@@ -58,7 +58,10 @@ public class PostInfoSystemBean implements PostInfoSystem {
 		}
 		
 		public PostInfo call() throws Exception {
-			return updater.getUpdate();
+			logger.debug("Starting PostInfo retrieval");
+			PostInfo info = updater.getUpdate();
+			logger.debug("Completed PostInfo retrieval");			
+			return info;
 		}
 	}
 	
@@ -182,8 +185,9 @@ public class PostInfoSystemBean implements PostInfoSystem {
 		Date maxUpdateAgo = new Date(System.currentTimeMillis() - MAX_UPDATE_RATE);
 		Date lastUpdate = post.getInfoDate();
 		if (lastUpdate != null && lastUpdate.after(maxUpdateAgo)) {
-			logger.debug("Post was updated in the last {} minutes, not updating", 
-					MAX_UPDATE_RATE / 1000 / 60);
+			// Don't enable this for now, it's spammy
+			// logger.debug("Post was updated in the last {} minutes, not updating", 
+			//		MAX_UPDATE_RATE / 1000 / 60);
 			return null; // nothing to do
 		}
 

@@ -121,7 +121,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 				throw new RuntimeException("getThreadPool() called after shutdown");
 				
 			if (threadPool == null) {
-				threadPool = Executors.newFixedThreadPool(10, new ThreadFactory() {
+				threadPool = Executors.newCachedThreadPool(new ThreadFactory() {
 					private int nextThreadId = 0;
 					
 					public synchronized Thread newThread(Runnable r) {
