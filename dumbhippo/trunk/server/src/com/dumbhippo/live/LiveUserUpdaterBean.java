@@ -59,7 +59,9 @@ public class LiveUserUpdaterBean implements LiveUserUpdater {
 	
 	private List<PostView> getRecentPosts(LiveUser user) {
 		User dbUser = identitySpider.lookupUser(user);
-		return postingBoard.getReceivedPosts(new UserViewpoint(dbUser), dbUser, 0, RECENT_POSTS_MAX_HISTORY);
+		List<PostView> posts = postingBoard.getReceivedPosts(new UserViewpoint(dbUser), dbUser, 0, RECENT_POSTS_MAX_HISTORY);
+		logger.debug("Got {} for getReceivedPosts for user {}", posts.size(), user.getGuid());
+		return posts;
 	}
 
 	private double computeInitialTemperature(LiveUser user, List<PostView> posts) {
