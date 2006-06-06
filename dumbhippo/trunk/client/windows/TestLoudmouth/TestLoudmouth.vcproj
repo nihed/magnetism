@@ -19,7 +19,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="../loudmouth;../dependencies/glib/include/glib-2.0;../dependencies/glib/lib/glib-2.0/include;../dependencies/gettext/include"
+				AdditionalIncludeDirectories="../../common/loudmouth;../dependencies/glib/include/glib-2.0;../dependencies/glib/lib/glib-2.0/include;../dependencies/gettext/include"
 				PreprocessorDefinitions="__WIN32__;WIN32;_DEBUG;_CONSOLE"
 				MinimalRebuild="TRUE"
 				BasicRuntimeChecks="3"
@@ -116,7 +116,19 @@
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
 			<File
-				RelativePath="..\loudmouth\examples\test-lm.c">
+				RelativePath="..\..\common\loudmouth\examples\test-lm.c">
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)/$(InputName)1.obj"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)/$(InputName)1.obj"/>
+				</FileConfiguration>
 			</File>
 		</Filter>
 	</Files>

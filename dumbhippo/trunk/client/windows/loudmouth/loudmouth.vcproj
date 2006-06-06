@@ -19,7 +19,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories=".;../dependencies/gettext/include;../dependencies/glib/include/glib-2.0;../dependencies/glib/lib/glib-2.0/include"
+				AdditionalIncludeDirectories=".;../dependencies/gettext/include;../dependencies/glib/include/glib-2.0;../dependencies/glib/lib/glib-2.0/include;../../common/loudmouth"
 				PreprocessorDefinitions="__WIN32__;LM_COMPILATION;HAVE_CONFIG_H;WIN32;_DEBUG;_WINDOWS;_USRDLL;LOUDMOUTH_EXPORTS"
 				MinimalRebuild="TRUE"
 				BasicRuntimeChecks="3"
@@ -36,7 +36,7 @@
 				OutputFile="$(OutDir)/loudmouth-1.dll"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="../dependencies/gettext/lib;../dependencies/glib/lib"
-				ModuleDefinitionFile="loudmouth/loudmouth.def"
+				ModuleDefinitionFile="../../common/loudmouth/loudmouth/loudmouth.def"
 				GenerateDebugInformation="TRUE"
 				ProgramDatabaseFile="$(OutDir)/loudmouth.pdb"
 				SubSystem="2"
@@ -48,7 +48,7 @@
 				Name="VCPostBuildEventTool"/>
 			<Tool
 				Name="VCPreBuildEventTool"
-				CommandLine="copy win32-config.h config.h"/>
+				CommandLine="copy ..\..\common\loudmouth\win32-config.h ..\..\common\loudmouth\config.h"/>
 			<Tool
 				Name="VCPreLinkEventTool"/>
 			<Tool
@@ -121,40 +121,40 @@
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
 			<File
-				RelativePath=".\loudmouth\lm-connection.c">
+				RelativePath="..\..\common\loudmouth\loudmouth\lm-connection.c">
 			</File>
 			<File
-				RelativePath=".\loudmouth\lm-debug.c">
+				RelativePath="..\..\common\loudmouth\loudmouth\lm-debug.c">
 			</File>
 			<File
-				RelativePath=".\loudmouth\lm-error.c">
+				RelativePath="..\..\common\loudmouth\loudmouth\lm-error.c">
 			</File>
 			<File
-				RelativePath=".\loudmouth\lm-message-handler.c">
+				RelativePath="..\..\common\loudmouth\loudmouth\lm-message-handler.c">
 			</File>
 			<File
-				RelativePath=".\loudmouth\lm-message-node.c">
+				RelativePath="..\..\common\loudmouth\loudmouth\lm-message-node.c">
 			</File>
 			<File
-				RelativePath=".\loudmouth\lm-message.c">
+				RelativePath="..\..\common\loudmouth\loudmouth\lm-message.c">
 			</File>
 			<File
-				RelativePath=".\loudmouth\lm-parser.c">
+				RelativePath="..\..\common\loudmouth\loudmouth\lm-parser.c">
 			</File>
 			<File
-				RelativePath=".\loudmouth\lm-proxy.c">
+				RelativePath="..\..\common\loudmouth\loudmouth\lm-proxy.c">
 			</File>
 			<File
-				RelativePath=".\loudmouth\lm-sha.c">
+				RelativePath="..\..\common\loudmouth\loudmouth\lm-sha.c">
 			</File>
 			<File
-				RelativePath=".\loudmouth\lm-ssl.c">
+				RelativePath="..\..\common\loudmouth\loudmouth\lm-ssl.c">
 			</File>
 			<File
-				RelativePath=".\loudmouth\lm-utils.c">
+				RelativePath="..\..\common\loudmouth\loudmouth\lm-utils.c">
 			</File>
 			<File
-				RelativePath=".\loudmouth\loudmouth.def">
+				RelativePath="..\..\common\loudmouth\loudmouth\loudmouth.def">
 			</File>
 		</Filter>
 		<Filter
@@ -162,43 +162,43 @@
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}">
 			<File
-				RelativePath=".\loudmouth\lm-connection.h">
+				RelativePath="..\..\common\loudmouth\loudmouth\lm-connection.h">
 			</File>
 			<File
-				RelativePath=".\loudmouth\lm-debug.h">
+				RelativePath="..\..\common\loudmouth\loudmouth\lm-debug.h">
 			</File>
 			<File
-				RelativePath=".\loudmouth\lm-error.h">
+				RelativePath="..\..\common\loudmouth\loudmouth\lm-error.h">
 			</File>
 			<File
-				RelativePath=".\loudmouth\lm-internals.h">
+				RelativePath="..\..\common\loudmouth\loudmouth\lm-internals.h">
 			</File>
 			<File
-				RelativePath=".\loudmouth\lm-message-handler.h">
+				RelativePath="..\..\common\loudmouth\loudmouth\lm-message-handler.h">
 			</File>
 			<File
-				RelativePath=".\loudmouth\lm-message-node.h">
+				RelativePath="..\..\common\loudmouth\loudmouth\lm-message-node.h">
 			</File>
 			<File
-				RelativePath=".\loudmouth\lm-message.h">
+				RelativePath="..\..\common\loudmouth\loudmouth\lm-message.h">
 			</File>
 			<File
-				RelativePath=".\loudmouth\lm-parser.h">
+				RelativePath="..\..\common\loudmouth\loudmouth\lm-parser.h">
 			</File>
 			<File
-				RelativePath=".\loudmouth\lm-proxy.h">
+				RelativePath="..\..\common\loudmouth\loudmouth\lm-proxy.h">
 			</File>
 			<File
-				RelativePath=".\loudmouth\lm-sha.h">
+				RelativePath="..\..\common\loudmouth\loudmouth\lm-sha.h">
 			</File>
 			<File
-				RelativePath=".\loudmouth\lm-ssl.h">
+				RelativePath="..\..\common\loudmouth\loudmouth\lm-ssl.h">
 			</File>
 			<File
-				RelativePath=".\loudmouth\lm-utils.h">
+				RelativePath="..\..\common\loudmouth\loudmouth\lm-utils.h">
 			</File>
 			<File
-				RelativePath=".\loudmouth\loudmouth.h">
+				RelativePath="..\..\common\loudmouth\loudmouth\loudmouth.h">
 			</File>
 		</Filter>
 		<Filter
