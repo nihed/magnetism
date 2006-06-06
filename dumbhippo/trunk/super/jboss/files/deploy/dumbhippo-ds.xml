@@ -3,6 +3,8 @@
 <datasources>
   <local-tx-datasource>
     <jndi-name>DumbHippoDS</jndi-name>
+    <max-pool-size>@@maxConnectionPoolSize@@</max-pool-size>
+    <blocking-timeout-millis>30000</blocking-timeout-millis>
 @@if mysqlEnabled
     <connection-url>jdbc:mysql://localhost:@@mysqlPort@@/dumbhippo</connection-url>
     <driver-class>com.mysql.jdbc.Driver</driver-class>
