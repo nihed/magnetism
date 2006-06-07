@@ -22,7 +22,7 @@
 			<div></div> <!-- IE bug workaround, display:none as first child causes problems -->
 			<dht:zoneBoxTitle>ABOUT GROUPS</dht:zoneBoxTitle>
 			You can create groups for specific interests and friends. Sharing links 
-			with Link Swarm is easier when using a group name rather than selecting 
+			with Web Swarm is easier when using a group name rather than selecting 
 			the names of friends one by one. Groups can be open to the public to see, 
 			or private for only group members. Any member of a group can invite new 
 			members and alter account settings.

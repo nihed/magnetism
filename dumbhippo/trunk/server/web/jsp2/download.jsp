@@ -68,7 +68,7 @@
 	</td>	
 	</tr>
 	</table>
-	<div class="dh-special-subtitle dh-download-bottom-title">Clicking that link will activate Link Swarm, and take you
+	<div class="dh-special-subtitle dh-download-bottom-title">Clicking that link will activate Web Swarm, and take you
 	to our page where you can get and customize Music Radar for your own page.  Easy!</div>
 	<dht:notevil/>
 	<div class="dh-disclaimer">Download for <a href="/download?platform=windows">Windows</a> | <a href="/download?platform=linux">Linux</a></div>

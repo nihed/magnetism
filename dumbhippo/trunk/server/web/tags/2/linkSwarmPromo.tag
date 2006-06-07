@@ -5,7 +5,7 @@
 
 <table><tr>
 <td rowSpan="2"><img src="/images2/${buildStamp}/buzzer50x44.gif" /></td>
-<td><strong>Link Swarm</strong> lets you share and chat about links with friends.</td>
+<td><strong>Web Swarm</strong> lets you share and chat about links with friends.</td>
 </tr><tr>
 <td>
 	<span class="dh-option-list"><%-- Just want to hack the style of this one element --%>

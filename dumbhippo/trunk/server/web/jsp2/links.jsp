@@ -4,7 +4,7 @@
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 
 <head>
-	<title>Mugshot Link Swarm</title>
+	<title>Mugshot Web Swarm</title>
 	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/links.css">
 	<dht:faviconIncludes/>
 	<dht:scriptIncludes/>
@@ -13,7 +13,7 @@
 	<c:if test="${signin.valid}">
 	<dht:requireLinksPersonBean who="${signin.user.id}"/>
 	<dht:sidebarPerson who="${signin.user.id}">
-		<dht:sidebarBoxControls title="LINK SWARM CONTROLS">
+		<dht:sidebarBoxControls title="WEB SWARM CONTROLS">
 			<div class="dh-public-shares-toggle">
 				<c:choose>
 					<%-- this is duplicated so we can set the checked attribute --%>

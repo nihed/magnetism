@@ -59,7 +59,7 @@ Mugshot currently offers two activities:
 </p>
 
 <ul>
-<li>Link Swarm - Share web links with individuals or groups in real time, and get live feedback when people visit those links</li>
+<li>Web Swarm - Share web links with individuals or groups in real time, and get live feedback when people visit those links</li>
 <li>Music Radar - Show off the music you listen to using services like iTunes, Yahoo! Music, and others on your web site, blog or MySpace page</li>
 </ul>
 

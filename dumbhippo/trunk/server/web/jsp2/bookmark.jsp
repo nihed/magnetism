@@ -34,9 +34,9 @@
 <dht:systemPage topImage="/images2/${buildStamp}/header_bookmark500.gif" fullHeader="true">
 <c:choose>
 	<c:when test="${browser.ieRequested}">
-		<dht:zoneBoxTitle>USING MUGSHOT LINK SWARM</dht:zoneBoxTitle>	
+		<dht:zoneBoxTitle>USING MUGSHOT WEB SWARM</dht:zoneBoxTitle>	
 		Since you're using Internet Explorer, you can <a href="/download">download</a> the
-		Link Swarm application and share links right from your Explorer toolbar.
+		Web Swarm application and share links right from your Explorer toolbar.
 	</c:when>
 	<c:when test="${unsupported}">
 		<dht:zoneBoxTitle>BROWSER NOT SUPPORTED</dht:zoneBoxTitle>		
@@ -45,9 +45,9 @@
 		below; one of them might apply for you.
 	</c:when>
 	<c:otherwise>
-	<dht:zoneBoxTitle>USING MUGSHOT LINK SWARM IN <c:out value="${browserTitle}"/></dht:zoneBoxTitle>
+	<dht:zoneBoxTitle>USING MUGSHOT WEB SWARM IN <c:out value="${browserTitle}"/></dht:zoneBoxTitle>
 	<p>Drag the link below onto the Bookmarks toolbar.  Then to share and chat about
-	a site with friends, click 'Mugshot Link Swarm' on your Bookmarks toolbar.</p>
+	a site with friends, click 'Mugshot Web Swarm' on your Bookmarks toolbar.</p>
 	<div id="dhBookmarkHowto">
 	<table cellspacing="0" cellpadding="0">
 	<tr>
@@ -55,7 +55,7 @@
 	<td align="left" valign="bottom"><img src="/images2/${buildStamp}/dragthis.gif"/></td>
 	<td align="center" valign="bottom">
 	<div id="dhBookmarkLink">
-	<a href="javascript:window.open('${bookmark.baseUrl}/sharelink?v=1&url='+encodeURIComponent(location.href)+'&title='+encodeURIComponent(document.title)+'&next=close','_NEW','menubar=no,location=no,toolbar=no,scrollbars=yes,status=no,resizable=yes,height=400,width=550,top='+((screen.availHeight-400)/2)+',left='+((screen.availWidth-550)/2));void(0);">Link Swarm</a>
+	<a href="javascript:window.open('${bookmark.baseUrl}/sharelink?v=1&url='+encodeURIComponent(location.href)+'&title='+encodeURIComponent(document.title)+'&next=close','_NEW','menubar=no,location=no,toolbar=no,scrollbars=yes,status=no,resizable=yes,height=400,width=550,top='+((screen.availHeight-400)/2)+',left='+((screen.availWidth-550)/2));void(0);">Mugshot Web Swarm</a>
 	</div>
 	</td>
 	<td align="right" valign="bottom"><img src="/images2/${dragDestImg}"/></td>
@@ -66,7 +66,7 @@
 	<dht:zoneBoxTitle>IF THE BOOKMARK DOESN'T SHOW UP IN THE TOOLBAR</dht:zoneBoxTitle>
 	<p>Go to the <span class="dh-bookmark-uiref">View</span> menu, and under <span class="dh-bookmark-uiref">Toolbars</span> make sure <span class="dh-bookmark-uiref">Bookmark Toolbar</span> is
 	checked.</p>
-	<p>If you see the Bookmark Toolbar but the Mugshot Link Swarm does not appear on it,
+	<p>If you see the Bookmark Toolbar but 'Mugshot Web Swarm' does not appear on it,
 	choose <span class="dh-bookmark-uiref">Manage Bookmarks</span> from the <span class="dh-bookmark-uiref">Bookmarks</span> menu,
 	and move the bookmark to your <span class="dh-bookmark-uiref">Personal Toolbar</span> folder.
 	</p>

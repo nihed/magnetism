@@ -35,7 +35,7 @@
 
 					<dht:zoneBoxSeparator/>
 					
-					<dht:searchSectionTitle a="dhLinkSwarm" query='${param["q"]}' pageable="${find.posts}">LINK SWARM</dht:searchSectionTitle>
+					<dht:searchSectionTitle a="dhLinkSwarm" query='${param["q"]}' pageable="${find.posts}">WEB SWARM</dht:searchSectionTitle>
 					<c:if test="${!empty find.postError}">
 						<c:out value="${find.postError}"/>
 					</c:if>

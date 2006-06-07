@@ -365,7 +365,7 @@ hippo_bubble_init(HippoBubble       *bubble)
     
     gtk_misc_set_alignment(GTK_MISC(widget), 0.0, 0.0);
     
-    /* link swarm logo text */
+    /* web swarm logo text */
     
     pixbuf = hippo_embedded_image_get("bublinkswarm");
     bubble->link_swarm_logo = gtk_image_new_from_pixbuf(pixbuf);
@@ -1000,7 +1000,7 @@ compute_content_widgets_layout(HippoBubble  *bubble,
     sender_name.x = sender_photo.x + (sender_photo.width - sender_name.width) / 2;
     sender_name.y = sender_photo.y + sender_photo.height + 5;
     
-    /* link swarm logo aligned top with photo */
+    /* web swarm logo aligned top with photo */
     GET_REQ(link_swarm_logo);
     link_swarm_logo.x = sender_photo.x + sender_photo.width + 10;
     link_swarm_logo.y = sender_photo.y;
@@ -1206,7 +1206,7 @@ hippo_bubble_size_request(GtkWidget         *widget,
     
     gdk_rectangle_union(&content_child_rect, &recipients_rect, &content_child_rect);
 
-    /* if the LINK SWARM is the longest thing, it tends to overlap the close button; 
+    /* if the WEB SWARM is the longest thing, it tends to overlap the close button; 
      * so add a little padding then
      */
     right_clearance = (content_child_rect.x + content_child_rect.width) - 

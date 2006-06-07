@@ -766,7 +766,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 				// this does NOT check whether the account has invitations left,
 				// that's why we do it above.
 				note = invitationSystem.sendEmailInvitation(new UserViewpoint(inviter), promotionCode, address,
-							"Mugshot Download", "Hey!\n\nClick here to get the Mugshot Music Radar and Link Swarm.");
+							"Mugshot Download", "Hey!\n\nClick here to get the Mugshot Music Radar and Web Swarm.");
 				if (note == null)
 					note = "Your invitation is on its way (check your email)";
 			}

@@ -4,7 +4,7 @@
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 
 <head>
-        <title>About Link Swarm</title>
+        <title>About Web Swarm</title>
         <link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/links-learnmore.css"/>
 	<dht:faviconIncludes/>
         <dht:scriptIncludes/>
@@ -16,7 +16,7 @@
 		<div>
 		<table cellspacing="0" cellpadding="0">
 		<tr><td><img src="/images2/${buildStamp}/buzzer63x58.gif"/></td>
-		<td class="dh-links-learnmore-text"><div class="dh-links-learnmore-header">About Link Swarm</div>
+		<td class="dh-links-learnmore-text"><div class="dh-links-learnmore-header">About Web Swarm</div>
 			<div>
 			Instantly share and chat about cool links with friends around
 			the world.  See how much interest sites are getting in real
@@ -36,7 +36,7 @@
 			<img src="/images2/${buildStamp}/toolbarsample.gif"/>
 		</td>
 		<td>
-			<p class="dh-links-learnmore-text">Once you have Link Swarm, simply click a button on your browser's toolbar
+			<p class="dh-links-learnmore-text">Once you have Web Swarm, simply click a button on your browser's toolbar
 			   to share a page.  Add in your comments on the window that appears, and
 			   decide who to send it to.  Easy!
 			</p>
@@ -48,7 +48,7 @@
 			Receive updates from friends on sites that interest you.
 		</div>
 		<div><img src="/images2/${buildStamp}/bubblesample.gif"/></div>
-		<div class="dh-links-learnmore-section"><a style="font-size: larger;" href="/download">Click here to get Link Swarm, free!</a></div>
+		<div class="dh-links-learnmore-section"><a style="font-size: larger;" href="/download">Click here to get Web Swarm, free!</a></div>
 		
 		<dht:zoneBoxSeparator/>
 		

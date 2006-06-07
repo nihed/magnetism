@@ -9,7 +9,7 @@
 
 Jump to:
 <c:if test="${skip != 'web'}">
-	<a href="/links">Link Swarm</a> |
+	<a href="/links">Web Swarm</a> |
 </c:if>
 <c:if test="${skip != 'music'}">
 	<a href="/music">Music Radar</a> <c:if test="${skip != 'tv'}">|</c:if>

@@ -45,7 +45,7 @@
 		
 		<dht:zoneBoxSeparator/>
 		
-		<div class="dh-music-learnmore-section"><a href="/links-learnmore">Learn more about Link Swarm</a></div>		
+		<div class="dh-music-learnmore-section"><a href="/links-learnmore">Learn more about Web Swarm</a></div>		
 		</dht:zoneBoxMusic>
 	</dht:contentColumn>
 </dht:twoColumnPage>
