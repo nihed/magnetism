@@ -1,5 +1,7 @@
 package com.dumbhippo.server.impl;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Callable;
 
 import javax.annotation.EJB;
@@ -16,6 +18,7 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.WantsIn;
 import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.WantsInSystem;
+import com.dumbhippo.server.WantsInView;
 
 @Stateless
 public class WantsInSystemBean implements WantsInSystem {
@@ -67,4 +70,49 @@ public class WantsInSystemBean implements WantsInSystem {
 			return; // not reached
 		}
 	}
+	
+	public List<WantsIn> getWantsInWithoutInvites(int count) {
+		Query q = em.createQuery("FROM WantsIn wi " +
+				                 "WHERE wi.invitationSent = FALSE " +
+				                 "AND wi.address NOT IN  " +
+				                 "(SELECT er.email from EmailResource er " +
+				                 "WHERE (er IN (select it.invitee from InvitationToken it) OR " +
+				                 "er IN (select ac.resource from AccountClaim ac)))" +
+				                 "ORDER BY wi.creationDate ASC");
+
+		q.setMaxResults(count);
+			
+		List<?> objects = q.getResultList();
+		List<WantsIn> results = new ArrayList<WantsIn>(); 
+		for (Object o : objects) {
+			assert o != null;
+			results.add((WantsIn)o);
+		}
+		
+		return results;
+	}
+	
+	public List<WantsInView> getWantsInViewsWithoutInvites(int count) {
+		
+		List<WantsIn> wantsInList = getWantsInWithoutInvites(count);
+
+		List<WantsInView> results = new ArrayList<WantsInView>(); 
+		for (WantsIn wi : wantsInList) {
+			results.add(new WantsInView(wi.getAddress(), wi.getCount(), wi.getCreationDate()));
+		}
+		
+		return results;
+	}
+	
+	public int getWantsInCount() {
+		Query q = em.createQuery("SELECT COUNT(wi) FROM WantsIn wi " +
+				                 "WHERE wi.invitationSent = FALSE AND wi.address NOT IN  " +
+				                 "(SELECT er.email from EmailResource er " +
+				                 "WHERE (er IN (select it.invitee from InvitationToken it) OR " +
+				                 "er IN (select ac.resource from AccountClaim ac)))");		
+		Number count = (Number) q.getSingleResult();
+		return count.intValue();		
+	}
 }
+
+

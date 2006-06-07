@@ -15,6 +15,8 @@ import com.dumbhippo.persistence.User;
 
 @Local
 public interface InvitationSystem {
+	
+	static public final String INVITATION_SUCCESS_STRING = new String("Congratulations");
 		
 	/**
 	 * The inviter argument is optional and means we only return an invitation token if this inviter is

@@ -1,31 +1,20 @@
 dojo.provide("dh.groupaccount")
 dojo.require("dh.server")
+dojo.require("dh.util")
 dojo.require("dh.formtable")
 dojo.require("dh.textinput")
 dojo.require("dh.photochooser")
 dojo.require("dh.fileinput")
 dojo.require("dojo.dom")
 
-dh.groupaccount.showMessage = function(message) {
-	var div = document.getElementById("dhMessageDiv")
-
-	if (message) {	
-		dh.util.clearNode(div)
-		div.appendChild(document.createTextNode(message))
-		div.style.display = "block"
-	} else {
-		div.style.display = "none"
-	}
-}
-
 dh.groupaccount.startWait = function() {
-	dh.groupaccount.showMessage("Please wait...")
+	dh.util.showMessage("Please wait...")
 	document.getElementById("dhCreateGroupSave").disabled = true
 	document.getElementById("dhCreateGroupCancel").disabled = true
 }
 
 dh.groupaccount.stopWait = function(message) {
-	dh.groupaccount.showMessage(message)
+	dh.util.showMessage(message)
 	document.getElementById("dhCreateGroupSave").disabled = false
 	document.getElementById("dhCreateGroupCancel").disabled = false
 }

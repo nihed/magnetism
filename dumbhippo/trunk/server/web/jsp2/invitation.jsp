@@ -1,6 +1,5 @@
 <html>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 <%@ taglib uri="/jsp/dumbhippo.tld" prefix="dh" %>
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 
@@ -20,14 +19,14 @@
 		dojo.require("dh.invitation")
 		dh.invitation.initialValues = {
 			'dhAddressEntry' : '',
-			'dhSubjectEntry' : 'Join me at Mugshot',
+			'dhSubjectEntry' : 'Invitation from ${signin.user.nickname} to join Mugshot',
 			'dhMessageEntry' : 	
 	'Mugshot makes it easy to instantly share web pages and music playlists ' +
 	'with friends and family -- or the world!'
 		}
 		dh.invitation.resendValues = {
 			'dhAddressEntry' : '',
-			'dhSubjectEntry' : 'Join me at Mugshot',
+			'dhSubjectEntry' : 'Invitation from ${signin.user.nickname} to join Mugshot',
 			'dhMessageEntry' : 'Just a reminder'
 		}
 		dojo.event.connect(dojo, "loaded", dj_global, "dhInvitationInit");
@@ -37,10 +36,8 @@
 	<dht:sidebarPerson who="${signin.user.id}"/>
 	<dht:contentColumn>
 		<dht:zoneBoxInvitation back='true'>
-			<div></div> <!-- IE bug workaround, display:none as first child causes problems -->
-			<div class="dh-message" id="dhMessageDiv" style='display: ${empty param["message"] ? "none" : "block"};'>
-				<c:out value='${param["message"]}'/>
-			</div>
+			<div></div> <!-- IE bug workaround, display:none as first child causes problems -->			
+			<dht:messageArea/>
 			<c:choose>
 			<c:when test="${signin.user.account.invitations > 0}">
 				<dht:zoneBoxTitle>INVITE A FRIEND</dht:zoneBoxTitle>
@@ -55,7 +52,6 @@
 						<dht:textInput id="dhMessageEntry" multiline="true"/>
 					</dht:formTableRow>
 					<tr>
-						<td></td>
 						<td class="dh-control-cell"><input type="button" value="Send" onclick="dh.invitation.send()"/></td>
 					</tr>
 				</dht:formTable>

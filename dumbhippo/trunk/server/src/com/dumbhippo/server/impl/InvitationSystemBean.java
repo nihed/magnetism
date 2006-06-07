@@ -497,14 +497,14 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 			User user = spider.lookupUserByResource(invitee);
 			return invitee.getHumanReadableString() + " already has an account '" + user.getNickname() + "', now added to your friends list.";
 		} else { 
-			
+			// note should be null or contain INVITATION_SUCCESS_STRING to indicate a successful invitation
 			if (result == CreateInvitationResult.REPEAT_INVITE) {
-				note = "Congratulations, the invitation to " + invitee.getHumanReadableString() + " was resent.";				
+				note = INVITATION_SUCCESS_STRING + ", the invitation to " + invitee.getHumanReadableString() + " was resent.";				
 			} else if (result == CreateInvitationResult.NEW_INVITER) {
-				note = "Congratulations, the invitation to " + invitee.getHumanReadableString() + " was sent."
+				note = INVITATION_SUCCESS_STRING + ", the invitation to " + invitee.getHumanReadableString() + " was sent."
 				       + " You didn't have to spend an invitation because they were already invited by someone else."; 			
 			} else if (result == CreateInvitationResult.INVITE_CREATED) {
-				note = "Congratulations, the invitation to " + invitee.getHumanReadableString() + " was sent.";
+				note = INVITATION_SUCCESS_STRING + ", the invitation to " + invitee.getHumanReadableString() + " was sent.";
 			} else {
 				// unknown case
 				return "Your invitation was not sent.";
@@ -553,12 +553,11 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		User mugshot = identitySpider.getCharacter(Character.MUGSHOT);
 		boolean isMugshotInvite = (viewedInviter.getUser() == mugshot);
 		
-		// TODO invitations from Mugshot character could already have their
-		// subject specified, shouldn't we use that?
-		if (isMugshotInvite) {
-			subject = "Mugshot Download";
-		} else if (subject == null || subject.trim().length() == 0) {
-			subject = "Invitation from " + inviterName + " to join Mugshot";
+		if (subject == null || subject.trim().length() == 0) {
+			if (isMugshotInvite)
+				subject = "Your Mugshot Invitation";
+			else
+				subject = "Invitation from " + inviterName + " to join Mugshot";				
 		}
 		
 		StringBuilder messageText = new StringBuilder();

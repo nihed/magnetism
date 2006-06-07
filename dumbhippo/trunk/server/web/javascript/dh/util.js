@@ -538,3 +538,16 @@ dh.util.getKeyCode = function(ev)
 	if (window.event)
 		return window.event.keyCode;
 };
+
+dh.util.showMessage = function(message) {
+	var div = document.getElementById("dhMessageDiv")
+
+	if (message) {	
+		dh.util.clearNode(div)
+		div.appendChild(document.createTextNode(message))
+		div.style.display = "block"
+	} else {
+		div.style.display = "none"
+	}
+};
+

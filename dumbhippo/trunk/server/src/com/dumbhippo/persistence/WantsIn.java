@@ -22,6 +22,7 @@ public class WantsIn extends DBUnique {
 	private int count;
 	private long creationDate; // first request to get in
 	private long updateDate;   // latest request to get in
+	private boolean invitationSent;
 	
 	// only called by hibernate
 	protected WantsIn() {
@@ -33,6 +34,7 @@ public class WantsIn extends DBUnique {
 		updateDate = -1;
 		setAddress(address);
 		setCount(0);
+		invitationSent = false;
 	}
 	
 	@Column(unique=true, nullable=false)
@@ -83,5 +85,14 @@ public class WantsIn extends DBUnique {
 	// only hibernate should call
 	protected void setUpdateDate(Date updateDate) {
 		this.updateDate = updateDate.getTime();
+	}
+	
+	@Column(nullable=false)
+	public boolean isInvitationSent() {
+		return invitationSent;
+	}
+	
+	public void setInvitationSent(boolean invitationSent) {
+		this.invitationSent = invitationSent;
 	}
 }

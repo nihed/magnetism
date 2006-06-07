@@ -14,6 +14,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import javax.annotation.EJB;
@@ -50,6 +51,7 @@ import com.dumbhippo.persistence.PostVisibility;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.Validators;
+import com.dumbhippo.persistence.WantsIn;
 import com.dumbhippo.postinfo.PostInfo;
 import com.dumbhippo.server.Character;
 import com.dumbhippo.server.ClaimVerifier;
@@ -74,6 +76,7 @@ import com.dumbhippo.server.TrackIndexer;
 import com.dumbhippo.server.TrackView;
 import com.dumbhippo.server.UserViewpoint;
 import com.dumbhippo.server.Viewpoint;
+import com.dumbhippo.server.WantsInSystem;
 import com.dumbhippo.server.util.EJBUtil;
 
 @Stateless
@@ -102,6 +105,9 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 
 	@EJB
 	private InvitationSystem invitationSystem;
+	
+	@EJB 
+	private WantsInSystem wantsInSystem;
 	
 	@EJB
 	private ClaimVerifier claimVerifier;
@@ -780,8 +786,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		writeMessageReply(out, "inviteSelfReply", note);
 	}
 	
-	public void doSendEmailInvitation(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint, String address, String subject, String message) throws IOException
-	{
+	public void doSendEmailInvitation(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint, String address, String subject, String message) throws IOException {
 		if (contentType != HttpResponseData.XML)
 			throw new IllegalArgumentException("only support XML replies");
 		
@@ -794,6 +799,40 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		String note = invitationSystem.sendEmailInvitation(viewpoint, null, address, subject, message);
 		
 		writeMessageReply(out, "sendEmailInvitationReply", note);
+	}
+	
+	
+	public void doInviteWantsIn(String countToInvite, String subject, String message) throws IOException {	
+		logger.debug("Got into doInviteWantsIn");
+		int countToInviteValue = Integer.parseInt(countToInvite);
+		
+		String note = null;
+		
+		Character character = Character.MUGSHOT;
+		User inviter = identitySpider.getCharacter(character);
+			
+		if (!inviter.getAccount().canSendInvitations(countToInviteValue)) {
+            logger.debug("Mugshot character does not have enough invitations to invite {} people.", countToInviteValue);
+        } else {
+        	
+        	List<WantsIn> wantsInList = wantsInSystem.getWantsInWithoutInvites(countToInviteValue);
+        	
+    		for (WantsIn wantsIn : wantsInList) {    			
+                // this does NOT check whether the account has invitations left,
+                // that's why we do it above.
+			    note = invitationSystem.sendEmailInvitation(new UserViewpoint(inviter), null, wantsIn.getAddress(),
+                                                            subject, message);
+			    if (note == null) {
+                    logger.debug("Invitation for {} is on its way", wantsIn.getAddress());
+                    wantsIn.setInvitationSent(true);
+			    } else {
+				    logger.debug("Trying to send an invitation to {} produced the following note: {}", wantsIn.getAddress(), note);
+				    if (note.contains(InvitationSystem.INVITATION_SUCCESS_STRING)) {
+	                    wantsIn.setInvitationSent(true);				    	
+				    }
+			    }
+    		}
+        }
 	}
 	
 	public void doSendGroupInvitation(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint, String groupId, String inviteeId, String inviteeAddress, String subject, String message) throws IOException

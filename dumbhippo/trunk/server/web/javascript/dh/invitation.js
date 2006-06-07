@@ -2,14 +2,7 @@ dojo.provide("dh.invitation")
 dojo.require("dh.server")
 dojo.require("dh.textinput")
 dojo.require("dojo.string")
-
-dh.invitation.showMessage = function(message) {
-	var div = document.getElementById("dhMessageDiv")
-	
-	dh.util.clearNode(div)
-	div.appendChild(document.createTextNode(message))
-	div.style.display = "block"
-}
+dojo.require("dh.util")
 
 dh.invitation.reloadWithMessage = function(message) {
 	// We do this as a POST to avoid including the message in the URL
@@ -62,7 +55,7 @@ dh.invitation.fillValues = function(values) {
 dh.invitation.resend = function(address) {
 	dh.invitation.fillValues(dh.invitation.resendValues)
 	dh.invitation.addressEntry.setValue(address)
-	dh.invitation.showMessage('Press "Send" to resend the invitation')
+	dh.util.showMessage('Press "Send" to resend the invitation')
 	
 	// Scroll to the top of the page
 	scroll(0,0)

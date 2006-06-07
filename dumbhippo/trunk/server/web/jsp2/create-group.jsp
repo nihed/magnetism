@@ -1,6 +1,5 @@
 <html>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 <%@ taglib uri="/jsp/dumbhippo.tld" prefix="dh" %>
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 
@@ -28,9 +27,7 @@
 			members and alter account settings.
 			<dht:zoneBoxSeparator/>
 			<dht:zoneBoxTitle>CREATE A GROUP</dht:zoneBoxTitle>
-			<div class="dh-message" id="dhMessageDiv" style='display: none;'>
-				<c:out value='${param["message"]}'/>
-			</div>
+			<dht:messageArea/>
 			<dht:formTable>
 				<dht:formTableRow label="Public or private?">
 					<input type="radio" name="dhGroupVisibility" id="dhGroupVisibilityPublic" value="public" checked="yes"><b>Public</b> (Visible to anyone browsing the Mugshot website)</input> 
