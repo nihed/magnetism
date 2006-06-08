@@ -975,7 +975,7 @@ public class PostingBoardBean implements PostingBoard {
 		PersonPostData ppd = getOrCreatePersonPostData(user, post);
 		boolean previouslyViewed = ppd.getClickedDate() != null;
 		ppd.setClicked();
-		ppd.setIgnored(false); // Since they viewed it, they implicitly un-ignore it
+		setPostIgnored(user, post, false); // Since they viewed it, they implicitly un-ignore it
 		if (previouslyViewed)
 			return;
 	
@@ -1198,7 +1198,10 @@ public class PostingBoardBean implements PostingBoard {
 			return;
 		}
 		PersonPostData ppd = getOrCreatePersonPostData(user, post);
-		ppd.setIgnored(true);
+		if (ppd.isIgnored() != ignore) {
+			ppd.setIgnored(ignore);
+			messageSender.sendPostViewChanged(new UserViewpoint(user), post);
+		}
 	}
 
 	public boolean getPostIgnored(User user, Post post) {

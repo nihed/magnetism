@@ -7,6 +7,7 @@ import java.util.Set;
 
 import javax.ejb.Remote;
 
+import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.live.Hotness;
 
@@ -293,7 +294,7 @@ public interface MessengerGlueRemote {
 	public String getRecentPostsXML(String username, String id);
 
 	/**
-	 * Signal that the user wants to ignore future notifications about
+	 * Signal whether or not the user wants to ignore future notifications about
 	 * a particular post.
 	 * 
 	 * @param userId the guid of the user
@@ -301,5 +302,5 @@ public interface MessengerGlueRemote {
 	 * @throws ParseException 
 	 * @throws NotFoundException 
 	 */
-	public void setPostIgnored(String userId, String postId) throws NotFoundException, ParseException;
+	public void setPostIgnored(Guid userId, Guid postId, boolean ignore) throws NotFoundException, ParseException;
 }

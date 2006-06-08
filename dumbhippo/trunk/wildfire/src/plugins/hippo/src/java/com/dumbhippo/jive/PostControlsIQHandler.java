@@ -8,6 +8,7 @@ import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError.Condition;
 
+import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.server.MessengerGlueRemote;
 import com.dumbhippo.server.NotFoundException;
@@ -38,7 +39,8 @@ public class PostControlsIQHandler extends AbstractIQHandler {
 		MessengerGlueRemote glue = EJBUtil.defaultLookup(MessengerGlueRemote.class);
 		if (type.equals("ignore")) {
 			try {
-				glue.setPostIgnored(from.getNode(), id);
+				glue.setPostIgnored(Guid.parseTrustedJabberId(from.getNode()), 
+								    new Guid(id), true);
 			} catch (NotFoundException e) {
 				Log.error(e);
 				reply.setError(Condition.internal_server_error);

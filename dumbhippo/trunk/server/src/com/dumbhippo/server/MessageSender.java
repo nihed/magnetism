@@ -14,6 +14,8 @@ public interface MessageSender {
 	
 	public void sendLivePostChanged(LivePost lpost);
 	
+	public void sendPostViewChanged(UserViewpoint viewpoint, Post post);	
+	
 	public void sendMySpaceNameChangedNotification(User user);
 	
 	public void sendMySpaceContactCommentNotification(User user);

@@ -26,12 +26,15 @@ import org.xmpp.packet.PacketError.Condition;
 
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
+import com.dumbhippo.identity20.Guid;
+import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.jms.JmsProducer;
 import com.dumbhippo.server.ChatRoomInfo;
 import com.dumbhippo.server.ChatRoomKind;
 import com.dumbhippo.server.ChatRoomMessage;
 import com.dumbhippo.server.ChatRoomUser;
 import com.dumbhippo.server.MessengerGlueRemote;
+import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.xmppcom.XmppEvent;
 import com.dumbhippo.xmppcom.XmppEventChatMessage;
@@ -442,7 +445,7 @@ public class Room {
 			if (userInfo.getParticipantCount() == 1) {
 				participantResources.put(jid, userInfo);
 				needNotify = true;
-			}
+			}			
 		} else if (!participant && resourceWasParticipant) {
 			userInfo.setParticipantCount(userInfo.getParticipantCount() - 1);
 			if (userInfo.getParticipantCount() == 0) {
@@ -450,6 +453,19 @@ public class Room {
 				needNotify = true;
 			}
 		}
+		
+		// Joining a chat implicitly un-ignores a post
+		if (participant && kind == ChatRoomKind.POST) {
+			MessengerGlueRemote glue = EJBUtil.defaultLookup(MessengerGlueRemote.class);
+			try {
+				glue.setPostIgnored(Guid.parseTrustedJabberId(username), 
+								    Guid.parseTrustedJabberId(roomName), false);
+			} catch (NotFoundException e) {
+				Log.error(e);								
+			} catch (ParseException e) {
+				Log.error(e);
+			}					
+		}		
 
 		if (needNotify) {
 			if (resourceWasPresent)

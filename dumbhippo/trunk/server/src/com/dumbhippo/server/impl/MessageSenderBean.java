@@ -703,6 +703,20 @@ public class MessageSenderBean implements MessageSender {
 			}
 		}
 	}
+	
+	/**
+	 * This method sends a post change notification to just a particular
+	 * user.  It is used currently when the "ignored" state on a post
+	 * changes. 
+	 * 
+	 * @param viewpoint the viewpoint of the user
+	 * @param post post in question
+	 */
+	public void sendPostViewChanged(UserViewpoint viewpoint, Post post) {
+		PostView postView = postingBoard.getPostView(viewpoint, post);
+		LivePost lpost = LiveState.getInstance().getLivePost(post.getGuid());
+		xmppSender.sendLivePostChanged(viewpoint.getViewer(), lpost, postView);		
+	}
 
 	public void sendMySpaceNameChangedNotification(User user) {
 		xmppSender.sendMySpaceNameChangedNotification(user);

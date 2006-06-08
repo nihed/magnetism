@@ -315,12 +315,16 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 		mySpaceTracker.notifyNewContactComment(new UserViewpoint(requestingUser), mySpaceContactName);
 	}
 	
-	private User getUserFromUsername(String username) {
+	private User getUserFromGuid(Guid guid) {
 		try {
-			return identitySpider.lookupGuid(User.class, Guid.parseTrustedJabberId(username));
+			return identitySpider.lookupGuid(User.class, guid);
 		} catch (NotFoundException e) {
-			throw new RuntimeException("User does not exist: " + username, e);
+			throw new RuntimeException("User does not exist: " + guid, e);
 		}
+	}
+	
+	private User getUserFromUsername(String username) {
+		return getUserFromGuid(Guid.parseTrustedJabberId(username));
 	}
 	
 	private Post getPostFromRoomName(String roomName) throws NotFoundException {
@@ -599,10 +603,10 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 		return builder.toString();
 	}
 
-	public void setPostIgnored(String username, String postId) throws NotFoundException, ParseException {
-		User user = getUserFromUsername(username);
-		Post post = postingBoard.loadRawPost(new UserViewpoint(user), new Guid(postId));
-		postingBoard.setPostIgnored(user, post, true);
+	public void setPostIgnored(Guid userId, Guid postId, boolean ignore) throws NotFoundException, ParseException {
+		User user = getUserFromGuid(userId);
+		Post post = postingBoard.loadRawPost(new UserViewpoint(user), postId);
+		postingBoard.setPostIgnored(user, post, ignore);
 	}
 
 }
