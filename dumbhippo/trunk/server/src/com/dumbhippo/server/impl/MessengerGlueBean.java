@@ -361,20 +361,20 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 	}
 
 	private Set<ChatRoomUser> getChatRoomRecipients(Post post) {
-		Set<ChatRoomUser> allowedUsers = new HashSet<ChatRoomUser>();
+		Set<ChatRoomUser> recipients = new HashSet<ChatRoomUser>();
 		User poster = post.getPoster();
-		allowedUsers.add(newChatRoomUser(poster));	
+		recipients.add(newChatRoomUser(poster));	
 		
-		// FIXME: This isn't really right; it doesn't handle public posts and
+		// FIXME: This doesn't handle
 		// posts where people join a group that it was sent to after the post was
-		// sent. Public posts will need to be handled with a separate flag
-		// in ChatRoomInfo.
+		// sent. 
 		for (Resource recipient : post.getExpandedRecipients()) {
 			User user = identitySpider.getUser(recipient);
-			if (user != null)
-				allowedUsers.add(newChatRoomUser(user));
+			if (user != null) {
+				recipients.add(newChatRoomUser(user));
+			}
 		}
-		return allowedUsers;
+		return recipients;
 	}
 	
 	private ChatRoomInfo getChatRoomInfo(String roomName, Post post) {
@@ -593,6 +593,12 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 		
 		builder.closeElement();
 		return builder.toString();
+	}
+
+	public void setPostIgnored(String username, String postId) throws NotFoundException, ParseException {
+		User user = getUserFromUsername(username);
+		Post post = postingBoard.loadRawPost(new UserViewpoint(user), new Guid(postId));
+		postingBoard.setPostIgnored(user, post, true);
 	}
 
 }

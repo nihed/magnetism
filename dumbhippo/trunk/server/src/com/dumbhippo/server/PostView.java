@@ -11,8 +11,8 @@ import javax.ejb.EJBContext;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.ObjectXmlBuilder;
 import com.dumbhippo.StringUtils;
-import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.live.LivePost;
 import com.dumbhippo.live.LiveState;
 import com.dumbhippo.persistence.PersonPostData;
@@ -53,6 +53,7 @@ public class PostView {
 	private Viewpoint viewpoint;
 	private LivePost livePost;
 	private boolean favorite;
+	private boolean ignored;
 	private boolean toWorld;
 	
 	public enum Context {
@@ -85,7 +86,7 @@ public class PostView {
 	public PostView(EJBContext ejbContext, Post p, PersonView poster, PersonPostData ppd, List<Object>recipientList, Viewpoint viewpoint) {
 		this(p, Context.WEB_BUBBLE);
 		posterView = poster;
-		viewerHasViewed = ppd != null;
+		viewerHasViewed = (ppd != null && ppd.getClickedDate() != null);
 		recipients = recipientList;
 		this.viewpoint = viewpoint;
 		this.toWorld = (p.getVisibility() != PostVisibility.RECIPIENTS_ONLY);
@@ -93,6 +94,7 @@ public class PostView {
 		if (viewpoint instanceof UserViewpoint) {
 			User viewer = ((UserViewpoint) viewpoint).getViewer();
 			this.favorite = viewer.getAccount().getFavoritePosts().contains(post);
+			this.ignored = (ppd != null && ppd.isIgnored());
 		}
 		
 		initFormatter(ejbContext);
@@ -212,6 +214,10 @@ public class PostView {
 		return toWorld;
 	}
 	
+	public boolean isIgnored() {
+		return ignored;
+	}
+	
 	public String getChatRoomMembers() {
 		return "Start chatting";
 
@@ -233,14 +239,14 @@ public class PostView {
 	}
 
 	public String toXml() {
-		XmlBuilder builder = new XmlBuilder();
+		ObjectXmlBuilder builder = new ObjectXmlBuilder();
 		builder.openElement("post", "id", post.getId());
-		builder.appendTextNode("poster", posterView.getUser().getId());
-		builder.appendTextNode("href", post.getUrl().toString());
-		builder.appendTextNode("title", post.getTitle());
-		builder.appendTextNode("text", post.getText());
-		builder.appendTextNode("toWorld", isToWorld() ? "true" : "false");
-		builder.appendTextNode("postDate", "" + (post.getPostDate().getTime()/1000));
+		builder.appendAttribute("poster", posterView.getUser().getId());
+		builder.appendAttribute("href", post.getUrl().toString());
+		builder.appendAttribute("title", post.getTitle());
+		builder.appendAttribute("text", post.getText());
+		builder.appendAttribute("toWorld", isToWorld());
+		builder.appendAttribute("postDate", "" + (post.getPostDate().getTime()/1000));
 		PostInfo pi = post.getPostInfo();
 		if (pi != null)
 			builder.appendTextNode("postInfo", pi.toXml());
@@ -254,7 +260,10 @@ public class PostView {
 				builder.append(gv.toIdentifyingXml());
 			}			
 		}
-		builder.closeElement();
+		builder.closeElement();		
+		builder.appendAttribute("favorite", favorite);
+		builder.appendAttribute("ignored", ignored);
+
 		return builder.toString();
 	}
 	

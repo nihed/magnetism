@@ -25,27 +25,29 @@ public class PersonPostData extends DBUnique {
 	private Person person;
 	// store date in this form since it's immutable and lightweight; -1 = null
 	private long clickedDate;
+	private boolean ignored;
 	
 	protected PersonPostData() {	
 	}
 	
-	private PersonPostData(Person person, Post post, long clickedDate) {
+	public PersonPostData(Person person, Post post) {
 		this.person = person;
 		this.post = post;
-		this.clickedDate = clickedDate;		
+		this.clickedDate = -1;
+		this.ignored = false;
 	}
 	
-	public PersonPostData(Person person, Post post) {
-		this(person, post, System.currentTimeMillis());
-	}
-	
-	public PersonPostData(Person person, Post post, Date clickedDate) {
-		this(person, post, clickedDate.getTime());
+	public void setClicked() {
+		this.clickedDate = System.currentTimeMillis();
 	}
 	
 	public void setClickedDate(Date seenDate) {
 		this.clickedDate = seenDate != null ? seenDate.getTime() : -1;
 	}	
+	
+	public void setIgnored(boolean ignored) {
+		this.ignored = ignored;
+	}
 
 	@JoinColumn(nullable=false)
 	@ManyToOne
@@ -63,6 +65,11 @@ public class PersonPostData extends DBUnique {
 	public Date getClickedDate() {
 		return clickedDate >= 0 ? new Date(clickedDate) : null;
 	}
+	
+	@Column(nullable=false)
+	public boolean isIgnored() {
+		return ignored;
+	}	
 	
 	protected void setPerson(Person person) {
 		this.person = person;

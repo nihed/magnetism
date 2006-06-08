@@ -137,7 +137,8 @@ public interface PostingBoard {
 
 	/**
 	 * Notifies system that the post was viewed by the given person.
-	 * If the postId is bad, silently does nothing.
+	 * If the postId is bad, silently does nothing.  This also
+	 * un-ignores the post if the user had it ignored.
 	 * 
 	 * @param postId the ID of the post that was clicked
 	 * @param clicker person who clicked on the post
@@ -226,4 +227,24 @@ public interface PostingBoard {
 	 * @param favorite
 	 */
 	public void setFavoritePost(UserViewpoint viewpoint, Post post, boolean favorite);
+
+	/**
+	 * Record whether ornot the specified user wants to ignore future notifications about
+	 * a particular post.
+	 * 
+	 * @param user user who wishes to ignore a post
+	 * @param post post to be ignored
+	 * @param ignore true iff future notifications should be ignored
+	 */
+	public void setPostIgnored(User user, Post post, boolean ignore);
+	
+	/**
+	 * Returns whether or not the specified user wants to ignore notifications
+	 * about a post.
+	 * 
+	 * @param user user in question
+	 * @param post post in question
+	 * @return true iff post notifications should be ignored
+	 */
+	public boolean getPostIgnored(User user, Post post);
 }

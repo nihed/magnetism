@@ -46,6 +46,7 @@ public class HippoPlugin implements Plugin {
 			iqRouter.addHandler(new PrefsIQHandler());
 			iqRouter.addHandler(new HotnessIQHandler());	
 			iqRouter.addHandler(new RecentPostsIQHandler());
+			iqRouter.addHandler(new PostControlsIQHandler());			
 			
 			Log.debug("... done initializing Hippo plugin");
 		} catch (Exception e) {

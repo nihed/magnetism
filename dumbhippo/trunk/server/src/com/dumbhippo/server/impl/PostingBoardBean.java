@@ -950,8 +950,8 @@ public class PostingBoardBean implements PostingBoard {
 		return post.getPersonPostData().size();
 	}
 	
-	public void postViewedBy(String postId, User clicker) {
-		logger.debug("Post {} clicked by {}", postId, clicker);
+	public void postViewedBy(String postId, User user) {
+		logger.debug("Post {} clicked by {}", postId, user);
 		
 		Post post;
 		
@@ -962,52 +962,23 @@ public class PostingBoardBean implements PostingBoard {
 			throw new RuntimeException("postViewedBy, bad Guid for some reason " + postId, e);
 		}
 		try {
-			post = loadRawPost(new UserViewpoint(clicker), postGuid);
+			post = loadRawPost(new UserViewpoint(user), postGuid);
 		} catch (NotFoundException e) {
 			throw new RuntimeException("postViewedBy, nonexistent Guid for some reason " + postId, e);
 		}
 		
 		// Notify the recommender system that a user clicked through, so that ratings can be updated
-		recommenderSystem.addRatingForPostViewedBy(post, clicker);
+		recommenderSystem.addRatingForPostViewedBy(post, user);
 		
-		if (!updatePersonPostData(clicker, post))
+		// Now update the per-user post data
+		PersonPostData ppd = getOrCreatePersonPostData(user, post);
+		boolean previouslyViewed = ppd.getClickedDate() != null;
+		ppd.setClicked();
+		ppd.setIgnored(false); // Since they viewed it, they implicitly un-ignore it
+		if (previouslyViewed)
 			return;
 	
-        LiveState.getInstance().queueUpdate(new PostViewedEvent(postGuid, clicker.getGuid(), new Date()));
-	}
-	
-	/**
-	 * Creates a PersonPostData to indicate that the user has viewed the post
-	 * if no such object previously existed. Otherwise does nothing 
-	 * 
-	 * @param user a User
-	 * @param post a Post
-	 * @return true if the user had not previously viewed the post
-	 */
-	private boolean updatePersonPostData(final User user, final Post post) {
-		try {
-			return runner.runTaskRetryingOnConstraintViolation(new Callable<Boolean>() {
-
-				public Boolean call() {
-					PersonPostData ppd = getPersonPostData(user, post);
-					// needed since we are in another transaction
-					Post attachedPost = em.find(Post.class, post.getId());
-					
-					if (ppd == null) {
-						ppd = new PersonPostData(user, post);
-						em.persist(ppd);
-						attachedPost.getPersonPostData().add(ppd);
-						em.persist(attachedPost);
-						return true;
-					} else {
-						return false;
-					}
-				}
-			});
-		} catch (Exception e) {
-			ExceptionUtils.throwAsRuntimeException(e);
-			return false; // not reached
-		}
+        LiveState.getInstance().queueUpdate(new PostViewedEvent(postGuid, user.getGuid(), new Date()));
 	}
 
 	public int getPostsForCount(Viewpoint viewpoint, Person forPerson) {
@@ -1194,5 +1165,39 @@ public class PostingBoardBean implements PostingBoard {
 			account.addFavoritePost(post);
 		else
 			account.removeFavoritePost(post);
+	}
+	
+	public PersonPostData getOrCreatePersonPostData(final User user, final Post post) {
+		try {
+			PersonPostData detached = runner.runTaskRetryingOnConstraintViolation(new Callable<PersonPostData>() {
+				public PersonPostData call() {
+					PersonPostData ppd = getPersonPostData(user, post);
+					// needed since we are in another transaction
+					Post attachedPost = em.find(Post.class, post.getId());
+					
+					if (ppd == null) {
+						ppd = new PersonPostData(user, post);
+						em.persist(ppd);
+						attachedPost.getPersonPostData().add(ppd);
+					}
+					return ppd;
+				}
+			});
+			// Reattach the data
+			return em.find(PersonPostData.class, detached.getId());
+		} catch (Exception e) {
+			ExceptionUtils.throwAsRuntimeException(e);
+			return null;
+		}		
+	}
+
+	public void setPostIgnored(final User user, final Post post, boolean ignore) {
+		PersonPostData ppd = getOrCreatePersonPostData(user, post);
+		ppd.setIgnored(true);
+	}
+
+	public boolean getPostIgnored(User user, Post post) {
+		PersonPostData ppd = getPersonPostData(user, post);
+		return ppd != null && ppd.isIgnored();
 	}
 }
