@@ -462,6 +462,18 @@ public class MessageSenderBean implements MessageSender {
 				lposts.add(lpost);
 				posts.add(pv);
 				referencedEntities.addAll(postingBoard.getReferencedEntities(viewpoint, pv.getPost()));
+
+				// getReferencedEntities() returns personRecipients but not expandedRecipients 
+				// so we also need to add any viewers
+				for (Guid guid : lpost.getViewers()) {
+					Person viewer;
+					try {
+						viewer = identitySpider.lookupGuid(Person.class, guid);
+					} catch (NotFoundException e) {
+						throw new RuntimeException(e);
+					}
+					referencedEntities.add(identitySpider.getPersonView(viewpoint, viewer));
+				}
 			}
 
 			message.addExtension(new ActivePostsChangedExtension(posts, lposts, referencedEntities));
