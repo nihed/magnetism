@@ -21,10 +21,16 @@
 	<c:choose>
 		<c:when test="${browser.linuxRequested}">
 			<%-- LINUX RELEASE NOTES GO HERE --%>
-			<p>Version 1.1.3</p>
+			<p>Version 1.1.4</p>
 			<ul>
-				<li>Require latest Loudmouth package, which fixes some crashes</li>
-				<li>Correctly get chat history and wrap chat lines</li>
+				<li>Fix a memory leak (thanks to Luke Macken)</li>
+				<li>Keep notification bubble sizes more consistent and reasonable</li>
+				<li>Always place notification bubbles in a corner of the screen</li>
+				<li>Reduced startup time</li>
+				<li>Fix a memory corruption issue</li>
+				<li>Close button closes all bubbles at once instead of only one</li>
+				<li>Include connection status in icon tooltip</li>
+				<li>Display "The World" in bubbles for world shares</li>
 			</ul>
 		</c:when>
 		<c:otherwise>
