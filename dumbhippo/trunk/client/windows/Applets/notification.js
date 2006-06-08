@@ -54,7 +54,7 @@ dh.notification.Display = function (serverUrl, appletUrl, selfId) {
     }
     this._bubble.onNext = function() {
         display._markCurrentAsSeen()
-        display.goNext();
+        display.goNextOrClose();
     }
     this._bubble.onLinkClick = function(postId, url) {
         window.external.application.DisplaySharedLink(postId, url)
