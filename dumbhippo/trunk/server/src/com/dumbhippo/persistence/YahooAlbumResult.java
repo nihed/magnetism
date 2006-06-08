@@ -194,6 +194,8 @@ public class YahooAlbumResult extends DBUnique {
 	
 	@Transient
 	public int getReleaseYear() {
+		if (releaseDate == null)
+			return -1;
 		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy MM dd");
 		try {
 		    Date date = dateFormat.parse(releaseDate);

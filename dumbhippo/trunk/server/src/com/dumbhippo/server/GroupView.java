@@ -77,11 +77,6 @@ import com.dumbhippo.persistence.VersionedEntity;
 	protected VersionedEntity getVersionedEntity() {
 		return group;
 	}
-
-	@Override
-	protected String getFilePath() {
-		return Configuration.GROUPSHOTS_RELATIVE_PATH;
-	}
 	
 	@Override
 	public String toXml() {

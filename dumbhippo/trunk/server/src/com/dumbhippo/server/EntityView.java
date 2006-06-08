@@ -9,7 +9,6 @@ import com.dumbhippo.persistence.VersionedEntity;
 public abstract class EntityView {
 	
 	protected abstract VersionedEntity getVersionedEntity();
-	protected abstract String getFilePath();
 	
 	public abstract String getSmallPhotoUrl();
 	

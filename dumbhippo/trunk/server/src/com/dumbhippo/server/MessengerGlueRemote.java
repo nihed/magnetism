@@ -28,7 +28,7 @@ public interface MessengerGlueRemote {
 		/**
 		 * @param username
 		 * @param name
-		 * @param email
+		 * @param email may be null
 		 */
 		public JabberUser(String username, String name, String email) {
 			this.username = username;
@@ -36,6 +36,10 @@ public interface MessengerGlueRemote {
 			this.email = email;
 		}
 
+		/**
+		 * email may be null if there is none
+		 * @return email or null
+		 */
 		public String getEmail() {
 			return email;
 		}

@@ -636,12 +636,7 @@ public class PersonView extends EntityView {
 	protected VersionedEntity getVersionedEntity() {
 		return user;
 	}
-	
-	@Override
-	protected String getFilePath() {
-		return Configuration.HEADSHOTS_RELATIVE_PATH;
-	}
-	
+		
 	/**
 	 * This method gives an XML fragment containing most of the interesting
 	 * information about the person or resource being viewed.
