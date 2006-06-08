@@ -1170,22 +1170,25 @@ public class PostingBoardBean implements PostingBoard {
 	
 	public PersonPostData getOrCreatePersonPostData(final User user, final Post post) {
 		try {
-			PersonPostData detached = runner.runTaskRetryingOnConstraintViolation(new Callable<PersonPostData>() {
+			PersonPostData outerPpd = runner.runTaskRetryingOnConstraintViolation(new Callable<PersonPostData>() {
 				public PersonPostData call() {
-					PersonPostData ppd = getPersonPostData(user, post);
-					// needed since we are in another transaction
 					Post attachedPost = em.find(Post.class, post.getId());
-					
+					User attachedUser = em.find(User.class, user.getId());
+					PersonPostData ppd = getPersonPostData(attachedUser, attachedPost);
+					// needed since we are in another transaction
+
 					if (ppd == null) {
-						ppd = new PersonPostData(user, post);
+						ppd = new PersonPostData(attachedUser, attachedPost);
 						em.persist(ppd);
-						attachedPost.getPersonPostData().add(ppd);
+						attachedPost.getPersonPostData().add(ppd);							
 					}
 					return ppd;
 				}
 			});
-			// Reattach the data
-			return em.find(PersonPostData.class, detached.getId());
+			// Reattach the data			
+			outerPpd = em.find(PersonPostData.class, outerPpd.getId());
+			em.refresh(post);
+			return outerPpd;
 		} catch (Exception e) {
 			ExceptionUtils.throwAsRuntimeException(e);
 			return null;
