@@ -489,9 +489,19 @@ HippoBubble::onUserJoined(HippoPerson *person,
             return;
     }
 
+    variant_t result;
     ie_->createInvocation(L"dhViewerJoined")
         .addDispatch(HippoPostWrapper::getWrapper(post, ui_->getDataCache()))
-        .run();
+        .getResult(&result);
+
+    if (result.vt != VT_BOOL) {
+        ui_->debugLogU("dhViewerJoined returned invalid type");
+        return;
+    }
+    if (!result.boolVal) {
+        ui_->debugLogU("dhViewerJoined returned false");
+        return;
+    }
 
     setShown();
 }
@@ -508,9 +518,19 @@ HippoBubble::onMessageAdded(HippoChatMessage *message,
             return;
     }
 
+    variant_t result;
     ie_->createInvocation(L"dhChatRoomMessage")
         .addDispatch(HippoPostWrapper::getWrapper(post, ui_->getDataCache()))
-        .run();
+        .getResult(&result);
+
+    if (result.vt != VT_BOOL) {
+        ui_->debugLogU("dhChatRoomMessage returned invalid type");
+        return;
+    }
+    if (!result.boolVal) {
+        ui_->debugLogU("dhChatRoomMessage returned false");
+        return;
+    }
 
     HippoChatRoom *room = hippo_post_get_chat_room(post);
     if (!hippo_chat_room_get_loading(room)) {
