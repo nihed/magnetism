@@ -913,8 +913,9 @@ public class PostingBoardBean implements PostingBoard {
 			// (or, why doesn't this method just take a Post anyway?)
 			throw new RuntimeException("post not found", e);
 		}
-		for (PersonPostData ppd : post.getPersonPostData()) { 
-			viewers.add(ppd);
+		for (PersonPostData ppd : post.getPersonPostData()) {
+			if (ppd.getClickedDate() != null)
+				viewers.add(ppd);
 		}
 		 
 		// sort descending by view date
