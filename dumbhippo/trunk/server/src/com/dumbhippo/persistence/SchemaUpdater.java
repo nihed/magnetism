@@ -7,6 +7,7 @@ import java.net.URLConnection;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashSet;
@@ -150,12 +151,25 @@ public class SchemaUpdater {
 		statement.close();
 	}
 	
-	private void createIndex(String tableName, String indexName, String[] columnNames) throws SQLException {
+	private void createIndex(TableMetadata tableMeta, String indexName, String[] columnNames) throws SQLException {
+		String tableName = tableMeta.getName();
 		StringBuffer columnString = new StringBuffer();
 		for (String columnName : columnNames) {
+			ColumnMetadata columnMeta = tableMeta.getColumnMetadata(columnName);
+			if (columnMeta == null)
+				throw new RuntimeException("Unknown column " + columnName + " referenced from index.");
+
 			if (columnString.length() > 0)
 				columnString.append(",");
+			
 			columnString.append(columnName);
+		
+			// varchar(255) columns cause problems for indices, since the total
+			// number of bytes indexed must be less than 1000 for MySQL, and
+			// with UTF-8 encoding, varchar(255) is treated as 763 bytes. Plus
+			// it's just silly to index that much in most cases.
+			if (columnMeta.getTypeCode() == Types.VARCHAR)
+				columnString.append("(20)");
 		}
 		
 		String sql = "ALTER TABLE " + tableName + " ADD INDEX " + indexName + "(" + columnString + ")";
@@ -176,7 +190,7 @@ public class SchemaUpdater {
 				}
 				dropIndex(tableMeta.getName(), indexMeta.getName());
 			}
-			createIndex(tableMeta.getName(), indexAnnotation.name(), indexAnnotation.columnNames());
+			createIndex(tableMeta, indexAnnotation.name(), indexAnnotation.columnNames());
 		} catch (SQLException e) {
 			throw new RuntimeException("SQL Exception updating index", e);
 		}
