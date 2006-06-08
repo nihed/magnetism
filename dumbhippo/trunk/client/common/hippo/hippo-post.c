@@ -15,6 +15,7 @@ struct _HippoPost {
     GSList *recipients;
     char *info;
     GTime date;
+	gboolean to_world;
     int timeout;
     /* have we clicked on this post ever */
     guint have_viewed : 1;
@@ -171,6 +172,13 @@ hippo_post_get_date(HippoPost *post)
 {
     g_return_val_if_fail(HIPPO_IS_POST(post), 0);
     return post->date;
+}
+
+gboolean
+hippo_post_is_to_world(HippoPost *post)
+{
+    g_return_val_if_fail(HIPPO_IS_POST(post), 0);
+    return post->to_world;
 }
 
 int
@@ -359,6 +367,17 @@ set_int(HippoPost *post, int *ip, int value)
         hippo_post_emit_changed(post);
     }
 }
+
+static void
+set_bool(HippoPost *post, gboolean *ip, gboolean value)
+{
+    g_return_if_fail(HIPPO_IS_POST(post));
+	value = !!value;
+    if (*ip != value) {
+        *ip = value;
+        hippo_post_emit_changed(post);
+    }
+}
                     
 void
 hippo_post_set_timeout(HippoPost  *post,
@@ -366,6 +385,14 @@ hippo_post_set_timeout(HippoPost  *post,
 {
     g_return_if_fail(HIPPO_IS_POST(post));
     set_int(post, &post->timeout, value);
+}
+
+void
+hippo_post_set_to_world(HippoPost  *post,
+                        gboolean    value)
+{
+    g_return_if_fail(HIPPO_IS_POST(post));
+    set_bool(post, &post->to_world, value);
 }
                        
 void

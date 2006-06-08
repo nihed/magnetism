@@ -1724,6 +1724,12 @@ is_post(LmMessageNode *node)
 }
 
 static gboolean
+parse_bool(const char *str) 
+{
+	return strcmp(str, "true") == 0;
+}
+
+static gboolean
 hippo_connection_parse_post(HippoConnection *connection,
                             LmMessageNode   *post_node,
                             gboolean         is_new)
@@ -1736,6 +1742,7 @@ hippo_connection_parse_post(HippoConnection *connection,
     const char *title;
     const char *text;
     const char *info;
+	gboolean to_world;
     GTime post_date;
     GSList *recipients = NULL;
     LmMessageNode *subchild;
@@ -1773,6 +1780,12 @@ hippo_connection_parse_post(HippoConnection *connection,
         info = node->value;
     else
         info = NULL;
+
+    node = lm_message_node_get_child (post_node, "toWorld");
+    if (node && node->value)
+        to_world = parse_bool(node->value);
+    else
+        to_world = FALSE;
 
     node = lm_message_node_get_child (post_node, "postDate");
     if (!(node && node->value))
@@ -1821,6 +1834,7 @@ hippo_connection_parse_post(HippoConnection *connection,
     hippo_post_set_info(post, info);
     hippo_post_set_date(post, post_date);
     hippo_post_set_recipients(post, recipients);
+	hippo_post_set_to_world(post, to_world);
 
     g_slist_free(recipients);
 

@@ -242,10 +242,35 @@ span.dh-notification-group-recipient
     position: relative;
     left: 3px;
     width: 384px;
-    text-align: center;
     font-size: 12px;
-    color: Blue;
     white-space: nowrap;
+}
+
+.dh-notification-swarm-controls
+{
+    color: Black;
+    position: absolute;
+    right: 0px;
+}
+
+.dh-notification-swarm-control
+{
+    padding-left: 5px;
+}
+
+.dh-notification-swarm-control img {
+    padding-right: 3px;
+}
+
+.dh-notification-swarm-nav-link
+{
+    color: Blue;
+}
+
+.dh-notification-swarm-nav-link-current
+{
+    color: Black;
+    font-weight: bold;
 }
 
 .dh-notification-swarm-nav-link:visited 
@@ -256,6 +281,7 @@ span.dh-notification-group-recipient
 .dh-notification-swarm
 {
     position: relative;
+    padding-top: 4px;
     height: 36px;
     left: 3px;
     width: 384px;
@@ -282,9 +308,7 @@ span.dh-notification-group-recipient
 
 .dh-notification-chat-sender
 {
-    position: absolute;
-    left: 0px;
-    bottom: 0px;
+    font-style: italic;
     font-size: 12px;
 }
 
@@ -300,7 +324,7 @@ span.dh-notification-group-recipient
 {
     position: relative;
     float: left;
-    top: -8px;
+    top: 0px;
     width: 30px;
     height: 30px;
 }

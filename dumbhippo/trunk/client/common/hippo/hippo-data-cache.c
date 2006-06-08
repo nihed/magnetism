@@ -921,7 +921,7 @@ void
 hippo_data_cache_add_debug_data(HippoDataCache *cache)
 {
     HippoEntity *person1, *person2, *person3, *person4;
-    GSList *recipients = NULL;
+    GSList *recipients = NULL, *viewers = NULL;
     GSList *comments = NULL;
     HippoPost *linkshare1, *linkshare2;
 
@@ -942,6 +942,7 @@ hippo_data_cache_add_debug_data(HippoDataCache *cache)
                                "cause differences from what we would have if we had a short title without "
                                "the kind of excessive length that you see here.");
     hippo_post_set_recipients(linkshare1, recipients);
+	hippo_post_set_to_world(linkshare1, TRUE);
     hippo_post_set_timeout(linkshare1, 0);
     hippo_post_set_new(linkshare1, TRUE);
 
@@ -953,6 +954,7 @@ hippo_data_cache_add_debug_data(HippoDataCache *cache)
     hippo_post_set_sender(linkshare2, hippo_entity_get_guid(person1));
     hippo_post_set_description(linkshare2, "Wow, this photo is funny");
     hippo_post_set_recipients(linkshare2, recipients);
+	hippo_post_set_to_world(linkshare2, FALSE);
     hippo_post_set_timeout(linkshare2, 0);
     hippo_post_set_new(linkshare2, TRUE);
 

@@ -287,6 +287,14 @@ HippoPostWrapper::get_Timeout(int *timeout)
 }
 
 STDMETHODIMP 
+HippoPostWrapper::get_ToWorld(BOOL *toWorld)
+{
+    *toWorld = hippo_post_is_to_world(delegate_);
+
+    return S_OK;
+}
+
+STDMETHODIMP 
 HippoPostWrapper::get_ViewingUserCount(int *viewingUserCount)
 {
     *viewingUserCount = hippo_post_get_viewing_user_count(delegate_);

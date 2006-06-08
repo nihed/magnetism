@@ -41,6 +41,7 @@ public:
     STDMETHODIMP Resize(int width, int height);
     STDMETHODIMP SetHaveMissedBubbles(BOOL haveMissed);
     STDMETHODIMP UpdateDisplay();
+    STDMETHODIMP ShowChatWindow(BSTR postId);
 
 protected:
     virtual HippoBSTR getURL();

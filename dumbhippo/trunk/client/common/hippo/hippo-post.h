@@ -30,6 +30,7 @@ GSList*          hippo_post_get_viewers               (HippoPost *post);
 const char*      hippo_post_get_info                  (HippoPost *post);
 GTime            hippo_post_get_date                  (HippoPost *post);
 int              hippo_post_get_timeout               (HippoPost *post);
+gboolean         hippo_post_is_to_world               (HippoPost *post);
 int              hippo_post_get_viewing_user_count    (HippoPost *post);
 int              hippo_post_get_chatting_user_count   (HippoPost *post);
 int              hippo_post_get_total_viewers         (HippoPost *post);
@@ -52,6 +53,8 @@ void             hippo_post_set_info                  (HippoPost  *post,
                                                        const char *value);
 void             hippo_post_set_date                  (HippoPost  *post,
                                                        GTime       value);
+void             hippo_post_set_to_world              (HippoPost  *post,
+                                                       gboolean    world);
 void             hippo_post_set_timeout               (HippoPost  *post,
                                                        int         value);
 void             hippo_post_set_viewing_user_count    (HippoPost  *post,

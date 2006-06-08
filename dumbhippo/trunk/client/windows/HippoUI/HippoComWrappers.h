@@ -142,6 +142,7 @@ public:
     STDMETHODIMP get_Info(BSTR *info);
     STDMETHODIMP get_PostDate(int *postDate);
     STDMETHODIMP get_Timeout(int *timeout);
+    STDMETHODIMP get_ToWorld(BOOL *toWorld);
     STDMETHODIMP get_ViewingUserCount(int *viewingUserCount);
     STDMETHODIMP get_ChattingUserCount(int *chattingUserCount);
     STDMETHODIMP get_TotalViewers(int *totalViewers);

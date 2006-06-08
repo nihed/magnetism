@@ -176,5 +176,7 @@ library HippoUtil {
         HRESULT LastChatSender([out, retval] IHippoEntity **sender);
         [id(236), propget, helpstring("People currently viewing the message")]
         HRESULT CurrentViewers([out, retval] IHippoEntityCollection **currentViewers);
+        [id(237), propget, helpstring("Whether or not post was sent to the world")]
+        HRESULT ToWorld([out, retval] BOOL *toWorld);
    }
 }

@@ -826,3 +826,9 @@ HippoBubble::UpdateDisplay()
 
     return S_OK;
 }
+
+HRESULT
+HippoBubble::ShowChatWindow(BSTR postId) 
+{
+    return ui_->ShowChatWindow(postId);
+}

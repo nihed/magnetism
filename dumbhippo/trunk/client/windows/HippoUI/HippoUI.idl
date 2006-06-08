@@ -38,6 +38,8 @@ library HippoUI {
         HRESULT SetHaveMissedBubbles([in] BOOL haveMissed);
         [id(128), helpstring("Refresh the display of notification window")]
         HRESULT UpdateDisplay();
+        [id(129), helpstring("Join chat for a link")]
+        HRESULT ShowChatWindow([in] BSTR postId);
         // up to 130
     }
     [

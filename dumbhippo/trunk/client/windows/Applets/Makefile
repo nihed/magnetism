@@ -6,6 +6,7 @@ all: *.xml *.css *.png *.js
     copy bubbleList.css $(OUTDIR)\applets	
     copy bubbleList.js $(OUTDIR)\applets
     copy bubbleList.xml $(OUTDIR)\applets
+    copy chaticon.gif $(OUTDIR)\applets    
     copy clientstyle.xml $(OUTDIR)\applets
     copy bubclose.png $(OUTDIR)\applets
     copy bubedge_*.png $(OUTDIR)\applets
@@ -16,6 +17,7 @@ all: *.xml *.css *.png *.js
     copy flickr.js $(OUTDIR)\applets	
     copy gray*arrow.gif $(OUTDIR)\applets
     copy groupChat.png $(OUTDIR)\applets
+    copy ignoreicon.png $(OUTDIR)\applets    
     copy linkswarm.gif $(OUTDIR)\applets
     copy ls_bubshadow.png $(OUTDIR)\applets
     copy lsorange_*.png $(OUTDIR)\applets
