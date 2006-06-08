@@ -512,7 +512,10 @@ HippoBubble::onMessageAdded(HippoChatMessage *message,
         .addDispatch(HippoPostWrapper::getWrapper(post, ui_->getDataCache()))
         .run();
 
-    setShown();
+    HippoChatRoom *room = hippo_post_get_chat_room(post);
+    if (!hippo_chat_room_get_loading(room)) {
+        setShown();
+    }
 }
 
 void 
