@@ -2279,8 +2279,8 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		if (count != 0)
 			throw new RuntimeException("broken code in song search");
 		
-		// just to make this deterministic, though we have no real reason
-		// to prefer one Track over another, this means we always use the 
+		// we want to make this deterministic, so that we always return the same 
+		// track for the same artist-album-song combination, we always use the 
 		// same (earliest-created) row
 		sb.append(" ORDER BY t.id");
 		
@@ -2334,8 +2334,8 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		if (count != 0)
 			throw new RuntimeException("broken code in song search");		    	
 
-		// just to make this deterministic, though we have no real reason
-		// to prefer one Album over another, this means we always use the 
+		// we want to make this deterministic, so that we always return the same 
+		// album for the same artist-album-song combination, we always use the 
 		// same (earliest-created) row
 		sb.append(" ORDER BY album.id");
 		

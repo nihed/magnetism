@@ -52,6 +52,7 @@
 						<dht:textInput id="dhMessageEntry" multiline="true"/>
 					</dht:formTableRow>
 					<tr>
+					    <td></td>
 						<td class="dh-control-cell"><input type="button" value="Send" onclick="dh.invitation.send()"/></td>
 					</tr>
 				</dht:formTable>
