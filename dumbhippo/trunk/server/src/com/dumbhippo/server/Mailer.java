@@ -26,6 +26,7 @@ public interface Mailer {
 	
 	public MimeMessage createMessage(UserViewpoint from, String to);
 	public MimeMessage createMessage(SpecialSender from, String to);
+	public MimeMessage createMessage(SpecialSender from, UserViewpoint viewpointReplyTo, String to);
 	
 	public void setMessageContent(MimeMessage message, String subject, String bodyText, String bodyHtml);
 	

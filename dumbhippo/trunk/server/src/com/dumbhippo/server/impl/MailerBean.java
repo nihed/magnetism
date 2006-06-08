@@ -65,39 +65,67 @@ public class MailerBean implements Mailer {
 			
 			return msg;
 	}
-	
-	private MimeMessage createMessage(String from, String to) {
-		try {
-			InternetAddress toAddress = new InternetAddress(to);
-			InternetAddress fromAddress = new InternetAddress(from);
+
+	private MimeMessage createMessage(InternetAddress fromAddress, InternetAddress replyToAddress, InternetAddress toAddress) {
+		MimeMessage msg = createMessage(fromAddress, toAddress);
 		
-			return createMessage(fromAddress, toAddress);
+		try {
+			msg.setReplyTo(new InternetAddress[]{replyToAddress});
 		} catch (MessagingException e) {
 			throw new RuntimeException(e);
 		}
-	}
-
-	public MimeMessage createMessage(UserViewpoint viewpoint, String to) {
-		PersonView fromViewedBySelf = identitySpider.getPersonView(viewpoint, viewpoint.getViewer(), PersonViewExtra.PRIMARY_EMAIL);
 		
-		InternetAddress fromAddress;
-		InternetAddress toAddress;
+		return msg;
+    }
+	
+	private InternetAddress createAddressFromViewpoint(UserViewpoint viewpoint) {
+		PersonView fromViewedBySelf = identitySpider.getPersonView(viewpoint, viewpoint.getViewer(), PersonViewExtra.PRIMARY_EMAIL);	
+	
+		InternetAddress internetAddress;
+		
 		try {
 			String niceName = fromViewedBySelf.getName();
 			String address = fromViewedBySelf.getEmail().getEmail();
-			fromAddress = new InternetAddress(address, niceName);
-			
-			toAddress = new InternetAddress(to);
-		} catch (AddressException e) {
-			throw new RuntimeException(e);
+			internetAddress = new InternetAddress(address, niceName);
 		} catch (UnsupportedEncodingException e) {
 			throw new RuntimeException(e);
+		}				
+		
+		return internetAddress;
+	}
+	
+	private InternetAddress createAddressFromString(String address) {
+		try {
+			InternetAddress internetAddress = new InternetAddress(address);		
+			return internetAddress;
+		} catch (AddressException e) {
+			throw new RuntimeException(e);
 		}
+	}
+	
+	public MimeMessage createMessage(UserViewpoint viewpoint, String to) {
+		
+		InternetAddress fromAddress = createAddressFromViewpoint(viewpoint);
+		InternetAddress toAddress = createAddressFromString(to);
+		
 		return createMessage(fromAddress, toAddress);
 	}
 
 	public MimeMessage createMessage(SpecialSender from, String to) {
-		return createMessage(from.toString(), to);
+		
+		InternetAddress fromAddress = createAddressFromString(from.toString());
+		InternetAddress toAddress = createAddressFromString(to);
+		
+		return createMessage(fromAddress, toAddress);
+	}
+
+	public MimeMessage createMessage(SpecialSender from, UserViewpoint viewpointReplyTo, String to) {
+		
+		InternetAddress fromAddress = createAddressFromString(from.toString());
+		InternetAddress replyToAddress = createAddressFromViewpoint(viewpointReplyTo);
+		InternetAddress toAddress = createAddressFromString(to);
+		
+		return createMessage(fromAddress, replyToAddress, toAddress);
 	}
 	
 	public void setMessageContent(MimeMessage message, String subject, String bodyText, String bodyHtml) {
