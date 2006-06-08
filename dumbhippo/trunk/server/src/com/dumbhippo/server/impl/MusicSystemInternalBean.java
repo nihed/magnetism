@@ -2310,7 +2310,11 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		if (count == 0)
 			throw new NotFoundException("Search has no parameters");
 		
-		StringBuilder sb = new StringBuilder("SELECT album FROM YahooAlbumResult album, YahooSongResult song WHERE ");
+		StringBuilder sb = new StringBuilder("SELECT album FROM YahooAlbumResult album");
+		if (name != null) {
+			sb.append(", YahooSongResult song ");
+		}
+		sb.append(" WHERE ");
 		if (artist != null) {
 			sb.append(" album.artist = :artist ");
 			--count;
