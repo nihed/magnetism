@@ -78,15 +78,25 @@ public class MailerBean implements Mailer {
 		return msg;
     }
 	
-	private InternetAddress createAddressFromViewpoint(UserViewpoint viewpoint) {
+	private InternetAddress createAddressFromViewpoint(UserViewpoint viewpoint, SpecialSender fallbackAddress) {
 		PersonView fromViewedBySelf = identitySpider.getPersonView(viewpoint, viewpoint.getViewer(), PersonViewExtra.PRIMARY_EMAIL);	
 	
 		InternetAddress internetAddress;
 		
 		try {
-			String niceName = fromViewedBySelf.getName();
-			String address = fromViewedBySelf.getEmail().getEmail();
-			internetAddress = new InternetAddress(address, niceName);
+			if ((fromViewedBySelf.getEmail() != null) && (fromViewedBySelf.getEmail().getEmail() != null)) {
+				String niceName = fromViewedBySelf.getName();
+				String address = fromViewedBySelf.getEmail().getEmail();
+				internetAddress = new InternetAddress(address, niceName);
+			} else {
+				// theoretically, we might have users in the system who do not have an e-mail, but 
+				// have an AIM, when we allow such users in practice, we can change this to possibly
+				// use users's @aol.com address, though it's quite possible that the person does not
+				// really use this address
+				internetAddress = new InternetAddress(fallbackAddress.toString());
+			}
+		} catch (AddressException e) {
+			throw new RuntimeException(e);	
 		} catch (UnsupportedEncodingException e) {
 			throw new RuntimeException(e);
 		}				
@@ -102,13 +112,17 @@ public class MailerBean implements Mailer {
 			throw new RuntimeException(e);
 		}
 	}
-	
-	public MimeMessage createMessage(UserViewpoint viewpoint, String to) {
+
+	public MimeMessage createMessage(UserViewpoint viewpoint, SpecialSender viewpointFallbackAddress, String to) {
 		
-		InternetAddress fromAddress = createAddressFromViewpoint(viewpoint);
+		InternetAddress fromAddress = createAddressFromViewpoint(viewpoint, viewpointFallbackAddress);
 		InternetAddress toAddress = createAddressFromString(to);
 		
 		return createMessage(fromAddress, toAddress);
+	}
+	
+	public MimeMessage createMessage(UserViewpoint viewpoint, String to) {
+		return createMessage(viewpoint, SpecialSender.MUGSHOT, to);
 	}
 
 	public MimeMessage createMessage(SpecialSender from, String to) {
@@ -119,10 +133,11 @@ public class MailerBean implements Mailer {
 		return createMessage(fromAddress, toAddress);
 	}
 
-	public MimeMessage createMessage(SpecialSender from, UserViewpoint viewpointReplyTo, String to) {
+	public MimeMessage createMessage(SpecialSender from, UserViewpoint viewpointReplyTo, 
+			                         SpecialSender viewpointFallbackAddress, String to) {
 		
 		InternetAddress fromAddress = createAddressFromString(from.toString());
-		InternetAddress replyToAddress = createAddressFromViewpoint(viewpointReplyTo);
+		InternetAddress replyToAddress = createAddressFromViewpoint(viewpointReplyTo, viewpointFallbackAddress);
 		InternetAddress toAddress = createAddressFromString(to);
 		
 		return createMessage(fromAddress, replyToAddress, toAddress);

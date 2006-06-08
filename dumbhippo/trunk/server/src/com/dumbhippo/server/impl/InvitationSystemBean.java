@@ -538,7 +538,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		
         // if invite is from a special character, like Mugshot, this function will get the character's viewpoint,
 		// which is fine
-		MimeMessage msg = mailer.createMessage(Mailer.SpecialSender.INVITATION, viewpoint, inviteeEmail);
+		MimeMessage msg = mailer.createMessage(Mailer.SpecialSender.INVITATION, viewpoint, Mailer.SpecialSender.INVITATION, inviteeEmail);
 
 		PersonView viewedInviter = spider.getPersonView(viewpoint, inviter);
 		String inviterName = viewedInviter.getName();
