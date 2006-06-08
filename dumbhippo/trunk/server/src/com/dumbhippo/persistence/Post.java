@@ -18,6 +18,7 @@ import javax.persistence.Transient;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.hibernate.annotations.Index;
 import org.hibernate.lucene.Indexed;
 import org.hibernate.lucene.Unstored;
 import org.slf4j.Logger;
@@ -28,6 +29,9 @@ import com.dumbhippo.postinfo.PostInfo;
 
 @Entity
 @Indexed(index="index/post")
+@org.hibernate.annotations.Table(name = "Post", indexes={ 
+		@Index(name="postDate_index", columnNames = { "postDate" } ) }
+)
 public class Post extends GuidPersistable {
 	
 	static private final Logger logger = GlobalSetup.getLogger(Post.class);
