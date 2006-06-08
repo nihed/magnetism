@@ -17,6 +17,8 @@ static const WCHAR HIPPO_SUBKEY_DEBUG[] = HIPPO_REGISTRY_KEY L"\\DebugClient";
 
 static const WCHAR DEFAULT_MESSAGE_SERVER[] = HIPPO_DEFAULT_MESSAGE_SERVER_L;
 static const WCHAR DEFAULT_WEB_SERVER[] = HIPPO_DEFAULT_WEB_SERVER_L;
+static const WCHAR DEFAULT_LOCAL_MESSAGE_SERVER[] = HIPPO_DEFAULT_LOCAL_MESSAGE_SERVER_L;
+static const WCHAR DEFAULT_LOCAL_WEB_SERVER[] = HIPPO_DEFAULT_LOCAL_WEB_SERVER_L;
 
 HippoPreferences::HippoPreferences(HippoInstanceType instanceType)
 {
@@ -31,6 +33,8 @@ HippoPreferences::getMessageServer(BSTR *server)
 {
     if (messageServer_)
         messageServer_.CopyTo(server);
+    else if (instanceType_ == HIPPO_INSTANCE_DEBUG)
+        HippoBSTR(DEFAULT_LOCAL_MESSAGE_SERVER).CopyTo(server);
     else
         HippoBSTR(DEFAULT_MESSAGE_SERVER).CopyTo(server);
 }
@@ -48,8 +52,10 @@ HippoPreferences::getWebServer(BSTR *server)
 {
     if (webServer_)
         webServer_.CopyTo(server);
+    else if (instanceType_ == HIPPO_INSTANCE_DEBUG) 
+       HippoBSTR(DEFAULT_LOCAL_WEB_SERVER).CopyTo(server);
     else
-        HippoBSTR(DEFAULT_WEB_SERVER).CopyTo(server);
+       HippoBSTR(DEFAULT_WEB_SERVER).CopyTo(server);
 }
 
 void 
