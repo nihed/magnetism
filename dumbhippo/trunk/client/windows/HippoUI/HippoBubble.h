@@ -42,6 +42,7 @@ public:
     STDMETHODIMP SetHaveMissedBubbles(BOOL haveMissed);
     STDMETHODIMP UpdateDisplay();
     STDMETHODIMP ShowChatWindow(BSTR postId);
+    STDMETHODIMP IgnorePost(BSTR postId);
 
 protected:
     virtual HippoBSTR getURL();

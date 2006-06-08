@@ -258,8 +258,8 @@ span.dh-notification-group-recipient
     padding-left: 5px;
 }
 
-.dh-notification-swarm-control img {
-    padding-right: 3px;
+.dh-notification-swarm-control-img {
+    margin-right: 5px;
 }
 
 .dh-notification-swarm-nav-link

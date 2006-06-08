@@ -334,6 +334,7 @@ dh.bubble.Bubble = function(isStandaloneBubble) {
     
     // Update the currently showing page and the navigation links for the swarm area
     this._updateSwarmPage = function() {
+        var bubble = this
         dh.util.dom.clearNode(this._swarmNavDiv)
         var activePage = null
         for (i = 0; i < this._swarmPages.length; i++) {
@@ -364,17 +365,28 @@ dh.bubble.Bubble = function(isStandaloneBubble) {
             span.className = "dh-notification-swarm-control"
             var img = document.createElement("img")
             span.appendChild(img)
+            img.className = "dh-notification-swarm-control-img"
             img.src = dh.appletUrl + iconName
-            var eventCallback = dh.util.dom.stdEventHandler(function (e) {
-                handler()
-                return false
-            })
-            img.onclick = eventCallback
-            var link = document.createElement("a")
+            if (handler != null) {            
+                var eventCallback = dh.util.dom.stdEventHandler(function (e) {
+                    handler()
+                    return false
+                })
+                img.onclick = eventCallback
+            }
+            var link;
+            if (handler != null)
+                link = document.createElement("a")
+            else
+                link = document.createElement("span")
             span.appendChild(link)
-            link.className = "dh-notification-swarm-nav-link"
-            link.href = "javascript:true"
-            link.onclick = eventCallback
+            if (handler != null) {
+                link.href = "javascript:true"
+                link.onclick = eventCallback
+                link.className = "dh-notification-swarm-nav-link"
+            } else {
+                link.className = "dh-notification-swarm-nav-link-current"
+            }
             link.appendChild(document.createTextNode(text))
             return span      
         }
@@ -386,11 +398,17 @@ dh.bubble.Bubble = function(isStandaloneBubble) {
         chatCount.appendChild(document.createTextNode(" [" + post.ChattingUserCount + "]"))
         chatControl.appendChild(chatCount)
         swarmControls.appendChild(chatControl)
-        /*
+        var alreadyIgnoredControl = createControl("ignoreicon.png", "Ignored", null)
         var ignoreControl = createControl("ignoreicon.png", "Ignore", 
-                        function () { window.external.application.IgnorePost(post.Id) });
-        swarmControls.appendChild(ignoreControl)
-        */
+                        function () { 
+                                      window.external.application.IgnorePost(post.Id);
+                                      swarmControls.replaceChild(alreadyIgnoredControl, ignoreControl)
+                                      bubble.onNext();
+                                      });
+        if (!post.Ignored)
+            swarmControls.appendChild(ignoreControl)
+        else
+            swarmControls.appendChild(alreadyIgnoredControl)
     }
     
     // Create a link that goes in the navigation area

@@ -58,6 +58,8 @@ gboolean         hippo_connection_signin                    (HippoConnection  *c
 void             hippo_connection_signout                   (HippoConnection  *connection);
 void             hippo_connection_notify_post_clicked       (HippoConnection  *connection,
                                                              const char       *post_id);
+void             hippo_connection_set_post_ignored          (HippoConnection  *connection,
+                                                             const char       *post_id);
 void             hippo_connection_notify_music_changed      (HippoConnection  *connection,
                                                              gboolean          currently_playing,
                                                              const HippoSong  *song);

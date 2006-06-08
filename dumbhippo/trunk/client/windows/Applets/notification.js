@@ -156,7 +156,7 @@ dh.notification.Display = function (serverUrl, appletUrl, selfId) {
             prevShareData.notification.data = share
             prevShareData.notification.why |= why
         }
-        if (!shouldDisplayShare)
+        if (!shouldDisplayShare || share.post.Ignored)
             return false
         if (!prevShareData || prevShareData.position < 0) {   
             // We don't have it at all, or it was saved and needs to be redisplayed

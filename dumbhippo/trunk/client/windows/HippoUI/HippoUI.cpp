@@ -508,6 +508,17 @@ HippoUI::timeoutShowDebugShare()
     return false; // remove idle
 }
 
+void 
+HippoUI::ignorePost(BSTR postId)
+{
+    HippoUStr postIdU(postId);
+    HippoPost *post;
+    // We set this value immediately locally
+    post = hippo_data_cache_lookup_post(getDataCache(), postIdU.c_str());
+    hippo_post_set_ignored(post, TRUE);
+    hippo_connection_set_post_ignored(getConnection(), postIdU.c_str());
+}
+
 bool
 HippoUI::create(HINSTANCE instance)
 {

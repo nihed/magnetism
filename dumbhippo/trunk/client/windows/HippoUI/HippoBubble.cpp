@@ -835,3 +835,10 @@ HippoBubble::ShowChatWindow(BSTR postId)
 {
     return ui_->ShowChatWindow(postId);
 }
+
+HRESULT
+HippoBubble::IgnorePost(BSTR postId)
+{
+    ui_->ignorePost(postId);
+    return S_OK;
+}

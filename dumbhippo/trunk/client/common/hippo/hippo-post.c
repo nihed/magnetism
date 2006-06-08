@@ -15,7 +15,7 @@ struct _HippoPost {
     GSList *recipients;
     char *info;
     GTime date;
-	gboolean to_world;
+    gboolean to_world;
     int timeout;
     /* have we clicked on this post ever */
     guint have_viewed : 1;
@@ -23,6 +23,7 @@ struct _HippoPost {
      * (gets unset when we bubble it up)
      */
     guint is_new : 1;
+    guint is_ignored : 1;
     HippoChatRoom *chat_room;
 
     /* Once we load the chat room, it overrides viewing_user_count and chatting_user_count
@@ -229,6 +230,13 @@ hippo_post_get_have_viewed(HippoPost *post)
 }
 
 gboolean
+hippo_post_get_ignored(HippoPost *post)
+{
+    g_return_val_if_fail(HIPPO_IS_POST(post), FALSE);
+	return post->is_ignored;
+}
+
+gboolean
 hippo_post_get_new(HippoPost *post)
 {
     g_return_val_if_fail(HIPPO_IS_POST(post), FALSE);
@@ -429,7 +437,19 @@ hippo_post_set_have_viewed(HippoPost  *post,
         post->have_viewed = value;
         hippo_post_emit_changed(post);
     }
-}                           
+}
+
+void
+hippo_post_set_ignored (HippoPost  *post,
+                        gboolean    value)
+{
+    g_return_if_fail(HIPPO_IS_POST(post));
+    value = value != FALSE;
+    if (post->is_ignored != value) {
+        post->is_ignored = value;
+        hippo_post_emit_changed(post);
+    }
+}
 
 void
 hippo_post_set_new(HippoPost  *post,

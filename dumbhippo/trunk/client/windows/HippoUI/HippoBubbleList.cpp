@@ -261,6 +261,19 @@ HippoBubbleList::Resize(int width, int height)
     return S_OK;
 }
 
+STDMETHODIMP 
+HippoBubbleList::ShowChatWindow(BSTR linkId)
+{
+    return ui_->ShowChatWindow(linkId);
+}
+
+HRESULT
+HippoBubbleList::IgnorePost(BSTR postId)
+{
+    ui_->ignorePost(postId);
+    return S_OK;
+}
+
 /////////////////////// IUnknown implementation ///////////////////////
 
 STDMETHODIMP 

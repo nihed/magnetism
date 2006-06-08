@@ -178,5 +178,7 @@ library HippoUtil {
         HRESULT CurrentViewers([out, retval] IHippoEntityCollection **currentViewers);
         [id(237), propget, helpstring("Whether or not post was sent to the world")]
         HRESULT ToWorld([out, retval] BOOL *toWorld);
+        [id(238), propget, helpstring("Whether or not post is currently ignored")]
+        HRESULT Ignored([out, retval] BOOL *ignored);
    }
 }

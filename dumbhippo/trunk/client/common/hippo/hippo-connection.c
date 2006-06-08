@@ -525,6 +525,31 @@ add_track_props(LmMessageNode *node,
     }
 }
 
+void             
+hippo_connection_set_post_ignored (HippoConnection  *connection,
+                                   const char       *post_id)
+{
+    LmMessage *message;
+    LmMessageNode *node;
+    LmMessageNode *method;
+    LmMessageNode *guid_arg;
+            
+    g_return_if_fail(HIPPO_IS_CONNECTION(connection));
+    
+    message = lm_message_new_with_sub_type(HIPPO_ADMIN_JID, LM_MESSAGE_TYPE_IQ,
+                                           LM_MESSAGE_SUB_TYPE_SET);
+    node = lm_message_get_node(message);
+
+    method = lm_message_node_add_child (node, "postControl", NULL);
+    lm_message_node_set_attribute(method, "xmlns", "http://dumbhippo.com/protocol/postControl");
+    lm_message_node_set_attribute(method, "op", "ignore");
+    lm_message_node_set_attribute(method, "id", post_id);
+ 
+    hippo_connection_send_message(connection, message, SEND_MODE_AFTER_AUTH);
+
+    lm_message_unref(message);
+}
+
 void
 hippo_connection_notify_music_changed(HippoConnection *connection,
                                       gboolean         currently_playing,
@@ -1739,7 +1764,7 @@ is_post(LmMessageNode *node)
 static gboolean
 parse_bool(const char *str) 
 {
-	return strcmp(str, "true") == 0;
+    return strcmp(str, "true") == 0;
 }
 
 static gboolean
@@ -1755,7 +1780,8 @@ hippo_connection_parse_post(HippoConnection *connection,
     const char *title;
     const char *text;
     const char *info;
-	gboolean to_world;
+    gboolean to_world;
+    gboolean ignored;
     GTime post_date;
     GSList *recipients = NULL;
     LmMessageNode *subchild;
@@ -1767,45 +1793,45 @@ hippo_connection_parse_post(HippoConnection *connection,
     if (!post_guid)
         return FALSE;
 
-    node = lm_message_node_get_child (post_node, "poster");
+    node = lm_message_node_find_child (post_node, "poster");
     if (!(node && node->value))
         return FALSE;
     sender_guid = node->value;
 
-    node = lm_message_node_get_child (post_node, "href");
+    node = lm_message_node_find_child (post_node, "href");
     if (!(node && node->value))
         return FALSE;
     url = node->value;
 
-    node = lm_message_node_get_child (post_node, "title");
+    node = lm_message_node_find_child (post_node, "title");
     if (!(node && node->value))
         return FALSE;
     title = node->value;
 
-    node = lm_message_node_get_child (post_node, "text");
+    node = lm_message_node_find_child (post_node, "text");
     if (!(node && node->value))
         text = "";
     else
         text = node->value;
 
-    node = lm_message_node_get_child (post_node, "postInfo");
+    node = lm_message_node_find_child (post_node, "postInfo");
     if (node && node->value)
         info = node->value;
     else
         info = NULL;
 
-    node = lm_message_node_get_child (post_node, "toWorld");
+    node = lm_message_node_find_child (post_node, "toWorld");
     if (node && node->value)
         to_world = parse_bool(node->value);
     else
         to_world = FALSE;
 
-    node = lm_message_node_get_child (post_node, "postDate");
+    node = lm_message_node_find_child (post_node, "postDate");
     if (!(node && node->value))
         return FALSE;
     post_date = strtol(node->value, NULL, 10);
 
-    node = lm_message_node_get_child (post_node, "recipients");
+    node = lm_message_node_find_child (post_node, "recipients");
     if (!node)
         return FALSE;
 
@@ -1827,6 +1853,12 @@ hippo_connection_parse_post(HippoConnection *connection,
             g_warning("Post receipient '%s' was not in the cache prior to post message", entity_id);
     }
 
+    node = lm_message_node_find_child (post_node, "ignored");
+    if (node && node->value)
+        ignored = parse_bool(node->value);
+    else
+        ignored = FALSE;
+
     post = hippo_data_cache_lookup_post(connection->cache, post_guid);
     if (post == NULL) {
         post = hippo_post_new(post_guid);
@@ -1847,7 +1879,8 @@ hippo_connection_parse_post(HippoConnection *connection,
     hippo_post_set_info(post, info);
     hippo_post_set_date(post, post_date);
     hippo_post_set_recipients(post, recipients);
-	hippo_post_set_to_world(post, to_world);
+    hippo_post_set_ignored(post, ignored);
+    hippo_post_set_to_world(post, to_world);
 
     g_slist_free(recipients);
 

@@ -85,6 +85,8 @@ public:
     HippoExternalBrowser *launchBrowser(BSTR url);
     void displaySharedLink(BSTR postId, BSTR url);
 
+    void ignorePost(BSTR postId);
+
     void debugLogW(const WCHAR *format, ...); // UTF-16
     void debugLogU(const char *format, ...);  // UTF-8
     void logErrorU(const char *format, ...); // UTF-8

@@ -40,6 +40,8 @@ library HippoUI {
         HRESULT UpdateDisplay();
         [id(129), helpstring("Join chat for a link")]
         HRESULT ShowChatWindow([in] BSTR postId);
+        [id(130), helpstring("Ignore a post")]
+        HRESULT IgnorePost([in] BSTR postId);
         // up to 130
     }
     [
@@ -80,7 +82,11 @@ library HippoUI {
         HRESULT Resize([in] int width, [in] int height);
         [id(192), helpstring("Return the base Url for the DumbHippo server")]
         HRESULT GetServerBaseUrl([out, retval] BSTR *url);
-        // up to 130
+        [id(193), helpstring("Join chat for a link")]
+        HRESULT ShowChatWindow([in] BSTR postId);
+        [id(194), helpstring("Ignore a post")]
+        HRESULT IgnorePost([in] BSTR postId);
+        // up to ?
     }
     [
         uuid(CECA44AA-12EE-4697-A81E-B6C94F8038AF), // IID_IHippoMenu

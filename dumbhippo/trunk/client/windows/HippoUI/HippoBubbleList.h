@@ -41,6 +41,8 @@ public:
     STDMETHODIMP DisplaySharedLink(BSTR linkId, BSTR url);
     STDMETHODIMP GetServerBaseUrl(BSTR *ret);
     STDMETHODIMP Resize(int width, int height);
+    STDMETHODIMP ShowChatWindow(BSTR linkId);
+    STDMETHODIMP IgnorePost(BSTR linkId);
 
 protected:
     virtual HippoBSTR getURL();

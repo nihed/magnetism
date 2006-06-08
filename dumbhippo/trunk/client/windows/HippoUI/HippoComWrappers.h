@@ -147,6 +147,7 @@ public:
     STDMETHODIMP get_ChattingUserCount(int *chattingUserCount);
     STDMETHODIMP get_TotalViewers(int *totalViewers);
     STDMETHODIMP get_HaveViewed(BOOL *haveViewed);
+    STDMETHODIMP get_Ignored(BOOL *ignored);
 
     STDMETHODIMP get_LastChatMessage(BSTR *message);
     STDMETHODIMP get_LastChatSender(IHippoEntity **sender);

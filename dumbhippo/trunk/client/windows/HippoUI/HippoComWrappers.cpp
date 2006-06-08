@@ -295,6 +295,13 @@ HippoPostWrapper::get_ToWorld(BOOL *toWorld)
 }
 
 STDMETHODIMP 
+HippoPostWrapper::get_Ignored(BOOL *ignored)
+{
+    *ignored = hippo_post_get_ignored(delegate_);
+    return S_OK;
+}
+
+STDMETHODIMP 
 HippoPostWrapper::get_ViewingUserCount(int *viewingUserCount)
 {
     *viewingUserCount = hippo_post_get_viewing_user_count(delegate_);
