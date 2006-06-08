@@ -61,6 +61,8 @@ void             hippo_bubble_set_last_chat_message  (HippoBubble *bubble,
                                                       const char  *sender_id);
 void             hippo_bubble_set_last_chat_photo    (HippoBubble *bubble,
                                                       GdkPixbuf   *pixbuf);
+void             hippo_bubble_set_chat_count         (HippoBubble *bubble,
+                                                      int          count);                                                      
 void             hippo_bubble_set_page_n_of_total    (HippoBubble *bubble,
                                                       int          n,
                                                       int          total);

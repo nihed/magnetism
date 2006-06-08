@@ -203,6 +203,20 @@ hippo_app_visit_post_id(HippoApp   *app,
     hippo_app_visit_post(app, post);
 }
 
+void
+hippo_app_ignore_post_id(HippoApp   *app,
+                         const char *guid)
+{
+    HippoPost *post;
+    
+    post = hippo_data_cache_lookup_post(app->cache, guid);
+    if (post == NULL) {
+        g_warning("don't know about post '%s' can't ignore it", guid);
+        return;
+    }
+    hippo_connection_set_post_ignored(app->connection, guid);
+}
+
 static void
 visit_entity(HippoApp       *app,
              const char     *id,

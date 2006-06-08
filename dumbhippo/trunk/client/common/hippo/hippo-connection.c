@@ -533,6 +533,7 @@ hippo_connection_set_post_ignored (HippoConnection  *connection,
     LmMessageNode *node;
     LmMessageNode *method;
     LmMessageNode *guid_arg;
+    HippoPost *post;
             
     g_return_if_fail(HIPPO_IS_CONNECTION(connection));
     
@@ -548,6 +549,19 @@ hippo_connection_set_post_ignored (HippoConnection  *connection,
     hippo_connection_send_message(connection, message, SEND_MODE_AFTER_AUTH);
 
     lm_message_unref(message);
+    
+    /* Because we don't have change notification on this flag right now, we 
+     * "write through" the cache and save the info locally also.
+     * Also avoids a race condition where we might fail to ignore some 
+     * incoming message.
+     */
+    post = hippo_data_cache_lookup_post(connection->cache, post_id);
+    if (post == NULL) {
+        g_warning("trying to ignore unknown post %s", post_id);
+        return;
+    } else {
+        hippo_post_set_ignored(post, TRUE);
+    }
 }
 
 void

@@ -1,11 +1,17 @@
 #include <config.h>
 #include <gtk/gtkcontainer.h>
 #include <gtk/gtknotebook.h>
+#include <gtk/gtkhbox.h>
 #include "hippo-bubble.h"
 #include "main.h"
 #include "hippo-embedded-image.h"
 
-#define MIN_BUBBLE_WIDTH 265
+/* If you shrink the min width, one thing to check is that toggling 
+ * between someone said, whos there does not resize the bubble;
+ * that happens if the largest width in the bubble comes from the bottom
+ * "extra widgets" area due to the bolding of the font
+ */
+#define MIN_BUBBLE_WIDTH 335
 #define MAX_TITLE_WIDTH 200
 #define MAX_DESCRIPTION_WIDTH 200
 #define MAX_RECIPIENTS_WIDTH 190
@@ -17,7 +23,9 @@ typedef enum {
     LINK_CLICK_VISIT_POST,
     LINK_CLICK_VISIT_LAST_MESSAGE_SENDER,
     LINK_CLICK_ACTIVATE_WHOS_THERE,
-    LINK_CLICK_ACTIVATE_SOMEONE_SAID
+    LINK_CLICK_ACTIVATE_SOMEONE_SAID,
+    LINK_CLICK_JOIN_CHAT,
+    LINK_CLICK_IGNORE_POST
 } LinkClickAction;
 
 typedef enum {
@@ -62,6 +70,11 @@ struct _HippoBubble {
     GtkWidget *right_arrow;
     GtkWidget *whos_there;
     GtkWidget *someone_said;
+    GtkWidget *join_chat;
+    GtkWidget *join_chat_label;
+    GtkWidget *chat_count_label;
+    GtkWidget *ignore;
+    GtkWidget *ignore_label;    
     GtkWidget *last_message;
     GtkWidget *last_message_photo;
     GtkWidget *viewers;
@@ -173,15 +186,10 @@ is_button_release_over_widget(GtkWidget *widget,
     return TRUE;
 }                              
 
-static gboolean
-delete_toplevel_on_click(GtkWidget *widget,
-                         GdkEvent  *event,
-                         void      *ignored)
+static void
+delete_toplevel(GtkWidget *widget)
 {
     GtkWidget *toplevel;
-        
-    if (!is_button_release_over_widget(widget, event))
-        return FALSE;
     
     toplevel = gtk_widget_get_ancestor(widget, GTK_TYPE_WINDOW);
     
@@ -197,6 +205,17 @@ delete_toplevel_on_click(GtkWidget *widget,
         gtk_main_do_event(event);
         gdk_event_free(event);
     }
+}
+
+static gboolean
+delete_toplevel_on_click(GtkWidget *widget,
+                         GdkEvent  *event,
+                         void      *ignored)
+{
+    if (!is_button_release_over_widget(widget, event))
+        return FALSE;
+        
+    delete_toplevel(widget);
 
     return FALSE;        
 }
@@ -298,17 +317,49 @@ hookup_widget(HippoBubble *bubble,
               GtkWidget  **widget_p)
 {
     g_signal_connect(G_OBJECT(*widget_p), "destroy", G_CALLBACK(gtk_widget_destroyed), widget_p);
-    gtk_container_add(GTK_CONTAINER(bubble), *widget_p);
+    if ((*widget_p)->parent == NULL)
+        gtk_container_add(GTK_CONTAINER(bubble), *widget_p);
     gtk_widget_show(*widget_p);
+}
+
+static void
+set_widget_fg(GtkWidget *widget, guint16 red, guint16 green, guint16 blue)
+{
+    GdkColor color;
+
+    color.red = red;
+    color.green = green;
+    color.blue = blue;
+    color.pixel = 0;
+    gtk_widget_modify_fg(widget, GTK_STATE_NORMAL, &color);
+}
+
+static void
+set_blue_fg(GtkWidget *widget)
+{
+    /* #3A6EA5 (matches the arrow images) */
+    set_widget_fg(widget, 0x3a3a, 0x6e6e, 0xa5a5);
+}
+
+static void
+set_white_fg(GtkWidget *widget)
+{
+    set_widget_fg(widget, 0xffff, 0xffff, 0xffff);
+}
+
+static void
+set_default_fg(GtkWidget *widget)
+{
+    gtk_widget_modify_fg(widget, GTK_STATE_NORMAL, NULL);
 }
 
 static void
 hippo_bubble_init(HippoBubble       *bubble)
 {
     GdkColor white;
-    GdkColor blue;
     GdkPixbuf *pixbuf;
     GtkWidget *widget;
+    GtkWidget *box;
 
     GTK_WIDGET_UNSET_FLAGS(bubble, GTK_NO_WINDOW);
     bubble->page = 0;
@@ -319,12 +370,6 @@ hippo_bubble_init(HippoBubble       *bubble)
     white.green = 0xFFFF;
     white.blue = 0xFFFF;
     white.pixel = 0;
-
-    /* #3A6EA5 (matches the arrow images) */
-    blue.red = 0x3a3a;
-    blue.green = 0x6e6e;
-    blue.blue = 0xa5a5;
-    blue.pixel = 0;
     
     /* we want a white background */
     
@@ -394,15 +439,15 @@ hippo_bubble_init(HippoBubble       *bubble)
     gtk_label_set_use_markup(GTK_LABEL(widget), TRUE);    
     gtk_label_set_single_line_mode(GTK_LABEL(widget), TRUE);
     gtk_misc_set_alignment(GTK_MISC(widget), 0.0, 0.0);
-    gtk_widget_modify_fg(widget, GTK_STATE_NORMAL, &white);
+    set_white_fg(widget);
 
     /* Link description text */
 
     bubble->link_description = gtk_label_new(NULL);
 
     hookup_widget(bubble, &bubble->link_description);
-    
-    gtk_widget_modify_fg(bubble->link_description, GTK_STATE_NORMAL, &white);
+
+    set_white_fg(bubble->link_description);    
     gtk_label_set_line_wrap(GTK_LABEL(bubble->link_description), TRUE);
     gtk_label_set_use_markup(GTK_LABEL(bubble->link_description), TRUE);
     gtk_misc_set_alignment(GTK_MISC(bubble->link_description), 0.0, 0.0);
@@ -490,8 +535,6 @@ hippo_bubble_init(HippoBubble       *bubble)
     gtk_container_add(GTK_CONTAINER(bubble->someone_said), widget);
     gtk_widget_show(widget);
     
-    gtk_widget_modify_fg(widget, GTK_STATE_NORMAL, &blue);
-    
     /* The "who's there" link */
 
     bubble->whos_there = g_object_new(GTK_TYPE_EVENT_BOX,
@@ -506,9 +549,57 @@ hippo_bubble_init(HippoBubble       *bubble)
     gtk_container_add(GTK_CONTAINER(bubble->whos_there), widget);
     gtk_widget_show(widget);
     
-    gtk_widget_modify_fg(widget, GTK_STATE_NORMAL, &blue);
+    /* The "Join chat" link */
 
-    /* Get the right initial size request */    
+    bubble->join_chat = g_object_new(GTK_TYPE_EVENT_BOX,
+                                     "visible-window", FALSE,
+                                     "above-child", TRUE,
+                                     NULL);
+    hookup_widget(bubble, &bubble->join_chat);
+    connect_link_action(bubble->join_chat, LINK_CLICK_JOIN_CHAT);
+
+    box = gtk_hbox_new(FALSE, 2);
+    gtk_container_add(GTK_CONTAINER(bubble->join_chat), box);
+    gtk_widget_show(box);
+    
+    widget = gtk_image_new_from_pixbuf(hippo_embedded_image_get("chaticon"));
+    gtk_widget_show(widget);
+    gtk_box_pack_start(GTK_BOX(box), widget, FALSE, FALSE, 0);
+    
+    bubble->join_chat_label = gtk_label_new(NULL);
+    gtk_label_set_markup(GTK_LABEL(bubble->join_chat_label), "<u>Join chat</u>");
+    set_blue_fg(bubble->join_chat_label);    
+    gtk_box_pack_start(GTK_BOX(box), bubble->join_chat_label, FALSE, FALSE, 0);
+    hookup_widget(bubble, &bubble->join_chat_label);    
+
+    bubble->chat_count_label = gtk_label_new(NULL);
+    gtk_box_pack_start(GTK_BOX(box), bubble->chat_count_label, FALSE, FALSE, 0);
+    hookup_widget(bubble, &bubble->chat_count_label);
+    
+    /* The "Ignore" link */
+
+    bubble->ignore = g_object_new(GTK_TYPE_EVENT_BOX,
+                                  "visible-window", FALSE,
+                                  "above-child", TRUE,
+                                  NULL);
+    hookup_widget(bubble, &bubble->ignore);
+    connect_link_action(bubble->ignore, LINK_CLICK_IGNORE_POST);
+
+    box = gtk_hbox_new(FALSE, 2);
+    gtk_container_add(GTK_CONTAINER(bubble->ignore), box);
+    gtk_widget_show(box);
+    
+    widget = gtk_image_new_from_pixbuf(hippo_embedded_image_get("ignoreicon"));
+    gtk_widget_show(widget);
+    gtk_box_pack_start(GTK_BOX(box), widget, FALSE, FALSE, 0);
+    
+    bubble->ignore_label = gtk_label_new(NULL);
+    gtk_label_set_markup(GTK_LABEL(bubble->ignore_label), "<u>Ignore</u>");
+    set_blue_fg(bubble->ignore_label);    
+    gtk_box_pack_start(GTK_BOX(box), bubble->ignore_label, FALSE, FALSE, 0);
+    hookup_widget(bubble, &bubble->ignore_label);    
+
+    /* Get the right initial size request */
     set_label_sizes(bubble);
 }
 
@@ -1033,6 +1124,8 @@ static void
 compute_extra_widgets_layout(HippoBubble  *bubble,
                              GdkRectangle *whos_there_p,
                              GdkRectangle *someone_said_p,
+                             GdkRectangle *join_chat_p,
+                             GdkRectangle *ignore_p,
                              GdkRectangle *last_message_photo_p,
                              GdkRectangle *last_message_p,
                              GdkRectangle *viewers_p,
@@ -1040,6 +1133,8 @@ compute_extra_widgets_layout(HippoBubble  *bubble,
 {
     GdkRectangle whos_there;
     GdkRectangle someone_said;
+    GdkRectangle join_chat;
+    GdkRectangle ignore;
     GdkRectangle last_message_photo;
     GdkRectangle last_message;
     GdkRectangle viewers;
@@ -1056,12 +1151,14 @@ compute_extra_widgets_layout(HippoBubble  *bubble,
     
     GET_REQ(whos_there);    
     GET_REQ(someone_said);
+    GET_REQ(join_chat);
+    GET_REQ(ignore);
     GET_REQ(last_message_photo);
     GET_REQ(last_message);
     GET_REQ(viewers);
 
-#define PADDING 10
-#define BETWEEN_LINKS 20
+#define PADDING 4
+#define BETWEEN_LINKS 6
 #define BETWEEN_PHOTO_AND_MESSAGE 10
 
     if (bubble->someone_said_set) {    
@@ -1090,12 +1187,14 @@ compute_extra_widgets_layout(HippoBubble  *bubble,
         panes_height = 0;
     }
 
-    total_width = links_width;
-    total_width = MAX(total_width, message_pane_width);
-    total_width = MAX(total_width, viewers.width);
+    total_width = links_width + PADDING + join_chat.width + BETWEEN_LINKS + ignore.width;
+    if (bubble->someone_said_set)
+        total_width = MAX(total_width, message_pane_width);
+    if (bubble->whos_there_set)
+        total_width = MAX(total_width, viewers.width);
     total_width += PADDING * 2;
 
-    /* figure out where to place the "notebook tabs", note 
+    /* left-align the "notebook tabs", note 
      * that if one is !set then it is invisible anyhow but 
      * important to be sure it doesn't "grow" the area
      */
@@ -1103,15 +1202,14 @@ compute_extra_widgets_layout(HippoBubble  *bubble,
     someone_said.y = PADDING;
 
     if (bubble->whos_there_set && bubble->someone_said_set) {
-        /* if both, center them with space in between */
-        whos_there.x = (total_width - links_width) / 2;
+        whos_there.x = PADDING;
         someone_said.x = whos_there.x + whos_there.width + BETWEEN_LINKS;
         
     } else if (bubble->whos_there_set) {
-        whos_there.x = (total_width - links_width) / 2;
+        whos_there.x = PADDING;
         someone_said.x = 0; /* irrelevant */
     } else if (bubble->someone_said_set) {
-        someone_said.x = (total_width - links_width) / 2;
+        someone_said.x = PADDING;
         whos_there.x = 0; /* irrelevant */
     } else {
         /* both irrelevant */
@@ -1119,31 +1217,44 @@ compute_extra_widgets_layout(HippoBubble  *bubble,
         someone_said.x = 0;
     }
 
+    /* Right-align the "join chat" and "ignore" */
+    join_chat.y = PADDING;
+    ignore.y = PADDING;
+    ignore.x = total_width - PADDING - ignore.width;
+    join_chat.x = ignore.x - BETWEEN_LINKS - join_chat.width;
+
     panes_y = PADDING + links_height + PADDING;
 
-    /* now center the "tab panes" in their area */
-    last_message_photo.x = (total_width - message_pane_width) / 2;
+    /* left-align the "tab panes" in their area */
+    last_message_photo.x = PADDING;
     last_message.x = last_message_photo.x + last_message_photo.width + BETWEEN_PHOTO_AND_MESSAGE;
+    /* and center vertically */
     last_message_photo.y = panes_y + (panes_height - message_pane_height) / 2;
     last_message.y = last_message_photo.y;
     
-    viewers.x = (total_width - viewers.width) / 2;
+    viewers.x = PADDING;
     viewers.y = panes_y + (panes_height - viewers.height) / 2;
 
     if (!(bubble->whos_there_set || bubble->someone_said_set)) {
         all_extra_widgets.x = 0;
         all_extra_widgets.y = 0;
-        all_extra_widgets.width = 0;
+        all_extra_widgets.width = total_width;
         all_extra_widgets.height = 0;
     } else {
         all_extra_widgets.x = 0;
         all_extra_widgets.y = 0;
         all_extra_widgets.width = total_width;
-        all_extra_widgets.height = panes_y + panes_height + PADDING;
+        all_extra_widgets.height = panes_y + panes_height;
     }
+    gdk_rectangle_union(&all_extra_widgets, &join_chat, &all_extra_widgets);
+    gdk_rectangle_union(&all_extra_widgets, &ignore, &all_extra_widgets);
+    
+    all_extra_widgets.height += PADDING;
     
     OUT(whos_there);
     OUT(someone_said);
+    OUT(join_chat);
+    OUT(ignore);
     OUT(last_message_photo);
     OUT(last_message);
     OUT(viewers);
@@ -1185,7 +1296,7 @@ hippo_bubble_size_request(GtkWidget         *widget,
         GtkFixedChild *child = link->data;
         if (GTK_WIDGET_VISIBLE(child->widget)) {
             gtk_widget_size_request(child->widget, NULL);
-        }            
+        }
     }
     
     /* layout children starting from 0,0 assuming no border or anything */
@@ -1256,8 +1367,11 @@ hippo_bubble_size_request(GtkWidget         *widget,
      
     compute_extra_widgets_layout(bubble, NULL, NULL,
                                  NULL, NULL, NULL,
+                                 NULL, NULL,
                                  &all_extra_widgets_rect);
-    all_extra_widgets_rect.x += container->border_width + PAGING_AREA_WIDTH;
+    all_extra_widgets_rect.x += container->border_width;
+    if (bubble->total_pages > 1)
+        all_extra_widgets_rect.x += PAGING_AREA_WIDTH;
     all_extra_widgets_rect.y += border_rect.y + border_rect.height;
 
     /* don't bother setting the gtk_fixed_put on the extra widgets, we have to dynamically
@@ -1306,11 +1420,13 @@ hippo_bubble_size_allocate(GtkWidget         *widget,
     int both_arrows_width;
     GdkRectangle whos_there_rect;
     GdkRectangle someone_said_rect;
+    GdkRectangle join_chat_rect;
+    GdkRectangle ignore_rect;
     GdkRectangle last_message_photo_rect;
     GdkRectangle last_message_rect;
     GdkRectangle viewers_rect;
     GdkRectangle all_extra_widgets_rect;
-    int xoffset, yoffset;
+    int xoffset_left, xoffset_right, yoffset;
     int extra_widgets_width_allocation;
 
     bubble = HIPPO_BUBBLE(widget);
@@ -1325,6 +1441,8 @@ hippo_bubble_size_allocate(GtkWidget         *widget,
     
     compute_extra_widgets_layout(bubble, &whos_there_rect,
                                  &someone_said_rect, 
+                                 &join_chat_rect,
+                                 &ignore_rect,
                                  &last_message_photo_rect,
                                  &last_message_rect,
                                  &viewers_rect,
@@ -1404,28 +1522,35 @@ hippo_bubble_size_allocate(GtkWidget         *widget,
     extra_widgets_width_allocation = allocation->width - container->border_width * 2;
     if (bubble->total_pages > 1) {
         extra_widgets_width_allocation -= PAGING_AREA_WIDTH;
-        xoffset = PAGING_AREA_WIDTH;
+        xoffset_left = xoffset_right = PAGING_AREA_WIDTH;
     } else {
-        xoffset = 0;
+        xoffset_left = xoffset_right = 0;
     }
-    /* center in extra widgets area */
-    xoffset += MAX(0, (extra_widgets_width_allocation - all_extra_widgets_rect.width) / 2);
+    xoffset_right += MAX(0, (extra_widgets_width_allocation - all_extra_widgets_rect.width));
 
     /* glue to bottom */
     yoffset = (allocation->height - all_extra_widgets_rect.height);
-#define ALLOC(what) do {                                       \
-        what##_rect.x += xoffset;                              \
+#define ALLOC_LEFT(what) do {                                  \
+        what##_rect.x += xoffset_left;                         \
+        what##_rect.y += yoffset;                              \
+        gtk_widget_size_allocate(bubble->what, &what##_rect);  \
+    } while(0)
+#define ALLOC_RIGHT(what) do {                                 \
+        what##_rect.x += xoffset_right;                        \
         what##_rect.y += yoffset;                              \
         gtk_widget_size_allocate(bubble->what, &what##_rect);  \
     } while(0)
     
-    ALLOC(whos_there);
-    ALLOC(someone_said);
-    ALLOC(last_message_photo);
-    ALLOC(last_message);
-    ALLOC(viewers);
+    ALLOC_LEFT(whos_there);
+    ALLOC_LEFT(someone_said);
+    ALLOC_RIGHT(join_chat);
+    ALLOC_RIGHT(ignore);    
+    ALLOC_LEFT(last_message_photo);
+    ALLOC_LEFT(last_message);
+    ALLOC_LEFT(viewers);
 
-#undef ALLOC
+#undef ALLOC_LEFT
+#undef ALLOC_RIGHT
 }
 
 void
@@ -1565,11 +1690,14 @@ update_extra_info(HippoBubble *bubble)
      
     if (bubble->whos_there_set) {
         GtkWidget *label = GTK_BIN(bubble->whos_there)->child;
-        if (whos_there_active)
-            gtk_label_set_text(GTK_LABEL(label), _("Who's there"));
-        else
+        if (whos_there_active) {
+            gtk_label_set_markup(GTK_LABEL(label), _("<b>Who's there</b>"));
+            set_default_fg(label);
+        } else {
             gtk_label_set_markup(GTK_LABEL(label),
                                  _("<u>Who's there</u>"));
+            set_blue_fg(label);
+        }
         gtk_widget_show(bubble->whos_there);
     } else {
         gtk_widget_hide(bubble->whos_there);    
@@ -1577,11 +1705,14 @@ update_extra_info(HippoBubble *bubble)
 
     if (bubble->someone_said_set) {
         GtkWidget *label = GTK_BIN(bubble->someone_said)->child;
-        if (someone_said_active)
-            gtk_label_set_text(GTK_LABEL(label), _("Someone said"));
-        else
+        if (someone_said_active) {
+            gtk_label_set_markup(GTK_LABEL(label), _("<b>Latest comment</b>"));
+            set_default_fg(label);
+        } else {
             gtk_label_set_markup(GTK_LABEL(label),
-                                 _("<u>Someone said</u>"));
+                                 _("<u>Latest comment</u>"));
+            set_blue_fg(label);
+        }
         gtk_widget_show(bubble->someone_said);
     } else {
         gtk_widget_hide(bubble->someone_said);
@@ -1660,10 +1791,13 @@ hippo_bubble_set_last_chat_message(HippoBubble *bubble,
     if (sender_id != bubble->last_message_sender_id) {
         g_free(bubble->last_message_sender_id);
         bubble->last_message_sender_id = g_strdup(sender_id);
-    }    
+    }
 
     if (message) {
-        gtk_label_set_text(GTK_LABEL(bubble->last_message), message);
+        char *s;
+        s = g_strdup_printf("\"%s\"", message);
+        gtk_label_set_text(GTK_LABEL(bubble->last_message), s);
+        g_free(s);
         bubble->someone_said_set = TRUE;
     } else {
         gtk_label_set_text(GTK_LABEL(bubble->last_message), "");
@@ -1697,6 +1831,18 @@ hippo_bubble_set_last_chat_photo(HippoBubble *bubble,
         g_object_unref(scaled);
 
     update_extra_info(bubble);        
+}
+
+void
+hippo_bubble_set_chat_count(HippoBubble *bubble,
+                            int          count)
+{
+    char *s;
+    g_return_if_fail(HIPPO_IS_BUBBLE(bubble));
+    
+    s = g_strdup_printf("[%d]", count);    
+    gtk_label_set_text(GTK_LABEL(bubble->chat_count_label), s);
+    g_free(s);
 }
 
 static void
@@ -1808,6 +1954,15 @@ hippo_bubble_link_click_action(HippoBubble       *bubble,
     case LINK_CLICK_ACTIVATE_SOMEONE_SAID:
         bubble->active_extra = ACTIVE_EXTRA_SOMEONE_SAID;
         update_extra_info(bubble);
+        break;
+    case LINK_CLICK_JOIN_CHAT:
+        if (bubble->post_id)
+            hippo_app_join_chat(hippo_get_app(), bubble->post_id);
+        break;
+    case LINK_CLICK_IGNORE_POST:
+        if (bubble->post_id) {
+            hippo_app_ignore_post_id(hippo_get_app(), bubble->post_id);
+        }
         break;
     }
 }

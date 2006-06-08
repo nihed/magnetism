@@ -232,6 +232,9 @@ update_viewers(PostWatch *watch)
     g_slist_free(chatters);
     
     hippo_bubble_set_viewers(watch->base.bubble, infos, n_viewers);
+    
+    /* this may also be covered by a post changed signal, but just checking */   
+    hippo_bubble_set_chat_count(watch->base.bubble, hippo_post_get_chatting_user_count(watch->post));
 }
 
 static void
@@ -295,6 +298,8 @@ on_post_changed(HippoPost *post,
 
     hippo_bubble_set_link_title(bubble, hippo_post_get_title(watch->post));
     hippo_bubble_set_post_guid(bubble, hippo_post_get_guid(watch->post));
+
+    hippo_bubble_set_chat_count(bubble, hippo_post_get_chatting_user_count(post));
 
     /* FIXME ordering of this isn't guaranteed, i.e. we could get a reply for 
      * an "old" post in theory

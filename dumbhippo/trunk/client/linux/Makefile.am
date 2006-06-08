@@ -58,8 +58,10 @@ EMBEDDED_IMAGES=				\
 	$(EMBEDDEDIMAGEDIR)/bublinkswarm.gif	\
 	$(EMBEDDEDIMAGEDIR)/blueleftarrow.gif	\
 	$(EMBEDDEDIMAGEDIR)/bluerightarrow.gif	\
+	$(EMBEDDEDIMAGEDIR)/chaticon.gif	\
 	$(EMBEDDEDIMAGEDIR)/grayleftarrow.gif	\
 	$(EMBEDDEDIMAGEDIR)/grayrightarrow.gif	\
+	$(EMBEDDEDIMAGEDIR)/ignoreicon.png	\
 	$(EMBEDDEDIMAGEDIR)/obubcnr_blmix.png	\
 	$(EMBEDDEDIMAGEDIR)/obubcnr_bl.png	\
 	$(EMBEDDEDIMAGEDIR)/obubcnr_brmix.png	\
