@@ -5,6 +5,13 @@
 #include "main.h"
 #include "hippo-embedded-image.h"
 
+#define MIN_BUBBLE_WIDTH 265
+#define MAX_TITLE_WIDTH 250
+#define MAX_DESCRIPTION_WIDTH 250
+#define MAX_RECIPIENTS_WIDTH 220
+#define MAX_SENDER_WIDTH 76
+#define MAX_CHAT_MESSAGE_WIDTH 220
+
 typedef enum {
     LINK_CLICK_VISIT_SENDER,
     LINK_CLICK_VISIT_POST,
@@ -279,11 +286,11 @@ connect_page_action(GtkWidget      *widget,
 static void
 set_label_sizes(HippoBubble *bubble)
 {
-    set_max_label_width(GTK_BIN(bubble->link_title)->child, 280, TRUE);
-    set_max_label_width(bubble->link_description, 300, FALSE);
-    set_max_label_width(bubble->recipients, 280, TRUE);
-    set_max_label_width(GTK_BIN(bubble->sender_name)->child, 76, TRUE);
-    set_max_label_width(bubble->last_message, 300, TRUE);
+    set_max_label_width(GTK_BIN(bubble->link_title)->child, MAX_TITLE_WIDTH, TRUE);
+    set_max_label_width(bubble->link_description, MAX_DESCRIPTION_WIDTH, FALSE);
+    set_max_label_width(bubble->recipients, MAX_RECIPIENTS_WIDTH, TRUE);
+    set_max_label_width(GTK_BIN(bubble->sender_name)->child, MAX_SENDER_WIDTH, TRUE);
+    set_max_label_width(bubble->last_message, MAX_CHAT_MESSAGE_WIDTH, TRUE);
 }
 
 static void
@@ -1263,6 +1270,9 @@ hippo_bubble_size_request(GtkWidget         *widget,
     requisition->width = MAX(border_rect.x + border_rect.width,
                         all_extra_widgets_rect.x + all_extra_widgets_rect.width);
     requisition->height = all_extra_widgets_rect.y + all_extra_widgets_rect.height;
+
+    if (requisition->width < MIN_BUBBLE_WIDTH)
+        requisition->width = MIN_BUBBLE_WIDTH;
 
 #if 0
     g_print("Size req on %p, %d x %d; border_rect %d,%d %dx%d\n"
