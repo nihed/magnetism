@@ -241,12 +241,12 @@ public class PostView {
 	public String toXml() {
 		ObjectXmlBuilder builder = new ObjectXmlBuilder();
 		builder.openElement("post", "id", post.getId());
-		builder.appendAttribute("poster", posterView.getUser().getId());
-		builder.appendAttribute("href", post.getUrl().toString());
-		builder.appendAttribute("title", post.getTitle());
-		builder.appendAttribute("text", post.getText());
-		builder.appendAttribute("toWorld", isToWorld());
-		builder.appendAttribute("postDate", "" + (post.getPostDate().getTime()/1000));
+		builder.appendMember("poster", posterView.getUser().getId());
+		builder.appendMember("href", post.getUrl().toString());
+		builder.appendMember("title", post.getTitle());
+		builder.appendMember("text", post.getText());
+		builder.appendMember("toWorld", isToWorld());
+		builder.appendMember("postDate", "" + (post.getPostDate().getTime()/1000));
 		PostInfo pi = post.getPostInfo();
 		if (pi != null)
 			builder.appendTextNode("postInfo", pi.toXml());
@@ -261,8 +261,8 @@ public class PostView {
 			}			
 		}
 		builder.closeElement();		
-		builder.appendAttribute("favorite", favorite);
-		builder.appendAttribute("ignored", ignored);
+		builder.appendMember("favorite", favorite);
+		builder.appendMember("ignored", ignored);
 
 		return builder.toString();
 	}

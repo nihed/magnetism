@@ -12,15 +12,15 @@ package com.dumbhippo;
  *
  */
 public class ObjectXmlBuilder extends XmlBuilder {
-	public void appendAttribute(String name, String value) {
+	public void appendMember(String name, String value) {
 		appendTextNode(name, value);
 	}
 	
-	public void appendAttribute(String name, boolean value) {
-		appendAttribute(name, value ? "true" : "false");
+	public void appendMember(String name, boolean value) {
+		appendMember(name, value ? "true" : "false");
 	}
 	
 	public void appendAttribute(String name, long value) {
-		appendAttribute(name, new Long(value).toString());
+		appendMember(name, new Long(value).toString());
 	}
 }

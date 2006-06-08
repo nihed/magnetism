@@ -1192,6 +1192,10 @@ public class PostingBoardBean implements PostingBoard {
 	}
 
 	public void setPostIgnored(final User user, final Post post, boolean ignore) {
+		if (!canViewPost(new UserViewpoint(user), post)) {
+			logger.debug("attempt to ignore non-viewable post {}", post.getId());
+			return;
+		}
 		PersonPostData ppd = getOrCreatePersonPostData(user, post);
 		ppd.setIgnored(true);
 	}
