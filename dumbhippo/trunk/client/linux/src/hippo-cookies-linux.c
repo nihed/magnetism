@@ -1,4 +1,5 @@
 #include "hippo-cookies-linux.h"
+#include <string.h>
 
 #define MAX_FILES 10
 
@@ -10,7 +11,7 @@ check_cookie_file(const char       *cookie_file,
     if (g_file_test(cookie_file, G_FILE_TEST_EXISTS)) {
         files[*n_files].filename = g_strdup(cookie_file);
         files[*n_files].browser = HIPPO_BROWSER_FIREFOX;
-        g_debug("  using as cookie file %d", *n_files);                
+        /* g_debug("  using as cookie file %d", *n_files); */
         (*n_files)++;
     }
 }
@@ -38,23 +39,29 @@ check_firefox_dir(const char       *firefox_dir,
             char *subdirfull;
             char *cookie_file;
 
-            g_debug("Reading firefox subdir/file '%s'", subdir);
+            /* g_debug("Reading firefox subdir/file '%s'", subdir); */
 
             if (*n_files >= MAX_FILES)
                 break;
 
+            if (strcmp(subdir, "Cache") == 0) {
+                /* this saves a lot of IO */
+                /* g_debug("Skipping firefox cache dir"); */
+                continue;
+            }
+
             cookie_file = g_build_filename(firefox_dir, subdir, "cookies.txt", NULL);
-            g_debug("Checking for cookies file '%s'\n", cookie_file);
+            /* g_debug("Checking for cookies file '%s'\n", cookie_file); */
             check_cookie_file(cookie_file, files, n_files);
             g_free(cookie_file);
 
             /* Also check for salted directories in the mozilla profile
                directories and discover the joy of recursion. */
             subdirfull = g_build_filename(firefox_dir, subdir, NULL);
-            g_debug("checking if '%s' is a directory...", subdirfull);
+            /* g_debug("checking if '%s' is a directory...", subdirfull); */
             if (g_file_test(subdirfull, G_FILE_TEST_IS_DIR)) {
                 char *subsubdir = g_build_filename(firefox_dir, subdir, NULL);
-                g_debug("'%s' is a directory...", subsubdir);
+                /* g_debug("'%s' is a directory...", subsubdir); */
                 check_firefox_dir(subsubdir, files, n_files);
                 g_free(subsubdir);
             }

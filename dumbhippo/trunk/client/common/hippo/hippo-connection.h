@@ -102,6 +102,8 @@ void hippo_connection_notify_myspace_contact_post   (HippoConnection *connection
                                                      const char      *myspace_name);
 
 
+const char*      hippo_connection_get_tooltip       (HippoConnection *connection);
+
 /* return string form of enum values */
 const char*      hippo_state_debug_string(HippoState state);
 

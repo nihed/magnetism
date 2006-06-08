@@ -350,6 +350,21 @@ hippo_app_put_window_by_icon(HippoApp  *app,
     is_west = ((x + width / 2) < (monitor.x + monitor.width / 2));
     is_north = ((y + height / 2) < (monitor.y + monitor.height / 2));
 
+    /* Let's try pretending the status icon is always in the corner; if it isn't,
+     * the bubble gets too annoying
+     */
+    if (is_west) {
+        x = monitor.x;
+    } else {
+        x = monitor.x + monitor.width - width;
+    }
+    
+    if (is_north) {
+        y = monitor.y;
+    } else {
+        y = monitor.y + monitor.height - height;
+    }
+
     /* this just assumes a borderless window for now, doesn't mess with gravity,
      * though it would be easily fixed if we ever cared
      */

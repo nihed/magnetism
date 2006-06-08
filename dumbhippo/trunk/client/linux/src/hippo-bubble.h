@@ -8,7 +8,7 @@ G_BEGIN_DECLS
 
 typedef struct {
     const char *name;
-    const char *entity_guid;
+    const char *entity_guid; /* NULL for "the world" recipient */
 } HippoRecipientInfo;
 
 typedef struct {

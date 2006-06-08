@@ -1518,6 +1518,10 @@ hippo_bubble_set_recipients(HippoBubble *bubble,
     
     g_return_if_fail(HIPPO_IS_BUBBLE(bubble));
         
+    /* though we don't use it right now, note that the guid in the 
+     * HippoRecipientInfo is NULL for "the world"
+     */
+        
     label = bubble->recipients;
     
     gstr = g_string_new(NULL);

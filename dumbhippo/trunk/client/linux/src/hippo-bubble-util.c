@@ -323,6 +323,13 @@ on_post_changed(HippoPost *post,
             infos[i].entity_guid = hippo_entity_get_guid(HIPPO_ENTITY(self));
             ++i;
         }
+
+        /* "the world" goes second if there */
+        if (hippo_post_is_to_world(post)) {
+            infos[i].name = _("The World");
+            infos[i].entity_guid = NULL;
+            ++i;
+        }
         
         while (recipients != NULL && i < MAX_DISPLAYED_RECIPIENTS) {
             HippoEntity *entity = recipients->data;

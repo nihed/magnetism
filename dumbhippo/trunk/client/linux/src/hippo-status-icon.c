@@ -29,6 +29,8 @@ static void      hippo_status_icon_popup_menu          (GtkStatusIcon           
 static void      on_hotness_changed                    (HippoDataCache          *cache,
                                                         HippoHotness             old,
                                                         HippoStatusIcon         *icon);
+static void      on_state_changed                      (HippoConnection         *connection,
+                                                        HippoStatusIcon         *icon);
 
 struct _HippoStatusIcon {
     GtkStatusIcon parent;
@@ -80,14 +82,16 @@ hippo_status_icon_new(HippoDataCache *cache)
     icon = g_object_new(HIPPO_TYPE_STATUS_ICON,
                      "icon-name", icon_names[HIPPO_HOTNESS_UNKNOWN].icon_name,
                      NULL);
-
-    gtk_status_icon_set_tooltip(GTK_STATUS_ICON(icon), 
-                                _("Mugshot"));
     
     icon->cache = cache;
     g_object_ref(icon->cache);
 
     g_signal_connect(icon->cache, "hotness-changed", G_CALLBACK(on_hotness_changed), icon);
+    g_signal_connect(hippo_data_cache_get_connection(icon->cache), "state-changed",
+                     G_CALLBACK(on_state_changed), icon);
+
+    /* initialize tooltip */
+    on_state_changed(hippo_data_cache_get_connection(icon->cache), icon);
 
     return HIPPO_STATUS_ICON(icon);
 }
@@ -107,6 +111,8 @@ hippo_status_icon_finalize(GObject *object)
     HippoStatusIcon *icon = HIPPO_STATUS_ICON(object);
 
     g_signal_handlers_disconnect_by_func(icon->cache, G_CALLBACK(on_hotness_changed), icon);
+    g_signal_handlers_disconnect_by_func(hippo_data_cache_get_connection(icon->cache),
+                                         G_CALLBACK(on_state_changed), icon);
 
     destroy_menu(icon);
     
@@ -319,4 +325,11 @@ on_hotness_changed(HippoDataCache  *cache,
     g_return_if_fail(new_hotness < (int) G_N_ELEMENTS(icon_names));
     
     g_object_set(G_OBJECT(icon), "icon-name", icon_names[new_hotness].icon_name, NULL);
+}
+
+static void
+on_state_changed(HippoConnection         *connection,
+                 HippoStatusIcon         *icon)
+{
+    gtk_status_icon_set_tooltip(GTK_STATUS_ICON(icon), hippo_connection_get_tooltip(connection));
 }

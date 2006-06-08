@@ -7,14 +7,18 @@
 
 /* === CONSTANTS === */
 
-static const int SIGN_IN_INITIAL_TIMEOUT = 5000;        /* 5 seconds */
-static const int SIGN_IN_INITIAL_COUNT = 60;            /* 5 minutes */
-static const int SIGN_IN_SUBSEQUENT_TIMEOUT = 30000;    /* 30 seconds */
-
 static const int KEEP_ALIVE_RATE = 60;                  /* 1 minute; 0 disables */
 
-static const int RETRY_TIMEOUT = 60000;                 /* 1 minute */
+/* retrying _authentication_ */
+static const int SIGN_IN_INITIAL_TIMEOUT = 5000;        /* 5 seconds */
+static const int SIGN_IN_INITIAL_COUNT = 60;            /* 5 minutes of fast retry */
+static const int SIGN_IN_SUBSEQUENT_TIMEOUT = 30000;    /* 30 seconds retry after INITIAL_COUNT tries*/
 
+/* retrying _connection_ */
+static const int RETRY_TIMEOUT = 60*1000;               /* 1 minute for retrying _connection_ */
+static const int RETRY_TIMEOUT_FUZZ = 60*1000*5;        /* add up to this much to keep clients from all connecting 
+                                                         * at the same time.
+                                                         */
 
 /* === OutgoingMessage internal class === */
 
@@ -699,10 +703,11 @@ static void
 hippo_connection_start_retry_timeout(HippoConnection *connection)
 {
     if (connection->retry_timeout_id == 0) {
-        g_debug("Installing retry timeout for %g seconds", RETRY_TIMEOUT / 1000.0);
-        connection->retry_timeout_id = g_timeout_add(RETRY_TIMEOUT, 
+        int timeout = RETRY_TIMEOUT + g_random_int_range(0, RETRY_TIMEOUT_FUZZ);
+        g_debug("Installing retry timeout for %g seconds", timeout / 1000.0);
+        connection->retry_timeout_id = g_timeout_add(timeout, 
                                                      retry_timeout, connection);
-    }                                                    
+    }
 }
 
 static void
@@ -1674,25 +1679,33 @@ hippo_connection_parse_entity(HippoConnection *connection,
         type = HIPPO_ENTITY_GROUP;
     else if (strcmp(node->name, "user") == 0)
         type = HIPPO_ENTITY_PERSON;
-    else
+    else {
+        g_warning("entity node lacks entity name");
         return FALSE;
+    }
 
     guid = lm_message_node_get_attribute(node, "id");
-    if (!guid)
+    if (!guid) {
+        g_warning("entity node lacks guid");
         return FALSE;
+    }
 
     if (type != HIPPO_ENTITY_RESOURCE) {
         name = lm_message_node_get_attribute(node, "name");
-        if (!name)
+        if (!name) {
+            g_warning("entity node lacks name");
             return FALSE;
+        }
     } else {
         name = NULL;
     }
 
     if (type != HIPPO_ENTITY_RESOURCE) {
         small_photo_url = lm_message_node_get_attribute(node, "smallPhotoUrl");
-        if (!small_photo_url)
+        if (!small_photo_url) {
+            g_warning("entity node lacks photo url");
             return FALSE;
+        }
     } else {
         small_photo_url = NULL;
     }
@@ -3091,6 +3104,45 @@ handle_authenticate(LmConnection *lconnection,
 
 /* == Random cruft == */
 
+const char*
+hippo_connection_get_tooltip(HippoConnection *connection)
+{
+    HippoState state;
+    const char *tip;
+    
+    g_return_val_if_fail(HIPPO_IS_CONNECTION(connection), NULL);
+    
+    state = hippo_connection_get_state(connection);
+    
+    tip = NULL;
+    switch (state) {
+    case HIPPO_STATE_SIGNED_OUT:
+    case HIPPO_STATE_RETRYING:    
+        tip = _("Mugshot (disconnected)");
+        break;
+    case HIPPO_STATE_SIGN_IN_WAIT:
+        tip = _("Mugshot (please log in to mugshot.org)");
+        break;
+    case HIPPO_STATE_CONNECTING:
+    case HIPPO_STATE_AUTHENTICATING:
+        tip = _("Mugshot (connecting)");
+        break;    
+    case HIPPO_STATE_AWAITING_CLIENT_INFO:
+        tip = _("Mugshot (checking for updates)");
+        break;    
+    case HIPPO_STATE_AUTH_WAIT:
+        tip = _("Mugshot (login failed, try logging in to mugshot.org?)");
+        break;
+    case HIPPO_STATE_AUTHENTICATED:
+        tip = _("Mugshot");
+        break;
+    }
+
+    if (tip == NULL)
+        tip = _("Mugshot");
+
+    return tip;
+}
 
 const char*
 hippo_state_debug_string(HippoState state)

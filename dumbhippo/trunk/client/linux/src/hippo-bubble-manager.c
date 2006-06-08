@@ -18,6 +18,13 @@ static void remove_popdown_timeout  (BubbleManager *manager);
 static void update_bubble_paging    (BubbleManager *manager);
 
 static void
+manager_hide_window(BubbleManager *manager)
+{
+    gtk_widget_hide(manager->window);
+    remove_popdown_timeout(manager);
+}
+
+static void
 manager_remove_bubble_by_page(BubbleManager *manager,
                               int            page)
 {
@@ -26,8 +33,7 @@ manager_remove_bubble_by_page(BubbleManager *manager,
     gtk_notebook_remove_page(GTK_NOTEBOOK(manager->notebook), page);
     
     if (gtk_notebook_get_n_pages(GTK_NOTEBOOK(manager->notebook)) == 0) {
-        gtk_widget_hide(manager->window);
-        remove_popdown_timeout(manager);
+        manager_hide_window(manager);
     } else {
         update_bubble_paging(manager); /* changes window size, before positioning */
         /* if we closed a bubble we need to redo the positioning */
@@ -68,12 +74,12 @@ popdown_timeout(void *data)
     GList *link;
     GTime now;
     GTimeVal tv;
-    gboolean all_timed_out;
+    GList *timed_out;
     
     g_get_current_time(&tv);
     now = tv.tv_sec;
     
-    all_timed_out = TRUE;
+    timed_out = NULL;
     children = gtk_container_get_children(GTK_CONTAINER(manager->notebook));
     for (link = children; link != NULL; link = link->next) {
         HippoBubble *bubble = HIPPO_BUBBLE(link->data);
@@ -88,21 +94,22 @@ popdown_timeout(void *data)
             bubble_set_timestamp(bubble, now);
         }
         
-        /* see if we've timed out */
         if ((now - bubble_time) > BUBBLE_LENGTH_SECONDS) {
             /* this bubble timed out */
-            ;
-        } else {
-            all_timed_out = FALSE;
+            timed_out = g_list_prepend(timed_out, bubble);
         }
     }
     
     g_list_free(children);
     
-    if (all_timed_out) {
-        gtk_widget_hide(manager->window);
-        remove_popdown_timeout(manager); /* remove ourselves */    
+    for (link = timed_out; link != NULL; link = link->next) {
+        /* When we remove the last bubble it will hide the window 
+         * and remove this timeout as a side effect
+         */
+        manager_remove_bubble(manager, HIPPO_BUBBLE(link->data));
     }
+    
+    g_list_free(timed_out);
     
     /* stay installed, unless we just removed ourselves */
     return TRUE;
@@ -303,7 +310,7 @@ on_chat_room_loaded(HippoPost     *post,
     }
 }
 
-static void 
+static void
 on_post_added(HippoDataCache *cache,
               HippoPost      *post,
               BubbleManager  *manager)
@@ -375,16 +382,7 @@ window_delete_event(GtkWindow     *window,
                     GdkEvent      *event,
                     BubbleManager *manager)
 {
-    /* change this to remove current bubble, and hide window 
-     * if no more bubbles
-     */
-
-    int page;
-    
-    page = gtk_notebook_get_current_page(GTK_NOTEBOOK(manager->notebook));
-    if (page >= 0) {
-        manager_remove_bubble_by_page(manager, page);
-    }
+    manager_hide_window(manager);
 
     /* don't destroy us */
     return TRUE;
