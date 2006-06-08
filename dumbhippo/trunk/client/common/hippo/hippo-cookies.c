@@ -393,6 +393,8 @@ hippo_load_cookies_file(HippoBrowserKind browser,
         }
     }
     
+    g_free(contents);
+    
     /* we've been prepending, so reverse */
     return g_slist_reverse(cookies);
 }
