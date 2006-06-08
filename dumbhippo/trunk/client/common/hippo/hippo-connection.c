@@ -542,7 +542,7 @@ hippo_connection_set_post_ignored (HippoConnection  *connection,
 
     method = lm_message_node_add_child (node, "postControl", NULL);
     lm_message_node_set_attribute(method, "xmlns", "http://dumbhippo.com/protocol/postControl");
-    lm_message_node_set_attribute(method, "op", "ignore");
+    lm_message_node_set_attribute(method, "type", "ignore");
     lm_message_node_set_attribute(method, "id", post_id);
  
     hippo_connection_send_message(connection, message, SEND_MODE_AFTER_AUTH);
