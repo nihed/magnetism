@@ -32,11 +32,11 @@ public class PostControlsIQHandler extends AbstractIQHandler {
 		IQ reply = IQ.createResultIQ(packet);
 		
 		Element element = packet.getChildElement();
+		String type = element.attributeValue("type");		
 		String id = element.attributeValue("id");
-		String op = element.attributeValue("op");
 		
 		MessengerGlueRemote glue = EJBUtil.defaultLookup(MessengerGlueRemote.class);
-		if (op.equals("ignore")) {
+		if (type.equals("ignore")) {
 			try {
 				glue.setPostIgnored(from.getNode(), id);
 			} catch (NotFoundException e) {
