@@ -2,6 +2,7 @@ package com.dumbhippo.persistence;
 
 /**
  * This enum is used in database persistence, so changing it affects the schema.
+ * Also we rely on the ordinal values being in order of "increasing membership"
  * 
  * @author otaylor
  */

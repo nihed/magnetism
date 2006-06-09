@@ -28,8 +28,6 @@ public interface GroupSystem {
 	 */
 	public Group createGroup(User creator, String name, GroupAccess access, String description);
 	
-	public void deleteGroup(User deleter, Group group);
-	
 	public void addMember(User adder, Group group, Person person);
 	
 	public void removeMember(User remover, Group group, Person person);
@@ -54,6 +52,13 @@ public interface GroupSystem {
 	
 	public Set<Group> findRawGroups(Viewpoint viewpoint, User member, MembershipStatus status);
 
+	/**
+	 * For all groups, ensure this user has a single GroupMember that points to the user's Account
+	 * rather than an email address or something. Used when adding a new AccountClaim.
+	 * @param member the user to fix up
+	 */
+	public void fixupGroupMemberships(User member);
+	
 	/**
 	 * Increase the version number of the group; increasing the group version means
 	 * any cached resources for the group (currently, just the group photo) are

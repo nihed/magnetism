@@ -1,5 +1,6 @@
 package com.dumbhippo.server.impl;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
@@ -22,7 +23,10 @@ import com.dumbhippo.TypeUtils;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.live.GroupEvent;
 import com.dumbhippo.live.LiveState;
+import com.dumbhippo.persistence.Account;
+import com.dumbhippo.persistence.AccountClaim;
 import com.dumbhippo.persistence.Contact;
+import com.dumbhippo.persistence.ContactClaim;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupAccess;
 import com.dumbhippo.persistence.GroupMember;
@@ -76,72 +80,106 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 
 		return g;
 	}
-	
-	public void deleteGroup(User deleter, Group group) {
-		// FIXME how can this even imagine working? getMembers() returns a set of GroupMember
-		if (!group.getMembers().contains(deleter)) {
-			throw new IllegalArgumentException("invalid person deleting group");
+
+	private GroupMember getGroupMemberForUser(Group group, User user, boolean fixupExpected) throws NotFoundException {
+		List<GroupMember> allMembers = new ArrayList<GroupMember>(); 
+		for (GroupMember member : group.getMembers()) {
+			AccountClaim ac = member.getMember().getAccountClaim();
+			if (ac != null && ac.getOwner().equals(user)) {
+				allMembers.add(member);
+			}
 		}
-	}
-	
-	static final String GET_GROUP_MEMBER_FOR_USER_QUERY =
-		"SELECT gm FROM GroupMember gm, AccountClaim ac " +
-		"WHERE gm.group = :group AND ac.resource = gm.member AND ac.owner = :user";
-	
-	private GroupMember getGroupMemberForUser(Group group, User user) throws NotFoundException {
-		try {
-			return (GroupMember)em.createQuery(GET_GROUP_MEMBER_FOR_USER_QUERY)
-				.setParameter("group", group)
-				.setParameter("user", user)
-				.setMaxResults(1)
-				.getSingleResult();
-		} catch (EntityNotFoundException e) {
-			throw new NotFoundException("GroupMember for user " + user + " not found", e);
+		
+		if (allMembers.isEmpty())
+			throw new NotFoundException("GroupMember for user " + user + " in group " + group + " not found");
+		
+		// if !fixupExpected we could always just return here (assuming allMembers.size() == 1) but for now
+		// run through the below sanity checking and throw RuntimeException if stuff is wonky
+		
+		/* We fix up here to always have a single member which is the account member */
+		
+		MembershipStatus status = MembershipStatus.NONMEMBER;
+		User adder = null;
+		GroupMember accountMember = null;
+		Account account = user.getAccount();
+		for (GroupMember member : allMembers) {
+			// use our "most joined up" status
+			if (member.getStatus().ordinal() > status.ordinal()) {
+				status = member.getStatus();
+				// prefer the "most joined" adder, but prefer any 
+				// adder over null adder
+				if (member.getAdder() != null)
+					adder = member.getAdder();
+			}
+			
+			if (member.getMember().equals(account)) {
+				accountMember = member;
+			} else {
+				if (fixupExpected) {
+					// get rid of anything that isn't an account member
+					logger.debug("Removing group member {} in favor of account member", member);
+					group.getMembers().remove(member);
+					em.remove(member);
+				} else {
+					throw new RuntimeException("Unexpected need to fixup GroupMember for user " + user + " in group " + group);
+				}
+			}
 		}
+		
+		if (status == MembershipStatus.NONMEMBER) {
+			throw new RuntimeException("MembershipStatus.NONMEMBER found in the database for group " + group + " user " + user);
+		}
+		
+		if (accountMember == null) {
+			if (!fixupExpected) {
+				throw new RuntimeException("Fixups not expected and group member was not an account member: " + allMembers);
+			}
+			logger.debug("Adding new account member to group {} for account {}", group, account);
+			accountMember = new GroupMember(group, account, status);
+			if (adder != null)
+				accountMember.setAdder(adder);
+			em.persist(accountMember);
+			group.getMembers().add(accountMember);
+		}
+		
+		return accountMember;
 	}
-	
-	static final String GET_GROUP_MEMBER_FOR_CONTACT_QUERY =
-		"SELECT gm FROM GroupMember gm, ContactClaim cc " +
-		"WHERE gm.group = :group AND cc.resource = gm.member AND cc.contact = :contact";
-	
+
 	private GroupMember getGroupMemberForContact(Group group, Contact contact) throws NotFoundException {
-		try {
-			return (GroupMember)em.createQuery(GET_GROUP_MEMBER_FOR_CONTACT_QUERY)
-				.setParameter("group", group)
-				.setParameter("contact", contact)
-				.setMaxResults(1)
-				.getSingleResult();
-		} catch (EntityNotFoundException e) {
-			throw new NotFoundException("GroupMember for contact " + contact + " not found", e);
+		
+		// FIXME this isn't really going to work well if there are multiple GroupMember, but the 
+		// UI doesn't really offer a way to do that right now anyway I don't think
+		
+		// This would work fine by itself without the above code, if there
+		// were never anything that needed fixup
+		for (GroupMember member : group.getMembers()) {
+			for (ContactClaim cc : contact.getResources()) {
+				if (cc.getResource().equals(member.getMember()))
+					return member;
+			}
 		}
+		throw new NotFoundException("GroupMember for contact " + contact + " not found");
 	}
 	
 	private GroupMember getGroupMember(Group group, Person person) throws NotFoundException {
 		if (person instanceof User)
-			return getGroupMemberForUser(group, (User)person);
+			return getGroupMemberForUser(group, (User)person, false);
 		else
 			return getGroupMemberForContact(group, (Contact)person);
 	}
-
-	static final String GET_GROUP_MEMBER_FOR_RESOURCE_QUERY =
-		"SELECT gm FROM GroupMember gm " +
-		"WHERE gm.group = :group AND gm.member = :resource";
 	
-	public GroupMember getGroupMember(Group group, Resource member) throws NotFoundException {
-		try {
-			return (GroupMember)em.createQuery(GET_GROUP_MEMBER_FOR_RESOURCE_QUERY)
-				.setParameter("group", group)
-				.setParameter("resource", member)
-				.setMaxResults(1)
-				.getSingleResult();
-		} catch (EntityNotFoundException e) {
-			throw new NotFoundException("GroupMember for resource " + member + " not found", e);
+	public GroupMember getGroupMember(Group group, Resource resource) throws NotFoundException {
+		for (GroupMember member : group.getMembers()) {
+			if (member.getMember().equals(resource))
+				return member;
 		}
+		throw new NotFoundException("GroupMember for resource " + resource + " not found");
 	}
 	
 	public void addMember(User adder, Group group, Person person) {
 		GroupMember groupMember;
 		try {
+			// if person is a User then this will do fixups
 			groupMember = getGroupMember(group, person);
 		} catch (NotFoundException e) {
 			groupMember = null;
@@ -175,7 +213,8 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 				if (selfAdd) {
 					// accepting an invitation, add our inviter as a contact
 					User previousAdder = groupMember.getAdder();
-					identitySpider.addContactPerson(adder, previousAdder);
+					if (previousAdder != null)
+						identitySpider.addContactPerson(adder, previousAdder);
 				} else {
 					// already invited, do nothing
 					return;
@@ -196,7 +235,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 			em.persist(group);
 		}
 		
-        LiveState.getInstance().queuePostTransactionUpdate(em, new GroupEvent(group.getGuid(), groupMember.getMember().getGuid(), GroupEvent.Type.MEMBERSHIP_CHANGE));	
+        LiveState.getInstance().queuePostTransactionUpdate(em, new GroupEvent(group.getGuid(), groupMember.getMember().getGuid(), GroupEvent.Type.MEMBERSHIP_CHANGE));
 	}
 	
 	public void removeMember(User remover, Group group, Person person) {
@@ -204,6 +243,8 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 			throw new IllegalArgumentException("a group member can only be removed by themself");
 		
 		try {
+			// note that getGroupMember() here does a fixup so we only have one GroupMember which 
+			// canonically points to our account.
 			GroupMember groupMember = getGroupMember(group, person);
 			if (groupMember.getStatus() != MembershipStatus.REMOVED) {
 				groupMember.setStatus(MembershipStatus.REMOVED);
@@ -223,17 +264,17 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 	// this is needed to avoid the group page vanishing when you remove
 	// yourself - and also "Can see private posts and members". There is 
 	// no difference between the two for the anonymous viewer.
-	static final String CAN_SEE = 
+	private static final String CAN_SEE = 
 		" (g.access >= " + GroupAccess.PUBLIC_INVITE.ordinal() + " OR " + 
 		  "EXISTS (SELECT vgm FROM GroupMember vgm, AccountClaim ac " +
 	              "WHERE vgm.group = g AND ac.resource = vgm.member AND ac.owner = :viewer AND " +
 	              "vgm.status >= " + MembershipStatus.INVITED.ordinal() + ")) ";
-	static final String CAN_SEE_GROUP =
+	private static final String CAN_SEE_GROUP =
 		" (g.access >= " + GroupAccess.PUBLIC_INVITE.ordinal() + " OR " + 
 		  "EXISTS (SELECT vgm FROM GroupMember vgm, AccountClaim ac " +
                   "WHERE vgm.group = g AND ac.resource = vgm.member AND ac.owner = :viewer AND " +
                   "vgm.status >= " + MembershipStatus.REMOVED.ordinal() + ")) ";
-	static final String CAN_SEE_ANONYMOUS = " g.access >= " + GroupAccess.PUBLIC_INVITE.ordinal() + " ";
+	private static final String CAN_SEE_ANONYMOUS = " g.access >= " + GroupAccess.PUBLIC_INVITE.ordinal() + " ";
 	
 	private String getStatusClause(MembershipStatus status) {
 		if (status != null) {
@@ -325,7 +366,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 	}
 	
 	// The selection of Group is only needed for the CAN_SEE checks
-	static final String GET_GROUP_MEMBER_QUERY = 
+	private static final String GET_GROUP_MEMBER_QUERY = 
 		"SELECT gm FROM GroupMember gm, AccountClaim ac, Group g " +
         "WHERE gm.group = :group AND ac.resource = gm.member AND ac.owner = :member AND g = :group";
 	
@@ -352,7 +393,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 	}
 	
 	// The selection of Group is only needed for the CAN_SEE checks
-	static final String FIND_RAW_GROUPS_QUERY = 
+	private static final String FIND_RAW_GROUPS_QUERY = 
 		"SELECT gm.group FROM GroupMember gm, AccountClaim ac, Group g " +
 		"WHERE ac.resource = gm.member AND ac.owner = :member AND g = gm.group ";
 
@@ -382,6 +423,22 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		return findRawGroups(viewpoint, member, null);
 	}
 
+	public void fixupGroupMemberships(User user) {
+		Set<Group> groups = findRawGroups(SystemViewpoint.getInstance(), user);
+		for (Group g : groups) {
+			GroupMember member;
+			try {
+				member = getGroupMemberForUser(g, user, true);
+				if (!(member.getMember() instanceof Account)) {
+					// continue to fix up the other memberships rather than crashing completely
+					logger.error("User " + user + " has not-fixed-up group member " + member + " in group " + g);
+				}
+			} catch (NotFoundException e) {
+				// ignore
+			}
+		}
+	}
+	
 	private Query buildFindGroupsQuery(Viewpoint viewpoint, User member, boolean isCount) {
 		Query q;		
 		StringBuilder queryStr = new StringBuilder("SELECT ");
@@ -473,7 +530,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 	}
 	
 	// The selection of Group is only needed for the CAN_SEE checks
-	static final String LOOKUP_GROUP_QUERY = "SELECT g FROM Group g where g.id = :groupId";
+	private static final String LOOKUP_GROUP_QUERY = "SELECT g FROM Group g where g.id = :groupId";
 
 	public Group lookupGroupById(Viewpoint viewpoint, String groupId) throws NotFoundException {
 		Query query;
@@ -500,10 +557,10 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		return lookupGroupById(viewpoint, guid.toString());
 	}
 	
-	static final String CONTACT_IS_MEMBER =
+	private static final String CONTACT_IS_MEMBER =
 		" EXISTS(SELECT cc FROM ContactClaim cc WHERE cc.contact = contact AND cc.resource = gm.member) ";
 	
-	static final String FIND_ADDABLE_CONTACTS_QUERY = 
+	private static final String FIND_ADDABLE_CONTACTS_QUERY = 
 		"SELECT contact from Account a, Contact contact, Group g " +
 		"WHERE a.owner = :viewer AND contact MEMBER OF a.contacts AND " + 
 			  "g.id = :groupid AND " + CAN_SEE_GROUP + " AND " + 
@@ -560,7 +617,12 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 	}
 
 	public boolean isMember(Group group, User user) {
-		// TODO can optimize this later
-		return getUserMembers(SystemViewpoint.getInstance(),group).contains(user);
+		try {
+			GroupMember member = getGroupMemberForUser(group, user, false);
+			assert member != null;
+			return true;
+		} catch (NotFoundException e) {
+			return false;
+		}
 	}
 }

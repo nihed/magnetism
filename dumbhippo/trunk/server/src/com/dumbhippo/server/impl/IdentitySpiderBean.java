@@ -41,6 +41,7 @@ import com.dumbhippo.persistence.Validators;
 import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.Character;
 import com.dumbhippo.server.Enabled;
+import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.IdentitySpiderRemote;
 import com.dumbhippo.server.InvitationSystem;
@@ -83,6 +84,9 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	
 	@EJB
 	private MySpaceTracker mySpaceTracker;
+	
+	@EJB
+	private GroupSystem groupSystem;
 	
 	public User lookupUserByEmail(String email) {
 		EmailResource res = getEmail(email);
@@ -535,6 +539,9 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		// Update inverse mappings
 		res.setAccountClaim(ac);
 		claimedOwner.getAccountClaims().add(ac);
+		
+		// fix up group memberships
+		groupSystem.fixupGroupMemberships(claimedOwner);
 	}
 
 	public void removeVerifiedOwnershipClaim(UserViewpoint viewpoint, User owner, Resource res) {
