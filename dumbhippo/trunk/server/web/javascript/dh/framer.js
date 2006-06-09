@@ -45,6 +45,7 @@ dh.framer.onReconnect = function() {
 	this._participantList.clear()
 	this._visitorList.clear()
 	this._messageList.clear()
+	this._updateChatCount()
 }
 
 // Go back to the user's home page, possibly closing the browser bar
@@ -84,6 +85,21 @@ dh.framer._removeMessage = function(message) {
 	}
 }
 
+dh.framer._updateChatCount = function() {
+	var chatCountNode = document.getElementById('dhPostChatCount')
+	var count = dh.framer._participantList.numUsers() // only chatters, not viewers
+	var countText;
+	
+	if (count == 0)
+		countText = "(empty)"
+	else if (count == 1)
+		countText = "(1 person)"
+	else
+		countText = "(" + count + " people)"
+
+	dojo.dom.textContent(chatCountNode, countText)
+}
+
 dh.framer._addUser = function(user, before, participant) {
 	var userList = document.getElementById("dhPostViewingListPeople")
     
@@ -95,19 +111,8 @@ dh.framer._addUser = function(user, before, participant) {
 		userList.insertBefore(document.createTextNode(", "), user.span.nextSibling);
 	else if (user.span.previousSibling)
 		userList.insertBefore(document.createTextNode(", "), user.span);
-		
-	var chatCountNode = document.getElementById('dhPostChatCount')
-	var count = dh.framer._participantList.numUsers() // only chatters, not viewers
-	var countText;
-	
-	if (count == 0)
-		countText = "(empty)"
-	else if (count == 1)
-		countText = "(1 person)"
-	else
-		countText = "(" + count + " people)"
-	
-	dojo.dom.textContent(chatCountNode, countText)
+
+	dh.framer._updateChatCount()
 }
 
 dh.framer._removeUser = function(user, participant) {
@@ -118,6 +123,8 @@ dh.framer._removeUser = function(user, participant) {
     else if (user.span.previousSibling)
 	    userList.removeChild(user.span.previousSibling)
     userList.removeChild(user.span)
+    
+    dh.framer._updateChatCount()
 }
 
 dh.framer.setSelfId = function(id) {
