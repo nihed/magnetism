@@ -55,6 +55,13 @@ dh.invitation.fillValues = function(values) {
 dh.invitation.resend = function(address) {
 	dh.invitation.fillValues(dh.invitation.resendValues)
 	dh.invitation.addressEntry.setValue(address)
+	// if the user is out of invitations, they can only resend an invitation,
+	// so subject entry, message entry and send button are enabled only if
+	// it is a resend; address entry stays disabled, pre-filled with the 
+	// invitee e-mail 
+    dh.invitation.subjectEntry.setEnabled()
+    dh.invitation.messageEntry.setEnabled() 
+    document.getElementById("dhInvitationSendButton").disabled = false
 	dh.util.showMessage('Press "Send" to resend the invitation')
 	
 	// Scroll to the top of the page

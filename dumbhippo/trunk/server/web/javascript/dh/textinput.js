@@ -100,7 +100,14 @@ dh.textinput.Entry = function(entryNode, defaultText, currentValue)
 		
 	}
 	
-	
+	this.setDisabled = function() {
+		this.elem.disabled = true;
+	}
+
+	this.setEnabled = function() {
+		this.elem.disabled = false;
+	}
+		
 	this.activate = function() {
 		this._emitValueChanged();
 	}

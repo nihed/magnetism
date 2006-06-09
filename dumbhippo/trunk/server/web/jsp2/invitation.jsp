@@ -38,29 +38,35 @@
 		<dht:zoneBoxInvitation back='true'>
 			<div></div> <!-- IE bug workaround, display:none as first child causes problems -->			
 			<dht:messageArea/>
+			
 			<c:choose>
-			<c:when test="${signin.user.account.invitations > 0}">
-				<dht:zoneBoxTitle>INVITE A FRIEND</dht:zoneBoxTitle>
-				<dht:formTable>
-					<dht:formTableRow label="Friend's email address">
-						<dht:textInput id="dhAddressEntry"/>
-					</dht:formTableRow>
-					<dht:formTableRow label="Subject">
-						<dht:textInput id="dhSubjectEntry"/>
-					</dht:formTableRow>
-					<dht:formTableRow label="Message">
-						<dht:textInput id="dhMessageEntry" multiline="true"/>
-					</dht:formTableRow>
-					<tr>
-					    <td></td>
-						<td class="dh-control-cell"><input type="button" value="Send" onclick="dh.invitation.send()"/></td>
-					</tr>
-				</dht:formTable>
-			</c:when>
-			<c:otherwise>
-				<dht:zoneBoxTitle>NO INVITATIONS REMAINING</dht:zoneBoxTitle>			
-			</c:otherwise>
+			    <c:when test="${signin.user.account.invitations > 0}">
+				    <dht:zoneBoxTitle>INVITE A FRIEND</dht:zoneBoxTitle>
+                    <c:set var="disabled" value="false"/>
+			    </c:when>
+			    <c:otherwise>
+				    <dht:zoneBoxTitle>NO INVITATIONS REMAINING</dht:zoneBoxTitle>							
+                    <c:set var="disabled" value="true"/>
+                    <c:set var="disabledAttribute" value="disabled"/>
+			    </c:otherwise>
 			</c:choose>
+			
+			<dht:formTable>
+                <dht:formTableRow label="Friend's email address">
+                    <dht:textInput id="dhAddressEntry" disabled="${disabled}"/>
+                </dht:formTableRow>
+                <dht:formTableRow label="Subject">
+                    <dht:textInput id="dhSubjectEntry" disabled="${disabled}"/>
+                </dht:formTableRow>
+                <dht:formTableRow label="Message">
+                    <dht:textInput id="dhMessageEntry" multiline="true" disabled="${disabled}"/>
+                </dht:formTableRow>
+                <tr>
+                    <td></td>
+                    <td class="dh-control-cell"><input ${disabledAttribute} id="dhInvitationSendButton" type="button" value="Send" onclick="dh.invitation.send()"/></td>
+                </tr>
+            </dht:formTable>
+            
 			<c:if test="${invites.outstandingInvitations.size > 0}">
 				<dht:zoneBoxSeparator/>
 				<dht:zoneBoxTitle>PENDING INVITATIONS</dht:zoneBoxTitle>

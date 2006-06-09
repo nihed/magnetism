@@ -4,7 +4,14 @@
 
 <%@ attribute name="href" required="true" type="java.lang.String" %>
 <%@ attribute name="title" required="true" type="java.lang.String" %>
+<%@ attribute name="oneLine" required="false" type="java.lang.Boolean" %>
 
-<div class="dh-action-link">
+<c:set var="tagName" value="div"/>
+	
+<c:if test="${oneLine}">
+	<c:set var="tagName" value="span"/>
+</c:if>
+
+<${tagName} class="dh-action-link">
 <a href="${href}" title="${title}"><jsp:doBody/></a>
-</div>
+</${tagName}>

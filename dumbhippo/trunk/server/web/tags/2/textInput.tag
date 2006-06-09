@@ -7,9 +7,14 @@
 <%@ attribute name="type" required="false" type="java.lang.String" %>
 <%@ attribute name="id" required="false" type="java.lang.String" %>
 <%@ attribute name="name" required="false" type="java.lang.String" %>
+<%@attribute name="disabled" required="false" type="java.lang.String" %>
 
 <c:if test="${empty type}">
 	<c:set var="type" value="text" scope="page"/>
+</c:if>
+
+<c:if test="${disabled}">
+	<c:set var="disabledAttribute" value="disabled"/>
 </c:if>
 
 <c:if test="${empty dhTextInputCount}">
@@ -27,9 +32,9 @@
 
 <c:choose>
 	<c:when test="${multiline}">
-		<textarea id="${id}" name="${name}" class="dh-text-input ${extraClass}" rows="5"></textarea>
+		<textarea ${disabledAttribute} id="${id}" name="${name}" class="dh-text-input ${extraClass}" rows="5"></textarea>
 	</c:when>
 	<c:otherwise>
-		<input id="${id}" name="${name}" type="${type}" class="dh-text-input ${extraClass}" maxlength="64"/>
+		<input ${disabledAttribute} id="${id}" name="${name}" type="${type}" class="dh-text-input ${extraClass}" maxlength="64"/>
 	</c:otherwise>
 </c:choose>
