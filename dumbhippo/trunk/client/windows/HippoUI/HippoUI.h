@@ -62,7 +62,7 @@ public:
     STDMETHODIMP RegisterBrowser(IWebBrowser2 *, DWORD *);
     STDMETHODIMP UnregisterBrowser(DWORD);
     STDMETHODIMP UpdateBrowser(DWORD, BSTR, BSTR);
-    STDMETHODIMP Quit();
+    STDMETHODIMP Quit(DWORD *processId);
     STDMETHODIMP ShowMissed();
     STDMETHODIMP ShowRecent();
     STDMETHODIMP BeginFlickrShare(BSTR filePath);

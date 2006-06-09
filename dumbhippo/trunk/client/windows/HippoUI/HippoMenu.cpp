@@ -269,7 +269,7 @@ HippoMenu::onClose(bool fromScript)
 STDMETHODIMP 
 HippoMenu::Exit()
 {
-    ui_->Quit();
+    ui_->Quit(NULL);
 
     return S_OK;
 }

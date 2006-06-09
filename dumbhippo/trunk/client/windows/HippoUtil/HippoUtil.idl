@@ -29,8 +29,8 @@ library HippoUtil {
         HRESULT UnregisterBrowser([in] DWORD cookie);
         [id(102), helpstring("Update information about a browser")]
         HRESULT UpdateBrowser([in] DWORD cookie, [in] BSTR url, [in] BSTR title);
-        [id(103), helpstring("Unregister and exit")]
-        HRESULT Quit();
+        [id(103), helpstring("Unregister and exit, returns process ID so caller can wait for exit")]
+        HRESULT Quit([out, retval] DWORD *processId);
         [id(104), helpstring("Show recently shared links")]
         HRESULT ShowRecent();
         [id(105), helpstring("Upload a photo file to flickr and share link to it")]

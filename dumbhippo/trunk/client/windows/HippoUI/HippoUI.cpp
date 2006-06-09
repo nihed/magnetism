@@ -54,6 +54,8 @@ static const int CHECK_IDLE_TIME = 5 * 1000;
 // Time between icon blinks (in ms)
 static const int HOTNESS_BLINK_TIME = 150;
 
+static void quitAndWait(IHippoUI *ui);
+
 HippoUI::HippoUI(HippoInstanceType instanceType, bool replaceExisting, bool initialDebugShare) 
 {
     HippoConnection *connection;
@@ -275,8 +277,11 @@ HippoUI::doQuit(gpointer data)
 }
 
 STDMETHODIMP
-HippoUI::Quit()
+HippoUI::Quit(DWORD *processId)
 {
+    if (processId)
+        *processId = GetCurrentProcessId();
+
     // We need to unregister ourself as the active HippoUI implementation before
     // we return, but we need to return to the caller, not just exit immediately.
 
@@ -1186,7 +1191,7 @@ RETRY_REGISTER:
         if (replaceExisting_) {
             if (retryCount-- > 0) {
                 if (oldUI)
-                    oldUI->Quit();
+                    quitAndWait(oldUI);
 
                 goto RETRY_REGISTER;
             }
@@ -1880,6 +1885,30 @@ installLaunch(HINSTANCE instance)
 }
 
 static void
+quitAndWait(IHippoUI *ui)
+{
+    DWORD processId;
+    HRESULT hr = ui->Quit(&processId); 
+    if (FAILED(hr)) {
+        hippoDebugLogW(L"Couldn't signal old process to quit");
+        return;
+    }
+
+    HANDLE process = OpenProcess(SYNCHRONIZE, FALSE, processId);
+    if (!process) {
+        hippoDebugLogW(L"Couldn't open old process to wait for it to quit, might have exited already");
+        return;
+    }
+
+    if (WaitForSingleObject(process, 30000) != WAIT_OBJECT_0) {
+        hippoDebugLogW(L"Waiting for old process to quit timed out or failed");
+        return;
+    }
+
+    hippoDebugLogW(L"Succesfully waited for old process to exit");
+}
+
+static void
 quitExisting(HippoInstanceType instanceType)
 {
     HippoPtr<IUnknown> unknown;
@@ -1888,7 +1917,10 @@ quitExisting(HippoInstanceType instanceType)
        unknown->QueryInterface<IHippoUI>(&oldUI);
 
     if (oldUI)
-        oldUI->Quit();
+        quitAndWait(oldUI);
+
+    // Dereferencing the HippoUI at this point triggers a warning from the runtime since
+    // it can't talk to the HippoUI object which is gone, but it seems to be safe
 }
 
 static void
