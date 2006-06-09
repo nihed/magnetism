@@ -8,6 +8,7 @@ import javax.annotation.EJB;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityNotFoundException;
+import javax.persistence.NonUniqueResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
@@ -102,6 +103,26 @@ public class WantsInSystemBean implements WantsInSystem {
 		}
 		
 		return results;
+	}
+	
+	public boolean isWantsIn(String emailAddress) {
+		// this function is used when we are deciding whether the person who just joined
+		// came from the WantsIn list, if we only want to return true in case the person
+		// is in the wants in list and it was us who sent them an invitation, could add
+		// " AND wi.invitationSent = TRUE"
+	    Query q = em.createQuery("FROM WantsIn wi WHERE wi.address = :emailAddress");	    
+		q.setParameter("emailAddress", emailAddress);
+
+		try {
+		    q.getSingleResult();
+		    return true;
+		} catch (EntityNotFoundException e) { 
+			return false;
+		} catch (NonUniqueResultException e) {
+			// this should not be allowed by the database schema
+			logger.error("Multiple entries match email address {} in WantsIn table", emailAddress);
+			throw new RuntimeException("Multiple entries match email address " + emailAddress + " in WantsIn table");
+		}
 	}
 	
 	public int getWantsInCount() {

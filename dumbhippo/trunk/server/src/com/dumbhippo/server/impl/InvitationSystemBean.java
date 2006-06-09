@@ -50,6 +50,7 @@ import com.dumbhippo.server.PersonViewExtra;
 import com.dumbhippo.server.PromotionCode;
 import com.dumbhippo.server.SystemViewpoint;
 import com.dumbhippo.server.UserViewpoint;
+import com.dumbhippo.server.WantsInSystem;
 import com.dumbhippo.server.Configuration.PropertyNotFoundException;
 
 @Stateless
@@ -80,6 +81,9 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 	
 	@EJB
 	private NoMailSystem noMail;
+	
+	@EJB 
+	private WantsInSystem wantsInSystem;
 	
 	public InvitationToken lookupInvitationFor(User inviter, Resource invitee) {
 		InvitationToken invite;
@@ -607,8 +611,9 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		if (invite.isViewed()) {
 			throw new IllegalArgumentException("InvitationToken " + invite + " has already been viewed");
 		}
+
+		EmailResource invitationResource = (EmailResource) invite.getInvitee();
 		
-		Resource invitationResource = invite.getInvitee();
 		Account acct = accounts.createAccountFromResource(invitationResource);
 		if (disable)
 			acct.setDisabled(true);
@@ -628,7 +633,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 			// people can always turn it off
 			acct.setMusicSharingEnabled(true);
 		} else if (invite.getPromotionCode() == PromotionCode.SUMMIT_LANDING_200606) {
-			// summit people get a few invited for friends
+			// summit people get a few invites for friends
 			acct.setInvitations(5);			
 			// current default for enabling music sharing should apply to summit people
 			// we also want summit people to be invited to the common group
@@ -645,7 +650,17 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		    } catch (NotFoundException e) {
 				logger.error("Summit Group not found, guid: {}, exception: {}", groupGuidString, e.getMessage());
 			}
+		} else if (wantsInSystem.isWantsIn(invitationResource.getEmail())) {
+			// This will give invitations to someone whose e-mail is in the wants in list, 
+			// even if it wasn't us who invited them in. This seems reasonable, as having
+			// "signed up" should give a person a special status. If we want to only give 
+			// invites when it was us who invited the person, we either can check the inviter
+			// is Mugshot or change the behavior of wantsInSystem.isWantsIn() to check that  
+			// we have marked invitationSent for the e-mail as "true", which means it was us
+			// who sent the invitation.
+			acct.setInvitations(5);			
 		}
+			
 		
 		// needed to fix newUser.getAccount() returning null inside identitySpider?
 		em.flush();

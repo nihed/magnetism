@@ -15,5 +15,15 @@ public interface WantsInSystem {
 	
 	public List<WantsInView> getWantsInViewsWithoutInvites(int count);
 	
+	/**
+	 * Returns true if the email address is in the wants in list,
+	 * regardless of whether the invitation for this e-mail has been marked 
+	 * as sent. 
+	 * 
+	 * @param emailAddress
+	 * @return true if the email addres is in the wants in list, false otherwise
+	 */
+	public boolean isWantsIn(String emailAddress);
+	
 	public int getWantsInCount();
 }
