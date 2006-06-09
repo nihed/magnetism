@@ -39,6 +39,8 @@
 		dumbhippo.server.stealthmode=@@stealthMode@@
 		dumbhippo.server.userupdateinterval=@@userUpdateInterval@@
 		dumbhippo.server.summitgroupguid=@@summitGroupGuid@@
+		dumbhippo.server.newuserinvitationcount=@@newUserInvitationCount@@
+		dumbhippo.server.specialnewuserinvitationcount=@@specialNewUserInvitationCount@@		
     </attribute>
   </mbean>
   

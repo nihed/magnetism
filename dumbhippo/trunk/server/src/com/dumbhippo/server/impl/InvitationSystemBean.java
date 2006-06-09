@@ -628,13 +628,20 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		invite.setViewed(true);
 		invite.setResultingPerson(newUser);
 		
+		String specialCountString = configuration.getProperty(HippoProperty.SPECIAL_NEW_USER_INVITATION_COUNT);
+		int specialCount = Integer.parseInt(specialCountString);
+		String regularCountString = configuration.getProperty(HippoProperty.NEW_USER_INVITATION_COUNT);
+		int regularCount = Integer.parseInt(regularCountString);
+		
 		if (invite.getPromotionCode() == PromotionCode.MUSIC_INVITE_PAGE_200602) {
+			// we aren't really using this promotion for now, so set the regular number of invitations
+			acct.setInvitations(regularCount);
 			// you are already implicitly wanting this if you came via the music thing;
 			// people can always turn it off
 			acct.setMusicSharingEnabled(true);
 		} else if (invite.getPromotionCode() == PromotionCode.SUMMIT_LANDING_200606) {
-			// summit people get a few invites for friends
-			acct.setInvitations(5);			
+			// we aren't really using this promotion for now, so set the regular number of invitations
+			acct.setInvitations(regularCount);			
 			// current default for enabling music sharing should apply to summit people
 			// we also want summit people to be invited to the common group
 			String groupGuidString = null;
@@ -658,10 +665,11 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 			// is Mugshot or change the behavior of wantsInSystem.isWantsIn() to check that  
 			// we have marked invitationSent for the e-mail as "true", which means it was us
 			// who sent the invitation.
-			acct.setInvitations(5);			
+			acct.setInvitations(specialCount);			
+		} else {
+			acct.setInvitations(regularCount);
 		}
-			
-		
+				
 		// needed to fix newUser.getAccount() returning null inside identitySpider?
 		em.flush();
 		

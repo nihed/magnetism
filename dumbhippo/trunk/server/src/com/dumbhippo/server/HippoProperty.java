@@ -25,7 +25,9 @@ public enum HippoProperty {
 	ENABLE_ADMIN_CONSOLE("dumbhippo.server.adminconsole.enable", "false"),
 	STEALTH_MODE("dumbhippo.server.stealthmode", "false"),
 	USER_UPDATE_INTERVAL("dumbhippo.server.userupdateinterval", "300"), // 5 minutes
-	SUMMIT_GROUP_GUID("dumbhippo.server.summitgroupguid", null);	
+	SUMMIT_GROUP_GUID("dumbhippo.server.summitgroupguid", null),	
+	NEW_USER_INVITATION_COUNT("dumbhippo.server.newuserinvitationcount", "0"),
+	SPECIAL_NEW_USER_INVITATION_COUNT("dumbhippo.server.specialnewuserinvitationcount", "5");	
 	
 	private String key;
 	private String def;
