@@ -35,7 +35,7 @@
 		</c:when>
 		<c:otherwise>
 			<%-- WINDOWS RELEASE NOTES GO HERE --%>
-			<p>Version 1.1.51</p>
+			<p>Version 1.1.52</p>
 			<ul>
 				<li>Add a link to join the chat directly from the bubble.</li>
 				<li>Allow the user to ignore chatter on uninteresting posts.</li>
