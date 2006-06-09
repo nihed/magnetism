@@ -87,6 +87,7 @@
 	        	        <File Id="bubedgeRPng"       Name="bubedge_.png" LongName="bubedge_r.png"       src="applets\bubedge_r.png"      DiskId="1" Vital="yes"/>
 	        	        <File Id="bubedgeTPng"       Name="bubedge_.png" LongName="bubedge_t.png"       src="applets\bubedge_t.png"      DiskId="1" Vital="yes"/>
 	        	        <File Id="bublinkswarmGif"   Name="bublinks.gif" LongName="bublinkswarm.gif"    src="applets\bublinkswarm.gif"   DiskId="1" Vital="yes"/>
+	        	        <File Id="chaticonGif"       Name="chaticon.gif" LongName="chaticon.gif"        src="applets\chaticon.gif"       DiskId="1" Vital="yes"/>
 	        	        <File Id="clientstyleXml"    Name="clientst.xml" LongName="clientstyle.xml"     src="applets\clientstyle.xml"    DiskId="1" Vital="yes"/>
 	        	        <File Id="dhCss"             Name="dh.css"                                      src="applets\dh.css"             DiskId="1" Vital="yes"/>
 	        	        <File Id="dhJs"              Name="dh.js"                                       src="applets\dh.js"              DiskId="1" Vital="yes"/>
@@ -94,6 +95,7 @@
 	        	        <File Id="grayleftarrowGif"  Name="grayleft.gif" LongName="grayleftarrow.gif"   src="applets\grayleftarrow.gif"  DiskId="1" Vital="yes"/>
 	        	        <File Id="grayrightarrowGif" Name="grayrigh.gif" LongName="grayrightarrow.gif"  src="applets\grayrightarrow.gif" DiskId="1" Vital="yes"/>
 	        	        <File Id="groupChatPng"      Name="groupCha.png" LongName="groupChat.png"       src="applets\groupChat.png"      DiskId="1" Vital="yes"/>
+	        	        <File Id="ignoreiconPng"     Name="ignoreic.png" LongName="ignoreicon.png"      src="applets\ignoreicon.png"     DiskId="1" Vital="yes"/>
 	        	        <File Id="linkswarm.gif"     Name="linkswar.gif" LongName="linkswarm.gif"       src="applets\linkswarm.gif"      DiskId="1" Vital="yes"/>
 	        	        <File Id="lsBubshadowPng"    Name="ls_bubsh.png" LongName="ls_bubshadow.png"    src="applets\ls_bubshadow.png"   DiskId="1" Vital="yes"/>
 	        	        <File Id="lsorangeBlPng"     Name="lsorange.png" LongName="lsorange_bl.png"     src="applets\lsorange_bl.png"    DiskId="1" Vital="yes"/>
