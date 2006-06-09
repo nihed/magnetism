@@ -22,7 +22,9 @@
 	
 	<div>
 		<br/>
-	    <dht:selfInvite promotion="${landing.summitPromotion}" invitesAvailable="${landing.selfInvitations}" summitSelfInvite="true"/>
+		<%-- we are not offering this promotion any longer, so instead of invitesAvailable="${landing.selfInvitations}", --%>
+		<%-- pretend we have no invites and offer people to "sign up" --%>	
+	    <dht:selfInvite promotion="${landing.summitPromotion}" invitesAvailable="0" summitSelfInvite="true"/>
 	</div>
 	
 	<dht:zoneBoxSeparator/>

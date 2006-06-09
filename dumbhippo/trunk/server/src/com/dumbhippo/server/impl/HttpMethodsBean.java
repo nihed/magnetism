@@ -744,13 +744,19 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			promotionCode = PromotionCode.check(promotion);
 			switch (promotionCode) {
 			case MUSIC_INVITE_PAGE_200602:
-				character = Character.MUSIC_GEEK;
+				// not valid at the moment
+				character = null;
+				// character = Character.MUSIC_GEEK;
 				break;
 			case GENERIC_LANDING_200606:
-				character = Character.MUGSHOT;
+                // not valid at the moment
+				character = null;
+				// character = Character.MUGSHOT;
 				break;
 			case SUMMIT_LANDING_200606:
-				character = Character.MUGSHOT;
+				// not valid at the moment
+				character = null;
+				// character = Character.MUGSHOT;
 				break;
 			default:
 				character = null;

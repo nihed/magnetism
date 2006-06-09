@@ -19,7 +19,9 @@
 	<div>
 		<img src="/images2/${buildStamp}/mugshot_tagline.gif"/>
 	</div>
-	<dht:selfInvite promotion="${landing.promotion}" invitesAvailable="${landing.selfInvitations}"/>
+    <%-- we are not offering this promotion any longer, so instead of invitesAvailable="${landing.selfInvitations}", --%>
+    <%-- pretend we have no invites and offer people to "sign up"--%>
+	<dht:selfInvite promotion="${landing.promotion}" invitesAvailable="0"/>
 	<dht:notevil/>
 	<div id="dhMusicRadarTag">
 		<img src="/images2/${buildStamp}/musicradartag.gif"/>
