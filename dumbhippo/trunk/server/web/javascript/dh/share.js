@@ -185,8 +185,10 @@ dh.share.addEmailContactAsync = function(email, onComplete) {
 dh.share.createNewContactFromCombo = function() {
 	var email = dojo.string.trim(dh.share.autoSuggest.inputText);
 	
-	if (email.length == 0) // Silently ignore empty
+	if (email.length == 0) { // Silently ignore empty
+		dojo.debug("ignoring empty email")
 		return
+	}
 	
 	if (!dh.share.isValidEmail(email)) {
 		alert("invalid email address: '" + email + "'");
@@ -205,6 +207,7 @@ dh.share.recipientSelected = function(selectedId) {
 		dh.share.doAddRecipient(selectedId, true);
 	else
 		dh.share.createNewContactFromCombo();
+	dh.share.autoSuggest.setText('')	
 }
 
 dh.share.doAddRecipient = function(selectedId, noFlash) {	

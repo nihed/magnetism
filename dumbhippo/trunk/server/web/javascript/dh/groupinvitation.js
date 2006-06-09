@@ -64,7 +64,8 @@ dh.groupinvitation.getEligibleRecipients = function() {
 
 dh.groupinvitation.recipientSelected = function(selectedId) {
 	var obj = dh.groupinvitation.allKnownIds[selectedId]
-	dh.groupinvitation.autoSuggest.inputText = dh.groupinvitation.autoSuggest.elem.value = obj.displayName
+	
+	dh.groupinvitation.autoSuggest.setText(obj.displayName)
 	
 	// Save both the text and the ID, so we can tell when the user subsequently edits
 	dh.groupinvitation.selectedText = obj.displayName

@@ -303,10 +303,7 @@ dh.autosuggest.AutoSuggest = function(entryNode, buttonNode)
 	{
 		var selectedId = this.getSelected();
 
-		this.elem.value = ''; //this.eligible[this.highlighted];
-		this.inputText = '';
-
-		this.onSelected(selectedId);
+		this.onSelected(selectedId)
 
 		this.hideDiv();
 	};
@@ -319,6 +316,11 @@ dh.autosuggest.AutoSuggest = function(entryNode, buttonNode)
 		var eligible = this.getEligible();
 		return eligible[this.highlighted][1];
 	};
+	
+	this.setText = function (text) {
+		this.elem.value = text
+		this.inputText = text
+	}
 
 	/********************************************************
 	Display the dropdown. Pretty straightforward.
