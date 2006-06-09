@@ -35,9 +35,11 @@
 		</c:when>
 		<c:otherwise>
 			<%-- WINDOWS RELEASE NOTES GO HERE --%>
-			<p>Version 1.1.50</p>
+			<p>Version 1.1.51</p>
 			<ul>
-				<li>Minor bug fixes</li>
+				<li>Add a link to join the chat directly from the bubble.</li>
+				<li>Allow the user to ignore chatter on uninteresting posts.</li>
+				<li>Bug fix: don't pop up already seen bubbles when reconnecting to the server.</li>
 			</ul>
 		</c:otherwise>
 	</c:choose>
