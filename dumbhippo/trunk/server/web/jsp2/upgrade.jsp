@@ -21,8 +21,9 @@
 	<c:choose>
 		<c:when test="${browser.linuxRequested}">
 			<%-- LINUX RELEASE NOTES GO HERE --%>
-			<p>Version 1.1.4</p>
+			<p>Version 1.1.5</p>
 			<ul>
+                                <li>Add Join Chat and Ignore buttons to notification bubbles</li>
 				<li>Fix a memory leak (thanks to Luke Macken)</li>
 				<li>Keep notification bubble sizes more consistent and reasonable</li>
 				<li>Always place notification bubbles in a corner of the screen</li>
