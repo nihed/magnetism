@@ -36,8 +36,13 @@
 		</c:when>
 		<c:otherwise>
 			<%-- WINDOWS RELEASE NOTES GO HERE --%>
-			<p>Version 1.1.52</p>
+			<div class="dh-message">
+			   Note: this upgrade might leave your copy of Mugshot in a non-working state. Please check out the
+<a href="http://developer.mugshot.org/wiki/How_To_Repair_Your_Windows_Client">Instructions to Fix</a> first.
+			</div>
+			<p>Version 1.1.53</p>
 			<ul>
+				<li>Don't lose files on future upgrades</li>
 				<li>Add a link to join the chat directly from the bubble.</li>
 				<li>Allow the user to ignore chatter on uninteresting posts.</li>
 				<li>Bug fix: don't pop up already seen bubbles when reconnecting to the server.</li>
