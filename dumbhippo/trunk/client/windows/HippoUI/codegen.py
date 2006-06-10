@@ -11,7 +11,6 @@ import os
 import re
 import exceptions
 import string
-import output    
 
 def die (s):
     print "Error: %s" % (s)
