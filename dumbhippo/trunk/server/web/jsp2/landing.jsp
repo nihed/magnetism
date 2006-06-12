@@ -3,7 +3,7 @@
 <%@ taglib uri="/jsp/dumbhippo.tld" prefix="dh" %>
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 
-<dh:bean id="landing" class="com.dumbhippo.web.LandingPage" scope="request"/>
+<dh:bean id="landing" class="com.dumbhippo.web.pages.LandingPage" scope="request"/>
 
 <head>
 	<title>Welcome to Mugshot</title>

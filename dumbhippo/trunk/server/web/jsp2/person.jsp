@@ -4,7 +4,7 @@
 <%@ taglib uri="/jsp/dumbhippo.tld" prefix="dh" %>
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 
-<dh:bean id="person" class="com.dumbhippo.web.PersonPage" scope="page"/>
+<dh:bean id="person" class="com.dumbhippo.web.pages.PersonPage" scope="page"/>
 <jsp:setProperty name="person" property="viewedUserId" param="who"/>
 
 <head>

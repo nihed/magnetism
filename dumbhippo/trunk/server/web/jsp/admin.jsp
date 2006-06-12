@@ -3,7 +3,7 @@
 <%@ taglib uri="dumbhippo.tld" prefix="dh" %>
 <%@ taglib tagdir="/WEB-INF/tags" prefix="dht" %>
 
-<dh:bean id="admin" class="com.dumbhippo.web.AdminPage" scope="request"/>
+<dh:bean id="admin" class="com.dumbhippo.web.pages.AdminPage" scope="request"/>
 
 <c:if test="${!admin.valid}">
 	<dht:errorPage>Permission Denied</dht:errorPage>

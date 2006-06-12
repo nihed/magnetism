@@ -13,7 +13,7 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.Post;
-import com.dumbhippo.web.SearchPage;
+import com.dumbhippo.web.pages.SearchPage;
 
 /**
  * Represents the result of searching over Posts using lucene. When

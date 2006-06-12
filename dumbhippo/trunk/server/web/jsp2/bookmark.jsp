@@ -3,7 +3,7 @@
 <%@ taglib uri="/jsp/dumbhippo.tld" prefix="dh" %>
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 
-<dh:bean id="bookmark" class="com.dumbhippo.web.BookmarkPage" scope="request"/>
+<dh:bean id="bookmark" class="com.dumbhippo.web.pages.BookmarkPage" scope="request"/>
 
 <c:choose>
 <%-- note that by "IE" browser bean means specifically "Windows IE" --%>

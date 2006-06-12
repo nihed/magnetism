@@ -3,7 +3,7 @@
 <%@ taglib uri="/jsp/dumbhippo.tld" prefix="dh" %>
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 
-<dh:bean id="musicsearch" class="com.dumbhippo.web.MusicSearchPage" scope="page"/>
+<dh:bean id="musicsearch" class="com.dumbhippo.web.pages.MusicSearchPage" scope="page"/>
 <jsp:setProperty name="musicsearch" property="song" param="track"/>
 <jsp:setProperty name="musicsearch" property="album" param="album"/>
 <jsp:setProperty name="musicsearch" property="artist" param="artist"/>

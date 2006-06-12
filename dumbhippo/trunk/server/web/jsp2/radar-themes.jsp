@@ -3,7 +3,7 @@
 <%@ taglib uri="/jsp/dumbhippo.tld" prefix="dh" %>
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 
-<dh:bean id="nowplaying" class="com.dumbhippo.web.NowPlayingThemesPage" scope="request"/>
+<dh:bean id="nowplaying" class="com.dumbhippo.web.pages.NowPlayingThemesPage" scope="request"/>
 
 <head>
         <title>Music Radar Themes</title>

@@ -3,7 +3,7 @@
 <%@ taglib uri="dumbhippo.tld" prefix="dh" %>
 <%@ taglib tagdir="/WEB-INF/tags" prefix="dht" %>
 
-<dh:bean id="mail" class="com.dumbhippo.web.MailSettingsPage" scope="request"/>
+<dh:bean id="mail" class="com.dumbhippo.web.pages.MailSettingsPage" scope="request"/>
 
 <head>
 	<title>Mail Settings</title>

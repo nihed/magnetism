@@ -9,7 +9,7 @@
 	<dht:errorPage>Not signed in</dht:errorPage>
 </c:if>
 
-<dh:bean id="group" class="com.dumbhippo.web.GroupPage" scope="request"/>
+<dh:bean id="group" class="com.dumbhippo.web.pages.GroupPage" scope="request"/>
 <jsp:setProperty name="group" property="viewedGroupId" param="group"/>
 <jsp:setProperty name="group" property="allMembers" value="true"/>
 
@@ -17,7 +17,7 @@
 	<dht:errorPage>Group not found</dht:errorPage>
 </c:if>
 
-<dh:bean id="invites" class="com.dumbhippo.web.InvitesPage" scope="page"/>
+<dh:bean id="invites" class="com.dumbhippo.web.pages.InvitesPage" scope="page"/>
 
 <head>
 	<title>Invitations to <c:out value="${group.name}"/></title>

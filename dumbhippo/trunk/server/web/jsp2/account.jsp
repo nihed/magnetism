@@ -8,7 +8,7 @@
 	<dht:errorPage>Not signed in</dht:errorPage>
 </c:if>
 
-<dh:bean id="account" class="com.dumbhippo.web.AccountPage" scope="page"/>
+<dh:bean id="account" class="com.dumbhippo.web.pages.AccountPage" scope="page"/>
 
 <head>
 	<title>Your Account</title>

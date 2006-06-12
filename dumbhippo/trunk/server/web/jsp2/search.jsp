@@ -3,7 +3,7 @@
 <%@ taglib uri="/jsp/dumbhippo.tld" prefix="dh" %>
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 
-<dh:bean id="find" class="com.dumbhippo.web.FindPage" scope="request"/>
+<dh:bean id="find" class="com.dumbhippo.web.pages.FindPage" scope="request"/>
 <jsp:setProperty name="find" property="searchText" param="q"/>
 
 <head>

@@ -4,7 +4,7 @@
 <%@ taglib uri="/jsp/dumbhippo.tld" prefix="dh" %>
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 
-<dh:bean id="framer" class="com.dumbhippo.web.FramerPage" scope="request"/>
+<dh:bean id="framer" class="com.dumbhippo.web.pages.FramerPage" scope="request"/>
 <dh:bean id="browser" class="com.dumbhippo.web.BrowserBean" scope="request"/>
 <jsp:setProperty name="framer" property="postId" param="postId"/>
 

@@ -3,5 +3,5 @@
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 
 <c:if test="${empty linksGlobal}">
-	<dh:bean id="linksGlobal" class="com.dumbhippo.web.LinksGlobalPage" scope="request"/>
+	<dh:bean id="linksGlobal" class="com.dumbhippo.web.pages.LinksGlobalPage" scope="request"/>
 </c:if>

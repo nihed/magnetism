@@ -3,7 +3,7 @@
 <%@ taglib uri="dumbhippo.tld" prefix="dh" %>
 <%@ taglib tagdir="/WEB-INF/tags" prefix="dht" %>
 
-<dh:bean id="welcome" class="com.dumbhippo.web.WelcomePage" scope="request"/>
+<dh:bean id="welcome" class="com.dumbhippo.web.pages.WelcomePage" scope="request"/>
 
 <c:if test="${welcome.signin.disabled}">
 	<jsp:forward page="/jsp/we-miss-you.jsp"/>

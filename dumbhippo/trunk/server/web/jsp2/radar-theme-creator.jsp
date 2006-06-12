@@ -3,7 +3,7 @@
 <%@ taglib uri="/jsp/dumbhippo.tld" prefix="dh" %>
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 
-<dh:bean id="nowplaying" class="com.dumbhippo.web.NowPlayingThemeCreatorPage" scope="request"/>
+<dh:bean id="nowplaying" class="com.dumbhippo.web.pages.NowPlayingThemeCreatorPage" scope="request"/>
 <jsp:setProperty name="nowplaying" property="themeId" param="theme"/>
 
 <c:if test="${empty nowplaying.theme}">

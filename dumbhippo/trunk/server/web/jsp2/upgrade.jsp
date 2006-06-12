@@ -5,7 +5,7 @@
 
 <%-- This is only used in the Linux case, but currently dh:bean as a side effect sets the 
      "browser" variable in request scope, so don't try moving this into the linux-only cases below --%>
-<dh:bean id="download" class="com.dumbhippo.web.DownloadPage" scope="page"/>
+<dh:bean id="download" class="com.dumbhippo.web.pages.DownloadPage" scope="page"/>
 
 <head>
 	<title>Upgrade</title>

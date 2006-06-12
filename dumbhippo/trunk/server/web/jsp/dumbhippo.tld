@@ -8,7 +8,7 @@
 	<info>DumbHippo Tag library</info>
     <tag>
         <name>bean</name>
-        <tagclass>com.dumbhippo.web.BeanTag</tagclass>
+        <tagclass>com.dumbhippo.web.tags.BeanTag</tagclass>
         <bodycontent>tagdependent</bodycontent>
         <info>A bean to instantiate with DumbHippo specific injection</info>
 	    <attribute>
@@ -29,7 +29,7 @@
     </tag>
     <tag>
         <name>entity</name>
-        <tagclass>com.dumbhippo.web.EntityTag</tagclass>
+        <tagclass>com.dumbhippo.web.tags.EntityTag</tagclass>
         <bodycontent>empty</bodycontent>
         <info>A taggified list person or group</info>
 	    <attribute>
@@ -75,7 +75,7 @@
     </tag>
     <tag>
         <name>presence</name>
-        <tagclass>com.dumbhippo.web.PresenceTag</tagclass>
+        <tagclass>com.dumbhippo.web.tags.PresenceTag</tagclass>
         <bodycontent>empty</bodycontent>
         <info>Taggified presence info about a person, group, or post</info>
 	    <attribute>
@@ -86,7 +86,7 @@
     </tag>
     <tag>
         <name>entityList</name>
-        <tagclass>com.dumbhippo.web.EntityListTag</tagclass>
+        <tagclass>com.dumbhippo.web.tags.EntityListTag</tagclass>
         <bodycontent>empty</bodycontent>
         <info>A taggified list of people and groups</info>
 	    <attribute>
@@ -147,7 +147,7 @@
     </tag>
     <tag>
         <name>favicon</name>
-        <tagclass>com.dumbhippo.web.FaviconTag</tagclass>
+        <tagclass>com.dumbhippo.web.tags.FaviconTag</tagclass>
         <bodycontent>empty</bodycontent>
         <info>Favicon image for the given link</info>
 	    <attribute>
@@ -158,7 +158,7 @@
     </tag>
     <tag>
         <name>png</name>
-        <tagclass>com.dumbhippo.web.PngTag</tagclass>
+        <tagclass>com.dumbhippo.web.tags.PngTag</tagclass>
         <bodycontent>empty</bodycontent>
         <info>A png that works in both firefox and IE</info>
 	    <attribute>
@@ -180,7 +180,7 @@
     </tag>
         <tag>
         <name>jsString</name>
-        <tagclass>com.dumbhippo.web.JavascriptStringTag</tagclass>
+        <tagclass>com.dumbhippo.web.tags.JavascriptStringTag</tagclass>
         <bodycontent>empty</bodycontent>
         <info>Output a JavaScript string literal</info>
 	    <attribute>
@@ -191,7 +191,7 @@
     </tag>
     <tag>
         <name>relocate</name>
-        <tagclass>com.dumbhippo.web.RelocateTag</tagclass>
+        <tagclass>com.dumbhippo.web.tags.RelocateTag</tagclass>
         <bodycontent>scriptless</bodycontent>
         <info>Move this stuff to a later relocateDest tag</info>
 	    <attribute>
@@ -202,7 +202,7 @@
     </tag>
     <tag>
         <name>relocateDest</name>
-        <tagclass>com.dumbhippo.web.RelocateDestTag</tagclass>
+        <tagclass>com.dumbhippo.web.tags.RelocateDestTag</tagclass>
         <bodycontent>empty</bodycontent>
         <info>Print out the stuff from an earlier relocate tag</info>
 	    <attribute>
@@ -213,7 +213,7 @@
     </tag>
     <tag>
         <name>whenRelocateDestNeeded</name>
-        <tagclass>com.dumbhippo.web.WhenRelocateDestNeededTag</tagclass>
+        <tagclass>com.dumbhippo.web.tags.WhenRelocateDestNeededTag</tagclass>
         <bodycontent>scriptless</bodycontent>
         <info>Invoke body only if there's stuff to be relocated</info>
 	    <attribute>
@@ -224,7 +224,7 @@
     </tag>
     <tag>
         <name>skipList</name>
-        <tagclass>com.dumbhippo.web.SkipListTag</tagclass>
+        <tagclass>com.dumbhippo.web.tags.SkipListTag</tagclass>
         <bodycontent>scriptless</bodycontent>
         <info>Skip the body if the given list is empty</info>
 	    <attribute>
@@ -240,7 +240,7 @@
     </tag>
     <tag>
         <name>nowPlaying</name>
-        <tagclass>com.dumbhippo.web.NowPlayingTag</tagclass>
+        <tagclass>com.dumbhippo.web.tags.NowPlayingTag</tagclass>
         <bodycontent>empty</bodycontent>
         <info>Outputs the "now playing" flash embed object</info>
 	    <attribute>
@@ -277,13 +277,13 @@
     </tag>
     <tag>
         <name>aRedHatSomething</name>
-        <tagclass>com.dumbhippo.web.RedHatSomethingTag</tagclass>
+        <tagclass>com.dumbhippo.web.tags.RedHatSomethingTag</tagclass>
         <bodycontent>empty</bodycontent>
         <info>Outputs "A Red Hat Something"</info>        
     </tag>    
     <tag>
         <name>pagerLinkList</name>
-        <tagclass>com.dumbhippo.web.PagerLinkListTag</tagclass>
+        <tagclass>com.dumbhippo.web.tags.PagerLinkListTag</tagclass>
         <bodycontent>empty</bodycontent>
         <info>Display list of pager links</info>        
 	    <attribute>

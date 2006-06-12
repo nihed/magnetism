@@ -3,7 +3,7 @@
 <%@ taglib uri="dumbhippo.tld" prefix="dh" %>
 <%@ taglib tagdir="/WEB-INF/tags" prefix="dht" %>
 
-<dh:bean id="viewgroup" class="com.dumbhippo.web.ViewGroupPage" scope="request"/>
+<dh:bean id="viewgroup" class="com.dumbhippo.web.pages.*Page" scope="request"/>
 <jsp:setProperty name="viewgroup" property="viewedGroupId" param="groupId"/>
 
 <c:if test="${empty viewgroup.viewedGroupId}">

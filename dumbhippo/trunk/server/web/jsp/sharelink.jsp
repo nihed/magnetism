@@ -3,7 +3,7 @@
 <%@ taglib uri="dumbhippo.tld" prefix="dh" %>
 <%@ taglib tagdir="/WEB-INF/tags" prefix="dht" %>
 
-<dh:bean id="sharelink" class="com.dumbhippo.web.ShareLinkPage" scope="request"/>
+<dh:bean id="sharelink" class="com.dumbhippo.web.pages.ShareLinkPage" scope="request"/>
 
 <head>
 	<title>Sharing a Link</title>

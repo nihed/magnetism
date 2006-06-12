@@ -1,5 +1,7 @@
 package com.dumbhippo.web;
 
+import com.dumbhippo.web.tags.JavascriptStringTag;
+
 import junit.framework.TestCase;
 
 public class JavascriptStringTest extends TestCase {

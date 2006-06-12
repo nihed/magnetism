@@ -4,7 +4,7 @@
 <%@ taglib uri="/jsp/dumbhippo.tld" prefix="dh" %>
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 
-<dh:bean id="group" class="com.dumbhippo.web.GroupPage" scope="request"/>
+<dh:bean id="group" class="com.dumbhippo.web.pages.GroupPage" scope="request"/>
 <jsp:setProperty name="group" property="viewedGroupId" param="group"/>
 
 <c:if test="${empty group.viewedGroupId}">

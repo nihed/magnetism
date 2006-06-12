@@ -4,7 +4,7 @@
 <%@ taglib uri="/jsp/dumbhippo.tld" prefix="dh" %>
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 
-<dh:bean id="chatwindow" class="com.dumbhippo.web.ChatWindowPage" scope="request"/>
+<dh:bean id="chatwindow" class="com.dumbhippo.web.pages.ChatWindowPage" scope="request"/>
 <%-- only one of these params is expected at a time... chatId just means 
 	"figure out whether it's post or group" which is less efficient but 
 	some calling contexts might not know the type of chat --%>

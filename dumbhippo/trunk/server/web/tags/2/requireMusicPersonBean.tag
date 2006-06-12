@@ -5,6 +5,6 @@
 <%@ attribute name="who" required="true" type="java.lang.String" %>
 
 <c:if test="${empty musicPerson}">
-	<dh:bean id="musicPerson" class="com.dumbhippo.web.MusicPersonPage" scope="request"/>
+	<dh:bean id="musicPerson" class="com.dumbhippo.web.pages.MusicPersonPage" scope="request"/>
 	<jsp:setProperty name="musicPerson" property="viewedUserId" value="${who}"/>
 </c:if>

@@ -3,7 +3,7 @@
 <%@ taglib uri="dumbhippo.tld" prefix="dh" %>
 <%@ taglib tagdir="/WEB-INF/tags" prefix="dht" %>
 
-<dh:bean id="framer" class="com.dumbhippo.web.FramerPage" scope="request"/>
+<dh:bean id="framer" class="com.dumbhippo.web.pages.FramerPage" scope="request"/>
 <jsp:setProperty name="framer" property="postId" param="post"/>
 
 <c:set var="title" value="${framer.post.title}" scope="page"/>

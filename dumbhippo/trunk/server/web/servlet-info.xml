@@ -13,61 +13,61 @@
     
     <servlet>
       <servlet-name>HttpMethodsServlet</servlet-name>
-      <servlet-class>com.dumbhippo.web.HttpMethodsServlet</servlet-class>
+      <servlet-class>com.dumbhippo.web.servlets.HttpMethodsServlet</servlet-class>
       <load-on-startup>1</load-on-startup>
     </servlet>   
 
    <servlet>
       <servlet-name>PostThumbnailServlet</servlet-name>
-      <servlet-class>com.dumbhippo.web.PostThumbnailServlet</servlet-class>
+      <servlet-class>com.dumbhippo.web.servlets.PostThumbnailServlet</servlet-class>
       <load-on-startup>1</load-on-startup>
     </servlet>   
 
    <servlet>
       <servlet-name>NowPlayingThemePhotoServlet</servlet-name>
-      <servlet-class>com.dumbhippo.web.NowPlayingThemePhotoServlet</servlet-class>
+      <servlet-class>com.dumbhippo.web.servlets.NowPlayingThemePhotoServlet</servlet-class>
       <load-on-startup>1</load-on-startup>
     </servlet>   
 
    <servlet>
       <servlet-name>PersonPhotoServlet</servlet-name>
-      <servlet-class>com.dumbhippo.web.PersonPhotoServlet</servlet-class>
+      <servlet-class>com.dumbhippo.web.servlets.PersonPhotoServlet</servlet-class>
       <load-on-startup>1</load-on-startup>
     </servlet>   
 
     <servlet>
       <servlet-name>GroupPhotoServlet</servlet-name>
-      <servlet-class>com.dumbhippo.web.GroupPhotoServlet</servlet-class>
+      <servlet-class>com.dumbhippo.web.servlets.GroupPhotoServlet</servlet-class>
 	  <load-on-startup>1</load-on-startup>
 	</servlet>
 
     <servlet>
       <servlet-name>RedirectServlet</servlet-name>
-      <servlet-class>com.dumbhippo.web.RedirectServlet</servlet-class>
+      <servlet-class>com.dumbhippo.web.servlets.RedirectServlet</servlet-class>
       <load-on-startup>1</load-on-startup>
     </servlet>
 
     <servlet>
       <servlet-name>WantsInServlet</servlet-name>
-      <servlet-class>com.dumbhippo.web.WantsInServlet</servlet-class>
+      <servlet-class>com.dumbhippo.web.servlets.WantsInServlet</servlet-class>
       <load-on-startup>1</load-on-startup>
     </servlet> 
 
     <servlet>
       <servlet-name>SigninServlet</servlet-name>
-      <servlet-class>com.dumbhippo.web.SigninServlet</servlet-class>
+      <servlet-class>com.dumbhippo.web.servlets.SigninServlet</servlet-class>
       <load-on-startup>1</load-on-startup>
     </servlet> 
 
     <servlet>
       <servlet-name>AbnormalErrorServlet</servlet-name>
-      <servlet-class>com.dumbhippo.web.AbnormalErrorServlet</servlet-class>
+      <servlet-class>com.dumbhippo.web.servlets.AbnormalErrorServlet</servlet-class>
       <load-on-startup>1</load-on-startup>
     </servlet>
 
     <servlet>
       <servlet-name>SendInviteServlet</servlet-name>
-      <servlet-class>com.dumbhippo.web.SendInviteServlet</servlet-class>
+      <servlet-class>com.dumbhippo.web.servlets.SendInviteServlet</servlet-class>
     </servlet>    
 
 	<!--  I can't figure out how to handle "all error codes" - "*" doesn't work afaict -->
@@ -153,7 +153,7 @@
 
    <servlet>
       <servlet-name>VerifyServlet</servlet-name>
-      <servlet-class>com.dumbhippo.web.VerifyServlet</servlet-class>
+      <servlet-class>com.dumbhippo.web.servlets.VerifyServlet</servlet-class>
    </servlet>   
    
    <servlet-mapping>
@@ -180,7 +180,7 @@
 
    <servlet>
       <servlet-name>RewriteServlet</servlet-name>
-      <servlet-class>com.dumbhippo.web.RewriteServlet</servlet-class>
+      <servlet-class>com.dumbhippo.web.servlets.RewriteServlet</servlet-class>
       <!-- Every page (other than psa-*) must be in one of these lists; please keep them alphabetical
            note that there is special-casing for download and we-miss-you in RewriteServlet, though
            they are listed below for completeness -->
