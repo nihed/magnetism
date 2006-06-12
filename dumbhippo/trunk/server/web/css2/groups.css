@@ -1,0 +1,7 @@
+@CHARSET "UTF-8";
+@IMPORT url("site.css");
+@IMPORT url("groups-positions.css");
+
+.dh-group-invitation-action-complete {
+	font-weight: bold;
+}

@@ -88,9 +88,9 @@ public interface GroupSystem {
 	 * @return a list of GroupView objects for the groups member is in
 	 * @return maxResults if positive, maximum number of groups to return
 	 */
-	public Set<GroupView> findGroups(Viewpoint viewpoint, User member);
+	public Set<GroupView> findGroups(Viewpoint viewpoint, User member, MembershipStatus status);
 	
-	public int findGroupsCount(Viewpoint viewpoint, User member);
+	public int findGroupsCount(Viewpoint viewpoint, User member, MembershipStatus status);
 	
 	public Group lookupGroupById(Viewpoint viewpoint, String groupId) throws NotFoundException;
 	

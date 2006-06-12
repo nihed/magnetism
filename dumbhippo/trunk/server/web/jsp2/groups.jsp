@@ -10,11 +10,9 @@
 
 <c:choose>
 	<c:when test='${empty param["who"]}'>
-		<c:set var="fromHome" value='true' scope="page"/>
 		<c:set var="who" value='${signin.user.id}' scope="page"/>
 	</c:when>
 	<c:otherwise>
-		<c:set var="fromHome" value='false' scope="page"/>
 		<c:set var="who" value='${param["who"]}' scope="page"/>
 	</c:otherwise>
 </c:choose>
@@ -31,17 +29,27 @@
 	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/site.css"/>
 	<dht:faviconIncludes/>
 	<dht:scriptIncludes/>
+	<script type="text/javascript" src="/javascript/${buildStamp}/dh/groups.js"></script>	
 </head>
 <dht:twoColumnPage alwaysShowSidebar="true">
 	<dht:sidebarPerson who="${person.viewedUserId}"/>
 	<dht:contentColumn>
 		<dht:zoneBoxGroups back='true'>
-			<dht:zoneBoxTitle>ALL <c:out value='${fromHome ? "YOUR " : "" }'/>GROUPS</dht:zoneBoxTitle>
+			<dht:zoneBoxTitle><c:out value='${person.self ? "YOUR " : "" }'/>GROUPS</dht:zoneBoxTitle>
 			<dht:twoColumnList>
 				<c:forEach items="${person.groups.list}" var="group">
 					<dht:groupItem group="${group}"/>
 				</c:forEach>
 			</dht:twoColumnList>
+			<c:if test="${person.self}">
+				<dht:zoneBoxSeparator/>			
+				<dht:zoneBoxTitle>INVITED GROUPS</dht:zoneBoxTitle>
+				<dht:twoColumnList>
+					<c:forEach items="${person.invitedGroups.list}" var="group">
+						<dht:groupItem group="${group}" controls="true"/>
+					</c:forEach>	
+				</dht:twoColumnList>
+			</c:if>
 		</dht:zoneBoxGroups>
 	</dht:contentColumn>
 </dht:twoColumnPage>

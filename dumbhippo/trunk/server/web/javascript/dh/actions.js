@@ -37,25 +37,37 @@ dh.actions.removeContact = function(contactId) {
 		  	    	 });
 }
 
-dh.actions.joinGroup = function(groupId) {
+dh.actions.joinGroup = function(groupId, cb, errcb) {
   	dh.server.doPOST("joingroup",
 			 	     { "groupId" : groupId },
   					 function(type, data, http) {
-			  		 	 document.location.reload();
+  					 	if (!cb)
+			  		 		document.location.reload();
+			  		 	else
+			  		 		cb();
 					 },
 					 function(type, error, http) {
-						 alert("Couldn't join group");
+					 	if (!errcb)
+							alert("Couldn't join group");
+						else
+							errcb();
 					 });
 }
 
-dh.actions.leaveGroup = function(groupId) {
+dh.actions.leaveGroup = function(groupId, cb, errcb) {
   	dh.server.doPOST("leavegroup",
 			 	     { "groupId" : groupId },
   					 function(type, data, http) {
-			  		 	 document.location.reload();
+  					 	if (!cb)
+			  		 		document.location.reload();
+			  		 	else
+			  		 		cb()
 					 },
 					 function(type, error, http) {
-						 alert("Couldn't leave group");
+					 	if (!errcb)
+							alert("Couldn't leave group");
+						else
+							errcb()
 					 });
 }
 

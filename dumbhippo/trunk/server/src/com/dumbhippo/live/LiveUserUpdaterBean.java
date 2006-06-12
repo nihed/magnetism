@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.identity20.Guid;
+import com.dumbhippo.persistence.MembershipStatus;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.IdentitySpider;
@@ -94,7 +95,7 @@ public class LiveUserUpdaterBean implements LiveUserUpdater {
 	
 	private void initializeGroups(LiveUser user) {
 		User dbUser = identitySpider.lookupUser(user);		
-		user.setGroupCount(groupSystem.findGroupsCount(SystemViewpoint.getInstance(), dbUser));
+		user.setGroupCount(groupSystem.findGroupsCount(SystemViewpoint.getInstance(), dbUser, MembershipStatus.ACTIVE));
 	}
 	
 	private void initializePostCount(LiveUser user) {

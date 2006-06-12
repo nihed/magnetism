@@ -46,6 +46,14 @@ import com.dumbhippo.persistence.VersionedEntity;
 			 return MembershipStatus.NONMEMBER;
 	 }
 	 
+	 public boolean isActive() {
+		 return getStatus() == MembershipStatus.ACTIVE;
+	 }
+	 
+	 public boolean isInvited() {
+		 return getStatus() == MembershipStatus.INVITED;
+	 }
+	 
 	 public PersonView getInviter() {
 		 return inviter;
 	 }

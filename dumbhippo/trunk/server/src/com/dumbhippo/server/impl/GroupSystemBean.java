@@ -439,7 +439,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		}
 	}
 	
-	private Query buildFindGroupsQuery(Viewpoint viewpoint, User member, boolean isCount) {
+	private Query buildFindGroupsQuery(Viewpoint viewpoint, User member, boolean isCount, MembershipStatus status) {
 		Query q;		
 		StringBuilder queryStr = new StringBuilder("SELECT ");
 		boolean ownGroups = viewpoint.isOfUser(member);		
@@ -450,8 +450,8 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 			queryStr.append("gm");
 		
 		queryStr.append(" FROM GroupMember gm, AccountClaim ac, Group g " +
-        "WHERE ac.resource = gm.member AND ac.owner = :member AND g = gm.group AND " +
-        "      gm.status  >= " + MembershipStatus.INVITED.ordinal());
+        "WHERE ac.resource = gm.member AND ac.owner = :member AND g = gm.group ");
+		queryStr.append(getStatusClause(status));
 		
 		if (ownGroups || viewpoint instanceof SystemViewpoint) {
 			// Special case this for effiency
@@ -471,14 +471,14 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		return q;
 	}
 	
-	public int findGroupsCount(Viewpoint viewpoint, User member) {
-		Query q = buildFindGroupsQuery(viewpoint, member, true);
+	public int findGroupsCount(Viewpoint viewpoint, User member, MembershipStatus status) {
+		Query q = buildFindGroupsQuery(viewpoint, member, true, status);
 		Object result = q.getSingleResult();
 		return ((Number) result).intValue();			
 	}
 	
-	public Set<GroupView> findGroups(Viewpoint viewpoint, User member) {
-		Query q = buildFindGroupsQuery(viewpoint, member, false);
+	public Set<GroupView> findGroups(Viewpoint viewpoint, User member, MembershipStatus status) {
+		Query q = buildFindGroupsQuery(viewpoint, member, false, status);
 		boolean ownGroups = viewpoint.isOfUser(member);
 		
 		Set<GroupView> result = new HashSet<GroupView>();

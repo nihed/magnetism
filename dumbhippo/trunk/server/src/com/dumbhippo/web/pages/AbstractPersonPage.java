@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.identity20.Guid.ParseException;
+import com.dumbhippo.persistence.MembershipStatus;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.GroupView;
@@ -30,6 +31,7 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 	private PersonView viewedPerson;
 	
 	private ListBean<GroupView> groups;
+	private ListBean<GroupView> invitedGroups;
 	
 	private boolean lookedUpCurrentTrack;
 	private TrackView currentTrack;
@@ -125,10 +127,20 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 	// We don't show group's you haven't accepted the invitation for on your public page
 	public ListBean<GroupView> getGroups() {
 		if (groups == null) {
-			groups = new ListBean<GroupView>(GroupView.sortedList(groupSystem.findGroups(getSignin().getViewpoint(), getViewedUser())));
+			groups = new ListBean<GroupView>(GroupView.sortedList(groupSystem.findGroups(getSignin().getViewpoint(), getViewedUser(), MembershipStatus.ACTIVE)));
 		}
 		return groups;
 	}	
+	
+	public ListBean<GroupView> getInvitedGroups() {
+		// Only the user can see their own invited groups
+		if (!isSelf())
+			return null;
+		if (invitedGroups == null) {
+			invitedGroups = new ListBean<GroupView>(GroupView.sortedList(groupSystem.findGroups(getSignin().getViewpoint(), getViewedUser(), MembershipStatus.INVITED)));
+		}
+		return invitedGroups;
+	}		
 	
 	/**
 	 * Get a set of contacts of the viewed user that we want to display on the person page.
