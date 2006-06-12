@@ -1,17 +1,24 @@
 package com.dumbhippo.web.pages;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.persistence.User;
+import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.Pageable;
+import com.dumbhippo.server.PersonView;
+import com.dumbhippo.server.PersonViewExtra;
 import com.dumbhippo.server.PostSearchResult;
 import com.dumbhippo.server.PostView;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.TrackSearchResult;
 import com.dumbhippo.server.TrackView;
+import com.dumbhippo.server.UserViewpoint;
+import com.dumbhippo.server.Viewpoint;
 import com.dumbhippo.web.PagePositions;
 import com.dumbhippo.web.PagePositionsBean;
 import com.dumbhippo.web.Signin;
@@ -41,6 +48,7 @@ public class FindPage {
 
 	private PostingBoard postBoard;
 	private MusicSystem musicSystem;
+	private IdentitySpider identitySpider;
 	
 	private String searchText;
 
@@ -49,9 +57,12 @@ public class FindPage {
 	private TrackSearchResult trackSearchResult;
 	private Pageable<TrackView> tracks;
 	
+	private Pageable<PersonView> people;
+	
 	public FindPage() {
 		postBoard = WebEJBUtil.defaultLookup(PostingBoard.class);
 		musicSystem = WebEJBUtil.defaultLookup(MusicSystem.class);
+		identitySpider = WebEJBUtil.defaultLookup(IdentitySpider.class);
 	}
 
 	private void ensurePostSearchResult() {
@@ -106,6 +117,35 @@ public class FindPage {
 		return tracks;
 	}
 
+	public Pageable<PersonView> getPeople() {
+		if (people == null) {
+			people = pagePositions.createPageable("people");
+			people.setInitialPerPage(INITIAL_PER_PAGE);
+			people.setSubsequentPerPage(SUBSEQUENT_PER_PAGE);
+			ArrayList<PersonView> results = new ArrayList<PersonView>();
+			
+			Viewpoint viewpoint = signin.getViewpoint();			
+			
+			if (viewpoint instanceof UserViewpoint && searchText != null) {
+				// look up the search text as an email or AIM
+				User user;
+				if (searchText.contains("@"))
+					user = identitySpider.lookupUserByEmail(viewpoint, searchText);
+				else
+					user = identitySpider.lookupUserByAim(viewpoint, searchText);
+				
+				if (user != null) {
+					PersonView pv = identitySpider.getPersonView(viewpoint, user, PersonViewExtra.ALL_RESOURCES);
+					results.add(pv);
+				}
+			}
+			people.setTotalCount(results.size());
+			people.setResults(results);
+		}
+		
+		return people;
+	}	
+	
 	public SigninBean getSignin() {
 		return signin;
 	}

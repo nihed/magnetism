@@ -21,6 +21,34 @@
 					Please enter some search terms
 				</c:when>
 				<c:otherwise>
+					<dht:searchSectionTitle a="dhPeople" query='${param["q"]}' pageable="${find.people}">PEOPLE</dht:searchSectionTitle>
+
+					<c:choose>
+						<c:when test="${signin.valid && find.people.totalCount > 0}">
+		
+							<c:forEach items="${find.people.results}" var="person">
+								<div>
+									<dht:headshot person="${person}"/> <a href="/person?who=${person.user.id}"><c:out value="${person.name}"/></a>
+								</div>
+								<div><c:out value="${person.bioAsHtml}" escapeXml="false"/></div>
+							</c:forEach>
+		
+							<dht:expandablePager pageable="${find.people}" anchor="dhPeople"/>
+						</c:when>
+						<c:when test="${signin.valid && find.people.totalCount == 0}">
+							<div>
+								<i>No people found (try searching for an exact email address or AIM screen name).</i>
+							</div>
+						</c:when>
+						<c:otherwise>
+							<div>
+								<i>You must be <a href="/who-are-you">logged in</a> to search for people.</i>
+							</div>
+						</c:otherwise>
+					</c:choose>						
+
+					<dht:zoneBoxSeparator/>
+				
 					<dht:searchSectionTitle a="dhMusicRadar" query='${param["q"]}' pageable="${find.tracks}">MUSIC RADAR</dht:searchSectionTitle>
 
 					<c:if test="${!empty find.trackError}">
