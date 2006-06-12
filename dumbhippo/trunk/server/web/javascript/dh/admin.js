@@ -178,6 +178,7 @@ dh.admin.shell.doEval = function () {
 								dh.util.clearNode(resultDiv)
 								dh.util.clearNode(reflectionDiv)								
 								resultDiv.appendChild(document.createTextNode(result.value))
+								if (result.reflection != null) {
 								for (var i = 0; i < result.reflection.length; i++) {
 									var node = result.reflection[i]
 									if (node.nodeName == "method") {
@@ -195,6 +196,7 @@ dh.admin.shell.doEval = function () {
 										p.appendChild(document.createTextNode(")"))
 										reflectionDiv.appendChild(p)
 									}
+								}
 								}
 							} else {
 								dh.admin.shell.setNotification("Exception: " + result.message, true)
