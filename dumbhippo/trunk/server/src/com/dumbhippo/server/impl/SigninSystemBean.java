@@ -21,7 +21,6 @@ import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.LoginToken;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
-import com.dumbhippo.persistence.ValidationException;
 import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HippoProperty;
@@ -32,6 +31,7 @@ import com.dumbhippo.server.Mailer;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
 import com.dumbhippo.server.SigninSystem;
+import com.dumbhippo.server.SystemViewpoint;
 import com.dumbhippo.server.UserViewpoint;
 
 @Stateless
@@ -61,7 +61,9 @@ public class SigninSystemBean implements SigninSystem {
 	
 	public void sendSigninLink(String address) throws HumanVisibleException {
 		if (address.contains("@")) {
-			EmailResource resource = identitySpider.getEmail(address);
+			EmailResource resource = identitySpider.lookupEmail(address);
+			if (resource == null)
+				throw new HumanVisibleException("That isn't an email address we know about");
 			String link = getLoginLink(resource);
 			MimeMessage message = mailer.createMessage(Mailer.SpecialSender.LOGIN, resource.getEmail());
 			
@@ -80,12 +82,10 @@ public class SigninSystemBean implements SigninSystem {
 			mailer.setMessageContent(message, "Sign in to Mugshot", bodyText.toString(), bodyHtml.toString());
 			mailer.sendMessage(message);
 		} else {
-			AimResource resource;
-			try {
-				resource = identitySpider.getAim(address);
-			} catch (ValidationException e) {
-				throw new HumanVisibleException(e.getMessage());
-			}
+			AimResource resource = identitySpider.lookupAim(address);
+			if (resource == null)
+				throw new HumanVisibleException("That isn't an AIM screen name we know about");
+
 			String link = getLoginLink(resource);
 			XmlBuilder bodyHtml = new XmlBuilder();
 			bodyHtml.appendTextNode("a", "Click to sign in", "href", link);
@@ -199,18 +199,17 @@ public class SigninSystemBean implements SigninSystem {
 		}
 		
 		if (address.contains("@")) {
-			resource = identitySpider.getEmail(address);
+			resource = identitySpider.lookupEmail(address);
 		} else {
-			try {
-				resource = identitySpider.getAim(address);
-			} catch (ValidationException e) {
-				throw new HumanVisibleException(e.getMessage());
-			}
+			resource = identitySpider.lookupAim(address);
 		}
+		
+		if (resource == null)
+			throw new HumanVisibleException("You entered '" + address + "', we don't know about that email address or AIM screen name");
 		
 		Account account;
 		
-		User user = identitySpider.lookupUserByResource(resource);
+		User user = identitySpider.lookupUserByResource(SystemViewpoint.getInstance(), resource);
 		if (user == null && noAuthentication) {
 			logger.warn("Creating new account for resource: {}", resource);
 			account = accountSystem.createAccountFromResource(resource);

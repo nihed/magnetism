@@ -4,6 +4,7 @@ import javax.ejb.Local;
 
 import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.ToggleNoMailToken;
+import com.dumbhippo.persistence.ValidationException;
 
 @Local
 public interface NoMailSystem {
@@ -14,7 +15,7 @@ public interface NoMailSystem {
 	
 	public void processAction(EmailResource email, Action action);
 	
-	public String getNoMailUrl(String address, Action action);
+	public String getNoMailUrl(String address, Action action) throws ValidationException;
 	public String getNoMailUrl(ToggleNoMailToken token, Action action);
 	public String getNoMailUrl(EmailResource email, Action action);
 }

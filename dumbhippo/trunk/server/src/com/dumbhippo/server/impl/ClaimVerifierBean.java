@@ -107,7 +107,12 @@ public class ClaimVerifierBean implements ClaimVerifier {
 			throw new HumanVisibleException("You aren't signed in as the person you want to add an address for");
 		}
 		if (address.contains("@")) {
-			EmailResource resource = identitySpider.getEmail(address);
+			EmailResource resource;
+			try {
+				resource = identitySpider.getEmail(address);
+			} catch (ValidationException e) {
+				throw new HumanVisibleException("That isn't a valid email address (" + e.getMessage() + ")");
+			}
 			String link = getClaimVerifierLink(user, resource);
 			MimeMessage message = mailer.createMessage(Mailer.SpecialSender.VERIFIER, resource.getEmail());
 			

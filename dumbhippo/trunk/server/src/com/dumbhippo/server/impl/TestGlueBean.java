@@ -18,6 +18,7 @@ import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.Client;
 import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.persistence.ValidationException;
 import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.NotFoundException;
@@ -69,7 +70,12 @@ public class TestGlueBean implements TestGlue, TestGlueRemote {
 			String e = emails[i];
 			String n = fullNames[i];
 			
-			EmailResource resource = identitySpider.getEmail(e);
+			EmailResource resource;
+			try {
+				resource = identitySpider.getEmail(e);
+			} catch (ValidationException e1) {
+				resource = null;
+			}
 			if (resource == null) {
 				System.err.println("EmailResource is null");
 				throw new Error("null resource");

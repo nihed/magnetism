@@ -10,6 +10,7 @@ import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.Client;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.persistence.ValidationException;
 
 @Local
 public interface AccountSystem {
@@ -20,8 +21,9 @@ public interface AccountSystem {
 	 * 
 	 * @param email
 	 * @return
+	 * @throws ValidationException  if the email address is bogus
 	 */
-	public Account createAccountFromEmail(String email);
+	public Account createAccountFromEmail(String email) throws ValidationException;
 	
 	/**
 	 * Adds a new Account (and Person) with verified ownership

@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.persistence.ValidationException;
 import com.dumbhippo.server.HumanVisibleException;
 import com.dumbhippo.server.InvitationSystem;
 import com.dumbhippo.server.UserViewpoint;
@@ -37,18 +38,22 @@ public class SendInviteServlet extends AbstractServlet {
 		if (email != null)
 			email = email.trim();
 		
-		// the error page redirect kind of sucks, but if we do inline javascript 
-		// validation it would only happen in weird manual-url-typing cases
-		if (email == null || email.equals("") || !email.contains("@")) 
-			throw new HumanVisibleException("Missing or invalid email address");
+		if (email == null) 
+			throw new HumanVisibleException("Missing email address");
 		
 		InvitationSystem invitationSystem = WebEJBUtil.defaultLookup(InvitationSystem.class);
 		
 		// we no longer need to check if the user has an invitation voucher to spend, 
 		// because invitationSystem will take care of it
-		String note = invitationSystem.sendEmailInvitation(new UserViewpoint(user), null, email, subject, message);
+		String note;
+		try {
+			note = invitationSystem.sendEmailInvitation(new UserViewpoint(user), null, email, subject, message);
+		} catch (ValidationException e) {
+			// the error page redirect kind of sucks, but if we do inline javascript 
+			// validation it would only happen in weird manual-url-typing cases
+			throw new HumanVisibleException("Invalid email address (" + e.getMessage() + ")");
+		}
 		
-		if (note == null)
 		request.setAttribute("email", email);
 		request.setAttribute("remaining", invitationSystem.getInvitations(user));
 		request.setAttribute("note", note);

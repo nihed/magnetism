@@ -50,6 +50,7 @@ import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.PostVisibility;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.persistence.ValidationException;
 import com.dumbhippo.persistence.Validators;
 import com.dumbhippo.persistence.WantsIn;
 import com.dumbhippo.postinfo.PostInfo;
@@ -270,7 +271,13 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 
 		startReturnObjectsXml(contentType, xml);
 
-		EmailResource resource = identitySpider.getEmail(email);
+		EmailResource resource;
+		try {
+			resource = identitySpider.getEmail(email);
+		} catch (ValidationException e) {
+			// FIXME this probably needs displaying to the user 
+			throw new RuntimeException(e);
+		}
 		Person contact = identitySpider.createContact(viewpoint.getViewer(), resource);
 		PersonView contactView = identitySpider.getPersonView(viewpoint,
 				contact, PersonViewExtra.ALL_RESOURCES);
@@ -386,7 +393,13 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 
 	public void doAddContact(OutputStream out, HttpResponseData contentType,
 			UserViewpoint viewpoint, String email) throws IOException {
-		EmailResource emailResource = identitySpider.getEmail(email);
+		EmailResource emailResource;
+		try {
+			emailResource = identitySpider.getEmail(email);
+		} catch (ValidationException e) {
+			// FIXME needs displaying to the user
+			throw new RuntimeException(e);
+		}
 		Contact contact = identitySpider.createContact(viewpoint.getViewer(), emailResource);
 		PersonView contactView = identitySpider.getPersonView(viewpoint,
 				contact, PersonViewExtra.ALL_RESOURCES);
@@ -505,7 +518,9 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	}
 
 	public void doRemoveClaimEmail(UserViewpoint viewpoint, String address) throws IOException, HumanVisibleException {
-		Resource resource = identitySpider.getEmail(address);
+		Resource resource = identitySpider.lookupEmail(address);
+		if (resource == null)
+			return; // doesn't exist anyhow
 		identitySpider.removeVerifiedOwnershipClaim(viewpoint, viewpoint.getViewer(), resource);
 	}
 
@@ -777,8 +792,13 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			} else {
 				// this does NOT check whether the account has invitations left,
 				// that's why we do it above.
-				note = invitationSystem.sendEmailInvitation(new UserViewpoint(inviter), promotionCode, address,
-							"Mugshot Download", "Hey!\n\nClick here to get the Mugshot Music Radar and Web Swarm.");
+				try {
+					note = invitationSystem.sendEmailInvitation(new UserViewpoint(inviter), promotionCode, address,
+								"Mugshot Download", "Hey!\n\nClick here to get the Mugshot Music Radar and Web Swarm.");
+				} catch (ValidationException e) {
+					// FIXME should be displayed to user somehow
+					throw new RuntimeException("Invalid email address", e); 
+				}
 				if (note == null)
 					note = "Your invitation is on its way (check your email)";
 			}
@@ -798,11 +818,13 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		
 		address = address.trim();
 		
-		// This error won't get back to the client
-		if (address.equals("") || !address.contains("@")) 
-			throw new RuntimeException("Missing or invalid email address");
-
-		String note = invitationSystem.sendEmailInvitation(viewpoint, null, address, subject, message);
+		String note;
+		try {
+			note = invitationSystem.sendEmailInvitation(viewpoint, null, address, subject, message);
+		} catch (ValidationException e) {
+			// FIXME This error won't get back to the client			
+			throw new RuntimeException("Missing or invalid email address", e);			
+		}
 		
 		writeMessageReply(out, "sendEmailInvitationReply", note);
 	}
@@ -826,8 +848,14 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
     		for (WantsIn wantsIn : wantsInList) {    			
                 // this does NOT check whether the account has invitations left,
                 // that's why we do it above.
-			    note = invitationSystem.sendEmailInvitation(new UserViewpoint(inviter), null, wantsIn.getAddress(),
-                                                            subject, message);
+			    try {
+					note = invitationSystem.sendEmailInvitation(new UserViewpoint(inviter), null, wantsIn.getAddress(),
+					                                            subject, message);
+				} catch (ValidationException e) {
+					// continue here, so we don't abort the whole thing if we got a bogus email address in the db
+					// (historically our validation is not so hot)
+					logger.warn("Tried to invite WantsIn with invalid email address", e);
+				}
 			    if (note == null) {
                     logger.debug("Invitation for {} is on its way", wantsIn.getAddress());
                     wantsIn.setInvitationSent(true);
@@ -867,10 +895,12 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		} else if (inviteeAddress != null) {
 			inviteeAddress = inviteeAddress.trim();
 
-			if (inviteeAddress.equals("") || !inviteeAddress.contains("@")) 
-				throw new RuntimeException("Missing or invalid email address");
-
-			EmailResource resource = identitySpider.getEmail(inviteeAddress);
+			EmailResource resource;
+			try {
+				resource = identitySpider.getEmail(inviteeAddress);
+			} catch (ValidationException e) {
+				throw new RuntimeException("Missing or invalid email address", e);
+			}
 
 			// If the recipient isn't yet a Mugshot member, make sure we can invite
 			// them to the system before sending out an email; the resulting email
@@ -1098,7 +1128,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 				guid = new Guid(id);
 				return identitySpider.lookupGuid(User.class, guid); 				
 			} catch (ParseException e) {
-				return identitySpider.lookupUserByEmail(id);
+				return identitySpider.lookupUserByEmail(SystemViewpoint.getInstance(), id);
 			}
 		}
 		

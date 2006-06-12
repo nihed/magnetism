@@ -38,7 +38,16 @@ public interface IdentitySpider {
 	 * @param email the address
 	 * @return a resource for the email
 	 */
-	public EmailResource getEmail(String email);
+	public EmailResource getEmail(String email) throws ValidationException;
+	
+	/**
+	 * Gets a Resource object for the given email address, only if it 
+	 * already exists.
+	 * 
+	 * @param email the address
+	 * @return a resource for the email or null
+	 */
+	public EmailResource lookupEmail(String email);	
 	
 	/**
 	 * Gets a Resource object for the given AIM address, creating
@@ -82,10 +91,9 @@ public interface IdentitySpider {
 	 * @param email the possibly-owned email address
 	 * @return the owning person, or null if none
 	 */
-	public User lookupUserByEmail(String email);
+	public User lookupUserByEmail(Viewpoint viewpoint, String email);
 
-	//public Person lookupPersonByAim(String aim);
-	//public Person lookupPersonByAim(Person viewpoint, String aim);
+	public User lookupUserByAim(Viewpoint viewpoint, String aim);
 
 	/**
 	 * Finds the unique person which owns a resource
@@ -95,7 +103,7 @@ public interface IdentitySpider {
 	 * @param resource the possibly-owned resource
 	 * @return the owning person, or null if none
 	 */
-	public User lookupUserByResource(Resource resource);
+	public User lookupUserByResource(Viewpoint viewpoint, Resource resource);
 	
 	/**
 	 * Return the database User object associated with a LiveUser.

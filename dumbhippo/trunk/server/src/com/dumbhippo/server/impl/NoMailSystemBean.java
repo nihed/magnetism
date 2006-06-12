@@ -16,6 +16,7 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.NoMail;
 import com.dumbhippo.persistence.ToggleNoMailToken;
+import com.dumbhippo.persistence.ValidationException;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.IdentitySpider;
@@ -90,7 +91,7 @@ public class NoMailSystemBean implements NoMailSystem {
 	}
 
 
-	public String getNoMailUrl(String address, Action action) {
+	public String getNoMailUrl(String address, Action action) throws ValidationException {
 		EmailResource email = identitySpider.getEmail(address);
 		return getNoMailUrl(email, action);
 	}

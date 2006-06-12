@@ -22,6 +22,7 @@ import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.HumanVisibleException;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.LoginVerifier;
+import com.dumbhippo.server.SystemViewpoint;
 import com.dumbhippo.server.TransactionRunner;
 
 @Stateless
@@ -47,7 +48,7 @@ public class LoginVerifierBean implements LoginVerifier {
 		if (resource == null)
 			throw new IllegalArgumentException("null resource");
 
-		User user = spider.lookupUserByResource(resource);
+		User user = spider.lookupUserByResource(SystemViewpoint.getInstance(), resource);
 		if (user == null) {
 			throw new HumanVisibleException("That address hasn't been added to any account");
 		}
@@ -93,7 +94,7 @@ public class LoginVerifierBean implements LoginVerifier {
 		}
 		
 		Resource resource = token.getResource();
-		User user = spider.lookupUserByResource(resource);
+		User user = spider.lookupUserByResource(SystemViewpoint.getInstance(), resource);
 		Account account;
 		
 		if (user != null)

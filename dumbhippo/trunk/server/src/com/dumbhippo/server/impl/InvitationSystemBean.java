@@ -32,6 +32,7 @@ import com.dumbhippo.persistence.InvitationToken;
 import com.dumbhippo.persistence.InviterData;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.persistence.ValidationException;
 import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.Character;
 import com.dumbhippo.server.Configuration;
@@ -373,7 +374,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		spider.createContact(inviter, invitee);
 		// this also catches inviting yourself and keeps us from 
 		// sending mail to disabled accounts 
-		User user = spider.lookupUserByResource(invitee);
+		User user = spider.lookupUserByResource(SystemViewpoint.getInstance(), invitee);
 		if (user != null) {
 			logger.debug("not inviting '{}' due to existing user {}", invitee, user);
 			return new Pair<CreateInvitationResult,InvitationToken>(CreateInvitationResult.ALREADY_HAS_ACCOUNT, null);
@@ -498,7 +499,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		if (result == CreateInvitationResult.INVITE_WAS_NOT_CREATED) {
 			return "Your invitation was not sent because you are out of invitation vouchers."; 
 		} else if (result == CreateInvitationResult.ALREADY_HAS_ACCOUNT) {
-			User user = spider.lookupUserByResource(invitee);
+			User user = spider.lookupUserByResource(viewpoint, invitee);
 			return invitee.getHumanReadableString() + " already has an account '" + user.getNickname() + "', now added to your friends list.";
 		} else { 
 			// note should be null or contain INVITATION_SUCCESS_STRING to indicate a successful invitation
@@ -524,7 +525,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		}
 	}
 
-	public String sendEmailInvitation(UserViewpoint viewpoint, PromotionCode promotionCode, String email, String subject, String message) {
+	public String sendEmailInvitation(UserViewpoint viewpoint, PromotionCode promotionCode, String email, String subject, String message) throws ValidationException {
 		Resource emailRes = spider.getEmail(email);
 		return sendInvitation(viewpoint, promotionCode, emailRes, subject, message);
 	}

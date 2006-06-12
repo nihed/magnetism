@@ -12,6 +12,7 @@ import com.dumbhippo.persistence.Client;
 import com.dumbhippo.persistence.InvitationToken;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.persistence.ValidationException;
 
 @Local
 public interface InvitationSystem {
@@ -146,10 +147,11 @@ public interface InvitationSystem {
 	 * @param email
 	 * @param subject subject for the email, text format
 	 * @param message message to send (from the inviter to invitee), text format
+	 * @throws ValidationException if email address is bogus 
 	 * @returns note that will be displayed to the user or null
 	 */
 	public String sendEmailInvitation(UserViewpoint viewpoint, PromotionCode promotionCode, String email, 
-			                          String subject, String message);
+			                          String subject, String message) throws ValidationException;
 	
 	/**
 	 * Mark an invitation as viewed; this creates an initial Account

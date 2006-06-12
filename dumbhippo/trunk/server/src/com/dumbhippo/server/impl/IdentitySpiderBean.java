@@ -88,12 +88,21 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	@EJB
 	private GroupSystem groupSystem;
 	
-	public User lookupUserByEmail(String email) {
-		EmailResource res = getEmail(email);
-		return lookupUserByResource(res);
+	public User lookupUserByEmail(Viewpoint viewpoint, String email) {
+		EmailResource res = lookupEmail(email);
+		if (res == null)
+			return null;
+		return lookupUserByResource(viewpoint, res);
 	}
 
-	public User lookupUserByResource(Resource resource) {
+	public User lookupUserByAim(Viewpoint viewpoint, String aim) {
+		AimResource res = lookupAim(aim);
+		if (res == null)
+			return null;
+		return lookupUserByResource(viewpoint, res);
+	}	
+	
+	public User lookupUserByResource(Viewpoint viewpoint, Resource resource) {
 		return getUser(resource);
 	}
 
@@ -131,7 +140,13 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		return ret;
 	}
 		
-	public EmailResource getEmail(final String email) {
+	public EmailResource getEmail(final String emailRaw) throws ValidationException {
+		// well, we could do a little better here with the validation...
+		final String email = emailRaw.trim();
+		if (!email.contains("@"))
+			throw new ValidationException("No @ sign in email address");
+		if (email.length() == 0)
+			throw new ValidationException("Email address is empty");
 		try {
 			EmailResource detached = runner.runTaskRetryingOnConstraintViolation(new Callable<EmailResource>() {
 				
@@ -214,6 +229,10 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		return lookupResourceByName(AimResource.class, "screenName", screenName);
 	}
 	
+	public EmailResource lookupEmail(String email) {
+		return lookupResourceByName(EmailResource.class, "email", email);
+	}
+	
 	public LinkResource getLink(final String link) {
 		try {
 			LinkResource detached = runner.runTaskRetryingOnConstraintViolation(new Callable<LinkResource>() {
@@ -248,7 +267,12 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		try {
 			User detached = runner.runTaskRetryingOnConstraintViolation(new Callable<User>() {
 				public User call() {
-					EmailResource email = getEmail(whichOne.getEmail());
+					EmailResource email;
+					try {
+						email = getEmail(whichOne.getEmail());
+					} catch (ValidationException e) {
+						throw new RuntimeException("Character has invalid email address!");
+					}
 					User user = getUser(email);
 					if (user == null) {
 						// don't add any special handling in here - it should be OK if 
@@ -498,7 +522,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		if (r instanceof Account) {
 			user = ((Account)r).getOwner();
 		} else {
-			user = lookupUserByResource(r);
+			user = lookupUserByResource(viewpoint, r);
 		}
 		
 		PersonView pv = new PersonView(contact, user);
@@ -639,7 +663,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 			// implement spidering) if contacts own the account resource for
 			// users, and not just the EmailResource
 			if (!(resource instanceof Account)) {
-				User contactUser = lookupUserByResource(resource);
+				User contactUser = lookupUserByResource(SystemViewpoint.getInstance(), resource);
 				
 				if (contactUser != null) {
 					ContactClaim cc = new ContactClaim(contact, contactUser.getAccount());

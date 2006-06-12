@@ -42,10 +42,13 @@ public class InvitePage extends AbstractInvitePage {
 			// previousInvitation is probably null anyway, but set it to null just in case
             previousInvitation = null;
 		} else {
-		    Resource emailRes = identitySpider.getEmail(email);
-	        previousInvitation = 
-	        	invitationSystem.lookupInvitationViewFor(getUserSignin().getViewpoint(), 
-	        			                                 emailRes);
+		    Resource emailRes = identitySpider.lookupEmail(email);
+		    if (emailRes != null)
+		        previousInvitation = 
+		        	invitationSystem.lookupInvitationViewFor(getUserSignin().getViewpoint(), 
+		        			                                 emailRes);
+		    else
+		    	previousInvitation = null;
 	    }
 	    
 	    return previousInvitation;

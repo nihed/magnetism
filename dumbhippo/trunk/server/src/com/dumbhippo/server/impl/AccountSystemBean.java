@@ -18,6 +18,7 @@ import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.Client;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.persistence.ValidationException;
 import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.NotFoundException;
@@ -44,7 +45,7 @@ public class AccountSystemBean implements AccountSystem {
 		return account;
 	}
 
-	public Account createAccountFromEmail(String email) {
+	public Account createAccountFromEmail(String email) throws ValidationException {
 		Resource res = spider.getEmail(email);
 		return createAccountFromResource(res);
 	}
