@@ -20,6 +20,8 @@ import java.util.Set;
 import javax.annotation.EJB;
 import javax.ejb.Stateless;
 import javax.naming.NamingException;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
@@ -115,6 +117,9 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	
 	@EJB
 	private Configuration config;
+	
+	@PersistenceContext(unitName = "dumbhippo")
+	private EntityManager em;	
 	
 	private void startReturnObjectsXml(HttpResponseData contentType,
 			XmlBuilder xml) {
@@ -1146,6 +1151,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		try {
 			bsh.set("server", new Server());
 			bsh.set("out", out);
+			bsh.set("em", em);
 			
 			// This makes us override private/protected etc
 			bsh.eval("setAccessibility(true);");
