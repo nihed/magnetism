@@ -20,11 +20,12 @@ public class AimResource extends Resource {
 	 * @return normalized version
 	 * @throws ValidationException
 	 */
-	private String filterName(String str) throws ValidationException {
+	public static String canonicalize(String str) throws ValidationException {
 		if (str == null)
 			return null;
 		
-		str = str.replaceAll(" ", "");
+		str = str.trim(); // gets tabs and stuff not just spaces
+		str = str.replaceAll(" ", ""); // but suck spaces out of middle of string, not just ends
 		
 		if (str.length() > 16)
 			throw new ValidationException("'" + str + "' is too long to be an AIM screen name");
@@ -62,7 +63,7 @@ public class AimResource extends Resource {
 
 	private void internalSetScreenName(String screenName) throws ValidationException {
 		if (screenName != null) {
-			screenName = filterName(screenName);
+			screenName = canonicalize(screenName);
 		}
 		this.screenName = screenName;
 	}

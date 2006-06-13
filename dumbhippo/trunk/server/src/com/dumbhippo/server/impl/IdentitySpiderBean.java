@@ -142,11 +142,8 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		
 	public EmailResource getEmail(final String emailRaw) throws ValidationException {
 		// well, we could do a little better here with the validation...
-		final String email = emailRaw.trim();
-		if (!email.contains("@"))
-			throw new ValidationException("No @ sign in email address");
-		if (email.length() == 0)
-			throw new ValidationException("Email address is empty");
+		final String email = EmailResource.canonicalize(emailRaw);
+		
 		try {
 			EmailResource detached = runner.runTaskRetryingOnConstraintViolation(new Callable<EmailResource>() {
 				
@@ -175,7 +172,8 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		}
 	}
 	
-	public AimResource getAim(final String screenName) throws ValidationException {
+	public AimResource getAim(final String screenNameRaw) throws ValidationException {
+		final String screenName = AimResource.canonicalize(screenNameRaw);
 		try {
 			AimResource detached = runner.runTaskRetryingOnConstraintViolation(new Callable<AimResource>() {
 				public AimResource call() {
@@ -226,10 +224,20 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	}
 	
 	public AimResource lookupAim(String screenName) {
+		try {
+			screenName = AimResource.canonicalize(screenName);
+		} catch (ValidationException e) {
+			return null;
+		}
 		return lookupResourceByName(AimResource.class, "screenName", screenName);
 	}
 	
 	public EmailResource lookupEmail(String email) {
+		try {
+			email = EmailResource.canonicalize(email);
+		} catch (ValidationException e) {
+			return null;
+		}
 		return lookupResourceByName(EmailResource.class, "email", email);
 	}
 	

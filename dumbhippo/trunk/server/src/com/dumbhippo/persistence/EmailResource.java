@@ -21,16 +21,43 @@ public class EmailResource extends Resource {
 	
 	private String email;
 	
+	/**
+	 * Validate and canonicalize (e.g. for case and leading/trailing space) the email address.
+	 * 
+	 * @param str the name to validate and normalize
+	 * @return normalized version
+	 * @throws ValidationException
+	 */
+	public static String canonicalize(String str) throws ValidationException {
+		if (str == null)
+			return null;
+		str = str.trim();
+		if (str.length() == 0)
+			throw new ValidationException("Email address is empty");
+		int at = str.indexOf('@');
+		if (at < 0)
+			throw new ValidationException("No @ sign in email address");
+		if (at == 0)
+			throw new ValidationException("Email address has nothing before the @");
+		if (str.substring(at + 1).indexOf('@') >= 0)
+			throw new ValidationException("Email address has two @ signs");
+		
+		// the domain is not case-sensitive
+		StringBuffer sb = new StringBuffer();
+		sb.append(str.substring(0, at + 1));
+		sb.append(str.substring(at + 1).toLowerCase());
+		return sb.toString();
+	}
+	
 	protected EmailResource() {}
 
 	// this is a "last ditch" validation to protect the DB, we should have
 	// checked before here to come up with a user-visible message
 	private void validateEmail(String str) throws IllegalArgumentException {
-		// the @ sign check would also catch length == 0, but just trying to be more clear
-		if (str.length() == 0) {
-			throw new IllegalArgumentException("Empty email address: " + str);
-		} else if (!str.contains("@")) {
-			throw new IllegalArgumentException("No @ sign in email address: " + str);
+		try {
+			canonicalize(str);
+		} catch (ValidationException e) {
+			throw new IllegalArgumentException("Invalid email address", e);
 		}
 	}
 	
@@ -61,7 +88,6 @@ public class EmailResource extends Resource {
 	protected void setEmail(String email) {
 		if (email != null) {
 			validateEmail(email); // in theory the database has nothing that would fail...
-			email = email.trim();
 		}
 		this.email = email;
 	}
