@@ -92,6 +92,12 @@ public class Account extends Resource {
 	private String bio;
 	private String musicBio;
 	
+	// Records the last time the user viewed their /group page, essentially
+	private long lastSeenGroupInvitations;
+	// The last time an invitation to a group was sent to this account; 
+	// used to notify when we have new ones
+	private long groupInvitationReceived;
+	
 	/*
 	 * don't add accessors to this directly, we don't want clients to "leak"
 	 * very far since they have auth keys. Instead add methods that do whatever
@@ -617,5 +623,44 @@ public class Account extends Resource {
 
 	public void setMusicBio(String musicBio) {
 		this.musicBio = musicBio;
+	}
+
+	@Column(nullable=true)	
+	public Date getLastSeenGroupInvitations() {
+		if (lastSeenGroupInvitations >= 0)
+			return new Date(lastSeenGroupInvitations);
+		else
+			return null;
+	}
+
+	// Only used by Hibernate
+	protected void setLastSeenGroupInvitations(Date date) {
+		if (date == null)
+			this.lastSeenGroupInvitations = -1;
+		else
+			this.lastSeenGroupInvitations = date.getTime();
+	}
+	
+	public void touchLastSeenGroupInvitations() {
+		this.lastSeenGroupInvitations = System.currentTimeMillis();
+	}
+
+	@Column(nullable=true)
+	public Date getGroupInvitationReceived() {
+		if (groupInvitationReceived >= 0)
+			return new Date(groupInvitationReceived);
+		else
+			return null;
+	}
+
+	protected void setGroupInvitationReceived(Date date) {
+		if (date == null)
+			this.groupInvitationReceived = -1;
+		else
+			this.groupInvitationReceived = date.getTime();
+	}
+
+	public void touchGroupInvitationReceived() {
+		this.groupInvitationReceived = System.currentTimeMillis();
 	}
 }

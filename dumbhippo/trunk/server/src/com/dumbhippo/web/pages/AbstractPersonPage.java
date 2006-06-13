@@ -1,11 +1,13 @@
 package com.dumbhippo.web.pages;
 
+import java.util.Date;
 import java.util.Set;
 
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.identity20.Guid.ParseException;
+import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.MembershipStatus;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.GroupSystem;
@@ -142,6 +144,19 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 		return invitedGroups;
 	}		
 	
+	public boolean isNewGroupInvites() {
+		if (!isSelf())
+			return false;
+		Account acct = getViewedUser().getAccount();
+		Date groupInvitationReceived = acct.getGroupInvitationReceived();
+		Date lastSeenInvitation = acct.getLastSeenGroupInvitations();
+		if (groupInvitationReceived == null)
+			return false;
+		if (lastSeenInvitation == null)
+			return true;
+		return groupInvitationReceived.compareTo(lastSeenInvitation) > 0;
+	}
+	
 	/**
 	 * Get a set of contacts of the viewed user that we want to display on the person page.
 	 * 
@@ -175,8 +190,8 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 	
 	public TrackView getCurrentTrack() {
 		if (!lookedUpCurrentTrack) {
-			lookedUpCurrentTrack = true;
 			try {
+			lookedUpCurrentTrack = true;
 				currentTrack = getMusicSystem().getCurrentTrackView(getSignin().getViewpoint(), getViewedUser());
 			} catch (NotFoundException e) {
 			}

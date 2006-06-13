@@ -228,8 +228,15 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 			Resource resource = identitySpider.getBestResource(person);
 			
 			groupMember = new GroupMember(group, resource, newStatus);
-			if (!selfAdd) 
+			if (!selfAdd) { 
 				groupMember.setAdder(adder);
+				// Adding to a group for the first time, touch their last 
+				// added date
+				if (resource instanceof Account) {
+					Account acct = (Account) resource;
+					acct.touchGroupInvitationReceived();
+				}
+			}
 			em.persist(groupMember);
 			group.getMembers().add(groupMember);
 			em.persist(group);

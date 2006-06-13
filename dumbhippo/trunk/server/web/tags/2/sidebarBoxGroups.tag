@@ -23,6 +23,10 @@
 				<c:if test="${person.groups.size > 3}">
 					<dht:moreLink moreName="ALL GROUPS" more="/groups?who=${person.viewedUserId}"/>
 				</c:if>
+				<c:if test="${person.newGroupInvites}">
+					<br/>
+					<div><a href="/groups?who=${person.viewedUserId}">New invited groups!</a></div>
+				</c:if>					
 			</c:when>
 			<c:otherwise>
 				<p class="dh-sidebar-box-empty">Start your own group</p>

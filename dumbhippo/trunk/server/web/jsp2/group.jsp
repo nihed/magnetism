@@ -26,6 +26,13 @@
 	<dht:sidebarGroup/>
 	<dht:contentColumn>
 		<dht:zoneBoxGroup>
+			<c:if test="${group.justAdded}">
+				<div></div> <%-- IE bug workaround, display:none as first child causes problems --%>
+				<div class="dh-message">
+					<div>You were invited to this group, but may <a href="javascript:dh.actions.leaveGroup('${group.viewedGroupId}')">Leave</a>
+					any time.</div>
+				</div>
+			</c:if>
 			<c:if test="${group.latestTracks.size > 0}">
 				<dht:zoneBoxTitle>RECENT GROUP SONGS</dht:zoneBoxTitle>
 				<c:forEach var="track" items="${group.latestTracks.list}">

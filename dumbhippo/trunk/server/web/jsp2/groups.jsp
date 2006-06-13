@@ -17,7 +17,7 @@
 	</c:otherwise>
 </c:choose>
 
-<dh:bean id="person" class="com.dumbhippo.web.pages.PersonPage" scope="page"/>
+<dh:bean id="person" class="com.dumbhippo.web.pages.GroupsPage" scope="page"/>
 <jsp:setProperty name="person" property="viewedUserId" value="${who}"/>
 
 <c:if test="${!person.valid}">
