@@ -207,6 +207,8 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 				else {
 					UserViewpoint viewpoint = new UserViewpoint(owner);
 					Set<Group> invitedToGroups = groupSystem.findRawGroups(viewpoint, owner, MembershipStatus.INVITED);
+					Set<Group> invitedToFollowGroups = groupSystem.findRawGroups(viewpoint, owner, MembershipStatus.INVITED_TO_FOLLOW);
+					invitedToGroups.addAll(invitedToFollowGroups);
 					if (invitedToGroups.size() == 0) {
 						postingBoard.doShareLinkTutorialPost(account.getOwner());
 					} else {

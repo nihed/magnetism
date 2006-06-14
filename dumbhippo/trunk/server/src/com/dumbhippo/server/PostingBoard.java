@@ -18,7 +18,6 @@ import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.PersonPostData;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.PostMessage;
-import com.dumbhippo.persistence.PostVisibility;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.postinfo.PostInfo;
 
@@ -102,7 +101,21 @@ public interface PostingBoard {
 		MUST_INVITE          // Skip sending email if sender has no invitations
 	}
 	
-	public Post doLinkPost(User poster, PostVisibility visibility, String title, String text, URL link, Set<GuidPersistable> recipients, InviteRecipients inviteRecipients, PostInfo postInfo)
+	/**
+	 * Shares a link. 
+	 * 
+	 * @param poster
+	 * @param isPublic make post publicly visible even if it isn't to any public groups
+	 * @param title
+	 * @param text
+	 * @param link
+	 * @param recipients
+	 * @param inviteRecipients
+	 * @param postInfo
+	 * @return
+	 * @throws NotFoundException
+	 */
+	public Post doLinkPost(User poster, boolean isPublic, String title, String text, URL link, Set<GuidPersistable> recipients, InviteRecipients inviteRecipients, PostInfo postInfo)
 		throws NotFoundException;
 
 	public Post doShareGroupPost(User poster, Group group, String title, String text, Set<GuidPersistable> recipients, InviteRecipients inviteRecipients)

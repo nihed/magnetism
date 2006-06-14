@@ -128,11 +128,15 @@ public class PostingBoardBean implements PostingBoard {
 	@javax.annotation.Resource
 	private EJBContext ejbContext;	
 	
-	private void sendPostNotifications(Post post, Set<Resource> expandedRecipients, PostType postType) {
+	private void sendPostNotifications(Post post, boolean explicitlyPublic, Set<Resource> expandedRecipients, PostType postType) {
 		// FIXME I suspect this should be outside the transaction and asynchronous
 		logger.debug("Sending out jabber/email notifications...");
 		
-		if (post.getVisibility() == PostVisibility.RECIPIENTS_ONLY) {
+		// We only notify "everyone" if the post was explicitly sent to "the world", 
+		// public posts can also happen implicitly by copying a public group; those
+		// posts are still visible to the world, but aren't sent out to the world
+		
+		if (post.getVisibility() == PostVisibility.RECIPIENTS_ONLY || !explicitlyPublic) {
 			for (Resource r : expandedRecipients) {
 				messageSender.sendPostNotification(r, post, postType);
 			}			
@@ -213,7 +217,13 @@ public class PostingBoardBean implements PostingBoard {
 		return replacement;
 	}
 	
-	private Post doLinkPostInternal(User poster, PostVisibility visibility, String title, String text, URL url, Set<GuidPersistable> recipients, InviteRecipients inviteRecipients, PostInfo postInfo, PostType postType) throws NotFoundException {
+	private Post doLinkPostInternal(User poster, boolean isPublic, String title, String text, URL url, Set<GuidPersistable> recipients, InviteRecipients inviteRecipients, PostInfo postInfo, PostType postType) throws NotFoundException {
+		
+		PostVisibility visibility;
+		
+		// if we want to explicitly send to "the world" then force public even if not to any public groups
+		visibility = isPublic ? PostVisibility.ATTRIBUTED_PUBLIC : PostVisibility.RECIPIENTS_ONLY;
+		
 		url = removeFrameset(url);
 		
 		Set<Resource> shared = (Collections.singleton((Resource) identitySpider.getLink(url.toExternalForm())));
@@ -264,6 +274,14 @@ public class PostingBoardBean implements PostingBoard {
 		expandedRecipients.addAll(personRecipients);
 		expandedRecipients.add(identitySpider.getBestResource(poster));
 		for (Group g : groupRecipients) {
+		
+			// If you copy a public group, the post is forced public
+			if (visibility == PostVisibility.RECIPIENTS_ONLY &&
+					(g.getAccess() == GroupAccess.PUBLIC_INVITE ||
+					 g.getAccess() == GroupAccess.PUBLIC)) {
+				visibility = PostVisibility.ATTRIBUTED_PUBLIC;
+			}
+			
 			for (GroupMember groupMember : g.getMembers()) {
 				if (groupMember.isParticipant())
 					expandedRecipients.add(groupMember.getMember());
@@ -273,7 +291,7 @@ public class PostingBoardBean implements PostingBoard {
 		// if this throws we shouldn't send out notifications, so do it first
 		Post post = createPost(poster, visibility, title, text, shared, personRecipients, groupRecipients, expandedRecipients, postInfo);
 		
-		sendPostNotifications(post, expandedRecipients, postType);
+		sendPostNotifications(post, isPublic, expandedRecipients, postType);
 		
 		LiveState liveState = LiveState.getInstance();
 		for (Group g : groupRecipients) {
@@ -287,8 +305,8 @@ public class PostingBoardBean implements PostingBoard {
 		return post;		
 	}
 	
-	public Post doLinkPost(User poster, PostVisibility visibility, String title, String text, URL url, Set<GuidPersistable> recipients, InviteRecipients inviteRecipients, PostInfo postInfo) throws NotFoundException {
-		return doLinkPostInternal(poster, visibility, title, text, url, recipients, inviteRecipients, postInfo, PostType.NORMAL);
+	public Post doLinkPost(User poster, boolean isPublic, String title, String text, URL url, Set<GuidPersistable> recipients, InviteRecipients inviteRecipients, PostInfo postInfo) throws NotFoundException {
+		return doLinkPostInternal(poster, isPublic, title, text, url, recipients, inviteRecipients, postInfo, PostType.NORMAL);
 	}
 	
 	public Post doShareGroupPost(User poster, Group group, String title, String text, Set<GuidPersistable> recipients, InviteRecipients inviteRecipients)
@@ -311,14 +329,12 @@ public class PostingBoardBean implements PostingBoard {
 		
 		if (title == null)
 			title = group.getName();
-			
-		PostVisibility visibility = PostVisibility.RECIPIENTS_ONLY;
-		
+					
 		ShareGroupPostInfo postInfo = PostInfo.newInstance(PostInfoType.SHARE_GROUP, ShareGroupPostInfo.class);
 		postInfo.getTree().updateContentChild(group.getId(), NodeName.shareGroup, NodeName.groupId);
 		postInfo.makeImmutable();
 
-		return doLinkPostInternal(poster, visibility, title, text, url, recipients, inviteRecipients, postInfo, PostType.GROUP);		
+		return doLinkPostInternal(poster, false, title, text, url, recipients, inviteRecipients, postInfo, PostType.GROUP);		
 	}
 
 	private void doTutorialPost(User recipient, Character sender, String urlText, String title, String text) {
@@ -334,7 +350,7 @@ public class PostingBoardBean implements PostingBoard {
 		Set<GuidPersistable> recipientSet = Collections.singleton((GuidPersistable)recipient);
 		Post post;
 		try {
-			post = doLinkPostInternal(poster, PostVisibility.RECIPIENTS_ONLY, title, text, url, recipientSet, InviteRecipients.MUST_INVITE, null, PostType.TUTORIAL);
+			post = doLinkPostInternal(poster, false, title, text, url, recipientSet, InviteRecipients.MUST_INVITE, null, PostType.TUTORIAL);
 		} catch (NotFoundException e) {
 			logger.error("Failed to post: {}", e.getMessage());
 			throw new RuntimeException(e);
@@ -416,15 +432,10 @@ public class PostingBoardBean implements PostingBoard {
 	
 	static private final String AUTH_GROUP =
         "g MEMBER OF post.groupRecipients AND " + 
-		" (g.access >= " + GroupAccess.PUBLIC.ordinal() + " OR " +
-          "EXISTS (SELECT vgm FROM GroupMember vgm, AccountClaim ac " +
+          " EXISTS (SELECT vgm FROM GroupMember vgm, AccountClaim ac " +
           "WHERE vgm.group = g AND vgm.member = ac.resource AND ac.owner = :viewer AND " +
-                "vgm.status >= " + MembershipStatus.INVITED.ordinal() + ")) ";
-	
-	static private final String AUTH_GROUP_ANONYMOUS =
-        "g MEMBER OF post.groupRecipients AND " + 
-		"g.access >= " + GroupAccess.PUBLIC.ordinal();
-	
+                "vgm.status >= " + MembershipStatus.INVITED.ordinal() + ") ";
+		
 	static private final String CAN_VIEW = 
 		" (post.disabled != true) AND (post.visibility = " + PostVisibility.ATTRIBUTED_PUBLIC.ordinal() + " OR " +
 			  "post.poster = :viewer OR " + 
@@ -433,8 +444,7 @@ public class PostingBoardBean implements PostingBoard {
               "EXISTS (SELECT g FROM Group g WHERE " + AUTH_GROUP + "))";
 	
 	static private final String CAN_VIEW_ANONYMOUS = 
-		" (post.disabled != true) AND (post.visibility = " + PostVisibility.ATTRIBUTED_PUBLIC.ordinal() + " OR " + 
-              "EXISTS (SELECT g FROM Group g WHERE " + AUTH_GROUP_ANONYMOUS + "))";
+		" (post.disabled != true) AND (post.visibility = " + PostVisibility.ATTRIBUTED_PUBLIC.ordinal() + ")";
 	
 	static private final String VIEWER_RECEIVED = 
 		" EXISTS(SELECT ac FROM AccountClaim ac " +
@@ -466,9 +476,10 @@ public class PostingBoardBean implements PostingBoard {
 					AccountClaim ac = member.getMember().getAccountClaim();
 					if (ac != null &&
 						ac.getOwner().equals(viewer) &&
-						member.getStatus().ordinal() >= MembershipStatus.REMOVED.ordinal()) {
+						member.getStatus().getReceivesPosts()) {
 						PersonView inviter  = null;
-						if (member.getStatus() == MembershipStatus.INVITED) {
+						if (member.getStatus() == MembershipStatus.INVITED ||
+						    member.getStatus() == MembershipStatus.INVITED_TO_FOLLOW) {
 							Person adder = member.getAdder();
 							if (adder != null)
 								inviter = identitySpider.getPersonView(viewpoint, adder);
@@ -619,8 +630,6 @@ public class PostingBoardBean implements PostingBoard {
 	private boolean isInGroupRecipients(UserViewpoint viewpoint, Post post) {
 		Set<AccountClaim> viewerClaims = viewpoint.getViewer().getAccountClaims();
 		for (Group g : post.getGroupRecipients()) {
-			if (g.getAccess().ordinal() >= GroupAccess.PUBLIC.ordinal())
-				return true;
 			for (GroupMember member : g.getMembers()) {
 				if (member.getStatus().ordinal() >= MembershipStatus.INVITED.ordinal()) {
 					for (AccountClaim ac : viewerClaims) {

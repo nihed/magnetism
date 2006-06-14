@@ -79,7 +79,7 @@ public class GroupMember extends DBUnique {
 	
 	/**
 	 * Is the person "in the group" (which means they can see other members,
-	 * posts, etc.)
+	 * posts, etc. if it's a private group)
 	 * @return true if the user is invited or active
 	 */
 	@Transient

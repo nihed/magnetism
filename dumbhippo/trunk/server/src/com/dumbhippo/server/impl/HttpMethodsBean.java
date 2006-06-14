@@ -49,7 +49,6 @@ import com.dumbhippo.persistence.GuidPersistable;
 import com.dumbhippo.persistence.NowPlayingTheme;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Post;
-import com.dumbhippo.persistence.PostVisibility;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.ValidationException;
@@ -311,9 +310,6 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			SAXException, MalformedURLException, IOException {
 		Set<String> recipientGuids = splitIdList(recipientIds);
 
-		PostVisibility visibility = isPublic ? PostVisibility.ATTRIBUTED_PUBLIC 
-				: PostVisibility.RECIPIENTS_ONLY;
-
 		PostInfo info;
 		if (postInfoXml != null)
 			info = PostInfo.parse(postInfoXml);
@@ -326,7 +322,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 
 		URL urlObject = postingBoard.parsePostURL(url);
 
-		Post post = postingBoard.doLinkPost(viewpoint.getViewer(), visibility, title, description,
+		Post post = postingBoard.doLinkPost(viewpoint.getViewer(), isPublic, title, description,
 							urlObject, recipients, PostingBoard.InviteRecipients.DONT_INVITE, info);
 		XmlBuilder xml = new XmlBuilder();
 		xml.openElement("post", "id", post.getId());

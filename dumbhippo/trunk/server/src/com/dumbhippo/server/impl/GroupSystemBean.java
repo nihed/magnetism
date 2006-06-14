@@ -205,6 +205,11 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 			switch (groupMember.getStatus()) {
 			case NONMEMBER:
 				throw new IllegalStateException();
+			case FOLLOWER:
+			case INVITED_TO_FOLLOW:
+				if (!selfAdd)
+					groupMember.setAdder(adder);				
+				break;
 			case REMOVED:
 				if (!selfAdd)
 					groupMember.setAdder(adder); // Mark adder for "please come back"
@@ -253,7 +258,8 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 			// note that getGroupMember() here does a fixup so we only have one GroupMember which 
 			// canonically points to our account.
 			GroupMember groupMember = getGroupMember(group, person);
-			if (groupMember.getStatus() != MembershipStatus.REMOVED) {
+			// REMOVED has more rights than FOLLOWER so be sure we don't let followers "remove" themselves
+			if (groupMember.getStatus().ordinal() > MembershipStatus.REMOVED.ordinal()) {
 				groupMember.setStatus(MembershipStatus.REMOVED);
 				
 		        LiveState.getInstance().queuePostTransactionUpdate(em, new GroupEvent(group.getGuid(), groupMember.getMember().getGuid(), GroupEvent.Type.MEMBERSHIP_CHANGE));						
