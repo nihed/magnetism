@@ -363,10 +363,9 @@ dh.bubble.Bubble = function(isStandaloneBubble) {
         var createControl = function (iconName, text, handler) {
             var span = document.createElement("span")
             span.className = "dh-notification-swarm-control"
-            var img = document.createElement("img")
+            var img = dh.util.createPngElement(dh.appletUrl + iconName, 10, 1)
             span.appendChild(img)
             img.className = "dh-notification-swarm-control-img"
-            img.src = dh.appletUrl + iconName
             if (handler != null) {            
                 var eventCallback = dh.util.dom.stdEventHandler(function (e) {
                     handler()
