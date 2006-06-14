@@ -18,12 +18,12 @@
 	<dht:sidebarPerson who="${signin.user.id}">
 		<c:if test="${browser.windows}">
 			<dht:sidebarBoxControls title="WINDOWS CONTROLS">
-				<dht:actionLink href="/download" title="Download and install the Windows client software to use Web Swarm and Music Radar">Download Windows client</dht:actionLink>
+				<dht:actionLink href="/download" title="Download and install Mugshot for Windows to use Web Swarm and Music Radar">Download for Windows</dht:actionLink>
 			</dht:sidebarBoxControls>
 		</c:if>
 		<c:if test="${browser.linux}">
 			<dht:sidebarBoxControls title="LINUX CONTROLS">
-				<dht:actionLink href="/download" title="Download and install the Linux client software to use Web Swarm and Music Radar">Download Linux client</dht:actionLink>
+				<dht:actionLink href="/download" title="Download and install Mugshot for Linux to use Web Swarm and Music Radar">Download for Linux</dht:actionLink>
 			</dht:sidebarBoxControls>
 		</c:if>
 		<c:if test="${browser.gecko}">
