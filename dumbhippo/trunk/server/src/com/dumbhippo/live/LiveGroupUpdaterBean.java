@@ -36,6 +36,8 @@ public class LiveGroupUpdaterBean implements LiveGroupUpdater {
 	private void initializeMemberCount(LiveGroup liveGroup, Group group) {
 		liveGroup.setMemberCount(groupSystem.getMembersCount(SystemViewpoint.getInstance(), group, MembershipStatus.ACTIVE));
 		liveGroup.setInvitedMemberCount(groupSystem.getMembersCount(SystemViewpoint.getInstance(), group, MembershipStatus.INVITED));
+		liveGroup.setFollowerCount(groupSystem.getMembersCount(SystemViewpoint.getInstance(), group, MembershipStatus.FOLLOWER));
+		liveGroup.setInvitedFollowerCount(groupSystem.getMembersCount(SystemViewpoint.getInstance(), group, MembershipStatus.INVITED_TO_FOLLOW));		
 	}
 
 	public void initialize(LiveGroup liveGroup) {

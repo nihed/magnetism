@@ -28,11 +28,12 @@
 								<div class="dh-action-link"><a href="/group-account?group=${group.viewedGroupId}" title="Edit the group information">Edit group</a></div>
 							</c:if>
 							<c:choose>
-								<c:when test="${group.canLeave}">
-									 <dht:actionLink href="javascript:dh.actions.leaveGroup('${group.viewedGroupId}')" title="I can't take it anymore! Let yourself out of this group.">Leave Group</dht:actionLink>
-								</c:when>
-								<c:when test="${group.canJoin}">
-									 <dht:actionLink href="javascript:dh.actions.joinGroup('${group.viewedGroupId}')" title="Become a group member">Join Group</dht:actionLink>
+								<%-- Be careful if changing this not to show both join and leave at the same time --%>
+								<c:when test="${!empty group.joinAction}">
+									 <dht:actionLink href="javascript:dh.actions.joinGroup('${group.viewedGroupId}')" title="${group.joinTooltip}"><c:out value="${group.joinAction}"/></dht:actionLink>
+								</c:when>							
+								<c:when test="${!empty group.leaveAction}">
+									 <dht:actionLink href="javascript:dh.actions.leaveGroup('${group.viewedGroupId}')" title="${group.leaveTooltip}"><c:out value="${group.leaveAction}"/></dht:actionLink>
 								</c:when>
 							</c:choose>
 							<c:if test="${group.canShare}">

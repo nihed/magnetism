@@ -19,8 +19,12 @@ public class CanonicalizationTest extends TestCase {
 			assertTrue(EmailResource.canonicalize("foo@BAR.COM").equals("foo@bar.com"));
 			// leading/trailing space
 			assertTrue(EmailResource.canonicalize(" foo@bar.com ").equals("foo@bar.com"));
+			// no change
+			assertTrue(EmailResource.canonicalize("foo@bar.com").equals("foo@bar.com"));
+			// another example
+			assertTrue(EmailResource.canonicalize("hp@redhat.com").equals("hp@redhat.com"));			
 		} catch (ValidationException e) {
-			throw new RuntimeException("Unexpected invalid aim address", e);
+			throw new RuntimeException("Unexpected invalid email address", e);
 		}
 	}
 }

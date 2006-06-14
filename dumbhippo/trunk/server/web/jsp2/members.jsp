@@ -33,7 +33,17 @@
 				</c:forEach>
 			</dht:twoColumnList>
 			
-			<c:if test="${group.member && group.invitedMembers.size > 0}">
+			<c:if test="${group.followers.size > 0}">
+				<dht:zoneBoxSeparator/>
+				<dht:zoneBoxTitle>ALL FOLLOWERS</dht:zoneBoxTitle>
+				<dht:twoColumnList>
+					<c:forEach items="${group.followers.list}" var="person">
+						<dht:personItem who="${person}"/>
+					</c:forEach>
+				</dht:twoColumnList>
+			</c:if>
+
+			<c:if test="${group.member && group.invitedMembers.size > 0}"> <%-- FIXME the access control check here is wrong, should be in GroupSystem --%>
 				<dht:zoneBoxSeparator/>
 				<dht:zoneBoxTitle>ALL PENDING INVITATIONS</dht:zoneBoxTitle>
 				<dht:twoColumnList>
@@ -42,6 +52,17 @@
 					</c:forEach>
 				</dht:twoColumnList>
 			</c:if>
+			
+			<c:if test="${group.member && group.invitedFollowers.size > 0}"> <%-- FIXME access control check doesn't go here --%>
+				<dht:zoneBoxSeparator/>
+				<dht:zoneBoxTitle>ALL INVITED FOLLOWERS</dht:zoneBoxTitle>
+				<dht:twoColumnList>
+					<c:forEach items="${group.invitedFollowers.list}" var="person">
+						<dht:personItem who="${person}"/>
+					</c:forEach>
+				</dht:twoColumnList>
+			</c:if>
+			
 		</dht:zoneBoxGroup>
 	</dht:contentColumn>
 </dht:twoColumnPage>

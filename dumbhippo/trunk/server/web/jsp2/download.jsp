@@ -72,7 +72,7 @@
 	to our page where you can get and customize Music Radar for your own page.  Easy!</div>
 	<dht:notevil/>
 	<div class="dh-disclaimer">Download for <a href="/download?platform=windows">Windows</a> | <a href="/download?platform=linux">Linux</a></div>
-	<div class="dh-disclaimer"><a id="dhSkipDownload" href="javascript:dh.download.doDownload('/home')">I can't install on this computer, skip download.</a> (Not recommended.)</div>
+	<div class="dh-disclaimer"><a id="dhSkipDownload" href="javascript:dh.download.doDownload('/')">I can't install on this computer, skip download.</a> (Not recommended.)</div>
 </dht:body>
 
 </html>

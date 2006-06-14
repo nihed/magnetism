@@ -33,7 +33,9 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 	private PersonView viewedPerson;
 	
 	private ListBean<GroupView> groups;
+	private ListBean<GroupView> followedGroups;
 	private ListBean<GroupView> invitedGroups;
+	private ListBean<GroupView> invitedToFollowGroups;
 	
 	private boolean lookedUpCurrentTrack;
 	private TrackView currentTrack;
@@ -136,6 +138,9 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 	
 	public ListBean<GroupView> getInvitedGroups() {
 		// Only the user can see their own invited groups
+		// FIXME this is broken, the access control rules need to be inside findGroups() ... but they are 
+		// somewhat complex since people who are already in the group can see invited members, something
+		// we aren't handling here
 		if (!isSelf())
 			return null;
 		if (invitedGroups == null) {
@@ -143,6 +148,26 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 		}
 		return invitedGroups;
 	}		
+	
+	public ListBean<GroupView> getFollowedGroups() {
+		if (followedGroups == null) {
+			followedGroups = new ListBean<GroupView>(GroupView.sortedList(groupSystem.findGroups(getSignin().getViewpoint(), getViewedUser(), MembershipStatus.FOLLOWER)));
+		}
+		return followedGroups;
+	}
+
+	public ListBean<GroupView> getInvitedToFollowGroups() {
+		// Only the user can see their own invited groups
+		// FIXME this is broken, the access control rules need to be inside findGroups() ... but they are 
+		// somewhat complex since people who are already in the group can see invited members, something
+		// we aren't handling here
+		if (!isSelf())
+			return null;		
+		if (invitedToFollowGroups == null) {
+			invitedToFollowGroups = new ListBean<GroupView>(GroupView.sortedList(groupSystem.findGroups(getSignin().getViewpoint(), getViewedUser(), MembershipStatus.INVITED_TO_FOLLOW)));
+		}
+		return invitedToFollowGroups;
+	}	
 	
 	public boolean isNewGroupInvites() {
 		if (!isSelf())

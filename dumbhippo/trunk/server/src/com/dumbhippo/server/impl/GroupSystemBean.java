@@ -178,29 +178,37 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 	
 	public void addMember(User adder, Group group, Person person) {
 		GroupMember groupMember;
+		GroupMember adderMember;
+		
+		boolean selfAdd = adder.equals(person);
+		
 		try {
 			// if person is a User then this will do fixups
 			groupMember = getGroupMember(group, person);
 		} catch (NotFoundException e) {
 			groupMember = null;
 		}
-		boolean selfAdd = adder.equals(person); 
+		try {
+			adderMember = getGroupMember(group, adder);
+		} catch (NotFoundException e) {
+			adderMember = null;
+		}
+		
+		boolean adderCanAdd;
+		
+		if ((adderMember != null &&
+			 adderMember.getStatus().ordinal() >= MembershipStatus.REMOVED.ordinal()) ||
+			group.getAccess() == GroupAccess.PUBLIC)
+			adderCanAdd = true;
+		else
+			adderCanAdd = false;
 		
 		MembershipStatus newStatus;
 		if (selfAdd)
-			newStatus = MembershipStatus.ACTIVE;
+			newStatus = adderCanAdd ? MembershipStatus.ACTIVE : MembershipStatus.FOLLOWER;
 		else
-			newStatus = MembershipStatus.INVITED;
+			newStatus = adderCanAdd ? MembershipStatus.INVITED : MembershipStatus.INVITED_TO_FOLLOW;
 
-		if (!(groupMember != null && selfAdd) &&
-			group.getAccess() != GroupAccess.PUBLIC) {
-			try {
-				@SuppressWarnings("unused") GroupMember adderMember = getGroupMember(group, adder);
-			} catch (NotFoundException e) {
-				throw new IllegalArgumentException("invalid person adding member to group", e);
-			}
-		}
-				
 		if (groupMember != null) {
 			switch (groupMember.getStatus()) {
 			case NONMEMBER:
@@ -258,11 +266,19 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 			// note that getGroupMember() here does a fixup so we only have one GroupMember which 
 			// canonically points to our account.
 			GroupMember groupMember = getGroupMember(group, person);
-			// REMOVED has more rights than FOLLOWER so be sure we don't let followers "remove" themselves
+
+			// REMOVED has more rights than FOLLOWER so be sure we don't let followers "remove" themselves. 
 			if (groupMember.getStatus().ordinal() > MembershipStatus.REMOVED.ordinal()) {
 				groupMember.setStatus(MembershipStatus.REMOVED);
 				
 		        LiveState.getInstance().queuePostTransactionUpdate(em, new GroupEvent(group.getGuid(), groupMember.getMember().getGuid(), GroupEvent.Type.MEMBERSHIP_CHANGE));						
+			} else if (groupMember.getStatus().ordinal() < MembershipStatus.REMOVED.ordinal()) {
+				// To go from FOLLOWER or INVITED_TO_FOLLOW to removed, we delete the GroupMember
+				group.getMembers().remove(groupMember);
+				em.remove(groupMember);
+				LiveState.getInstance().queuePostTransactionUpdate(em, new GroupEvent(group.getGuid(), groupMember.getMember().getGuid(), GroupEvent.Type.MEMBERSHIP_CHANGE));
+			} else {
+				// status == REMOVED, nothing to do
 			}
 		} catch (NotFoundException e) {
 			// nothing to do
@@ -491,10 +507,12 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 	}
 	
 	public Set<GroupView> findGroups(Viewpoint viewpoint, User member, MembershipStatus status) {
-		Query q = buildFindGroupsQuery(viewpoint, member, false, status);
+
 		boolean ownGroups = viewpoint.isOfUser(member);
 		
 		Set<GroupView> result = new HashSet<GroupView>();
+		
+		Query q = buildFindGroupsQuery(viewpoint, member, false, status);
 		for (Object o : q.getResultList()) {
 			GroupMember groupMember = (GroupMember)o;
 			PersonView inviter  = null;

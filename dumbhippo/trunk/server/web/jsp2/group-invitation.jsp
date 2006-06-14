@@ -30,7 +30,7 @@
 		dh.groupinvitation.groupId = <dh:jsString value="${group.viewedGroupId}"/>
 		dh.groupinvitation.initialValues = {
 			'dhAddressEntry' : '',
-			'dhSubjectEntry' : 'Join the ' + <dh:jsString value="${group.name}"/> + ' group on Mugshot',
+			'dhSubjectEntry' : <dh:jsString value="${group.shareSubject}"/>,
 			'dhMessageEntry' : <dh:jsString value="${!empty param['body'] ? param['body'] : group.viewedGroup.group.description}"/>
 		}
 		dojo.event.connect(dojo, "loaded", dj_global, "dhGroupInvitationInit");
@@ -44,7 +44,14 @@
 			<div class="dh-message" id="dhMessageDiv" style='display: ${empty param["message"] ? "none" : "block"};'>
 				<c:out value='${param["message"]}'/>
 			</div>
-			<dht:zoneBoxTitle>INVITE A FRIEND TO THIS GROUP</dht:zoneBoxTitle>
+			<c:choose>
+				<c:when test="${group.member}">				
+					<dht:zoneBoxTitle>INVITE A FRIEND TO THIS GROUP</dht:zoneBoxTitle>
+				</c:when>
+				<c:otherwise>
+					<dht:zoneBoxTitle>INVITE A FRIEND TO FOLLOW THIS GROUP</dht:zoneBoxTitle>
+				</c:otherwise>
+			</c:choose>
 			<c:if test="${signin.user.account.invitations == 0}">
 				<div class="dh-warning-note">
 					Since you currently don't have any invitations to Mugshot to give out,
@@ -77,6 +84,15 @@
 					</c:forEach>
 				</dht:twoColumnList>
 			</c:if>
+			<c:if test="${group.invitedFollowers.size > 0}">
+				<dht:zoneBoxSeparator/>
+				<dht:zoneBoxTitle>PENDING INVITATIONS TO FOLLOW</dht:zoneBoxTitle>
+				<dht:twoColumnList>
+					<c:forEach items="${group.invitedFollowers.list}" var="person">
+						<dht:personItem who="${person}" invited="true"/>
+					</c:forEach>
+				</dht:twoColumnList>
+			</c:if>			
 		</dht:zoneBoxInvitation>
 	</dht:contentColumn>
 </dht:twoColumnPage>

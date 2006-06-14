@@ -54,7 +54,9 @@ public class GroupPage extends AbstractSigninOptionalPage {
 	private ListBean<TrackView> latestTracks;
 	private ListBean<PersonView> activeMembers;
 	private ListBean<PersonView> invitedMembers;
-
+	private ListBean<PersonView> followers;
+	private ListBean<PersonView> invitedFollowers;
+	
 	private Pageable<PostView> posts;
 	private boolean allMembers;
 	
@@ -114,7 +116,7 @@ public class GroupPage extends AbstractSigninOptionalPage {
 				
 				// If you view a group you were invited to, you get added; you can leave again and then 
 				// you enter the REMOVED state where you can re-add yourself but don't get auto-added.
-				if (groupMember.getStatus() == MembershipStatus.INVITED) {
+				if (groupMember.getStatus() == MembershipStatus.INVITED || groupMember.getStatus() == MembershipStatus.INVITED_TO_FOLLOW) {
 					groupSystem.addMember(viewpoint.getViewer(), group, viewpoint.getViewer());
 					
 					// reload the groupMember to have the new state
@@ -152,35 +154,126 @@ public class GroupPage extends AbstractSigninOptionalPage {
 	}
 
 	public ListBean<PersonView> getInvitedMembers() {
+		// FIXME the isMember() check is broken, it should be inside GroupSystem.getMembers()
 		if (invitedMembers == null && isMember())
 			invitedMembers = new ListBean<PersonView>(getMembers(MembershipStatus.INVITED));
 		return invitedMembers;
 	}
 
+	public ListBean<PersonView> getFollowers() {
+		if (followers == null)
+			followers = new ListBean<PersonView>(getMembers(MembershipStatus.FOLLOWER));
+		return followers;
+	}
+
+	public ListBean<PersonView> getInvitedFollowers() {
+		if (invitedFollowers == null)
+			invitedFollowers = new ListBean<PersonView>(getMembers(MembershipStatus.INVITED_TO_FOLLOW));
+		return invitedFollowers;
+	}
+	
 	public GroupMember getGroupMember() {
 		return groupMember;
 	}
 
+	public String getJoinAction() {
+		switch (getGroupMember().getStatus()) {
+		case NONMEMBER:
+		case INVITED_TO_FOLLOW:
+			if (viewedGroup.getGroup().getAccess() == GroupAccess.PUBLIC)
+				return "Join Group";
+			else
+				return "Follow Group";
+		case INVITED:
+		case REMOVED:
+			return "Join Group";
+		case ACTIVE:
+			return null;
+		}
+		return null;
+	}
+	
+	public String getLeaveAction() {
+		switch (getGroupMember().getStatus()) {
+		case NONMEMBER:
+		case REMOVED:			
+			return null;
+		case INVITED_TO_FOLLOW:
+		case FOLLOWER:
+			return "Stop Following";
+		case INVITED:
+		case ACTIVE:
+			return "Leave Group";
+		}
+		return null;
+	}
+	
+	public String getJoinTooltip() {
+		switch (getGroupMember().getStatus()) {
+		case NONMEMBER:
+		case INVITED_TO_FOLLOW:
+			if (viewedGroup.getGroup().getAccess() == GroupAccess.PUBLIC)
+				return "Become a group member";
+			else
+				return "Become a groupie! Get new stuff from this group.";
+		case INVITED:
+		case REMOVED:
+			return "Become a group member";
+		case ACTIVE:
+			return null;
+		}
+		return null;
+	}	
+	
+	public String getLeaveTooltip() {
+		switch (getGroupMember().getStatus()) {
+		case NONMEMBER:
+		case REMOVED:			
+			return null;
+		case INVITED_TO_FOLLOW:
+		case FOLLOWER:
+			return "Stop getting stuff from this group";
+		case INVITED:
+		case ACTIVE:
+			return "I can't take it anymore! Let yourself out of this group.";
+		}
+		return null;
+	}
+	
+	public String getShareSubject() {
+		// sharing isn't actually enabled for all statuses, but no need to have that logic here,
+		// just return a share subject for all cases
+		if (getGroupMember().getStatus().ordinal() >= MembershipStatus.REMOVED.ordinal()) {
+			return "Join the " + viewedGroup.getGroup().getName() + " group on Mugshot";
+		} else {
+			return "Follow the " + viewedGroup.getGroup().getName() + " group on Mugshot";
+		}
+	} 
+	
 	public boolean isMember() {
 		return getGroupMember().isParticipant();
 	}
-
+	
+	public boolean isFollower() {
+		return getGroupMember().getStatus() == MembershipStatus.FOLLOWER;
+	}
+	
 	public boolean getCanModify() {
 		return getGroupMember().canModify();
 	}
 
-	public boolean getCanJoin() {
-		return !isMember() && 
-		       (viewedGroup.getGroup().getAccess() == GroupAccess.PUBLIC ||
-		        getGroupMember().getStatus() == MembershipStatus.REMOVED);
-	}
-
-	public boolean getCanLeave() {
-		return isMember() || isInvitedNotAccepted();
-	}
-
 	public boolean getCanShare() {
-		return isMember() && !isForum();
+		switch (getGroupMember().getStatus()) {
+		case NONMEMBER:
+		case INVITED_TO_FOLLOW:
+		case INVITED:
+		case REMOVED:
+			return false;
+		case ACTIVE:
+		case FOLLOWER:
+			return true;
+		}
+		return false;
 	}
 
 	public boolean isForum() {

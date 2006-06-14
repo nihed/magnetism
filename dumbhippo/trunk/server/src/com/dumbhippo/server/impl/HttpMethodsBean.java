@@ -894,8 +894,6 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			}
 			
 		} else if (inviteeAddress != null) {
-			inviteeAddress = inviteeAddress.trim();
-
 			EmailResource resource;
 			try {
 				resource = identitySpider.getEmail(inviteeAddress);

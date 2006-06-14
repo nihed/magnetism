@@ -18,7 +18,7 @@ dh.download.updateDownload = function() {
 }
 
 dh.download.doDownload = function(url) {
-	// be careful, right now "url" can be either the download binary or /home (for "skip download")
+	// be careful, right now "url" can be either the download binary or "/" (for "skip download")
 
 	if (dh.download.needTermsOfUse && !document.getElementById("dhAcceptTerms").checked) {
 		document.getElementById("dhAcceptTermsBox").className = "dh-accept-terms-box-warning"

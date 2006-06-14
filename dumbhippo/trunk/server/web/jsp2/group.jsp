@@ -29,8 +29,16 @@
 			<c:if test="${group.justAdded}">
 				<div></div> <%-- IE bug workaround, display:none as first child causes problems --%>
 				<div class="dh-message">
-					<div>You were invited to this group, but may <a href="javascript:dh.actions.leaveGroup('${group.viewedGroupId}')">Leave</a>
-					any time.</div>
+					<c:choose>
+						<c:when test="${group.member}">
+							<div>You were invited to this group, but may <a href="javascript:dh.actions.leaveGroup('${group.viewedGroupId}')">Leave</a>
+								at any time.</div>
+						</c:when>
+						<c:when test="${group.follower}">
+							<div>You were invited to follow this group, but may <a href="javascript:dh.actions.leaveGroup('${group.viewedGroupId}')">stop following it</a>
+								at any time.</div>
+						</c:when>
+					</c:choose>
 				</div>
 			</c:if>
 			<c:if test="${group.latestTracks.size > 0}">

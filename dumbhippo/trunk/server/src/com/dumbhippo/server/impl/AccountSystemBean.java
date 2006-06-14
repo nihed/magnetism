@@ -40,8 +40,11 @@ public class AccountSystemBean implements AccountSystem {
 		Account account = new Account(user);
 		em.persist(user);
 		em.persist(account);
+		// Important to add the account first here so other code
+		// can just assume all users have accounts. Specifically
+		// the GroupMember canonicalization code assumes this for example.
+		spider.addVerifiedOwnershipClaim(user, account);		
 		spider.addVerifiedOwnershipClaim(user, res);
-		spider.addVerifiedOwnershipClaim(user, account);
 		return account;
 	}
 
