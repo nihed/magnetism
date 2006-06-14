@@ -7,6 +7,9 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Transient;
 
+import org.slf4j.Logger;
+
+import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.StringUtils;
 
 
@@ -16,6 +19,8 @@ import com.dumbhippo.StringUtils;
  */
 @Entity
 public class EmailResource extends Resource {
+	
+	private static final Logger logger = GlobalSetup.getLogger(EmailResource.class); 
 	
 	private static final long serialVersionUID = 0L;
 	
@@ -57,7 +62,9 @@ public class EmailResource extends Resource {
 		try {
 			canonicalize(str);
 		} catch (ValidationException e) {
-			throw new IllegalArgumentException("Invalid email address", e);
+			// log this since it doesn't always make it out of the layers of ejb/hibernate fun
+			logger.error("Invalid email address '" + str + "': " + e.getMessage());
+			throw new IllegalArgumentException("Invalid email address '" + str + "': " + e.getMessage(), e);
 		}
 	}
 	
