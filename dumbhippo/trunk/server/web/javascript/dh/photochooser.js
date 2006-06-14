@@ -5,12 +5,15 @@ dojo.require("dojo.style");
 // FIXME automate getting this from the app server
 dh.photochooser.user_nophoto = '/user_pix1/nophoto.gif';
 dh.photochooser.user_pix1 = [ 'alien.gif', 'apricot.gif', 'bear.gif',
-							'bear2.gif', 'clown.gif', 'devil.gif', 'duck.gif',
-							'eye.gif', 'giraffe.gif', 'greenie.gif', 'kitty.gif',
-							'mask.gif', 'monster.gif', 'mysteryman.gif', 'oooh.gif',
-							'puffer.gif', 'pug.gif', 'purplehead.gif', 'robo.gif',
-							'skull.gif', 'sun.gif', 'tiger.gif', 'tiki.gif', 
-							'wolfman.gif', 'ghost.gif', 'hippo.gif', 'monkey.gif' ];
+			      'bear2.gif', 'clown.gif', 'devil.gif', 'duck.gif',
+			      'eye.gif', 'giraffe.gif', 'greenie.gif', 'kitty.gif',
+			      'mask.gif', 'monster.gif', 'mysteryman.gif', 'oooh.gif',
+			      'puffer.gif', 'pug.gif', 'purplehead.gif', 'robo.gif',
+			      'skull.gif', 'sun.gif', 'tiger.gif', 'tiki.gif', 
+			      'wolfman.gif', 'ghost.gif', 'hippo.gif', 'monkey.gif',
+			      'bloo.gif', 'cactoo.gif', 'eggwin.gif', 'goobli.gif',
+			      'jojo.gif', 'mutt.gif', 'burnie.gif', 'drippy.gif', 'flim.gif',
+			      'hrvatchki.gif', 'leafy.gif', 'squidley.gif' ];
 
 dh.photochooser.group_nophoto = '/group_pix1/nogroupphoto.gif';
 dh.photochooser.group_pix1 = [ 'baseball.gif', 'bingo.gif', 'birds.gif',
@@ -56,10 +59,10 @@ dh.photochooser.setPage = function(number) {
 	var hideBack = (number == 0);
 	var hideMore = ((number + 1) == dh.photochooser.pages.length);
 	var controlsNode = document.getElementById('dhPhotoChooserControls');
-	if (hideBack || hideMore)
-		controlsNode.style.display = 'block';
-	else
+	if (hideBack && hideMore)
 		controlsNode.style.display = 'none';
+	else
+		controlsNode.style.display = 'block';
 	
 	var backNode = document.getElementById('dhPhotoChooserBack');
 	if (hideBack)
