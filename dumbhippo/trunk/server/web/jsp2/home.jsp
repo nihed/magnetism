@@ -16,18 +16,26 @@
 </head>
 <dht:twoColumnPage disableHomeLink="true">
 	<dht:sidebarPerson who="${signin.user.id}">
-	<c:choose>
-		<c:when test="${browser.gecko}">
+		<c:if test="${browser.windows}">
+			<dht:sidebarBoxControls title="WINDOWS CONTROLS">
+				<dht:actionLink href="/download" title="Download and install the Windows client software to use Web Swarm and Music Radar">Download Windows client</dht:actionLink>
+			</dht:sidebarBoxControls>
+		</c:if>
+		<c:if test="${browser.linux}">
+			<dht:sidebarBoxControls title="LINUX CONTROLS">
+				<dht:actionLink href="/download" title="Download and install the Linux client software to use Web Swarm and Music Radar">Download Linux client</dht:actionLink>
+			</dht:sidebarBoxControls>
+		</c:if>
+		<c:if test="${browser.gecko}">
 			<dht:sidebarBoxControls title="FIREFOX CONTROLS">
-				<dht:actionLink href="/bookmark" title="Add the Link Share Link to your Mozilla Firefox Browser">Add Mugshot to Firefox!</dht:actionLink>
+				<dht:actionLink href="/bookmark" title="Add the Link Share Link to your Mozilla Firefox Browser">Add Mugshot to Firefox</dht:actionLink>
 			</dht:sidebarBoxControls>
-		</c:when>
-		<c:when test="${browser.khtml}">
+		</c:if>
+		<c:if test="${browser.khtml}">
 			<dht:sidebarBoxControls title="SAFARI CONTROLS">
-				<dht:actionLink href="/bookmark" title="Add the Link Share Link to your Safari Browser">Add Mugshot to Safari!</dht:actionLink>
+				<dht:actionLink href="/bookmark" title="Add the Link Share Link to your Safari Browser">Add Mugshot to Safari</dht:actionLink>
 			</dht:sidebarBoxControls>
-		</c:when>
-	</c:choose>
+		</c:if>
 	</dht:sidebarPerson>
 	<dht:contentColumn>
 		<dht:zoneBoxWeb more="true">
