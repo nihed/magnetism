@@ -45,6 +45,10 @@ dh.photochooser.setPage = function(number) {
 		var imgLink = imgNode.parentNode;
 		
 		if (i < page.length) {
+			// This is a hack to make sure IE loads all the images (bug 576)
+			var tmpImg = new Image();
+			tmpImg.src = "/images2" + page[i];
+
 			imgNode.src = "/images2" + page[i];
 			imgLink.chosenImageName = page[i];
 			imgLink.onclick = function() {
