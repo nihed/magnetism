@@ -21,6 +21,7 @@ import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.LoginToken;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.persistence.ValidationException;
 import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HippoProperty;
@@ -198,10 +199,14 @@ public class SigninSystemBean implements SigninSystem {
 			logger.warn("Not requiring authentication for address {}", address);
 		}
 		
-		if (address.contains("@")) {
-			resource = identitySpider.lookupEmail(address);
-		} else {
-			resource = identitySpider.lookupAim(address);
+		try {
+			if (address.contains("@")) {
+				resource = identitySpider.getEmail(address);
+			} else {
+				resource = identitySpider.getAim(address);
+			}
+		} catch (ValidationException e) {
+			throw new HumanVisibleException("Invalid address '" + address + "': " + e.getMessage());
 		}
 		
 		if (resource == null)
