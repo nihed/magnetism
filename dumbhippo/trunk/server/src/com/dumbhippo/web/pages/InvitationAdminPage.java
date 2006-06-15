@@ -3,11 +3,17 @@ package com.dumbhippo.web.pages;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.persistence.MembershipStatus;
+import com.dumbhippo.persistence.User;
+import com.dumbhippo.server.Character;
 import com.dumbhippo.server.Configuration;
+import com.dumbhippo.server.GroupSystem;
+import com.dumbhippo.server.GroupView;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.HumanVisibleException;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.PersonView;
+import com.dumbhippo.server.UserViewpoint;
 import com.dumbhippo.server.WantsInSystem;
 import com.dumbhippo.server.WantsInView;
 import com.dumbhippo.web.ListBean;
@@ -22,11 +28,14 @@ public class InvitationAdminPage extends AbstractSigninRequiredPage {
 	
 	private IdentitySpider identitySpider;
 	private WantsInSystem wantsInSystem;
+	private GroupSystem groupSystem;
 	
 	private ListBean<WantsInView> wantsInList;
 	private int countToInvite;
+
+	private ListBean<GroupView> groups;
 	
-    public InvitationAdminPage() throws HumanVisibleException {
+	public InvitationAdminPage() throws HumanVisibleException {
 		super();
 		config = WebEJBUtil.defaultLookup(Configuration.class);
 		String isAdminEnabled = config.getProperty(HippoProperty.ENABLE_ADMIN_CONSOLE);
@@ -35,6 +44,7 @@ public class InvitationAdminPage extends AbstractSigninRequiredPage {
 			throw new HumanVisibleException("Administrator console not enabled");
 		identitySpider = WebEJBUtil.defaultLookup(IdentitySpider.class);
 		wantsInSystem = WebEJBUtil.defaultLookup(WantsInSystem.class);	
+		groupSystem = WebEJBUtil.defaultLookup(GroupSystem.class);
 		countToInvite = 50;
 	}
 	
@@ -62,4 +72,12 @@ public class InvitationAdminPage extends AbstractSigninRequiredPage {
 		this.countToInvite = countToInvite;
 	}
 	
+	public ListBean<GroupView> getGroups() {
+		if (groups == null) {
+		    Character character = Character.MUGSHOT;
+		    User inviter = identitySpider.getCharacter(character);
+			groups = new ListBean<GroupView>(GroupView.sortedList(groupSystem.findGroups(new UserViewpoint(inviter), inviter, MembershipStatus.ACTIVE)));
+		}
+		return groups;		
+	}
 }

@@ -37,6 +37,25 @@
 		    </c:forEach>
 	    </table>	
 	    <br/>
+	 
+	    Select groups to suggest:
+	    <br/>
+	    <c:set var="count" value="1"/>  
+	    <c:choose>
+	        <c:when test="${invitationAdmin.groups.size < 1}">
+	            <c:out value="Mugshot has no groups."/>
+	        </c:when>
+	        <c:otherwise>        
+	            <c:forEach items="${invitationAdmin.groups.list}" var="group">
+	                <input id="groupCheckbox${count}" type="checkbox" value="${group.group.id}"/> 
+	                <c:out value="${group.group.name}"/>
+	                <br/>
+                    <c:set var="count" value="${count+1}"/>
+                </c:forEach>
+            </c:otherwise>
+        </c:choose>
+        <br/>
+        
 	    <dht:formTable>
             <dht:formTableRow label="Subject">        
                 <input id="dhSubjectEntry" size="30" maxlength="64" value="Your Mugshot Invitation"/>

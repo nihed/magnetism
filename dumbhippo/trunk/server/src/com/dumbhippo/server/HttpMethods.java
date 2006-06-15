@@ -172,9 +172,9 @@ public interface HttpMethods {
 	public void doSendEmailInvitation(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint, String address, String subject, String message) throws IOException;
 	
 	@HttpContentTypes(HttpResponseData.NONE)
-	@HttpParams( { "countToInvite", "subject", "message" })	
+	@HttpParams( { "countToInvite", "subject", "message", "suggestGroupIds" })	
     @HttpOptions( adminOnly = true )
-	public void doInviteWantsIn(String countToInvite, String subject, String message) throws IOException;
+	public void doInviteWantsIn(String countToInvite, String subject, String message, String suggestGroupIds) throws IOException;
 	
 	@HttpContentTypes(HttpResponseData.XML)
 	@HttpParams( { "groupId", "inviteeId", "inviteeAddress", "subject", "message" })

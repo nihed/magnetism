@@ -831,7 +831,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	}
 	
 	
-	public void doInviteWantsIn(String countToInvite, String subject, String message) throws IOException {	
+	public void doInviteWantsIn(String countToInvite, String subject, String message, String suggestGroupIds) throws IOException {	
 		logger.debug("Got into doInviteWantsIn");
 		int countToInviteValue = Integer.parseInt(countToInvite);
 		
@@ -866,6 +866,29 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	                    wantsIn.setInvitationSent(true);				    	
 				    }
 			    }
+			    
+				Set<String> groupIdsSet = splitIdList(suggestGroupIds);
+				
+			    EmailResource invitee;
+				try {
+				    invitee = identitySpider.getEmail(wantsIn.getAddress());
+				} catch (ValidationException e) {
+					throw new RuntimeException("Missing or invalid email address", e);
+				}
+
+				// this will try to findContact first, which should normally return an existing contact
+				// because Mugshot has already sent the invitation to the system to the invitee 
+				Contact contact = identitySpider.createContact(inviter, invitee);
+
+				try {
+				    for (String groupId : groupIdsSet) {
+				        Group groupToSuggest = groupSystem.lookupGroupById(new UserViewpoint(inviter), groupId);
+				        groupSystem.addMember(inviter, groupToSuggest, contact);
+				    }
+				} catch (NotFoundException e) {
+					throw new RuntimeException("Group with a given id not found " + e);
+				}	    	
+				
     		}
         }
 	}

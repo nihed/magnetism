@@ -125,11 +125,11 @@ dh.invitation.showSuggestGroupsPopup = function(linkId, address, suggestedGroupI
 }
 
 dh.invitation.doSuggestGroups = function() {
-    var allInputs = document.getElementsByTagName("input");
-    var suggestedGroups = [];
-    var desuggestedGroups = [];
+    var allInputs = document.getElementsByTagName("input")
+    var suggestedGroups = []
+    var desuggestedGroups = []
     for (var i = 0; i < allInputs.length; ++i) {
-        var n = allInputs[i];
+        var n = allInputs[i]
         if (n.type == "checkbox" && n.checked && !dh.util.contains(dh.invitation.suggestedGroupIdsArray, n.value)) {
             // if this is a new suggestion, add it to the list;
             // remove the last condition if we want to "renew" all suggestions, it does not seem necessary,
@@ -141,8 +141,8 @@ dh.invitation.doSuggestGroups = function() {
         }
     }    
       
-	var commaSuggestedGroups = dh.util.join(suggestedGroups, ",");
-	var commaDesuggestedGroups = dh.util.join(desuggestedGroups, ",");
+	var commaSuggestedGroups = dh.util.join(suggestedGroups, ",")
+	var commaDesuggestedGroups = dh.util.join(desuggestedGroups, ",")
 	        
     dh.server.doPOST("suggestgroups",
 				     { "address" : dh.invitation.suggestGroupsInvitee.firstChild.nodeValue, 
@@ -151,12 +151,12 @@ dh.invitation.doSuggestGroups = function() {
 		  	    	 function(type, data, http) {
 		  	    	     // we do not want the information to be resent with a reload, 
 		  	    	     // we want to get a new view of the page
-		  	    	     document.location.href = "/invitation"
+		  	    	     document.location.href = "/invitation";
 		  	    	 },
 		  	    	 function(type, error, http) {
 		  	    	     alert("Couldn't add group suggestions");
 		  	    	     dh.invitation.cancelSuggestGroups();
-		  	    	 });
+		  	    	 })
 }
 
 dh.invitation.cancelSuggestGroups = function() {
@@ -164,7 +164,7 @@ dh.invitation.cancelSuggestGroups = function() {
     
     var suggestGroupsLink = document.getElementById(dh.invitation.suggestGroupsLinkId)
     suggestGroupsLink.href = dh.invitation.suggestGroupsLinkHref
-    dojo.dom.textContent(suggestGroupsLink, dh.invitation.suggestGroupsLinkValue);
+    dojo.dom.textContent(suggestGroupsLink, dh.invitation.suggestGroupsLinkValue)
     
     // set these values back to null, so that we will not reuse them when the group suggestions
     // popup is shown next time
@@ -181,8 +181,8 @@ dhInvitationInit = function() {
 	
 	dh.invitation.fillValues(dh.invitation.initialValues)
 	
-	dh.invitation.suggestGroupsPopup = document.getElementById("dhSuggestGroupsPopup");	
-	dh.invitation.suggestGroupsInvitee = document.getElementById("dhSuggestGroupsInvitee");		
-	dh.invitation.suggestGroupsOk = document.getElementById("dhSuggestGroupsOk");
-	dh.invitation.suggestGroupsCancel = document.getElementById("dhSuggestGroupsCancel");
+	dh.invitation.suggestGroupsPopup = document.getElementById("dhSuggestGroupsPopup")
+	dh.invitation.suggestGroupsInvitee = document.getElementById("dhSuggestGroupsInvitee")	
+	dh.invitation.suggestGroupsOk = document.getElementById("dhSuggestGroupsOk")
+	dh.invitation.suggestGroupsCancel = document.getElementById("dhSuggestGroupsCancel")
 }
