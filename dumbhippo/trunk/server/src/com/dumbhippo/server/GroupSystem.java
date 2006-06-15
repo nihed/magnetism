@@ -28,6 +28,15 @@ public interface GroupSystem {
 	 */
 	public Group createGroup(User creator, String name, GroupAccess access, String description);
 	
+	/**
+	 * Returns a set of groups an invitee was invited to by the adder.
+	 * 
+	 * @param adder
+	 * @param invitee
+	 * @return a set of groups an invitee was invited to by the adder
+	 */
+	public Set<Group> getInvitedToGroups(User adder, Resource invitee);
+	
 	public void addMember(User adder, Group group, Person person);
 	
 	public void removeMember(User remover, Group group, Person person);

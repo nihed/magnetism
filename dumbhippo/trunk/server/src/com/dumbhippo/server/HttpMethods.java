@@ -182,6 +182,10 @@ public interface HttpMethods {
 	public void doSendGroupInvitation(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint, String groupId, String inviteeId, String inviteeAddress, String subject, String message) throws IOException;
 
 	@HttpContentTypes(HttpResponseData.NONE)
+	@HttpParams( { "address", "suggestedGroupIds", "desuggestedGroupIds" })
+	public void doSuggestGroups(UserViewpoint viewpoint, String address, String suggestedGroupIds, String desuggestedGroupIds);
+	
+	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "userId" })
 	public void doSendRepairEmail(UserViewpoint viewpoint, String userId);
 	

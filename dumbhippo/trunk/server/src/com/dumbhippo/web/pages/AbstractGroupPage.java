@@ -1,6 +1,7 @@
 package com.dumbhippo.web.pages;
 
 import java.util.List;
+import java.util.Set;
 
 import org.slf4j.Logger;
 
@@ -35,7 +36,7 @@ public abstract class AbstractGroupPage {
 	private int invitations;
 	private boolean fromInvite;
 	private boolean justAdded;
-	private User adder;
+	private Set<User> adders;
 	private PersonView inviter;
 	private GroupMember groupMember;
 
@@ -101,7 +102,7 @@ public abstract class AbstractGroupPage {
 				justAdded = true;
 			}
 	
-			adder = groupMember.getAdder();
+			adders = groupMember.getAdders();
 		}
 	}
 
@@ -168,8 +169,9 @@ public abstract class AbstractGroupPage {
 	}
 
 	public PersonView getInviter() {
-		if (inviter == null && adder != null) {
-			inviter = identitySpider.getPersonView(signin.getViewpoint(), adder);	
+		// TODO: display all the adders
+		if (inviter == null && adders.iterator().hasNext()) {
+			inviter = identitySpider.getPersonView(signin.getViewpoint(), adders.iterator().next());	
 		}
 		
 		return inviter;

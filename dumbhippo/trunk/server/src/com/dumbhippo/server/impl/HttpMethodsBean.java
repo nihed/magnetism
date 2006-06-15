@@ -893,7 +893,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 				throw new RuntimeException("no such invitee guid", e);
 			}
 			
-		} else if (inviteeAddress != null) {
+		} else if (inviteeAddress != null) { 
 			EmailResource resource;
 			try {
 				resource = identitySpider.getEmail(inviteeAddress);
@@ -933,6 +933,39 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		writeMessageReply(out, "sendGroupInvitationReply", note);
 	}
 
+	public void doSuggestGroups(UserViewpoint viewpoint, String address, String suggestedGroupIds, String desuggestedGroupIds) {
+		Set<String> suggestedGroupIdsSet = splitIdList(suggestedGroupIds);
+		Set<String> desuggestedGroupIdsSet = splitIdList(desuggestedGroupIds);
+		
+		address = address.trim();
+
+		EmailResource invitee;
+		try {
+		    invitee = identitySpider.getEmail(address);
+		} catch (ValidationException e) {
+			throw new RuntimeException("Missing or invalid email address", e);
+		}
+
+		// this will try to findContact first, which should normally return an existing contact
+		// if the viewer has already sent the invitation to the system to the invitee 
+		Contact contact = identitySpider.createContact(viewpoint.getViewer(), invitee);
+
+		try {
+		    for (String groupId : suggestedGroupIdsSet) {
+		        Group groupToSuggest = groupSystem.lookupGroupById(viewpoint, groupId);
+		        groupSystem.addMember(viewpoint.getViewer(), groupToSuggest, contact);
+		    }
+		    
+		    for (String groupId : desuggestedGroupIdsSet) {
+		    	Group groupToDesuggest = groupSystem.lookupGroupById(viewpoint, groupId);
+		        groupSystem.removeMember(viewpoint.getViewer(), groupToDesuggest, contact);
+		    }		    
+		    
+		} catch (NotFoundException e) {
+			throw new RuntimeException("Group with a given id not found " + e);
+		}	    	
+	}
+	
 	public void doSendRepairEmail(UserViewpoint viewpoint, String userId)
 	{
 		if (!identitySpider.isAdministrator(viewpoint.getViewer())) {
@@ -954,7 +987,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			throw new RuntimeException("Error sending repair link", e);
 		}
 	}
-
+	
 	public void doReindexAll(UserViewpoint viewpoint) 
 	{
 		if (!identitySpider.isAdministrator(viewpoint.getViewer())) {

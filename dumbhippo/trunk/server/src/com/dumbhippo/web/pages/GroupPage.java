@@ -1,6 +1,7 @@
 package com.dumbhippo.web.pages;
 
 import java.util.List;
+import java.util.Set;
 
 import org.slf4j.Logger;
 
@@ -48,7 +49,7 @@ public class GroupPage extends AbstractSigninOptionalPage {
 	private String viewedGroupId;
 	private boolean fromInvite;
 	private boolean justAdded;
-	private User adder;
+	private Set<User> adders;
 	private PersonView inviter;
 	private GroupMember groupMember;
 	private ListBean<TrackView> latestTracks;
@@ -129,7 +130,7 @@ public class GroupPage extends AbstractSigninOptionalPage {
 					justAdded = true;
 				}
 		
-				adder = groupMember.getAdder();
+				adders = groupMember.getAdders();
 			} else {
 				groupMember = new GroupMember(group, null, MembershipStatus.NONMEMBER);
 				viewedGroup = new GroupView(group, groupMember, null);
@@ -297,8 +298,9 @@ public class GroupPage extends AbstractSigninOptionalPage {
 	}
 
 	public PersonView getInviter() {
-		if (inviter == null && adder != null) {
-			inviter = identitySpider.getPersonView(getSignin().getViewpoint(), adder);	
+		// TODO: display all the adders
+		if (inviter == null && adders.iterator().hasNext()) {
+			inviter = identitySpider.getPersonView(getSignin().getViewpoint(), adders.iterator().next());	
 		}
 		
 		return inviter;

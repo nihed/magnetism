@@ -38,7 +38,7 @@
 		<dht:zoneBoxInvitation back='true'>
 			<div></div> <!-- IE bug workaround, display:none as first child causes problems -->			
 			<dht:messageArea/>
-			
+			<dht:suggestGroupsDialog/>	
 			<c:choose>
 			    <c:when test="${signin.user.account.invitations > 0}">
 				    <dht:zoneBoxTitle>INVITE A FRIEND</dht:zoneBoxTitle>
@@ -71,7 +71,12 @@
 				<dht:zoneBoxSeparator/>
 				<dht:zoneBoxTitle>PENDING INVITATIONS</dht:zoneBoxTitle>
 				<table>
+				    <c:set var="count" value="1"/>  
 					<c:forEach items="${invites.outstandingInvitations.list}" var="invitation">
+					    <c:set var="suggestGroupsText" value="Suggest Groups"/>
+					    <c:if test="${invitation.suggestedGroupsCount > 0}">
+					        <c:set var="suggestGroupsText" value="Edit Suggestions (${invitation.suggestedGroupsCount})"/>
+					    </c:if>     
 						<tr class="dh-invitation">
 							<td class="dh-address">
 								<c:out value="${invitation.invite.humanReadableInvitee}"/>
@@ -81,9 +86,14 @@
 							</td>
 							<td>
 								<c:set var="addressJs" scope="page"><dh:jsString value="${invitation.invite.humanReadableInvitee}"/></c:set>
-								<dht:actionLink title="Send the invitation again" href="javascript:dh.invitation.resend(${addressJs})">Resend</dht:actionLink>
+								<dht:actionLink oneLine="true" title="Send the invitation again" href="javascript:dh.invitation.resend(${addressJs})">Resend</dht:actionLink>
+								|
+			                    <dht:actionLink id="suggestGroups${count}" oneLine="true" title="Suggest groups to the invitee and offer invitations to these groups" href="javascript:dh.invitation.showSuggestGroupsPopup('suggestGroups${count}', '${invitation.invite.humanReadableInvitee}', '${invitation.commaSeparatedSuggestedGroupIds}')">
+                                    <c:out value="${suggestGroupsText}"/>
+			                    </dht:actionLink> 		 		
 							</td>
 						</tr>
+						<c:set var="count" value="${count+1}"/>
 					</c:forEach>
 				</table>
 			</c:if>

@@ -99,17 +99,17 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		/* We fix up here to always have a single member which is the account member */
 		
 		MembershipStatus status = MembershipStatus.NONMEMBER;
-		User adder = null;
+		Set<User> adders = null;
 		GroupMember accountMember = null;
 		Account account = user.getAccount();
 		for (GroupMember member : allMembers) {
 			// use our "most joined up" status
 			if (member.getStatus().ordinal() > status.ordinal()) {
 				status = member.getStatus();
-				// prefer the "most joined" adder, but prefer any 
-				// adder over null adder
-				if (member.getAdder() != null)
-					adder = member.getAdder();
+				// prefer the "most joined" adders, but prefer any 
+				// adders over no adders
+				if (!member.getAdders().isEmpty())
+					adders = member.getAdders();
 			}
 			
 			if (member.getMember().equals(account)) {
@@ -136,8 +136,8 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 			}
 			logger.debug("Adding new account member to group {} for account {}", group, account);
 			accountMember = new GroupMember(group, account, status);
-			if (adder != null)
-				accountMember.setAdder(adder);
+			if (!adders.isEmpty())
+				accountMember.setAdders(adders);
 			em.persist(accountMember);
 			group.getMembers().add(accountMember);
 		}
@@ -163,7 +163,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 	
 	private GroupMember getGroupMember(Group group, Person person) throws NotFoundException {
 		if (person instanceof User)
-			return getGroupMemberForUser(group, (User)person, false);
+			return getGroupMemberForUser(group, (User)person, true);
 		else
 			return getGroupMemberForContact(group, (Contact)person);
 	}
@@ -174,6 +174,26 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 				return member;
 		}
 		throw new NotFoundException("GroupMember for resource " + resource + " not found");
+	}
+	
+	public Set<Group> getInvitedToGroups(User adder, Resource invitee) {
+		Set<Group> invitedToGroups = new HashSet<Group>();
+		
+		Set<Group> adderGroups = 
+			findRawGroups(new UserViewpoint(adder), adder, MembershipStatus.ACTIVE);
+
+	    for (Group group : adderGroups) {
+	        try {
+	        	GroupMember member = getGroupMember(group, invitee);
+	        	if (member.getAdders().contains(adder)) {
+	        		invitedToGroups.add(group);
+	        	}
+	        } catch (NotFoundException e) {
+	        	// invitee is not a member of this group, nothing to do
+	        }
+	    }
+	    
+	    return invitedToGroups;
 	}
 	
 	public void addMember(User adder, Group group, Person person) {
@@ -216,20 +236,22 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 			case FOLLOWER:
 			case INVITED_TO_FOLLOW:
 				if (!selfAdd)
-					groupMember.setAdder(adder);				
+					groupMember.addAdder(adder);				
 				break;
 			case REMOVED:
 				if (!selfAdd)
-					groupMember.setAdder(adder); // Mark adder for "please come back"
+					groupMember.addAdder(adder); // Mark adder for "please come back"
 				break;
 			case INVITED:
 				if (selfAdd) {
-					// accepting an invitation, add our inviter as a contact
-					User previousAdder = groupMember.getAdder();
-					if (previousAdder != null)
+					// accepting an invitation, add our inviters as contacts
+					Set<User> previousAdders = groupMember.getAdders();
+					for (User previousAdder : previousAdders) {
 						identitySpider.addContactPerson(adder, previousAdder);
+					}
 				} else {
-					// already invited, do nothing
+					// already invited, add the new adder 
+					groupMember.addAdder(adder);					
 					return;
 				}
 				break;
@@ -242,7 +264,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 			
 			groupMember = new GroupMember(group, resource, newStatus);
 			if (!selfAdd) { 
-				groupMember.setAdder(adder);
+				groupMember.addAdder(adder);
 				// Adding to a group for the first time, touch their last 
 				// added date
 				if (resource instanceof Account) {
@@ -258,15 +280,26 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
         LiveState.getInstance().queuePostTransactionUpdate(em, new GroupEvent(group.getGuid(), groupMember.getMember().getGuid(), GroupEvent.Type.MEMBERSHIP_CHANGE));
 	}
 	
-	public void removeMember(User remover, Group group, Person person) {
-		if (!remover.equals(person))
-			throw new IllegalArgumentException("a group member can only be removed by themself");
-		
+	public void removeMember(User remover, Group group, Person person) {		
 		try {
 			// note that getGroupMember() here does a fixup so we only have one GroupMember which 
 			// canonically points to our account.
 			GroupMember groupMember = getGroupMember(group, person);
 
+            // we let adders remove group members they added that do not have an account
+			if (!remover.equals(person) && groupMember.getAdders().contains(remover) 
+			    && !(groupMember.getMember() instanceof Account)) {
+				groupMember.removeAdder(remover);
+				// entirely remove the group member if the last adder removed them
+				if (groupMember.getAdders().isEmpty()) {
+					group.getMembers().remove(groupMember);
+					em.remove(groupMember);					
+				}
+			} else if (!remover.equals(person)) {				
+				throw new IllegalArgumentException("a group member can only be removed by themself " +
+						                           "or by one of its adders if the group member doesn't have an account");
+			}
+			
 			// REMOVED has more rights than FOLLOWER so be sure we don't let followers "remove" themselves. 
 			if (groupMember.getStatus().ordinal() > MembershipStatus.REMOVED.ordinal()) {
 				groupMember.setStatus(MembershipStatus.REMOVED);
@@ -515,18 +548,19 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		Query q = buildFindGroupsQuery(viewpoint, member, false, status);
 		for (Object o : q.getResultList()) {
 			GroupMember groupMember = (GroupMember)o;
-			PersonView inviter  = null;
+			Set<PersonView> inviters  = new HashSet<PersonView>();
 			
 			// Only get the inviter information for viewing the viewpoint's own groups
 			if (ownGroups) {
 				if (groupMember.getStatus() == MembershipStatus.INVITED) {
-					User adder = groupMember.getAdder();
-					if (adder != null)
-						inviter = identitySpider.getPersonView(viewpoint, adder);
+					Set<User> adders = groupMember.getAdders();
+					for(User adder : adders) {
+						inviters.add(identitySpider.getPersonView(viewpoint, adder));
+					}
 				}
 			}
 			
-			result.add(new GroupView(groupMember.getGroup(), groupMember, inviter));
+			result.add(new GroupView(groupMember.getGroup(), groupMember, inviters));
 		}
 		return result;	
 	}

@@ -22,6 +22,19 @@
     cursor:             pointer;
 }
 
+/* White background with round corners and black outline */
+#dhSuggestGroupsPopup {
+	background-color:			#fff;
+	border:						1px solid black;
+	-moz-border-radius:			5px;
+	overflow:                   auto; 
+}
+
+.dh-explanation-note {
+	font-style:			italic;
+	font-size:			10px;
+}
+
 /* Suggestion list styling; similar rules are in sharelink.css */
 
 .dh-suggestion-list {

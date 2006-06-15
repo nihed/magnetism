@@ -551,3 +551,11 @@ dh.util.showMessage = function(message) {
 	}
 };
 
+dh.util.contains = function(items, item) { 
+    for (var i = 0; i < items.length; i++){
+        if (items[i] == item) {
+            return true
+        }
+    }
+    return false
+};

@@ -477,14 +477,15 @@ public class PostingBoardBean implements PostingBoard {
 					if (ac != null &&
 						ac.getOwner().equals(viewer) &&
 						member.getStatus().getReceivesPosts()) {
-						PersonView inviter  = null;
+						Set<PersonView> inviters  = new HashSet<PersonView>();
 						if (member.getStatus() == MembershipStatus.INVITED ||
 						    member.getStatus() == MembershipStatus.INVITED_TO_FOLLOW) {
-							Person adder = member.getAdder();
-							if (adder != null)
-								inviter = identitySpider.getPersonView(viewpoint, adder);
+							Set<User> adders = member.getAdders();
+							for (User adder : adders) {
+								inviters.add(identitySpider.getPersonView(viewpoint, adder));
+							}
 						}
-						recipients.add(new GroupView(g, member, inviter));
+						recipients.add(new GroupView(g, member, inviters));
 						added = true;
 						break;
 					}

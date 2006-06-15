@@ -27,12 +27,12 @@ import com.dumbhippo.persistence.VersionedEntity;
  public class GroupView extends EntityView {
 	 Group group;
 	 GroupMember groupMember;
-	 PersonView inviter;
+	 Set<PersonView> inviters;
 	 
-	 public GroupView(Group g, GroupMember gm, PersonView i) {
-		 group = g;
-		 groupMember = gm;
-		 inviter = i;
+	 public GroupView(Group group, GroupMember groupMember, Set<PersonView> inviters) {
+		 this.group = group;
+		 this.groupMember = groupMember;
+		 this.inviters = inviters;
 	 }
 	 
 	 public Group getGroup() {
@@ -54,8 +54,17 @@ import com.dumbhippo.persistence.VersionedEntity;
 		 return getStatus() == MembershipStatus.INVITED;
 	 }
 	 
+	 // TODO: avoid using this, and try using getInviters
 	 public PersonView getInviter() {
-		 return inviter;
+		 
+		 if (inviters.iterator().hasNext())
+		     return inviters.iterator().next();
+		 
+		 return null;
+	 }
+
+	 public Set<PersonView> getInviters() {
+		 return inviters;
 	 }
 	 
 	/**

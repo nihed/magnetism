@@ -1,5 +1,7 @@
 package com.dumbhippo.server.formatters;
 
+import java.util.Set;
+
 import javax.ejb.EJBContext;
 
 import org.slf4j.Logger;
@@ -64,10 +66,11 @@ public class ShareGroupFormatter extends DefaultFormatter {
 		}
 		
 		if (member != null) {
-			User adder = member.getAdder();
-			// adder is null if you created the group, I believe
-			if (adder != null) {
-				String nick = adder.getNickname();
+			Set<User> adders = member.getAdders();
+			// adders will be empty if you created the group
+			// TODO: reflect all adders in inviterName(s)
+			if (adders.iterator().hasNext()) {
+				String nick = adders.iterator().next().getNickname();
 				if (nick != null) {
 					FullName parsed = FullName.parseHumanString(nick);
 					inviterName = parsed.getFirstName();

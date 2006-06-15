@@ -141,8 +141,12 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		}
 		
 		InviterData ivd = getInviterData(invite, inviter);
-	
-        InvitationView invitationView = new InvitationView(invite, ivd);
+		
+		Set<Group> suggestedGroups = 
+			groupSystem.getInvitedToGroups(ivd.getInviter(), invite.getInvitee());
+		
+        InvitationView invitationView = new InvitationView(invite, ivd, suggestedGroups);
+        
         return invitationView;		
 	}
 	
@@ -218,7 +222,9 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 			// inviterData should not come back null, because we just obtained all 
 			// the invitations sent out by this particular inviter, but if it
 			// is null, it's ok to pass it to the invitationView constructor too
-            InvitationView invitationView = new InvitationView(invite, inviterData);
+			Set<Group> suggestedGroups = 
+				groupSystem.getInvitedToGroups(inviterData.getInviter(), invite.getInvitee());
+            InvitationView invitationView = new InvitationView(invite, inviterData, suggestedGroups);
             outstandingInvitationViews.add(invitationView);
 		}
 			
@@ -288,7 +294,9 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
         	invite.setDeleted(true);
         }
 		
-        InvitationView invitationView = new InvitationView(invite, ivd);
+		Set<Group> suggestedGroups = 
+			groupSystem.getInvitedToGroups(ivd.getInviter(), invite.getInvitee());
+        InvitationView invitationView = new InvitationView(invite, ivd, suggestedGroups);
         return invitationView;		
 	}
 	
