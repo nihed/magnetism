@@ -22,16 +22,23 @@
 				</c:forEach>
 				<c:if test="${person.groups.size > 3}">
 					<dht:moreLink moreName="ALL GROUPS" more="/groups?who=${person.viewedUserId}"/>
-				</c:if>
-				<c:if test="${person.newGroupInvites}">
-					<br/>
-					<div><a href="/groups?who=${person.viewedUserId}">New invited groups!</a></div>
-				</c:if>					
+				</c:if>				
 			</c:when>
 			<c:otherwise>
-				<p class="dh-sidebar-box-empty">Start your own group</p>
+				<c:choose>
+	                <c:when test="${person.invitedGroups.size > 0 && !person.newGroupInvites}">
+                        <p class="dh-sidebar-box-empty"><a href="/groups?who=${person.viewedUserId}">You still have group invitations</a></p>
+                    </c:when>
+                    <c:otherwise>
+                    <%-- This should be changed to 'browse / search public groups' when that makes sense --%>
+                       <p class="dh-sidebar-box-empty">Start your own group</p>
+                    </c:otherwise>
+               </c:choose>				
 			</c:otherwise>
 		</c:choose>
+	    <c:if test="${person.newGroupInvites}">
+            <p><a class="dh-new-invited-groups" href="/groups?who=${person.viewedUserId}">New invited groups!</a></p>
+        </c:if>		
 		<dht:sidebarBoxSeparator/>
 		<dht:actionLink href="/create-group" title="Create a new group of your very own">Create a new group</dht:actionLink>
 	</dht:sidebarBox>
