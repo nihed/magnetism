@@ -118,7 +118,13 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 				if (fixupExpected) {
 					// get rid of anything that isn't an account member
 					logger.debug("Removing group member {} in favor of account member", member);
-					group.getMembers().remove(member);
+					// update the flag on account in case new invitations are awaiting
+					// this is useful when a person signs in for the first time and gets an account,
+				    // we want them to see that they have new group invitations
+					if (member.getStatus() == MembershipStatus.INVITED) {
+						account.touchGroupInvitationReceived();
+					}
+					group.getMembers().remove(member);					
 					em.remove(member);
 				} else {
 					throw new RuntimeException("Unexpected need to fixup GroupMember for user " + user + " in group " + group);

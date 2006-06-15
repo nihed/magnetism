@@ -122,6 +122,8 @@ public class Account extends Resource {
 		hasDoneShareLinkTutorial = false;
 		disabled = false;
 		musicSharingPrimed = false;
+		lastSeenGroupInvitations = -1;
+		groupInvitationReceived = -1;	
 		// Do not initialize musicSharingEnabled here, keep it null intil the
 		// user sets it one way or another.
 
