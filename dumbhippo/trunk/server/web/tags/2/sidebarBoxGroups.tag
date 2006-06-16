@@ -22,25 +22,27 @@
 				</c:forEach>
 				<c:if test="${person.combinedGroups.size > 3}">
 					<dht:moreLink moreName="ALL ${title}" more="/groups?who=${person.viewedUserId}"/>
-				</c:if>				
+				</c:if>
 			</c:when>
-			<c:otherwise>
-				<c:choose>
-	                <c:when test="${person.invitedToFollowGroups.size > 0 && !person.newGroupInvites || person.invitedGroups.size > 0 && !person.newGroupInvites}">
-                        <p class="dh-sidebar-box-empty"><a href="/groups?who=${person.viewedUserId}">You still have group invitations</a></p>
-                    </c:when>
-              
-                    <c:otherwise>
-                    <%-- This should be changed to 'browse / search public groups' when that makes sense --%>
-                       <p class="dh-sidebar-box-empty">Find a group to join, or start your own!</p>
-                    </c:otherwise>
-               </c:choose>				
+			<c:otherwise> 
+                 <c:if test="${person.invitedToFollowGroups.size == 0 && person.invitedGroups.size == 0}">
+                     <p class="dh-sidebar-box-empty">Find a group to join,<br/>or start your own!</p>
+                 </c:if>			
 			</c:otherwise>
 		</c:choose>
-	    <c:if test="${person.invitedToFollowGroups.size > 0 && person.newGroupInvites || person.invitedGroups.size > 0 && person.newGroupInvites}">
-            <p><a class="dh-new-invited-groups" href="/groups?who=${person.viewedUserId}">New invited groups!</a></p>
-        </c:if>		
-		<dht:sidebarBoxSeparator/>
+		
+		<c:if test="${person.invitedToFollowGroups.size > 0 || person.invitedGroups.size > 0}">
+		    <c:choose>
+		        <c:when test="person.newGroupInvites">
+                    <p><a class="dh-new-invited-groups" href="/groups?who=${person.viewedUserId}">New invited groups!</a></p>
+                </c:when>
+                <c:otherwise>
+                    <p class="dh-sidebar-box-empty"><a href="/groups?who=${person.viewedUserId}">You still have group invitations</a></p>           
+                </c:otherwise>
+            </c:choose>
+        </c:if>
+          
+     	<dht:sidebarBoxSeparator/>
 		<dht:actionLink href="/groups?publiconly=true" title="Browse existing public groups">Browse public groups</dht:actionLink>
 		<dht:actionLink href="/create-group" title="Create a new group of your very own">Create a new group</dht:actionLink>
 	</dht:sidebarBox>
