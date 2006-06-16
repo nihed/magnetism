@@ -71,9 +71,9 @@
 				<table>
 				    <c:set var="count" value="1"/>  
 					<c:forEach items="${person.outstandingInvitations.list}" var="invitation">
-					    <c:set var="suggestGroupsText" value="Suggest Groups"/>
+					    <c:set var="suggestGroupsText" value="Invite to Groups"/>
 					    <c:if test="${invitation.suggestedGroupsCount > 0}">
-					        <c:set var="suggestGroupsText" value="Edit Suggestions (${invitation.suggestedGroupsCount})"/>
+					        <c:set var="suggestGroupsText" value="Edit Groups (${invitation.suggestedGroupsCount})"/>
 					    </c:if>     
 						<tr class="dh-invitation">
 							<td class="dh-address">
@@ -86,7 +86,7 @@
 								<c:set var="addressJs" scope="page"><dh:jsString value="${invitation.invite.humanReadableInvitee}"/></c:set>
 								<dht:actionLink oneLine="true" title="Send the invitation again" href="javascript:dh.invitation.resend(${addressJs})">Resend</dht:actionLink>
 								|
-			                    <dht:actionLink id="suggestGroups${count}" oneLine="true" title="Suggest groups to the invitee and offer invitations to these groups" href="javascript:dh.invitation.showSuggestGroupsPopup('suggestGroups${count}', '${invitation.invite.humanReadableInvitee}', '${invitation.commaSeparatedSuggestedGroupIds}')">
+			                    <dht:actionLink id="suggestGroups${count}" oneLine="true" title="Invite to groups" href="javascript:dh.invitation.showSuggestGroupsPopup('suggestGroups${count}', '${invitation.invite.humanReadableInvitee}', '${invitation.commaSeparatedSuggestedGroupIds}')">
                                     <c:out value="${suggestGroupsText}"/>
 			                    </dht:actionLink> 		 		
 							</td>

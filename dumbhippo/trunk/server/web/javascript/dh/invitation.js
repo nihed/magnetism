@@ -6,6 +6,7 @@ dojo.require("dojo.dom");
 dojo.require("dh.util")
 
 dh.invitation.suggestGroupsPopup = null;
+dh.invitation.suggestGroupsArea = null;
 dh.invitation.suggestGroupsInvitee = null;
 dh.invitation.suggestGroupsOk = null;
 dh.invitation.suggestGroupsCancel = null;
@@ -100,7 +101,7 @@ dh.invitation.showSuggestGroupsPopup = function(linkId, address, suggestedGroupI
     dojo.dom.textContent(suggestGroupsLink, "Cancel");
     
     dh.util.show(dh.invitation.suggestGroupsPopup)
-    var inviteeAddressNode = document.createTextNode(address + " ")
+    var inviteeAddressNode = document.createTextNode(address)
     if (dh.invitation.suggestGroupsInvitee.firstChild == null) {
         dh.invitation.suggestGroupsInvitee.appendChild(inviteeAddressNode)
     } else {     
@@ -120,8 +121,13 @@ dh.invitation.showSuggestGroupsPopup = function(linkId, address, suggestedGroupI
         }
     }  
     
-    // scroll to the top of the popup
-    dh.invitation.suggestGroupsPopup.scrollTop = 0
+    // display the border around the group listing only if there is a scrollbar
+    if (dh.invitation.suggestGroupsArea.scrollHeight < dh.invitation.suggestGroupsArea.offsetHeight) {
+        dh.invitation.suggestGroupsArea.style.border = "0px"
+    }
+    
+    // scroll to the top of the suggest groups area
+    dh.invitation.suggestGroupsArea.scrollTop = 0
 }
 
 dh.invitation.doSuggestGroups = function() {
@@ -182,6 +188,7 @@ dhInvitationInit = function() {
 	dh.invitation.fillValues(dh.invitation.initialValues)
 	
 	dh.invitation.suggestGroupsPopup = document.getElementById("dhSuggestGroupsPopup")
+	dh.invitation.suggestGroupsArea = document.getElementById("dhSuggestGroupsArea")
 	dh.invitation.suggestGroupsInvitee = document.getElementById("dhSuggestGroupsInvitee")	
 	dh.invitation.suggestGroupsOk = document.getElementById("dhSuggestGroupsOk")
 	dh.invitation.suggestGroupsCancel = document.getElementById("dhSuggestGroupsCancel")

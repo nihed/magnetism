@@ -38,7 +38,7 @@
 	    </table>	
 	    <br/>
 	 
-	    Select groups to suggest:
+	    Invite to groups:
 	    <br/>
 	    <c:set var="count" value="1"/>  
 	    <c:choose>
