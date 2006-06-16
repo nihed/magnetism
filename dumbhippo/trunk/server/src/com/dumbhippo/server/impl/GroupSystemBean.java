@@ -232,7 +232,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		MembershipStatus newStatus;
 		if (selfAdd)
 			newStatus = adderCanAdd ? MembershipStatus.ACTIVE : MembershipStatus.FOLLOWER;
-		else
+		else 
 			newStatus = adderCanAdd ? MembershipStatus.INVITED : MembershipStatus.INVITED_TO_FOLLOW;
 
 		if (groupMember != null) {
@@ -240,6 +240,11 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 			case NONMEMBER:
 				throw new IllegalStateException();
 			case FOLLOWER:
+				// Followers always transition directly to ACTIVE, we don't
+				// want a 3 way handshake.
+				if (newStatus == MembershipStatus.INVITED) 
+					newStatus = MembershipStatus.ACTIVE;
+				break;
 			case INVITED_TO_FOLLOW:
 				if (!selfAdd)
 					groupMember.addAdder(adder);				

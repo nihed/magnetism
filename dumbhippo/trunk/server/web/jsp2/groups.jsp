@@ -49,6 +49,13 @@
 						<dht:groupItem group="${group}" controls="true"/>
 					</c:forEach>	
 				</dht:twoColumnList>
+				<dht:zoneBoxSeparator/>			
+				<dht:zoneBoxTitle>FOLLOWED GROUPS</dht:zoneBoxTitle>
+				<dht:twoColumnList>
+					<c:forEach items="${person.followedGroups.list}" var="group">
+						<dht:groupItem group="${group}"/>
+					</c:forEach>	
+				</dht:twoColumnList>				
 			</c:if>
 		</dht:zoneBoxGroups>
 	</dht:contentColumn>

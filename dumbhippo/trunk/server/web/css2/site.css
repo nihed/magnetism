@@ -158,12 +158,17 @@ img {
 .dh-sidebar-box .dh-new-invited-groups {
 	font-weight:		bold;
 }
+
 .dh-sidebar-box .dh-new-invited-groups:visited {
 	color:			blue;
 }
 
 .dh-sidebar-box .dh-sidebar-box-empty a:visited {
 	color:			#666666;
+}
+
+.dh-sidebar-box .dh-follower-actions {
+	font-size: 11px;
 }
 
 .dh-compact-item .dh-next-to-image .dh-name {
@@ -336,6 +341,14 @@ div.dh-save-status {
 	color:				#cc0033;
 	margin-left:		5px;
 	text-decoration:	underline;
+}
+
+div.dh-async-action-link-working {
+	font-weight:		bold;
+}
+
+div.dh-async-action-link-complete {
+	font-weight:		bold;
 }
 
 #dhContentColumn .dh-zone-box .dh-message {

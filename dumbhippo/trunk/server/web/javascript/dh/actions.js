@@ -2,6 +2,7 @@ dojo.provide("dh.actions");
 
 dojo.require("dh.server");
 dojo.require("dh.util");
+dojo.require("dh.asyncActionLink")
 
 dh.actions.requestJoinRoom = function(userId, chatId) {
     // Check readyState is to see if the object was actually loaded.
@@ -15,14 +16,20 @@ dh.actions.requestJoinRoom = function(userId, chatId) {
 	}
 }
 
-dh.actions.addContact = function(contactId) {
+dh.actions.addContact = function(contactId, cb, errcb) {
    	dh.server.doPOST("addcontactperson",
 				     { "contactId" : contactId },
 		  	    	 function(type, data, http) {
-		  	    	 	 document.location.reload();
+		  	    	 	if (cb)
+		  	    	 		cb()
+		  	    	 	else
+		  	    	 		document.location.reload();
 		  	    	 },
 		  	    	 function(type, error, http) {
-		  	    	     alert("Couldn't add user to contact list");
+		  	    	 	if (errcb)
+		  	    	 		errcb()
+		  	    	 	else
+		  	    	    	alert("Couldn't add user to contact list");
 		  	    	 });
 }
 
@@ -69,6 +76,19 @@ dh.actions.leaveGroup = function(groupId, cb, errcb) {
 						else
 							errcb()
 					 });
+}
+
+dh.actions.addMember = function(groupId, id, onSuccess) {
+	dh.server.getXmlPOST("addmembers",
+		{ 
+			"groupId" : groupId, 
+			"members" : id
+		},
+		function(type, data, http) {
+			onSuccess();
+		},					
+		function(type, error, http) {	
+		});
 }
 
 dh.actions.signOut = function() {

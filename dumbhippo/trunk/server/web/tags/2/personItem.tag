@@ -4,6 +4,7 @@
 
 <%@ attribute name="who" required="true" type="com.dumbhippo.server.PersonView" %>
 <%@ attribute name="invited" required="false" type="java.lang.Boolean" %>
+<%@ attribute name="suppressDefaultBody" required="false" type="java.lang.Boolean" %>
 
 <div class="dh-compact-item">
 	<table cellpadding="0" cellspacing="0">
@@ -17,10 +18,17 @@
 				<td>
 					<div class="dh-next-to-image">
 						<dht:personName who="${who}"/>
-						<c:if test="${who.liveUser != null}">
-							<div class="dh-info">${who.liveUser.groupCount} groups</div>
-							<div class="dh-info">${who.liveUser.sentPostsCount} posts</div> 
-						</c:if>
+						<c:choose>
+							<c:when test="${!suppressDefaultBody}">
+								<c:if test="${who.liveUser != null}">
+									<div class="dh-info">${who.liveUser.groupCount} groups</div>
+									<div class="dh-info">${who.liveUser.sentPostsCount} posts</div> 
+								</c:if>
+							</c:when>
+							<c:otherwise>
+								<jsp:doBody/>						
+							</c:otherwise>
+						</c:choose>
 					</div>
 				</td>
 			</tr>
