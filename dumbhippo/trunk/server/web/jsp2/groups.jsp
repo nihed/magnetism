@@ -27,24 +27,29 @@
 <dh:bean id="person" class="com.dumbhippo.web.pages.GroupsPage" scope="page"/>
 <jsp:setProperty name="person" property="viewedUserId" value="${who}"/>
 
-<c:if test="${empty publiconly} && ${!person.valid}">
+<c:if test="${empty publiconly && !person.valid}">
 	<dht:errorPage>There's nobody here!</dht:errorPage>
 </c:if>
 
 <c:choose>
 	<c:when test="${!empty publiconly}">
-	    <c:set var="title" value="All Public Groups" scope="page"/>
+	    <c:set var="pagetitle" value="All Public Groups" scope="page"/>
+	    <c:set var="intitle" value="All Public Groups" scope="page"/>
 	</c:when>
 	<c:when test="${person.self}">
-	    <c:set var="title" value="Your Groups" scope="page"/>
+	    <c:set var="pagetitle" value="Your Groups" scope="page"/>
+	    <c:set var="intitle" value="Groups You're In" scope="page"/>
+	    <c:set var="followtitle" value="Groups You Follow" scope="page"/>
 	</c:when>
 	<c:otherwise>
-	    <c:set var="title" value="${person.viewedPerson.name}'s Groups" scope="page"/>
+	    <c:set var="pagetitle" value="${person.viewedPerson.name}'s Groups" scope="page"/>
+	    <c:set var="intitle" value="Groups ${person.viewedPerson.name} Is In" scope="page"/>
+	    <c:set var="followtitle" value="Groups ${person.viewedPerson.name} Follows" scope="page"/>
 	</c:otherwise>
 </c:choose> 
 
 <head>
-	<title><c:out value="${title}"/></title>
+	<title><c:out value="${pagetitle}"/></title>
 	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/site.css"/>
 	<dht:faviconIncludes/>
 	<dht:scriptIncludes/>
@@ -57,7 +62,7 @@
 	<dht:contentColumn>
 		<dht:zoneBoxGroups back='true'>
 			<dht:zoneBoxTitle>
-			    <c:out value="${fn:toUpperCase(title)}"/>
+			    <c:out value="${fn:toUpperCase(intitle)}"/>
 			</dht:zoneBoxTitle>
 			<dht:twoColumnList>
 			    <c:choose>
@@ -67,27 +72,52 @@
 				        </c:forEach>
 			    	</c:when>
 			    	<c:otherwise>
-				        <c:forEach items="${person.groups.list}" var="group">
-					        <dht:groupItem group="${group}"/>
-				        </c:forEach>
+			    	    <c:choose>
+			    	        <c:when test="${person.groups.size > 0}">
+				                <c:forEach items="${person.groups.list}" var="group">
+					                <dht:groupItem group="${group}"/>
+				                </c:forEach>
+				            </c:when>
+				            <c:otherwise>
+				                Not in any groups.
+				            </c:otherwise>
+				        </c:choose>		
 				    </c:otherwise>
 				</c:choose>
 			</dht:twoColumnList>
-			<c:if test="${empty publiconly} && ${person.self}">
+			<c:if test="${empty publiconly && person.self && person.invitedGroups.size > 0}">
 				<dht:zoneBoxSeparator/>			
-				<dht:zoneBoxTitle>INVITED GROUPS</dht:zoneBoxTitle>
+				<dht:zoneBoxTitle>GROUPS YOU'VE BEEN INVITED TO JOIN</dht:zoneBoxTitle>
 				<dht:twoColumnList>
 					<c:forEach items="${person.invitedGroups.list}" var="group">
 						<dht:groupItem group="${group}" controls="true"/>
 					</c:forEach>	
 				</dht:twoColumnList>
+			</c:if>
+			<c:if test="${empty publiconly}">
 				<dht:zoneBoxSeparator/>			
-				<dht:zoneBoxTitle>FOLLOWED GROUPS</dht:zoneBoxTitle>
+				<dht:zoneBoxTitle>${fn:toUpperCase(followtitle)}</dht:zoneBoxTitle>
+				<c:choose>
+				    <c:when test="${person.followedGroups.size > 0}">
+				        <dht:twoColumnList>
+					        <c:forEach items="${person.followedGroups.list}" var="group">
+						        <dht:groupItem group="${group}"/>
+					        </c:forEach>	
+				        </dht:twoColumnList>
+				    </c:when>
+				    <c:otherwise>
+				        Not following any groups.
+				    </c:otherwise>
+				</c:choose>			
+			</c:if>
+			<c:if test="${empty publiconly && person.self && person.invitedToFollowGroups.size > 0}">
+				<dht:zoneBoxSeparator/>			
+				<dht:zoneBoxTitle>GROUPS YOU'VE BEEN INVITED TO FOLLOW</dht:zoneBoxTitle>
 				<dht:twoColumnList>
-					<c:forEach items="${person.followedGroups.list}" var="group">
-						<dht:groupItem group="${group}"/>
+					<c:forEach items="${person.invitedToFollowGroups.list}" var="group">
+						<dht:groupItem group="${group}" controls="true"/>
 					</c:forEach>	
-				</dht:twoColumnList>				
+				</dht:twoColumnList>
 			</c:if>
 		</dht:zoneBoxGroups>
 	</dht:contentColumn>
