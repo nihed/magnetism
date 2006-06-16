@@ -25,14 +25,13 @@
 
 					<c:choose>
 						<c:when test="${signin.valid && find.people.totalCount > 0}">
-		
 							<c:forEach items="${find.people.results}" var="person">
-								<div>
-									<dht:headshot person="${person}"/> <a href="/person?who=${person.user.id}"><c:out value="${person.name}"/></a>
+								<div class="dh-search-result-person">
+									<dht:personItem who="${person}" suppressDefaultBody="true">
+										<div><c:out value="${person.bioAsHtml}" escapeXml="false"/></div>
+									</dht:personItem>
 								</div>
-								<div><c:out value="${person.bioAsHtml}" escapeXml="false"/></div>
 							</c:forEach>
-		
 							<dht:expandablePager pageable="${find.people}" anchor="dhPeople"/>
 						</c:when>
 						<c:when test="${signin.valid && find.people.totalCount == 0}">

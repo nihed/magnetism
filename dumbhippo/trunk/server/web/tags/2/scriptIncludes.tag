@@ -6,3 +6,4 @@
 <script src="/javascript/${buildStamp}/dh/util.js" type="text/javascript"></script>
 <script src="/javascript/${buildStamp}/dh/server.js" type="text/javascript"></script>
 <script src="/javascript/${buildStamp}/dh/actions.js" type="text/javascript"></script>
+<script src="/javascript/${buildStamp}/dh/textinput.js" type="text/javascript"></script>

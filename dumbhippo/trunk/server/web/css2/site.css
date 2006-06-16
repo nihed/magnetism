@@ -110,6 +110,11 @@ img {
 	color:				black;
 }
 
+#dhSearchBox .dh-text-input-showing-default { 
+	font-weight:		normal;
+	color:				#aaaaaa;
+}
+
 #dhHeaderLinks {
 	font-size:			12px;
 	font-weight:		bold;

@@ -97,4 +97,15 @@ public class Pageable<T> {
 		else
 			return 1 + (itemCount - initialPerPage + subsequentPerPage - 1) / subsequentPerPage;
 	}
+	
+	public int getCurrentItemCount() {
+		int pageCount = getPageCount();
+		if (position == 0) {
+			return Math.min(initialPerPage, totalCount);
+		} else if (position == (pageCount - 1)) {
+			return totalCount - (initialPerPage + (pageCount-1) * subsequentPerPage); 
+		} else {
+			return subsequentPerPage;
+		}
+	}
 }

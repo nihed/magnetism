@@ -72,12 +72,20 @@
 				Search: 
 				<jsp:element name="input">
 					<jsp:attribute name="type">text</jsp:attribute>
+					<jsp:attribute name="id">dhGlobalSearchEntry</jsp:attribute>
 					<jsp:attribute name="class">dh-text-input</jsp:attribute>
 					<jsp:attribute name="name">q</jsp:attribute>
 					<jsp:attribute name="value">${searchText}</jsp:attribute>
 				</jsp:element>
-				<input type="submit" value="Go"/>
+				<input type="submit"  value="Go"/>
 			</form>
+			<script type="text/javascript">
+				dhGlobalSearchEntryInit = function () {
+					var searchBox = document.getElementById('dhGlobalSearchEntry');
+					var entry = new dh.textinput.Entry(searchBox, "topic, music, people", "");
+				}
+				dhGlobalSearchEntryInit()
+			</script>			
 		</div>
 	</div>		
 </div>
