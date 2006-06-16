@@ -57,6 +57,9 @@ import com.dumbhippo.persistence.VersionedEntity;
 	 // TODO: avoid using this, and try using getInviters
 	 public PersonView getInviter() {
 		 
+		 if (inviters == null) {
+			 return null;
+		 }
 		 if (inviters.iterator().hasNext())
 		     return inviters.iterator().next();
 		 
