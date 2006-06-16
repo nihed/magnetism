@@ -1,5 +1,7 @@
 package com.dumbhippo.web.pages;
 
+import java.util.List;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Set;
 
@@ -38,6 +40,7 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 	private ListBean<GroupView> followedGroups;
 	private ListBean<GroupView> invitedGroups;
 	private ListBean<GroupView> invitedToFollowGroups;
+	private ListBean<GroupView> combinedGroups;
 	
 	// information about existing outstanding invitations
 	private ListBean<InvitationView> outstandingInvitations;
@@ -139,7 +142,7 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 			groups = new ListBean<GroupView>(GroupView.sortedList(groupSystem.findGroups(getSignin().getViewpoint(), getViewedUser(), MembershipStatus.ACTIVE)));
 		}
 		return groups;
-	}	
+	}                                       
 	
 	public ListBean<GroupView> getAllPublicGroups() {
 		if (allPublicGroups == null) {
@@ -159,7 +162,7 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 			invitedGroups = new ListBean<GroupView>(GroupView.sortedList(groupSystem.findGroups(getSignin().getViewpoint(), getViewedUser(), MembershipStatus.INVITED)));
 		}
 		return invitedGroups;
-	}		
+	}
 	
 	public ListBean<GroupView> getFollowedGroups() {
 		if (followedGroups == null) {
@@ -180,6 +183,24 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 		}
 		return invitedToFollowGroups;
 	}	
+
+	/**
+	 * Combined list of groups the person is in and groups the person follows; 
+	 * used for example in the Groups sideBox
+	 * 
+	 * Note: All member groups will appear in sorted order before all followed
+	 * groups.
+	 */
+	public ListBean<GroupView> getCombinedGroups() {
+		if (combinedGroups == null) {
+			List<GroupView> groupsList = getGroups().getList();
+			List<GroupView> followedGroupsList = getFollowedGroups().getList();
+			List<GroupView> combinedGroupsList = new ArrayList<GroupView>(groupsList);
+			combinedGroupsList.addAll(followedGroupsList);
+			combinedGroups = new ListBean<GroupView>(combinedGroupsList);
+		}
+		return combinedGroups;
+	}   
 	
 	public boolean isNewGroupInvites() {
 		if (!isSelf())

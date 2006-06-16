@@ -16,27 +16,28 @@
 	
 	<dht:sidebarBox boxClass="dh-groups-box" title="${title}">
 		<c:choose>
-			<c:when test="${person.groups.size > 0}">
-				<c:forEach items="${person.groups.list}" end="2" var="group">
+			<c:when test="${person.combinedGroups.size > 0}">
+				<c:forEach items="${person.combinedGroups.list}" end="2" var="group">
 					<dht:groupItem group="${group}"/>
 				</c:forEach>
-				<c:if test="${person.groups.size > 3}">
+				<c:if test="${person.combinedGroups.size > 3}">
 					<dht:moreLink moreName="ALL ${title}" more="/groups?who=${person.viewedUserId}"/>
 				</c:if>				
 			</c:when>
 			<c:otherwise>
 				<c:choose>
-	                <c:when test="${person.invitedGroups.size > 0 && !person.newGroupInvites}">
+	                <c:when test="${person.invitedToFollowGroups.size > 0 && !person.newGroupInvites || person.invitedGroups.size > 0 && !person.newGroupInvites}">
                         <p class="dh-sidebar-box-empty"><a href="/groups?who=${person.viewedUserId}">You still have group invitations</a></p>
                     </c:when>
+              
                     <c:otherwise>
                     <%-- This should be changed to 'browse / search public groups' when that makes sense --%>
-                       <p class="dh-sidebar-box-empty">Start your own group</p>
+                       <p class="dh-sidebar-box-empty">Find a group to join, or start your own!</p>
                     </c:otherwise>
                </c:choose>				
 			</c:otherwise>
 		</c:choose>
-	    <c:if test="${person.newGroupInvites}">
+	    <c:if test="${person.invitedToFollowGroups.size > 0 && person.newGroupInvites || person.invitedGroups.size > 0 && person.newGroupInvites}">
             <p><a class="dh-new-invited-groups" href="/groups?who=${person.viewedUserId}">New invited groups!</a></p>
         </c:if>		
 		<dht:sidebarBoxSeparator/>
