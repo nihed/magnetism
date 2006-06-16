@@ -35,9 +35,17 @@
 			</c:choose>
 			</c:otherwise>
 		</c:choose>
-		<c:if test="${person.signin.user.account.invitations > 0}">
-			<dht:sidebarBoxSeparator/>
-			<dht:actionLink href="/invitation" title="Invite a friend">Invite a friend (${person.signin.user.account.invitations} invitations left)</dht:actionLink>
-		</c:if>
+	    <dht:sidebarBoxSeparator/>
+	    <c:choose>
+		    <c:when test="${person.signin.user.account.invitations > 0}">
+			    <dht:actionLink href="/invitation" title="Invite a friend">Invite a friend (${person.signin.user.account.invitations} invitations left)</dht:actionLink>
+		    </c:when>
+		    <c:when test="${person.outstandingInvitations.size > 0}">
+                <dht:actionLink href="/invitation" title="Review pending invitations">Pending invitations (${person.outstandingInvitations.size} out there)</dht:actionLink>
+		    </c:when>
+		    <c:otherwise>
+		        No invitations to extend to friends
+		    </c:otherwise>  	
+		</c:choose>    	    
 	</dht:sidebarBox>
 </c:if>

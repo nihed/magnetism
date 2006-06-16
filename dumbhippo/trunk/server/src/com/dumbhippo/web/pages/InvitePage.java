@@ -4,12 +4,13 @@ import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.server.InvitationView;
 
 /**
- * InvitePage corresponds to invite.jsp
+ * This class is currently not used, but it contains a 
+ * set of functions that can be useful for invitation.jsp
  * 
  * @author dff, marinaz
  * 
  */
-public class InvitePage extends AbstractInvitePage {
+public class InvitePage extends AbstractSigninRequiredPage {
 
 	// information about person to invite
 	private String email;
@@ -18,7 +19,12 @@ public class InvitePage extends AbstractInvitePage {
 	private InvitationView previousInvitation;
 	private boolean checkedForPreviousInvitation;
 	
-	public InvitePage() {
+    private String invitationToDelete;
+    private InvitationView invitationToDeleteView;
+
+    private String invitationToRestore;
+    
+	public InvitePage() {		
 		checkedForPreviousInvitation = false;
 	}
 	
@@ -96,4 +102,34 @@ public class InvitePage extends AbstractInvitePage {
         	return "[your message goes here]";
         }        	
 	}	
+	
+	public String getInvitationToDelete() {
+		return invitationToDelete;
+	}
+
+	public void setInvitationToDelete(String invitationToDelete) {
+		this.invitationToDelete = invitationToDelete;
+        if (invitationToDelete != null) { //&& (invitationToDeleteView == null)
+        	invitationToDeleteView = 
+		    	invitationSystem.deleteInvitation(getUserSignin().getViewpoint(), 
+		    			                          invitationToDelete);        	
+	    } else {
+	    	invitationToDeleteView = null;
+	    }
+	}
+	
+	public InvitationView getDeletedInvitation()
+	{
+		return invitationToDeleteView;
+	}
+	
+	public String getInvitationToRestore() {
+		return invitationToRestore;
+	}
+
+	public void setInvitationToRestore(String invitationToRestore) {
+		this.invitationToRestore = invitationToRestore;
+		invitationSystem.restoreInvitation(getUserSignin().getViewpoint(), 
+				                           invitationToRestore);
+	}
 }

@@ -13,6 +13,7 @@ import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.GroupView;
 import com.dumbhippo.server.IdentitySpider;
+import com.dumbhippo.server.InvitationView;
 import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PersonView;
@@ -36,6 +37,9 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 	private ListBean<GroupView> followedGroups;
 	private ListBean<GroupView> invitedGroups;
 	private ListBean<GroupView> invitedToFollowGroups;
+	
+	// information about existing outstanding invitations
+	private ListBean<InvitationView> outstandingInvitations;
 	
 	private boolean lookedUpCurrentTrack;
 	private TrackView currentTrack;
@@ -222,5 +226,15 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 			}
 		}
 		return currentTrack;
+	}
+	
+	public ListBean<InvitationView> getOutstandingInvitations() {
+		if (outstandingInvitations == null) {
+			outstandingInvitations = 
+				new ListBean<InvitationView>(
+				    invitationSystem.findOutstandingInvitations(getUserSignin().getViewpoint(), 
+				    		                                    0, -1));
+		}
+		return outstandingInvitations;
 	}
 }

@@ -17,8 +17,6 @@
 	<dht:errorPage>Group not found</dht:errorPage>
 </c:if>
 
-<dh:bean id="invites" class="com.dumbhippo.web.pages.InvitesPage" scope="page"/>
-
 <head>
 	<title>Invitations to <c:out value="${group.name}"/></title>
 	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/invitation.css"/>

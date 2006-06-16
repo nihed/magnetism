@@ -8,8 +8,6 @@
 	<dht:errorPage>Not signed in</dht:errorPage>
 </c:if>
 
-<dh:bean id="invites" class="com.dumbhippo.web.pages.InvitesPage" scope="page"/>
-
 <head>
 	<title>Your Invitations</title>
 	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/invitation.css"/>
@@ -67,12 +65,12 @@
                 </tr>
             </dht:formTable>
             
-			<c:if test="${invites.outstandingInvitations.size > 0}">
+			<c:if test="${person.outstandingInvitations.size > 0}">
 				<dht:zoneBoxSeparator/>
 				<dht:zoneBoxTitle>PENDING INVITATIONS</dht:zoneBoxTitle>
 				<table>
 				    <c:set var="count" value="1"/>  
-					<c:forEach items="${invites.outstandingInvitations.list}" var="invitation">
+					<c:forEach items="${person.outstandingInvitations.list}" var="invitation">
 					    <c:set var="suggestGroupsText" value="Suggest Groups"/>
 					    <c:if test="${invitation.suggestedGroupsCount > 0}">
 					        <c:set var="suggestGroupsText" value="Edit Suggestions (${invitation.suggestedGroupsCount})"/>
