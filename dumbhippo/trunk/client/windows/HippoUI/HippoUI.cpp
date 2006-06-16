@@ -941,11 +941,22 @@ HippoUI::isNoFrameURL(BSTR url)
         L"/account",
     };
 
+    static const WCHAR *noFramePagePrefixes[] = {
+        L"/group?",
+    };
+
     for (int i = 0; i < sizeof(noFramePages) / sizeof(noFramePages[0]); i++) {
         const WCHAR *page = noFramePages[i];
 
         if (components.dwUrlPathLength == wcslen(page) &&
             wcsncmp(components.lpszUrlPath, page, components.dwUrlPathLength) == 0)
+            return true;
+    }
+
+    for (int i = 0; i < sizeof(noFramePagePrefixes) / sizeof(noFramePagePrefixes[0]); i++) {
+        const WCHAR *page = noFramePagePrefixes[i];
+
+        if (wcsncmp(components.lpszUrlPath, page, wcslen(page)) == 0)
             return true;
     }
 
