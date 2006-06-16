@@ -4,13 +4,20 @@
 <%@ taglib uri="/jsp/dumbhippo.tld" prefix="dh" %>
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 
-<c:if test='${empty param["who"] && !signin.valid}'>
-	<dht:errorPage>I don't know whose groups you are looking at!</dht:errorPage>
+<c:if test='${!empty param["publiconly"]}'>
+	<c:set var="publiconly" value='${param["publiconly"]}' scope="page"/>
 </c:if>
 
 <c:choose>
 	<c:when test='${empty param["who"]}'>
-		<c:set var="who" value='${signin.user.id}' scope="page"/>
+	    <c:choose>
+	        <c:when test='${signin.valid}'>
+	            <c:set var="who" value='${signin.user.id}' scope="page"/>
+            </c:when>
+            <c:otherwise>
+ 	            <c:set var="publiconly" value='true' scope="page"/>
+            </c:otherwise>
+		</c:choose>
 	</c:when>
 	<c:otherwise>
 		<c:set var="who" value='${param["who"]}' scope="page"/>
@@ -20,28 +27,53 @@
 <dh:bean id="person" class="com.dumbhippo.web.pages.GroupsPage" scope="page"/>
 <jsp:setProperty name="person" property="viewedUserId" value="${who}"/>
 
-<c:if test="${!person.valid}">
+<c:if test="${empty publiconly} && ${!person.valid}">
 	<dht:errorPage>There's nobody here!</dht:errorPage>
 </c:if>
 
+<c:choose>
+	<c:when test="${!empty publiconly}">
+	    <c:set var="title" value="All Public Groups" scope="page"/>
+	</c:when>
+	<c:when test="${person.self}">
+	    <c:set var="title" value="Your Groups" scope="page"/>
+	</c:when>
+	<c:otherwise>
+	    <c:set var="title" value="${person.viewedPerson.name}'s Groups" scope="page"/>
+	</c:otherwise>
+</c:choose> 
+
 <head>
-	<title><c:out value="${person.viewedPerson.name}"/>'s Groups</title>
+	<title><c:out value="${title}"/></title>
 	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/site.css"/>
 	<dht:faviconIncludes/>
 	<dht:scriptIncludes/>
 	<script type="text/javascript" src="/javascript/${buildStamp}/dh/groups.js"></script>	
 </head>
-<dht:twoColumnPage alwaysShowSidebar="true">
-	<dht:sidebarPerson who="${person.viewedUserId}"/>
+<dht:twoColumnPage>
+    <c:if test="${!empty who}">
+	    <dht:sidebarPerson who="${person.viewedUserId}"/>
+	</c:if>
 	<dht:contentColumn>
 		<dht:zoneBoxGroups back='true'>
-			<dht:zoneBoxTitle><c:out value='${person.self ? "YOUR " : "" }'/>GROUPS</dht:zoneBoxTitle>
+			<dht:zoneBoxTitle>
+			    <c:out value="${fn:toUpperCase(title)}"/>
+			</dht:zoneBoxTitle>
 			<dht:twoColumnList>
-				<c:forEach items="${person.groups.list}" var="group">
-					<dht:groupItem group="${group}"/>
-				</c:forEach>
+			    <c:choose>
+			    	<c:when test="${!empty publiconly}">
+			    		<c:forEach items="${person.allPublicGroups.list}" var="group">
+					        <dht:groupItem group="${group}"/>
+				        </c:forEach>
+			    	</c:when>
+			    	<c:otherwise>
+				        <c:forEach items="${person.groups.list}" var="group">
+					        <dht:groupItem group="${group}"/>
+				        </c:forEach>
+				    </c:otherwise>
+				</c:choose>
 			</dht:twoColumnList>
-			<c:if test="${person.self}">
+			<c:if test="${empty publiconly} && ${person.self}">
 				<dht:zoneBoxSeparator/>			
 				<dht:zoneBoxTitle>INVITED GROUPS</dht:zoneBoxTitle>
 				<dht:twoColumnList>

@@ -34,6 +34,7 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 	private PersonView viewedPerson;
 	
 	private ListBean<GroupView> groups;
+	private ListBean<GroupView> allPublicGroups;
 	private ListBean<GroupView> followedGroups;
 	private ListBean<GroupView> invitedGroups;
 	private ListBean<GroupView> invitedToFollowGroups;
@@ -139,6 +140,13 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 		}
 		return groups;
 	}	
+	
+	public ListBean<GroupView> getAllPublicGroups() {
+		if (allPublicGroups == null) {
+			allPublicGroups = new ListBean<GroupView>(GroupView.sortedList(groupSystem.findPublicGroups()));
+		}
+		return allPublicGroups;
+	}
 	
 	public ListBean<GroupView> getInvitedGroups() {
 		// Only the user can see their own invited groups

@@ -21,7 +21,7 @@
 					<dht:groupItem group="${group}"/>
 				</c:forEach>
 				<c:if test="${person.groups.size > 3}">
-					<dht:moreLink moreName="ALL GROUPS" more="/groups?who=${person.viewedUserId}"/>
+					<dht:moreLink moreName="ALL ${title}" more="/groups?who=${person.viewedUserId}"/>
 				</c:if>				
 			</c:when>
 			<c:otherwise>
@@ -40,6 +40,7 @@
             <p><a class="dh-new-invited-groups" href="/groups?who=${person.viewedUserId}">New invited groups!</a></p>
         </c:if>		
 		<dht:sidebarBoxSeparator/>
+		<dht:actionLink href="/groups?publiconly=true" title="Browse existing public groups">Browse public groups</dht:actionLink>
 		<dht:actionLink href="/create-group" title="Create a new group of your very own">Create a new group</dht:actionLink>
 	</dht:sidebarBox>
 </c:if>

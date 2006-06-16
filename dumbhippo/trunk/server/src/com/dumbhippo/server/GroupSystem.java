@@ -61,6 +61,7 @@ public interface GroupSystem {
 	
 	public Set<Group> findRawGroups(Viewpoint viewpoint, User member, MembershipStatus status);
 
+	
 	/**
 	 * For all groups, ensure this user has a single GroupMember that points to the user's Account
 	 * rather than an email address or something. Used when adding a new AccountClaim.
@@ -100,6 +101,8 @@ public interface GroupSystem {
 	public Set<GroupView> findGroups(Viewpoint viewpoint, User member, MembershipStatus status);
 	
 	public int findGroupsCount(Viewpoint viewpoint, User member, MembershipStatus status);
+	
+	public Set<GroupView> findPublicGroups();
 	
 	public Group lookupGroupById(Viewpoint viewpoint, String groupId) throws NotFoundException;
 	

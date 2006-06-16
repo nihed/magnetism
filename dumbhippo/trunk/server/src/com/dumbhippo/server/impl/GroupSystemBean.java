@@ -496,6 +496,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		return findRawGroups(viewpoint, member, null);
 	}
 
+ 
 	public void fixupGroupMemberships(User user) {
 		Set<Group> groups = findRawGroups(SystemViewpoint.getInstance(), user);
 		for (Group g : groups) {
@@ -574,6 +575,21 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 			result.add(new GroupView(groupMember.getGroup(), groupMember, inviters));
 		}
 		return result;	
+	}
+	
+	private static final String FIND_PUBLIC_GROUPS_QUERY = 
+		"FROM Group g WHERE ";
+	
+	public Set<GroupView> findPublicGroups() {
+		Query q;
+		
+		q = em.createQuery(FIND_PUBLIC_GROUPS_QUERY + CAN_SEE_ANONYMOUS);
+
+		Set<GroupView> ret = new HashSet<GroupView>();
+		for (Object o : q.getResultList()) {
+			ret.add(new GroupView((Group) o, null, null));
+		}
+		return ret;
 	}
 	
 	public int incrementGroupVersion(final String groupId) {
