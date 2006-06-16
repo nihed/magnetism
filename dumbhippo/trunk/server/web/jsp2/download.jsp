@@ -44,32 +44,42 @@
 					<c:set var="forFedora" value=" for Fedora Core 5" scope="page"/>
 				</c:if>	
 				1. <a id="dhDownloadProduct" class="dh-download-product" href="javascript:dh.download.doDownload('${welcome.downloadUrl}')">Click here to download</a><c:out value="${forFedora}"/>.<br/>
-			    The software will install automatically.
+			    <c:choose>
+			        <c:when test="${browser.linuxRequested}">
+			        Install the package, log out of your desktop, and log back in.
+			        </c:when>
+			        <c:otherwise>
+			        The software will install automatically.
+			        </c:otherwise>
+			    </c:choose>
 			</td>
 			</tr>
 		</table>
 	</td>
 	<td class="dh-download-separator"><div></div></td>
-	<td class="dh-download-instructions"><center>
-	<c:choose>
-		<c:when test="${browser.linuxRequested}">
-			<div>2. Open Rhythmbox and play a song.</div>		
-		</c:when>
-		<c:otherwise>
-			<div>2. Open iTunes or Yahoo! Music and play a song.</div>
-		</c:otherwise>
-	</c:choose>			
-	<div><img src="/images2/${buildStamp}/musicradar45x57.gif"/></div></center>
-	</td>
-	<td class="dh-download-separator"><div></div></td>	
 	<td class="dh-download-instructions">
-	3. Click the link on the bubble that appears.<br/>
+	2. Click the link on the bubble that appears.<br/>
 	<img src="/images2/${buildStamp}/minibubble.gif"/>
-	</td>	
+	</td>
 	</tr>
 	</table>
-	<div class="dh-special-subtitle dh-download-bottom-title">Clicking that link will activate Web Swarm, and take you
-	to our page where you can get and customize Music Radar for your own page.  Easy!</div>
+	<div class="dh-special-subtitle dh-download-bottom-title">
+	  <div>
+	      That will activate Web Swarm and get you started with Mugshot.
+	  </div>
+	  <div>
+	      Songs you play in 
+	      <c:choose>
+		      <c:when test="${browser.linuxRequested}">
+	      		  Rhythmbox		
+		      </c:when>
+		      <c:otherwise>
+			      iTunes or Yahoo! Music
+		      </c:otherwise>
+	      </c:choose>			
+	      will show up in Music Radar.  Easy!
+	  </div>
+	</div>
 	<dht:notevil/>
 	<div class="dh-disclaimer">Download for <a href="/download?platform=windows">Windows</a> | <a href="/download?platform=linux">Linux</a></div>
 	<div class="dh-disclaimer"><a id="dhSkipDownload" href="javascript:dh.download.doDownload('/')">I can't install on this computer, skip download.</a> (Not recommended.)</div>
