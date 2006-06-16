@@ -10,11 +10,6 @@
 			exec="dh.actions.addMember('${group.viewedGroupId}', '${who.user.id}', function () { dh.asyncActionLink.complete('addMember${group.viewedGroupId}${who.user.id}') })"
 			ctrlId="addMember${group.viewedGroupId}${who.user.id}"
 			text="Invite to group"
-			completedText="Invited to group"/>
-		<dht:asyncActionLink 
-			exec="dh.actions.addContact('${who.user.id}', function () { dh.asyncActionLink.complete('addContact${who.user.id}') })"
-			ctrlId="addContact${who.user.id}"
-			text="Add to friends"
-			completedText="Added to friends"/>								
+			completedText="Invited to group"/>							
 		</div>
 </dht:personItem>
