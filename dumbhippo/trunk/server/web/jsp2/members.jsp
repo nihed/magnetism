@@ -38,7 +38,7 @@
 				<dht:zoneBoxTitle>ALL FOLLOWERS</dht:zoneBoxTitle>
 				<dht:twoColumnList>
 					<c:forEach items="${group.followers.list}" var="person">
-						<dht:personFollowerItem who="${person}"/>
+						<dht:personFollowerItem group="${group}" who="${person}"/>
 					</c:forEach>
 				</dht:twoColumnList>
 			</c:if>

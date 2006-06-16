@@ -21,7 +21,7 @@
 <c:if test="${group.followers.size > 0}">
 	<dht:sidebarBox boxClass="dh-group-members-box" title="${group.viewedGroup.liveGroup.followerCount} FOLLOWERS">
 		<c:forEach items="${group.followers.list}" var="person">
-			<dht:personFollowerItem who="${person}"/>
+			<dht:personFollowerItem group="${group}" who="${person}"/>
 		</c:forEach>
 		<c:if test="${group.viewedGroup.liveGroup.followerCount > group.maxMembersShown}">
 			<dht:moreLink moreName="ALL FOLLOWERS" more="/members?group=${group.viewedGroupId}"/>
