@@ -23,7 +23,7 @@ dh.invitationadmin.invite = function(countToInvite) {
 				     { "countToInvite" : countToInvite,
 				       "subject" : subject.value,
 				       "message" : message.value,
-				       "suggestGroupIds" : commaSuggestedGroups },
+				       "suggestedGroupIds" : commaSuggestedGroups },
 		  	    	 function(type, data, http) {
                          document.location.reload();
 		  	    	 },

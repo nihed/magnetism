@@ -24,6 +24,10 @@
 	width:			309px;
 }
 
+#dhContentColumn #dhSuggestedGroupsWithInvitationDiv {
+	width:			309px;
+}
+
 #dhContentColumn .dh-zone-box .dh-invitation .dh-address {
 	padding-right:	10px;
 }

@@ -168,13 +168,13 @@ public interface HttpMethods {
 	public void doInviteSelf(OutputStream out, HttpResponseData contentType, String address, String promotion) throws IOException;
 	
 	@HttpContentTypes(HttpResponseData.XML)
-	@HttpParams( { "address", "subject", "message" })
-	public void doSendEmailInvitation(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint, String address, String subject, String message) throws IOException;
+	@HttpParams( { "address", "subject", "message", "suggestedGroupIds" })
+	public void doSendEmailInvitation(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint, String address, String subject, String message, String suggestedGroupIds) throws IOException;
 	
 	@HttpContentTypes(HttpResponseData.NONE)
-	@HttpParams( { "countToInvite", "subject", "message", "suggestGroupIds" })	
+	@HttpParams( { "countToInvite", "subject", "message", "suggestedGroupIds" })	
     @HttpOptions( adminOnly = true )
-	public void doInviteWantsIn(String countToInvite, String subject, String message, String suggestGroupIds) throws IOException;
+	public void doInviteWantsIn(String countToInvite, String subject, String message, String suggestedGroupIds) throws IOException;
 	
 	@HttpContentTypes(HttpResponseData.XML)
 	@HttpParams( { "groupId", "inviteeId", "inviteeAddress", "subject", "message" })

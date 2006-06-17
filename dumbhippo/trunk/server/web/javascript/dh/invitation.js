@@ -16,6 +16,9 @@ dh.invitation.suggestGroupsLinkHref = null;
 dh.invitation.suggestGroupsLinkValue = null;
 dh.invitation.suggestedGroupIdsArray = null;
 
+dh.invitation.suggestedGroupIdsWithInvitationArray = null;
+dh.invitation.suggestedGroupsWithInvitation = null;
+
 dh.invitation.reloadWithMessage = function(message) {
 	// We do this as a POST to avoid including the message in the URL
 	document.getElementById("dhReloadMessage").value = message
@@ -40,11 +43,14 @@ dh.invitation.send = function() {
 		return
 	}
 	
+	var commaSuggestedGroups = dh.util.join(dh.invitation.suggestedGroupIdsWithInvitationArray, ",")
+	
     dh.server.getXmlPOST("sendemailinvitation",
                     {
                         "address" : address,
                         "subject" : subject,
-	                    "message" : message
+	                    "message" : message,
+	                    "suggestedGroupIds" : commaSuggestedGroups
                     },
                     function(type, document, http) {
                     	var messages = document.getElementsByTagName("message")
@@ -108,7 +114,11 @@ dh.invitation.showSuggestGroupsPopup = function(linkId, address, suggestedGroupI
         dh.invitation.suggestGroupsInvitee.replaceChild(inviteeAddressNode, dh.invitation.suggestGroupsInvitee.firstChild)
     }
     
-    dh.invitation.suggestedGroupIdsArray = suggestedGroupIds.split(",");
+    if (linkId == "dhSuggestGroupsWithInvitation") {
+        dh.invitation.suggestedGroupIdsArray = dh.invitation.suggestedGroupIdsWithInvitationArray
+    } else {
+        dh.invitation.suggestedGroupIdsArray = suggestedGroupIds.split(",");
+    }
     
     var allInputs = document.getElementsByTagName("input");
     
@@ -134,35 +144,70 @@ dh.invitation.doSuggestGroups = function() {
     var allInputs = document.getElementsByTagName("input")
     var suggestedGroups = []
     var desuggestedGroups = []
+    var suggestedGroupsWithInvitationArray = []
     for (var i = 0; i < allInputs.length; ++i) {
         var n = allInputs[i]
-        if (n.type == "checkbox" && n.checked && !dh.util.contains(dh.invitation.suggestedGroupIdsArray, n.value)) {
-            // if this is a new suggestion, add it to the list;
-            // remove the last condition if we want to "renew" all suggestions, it does not seem necessary,
-            // since this is happenning at the point when the person does not have an account yet, there 
-            // is no difference between a new suggestion and a renewed suggestion
-            suggestedGroups.push(n.value)
+        if (n.type == "checkbox" && n.checked) {
+            if (dh.invitation.suggestGroupsLinkId == "dhSuggestGroupsWithInvitation") {
+                suggestedGroups.push(n.value)                            
+                suggestedGroupsWithInvitationArray.push(" " + dojo.string.trim(n.nextSibling.nodeValue))
+            } else if (!dh.util.contains(dh.invitation.suggestedGroupIdsArray, n.value)) {
+                // if this is a new suggestion, add it to the list;
+                // remove the last condition if we want to "renew" all suggestions, it does not seem necessary,
+                // since this is happenning at the point when the person does not have an account yet, there 
+                // is no difference between a new suggestion and a renewed suggestion
+                suggestedGroups.push(n.value)
+            }
         } else if (n.type == "checkbox" && !n.checked && dh.util.contains(dh.invitation.suggestedGroupIdsArray, n.value)) {
             desuggestedGroups.push(n.value)
         }
     }    
       
-	var commaSuggestedGroups = dh.util.join(suggestedGroups, ",")
-	var commaDesuggestedGroups = dh.util.join(desuggestedGroups, ",")
+    if (dh.invitation.suggestGroupsLinkId == "dhSuggestGroupsWithInvitation") {
+        dh.invitation.suggestedGroupIdsWithInvitationArray = suggestedGroups
+       
+        var commaSuggestedGroupsWithInvitationNode = document.createTextNode(dojo.string.trim(dh.util.join(suggestedGroupsWithInvitationArray, ",")) + " | ")
+        if (dh.invitation.suggestedGroupsWithInvitation.firstChild == null) {
+            dh.invitation.suggestedGroupsWithInvitation.appendChild(commaSuggestedGroupsWithInvitationNode)
+        } else {     
+            dh.invitation.suggestedGroupsWithInvitation.replaceChild(commaSuggestedGroupsWithInvitationNode, dh.invitation.suggestedGroupsWithInvitation.firstChild)
+        }
+        
+        dh.util.hide(dh.invitation.suggestGroupsPopup)
+        
+        var suggestGroupsLink = document.getElementById("dhSuggestGroupsWithInvitation")
+        suggestGroupsLink.href = dh.invitation.suggestGroupsLinkHref
+        if (suggestedGroups.length > 0) {
+            dojo.dom.textContent(suggestGroupsLink, "Edit")
+        } else {
+            dojo.dom.textContent(suggestGroupsLink, "Choose Groups")        
+        }
+       
+        // set these values back to null, so that we will not reuse them when the group suggestions
+        // popup is shown next time
+        dh.invitation.suggestGroupsLinkId = null
+        dh.invitation.suggestGroupsLinkHref = null
+        dh.invitation.suggestGroupsLinkValue = null
+        dh.invitation.suggestedGroupIdsArray = null    
+    } else {
+    
+	    var commaSuggestedGroups = dh.util.join(suggestedGroups, ",")
+	    var commaDesuggestedGroups = dh.util.join(desuggestedGroups, ",")
 	        
-    dh.server.doPOST("suggestgroups",
-				     { "address" : dh.invitation.suggestGroupsInvitee.firstChild.nodeValue, 
-					   "suggestedGroupIds" : commaSuggestedGroups,
-					   "desuggestedGroupIds" : commaDesuggestedGroups },
-		  	    	 function(type, data, http) {
-		  	    	     // we do not want the information to be resent with a reload, 
-		  	    	     // we want to get a new view of the page
-		  	    	     document.location.href = "/invitation";
-		  	    	 },
-		  	    	 function(type, error, http) {
-		  	    	     alert("Couldn't add group suggestions");
-		  	    	     dh.invitation.cancelSuggestGroups();
-		  	    	 })
+        dh.server.doPOST("suggestgroups",
+		   		         { "address" : dh.invitation.suggestGroupsInvitee.firstChild.nodeValue, 
+					       "suggestedGroupIds" : commaSuggestedGroups,
+					       "desuggestedGroupIds" : commaDesuggestedGroups },
+		  	    	     function(type, data, http) {
+		  	    	         // we do not want the information to be resent with a reload, 
+		  	    	         // we want to get a new view of the page
+		  	    	         document.location.href = "/invitation";
+		  	    	     },
+		  	    	     function(type, error, http) {
+		  	    	         alert("Couldn't add group suggestions");
+		  	    	         dh.invitation.cancelSuggestGroups();
+		  	    	     })
+    }
 }
 
 dh.invitation.cancelSuggestGroups = function() {
@@ -192,4 +237,7 @@ dhInvitationInit = function() {
 	dh.invitation.suggestGroupsInvitee = document.getElementById("dhSuggestGroupsInvitee")	
 	dh.invitation.suggestGroupsOk = document.getElementById("dhSuggestGroupsOk")
 	dh.invitation.suggestGroupsCancel = document.getElementById("dhSuggestGroupsCancel")
+	dh.invitation.suggestedGroupsWithInvitation = document.getElementById("dhSuggestedGroupsWithInvitation")
+	
+	dh.invitation.suggestedGroupIdsWithInvitationArray = []
 }

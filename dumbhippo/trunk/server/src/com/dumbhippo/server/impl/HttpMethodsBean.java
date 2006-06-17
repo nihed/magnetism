@@ -813,7 +813,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		writeMessageReply(out, "inviteSelfReply", note);
 	}
 	
-	public void doSendEmailInvitation(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint, String address, String subject, String message) throws IOException {
+	public void doSendEmailInvitation(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint, String address, String subject, String message, String suggestedGroupIds) throws IOException {
 		if (contentType != HttpResponseData.XML)
 			throw new IllegalArgumentException("only support XML replies");
 		
@@ -822,6 +822,21 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		String note;
 		try {
 			note = invitationSystem.sendEmailInvitation(viewpoint, null, address, subject, message);
+			
+			Set<String> groupIdsSet = splitIdList(suggestedGroupIds);
+			
+		    EmailResource invitee = identitySpider.getEmail(address);
+
+			// this will try to findContact first, which should normally return an existing contact
+			// because the viewer has just sent the invitation to the system to the invitee 
+			Contact contact = identitySpider.createContact(viewpoint.getViewer(), invitee);
+			
+			for (String groupId : groupIdsSet) {
+			    Group groupToSuggest = groupSystem.lookupGroupById(viewpoint, groupId);
+			    groupSystem.addMember(viewpoint.getViewer(), groupToSuggest, contact);
+			}
+		} catch (NotFoundException e) {
+				throw new RuntimeException("Group with a given id not found " + e);	
 		} catch (ValidationException e) {
 			// FIXME This error won't get back to the client			
 			throw new RuntimeException("Missing or invalid email address", e);			
@@ -831,7 +846,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	}
 	
 	
-	public void doInviteWantsIn(String countToInvite, String subject, String message, String suggestGroupIds) throws IOException {	
+	public void doInviteWantsIn(String countToInvite, String subject, String message, String suggestedGroupIds) throws IOException {	
 		logger.debug("Got into doInviteWantsIn");
 		int countToInviteValue = Integer.parseInt(countToInvite);
 		
@@ -867,7 +882,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 				    }
 			    }
 			    
-				Set<String> groupIdsSet = splitIdList(suggestGroupIds);
+				Set<String> groupIdsSet = splitIdList(suggestedGroupIds);
 				
 			    EmailResource invitee;
 				try {

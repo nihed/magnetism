@@ -50,7 +50,7 @@
 			</c:choose>
 			
 			<dht:formTable>
-                <dht:formTableRow label="Friend's email address">
+                <dht:formTableRow label="Friend's Email Address">
                     <dht:textInput id="dhAddressEntry" disabled="${disabled}"/>
                 </dht:formTableRow>
                 <dht:formTableRow label="Subject">
@@ -59,6 +59,14 @@
                 <dht:formTableRow label="Message">
                     <dht:textInput id="dhMessageEntry" multiline="true" disabled="${disabled}"/>
                 </dht:formTableRow>
+                <dht:formTableRow label="Invite to Groups">
+                    <div id="dhSuggestedGroupsWithInvitationDiv">
+                        <span id="dhSuggestedGroupsWithInvitation"></span> 
+                        <dht:actionLink id="dhSuggestGroupsWithInvitation" disabled="${disabled}" oneLine="true" title="Invite to groups" href="javascript:dh.invitation.showSuggestGroupsPopup('dhSuggestGroupsWithInvitation', 'a new invitee', '')">
+                            <c:out value="Choose Groups"/>
+			            </dht:actionLink>
+			        </div>    
+                </dht:formTableRow>                
                 <tr>
                     <td></td>
                     <td class="dh-control-cell"><input ${disabledAttribute} id="dhInvitationSendButton" type="button" value="Send" onclick="dh.invitation.send()"/></td>
@@ -86,7 +94,7 @@
 								<c:set var="addressJs" scope="page"><dh:jsString value="${invitation.invite.humanReadableInvitee}"/></c:set>
 								<dht:actionLink oneLine="true" title="Send the invitation again" href="javascript:dh.invitation.resend(${addressJs})">Resend</dht:actionLink>
 								|
-			                    <dht:actionLink id="suggestGroups${count}" oneLine="true" title="Invite to groups" href="javascript:dh.invitation.showSuggestGroupsPopup('suggestGroups${count}', '${invitation.invite.humanReadableInvitee}', '${invitation.commaSeparatedSuggestedGroupIds}')">
+			                    <dht:actionLink id="dhSuggestGroups${count}" oneLine="true" title="Invite to groups" href="javascript:dh.invitation.showSuggestGroupsPopup('dhSuggestGroups${count}', '${invitation.invite.humanReadableInvitee}', '${invitation.commaSeparatedSuggestedGroupIds}')">
                                     <c:out value="${suggestGroupsText}"/>
 			                    </dht:actionLink> 		 		
 							</td>

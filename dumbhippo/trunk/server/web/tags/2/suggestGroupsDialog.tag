@@ -15,8 +15,8 @@
 	        </c:when>
 	        <c:otherwise>        
 	            <c:forEach items="${person.groups.list}" var="group">
-	                <input id="groupCheckbox${count}" type="checkbox" value="${group.group.id}"/> 
-	                <c:out value="${group.group.name}"/>
+	                <input id="dhGroupCheckbox${count}" type="checkbox" value="${group.group.id}"/> 
+	                <c:out value="${group.group.name}"/> 	                
 	                <br/>
                     <c:set var="count" value="${count+1}"/>
                 </c:forEach>
