@@ -645,16 +645,25 @@ public class MessageSenderBean implements MessageSender {
 			// HTML: append footer
 			
 			if (recipientInviteUrl != null) {
-				format = "<div style=\"text-align:center;margin-top:1em;font-size:9pt;\">\n"
-					+ "<a href=\"%s\">%s</a> created an open "
-					+ "<a href=\"%s\">invitation for you</a> to use <a href=\"%s\">Mugshot</a>\n"
-					+ "</div>\n";
-				messageHtml.append(String.format(format, 
-						// FIXME handle null public page url
-						XmlBuilder.escape(posterPublicPageUrl),
-						XmlBuilder.escape(posterViewedBySelf.getName()),
-						XmlBuilder.escape(recipientInviteUrl),
-						XmlBuilder.escape(baseurl)));
+				messageHtml.append("<div style=\"text-align:center;margin-top:1em;font-size:9pt;\">\n");
+				if (addToInvitation) {
+					format = "<a href=\"%s\">%s</a> extended an "
+					+ "<a href=\"%s\">invitation for you</a> to join <a href=\"%s\">Mugshot</a>\n";
+
+					messageHtml.append(String.format(format, 
+							// FIXME handle null public page url
+							XmlBuilder.escape(posterPublicPageUrl),
+							XmlBuilder.escape(posterViewedBySelf.getName()),
+							XmlBuilder.escape(recipientInviteUrl),
+							XmlBuilder.escape(baseurl)));					
+				} else {
+					format = "There is an <a href=\"%s\">invitation for you</a> to join <a href=\"%s\">Mugshot</a>\n";
+					messageHtml.append(String.format(format, 
+							XmlBuilder.escape(recipientInviteUrl),
+							XmlBuilder.escape(baseurl)));						
+				}
+				messageHtml.append( "</div>\n");
+
 			}
 			
 			String stopLink;
