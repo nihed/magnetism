@@ -178,6 +178,9 @@ public class GroupPage extends AbstractSigninOptionalPage {
 	}
 
 	public String getJoinAction() {
+		if (!getSignin().isValid())
+			return null;
+			
 		switch (getGroupMember().getStatus()) {
 		case NONMEMBER:
 		case INVITED_TO_FOLLOW:
@@ -210,6 +213,9 @@ public class GroupPage extends AbstractSigninOptionalPage {
 	}
 	
 	public String getJoinTooltip() {
+		if (!getSignin().isValid())
+			return null;
+			
 		switch (getGroupMember().getStatus()) {
 		case NONMEMBER:
 		case INVITED_TO_FOLLOW:
