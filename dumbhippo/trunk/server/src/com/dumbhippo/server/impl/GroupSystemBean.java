@@ -252,8 +252,12 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 					groupMember.addAdder(adder);				
 				break;
 			case REMOVED:
-				if (!selfAdd)
+				if (!selfAdd) {
 					groupMember.addAdder(adder); // Mark adder for "please come back"
+					// We don't want to change REMOVED status except by the user
+					// who was removed
+					return;
+				}
 				break;
 			case INVITED:
 				if (selfAdd) {
