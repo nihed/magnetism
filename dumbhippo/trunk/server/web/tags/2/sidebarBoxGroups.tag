@@ -33,7 +33,7 @@
 		
 		<c:if test="${person.invitedToFollowGroups.size > 0 || person.invitedGroups.size > 0}">
 		    <c:choose>
-		        <c:when test="person.newGroupInvites">
+		        <c:when test="${person.newGroupInvites}">
                     <p><a class="dh-new-invited-groups" href="/groups?who=${person.viewedUserId}">New invited groups!</a></p>
                 </c:when>
                 <c:otherwise>
