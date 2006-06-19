@@ -345,21 +345,11 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		return account;
 	}
 
-	/**
-	 * If invitee has already been invited and the invitation is not expired, 
-	 * ensures inviter is in the inviter set and returns the invitation. 
-	 * If the inviter is new to the inviter set, the invitation date is updated.
-	 * Else returns null.
-	 * 
-	 * @param inviter possible inviter
-	 * @param invitee possible invitee
-	 * @return invitation if any, or null
-	 */
-	public InvitationToken updateValidInvitation(User inviter, Resource invitee) {
+	public InvitationToken updateValidInvitation(User inviter, Resource invitee, boolean addToInvitation) {
 		InvitationToken iv = lookupInvitationFor(null, invitee);
 		if (iv == null || !iv.isValid())
 			return null;
-		if (getInviterData(iv, inviter) == null) {
+		if (addToInvitation && getInviterData(iv, inviter) == null) {
 			// it's a new inviter for this invitation, so we can add him to
 			// the inviters list and update the invitation date
 			long currentTime = System.currentTimeMillis();

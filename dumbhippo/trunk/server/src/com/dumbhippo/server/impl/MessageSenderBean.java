@@ -500,6 +500,15 @@ public class MessageSenderBean implements MessageSender {
 			// be able to see the post details.
 			UserViewpoint viewpoint = new UserViewpoint(post.getPoster());
 			
+			// We don't want to send email notifications if, say, the recipient
+			// is a member of a public group that the post was sent to, since
+			// that is too spammy for people who have just been invited to the
+			// system.
+			if (!postingBoard.worthEmailNotification(post, recipient)) {
+				logger.debug("Not sending email notification because it would be spammy");
+				return;
+			}
+			
 			if (!noMail.getMailEnabled(recipient)) {
 				logger.debug("Mail is disabled to {} not sending post notification", recipient);
 				return;
@@ -507,8 +516,13 @@ public class MessageSenderBean implements MessageSender {
 			
 			String baseurl = config.getProperty(HippoProperty.BASEURL);
 			
+			// If the sender has addressed their post directly to this recipient, then
+			// we want to "pile on" to any invitation that exists for the recipient.
+			// But we don't want to do that if the recipient is just a group member
+			boolean addToInvitation = post.getPersonRecipients().contains(recipient);
+			
 			// may be null!
-			InvitationToken invitation = invitationSystem.updateValidInvitation(post.getPoster(), recipient); 
+			InvitationToken invitation = invitationSystem.updateValidInvitation(post.getPoster(), recipient, addToInvitation); 
 			String recipientInviteUrl;
 			if (invitation != null) 
 				recipientInviteUrl = invitation.getAuthURL(baseurl); 

@@ -18,6 +18,7 @@ import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.PersonPostData;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.PostMessage;
+import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.postinfo.PostInfo;
 
@@ -260,4 +261,17 @@ public interface PostingBoard {
 	 * @return true iff post notifications should be ignored
 	 */
 	public boolean getPostIgnored(User user, Post post);
+	
+	/**
+	 * Determines whether a post is sufficiently interesting to one of the recipients
+	 * to be worth sending an email notification for it. This is currently defined
+	 * as the recipient being either a direct personRecipient of the post or a member
+	 * of private group that the post was sent to.
+	 * @param post
+	 * @param recipient recipient to which the notification will be sent; no spidering
+	 *   will be done, so this must be the same resource that is the post recipient
+	 *   or group member.
+	 * @return true if an email notification should be sent
+	 */
+	public boolean worthEmailNotification(Post post, Resource recipient);
 }

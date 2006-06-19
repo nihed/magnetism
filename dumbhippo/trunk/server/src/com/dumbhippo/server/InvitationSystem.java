@@ -104,16 +104,19 @@ public interface InvitationSystem {
 	public void restoreInvitation(UserViewpoint viewpoint, String authKey);
 	
 	/**
-	 * If invitee has already been invited and the invitation is not expired, 
-	 * ensures inviter is in the inviter set and returns the invitation. 
-	 * If the inviter is new to the inviter set, the invitation date is updated.
-	 * Else returns null.
+	 * If invitee has already been invited and the invitation is not expired,
+	 * gets the invitation. addToInvitation enables "piling on" to an existing
+	 * invitation, but the invitation will be returned even if addToinvitation is false, 
+	 * so that we can use the invitation URL in a context like an email notification.
 	 * 
 	 * @param inviter possible inviter
 	 * @param invitee possible invitee
-	 * @return invitation if any, or null
+	 * @param addToInvitiation if true true, and the inviter is not already part
+	 *   of the invitater set, the inviter will be added and the invitation
+	 *   date updated. 
+	 * @return invitation if any, or null if no valid invitation exists
 	 */
-	public InvitationToken updateValidInvitation(User inviter, Resource invitee);
+	public InvitationToken updateValidInvitation(User inviter, Resource invitee, boolean addToInvitation);
 	
 	/**
 	 * Ensure the invitation from inviter to invitee exists, if it makes sense. 

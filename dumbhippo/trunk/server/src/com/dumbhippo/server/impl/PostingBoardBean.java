@@ -1221,4 +1221,20 @@ public class PostingBoardBean implements PostingBoard {
 		PersonPostData ppd = getPersonPostData(user, post);
 		return ppd != null && ppd.isIgnored();
 	}
+	
+	public boolean worthEmailNotification(Post post, Resource recipient) {
+		if (post.getPersonRecipients().contains(recipient))
+			return true;
+		
+		for (Group group : post.getGroupRecipients()) {
+			if (group.getAccess() == GroupAccess.SECRET) {
+				try {
+					groupSystem.getGroupMember(group, recipient); // throws on not found
+					return true;
+				} catch (NotFoundException e) {}
+			}
+		}
+		
+		return false;
+	}
 }
