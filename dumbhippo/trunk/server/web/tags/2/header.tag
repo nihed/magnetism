@@ -82,7 +82,7 @@
 			<script type="text/javascript">
 				dhGlobalSearchEntryInit = function () {
 					var searchBox = document.getElementById('dhGlobalSearchEntry');
-					var entry = new dh.textinput.Entry(searchBox, "topic, music, people", "");
+					var entry = new dh.textinput.Entry(searchBox, "topics, music, people", "");
 				}
 				dhGlobalSearchEntryInit()
 			</script>			

@@ -261,6 +261,10 @@ public class GroupPage extends AbstractSigninOptionalPage {
 		return getGroupMember().isParticipant();
 	}
 	
+	public boolean getCanAddMembers() {
+		return (getGroupMember().canAddMembers() || isForum());
+	}
+	
 	public boolean isFollower() {
 		return getGroupMember().getStatus() == MembershipStatus.FOLLOWER;
 	}

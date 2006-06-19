@@ -43,7 +43,8 @@
 				<c:out value='${param["message"]}'/>
 			</div>
 			<c:choose>
-				<c:when test="${group.member}">				
+			    <%-- TODO: we will need to enhance this test once we have forums --%>
+				<c:when test="${group.canAddMembers}">				
 					<dht:zoneBoxTitle>INVITE A FRIEND TO THIS GROUP</dht:zoneBoxTitle>
 				</c:when>
 				<c:otherwise>

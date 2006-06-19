@@ -965,9 +965,18 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			throw new RuntimeException("doShareGroup unxpectedly couldn't find contact recipient");
 		}
 		
+		// let's find out if we were inviting to the group or inviting to follow the group
+		boolean adderCanAdd = groupSystem.canAddMembers(viewpoint.getViewer(), group);
+		
 		PersonView contactView = identitySpider.getPersonView(viewpoint, contact, PersonViewExtra.PRIMARY_RESOURCE);
 
-		String note = contactView.getName() + " has been invited to the group " + group.getName();
+		String note;
+		if (adderCanAdd) {
+		    note = contactView.getName() + " has been invited to the group " + group.getName();
+		} else {
+			note = contactView.getName() + " has been invited to follow the group " + group.getName();
+		}
+		
 		writeMessageReply(out, "sendGroupInvitationReply", note);
 	}
 

@@ -202,9 +202,23 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 	    return invitedToGroups;
 	}
 	
+	public boolean canAddMembers(User adder, Group group) {
+		GroupMember adderMember;
+		try {
+			adderMember = getGroupMember(group, adder);
+		} catch (NotFoundException e) {
+			adderMember = null;
+		}		
+		
+		if ((adderMember != null && adderMember.canAddMembers()) ||
+            group.getAccess() == GroupAccess.PUBLIC)
+				return true;
+			else
+				return false;
+	}
+	
 	public void addMember(User adder, Group group, Person person) {
 		GroupMember groupMember;
-		GroupMember adderMember;
 		
 		boolean selfAdd = adder.equals(person);
 		
@@ -214,20 +228,8 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		} catch (NotFoundException e) {
 			groupMember = null;
 		}
-		try {
-			adderMember = getGroupMember(group, adder);
-		} catch (NotFoundException e) {
-			adderMember = null;
-		}
 		
-		boolean adderCanAdd;
-		
-		if ((adderMember != null &&
-			 adderMember.getStatus().ordinal() >= MembershipStatus.REMOVED.ordinal()) ||
-			group.getAccess() == GroupAccess.PUBLIC)
-			adderCanAdd = true;
-		else
-			adderCanAdd = false;
+		boolean adderCanAdd = canAddMembers(adder, group);
 		
 		MembershipStatus newStatus;
 		if (selfAdd)

@@ -125,6 +125,15 @@ public class GroupMember extends DBUnique {
 		return getStatus().ordinal() >= MembershipStatus.ACTIVE.ordinal();
 	}
 	
+	/**
+	 * Can the user add members to the group.
+	 * @return
+	 */
+	@Transient
+	public boolean canAddMembers() {
+		return getStatus().ordinal() >= MembershipStatus.REMOVED.ordinal();
+	}
+	
 	@Override
 	public String toString() {
 		return "{GroupMember status = " + getStatus() + " member = " + getMember() + " group = " + getGroup() + "}";

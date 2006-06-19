@@ -37,6 +37,8 @@ public interface GroupSystem {
 	 */
 	public Set<Group> getInvitedToGroups(User adder, Resource invitee);
 	
+	public boolean canAddMembers(User adder, Group group);
+	
 	public void addMember(User adder, Group group, Person person);
 	
 	public void removeMember(User remover, Group group, Person person);
