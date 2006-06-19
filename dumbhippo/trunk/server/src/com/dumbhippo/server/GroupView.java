@@ -54,6 +54,10 @@ import com.dumbhippo.persistence.VersionedEntity;
 		 return getStatus() == MembershipStatus.INVITED;
 	 }
 	 
+	 public boolean isInvitedToFollow() {
+		 return getStatus() == MembershipStatus.INVITED_TO_FOLLOW;
+	 }
+	 
 	 // TODO: avoid using this, and try using getInviters
 	 public PersonView getInviter() {
 		 

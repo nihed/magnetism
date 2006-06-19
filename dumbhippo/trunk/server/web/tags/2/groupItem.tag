@@ -18,7 +18,7 @@
 					<div class="dh-next-to-image">
 						<div class="dh-name"><a href="/group?who=${group.group.id}"><c:out value="${group.group.name}"/></a></div>
 						<c:choose>
-							<c:when test="${controls && group.invited}">
+							<c:when test="${controls && group.invited || controls && group.invitedToFollow}">
 								<div id="dhGroupInvitationControls-${group.group.id}">
 									<div class="dh-group-invitation-control" id="dhGroupInvitationAccept-${group.group.id}">
 											<img class="dh-group-add" src="/images2/${buildStamp}/add.png"
