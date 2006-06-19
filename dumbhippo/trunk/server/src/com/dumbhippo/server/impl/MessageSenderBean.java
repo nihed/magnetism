@@ -632,9 +632,11 @@ public class MessageSenderBean implements MessageSender {
 			
 			// TEXT: append footer
 			messageText.append("\n\n");
-			if (recipientInviteUrl != null) {
+			if (recipientInviteUrl != null && addToInvitation) {
 				messageText.append("      " + posterViewedBySelf.getName()
-						+ " created an invitation for you: " + recipientInviteUrl + "\n");
+						+ " extended an invitation for you: " + recipientInviteUrl + "\n");
+			} else if (recipientInviteUrl != null) {
+				messageText.append("      " + "There is an invitation for you to join Mugshot: " + recipientInviteUrl + "\n");				
 			}
 			if (recipientStopUrl != null) {
 				messageText.append("      To stop getting these mails, go to " + recipientStopUrl + "\n");
