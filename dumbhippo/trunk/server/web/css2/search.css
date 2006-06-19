@@ -28,3 +28,18 @@
 #dhContentColumn .dh-zone-box .dh-item-with-numeral .dh-title {
 	font-size:		12px;
 }
+
+#dhPeople {
+	color:			#84569b;
+	background-color:	inherit;
+}
+
+#dhMusicRadar {
+	color:			#36aae8;
+	background-color:	inherit;
+}
+
+#dhLinkSwarm {
+	color:			#f16d1c;
+	background-color:	inherit;
+}

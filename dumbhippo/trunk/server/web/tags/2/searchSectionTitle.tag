@@ -8,7 +8,7 @@
 
 <c:if test="${a != null}"><a name="${a}"></a></c:if>
 <div> 
-	<span class="dh-search-title"><jsp:doBody/></span>
+	<span <c:if test="${a != null}">id="${a}"</c:if> class="dh-search-title"><jsp:doBody/></span>
 	<c:if test="${!empty pageable && pageable.resultCount > 0}">
 		<span class="dh-search-info">
 			<c:if test="${pageable.pageCount > 1}">
