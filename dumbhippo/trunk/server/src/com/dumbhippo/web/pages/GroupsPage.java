@@ -15,15 +15,28 @@ public class GroupsPage extends AbstractPersonPage {
 	@SuppressWarnings("unused")
 	static private final Logger logger = GlobalSetup.getLogger(ViewPersonPage.class);	
 	
+	private String mode;
+	
 	public GroupsPage() {
 	}
 
 	@Override
 	protected void setViewedUser(User user) {
 		super.setViewedUser(user);
-		if (isSelf()) {
-			Account acct = getViewedUser().getAccount();
-			acct.touchLastSeenGroupInvitations();
-		}		
 	}
+	
+	public void setMode(String mode) {
+		this.mode = mode;
+		if (mode != null && mode.equals("invited")) {
+			if (isSelf() && (getViewedUser() != null)) { 
+				Account acct = getViewedUser().getAccount();
+				acct.touchLastSeenGroupInvitations();
+			}
+		}
+	}
+	
+	public String getMode() {
+		return mode;
+	}
+
 }

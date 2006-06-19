@@ -21,7 +21,7 @@
 					<dht:personItem who="${person}" invited="true"/>
 				</c:forEach>
 				<c:if test="${person.contacts.size > 3}">
-					<dht:moreLink moreName="ALL FRIENDS" more="/friends?who=${person.viewedUserId}"/>
+					<dht:moreLink moreName="ALL ${title} (${person.contacts.size})" more="/friends?who=${person.viewedUserId}"/>
 				</c:if>
 			</c:when>
 			<c:otherwise>
