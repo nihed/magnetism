@@ -28,7 +28,7 @@
 		<dht:zoneBoxGroup>
 			<c:if test="${group.justAdded}">
 				<div></div> <%-- IE bug workaround, display:none as first child causes problems --%>
-				<div class="dh-message">
+				<div class="dh-notification">
 					<c:choose>
 						<c:when test="${group.member}">
 							<div>You were invited to this group, but may <a href="javascript:dh.actions.leaveGroup('${group.viewedGroupId}')">Leave</a>
@@ -40,6 +40,7 @@
 						</c:when>
 					</c:choose>
 				</div>
+				<dht:zoneBoxSeparator/>
 			</c:if>
 			<c:if test="${group.latestTracks.size > 0}">
 				<dht:zoneBoxTitle>RECENT GROUP SONGS</dht:zoneBoxTitle>

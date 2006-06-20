@@ -333,11 +333,14 @@ img {
 	font-size:			12px;
 }
 
-div.dh-save-status {
+div.dh-notification {
 	background-color:	#ffffcc;
-	color:				#cc0033;
 	font-weight:		bold;
-	-moz-border-radius:	5px;
+	-moz-border-radius:	5px;	
+}
+
+div.dh-save-status {
+	color:				#cc0033;
 }
 
 /* the Undo link in the save status thing */

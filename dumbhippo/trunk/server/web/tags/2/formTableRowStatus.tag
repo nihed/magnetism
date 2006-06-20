@@ -6,7 +6,7 @@
 <%@ attribute name="controlId" required="true" type="java.lang.String" %>
 
 <tr id="${controlId}StatusRow" valign="top" style="display: none;">
-	<td colspan="2"><div class="dh-save-status"><span id="${controlId}StatusText"><jsp:doBody/></span> <a id="${controlId}StatusLink" href=""></a></div></td>
+	<td colspan="2"><div class="dh-notification dh-save-status"><span id="${controlId}StatusText"><jsp:doBody/></span> <a id="${controlId}StatusLink" href=""></a></div></td>
 </tr>
 <%-- there's no good multibrowser way to do this with CSS --%>
 <tr id="${controlId}StatusSpacer" style="display: none;"><td colspan="2" class="dh-spacer-row"></td></tr>
