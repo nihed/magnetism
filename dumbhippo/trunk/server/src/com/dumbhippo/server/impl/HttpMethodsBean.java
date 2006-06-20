@@ -1245,7 +1245,6 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	}
 
 	public void doAdminShellExec(Writer out, UserViewpoint viewpoint, HttpServletRequest request, boolean parseOnly, String command) throws IOException, HumanVisibleException {
-		HttpSession session = request.getSession();
 		StringWriter clientOut = new StringWriter();
 		if (parseOnly) {
 			Parser parser = new Parser(new StringReader(command));
@@ -1261,11 +1260,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			return;
 		}
 		
-		Interpreter bsh = (Interpreter) session.getAttribute("dumbhippo.adminshell");
-		if (bsh == null) {
-			bsh = makeInterpreter(clientOut);
-			session.setAttribute("dumbhippo.adminshell", bsh);
-		}
+		Interpreter bsh = makeInterpreter(clientOut);
 
 		try {
 			Object result = bsh.eval(command);
