@@ -141,10 +141,17 @@ form {
 	width:			453px;
 }
 
+#dhContentColumn .dh-zone-box .dh-item-with-numeral-and-photo .dh-next-to-image {
+	float:			right;
+	width:			370px;
+}
+
 #dhContentColumn .dh-zone-box .dh-item-with-numeral .dh-numeral {
 	width:				20px;
 	float:				left;
 	text-align:			right;
+	margin-top:			0px;
+	margin-right:		10px;
 }
 
 #dhSidebarColumn {

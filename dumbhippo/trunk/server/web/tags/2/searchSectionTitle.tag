@@ -7,7 +7,7 @@
 <%@ attribute name="query" required="false" type="java.lang.String" %>
 
 <c:if test="${a != null}"><a name="${a}"></a></c:if>
-<div> 
+<div class="dh-search-title-container"> 
 	<span <c:if test="${a != null}">id="${a}"</c:if> class="dh-search-title"><jsp:doBody/></span>
 	<c:if test="${!empty pageable && pageable.resultCount > 0}">
 		<span class="dh-search-info">

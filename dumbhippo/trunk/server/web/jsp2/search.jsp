@@ -25,8 +25,11 @@
 
 					<c:choose>
 						<c:when test="${signin.valid && find.people.totalCount > 0}">
-							<c:forEach items="${find.people.results}" var="person">
-								<div class="dh-item dh-item-with-photo">
+							<c:forEach items="${find.people.results}" var="person" varStatus="loopStatus">
+								<div class="dh-item dh-item-with-photo dh-item-with-numeral dh-item-with-numeral-and-photo">
+									<div class="dh-numeral">
+										<c:out value="${loopStatus.index + 1}"/>
+									</div>								
 									<div class="dh-image">
 										<dht:headshot person="${person}"/>
 									</div>
