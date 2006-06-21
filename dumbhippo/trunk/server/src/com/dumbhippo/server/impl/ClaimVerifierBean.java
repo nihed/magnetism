@@ -121,13 +121,11 @@ public class ClaimVerifierBean implements ClaimVerifier {
 			
 			bodyText.append("\n");
 			bodyText.append("Click this link to add '" + resource.getEmail() + "' to your account: " + link + "\n");
-			bodyText.append("NOTE: Anyone with access to this email account will be able to log in to your Mugshot account.\n");
 			bodyText.append("\n");
 			
 			bodyHtml.appendHtmlHead("");
 			bodyHtml.append("<body>\n");
 			bodyHtml.appendTextNode("a", "Click here to add '" + resource.getEmail() + "' to your account", "href", link);
-			bodyHtml.append("<p>NOTE: <b>Anyone</b> with access to this email account will be able to log in to your Mugshot account.</p>");
 			bodyHtml.append("</body>\n</html>\n");
 			
 			mailer.setMessageContent(message, "Add address '" + resource.getEmail() + "' to your Mugshot account",
