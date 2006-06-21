@@ -372,6 +372,31 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		}
 	}
 	
+	
+    private void initializePersonViewFallbacks(PersonView pv, Set<Resource> fallbackResources) {
+        // we want to set a fallback name from an email resource if we 
+        // have one, since we won't disclose the resources and PersonView
+        // ideally doesn't show as <Unknown> in the UI
+    	// we need to set a Guid for the PersonView as well, because if it doesn't have a user set,
+    	// it relies on the id of the primary resource
+        Guid emailGuid = null; // we prefer an email resource guid as the identifying guid
+        Guid anyGuid = null;		
+        for (Resource r : fallbackResources) {
+            if (r instanceof EmailResource) {
+                pv.setFallbackName(r.getDerivedNickname());
+                emailGuid = r.getGuid();
+            } else {
+                anyGuid = r.getGuid();
+            }
+        }
+        if (emailGuid != null)
+            pv.setFallbackIdentifyingGuid(emailGuid);
+        else if (anyGuid != null)
+            pv.setFallbackIdentifyingGuid(anyGuid);
+        else
+            logger.warn("No fallback identifying guid for {}", pv);				
+    }
+	
 	private void addPersonViewExtras(Viewpoint viewpoint, PersonView pv, Resource fromResource, PersonViewExtra... extras) {		
 		// given the viewpoint, set whether the view is of self
 		if (viewpoint.isOfUser(pv.getUser())) {
@@ -398,26 +423,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 			boolean ownContact = viewpoint instanceof SystemViewpoint || viewpoint.isOfUser(contact.getAccount().getOwner());
 
 			if (!ownContact) {
-				// we want to set a fallback name from an email resource if we 
-				// have one, since we won't disclose the resources and PersonView
-				// ideally doesn't show as <Unknown> in the UI
-				Guid emailGuid = null; // we want to prefer email as the identifying guid
-				Guid anyGuid = null;
-				for (Resource r : contactResources) {
-					if (r instanceof EmailResource) {
-						pv.setFallbackName(r.getDerivedNickname());
-						emailGuid = r.getGuid();
-					} else {
-						anyGuid = r.getGuid();
-					}
-				}
-				if (emailGuid != null)
-					pv.setFallbackIdentifyingGuid(emailGuid);
-				else if (anyGuid != null)
-					pv.setFallbackIdentifyingGuid(anyGuid);
-				else
-					logger.warn("No fallback identifying guid for {}", contact);
-				
+				initializePersonViewFallbacks(pv, contactResources);				
 				// don't disclose
 				contactResources = null;
 			}
@@ -434,14 +440,18 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 			if (userResources != null) {
 				resources.addAll(userResources); // contactResources won't be overwritten in case of conflict
 			}
-		} else if (userResources != null) {
+		} else if (userResources != null) {		
 			resources = userResources;
 		} else {
 			if (fromResource != null) {
-				resources = Collections.singleton(fromResource);
-			} else {
-				resources = Collections.emptySet();
-			}
+				// fromResource is not reflected in the PersonView only if the viewer is 
+				// not a contact of the resource (findContactByResource did not return any 
+				// results), so if we are resorting to fromResource here, we must not 
+				// disclose the resource, and can only supply the fallbacks to the 
+				// PersonView
+				initializePersonViewFallbacks(pv, Collections.singleton(fromResource));
+			}	
+			resources = Collections.emptySet();
 		}
 		
 		// this does extra work right now (adding some things more than once)
@@ -488,14 +498,14 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 				}
 				
 				if (e == PersonViewExtra.PRIMARY_RESOURCE) {
-					if (email != null)
+					if (email != null) {
 						pv.addPrimaryResource(email);
-					else if (aim != null)
+					} else if (aim != null) {
 						pv.addPrimaryResource(aim);
-					else {
+					} else {
 						pv.addPrimaryResource(null);
 					}
-				} else if (e == PersonViewExtra.PRIMARY_EMAIL) {
+				} else if (e == PersonViewExtra.PRIMARY_EMAIL) {				
 					pv.addPrimaryEmail(email); // can be null
 				} else if (e == PersonViewExtra.PRIMARY_AIM) {
 					pv.addPrimaryAim(aim); // can be null

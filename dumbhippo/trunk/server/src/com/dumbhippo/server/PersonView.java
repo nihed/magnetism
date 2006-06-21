@@ -191,20 +191,19 @@ public class PersonView extends EntityView {
 		
 		// we may not have had a User, we try to use a resource instead
 		// or the "fallback name"
-		// resources won't be included in the PersonView by IdentitySpider
-		// if the viewer should not see them
+		// PrimaryResource will not be included or will be null if the viewer should
+		// not see it
 		if (name == null || name.length() == 0) {
-			if (!getExtra(PersonViewExtra.PRIMARY_RESOURCE)) {
+			if (!getExtra(PersonViewExtra.PRIMARY_RESOURCE) || (getPrimaryResource() == null)) {
 				// try fallback name then
 				if (fallbackName != null) {
 					name = fallbackName;
 				} else  {
-					throw new RuntimeException("PersonView has no User, Contact, Resource, or fallback name; totally useless: " + this);
+                    // TODO: check if this happens when you aren't logged in and we create a PersonView for anonymous
+					logger.warn("PersonView has no User, Contact, Resource, or fallback name; totally useless: " + this);
 				}
 			} else {
-				Resource r = getPrimaryResource();
-				if (r != null) // shouldn't happen but does when you aren't logged in and we create a personview for anonymous
-					name = r.getHumanReadableString();
+                name = getPrimaryResource().getHumanReadableString();
 			}
 		}
 		
@@ -651,8 +650,7 @@ public class PersonView extends EntityView {
 				               	   "name", getName(),
 				               	   "smallPhotoUrl", getSmallPhotoUrl());
 		} else {
-			Resource primary = getPrimaryResource();
-			builder.appendTextNode("resource", "", "id", primary.getId(), "name", getName());
+			builder.appendTextNode("resource", "", "id", getIdentifyingGuid().toString(), "name", getName());
 		}
 		return builder.toString();		
 	}
@@ -669,8 +667,7 @@ public class PersonView extends EntityView {
 		if (user != null) {
 			builder.appendTextNode("user", "", "id", user.getId());
 		} else {
-			Resource primary = getPrimaryResource();
-			builder.appendTextNode("resource", "", "id", primary.getId());
+			builder.appendTextNode("resource", "", "id", getIdentifyingGuid().toString());
 		}
 		return builder.toString();					
 	}
