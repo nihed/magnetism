@@ -33,7 +33,8 @@
 					</c:choose>
 				</div>
 				<c:if test="${signin.musicSharingEnabled}">				
-					<div style="margin-top: 3px;"><a href="/radar-themes">Edit theme</a></div>
+					<div class="dh-music-radar-options" ><a href="/radar-themes">Edit theme</a></div>
+					<div class="dh-music-radar-options" ><a href="/getradar">Get Music Radar HTML</a></div>
 				</c:if>
 				<dht:sidebarBoxSeparator/>
 				<div><a href="/account">Edit your music bio</a></div>
