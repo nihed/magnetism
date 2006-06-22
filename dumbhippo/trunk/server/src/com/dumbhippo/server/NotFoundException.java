@@ -12,6 +12,8 @@ import javax.ejb.ApplicationException;
  * seems to roll back even if you don't throw out of the outermost EJB frame.
  * Needs investigation.
  * 
+ * See: http://today.java.net/pub/a/today/2006/04/06/exception-handling-antipatterns.html#ejb3
+ * 
  * @author Havoc Pennington
  */
 @ApplicationException

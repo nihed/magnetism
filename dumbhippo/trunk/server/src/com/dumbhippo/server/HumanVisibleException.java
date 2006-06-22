@@ -4,7 +4,7 @@ import javax.ejb.ApplicationException;
 
 import com.dumbhippo.XmlBuilder;
 
-@ApplicationException(rollback=true)
+@ApplicationException
 public class HumanVisibleException extends Exception {
 	private static final long serialVersionUID = 0L;
 
