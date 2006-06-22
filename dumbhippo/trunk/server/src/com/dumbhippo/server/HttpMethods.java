@@ -244,15 +244,15 @@ public interface HttpMethods {
 	@HttpOptions( adminOnly = true )
 	public void doAdminShellExec(XmlBuilder xml, UserViewpoint viewpoint, HttpServletRequest request, boolean parseOnly, String command) throws IOException, HumanVisibleException;
 
-	@HttpContentTypes(HttpResponseData.XML)
+	@HttpContentTypes(HttpResponseData.XMLMETHOD)
 	@HttpParams( { "url" })
-	public void doFeedPreview(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint, String url) throws HumanVisibleException;
+	public void doFeedPreview(XmlBuilder xml, UserViewpoint viewpoint, String url) throws XmlMethodException;
 	
-	@HttpContentTypes(HttpResponseData.XML)
+	@HttpContentTypes(HttpResponseData.XMLMETHOD)
 	@HttpParams( { "groupId", "url" })
-	public void doAddGroupFeed(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint, String groupId, String url) throws HumanVisibleException;
+	public void doAddGroupFeed(XmlBuilder xml, UserViewpoint viewpoint, String groupId, String url) throws XmlMethodException;
 	
-	@HttpContentTypes(HttpResponseData.XML)
+	@HttpContentTypes(HttpResponseData.XMLMETHOD)
 	@HttpParams( { "groupId", "url" })
-	public void doRemoveGroupFeed(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint, String groupId, String url) throws HumanVisibleException;	
+	public void doRemoveGroupFeed(XmlBuilder xml, UserViewpoint viewpoint, String groupId, String url) throws XmlMethodException;	
 }

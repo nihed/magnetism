@@ -70,8 +70,8 @@ public class HttpMethodsServlet extends AbstractServlet {
 				 
 		// FIXME only allow XmlBuilder for XMLMETHOD
 		boolean methodCanReturnContent = args.length > i 
-						&& (args[i].getClass().isAssignableFrom(OutputStream.class)
-							|| args[i].getClass().isAssignableFrom(XmlBuilder.class));
+						&& (OutputStream.class.isAssignableFrom(args[i])
+							|| XmlBuilder.class.isAssignableFrom(args[i]));
 		
 		if (methodCanReturnContent) {
 			toPassIn.add(out);
@@ -318,7 +318,7 @@ public class HttpMethodsServlet extends AbstractServlet {
 					} else if (cause instanceof XmlMethodException){
 						XmlMethodException methodException = (XmlMethodException) cause;
 						if (requestedContentType.equals(HttpResponseData.XMLMETHOD)) {
-							writeXmlMethodError(response.getOutputStream(), methodException.getCode(), methodException.getMessage());
+							writeXmlMethodError(response.getOutputStream(), methodException.getCodeString(), methodException.getMessage());
 							trappedError = true;
 						} else {
 							throw new RuntimeException("Non-XMLMETHOD threw an XmlMethodException", methodException);

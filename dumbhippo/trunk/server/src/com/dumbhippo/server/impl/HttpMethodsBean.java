@@ -12,11 +12,8 @@ import java.net.URL;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Set;
 
 import javax.annotation.EJB;
@@ -80,6 +77,8 @@ import com.dumbhippo.server.TrackView;
 import com.dumbhippo.server.UserViewpoint;
 import com.dumbhippo.server.Viewpoint;
 import com.dumbhippo.server.WantsInSystem;
+import com.dumbhippo.server.XmlMethodErrorCode;
+import com.dumbhippo.server.XmlMethodException;
 import com.dumbhippo.server.util.EJBUtil;
 
 @Stateless
@@ -250,6 +249,15 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		endReturnObjectsXml(out, xml);
 	}
 
+	// this could even be in HttpMethodServlet, would be nice sometime
+	private Group parseGroupId(Viewpoint viewpoint, String groupId) throws XmlMethodException {
+		try {
+			return groupSystem.lookupGroupById(viewpoint, groupId);
+		} catch (NotFoundException e) {
+			throw new XmlMethodException(XmlMethodErrorCode.UNKNOWN_GROUP, "Unknown group");
+		}
+	}	
+	
 	public void getAddableContacts(OutputStream out,
 			HttpResponseData contentType, UserViewpoint viewpoint, String groupId)
 			throws IOException {
@@ -1268,28 +1276,18 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		}
 	}
 
-	public void doFeedPreview(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint, String url) throws HumanVisibleException {
+	public void doFeedPreview(XmlBuilder xml, UserViewpoint viewpoint, String url) throws XmlMethodException {
 		
 	}
-
-	public void doAddGroupFeed(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint, String groupId, String url) throws HumanVisibleException {
-		Group group;
-		try {
-			group = groupSystem.lookupGroupById(viewpoint, groupId);
-		} catch (NotFoundException e) {
-			throw new RuntimeException("no such group", e);
-		}
+	
+	public void doAddGroupFeed(XmlBuilder xml, UserViewpoint viewpoint, String groupId, String url) throws XmlMethodException {
+		Group group = parseGroupId(viewpoint, groupId);
 		
 		// FIXME
 	}
 
-	public void doRemoveGroupFeed(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint, String groupId, String url) throws HumanVisibleException {
-		Group group;
-		try {
-			group = groupSystem.lookupGroupById(viewpoint, groupId);
-		} catch (NotFoundException e) {
-			throw new RuntimeException("no such group", e);
-		}
+	public void doRemoveGroupFeed(XmlBuilder xml, UserViewpoint viewpoint, String groupId, String url) throws XmlMethodException {
+		Group group = parseGroupId(viewpoint, groupId);
 		
 		// FIXME
 	}
