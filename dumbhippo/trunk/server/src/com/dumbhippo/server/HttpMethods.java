@@ -104,10 +104,6 @@ public interface HttpMethods {
 
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "address" })
-	public void doSendLoginLinkAim(String address) throws IOException, HumanVisibleException;
-
-	@HttpContentTypes(HttpResponseData.NONE)
-	@HttpParams( { "address" })
 	public void doSendClaimLinkEmail(UserViewpoint viewpoint, String address) throws IOException, HumanVisibleException;
 
 	@HttpContentTypes(HttpResponseData.NONE)

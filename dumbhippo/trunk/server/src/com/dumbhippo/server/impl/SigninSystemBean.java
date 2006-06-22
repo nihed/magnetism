@@ -33,6 +33,7 @@ import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
 import com.dumbhippo.server.SigninSystem;
 import com.dumbhippo.server.SystemViewpoint;
+import com.dumbhippo.server.UnauthorizedException;
 import com.dumbhippo.server.UserViewpoint;
 
 @Stateless
@@ -60,44 +61,41 @@ public class SigninSystemBean implements SigninSystem {
 		return token.getAuthURL(configuration.getPropertyFatalIfUnset(HippoProperty.BASEURL));
 	}
 	
-	public void sendSigninLink(String address) throws HumanVisibleException {
-		if (address.contains("@")) {
-			EmailResource resource = identitySpider.lookupEmail(address);
-			if (resource == null)
-				throw new HumanVisibleException("That isn't an email address we know about");
-			String link = getLoginLink(resource);
-			MimeMessage message = mailer.createMessage(Mailer.SpecialSender.LOGIN, resource.getEmail());
-			
-			StringBuilder bodyText = new StringBuilder();
-			XmlBuilder bodyHtml = new XmlBuilder();
-			
-			bodyText.append("\n");
-			bodyText.append("Go to: " + link + "\n");
-			bodyText.append("\n");
-			
-			bodyHtml.appendHtmlHead("");
-			bodyHtml.append("<body>\n");
-			bodyHtml.appendTextNode("a", "Click here to sign in", "href", link);
-			bodyHtml.append("</body>\n</html>\n");
-			
-			mailer.setMessageContent(message, "Sign in to Mugshot", bodyText.toString(), bodyHtml.toString());
-			mailer.sendMessage(message);
-		} else {
-			AimResource resource = identitySpider.lookupAim(address);
-			if (resource == null)
-				throw new HumanVisibleException("That isn't an AIM screen name we know about");
-
-			String link = getLoginLink(resource);
-			XmlBuilder bodyHtml = new XmlBuilder();
-			bodyHtml.appendTextNode("a", "Click to sign in", "href", link);
-			
-			BotTaskMessage message = new BotTaskMessage(null, resource.getScreenName(), bodyHtml.toString());
-			JmsProducer producer = new JmsProducer(BotTask.QUEUE, true);
-			ObjectMessage jmsMessage = producer.createObjectMessage(message);
-			producer.send(jmsMessage);
-		}
+	public void sendSigninLinkEmail(String address) throws HumanVisibleException {
+		EmailResource resource = identitySpider.lookupEmail(address);
+		if (resource == null)
+			throw new HumanVisibleException("That isn't an email address we know about");
+		String link = getLoginLink(resource);
+		MimeMessage message = mailer.createMessage(Mailer.SpecialSender.LOGIN, resource.getEmail());
+		
+		StringBuilder bodyText = new StringBuilder();
+		XmlBuilder bodyHtml = new XmlBuilder();
+		
+		bodyText.append("\n");
+		bodyText.append("Go to: " + link + "\n");
+		bodyText.append("\n");
+		
+		bodyHtml.appendHtmlHead("");
+		bodyHtml.append("<body>\n");
+		bodyHtml.appendTextNode("a", "Click here to sign in", "href", link);
+		bodyHtml.append("</body>\n</html>\n");
+		
+		mailer.setMessageContent(message, "Sign in to Mugshot", bodyText.toString(), bodyHtml.toString());
+		mailer.sendMessage(message);
 	}
-
+	
+	public String getSigninLinkAim(String address) throws HumanVisibleException {
+		AimResource resource = identitySpider.lookupAim(address);
+		if (resource == null)
+			throw new HumanVisibleException("That isn't an AIM screen name we know about");
+		
+		String link = getLoginLink(resource);
+		XmlBuilder bodyHtml = new XmlBuilder();
+		bodyHtml.appendTextNode("a", "Click to sign in", "href", link);
+		
+		return bodyHtml.toString();
+	}
+		
 	final static String REPAIR_TEXT = 
 		"There are some bumps along the road for most development projects.\n" + 
 		"We just hit a good sized pothole. Due to some recent bugs on our.\n" + 

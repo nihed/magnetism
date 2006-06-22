@@ -8,7 +8,9 @@ import com.dumbhippo.persistence.User;
 @Local
 public interface SigninSystem {
 
-	public void sendSigninLink(String address) throws HumanVisibleException;
+	public void sendSigninLinkEmail(String address) throws HumanVisibleException;
+	
+	public String getSigninLinkAim(String address) throws HumanVisibleException;
 	
 	public void sendRepairLink(User user) throws HumanVisibleException; 
 	

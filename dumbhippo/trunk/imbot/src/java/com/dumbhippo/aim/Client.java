@@ -252,6 +252,7 @@ public class Client {
         if (aimbud == null) {
             if (autoAddUsers) {
                 addBuddy(from);
+                aimbud = getBuddy(from);
                 aimbud.setOnline(true);
             } else {
                 logger.info("MESSAGE FROM A NON BUDDY(" + from + ")");

@@ -511,12 +511,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	}
 
 	public void doSendLoginLinkEmail(XmlBuilder xml, String address) throws IOException, HumanVisibleException {
-		signinSystem.sendSigninLink(address);
-	}
-
-	public void doSendLoginLinkAim(String address) throws IOException,
-			HumanVisibleException {
-		signinSystem.sendSigninLink(address);
+		signinSystem.sendSigninLinkEmail(address);
 	}
 
 	public void doSendClaimLinkEmail(UserViewpoint viewpoint, String address) throws IOException, HumanVisibleException {

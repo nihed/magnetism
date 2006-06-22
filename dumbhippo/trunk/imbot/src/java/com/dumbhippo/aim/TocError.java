@@ -18,6 +18,7 @@ public enum TocError {
 	SENDING_TOO_FAST(960, "You are sending message too fast to %s"),
 	MISSED_TOO_BIG_IM(961, "You missed an im from %s because it was too big"),
 	MISSED_TOO_FAST_IM(962, "You missed an im from %s because it was sent too fast"),
+	BOT_CANNOT_INITIATE(964, "This screen name is registered as an open bot and cannot start an IM conversation"),
 	// * Dir Errors *
 	DIR_FAILURE(970, "Directory failure"),
 	DIR_TOO_MANY_MATCHES(971, "Too many matches in directory"),

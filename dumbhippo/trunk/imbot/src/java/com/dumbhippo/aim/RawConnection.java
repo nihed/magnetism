@@ -724,7 +724,6 @@ public class RawConnection {
      * Invoked in fromAIM() whenever we receive a message from the AIM service.
      */
     private void checkForLonelyBots() {
-    	logger.debug("checking for lonely bots...");
      	for (String chatRoomId: chatRoomInfoById.keySet()) {
      		// check each room with a lonely bot, and leave only if the bot has been
      		//  alone for more than the timeout period

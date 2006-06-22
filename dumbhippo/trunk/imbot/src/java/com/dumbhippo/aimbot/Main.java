@@ -11,8 +11,8 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.botcom.BotEvent;
+import com.dumbhippo.botcom.BotEventLogin;
 import com.dumbhippo.botcom.BotEventToken;
-import com.dumbhippo.botcom.BotEventUserPresence;
 import com.dumbhippo.botcom.BotTask;
 import com.dumbhippo.jms.JmsConsumer;
 import com.dumbhippo.jms.JmsProducer;
@@ -56,7 +56,7 @@ public class Main {
 					logger.debug("{}", event);
 					
 					if ((event instanceof BotEventToken) ||
-						(event instanceof BotEventUserPresence)) {
+					    (event instanceof BotEventLogin)) {
 						
 						logger.debug("Sending event type " + event.getClass().getName());
 						

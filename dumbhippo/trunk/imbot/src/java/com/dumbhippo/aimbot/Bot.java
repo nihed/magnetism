@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.Timer;
@@ -26,8 +27,8 @@ import com.dumbhippo.aim.RawListenerAdapter;
 import com.dumbhippo.aim.ScreenName;
 import com.dumbhippo.aim.TocError;
 import com.dumbhippo.botcom.BotEvent;
+import com.dumbhippo.botcom.BotEventLogin;
 import com.dumbhippo.botcom.BotEventToken;
-import com.dumbhippo.botcom.BotEventUserPresence;
 import com.dumbhippo.botcom.BotTaskFailedException;
 import com.dumbhippo.botcom.BotTaskMessage;
 import com.dumbhippo.identity20.RandomToken;
@@ -39,6 +40,9 @@ class Bot implements Runnable {
 	
 	private static final String tokenRegex = "[a-f0-9]{" + RandomToken.STRING_LENGTH + "}";
 	private static final Pattern tokenPattern = Pattern.compile(tokenRegex);
+	
+	/* list of names this bot has recently identified itself to */
+	private static Map<Buddy,Long> identifiedTo = new HashMap<Buddy,Long>();
 	
 	private ScreenName name;
 	private String pass;
@@ -55,6 +59,9 @@ class Bot implements Runnable {
 	private Condition onlineCondition;
 	
 	private Set<BotListener> listeners;
+	
+	// how frequently we need to re-identify ourselves to users; in milliseconds (10 minutes)
+	private static final long IDENTIFICATION_INTERVAL = 10 * 60 * 1000;
 	
 	class SelfPinger extends TimerTask {
 	    // check connection every "TIME_DELAY" milliseconds (5 mins)
@@ -146,17 +153,39 @@ class Bot implements Runnable {
 		public void handleMessage(Buddy buddy, String messageHtml) {
 			logger.info(name + " message from " + buddy.getName() + ": " + messageHtml);
 			
+			if (buddy.getName().equals(name)) {
+				logger.info("ignoring message from this bot's screen name; (AIM bot policy warning?)");
+				return;
+			}
+			
 			Client client = aim;
 			if (client == null)
 				return;		
 			
-			Matcher m = tokenPattern.matcher(messageHtml);
-			if (m.find()) {
+			/* send them the intro message if we haven't already done so recently */
+			sayIdentification(buddy, false);
+			
+			/* if the message is requesting a login link, pass that along to the server */
+			if (messageHtml.toLowerCase().indexOf("privacy") >= 0) {
+				// force identification to buddy because they said the word privacy
+				sayIdentification(buddy, true);
+			} else if ((messageHtml.toLowerCase().indexOf("login") >= 0) ||
+					   (messageHtml.toLowerCase().indexOf("log in") >= 0)) {
 				sayBusyThinking(buddy);
-				sendEvent(new BotEventToken(name.getNormalized(), buddy.getName().getNormalized(), 
-						m.group()));
+				sendEvent(new BotEventLogin(name.getNormalized(), buddy.getName().getNormalized()));
 			} else {
-				saySomethingRandom(buddy, null);
+				/*
+				 * if the message includes an authentication token, pass that
+				 * along to the server
+				 */
+				Matcher m = tokenPattern.matcher(messageHtml);
+				if (m.find()) {
+					sayBusyThinking(buddy);
+					sendEvent(new BotEventToken(name.getNormalized(), buddy
+							.getName().getNormalized(), m.group()));
+				} else {
+					saySomethingRandom(buddy, null);
+				}
 			}
 		}
 		
@@ -185,9 +214,6 @@ class Bot implements Runnable {
 			
 			HashMap<String,Boolean> map= new HashMap<String,Boolean>();
 			map.put(buddy.getName().getDisplay(), true);
-			
-			// send the event to the main server over JMS connection
-			sendEvent(new BotEventUserPresence(name.getNormalized(), map));
 		}
 		
 		public void handleBuddySignOff(Buddy buddy, String info) {
@@ -195,9 +221,6 @@ class Bot implements Runnable {
 			
 			HashMap<String,Boolean> map= new HashMap<String,Boolean>();
 			map.put(buddy.getName().getDisplay(), new Boolean(false));
-			
-			// send the event to the main server over JMS connection
-			sendEvent(new BotEventUserPresence(name.getNormalized(), map));
 		}
 		
 		public void handleError(TocError error, String message) {
@@ -259,6 +282,27 @@ class Bot implements Runnable {
 		}
 	}
 
+	/**
+	 * Check whether we've identified ourselves to this buddy recently;
+	 * if not send them an introductory message.
+	 * 
+	 * @param buddy Who to send message to
+	 * @param force Send the message even if we've sent it within IDENTIFICATION_INTERVAL
+	 */
+	private synchronized void sayIdentification(Buddy buddy, boolean force) {
+
+		Long whenIdentifiedTo = identifiedTo.get(buddy);
+		long now = System.currentTimeMillis();
+		if (force ||
+	        (whenIdentifiedTo == null) ||
+	        (whenIdentifiedTo.longValue() - now > IDENTIFICATION_INTERVAL)) {		
+			logger.debug("identifying bot to " + buddy.getName());
+			Client client = aim;
+			client.sendMessage(buddy, null, "Hi, I'm the Mugshot bot.  (see my <a href='http://mugshot.org/privacy'>privacy policy</a>)");
+			identifiedTo.put(buddy, System.currentTimeMillis());
+		}
+	}
+	
 	private void sayBusyThinking(Buddy buddy) {
 		Client client = aim;
 		logger.debug("saying we're thinking to " + buddy.getName());
@@ -278,7 +322,7 @@ class Bot implements Runnable {
 			client.sendMessage(buddy, null, "........");
 			break;
 		case 4:
-			client.sendMessage(buddy, null, "Your feeble commands insult my infinite bot mind");
+			client.sendMessage(buddy, null, "Working on it...");
 			break;
 		case 5:
 			client.sendMessage(buddy, null, "Got it! Right on it!");
@@ -303,7 +347,7 @@ class Bot implements Runnable {
 		}
 		*/
 		
-		Client client = new Client(name, pass, "I am DUMB HIPPO BOT",
+		Client client = new Client(name, pass, "I am MUGSHOT BOT",
 				"Hmm, who are you?", true /*auto-add everyone as buddy*/);
 		client.addListener(new ClientListener());
 		

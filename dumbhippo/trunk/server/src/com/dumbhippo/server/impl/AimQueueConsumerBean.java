@@ -1,7 +1,5 @@
 package com.dumbhippo.server.impl;
 
-import java.util.Map;
-
 import javax.annotation.EJB;
 import javax.ejb.ActivationConfigProperty;
 import javax.ejb.MessageDriven;
@@ -15,19 +13,19 @@ import org.slf4j.Logger;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.botcom.BotEvent;
+import com.dumbhippo.botcom.BotEventLogin;
 import com.dumbhippo.botcom.BotEventToken;
-import com.dumbhippo.botcom.BotEventUserPresence;
 import com.dumbhippo.botcom.BotTask;
 import com.dumbhippo.botcom.BotTaskMessage;
 import com.dumbhippo.jms.JmsProducer;
 import com.dumbhippo.persistence.AimResource;
 import com.dumbhippo.persistence.ResourceClaimToken;
 import com.dumbhippo.persistence.Token;
-import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.ValidationException;
 import com.dumbhippo.server.ClaimVerifier;
 import com.dumbhippo.server.HumanVisibleException;
 import com.dumbhippo.server.IdentitySpider;
+import com.dumbhippo.server.SigninSystem;
 import com.dumbhippo.server.TokenExpiredException;
 import com.dumbhippo.server.TokenSystem;
 import com.dumbhippo.server.TokenUnknownException;
@@ -51,11 +49,14 @@ public class AimQueueConsumerBean implements MessageListener {
 	@EJB
 	private IdentitySpider identitySpider;
 	
+	@EJB
+	private SigninSystem signinSystem;
+	
 	private void sendHtmlReplyMessage(BotEvent event, String aimName, String htmlMessage) {
 		BotTaskMessage message = new BotTaskMessage(event.getBotName(), aimName, htmlMessage);
 		JmsProducer producer = new JmsProducer(BotTask.QUEUE, true);
 		ObjectMessage jmsMessage = producer.createObjectMessage(message);
-		//logger.debug("Sending JMS message to " + BotTask.QUEUE + ": " + jmsMessage);
+		// logger.debug("Sending JMS message to " + BotTask.QUEUE + ": " + jmsMessage);
 		producer.send(jmsMessage);
 	}
 	
@@ -93,47 +94,23 @@ public class AimQueueConsumerBean implements MessageListener {
 		
 		try {
 			claimVerifier.verify(null, claim, resource);
-			sendReplyMessage(event, event.getAimName(), "The screen name " + event.getAimName() + " was added to your account");
+			sendReplyMessage(event, event.getAimName(), "The screen name " + event.getAimName() + " was added to your Mugshot account");
 		} catch (HumanVisibleException e) {
 			logger.debug("exception verifying claim, sending back to user: {}", e.getMessage());
 			sendHtmlReplyMessage(event, event.getAimName(), e.getHtmlMessage());
 		}
 	}
 	
-	/*
-	 * Handle an event from the bot specifying the online/offline status of
-	 * one or more screen names.
-	 * 
-	 * @param event
-	 */
-	private void processUserPresence(BotEventUserPresence event) {
-		
-		logger.debug("processing user presence event {}", event);
-		
-		Map<String,Boolean> userOnlineMap = event.getUserOnlineMap();
-		
-		for (String screenName: userOnlineMap.keySet()) {
-			//boolean isOnline = userOnlineMap.get(screenName);
-			//logger.debug("processing user presence event part for '" + screenName + "' of " + (isOnline ? "online" : "offline"));
-			
-			AimResource aimResource = identitySpider.lookupAim(screenName);
-			if (aimResource == null) {
-				logger.debug("no AimResource found for screen name '{}'", screenName);
-			} else {
-				//logger.debug("found an aimResource, looking up matching user for " + aimResource.getId());
-				
-				User user = identitySpider.getUser(aimResource);
-				
-				if (user == null) {
-					logger.debug("didn't find a matching user for {}", aimResource.getId());
-					return;
-				}
-				
-				logger.debug("matching user for screen name '{}': {}", screenName, user.getGuid());
-			}
+	private void processLoginEvent(BotEventLogin event) {
+		try {
+			String htmlSigninLinkMessage = signinSystem.getSigninLinkAim(event.getAimName());
+			sendHtmlReplyMessage(event, event.getAimName(), htmlSigninLinkMessage);
+		} catch (HumanVisibleException e) {
+			logger.warn("exception getting signin link, sending back to user: {} ", e.getMessage());
+			sendHtmlReplyMessage(event, event.getAimName(), e.getHtmlMessage());
 		}
 	}
-	
+
 	public void onMessage(Message message) {
 		try {
 			if (message instanceof ObjectMessage) {
@@ -141,13 +118,13 @@ public class AimQueueConsumerBean implements MessageListener {
 				Object obj = objectMessage.getObject();
 				
 				logger.debug("Got object in {}: {}", BotEvent.QUEUE, obj);
-				
+					
 				if (obj instanceof BotEventToken) {
 					BotEventToken event = (BotEventToken) obj;
 					processTokenEvent(event);
-				} else if (obj instanceof BotEventUserPresence) {
-					BotEventUserPresence event = (BotEventUserPresence) obj;
-					processUserPresence(event);
+				} else if (obj instanceof BotEventLogin) {
+					BotEventLogin event = (BotEventLogin) obj;
+					processLoginEvent(event);
 				} else {
 					logger.warn("Got unknown object: " + obj);
 				}
