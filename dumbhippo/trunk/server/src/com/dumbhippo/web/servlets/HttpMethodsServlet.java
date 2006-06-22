@@ -152,7 +152,7 @@ public class HttpMethodsServlet extends AbstractServlet {
 		return toPassIn.toArray();
 	}
 
-	private void writeRestSuccess(OutputStream out, String innerXml) throws IOException {
+	private void writeXmlMethodSuccess(OutputStream out, String innerXml) throws IOException {
 		XmlBuilder xml = new XmlBuilder();
 		xml.appendStandaloneFragmentHeader();
 		xml.openElement("rsp", "stat", "ok");
@@ -161,7 +161,7 @@ public class HttpMethodsServlet extends AbstractServlet {
 		out.write(StringUtils.getBytes(xml.toString()));
 	}
 	
-	private void writeRestError(OutputStream out, String code, String message) throws IOException {
+	private void writeXmlMethodError(OutputStream out, String code, String message) throws IOException {
 		XmlBuilder xml = new XmlBuilder();
 		xml.appendStandaloneFragmentHeader();
 		xml.openElement("rsp", "stat", "fail");
@@ -170,8 +170,8 @@ public class HttpMethodsServlet extends AbstractServlet {
 		out.write(StringUtils.getBytes(xml.toString()));
 	}	
 	
-	private void writeRestError(OutputStream out, String message) throws IOException {
-		writeRestError(out, "red", message);
+	private void writeXmlMethodError(OutputStream out, String message) throws IOException {
+		writeXmlMethodError(out, "red", message);
 	}
 	
 	private <T> void invokeHttpRequest(T object, HttpServletRequest request, HttpServletResponse response)
@@ -248,7 +248,7 @@ public class HttpMethodsServlet extends AbstractServlet {
 				}
 				if (!requestedContentTypeSupported) {
 					for (HttpResponseData t : contentAnnotation.value()) {
-						// For REST methods, we skip this check versus the
+						// For XMLMETHOD methods, we skip this check versus the
 						// default requested content type of NONE
 						if (t == requestedContentType) {
 							requestedContentTypeSupported = true;
@@ -298,7 +298,7 @@ public class HttpMethodsServlet extends AbstractServlet {
 					if (cause instanceof HumanVisibleException) {
 						HumanVisibleException visibleException = (HumanVisibleException) cause;
 						if (requestedContentType.equals(HttpResponseData.XMLMETHOD)) {
-							writeRestError(response.getOutputStream(), visibleException.getMessage());
+							writeXmlMethodError(response.getOutputStream(), visibleException.getMessage());
 							trappedError = true;
 						} else {
 							throw visibleException;
@@ -328,8 +328,8 @@ public class HttpMethodsServlet extends AbstractServlet {
 				}
 
 				if (requestedContentType.equals(HttpResponseData.XMLMETHOD) && !trappedError) {
-					StringWriter restStream = (StringWriter) out;
-					writeRestSuccess(response.getOutputStream(), restStream.toString());
+					StringWriter xmlStream = (StringWriter) out;
+					writeXmlMethodSuccess(response.getOutputStream(), xmlStream.toString());
 				}
 				
 				response.getOutputStream().flush();
