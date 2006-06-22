@@ -4,16 +4,11 @@ import java.util.Formatter;
 
 import javax.annotation.EJB;
 import javax.ejb.Stateless;
-import javax.jms.ObjectMessage;
-import javax.mail.internet.MimeMessage;
 
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.XmlBuilder;
-import com.dumbhippo.botcom.BotTask;
-import com.dumbhippo.botcom.BotTaskMessage;
-import com.dumbhippo.jms.JmsProducer;
 import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.AimResource;
 import com.dumbhippo.persistence.Client;
@@ -33,7 +28,6 @@ import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
 import com.dumbhippo.server.SigninSystem;
 import com.dumbhippo.server.SystemViewpoint;
-import com.dumbhippo.server.UnauthorizedException;
 import com.dumbhippo.server.UserViewpoint;
 
 @Stateless
