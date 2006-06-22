@@ -2,7 +2,6 @@ package com.dumbhippo.server;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.Writer;
 import java.net.MalformedURLException;
 
 import javax.ejb.Local;
@@ -10,6 +9,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.xml.sax.SAXException;
 
+import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.identity20.Guid.ParseException;
 
 /**
@@ -100,7 +100,7 @@ public interface HttpMethods {
 
 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
 	@HttpParams( { "address" })
-	public void doSendLoginLinkEmail(Writer out, String address) throws IOException, HumanVisibleException;
+	public void doSendLoginLinkEmail(XmlBuilder xml, String address) throws IOException, HumanVisibleException;
 
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "address" })
@@ -242,6 +242,17 @@ public interface HttpMethods {
 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
 	@HttpParams( { "parseOnly", "command" } )
 	@HttpOptions( adminOnly = true )
-	public void doAdminShellExec(Writer out, UserViewpoint viewpoint, HttpServletRequest request, boolean parseOnly, String command) throws IOException, HumanVisibleException;
+	public void doAdminShellExec(XmlBuilder xml, UserViewpoint viewpoint, HttpServletRequest request, boolean parseOnly, String command) throws IOException, HumanVisibleException;
+
+	@HttpContentTypes(HttpResponseData.XML)
+	@HttpParams( { "url" })
+	public void doFeedPreview(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint, String url) throws HumanVisibleException;
 	
+	@HttpContentTypes(HttpResponseData.XML)
+	@HttpParams( { "groupId", "url" })
+	public void doAddGroupFeed(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint, String groupId, String url) throws HumanVisibleException;
+	
+	@HttpContentTypes(HttpResponseData.XML)
+	@HttpParams( { "groupId", "url" })
+	public void doRemoveGroupFeed(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint, String groupId, String url) throws HumanVisibleException;	
 }

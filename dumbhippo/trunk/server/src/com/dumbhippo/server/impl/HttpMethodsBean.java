@@ -6,15 +6,17 @@ import java.io.PrintWriter;
 import java.io.Serializable;
 import java.io.StringReader;
 import java.io.StringWriter;
-import java.io.Writer;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Set;
 
 import javax.annotation.EJB;
@@ -23,7 +25,6 @@ import javax.naming.NamingException;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
 
 import org.slf4j.Logger;
 import org.xml.sax.SAXException;
@@ -501,7 +502,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		}
 	}
 
-	public void doSendLoginLinkEmail(Writer out, String address) throws IOException, HumanVisibleException {
+	public void doSendLoginLinkEmail(XmlBuilder xml, String address) throws IOException, HumanVisibleException {
 		signinSystem.sendSigninLink(address);
 	}
 
@@ -1160,8 +1161,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		user.getAccount().setAdminDisabled(disabled);
 	}
 	
-	private void writeException(Writer out, StringWriter clientOut, Throwable t) throws IOException {
-		XmlBuilder xml = new XmlBuilder();
+	private void writeException(XmlBuilder xml, StringWriter clientOut, Throwable t) throws IOException {
 		xml.openElement("result", "type", "exception");
 		xml.appendTextNode("output", clientOut.toString());		
 		xml.appendTextNode("message", t.getMessage());
@@ -1169,11 +1169,9 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		t.printStackTrace(new PrintWriter(buf));
 		xml.appendTextNode("trace", buf.toString());
 		xml.closeElement();
-		out.write(xml.toString());
 	}
 	
-	private void writeSuccess(Writer out, StringWriter clientOut, Object result) throws IOException {
-		XmlBuilder xml = new XmlBuilder();
+	private void writeSuccess(XmlBuilder xml, StringWriter clientOut, Object result) throws IOException {
 		xml.openElement("result", "type", "success");
 		xml.appendTextNode("retval", result != null ? result.toString() : "null", "class", result != null ? result.getClass().getCanonicalName() : "null");
 		if (result != null) {
@@ -1189,7 +1187,6 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		}
 		xml.appendTextNode("output", clientOut.toString());
 		xml.closeElement();
-		out.write(xml.toString());
 	}
 	
 	public class Server implements Serializable {
@@ -1244,18 +1241,18 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		return bsh;
 	}
 
-	public void doAdminShellExec(Writer out, UserViewpoint viewpoint, HttpServletRequest request, boolean parseOnly, String command) throws IOException, HumanVisibleException {
+	public void doAdminShellExec(XmlBuilder xml, UserViewpoint viewpoint, HttpServletRequest request, boolean parseOnly, String command) throws IOException, HumanVisibleException {
 		StringWriter clientOut = new StringWriter();
 		if (parseOnly) {
 			Parser parser = new Parser(new StringReader(command));
 			try {
 				while (!parser.Line())
 					;
-				writeSuccess(out, clientOut, null);
+				writeSuccess(xml, clientOut, null);
 			} catch (bsh.ParseException e) {
-				writeException(out, clientOut, e);
+				writeException(xml, clientOut, e);
 			} catch (TokenMgrError e) {
-				writeException(out, clientOut, e);
+				writeException(xml, clientOut, e);
 			}
 			return;
 		}
@@ -1265,9 +1262,35 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		try {
 			Object result = bsh.eval(command);
 			bsh.set("result", result);
-			writeSuccess(out, clientOut, result);
+			writeSuccess(xml, clientOut, result);
 		} catch (EvalError e) {
-			writeException(out, clientOut, e);
+			writeException(xml, clientOut, e);
 		}
+	}
+
+	public void doFeedPreview(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint, String url) throws HumanVisibleException {
+		
+	}
+
+	public void doAddGroupFeed(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint, String groupId, String url) throws HumanVisibleException {
+		Group group;
+		try {
+			group = groupSystem.lookupGroupById(viewpoint, groupId);
+		} catch (NotFoundException e) {
+			throw new RuntimeException("no such group", e);
+		}
+		
+		// FIXME
+	}
+
+	public void doRemoveGroupFeed(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint, String groupId, String url) throws HumanVisibleException {
+		Group group;
+		try {
+			group = groupSystem.lookupGroupById(viewpoint, groupId);
+		} catch (NotFoundException e) {
+			throw new RuntimeException("no such group", e);
+		}
+		
+		// FIXME
 	}
 }

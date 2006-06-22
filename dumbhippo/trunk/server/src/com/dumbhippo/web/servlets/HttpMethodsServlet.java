@@ -2,8 +2,6 @@ package com.dumbhippo.web.servlets;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.StringWriter;
-import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -28,6 +26,7 @@ import com.dumbhippo.server.HttpResponseData;
 import com.dumbhippo.server.HumanVisibleException;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.UserViewpoint;
+import com.dumbhippo.server.XmlMethodException;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.web.DisabledSigninBean;
 import com.dumbhippo.web.LoginCookie;
@@ -68,10 +67,11 @@ public class HttpMethodsServlet extends AbstractServlet {
 		ArrayList<Object> toPassIn = new ArrayList<Object>();
 		
 		int i = 0;
-				
+				 
+		// FIXME only allow XmlBuilder for XMLMETHOD
 		boolean methodCanReturnContent = args.length > i 
-						&& (OutputStream.class.isAssignableFrom(args[i])
-								|| Writer.class.isAssignableFrom(args[i]));
+						&& (args[i].getClass().isAssignableFrom(OutputStream.class)
+							|| args[i].getClass().isAssignableFrom(XmlBuilder.class));
 		
 		if (methodCanReturnContent) {
 			toPassIn.add(out);
@@ -107,7 +107,7 @@ public class HttpMethodsServlet extends AbstractServlet {
 		}
 		
 		if (args.length != i + paramsAnnotation.value().length) {
-			throw new RuntimeException("HTTP method " + m.getName() + " should have params " + paramsAnnotation.value());
+			throw new RuntimeException("HTTP method " + m.getName() + " should have params " + Arrays.toString(paramsAnnotation.value()));
 		}
 		
 		for (String pname : paramsAnnotation.value()) {
@@ -151,15 +151,6 @@ public class HttpMethodsServlet extends AbstractServlet {
 		
 		return toPassIn.toArray();
 	}
-
-	private void writeXmlMethodSuccess(OutputStream out, String innerXml) throws IOException {
-		XmlBuilder xml = new XmlBuilder();
-		xml.appendStandaloneFragmentHeader();
-		xml.openElement("rsp", "stat", "ok");
-		xml.append(innerXml);
-		xml.closeElement();
-		out.write(StringUtils.getBytes(xml.toString()));
-	}
 	
 	private void writeXmlMethodError(OutputStream out, String code, String message) throws IOException {
 		XmlBuilder xml = new XmlBuilder();
@@ -172,6 +163,24 @@ public class HttpMethodsServlet extends AbstractServlet {
 	
 	private void writeXmlMethodError(OutputStream out, String message) throws IOException {
 		writeXmlMethodError(out, "red", message);
+	}
+	
+	private String arrayToStringXmlBuilderWorkaround(Object[] array) {
+		// XmlBuilder.toString() has kind of a broken side effect of closing the XML document, 
+		// so we can't use Arrays.toString()
+		StringBuilder sb = new StringBuilder();
+		sb.append("{");
+		for (Object arg : array) {
+			if (arg instanceof XmlBuilder)
+				sb.append("XmlBuilder");
+			else
+				sb.append(arg.toString());
+			sb.append(", ");
+		}
+		if (array.length > 0)
+			sb.setLength(sb.length() - 2); // delete last comma
+		sb.append("}");
+		return sb.toString();
 	}
 	
 	private <T> void invokeHttpRequest(T object, HttpServletRequest request, HttpServletResponse response)
@@ -264,7 +273,10 @@ public class HttpMethodsServlet extends AbstractServlet {
 
 				Object out;
 				if (requestedContentType.equals(HttpResponseData.XMLMETHOD)) {
-					out = new StringWriter();
+					XmlBuilder xml = new XmlBuilder();
+					out = xml;
+					xml.appendStandaloneFragmentHeader();
+					xml.openElement("rsp", "stat", "ok");
 				} else {
 					out = response.getOutputStream();
 				}
@@ -276,8 +288,8 @@ public class HttpMethodsServlet extends AbstractServlet {
 
 				boolean trappedError = false;
 				try {
-					if (logger.isDebugEnabled()) {
-						String showArgs = Arrays.toString(methodArgs);
+					if (logger.isDebugEnabled()) {						
+						String showArgs = arrayToStringXmlBuilderWorkaround(methodArgs);
 						// suppress plaintext password from appearing in log
 						if ((m.getName() != null) && (m.getName().equals("doSetPassword")))
 							showArgs = "[SUPPRESSED FROM LOG]";
@@ -302,6 +314,14 @@ public class HttpMethodsServlet extends AbstractServlet {
 							trappedError = true;
 						} else {
 							throw visibleException;
+						}
+					} else if (cause instanceof XmlMethodException){
+						XmlMethodException methodException = (XmlMethodException) cause;
+						if (requestedContentType.equals(HttpResponseData.XMLMETHOD)) {
+							writeXmlMethodError(response.getOutputStream(), methodException.getCode(), methodException.getMessage());
+							trappedError = true;
+						} else {
+							throw new RuntimeException("Non-XMLMETHOD threw an XmlMethodException", methodException);
 						}
 					} else {
 						throw new RuntimeException(e);
@@ -328,8 +348,9 @@ public class HttpMethodsServlet extends AbstractServlet {
 				}
 
 				if (requestedContentType.equals(HttpResponseData.XMLMETHOD) && !trappedError) {
-					StringWriter xmlStream = (StringWriter) out;
-					writeXmlMethodSuccess(response.getOutputStream(), xmlStream.toString());
+					XmlBuilder xml = (XmlBuilder) out;
+					xml.closeElement();
+					response.getOutputStream().write(xml.getBytes());
 				}
 				
 				response.getOutputStream().flush();
