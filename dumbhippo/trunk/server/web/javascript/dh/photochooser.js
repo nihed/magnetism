@@ -1,6 +1,7 @@
 dojo.provide("dh.photochooser");
 dojo.require("dh.util");
 dojo.require("dojo.style");
+dojo.require("dh.popup");
 
 // FIXME automate getting this from the app server
 dh.photochooser.user_nophoto = '/user_pix1/nophoto.gif';
@@ -25,7 +26,6 @@ dh.photochooser.group_pix1 = [ 'baseball.gif', 'bingo.gif', 'birds.gif',
 dh.photochooser.type = "user"
 dh.photochooser.pages = [];
 dh.photochooser.onSelected = null;
-dh.photochooser.showing = false;
 
 dh.photochooser.makePage = function(prefix, photoPool) {
 	var page = [];
@@ -132,8 +132,8 @@ dh.photochooser.reloadPhoto = function(imgAncestorNodes, size) {
 }
 
 dh.photochooser.show = function(aboveNode, postSelectFunc) {
-
-	if (dh.photochooser.showing)
+		
+	if (dh.popup.isShowing('dhPhotoChooser'))
 		return;
 		
 	dh.photochooser.onSelected = function(chosenImageName) {
@@ -160,70 +160,11 @@ dh.photochooser.show = function(aboveNode, postSelectFunc) {
 	
 	dh.photochooser.setPage(0);
 	
-	// we assume that "aboveNode" is positioned, or at least 
-	// that we want to be relative to its positioned parent
-	
-	var chooser = document.getElementById('dhPhotoChooser');
-
-	// reparent so the chooser is relative to first possible
-	// parent
-	var e = aboveNode;
-	while (e.nodeName.toUpperCase() != 'DIV') {
-		e = e.parentNode;
-	}
-	
-	if (chooser.parentNode != e) {
-		chooser.parentNode.removeChild(chooser);
-		e.appendChild(chooser);
-	}
-	
-	/* This isn't precision, just "kind of next to", with 0px it just covers the file input 
-	 * IE considers a scrollbar click as mouse input ergo it doesn't allow people to scroll horizontally 
-	 * and see the rest of the stock photos under 800x600
-	 */
-	chooser.style.left = "0px";
-	chooser.style.bottom = "15px";
-	chooser.style.display = 'block';
-	
-	document.body.onkeydown = function(ev) {
-		if (dh.util.getKeyCode(ev) == ESC) {
-			dh.photochooser.hide();
-			dh.util.cancelEvent(ev);
-			return false;
-		}
-	}
-	
-	document.body.onmousedown = function(ev) {
-		var target = dh.util.getEventNode(ev);
-		if (!target) {
-			alert("No event node?");
-			return;
-		}
-		var e = target;
-		while (e && e != chooser) {
-			e = e.parentNode;
-		}
-		if (!e) {
-			// we weren't a child of the chooser
-			dh.photochooser.hide();
-		}
-		// don't activate something else
-		dh.util.cancelEvent(ev);
-		return false;
-	}
-	
-	dh.photochooser.showing = true;
+	dh.popup.show('dhPhotoChooser', aboveNode);
 }
 
 dh.photochooser.hide = function() {
-	if (!dh.photochooser.showing)
-		return;
-
-	var chooser = document.getElementById('dhPhotoChooser');
-	chooser.style.display = 'none';
-	document.body.onmousedown = null;
-	document.body.onkeydown = null;
-	dh.photochooser.showing = false;
+	dh.popup.hide('dhPhotoChooser');
 }
 
 dh.photochooser.init = function(type, id) {

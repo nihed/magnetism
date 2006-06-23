@@ -5,6 +5,10 @@ dojo.require("dojo.style");
 // hash from popupId to bool
 dh.popup.showing = {};
 
+dh.popup.isShowing = function(popupId) {
+	return !!dh.popup.showing[popupId];
+}
+
 dh.popup.show = function(popupId, aboveNode) {
 	if (!popupId)
 		throw "no popup id"
