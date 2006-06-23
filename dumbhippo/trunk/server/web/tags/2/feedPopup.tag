@@ -6,7 +6,6 @@
 <%@ attribute name="id" required="true" type="java.lang.String" %>
 <%@ attribute name="title" required="true" type="java.lang.String" %>
 <%@ attribute name="icon" required="true" type="java.lang.String" %>
-<%@ attribute name="url" required="true" type="java.lang.String" %>
 <%@ attribute name="bodyText" required="false" type="java.lang.String" %>
 
 <dht:popup id="${id}" extraClass="dh-feed-popup">
@@ -26,7 +25,7 @@
 					</td>
 					<td>
 						<div class="dh-title"><c:out value="${title}"/></div>
-						<div class="dh-subtitle"><c:out value="${url}"/></div>
+						<div class="dh-subtitle"><%-- FIXME url here --%></div>
 						<div><c:out value="${bodyText}"/></div>
 					</td>
 				</tr>

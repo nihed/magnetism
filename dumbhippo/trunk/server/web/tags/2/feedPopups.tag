@@ -2,15 +2,15 @@
 <%@ taglib uri="/jsp/dumbhippo.tld" prefix="dh" %>
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 
-<dht:feedPopup id="dhFeedLoadingPopup" title="LOCATING FEED..." icon="/images2/${buildstamp}/feedspinner.gif" url="http://example.com">
-	<input type="button" value="OK"/>
-	<input type="button" value="Cancel"/>
+<dht:feedPopup id="dhFeedLoadingPopup" title="LOCATING FEED..." icon="/images2/${buildstamp}/feedspinner.gif">
+	<input type="button" value="OK" disabled="true"/> <%--- never gets enabled, we just switch to PreviewPopup --%>
+	<input type="button" value="Cancel" onclick="dh.feeds.loadingCancel()"/>
 </dht:feedPopup>
-<dht:feedPopup id="dhFeedPreviewPopup" title="FOUND A FEED!" icon="/images2/${buildstamp}/check21x20.png" url="http://example.com">
-	<input type="button" value="OK"/>
-	<input type="button" value="Cancel"/>
+<dht:feedPopup id="dhFeedPreviewPopup" title="FOUND A FEED!" icon="/images2/${buildstamp}/check21x20.png">
+	<input type="button" value="OK"  onclick="dh.feeds.previewOK()"/>
+	<input type="button" value="Cancel" onclick="dh.feeds.previewCancel()"/>
 </dht:feedPopup>
-<dht:feedPopup id="dhFeedFailedPopup" title="FEED NOT FOUND" icon="/images2/${buildstamp}/alert21x20.png" url="http://example.com">
-	<input type="button" value="Try Again"/>
-	<input type="button" value="Cancel"/>
+<dht:feedPopup id="dhFeedFailedPopup" title="FEED NOT FOUND" icon="/images2/${buildstamp}/alert21x20.png">
+	<input type="button" value="Try Again" onclick="dh.feeds.failedTryAgain()"/>
+	<input type="button" value="Cancel" onclick="dh.feeds.failedCancel()"/>
 </dht:feedPopup>

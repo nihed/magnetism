@@ -7,6 +7,7 @@ dojo.require("dh.photochooser")
 dojo.require("dh.fileinput")
 dojo.require("dojo.dom")
 dojo.require("dh.popup")
+dojo.require("dh.feeds");
 
 dh.groupaccount.startWait = function() {
 	dh.util.showMessage("Please wait...")
@@ -66,15 +67,23 @@ dh.groupaccount.updateDescription = function(description) {
 	nameDiv.appendChild(document.createTextNode(description))
 }
 
+dh.groupaccount.hideAllFeedPopups = function() {
+	dh.popup.hide('dhFeedPreviewPopup');
+	dh.popup.hide('dhFeedFailedPopup');
+	dh.popup.hide('dhFeedLoadingPopup');
+}
+
 dh.groupaccount.addFeed = function(feedUrl) {
    	dh.server.doXmlMethod("addgroupfeed",
 				     { "groupId" : dh.groupaccount.groupId,
-				       "url" :  url },
+				       "url" :  feedUrl },
 		  	    	 function(childNodes, http) {
-						// FIXME
+		  	    	 	dh.groupaccount.hideAllFeedPopups();
+						document.location.reload();
 		  	    	 },
 		  	    	 function(code, msg, http) {
-		  	    	 	// FIXME
+			  	    	dh.groupaccount.hideAllFeedPopups();
+		  	    		dh.formtable.showStatusMessage('dhFeedEntry', "Failed to add feed; try again?");
 		  	    	 });
 }
 
@@ -87,27 +96,55 @@ dh.groupaccount.tryAddFeed = function() {
 		return;
 	}
 	
+	dh.groupaccount.hideAllFeedPopups();
+	
+	// Set up dh.feeds
+	dh.feeds.loadingCancel = function() {
+		dh.groupaccount.hideAllFeedPopups();
+	};
+	dh.feeds.previewOK = function() {
+		dh.groupaccount.addFeed(url);
+	};
+	dh.feeds.previewCancel = function() {
+		dh.groupaccount.hideAllFeedPopups();
+	};
+	dh.feeds.failedTryAgain = function() {
+		dh.groupaccount.tryAddFeed();
+	};
+	dh.feeds.failedCancel = function() {
+		dh.groupaccount.hideAllFeedPopups();
+	};
+	
+	dh.feeds.setUrl(url);
+	
+	// now show the first feed popup
 	dh.popup.show('dhFeedLoadingPopup', document.getElementById('dhFeedEntry'));
 	
    	dh.server.doXmlMethod("feedpreview",
 				     { "url" :  url },
 		  	    	 function(childNodes, http) {
-						// FIXME
+		  	    	 	var canceled = !dh.popup.isShowing('dhFeedLoadingPopup');
+		  	    	 	dh.groupaccount.hideAllFeedPopups();
+		  	    	 	if (!canceled)
+			  	    	 	dh.popup.show('dhFeedPreviewPopup', document.getElementById('dhFeedEntry'));
 		  	    	 },
 		  	    	 function(code, msg, http) {
-		  	    	 	// FIXME
+		  	    	 	var canceled = !dh.popup.isShowing('dhFeedLoadingPopup');
+			 	    	dh.groupaccount.hideAllFeedPopups();
+			 	    	if (!canceled)
+			  	    	 	dh.popup.show('dhFeedFailedPopup', document.getElementById('dhFeedEntry'));		  	    	 	
 		  	    	 });
 }
 
 dh.groupaccount.removeFeed = function(feedUrl) {
    	dh.server.doXmlMethod("removegroupfeed",
 				     { "groupId" : dh.groupaccount.groupId,
-				       "url" :  url },
+				       "url" :  feedUrl },
 		  	    	 function(childNodes, http) {
-						// FIXME
+						document.location.reload();
 		  	    	 },
 		  	    	 function(code, msg, http) {
-		  	    	 	// FIXME
+			  	    	 dh.formtable.showStatusMessage('dhFeedEntry', "Failed to remove feed; try again?");
 		  	    	 });
 }
 

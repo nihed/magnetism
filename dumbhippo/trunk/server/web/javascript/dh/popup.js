@@ -13,6 +13,9 @@ dh.popup.show = function(popupId, aboveNode) {
 	if (!popupId)
 		throw "no popup id"
 
+	if (!aboveNode)
+		throw "no aboveNode"
+
 	if (dh.popup.showing[popupId])
 		return;
 	
