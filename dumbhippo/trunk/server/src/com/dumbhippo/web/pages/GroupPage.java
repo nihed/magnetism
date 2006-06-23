@@ -1,5 +1,8 @@
 package com.dumbhippo.web.pages;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 
@@ -9,6 +12,7 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupAccess;
+import com.dumbhippo.persistence.GroupFeed;
 import com.dumbhippo.persistence.GroupMember;
 import com.dumbhippo.persistence.MembershipStatus;
 import com.dumbhippo.persistence.User;
@@ -57,6 +61,7 @@ public class GroupPage extends AbstractSigninOptionalPage {
 	private ListBean<PersonView> invitedMembers;
 	private ListBean<PersonView> followers;
 	private ListBean<PersonView> invitedFollowers;
+	private ListBean<GroupFeed> feeds;
 	
 	private Pageable<PostView> posts;
 	private boolean allMembers;
@@ -348,6 +353,23 @@ public class GroupPage extends AbstractSigninOptionalPage {
 		return latestTracks;
 	}	
 	
+	public ListBean<GroupFeed> getFeeds() {
+		if (feeds == null) {
+			List<GroupFeed> list = new ArrayList<GroupFeed>();
+			list.addAll(getViewedGroup().getGroup().getFeeds());
+ 
+			Collections.sort(list, new Comparator<GroupFeed>() {
+
+				public int compare(GroupFeed feed1, GroupFeed feed2) {
+					return String.CASE_INSENSITIVE_ORDER.compare(feed1.getFeed().getLink().getUrl(),
+							feed2.getFeed().getLink().getUrl());
+				}
+				
+			});
+			feeds = new ListBean<GroupFeed>(list);
+		}
+		return feeds;
+	}
 	
 	public int getMaxPostsShown() {
 		return MAX_POSTS_SHOWN;

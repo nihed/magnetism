@@ -1,29 +1,6 @@
 @CHARSET "UTF-8";
 @IMPORT url("photo-chooser-positions.css");
 
-.dh-photo-chooser {
-	/* drop shadow color */
-	background-color:	#b3b3b3;
-}
-
-.dh-photo-chooser .dh-border {
-	background-color:	black;
-}
-
-.dh-photo-chooser .dh-content-padding {
-	background-color:	white;
-}
-
-.dh-photo-chooser .dh-title {
-	font-size:			16px;
-	font-weight:		bold;
-	text-align:			left;
-}
-
 .dh-photo-chooser .dh-content .dh-image-grid .dh-image {
 	background-color:	white;
-}
-
-.dh-photo-chooser .dh-controls {
-	font-size:			12px;
 }

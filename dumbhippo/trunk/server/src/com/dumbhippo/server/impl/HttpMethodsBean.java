@@ -1362,8 +1362,8 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			if (count > 2)
 				break;
 			xml.openElement("item");
-			xml.openElement("title", entry.getTitle());
-			xml.openElement("link", entry.getLink().getUrl());
+			xml.appendTextNode("title", entry.getTitle());
+			xml.appendTextNode("link", entry.getLink().getUrl());
 			xml.closeElement();
 			++count;
 		}

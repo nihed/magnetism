@@ -366,3 +366,26 @@ div.dh-async-action-link-complete {
 	border:				1px solid #cc0033;
 	-moz-border-radius:	5px;
 }
+
+.dh-popup {
+	/* drop shadow color */
+	background-color:	#b3b3b3;
+}
+
+.dh-popup .dh-border {
+	background-color:	black;
+}
+
+.dh-popup .dh-content-padding {
+	background-color:	white;
+}
+
+.dh-popup .dh-title {
+	font-size:			16px;
+	font-weight:		bold;
+	text-align:			left;
+}
+
+.dh-popup .dh-controls {
+	font-size:			12px;
+}

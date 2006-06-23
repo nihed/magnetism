@@ -1,0 +1,22 @@
+@CHARSET "UTF-8";
+
+.dh-feed-popup {
+	width:			293px;
+}
+
+.dh-feed-popup .dh-border {
+	width:				292px;
+}
+
+.dh-feed-popup .dh-content-padding {
+	width:				290px;
+}
+
+.dh-feed-popup .dh-content {
+	width:				270px;
+}
+
+.dh-feed-popup .dh-content .dh-title {
+	position:			relative;
+	margin-bottom:		10px;
+}

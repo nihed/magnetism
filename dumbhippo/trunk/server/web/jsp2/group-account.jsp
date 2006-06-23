@@ -80,26 +80,39 @@
 				<dht:formTableRow label="Feeds">
 					<table cellpadding="0" cellspacing="0" class="dh-address-table">
 						<tbody>	
-									<%--
-							<c:forEach items="${group.allFeeds}" var="feed" varStatus="status">
+							<c:forEach items="${group.feeds.list}" var="feed" varStatus="status">
 								<tr>
-									<td><a href="${feed.url}" target="_top"><c:out value="${feed.name}"/></a></td>
+									<td><a href="${feed.feed.link.url}" target="_top"><c:out value="${feed.feed.title}"/></a></td>
+									<td>
+										<c:choose>
+											<c:when test="${feed.feed.lastFetchSucceeded}">
+												<dh:png src="/images2/${buildStamp}/check10x10.png" style="width: 10; height: 10;"/>
+											</c:when>
+											<c:otherwise>
+												<dh:png src="/images2/${buildStamp}/alert10x10.png" style="width: 10; height: 10;"/>
+											</c:otherwise>
+										</c:choose>
+									</td>
 									<td>
 										<c:set var="feedJs" scope="page">
 											<jsp:attribute name="value">
-												<dh:jsString value="${feed.url}"/>
+												<dh:jsString value="${feed.feed.link.url}"/>
 											</jsp:attribute>
 										</c:set>
 										<a href="javascript:dh.groupaccount.removeFeed(${feedJs});">remove</a>
 									</td>
 								</tr>
+								<tr class="dh-feed-detail">
+									<td colspan="2"><c:out value="${feed.feed.link.url}"/></td>
+									<td></td>
+								</tr>
 								<tr class="dh-feed-spacer">
+									<td></td>
 									<td></td>
 									<td></td>
 								</tr>
 							</c:forEach>
-							--%>
-							<tr><td><dht:textInput id='dhFeedEntry'/></td><td><input id='dhFeedAddButton' type="button" value="Add" onclick="dh.groupaccount.tryAddFeed();"/></td></tr>
+							<tr><td><dht:textInput id='dhFeedEntry'/></td><td><input id='dhFeedAddButton' type="button" value="Subscribe" onclick="dh.groupaccount.tryAddFeed();"/></td></tr>
 						</tbody>
 					</table>
 				</dht:formTableRow>
@@ -107,5 +120,6 @@
 		</dht:zoneBoxGroups>
 	</dht:contentColumn>
 	<dht:photoChooser/>
+	<dht:feedPopup/>
 </dht:twoColumnPage>
 </html>

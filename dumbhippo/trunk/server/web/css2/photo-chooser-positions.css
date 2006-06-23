@@ -1,55 +1,18 @@
 @CHARSET "UTF-8";
 
 .dh-photo-chooser {
-	position:		absolute;
 	width:			293px;
 }
 
-/* For the nested div onion creating the borders of the photo
- * chooser, position: relative would make more sense but seems to 
- * confuse firefox into drawing the background color of the outermost
- * div over the top and bottom of the chooser.
- * Using float: left fixes firefox, but creates the "double margin" 
- * bug in IE, which is fixed with display:inline
- * (inline is invalid on floats, but gets ignored except
- * to mysteriously fix the IE double margin bug)
- */
-
 .dh-photo-chooser .dh-border {
-	/* hacks! see comment above */
-	float:				left;
-	display:			inline;
-	/* end hacks */
-	margin-left:		0px;
-	margin-top:			0px;
-	/* background of parent is drop shadow */
-	margin-bottom:		1px;
 	width:				292px;
 }
 
 .dh-photo-chooser .dh-content-padding {
-	/* hacks! see comment above */
-	float:				left;
-	display:			inline;
-	/* end hacks */
-	/* background of parent is the black border */
-	margin-top:			1px;
-	margin-bottom:		1px;
-	margin-left:		1px;
 	width:				290px;
 }
 
 .dh-photo-chooser .dh-content {
-	/* hacks! see comment above */
-	float:				left;
-	display:			inline;
-	/* end hacks */	
-	margin-top:			10px;
-	margin-left:		10px;
-	/* IE seems to ignore margin-bottom, I don't know why,
-	 * since we don't set any heights padding works too
-	 */
-	padding-bottom:		10px;
 	width:				270px;
 }
 

@@ -6,6 +6,7 @@ dojo.require("dh.textinput")
 dojo.require("dh.photochooser")
 dojo.require("dh.fileinput")
 dojo.require("dojo.dom")
+dojo.require("dh.popup")
 
 dh.groupaccount.startWait = function() {
 	dh.util.showMessage("Please wait...")
@@ -85,6 +86,9 @@ dh.groupaccount.tryAddFeed = function() {
 		dh.formtable.showStatusMessage('dhFeedEntry', "Enter a web site URL");
 		return;
 	}
+	
+	dh.popup.show('dhFeedPopup', document.getElementById('dhFeedEntry'));
+	
    	dh.server.doXmlMethod("feedpreview",
 				     { "url" :  url },
 		  	    	 function(childNodes, http) {
@@ -140,5 +144,5 @@ dhGroupAccountInit = function() {
 	
 	dh.photochooser.init("group", dh.groupaccount.groupId);
 	
-	dh.groupaccount.feedEntry = new dh.textinput.Entry(document.getElementById("dhFeedEntry"), 'http://blog.example.com/', null);
+	dh.groupaccount.feedEntry = new dh.textinput.Entry(document.getElementById("dhFeedEntry"), 'Enter feed URL', null);
 }
