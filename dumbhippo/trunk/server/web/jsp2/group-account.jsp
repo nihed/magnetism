@@ -120,6 +120,6 @@
 		</dht:zoneBoxGroups>
 	</dht:contentColumn>
 	<dht:photoChooser/>
-	<dht:feedPopup/>
+	<dht:feedPopups/>
 </dht:twoColumnPage>
 </html>

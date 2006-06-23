@@ -87,7 +87,7 @@ dh.groupaccount.tryAddFeed = function() {
 		return;
 	}
 	
-	dh.popup.show('dhFeedPopup', document.getElementById('dhFeedEntry'));
+	dh.popup.show('dhFeedLoadingPopup', document.getElementById('dhFeedEntry'));
 	
    	dh.server.doXmlMethod("feedpreview",
 				     { "url" :  url },
