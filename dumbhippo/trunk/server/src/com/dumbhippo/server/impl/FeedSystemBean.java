@@ -7,8 +7,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
@@ -41,6 +43,8 @@ import com.sun.syndication.io.FeedException;
 public class FeedSystemBean implements FeedSystem {
 	@SuppressWarnings("unused")
 	private static final Logger logger = GlobalSetup.getLogger(FeedSystemBean.class);
+	
+	static final long FEED_UPDATE_TIME = 10 * 60 * 1000; // 10 minutes
 	
 	@PersistenceContext(unitName = "dumbhippo")
 	private EntityManager em;
@@ -83,6 +87,53 @@ public class FeedSystemBean implements FeedSystem {
 		}
 	}
 	
+	private FeedEntry createEntryFromSyndEntry(Feed feed, SyndEntry syndEntry) throws MalformedURLException {
+		URL entryUrl = new URL(syndEntry.getLink());
+		
+		FeedEntry entry = new FeedEntry(feed);
+		entry.setEntryGuid(syndEntry.getUri());
+		entry.setTitle(syndEntry.getTitle());
+		
+		SyndContent content = syndEntry.getDescription();
+		
+		// FIXME: we need to extract text out of HTML here, and so forth
+		entry.setDescription(content.getValue());
+
+		Date publishedDate = syndEntry.getPublishedDate();
+		if (publishedDate != null)
+			entry.setDate(publishedDate);
+		else {
+			logger.warn("Failed to retrieve date from feed {}", feed.getLink().getUrl());
+			entry.setDate(new Date());
+		}
+		
+		entry.setLink(identitySpider.getLink(entryUrl));
+		entry.setCurrent(true);
+		
+		return entry;
+	}
+	
+	private void updateEntryFromSyndEntry(FeedEntry entry, SyndEntry syndEntry) {
+		entry.setTitle(syndEntry.getTitle());
+		
+		SyndContent content = syndEntry.getDescription();
+		
+		// FIXME: we need to extract text out of HTML here, and so forth
+		entry.setDescription(content.getValue());
+
+		Date publishedDate = syndEntry.getPublishedDate();
+		if (publishedDate != null)
+			entry.setDate(publishedDate);
+		else
+			entry.setDate(new Date());
+		
+		try {
+			URL entryUrl = new URL(syndEntry.getLink());
+			entry.setLink(identitySpider.getLink(entryUrl));
+		} catch (MalformedURLException e) {
+		}
+	}
+
 	private void initializeFeedFromSyndFeed(Feed feed, SyndFeed syndFeed) {
 		feed.setTitle(syndFeed.getTitle());
 		
@@ -95,42 +146,75 @@ public class FeedSystemBean implements FeedSystem {
 			if (foundGuids.contains(guid))
 				continue;
 			
-			URL entryUrl;
-			try {
-				entryUrl = new URL(syndEntry.getLink());
-			} catch (MalformedURLException e) {
-				continue;
-			}
-			
 			if (!foundGuids.contains(guid)) {
-				foundGuids.add(guid);
-				
-				FeedEntry entry = new FeedEntry(feed);
-				entry.setEntryGuid(guid);
-				entry.setTitle(syndEntry.getTitle());
-				
-				SyndContent content = syndEntry.getDescription();
-				
-				// FIXME: we need to extract text out of HTML here, and so forth
-				entry.setDescription(content.getValue());
-				
-				Date publishedDate = syndEntry.getPublishedDate();
-				if (publishedDate != null) {
-					entry.setDate(syndEntry.getPublishedDate());
-				} else {
-					logger.warn("Failed to parse date in feed {}", feed.getLink().getUrl());
-					entry.setDate(new Date()); // set to current time - then never overwrite it (important)
+				FeedEntry entry;
+				try {
+					entry = createEntryFromSyndEntry(feed, syndEntry);
+					foundGuids.add(guid);
+					em.persist(entry);
+					feed.getEntries().add(entry);
+				} catch (MalformedURLException e) {
+					continue;
 				}
-				
-				entry.setLink(identitySpider.getLink(entryUrl));
-				entry.setCurrent(true);
-				
-				em.persist(entry);
 			}
 		}
 
 		feed.setLastFetched(new Date());
 		feed.setLastFetchSucceeded(true);
+	}
+	
+	private void updateFeedFromSyndFeed(Feed feed, SyndFeed syndFeed) {
+		feed.setTitle(syndFeed.getTitle());
+		
+		Map<String, FeedEntry> oldEntries = new HashMap<String, FeedEntry>();
+		
+		for (FeedEntry entry : feed.getEntries()) {
+			oldEntries.put(entry.getEntryGuid(), entry);
+		}
+		
+		Set<String> foundGuids = new HashSet<String>();
+		
+		for (Object o : syndFeed.getEntries()) {
+			SyndEntry syndEntry = (SyndEntry)o;
+			
+			String guid = syndEntry.getUri();
+			if (foundGuids.contains(guid))
+				continue;
+			
+			if (oldEntries.containsKey(guid)) {
+				updateEntryFromSyndEntry(oldEntries.get(guid), syndEntry);
+				foundGuids.add(guid);
+				continue;
+			}
+			
+			if (!foundGuids.contains(guid)) {
+				FeedEntry entry;
+				try {
+					entry = createEntryFromSyndEntry(feed, syndEntry);
+					foundGuids.add(guid);
+					em.persist(entry);
+					feed.getEntries().add(entry);
+				} catch (MalformedURLException e) {
+					continue;
+				}
+			}
+		}
+		
+		for (FeedEntry entry : feed.getEntries()) {
+			if (!foundGuids.contains(entry.getEntryGuid()))
+				entry.setCurrent(false);
+			else if (oldEntries.containsKey(entry))
+				entry.setCurrent(true);
+		}
+
+		feed.setLastFetched(new Date());
+		feed.setLastFetchSucceeded(true);
+
+		for (FeedEntry entry : feed.getEntries()) {
+			if (foundGuids.contains(entry.getEntryGuid()) && !oldEntries.containsKey(entry.getEntryGuid())) {
+				logger.debug("Found new Feed entry: {}", entry.getTitle());
+			}
+		}
 	}
 	
 	public Feed getFeed(final LinkResource link) throws XmlMethodException {
@@ -168,7 +252,12 @@ public class FeedSystemBean implements FeedSystem {
 		}
 	}
 
-	public void updateFeed(Feed feed) {
+	public void updateFeed(Feed feed) throws XmlMethodException {
+		if (System.currentTimeMillis() - feed.getLastFetched().getTime() < FEED_UPDATE_TIME)
+			return; // Up-to-date, nothing to do
+		
+		final SyndFeed syndFeed = fetchFeedFromNet(feed.getLink());
+		updateFeedFromSyndFeed(feed, syndFeed);		
 	}
 
 	public List<FeedEntry> getCurrentEntries(Feed feed) {
