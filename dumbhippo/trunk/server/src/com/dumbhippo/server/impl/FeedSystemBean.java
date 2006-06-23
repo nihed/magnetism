@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
 
 import javax.annotation.EJB;
 import javax.ejb.Stateless;
@@ -23,6 +24,8 @@ import javax.persistence.PersistenceContext;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.ThreadUtils;
+import com.dumbhippo.TypeUtils;
 import com.dumbhippo.persistence.Feed;
 import com.dumbhippo.persistence.FeedEntry;
 import com.dumbhippo.persistence.Group;
@@ -33,6 +36,7 @@ import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.XmlMethodErrorCode;
 import com.dumbhippo.server.XmlMethodException;
+import com.dumbhippo.server.util.EJBUtil;
 import com.sun.syndication.feed.synd.SyndContent;
 import com.sun.syndication.feed.synd.SyndEntry;
 import com.sun.syndication.feed.synd.SyndFeed;
@@ -46,7 +50,13 @@ public class FeedSystemBean implements FeedSystem {
 	@SuppressWarnings("unused")
 	private static final Logger logger = GlobalSetup.getLogger(FeedSystemBean.class);
 	
+	// How old the feed data can be before we refetch
 	static final long FEED_UPDATE_TIME = 10 * 60 * 1000; // 10 minutes
+	
+	// Interval at which we check all threads for needing update. This is shorter 
+	// than FEED_UPDATE_TIME so that we don't just miss an update and wait 
+	// an entire additional cycle
+	static final long UPDATE_THREAD_TIME = FEED_UPDATE_TIME / 2;
 	
 	@PersistenceContext(unitName = "dumbhippo")
 	private EntityManager em;
@@ -55,7 +65,20 @@ public class FeedSystemBean implements FeedSystem {
 	private TransactionRunner runner;	
 	
 	@EJB
-	private IdentitySpider identitySpider;	
+	private IdentitySpider identitySpider;
+	
+	private static ExecutorService notificationService;
+	private static boolean shutdown = false;
+	
+	private static synchronized ExecutorService getNotificationService() {
+		if (shutdown)
+			throw new RuntimeException("getNotificationService() called after shutdown");
+		
+		if (notificationService == null)
+			notificationService = ThreadUtils.newSingleThreadExecutor("FeedSystem notification");
+		
+		return notificationService;
+	}
 
 	private Feed lookupExistingFeed(LinkResource link) {
 		try {
@@ -212,9 +235,14 @@ public class FeedSystemBean implements FeedSystem {
 		feed.setLastFetched(new Date());
 		feed.setLastFetchSucceeded(true);
 
-		for (FeedEntry entry : feed.getEntries()) {
+		for (final FeedEntry entry : feed.getEntries()) {
 			if (foundGuids.contains(entry.getEntryGuid()) && !oldEntries.containsKey(entry.getEntryGuid())) {
 				logger.debug("Found new Feed entry: {}", entry.getTitle());
+				getNotificationService().submit(new Runnable() {
+					public void run() {
+						EJBUtil.defaultLookup(FeedSystem.class).handleNewEntryNotification(entry.getId());
+					}
+				});
 			}
 		}
 	}
@@ -254,12 +282,26 @@ public class FeedSystemBean implements FeedSystem {
 		}
 	}
 
-	public void updateFeed(Feed feed) throws XmlMethodException {
+	public void updateFeed(Feed feed) {
+		// Needed when called from the update thread
+		if (!em.contains(feed)) {
+			feed = em.find(Feed.class, feed.getId());
+		}
+		
 		if (System.currentTimeMillis() - feed.getLastFetched().getTime() < FEED_UPDATE_TIME)
 			return; // Up-to-date, nothing to do
+
+		logger.debug("Feed {} needs update", feed.getLink());
 		
-		final SyndFeed syndFeed = fetchFeedFromNet(feed.getLink());
-		updateFeedFromSyndFeed(feed, syndFeed);		
+		try {
+			final SyndFeed syndFeed = fetchFeedFromNet(feed.getLink());
+			updateFeedFromSyndFeed(feed, syndFeed);		
+		} catch (XmlMethodException e) {
+			logger.warn("Couldn't update feed", e);
+			
+			feed.setLastFetched(new Date());
+			feed.setLastFetchSucceeded(false);
+		}
 	}
 
 	public List<FeedEntry> getCurrentEntries(Feed feed) {
@@ -277,6 +319,85 @@ public class FeedSystemBean implements FeedSystem {
 		});
 		
 		return result;
+	}
+	
+	public List<Feed> getInUseFeeds() {
+		List l = em.createQuery("SELECT f FROM Feed f WHERE EXISTS (SELECT gf FROM GroupFeed gf WHERE gf.feed = f)").getResultList();
+		return TypeUtils.castList(Feed.class, l);
+	}
+	
+	public void handleNewEntryNotification(long entryId) {
+		FeedEntry entry = em.find(FeedEntry.class, entryId);
+		
+		logger.debug("Processing feed entry: {}", entry.getTitle());
+	}
+	
+	public synchronized static void startup() {
+		FeedUpdater.getInstance().start();
+	}
+	
+	public synchronized static void shutdown() {
+		shutdown = true;
+
+		FeedUpdater.getInstance().shutdown();
+		if (notificationService != null) {
+			notificationService.shutdown();
+			notificationService = null;
+		}
+	}
+
+	private static class FeedUpdater extends Thread {
+		private static FeedUpdater instance;
+		
+		static synchronized FeedUpdater getInstance() {
+			if (instance == null)
+				instance = new FeedUpdater();
+			
+			return instance;
+		}
+		
+		public FeedUpdater() {
+			super("FeedUpdater");
+		}
+		
+		public void run() {
+			// We start off by sleeping for our delay time to reduce the initial
+			// server load on restart
+			long lastUpdate = System.currentTimeMillis();
+			
+			while (true) {
+				try {
+					long sleepTime = lastUpdate + UPDATE_THREAD_TIME - System.currentTimeMillis();
+					if (sleepTime < 0)
+						sleepTime = 0;
+					Thread.sleep(sleepTime);
+					
+					// We intentionally iterate here rather than inside a session
+					// bean method to get a separate transaction for updating each
+					// feed rather than holding a single transaction over the whole
+					// process.
+					FeedSystem feedSystem = EJBUtil.defaultLookup(FeedSystem.class);
+					for (Feed feed : feedSystem.getInUseFeeds()) {
+						feedSystem.updateFeed(feed);
+					}
+					
+					lastUpdate = System.currentTimeMillis();
+				} catch (InterruptedException e) {
+					break;
+				}
+			}
+		}
+		
+		public void shutdown() {
+			interrupt();
+			
+			try {
+				join();
+				logger.info("Successfully stopped FeedUpdater thread");
+			} catch (InterruptedException e) {
+				// Shouldn't happen, just ignore
+			}
+		}
 	}
 
 	public void addGroupFeed(Group group, Feed feed) {

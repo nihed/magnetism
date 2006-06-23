@@ -5,8 +5,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
 
 import javax.annotation.EJB;
 import javax.ejb.PostConstruct;
@@ -18,6 +16,7 @@ import javax.persistence.PersistenceContext;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.ThreadUtils;
 import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.MySpaceBlogComment;
 import com.dumbhippo.persistence.User;
@@ -46,14 +45,7 @@ public class MySpaceTrackerBean implements MySpaceTracker {
 	
 	@PostConstruct
 	public void init() {
-		threadPool = Executors.newCachedThreadPool(new ThreadFactory() {
-			public Thread newThread(Runnable r) {
-				Thread t = new Thread(r);
-				t.setDaemon(true);
-				t.setName("MySpaceBlogTracker");
-				return t;
-			}
-		});
+		threadPool = ThreadUtils.newCachedThreadPool("MySpaceBlogTracker");
 	}
 	
 	private static final String LOOKUP_COMMENT_BY_ID_QUERY =

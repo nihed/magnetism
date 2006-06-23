@@ -9,10 +9,8 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
-import java.util.concurrent.ThreadFactory;
 
 import javax.annotation.EJB;
 import javax.ejb.PostConstruct;
@@ -21,6 +19,7 @@ import javax.ejb.Stateless;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.ThreadUtils;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.postinfo.PostInfo;
@@ -134,14 +133,7 @@ public class PostInfoSystemBean implements PostInfoSystem {
 			}
 		}
 		
-		threadPool = Executors.newCachedThreadPool(new ThreadFactory() {
-			public Thread newThread(Runnable r) {
-				Thread t = new Thread(r);
-				t.setDaemon(true);
-				t.setName("PostInfoSystemBean");
-				return t;
-			}
-		});
+		threadPool = ThreadUtils.newCachedThreadPool("PostInfoSystemBean");
 	
 		// note that this isn't global; it's per-stateless-bean. i.e. 
 		// it's just an optimization and you don't want to rely on it 

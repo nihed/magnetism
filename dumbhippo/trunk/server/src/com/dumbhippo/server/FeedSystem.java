@@ -12,9 +12,19 @@ import com.dumbhippo.persistence.LinkResource;
 @Local
 public interface FeedSystem {
 	Feed getFeed(LinkResource link) throws XmlMethodException;
-	void updateFeed(Feed feed) throws XmlMethodException;
+	void updateFeed(Feed feed);
 	List<FeedEntry> getCurrentEntries(Feed feed);
+	
+	List<Feed> getInUseFeeds();
 	
 	void addGroupFeed(Group group, Feed feed);
 	void removeGroupFeed(Group group, Feed feed);
+	
+	/*
+	 * Called (by FeedSystem itself) when a new FeedEntry is found
+	 * 
+	 *  @param entryId the ID of the entry that changed (a ID rather than
+	 *     a FeedEntry is used here because this is called asynchronously) 
+	 */
+	void handleNewEntryNotification(long entryId);	
 }

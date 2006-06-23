@@ -15,10 +15,8 @@ import java.util.TreeMap;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
-import java.util.concurrent.ThreadFactory;
 
 import javax.annotation.EJB;
 import javax.ejb.Stateless;
@@ -40,6 +38,7 @@ import org.slf4j.Logger;
 import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.Pair;
+import com.dumbhippo.ThreadUtils;
 import com.dumbhippo.TypeUtils;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
@@ -115,27 +114,15 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	private static ExecutorService threadPool;
 	private static boolean shutdown = false;
 	
-	private static ExecutorService getThreadPool() {
-		synchronized (MusicSystemInternalBean.class) {
-			if (shutdown)
-				throw new RuntimeException("getThreadPool() called after shutdown");
-				
-			if (threadPool == null) {
-				threadPool = Executors.newCachedThreadPool(new ThreadFactory() {
-					private int nextThreadId = 0;
-					
-					public synchronized Thread newThread(Runnable r) {
-						Thread t = new Thread(r);
-						t.setDaemon(true);
-						t.setName("music pool " + nextThreadId);
-						nextThreadId += 1;
-						return t;
-					}
-				});
-			}
+	private synchronized static ExecutorService getThreadPool() {
+		if (shutdown)
+			throw new RuntimeException("getThreadPool() called after shutdown");
 			
-			return threadPool;
+		if (threadPool == null) {
+			threadPool = ThreadUtils.newCachedThreadPool("music pool");
 		}
+		
+		return threadPool;
 	}
 	
 	public static void shutdown() {

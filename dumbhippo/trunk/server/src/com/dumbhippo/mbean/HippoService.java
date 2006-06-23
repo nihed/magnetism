@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.live.LiveState;
 import com.dumbhippo.persistence.SchemaUpdater;
+import com.dumbhippo.server.impl.FeedSystemBean;
 import com.dumbhippo.server.impl.MusicSystemInternalBean;
 
 // The point of this extremely simple MBean is to get notification
@@ -18,8 +19,9 @@ public class HippoService extends ServiceMBeanSupport implements HippoServiceMBe
 	
 	@Override
 	protected void startService() {
-		SchemaUpdater.update();
 		logger.info("Starting HippoService MBean");
+		SchemaUpdater.update();
+		FeedSystemBean.startup();
     }
 	
     @Override
@@ -27,5 +29,6 @@ public class HippoService extends ServiceMBeanSupport implements HippoServiceMBe
 		logger.info("Stopping HippoService MBean");
 		LiveState.getInstance().shutdown();
 		MusicSystemInternalBean.shutdown();
+		FeedSystemBean.shutdown();
    }
 }
