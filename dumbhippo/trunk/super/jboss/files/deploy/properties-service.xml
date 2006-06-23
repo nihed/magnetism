@@ -25,6 +25,7 @@
 		dumbhippo.server.baseurl=@@baseurl@@
 		dumbhippo.server.files.saveurl=file://@@filesavedir@@
 		dumbhippo.server.aimbot.name=@@imbotScreenName@@
+		dumbhippo.server.aim.presence.key=@@aimPresenceKey@@
 		dumbhippo.server.downloadurl.windows=@@clientWindowsDownload@@
 		dumbhippo.server.downloadurl.windows.source=@@clientWindowsDownloadSource@@
 		dumbhippo.server.downloadurl.linux=@@clientLinuxDownload@@

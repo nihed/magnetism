@@ -130,7 +130,11 @@
 									<dh:jsString value="${aim.screenName}"/>
 								</jsp:attribute>
 							</c:set>
-							<c:out value="${aim.screenName}"/><a href="javascript:dh.account.removeClaimAim(${aimJs});">remove</a>
+							<c:out value="${aim.screenName}"/>
+							<c:if test="${!empty account.aimPresenceKey}">
+								<a href="aim:GoIM?screenname=${aim.screenName}"><img src="http://api.oscar.aol.com/SOA/key=${account.aimPresenceKey}/presence/${aim.screenName}" border="0"/></a>
+							</c:if>
+							<a href="javascript:dh.account.removeClaimAim(${aimJs});">remove</a>
 						</div>
 					</c:forEach>
 					<div>

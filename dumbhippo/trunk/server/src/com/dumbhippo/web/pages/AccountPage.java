@@ -9,6 +9,7 @@ import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
+import com.dumbhippo.server.Configuration.PropertyNotFoundException;
 import com.dumbhippo.web.Signin;
 import com.dumbhippo.web.SigninBean;
 import com.dumbhippo.web.UserSigninBean;
@@ -17,7 +18,7 @@ import com.dumbhippo.web.WebEJBUtil;
 /**
  * @author hp
  *
- * Has fun tutorials and lets you set up personal information.
+ * Page to manage personal information associated with an account.
  */
 public class AccountPage {
 	@SuppressWarnings("unused")
@@ -50,6 +51,14 @@ public class AccountPage {
 
 	public boolean getCanRemoveEmails() {
 		return person.getAllEmails().size() > 1;
+	}
+	
+	public String getAimPresenceKey() {
+		try {
+			return config.getPropertyNoDefault(HippoProperty.AIM_PRESENCE_KEY);
+		} catch (PropertyNotFoundException pnfe) {
+			return null;
+		}
 	}
 	
 	public String getAddAimLink() {
