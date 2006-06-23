@@ -28,6 +28,7 @@ public class Group extends GuidPersistable implements VersionedEntity {
 	private String description;
 	private String stockPhoto;
 	private Set<GroupMember> members;
+	private Set<GroupFeed> feeds;
 	private boolean markedForDelete;
 		
 	private void initMissing() {
@@ -35,6 +36,8 @@ public class Group extends GuidPersistable implements VersionedEntity {
 			access = GroupAccess.PUBLIC_INVITE;
 		if (members == null)
 			members = new HashSet<GroupMember>();
+		if (feeds == null)
+			feeds = new HashSet<GroupFeed>();
 	}
 	
 	public Group() {
@@ -139,6 +142,22 @@ public class Group extends GuidPersistable implements VersionedEntity {
 	@Transient
 	public String getPhotoUrl60() {
 		return getPhotoUrl(60);
+	}
+
+	@OneToMany(mappedBy="group")
+	@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)
+	public Set<GroupFeed> getFeeds() {
+		return feeds;
+	}
+	
+	/**
+	 * Only hibernate should call this probably
+	 * @param feeds
+	 */
+	protected void setFeeds(Set<GroupFeed> feeds) {
+		if (feeds == null)
+			throw new IllegalArgumentException("null");
+		this.feeds = feeds;
 	}
 	
 	/**

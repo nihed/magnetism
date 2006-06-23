@@ -1298,18 +1298,23 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		}
 	}
 	
-	public void getFeedDump(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint, String url) throws HumanVisibleException, IOException {
+	private Feed getFeedFromUserEnteredUrl(String url) throws XmlMethodException {
 		URL urlObject;
 		try {
 			urlObject = parseUserEnteredUrl(url, true);
 		} catch (MalformedURLException e) {
-			throw new HumanVisibleException("Invalid URL: " + e.getMessage());
+			throw new XmlMethodException(XmlMethodErrorCode.INVALID_URL, "Invalid URL: " + e.getMessage());
 		}
+		LinkResource link = identitySpider.getLink(urlObject);
+		Feed feed = feedSystem.getFeed(link);
+		return feed;
+	}
+	
+	public void getFeedDump(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint, String url) throws HumanVisibleException, IOException {
 		try {
 			PrintStream printer = new PrintStream(out);
 			
-			LinkResource link = identitySpider.getLink(urlObject);
-			Feed feed = feedSystem.getFeed(link);
+			Feed feed = getFeedFromUserEnteredUrl(url);
 			feedSystem.updateFeed(feed);
 			
 			printer.println("Link: " + feed.getLink().getUrl());
@@ -1339,29 +1344,44 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	}
 
 	public void doFeedPreview(XmlBuilder xml, UserViewpoint viewpoint, String url) throws XmlMethodException {
-		URL urlObject;
-		try {
-			urlObject = parseUserEnteredUrl(url, true);
-		} catch (MalformedURLException e) {
-			throw new XmlMethodException(XmlMethodErrorCode.INVALID_URL, "Invalid URL: " + e.getMessage());
-		}
-		LinkResource link = identitySpider.getLink(urlObject);
-		Feed feed = feedSystem.getFeed(link);
+		Feed feed = getFeedFromUserEnteredUrl(url);
+		feedSystem.updateFeed(feed);
+
+		// format deliberately kept a little bit similar to RSS
+		// (element names title, link, item for example)
+		
+		xml.openElement("feedPreview");
+		xml.appendTextNode("title", feed.getTitle());
+		xml.appendTextNode("link", feed.getLink().getUrl());
+				
 		List<FeedEntry> entries = feedSystem.getCurrentEntries(feed);
 		
+		xml.openElement("items");
+		int count = 0;
+		for (FeedEntry entry : entries) {
+			if (count > 2)
+				break;
+			xml.openElement("item");
+			xml.openElement("title", entry.getTitle());
+			xml.openElement("link", entry.getLink().getUrl());
+			xml.closeElement();
+			++count;
+		}
+		xml.closeElement();
+		xml.closeElement();
 	}
 	
 	public void doAddGroupFeed(XmlBuilder xml, UserViewpoint viewpoint, String groupId, String url) throws XmlMethodException {
 		Group group = parseGroupId(viewpoint, groupId);
+		Feed feed = getFeedFromUserEnteredUrl(url);
 		
-		// url is supposed to already exist as a feed in the database, since we did doFeedPreview first
-		
-		// FIXME
+		feedSystem.addGroupFeed(group, feed);
 	}
 
 	public void doRemoveGroupFeed(XmlBuilder xml, UserViewpoint viewpoint, String groupId, String url) throws XmlMethodException {
 		Group group = parseGroupId(viewpoint, groupId);
+		Feed feed = getFeedFromUserEnteredUrl(url);
 		
-		// FIXME
+		feedSystem.removeGroupFeed(group, feed);		
 	}
 }

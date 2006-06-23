@@ -70,4 +70,9 @@ public class Feed extends DBUnique {
 	public void setEntries(Set<FeedEntry> entries) {
 		this.entries = entries;
 	}
+	
+	@Override
+	public String toString() {
+		return "{Feed url = " + getLink().getUrl() + "}";
+	}
 }

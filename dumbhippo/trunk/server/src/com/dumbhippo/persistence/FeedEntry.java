@@ -87,4 +87,8 @@ public class FeedEntry extends DBUnique {
 		this.current = visible;
 	}
 	
+	@Override
+	public String toString() {
+		return "{FeedEntry feed = " + getFeed() + " title = " + getTitle() + " date = " + getDate() + "}";
+	}
 }

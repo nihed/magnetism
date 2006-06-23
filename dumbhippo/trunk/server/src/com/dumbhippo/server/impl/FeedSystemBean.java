@@ -25,6 +25,8 @@ import org.slf4j.Logger;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.Feed;
 import com.dumbhippo.persistence.FeedEntry;
+import com.dumbhippo.persistence.Group;
+import com.dumbhippo.persistence.GroupFeed;
 import com.dumbhippo.persistence.LinkResource;
 import com.dumbhippo.server.FeedSystem;
 import com.dumbhippo.server.IdentitySpider;
@@ -277,4 +279,24 @@ public class FeedSystemBean implements FeedSystem {
 		return result;
 	}
 
+	public void addGroupFeed(Group group, Feed feed) {
+		for (GroupFeed old : group.getFeeds()) {
+			if (old.getFeed().equals(feed)) {
+				return;
+			}
+		}
+		GroupFeed groupFeed = new GroupFeed(group, feed);
+		em.persist(groupFeed);
+		group.getFeeds().add(groupFeed);
+	}
+	
+	public void removeGroupFeed(Group group, Feed feed) {
+		for (GroupFeed old : group.getFeeds()) {
+			if (old.getFeed().equals(feed)) {
+				group.getFeeds().remove(old);				
+				em.remove(old);
+				return;
+			}
+		}
+	}
 }
