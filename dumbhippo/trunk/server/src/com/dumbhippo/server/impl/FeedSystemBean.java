@@ -115,9 +115,12 @@ public class FeedSystemBean implements FeedSystem {
 				entry.setDescription(content.getValue());
 				
 				Date publishedDate = syndEntry.getPublishedDate();
-				// FIXME if publishedDate is null we have a problem
-				if (publishedDate != null)
+				if (publishedDate != null) {
 					entry.setDate(syndEntry.getPublishedDate());
+				} else {
+					logger.warn("Failed to parse date in feed {}", feed.getLink().getUrl());
+					entry.setDate(new Date()); // set to current time - then never overwrite it (important)
+				}
 				
 				entry.setLink(identitySpider.getLink(entryUrl));
 				entry.setCurrent(true);
