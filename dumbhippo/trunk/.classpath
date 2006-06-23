@@ -85,5 +85,7 @@
 	<classpathentry kind="lib" path="hungry/lib/httpunit-1.6.2.jar"/>
 	<classpathentry kind="lib" path="wildfire/build/lib/merge/jstl.jar"/>
 	<classpathentry kind="lib" path="server/lib/bsh-2.0b4.jar"/>
+	<classpathentry kind="lib" path="server/lib/rome-0.8.jar"/>
+	<classpathentry kind="lib" path="server/lib/rome-fetcher-0.7.jar"/>
 	<classpathentry kind="output" path="eclipse-bin"/>
 </classpath>

@@ -2,6 +2,7 @@ package com.dumbhippo.server.impl;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.Serializable;
 import java.io.StringReader;
@@ -1294,6 +1295,46 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			writeSuccess(xml, clientOut, result);
 		} catch (EvalError e) {
 			writeException(xml, clientOut, e);
+		}
+	}
+	
+	public void getFeedDump(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint, String url) throws HumanVisibleException, IOException {
+		URL urlObject;
+		try {
+			urlObject = parseUserEnteredUrl(url, true);
+		} catch (MalformedURLException e) {
+			throw new HumanVisibleException("Invalid URL: " + e.getMessage());
+		}
+		try {
+			PrintStream printer = new PrintStream(out);
+			
+			LinkResource link = identitySpider.getLink(urlObject);
+			Feed feed = feedSystem.getFeed(link);
+			feedSystem.updateFeed(feed);
+			
+			printer.println("Link: " + feed.getLink().getUrl());
+			printer.println("Title: " + feed.getTitle());
+			printer.print("Last fetched: " + feed.getLastFetched());
+			if (feed.getLastFetchSucceeded())
+				printer.println(" (succeeded)");
+			else
+				printer.println(" (failed)");
+			printer.println();
+			
+			List<FeedEntry> entries = feedSystem.getCurrentEntries(feed);
+			for (FeedEntry entry : entries) {
+				printer.println("Guid: " + entry.getEntryGuid());
+				printer.println("Link: " + entry.getLink());
+				printer.println("Title: " + entry.getTitle());
+				printer.println("Date: " + entry.getDate());
+				printer.println("Description: " + entry.getDescription());
+				printer.println();
+			}
+			
+			printer.flush();
+			
+		} catch (XmlMethodException e) {
+			throw new HumanVisibleException(e.getCodeString() + ": " + e.getMessage());
 		}
 	}
 

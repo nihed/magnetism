@@ -244,6 +244,10 @@ public interface HttpMethods {
 	@HttpParams( { "url" })
 	public void doFeedPreview(XmlBuilder xml, UserViewpoint viewpoint, String url) throws XmlMethodException;
 	
+	@HttpContentTypes(HttpResponseData.TEXT)
+	@HttpParams( { "url" })
+	public void getFeedDump(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint, String url) throws HumanVisibleException, IOException;
+
 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
 	@HttpParams( { "groupId", "url" })
 	public void doAddGroupFeed(XmlBuilder xml, UserViewpoint viewpoint, String groupId, String url) throws XmlMethodException;

@@ -19,18 +19,22 @@ public class Feed extends DBUnique {
 	private boolean lastFetchSucceeded;
 	private Set<FeedEntry> entries;
 	
-	public Feed(LinkResource link) {
+	protected Feed() {
 		this.entries = new HashSet<FeedEntry>();
+	}
+	
+	public Feed(LinkResource link) {
+		this();
 		this.link = link;
 	}
 
-	protected void setLink(LinkResource link) {
-		this.link = link;
-	}
-	
 	@OneToOne
 	public LinkResource getLink() {
 		return link;
+	}
+	
+	protected void setLink(LinkResource link) {
+		this.link = link;
 	}
 	
 	@Column(nullable = false)

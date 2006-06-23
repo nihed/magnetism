@@ -4,6 +4,7 @@ import java.util.Date;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 
 @Entity
@@ -13,15 +14,20 @@ public class FeedEntry extends DBUnique {
 	private Feed feed;
 	private String entryGuid;
 	private String title;
+	private String description;
 	private LinkResource link;
 	private long date;
 	private boolean current;
+	
+	protected FeedEntry() {
+	}
 	
 	public FeedEntry(Feed feed) {
 		this.feed = feed;
 	}
 	
 	@ManyToOne
+	@JoinColumn(nullable = false)
 	public Feed getFeed() {
 		return feed;
 	}
@@ -47,6 +53,7 @@ public class FeedEntry extends DBUnique {
 		this.entryGuid = entryGuid;
 	}
 	
+	@ManyToOne
 	public LinkResource getLink() {
 		return link;
 	}
@@ -63,6 +70,14 @@ public class FeedEntry extends DBUnique {
 		this.title = title;
 	}
 	
+	public String getDescription() {
+		return description;
+	}
+
+	public void setDescription(String description) {
+		this.description = description;
+	}
+
 	public boolean isCurrent() {
 		return current;
 	}

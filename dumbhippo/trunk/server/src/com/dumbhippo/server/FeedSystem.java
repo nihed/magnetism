@@ -10,7 +10,7 @@ import com.dumbhippo.persistence.LinkResource;
 
 @Local
 public interface FeedSystem {
-	Feed getFeed(LinkResource link);
+	Feed getFeed(LinkResource link) throws XmlMethodException;
 	void updateFeed(Feed feed);
 	List<FeedEntry> getCurrentEntries(Feed feed);
 }

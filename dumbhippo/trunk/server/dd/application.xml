@@ -18,6 +18,15 @@
     	<java>slf4j-log4j12.jar</java>
     </module>
     <module>
+    	<java>jdom-1.0.jar</java>
+    </module>
+    <module>
+    	<java>rome-0.8.jar</java>
+    </module>
+    <module>
+    	<java>rome-fetcher-0.7.jar</java>
+    </module>
+    <module>
         <java>dumbhippo-base.jar</java>
     </module>
     <module>
