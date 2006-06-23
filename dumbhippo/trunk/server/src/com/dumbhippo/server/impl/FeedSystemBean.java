@@ -75,11 +75,11 @@ public class FeedSystemBean implements FeedSystem {
 		try {
 			return feedFetcher.retrieveFeed(url);
 		} catch (IOException e) {
-			throw new XmlMethodException(XmlMethodErrorCode.NETWORK_ERROR, "Network error fetching feed");
+			throw new XmlMethodException(XmlMethodErrorCode.NETWORK_ERROR, "Network error fetching feed " + url);
 		} catch (FetcherException e) {
-			throw new XmlMethodException(XmlMethodErrorCode.NETWORK_ERROR, "Error requesting feed from server");
+			throw new XmlMethodException(XmlMethodErrorCode.NETWORK_ERROR, "Error requesting feed from server " + url);
 		} catch (FeedException e) {
-			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, "Error parsing feed");
+			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, "Error parsing feed " + url);
 		}
 	}
 	
@@ -113,7 +113,11 @@ public class FeedSystemBean implements FeedSystem {
 				
 				// FIXME: we need to extract text out of HTML here, and so forth
 				entry.setDescription(content.getValue());
-				entry.setDate(syndEntry.getPublishedDate());
+				
+				Date publishedDate = syndEntry.getPublishedDate();
+				// FIXME if publishedDate is null we have a problem
+				if (publishedDate != null)
+					entry.setDate(syndEntry.getPublishedDate());
 				
 				entry.setLink(identitySpider.getLink(entryUrl));
 				entry.setCurrent(true);
@@ -154,7 +158,10 @@ public class FeedSystemBean implements FeedSystem {
 			return em.find(Feed.class, detached.getId());
 			
 		} catch (Exception e) {
-			throw new RuntimeException("Error initializing feed from download result", e);
+			if (e instanceof XmlMethodException)
+				throw (XmlMethodException) e;
+			else
+				throw new RuntimeException("Error initializing feed from download result " + link.getUrl(), e);
 		}
 	}
 
