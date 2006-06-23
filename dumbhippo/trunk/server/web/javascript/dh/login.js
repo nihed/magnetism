@@ -12,7 +12,7 @@ dh.login.setNotification = function(msg) {
 
 dh.login.sendSigninLink = function() {
 	var form = document.getElementById("dhLoginNoPasswordForm")	
-   	dh.server.doXMLMethod("sendloginlinkemail",
+   	dh.server.doXmlMethod("sendloginlinkemail",
 				     { "address" : form.address.value },
 		  	    	 function(childNodes, http) {
 						dh.login.setNotification("Login link sent! Check your email or AIM.")

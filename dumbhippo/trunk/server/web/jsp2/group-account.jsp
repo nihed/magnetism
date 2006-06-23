@@ -76,7 +76,34 @@
 					</div>
 					<div class="dh-grow-div-around-floats"><div></div></div>
 				</dht:formTableRow>
-			</dht:formTable>
+				<dht:formTableRowStatus controlId='dhFeedEntry'></dht:formTableRowStatus>
+				<dht:formTableRow label="Feeds">
+					<table cellpadding="0" cellspacing="0" class="dh-address-table">
+						<tbody>	
+									<%--
+							<c:forEach items="${group.allFeeds}" var="feed" varStatus="status">
+								<tr>
+									<td><a href="${feed.url}" target="_top"><c:out value="${feed.name}"/></a></td>
+									<td>
+										<c:set var="feedJs" scope="page">
+											<jsp:attribute name="value">
+												<dh:jsString value="${feed.url}"/>
+											</jsp:attribute>
+										</c:set>
+										<a href="javascript:dh.groupaccount.removeFeed(${feedJs});">remove</a>
+									</td>
+								</tr>
+								<tr class="dh-feed-spacer">
+									<td></td>
+									<td></td>
+								</tr>
+							</c:forEach>
+							--%>
+							<tr><td><dht:textInput id='dhFeedEntry'/></td><td><input id='dhFeedAddButton' type="button" value="Add" onclick="dh.groupaccount.tryAddFeed();"/></td></tr>
+						</tbody>
+					</table>
+				</dht:formTableRow>
+			</dht:formTable>			
 		</dht:zoneBoxGroups>
 	</dht:contentColumn>
 	<dht:photoChooser/>

@@ -1,5 +1,6 @@
 package com.dumbhippo.server;
 
+import java.net.URL;
 import java.util.Set;
 
 import javax.ejb.Local;
@@ -81,7 +82,7 @@ public interface IdentitySpider {
 	 * @param url the url
 	 * @return a resource for the url
 	 */
-	public LinkResource getLink(String url);
+	public LinkResource getLink(URL url);
 	
 	/**
 	 * Finds the unique person which owns an email address

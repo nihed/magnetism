@@ -1,5 +1,6 @@
 package com.dumbhippo.server.impl;
 
+import java.net.URL;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -239,9 +240,9 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 			return null;
 		}
 		return lookupResourceByName(EmailResource.class, "email", email);
-	}
-	
-	public LinkResource getLink(final String link) {
+	}	
+
+	public LinkResource getLink(final URL url) {
 		try {
 			LinkResource detached = runner.runTaskRetryingOnConstraintViolation(new Callable<LinkResource>() {
 	
@@ -249,13 +250,13 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 					Query q;
 					
 					q = em.createQuery("from LinkResource l where l.url = :url");
-					q.setParameter("url", link);
+					q.setParameter("url", url.toExternalForm());
 					
 					LinkResource res;
 					try {
 						res = (LinkResource) q.getSingleResult();
 					} catch (EntityNotFoundException e) {
-						res = new LinkResource(link);
+						res = new LinkResource(url.toExternalForm());
 						em.persist(res);
 					}
 					
@@ -270,7 +271,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 			return null; // not reached
 		}
 	}
-
+	
 	public User getCharacter(final Character whichOne) {
 		try {
 			User detached = runner.runTaskRetryingOnConstraintViolation(new Callable<User>() {

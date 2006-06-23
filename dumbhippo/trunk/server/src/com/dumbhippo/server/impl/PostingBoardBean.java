@@ -226,7 +226,7 @@ public class PostingBoardBean implements PostingBoard {
 		
 		url = removeFrameset(url);
 		
-		Set<Resource> shared = (Collections.singleton((Resource) identitySpider.getLink(url.toExternalForm())));
+		Set<Resource> shared = (Collections.singleton((Resource) identitySpider.getLink(url)));
 		
 		// for each recipient, if it's a group we want to explode it into persons
 		// (but also keep the group itself), if it's a person we just add it
@@ -1088,18 +1088,6 @@ public class PostingBoardBean implements PostingBoard {
 		
 		PostMessage postMessage = new PostMessage(post, fromUser, text, timestamp, serial);
 		em.persist(postMessage);
-	}
-
-	public URL parsePostURL(String urlStr) {
-		URL url;		
-		try {
-			url = new URL(urlStr);
-			if (!(url.getProtocol().equals("http") || url.getProtocol().equals("https")))
-				throw new IllegalArgumentException("Invalid protocol in url " + urlStr);
-		} catch (MalformedURLException e) {
-			throw new IllegalArgumentException(e);
-		}
-		return url;
 	}
 
 	public Set<EntityView> getReferencedEntities(Viewpoint viewpoint, Post post) {

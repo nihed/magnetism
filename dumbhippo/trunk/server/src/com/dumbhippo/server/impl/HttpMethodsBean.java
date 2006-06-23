@@ -41,9 +41,12 @@ import com.dumbhippo.live.LiveState;
 import com.dumbhippo.persistence.AimResource;
 import com.dumbhippo.persistence.Contact;
 import com.dumbhippo.persistence.EmailResource;
+import com.dumbhippo.persistence.Feed;
+import com.dumbhippo.persistence.FeedEntry;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupAccess;
 import com.dumbhippo.persistence.GuidPersistable;
+import com.dumbhippo.persistence.LinkResource;
 import com.dumbhippo.persistence.NowPlayingTheme;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Post;
@@ -56,6 +59,7 @@ import com.dumbhippo.postinfo.PostInfo;
 import com.dumbhippo.server.Character;
 import com.dumbhippo.server.ClaimVerifier;
 import com.dumbhippo.server.Configuration;
+import com.dumbhippo.server.FeedSystem;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.HttpMethods;
@@ -116,6 +120,9 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	
 	@EJB
 	private Configuration config;
+	
+	@EJB
+	private FeedSystem feedSystem;
 	
 	@PersistenceContext(unitName = "dumbhippo")
 	private EntityManager em;	
@@ -258,6 +265,25 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		}
 	}	
 	
+	// FIXME if we change doShareLink to be an "XMLMETHOD" then this can throw XmlMethodException directly
+	private URL parseUserEnteredUrl(String url, boolean httpOnly) throws MalformedURLException {
+		url = url.trim();
+		URL urlObject;
+		try {
+			urlObject = new URL(url);
+		} catch (MalformedURLException e) {
+			if (!url.startsWith("http://")) {
+				// let users type just "example.com" instead of "http://example.com"
+				return parseUserEnteredUrl("http://" + url, httpOnly);	
+			} else {
+				throw e;
+			}
+		}
+		if (httpOnly && !(urlObject.getProtocol().equals("http") || urlObject.getProtocol().equals("https")))
+			throw new MalformedURLException("Invalid protocol in url " + url);
+		return urlObject;
+	}
+	
 	public void getAddableContacts(OutputStream out,
 			HttpResponseData contentType, UserViewpoint viewpoint, String groupId)
 			throws IOException {
@@ -329,7 +355,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		Set<GuidPersistable> recipients = identitySpider.lookupGuidStrings(
 				GuidPersistable.class, recipientGuids);
 
-		URL urlObject = postingBoard.parsePostURL(url);
+		URL urlObject = parseUserEnteredUrl(url, true);
 
 		Post post = postingBoard.doLinkPost(viewpoint.getViewer(), isPublic, title, description,
 							urlObject, recipients, PostingBoard.InviteRecipients.DONT_INVITE, info);
@@ -1272,11 +1298,22 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	}
 
 	public void doFeedPreview(XmlBuilder xml, UserViewpoint viewpoint, String url) throws XmlMethodException {
+		URL urlObject;
+		try {
+			urlObject = parseUserEnteredUrl(url, true);
+		} catch (MalformedURLException e) {
+			throw new XmlMethodException(XmlMethodErrorCode.INVALID_URL, "Invalid URL: " + e.getMessage());
+		}
+		LinkResource link = identitySpider.getLink(urlObject);
+		Feed feed = feedSystem.getFeed(link);
+		List<FeedEntry> entries = feedSystem.getCurrentEntries(feed);
 		
 	}
 	
 	public void doAddGroupFeed(XmlBuilder xml, UserViewpoint viewpoint, String groupId, String url) throws XmlMethodException {
 		Group group = parseGroupId(viewpoint, groupId);
+		
+		// url is supposed to already exist as a feed in the database, since we did doFeedPreview first
 		
 		// FIXME
 	}

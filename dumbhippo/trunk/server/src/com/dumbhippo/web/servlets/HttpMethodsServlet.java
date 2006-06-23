@@ -174,7 +174,7 @@ public class HttpMethodsServlet extends AbstractServlet {
 			if (arg instanceof XmlBuilder)
 				sb.append("XmlBuilder");
 			else
-				sb.append(arg.toString());
+				sb.append(arg != null ? arg.toString() : "null");
 			sb.append(", ");
 		}
 		if (array.length > 0)

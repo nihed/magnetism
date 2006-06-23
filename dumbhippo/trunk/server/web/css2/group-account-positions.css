@@ -13,3 +13,11 @@
 #dhContentColumn #dhAboutGroupEntry {
 	width:			252px;
 }
+
+tr.dh-feed-spacer {
+	height:			5px;
+}
+
+#dhFeedEntry {
+	margin-right:	10px;
+}

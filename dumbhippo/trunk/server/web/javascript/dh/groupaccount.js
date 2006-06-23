@@ -65,6 +65,48 @@ dh.groupaccount.updateDescription = function(description) {
 	nameDiv.appendChild(document.createTextNode(description))
 }
 
+dh.groupaccount.addFeed = function(feedUrl) {
+   	dh.server.doXmlMethod("addgroupfeed",
+				     { "groupId" : dh.groupaccount.groupId,
+				       "url" :  url },
+		  	    	 function(childNodes, http) {
+						// FIXME
+		  	    	 },
+		  	    	 function(code, msg, http) {
+		  	    	 	// FIXME
+		  	    	 });
+}
+
+dh.groupaccount.tryAddFeed = function() {
+	var url = dh.groupaccount.feedEntry.getValue();
+	if (url)
+		url = dojo.string.trim(url);
+	if (url.length == 0) {
+		dh.formtable.showStatusMessage('dhFeedEntry', "Enter a web site URL");
+		return;
+	}
+   	dh.server.doXmlMethod("feedpreview",
+				     { "url" :  url },
+		  	    	 function(childNodes, http) {
+						// FIXME
+		  	    	 },
+		  	    	 function(code, msg, http) {
+		  	    	 	// FIXME
+		  	    	 });
+}
+
+dh.groupaccount.removeFeed = function(feedUrl) {
+   	dh.server.doXmlMethod("removegroupfeed",
+				     { "groupId" : dh.groupaccount.groupId,
+				       "url" :  url },
+		  	    	 function(childNodes, http) {
+						// FIXME
+		  	    	 },
+		  	    	 function(code, msg, http) {
+		  	    	 	// FIXME
+		  	    	 });
+}
+
 dhCreateGroupInit = function() {
 	dh.groupaccount.groupNameEntry = new dh.textinput.Entry(document.getElementById("dhGroupNameEntry"), "Mugshot Fans")
 	dh.groupaccount.aboutGroupEntry = new dh.textinput.Entry(document.getElementById("dhAboutGroupEntry"))
@@ -96,5 +138,7 @@ dhGroupAccountInit = function() {
 	// add some event handlers on the file input (onchange)
 	new dh.fileinput.Entry(document.getElementById('dhPictureEntry'));
 	
-	dh.photochooser.init("group", dh.groupaccount.groupId)
+	dh.photochooser.init("group", dh.groupaccount.groupId);
+	
+	dh.groupaccount.feedEntry = new dh.textinput.Entry(document.getElementById("dhFeedEntry"), 'http://blog.example.com/', null);
 }

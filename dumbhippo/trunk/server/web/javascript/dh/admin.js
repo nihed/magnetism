@@ -128,7 +128,7 @@ dh.admin.shell.queueParseCheck = function () {
 dh.admin.shell.exec = function (parseOnly, cb) {
 	var text = document.getElementById("dhAdminShellInput").value
 
-	dh.server.doXMLMethod("adminshellexec",
+	dh.server.doXmlMethod("adminshellexec",
 						  { "parseOnly": "" + parseOnly,
 						  	"command" : text },
 			  	    	  function(childNodes, http) {

@@ -24,8 +24,6 @@ import com.dumbhippo.postinfo.PostInfo;
 
 @Local
 public interface PostingBoard {
-
-	public URL parsePostURL(String url);
 	
 	public int getPostsForCount(Viewpoint viewpoint, Person forPerson);	
 	

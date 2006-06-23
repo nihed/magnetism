@@ -1,5 +1,6 @@
 package com.dumbhippo.server;
 
 public enum XmlMethodErrorCode {
-	UNKNOWN_GROUP
+	UNKNOWN_GROUP,
+	INVALID_URL
 }
