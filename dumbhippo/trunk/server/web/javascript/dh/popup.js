@@ -11,10 +11,10 @@ dh.popup.isShowing = function(popupId) {
 
 dh.popup.show = function(popupId, aboveNode) {
 	if (!popupId)
-		throw "no popup id"
+		throw Error("no popup id");
 
 	if (!aboveNode)
-		throw "no aboveNode"
+		throw Error("no aboveNode");
 
 	if (dh.popup.showing[popupId])
 		return;
@@ -24,7 +24,7 @@ dh.popup.show = function(popupId, aboveNode) {
 	
 	var popup = document.getElementById(popupId);
 	if (!popup)
-		throw "popupId nonexistent " + popupId;
+		throw Error("popupId nonexistent " + popupId);
 
 	// reparent so the popup is relative to first possible
 	// parent
@@ -80,7 +80,7 @@ dh.popup.show = function(popupId, aboveNode) {
 
 dh.popup.hide = function(popupId) {
 	if (!popupId)
-		throw "no popup id"
+		throw Error("no popup id");
 		
 	if (!dh.popup.showing[popupId])
 		return;

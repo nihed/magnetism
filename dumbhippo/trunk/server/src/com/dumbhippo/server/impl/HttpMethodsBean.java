@@ -1356,7 +1356,6 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 				
 		List<FeedEntry> entries = feedSystem.getCurrentEntries(feed);
 		
-		xml.openElement("items");
 		int count = 0;
 		for (FeedEntry entry : entries) {
 			if (count > 2)
@@ -1367,7 +1366,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			xml.closeElement();
 			++count;
 		}
-		xml.closeElement();
+		// close feedPreview
 		xml.closeElement();
 	}
 	

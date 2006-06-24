@@ -87,6 +87,87 @@ dh.groupaccount.addFeed = function(feedUrl) {
 		  	    	 });
 }
 
+dh.groupaccount.onFeedPreview = function(childNodes, http) {
+	var canceled = !dh.popup.isShowing('dhFeedLoadingPopup');
+	dh.groupaccount.hideAllFeedPopups();
+    if (canceled)
+    	return;
+    
+    if (childNodes.length != 1 || childNodes.item(0).nodeName != "feedPreview")
+    	throw Error("Bad feed preview XML doesn't have single feedPreview node");
+	// change child nodes to be children of feedPreview
+    childNodes = childNodes.item(0).childNodes;
+    
+	var title = null;
+	var link = null;
+	var items = [];
+	var i = 0;
+	for (i = 0; i < childNodes.length; ++i) {
+		var child = childNodes.item(i);
+		if (child.nodeType != dojo.dom.ELEMENT_NODE)
+			continue;
+		
+		//alert("child node name " + child.nodeName + " content: " + dojo.dom.textContent(child));
+		
+		if (child.nodeName == "title") {
+			title = dojo.dom.textContent(child);
+		} else if (child.nodeName == "link") {
+			link = dojo.dom.textContent(child);
+		} else if (child.nodeName == "item") {
+			var item = {};
+			var j = 0;
+			for (j = 0; j < child.childNodes.length; ++j) {			
+				var child2 = child.childNodes.item(j);
+				
+				if (child2.nodeType != dojo.dom.ELEMENT_NODE)
+					continue;
+				
+				if (child2.nodeName == "title") {
+					item["title"] = dojo.dom.textContent(child2);
+				} else if (child2.nodeName == "link") {
+					item["link"] = dojo.dom.textContent(child2);
+				} else {
+					alert("unknown node " + child2.nodeName + " with content: " + dojo.dom.textContent(child2));
+				}
+			}
+			items.push(item);
+		} else {
+			//alert("unknown node " + child.nodeName + " with content: " + dojo.dom.textContent(child));
+		}
+	}
+
+	if (!link)
+		throw Error("something went wrong parsing feed preview");
+
+	//alert(items.length + " items found");
+
+	var previewNode = document.getElementById('dhFeedPreview');
+	if (!previewNode)
+		throw Error("no feed preview node!");
+
+	dh.util.clearNode(previewNode);
+
+	var feedTitleNode = document.createElement('div');
+	dojo.html.addClass(feedTitleNode, 'dh-feed-title');
+	dojo.dom.textContent(feedTitleNode, title);	
+	previewNode.appendChild(feedTitleNode);
+
+	for (i = 0; i < items.length; ++i) {
+		var itemNode = document.createElement('div');
+		dojo.html.addClass(itemNode, 'dh-feed-item');
+		dojo.dom.textContent(itemNode, (i + 1) + ". " + items[i]["title"]);
+		previewNode.appendChild(itemNode);
+	}
+    
+	dh.feeds.previewOK = function() {
+		dh.groupaccount.addFeed(link);
+	};
+	dh.feeds.previewCancel = function() {
+		dh.groupaccount.hideAllFeedPopups();
+	};
+  	dh.popup.show('dhFeedPreviewPopup', document.getElementById('dhFeedEntry'));
+}
+
 dh.groupaccount.tryAddFeed = function() {
 	var url = dh.groupaccount.feedEntry.getValue();
 	if (url)
@@ -98,14 +179,9 @@ dh.groupaccount.tryAddFeed = function() {
 	
 	dh.groupaccount.hideAllFeedPopups();
 	
-	// Set up dh.feeds
+	// set up dh.feeds; wait to set up the "preview" 
+	// callbacks until we get the preview info though
 	dh.feeds.loadingCancel = function() {
-		dh.groupaccount.hideAllFeedPopups();
-	};
-	dh.feeds.previewOK = function() {
-		dh.groupaccount.addFeed(url);
-	};
-	dh.feeds.previewCancel = function() {
 		dh.groupaccount.hideAllFeedPopups();
 	};
 	dh.feeds.failedTryAgain = function() {
@@ -122,17 +198,19 @@ dh.groupaccount.tryAddFeed = function() {
 	
    	dh.server.doXmlMethod("feedpreview",
 				     { "url" :  url },
-		  	    	 function(childNodes, http) {
-		  	    	 	var canceled = !dh.popup.isShowing('dhFeedLoadingPopup');
-		  	    	 	dh.groupaccount.hideAllFeedPopups();
-		  	    	 	if (!canceled)
-			  	    	 	dh.popup.show('dhFeedPreviewPopup', document.getElementById('dhFeedEntry'));
-		  	    	 },
+				     dh.groupaccount.onFeedPreview,
 		  	    	 function(code, msg, http) {
 		  	    	 	var canceled = !dh.popup.isShowing('dhFeedLoadingPopup');
 			 	    	dh.groupaccount.hideAllFeedPopups();
-			 	    	if (!canceled)
-			  	    	 	dh.popup.show('dhFeedFailedPopup', document.getElementById('dhFeedEntry'));		  	    	 	
+			 	    	if (!canceled) {
+			 	    		var failedMessageNode = document.getElementById('dhFeedFailedMessage');
+
+							dh.util.clearNode(failedMessageNode);
+							dojo.html.addClass(failedMessageNode, 'dh-feed-title');
+							dojo.dom.textContent(failedMessageNode, msg);
+							
+			  	    	 	dh.popup.show('dhFeedFailedPopup', document.getElementById('dhFeedEntry'));
+			  	    	}
 		  	    	 });
 }
 
