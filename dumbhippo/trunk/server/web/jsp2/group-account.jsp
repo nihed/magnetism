@@ -114,7 +114,7 @@
 							</c:forEach>
 							<tr>
 								<td colspan="3">
-									<dht:textInput id='dhFeedEntry'/>
+									<dht:textInput id='dhFeedEntry' maxlength="255"/>
 									<input id='dhFeedAddButton' type="button" value="Subscribe" onclick="dh.groupaccount.tryAddFeed();"/>
 								</td>
 							</tr>
