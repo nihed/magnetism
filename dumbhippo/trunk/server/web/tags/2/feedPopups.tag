@@ -2,7 +2,13 @@
 <%@ taglib uri="/jsp/dumbhippo.tld" prefix="dh" %>
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 
-<dht:feedPopup id="dhFeedLoadingPopup" title="LOCATING FEED..." icon="/images2/${buildstamp}/feedspinner.gif">
+<c:set var="loadingHtml" scope="page">
+	<jsp:attribute name="value">
+		<%-- this is to make the loading popup taller to match the other two popups --%>
+		<div style="height: 100px;"></div>
+	</jsp:attribute>
+</c:set>
+<dht:feedPopup id="dhFeedLoadingPopup" title="LOCATING FEED..." icon="/images2/${buildstamp}/feedspinner.gif" bodyHtml="${loadingHtml}">
 	<input type="button" value="OK" disabled="true"/> <%--- never gets enabled, we just switch to PreviewPopup --%>
 	<input type="button" value="Cancel" onclick="dh.feeds.loadingCancel()"/>
 </dht:feedPopup>

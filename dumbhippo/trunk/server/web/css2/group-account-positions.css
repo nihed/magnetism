@@ -18,6 +18,10 @@ tr.dh-feed-spacer {
 	height:			5px;
 }
 
+.dh-feed-status-icon {
+	margin-right:	10px;
+}
+
 #dhFeedEntry {
 	margin-right:	10px;
 }

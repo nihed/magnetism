@@ -14,14 +14,16 @@
 			<tbody>
 				<tr>
 					<td valign="top">
-						<c:choose>
-							<c:when test="${fn:endsWith(icon, '.gif')}">
-								<img src="${icon}" style="width: 21; height: 20;"/>
-							</c:when>
-							<c:otherwise>
-								<dh:png src="${icon}" style="width: 21; height: 20;"/>
-							</c:otherwise>
-						</c:choose>
+						<div class="dh-left-side">
+							<c:choose>
+								<c:when test="${fn:endsWith(icon, '.gif')}">
+									<img src="${icon}" style="width: 21; height: 20;"/>
+								</c:when>
+								<c:otherwise>
+									<dh:png src="${icon}" style="width: 21; height: 20;"/>
+								</c:otherwise>
+							</c:choose>
+						</div>
 					</td>
 					<td>
 						<div class="dh-title"><c:out value="${title}"/></div>

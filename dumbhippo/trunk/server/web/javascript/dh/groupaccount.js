@@ -83,7 +83,7 @@ dh.groupaccount.addFeed = function(feedUrl) {
 		  	    	 },
 		  	    	 function(code, msg, http) {
 			  	    	dh.groupaccount.hideAllFeedPopups();
-		  	    		dh.formtable.showStatusMessage('dhFeedEntry', "Failed to add feed; try again?");
+		  	    		dh.formtable.showStatusMessage('dhFeedEntry', "Failed to add feed; try again? (" + msg + ")");
 		  	    	 });
 }
 
@@ -100,6 +100,7 @@ dh.groupaccount.onFeedPreview = function(childNodes, http) {
     
 	var title = null;
 	var link = null;
+	var source = null;
 	var items = [];
 	var i = 0;
 	for (i = 0; i < childNodes.length; ++i) {
@@ -113,6 +114,8 @@ dh.groupaccount.onFeedPreview = function(childNodes, http) {
 			title = dojo.dom.textContent(child);
 		} else if (child.nodeName == "link") {
 			link = dojo.dom.textContent(child);
+		} else if (child.nodeName == "source") {
+			source = dojo.dom.textContent(child);
 		} else if (child.nodeName == "item") {
 			var item = {};
 			var j = 0;
@@ -136,7 +139,7 @@ dh.groupaccount.onFeedPreview = function(childNodes, http) {
 		}
 	}
 
-	if (!link)
+	if (!source)
 		throw Error("something went wrong parsing feed preview");
 
 	//alert(items.length + " items found");
@@ -147,20 +150,25 @@ dh.groupaccount.onFeedPreview = function(childNodes, http) {
 
 	dh.util.clearNode(previewNode);
 
-	var feedTitleNode = document.createElement('div');
+	var feedTitleNode = document.createElement('a');
 	dojo.html.addClass(feedTitleNode, 'dh-feed-title');
-	dojo.dom.textContent(feedTitleNode, title);	
+	feedTitleNode.setAttribute("target", "_blank");
+	feedTitleNode.setAttribute("href", link);
+	dojo.dom.textContent(feedTitleNode, title);
 	previewNode.appendChild(feedTitleNode);
 
+	var feedItemListNode = document.createElement('ol');
+	previewNode.appendChild(feedItemListNode);
+
 	for (i = 0; i < items.length; ++i) {
-		var itemNode = document.createElement('div');
+		var itemNode = document.createElement('li');
 		dojo.html.addClass(itemNode, 'dh-feed-item');
-		dojo.dom.textContent(itemNode, (i + 1) + ". " + items[i]["title"]);
-		previewNode.appendChild(itemNode);
+		dojo.dom.textContent(itemNode, items[i]["title"]);
+		feedItemListNode.appendChild(itemNode);
 	}
     
 	dh.feeds.previewOK = function() {
-		dh.groupaccount.addFeed(link);
+		dh.groupaccount.addFeed(source);
 	};
 	dh.feeds.previewCancel = function() {
 		dh.groupaccount.hideAllFeedPopups();
@@ -222,7 +230,7 @@ dh.groupaccount.removeFeed = function(feedUrl) {
 						document.location.reload();
 		  	    	 },
 		  	    	 function(code, msg, http) {
-			  	    	 dh.formtable.showStatusMessage('dhFeedEntry', "Failed to remove feed; try again?");
+			  	    	 dh.formtable.showStatusMessage('dhFeedEntry', "Failed to remove feed; try again? (" + msg + ")");
 		  	    	 });
 }
 

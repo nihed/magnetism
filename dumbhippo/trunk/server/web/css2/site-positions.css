@@ -459,6 +459,8 @@ div.dh-notification {
 	 * since we don't set any heights padding works too
 	 */
 	padding-bottom:		10px;
+	/* if we have a fixed width, don't exceed it */
+	overflow:			hidden;
 }
 
 .dh-popup .dh-content .dh-title {

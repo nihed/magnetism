@@ -82,21 +82,21 @@
 						<tbody>	
 							<c:forEach items="${group.feeds.list}" var="feed" varStatus="status">
 								<tr>
-									<td><a href="${feed.feed.link.url}" target="_top"><c:out value="${feed.feed.title}"/></a></td>
-									<td>
+									<td><a href="${feed.feed.link.url}" target="_blank"><c:out value="${feed.feed.title}"/></a></td>
+									<td align="right" title="${feed.feed.lastFetchSucceeded ? 'This feed is working great!' : 'Something went wrong last time Mugshot checked this feed'}">
 										<c:choose>
 											<c:when test="${feed.feed.lastFetchSucceeded}">
-												<dh:png src="/images2/${buildStamp}/check10x10.png" style="width: 10; height: 10;"/>
+												<dh:png src="/images2/${buildStamp}/check10x10.png" style="width: 10; height: 10;" klass="dh-feed-status-icon"/>
 											</c:when>
 											<c:otherwise>
-												<dh:png src="/images2/${buildStamp}/alert10x10.png" style="width: 10; height: 10;"/>
+												<dh:png src="/images2/${buildStamp}/alert10x10.png" style="width: 10; height: 10;" klass="dh-feed-status-icon"/>
 											</c:otherwise>
 										</c:choose>
 									</td>
 									<td>
 										<c:set var="feedJs" scope="page">
 											<jsp:attribute name="value">
-												<dh:jsString value="${feed.feed.link.url}"/>
+												<dh:jsString value="${feed.feed.source.url}"/>
 											</jsp:attribute>
 										</c:set>
 										<a href="javascript:dh.groupaccount.removeFeed(${feedJs});">remove</a>
@@ -112,7 +112,12 @@
 									<td></td>
 								</tr>
 							</c:forEach>
-							<tr><td><dht:textInput id='dhFeedEntry'/></td><td><input id='dhFeedAddButton' type="button" value="Subscribe" onclick="dh.groupaccount.tryAddFeed();"/></td></tr>
+							<tr>
+								<td colspan="3">
+									<dht:textInput id='dhFeedEntry'/>
+									<input id='dhFeedAddButton' type="button" value="Subscribe" onclick="dh.groupaccount.tryAddFeed();"/>
+								</td>
+							</tr>
 						</tbody>
 					</table>
 				</dht:formTableRow>

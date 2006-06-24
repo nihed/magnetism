@@ -80,10 +80,10 @@ public class FeedSystemBean implements FeedSystem {
 		return notificationService;
 	}
 
-	private Feed lookupExistingFeed(LinkResource link) {
+	private Feed lookupExistingFeed(LinkResource source) {
 		try {
-			Feed feed = (Feed)em.createQuery("SELECT f FROM Feed f WHERE f.link = :link")
-			  .setParameter("link", link)
+			Feed feed = (Feed)em.createQuery("SELECT f FROM Feed f WHERE f.source = :source")
+			  .setParameter("source", source)
 			  .getSingleResult();
 			
 			return feed;
@@ -92,10 +92,10 @@ public class FeedSystemBean implements FeedSystem {
 		}
 	}
 	
-	private SyndFeed fetchFeedFromNet(LinkResource link) throws XmlMethodException {
+	private SyndFeed fetchFeedFromNet(LinkResource source) throws XmlMethodException {
 		URL url;
 		try {
-			url = new URL(link.getUrl());
+			url = new URL(source.getUrl());
 		} catch (MalformedURLException e) {
 			throw new RuntimeException("getFeed passed malformed URL object");
 		}
@@ -128,7 +128,7 @@ public class FeedSystemBean implements FeedSystem {
 		if (publishedDate != null)
 			entry.setDate(publishedDate);
 		else {
-			logger.warn("Failed to retrieve date from feed {}", feed.getLink().getUrl());
+			logger.warn("Failed to retrieve date from feed {}", feed.getSource().getUrl());
 			entry.setDate(new Date());
 		}
 		
@@ -159,8 +159,20 @@ public class FeedSystemBean implements FeedSystem {
 		}
 	}
 
-	private void initializeFeedFromSyndFeed(Feed feed, SyndFeed syndFeed) {
+	private void setLinkFromSyndFeed(Feed feed, SyndFeed syndFeed) throws XmlMethodException {
+		String link = syndFeed.getLink();
+		URL linkUrl;
+		try {
+			linkUrl = new URL(link);
+		} catch (MalformedURLException e) {
+			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, "Feed contains invalid link '" + link + "'");
+		}
+		feed.setLink(identitySpider.getLink(linkUrl));
+	}
+	
+	private void initializeFeedFromSyndFeed(Feed feed, SyndFeed syndFeed) throws XmlMethodException {
 		feed.setTitle(syndFeed.getTitle());
+		setLinkFromSyndFeed(feed, syndFeed);
 		
 		Set<String> foundGuids = new HashSet<String>();
 		
@@ -188,8 +200,9 @@ public class FeedSystemBean implements FeedSystem {
 		feed.setLastFetchSucceeded(true);
 	}
 	
-	private void updateFeedFromSyndFeed(Feed feed, SyndFeed syndFeed) {
+	private void updateFeedFromSyndFeed(Feed feed, SyndFeed syndFeed) throws XmlMethodException {
 		feed.setTitle(syndFeed.getTitle());
+		setLinkFromSyndFeed(feed, syndFeed);
 		
 		Map<String, FeedEntry> oldEntries = new HashMap<String, FeedEntry>();
 		
@@ -247,23 +260,23 @@ public class FeedSystemBean implements FeedSystem {
 		}
 	}
 	
-	public Feed getFeed(final LinkResource link) throws XmlMethodException {
-		Feed feed = lookupExistingFeed(link);
+	public Feed getFeed(final LinkResource source) throws XmlMethodException {
+		Feed feed = lookupExistingFeed(source);
 		if (feed != null)
 			return feed;
 		
-		final SyndFeed syndFeed = fetchFeedFromNet(link);
+		final SyndFeed syndFeed = fetchFeedFromNet(source);
 		
 		try {
 			Feed detached = runner.runTaskRetryingOnConstraintViolation(new Callable<Feed>() {
 				
 				public Feed call() throws Exception {
-					Feed newFeed = lookupExistingFeed(link);
+					Feed newFeed = lookupExistingFeed(source);
 					if (newFeed != null) // Someone else already looked it up and stored it
 						return newFeed;
 					
-					// link is not part of the session, but only it's ID is needed for this
-					newFeed = new Feed(link);
+					// source is not part of the session, but only it's ID is needed for this
+					newFeed = new Feed(source);
 					em.persist(newFeed);
 										
 					initializeFeedFromSyndFeed(newFeed, syndFeed);
@@ -278,7 +291,7 @@ public class FeedSystemBean implements FeedSystem {
 			if (e instanceof XmlMethodException)
 				throw (XmlMethodException) e;
 			else
-				throw new RuntimeException("Error initializing feed from download result " + link.getUrl(), e);
+				throw new RuntimeException("Error initializing feed from download result " + source.getUrl(), e);
 		}
 	}
 
@@ -291,10 +304,10 @@ public class FeedSystemBean implements FeedSystem {
 		if (System.currentTimeMillis() - feed.getLastFetched().getTime() < FEED_UPDATE_TIME)
 			return; // Up-to-date, nothing to do
 
-		logger.debug("Feed {} needs update", feed.getLink());
+		logger.debug("Feed {} needs update", feed.getSource());
 		
 		try {
-			final SyndFeed syndFeed = fetchFeedFromNet(feed.getLink());
+			final SyndFeed syndFeed = fetchFeedFromNet(feed.getSource());
 			updateFeedFromSyndFeed(feed, syndFeed);		
 		} catch (XmlMethodException e) {
 			logger.warn("Couldn't update feed", e);
@@ -360,6 +373,7 @@ public class FeedSystemBean implements FeedSystem {
 			super("FeedUpdater");
 		}
 		
+		@Override
 		public void run() {
 			// We start off by sleeping for our delay time to reduce the initial
 			// server load on restart

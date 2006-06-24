@@ -6,6 +6,7 @@ import java.util.Set;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 
@@ -14,6 +15,7 @@ public class Feed extends DBUnique {
 	private static final long serialVersionUID = 1L;
 
 	private LinkResource link;
+	private LinkResource source;
 	private String title;
 	private long lastFetched;
 	private boolean lastFetchSucceeded;
@@ -23,18 +25,19 @@ public class Feed extends DBUnique {
 		this.entries = new HashSet<FeedEntry>();
 	}
 	
-	public Feed(LinkResource link) {
+	public Feed(LinkResource source) {
 		this();
-		this.link = link;
+		this.source = source;
 	}
 
+	@Column(nullable = false)
 	@OneToOne
-	public LinkResource getLink() {
-		return link;
+	public LinkResource getSource() {
+		return source;
 	}
 	
-	protected void setLink(LinkResource link) {
-		this.link = link;
+	protected void setSource(LinkResource source) {
+		this.source = source;
 	}
 	
 	@Column(nullable = false)
@@ -73,6 +76,21 @@ public class Feed extends DBUnique {
 	
 	@Override
 	public String toString() {
-		return "{Feed url = " + getLink().getUrl() + "}";
+		return "{Feed url = " + getSource().getUrl() + "}";
+	}
+
+	/**
+	 * This is ManyToOne since it's the human-readable web site 
+	 * link, not the RSS link. There may be multiple rss/atom feeds
+	 * from one site.
+	 * @return the site the feed is for
+	 */
+	@ManyToOne
+	public LinkResource getLink() {
+		return link;
+	}
+
+	public void setLink(LinkResource link) {
+		this.link = link;
 	}
 }

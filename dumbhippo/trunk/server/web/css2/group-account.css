@@ -4,3 +4,7 @@
 @IMPORT url("photo-chooser.css");
 @IMPORT url("feed-popup.css");
 
+.dh-feed-detail {
+	font-size:	12px;
+	color:		#999999;
+}

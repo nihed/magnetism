@@ -1,22 +1,38 @@
 @CHARSET "UTF-8";
 
 .dh-feed-popup {
-	width:			293px;
+	width:				323px;
 }
 
 .dh-feed-popup .dh-border {
-	width:				292px;
+	width:				322px;
 }
 
 .dh-feed-popup .dh-content-padding {
-	width:				290px;
+	width:				320px;
 }
 
 .dh-feed-popup .dh-content {
-	width:				270px;
+	width:				300px;
 }
 
 .dh-feed-popup .dh-content .dh-title {
 	position:			relative;
+	margin-bottom:		5px;
+}
+
+.dh-feed-popup .dh-content .dh-subtitle {
+	position:			relative;
 	margin-bottom:		10px;
+	/* keep this from messing up the layout */
+	width:				250px;
+	overflow:			hidden;
+}
+
+.dh-feed-popup .dh-left-side {
+	margin-right:		10px;
+}
+
+.dh-feed-popup .dh-controls {
+	margin-top:			10px;
 }

@@ -1317,7 +1317,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			Feed feed = getFeedFromUserEnteredUrl(url);
 			feedSystem.updateFeed(feed);
 			
-			printer.println("Link: " + feed.getLink().getUrl());
+			printer.println("Link: " + feed.getSource().getUrl());
 			printer.println("Title: " + feed.getTitle());
 			printer.print("Last fetched: " + feed.getLastFetched());
 			if (feed.getLastFetchSucceeded())
@@ -1353,6 +1353,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		xml.openElement("feedPreview");
 		xml.appendTextNode("title", feed.getTitle());
 		xml.appendTextNode("link", feed.getLink().getUrl());
+		xml.appendTextNode("source", feed.getSource().getUrl());
 				
 		List<FeedEntry> entries = feedSystem.getCurrentEntries(feed);
 		

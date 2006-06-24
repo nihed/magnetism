@@ -1,2 +1,6 @@
 @CHARSET "UTF-8";
 @IMPORT url("feed-popup-positions.css");
+
+.dh-feed-popup .dh-subtitle {
+	font-size:		12px;
+}

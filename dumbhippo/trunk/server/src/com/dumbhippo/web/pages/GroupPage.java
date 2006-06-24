@@ -361,8 +361,8 @@ public class GroupPage extends AbstractSigninOptionalPage {
 			Collections.sort(list, new Comparator<GroupFeed>() {
 
 				public int compare(GroupFeed feed1, GroupFeed feed2) {
-					return String.CASE_INSENSITIVE_ORDER.compare(feed1.getFeed().getLink().getUrl(),
-							feed2.getFeed().getLink().getUrl());
+					return String.CASE_INSENSITIVE_ORDER.compare(feed1.getFeed().getSource().getUrl(),
+							feed2.getFeed().getSource().getUrl());
 				}
 				
 			});
