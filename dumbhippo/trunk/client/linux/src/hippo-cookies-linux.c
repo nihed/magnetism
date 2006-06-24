@@ -94,7 +94,6 @@ hippo_load_cookies(const char *domain,
     files[n_files].filename = g_build_filename(homedir,
         ".gnome2/epiphany/mozilla/epiphany/cookies.txt", NULL);
     files[n_files].browser = HIPPO_BROWSER_EPIPHANY;
-    g_debug("Using '%s' as cookie file %d", files[n_files].filename, n_files);    
     ++n_files;
 
     firefox_dir = g_build_filename(homedir, ".mozilla/firefox", NULL);
