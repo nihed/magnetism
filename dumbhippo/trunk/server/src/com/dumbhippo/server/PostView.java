@@ -17,7 +17,6 @@ import com.dumbhippo.live.LivePost;
 import com.dumbhippo.live.LiveState;
 import com.dumbhippo.persistence.PersonPostData;
 import com.dumbhippo.persistence.Post;
-import com.dumbhippo.persistence.PostVisibility;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.postinfo.PostInfo;
@@ -89,7 +88,7 @@ public class PostView {
 		viewerHasViewed = (ppd != null && ppd.getClickedDate() != null);
 		recipients = recipientList;
 		this.viewpoint = viewpoint;
-		this.toWorld = (p.getVisibility() != PostVisibility.RECIPIENTS_ONLY);
+		this.toWorld = p.isToWorld();
 	
 		if (viewpoint instanceof UserViewpoint) {
 			User viewer = ((UserViewpoint) viewpoint).getViewer();

@@ -36,7 +36,7 @@ public class FeedPost extends Post {
 	}
 	
 	public FeedPost(GroupFeed feed, FeedEntry entry, PostVisibility visibility) {
-		super(null, visibility, entry.getTitle(), entry.getDescription(), null,
+		super(null, visibility, false, entry.getTitle(), entry.getDescription(), null,
 				  Collections.singleton(feed.getGroup()), makeExpandedRecipients(feed), 
 				  Collections.singleton((Resource)entry.getLink()));
 		

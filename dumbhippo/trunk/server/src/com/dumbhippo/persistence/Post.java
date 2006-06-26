@@ -8,7 +8,6 @@ import java.util.Set;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
@@ -47,6 +46,7 @@ public class Post extends GuidPersistable {
 	private String info;
 	private long infoDate;
 	private boolean disabled;
+	private boolean toWorld;
 	transient private PostInfo cachedPostInfo;
 	transient private boolean leaveInfoUnmodified;
 	private Set<Resource> personRecipients;
@@ -86,10 +86,11 @@ public class Post extends GuidPersistable {
 	 * @param expandedRecipients
 	 * @param resources
 	 */
-	public Post(User poster, PostVisibility visibility, String explicitTitle, String text, Set<Resource> personRecipients,
+	public Post(User poster, PostVisibility visibility, boolean toWorld, String explicitTitle, String text, Set<Resource> personRecipients,
 			Set<Group> groupRecipients, Set<Resource> expandedRecipients, Set<Resource> resources) {
 		this.poster = poster;
 		this.visibility = visibility;
+		this.toWorld = toWorld;
 		this.explicitTitle = explicitTitle;
 		this.text = text;
 		this.personRecipients = personRecipients;
@@ -126,6 +127,15 @@ public class Post extends GuidPersistable {
 		this.disabled = disabled;
 	}	
 
+	@Column(nullable = false)
+	public boolean isToWorld() {
+		return toWorld;
+	}
+
+	public void setToWorld(boolean toWorld) {
+		this.toWorld = toWorld;
+	}	
+	
 	@ManyToMany
 	@JoinTable(table=@Table(name="Post_PersonRecipient"))
 	@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)

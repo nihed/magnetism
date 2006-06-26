@@ -132,7 +132,7 @@ public class PostingBoardBean implements PostingBoard {
 	@javax.annotation.Resource
 	private EJBContext ejbContext;	
 	
-	private void sendPostNotifications(Post post, boolean explicitlyPublic, PostType postType) {
+	private void sendPostNotifications(Post post, PostType postType) {
 		// FIXME I suspect this should be outside the transaction and asynchronous
 		logger.debug("Sending out jabber/email notifications...");
 		
@@ -140,7 +140,7 @@ public class PostingBoardBean implements PostingBoard {
 		// public posts can also happen implicitly by copying a public group; those
 		// posts are still visible to the world, but aren't sent out to the world
 		
-		if (post.getVisibility() == PostVisibility.RECIPIENTS_ONLY || !explicitlyPublic) {
+		if (post.getVisibility() == PostVisibility.RECIPIENTS_ONLY || !post.isToWorld()) {
 			for (Resource r : post.getExpandedRecipients()) {
 				messageSender.sendPostNotification(r, post, postType);
 			}			
@@ -158,8 +158,7 @@ public class PostingBoardBean implements PostingBoard {
 			}
 		} else {
 			throw new RuntimeException("invalid visibility on post " + post.getId());
-		}	
-
+		}
 	}
 	
 	/**
@@ -221,8 +220,8 @@ public class PostingBoardBean implements PostingBoard {
 		return replacement;
 	}
 	
-	private void postPost(Post post, boolean explicitlyPublic, PostType postType) {
-		sendPostNotifications(post, explicitlyPublic, postType);
+	private void postPost(Post post, PostType postType) {
+		sendPostNotifications(post, postType);
 		
 		LiveState liveState = LiveState.getInstance();
 		for (Group g : post.getGroupRecipients()) {
@@ -238,12 +237,12 @@ public class PostingBoardBean implements PostingBoard {
 		}
 	}
 	
-	private Post doLinkPostInternal(User poster, boolean isPublic, String title, String text, URL url, Set<GuidPersistable> recipients, InviteRecipients inviteRecipients, PostInfo postInfo, PostType postType) throws NotFoundException {
+	private Post doLinkPostInternal(User poster, boolean toWorld, String title, String text, URL url, Set<GuidPersistable> recipients, InviteRecipients inviteRecipients, PostInfo postInfo, PostType postType) throws NotFoundException {
 		
 		PostVisibility visibility;
 		
 		// if we want to explicitly send to "the world" then force public even if not to any public groups
-		visibility = isPublic ? PostVisibility.ATTRIBUTED_PUBLIC : PostVisibility.RECIPIENTS_ONLY;
+		visibility = toWorld ? PostVisibility.ATTRIBUTED_PUBLIC : PostVisibility.RECIPIENTS_ONLY;
 		
 		url = removeFrameset(url);
 		
@@ -310,9 +309,9 @@ public class PostingBoardBean implements PostingBoard {
 		}
 		
 		// if this throws we shouldn't send out notifications, so do it first
-		Post post = createPost(poster, visibility, title, text, shared, personRecipients, groupRecipients, expandedRecipients, postInfo);
+		Post post = createPost(poster, visibility, toWorld, title, text, shared, personRecipients, groupRecipients, expandedRecipients, postInfo);
 		
-		postPost(post, isPublic, postType);
+		postPost(post, postType);
 		
 		return post;		
 	}
@@ -396,15 +395,15 @@ public class PostingBoardBean implements PostingBoard {
 		FeedPost post = new FeedPost(feed, entry, PostVisibility.RECIPIENTS_ONLY);
 		em.persist(post);
 		
-		postPost(post, false, PostType.FEED);
+		postPost(post, PostType.FEED);
 	}
 	
-	private Post createPost(final User poster, final PostVisibility visibility, final String title, final String text, final Set<Resource> resources, 
+	private Post createPost(final User poster, final PostVisibility visibility, final boolean toWorld, final String title, final String text, final Set<Resource> resources, 
 			               final Set<Resource> personRecipients, final Set<Group> groupRecipients, final Set<Resource> expandedRecipients, final PostInfo postInfo) {
 		try {
 			Post detached = runner.runTaskInNewTransaction(new Callable<Post>() {
 				public Post call() {
-					Post post = new Post(poster, visibility, title, text, personRecipients, groupRecipients, expandedRecipients, resources);
+					Post post = new Post(poster, visibility, toWorld, title, text, personRecipients, groupRecipients, expandedRecipients, resources);
 					post.setPostInfo(postInfo);
 					em.persist(post);
 					logger.debug("saved new Post {}", post);
