@@ -652,6 +652,7 @@ HippoYahooMonitor::HippoYahooMonitor()
 
 HippoYahooMonitor::~HippoYahooMonitor()
 {
+    impl_->disconnect(); // called manually here since it requires the wrapper_
     impl_->wrapper_ = 0;
     impl_ = 0;
 }
