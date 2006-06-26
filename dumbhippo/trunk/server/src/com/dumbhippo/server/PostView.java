@@ -45,7 +45,7 @@ public class PostView {
 	private Post post;
 	private String url;
 	private boolean viewerHasViewed;
-	private PersonView posterView;
+	private EntityView posterView;
 	private List<Object> recipients;
 	private String search;
 	private PostFormatter formatter;
@@ -83,7 +83,7 @@ public class PostView {
 	 * @param recipientList the list of (visible) recipients of the post
 	 * @param viewpoint who is looking at the post
 	 */
-	public PostView(EJBContext ejbContext, Post p, PersonView poster, PersonPostData ppd, List<Object>recipientList, Viewpoint viewpoint) {
+	public PostView(EJBContext ejbContext, Post p, EntityView poster, PersonPostData ppd, List<Object>recipientList, Viewpoint viewpoint) {
 		this(p, Context.WEB_BUBBLE);
 		posterView = poster;
 		viewerHasViewed = (ppd != null && ppd.getClickedDate() != null);
@@ -166,7 +166,7 @@ public class PostView {
 		return url;	
 	}
 	
-	public PersonView getPoster() {
+	public EntityView getPoster() {
 		return posterView;
 	}
 	
@@ -241,7 +241,7 @@ public class PostView {
 	public String toXml() {
 		ObjectXmlBuilder builder = new ObjectXmlBuilder();
 		builder.openElement("post", "id", post.getId());
-		builder.appendMember("poster", posterView.getUser().getId());
+		builder.appendMember("poster", posterView.getIdentifyingGuid().toString());
 		builder.appendMember("href", post.getUrl().toString());
 		builder.appendMember("title", post.getTitle());
 		builder.appendMember("text", post.getText());

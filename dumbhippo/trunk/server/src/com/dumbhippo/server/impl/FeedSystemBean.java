@@ -33,6 +33,7 @@ import com.dumbhippo.persistence.GroupFeed;
 import com.dumbhippo.persistence.LinkResource;
 import com.dumbhippo.server.FeedSystem;
 import com.dumbhippo.server.IdentitySpider;
+import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.XmlMethodErrorCode;
 import com.dumbhippo.server.XmlMethodException;
@@ -66,6 +67,9 @@ public class FeedSystemBean implements FeedSystem {
 	
 	@EJB
 	private IdentitySpider identitySpider;
+	
+	@EJB
+	private PostingBoard postingBoard;
 	
 	private static ExecutorService notificationService;
 	private static boolean shutdown = false;
@@ -247,13 +251,22 @@ public class FeedSystemBean implements FeedSystem {
 
 		feed.setLastFetched(new Date());
 		feed.setLastFetchSucceeded(true);
+		
+		// FIXME: Probably really should queue things after the transaction, but flushing
+		// will at least make the race condition between this and processing new
+		// entries in a separate transaction less likely
+		em.flush();
 
 		for (final FeedEntry entry : feed.getEntries()) {
 			if (foundGuids.contains(entry.getEntryGuid()) && !oldEntries.containsKey(entry.getEntryGuid())) {
 				logger.debug("Found new Feed entry: {}", entry.getTitle());
 				getNotificationService().submit(new Runnable() {
 					public void run() {
-						EJBUtil.defaultLookup(FeedSystem.class).handleNewEntryNotification(entry.getId());
+						try {
+							EJBUtil.defaultLookup(FeedSystem.class).handleNewEntryNotification(entry.getId());
+						} catch (Throwable t) {
+							logger.error("Exception handling feed entry notification", t);
+						}
 					}
 				});
 			}
@@ -341,8 +354,11 @@ public class FeedSystemBean implements FeedSystem {
 	
 	public void handleNewEntryNotification(long entryId) {
 		FeedEntry entry = em.find(FeedEntry.class, entryId);
-		
 		logger.debug("Processing feed entry: {}", entry.getTitle());
+		
+		for (GroupFeed feed : entry.getFeed().getGroups()) {
+			postingBoard.doFeedPost(feed, entry);
+		}
 	}
 	
 	public synchronized static void startup() {

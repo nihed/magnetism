@@ -106,7 +106,7 @@ import com.dumbhippo.persistence.VersionedEntity;
 	public String toXml() {
 		XmlBuilder builder = new XmlBuilder();
 		builder.appendTextNode("group", "", "id", group.getId(), "name", group.getName(),
-							   "smallPhotoUrl", getSmallPhotoUrl());
+							   "homeUrl", getHomeUrl(), "smallPhotoUrl", getSmallPhotoUrl());
 		return builder.toString();		
 	}
 	
@@ -120,6 +120,16 @@ import com.dumbhippo.persistence.VersionedEntity;
 	@Override
 	public Guid getIdentifyingGuid() {
 		return group.getGuid(); 
+	}
+	
+	@Override
+	public String getName() {
+		return group.getName();
+	}
+	
+	@Override
+	public String getHomeUrl() {
+		return "/group?who=" + group.getId();
 	}
 	
 	@Override

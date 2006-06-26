@@ -14,5 +14,6 @@ package com.dumbhippo.server;
 public enum PostType {
 	NORMAL,
 	GROUP,
+	FEED,
 	TUTORIAL
 }

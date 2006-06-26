@@ -10,6 +10,10 @@ public abstract class EntityView {
 	
 	protected abstract VersionedEntity getVersionedEntity();
 	
+	public abstract String getName();
+	
+	public abstract String getHomeUrl();
+	
 	public abstract String getSmallPhotoUrl();
 	
 	public abstract Guid getIdentifyingGuid();

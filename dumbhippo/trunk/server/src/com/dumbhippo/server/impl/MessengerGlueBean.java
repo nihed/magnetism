@@ -373,7 +373,8 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 	private Set<ChatRoomUser> getChatRoomRecipients(Post post) {
 		Set<ChatRoomUser> recipients = new HashSet<ChatRoomUser>();
 		User poster = post.getPoster();
-		recipients.add(newChatRoomUser(poster));	
+		if (poster != null)
+			recipients.add(newChatRoomUser(poster));	
 		
 		// FIXME: This doesn't handle
 		// posts where people join a group that it was sent to after the post was
@@ -396,7 +397,8 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 	
 		// if post description is not empty, add it to the history of chat room messages, designate this type
 		// of message that contains post description with serial = -1
-		if (post.getText().trim().length() != 0) {
+		// FIXME: Should handle the case of a FeedPost where the effective poster is a GroupFeed
+		if (poster != null && post.getText().trim().length() != 0) {
             ChatRoomMessage message = new ChatRoomMessage(poster.getGuid().toJabberId(null), post.getText(), post.getPostDate(), -1);	 
             history.add(message);
 		}

@@ -1696,9 +1696,50 @@ static gboolean
 is_entity(LmMessageNode *node)
 {
     if (strcmp(node->name, "resource") == 0 || strcmp(node->name, "group") == 0
-        || strcmp(node->name, "user") == 0)
+        || strcmp(node->name, "user") == 0 || strcmp(node->name, "feed") == 0)
         return TRUE;
     return FALSE;
+}
+
+static char*
+make_absolute_url(HippoConnection *connection,
+                  const char      *relative)
+{
+    char *server;
+    char *url;
+
+    if (relative[0] != '/')
+	return g_strdup(relative);
+    
+    server = hippo_platform_get_web_server(connection->platform);
+    url = g_strdup_printf("http://%s%s", server, relative);
+    g_free(server);
+    
+    return url;
+}
+
+/* Derive a fallback home location if the server didn't send one
+ */
+static void
+set_fallback_home_url(HippoConnection *connection,
+                      HippoEntity     *entity)
+{
+    HippoEntityType type = hippo_entity_get_entity_type(entity);
+    const char *id = hippo_entity_get_guid(entity);
+
+    char *url;
+    char *relative;
+    if (type == HIPPO_ENTITY_PERSON)
+        relative = g_strdup_printf("/person?who=%s", id);
+    else if (type == HIPPO_ENTITY_GROUP)
+        relative = g_strdup_printf("/person?who=%s", id);
+    else {
+        return;
+    }        
+    url = make_absolute_url(connection, relative);
+    hippo_entity_set_home_url(entity, url);
+    g_free(relative);
+    g_free(url);
 }
 
 static gboolean
@@ -1709,6 +1750,7 @@ hippo_connection_parse_entity(HippoConnection *connection,
     gboolean created_entity;
     const char *guid;
     const char *name;
+    const char *home_url;
     const char *small_photo_url;
  
     HippoEntityType type;
@@ -1718,6 +1760,8 @@ hippo_connection_parse_entity(HippoConnection *connection,
         type = HIPPO_ENTITY_GROUP;
     else if (strcmp(node->name, "user") == 0)
         type = HIPPO_ENTITY_PERSON;
+    else if (strcmp(node->name, "feed") == 0)
+        type = HIPPO_ENTITY_FEED;
     else {
         g_warning("entity node lacks entity name");
         return FALSE;
@@ -1739,6 +1783,8 @@ hippo_connection_parse_entity(HippoConnection *connection,
         name = NULL;
     }
 
+    home_url = lm_message_node_get_attribute(node, "homeUrl");
+
     if (type != HIPPO_ENTITY_RESOURCE) {
         small_photo_url = lm_message_node_get_attribute(node, "smallPhotoUrl");
         if (!small_photo_url) {
@@ -1759,6 +1805,13 @@ hippo_connection_parse_entity(HippoConnection *connection,
     }
 
     hippo_entity_set_name(entity, name);
+    if (home_url) {
+        char *absolute = make_absolute_url(connection, home_url);
+	hippo_entity_set_home_url(entity, home_url);
+	g_free(absolute);
+    } else {
+	set_fallback_home_url(connection, entity);
+    }
     hippo_entity_set_small_photo_url(entity, small_photo_url);
  
     if (created_entity) {

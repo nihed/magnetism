@@ -43,8 +43,11 @@ import com.dumbhippo.live.PostCreatedEvent;
 import com.dumbhippo.live.PostViewedEvent;
 import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.AccountClaim;
+import com.dumbhippo.persistence.FeedEntry;
+import com.dumbhippo.persistence.FeedPost;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupAccess;
+import com.dumbhippo.persistence.GroupFeed;
 import com.dumbhippo.persistence.GroupMember;
 import com.dumbhippo.persistence.GuidPersistable;
 import com.dumbhippo.persistence.InvitationToken;
@@ -66,6 +69,7 @@ import com.dumbhippo.server.Character;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.CreateInvitationResult;
 import com.dumbhippo.server.EntityView;
+import com.dumbhippo.server.FeedView;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.GroupView;
 import com.dumbhippo.server.HippoProperty;
@@ -128,7 +132,7 @@ public class PostingBoardBean implements PostingBoard {
 	@javax.annotation.Resource
 	private EJBContext ejbContext;	
 	
-	private void sendPostNotifications(Post post, boolean explicitlyPublic, Set<Resource> expandedRecipients, PostType postType) {
+	private void sendPostNotifications(Post post, boolean explicitlyPublic, PostType postType) {
 		// FIXME I suspect this should be outside the transaction and asynchronous
 		logger.debug("Sending out jabber/email notifications...");
 		
@@ -137,7 +141,7 @@ public class PostingBoardBean implements PostingBoard {
 		// posts are still visible to the world, but aren't sent out to the world
 		
 		if (post.getVisibility() == PostVisibility.RECIPIENTS_ONLY || !explicitlyPublic) {
-			for (Resource r : expandedRecipients) {
+			for (Resource r : post.getExpandedRecipients()) {
 				messageSender.sendPostNotification(r, post, postType);
 			}			
 		} else if (post.getVisibility() == PostVisibility.ANONYMOUSLY_PUBLIC || 
@@ -147,7 +151,7 @@ public class PostingBoardBean implements PostingBoard {
 					messageSender.sendPostNotification(acct, post, postType);
 				}
 			}
-			for (Resource r : expandedRecipients) {
+			for (Resource r : post.getExpandedRecipients()) {
 				if (!(r instanceof Account)) { // We covered the accounts above
 					messageSender.sendPostNotification(r, post, postType);
 				}
@@ -215,6 +219,23 @@ public class PostingBoardBean implements PostingBoard {
 		logger.debug("Changing URL to '{}'", replacement);
 		
 		return replacement;
+	}
+	
+	private void postPost(Post post, boolean explicitlyPublic, PostType postType) {
+		sendPostNotifications(post, explicitlyPublic, postType);
+		
+		LiveState liveState = LiveState.getInstance();
+		for (Group g : post.getGroupRecipients()) {
+		    liveState.queuePostTransactionUpdate(em, new GroupEvent(g.getGuid(), post.getGuid(), GroupEvent.Type.POST_ADDED));
+		}
+		
+		User poster = post.getPoster();
+		if (poster != null) {
+			liveState.queuePostTransactionUpdate(em, new PostCreatedEvent(post.getGuid(), poster.getGuid()));
+		
+			// tell the recommender engine, so ratings can be updated
+			recommenderSystem.addRatingForPostCreatedBy(post, poster);
+		}
 	}
 	
 	private Post doLinkPostInternal(User poster, boolean isPublic, String title, String text, URL url, Set<GuidPersistable> recipients, InviteRecipients inviteRecipients, PostInfo postInfo, PostType postType) throws NotFoundException {
@@ -291,16 +312,7 @@ public class PostingBoardBean implements PostingBoard {
 		// if this throws we shouldn't send out notifications, so do it first
 		Post post = createPost(poster, visibility, title, text, shared, personRecipients, groupRecipients, expandedRecipients, postInfo);
 		
-		sendPostNotifications(post, isPublic, expandedRecipients, postType);
-		
-		LiveState liveState = LiveState.getInstance();
-		for (Group g : groupRecipients) {
-		    liveState.queuePostTransactionUpdate(em, new GroupEvent(g.getGuid(), post.getGuid(), GroupEvent.Type.POST_ADDED));
-		}
-		liveState.queuePostTransactionUpdate(em, new PostCreatedEvent(post.getGuid(), poster.getGuid()));
-		
-		// tell the recommender engine, so ratings can be updated
-		recommenderSystem.addRatingForPostCreatedBy(post, poster);
+		postPost(post, isPublic, postType);
 		
 		return post;		
 	}
@@ -379,6 +391,13 @@ public class PostingBoardBean implements PostingBoard {
 				"Invitation to join " + group.getName(),
 				"You've been invited to join the " + group.getName() + " group");		
 	}	
+	
+	public void doFeedPost(GroupFeed feed, FeedEntry entry) {
+		FeedPost post = new FeedPost(feed, entry, PostVisibility.RECIPIENTS_ONLY);
+		em.persist(post);
+		
+		postPost(post, false, PostType.FEED);
+	}
 	
 	private Post createPost(final User poster, final PostVisibility visibility, final String title, final String text, final Set<Resource> resources, 
 			               final Set<Resource> personRecipients, final Set<Group> groupRecipients, final Set<Resource> expandedRecipients, final PostInfo postInfo) {
@@ -525,6 +544,16 @@ public class PostingBoardBean implements PostingBoard {
 		
 		return results;
 	}
+
+	private EntityView getPosterView(Viewpoint viewpoint, Post post) {
+		if (post.getPoster() != null)
+			return identitySpider.getPersonView(viewpoint, post.getPoster(), PersonViewExtra.ALL_RESOURCES);
+		else if (post instanceof FeedPost) {
+			return new FeedView(((FeedPost)post).getFeed());
+		} else {
+			throw new RuntimeException("Don't know how to get a EntityView for the poster of " + post);
+		}
+	}
 	
 	// This doesn't check access to the Post, since that was supposed to be done
 	// when loading the post... conceivably we should redo the API to eliminate 
@@ -569,7 +598,7 @@ public class PostingBoardBean implements PostingBoard {
 				ppd = null;
 			
 			return new PostView(ejbContext, post, 
-					identitySpider.getPersonView(viewpoint, post.getPoster(), PersonViewExtra.ALL_RESOURCES),
+					getPosterView(viewpoint, post),
 					ppd,
 					recipients,
 					viewpoint);
@@ -652,14 +681,12 @@ public class PostingBoardBean implements PostingBoard {
 	 * @return true if post is visible, false otherwise
 	 */
 	public boolean canViewPost(UserViewpoint viewpoint, Post post) {
-		User viewer = viewpoint.getViewer();
-		
 		if (post.getDisabled()) {
 			return false;
 		}
 		
 		/* Optimization for a common case */
-		if (post.getPoster().equals(viewer))
+		if (viewpoint.isOfUser(post.getPoster()))
 			return true;
 		
 		/* public post */
@@ -1103,7 +1130,8 @@ public class PostingBoardBean implements PostingBoard {
 		for (Resource r : post.getPersonRecipients()) {
 			result.add(identitySpider.getPersonView(viewpoint, r, PersonViewExtra.PRIMARY_RESOURCE));	
 		}
-		result.add(identitySpider.getPersonView(viewpoint, post.getPoster(), PersonViewExtra.PRIMARY_RESOURCE));
+		result.add(getPosterView(viewpoint, post));
+		
 		return result;
 	}
 

@@ -118,6 +118,13 @@ hippo_entity_get_name(HippoEntity    *entity)
 }
 
 const char*
+hippo_entity_get_home_url(HippoEntity    *entity)
+{
+    g_return_val_if_fail(HIPPO_IS_ENTITY(entity), NULL);
+    return entity->home_url;
+}
+
+const char*
 hippo_entity_get_small_photo_url(HippoEntity    *entity)
 {
     g_return_val_if_fail(HIPPO_IS_ENTITY(entity), NULL);
@@ -130,6 +137,14 @@ hippo_entity_set_name(HippoEntity    *entity,
 {
     g_return_if_fail(HIPPO_IS_ENTITY(entity));
     hippo_entity_set_string(entity, &entity->name, name);
+}
+
+void
+hippo_entity_set_home_url(HippoEntity    *entity,
+                         const char     *url)
+{
+    g_return_if_fail(HIPPO_IS_ENTITY(entity));
+    hippo_entity_set_string(entity, &entity->home_url, url);
 }
 
 void

@@ -202,6 +202,15 @@ hippo_platform_impl_get_jabber_resource(HippoPlatform *platform)
     return impl->jabber_resource;
 }
 
+static const char *
+get_debug_server(void)
+{
+    const char *debug_server = g_getenv("HIPPO_DEBUG_SERVER");
+    if (debug_server)
+        return debug_server;
+    else
+	return "localinstance.mugshot.org";
+}
 
 static char*
 hippo_platform_impl_get_message_server(HippoPlatform *platform)
@@ -213,7 +222,7 @@ hippo_platform_impl_get_message_server(HippoPlatform *platform)
     if (impl->instance == HIPPO_INSTANCE_DOGFOOD)
         return g_strdup("dogfood.mugshot.org:21020");
     else if (impl->instance == HIPPO_INSTANCE_DEBUG)
-        return g_strdup("localinstance.mugshot.org:21020");
+        return g_strconcat(get_debug_server(), ":21020", NULL);
     else
         return g_strdup(HIPPO_DEFAULT_MESSAGE_SERVER);
 }
@@ -228,7 +237,7 @@ hippo_platform_impl_get_web_server(HippoPlatform *platform)
     if (impl->instance == HIPPO_INSTANCE_DOGFOOD)
         return g_strdup("dogfood.mugshot.org:9080");
     else if (impl->instance == HIPPO_INSTANCE_DEBUG)
-        return g_strdup("localinstance.mugshot.org:8080");        
+        return g_strconcat(get_debug_server(), ":8080", NULL);
     else
         return g_strdup(HIPPO_DEFAULT_WEB_SERVER);
 }

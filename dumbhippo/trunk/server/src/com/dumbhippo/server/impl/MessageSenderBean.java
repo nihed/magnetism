@@ -493,12 +493,19 @@ public class MessageSenderBean implements MessageSender {
 	private class EmailSender {
 
 		public void sendPostNotification(EmailResource recipient, Post post, PostType postType) {
+			User poster = post.getPoster();
+			
+			// We only send out notifications for posts that come from users on the system
+			// not for FeedPost, and similar
+			if (poster == null)
+				return;
+			
 			// We really want to use the viewpoint of the recipient, not the
 			// viewpoint of the sender, but the recipient doesn't have an
 			// account and thus can't have a viewpoint. Using an anonymous
 			// viewpoint wouldn't work since the anonymous viewpoint wouldn't
 			// be able to see the post details.
-			UserViewpoint viewpoint = new UserViewpoint(post.getPoster());
+			UserViewpoint viewpoint = new UserViewpoint(poster);
 			
 			// We don't want to send email notifications if, say, the recipient
 			// is a member of a public group that the post was sent to, since
@@ -522,7 +529,7 @@ public class MessageSenderBean implements MessageSender {
 			boolean addToInvitation = post.getPersonRecipients().contains(recipient);
 			
 			// may be null!
-			InvitationToken invitation = invitationSystem.updateValidInvitation(post.getPoster(), recipient, addToInvitation); 
+			InvitationToken invitation = invitationSystem.updateValidInvitation(poster, recipient, addToInvitation); 
 			String recipientInviteUrl;
 			if (invitation != null) 
 				recipientInviteUrl = invitation.getAuthURL(baseurl); 
@@ -540,7 +547,7 @@ public class MessageSenderBean implements MessageSender {
 			// Since the recipient doesn't have an account, we can't get the recipient's view
 			// of the poster. Send out information from the poster's view of themself.
 			PersonView posterViewedBySelf = identitySpider.getPersonView(viewpoint, 
-					                                                     post.getPoster(),
+					                                                     poster,
 					                                                     PersonViewExtra.PRIMARY_EMAIL);
 			
 			StringBuilder messageText = new StringBuilder();

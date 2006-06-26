@@ -10,7 +10,11 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
+
 @Entity
+@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)	   
 public class Feed extends DBUnique {
 	private static final long serialVersionUID = 1L;
 
@@ -20,9 +24,11 @@ public class Feed extends DBUnique {
 	private long lastFetched;
 	private boolean lastFetchSucceeded;
 	private Set<FeedEntry> entries;
+	private Set<GroupFeed> groups;
 	
 	protected Feed() {
 		this.entries = new HashSet<FeedEntry>();
+		this.groups = new HashSet<GroupFeed>();
 	}
 	
 	public Feed(LinkResource source) {
@@ -72,6 +78,22 @@ public class Feed extends DBUnique {
 	
 	public void setEntries(Set<FeedEntry> entries) {
 		this.entries = entries;
+	}
+	
+	@OneToMany(mappedBy="feed")
+	@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)
+	public Set<GroupFeed> getGroups() {
+		return groups;
+	}
+	
+	/**
+	 * Only hibernate should call this probably
+	 * @param groups
+	 */
+	protected void setGroups(Set<GroupFeed> groups) {
+		if (groups == null)
+			throw new IllegalArgumentException("null");
+		this.groups = groups;
 	}
 	
 	@Override

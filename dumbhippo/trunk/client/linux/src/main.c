@@ -217,34 +217,16 @@ hippo_app_ignore_post_id(HippoApp   *app,
     hippo_connection_set_post_ignored(app->connection, guid);
 }
 
-static void
-visit_entity(HippoApp       *app,
-             const char     *id,
-             HippoEntityType type)
-{
-    char *url;
-    char *relative;
-    if (type == HIPPO_ENTITY_PERSON)
-        relative = g_strdup_printf("/person?who=%s", id);
-    else if (type == HIPPO_ENTITY_GROUP)
-        relative = g_strdup_printf("/person?who=%s", id);
-    else {
-        g_warning("Can't visit entity '%s' due to type %d", id, type);
-        return;
-    }        
-    url = make_absolute_url(app, relative);
-    hippo_app_open_url(app, TRUE, url);
-    g_free(relative);
-    g_free(url);
-    
-}             
-
 void
 hippo_app_visit_entity(HippoApp    *app,
                        HippoEntity *entity)
 {
-    visit_entity(app, hippo_entity_get_guid(entity),
-                 hippo_entity_get_entity_type(entity));
+    const char *home_url = hippo_entity_get_home_url(entity);
+    if (home_url) {
+	hippo_app_open_url(app, TRUE, home_url);
+    } else {
+	g_warning("Don't know how to go to the home page for entity '%s'", hippo_entity_get_guid(entity));
+    }
 }
                        
 void

@@ -101,7 +101,6 @@ public class Post extends GuidPersistable {
 	}
 	
 	@ManyToOne
-	@JoinColumn(nullable=false)
 	public User getPoster() {
 		return poster;
 	}

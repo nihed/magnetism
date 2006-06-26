@@ -12,7 +12,9 @@ import org.apache.lucene.index.IndexWriter;
 import org.hibernate.lucene.DocumentBuilder;
 
 import com.dumbhippo.identity20.Guid;
+import com.dumbhippo.persistence.FeedEntry;
 import com.dumbhippo.persistence.Group;
+import com.dumbhippo.persistence.GroupFeed;
 import com.dumbhippo.persistence.GuidPersistable;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.PersonPostData;
@@ -119,6 +121,15 @@ public interface PostingBoard {
 
 	public Post doShareGroupPost(User poster, Group group, String title, String text, Set<GuidPersistable> recipients, InviteRecipients inviteRecipients)
 		throws NotFoundException;
+	
+	/**
+	 * Send out notifications of a new Feed item
+	 * @param The GroupFeed object that "sends out the post"; the GroupFeed is the
+	 *    sender conceptually rather than the Feed because the image for the feed
+	 *    is the group's image. The recipients will be the members of the GroupFeed's group
+	 * @param the entry to share
+	 */
+	public void doFeedPost(GroupFeed feed, FeedEntry entry);
 
 	public void doGroupInvitationPost(User owner, Group group);	
 	

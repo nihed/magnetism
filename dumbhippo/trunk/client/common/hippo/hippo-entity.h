@@ -8,7 +8,8 @@ G_BEGIN_DECLS
 typedef enum {
     HIPPO_ENTITY_RESOURCE,
     HIPPO_ENTITY_GROUP,
-    HIPPO_ENTITY_PERSON
+    HIPPO_ENTITY_PERSON,
+    HIPPO_ENTITY_FEED
 } HippoEntityType;
 
 typedef struct _HippoEntity      HippoEntity;
@@ -27,9 +28,12 @@ HippoEntity*     hippo_entity_new                 (HippoEntityType type,
 const char*      hippo_entity_get_guid            (HippoEntity    *entity);
 HippoEntityType  hippo_entity_get_entity_type     (HippoEntity    *entity);
 const char*      hippo_entity_get_name            (HippoEntity    *entity);
+const char*      hippo_entity_get_home_url        (HippoEntity    *entity);
 const char*      hippo_entity_get_small_photo_url (HippoEntity    *entity);
 void             hippo_entity_set_name            (HippoEntity    *entity,
                                                    const char     *name);
+void             hippo_entity_set_home_url        (HippoEntity    *entity,
+                                                   const char     *link);
 void             hippo_entity_set_small_photo_url (HippoEntity    *entity,
                                                    const char     *url);
 

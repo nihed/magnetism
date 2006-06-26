@@ -67,7 +67,7 @@
 				<dht:formTableRowStatus controlId='dhPictureEntry'></dht:formTableRowStatus>
 				<dht:formTableRow label="Picture">
 					<div id="dhHeadshotImageContainer" class="dh-image">
-						<dht:headshot user="${signin.user}" size="60" customLink="javascript:dh.photochooser.show(document.getElementById('dhChooseStockLinkContainer'), dh.account.reloadPhoto);" />
+						<dht:headshot person="${account.person}" size="60" customLink="javascript:dh.photochooser.show(document.getElementById('dhChooseStockLinkContainer'), dh.account.reloadPhoto);" />
 					</div>
 					<div class="dh-next-to-image">
 						<div>Upload new picture:</div>

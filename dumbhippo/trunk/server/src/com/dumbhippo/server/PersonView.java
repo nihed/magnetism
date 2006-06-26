@@ -648,6 +648,7 @@ public class PersonView extends EntityView {
 		if (user != null) {
 			builder.appendTextNode("user", "", "id", user.getId(), 
 				               	   "name", getName(),
+				               	   "homeUrl", getHomeUrl(), 
 				               	   "smallPhotoUrl", getSmallPhotoUrl());
 		} else {
 			builder.appendTextNode("resource", "", "id", getIdentifyingGuid().toString(), "name", getName());
@@ -702,6 +703,14 @@ public class PersonView extends EntityView {
 		}
 	}
 
+	@Override
+	public String getHomeUrl() {
+		if (user != null)
+			return "/person?who=" + user.getId();
+		else
+			return null;
+	}
+	
 	@Override
 	public String getSmallPhotoUrl() {
 		if (user != null)

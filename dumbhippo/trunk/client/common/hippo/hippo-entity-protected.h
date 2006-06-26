@@ -10,6 +10,7 @@ struct _HippoEntity {
     HippoEntityType type;
     char *guid;
     char *name;
+    char *home_url;
     char *small_photo_url;
     int version;
 };

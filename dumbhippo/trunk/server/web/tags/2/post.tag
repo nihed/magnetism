@@ -44,7 +44,7 @@
 							<td align="left">
 							    <%-- FIXME: tagify this and share with framer --%>
 								<div class="dh-attribution">
-									sent by <a href="/person?who=${post.poster.viewPersonPageId}" class="dh-name-link">
+									sent by <a href="${post.poster.homeUrl}" class="dh-name-link">
 										<c:out value="${post.poster.name}"/>
 									</a>
 							        to 
