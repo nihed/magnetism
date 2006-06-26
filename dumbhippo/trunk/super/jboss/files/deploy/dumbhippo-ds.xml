@@ -6,7 +6,8 @@
     <max-pool-size>@@maxConnectionPoolSize@@</max-pool-size>
     <blocking-timeout-millis>30000</blocking-timeout-millis>
 @@if mysqlEnabled
-    <connection-url>jdbc:mysql://localhost:@@mysqlPort@@/dumbhippo</connection-url>
+	<!-- I don't think the useUnicode is needed with current MySQL, but it shouldn't hurt -->
+    <connection-url>jdbc:mysql://localhost:@@mysqlPort@@/dumbhippo?useUnicode=true&amp;characterEncoding=UTF-8</connection-url>
     <driver-class>com.mysql.jdbc.Driver</driver-class>
     <user-name>root</user-name>
     <password>@@dbPassword@@</password>

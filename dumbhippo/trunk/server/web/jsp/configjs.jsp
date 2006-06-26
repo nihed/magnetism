@@ -20,8 +20,6 @@ var dhTextRoot = dhServerUri + "text/";
 var dhPostRoot = dhServerUri + "action/";
 var dhUploadRoot = dhServerUri + "upload/";
 var dhFilesRoot = dhServerUri + "files/";
-var dhHeadshotsRoot = dhFilesRoot + "headshots/48/";
-var dhGroupshotsRoot = dhFilesRoot + "groupshots/48/";
 
 // configure Dojo; don't put anything here we expect to change, instead make a 
 // dh variable above then slave djConfig to it.
@@ -30,5 +28,6 @@ var djConfig = {
 	preventBackButtonFix: true,
 //  this loads browser_debug.js which makes module loading a no-op?
 //	debugAtAllCosts: true,
-	baseScriptUri: dhScriptRoot + "dojo/"
+	baseScriptUri: dhScriptRoot + "dojo/",
+	bindEncoding: "UTF-8" // For post submission. Default is mangled ASCII
 };

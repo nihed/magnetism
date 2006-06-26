@@ -5,6 +5,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Enumeration;
@@ -216,6 +217,22 @@ public abstract class AbstractServlet extends HttpServlet {
 		response.setHeader("Pragma", "no-cache");
 	}
 	
+	/**
+	 * Set UTF-8 as the request encoding for the request if no other encoding
+	 * is set. The request encoding determines the interpretation of request
+	 * parameters, among other things.
+	 * @param request the request object
+	 */
+	public static void ensureRequestEncoding(HttpServletRequest request) {
+		if (request.getCharacterEncoding() == null) {
+			try {
+				request.setCharacterEncoding("UTF-8");
+			} catch (UnsupportedEncodingException e) {
+				throw new RuntimeException("Encoding UTF-8 is not supported");
+			}
+		}
+	}
+	
 	protected static final SimpleDateFormat format = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz", Locale.US);
 	protected final static TimeZone gmtZone = TimeZone.getTimeZone("GMT");
 
@@ -344,6 +361,7 @@ public abstract class AbstractServlet extends HttpServlet {
 	@Override
 	protected void doPost(final HttpServletRequest request, final HttpServletResponse response) throws ServletException,
 			IOException {
+		ensureRequestEncoding(request);
 		logRequest(request, "POST");
 		String forwardUrl;
 		if (requiresTransaction()) {
@@ -366,6 +384,7 @@ public abstract class AbstractServlet extends HttpServlet {
 	
 	@Override
 	protected void doGet(final HttpServletRequest request, final HttpServletResponse response) throws ServletException, IOException {
+		ensureRequestEncoding(request);
 		logRequest(request, "GET");
 		String forwardUrl;
 		if (requiresTransaction()) {
