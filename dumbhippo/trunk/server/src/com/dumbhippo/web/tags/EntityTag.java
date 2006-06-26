@@ -15,6 +15,7 @@ import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.Configuration;
+import com.dumbhippo.server.FeedView;
 import com.dumbhippo.server.GroupView;
 import com.dumbhippo.server.PersonView;
 
@@ -91,6 +92,14 @@ public class EntityTag extends SimpleTagSupport {
 			body = group.getName();
 			photoUrl = view.getSmallPhotoUrl();
 			defaultCssClass = "dh-group";
+		} else if (o instanceof FeedView) {
+			FeedView feedView = (FeedView)o;
+			if (skipId != null && skipId.equals(feedView.getIdentifyingGuid()))
+				return null;
+			link = feedView.getHomeUrl();
+			body = feedView.getName();
+			photoUrl = feedView.getSmallPhotoUrl();
+			defaultCssClass = "dh-feed";
 		} else {
 			if (o == null)
 				logger.error("null object in EntityTag!");
