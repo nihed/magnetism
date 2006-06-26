@@ -43,6 +43,8 @@ import com.sun.syndication.feed.synd.SyndEntry;
 import com.sun.syndication.feed.synd.SyndFeed;
 import com.sun.syndication.fetcher.FeedFetcher;
 import com.sun.syndication.fetcher.FetcherException;
+import com.sun.syndication.fetcher.impl.FeedFetcherCache;
+import com.sun.syndication.fetcher.impl.HashMapFeedInfoCache;
 import com.sun.syndication.fetcher.impl.HttpURLFeedFetcher;
 import com.sun.syndication.io.FeedException;
 
@@ -104,7 +106,9 @@ public class FeedSystemBean implements FeedSystem {
 			throw new RuntimeException("getFeed passed malformed URL object");
 		}
 		
-		FeedFetcher feedFetcher = new HttpURLFeedFetcher(null);
+		// a static memory cache; might be cute to use the database instead, but this is simple and helps.
+		FeedFetcherCache feedInfoCache = HashMapFeedInfoCache.getInstance();
+		FeedFetcher feedFetcher = new HttpURLFeedFetcher(feedInfoCache);
 		try {
 			return feedFetcher.retrieveFeed(url);
 		} catch (IOException e) {
