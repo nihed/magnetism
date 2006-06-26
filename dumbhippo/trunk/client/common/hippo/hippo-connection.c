@@ -1732,7 +1732,7 @@ set_fallback_home_url(HippoConnection *connection,
     if (type == HIPPO_ENTITY_PERSON)
         relative = g_strdup_printf("/person?who=%s", id);
     else if (type == HIPPO_ENTITY_GROUP)
-        relative = g_strdup_printf("/person?who=%s", id);
+        relative = g_strdup_printf("/group?who=%s", id);
     else {
         return;
     }        
