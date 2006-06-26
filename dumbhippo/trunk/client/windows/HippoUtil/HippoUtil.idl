@@ -116,6 +116,8 @@ library HippoUtil {
         HRESULT Name([out, retval] BSTR *name);
         [id(203), propget, helpstring("URL to a small image representing the entity")]
         HRESULT SmallPhotoUrl([out, retval] BSTR *smallPhotoUrl);
+        [id(204), propget, helpstring("URL to a web page with information about the entity")]
+        HRESULT HomeUrl([out, retval] BSTR *homeUrl);
     }
     [
         uuid(89503F0C-B401-4AAB-9F99-9B4D2EFA7AD6),

@@ -449,7 +449,7 @@ dh.bubble.PostData = function(post) {
     }
 
     this.getPhotoLink = function() {
-        return dh.serverUrl + "person?who=" + this.post.Sender.Id
+        return this.post.Sender.HomeUrl
     }
     
     this.getPhotoSrc = function() {

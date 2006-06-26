@@ -84,6 +84,7 @@ public:
     STDMETHODIMP get_Id(BSTR *id);
     STDMETHODIMP get_Name(BSTR *name);
     STDMETHODIMP get_SmallPhotoUrl(BSTR *smallPhotoUrl);
+    STDMETHODIMP get_HomeUrl(BSTR *homeUrl);
 
 private:
 

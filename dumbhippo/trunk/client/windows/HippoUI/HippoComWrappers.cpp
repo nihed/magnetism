@@ -70,6 +70,14 @@ HippoEntityWrapper::get_SmallPhotoUrl(BSTR *smallPhotoUrl)
     return S_OK;
 }
 
+STDMETHODIMP
+HippoEntityWrapper::get_HomeUrl(BSTR *homeUrl)
+{
+    utf8ToCom(hippo_entity_get_home_url(delegate_), homeUrl);
+
+    return S_OK;
+}
+
 /////////////////////////////////////////////////////////////////////////
 
 HippoEntityCollection::HippoEntityCollection()
