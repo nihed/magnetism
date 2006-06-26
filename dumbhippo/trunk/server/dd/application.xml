@@ -27,6 +27,9 @@
     	<java>rome-fetcher-0.7.jar</java>
     </module>
     <module>
+    	<java>tagsoup-1.0.jar</java>
+    </module>
+    <module>
         <java>dumbhippo-base.jar</java>
     </module>
     <module>

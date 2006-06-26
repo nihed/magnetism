@@ -217,7 +217,7 @@ public class EbayScreenScraper {
 			URLConnection connection = url.openConnection();
 			connection.setConnectTimeout(timeoutMilliseconds);
 			connection.setReadTimeout(timeoutMilliseconds);
-			html = StreamUtils.readStreamUTF8(connection.getInputStream());
+			html = StreamUtils.readStreamUTF8(connection.getInputStream(), StreamUtils.ONE_MEGACHAR);
 		
 		} catch (IOException e) {
 			logger.warn("http error getting ebay item: {}", e.getMessage());

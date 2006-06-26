@@ -44,7 +44,7 @@ public class MySpaceScraper {
 		connection.setReadTimeout(REQUEST_TIMEOUT);
 		connection.setAllowUserInteraction(false);
 		
-		String html = StreamUtils.readStreamUTF8(connection.getInputStream());		
+		String html = StreamUtils.readStreamUTF8(connection.getInputStream(), StreamUtils.ONE_MEGACHAR);		
 		return scrapeFriendID(html);
 	}
 	

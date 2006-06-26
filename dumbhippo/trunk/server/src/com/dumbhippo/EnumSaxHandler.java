@@ -105,6 +105,10 @@ public abstract class EnumSaxHandler<E extends Enum<E>> extends DefaultHandler {
 			return null;
 	}
 	
+	protected final boolean currentlyInside(E element) {
+		return stack.contains(element);
+	}
+	
 	protected String getCurrentContent() {
 		return content.toString();
 	}
