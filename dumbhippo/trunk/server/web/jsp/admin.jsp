@@ -120,6 +120,7 @@
 					</c:otherwise>
 				</c:choose>
 			</td>
+			<td><a href="/person?who=${user.user.id}">&#187;</a></td>
 		</tr>
   	</c:forEach>
 </table>
