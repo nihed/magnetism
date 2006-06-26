@@ -454,36 +454,38 @@ hippo_chat_room_add_message(HippoChatRoom    *room,
     
     if (room->messages == NULL) {
         room->messages = g_slist_prepend(room->messages, message);
-        return;
-    }
+        g_signal_emit(room, signals[MESSAGE_ADDED], 0, message);
+    } else {
 
-    serial = hippo_chat_message_get_serial(message);
+        serial = hippo_chat_message_get_serial(message);
 
-    /* highest serial is earliest in the list */
-    prev = NULL;
-    for (link = room->messages; link != NULL; link = link->next) {
-        HippoChatMessage *old = link->data;
-        int old_serial = hippo_chat_message_get_serial(old);
-        
-        if (old_serial == serial) {
-            /* We already have this message */
-            hippo_chat_message_free(message);
-            return;
-        } else if (old_serial < serial) {
-            if (prev) {
-                g_assert(prev->next == link);
-                prev->next = g_slist_prepend(prev->next, message);
+        /* highest serial is earliest in the list */
+        prev = NULL;
+        for (link = room->messages; link != NULL; link = link->next) {
+            HippoChatMessage *old = link->data;
+            int old_serial = hippo_chat_message_get_serial(old);
+
+            if (old_serial == serial) {
+                /* We already have this message */
+                hippo_chat_message_free(message);
+                return;
+            } else if (old_serial < serial) {
+                if (prev) {
+                    g_assert(prev->next == link);
+                    prev->next = g_slist_prepend(prev->next, message);
+                } else {
+                    g_assert(link == room->messages);
+                    room->messages = g_slist_prepend(room->messages, message);
+                }
+
+                g_signal_emit(room, signals[MESSAGE_ADDED], 0, message);
+
+                return;
             } else {
-                g_assert(link == room->messages);
-                room->messages = g_slist_prepend(room->messages, message);
+                prev = link;
             }
-            
-            g_signal_emit(room, signals[MESSAGE_ADDED], 0, message);
-            
-            return;
-        } else {
-            prev = link;
         }
+        g_assert_not_reached();
     }
 }
 
