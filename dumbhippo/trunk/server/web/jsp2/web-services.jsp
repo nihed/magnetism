@@ -16,6 +16,18 @@
     Mugshot uses public web services from third party providers, subject to the following 
     terms and conditions.
     </p>
+   
+    <a name="aim">
+    <h3>AIM</h3>
+    
+    <p>Mugshot is compatible with the AIM&reg; service and makes use of interfaces provided through the
+    <a href="http://developer.aim.com">Open AIM</a> program.  All such services are provided to 
+    you "as is." These services and your use of them are subject to change and/or removal at 
+    any time.</p>
+    
+    <p>By providing your AIM Screen name, your online status may be publicly displayed.
+    Visit the <a href="http://developer.aim.com/faq.jsp#presence">Open AIM FAQ</a> for
+    more information about displays of online presence.</p>
     
     <a name="amazon">
     <h3>Amazon</h3>
