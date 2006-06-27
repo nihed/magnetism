@@ -58,11 +58,13 @@ public class ShareGroupFormatter extends DefaultFormatter {
 					member = groupSystem.getGroupMember(postView.getViewpoint(), group, ((UserViewpoint)viewpoint).getViewer());
 			}
 		} catch (ParseException e) {
+			// should not happen
 			logger.warn("Bad group ID {} in post {}", groupId, postView.getPost().getId());
 			logger.warn("Parse exception on group id", e);
 		} catch (NotFoundException e) {
-			logger.warn("Bad group ID {} in post {} or recipient has no GroupMember", groupId, postView.getPost().getId());
-			logger.warn("NotFoundException on group id", e);
+			// this is just debug() not warn() since a recipient can leave a group, which will mean no GroupMember, which is normal
+			logger.debug("Bad group ID {} in post {} or recipient has no GroupMember", groupId, postView.getPost().getId());
+			logger.debug("NotFoundException on group id: {}", e.getMessage());
 		}
 		
 		if (member != null) {
