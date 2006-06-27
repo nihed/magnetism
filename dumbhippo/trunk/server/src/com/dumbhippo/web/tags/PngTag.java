@@ -51,6 +51,29 @@ public class PngTag extends SimpleTagSupport implements DynamicAttributes {
 		}
 	}
 	
+	private static String addBuildStamp(String srcUrl, String buildStamp) {
+		if (!(srcUrl.startsWith("/images2/") || srcUrl.startsWith("/images/"))) {
+			return srcUrl;
+		}
+		
+		int secondSlash = srcUrl.indexOf("/", 1);
+		int thirdSlash = srcUrl.indexOf("/", secondSlash + 1);
+		if (thirdSlash > 0) {
+			boolean allDigits = true;
+			for (int i = secondSlash + 1; i < thirdSlash; i++) {
+				if (srcUrl.charAt(i) < '0' || srcUrl.charAt(i) > '9') {
+					allDigits = false;
+					break;
+				}
+			}
+			
+			if (allDigits) // Already has a buildstamp
+				return srcUrl;
+		}
+		
+		return srcUrl.substring(0, secondSlash + 1) + buildStamp + srcUrl.substring(secondSlash);
+	}
+	
 	static void pngHtml(JspContext context, XmlBuilder xml, String src, String buildStamp, String klass, String style, List<String> extraAttributes) {
 		HttpServletRequest request = (HttpServletRequest)((PageContext)context).getRequest();
 		BrowserBean browser = BrowserBean.getForRequest(request);
@@ -72,7 +95,7 @@ public class PngTag extends SimpleTagSupport implements DynamicAttributes {
 			}
 			appendExtraAttributes(xml, extraAttributes);
 			xml.append("><img src=\"");
-			xml.append(src);
+			xml.append(addBuildStamp(src, buildStamp));
 			xml.append("\" style=\"visibility:hidden\" onload=\"dh.actions.fillAlphaPng(this)\"/></span>");
 		} else {
 			xml.append("<img ");
@@ -82,7 +105,7 @@ public class PngTag extends SimpleTagSupport implements DynamicAttributes {
 				xml.append("\" ");
 			}
 			xml.append("src=\"");
-			xml.append(src);
+			xml.append(addBuildStamp(src, buildStamp));
 			xml.append("\" ");
 			if (style != null) {
 				xml.append("style=\"");
