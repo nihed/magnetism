@@ -56,7 +56,7 @@ public class FeedSystemBean implements FeedSystem {
 	private static final Logger logger = GlobalSetup.getLogger(FeedSystemBean.class);
 	
 	// How old the feed data can be before we refetch
-	static final long FEED_UPDATE_TIME = 2 * 60 * 1000; // 10 minutes
+	static final long FEED_UPDATE_TIME = 10 * 60 * 1000; // 10 minutes
 	
 	// Interval at which we check all threads for needing update. This is shorter 
 	// than FEED_UPDATE_TIME so that we don't just miss an update and wait 
@@ -339,10 +339,12 @@ public class FeedSystemBean implements FeedSystem {
 			feed = em.find(Feed.class, feed.getId());
 		}
 		
-		if (System.currentTimeMillis() - feed.getLastFetched().getTime() < FEED_UPDATE_TIME)
+		if (System.currentTimeMillis() - feed.getLastFetched().getTime() < FEED_UPDATE_TIME) {
+			//logger.debug("  Feed {} is already up-to-date", feed);
 			return; // Up-to-date, nothing to do
-
-		logger.debug("Feed {} needs update", feed.getSource());
+		}
+		
+		logger.debug("  Feed {} needs update", feed.getSource());
 		
 		try {
 			final SyndFeed syndFeed = fetchFeedFromNet(feed.getSource());
@@ -387,12 +389,13 @@ public class FeedSystemBean implements FeedSystem {
 	}
 	
 	public synchronized static void startup() {
+		logger.info("Starting FeedUpdater");
 		FeedUpdater.getInstance().start();
 	}
 	
 	public synchronized static void shutdown() {
 		shutdown = true;
-
+		
 		FeedUpdater.getInstance().shutdown();
 		if (notificationService != null) {
 			notificationService.shutdown();
@@ -416,30 +419,39 @@ public class FeedSystemBean implements FeedSystem {
 		
 		@Override
 		public void run() {
-			// We start off by sleeping for our delay time to reduce the initial
-			// server load on restart
-			long lastUpdate = System.currentTimeMillis();
-			
-			while (true) {
-				try {
-					long sleepTime = lastUpdate + UPDATE_THREAD_TIME - System.currentTimeMillis();
-					if (sleepTime < 0)
-						sleepTime = 0;
-					Thread.sleep(sleepTime);
-					
-					// We intentionally iterate here rather than inside a session
-					// bean method to get a separate transaction for updating each
-					// feed rather than holding a single transaction over the whole
-					// process.
-					FeedSystem feedSystem = EJBUtil.defaultLookup(FeedSystem.class);
-					for (Feed feed : feedSystem.getInUseFeeds()) {
-						feedSystem.updateFeed(feed);
+			try {
+				// We start off by sleeping for our delay time to reduce the initial
+				// server load on restart
+				long lastUpdate = System.currentTimeMillis();
+				
+				while (true) {
+					try {
+						long sleepTime = lastUpdate + UPDATE_THREAD_TIME - System.currentTimeMillis();
+						if (sleepTime < 0)
+							sleepTime = 0;
+						Thread.sleep(sleepTime);
+						
+						// We intentionally iterate here rather than inside a session
+						// bean method to get a separate transaction for updating each
+						// feed rather than holding a single transaction over the whole
+						// process.
+						FeedSystem feedSystem = EJBUtil.defaultLookup(FeedSystem.class);
+						List<Feed> feeds = feedSystem.getInUseFeeds();
+						
+						logger.debug("FeedUpdater slept " + sleepTime / 1000.0 + " seconds, and now has " + feeds.size() + " feeds to update");
+						
+						for (Feed feed : feeds) {
+							feedSystem.updateFeed(feed);
+						}
+						
+						lastUpdate = System.currentTimeMillis();
+					} catch (InterruptedException e) {
+						break;
 					}
-					
-					lastUpdate = System.currentTimeMillis();
-				} catch (InterruptedException e) {
-					break;
 				}
+			} catch (RuntimeException e) {
+				// not sure jboss will catch and print this since it's our own thread, so doing it here
+				logger.error("Unexpected exception updating feeds, thread exiting abnormally", e);
 			}
 		}
 		
