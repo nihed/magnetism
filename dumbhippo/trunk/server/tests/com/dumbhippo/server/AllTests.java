@@ -11,6 +11,7 @@ public class AllTests {
         TestSuite suite = new TestSuite("Server tests");
         suite.addTest(new TestSuite(BasicTests.class));
         suite.addTest(new TestSuite(GuidTest.class));
+        suite.addTest(new TestSuite(TestHtmlTextExtractor.class));
         return suite;
     }
 }

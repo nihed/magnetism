@@ -84,7 +84,7 @@ public abstract class EnumSaxHandler<E extends Enum<E>> extends DefaultHandler {
 	}
 	
 	@Override
-	public final void characters(char[] ch, int start, int length) throws SAXException {
+	public void characters(char[] ch, int start, int length) throws SAXException {
 		E c = current();
 		if (c != ignoredValue)
 			content.append(ch, start, length);

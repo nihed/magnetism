@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
+import java.util.regex.Pattern;
 
 import javax.annotation.EJB;
 import javax.ejb.Stateless;
@@ -38,6 +39,7 @@ import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.XmlMethodErrorCode;
 import com.dumbhippo.server.XmlMethodException;
 import com.dumbhippo.server.util.EJBUtil;
+import com.dumbhippo.server.util.HtmlTextExtractor;
 import com.sun.syndication.feed.synd.SyndContent;
 import com.sun.syndication.feed.synd.SyndEntry;
 import com.sun.syndication.feed.synd.SyndFeed;
@@ -54,7 +56,7 @@ public class FeedSystemBean implements FeedSystem {
 	private static final Logger logger = GlobalSetup.getLogger(FeedSystemBean.class);
 	
 	// How old the feed data can be before we refetch
-	static final long FEED_UPDATE_TIME = 10 * 60 * 1000; // 10 minutes
+	static final long FEED_UPDATE_TIME = 2 * 60 * 1000; // 10 minutes
 	
 	// Interval at which we check all threads for needing update. This is shorter 
 	// than FEED_UPDATE_TIME so that we don't just miss an update and wait 
@@ -120,7 +122,42 @@ public class FeedSystemBean implements FeedSystem {
 		}
 	}
 	
-	private FeedEntry createEntryFromSyndEntry(Feed feed, SyndEntry syndEntry) throws MalformedURLException {
+	private static final Pattern externalWhitespace = Pattern.compile("(^[\r\n\t ]+)|(^[\r\n\t ]+?$)");
+	private static final Pattern internalWhitespace = Pattern.compile("[\r\n\t ]+");
+
+	// Some simple handling of plain text, removing irrelevant whitespace
+	private String prepPlainText(String value) {
+		String temp = externalWhitespace.matcher(value).replaceAll("");
+		return internalWhitespace.matcher(temp).replaceAll(" ");
+	}
+	
+	private String getContentAsText(SyndFeed feed, SyndContent content) {
+		boolean isDefinitelyText = false;
+		
+		// The content of HTML entries is very poorly defined; RSS 1.0
+		// defines that the contents must be plain text, but HTML content
+		// is frequently used anyways. RSS 2.0 explicitely allows HTML
+		// entities (without defining what is allowed in particular), but
+		// Rome sets a type on content of text/plain, anyways :-(
+		// 
+		// We skip HTML tag stripping for a few cases where we have strong
+		// evidence that text is required
+		
+		if (feed.getFeedType().equals("atom_0.3")) {
+			if (content.getType().equals("text/plain"))
+				isDefinitelyText = true;
+		} else if (feed.getFeedType().equals("atom_1.0")) {
+			if (content.getType().equals("text") || content.getType().equals("text/plain"))
+				isDefinitelyText = true;
+		}
+		
+		if (isDefinitelyText)
+			return prepPlainText(content.getValue());
+		else
+			return HtmlTextExtractor.extractText(content.getValue());
+	}
+	
+	private FeedEntry createEntryFromSyndEntry(Feed feed, SyndFeed syndFeed, SyndEntry syndEntry) throws MalformedURLException {
 		URL entryUrl = new URL(syndEntry.getLink());
 		
 		FeedEntry entry = new FeedEntry(feed);
@@ -130,7 +167,7 @@ public class FeedSystemBean implements FeedSystem {
 		SyndContent content = syndEntry.getDescription();
 		
 		// FIXME: we need to extract text out of HTML here, and so forth
-		entry.setDescription(content.getValue());
+		entry.setDescription(getContentAsText(syndFeed, content));
 
 		Date publishedDate = syndEntry.getPublishedDate();
 		if (publishedDate != null)
@@ -146,27 +183,6 @@ public class FeedSystemBean implements FeedSystem {
 		return entry;
 	}
 	
-	private void updateEntryFromSyndEntry(FeedEntry entry, SyndEntry syndEntry) {
-		entry.setTitle(syndEntry.getTitle());
-		
-		SyndContent content = syndEntry.getDescription();
-		
-		// FIXME: we need to extract text out of HTML here, and so forth
-		entry.setDescription(content.getValue());
-
-		Date publishedDate = syndEntry.getPublishedDate();
-		if (publishedDate != null)
-			entry.setDate(publishedDate);
-		else
-			entry.setDate(new Date());
-		
-		try {
-			URL entryUrl = new URL(syndEntry.getLink());
-			entry.setLink(identitySpider.getLink(entryUrl));
-		} catch (MalformedURLException e) {
-		}
-	}
-
 	private void setLinkFromSyndFeed(Feed feed, SyndFeed syndFeed) throws XmlMethodException {
 		String link = syndFeed.getLink();
 		URL linkUrl;
@@ -194,7 +210,7 @@ public class FeedSystemBean implements FeedSystem {
 			if (!foundGuids.contains(guid)) {
 				FeedEntry entry;
 				try {
-					entry = createEntryFromSyndEntry(feed, syndEntry);
+					entry = createEntryFromSyndEntry(feed, syndFeed, syndEntry);
 					foundGuids.add(guid);
 					em.persist(entry);
 					feed.getEntries().add(entry);
@@ -228,7 +244,12 @@ public class FeedSystemBean implements FeedSystem {
 				continue;
 			
 			if (oldEntries.containsKey(guid)) {
-				updateEntryFromSyndEntry(oldEntries.get(guid), syndEntry);
+				// We don't try to update old entries, because it is painful and expensive:
+				// The most interesting thing to update is the description, and we only store the 
+				// extracted version of the description, so we have to actually do the extraction 
+				// before we can tell if the description has changed. We also have to deal with 
+				// the fact that description is truncated based on database limits, when comparing 
+				// the existing value with the new value.
 				foundGuids.add(guid);
 				continue;
 			}
@@ -236,7 +257,7 @@ public class FeedSystemBean implements FeedSystem {
 			if (!foundGuids.contains(guid)) {
 				FeedEntry entry;
 				try {
-					entry = createEntryFromSyndEntry(feed, syndEntry);
+					entry = createEntryFromSyndEntry(feed, syndFeed, syndEntry);
 					foundGuids.add(guid);
 					em.persist(entry);
 					feed.getEntries().add(entry);
