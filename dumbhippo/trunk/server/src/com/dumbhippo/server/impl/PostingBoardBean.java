@@ -237,6 +237,16 @@ public class PostingBoardBean implements PostingBoard {
 		}
 	}
 	
+	private PostVisibility expandVisibilityForGroup(PostVisibility visibility, Group group) {
+		if (visibility == PostVisibility.RECIPIENTS_ONLY &&
+				(group.getAccess() == GroupAccess.PUBLIC_INVITE ||
+				 group.getAccess() == GroupAccess.PUBLIC)) {
+			return PostVisibility.ATTRIBUTED_PUBLIC;
+		} else {
+			return visibility;
+		}
+	}
+	
 	private Post doLinkPostInternal(User poster, boolean toWorld, String title, String text, URL url, Set<GuidPersistable> recipients, InviteRecipients inviteRecipients, PostInfo postInfo, PostType postType) throws NotFoundException {
 		
 		PostVisibility visibility;
@@ -294,13 +304,9 @@ public class PostingBoardBean implements PostingBoard {
 		expandedRecipients.addAll(personRecipients);
 		expandedRecipients.add(identitySpider.getBestResource(poster));
 		for (Group g : groupRecipients) {
-		
+	
 			// If you copy a public group, the post is forced public
-			if (visibility == PostVisibility.RECIPIENTS_ONLY &&
-					(g.getAccess() == GroupAccess.PUBLIC_INVITE ||
-					 g.getAccess() == GroupAccess.PUBLIC)) {
-				visibility = PostVisibility.ATTRIBUTED_PUBLIC;
-			}
+			visibility = expandVisibilityForGroup(visibility, g);
 			
 			for (GroupMember groupMember : g.getMembers()) {
 				if (groupMember.isParticipant())
@@ -392,7 +398,7 @@ public class PostingBoardBean implements PostingBoard {
 	}	
 	
 	public void doFeedPost(GroupFeed feed, FeedEntry entry) {
-		FeedPost post = new FeedPost(feed, entry, PostVisibility.RECIPIENTS_ONLY);
+		FeedPost post = new FeedPost(feed, entry, expandVisibilityForGroup(PostVisibility.RECIPIENTS_ONLY, feed.getGroup()));
 		em.persist(post);
 		
 		postPost(post, PostType.FEED);
