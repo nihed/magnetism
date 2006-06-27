@@ -171,9 +171,9 @@ public class InvitationToken extends Token {
 	@Override
 	public long getExpirationPeriodInSeconds() {
 		if (invitee instanceof EmailResource) {
-			return 60*60*24*7; // 7 days 
+			return 60*60*24*90; // 90 days 
 		} else if (invitee instanceof AimResource) {
-			return 60*60*24; // 1 day
+			return 60*60*24*7; // 7 days
 		} else {
 			return super.getExpirationPeriodInSeconds();
 		}
