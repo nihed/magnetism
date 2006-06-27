@@ -630,6 +630,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 	// The selection of Group is only needed for the CAN_SEE checks
 	private static final String LOOKUP_GROUP_QUERY = "SELECT g FROM Group g where g.id = :groupId";
 
+	// some usages of this don't necessarily trust the groupId to be valid, keep that in mind
 	public Group lookupGroupById(Viewpoint viewpoint, String groupId) throws NotFoundException {
 		Query query;
 		

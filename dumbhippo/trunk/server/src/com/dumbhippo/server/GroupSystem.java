@@ -105,7 +105,7 @@ public interface GroupSystem {
 	public int findGroupsCount(Viewpoint viewpoint, User member, MembershipStatus status);
 	
 	public Set<GroupView> findPublicGroups();
-	
+		
 	public Group lookupGroupById(Viewpoint viewpoint, String groupId) throws NotFoundException;
 	
 	public Group lookupGroupById(Viewpoint viewpoint, Guid guid) throws NotFoundException;
