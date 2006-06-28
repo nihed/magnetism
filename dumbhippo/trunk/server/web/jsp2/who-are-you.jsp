@@ -37,8 +37,9 @@
 	</form>
 	<dht:zoneBoxSeparator/>
 	<div>
-		<c:if test="${!empty whoareyou.aimPresenceKey}">
-			<a href="${whoareyou.signinAimLink}"><img src="http://api.oscar.aol.com/SOA/key=${whoareyou.aimPresenceKey}/presence/${whoareyou.aimBotName}" border="0"/> AIM log in</a> |
+		<c:if test="${!empty whoareyou.aimBotScreenName}">
+			<%-- c:if on one line here to avoid weird link text spacing --%>
+			<a href="aim:GoIM?screenname=${whoareyou.aimBotScreenName}&message=Hey+Bot!+Send+me+a+login+link!"><c:if test="${!empty whoareyou.aimPresenceKey}"><img src="http://api.oscar.aol.com/SOA/key=${whoareyou.aimPresenceKey}/presence/${whoareyou.aimBotName}" border="0"/> </c:if>AIM log in</a> |
 		</c:if>
 		<a id="dhLoginTogglePasswordLink" href="javascript:dh.login.togglePasswordBox()"><%-- filled in by javascript --%></a>&nbsp; [alt-p]
 	</div>

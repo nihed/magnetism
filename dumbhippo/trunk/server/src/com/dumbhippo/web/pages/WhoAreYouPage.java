@@ -22,9 +22,12 @@ public class WhoAreYouPage {
 		return browser;
 	}
 	
-	public String getSigninAimLink() {
-		return "aim:GoIM?screenname=" + config.getPropertyFatalIfUnset(HippoProperty.AIMBOT_NAME) 
-		+ "&message=Hey+Bot!+Send+me+a+login+link!";
+	public String getAimBotScreenName() {
+		try {
+			return config.getPropertyNoDefault(HippoProperty.AIMBOT_NAME);
+		} catch (PropertyNotFoundException pnfe) {
+			return null;
+		}
 	}
 	
 	public String getAimPresenceKey() {
