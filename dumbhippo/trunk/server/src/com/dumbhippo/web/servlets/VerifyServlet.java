@@ -181,9 +181,9 @@ public class VerifyServlet extends AbstractServlet {
 			if (e.getTokenClass() == InvitationToken.class)
 				throw new HumanVisibleException("Your invitation has expired! Ask the person who sent you this to invite you again.");
 			else if (e.getTokenClass() == LoginToken.class)
-				throw new HumanVisibleException("The sign-in link you followed has expired. You'll need to send a new one.").setHtmlSuggestion("<a href=\"/who-are-you\">Go here</a>");
+				throw new HumanVisibleException("The login link you followed has expired. You'll need to send a new one.").setHtmlSuggestion("<a href=\"/who-are-you\">Go here to get a new login link.</a>");
 			else if (e.getTokenClass() == ResourceClaimToken.class)
-				throw new HumanVisibleException("This verification link has expired. You'll need to add this address again.").setHtmlSuggestion("<a href=\"/account\">Go here</a>");
+				throw new HumanVisibleException("This verification link has expired. You'll need to add this address again.").setHtmlSuggestion("<a href=\"/account\">Go here to add an address.</a>");
 			else if (e.getTokenClass() == ToggleNoMailToken.class)
 				throw new HumanVisibleException("For your security, the verification link for enabling or disabling email has expired after " + ToggleNoMailToken.getExpirationInDays() 
 						+ " days. If you ever get mail from us again, it will have a new link valid for " + ToggleNoMailToken.getExpirationInDays() + " days.");
@@ -191,7 +191,7 @@ public class VerifyServlet extends AbstractServlet {
 				throw new HumanVisibleException("The link you followed has expired. You'll need to send a new one.").setHtmlSuggestion("<a href=\"/\">Main</a>");
 		} catch (TokenUnknownException e) {
 			logger.debug("token unknown: {}", e.getMessage());
-			throw new HumanVisibleException("The link you followed is no longer valid.").setHtmlSuggestion("<a href=\"/\">Main</a>");
+			throw new HumanVisibleException("The link you followed is no longer valid.").setHtmlSuggestion("<a href=\"/\">Home</a>");
 		}
 		
 		assert token != null;

@@ -22,15 +22,25 @@
 <dht:systemPage disableJumpTo="true" topImage="/images2/${buildStamp}/header_oops500.gif">
 	<p class="dh-error-header">
 		<c:choose>
-			<c:when test='${!empty errorHtml}'>
-				${errorHtml}
+			<c:when test="${!empty errorHtml}">
+				<c:out value="${errorHtml}" escapeXml="false"/>
 			</c:when>
 			<c:otherwise>
-				<c:out value='${text}'/>
+				<c:out value="${text}"/>
 			</c:otherwise>
 		</c:choose>
 	</p>
-	<p><dht:backLink/>
-	<c:if test='${!empty param["retry"]}'> or <a href='${param["retry"]}'>try again</a></c:if></p>
-</dht:systemPage>	
+	<c:choose>
+		<c:when test="${!empty suggestionHtml}">
+			<c:out value="${suggestionHtml}" escapeXml="false"/>
+		</c:when>
+		<c:otherwise>
+			<p>
+				<dht:backLink/>
+				<c:if test='${!empty param["retry"]}'> or <a href='${param["retry"]}'>try again</a>
+				</c:if>
+			</p>
+		</c:otherwise>
+	</c:choose>
+</dht:systemPage>
 </html>
