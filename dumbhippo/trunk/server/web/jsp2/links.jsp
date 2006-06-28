@@ -32,9 +32,9 @@
 	</c:if>
 	<dht:contentColumn>
 		<dht:zoneBoxWeb>
-            <dht:linkSwarmPromo browserInstructions="true" separator="true"/>		
 			<c:choose>
 				<c:when test="${signin.valid}">
+					<dht:linkSwarmPromo browserInstructions="true" separator="true"/>
 					<dht:requireLinksPersonBean who="${signin.user.id}"/>
 					<c:if test="${links.favoritePosts.resultCount > 0}">
 						<dht:zoneBoxTitle a="dhFavoritePosts">FAVES</dht:zoneBoxTitle>
