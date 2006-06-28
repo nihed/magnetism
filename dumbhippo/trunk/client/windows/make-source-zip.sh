@@ -1,6 +1,6 @@
 #!/bin/sh
 
-PROJECT=Mugshot-windows
+PROJECT=Mugshot
 
 DIRECTORIES="Applets dependencies HippoExplorer HippoShellExt HippoUI HippoUtil loudmouth TestLoudmouth WiXInstaller"
 
