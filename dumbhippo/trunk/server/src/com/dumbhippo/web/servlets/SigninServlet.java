@@ -49,7 +49,7 @@ public class SigninServlet extends AbstractServlet {
 		String next = request.getParameter("next");
 		
 		if (address == null) {
-			throw new HumanVisibleException("Please enter an email or AIM address you use with your Mugshot account").setHtmlSuggestion("<a href=\"/who-are-you\">Go back</a>");
+			throw new HumanVisibleException("Please enter an email address you use with your Mugshot account").setHtmlSuggestion("<a href=\"/who-are-you\">Go back</a>");
 		}
 		
 		if (password == null)

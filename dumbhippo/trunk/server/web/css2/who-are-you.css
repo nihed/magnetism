@@ -2,13 +2,8 @@
 @IMPORT url("site.css");
 @IMPORT url("who-are-you-positions.css");
 
-.dh-login-type-header {
-	font-weight: bold;
-	font-size: 14px;
-}
-
-.dh-login-text {
-	font-size: 12px;
+#dhContentColumn {
+	font-size: 12px; /* for inheritance by text in the zone box */
 }
 
 #dhLoginNotification {

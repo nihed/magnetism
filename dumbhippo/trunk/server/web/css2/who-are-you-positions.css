@@ -1,13 +1,12 @@
 @CHARSET "UTF-8";
 
-#dhLoginNoPassword {
-	padding-right: 5px;
+/* Override the 500px width that's normal for a zone box */
+
+.dh-body-without-sidebar #dhPageHeader, .dh-zone-box-title-container, #dhContentColumn, .dh-body-without-sidebar #dhPage, .dh-zone-box-header {
+	width:				310px;	
 }
 
-#dhLoginWithPassword {
-	padding-left: 20px;
-}
-
-#dhLoginSuccessful {
-	padding: 0px 5px;
+#dhContentColumn .dh-text-input {
+	margin-bottom:		10px;
+	width:				288px;
 }

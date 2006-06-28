@@ -298,7 +298,7 @@ class Bot implements Runnable {
 	        (whenIdentifiedTo.longValue() - now > IDENTIFICATION_INTERVAL)) {		
 			logger.debug("identifying bot to " + buddy.getName());
 			Client client = aim;
-			client.sendMessage(buddy, null, "Hi, I'm the Mugshot bot.  (see my <a href='http://mugshot.org/privacy'>privacy policy</a>)");
+			client.sendMessage(buddy, null, "Hi, I'm the Mugshot bot.  (see my <a href=\"http://mugshot.org/privacy\">privacy policy</a>)");
 			identifiedTo.put(buddy, System.currentTimeMillis());
 		}
 	}

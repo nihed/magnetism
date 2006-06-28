@@ -539,6 +539,15 @@ dh.util.getKeyCode = function(ev)
 		return window.event.keyCode;
 };
 
+// is alt held down?
+dh.util.getAltKey = function(ev)
+{
+	if (ev)
+		return ev.altKey;
+	if (window.event)
+		return window.event.altKey;
+};
+
 dh.util.showMessage = function(message) {
 	var div = document.getElementById("dhMessageDiv")
 
