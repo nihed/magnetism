@@ -20,6 +20,7 @@
 	<dht:sidebarPerson who="${person.viewedUserId}"/>
 	<dht:contentColumn>
 		<dht:zoneBoxWeb disableJumpTo="true">
+			<dht:linkSwarmPromo browserInstructions="false" linksLink="true" separator="true"/>	
 			<dht:requireLinksPersonBean who="${person.viewedUserId}"/>
 			<c:if test="${!signin.valid}">
 			        <dht:linkSwarmPromo separator="true" linksLink="true"/>
@@ -40,6 +41,7 @@
 			</c:choose>
 		</dht:zoneBoxWeb>
 		<dht:zoneBoxMusic disableJumpTo="true">
+			<dht:musicRadarPromo separator="true"/>
 			<c:if test="${!signin.valid}">
 			        <dht:musicRadarPromo separator="true" musicLink="true"/>
 			</c:if>
