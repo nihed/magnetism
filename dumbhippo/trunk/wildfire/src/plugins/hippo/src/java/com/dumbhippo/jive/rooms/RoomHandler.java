@@ -14,7 +14,6 @@ import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.PacketError;
 
-import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.jive.PresenceMonitor;
 
 public class RoomHandler implements Component {
@@ -107,36 +106,16 @@ public class RoomHandler implements Component {
 		room.processPacket(packet);			
 	}
 	
-	public void roomChanged(Guid roomGuid) {
-		Room room = peekRoom(roomGuid.toJabberId(null));
-		if (room == null)
-			return;
-		else
-			room.reloadCaches();
-	}
-	
-	public Room peekRoom(String roomName) {
-		return getRoom(roomName, null, false);
-	}
-	
 	private Room getRoom(String roomName, String userId) {
-		return getRoom(roomName, userId, true);
-	}
-	
-	private Room getRoom(String roomName, String userId, boolean create) {
 		Room room = rooms.get(roomName);
-		if (room == null && create) {
+		if (room == null) {
 			room = Room.loadFromServer(this, roomName);
 			if (room == null) {
 				Log.debug("  room doesn't seem to exist");
 				return null;
 			}
 			rooms.put(roomName, room);			
-		} else if (room == null) {
-			return null;
 		}
-		if (userId == null)
-			return room;
 		if (room.checkUserCanJoin(userId)) {
 			Log.debug("  sending packet to existing room " + roomName);
 			return room;

@@ -214,20 +214,16 @@ public class Room {
 		}
 		return userInfoCache.get(username);
 	}
-	
-	private void updateRecipientsCache() {
-		MessengerGlueRemote glue = EJBUtil.defaultLookup(MessengerGlueRemote.class);		
-		for (ChatRoomUser user : glue.getChatRoomRecipients(roomName, this.kind)) {
-			Log.debug("Room recipient: " + user.getUsername());
-			recipientsCache.add(user.getUsername());
-		}					
-	}
 		
 	private Set<String> getRecipientsCache() {
 		if (recipientsCache == null) {
 			recipientsCache = new HashSet<String>();
-			updateRecipientsCache();
 		}
+		MessengerGlueRemote glue = EJBUtil.defaultLookup(MessengerGlueRemote.class);		
+		for (ChatRoomUser user : glue.getChatRoomRecipients(roomName, this.kind)) {
+			Log.debug("Room recipient: " + user.getUsername());
+			recipientsCache.add(user.getUsername());
+		}			
 		return recipientsCache;
 	}
 	
@@ -692,9 +688,5 @@ public class Room {
 	 */
 	public boolean checkUserPresent(String username) {
 	    return presentUsers.containsKey(username);	
-	}
-
-	public void reloadCaches() {
-		updateRecipientsCache();
 	}
 }
