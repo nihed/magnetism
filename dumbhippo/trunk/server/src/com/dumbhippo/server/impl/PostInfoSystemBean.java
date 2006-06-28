@@ -164,10 +164,6 @@ public class PostInfoSystemBean implements PostInfoSystem {
 		if (cachedUpdaters.containsKey(guid)) {
 			logger.debug("Pulling post update task from cachedUpdaters");
 			Future<PostInfo> task = cachedUpdaters.get(guid);
-			if (task.isDone()) {
-				logger.debug("Removing post update task from cachedUpdaters");
-				cachedUpdaters.remove(guid);
-			}
 			return task;
 		}
 		
@@ -247,6 +243,7 @@ public class PostInfoSystemBean implements PostInfoSystem {
 				try {
 					//logger.debug("Getting result from updater for {}", post);
 					newPostInfo = task.get();
+					cachedUpdaters.remove(post.getGuid());
 					break;
 				} catch (InterruptedException e) {
 					// just retry
