@@ -37,7 +37,12 @@
 	<c:when test="${browser.ieRequested}">
 		<dht:zoneBoxTitle>USING MUGSHOT WEB SWARM</dht:zoneBoxTitle>	
 		Since you're using Internet Explorer, you can <a href="/download">download</a> the
-		Web Swarm application and share links right from your Explorer toolbar.
+		Web Swarm application and share links right from your Explorer toolbar. Just click
+		on the button with the bee when you are on the page you want to share. Then enter 
+		Mugshot groups, users, or friends' e-mails as recipients, offer a quick description,
+		and send it out!
+		<br/>
+		<img src="/images2/${buildStamp}/toolbarsample.gif"/>
 	</c:when>
 	<c:when test="${unsupported}">
 		<dht:zoneBoxTitle>BROWSER NOT SUPPORTED</dht:zoneBoxTitle>		

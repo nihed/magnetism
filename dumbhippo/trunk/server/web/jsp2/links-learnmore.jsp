@@ -38,8 +38,8 @@
 		</td>
 		<td>
 			<p class="dh-links-learnmore-text">Once you have Web Swarm, simply click a button on your browser's toolbar
-			   to share a page.  Add in your comments on the window that appears, and
-			   decide who to send it to.  Easy!
+			   to share the page you are on. Then enter Mugshot groups, users, or friends' e-mails as recipients, offer a quick 
+			   description, and send it out. Easy!
 			</p>
 		</td>
 		</tr>

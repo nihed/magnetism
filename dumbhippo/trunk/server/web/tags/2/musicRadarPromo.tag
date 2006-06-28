@@ -9,20 +9,20 @@
 
 <table><tr>
 <td rowSpan="2" valign="top"><img src="/images2/${buildStamp}/musicradar32x44.gif" /></td>
-<td class="dh-music-radar-promo"><strong>Music Radar</strong> shares your music taste with friends and on your blog.</td>
+<td class="dh-promo-description"><strong>Music Radar</strong> shares your music taste with friends and on your blog.</td>
 </tr><tr>
 <td>
 	<span class="dh-option-list">
 	<%-- Just want to hack the style of the first element --%>
-	<a style="margin-left:0;" class="dh-option-list-option" href="/radar-learnmore">Learn More</a>
+	<a style="margin-left:0;" class="dh-option-list-option" href="/radar-learnmore">Learn more</a>
 <c:if test="${empty browseLink || browseLink}">
 	| 
 	<c:choose>
 		<c:when test="${signin.valid}">
-			<a class="dh-option-list-option" href="/radar-themes">Edit and Browse Themes</a>
+			<a class="dh-option-list-option" href="/radar-themes">Edit and browse themes</a>
 		</c:when>
 		<c:otherwise>
-			<a class="dh-option-list-option" href="/radar-themes">Browse Themes</a>
+			<a class="dh-option-list-option" href="/radar-themes">Browse themes</a>
 		</c:otherwise>
 	</c:choose>
 </c:if>

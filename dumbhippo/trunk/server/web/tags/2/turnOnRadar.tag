@@ -8,7 +8,7 @@
 	</tr><tr>
 	<td>
 	<span class="dh-option-list"><%-- Just want to hack the style of this one element --%>
-	<a style="margin-left:0;" class="dh-option-list-option" href="/radar-learnmore">Learn More</a>
+	<a style="margin-left:0;" class="dh-option-list-option" href="/radar-learnmore">Learn more</a>
 	|
 	<a class="dh-option-list-option" href="/radar-themes">Browse themes</a>
 	</span>

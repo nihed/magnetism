@@ -40,6 +40,7 @@
 	</dht:sidebarPerson>
 	<dht:contentColumn>
 		<dht:zoneBoxWeb more="true">
+		    <dht:linkSwarmPromo browserInstructions="true" linksLink="true" separator="true"/>	
 			<dht:requireLinksPersonBean who="${signin.user.id}"/>
 			<c:if test="${links.favoritePosts.resultCount > 0}">
 				<dht:zoneBoxTitle>FAVES</dht:zoneBoxTitle>

@@ -22,7 +22,7 @@
 		<dht:zoneBoxWeb disableJumpTo="true">
 			<dht:requireLinksPersonBean who="${person.viewedUserId}"/>
 			<c:if test="${!signin.valid}">
-			        <dht:linkSwarmPromo separator="true" />
+			        <dht:linkSwarmPromo separator="true" linksLink="true"/>
 			</c:if>
 			<c:if test="${links.favoritePosts.resultCount > 0}">
 				<dht:zoneBoxTitle>FAVES</dht:zoneBoxTitle>

@@ -32,6 +32,7 @@
 	</c:if>
 	<dht:contentColumn>
 		<dht:zoneBoxWeb>
+            <dht:linkSwarmPromo browserInstructions="true" separator="true"/>		
 			<c:choose>
 				<c:when test="${signin.valid}">
 					<dht:requireLinksPersonBean who="${signin.user.id}"/>
@@ -87,7 +88,7 @@
 					</div>
 					<div>
 					<span class="dh-option-list">
-					<a class="dh-option-list-option" href="/links-learnmore">Learn More</a>
+					<a class="dh-option-list-option" href="/links-learnmore">Learn more</a>
 					</span>
 					</div>					
 					<dht:zoneBoxSeparator/>
