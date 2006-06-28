@@ -37,8 +37,4 @@ public class WhoAreYouPage {
 			return null;
 		}
 	}
-	
-	public String getAimBotName() {
-		return config.getPropertyFatalIfUnset(HippoProperty.AIMBOT_NAME);
-	}
 }
