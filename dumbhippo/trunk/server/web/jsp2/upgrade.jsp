@@ -22,31 +22,20 @@
 	<c:choose>
 		<c:when test="${browser.linuxRequested}">
 			<%-- LINUX RELEASE NOTES GO HERE --%>
-			<p>Version 1.1.5</p>
+			<p>Version 1.1.6</p>
 			<ul>
-                                <li>Add Join Chat and Ignore buttons to notification bubbles</li>
-				<li>Fix a memory leak (thanks to Luke Macken)</li>
-				<li>Keep notification bubble sizes more consistent and reasonable</li>
-				<li>Always place notification bubbles in a corner of the screen</li>
-				<li>Reduced startup time</li>
-				<li>Fix a memory corruption issue</li>
-				<li>Close button closes all bubbles at once instead of only one</li>
-				<li>Include connection status in icon tooltip</li>
-				<li>Display "The World" in bubbles for world shares</li>
+				<li>Fix a bug where sometimes the first chat message did not show up</li>
+				<li>Add support for RSS feeds in groups</li>
+				<li>Other small fixes</li>
 			</ul>
 		</c:when>
 		<c:otherwise>
 			<%-- WINDOWS RELEASE NOTES GO HERE --%>
-			<div class="dh-message">
-			   Note: this upgrade might leave your copy of Mugshot in a non-working state. Please check out the
-<a href="http://developer.mugshot.org/wiki/How_To_Repair_Your_Windows_Client">Instructions to Fix</a> first.
-			</div>
-			<p>Version 1.1.53</p>
+			<p>Version 1.1.54</p>
 			<ul>
-				<li>Don't lose files on future upgrades</li>
-				<li>Add a link to join the chat directly from the bubble.</li>
-				<li>Allow the user to ignore chatter on uninteresting posts.</li>
-				<li>Bug fix: don't pop up already seen bubbles when reconnecting to the server.</li>
+				<li>Fix a bug where sometimes the first chat message did not show up</li>
+				<li>Add support for RSS feeds in groups</li>
+				<li>Other small fixes</li>
 			</ul>
 		</c:otherwise>
 	</c:choose>
