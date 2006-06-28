@@ -18,7 +18,7 @@
 <dht:twoColumnPage neverShowSidebar="true">
 	<dht:contentColumn>
 		<dht:zoneBoxMusic>
-		
+		<dht:musicRadarPromo browseLink="false" separator="true"/>		
 		<c:if test="${nowplaying.signin.valid}">
 		<c:if test="${!empty nowplaying.currentTheme}">		
 			<dht:zoneBoxTitle>CURRENT THEME</dht:zoneBoxTitle>	

@@ -34,7 +34,7 @@
 					</c:choose>
 				</div>
 				<c:if test="${signin.musicSharingEnabled}">				
-					<div class="dh-music-radar-options" ><a href="/radar-themes">Edit theme</a></div>
+					<div class="dh-music-radar-options" ><a href="/radar-themes">Edit Your Theme</a></div>
 					<div class="dh-music-radar-options" ><a href="/getradar">Get Music Radar HTML</a></div>
 				</c:if>
 				<dht:sidebarBoxSeparator/>
@@ -44,6 +44,7 @@
 	</c:if>
 	<dht:contentColumn>
 		<dht:zoneBoxMusic>
+			<dht:musicRadarPromo musicLink="false" separator="true"/>
 			<c:choose>
 				<c:when test="${signin.valid}">
 					<c:choose>
@@ -57,7 +58,6 @@
 					</c:choose>
 				</c:when>
 				<c:otherwise>
-				        <dht:musicRadarPromo/>
 					<div><dht:beaconSamples/></div>					
 				</c:otherwise>
 			</c:choose>

@@ -66,6 +66,7 @@
 			</c:choose>
 		</dht:zoneBoxWeb>
 		<dht:zoneBoxMusic more="true">
+			<dht:musicRadarPromo separator="true"/>
 			<c:if test="${signin.musicSharingEnabled}">
 				<dht:requireMusicPersonBean who="${signin.user.id}"/>
 				<dht:zoneBoxTitle>YOUR CURRENT SONG</dht:zoneBoxTitle>
