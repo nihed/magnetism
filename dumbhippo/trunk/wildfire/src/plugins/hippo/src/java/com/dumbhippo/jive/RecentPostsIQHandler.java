@@ -11,6 +11,8 @@ import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError.Condition;
 
+import com.dumbhippo.identity20.Guid;
+import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.server.MessengerGlueRemote;
 import com.dumbhippo.server.util.EJBUtil;
 
@@ -38,7 +40,14 @@ public class RecentPostsIQHandler extends AbstractIQHandler {
 		String id = element.attributeValue("id");
 		
 		MessengerGlueRemote glue = EJBUtil.defaultLookup(MessengerGlueRemote.class);
-		String recentPostsString = glue.getRecentPostsXML(from.getNode(), id);
+		
+		String recentPostsString;
+		try {
+			recentPostsString = glue.getPostsXML(Guid.parseTrustedJabberId(from.getNode()), 
+					                             new Guid(id), null);
+		} catch (ParseException e) {
+			recentPostsString = null;
+		}
 		
 		if (recentPostsString != null) {
 			Document recentPostsDocument;

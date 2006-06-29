@@ -724,4 +724,31 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 			return false;
 		}
 	}
+
+	public GroupView loadGroup(Viewpoint viewpoint, Guid guid) throws NotFoundException {
+		GroupMember groupMember = null;
+		Group group = lookupGroupById(viewpoint, guid);
+		
+		// FIXME: add getGroupMemberByGroupId (or replace getGroupMember), so that
+		// we only do one lookup in the database. Careful: need to propagate
+		// the handling of REMOVED members from lookupGroupById to getGroupMember
+		if (viewpoint instanceof UserViewpoint) {
+			UserViewpoint userView = (UserViewpoint) viewpoint;
+			try {
+				groupMember = getGroupMember(viewpoint, group, userView.getViewer());
+			} catch (NotFoundException e) {
+				groupMember = new GroupMember(group, userView.getViewer().getAccount(), MembershipStatus.NONMEMBER);
+			}
+		} else {
+			groupMember = new GroupMember(group, null, MembershipStatus.NONMEMBER);			
+		}
+				
+		return new GroupView(group, groupMember, null);
+	}
+
+	public void acceptInvitation(UserViewpoint viewpoint, Group group) {
+		// If you view a group you were invited to, you get added; you can leave again and then 
+		// you enter the REMOVED state where you can re-add yourself but don't get auto-added.
+		addMember(viewpoint.getViewer(), group, viewpoint.getViewer());
+	}
 }

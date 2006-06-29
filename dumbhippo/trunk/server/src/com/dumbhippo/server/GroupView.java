@@ -140,4 +140,8 @@ import com.dumbhippo.persistence.VersionedEntity;
 	public LiveGroup getLiveGroup() {
 		return LiveState.getInstance().getLiveGroup(getGroup().getGuid());
 	}
+
+	public GroupMember getGroupMember() {
+		return groupMember;
+	}
 }

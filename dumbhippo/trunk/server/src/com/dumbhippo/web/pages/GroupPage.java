@@ -10,7 +10,8 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.XmlBuilder;
-import com.dumbhippo.persistence.Group;
+import com.dumbhippo.identity20.Guid;
+import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.GroupAccess;
 import com.dumbhippo.persistence.GroupFeed;
 import com.dumbhippo.persistence.GroupMember;
@@ -29,6 +30,7 @@ import com.dumbhippo.server.PostView;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.TrackView;
 import com.dumbhippo.server.UserViewpoint;
+import com.dumbhippo.server.Viewpoint;
 import com.dumbhippo.web.ListBean;
 import com.dumbhippo.web.PagePositions;
 import com.dumbhippo.web.PagePositionsBean;
@@ -94,53 +96,39 @@ public class GroupPage extends AbstractSigninOptionalPage {
 
 	public void setViewedGroupId(String groupId) {
 		viewedGroupId = groupId;
-				
-		// FIXME: add getGroupMemberByGroupId (or replace getGroupMember), so that
-		// we only do one lookup in the database. Careful: need to propagate
-		// the handling of REMOVED members from lookupGroupById to getGroupMember
 		
-		Group group = null;
-		if (groupId != null) {
+		Viewpoint viewpoint = getSignin().getViewpoint();
+		Guid groupGuid;
+		try {
+			groupGuid = new Guid(viewedGroupId);
+		} catch (ParseException e) {
+			logger.debug("invalid group id");
+			return;
+		}
+		
+		try {
+			viewedGroup = groupSystem.loadGroup(viewpoint, groupGuid);
+		} catch (NotFoundException e) {
+			logger.debug("invalid or inaccessible group id {}", groupId);
+			return;
+		}
+		
+		if (viewedGroup.getStatus() == MembershipStatus.INVITED || viewedGroup.getStatus() == MembershipStatus.INVITED_TO_FOLLOW ) {
+			// Only UserViewpoints can have INVITED or INVITED_TO_FOLLOW membership status
+			UserViewpoint userView = (UserViewpoint) viewpoint;
+			groupSystem.acceptInvitation(userView, viewedGroup.getGroup());
+			// Reload the view so we get the new status
 			try {
-				group = groupSystem.lookupGroupById(getSignin().getViewpoint(), groupId);
+				viewedGroup = groupSystem.loadGroup(viewpoint, groupGuid);
 			} catch (NotFoundException e) {
-				viewedGroupId = null;
+				logger.debug("invalid or inaccessible group id {}", groupId);
+				return;
 			}
+			justAdded = true;
 		}
+		groupMember = viewedGroup.getGroupMember();
 		
-		if (group != null) {
-			if (getSignin().isValid()) {
-				UserViewpoint viewpoint = (UserViewpoint)getSignin().getViewpoint();
-						
-				try {
-					groupMember = groupSystem.getGroupMember(getSignin().getViewpoint(), group, viewpoint.getViewer());
-				} catch (NotFoundException e) {
-					groupMember = new GroupMember(group, viewpoint.getViewer().getAccount(), MembershipStatus.NONMEMBER);
-				}
-				
-				viewedGroup = new GroupView(group, groupMember, null);			
-				
-				// If you view a group you were invited to, you get added; you can leave again and then 
-				// you enter the REMOVED state where you can re-add yourself but don't get auto-added.
-				if (groupMember.getStatus() == MembershipStatus.INVITED || groupMember.getStatus() == MembershipStatus.INVITED_TO_FOLLOW) {
-					groupSystem.addMember(viewpoint.getViewer(), group, viewpoint.getViewer());
-					
-					// reload the groupMember to have the new state
-					try {
-						groupMember = groupSystem.getGroupMember(getSignin().getViewpoint(), group, viewpoint.getViewer());
-					} catch (NotFoundException e) {
-						groupMember = new GroupMember(group, viewpoint.getViewer().getAccount(), MembershipStatus.NONMEMBER);
-					}
-		
-					justAdded = true;
-				}
-		
-				adders = groupMember.getAdders();
-			} else {
-				groupMember = new GroupMember(group, null, MembershipStatus.NONMEMBER);
-				viewedGroup = new GroupView(group, groupMember, null);
-			}
-		}
+		adders = groupMember.getAdders();
 	}
 	
 	public void setAllMembers(boolean allMembers) {

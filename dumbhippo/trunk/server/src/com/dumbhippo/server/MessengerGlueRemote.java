@@ -280,18 +280,18 @@ public interface MessengerGlueRemote {
 	 * Retrieves information about post or posts in XML form suitable for passing
 	 * back to the client over XMPP. A particular post can be specified by
 	 * ID, or if none is specified, some number of recent posts will be
-	 * returned. (Currently 4). The reason that these two not entirely related
-	 * operations are combined together is a vague feeling that we should
-	 * have one "getPosts()" operation that takes a flexible way of specifying
-	 * what posts to get, rather than a big pile of slightly different variants.
+	 * returned. (Currently 4). One day we should have a "getPosts()" operation 
+	 * that takes a flexible way of specifying what posts to get, and we should avoid
+	 * having a big pile of slightly different variants.
 	 * 
 	 * @param username the user to get posts for
 	 * @param id an optional id of a particular post to retrieve, or null
+	 * @param elementName an optional outer element name, or null
 	 * @return XML form of the recent posts or of the particular post.
 	 *     if id is specified and is not the id of a post visible to the
 	 *     user, returns null.
 	 */
-	public String getRecentPostsXML(String username, String id);
+	public String getPostsXML(Guid userId, Guid id, String elementName);
 
 	/**
 	 * Signal whether or not the user wants to ignore future notifications about
@@ -303,4 +303,14 @@ public interface MessengerGlueRemote {
 	 * @throws NotFoundException 
 	 */
 	public void setPostIgnored(Guid userId, Guid postId, boolean ignore) throws NotFoundException, ParseException;
+
+	/**
+	 * Returns the viewpoint XML of a group for a person
+	 * 
+	 * @param username Guid of viewpoint person
+	 * @param groupid Guid of group being dumped
+	 * @return xml dump as string
+	 * @throws NotFoundException when passed an invalid group id 
+	 */
+	public String getGroupXML(Guid username, Guid groupid) throws NotFoundException;
 }

@@ -110,6 +110,8 @@ public interface GroupSystem {
 	
 	public Group lookupGroupById(Viewpoint viewpoint, Guid guid) throws NotFoundException;
 	
+	public GroupView loadGroup(Viewpoint viewpoint, Guid guid) throws NotFoundException;
+	
 	/**
 	 * Finds the set of contacts of an account owner that aren't already
 	 * members of a group (and thus can be added to the group)
@@ -150,4 +152,12 @@ public interface GroupSystem {
 	 * @return true if the user of the viewpoint is allowed to edit group settings
 	 */
 	public boolean canEditGroup(UserViewpoint viewpoint, Group group);
+
+	/**
+	 * Transition from INVITED->MEMBER or INVITED_TO_FOLLOW->FOLLOWER.
+	 * 
+	 * @param userView current viewpoint
+	 * @param group group for which we accept invitation
+	 */
+	public void acceptInvitation(UserViewpoint userView, Group group);
 }

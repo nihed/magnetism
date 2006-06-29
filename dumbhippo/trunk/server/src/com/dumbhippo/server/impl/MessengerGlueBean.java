@@ -43,6 +43,7 @@ import com.dumbhippo.server.ChatRoomUser;
 import com.dumbhippo.server.Enabled;
 import com.dumbhippo.server.EntityView;
 import com.dumbhippo.server.GroupSystem;
+import com.dumbhippo.server.GroupView;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.InvitationSystem;
 import com.dumbhippo.server.JabberUserNotFoundException;
@@ -543,24 +544,16 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 	static final String RECENT_POSTS_ELEMENT_NAME = "recentPosts";
 	static final String RECENT_POSTS_NAMESPACE = "http://dumbhippo.com/protocol/post";
 	
-	public String getRecentPostsXML(String username, String id) {
-		User user = getUserFromUsername(username);
+	public String getPostsXML(Guid userId, Guid id, String elementName) {
+		User user = getUserFromGuid(userId);
 		UserViewpoint viewpoint = new UserViewpoint(user);
 		LiveState liveState = LiveState.getInstance();
 		List<PostView> views;
 		
 		if (id != null) {
 			PostView view;
-			Guid guid;
-			
 			try {
-				guid = new Guid(id);
-			} catch (ParseException e) {
-				return null;
-			}
-			
-			try {
-				view = postingBoard.loadPost(viewpoint, guid);
+				view = postingBoard.loadPost(viewpoint, id);
 			} catch (NotFoundException e) {
 				return null;
 			}	
@@ -571,7 +564,9 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 		}
 
 		XmlBuilder builder = new XmlBuilder();
-		builder.openElement(RECENT_POSTS_ELEMENT_NAME, "xmlns", RECENT_POSTS_NAMESPACE);
+		if (elementName == null)
+			elementName = RECENT_POSTS_ELEMENT_NAME;
+		builder.openElement(elementName, "xmlns", RECENT_POSTS_NAMESPACE);
 		
 		Set<EntityView> viewerEntities = new HashSet<EntityView>();
 		
@@ -611,6 +606,13 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 		User user = getUserFromGuid(userId);
 		Post post = postingBoard.loadRawPost(new UserViewpoint(user), postId);
 		postingBoard.setPostIgnored(user, post, ignore);
+	}
+
+	public String getGroupXML(Guid username, Guid groupId) throws NotFoundException {
+		User user = getUserFromGuid(username);
+		UserViewpoint viewpoint = new UserViewpoint(user);		
+		GroupView groupView = groupSystem.loadGroup(viewpoint, groupId);
+		return groupView.toXml();
 	}
 
 }

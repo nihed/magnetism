@@ -12,6 +12,9 @@ import java.util.Set;
 import javax.jms.ObjectMessage;
 
 import org.dom4j.Attribute;
+import org.dom4j.Document;
+import org.dom4j.DocumentException;
+import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.SessionManager;
@@ -327,12 +330,48 @@ public class Room {
 		return null; // Not reached
 	}
 	
-	private void addRoomInfo(Packet outgoing, boolean needTitle) {
+	private void addRoomInfo(Packet outgoing, boolean includeDetails, String viewpointGuid) {
 		Element messageElement = outgoing.getElement();
 		Element roomInfo = messageElement.addElement("roomInfo", "http://dumbhippo.com/protocol/rooms");
 		roomInfo.addAttribute("kind", kind.name().toLowerCase());
-		if (needTitle)
+		if (includeDetails)
 			roomInfo.addAttribute("title", title);
+		MessengerGlueRemote glue = EJBUtil.defaultLookup(MessengerGlueRemote.class);
+		String objectXml = null;
+		if (includeDetails) {
+			String elementName = "objects";
+			
+			if (kind == ChatRoomKind.GROUP) {
+				try {			
+					objectXml = glue.getGroupXML(Guid.parseTrustedJabberId(viewpointGuid), 
+							                     Guid.parseTrustedJabberId(roomName));
+				} catch (NotFoundException e) {
+					Log.error("failed to find group", e);				
+				}				
+			} else if (kind == ChatRoomKind.POST) {
+			       objectXml = glue.getPostsXML(Guid.parseTrustedJabberId(viewpointGuid), 
+			    		                        Guid.parseTrustedJabberId(roomName), 
+			    		                        elementName);
+			}
+			if (objectXml != null) {
+				Document xmlDumpDoc;
+				try {
+					xmlDumpDoc = DocumentHelper.parseText(objectXml);
+				} catch (DocumentException e) {
+					throw new RuntimeException("Couldn't parse result for an object associated with a room");
+				}
+				
+				Element childElement = xmlDumpDoc.getRootElement();
+				childElement.detach();
+				
+				if (kind == ChatRoomKind.GROUP) { 
+				    Element objectElt = roomInfo.addElement(elementName);
+				    objectElt.add(childElement);
+				} else if (kind == ChatRoomKind.POST) {
+					roomInfo.add(childElement);
+				}
+			}
+		}
 	}
 	
 	private Presence makePresenceAvailable(UserInfo userInfo, RoomUserStatus oldStatus) {
@@ -356,7 +395,7 @@ public class Room {
 		info.addAttribute("artist", userInfo.getArtist()); 
 		info.addAttribute("musicPlaying", Boolean.toString(userInfo.isMusicPlaying()));
 
-		addRoomInfo(presence, false);
+		addRoomInfo(presence, false, null);
 		
 		return presence;
 	}
@@ -365,7 +404,7 @@ public class Room {
 		Presence presence = new Presence(Presence.Type.unavailable);
 		presence.setFrom(new JID(roomName, getServiceDomain(), userInfo.getUsername()));
 		
-		addRoomInfo(presence, false);
+		addRoomInfo(presence, false, null);
 		
 		return presence;
 	}
@@ -546,7 +585,7 @@ public class Room {
 		info.addAttribute("timestamp", Long.toString(messageInfo.getTimestamp().getTime()));
 		info.addAttribute("serial", Integer.toString(messageInfo.getSerial()));
 
-		addRoomInfo(outgoing, false);
+		addRoomInfo(outgoing, false, null);
 		
 		return outgoing;
 	}
@@ -603,7 +642,7 @@ public class Room {
 			// to indicate that we are finished.
 			sendRoomDetails(false, fromJid);
 		
-			addRoomInfo(reply, true);
+			addRoomInfo(reply, true, fromJid.getNode());
 		} else {
 			reply.setError(Condition.feature_not_implemented);
 		}

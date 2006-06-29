@@ -10,6 +10,7 @@ import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.server.GroupSystem;
+import com.dumbhippo.server.GroupView;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PostView;
 import com.dumbhippo.server.PostingBoard;
@@ -34,7 +35,7 @@ public class ChatWindowPage {
     private GroupSystem groupSystem;
     private PostingBoard postBoard;
     private PostView post;
-	private Group group;
+	private GroupView group;
     
     public ChatWindowPage() {
     	groupSystem = WebEJBUtil.defaultLookup(GroupSystem.class);
@@ -56,7 +57,7 @@ public class ChatWindowPage {
     	if (group == null)
     		return null;
     	else
-    		return group.getId();
+    		return group.getGroup().getId();
     }
     
     public boolean isAboutGroup() {
@@ -109,10 +110,12 @@ public class ChatWindowPage {
 				if (oldId != null && oldId.equals(groupId))
 					; // nothing to do
 				else
-					group = groupSystem.lookupGroupById(signin.getViewpoint(), groupId);
+					group = groupSystem.loadGroup(signin.getViewpoint(), new Guid(groupId));
 			} catch (NotFoundException e) {
 				logger.debug("unknown group id {}", groupId);
 				return;
+			} catch (ParseException e) {
+				group = null;
 			}
 		}
     }
@@ -146,14 +149,18 @@ public class ChatWindowPage {
     }
     
     public Group getGroup() {
-    	return group;
+    	// TODO: make web page take GroupView, not group
+    	if (group == null)
+    		return null;
+    		
+    	return group.getGroup();
     }
     
     public String getTitle() {
     	if (post != null)
     		return post.getTitle();
     	else if (group != null)
-    		return group.getName();
+    		return group.getGroup().getName();
     	else
     		return "<Unknown Chat>";
     }
@@ -162,7 +169,7 @@ public class ChatWindowPage {
     	if (post != null)
     		return post.getTitleAsHtml();
     	else if (group != null)
-    		return XmlBuilder.escape(group.getName());
+    		return XmlBuilder.escape(getTitle());
     	else
     		return "&lt;Unknown Chat&gt;";
     }
