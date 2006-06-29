@@ -425,7 +425,7 @@ public class Room {
 		
 		for (int i = messages.size() - count; i < messages.size(); i++) {
 			MessageInfo messageInfo = messages.get(i);
-			Message message = makeMessage(messageInfo);
+			Message message = makeMessage(messageInfo, true);
 			sendPacketToResource(message, to);
 		}
 	}
@@ -571,7 +571,7 @@ public class Room {
 		}
 	}
 	
-	private Message makeMessage(MessageInfo messageInfo) {
+	private Message makeMessage(MessageInfo messageInfo, boolean isDelayed) {
 		UserInfo userInfo = messageInfo.getUser(); 
 		
 		Message outgoing = new Message();
@@ -585,6 +585,13 @@ public class Room {
 		info.addAttribute("timestamp", Long.toString(messageInfo.getTimestamp().getTime()));
 		info.addAttribute("serial", Integer.toString(messageInfo.getSerial()));
 
+		if (isDelayed) {
+			Element delay = messageElement.addElement("x", "jabber:x:delay");
+			delay.addAttribute("from", outgoing.getFrom().toString());
+			// This isn't in the Jabber format and we're too lazy to fix it 
+			// delay.addAttribute("stamp", info.attributeValue("timestamp"));
+		}
+		
 		addRoomInfo(outgoing, false, null);
 		
 		return outgoing;
@@ -610,7 +617,7 @@ public class Room {
 		MessageInfo messageInfo = new MessageInfo(userInfo, packet.getBody(), timestamp, serial);
 		messages.add(messageInfo);
 		
-		Message outgoing = makeMessage(messageInfo);
+		Message outgoing = makeMessage(messageInfo, false);
 		sendPacketToAll(outgoing);
 		
 		// Send over to the server via JMS
