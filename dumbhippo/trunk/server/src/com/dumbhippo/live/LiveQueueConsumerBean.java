@@ -12,6 +12,7 @@ import javax.jms.ObjectMessage;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.jms.JmsProducer;
 
 //
 // Handles taking events queued via LiveState.queueUpdate and dispatching
@@ -45,6 +46,11 @@ public class LiveQueueConsumerBean implements MessageListener {
 		}
 		
 		processor.process(LiveState.getInstance(), event);
+		
+		// Reflect LiveEvents to XMPP server
+		JmsProducer producer = new JmsProducer(LiveEvent.XMPP_QUEUE, false);
+		ObjectMessage jmsMessage = producer.createObjectMessage(event);
+		producer.send(jmsMessage);		
 	}
 
 	public void onMessage(Message message) {

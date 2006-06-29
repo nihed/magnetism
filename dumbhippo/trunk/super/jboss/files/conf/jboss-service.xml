@@ -428,5 +428,13 @@
 			jboss.mq:service=DestinationManager
 		</depends>
 	</mbean>
-
+	
+	<!-- Queue for live state reflected to XMPP -->
+	<mbean code="org.jboss.mq.server.jmx.Queue"
+		name="jboss.mq.destination:service=Queue,name=LiveUpdateXmppQueue">
+		<!--  we need to start DestinationManager first before creating a queue -->
+		<depends optional-attribute-name="DestinationManager">
+			jboss.mq:service=DestinationManager
+		</depends>
+	</mbean>
 </server>

@@ -10,6 +10,7 @@ import java.io.Serializable;
  */
 public abstract interface LiveEvent extends Serializable {
 	static public final String QUEUE = "LiveUpdateQueue";
+	static public final String XMPP_QUEUE = "LiveUpdateXmppQueue";	
 	
 	/**
 	 * Get the type of the Stateless session bean that will be
