@@ -9,7 +9,9 @@ all: *.xml *.css *.png *.js
     copy chaticon.gif $(OUTDIR)\applets    
     copy clientstyle.xml $(OUTDIR)\applets
     copy bubclose.png $(OUTDIR)\applets
+    copy bubclose_purple.png $(OUTDIR)\applets    
     copy bubedge_*.png $(OUTDIR)\applets
+    copy bubgroupupdate.gif $(OUTDIR)\applets
     copy bublinkswarm.gif $(OUTDIR)\applets
     copy dh.css $(OUTDIR)\applets	    
     copy dh.js $(OUTDIR)\applets
@@ -21,6 +23,7 @@ all: *.xml *.css *.png *.js
     copy linkswarm.gif $(OUTDIR)\applets
     copy ls_bubshadow.png $(OUTDIR)\applets
     copy lsorange_*.png $(OUTDIR)\applets
+    copy lspurple_*.png $(OUTDIR)\applets    
     copy lswhite_*.png $(OUTDIR)\applets
     copy menu.css $(OUTDIR)\applets	
     copy menu.js $(OUTDIR)\applets

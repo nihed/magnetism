@@ -99,6 +99,7 @@ public:
 
     int getRecentMessageCount();
 
+    bool isGroupChatActive(HippoEntity *entity);
     bool isShareActive(HippoPost *post);
     void onChatWindowClosed(HippoChatWindow *chatWindow);
 

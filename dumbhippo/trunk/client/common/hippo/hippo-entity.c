@@ -131,6 +131,13 @@ hippo_entity_get_small_photo_url(HippoEntity    *entity)
     return entity->small_photo_url;
 }
 
+HippoChatRoom*   
+hippo_entity_get_chat_room(HippoEntity    *entity)
+{
+    g_return_val_if_fail(HIPPO_IS_ENTITY(entity), NULL);
+    return entity->room;
+}
+
 void
 hippo_entity_set_name(HippoEntity    *entity,
                       const char     *name)
@@ -154,4 +161,25 @@ hippo_entity_set_small_photo_url(HippoEntity    *entity,
     g_return_if_fail(HIPPO_IS_ENTITY(entity));
     /* g_debug("Setting photo for '%s' to '%s'", entity->guid, url ? url : "null"); */
     hippo_entity_set_string(entity, &entity->small_photo_url, url);
+}
+
+void
+hippo_entity_set_chat_room(HippoEntity    *entity,
+						   HippoChatRoom  *room)
+{
+    g_return_if_fail(HIPPO_IS_ENTITY(entity));
+
+    if (room == entity->room)
+        return;
+            
+    if (room)
+        g_object_ref(room);
+    if (entity->room)
+        g_object_unref(entity->room);
+    entity->room = room;
+
+    if (entity->room)
+        hippo_chat_room_set_title(entity->room, entity->name);
+    
+    hippo_entity_emit_changed(entity);
 }

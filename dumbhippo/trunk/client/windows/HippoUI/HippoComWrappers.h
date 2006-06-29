@@ -84,7 +84,12 @@ public:
     STDMETHODIMP get_Id(BSTR *id);
     STDMETHODIMP get_Name(BSTR *name);
     STDMETHODIMP get_SmallPhotoUrl(BSTR *smallPhotoUrl);
+    STDMETHODIMP get_ChattingUserCount(int *chattingUserCount);
+    STDMETHODIMP get_Ignored(BOOL *ignored);
     STDMETHODIMP get_HomeUrl(BSTR *homeUrl);
+
+    STDMETHODIMP get_LastChatMessage(BSTR *message);
+    STDMETHODIMP get_LastChatSender(IHippoEntity **sender);
 
 private:
 

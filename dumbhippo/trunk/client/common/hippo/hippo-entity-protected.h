@@ -13,6 +13,7 @@ struct _HippoEntity {
     char *home_url;
     char *small_photo_url;
     int version;
+	HippoChatRoom *room; 
 };
 
 struct _HippoEntityClass {

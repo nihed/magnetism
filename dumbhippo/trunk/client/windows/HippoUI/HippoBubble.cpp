@@ -473,7 +473,56 @@ HippoBubble::doShow(void)
 void 
 HippoBubble::showMissedBubbles()
 {
-    ie_->createInvocation(L"dhDisplayMissed").run();
+    // ie_->createInvocation(L"dhDisplayMissed").run();
+    setShown();
+}
+
+void 
+HippoBubble::onUserJoinedGroupChatRoom(HippoPerson *person,
+                                       HippoEntity *entity)
+{
+    if (hippo_entity_get_entity_type(entity) != HIPPO_ENTITY_GROUP) {
+        g_warning("HippoBubble::onUserJoinedGroupChatRoom was called with an entity that is not a group");
+        return;
+    }
+
+    if (ui_->isGroupChatActive(entity)) // Already have a window open
+        return;
+
+    if (!ie_) {
+        if (!create())
+            return;
+    }
+
+    ie_->createInvocation(L"dhGroupViewerJoined")
+        .addDispatch(HippoEntityWrapper::getWrapper(entity))
+        .run();
+
+    setShown();
+}
+
+void 
+HippoBubble::onGroupChatRoomMessageAdded(HippoChatMessage *message,
+                                         HippoEntity      *entity)
+{
+
+    if (hippo_entity_get_entity_type(entity) != HIPPO_ENTITY_GROUP) {
+        g_warning("HippoBubble::onGroupChatRoomMessageAdded was called with an entity that is not a group");
+        return;
+    }
+
+    if (ui_->isGroupChatActive(entity)) // Already have a window open
+        return;
+
+    if (!ie_) {
+        if (!create())
+            return;
+    }
+
+    ie_->createInvocation(L"dhGroupChatRoomMessage")
+        .addDispatch(HippoEntityWrapper::getWrapper(entity))
+        .run();
+
     setShown();
 }
 
@@ -567,13 +616,23 @@ void
 HippoBubble::onChatRoomLoaded(HippoChatRoom *room)
 {
     if (hippo_chat_room_get_kind(room) == HIPPO_CHAT_KIND_POST) {
-        HippoDataCache *cache = ui_->getDataCache();
         HippoPost *post = hippo_data_cache_lookup_post(ui_->getDataCache(), hippo_chat_room_get_id(room));
+
+        g_assert(post != NULL);
 
         GConnection1<void,HippoPerson*>::named_connect(G_OBJECT(room), "hippo-bubble-user-joined",
             "user-joined", bind(slot(this, &HippoBubble::onUserJoined), post));
         GConnection1<void,HippoChatMessage*>::named_connect(G_OBJECT(room), "hippo-bubble-message-added",
             "message-added", bind(slot(this, &HippoBubble::onMessageAdded), post));
+    } else if (hippo_chat_room_get_kind(room) == HIPPO_CHAT_KIND_GROUP) {
+        HippoEntity *entity = hippo_data_cache_lookup_entity(ui_->getDataCache(), hippo_chat_room_get_id(room));
+
+        g_assert(entity != NULL);
+
+        GConnection1<void,HippoPerson*>::named_connect(G_OBJECT(room), "hippo-bubble-user-joined-group-chat-room",
+            "user-joined", bind(slot(this, &HippoBubble::onUserJoinedGroupChatRoom), entity));
+        GConnection1<void,HippoChatMessage*>::named_connect(G_OBJECT(room), "hippo-bubble-group-chat-room-message-added",
+            "message-added", bind(slot(this, &HippoBubble::onGroupChatRoomMessageAdded), entity));
     }
 }
 

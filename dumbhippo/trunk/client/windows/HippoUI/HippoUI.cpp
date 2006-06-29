@@ -1093,6 +1093,24 @@ HippoUI::onAuthFailed()
 
 
 bool 
+HippoUI::isGroupChatActive(HippoEntity *entity)
+{
+    if (hippo_entity_get_entity_type(entity) != HIPPO_ENTITY_GROUP) {
+        g_warning("HippoUI::isGroupChatActive was called with an entity that is not a group");
+        return false;
+    }
+
+    HippoChatRoom *chatRoom = hippo_entity_get_chat_room(entity);
+        
+    if (chatRoom != NULL &&
+        hippo_chat_room_get_desired_state(chatRoom) != HIPPO_CHAT_STATE_NONMEMBER) {
+        return true;
+    }
+    
+    return false;
+}
+
+bool 
 HippoUI::isShareActive(HippoPost *post)
 {
     HippoChatRoom *chatRoom = hippo_post_get_chat_room(post);

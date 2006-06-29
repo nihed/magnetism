@@ -79,6 +79,8 @@ private:
     GConnection1<void,HippoPost*> postAdded_;           // HippoDataCache::post-added
     GConnection1<void,HippoChatRoom*> chatRoomLoaded_;  // HippoDataCache::chat-room-loaded
 
+    void onUserJoinedGroupChatRoom(HippoPerson *person, HippoEntity *group);
+    void onGroupChatRoomMessageAdded(HippoChatMessage *message, HippoEntity *group);
     void onUserJoined(HippoPerson *person, HippoPost *post);
     void onMessageAdded(HippoChatMessage *message, HippoPost *post);
     void onPostChanged(HippoPost *post);

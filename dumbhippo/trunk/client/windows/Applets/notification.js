@@ -20,6 +20,8 @@ var dhInit = function(serverUrl, appletUrl, selfId) {
 dh.notification.NEW = 1
 dh.notification.VIEWER = 2
 dh.notification.MESSAGE = 4
+dh.notification.FOLLOWER = 8
+dh.notification.GROUP_MEMBER = 16
 
 dh.notification.Display = function (serverUrl, appletUrl, selfId) {
     // Whether the user is currently using the computer
@@ -29,11 +31,11 @@ dh.notification.Display = function (serverUrl, appletUrl, selfId) {
     this._visible = false
     
     this._pageTimeoutId = null
-    
-    // postid -> notification
-    this.savedNotifications = {}
 
+    this._defaultTimeout = 7  // in seconds
+    
     this._initNotifications = function() {
+        // postid or groupid -> notification
         this.notifications = []
         this.position = -1
     }
@@ -125,17 +127,17 @@ dh.notification.Display = function (serverUrl, appletUrl, selfId) {
         return true
     }
     
-    this._findLinkShare = function (postId) {
+    this._findNotification = function (id) {
         for (var i = 0; i < this.notifications.length; i++) {
-            var notification = this.notifications[i] 
-            if (notification.notificationType == 'linkShare' &&
-                notification.data.post.Id == postId) {
+            var notification = this.notifications[i]
+            // there is no id defined for mySpace notifications
+            // and we never reuse them, so this code will never find
+            // mySpace notifications, change if needed             
+            if (notification.data.getId() == id) {
                 return {notification: notification, position: i}
             }
         }
-        if (this.savedNotifications[postId]) {
-            return {notification: this.savedNotifications[postId], position: -1}
-        }
+        
         return null
     }
     
@@ -147,12 +149,14 @@ dh.notification.Display = function (serverUrl, appletUrl, selfId) {
             this._bubble.setPage("whosThere")
     }
 
+    // TODO possibly merge addLinkShare and addGroupUpdate into a single function 
     // Returns true iff we should show the window if it's hidden. 
     this.addLinkShare = function (share, isRedisplay, why) {
-        var prevShareData = this._findLinkShare(share.post.Id)
+        var prevShareData = this._findNotification(share.getId())
         var shouldDisplayShare = isRedisplay || this._shouldDisplayShare(share)
         if (prevShareData) {
-            // Update the viewer data
+            // you already have a notification for this particular activity in your
+            // stack of bubbles, update the data
             prevShareData.notification.data = share
             prevShareData.notification.why |= why
         }
@@ -177,9 +181,39 @@ dh.notification.Display = function (serverUrl, appletUrl, selfId) {
         return false
     }
     
+    // Returns true iff we should show the window if it's hidden. 
+    this.addGroupUpdate = function (groupData, isRedisplay, why) {
+        var prevNotificationData = this._findNotification(groupData.getId())
+        if (prevNotificationData) {
+            // you already have a notification for this particular activity in your
+            // stack of bubbles, update the data
+            prevNotificationData.notification.data = groupData
+            prevNotificationData.notification.why |= why
+        }
+        if (groupData.group.Ignored)
+            return false
+        if (!prevNotificationData) {   
+            // We don't have it at all and needs to be redisplayed
+            var displayed = this._pushNotification('groupUpdate', groupData, this._defaultTimeout, why)
+            if (displayed)
+                this._showRelevantPage(why)
+            this._idleUpdateDisplay() // Handle changes to the navigation arrows
+            return true
+        } else if (prevNotificationData && prevNotificationData.position == this.position) {
+            // We're currently displaying this notification, set it again in the bubble to force rerendering
+            dh.util.debug("resetting current bubble data")
+            this._bubble.setData(groupData)
+            this._showRelevantPage(why)
+            return true
+        } else {
+            dh.util.debug("not rerendering bubble");
+        }
+        return false
+    }
+    
     // Refresh the display of the share, if showing, otherwise do nothing
     this.updatePost = function(id) {
-        var prevShareData = this._findLinkShare(id)
+        var prevShareData = this._findNotification(id)
         if (!prevShareData)
             return
             
@@ -213,15 +247,6 @@ dh.notification.Display = function (serverUrl, appletUrl, selfId) {
         this._pushNotification('mySpaceComment', comment, 0)    
     }
     
-    this.displayMissed = function () {    
-        for (postid in this.savedNotifications) {
-            var notification = this.savedNotifications[postid]
-            if (notification.state == "missed") {
-                this._pushNotification(notification.notificationType, notification.data)
-            }
-        }    
-    }
-    
     this._clearPageTimeout = function() {
         if (this._pageTimeoutId != null) {
             window.clearTimeout(this._pageTimeoutId)
@@ -239,12 +264,12 @@ dh.notification.Display = function (serverUrl, appletUrl, selfId) {
                 if (timeout < 0) {
                     return;
                 } else if (timeout == 0) {
-                    timeout = 7 // default timeout
+                    timeout = this._defaultTimeout
                 }
                 var display = this;                
                 this._pageTimeoutId = window.setTimeout(function() {
                     display.displayTimeout();
-                    }, timeout * 1000); // 7 seconds
+                    }, timeout * 1000);
             }
         }
     }
@@ -295,34 +320,11 @@ dh.notification.Display = function (serverUrl, appletUrl, selfId) {
         }
     }
     
-    this.notifyMissedChanged = function () {
-        var haveMissed = false;
-        for (postid in this.savedNotifications) {
-            var notification = this.savedNotifications[postid]
-            if (notification.state == "missed") {
-                haveMissed = true;
-            }
-        }
-        window.external.application.SetHaveMissedBubbles(haveMissed)
-    }
-    
     this.close = function () {
         dh.util.debug("bubble close invoked")
         this.setVisible(false)
         this._clearPageTimeout()
         window.external.application.Close()     
-        var curDate = new Date()
-        for (var i = 0; i < this.notifications.length; i++) {
-            var notification = this.notifications[i]
-            notification.saveDate = curDate
-            dh.util.debug("saving notification " + notification)
-            if (notification.state == "pending") // shouldn't happen
-                notification.state = "missed"
-            // be sure we've saved it, this is a noop for already saved
-            this.savedNotifications[notification.data.postId] = notification
-            dh.util.debug("done saving notification " + notification)            
-        }
-        this.notifyMissedChanged()      
         this._initNotifications()
     }
     
@@ -383,8 +385,18 @@ dhAddMySpaceComment = function (myId, blogId, commentId, posterId, posterName, p
     dh.display.addMySpaceComment(data)
 }
 
-dhDisplayMissed = function () {
-    dh.display.displayMissed()
+dhGroupViewerJoined = function(entity, shouldNotify) {
+    dh.display.setVisible(true)
+    
+    var data = new dh.bubble.GroupData(entity, "groupChat")
+    return dh.display.addGroupUpdate(data, true, dh.notification.VIEWER)
+}
+
+dhGroupChatRoomMessage = function(entity, shouldNotify) {
+    dh.display.setVisible(true)
+        
+    var data = new dh.bubble.GroupData(entity, "groupChat")
+    return dh.display.addGroupUpdate(data, true, dh.notification.MESSAGE)
 }
 
 dhViewerJoined = function(post, shouldNotify) {

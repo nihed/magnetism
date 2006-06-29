@@ -37,6 +37,9 @@ struct _HippoDataCache {
     unsigned int     music_sharing_enabled : 1;
     unsigned int     music_sharing_primed : 1;    
     HippoClientInfo  client_info;
+
+	char            *current_element;
+	GString         *current_text;
 };
 
 struct _HippoDataCacheClass {
@@ -376,6 +379,7 @@ hippo_data_cache_add_post(HippoDataCache *cache,
     g_object_ref(post);
     g_hash_table_replace(cache->posts, g_strdup(hippo_post_get_guid(post)), post);
  
+	// we always want to create a chat room for a post
     room = hippo_data_cache_ensure_chat_room(cache, hippo_post_get_guid(post),
                                       HIPPO_CHAT_KIND_POST);
     if (hippo_post_get_chat_room(post) == NULL) {
@@ -391,10 +395,27 @@ void
 hippo_data_cache_add_entity(HippoDataCache *cache,
                             HippoEntity    *entity)
 {
-    g_return_if_fail(hippo_data_cache_lookup_entity(cache, hippo_entity_get_guid(entity)) == NULL);
+	HippoChatRoom* chat;
+
+	g_return_if_fail(hippo_data_cache_lookup_entity(cache, hippo_entity_get_guid(entity)) == NULL);
 
     g_object_ref(entity);
-    g_hash_table_replace(cache->entities, g_strdup(hippo_entity_get_guid(entity)), entity);
+	g_hash_table_replace(cache->entities, g_strdup(hippo_entity_get_guid(entity)), entity);
+	g_debug("Entity %s of type %d added, emitting entity-added", 
+		    hippo_entity_get_guid(entity), hippo_entity_get_entity_type(entity));
+
+	if (hippo_entity_get_entity_type(entity) == HIPPO_ENTITY_GROUP) {
+		// we do not want to create a chat room for every group that the client learns about,
+		// but we should look up if we already have the chat room, and then associate it with
+		// the group, because we should only set the chat room to be fully loaded once it has 
+		// an associated entity or post
+        chat = hippo_data_cache_lookup_chat_room(cache, hippo_entity_get_guid(entity), NULL);
+
+		if (chat) {
+			hippo_entity_set_chat_room(entity, chat);
+        }
+	}
+
     g_signal_emit(cache, signals[ENTITY_ADDED], 0, entity);    
 }
 
@@ -691,20 +712,36 @@ hippo_data_cache_ensure_chat_room(HippoDataCache  *cache,
     
     room = g_hash_table_lookup(cache->chats, chat_id);
     if (room == NULL) {
-        HippoPost *post;
-        
+        HippoPost *post = NULL;
+        HippoEntity *group = NULL;
+
         if (kind == HIPPO_CHAT_KIND_POST || kind == HIPPO_CHAT_KIND_UNKNOWN) {
-            post = hippo_data_cache_lookup_post(cache, chat_id);
-            if (post != NULL && kind == HIPPO_CHAT_KIND_UNKNOWN) {
+			post = hippo_data_cache_lookup_post(cache, chat_id);
+            
+			if (post != NULL && kind == HIPPO_CHAT_KIND_UNKNOWN) {
                 kind = HIPPO_CHAT_KIND_POST;
-            }
-        } else {
-            post = NULL;
-        }
+			}
+		}
+
+		if (kind == HIPPO_CHAT_KIND_GROUP || kind == HIPPO_CHAT_KIND_UNKNOWN) {
+            group = hippo_data_cache_lookup_entity(cache, chat_id);
+            
+			if (group != NULL && hippo_entity_get_entity_type(group) != HIPPO_ENTITY_GROUP)
+				group = NULL;
+            
+			if (group != NULL && kind == HIPPO_CHAT_KIND_UNKNOWN) {
+                kind = HIPPO_CHAT_KIND_GROUP;
+			}
+		}
         
         room = hippo_chat_room_new(chat_id, kind);
+
         if (post)
             hippo_post_set_chat_room(post, room);
+
+		if (group) {
+			hippo_entity_set_chat_room(group, room);
+        }
 
         g_signal_connect(room, "loaded",
                          G_CALLBACK(hippo_data_cache_on_chat_room_loaded), cache);

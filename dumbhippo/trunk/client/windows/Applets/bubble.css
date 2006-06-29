@@ -20,17 +20,36 @@ body
 
 .dh-close-button 
 {
-    background-image: url(bubclose.png);
     width: 23px;
     height: 23px;
+}
+
+.dh-close-button-link-swarm
+{
+    background-image: url(bubclose.png);
+}
+
+.dh-close-button-group-update
+{
+    background-image: url(bubclose_purple.png);
 }
 
 .dh-notification-color
 {
     position: relative;
-    background-color: #F16D1C;
+
     width: 384px;
     left: 3px;
+}
+
+.dh-notification-color-link-swarm 
+{
+    background-color: #F16D1C;
+}
+
+.dh-notification-color-group-update
+{
+    background-color: #AA86B6;
 }
 
 .dh-notification-color-whiteout
@@ -172,10 +191,20 @@ body
 {
     margin-top: 3px;
     margin-bottom: 2px;
-    background-image: url(bublinkswarm.gif);
     background-repeat: no-repeat;
-    width: 112px;
     height: 17px;
+}
+
+.dh-notification-logo-link-swarm 
+{
+    width: 112px;
+    background-image: url(bublinkswarm.gif);
+}
+
+.dh-notification-logo-group-update
+{
+    width: 120px;
+    background-image: url(bubgroupupdate.gif);
 }
 
 .dh-notification-title 
@@ -413,22 +442,48 @@ span.dh-notification-self-viewer
 
 .dh-notification-color-tl
 {
-    background-image: url(lsorange_tl.png);   
     width: 8px;
     height: 8px;
+}
+
+.dh-notification-color-tl-link-swarm
+{
+    background-image: url(lsorange_tl.png);   
+}
+
+.dh-notification-color-tl-group-update
+{
+    background-image: url(lspurple_tl.png);   
 }
 
 .dh-notification-color-bl
 {
-    background-image: url(lsorange_bl.png);
     width: 8px;
     height: 8px;
+}
+
+.dh-notification-color-bl-link-swarm
+{
+    background-image: url(lsorange_bl.png);
+}
+
+.dh-notification-color-bl-group-update
+{
+    background-image: url(lspurple_bl.png);
 }
 
 .dh-notification-color-br
 {
-    background-image: url(lsorange_br.png);
     width: 8px;
     height: 8px;
 }
 
+.dh-notification-color-br-link-swarm
+{
+    background-image: url(lsorange_br.png);
+}
+
+.dh-notification-color-br-group-update
+{
+    background-image: url(lspurple_br.png);
+}

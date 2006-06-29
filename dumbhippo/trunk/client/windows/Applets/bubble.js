@@ -69,10 +69,10 @@ dh.bubble.Bubble = function(isStandaloneBubble) {
         function createDecoratedDiv(className) {
             var div = document.createElement("div")
             div.setAttribute("className", className)
-            appendDiv(div, className + "-tl dh-tl")
-            appendDiv(div, className + "-tr dh-tr")
-            appendDiv(div, className + "-bl dh-bl")
-            appendDiv(div, className + "-br dh-br")
+            div.tl = appendDiv(div, className + "-tl dh-tl")
+            div.tr = appendDiv(div, className + "-tr dh-tr")
+            div.bl = appendDiv(div, className + "-bl dh-bl")
+            div.br = appendDiv(div, className + "-br dh-br")
             appendDiv(div, className + "-t dh-t")
             appendDiv(div, className + "-b dh-b")
             appendDiv(div, className + "-l dh-l")
@@ -100,7 +100,8 @@ dh.bubble.Bubble = function(isStandaloneBubble) {
 
         var mainDiv = appendDiv(this._topDiv, "dh-notification-main")
         
-            var colorDiv = appendDecoratedDiv(mainDiv, "dh-notification-color")
+        this._colorDiv = appendDecoratedDiv(mainDiv, "dh-notification-color")
+        var colorDiv = this._colorDiv
                 // The absolutely positioned corner divs vanish unless we add this div
                 // here; it isn't one of the well-known IE bugs, but probably a more
                 // obscure bug; the div is styled to 0 width/height
@@ -113,7 +114,7 @@ dh.bubble.Bubble = function(isStandaloneBubble) {
         
                 this._rightsideDiv = appendDiv(colorDiv, "dh-notification-rightside")
                     if (this._isStandaloneBubble)
-                        appendDiv(this._rightsideDiv, "dh-notification-logo")
+                        this._headerDiv = appendDiv(this._rightsideDiv, "dh-notification-logo")
                     this._titleDiv = appendDiv(this._rightsideDiv, "dh-notification-title")
                     this._bodyDiv = appendDiv(this._rightsideDiv, "dh-notification-body")
                     
@@ -125,7 +126,7 @@ dh.bubble.Bubble = function(isStandaloneBubble) {
                 appendDiv(colorDiv, "dh-notification-color-whiteout")
                 
                 if (this._isStandaloneBubble) {
-                    this._closeButton = appendDiv(this._rightsideDiv, "dh-close-button dh-tr")
+                    this._closeButton = appendDiv(this._rightsideDiv, "dh-tr dh-close-button")
                     this._closeButton.onclick = dh.util.dom.stdEventHandler(function (e) {
                         bubble.onClose();
                         e.stopPropagation();
@@ -218,7 +219,7 @@ dh.bubble.Bubble = function(isStandaloneBubble) {
     // @param cssCssClass CSS class to use for display of the current user
     this.renderRecipients = function (node, arr, normalCssClass, selfCssClass) {
         for (var i = 0; i < arr.length; i++) {
-            var recipientNode = this.renderRecipient(arr[i], normalCssClass, selfCssClass)
+            var recipientNode = this.renderPerson(arr[i], normalCssClass, selfCssClass)
             node.appendChild(recipientNode)
             if (i < arr.length - 1) {
                 node.appendChild(document.createTextNode(", "))
@@ -241,12 +242,12 @@ dh.bubble.Bubble = function(isStandaloneBubble) {
         return height
     }
 
-    // Render a single recipient
-    this.renderRecipient = function (recipient, normalCssClass, selfCssClass) {  
-        dh.util.debug("rendering recipient with id=" + recipient.Id + ", name=" + recipient.Name)
+    // Render a person
+    this.renderPerson = function (person, normalCssClass, selfCssClass) {  
+        dh.util.debug("rendering person with id=" + person.Id + ", name=" + person.Name)
         var cssClass = normalCssClass
-        var name = recipient.Name
-        if (recipient.Id == dh.selfId) {
+        var name = person.Name
+        if (person.Id == dh.selfId) {
             name = "you"
             cssClass = selfCssClass
         }
@@ -287,6 +288,15 @@ dh.bubble.Bubble = function(isStandaloneBubble) {
     this._render = function() {
         this._setPhotoImage(this._data.getPhotoSrc(), this._data.getPhotoLink())
         this._setPhotoTitle(this._data.getPhotoTitle(), this._data.getPhotoLink())
+        
+        dh.util.swapLastCssClass(this._headerDiv, "dh-notification-logo-", this._data.getCssClassSuffix())
+        dh.util.swapLastCssClass(this._colorDiv, "dh-notification-color-", this._data.getCssClassSuffix())
+        
+        dh.util.swapLastCssClass(this._closeButton, "dh-close-button-", this._data.getCssClassSuffix())
+                
+        dh.util.swapLastCssClass(this._colorDiv.tl, "dh-notification-color-tl-", this._data.getCssClassSuffix())
+        dh.util.swapLastCssClass(this._colorDiv.bl, "dh-notification-color-bl-", this._data.getCssClassSuffix())
+        dh.util.swapLastCssClass(this._colorDiv.br, "dh-notification-color-br-", this._data.getCssClassSuffix())                                
         
         dh.util.dom.clearNode(this._titleDiv)
         this._data.appendTitleContent(this, this._titleDiv)
@@ -389,22 +399,21 @@ dh.bubble.Bubble = function(isStandaloneBubble) {
             link.appendChild(document.createTextNode(text))
             return span      
         }
-        
-        var post = this._data.post
+      
         var chatControl = createControl("chaticon.gif", "Join chat", 
-                        function () { window.external.application.ShowChatWindow(post.Id) });
+                        function () { window.external.application.ShowChatWindow(bubble._data.getId()) });
         var chatCount = document.createElement("span")
-        chatCount.appendChild(document.createTextNode(" [" + post.ChattingUserCount + "]"))
+        chatCount.appendChild(document.createTextNode(" [" + this._data.getChattingUserCount() + "]"))
         chatControl.appendChild(chatCount)
         swarmControls.appendChild(chatControl)
         var alreadyIgnoredControl = createControl("ignoreicon.png", "Ignored", null)
         var ignoreControl = createControl("ignoreicon.png", "Ignore", 
                         function () { 
-                                      window.external.application.IgnorePost(post.Id);
+                                      bubble._data.setIgnored();
                                       swarmControls.replaceChild(alreadyIgnoredControl, ignoreControl)
                                       bubble.onNext();
                                       });
-        if (!post.Ignored)
+        if (!this._data.getIgnored())
             swarmControls.appendChild(ignoreControl)
         else
             swarmControls.appendChild(alreadyIgnoredControl)
@@ -448,6 +457,18 @@ dh.bubble.PostData = function(post) {
         this.info = null
     }
 
+    this.getId = function() {
+        return this.post.Id
+    }
+    
+    this.getChattingUserCount = function() {
+        return this.post.ChattingUserCount
+    }
+    
+    this.getIgnored = function() {
+        return this.post.Ignored
+    }
+    
     this.getPhotoLink = function() {
         return this.post.Sender.HomeUrl
     }
@@ -458,6 +479,10 @@ dh.bubble.PostData = function(post) {
     
     this.getPhotoTitle = function() {
         return this.post.Sender.Name
+    }
+    
+    this.getCssClassSuffix = function() {
+        return "link-swarm"
     }
     
     this.appendTitleContent = function(bubble, parent) {
@@ -540,7 +565,7 @@ dh.bubble.PostData = function(post) {
             var sender = this.post.LastChatSender
             var senderDiv = document.createElement("div")
             senderDiv.className = "dh-notification-chat-sender"
-            senderDiv.appendChild(bubble.renderRecipient(sender, "dh-notification-sender"))
+            senderDiv.appendChild(bubble.renderPerson(sender, "dh-notification-sender"))
             someoneSaidDiv.appendChild(senderDiv)
             
             pages.push({ name: "someoneSaid", title: "Recent Comments", div: someoneSaidDiv })
@@ -552,6 +577,99 @@ dh.bubble.PostData = function(post) {
     this.getViewersPhotoSrc = function() {
         // Need to pass in the viewer ID as well as name to here to display
         return null
+    }
+    
+    this.setIgnored = function() {
+        window.external.application.IgnorePost(this.getId());
+    }
+}
+
+
+dh.bubble.GroupData = function(group, eventType) {
+    this.group = group
+    this.eventType = eventType
+
+    this.getId = function() {
+        return this.group.Id
+    }
+    
+    this.getChattingUserCount = function() {
+        return this.group.ChattingUserCount
+    }
+    
+    this.getIgnored = function() {
+        return this.group.Ignored
+    }
+        
+    this._getGroupLink = function() {
+        return dh.serverUrl + "group?who=" + this.group.Id
+    }
+
+    this.getPhotoLink = function() {
+        return this._getGroupLink()
+    }
+    
+    this.getPhotoSrc = function() {
+        return dh.serverUrl + this.group.SmallPhotoUrl
+    }
+    
+    this.getPhotoTitle = function() {
+        return ""
+    }
+
+    this.getCssClassSuffix = function() {
+        return "group-update"
+    }
+       
+    this.appendTitleContent = function(bubble, parent) {
+        var a = document.createElement("a")
+        a.appendChild(document.createTextNode(this.group.Name))
+        a.setAttribute("href", this._getGroupLink())
+        parent.appendChild(a)
+    }
+        
+    this.appendBodyContent = function(bubble, parent) {
+        parent.appendChild(document.createTextNode("New chat comments."));
+    }
+    
+    this.appendMetaContent = function(bubble, parent) {
+    }
+            
+    this.appendSwarmContent = function(bubble, parent) {
+        var pages = []
+        
+        if (this.eventType == "groupChat") {
+            var someoneSaidDiv = document.createElement("div")
+            someoneSaidDiv.className  = "dh-notification-someone-said"
+            parent.appendChild(someoneSaidDiv)
+            
+            var senderPhoto = bubble.createPngElement(dh.serverUrl + this.group.LastChatSender.SmallPhotoUrl)
+            senderPhoto.className = "dh-notification-chat-sender-photo"
+            someoneSaidDiv.appendChild(senderPhoto)
+            
+            var messageSpan = document.createElement("span")
+            messageSpan.className = "dh-notification-chat-message"
+            messageSpan.appendChild(document.createTextNode('"' + this.group.LastChatMessage + '"'))
+            someoneSaidDiv.appendChild(messageSpan)            
+            
+            var sender = this.group.LastChatSender
+            var senderDiv = document.createElement("div")
+            senderDiv.className = "dh-notification-chat-sender"
+            senderDiv.appendChild(bubble.renderPerson(sender, "dh-notification-sender"))
+            someoneSaidDiv.appendChild(senderDiv)
+            
+            pages.push({ name: "someoneSaid", title: "Recent Comments", div: someoneSaidDiv })
+        }
+        
+        return pages
+    }
+    
+    this.getViewersPhotoSrc = function() {
+        // Need to pass in the viewer ID as well as name to here to display
+        return null
+    }
+    
+    this.setIgnored = function() {
     }
 }
 

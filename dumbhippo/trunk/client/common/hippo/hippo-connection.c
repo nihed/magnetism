@@ -120,6 +120,9 @@ static void     hippo_connection_parse_prefs_node     (HippoConnection *connecti
                                                        LmMessageNode   *prefs_node);
 static void     hippo_connection_request_post         (HippoConnection *connection,
                                                        const char      *post_id);
+static void     hippo_connection_request_entity       (HippoConnection *connection,
+                                                       const char      *entity_id,
+													   HippoEntityType  entity_type);
 static void     hippo_connection_process_pending_room_messages(HippoConnection *connection);
 
 /* enter/leave unconditionally send the presence message; send_state will 
@@ -2098,14 +2101,6 @@ hippo_connection_request_recent_posts(HippoConnection *connection)
     hippo_connection_request_posts_impl(connection, NULL);
 }
 
-static void
-hippo_connection_request_post(HippoConnection *connection,
-                              const char      *post_id)
-{
-    g_return_if_fail(post_id != NULL);
-    hippo_connection_request_posts_impl(connection, post_id);
-}
-
 static void 
 send_room_presence(HippoConnection *connection,
                    HippoChatRoom   *room,
@@ -2338,6 +2333,7 @@ parse_room_info(HippoConnection *connection,
     const char *kind_str;
     const char *title;
     LmMessageNode *info_node;
+	LmMessageNode *child;
 
     if (kind_p)
         *kind_p = HIPPO_CHAT_KIND_UNKNOWN;
@@ -2361,6 +2357,16 @@ parse_room_info(HippoConnection *connection,
 
     title = lm_message_node_get_attribute(info_node, "title");
     /* title can be NULL, roomInfo only optionally has it */
+
+	/* Look for the object associated with this room */
+	for (child = info_node->children; child; child = child->next) {
+		if (strcmp (child->name, "objects") == 0 && child->children) {
+			if (kind == HIPPO_CHAT_KIND_GROUP)
+			    hippo_connection_parse_entity(connection, child->children);
+		    else if (kind == HIPPO_CHAT_KIND_POST)
+				hippo_connection_parse_post_data(connection, child, FALSE, "parseRoomInfo");
+		}
+	}
 
     room = hippo_data_cache_lookup_chat_room(connection->cache, chat_id, &existing_kind);
     
@@ -2444,6 +2450,20 @@ on_get_chat_room_details_reply(LmMessageHandler *handler,
     /* if we still don't know the kind, this thing is hosed, e.g. bad roomInfo */
     if (hippo_chat_room_get_kind(room) == HIPPO_CHAT_KIND_UNKNOWN)   
         hippo_chat_room_set_kind(room, HIPPO_CHAT_KIND_BROKEN);
+    kind = hippo_chat_room_get_kind(room);
+
+    /* We require that the associated entity be loaded when we signal
+     * a chat room as loaded, otherwise we crash.
+     */
+    if (kind == HIPPO_CHAT_KIND_POST && 
+        hippo_data_cache_lookup_post(connection->cache, chat_id) == NULL) {
+        g_error("Couldn't find post associated with chat");
+        goto out;
+    } else if (kind == HIPPO_CHAT_KIND_GROUP &&
+        hippo_data_cache_lookup_entity(connection->cache, chat_id) == NULL) {
+        g_error("Couldn't find entity associated with chat");
+        goto out;
+    }
 
     g_debug("Chat room loaded, kind=%d", hippo_chat_room_get_kind(room));
     /* notify listeners we're loaded */
@@ -2462,6 +2482,7 @@ on_get_chat_room_details_reply(LmMessageHandler *handler,
     /* process any pending notifications of new users / messages */
     hippo_connection_process_pending_room_messages(connection);
 
+    out:
     g_object_unref(room);
 
     return LM_HANDLER_RESULT_REMOVE_MESSAGE;
@@ -2757,6 +2778,8 @@ process_room_message(HippoConnection *connection,
     char *user_id;
     HippoChatRoom *room;
     HippoChatKind kind;
+    LmMessageNode *child;
+    gboolean is_history_message;
 
     chat_id = NULL;
     user_id = NULL;
@@ -2772,7 +2795,8 @@ process_room_message(HippoConnection *connection,
         g_debug("Failed to parse room ID, probably not a chat-related message");
         goto out;
     }    
-
+ 
+	g_debug("hippo-connection::process_room_message Chat id is %s", chat_id);
     /* We only use this for "spontaneous" chat messages right now, 
      * since otherwise we have the kind from get_chat_room_details reply
      */    
@@ -2785,50 +2809,49 @@ process_room_message(HippoConnection *connection,
     room = hippo_data_cache_lookup_chat_room(connection->cache, chat_id, NULL);
     
     if (!room) {
-        /* This is a spontaneous message from a chatroom, which we'll bubble up
-         * for the user, right now only if the chat is about a post.
-         * In order to do that, we need both the rest of the information
-         * about the chatroom (the present users, and so forth), and also the information
-         * about the post like the title, description, and so on. We could get
-         * these two things in parallel, but to simplify, we first get the 
-         * post, to have a place to hang the chatroom off of, then we get the
-         * chat room information.
-         *
-         * Here we rely on the fact that we always get the chat room for every post.
-         */
-        if (kind == HIPPO_CHAT_KIND_POST) {
-            HippoPost *post;
-            
-            post = hippo_data_cache_lookup_post(connection->cache, chat_id);
-            if (!post) {
-                /* If multiple messages from a chatroom that we aren't part of come in,
-                 * we might retrieve the chat room information multiple times; but 
-                 * that's harmless, so we don't bother keeping track of what posts
-                 * we are in the process of retrieving.
-                 */
-                 hippo_connection_request_post(connection, chat_id);
-            }
-            result = PROCESS_MESSAGE_PEND;
-            goto out;
-        } else {
-            /* spontaneous messages that aren't about posts we just want to ignore */
+	    g_debug("hippo-connection::process_room_message no room");
+		if ((kind == HIPPO_CHAT_KIND_POST) || (kind == HIPPO_CHAT_KIND_GROUP)) {
+			// we don't need to check here if the group or post exists, because we 
+			// want to create a chat room and load details for it in any case;
+			// if the group or post is already around, we will associate the chat room with
+			// it immediately in hippo_data_cache_ensure_chat_room; if the group or post
+			// is not around we'll get the details for it when we get a response 
+			// with the chat room info, and create it and the association then
+		    room = hippo_data_cache_ensure_chat_room(connection->cache, chat_id, kind);
+		} else {
+            // spontaneous messages that aren't about posts or groups we just want to ignore
             result = PROCESS_MESSAGE_CONSUME;
             goto out;
         }
     }
 
-    /* If we got a message and request the room contents in response to that,
-     * wait until we finish until we process that message
+    is_history_message = FALSE;
+    for (child = message->node->children; child != NULL; child = child->next) {
+        if (node_matches(child, "x", "jabber:x:delay")) {
+            is_history_message = TRUE;
+            break;
+        }
+    }
+
+    /* If we got a message and started loading the room in response to that,
+     * we need to wait until we finish loading before we can start processing 
+     * any non-history messages.  History messages are immediately appended to the 
+     * chat room.
      */
-    if (was_pending && hippo_chat_room_get_loading(room)) {
+    if (!is_history_message && hippo_chat_room_get_loading(room)) {
         result = PROCESS_MESSAGE_PEND;
         goto out;
     }
 
-    if (lm_message_get_type(message) == LM_MESSAGE_TYPE_MESSAGE)
+	if (lm_message_get_type(message) == LM_MESSAGE_TYPE_MESSAGE) {
+		g_debug("hippo-connection::process_room_message processing room message");
         process_room_chat_message(connection, message, room, user_id, was_pending);
-    else if (lm_message_get_type(message) == LM_MESSAGE_TYPE_PRESENCE)
-        process_room_presence(connection, message, room, user_id, was_pending);
+	} else if (lm_message_get_type(message) == LM_MESSAGE_TYPE_PRESENCE) {
+		g_debug("hippo-connection::process_room_message processing room presence");
+		process_room_presence(connection, message, room, user_id, was_pending);
+	} else {
+		g_debug("hippo-connection::process_room_message unknown message type");
+	}
 
     result = PROCESS_MESSAGE_CONSUME;
     

@@ -116,7 +116,15 @@ library HippoUtil {
         HRESULT Name([out, retval] BSTR *name);
         [id(203), propget, helpstring("URL to a small image representing the entity")]
         HRESULT SmallPhotoUrl([out, retval] BSTR *smallPhotoUrl);
-        [id(204), propget, helpstring("URL to a web page with information about the entity")]
+        [id(204), propget, helpstring("Number of people currently chatting in group chat")]
+        HRESULT ChattingUserCount([out, retval] int *chattingUserCount);
+        [id(205), propget, helpstring("Last message sent to the chatroom")]
+        HRESULT LastChatMessage([out, retval] BSTR *message);
+        [id(206), propget, helpstring("Sender of the last chat message")]
+        HRESULT LastChatSender([out, retval] IHippoEntity **sender);
+        [id(207), propget, helpstring("Whether or not group chat is currently ignored")]
+        HRESULT Ignored([out, retval] BOOL *ignored);
+        [id(208), propget, helpstring("URL to a web page with information about the entity")]
         HRESULT HomeUrl([out, retval] BSTR *homeUrl);
     }
     [

@@ -82,10 +82,12 @@
 	        	        <File Id="bubbleListJs"      Name="bubbleLi.js"  LongName="bubbleList.js"       src="applets\bubbleList.js"      DiskId="1" Vital="yes"/>
 	        	        <File Id="bubbleListXml"     Name="bubbleLi.xml" LongName="bubbleList.xml"      src="applets\bubbleList.xml"     DiskId="1" Vital="yes"/>
 	        	        <File Id="bubclosePng"       Name="bubclose.gif" LongName="bubclose.png"        src="applets\bubclose.png"       DiskId="1" Vital="yes"/>
+						<File Id="bubclosepPng"      Name="bubclp.gif"   LongName="bubclose_purple.png" src="applets\bubclose_purple.png" DiskId="1" Vital="yes"/>						
 	        	        <File Id="bubedgeBPng"       Name="bubedge_.png" LongName="bubedge_b.png"       src="applets\bubedge_b.png"      DiskId="1" Vital="yes"/>
 	        	        <File Id="bubedgeLPng"       Name="bubedge_.png" LongName="bubedge_l.png"       src="applets\bubedge_l.png"      DiskId="1" Vital="yes"/>
 	        	        <File Id="bubedgeRPng"       Name="bubedge_.png" LongName="bubedge_r.png"       src="applets\bubedge_r.png"      DiskId="1" Vital="yes"/>
 	        	        <File Id="bubedgeTPng"       Name="bubedge_.png" LongName="bubedge_t.png"       src="applets\bubedge_t.png"      DiskId="1" Vital="yes"/>
+						<File Id="bubgroupupdateGif" Name="bubgroup.gif" LongName="bubgroupupdate.gif"  src="applets\bubgroupupdate.gif" DiskId="1" Vital="yes"/>
 	        	        <File Id="bublinkswarmGif"   Name="bublinks.gif" LongName="bublinkswarm.gif"    src="applets\bublinkswarm.gif"   DiskId="1" Vital="yes"/>
 	        	        <File Id="chaticonGif"       Name="chaticon.gif" LongName="chaticon.gif"        src="applets\chaticon.gif"       DiskId="1" Vital="yes"/>
 	        	        <File Id="clientstyleXml"    Name="clientst.xml" LongName="clientstyle.xml"     src="applets\clientstyle.xml"    DiskId="1" Vital="yes"/>
@@ -102,6 +104,10 @@
 	        	        <File Id="lsorangeBrPng"     Name="lsorange.png" LongName="lsorange_br.png"     src="applets\lsorange_br.png"    DiskId="1" Vital="yes"/>
 	        	        <File Id="lsorangeTlPng"     Name="lsorange.png" LongName="lsorange_tl.png"     src="applets\lsorange_tl.png"    DiskId="1" Vital="yes"/>
 	        	        <File Id="lsorangeTrPng"     Name="lsorange.png" LongName="lsorange_tr.png"     src="applets\lsorange_tr.png"    DiskId="1" Vital="yes"/>
+						<File Id="lspurpleBlPng"     Name="lspurple.png" LongName="lspurple_bl.png"     src="applets\lspurple_bl.png"    DiskId="1" Vital="yes"/>
+						<File Id="lspurpleBrPng"     Name="lspurple.png" LongName="lspurple_br.png"     src="applets\lspurple_br.png"    DiskId="1" Vital="yes"/>
+						<File Id="lspurpleTlPng"     Name="lspurple.png" LongName="lspurple_tl.png"     src="applets\lspurple_tl.png"    DiskId="1" Vital="yes"/>
+						<File Id="lspurpleTrPng"     Name="lspurple.png" LongName="lspurple_tr.png"     src="applets\lspurple_tr.png"    DiskId="1" Vital="yes"/>						
 	        	        <File Id="lswhiteBlPng"      Name="lswhite_.png" LongName="lswhite_bl.png"      src="applets\lswhite_bl.png"     DiskId="1" Vital="yes"/>
 	        	        <File Id="lswhiteBrPng"      Name="lswhite_.png" LongName="lswhite_br.png"      src="applets\lswhite_br.png"     DiskId="1" Vital="yes"/>
 	        	        <File Id="lswhiteTlPng"      Name="lswhite_.png" LongName="lswhite_tl.png"      src="applets\lswhite_tl.png"     DiskId="1" Vital="yes"/>

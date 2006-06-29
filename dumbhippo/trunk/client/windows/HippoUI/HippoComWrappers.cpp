@@ -70,6 +70,64 @@ HippoEntityWrapper::get_SmallPhotoUrl(BSTR *smallPhotoUrl)
     return S_OK;
 }
 
+STDMETHODIMP 
+HippoEntityWrapper::get_Ignored(BOOL *ignored)
+{
+    // *ignored = hippo_entity_get_ignored(delegate_);
+    *ignored = false;
+    return S_OK;
+}
+
+STDMETHODIMP 
+HippoEntityWrapper::get_ChattingUserCount(int *chattingUserCount)
+{
+    HippoChatRoom *room = hippo_entity_get_chat_room(delegate_);
+
+    if (room && !hippo_chat_room_get_loading(room)) {
+        *chattingUserCount = hippo_chat_room_get_chatting_user_count(room);
+    } else {
+        hippoDebugLogW(L"HippoEntityWrapper::get_ChattingUserCount was called when the chat room "
+                       L"for the group was null or was still loading");
+        *chattingUserCount = 0;
+    }
+
+    return S_OK;
+}
+
+STDMETHODIMP 
+HippoEntityWrapper::get_LastChatMessage(BSTR *message)
+{
+    *message = NULL;
+
+    HippoChatRoom *room = hippo_entity_get_chat_room(delegate_);
+    if (room) {
+        HippoChatMessage *m = hippo_chat_room_get_last_message(room);
+        if (m != NULL) {
+            utf8ToCom(hippo_chat_message_get_text(m), message);
+        }
+    }
+
+    return S_OK;
+}
+
+STDMETHODIMP
+HippoEntityWrapper::get_LastChatSender(IHippoEntity **sender)
+{
+    *sender = NULL;
+
+    HippoChatRoom *room = hippo_entity_get_chat_room(delegate_);
+    if (room) {
+        HippoChatMessage *m = hippo_chat_room_get_last_message(room);
+        if (m != NULL) {
+            HippoPerson *person = hippo_chat_message_get_person(m);
+            if (person != NULL)
+                entityToCom(HIPPO_ENTITY(person), sender);
+        }
+    }
+
+    return S_OK;
+}
+
 STDMETHODIMP
 HippoEntityWrapper::get_HomeUrl(BSTR *homeUrl)
 {

@@ -485,6 +485,15 @@ hippo_chat_room_add_message(HippoChatRoom    *room,
                 prev = link;
             }
         }
+        /* We now require that messages are inserted in order, the
+         * above code is excessively complicated for that, but historically
+         * it was thought possible that messages could come in particular
+         * out of order forms.  The above code does not work when a message
+         * older than any other messages already in the list comes in, in 
+         * this case we reach this assertion.  Feel free to simplify now
+         * that we require messages are inserted in order, or fix if
+         * we do later allow any order.
+         */
         g_assert_not_reached();
     }
 }

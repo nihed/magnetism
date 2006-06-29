@@ -131,6 +131,15 @@ dh.util.prependCssClass = function (node, className) {
         node.className = className
 }
 
+dh.util.swapLastCssClass = function (node, classPrefix, classSuffix) {
+    var klasses = node.className.split(" ")
+    if (klasses.length > 0 && klasses[klasses.length-1].indexOf(classPrefix) == 0) {
+        klasses.pop()
+    }
+    klasses.push(classPrefix + classSuffix)
+    node.className = klasses.join(" ")
+}
+
 dh.util.fillAlphaPng = function(image) {
     var span = image.parentNode
     var src = image.src
