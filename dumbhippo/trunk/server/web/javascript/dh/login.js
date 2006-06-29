@@ -77,6 +77,7 @@ dhLoginInit = function() {
 			return false; // don't submit
 		}
 	}
+	document.getElementById("dhLoginAddressEntry").focus();
 }
 
 dojo.event.connect(dojo, "loaded", dj_global, "dhLoginInit");

@@ -24,7 +24,7 @@
 		<div id="dhLoginNotification" style="display: none;"></div>
 		<div>Email address:</div>
 		<div>
-			<dht:textInput name="address"/>
+			<dht:textInput id="dhLoginAddressEntry" name="address"/>
 		</div>
 		<div id="dhLoginPasswordLabel" style="display: none;">Password:</div>
 		<div>
