@@ -6,7 +6,7 @@
 <c:if test="${person.combinedGroups.size > 0 || person.self}">
 	
 	<c:choose>
-		<c:when test="${person.self}">
+		<c:when test="${person.self && !person.asOthersWouldSee}">
 			<c:set var="title" value="YOUR GROUPS" scope="page"/>
 		</c:when>
 		<c:otherwise>

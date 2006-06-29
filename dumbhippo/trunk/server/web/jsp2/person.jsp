@@ -7,6 +7,7 @@
 
 <dh:bean id="person" class="com.dumbhippo.web.pages.PersonPage" scope="page"/>
 <jsp:setProperty name="person" property="viewedUserId" param="who"/>
+<jsp:setProperty name="person" property="asOthersWouldSee" value="true"/>
 
 <head>
 	<title><c:out value="${person.viewedPerson.name}"/>'s Mugshot</title>
@@ -16,8 +17,11 @@
 </head>
 <c:choose>
 <c:when test="${!person.disabled}">
-<dht:twoColumnPage alwaysShowSidebar="true">
-	<dht:sidebarPerson who="${person.viewedUserId}"/>
+	<c:if test="${person.self}">
+		<c:set var="topMessageHtml" value="Here is how others see your profile. <a href='/account'>Go to edit mode</a>" scope="page"/>
+	</c:if>
+<dht:twoColumnPage alwaysShowSidebar="true" topMessageHtml="${topMessageHtml}">
+	<dht:sidebarPerson who="${person.viewedUserId}" asOthersWouldSee="true"/>
 	<dht:contentColumn>
 		<dht:zoneBoxWeb disableJumpTo="true">
 			<dht:linkSwarmPromo browserInstructions="false" linksLink="true" separator="true"/>	

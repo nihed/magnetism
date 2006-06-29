@@ -8,6 +8,7 @@
 <%@ attribute name="disableSignupLink" required="false" type="java.lang.Boolean" %>
 <%@ attribute name="searchText" required="false" type="java.lang.String" %>
 <%@ attribute name="logoOnly" required="false" type="java.lang.Boolean" %>
+<%@ attribute name="topMessageHtml" required="false" type="java.lang.String" %>
 
 <c:choose>
 	<c:when test="${alwaysShowSidebar}">
@@ -30,6 +31,13 @@
 			<dht:header disableHomeLink="${disableHomeLink}" disableSignupLink="${disableSignupLink}"/>
 		</c:otherwise>
 	</c:choose>
+	<c:if test="${!empty topMessageHtml}">
+		<div id="dhPageTopMessage">
+			<div id="dhPageTopMessageContent">
+				<c:out value="${topMessageHtml}" escapeXml="false"/>
+			</div>
+		</div>
+	</c:if>
 	<div id="dhPageContent">
 		<jsp:doBody/>
 	</div>

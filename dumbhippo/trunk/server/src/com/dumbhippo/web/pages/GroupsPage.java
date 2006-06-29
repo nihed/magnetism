@@ -11,7 +11,7 @@ import com.dumbhippo.GlobalSetup;
 
 public class GroupsPage extends AbstractPersonPage {
 	@SuppressWarnings("unused")
-	static private final Logger logger = GlobalSetup.getLogger(ViewPersonPage.class);	
+	static private final Logger logger = GlobalSetup.getLogger(GroupsPage.class);	
 		
 	public GroupsPage() {
 	}

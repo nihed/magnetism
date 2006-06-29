@@ -48,18 +48,29 @@ form {
 	overflow:		hidden;
 }
 
-.dh-body-with-sidebar #dhPageHeader {
+#dhPageTopMessage {
+	position:		relative;
+	left:			0px;
+	top:			0px;
+	margin-bottom:	12px;
+}
+
+#dhPageTopMessageContent {
+	margin:			10px;	
+}
+
+.dh-body-with-sidebar #dhPageHeader, .dh-body-with-sidebar #dhPageTopMessage {
 	width:			710px;
 }
 
-.dh-body-without-sidebar #dhPageHeader {
+.dh-body-without-sidebar #dhPageHeader, .dh-body-without-sidebar #dhPageTopMessage {
 	width:			500px;
 }
 
 .dh-main-page #dhPageHeader {
 	width:			710px;	
 }
-	
+
 .dh-header-short {
 	height:			65px;
 }

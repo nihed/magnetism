@@ -3,9 +3,10 @@
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 
 <%@ attribute name="who" required="true" type="java.lang.String" %>
+<%@ attribute name="asOthersWouldSee" required="false" type="java.lang.Boolean" %>
 
 <c:if test="${showSidebar}"> <%-- set in twoColumnPage tag --%>
-	<dht:requirePersonBean who="${who}"/>
+	<dht:requirePersonBean who="${who}" asOthersWouldSee="${asOthersWouldSee}"/>
 	
 	<dht:sidebarColumn>
 		<dht:sidebarBoxProfile/>

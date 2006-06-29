@@ -13,7 +13,7 @@ import com.dumbhippo.persistence.User;
 
 public class GroupInvitationsPage extends AbstractPersonPage {
 	@SuppressWarnings("unused")
-	static private final Logger logger = GlobalSetup.getLogger(ViewPersonPage.class);	
+	static private final Logger logger = GlobalSetup.getLogger(GroupInvitationsPage.class);	
 	
 	public GroupInvitationsPage() {
 	}

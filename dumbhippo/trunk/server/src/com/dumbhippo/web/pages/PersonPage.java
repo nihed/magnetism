@@ -11,8 +11,18 @@ import com.dumbhippo.GlobalSetup;
 
 public class PersonPage extends AbstractPersonPage {
 	@SuppressWarnings("unused")
-	static private final Logger logger = GlobalSetup.getLogger(ViewPersonPage.class);	
+	static private final Logger logger = GlobalSetup.getLogger(PersonPage.class);	
 	
-	public PersonPage() {		
+	private boolean asOthersWouldSee;
+
+	public PersonPage() {
+	}
+	
+	public boolean isAsOthersWouldSee() {
+		return asOthersWouldSee;
+	}
+
+	public void setAsOthersWouldSee(boolean asOthersWouldSee) {
+		this.asOthersWouldSee = asOthersWouldSee;
 	}
 }

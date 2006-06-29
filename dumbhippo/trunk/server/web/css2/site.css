@@ -90,6 +90,13 @@ img {
 	background-color:	#CCCCCC;
 }
 
+#dhPageTopMessage {
+	font-size: 			14px;
+	font-weight:		bold;
+	background-color:	#ffffcc;
+	-moz-border-radius:	5px;	
+}
+
 #dhPageFooter {
 	font-size:			12px;
 	color:				#666666;

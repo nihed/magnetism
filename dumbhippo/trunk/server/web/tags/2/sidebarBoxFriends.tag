@@ -6,7 +6,7 @@
 <c:if test="${person.contacts.size > 0 || person.self}">
 
 	<c:choose>
-		<c:when test="${person.self}">
+		<c:when test="${person.self && !person.asOthersWouldSee}">
 			<c:set var="title" value="YOUR FRIENDS" scope="page"/>
 		</c:when>
 		<c:otherwise>
