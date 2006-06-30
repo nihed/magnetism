@@ -80,13 +80,9 @@ public interface GroupSystem {
 	 * calling it first could result in stale versions of the resources being
 	 * received and cached.
 	 * 
-	 * Note that if you have a Group object around and call this function with
-	 * group.getId(), the version field of the group won't be updated.
-	 * 
-	 * @param groupId group ID of a group
-	 * @return the new version
+	 * @param group the group to update
 	 */
-	public int incrementGroupVersion(String groupId);
+	public void incrementGroupVersion(Group group);
 
 	/**
 	 * Find the groups that member is in. The returned GroupView objects
@@ -143,7 +139,6 @@ public interface GroupSystem {
 	 */
 	public void addGroupMessage(Group group, User fromUser, String text, Date timestamp, int serial);
 
-
 	/**
 	 * Checks whether the given viewpoint is allowed to change settings of a group
 	 * such as the group's name and description.
@@ -152,6 +147,16 @@ public interface GroupSystem {
 	 * @return true if the user of the viewpoint is allowed to edit group settings
 	 */
 	public boolean canEditGroup(UserViewpoint viewpoint, Group group);
+
+	/**
+	 * Change the stock photo for a group.
+	 * 
+	 * @param viewpoint the viewpoint of the user changing the group
+	 * @param group the group to change
+	 * @param photo the relative path to the photo, or null to unset any previously set photo
+	 *   (you have to unset the stock photo to use a custom photo)
+	 */
+	public void setStockPhoto(UserViewpoint viewpoint, Group group, String photo);
 
 	/**
 	 * Transition from INVITED->MEMBER or INVITED_TO_FOLLOW->FOLLOWER.

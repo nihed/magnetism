@@ -380,13 +380,9 @@ public interface IdentitySpider {
 	 * calling it first could result in stale versions of the resources being
 	 * received and cached.
 	 * 
-	 * Note that if you have a user object around and call this function with
-	 * user.getId(), the version field of the user won't be updated.
-	 * 
-	 * @param userId user ID of a user
-	 * @return the new version
+	 * @param user the user to update
 	 */
-	public int incrementUserVersion(String userId);
+	public void incrementUserVersion(User user);
 
 	/** 
 	 * Admin users can get the total number of accounts on the system.

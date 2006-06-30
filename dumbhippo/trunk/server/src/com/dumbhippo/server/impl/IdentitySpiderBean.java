@@ -949,9 +949,9 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		}		
 	}
 	
-	public int incrementUserVersion(final String userId) {
+	public void incrementUserVersion(final User user) {
 		try {
-			return runner.runTaskInNewTransaction(new Callable<Integer>() {
+			runner.runTaskInNewTransaction(new Callable<Object>() {
 				public Integer call() {
 	//				While it isn't a big deal in practice, the implementation below is slightly
 	//				racy. The following would be better, but triggers a hibernate bug.
@@ -961,17 +961,19 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	//				.executeUpdate();
 	//				
 	//				return em.find(User.class, userId).getVersion();
-					User user = em.find(User.class, userId);
-					int newVersion = user.getVersion() + 1;
+					User inner = em.find(User.class, user.getId());
+					int newVersion = inner.getVersion() + 1;
 					
-					user.setVersion(newVersion);
+					inner.setVersion(newVersion);
 					
-					return newVersion;			
+					return null;			
 				}
 			});
+			
+			em.refresh(user);
+
 		} catch (Exception e) {
 			ExceptionUtils.throwAsRuntimeException(e);
-			return 0; // not reached
 		}
 	}
 
@@ -1002,15 +1004,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 			throw new RuntimeException("can only set one's own photo");
 		if (photo != null && !Validators.validateStockPhoto(photo))
 			throw new RuntimeException("invalid stock photo name");
-		if (!em.contains(user)) {
-			// this happens from PersonPhotoServlet...
-			logger.debug("user not attached in setStockPhoto()");
-			try {
-				user = lookupGuid(User.class, user.getGuid());
-			} catch (NotFoundException e) {
-				throw new RuntimeException("invalid user id");
-			}
-		}
+
 		user.setStockPhoto(photo);
 	}
 	

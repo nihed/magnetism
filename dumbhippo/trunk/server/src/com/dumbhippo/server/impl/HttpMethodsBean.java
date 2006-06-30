@@ -54,7 +54,6 @@ import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.ValidationException;
-import com.dumbhippo.persistence.Validators;
 import com.dumbhippo.persistence.WantsIn;
 import com.dumbhippo.postinfo.PostInfo;
 import com.dumbhippo.server.Character;
@@ -501,14 +500,8 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	public void doSetGroupStockPhoto(UserViewpoint viewpoint, String groupId, String photo) {
 		try {
 			Group group = groupSystem.lookupGroupById(viewpoint, groupId);
-			
-			if (!groupSystem.canEditGroup(viewpoint, group))
-				throw new RuntimeException("Only active members can edit a group");
 
-			if (photo != null && !Validators.validateStockPhoto(photo))
-				throw new RuntimeException("invalid stock photo name");
-			
-			group.setStockPhoto(photo);
+			groupSystem.setStockPhoto(viewpoint, group, photo);
 		} catch (NotFoundException e) {
 			throw new RuntimeException(e);
 		}		

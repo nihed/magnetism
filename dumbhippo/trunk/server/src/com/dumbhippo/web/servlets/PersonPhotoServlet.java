@@ -42,7 +42,7 @@ public class PersonPhotoServlet extends AbstractPhotoServlet {
 		String personId = user.getId();
 		writePhotos(scaled, personId, true);
 		
-		identitySpider.incrementUserVersion(user.getId());
+		identitySpider.incrementUserVersion(user);
 		
 		// if we upload a photo we have to remove the stock photo that 
 		// would otherwise override
@@ -53,7 +53,7 @@ public class PersonPhotoServlet extends AbstractPhotoServlet {
 
 	@Override
 	protected boolean requiresTransaction() {
-		return false;
+		return true;
 	}
 
 	@Override

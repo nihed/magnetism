@@ -68,7 +68,11 @@ public class GroupPhotoServlet extends AbstractPhotoServlet {
 		Collection<BufferedImage> scaled = readScaledPhotos(photo);
 		writePhotos(scaled, groupId, true);
 		
-		groupSystem.incrementGroupVersion(group.getId());
+		groupSystem.incrementGroupVersion(group);
+		
+		// if we upload a photo we have to remove the stock photo that 
+		// would otherwise override
+		groupSystem.setStockPhoto(new UserViewpoint(user), group, null);
 		
 		doFinalRedirect(request, response);
 	}

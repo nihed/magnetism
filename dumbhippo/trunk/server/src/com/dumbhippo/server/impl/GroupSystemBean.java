@@ -35,6 +35,7 @@ import com.dumbhippo.persistence.MembershipStatus;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.persistence.Validators;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.GroupSystemRemote;
 import com.dumbhippo.server.GroupView;
@@ -598,9 +599,10 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		return ret;
 	}
 	
-	public int incrementGroupVersion(final String groupId) {
+	public void incrementGroupVersion(final Group group) {
 		try {
-			return runner.runTaskInNewTransaction(new Callable<Integer>() {
+			
+			runner.runTaskInNewTransaction(new Callable<Object>() {
 
 				public Integer call() {
 //				While it isn't a big deal in practice, the implementation below is slightly
@@ -612,18 +614,20 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 				
 //				return em.find(Group.class, groupId).getVersion();
 
-					Group group = em.find(Group.class, groupId);
-					int newVersion = group.getVersion() + 1;
+					Group inner = em.find(Group.class, group.getId());
+					int newVersion = inner.getVersion() + 1;
 					
-					group.setVersion(newVersion);
+					inner.setVersion(newVersion);
 					
-					return newVersion;
+					return null;
 				}
 				
 			});
+			
+			em.refresh(group);
+			
 		} catch (Exception e) {
 			ExceptionUtils.throwAsRuntimeException(e);
-			return 0; // not reached
 		}
 	}
 	
@@ -723,6 +727,16 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		} catch (NotFoundException e) {
 			return false;
 		}
+	}
+	
+	public void setStockPhoto(UserViewpoint viewpoint, Group group, String photo) {
+		if (!canEditGroup(viewpoint, group))
+			throw new RuntimeException("Only active members can edit a group");
+
+		if (photo != null && !Validators.validateStockPhoto(photo))
+			throw new RuntimeException("invalid stock photo name");
+		
+		group.setStockPhoto(photo);
 	}
 
 	public GroupView loadGroup(Viewpoint viewpoint, Guid guid) throws NotFoundException {
