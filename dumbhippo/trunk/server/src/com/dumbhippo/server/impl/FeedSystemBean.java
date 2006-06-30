@@ -377,7 +377,7 @@ public class FeedSystemBean implements FeedSystem {
 	}
 	
 	public List<Feed> getInUseFeeds() {
-		List l = em.createQuery("SELECT f FROM Feed f WHERE EXISTS (SELECT gf FROM GroupFeed gf WHERE gf.feed = f)").getResultList();
+		List l = em.createQuery("SELECT f FROM Feed f WHERE EXISTS (SELECT gf FROM GroupFeed gf WHERE gf.feed = f AND gf.removed = 0)").getResultList();
 		return TypeUtils.castList(Feed.class, l);
 	}
 	
@@ -472,6 +472,7 @@ public class FeedSystemBean implements FeedSystem {
 	public void addGroupFeed(Group group, Feed feed) {
 		for (GroupFeed old : group.getFeeds()) {
 			if (old.getFeed().equals(feed)) {
+				old.setRemoved(false);
 				return;
 			}
 		}
@@ -483,8 +484,7 @@ public class FeedSystemBean implements FeedSystem {
 	public void removeGroupFeed(Group group, Feed feed) {
 		for (GroupFeed old : group.getFeeds()) {
 			if (old.getFeed().equals(feed)) {
-				group.getFeeds().remove(old);				
-				em.remove(old);
+				old.setRemoved(true);
 				return;
 			}
 		}

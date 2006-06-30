@@ -1,5 +1,6 @@
 package com.dumbhippo.persistence;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
@@ -20,6 +21,7 @@ public class GroupFeed extends EmbeddedGuidPersistable {
 	
 	private Feed feed;
 	private Group group;
+	private boolean removed;
 
 	public GroupFeed() {
 		
@@ -53,5 +55,14 @@ public class GroupFeed extends EmbeddedGuidPersistable {
 
 	public void setGroup(Group group) {
 		this.group = group;
+	}
+
+	@Column(nullable=false)
+	public boolean isRemoved() {
+		return removed;
+	}
+
+	public void setRemoved(boolean removed) {
+		this.removed = removed;
 	}
 }

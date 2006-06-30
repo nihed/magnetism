@@ -344,7 +344,10 @@ public class GroupPage extends AbstractSigninOptionalPage {
 	public ListBean<GroupFeed> getFeeds() {
 		if (feeds == null) {
 			List<GroupFeed> list = new ArrayList<GroupFeed>();
-			list.addAll(getViewedGroup().getGroup().getFeeds());
+			for (GroupFeed feed : getViewedGroup().getGroup().getFeeds()) {
+				if (!feed.isRemoved())
+					list.add(feed);
+			}
  
 			Collections.sort(list, new Comparator<GroupFeed>() {
 
