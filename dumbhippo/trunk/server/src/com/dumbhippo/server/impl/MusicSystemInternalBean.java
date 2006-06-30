@@ -302,7 +302,28 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		return count;		
 	}
 
-	private List<TrackHistory> getTrackHistory(Viewpoint viewpoint, Group group, History type, int maxResults) {
+	static final private int MAX_GROUP_HISTORY_TRACKS = 200;
+	static final private int MAX_GROUP_HISTORY_TRACKS_PER_MEMBER = 8;
+	
+	private void chopTrackHistory(List<TrackHistory> results, int firstResult, int maxResults) {
+		// chop out before firstResult
+		if (firstResult > 0) {
+			results.subList(0, Math.min(firstResult, results.size())).clear();
+		}
+		
+		// chop off the end of the list if it's longer than needed
+		if (results.size() > maxResults) {
+			results.subList(maxResults, results.size()).clear();
+		}
+	}
+	
+	private List<TrackHistory> getTrackHistory(Viewpoint viewpoint, Group group, History type, int firstResult, int maxResults) {
+		List<TrackHistory> results = getEntireTrackHistory(viewpoint, group, type);
+		chopTrackHistory(results, firstResult, maxResults);
+		return results;
+	}
+	
+	private List<TrackHistory> getEntireTrackHistory(Viewpoint viewpoint, Group group, History type) {
 		//logger.debug("getTrackHistory() type {} for {} max results " + maxResults, type, group);
 
 		// This is not very efficient now is it...
@@ -310,8 +331,11 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		Set<User> members = groupSystem.getUserMembers(viewpoint, group, MembershipStatus.ACTIVE);
 		List<TrackHistory> results = new ArrayList<TrackHistory>();
 		for (User m : members) {
-			List<TrackHistory> memberHistory = getTrackHistory(viewpoint, m, type, 0, maxResults);
+			List<TrackHistory> memberHistory = getTrackHistory(viewpoint, m, type, 0,
+							MAX_GROUP_HISTORY_TRACKS_PER_MEMBER);
 			results.addAll(memberHistory);
+			if (results.size() > MAX_GROUP_HISTORY_TRACKS)
+				break; // enough! this arbitrarily ignores certain users, but oh well.
 		}
 		
 		Comparator<TrackHistory> comparator;
@@ -354,11 +378,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		}
 		
 		Collections.sort(results, comparator);
-		
-		if (results.size() > maxResults) {
-			results.subList(maxResults, results.size()).clear();
-		}
-		
+
 		return results;
 	}
 
@@ -2077,16 +2097,23 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		pageable.setTotalCount(countTrackHistory(viewpoint, user));
 	}
 
+	public void pageLatestTrackViews(Viewpoint viewpoint, Group group, Pageable<TrackView> pageable) {
+		List<TrackHistory> history = getEntireTrackHistory(viewpoint, group, History.LATEST);
+		pageable.setTotalCount(history.size());
+		chopTrackHistory(history, pageable.getStart(), pageable.getCount());
+		pageable.setResults(getViewsFromTrackHistories(viewpoint, history, true));
+	}
+	
 	public List<TrackView> getLatestTrackViews(Viewpoint viewpoint, Group group, int maxResults) {
 		//logger.debug("getLatestTrackViews() for group {}", group);
-		List<TrackHistory> history = getTrackHistory(viewpoint, group, History.LATEST, maxResults);
+		List<TrackHistory> history = getTrackHistory(viewpoint, group, History.LATEST, 0, maxResults);
 		
 		return getViewsFromTrackHistories(viewpoint, history, true);
 	}
 
 	public List<TrackView> getFrequentTrackViews(Viewpoint viewpoint, Group group, int maxResults) {
 		//logger.debug("getFrequentTrackViews() for group {}", group);
-		List<TrackHistory> history = getTrackHistory(viewpoint, group, History.FREQUENT, maxResults);
+		List<TrackHistory> history = getTrackHistory(viewpoint, group, History.FREQUENT, 0, maxResults);
 		
 		return getViewsFromTrackHistories(viewpoint, history, false);
 	}

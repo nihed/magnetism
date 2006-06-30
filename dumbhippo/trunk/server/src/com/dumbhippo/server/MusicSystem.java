@@ -65,6 +65,8 @@ public interface MusicSystem {
 	
 	public List<TrackView> getFrequentTrackViews(Viewpoint viewpoint, User user, int maxResults);
 	
+	public void pageLatestTrackViews(Viewpoint viewpoint, Group group, Pageable<TrackView> pageable);
+	
 	public List<TrackView> getLatestTrackViews(Viewpoint viewpoint, Group group, int maxResults);
 	
 	public List<TrackView> getFrequentTrackViews(Viewpoint viewpoint, Group group, int maxResults);

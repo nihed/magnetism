@@ -9,7 +9,7 @@
 <jsp:setProperty name="group" property="fromInvite" param="fromInvite"/>
 <jsp:setProperty name="group" property="viewedGroupId" param="who"/>
 
-<c:if test="${empty group.viewedGroupId}">
+<c:if test="${empty group.viewedGroup}">
 	<dht:errorPage>Group not found</dht:errorPage>
 </c:if>
 
@@ -43,12 +43,9 @@
 				</div>
 				<dht:zoneBoxSeparator/>
 			</c:if>
-			<c:if test="${group.latestTracks.size > 0}">
-				<dht:zoneBoxTitle>RECENT GROUP SONGS</dht:zoneBoxTitle>
-				<c:forEach var="track" items="${group.latestTracks.list}">
-				     <dht:track track="${track}" oneLine="true" displaySinglePersonMusicPlay="true"/>
-				</c:forEach>
-				<dht:zoneBoxSeparator/>
+			<c:if test="${group.latestTracks.resultCount > 0}">
+				<dht:trackList name="RECENT GROUP SONGS" id="dhRecentSongs" tracks="${group.latestTracks.results}"
+					pageable="${group.latestTracks}" separator="true" oneLine="true" displaySinglePersonMusicPlay="true"/>
 			</c:if>
 			<dht:zoneBoxTitle a="dhGroupPosts">LINKS RECENTLY SHARED WITH <c:out value="${fn:toUpperCase(group.name)}"/></dht:zoneBoxTitle>
 			<c:choose>

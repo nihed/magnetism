@@ -9,6 +9,7 @@
 <%@ attribute name="pageable" required="false" type="com.dumbhippo.server.Pageable" %>
 <%@ attribute name="separator" required="false" type="java.lang.Boolean" %>
 <%@ attribute name="displaySinglePersonMusicPlay" required="false" type="java.lang.Boolean"%>
+<%@ attribute name="playItLink" required="false" type="java.lang.Boolean"%>
 
 <c:if test="${empty id}">
 	<c:set var="id" value=""/>
@@ -36,7 +37,7 @@
 <c:if test="${!empty tracks}">
 	<dht:zoneBoxTitle a="${id}"><c:out value="${name}"/></dht:zoneBoxTitle>
 	<c:forEach items="${tracks}" var="track">
-		<dht:track track="${track}" albumArt="${albumArt}" oneLine="${oneLine}" displaySinglePersonMusicPlay="${displaySinglePersonMusicPlay}" />
+		<dht:track track="${track}" albumArt="${albumArt}" oneLine="${oneLine}" displaySinglePersonMusicPlay="${displaySinglePersonMusicPlay}" playItLink="${playItLink}"/>
 	</c:forEach>
 	<c:if test="${!empty pageable}">
 		<dht:expandablePager pageable="${pageable}" anchor="${id}"/>

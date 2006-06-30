@@ -58,7 +58,7 @@ public class GroupPage extends AbstractSigninOptionalPage {
 	private Set<User> adders;
 	private PersonView inviter;
 	private GroupMember groupMember;
-	private ListBean<TrackView> latestTracks;
+	private Pageable<TrackView> latestTracks;
 	private ListBean<PersonView> activeMembers;
 	private ListBean<PersonView> invitedMembers;
 	private ListBean<PersonView> followers;
@@ -332,14 +332,14 @@ public class GroupPage extends AbstractSigninOptionalPage {
 		return posts;
 	}
 
-	public ListBean<TrackView> getLatestTracks() {
+	public Pageable<TrackView> getLatestTracks() {
 		if (latestTracks == null) {
-			List<TrackView> tracks = musicSystem.getLatestTrackViews(getSignin().getViewpoint(), getViewedGroup().getGroup(), 3);
-			latestTracks = new ListBean<TrackView>(tracks);
+			latestTracks = pagePositions.createPageable("latestTracks"); 
+			musicSystem.pageLatestTrackViews(getSignin().getViewpoint(), getViewedGroup().getGroup(), latestTracks);
 		}
 
 		return latestTracks;
-	}	
+	}
 	
 	public ListBean<GroupFeed> getFeeds() {
 		if (feeds == null) {

@@ -24,20 +24,19 @@
 	<dht:sidebarPerson who="${person.viewedUserId}" asOthersWouldSee="true"/>
 	<dht:contentColumn>
 		<dht:zoneBoxWeb disableJumpTo="true">
-			<dht:linkSwarmPromo browserInstructions="false" linksLink="true" separator="true"/>	
 			<dht:requireLinksPersonBean who="${person.viewedUserId}"/>
-			<c:if test="${!signin.valid}">
-			        <dht:linkSwarmPromo separator="true" linksLink="true"/>
-			</c:if>
+	        <dht:linkSwarmPromo separator="true" linksLink="true" browserInstructions="${signin.valid}"/>
 			<c:if test="${links.favoritePosts.resultCount > 0}">
-				<dht:zoneBoxTitle>FAVES</dht:zoneBoxTitle>
+				<dht:zoneBoxTitle a="dhFavoritePosts">FAVES</dht:zoneBoxTitle>
 				<dht:postList posts="${links.favoritePosts.results}" format="simple"/>
+				<dht:expandablePager pageable="${links.favoritePosts}" anchor="dhFavoritePosts"/>
 				<dht:zoneBoxSeparator/>
 			</c:if>
-			<dht:zoneBoxTitle>SHARED BY <c:out value="${fn:toUpperCase(person.viewedPerson.name)}"/></dht:zoneBoxTitle>
+			<dht:zoneBoxTitle a="dhSentPosts">SHARED BY <c:out value="${fn:toUpperCase(person.viewedPerson.name)}"/></dht:zoneBoxTitle>
 			<c:choose>
 				<c:when test="${links.sentPosts.resultCount > 0}">
 					<dht:postList posts="${links.sentPosts.results}" format="simple"/>
+					<dht:expandablePager pageable="${links.sentPosts}" anchor="dhSentPosts"/>
 				</c:when>
 				<c:otherwise>
 					Nothing shared by <c:out value="${person.viewedPerson.name}"/> yet!
@@ -45,11 +44,8 @@
 			</c:choose>
 		</dht:zoneBoxWeb>
 		<dht:zoneBoxMusic disableJumpTo="true">
-			<dht:musicRadarPromo separator="true"/>
-			<c:if test="${!signin.valid}">
-			        <dht:musicRadarPromo separator="true" musicLink="true"/>
-			</c:if>
-			<dht:requireMusicPersonBean who="${person.viewedUserId}"/>
+			<dht:requireMusicPersonBean who="${person.viewedUserId}"/>		
+	        <dht:musicRadarPromo separator="true" musicLink="${!signin.valid}"/>
 			<dht:zoneBoxTitle>CURRENT SONG FOR <c:out value="${fn:toUpperCase(person.viewedPerson.name)}"/></dht:zoneBoxTitle>
 			<dh:nowPlaying userId="${person.viewedUserId}" hasLabel="false"/>
 			<dht:zoneBoxSeparator/>
@@ -59,10 +55,8 @@
 			    <dht:zoneBoxSubcolumns>
 				    <dht:zoneBoxSubcolumn which="one">
 			            <c:if test="${musicPerson.recentTracks.resultCount > 0}">
-				            <dht:zoneBoxTitle>RECENT SONGS</dht:zoneBoxTitle>
-				            <c:forEach items="${musicPerson.recentTracks.results}" var="track">
-				            <dht:track track="${track}" oneLine="false" playItLink="false"/>
-				            </c:forEach>
+				            <dht:trackList name="RECENT SONGS" id="dhRecentSongs" tracks="${musicPerson.recentTracks.results}"
+				            pageable="${musicPerson.recentTracks}" separator="false" oneLine="false" playItLink="false"/>
 			            </c:if>
 				    </dht:zoneBoxSubcolumn>
 				    <dht:zoneBoxSubcolumn which="two">
@@ -74,12 +68,10 @@
 			    </dht:zoneBoxSubcolumns>
 			</c:when>
 			<c:otherwise>
-			            <c:if test="${musicPerson.recentTracks.resultCount > 0}">
-				            <dht:zoneBoxTitle>RECENT SONGS</dht:zoneBoxTitle>
-				            <c:forEach items="${musicPerson.recentTracks.results}" var="track">
-				            <dht:track track="${track}" oneLine="true" playItLink="false"/>
-				            </c:forEach>
-			            </c:if>
+				<c:if test="${musicPerson.recentTracks.resultCount > 0}">
+					<dht:trackList name="RECENT SONGS" id="dhRecentSongs" tracks="${musicPerson.recentTracks.results}"
+			            		pageable="${musicPerson.recentTracks}" separator="false" oneLine="true" playItLink="false"/>
+				</c:if>
 			</c:otherwise>
 			</c:choose>
 		</dht:zoneBoxMusic>
