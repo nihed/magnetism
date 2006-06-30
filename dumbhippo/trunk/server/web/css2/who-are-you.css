@@ -10,3 +10,8 @@
 	font-weight: bold;
 	color: 		 #cc0033;
 }
+
+#dhPasswordHelp {
+	display:	none;
+	font-size:	12px;
+}

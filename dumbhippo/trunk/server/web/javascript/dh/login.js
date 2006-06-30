@@ -32,12 +32,14 @@ dh.login.sendSigninLink = function() {
 dh.login.togglePasswordBox = function() {
 	var passwordLabel = document.getElementById('dhLoginPasswordLabel');
 	var passwordEntry = document.getElementById('dhLoginPasswordEntry');
+	var passwordHelp = document.getElementById('dhPasswordHelp');
 	var toggleLink = document.getElementById('dhLoginTogglePasswordLink');
 	var showingEntry = document.getElementById('dhLoginPasswordShowing');
 	var loginButton = document.getElementById('dhLoginButton');
 	if (dh.login.showingPassword) {
 		passwordLabel.style.display = 'none';
 		passwordEntry.style.display = 'none';
+		passwordHelp.style.display  = 'none';
 		loginButton.value = "Mail me a log in link";
 		dojo.dom.textContent(toggleLink, "Log in with password");
 		showingEntry.value = "false";
@@ -45,6 +47,7 @@ dh.login.togglePasswordBox = function() {
 	} else {
 		passwordLabel.style.display = 'block';
 		passwordEntry.style.display = 'inline';
+		passwordHelp.style.display  = 'inline';
 		loginButton.value = "Log in";
 		dojo.dom.textContent(toggleLink, "Don't know my password");
 		showingEntry.value = "true";
