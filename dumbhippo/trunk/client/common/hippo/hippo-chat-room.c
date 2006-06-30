@@ -452,50 +452,38 @@ hippo_chat_room_add_message(HippoChatRoom    *room,
     
     g_return_if_fail(HIPPO_IS_CHAT_ROOM(room));
     
-    if (room->messages == NULL) {
-        room->messages = g_slist_prepend(room->messages, message);
-        g_signal_emit(room, signals[MESSAGE_ADDED], 0, message);
-    } else {
+    serial = hippo_chat_message_get_serial(message);
 
-        serial = hippo_chat_message_get_serial(message);
+    /* highest serial is earliest in the list */
+    prev = NULL;
+    for (link = room->messages; link != NULL; link = link->next) {
+        HippoChatMessage *old = link->data;
+        int old_serial = hippo_chat_message_get_serial(old);
 
-        /* highest serial is earliest in the list */
-        prev = NULL;
-        for (link = room->messages; link != NULL; link = link->next) {
-            HippoChatMessage *old = link->data;
-            int old_serial = hippo_chat_message_get_serial(old);
-
-            if (old_serial == serial) {
-                /* We already have this message */
-                hippo_chat_message_free(message);
-                return;
-            } else if (old_serial < serial) {
-                if (prev) {
-                    g_assert(prev->next == link);
-                    prev->next = g_slist_prepend(prev->next, message);
-                } else {
-                    g_assert(link == room->messages);
-                    room->messages = g_slist_prepend(room->messages, message);
-                }
-
-                g_signal_emit(room, signals[MESSAGE_ADDED], 0, message);
-
-                return;
+        if (old_serial == serial) {
+            /* We already have this message */
+            hippo_chat_message_free(message);
+            return;
+        } else if (old_serial < serial) {
+            if (prev) {
+                g_assert(prev->next == link);
+                prev->next = g_slist_prepend(prev->next, message);
             } else {
-                prev = link;
+                g_assert(link == room->messages);
+                room->messages = g_slist_prepend(room->messages, message);
             }
+
+            g_signal_emit(room, signals[MESSAGE_ADDED], 0, message);
+
+            return;
         }
-        /* We now require that messages are inserted in order, the
-         * above code is excessively complicated for that, but historically
-         * it was thought possible that messages could come in particular
-         * out of order forms.  The above code does not work when a message
-         * older than any other messages already in the list comes in, in 
-         * this case we reach this assertion.  Feel free to simplify now
-         * that we require messages are inserted in order, or fix if
-         * we do later allow any order.
-         */
-        g_assert_not_reached();
+        
+        prev = link;
     }
+
+    /* We were lower than all existing serials, or the existing list was empty */
+    room->messages = g_slist_append(room->messages, message);
+    g_signal_emit(room, signals[MESSAGE_ADDED], 0, message);
 }
 
 /* Called on reconnect, since users and messages will be resent */
