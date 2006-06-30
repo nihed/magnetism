@@ -24,6 +24,16 @@ typedef enum {
     HIPPO_BUBBLE_REASON_VIEWER
 } HippoBubbleReason;
 
+typedef enum {
+	HIPPO_BUBBLE_COLOR_ORANGE,
+	HIPPO_BUBBLE_COLOR_PURPLE
+} HippoBubbleColor;
+
+typedef enum {
+	HIPPO_BUBBLE_ACTION_JOIN_CHAT = 1,
+	HIPPO_BUBBLE_ACTION_IGNORE = 2
+} HippoBubbleActions;
+
 typedef struct _HippoBubble      HippoBubble;
 typedef struct _HippoBubbleClass HippoBubbleClass;
 
@@ -37,6 +47,15 @@ typedef struct _HippoBubbleClass HippoBubbleClass;
 GType        	 hippo_bubble_get_type               (void) G_GNUC_CONST;
 
 GtkWidget*       hippo_bubble_new                    (void);
+
+void             hippo_bubble_set_header_image       (HippoBubble  *bubble,
+                                                      const char   *img_name);
+
+void             hippo_bubble_set_foreground_color   (HippoBubble     *bubble, 
+                                                      HippoBubbleColor color);
+
+void			 hippo_bubble_set_actions            (HippoBubble *bubble, 
+                                                      int          actions);
 
 void             hippo_bubble_set_sender_guid        (HippoBubble *bubble,
                                                       const char  *value);

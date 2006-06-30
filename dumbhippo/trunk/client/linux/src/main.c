@@ -290,7 +290,14 @@ hippo_app_post_is_active(HippoApp   *app,
     if (app->creating_chat_id && strcmp(post_id, app->creating_chat_id) == 0)
         return TRUE;
         
-    return g_hash_table_lookup(app->chat_windows, post_id) != NULL;    
+    return hippo_app_chat_is_active(app, post_id);
+}
+
+gboolean
+hippo_app_chat_is_active(HippoApp   *app,
+                         const char *post_id)
+{
+	return g_hash_table_lookup(app->chat_windows, post_id) != NULL;    
 }
 
 void

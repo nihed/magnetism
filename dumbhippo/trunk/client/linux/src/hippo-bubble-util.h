@@ -18,6 +18,11 @@ void             hippo_bubble_set_post               (HippoBubble    *bubble,
                                                       HippoDataCache *cache);
 HippoPost*       hippo_bubble_get_post               (HippoBubble    *bubble);
 
+void             hippo_bubble_set_group              (HippoBubble    *bubble,
+                                                      HippoEntity    *group,
+                                                      HippoDataCache *cache);
+HippoEntity *    hippo_bubble_get_group              (HippoBubble *bubble);
+
 G_END_DECLS
 
 #endif /* __HIPPO_BUBBLE_UTIL_H__ */

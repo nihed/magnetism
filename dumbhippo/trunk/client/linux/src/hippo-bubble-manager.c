@@ -28,9 +28,9 @@ manager_hide_window(BubbleManager *manager)
 }
 
 static gboolean
-find_bubble_for_post(BubbleManager *manager,
-                     HippoPost     *post,
-                     HippoBubble  **bubble_p)
+find_bubble_for_object(BubbleManager *manager,
+                       gpointer       object,
+                       HippoBubble  **bubble_p)
 {
     GList *children;
     GList *link;
@@ -39,7 +39,7 @@ find_bubble_for_post(BubbleManager *manager,
     for (link = children; link != NULL; link = link->next) {
         HippoBubble *bubble = HIPPO_BUBBLE(link->data);
      
-        if (hippo_bubble_get_post(bubble) == post) {
+        if (hippo_bubble_get_post(bubble) == object || hippo_bubble_get_group(bubble) == object) {
             g_list_free(children);
             *bubble_p = bubble;
             return TRUE;
@@ -58,7 +58,7 @@ on_post_changed(HippoPost     *post,
     HippoBubble *bubble;
     
     if (hippo_post_get_ignored(post) &&
-        find_bubble_for_post(manager, post, &bubble)) {
+        find_bubble_for_object(manager, post, &bubble)) {
         manager_remove_bubble(manager, bubble);
     }
 }                
@@ -75,7 +75,8 @@ manager_remove_bubble_by_page(BubbleManager *manager,
     widget = gtk_notebook_get_nth_page(GTK_NOTEBOOK(manager->notebook), page);
     post = hippo_bubble_get_post(HIPPO_BUBBLE(widget));
 
-    g_signal_handlers_disconnect_by_func(G_OBJECT(post), G_CALLBACK(on_post_changed), manager);
+	if (post != NULL)
+	    g_signal_handlers_disconnect_by_func(G_OBJECT(post), G_CALLBACK(on_post_changed), manager);
 
     gtk_notebook_remove_page(GTK_NOTEBOOK(manager->notebook), page);
     
@@ -214,41 +215,14 @@ update_bubble_paging(BubbleManager *manager)
     g_list_free(children);
 }
 
-/* note, our job in this file is just to be sure the bubble exists
- * and has the right "reason";
- * The bubble itself is responsible for watching changes to the post
- * and chat room in hippo-bubble-util.c, so e.g. a "recent links"
- * window could share that code.
- * 
- * We also simply skip updating the bubble if the chat is open.
- * 
- * So basically don't call most of the bubble setters in this file 
- * or it will be broken.
- */
 static void
-manager_bubble_post(BubbleManager    *manager,
-                    HippoPost        *post,
-                    HippoBubbleReason reason)
+manager_show_bubble(BubbleManager     *manager,
+					HippoBubble       *bubble,
+                    HippoBubbleReason  reason)
 {
-    HippoBubble *bubble;
     int page;
     GTimeVal tv;
     
-    /* if chat is open, we don't want to bubble */
-    if (hippo_app_post_is_active(hippo_get_app(), hippo_post_get_guid(post)))
-        return;
-
-    if (hippo_post_get_ignored(post))
-        return;
-
-    if (!find_bubble_for_post(manager, post, &bubble)) {
-        bubble = HIPPO_BUBBLE(hippo_bubble_new());
-        hippo_bubble_set_post(bubble, post, manager->cache);
-        g_signal_connect(G_OBJECT(post), "changed", G_CALLBACK(on_post_changed), manager);
-        gtk_notebook_append_page(GTK_NOTEBOOK(manager->notebook), GTK_WIDGET(bubble), NULL);
-        gtk_widget_show(GTK_WIDGET(bubble));
-    }
-
     g_debug("Showing bubble window");
 
     hippo_bubble_notify_reason(bubble, reason);
@@ -267,6 +241,63 @@ manager_bubble_post(BubbleManager    *manager,
     gtk_widget_show(manager->window);
 }
 
+/* note, our job in this file is just to be sure the bubble exists
+ * and has the right "reason";
+ * The bubble itself is responsible for watching changes to the post
+ * and chat room in hippo-bubble-util.c, so e.g. a "recent links"
+ * window could share that code.
+ * 
+ * We also simply skip updating the bubble if the chat is open.
+ * 
+ * So basically don't call most of the bubble setters in this file 
+ * or it will be broken.
+ */
+static void
+manager_bubble_post(BubbleManager    *manager,
+                    HippoPost        *post,
+                    HippoBubbleReason reason)
+{
+    HippoBubble *bubble;
+    
+    /* if chat is open, we don't want to bubble */
+    if (hippo_app_post_is_active(hippo_get_app(), hippo_post_get_guid(post)))
+        return;
+
+    if (hippo_post_get_ignored(post))
+        return;
+
+    if (!find_bubble_for_object(manager, post, &bubble)) {
+        bubble = HIPPO_BUBBLE(hippo_bubble_new());
+        hippo_bubble_set_post(bubble, post, manager->cache);
+        g_signal_connect(G_OBJECT(post), "changed", G_CALLBACK(on_post_changed), manager);
+        gtk_notebook_append_page(GTK_NOTEBOOK(manager->notebook), GTK_WIDGET(bubble), NULL);
+        gtk_widget_show(GTK_WIDGET(bubble));
+    }
+    
+    manager_show_bubble(manager, bubble, reason);
+}
+
+static void
+manager_bubble_group(BubbleManager    *manager,
+                     HippoEntity      *group,
+                     HippoBubbleReason reason)
+{
+    HippoBubble *bubble;
+    
+    /* if chat is open, we don't want to bubble */
+    if (hippo_app_chat_is_active(hippo_get_app(), hippo_entity_get_guid(group)))
+        return;
+
+    if (!find_bubble_for_object(manager, group, &bubble)) {
+        bubble = HIPPO_BUBBLE(hippo_bubble_new());
+        hippo_bubble_set_group(bubble, group, manager->cache);
+        gtk_notebook_append_page(GTK_NOTEBOOK(manager->notebook), GTK_WIDGET(bubble), NULL);
+        gtk_widget_show(GTK_WIDGET(bubble));
+    }
+    
+    manager_show_bubble(manager, bubble, reason);
+}
+
 static HippoPost*
 manager_post_for_room(BubbleManager *manager,
                       HippoChatRoom *room)
@@ -278,6 +309,20 @@ manager_post_for_room(BubbleManager *manager,
 
     return post;
 }                      
+
+static HippoEntity *
+manager_group_for_room(BubbleManager *manager,
+                       HippoChatRoom *room)
+{
+    HippoEntity *group;
+    
+    group = hippo_data_cache_lookup_entity(manager->cache, 
+                hippo_chat_room_get_id(room));
+	if (hippo_entity_get_entity_type(group) != HIPPO_ENTITY_GROUP)
+		group = NULL;
+
+    return group;
+}                     
 
 /* happens for both participants and chatters */
 static void
@@ -305,8 +350,43 @@ on_message_added(HippoChatRoom    *room,
     post = manager_post_for_room(manager, room);    
     if (post != NULL) {                
         manager_bubble_post(manager, post, HIPPO_BUBBLE_REASON_CHAT);
+    } else {
+	    HippoEntity *group;    
+	    group = manager_group_for_room(manager, room);
+    	if (group != NULL) {                
+        	manager_bubble_group(manager, group, HIPPO_BUBBLE_REASON_CHAT);
+	    }    
     }
 }
+
+static void
+on_user_joined_group_chat(HippoChatRoom *room,
+		                  HippoPerson   *user,
+                          BubbleManager *manager)
+{
+    HippoPost *post;
+    post = manager_post_for_room(manager, room);
+    if (post != NULL) {                
+        manager_bubble_post(manager, post, HIPPO_BUBBLE_REASON_VIEWER);
+    }
+}
+
+static void
+on_group_chatmessage_added(HippoChatRoom    *room,
+                           HippoChatMessage *message,
+                           BubbleManager    *manager)
+{
+    HippoPost *post;
+    
+    if (hippo_chat_room_get_loading(room))
+        return;
+    
+    post = manager_post_for_room(manager, room);    
+    if (post != NULL) {                
+        manager_bubble_post(manager, post, HIPPO_BUBBLE_REASON_CHAT);
+    }
+}
+
 
 static void
 chat_room_disconnect(BubbleManager *manager,
@@ -330,6 +410,10 @@ on_chat_room_loaded(HippoPost     *post,
         g_signal_connect(G_OBJECT(room), "message-added", G_CALLBACK(on_message_added), manager);
         
         g_hash_table_replace(manager->chats, room, room);
+    } else if (hippo_chat_room_get_kind(room) == HIPPO_CHAT_KIND_GROUP
+    		   && g_hash_table_lookup(manager->chats, room) == NULL) {
+        g_signal_connect(G_OBJECT(room), "user-joined", G_CALLBACK(on_user_joined_group_chat), manager);
+        g_signal_connect(G_OBJECT(room), "message-added", G_CALLBACK(on_message_added), manager);    		   
     }
 }
 

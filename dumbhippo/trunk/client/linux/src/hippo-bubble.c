@@ -60,7 +60,7 @@ struct _HippoBubble {
     GtkFixed parent;
     GtkWidget *sender_photo;
     GtkWidget *sender_name;
-    GtkWidget *link_swarm_logo;
+    GtkWidget *header_logo;
     GtkWidget *link_title;
     GtkWidget *link_description;
     GtkWidget *recipients;
@@ -78,9 +78,11 @@ struct _HippoBubble {
     GtkWidget *last_message;
     GtkWidget *last_message_photo;
     GtkWidget *viewers;
+    HippoBubbleColor color;
     char      *sender_id;
     char      *post_id;
     char      *last_message_sender_id;
+    int        actions;
     int        page; /* [0,total_pages) */
     int        total_pages;
     unsigned int whos_there_set : 1;
@@ -357,7 +359,6 @@ static void
 hippo_bubble_init(HippoBubble       *bubble)
 {
     GdkColor white;
-    GdkPixbuf *pixbuf;
     GtkWidget *widget;
     GtkWidget *box;
 
@@ -365,6 +366,7 @@ hippo_bubble_init(HippoBubble       *bubble)
     bubble->page = 0;
     bubble->total_pages = 1;
     bubble->active_extra = ACTIVE_EXTRA_WHOS_THERE;
+    bubble->actions = HIPPO_BUBBLE_ACTION_JOIN_CHAT | HIPPO_BUBBLE_ACTION_IGNORE;
 
     white.red = 0xFFFF;
     white.green = 0xFFFF;
@@ -417,12 +419,9 @@ hippo_bubble_init(HippoBubble       *bubble)
     
     gtk_misc_set_alignment(GTK_MISC(widget), 0.0, 0.0);
     
-    /* web swarm logo text */
-    
-    pixbuf = hippo_embedded_image_get("bublinkswarm");
-    bubble->link_swarm_logo = gtk_image_new_from_pixbuf(pixbuf);
-    hookup_widget(bubble, &bubble->link_swarm_logo);
-    
+	bubble->header_logo = gtk_image_new();
+	hookup_widget(bubble, &bubble->header_logo);
+
     /* link title */
     
     bubble->link_title = g_object_new(GTK_TYPE_EVENT_BOX,
@@ -921,6 +920,16 @@ compute_layout(GtkWidget          *widget,
 #undef OUT   
 }
 
+static GdkPixbuf *
+lookup_corner(HippoBubbleColor color, const char *suffix)
+{
+	GdkPixbuf *pixbuf;
+	char *filename = g_strdup_printf("%c%s", color == HIPPO_BUBBLE_COLOR_ORANGE ? 'o' : 'p', suffix);
+    pixbuf = hippo_embedded_image_get(filename);
+    g_free(filename);
+    return pixbuf;
+}
+
 static gboolean
 hippo_bubble_expose_event(GtkWidget      *widget,
             		      GdkEventExpose *event)
@@ -964,46 +973,46 @@ hippo_bubble_expose_event(GtkWidget      *widget,
                         border_rect.x, border_rect.y,
                         border_rect.width, border_rect.height);
 
-    /* IT'S ORANGE BABY */
-    gdk_rgb_gc_set_foreground(gc, 0xF16D1C);
+    /* IT'S ORANGE (or purple) BABY */
+    gdk_rgb_gc_set_foreground(gc, bubble->color == HIPPO_BUBBLE_COLOR_ORANGE ? 0xF16D1C : 0xAA86B6);
     gdk_draw_rectangle(widget->window, gc, TRUE,
                         content_rect.x, content_rect.y,
                         content_rect.width, content_rect.height);
 
     /* now stamp the little pixmap pieces all over */    
-    pixbuf = hippo_embedded_image_get("obubcnr_tr");
+	pixbuf = lookup_corner(bubble->color, "bubcnr_tr");	
     draw_pixbuf(widget, gc, pixbuf, GDK_GRAVITY_NORTH_EAST,
                 border_rect.x + border_rect.width,
                 border_rect.y);
     
-    pixbuf = hippo_embedded_image_get("obubcnr_br");
+    pixbuf = lookup_corner(bubble->color, "bubcnr_br");
     draw_pixbuf(widget, gc, pixbuf, GDK_GRAVITY_SOUTH_EAST,
                 border_rect.x + border_rect.width,
                 border_rect.y + border_rect.height);
     
-    pixbuf = hippo_embedded_image_get("obubcnr_bl");
+    pixbuf = lookup_corner(bubble->color, "bubcnr_bl");
     draw_pixbuf(widget, gc, pixbuf, GDK_GRAVITY_SOUTH_WEST,
                 border_rect.x,
                 border_rect.y + border_rect.height);
                                 
-    pixbuf = hippo_embedded_image_get("obubcnr_tl");
+    pixbuf = lookup_corner(bubble->color, "bubcnr_tl");
     draw_pixbuf(widget, gc, pixbuf, GDK_GRAVITY_NORTH_WEST,
                 border_rect.x,
                 border_rect.y);
                 
-    pixbuf = hippo_embedded_image_get("obubedge_b");
+    pixbuf = lookup_corner(bubble->color, "bubedge_b");
     tile_pixbuf(widget, gc, pixbuf, GDK_WINDOW_EDGE_SOUTH,
                 &border_clip, &bottom_edge_rect);
 
-    pixbuf = hippo_embedded_image_get("obubedge_t");
+    pixbuf = lookup_corner(bubble->color, "bubedge_t");
     tile_pixbuf(widget, gc, pixbuf, GDK_WINDOW_EDGE_NORTH,
                 &border_clip, &top_edge_rect);
 
-    pixbuf = hippo_embedded_image_get("obubedge_l");
+    pixbuf = lookup_corner(bubble->color, "bubedge_l");
     tile_pixbuf(widget, gc, pixbuf, GDK_WINDOW_EDGE_WEST,
                 &border_clip, &left_edge_rect);
 
-    pixbuf = hippo_embedded_image_get("obubedge_r");
+    pixbuf = lookup_corner(bubble->color, "bubedge_r");
     tile_pixbuf(widget, gc, pixbuf, GDK_WINDOW_EDGE_EAST,
                 &border_clip, &right_edge_rect);
 
@@ -1071,13 +1080,13 @@ static void
 compute_content_widgets_layout(HippoBubble  *bubble,
                                GdkRectangle *sender_photo_p,
                                GdkRectangle *sender_name_p,
-                               GdkRectangle *link_swarm_logo_p,
+                               GdkRectangle *header_logo_p,
                                GdkRectangle *link_title_p,
                                GdkRectangle *link_description_p)
 {
     GdkRectangle sender_photo;
     GdkRectangle sender_name;
-    GdkRectangle link_swarm_logo;
+    GdkRectangle header_logo;
     GdkRectangle link_title;
     GdkRectangle link_description;
 
@@ -1099,13 +1108,13 @@ compute_content_widgets_layout(HippoBubble  *bubble,
     sender_name.y = sender_photo.y + sender_photo.height + 5;
     
     /* web swarm logo aligned top with photo */
-    GET_REQ(link_swarm_logo);
-    link_swarm_logo.x = sender_photo.x + sender_photo.width + 10;
-    link_swarm_logo.y = sender_photo.y;
+    GET_REQ(header_logo);
+    header_logo.x = sender_photo.x + sender_photo.width + 10;
+    header_logo.y = sender_photo.y;
 
     GET_REQ(link_title);
-    link_title.x = link_swarm_logo.x;
-    link_title.y = link_swarm_logo.y + link_swarm_logo.height + 10;
+    link_title.x = header_logo.x;
+    link_title.y = header_logo.y + header_logo.height + 10;
     
     GET_REQ(link_description);
     link_description.x = link_title.x;
@@ -1114,7 +1123,7 @@ compute_content_widgets_layout(HippoBubble  *bubble,
 #define OUT(what) do { if (what ## _p) { * what ## _p = what; }  } while(0)
     OUT(sender_photo);
     OUT(sender_name);
-    OUT(link_swarm_logo);
+    OUT(header_logo);
     OUT(link_title);
     OUT(link_description);
 }
@@ -1275,7 +1284,7 @@ hippo_bubble_size_request(GtkWidget         *widget,
     GdkRectangle content_child_rect;
     GdkRectangle sender_photo_rect;
     GdkRectangle sender_name_rect;
-    GdkRectangle link_swarm_logo_rect;
+    GdkRectangle header_logo_rect;
     GdkRectangle link_title_rect;
     GdkRectangle link_description_rect;
     GdkRectangle recipients_rect;
@@ -1301,7 +1310,7 @@ hippo_bubble_size_request(GtkWidget         *widget,
     
     /* layout children starting from 0,0 assuming no border or anything */
     compute_content_widgets_layout(bubble, &sender_photo_rect, &sender_name_rect,
-                   &link_swarm_logo_rect, &link_title_rect, &link_description_rect);
+                   &header_logo_rect, &link_title_rect, &link_description_rect);
     
     /* compute union of these rects */
     content_child_rect.x = 0;
@@ -1311,7 +1320,7 @@ hippo_bubble_size_request(GtkWidget         *widget,
     
     gdk_rectangle_union(&content_child_rect, &sender_photo_rect, &content_child_rect);
     gdk_rectangle_union(&content_child_rect, &sender_name_rect, &content_child_rect);
-    gdk_rectangle_union(&content_child_rect, &link_swarm_logo_rect, &content_child_rect);
+    gdk_rectangle_union(&content_child_rect, &header_logo_rect, &content_child_rect);
     gdk_rectangle_union(&content_child_rect, &link_title_rect, &content_child_rect);
     gdk_rectangle_union(&content_child_rect, &link_description_rect, &content_child_rect);
     
@@ -1328,7 +1337,7 @@ hippo_bubble_size_request(GtkWidget         *widget,
      * so add a little padding then
      */
     right_clearance = (content_child_rect.x + content_child_rect.width) - 
-                      (link_swarm_logo_rect.x + link_swarm_logo_rect.width);
+                      (header_logo_rect.x + header_logo_rect.width);
     if (right_clearance < 20) {
         content_child_rect.width += (20 - right_clearance);
     }
@@ -1354,7 +1363,7 @@ hippo_bubble_size_request(GtkWidget         *widget,
     
     OFFSET(sender_photo);
     OFFSET(sender_name);
-    OFFSET(link_swarm_logo);
+    OFFSET(header_logo);
     OFFSET(link_title);
     OFFSET(link_description);
     OFFSET(close_event_box);
@@ -1551,6 +1560,37 @@ hippo_bubble_size_allocate(GtkWidget         *widget,
 
 #undef ALLOC_LEFT
 #undef ALLOC_RIGHT
+}
+
+void
+hippo_bubble_set_header_image(HippoBubble  *bubble,
+                              const char   *img_name)
+{
+	GdkPixbuf *pixbuf;
+    pixbuf = hippo_embedded_image_get(img_name);
+    gtk_image_set_from_pixbuf(GTK_IMAGE(bubble->header_logo), pixbuf);
+}    
+
+void
+hippo_bubble_set_foreground_color(HippoBubble        *bubble,
+                                  HippoBubbleColor    color)
+{
+	bubble->color = color;
+}                                 
+
+void
+hippo_bubble_set_actions (HippoBubble *bubble, 
+                          int          actions)
+{
+	bubble->actions = actions;
+	if (bubble->actions & HIPPO_BUBBLE_ACTION_JOIN_CHAT)
+		gtk_widget_show(bubble->join_chat);
+	else
+		gtk_widget_hide(bubble->join_chat);
+	if (bubble->actions & HIPPO_BUBBLE_ACTION_IGNORE)
+		gtk_widget_show(bubble->ignore);
+	else
+		gtk_widget_hide(bubble->ignore);		
 }
 
 void

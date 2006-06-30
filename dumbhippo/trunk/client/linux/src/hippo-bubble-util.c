@@ -1,33 +1,42 @@
 #include "hippo-bubble-util.h"
 
-/* We also bubble e.g. myspace comments, so this is supposed to 
- * handle that cleanly or something ... 
- */ 
 enum {
     WATCH_KIND_POST,
-    WATCH_KIND_MYSPACE
+    WATCH_KIND_GROUP
 };
  
 typedef struct {
     int          refcount;
     int          kind;
     HippoBubble *bubble;
+    HippoChatRoom  *room; 
+    HippoDataCache *cache;   
     GFreeFunc    finalize;
 } BubbleWatch;
 
 typedef struct {
     BubbleWatch     base;
     HippoPost      *post;
-    HippoChatRoom  *room;
-    HippoDataCache *cache;
 } PostWatch;
+
+typedef struct {
+    BubbleWatch     base;
+    HippoEntity    *group;
+} GroupWatch;
 
 #define BUBBLE_WATCH(w) ((BubbleWatch*) w)
 #define POST_WATCH(w)   ((PostWatch*) w)
+#define GROUP_WATCH(w)   ((GroupWatch*) w)
+
+static void  on_chat_message_added(HippoChatRoom    *room,
+                                   HippoChatMessage *message,
+                                   BubbleWatch      *watch);
 
 static void
 bubble_watch_init(BubbleWatch *watch,
                   HippoBubble *bubble,
+                  HippoChatRoom *room,
+                  HippoDataCache *cache,
                   GFreeFunc    finalize,
                   int          kind)
 {
@@ -35,8 +44,14 @@ bubble_watch_init(BubbleWatch *watch,
     watch->bubble = bubble;
     watch->finalize = finalize;
     watch->kind = kind;
-
+    watch->room = room;
+    watch->cache = cache;
+    
     ADD_WEAK(&watch->bubble);    
+    ADD_WEAK(&watch->room);
+    ADD_WEAK(&watch->cache);    
+    
+    g_signal_connect(watch->room, "message-added", G_CALLBACK(on_chat_message_added), watch);    
 }
 
 #define bubble_watch_ref(watch) do { (watch)->refcount += 1; } while(0)
@@ -49,6 +64,13 @@ bubble_watch_unref(BubbleWatch *watch)
     watch->refcount -= 1;
     if (watch->refcount == 0) {
         REMOVE_WEAK(&watch->bubble);
+	
+	    if (watch->room) {
+    	    g_signal_handlers_disconnect_by_func(G_OBJECT(watch->room),
+                                             G_CALLBACK(on_chat_message_added), watch);
+	    }
+    	REMOVE_WEAK(&watch->room);
+	    REMOVE_WEAK(&watch->cache);         
 
         (* watch->finalize) (watch);
         g_free(watch);
@@ -100,7 +122,7 @@ on_chatter_photo_loaded(GdkPixbuf *pixbuf,
 }
 
 static void
-update_last_message(PostWatch        *watch)
+update_last_message(BubbleWatch        *watch)
 {
     HippoChatMessage *last;
     
@@ -111,14 +133,14 @@ update_last_message(PostWatch        *watch)
     last = hippo_chat_room_get_last_message(watch->room);
     
     if (last == NULL) {
-        hippo_bubble_set_last_chat_photo(watch->base.bubble, NULL);
-        hippo_bubble_set_last_chat_message(watch->base.bubble, NULL, NULL);
+        hippo_bubble_set_last_chat_photo(watch->bubble, NULL);
+        hippo_bubble_set_last_chat_message(watch->bubble, NULL, NULL);
     } else {
         const char *sender_id;
         
         sender_id = hippo_entity_get_guid(HIPPO_ENTITY(hippo_chat_message_get_person(last)));
 
-        hippo_bubble_set_last_chat_message(watch->base.bubble,
+        hippo_bubble_set_last_chat_message(watch->bubble,
                                         hippo_chat_message_get_text(last),
                                         sender_id);
                                         
@@ -136,7 +158,7 @@ update_last_message(PostWatch        *watch)
 static void
 on_chat_message_added(HippoChatRoom    *room,
                       HippoChatMessage *message,
-                      PostWatch        *watch)
+                      BubbleWatch        *watch)
 {
     /* we don't care about this specific message, just 
      * whether the last message changed... 
@@ -184,8 +206,8 @@ update_viewers(PostWatch *watch)
     if (!bubble_watch_is_attached(BUBBLE_WATCH(watch)))
         return;
 
-    room = watch->room;
-    self = hippo_data_cache_get_self(watch->cache);
+    room = watch->base.room;
+    self = hippo_data_cache_get_self(watch->base.cache);
     /* remember self is null if not logged in */
 
     /* reload viewer list, preferring people there live */
@@ -286,8 +308,11 @@ on_post_changed(HippoPost *post,
     g_assert(bubble != NULL); /* is_attached checks this */
     
     sender_id = hippo_post_get_sender(watch->post);
-    sender = hippo_data_cache_lookup_entity(watch->cache, sender_id);
-    self = hippo_data_cache_get_self(watch->cache);
+    sender = hippo_data_cache_lookup_entity(watch->base.cache, sender_id);
+    self = hippo_data_cache_get_self(watch->base.cache);
+    
+	hippo_bubble_set_foreground_color(bubble, HIPPO_BUBBLE_COLOR_ORANGE);
+	hippo_bubble_set_header_image(bubble, "bublinkswarm");
     
     if (sender == HIPPO_ENTITY(self)) {
         hippo_bubble_set_sender_name(bubble, _("You"));
@@ -355,21 +380,71 @@ on_post_changed(HippoPost *post,
 }
 
 static void
+on_group_changed(HippoEntity *entity,
+                 GroupWatch *watch)
+{
+    HippoBubble *bubble;
+    
+    /* FIXME this is all pretty expensive to do every time someone calls 
+     * a setter on a group ... but we'll wait and see if it's an issue
+     * and optimize later
+     */
+    
+    /* be sure we're still the current group */
+    if (!bubble_watch_is_attached(BUBBLE_WATCH(watch)))
+        return;
+
+    g_assert(watch->group != NULL); /* shouldn't get a signal from a dead body */
+
+    bubble = watch->base.bubble;
+    g_assert(bubble != NULL); /* is_attached checks this */
+    
+	hippo_bubble_set_foreground_color(bubble, HIPPO_BUBBLE_COLOR_PURPLE);
+	hippo_bubble_set_header_image(bubble, "bubgroupupdate");
+	
+	hippo_bubble_set_actions(bubble, HIPPO_BUBBLE_ACTION_JOIN_CHAT);
+    
+    hippo_bubble_set_sender_name(bubble, "");
+    hippo_bubble_set_sender_guid(bubble, hippo_entity_get_guid(watch->group));
+
+    hippo_bubble_set_link_title(bubble, hippo_entity_get_name(watch->group));
+    hippo_bubble_set_post_guid(bubble, hippo_entity_get_guid(watch->group));
+
+    hippo_bubble_set_chat_count(bubble, hippo_entity_get_chatting_user_count(watch->group));
+
+    /* FIXME ordering of this isn't guaranteed, i.e. we could get a reply for 
+     * an "old" post in theory
+     */
+    bubble_watch_ref(BUBBLE_WATCH(watch)); /* on_sender_photo_loaded will unref */    
+    hippo_app_load_photo(hippo_get_app(), watch->group, on_sender_photo_loaded, watch);
+    
+    hippo_bubble_set_link_description(bubble, "New chat messages.");
+}
+
+static void
 post_watch_finalize(void *value)
 {
     PostWatch *watch = POST_WATCH(value);
+    
     if (watch->post)
         g_signal_handlers_disconnect_by_func(G_OBJECT(watch->post),
                                              G_CALLBACK(on_post_changed), watch);
-    if (watch->room) {
-        g_signal_handlers_disconnect_by_func(G_OBJECT(watch->room),
-                                             G_CALLBACK(on_chat_message_added), watch);
-        g_signal_handlers_disconnect_by_func(G_OBJECT(watch->room),
+    if (watch->base.room) {
+        g_signal_handlers_disconnect_by_func(G_OBJECT(watch->base.room),
                                              G_CALLBACK(on_chat_user_state_changed), watch);
     }                                             
     REMOVE_WEAK(&watch->post);
-    REMOVE_WEAK(&watch->room);
-    REMOVE_WEAK(&watch->cache);
+}
+
+static void
+group_watch_finalize(void *value)
+{
+	GroupWatch *watch = GROUP_WATCH(value);
+
+    if (watch->group)
+        g_signal_handlers_disconnect_by_func(G_OBJECT(watch->group),
+                                             G_CALLBACK(on_group_changed), watch);                  	
+    REMOVE_WEAK(&watch->group);
 }
 
 static void
@@ -381,25 +456,51 @@ post_watch_add(HippoBubble    *bubble,
         
     watch = g_new0(PostWatch, 1);
     
-    bubble_watch_init(&watch->base, bubble,
-                post_watch_finalize, WATCH_KIND_POST);
+    bubble_watch_init(&watch->base, bubble, 
+				      hippo_post_get_chat_room(post),
+				      cache,
+                      post_watch_finalize, WATCH_KIND_POST);
     
     watch->post = post;
-    watch->cache = cache;
-    watch->room = hippo_post_get_chat_room(watch->post);
     ADD_WEAK(&watch->post);
-    ADD_WEAK(&watch->room);
-    ADD_WEAK(&watch->cache);
     
-    g_signal_connect(post, "changed", G_CALLBACK(on_post_changed), watch);
-    
-    g_signal_connect(watch->room, "message-added", G_CALLBACK(on_chat_message_added), watch);
-    g_signal_connect(watch->room, "user-state-changed", G_CALLBACK(on_chat_user_state_changed), watch);
+    g_signal_connect(post, "changed", G_CALLBACK(on_post_changed), watch); 
+    g_signal_connect(watch->base.room, "message-added", G_CALLBACK(on_chat_message_added), watch);
+    g_signal_connect(watch->base.room, "user-state-changed", G_CALLBACK(on_chat_user_state_changed), watch);
     
     bubble_watch_set(bubble, BUBBLE_WATCH(watch));
     
     on_post_changed(post, watch); /* includes an update_viewers() */
-    update_last_message(watch);
+    update_last_message(BUBBLE_WATCH(watch));
+    
+    bubble_watch_unref(BUBBLE_WATCH(watch));
+}
+
+static void
+group_watch_add(HippoBubble    *bubble,
+                HippoEntity    *group,
+                HippoDataCache *cache)
+{
+    GroupWatch *watch;
+        
+    watch = g_new0(GroupWatch, 1);
+    
+    bubble_watch_init(&watch->base, bubble,
+    				  hippo_entity_get_chat_room(group),
+				      cache,
+                      group_watch_finalize, WATCH_KIND_GROUP);
+     
+    watch->group = group;
+    ADD_WEAK(&watch->group);
+    
+    g_signal_connect(group, "changed", G_CALLBACK(on_group_changed), watch);
+    // TODO: implement me
+    // g_signal_connect(watch->room, "user-state-changed", G_CALLBACK(on_group_chat_user_state_changed), watch);
+    
+    bubble_watch_set(bubble, BUBBLE_WATCH(watch));
+    
+    on_group_changed(group, watch); /* includes an update_viewers() */
+    update_last_message(BUBBLE_WATCH(watch));
     
     bubble_watch_unref(BUBBLE_WATCH(watch));
 }
@@ -412,6 +513,14 @@ hippo_bubble_set_post(HippoBubble    *bubble,
     post_watch_add(bubble, post, cache);
 }
 
+void
+hippo_bubble_set_group(HippoBubble    *bubble,
+                       HippoEntity    *group,
+                       HippoDataCache *cache)
+{
+    group_watch_add(bubble, group, cache);
+}
+
 HippoPost*
 hippo_bubble_get_post(HippoBubble *bubble)
 {
@@ -420,6 +529,18 @@ hippo_bubble_get_post(HippoBubble *bubble)
     watch = bubble_watch_get(bubble);
     if (watch && watch->kind == WATCH_KIND_POST)
         return POST_WATCH(watch)->post;
+    else
+        return NULL;
+}
+
+HippoEntity *
+hippo_bubble_get_group(HippoBubble *bubble)
+{
+    BubbleWatch *watch;
+    
+    watch = bubble_watch_get(bubble);
+    if (watch && watch->kind == WATCH_KIND_GROUP)
+        return GROUP_WATCH(watch)->group;
     else
         return NULL;
 }

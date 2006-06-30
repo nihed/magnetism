@@ -56,12 +56,26 @@ BUILT_SRC_DIR=$(top_builddir)/config/hippo
 EMBEDDEDIMAGEDIR=images
 EMBEDDED_IMAGES=				\
 	$(EMBEDDEDIMAGEDIR)/bublinkswarm.gif	\
+	$(EMBEDDEDIMAGEDIR)/bubgroupupdate.gif	\
 	$(EMBEDDEDIMAGEDIR)/blueleftarrow.gif	\
 	$(EMBEDDEDIMAGEDIR)/bluerightarrow.gif	\
 	$(EMBEDDEDIMAGEDIR)/chaticon.gif	\
 	$(EMBEDDEDIMAGEDIR)/grayleftarrow.gif	\
 	$(EMBEDDEDIMAGEDIR)/grayrightarrow.gif	\
 	$(EMBEDDEDIMAGEDIR)/ignoreicon.png	\
+	$(EMBEDDEDIMAGEDIR)/pbubcnr_blmix.png	\
+	$(EMBEDDEDIMAGEDIR)/pbubcnr_bl.png	\
+	$(EMBEDDEDIMAGEDIR)/pbubcnr_brmix.png	\
+	$(EMBEDDEDIMAGEDIR)/pbubcnr_br.png	\
+	$(EMBEDDEDIMAGEDIR)/pbubcnr_tlmix.png	\
+	$(EMBEDDEDIMAGEDIR)/pbubcnr_tl.png	\
+	$(EMBEDDEDIMAGEDIR)/pbubcnr_tr.png	\
+	$(EMBEDDEDIMAGEDIR)/pbubedge_bmix.png	\
+	$(EMBEDDEDIMAGEDIR)/pbubedge_b.png	\
+	$(EMBEDDEDIMAGEDIR)/pbubedge_lmix.png	\
+	$(EMBEDDEDIMAGEDIR)/pbubedge_l.png	\
+	$(EMBEDDEDIMAGEDIR)/pbubedge_r.png	\
+	$(EMBEDDEDIMAGEDIR)/pbubedge_t.png	\
 	$(EMBEDDEDIMAGEDIR)/obubcnr_blmix.png	\
 	$(EMBEDDEDIMAGEDIR)/obubcnr_bl.png	\
 	$(EMBEDDEDIMAGEDIR)/obubcnr_brmix.png	\
