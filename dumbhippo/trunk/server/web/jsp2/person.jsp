@@ -18,7 +18,7 @@
 <c:choose>
 <c:when test="${!person.disabled}">
 	<c:if test="${person.self}">
-		<c:set var="topMessageHtml" value="Here is how others see your profile. <a href='/account'>Go to edit mode</a>" scope="page"/>
+		<c:set var="topMessageHtml" value="Here is how others see you on mugshot. You can go back <a href='/'>home</a> or <a href='/account'>edit your account</a>" scope="page"/>
 	</c:if>
 <dht:twoColumnPage alwaysShowSidebar="true" topMessageHtml="${topMessageHtml}">
 	<dht:sidebarPerson who="${person.viewedUserId}" asOthersWouldSee="true"/>
