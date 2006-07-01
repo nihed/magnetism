@@ -6,6 +6,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
+import org.xml.sax.helpers.AttributesImpl;
 import org.xml.sax.helpers.DefaultHandler;
 
 public abstract class EnumSaxHandler<E extends Enum<E>> extends DefaultHandler {
@@ -40,6 +41,17 @@ public abstract class EnumSaxHandler<E extends Enum<E>> extends DefaultHandler {
 	
 	private void push(String name, Attributes attributes) {
 		 E value = parseElementName(name);
+
+		 // The SAX parser seems to reuse or modify Attributes
+		 // once startElement returns; I can't find anything about this
+		 // in the docs and I think it's busted, but it apparently does 
+		 // it. So make a copy. But, for the usual case where there are 
+		 // no attributes, don't bother; this could leave us with 
+		 // wrong attributes we didn't expect, but we usually ignore
+		 // unexpected attributes so for now take the risk.
+		 if (attributes.getLength() > 0)
+			 attributes = new  AttributesImpl(attributes);
+
 		 attributesStack.add(attributes);
 		 stack.add(value);
 	}
@@ -65,7 +77,9 @@ public abstract class EnumSaxHandler<E extends Enum<E>> extends DefaultHandler {
 	
 	@Override
 	public final void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
-		 //logger.debug("start element " + qName);
+		 // logger.debug("start element " + qName);
+		 // debugLogAttributes(attributes);
+		 
 		 push(qName, attributes);
 		 
 		 openElement(current());
@@ -76,7 +90,7 @@ public abstract class EnumSaxHandler<E extends Enum<E>> extends DefaultHandler {
 		
 		E c = current();
 
-		//logger.debug("end element " + c + " content = '" + getCurrentContent() + "'");
+		// logger.debug("end element " + qName + " content = '" + getCurrentContent() + "'");
 		
 		closeElement(c);
 		
@@ -88,7 +102,7 @@ public abstract class EnumSaxHandler<E extends Enum<E>> extends DefaultHandler {
 		E c = current();
 		if (c != ignoredValue)
 			content.append(ch, start, length);
-	}	
+	}
 	
 	protected final E current() {
 		return stackTop(stack);
@@ -122,4 +136,12 @@ public abstract class EnumSaxHandler<E extends Enum<E>> extends DefaultHandler {
 	}
 	
 	protected abstract void closeElement(E element) throws SAXException;
+	
+	protected void debugLogAttributes(Attributes attributes) {
+		if (attributes.getLength() == 0)
+			logger.debug(" (no attributes)");
+		for (int i = 0; i < attributes.getLength(); ++i) {
+			logger.debug(" " + i + " {} = {}", attributes.getQName(i), attributes.getValue(i));
+		}
+	}
 }

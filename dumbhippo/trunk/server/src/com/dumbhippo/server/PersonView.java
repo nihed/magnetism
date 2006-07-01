@@ -214,6 +214,7 @@ public class PersonView extends EntityView {
 		return name;
 	}
 	
+	@Override
 	public String getName() {
 		return getNickname();
 	}

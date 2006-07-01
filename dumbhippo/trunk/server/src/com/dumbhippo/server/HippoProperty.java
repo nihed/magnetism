@@ -28,7 +28,8 @@ public enum HippoProperty {
 	USER_UPDATE_INTERVAL("dumbhippo.server.userupdateinterval", "300"), // 5 minutes
 	SUMMIT_GROUP_GUID("dumbhippo.server.summitgroupguid", null),	
 	NEW_USER_INVITATION_COUNT("dumbhippo.server.newuserinvitationcount", "0"),
-	SPECIAL_NEW_USER_INVITATION_COUNT("dumbhippo.server.specialnewuserinvitationcount", "5");	
+	SPECIAL_NEW_USER_INVITATION_COUNT("dumbhippo.server.specialnewuserinvitationcount", "5"), 
+	FLICKR_API_ID("dumbhippo.server.flickr.apiid", null);
 	
 	private String key;
 	private String def;
