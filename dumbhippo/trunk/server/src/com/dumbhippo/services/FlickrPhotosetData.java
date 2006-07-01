@@ -2,6 +2,10 @@ package com.dumbhippo.services;
 
 import java.util.List;
 
+/**
+ * This class is used for PostInfo uploaded from the client, an old/dead feature at the moment.
+ *
+ */
 public interface FlickrPhotosetData {	
 	public static class PhotoData {
 		private String thumbnailUrl;

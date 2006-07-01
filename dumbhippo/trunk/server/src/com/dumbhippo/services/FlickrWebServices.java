@@ -53,13 +53,30 @@ public class FlickrWebServices extends AbstractXmlRequest<FlickrSaxHandler> {
 		return parseUrl(new FlickrSaxHandler(), wsUrl);
 	}
 	
-	public String lookupFlickrIdByEmail(String email) {
+	public FlickrUser lookupFlickrUserByEmail(String email) {
 		FlickrSaxHandler handler = doFlickrCall("flickr.people.findByEmail",
 				"find_email", email);
 		if (handler == null)
 			return null;
 		else
-			return handler.getNsid();
+			return handler.getUser();
+	}
+	
+	/**
+	 * 
+	 * @param userId Flickr NSID
+	 * @param page 1-based page to return
+	 * @return photos or null on failure
+	 */
+	public FlickrPhotos lookupPublicPhotos(String userId, int page) {
+		if (page < 1)
+			throw new RuntimeException("Flickr photo pages count from 1");
+		FlickrSaxHandler handler = doFlickrCall("flickr.people.getPublicPhotos",
+				"user_id", userId, "page", Integer.toString(page));
+		if (handler == null)
+			return null;
+		else
+			return handler.getPhotos();
 	}
 	
 	static public final void main(String[] args) {
@@ -72,7 +89,13 @@ public class FlickrWebServices extends AbstractXmlRequest<FlickrSaxHandler> {
 		config.init();
 		
 		FlickrWebServices ws = new FlickrWebServices(6000, config);
-		String user = ws.lookupFlickrIdByEmail("hp@pobox.com");
-		System.out.println("Got flickr user id: '" + user + "'");
+		FlickrUser user = ws.lookupFlickrUserByEmail("hp@pobox.com");
+		System.out.println("Got flickr user: " + user);
+		
+		FlickrPhotos photos = ws.lookupPublicPhotos(user.getId(), 1);
+		System.out.println("Their photos are: " + photos);
+		for (FlickrPhoto p : photos.getPhotos()) {
+			System.out.println("  " + p);
+		}
 	}
 }
