@@ -10,6 +10,8 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.annotation.EJB;
+import javax.ejb.AroundInvoke;
+import javax.ejb.InvocationContext;
 import javax.ejb.Stateless;
 
 import org.slf4j.Logger;
@@ -85,6 +87,18 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 	
 	@EJB
 	private GroupSystem groupSystem;
+	
+	@AroundInvoke
+	public Object catchRuntimeExceptions(InvocationContext ctx) throws Exception {
+		try {
+			return ctx.proceed();
+		} catch (RuntimeException e) {
+			logger.error("Unexpected exception: " + e.getMessage(), e);
+			// create a new RuntimeException that won't have any types the XMPP server 
+			// is unfamiliar with
+			throw new RuntimeException(e.getClass().getName() + ": " + e.getMessage());
+		}
+	}
 	
 	private Account accountFromUsername(String username) throws JabberUserNotFoundException {
 		Guid guid;
