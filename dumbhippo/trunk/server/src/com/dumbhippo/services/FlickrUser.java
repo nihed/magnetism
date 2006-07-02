@@ -16,13 +16,21 @@ public final class FlickrUser {
 	public void setName(String name) {
 		this.name = name;
 	}
+
+	static public String getProfileUrl(String id) {
+		return "http://www.flickr.com/people/" + id;
+	}
 	
-	public String getPhotosUrl() {
+	static public String getPhotosUrl(String id) {
 		return "http://www.flickr.com/photos/" + id;
 	}
 	
+	public String getPhotosUrl() {
+		return getPhotosUrl(id);
+	}
+	
 	public String getProfileUrl() {
-		return "http://www.flickr.com/people/" + id;
+		return getProfileUrl(id);
 	}
 	
 	@Override

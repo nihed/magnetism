@@ -10,6 +10,7 @@ import java.util.Set;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
@@ -76,6 +77,7 @@ public class Account extends Resource {
 	private String password;
 	private Integer passwordSalt;
 	
+	// these should be replaced by ExternalAccount
 	private String mySpaceName;
 	private String mySpaceFriendId;
 	
@@ -103,7 +105,10 @@ public class Account extends Resource {
 	 * very far since they have auth keys. Instead add methods that do whatever
 	 * you need to do.
 	 */
-	private Set<Client> clients; 
+	/* FIXME we can probably simplify this down to just one cookie right in the Account ? */
+	private Set<Client> clients;
+
+	private Set<ExternalAccount> externalAccounts; 
 	
 	/**
 	 * Used only for Hibernate 
@@ -116,6 +121,7 @@ public class Account extends Resource {
 		clients = new HashSet<Client>();
 		contacts = new HashSet<Contact>();
 		favoritePosts = new HashSet<Post>();
+		externalAccounts = new HashSet<ExternalAccount>();
 		creationDate = -1;
 		lastLoginDate = -1;
 		wasSentShareLinkTutorial = false;
@@ -647,6 +653,28 @@ public class Account extends Resource {
 		this.lastSeenGroupInvitations = System.currentTimeMillis();
 	}
 
+	// try LAZY fetch since for now we only need this on /account and /person
+	// maybe it will make sense
+	@OneToMany(mappedBy="account", fetch=FetchType.LAZY)
+	@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)
+	public Set<ExternalAccount> getExternalAccounts() {
+		if (externalAccounts == null)
+			throw new RuntimeException("no external accounts set???");
+		return externalAccounts;
+	}
+	
+	/**
+	 * This is protected because only Hibernate probably 
+	 * needs to call it.
+	 * 
+	 * @param externalAccounts
+	 */
+	protected void setExternalAccounts(Set<ExternalAccount> externalAccounts) {
+		if (externalAccounts == null)
+			throw new IllegalArgumentException("null external accounts");
+		this.externalAccounts = externalAccounts;
+	}	
+	
 	@Column(nullable=true)
 	public Date getGroupInvitationReceived() {
 		if (groupInvitationReceived >= 0)
@@ -664,5 +692,36 @@ public class Account extends Resource {
 
 	public void touchGroupInvitationReceived() {
 		this.groupInvitationReceived = System.currentTimeMillis();
+	}
+	
+	@Transient
+	private Set<ExternalAccount> getExternalAccountsBySentiment(Sentiment sentiment) {
+		Set<ExternalAccount> filtered = new HashSet<ExternalAccount>();
+		for (ExternalAccount a : getExternalAccounts()) {
+			if (a.getSentiment() == Sentiment.LOVE) {
+				filtered.add(a);
+			}
+		}
+		return filtered;		
+	}
+	
+	@Transient
+	public Set<ExternalAccount> getLovedAccounts() {
+		return getExternalAccountsBySentiment(Sentiment.LOVE);
+	}
+	
+	@Transient
+	public Set<ExternalAccount> getHatedAccounts() {
+		return getExternalAccountsBySentiment(Sentiment.HATE);
+	}
+	
+	@Transient
+	public ExternalAccount getExternalAccount(ExternalAccountType type) {
+		for (ExternalAccount a : getExternalAccounts()) {
+			if (a.getWhere() == type) {
+				return a;
+			}
+		}
+		return null;
 	}
 }

@@ -84,7 +84,7 @@ public class FlickrWebServices extends AbstractXmlRequest<FlickrSaxHandler> {
 		ConsoleAppender appender = new ConsoleAppender(new PatternLayout("%d %-5p [%c] (%t): %m%n"));
 		log4jRoot.addAppender(appender);
 		log4jRoot.setLevel(Level.DEBUG);
-				
+		
 		ConfigurationBean config = new ConfigurationBean();
 		config.init();
 		
