@@ -26,6 +26,9 @@ public class ExternalAccount extends DBUnique {
 	private Sentiment sentiment;
 	// meaning of this varies by the where
 	private String handle;
+	// meaning of this also varies by the where
+	// not always used...
+	private String extra;
 	// quip (right now only applies if sentiment == HATE)
 	private String quip;
 	
@@ -63,6 +66,15 @@ public class ExternalAccount extends DBUnique {
 	public void setHandle(String handle) {
 		this.handle = handle;
 	}
+	
+	@Column(nullable=true)
+	public String getExtra() {
+		return extra;
+	}
+
+	public void setExtra(String extra) {
+		this.extra = extra;
+	}	
 	
 	@Column(nullable=true)
 	public String getQuip() {

@@ -42,6 +42,8 @@ import com.dumbhippo.live.LiveState;
 import com.dumbhippo.persistence.AimResource;
 import com.dumbhippo.persistence.Contact;
 import com.dumbhippo.persistence.EmailResource;
+import com.dumbhippo.persistence.ExternalAccount;
+import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.Feed;
 import com.dumbhippo.persistence.FeedEntry;
 import com.dumbhippo.persistence.Group;
@@ -52,6 +54,7 @@ import com.dumbhippo.persistence.NowPlayingTheme;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.Resource;
+import com.dumbhippo.persistence.Sentiment;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.ValidationException;
 import com.dumbhippo.persistence.WantsIn;
@@ -59,6 +62,7 @@ import com.dumbhippo.postinfo.PostInfo;
 import com.dumbhippo.server.Character;
 import com.dumbhippo.server.ClaimVerifier;
 import com.dumbhippo.server.Configuration;
+import com.dumbhippo.server.ExternalAccountSystem;
 import com.dumbhippo.server.FeedSystem;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.HippoProperty;
@@ -85,6 +89,8 @@ import com.dumbhippo.server.XmlMethodErrorCode;
 import com.dumbhippo.server.XmlMethodException;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.util.FeedScraper;
+import com.dumbhippo.services.FlickrUser;
+import com.dumbhippo.services.FlickrWebServices;
 
 @Stateless
 public class HttpMethodsBean implements HttpMethods, Serializable {
@@ -124,6 +130,9 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	
 	@EJB
 	private FeedSystem feedSystem;
+	
+	@EJB
+	private ExternalAccountSystem externalAccountSystem;
 	
 	@PersistenceContext(unitName = "dumbhippo")
 	private EntityManager em;	
@@ -1390,5 +1399,61 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		Feed feed = getFeedFromUserEnteredUrl(url);
 		
 		feedSystem.removeGroupFeed(group, feed);		
+	}
+
+	private ExternalAccountType parseExternalAccountType(String type) throws XmlMethodException {
+		try {
+			return ExternalAccountType.valueOf(type);
+		} catch (IllegalArgumentException e) {
+			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, "Unknown external account type: " + type);
+		}
+	}
+
+	private String parseEmail(String email) throws XmlMethodException {
+		try {
+			email = EmailResource.canonicalize(email);
+			return email;
+		} catch (ValidationException e) {
+			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, "Not a valid email address: '" + email + "'");
+		}		
+	}
+	
+	public void doHateExternalAccount(XmlBuilder xml, UserViewpoint viewpoint, String type, String quip) throws XmlMethodException {
+		ExternalAccountType typeEnum = parseExternalAccountType(type);
+		ExternalAccount external = externalAccountSystem.getOrCreateExternalAccount(viewpoint, typeEnum);
+		external.setSentiment(Sentiment.HATE);
+		if (quip != null) {
+			quip = quip.trim();
+			if (quip.length() == 0)
+				quip = null;
+		}
+		external.setQuip(quip);
+	}
+
+	public void doRemoveExternalAccount(XmlBuilder xml, UserViewpoint viewpoint, String type) throws XmlMethodException {
+		ExternalAccountType typeEnum = parseExternalAccountType(type);
+		ExternalAccount external = externalAccountSystem.getOrCreateExternalAccount(viewpoint, typeEnum);
+		external.setSentiment(Sentiment.INDIFFERENT);
+	}
+
+	public void doFindFlickrAccount(XmlBuilder xml, UserViewpoint viewpoint, String email) throws XmlMethodException {
+		FlickrWebServices ws = new FlickrWebServices(8000, config);
+		FlickrUser flickrUser = ws.lookupFlickrUserByEmail(email);
+		if (flickrUser == null)
+			throw new XmlMethodException(XmlMethodErrorCode.NOT_FOUND, "Flickr doesn't report a user with the email address '" + email + "'");
+		xml.openElement("flickrUser");
+		xml.appendTextNode("nsid", flickrUser.getId());
+		xml.appendTextNode("username", flickrUser.getName());
+		xml.closeElement();
+	}
+
+	public void doSetFlickrAccount(XmlBuilder xml, UserViewpoint viewpoint, String nsid, String email) throws XmlMethodException {
+		ExternalAccount external = externalAccountSystem.getOrCreateExternalAccount(viewpoint, ExternalAccountType.FLICKR);
+		external.setSentiment(Sentiment.LOVE);
+		
+		email = parseEmail(email);
+		
+		external.setHandle(nsid);
+		external.setExtra(email);
 	}
 }

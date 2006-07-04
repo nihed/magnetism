@@ -254,5 +254,65 @@ public interface HttpMethods {
 	
 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
 	@HttpParams( { "groupId", "url" })
-	public void doRemoveGroupFeed(XmlBuilder xml, UserViewpoint viewpoint, String groupId, String url) throws XmlMethodException;	
+	public void doRemoveGroupFeed(XmlBuilder xml, UserViewpoint viewpoint, String groupId, String url) throws XmlMethodException;
+
+	/**
+	 * Mark an external account as "hated" and give an optional quip about why.
+	 * If the quip is missing or empty it's taken as "delete any quip"
+	 * 
+	 * @param xml
+	 * @param viewpoint
+	 * @param type
+	 * @param quip
+	 * @throws XmlMethodException
+	 */
+	@HttpContentTypes(HttpResponseData.XMLMETHOD)
+	@HttpParams( { "type", "quip" })
+	@HttpOptions( optionalParams = { "quip" } )
+	public void doHateExternalAccount(XmlBuilder xml, UserViewpoint viewpoint, String type, String quip) throws XmlMethodException;	
+
+	/**
+	 * Mark an external account as "indifferent" which effectively hides both any hate-quip or 
+	 * account information from your profile. i.e. this is the same as "removing" an external account.
+	 * We don't really remove it though, i.e. the quip/account-info are remembered in case you
+	 * switch back to those states.
+	 * 
+	 * @param xml
+	 * @param viewpoint
+	 * @param type
+	 * @throws XmlMethodException
+	 */
+	@HttpContentTypes(HttpResponseData.XMLMETHOD)
+	@HttpParams( { "type" })
+	public void doRemoveExternalAccount(XmlBuilder xml, UserViewpoint viewpoint, String type) throws XmlMethodException;	
+	
+	
+	/**
+	 * Given an email address, try to lookup the associated flickr account information.
+	 * 
+	 * @param xml
+	 * @param viewpoint
+	 * @param email the flickr email address
+	 * @throws XmlMethodException
+	 */
+	@HttpContentTypes(HttpResponseData.XMLMETHOD)
+	@HttpParams( { "email" })
+	public void doFindFlickrAccount(XmlBuilder xml, UserViewpoint viewpoint, String email) throws XmlMethodException;
+	
+	/**
+	 * Adds a flickr account with the given nsid and Flickr email address. Automatically marks
+	 * Flickr as "loved" instead of "hated"
+	 * 
+	 * To get the NSID, you would ask someone for their Flickr email address, then use it to call 
+	 * FindFlickrAccount, then you have both email and nsid.
+	 * 
+	 * @param xml
+	 * @param viewpoint
+	 * @param nsid
+	 * @param email
+	 * @throws XmlMethodException
+	 */
+	@HttpContentTypes(HttpResponseData.XMLMETHOD)
+	@HttpParams( { "nsid", "email" })
+	public void doSetFlickrAccount(XmlBuilder xml, UserViewpoint viewpoint, String nsid, String email) throws XmlMethodException;	
 }
