@@ -304,6 +304,8 @@ HippoBubble::initializeUI()
         slot(this, &HippoBubble::onPostAdded));
     chatRoomLoaded_.connect(G_OBJECT(ui_->getDataCache()), "chat-room-loaded",
         slot(this, &HippoBubble::onChatRoomLoaded));
+    groupMembershipChanged_.connect(G_OBJECT(ui_->getConnection()), "group-membership-changed",
+        slot(this, &HippoBubble::onGroupMembershipChanged));
 }
 
 void
@@ -610,6 +612,31 @@ HippoBubble::onPostAdded(HippoPost *post)
         hippoDebugLogU("Post %s is not new, not bubbling up for now",
             hippo_post_get_guid(post));
     }
+}
+
+void 
+HippoBubble::onGroupMembershipChanged(HippoEntity *group, HippoEntity *user, const char *membershipStatus)
+{
+    if (hippo_entity_get_entity_type(group) != HIPPO_ENTITY_GROUP) {
+        g_warning("HippoBubble::onGroupMembershipChanged was called with an entity that is not a group");
+        return;
+    }
+
+    if (!ie_) {
+        if (!create())
+            return;
+    }
+
+    HippoBSTR status;
+    status.setUTF8(membershipStatus);
+
+    ie_->createInvocation(L"dhGroupMembershipChanged")
+        .addDispatch(HippoEntityWrapper::getWrapper(group))
+        .addDispatch(HippoEntityWrapper::getWrapper(user))
+        .add(status)
+        .run();
+
+    setShown();
 }
 
 void

@@ -401,7 +401,7 @@ dh.bubble.Bubble = function(isStandaloneBubble) {
         }
       
         var chatControl = createControl("chaticon.gif", "Join chat", 
-                        function () { window.external.application.ShowChatWindow(bubble._data.getId()) });
+                        function () { window.external.application.ShowChatWindow(bubble._data.getChatId()) });
         var chatCount = document.createElement("span")
         chatCount.appendChild(document.createTextNode(" [" + this._data.getChattingUserCount() + "]"))
         chatControl.appendChild(chatCount)
@@ -445,10 +445,69 @@ dh.bubble.Bubble = function(isStandaloneBubble) {
 // Notification data object for DumbHippo posts
 //////////////////////////////////////////////////////////////////////////////
     
+dh.bubble.BubbleData = function() {
+    this.getId = function() {
+        throw Error("not implemented");
+    }
+    
+    this.getChatId = function () {
+        return this.getId()
+    }
+    
+    this.getChattingUserCount = function() {
+        return -1
+    }
+    
+    this.getIgnored = function() {
+        return false
+    }
+    
+    this.getPhotoLink = function() {
+        throw Error("not implemented");
+    }
+    
+    this.getPhotoSrc = function() {
+        throw Error("not implemented");
+    }
+    
+    this.getPhotoTitle = function() {
+        throw Error("not implemented");
+    }
+    
+    this.getCssClassSuffix = function() {
+        throw Error("not implemented");
+    }
+    
+    this.appendTitleContent = function(bubble, parent) {
+        throw Error("not implemented");
+    }
+        
+    this.appendBodyContent = function(bubble, parent) {
+        throw Error("not implemented");
+    }
+    
+    this.appendMetaContent = function(bubble, parent) {
+        throw Error("not implemented");
+    }
+            
+    this.appendSwarmContent = function(bubble, parent) {
+        throw Error("not implemented");
+    }
+    
+    this.setIgnored = function() {
+        throw Error("not implemented");        
+    }
+
+}    
+
+dh.core.inherits(dh.bubble.BubbleData, Object)
+ 
 // Extension point for specific post types
 dh.bubble.postExtensions = {}
     
 dh.bubble.PostData = function(post) {
+    
+    dh.bubble.BubbleData.call(this)
     this.post = post
     var postInfo = post.Info
     if (postInfo != null && !postInfo.match(/^\s*$/)) {
@@ -574,24 +633,18 @@ dh.bubble.PostData = function(post) {
         return pages
     }
     
-    this.getViewersPhotoSrc = function() {
-        // Need to pass in the viewer ID as well as name to here to display
-        return null
-    }
-    
     this.setIgnored = function() {
         window.external.application.IgnorePost(this.getId());
     }
 }
 
-
-dh.bubble.GroupData = function(group, eventType) {
+dh.core.inherits(dh.bubble.PostData, dh.bubble.BubbleData)
+    
+dh.bubble.GroupData = function(group) {
+  
+    dh.bubble.BubbleData.call(this)
+    
     this.group = group
-    this.eventType = eventType
-
-    this.getId = function() {
-        return this.group.Id
-    }
     
     this.getChattingUserCount = function() {
         return this.group.ChattingUserCount
@@ -627,52 +680,122 @@ dh.bubble.GroupData = function(group, eventType) {
         a.setAttribute("href", this._getGroupLink())
         parent.appendChild(a)
     }
-        
-    this.appendBodyContent = function(bubble, parent) {
-        parent.appendChild(document.createTextNode("New chat comments."));
-    }
     
     this.appendMetaContent = function(bubble, parent) {
-    }
-            
-    this.appendSwarmContent = function(bubble, parent) {
-        var pages = []
-        
-        if (this.eventType == "groupChat") {
-            var someoneSaidDiv = document.createElement("div")
-            someoneSaidDiv.className  = "dh-notification-someone-said"
-            parent.appendChild(someoneSaidDiv)
-            
-            var senderPhoto = bubble.createPngElement(dh.serverUrl + this.group.LastChatSender.SmallPhotoUrl)
-            senderPhoto.className = "dh-notification-chat-sender-photo"
-            someoneSaidDiv.appendChild(senderPhoto)
-            
-            var messageSpan = document.createElement("span")
-            messageSpan.className = "dh-notification-chat-message"
-            messageSpan.appendChild(document.createTextNode('"' + this.group.LastChatMessage + '"'))
-            someoneSaidDiv.appendChild(messageSpan)            
-            
-            var sender = this.group.LastChatSender
-            var senderDiv = document.createElement("div")
-            senderDiv.className = "dh-notification-chat-sender"
-            senderDiv.appendChild(bubble.renderPerson(sender, "dh-notification-sender"))
-            someoneSaidDiv.appendChild(senderDiv)
-            
-            pages.push({ name: "someoneSaid", title: "Recent Comments", div: someoneSaidDiv })
-        }
-        
-        return pages
-    }
-    
-    this.getViewersPhotoSrc = function() {
-        // Need to pass in the viewer ID as well as name to here to display
-        return null
     }
     
     this.setIgnored = function() {
     }
 }
 
+dh.core.inherits(dh.bubble.GroupData, dh.bubble.BubbleData)
+
+dh.bubble.GroupChatData = function(group) {
+    dh.bubble.GroupData.call(this, group)
+
+    this.getId = function() {
+        return this.group.Id
+    }
+    
+    this.appendBodyContent = function(bubble, parent) {
+        parent.appendChild(document.createTextNode("New chat comments."));
+    }
+          
+    this.appendSwarmContent = function(bubble, parent) {
+        var pages = []
+        
+        var someoneSaidDiv = document.createElement("div")
+        someoneSaidDiv.className  = "dh-notification-someone-said"
+        parent.appendChild(someoneSaidDiv)
+        
+        var senderPhoto = bubble.createPngElement(dh.serverUrl + this.group.LastChatSender.SmallPhotoUrl)
+        senderPhoto.className = "dh-notification-chat-sender-photo"
+        someoneSaidDiv.appendChild(senderPhoto)
+        
+        var messageSpan = document.createElement("span")
+        messageSpan.className = "dh-notification-chat-message"
+        messageSpan.appendChild(document.createTextNode('"' + this.group.LastChatMessage + '"'))
+        someoneSaidDiv.appendChild(messageSpan)            
+        
+        var sender = this.group.LastChatSender
+        var senderDiv = document.createElement("div")
+        senderDiv.className = "dh-notification-chat-sender"
+        senderDiv.appendChild(bubble.renderPerson(sender, "dh-notification-sender"))
+        someoneSaidDiv.appendChild(senderDiv)
+        
+        pages.push({ name: "someoneSaid", title: "Recent Comments", div: someoneSaidDiv })
+
+        
+        return pages
+    }
+}
+
+dh.core.inherits(dh.bubble.GroupChatData, dh.bubble.GroupData)
+
+dh.bubble.GroupMembershipChangeData = function(group, user, status) {
+    dh.bubble.GroupData.call(this, group)
+    
+    this.user = user
+    this.status = status
+    this.description = ""
+    this.swarmTitle = ""    
+    
+    if (this.status == "FOLLOWER") {
+        this.description = "There is a new group follower."
+        this.swarmTitle = "New Follower"
+    } else if (this.status == "ACTIVE") {
+        this.description = "There is a new group member."
+        this.swarmTitle = "New Member"
+    }
+           
+    this.getId = function() {
+        // different group membership changes are treated as differnet activities,
+        // so we do not want the previous bubbles with membership changes to be replaced, 
+        // and this id is used as a key in notification.js for bubble identity
+        return this.group.Id + "-" + this.user.Id + "-" + this.status
+    }
+    
+    this.getChatId = function () {
+        return this.group.Id
+    }    
+    
+    this.appendBodyContent = function(bubble, parent) {
+       parent.appendChild(document.createTextNode(this.description))
+    }
+    
+                
+    this.appendSwarmContent = function(bubble, parent) {
+        var pages = []
+
+        // TODO replace someone-said with something more applicable
+         
+        var someoneSaidDiv = document.createElement("div")
+        someoneSaidDiv.className  = "dh-notification-someone-said"
+        parent.appendChild(someoneSaidDiv)
+        
+        var senderPhoto = bubble.createPngElement(dh.serverUrl + this.user.SmallPhotoUrl)
+        senderPhoto.className = "dh-notification-chat-sender-photo"
+        someoneSaidDiv.appendChild(senderPhoto)
+        
+        var messageSpan = document.createElement("span")
+        messageSpan.className = "dh-notification-chat-message"
+        var a = document.createElement("a")
+        a.appendChild(document.createTextNode(this.user.Name))
+        a.setAttribute("href", this.user.HomeUrl)
+        messageSpan.appendChild(a)
+        someoneSaidDiv.appendChild(messageSpan)            
+        
+        pages.push({ name: "someoneSaid", title: this.swarmTitle, div: someoneSaidDiv })
+    
+        return pages
+    }
+}
+
+dh.core.inherits(dh.bubble.GroupMembershipChangeData, dh.bubble.GroupData)
+
+// dh.bubble.GroupMembershipChangeData.prototype = new dh.bubble.GroupData()
+// dh.bubble.GroupMembershipChangeData.prototype.constructor = dh.bubble.GroupMembershipChangeData.init
+    
 //////////////////////////////////////////////////////////////////////////////
 // Notification data object for MySpace blog comments
 //////////////////////////////////////////////////////////////////////////////
@@ -723,8 +846,5 @@ dh.bubble.MySpaceData = function(myId, blogId, commentId, posterId, posterName, 
     this.appendSwarmContent = function(bubble, parent) {
         return []
     }
-    
-    this.getViewersPhotoSrc = function() {
-        return null
-    }
 }
+

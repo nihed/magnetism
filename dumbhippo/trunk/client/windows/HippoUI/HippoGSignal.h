@@ -148,6 +148,37 @@ private:
     }
 };
 
+// We don't like 2
+
+// A connection to a signal with 3 arguments
+template <class ReturnType, class Arg1Type, class Arg2Type, class Arg3Type>
+class GConnection3 : public GConnection
+{
+public:
+    GConnection3()
+    {
+    }
+
+    void connect(GObject *object, const char *signal, Slot3<ReturnType,Arg1Type,Arg2Type,Arg3Type> *slot) {
+        connect_impl(object, signal, (GCallback) gcallback, slot);
+    }
+
+    static unsigned int unmanaged_connect(GObject *object, const char *signal, Slot3<ReturnType,Arg1Type,Arg2Type,Arg3Type> *slot) {
+        return unmanaged_connect_impl(object, signal, (GCallback) gcallback, slot);
+    }
+    
+    static void named_connect(GObject *object, const char *connection_name, const char *signal, Slot3<ReturnType,Arg1Type,Arg2Type,Arg3Type> *slot) {
+        return named_connect_impl(object, connection_name, signal, (GCallback) gcallback, slot);
+    }
+
+private:
+    static ReturnType gcallback(GObject *object, Arg1Type arg1, Arg2Type arg2, Arg3Type arg3, void *data) {
+        Slot3<ReturnType,Arg1Type,Arg2Type,Arg3Type> *slot = static_cast<Slot3<ReturnType,Arg1Type,Arg2Type,Arg3Type>*>(data);
+        return slot->invoke(arg1, arg2, arg3);
+    }
+};
+
+
 class GAbstractSource
 {
 public:

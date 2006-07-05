@@ -20,8 +20,6 @@ var dhInit = function(serverUrl, appletUrl, selfId) {
 dh.notification.NEW = 1
 dh.notification.VIEWER = 2
 dh.notification.MESSAGE = 4
-dh.notification.FOLLOWER = 8
-dh.notification.GROUP_MEMBER = 16
 
 dh.notification.Display = function (serverUrl, appletUrl, selfId) {
     // Whether the user is currently using the computer
@@ -193,7 +191,7 @@ dh.notification.Display = function (serverUrl, appletUrl, selfId) {
         if (groupData.group.Ignored)
             return false
         if (!prevNotificationData) {   
-            // We don't have it at all and needs to be redisplayed
+            // We don't have it at all and it needs to be redisplayed
             var displayed = this._pushNotification('groupUpdate', groupData, this._defaultTimeout, why)
             if (displayed)
                 this._showRelevantPage(why)
@@ -388,15 +386,22 @@ dhAddMySpaceComment = function (myId, blogId, commentId, posterId, posterName, p
 dhGroupViewerJoined = function(entity, shouldNotify) {
     dh.display.setVisible(true)
     
-    var data = new dh.bubble.GroupData(entity, "groupChat")
+    var data = new dh.bubble.GroupChatData(entity)
     return dh.display.addGroupUpdate(data, true, dh.notification.VIEWER)
 }
 
 dhGroupChatRoomMessage = function(entity, shouldNotify) {
     dh.display.setVisible(true)
         
-    var data = new dh.bubble.GroupData(entity, "groupChat")
+    var data = new dh.bubble.GroupChatData(entity)
     return dh.display.addGroupUpdate(data, true, dh.notification.MESSAGE)
+}
+
+dhGroupMembershipChanged = function(group, user, status) {
+    dh.display.setVisible(true)
+              
+    var data = new dh.bubble.GroupMembershipChangeData(group, user, status)
+    return dh.display.addGroupUpdate(data, true, dh.notification.NEW)
 }
 
 dhViewerJoined = function(post, shouldNotify) {

@@ -1,6 +1,7 @@
 #include "hippo-common-internal.h"
 #include "hippo-connection.h"
 #include "hippo-data-cache-internal.h"
+#include "hippo-common-marshal.h"
 #include <loudmouth/loudmouth.h>
 #include <string.h>
 #include <stdlib.h>
@@ -207,6 +208,7 @@ enum {
      */
     CLIENT_INFO_AVAILABLE,
     MYSPACE_CHANGED,
+	GROUP_MEMBERSHIP_CHANGED,
     LAST_SIGNAL
 };
 
@@ -297,6 +299,15 @@ hippo_connection_class_init(HippoConnectionClass *klass)
             		  NULL, NULL,
             		  g_cclosure_marshal_VOID__VOID,
             		  G_TYPE_NONE, 0); 
+
+	signals[GROUP_MEMBERSHIP_CHANGED] =
+        g_signal_new ("group-membership-changed",
+            		  G_TYPE_FROM_CLASS (object_class),
+            		  G_SIGNAL_RUN_LAST,
+            		  0,
+            		  NULL, NULL,
+					  hippo_common_marshal_VOID__OBJECT_OBJECT_STRING,
+            		  G_TYPE_NONE, 3, G_TYPE_OBJECT, G_TYPE_OBJECT, G_TYPE_STRING); 
 
     object_class->finalize = hippo_connection_finalize;
 }
@@ -3063,6 +3074,52 @@ handle_myspace_contact_comment(HippoConnection *connection,
     return TRUE;
 }
 
+static gboolean
+handle_group_membership_change(HippoConnection *connection,
+                               LmMessage       *message)
+{
+	const char *group_id;
+	HippoEntity *group;
+	const char *user_id;
+	HippoEntity *user;
+	const char *membership_status;
+    LmMessageNode *child;
+    LmMessageNode *sub_child;
+
+	if (lm_message_get_sub_type(message) != LM_MESSAGE_SUB_TYPE_NORMAL &&
+		lm_message_get_sub_type(message) != LM_MESSAGE_SUB_TYPE_NOT_SET)
+        return FALSE;
+
+    child = find_child_node(message->node, "http://dumbhippo.com/protocol/group", "membershipChange");
+    if (child == NULL)
+        return FALSE;
+    
+	/* Look for the objects associated with this message */
+	for (sub_child = child->children; sub_child; sub_child = sub_child->next) {
+		hippo_connection_parse_entity(connection, sub_child);
+	}
+
+	group_id = lm_message_node_get_attribute(child, "groupId");
+	if (group_id == NULL)
+		return FALSE;
+	group = hippo_data_cache_lookup_entity(connection->cache, group_id);
+	if (!group)
+		return FALSE;
+	user_id = lm_message_node_get_attribute(child, "userId");
+	if (user_id == NULL)
+		return FALSE;
+	user = hippo_data_cache_lookup_entity(connection->cache, user_id);
+	if (!user)
+		return FALSE;
+
+	membership_status = lm_message_node_get_attribute(child, "membershipStatus");
+
+	g_signal_emit(connection, signals[GROUP_MEMBERSHIP_CHANGED], 0, 
+		          group, user, membership_status);
+    
+    return TRUE;
+}
+
 static LmHandlerResult 
 handle_message (LmMessageHandler *handler,
                 LmConnection     *lconnection,
@@ -3103,6 +3160,10 @@ handle_message (LmMessageHandler *handler,
     }
     
     if (handle_myspace_contact_comment(connection, message)) {
+        return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+    }
+
+    if (handle_group_membership_change(connection, message)) {
         return LM_HANDLER_RESULT_REMOVE_MESSAGE;
     }
     
