@@ -15,7 +15,7 @@
 
 <head>
 	<title><c:out value="${group.name}"/>'s Mugshot</title>
-	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/site.css"/>
+	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/group.css"/>
 	<dht:faviconIncludes/>
 	<dht:scriptIncludes/>
 	<dht:embedObject/>

@@ -21,6 +21,7 @@
 <head>
 	<title>Invitations to <c:out value="${group.name}"/></title>
 	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/invitation.css"/>
+	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/group.css"/>
 	<dht:faviconIncludes/>
 	<dht:scriptIncludes/>
 	<dht:embedObject/>

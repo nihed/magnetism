@@ -57,5 +57,16 @@
 				</c:when>
 			</c:choose>
 		</div>
+		<c:if test="${!empty group.feeds.list}">
+			<dht:sidebarBoxSeparator/>
+			<div id="dhSidebarBoxProfileGroupFeeds" class="di-bio">
+			<strong>Group Feeds</strong>
+			<ul class="dh-group-feed-list">
+				<c:forEach items="${group.feeds.list}" var="feed">
+					<li class="dh-group-feed-item"><a href="${feed.feed.link.url}" target="_blank"><c:out value="${feed.feed.title}"/></a></li>
+				</c:forEach>				  
+			</ul>
+			</div>
+		</c:if>
 	</div>
 </dht:sidebarBox>
