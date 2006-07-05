@@ -718,7 +718,7 @@ public class Account extends Resource {
 	@Transient
 	public ExternalAccount getExternalAccount(ExternalAccountType type) {
 		for (ExternalAccount a : getExternalAccounts()) {
-			if (a.getWhere() == type) {
+			if (a.getAccountType() == type) {
 				return a;
 			}
 		}

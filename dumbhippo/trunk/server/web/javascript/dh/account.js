@@ -3,6 +3,7 @@ dojo.require("dh.formtable");
 dojo.require("dh.textinput");
 dojo.require("dh.fileinput");
 dojo.require("dh.photochooser");
+dojo.require("dh.lovehate");
 
 dh.account.generatingRandomBio = false;
 dh.account.generateRandomBio = function() {
@@ -71,6 +72,98 @@ dh.account.removeClaimAim = function(address) {
 					 });
 }
 
+dh.account.hateExternalAccount = function(type, quip, loadFunc, errorFunc) {
+   	dh.server.doXmlMethod("hateexternalaccount",
+				     { "type" : type,
+				       "quip" :  quip },
+					loadFunc, errorFunc);
+}
+
+dh.account.removeExternalAccount = function(type, loadFunc, errorFunc) {
+   	dh.server.doXmlMethod("removeexternalaccount",
+				     { "type" : type },
+						loadFunc, errorFunc);
+}
+
+dh.account.findFlickrAccount = function(email, loadFunc, errorFunc) {
+   	dh.server.doXmlMethod("findflickraccount",
+				     { "email" : email },
+						loadFunc, errorFunc);
+}
+
+dh.account.setFlickrAccount = function(nsid, email, loadFunc, errorFunc) {
+   	dh.server.doXmlMethod("setflickraccount",
+				     { "nsid" : nsid, "email" : email },
+				     	loadFunc, errorFunc);
+}
+
+dh.account.onFlickrLoveSaved = function(value) {
+	var entry = dh.account.flickrEntry;
+	var oldMode = entry.getMode();
+	entry.setBusy();
+	dh.account.findFlickrAccount(value,
+			function(childNodes, http) {
+
+				// change child nodes to be children of flickrUser
+			    childNodes = childNodes.item(0).childNodes;
+			    var nsid = null;
+			    var username = null;
+				var i = 0;
+				for (i = 0; i < childNodes.length; ++i) {
+					var child = childNodes.item(i);
+					if (child.nodeType != dojo.dom.ELEMENT_NODE)
+						continue;
+		
+					if (child.nodeName == "nsid") {
+						nsid = dojo.dom.textContent(child);
+					} else if (child.nodeName == "username") {
+						username = dojo.dom.textContent(child);
+					}
+				}
+				
+				dh.account.setFlickrAccount(nsid, value,
+					function(childNodes, http) {
+						entry.setMode('love');
+					},
+					function(code, msg, http) {
+						alert(msg);
+			  	     	entry.setMode(oldMode);			
+					});
+			},
+	  	    function(code, msg, http) {
+	  	     	alert(msg);
+	  	     	entry.setMode(oldMode);
+	  	    });
+}
+
+dh.account.onFlickrHateSaved = function(value) {
+	var entry = dh.account.flickrEntry;
+	var oldMode = entry.getMode();
+	entry.setBusy();
+	dh.account.hateExternalAccount('FLICKR', value,
+	 	    	 function(childNodes, http) {
+	 	    	 	entry.setMode('hate');
+	  	    	 },
+	  	    	 function(code, msg, http) {
+	  	    	 	alert(msg);
+	  	    	 	entry.setMode(oldMode);
+	  	    	 });
+}
+
+dh.account.onFlickrCanceled = function(value) {
+	var entry = dh.account.flickrEntry;
+	var oldMode = entry.getMode();
+	entry.setBusy();
+	dh.account.removeExternalAccount('FLICKR', 
+	 	    	 function(childNodes, http) {
+	 	    	 	entry.setMode('indifferent');
+	  	    	 },
+	  	    	 function(code, msg, http) {
+	  	    	 	alert(msg);
+	  	    	 	entry.setMode(oldMode);
+	  	    	 });
+}
+
 dhAccountInit = function() {
 	dh.account.usernameEntryNode = document.getElementById('dhUsernameEntry');
 	dh.account.usernameEntry = new dh.textinput.Entry(dh.account.usernameEntryNode, "J. Doe", dh.formtable.currentValues['dhUsernameEntry']);
@@ -125,6 +218,12 @@ dhAccountInit = function() {
 	}
 	
 	dh.photochooser.init("user", dh.account.userId)
+	
+	dh.account.flickrEntry = new dh.lovehate.Entry('dhFlickr', 'Email used for Flickr account', dh.account.initialFlickrEmail,
+					'Flickr doesn\'t do it for me', dh.account.initialFlickrHateQuip);
+	dh.account.flickrEntry.onLoveSaved = dh.account.onFlickrLoveSaved;
+	dh.account.flickrEntry.onHateSaved = dh.account.onFlickrHateSaved;
+	dh.account.flickrEntry.onCanceled = dh.account.onFlickrCanceled;
 }
 
 dojo.event.connect(dojo, "loaded", dj_global, "dhAccountInit");

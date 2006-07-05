@@ -29,6 +29,8 @@
 		dh.account.reloadPhoto = function() {
 			dh.photochooser.reloadPhoto([document.getElementById('dhHeadshotImageContainer')], 60);
 		}
+		dh.account.initialFlickrEmail = <dh:jsString value="${account.flickrEmail}"/>;
+		dh.account.initialFlickrHateQuip = <dh:jsString value="${account.flickrHateQuip}"/>;
 	</script>
 </head>
 <dht:twoColumnPage neverShowSidebar="true">
@@ -90,6 +92,9 @@
 				<dht:formTableRowStatus controlId='dhMyspaceEntry'></dht:formTableRowStatus>
 				<dht:formTableRow label="MySpace name">
 					<dht:textInput id="dhMyspaceEntry"/>
+				</dht:formTableRow>
+				<dht:formTableRow label="Flickr">
+					<dht:loveHateEntry baseId="dhFlickr" mode="${account.flickrSentiment}"/>
 				</dht:formTableRow>
 			</dht:formTable>
 			<dht:zoneBoxSeparator/>

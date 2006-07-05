@@ -12,7 +12,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 @Entity
 @Table(name="ExternalAccount", 
 		   uniqueConstraints = 
-			      {@UniqueConstraint(columnNames={"account_id", "where"})}
+			      {@UniqueConstraint(columnNames={"account_id", "accountType"})}
 		   )
 @Cache(usage=CacheConcurrencyStrategy.READ_WRITE)
 public class ExternalAccount extends DBUnique {
@@ -21,7 +21,7 @@ public class ExternalAccount extends DBUnique {
 	private Account account;
 	
 	// what site is the account on
-	private ExternalAccountType where;
+	private ExternalAccountType accountType;
 	// how do we feel about this site
 	private Sentiment sentiment;
 	// meaning of this varies by the where
@@ -38,7 +38,7 @@ public class ExternalAccount extends DBUnique {
 	
 	public ExternalAccount(ExternalAccountType where) {
 		this();
-		this.where = where;
+		this.accountType = where;
 	}
 	
 	@ManyToOne
@@ -52,11 +52,11 @@ public class ExternalAccount extends DBUnique {
 	}
 	
 	@Column(nullable=false)
-	public ExternalAccountType getWhere() {
-		return where;
+	public ExternalAccountType getAccountType() {
+		return accountType;
 	}
-	public void setWhere(ExternalAccountType where) {
-		this.where = where;
+	public void setAccountType(ExternalAccountType type) {
+		this.accountType = type;
 	}
 	
 	@Column(nullable=true)

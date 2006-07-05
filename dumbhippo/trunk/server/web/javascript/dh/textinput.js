@@ -28,6 +28,11 @@ dh.textinput.Entry = function(entryNode, defaultText, currentValue)
 	//from event handlers
 	var me = this;
 
+	if (!entryNode)
+		throw new Error("null entryNode in dh.textinput.Entry");
+	if (entryNode.nodeName.toLowerCase() != "input" && entryNode.nodeName.toLowerCase() != "textarea")
+		throw new Error("entryNode in dh.textinput.Entry has node name " + entryNode.nodeName);
+
 	//A reference to the input element we're binding to
 	this.elem = entryNode;
 	if (currentValue)
