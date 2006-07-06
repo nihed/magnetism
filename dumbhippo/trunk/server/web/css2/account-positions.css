@@ -13,16 +13,24 @@
 	width:			358px;
 }
 
+#dhContentColumn .dh-form-table .dh-control-cell .dh-control-cell-div img {
+	vertical-align:		middle;
+}
+
+#dhContentColumn .dh-form-table .dh-control-cell .dh-control-cell-div input {
+	vertical-align:		middle;
+}
+
 #dhContentColumn .dh-form-table .dh-control-cell .dh-text-input {
-	width:			250px;	
+	width:			250px;
 }
 
 #dhContentColumn .dh-form-table .dh-control-cell .dh-password-input {
-	width:			180px;	
+	width:			180px;
 }
 
 #dhContentColumn .dh-form-table .dh-control-cell .dh-username-input {
-	width:			180px;	
+	width:			180px;
 }
 
 .dh-aim-address {

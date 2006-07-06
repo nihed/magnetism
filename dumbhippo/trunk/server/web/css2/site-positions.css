@@ -96,8 +96,12 @@ form {
 
 #dhSearchBox .dh-text-input {
 	width:			140px;
+	padding:		2px;
 }
-
+/* specific only to input entries and not textarea's which have specified rows  */
+input.dh-text-input {
+	height:			23px;
+}
 #dhHeaderLogo {
 	position:		relative;
 	left:			0px;

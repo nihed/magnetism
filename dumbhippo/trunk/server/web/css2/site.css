@@ -113,7 +113,6 @@ img {
 	border-color:		#666666;
 	border-width:		1px;
 	font-weight:		bold;
-	padding:			2px;
 	color:				black;
 }
 
@@ -297,6 +296,7 @@ img {
 
 .dh-text-input {
     font-family:		sans-serif;
+	font-size:		13px;
 	border:				1px solid #CCCCCC;
 	background-color:	#FFFFFF;
 	color:				#000000;

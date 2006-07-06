@@ -27,7 +27,7 @@
 	</c:otherwise>
 </c:choose>
 
-<div id="${baseId}AllId">
+<div id="${baseId}AllId" class="dh-love-hate">
 	<div id="${baseId}LoveId" style="display: ${loveDisplay};">
 		<a href="javascript:dh.lovehate.setMode('${baseId}', 'loveEdit')" title="Click to change">
 			<dh:png src="/images2/${buildStamp}/loveicon16x14.png" style="width: 16px; height: 14px;"/>
@@ -50,13 +50,13 @@
 		<dh:png src="/images2/${buildStamp}/loveicon16x14.png" style="width: 16px; height: 14px;"/>
 		<dht:textInput id="${baseId}LoveEntryId"/>
 		<input type="button" value="Save" onclick="dh.lovehate.saveClicked('${baseId}', 'love')"/>
-		<a href="javascript:dh.lovehate.cancelClicked('${baseId}')" title="I don't love it anymore - go back to being indifferent"><img src="/images2/${buildStamp}/x.gif"/></a>
+		<a href="javascript:dh.lovehate.cancelClicked('${baseId}')" title="I don't love it anymore - go back to being indifferent"><img src="/images2/${buildStamp}/xbutton23x23.gif"/></a>
 	</div>	
 	<div id="${baseId}HateEditId" style="display: none;">
 		<dh:png src="/images2/${buildStamp}/hateicon16x14.png" style="width: 16px; height: 14px;"/>
 		<dht:textInput id="${baseId}HateEntryId" maxlength="255"/>
 		<input type="button" value="Save" onclick="dh.lovehate.saveClicked('${baseId}', 'hate')"/>
-		<a href="javascript:dh.lovehate.cancelClicked('${baseId}')" title="End the hate - go back to being indifferent"><img src="/images2/${buildStamp}/x.gif"/></a>
+		<a href="javascript:dh.lovehate.cancelClicked('${baseId}')" title="End the hate - go back to being indifferent"><img src="/images2/${buildStamp}/xbutton23x23.gif"/></a>
 	</div>
 	<div id="${baseId}BusyId" style="display: none;">
 		<img src="/images2/${buildStamp}/feedspinner.gif"/> Please wait...
