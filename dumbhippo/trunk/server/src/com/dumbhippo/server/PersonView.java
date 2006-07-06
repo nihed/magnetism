@@ -22,6 +22,7 @@ import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.AimResource;
 import com.dumbhippo.persistence.Contact;
 import com.dumbhippo.persistence.EmailResource;
+import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.VersionedEntity;
@@ -52,6 +53,7 @@ public class PersonView extends EntityView {
 	private String bioAsHtmlCached;
 	private String musicBioAsHtmlCached;
 	private boolean viewOfSelf;
+	private Set<ExternalAccount> externalAccounts;
 	
 	private void addExtras(EnumSet<PersonViewExtra> more) {
 		if (extras == null)
@@ -92,7 +94,9 @@ public class PersonView extends EntityView {
 	}
 	
 	public void addAllResources(Collection<Resource> resources) {
-		addExtras(EnumSet.allOf(PersonViewExtra.class));
+		addExtras(EnumSet.of(PersonViewExtra.ALL_AIMS, PersonViewExtra.ALL_EMAILS,
+				PersonViewExtra.ALL_RESOURCES, PersonViewExtra.PRIMARY_AIM, 
+				PersonViewExtra.PRIMARY_EMAIL, PersonViewExtra.PRIMARY_RESOURCE));
 		this.getResources().addAll(resources);
 	}
 	
@@ -155,6 +159,13 @@ public class PersonView extends EntityView {
 			return user.getId();
 		else
 			return null;
+	}
+	
+	public void addExternalAccounts(Set<ExternalAccount> externalAccounts) {
+		if (externalAccounts == null)
+			throw new IllegalArgumentException("can't add null internal accounts set");
+		addExtras(EnumSet.of(PersonViewExtra.EXTERNAL_ACCOUNTS));
+		this.externalAccounts = externalAccounts;
 	}
 	
 	/**
@@ -290,6 +301,12 @@ public class PersonView extends EntityView {
 	
 	public Collection<Resource> getAllResources() {
 		return getMany(PersonViewExtra.ALL_RESOURCES, Resource.class);
+	}
+	
+	public Set<ExternalAccount> getExternalAccounts() {
+		if (!getExtra(PersonViewExtra.EXTERNAL_ACCOUNTS))
+			throw new IllegalStateException("asked for " + PersonViewExtra.EXTERNAL_ACCOUNTS + " but this PersonView wasn't created with that, only with " + extras + " for " + this.hashCode());
+		return externalAccounts;
 	}
 	
 	@Override
@@ -786,6 +803,4 @@ public class PersonView extends EntityView {
 	public void setViewOfSelf(boolean viewOfSelf) {
 		this.viewOfSelf = viewOfSelf;
 	}
-	
-	
 }

@@ -11,21 +11,53 @@
 
 <head>
 	<title><c:out value="${person.viewedPerson.name}"/>'s Mugshot</title>
-	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/site.css"/>
+	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/person.css"/>
 	<dht:faviconIncludes/>
 	<dht:scriptIncludes/>
 </head>
 <c:choose>
 <c:when test="${!person.disabled}">
 	<c:if test="${person.self}">
-		<c:set var="topMessageHtml" value="Here is how friends see you on Mugshot. Strangers see only some of this. You can go back <a href='/'>home</a> or <a href='/account'>edit your account</a>" scope="page"/>
+		<c:set var="topMessageHtml" value="Here is how friends see you on Mugshot. Strangers see only some of this. You can go back <a href='/'>home</a> or <a href='/account'>edit your account</a>." scope="page"/>
 	</c:if>
 <dht:twoColumnPage alwaysShowSidebar="true" topMessageHtml="${topMessageHtml}">
 	<dht:sidebarPerson who="${person.viewedUserId}" asOthersWouldSee="true"/>
 	<dht:contentColumn>
-		<dht:zoneBoxWhereAt>
-			Hello world!
-		</dht:zoneBoxWhereAt>
+		<c:set var="haveWhereAtSection" value="${!empty person.viewedPerson.email || !empty person.viewedPerson.aim || person.lovedAccounts.size > 0}"/>
+		<c:set var="haveWhereNotAtSection" value="${person.hatedAccounts.size > 0}"/>
+		<c:if test="${haveWhereAtSection || haveWhereNotAtSection}">
+			<dht:zoneBoxWhereAt>
+				<c:if test="${haveWhereAtSection}">
+					<c:if test="${!empty person.viewedPerson.aim}">
+						<c:if test="${!empty person.aimPresenceImageLink}">
+							<img src="${person.aimPresenceImageLink}" border="0"/>
+						</c:if>
+						<dht:whereAtItem label="AIM" linkText="${person.viewedPerson.aim.aim}" linkTarget="${person.aimLink}"/>
+					</c:if>
+					<c:if test="${!empty person.viewedPerson.email}">
+						<dh:png src="/images2/${buildStamp}/email_icon.png" style="width: 16px; height: 11px;"/>
+						<dht:whereAtItem linkText="Send me email" linkTarget="${person.emailLink}"/>
+					</c:if>
+					<c:forEach var="account" items="${person.lovedAccounts.list}">
+						<div>
+							<dht:whereAtItem label="${account.siteName}" linkText="${account.linkText}" linkTarget="${account.link}"/>
+						</div>
+					</c:forEach>
+				</c:if>
+				<c:if test="${haveWhereAtSection && haveWhereNotAtSection}">
+					<dht:zoneBoxSeparator/>
+				</c:if>		
+				<c:if test="${haveWhereNotAtSection}">
+					<dht:zoneBoxTitle>WHERE YOU WON'T FIND ME</dht:zoneBoxTitle>
+					<c:forEach var="account" items="${person.hatedAccounts.list}">
+						<div class="dh-hated-place">
+							<dh:png src="/images2/${buildStamp}/hate15x15.png" style="width: 15px; height: 15px;"/>
+							<span class="dh-hated-place-name"><c:out value="${account.siteName}"/></span> &#8212; <c:out value="${account.quip}"/>
+						</div>
+					</c:forEach>
+				</c:if>
+			</dht:zoneBoxWhereAt>
+		</c:if>
 		<dht:zoneBoxWeb disableJumpTo="true">
 			<dht:requireLinksPersonBean who="${person.viewedUserId}"/>
 	        <dht:linkSwarmPromo separator="true" linksLink="true" browserInstructions="${signin.valid}"/>

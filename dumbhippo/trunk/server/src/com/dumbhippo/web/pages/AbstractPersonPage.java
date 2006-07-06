@@ -111,8 +111,13 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 	}
 
 	public PersonView getViewedPerson() {
-		if (viewedPerson == null)
-			viewedPerson = identitySpider.getPersonView(getSignin().getViewpoint(), getViewedUser(), PersonViewExtra.ALL_RESOURCES);
+		if (viewedPerson == null) {
+			if (getNeedExternalAccounts())
+				viewedPerson = identitySpider.getPersonView(getSignin().getViewpoint(), getViewedUser(), PersonViewExtra.ALL_RESOURCES,
+						PersonViewExtra.EXTERNAL_ACCOUNTS);
+			else
+				viewedPerson = identitySpider.getPersonView(getSignin().getViewpoint(), getViewedUser(), PersonViewExtra.ALL_RESOURCES);
+		}
 		
 		return viewedPerson;
 	}
@@ -265,5 +270,9 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 				    		                                    0, -1));
 		}
 		return outstandingInvitations;
+	}
+	
+	protected boolean getNeedExternalAccounts() {
+		return false;
 	}
 }

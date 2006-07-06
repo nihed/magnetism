@@ -74,10 +74,14 @@ public class ExternalAccountSystemBean implements ExternalAccountSystem {
 	public Set<ExternalAccount> getExternalAccounts(Viewpoint viewpoint, User user) {
 		// Right now we ignore the viewpoint, so this method is pretty pointless.
 		// but if people use it, future code will work properly.
+		
+		// be sure the account is attached... the external accounts are lazy-loaded
 		if (!em.contains(user.getAccount()))
 			throw new RuntimeException("detached account in getExternalAccounts()");
 		
-		return user.getAccount().getExternalAccounts();
+		Set<ExternalAccount> accounts = user.getAccount().getExternalAccounts();
+		//logger.debug("{} external accounts for user {}", accounts.size(), user);
+		return accounts;
 	}
 	
 	public void setMySpaceName(UserViewpoint viewpoint, String name) throws ValidationException {

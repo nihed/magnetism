@@ -487,6 +487,13 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 				pv.addAllEmails(new TypeFilteredCollection<Resource,EmailResource>(resources, EmailResource.class));
 			} else if (e == PersonViewExtra.ALL_AIMS) {
 				pv.addAllAims(new TypeFilteredCollection<Resource,AimResource>(resources, AimResource.class));
+			} else if (e == PersonViewExtra.EXTERNAL_ACCOUNTS) {
+				if (pv.getUser() != null)
+					pv.addExternalAccounts(externalAccounts.getExternalAccounts(viewpoint, pv.getUser()));
+				else
+					pv.addExternalAccounts(new HashSet<ExternalAccount>());
+				if (pv.getExternalAccounts() == null)
+					throw new IllegalStateException("Somehow set null external accounts on PersonView");
 			} else {
 				EmailResource email = null;
 				AimResource aim = null;

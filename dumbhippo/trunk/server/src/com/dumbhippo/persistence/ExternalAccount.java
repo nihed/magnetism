@@ -4,6 +4,7 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
 
 import org.hibernate.annotations.Cache;
@@ -120,5 +121,25 @@ public class ExternalAccount extends DBUnique {
 	}
 	public void setSentiment(Sentiment sentiment) {
 		this.sentiment = sentiment;
+	}
+
+	@Override
+	public String toString() {
+		return "{" + sentiment + " accountType=" + accountType + " handle=" + handle + " extra=" + extra + " quip=" + quip + "}";
+	}
+		
+	@Transient
+	public String getSiteName() {
+		return accountType.getSiteName();
+	}
+	
+	@Transient
+	public String getLink() {
+		return accountType.getLink(handle, extra);
+	}
+	
+	@Transient
+	public String getLinkText() {
+		return accountType.getLinkText(handle, extra);
 	}
 }

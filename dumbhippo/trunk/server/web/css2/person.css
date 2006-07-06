@@ -1,0 +1,19 @@
+@CHARSET "UTF-8";
+@IMPORT url("site.css");
+
+#dhContentColumn .dh-zone-box .dh-hated-place {
+	color:				#cc0033;
+}
+
+#dhContentColumn .dh-zone-box .dh-hated-place .dh-hated-place-name {
+	font-weight:		bold;
+}
+
+#dhContentColumn .dh-zone-box .dh-where-at-label {
+	font-weight: 		bold;
+	color:				black;
+}
+
+#dhContentColumn .dh-zone-box .dh-where-at-link {
+	color:				blue;
+}

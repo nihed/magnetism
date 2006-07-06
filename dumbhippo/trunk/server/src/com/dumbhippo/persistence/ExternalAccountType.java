@@ -19,6 +19,12 @@ public enum ExternalAccountType {
 			// handle is myspace name, extra is friend id number
 			return "http://myspace.com/" + StringUtils.urlEncode(handle);
 		}
+		
+		@Override
+		public String getLinkText(String handle, String extra) {
+			return handle;
+		}
+		
 		@Override
 		public String canonicalizeHandle(String handle) throws ValidationException {
 			handle = super.canonicalizeHandle(handle);
@@ -51,6 +57,12 @@ public enum ExternalAccountType {
 			// handle is "NSID" extra is flickr email address
 			return FlickrUser.getProfileUrl(handle);
 		}
+		
+		@Override
+		public String getLinkText(String handle, String extra) {
+			return "My Profile";
+		}
+
 		@Override
 		public String canonicalizeExtra(String extra) throws ValidationException {
 			extra = super.canonicalizeExtra(extra);
@@ -66,6 +78,11 @@ public enum ExternalAccountType {
 		public String getLink(String handle, String extra) {
 			return "http://www.linkedin.com/in/" + StringUtils.urlEncode(handle);
 		}
+		
+		@Override
+		public String getLinkText(String handle, String extra) {
+			return "My Profile";
+		}
 	},
 	WEBSITE("Website")  {
 		@Override
@@ -73,6 +90,16 @@ public enum ExternalAccountType {
 			// the "website" thing is just an url we know nothing further about
 			return handle;
 		}
+		
+		@Override
+		public String getLinkText(String handle, String extra) {
+			// prettier without the http://
+			if (handle.startsWith("http://"))
+				return handle.substring("http://".length());
+			else
+				return handle;
+		}
+		
 		@Override
 		public String canonicalizeHandle(String handle) throws ValidationException {
 			handle = super.canonicalizeHandle(handle);
@@ -92,11 +119,20 @@ public enum ExternalAccountType {
 			// the handle here is a numeric ID 
 			return "http://www.facebook.com/profile.php?id=" + StringUtils.urlEncode(handle);
 		}
+		
+		@Override
+		public String getLinkText(String handle, String extra) {
+			return "My Profile";
+		}
 	},
 	ORKUT("Orkut")  {
 		@Override
 		public String getLink(String handle, String extra) {
 			throw new UnsupportedOperationException("add orkut support");
+		}
+		@Override
+		public String getLinkText(String handle, String extra) {
+			throw new UnsupportedOperationException("Not implemented yet");
 		}
 	},
 	YOUTUBE("YouTube")  {
@@ -104,11 +140,20 @@ public enum ExternalAccountType {
 		public String getLink(String handle, String extra) {
 			throw new UnsupportedOperationException("add youtube support");
 		}
+		@Override
+		public String getLinkText(String handle, String extra) {
+			throw new UnsupportedOperationException("Not implemented yet");
+		}
+
 	},
 	XANGA("Xanga")  {
 		@Override
 		public String getLink(String handle, String extra) {
 			throw new UnsupportedOperationException("add xanga support");
+		}
+		@Override
+		public String getLinkText(String handle, String extra) {
+			throw new UnsupportedOperationException("Not implemented yet");
 		}
 	};
 	
@@ -128,6 +173,8 @@ public enum ExternalAccountType {
 	}
 	
 	abstract public String getLink(String handle, String extra);
+	
+	abstract public String getLinkText(String handle, String extra);
 	
 	public String canonicalizeHandle(String handle) throws ValidationException {
 		if (handle != null) {
