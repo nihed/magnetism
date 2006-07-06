@@ -2057,6 +2057,8 @@ hippo_bubble_link_click_action(HippoBubble       *bubble,
     case LINK_CLICK_JOIN_CHAT:
         if (bubble->post_id)
             hippo_app_join_chat(hippo_get_app(), bubble->post_id);
+        else if (bubble->group_id)
+        	hippo_app_join_chat(hippo_get_app(), bubble->group_id);
         break;
     case LINK_CLICK_IGNORE_POST:
         if (bubble->post_id) {

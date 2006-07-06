@@ -399,6 +399,12 @@ on_user_joined(HippoChatRoom *room,
     post = manager_post_for_room(manager, room);
     if (post != NULL) {                
         manager_bubble_post(manager, post, HIPPO_BUBBLE_REASON_VIEWER);
+    } else {
+	    HippoEntity *group;    
+	    group = manager_group_for_room(manager, room);
+    	if (group != NULL) {                
+        	manager_bubble_group(manager, group, HIPPO_BUBBLE_REASON_VIEWER);
+	    }        
     }
 }
 
@@ -425,35 +431,6 @@ on_message_added(HippoChatRoom    *room,
 }
 
 static void
-on_user_joined_group_chat(HippoChatRoom *room,
-		                  HippoPerson   *user,
-                          BubbleManager *manager)
-{
-    HippoPost *post;
-    post = manager_post_for_room(manager, room);
-    if (post != NULL) {                
-        manager_bubble_post(manager, post, HIPPO_BUBBLE_REASON_VIEWER);
-    }
-}
-
-static void
-on_group_chatmessage_added(HippoChatRoom    *room,
-                           HippoChatMessage *message,
-                           BubbleManager    *manager)
-{
-    HippoPost *post;
-    
-    if (hippo_chat_room_get_loading(room))
-        return;
-    
-    post = manager_post_for_room(manager, room);    
-    if (post != NULL) {                
-        manager_bubble_post(manager, post, HIPPO_BUBBLE_REASON_CHAT);
-    }
-}
-
-
-static void
 chat_room_disconnect(BubbleManager *manager,
                      HippoChatRoom *room)
 {
@@ -477,7 +454,7 @@ on_chat_room_loaded(HippoPost     *post,
         g_hash_table_replace(manager->chats, room, room);
     } else if (hippo_chat_room_get_kind(room) == HIPPO_CHAT_KIND_GROUP
     		   && g_hash_table_lookup(manager->chats, room) == NULL) {
-        g_signal_connect(G_OBJECT(room), "user-joined", G_CALLBACK(on_user_joined_group_chat), manager);
+        g_signal_connect(G_OBJECT(room), "user-joined", G_CALLBACK(on_user_joined), manager);
         g_signal_connect(G_OBJECT(room), "message-added", G_CALLBACK(on_message_added), manager);    		   
     }
 }
