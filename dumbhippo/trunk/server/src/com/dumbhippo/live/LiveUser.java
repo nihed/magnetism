@@ -40,6 +40,10 @@ public class LiveUser extends LiveObject {
 		return availableCount;
 	}
 
+	public boolean isOnline() {
+		return availableCount > 0;
+	}
+	
 	public List<Guid> getActivePosts() {
 		return activePosts;
 	}

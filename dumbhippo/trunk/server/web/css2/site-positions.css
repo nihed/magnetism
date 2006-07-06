@@ -210,7 +210,7 @@ input.dh-text-input {
 	margin-bottom:		3px;
 }
 
-.dh-compact-item .dh-next-to-image .dh-action-link {
+.dh-compact-item .dh-next-to-image .dh-action-link, .dh-compact-item .dh-next-to-image .dh-presence {
 	margin-top:			2px;
 }
 

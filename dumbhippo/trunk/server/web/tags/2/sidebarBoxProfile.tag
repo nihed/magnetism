@@ -33,7 +33,21 @@
 					</td>
 					<td>
 						<div class="dh-next-to-image">
-							<div class="dh-name"><c:out value="${person.viewedPerson.name}"/></div>							
+							<div class="dh-name"><c:out value="${person.viewedPerson.name}"/></div>
+							<c:if test="${!person.self || person.asOthersWouldSee}">
+								<div class="dh-presence">
+									<c:choose>
+										<c:when test="${person.viewedPerson.liveUser.online}">
+											<dh:png src="/images2/${buildStamp}/online12x12.png" style="width: 12px; height: 12px;"/>
+											online
+										</c:when>
+										<c:otherwise>
+											<dh:png src="/images2/${buildStamp}/offline12x12.png" style="width: 12px; height: 12px;"/>
+											offline
+										</c:otherwise>
+									</c:choose>
+								</div>
+							</c:if>
 							<c:choose>
 								<c:when test="${person.self && !person.asOthersWouldSee}">
 									<dht:actionLink href="/account" title="Set preferences, add addresses, and update your profile">Edit account</dht:actionLink>
