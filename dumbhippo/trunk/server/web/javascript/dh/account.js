@@ -84,7 +84,11 @@ dh.account.removeExternalAccount = function(type, loadFunc, errorFunc) {
 				     { "type" : type },
 						loadFunc, errorFunc);
 }
-
+dh.account.setMyspaceName = function(name, loadFunc, errorFunc) {
+   	dh.server.doXmlMethod("setmyspacename",
+				     { "name" : name },
+						loadFunc, errorFunc);
+}
 dh.account.findFlickrAccount = function(email, loadFunc, errorFunc) {
    	dh.server.doXmlMethod("findflickraccount",
 				     { "email" : email },
@@ -164,6 +168,46 @@ dh.account.onFlickrCanceled = function(value) {
 	  	    	 });
 }
 
+dh.account.onMyspaceLoveSaved = function(value) {
+	var entry = dh.account.myspaceEntry;
+	var oldMode = entry.getMode();
+	entry.setBusy();
+  	dh.account.setMyspaceName(value, 
+	 	    	 function(childNodes, http) {
+	 	    	 	entry.setMode('love');
+	  	    	 },
+	  	    	 function(code, msg, http) {
+	  	    	 	alert(msg);
+	  	    	 	entry.setMode(oldMode);
+	  	    	 }); 
+}
+dh.account.onMyspaceHateSaved = function(value) {
+	var entry = dh.account.myspaceEntry;
+	var oldMode = entry.getMode();
+	entry.setBusy();
+	dh.account.hateExternalAccount('MYSPACE', value,
+	 	    	 function(childNodes, http) {
+	 	    	 	entry.setMode('hate');
+	  	    	 },
+	  	    	 function(code, msg, http) {
+	  	    	 	alert(msg);
+	  	    	 	entry.setMode(oldMode);
+	  	    	 });
+}
+dh.account.onMyspaceCanceled = function(value) {
+	var entry = dh.account.myspaceEntry;
+	var oldMode = entry.getMode();
+	entry.setBusy();
+	dh.account.removeExternalAccount('MYSPACE', 
+	 	    	 function(childNodes, http) {
+	 	    	 	entry.setMode('indifferent');
+	  	    	 },
+	  	    	 function(code, msg, http) {
+	  	    	 	alert(msg);
+	  	    	 	entry.setMode(oldMode);
+	  	    	 });
+}
+
 dhAccountInit = function() {
 	dh.account.usernameEntryNode = document.getElementById('dhUsernameEntry');
 	dh.account.usernameEntry = new dh.textinput.Entry(dh.account.usernameEntryNode, "J. Doe", dh.formtable.currentValues['dhUsernameEntry']);
@@ -195,16 +239,12 @@ dhAccountInit = function() {
 		"Your music bio has been saved.");
 	}
 	
-	dh.account.myspaceEntryNode = document.getElementById('dhMyspaceEntry');
-	dh.account.myspaceEntry = new dh.textinput.Entry(dh.account.myspaceEntryNode, null, dh.formtable.currentValues['dhMyspaceEntry']);
+	dh.account.myspaceEntry = new dh.lovehate.Entry('dhMyspace', 'Enter your Myspace name', dh.account.initialMyspaceName,
+							'I despise Tom and his space', dh.account.initialMyspaceHateQuip);
+	dh.account.myspaceEntry.onLoveSaved = dh.account.onMyspaceLoveSaved;
+	dh.account.myspaceEntry.onHateSaved = dh.account.onMyspaceHateSaved;
+	dh.account.myspaceEntry.onCanceled = dh.account.onMyspaceCanceled;
 
-	dh.formtable.undoValues['dhMyspaceEntry'] = dh.account.myspaceEntry.getValue();
-	dh.account.myspaceEntry.onValueChanged = function(value) {
-		dh.formtable.onValueChanged(dh.account.myspaceEntry, 'setmyspacename', 'name', value,
-		"Saving new MySpace name...",
-		"Your MySpace name has been saved.");
-	}
-	
 	// add some event handlers on the file input
 	dh.account.photoEntry = new dh.fileinput.Entry(document.getElementById('dhPictureEntry'));
 	

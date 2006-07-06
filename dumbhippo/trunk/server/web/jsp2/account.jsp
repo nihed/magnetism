@@ -22,13 +22,14 @@
 		dh.formtable.currentValues = {
 			'dhUsernameEntry' : <dh:jsString value="${signin.user.nickname}"/>,
 			'dhBioEntry' : <dh:jsString value="${signin.user.account.bio}"/>,
-			'dhMusicBioEntry' : <dh:jsString value="${signin.user.account.musicBio}"/>,
-			'dhMyspaceEntry' : <dh:jsString value="${signin.user.account.mySpaceName}"/>
+			'dhMusicBioEntry' : <dh:jsString value="${signin.user.account.musicBio}"/>
 		};
 		dh.account.userId = <dh:jsString value="${signin.user.id}"/>
 		dh.account.reloadPhoto = function() {
 			dh.photochooser.reloadPhoto([document.getElementById('dhHeadshotImageContainer')], 60);
 		}
+		dh.account.initialMyspaceName = <dh:jsString value="${account.mySpaceName}"/>;
+		dh.account.initialMyspaceHateQuip = <dh:jsString value="${account.mySpaceHateQuip}"/>;
 		dh.account.initialFlickrEmail = <dh:jsString value="${account.flickrEmail}"/>;
 		dh.account.initialFlickrHateQuip = <dh:jsString value="${account.flickrHateQuip}"/>;
 	</script>
@@ -91,7 +92,7 @@
 				</dht:formTableRow>
 				<dht:formTableRowStatus controlId='dhMyspaceEntry'></dht:formTableRowStatus>
 				<dht:formTableRow label="MySpace name">
-					<dht:textInput id="dhMyspaceEntry"/>
+					<dht:loveHateEntry baseId="dhMyspace" mode="${account.mySpaceSentiment}"/>
 				</dht:formTableRow>
 				<dht:formTableRow label="Flickr">
 					<dht:loveHateEntry baseId="dhFlickr" mode="${account.flickrSentiment}"/>

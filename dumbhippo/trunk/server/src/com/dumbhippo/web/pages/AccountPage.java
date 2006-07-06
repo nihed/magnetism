@@ -123,6 +123,18 @@ public class AccountPage {
 		}
 		return external.getExtra();
 	}
+
+	public String getMySpaceSentiment() {
+		return getExternalAccountSentiment(ExternalAccountType.MYSPACE);
+	}
+	
+	public String getMySpaceHateQuip() {
+		return getExternalAccountHateQuip(ExternalAccountType.MYSPACE);
+	}
+	
+	public String getMySpaceName() {
+		return getExternalAccountHandle(ExternalAccountType.MYSPACE);
+	}
 	
 	public String getFlickrSentiment() {
 		return getExternalAccountSentiment(ExternalAccountType.FLICKR);
