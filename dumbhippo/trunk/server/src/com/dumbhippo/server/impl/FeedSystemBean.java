@@ -386,7 +386,18 @@ public class FeedSystemBean implements FeedSystem {
 		logger.debug("Processing feed entry: {}", entry.getTitle());
 		
 		for (GroupFeed feed : entry.getFeed().getGroups()) {
-			postingBoard.doFeedPost(feed, entry);
+			if (!feed.isRemoved()) {
+				// catch errors here so failure to post to one group 
+				// won't break all other groups that want the same
+				// entry; there's nobody to catch this exception anyhow.
+				try {
+					postingBoard.doFeedPost(feed, entry);
+				} catch (RuntimeException e) {
+					logger.error("Error posting feed entry {} to GroupFeed {}",
+							entry, feed);
+					logger.error("Exception posting feed", e);
+				}
+			}
 		}
 	}
 	
