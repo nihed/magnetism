@@ -59,6 +59,8 @@ protected:
     }
 };
 
+class HippoEntityCollection;
+
 class HippoEntityWrapper
     : public HippoComWrapperDispatchable<HippoEntity, IHippoEntity, HippoEntityWrapper>
 {
@@ -85,13 +87,21 @@ public:
     STDMETHODIMP get_Name(BSTR *name);
     STDMETHODIMP get_SmallPhotoUrl(BSTR *smallPhotoUrl);
     STDMETHODIMP get_ChattingUserCount(int *chattingUserCount);
+    STDMETHODIMP get_ChattingUsers(IHippoEntityCollection **users);
     STDMETHODIMP get_Ignored(BOOL *ignored);
     STDMETHODIMP get_HomeUrl(BSTR *homeUrl);
 
     STDMETHODIMP get_LastChatMessage(BSTR *message);
     STDMETHODIMP get_LastChatSender(IHippoEntity **sender);
 
-private:
+private:    
+    HippoPtr<HippoEntityCollection> currentChatParticipants_;
+
+    GConnection1<void,HippoEntity*> userStateChanged_;
+    GConnection0<void> cleared_;
+
+    void onUserStateChanged(HippoEntity *entity);
+    void onCleared();
 
     HippoEntityWrapper(const HippoEntityWrapper &other);
     const HippoEntityWrapper &operator=(const HippoEntityWrapper &other);

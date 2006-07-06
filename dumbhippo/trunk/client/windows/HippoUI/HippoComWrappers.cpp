@@ -94,6 +94,58 @@ HippoEntityWrapper::get_ChattingUserCount(int *chattingUserCount)
     return S_OK;
 }
 
+void
+HippoEntityWrapper::onUserStateChanged(HippoEntity *entity)
+{
+    // drop cached user information from ChatRoom
+    currentChatParticipants_ = NULL;
+}
+
+void
+HippoEntityWrapper::onCleared()
+{
+    // drop cached info from ChatRoom (individual user state changes
+    // aren't emitted when we clear the room)
+    currentChatParticipants_ = NULL;
+}
+
+STDMETHODIMP
+HippoEntityWrapper::get_ChattingUsers(IHippoEntityCollection **users)
+{
+    // We keep a pointer to the CurrentChatParticipants object so something like
+    // for (i = 0; i < post.CurrentChatParticipants.length; i++) { ... } 
+    // doesn't continually create new objects, but we don't try to 
+    // incrementally update it, we just clear it and demand create
+    // a new one.
+
+    if (!currentChatParticipants_) {
+        currentChatParticipants_ = new HippoEntityCollection();
+        currentChatParticipants_->Release(); // the smart pointer has got it
+
+        HippoChatRoom *room = hippo_entity_get_chat_room(delegate_);
+        if (room && !hippo_chat_room_get_loading(room)) {
+            GSList *members = hippo_chat_room_get_users(room);
+            for (GSList *link = members; link != NULL; link = link->next) {
+                HippoEntity *entity = HIPPO_ENTITY(link->data);
+                currentChatParticipants_->addMember(entity);
+                g_object_unref(entity);
+            }
+            g_slist_free(members);
+
+            // connect up to clear cache if chat room changes
+            userStateChanged_.connect(G_OBJECT(room), "user-state-changed", 
+                slot(this, &HippoEntityWrapper::onUserStateChanged));
+            cleared_.connect(G_OBJECT(room), "cleared",
+                slot(this, &HippoEntityWrapper::onCleared));
+        }
+    }
+
+    currentChatParticipants_->AddRef();
+    *users = currentChatParticipants_;
+
+    return S_OK;
+}
+
 STDMETHODIMP 
 HippoEntityWrapper::get_LastChatMessage(BSTR *message)
 {

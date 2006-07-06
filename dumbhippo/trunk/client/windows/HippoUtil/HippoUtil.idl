@@ -100,6 +100,9 @@ library HippoUtil {
         [id(136), helpstring("Create an xmlhttp object")]
         HRESULT GetXmlHttp([out, retval] IXmlHttpRequest **request);
     }
+    
+    interface IHippoEntityCollection;
+
     [
         uuid(58749FB7-80D9-4BCD-9390-07E0BC98863E),
         helpstring("DumbHippo Entity"),
@@ -126,6 +129,8 @@ library HippoUtil {
         HRESULT Ignored([out, retval] BOOL *ignored);
         [id(208), propget, helpstring("URL to a web page with information about the entity")]
         HRESULT HomeUrl([out, retval] BSTR *homeUrl);
+        [id(209), propget, helpstring("People currently participating in the group chat")]
+        HRESULT ChattingUsers([out, retval] IHippoEntityCollection **users);
     }
     [
         uuid(89503F0C-B401-4AAB-9F99-9B4D2EFA7AD6),

@@ -698,33 +698,49 @@ dh.bubble.GroupChatData = function(group) {
     }
     
     this.appendBodyContent = function(bubble, parent) {
-        parent.appendChild(document.createTextNode("New chat comments."));
+        parent.appendChild(document.createTextNode("New chat activity."));
     }
           
     this.appendSwarmContent = function(bubble, parent) {
         var pages = []
-        
-        var someoneSaidDiv = document.createElement("div")
-        someoneSaidDiv.className  = "dh-notification-someone-said"
-        parent.appendChild(someoneSaidDiv)
-        
-        var senderPhoto = bubble.createPngElement(dh.serverUrl + this.group.LastChatSender.SmallPhotoUrl)
-        senderPhoto.className = "dh-notification-chat-sender-photo"
-        someoneSaidDiv.appendChild(senderPhoto)
-        
-        var messageSpan = document.createElement("span")
-        messageSpan.className = "dh-notification-chat-message"
-        messageSpan.appendChild(document.createTextNode('"' + this.group.LastChatMessage + '"'))
-        someoneSaidDiv.appendChild(messageSpan)            
-        
-        var sender = this.group.LastChatSender
-        var senderDiv = document.createElement("div")
-        senderDiv.className = "dh-notification-chat-sender"
-        senderDiv.appendChild(bubble.renderPerson(sender, "dh-notification-sender"))
-        someoneSaidDiv.appendChild(senderDiv)
-        
-        pages.push({ name: "someoneSaid", title: "Recent Comments", div: someoneSaidDiv })
 
+        if (this.group.ChattingUsers.length > 0) {
+            var whosThereDiv = document.createElement("div")
+            whosThereDiv.className  = "dh-notification-whos-there"
+            parent.appendChild(whosThereDiv)
+        
+            var chattingUsersArray = []
+            var chattingUsers = this.group.ChattingUsers
+            for (var i = 0; i < chattingUsers.length; i++) {
+                chattingUsersArray.push(chattingUsers.item(i))
+            }
+            bubble.renderRecipients(whosThereDiv, chattingUsersArray, "dh-notification-viewer", "dh-notification-self-viewer")
+            
+            pages.push({ name: "whosThere", title: "Who's there", div: whosThereDiv })
+        }
+
+        if (this.group.LastChatSender != null) {                
+            var someoneSaidDiv = document.createElement("div")
+            someoneSaidDiv.className  = "dh-notification-someone-said"
+            parent.appendChild(someoneSaidDiv)
+            
+            var senderPhoto = bubble.createPngElement(dh.serverUrl + this.group.LastChatSender.SmallPhotoUrl)
+            senderPhoto.className = "dh-notification-chat-sender-photo"
+            someoneSaidDiv.appendChild(senderPhoto)
+            
+            var messageSpan = document.createElement("span")
+            messageSpan.className = "dh-notification-chat-message"
+            messageSpan.appendChild(document.createTextNode('"' + this.group.LastChatMessage + '"'))
+            someoneSaidDiv.appendChild(messageSpan)            
+            
+            var sender = this.group.LastChatSender
+            var senderDiv = document.createElement("div")
+            senderDiv.className = "dh-notification-chat-sender"
+            senderDiv.appendChild(bubble.renderPerson(sender, "dh-notification-sender"))
+            someoneSaidDiv.appendChild(senderDiv)
+            
+            pages.push({ name: "someoneSaid", title: "Recent Comments", div: someoneSaidDiv })
+        }
         
         return pages
     }
