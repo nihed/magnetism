@@ -32,7 +32,7 @@
 						<c:if test="${!empty person.aimPresenceImageLink}">
 							<img src="${person.aimPresenceImageLink}" border="0"/>
 						</c:if>
-						<dht:whereAtItem label="AIM" linkText="${person.viewedPerson.aim.aim}" linkTarget="${person.aimLink}"/>
+						<dht:whereAtItem label="AIM" linkText="${person.viewedPerson.aim.screenName}" linkTarget="${person.aimLink}"/>
 					</c:if>
 					<c:if test="${!empty person.viewedPerson.email}">
 						<dh:png src="/images2/${buildStamp}/email_icon.png" style="width: 16px; height: 11px;"/>
