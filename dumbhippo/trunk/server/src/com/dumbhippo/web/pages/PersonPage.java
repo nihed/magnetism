@@ -105,9 +105,11 @@ public class PersonPage extends AbstractPersonPage {
 		} catch (PropertyNotFoundException pnfe) {
 			return null;
 		}
+		if (presenceKey.length() == 0)
+			return null;
 
 		return "http://api.oscar.aol.com/SOA/key=" + presenceKey + "/presence/" + aimName;
-	}	
+	}
 	
 	public String getAimLink() {
 		PersonView pv = getViewedPerson();
