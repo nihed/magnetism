@@ -26,6 +26,8 @@ import com.dumbhippo.live.LiveState;
 import com.dumbhippo.live.LiveXmppServer;
 import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.EmbeddedMessage;
+import com.dumbhippo.persistence.ExternalAccount;
+import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupMessage;
 import com.dumbhippo.persistence.InvitationToken;
@@ -36,6 +38,7 @@ import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.PostMessage;
 import com.dumbhippo.persistence.PostVisibility;
 import com.dumbhippo.persistence.Resource;
+import com.dumbhippo.persistence.Sentiment;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.ChatRoomInfo;
@@ -44,6 +47,7 @@ import com.dumbhippo.server.ChatRoomMessage;
 import com.dumbhippo.server.ChatRoomUser;
 import com.dumbhippo.server.Enabled;
 import com.dumbhippo.server.EntityView;
+import com.dumbhippo.server.ExternalAccountSystem;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.GroupView;
 import com.dumbhippo.server.IdentitySpider;
@@ -87,6 +91,9 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 	
 	@EJB
 	private GroupSystem groupSystem;
+	
+	@EJB
+	private ExternalAccountSystem externalAccounts;
 	
 	@AroundInvoke
 	public Object catchRuntimeExceptions(InvocationContext ctx) throws Exception {
@@ -298,7 +305,11 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 	
 	public String getMySpaceName(String username) {
 		User user = userFromTrustedUsername(username);
-		return user.getAccount().getMySpaceName();
+		try {
+			return externalAccounts.getMySpaceName(SystemViewpoint.getInstance(), user);
+		} catch (NotFoundException e) {
+			return null;
+		}
 	}
 	
 	public void addMySpaceBlogComment(String username, long commentId, long posterId) {
@@ -316,10 +327,19 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 	private List<MySpaceContactInfo> userSetToContactList(Set<User> users) {
 		List<MySpaceContactInfo> ret = new ArrayList<MySpaceContactInfo>();
 		for (User user : users) {
-			Account acct = user.getAccount();
-			ret.add(new MySpaceContactInfo(acct.getMySpaceName(), acct.getMySpaceFriendId()));
+			String myspaceName = null;
+			String myspaceFriendId = null;
+			try {
+				ExternalAccount external = externalAccounts.lookupExternalAccount(SystemViewpoint.getInstance(), user, ExternalAccountType.MYSPACE);
+				if (external.getSentiment() == Sentiment.LOVE) {
+					myspaceName = external.getHandle();
+					myspaceFriendId = external.getExtra();
+				}
+			} catch (NotFoundException e) {
+			}
+			ret.add(new MySpaceContactInfo(myspaceName, myspaceFriendId));
 		}
-		return ret;		
+		return ret;
 	}
 	
 	public List<MySpaceContactInfo> getContactMySpaceNames(String username) {

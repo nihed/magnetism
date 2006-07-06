@@ -64,8 +64,16 @@ public class ExternalAccount extends DBUnique {
 		return handle;
 	}
 	public void setHandle(String handle) {
-		this.handle = handle;
+		try {
+			this.handle = accountType.canonicalizeHandle(handle);
+		} catch (ValidationException e) {
+			throw new IllegalArgumentException("Setting invalid handle on ExternalAccount type " + accountType + " value '" + handle + "'", e);
+		}
 	}
+
+	public void setHandleValidating(String handle) throws ValidationException {
+		this.handle = accountType.canonicalizeHandle(handle);
+	}	
 	
 	@Column(nullable=true)
 	public String getExtra() {
@@ -73,8 +81,16 @@ public class ExternalAccount extends DBUnique {
 	}
 
 	public void setExtra(String extra) {
-		this.extra = extra;
-	}	
+		try {
+			this.extra = accountType.canonicalizeExtra(extra);
+		} catch (ValidationException e) {
+			throw new IllegalArgumentException("Setting invalid extra on ExternalAccount type " + accountType + " value '" + extra + "'", e);
+		}
+	}
+	
+	public void setExtraValidating(String extra) throws ValidationException {
+		this.extra = accountType.canonicalizeExtra(extra);
+	}
 	
 	@Column(nullable=true)
 	public String getQuip() {

@@ -7,6 +7,7 @@ import javax.ejb.Local;
 import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.persistence.ValidationException;
 
 @Local
 public interface ExternalAccountSystem {
@@ -46,4 +47,24 @@ public interface ExternalAccountSystem {
 	 * @return the set of external accounts for this user (should not be modified)
 	 */
 	public Set<ExternalAccount> getExternalAccounts(Viewpoint viewpoint, User user);
+	
+	
+	/**
+	 * Associate a MySpace identity with an account holder. 
+	 * 
+	 * @param viewpoint whose myspace name to set
+	 * @param name permanent MySpace name
+	 * @throws ValidationException 
+	 */
+	public void setMySpaceName(UserViewpoint viewpoint, String name) throws ValidationException;
+	
+	/**
+	 * Only returns a myspace name if the person has it set as LOVE
+	 * 
+	 * @param viewpoint
+	 * @param user
+	 * @return
+	 * @throws NotFoundException
+	 */
+	public String getMySpaceName(Viewpoint viewpoint, User user) throws NotFoundException;
 }

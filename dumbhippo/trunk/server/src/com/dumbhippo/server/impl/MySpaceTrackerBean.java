@@ -17,13 +17,16 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.ThreadUtils;
-import com.dumbhippo.persistence.Account;
+import com.dumbhippo.persistence.ExternalAccount;
+import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.MySpaceBlogComment;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.server.ExternalAccountSystem;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.MessageSender;
 import com.dumbhippo.server.MySpaceTracker;
 import com.dumbhippo.server.NotFoundException;
+import com.dumbhippo.server.SystemViewpoint;
 import com.dumbhippo.server.UserViewpoint;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.services.MySpaceScraper;
@@ -41,6 +44,9 @@ public class MySpaceTrackerBean implements MySpaceTracker {
 	@EJB
 	private MessageSender messageSender;
 
+	@EJB
+	private ExternalAccountSystem externalAccounts;
+	
 	private ExecutorService threadPool;
 	
 	@PostConstruct
@@ -82,26 +88,31 @@ public class MySpaceTrackerBean implements MySpaceTracker {
 		return comments;	
 	}
 	
-	public void setFriendId(Account acct, String friendId) {
+	public void setFriendId(User user, String friendId) {
+		ExternalAccount external;
 		try {
-			acct = identitySpider.lookupGuid(Account.class, acct.getGuid());
+			external = externalAccounts.lookupExternalAccount(new UserViewpoint(user), user, ExternalAccountType.MYSPACE);
+			external.setExtra(friendId);
 		} catch (NotFoundException e) {
-			throw new RuntimeException(e);
+			// nothing to do here really... can legitimately happen in some race situations
 		}
-		acct.setMySpaceFriendId(friendId);
 	}
 
-	public void updateFriendId(User user) {
-		final Account acct = user.getAccount();
-		assert(acct != null);		
+	public void updateFriendId(final User user) {
+		final String mySpaceName;
+		try {
+			mySpaceName = externalAccounts.getMySpaceName(SystemViewpoint.getInstance(), user);
+		} catch (NotFoundException e) {
+			setFriendId(user, null);
+			return;
+		}
+		
 		threadPool.execute(new Runnable() {
 			public void run() {
 				MySpaceTracker tracker = EJBUtil.defaultLookup(MySpaceTracker.class);
-				String name = acct.getMySpaceName();
-				assert(name != null);
 				try {
-					String friendId = MySpaceScraper.getFriendId(name);
-					tracker.setFriendId(acct, friendId);
+					String friendId = MySpaceScraper.getFriendId(mySpaceName);
+					tracker.setFriendId(user, friendId);
 				} catch (IOException e) {
 					logger.warn("Failed to retrieve MySpace friend ID", e);
 				}
@@ -115,5 +126,4 @@ public class MySpaceTrackerBean implements MySpaceTracker {
 			messageSender.sendMySpaceContactCommentNotification(u);
 		}
 	}
-
 }

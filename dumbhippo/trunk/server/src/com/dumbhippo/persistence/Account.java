@@ -77,10 +77,6 @@ public class Account extends Resource {
 	private String password;
 	private Integer passwordSalt;
 	
-	// these should be replaced by ExternalAccount
-	private String mySpaceName;
-	private String mySpaceFriendId;
-	
 	private Boolean musicSharingEnabled;
 	// whether we've "primed" music sharing with some sample music
 	private boolean musicSharingPrimed;
@@ -497,33 +493,6 @@ public class Account extends Resource {
 	public void setAdminDisabled(boolean adminDisabled) {
 		this.adminDisabled = adminDisabled;
 	}
-	
-	@Column
-	public String getMySpaceName() {
-		return mySpaceName;
-	}
-
-	public void setMySpaceName(String name) {
-		if (name != null) {
-			// Last ditch exceptions
-			if (name.length() > 40)
-				throw new IllegalArgumentException("MySpace name too long: " + name);
-			if (!name.matches("^[\\p{Alnum}]+$"))
-				throw new IllegalArgumentException("Invalid MySpace name");
-		}
-		
-		this.mySpaceName = name;
-	}	
-	
-	@Column
-	public String getMySpaceFriendId() {
-		return mySpaceFriendId;
-	}
-
-	public void setMySpaceFriendId(String mySpaceFriendId) {
-		this.mySpaceFriendId = mySpaceFriendId;
-	}
-
 
 	@Column(nullable=true)
 	public Boolean isMusicSharingEnabled() {

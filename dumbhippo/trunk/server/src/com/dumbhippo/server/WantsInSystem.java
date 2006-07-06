@@ -4,12 +4,13 @@ import java.util.List;
 
 import javax.ejb.Local;
 
+import com.dumbhippo.persistence.ValidationException;
 import com.dumbhippo.persistence.WantsIn;
 
 @Local
 public interface WantsInSystem {
 
-	public void addWantsIn(String address);
+	public void addWantsIn(String address) throws ValidationException;
 	
 	public List<WantsIn> getWantsInWithoutInvites(int count);
 	

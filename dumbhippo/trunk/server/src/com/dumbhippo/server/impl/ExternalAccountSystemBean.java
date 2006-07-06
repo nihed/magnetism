@@ -2,6 +2,7 @@ package com.dumbhippo.server.impl;
 
 import java.util.Set;
 
+import javax.annotation.EJB;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -12,8 +13,13 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.ExternalAccountType;
+import com.dumbhippo.persistence.Sentiment;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.persistence.ValidationException;
 import com.dumbhippo.server.ExternalAccountSystem;
+import com.dumbhippo.server.IdentitySpider;
+import com.dumbhippo.server.MessageSender;
+import com.dumbhippo.server.MySpaceTracker;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.UserViewpoint;
 import com.dumbhippo.server.Viewpoint;
@@ -23,6 +29,15 @@ public class ExternalAccountSystemBean implements ExternalAccountSystem {
 
 	@SuppressWarnings("unused")
 	private static final Logger logger = GlobalSetup.getLogger(ExternalAccountSystemBean.class);
+	
+	@EJB
+	IdentitySpider identitySpider;
+	
+	@EJB
+	private MySpaceTracker mySpaceTracker;
+	
+	@EJB
+	private MessageSender messageSender;	
 	
 	@PersistenceContext(unitName = "dumbhippo")
 	private EntityManager em; 
@@ -63,5 +78,22 @@ public class ExternalAccountSystemBean implements ExternalAccountSystem {
 			throw new RuntimeException("detached account in getExternalAccounts()");
 		
 		return user.getAccount().getExternalAccounts();
+	}
+	
+	public void setMySpaceName(UserViewpoint viewpoint, String name) throws ValidationException {
+		ExternalAccount external = getOrCreateExternalAccount(viewpoint, ExternalAccountType.MYSPACE);
+		external.setHandleValidating(name);
+		mySpaceTracker.updateFriendId(viewpoint.getViewer());
+		messageSender.sendMySpaceNameChangedNotification(viewpoint.getViewer());
+	}
+	
+	public String getMySpaceName(Viewpoint viewpoint, User user) throws NotFoundException {
+		ExternalAccount external = lookupExternalAccount(viewpoint, user, ExternalAccountType.MYSPACE);
+		if (external.getSentiment() == Sentiment.LOVE &&
+				external.getHandle() != null) {
+			return external.getHandle();
+		} else {
+			throw new NotFoundException("No MySpace name for user " + user);
+		}
 	}
 }

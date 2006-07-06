@@ -30,24 +30,27 @@ import com.dumbhippo.persistence.AimResource;
 import com.dumbhippo.persistence.Contact;
 import com.dumbhippo.persistence.ContactClaim;
 import com.dumbhippo.persistence.EmailResource;
+import com.dumbhippo.persistence.ExternalAccount;
+import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GuidPersistable;
 import com.dumbhippo.persistence.LinkResource;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.Resource;
+import com.dumbhippo.persistence.Sentiment;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.ValidationException;
 import com.dumbhippo.persistence.Validators;
 import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.Character;
 import com.dumbhippo.server.Enabled;
+import com.dumbhippo.server.ExternalAccountSystem;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.IdentitySpiderRemote;
 import com.dumbhippo.server.InvitationSystem;
 import com.dumbhippo.server.MessageSender;
-import com.dumbhippo.server.MySpaceTracker;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
@@ -84,10 +87,10 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	private MessageSender messageSender;
 	
 	@EJB
-	private MySpaceTracker mySpaceTracker;
+	private GroupSystem groupSystem;
 	
 	@EJB
-	private GroupSystem groupSystem;
+	private ExternalAccountSystem externalAccounts;
 	
 	public User lookupUserByEmail(Viewpoint viewpoint, String email) {
 		EmailResource res = lookupEmail(email);
@@ -1008,19 +1011,6 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		user.setStockPhoto(photo);
 	}
 	
-	public void setMySpaceName(User user, String name) {
-		// Refresh
-		try {
-			user = lookupGuid(User.class, user.getGuid());
-		} catch (NotFoundException e) {
-			throw new RuntimeException(e);
-		}
-		Account acct = user.getAccount();
-		acct.setMySpaceName(name);
-		mySpaceTracker.updateFriendId(user);
-		messageSender.sendMySpaceNameChangedNotification(user);
-	}
-
 	public Set<User> getMySpaceContacts(UserViewpoint viewpoint) {
 		Set<User> contacts = getRawUserContacts(viewpoint, viewpoint.getViewer());
 		
@@ -1029,14 +1019,23 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		while (iterator.hasNext()) {
 			User user = iterator.next();
 			
-			if (user.equals(viewpoint.getViewer()))
-				continue;
+			if (!user.equals(viewpoint.getViewer())) {	
+				ExternalAccount external;
+				try {
+					// not using externalAccounts.getMySpaceName() because we also want to check we have the friend id
+					external = externalAccounts.lookupExternalAccount(viewpoint, user, ExternalAccountType.MYSPACE);
+					if (external.getSentiment() == Sentiment.LOVE &&
+							external.getHandle() != null &&
+							external.getExtra() != null) {
+						// we have myspace name AND friend ID
+						continue;
+					}				
+				} catch (NotFoundException e) {
+					// nothing
+				} 
+			}
 			
-			Account acct = user.getAccount();
-			if (acct != null && acct.getMySpaceName() != null && acct.getMySpaceFriendId() != null)
-				continue;
-			
-			
+			// remove - did not have a myspace name
 			iterator.remove();
 		}
 		return contacts;
@@ -1046,8 +1045,13 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		Set<User> users = getMySpaceContacts(viewpoint);
 		Set<User> ret = new HashSet<User>();
 		for (User u : users) {
-			if (u.getAccount().getMySpaceName().equals(mySpaceName)) {
-				ret.add(u);
+			try {
+				String name = externalAccounts.getMySpaceName(viewpoint, u);
+				if (name.equals(mySpaceName)) {
+					ret.add(u);
+				}
+			} catch (NotFoundException e) {
+				// nothing
 			}
 		}
 		return ret;

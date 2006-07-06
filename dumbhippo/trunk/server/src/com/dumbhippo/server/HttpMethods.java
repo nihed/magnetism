@@ -128,10 +128,6 @@ public interface HttpMethods {
 	public void doSetPassword(UserViewpoint viewpoint, String password) throws IOException, HumanVisibleException;
 	
 	@HttpContentTypes(HttpResponseData.NONE)
-	@HttpParams( { "name" })
-	public void doSetMySpaceName(UserViewpoint viewpoint, String name) throws IOException;
-	
-	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "enabled" })
 	public void doSetMusicSharingEnabled(UserViewpoint viewpoint, boolean enabled) throws IOException;
 	
@@ -315,4 +311,9 @@ public interface HttpMethods {
 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
 	@HttpParams( { "nsid", "email" })
 	public void doSetFlickrAccount(XmlBuilder xml, UserViewpoint viewpoint, String nsid, String email) throws XmlMethodException;	
+	
+	
+	@HttpContentTypes(HttpResponseData.XMLMETHOD)
+	@HttpParams( { "name" })
+	public void doSetMySpaceName(XmlBuilder xml, UserViewpoint viewpoint, String name) throws XmlMethodException;
 }

@@ -16,6 +16,8 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.persistence.EmailResource;
+import com.dumbhippo.persistence.ValidationException;
 import com.dumbhippo.persistence.WantsIn;
 import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.WantsInSystem;
@@ -33,10 +35,12 @@ public class WantsInSystemBean implements WantsInSystem {
 	@EJB
 	private TransactionRunner runner;
 	
-	public void addWantsIn(final String address) {
+	public void addWantsIn(String untrustedAddress) throws ValidationException {
 		
-		if (address == null)
+		if (untrustedAddress == null)
 			throw new IllegalArgumentException("null wants in address");
+		
+		final String address = EmailResource.canonicalize(untrustedAddress);
 		
 		final boolean increment = true;
 		

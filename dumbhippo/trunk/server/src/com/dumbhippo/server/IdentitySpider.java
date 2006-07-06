@@ -347,14 +347,6 @@ public interface IdentitySpider {
 	public void setStockPhoto(UserViewpoint viewpoint, User user, String photo);
 	
 	/**
-	 * Associate a MySpace identity with an account holder. 
-	 * 
-	 * @param user account user
-	 * @param name permanent MySpace name
-	 */
-	public void setMySpaceName(User user, String name);
-	
-	/**
 	 * Return the set of all User contacts (Contacts which represent Users)
 	 * that have set a MySpace name.
 	 * 

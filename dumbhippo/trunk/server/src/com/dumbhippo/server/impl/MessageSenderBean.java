@@ -40,6 +40,7 @@ import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.EntityView;
+import com.dumbhippo.server.ExternalAccountSystem;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.GroupView;
 import com.dumbhippo.server.HippoProperty;
@@ -98,6 +99,9 @@ public class MessageSenderBean implements MessageSender {
 	
 	@EJB
 	private GroupSystem groupSystem;
+	
+	@EJB
+	private ExternalAccountSystem externalAccounts;
 	
 	@javax.annotation.Resource
 	private EJBContext ejbContext;
@@ -467,10 +471,15 @@ public class MessageSenderBean implements MessageSender {
 		public void sendMySpaceNameChangedNotification(User user) {
 			XMPPConnection connection = getConnection();
 			Message message = createMessageFor(user, Message.Type.HEADLINE);
-			String newMySpaceName = user.getAccount().getMySpaceName();
+			String newMySpaceName;
+			try {
+				newMySpaceName = externalAccounts.getMySpaceName(SystemViewpoint.getInstance(), user);
+			} catch (NotFoundException e) {
+				newMySpaceName = null;
+			}
 			message.addExtension(new MySpaceNameChangedExtension(newMySpaceName));
 			logger.debug("Sending mySpaceNameChanged message to {}", message.getTo());			
-			connection.sendPacket(message);
+			connection.sendPacket(message);			
 		}
 
 		public void sendMySpaceContactCommentNotification(User user) {

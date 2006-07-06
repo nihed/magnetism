@@ -10,6 +10,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.persistence.ValidationException;
 import com.dumbhippo.server.HumanVisibleException;
 import com.dumbhippo.server.WantsInSystem;
 import com.dumbhippo.web.WebEJBUtil;
@@ -38,7 +39,11 @@ public class WantsInServlet extends AbstractServlet {
 			throw new HumanVisibleException("You have to put in an email address").setHtmlSuggestion("<a href=\"/\">Try again</a>");
 		}
 		
-		wantsInSystem.addWantsIn(address);
+		try {
+			wantsInSystem.addWantsIn(address);
+		} catch (ValidationException e) {
+			throw new HumanVisibleException("Something was wrong with that email address (" + e.getMessage() + ")").setHtmlSuggestion("<a href=\"/\">Try again</a>");
+		}
 		
 		response.setContentType("text/html");
 		OutputStream out = response.getOutputStream();

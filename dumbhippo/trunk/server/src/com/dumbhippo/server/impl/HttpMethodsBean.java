@@ -580,10 +580,6 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		signinSystem.setPassword(viewpoint.getViewer(), password);
 	}
 
-	public void doSetMySpaceName(UserViewpoint viewpoint, String name) throws IOException {
-		identitySpider.setMySpaceName(viewpoint.getViewer(), name);
-	}
-
 	public void doSetMusicSharingEnabled(UserViewpoint viewpoint, boolean enabled)
 			throws IOException {
 		identitySpider.setMusicSharingEnabled(viewpoint.getViewer(), enabled);
@@ -1419,6 +1415,9 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	}
 	
 	public void doHateExternalAccount(XmlBuilder xml, UserViewpoint viewpoint, String type, String quip) throws XmlMethodException {
+		
+		// FIXME if we do this to a MySpace account we're supposed to send notifications to the myspace tracker
+		
 		ExternalAccountType typeEnum = parseExternalAccountType(type);
 		ExternalAccount external = externalAccountSystem.getOrCreateExternalAccount(viewpoint, typeEnum);
 		external.setSentiment(Sentiment.HATE);
@@ -1431,6 +1430,9 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	}
 
 	public void doRemoveExternalAccount(XmlBuilder xml, UserViewpoint viewpoint, String type) throws XmlMethodException {
+		
+		// FIXME if we do this to a MySpace account we're supposed to send notifications to the myspace tracker
+		
 		ExternalAccountType typeEnum = parseExternalAccountType(type);
 		ExternalAccount external = externalAccountSystem.getOrCreateExternalAccount(viewpoint, typeEnum);
 		external.setSentiment(Sentiment.INDIFFERENT);
@@ -1455,5 +1457,26 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		
 		external.setHandle(nsid);
 		external.setExtra(email);
+	}
+	
+	public void doSetMySpaceName(XmlBuilder xml, UserViewpoint viewpoint, String name) throws XmlMethodException {
+		ExternalAccount external = externalAccountSystem.getOrCreateExternalAccount(viewpoint, ExternalAccountType.MYSPACE);
+		String oldHandle = external.getHandle();
+		try {
+			external.setHandleValidating(name);
+		} catch (ValidationException e) {
+			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, e.getMessage());
+		}
+		external.setSentiment(Sentiment.LOVE);
+		
+		// FIXME in externalAccounts.setMySpaceName we don't clear the friend ID in this way... 
+		// but might have side effect problems if we did.
+		String newHandle = external.getHandle();
+		if ((oldHandle == null && newHandle != null) ||
+			(oldHandle != null && newHandle == null) ||
+			(oldHandle != null && newHandle != null && !oldHandle.equals(newHandle))) {
+			// kill the friend ID if the name changes
+			external.setExtra(null);
+		}
 	}
 }
