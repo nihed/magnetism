@@ -119,11 +119,6 @@ static void     hippo_connection_send_message_with_reply(HippoConnection *connec
 static void     hippo_connection_request_client_info  (HippoConnection *connection);
 static void     hippo_connection_parse_prefs_node     (HippoConnection *connection,
                                                        LmMessageNode   *prefs_node);
-static void     hippo_connection_request_post         (HippoConnection *connection,
-                                                       const char      *post_id);
-static void     hippo_connection_request_entity       (HippoConnection *connection,
-                                                       const char      *entity_id,
-													   HippoEntityType  entity_type);
 static void     hippo_connection_process_pending_room_messages(HippoConnection *connection);
 
 /* enter/leave unconditionally send the presence message; send_state will 
@@ -546,7 +541,6 @@ hippo_connection_set_post_ignored (HippoConnection  *connection,
     LmMessage *message;
     LmMessageNode *node;
     LmMessageNode *method;
-    LmMessageNode *guid_arg;
     HippoPost *post;
             
     g_return_if_fail(HIPPO_IS_CONNECTION(connection));

@@ -1,5 +1,6 @@
 #include "hippo-entity-protected.h"
 #include "hippo-person.h"
+#include "hippo-chat-room.h"
 #include <string.h>
 
 /* === HippoEntity implementation === */
@@ -182,4 +183,13 @@ hippo_entity_set_chat_room(HippoEntity    *entity,
         hippo_chat_room_set_title(entity->room, entity->name);
     
     hippo_entity_emit_changed(entity);
+}
+
+int
+hippo_entity_get_chatting_user_count(HippoEntity *entity)
+{
+	if (entity->room)
+		return hippo_chat_room_get_chatting_user_count(entity->room);
+	else
+		return -3;
 }

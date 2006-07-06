@@ -11,6 +11,9 @@ typedef struct _HippoDataCacheClass HippoDataCacheClass;
 typedef struct _HippoConnection      HippoConnection;
 typedef struct _HippoConnectionClass HippoConnectionClass;
 
+typedef struct _HippoChatRoom      HippoChatRoom;
+typedef struct _HippoChatRoomClass HippoChatRoomClass;
+
 typedef enum {
     HIPPO_ERROR_FAILED
 } HippoError;

@@ -28,9 +28,6 @@ G_BEGIN_DECLS
 
 typedef struct _HippoChatMessage   HippoChatMessage;
 
-typedef struct _HippoChatRoom      HippoChatRoom;
-typedef struct _HippoChatRoomClass HippoChatRoomClass;
-
 #define HIPPO_TYPE_CHAT_ROOM              (hippo_chat_room_get_type ())
 #define HIPPO_CHAT_ROOM(object)           (G_TYPE_CHECK_INSTANCE_CAST ((object), HIPPO_TYPE_CHAT_ROOM, HippoChatRoom))
 #define HIPPO_CHAT_ROOM_CLASS(klass)      (G_TYPE_CHECK_CLASS_CAST ((klass), HIPPO_TYPE_CHAT_ROOM, HippoChatRoomClass))

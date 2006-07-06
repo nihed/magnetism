@@ -193,6 +193,8 @@ LIBHIPPO_SOURCEFILES =						\
 	$(COMMONSRCDIR)/hippo/hippo-chat-room.h			\
 	$(COMMONSRCDIR)/hippo/hippo-common.h			\
         $(COMMONSRCDIR)/hippo/hippo-common-internal.h           \
+	$(COMMONSRCDIR)/hippo/hippo-common-marshal.h		\
+	$(COMMONSRCDIR)/hippo/hippo-common-marshal.c		\
 	$(COMMONSRCDIR)/hippo/hippo-connection.c		\
 	$(COMMONSRCDIR)/hippo/hippo-connection.h		\
 	$(COMMONSRCDIR)/hippo/hippo-cookies.c			\

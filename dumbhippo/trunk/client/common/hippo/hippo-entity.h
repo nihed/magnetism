@@ -5,9 +5,6 @@
 
 G_BEGIN_DECLS
 
-typedef struct _HippoChatRoom      HippoChatRoom;
-typedef struct _HippoChatRoomClass HippoChatRoomClass;
-
 typedef enum {
     HIPPO_ENTITY_RESOURCE,
     HIPPO_ENTITY_GROUP,
@@ -34,6 +31,7 @@ const char*      hippo_entity_get_name            (HippoEntity    *entity);
 const char*      hippo_entity_get_home_url        (HippoEntity    *entity);
 const char*      hippo_entity_get_small_photo_url (HippoEntity    *entity);
 HippoChatRoom*   hippo_entity_get_chat_room       (HippoEntity    *entity);
+int              hippo_entity_get_chatting_user_count(HippoEntity *entity);
 void             hippo_entity_set_name            (HippoEntity    *entity,
                                                    const char     *name);
 void             hippo_entity_set_home_url        (HippoEntity    *entity,
