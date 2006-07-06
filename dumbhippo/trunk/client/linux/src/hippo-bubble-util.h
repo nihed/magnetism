@@ -23,6 +23,17 @@ void             hippo_bubble_set_group              (HippoBubble    *bubble,
                                                       HippoDataCache *cache);
 HippoEntity *    hippo_bubble_get_group              (HippoBubble *bubble);
 
+void             hippo_bubble_set_group_membership_change (HippoBubble    *bubble,
+                                                           HippoEntity    *group,
+                                                           HippoEntity    *user,
+                                                           const char     *status,                                         
+                                                           HippoDataCache *cache);
+                                                           
+void             hippo_bubble_get_group_membership_change (HippoBubble    *bubble,
+                                                           HippoEntity    **group,
+                                                           HippoEntity    **user);
+
+
 G_END_DECLS
 
 #endif /* __HIPPO_BUBBLE_UTIL_H__ */

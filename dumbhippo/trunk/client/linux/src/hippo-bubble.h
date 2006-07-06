@@ -21,7 +21,8 @@ typedef struct {
 typedef enum {
     HIPPO_BUBBLE_REASON_NEW,
     HIPPO_BUBBLE_REASON_CHAT,
-    HIPPO_BUBBLE_REASON_VIEWER
+    HIPPO_BUBBLE_REASON_VIEWER,
+    HIPPO_BUBBLE_REASON_MEMBERSHIP_CHANGE    
 } HippoBubbleReason;
 
 typedef enum {
@@ -31,7 +32,8 @@ typedef enum {
 
 typedef enum {
 	HIPPO_BUBBLE_ACTION_JOIN_CHAT = 1,
-	HIPPO_BUBBLE_ACTION_IGNORE = 2
+	HIPPO_BUBBLE_ACTION_IGNORE = 2,
+	HIPPO_BUBBLE_ACTION_INVITE = 4
 } HippoBubbleActions;
 
 typedef struct _HippoBubble      HippoBubble;
@@ -61,6 +63,8 @@ void             hippo_bubble_set_sender_guid        (HippoBubble *bubble,
                                                       const char  *value);
 void             hippo_bubble_set_post_guid          (HippoBubble *bubble,
                                                       const char  *value);
+void             hippo_bubble_set_group_guid         (HippoBubble *bubble,
+                                                      const char  *value);                                                      
 void             hippo_bubble_set_sender_name        (HippoBubble *bubble, 
                                                       const char  *value);
 void             hippo_bubble_set_sender_photo       (HippoBubble *bubble, 
@@ -78,8 +82,12 @@ void             hippo_bubble_set_viewers            (HippoBubble *bubble,
 void             hippo_bubble_set_last_chat_message  (HippoBubble *bubble,
                                                       const char  *message,
                                                       const char  *sender_id);
-void             hippo_bubble_set_last_chat_photo    (HippoBubble *bubble,
+void             hippo_bubble_set_swarm_photo        (HippoBubble *bubble,
                                                       GdkPixbuf   *pixbuf);
+void             hippo_bubble_set_swarm_user_link    (HippoBubble *bubble,
+                                                      const char  *header,
+                                                      const char  *message,
+                                                      const char  *sender_id);                                                      
 void             hippo_bubble_set_chat_count         (HippoBubble *bubble,
                                                       int          count);                                                      
 void             hippo_bubble_set_page_n_of_total    (HippoBubble *bubble,

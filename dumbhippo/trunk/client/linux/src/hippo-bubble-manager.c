@@ -7,6 +7,7 @@
 typedef struct {
     int refcount;
     HippoDataCache *cache;
+    HippoConnection *connection;
     GHashTable     *chats;
     GtkWidget      *window;
     GtkWidget      *notebook;
@@ -28,9 +29,10 @@ manager_hide_window(BubbleManager *manager)
 }
 
 static gboolean
-find_bubble_for_object(BubbleManager *manager,
-                       gpointer       object,
-                       HippoBubble  **bubble_p)
+find_bubble(BubbleManager *manager,
+            GEqualFunc     compare,
+            gpointer       data,
+            HippoBubble  **bubble_p)
 {
     GList *children;
     GList *link;
@@ -39,7 +41,7 @@ find_bubble_for_object(BubbleManager *manager,
     for (link = children; link != NULL; link = link->next) {
         HippoBubble *bubble = HIPPO_BUBBLE(link->data);
      
-        if (hippo_bubble_get_post(bubble) == object || hippo_bubble_get_group(bubble) == object) {
+     	if (compare(bubble, data)) {
             g_list_free(children);
             *bubble_p = bubble;
             return TRUE;
@@ -49,7 +51,52 @@ find_bubble_for_object(BubbleManager *manager,
     g_list_free(children);
     *bubble_p = NULL;
     return FALSE;
-}                     
+}        
+
+static gboolean
+check_bubble_has_post_or_group(gconstpointer a,
+                               gconstpointer b)
+{
+	HippoBubble *bubble = (HippoBubble*) a;
+	return hippo_bubble_get_post(bubble) == b || hippo_bubble_get_group(bubble) == b;
+}	           
+
+static gboolean
+find_bubble_for_object(BubbleManager *manager, 
+                       gpointer       data,
+                       HippoBubble  **bubble_p)
+{
+        return find_bubble(manager, check_bubble_has_post_or_group, data, bubble_p);
+}
+
+typedef struct {
+	HippoEntity   *group;
+    HippoEntity   *user;
+} MembershipChangeKey;	
+
+static gboolean
+check_bubble_has_membership_change(gconstpointer a,
+                                   gconstpointer b)
+{
+	HippoBubble *bubble = (HippoBubble*) a;
+	MembershipChangeKey *key = (MembershipChangeKey*) b;
+	HippoEntity *group;
+	HippoEntity *user;
+	hippo_bubble_get_group_membership_change(bubble, &group, &user);
+	return group == key->group && user == key->user;
+}
+
+static gboolean
+find_bubble_for_membership_change(BubbleManager *manager,
+                                  HippoEntity   *group,
+                                  HippoEntity   *user,
+                                  HippoBubble  **bubble_p)
+{
+    MembershipChangeKey key;
+    key.group = group;
+    key.user = user;
+	return find_bubble(manager, check_bubble_has_membership_change, &key, bubble_p);
+}                                  
 
 static void
 on_post_changed(HippoPost     *post,
@@ -298,6 +345,24 @@ manager_bubble_group(BubbleManager    *manager,
     manager_show_bubble(manager, bubble, reason);
 }
 
+static void
+manager_bubble_group_membership(BubbleManager    *manager,
+                                HippoEntity      *group,
+                                HippoEntity      *user,
+                                const char       *status)
+{
+    HippoBubble *bubble;
+
+    if (!find_bubble_for_membership_change(manager, group, user, &bubble)) {
+        bubble = HIPPO_BUBBLE(hippo_bubble_new());
+        hippo_bubble_set_group_membership_change(bubble, group, user, status, manager->cache);
+        gtk_notebook_append_page(GTK_NOTEBOOK(manager->notebook), GTK_WIDGET(bubble), NULL);
+        gtk_widget_show(GTK_WIDGET(bubble));
+    }
+    
+    manager_show_bubble(manager, bubble, HIPPO_BUBBLE_REASON_MEMBERSHIP_CHANGE);
+}
+
 static HippoPost*
 manager_post_for_room(BubbleManager *manager,
                       HippoChatRoom *room)
@@ -432,6 +497,19 @@ on_post_added(HippoDataCache *cache,
 }
 
 static void
+on_group_membership_change(HippoDataCache *cache,
+                           HippoEntity    *group,
+                           HippoEntity    *user,
+                           const char     *status,
+                           BubbleManager  *manager)
+{
+    g_debug("bubble manager, group membership change g=%s u=%s s=%s",
+            hippo_entity_get_guid(group), hippo_entity_get_guid(user),
+            status);
+    manager_bubble_group_membership(manager, group, user, status);
+}
+
+static void
 foreach_disconnect(void *key, void *value, void *data)
 {
     BubbleManager *manager = data;
@@ -461,7 +539,8 @@ manager_disconnect(BubbleManager *manager)
         g_signal_handlers_disconnect_by_func(manager->cache, G_CALLBACK(on_post_added), manager);    
     
         g_object_unref(manager->cache);
-        manager->cache = NULL;        
+        manager->cache = NULL;
+        manager->connection = NULL;        
     }
 }
 
@@ -573,6 +652,7 @@ manager_attach(BubbleManager   *manager,
 
     manager->cache = cache;
     g_object_ref(manager->cache);
+    manager->connection = hippo_data_cache_get_connection(manager->cache);
 
     /* this creates a refcount cycle, but
      * hippo_bubble_manager_unmanage breaks it.
@@ -587,6 +667,7 @@ manager_attach(BubbleManager   *manager,
                            
     g_signal_connect(cache, "chat-room-loaded", G_CALLBACK(on_chat_room_loaded), manager);
     g_signal_connect(cache, "post-added", G_CALLBACK(on_post_added), manager);
+    g_signal_connect(manager->connection, "group-membership-changed", G_CALLBACK(on_group_membership_change), manager);
 }
 
 static void

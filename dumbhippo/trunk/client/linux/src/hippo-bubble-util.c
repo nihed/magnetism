@@ -1,8 +1,10 @@
 #include "hippo-bubble-util.h"
+#include <string.h>
 
 enum {
     WATCH_KIND_POST,
-    WATCH_KIND_GROUP
+    WATCH_KIND_GROUP,
+    WATCH_KIND_GROUP_MEMBERSHIP
 };
  
 typedef struct {
@@ -24,9 +26,17 @@ typedef struct {
     HippoEntity    *group;
 } GroupWatch;
 
+typedef struct {
+    BubbleWatch     base;
+    HippoEntity    *group;
+    HippoEntity    *user;
+    char           *status;
+} GroupMembershipWatch;
+
 #define BUBBLE_WATCH(w) ((BubbleWatch*) w)
 #define POST_WATCH(w)   ((PostWatch*) w)
 #define GROUP_WATCH(w)   ((GroupWatch*) w)
+#define GROUP_MEMBERSHIP_WATCH(w)   ((GroupMembershipWatch*) w)
 
 static void  on_chat_message_added(HippoChatRoom    *room,
                                    HippoChatMessage *message,
@@ -48,10 +58,11 @@ bubble_watch_init(BubbleWatch *watch,
     watch->cache = cache;
     
     ADD_WEAK(&watch->bubble);    
-    ADD_WEAK(&watch->room);
+    if (watch->room) {
+	    ADD_WEAK(&watch->room);
+	    g_signal_connect(watch->room, "message-added", G_CALLBACK(on_chat_message_added), watch);   	    
+	}
     ADD_WEAK(&watch->cache);    
-    
-    g_signal_connect(watch->room, "message-added", G_CALLBACK(on_chat_message_added), watch);    
 }
 
 #define bubble_watch_ref(watch) do { (watch)->refcount += 1; } while(0)
@@ -68,8 +79,8 @@ bubble_watch_unref(BubbleWatch *watch)
 	    if (watch->room) {
     	    g_signal_handlers_disconnect_by_func(G_OBJECT(watch->room),
                                              G_CALLBACK(on_chat_message_added), watch);
+	    	REMOVE_WEAK(&watch->room);                                             
 	    }
-    	REMOVE_WEAK(&watch->room);
 	    REMOVE_WEAK(&watch->cache);         
 
         (* watch->finalize) (watch);
@@ -115,7 +126,7 @@ on_chatter_photo_loaded(GdkPixbuf *pixbuf,
     watch = data;
     
     if (bubble_watch_is_attached(BUBBLE_WATCH(watch))) {
-        hippo_bubble_set_last_chat_photo(watch->base.bubble, pixbuf);
+        hippo_bubble_set_swarm_photo(watch->base.bubble, pixbuf);
     }
     
     bubble_watch_unref(BUBBLE_WATCH(watch));
@@ -133,7 +144,7 @@ update_last_message(BubbleWatch        *watch)
     last = hippo_chat_room_get_last_message(watch->room);
     
     if (last == NULL) {
-        hippo_bubble_set_last_chat_photo(watch->bubble, NULL);
+        hippo_bubble_set_swarm_photo(watch->bubble, NULL);
         hippo_bubble_set_last_chat_message(watch->bubble, NULL, NULL);
     } else {
         const char *sender_id;
@@ -408,7 +419,7 @@ on_group_changed(HippoEntity *entity,
     hippo_bubble_set_sender_guid(bubble, hippo_entity_get_guid(watch->group));
 
     hippo_bubble_set_link_title(bubble, hippo_entity_get_name(watch->group));
-    hippo_bubble_set_post_guid(bubble, hippo_entity_get_guid(watch->group));
+    hippo_bubble_set_group_guid(bubble, hippo_entity_get_guid(watch->group));
 
     hippo_bubble_set_chat_count(bubble, hippo_entity_get_chatting_user_count(watch->group));
 
@@ -419,6 +430,68 @@ on_group_changed(HippoEntity *entity,
     hippo_app_load_photo(hippo_get_app(), watch->group, on_sender_photo_loaded, watch);
     
     hippo_bubble_set_link_description(bubble, "New chat messages.");
+}
+
+static void
+on_group_membership_changed(HippoEntity *entity,
+                            GroupMembershipWatch *watch)
+{
+    HippoBubble *bubble;
+    char *description;
+    char *header;
+    const char *member_id;    
+    
+    /* be sure we're still the current group */
+    if (!bubble_watch_is_attached(BUBBLE_WATCH(watch)))
+        return;
+
+    g_assert(watch->group != NULL);
+    
+    bubble = watch->base.bubble;
+    g_assert(bubble != NULL); /* is_attached checks this */
+    
+	hippo_bubble_set_foreground_color(bubble, HIPPO_BUBBLE_COLOR_PURPLE);
+	hippo_bubble_set_header_image(bubble, "bubgroupupdate");
+	
+	hippo_bubble_set_actions(bubble, HIPPO_BUBBLE_ACTION_IGNORE);
+    
+    hippo_bubble_set_sender_name(bubble, "");
+    hippo_bubble_set_sender_guid(bubble, hippo_entity_get_guid(watch->group));
+
+    hippo_bubble_set_link_title(bubble, hippo_entity_get_name(watch->group));
+    hippo_bubble_set_group_guid(bubble, hippo_entity_get_guid(watch->group));
+
+    hippo_bubble_set_chat_count(bubble, hippo_entity_get_chatting_user_count(watch->group));
+
+	if (strcmp(watch->status, "ACTIVE") == 0) {
+		description = _("Someone has joined this group as a member.");
+		header = _("New member");
+ 	} else if (strcmp(watch->status, "FOLLOWER") == 0) {
+		description = _("Someone has joined this group as a follower");
+		header = _("New follower");
+	} else {
+		g_warning("Unknown membership status %s", watch->status);
+		description = "";
+		header = "";
+	}
+   
+    member_id = hippo_entity_get_guid(HIPPO_ENTITY(watch->user));
+
+    hippo_bubble_set_swarm_user_link(bubble,
+    								 header,
+                                     hippo_entity_get_name(watch->user),
+                                     member_id);
+    bubble_watch_ref(BUBBLE_WATCH(watch));
+    hippo_app_load_photo(hippo_get_app(), HIPPO_ENTITY(watch->user),
+                         on_chatter_photo_loaded, watch);    
+
+    /* FIXME ordering of this isn't guaranteed, i.e. we could get a reply for 
+     * an "old" post in theory
+     */
+    bubble_watch_ref(BUBBLE_WATCH(watch)); /* on_sender_photo_loaded will unref */    
+    hippo_app_load_photo(hippo_get_app(), watch->group, on_sender_photo_loaded, watch);
+
+    hippo_bubble_set_link_description(bubble, description);
 }
 
 static void
@@ -445,6 +518,20 @@ group_watch_finalize(void *value)
         g_signal_handlers_disconnect_by_func(G_OBJECT(watch->group),
                                              G_CALLBACK(on_group_changed), watch);                  	
     REMOVE_WEAK(&watch->group);
+}
+
+static void
+group_membership_watch_finalize(void *value)
+{
+	GroupMembershipWatch *watch = GROUP_MEMBERSHIP_WATCH(value);
+
+    if (watch->group)
+        g_signal_handlers_disconnect_by_func(G_OBJECT(watch->group),
+                                             G_CALLBACK(on_group_membership_changed), watch);                  	
+    REMOVE_WEAK(&watch->group);
+	REMOVE_WEAK(&watch->user);    
+	g_free(watch->status);
+	watch->status = NULL;
 }
 
 static void
@@ -505,6 +592,39 @@ group_watch_add(HippoBubble    *bubble,
     bubble_watch_unref(BUBBLE_WATCH(watch));
 }
 
+static void
+group_membership_watch_add(HippoBubble    *bubble,
+                           HippoEntity    *group,
+                           HippoEntity    *user,
+                           const char     *status,                           
+                           HippoDataCache *cache)
+{
+    GroupMembershipWatch *watch;
+        
+    watch = g_new0(GroupMembershipWatch, 1);
+    
+    bubble_watch_init(&watch->base, bubble,
+    				  NULL,
+				      cache,
+                      group_membership_watch_finalize, WATCH_KIND_GROUP_MEMBERSHIP);
+     
+    watch->group = group;
+    ADD_WEAK(&watch->group);
+    watch->user = user;
+    ADD_WEAK(&watch->user);
+    watch->status = g_strdup(status);
+    
+    g_signal_connect(group, "changed", G_CALLBACK(on_group_membership_changed), watch);
+    // TODO: implement me
+    // g_signal_connect(watch->room, "user-state-changed", G_CALLBACK(on_group_chat_user_state_changed), watch);
+    
+    bubble_watch_set(bubble, BUBBLE_WATCH(watch));
+    
+    on_group_membership_changed(group, watch);
+    
+    bubble_watch_unref(BUBBLE_WATCH(watch));
+}
+
 void
 hippo_bubble_set_post(HippoBubble    *bubble,
                       HippoPost      *post,
@@ -519,6 +639,16 @@ hippo_bubble_set_group(HippoBubble    *bubble,
                        HippoDataCache *cache)
 {
     group_watch_add(bubble, group, cache);
+}
+
+void
+hippo_bubble_set_group_membership_change(HippoBubble    *bubble,
+                                         HippoEntity    *group,
+                                         HippoEntity    *user,
+                                         const char     *status,                                         
+                                         HippoDataCache *cache)
+{
+    group_membership_watch_add(bubble, group, user, status, cache);
 }
 
 HippoPost*
@@ -543,4 +673,21 @@ hippo_bubble_get_group(HippoBubble *bubble)
         return GROUP_WATCH(watch)->group;
     else
         return NULL;
+}
+
+void
+hippo_bubble_get_group_membership_change(HippoBubble    *bubble,
+                                         HippoEntity    **group,
+                                         HippoEntity    **user)
+{
+	BubbleWatch *watch;
+    
+    watch = bubble_watch_get(bubble);
+    if (watch && watch->kind == WATCH_KIND_GROUP_MEMBERSHIP) {
+        *group = GROUP_MEMBERSHIP_WATCH(watch)->group;
+        *user = GROUP_MEMBERSHIP_WATCH(watch)->user;
+    } else {
+        *group = NULL;
+        *user = NULL;
+    }
 }

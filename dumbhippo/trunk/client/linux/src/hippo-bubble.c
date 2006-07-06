@@ -35,7 +35,8 @@ typedef enum {
 
 typedef enum {
     ACTIVE_EXTRA_WHOS_THERE,
-    ACTIVE_EXTRA_SOMEONE_SAID
+    ACTIVE_EXTRA_SOMEONE_SAID,
+    ACTIVE_EXTRA_MEMBERSHIP_CHANGE
 } ActiveExtraInfo;
 
 static void      hippo_bubble_init                (HippoBubble       *bubble);
@@ -79,8 +80,10 @@ struct _HippoBubble {
     GtkWidget *last_message_photo;
     GtkWidget *viewers;
     HippoBubbleColor color;
+    char      *user_link_header;
     char      *sender_id;
     char      *post_id;
+    char      *group_id;    
     char      *last_message_sender_id;
     int        actions;
     int        page; /* [0,total_pages) */
@@ -1615,6 +1618,22 @@ hippo_bubble_set_post_guid(HippoBubble *bubble,
         g_free(bubble->post_id);
         bubble->post_id = g_strdup(value);
     }
+    g_free(bubble->group_id);
+    bubble->group_id = NULL;
+}
+
+void
+hippo_bubble_set_group_guid(HippoBubble *bubble,
+                            const char  *value)
+{
+    g_return_if_fail(HIPPO_IS_BUBBLE(bubble));
+
+    if (bubble->group_id != value) {
+        g_free(bubble->group_id);
+        bubble->group_id = g_strdup(value);
+    }
+    g_free(bubble->post_id);
+    bubble->post_id = NULL;    
 }
                            
 void
@@ -1720,13 +1739,15 @@ static void
 update_extra_info(HippoBubble *bubble)
 {
     gboolean whos_there_active;
-    gboolean someone_said_active;
+    gboolean someone_said_active;    
+    gboolean membership_change_active;    
     
     whos_there_active = (bubble->whos_there_set &&
                          !bubble->someone_said_set) ||
                         (bubble->whos_there_set &&
                          bubble->active_extra == ACTIVE_EXTRA_WHOS_THERE);
-    someone_said_active = (bubble->someone_said_set && !whos_there_active);     
+    membership_change_active = (bubble->someone_said_set && bubble->active_extra == ACTIVE_EXTRA_MEMBERSHIP_CHANGE);
+    someone_said_active = (bubble->someone_said_set && bubble->active_extra == ACTIVE_EXTRA_SOMEONE_SAID);     
      
     if (bubble->whos_there_set) {
         GtkWidget *label = GTK_BIN(bubble->whos_there)->child;
@@ -1748,6 +1769,15 @@ update_extra_info(HippoBubble *bubble)
         if (someone_said_active) {
             gtk_label_set_markup(GTK_LABEL(label), _("<b>Latest comment</b>"));
             set_default_fg(label);
+        } else if (membership_change_active) {
+        	char *markup;
+        	char *markup_content;
+        	markup_content = g_markup_escape_text(bubble->user_link_header, -1);
+        	markup = g_strdup_printf("<b>%s</b>", markup_content);
+        	g_free(markup_content);
+        	
+            gtk_label_set_markup(GTK_LABEL(label), markup);
+            set_default_fg(label);       
         } else {
             gtk_label_set_markup(GTK_LABEL(label),
                                  _("<u>Latest comment</u>"));
@@ -1764,7 +1794,7 @@ update_extra_info(HippoBubble *bubble)
         gtk_widget_hide(bubble->viewers);
     }
         
-    if (someone_said_active) {
+    if (someone_said_active || membership_change_active) {
         gtk_widget_show(bubble->last_message);
         gtk_widget_show(bubble->last_message_photo);
     } else {
@@ -1821,10 +1851,11 @@ hippo_bubble_set_viewers(HippoBubble *bubble,
     update_extra_info(bubble);
 }
 
-void
-hippo_bubble_set_last_chat_message(HippoBubble *bubble,
-                                   const char  *message,
-                                   const char  *sender_id)
+static void
+set_last_chat_message(HippoBubble *bubble,
+                      const char  *message,
+                      const char  *sender_id,
+                      gboolean     quote)
 {
     g_return_if_fail(HIPPO_IS_BUBBLE(bubble));
     
@@ -1835,7 +1866,10 @@ hippo_bubble_set_last_chat_message(HippoBubble *bubble,
 
     if (message) {
         char *s;
-        s = g_strdup_printf("\"%s\"", message);
+        if (quote)
+	        s = g_strdup_printf("\"%s\"", message);
+	    else
+	    	s = g_strdup(message);
         gtk_label_set_text(GTK_LABEL(bubble->last_message), s);
         g_free(s);
         bubble->someone_said_set = TRUE;
@@ -1848,7 +1882,26 @@ hippo_bubble_set_last_chat_message(HippoBubble *bubble,
 }
 
 void
-hippo_bubble_set_last_chat_photo(HippoBubble *bubble,
+hippo_bubble_set_last_chat_message(HippoBubble *bubble,
+                                   const char  *message,
+                                   const char  *sender_id)
+{
+	set_last_chat_message(bubble, message, sender_id, TRUE);
+}
+
+void
+hippo_bubble_set_swarm_user_link(HippoBubble *bubble,
+								 const char  *header,
+                                 const char  *text,
+                                 const char  *user_id)
+{
+	g_free(bubble->user_link_header);
+	bubble->user_link_header = g_strdup(header);
+	set_last_chat_message(bubble, text, user_id, FALSE);
+}
+
+void
+hippo_bubble_set_swarm_photo(HippoBubble *bubble,
                                  GdkPixbuf   *pixbuf)
 {
     GtkWidget *image;
@@ -1965,6 +2018,10 @@ hippo_bubble_notify_reason(HippoBubble      *bubble,
         bubble->active_extra = ACTIVE_EXTRA_WHOS_THERE;
         update_extra_info(bubble);
         break;
+    case HIPPO_BUBBLE_REASON_MEMBERSHIP_CHANGE:
+        bubble->active_extra = ACTIVE_EXTRA_MEMBERSHIP_CHANGE;
+        update_extra_info(bubble);
+        break;        
     case HIPPO_BUBBLE_REASON_NEW:
         break;
     }
@@ -1982,6 +2039,8 @@ hippo_bubble_link_click_action(HippoBubble       *bubble,
     case LINK_CLICK_VISIT_POST:
         if (bubble->post_id)
             hippo_app_visit_post_id(hippo_get_app(), bubble->post_id);
+        else if (bubble->group_id)
+        	hippo_app_visit_entity_id(hippo_get_app(), bubble->group_id);
         break;
     case LINK_CLICK_VISIT_LAST_MESSAGE_SENDER:
         if (bubble->last_message_sender_id)
