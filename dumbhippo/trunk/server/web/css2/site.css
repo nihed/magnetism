@@ -41,12 +41,17 @@ img {
 	color:				white;
 }
 
+.dh-color-where-im-at {
+	background-color:	#84569B;
+	color:				white;
+}
+
 .dh-color-group, .dh-color-account, .dh-color-artists, .dh-color-system, .dh-color-friend {
 	background-color:	#666666;
 	color:				white;
 }
 
-.dh-color-web a:visited, .dh-color-music a:visited, .dh-color-tv a:visited, .dh-color-group a:visited, .dh-color-account a:visited, .dh-color-artists a:visited {
+.dh-color-web a:visited, .dh-color-music a:visited, .dh-color-tv a:visited, .dh-color-group a:visited, .dh-color-account a:visited, .dh-color-artists a:visited, .dh-color-where-im-at a:visited {
 	color:				white;
 }
 
@@ -69,6 +74,10 @@ img {
 
 .dh-color-tv-foreground {
 	color:		#60B635;
+}
+
+.dh-color-where-im-at-foreground {
+	color:		#84569B;
 }
 
 .dh-color-group-foreground, .dh-color-account-foreground, .dh-color-artists-foreground .dh-color-system-foreground {

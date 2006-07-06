@@ -64,6 +64,13 @@ public class ExternalAccount extends DBUnique {
 		return handle;
 	}
 	public void setHandle(String handle) {
+		if (accountType == null) {
+			// this happens if hibernate sets this field before the accountType field
+			// in that case we just skip validation... in theory stuff in the db is valid.
+			this.handle = handle;
+			return;
+		}
+		
 		try {
 			this.handle = accountType.canonicalizeHandle(handle);
 		} catch (ValidationException e) {
@@ -81,6 +88,13 @@ public class ExternalAccount extends DBUnique {
 	}
 
 	public void setExtra(String extra) {
+		if (accountType == null) {
+			// this happens if hibernate sets this field before the accountType field
+			// in that case we just skip validation... in theory stuff in the db is valid.
+			this.extra = extra;
+			return;
+		}
+		
 		try {
 			this.extra = accountType.canonicalizeExtra(extra);
 		} catch (ValidationException e) {

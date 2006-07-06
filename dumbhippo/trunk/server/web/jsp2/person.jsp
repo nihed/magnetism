@@ -18,11 +18,14 @@
 <c:choose>
 <c:when test="${!person.disabled}">
 	<c:if test="${person.self}">
-		<c:set var="topMessageHtml" value="Here is how others see you on mugshot. You can go back <a href='/'>home</a> or <a href='/account'>edit your account</a>" scope="page"/>
+		<c:set var="topMessageHtml" value="Here is how friends see you on Mugshot. Strangers see only some of this. You can go back <a href='/'>home</a> or <a href='/account'>edit your account</a>" scope="page"/>
 	</c:if>
 <dht:twoColumnPage alwaysShowSidebar="true" topMessageHtml="${topMessageHtml}">
 	<dht:sidebarPerson who="${person.viewedUserId}" asOthersWouldSee="true"/>
 	<dht:contentColumn>
+		<dht:zoneBoxWhereAt>
+			Hello world!
+		</dht:zoneBoxWhereAt>
 		<dht:zoneBoxWeb disableJumpTo="true">
 			<dht:requireLinksPersonBean who="${person.viewedUserId}"/>
 	        <dht:linkSwarmPromo separator="true" linksLink="true" browserInstructions="${signin.valid}"/>
