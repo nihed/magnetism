@@ -59,6 +59,8 @@ public interface GroupSystem {
 	
 	public GroupMember getGroupMember(Group group, Resource member) throws NotFoundException;
 	
+	public GroupMember getGroupMember(Group group, Guid resourceId) throws NotFoundException;
+	
 	public Set<Group> findRawGroups(Viewpoint viewpoint, User member);	
 	
 	public Set<Group> findRawGroups(Viewpoint viewpoint, User member, MembershipStatus status);
@@ -107,6 +109,8 @@ public interface GroupSystem {
 	public Group lookupGroupById(Viewpoint viewpoint, Guid guid) throws NotFoundException;
 	
 	public GroupView loadGroup(Viewpoint viewpoint, Guid guid) throws NotFoundException;
+	
+	public GroupView getGroupView(Viewpoint viewpoint, Group group);
 	
 	/**
 	 * Finds the set of contacts of an account owner that aren't already

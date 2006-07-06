@@ -182,6 +182,14 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		}
 		throw new NotFoundException("GroupMember for resource " + resource + " not found");
 	}
+
+	public GroupMember getGroupMember(Group group, Guid resourceId) throws NotFoundException {
+		for (GroupMember member : group.getMembers()) {
+			if (member.getMember().getGuid().equals(resourceId))
+				return member;
+		}
+		throw new NotFoundException("GroupMember for resource " + resourceId + " not found");
+	}
 	
 	public Set<Group> getInvitedToGroups(User adder, Resource invitee) {
 		Set<Group> invitedToGroups = new HashSet<Group>();
@@ -740,9 +748,11 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 	}
 
 	public GroupView loadGroup(Viewpoint viewpoint, Guid guid) throws NotFoundException {
+		return getGroupView(viewpoint, lookupGroupById(viewpoint, guid));
+	}
+	
+	public GroupView getGroupView(Viewpoint viewpoint, Group group) {
 		GroupMember groupMember = null;
-		Group group = lookupGroupById(viewpoint, guid);
-		
 		// FIXME: add getGroupMemberByGroupId (or replace getGroupMember), so that
 		// we only do one lookup in the database. Careful: need to propagate
 		// the handling of REMOVED members from lookupGroupById to getGroupMember
