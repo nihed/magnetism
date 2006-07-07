@@ -46,6 +46,8 @@ library HippoUI {
         HRESULT IgnoreEntity([in] BSTR entityId);
         [id(132), helpstring("Ignore a chat")]
         HRESULT IgnoreChat([in] BSTR chatId);
+        [id(133), helpstring("Invite a user to a group")]
+        HRESULT DoGroupInvite([in] BSTR groupId, [in] BSTR userId);
         // up to 150
     }
     [

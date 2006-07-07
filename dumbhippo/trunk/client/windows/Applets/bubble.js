@@ -401,7 +401,17 @@ dh.bubble.Bubble = function(isStandaloneBubble) {
             link.appendChild(document.createTextNode(text))
             return span      
         }
-      
+        
+        if (this._data.canInvite()) {
+            var inviteDoneControl = createControl("add.png", "Invited", null)
+            var inviteControl = createControl("add.png", "Invite",
+                               function () {
+                                 bubble._data.doInvite()
+                                 swarmControls.replaceChild(inviteDoneControl, inviteControl)
+                                 bubble.onNext();
+                               })
+            swarmControls.appendChild(inviteControl)
+        }
         var chatControl = createControl("chaticon.gif", "Join chat", 
                         function () { window.external.application.ShowChatWindow(bubble._data.getChatId()) });
         var chatCount = document.createElement("span")
@@ -493,6 +503,14 @@ dh.bubble.BubbleData = function() {
     }
             
     this.appendSwarmContent = function(bubble, parent) {
+        throw Error("not implemented");
+    }
+    
+    this.canInvite = function() {
+        return false;
+    }
+    
+    this.doInvite = function() {
         throw Error("not implemented");
     }
     
@@ -757,9 +775,11 @@ dh.bubble.GroupMembershipChangeData = function(group, user, status) {
     this.user = user
     this.status = status
     this.description = ""
-    this.swarmTitle = ""    
+    this.swarmTitle = ""
+    this._showInvite = false
     
     if (this.status == "FOLLOWER") {
+        this._showInvite = true
         this.description = "There is a new group follower."
         this.swarmTitle = "New Follower"
     } else if (this.status == "ACTIVE") {
@@ -815,6 +835,14 @@ dh.bubble.GroupMembershipChangeData = function(group, user, status) {
      this.setIgnored = function() {    
         window.external.application.IgnoreEntity(this.group.Id);
     }
+    
+    this.canInvite = function() {
+        return this._showInvite
+    }
+    
+    this.doInvite = function() {
+        window.external.application.DoGroupInvite(this.group.Id, this.user.Id)
+    }    
 }
 
 dh.core.inherits(dh.bubble.GroupMembershipChangeData, dh.bubble.GroupData)

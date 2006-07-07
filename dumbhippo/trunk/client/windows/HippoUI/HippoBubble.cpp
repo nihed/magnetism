@@ -968,3 +968,10 @@ HippoBubble::IgnoreChat(BSTR chatId)
     ui_->ignoreChat(chatId);
     return S_OK;
 }
+
+HRESULT 
+HippoBubble::DoGroupInvite(BSTR groupId, BSTR userId)
+{
+    ui_->groupInvite(groupId, userId);
+    return S_OK;
+}

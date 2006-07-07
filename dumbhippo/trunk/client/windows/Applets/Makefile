@@ -1,5 +1,6 @@
-all: *.xml *.css *.png *.js
+all: *.xml *.css *.png *.js *.gif
     -mkdir $(OUTDIR)\applets
+    copy add.png $(OUTDIR)\applets    
     copy blue*arrow.gif $(OUTDIR)\applets
     copy bubble.css $(OUTDIR)\applets
     copy bubble.js $(OUTDIR)\applets

@@ -45,6 +45,7 @@ public:
     STDMETHODIMP IgnorePost(BSTR postId);
     STDMETHODIMP IgnoreEntity(BSTR entityId);
     STDMETHODIMP IgnoreChat(BSTR chatId);
+    STDMETHODIMP DoGroupInvite(BSTR groupId, BSTR userId);
 
 protected:
     virtual HippoBSTR getURL();

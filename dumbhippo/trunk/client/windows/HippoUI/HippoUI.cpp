@@ -542,6 +542,14 @@ HippoUI::ignoreChat(BSTR chatId)
     hippo_chat_room_set_ignored(room, TRUE);
 }
 
+void 
+HippoUI::groupInvite(BSTR groupId, BSTR userId)
+{
+    HippoUStr groupIdU(groupId);
+    HippoUStr userIdU(userId);
+    hippo_connection_do_invite_to_group(getConnection(), groupIdU.c_str(), userIdU.c_str());
+}
+
 bool
 HippoUI::create(HINSTANCE instance)
 {

@@ -88,6 +88,7 @@ public:
     void ignorePost(BSTR postId);
     void ignoreEntity(BSTR entityId);
     void ignoreChat(BSTR chatId);
+    void groupInvite(BSTR groupId, BSTR userId);
 
     void debugLogW(const WCHAR *format, ...); // UTF-16
     void debugLogU(const char *format, ...);  // UTF-8
