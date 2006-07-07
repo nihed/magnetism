@@ -1525,6 +1525,22 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	}
 
 	public void doSetWebsite(XmlBuilder xml, UserViewpoint viewpoint, String url) throws XmlMethodException {
+		// DO NOT cut and paste this block into similar external account methods. It's only here because
+		// we don't use the "love hate" widget on /account for the website, and the javascript glue 
+		// for the plain entries assumes this works.
+		if (url.trim().length() == 0) {
+			doRemoveExternalAccount(xml, viewpoint, "WEBSITE");
+			try {
+				ExternalAccount external = externalAccountSystem.lookupExternalAccount(viewpoint, viewpoint.getViewer(), ExternalAccountType.WEBSITE);
+				// otherwise the website url would keep "coming back" since there's no visual indication of hate/indifferent status
+				external.setHandle(null);
+			} catch (NotFoundException e) {
+			}
+			return;
+		}
+		
+		// the rest of this is more typical of a "set external account" http method
+		
 		URL urlObject;
 		try {
 			urlObject = parseUserEnteredUrl(url, true);

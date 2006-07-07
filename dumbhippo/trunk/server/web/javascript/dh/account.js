@@ -256,6 +256,16 @@ dhAccountInit = function() {
 		"Your Rhapsody Listening History Feed URL has been saved.");
 	}
 	
+	dh.account.websiteEntryNode = document.getElementById('dhWebsiteEntry');
+	dh.account.websiteEntry = new dh.textinput.Entry(dh.account.websiteEntryNode, null, dh.formtable.currentValues['dhWebsiteEntry']);
+
+	dh.formtable.undoValues['dhWebsiteEntry'] = dh.account.websiteEntry.getValue();
+	dh.account.websiteEntry.onValueChanged = function(value) {
+		dh.formtable.onValueChangedXmlMethod(dh.account.websiteEntry, 'setwebsite', 'url', value,
+		"Saving your website address...",
+		"Your website link has been saved.");
+	}	
+	
 	// add some event handlers on the file input
 	dh.account.photoEntry = new dh.fileinput.Entry(document.getElementById('dhPictureEntry'));
 	

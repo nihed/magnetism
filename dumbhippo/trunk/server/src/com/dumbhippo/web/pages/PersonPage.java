@@ -70,6 +70,8 @@ public class PersonPage extends AbstractPersonPage {
 				
 				if (first.getAccountType() == ExternalAccountType.WEBSITE)
 					return -1;
+				if (second.getAccountType() == ExternalAccountType.WEBSITE)
+					return 1;
 				
 				return String.CASE_INSENSITIVE_ORDER.compare(first.getSiteName(), second.getSiteName());
 			}

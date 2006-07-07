@@ -168,4 +168,8 @@ public class AccountPage {
 	public String getLinkedInName() {
 		return getExternalAccountHandle(ExternalAccountType.LINKED_IN);
 	}
+	
+	public String getWebsiteUrl() {
+		return getExternalAccountHandle(ExternalAccountType.WEBSITE);
+	}
 }
