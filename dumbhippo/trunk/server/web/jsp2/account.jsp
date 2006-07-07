@@ -44,7 +44,7 @@
 			<c:choose>
 			<c:when test="${!signin.user.account.disabled}">
 				<dht:zoneBoxTitle>PUBLIC INFO</dht:zoneBoxTitle>
-				<dht:zoneBoxSubtitle>This information will be visible on your profile page.</dht:zoneBoxSubtitle>
+				<dht:zoneBoxSubtitle>This information will be visible on your <a href="/person?who=${signin.user.id}">profile page</a>.</dht:zoneBoxSubtitle>
 				<dht:formTable>
 				<dht:formTableRowStatus controlId='dhUsernameEntry'></dht:formTableRowStatus>
 				<dht:formTableRow label="User name">
