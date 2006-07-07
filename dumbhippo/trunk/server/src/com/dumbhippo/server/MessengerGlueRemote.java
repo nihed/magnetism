@@ -313,4 +313,6 @@ public interface MessengerGlueRemote {
 	 * @throws NotFoundException when passed an invalid group id 
 	 */
 	public String getGroupXML(Guid username, Guid groupid) throws NotFoundException;
+
+	public void addGroupMember(Guid user, Guid groupId, Guid invitee) throws NotFoundException;
 }

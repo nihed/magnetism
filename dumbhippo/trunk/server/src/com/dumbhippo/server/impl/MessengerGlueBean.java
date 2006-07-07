@@ -649,4 +649,12 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 		return groupView.toXml();
 	}
 
+	public void addGroupMember(Guid userId, Guid groupId, Guid inviteeId) throws NotFoundException {
+		User user = getUserFromGuid(userId);
+		UserViewpoint viewpoint = new UserViewpoint(user);
+		GroupView groupView = groupSystem.loadGroup(viewpoint, groupId);
+		User invitee = getUserFromGuid(inviteeId);		
+		groupSystem.addMember(user, groupView.getGroup(), invitee);
+	}
+
 }
