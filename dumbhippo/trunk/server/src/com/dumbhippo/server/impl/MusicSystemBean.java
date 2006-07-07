@@ -8,8 +8,10 @@ import javax.ejb.Stateless;
 
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
+import com.dumbhippo.persistence.AccountFeed;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.NowPlayingTheme;
+import com.dumbhippo.persistence.TrackFeedEntry;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.AlbumView;
 import com.dumbhippo.server.ArtistView;
@@ -180,5 +182,9 @@ public class MusicSystemBean implements MusicSystem {
 
 	public void getAllThemes(Viewpoint viewpoint, Pageable<NowPlayingTheme> pageable) {
 		internal.getAllThemes(viewpoint, pageable);
+	}
+	
+	public void addFeedTrack(AccountFeed feed, TrackFeedEntry entry, int entryPosition) {
+		internal.addFeedTrack(feed, entry, entryPosition);
 	}
 }

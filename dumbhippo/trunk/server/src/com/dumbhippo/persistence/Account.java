@@ -106,6 +106,8 @@ public class Account extends Resource {
 
 	private Set<ExternalAccount> externalAccounts; 
 	
+	private Set<AccountFeed> feeds;
+	
 	/**
 	 * Used only for Hibernate 
 	 */
@@ -661,6 +663,36 @@ public class Account extends Resource {
 
 	public void touchGroupInvitationReceived() {
 		this.groupInvitationReceived = System.currentTimeMillis();
+	}
+	
+	@OneToMany(mappedBy="account")
+	@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)
+	public Set<AccountFeed> getFeeds() {
+		return feeds;
+	}
+	
+	/**
+	 * Only hibernate should call this probably
+	 * @param feeds
+	 */
+	protected void setFeeds(Set<AccountFeed> feeds) {
+		if (feeds == null)
+			throw new IllegalArgumentException("null");
+		this.feeds = feeds;
+	}
+	
+	
+	@Transient
+	public AccountFeed getRhapsodyHistoryFeed() {
+		Set<AccountFeed> accountFeeds = getFeeds();
+		if (!accountFeeds.isEmpty()) {
+			// we assume there are zero or one AccountFeeds for now
+			AccountFeed accountFeed = accountFeeds.iterator().next();
+			if ((accountFeed != null) && (!accountFeed.isRemoved())) {
+				return accountFeed;
+			}
+		}
+		return null;
 	}
 	
 	@Transient

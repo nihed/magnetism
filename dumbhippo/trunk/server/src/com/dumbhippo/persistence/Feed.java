@@ -25,6 +25,7 @@ public class Feed extends DBUnique {
 	private boolean lastFetchSucceeded;
 	private Set<FeedEntry> entries;
 	private Set<GroupFeed> groups;
+	private Set<AccountFeed> accounts;
 	
 	protected Feed() {
 		this.entries = new HashSet<FeedEntry>();
@@ -91,9 +92,21 @@ public class Feed extends DBUnique {
 	 * @param groups
 	 */
 	protected void setGroups(Set<GroupFeed> groups) {
-		if (groups == null)
-			throw new IllegalArgumentException("null");
 		this.groups = groups;
+	}
+	
+	@OneToMany(mappedBy="feed")
+	@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)
+	public Set<AccountFeed> getAccounts() {
+		return accounts;
+	}
+	
+	/**
+	 * Only hibernate should call this probably
+	 * @param groups
+	 */
+	protected void setAccounts(Set<AccountFeed> accounts) {
+		this.accounts = accounts;
 	}
 	
 	@Override

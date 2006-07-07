@@ -39,6 +39,8 @@ import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.live.LiveState;
+import com.dumbhippo.persistence.Account;
+import com.dumbhippo.persistence.AccountFeed;
 import com.dumbhippo.persistence.AimResource;
 import com.dumbhippo.persistence.Contact;
 import com.dumbhippo.persistence.EmailResource;
@@ -1395,6 +1397,38 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		Feed feed = getFeedFromUserEnteredUrl(url);
 		
 		feedSystem.removeGroupFeed(group, feed);		
+	}
+	
+	private void doAddAccountFeed(UserViewpoint viewpoint, String url) throws XmlMethodException {
+		User user = viewpoint.getViewer();
+		Account acct = user.getAccount();
+		Feed feed = getFeedFromUserEnteredUrl(url);
+		
+		feedSystem.addAccountFeed(acct, feed);
+	}
+	
+	private void doRemoveAccountFeed(UserViewpoint viewpoint, String url) throws XmlMethodException {
+		User user = viewpoint.getViewer();
+		Account acct = user.getAccount();
+		Feed feed = getFeedFromUserEnteredUrl(url);
+		
+		feedSystem.removeAccountFeed(acct, feed);		
+	}
+	
+	public void doSetRhapsodyListeningHistoryFeedUrl(UserViewpoint viewpoint, String url) throws XmlMethodException {
+		User user = viewpoint.getViewer();
+		Account acct = user.getAccount();
+		AccountFeed rhapsodyHistoryFeed = acct.getRhapsodyHistoryFeed();
+		String currentFeedUrl = null;
+		if (rhapsodyHistoryFeed != null) {
+			currentFeedUrl = rhapsodyHistoryFeed.getFeed().getSource().getUrl();
+		}
+		if ((currentFeedUrl != null) && (!currentFeedUrl.equals(url))) {
+			doRemoveAccountFeed(viewpoint, currentFeedUrl);
+		}
+		if ((url != null) && (!url.equals("")) && (!url.equals(currentFeedUrl))) {
+			doAddAccountFeed(viewpoint, url);
+		}
 	}
 
 	private ExternalAccountType parseExternalAccountType(String type) throws XmlMethodException {

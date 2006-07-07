@@ -4,6 +4,7 @@ public enum SongDownloadSource {
 	ITUNES("iTunes"),
 	YAHOO("Yahoo! Music Unlimited"),
 	RHAPSODY("Rhapsody"),
+	//RHAPSODY_PARTNER("Rhapsody Partner"),  // this would capture "legacy Rhapsody" results from Yahoo
 	// this is used to create a db row indicating that yahoo returned no results
 	NONE_MARKER("[not found in yahoo]");
 	

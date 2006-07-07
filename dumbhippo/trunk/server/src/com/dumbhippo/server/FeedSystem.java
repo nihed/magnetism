@@ -4,6 +4,7 @@ import java.util.List;
 
 import javax.ejb.Local;
 
+import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.Feed;
 import com.dumbhippo.persistence.FeedEntry;
 import com.dumbhippo.persistence.Group;
@@ -19,6 +20,9 @@ public interface FeedSystem {
 	
 	void addGroupFeed(Group group, Feed feed);
 	void removeGroupFeed(Group group, Feed feed);
+
+	void addAccountFeed(Account account, Feed feed);
+	void removeAccountFeed(Account account, Feed feed);
 	
 	/*
 	 * Called (by FeedSystem itself) when a new FeedEntry is found

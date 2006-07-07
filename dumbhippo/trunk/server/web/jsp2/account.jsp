@@ -22,7 +22,8 @@
 		dh.formtable.currentValues = {
 			'dhUsernameEntry' : <dh:jsString value="${signin.user.nickname}"/>,
 			'dhBioEntry' : <dh:jsString value="${signin.user.account.bio}"/>,
-			'dhMusicBioEntry' : <dh:jsString value="${signin.user.account.musicBio}"/>
+			'dhMusicBioEntry' : <dh:jsString value="${signin.user.account.musicBio}"/>,
+			'dhRhapsodyListeningHistoryEntry' : <dh:jsString value="${account.rhapsodyListeningHistoryFeedUrl}"/>
 		};
 		dh.account.userId = <dh:jsString value="${signin.user.id}"/>
 		dh.account.reloadPhoto = function() {
@@ -96,6 +97,10 @@
 				</dht:formTableRow>
 				<dht:formTableRow label="Flickr">
 					<dht:loveHateEntry baseId="dhFlickr" mode="${account.flickrSentiment}"/>
+				</dht:formTableRow>
+				<dht:formTableRowStatus controlId='dhRhapsodyListeningHistoryEntry'></dht:formTableRowStatus>
+				<dht:formTableRow label="Rhapsody feed">
+					<dht:textInput id="dhRhapsodyListeningHistoryEntry" maxlength="255"/>
 				</dht:formTableRow>
 			</dht:formTable>
 			<dht:zoneBoxSeparator/>

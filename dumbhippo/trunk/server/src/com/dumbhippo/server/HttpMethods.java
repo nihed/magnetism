@@ -312,8 +312,12 @@ public interface HttpMethods {
 	@HttpParams( { "nsid", "email" })
 	public void doSetFlickrAccount(XmlBuilder xml, UserViewpoint viewpoint, String nsid, String email) throws XmlMethodException;	
 	
-	
 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
 	@HttpParams( { "name" })
 	public void doSetMySpaceName(XmlBuilder xml, UserViewpoint viewpoint, String name) throws XmlMethodException;
+
+	@HttpContentTypes(HttpResponseData.NONE)
+	@HttpParams( { "url" })
+	public void doSetRhapsodyListeningHistoryFeedUrl(UserViewpoint viewpoint, String url) throws XmlMethodException;
+
 }

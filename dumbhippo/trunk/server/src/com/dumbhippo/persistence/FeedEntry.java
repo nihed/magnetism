@@ -4,10 +4,13 @@ import java.util.Date;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.Inheritance;
+import javax.persistence.InheritanceType;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 
 @Entity
+@Inheritance(strategy=InheritanceType.JOINED)
 public class FeedEntry extends DBUnique {
 	private static final long serialVersionUID = 1L;
 	

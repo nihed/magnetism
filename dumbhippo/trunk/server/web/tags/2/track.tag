@@ -132,27 +132,26 @@
 			</div>
 		</c:if>
 		<c:if test="${playItLink}">
-		    <c:if test="${!empty track.itunesUrl || !empty track.yahooUrl || !empty track.rhapsodyUrl || displayAsAlbumTrack}">
+		    <c:if test="${!empty track.itunesUrl || !empty track.yahooUrl || !empty track.rhapsodyUrl}">
 				<c:set var="itunesDisabled" value='${empty track.itunesUrl ? "disabled" : ""}'/>
 				<c:set var="yahooDisabled" value='${empty track.yahooUrl ? "disabled" : ""}'/>
 				<c:set var="rhapsodyDisabled" value='${empty track.rhapsodyUrl ? "disabled" : ""}'/>
 				<div class="dh-song-links">Play at 
-					<c:choose>
-						<c:when test="${!empty track.itunesUrl}">
-							<a class="dh-music-source-link" href="${track.itunesUrl}">iTunes</a>,
-						</c:when>
-						<c:otherwise>
-							<span class="dh-music-source-link-disabled">iTunes</span>,
-						</c:otherwise>
-					</c:choose>
-					<c:choose>
-						<c:when test="${!empty track.yahooUrl}">
-							<a class="dh-music-source-link" href="${track.yahooUrl}">Yahoo! Music</a>
-						</c:when>
-						<c:otherwise>
-							<span class="dh-music-source-link-disabled">Yahoo! Music</span>
-						</c:otherwise>
-					</c:choose>
+					<c:if test="${!empty track.itunesUrl}">
+						<a class="dh-music-source-link" href="${track.itunesUrl}">iTunes</a>
+						<c:if test="${!empty track.yahooUrl || !empty track.rhapsodyUrl}">
+					        ,
+					    </c:if>
+					</c:if>
+					<c:if test="${!empty track.yahooUrl}">
+						<a class="dh-music-source-link" href="${track.yahooUrl}">Yahoo! Music</a>
+						<c:if test="${!empty track.rhapsodyUrl}">
+					        ,
+					    </c:if>
+					</c:if>
+					<c:if test="${!empty track.rhapsodyUrl}">
+						<a class="dh-music-source-link" href="${track.rhapsodyUrl}">Rhapsody</a>
+					</c:if>
 				</div>
 			</c:if>
 		</c:if>

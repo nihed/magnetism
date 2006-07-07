@@ -200,6 +200,7 @@
 	<target name="ejb3jar" depends="compile">
 		<jar destfile="${buildjar.dir}/dumbhippo.ejb3">
 			<fileset dir="${build}">
+				<include name="rome.properties" />
 				<include name="**/live/*.class" />
 				<include name="**/recommender/*.class" />
 				<include name="**/postinfo/*.class" />

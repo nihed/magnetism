@@ -27,6 +27,10 @@
 	<c:set var="displaySinglePersonMusicPlay" value="false"/>
 </c:if>
 
+<c:if test="${empty playItLink}">
+	<c:set var="playItLink" value="true"/>
+</c:if>
+
 <%--
   Our general rule of thumb for using this section is that if the tracks rely on circumstances not fulfilled 
   like the person having friends or having listened to something then we hide it by default.  The other

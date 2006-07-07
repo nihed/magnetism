@@ -27,19 +27,28 @@ import org.slf4j.Logger;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.ThreadUtils;
 import com.dumbhippo.TypeUtils;
+import com.dumbhippo.persistence.Account;
+import com.dumbhippo.persistence.AccountFeed;
 import com.dumbhippo.persistence.Feed;
 import com.dumbhippo.persistence.FeedEntry;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupFeed;
 import com.dumbhippo.persistence.LinkResource;
+import com.dumbhippo.persistence.Track;
+import com.dumbhippo.persistence.TrackFeedEntry;
+import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.FeedSystem;
 import com.dumbhippo.server.IdentitySpider;
+import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.XmlMethodErrorCode;
 import com.dumbhippo.server.XmlMethodException;
+import com.dumbhippo.server.syndication.RhapModule;
+import com.dumbhippo.server.syndication.RhapModuleImpl;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.util.HtmlTextExtractor;
+import com.sun.syndication.feed.module.Module;
 import com.sun.syndication.feed.synd.SyndContent;
 import com.sun.syndication.feed.synd.SyndEntry;
 import com.sun.syndication.feed.synd.SyndFeed;
@@ -74,6 +83,9 @@ public class FeedSystemBean implements FeedSystem {
 	
 	@EJB
 	private PostingBoard postingBoard;
+
+	@EJB
+	private MusicSystem musicSystem;
 	
 	private static ExecutorService notificationService;
 	private static boolean shutdown = false;
@@ -160,7 +172,44 @@ public class FeedSystemBean implements FeedSystem {
 	private FeedEntry createEntryFromSyndEntry(Feed feed, SyndFeed syndFeed, SyndEntry syndEntry) throws MalformedURLException {
 		URL entryUrl = new URL(syndEntry.getLink());
 		
-		FeedEntry entry = new FeedEntry(feed);
+		FeedEntry entry = null;
+		
+		List<Module> modules = (List<Module>)(syndEntry.getModules());
+		for (Module m : modules) {
+			if (m instanceof RhapModule) {
+				RhapModule module = (RhapModule)m;
+				
+				// logger.debug("RhapModule found for feedentry from feed {}", feed.getSource().getUrl());
+				TrackFeedEntry trackFeedEntry = new TrackFeedEntry(feed);
+				
+				trackFeedEntry.setArtist(module.getArtist());
+				trackFeedEntry.setArtistRCID(module.getArtistRCID());
+				trackFeedEntry.setAlbum(module.getAlbum());
+				trackFeedEntry.setAlbumRCID(module.getAlbumRCID());
+				trackFeedEntry.setTrack(module.getTrack());
+				trackFeedEntry.setTrackRCID(module.getTrackRCID());
+				trackFeedEntry.setDuration(module.getDuration());
+				trackFeedEntry.setPlayHref(module.getPlayHref());
+				trackFeedEntry.setDataHref(module.getDataHref());
+				trackFeedEntry.setAlbumArt(module.getAlbumArt());
+				
+				/*
+				logger.debug("RhapModule artist: {}", module.getArtist());
+				logger.debug("RhapModule album : {}", module.getAlbum());
+				logger.debug("RhapModule track : {}", module.getTrack());
+				logger.debug("RhapModule play  : {}", module.getPlayHref());
+				logger.debug("RhapModule data  : {}", module.getDataHref());
+				*/
+				
+				entry = trackFeedEntry;				
+			}
+		}
+		
+		if (entry == null) {
+			// logger.debug("RhapModule not found for feedentry from feed {}", feed.getSource().getUrl());
+			entry = new FeedEntry(feed);
+		}
+			
 		entry.setEntryGuid(syndEntry.getUri());
 
 		String title = syndEntry.getTitle();
@@ -185,6 +234,13 @@ public class FeedSystemBean implements FeedSystem {
 		return entry;
 	}
 	
+	private void addTrackFromFeedEntry(TrackFeedEntry entry, int entryPosition) {
+		for (AccountFeed afeed : entry.getFeed().getAccounts()) {
+			// logger.debug("Processing feed event {} for account {}", entry.getTitle(), afeed.getAccount());
+			musicSystem.addFeedTrack(afeed, entry, entryPosition);
+		}
+	}
+	
 	private void setLinkFromSyndFeed(Feed feed, SyndFeed syndFeed) throws XmlMethodException {
 		String link = syndFeed.getLink();
 		URL linkUrl;
@@ -202,6 +258,7 @@ public class FeedSystemBean implements FeedSystem {
 		
 		Set<String> foundGuids = new HashSet<String>();
 		
+		int entryPosition = 0;
 		for (Object o : syndFeed.getEntries()) {
 			SyndEntry syndEntry = (SyndEntry)o;
 			
@@ -216,6 +273,9 @@ public class FeedSystemBean implements FeedSystem {
 					foundGuids.add(guid);
 					em.persist(entry);
 					feed.getEntries().add(entry);
+					if (entry instanceof TrackFeedEntry) {
+						addTrackFromFeedEntry((TrackFeedEntry)entry, entryPosition++);
+					}
 				} catch (MalformedURLException e) {
 					continue;
 				}
@@ -238,6 +298,7 @@ public class FeedSystemBean implements FeedSystem {
 		
 		Set<String> foundGuids = new HashSet<String>();
 		
+		int entryPosition = 0;
 		for (Object o : syndFeed.getEntries()) {
 			SyndEntry syndEntry = (SyndEntry)o;
 			
@@ -263,6 +324,9 @@ public class FeedSystemBean implements FeedSystem {
 					foundGuids.add(guid);
 					em.persist(entry);
 					feed.getEntries().add(entry);
+					if (entry instanceof TrackFeedEntry) {
+						addTrackFromFeedEntry((TrackFeedEntry)entry, entryPosition++);
+					}
 				} catch (MalformedURLException e) {
 					continue;
 				}
@@ -331,7 +395,7 @@ public class FeedSystemBean implements FeedSystem {
 			if (e instanceof XmlMethodException)
 				throw (XmlMethodException) e;
 			else
-				throw new RuntimeException("Error initializing feed from download result " + source.getUrl(), e);
+				throw new RuntimeException("Error initializing feed from download result " + source.getUrl() + ": " + e.getMessage(), e);
 		}
 	}
 
@@ -377,7 +441,7 @@ public class FeedSystemBean implements FeedSystem {
 	}
 	
 	public List<Feed> getInUseFeeds() {
-		List l = em.createQuery("SELECT f FROM Feed f WHERE EXISTS (SELECT gf FROM GroupFeed gf WHERE gf.feed = f AND gf.removed = 0)").getResultList();
+		List l = em.createQuery("SELECT f FROM Feed f WHERE EXISTS (SELECT gf FROM GroupFeed gf WHERE gf.feed = f AND gf.removed = 0) OR EXISTS (SELECT af FROM AccountFeed af WHERE af.feed = f AND af.removed = 0)").getResultList();
 		return TypeUtils.castList(Feed.class, l);
 	}
 	
@@ -494,6 +558,27 @@ public class FeedSystemBean implements FeedSystem {
 	
 	public void removeGroupFeed(Group group, Feed feed) {
 		for (GroupFeed old : group.getFeeds()) {
+			if (old.getFeed().equals(feed)) {
+				old.setRemoved(true);
+				return;
+			}
+		}
+	}
+	
+	public void addAccountFeed(Account account, Feed feed) {
+		for (AccountFeed old : account.getFeeds()) {
+			if (old.getFeed().equals(feed)) {
+				old.setRemoved(false);
+				return;
+			}
+		}
+		AccountFeed accountFeed = new AccountFeed(account, feed);
+		em.persist(accountFeed);
+		account.getFeeds().add(accountFeed);
+	}
+	
+	public void removeAccountFeed(Account account, Feed feed) {
+		for (AccountFeed old : account.getFeeds()) {
 			if (old.getFeed().equals(feed)) {
 				old.setRemoved(true);
 				return;

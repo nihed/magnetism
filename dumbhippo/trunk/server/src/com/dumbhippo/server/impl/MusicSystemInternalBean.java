@@ -1,6 +1,11 @@
 package com.dumbhippo.server.impl;
 
 import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.ProtocolException;
+import java.net.URL;
+import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -42,13 +47,20 @@ import com.dumbhippo.ThreadUtils;
 import com.dumbhippo.TypeUtils;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
+import com.dumbhippo.persistence.AccountFeed;
 import com.dumbhippo.persistence.AmazonAlbumResult;
 import com.dumbhippo.persistence.Contact;
 import com.dumbhippo.persistence.Group;
+import com.dumbhippo.persistence.GroupFeed;
+import com.dumbhippo.persistence.MediaFileFormat;
 import com.dumbhippo.persistence.MembershipStatus;
 import com.dumbhippo.persistence.NowPlayingTheme;
+import com.dumbhippo.persistence.RhapLink;
+import com.dumbhippo.persistence.SongDownloadSource;
 import com.dumbhippo.persistence.Track;
+import com.dumbhippo.persistence.TrackFeedEntry;
 import com.dumbhippo.persistence.TrackHistory;
+import com.dumbhippo.persistence.TrackType;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.YahooAlbumResult;
 import com.dumbhippo.persistence.YahooArtistResult;
@@ -86,6 +98,8 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	@SuppressWarnings("unused")
 	static private final Logger logger = GlobalSetup.getLogger(MusicSystemInternalBean.class);
 	
+	// 14 days
+	static private final int RHAPLINK_EXPIRATION_TIMEOUT = 1000 * 60 * 60 * 24 * 14;
 	// 2 days
 	static private final int YAHOO_EXPIRATION_TIMEOUT = 1000 * 60 * 60 * 24 * 2;
 	// 14 days since we aren't getting price information
@@ -1672,6 +1686,11 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 						    }
         			    }
 					}
+    				String rhapsodyDownloadUrl = 
+    					getRhapsodyDownloadUrl(trackView.getArtist(), trackView.getAlbum(), trackView.getTrackNumber());
+    				if (rhapsodyDownloadUrl != null) {
+    					trackView.setDownloadUrl(SongDownloadSource.RHAPSODY, rhapsodyDownloadUrl);
+    				}
         		}							
 			} catch (InterruptedException e) {
 				logger.warn("Thread interrupted getting tracks or downloads for an album from yahoo {}", e.getMessage());
@@ -1745,6 +1764,29 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 					} else {
 						logger.debug("ignoring second download url for {}", d.getSource().getYahooSourceName());
 					}
+				}
+			}
+			
+			// if futureYahooAlbum is not null, try to get a Rhapsody download URL for this song and that album
+			if (futureYahooAlbum != null) {
+				YahooAlbumResult yahooAlbum = null;
+				try {
+					yahooAlbum = futureYahooAlbum.get();
+				} catch (InterruptedException e) {
+					logger.error("yahoo album get thread interrupted {}", e.getMessage());
+					throw new RuntimeException(e);
+				} catch (ExecutionException e) {
+	 				logger.error("yahoo album get thread execution exception {}", e.getMessage());
+				}
+				if (yahooAlbum != null) {
+					String rhapsodyDownloadUrl = 
+						getRhapsodyDownloadUrl(yahooAlbum.getArtist(), yahooAlbum.getAlbum(), yahooSong.getTrackNumber());
+					if (rhapsodyDownloadUrl != null) {
+						view.setDownloadUrl(SongDownloadSource.RHAPSODY, rhapsodyDownloadUrl);
+						//logger.debug("set rhapsody download url {}", rhapsodyDownloadUrl);
+					}
+				} else {
+					logger.warn("yahooAlbum for {} was null in getTrackView", yahooSong.getName());
 				}
 			}
 			fillAlbumInfo(futureYahooAlbum, futureAmazonAlbum, view.getAlbumView());
@@ -3038,5 +3080,147 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		pageable.setResults(TypeUtils.castList(NowPlayingTheme.class, q.getResultList()));
 		q = em.createQuery(buildGetThemesQuery(viewpoint, null, true));
 		pageable.setTotalCount(((Number) q.getSingleResult()).intValue());
+	}
+	
+	public void addFeedTrack(AccountFeed feed, TrackFeedEntry entry, int entryPosition) {
+		User user = feed.getAccount().getOwner();
+		
+		Map<String,String> properties = new HashMap<String,String>();
+		properties.put("type", ""+TrackType.NETWORK_STREAM);
+		properties.put("name", entry.getTrack());
+		properties.put("artist", entry.getArtist());
+		properties.put("album", entry.getAlbum());
+		properties.put("url", entry.getPlayHref());
+		
+		Integer duration = Integer.parseInt(entry.getDuration());
+		duration = duration/1000;  // Rhapsody duration info is in milliseconds, elswhere it's seconds
+		
+		properties.put("duration", ""+duration);
+		
+		//properties.put("format", "");            // could set to 'Rhapsody' or something like that
+		//properties.put("fileSize", "");          // streaming tracks don't have a file size
+		//properties.put("trackNumber", "");       // could parse this out of the PlayHref()
+		//properties.put("discIdentifier", "");    // could use RCID information?
+		
+		/**
+		 * Note that the track play date is set to the moment when the feed is processed.
+		 * Although Rhapsody feeds have a date field, it seems to correspond to the date
+		 * the song was published, not the date it was played by the user.
+		 * 
+		 * So instead, we create virtual play times based on the order of items in the 
+		 * rhapsody feed.  The most recently played item is first; we use the current
+		 * system time at feed parsing for that one.  The second most recently played item
+		 * is second, we use the current system time minus one minute for that one.  And so on.
+		 */
+		
+		long now = System.currentTimeMillis();
+		long virtualPlayTime = now - (1000 * 60 * entryPosition);
+		
+		Track track = getTrack(properties);
+		addTrackHistory(user, track, new Date(virtualPlayTime));
+	}
+	
+	
+	/**
+	 * Try to find a Rhapsody friendly URL for this song.
+	 * 
+	 * @param songId
+	 * @param artistName
+	 * @param albumName
+	 * @param trackNumber
+	 * @return a working download url result, or null otherwise
+	 */
+	private String getRhapsodyDownloadUrl(String artistName, String albumName, int trackNumber) {
+		if ((trackNumber>0) && (artistName != null) && (albumName != null)) {
+			// Try to concoct a Rhapsody friendly URL; see:
+			//  http://rws-blog.rhapsody.com/rhapsody_web_services/2006/04/new_album_urls.html
+			String rhaplink = "http://play.rhapsody.com/" + rhapString(artistName) + "/" + rhapString(albumName) + "/track-" + trackNumber;
+			
+			boolean rhapLinkActive = false;
+			RhapLink oldRhapLink = null;
+			
+			try {
+				Query q = em.createQuery("FROM RhapLink rhaplink WHERE rhaplink.url = :rhaplink");
+				q.setParameter("rhaplink", rhaplink);
+				oldRhapLink = (RhapLink)(q.getSingleResult());
+			} catch (EntityNotFoundException e) {
+				//logger.debug("No cached rhaplink status for {}", rhaplink);
+			}
+			
+			long now = System.currentTimeMillis();
+			if ((oldRhapLink == null) || ((oldRhapLink.getLastUpdated() + RHAPLINK_EXPIRATION_TIMEOUT) < now)) {
+				logger.debug("Unknown or outdated Rhapsody link; testing status for rhaplink {}", rhaplink);
+				
+				try {
+					URL u = new URL(rhaplink);
+					URLConnection connection = u.openConnection();
+					if (!(connection instanceof HttpURLConnection)) {
+						logger.warn("Got a weird connection of type {} for URL {}; skipping", connection.getClass().getName(), u);
+					} else {
+						HttpURLConnection httpConnection = (HttpURLConnection)connection;
+						httpConnection.setRequestMethod("HEAD");
+						httpConnection.setInstanceFollowRedirects(false);
+						httpConnection.setConnectTimeout(REQUEST_TIMEOUT);
+						httpConnection.setReadTimeout(REQUEST_TIMEOUT);
+						httpConnection.setAllowUserInteraction(false);
+						httpConnection.connect();
+						
+						// if we get a 200 response it's a playable URL
+						// if we get anything else, it's not
+						
+						int httpResponse = httpConnection.getResponseCode();
+						httpConnection.disconnect();
+						
+						logger.debug("response for rhaplink {} was {}", rhaplink, httpResponse);
+						
+						if (httpResponse == HttpURLConnection.HTTP_OK) {
+							logger.debug("got working rhaplink {}", rhaplink);
+							rhapLinkActive = true;
+						}
+					}
+				} catch (MalformedURLException mue) {
+					logger.warn("malformed URL when trying to fetch rhapsody link: " + mue.getMessage(), mue);
+				} catch (IOException ioe) {
+					logger.warn("IO exception when trying to fetch rhapsody link: " + ioe.getMessage(), ioe);
+				}
+				
+				// remove the old rhaplink entry, if any, and store a new one
+				try {
+					if (oldRhapLink != null) {
+						em.remove(oldRhapLink);
+					}
+					
+					RhapLink newRhapLink = new RhapLink();
+					newRhapLink.setUrl(rhaplink);
+					newRhapLink.setActive(rhapLinkActive);
+					newRhapLink.setLastUpdated(now);
+					em.persist(newRhapLink);
+				} catch (Exception e) {
+					logger.error("Error updating RhapLink", e);
+				}
+				
+			} else {
+				// we found a rhaplink result that wasn't outdated, so return it
+				rhapLinkActive = oldRhapLink.isActive();
+				//logger.debug("cached rhaplink status for {} was {}", rhaplink, rhapLinkActive);
+			}
+		
+			if (rhapLinkActive) {
+				return rhaplink;
+			} else {
+				return null;
+			}
+		}
+		return null;
+	}
+	
+	/*
+	 * Mangle a string to work in a Rhapsody friendly URL - remove all 
+	 * punctuation and whitespace and lowercase it
+	 */
+	private static String rhapString(String s) {
+		// strip all non-word characters, e.g. other than [a-zA-Z0-9]
+		// TODO: figure out how to deal with broader character set, if Rhapsody even supports that?
+		return s.replaceAll("[^a-zA-Z0-9]","").toLowerCase();
 	}
 }

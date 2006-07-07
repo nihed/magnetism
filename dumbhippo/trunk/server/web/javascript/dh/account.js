@@ -245,6 +245,16 @@ dhAccountInit = function() {
 	dh.account.myspaceEntry.onHateSaved = dh.account.onMyspaceHateSaved;
 	dh.account.myspaceEntry.onCanceled = dh.account.onMyspaceCanceled;
 
+	dh.account.rhapsodyListeningHistoryEntryNode = document.getElementById('dhRhapsodyListeningHistoryEntry');
+	dh.account.rhapsodyListeningHistoryEntry = new dh.textinput.Entry(dh.account.rhapsodyListeningHistoryEntryNode, null, dh.formtable.currentValues['dhRhapsodyListeningHistoryEntry']);
+
+	dh.formtable.undoValues['dhRhapsodyListeningHistoryEntry'] = dh.account.rhapsodyListeningHistoryEntry.getValue();
+	dh.account.rhapsodyListeningHistoryEntry.onValueChanged = function(value) {
+		dh.formtable.onValueChanged(dh.account.rhapsodyListeningHistoryEntry, 'setrhapsodylisteninghistoryfeedurl', 'url', value,
+		"Saving new Rhapsody Listening History Feed URL...",
+		"Your Rhapsody Listening History Feed URL has been saved.");
+	}
+	
 	// add some event handlers on the file input
 	dh.account.photoEntry = new dh.fileinput.Entry(document.getElementById('dhPictureEntry'));
 	

@@ -7,8 +7,10 @@ import javax.ejb.Local;
 
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
+import com.dumbhippo.persistence.AccountFeed;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.NowPlayingTheme;
+import com.dumbhippo.persistence.TrackFeedEntry;
 import com.dumbhippo.persistence.User;
 
 @Local
@@ -199,4 +201,5 @@ public interface MusicSystem {
 	 */
 	public List<TrackView> getTrackSearchTracks(Viewpoint viewpoint, TrackSearchResult searchResult, int start, int count);
 	
+	public void addFeedTrack(AccountFeed feed, TrackFeedEntry entry, int entryPosition);
 }
