@@ -225,7 +225,7 @@ dhAccountInit = function() {
 		"Saving user name...",
 		"Your user name has been saved.");
 	}
-		
+	
 	dh.account.bioEntryNode = document.getElementById('dhBioEntry');
 	dh.account.bioEntry = new dh.textinput.Entry(dh.account.bioEntryNode, "I grew up in Kansas.", dh.formtable.currentValues['dhBioEntry']);
 

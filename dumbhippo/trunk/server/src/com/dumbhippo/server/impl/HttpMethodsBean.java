@@ -480,11 +480,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			
 			if (!groupSystem.canEditGroup(viewpoint, group))
 				throw new RuntimeException("Only active members can edit a group");
-			
-			name = name.trim();
-			if (name == "")
-				throw new RuntimeException("Name is empty");
-			
+						
 			group.setName(name);
 		} catch (NotFoundException e) {
 			throw new RuntimeException(e);
@@ -499,8 +495,6 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 				throw new RuntimeException("Only active members can edit a group");
 			
 			description = description.trim();
-			if (description == "")
-				throw new RuntimeException("Description is empty");
 			
 			group.setDescription(description);
 		} catch (NotFoundException e) {
@@ -1400,11 +1394,19 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	}
 	
 	public void doSetRhapsodyHistoryFeed(XmlBuilder xml, UserViewpoint viewpoint, String url) throws XmlMethodException {
-		Feed feed = getFeedFromUserEnteredUrl(url);
-		
 		User user = viewpoint.getViewer();
 		Account account = user.getAccount();
 		AccountFeed rhapsodyHistoryFeed = account.getRhapsodyHistoryFeed();
+		
+		// empty string means unset the value
+		if (url.trim().length() == 0) {
+			if (rhapsodyHistoryFeed != null)
+				feedSystem.removeAccountFeed(account, rhapsodyHistoryFeed.getFeed());
+			return;
+		}
+		
+		// otherwise, set a new value
+		Feed feed = getFeedFromUserEnteredUrl(url);
 
 		if (rhapsodyHistoryFeed != null && rhapsodyHistoryFeed.getFeed().equals(feed)) {
 			// no change

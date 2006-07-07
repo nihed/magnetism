@@ -81,20 +81,19 @@ dh.formtable.showStatusMessage = function(controlId, message, hideClose) {
 dh.formtable._onValueChanged = function(entryObject, isXmlMethod, postMethod, argName, value,
  									   pendingMessage, successMessage, fixedArgs, onUpdate) {
 	var controlId = entryObject.elem.id;										
-	if (!value || value.length == 0) {
-		return;
-	}
-	var args
+
+	var args;
 	if (fixedArgs != null)
 		args = dojo.lang.shallowCopy(fixedArgs)
 	else
 		args = {}
 	args[argName] = value;
+	
 	dh.formtable.showStatus(controlId, pendingMessage, null, null);
 	if (isXmlMethod)
-		invokeMethod = dh.server.doPOST;
-	else
 		invokeMethod = dh.server.doXmlMethod;
+	else
+		invokeMethod = dh.server.doPOST;
    	invokeMethod	   (postMethod,
 			     		args,
 		  	    		function(/*type, data, http -or- childNodes, http*/) {
