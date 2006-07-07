@@ -30,6 +30,20 @@ dh.lovehate.Entry = function(baseId, defaultLoveText, currentLoveValue, defaultH
 	this._hateValue = document.getElementById(baseId + 'HateValueId');
 	
 	this._allNodes = [me._loveNode, me._hateNode, me._loveEditNode, me._hateEditNode, me._indifferentNode, me._busyNode];
+
+	this._loveEntryNode.onkeydown = function(ev) {
+		var key = dh.util.getKeyCode(ev);
+		if (key == ENTER) {
+			me._saveClicked("love");
+		}
+	}
+
+	this._hateEntryNode.onkeydown = function(ev) {
+		var key = dh.util.getKeyCode(ev);
+		if (key == ENTER) {
+			me._saveClicked("hate");
+		}
+	}
 	
 	this._showNode = function(node) {
 		if (!node)
