@@ -78,7 +78,7 @@ dh.formtable.showStatusMessage = function(controlId, message, hideClose) {
 		hideClose ? null : "I've read this already, go away");
 }
 
-dh.formtable.onValueChanged = function(entryObject, postMethod, argName, value,
+dh.formtable._onValueChanged = function(entryObject, isXmlMethod, postMethod, argName, value,
  									   pendingMessage, successMessage, fixedArgs, onUpdate) {
 	var controlId = entryObject.elem.id;										
 	if (!value || value.length == 0) {
@@ -91,9 +91,13 @@ dh.formtable.onValueChanged = function(entryObject, postMethod, argName, value,
 		args = {}
 	args[argName] = value;
 	dh.formtable.showStatus(controlId, pendingMessage, null, null);
-   	dh.server.doPOST(postMethod,
+	if (isXmlMethod)
+		invokeMethod = dh.server.doPOST;
+	else
+		invokeMethod = dh.server.doXmlMethod;
+   	invokeMethod	   (postMethod,
 			     		args,
-		  	    		function(type, data, http) {
+		  	    		function(/*type, data, http -or- childNodes, http*/) {
 		  	    			var oldValue = dh.formtable.undoValues[controlId];
 		  	    	 		dh.formtable.showStatus(controlId, successMessage,
 		  	    	 			oldValue ? "Undo" : null,
@@ -107,9 +111,22 @@ dh.formtable.onValueChanged = function(entryObject, postMethod, argName, value,
 							if (onUpdate != null)
 								onUpdate(value)
 			  	    	},
-			  	    	function(type, error, http) {
+			  	    	function(arg1, arg2, arg3 /*type, error, http -or- code, msg, http */) {
+			  	    		msg = "Failed to save this setting.";
+			  	    		if (isXmlMethod)
+			  	    			msg = msg + " (" + arg2 + ")";
 							dh.formtable.showStatusMessage(controlId, "Failed to save this setting.");
 			  	    	});
+}
+
+dh.formtable.onValueChanged = function(entryObject, postMethod, argName, value,
+ 									   pendingMessage, successMessage, fixedArgs, onUpdate) {
+	dh.formtable._onValueChanged(entryObject, false, postMethod, argName, value, pendingMessage, successMessage, fixedArgs, onUpdate);
+}
+
+dh.formtable.onValueChangedXmlMethod = function(entryObject, postMethod, argName, value,
+ 									   pendingMessage, successMessage, fixedArgs, onUpdate) {
+	dh.formtable._onValueChanged(entryObject, true, postMethod, argName, value, pendingMessage, successMessage, fixedArgs, onUpdate);
 }
 
 dh.formtable.undo = function(entryObject, oldValue, postMethod, argName, fixedArgs, onUpdate) {

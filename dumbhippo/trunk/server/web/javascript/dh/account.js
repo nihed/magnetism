@@ -238,19 +238,13 @@ dhAccountInit = function() {
 		"Saving new music bio...",
 		"Your music bio has been saved.");
 	}
-	
-	dh.account.myspaceEntry = new dh.lovehate.Entry('dhMyspace', 'Enter your Myspace name', dh.account.initialMyspaceName,
-							'I despise Tom and his space', dh.account.initialMyspaceHateQuip);
-	dh.account.myspaceEntry.onLoveSaved = dh.account.onMyspaceLoveSaved;
-	dh.account.myspaceEntry.onHateSaved = dh.account.onMyspaceHateSaved;
-	dh.account.myspaceEntry.onCanceled = dh.account.onMyspaceCanceled;
 
 	dh.account.rhapsodyListeningHistoryEntryNode = document.getElementById('dhRhapsodyListeningHistoryEntry');
 	dh.account.rhapsodyListeningHistoryEntry = new dh.textinput.Entry(dh.account.rhapsodyListeningHistoryEntryNode, null, dh.formtable.currentValues['dhRhapsodyListeningHistoryEntry']);
 
 	dh.formtable.undoValues['dhRhapsodyListeningHistoryEntry'] = dh.account.rhapsodyListeningHistoryEntry.getValue();
 	dh.account.rhapsodyListeningHistoryEntry.onValueChanged = function(value) {
-		dh.formtable.onValueChanged(dh.account.rhapsodyListeningHistoryEntry, 'setrhapsodylisteninghistoryfeedurl', 'url', value,
+		dh.formtable.onValueChangedXmlMethod(dh.account.rhapsodyListeningHistoryEntry, 'setrhapsodyhistoryfeed', 'url', value,
 		"Saving new Rhapsody Listening History Feed URL...",
 		"Your Rhapsody Listening History Feed URL has been saved.");
 	}
@@ -268,6 +262,12 @@ dhAccountInit = function() {
 	}
 	
 	dh.photochooser.init("user", dh.account.userId)
+
+	dh.account.myspaceEntry = new dh.lovehate.Entry('dhMyspace', 'Enter your Myspace name', dh.account.initialMyspaceName,
+							'I despise Tom and his space', dh.account.initialMyspaceHateQuip);
+	dh.account.myspaceEntry.onLoveSaved = dh.account.onMyspaceLoveSaved;
+	dh.account.myspaceEntry.onHateSaved = dh.account.onMyspaceHateSaved;
+	dh.account.myspaceEntry.onCanceled = dh.account.onMyspaceCanceled;
 	
 	dh.account.flickrEntry = new dh.lovehate.Entry('dhFlickr', 'Email used for Flickr account', dh.account.initialFlickrEmail,
 					'Flickr doesn\'t do it for me', dh.account.initialFlickrHateQuip);

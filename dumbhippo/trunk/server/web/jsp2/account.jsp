@@ -101,6 +101,7 @@
 				<dht:formTableRowStatus controlId='dhRhapsodyListeningHistoryEntry'></dht:formTableRowStatus>
 				<dht:formTableRow label="Rhapsody feed">
 					<dht:textInput id="dhRhapsodyListeningHistoryEntry" maxlength="255"/>
+					<a href="http://www.rhapsody.com/myrhapsody/rss.html" target="_blank" class="dh-text-input-help">help me find it</a>
 				</dht:formTableRow>
 			</dht:formTable>
 			<dht:zoneBoxSeparator/>

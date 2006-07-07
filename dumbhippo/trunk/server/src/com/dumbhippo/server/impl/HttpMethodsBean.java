@@ -1399,36 +1399,21 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		feedSystem.removeGroupFeed(group, feed);		
 	}
 	
-	private void doAddAccountFeed(UserViewpoint viewpoint, String url) throws XmlMethodException {
-		User user = viewpoint.getViewer();
-		Account acct = user.getAccount();
+	public void doSetRhapsodyHistoryFeed(XmlBuilder xml, UserViewpoint viewpoint, String url) throws XmlMethodException {
 		Feed feed = getFeedFromUserEnteredUrl(url);
 		
-		feedSystem.addAccountFeed(acct, feed);
-	}
-	
-	private void doRemoveAccountFeed(UserViewpoint viewpoint, String url) throws XmlMethodException {
 		User user = viewpoint.getViewer();
-		Account acct = user.getAccount();
-		Feed feed = getFeedFromUserEnteredUrl(url);
+		Account account = user.getAccount();
+		AccountFeed rhapsodyHistoryFeed = account.getRhapsodyHistoryFeed();
+
+		if (rhapsodyHistoryFeed != null && rhapsodyHistoryFeed.getFeed().equals(feed)) {
+			// no change
+			return;
+		}
 		
-		feedSystem.removeAccountFeed(acct, feed);		
-	}
-	
-	public void doSetRhapsodyListeningHistoryFeedUrl(UserViewpoint viewpoint, String url) throws XmlMethodException {
-		User user = viewpoint.getViewer();
-		Account acct = user.getAccount();
-		AccountFeed rhapsodyHistoryFeed = acct.getRhapsodyHistoryFeed();
-		String currentFeedUrl = null;
-		if (rhapsodyHistoryFeed != null) {
-			currentFeedUrl = rhapsodyHistoryFeed.getFeed().getSource().getUrl();
-		}
-		if ((currentFeedUrl != null) && (!currentFeedUrl.equals(url))) {
-			doRemoveAccountFeed(viewpoint, currentFeedUrl);
-		}
-		if ((url != null) && (!url.equals("")) && (!url.equals(currentFeedUrl))) {
-			doAddAccountFeed(viewpoint, url);
-		}
+		if (rhapsodyHistoryFeed != null)
+			feedSystem.removeAccountFeed(account, rhapsodyHistoryFeed.getFeed());
+		feedSystem.addAccountFeed(account, feed);
 	}
 
 	private ExternalAccountType parseExternalAccountType(String type) throws XmlMethodException {
@@ -1484,11 +1469,11 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	}
 
 	public void doSetFlickrAccount(XmlBuilder xml, UserViewpoint viewpoint, String nsid, String email) throws XmlMethodException {
-		ExternalAccount external = externalAccountSystem.getOrCreateExternalAccount(viewpoint, ExternalAccountType.FLICKR);
-		external.setSentiment(Sentiment.LOVE);
-		
+		ExternalAccount external = externalAccountSystem.getOrCreateExternalAccount(viewpoint, ExternalAccountType.FLICKR);		
+
 		email = parseEmail(email);
 		
+		external.setSentiment(Sentiment.LOVE);
 		external.setHandle(nsid);
 		external.setExtra(email);
 	}
@@ -1501,6 +1486,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		} catch (ValidationException e) {
 			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, e.getMessage());
 		}
+
 		external.setSentiment(Sentiment.LOVE);
 		
 		// FIXME in externalAccounts.setMySpaceName we don't clear the friend ID in this way... 
@@ -1512,5 +1498,36 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			// kill the friend ID if the name changes
 			external.setExtra(null);
 		}
+	}
+
+	public void doSetLinkedInProfile(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException {
+		
+		// Try to pull linked in name out of either a linked in profile url ("http://www.linkedin.com/in/username") or 
+		// just try using the thing as a username directly
+		String name = urlOrName;
+		int i = urlOrName.indexOf("/in/");
+		if (i >= 0) {
+			i += "/in/".length();
+			name = urlOrName.substring(i);
+		}
+		if (name.length() > 255) // an arbitrary limit just so we don't accept huge megs of data 
+			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, "LinkedIn username is too long");
+		
+		ExternalAccount external = externalAccountSystem.getOrCreateExternalAccount(viewpoint, ExternalAccountType.LINKED_IN);
+		external.setSentiment(Sentiment.LOVE);
+		external.setHandle(name);
+	}
+
+	public void doSetWebsite(XmlBuilder xml, UserViewpoint viewpoint, String url) throws XmlMethodException {
+		URL urlObject;
+		try {
+			urlObject = parseUserEnteredUrl(url, true);
+		} catch (MalformedURLException e) {
+			throw new XmlMethodException(XmlMethodErrorCode.INVALID_URL, "Invalid url (" + e.getMessage() + ")");
+		}
+		
+		ExternalAccount external = externalAccountSystem.getOrCreateExternalAccount(viewpoint, ExternalAccountType.WEBSITE);
+		external.setHandle(urlObject.toExternalForm());
+		external.setSentiment(Sentiment.LOVE);
 	}
 }
