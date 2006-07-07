@@ -2,6 +2,7 @@ noinst_LTLIBRARIES += libhippo.la
 
 libhippo_la_CPPFLAGS =			\
 	$(AM_CPPFLAGS)			\
+	-I $(MARSHAL_DIR)		\
 	$(LIBHIPPO_CFLAGS)
 
 libhippo_la_LIBADD = 			\

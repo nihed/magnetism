@@ -1,7 +1,7 @@
 #include "hippo-common-internal.h"
 #include "hippo-connection.h"
 #include "hippo-data-cache-internal.h"
-#include <hippo/hippo-common-marshal.h>
+#include "hippo-common-marshal.h"
 #include <loudmouth/loudmouth.h>
 #include <string.h>
 #include <stdlib.h>
