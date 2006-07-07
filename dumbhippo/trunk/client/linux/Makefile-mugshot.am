@@ -41,6 +41,7 @@ mugshot_SOURCES	=				\
 
 EMBEDDEDIMAGEDIR=images
 EMBEDDED_IMAGES=				\
+	$(EMBEDDEDIMAGEDIR)/add.png	\
 	$(EMBEDDEDIMAGEDIR)/bublinkswarm.gif	\
 	$(EMBEDDEDIMAGEDIR)/bubgroupupdate.gif	\
 	$(EMBEDDEDIMAGEDIR)/blueleftarrow.gif	\

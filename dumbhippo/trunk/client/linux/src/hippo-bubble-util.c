@@ -447,7 +447,8 @@ on_group_membership_changed(HippoEntity *entity,
     HippoBubble *bubble;
     char *description;
     char *header;
-    const char *member_id;    
+    const char *member_id;
+    int actions = HIPPO_BUBBLE_ACTION_IGNORE;
     
     /* be sure we're still the current group */
     if (!bubble_watch_is_attached(BUBBLE_WATCH(watch)))
@@ -460,14 +461,13 @@ on_group_membership_changed(HippoEntity *entity,
     
 	hippo_bubble_set_foreground_color(bubble, HIPPO_BUBBLE_COLOR_PURPLE);
 	hippo_bubble_set_header_image(bubble, "bubgroupupdate");
-	
-	hippo_bubble_set_actions(bubble, HIPPO_BUBBLE_ACTION_IGNORE);
     
     hippo_bubble_set_sender_name(bubble, "");
     hippo_bubble_set_sender_guid(bubble, hippo_entity_get_guid(watch->group));
 
     hippo_bubble_set_link_title(bubble, hippo_entity_get_name(watch->group));
     hippo_bubble_set_group_guid(bubble, hippo_entity_get_guid(watch->group));
+    hippo_bubble_set_assoc_guid(bubble, hippo_entity_get_guid(watch->user));        
 
     hippo_bubble_set_chat_count(bubble, hippo_entity_get_chatting_user_count(watch->group));
 
@@ -477,13 +477,17 @@ on_group_membership_changed(HippoEntity *entity,
  	} else if (strcmp(watch->status, "FOLLOWER") == 0) {
 		description = _("Someone has joined this group as a follower");
 		header = _("New follower");
+		actions |= HIPPO_BUBBLE_ACTION_INVITE;
 	} else {
 		g_warning("Unknown membership status %s", watch->status);
 		description = "";
 		header = "";
 	}
-   
+  
+	hippo_bubble_set_actions(bubble, actions);
+	   
     member_id = hippo_entity_get_guid(HIPPO_ENTITY(watch->user));
+    hippo_bubble_set_assoc_guid(bubble, member_id);
 
     hippo_bubble_set_swarm_user_link(bubble,
     								 header,

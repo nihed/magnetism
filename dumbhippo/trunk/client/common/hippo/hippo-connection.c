@@ -573,6 +573,32 @@ hippo_connection_set_post_ignored (HippoConnection  *connection,
 }
 
 void
+hippo_connection_do_invite_to_group (HippoConnection  *connection,
+                                     const char       *group_id,
+                                     const char       *person_id)
+{
+    LmMessage *message;
+    LmMessageNode *node;
+    LmMessageNode *method;
+            
+    g_return_if_fail(HIPPO_IS_CONNECTION(connection));
+    
+    message = lm_message_new_with_sub_type(HIPPO_ADMIN_JID, LM_MESSAGE_TYPE_IQ,
+                                           LM_MESSAGE_SUB_TYPE_SET);
+    node = lm_message_get_node(message);
+
+    method = lm_message_node_add_child (node, "groupSystem", NULL);
+    lm_message_node_set_attribute(method, "xmlns", "http://dumbhippo.com/protocol/groupSystem");
+    lm_message_node_set_attribute(method, "op", "addMember");
+    lm_message_node_set_attribute(method, "groupId", group_id);
+    lm_message_node_set_attribute(method, "userId", person_id);    
+ 
+    hippo_connection_send_message(connection, message, SEND_MODE_AFTER_AUTH);
+
+    lm_message_unref(message);
+}
+
+void
 hippo_connection_notify_music_changed(HippoConnection *connection,
                                       gboolean         currently_playing,
                                       const HippoSong *song)

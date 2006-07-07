@@ -64,7 +64,9 @@ void             hippo_bubble_set_sender_guid        (HippoBubble *bubble,
 void             hippo_bubble_set_post_guid          (HippoBubble *bubble,
                                                       const char  *value);
 void             hippo_bubble_set_group_guid         (HippoBubble *bubble,
-                                                      const char  *value);                                                      
+                                                      const char  *value);
+void             hippo_bubble_set_assoc_guid         (HippoBubble *bubble,
+                                                      const char  *value);                                                                                                              
 void             hippo_bubble_set_sender_name        (HippoBubble *bubble, 
                                                       const char  *value);
 void             hippo_bubble_set_sender_photo       (HippoBubble *bubble, 

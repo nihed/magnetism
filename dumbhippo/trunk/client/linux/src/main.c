@@ -271,6 +271,14 @@ hippo_app_visit_entity_id(HippoApp    *app,
     hippo_app_visit_entity(app, entity);
 }
 
+void
+hippo_app_invite_to_group(HippoApp   *app,
+                          const char *group_id,
+                          const char *user_id)
+{
+	hippo_connection_do_invite_to_group(app->connection, group_id, user_id);
+}
+
 static void
 on_chat_window_destroy(HippoChatWindow *window,
                        HippoApp        *app)

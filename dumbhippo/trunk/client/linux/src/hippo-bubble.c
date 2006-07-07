@@ -25,7 +25,8 @@ typedef enum {
     LINK_CLICK_ACTIVATE_WHOS_THERE,
     LINK_CLICK_ACTIVATE_SOMEONE_SAID,
     LINK_CLICK_JOIN_CHAT,
-    LINK_CLICK_IGNORE_POST
+    LINK_CLICK_IGNORE_POST,
+    LINK_CLICK_INVITE    
 } LinkClickAction;
 
 typedef enum {
@@ -75,7 +76,9 @@ struct _HippoBubble {
     GtkWidget *join_chat_label;
     GtkWidget *chat_count_label;
     GtkWidget *ignore;
-    GtkWidget *ignore_label;    
+    GtkWidget *ignore_label;
+    GtkWidget *invite;
+    GtkWidget *invite_label;     
     GtkWidget *last_message;
     GtkWidget *last_message_photo;
     GtkWidget *viewers;
@@ -83,7 +86,8 @@ struct _HippoBubble {
     char      *user_link_header;
     char      *sender_id;
     char      *post_id;
-    char      *group_id;    
+    char      *group_id;
+    char      *assoc_id;       
     char      *last_message_sender_id;
     int        actions;
     int        page; /* [0,total_pages) */
@@ -599,7 +603,30 @@ hippo_bubble_init(HippoBubble       *bubble)
     gtk_label_set_markup(GTK_LABEL(bubble->ignore_label), "<u>Ignore</u>");
     set_blue_fg(bubble->ignore_label);    
     gtk_box_pack_start(GTK_BOX(box), bubble->ignore_label, FALSE, FALSE, 0);
-    hookup_widget(bubble, &bubble->ignore_label);    
+    hookup_widget(bubble, &bubble->ignore_label);   
+    
+    /* The "Invite to Group" link */
+
+    bubble->invite = g_object_new(GTK_TYPE_EVENT_BOX,
+                                  "visible-window", FALSE,
+                                  "above-child", TRUE,
+                                  NULL);
+    hookup_widget(bubble, &bubble->invite);
+    connect_link_action(bubble->invite, LINK_CLICK_INVITE);
+
+    box = gtk_hbox_new(FALSE, 2);
+    gtk_container_add(GTK_CONTAINER(bubble->invite), box);
+    gtk_widget_show(box);
+    
+    widget = gtk_image_new_from_pixbuf(hippo_embedded_image_get("add"));
+    gtk_widget_show(widget);
+    gtk_box_pack_start(GTK_BOX(box), widget, FALSE, FALSE, 0);
+    
+    bubble->invite_label = gtk_label_new(NULL);
+    gtk_label_set_markup(GTK_LABEL(bubble->invite_label), "<u>Invite</u>");
+    set_blue_fg(bubble->invite_label);    
+    gtk_box_pack_start(GTK_BOX(box), bubble->invite_label, FALSE, FALSE, 0);
+    hookup_widget(bubble, &bubble->invite_label);         
 
     /* Get the right initial size request */
     set_label_sizes(bubble);
@@ -1138,6 +1165,7 @@ compute_extra_widgets_layout(HippoBubble  *bubble,
                              GdkRectangle *someone_said_p,
                              GdkRectangle *join_chat_p,
                              GdkRectangle *ignore_p,
+                             GdkRectangle *invite_p,                             
                              GdkRectangle *last_message_photo_p,
                              GdkRectangle *last_message_p,
                              GdkRectangle *viewers_p,
@@ -1147,6 +1175,7 @@ compute_extra_widgets_layout(HippoBubble  *bubble,
     GdkRectangle someone_said;
     GdkRectangle join_chat;
     GdkRectangle ignore;
+    GdkRectangle invite;    
     GdkRectangle last_message_photo;
     GdkRectangle last_message;
     GdkRectangle viewers;
@@ -1165,6 +1194,7 @@ compute_extra_widgets_layout(HippoBubble  *bubble,
     GET_REQ(someone_said);
     GET_REQ(join_chat);
     GET_REQ(ignore);
+    GET_REQ(invite);    
     GET_REQ(last_message_photo);
     GET_REQ(last_message);
     GET_REQ(viewers);
@@ -1199,7 +1229,7 @@ compute_extra_widgets_layout(HippoBubble  *bubble,
         panes_height = 0;
     }
 
-    total_width = links_width + PADDING + join_chat.width + BETWEEN_LINKS + ignore.width;
+    total_width = links_width + PADDING + join_chat.width + BETWEEN_LINKS + ignore.width + BETWEEN_LINKS + invite.width;
     if (bubble->someone_said_set)
         total_width = MAX(total_width, message_pane_width);
     if (bubble->whos_there_set)
@@ -1232,8 +1262,10 @@ compute_extra_widgets_layout(HippoBubble  *bubble,
     /* Right-align the "join chat" and "ignore" */
     join_chat.y = PADDING;
     ignore.y = PADDING;
+    invite.y = PADDING;
     ignore.x = total_width - PADDING - ignore.width;
     join_chat.x = ignore.x - BETWEEN_LINKS - join_chat.width;
+    invite.x = join_chat.x - BETWEEN_LINKS - invite.width;
 
     panes_y = PADDING + links_height + PADDING;
 
@@ -1260,6 +1292,7 @@ compute_extra_widgets_layout(HippoBubble  *bubble,
     }
     gdk_rectangle_union(&all_extra_widgets, &join_chat, &all_extra_widgets);
     gdk_rectangle_union(&all_extra_widgets, &ignore, &all_extra_widgets);
+    gdk_rectangle_union(&all_extra_widgets, &invite, &all_extra_widgets);    
     
     all_extra_widgets.height += PADDING;
     
@@ -1267,6 +1300,7 @@ compute_extra_widgets_layout(HippoBubble  *bubble,
     OUT(someone_said);
     OUT(join_chat);
     OUT(ignore);
+    OUT(invite);    
     OUT(last_message_photo);
     OUT(last_message);
     OUT(viewers);
@@ -1379,7 +1413,7 @@ hippo_bubble_size_request(GtkWidget         *widget,
      
     compute_extra_widgets_layout(bubble, NULL, NULL,
                                  NULL, NULL, NULL,
-                                 NULL, NULL,
+                                 NULL, NULL, NULL,
                                  &all_extra_widgets_rect);
     all_extra_widgets_rect.x += container->border_width;
     if (bubble->total_pages > 1)
@@ -1434,6 +1468,7 @@ hippo_bubble_size_allocate(GtkWidget         *widget,
     GdkRectangle someone_said_rect;
     GdkRectangle join_chat_rect;
     GdkRectangle ignore_rect;
+    GdkRectangle invite_rect;    
     GdkRectangle last_message_photo_rect;
     GdkRectangle last_message_rect;
     GdkRectangle viewers_rect;
@@ -1455,6 +1490,7 @@ hippo_bubble_size_allocate(GtkWidget         *widget,
                                  &someone_said_rect, 
                                  &join_chat_rect,
                                  &ignore_rect,
+                                 &invite_rect,                                 
                                  &last_message_photo_rect,
                                  &last_message_rect,
                                  &viewers_rect,
@@ -1556,7 +1592,8 @@ hippo_bubble_size_allocate(GtkWidget         *widget,
     ALLOC_LEFT(whos_there);
     ALLOC_LEFT(someone_said);
     ALLOC_RIGHT(join_chat);
-    ALLOC_RIGHT(ignore);    
+    ALLOC_RIGHT(ignore);   
+    ALLOC_RIGHT(invite);      
     ALLOC_LEFT(last_message_photo);
     ALLOC_LEFT(last_message);
     ALLOC_LEFT(viewers);
@@ -1593,7 +1630,11 @@ hippo_bubble_set_actions (HippoBubble *bubble,
 	if (bubble->actions & HIPPO_BUBBLE_ACTION_IGNORE)
 		gtk_widget_show(bubble->ignore);
 	else
-		gtk_widget_hide(bubble->ignore);		
+		gtk_widget_hide(bubble->ignore);
+	if (bubble->actions & HIPPO_BUBBLE_ACTION_INVITE)
+		gtk_widget_show(bubble->invite);
+	else
+		gtk_widget_hide(bubble->invite);			
 }
 
 void
@@ -1634,6 +1675,20 @@ hippo_bubble_set_group_guid(HippoBubble *bubble,
     }
     g_free(bubble->post_id);
     bubble->post_id = NULL;    
+}
+
+/* Set the id of an entity associated with this bubble.
+   Presently used to keep track of the user to invite
+   for group membership changes.
+ */
+void
+hippo_bubble_set_assoc_guid(HippoBubble *bubble,
+                            const char  *value)
+{
+    g_return_if_fail(HIPPO_IS_BUBBLE(bubble));
+
+    g_free(bubble->assoc_id);
+    bubble->assoc_id = g_strdup(value);    
 }
                            
 void
@@ -2071,5 +2126,10 @@ hippo_bubble_link_click_action(HippoBubble       *bubble,
 			}
         }
         break;
+    case LINK_CLICK_INVITE:
+		if (bubble->group_id && bubble->assoc_id) {
+        	hippo_app_invite_to_group(hippo_get_app(), bubble->group_id, bubble->assoc_id);
+        }
+        break;        
     }
 }
