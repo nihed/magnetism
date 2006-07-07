@@ -39,9 +39,16 @@
 						<dht:whereAtItem linkText="Send me email" linkTarget="${person.emailLink}"/>
 					</c:if>
 					<c:forEach var="account" items="${person.lovedAccounts.list}">
+						<c:if test="${!account.hasThumbnails}">
 						<div>
 							<dht:whereAtItem label="${account.siteName}" linkText="${account.linkText}" linkTarget="${account.link}"/>
 						</div>
+						</c:if>
+					</c:forEach>
+					<c:forEach var="account" items="${person.lovedAccounts.list}">
+						<c:if test="${account.hasThumbnails}">
+							<dht:whereAtThumbnailBox account="${account}" />
+						</c:if>
 					</c:forEach>
 				</c:if>
 				<c:if test="${haveWhereAtSection && haveWhereNotAtSection}">

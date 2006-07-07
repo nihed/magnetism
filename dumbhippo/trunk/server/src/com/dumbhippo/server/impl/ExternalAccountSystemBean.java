@@ -118,7 +118,7 @@ public class ExternalAccountSystemBean implements ExternalAccountSystem {
 			return;
 		
 		FlickrWebServices ws = new FlickrWebServices(5000, config);
-		FlickrPhotos photos = ws.lookupPublicPhotos(account.getHandle(), 0);
+		FlickrPhotos photos = ws.lookupPublicPhotos(account.getHandle(), 1);
 		if (photos == null) {
 			logger.debug("Failed to load public photos for {}", account);
 		}
