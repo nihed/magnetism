@@ -56,6 +56,8 @@ int               hippo_chat_room_get_viewing_user_count  (HippoChatRoom  *room)
 int               hippo_chat_room_get_chatting_user_count (HippoChatRoom  *room);
 /* This is not a copy, don't need to free list or its members */
 GSList*           hippo_chat_room_get_messages            (HippoChatRoom  *room);
+GTime             hippo_chat_room_get_date_last_ignored   (HippoChatRoom  *room);
+gboolean          hippo_chat_room_get_ignored             (HippoChatRoom  *room);
 
 /* === Methods used by HippoConnection to keep chat room updated === */
 
@@ -68,6 +70,12 @@ void     hippo_chat_room_set_kind                (HippoChatRoom *room,
 void     hippo_chat_room_set_user_state          (HippoChatRoom *room,
                                                   HippoPerson   *person,
                                                   HippoChatState state);
+void     hippo_chat_room_set_date_last_ignored   (HippoChatRoom *room,
+												  GTime          date); 
+void     hippo_chat_room_set_ignored             (HippoChatRoom *room,
+												  gboolean       is_ignored);
+
+
 /* Ownership of the message passes to the chat room, which may IMMEDIATELY FREE
  * the message if it's a dup
  */

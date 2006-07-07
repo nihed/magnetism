@@ -32,6 +32,9 @@ const char*      hippo_entity_get_home_url        (HippoEntity    *entity);
 const char*      hippo_entity_get_small_photo_url (HippoEntity    *entity);
 HippoChatRoom*   hippo_entity_get_chat_room       (HippoEntity    *entity);
 int              hippo_entity_get_chatting_user_count(HippoEntity *entity);
+GTime            hippo_entity_get_date_last_ignored(HippoEntity   *entity);
+gboolean         hippo_entity_get_ignored         (HippoEntity    *entity);
+
 void             hippo_entity_set_name            (HippoEntity    *entity,
                                                    const char     *name);
 void             hippo_entity_set_home_url        (HippoEntity    *entity,
@@ -40,7 +43,10 @@ void             hippo_entity_set_small_photo_url (HippoEntity    *entity,
                                                    const char     *url);
 void             hippo_entity_set_chat_room       (HippoEntity    *entity,
 												   HippoChatRoom  *room); 
-
+void             hippo_entity_set_date_last_ignored(HippoEntity   *entity,
+												    GTime          date); 
+void             hippo_entity_set_ignored         (HippoEntity    *entity,
+												   gboolean        is_ignored);
 G_END_DECLS
 
 #endif /* __HIPPO_ENTITY_H__ */

@@ -89,6 +89,7 @@ public:
     STDMETHODIMP get_ChattingUserCount(int *chattingUserCount);
     STDMETHODIMP get_ChattingUsers(IHippoEntityCollection **users);
     STDMETHODIMP get_Ignored(BOOL *ignored);
+    STDMETHODIMP get_ChatIgnored(BOOL *ignored);
     STDMETHODIMP get_HomeUrl(BSTR *homeUrl);
 
     STDMETHODIMP get_LastChatMessage(BSTR *message);

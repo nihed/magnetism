@@ -42,7 +42,11 @@ library HippoUI {
         HRESULT ShowChatWindow([in] BSTR postId);
         [id(130), helpstring("Ignore a post")]
         HRESULT IgnorePost([in] BSTR postId);
-        // up to 130
+        [id(131), helpstring("Ignore an entity")]
+        HRESULT IgnoreEntity([in] BSTR entityId);
+        [id(132), helpstring("Ignore a chat")]
+        HRESULT IgnoreChat([in] BSTR chatId);
+        // up to 150
     }
     [
         uuid(A2B1B344-F645-4EF0-B5A6-0C310353D2A6),

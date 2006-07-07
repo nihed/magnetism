@@ -459,7 +459,7 @@ dh.bubble.BubbleData = function() {
     }
     
     this.getIgnored = function() {
-        return false
+        throw Error("not implemented"); 
     }
     
     this.getPhotoLink = function() {
@@ -649,10 +649,6 @@ dh.bubble.GroupData = function(group) {
     this.getChattingUserCount = function() {
         return this.group.ChattingUserCount
     }
-    
-    this.getIgnored = function() {
-        return this.group.Ignored
-    }
         
     this._getGroupLink = function() {
         return dh.serverUrl + "group?who=" + this.group.Id
@@ -683,9 +679,6 @@ dh.bubble.GroupData = function(group) {
     
     this.appendMetaContent = function(bubble, parent) {
     }
-    
-    this.setIgnored = function() {
-    }
 }
 
 dh.core.inherits(dh.bubble.GroupData, dh.bubble.BubbleData)
@@ -695,6 +688,10 @@ dh.bubble.GroupChatData = function(group) {
 
     this.getId = function() {
         return this.group.Id
+    }
+    
+    this.getIgnored = function() {
+        return this.group.ChatIgnored
     }
     
     this.appendBodyContent = function(bubble, parent) {
@@ -744,6 +741,10 @@ dh.bubble.GroupChatData = function(group) {
         
         return pages
     }
+    
+     this.setIgnored = function() {    
+        window.external.application.IgnoreChat(this.group.Id);
+    }
 }
 
 dh.core.inherits(dh.bubble.GroupChatData, dh.bubble.GroupData)
@@ -770,15 +771,18 @@ dh.bubble.GroupMembershipChangeData = function(group, user, status) {
         // and this id is used as a key in notification.js for bubble identity
         return this.group.Id + "-" + this.user.Id + "-" + this.status
     }
-    
+        
     this.getChatId = function () {
         return this.group.Id
+    }
+    
+    this.getIgnored = function() {
+        return this.group.Ignored
     }    
     
     this.appendBodyContent = function(bubble, parent) {
        parent.appendChild(document.createTextNode(this.description))
     }
-    
                 
     this.appendSwarmContent = function(bubble, parent) {
         var pages = []
@@ -804,6 +808,10 @@ dh.bubble.GroupMembershipChangeData = function(group, user, status) {
         pages.push({ name: "someoneSaid", title: this.swarmTitle, div: someoneSaidDiv })
     
         return pages
+    }
+
+     this.setIgnored = function() {    
+        window.external.application.IgnoreEntity(this.group.Id);
     }
 }
 

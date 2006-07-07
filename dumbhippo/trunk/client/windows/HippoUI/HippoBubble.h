@@ -43,6 +43,8 @@ public:
     STDMETHODIMP UpdateDisplay();
     STDMETHODIMP ShowChatWindow(BSTR postId);
     STDMETHODIMP IgnorePost(BSTR postId);
+    STDMETHODIMP IgnoreEntity(BSTR entityId);
+    STDMETHODIMP IgnoreChat(BSTR chatId);
 
 protected:
     virtual HippoBSTR getURL();

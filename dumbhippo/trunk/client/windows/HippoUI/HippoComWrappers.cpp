@@ -73,8 +73,23 @@ HippoEntityWrapper::get_SmallPhotoUrl(BSTR *smallPhotoUrl)
 STDMETHODIMP 
 HippoEntityWrapper::get_Ignored(BOOL *ignored)
 {
-    // *ignored = hippo_entity_get_ignored(delegate_);
-    *ignored = false;
+    *ignored = hippo_entity_get_ignored(delegate_);
+    return S_OK;
+}
+
+STDMETHODIMP 
+HippoEntityWrapper::get_ChatIgnored(BOOL *ignored)
+{
+HippoChatRoom *room = hippo_entity_get_chat_room(delegate_);
+
+    if (room && !hippo_chat_room_get_loading(room)) {
+        *ignored = hippo_chat_room_get_ignored(room);
+    } else {
+        hippoDebugLogW(L"HippoEntityWrapper::get_ChatIgnored was called when the chat room "
+                       L"for the group was null or was still loading");
+        *ignored = FALSE;
+    }
+
     return S_OK;
 }
 

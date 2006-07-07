@@ -3,6 +3,12 @@
 #include "hippo-chat-room.h"
 #include <string.h>
 
+/* === CONSTANTS === */
+
+/* 2 hours entity ignore timeout, in seconds; make this a parameter that can be set */
+/* if want different ignore timeouts or want ignore to remain in effect indefinitely */
+static const int ENTITY_IGNORE_TIMEOUT = 2*60*60; 
+
 /* === HippoEntity implementation === */
 
 static void     hippo_entity_finalize             (GObject *object);
@@ -93,6 +99,7 @@ hippo_entity_new(HippoEntityType  type,
     
     entity->type = type;
     entity->guid = g_strdup(guid);
+	entity->date_last_ignored = 0;
     
     return entity;
 }
@@ -139,6 +146,43 @@ hippo_entity_get_chat_room(HippoEntity    *entity)
     return entity->room;
 }
 
+int
+hippo_entity_get_chatting_user_count(HippoEntity *entity)
+{
+	if (entity->room)
+		return hippo_chat_room_get_chatting_user_count(entity->room);
+	else
+		return -3;
+}
+
+GTime            
+hippo_entity_get_date_last_ignored(HippoEntity   *entity)
+{
+    g_return_val_if_fail(HIPPO_IS_ENTITY(entity), 0);
+    return entity->date_last_ignored;
+}
+
+gboolean         
+hippo_entity_get_ignored(HippoEntity  *entity)
+{
+    GTimeVal timeval;
+
+	g_return_val_if_fail(HIPPO_IS_ENTITY(entity), FALSE);
+
+	// date_last_ignored being 0 means that the entity was never ignored 
+	// or that the entity was explicitly unignored; we want to check for 
+	// it explicitly here, rather than let this special meaning of 0 be lost
+	// in the check below
+	if (entity->date_last_ignored == 0)
+        return FALSE;
+
+    g_get_current_time(&timeval);
+	if (entity->date_last_ignored + ENTITY_IGNORE_TIMEOUT < timeval.tv_sec)
+		return FALSE;
+
+	return TRUE;
+}
+
 void
 hippo_entity_set_name(HippoEntity    *entity,
                       const char     *name)
@@ -149,7 +193,7 @@ hippo_entity_set_name(HippoEntity    *entity,
 
 void
 hippo_entity_set_home_url(HippoEntity    *entity,
-                         const char     *url)
+                          const char     *url)
 {
     g_return_if_fail(HIPPO_IS_ENTITY(entity));
     hippo_entity_set_string(entity, &entity->home_url, url);
@@ -185,11 +229,29 @@ hippo_entity_set_chat_room(HippoEntity    *entity,
     hippo_entity_emit_changed(entity);
 }
 
-int
-hippo_entity_get_chatting_user_count(HippoEntity *entity)
+void             
+hippo_entity_set_date_last_ignored(HippoEntity   *entity,
+								   GTime          date) 
 {
-	if (entity->room)
-		return hippo_chat_room_get_chatting_user_count(entity->room);
-	else
-		return -3;
+	g_return_if_fail(HIPPO_IS_ENTITY(entity));
+    if (entity->date_last_ignored != date) {
+        entity->date_last_ignored = date;
+        hippo_entity_emit_changed(entity);
+    }
+}
+
+void             
+hippo_entity_set_ignored(HippoEntity    *entity,
+						 gboolean        is_ignored)
+{
+    GTimeVal timeval;
+
+	g_return_if_fail(HIPPO_IS_ENTITY(entity));
+    
+	if (is_ignored) {
+        g_get_current_time(&timeval);
+        entity->date_last_ignored = timeval.tv_sec; 
+	} else {
+        entity->date_last_ignored = 0;
+	}
 }

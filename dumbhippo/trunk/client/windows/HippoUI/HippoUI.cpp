@@ -524,6 +524,24 @@ HippoUI::ignorePost(BSTR postId)
     hippo_connection_set_post_ignored(getConnection(), postIdU.c_str());
 }
 
+void 
+HippoUI::ignoreEntity(BSTR entityId)
+{
+    HippoUStr entityIdU(entityId);
+    HippoEntity *entity;
+    entity = hippo_data_cache_lookup_entity(getDataCache(), entityIdU.c_str());
+    hippo_entity_set_ignored(entity, TRUE);
+}
+
+void 
+HippoUI::ignoreChat(BSTR chatId)
+{
+    HippoUStr chatIdU(chatId);
+    HippoChatRoom *room;
+    room = hippo_data_cache_lookup_chat_room(getDataCache(), chatIdU.c_str(), NULL);
+    hippo_chat_room_set_ignored(room, TRUE);
+}
+
 bool
 HippoUI::create(HINSTANCE instance)
 {
@@ -731,6 +749,9 @@ HippoUI::GetChatRoom(BSTR chatId, IHippoChatRoom **result)
     }
 
     HippoChatRoom *room = hippo_data_cache_ensure_chat_room(dataCache_, chatIdU.c_str(), HIPPO_CHAT_KIND_UNKNOWN);
+    
+    // when we go to the chat room, we are no longer ignoring it
+    hippo_chat_room_set_ignored(room, FALSE);
  
     if (room != NULL) {
         *result = HippoChatRoomWrapper::getWrapper(room, dataCache_);

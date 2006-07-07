@@ -86,6 +86,8 @@ public:
     void displaySharedLink(BSTR postId, BSTR url);
 
     void ignorePost(BSTR postId);
+    void ignoreEntity(BSTR entityId);
+    void ignoreChat(BSTR chatId);
 
     void debugLogW(const WCHAR *format, ...); // UTF-16
     void debugLogU(const char *format, ...);  // UTF-8

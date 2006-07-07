@@ -496,10 +496,13 @@ HippoBubble::onUserJoinedGroupChatRoom(HippoPerson *person,
             return;
     }
 
+    variant_t result;
     ie_->createInvocation(L"dhGroupViewerJoined")
         .addDispatch(HippoEntityWrapper::getWrapper(entity))
-        .run();
-
+        .getResult(&result);
+    if (result.vt != VT_BOOL || !result.boolVal) {
+        return;
+    }
     setShown();
 }
 
@@ -521,9 +524,13 @@ HippoBubble::onGroupChatRoomMessageAdded(HippoChatMessage *message,
             return;
     }
 
+    variant_t result;
     ie_->createInvocation(L"dhGroupChatRoomMessage")
         .addDispatch(HippoEntityWrapper::getWrapper(entity))
-        .run();
+        .getResult(&result);
+    if (result.vt != VT_BOOL || !result.boolVal) {
+        return;
+    }
 
     setShown();
 }
@@ -545,12 +552,7 @@ HippoBubble::onUserJoined(HippoPerson *person,
         .addDispatch(HippoPostWrapper::getWrapper(post, ui_->getDataCache()))
         .getResult(&result);
 
-    if (result.vt != VT_BOOL) {
-        ui_->debugLogU("dhViewerJoined returned invalid type");
-        return;
-    }
-    if (!result.boolVal) {
-        ui_->debugLogU("dhViewerJoined returned false");
+    if (result.vt != VT_BOOL || !result.boolVal) {
         return;
     }
 
@@ -630,11 +632,15 @@ HippoBubble::onGroupMembershipChanged(HippoEntity *group, HippoEntity *user, con
     HippoBSTR status;
     status.setUTF8(membershipStatus);
 
+    variant_t result;
     ie_->createInvocation(L"dhGroupMembershipChanged")
         .addDispatch(HippoEntityWrapper::getWrapper(group))
         .addDispatch(HippoEntityWrapper::getWrapper(user))
         .add(status)
-        .run();
+        .getResult(&result);
+    if (result.vt != VT_BOOL || !result.boolVal) {
+        return;
+    }
 
     setShown();
 }
@@ -946,5 +952,19 @@ HRESULT
 HippoBubble::IgnorePost(BSTR postId)
 {
     ui_->ignorePost(postId);
+    return S_OK;
+}
+
+HRESULT
+HippoBubble::IgnoreEntity(BSTR entityId)
+{
+    ui_->ignoreEntity(entityId);
+    return S_OK;
+}
+
+HRESULT
+HippoBubble::IgnoreChat(BSTR chatId)
+{
+    ui_->ignoreChat(chatId);
     return S_OK;
 }

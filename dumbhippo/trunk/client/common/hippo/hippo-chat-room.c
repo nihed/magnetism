@@ -3,6 +3,13 @@
 #include "hippo-connection.h"
 #include <string.h>
 
+
+/* === CONSTANTS === */
+
+/* 2 hours chat room ignore timeout, in seconds; make this a parameter that can be set */
+/* if want different ignore timeouts or want ignore to remain in effect indefinitely */
+static const int CHAT_ROOM_IGNORE_TIMEOUT = 2*60*60; 
+
 static void      hippo_chat_room_init        (HippoChatRoom       *room);
 static void      hippo_chat_room_class_init  (HippoChatRoomClass  *klass);
 static void      hippo_chat_room_finalize    (GObject             *object);
@@ -32,6 +39,9 @@ struct _HippoChatRoom {
     int generation;
     int loading_generation;
     guint loading : 1;
+	/* date this chat room was last ignored; ignore for posts (including post-related chat rooms) */
+	/* is handled separately */
+	GTime date_last_ignored;
 };
 
 struct _HippoChatRoomClass {
@@ -201,6 +211,34 @@ hippo_chat_room_get_kind(HippoChatRoom *room)
 {
     g_return_val_if_fail(HIPPO_IS_CHAT_ROOM(room), HIPPO_CHAT_KIND_UNKNOWN);
     return room->kind;
+}
+
+GTime            
+hippo_chat_room_get_date_last_ignored(HippoChatRoom   *room)
+{
+    g_return_val_if_fail(HIPPO_IS_CHAT_ROOM(room), 0);
+    return room->date_last_ignored;
+}
+
+gboolean         
+hippo_chat_room_get_ignored(HippoChatRoom  *room)
+{
+    GTimeVal timeval;
+
+	g_return_val_if_fail(HIPPO_IS_CHAT_ROOM(room), FALSE);
+
+	// date_last_ignored being 0 means that the chat room was never ignored 
+	// or that the chat room was explicitly unignored; we want to check for 
+	// it explicitly here, rather than let this special meaning of 0 be lost
+	// in the check below
+	if (room->date_last_ignored == 0)
+        return FALSE;
+
+    g_get_current_time(&timeval);
+	if (room->date_last_ignored + CHAT_ROOM_IGNORE_TIMEOUT < timeval.tv_sec)
+		return FALSE;
+
+	return TRUE;
 }
 
 void
@@ -674,4 +712,30 @@ hippo_chat_message_get_serial(HippoChatMessage *message)
     g_return_val_if_fail(HIPPO_IS_CHAT_MESSAGE(message), 0);
 
     return message->serial;
+}
+
+void             
+hippo_chat_room_set_date_last_ignored(HippoChatRoom *room,
+							 	      GTime          date) 
+{
+	g_return_if_fail(HIPPO_IS_CHAT_ROOM(room));
+    if (room->date_last_ignored != date) {
+        room->date_last_ignored = date;
+    }
+}
+
+void             
+hippo_chat_room_set_ignored(HippoChatRoom    *room,
+						    gboolean          is_ignored)
+{
+    GTimeVal timeval;
+
+	g_return_if_fail(HIPPO_IS_CHAT_ROOM(room));
+    
+	if (is_ignored) {
+        g_get_current_time(&timeval);
+        room->date_last_ignored = timeval.tv_sec; 
+	} else {
+        room->date_last_ignored = 0;
+	}
 }
