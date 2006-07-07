@@ -129,7 +129,8 @@ public class ExternalAccountSystemBean implements ExternalAccountSystem {
 			thumbs.add(url);
 		}
 		if (thumbs.size() > 0) {
-			account.setThumbnails(thumbs, FlickrPhotoSize.THUMBNAIL.getPixels(), FlickrPhotoSize.THUMBNAIL.getPixels());
+			account.setThumbnails(thumbs, photos.getTotal(), 
+					FlickrPhotoSize.THUMBNAIL.getPixels(), FlickrPhotoSize.THUMBNAIL.getPixels());
 		}
 	}
 	

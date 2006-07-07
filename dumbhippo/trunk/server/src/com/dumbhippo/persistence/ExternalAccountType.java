@@ -71,7 +71,15 @@ public enum ExternalAccountType {
 			else
 				return null;
 		}
-		
+
+		@Override
+		public String formatThumbnailCount(int count) {
+			if (count == 1)
+				return count + " photo";
+			else
+				return count + " photos";
+		}
+
 	},
 	LINKED_IN("LinkedIn")  {
 		@Override
@@ -175,6 +183,13 @@ public enum ExternalAccountType {
 	abstract public String getLink(String handle, String extra);
 	
 	abstract public String getLinkText(String handle, String extra);
+	
+	public String formatThumbnailCount(int count) {
+		if (count == 1)
+			return count + " item";
+		else
+			return count + " items";
+	}
 	
 	public String canonicalizeHandle(String handle) throws ValidationException {
 		if (handle != null) {

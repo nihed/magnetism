@@ -36,6 +36,7 @@ public class ExternalAccount extends DBUnique {
 	private String quip;
  
 	private List<String> thumbnailUrls;
+	private int thumbnailTotalItems;
 	private int thumbnailWidth;
 	private int thumbnailHeight;
 	
@@ -159,10 +160,11 @@ public class ExternalAccount extends DBUnique {
 	 * @param width
 	 * @param height
 	 */
-	public void setThumbnails(List<String> thumbnailUrls, int width, int height) {
+	public void setThumbnails(List<String> thumbnailUrls, int totalItems, int width, int height) {
 		this.thumbnailUrls = thumbnailUrls;
 		this.thumbnailWidth = width;
 		this.thumbnailHeight = height;
+		this.thumbnailTotalItems = totalItems;
 	}
 	
 	@Transient
@@ -176,6 +178,14 @@ public class ExternalAccount extends DBUnique {
 	}
 	
 	@Transient
+	public int getThumbnailCount() {
+		if (thumbnailUrls != null)
+			return thumbnailUrls.size();
+		else
+			return 0;
+	}
+	
+	@Transient
 	public int getThumbnailWidth() {
 		return thumbnailWidth;
 	}
@@ -183,5 +193,15 @@ public class ExternalAccount extends DBUnique {
 	@Transient
 	public int getThumbnailHeight() {
 		return thumbnailHeight;
+	}
+	
+	@Transient
+	public int getTotalThumbnailItems() {
+		return thumbnailTotalItems; 
+	}
+	
+	@Transient
+	public String getTotalThumbnailItemsString() {
+		return accountType.formatThumbnailCount(thumbnailTotalItems); 
 	}
 }
