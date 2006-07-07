@@ -3118,6 +3118,17 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	}
 	
 	
+	private RhapLink rhapLinkQuery(String rhaplink) {
+		try {
+			Query q = em.createQuery("FROM RhapLink rhaplink WHERE rhaplink.url = :rhaplink");
+			q.setParameter("rhaplink", rhaplink);
+			return (RhapLink)(q.getSingleResult());
+		} catch (EntityNotFoundException e) {
+			//logger.debug("No cached rhaplink status for {}", rhaplink);
+			return null;
+		}
+	}
+	
 	/**
 	 * Try to find a Rhapsody friendly URL for this song.
 	 * 
@@ -3131,20 +3142,12 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		if ((trackNumber>0) && (artistName != null) && (albumName != null)) {
 			// Try to concoct a Rhapsody friendly URL; see:
 			//  http://rws-blog.rhapsody.com/rhapsody_web_services/2006/04/new_album_urls.html
-			String rhaplink = "http://play.rhapsody.com/" + rhapString(artistName) + "/" + rhapString(albumName) + "/track-" + trackNumber;
+			final String rhaplink = "http://play.rhapsody.com/" + rhapString(artistName) + "/" + rhapString(albumName) + "/track-" + trackNumber;
 			
 			boolean rhapLinkActive = false;
-			RhapLink oldRhapLink = null;
+			RhapLink oldRhapLink = rhapLinkQuery(rhaplink);
 			
-			try {
-				Query q = em.createQuery("FROM RhapLink rhaplink WHERE rhaplink.url = :rhaplink");
-				q.setParameter("rhaplink", rhaplink);
-				oldRhapLink = (RhapLink)(q.getSingleResult());
-			} catch (EntityNotFoundException e) {
-				//logger.debug("No cached rhaplink status for {}", rhaplink);
-			}
-			
-			long now = System.currentTimeMillis();
+			final long now = System.currentTimeMillis();
 			if ((oldRhapLink == null) || ((oldRhapLink.getLastUpdated() + RHAPLINK_EXPIRATION_TIMEOUT) < now)) {
 				logger.debug("Unknown or outdated Rhapsody link; testing status for rhaplink {}", rhaplink);
 				
@@ -3181,19 +3184,32 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 					logger.warn("IO exception when trying to fetch rhapsody link: " + ioe.getMessage(), ioe);
 				}
 				
-				// remove the old rhaplink entry, if any, and store a new one
+				final boolean isActive = rhapLinkActive;
+				
+				// need to retry on constraint violation to deal with race where multiple TrackViews are
+				// being updated in parallel
 				try {
-					if (oldRhapLink != null) {
-						em.remove(oldRhapLink);
-					}
-					
-					RhapLink newRhapLink = new RhapLink();
-					newRhapLink.setUrl(rhaplink);
-					newRhapLink.setActive(rhapLinkActive);
-					newRhapLink.setLastUpdated(now);
-					em.persist(newRhapLink);
+					RhapLink detached = runner.runTaskRetryingOnConstraintViolation(new Callable<RhapLink>() {
+						
+						public RhapLink call() {
+							
+							RhapLink rhapLink = rhapLinkQuery(rhaplink);
+							if (rhapLink == null) {
+								rhapLink = new RhapLink();
+								rhapLink.setUrl(rhaplink);
+								rhapLink.setActive(isActive);
+								rhapLink.setLastUpdated(now);
+								em.persist(rhapLink);
+							} else {
+								rhapLink.setActive(isActive);
+								rhapLink.setLastUpdated(now);
+							}
+							return rhapLink;
+						}
+						
+					});
 				} catch (Exception e) {
-					logger.error("Error updating RhapLink", e);
+					logger.warn("Exception updating RhapLink entity in getRhapsodyDownloadUrl", e);
 				}
 				
 			} else {
