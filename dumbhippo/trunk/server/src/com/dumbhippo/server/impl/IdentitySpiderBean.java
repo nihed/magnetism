@@ -488,10 +488,13 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 			} else if (e == PersonViewExtra.ALL_AIMS) {
 				pv.addAllAims(new TypeFilteredCollection<Resource,AimResource>(resources, AimResource.class));
 			} else if (e == PersonViewExtra.EXTERNAL_ACCOUNTS) {
-				if (pv.getUser() != null)
-					pv.addExternalAccounts(externalAccounts.getExternalAccounts(viewpoint, pv.getUser()));
-				else
+				if (pv.getUser() != null) {
+					Set<ExternalAccount> externals = externalAccounts.getExternalAccounts(viewpoint, pv.getUser()); 
+					externalAccounts.loadThumbnails(viewpoint, externals);
+					pv.addExternalAccounts(externals);
+				} else {
 					pv.addExternalAccounts(new HashSet<ExternalAccount>());
+				}
 				if (pv.getExternalAccounts() == null)
 					throw new IllegalStateException("Somehow set null external accounts on PersonView");
 			} else {

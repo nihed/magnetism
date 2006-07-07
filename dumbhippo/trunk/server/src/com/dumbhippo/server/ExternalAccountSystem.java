@@ -67,4 +67,6 @@ public interface ExternalAccountSystem {
 	 * @throws NotFoundException
 	 */
 	public String getMySpaceName(Viewpoint viewpoint, User user) throws NotFoundException;
+	
+	public void loadThumbnails(Viewpoint viewpoint, Set<ExternalAccount> accounts);
 }

@@ -1,5 +1,7 @@
 package com.dumbhippo.persistence;
 
+import java.util.List;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.ManyToOne;
@@ -32,6 +34,10 @@ public class ExternalAccount extends DBUnique {
 	private String extra;
 	// quip (right now only applies if sentiment == HATE)
 	private String quip;
+ 
+	private List<String> thumbnailUrls;
+	private int thumbnailWidth;
+	private int thumbnailHeight;
 	
 	public ExternalAccount() {
 		sentiment = Sentiment.INDIFFERENT;
@@ -141,5 +147,41 @@ public class ExternalAccount extends DBUnique {
 	@Transient
 	public String getLinkText() {
 		return accountType.getLinkText(handle, extra);
+	}
+
+	/**
+	 * Sets thumbnails for this account; done in the "view" tier. This thumbnail stuff
+	 * would typically be on a "view" object like PersonView, TrackView but in this
+	 * case it doesn't seem worth creating and managing an ExternalAccountView. We'll see 
+	 * how it goes.
+	 * 
+	 * @param thumbnailUrls
+	 * @param width
+	 * @param height
+	 */
+	public void setThumbnails(List<String> thumbnailUrls, int width, int height) {
+		this.thumbnailUrls = thumbnailUrls;
+		this.thumbnailWidth = width;
+		this.thumbnailHeight = height;
+	}
+	
+	@Transient
+	public boolean getHasThumbnails() {
+		return thumbnailUrls != null;
+	}
+	
+	@Transient
+	public List<String> getThumbnailUrls() {
+		return thumbnailUrls;
+	}
+	
+	@Transient
+	public int getThumbnailWidth() {
+		return thumbnailWidth;
+	}
+	
+	@Transient
+	public int getThumbnailHeight() {
+		return thumbnailHeight;
 	}
 }

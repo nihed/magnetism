@@ -34,9 +34,7 @@ import com.dumbhippo.persistence.FeedEntry;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupFeed;
 import com.dumbhippo.persistence.LinkResource;
-import com.dumbhippo.persistence.Track;
 import com.dumbhippo.persistence.TrackFeedEntry;
-import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.FeedSystem;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.MusicSystem;
@@ -45,7 +43,6 @@ import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.XmlMethodErrorCode;
 import com.dumbhippo.server.XmlMethodException;
 import com.dumbhippo.server.syndication.RhapModule;
-import com.dumbhippo.server.syndication.RhapModuleImpl;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.util.HtmlTextExtractor;
 import com.sun.syndication.feed.module.Module;
@@ -174,7 +171,7 @@ public class FeedSystemBean implements FeedSystem {
 		
 		FeedEntry entry = null;
 		
-		List<Module> modules = (List<Module>)(syndEntry.getModules());
+		List<Module> modules = TypeUtils.castList(Module.class, syndEntry.getModules());
 		for (Module m : modules) {
 			if (m instanceof RhapModule) {
 				RhapModule module = (RhapModule)m;

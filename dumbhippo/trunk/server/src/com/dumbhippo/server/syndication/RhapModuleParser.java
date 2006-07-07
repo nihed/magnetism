@@ -9,7 +9,6 @@ import org.jdom.Namespace;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
-import com.dumbhippo.server.impl.MusicSystemInternalBean;
 import com.sun.syndication.feed.module.Module;
 import com.sun.syndication.io.ModuleParser;
 

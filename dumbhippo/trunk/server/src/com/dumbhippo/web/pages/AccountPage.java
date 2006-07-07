@@ -10,7 +10,6 @@ import com.dumbhippo.persistence.Sentiment;
 import com.dumbhippo.server.ClaimVerifier;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.ExternalAccountSystem;
-import com.dumbhippo.server.FeedSystem;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.NotFoundException;
@@ -38,14 +37,12 @@ public class AccountPage {
 	private PersonView person;
 	private Configuration config;
 	private ClaimVerifier claimVerifier;
-	private FeedSystem feedSystem;
 	private ExternalAccountSystem externalAccounts;
 	
 	public AccountPage() {
 		identitySpider = WebEJBUtil.defaultLookup(IdentitySpider.class);
 		config = WebEJBUtil.defaultLookup(Configuration.class);
 		claimVerifier = WebEJBUtil.defaultLookup(ClaimVerifier.class);
-		feedSystem = WebEJBUtil.defaultLookup(FeedSystem.class);
 		externalAccounts = WebEJBUtil.defaultLookup(ExternalAccountSystem.class);
 	}
 	

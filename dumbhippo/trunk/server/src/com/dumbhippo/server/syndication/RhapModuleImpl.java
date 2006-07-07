@@ -7,6 +7,8 @@ import com.sun.syndication.feed.module.ModuleImpl;
  */
 public class RhapModuleImpl extends ModuleImpl implements RhapModule {
 	
+	private static final long serialVersionUID = 1L;
+
 	private String artist;
 	private String artistRCID;
 	private String album;
