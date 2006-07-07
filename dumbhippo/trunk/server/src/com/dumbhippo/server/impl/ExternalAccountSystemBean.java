@@ -125,12 +125,12 @@ public class ExternalAccountSystemBean implements ExternalAccountSystem {
 		}
 		List<String> thumbs = new ArrayList<String>();
 		for (FlickrPhoto p : photos.getPhotos()) {
-			String url = p.getUrl(FlickrPhotoSize.THUMBNAIL);
+			String url = p.getUrl(FlickrPhotoSize.SMALL_SQUARE);
 			thumbs.add(url);
 		}
 		if (thumbs.size() > 0) {
 			account.setThumbnails(thumbs, photos.getTotal(), 
-					FlickrPhotoSize.THUMBNAIL.getPixels(), FlickrPhotoSize.THUMBNAIL.getPixels());
+					FlickrPhotoSize.SMALL_SQUARE.getPixels(), FlickrPhotoSize.SMALL_SQUARE.getPixels());
 		}
 	}
 	
