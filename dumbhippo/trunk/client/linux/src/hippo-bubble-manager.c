@@ -330,10 +330,15 @@ manager_bubble_group(BubbleManager    *manager,
                      HippoBubbleReason reason)
 {
     HippoBubble *bubble;
+    HippoChatRoom *room;
     
     /* if chat is open, we don't want to bubble */
     if (hippo_app_chat_is_active(hippo_get_app(), hippo_entity_get_guid(group)))
         return;
+        
+    room = hippo_entity_get_chat_room(group);
+    if (room != NULL && hippo_chat_room_get_ignored(room))
+    	return;
 
     if (!find_bubble_for_object(manager, group, &bubble)) {
         bubble = HIPPO_BUBBLE(hippo_bubble_new());
@@ -352,6 +357,9 @@ manager_bubble_group_membership(BubbleManager    *manager,
                                 const char       *status)
 {
     HippoBubble *bubble;
+
+    if (hippo_entity_get_ignored(group))
+        return;
 
     if (!find_bubble_for_membership_change(manager, group, user, &bubble)) {
         bubble = HIPPO_BUBBLE(hippo_bubble_new());

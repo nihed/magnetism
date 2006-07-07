@@ -2063,6 +2063,12 @@ hippo_bubble_link_click_action(HippoBubble       *bubble,
     case LINK_CLICK_IGNORE_POST:
         if (bubble->post_id) {
             hippo_app_ignore_post_id(hippo_get_app(), bubble->post_id);
+        } else if (bubble->group_id) {
+        	if (bubble->active_extra == ACTIVE_EXTRA_MEMBERSHIP_CHANGE) {
+	        	hippo_app_ignore_entity_id(hippo_get_app(), bubble->group_id);
+	        } else {
+	        	hippo_app_ignore_entity_chat_id(hippo_get_app(), bubble->group_id);	        
+			}
         }
         break;
     }

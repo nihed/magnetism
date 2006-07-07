@@ -218,6 +218,35 @@ hippo_app_ignore_post_id(HippoApp   *app,
 }
 
 void
+hippo_app_ignore_entity_id(HippoApp    *app,
+                           const char  *guid)
+{
+    HippoEntity *entity;
+    entity = hippo_data_cache_lookup_entity(app->cache, guid);
+    if (entity == NULL) {
+        g_warning("Don't know about entity '%s' can't ignore", guid);
+        return;
+    }
+    hippo_entity_set_ignored(entity, TRUE);
+}
+
+void
+hippo_app_ignore_entity_chat_id(HippoApp    *app,
+                                const char  *guid)
+{
+    HippoEntity *entity;
+    HippoChatRoom *room;
+    entity = hippo_data_cache_lookup_entity(app->cache, guid);
+    if (entity == NULL) {
+        g_warning("Don't know about entity '%s' can't ignore chat", guid);
+        return;
+    }
+    room = hippo_entity_get_chat_room(entity);
+    hippo_chat_room_set_ignored(room, TRUE);
+}
+
+
+void
 hippo_app_visit_entity(HippoApp    *app,
                        HippoEntity *entity)
 {
@@ -277,7 +306,8 @@ hippo_app_join_chat(HippoApp   *app,
         
         app->creating_chat_id = NULL;
     }
-    
+    /* Displaying a chat window unignores the chat */
+    hippo_chat_room_set_ignored(hippo_chat_window_get_room(window), FALSE);    
     gtk_window_present(GTK_WINDOW(window));   
 }
 

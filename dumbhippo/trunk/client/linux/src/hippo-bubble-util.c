@@ -328,6 +328,8 @@ on_post_changed(HippoPost *post,
     
 	hippo_bubble_set_foreground_color(bubble, HIPPO_BUBBLE_COLOR_ORANGE);
 	hippo_bubble_set_header_image(bubble, "bublinkswarm");
+	
+	hippo_bubble_set_actions(bubble, HIPPO_BUBBLE_ACTION_JOIN_CHAT | HIPPO_BUBBLE_ACTION_IGNORE);	
     
     if (sender == HIPPO_ENTITY(self)) {
         hippo_bubble_set_sender_name(bubble, _("You"));
@@ -417,7 +419,7 @@ on_group_changed(HippoEntity *entity,
 	hippo_bubble_set_foreground_color(bubble, HIPPO_BUBBLE_COLOR_PURPLE);
 	hippo_bubble_set_header_image(bubble, "bubgroupupdate");
 	
-	hippo_bubble_set_actions(bubble, HIPPO_BUBBLE_ACTION_JOIN_CHAT);
+	hippo_bubble_set_actions(bubble, HIPPO_BUBBLE_ACTION_JOIN_CHAT | HIPPO_BUBBLE_ACTION_IGNORE);
     
     hippo_bubble_set_sender_name(bubble, "");
     hippo_bubble_set_sender_guid(bubble, hippo_entity_get_guid(watch->group));
