@@ -4,7 +4,6 @@ import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.InvitationSystem;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
-import com.dumbhippo.web.ListBean;
 import com.dumbhippo.web.SigninBean;
 import com.dumbhippo.web.UserSigninBean;
 import com.dumbhippo.web.WebEJBUtil;
@@ -26,7 +25,6 @@ public abstract class AbstractSigninPage {
 	protected InvitationSystem invitationSystem;
 	protected int invitations;
 	protected PersonView signinPerson;
-	protected ListBean<PersonView> contacts;	
 	
 	protected AbstractSigninPage() {
 		identitySpider = WebEJBUtil.defaultLookup(IdentitySpider.class);		

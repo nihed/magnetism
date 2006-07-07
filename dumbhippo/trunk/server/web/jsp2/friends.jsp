@@ -39,10 +39,11 @@
 		<dht:zoneBoxFriends back='true'>
 			<dht:zoneBoxTitle>ALL <c:out value='${fromHome ? "YOUR " : "" }'/>FRIENDS</dht:zoneBoxTitle>
 			<dht:twoColumnList>
-				<c:forEach items="${person.contacts.list}" var="person">
+				<c:forEach items="${person.pageableContacts.results}" var="person">
 					<dht:personItem who="${person}" invited="true"/>
 				</c:forEach>
 			</dht:twoColumnList>
+		    <dht:expandablePager pageable="${person.pageableContacts}" anchor="dhFriends"/>
 		</dht:zoneBoxFriends>
 	</dht:contentColumn>
 </dht:twoColumnPage>

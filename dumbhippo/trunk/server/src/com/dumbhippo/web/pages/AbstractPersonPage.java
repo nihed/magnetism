@@ -18,14 +18,23 @@ import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.InvitationView;
 import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.NotFoundException;
+import com.dumbhippo.server.Pageable;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
 import com.dumbhippo.server.TrackView;
 import com.dumbhippo.web.ListBean;
+import com.dumbhippo.web.PagePositions;
+import com.dumbhippo.web.PagePositionsBean;
 import com.dumbhippo.web.WebEJBUtil;
 
 public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 	static private final Logger logger = GlobalSetup.getLogger(AbstractPersonPage.class);	
+	
+	// We override the default values for initial and subsequent results per page from Pageable
+	static private final int FRIENDS_PER_PAGE = 20;
+	
+	@PagePositions
+	PagePositionsBean pagePositions;
 	
 	private User viewedUser;
 	private String viewedUserId;
@@ -48,6 +57,8 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 	private boolean lookedUpCurrentTrack;
 	private TrackView currentTrack;
 	
+	protected ListBean<PersonView> contacts;
+	private Pageable<PersonView> pageableContacts; 
 	protected int totalContacts;
 	
 	protected AbstractPersonPage() {	
@@ -237,6 +248,32 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 			totalContacts = mingledContacts.size();
 		}
 		return contacts;
+	}
+
+	public Pageable<PersonView> getPageableContacts() {
+        if (pageableContacts == null) {
+			if (contacts == null) {
+				getContacts();
+			}
+			
+			pageableContacts = pagePositions.createPageable("friends"); 				
+			pageableContacts.setInitialPerPage(FRIENDS_PER_PAGE);
+			pageableContacts.setSubsequentPerPage(FRIENDS_PER_PAGE);
+			
+			pageableContacts.setTotalCount(contacts.getSize());		
+			
+			List<PersonView> contactsSubset = new ArrayList<PersonView>();
+			int i = Math.min(contacts.getSize(), pageableContacts.getStart());
+			int count = Math.min(contacts.getSize() - pageableContacts.getStart(), pageableContacts.getCount());
+			while (count > 0) {
+				contactsSubset.add(contacts.getList().get(i));
+				--count;
+				++i;
+			}
+			pageableContacts.setResults(contactsSubset);		
+		}
+		
+		return pageableContacts;
 	}
 	
 	public void setTotalContacts(int totalContacts) {		
