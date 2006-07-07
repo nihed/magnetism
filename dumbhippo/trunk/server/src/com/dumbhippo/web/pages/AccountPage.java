@@ -83,8 +83,9 @@ public class AccountPage {
 		AccountFeed rhapsodyHistoryFeed = signin.getUser().getAccount().getRhapsodyHistoryFeed();
 		if (rhapsodyHistoryFeed != null) {
 			return rhapsodyHistoryFeed.getFeed().getSource().getUrl();
+		} else {
+			return null;
 		}
-		return null;
 	}
 	
 	private String getExternalAccountSentiment(ExternalAccountType type) {

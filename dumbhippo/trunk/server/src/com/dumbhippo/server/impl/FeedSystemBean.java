@@ -258,7 +258,6 @@ public class FeedSystemBean implements FeedSystem {
 		
 		Set<String> foundGuids = new HashSet<String>();
 		
-		int entryPosition = 0;
 		for (Object o : syndFeed.getEntries()) {
 			SyndEntry syndEntry = (SyndEntry)o;
 			

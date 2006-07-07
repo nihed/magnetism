@@ -247,24 +247,24 @@ dhAccountInit = function() {
 	}
 
 	dh.account.rhapsodyListeningHistoryEntryNode = document.getElementById('dhRhapsodyListeningHistoryEntry');
-	dh.account.rhapsodyListeningHistoryEntry = new dh.textinput.Entry(dh.account.rhapsodyListeningHistoryEntryNode, null, dh.formtable.currentValues['dhRhapsodyListeningHistoryEntry']);
+	dh.account.rhapsodyListeningHistoryEntry = new dh.textinput.Entry(dh.account.rhapsodyListeningHistoryEntryNode, "Rhapsody recent plays RSS URL", dh.formtable.currentValues['dhRhapsodyListeningHistoryEntry']);
 
 	dh.formtable.undoValues['dhRhapsodyListeningHistoryEntry'] = dh.account.rhapsodyListeningHistoryEntry.getValue();
 	dh.account.rhapsodyListeningHistoryEntry.onValueChanged = function(value) {
 		dh.formtable.onValueChangedXmlMethod(dh.account.rhapsodyListeningHistoryEntry, 'setrhapsodyhistoryfeed', 'url', value,
-		"Saving new Rhapsody Listening History Feed URL...",
-		"Your Rhapsody Listening History Feed URL has been saved.");
+		"Saving new Rhapsody recent plays RSS feed...",
+		"Your Rhapsody recent plays RSS feed has been updated."); // phrasing "updated" is because it could also be removed
 	}
 	
 	dh.account.websiteEntryNode = document.getElementById('dhWebsiteEntry');
-	dh.account.websiteEntry = new dh.textinput.Entry(dh.account.websiteEntryNode, null, dh.formtable.currentValues['dhWebsiteEntry']);
+	dh.account.websiteEntry = new dh.textinput.Entry(dh.account.websiteEntryNode, "Your website URL", dh.formtable.currentValues['dhWebsiteEntry']);
 
 	dh.formtable.undoValues['dhWebsiteEntry'] = dh.account.websiteEntry.getValue();
 	dh.account.websiteEntry.onValueChanged = function(value) {
 		dh.formtable.onValueChangedXmlMethod(dh.account.websiteEntry, 'setwebsite', 'url', value,
 		"Saving your website address...",
-		"Your website link has been saved.");
-	}	
+		"Your website link has been updated.");  // phrasing "updated" is because it could also be removed
+	}
 	
 	// add some event handlers on the file input
 	dh.account.photoEntry = new dh.fileinput.Entry(document.getElementById('dhPictureEntry'));

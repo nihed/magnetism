@@ -685,12 +685,11 @@ public class Account extends Resource {
 	@Transient
 	public AccountFeed getRhapsodyHistoryFeed() {
 		Set<AccountFeed> accountFeeds = getFeeds();
-		if (!accountFeeds.isEmpty()) {
-			// we assume there are zero or one AccountFeeds for now
-			AccountFeed accountFeed = accountFeeds.iterator().next();
-			if ((accountFeed != null) && (!accountFeed.isRemoved())) {
-				return accountFeed;
-			}
+		// we assume there are zero or one not removed AccountFeeds for now, which 
+		// will be pretty bogus in the end 
+		for (AccountFeed f : accountFeeds) {
+			if (!f.isRemoved())
+				return f;
 		}
 		return null;
 	}
