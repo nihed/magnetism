@@ -1501,21 +1501,27 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	}
 
 	public void doSetLinkedInProfile(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException {
-		
 		// Try to pull linked in name out of either a linked in profile url ("http://www.linkedin.com/in/username") or 
 		// just try using the thing as a username directly
-		String name = urlOrName;
+		String name = urlOrName.trim();
 		int i = urlOrName.indexOf("/in/");
 		if (i >= 0) {
 			i += "/in/".length();
 			name = urlOrName.substring(i);
 		}
-		if (name.length() > 255) // an arbitrary limit just so we don't accept huge megs of data 
-			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, "LinkedIn username is too long");
+		
+		if (name.startsWith("http://"))
+			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, "Enter your public profile URL or just your username");
 		
 		ExternalAccount external = externalAccountSystem.getOrCreateExternalAccount(viewpoint, ExternalAccountType.LINKED_IN);
+		try {
+			external.setHandleValidating(name);
+		} catch (ValidationException e) {
+			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, e.getMessage());
+		}
 		external.setSentiment(Sentiment.LOVE);
-		external.setHandle(name);
+		
+		xml.appendTextNode("username", external.getHandle());
 	}
 
 	public void doSetWebsite(XmlBuilder xml, UserViewpoint viewpoint, String url) throws XmlMethodException {
@@ -1527,7 +1533,11 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		}
 		
 		ExternalAccount external = externalAccountSystem.getOrCreateExternalAccount(viewpoint, ExternalAccountType.WEBSITE);
-		external.setHandle(urlObject.toExternalForm());
+		try {
+			external.setHandleValidating(urlObject.toExternalForm());
+		} catch (ValidationException e) {
+			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, e.getMessage());
+		}
 		external.setSentiment(Sentiment.LOVE);
 	}
 }

@@ -33,6 +33,8 @@
 		dh.account.initialMyspaceHateQuip = <dh:jsString value="${account.mySpaceHateQuip}"/>;
 		dh.account.initialFlickrEmail = <dh:jsString value="${account.flickrEmail}"/>;
 		dh.account.initialFlickrHateQuip = <dh:jsString value="${account.flickrHateQuip}"/>;
+		dh.account.initialLinkedInName = <dh:jsString value="${account.linkedInName}"/>;
+		dh.account.initialLinkedInHateQuip = <dh:jsString value="${account.linkedInHateQuip}"/>;		
 	</script>
 </head>
 <dht:twoColumnPage neverShowSidebar="true">
@@ -91,12 +93,14 @@
 					</div>
 					<div class="dh-grow-div-around-floats"><div></div></div>
 				</dht:formTableRow>
-				<dht:formTableRowStatus controlId='dhMyspaceEntry'></dht:formTableRowStatus>
-				<dht:formTableRow label="MySpace name">
-					<dht:loveHateEntry baseId="dhMyspace" mode="${account.mySpaceSentiment}"/>
-				</dht:formTableRow>
 				<dht:formTableRow label="Flickr">
 					<dht:loveHateEntry baseId="dhFlickr" mode="${account.flickrSentiment}"/>
+				</dht:formTableRow>				
+				<dht:formTableRow label="LinkedIn profile">
+					<dht:loveHateEntry baseId="dhLinkedIn" mode="${account.linkedInSentiment}"/>
+				</dht:formTableRow>
+				<dht:formTableRow label="MySpace name">
+					<dht:loveHateEntry baseId="dhMyspace" mode="${account.mySpaceSentiment}"/>
 				</dht:formTableRow>
 				<dht:formTableRowStatus controlId='dhRhapsodyListeningHistoryEntry'></dht:formTableRowStatus>
 				<dht:formTableRow label="Rhapsody feed">

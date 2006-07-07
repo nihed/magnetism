@@ -82,14 +82,29 @@ public enum ExternalAccountType {
 
 	},
 	LINKED_IN("LinkedIn")  {
+		private static final String PROFILE_BASE_URL = "http://www.linkedin.com/in/";
+		
 		@Override
 		public String getLink(String handle, String extra) {
-			return "http://www.linkedin.com/in/" + StringUtils.urlEncode(handle);
+			return PROFILE_BASE_URL + StringUtils.urlEncode(handle);
 		}
 		
 		@Override
 		public String getLinkText(String handle, String extra) {
 			return "My Profile";
+		}
+		
+		@Override
+		public String canonicalizeHandle(String handle) throws ValidationException {
+			handle = super.canonicalizeHandle(handle);
+			if (handle != null) {
+				try {
+					new URL(getLink(handle, null));
+				} catch (MalformedURLException e) {
+					throw new ValidationException("Invalid LinkedIn username '" + handle + "': " + e.getMessage());
+				}
+			}
+			return handle;
 		}
 	},
 	WEBSITE("Website")  {

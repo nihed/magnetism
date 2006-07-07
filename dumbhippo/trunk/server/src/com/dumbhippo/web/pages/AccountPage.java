@@ -156,4 +156,16 @@ public class AccountPage {
 	public String getFlickrEmail() {
 		return getExternalAccountExtra(ExternalAccountType.FLICKR);
 	}
+	
+	public String getLinkedInSentiment() {
+		return getExternalAccountSentiment(ExternalAccountType.LINKED_IN);
+	}
+	
+	public String getLinkedInHateQuip() {
+		return getExternalAccountHateQuip(ExternalAccountType.LINKED_IN);
+	}
+	
+	public String getLinkedInName() {
+		return getExternalAccountHandle(ExternalAccountType.LINKED_IN);
+	}
 }

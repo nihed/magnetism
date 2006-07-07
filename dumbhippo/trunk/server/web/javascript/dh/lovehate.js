@@ -113,6 +113,10 @@ dh.lovehate.Entry = function(baseId, defaultLoveText, currentLoveValue, defaultH
 		me.setMode('busy');
 	}
 	
+	this.setLoveValueAlreadySaved = function(value) {
+		me._loveEntry.setValue(value, true); // true = don't emit changed
+	}
+	
 	// to be set by api user
 	this.onLoveSaved = function(value) {
 	
