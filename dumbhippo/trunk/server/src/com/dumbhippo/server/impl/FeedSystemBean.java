@@ -232,6 +232,9 @@ public class FeedSystemBean implements FeedSystem {
 	}
 	
 	private void addTrackFromFeedEntry(TrackFeedEntry entry, int entryPosition) {
+		if (entry.getFeed().getAccounts() == null) {
+			logger.warn("addTrackFromFeedEntry called for {}, but no accounts associated with feed", entry);
+		}
 		for (AccountFeed afeed : entry.getFeed().getAccounts()) {
 			// logger.debug("Processing feed event {} for account {}", entry.getTitle(), afeed.getAccount());
 			musicSystem.addFeedTrack(afeed, entry, entryPosition);
@@ -271,7 +274,8 @@ public class FeedSystemBean implements FeedSystem {
 					em.persist(entry);
 					feed.getEntries().add(entry);
 					if (entry instanceof TrackFeedEntry) {
-						addTrackFromFeedEntry((TrackFeedEntry)entry, entryPosition++);
+						// This won't work at the moment because the feed hasn't yet been associated with an account yet
+						// addTrackFromFeedEntry((TrackFeedEntry)entry, entryPosition++);
 					}
 				} catch (MalformedURLException e) {
 					continue;
