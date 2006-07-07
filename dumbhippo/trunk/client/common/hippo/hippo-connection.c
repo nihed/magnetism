@@ -1815,10 +1815,10 @@ hippo_connection_parse_entity(HippoConnection *connection,
     hippo_entity_set_name(entity, name);
     if (home_url) {
         char *absolute = make_absolute_url(connection, home_url);
-	hippo_entity_set_home_url(entity, home_url);
-	g_free(absolute);
+	    hippo_entity_set_home_url(entity, absolute);
+	    g_free(absolute);
     } else {
-	set_fallback_home_url(connection, entity);
+	    set_fallback_home_url(connection, entity);
     }
     hippo_entity_set_small_photo_url(entity, small_photo_url);
  

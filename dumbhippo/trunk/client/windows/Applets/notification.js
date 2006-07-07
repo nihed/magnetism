@@ -181,10 +181,6 @@ dh.notification.Display = function (serverUrl, appletUrl, selfId) {
     
     // Returns true iff we should show the window if it's hidden. 
     this.addGroupUpdate = function (groupData, isRedisplay, why) {
-        if (groupData.getIgnored()) {
-            dh.util.debug("group is ignored, should not render")            
-            return false
-        }
         var prevNotificationData = this._findNotification(groupData.getId())
         if (prevNotificationData) {
             // you already have a notification for this particular activity in your
@@ -192,6 +188,8 @@ dh.notification.Display = function (serverUrl, appletUrl, selfId) {
             prevNotificationData.notification.data = groupData
             prevNotificationData.notification.why |= why
         }
+        if (groupData.getIgnored())      
+            return false
         if (!prevNotificationData) {   
             // We don't have it at all and it needs to be redisplayed
             var displayed = this._pushNotification('groupUpdate', groupData, this._defaultTimeout, why)
