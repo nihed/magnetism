@@ -38,22 +38,21 @@ Strip: 0
 lib/intl.lib
 include/libintl.h
 
-# FIXME is this one really used? I don't see a glib/bin in svn
 URL: ftp://ftp.gtk.org/pub/gtk/v2.10/win32/glib-2.10.1.zip
 MD5sum: 46d8dcfee8a7026478da4a6392a3342a
-Source: ftp://ftp.gtk.org/pub/gtk/v2.10/glib-2.10.1.tar.bz2
-Directory: glib
-Strip: 0
-bin/libglib-2.0.0
-
-URL: ftp://ftp.gtk.org/pub/gtk/v2.10/win32/glib-dev-2.10.1.zip
-MD5sum: b1faf34aed8c8b0519f5f26aec30a36f
 Source: ftp://ftp.gtk.org/pub/gtk/v2.10/glib-2.10.1.tar.bz2
 Directory: glib
 Strip: 0
 bin/libglib-2.0-0.dll s@.*/@@
 bin/libthread-2.0-0.dll s@.*/@@
 bin/libgobject-2.0-0.dll s@.*/@@
+
+URL: ftp://ftp.gtk.org/pub/gtk/v2.10/win32/glib-dev-2.10.1.zip
+MD5sum: b1faf34aed8c8b0519f5f26aec30a36f
+Source: ftp://ftp.gtk.org/pub/gtk/v2.10/glib-2.10.1.tar.bz2
+Directory: glib
+Strip: 0
+bin/glib-genmarshal.exe
 include/glib-2.0/glib.h
 include/glib-2.0/glib/*.h
 include/glib-2.0/glib-object.h

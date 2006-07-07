@@ -1,3 +1,1 @@
-# This file is not presently used, since we want to avoid requiring
-# execution of glib-genmarshal on Windows. 
-VOID:OBJECT,OBJECT:STRING
+VOID:OBJECT,OBJECT,STRING
