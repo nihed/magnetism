@@ -15,8 +15,18 @@ libhippo_la_LIBADD = 			\
 # hippo-common-marshal.list, but just check them directly into
 # Subversion; this is because it would be a slight pain to do
 # the building of the marshalers on windows.
-#
-# COMMON_MARSHAL_LIST=$(COMMONSRCDIR)/hippo/hippo-common-marshal.list
+
+COMMON_MARSHAL_LIST=$(COMMONSRCDIR)/hippo/hippo-common-marshal.list
+COMMON_MARSHAL_HEADER=$(MARSHAL_DIR)/hippo-common-marshal.h
+COMMON_MARSHAL_BODY=$(MARSHAL_DIR)/hippo-common-marshal.c
+
+$(COMMON_MARSHAL_HEADER): $(COMMON_MARSHAL_LIST)
+	test -d $(MARSHAL_DIR) || mkdir $(MARSHAL_DIR) 
+	$(GLIB_GENMARSHAL) --prefix=hippo_common_marshal $(COMMON_MARSHAL_LIST) --header > $(COMMON_MARSHAL_HEADER)
+
+$(COMMON_MARSHAL_BODY): $(COMMON_MARSHAL_LIST)
+	test -d $(MARSHAL_DIR) || mkdir $(MARSHAL_DIR) 
+	(echo "#include \"hippo-common-marshal.h\""; $(GLIB_GENMARSHAL) --prefix=hippo_common_marshal $(COMMON_MARSHAL_LIST) --body) > $(COMMON_MARSHAL_BODY)
 
 LIBHIPPO_SOURCEFILES =						\
 	$(COMMONSRCDIR)/hippo/hippo-basics.c			\
@@ -25,8 +35,6 @@ LIBHIPPO_SOURCEFILES =						\
 	$(COMMONSRCDIR)/hippo/hippo-chat-room.h			\
 	$(COMMONSRCDIR)/hippo/hippo-common.h			\
         $(COMMONSRCDIR)/hippo/hippo-common-internal.h           \
-	$(COMMONSRCDIR)/hippo/hippo-common-marshal.h		\
-	$(COMMONSRCDIR)/hippo/hippo-common-marshal.c		\
 	$(COMMONSRCDIR)/hippo/hippo-connection.c		\
 	$(COMMONSRCDIR)/hippo/hippo-connection.h		\
 	$(COMMONSRCDIR)/hippo/hippo-cookies.c			\
@@ -46,6 +54,13 @@ LIBHIPPO_SOURCEFILES =						\
 	$(COMMONSRCDIR)/hippo/hippo-post.c			\
 	$(COMMONSRCDIR)/hippo/hippo-post.h
 
+LIBHIPPO_BUILT_SOURCEFILES =			\
+	$(COMMON_MARSHAL_HEADER)		\
+	$(COMMON_MARSHAL_BODY)
+
+MAINTAINERCLEANFILES +=	$(LIBHIPPO_BUILT_SOURCEFILES)
+BUILT_SOURCES += $(LIBHIPPO_BUILT_SOURCEFILES)
+
 ## we need to nodist these because otherwise automake would copy 
 ## ../common to distdir/../common which puts common outside of distdir.
 ## so we handle the disting manually so the destination is always distdir/common-dist
@@ -55,5 +70,3 @@ dist-hook:
 	mkdir $(distdir)/common-dist/hippo
 	cp $(COMMONSRCDIR)/hippo/hippo-common-marshal.list $(distdir)/common-dist/hippo
 	cp $(LIBHIPPO_SOURCEFILES) $(distdir)/common-dist/hippo
-
-MAINTAINERCLEANFILES +=	$(LIBHIPPO_BUILT_SOURCEFILES)

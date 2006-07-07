@@ -23,6 +23,7 @@ libgtkcopy_la_SOURCES=				\
 nodist_libgtkcopy_la_SOURCES = $(LIBGTKCOPY_BUILT_SOURCEFILES)
 
 MAINTAINERCLEANFILES +=	$(LIBGTKCOPY_BUILT_SOURCEFILES)
+BUILT_SOURCES += $(LIBGTKCOPY_BUILT_SOURCEFILES)
 
 GTK_MARSHAL_LIST=$(top_srcdir)/gtk/hippo-gtk-marshal.list
 GTK_MARSHAL_HEADER=$(MARSHAL_DIR)/hippo-gtk-marshal.h
@@ -36,5 +37,4 @@ $(GTK_MARSHAL_BODY): $(GTK_MARSHAL_LIST)
 	test -d $(MARSHAL_DIR) || mkdir $(MARSHAL_DIR) 
 	(echo "#include \"hippo-gtk-marshal.h\""; $(GLIB_GENMARSHAL) --prefix=hippo_gtk_marshal $(GTK_MARSHAL_LIST) --body) > $(GTK_MARSHAL_BODY)
 
-BUILT_SOURCES += $(GTK_MARSHAL_HEADER) $(GTK_MARSHAL_BODY)
 EXTRA_DIST += $(GTK_MARSHAL_LIST)
