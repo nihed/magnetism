@@ -1,7 +1,5 @@
 package com.dumbhippo.server.impl;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Set;
 
 import javax.annotation.EJB;
@@ -12,6 +10,8 @@ import javax.persistence.PersistenceContext;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.Thumbnail;
+import com.dumbhippo.TypeUtils;
 import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.ExternalAccountType;
@@ -26,7 +26,6 @@ import com.dumbhippo.server.MySpaceTracker;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.UserViewpoint;
 import com.dumbhippo.server.Viewpoint;
-import com.dumbhippo.services.FlickrPhoto;
 import com.dumbhippo.services.FlickrPhotoSize;
 import com.dumbhippo.services.FlickrPhotos;
 import com.dumbhippo.services.FlickrWebServices;
@@ -123,13 +122,9 @@ public class ExternalAccountSystemBean implements ExternalAccountSystem {
 		if (photos == null) {
 			logger.debug("Failed to load public photos for {}", account);
 		}
-		List<String> thumbs = new ArrayList<String>();
-		for (FlickrPhoto p : photos.getPhotos()) {
-			String url = p.getUrl(FlickrPhotoSize.SMALL_SQUARE);
-			thumbs.add(url);
-		}
-		if (thumbs.size() > 0) {
-			account.setThumbnails(thumbs, photos.getTotal(), 
+		
+		if (photos.getPhotos().size() > 0) {
+			account.setThumbnails(TypeUtils.castList(Thumbnail.class, photos.getPhotos()), photos.getTotal(), 
 					FlickrPhotoSize.SMALL_SQUARE.getPixels(), FlickrPhotoSize.SMALL_SQUARE.getPixels());
 		}
 	}

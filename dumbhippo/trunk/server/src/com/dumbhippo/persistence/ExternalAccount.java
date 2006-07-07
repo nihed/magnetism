@@ -12,6 +12,8 @@ import javax.persistence.UniqueConstraint;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
+import com.dumbhippo.Thumbnail;
+
 @Entity
 @Table(name="ExternalAccount", 
 		   uniqueConstraints = 
@@ -35,7 +37,7 @@ public class ExternalAccount extends DBUnique {
 	// quip (right now only applies if sentiment == HATE)
 	private String quip;
  
-	private List<String> thumbnailUrls;
+	private List<Thumbnail> thumbnails;
 	private int thumbnailTotalItems;
 	private int thumbnailWidth;
 	private int thumbnailHeight;
@@ -156,12 +158,12 @@ public class ExternalAccount extends DBUnique {
 	 * case it doesn't seem worth creating and managing an ExternalAccountView. We'll see 
 	 * how it goes.
 	 * 
-	 * @param thumbnailUrls
+	 * @param thumbnails
 	 * @param width
 	 * @param height
 	 */
-	public void setThumbnails(List<String> thumbnailUrls, int totalItems, int width, int height) {
-		this.thumbnailUrls = thumbnailUrls;
+	public void setThumbnails(List<Thumbnail> thumbnails, int totalItems, int width, int height) {
+		this.thumbnails = thumbnails;
 		this.thumbnailWidth = width;
 		this.thumbnailHeight = height;
 		this.thumbnailTotalItems = totalItems;
@@ -169,18 +171,18 @@ public class ExternalAccount extends DBUnique {
 	
 	@Transient
 	public boolean getHasThumbnails() {
-		return thumbnailUrls != null;
+		return thumbnails != null;
 	}
 	
 	@Transient
-	public List<String> getThumbnailUrls() {
-		return thumbnailUrls;
+	public List<Thumbnail> getThumbnails() {
+		return thumbnails;
 	}
 	
 	@Transient
 	public int getThumbnailCount() {
-		if (thumbnailUrls != null)
-			return thumbnailUrls.size();
+		if (thumbnails != null)
+			return thumbnails.size();
 		else
 			return 0;
 	}

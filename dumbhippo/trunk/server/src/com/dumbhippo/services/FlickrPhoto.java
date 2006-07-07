@@ -1,6 +1,8 @@
 package com.dumbhippo.services;
 
-public final class FlickrPhoto {
+import com.dumbhippo.Thumbnail;
+
+public final class FlickrPhoto implements Thumbnail {
 	private String id;
 	private String owner;
 	private String secret;
@@ -82,5 +84,24 @@ public final class FlickrPhoto {
 	public String toString() {
 		return "{id=" + id + " title='" + title + "' url=" +
 		getUrl(FlickrPhotoSize.SMALL_SQUARE) + "}";
+	}
+	public String getThumbnailSrc() {
+		return getUrl(FlickrPhotoSize.SMALL_SQUARE);
+	}
+	public String getThumbnailHref() {
+		StringBuilder sb = new StringBuilder("http://www.flickr.com/photos/");
+		sb.append(owner);
+		sb.append("/");
+		sb.append(id);
+		return sb.toString();
+	}
+	public String getThumbnailTitle() {
+		return getTitle();
+	}
+	public int getThumbnailWidth() {
+		return FlickrPhotoSize.SMALL_SQUARE.getPixels();
+	}
+	public int getThumbnailHeight() {
+		return FlickrPhotoSize.SMALL_SQUARE.getPixels();
 	}
 }
