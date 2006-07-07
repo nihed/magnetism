@@ -131,7 +131,8 @@ dh.util.prependCssClass = function (node, className) {
         node.className = className
 }
 
-dh.util.swapLastCssClass = function (node, classPrefix, classSuffix) {
+// node must not be null
+dh.util.swapLastCssClass = function (node, classPrefix, classSuffix) {        
     var klasses = node.className.split(" ")
     if (klasses.length > 0 && klasses[klasses.length-1].indexOf(classPrefix) == 0) {
         klasses.pop()

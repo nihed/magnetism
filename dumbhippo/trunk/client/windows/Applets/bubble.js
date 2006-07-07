@@ -289,10 +289,12 @@ dh.bubble.Bubble = function(isStandaloneBubble) {
         this._setPhotoImage(this._data.getPhotoSrc(), this._data.getPhotoLink())
         this._setPhotoTitle(this._data.getPhotoTitle(), this._data.getPhotoLink())
         
-        dh.util.swapLastCssClass(this._headerDiv, "dh-notification-logo-", this._data.getCssClassSuffix())
-        dh.util.swapLastCssClass(this._colorDiv, "dh-notification-color-", this._data.getCssClassSuffix())
-        
-        dh.util.swapLastCssClass(this._closeButton, "dh-close-button-", this._data.getCssClassSuffix())
+        if (this._isStandaloneBubble) {
+            dh.util.swapLastCssClass(this._headerDiv, "dh-notification-logo-", this._data.getCssClassSuffix())
+            dh.util.swapLastCssClass(this._closeButton, "dh-close-button-", this._data.getCssClassSuffix()) 
+        }
+           
+        dh.util.swapLastCssClass(this._colorDiv, "dh-notification-color-", this._data.getCssClassSuffix())   
                 
         dh.util.swapLastCssClass(this._colorDiv.tl, "dh-notification-color-tl-", this._data.getCssClassSuffix())
         dh.util.swapLastCssClass(this._colorDiv.bl, "dh-notification-color-bl-", this._data.getCssClassSuffix())
