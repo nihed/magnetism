@@ -34,23 +34,37 @@
 		<c:if test="${haveWhereAtSection || haveWhereNotAtSection}">
 			<dht:zoneBoxWhereAt>
 				<c:if test="${haveWhereAtSection}">
-					<c:if test="${!empty person.viewedPerson.aim}">
-						<c:if test="${!empty person.aimPresenceImageLink}">
-							<img src="${person.aimPresenceImageLink}" border="0"/>
-						</c:if>
-						<dht:whereAtItem label="AIM" linkText="${person.viewedPerson.aim.screenName}" linkTarget="${person.aimLink}"/>
-					</c:if>
-					<c:if test="${!empty person.viewedPerson.email}">
-						<dh:png src="/images2/${buildStamp}/email_icon.png" style="width: 16px; height: 11px;"/>
-						<dht:whereAtItem linkText="Send me email" linkTarget="${person.emailLink}"/>
-					</c:if>
-					<c:forEach var="account" items="${person.lovedAccounts.list}">
-						<c:if test="${!account.hasThumbnails}">
-						<div>
-							<dht:whereAtItem label="${account.siteName}" linkText="${account.linkText}" linkTarget="${account.link}"/>
+					<div class="dh-where-at-viewport">
+						<div class="dh-where-at-list">
+							<c:if test="${!empty person.viewedPerson.aim}">
+								<div class="dh-where-at-item">
+									<c:if test="${!empty person.aimPresenceImageLink}">
+										<img src="${person.aimPresenceImageLink}" border="0"/>
+									</c:if>
+									<dht:whereAtItem label="AIM" linkText="${person.viewedPerson.aim.screenName}" linkTarget="${person.aimLink}"/>
+								</div>
+							</c:if>
+							<c:if test="${!empty person.viewedPerson.email}">
+								<div class="dh-where-at-item">
+									<dh:png src="/images2/${buildStamp}/email_icon.png" style="width: 16px; height: 11px;"/>
+									<dht:whereAtItem linkText="Send me email" linkTarget="${person.emailLink}"/>
+								</div>
+							</c:if>
+							<div class="dh-grow-div-around-floats"><div></div></div>
 						</div>
-						</c:if>
-					</c:forEach>
+						<%-- Loved items with just links --%>
+						<div class="dh-where-at-list">
+							<c:forEach var="account" items="${person.lovedAccounts.list}">
+								<c:if test="${!account.hasThumbnails}">
+									<div class="dh-where-at-item">
+										<dht:whereAtItem label="${account.siteName}" linkText="${account.linkText}" linkTarget="${account.link}"/>
+									</div>
+								</c:if>
+							</c:forEach>
+							<div class="dh-grow-div-around-floats"><div></div></div>
+						</div>
+					</div>
+					<%-- Items with thumbnail boxes --%>
 					<c:forEach var="account" items="${person.lovedAccounts.list}">
 						<c:if test="${account.hasThumbnails}">
 							<dht:whereAtThumbnailBox account="${account}" />

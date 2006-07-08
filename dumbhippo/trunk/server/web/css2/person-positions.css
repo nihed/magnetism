@@ -5,6 +5,7 @@
 	width:				478px;
 	margin-top:			10px;
 	margin-bottom:		10px;
+	/* FIXME this should be margin on the inner box, not padding here, or the width will be broken */
 	padding:			1px;
 }
 
@@ -17,6 +18,7 @@
 #dhContentColumn .dh-zone-box .dh-thumbnail-meta, #dhContentColumn .dh-zone-box .dh-rss-meta {
 	position:				relative;
 	height:					26px;
+	/* FIXME this should be margin on an inner box, not padding here, or the width will be broken */
 	padding:				6px;
 }
 
@@ -29,22 +31,33 @@
 	right:				6px;
 }
 
-#dhContentColumn .dh-zone-box .dh-thumbnail-photos {
+#dhContentColumn .dh-zone-box .dh-thumbnail-photos-border {
 	position:				relative;
+	/* 478px is the whole zone box width, minus 2px more for border of thumbnail box */
 	width:					476px;
-	padding:				10px;
-	padding-top:			0px;
+	overflow:				hidden;
+}
+
+#dhContentColumn .dh-zone-box .dh-thumbnail-photos {
+	margin:					10px;
+	margin-top:				0px;
+	/* 
+	 * The thumbs are each 75px + 20px right margin = 95px * 5 = 475px
+	 * So we need to be at least that wide. It's OK to be larger than the
+	 * page width by up to the size of the right margin, since it will just
+	 * get chopped.
+	 */
+	width:					496px;
 }
 
 #dhContentColumn .dh-zone-box .dh-thumbnail-photo {
 	float:				left;
-	margin:				0;
-	margin-left:		10px;
-	margin-right:		10px;
+	margin-right:		20px;
 	width:				75px;
 	padding:			0px;
 }
 
+/*
 #dhContentColumn .dh-zone-box .dh-thumbnail-photo-first {
 	margin:				0 10px 0 0;
 }
@@ -52,14 +65,36 @@
 #dhContentColumn .dh-zone-box .dh-thumbnail-photo-last {
 	margin:				0 0 0 10px;
 }
+*/
 
 #dhContentColumn .dh-zone-box .dh-thumbnail-photo img {
 	border:				none;
-	margin:				0;
+	margin:				0px;
 }
 
 #dhContentColumn .dh-zone-box .dh-thumbnail-title {
 	width:				75px;
 	overflow:			hidden;
 	text-align:			center;
+}
+
+#dhContentColumn .dh-zone-box .dh-where-at-viewport {
+	position:			relative;
+	width:				478px;	
+	overflow:			hidden;
+}
+
+#dhContentColumn .dh-zone-box .dh-where-at-list {
+	position:			relative;
+	/* It appears as 478px since the items in the list have 10px right margin,
+	 * and the dh-where-at-viewport chops it off the rightmost items.
+	 */
+	width:				488px;
+}
+
+#dhContentColumn .dh-zone-box .dh-where-at-list .dh-where-at-item {
+	float:				left;
+	margin-right:		10px;
+	width:				234px; /* (488px - 20px) / 2 */
+	overflow:			hidden;
 }
