@@ -5,6 +5,9 @@
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 
 <c:choose>
+	<c:when test="${!empty errorText}">
+		<c:set var="text" value='${errorText}'/>
+	</c:when>
 	<c:when test='${!empty param["text"]}'>
 		<c:set var="text" value='${param["text"]}'/>
 	</c:when>

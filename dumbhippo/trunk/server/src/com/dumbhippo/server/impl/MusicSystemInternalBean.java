@@ -3189,7 +3189,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 				// need to retry on constraint violation to deal with race where multiple TrackViews are
 				// being updated in parallel
 				try {
-					RhapLink detached = runner.runTaskRetryingOnConstraintViolation(new Callable<RhapLink>() {
+					runner.runTaskRetryingOnConstraintViolation(new Callable<RhapLink>() {
 						
 						public RhapLink call() {
 							

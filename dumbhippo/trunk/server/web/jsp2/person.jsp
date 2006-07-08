@@ -9,6 +9,12 @@
 <jsp:setProperty name="person" property="viewedUserId" param="who"/>
 <jsp:setProperty name="person" property="asOthersWouldSee" value="true"/>
 
+<%-- use viewedPerson (PersonView) on most of the page, but it will throw
+     if unset so here we look at viewedUser --%>
+<c:if test="${empty person.viewedUser}">
+	<dht:errorPage>Person not found</dht:errorPage>
+</c:if>
+
 <head>
 	<title><c:out value="${person.viewedPerson.name}"/>'s Mugshot</title>
 	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/person.css"/>
