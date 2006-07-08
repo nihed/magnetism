@@ -3,23 +3,33 @@
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 
 <%@ attribute name="account" required="true" type="com.dumbhippo.persistence.ExternalAccount" %>
+
 <div class="dh-thumbnail-box-border">
-<div class="dh-thumbnail-box">
-	<div class="dh-thumbnail-meta">
-	<div class="dh-thumbnail-service"><dht:whereAtItem label="${account.siteName}" linkText="${account.linkText}" linkTarget="${account.link}"/></div>
-	<div class="dh-thumbnail-status"><c:out value="${account.totalThumbnailItemsString}" /></div>
-	</div>
-	<div class="dh-thumbnail-photos">
-		<c:forEach items="${account.thumbnails}" end="4" var="thumbnail" varStatus="status">
-			<c:set var="css" value="" />
-			<c:if test="${status.first}"><c:set var="css" value="dh-thumbnail-photo-first" /></c:if>
-			<c:if test="${status.last}"><c:set var="css" value="dh-thumbnail-photo-last" /></c:if>
-			<div class="dh-thumbnail-photo ${css}">
-				<a title="${thumbnail.thumbnailTitle}" href="${thumbnail.thumbnailHref}"><img src="${thumbnail.thumbnailSrc}" width="${account.thumbnailWidth}" height="${account.thumbnailHeight}" /></a>
-				<div class="dh-thumbnail-title"><a href="${thumbnail.thumbnailHref}"><c:out value="${thumbnail.thumbnailTitle}" /></a></div>
+	<div class="dh-thumbnail-box">
+		<div class="dh-thumbnail-meta">
+			<div class="dh-thumbnail-service">
+				<dht:whereAtItem label="${account.siteName}" linkText="${account.linkText}" linkTarget="${account.link}"/>
 			</div>
-		</c:forEach>
-		<div class="dh-grow-div-around-floats"><div></div></div>
+			<div class="dh-thumbnail-status">
+				<c:out value="${account.totalThumbnailItemsString}" />
+			</div>
+		</div>
+		<div class="dh-thumbnail-photos">
+			<c:forEach items="${account.thumbnails}" end="4" var="thumbnail" varStatus="status">
+				<c:choose>
+					<c:when test="${status.first}">
+						<c:set var="css" value="dh-thumbnail-photo-first" />
+					</c:when>
+					<c:when test="${status.last}">
+						<c:set var="css" value="dh-thumbnail-photo-last" />
+					</c:when>
+				</c:choose>
+				<div class="dh-thumbnail-photo ${css}">
+					<a title="${thumbnail.thumbnailTitle}" href="${thumbnail.thumbnailHref}"><img src="${thumbnail.thumbnailSrc}" width="${account.thumbnailWidth}" height="${account.thumbnailHeight}" /></a>
+					<div class="dh-thumbnail-title"><a href="${thumbnail.thumbnailHref}"><c:out value="${thumbnail.thumbnailTitle}" /></a></div>
+				</div>
+			</c:forEach>
+			<div class="dh-grow-div-around-floats"><div></div></div>
+		</div>
 	</div>
-</div>
 </div>
