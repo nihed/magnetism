@@ -4,7 +4,7 @@
         {
             CLASS = MugshotMenulet; 
             LANGUAGE = ObjC; 
-            OUTLETS = {theMenu = NSMenu; }; 
+            OUTLETS = {aboutItem = NSMenuItem; theMenu = NSMenu; }; 
             SUPERCLASS = NSObject; 
         }
     ); 

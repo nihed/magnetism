@@ -16,10 +16,8 @@
 	HippoApp *app;
 
 	IBOutlet NSMenu *theMenu;
-	bool needUpdate;
+	IBOutlet NSMenuItem *aboutItem;
 }
 
-- (void) showAboutPanel:(id)sender;
-- (void) addDefaultMenuItems;
-- (IBAction) updateMenu:(id)sender;
+- (IBAction) showAboutPanel:(id)sender;
 @end
