@@ -786,7 +786,7 @@ public class PostingBoardBean implements PostingBoard {
 			queryText.append("count(post)");
 		else
 			queryText.append("post");
-		queryText.append(" FROM Post post WHERE NOT EXISTS (SELECT fp.id FROM FeedPost fp WHERE post.id=fp.id) AND " + VIEWER_RECEIVED);
+		queryText.append(" FROM Post post WHERE post.poster != :viewer AND NOT EXISTS (SELECT fp.id FROM FeedPost fp WHERE post.id=fp.id) AND " + VIEWER_RECEIVED);
 		
 		appendPostLikeClause(queryText, search);
 
