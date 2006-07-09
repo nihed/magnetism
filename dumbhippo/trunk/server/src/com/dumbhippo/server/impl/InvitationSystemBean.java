@@ -751,9 +751,14 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 	public int getSystemInvitationCount(UserViewpoint viewpoint) {
 		if (!spider.isAdministrator(viewpoint.getViewer()))
 			throw new RuntimeException("can't do this if you aren't an admin");
+		Set<User> already = new HashSet<User>();
 		int count = 0;
 		for (Character c : Character.values()) {
+			// the character enum has the same user more than once
 			User u = spider.getCharacter(c);
+			if (already.contains(u))
+				continue;
+			already.add(u);
 			count += u.getAccount().getInvitations();
 		}
 		return count;
