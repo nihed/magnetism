@@ -372,7 +372,7 @@ dh.bubble.Bubble = function(isStandaloneBubble) {
         this._swarmNavDiv.appendChild(swarmControls)
         swarmControls.className = "dh-notification-swarm-controls"
         
-        var createControl = function (iconName, text, handler) {
+        var createControl = function (iconName, text, handler, tooltip) {
             var span = document.createElement("span")
             span.className = "dh-notification-swarm-control"
             var img = dh.util.createPngElement(dh.appletUrl + iconName, 10, 1)
@@ -398,6 +398,8 @@ dh.bubble.Bubble = function(isStandaloneBubble) {
             } else {
                 link.className = "dh-notification-swarm-nav-link-current"
             }
+            if (tooltip)
+                span.title = tooltip
             link.appendChild(document.createTextNode(text))
             return span      
         }
@@ -409,7 +411,8 @@ dh.bubble.Bubble = function(isStandaloneBubble) {
                                  bubble._data.doInvite()
                                  swarmControls.replaceChild(inviteDoneControl, inviteControl)
                                  bubble.onNext();
-                               })
+                               },
+                               "Invite this person to join the group")
             swarmControls.appendChild(inviteControl)
         }
         var chatControl = createControl("chaticon.gif", "Join chat", 
@@ -418,13 +421,15 @@ dh.bubble.Bubble = function(isStandaloneBubble) {
         chatCount.appendChild(document.createTextNode(" [" + this._data.getChattingUserCount() + "]"))
         chatControl.appendChild(chatCount)
         swarmControls.appendChild(chatControl)
-        var alreadyIgnoredControl = createControl("ignoreicon.png", "Ignored", null)
-        var ignoreControl = createControl("ignoreicon.png", "Ignore", 
+        var alreadyIgnoredControl = createControl("ignoreicon.png", this._data.getIgnoreText().ignored, null)        
+        var ignoreControl = createControl("ignoreicon.png", this._data.getIgnoreText().ignore, 
                         function () { 
                                       bubble._data.setIgnored();
                                       swarmControls.replaceChild(alreadyIgnoredControl, ignoreControl)
                                       bubble.onNext();
-                                      });
+                                      },
+                                      this._data.getIgnoreText().tooltip);
+        ignoreControl.appendChild(document.createTextNode(this._data.getIgnoreText().details))
         if (!this._data.getIgnored())
             swarmControls.appendChild(ignoreControl)
         else
@@ -468,6 +473,10 @@ dh.bubble.BubbleData = function() {
     
     this.getChattingUserCount = function() {
         return -1
+    }
+    
+    this.getIgnoreText = function () {
+        return {ignore: "Ignore", details: "", ignored: "Ignored", tooltip: "" }
     }
     
     this.getIgnored = function() {
@@ -714,6 +723,10 @@ dh.bubble.GroupChatData = function(group) {
         return this.group.ChatIgnored
     }
     
+    this.getIgnoreText = function () {
+        return {ignore: "Hush Chat", details: " (2hrs)", ignored: "Hushed", tooltip: "Hush group chat notifications for 2 hours" }
+    }
+    
     this.appendBodyContent = function(bubble, parent) {
         parent.appendChild(document.createTextNode("New chat activity."));
     }
@@ -801,6 +814,10 @@ dh.bubble.GroupMembershipChangeData = function(group, user, status) {
     this.getIgnored = function() {
         return this.group.Ignored
     }    
+    
+    this.getIgnoreText = function () {
+        return {ignore: "Hush Updates", details: " (2hrs)", ignored: "Hushed", tooltip: "Hush group membership update notifications for 2 hours" }
+    }
     
     this.appendBodyContent = function(bubble, parent) {
        parent.appendChild(document.createTextNode(this.description))
