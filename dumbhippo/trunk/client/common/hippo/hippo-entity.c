@@ -152,7 +152,7 @@ hippo_entity_get_chatting_user_count(HippoEntity *entity)
 	if (entity->room)
 		return hippo_chat_room_get_chatting_user_count(entity->room);
 	else
-		return -3;
+		return 0;
 }
 
 GTime            
