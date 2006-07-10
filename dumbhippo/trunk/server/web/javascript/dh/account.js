@@ -105,6 +105,11 @@ dh.account.setMyspaceName = function(name, loadFunc, errorFunc) {
 				     { "name" : name },
 						loadFunc, errorFunc);
 }
+dh.account.setYouTubeName = function(name, loadFunc, errorFunc) {
+   	dh.server.doXmlMethod("setyoutubename",
+				     { "urlOrName" : name },
+						loadFunc, errorFunc);
+}
 
 dh.account.createExternalAccountOnHateSavedFunc = function(entry, accountType) {
 	return function(value) {
@@ -180,6 +185,20 @@ dh.account.onMyspaceLoveSaved = function(value) {
 	var oldMode = entry.getMode();
 	entry.setBusy();
   	dh.account.setMyspaceName(value, 
+	 	    	 function(childNodes, http) {
+	 	    	 	entry.setMode('love');
+	  	    	 },
+	  	    	 function(code, msg, http) {
+	  	    	 	alert(msg);
+	  	    	 	entry.setMode(oldMode);
+	  	    	 }); 
+}
+
+dh.account.onYouTubeLoveSaved = function(value) {
+	var entry = dh.account.youTubeEntry;
+	var oldMode = entry.getMode();
+	entry.setBusy();
+  	dh.account.setYouTubeName(value, 
 	 	    	 function(childNodes, http) {
 	 	    	 	entry.setMode('love');
 	  	    	 },
@@ -285,7 +304,13 @@ dhAccountInit = function() {
 	dh.account.myspaceEntry.onLoveSaved = dh.account.onMyspaceLoveSaved;
 	dh.account.myspaceEntry.onHateSaved = dh.account.createExternalAccountOnHateSavedFunc(dh.account.myspaceEntry, 'MYSPACE');
 	dh.account.myspaceEntry.onCanceled = dh.account.createExternalAccountOnCanceledFunc(dh.account.myspaceEntry, 'MYSPACE');
-	
+
+	dh.account.youTubeEntry = new dh.lovehate.Entry('dhYouTube', 'YouTube username or profile URL', dh.account.initialYouTubeName,
+							'Video should kill the internet geeks', dh.account.initialYouTubeHateQuip);
+	dh.account.youTubeEntry.onLoveSaved = dh.account.onYouTubeLoveSaved;
+	dh.account.youTubeEntry.onHateSaved = dh.account.createExternalAccountOnHateSavedFunc(dh.account.youTubeEntry, 'YOUTUBE');
+	dh.account.youTubeEntry.onCanceled = dh.account.createExternalAccountOnCanceledFunc(dh.account.youTubeEntry, 'YOUTUBE');
+		
 	dh.account.flickrEntry = new dh.lovehate.Entry('dhFlickr', 'Email used for Flickr account', dh.account.initialFlickrEmail,
 					'Flickr doesn\'t do it for me', dh.account.initialFlickrHateQuip);
 	dh.account.flickrEntry.onLoveSaved = dh.account.onFlickrLoveSaved;

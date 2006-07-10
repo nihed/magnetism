@@ -32,6 +32,8 @@
 		}
 		dh.account.initialMyspaceName = <dh:jsString value="${account.mySpaceName}"/>;
 		dh.account.initialMyspaceHateQuip = <dh:jsString value="${account.mySpaceHateQuip}"/>;
+		dh.account.initialYouTubeName = <dh:jsString value="${account.youTubeName}"/>;
+		dh.account.initialYouTubeHateQuip = <dh:jsString value="${account.youTubeHateQuip}"/>;
 		dh.account.initialFlickrEmail = <dh:jsString value="${account.flickrEmail}"/>;
 		dh.account.initialFlickrHateQuip = <dh:jsString value="${account.flickrHateQuip}"/>;
 		dh.account.initialLinkedInName = <dh:jsString value="${account.linkedInName}"/>;
@@ -102,6 +104,9 @@
 				</dht:formTableRow>
 				<dht:formTableRow label="MySpace name">
 					<dht:loveHateEntry baseId="dhMyspace" mode="${account.mySpaceSentiment}"/>
+				</dht:formTableRow>
+				<dht:formTableRow label="YouTube name">
+					<dht:loveHateEntry baseId="dhYouTube" mode="${account.youTubeSentiment}"/>
 				</dht:formTableRow>
 				<dht:formTableRowStatus controlId='dhRhapsodyListeningHistoryEntry'></dht:formTableRowStatus>
 				<dht:formTableRow label="Rhapsody feed">

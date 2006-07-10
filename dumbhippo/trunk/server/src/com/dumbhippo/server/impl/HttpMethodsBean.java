@@ -1502,6 +1502,33 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		}
 	}
 
+	public void doSetYouTubeName(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException {
+		// Try to pull youtube name out of either a youtube profile url ("http://www.youtube.com/user/$username" || "http://www.youtube.com/profile?user=$username") or 
+		// just try using the thing as a username directly
+		String name = urlOrName.trim();
+		int user = urlOrName.indexOf("/user/");
+		if (user >= 0) {
+			user += "/user/".length();
+			name = urlOrName.substring(user);
+		} else if ( (user = urlOrName.indexOf("/profile?user=")) >= 0) {
+			user += "/profile?user=".length();
+			name = urlOrName.substring(user);
+		}
+		
+		if (name.startsWith("http://"))
+			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, "Enter your public profile URL or just your username");
+		
+		ExternalAccount external = externalAccountSystem.getOrCreateExternalAccount(viewpoint, ExternalAccountType.YOUTUBE);
+		try {
+			external.setHandleValidating(name);
+		} catch (ValidationException e) {
+			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, e.getMessage());
+		}
+		external.setSentiment(Sentiment.LOVE);
+		
+		xml.appendTextNode("username", external.getHandle());
+	}
+
 	public void doSetLinkedInProfile(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException {
 		// Try to pull linked in name out of either a linked in profile url ("http://www.linkedin.com/in/username") or 
 		// just try using the thing as a username directly

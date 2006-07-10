@@ -169,7 +169,19 @@ public class AccountPage {
 	public String getLinkedInName() {
 		return getExternalAccountHandle(ExternalAccountType.LINKED_IN);
 	}
+
+	public String getYouTubeSentiment() {
+		return getExternalAccountSentiment(ExternalAccountType.YOUTUBE);
+	}
 	
+	public String getYouTubeHateQuip() {
+		return getExternalAccountHateQuip(ExternalAccountType.YOUTUBE);
+	}
+	
+	public String getYouTubeName() {
+		return getExternalAccountHandle(ExternalAccountType.YOUTUBE);
+	}
+		
 	public String getWebsiteUrl() {
 		return getExternalAccountHandle(ExternalAccountType.WEBSITE);
 	}

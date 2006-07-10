@@ -321,6 +321,10 @@ public interface HttpMethods {
 	public void doSetLinkedInProfile(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException;
 
 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
+	@HttpParams( { "urlOrName" })
+	public void doSetYouTubeName(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException;
+
+	@HttpContentTypes(HttpResponseData.XMLMETHOD)
 	@HttpParams( { "url" })
 	public void doSetWebsite(XmlBuilder xml, UserViewpoint viewpoint, String url) throws XmlMethodException;
 	

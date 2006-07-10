@@ -159,13 +159,31 @@ public enum ExternalAccountType {
 		}
 	},
 	YOUTUBE("YouTube")  {
+		/* YouTube RSS feeds
+			http://www.youtube.com/rssls
+			feed://www.youtube.com/rss/user/$username/videos.rss
+		*/
+		private static final String PROFILE_BASE_URL = "http://www.youtube.com/user/";
+
 		@Override
 		public String getLink(String handle, String extra) {
-			throw new UnsupportedOperationException("add youtube support");
+			return PROFILE_BASE_URL + StringUtils.urlEncode(handle);
 		}
 		@Override
 		public String getLinkText(String handle, String extra) {
-			throw new UnsupportedOperationException("Not implemented yet");
+			return handle;
+		}
+		@Override
+		public String canonicalizeHandle(String handle) throws ValidationException {
+			handle = super.canonicalizeHandle(handle);
+			if (handle != null) {
+				try {
+					new URL(getLink(handle, null));
+				} catch (MalformedURLException e) {
+					throw new ValidationException("Invalid YouTube username '" + handle + "': " + e.getMessage());
+				}
+			}
+			return handle;
 		}
 
 	},
