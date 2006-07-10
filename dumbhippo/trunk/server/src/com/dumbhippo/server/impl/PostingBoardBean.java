@@ -398,16 +398,26 @@ public class PostingBoardBean implements PostingBoard {
 	}	
 	
 	public void doFeedPost(GroupFeed feed, FeedEntry entry) {
-		FeedPost post = new FeedPost(feed, entry, expandVisibilityForGroup(PostVisibility.RECIPIENTS_ONLY, feed.getGroup()));
-		em.persist(post);
-		
+		Post post = createPost(feed, entry);		
 		postPost(post, PostType.FEED);
+	}
+
+	private Post createAndIndexPost(Callable<Post> creator) {
+		try {
+			Post detached = runner.runTaskInNewTransaction(creator);
+			PostIndexer.getInstance().index(detached.getGuid());
+			Post post = em.find(Post.class, detached.getId());
+			
+			return post;
+		} catch (Exception e) {
+			ExceptionUtils.throwAsRuntimeException(e);
+			return null; // not reached
+		}		
 	}
 	
 	private Post createPost(final User poster, final PostVisibility visibility, final boolean toWorld, final String title, final String text, final Set<Resource> resources, 
-			               final Set<Resource> personRecipients, final Set<Group> groupRecipients, final Set<Resource> expandedRecipients, final PostInfo postInfo) {
-		try {
-			Post detached = runner.runTaskInNewTransaction(new Callable<Post>() {
+			                		final Set<Resource> personRecipients, final Set<Group> groupRecipients, final Set<Resource> expandedRecipients, final PostInfo postInfo) {
+		return createAndIndexPost(new Callable<Post>() {
 				public Post call() {
 					Post post = new Post(poster, visibility, toWorld, title, text, personRecipients, groupRecipients, expandedRecipients, resources);
 					post.setPostInfo(postInfo);
@@ -416,14 +426,18 @@ public class PostingBoardBean implements PostingBoard {
 					return post;
 				}
 			});
-			PostIndexer.getInstance().index(detached.getGuid());
-			Post post = em.find(Post.class, detached.getId());
-			
-			return post;
-		} catch (Exception e) {
-			ExceptionUtils.throwAsRuntimeException(e);
-			return null; // not reached
-		}
+	}
+	
+	private Post createPost(final GroupFeed feed, final FeedEntry entry) {
+		return createAndIndexPost(new Callable<Post>() {
+			public Post call() {
+				FeedPost post = new FeedPost(feed, entry, expandVisibilityForGroup(PostVisibility.RECIPIENTS_ONLY, feed.getGroup()));
+				em.persist(post);
+
+				logger.debug("saved new FeedPost {}", post);
+				return post;
+			}
+		});
 	}
 
 	private PersonPostData getPersonPostData(User user, Post post) {

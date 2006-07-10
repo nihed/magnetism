@@ -63,4 +63,9 @@ public class FeedPost extends Post {
 	public void setEntry(FeedEntry entry) {
 		this.entry = entry;
 	}
+	
+	@Override
+	public String toString() {
+		return "{FeedPost id=" + getId() + " feed=" + feed + "}";
+	}
 }
