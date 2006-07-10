@@ -30,7 +30,7 @@
 <li><a href="#3">Why should I care?</a></li>
 <li><a href="#4">What does "open project" mean?</a></li>
 <li><a href="#5">What's a "live social experience"?</a></li>
-<li><a href="#6">What is available as of May 31, 2006?</a></li>
+<li><a href="#6">What is currently available?</a></li>
 <li><a href="#7">What's next?</a></li>
 <li><a href="#8">How do I get involved?</a></li>
 <li><a href="#9">What is the relationship to existing social networking sites?</a></li>
