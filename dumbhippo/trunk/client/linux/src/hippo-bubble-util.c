@@ -450,7 +450,7 @@ on_group_membership_changed(HippoEntity *entity,
     char *description;
     char *header;
     const char *member_id;
-    int actions = HIPPO_BUBBLE_ACTION_IGNORE;
+    int actions = HIPPO_BUBBLE_ACTION_JOIN_CHAT | HIPPO_BUBBLE_ACTION_IGNORE;
     
     /* be sure we're still the current group */
     if (!bubble_watch_is_attached(BUBBLE_WATCH(watch)))
