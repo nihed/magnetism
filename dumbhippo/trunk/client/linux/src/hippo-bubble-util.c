@@ -329,6 +329,7 @@ on_post_changed(HippoPost *post,
 	hippo_bubble_set_foreground_color(bubble, HIPPO_BUBBLE_COLOR_ORANGE);
 	hippo_bubble_set_header_image(bubble, "bublinkswarm");
 	
+	hippo_bubble_set_ignore_text(bubble, "Ignore", "");
 	hippo_bubble_set_actions(bubble, HIPPO_BUBBLE_ACTION_JOIN_CHAT | HIPPO_BUBBLE_ACTION_IGNORE);	
     
     if (sender == HIPPO_ENTITY(self)) {
@@ -418,7 +419,8 @@ on_group_changed(HippoEntity *entity,
     
 	hippo_bubble_set_foreground_color(bubble, HIPPO_BUBBLE_COLOR_PURPLE);
 	hippo_bubble_set_header_image(bubble, "bubgroupupdate");
-	
+
+	hippo_bubble_set_ignore_text(bubble, "Hush Chat", " (2hrs)");	
 	hippo_bubble_set_actions(bubble, HIPPO_BUBBLE_ACTION_JOIN_CHAT | HIPPO_BUBBLE_ACTION_IGNORE);
     
     hippo_bubble_set_sender_name(bubble, "");
@@ -475,7 +477,7 @@ on_group_membership_changed(HippoEntity *entity,
 		description = _("Someone has joined this group as a member.");
 		header = _("New member");
  	} else if (strcmp(watch->status, "FOLLOWER") == 0) {
-		description = _("Someone has joined this group as a follower");
+		description = _("Someone has joined this group as a follower.");
 		header = _("New follower");
 		actions |= HIPPO_BUBBLE_ACTION_INVITE;
 	} else {
@@ -483,7 +485,8 @@ on_group_membership_changed(HippoEntity *entity,
 		description = "";
 		header = "";
 	}
-  
+	
+	hippo_bubble_set_ignore_text(bubble, "Hush Updates", " (2hrs)");  
 	hippo_bubble_set_actions(bubble, actions);
 	   
     member_id = hippo_entity_get_guid(HIPPO_ENTITY(watch->user));

@@ -12,11 +12,6 @@ libhippo_la_LIBADD = 			\
 # for future reference
 # libhippo_la_LDFLAGS= -export-symbols-regex "^[^_].*" -version-info $(LT_CURRENT):$(LT_REVISION):$(LT_AGE) -no-undefined
 
-# For right now, we don't build hippo-common-marshal.[ch] from 
-# hippo-common-marshal.list, but just check them directly into
-# Subversion; this is because it would be a slight pain to do
-# the building of the marshalers on windows.
-
 COMMON_MARSHAL_LIST=$(COMMONSRCDIR)/hippo/hippo-common-marshal.list
 COMMON_MARSHAL_HEADER=$(MARSHAL_DIR)/hippo-common-marshal.h
 COMMON_MARSHAL_BODY=$(MARSHAL_DIR)/hippo-common-marshal.c

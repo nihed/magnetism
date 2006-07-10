@@ -600,7 +600,6 @@ hippo_bubble_init(HippoBubble       *bubble)
     gtk_box_pack_start(GTK_BOX(box), widget, FALSE, FALSE, 0);
     
     bubble->ignore_label = gtk_label_new(NULL);
-    gtk_label_set_markup(GTK_LABEL(bubble->ignore_label), "<u>Ignore</u>");
     set_blue_fg(bubble->ignore_label);    
     gtk_box_pack_start(GTK_BOX(box), bubble->ignore_label, FALSE, FALSE, 0);
     hookup_widget(bubble, &bubble->ignore_label);   
@@ -2057,6 +2056,16 @@ hippo_bubble_set_page_n_of_total(HippoBubble *bubble,
         gtk_widget_show(bubble->right_arrow);    
     }
 }
+
+void
+hippo_bubble_set_ignore_text(HippoBubble *bubble,
+                             const char  *link_text,
+                             const char  *details_text)
+{
+	char *markup = g_markup_printf_escaped("<u>%s</u>%s", link_text, details_text);
+    gtk_label_set_markup(GTK_LABEL(bubble->ignore_label), markup);
+	g_free(markup);
+}                             
 
 void
 hippo_bubble_notify_reason(HippoBubble      *bubble,

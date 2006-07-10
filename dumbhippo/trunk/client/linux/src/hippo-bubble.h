@@ -95,6 +95,9 @@ void             hippo_bubble_set_chat_count         (HippoBubble *bubble,
 void             hippo_bubble_set_page_n_of_total    (HippoBubble *bubble,
                                                       int          n,
                                                       int          total);
+void             hippo_bubble_set_ignore_text        (HippoBubble *bubble,
+                                                      const char  *link_text,
+                                                      const char  *details_text);                                                      
 void             hippo_bubble_notify_reason          (HippoBubble *bubble,
                                                       HippoBubbleReason reason);
 
