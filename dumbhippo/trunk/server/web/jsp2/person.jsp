@@ -118,7 +118,7 @@
 				    <dht:zoneBoxSubcolumn which="one">
 			            <c:if test="${musicPerson.recentTracks.resultCount > 0}">
 				            <dht:trackList name="RECENT SONGS" id="dhRecentSongs" tracks="${musicPerson.recentTracks.results}"
-				            pageable="${musicPerson.recentTracks}" separator="false" oneLine="false" playItLink="false"/>
+				            pageable="${musicPerson.recentTracks}" separator="false" oneLine="false" playItLink="true"/>
 			            </c:if>
 				    </dht:zoneBoxSubcolumn>
 				    <dht:zoneBoxSubcolumn which="two">
@@ -132,7 +132,7 @@
 			<c:otherwise>
 				<c:if test="${musicPerson.recentTracks.resultCount > 0}">
 					<dht:trackList name="RECENT SONGS" id="dhRecentSongs" tracks="${musicPerson.recentTracks.results}"
-			            		pageable="${musicPerson.recentTracks}" separator="false" oneLine="true" playItLink="false"/>
+			            		pageable="${musicPerson.recentTracks}" separator="false" oneLine="true" playItLink="true"/>
 				</c:if>
 			</c:otherwise>
 			</c:choose>
