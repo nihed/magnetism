@@ -37,7 +37,7 @@
 		</div>
 		<br/>
 		<div>
-			<b>Music Radar</b> shows what's currently on your iTunes or Yahoo! Music player.
+			<b>Music Radar</b> shows what's currently on your iTunes, Rhapsody, or Yahoo! Music player.
 			When someone clicks on it, they'll be taken to your Mugshot page to see more
 			about you and your musical tastes.  With a free Mugshot account, you can 
 			keep track of what your friends are listening to and explore new music.

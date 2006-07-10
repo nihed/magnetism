@@ -61,11 +61,11 @@ Mugshot currently offers two activities:
 
 <ul>
 <li>Web Swarm - Share web links with individuals or groups in real time, and get live feedback when people visit those links</li>
-<li>Music Radar - Show off the music you listen to using services like iTunes, Yahoo! Music, and others on your web site, blog or MySpace page</li>
+<li>Music Radar - Show off the music you listen to using services like iTunes, Rhapsody, Yahoo! Music, and others on your web site, blog or MySpace page</li>
 </ul>
 
 <p>
-Mugshot works with mainstream applications like iTunes, Yahoo! Music Engine,
+Mugshot works with mainstream applications like iTunes, Rhapsody, Yahoo! Music Engine,
 Firefox and Internet Explorer and currently supports Windows XP and
 Linux platforms, with limited support for Apple's OS X.
 </p>
@@ -112,7 +112,7 @@ centered on people and their activities, not documents and files.
 </p>
 
 <a name="6">
-<h3>6. What is available as of May 31, 2006?</h3>
+<h3>6. What is currently available?</h3>
    
 <ul>
 <li>The Mugshot open source project site, including source code for the client and server, project information, blog, and more, at <a href="http://developer.mugshot.org">http://developer.mugshot.org</a></li>
@@ -260,7 +260,7 @@ OS X and other platforms.
 The Mugshot client software currently offers integration with Apple
 iTunes, Yahoo! Music Engine, Internet Explorer and Firefox on Windows
 XP. The open source Rhythmbox music player and Firefox are supported
-on Linux.
+on Linux.  Rhapsody is supported on Windows, Linux, and Mac.
 </p>
 
 <p>
@@ -275,9 +275,9 @@ applications and service providers.
 <h3>17. What web services does Mugshot use?</h3>
     
 <p>
-Mugshot currently makes use of public web services from Yahoo! and
-Amazon, but has no formal partnership with either company related 
-to this project.
+Mugshot currently makes use of public web services from AOL, Amazon,
+Rhapsody, and Yahoo!, but has no formal partnerships with these companies
+related to this project.
 </p>
 
 <p>

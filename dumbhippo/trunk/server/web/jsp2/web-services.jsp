@@ -38,6 +38,14 @@
     All such content is provided to you "as is." This content and your use of it are 
     subject to change and/or removal at any time.</p>
     
+    <a name="rhapsody">
+    <h3>Rhapsody</h3>
+    
+    <p>Some of the content that we make available to you through this application 
+    comes from <a href="http://www.rhapsody.com/webservices">Rhapsody web services</a>.  
+    All such content is provided to you "as is." This content and your use of it 
+    are subject to change and/or removal at any time.</p>
+    
     <a name="yahoo">
     <h3>Yahoo!</h3>
     

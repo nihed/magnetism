@@ -55,8 +55,8 @@
 		<c:if test="${!signin.musicSharingEnabled}">
 			<li><a href="javascript:dh.actions.setMusicSharingEnabled(true);">Turn music sharing on</a></li>
 		</c:if>
-		<li>Make sure that iTunes is on, and that a song is playing.</li>
-		<li>Try restarting iTunes.</li>
+		<li>Make sure that iTunes or Yahoo! Music Engine is on, and that a song is playing.</li>
+		<li>Try restarting iTunes or Yahoo! Music Engine.</li>
 		<li><a href="javascript:window.location.reload();">Refresh</a> your browser.</li>
 		</ul>
 		</dht:zoneBoxMusic>
