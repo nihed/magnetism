@@ -46,7 +46,10 @@
 		
 		<dht:zoneBoxSeparator/>
 		
-		<div class="dh-music-learnmore-section"><a href="/links-learnmore">Learn more about Web Swarm</a></div>		
+		<div class="dh-music-learnmore-section">
+		    <div class="dh-music-learnmore-text"><a href="/links-learnmore">Learn more about Web Swarm</a></div>		
+		    <div class="dh-music-learnmore-text"><a href="http://blog.mugshot.org/?page_id=213" target="_blank">Learn more about Mugshot Features</a></div>
+		</div>    
 		</dht:zoneBoxMusic>
 	</dht:contentColumn>
 </dht:twoColumnPage>

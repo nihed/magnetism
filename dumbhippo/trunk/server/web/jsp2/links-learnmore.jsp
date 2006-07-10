@@ -53,7 +53,11 @@
 		
 		<dht:zoneBoxSeparator/>
 		
-		<div><a href="/radar-learnmore">Learn more about Music Radar</a></div>
+        <div class="dh-links-learnmore-section">
+		    <div class="dh-links-learnmore-text"><a href="/radar-learnmore">Learn more about Music Radar</a></div>	
+		    <div class="dh-links-learnmore-text"><a href="http://blog.mugshot.org/?page_id=213" target="_blank">Learn more about Mugshot Features</a></div>
+		</div>   
+		
 		</dht:zoneBoxWeb>
 	</dht:contentColumn>
 </dht:twoColumnPage>

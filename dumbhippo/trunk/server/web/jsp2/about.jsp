@@ -15,7 +15,9 @@
 	<p>Mugshot is an open project to create a live social experience around entertainment.</p>
 
     <p>Mugshot makes it easy to <a href="/links-learnmore">share web pages</a> and 
-    <a href="/radar-learnmore">show off your music tastes</a>.
+    <a href="/radar-learnmore">show off your music tastes</a>. You can learn about
+    Mugshot feautures as we introduce them on <a href="http://blog.mugshot.org/?page_id=213">
+    our Mugshot Features page</a>.
 
 	<p>Mugshot is currently operating a limited user trial, with new
 	accounts available on an invitation-only basis until we scale things
