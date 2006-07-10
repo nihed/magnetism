@@ -26,10 +26,14 @@ public class FeedPost extends Post {
 		super();
 	}
 	
+	// note this logic is copied in PostingBoardBean for non-FeedPost,
+	// careful keeping them in sync
 	static private Set<Resource> makeExpandedRecipients(GroupFeed feed) {
 		Set<Resource> expandedRecipients = new HashSet<Resource>();
 		for (GroupMember member : feed.getGroup().getMembers()) {
-			expandedRecipients.add(member.getMember());
+			if (member.isParticipant()) {
+				expandedRecipients.add(member.getMember());
+			}
 		}
 		
 		return expandedRecipients;
