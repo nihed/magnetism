@@ -23,6 +23,8 @@ public class MusicGlobalPage extends AbstractSigninOptionalPage {
 	@PagePositions
 	PagePositionsBean pagePositions;
 	
+	private int initialPerPage;
+	
 	private Pageable<TrackView> recentTracks;
 	private Pageable<TrackView> mostPlayedTracks;
 	private Pageable<TrackView> mostPlayedToday;
@@ -30,11 +32,16 @@ public class MusicGlobalPage extends AbstractSigninOptionalPage {
 	
 	public MusicGlobalPage() {
 		musicSystem = WebEJBUtil.defaultLookup(MusicSystem.class);
+		initialPerPage = -1; // leave at -1 to get the PagePositionsBean default
 	}
 
+	public void setInitialPerPage(int initialPerPage) {
+		this.initialPerPage = initialPerPage;
+	}
+	
 	public Pageable<TrackView> getRecentTracks() {
 		if (recentTracks == null) {
-			recentTracks = pagePositions.createBoundedPageable("globalRecentTracks");
+			recentTracks = pagePositions.createBoundedPageable("globalRecentTracks", initialPerPage);
 			musicSystem.pageLatestTrackViews(getSignin().getViewpoint(), recentTracks);
 		}
 		
@@ -43,7 +50,7 @@ public class MusicGlobalPage extends AbstractSigninOptionalPage {
 	
 	public Pageable<TrackView> getMostPlayedTracks() {
 		if (mostPlayedTracks == null) {
-			mostPlayedTracks = pagePositions.createBoundedPageable("globalMostPlayedTracks");
+			mostPlayedTracks = pagePositions.createBoundedPageable("globalMostPlayedTracks", initialPerPage);
 			musicSystem.pageFrequentTrackViews(getSignin().getViewpoint(), mostPlayedTracks);
 		}
 		return mostPlayedTracks;
@@ -67,7 +74,7 @@ public class MusicGlobalPage extends AbstractSigninOptionalPage {
 			
 			dayStart = calendar.getTime();
 			
-			mostPlayedToday = pagePositions.createBoundedPageable("mostPlayedToday");
+			mostPlayedToday = pagePositions.createBoundedPageable("mostPlayedToday", initialPerPage);
 			musicSystem.pageFrequentTrackViewsSince(getSignin().getViewpoint(), dayStart, mostPlayedToday);
 		}
 		return mostPlayedToday;
@@ -75,7 +82,7 @@ public class MusicGlobalPage extends AbstractSigninOptionalPage {
 
 	public Pageable<TrackView> getOnePlayTracks() {
 		if (onePlayTracks == null) {
-			onePlayTracks = pagePositions.createBoundedPageable("onePlayTracks");
+			onePlayTracks = pagePositions.createBoundedPageable("onePlayTracks", initialPerPage);
 			musicSystem.pageOnePlayTrackViews(getSignin().getViewpoint(), onePlayTracks);
 		}
 		return onePlayTracks;

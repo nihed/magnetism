@@ -12,7 +12,7 @@ public class PagePositionsBean {
 	// with the default page sizes of initial=3, subsequent=6
 	static final int DEFAULT_BOUND = 57;
 	
-	Map<String, Integer> positions;
+	private Map<String, Integer> positions;
 	
 	private PagePositionsBean(HttpServletRequest request) {
 		positions = new HashMap<String, Integer>();
@@ -47,17 +47,27 @@ public class PagePositionsBean {
 	}
 	
 	public <T> Pageable<T> createPageable(String name) {
+		return createPageable(name, -1);
+	}
+	
+	public <T> Pageable<T> createPageable(String name, int initialPerPage) {
 		Pageable<T> pageable = new Pageable<T>(name);
 		
 		Integer position = positions.get(name);
 		if (position != null)
 			pageable.setPosition(position);
+		if (initialPerPage > 0)
+			pageable.setInitialPerPage(initialPerPage);
 		
 		return pageable;
 	}
 	
 	public <T> Pageable<T> createBoundedPageable(String name) {
-		Pageable<T> pageable = createPageable(name);
+		return createBoundedPageable(name, -1);
+	}
+	
+	public <T> Pageable<T> createBoundedPageable(String name, int initialPerPage) {
+		Pageable<T> pageable = createPageable(name, initialPerPage);
 		pageable.setBound(DEFAULT_BOUND);
 		
 		return pageable;

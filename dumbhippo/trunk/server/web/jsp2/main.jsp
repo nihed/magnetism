@@ -72,6 +72,7 @@
 		<td id="dhZoneBoxMusic" class="dh-zone-box dh-color-normal" valign="top">
 			<div class="dh-zone-box-content">
 				<dht:requireMusicGlobalBean/>
+				<jsp:setProperty name="musicGlobal" property="initialPerPage" value="5"/>
 				<c:forEach items="${musicGlobal.recentTracks.results}" var="track" varStatus="status">
 					<dht:track track="${track}" albumArt="true"/>
 					<c:if test="${!status.last}">
