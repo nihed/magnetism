@@ -6,7 +6,6 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.Callable;
 
 import javax.annotation.EJB;
 import javax.ejb.Stateless;
@@ -17,7 +16,6 @@ import javax.persistence.Query;
 
 import org.slf4j.Logger;
 
-import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.TypeUtils;
 import com.dumbhippo.identity20.Guid;
@@ -45,7 +43,6 @@ import com.dumbhippo.server.Pageable;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
 import com.dumbhippo.server.SystemViewpoint;
-import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.UserViewpoint;
 import com.dumbhippo.server.Viewpoint;
 
@@ -60,9 +57,6 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 	
 	@EJB
 	private IdentitySpider identitySpider;
-	
-	@EJB
-	private TransactionRunner runner;
 	
 	public Group createGroup(User creator, String name, GroupAccess access, String description) {
 		if (creator == null)
@@ -617,35 +611,16 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 	}
 	
 	public void incrementGroupVersion(final Group group) {
-		try {
-			
-			runner.runTaskInNewTransaction(new Callable<Object>() {
-
-				public Integer call() {
-//				While it isn't a big deal in practice, the implementation below is slightly
-//				racy. The following would be better, but triggers a hibernate bug.
-
-//				em.createQuery("UPDATE Group g set g.version = g.version + 1 WHERE g.id = :id")
-//				.setParameter("id", groupId)
-//				.executeUpdate();
+//		While it isn't a big deal in practice, the implementation below is slightly
+//		racy. The following would be better, but triggers a hibernate bug.
+//
+//		em.createQuery("UPDATE Group g set g.version = g.version + 1 WHERE g.id = :id")
+//			.setParameter("id", groupId)
+//			.executeUpdate();
+//		
+// 	       em.refresh(group);
 				
-//				return em.find(Group.class, groupId).getVersion();
-
-					Group inner = em.find(Group.class, group.getId());
-					int newVersion = inner.getVersion() + 1;
-					
-					inner.setVersion(newVersion);
-					
-					return null;
-				}
-				
-			});
-			
-			em.refresh(group);
-			
-		} catch (Exception e) {
-			ExceptionUtils.throwAsRuntimeException(e);
-		}
+		group.setVersion(group.getVersion() + 1);
 	}
 	
 	// The selection of Group is only needed for the CAN_SEE checks

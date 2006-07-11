@@ -149,7 +149,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		final String email = EmailResource.canonicalize(emailRaw);
 		
 		try {
-			EmailResource detached = runner.runTaskRetryingOnConstraintViolation(new Callable<EmailResource>() {
+			return runner.runTaskThrowingConstraintViolation(new Callable<EmailResource>() {
 				
 				public EmailResource call() throws Exception {
 					Query q;
@@ -169,7 +169,6 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 				}			
 			});
 			
-			return em.find(EmailResource.class, detached.getId()); 
 		} catch (Exception e) {
 			ExceptionUtils.throwAsRuntimeException(e);
 			return null; // not reached
@@ -179,7 +178,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	public AimResource getAim(final String screenNameRaw) throws ValidationException {
 		final String screenName = AimResource.canonicalize(screenNameRaw);
 		try {
-			AimResource detached = runner.runTaskRetryingOnConstraintViolation(new Callable<AimResource>() {
+			return runner.runTaskThrowingConstraintViolation(new Callable<AimResource>() {
 				public AimResource call() {
 					Query q;
 					
@@ -202,7 +201,6 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 				}
 			});
 			
-			return em.find(AimResource.class, detached.getId());
 		} catch (ValidationException e) {
 			throw e;
 		} catch (Exception e) {
@@ -247,7 +245,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 
 	public LinkResource getLink(final URL url) {
 		try {
-			LinkResource detached = runner.runTaskRetryingOnConstraintViolation(new Callable<LinkResource>() {
+			return runner.runTaskThrowingConstraintViolation(new Callable<LinkResource>() {
 	
 				public LinkResource call() throws Exception {
 					Query q;
@@ -268,7 +266,6 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 				
 			});
 			
-			return em.find(LinkResource.class, detached.getId());
 		} catch (Exception e) {
 			ExceptionUtils.throwAsRuntimeException(e);
 			return null; // not reached
@@ -277,7 +274,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	
 	public User getCharacter(final Character whichOne) {
 		try {
-			User detached = runner.runTaskRetryingOnConstraintViolation(new Callable<User>() {
+			return runner.runTaskThrowingConstraintViolation(new Callable<User>() {
 				public User call() {
 					EmailResource email;
 					try {
@@ -300,7 +297,6 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 				}
 			});
 			
-			return em.find(User.class, detached.getId());
 		} catch (Exception e) {
 			ExceptionUtils.throwAsRuntimeException(e);
 			return null; // not reached
@@ -963,31 +959,15 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	}
 	
 	public void incrementUserVersion(final User user) {
-		try {
-			runner.runTaskInNewTransaction(new Callable<Object>() {
-				public Integer call() {
-	//				While it isn't a big deal in practice, the implementation below is slightly
-	//				racy. The following would be better, but triggers a hibernate bug.
+    //		While it isn't a big deal in practice, the implementation below is slightly
+	//		racy. The following would be better, but triggers a hibernate bug.
 	//				
-	//				em.createQuery("UPDATE User u set u.version = u.version + 1 WHERE u.id = :id")
-	//				.setParameter("id", userId)
-	//				.executeUpdate();
-	//				
-	//				return em.find(User.class, userId).getVersion();
-					User inner = em.find(User.class, user.getId());
-					int newVersion = inner.getVersion() + 1;
-					
-					inner.setVersion(newVersion);
-					
-					return null;			
-				}
-			});
-			
-			em.refresh(user);
-
-		} catch (Exception e) {
-			ExceptionUtils.throwAsRuntimeException(e);
-		}
+	//		em.createQuery("UPDATE User u set u.version = u.version + 1 WHERE u.id = :id")
+	//			.setParameter("id", userId)
+	//			.executeUpdate();
+	//			
+	//			em.refresh(user);
+		user.setVersion(user.getVersion() + 1);
 	}
 
 	public void setBio(UserViewpoint viewpoint, User user, String bio) {

@@ -12,6 +12,7 @@ import java.util.Set;
 
 import javax.naming.InitialContext;
 import javax.persistence.EntityManager;
+import javax.transaction.Status;
 import javax.transaction.Synchronization;
 import javax.transaction.TransactionManager;
 
@@ -412,9 +413,11 @@ public class LiveState {
 		public void beforeCompletion() {
 		}
 
-		public void afterCompletion(int arg0) {
-			logger.debug("enqueuing post-transaction event " + event);
-			LiveState.getInstance().queueUpdate(event);
+		public void afterCompletion(int status) {
+			if (status == Status.STATUS_COMMITTED) {
+				logger.debug("running post-transaction event " + event);
+				LiveState.getInstance().queueUpdate(event);
+			}
 		}
 	}
 	

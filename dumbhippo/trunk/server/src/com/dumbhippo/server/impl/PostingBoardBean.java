@@ -405,8 +405,8 @@ public class PostingBoardBean implements PostingBoard {
 
 	private Post createAndIndexPost(Callable<Post> creator) {
 		try {
-			Post detached = runner.runTaskInNewTransaction(creator);
-			PostIndexer.getInstance().index(detached.getGuid());
+			Post detached = runner.runTaskNotInNewTransaction(creator);
+			PostIndexer.getInstance().indexAfterTransaction(detached.getGuid());
 			Post post = em.find(Post.class, detached.getId());
 			if (post == null)
 				logger.error("reattach after creating new post FAILED ...");
@@ -1219,25 +1219,18 @@ public class PostingBoardBean implements PostingBoard {
 	
 	public PersonPostData getOrCreatePersonPostData(final User user, final Post post) {
 		try {
-			PersonPostData outerPpd = runner.runTaskRetryingOnConstraintViolation(new Callable<PersonPostData>() {
+			return runner.runTaskThrowingConstraintViolation(new Callable<PersonPostData>() {
 				public PersonPostData call() {
-					Post attachedPost = em.find(Post.class, post.getId());
-					User attachedUser = em.find(User.class, user.getId());
-					PersonPostData ppd = getPersonPostData(attachedUser, attachedPost);
-					// needed since we are in another transaction
+					PersonPostData ppd = getPersonPostData(user, post);
 
 					if (ppd == null) {
-						ppd = new PersonPostData(attachedUser, attachedPost);
+						ppd = new PersonPostData(user, post);
 						em.persist(ppd);
-						attachedPost.getPersonPostData().add(ppd);							
+						post.getPersonPostData().add(ppd);							
 					}
 					return ppd;
 				}
 			});
-			// Reattach the data			
-			outerPpd = em.find(PersonPostData.class, outerPpd.getId());
-			em.refresh(post);
-			return outerPpd;
 		} catch (Exception e) {
 			ExceptionUtils.throwAsRuntimeException(e);
 			return null;

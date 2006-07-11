@@ -81,7 +81,7 @@ public class RecommenderSystemBean implements RecommenderSystem {
 	 */
 	private boolean updateRatingData(final User user, final Post item, final double score, final String reason, final String type) {
 		try {
-			return runner.runTaskRetryingOnConstraintViolation(new Callable<Boolean>() {
+			return runner.runTaskThrowingConstraintViolation(new Callable<Boolean>() {
 
 				public Boolean call() {
 					

@@ -372,14 +372,13 @@ public class FeedSystemBean implements FeedSystem {
 		final SyndFeed syndFeed = fetchFeedFromNet(source);
 		
 		try {
-			Feed detached = runner.runTaskRetryingOnConstraintViolation(new Callable<Feed>() {
+			return runner.runTaskThrowingConstraintViolation(new Callable<Feed>() {
 				
 				public Feed call() throws Exception {
 					Feed newFeed = lookupExistingFeed(source);
 					if (newFeed != null) // Someone else already looked it up and stored it
 						return newFeed;
 					
-					// source is not part of the session, but only it's ID is needed for this
 					newFeed = new Feed(source);
 					em.persist(newFeed);
 										
@@ -388,8 +387,6 @@ public class FeedSystemBean implements FeedSystem {
 					return newFeed;
 				}
 			});
-			
-			return em.find(Feed.class, detached.getId());
 			
 		} catch (Exception e) {
 			if (e instanceof XmlMethodException)

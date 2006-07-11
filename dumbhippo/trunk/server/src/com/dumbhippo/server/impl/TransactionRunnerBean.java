@@ -26,6 +26,10 @@ public class TransactionRunnerBean implements TransactionRunner {
 		return proxy.internalRunTaskInNewTransaction(callable);
 	}
 	
+	public <T> T runTaskNotInNewTransaction(Callable<T> callable) throws Exception {
+		return callable.call();
+	}
+	
 	public <T> T runTaskRetryingOnConstraintViolation(Callable<T> callable) throws Exception {
 		int retries = 1;
 		
@@ -43,6 +47,10 @@ public class TransactionRunnerBean implements TransactionRunner {
 				}
 			}
 		}
+	}
+
+	public <T> T runTaskThrowingConstraintViolation(Callable<T> callable) throws Exception {
+		return callable.call();
 	}
 
 	@TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)

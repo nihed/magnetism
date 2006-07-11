@@ -45,7 +45,7 @@ public class WantsInSystemBean implements WantsInSystem {
 		final boolean increment = true;
 		
 		try {
-			runner.runTaskRetryingOnConstraintViolation(new Callable<WantsIn>() {
+			runner.runTaskThrowingConstraintViolation(new Callable<WantsIn>() {
 
 				public WantsIn call() {
 					Query q;

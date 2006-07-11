@@ -62,7 +62,7 @@ public class ClaimVerifierBean implements ClaimVerifier {
 			throw new IllegalArgumentException("one of user/resource has to be non-null");
 		
 		try {
-			return runner.runTaskRetryingOnConstraintViolation(new Callable<ResourceClaimToken>() {
+			return runner.runTaskThrowingConstraintViolation(new Callable<ResourceClaimToken>() {
 				
 				public ResourceClaimToken call() {
 					Query q;

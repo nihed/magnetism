@@ -57,7 +57,7 @@ public class NoMailSystemBean implements NoMailSystem {
 	public void processAction(final EmailResource email, Action action) {
 		NoMail noMail;
 		try {
-			noMail = runner.runTaskRetryingOnConstraintViolation(new Callable<NoMail>() {
+			noMail = runner.runTaskThrowingConstraintViolation(new Callable<NoMail>() {
 
 				public NoMail call() {
 					Query q;
@@ -99,7 +99,7 @@ public class NoMailSystemBean implements NoMailSystem {
 	public String getNoMailUrl(final EmailResource email, Action action) {
 		ToggleNoMailToken token;
 		try {
-			token = runner.runTaskRetryingOnConstraintViolation(new Callable<ToggleNoMailToken>() {
+			token = runner.runTaskThrowingConstraintViolation(new Callable<ToggleNoMailToken>() {
 
 				public ToggleNoMailToken call() {
 					Query q;

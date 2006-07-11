@@ -10,6 +10,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.transaction.RollbackException;
+import javax.transaction.Status;
 import javax.transaction.SystemException;
 import javax.transaction.Synchronization;
 import javax.transaction.TransactionManager;
@@ -81,8 +82,9 @@ public abstract class Indexer<T> {
 			tm.getTransaction().registerSynchronization(new Synchronization() {
 				public void beforeCompletion() {}
 
-				public void afterCompletion(int arg0) {
-					index(ids);
+				public void afterCompletion(int status) {
+					if (status == Status.STATUS_COMMITTED)
+						index(ids);
 				}
 			});
 		} catch (NamingException e) {
