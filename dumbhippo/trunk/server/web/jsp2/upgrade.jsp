@@ -24,15 +24,15 @@
 			<%-- LINUX RELEASE NOTES GO HERE --%>
 			<p>Version 1.1.7</p>
 			<ul>
-				<li>Purple bubbles! Purple bubbles are about group chat activity and new members in groups.</li>
+				<li>Purple bubbles! Purple bubbles show group chat activity and new members in groups.</li>
 				<li>Other small fixes</li>
 			</ul>
 		</c:when>
 		<c:otherwise>
 			<%-- WINDOWS RELEASE NOTES GO HERE --%>
-			<p>Version 1.1.55</p>
+			<p>Version 1.1.56</p>
 			<ul>
-				<li>Purple bubbles! Purple bubbles are about group chat activity and new members in groups.</li>
+				<li>Purple bubbles! Purple bubbles show group chat activity and new members in groups.</li>
 				<li>Fix a bug where clicking on someone's name/photo did not open their page.</li>
 				<li>Other small fixes</li>
 			</ul>
