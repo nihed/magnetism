@@ -71,12 +71,16 @@ form {
 	width:			710px;	
 }
 
-.dh-header-short {
-	height:			65px;
+.dh-header-tall {
+	height:			125px;	
 }
 
-.dh-header-tall {
-	height:			110px;	
+.dh-header-regular {
+	height:			80px;
+}
+
+.dh-header-short {
+	height:			65px;
 }
 
 #dhHeaderControls {
@@ -85,13 +89,26 @@ form {
 	top:			7px;
 }
 
-#dhHeaderControls #dhHeaderLinks {
+#dhHeaderControls #dhHeaderOptions {
 	margin-bottom:	4px;
 	text-align:		right;
 }
 
-#dhHeaderLinks .dh-action-link {
+#dhHeaderOptions .dh-action-link {
 	display:		inline;
+}
+
+#dhHeaderLinks {
+    position:       absolute;
+    bottom:         5px; 
+}
+
+.dh-header-tall #dhHeaderLinks {
+    left:           19px;
+}
+
+.dh-header-regular #dhHeaderLinks {
+    left:           10px;
 }
 
 #dhSearchBox .dh-text-input {

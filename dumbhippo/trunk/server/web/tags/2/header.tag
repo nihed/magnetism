@@ -20,14 +20,14 @@
 
 <c:choose>
 	<c:when test="${kind == 'main'}">
-		<c:set var="headerMap" value="header710x110" scope="page" />
-		<c:set var="headerImage" value="/images2/${buildStamp}/mughdr710x110.gif" scope="page"/>
+		<c:set var="headerMap" value="header710x125" scope="page" />
+		<c:set var="headerImage" value="/images2/${buildStamp}/mughdr710x125.gif" scope="page"/>
 		<c:set var="headerHeightClass" value="dh-header-tall" scope="page"/>
 	</c:when>
 	<c:when test="${kind == 'withSidebar'}">
-		<c:set var="headerMap" value="header710x65" scope="page" />
-		<c:set var="headerImage" value="/images2/${buildStamp}/mughdr710x65.gif" scope="page"/>
-		<c:set var="headerHeightClass" value="dh-header-short" scope="page"/>
+		<c:set var="headerMap" value="header710x80" scope="page" />
+		<c:set var="headerImage" value="/images2/${buildStamp}/mughdr710x80.gif" scope="page"/>
+		<c:set var="headerHeightClass" value="dh-header-regular" scope="page"/>
 	</c:when>
 	<c:otherwise>
 		<c:set var="headerMap" value="header500x65" scope="page" />
@@ -36,12 +36,12 @@
 	</c:otherwise>
 </c:choose>
 
-<map name="header710x110">
-<area shape="rect" coords="0,0,400,110" href="/" />
+<map name="header710x125">
+<area shape="rect" coords="0,0,400,125" href="/" />
 </map>
 
-<map name="header710x65">
-<area shape="rect" coords="0,0,258,65" href="/" />
+<map name="header710x80">
+<area shape="rect" coords="0,0,258,80" href="/" />
 </map>
 
 <map name="header500x65">
@@ -51,7 +51,7 @@
 <div id="dhPageHeader" class="${headerHeightClass}">
 	<img id="dhPageHeaderImage" src="${headerImage}" usemap="#${headerMap}" />
 	<div id="dhHeaderControls">
-		<div id="dhHeaderLinks">
+		<div id="dhHeaderOptions">
 			<c:choose>
 				<c:when test="${signin.valid}">
 					<c:if test="${!disableHomeLink}">
@@ -86,6 +86,14 @@
 				}
 				dhGlobalSearchEntryInit()
 			</script>			
+		</div>		
+	</div>
+    <c:if test="${kind == 'main' || kind == 'withSidebar'}">
+        <div id="dhHeaderLinks">
+            <%-- TODO: use <img id="dhNewFeaturesImage" src="/images2/${buildStamp}/newpink.gif"/>  to indicate --%>
+            <%-- when new features are available --%>
+            <a href="http://blog.mugshot.org/?page_id=213" title="Learn about various Mugshot features" target="_blank">Mugshot Features</a>&nbsp;&nbsp;|&nbsp;&nbsp;
+		    <a href="http://blog.mugshot.org" title="Read our blog" target="_blank">Mugshot Blog</a>
 		</div>
-	</div>		
+    </c:if>    		
 </div>

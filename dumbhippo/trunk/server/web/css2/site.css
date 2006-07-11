@@ -126,13 +126,13 @@ img {
 	color:				#aaaaaa;
 }
 
-#dhHeaderLinks {
+#dhHeaderOptions, #dhHeaderLinks {
 	font-size:			12px;
 	font-weight:		bold;
 	color:				white;
 }
 
-#dhHeaderLinks a:link, #dhHeaderLinks a:visited {
+#dhHeaderOptions a:link, #dhHeaderOptions a:visited, #dhHeaderLinks a:link, #dhHeaderLinks a:visited {
 	color:				white;
 }
 
