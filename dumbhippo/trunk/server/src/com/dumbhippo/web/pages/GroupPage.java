@@ -39,6 +39,9 @@ import com.dumbhippo.web.WebEJBUtil;
 public class GroupPage extends AbstractSigninOptionalPage {
 	protected static final Logger logger = GlobalSetup.getLogger(GroupPage.class);
 	
+	// We override the default values for initial and subsequent results per page from Pageable
+	// This number will apply to each section of members (active/followers/invited/invited followers)
+	static private final int MEMBERS_PER_PAGE = 14;
 	static private final int MAX_POSTS_SHOWN = 10;
 	static private final int MAX_MEMBERS_SHOWN = 5;
 	
@@ -63,6 +66,10 @@ public class GroupPage extends AbstractSigninOptionalPage {
 	private ListBean<PersonView> invitedMembers;
 	private ListBean<PersonView> followers;
 	private ListBean<PersonView> invitedFollowers;
+	private Pageable<PersonView> pageableActiveMembers;
+	private Pageable<PersonView> pageableInvitedMembers;
+	private Pageable<PersonView> pageableFollowers;
+	private Pageable<PersonView> pageableInvitedFollowers;
 	private ListBean<GroupFeed> feeds;
 	
 	private Pageable<PostView> posts;
@@ -141,12 +148,29 @@ public class GroupPage extends AbstractSigninOptionalPage {
 		return result;
 	}
  
+	private Pageable<PersonView> pageMembers(ListBean<PersonView> members, String pageableName) {
+        Pageable<PersonView> pageableMembers = pagePositions.createPageable(pageableName);
+		pageableMembers.setInitialPerPage(MEMBERS_PER_PAGE);
+		pageableMembers.setSubsequentPerPage(MEMBERS_PER_PAGE);
+		
+		pageableMembers.generatePageResults(members.getList());
+		
+		return pageableMembers;
+    }
+	
 	public ListBean<PersonView> getActiveMembers() {
 		if (activeMembers == null)
 			activeMembers = new ListBean<PersonView>(getMembers(MembershipStatus.ACTIVE));
 		return activeMembers;
 	}
 
+	public Pageable<PersonView> getPageableActiveMembers() {
+		if (pageableActiveMembers == null) {
+            pageableActiveMembers = pageMembers(getActiveMembers(), "activeMembers");
+		}
+		return pageableActiveMembers;
+	}
+	
 	public ListBean<PersonView> getInvitedMembers() {
 		// FIXME the isMember() check is broken, it should be inside GroupSystem.getMembers()
 		if (invitedMembers == null && isMember())
@@ -154,16 +178,37 @@ public class GroupPage extends AbstractSigninOptionalPage {
 		return invitedMembers;
 	}
 
+	public Pageable<PersonView> getPageableInvitedMembers() {
+		if (pageableInvitedMembers == null) {
+            pageableInvitedMembers = pageMembers(getInvitedMembers(), "invitedMembers");
+		}
+		return pageableInvitedMembers;
+	}
+	
 	public ListBean<PersonView> getFollowers() {
 		if (followers == null)
 			followers = new ListBean<PersonView>(getMembers(MembershipStatus.FOLLOWER));
 		return followers;
 	}
 
+	public Pageable<PersonView> getPageableFollowers() {
+		if (pageableFollowers == null) {
+            pageableFollowers = pageMembers(getFollowers(), "followers");
+		}
+		return pageableFollowers;
+	}
+	
 	public ListBean<PersonView> getInvitedFollowers() {
 		if (invitedFollowers == null)
 			invitedFollowers = new ListBean<PersonView>(getMembers(MembershipStatus.INVITED_TO_FOLLOW));
 		return invitedFollowers;
+	}
+
+	public Pageable<PersonView> getPageableInvitedFollowers() {
+		if (pageableInvitedFollowers == null) {
+            pageableInvitedFollowers = pageMembers(getInvitedFollowers(), "invitedFollowers");
+		}
+		return pageableInvitedFollowers;
 	}
 	
 	public GroupMember getGroupMember() {

@@ -27,12 +27,13 @@
 			    <c:out value="${fn:toUpperCase(pagetitle)}"/>
 			</dht:zoneBoxTitle>
 			<c:choose>
-				<c:when test="${person.allPublicGroups.size > 0}">
+				<c:when test="${person.pageablePublicGroups.totalCount > 0}">
 				    <dht:twoColumnList>
-					<c:forEach items="${person.allPublicGroups.list}" var="group">
+					<c:forEach items="${person.pageablePublicGroups.results}" var="group">
 						<dht:groupItem group="${group}" controls="true"/>
 					</c:forEach>    
 					</dht:twoColumnList>
+				    <dht:expandablePager pageable="${person.pageablePublicGroups}" anchor="dhPublicGroups"/>
 				</c:when>
 				<c:otherwise>
 				    No public groups.

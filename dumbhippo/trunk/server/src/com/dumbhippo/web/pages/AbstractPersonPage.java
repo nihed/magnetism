@@ -32,6 +32,7 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 	
 	// We override the default values for initial and subsequent results per page from Pageable
 	static private final int FRIENDS_PER_PAGE = 20;
+	static private final int GROUPS_PER_PAGE = 20;
 	
 	@PagePositions
 	PagePositionsBean pagePositions;
@@ -45,7 +46,7 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 	private PersonView viewedPerson;
 	
 	private ListBean<GroupView> groups;
-	private ListBean<GroupView> allPublicGroups;
+	private Pageable<GroupView> pageablePublicGroups;
 	private ListBean<GroupView> followedGroups;
 	private ListBean<GroupView> invitedGroups;
 	private ListBean<GroupView> invitedToFollowGroups;
@@ -160,11 +161,16 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 		return groups;
 	}                                       
 	
-	public ListBean<GroupView> getAllPublicGroups() {
-		if (allPublicGroups == null) {
-			allPublicGroups = new ListBean<GroupView>(GroupView.sortedList(groupSystem.findPublicGroups()));
+	public Pageable<GroupView> getPageablePublicGroups() {
+        if (pageablePublicGroups == null) {			
+			pageablePublicGroups = pagePositions.createPageable("publicGroups"); 				
+			pageablePublicGroups.setInitialPerPage(GROUPS_PER_PAGE);
+			pageablePublicGroups.setSubsequentPerPage(GROUPS_PER_PAGE);
+			
+			groupSystem.pagePublicGroups(pageablePublicGroups);
 		}
-		return allPublicGroups;
+		
+		return pageablePublicGroups;
 	}
 	
 	public ListBean<GroupView> getInvitedGroups() {
@@ -251,26 +257,12 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 	}
 
 	public Pageable<PersonView> getPageableContacts() {
-        if (pageableContacts == null) {
-			if (contacts == null) {
-				getContacts();
-			}
-			
+        if (pageableContacts == null) {			
 			pageableContacts = pagePositions.createPageable("friends"); 				
 			pageableContacts.setInitialPerPage(FRIENDS_PER_PAGE);
 			pageableContacts.setSubsequentPerPage(FRIENDS_PER_PAGE);
 			
-			pageableContacts.setTotalCount(contacts.getSize());		
-			
-			List<PersonView> contactsSubset = new ArrayList<PersonView>();
-			int i = Math.min(contacts.getSize(), pageableContacts.getStart());
-			int count = Math.min(contacts.getSize() - pageableContacts.getStart(), pageableContacts.getCount());
-			while (count > 0) {
-				contactsSubset.add(contacts.getList().get(i));
-				--count;
-				++i;
-			}
-			pageableContacts.setResults(contactsSubset);		
+			pageableContacts.generatePageResults(getContacts().getList());
 		}
 		
 		return pageableContacts;

@@ -41,6 +41,7 @@ import com.dumbhippo.server.GroupSystemRemote;
 import com.dumbhippo.server.GroupView;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.NotFoundException;
+import com.dumbhippo.server.Pageable;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
 import com.dumbhippo.server.SystemViewpoint;
@@ -594,17 +595,25 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 	
 	private static final String FIND_PUBLIC_GROUPS_QUERY = 
 		"FROM Group g WHERE ";
+
+	private static final String COUNT_PUBLIC_GROUPS_QUERY = 
+		"SELECT COUNT(g) FROM Group g WHERE ";
 	
-	public Set<GroupView> findPublicGroups() {
+	public void pagePublicGroups(Pageable<GroupView> pageable) {
 		Query q;
 		
-		q = em.createQuery(FIND_PUBLIC_GROUPS_QUERY + CAN_SEE_ANONYMOUS);
-
-		Set<GroupView> ret = new HashSet<GroupView>();
+		q = em.createQuery(FIND_PUBLIC_GROUPS_QUERY + CAN_SEE_ANONYMOUS 
+				           + " ORDER BY LCASE(g.name)");
+		q.setFirstResult(pageable.getStart());
+		q.setMaxResults(pageable.getCount());
+		List<GroupView> groups = new ArrayList<GroupView>();
 		for (Object o : q.getResultList()) {
-			ret.add(new GroupView((Group) o, null, null));
+			groups.add(new GroupView((Group) o, null, null));
 		}
-		return ret;
+		pageable.setResults(groups);
+		
+		q = em.createQuery(COUNT_PUBLIC_GROUPS_QUERY + CAN_SEE_ANONYMOUS);
+		pageable.setTotalCount(((Number) q.getSingleResult()).intValue());
 	}
 	
 	public void incrementGroupVersion(final Group group) {

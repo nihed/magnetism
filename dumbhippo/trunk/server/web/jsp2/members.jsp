@@ -29,39 +29,43 @@
 		<dht:zoneBoxGroup back="/group?who=${group.viewedGroupId}">
 			<dht:zoneBoxTitle>ALL GROUP MEMBERS</dht:zoneBoxTitle>
 			<dht:twoColumnList>
-				<c:forEach items="${group.activeMembers.list}" var="person">
+				<c:forEach items="${group.pageableActiveMembers.results}" var="person">
 					<dht:personItem who="${person}"/>
 				</c:forEach>
 			</dht:twoColumnList>
+			<dht:expandablePager pageable="${group.pageableActiveMembers}" anchor="dhActiveMembers"/>
 			
 			<c:if test="${group.followers.size > 0}">
 				<dht:zoneBoxSeparator/>
 				<dht:zoneBoxTitle>ALL FOLLOWERS</dht:zoneBoxTitle>
 				<dht:twoColumnList>
-					<c:forEach items="${group.followers.list}" var="person">
+					<c:forEach items="${group.pageableFollowers.results}" var="person">
 						<dht:personFollowerItem group="${group}" who="${person}"/>
 					</c:forEach>
 				</dht:twoColumnList>
+				<dht:expandablePager pageable="${group.pageableFollowers}" anchor="dhFollowers"/>
 			</c:if>
 
 			<c:if test="${group.member && group.invitedMembers.size > 0}"> <%-- FIXME the access control check here is wrong, should be in GroupSystem --%>
 				<dht:zoneBoxSeparator/>
 				<dht:zoneBoxTitle>ALL PENDING INVITATIONS</dht:zoneBoxTitle>
 				<dht:twoColumnList>
-					<c:forEach items="${group.invitedMembers.list}" var="person">
+					<c:forEach items="${group.pageableInvitedMembers.results}" var="person">
 						<dht:personItem who="${person}"/>
 					</c:forEach>
 				</dht:twoColumnList>
+				<dht:expandablePager pageable="${group.pageableInvitedMembers}" anchor="dhInvitedMembers"/>
 			</c:if>
 			
 			<c:if test="${group.member && group.invitedFollowers.size > 0}"> <%-- FIXME access control check doesn't go here --%>
 				<dht:zoneBoxSeparator/>
 				<dht:zoneBoxTitle>ALL INVITED FOLLOWERS</dht:zoneBoxTitle>
 				<dht:twoColumnList>
-					<c:forEach items="${group.invitedFollowers.list}" var="person">
+					<c:forEach items="${group.pageableInvitedFollowers.results}" var="person">
 						<dht:personItem who="${person}"/>
 					</c:forEach>
 				</dht:twoColumnList>
+				<dht:expandablePager pageable="${group.pageableInvitedFollowers}" anchor="dhInvitedFollowers"/>
 			</c:if>
 			
 		</dht:zoneBoxGroup>

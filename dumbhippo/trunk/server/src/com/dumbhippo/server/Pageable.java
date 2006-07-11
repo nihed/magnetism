@@ -1,5 +1,6 @@
 package com.dumbhippo.server;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class Pageable<T> {
@@ -107,5 +108,23 @@ public class Pageable<T> {
 		} else {
 			return subsequentPerPage;
 		}
+	}
+	
+	/**
+	 * Sets results for a page to be an appropriate subset of allItems.
+	 * 
+	 * @param allItems a list of items that are being paged
+	 */
+	public void generatePageResults(List<T> allItems) {
+		setTotalCount(allItems.size());				
+		List<T> pageResults = new ArrayList<T>();
+		int i = Math.min(allItems.size(), getStart());
+		int count = Math.min(allItems.size() - getStart(), getCount());
+		while (count > 0) {
+			pageResults.add(allItems.get(i));
+			--count;
+			++i;
+		}
+		setResults(pageResults);
 	}
 }
