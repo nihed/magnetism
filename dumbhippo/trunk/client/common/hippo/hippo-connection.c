@@ -2488,11 +2488,11 @@ on_get_chat_room_details_reply(LmMessageHandler *handler,
      */
     if (kind == HIPPO_CHAT_KIND_POST && 
         hippo_data_cache_lookup_post(connection->cache, chat_id) == NULL) {
-        g_error("Couldn't find post associated with chat");
+        g_warning("Couldn't find post associated with chat");
         goto out;
     } else if (kind == HIPPO_CHAT_KIND_GROUP &&
         hippo_data_cache_lookup_entity(connection->cache, chat_id) == NULL) {
-        g_error("Couldn't find entity associated with chat");
+        g_warning("Couldn't find entity associated with chat");
         goto out;
     }
 
