@@ -408,10 +408,13 @@ public class PostingBoardBean implements PostingBoard {
 			Post detached = runner.runTaskInNewTransaction(creator);
 			PostIndexer.getInstance().index(detached.getGuid());
 			Post post = em.find(Post.class, detached.getId());
+			if (post == null)
+				logger.error("reattach after creating new post FAILED ...");
 			
 			return post;
 		} catch (Exception e) {
 			ExceptionUtils.throwAsRuntimeException(e);
+			logger.error("WHAT THE HELL");
 			return null; // not reached
 		}		
 	}
