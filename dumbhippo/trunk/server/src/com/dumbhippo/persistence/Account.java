@@ -116,6 +116,7 @@ public class Account extends Resource {
 	}
 	
 	public Account(User owner) {	
+		feeds = new HashSet<AccountFeed>();		
 		clients = new HashSet<Client>();
 		contacts = new HashSet<Contact>();
 		favoritePosts = new HashSet<Post>();
@@ -221,7 +222,7 @@ public class Account extends Resource {
 
 	protected void setClients(Set<Client> clients) {
 		if (clients == null)
-			throw new IllegalArgumentException("null");
+			throw new IllegalArgumentException("null passed for clients");
 		this.clients = clients;
 	}
 
@@ -677,7 +678,7 @@ public class Account extends Resource {
 	 */
 	protected void setFeeds(Set<AccountFeed> feeds) {
 		if (feeds == null)
-			throw new IllegalArgumentException("null");
+			throw new IllegalArgumentException("null passed for feed");
 		this.feeds = feeds;
 	}
 	
