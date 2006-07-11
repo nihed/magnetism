@@ -30,11 +30,11 @@ GTK_MARSHAL_HEADER=$(MARSHAL_DIR)/hippo-gtk-marshal.h
 GTK_MARSHAL_BODY=$(MARSHAL_DIR)/hippo-gtk-marshal.c
 
 $(GTK_MARSHAL_HEADER): $(GTK_MARSHAL_LIST)
-	test -d $(MARSHAL_DIR) || mkdir $(MARSHAL_DIR) 
+	mkdir $(MARSHAL_DIR) || true
 	$(GLIB_GENMARSHAL) --prefix=hippo_gtk_marshal $(GTK_MARSHAL_LIST) --header > $(GTK_MARSHAL_HEADER)
 
 $(GTK_MARSHAL_BODY): $(GTK_MARSHAL_LIST)
-	test -d $(MARSHAL_DIR) || mkdir $(MARSHAL_DIR) 
+	mkdir $(MARSHAL_DIR) || true
 	(echo "#include \"hippo-gtk-marshal.h\""; $(GLIB_GENMARSHAL) --prefix=hippo_gtk_marshal $(GTK_MARSHAL_LIST) --body) > $(GTK_MARSHAL_BODY)
 
 EXTRA_DIST += $(GTK_MARSHAL_LIST)

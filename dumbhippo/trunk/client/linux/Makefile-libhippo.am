@@ -17,11 +17,11 @@ COMMON_MARSHAL_HEADER=$(MARSHAL_DIR)/hippo-common-marshal.h
 COMMON_MARSHAL_BODY=$(MARSHAL_DIR)/hippo-common-marshal.c
 
 $(COMMON_MARSHAL_HEADER): $(COMMON_MARSHAL_LIST)
-	test -d $(MARSHAL_DIR) || mkdir $(MARSHAL_DIR) 
+	mkdir $(MARSHAL_DIR) || true
 	$(GLIB_GENMARSHAL) --prefix=hippo_common_marshal $(COMMON_MARSHAL_LIST) --header > $(COMMON_MARSHAL_HEADER)
 
 $(COMMON_MARSHAL_BODY): $(COMMON_MARSHAL_LIST)
-	test -d $(MARSHAL_DIR) || mkdir $(MARSHAL_DIR) 
+	mkdir $(MARSHAL_DIR) || true
 	(echo "#include \"hippo-common-marshal.h\""; $(GLIB_GENMARSHAL) --prefix=hippo_common_marshal $(COMMON_MARSHAL_LIST) --body) > $(COMMON_MARSHAL_BODY)
 
 LIBHIPPO_SOURCEFILES =						\

@@ -79,7 +79,7 @@ EMBEDDED_IMAGES=				\
 
 EMBEDDED_IMAGE_HEADER=$(BUILT_SRC_DIR)/hippo-embedded-image-data.h
 $(EMBEDDED_IMAGE_HEADER):	$(EMBEDDED_IMAGES)
-	test -d $(MARSHAL_DIR) || mkdir $(MARSHAL_DIR) 
+	mkdir $(MARSHAL_DIR) || true
 	cat </dev/null > $(EMBEDDED_IMAGE_HEADER) || exit 1 ;				\
 	ALL_NAMES="" ;									\
 	for I in $(EMBEDDED_IMAGES); do							\

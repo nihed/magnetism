@@ -22,10 +22,10 @@
 	<c:choose>
 		<c:when test="${browser.linuxRequested}">
 			<%-- LINUX RELEASE NOTES GO HERE --%>
-			<p>Version 1.1.6</p>
+			<p>Version 1.1.7</p>
 			<ul>
-				<li>Fix a bug where sometimes the first chat message did not show up</li>
-				<li>Add support for RSS feeds in groups</li>
+				<li>Purple bubbles! Purple bubbles are about group chat activity and new members in groups.</li>
+				<li>Fix a bug where the first chat message was sometimes invisible.</li>
 				<li>Other small fixes</li>
 			</ul>
 		</c:when>
@@ -33,8 +33,9 @@
 			<%-- WINDOWS RELEASE NOTES GO HERE --%>
 			<p>Version 1.1.54</p>
 			<ul>
-				<li>Fix a bug where sometimes the first chat message did not show up</li>
-				<li>Add support for RSS feeds in groups</li>
+				<li>Purple bubbles! Purple bubbles are about group chat activity and new members in groups.</li>
+				<li>Fix a bug where clicking on someone's name/photo did not open their page.</li>
+				<li>Fix a bug where the first chat message was sometimes invisible.</li>
 				<li>Other small fixes</li>
 			</ul>
 		</c:otherwise>
