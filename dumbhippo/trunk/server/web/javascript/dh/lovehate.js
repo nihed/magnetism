@@ -71,10 +71,11 @@ dh.lovehate.Entry = function(baseId, defaultLoveText, currentLoveValue, defaultH
 			throw new Error("node " + node.id + " was not found...");
 					
 		// focus entry boxes
-		if (node == me._loveEditNode)
-			me._loveEntryNode.focus();
-		if (node == me._hateEditNode)
-			me._hateEntryNode.focus();
+		// we don't do this because it hides the gray hint text
+		//if (node == me._loveEditNode)
+		//	me._loveEntryNode.focus();
+		//if (node == me._hateEditNode)
+		//	me._hateEntryNode.focus();
 	}
 	
 	this.getMode = function() {
