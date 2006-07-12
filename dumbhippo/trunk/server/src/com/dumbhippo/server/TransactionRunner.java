@@ -16,6 +16,8 @@ public interface TransactionRunner {
 	
 	public <T> T runTaskThrowingConstraintViolation(Callable<T> callable) throws Exception;
 	
+	public void runTaskOnTransactionCommit(Runnable runnable);
+	
 	// internal, way to get TransactionAttribute, do not use
 	public <T> T internalRunTaskInNewTransaction(Callable<T> callable) throws Exception;
 	public void internalRunTaskInNewTransaction(Runnable runnable) throws Exception;

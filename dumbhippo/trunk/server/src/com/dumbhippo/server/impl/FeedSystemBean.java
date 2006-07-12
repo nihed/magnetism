@@ -342,28 +342,35 @@ public class FeedSystemBean implements FeedSystem {
 
 		feed.setLastFetched(new Date());
 		feed.setLastFetchSucceeded(true);
-		
-		// FIXME: Probably really should queue things after the transaction, but flushing
-		// will at least make the race condition between this and processing new
-		// entries in a separate transaction less likely
-		// FIXME in fact this does nothing at all, because with isolation the other 
-		// thread isn't going to see the feed entry until we commit our transaction
-		// anyhow - the race _has_ happened in practice...
-		em.flush();
 
-		for (final FeedEntry entry : feed.getEntries()) {
+		final List<Long> newEntryIds = new ArrayList<Long>();
+		for (FeedEntry entry : feed.getEntries()) {
 			if (foundGuids.contains(entry.getEntryGuid()) && !oldEntries.containsKey(entry.getEntryGuid())) {
 				logger.debug("Found new Feed entry: {}", entry.getTitle());
-				getNotificationService().submit(new Runnable() {
-					public void run() {
-						try {
-							EJBUtil.defaultLookup(FeedSystem.class).handleNewEntryNotification(entry.getId());
-						} catch (Throwable t) {
-							logger.error("Exception handling feed entry notification", t);
-						}
-					}
-				});
+				
+				newEntryIds.add(entry.getId());
 			}
+		}
+		
+		// The feed entries aren't visible to the notification service 
+		// thread until after we commit this transaction, so don't submit them
+		// to that thread until then.
+		if (!newEntryIds.isEmpty()) {
+			runner.runTaskOnTransactionCommit(new Runnable() {
+				public void run() {
+					for (final long entryId : newEntryIds) {
+						getNotificationService().submit(new Runnable() {
+							public void run() {
+								try {
+									EJBUtil.defaultLookup(FeedSystem.class).handleNewEntryNotification(entryId);
+								} catch (Throwable t) {
+									logger.error("Exception handling feed entry notification", t);
+								}
+							}
+						});
+					}
+				}
+			});
 		}
 	}
 	

@@ -6,6 +6,13 @@ import javax.ejb.EJBContext;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
+import javax.transaction.RollbackException;
+import javax.transaction.Status;
+import javax.transaction.Synchronization;
+import javax.transaction.SystemException;
+import javax.transaction.TransactionManager;
 
 import org.slf4j.Logger;
 
@@ -58,6 +65,34 @@ public class TransactionRunnerBean implements TransactionRunner {
 		return callable.call();
 	}
 
+	public void runTaskOnTransactionCommit(final Runnable runnable) {
+		TransactionManager tm;
+		try {
+			tm = (TransactionManager) (new InitialContext()).lookup("java:/TransactionManager");
+			tm.getTransaction().registerSynchronization(new Synchronization() {
+				public void beforeCompletion() {}
+
+				public void afterCompletion(int status) {
+					if (status == Status.STATUS_COMMITTED) {
+						try {
+							runnable.run();
+						} catch (RuntimeException e) {
+							logger.error("Post-commit task threw exception", e);
+						}
+					}
+				}
+			});
+		} catch (NamingException e) {
+			throw new RuntimeException(e);
+		} catch (IllegalStateException e) {
+			throw new RuntimeException(e);
+		} catch (RollbackException e) {
+			throw new RuntimeException(e);
+		} catch (SystemException e) {
+			throw new RuntimeException(e);
+		}
+	}
+	
 	@TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
 	public <T> T internalRunTaskInNewTransaction(Callable<T> callable) throws Exception {
 		return callable.call();

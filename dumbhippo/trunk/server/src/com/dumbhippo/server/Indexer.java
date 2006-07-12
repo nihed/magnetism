@@ -7,14 +7,6 @@ import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import javax.naming.InitialContext;
-import javax.naming.NamingException;
-import javax.transaction.RollbackException;
-import javax.transaction.Status;
-import javax.transaction.SystemException;
-import javax.transaction.Synchronization;
-import javax.transaction.TransactionManager;
-
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.StopAnalyzer;
 import org.apache.lucene.index.IndexReader;
@@ -25,6 +17,7 @@ import org.hibernate.lucene.DocumentBuilder;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.server.util.EJBUtil;
 
 public abstract class Indexer<T> {
 	@SuppressWarnings("unused")
@@ -76,27 +69,11 @@ public abstract class Indexer<T> {
 	}
 	
 	public void indexAfterTransaction(final List<Object> ids) {
-		TransactionManager tm;
-		try {
-			tm = (TransactionManager) (new InitialContext()).lookup("java:/TransactionManager");
-			tm.getTransaction().registerSynchronization(new Synchronization() {
-				public void beforeCompletion() {}
-
-				public void afterCompletion(int status) {
-					if (status == Status.STATUS_COMMITTED)
-						index(ids);
-				}
-			});
-		} catch (NamingException e) {
-			throw new RuntimeException(e);
-		} catch (IllegalStateException e) {
-			throw new RuntimeException(e);
-		} catch (RollbackException e) {
-			throw new RuntimeException(e);
-		} catch (SystemException e) {
-			throw new RuntimeException(e);
-		}
-		
+		EJBUtil.defaultLookup(TransactionRunner.class).runTaskOnTransactionCommit(new Runnable() {
+			public void run() {
+				index(ids);
+			}
+		});
 	}
 	
 	public void indexAfterTransaction(Object id) {
