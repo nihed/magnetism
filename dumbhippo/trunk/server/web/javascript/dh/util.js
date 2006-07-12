@@ -503,8 +503,8 @@ dh.util.stdEventHandler = function(f) {
             if (!e) e = window.event;
             e.returnValue = f(e);
             return e.returnValue;
-        } catch (e) {
-            alert("exception in event handler: " + e.message);
+        } catch (ex) {
+            alert("exception in event handler: " + ex.message);
             return false;
         }
     }

@@ -480,24 +480,24 @@ dh.chatwindow.sendClicked = function() {
     messageInput.value = ""
 }
 
-dh.chatwindow.onMessageKeyPress = function(e) {
+dh.chatwindow.onMessageKeyPress = function() {
+	var e = window.event
     if (e.keyCode == 13) {
+    	// Suppress event
+    	e.returnValue = false
         this.sendClicked()
-        e.returnValue = false
-        return false;
     } else if (e.keyCode == 27) {
+    	e.returnValue = false
     	window.close();
-    	return false;
     }
-    return true;
 }
 
-dh.chatwindow.onBodyKeyPress = function (e) {
+dh.chatwindow.onBodyKeyPress = function () {
+	var e = window.event
 	if (e.keyCode == 27) {
+		e.returnValue = false	
 		window.close();
-		return false;
 	}
-	return true;
 }
 
 dh.chatwindow.setSelfId = function(id) {
@@ -521,8 +521,8 @@ dh.chatwindow.init = function() {
     // We use this special event handler stuff because there appears
     // to be much more serious leakage when using the Dojo event handler
     // infrastructure (need to investigate Dojo upgrade)
-    messageInput.onkeypress = dh.util.stdEventHandler(function (e) { chatWindow.onMessageKeyPress(e); })    
-    document.body.onkeypress = dh.util.stdEventHandler(function (e) { chatWindow.onBodyKeyPress(e); })
+    messageInput.onkeypress = function () { chatWindow.onMessageKeyPress(); }
+    document.body.onkeypress = function () { chatWindow.onBodyKeyPress(); }
 
     dh.chatwindow.resizeElements()
     window.onresize = function() { dh.chatwindow.resizeElements() }
