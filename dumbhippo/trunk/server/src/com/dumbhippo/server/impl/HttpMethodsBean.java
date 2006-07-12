@@ -1186,6 +1186,10 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		user.getAccount().setAdminDisabled(disabled);
 	}
 	
+	public void doSetNewFeatures(UserViewpoint viewpoint, boolean newFeaturesFlag) {
+		config.setProperty(HippoProperty.NEW_FEATURES.getKey(), Boolean.valueOf(newFeaturesFlag).toString());
+	}
+	
 	private void writeException(XmlBuilder xml, StringWriter clientOut, Throwable t) throws IOException {
 		xml.openElement("result", "type", "exception");
 		xml.appendTextNode("output", clientOut.toString());		

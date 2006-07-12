@@ -23,9 +23,12 @@ import com.dumbhippo.server.HippoProperty;
 public class ConfigurationBean implements Configuration {
 	
 	static private final Logger logger = GlobalSetup.getLogger(ConfigurationBean.class);		
+
+	static private Properties overridenProperties = new Properties();
 	
 	private Properties props;
 
+	
 	private URL baseurl;
 	
 	@PostConstruct
@@ -76,7 +79,9 @@ public class ConfigurationBean implements Configuration {
 	}
 
 	public String getProperty(String name) throws PropertyNotFoundException {
-		String ret = props.getProperty(name);
+		String ret = overridenProperties.getProperty(name);
+		if (ret == null)
+		    ret = props.getProperty(name);
 		if (ret == null)
 			ret = System.getProperty(name);
 		if (ret == null)
@@ -117,6 +122,10 @@ public class ConfigurationBean implements Configuration {
 			}
 		}
 		return baseurl;
+	}
+	
+	public void setProperty(String name, String value) {
+		overridenProperties.put(name, value);
 	}
 }
 

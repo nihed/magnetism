@@ -70,5 +70,7 @@
         </dht:formTable>
         <dht:messageArea/>
 	</div>
+	<br/>
+	<a href="http://developer.mugshot.org/wiki/WantsIn_Invitations" target="_blank">What do I need to know about this page?</a>
 </dht:body>
 </html>

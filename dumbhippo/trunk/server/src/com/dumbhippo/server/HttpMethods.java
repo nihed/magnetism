@@ -230,7 +230,13 @@ public interface HttpMethods {
 	@HttpParams( { "userId", "disabled" } )
 	@HttpOptions( adminOnly = true )
 	public void doSetAdminDisabled(UserViewpoint viewpoint, String userId, boolean disabled);
-		
+
+	
+	@HttpContentTypes(HttpResponseData.NONE)
+	@HttpParams( { "newFeaturesFlag" } )
+	@HttpOptions( adminOnly = true )
+	public void doSetNewFeatures(UserViewpoint viewpoint, boolean newFeaturesFlag);
+	
 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
 	@HttpParams( { "parseOnly", "command" } )
 	@HttpOptions( adminOnly = true )

@@ -83,4 +83,13 @@ public interface Configuration {
 	 * @return the base URL for this server
 	 */
 	public URL getBaseUrl();
+	
+	/**
+	 * Set a configuration property, use to override properties loaded 
+	 * when the server starts up.
+	 *  
+	 * @param name property name
+	 * @param value property value
+	 */
+	public void setProperty(String name, String value);
 }

@@ -3,6 +3,8 @@ package com.dumbhippo.web.pages;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.server.Configuration;
+import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.Pageable;
 import com.dumbhippo.server.PostView;
 import com.dumbhippo.server.PostingBoard;
@@ -20,10 +22,13 @@ public class LinksGlobalPage extends AbstractSigninOptionalPage {
 	
 	private PostingBoard postBoard;
 	
+	private Configuration config;
+	
 	private Pageable<PostView> hotPosts;
 	
 	public LinksGlobalPage() {
 		postBoard = WebEJBUtil.defaultLookup(PostingBoard.class);
+		config = WebEJBUtil.defaultLookup(Configuration.class);
 	}
 
 	public Pageable<PostView> getHotPosts() {
@@ -32,5 +37,11 @@ public class LinksGlobalPage extends AbstractSigninOptionalPage {
 			postBoard.pageHotPosts(getSignin().getViewpoint(), hotPosts);
 		}
 		return hotPosts;
+	}
+	
+	// TODO: find an appropriate place for this method, something like 
+	// GlobalPage ?
+	public boolean isNewFeatures() {
+	    return Boolean.valueOf(config.getProperty(HippoProperty.NEW_FEATURES));	
 	}
 }

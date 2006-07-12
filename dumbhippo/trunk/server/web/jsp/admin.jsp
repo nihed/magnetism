@@ -44,6 +44,10 @@
 <textarea rows="10" cols="70" id="dhAdminShellTrace" style="display: none;"></textarea>
 
 <hr/>
+<h2>New Features</h2>
+New features flag is <b><c:out value="${admin.newFeatures}"/></b>
+<a href="javascript:dh.admin.setNewFeatures('${!admin.newFeatures}')">Toggle</a>
+</p>
 
 <h2>Site Stats</h2>
 <p>

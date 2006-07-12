@@ -38,6 +38,7 @@
 		dumbhippo.server.ebay.certid=@@ebayCertId@@
 		dumbhippo.server.flickr.apiid=@@flickrApiId@@
 		dumbhippo.server.adminconsole.enable=@@adminConsole@@
+		dumbhippo.server.newfeatures = @@newFeatures@@
 		dumbhippo.server.stealthmode=@@stealthMode@@
 		dumbhippo.server.userupdateinterval=@@userUpdateInterval@@
 		dumbhippo.server.summitgroupguid=@@summitGroupGuid@@

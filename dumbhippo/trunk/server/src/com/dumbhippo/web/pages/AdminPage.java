@@ -56,6 +56,10 @@ public class AdminPage extends AbstractSigninRequiredPage {
 		numberOfAccounts = -1;
 	}
 	
+	public boolean isNewFeatures() {
+	    return Boolean.valueOf(config.getProperty(HippoProperty.NEW_FEATURES));	
+	}
+	
 	public boolean isValid() throws HumanVisibleException {
 		PersonView person = getPerson();
 		return identitySpider.isAdministrator(person.getUser());

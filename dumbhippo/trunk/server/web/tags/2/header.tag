@@ -90,9 +90,12 @@
 	</div>
     <c:if test="${kind == 'main' || kind == 'withSidebar'}">
         <div id="dhHeaderLinks">
-            <%-- TODO: use <img id="dhNewFeaturesImage" src="/images2/${buildStamp}/newpink.gif"/>  to indicate --%>
-            <%-- when new features are available --%>
-            <a href="http://blog.mugshot.org/?page_id=213" title="Learn about various Mugshot features" target="_blank">Mugshot Features</a>&nbsp;&nbsp;|&nbsp;&nbsp;
+            <dht:requireLinksGlobalBean/>
+            <a href="http://blog.mugshot.org/?page_id=213" title="Learn about various Mugshot features" target="_blank">Mugshot Features</a>
+            <c:if test="${linksGlobal.newFeatures}">
+                &nbsp;<img src="/images2/${buildStamp}/newpink.gif"/>
+            </c:if>
+            &nbsp;&nbsp;|&nbsp;&nbsp;
 		    <a href="http://blog.mugshot.org" title="Read our blog" target="_blank">Mugshot Blog</a>
 		</div>
     </c:if>    		

@@ -36,6 +36,17 @@ dh.admin.setAdminDisabled = function(userId, disabled) {
 		  	    	 });
 }
 
+dh.admin.setNewFeatures = function(flag) {
+   	dh.server.doPOST("setnewfeatures",
+				     { "newFeaturesFlag" : flag },
+		  	    	 function(type, data, http) {
+		  	    	     document.location.reload()
+		  	    	 },
+		  	    	 function(type, error, http) {
+		  	    	     alert("Couldn't change new features flag")
+		  	    	 });
+}
+
 dh.admin.shell = {}
 
 dh.admin.shell.executing = false
