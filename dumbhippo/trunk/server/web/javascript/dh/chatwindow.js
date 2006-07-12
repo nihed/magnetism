@@ -483,7 +483,7 @@ dh.chatwindow.sendClicked = function() {
 dh.chatwindow.onMessageKeyPress = function(e) {
     if (e.keyCode == 13) {
         this.sendClicked()
-        e.preventDefault()
+        e.returnValue = false
         return false;
     } else if (e.keyCode == 27) {
     	window.close();

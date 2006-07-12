@@ -504,7 +504,7 @@ dh.util.stdEventHandler = function(f) {
             e.returnValue = f(e);
             return e.returnValue;
         } catch (e) {
-            dh.util.debug("exception in event handler: " + e.message);
+            alert("exception in event handler: " + e.message);
             return false;
         }
     }
