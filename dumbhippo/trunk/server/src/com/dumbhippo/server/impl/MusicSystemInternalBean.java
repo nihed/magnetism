@@ -192,8 +192,14 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 						res = key;
 						em.persist(res);
 						
+						final long trackId = res.getId();
 						// this is a fresh new track, so asynchronously fill in the Yahoo! search results
-						hintNeedsRefresh(res);
+						// only after we commit the transaction so the Track is visible
+						runner.runTaskOnTransactionCommit(new Runnable() {
+							public void run() {
+								hintNeedsRefresh(trackId);
+							}
+						});
 					}
 					
 					return res;	
@@ -612,8 +618,11 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		}
 	}
 	
-	public void hintNeedsRefresh(Track track) {
-		// called for side effect to kick off querying the results
+	private void hintNeedsRefresh(long trackId) {
+		// called for side effect to kick off querying the results.
+		Track track = em.find(Track.class, trackId);
+		if (track == null)
+			throw new RuntimeException("database isolation bug (?): can't reattach trackid in hintNeedsRefresh");
 		getTrackViewAsync(track, -1);
 	}
 	

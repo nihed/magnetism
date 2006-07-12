@@ -46,8 +46,6 @@ public interface MusicSystemInternal extends MusicSystem {
 	 */
 	public void addHistoricalTrack(User user, Map<String,String> properties);
 	
-	public void hintNeedsRefresh(Track track);
-	
 	public AmazonAlbumResult getAmazonAlbumSync(final String album, final String artist); 
 	
 	public Future<AmazonAlbumResult> getAmazonAlbumAsync(String album, String artist);
