@@ -30,7 +30,7 @@
 		</c:when>
 		<c:otherwise>
 			<%-- WINDOWS RELEASE NOTES GO HERE --%>
-			<p>Version 1.1.56</p>
+			<p>Version 1.1.57</p>
 			<ul>
 				<li>Purple bubbles! Purple bubbles show group chat activity and new members in groups.</li>
 				<li>Fix a bug where clicking on someone's name/photo did not open their page.</li>
