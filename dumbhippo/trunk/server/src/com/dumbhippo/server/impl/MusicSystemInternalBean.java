@@ -250,7 +250,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		
 		final long trackId = getTrackIdIsolated(properties);
 		
-		final Guid userId = user.getGuid();
+		final String userId = user.getId();
 		
 		// trackId is invalid in this outer transaction, so we need a new one
 		try {
@@ -261,7 +261,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 					if (t == null)
 						throw new RuntimeException("database isolation problem (?): track id not found " + trackId);
 					User u = em.find(User.class, userId);
-					if (t == null)
+					if (u == null)
 						throw new RuntimeException("database isolation problem (?): user id not found " + userId);				
 					setCurrentTrack(u, t);
 				}
