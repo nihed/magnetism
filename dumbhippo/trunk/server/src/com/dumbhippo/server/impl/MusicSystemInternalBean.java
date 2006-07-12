@@ -735,6 +735,8 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			// ensure we won't update for FAILED_QUERY_TIMEOUT
 			long updateTime = System.currentTimeMillis() - YAHOO_EXPIRATION_TIMEOUT + FAILED_QUERY_TIMEOUT;
 			for (YahooSongResult old : oldResults) {
+				if (!em.contains(old))
+					throw new RuntimeException("old song result should have been attached");
 				old.setLastUpdated(new Date(updateTime));
 			}
 			
@@ -1789,6 +1791,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			fillAlbumInfo(futureYahooAlbum, futureAmazonAlbum, view.getAlbumView());
 		} catch (Exception e) {
 			logger.error("Failed to get Yahoo! search information for TrackView {}: {}", view, e.getMessage());
+			logger.debug("exception from yahoo failure", e);
 		}
 		
 		return view;
