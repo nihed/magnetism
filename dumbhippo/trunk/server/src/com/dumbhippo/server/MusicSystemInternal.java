@@ -37,7 +37,7 @@ public interface MusicSystemInternal extends MusicSystem {
 	public void setCurrentTrack(User user, Track track);
 
 	public void setCurrentTrack(User user, Map<String,String> properties);
-
+	
 	/**
 	 * 
 	 * Add this track as if it were one we have listened to, but don't set it as current.
@@ -83,6 +83,8 @@ public interface MusicSystemInternal extends MusicSystem {
 	public YahooArtistResult getYahooArtistResultSync(String artist, String artistId) throws NotFoundException;
 	
 	public TrackView getTrackView(Track track, long lastListen);
+
+	public Future<TrackView> getTrackViewAsync(long trackId, long lastListen);	
 	
 	public Future<TrackView> getTrackViewAsync(Track track, long lastListen);
 	

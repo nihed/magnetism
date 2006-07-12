@@ -618,12 +618,8 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		}
 	}
 	
-	private void hintNeedsRefresh(long trackId) {
-		// called for side effect to kick off querying the results.
-		Track track = em.find(Track.class, trackId);
-		if (track == null)
-			throw new RuntimeException("database isolation bug (?): can't reattach trackid in hintNeedsRefresh");
-		getTrackViewAsync(track, -1);
+	static private void hintNeedsRefresh(long trackId) {
+		EJBUtil.defaultLookup(MusicSystemInternal.class).getTrackViewAsync(trackId, -1);
 	}
 	
 	private void updateSongResultsSync(List<YahooSongResult> oldResults, Track track) {
@@ -1979,6 +1975,14 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	public TrackView getCurrentTrackView(Viewpoint viewpoint, User user) throws NotFoundException {
 		TrackHistory current = getCurrentTrack(viewpoint, user);
 		return getTrackView(current.getTrack(), current.getLastUpdated().getTime());
+	}
+
+	public Future<TrackView> getTrackViewAsync(long trackId, long lastListen) {
+		// called for side effect to kick off querying the results.
+		Track track = em.find(Track.class, trackId);
+		if (track == null)
+			throw new RuntimeException("database isolation bug (?): can't reattach trackid in hintNeedsRefresh");
+		return getTrackViewAsync(track, lastListen);
 	}
 	
 	public Future<TrackView> getTrackViewAsync(Track track, long lastListen) {
