@@ -147,6 +147,30 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		}	
 	}
 	
+	/**
+	 * Gets the ID of a potentially newly-created track.
+	 * Creates the track in another transaction, i.e. the caller
+	 * can't use this id, but can pass it to a new transaction for 
+	 * use.
+	 * 
+	 * @param properties properties of the track
+	 * @return the track id
+	 */
+	private long getTrackIdIsolated(final Map<String, String> properties) {
+		Track detached;
+		try {
+			detached = runner.runTaskInNewTransaction(new Callable<Track>() {
+				public Track call() {
+					return getTrack(properties);
+				}
+			});
+		} catch (Exception e) {
+			logger.error("Failed to create Track", e);
+			throw new RuntimeException(e);
+		}
+		return detached.getId();
+	}
+	
 	public Track getTrack(Map<String, String> properties) {
 		
 		final Track key = new Track(properties);
@@ -222,10 +246,31 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		// empty properties means "not listening to any track" - we always
 		// keep the latest track with content, we don't set CurrentTrack to null
 		if (properties.size() == 0)
-			return;
+			return; 
 		
-		Track track = getTrack(properties);
-		setCurrentTrack(user, track);
+		final long trackId = getTrackIdIsolated(properties);
+		
+		final Guid userId = user.getGuid();
+		
+		// trackId is invalid in this outer transaction, so we need a new one
+		try {
+			runner.runTaskInNewTransaction(new Runnable() {
+
+				public void run() {
+					Track t = em.find(Track.class, trackId);
+					if (t == null)
+						throw new RuntimeException("database isolation problem (?): track id not found " + trackId);
+					User u = em.find(User.class, userId);
+					if (t == null)
+						throw new RuntimeException("database isolation problem (?): user id not found " + userId);				
+					setCurrentTrack(u, t);
+				}
+				
+			});
+		} catch (Exception e) {
+			logger.error("failed to set user's current track", e);
+			throw new RuntimeException(e);
+		}
 	}
 	
 	public void addHistoricalTrack(User user, Map<String,String> properties) {
@@ -687,6 +732,8 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		// the track we get passed in belongs to a different session.
 		if (!em.contains(track)) {
 			track = em.find(Track.class, track.getId()); // attach the track to this sesssion
+			if (track == null)
+				throw new RuntimeException("Transaction isolation mistake (?): can't reattach track");
 		} 
 		
 		List<YahooSongResult> results = new ArrayList<YahooSongResult>();
@@ -3083,9 +3130,9 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	}
 	
 	public void addFeedTrack(AccountFeed feed, TrackFeedEntry entry, int entryPosition) {
-		User user = feed.getAccount().getOwner();
+		final User user = feed.getAccount().getOwner();
 		
-		Map<String,String> properties = new HashMap<String,String>();
+		final Map<String,String> properties = new HashMap<String,String>();
 		properties.put("type", ""+TrackType.NETWORK_STREAM);
 		properties.put("name", entry.getTrack());
 		properties.put("artist", entry.getArtist());
@@ -3114,12 +3161,31 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		 */
 		
 		long now = System.currentTimeMillis();
-		long virtualPlayTime = now - (1000 * 60 * entryPosition);
-		
-		Track track = getTrack(properties);
-		addTrackHistory(user, track, new Date(virtualPlayTime));
-	}
+		final long virtualPlayTime = now - (1000 * 60 * entryPosition);
 	
+		// We need this track to be committed before the end of our current 
+		// transaction - conceptually, right now we should be in POJO code, 
+		// not inside any transaction most likely, FIXME
+		// FIXME retry on db errors
+		final long trackId = getTrackIdIsolated(properties);
+		
+		// Then we need another transaction because this outer transaction
+		// can't see the new track object due to isolation
+		// FIXME retry on db errors ?
+		try {
+			runner.runTaskInNewTransaction(new Runnable() {
+				public void run() {
+					Track t = em.find(Track.class, trackId);
+					if (t == null)
+						throw new RuntimeException("database isolation mistake (?): null track " + trackId);
+					addTrackHistory(user, t, new Date(virtualPlayTime));
+				}
+			});
+		} catch (Exception e) {
+			logger.error("Failed to save track history", e);
+			throw new RuntimeException(e);
+		}
+	}
 	
 	private RhapLink rhapLinkQuery(String rhaplink) {
 		try {

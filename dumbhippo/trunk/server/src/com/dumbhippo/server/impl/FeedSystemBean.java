@@ -346,6 +346,9 @@ public class FeedSystemBean implements FeedSystem {
 		// FIXME: Probably really should queue things after the transaction, but flushing
 		// will at least make the race condition between this and processing new
 		// entries in a separate transaction less likely
+		// FIXME in fact this does nothing at all, because with isolation the other 
+		// thread isn't going to see the feed entry until we commit our transaction
+		// anyhow - the race _has_ happened in practice...
 		em.flush();
 
 		for (final FeedEntry entry : feed.getEntries()) {
@@ -444,7 +447,9 @@ public class FeedSystemBean implements FeedSystem {
 	
 	public void handleNewEntryNotification(long entryId) {
 		FeedEntry entry = em.find(FeedEntry.class, entryId);
-		logger.debug("Processing feed entry: {}", entry.getTitle());
+		if (entry == null)
+			throw new RuntimeException("database isolation problem (?): entry Id doesn't exist " + entryId);
+		logger.debug("Processing feed entry: {}", entry);
 		
 		for (GroupFeed feed : entry.getFeed().getGroups()) {
 			if (!feed.isRemoved()) {
