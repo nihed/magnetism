@@ -74,6 +74,7 @@
 		    
 		    <Directory Id="dhAppletsDir" Name="Applets">
         		    <Component Id="applets" Guid="207BF071-197E-471E-8AAF-6DB6C03B78EC">
+						<File Id="addPng"            Name="add.png"      LongName="add.png"             src="applets\add.png"            DiskId="1" Vital="yes"/>
 	        	        <File Id="blueleftarrowGif"  Name="blueleft.gif" LongName="blueleftarrow.gif"   src="applets\blueleftarrow.gif"  DiskId="1" Vital="yes"/>
 	        	        <File Id="bluerightarrowGif" Name="bluerigh.gif" LongName="bluerightarrow.gif"  src="applets\bluerightarrow.gif" DiskId="1" Vital="yes"/>
 	        	        <File Id="bubbleCss"         Name="bubble.css"   LongName="bubble.css"          src="applets\bubble.css"         DiskId="1" Vital="yes"/>
