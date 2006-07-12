@@ -165,7 +165,9 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 				}
 			});
 		} catch (Exception e) {
-			logger.error("Failed to create Track", e);
+			logger.error("Failed to create Track: {}", e.getMessage());
+			ExceptionUtils.throwAsRuntimeException(e);
+			// not reached
 			throw new RuntimeException(e);
 		}
 		return detached.getId();
@@ -267,9 +269,9 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 				}
 				
 			});
-		} catch (Exception e) {
-			logger.error("failed to set user's current track", e);
-			throw new RuntimeException(e);
+		} catch (RuntimeException e) {
+			logger.error("failed to set user's current track {}", e.getMessage());
+			throw e;
 		}
 	}
 	
@@ -700,8 +702,8 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			} catch (EntityNotFoundException e) {	
 				continue;
 			} catch (NonUniqueResultException e) {
-				logger.warn("non-unique result based on song id {} in YahooSongResult table", n.getSongId(), e.getMessage());
-				throw new RuntimeException(e);
+				logger.warn("non-unique result based on song id {} in YahooSongResult table {}", n.getSongId(), e.getMessage());
+				throw e;
 			}
 		}
 		

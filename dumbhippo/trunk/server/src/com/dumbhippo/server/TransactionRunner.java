@@ -7,7 +7,7 @@ import javax.ejb.Local;
 @Local
 public interface TransactionRunner {
 	public <T> T runTaskInNewTransaction(Callable<T> callable) throws Exception;
-	public void runTaskInNewTransaction(Runnable runnable) throws Exception;
+	public void runTaskInNewTransaction(Runnable runnable);
 	
 	// FIXME: This marks places that need to be fixed by adding post-transaction
 	// queueing of non-database operations.
@@ -20,5 +20,5 @@ public interface TransactionRunner {
 	
 	// internal, way to get TransactionAttribute, do not use
 	public <T> T internalRunTaskInNewTransaction(Callable<T> callable) throws Exception;
-	public void internalRunTaskInNewTransaction(Runnable runnable) throws Exception;
+	public void internalRunTaskInNewTransaction(Runnable runnable);
 }

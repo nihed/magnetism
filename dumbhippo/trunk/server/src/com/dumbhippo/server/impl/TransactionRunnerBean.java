@@ -33,7 +33,7 @@ public class TransactionRunnerBean implements TransactionRunner {
 		return proxy.internalRunTaskInNewTransaction(callable);
 	}
 	
-	public void runTaskInNewTransaction(Runnable runnable) throws Exception {
+	public void runTaskInNewTransaction(Runnable runnable) {
 		TransactionRunner proxy = EJBUtil.contextLookup(ejbContext, TransactionRunner.class);
 		proxy.internalRunTaskInNewTransaction(runnable);
 	}
@@ -99,7 +99,7 @@ public class TransactionRunnerBean implements TransactionRunner {
 	}
 	
 	@TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-	public void internalRunTaskInNewTransaction(Runnable runnable) throws Exception {
-		runnable.run(); 
+	public void internalRunTaskInNewTransaction(Runnable runnable) {
+		runnable.run();
 	}
 }
