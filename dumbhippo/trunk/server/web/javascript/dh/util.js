@@ -497,6 +497,19 @@ dh.util.getPreparedUrl = function(url) {
     return preparedUrl
 }
 
+dh.util.stdEventHandler = function(f) {
+    return function(e) {
+        try {
+            if (!e) e = window.event;
+            e.returnValue = f(e);
+            return e.returnValue;
+        } catch (e) {
+            dh.util.debug("exception in event handler: " + e.message);
+            return false;
+        }
+    }
+}
+
 // get the node an event happened on
 dh.util.getEventNode = function(ev)
 {
@@ -568,3 +581,8 @@ dh.util.contains = function(items, item) {
     }
     return false
 };
+
+// This function only works if you have the client running, on Windows
+dh.util.clientDebug = function(text) {
+	window.external.DebugLog(text)
+}

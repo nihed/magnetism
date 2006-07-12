@@ -73,6 +73,7 @@ dh.chatwindow._scrollToBottom = function(element) {
 }
 
 dh.chatwindow._addMessage = function(message, before, resizingFlag) {
+	dh.util.clientDebug("adding chat message: " + message + " resizing: " + resizingFlag)
 	message.div = document.createElement("div")
 	message.div.className = "dh-chat-message"
     if (message.userId == this._selfId)
@@ -254,7 +255,7 @@ dh.chatwindow._addMessage = function(message, before, resizingFlag) {
     if (!before && wasAtBottom)
 		this._scrollToBottom(messagesDiv)
 				
-	window.external.application.DemandAttention()
+    window.external.application.DemandAttention()
 }
 
 dh.chatwindow._removeMessage = function(message) {
@@ -390,6 +391,7 @@ dh.chatwindow._updateUserMusic = function(user, arrangementName, artist, musicPl
 // manually since some things we want aren't possible with pure CSS,
 // especially with the IE limitations
 dh.chatwindow.resizeElements = function() {
+	dh.util.clientDebug("resizing chat window elements");
     var width, height
     if (window.innerWidth) {
         width = window.innerWidth
@@ -482,9 +484,12 @@ dh.chatwindow.onMessageKeyPress = function(e) {
     if (e.keyCode == 13) {
         this.sendClicked()
         e.preventDefault()
+        return false;
     } else if (e.keyCode == 27) {
     	window.close();
+    	return false;
     }
+    return true;
 }
 
 dh.chatwindow.onBodyKeyPress = function (e) {
@@ -512,9 +517,12 @@ dh.chatwindow.init = function() {
 	var chatControl = document.getElementById("dhChatControl")
 
     var messageInput = document.getElementById("dhChatMessageInput")
-    dojo.event.connect(messageInput, "onkeypress", this, "onMessageKeyPress")
-    
-    dojo.event.connect(document.body, "onkeypress", this, "onBodyKeyPress")
+    var chatWindow = this
+    // We use this special event handler stuff because there appears
+    // to be much more serious leakage when using the Dojo event handler
+    // infrastructure (need to investigate Dojo upgrade)
+    messageInput.onkeypress = dh.util.stdEventHandler(function (e) { chatWindow.onMessageKeyPress(e); })    
+    document.body.onkeypress = dh.util.stdEventHandler(function (e) { chatWindow.onBodyKeyPress(e); })
 
     dh.chatwindow.resizeElements()
     window.onresize = function() { dh.chatwindow.resizeElements() }
@@ -524,6 +532,7 @@ dh.chatwindow.init = function() {
 
 dh.chatwindow.initDisabled = function() {
 	var chatControl = document.getElementById("dhChatControl")
+
 
     dojo.event.connect(document.body, "onkeypress", this, "onBodyKeyPress")
 
