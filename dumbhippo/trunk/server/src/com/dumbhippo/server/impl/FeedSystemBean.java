@@ -358,6 +358,7 @@ public class FeedSystemBean implements FeedSystem {
 		if (!newEntryIds.isEmpty()) {
 			runner.runTaskOnTransactionCommit(new Runnable() {
 				public void run() {
+					logger.debug("Transaction committed, running new entry notification for {} entries", newEntryIds.size());
 					for (final long entryId : newEntryIds) {
 						getNotificationService().submit(new Runnable() {
 							public void run() {
