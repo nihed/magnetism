@@ -78,12 +78,13 @@ bubble_watch_unref(BubbleWatch *watch)
 	
 	    if (watch->room) {
     	    g_signal_handlers_disconnect_by_func(G_OBJECT(watch->room),
-                                             G_CALLBACK(on_chat_message_added), watch);
-	    	REMOVE_WEAK(&watch->room);                                             
-	    }
-	    REMOVE_WEAK(&watch->cache);         
+                                             G_CALLBACK(on_chat_message_added), watch);                                            
+	    }      
 
         (* watch->finalize) (watch);
+        if (watch->room)
+            REMOVE_WEAK(&watch->room); 
+	    REMOVE_WEAK(&watch->cache);            
         g_free(watch);
     }
 }
