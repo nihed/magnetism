@@ -618,8 +618,15 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		}
 	}
 	
-	static private void hintNeedsRefresh(long trackId) {
-		EJBUtil.defaultLookup(MusicSystemInternal.class).getTrackViewAsync(trackId, -1);
+	static private void hintNeedsRefresh(final long trackId) {
+		// this has to be in another thread since it's called from 
+		// an after-commit handler and looking up session beans doesn't 
+		// really work in that handler apparently
+		getThreadPool().execute(new Runnable() {
+			public void run() {
+				EJBUtil.defaultLookup(MusicSystemInternal.class).getTrackViewAsync(trackId, -1);
+			}
+		});
 	}
 	
 	private void updateSongResultsSync(List<YahooSongResult> oldResults, Track track) {
