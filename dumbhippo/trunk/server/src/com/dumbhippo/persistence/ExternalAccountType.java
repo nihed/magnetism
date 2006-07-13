@@ -55,7 +55,7 @@ public enum ExternalAccountType {
 		@Override
 		public String getLink(String handle, String extra) {
 			// handle is "NSID" extra is flickr email address
-			return FlickrUser.getProfileUrl(handle);
+			return FlickrUser.getPhotosUrl(handle);
 		}
 		
 		@Override
