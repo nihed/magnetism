@@ -506,7 +506,6 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		}
 	}
 
-	// this is called from getYahooAlbumResultsAsync which is currently not used anywhere
 	static private class YahooAlbumResultsTask implements Callable<List<YahooAlbumResult>> {
 
 		private YahooArtistResult artist;
@@ -1101,6 +1100,14 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		return results;
 	}
 	
+	// FIXME FIXME FIXME: artist here is modified; but in the case this is called Async, it is attached to the
+	// session of the *parent* thread! This basically works because we are modifying only plain data
+	// fields, and the changes will get committed when the parent thread's session is flushed to the
+	// database, but it's highly improper.
+	// (If you change this to pass the artist ID, then you need to change all the callers to make sure
+	// that the artist is committed to the database before this function is called)
+	//
+	// albumToExclude is passed in as committed and detached
 	public List<YahooAlbumResult> getYahooAlbumResultsSync(YahooArtistResult artist, Pageable<AlbumView> albumsByArtist, YahooAlbumResult albumToExclude) {
 		
 		// we require the artist and the artistId to be set
@@ -1475,7 +1482,6 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		return futureDownload;		
 	}
 	
-	// currently not used
 	public Future<List<YahooAlbumResult>> getYahooAlbumResultsAsync(YahooArtistResult artist, Pageable<AlbumView> albumsByArtist, YahooAlbumResult albumToExclude) {
 		FutureTask<List<YahooAlbumResult>> futureAlbums =
 			new FutureTask<List<YahooAlbumResult>>(new YahooAlbumResultsTask(artist, albumsByArtist, albumToExclude));
@@ -1581,6 +1587,18 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		return result;
 	}
 	
+	static private <T> T getFutureResult(Future<T> future) {
+		try {
+			return future.get();
+		} catch (InterruptedException e) {
+			logger.warn("thread pool worker thread interrupted {}", e.getMessage());
+			throw new RuntimeException(e);
+		} catch (ExecutionException e) {
+			logger.warn("thread pool worker thread threw execution exception {}", e.getMessage());
+			throw new RuntimeException(e);
+		}		
+	}
+	
 	private void fillAlbumInfo(YahooAlbumResult yahooAlbum, Future<AmazonAlbumResult> futureAmazonAlbum, AlbumView albumView) {
 		try {			
 			// Note that if neither Amazon nor Yahoo! has a small image url, we want to leave 
@@ -1606,16 +1624,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			}
 			
 			// now get the amazon stuff
-			AmazonAlbumResult amazonAlbum;
-			try {
-				amazonAlbum = futureAmazonAlbum.get();
-			} catch (InterruptedException e) {
-				logger.warn("amazon album get thread interrupted {}", e.getMessage());
-				throw new RuntimeException(e);
-			} catch (ExecutionException e) {
-				logger.warn("amazon album get thread execution exception {}", e.getMessage());
-				throw new RuntimeException(e);
-			}
+			AmazonAlbumResult amazonAlbum = getFutureResult(futureAmazonAlbum);
 						
 			if (amazonAlbum != null) {
 				// if album artwork was not available from yahoo, we are after album artwork from amazon
@@ -1654,14 +1663,16 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	
 	private void fillAlbumInfo(Future<YahooAlbumResult> futureYahooAlbum, Future<AmazonAlbumResult> futureAmazonAlbum, AlbumView albumView) {
 		YahooAlbumResult yahooAlbum = null;
-	    if (futureYahooAlbum != null) {	
+	    if (futureYahooAlbum != null) {
 			try {
 				yahooAlbum = futureYahooAlbum.get();
 			} catch (InterruptedException e) {
 				logger.error("yahoo album get thread interrupted {}", e.getMessage());
 				throw new RuntimeException(e);
 			} catch (ExecutionException e) {
- 				// it is ok to call fillAlbumInfo bellow with yahooAlbum being null
+ 				// it is ok to call fillAlbumInfo below with yahooAlbum being null
+				// TODO: The backtrace from the exception isn't logged (and should this
+				// whole block be replaced with a getFutureResult variant?)
  				logger.error("yahoo album get thread execution exception {}", e.getMessage());
 			}
 	    }
@@ -1671,94 +1682,85 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	private void fillAlbumInfo(Viewpoint viewpoint, YahooSongResult yahooSong, YahooAlbumResult yahooAlbum, Future<AmazonAlbumResult> futureAmazonAlbum, Future<List<YahooSongResult>> futureAlbumTracks, AlbumView albumView) {
 			fillAlbumInfo(yahooAlbum, futureAmazonAlbum, albumView);
 
-			List<YahooSongResult> albumTracks;
 			TreeMap<Integer, TrackView> sortedTracks = new TreeMap<Integer, TrackView>();
 			TreeMap<Integer, List<Future<List<YahooSongDownloadResult>>>> trackDownloads = 
 				new TreeMap<Integer, List<Future<List<YahooSongDownloadResult>>>>();
-			try {
-				albumTracks = futureAlbumTracks.get();
-				// now we have a fun task of sorting these YahooSongResult by track number and filtering out
-				// the ones with -1 or 0 track number (YahooSongResult has -1 track number by default, 
-				// and 0 track number if it was returned set to that by the web service, which is typical
-				// for songs for which track number is inapplicable or unknown)				
-				// TODO: we might consider not storing songs with -1 or 0 track number in the database
-				// when we are doing updateYahooSongResults based on an albumId, yet we might still
-				// have some songs with -1 or 0 track number because of getting yahoo songs based on
-				// tracks that were played (note: for Track objects -1 indicates that the track number
-				// is inapplicable or unknown and 0 is not a valid value)
-				// TODO: this can also be part of a threaded task
-				for (YahooSongResult albumTrack : albumTracks) {
-					// so fun! now we get to pair up the multiple YahooSongResult into
-					// a single track, and most importantly, get the download urls
-					// based on each YahooSongResult and add them to the right albumTrack
-					
-					if (albumTrack.getTrackNumber() > 0) {
-						
-						// we only need one of the songs with a given track number to create a track view,
-						// but we need to go through all song results to get all the downloads
-						if (sortedTracks.get(albumTrack.getTrackNumber()) == null) {
-					   	    TrackView trackView = new TrackView(albumTrack.getName(), 
-                                                                albumView.getTitle(),
-                                                                albumView.getArtist(),
-                                                                albumTrack.getDuration(),
-                                                                albumTrack.getTrackNumber());
-						    // if we are displaying this album because of a particular song search, 
-						    // we want to display this song initially expanded
-                            // because a single track can have multiple valid YahooSongResults associated
-						    // with it (e.g. for different downloads), we do not want to check the equality
-						    // of yahooSong and albumTrack here, but rather the equality of the song
-						    // names
-						    if ((yahooSong != null) && yahooSong.getName().equals(albumTrack.getName())) {
-                        	    trackView.setShowExpanded(true);
-                            }
-						    fillTrackViewWithTrackHistory(viewpoint, trackView);						
-						    sortedTracks.put(albumTrack.getTrackNumber(), trackView);
-						}
-						
-						if (trackDownloads.get(albumTrack.getTrackNumber()) == null) {
-                        	ArrayList<Future<List<YahooSongDownloadResult>>> downloads =
-                        		new ArrayList<Future<List<YahooSongDownloadResult>>>();
-                        	// if the trackNumber was positive this can't be a no results marker,
-                        	// so the song id should also not be null
-                        	downloads.add(getYahooSongDownloadResultsAsync(albumTrack.getSongId()));
-                        	trackDownloads.put(albumTrack.getTrackNumber(), downloads);
-                        } else {
-                        	trackDownloads.get(albumTrack.getTrackNumber()).add(getYahooSongDownloadResultsAsync(albumTrack.getSongId()));
-                        }
-					}
-				}
+			List<YahooSongResult> albumTracks = getFutureResult(futureAlbumTracks);
+			// now we have a fun task of sorting these YahooSongResult by track number and filtering out
+			// the ones with -1 or 0 track number (YahooSongResult has -1 track number by default, 
+			// and 0 track number if it was returned set to that by the web service, which is typical
+			// for songs for which track number is inapplicable or unknown)				
+			// TODO: we might consider not storing songs with -1 or 0 track number in the database
+			// when we are doing updateYahooSongResults based on an albumId, yet we might still
+			// have some songs with -1 or 0 track number because of getting yahoo songs based on
+			// tracks that were played (note: for Track objects -1 indicates that the track number
+			// is inapplicable or unknown and 0 is not a valid value)
+			// TODO: this can also be part of a threaded task
+			for (YahooSongResult albumTrack : albumTracks) {
+				// so fun! now we get to pair up the multiple YahooSongResult into
+				// a single track, and most importantly, get the download urls
+				// based on each YahooSongResult and add them to the right albumTrack
 				
-        		for (Integer trackNumber : sortedTracks.keySet()) {
-        			TrackView trackView = sortedTracks.get(trackNumber);       			
-        			for (Future<List<YahooSongDownloadResult>> futureDownloads : trackDownloads.get(trackNumber)) {
-						List<YahooSongDownloadResult> ds = futureDownloads.get();					        			
-        			    for (YahooSongDownloadResult d : ds) {
-						    if (d.isNoResultsMarker()) {
-							    // normally, if there is a no results marker result, there won't be other results
-							    break;
-						    }
-						    // if two search results are for the same source, first is assumed better
-						    if (trackView.getDownloadUrl(d.getSource()) == null) {
-							    trackView.setDownloadUrl(d.getSource(), d.getUrl());
-							    //logger.debug("adding download url for {}", d.getSource().getYahooSourceName());
-						    } else {
-							    logger.debug("ignoring second download url for {}", d.getSource().getYahooSourceName());
-						    }
-        			    }
+				if (albumTrack.getTrackNumber() > 0) {
+					
+					// we only need one of the songs with a given track number to create a track view,
+					// but we need to go through all song results to get all the downloads
+					if (sortedTracks.get(albumTrack.getTrackNumber()) == null) {
+				   	    TrackView trackView = new TrackView(albumTrack.getName(), 
+                                                            albumView.getTitle(),
+                                                            albumView.getArtist(),
+                                                            albumTrack.getDuration(),
+                                                            albumTrack.getTrackNumber());
+					    // if we are displaying this album because of a particular song search, 
+					    // we want to display this song initially expanded
+                        // because a single track can have multiple valid YahooSongResults associated
+					    // with it (e.g. for different downloads), we do not want to check the equality
+					    // of yahooSong and albumTrack here, but rather the equality of the song
+					    // names
+					    if ((yahooSong != null) && yahooSong.getName().equals(albumTrack.getName())) {
+                    	    trackView.setShowExpanded(true);
+                        }
+					    fillTrackViewWithTrackHistory(viewpoint, trackView);						
+					    sortedTracks.put(albumTrack.getTrackNumber(), trackView);
 					}
-    				String rhapsodyDownloadUrl = 
-    					getRhapsodyDownloadUrl(trackView.getArtist(), trackView.getAlbum(), trackView.getTrackNumber());
-    				if (rhapsodyDownloadUrl != null) {
-    					trackView.setDownloadUrl(SongDownloadSource.RHAPSODY, rhapsodyDownloadUrl);
-    				}
-        		}							
-			} catch (InterruptedException e) {
-				logger.warn("Thread interrupted getting tracks or downloads for an album from yahoo {}", e.getMessage());
-				throw new RuntimeException(e);
-			} catch (ExecutionException e) {
-				logger.warn("Exception getting tracks or downloads for an album from yahoo {}", e.getMessage());
-				throw new RuntimeException(e);
+					
+					if (trackDownloads.get(albumTrack.getTrackNumber()) == null) {
+                    	ArrayList<Future<List<YahooSongDownloadResult>>> downloads =
+                    		new ArrayList<Future<List<YahooSongDownloadResult>>>();
+                    	// if the trackNumber was positive this can't be a no results marker,
+                    	// so the song id should also not be null
+                    	downloads.add(getYahooSongDownloadResultsAsync(albumTrack.getSongId()));
+                    	trackDownloads.put(albumTrack.getTrackNumber(), downloads);
+                    } else {
+                    	trackDownloads.get(albumTrack.getTrackNumber()).add(getYahooSongDownloadResultsAsync(albumTrack.getSongId()));
+                    }
+				}
 			}
+			
+    		for (Integer trackNumber : sortedTracks.keySet()) {
+    			TrackView trackView = sortedTracks.get(trackNumber);       			
+    			for (Future<List<YahooSongDownloadResult>> futureDownloads : trackDownloads.get(trackNumber)) {
+					List<YahooSongDownloadResult> ds = getFutureResult(futureDownloads);					        			
+    			    for (YahooSongDownloadResult d : ds) {
+					    if (d.isNoResultsMarker()) {
+						    // normally, if there is a no results marker result, there won't be other results
+						    break;
+					    }
+					    // if two search results are for the same source, first is assumed better
+					    if (trackView.getDownloadUrl(d.getSource()) == null) {
+						    trackView.setDownloadUrl(d.getSource(), d.getUrl());
+						    //logger.debug("adding download url for {}", d.getSource().getYahooSourceName());
+					    } else {
+						    logger.debug("ignoring second download url for {}", d.getSource().getYahooSourceName());
+					    }
+    			    }
+				}
+				String rhapsodyDownloadUrl = 
+					getRhapsodyDownloadUrl(trackView.getArtist(), trackView.getAlbum(), trackView.getTrackNumber());
+				if (rhapsodyDownloadUrl != null) {
+					trackView.setDownloadUrl(SongDownloadSource.RHAPSODY, rhapsodyDownloadUrl);
+				}
+    		}							
 			
 			for (TrackView trackView : sortedTracks.values()) {
 				albumView.addTrack(trackView);
@@ -1899,7 +1901,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	private void fillAlbumsByArtist(Viewpoint viewpoint, YahooArtistResult yahooArtist, Pageable<AlbumView> albumsByArtist, 
 			                        YahooAlbumResult albumToExclude, ExpandedArtistView view) {
 		// get albums using an artistId
-		List<YahooAlbumResult> albums = getYahooAlbumResultsSync(yahooArtist, albumsByArtist, albumToExclude);
+		List<YahooAlbumResult> albums = getFutureResult(getYahooAlbumResultsAsync(yahooArtist, albumsByArtist, albumToExclude));
 		
 		// we want to fill artist info after the above call, because we only might have the total albums
 		// by artist set correctly after we get yahoo album results for the artist
@@ -1958,6 +1960,8 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		
 		ExpandedArtistView view = new ExpandedArtistView(album.getArtist());		
 
+		// FIXME: (?) this is *almost* the same as the YahooArtistResult the caller has, but we pass
+		// in album.getArtist() here instead of the search album
 	    // this call would throw a NotFoundException if an artist was not found, and would never return null
         YahooArtistResult yahooArtist = getYahooArtistResultSync(album.getArtist(), album.getArtistId());		
         
@@ -2538,7 +2542,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			Track track = getMatchingTrack(viewpoint, artist, album, name);
 	        // we could just do track.getYahooSongResults(), but why don't we
 	        // check if any YahooSongResult cache updating is in order 
-			List<YahooSongResult> songs = getYahooSongResultsSync(track);
+			List<YahooSongResult> songs = getFutureResult(getYahooSongResultsAsync(track));
 			if (!songs.isEmpty() && !songs.get(0).isNoResultsMarker()) {
 				// get the primary artist result for this artist, than make sure we use the song result
 				// associated with the primary artist result
@@ -2555,7 +2559,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			    
 			    if (yahooSong != null) {
 				    // we want to get yahoo album here synchronously
-                    YahooAlbumResult yahooAlbum = getYahooAlbumSync(yahooSong);	
+                    YahooAlbumResult yahooAlbum = getFutureResult(getYahooAlbumAsync(yahooSong));	
                     // albumsByArtist is a pageable object that contains information on what albums the expanded
                     // artist view should be loaded with, it also needs to have these albums set in its results field
                     YahooSongResult songToExpand = null;
