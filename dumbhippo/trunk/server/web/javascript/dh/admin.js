@@ -182,6 +182,7 @@ dh.admin.shell.doEval = function () {
 							var outputDiv = document.getElementById("dhAdminShellOutput")
 							var traceDiv = document.getElementById("dhAdminShellTrace")							
 							outputDiv.value = result.output
+							traceDiv.value = ""
 							if (result.type == "success") {
 								dh.admin.shell.setNotification("Evaluation complete")
 								var resultDiv = document.getElementById("dhAdminShellResult")

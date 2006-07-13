@@ -21,14 +21,22 @@
 <dht:body>
 
 <h2>Shell</h2>
-<div id="dhAdminSamples">Sample commands:<br/>
+<div id="dhAdminSamples">
+Important variables:<br/>
+<i>server</i> - Object with a few handy methods (see reflection)<br/>
+<i>em</i> - The EntityManager for this transaction<br/>
+<i>out</i> - A PrintWriter you can use to print things<br/>
+Sample commands:<br/>
 <span class="dh-admin-sample-code">r = 1+1;</span> -> <b>2</b><br/>
 <span class="dh-admin-sample-code">r;</span> -> <b>2</b><br/>
+<span class="dh-admin-sample-code">out.println("Hello World");</span> -> <b>void</b><br/>
 <span class="dh-admin-sample-code">me = user("walters@redhat.com");</span> -> <b>User@12345</b><br/>
 <span class="dh-admin-sample-code">me.getGuid();</span> -> <b>52fx2341v33</b><br/>
 <span class="dh-admin-sample-code">user("52fx2341v33");</span> -> <b>User@12345</b><br/>
-<span class="dh-admin-sample-code">me.getAccount().setMySpaceName("foo")</span> -> <b>void</b><br/>
-<span class="dh-admin-sample-code">server.getEJB("InvitationSystem").getInvitations(me);</span> -> <b>4</b><br/>
+<span class="dh-admin-sample-code">me.getAccount().setMySpaceName("foo");</span> -> <b>void</b><br/>
+<span class="dh-admin-sample-code">em.createQuery("from Group where name like 'Red Hat'").getResultList();</span> -> <b>List&lt;Group&gt;</b><br/>
+<span class="dh-admin-sample-code">ejb("InvitationSystem").getInvitations(me);</span> -> <b>4</b><br/>
+<div>More examples on the <a href="http://developer.mugshot.org/wiki/Server_Admin">Server Admin</a> page.</div>
 </div>
 <div id="dhAdminShellMessage"></div>
 <div>

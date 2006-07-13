@@ -1245,7 +1245,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		}		
 	}
 	
-	private Interpreter makeInterpreter(StringWriter out) {
+	private Interpreter makeInterpreter(PrintWriter out) {
 		Interpreter bsh = new Interpreter();
 
 		try {
@@ -1258,6 +1258,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		
 			// Some handy primitives
 			bsh.eval("user(str) { return server.getUser(str); };");
+			bsh.eval("ejb(str) { return server.getEJB(str); };");			
 			bsh.eval("guid(str) { return new com.dumbhippo.identity20.Guid(str); }");
 			
 			// Some default bindings
@@ -1286,7 +1287,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			return;
 		}
 		
-		Interpreter bsh = makeInterpreter(clientOut);
+		Interpreter bsh = makeInterpreter(new PrintWriter(clientOut));
 
 		try {
 			Object result = bsh.eval(command);
