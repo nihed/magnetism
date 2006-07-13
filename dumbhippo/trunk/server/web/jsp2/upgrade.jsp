@@ -22,6 +22,10 @@
 	<c:choose>
 		<c:when test="${browser.linuxRequested}">
 			<%-- LINUX RELEASE NOTES GO HERE --%>
+			<p>Version 1.1.8</p>
+			<ul>
+				<li>Fix a crash that a lot of people were seeing.</li>
+			</ul>
 			<p>Version 1.1.7</p>
 			<ul>
 				<li>Purple bubbles! Purple bubbles show group chat activity and new members in groups.</li>
