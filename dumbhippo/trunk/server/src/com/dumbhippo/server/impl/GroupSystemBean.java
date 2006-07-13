@@ -123,6 +123,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 					group.getMembers().remove(member);					
 					em.remove(member);
 				} else {
+					logger.debug("fixup would remove {}", member);
 					throw new RuntimeException("Unexpected need to fixup GroupMember for user " + user + " in group " + group);
 				}
 			}
