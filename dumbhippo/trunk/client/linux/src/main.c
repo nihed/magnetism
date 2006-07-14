@@ -725,7 +725,8 @@ on_idle_changed(gboolean  idle,
                 void      *data)
 {
     HippoApp *app = data;
-    g_print("idle = %d\n", idle);
+
+    hippo_bubble_manager_set_idle(app->cache, idle);
 }                
 
 static HippoApp*

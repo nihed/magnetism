@@ -12,9 +12,12 @@
 
 G_BEGIN_DECLS
 
-void hippo_bubble_manager_manage  (HippoDataCache  *cache);
+void hippo_bubble_manager_manage   (HippoDataCache  *cache);
 
-void hippo_bubble_manager_unmanage(HippoDataCache  *cache);
+void hippo_bubble_manager_unmanage (HippoDataCache  *cache);
+
+void hippo_bubble_manager_set_idle (HippoDataCache  *cache,
+                                    gboolean         idle);
 
 G_END_DECLS
 

@@ -13,6 +13,7 @@ typedef struct {
     GtkWidget      *notebook;
     guint           popdown_timeout;
     guint           window_contains_pointer : 1;
+    guint           idle : 1;
 } BubbleManager;
 
 static void remove_popdown_timeout  (BubbleManager *manager);
@@ -182,8 +183,8 @@ popdown_timeout(void *data)
         if (bubble_time > now) {
             /* clock went backward ... fixup bubble time */
             bubble_set_timestamp(bubble, now);
-        } else if (manager->window_contains_pointer) {
-            /* all bubbles are reset if user is doing stuff with them */
+        } else if (manager->window_contains_pointer || manager->idle) {
+            /* all bubbles are reset if user is doing stuff with them OR session is idle*/
             bubble_set_timestamp(bubble, now);
         }
         
@@ -684,4 +685,15 @@ void
 hippo_bubble_manager_unmanage(HippoDataCache  *cache)
 {
     manager_detach(cache);
+}
+
+void
+hippo_bubble_manager_set_idle (HippoDataCache  *cache,
+                               gboolean         idle)
+{
+    BubbleManager *manager;
+    
+    manager = g_object_get_data(G_OBJECT(cache), "bubble-manager");
+
+    manager->idle = idle != FALSE;
 }
