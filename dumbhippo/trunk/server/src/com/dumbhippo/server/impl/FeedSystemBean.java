@@ -214,8 +214,10 @@ public class FeedSystemBean implements FeedSystem {
 			entry.setTitle(HtmlTextExtractor.extractText(title));
 		
 		SyndContent content = syndEntry.getDescription();
-		
-		entry.setDescription(getContentAsText(syndFeed, content));
+		if (content != null)
+			entry.setDescription(getContentAsText(syndFeed, content));
+		else
+			entry.setDescription("");
 
 		Date publishedDate = syndEntry.getPublishedDate();
 		if (publishedDate != null)
