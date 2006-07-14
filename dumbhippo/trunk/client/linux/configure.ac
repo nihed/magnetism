@@ -216,10 +216,18 @@ else
     fi
 fi
 
+AC_CHECK_HEADERS([X11/extensions/scrnsaver.h])
+AC_CHECK_LIB(Xss, XScreenSaverQueryExtension, have_xscreensaver=true, have_xscreensaver=false, -lX11 -lXext)
+
+if ! $have_xscreensaver ; then
+    AC_MSG_ERROR([XScreenSaver extension is required - X11/extensions/scnsaver.h, libXss.so])
+fi
+XSCREENSAVER_LIBS=-lXss
+
 PKG_CHECK_MODULES(LIBHIPPO, gobject-2.0 >= $GLIB2_REQUIRED gthread-2.0 loudmouth-1.0 >= $LOUDMOUTH_REQUIRED)
 PKG_CHECK_MODULES(LIBGTKCOPY, gtk+-2.0 >= $GTK2_REQUIRED gtk+-x11-2.0)
 PKG_CHECK_MODULES(MUGSHOT_BASE, gtk+-2.0 >= $GTK2_REQUIRED gthread-2.0 loudmouth-1.0 >= $LOUDMOUTH_REQUIRED dbus-1 >= $DBUS_REQUIRED dbus-glib-1 >= $DBUS_GLIB_REQUIRED)
-MUGSHOT_LIBS="$MUGSHOT_BASE_LIBS $CURL_LIBS"
+MUGSHOT_LIBS="$MUGSHOT_BASE_LIBS $CURL_LIBS $XSCREENSAVER_LIBS"
 MUGSHOT_CFLAGS="$MUGSHOT_BASE_CFLAGS $CURL_CFLAGS"
 AC_SUBST(MUGSHOT_LIBS)
 AC_SUBST(MUGSHOT_CFLAGS)

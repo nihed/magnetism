@@ -11,6 +11,7 @@
 #include "hippo-bubble.h"
 #include "hippo-bubble-manager.h"
 #include "hippo-dbus-server.h"
+#include "hippo-idle.h"
 
 static const char *hippo_version_file = NULL;
 
@@ -36,6 +37,7 @@ struct HippoApp {
     guint check_installed_timeout;
     int check_installed_fast_count;
     guint check_installed_timeout_fast : 1;
+    HippoIdleMonitor *idle_monitor;
 };
 
 static void hippo_app_start_check_installed_timeout(HippoApp *app,
@@ -718,6 +720,14 @@ on_dbus_disconnected(HippoDBus *dbus,
     hippo_app_quit(app);
 }
 
+static void
+on_idle_changed(gboolean  idle,
+                void      *data)
+{
+    HippoApp *app = data;
+    g_print("idle = %d\n", idle);
+}                
+
 static HippoApp*
 hippo_app_new(HippoInstanceType  instance_type,
               HippoPlatform     *platform,
@@ -764,6 +774,8 @@ hippo_app_new(HippoInstanceType  instance_type,
     hippo_app_check_installed(app);
     /* start slow timeout to look for new installed versions */
     hippo_app_start_check_installed_timeout(app, FALSE);
+ 
+    app->idle_monitor = hippo_idle_add(gdk_display_get_default(), on_idle_changed, app); 
     
     return app;
 }
@@ -771,6 +783,8 @@ hippo_app_new(HippoInstanceType  instance_type,
 static void
 hippo_app_free(HippoApp *app)
 {
+    hippo_idle_free(app->idle_monitor);
+
     if (app->check_installed_timeout != 0)
         g_source_remove(app->check_installed_timeout);
 
