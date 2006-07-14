@@ -1,10 +1,14 @@
 package com.dumbhippo.server;
 
+import java.io.IOException;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
 import javax.ejb.Local;
+
+import org.apache.lucene.index.IndexWriter;
+import org.hibernate.lucene.DocumentBuilder;
 
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.Group;
@@ -169,4 +173,36 @@ public interface GroupSystem {
 	 * @param group group for which we accept invitation
 	 */
 	public void acceptInvitation(UserViewpoint userView, Group group);
+
+	public void indexGroups(IndexWriter writer, DocumentBuilder<Group> builder, List<Object> ids) throws IOException;
+
+	public void indexAllGroups(IndexWriter writer, DocumentBuilder<Group> builder) throws IOException;
+	
+	/**
+	 * Search the database of groups using Lucene.
+	 * 
+	 * @param viewpoint the viewpoint being searched from
+	 * @param queryString the search string to use, in Lucene syntax. The search
+	 *   will be done across both the group name and description fields
+	 * @return a GroupSearchResult object representing the search; you should
+	 *    check the getError() method of this object to determine if an error
+	 *    occurred (such as an error parsing the query string) 
+	 */
+	public GroupSearchResult searchGroups(Viewpoint viewpoint, String queryString);
+	
+	/**
+	 * Get a range of groups from the result object returned from searchGroups(). 
+	 * This is slightly more efficient than calling GroupSearchResult getGroups(),
+	 * because we avoid some EJB overhead.
+	 * 
+	 * @param viewpoint the viewpoint for the returned GroupView objects; must be the same 
+	 *        as the viewpoint passed in when calling searchGroups()
+	 * @param searchResult the result
+	 * @param start the index of the first group to retrieve (starting at zero)
+	 * @param count the maximum number of items desired 
+	 * @return a list of GroupView objects; may have less than count items when no more
+	 *        are available. 
+	 */
+	public List<GroupView> getGroupSearchGroups(Viewpoint viewpoint, GroupSearchResult searchResult, int start, int count);
+
 }

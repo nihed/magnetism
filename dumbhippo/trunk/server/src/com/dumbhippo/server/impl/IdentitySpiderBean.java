@@ -44,9 +44,11 @@ import com.dumbhippo.persistence.ValidationException;
 import com.dumbhippo.persistence.Validators;
 import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.Character;
+import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.Enabled;
 import com.dumbhippo.server.ExternalAccountSystem;
 import com.dumbhippo.server.GroupSystem;
+import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.IdentitySpiderRemote;
 import com.dumbhippo.server.InvitationSystem;
@@ -91,6 +93,9 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	
 	@EJB
 	private ExternalAccountSystem externalAccounts;
+	
+	@EJB
+	private Configuration config;
 	
 	public User lookupUserByEmail(Viewpoint viewpoint, String email) {
 		EmailResource res = lookupEmail(email);
@@ -893,6 +898,13 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		Account acct = getAttachedAccount(user);
 		if (acct == null)
 			return false;
+		
+		boolean noAuthentication = config.getProperty(HippoProperty.DISABLE_AUTHENTICATION).equals("true");
+		if (noAuthentication) {
+			logger.debug("auth disabled - everyone gets to be an administrator!");
+			return true;
+		}
+		
 		try {
 			Administrator adm = (Administrator)em.createQuery(GET_ADMIN_QUERY)
 			.setParameter("acct", acct)

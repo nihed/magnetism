@@ -16,8 +16,11 @@ import javax.persistence.Transient;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.hibernate.lucene.Indexed;
+import org.hibernate.lucene.Unstored;
 
 @Entity
+@Indexed(index="index/group")
 @Table(name="HippoGroup") // "Group" is a sql command so default name breaks things
 public class Group extends GuidPersistable implements VersionedEntity {
 	private static final long serialVersionUID = 1L;
@@ -89,6 +92,7 @@ public class Group extends GuidPersistable implements VersionedEntity {
 		this.members = members;
 	}
 	
+	@Unstored
 	@Column(nullable=false)
 	public String getName() {
 		return name;
@@ -107,6 +111,7 @@ public class Group extends GuidPersistable implements VersionedEntity {
 		this.version = version;
 	}
 	
+	@Unstored
 	@Column(nullable=true)
 	public String getDescription() {
 		return description;

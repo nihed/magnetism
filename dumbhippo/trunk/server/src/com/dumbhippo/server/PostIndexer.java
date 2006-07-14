@@ -10,7 +10,7 @@ import com.dumbhippo.persistence.Post;
 import com.dumbhippo.server.util.EJBUtil;
 
 public class PostIndexer extends Indexer<Post> {
-	DocumentBuilder<Post> builder;
+	private DocumentBuilder<Post> builder;
 	
 	static PostIndexer instance = new PostIndexer();
 	

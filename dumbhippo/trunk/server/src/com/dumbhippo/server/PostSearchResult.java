@@ -13,7 +13,6 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.Post;
-import com.dumbhippo.web.pages.SearchPage;
 
 /**
  * Represents the result of searching over Posts using lucene. When
@@ -26,12 +25,12 @@ import com.dumbhippo.web.pages.SearchPage;
  * @author otaylor
  */
 public class PostSearchResult {
-	static private final Logger logger = GlobalSetup.getLogger(SearchPage.class);
+	static private final Logger logger = GlobalSetup.getLogger(PostSearchResult.class);
 	
-	public List<Guid> foundPosts;
+	private List<Guid> foundPosts;
 	private int nChecked;
-	Hits hits;
-	String error;
+	private Hits hits;
+	private String error;
 	
 	public PostSearchResult(Hits hits) {
 		this.hits = hits;

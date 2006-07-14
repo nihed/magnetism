@@ -57,6 +57,11 @@ New features flag is <b><c:out value="${admin.newFeatures}"/></b>
 <a href="javascript:dh.admin.setNewFeatures('${!admin.newFeatures}')">Toggle</a>
 </p>
 
+<h2>Search</h2>
+<p>
+<a href="javascript:dh.admin.reindexAll();">Rebuild all Lucene indexes</a>
+</p>
+
 <h2>Site Stats</h2>
 <p>
 <b><c:out value="${admin.numberOfAccounts}"/> active accounts</b>

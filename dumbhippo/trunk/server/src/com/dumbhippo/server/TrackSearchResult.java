@@ -10,7 +10,6 @@ import org.apache.lucene.search.Hits;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
-import com.dumbhippo.web.pages.SearchPage;
 
 /**
  * Represents the result of searching over Track using lucene.
@@ -22,7 +21,7 @@ import com.dumbhippo.web.pages.SearchPage;
  */
 public class TrackSearchResult {
 	@SuppressWarnings("unused")
-	static private final Logger logger = GlobalSetup.getLogger(SearchPage.class);
+	static private final Logger logger = GlobalSetup.getLogger(TrackSearchResult.class);
 	
 	Hits hits;
 	String error;

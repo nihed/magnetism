@@ -60,6 +60,42 @@
 					</c:choose>						
 
 					<dht:zoneBoxSeparator/>
+					
+					<dht:searchSectionTitle a="dhGroups" query='${param["q"]}' pageable="${find.groups}">GROUPS</dht:searchSectionTitle>
+					<c:choose>
+						<c:when test="${!empty find.groupError}">
+							<c:out value="${find.groupError}"/>
+						</c:when>
+						<c:when test="${find.groups.totalCount > 0}">
+							<c:forEach items="${find.groups.results}" var="group" varStatus="loopStatus">
+								<div class="dh-item dh-item-with-photo dh-item-with-numeral dh-item-with-numeral-and-photo">
+									<div class="dh-numeral">
+										<c:out value="${loopStatus.index + 1}"/>
+									</div>								
+									<div class="dh-image">
+										<dht:groupshot group="${group}"/>
+									</div>
+									<div class="dh-next-to-image">
+										<div class="dh-title">
+											<a href="/group?who=${group.group.id}"><c:out value="${group.group.name}"/></a>
+										</div>
+										<div class="dh-info dh-blurb">
+											<c:out value="${group.group.description}"/>
+										</div>
+									</div>
+									<div class="dh-grow-div-around-floats"></div>
+								</div>
+							</c:forEach>
+							<dht:expandablePager pageable="${find.groups}" anchor="dhGroups"/>
+						</c:when>
+						<c:otherwise>
+							<div>
+								<i>No groups found.</i>
+							</div>
+						</c:otherwise>
+					</c:choose>
+
+					<dht:zoneBoxSeparator/>
 				
 					<dht:searchSectionTitle a="dhMusicRadar" query='${param["q"]}' pageable="${find.tracks}">MUSIC RADAR</dht:searchSectionTitle>
 
@@ -72,7 +108,7 @@
 					</c:forEach>
 
 					<dht:expandablePager pageable="${find.tracks}" anchor="dhMusicRadar"/>
-
+			
 					<dht:zoneBoxSeparator/>
 					
 					<dht:searchSectionTitle a="dhLinkSwarm" query='${param["q"]}' pageable="${find.posts}">WEB SWARM</dht:searchSectionTitle>

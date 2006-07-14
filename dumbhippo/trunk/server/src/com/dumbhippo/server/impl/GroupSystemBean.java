@@ -1,5 +1,6 @@
 package com.dumbhippo.server.impl;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -14,6 +15,13 @@ import javax.persistence.EntityNotFoundException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
+import org.apache.lucene.document.Document;
+import org.apache.lucene.index.IndexWriter;
+import org.apache.lucene.queryParser.MultiFieldQueryParser;
+import org.apache.lucene.queryParser.QueryParser;
+import org.apache.lucene.queryParser.QueryParser.Operator;
+import org.apache.lucene.search.Hits;
+import org.hibernate.lucene.DocumentBuilder;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
@@ -34,6 +42,8 @@ import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.Validators;
+import com.dumbhippo.server.GroupIndexer;
+import com.dumbhippo.server.GroupSearchResult;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.GroupSystemRemote;
 import com.dumbhippo.server.GroupView;
@@ -74,6 +84,8 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		// Fix up the inverse side of the mapping
 		g.getMembers().add(groupMember);
 
+		GroupIndexer.getInstance().indexAfterTransaction(g.getGuid());
+		
 		return g;
 	}
 
@@ -759,5 +771,51 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		// If you view a group you were invited to, you get added; you can leave again and then 
 		// you enter the REMOVED state where you can re-add yourself but don't get auto-added.
 		addMember(viewpoint.getViewer(), group, viewpoint.getViewer());
+	}
+
+	public void indexGroups(IndexWriter writer, DocumentBuilder<Group> builder, List<Object> ids) throws IOException {
+		for (Object o : ids) {
+			Guid guid = (Guid)o;
+			Group g = em.find(Group.class, guid.toString());
+			Document document = builder.getDocument(g, g.getId());
+			writer.addDocument(document);
+			logger.debug("Indexed group with guid {}", guid);
+		}
+	}
+
+	public void indexAllGroups(IndexWriter writer, DocumentBuilder<Group> builder) throws IOException {
+		List<?> l = em.createQuery("SELECT g FROM Group g").getResultList();
+		List<Group> groups = TypeUtils.castList(Group.class, l);
+		
+		for (Group g : groups) {
+			Document document = builder.getDocument(g, g.getId());
+			writer.addDocument(document);
+		}
+	}
+
+	public GroupSearchResult searchGroups(Viewpoint viewpoint, String queryString) {
+		final String[] fields = { "Name", "Description" };
+		QueryParser queryParser = new MultiFieldQueryParser(fields, GroupIndexer.getInstance().createAnalyzer());
+		queryParser.setDefaultOperator(Operator.AND);
+		org.apache.lucene.search.Query query;
+		try {
+			query = queryParser.parse(queryString);
+			
+			Hits hits = GroupIndexer.getInstance().getSearcher().search(query);
+			
+			return new GroupSearchResult(hits);
+			
+		} catch (org.apache.lucene.queryParser.ParseException e) {
+			return new GroupSearchResult("Can't parse query '" + queryString + "'");
+		} catch (IOException e) {
+			return new GroupSearchResult("System error while searching, please try again");
+		}
+	}
+
+	public List<GroupView> getGroupSearchGroups(Viewpoint viewpoint, GroupSearchResult searchResult, int start, int count) {
+		// The efficiency gain of having this wrapper is that we pass the real 
+		// object to the method rather than the proxy; getGroups() can make many, 
+		// many calls back against the GroupSystem
+		return searchResult.getGroups(this, viewpoint, start, count);
 	}
 }

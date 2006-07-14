@@ -7,6 +7,9 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.server.GroupSearchResult;
+import com.dumbhippo.server.GroupSystem;
+import com.dumbhippo.server.GroupView;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.Pageable;
@@ -26,9 +29,7 @@ import com.dumbhippo.web.SigninBean;
 import com.dumbhippo.web.WebEJBUtil;
 
 /**
- * Backing bean for find.jsp ... as find.jsp is a temporary name for a 
- * search.jsp replacement, this is a temporary name for a SearchPage 
- * replacement.
+ * Backing bean for search.jsp 
  * 
  * @author otaylor
  */
@@ -48,6 +49,7 @@ public class FindPage {
 
 	private PostingBoard postBoard;
 	private MusicSystem musicSystem;
+	private GroupSystem groupSystem;
 	private IdentitySpider identitySpider;
 	
 	private String searchText;
@@ -58,11 +60,15 @@ public class FindPage {
 	private Pageable<TrackView> tracks;
 	
 	private Pageable<PersonView> people;
+
+	private GroupSearchResult groupSearchResult;
+	private Pageable<GroupView> groups;
 	
 	public FindPage() {
 		postBoard = WebEJBUtil.defaultLookup(PostingBoard.class);
 		musicSystem = WebEJBUtil.defaultLookup(MusicSystem.class);
 		identitySpider = WebEJBUtil.defaultLookup(IdentitySpider.class);
+		groupSystem = WebEJBUtil.defaultLookup(GroupSystem.class);
 	}
 
 	private void ensurePostSearchResult() {
@@ -144,6 +150,32 @@ public class FindPage {
 		}
 		
 		return people;
+	}	
+	
+	private void ensureGroupSearchResult() {
+		if (groupSearchResult == null) {
+			groupSearchResult = groupSystem.searchGroups(signin.getViewpoint(), searchText);
+			groups = pagePositions.createPageable("groups");
+			groups.setInitialPerPage(INITIAL_PER_PAGE);
+			groups.setSubsequentPerPage(SUBSEQUENT_PER_PAGE);
+
+			List<GroupView> resultList = groupSystem.getGroupSearchGroups(signin.getViewpoint(), groupSearchResult, groups.getStart(), groups.getCount());
+			
+			groups.setTotalCount(groupSearchResult.getApproximateCount());
+			groups.setResults(resultList);
+		}
+	}
+	
+	public String getGroupError() {
+		ensureGroupSearchResult();
+
+		return groupSearchResult.getError();
+	}
+	
+	public Pageable<GroupView> getGroups() {
+		ensureGroupSearchResult();
+		
+		return groups;
 	}	
 	
 	public SigninBean getSignin() {

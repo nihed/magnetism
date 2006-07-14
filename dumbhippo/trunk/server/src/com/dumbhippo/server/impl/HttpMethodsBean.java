@@ -66,6 +66,7 @@ import com.dumbhippo.server.ClaimVerifier;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.ExternalAccountSystem;
 import com.dumbhippo.server.FeedSystem;
+import com.dumbhippo.server.GroupIndexer;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.HttpMethods;
@@ -1069,6 +1070,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		
 		PostIndexer.getInstance().reindex();
 		TrackIndexer.getInstance().reindex();
+		GroupIndexer.getInstance().reindex();
 	}
 	
 	public void doSetFavoritePost(UserViewpoint viewpoint, String postId, boolean favorite) {
