@@ -471,6 +471,14 @@ dh.bubble.BubbleData = function() {
         return this.getId()
     }
     
+    this.getTimeout = function() {
+        throw Error("not implemented"); 
+    }
+    
+    this.getBubbleType = function() {
+        throw Error("not implemented"); 
+    }
+    
     this.getChattingUserCount = function() {
         return -1
     }
@@ -547,6 +555,14 @@ dh.bubble.PostData = function(post) {
 
     this.getId = function() {
         return this.post.Id
+    }
+    
+    this.getTimeout = function() {
+        return this.post.Timeout
+    }
+    
+    this.getBubbleType = function() {
+        return 'linkShare'
     }
     
     this.getChattingUserCount = function() {
@@ -674,7 +690,16 @@ dh.bubble.GroupData = function(group) {
     dh.bubble.BubbleData.call(this)
     
     this.group = group
-    
+
+    this.getTimeout = function() {
+        // 0 signifies to use the default timeout
+        return 0
+    }
+
+    this.getBubbleType = function() {
+        return 'groupUpdate'
+    }
+            
     this.getChattingUserCount = function() {
         return this.group.ChattingUserCount
     }

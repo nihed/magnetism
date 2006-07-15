@@ -368,7 +368,7 @@ HippoBubble::processMessage(UINT   message,
 }
 
 void 
-HippoBubble::setLinkNotification(bool isRedisplay, HippoPost *share)
+HippoBubble::setLinkNotification(HippoPost *share)
 {
     // watch future changes to this post
     connectPost(share);
@@ -380,7 +380,6 @@ HippoBubble::setLinkNotification(bool isRedisplay, HippoPost *share)
     ui_->debugLogW(L"Invoking dhAddLinkShare");
     // Note if you change the arguments to this function, you must change notification.js
     ie_->createInvocation(L"dhAddLinkShare")
-        .addBool(isRedisplay)
         .addDispatch(HippoPostWrapper::getWrapper(share, ui_->getDataCache()))
         .getResult(&result);
 
@@ -499,6 +498,7 @@ HippoBubble::onUserJoinedGroupChatRoom(HippoPerson *person,
     variant_t result;
     ie_->createInvocation(L"dhGroupViewerJoined")
         .addDispatch(HippoEntityWrapper::getWrapper(entity))
+        .addBool(false)
         .getResult(&result);
     if (result.vt != VT_BOOL || !result.boolVal) {
         return;
@@ -510,7 +510,6 @@ void
 HippoBubble::onGroupChatRoomMessageAdded(HippoChatMessage *message,
                                          HippoEntity      *entity)
 {
-
     if (hippo_entity_get_entity_type(entity) != HIPPO_ENTITY_GROUP) {
         g_warning("HippoBubble::onGroupChatRoomMessageAdded was called with an entity that is not a group");
         return;
@@ -523,10 +522,13 @@ HippoBubble::onGroupChatRoomMessageAdded(HippoChatMessage *message,
         if (!create())
             return;
     }
+    HippoChatRoom *room = hippo_entity_get_chat_room(entity);
+    gboolean isReloading = hippo_chat_room_get_loading(room);
 
     variant_t result;
     ie_->createInvocation(L"dhGroupChatRoomMessage")
         .addDispatch(HippoEntityWrapper::getWrapper(entity))
+        .addBool((bool) isReloading)
         .getResult(&result);
     if (result.vt != VT_BOOL || !result.boolVal) {
         return;
@@ -550,6 +552,7 @@ HippoBubble::onUserJoined(HippoPerson *person,
     variant_t result;
     ie_->createInvocation(L"dhViewerJoined")
         .addDispatch(HippoPostWrapper::getWrapper(post, ui_->getDataCache()))
+        .add(false)
         .getResult(&result);
 
     if (result.vt != VT_BOOL || !result.boolVal) {
@@ -571,9 +574,13 @@ HippoBubble::onMessageAdded(HippoChatMessage *message,
             return;
     }
 
+    HippoChatRoom *room = hippo_post_get_chat_room(post);
+    gboolean isReloading = hippo_chat_room_get_loading(room);
+
     variant_t result;
     ie_->createInvocation(L"dhChatRoomMessage")
         .addDispatch(HippoPostWrapper::getWrapper(post, ui_->getDataCache()))
+        .addBool((bool) isReloading)
         .getResult(&result);
 
     if (result.vt != VT_BOOL) {
@@ -585,10 +592,8 @@ HippoBubble::onMessageAdded(HippoChatMessage *message,
         return;
     }
 
-    HippoChatRoom *room = hippo_post_get_chat_room(post);
-    if (!hippo_chat_room_get_loading(room)) {
-        setShown();
-    }
+    setShown();
+
 }
 
 void 
@@ -609,7 +614,7 @@ HippoBubble::onPostAdded(HippoPost *post)
         hippoDebugLogU("New post %s needs bubbling up",
             hippo_post_get_guid(post));
         hippo_post_set_new(post, FALSE);
-        setLinkNotification(false, post);
+        setLinkNotification(post);
     } else {
         hippoDebugLogU("Post %s is not new, not bubbling up for now",
             hippo_post_get_guid(post));

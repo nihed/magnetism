@@ -116,7 +116,7 @@ dh.notification.Display = function (serverUrl, appletUrl, selfId) {
         this._idleUpdateDisplay()
     }
     
-    this._shouldDisplayShare = function (share) {
+    this.shouldDisplayShare = function (share) {
         if ((share.post.CurrentViewers.length > 0 && share.post.CurrentViewers.item(0).Id == dh.selfId)
             || (share.post.Sender.id == dh.selfId && share.post.CurrentViewers.length == 0)) {
             dh.util.debug("Not displaying notification of self-view or initial post")
@@ -147,74 +147,48 @@ dh.notification.Display = function (serverUrl, appletUrl, selfId) {
             this._bubble.setPage("whosThere")
     }
 
-    // TODO possibly merge addLinkShare and addGroupUpdate into a single function 
     // Returns true iff we should show the window if it's hidden. 
-    this.addLinkShare = function (share, isRedisplay, why) {
-        var prevShareData = this._findNotification(share.getId())
-        var shouldDisplayShare = isRedisplay || this._shouldDisplayShare(share)
-        if (prevShareData) {
+    this.addBubbleUpdate = function (bubbleData, updateOnly, why) {
+        
+        var prevBubbleData = this._findNotification(bubbleData.getId())
+        if (prevBubbleData) {
             // you already have a notification for this particular activity in your
             // stack of bubbles, update the data
-            prevShareData.notification.data = share
-            prevShareData.notification.why |= why
-        }
-        if (!shouldDisplayShare || share.getIgnored())
-            return false
-        if (!prevShareData || prevShareData.position < 0) {   
-            // We don't have it at all, or it was saved and needs to be redisplayed
-            var displayed = this._pushNotification('linkShare', share, share.post.Timeout, why)
-            if (displayed)
+            prevBubbleData.notification.data = bubbleData
+            prevBubbleData.notification.why |= why
+            
+            if (prevBubbleData.position == this.position) {
+                // We're currently displaying this data, set it again in the bubble to force rerendering
+                dh.util.debug("resetting current bubble data")
+                this._bubble.setData(bubbleData)
                 this._showRelevantPage(why)
-            this._idleUpdateDisplay() // Handle changes to the navigation arrows
-            return true
-        } else if (prevShareData && prevShareData.position == this.position) {
-            // We're currently displaying this share, set it again in the bubble to force rerendering
-            dh.util.debug("resetting current bubble data")
-            this._bubble.setData(share)
-            this._showRelevantPage(why)
-            return shouldDisplayShare
-        } else {
-            dh.util.debug("not rerendering bubble");
+            }
+            
+            // do more tests if ever have data with negative positions (signifying saved missed notifications)
+            return !bubbleData.getIgnored()
         }
-        return false
-    }
-    
-    // Returns true iff we should show the window if it's hidden. 
-    this.addGroupUpdate = function (groupData, isRedisplay, why) {
-        var prevNotificationData = this._findNotification(groupData.getId())
-        if (prevNotificationData) {
-            // you already have a notification for this particular activity in your
-            // stack of bubbles, update the data
-            prevNotificationData.notification.data = groupData
-            prevNotificationData.notification.why |= why
-        }
-        if (groupData.getIgnored())      
+        
+        if (bubbleData.getIgnored() || updateOnly)
             return false
-        if (!prevNotificationData) {   
-            // We don't have it at all and it needs to be redisplayed
-            var displayed = this._pushNotification('groupUpdate', groupData, this._defaultTimeout, why)
-            if (displayed)
-                this._showRelevantPage(why)
-            this._idleUpdateDisplay() // Handle changes to the navigation arrows
-            return true
-        } else if (prevNotificationData && prevNotificationData.position == this.position) {
-            // We're currently displaying this notification, set it again in the bubble to force rerendering
-            dh.util.debug("resetting current bubble data")
-            this._bubble.setData(groupData)
+
+        // We don't have it at all, or it was saved and needs to be redisplayed
+        // bubble type is either 'linkShare' or 'groupUpdate'
+        var displayed = this._pushNotification(bubbleData.getBubbleType(), bubbleData, bubbleData.getTimeout(), why)
+            
+        if (displayed)
             this._showRelevantPage(why)
-            return true
-        } else {
-            dh.util.debug("not rerendering bubble");
-        }
-        return false
+        this._idleUpdateDisplay() // Handle changes to the navigation arrows
+        return true
     }
     
     // Refresh the display of the share, if showing, otherwise do nothing
     this.updatePost = function(id) {
         var prevShareData = this._findNotification(id)
-        if (!prevShareData)
-            return
-            
+        if (!prevShareData) {
+            dh.util.debug("did not find notification for post id " + id);
+            return            
+        } 
+        dh.util.debug("found a notification for post id " + id);
         // Check to see if the last viewer has left the post; if so and
         // we were only showing this page because there were viewers
         // remove the page and possibly close the bubble
@@ -370,12 +344,16 @@ dhAdaptLinkRecipients = function (recipients) {
 
 // Note if you change the parameters to these functions, you must change HippoBubble.cpp
 
-dhAddLinkShare = function (isRedisplay, post) {
+dhAddLinkShare = function (post) {
     dh.display.setVisible(true)
     
     dh.util.debug("adding link share id=" + post.Id)
     var data = new dh.bubble.PostData(post)
-    return dh.display.addLinkShare(data, isRedisplay, dh.notification.NEW)
+    
+    if (!dh.display.shouldDisplayShare(data))
+        return false
+        
+    return dh.display.addBubbleUpdate(data, false, dh.notification.NEW)
 }
 
 dhAddMySpaceComment = function (myId, blogId, commentId, posterId, posterName, posterImgUrl, content) {
@@ -383,39 +361,39 @@ dhAddMySpaceComment = function (myId, blogId, commentId, posterId, posterName, p
     dh.display.addMySpaceComment(data)
 }
 
-dhGroupViewerJoined = function(entity, shouldNotify) {
+dhGroupViewerJoined = function(entity, updateOnly) {
     dh.display.setVisible(true)
     
     var data = new dh.bubble.GroupChatData(entity)
-    return dh.display.addGroupUpdate(data, true, dh.notification.VIEWER)
+    return dh.display.addBubbleUpdate(data, updateOnly, dh.notification.VIEWER)
 }
 
-dhGroupChatRoomMessage = function(entity, shouldNotify) {
+dhGroupChatRoomMessage = function(entity, updateOnly) {
     dh.display.setVisible(true)
         
     var data = new dh.bubble.GroupChatData(entity)
-    return dh.display.addGroupUpdate(data, true, dh.notification.MESSAGE)
+    return dh.display.addBubbleUpdate(data, updateOnly, dh.notification.MESSAGE)
 }
 
 dhGroupMembershipChanged = function(group, user, status) {
     dh.display.setVisible(true)
               
     var data = new dh.bubble.GroupMembershipChangeData(group, user, status)
-    return dh.display.addGroupUpdate(data, true, dh.notification.NEW)
+    return dh.display.addBubbleUpdate(data, false, dh.notification.NEW)
 }
 
-dhViewerJoined = function(post, shouldNotify) {
+dhViewerJoined = function(post, updateOnly) {
     dh.display.setVisible(true)
     
     var data = new dh.bubble.PostData(post)
-    return dh.display.addLinkShare(data, true, dh.notification.VIEWER)
+    return dh.display.addBubbleUpdate(data, updateOnly, dh.notification.VIEWER)
 }
 
-dhChatRoomMessage = function(post, shouldNotify) {
+dhChatRoomMessage = function(post, updateOnly) {
     dh.display.setVisible(true)
         
     var data = new dh.bubble.PostData(post)
-    return dh.display.addLinkShare(data, true, dh.notification.MESSAGE)
+    return dh.display.addBubbleUpdate(data, updateOnly, dh.notification.MESSAGE)
 }
 
 dhUpdatePost = function(post) {

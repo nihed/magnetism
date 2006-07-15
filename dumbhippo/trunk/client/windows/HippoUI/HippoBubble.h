@@ -96,7 +96,7 @@ private:
     void disconnectPost(HippoPost *post);
     void disconnectAllPosts();
 
-    void setLinkNotification(bool isRedisplay, HippoPost *share);
+    void setLinkNotification(HippoPost *share);
 
     void setShown();
     void moveResizeWindow(void);
