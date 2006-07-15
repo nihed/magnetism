@@ -22,6 +22,10 @@
 	<c:choose>
 		<c:when test="${browser.linuxRequested}">
 			<%-- LINUX RELEASE NOTES GO HERE --%>
+			<p>Version 1.1.9</p>
+			<ul>
+				<li>Don't time out bubbles while you're not at the computer.</li>
+			</ul>
 			<p>Version 1.1.8</p>
 			<ul>
 				<li>Fix a crash that a lot of people were seeing.</li>
