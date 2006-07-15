@@ -1,0 +1,17 @@
+@CHARSET "UTF-8";
+@IMPORT url("site.css");
+@IMPORT url("who-are-you-positions.css");
+
+#dhContentColumn {
+	font-size: 12px; /* for inheritance by text in the zone box */
+}
+
+#dhLoginNotification {
+	font-weight: bold;
+	color: 		 #cc0033;
+}
+
+#dhPasswordHelp {
+	display:	none;
+	font-size:	12px;
+}

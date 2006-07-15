@@ -1,0 +1,91 @@
+@CHARSET "UTF-8";
+@IMPORT url("site.css");
+@IMPORT url("artist-positions.css");
+
+.dh-artist-profile {
+	background-color: white;
+}
+
+.dh-artist-name {
+	font-size:			16px;
+	font-weight:		bold;
+}
+
+.dh-artist-zone-title {
+	font-size:			14px;
+	font-weight:		bold;
+}
+
+.dh-artist-bio {
+	font-size:			12px;
+}
+
+.dh-album {
+    background-color:   white;
+}
+
+.dh-album-image {
+}
+
+.dh-album-title {
+	font-size:			12px;
+	font-weight:		bold;
+	color:              blue;
+}
+
+.dh-album-year {
+    font-size:          12px;
+    color:              black;
+}
+
+.dh-album-buy {
+    font-size:          12px;
+	font-weight:		bold;
+    color:              black;
+}
+
+.dh-songs {
+    font-size:         12px;
+    color:             blue;
+}
+
+.dh-songs a:visited {
+    color: blue;
+    text-decoration: none;
+}
+
+.dh-album-track {
+    border-left: 1px solid #CCCCCC;
+    border-right: 1px solid #CCCCCC;
+}
+
+.dh-odd-track {
+    background-color: #EBEBEB;   
+}
+
+.dh-even-track {
+    background-color: white;   
+}
+
+.dh-first-track {
+    border-top: 1px solid #CCCCCC;
+}
+
+.dh-last-track {
+    border-bottom: 1px solid #CCCCCC;
+}
+
+.dh-album-track .dh-song-info .dh-song-name {
+	font-size:			11px;
+	font-weight:		bold;
+}
+
+.dh-album-buy {
+	font-size:			11px;
+	overflow:			hidden;
+	color:				#666666;
+}
+
+.dh-album-track .dh-song-info .dh-song-plays {
+    color:              black;
+}

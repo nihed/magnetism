@@ -1,0 +1,40 @@
+@CHARSET "UTF-8";
+@IMPORT url("site.css");
+@IMPORT url("download-positions.css");
+
+.dh-download-separator {
+	background: black;
+}
+
+.dh-download-instructions {
+	font-size: 14px;
+	font-weight: bold;
+}
+
+.dh-download-product {
+	font-size: 18px;
+	font-weight: bold;
+}
+
+.dh-download-product-disabled {
+	color: #cccccc;
+	cursor: default;
+}
+
+.dh-accept-terms-box-normal .dh-accept-terms-warning {
+	display: none;
+}
+
+.dh-accept-terms-box-warning {
+	background-color:	#ffffcc;
+	border:				1px solid #cc0033;
+	padding-top:		10px;
+	padding-bottom:		10px;
+	-moz-border-radius:	5px;
+}
+
+.dh-accept-terms-box-warning .dh-accept-terms-warning {
+	display: 			block;
+	color:				#cc0033;
+	font-weight:		bold;
+}

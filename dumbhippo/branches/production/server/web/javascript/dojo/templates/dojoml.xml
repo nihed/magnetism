@@ -1,0 +1,341 @@
+<?xml version="1.0" encoding="utf-8"?>
+<dojo:application xmlns:dojo="http://www.dojotoolkit.org/2004/dojoml" xmlns:xlink="http://www.w3.org/1999/xlink" propertyProvider="">
+	<!-- This is an outline of the xml declaration syntax that will be used to allow people to define components in the dojo toolkit -->
+	<!-- TODO:
+		- soap, real-time/mod_pubsub, wsdl supplied data
+		- "virtual" actions, i.e. events sent to the server upon submitting a form or completing an action
+		- fragments and data updates
+		- add the rest of the components... this is a non-exhaustive list to get started on
+		- handling data validation models... separate elements or as an attribute on the field... basically as part of the model or part of the ui?
+		- define relationships between components, if any (hash maps, perhaps)
+		- define nontrivial relationships between data structures for different components,  data models that grab elements from different data sources, and logical transformations of data sources into component data (not sure that we should even worry about the latter
+		- define schema (w3c and/or relax-ng) and dtd
+	-->
+
+	<!-- attributes
+		id: unique identifier, string
+		dataProivder: data or a pointer to a data source or data model using JavaScript syntax... decided to use ognl/jsf style syntax rather than xpath for simplicity:
+			text: dataProvider="some plain text"
+			reference to a model: dataProvider="uri#modelName" where modelName is an id of an element in the document returned from the given uri
+			reference to an item in a model: dataProvider="uri#modelName.elementName"
+		propertyProviderList: uri to a propertySet for the component... includes actions and styles... propertySets can be nested
+		action: uri for form submission
+	-->
+
+	<!-- structure
+		There are two fundamentally different approaches that were considered here for how the markup works.  One is the XAML style where the structure can actually represent the underlying data model: http://myxaml.com/marcclifton/archive/2004/04/04/193.aspx .  The other is to make the markup reflective of what components are, and to abstract away the particular structure of the underlying implementation.  In this case, I think our target market is more in line with the latter.  I'm thinking that we're not looking for a way to program with xml, but rather a way to configure with xml.
+	-->
+	<!--
+		(rar) structure:
+			I'm not entirely sure that I agree with what Dylan wrote above. I
+			DO belive that it should be entirely possible (and likely!) that
+			one can do a one-to-one mapping between properties and attributes
+			specified on an XML ctor and the resulting widget/component/object.
+			It's the job of the parser to see this through, although requiring
+			component class cooperation is not out of the question.
+
+			What I DO want to see happen here is threefold:
+				- provide the most terse shorthand for declaring components,
+				  and then allow the amount of syntax required after that to
+				  scale with the cpabilities needed. I.e., our syntax should
+				  provide a good huffman encoding (what is common is shortest,
+				  what is less common is longer).
+				- a way to set EVERY property of an object via markup.
+				- degradeability within the resulting markup if a translation
+				  is required down to HTML/SVG/etc.
+	-->
+
+	<!-- ways to specify attributes
+			1. as nested elements:
+			<dojo:component>
+				<prop1>prop1Value</prop1>
+				<prop2>prop2Value</prop2>
+				<prop3>prop3Value</prop3>
+				...
+			</dojo:component>
+
+			2. as nested elements, with more complex property structures:
+			<dojo:component>
+				<prop1>
+					<item1>
+						prop1Item1Value
+					</item1>
+					<item2>
+						prop1Item2Value
+					</item2>
+				</prop1>
+				<prop2>prop2Value</prop2>
+				<prop3>prop3Value</prop3>
+				...
+			</dojo:component>
+
+			3. as an xml fragment somewhere in the current or external document:
+			<component propertyProviderList="file#elementId" />
+
+			<dojo:propertySet>
+				<dojo:propertySet id="elementId">
+					<prop1>prop1Value</prop1>
+					<prop2>prop2Value</prop2>
+					<prop3>prop3Value</prop3>
+				</dojo:propertySet>
+			</dojo:propertySet>
+
+			in essence, this is a propertySet, so there's no reason to
+			arbitrarily place it in a properties element, i.e....
+
+			<dojo:propertySet id="" type="">
+				<prop1>prop1Value</prop1>
+				<prop2>prop2Value</prop2>
+				<prop3>prop3Value</prop3>
+			</dojo:propertySet>
+
+
+			4. as attributes
+			<component prop1="prop1Value" prop2="prop2Value" prop3="prop3Value" />
+
+			5. as a css selector style name value pairs in a properties attribute
+			<component properties="prop1:prop1Value;prop2:prop2Value;prop3:prop3Value;" />
+
+			6. perhaps we may now or later consider also supporting the use of an external css-like selector file for properties without consideration for cascading (for NOW, we are NOT SUPPORTING THIS):
+
+			<dojo:component propertyProviderList="file.className" />
+
+			.className {
+				prop1:prop1Value;
+				prop2:prop2Value;
+				prop3:prop3Value;
+			}
+			
+			6a.
+			
+			<dojo:component propertyProviderList="provider1" />
+			
+			<dojo:propertySet id="provider1">
+				<dojo:propertySet match="someSubComponent" xlink:href="file" sourceType="css" targetType="svg" />
+			</dojo:propertySet>
+			
+			.-dojo-someSubComponent {
+				prop1:prop1Value;
+				prop2:prop2Value;
+				prop3:prop3Value;
+			}
+			
+	-->
+
+	<!-- components -->
+	<dojo:button id=""  dataProvider="" propertyProviderList="" label="#text" state="enabled|disabled">
+		<dojo:image>
+			<!-- usual css properties for displaying an image on a button -->
+		</dojo:image>
+	</dojo:button>
+	<dojo:contextMenu id=""  dataProvider="" propertyProviderList="">
+		<!-- FIXME: Does is make sense to have items as separate tag types, or 
+		should the following three things just all be items -->
+		<dojo:header>text</dojo:header>
+		<dojo:item propertyProviderList="">text</dojo:item>
+		<dojo:separator />
+	</dojo:contextMenu>
+	<dojo:menu id=""  dataProvider="" propertyProviderList=""  />
+	<dojo:progressBar id=""  dataProvider="" propertyProviderList=""  />
+	<dojo:list id=""  dataProvider="" propertyProviderList=""  />
+	<dojo:splitPane id=""  dataProvider="" propertyProviderList=""  />
+	<dojo:tabbedPane id=""  dataProvider="" propertyProviderList=""  />
+	<dojo:tree id=""  dataProvider="" propertyProviderList="" >
+		<dojo:resizable></dojo:resizable>
+		<!-- resizable by user... yes|no|x|y, default is no -->
+		<!--
+			my (Dylan) thoughts on this are that the developer should be able to specify dimensions and resiability of a tree or other elements, but that we might translate such things to a container or other internal widget such as a split pane that would be needed for such behavior to acutally work
+		-->
+		<dojo:indentation></dojo:indentation>
+		<!-- indentation for each tree level, css size allowed -->
+		<dojo:state type="default" mode="collapsed | expandedAll | expandedToDepth | expandedToList">
+			<!--
+				the default state of the tree... possible states are:
+					collapsed: all tree items are collapsed
+					expandedAll: all tree items are expanded
+					expandedToDepth: all tree items to a certain integral depth are open... for example, 3 will have all items that are 1 ,2,or 3 levels deep expanded (top level is 0)
+					expandedToList: expand all items necessary to show the list of items that are to be expanded... need to work out what this list of ids represents
+					TODO: these names aren't very good, and they won't work well as attributes of the tree
+			-->
+			<dojo:expandDepth>3</dojo:expandDepth>
+			<dojo:expandList>node1,node2,node5</dojo:expandList>
+			<!-- these could of course be specified as attributes, and would only need to be specified if relevant -->
+		</dojo:state>
+		<dojo:treeItems>
+			<dojo:cssClassList></dojo:cssClassList>
+			<!--
+				seems better than mxml's way of just specifying a list of
+				background colors to use for alteration
+			-->
+			<!-- comma separated list of classNames -->
+			<dojo:repetitionFrequency></dojo:repetitionFrequency>
+			<!-- comma-separated list of integers -->
+			<!-- these names aren't very good... trying to replicate some of
+			svg's capabilities for specifying declarative repetition without
+			having to use more complex css selectors... -->
+			<dojo:rowHeight></dojo:rowHeight>
+				<!-- css size -->
+				<!-- should this really be height... what if we wanted to be able to specify rowHeight as an attribute of the dojo:grid element? -->
+		</dojo:treeItems>
+		<dojo:treeIconItems>
+			<!-- perhaps a dataProvider could be used here to add textual
+			content instead of an icon -->
+			<dojo:icon type="folderClosed" cssClassName="folderClosed" svgDefsElement="" src="folderClosedIcon.png" />
+			<dojo:icon type="folderOpen" cssClassName="folderOpen" svgDefsElement="" src="folderOpenIcon.png" />
+			<dojo:icon type="leaf" cssClassName="leaf" svgDefsElement="" src="leafIcon.png" />
+			<!-- idea is that in html, you'd usually want to use graphics for icons,
+				 but with svg, you'd probably want to specify either a class name, or
+				 a defs element
+			-->
+		</dojo:treeIconItems>
+		<!-- TODO: how to describe transition effects specific to trees...
+		I'm thinking this should be deferred to whatever animation model we use -->
+	</dojo:tree>
+
+	<dojo:wizard id=""  dataProvider="" propertyProviderList=""  />
+
+	<dojo:form id=""  action="">
+		<!-- TODO: We should make an effort to include items in the whatwg's web forms 2.0 spec -->
+		<dojo:textInput type="text|password|hidden|image|datetime|date|month|week|time|name|range|email|uri" />
+		<dojo:button />
+		<dojo:selectOne type="list|dropdown|radio" /> <!-- drop down and radio buttons -->
+		<dojo:selectMultiple type="list|checkbox" /> <!-- multiple select and checkboxes -->
+		<dojo:comboBox />
+		<dojo:file />
+		<dojo:datePicker />
+		<!-- dojo:numericStepper should be replaced by a select list with the appropriate dataProvider? -->
+		<!-- TODO: handle data validation models for form element input -->
+	</dojo:form>
+
+	<!-- traditionally static or non-componentized elements -->
+	<dojo:label id=""  dataProvider="" propertyProviderList=""  /> <!-- container to insert text through a static or dynamic dataProvider -->
+	<dojo:list id=""  dataProvider="" propertyProviderList=""  />
+	<dojo:link id=""  dataProvider="" propertyProviderList=""  />
+
+	<dojo:resource dataProvider="" propertyProviderList=""  type="css|xslt|javascript|rss|atom" version="" />
+	<dojo:htmlFragment dataProvider="" propertyProviderList=""  />
+	<dojo:svgFragment dataProvider="" propertyProviderList=""  />
+	<dojo:xmlFragment dataProvider="" propertyProviderList=""  /><!-- for generic namespaces? -->
+
+	<dojo:grid cssFileName="" cssClassName="" id="" dataProvider="" propertyProviderList="" >
+		<dojo:scroll type="specified|auto|none">
+			<dojo:fixedItems position="top | right | bottom | left" quantity="" />
+			<!-- used to set a fixed number of rows or columns in any position on the table... use multiple entries to specify for each position
+			TODO: nomenclature isn't very good...
+			-->
+		</dojo:scroll>
+		<dojo:reorder type="column|row|both|none" /><!-- specified the allowed actions by the user to change the order of columns and rows through drag and drop of selected rows or columns -->
+		<dojo:sort type="user-row|user-column|automatic|none" ascendingClassName="" descendingClassName=""><!-- grid table sorting, default type is none -->
+			<!-- TODO: do we really want additional css class names like this... how should this be done differently? -->
+			<dojo:order type="ascending|descending|custom">
+				<dojo:comparator></dojo:comparator>
+				<!-- how to define the comparator for each row/column... perhaps we allow multiple comparators and define a way for them to be bound to a column or a row through the head/body/foot items define below? I envision these working much like a NodeFilter in DOM 2 Range... may need some extra properties for things like sortBlankAs -->
+				<!-- add an event to cause a sort on load... by default, it does not auto-sort -->
+			</dojo:order>
+		<!-- TODO: multiple sort?
+		-->
+		</dojo:sort>
+		<dojo:head>
+			<dojo:rows>
+				<dojo:cssClassList></dojo:cssClassList>
+				<!-- comma separated list of classNames -->
+				<dojo:repetitionFrequency></dojo:repetitionFrequency>
+				<!-- comma-separated list of integers -->
+				<!-- these names aren't very good... trying to replicate some of
+				svg's capabilities for specifying declarative repetition without
+				having to use more complex css selectors... -->
+				<dojo:rowHeight>1.5em</dojo:rowHeight>
+				<!-- css size -->
+				<!-- should this really be height... what if we wanted to be able to specify rowHeight as an attribute of the dojo:grid element? -->
+				<dojo:cells>
+					<dojo:cssClassList></dojo:cssClassList>
+				<!-- comma separated list of classNames -->
+				</dojo:cells>
+			</dojo:rows>
+		</dojo:head>
+		<dojo:body>
+			<dojo:rows>
+				<dojo:cssClassList></dojo:cssClassList>
+				<dojo:repetitionFrequency></dojo:repetitionFrequency>
+				<dojo:rowHeight></dojo:rowHeight>
+				<dojo:cells>
+					<dojo:cssClassList></dojo:cssClassList>
+				</dojo:cells>
+			</dojo:rows>
+		</dojo:body>
+		<dojo:foot>
+			<dojo:rows>
+				<dojo:cssClassList></dojo:cssClassList>
+				<dojo:rowHeight></dojo:rowHeight>
+				<dojo:cells>
+					<dojo:cssClassList></dojo:cssClassList>
+				</dojo:cells>
+			</dojo:rows>
+		</dojo:foot>
+	</dojo:grid>
+	<dojo:tabPane  cssFileName="" cssClassName="" id="" dataProvider="" propertyProviderList=""  />
+	<dojo:box cssFileName="" cssClassName="" id="" dataProvider="" propertyProviderList=""  />
+
+	<!-- models -->
+
+	<!-- FIXME (rar):
+		The discussion below makes me think that what we really want is 3 types:
+			- data model (a descriptor)
+			- data src (a pointer or actual data carrier
+			- translator (bridges gap between src and model)
+
+		Trying to do everything in dataModel doesn't make any sense to me.
+	-->
+
+	<dojo:dataModel id="" xlink:href="" type="xml|javascript">
+		<!-- dataModel can be empty, or cotain xml describing the structure of the data that will be passed from the src, or it can contain an xml data structure inline.  xml is allowed in any namespace... perhaps we should consider requiring a descriptor of the data structure, though that seems silly, and I'm not sure if it buys us anything. Actually, I've figured out what it buys us... it allows us to define the translation between any arbitrary xml data source or javascript data structure, and that required for the component's data model... so someone could easily have an xml fragment somewhere and use part or all of that data structure to feed a component -->
+	</dojo:dataModel>
+		<!-- FIXME (rar):
+			the new event system which I landed yesterday (although it's mainly
+			code from Burst) DOES have a connect() method, but it accepts
+			several parameters which aren't represented here, and it uses
+			terminology that is different from sigslot. This file should be
+			updated to reflect the various kinds of advice and perahsp use the
+			terms "source" and "target" instead of "signal" and "slot"
+			(although "signal" and "slot" may also be acceptable).
+
+			Additionally, "mutators" don't need explicit support, but around
+			advice does.
+			
+			MDA feels that exposing advice may be a bit much here... thoughts?  For now I'm going to keep it simple.
+		-->
+		<!-- TODO: add conditions for detaching, etc. -->
+		<!-- TODO: how about real-time event setup... how to specify relationships between events on the client and server-side... some of this needs to wait until the event model itself is worked out -->
+		<!-- TODO: is this generalized enough to apply to a class of component items, and if not, how would this be done? -->
+		<!-- DOM style events... needs work in defining how the action and propagation of the event object is setup -->
+	<dojo:propertySet id="" componentClass="">
+		<!-- presentational attributes , may be specified in css or xml, as attributes in a component, or in a propertySet; most css properties are allowed, expressed in lowerCamelCase
+		
+		-->
+		<!-- propertySet contains a collection of properties and attributes to specify as a default set for components to inherit from... currently I'm thinking of not really supporting multiple inheritance, but I (Dylan) may change my mind -->
+		<!-- componentClass is used to describe classes of components
+		of a certain type, meaning not a type of component, but a subtype... for example, a sortable grid component as opposed to a normal grid component
+		-->
+		<!-- 
+			(rar): when a component class is specified, does the property model
+			being defined then apply to all components of that class? How does
+			this property cascade? Does that last one defined wipe out all
+			others, or does it just over-ride properties potentially set in
+			others?  Or does the first one set win?
+			
+			(dylan): the last one set wins... now i need to define what "last" means :)
+		-->
+		<dojo:propertySet match="someSubComponent" xlink:href="file" sourceType="css" targetType="svg" />
+		<dojo:propertySet xlink:href="file#.className" sourceType="css" targetType="html" /><!-- TODO: better syntax for class names to prevent confusion with file name?-->
+		<dojo:propertySet xlink:href="file#idName" sourceType="css" targetType="svg"  />
+		<dojo:propertySet xlink:href="file" sourceType="xml" targetType="all"  />
+		<dojo:propertySet xlink:href="file#idName" sourceType="xml" targetType="svg"  />
+		<dojo:connect>
+			<dojo:source object="" function="" name="" />
+			<dojo:target object="" function="" name="" />
+		</dojo:connect>
+		<dojo:event type="" target="" action="" />
+
+	</dojo:propertySet>
+
+</dojo:application>

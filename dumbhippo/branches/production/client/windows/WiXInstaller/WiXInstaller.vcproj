@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="Windows-1252"?>
+<VisualStudioProject
+	ProjectType="Visual C++"
+	Version="7.10"
+	Name="WiXInstaller"
+	ProjectGUID="{D45AA47E-F39D-45C9-93A5-5D17CF093164}"
+	Keyword="MakeFileProj">
+	<Platforms>
+		<Platform
+			Name="Win32"/>
+	</Platforms>
+	<Configurations>
+		<Configuration
+			Name="Debug|Win32"
+			OutputDirectory="Debug"
+			IntermediateDirectory="Debug"
+			ConfigurationType="0">
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="nmake INTDIR=Debug OUTDIR=..\Debug all"
+				ReBuildCommandLine="nmake INTDIR=Debug OUTDIR=..\Debug clean all"
+				CleanCommandLine="nmake INTDIR=Debug OUTDIR=..\Debug clean"
+				Output="Mugshot.msi"/>
+		</Configuration>
+		<Configuration
+			Name="Release|Win32"
+			OutputDirectory="Release"
+			IntermediateDirectory="Release"
+			ConfigurationType="0">
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="nmake all"
+				ReBuildCommandLine="nmake clean all"
+				CleanCommandLine="nmake clean"
+				Output="Mugshot.msi"/>
+		</Configuration>
+	</Configurations>
+	<References>
+	</References>
+	<Files>
+		<Filter
+			Name="Source Files"
+			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
+			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
+			<File
+				RelativePath=".\Components.wxs">
+			</File>
+			<File
+				RelativePath=".\DumbHippo.wxs">
+			</File>
+			<File
+				RelativePath=".\ErrorDialog.wxs">
+			</File>
+			<File
+				RelativePath=".\FatalErrorPage.wxs">
+			</File>
+			<File
+				RelativePath=".\FilesInUseDialog.wxs">
+			</File>
+			<File
+				RelativePath=".\NotAdminPage.wxs">
+			</File>
+			<File
+				RelativePath=".\ProgressPage.wxs">
+			</File>
+			<File
+				RelativePath=".\UpgradeProgressPage.wxs">
+			</File>
+			<File
+				RelativePath=".\WelcomePage.wxs">
+			</File>
+		</Filter>
+		<Filter
+			Name="Header Files"
+			Filter="h;hpp;hxx;hm;inl;inc;xsd"
+			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}">
+		</Filter>
+		<Filter
+			Name="Resource Files"
+			Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx"
+			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}">
+			<File
+				RelativePath=".\fog.jpg">
+			</File>
+			<File
+				RelativePath=".\license.rtf">
+			</File>
+		</Filter>
+		<File
+			RelativePath=".\Makefile">
+		</File>
+	</Files>
+	<Globals>
+	</Globals>
+</VisualStudioProject>

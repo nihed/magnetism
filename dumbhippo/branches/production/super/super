@@ -1,0 +1,61 @@
+#!/usr/bin/python
+
+import getopt
+import re
+import sys
+import os
+
+superdir = os.path.dirname(sys.argv[0])
+sys.path.append(os.path.join(superdir, 'lib'))
+
+import super.config
+
+def usage():
+    print >>sys.stderr,  "Usage: ./super [--config=FILE] [-Dparam=value] ACTION {SERVICES,all}"
+
+def main():
+    try:
+        options, remaining = getopt.getopt(sys.argv[1:], 'c:D:', 'config=')
+    except getopt.GetoptError:
+        usage()
+        sys.exit(1)
+
+    init_params={}
+    conf = None
+    for opt, val in options:
+        if opt == '-c' or opt == '--config':
+            conf = val
+        if opt == '-D':
+            m = re.match('([^=]+)=(.*)', val)
+            if m:
+                init_params[m.group(1)] = m.group(2)
+            else:
+                usage()
+                sys.exit(1)
+            
+    config = super.config.Config(superdir, conf, init_params)
+
+    if len(remaining) < 2:
+        usage()
+        sys.exit(1)
+
+    known_actions = [ 'init', 'build', 'console', 'deploy', 'nuke', 'start', 'stop', 'restart', 'reload', 'status', 'watch' ]
+    if not remaining[0] in known_actions:
+        print >>sys.stderr, "Known actions are: %s" % ' '.join(known_actions)
+        sys.exit(1)
+
+    available_services = config.list_services()
+    services = remaining[1:]
+
+    for service in services:
+        if service == 'all':
+            services = available_services
+            break
+        elif not service in available_services:
+            print >>sys.stderr, "Unknown service: %s" % service
+            sys.exit(1)
+
+    config.run_action(remaining[0], services)
+    
+if __name__ == "__main__":
+    main()

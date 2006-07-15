@@ -1,0 +1,38 @@
+.dojoTree {
+	width:25em;
+	height:100%;
+	font-family:Arial sans-serif;
+	color:#0054aa;
+	background-color:#e1f0ff;
+	border:1px solid #000000;
+	-dojo-tree-indentation: 0.5em; /* not sure we want to support this, but I (Dylan) really like the idea of being able to specify everything presentational with css, even things that are component properties that get translated to css through templating... but it isn't a must have feature.  And if we do it, we need a way to prefix it with a different namespace... */
+}
+
+.className1 {
+
+}
+
+.className2 {
+	color:#001488;
+	background-color:#c1d0df;
+}
+
+.className3 {
+	color:#0034a0;
+	background-color:#b1c0cf;
+}
+
+.folderClosed {
+	width:1em;
+	height:1em;
+}
+
+.folderOpen {
+	width:1em;
+	height:1em;
+}
+
+.leaf {
+	width:1em;
+	height:1em;
+}

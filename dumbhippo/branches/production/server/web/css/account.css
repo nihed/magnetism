@@ -1,0 +1,46 @@
+@CHARSET "UTF-8";
+
+/* This file contains styles specific to the "account" page 
+ */
+
+@import "sitewide.css";
+@import "slideshow.css";
+
+.dh-account-movie-area {
+	text-align:	center;
+}
+
+#dhPasswordEntry, #dhPasswordAgainEntry {
+	width:			10em;
+}
+
+.dh-edit-table {
+	width:				400px;
+}
+
+.dh-edit-table tr {
+}
+
+.dh-edit-table-label {
+}
+
+.dh-edit-table-control {
+	text-align:		right;
+}
+
+.dh-explanation {
+	font-size:		small;
+	font-style: 	italic;
+}
+
+.dhBackgroundBox {
+
+}
+
+/* Lame hack to keep dojo Edit link from screwing with the layout on mouseover;
+ * need to just fix this widget
+ */
+a.editLabel {
+	position:		absolute;
+	color:			#556a87 !important;
+}

@@ -1,0 +1,23 @@
+@CHARSET "UTF-8";
+
+.dh-body-without-sidebar #dhPage {
+	width:			700px;
+	text-align:		center; /* we want centered text */
+}
+
+.dh-download-separator {
+	width: 1px;
+	margin: 0px 20px;
+}
+
+#dhDownloadImg {
+	margin-right: 10px;
+}
+
+.dh-download-bottom-title {
+	margin-bottom: 5px;
+}
+
+.dh-download-disclaimer {
+	margin-top: 20px;
+}

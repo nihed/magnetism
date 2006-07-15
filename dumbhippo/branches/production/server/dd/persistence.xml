@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<entity-manager>
+    <name>dumbhippo</name>
+    <!-- Remember to also look at the definition of this data source 
+    	for settings -->
+    <jta-data-source>java:/DumbHippoDS</jta-data-source>
+	<properties>
+		<!-- DO NOT turn this on, it prints sql to stdout. Instead
+		mess with org.hibernate.SQL logger in log4j.xml -->
+    	<property name="hibernate.show_sql"
+              value="false"/>
+        <!-- This means to blow away tables when our app is 
+        	removed ... there is no "magic right thing" setting
+        	apparently, "update" means "don't blow away tables,
+            unless the schema changed, then blow them away" -->
+        <property name="hibernate.hbm2ddl.auto"
+              value="update"/>
+              
+        <!-- We set this in the ejb3 deployer's persistance.properties
+             so that we can switch between MySQL and PostgreSQL from
+             the super configuration
+	
+	     It's important to set properly: othrewise hbm2ddl will
+	     create hosed-up sql for creating the tables and you'll
+             get bizarre hibernate failures -->
+	<!--
+        <property name="hibernate.dialect"
+              value="org.hibernate.dialect.MySQLDialect" />
+        -->
+    <!-- With newer versions of the Hibernate Entity Manager, 
+         listeners can be added as follows for updating our
+         Lucene indices. For now, we just do the update manually
+	<property name="hibernate.ejb.event.post-commit-insert" 
+        value="org.hibernate.lucene.event.LuceneEventListener"/>
+	<property name="hibernate.ejb.event.post-commit-update" 
+        value="org.hibernate.lucene.event.LuceneEventListener"/>
+	<property name="hibernate.ejb.event.post-commit-delete" 
+        value="org.hibernate.lucene.event.LuceneEventListener"/>
+    	-->
+  	</properties>
+</entity-manager>

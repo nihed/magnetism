@@ -1,0 +1,48 @@
+<!-- This is just installing a protocol handler for mugshot: urls -->
+
+<gconfschemafile>
+  <schemalist>
+
+    <!-- General preferences -->        
+
+    <schema>
+      <key>/schemas/desktop/gnome/url-handlers/mugshot/enabled</key>
+      <applyto>/desktop/gnome/url-handlers/mugshot/enabled</applyto>
+      <owner>mugshot</owner>
+      <type>bool</type>
+      <default>true</default>
+      <locale name="C">
+         <short>Enable mugshot: URI handler</short>
+         <long>
+         </long>
+      </locale>
+    </schema>
+
+    <schema>
+      <key>/schemas/desktop/gnome/url-handlers/mugshot/needs_terminal</key>
+      <applyto>/desktop/gnome/url-handlers/mugshot/needs_terminal</applyto>
+      <owner>mugshot</owner>
+      <type>bool</type>
+      <default>false</default>
+      <locale name="C">
+         <short>Put mugshot: URI handler in a terminal</short>
+         <long>
+         </long>
+      </locale>
+    </schema>
+
+    <schema>
+      <key>/schemas/desktop/gnome/url-handlers/mugshot/command</key>
+      <applyto>/desktop/gnome/url-handlers/mugshot/command</applyto>
+      <owner>mugshot</owner>
+      <type>string</type>
+      <default>mugshot-uri-handler %s</default>
+      <locale name="C">
+         <short>Command to invoke mugshot: URI handler</short>
+         <long>
+         </long>
+      </locale>
+    </schema>
+
+  </schemalist>  
+</gconfschemafile>

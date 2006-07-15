@@ -1,0 +1,601 @@
+#include <config.h>
+#include <glib/gi18n-lib.h>
+#include <string.h>
+#define DBUS_API_SUBJECT_TO_CHANGE 1
+#include <dbus/dbus-glib.h>
+#include <dbus/dbus-glib-lowlevel.h>
+#include "hippo-dbus-server.h"
+#include "hippo-dbus-client.h"
+#include "main.h"
+
+/* rhythmbox messages */
+#define RB_SHELL_PATH          "/org/gnome/Rhythmbox/Shell"
+#define RB_SHELL_IFACE         "org.gnome.Rhythmbox.Shell"
+#define RB_PLAYER_IFACE        "org.gnome.Rhythmbox.Player"
+#define RB_BUS_NAME            "org.gnome.Rhythmbox"
+#define RB_PLAYING_URI_CHANGED "playingUriChanged"
+#define RB_GET_SONG_PROPERTIES "getSongProperties"
+
+
+static void      hippo_dbus_init                (HippoDBus       *dbus);
+static void      hippo_dbus_class_init          (HippoDBusClass  *klass);
+
+static void      hippo_dbus_finalize            (GObject               *object);
+
+static DBusHandlerResult handle_message         (DBusConnection     *connection,
+                                                 DBusMessage        *message,
+                                                 void               *user_data);
+
+enum {
+    DISCONNECTED,
+    SONG_CHANGED,
+    LAST_SIGNAL
+};
+
+static int signals[LAST_SIGNAL];  
+
+struct _HippoDBus {
+    GObject parent;
+    char           *bus_name;
+    DBusConnection *connection;
+    unsigned int in_dispatch : 1; /* dbus is broken and we can't recurse right now */
+    unsigned int requested_disconnect : 1;
+    unsigned int processed_disconnected : 1;
+};
+
+struct _HippoDBusClass {
+    GObjectClass parent_class;
+
+};
+
+G_DEFINE_TYPE(HippoDBus, hippo_dbus, G_TYPE_OBJECT);
+
+static void
+hippo_dbus_init(HippoDBus  *dbus)
+{
+
+}
+
+static void
+hippo_dbus_class_init(HippoDBusClass  *klass)
+{
+    GObjectClass *object_class = G_OBJECT_CLASS(klass);
+
+    object_class->finalize = hippo_dbus_finalize;
+    
+    signals[DISCONNECTED] =
+        g_signal_new ("disconnected",
+            		  G_TYPE_FROM_CLASS (object_class),
+            		  G_SIGNAL_RUN_LAST,
+            		  0,
+            		  NULL, NULL,
+            		  g_cclosure_marshal_VOID__VOID,
+            		  G_TYPE_NONE, 0);
+
+    signals[SONG_CHANGED] =
+        g_signal_new ("song-changed",
+            		  G_TYPE_FROM_CLASS (object_class),
+            		  G_SIGNAL_RUN_LAST,
+            		  0,
+            		  NULL, NULL,
+            		  g_cclosure_marshal_VOID__POINTER,
+            		  G_TYPE_NONE, 1, G_TYPE_POINTER);
+}
+
+static gboolean
+propagate_dbus_error(GError **error, DBusError *derror)
+{
+    if (dbus_error_is_set(derror)) {
+        g_set_error(error, HIPPO_ERROR, HIPPO_ERROR_FAILED,
+            _("D-BUS error: %s"), derror->message ? derror->message : derror->name);
+        dbus_error_free(derror);
+        return FALSE;
+    } else {
+        return TRUE;
+    }
+}
+
+HippoDBus*
+hippo_dbus_try_to_acquire(const char  *server,
+                          gboolean     replace_existing,
+                          GError     **error)
+{
+    HippoDBus *dbus;
+    DBusGConnection *gconnection;
+    DBusConnection *connection;
+    char *bus_name;
+    int result;
+    DBusError derror;
+    unsigned int flags;
+    
+    /* dbus_bus_get is a little hosed since you can't unref 
+     * unless you know it's disconnected. I guess it turns
+     * out we more or less want to do that anyway.
+     */
+    
+    gconnection = dbus_g_bus_get(DBUS_BUS_SESSION, error);
+    if (gconnection == NULL)
+        return NULL;
+    
+    connection = dbus_g_connection_get_connection(gconnection);
+    
+    /* the purpose of this check is to be sure we will get a "Disconnected"
+     * message in the future
+     */
+    if (!dbus_connection_get_is_connected(connection)) {
+        dbus_connection_unref(connection);
+        g_set_error(error, HIPPO_ERROR, HIPPO_ERROR_FAILED, 
+            _("No active connection to the session's message bus"));
+        return NULL;
+    }
+
+    bus_name = hippo_dbus_full_bus_name(server);
+    
+    flags = DBUS_NAME_FLAG_DO_NOT_QUEUE | DBUS_NAME_FLAG_ALLOW_REPLACEMENT;
+    if (replace_existing)
+        flags |= DBUS_NAME_FLAG_REPLACE_EXISTING;
+    
+    dbus_error_init(&derror);
+    result = dbus_bus_request_name(connection, bus_name,
+                        flags,
+                        &derror);
+    if (dbus_error_is_set(&derror)) {
+        g_free(bus_name);
+        propagate_dbus_error(error, &derror);
+        /* FIXME leak bus connection since unref isn't allowed */
+        return NULL;
+    }
+    
+    if (!(result == DBUS_REQUEST_NAME_REPLY_PRIMARY_OWNER ||
+          result == DBUS_REQUEST_NAME_REPLY_ALREADY_OWNER)) {
+        g_free(bus_name);
+        g_set_error(error, HIPPO_ERROR, HIPPO_ERROR_FAILED,
+                    _("Another copy of %s is already running in this session for server %s"),
+                    g_get_application_name(), server);
+        /* FIXME leak bus connection since unref isn't allowed */
+        return NULL;
+    }
+
+    /* Add Rhythmbox signal match */
+    dbus_bus_add_match(connection,
+                       "type='signal',sender='"
+                       RB_BUS_NAME
+                       "',interface='"
+                       RB_PLAYER_IFACE
+                       "',member='"
+                       RB_PLAYING_URI_CHANGED
+                       "'",
+                       &derror);
+    if (dbus_error_is_set(&derror)) {
+        g_free(bus_name);
+        propagate_dbus_error(error, &derror);
+        /* FIXME leak bus connection since unref isn't allowed */
+        return NULL;
+    }
+
+    /* the connection is already set up with the main loop. 
+     * We just need to create our object, filters, etc. 
+     */
+    g_debug("D-BUS connection established");
+
+    dbus = g_object_new(HIPPO_TYPE_DBUS, NULL);
+    dbus->bus_name = bus_name;
+    dbus->connection = connection;
+    
+    if (!dbus_connection_add_filter(connection, handle_message,
+                                    dbus, NULL))
+        g_error("no memory adding dbus connection filter");
+
+    /* add an extra ref, which is owned by the "connected" state on 
+     * the connection. We drop it in our filter func if we get 
+     * the disconnected message.
+     */
+    g_object_ref(dbus);
+
+    /* we'll deal with this ourselves */
+    dbus_connection_set_exit_on_disconnect(connection, FALSE);
+
+    /* also returning a ref to the caller */    
+    return dbus;
+}
+
+static void
+hippo_dbus_finalize(GObject *object)
+{
+    HippoDBus *dbus = HIPPO_DBUS(object);
+
+    g_debug("Finalizing dbus object");
+
+    g_free(dbus->bus_name);
+    /* assumes connection is disconnected */
+    dbus_connection_unref(dbus->connection);
+    
+    G_OBJECT_CLASS(hippo_dbus_parent_class)->finalize(object);
+}
+
+void
+hippo_dbus_disconnect(HippoDBus *dbus)
+{
+    if (dbus->requested_disconnect)
+        return;
+    dbus->requested_disconnect = TRUE;
+    /* will send back a message, processed in the main loop, that unrefs us */
+    dbus_connection_close(dbus->connection);    
+}
+
+void
+hippo_dbus_blocking_shutdown(HippoDBus   *dbus)
+{
+    /* disconnect if we haven't */
+    hippo_dbus_disconnect(dbus);
+
+    /* this processed_disconnected flag is to avoid recursive 
+     * dispatch, which current dbus doesn't like
+     */
+    if (!dbus->processed_disconnected) {
+        while (dbus_connection_read_write_dispatch(dbus->connection, -1))
+            ; /* nothing */
+    }
+}
+
+static DBusMessage*
+handle_join_chat(HippoDBus   *dbus,
+                 DBusMessage *message)
+{
+    DBusMessage *reply;
+    const char *chat_id;
+    const char *kind_str;
+    
+    chat_id = NULL;
+    kind_str = NULL;
+    
+    if (!dbus_message_get_args(message, NULL,
+        DBUS_TYPE_STRING, &chat_id,
+        DBUS_TYPE_STRING, &kind_str,
+        DBUS_TYPE_INVALID)) {
+        reply = dbus_message_new_error(message,
+                                        DBUS_ERROR_INVALID_ARGS,
+                                        _("Expected two string args, chat ID and chat kind"));
+    } else {
+        HippoChatKind kind;
+        
+        kind = hippo_parse_chat_kind(kind_str);
+        
+        if (!hippo_verify_guid(chat_id)) {
+            reply = dbus_message_new_error_printf(message,
+                                            DBUS_ERROR_INVALID_ARGS,
+                                            _("Invalid chat ID '%s'"), chat_id);
+        } else if (kind == HIPPO_CHAT_KIND_BROKEN) {
+            reply = dbus_message_new_error_printf(message, DBUS_ERROR_INVALID_ARGS,
+                                            _("Invalid chat kind '%s' try group,post,unknown"),
+                                            kind_str);
+        } else {
+            /* heh, for now we don't even use the kind after all that trouble */
+            hippo_app_join_chat(hippo_get_app(), chat_id);
+            reply = dbus_message_new_method_return(message);
+        }
+    }
+    g_assert(reply != NULL);
+    
+    return reply;
+}
+
+static void
+emit_song_changed_from_rb_message(HippoDBus   *dbus,
+                                  DBusMessage *message)
+{
+#define MAX_PROPS 10
+    DBusMessageIter iter;
+    DBusMessageIter array_iter;
+    HippoSong song;
+    char **keys;
+    char **values;
+    int i;
+
+    i = 0;
+    keys = g_new0(char*, MAX_PROPS + 1);
+    values = g_new0(char*, MAX_PROPS + 1);
+    
+    /* signature supposed to be checked already */
+    
+    dbus_message_iter_init(message, &iter);
+    if (dbus_message_iter_get_arg_type(&iter) == DBUS_TYPE_INVALID)
+        goto bad_args;
+    
+    dbus_message_iter_recurse(&iter, &array_iter);
+    
+    while (dbus_message_iter_get_arg_type(&array_iter) != DBUS_TYPE_INVALID) {
+        DBusMessageIter struct_iter;
+        DBusMessageIter variant_iter;
+        const char *prop_name;
+        int prop_type;
+        
+        prop_name = NULL;
+    
+        dbus_message_iter_recurse(&array_iter, &struct_iter);
+        
+        /* struct_iter should have a string and a variant in it */
+        dbus_message_iter_get_basic(&struct_iter, &prop_name);
+        dbus_message_iter_next(&struct_iter);
+        dbus_message_iter_recurse(&struct_iter, &variant_iter);
+        
+        prop_type = dbus_message_iter_get_arg_type(&variant_iter);
+        
+        /* g_debug("Property '%s' has type '%c'", prop_name, prop_type); */
+
+        if (strcmp(prop_name, "type") == 0) {
+            /* type UINT32 maybe 0=song 1=iradio_station 2=podcast_post 3=podcast_feed
+             * going to 
+             * key "type" TrackType enum UNKNOWN, FILE, CD, NETWORK_STREAM, PODCAST 
+             */
+             /* this doesn't really map, so we just skip it for now */
+        } else if (strcmp(prop_name, "mimetype") == 0) {
+            /* type STRING
+             * going to 
+             * key "format" MediaFileFormat enum UNKNOWN, MP3, WMA, AAC, VORBIS
+             */
+             const char *prop_val = NULL;
+             if (prop_type != DBUS_TYPE_STRING)
+                goto bad_args;
+             dbus_message_iter_get_basic(&variant_iter, &prop_val);
+             g_debug("mime type %s", prop_val);
+             if (strcmp(prop_val, "application/ogg") == 0) {
+                keys[i] = g_strdup("format");
+                values[i] = g_strdup("VORBIS");
+                ++i;
+             } else {
+                
+             }
+        } else if (strcmp(prop_name, "title") == 0) {
+            /* type STRING going to key "name" */
+            const char *prop_val = NULL;            
+            if (prop_type != DBUS_TYPE_STRING)
+               goto bad_args;            
+            dbus_message_iter_get_basic(&variant_iter, &prop_val);
+            g_debug("title %s", prop_val);
+            keys[i] = g_strdup("name");
+            values[i] = g_strdup(prop_val);
+            ++i;
+        } else if (strcmp(prop_name, "artist") == 0) {
+            /* type STRING going to key "artist" */
+            const char *prop_val = NULL;            
+            if (prop_type != DBUS_TYPE_STRING)
+               goto bad_args;            
+            dbus_message_iter_get_basic(&variant_iter, &prop_val);
+            g_debug("artist %s", prop_val);
+            keys[i] = g_strdup("artist");
+            values[i] = g_strdup(prop_val);
+            ++i;            
+        } else if (strcmp(prop_name, "album") == 0) {
+            /* type STRING going to key "album" */
+            const char *prop_val = NULL;            
+            if (prop_type != DBUS_TYPE_STRING)
+               goto bad_args;                        
+            dbus_message_iter_get_basic(&variant_iter, &prop_val);
+            g_debug("album %s", prop_val);
+            keys[i] = g_strdup("album");
+            values[i] = g_strdup(prop_val);
+            ++i;                        
+        } else if (strcmp(prop_name, "duration") == 0) {
+            /* type UINT32 in seconds (I think) going to key "duration" in seconds */
+            dbus_uint32_t val = 0;
+            if (prop_type != DBUS_TYPE_UINT32)
+               goto bad_args;                        
+            dbus_message_iter_get_basic(&variant_iter, &val);
+            g_debug("duration %u", val);
+            keys[i] = g_strdup("duration");
+            values[i] = g_strdup_printf("%u", val);
+            ++i;                  
+        } else if (strcmp(prop_name, "file-size") == 0) {
+            /* type UINT64 going to key "fileSize" in bytes */
+            dbus_uint64_t val;
+            if (prop_type != DBUS_TYPE_UINT64)
+               goto bad_args;                    
+            dbus_message_iter_get_basic(&variant_iter, &val);
+            g_debug("file-size %" G_GUINT64_FORMAT, val);
+            keys[i] = g_strdup("fileSize");
+            values[i] = g_strdup_printf("%" G_GUINT64_FORMAT, val);
+            ++i;
+        } else if (strcmp(prop_name, "track-number") == 0) {
+            /* type UINT32 ?-based going to key "trackNumber" 1-based */
+            dbus_uint32_t val = 0;
+            if (prop_type != DBUS_TYPE_UINT32)
+               goto bad_args;                     
+            dbus_message_iter_get_basic(&variant_iter, &val);
+            g_debug("track-number %u", val);
+            /* FIXME Skipping this for now since I'm not sure if it's 1-based from rb */
+        } else {
+            /* Not interested in this property */
+            /* the server supports a "discIdentifier" also but rhythmbox doesn't seem to */
+        }
+            
+        dbus_message_iter_next(&array_iter);
+    }
+
+    g_assert(i < MAX_PROPS);
+    
+    song.keys = keys;
+    song.values = values;
+    g_signal_emit(G_OBJECT(dbus), signals[SONG_CHANGED], 0, &song);
+
+    g_strfreev(keys);
+    g_strfreev(values);
+
+    return;
+
+  bad_args:
+    g_debug("Failed to interpret args to getSongProperties");
+    g_strfreev(keys);
+    g_strfreev(values);
+}                   
+
+static void
+on_get_song_props_reply(DBusPendingCall *pending,
+                        void            *user_data)
+{
+    HippoDBus *dbus;
+    DBusMessage *reply;
+    
+    dbus = HIPPO_DBUS(user_data);
+
+    reply = dbus_pending_call_steal_reply(pending);
+    if (reply == NULL) {
+        g_warning("NULL reply in on_get_song_props_reply?");
+        return;
+    }
+    
+    if (dbus_message_get_type(reply) == DBUS_MESSAGE_TYPE_METHOD_RETURN) {
+        /* Traverse array of struct { string; variant; } */
+        if (!dbus_message_has_signature(reply, "a{sv}")) {
+            g_debug("getSongProperties reply has wrong signature '%s'",
+                dbus_message_get_signature(reply));
+        } else {
+
+            g_debug("getSongProperties reply received");
+            
+            emit_song_changed_from_rb_message(dbus, reply);
+        }
+    } else if (dbus_message_get_type(reply) == DBUS_MESSAGE_TYPE_ERROR) {
+        const char *error;
+        const char *message;
+        
+        error = dbus_message_get_error_name(reply);
+        message = NULL;
+        if (dbus_message_get_args(reply, NULL,
+                DBUS_TYPE_STRING, &message,
+                DBUS_TYPE_INVALID)) {
+            g_debug("Got error reply to getSongProperties %s '%s'",
+                error ? error : "NULL", message ? message : "NULL");
+        } else {
+            g_debug("Got error reply to getSongProperties %s",
+                error ? error : "NULL");
+        }
+    } else {
+        g_warning("weird unknown reply type %d to get_song_props_reply",
+            dbus_message_get_type(reply));
+    }
+    
+    dbus_message_unref(reply);
+}
+
+static void
+handle_rb_playing_uri_changed(HippoDBus   *dbus,
+                              DBusMessage *message)
+{
+    DBusMessage *get_props;
+    DBusPendingCall *call;
+    const char *uri;
+    
+    uri = NULL;
+    if (!dbus_message_get_args(message, NULL,
+                               DBUS_TYPE_STRING, &uri,
+                               DBUS_TYPE_INVALID)) {
+        g_warning("Rhythmbox playingUriChanged signal had unexpected arguments");
+        return;                           
+    }
+    
+    get_props = dbus_message_new_method_call(RB_BUS_NAME, RB_SHELL_PATH, RB_SHELL_IFACE,
+                                                RB_GET_SONG_PROPERTIES);
+    if (get_props == NULL)
+        g_error("out of memory");
+    if (!dbus_message_append_args(get_props, DBUS_TYPE_STRING, &uri, DBUS_TYPE_INVALID))
+        g_error("out of memory");
+
+    call = NULL;               
+    dbus_connection_send_with_reply(dbus->connection, get_props, &call, -1);
+    if (call != NULL) {
+        g_object_ref(dbus);
+        if (!dbus_pending_call_set_notify(call, on_get_song_props_reply,
+                                          dbus, (DBusFreeFunction) g_object_unref))
+            g_error("out of memory");
+
+        /* rely on connection to hold a reference to it, if finalized
+         * I think on_get_song_props_reply won't get called though, 
+         * which is fine currently
+         */
+        dbus_pending_call_unref(call);        
+    }
+    dbus_message_unref(get_props);
+}
+
+static DBusHandlerResult
+handle_message(DBusConnection     *connection,
+               DBusMessage        *message,
+               void               *user_data)
+{
+    HippoDBus *dbus;
+    int type;
+    DBusHandlerResult result;
+    
+    dbus = HIPPO_DBUS(user_data);
+    
+    type = dbus_message_get_type(message);
+
+    result = DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+    dbus->in_dispatch = TRUE;
+        
+    if (type == DBUS_MESSAGE_TYPE_METHOD_CALL) {
+        const char *sender = dbus_message_get_sender(message);
+        const char *interface = dbus_message_get_interface(message);
+        const char *member = dbus_message_get_member(message);
+        const char *path = dbus_message_get_path(message);        
+        
+        g_debug("method call from %s %s.%s on %s", sender ? sender : "NULL",
+                interface ? interface : "NULL",
+                member ? member : "NULL",
+                path ? path : "NULL");
+    
+        if (interface && path && member && 
+            strcmp(interface, HIPPO_DBUS_INTERFACE) == 0 &&
+            strcmp(path, HIPPO_DBUS_PATH) == 0) {
+            DBusMessage *reply;
+            
+            reply = NULL;
+            result = DBUS_HANDLER_RESULT_HANDLED;
+            
+            if (strcmp(member, "JoinChat") == 0) {
+                reply = handle_join_chat(dbus, message);
+            } else {
+                /* Set this back so the default handler can return an error */
+                result = DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+            }
+            
+            if (reply != NULL) {
+                dbus_connection_send(dbus->connection, reply, NULL);
+                dbus_message_unref(reply);
+            }
+        }
+    } else if (type == DBUS_MESSAGE_TYPE_SIGNAL) {
+        const char *sender = dbus_message_get_sender(message);
+        const char *interface = dbus_message_get_interface(message);
+        const char *member = dbus_message_get_member(message);
+
+        g_debug("signal from %s %s.%s", sender ? sender : "NULL", interface, member);
+    
+        if (dbus_message_has_sender(message, DBUS_SERVICE_DBUS) &&
+            dbus_message_is_signal(message, DBUS_INTERFACE_DBUS, "NameLost")) {
+            /* If we lose our name, we disconnect and exit */
+            const char *name = NULL;
+            if (dbus_message_get_args(message, NULL, DBUS_TYPE_STRING, &name, DBUS_TYPE_INVALID) && 
+                strcmp(name, dbus->bus_name) == 0) {
+                hippo_dbus_disconnect(dbus);
+            }
+        } else if (dbus_message_is_signal(message, DBUS_INTERFACE_LOCAL, "Disconnected")) {
+            /* the "connected" state owns one ref on the HippoDBus */
+            dbus->processed_disconnected = TRUE;
+            g_signal_emit(G_OBJECT(dbus), signals[DISCONNECTED], 0);
+            g_object_unref(dbus);
+            dbus = NULL;
+        } else if (dbus_message_is_signal(message, RB_PLAYER_IFACE, RB_PLAYING_URI_CHANGED)) {
+            handle_rb_playing_uri_changed(dbus, message);
+        }
+    } else {
+        g_debug("got message type %s\n", 
+                dbus_message_type_to_string(type));    
+    }
+    
+    if (dbus)
+        dbus->in_dispatch = FALSE;
+        
+    return result;
+}

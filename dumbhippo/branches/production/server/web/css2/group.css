@@ -1,0 +1,10 @@
+@CHARSET "UTF-8";
+@IMPORT url("site.css");
+@IMPORT url("group-positions.css");
+
+#dhSidebarBoxProfileGroupFeeds {
+
+}
+.dh-group-feed-list {
+	list-style: 			none;
+}

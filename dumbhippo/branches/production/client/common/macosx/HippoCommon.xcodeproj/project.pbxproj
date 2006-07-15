@@ -1,0 +1,563 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 42;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		375F22CE0A2CD94300596099 /* lm-connection.c in Sources */ = {isa = PBXBuildFile; fileRef = 375F22B60A2CD94300596099 /* lm-connection.c */; };
+		375F22D00A2CD94300596099 /* lm-debug.c in Sources */ = {isa = PBXBuildFile; fileRef = 375F22B80A2CD94300596099 /* lm-debug.c */; };
+		375F22D20A2CD94300596099 /* lm-error.c in Sources */ = {isa = PBXBuildFile; fileRef = 375F22BA0A2CD94300596099 /* lm-error.c */; };
+		375F22D50A2CD94300596099 /* lm-message-handler.c in Sources */ = {isa = PBXBuildFile; fileRef = 375F22BD0A2CD94300596099 /* lm-message-handler.c */; };
+		375F22D70A2CD94300596099 /* lm-message-node.c in Sources */ = {isa = PBXBuildFile; fileRef = 375F22BF0A2CD94300596099 /* lm-message-node.c */; };
+		375F22D90A2CD94300596099 /* lm-message.c in Sources */ = {isa = PBXBuildFile; fileRef = 375F22C10A2CD94300596099 /* lm-message.c */; };
+		375F22DB0A2CD94300596099 /* lm-parser.c in Sources */ = {isa = PBXBuildFile; fileRef = 375F22C30A2CD94300596099 /* lm-parser.c */; };
+		375F22DD0A2CD94300596099 /* lm-proxy.c in Sources */ = {isa = PBXBuildFile; fileRef = 375F22C50A2CD94300596099 /* lm-proxy.c */; };
+		375F22DF0A2CD94300596099 /* lm-sha.c in Sources */ = {isa = PBXBuildFile; fileRef = 375F22C70A2CD94300596099 /* lm-sha.c */; };
+		375F22E10A2CD94300596099 /* lm-ssl.c in Sources */ = {isa = PBXBuildFile; fileRef = 375F22C90A2CD94300596099 /* lm-ssl.c */; };
+		375F22E30A2CD94300596099 /* lm-utils.c in Sources */ = {isa = PBXBuildFile; fileRef = 375F22CB0A2CD94300596099 /* lm-utils.c */; };
+		375F22FE0A2CD95600596099 /* hippo-basics.c in Sources */ = {isa = PBXBuildFile; fileRef = 375F22E60A2CD95600596099 /* hippo-basics.c */; };
+		375F23000A2CD95600596099 /* hippo-chat-room.c in Sources */ = {isa = PBXBuildFile; fileRef = 375F22E80A2CD95600596099 /* hippo-chat-room.c */; };
+		375F23040A2CD95600596099 /* hippo-connection.c in Sources */ = {isa = PBXBuildFile; fileRef = 375F22EC0A2CD95600596099 /* hippo-connection.c */; };
+		375F23060A2CD95600596099 /* hippo-cookies.c in Sources */ = {isa = PBXBuildFile; fileRef = 375F22EE0A2CD95600596099 /* hippo-cookies.c */; };
+		375F23090A2CD95600596099 /* hippo-data-cache.c in Sources */ = {isa = PBXBuildFile; fileRef = 375F22F10A2CD95600596099 /* hippo-data-cache.c */; };
+		375F230C0A2CD95600596099 /* hippo-entity.c in Sources */ = {isa = PBXBuildFile; fileRef = 375F22F40A2CD95600596099 /* hippo-entity.c */; };
+		375F230E0A2CD95600596099 /* hippo-myspace.c in Sources */ = {isa = PBXBuildFile; fileRef = 375F22F60A2CD95600596099 /* hippo-myspace.c */; };
+		375F23100A2CD95600596099 /* hippo-person.c in Sources */ = {isa = PBXBuildFile; fileRef = 375F22F80A2CD95600596099 /* hippo-person.c */; };
+		375F23120A2CD95600596099 /* hippo-platform.c in Sources */ = {isa = PBXBuildFile; fileRef = 375F22FA0A2CD95600596099 /* hippo-platform.c */; };
+		375F23140A2CD95600596099 /* hippo-post.c in Sources */ = {isa = PBXBuildFile; fileRef = 375F22FC0A2CD95600596099 /* hippo-post.c */; };
+		378E3D1C0A2CF12A00B801F6 /* hippo-basics.h in Headers */ = {isa = PBXBuildFile; fileRef = 375F22E70A2CD95600596099 /* hippo-basics.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		378E3D1D0A2CF12A00B801F6 /* hippo-chat-room.h in Headers */ = {isa = PBXBuildFile; fileRef = 375F22E90A2CD95600596099 /* hippo-chat-room.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		378E3D1E0A2CF12A00B801F6 /* hippo-common-internal.h in Headers */ = {isa = PBXBuildFile; fileRef = 375F22EA0A2CD95600596099 /* hippo-common-internal.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		378E3D1F0A2CF12A00B801F6 /* hippo-common.h in Headers */ = {isa = PBXBuildFile; fileRef = 375F22EB0A2CD95600596099 /* hippo-common.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		378E3D200A2CF12A00B801F6 /* hippo-connection.h in Headers */ = {isa = PBXBuildFile; fileRef = 375F22ED0A2CD95600596099 /* hippo-connection.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		378E3D210A2CF12A00B801F6 /* hippo-cookies.h in Headers */ = {isa = PBXBuildFile; fileRef = 375F22EF0A2CD95600596099 /* hippo-cookies.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		378E3D220A2CF12A00B801F6 /* hippo-data-cache-internal.h in Headers */ = {isa = PBXBuildFile; fileRef = 375F22F00A2CD95600596099 /* hippo-data-cache-internal.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		378E3D230A2CF12A00B801F6 /* hippo-data-cache.h in Headers */ = {isa = PBXBuildFile; fileRef = 375F22F20A2CD95600596099 /* hippo-data-cache.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		378E3D240A2CF12A00B801F6 /* hippo-entity-protected.h in Headers */ = {isa = PBXBuildFile; fileRef = 375F22F30A2CD95600596099 /* hippo-entity-protected.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		378E3D250A2CF12A00B801F6 /* hippo-entity.h in Headers */ = {isa = PBXBuildFile; fileRef = 375F22F50A2CD95600596099 /* hippo-entity.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		378E3D260A2CF12A00B801F6 /* hippo-myspace.h in Headers */ = {isa = PBXBuildFile; fileRef = 375F22F70A2CD95600596099 /* hippo-myspace.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		378E3D270A2CF12A00B801F6 /* hippo-person.h in Headers */ = {isa = PBXBuildFile; fileRef = 375F22F90A2CD95600596099 /* hippo-person.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		378E3D280A2CF12A00B801F6 /* hippo-platform.h in Headers */ = {isa = PBXBuildFile; fileRef = 375F22FB0A2CD95600596099 /* hippo-platform.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		378E3D290A2CF12A00B801F6 /* hippo-post.h in Headers */ = {isa = PBXBuildFile; fileRef = 375F22FD0A2CD95600596099 /* hippo-post.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		378E3D2A0A2CF12A00B801F6 /* lm-connection.h in Headers */ = {isa = PBXBuildFile; fileRef = 375F22B70A2CD94300596099 /* lm-connection.h */; settings = {ATTRIBUTES = (Private, ); }; };
+		378E3D2B0A2CF12A00B801F6 /* lm-debug.h in Headers */ = {isa = PBXBuildFile; fileRef = 375F22B90A2CD94300596099 /* lm-debug.h */; settings = {ATTRIBUTES = (Private, ); }; };
+		378E3D2C0A2CF12A00B801F6 /* lm-error.h in Headers */ = {isa = PBXBuildFile; fileRef = 375F22BB0A2CD94300596099 /* lm-error.h */; settings = {ATTRIBUTES = (Private, ); }; };
+		378E3D2D0A2CF12A00B801F6 /* lm-internals.h in Headers */ = {isa = PBXBuildFile; fileRef = 375F22BC0A2CD94300596099 /* lm-internals.h */; settings = {ATTRIBUTES = (Private, ); }; };
+		378E3D2E0A2CF12A00B801F6 /* lm-message-handler.h in Headers */ = {isa = PBXBuildFile; fileRef = 375F22BE0A2CD94300596099 /* lm-message-handler.h */; settings = {ATTRIBUTES = (Private, ); }; };
+		378E3D2F0A2CF12A00B801F6 /* lm-message-node.h in Headers */ = {isa = PBXBuildFile; fileRef = 375F22C00A2CD94300596099 /* lm-message-node.h */; settings = {ATTRIBUTES = (Private, ); }; };
+		378E3D300A2CF12A00B801F6 /* lm-message.h in Headers */ = {isa = PBXBuildFile; fileRef = 375F22C20A2CD94300596099 /* lm-message.h */; settings = {ATTRIBUTES = (Private, ); }; };
+		378E3D310A2CF12A00B801F6 /* lm-parser.h in Headers */ = {isa = PBXBuildFile; fileRef = 375F22C40A2CD94300596099 /* lm-parser.h */; settings = {ATTRIBUTES = (Private, ); }; };
+		378E3D320A2CF12A00B801F6 /* lm-proxy.h in Headers */ = {isa = PBXBuildFile; fileRef = 375F22C60A2CD94300596099 /* lm-proxy.h */; settings = {ATTRIBUTES = (Private, ); }; };
+		378E3D330A2CF12A00B801F6 /* lm-sha.h in Headers */ = {isa = PBXBuildFile; fileRef = 375F22C80A2CD94300596099 /* lm-sha.h */; settings = {ATTRIBUTES = (Private, ); }; };
+		378E3D340A2CF12A00B801F6 /* lm-ssl.h in Headers */ = {isa = PBXBuildFile; fileRef = 375F22CA0A2CD94300596099 /* lm-ssl.h */; settings = {ATTRIBUTES = (Private, ); }; };
+		378E3D350A2CF12A00B801F6 /* lm-utils.h in Headers */ = {isa = PBXBuildFile; fileRef = 375F22CC0A2CD94300596099 /* lm-utils.h */; settings = {ATTRIBUTES = (Private, ); }; };
+		378E3D360A2CF12A00B801F6 /* loudmouth.h in Headers */ = {isa = PBXBuildFile; fileRef = 375F22CD0A2CD94300596099 /* loudmouth.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		3793CD760A618CD9007D1AB9 /* hippo-common-marshal.c in Sources */ = {isa = PBXBuildFile; fileRef = 3793CD740A618CD9007D1AB9 /* hippo-common-marshal.c */; };
+		3793CD770A618CD9007D1AB9 /* hippo-common-marshal.h in Headers */ = {isa = PBXBuildFile; fileRef = 3793CD750A618CD9007D1AB9 /* hippo-common-marshal.h */; };
+		8D07F2C00486CC7A007CD1D0 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 089C1666FE841158C02AAC07 /* InfoPlist.strings */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		089C1667FE841158C02AAC07 /* English */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = English; path = English.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		375F22B60A2CD94300596099 /* lm-connection.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "lm-connection.c"; path = "../loudmouth/loudmouth/lm-connection.c"; sourceTree = SOURCE_ROOT; };
+		375F22B70A2CD94300596099 /* lm-connection.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "lm-connection.h"; path = "../loudmouth/loudmouth/lm-connection.h"; sourceTree = SOURCE_ROOT; };
+		375F22B80A2CD94300596099 /* lm-debug.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "lm-debug.c"; path = "../loudmouth/loudmouth/lm-debug.c"; sourceTree = SOURCE_ROOT; };
+		375F22B90A2CD94300596099 /* lm-debug.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "lm-debug.h"; path = "../loudmouth/loudmouth/lm-debug.h"; sourceTree = SOURCE_ROOT; };
+		375F22BA0A2CD94300596099 /* lm-error.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "lm-error.c"; path = "../loudmouth/loudmouth/lm-error.c"; sourceTree = SOURCE_ROOT; };
+		375F22BB0A2CD94300596099 /* lm-error.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "lm-error.h"; path = "../loudmouth/loudmouth/lm-error.h"; sourceTree = SOURCE_ROOT; };
+		375F22BC0A2CD94300596099 /* lm-internals.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "lm-internals.h"; path = "../loudmouth/loudmouth/lm-internals.h"; sourceTree = SOURCE_ROOT; };
+		375F22BD0A2CD94300596099 /* lm-message-handler.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "lm-message-handler.c"; path = "../loudmouth/loudmouth/lm-message-handler.c"; sourceTree = SOURCE_ROOT; };
+		375F22BE0A2CD94300596099 /* lm-message-handler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "lm-message-handler.h"; path = "../loudmouth/loudmouth/lm-message-handler.h"; sourceTree = SOURCE_ROOT; };
+		375F22BF0A2CD94300596099 /* lm-message-node.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "lm-message-node.c"; path = "../loudmouth/loudmouth/lm-message-node.c"; sourceTree = SOURCE_ROOT; };
+		375F22C00A2CD94300596099 /* lm-message-node.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "lm-message-node.h"; path = "../loudmouth/loudmouth/lm-message-node.h"; sourceTree = SOURCE_ROOT; };
+		375F22C10A2CD94300596099 /* lm-message.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "lm-message.c"; path = "../loudmouth/loudmouth/lm-message.c"; sourceTree = SOURCE_ROOT; };
+		375F22C20A2CD94300596099 /* lm-message.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "lm-message.h"; path = "../loudmouth/loudmouth/lm-message.h"; sourceTree = SOURCE_ROOT; };
+		375F22C30A2CD94300596099 /* lm-parser.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "lm-parser.c"; path = "../loudmouth/loudmouth/lm-parser.c"; sourceTree = SOURCE_ROOT; };
+		375F22C40A2CD94300596099 /* lm-parser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "lm-parser.h"; path = "../loudmouth/loudmouth/lm-parser.h"; sourceTree = SOURCE_ROOT; };
+		375F22C50A2CD94300596099 /* lm-proxy.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "lm-proxy.c"; path = "../loudmouth/loudmouth/lm-proxy.c"; sourceTree = SOURCE_ROOT; };
+		375F22C60A2CD94300596099 /* lm-proxy.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "lm-proxy.h"; path = "../loudmouth/loudmouth/lm-proxy.h"; sourceTree = SOURCE_ROOT; };
+		375F22C70A2CD94300596099 /* lm-sha.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "lm-sha.c"; path = "../loudmouth/loudmouth/lm-sha.c"; sourceTree = SOURCE_ROOT; };
+		375F22C80A2CD94300596099 /* lm-sha.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "lm-sha.h"; path = "../loudmouth/loudmouth/lm-sha.h"; sourceTree = SOURCE_ROOT; };
+		375F22C90A2CD94300596099 /* lm-ssl.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "lm-ssl.c"; path = "../loudmouth/loudmouth/lm-ssl.c"; sourceTree = SOURCE_ROOT; };
+		375F22CA0A2CD94300596099 /* lm-ssl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "lm-ssl.h"; path = "../loudmouth/loudmouth/lm-ssl.h"; sourceTree = SOURCE_ROOT; };
+		375F22CB0A2CD94300596099 /* lm-utils.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "lm-utils.c"; path = "../loudmouth/loudmouth/lm-utils.c"; sourceTree = SOURCE_ROOT; };
+		375F22CC0A2CD94300596099 /* lm-utils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "lm-utils.h"; path = "../loudmouth/loudmouth/lm-utils.h"; sourceTree = SOURCE_ROOT; };
+		375F22CD0A2CD94300596099 /* loudmouth.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = loudmouth.h; path = ../loudmouth/loudmouth/loudmouth.h; sourceTree = SOURCE_ROOT; };
+		375F22E60A2CD95600596099 /* hippo-basics.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "hippo-basics.c"; path = "../hippo/hippo-basics.c"; sourceTree = SOURCE_ROOT; };
+		375F22E70A2CD95600596099 /* hippo-basics.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "hippo-basics.h"; path = "../hippo/hippo-basics.h"; sourceTree = SOURCE_ROOT; };
+		375F22E80A2CD95600596099 /* hippo-chat-room.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "hippo-chat-room.c"; path = "../hippo/hippo-chat-room.c"; sourceTree = SOURCE_ROOT; };
+		375F22E90A2CD95600596099 /* hippo-chat-room.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "hippo-chat-room.h"; path = "../hippo/hippo-chat-room.h"; sourceTree = SOURCE_ROOT; };
+		375F22EA0A2CD95600596099 /* hippo-common-internal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "hippo-common-internal.h"; path = "../hippo/hippo-common-internal.h"; sourceTree = SOURCE_ROOT; };
+		375F22EB0A2CD95600596099 /* hippo-common.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "hippo-common.h"; path = "../hippo/hippo-common.h"; sourceTree = SOURCE_ROOT; };
+		375F22EC0A2CD95600596099 /* hippo-connection.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "hippo-connection.c"; path = "../hippo/hippo-connection.c"; sourceTree = SOURCE_ROOT; };
+		375F22ED0A2CD95600596099 /* hippo-connection.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "hippo-connection.h"; path = "../hippo/hippo-connection.h"; sourceTree = SOURCE_ROOT; };
+		375F22EE0A2CD95600596099 /* hippo-cookies.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "hippo-cookies.c"; path = "../hippo/hippo-cookies.c"; sourceTree = SOURCE_ROOT; };
+		375F22EF0A2CD95600596099 /* hippo-cookies.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "hippo-cookies.h"; path = "../hippo/hippo-cookies.h"; sourceTree = SOURCE_ROOT; };
+		375F22F00A2CD95600596099 /* hippo-data-cache-internal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "hippo-data-cache-internal.h"; path = "../hippo/hippo-data-cache-internal.h"; sourceTree = SOURCE_ROOT; };
+		375F22F10A2CD95600596099 /* hippo-data-cache.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "hippo-data-cache.c"; path = "../hippo/hippo-data-cache.c"; sourceTree = SOURCE_ROOT; };
+		375F22F20A2CD95600596099 /* hippo-data-cache.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "hippo-data-cache.h"; path = "../hippo/hippo-data-cache.h"; sourceTree = SOURCE_ROOT; };
+		375F22F30A2CD95600596099 /* hippo-entity-protected.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "hippo-entity-protected.h"; path = "../hippo/hippo-entity-protected.h"; sourceTree = SOURCE_ROOT; };
+		375F22F40A2CD95600596099 /* hippo-entity.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "hippo-entity.c"; path = "../hippo/hippo-entity.c"; sourceTree = SOURCE_ROOT; };
+		375F22F50A2CD95600596099 /* hippo-entity.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "hippo-entity.h"; path = "../hippo/hippo-entity.h"; sourceTree = SOURCE_ROOT; };
+		375F22F60A2CD95600596099 /* hippo-myspace.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "hippo-myspace.c"; path = "../hippo/hippo-myspace.c"; sourceTree = SOURCE_ROOT; };
+		375F22F70A2CD95600596099 /* hippo-myspace.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "hippo-myspace.h"; path = "../hippo/hippo-myspace.h"; sourceTree = SOURCE_ROOT; };
+		375F22F80A2CD95600596099 /* hippo-person.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "hippo-person.c"; path = "../hippo/hippo-person.c"; sourceTree = SOURCE_ROOT; };
+		375F22F90A2CD95600596099 /* hippo-person.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "hippo-person.h"; path = "../hippo/hippo-person.h"; sourceTree = SOURCE_ROOT; };
+		375F22FA0A2CD95600596099 /* hippo-platform.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "hippo-platform.c"; path = "../hippo/hippo-platform.c"; sourceTree = SOURCE_ROOT; };
+		375F22FB0A2CD95600596099 /* hippo-platform.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "hippo-platform.h"; path = "../hippo/hippo-platform.h"; sourceTree = SOURCE_ROOT; };
+		375F22FC0A2CD95600596099 /* hippo-post.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "hippo-post.c"; path = "../hippo/hippo-post.c"; sourceTree = SOURCE_ROOT; };
+		375F22FD0A2CD95600596099 /* hippo-post.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "hippo-post.h"; path = "../hippo/hippo-post.h"; sourceTree = SOURCE_ROOT; };
+		3793CD740A618CD9007D1AB9 /* hippo-common-marshal.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = "hippo-common-marshal.c"; sourceTree = "<group>"; };
+		3793CD750A618CD9007D1AB9 /* hippo-common-marshal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "hippo-common-marshal.h"; sourceTree = "<group>"; };
+		8D07F2C70486CC7A007CD1D0 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = Info.plist; sourceTree = SOURCE_ROOT; };
+		8D07F2C80486CC7A007CD1D0 /* hippo.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = hippo.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		8D07F2C30486CC7A007CD1D0 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		034768DDFF38A45A11DB9C8B /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				8D07F2C80486CC7A007CD1D0 /* hippo.framework */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		0867D691FE84028FC02AAC07 /* HippoCommon */ = {
+			isa = PBXGroup;
+			children = (
+				08FB77ACFE841707C02AAC07 /* Source */,
+				089C1665FE841158C02AAC07 /* Resources */,
+				0867D69AFE84028FC02AAC07 /* External Frameworks and Libraries */,
+				034768DDFF38A45A11DB9C8B /* Products */,
+			);
+			name = HippoCommon;
+			sourceTree = "<group>";
+		};
+		0867D69AFE84028FC02AAC07 /* External Frameworks and Libraries */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = "External Frameworks and Libraries";
+			sourceTree = "<group>";
+		};
+		089C1665FE841158C02AAC07 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				8D07F2C70486CC7A007CD1D0 /* Info.plist */,
+				089C1666FE841158C02AAC07 /* InfoPlist.strings */,
+			);
+			name = Resources;
+			sourceTree = "<group>";
+		};
+		08FB77ACFE841707C02AAC07 /* Source */ = {
+			isa = PBXGroup;
+			children = (
+				375F22B50A2CD92700596099 /* Hippo */,
+				375F22B40A2CD92100596099 /* Loudmouth */,
+			);
+			name = Source;
+			sourceTree = "<group>";
+		};
+		375F22B40A2CD92100596099 /* Loudmouth */ = {
+			isa = PBXGroup;
+			children = (
+				375F22B60A2CD94300596099 /* lm-connection.c */,
+				375F22B70A2CD94300596099 /* lm-connection.h */,
+				375F22B80A2CD94300596099 /* lm-debug.c */,
+				375F22B90A2CD94300596099 /* lm-debug.h */,
+				375F22BA0A2CD94300596099 /* lm-error.c */,
+				375F22BB0A2CD94300596099 /* lm-error.h */,
+				375F22BC0A2CD94300596099 /* lm-internals.h */,
+				375F22BD0A2CD94300596099 /* lm-message-handler.c */,
+				375F22BE0A2CD94300596099 /* lm-message-handler.h */,
+				375F22BF0A2CD94300596099 /* lm-message-node.c */,
+				375F22C00A2CD94300596099 /* lm-message-node.h */,
+				375F22C10A2CD94300596099 /* lm-message.c */,
+				375F22C20A2CD94300596099 /* lm-message.h */,
+				375F22C30A2CD94300596099 /* lm-parser.c */,
+				375F22C40A2CD94300596099 /* lm-parser.h */,
+				375F22C50A2CD94300596099 /* lm-proxy.c */,
+				375F22C60A2CD94300596099 /* lm-proxy.h */,
+				375F22C70A2CD94300596099 /* lm-sha.c */,
+				375F22C80A2CD94300596099 /* lm-sha.h */,
+				375F22C90A2CD94300596099 /* lm-ssl.c */,
+				375F22CA0A2CD94300596099 /* lm-ssl.h */,
+				375F22CB0A2CD94300596099 /* lm-utils.c */,
+				375F22CC0A2CD94300596099 /* lm-utils.h */,
+				375F22CD0A2CD94300596099 /* loudmouth.h */,
+			);
+			name = Loudmouth;
+			sourceTree = "<group>";
+		};
+		375F22B50A2CD92700596099 /* Hippo */ = {
+			isa = PBXGroup;
+			children = (
+				3793CD740A618CD9007D1AB9 /* hippo-common-marshal.c */,
+				3793CD750A618CD9007D1AB9 /* hippo-common-marshal.h */,
+				375F22E60A2CD95600596099 /* hippo-basics.c */,
+				375F22E70A2CD95600596099 /* hippo-basics.h */,
+				375F22E80A2CD95600596099 /* hippo-chat-room.c */,
+				375F22E90A2CD95600596099 /* hippo-chat-room.h */,
+				375F22EA0A2CD95600596099 /* hippo-common-internal.h */,
+				375F22EB0A2CD95600596099 /* hippo-common.h */,
+				375F22EC0A2CD95600596099 /* hippo-connection.c */,
+				375F22ED0A2CD95600596099 /* hippo-connection.h */,
+				375F22EE0A2CD95600596099 /* hippo-cookies.c */,
+				375F22EF0A2CD95600596099 /* hippo-cookies.h */,
+				375F22F00A2CD95600596099 /* hippo-data-cache-internal.h */,
+				375F22F10A2CD95600596099 /* hippo-data-cache.c */,
+				375F22F20A2CD95600596099 /* hippo-data-cache.h */,
+				375F22F30A2CD95600596099 /* hippo-entity-protected.h */,
+				375F22F40A2CD95600596099 /* hippo-entity.c */,
+				375F22F50A2CD95600596099 /* hippo-entity.h */,
+				375F22F60A2CD95600596099 /* hippo-myspace.c */,
+				375F22F70A2CD95600596099 /* hippo-myspace.h */,
+				375F22F80A2CD95600596099 /* hippo-person.c */,
+				375F22F90A2CD95600596099 /* hippo-person.h */,
+				375F22FA0A2CD95600596099 /* hippo-platform.c */,
+				375F22FB0A2CD95600596099 /* hippo-platform.h */,
+				375F22FC0A2CD95600596099 /* hippo-post.c */,
+				375F22FD0A2CD95600596099 /* hippo-post.h */,
+			);
+			name = Hippo;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXHeadersBuildPhase section */
+		8D07F2BD0486CC7A007CD1D0 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				378E3D1C0A2CF12A00B801F6 /* hippo-basics.h in Headers */,
+				378E3D1D0A2CF12A00B801F6 /* hippo-chat-room.h in Headers */,
+				378E3D1E0A2CF12A00B801F6 /* hippo-common-internal.h in Headers */,
+				378E3D1F0A2CF12A00B801F6 /* hippo-common.h in Headers */,
+				378E3D200A2CF12A00B801F6 /* hippo-connection.h in Headers */,
+				378E3D210A2CF12A00B801F6 /* hippo-cookies.h in Headers */,
+				378E3D220A2CF12A00B801F6 /* hippo-data-cache-internal.h in Headers */,
+				378E3D230A2CF12A00B801F6 /* hippo-data-cache.h in Headers */,
+				378E3D240A2CF12A00B801F6 /* hippo-entity-protected.h in Headers */,
+				378E3D250A2CF12A00B801F6 /* hippo-entity.h in Headers */,
+				378E3D260A2CF12A00B801F6 /* hippo-myspace.h in Headers */,
+				378E3D270A2CF12A00B801F6 /* hippo-person.h in Headers */,
+				378E3D280A2CF12A00B801F6 /* hippo-platform.h in Headers */,
+				378E3D290A2CF12A00B801F6 /* hippo-post.h in Headers */,
+				378E3D2A0A2CF12A00B801F6 /* lm-connection.h in Headers */,
+				378E3D2B0A2CF12A00B801F6 /* lm-debug.h in Headers */,
+				378E3D2C0A2CF12A00B801F6 /* lm-error.h in Headers */,
+				378E3D2D0A2CF12A00B801F6 /* lm-internals.h in Headers */,
+				378E3D2E0A2CF12A00B801F6 /* lm-message-handler.h in Headers */,
+				378E3D2F0A2CF12A00B801F6 /* lm-message-node.h in Headers */,
+				378E3D300A2CF12A00B801F6 /* lm-message.h in Headers */,
+				378E3D310A2CF12A00B801F6 /* lm-parser.h in Headers */,
+				378E3D320A2CF12A00B801F6 /* lm-proxy.h in Headers */,
+				378E3D330A2CF12A00B801F6 /* lm-sha.h in Headers */,
+				378E3D340A2CF12A00B801F6 /* lm-ssl.h in Headers */,
+				378E3D350A2CF12A00B801F6 /* lm-utils.h in Headers */,
+				378E3D360A2CF12A00B801F6 /* loudmouth.h in Headers */,
+				3793CD770A618CD9007D1AB9 /* hippo-common-marshal.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXHeadersBuildPhase section */
+
+/* Begin PBXNativeTarget section */
+		8D07F2BC0486CC7A007CD1D0 /* hippo */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 3793CD4C0A618AE2007D1AB9 /* Build configuration list for PBXNativeTarget "hippo" */;
+			buildPhases = (
+				8D07F2BD0486CC7A007CD1D0 /* Headers */,
+				8D07F2BF0486CC7A007CD1D0 /* Resources */,
+				8D07F2C10486CC7A007CD1D0 /* Sources */,
+				8D07F2C30486CC7A007CD1D0 /* Frameworks */,
+				8D07F2C50486CC7A007CD1D0 /* Rez */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = hippo;
+			productInstallPath = "$(HOME)/Library/Frameworks";
+			productName = HippoCommon;
+			productReference = 8D07F2C80486CC7A007CD1D0 /* hippo.framework */;
+			productType = "com.apple.product-type.framework";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		0867D690FE84028FC02AAC07 /* Project object */ = {
+			isa = PBXProject;
+			buildConfigurationList = 3793CD500A618AE2007D1AB9 /* Build configuration list for PBXProject "HippoCommon" */;
+			hasScannedForEncodings = 1;
+			mainGroup = 0867D691FE84028FC02AAC07 /* HippoCommon */;
+			productRefGroup = 034768DDFF38A45A11DB9C8B /* Products */;
+			projectDirPath = "";
+			targets = (
+				8D07F2BC0486CC7A007CD1D0 /* hippo */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		8D07F2BF0486CC7A007CD1D0 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8D07F2C00486CC7A007CD1D0 /* InfoPlist.strings in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXRezBuildPhase section */
+		8D07F2C50486CC7A007CD1D0 /* Rez */ = {
+			isa = PBXRezBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXRezBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		8D07F2C10486CC7A007CD1D0 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				375F22CE0A2CD94300596099 /* lm-connection.c in Sources */,
+				375F22D00A2CD94300596099 /* lm-debug.c in Sources */,
+				375F22D20A2CD94300596099 /* lm-error.c in Sources */,
+				375F22D50A2CD94300596099 /* lm-message-handler.c in Sources */,
+				375F22D70A2CD94300596099 /* lm-message-node.c in Sources */,
+				375F22D90A2CD94300596099 /* lm-message.c in Sources */,
+				375F22DB0A2CD94300596099 /* lm-parser.c in Sources */,
+				375F22DD0A2CD94300596099 /* lm-proxy.c in Sources */,
+				375F22DF0A2CD94300596099 /* lm-sha.c in Sources */,
+				375F22E10A2CD94300596099 /* lm-ssl.c in Sources */,
+				375F22E30A2CD94300596099 /* lm-utils.c in Sources */,
+				375F22FE0A2CD95600596099 /* hippo-basics.c in Sources */,
+				375F23000A2CD95600596099 /* hippo-chat-room.c in Sources */,
+				375F23040A2CD95600596099 /* hippo-connection.c in Sources */,
+				375F23060A2CD95600596099 /* hippo-cookies.c in Sources */,
+				375F23090A2CD95600596099 /* hippo-data-cache.c in Sources */,
+				375F230C0A2CD95600596099 /* hippo-entity.c in Sources */,
+				375F230E0A2CD95600596099 /* hippo-myspace.c in Sources */,
+				375F23100A2CD95600596099 /* hippo-person.c in Sources */,
+				375F23120A2CD95600596099 /* hippo-platform.c in Sources */,
+				375F23140A2CD95600596099 /* hippo-post.c in Sources */,
+				3793CD760A618CD9007D1AB9 /* hippo-common-marshal.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXVariantGroup section */
+		089C1666FE841158C02AAC07 /* InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				089C1667FE841158C02AAC07 /* English */,
+			);
+			name = InfoPlist.strings;
+			sourceTree = SOURCE_ROOT;
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		3793CD4D0A618AE2007D1AB9 /* Development */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+				DEBUGGING_SYMBOLS = YES;
+				DEPLOYMENT_LOCATION = YES;
+				DSTROOT = /;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				FRAMEWORK_SEARCH_PATHS = "";
+				FRAMEWORK_VERSION = A;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_FIX_AND_CONTINUE = YES;
+				GCC_ENABLE_TRIGRAPHS = NO;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PRECOMPILE_PREFIX_HEADER = NO;
+				GCC_PREFIX_HEADER = "";
+				GCC_WARN_ABOUT_MISSING_PROTOTYPES = NO;
+				GCC_WARN_FOUR_CHARACTER_CONSTANTS = NO;
+				GCC_WARN_UNKNOWN_PRAGMAS = NO;
+				HEADER_SEARCH_PATHS = (
+					"$(BUILD_DIR)/../",
+					"$(BUILD_DIR)/../../loudmouth/",
+					"$(BUILD_DIR)/../../",
+					"/usr/include/glib-2.0",
+					"/usr/lib/glib-2.0/include",
+				);
+				INFOPLIST_FILE = Info.plist;
+				INSTALL_PATH = "$(HOME)/Library/Frameworks";
+				LIBRARY_SEARCH_PATHS = /usr/lib;
+				LIBRARY_STYLE = Dynamic;
+				MACH_O_TYPE = mh_dylib;
+				OPTIMIZATION_CFLAGS = "-O0";
+				OTHER_CFLAGS = "-DLM_COMPILATION";
+				OTHER_LDFLAGS = (
+					"-lgthread-2.0",
+					"-lgobject-2.0",
+					"-lglib-2.0",
+					"-lintl",
+					"-liconv",
+				);
+				PRODUCT_NAME = hippo;
+				SECTORDER_FLAGS = "";
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+				WRAPPER_EXTENSION = framework;
+				ZERO_LINK = YES;
+			};
+			name = Development;
+		};
+		3793CD4E0A618AE2007D1AB9 /* Deployment */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = YES;
+				DEPLOYMENT_LOCATION = YES;
+				DSTROOT = /;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				FRAMEWORK_SEARCH_PATHS = "";
+				FRAMEWORK_VERSION = A;
+				GCC_ENABLE_FIX_AND_CONTINUE = NO;
+				GCC_ENABLE_TRIGRAPHS = NO;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_PRECOMPILE_PREFIX_HEADER = NO;
+				GCC_PREFIX_HEADER = "";
+				GCC_WARN_ABOUT_MISSING_PROTOTYPES = NO;
+				GCC_WARN_FOUR_CHARACTER_CONSTANTS = NO;
+				GCC_WARN_UNKNOWN_PRAGMAS = NO;
+				HEADER_SEARCH_PATHS = (
+					"$(BUILD_DIR)/../",
+					"$(BUILD_DIR)/../../loudmouth/",
+					"$(BUILD_DIR)/../../",
+					"/usr/include/glib-2.0",
+					"/usr/lib/glib-2.0/include",
+				);
+				INFOPLIST_FILE = Info.plist;
+				INSTALL_PATH = "$(HOME)/Library/Frameworks";
+				LIBRARY_SEARCH_PATHS = /usr/lib;
+				LIBRARY_STYLE = Dynamic;
+				MACH_O_TYPE = mh_dylib;
+				OTHER_CFLAGS = "-DLM_COMPILATION";
+				OTHER_LDFLAGS = (
+					"-lgthread-2.0",
+					"-lgobject-2.0",
+					"-lglib-2.0",
+					"-lintl",
+					"-liconv",
+				);
+				PRODUCT_NAME = hippo;
+				SECTORDER_FLAGS = "";
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+				WRAPPER_EXTENSION = framework;
+				ZERO_LINK = NO;
+			};
+			name = Deployment;
+		};
+		3793CD4F0A618AE2007D1AB9 /* Default */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				DEPLOYMENT_LOCATION = YES;
+				DSTROOT = /;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				FRAMEWORK_SEARCH_PATHS = "";
+				FRAMEWORK_VERSION = A;
+				GCC_ENABLE_TRIGRAPHS = NO;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_PRECOMPILE_PREFIX_HEADER = NO;
+				GCC_PREFIX_HEADER = "";
+				GCC_WARN_ABOUT_MISSING_PROTOTYPES = NO;
+				GCC_WARN_FOUR_CHARACTER_CONSTANTS = NO;
+				GCC_WARN_UNKNOWN_PRAGMAS = NO;
+				HEADER_SEARCH_PATHS = "";
+				INFOPLIST_FILE = Info.plist;
+				INSTALL_PATH = "$(HOME)/Library/Frameworks";
+				LIBRARY_SEARCH_PATHS = "";
+				LIBRARY_STYLE = Dynamic;
+				MACH_O_TYPE = mh_dylib;
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				PRODUCT_NAME = hippo;
+				SECTORDER_FLAGS = "";
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+				WRAPPER_EXTENSION = framework;
+			};
+			name = Default;
+		};
+		3793CD510A618AE2007D1AB9 /* Development */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+			};
+			name = Development;
+		};
+		3793CD520A618AE2007D1AB9 /* Deployment */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+			};
+			name = Deployment;
+		};
+		3793CD530A618AE2007D1AB9 /* Default */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+			};
+			name = Default;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		3793CD4C0A618AE2007D1AB9 /* Build configuration list for PBXNativeTarget "hippo" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				3793CD4D0A618AE2007D1AB9 /* Development */,
+				3793CD4E0A618AE2007D1AB9 /* Deployment */,
+				3793CD4F0A618AE2007D1AB9 /* Default */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Default;
+		};
+		3793CD500A618AE2007D1AB9 /* Build configuration list for PBXProject "HippoCommon" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				3793CD510A618AE2007D1AB9 /* Development */,
+				3793CD520A618AE2007D1AB9 /* Deployment */,
+				3793CD530A618AE2007D1AB9 /* Default */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Default;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 0867D690FE84028FC02AAC07 /* Project object */;
+}

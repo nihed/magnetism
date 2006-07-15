@@ -1,0 +1,35 @@
+@CHARSET "UTF-8";
+
+/* This file contains styles specific to the "welcome" page 
+ */
+
+@import "home.css"; /* kind of a cheat, we use a bunch of the same stuff */
+
+.dh-welcome-headline {
+	font-size:				larger;
+	font-weight:			bold;
+}
+
+.dh-big-download-box {
+	float:				right;
+	/* Golden ratio baby! */
+	width: 				180;
+	height: 			110;
+	background-color:	lightgreen;
+	-moz-border-radius: 5px;
+	border:				1px solid darkgreen;
+	margin-left:		2em;
+	margin-bottom:		2em;
+	padding:			1em;
+}
+
+.dh-big-download-box div a {
+	font-size:	larger;
+	color:		darkgreen;
+	margin: 	2em;
+}
+
+.dh-welcome-message {
+	width: 			80%;
+	margin-left:	10%;
+}

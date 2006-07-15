@@ -1,0 +1,61 @@
+cpp_quote("#pragma once")
+
+import "oaidl.idl";
+import "ocidl.idl";
+import "HippoUtil.idl";
+
+#include "HippoExplorerDispID.h"
+
+[
+    uuid(39794B35-15C8-43b8-A1D7-AEB345E8355C), // LIBID_HippoExplorer
+    helpstring("DumbHippo Explorer Interface"),
+    lcid(0x0000),
+    version(0.1)
+]
+library HippoExplorer {
+    [
+        uuid(82344E95-33D8-44e3-A2BF-2E4A0CCC6C95), // IID_IHippoEmbed
+        helpstring("DumbHippo Embedded Object"),
+        dual,
+        oleautomation
+    ]
+    interface IHippoEmbed : IDispatch
+    {
+        [helpstring("Close the browser window; usually used for server side dialogs")]
+        HRESULT CloseWindow(void);
+        [helpstring("Show a chat window for the given post")]
+        HRESULT ShowChatWindow(BSTR userId, BSTR postId);
+        [helpstring("Open the post information bar (the post will be determined from the current URL)")]
+        HRESULT OpenBrowserBar();
+        [helpstring("Close the post information bar")]
+        HRESULT CloseBrowserBar();
+    }
+    [
+        uuid(48584F5A-B7EB-4eda-B058-42DEDB94A89E), // IID_IHippoEmbedEvents
+        helpstring("DumbHippo Embedded Object Events"),
+        dual,
+        oleautomation
+    ]
+    interface IHippoEmbedEvents : IDispatch
+    {
+        [helpstring("Toplevel location changed")]
+        [id(HIPPO_DISPID_LOCATIONCHANGED)] HRESULT LocationChanged(BSTR locationURL);
+    }
+    [
+        uuid(5A96BF90-0D8A-4200-A23B-1C8DABC0CC04) // CLSID_HippoEmbed
+    ]
+    coclass HippoEmbed
+    {
+        [default] interface IHippoEmbed;
+        [default, source] interface IHippoEmbedEvents;
+    }
+    [
+        uuid(2D40665F-8139-4cb5-BA39-A6E25A147F5D) // CLSID_HippoChatControl
+    ]
+    coclass HippoChatControl
+    {
+        [default] interface IHippoChatRoom;
+        [default, source] interface IHippoChatRoomEvents;
+        interface IHippoChatRoomEvents;
+    }
+}
