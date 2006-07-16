@@ -40,6 +40,7 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 	private User viewedUser;
 	private String viewedUserId;
 	private boolean disabled;
+	private boolean needExternalAccounts;
 	
 	private GroupSystem groupSystem;
 	private MusicSystem musicSystem;
@@ -301,7 +302,11 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 		return outstandingInvitations;
 	}
 	
-	protected boolean getNeedExternalAccounts() {
-		return false;
+	protected final boolean getNeedExternalAccounts() {
+		return needExternalAccounts;
+	}
+	
+	public void setNeedExternalAccounts(boolean needExternalAccounts) {
+		this.needExternalAccounts = needExternalAccounts;
 	}
 }

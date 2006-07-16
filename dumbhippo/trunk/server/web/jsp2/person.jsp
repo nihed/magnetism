@@ -5,9 +5,10 @@
 <%@ taglib uri="/jsp/dumbhippo.tld" prefix="dh" %>
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 
-<dh:bean id="person" class="com.dumbhippo.web.pages.PersonPage" scope="page"/>
+<%-- by using requirePersonBean instead of dh:bean directly we share the PersonPage
+     object between this jsp and the person sidebar tag --%>
+<dht:requirePersonBean asOthersWouldSee="true" needExternalAccounts="true"/>
 <jsp:setProperty name="person" property="viewedUserId" param="who"/>
-<jsp:setProperty name="person" property="asOthersWouldSee" value="true"/>
 
 <%-- use viewedPerson (PersonView) on most of the page, but it will throw
      if unset so here we look at viewedUser --%>
