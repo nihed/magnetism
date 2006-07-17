@@ -418,8 +418,14 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		Set<Resource> resources = null;
 		if (pv.getContact() != null) {
 			Contact contact = pv.getContact();
-			contactResources = getResourcesForPerson(contact);
+		
+			// contact should point to something...
+			if (contact.getResources().isEmpty())
+				logger.warn("Problem in database: contact has no resources: {}", contact);
 			
+			// this returns only email/aim resources
+			contactResources = getResourcesForPerson(contact);
+						
 			//logger.debug("Contact has owner {} viewpoint is {}", contact.getAccount().getOwner(),
 			//		viewpoint != null ? viewpoint.getViewer() : null);
 			
