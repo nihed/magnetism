@@ -275,8 +275,13 @@ manager_show_bubble(BubbleManager     *manager,
 
     hippo_bubble_notify_reason(bubble, reason);
 
-    page = gtk_notebook_page_num(GTK_NOTEBOOK(manager->notebook), GTK_WIDGET(bubble));
-    gtk_notebook_set_current_page(GTK_NOTEBOOK(manager->notebook), page);
+    /* FIXME the page-flipping logic is screwy; we need to "slideshow" instead of 
+     * just popping down the whole stack after a timeout
+     */
+    if (!(manager->window_contains_pointer || manager->idle)) {
+        page = gtk_notebook_page_num(GTK_NOTEBOOK(manager->notebook), GTK_WIDGET(bubble));
+        gtk_notebook_set_current_page(GTK_NOTEBOOK(manager->notebook), page);
+    }
     
     update_bubble_paging(manager);
     
