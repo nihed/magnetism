@@ -35,12 +35,14 @@ public class PostViewedProcessor implements LiveEventProcessor {
 		return num != 0 && ((num & (num - 1)) == 0);
 	}
 	
+	// Thinking about this a bit more, interesting should probably be
+	// based at least partially on a delta since a given time period,
+	// not absolutes
 	private boolean countIsInteresting(long count) {
 		if (count >= 3 && count <= 5)
 			return true;
-		if (count > 128)
-			return false;
-		return numIsPow2(count);		
+		return numIsPow2(count) || (numIsPow2(count - Math.round(count*.1))
+				         || numIsPow2(count + Math.round(count*.1)));		
 	}	
 	
 	public void process(LiveState state, LiveEvent abstractEvent) {

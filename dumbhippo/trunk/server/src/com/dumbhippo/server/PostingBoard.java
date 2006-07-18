@@ -144,6 +144,16 @@ public interface PostingBoard {
 	public PostView getPostView(Viewpoint viewpoint, Post post);
 	
 	/**
+	 * Return the set of resources which should receive notifications about
+	 * this post.  For non-world shares, this is equivalent to the expanded recipients.
+	 * For world shares, it also includes all recently active accounts.
+	 * 
+	 * @param post post for which recipients are determined
+	 * @return set of complete recipients
+	 */
+	public Set<Resource> getPostRecipients(Post post);	
+	
+	/**
 	 * Returns a set of EntityView (i.e. PersonView and GroupView) which contains the entities directly
 	 * referenced by this post.  At the moment, this is just the person recipients, the poster, and the
 	 * group recipients.  This does not include indirectly referenced entities (e.g. the members of a group).

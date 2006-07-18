@@ -795,7 +795,7 @@ public class MessageSenderBean implements MessageSender {
 		} catch (NotFoundException e) {
 			throw new RuntimeException(e);
 		}
-		for (Resource recipientResource : post.getExpandedRecipients()) {
+		for (Resource recipientResource : postingBoard.getPostRecipients(post)) {
 			User recipient = identitySpider.getUser(recipientResource);
 			if (recipient != null) {
 				try {
