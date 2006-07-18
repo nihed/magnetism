@@ -637,13 +637,13 @@ dh.bubble.PostData = function(post) {
     this.appendSwarmContent = function(bubble, parent) {
         var pages = []
     
-        if (this.post.ToWorld) {
+        if (this.post.ToWorld && post.TotalViewers > 0) {
             var viewersCountDiv = document.createElement("div")
             viewersCountDiv.className  = "dh-notification-whos-there"
             parent.appendChild(viewersCountDiv)
             var viewersCount = this.post.TotalViewers
-            var text = viewersCount > 1 ? " people viewed this share" : " person viewed this share"
-            dh.util.dom.appendSpanText(viewersCountDiv, "" + viewersCount + text, "dh-notification-viewer-count")
+            var text = viewersCount > 1 ? "people viewed this share" : "person viewed this share"
+            dh.util.dom.appendSpanText(viewersCountDiv, "" + viewersCount + " " + text, "dh-notification-viewer-count")
             
             pages.push({ name: "whosThere", title: "Viewers", div: viewersCountDiv })
             // World shares don't yet have any other pages

@@ -361,6 +361,8 @@ dhPostActivity = function(post) {
     dh.display.setVisible(true)
     
     dh.util.debug("post activity id=" + post.Id)
+    if (post.TotalViewers == 0) // This shouldn't happen, but just in case
+        return false;
     var data = new dh.bubble.PostData(post)
     return dh.display.addBubbleUpdate(data, false, dh.notification.ACTIVITY)
 }
