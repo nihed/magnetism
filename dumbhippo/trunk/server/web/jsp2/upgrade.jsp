@@ -38,11 +38,11 @@
 		</c:when>
 		<c:otherwise>
 			<%-- WINDOWS RELEASE NOTES GO HERE --%>
-			<p>Version 1.1.57</p>
+			<p>Version 1.1.59</p>
 			<ul>
-				<li>Purple bubbles! Purple bubbles show group chat activity and new members in groups.</li>
-				<li>Fix a bug where clicking on someone's name/photo did not open their page.</li>
-				<li>Other small fixes</li>
+				<li>World share swarming: The bubble now shows how many people visited a post.</li>
+				<li>Fixed a bug that caused a lot of old bubbles to show up again periodically.</li>
+				
 			</ul>
 		</c:otherwise>
 	</c:choose>
