@@ -193,6 +193,18 @@ public interface IdentitySpider {
 	public Set<PersonView> getContacts(Viewpoint viewpoint, User user, boolean includeSelf, PersonViewExtra... extras);
 	
 	/**
+	 * Get a list of users who have this user as a contact, but who are not contacts of this user.
+	 * An empty list will be returned, if the viewpoint is anything other than the viewpoint of the 
+	 * user.
+	 * 
+	 * @param viewpoint
+	 * @param user a user we are getting followers for
+	 * @param extras
+	 * @return a list of followers for the user
+	 */
+	public Set<PersonView> getFollowers(Viewpoint viewpoint, User user, PersonViewExtra... extras);
+	
+	/**
 	 * Checks whether a person has another other as a contact
 	 * @param current viewpoint (only a user can see their contacts, 
 	 *          so if viewpoint.getviewer() doesn't match user, the result will 
