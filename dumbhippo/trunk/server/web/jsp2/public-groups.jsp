@@ -26,6 +26,25 @@
 			<dht:zoneBoxTitle>
 			    <c:out value="${fn:toUpperCase(pagetitle)}"/>
 			</dht:zoneBoxTitle>
+			<form action="/search" method="get">
+				<div>
+					Search:
+					<jsp:element name="input">
+						<jsp:attribute name="type">text</jsp:attribute>
+						<jsp:attribute name="id">dhGroupsSearchEntry</jsp:attribute>
+						<jsp:attribute name="class">dh-text-input</jsp:attribute>
+						<jsp:attribute name="name">q</jsp:attribute>
+					</jsp:element>
+					<input type="submit" value="Go"/>
+				</div>
+			</form>
+			<script type="text/javascript">
+				dhGroupsSearchEntryInit = function () {
+					var searchBox = document.getElementById('dhGroupsSearchEntry');
+					var entry = new dh.textinput.Entry(searchBox, "Group topic or name", "");
+				}
+				dhGroupsSearchEntryInit()
+			</script>
 			<c:choose>
 				<c:when test="${person.pageablePublicGroups.totalCount > 0}">
 				    <dht:twoColumnList>
