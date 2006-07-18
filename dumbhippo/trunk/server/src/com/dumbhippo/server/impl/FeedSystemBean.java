@@ -547,6 +547,11 @@ public class FeedSystemBean implements FeedSystem {
 		
 		for (GroupFeed feed : entry.getFeed().getGroups()) {
 			if (!feed.isRemoved()) {
+				// FIXME the below comment is bogus because once a transaction 
+				// is hosed you can't keep doing other stuff ... to do this 
+				// each FeedPost needs creating in a new transaction or something.
+				// And failed transactions should probably retry.
+				
 				// catch errors here so failure to post to one group 
 				// won't break all other groups that want the same
 				// entry; there's nobody to catch this exception anyhow.
