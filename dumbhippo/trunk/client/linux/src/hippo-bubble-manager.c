@@ -501,6 +501,15 @@ on_group_membership_change(HippoDataCache *cache,
 }
 
 static void
+on_post_activity(HippoConnection *connection,
+                 HippoPost       *post,
+                 BubbleManager   *manager)
+{
+    g_debug("bubble manager, post activity %s", hippo_post_get_guid(post));
+    manager_bubble_post(manager, post, HIPPO_BUBBLE_REASON_ACTIVITY);
+}
+
+static void
 foreach_disconnect(void *key, void *value, void *data)
 {
     BubbleManager *manager = data;
@@ -659,6 +668,7 @@ manager_attach(BubbleManager   *manager,
     g_signal_connect(cache, "chat-room-loaded", G_CALLBACK(on_chat_room_loaded), manager);
     g_signal_connect(cache, "post-added", G_CALLBACK(on_post_added), manager);
     g_signal_connect(manager->connection, "group-membership-changed", G_CALLBACK(on_group_membership_change), manager);
+    g_signal_connect(manager->connection, "post-activity", G_CALLBACK(on_post_activity), manager);    
 }
 
 static void

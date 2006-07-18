@@ -24,6 +24,7 @@ typedef enum {
     LINK_CLICK_VISIT_LAST_MESSAGE_SENDER,
     LINK_CLICK_ACTIVATE_WHOS_THERE,
     LINK_CLICK_ACTIVATE_SOMEONE_SAID,
+    LINK_CLICK_ACTIVATE_TOTAL_VIEWERS,    
     LINK_CLICK_JOIN_CHAT,
     LINK_CLICK_IGNORE_POST,
     LINK_CLICK_INVITE    
@@ -35,6 +36,7 @@ typedef enum {
 } PageAction;
 
 typedef enum {
+    ACTIVE_EXTRA_TOTAL_VIEWERS,
     ACTIVE_EXTRA_WHOS_THERE,
     ACTIVE_EXTRA_SOMEONE_SAID,
     ACTIVE_EXTRA_MEMBERSHIP_CHANGE
@@ -70,6 +72,7 @@ struct _HippoBubble {
     GtkWidget *n_of_n;
     GtkWidget *left_arrow;
     GtkWidget *right_arrow;
+    GtkWidget *total_viewers;    
     GtkWidget *whos_there;
     GtkWidget *someone_said;
     GtkWidget *join_chat;
@@ -92,6 +95,7 @@ struct _HippoBubble {
     int        actions;
     int        page; /* [0,total_pages) */
     int        total_pages;
+    unsigned int total_viewers_set : 1;    
     unsigned int whos_there_set : 1;
     unsigned int someone_said_set : 1;
     ActiveExtraInfo active_extra;
@@ -526,6 +530,19 @@ hippo_bubble_init(HippoBubble       *bubble)
     bubble->viewers = gtk_label_new(NULL);
     hookup_widget(bubble, &bubble->viewers);
     gtk_widget_hide(bubble->viewers); /* override hookup_widget */        
+    
+    /* World share total viewers */
+    bubble->total_viewers = g_object_new(GTK_TYPE_EVENT_BOX,
+                                         "visible-window", FALSE,
+                                         "above-child", TRUE,
+                                         NULL);
+    hookup_widget(bubble, &bubble->total_viewers);
+    gtk_widget_hide(bubble->total_viewers); /* override hookup_widget */     
+    connect_link_action(bubble->total_viewers, LINK_CLICK_ACTIVATE_TOTAL_VIEWERS);    
+    
+    widget = gtk_label_new(NULL);
+    gtk_container_add(GTK_CONTAINER(bubble->total_viewers), widget);
+    gtk_widget_show(widget);    
 
     /* The "someone said" link */
 
@@ -1160,6 +1177,7 @@ compute_content_widgets_layout(HippoBubble  *bubble,
 /* this computes with respect to coordinates 0,0 */
 static void
 compute_extra_widgets_layout(HippoBubble  *bubble,
+                             GdkRectangle *total_viewers_p,
                              GdkRectangle *whos_there_p,
                              GdkRectangle *someone_said_p,
                              GdkRectangle *join_chat_p,
@@ -1170,6 +1188,7 @@ compute_extra_widgets_layout(HippoBubble  *bubble,
                              GdkRectangle *viewers_p,
                              GdkRectangle *all_extra_widgets_p)
 {
+    GdkRectangle total_viewers;
     GdkRectangle whos_there;
     GdkRectangle someone_said;
     GdkRectangle join_chat;
@@ -1182,13 +1201,14 @@ compute_extra_widgets_layout(HippoBubble  *bubble,
     int total_width;
     int message_pane_width;
     int message_pane_height;
-    int links_width;
+    int links_width = -1;
     int links_height;
     int panes_height;
     int panes_y;
     
     /* First get all the width, height */
-    
+
+    GET_REQ(total_viewers);      
     GET_REQ(whos_there);    
     GET_REQ(someone_said);
     GET_REQ(join_chat);
@@ -1209,11 +1229,16 @@ compute_extra_widgets_layout(HippoBubble  *bubble,
         message_pane_width = 0;
         message_pane_height = 0;
     }
-
-    if (bubble->whos_there_set && bubble->someone_said_set) {
+    
+    if (bubble->total_viewers_set) {
+        // Currently this is exclusive with whos_there and someone_said
+    	links_width = total_viewers.width;
+    	links_height = total_viewers.height;
+    	panes_height = viewers.height;
+    } else if (bubble->whos_there_set && bubble->someone_said_set) {
         links_width = whos_there.width + BETWEEN_LINKS + someone_said.width;
         links_height = MAX(whos_there.height, someone_said.height);
-        panes_height = MAX(message_pane_height, viewers.height);
+        panes_height = MAX(message_pane_height, viewers.height);        
     } else if (bubble->whos_there_set) {
         links_width = whos_there.width;
         links_height = whos_there.height;
@@ -1231,7 +1256,7 @@ compute_extra_widgets_layout(HippoBubble  *bubble,
     total_width = links_width + PADDING + join_chat.width + BETWEEN_LINKS + ignore.width + BETWEEN_LINKS + invite.width;
     if (bubble->someone_said_set)
         total_width = MAX(total_width, message_pane_width);
-    if (bubble->whos_there_set)
+    if (bubble->whos_there_set || bubble->total_viewers_set)
         total_width = MAX(total_width, viewers.width);
     total_width += PADDING * 2;
 
@@ -1241,21 +1266,23 @@ compute_extra_widgets_layout(HippoBubble  *bubble,
      */
     whos_there.y = PADDING;
     someone_said.y = PADDING;
+    total_viewers.y = PADDING;
 
-    if (bubble->whos_there_set && bubble->someone_said_set) {
+    whos_there.x = 0;
+    someone_said.x = 0;
+    total_viewers.x = 0;
+
+	if (bubble->total_viewers_set) {
+	    total_viewers.x = PADDING;
+    } else if (bubble->whos_there_set && bubble->someone_said_set) {
         whos_there.x = PADDING;
         someone_said.x = whos_there.x + whos_there.width + BETWEEN_LINKS;
-        
     } else if (bubble->whos_there_set) {
         whos_there.x = PADDING;
         someone_said.x = 0; /* irrelevant */
     } else if (bubble->someone_said_set) {
         someone_said.x = PADDING;
         whos_there.x = 0; /* irrelevant */
-    } else {
-        /* both irrelevant */
-        whos_there.x = 0;
-        someone_said.x = 0;
     }
 
     /* Right-align the "join chat" and "ignore" */
@@ -1278,7 +1305,7 @@ compute_extra_widgets_layout(HippoBubble  *bubble,
     viewers.x = PADDING;
     viewers.y = panes_y + (panes_height - viewers.height) / 2;
 
-    if (!(bubble->whos_there_set || bubble->someone_said_set)) {
+    if (!(bubble->whos_there_set || bubble->someone_said_set || bubble->total_viewers_set)) {
         all_extra_widgets.x = 0;
         all_extra_widgets.y = 0;
         all_extra_widgets.width = total_width;
@@ -1295,6 +1322,7 @@ compute_extra_widgets_layout(HippoBubble  *bubble,
     
     all_extra_widgets.height += PADDING;
     
+    OUT(total_viewers);    
     OUT(whos_there);
     OUT(someone_said);
     OUT(join_chat);
@@ -1410,7 +1438,7 @@ hippo_bubble_size_request(GtkWidget         *widget,
      * compute_extra_widgets computes the extra area based at the origin (0,0)
      */
      
-    compute_extra_widgets_layout(bubble, NULL, NULL,
+    compute_extra_widgets_layout(bubble, NULL, NULL, NULL,
                                  NULL, NULL, NULL,
                                  NULL, NULL, NULL,
                                  &all_extra_widgets_rect);
@@ -1463,6 +1491,7 @@ hippo_bubble_size_allocate(GtkWidget         *widget,
     GdkRectangle right_arrow_rect;
     GdkRectangle n_of_n_rect;
     int both_arrows_width;
+    GdkRectangle total_viewers_rect;    
     GdkRectangle whos_there_rect;
     GdkRectangle someone_said_rect;
     GdkRectangle join_chat_rect;
@@ -1485,7 +1514,9 @@ hippo_bubble_size_allocate(GtkWidget         *widget,
     
     /* Now change our mind on some of them ... */
     
-    compute_extra_widgets_layout(bubble, &whos_there_rect,
+    compute_extra_widgets_layout(bubble, 
+                                 &total_viewers_rect,
+                                 &whos_there_rect,
                                  &someone_said_rect, 
                                  &join_chat_rect,
                                  &ignore_rect,
@@ -1587,7 +1618,8 @@ hippo_bubble_size_allocate(GtkWidget         *widget,
         what##_rect.y += yoffset;                              \
         gtk_widget_size_allocate(bubble->what, &what##_rect);  \
     } while(0)
-    
+
+    ALLOC_LEFT(total_viewers);    
     ALLOC_LEFT(whos_there);
     ALLOC_LEFT(someone_said);
     ALLOC_RIGHT(join_chat);
@@ -1792,18 +1824,21 @@ hippo_bubble_set_recipients(HippoBubble *bubble,
 static void
 update_extra_info(HippoBubble *bubble)
 {
+    gboolean total_viewers_active;
     gboolean whos_there_active;
     gboolean someone_said_active;    
     gboolean membership_change_active;    
     
+    total_viewers_active = bubble->active_extra == ACTIVE_EXTRA_TOTAL_VIEWERS;
     whos_there_active = (bubble->whos_there_set &&
+                         !total_viewers_active &&
                          !bubble->someone_said_set) ||
                         (bubble->whos_there_set &&
                          bubble->active_extra == ACTIVE_EXTRA_WHOS_THERE);
     membership_change_active = (bubble->someone_said_set && bubble->active_extra == ACTIVE_EXTRA_MEMBERSHIP_CHANGE);
     someone_said_active = (bubble->someone_said_set && bubble->active_extra == ACTIVE_EXTRA_SOMEONE_SAID);     
      
-    if (bubble->whos_there_set) {
+    if (bubble->whos_there_set && !total_viewers_active) {
         GtkWidget *label = GTK_BIN(bubble->whos_there)->child;
         if (whos_there_active) {
             gtk_label_set_markup(GTK_LABEL(label), _("<b>Who's there</b>"));
@@ -1818,7 +1853,7 @@ update_extra_info(HippoBubble *bubble)
         gtk_widget_hide(bubble->whos_there);    
     }
 
-    if (bubble->someone_said_set) {
+    if (bubble->someone_said_set && !total_viewers_active) {
         GtkWidget *label = GTK_BIN(bubble->someone_said)->child;
         if (someone_said_active) {
             gtk_label_set_markup(GTK_LABEL(label), _("<b>Latest comment</b>"));
@@ -1841,8 +1876,16 @@ update_extra_info(HippoBubble *bubble)
     } else {
         gtk_widget_hide(bubble->someone_said);
     }
+    
+    if (total_viewers_active) {
+	    GtkWidget *label = GTK_BIN(bubble->total_viewers)->child;
+        gtk_label_set_markup(GTK_LABEL(label), _("<b>Viewers</b>"));
+        gtk_widget_show(bubble->total_viewers);
+    } else {
+    	gtk_widget_hide(bubble->total_viewers);
+    }
 
-    if (whos_there_active) {
+    if (whos_there_active || total_viewers_active) {
         gtk_widget_show(bubble->viewers);
     } else {
         gtk_widget_hide(bubble->viewers);
@@ -1902,6 +1945,32 @@ hippo_bubble_set_viewers(HippoBubble *bubble,
 
     set_label_sizes(bubble);
     
+    update_extra_info(bubble);
+}
+
+void
+hippo_bubble_set_total_viewers(HippoBubble *bubble,
+                               int          n_viewers)
+{
+	if (n_viewers > 0) {
+	    char *fmt_single;
+    	char *fmt_plural;
+    
+	    fmt_single = g_strdup_printf(_("%d person has viewed this share"), n_viewers);
+    	fmt_plural = g_strdup_printf(_("%d people have viewed this share"), n_viewers);
+    
+	    gtk_label_set_text(GTK_LABEL(bubble->viewers), ngettext(fmt_single, fmt_plural, n_viewers));
+    
+    	g_free(fmt_single);
+	    g_free(fmt_plural);
+    
+    	bubble->total_viewers_set = TRUE; 
+    } else {
+        gtk_label_set_text(GTK_LABEL(bubble->viewers), "");    
+    	bubble->total_viewers_set = FALSE;
+    }
+
+    set_label_sizes(bubble);    
     update_extra_info(bubble);
 }
 
@@ -2085,7 +2154,11 @@ hippo_bubble_notify_reason(HippoBubble      *bubble,
     case HIPPO_BUBBLE_REASON_MEMBERSHIP_CHANGE:
         bubble->active_extra = ACTIVE_EXTRA_MEMBERSHIP_CHANGE;
         update_extra_info(bubble);
-        break;        
+        break;
+    case HIPPO_BUBBLE_REASON_ACTIVITY:
+    	bubble->active_extra = ACTIVE_EXTRA_TOTAL_VIEWERS;
+    	update_extra_info(bubble);
+    	break;
     case HIPPO_BUBBLE_REASON_NEW:
         break;
     }
@@ -2110,6 +2183,10 @@ hippo_bubble_link_click_action(HippoBubble       *bubble,
         if (bubble->last_message_sender_id)
             hippo_app_visit_entity_id(hippo_get_app(), bubble->last_message_sender_id);
         break;
+    case LINK_CLICK_ACTIVATE_TOTAL_VIEWERS:
+        bubble->active_extra = ACTIVE_EXTRA_TOTAL_VIEWERS;
+        update_extra_info(bubble);  
+    	break;
     case LINK_CLICK_ACTIVATE_WHOS_THERE:
         bubble->active_extra = ACTIVE_EXTRA_WHOS_THERE;
         update_extra_info(bubble);

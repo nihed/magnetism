@@ -241,6 +241,11 @@ update_viewers(BubbleWatch *watch, GSList *ever_viewed)
     }
    
     /* show some people who have visited in the past */
+    /* For now, disable this code since it doesn't match the Windows client.
+       In the future we might want to reenable this once we can display
+       things more clearly.
+    */
+#if 0     
     if (n_viewers < MAX_VIEWERS_SHOWN && ever_viewed) { 
         for (link = ever_viewed; link != NULL; link = link->next) {
             HippoPerson *user = HIPPO_PERSON(link->data);
@@ -258,6 +263,7 @@ update_viewers(BubbleWatch *watch, GSList *ever_viewed)
             }
         }
     }
+#endif
     
     /* "ever_viewed" isn't a copy, but "chatters" is */
     g_slist_foreach(chatters, (GFunc) g_object_unref, NULL);
@@ -396,6 +402,10 @@ on_post_changed(HippoPost *post,
     }
     
     update_viewers(BUBBLE_WATCH(watch), hippo_post_get_viewers(watch->post));
+    // Right now this only is set for "world" posts, where we don't currently
+    // have the full recipient list.
+    if (hippo_post_is_to_world(post))
+	    hippo_bubble_set_total_viewers(bubble, hippo_post_get_total_viewers(watch->post));
 }
 
 static void
