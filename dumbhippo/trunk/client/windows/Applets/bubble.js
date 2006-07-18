@@ -838,10 +838,7 @@ dh.bubble.GroupMembershipChangeData = function(group, user, status) {
     }
            
     this.getId = function() {
-        // different group membership changes are treated as differnet activities,
-        // so we do not want the previous bubbles with membership changes to be replaced, 
-        // and this id is used as a key in notification.js for bubble identity
-        return this.group.Id + "-" + this.user.Id + "-" + this.status
+        return this.group.Id + "-" + this.user.Id
     }
         
     this.getChatId = function () {
