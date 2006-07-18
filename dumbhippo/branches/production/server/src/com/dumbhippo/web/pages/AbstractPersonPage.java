@@ -40,6 +40,7 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 	private User viewedUser;
 	private String viewedUserId;
 	private boolean disabled;
+	private boolean needExternalAccounts;
 	
 	private GroupSystem groupSystem;
 	private MusicSystem musicSystem;
@@ -61,6 +62,9 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 	protected ListBean<PersonView> contacts;
 	private Pageable<PersonView> pageableContacts; 
 	protected int totalContacts;
+
+	protected ListBean<PersonView> followers;
+	private Pageable<PersonView> pageableFollowers; 
 	
 	protected AbstractPersonPage() {	
 		groupSystem = WebEJBUtil.defaultLookup(GroupSystem.class);
@@ -268,6 +272,27 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 		return pageableContacts;
 	}
 	
+	public ListBean<PersonView> getFollowers() {
+		if (followers == null) {
+		    Set<PersonView> mingledFollowers = 
+			    identitySpider.getFollowers(getSignin().getViewpoint(), getViewedUser());		
+		        followers = new ListBean<PersonView>(PersonView.sortedList(getSignin().getViewpoint(), getViewedUser(), mingledFollowers));
+		}
+		return followers;
+	}
+
+	public Pageable<PersonView> getPageableFollowers() {
+        if (pageableFollowers == null) {			
+        	pageableFollowers = pagePositions.createPageable("followers"); 				
+        	pageableFollowers.setInitialPerPage(FRIENDS_PER_PAGE);
+        	pageableFollowers.setSubsequentPerPage(FRIENDS_PER_PAGE);
+			
+			pageableFollowers.generatePageResults(getFollowers().getList());
+		}
+		
+		return pageableFollowers;
+	}
+	
 	public void setTotalContacts(int totalContacts) {		
 	    this.totalContacts = totalContacts;
 	}
@@ -301,7 +326,11 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 		return outstandingInvitations;
 	}
 	
-	protected boolean getNeedExternalAccounts() {
-		return false;
+	protected final boolean getNeedExternalAccounts() {
+		return needExternalAccounts;
+	}
+	
+	public void setNeedExternalAccounts(boolean needExternalAccounts) {
+		this.needExternalAccounts = needExternalAccounts;
 	}
 }

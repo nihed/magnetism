@@ -418,8 +418,14 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		Set<Resource> resources = null;
 		if (pv.getContact() != null) {
 			Contact contact = pv.getContact();
-			contactResources = getResourcesForPerson(contact);
+		
+			// contact should point to something...
+			if (contact.getResources().isEmpty())
+				logger.warn("Problem in database: contact has no resources: {}", contact);
 			
+			// this returns only email/aim resources
+			contactResources = getResourcesForPerson(contact);
+						
 			//logger.debug("Contact has owner {} viewpoint is {}", contact.getAccount().getOwner(),
 			//		viewpoint != null ? viewpoint.getViewer() : null);
 			
@@ -793,6 +799,35 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		}
 		
 		return result;
+	}
+	
+	static final String GET_SELF_A_CONTACT_OF_QUERY = 
+		"SELECT cc.account FROM ContactClaim cc WHERE cc.resource = :accountOfSelf";
+	
+	public Set<PersonView> getFollowers(Viewpoint viewpoint, User user, PersonViewExtra... extras) {
+		
+		Set<PersonView> followers = new HashSet<PersonView>();
+	    if (!viewpoint.isOfUser(user)) {
+	        // can only see followers if self
+	    	return followers;
+	    }
+	    
+	    // we are only interested in user contacts of self
+	    Set<User> rawContactsOfSelf = getRawUserContacts(viewpoint, user);
+			
+		Query q = em.createQuery(GET_SELF_A_CONTACT_OF_QUERY);
+		q.setParameter("accountOfSelf", user.getAccount());
+		List<?> rawResults = q.getResultList();
+		for (Object o : rawResults) {		
+			User selfAContactOf = ((Account)o).getOwner();
+		    if (!rawContactsOfSelf.contains(selfAContactOf)) {
+		    	// this person is our follower, because we don't have them as a contact!
+				PersonView pv = getPersonView(viewpoint, selfAContactOf, extras);
+				followers.add(pv);
+		    }
+		}
+	    
+		return followers;
 	}
 	
 	/**
