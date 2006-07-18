@@ -16,8 +16,8 @@ static const int SIGN_IN_INITIAL_COUNT = 60;            /* 5 minutes of fast ret
 static const int SIGN_IN_SUBSEQUENT_TIMEOUT = 30000;    /* 30 seconds retry after INITIAL_COUNT tries*/
 
 /* retrying _connection_ */
-static const int RETRY_TIMEOUT = 10*1000;               /* 1 minute for retrying _connection_ */
-static const int RETRY_TIMEOUT_FUZZ = 1;        /* add up to this much to keep clients from all connecting 
+static const int RETRY_TIMEOUT = 60*1000;               /* 1 minute for retrying _connection_ */
+static const int RETRY_TIMEOUT_FUZZ = 60*1000*5;        /* add up to this much to keep clients from all connecting 
                                                          * at the same time.
                                                          */
 
