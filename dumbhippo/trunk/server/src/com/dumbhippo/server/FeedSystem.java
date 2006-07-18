@@ -21,6 +21,14 @@ public interface FeedSystem {
 	 */
 	void updateFeed(Feed feed);
 	
+	/** 
+	 * Does "step zero" of updating a feed - see if we need to update it.
+	 * 
+	 * @param feed the feed (can be detached)
+	 * @return true if updateFeedFetchFeed is needed.
+	 */
+	boolean updateFeedNeedsFetch(Feed feed);
+	
 	/**
 	 * Does "step one" of updating a feed, goes out on the net to get the 
 	 * feed. Best done in a separate transaction from storing the feed.
