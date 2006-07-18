@@ -18,6 +18,8 @@ import java.util.regex.Pattern;
 
 import javax.annotation.EJB;
 import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityNotFoundException;
 import javax.persistence.PersistenceContext;
@@ -119,6 +121,13 @@ public class FeedSystemBean implements FeedSystem {
 		
 		// a static memory cache; might be cute to use the database instead, but this is simple and helps.
 		FeedFetcherCache feedInfoCache = HashMapFeedInfoCache.getInstance();
+		
+		// FIXME unfortunately the timeout on the feed fetcher http download is 
+		// way too long - but there's no way to fix without hacking on ROME.
+		// Doing the HTTP GET by hand is not really desirable since the feed fetcher
+		// is smarter than that (e.g. uses some "get new stuff only" protocols, checks
+		// whether the data has changed, etc.)
+		
 		FeedFetcher feedFetcher = new HttpURLFeedFetcher(feedInfoCache);
 		try {
 			return feedFetcher.retrieveFeed(url);
@@ -348,7 +357,7 @@ public class FeedSystemBean implements FeedSystem {
 		final List<Long> newEntryIds = new ArrayList<Long>();
 		for (FeedEntry entry : feed.getEntries()) {
 			if (foundGuids.contains(entry.getEntryGuid()) && !oldEntries.containsKey(entry.getEntryGuid())) {
-				logger.debug("Found new Feed entry: {}", entry.getTitle());
+				logger.debug("  Found new Feed entry: {}", entry.getTitle());
 				
 				newEntryIds.add(entry.getId());
 			}
@@ -360,20 +369,22 @@ public class FeedSystemBean implements FeedSystem {
 		if (!newEntryIds.isEmpty()) {
 			runner.runTaskOnTransactionCommit(new Runnable() {
 				public void run() {
-					logger.debug("Transaction committed, running new entry notification for {} entries", newEntryIds.size());
+					logger.debug("  Transaction committed, running new entry notification for {} entries", newEntryIds.size());
 					for (final long entryId : newEntryIds) {
 						getNotificationService().submit(new Runnable() {
 							public void run() {
 								try {
 									EJBUtil.defaultLookup(FeedSystem.class).handleNewEntryNotification(entryId);
-								} catch (Throwable t) {
-									logger.error("Exception handling feed entry notification", t);
+								} catch (RuntimeException e) {
+									logger.error("Exception handling feed entry notification", e);
 								}
 							}
 						});
 					}
 				}
 			});
+		} else {
+			logger.debug("  No new entries for feed {}", feed.getSource());
 		}
 	}
 	
@@ -409,27 +420,80 @@ public class FeedSystemBean implements FeedSystem {
 		}
 	}
 
-	public void updateFeed(Feed feed) {
-		// Needed when called from the update thread
-		if (!em.contains(feed)) {
-			feed = em.find(Feed.class, feed.getId());
+	static class UpdateFeedContext {
+		private long feedId;
+		private SyndFeed syndFeed;
+		
+		UpdateFeedContext(long feedId, SyndFeed syndFeed) {
+			this.feedId = feedId;
+			this.syndFeed = syndFeed;
 		}
+
+		public long getFeedId() {
+			return feedId;
+		}
+
+		public SyndFeed getSyndFeed() {
+			return syndFeed;
+		}
+	}
+
+	// NOT_SUPPORTED would suspend the parent transaction; SUPPORTS means
+	// we just kind of leave the parent transaction as-is, which seems most 
+	// appropriate; we should not be using it.
+	// Ultimately NEVER (prohibit a live transaction) would be most correct
+	// here, but is some extra work since we can be called from HttpMethodsBean
+	@TransactionAttribute(TransactionAttributeType.SUPPORTS)
+	public Object updateFeedFetchFeed(Feed feed) throws XmlMethodException {
+		// The feed here need not be attached, and in fact we should not 
+		// try to use the database in this method
 		
 		if (System.currentTimeMillis() - feed.getLastFetched().getTime() < FEED_UPDATE_TIME) {
 			//logger.debug("  Feed {} is already up-to-date", feed);
-			return; // Up-to-date, nothing to do
+			return null; // Up-to-date, nothing to do
 		}
 		
 		logger.debug("  Feed {} needs update", feed.getSource());
 		
 		try {
 			final SyndFeed syndFeed = fetchFeedFromNet(feed.getSource());
-			updateFeedFromSyndFeed(feed, syndFeed);		
+			logger.debug("  HTTP request completed for feed {}", feed.getSource());
+			return new UpdateFeedContext(feed.getId(), syndFeed);		
 		} catch (XmlMethodException e) {
 			logger.warn("Couldn't update feed", e);
 			
-			feed.setLastFetched(new Date());
-			feed.setLastFetchSucceeded(false);
+			throw e;
+		}
+	}
+
+	public void updateFeedStoreFeed(Object contextObject) throws XmlMethodException {
+		UpdateFeedContext context = (UpdateFeedContext) contextObject;
+		SyndFeed syndFeed = context.getSyndFeed();
+		Feed feed = em.find(Feed.class, context.getFeedId());
+		logger.debug("  Saving feed update results in db for {}", feed.getSource());
+		updateFeedFromSyndFeed(feed, syndFeed);
+	}
+	
+	public void markFeedFailedLastUpdate(Feed feed) {
+		logger.debug("  Marking feed {} as failed to update", feed.getSource());
+
+		// Needed when called from the update thread		
+		if (!em.contains(feed)) {
+			feed = em.find(Feed.class, feed.getId());
+		}
+		
+		feed.setLastFetched(new Date());
+		feed.setLastFetchSucceeded(false);		
+	}
+	
+	public void updateFeed(Feed feed) {
+		try {
+			Object o = updateFeedFetchFeed(feed);
+			if (o != null)
+				updateFeedStoreFeed(o);
+		} catch (XmlMethodException e) {
+			logger.warn("Couldn't update feed", e);
+			markFeedFailedLastUpdate(feed);
 		}
 	}
 
@@ -508,6 +572,8 @@ public class FeedSystemBean implements FeedSystem {
 		
 		@Override
 		public void run() {
+			boolean restart = false;
+			
 			try {
 				// We start off by sleeping for our delay time to reduce the initial
 				// server load on restart
@@ -530,7 +596,14 @@ public class FeedSystemBean implements FeedSystem {
 						logger.debug("FeedUpdater slept " + sleepTime / 1000.0 + " seconds, and now has " + feeds.size() + " feeds to update");
 						
 						for (Feed feed : feeds) {
-							feedSystem.updateFeed(feed);
+							try {
+								Object o = feedSystem.updateFeedFetchFeed(feed);
+								if (o != null)
+									feedSystem.updateFeedStoreFeed(o);
+							} catch (XmlMethodException e) {
+								logger.warn("Couldn't update feed", e);
+								feedSystem.markFeedFailedLastUpdate(feed);
+							}
 						}
 						
 						lastUpdate = System.currentTimeMillis();
@@ -541,6 +614,17 @@ public class FeedSystemBean implements FeedSystem {
 			} catch (RuntimeException e) {
 				// not sure jboss will catch and print this since it's our own thread, so doing it here
 				logger.error("Unexpected exception updating feeds, thread exiting abnormally", e);
+				restart = true;
+			}
+			if (restart) {
+				// sleep protects us from 100% CPU in catastrophic failure case
+				logger.warn("FeedUpdater thread sleeping and then restarting itself");
+				try {
+					Thread.sleep(10000);
+				} catch (InterruptedException e1) {
+				}
+				// tail recursion needs to work or this will suck
+				run();
 			}
 		}
 		
@@ -597,4 +681,5 @@ public class FeedSystemBean implements FeedSystem {
 			}
 		}
 	}
+
 }
