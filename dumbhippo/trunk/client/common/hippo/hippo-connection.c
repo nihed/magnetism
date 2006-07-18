@@ -16,8 +16,8 @@ static const int SIGN_IN_INITIAL_COUNT = 60;            /* 5 minutes of fast ret
 static const int SIGN_IN_SUBSEQUENT_TIMEOUT = 30000;    /* 30 seconds retry after INITIAL_COUNT tries*/
 
 /* retrying _connection_ */
-static const int RETRY_TIMEOUT = 60*1000;               /* 1 minute for retrying _connection_ */
-static const int RETRY_TIMEOUT_FUZZ = 60*1000*5;        /* add up to this much to keep clients from all connecting 
+static const int RETRY_TIMEOUT = 10*1000;               /* 1 minute for retrying _connection_ */
+static const int RETRY_TIMEOUT_FUZZ = 1;        /* add up to this much to keep clients from all connecting 
                                                          * at the same time.
                                                          */
 
@@ -202,6 +202,7 @@ enum {
      * won't connect successfully. Comes just before CONNECTED_CHANGED.
      */
     CLIENT_INFO_AVAILABLE,
+    POST_ACTIVITY,
     MYSPACE_CHANGED,
 	GROUP_MEMBERSHIP_CHANGED,
     LAST_SIGNAL
@@ -285,6 +286,15 @@ hippo_connection_class_init(HippoConnectionClass *klass)
             		  NULL, NULL,
             		  g_cclosure_marshal_VOID__VOID,
             		  G_TYPE_NONE, 0);
+
+    signals[POST_ACTIVITY] =
+        g_signal_new ("post-activity",
+            		  G_TYPE_FROM_CLASS (object_class),
+            		  G_SIGNAL_RUN_LAST,
+            		  0,
+            		  NULL, NULL,
+            		  g_cclosure_marshal_VOID__OBJECT,
+            		  G_TYPE_NONE, 1, G_TYPE_OBJECT);
 
     signals[MYSPACE_CHANGED] =
         g_signal_new ("myspace-changed",
@@ -1871,7 +1881,8 @@ parse_bool(const char *str)
 static gboolean
 hippo_connection_parse_post(HippoConnection *connection,
                             LmMessageNode   *post_node,
-                            gboolean         is_new)
+                            gboolean         is_new,
+                            HippoPost      **post_return)
 {
     LmMessageNode *node;
     HippoPost *post;
@@ -1991,6 +2002,8 @@ hippo_connection_parse_post(HippoConnection *connection,
     }
     
     g_object_unref(post);
+    if (post_return)
+    	*post_return = post;
 
     return TRUE;
 }
@@ -2008,7 +2021,7 @@ hippo_connection_parse_post_stream(HippoConnection *connection,
                 return FALSE;
             }
         } else if (is_post(subchild)) {
-            if (!hippo_connection_parse_post(connection, subchild, FALSE)) {
+            if (!hippo_connection_parse_post(connection, subchild, FALSE, NULL)) {
                 g_warning("failed to parse post in %s", func_name);
                 return FALSE;
             }
@@ -2023,10 +2036,11 @@ hippo_connection_parse_post_stream(HippoConnection *connection,
 }
 
 static gboolean
-hippo_connection_parse_post_data(HippoConnection *connection,
+hippo_connection_parse_post_data_full(HippoConnection *connection,
                                  LmMessageNode   *node,
                                  gboolean         is_new,
-                                 const char      *func_name)
+                                 const char      *func_name,
+                                 HippoPost      **post_return)
 {
     gboolean seen_post;
     gboolean seen_live_post;
@@ -2047,7 +2061,7 @@ hippo_connection_parse_post_data(HippoConnection *connection,
                 return FALSE;
             }
 
-            if (!hippo_connection_parse_post(connection, subchild, is_new)) {
+            if (!hippo_connection_parse_post(connection, subchild, is_new, post_return)) {
                 g_warning("failed to parse post in %s", func_name);
                 return FALSE;
             }
@@ -2071,6 +2085,16 @@ hippo_connection_parse_post_data(HippoConnection *connection,
     }
 
     return TRUE;
+}
+
+
+static gboolean
+hippo_connection_parse_post_data(HippoConnection *connection,
+                                 LmMessageNode   *node,
+                                 gboolean         is_new,
+                                 const char      *func_name)
+{
+    return hippo_connection_parse_post_data_full(connection, node, is_new, func_name, NULL);
 }
 
 static LmHandlerResult
@@ -2918,6 +2942,7 @@ handle_live_post_changed(HippoConnection *connection,
                          LmMessage       *message)
 {
     LmMessageNode *child;
+    HippoPost *post;
     
     if (lm_message_get_sub_type(message) != LM_MESSAGE_SUB_TYPE_HEADLINE
         && lm_message_get_sub_type(message) != LM_MESSAGE_SUB_TYPE_NOT_SET)
@@ -2930,10 +2955,12 @@ handle_live_post_changed(HippoConnection *connection,
 
     g_debug("handling livePostChanged message");
 
-    if (!hippo_connection_parse_post_data(connection, child, FALSE, "livePostChanged")) {
+	post = NULL;
+    if (!hippo_connection_parse_post_data_full(connection, child, FALSE, "livePostChanged", &post)) {
         g_warning("failed to parse post stream from livePostChanged");
         return TRUE; /* still handled, just busted */
     }
+    g_signal_emit(connection, signals[POST_ACTIVITY], 0, post);
 
     /* We don't display any information from the link message currently -- the bubbling
      * up when viewers are added comes from the separate "chat room" path, so just
@@ -2969,7 +2996,7 @@ handle_active_posts_changed(HippoConnection *connection,
                     g_warning("failed to parse entity in activePostsChanged");
                 }
             } else if (is_post(subchild)) {
-                if (!hippo_connection_parse_post(connection, subchild, FALSE)) {
+                if (!hippo_connection_parse_post(connection, subchild, FALSE, NULL)) {
                     g_warning("failed to parse post in activePostsChanged");
                 }
                 /* The ordering is important here - we expect the post node to come first,
