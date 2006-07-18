@@ -6,6 +6,7 @@
 #include <dbus/dbus-glib-lowlevel.h>
 #include "hippo-dbus-server.h"
 #include "hippo-dbus-client.h"
+#include <hippo/hippo-ipc-source.h>
 #include "main.h"
 
 /* rhythmbox messages */
@@ -17,6 +18,8 @@
 #define RB_GET_SONG_PROPERTIES "getSongProperties"
 
 
+typedef struct _HippoDBusListener HippoDBusListener;
+
 static void      hippo_dbus_init                (HippoDBus       *dbus);
 static void      hippo_dbus_class_init          (HippoDBusClass  *klass);
 
@@ -26,6 +29,9 @@ static DBusHandlerResult handle_message         (DBusConnection     *connection,
                                                  DBusMessage        *message,
                                                  void               *user_data);
 
+static void disconnect_listener(HippoDBus         *dbus,
+				HippoDBusListener *listener);
+
 enum {
     DISCONNECTED,
     SONG_CHANGED,
@@ -34,6 +40,12 @@ enum {
 
 static int signals[LAST_SIGNAL];  
 
+struct _HippoDBusListener {
+    HippoDBus *dbus;
+    char *name;
+    GSList *sources;
+};
+
 struct _HippoDBus {
     GObject parent;
     char           *bus_name;
@@ -41,6 +53,8 @@ struct _HippoDBus {
     unsigned int in_dispatch : 1; /* dbus is broken and we can't recurse right now */
     unsigned int requested_disconnect : 1;
     unsigned int processed_disconnected : 1;
+
+    GSList *listeners;
 };
 
 struct _HippoDBusClass {
@@ -216,6 +230,9 @@ hippo_dbus_finalize(GObject *object)
 void
 hippo_dbus_disconnect(HippoDBus *dbus)
 {
+    while (dbus->listeners)
+	disconnect_listener(dbus, dbus->listeners->data);
+
     if (dbus->requested_disconnect)
         return;
     dbus->requested_disconnect = TRUE;
@@ -238,45 +255,421 @@ hippo_dbus_blocking_shutdown(HippoDBus   *dbus)
     }
 }
 
+static HippoDBusListener *
+find_listener(HippoDBus   *dbus,
+	      DBusMessage *message)
+{
+    const char *sender = dbus_message_get_sender(message);
+    GSList *l;
+
+    for (l = dbus->listeners; l; l = l->next) {
+	HippoDBusListener *listener = l->data;
+	if (strcmp(listener->name, sender) == 0) {
+	    return listener;
+	}
+    }
+
+    return NULL;
+}
+
+static HippoDBusListener *
+add_new_listener(HippoDBus   *dbus,
+		 DBusMessage *message)
+{
+    HippoDBusListener *listener = g_new0(HippoDBusListener, 1);
+    listener->dbus = dbus;
+    listener->name = g_strdup(dbus_message_get_sender(message));
+    dbus->listeners = g_slist_prepend(dbus->listeners, listener);
+
+    return listener;
+}
+
+static void
+on_source_user_join(HippoIpcSource    *source,
+		    HippoChatRoom     *chat_room,
+		    HippoPerson       *user,
+		    HippoDBusListener *listener)
+{
+    DBusMessage *message;
+    guint64 source_id = hippo_ipc_source_get_id(source);
+    const char *chat_id = hippo_chat_room_get_id(chat_room);
+    const char *user_id = hippo_entity_get_guid(HIPPO_ENTITY(user));
+    
+    message = dbus_message_new_method_call(listener->name,
+                                           HIPPO_DBUS_LISTENER_PATH,
+                                           HIPPO_DBUS_LISTENER_INTERFACE,
+                                           "UserJoin");
+    dbus_message_append_args(message,
+			     DBUS_TYPE_UINT64, &source_id,
+			     DBUS_TYPE_STRING, &chat_id,
+			     DBUS_TYPE_STRING, &user_id,
+			     DBUS_TYPE_INVALID);
+
+    dbus_connection_send(listener->dbus->connection, message, NULL);
+    dbus_message_unref(message);
+}
+
+static void
+on_source_user_leave(HippoIpcSource    *source,
+		     HippoChatRoom     *chat_room,
+		     HippoPerson       *user,
+		     HippoDBusListener *listener)
+{
+    DBusMessage *message;
+    
+    guint64 source_id = hippo_ipc_source_get_id(source);
+    const char *chat_id = hippo_chat_room_get_id(chat_room);
+    const char *user_id = hippo_entity_get_guid(HIPPO_ENTITY(user));
+    
+    message = dbus_message_new_method_call(listener->name,
+                                           HIPPO_DBUS_LISTENER_PATH,
+                                           HIPPO_DBUS_LISTENER_INTERFACE,
+                                           "UserLeave");
+    dbus_message_append_args(message,
+			     DBUS_TYPE_UINT64, &source_id,
+			     DBUS_TYPE_STRING, &chat_id,
+			     DBUS_TYPE_STRING, &user_id,
+			     DBUS_TYPE_INVALID);
+
+    dbus_connection_send(listener->dbus->connection, message, NULL);
+    dbus_message_unref(message);
+}
+
+static void
+on_source_message(HippoIpcSource    *source,
+		  HippoChatRoom     *chat_room,
+		  HippoChatMessage  *chat_message,
+		  HippoDBusListener *listener)
+{
+    DBusMessage *message;
+    
+    guint64 source_id = hippo_ipc_source_get_id(source);
+    const char *chat_id = hippo_chat_room_get_id(chat_room);
+    const char *user_id = hippo_entity_get_guid(HIPPO_ENTITY(hippo_chat_message_get_person(chat_message)));
+    const char *text = hippo_chat_message_get_text(chat_message);
+    double timestamp = hippo_chat_message_get_timestamp(chat_message);
+    dbus_int32_t serial = hippo_chat_message_get_serial(chat_message);
+
+    message = dbus_message_new_method_call(listener->name,
+                                           HIPPO_DBUS_LISTENER_PATH,
+                                           HIPPO_DBUS_LISTENER_INTERFACE,
+                                           "Message");
+    dbus_message_append_args(message,
+			     DBUS_TYPE_UINT64, &source_id,
+			     DBUS_TYPE_STRING, &chat_id,
+			     DBUS_TYPE_STRING, &user_id,
+			     DBUS_TYPE_STRING, &text,
+			     DBUS_TYPE_DOUBLE, &timestamp,
+			     DBUS_TYPE_INT32, &serial,
+			     DBUS_TYPE_INVALID);
+
+    dbus_connection_send(listener->dbus->connection, message, NULL);
+    dbus_message_unref(message);
+}
+
+static void
+on_source_reconnect(HippoIpcSource    *source,
+		    HippoChatRoom     *chat_room,
+		    HippoDBusListener *listener)
+{
+    DBusMessage *message;
+    
+    guint64 source_id = hippo_ipc_source_get_id(source);
+    const char *chat_id = hippo_chat_room_get_id(chat_room);
+
+    message = dbus_message_new_method_call(listener->name,
+                                           HIPPO_DBUS_LISTENER_PATH,
+                                           HIPPO_DBUS_LISTENER_INTERFACE,
+                                           "Reconnect");
+    dbus_message_append_args(message,
+			     DBUS_TYPE_UINT64, &source_id,
+			     DBUS_TYPE_STRING, &chat_id,
+			     DBUS_TYPE_INVALID);
+
+    dbus_connection_send(listener->dbus->connection, message, NULL);
+    dbus_message_unref(message);
+}
+
+static void
+on_source_user_info(HippoIpcSource    *source,
+		    HippoPerson       *person,
+		    HippoDBusListener *listener)
+{
+    DBusMessage *message;
+    HippoEntity *entity = HIPPO_ENTITY(person);
+
+    guint64 source_id = hippo_ipc_source_get_id(source);
+    const char *user_id = hippo_entity_get_guid(entity);
+    const char *name = hippo_entity_get_name(entity);
+    const char *small_photo_url = hippo_entity_get_small_photo_url(entity);
+    const char *current_song = hippo_person_get_current_song(person);
+    const char *current_artist = hippo_person_get_current_artist(person);
+    dbus_bool_t music_playing = hippo_person_get_music_playing(person);
+    
+    message = dbus_message_new_method_call(listener->name,
+                                           HIPPO_DBUS_LISTENER_PATH,
+                                           HIPPO_DBUS_LISTENER_INTERFACE,
+                                           "UserInfo");
+    
+    dbus_message_append_args(message,
+			     DBUS_TYPE_UINT64, &source_id,
+			     DBUS_TYPE_STRING, &user_id,
+			     DBUS_TYPE_STRING, &name,
+			     DBUS_TYPE_STRING, &small_photo_url,
+			     DBUS_TYPE_STRING, &current_song,
+			     DBUS_TYPE_STRING, &current_artist,
+			     DBUS_TYPE_BOOLEAN, &music_playing,
+	                     DBUS_TYPE_INVALID);
+
+    dbus_connection_send(listener->dbus->connection, message, NULL);
+    dbus_message_unref(message);
+}
+
 static DBusMessage*
-handle_join_chat(HippoDBus   *dbus,
-                 DBusMessage *message)
+handle_connect(HippoDBus   *dbus,
+	       DBusMessage *message)
+{
+    HippoDataCache *cache = hippo_app_get_data_cache(hippo_get_app());
+    DBusMessage *reply;
+    HippoIpcSource *source;
+    HippoDBusListener *listener;
+    dbus_uint64_t source_id;
+    
+    if (!dbus_message_get_args(message, NULL,
+			       DBUS_TYPE_INVALID)) {
+        return dbus_message_new_error(message,
+				      DBUS_ERROR_INVALID_ARGS,
+				      _("Expected no arguments"));
+    }
+    
+    listener = find_listener(dbus, message);
+    if (!listener) {
+	listener = add_new_listener(dbus, message);
+    }
+
+    source = hippo_ipc_source_new(cache);
+
+    listener->sources = g_slist_prepend(listener->sources, source);
+
+    g_signal_connect(source, "user-join",
+		     G_CALLBACK(on_source_user_join), listener);
+    g_signal_connect(source, "user-leave",
+		     G_CALLBACK(on_source_user_leave), listener);
+    g_signal_connect(source, "message",
+		     G_CALLBACK(on_source_message), listener);
+    g_signal_connect(source, "reconnect",
+		     G_CALLBACK(on_source_reconnect), listener);
+    g_signal_connect(source, "user-info",
+		     G_CALLBACK(on_source_user_info), listener);
+    
+    reply = dbus_message_new_method_return(message);
+    source_id = hippo_ipc_source_get_id(source),
+    dbus_message_append_args(reply,
+			     DBUS_TYPE_UINT64, &source_id,
+			     DBUS_TYPE_INVALID);
+    
+    return reply;
+}
+
+static HippoIpcSource *
+find_source(HippoDBusListener *listener,
+	    guint64            source_id,
+	    DBusMessage       *message,
+	    DBusMessage      **reply)
+{
+    *reply = NULL;
+
+    if (listener) {
+	GSList *l;
+
+	for (l = listener->sources; l; l = l->next) {
+	    HippoIpcSource *source = l->data;
+	    if (hippo_ipc_source_get_id(source) == source_id)
+		return source;
+	}
+    }
+
+    *reply = dbus_message_new_error(message,
+				    "org.mugshot.Error.BadId",
+				    _("Can't find source ID"));
+
+    return NULL;
+}
+
+static void
+disconnect_source(HippoDBusListener *listener,
+		  HippoIpcSource    *source)
+{
+
+    g_signal_handlers_disconnect_by_func(source, (void *)on_source_user_join, listener);
+    g_signal_handlers_disconnect_by_func(source, (void *)on_source_user_leave, listener);
+    g_signal_handlers_disconnect_by_func(source, (void *)on_source_message, listener);
+    g_signal_handlers_disconnect_by_func(source, (void *)on_source_reconnect, listener);
+    g_signal_handlers_disconnect_by_func(source, (void *)on_source_user_info, listener);
+
+    listener->sources = g_slist_remove(listener->sources, source);
+    hippo_ipc_source_disconnect(source);
+    g_object_unref(source);
+}
+
+static void
+disconnect_listener(HippoDBus         *dbus,
+		    HippoDBusListener *listener)
+{
+    while (listener->sources != NULL)
+	disconnect_source(listener, listener->sources->data);
+
+    dbus->listeners = g_slist_remove(dbus->listeners, listener);
+    g_free(listener->name);
+    g_free(listener);
+}
+
+static DBusMessage*
+handle_disconnect(HippoDBus   *dbus,
+		  DBusMessage *message)
+{
+    DBusMessage *reply;
+    guint64 source_id;
+    HippoDBusListener *listener;
+    HippoIpcSource *source;
+    
+    if (!dbus_message_get_args(message, NULL,
+			       DBUS_TYPE_UINT64, &source_id,
+			       DBUS_TYPE_INVALID)) {
+        return dbus_message_new_error(message,
+				      DBUS_ERROR_INVALID_ARGS,
+				      _("Expected one argument, the source ID"));
+    }
+    
+    listener = find_listener(dbus, message);
+    source = find_source(listener, source_id, message, &reply);
+    if (!source)
+	return reply;
+
+    disconnect_source(listener, source);
+    if (listener->sources == NULL)
+	disconnect_listener(dbus, listener);
+	
+    reply = dbus_message_new_method_return(message);
+    return reply;
+}
+
+static DBusMessage*
+handle_join_chat_room(HippoDBus   *dbus,
+		      DBusMessage *message)
+{
+    DBusMessage *reply;
+    guint64 source_id;
+    const char *chat_id;
+    dbus_bool_t participant;
+    HippoDBusListener *listener;
+    HippoIpcSource *source;
+    
+    chat_id = NULL;
+    
+    if (!dbus_message_get_args(message, NULL,
+			       DBUS_TYPE_UINT64, &source_id,
+			       DBUS_TYPE_STRING, &chat_id,
+			       DBUS_TYPE_BOOLEAN, &participant,
+			       DBUS_TYPE_INVALID)) {
+        return dbus_message_new_error(message,
+				      DBUS_ERROR_INVALID_ARGS,
+				      _("Expected three arguments, the source ID, the chat ID, and participant boolean"));
+    }
+    
+    listener = find_listener(dbus, message);
+    source = find_source(listener, source_id, message, &reply);
+    if (!source)
+	return reply;
+
+    hippo_ipc_source_join_chat_room(source, chat_id,
+				    participant ? HIPPO_CHAT_STATE_PARTICIPANT : HIPPO_CHAT_STATE_VISITOR);
+
+    reply = dbus_message_new_method_return(message);
+    return reply;
+}
+
+static DBusMessage*
+handle_leave_chat_room(HippoDBus   *dbus,
+		       DBusMessage *message)
 {
     DBusMessage *reply;
     const char *chat_id;
-    const char *kind_str;
+    guint64 source_id;
+    HippoDBusListener *listener;
+    HippoIpcSource *source;
     
     chat_id = NULL;
-    kind_str = NULL;
     
     if (!dbus_message_get_args(message, NULL,
-        DBUS_TYPE_STRING, &chat_id,
-        DBUS_TYPE_STRING, &kind_str,
-        DBUS_TYPE_INVALID)) {
-        reply = dbus_message_new_error(message,
-                                        DBUS_ERROR_INVALID_ARGS,
-                                        _("Expected two string args, chat ID and chat kind"));
-    } else {
-        HippoChatKind kind;
-        
-        kind = hippo_parse_chat_kind(kind_str);
-        
-        if (!hippo_verify_guid(chat_id)) {
-            reply = dbus_message_new_error_printf(message,
-                                            DBUS_ERROR_INVALID_ARGS,
-                                            _("Invalid chat ID '%s'"), chat_id);
-        } else if (kind == HIPPO_CHAT_KIND_BROKEN) {
-            reply = dbus_message_new_error_printf(message, DBUS_ERROR_INVALID_ARGS,
-                                            _("Invalid chat kind '%s' try group,post,unknown"),
-                                            kind_str);
-        } else {
-            /* heh, for now we don't even use the kind after all that trouble */
-            hippo_app_join_chat(hippo_get_app(), chat_id);
-            reply = dbus_message_new_method_return(message);
-        }
+			       DBUS_TYPE_UINT64, &source_id,
+			       DBUS_TYPE_STRING, &chat_id,
+			       DBUS_TYPE_INVALID)) {
+        return dbus_message_new_error(message,
+				      DBUS_ERROR_INVALID_ARGS,
+				      _("Expected two arguments, the source ID and the chat ID"));
     }
-    g_assert(reply != NULL);
     
+    listener = find_listener(dbus, message);
+    source = find_source(listener, source_id, message, &reply);
+    if (!source)
+	return reply;
+
+    hippo_ipc_source_leave_chat_room(source, chat_id);
+
+    reply = dbus_message_new_method_return(message);
+    return reply;
+}
+
+static DBusMessage*
+handle_show_chat_window(HippoDBus   *dbus,
+			DBusMessage *message)
+{
+    DBusMessage *reply;
+    const char *chat_id;
+    
+    chat_id = NULL;
+    
+    if (!dbus_message_get_args(message, NULL,
+			       DBUS_TYPE_STRING, &chat_id,
+			       DBUS_TYPE_INVALID)) {
+        return dbus_message_new_error(message,
+				      DBUS_ERROR_INVALID_ARGS,
+				      _("Expected one string arg, the chat ID"));
+    }
+
+    hippo_app_join_chat(hippo_get_app(), chat_id);
+    
+    reply = dbus_message_new_method_return(message);
+    return reply;
+}
+
+static DBusMessage*
+handle_send_chat_message(HippoDBus   *dbus,
+			 DBusMessage *message)
+{
+    DBusMessage *reply;
+    HippoDataCache *cache = hippo_app_get_data_cache(hippo_get_app());
+    HippoConnection *connection = hippo_data_cache_get_connection(cache);
+    HippoChatRoom *room;
+    const char *chat_id;
+    const char *message_text;
+    
+    chat_id = NULL;
+    
+    if (!dbus_message_get_args(message, NULL,
+			       DBUS_TYPE_STRING, &chat_id,
+			       DBUS_TYPE_STRING, &message_text,
+			       DBUS_TYPE_INVALID)) {
+        return dbus_message_new_error(message,
+				      DBUS_ERROR_INVALID_ARGS,
+				      _("Expected two string args, the chat ID and the message text"));
+    }
+
+    room = hippo_data_cache_ensure_chat_room(cache, chat_id, HIPPO_CHAT_KIND_UNKNOWN);
+    hippo_connection_send_chat_room_message(connection, room, message_text);
+    
+    reply = dbus_message_new_method_return(message);
     return reply;
 }
 
@@ -553,8 +946,18 @@ handle_message(DBusConnection     *connection,
             reply = NULL;
             result = DBUS_HANDLER_RESULT_HANDLED;
             
-            if (strcmp(member, "JoinChat") == 0) {
-                reply = handle_join_chat(dbus, message);
+            if (strcmp(member, "Connect") == 0) {
+                reply = handle_connect(dbus, message);
+	    } else if (strcmp(member, "Disconnect") == 0) {
+                reply = handle_disconnect(dbus, message);
+	    } else if (strcmp(member, "JoinChatRoom") == 0) {
+                reply = handle_join_chat_room(dbus, message);
+	    } else if (strcmp(member, "LeaveChatRoom") == 0) {
+                reply = handle_leave_chat_room(dbus, message);
+	    } else if (strcmp(member, "SendChatMessage") == 0) {
+                reply = handle_send_chat_message(dbus, message);
+	    } else if (strcmp(member, "ShowChatWindow") == 0) {
+                reply = handle_show_chat_window(dbus, message);
             } else {
                 /* Set this back so the default handler can return an error */
                 result = DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
@@ -589,6 +992,8 @@ handle_message(DBusConnection     *connection,
         } else if (dbus_message_is_signal(message, RB_PLAYER_IFACE, RB_PLAYING_URI_CHANGED)) {
             handle_rb_playing_uri_changed(dbus, message);
         }
+    } else if (dbus_message_get_type(message) == DBUS_MESSAGE_TYPE_ERROR) {
+	g_debug("Got error message %s", dbus_message_get_error_name(message));
     } else {
         g_debug("got message type %s\n", 
                 dbus_message_type_to_string(type));    

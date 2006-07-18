@@ -1,0 +1,25 @@
+#include "nsISupports.idl"
+#include "hippoIServiceListener.idl"
+
+[scriptable,uuid(8bf6de0a-ed8f-47af-8757-41551542d196)]
+interface hippoIService : nsISupports {
+    readonly attribute AString serverUrl;
+
+    void connect(in AUTF8String serverUrl);
+    void disconnect();
+
+    void setListener(in hippoIServiceListener listener);
+
+    void joinChatRoom(in AString chatId);
+    void leaveChatRoom(in AString chatId);
+    void showChatWindow(in AString chatId);
+    void sendChatMessage(in AString chatId, in AString text);
+};
+
+
+%{ C++
+#define HIPPO_SERVICE_CID \
+  { 0xfb192a55, 0xb1de, 0x4b23, \
+      { 0xa5, 0xb2, 0xa5, 0xad, 0xf8, 0xa4, 0xe4, 0x46 } }
+#define HIPPO_SERVICE_CONTRACTID "@mugshot.org/hippoService"
+%}

@@ -16,6 +16,11 @@ G_BEGIN_DECLS
 #define HIPPO_DBUS_INTERFACE           "com.dumbhippo.Client"
 #define HIPPO_DBUS_PATH                "/com/dumbhippo/client"
 
+/* This interface/path is used for callbacks from the server to a client (establish
+ * using the Connect() method */
+#define HIPPO_DBUS_LISTENER_INTERFACE  "com.dumbhippo.Listener"
+#define HIPPO_DBUS_LISTENER_PATH       "/com/dumbhippo/listener"
+
 char*    hippo_dbus_full_bus_name     (const char   *server);
 
 gboolean hippo_dbus_open_chat_blocking(const char   *server,

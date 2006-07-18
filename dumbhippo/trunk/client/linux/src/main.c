@@ -50,6 +50,12 @@ hippo_app_quit(HippoApp *app)
     g_main_loop_quit(app->loop);
 }
 
+HippoDataCache *
+hippo_app_get_data_cache (HippoApp *app)
+{
+    return app->cache;
+}
+
 static void
 hippo_app_restart(HippoApp *app)
 {

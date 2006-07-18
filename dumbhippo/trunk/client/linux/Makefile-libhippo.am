@@ -41,6 +41,8 @@ LIBHIPPO_SOURCEFILES =						\
 	$(COMMONSRCDIR)/hippo/hippo-entity.c			\
 	$(COMMONSRCDIR)/hippo/hippo-entity.h			\
 	$(COMMONSRCDIR)/hippo/hippo-entity-protected.h		\
+	$(COMMONSRCDIR)/hippo/hippo-ipc-source.c		\
+	$(COMMONSRCDIR)/hippo/hippo-ipc-source.h		\
 	$(COMMONSRCDIR)/hippo/hippo-myspace.c			\
 	$(COMMONSRCDIR)/hippo/hippo-myspace.h			\
 	$(COMMONSRCDIR)/hippo/hippo-person.c			\
@@ -61,8 +63,8 @@ BUILT_SOURCES += $(LIBHIPPO_BUILT_SOURCEFILES)
 ## ../common to distdir/../common which puts common outside of distdir.
 ## so we handle the disting manually so the destination is always distdir/common-dist
 nodist_libhippo_la_SOURCES=$(LIBHIPPO_SOURCEFILES) $(LIBHIPPO_BUILT_SOURCEFILES)
-dist-hook:
-	mkdir $(distdir)/common-dist
+libhippo-dist-hook:
+	-mkdir $(distdir)/common-dist
 	mkdir $(distdir)/common-dist/hippo
 	cp $(COMMONSRCDIR)/hippo/hippo-common-marshal.list $(distdir)/common-dist/hippo
 	cp $(LIBHIPPO_SOURCEFILES) $(distdir)/common-dist/hippo

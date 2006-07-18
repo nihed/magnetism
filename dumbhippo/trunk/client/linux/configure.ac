@@ -54,98 +54,124 @@ AC_HEADER_STDC
 ## don't rerun to this point if we abort
 AC_CACHE_SAVE
 
-## example of how to do an arg
-## AC_ARG_ENABLE(qt,               [  --enable-qt           enable Qt-friendly client library],enable_qt=$enableval,enable_qt=auto)
-
 #### gcc warning flags
 
-if test "x$GCC" = "xyes"; then
-  changequote(,)dnl
-  case " $CFLAGS " in
+changequote(,)dnl
+addCommonWarnings() {
+  result="$@"
+
+  case " $result " in
   *[\ \	]-Wall[\ \	]*) ;;
-  *) CFLAGS="$CFLAGS -Wall" ;;
+  *) result="$result -Wall" ;;
   esac
 
-  case " $CFLAGS " in
+  case " $result " in
   *[\ \	]-Wchar-subscripts[\ \	]*) ;;
-  *) CFLAGS="$CFLAGS -Wchar-subscripts" ;;
+  *) result="$result -Wchar-subscripts" ;;
   esac
 
-  case " $CFLAGS " in
-  *[\ \	]-Wdeclaration-after-statement[\ \	]*) ;;
-  *) CFLAGS="$CFLAGS -Wdeclaration-after-statement" ;;
-  esac
-
-  case " $CFLAGS " in
-  *[\ \	]-Wmissing-declarations[\ \	]*) ;;
-  *) CFLAGS="$CFLAGS -Wmissing-declarations" ;;
-  esac
-
-  case " $CFLAGS " in
-  *[\ \	]-Wmissing-prototypes[\ \	]*) ;;
-  *) CFLAGS="$CFLAGS -Wmissing-prototypes" ;;
-  esac
-
-  case " $CFLAGS " in
-  *[\ \	]-Wnested-externs[\ \	]*) ;;
-  *) CFLAGS="$CFLAGS -Wnested-externs" ;;
-  esac
-
-  case " $CFLAGS " in
+  case " $result " in
   *[\ \	]-Wpointer-arith[\ \	]*) ;;
-  *) CFLAGS="$CFLAGS -Wpointer-arith" ;;
+  *) result="$result -Wpointer-arith" ;;
   esac
 
-  case " $CFLAGS " in
+  case " $result " in
   *[\ \	]-Wcast-align[\ \	]*) ;;
-  *) CFLAGS="$CFLAGS -Wcast-align" ;;
+  *) result="$result -Wcast-align" ;;
   esac
 
-  case " $CFLAGS " in
+  case " $result " in
   *[\ \	]-Wfloat-equal[\ \	]*) ;;
-  *) CFLAGS="$CFLAGS -Wfloat-equal" ;;
+  *) result="$result -Wfloat-equal" ;;
   esac
 
-  case " $CFLAGS " in
+  case " $result " in
   *[\ \	]-Wsign-compare[\ \	]*) ;;
-  *) CFLAGS="$CFLAGS -Wsign-compare" ;;
+  *) result="$result -Wsign-compare" ;;
   esac
 
   if test "x$enable_ansi" = "xyes"; then
-    case " $CFLAGS " in
+    case " $result " in
     *[\ \	]-ansi[\ \	]*) ;;
-    *) CFLAGS="$CFLAGS -ansi" ;;
+    *) result="$result -ansi" ;;
     esac
 
-    case " $CFLAGS " in
+    case " $result " in
     *[\ \	]-D_POSIX_C_SOURCE*) ;;
-    *) CFLAGS="$CFLAGS -D_POSIX_C_SOURCE=199309L" ;;
+    *) result="$result -D_POSIX_C_SOURCE=199309L" ;;
     esac
 
-    case " $CFLAGS " in
+    case " $result " in
     *[\ \	]-D_BSD_SOURCE[\ \	]*) ;;
-    *) CFLAGS="$CFLAGS -D_BSD_SOURCE" ;;
+    *) result="$result -D_BSD_SOURCE" ;;
     esac
 
-    case " $CFLAGS " in
+    case " $result " in
     *[\ \	]-pedantic[\ \	]*) ;;
-    *) CFLAGS="$CFLAGS -pedantic" ;;
+    *) result="$result -pedantic" ;;
     esac
   fi
   if test x$enable_gcov = xyes; then
-    case " $CFLAGS " in
+    case " $result " in
     *[\ \	]-fprofile-arcs[\ \	]*) ;;
-    *) CFLAGS="$CFLAGS -fprofile-arcs" ;;
+    *) result="$result -fprofile-arcs" ;;
     esac
-    case " $CFLAGS " in
+    case " $result " in
     *[\ \	]-ftest-coverage[\ \	]*) ;;
-    *) CFLAGS="$CFLAGS -ftest-coverage" ;;
+    *) result="$result -ftest-coverage" ;;
     esac
 
     ## remove optimization
-    CFLAGS=`echo "$CFLAGS" | sed -e 's/-O[0-9]*//g'`
+    result=`echo "$result" | sed -e 's/-O[0-9]*//g'`
   fi
-  changequote([,])dnl
+
+  echo $result
+}
+
+addCOnlyWarnings() {
+  result="$@"
+
+  case " $result " in
+  *[\ \	]-Wdeclaration-after-statement[\ \	]*) ;;
+  *) result="$result -Wdeclaration-after-statement" ;;
+  esac
+
+  case " $result " in
+  *[\ \	]-Wmissing-declarations[\ \	]*) ;;
+  *) result="$result -Wmissing-declarations" ;;
+  esac
+
+  case " $result " in
+  *[\ \	]-Wmissing-prototypes[\ \	]*) ;;
+  *) result="$result -Wmissing-prototypes" ;;
+  esac
+
+  case " $result " in
+  *[\ \	]-Wnested-externs[\ \	]*) ;;
+  *) result="$result -Wnested-externs" ;;
+  esac
+
+  echo $result
+}
+
+addCXXOnlyWarnings() {
+  result="$@"
+
+  case " $result " in
+  *[\ \	]-Wno-non-virtual-dtor[\ \	]*) ;;
+  *) result="$result -Wno-non-virtual-dtor" ;;
+  esac
+
+  echo $result
+}
+changequote([,])dnl
+
+
+if test "x$GCC" = "xyes"; then
+  CFLAGS="`addCommonWarnings $CFLAGS`"
+  CFLAGS="`addCOnlyWarnings $CFLAGS`"
+  CXXFLAGS="`addCommonWarnings $CXXFLAGS`"
+  CXXFLAGS="`addCXXOnlyWarnings $CXXFLAGS`"
 else
   if test x$enable_gcov = xyes; then
     AC_MSG_ERROR([--enable-gcov can only be used with gcc])
@@ -153,6 +179,7 @@ else
 fi
 
 AC_SUBST(CFLAGS)
+AC_SUBST(CXXFLAGS)
 AC_SUBST(LDFLAGS)
 
 ## we prefer to find common in ../common when building from 
@@ -225,6 +252,7 @@ fi
 XSCREENSAVER_LIBS=-lXss
 
 PKG_CHECK_MODULES(LIBHIPPO, gobject-2.0 >= $GLIB2_REQUIRED gthread-2.0 loudmouth-1.0 >= $LOUDMOUTH_REQUIRED)
+PKG_CHECK_MODULES(LIBHIPPOIPC, gobject-2.0 dbus-1 >= $DBUS_REQUIRED dbus-glib-1 >= $DBUS_REQUIRED)
 PKG_CHECK_MODULES(LIBGTKCOPY, gtk+-2.0 >= $GTK2_REQUIRED gtk+-x11-2.0)
 PKG_CHECK_MODULES(MUGSHOT_BASE, gtk+-2.0 >= $GTK2_REQUIRED gthread-2.0 loudmouth-1.0 >= $LOUDMOUTH_REQUIRED dbus-1 >= $DBUS_REQUIRED dbus-glib-1 >= $DBUS_GLIB_REQUIRED)
 MUGSHOT_LIBS="$MUGSHOT_BASE_LIBS $CURL_LIBS $XSCREENSAVER_LIBS"
@@ -232,6 +260,7 @@ MUGSHOT_CFLAGS="$MUGSHOT_BASE_CFLAGS $CURL_CFLAGS"
 AC_SUBST(MUGSHOT_LIBS)
 AC_SUBST(MUGSHOT_CFLAGS)
 PKG_CHECK_MODULES(MUGSHOT_URI_HANDLER, gtk+-2.0 >= $GTK2_REQUIRED gthread-2.0 dbus-1 >= $DBUS_REQUIRED)
+PKG_CHECK_MODULES(TEST_HIPPO_IPC, gobject-2.0 dbus-1 >= $DBUS_REQUIRED dbus-glib-1 >= $DBUS_REQUIRED)
 
 GLIB_GENMARSHAL=`$PKG_CONFIG --variable=glib_genmarshal glib-2.0`
 AC_SUBST(GLIB_GENMARSHAL)
@@ -250,6 +279,106 @@ fi
 AM_GCONF_SOURCE_2
 
 
+##
+## Checks for Firefox build environment
+##
+AC_ARG_WITH(gecko_sdk, 
+	AC_HELP_STRING([--with-gecko-sdk=DIR],
+		       [Path to Gecko SDK]))
+AC_ARG_WITH(gecko_full_headers,
+	AC_HELP_STRING([--with-gecko-headers=DIR],
+		       [Path to Gecko headers]))
+AC_ARG_WITH(gecko_full_idl,
+	AC_HELP_STRING([--with-gecko-idl=DIR],
+		       [Path to Gecko IDL files]))
+AC_ARG_WITH(xpidl,
+	AC_HELP_STRING([--with-xpidl=SOURCE_DIR],
+		       [Path to XPIDL binary]))
+
+have_full_gecko=false
+sdk_includes_nspr=false
+
+if test "x$with_gecko_sdk" != x -a "x$with_gecko_sdk" != xyes -a "x$with_gecko_sdk" != xno ; then
+   GECKO_IDLDIR="$with_gecko_sdk/idl"
+   GECKO_INCLUDEDIR="$with_gecko_sdk/include"
+   XPIDL="$with_gecko_sdk/bin/xpidl"
+
+   if test -f "$GECKO_INCLUDEDIR/nspr.h" ; then
+       sdk_includes_nspr=true
+   fi
+fi
+
+if test "x$with_gecko_idl" != x -a "x$with_gecko_idl" != xyes -a "x$with_gecko_idl" != xno ; then
+    GECKO_IDLDIR="$with_gecko_idl"
+fi
+
+if test "x$with_gecko_headers" != x -a "x$with_gecko_headers" != xyes -a "x$with_gecko_headers" != xno ; then
+    GECKO_INCLUDEDIR="$with_gecko_headers"
+fi
+
+if test "x$with_xpidl" != x -a "x$with_xpidl" != xyes -a "x$with_xpidl" != xno ; then
+    XPIDL="$with_xpidl"
+fi
+
+if test "x$GECKO_INCLUDEDIR" = x ; then
+    AC_MSG_CHECKING([for Gecko SDK in /opt/gecko-sdk])
+    if ! test -f "/opt/gecko-sdk/include/nsIURI.idl" ; then
+        GECKO_IDLDIR="/opt/gecko-sdk/idl"
+        GECKO_INCLUDEDIR="/opt/gecko-sdk/include"
+        XPIDL="/opt/gecko-sdk/bin/xpidl"
+	AC_MSG_RESULT([yes])
+    else
+	AC_MSG_RESULT([no])
+    fi
+fi
+
+if test "x$GECKO_IDLDIR" != x ; then
+   if ! test -f "$GECKO_IDLDIR/nsIURI.idl" ; then
+       AC_MSG_ERROR([Cannot find Gecko IDL files in $GECKO_IDLDIR])
+   fi
+else
+    AC_MSG_ERROR([Must either specify --with-gecko-sdk=DIR or --with-gecko-idl=DIR])
+fi
+
+if test "x$GECKO_INCLUDEDIR" != x ; then
+   if test -f "$GECKO_INCLUDEDIR/nsIURI.h" ; then
+	:
+   elif test -f "$GECKO_INCLUDEDIR/caps/nsIScriptSecurityManager.h" ; then
+	have_full_gecko=true
+   else
+       AC_MSG_ERROR([Cannot find Gecko headers in $GECKO_INCLUDEDIR])
+   fi
+else
+    AC_MSG_ERROR([Must either specify --with-gecko-sdk=DIR or --with-gecko-headers=DIR])
+fi
+
+if test "x$XPIDL" != x ; then
+    if ! test -x "$XPIDL" ; then
+        AC_MSG_ERROR([Cannot find xpidl at $XPIDL])
+    fi
+else
+    AC_MSG_ERROR([Must either specify --with-gecko-sdk=DIR or --with-xpidl=DIR])
+fi
+
+AM_CONDITIONAL(HAVE_FULL_GECKO, $have_full_gecko)
+
+AC_SUBST(GECKO_IDLDIR)
+AC_SUBST(GECKO_INCLUDEDIR)
+AC_SUBST(XPIDL)
+
+if $sdk_includes_nspr ; then
+    NSPR_LIBS="-L $with_gecko_sdk/lib -lnspr4"
+else
+    NSPR_PACKAGES=nspr
+fi
+
+PKG_CHECK_MODULES(LIBHIPPOFIREFOX, gobject-2.0 dbus-1 >= $DBUS_REQUIRED dbus-glib-1 >= $DBUS_REQUIRED $NSPR_PACKAGES)
+
+# Should have -lxpcom here, but that upsets libtool for unknown reasons. Or
+# should we use -lxpcomglue instead? We don't actually link to anything private, though
+# we use some private interfaces
+LIBHIPPOFIREFOX_LIBS="$LIBHIPPOFIREFOX_LIBS $NSPR_LIBS"
+
 #### define absolute path to srcdir for debugging-only code
 ABSOLUTE_TOP_SRCDIR=`cd ${srcdir} && pwd`
 AC_DEFINE_UNQUOTED(ABSOLUTE_TOP_SRCDIR, "$ABSOLUTE_TOP_SRCDIR", [full path to srcdir])
@@ -267,6 +396,10 @@ echo "
 
         prefix:                   ${prefix}
         compiler:                 ${CC}
+	xpidl:			  ${XPIDL}
+	Gecko includes:		  ${GECKO_INCLUDEDIR}
+	Gecko idl files:	  ${GECKO_IDLDIR}
+	Full Gecko:	  	  ${have_full_gecko}
         LIBHIPPO_CFLAGS:          ${LIBHIPPO_CFLAGS}
         MUGSHOT_CFLAGS:           ${MUGSHOT_CFLAGS}
         LIBHIPPO_LIBS:            ${LIBHIPPO_LIBS}

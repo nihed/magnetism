@@ -1,0 +1,11 @@
+#include "nsISupports.idl"
+
+[scriptable, uuid(2308cdf8-9513-4e90-be59-985858d65a66)]
+interface hippoIServiceListener : nsISupports {
+    void onUserJoin(in AString chatId, in AString userId);
+    void onUserLeave(in AString chatId);
+    void onMessage(in AString chatId, in AString message, in double timestamp, in long serial);
+    void onReconnect(in AString chatId);
+
+    void userInfo(in AString userId, in AString name, in AString smallPhotoUrl, in AString arrangementName, in AString artistName, in boolean musicPlaying);
+};
