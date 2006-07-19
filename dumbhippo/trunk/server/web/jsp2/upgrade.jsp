@@ -22,18 +22,9 @@
 	<c:choose>
 		<c:when test="${browser.linuxRequested}">
 			<%-- LINUX RELEASE NOTES GO HERE --%>
-			<p>Version 1.1.9</p>
+			<p>Version 1.1.11</p>
 			<ul>
-				<li>Don't time out bubbles while you're not at the computer.</li>
-			</ul>
-			<p>Version 1.1.8</p>
-			<ul>
-				<li>Fix a crash that a lot of people were seeing.</li>
-			</ul>
-			<p>Version 1.1.7</p>
-			<ul>
-				<li>Purple bubbles! Purple bubbles show group chat activity and new members in groups.</li>
-				<li>Other small fixes</li>
+				<li>World share swarming: The bubble now shows how many people visited a post.</li>			
 			</ul>
 		</c:when>
 		<c:otherwise>
@@ -41,8 +32,7 @@
 			<p>Version 1.1.59</p>
 			<ul>
 				<li>World share swarming: The bubble now shows how many people visited a post.</li>
-				<li>Fixed a bug that caused a lot of old bubbles to show up again periodically.</li>
-				
+				<li>Fixed a bug that caused a lot of old bubbles to show up again periodically.</li>				
 			</ul>
 		</c:otherwise>
 	</c:choose>
