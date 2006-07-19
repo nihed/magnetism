@@ -1,3 +1,4 @@
+/* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 #include "hippo-common-internal.h"
 #include "hippo-connection.h"
 #include "hippo-data-cache-internal.h"

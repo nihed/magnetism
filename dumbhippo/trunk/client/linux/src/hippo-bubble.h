@@ -1,3 +1,4 @@
+/* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 #ifndef __HIPPO_BUBBLE_H__
 #define __HIPPO_BUBBLE_H__
 

@@ -1,3 +1,4 @@
+/* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 #include "hippo-ipc-source.h"
 #include <hippo/hippo-common-marshal.h>
 

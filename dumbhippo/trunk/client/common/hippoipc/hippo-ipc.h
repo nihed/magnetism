@@ -1,3 +1,4 @@
+/* -*- mode: C++; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 typedef unsigned long long HippoIpcId;
 
 class HippoIpcListener {
