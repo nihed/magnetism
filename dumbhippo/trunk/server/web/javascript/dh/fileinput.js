@@ -24,8 +24,16 @@ dh.fileinput.Entry = function(entryNode)
 	}
 	
 	this.elem.onchange = function() {
+		me.think();
 		me.activate();
 		return false;
+	}
+
+	this.think = function() {
+		var img = document.createElement("img");
+		img.src = dhImageRoot2 + "feedspinner.gif";
+		this.elem.parentNode.appendChild(img);
+		this.elem.style.display = "none";
 	}
 
 	// with the onchange, this isn't needed
