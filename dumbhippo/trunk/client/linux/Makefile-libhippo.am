@@ -41,8 +41,8 @@ LIBHIPPO_SOURCEFILES =						\
 	$(COMMONSRCDIR)/hippo/hippo-entity.c			\
 	$(COMMONSRCDIR)/hippo/hippo-entity.h			\
 	$(COMMONSRCDIR)/hippo/hippo-entity-protected.h		\
-	$(COMMONSRCDIR)/hippo/hippo-ipc-source.c		\
-	$(COMMONSRCDIR)/hippo/hippo-ipc-source.h		\
+	$(COMMONSRCDIR)/hippo/hippo-endpoint-proxy.c		\
+	$(COMMONSRCDIR)/hippo/hippo-endpoint-proxy.h		\
 	$(COMMONSRCDIR)/hippo/hippo-myspace.c			\
 	$(COMMONSRCDIR)/hippo/hippo-myspace.h			\
 	$(COMMONSRCDIR)/hippo/hippo-person.c			\

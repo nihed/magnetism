@@ -17,11 +17,11 @@ public:
     
     virtual void setListener(HippoIpcListener *listener);
 
-    virtual HippoIpcId connect();
-    virtual void disconnect(HippoIpcId source);
+    virtual HippoEndpointId connect();
+    virtual void disconnect(HippoEndpointId endpoint);
 
-    virtual void joinChatRoom(HippoIpcId source, const char *chatId, bool participant);
-    virtual void leaveChatRoom(HippoIpcId source, const char *chatId);
+    virtual void joinChatRoom(HippoEndpointId endpoint, const char *chatId, bool participant);
+    virtual void leaveChatRoom(HippoEndpointId endpoint, const char *chatId);
     
     virtual void sendChatMessage(const char *chatId, const char *text);
     virtual void showChatWindow(const char *chatId);
@@ -100,7 +100,7 @@ HippoDBusIpcProviderImpl::createMethodMessage(const char *name)
     return message;
 }
 
-HippoIpcId
+HippoEndpointId
 HippoDBusIpcProviderImpl::connect()
 {
     DBusError derror;
@@ -111,7 +111,7 @@ HippoDBusIpcProviderImpl::connect()
     DBusMessage *reply = dbus_connection_send_with_reply_and_block(connection_, message, -1,
                                                       &derror);
 
-    guint64 sourceId = 0;
+    guint64 endpoint = 0;
 
     if (!reply) {
 	g_warning("Can't send connect() message: %s\n", derror.message);
@@ -120,9 +120,9 @@ HippoDBusIpcProviderImpl::connect()
     
     if (reply &&
 	!dbus_message_get_args(reply, &derror,
-			       DBUS_TYPE_UINT64, &sourceId,
+			       DBUS_TYPE_UINT64, &endpoint,
 	                       DBUS_TYPE_INVALID)) {
-	g_warning("connect() message didn't return a source ID: %s\n", derror.message);
+	g_warning("connect() message didn't return a endpoint ID: %s\n", derror.message);
 	dbus_error_free(&derror);
     }
 
@@ -130,16 +130,16 @@ HippoDBusIpcProviderImpl::connect()
     if (reply)
 	dbus_message_unref(reply);
 
-    return sourceId;
+    return endpoint;
 }
 
 void
-HippoDBusIpcProviderImpl::disconnect(HippoIpcId source)
+HippoDBusIpcProviderImpl::disconnect(HippoEndpointId endpoint)
 {
     DBusMessage *message = createMethodMessage("Disconnect");
     
     dbus_message_append_args(message,
-			     DBUS_TYPE_UINT64, &source,
+			     DBUS_TYPE_UINT64, &endpoint,
 			     DBUS_TYPE_INVALID);
     
     dbus_connection_send(connection_, message, NULL);
@@ -147,13 +147,13 @@ HippoDBusIpcProviderImpl::disconnect(HippoIpcId source)
 }
 
 void
-HippoDBusIpcProviderImpl::joinChatRoom(HippoIpcId source, const char *chatId, bool participant)
+HippoDBusIpcProviderImpl::joinChatRoom(HippoEndpointId endpoint, const char *chatId, bool participant)
 {
     DBusMessage *message = createMethodMessage("JoinChatRoom");
 
     dbus_bool_t participantArg = participant;
     dbus_message_append_args(message,
-			     DBUS_TYPE_UINT64, &source,
+			     DBUS_TYPE_UINT64, &endpoint,
 			     DBUS_TYPE_STRING, &chatId,
 			     DBUS_TYPE_BOOLEAN, &participantArg,
 			     DBUS_TYPE_INVALID);
@@ -163,12 +163,12 @@ HippoDBusIpcProviderImpl::joinChatRoom(HippoIpcId source, const char *chatId, bo
 }
 
 void
-HippoDBusIpcProviderImpl::leaveChatRoom(HippoIpcId source, const char *chatId)
+HippoDBusIpcProviderImpl::leaveChatRoom(HippoEndpointId endpoint, const char *chatId)
 {
     DBusMessage *message = createMethodMessage("LeaveChatRoom");
 
     dbus_message_append_args(message,
-			     DBUS_TYPE_UINT64, &source,
+			     DBUS_TYPE_UINT64, &endpoint,
 			     DBUS_TYPE_STRING, &chatId,
 			     DBUS_TYPE_INVALID);
     
@@ -226,43 +226,43 @@ HippoDBusIpcProviderImpl::handleMethod(DBusMessage *message)
 	return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 
     if (strcmp(member, "UserJoin") == 0) {
-	dbus_uint64_t sourceId;
+	dbus_uint64_t endpoint;
 	const char *chatId;
 	const char *userId;
 	
 	if (dbus_message_get_args(message, NULL,
-				  DBUS_TYPE_UINT64, &sourceId,
+				  DBUS_TYPE_UINT64, &endpoint,
 				  DBUS_TYPE_STRING, &chatId,
 				  DBUS_TYPE_STRING, &userId,
 				  DBUS_TYPE_INVALID)) {
 	    if (listener_)
-		listener_->onUserJoin(sourceId, chatId, userId);
+		listener_->onUserJoin(endpoint, chatId, userId);
 	} else {
 	    reply = dbus_message_new_error(message,
 					   DBUS_ERROR_INVALID_ARGS,
-					   _("Expected userJoin(uint64 sourceId, string chatId, string userId)"));
+					   _("Expected userJoin(uint64 endpoint, string chatId, string userId)"));
 	}
 	
     } else if (strcmp(member, "UserLeave") == 0) {
-	dbus_uint64_t sourceId;
+	dbus_uint64_t endpoint;
 	const char *chatId;
 	const char *userId;
 
 	if (dbus_message_get_args(message, NULL,
-				  DBUS_TYPE_UINT64, &sourceId,
+				  DBUS_TYPE_UINT64, &endpoint,
 				  DBUS_TYPE_STRING, &chatId,
 				  DBUS_TYPE_STRING, &userId,
 				  DBUS_TYPE_INVALID)) {
 	if (listener_)
-	    listener_->onUserLeave(sourceId, chatId, userId);
+	    listener_->onUserLeave(endpoint, chatId, userId);
 	} else {
 	    reply = dbus_message_new_error(message,
 					   DBUS_ERROR_INVALID_ARGS,
-					   _("Expected userLeave(uint64 sourceId, string chatId, string userId)"));
+					   _("Expected userLeave(uint64 endpoint, string chatId, string userId)"));
 	}
 
     } else if (strcmp(member, "Message") == 0) {
-	dbus_uint64_t sourceId;
+	dbus_uint64_t endpoint;
 	const char *chatId;
 	const char *userId;
 	const char *text;
@@ -270,7 +270,7 @@ HippoDBusIpcProviderImpl::handleMethod(DBusMessage *message)
 	int serial;
 
 	if (dbus_message_get_args(message, NULL,
-				  DBUS_TYPE_UINT64, &sourceId,
+				  DBUS_TYPE_UINT64, &endpoint,
 				  DBUS_TYPE_STRING, &chatId,
 				  DBUS_TYPE_STRING, &userId,
 				  DBUS_TYPE_STRING, &text,
@@ -278,31 +278,31 @@ HippoDBusIpcProviderImpl::handleMethod(DBusMessage *message)
 				  DBUS_TYPE_INT32, &serial,
 				  DBUS_TYPE_INVALID)) {
 	    if (listener_)
-		listener_->onMessage(sourceId, chatId, userId, text, timestamp, serial);
+		listener_->onMessage(endpoint, chatId, userId, text, timestamp, serial);
 	} else {
 	    reply = dbus_message_new_error(message,
 					  DBUS_ERROR_INVALID_ARGS,
-					  _("Expected Messsage(uint64 sourceId, string chatId, string userId, string text, double timestamp, int32 serial)"));
+					  _("Expected Messsage(uint64 endpoint, string chatId, string userId, string text, double timestamp, int32 serial)"));
 	}
 
     } else if (strcmp(member, "Reconnect") == 0) {
-	dbus_uint64_t sourceId;
+	dbus_uint64_t endpoint;
 	const char *chatId;
 
 	if (dbus_message_get_args(message, NULL,
-				  DBUS_TYPE_UINT64, &sourceId,
+				  DBUS_TYPE_UINT64, &endpoint,
 				  DBUS_TYPE_STRING, &chatId,
 				  DBUS_TYPE_INVALID)) {
 	    if (listener_)
-		listener_->onReconnect(sourceId, chatId);
+		listener_->onReconnect(endpoint, chatId);
 	} else {
 	    reply = dbus_message_new_error(message,
 					  DBUS_ERROR_INVALID_ARGS,
-					  _("Expected Reconnect(uint64 sourceId, string chatId)"));
+					  _("Expected Reconnect(uint64 endpoint, string chatId)"));
 	}
 	
     } else if (strcmp(member, "UserInfo") == 0) {
-	dbus_uint64_t sourceId;
+	dbus_uint64_t endpoint;
 	const char *userId;
 	const char *name;
 	const char *smallPhotoUrl;
@@ -311,7 +311,7 @@ HippoDBusIpcProviderImpl::handleMethod(DBusMessage *message)
 	dbus_bool_t musicPlaying;
 	
 	if (dbus_message_get_args(message, NULL,
-				  DBUS_TYPE_UINT64, &sourceId,
+				  DBUS_TYPE_UINT64, &endpoint,
 				  DBUS_TYPE_STRING, &userId,
 				  DBUS_TYPE_STRING, &name,
 				  DBUS_TYPE_STRING, &smallPhotoUrl,
@@ -320,12 +320,12 @@ HippoDBusIpcProviderImpl::handleMethod(DBusMessage *message)
 				  DBUS_TYPE_BOOLEAN, &musicPlaying,
 				  DBUS_TYPE_INVALID)) {
 	    if (listener_)
-		listener_->userInfo(sourceId, userId, name, smallPhotoUrl,
+		listener_->userInfo(endpoint, userId, name, smallPhotoUrl,
 				    currentSong, currentArtist, musicPlaying);
 	} else {
 	    reply = dbus_message_new_error(message,
 					   DBUS_ERROR_INVALID_ARGS,
-					   _("Expected UserInfo(uint64 sourceId, string userId, string name, string smallPhotoUrl, string currentSong, boolean musicPlaying)"));
+					   _("Expected UserInfo(uint64 endpoint, string userId, string name, string smallPhotoUrl, string currentSong, boolean musicPlaying)"));
 	}
 
     } else {

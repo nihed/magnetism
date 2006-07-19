@@ -10,15 +10,15 @@
 
 class TestListener : public HippoIpcListener {
 public:    
-    virtual void onUserJoin(HippoIpcId dest, const char *chatId, const char *userId);
-    virtual void onUserLeave(HippoIpcId dest, const char *chatId, const char *userId);
-    virtual void onMessage(HippoIpcId dest, const char *chatId, const char *userId, const char *message, double timestamp, long serial);
-    virtual void onReconnect(HippoIpcId dest, const char *chatId);
-    virtual void userInfo(HippoIpcId dest, const char *userId, const char *name, const char *smallPhotoUrl, const char *currentSong, const char *currentArtist, bool musicPlaying);
+    virtual void onUserJoin(HippoEndpointId endpoint, const char *chatId, const char *userId);
+    virtual void onUserLeave(HippoEndpointId endpoint, const char *chatId, const char *userId);
+    virtual void onMessage(HippoEndpointId endpoint, const char *chatId, const char *userId, const char *message, double timestamp, long serial);
+    virtual void onReconnect(HippoEndpointId endpoint, const char *chatId);
+    virtual void userInfo(HippoEndpointId endpoint, const char *userId, const char *name, const char *smallPhotoUrl, const char *currentSong, const char *currentArtist, bool musicPlaying);
 };
 
 void
-TestListener::onUserJoin(HippoIpcId dest, const char *chatId, const char *userId)
+TestListener::onUserJoin(HippoEndpointId endpoint, const char *chatId, const char *userId)
 {
     g_print("userJoin\n");
     g_print("    chatId: %s\n", chatId);
@@ -26,7 +26,7 @@ TestListener::onUserJoin(HippoIpcId dest, const char *chatId, const char *userId
 }
 
 void
-TestListener::onUserLeave(HippoIpcId dest, const char *chatId, const char *userId)
+TestListener::onUserLeave(HippoEndpointId endpoint, const char *chatId, const char *userId)
 {
     g_print("userLeave\n");
     g_print("    chatId: %s\n", chatId);
@@ -34,7 +34,7 @@ TestListener::onUserLeave(HippoIpcId dest, const char *chatId, const char *userI
 }
 
 void
-TestListener::onMessage(HippoIpcId dest, const char *chatId, const char *userId, const char *message, double timestamp, long serial)
+TestListener::onMessage(HippoEndpointId endpoint, const char *chatId, const char *userId, const char *message, double timestamp, long serial)
 {
     g_print("message\n");
     g_print("    chatId: %s\n", chatId);
@@ -45,14 +45,14 @@ TestListener::onMessage(HippoIpcId dest, const char *chatId, const char *userId,
 }
 
 void
-TestListener::onReconnect(HippoIpcId dest, const char *chatId)
+TestListener::onReconnect(HippoEndpointId endpoint, const char *chatId)
 {
     g_print("reconnect\n");
     g_print("    chatId: %s\n", chatId);
 }
 
 void
-TestListener::userInfo(HippoIpcId dest, const char *userId, const char *name, const char *smallPhotoUrl, const char *currentSong, const char *currentArtist, bool musicPlaying)
+TestListener::userInfo(HippoEndpointId endpoint, const char *userId, const char *name, const char *smallPhotoUrl, const char *currentSong, const char *currentArtist, bool musicPlaying)
 {
     g_print("userInfo\n");
     g_print("    userId: %s\n", userId);
@@ -97,11 +97,11 @@ int main(int argc, char **argv)
     HippoIpcListener *listener = new TestListener();
     
     controller->addListener(listener);
-    HippoIpcId id = controller->connect(listener);
-    g_printerr("Connected as %lld\n", id);
+    HippoEndpointId endpoint = controller->connect(listener);
+    g_printerr("Connected as %lld\n", endpoint);
 
     if (chatRoom)
-	controller->joinChatRoom(id, chatRoom, true);
+	controller->joinChatRoom(endpoint, chatRoom, true);
 
     GMainLoop *loop = g_main_loop_new(NULL, FALSE);
     g_main_loop_run(loop);
