@@ -658,6 +658,11 @@ HippoBubble::onPostActivity(HippoPost *post)
     if (!create())
         return;
 
+    // TODO: we don't presently check for isPostActive() here because
+    // the total viewer count is not yet displayed in the framer.  Once
+    // we do implement that, we should suppress a bubble if the post is
+    // active.
+
     variant_t result;
     ui_->debugLogW(L"Invoking dhPostActivity");
     // Note if you change the arguments to this function, you must change notification.js
