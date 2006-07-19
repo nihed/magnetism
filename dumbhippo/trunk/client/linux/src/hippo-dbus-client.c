@@ -125,7 +125,7 @@ hippo_dbus_open_chat_blocking(const char   *server,
     message = dbus_message_new_method_call(bus_name,
                                            HIPPO_DBUS_PATH,
                                            HIPPO_DBUS_INTERFACE,
-                                           "ShowChatWindow");                                          
+                                           "ShowChatWindow");
     if (message == NULL)
         g_error("out of memory");
         

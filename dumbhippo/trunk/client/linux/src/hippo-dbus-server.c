@@ -392,38 +392,42 @@ on_endpoint_reconnect(HippoEndpointProxy *proxy,
 }
 
 static void
-on_endpoint_user_info(HippoEndpointProxy *proxy,
-		    HippoPerson       *person,
-		    HippoDBusListener *listener)
+on_endpoint_entity_info(HippoEndpointProxy *proxy,
+		        HippoEntity        *entity,
+                        HippoDBusListener  *listener)
 {
     DBusMessage *message;
-    HippoEntity *entity = HIPPO_ENTITY(person);
 
     guint64 endpoint = hippo_endpoint_proxy_get_id(proxy);
     const char *user_id = hippo_entity_get_guid(entity);
     const char *name = hippo_entity_get_name(entity);
     const char *small_photo_url = hippo_entity_get_small_photo_url(entity);
-    const char *current_song = hippo_person_get_current_song(person);
-    const char *current_artist = hippo_person_get_current_artist(person);
-    dbus_bool_t music_playing = hippo_person_get_music_playing(person);
-    
-    message = dbus_message_new_method_call(listener->name,
-                                           HIPPO_DBUS_LISTENER_PATH,
-                                           HIPPO_DBUS_LISTENER_INTERFACE,
-                                           "UserInfo");
-    
-    dbus_message_append_args(message,
-			     DBUS_TYPE_UINT64, &endpoint,
-			     DBUS_TYPE_STRING, &user_id,
-			     DBUS_TYPE_STRING, &name,
-			     DBUS_TYPE_STRING, &small_photo_url,
-			     DBUS_TYPE_STRING, &current_song,
-			     DBUS_TYPE_STRING, &current_artist,
-			     DBUS_TYPE_BOOLEAN, &music_playing,
-	                     DBUS_TYPE_INVALID);
 
-    dbus_connection_send(listener->dbus->connection, message, NULL);
-    dbus_message_unref(message);
+    if (HIPPO_IS_PERSON(entity)) {
+        HippoPerson *person = HIPPO_PERSON(entity);
+    
+        const char *current_song = hippo_person_get_current_song(person);
+        const char *current_artist = hippo_person_get_current_artist(person);
+        dbus_bool_t music_playing = hippo_person_get_music_playing(person);
+    
+        message = dbus_message_new_method_call(listener->name,
+                                               HIPPO_DBUS_LISTENER_PATH,
+                                               HIPPO_DBUS_LISTENER_INTERFACE,
+                                               "UserInfo");
+    
+        dbus_message_append_args(message,
+                                 DBUS_TYPE_UINT64, &endpoint,
+                                 DBUS_TYPE_STRING, &user_id,
+                                 DBUS_TYPE_STRING, &name,
+                                 DBUS_TYPE_STRING, &small_photo_url,
+                                 DBUS_TYPE_STRING, &current_song,
+                                 DBUS_TYPE_STRING, &current_artist,
+                                 DBUS_TYPE_BOOLEAN, &music_playing,
+                                 DBUS_TYPE_INVALID);
+
+        dbus_connection_send(listener->dbus->connection, message, NULL);
+        dbus_message_unref(message);
+    }
 }
 
 static DBusMessage*
@@ -458,8 +462,8 @@ handle_register_endpoint(HippoDBus   *dbus,
 		     G_CALLBACK(on_endpoint_user_leave), listener);
     g_signal_connect(proxy, "message",
 		     G_CALLBACK(on_endpoint_message), listener);
-    g_signal_connect(proxy, "user-info",
-		     G_CALLBACK(on_endpoint_user_info), listener);
+    g_signal_connect(proxy, "entity-info",
+		     G_CALLBACK(on_endpoint_entity_info), listener);
     
     reply = dbus_message_new_method_return(message);
     endpoint = hippo_endpoint_proxy_get_id(proxy),
@@ -504,7 +508,7 @@ unregister_endpoint(HippoDBusListener *listener,
     g_signal_handlers_disconnect_by_func(proxy, (void *)on_endpoint_user_leave, listener);
     g_signal_handlers_disconnect_by_func(proxy, (void *)on_endpoint_message, listener);
     g_signal_handlers_disconnect_by_func(proxy, (void *)on_endpoint_reconnect, listener);
-    g_signal_handlers_disconnect_by_func(proxy, (void *)on_endpoint_user_info, listener);
+    g_signal_handlers_disconnect_by_func(proxy, (void *)on_endpoint_entity_info, listener);
 
     listener->endpoints = g_slist_remove(listener->endpoints, proxy);
     hippo_endpoint_proxy_unregister(proxy);
@@ -955,7 +959,9 @@ handle_message(DBusConnection     *connection,
                 reply = handle_leave_chat_room(dbus, message);
 	    } else if (strcmp(member, "SendChatMessage") == 0) {
                 reply = handle_send_chat_message(dbus, message);
-	    } else if (strcmp(member, "ShowChatWindow") == 0) {
+	    } else if (strcmp(member, "ShowChatWindow") == 0 ||
+                       /* JoinChat is the legacy name until we have an rpm built with new url handler */
+                       strcmp(member, "JoinChat") == 0) {
                 reply = handle_show_chat_window(dbus, message);
             } else {
                 /* Set this back so the default handler can return an error */
