@@ -18,22 +18,29 @@ dh.download.updateDownload = function() {
 }
 
 dh.download.doDownload = function(url) {
-	// be careful, right now "url" can be either the download binary or "/" (for "skip download")
+	// "url" should be the download binary; if it's empty, it means we are skipping the download
 
 	if (dh.download.needTermsOfUse && !document.getElementById("dhAcceptTerms").checked) {
 		document.getElementById("dhAcceptTermsBox").className = "dh-accept-terms-box-warning"
 		return
 	}
 
-	window.open(url, "_self")
+    // they can start downloading while the terms of use are being accepted
+    if (url)
+	    window.open(url, "_self")
+	
 	if (dh.download.needTermsOfUse) {
 		dh.server.doPOST("acceptterms",
 						{},
 						function(type, data, http) {
+						    if (!url)
+	                            window.open("/account", "_self")
 						},
 						function(type, error, http) {
 							alert("Oops! Error accepting the terms of use agreement");
 						});
+	} else if (!url) {
+        window.open("/account", "_self")	
 	}
 }
 

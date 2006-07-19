@@ -132,6 +132,26 @@ public class PostingBoardBean implements PostingBoard {
 	@javax.annotation.Resource
 	private EJBContext ejbContext;	
 	
+	public Set<Resource> getPostRecipients(Post post) {
+		Set<Resource> addressedRecipients = post.getExpandedRecipients();  
+		if (post.getVisibility() == PostVisibility.RECIPIENTS_ONLY || !post.isToWorld()) {
+			return addressedRecipients;
+		} else if (post.getVisibility() == PostVisibility.ANONYMOUSLY_PUBLIC || 
+				   post.getVisibility() == PostVisibility.ATTRIBUTED_PUBLIC) {
+			Set<Resource> recipients = new HashSet<Resource>();
+			for (Account acct : accountSystem.getRecentlyActiveAccounts()) {
+				if (identitySpider.getNotifyPublicShares(acct.getOwner())) {
+					recipients.add(acct);
+				}
+			}
+			recipients.addAll(addressedRecipients);
+			return recipients;
+		} else {
+			throw new RuntimeException("invalid visibility on post " + post.getId());
+		}		
+	}
+	
+	
 	private void sendPostNotifications(Post post, PostType postType) {
 		// FIXME I suspect this should be outside the transaction and asynchronous
 		logger.debug("Sending out jabber/email notifications...");
@@ -140,25 +160,10 @@ public class PostingBoardBean implements PostingBoard {
 		// public posts can also happen implicitly by copying a public group; those
 		// posts are still visible to the world, but aren't sent out to the world
 		
-		if (post.getVisibility() == PostVisibility.RECIPIENTS_ONLY || !post.isToWorld()) {
-			for (Resource r : post.getExpandedRecipients()) {
-				messageSender.sendPostNotification(r, post, postType);
-			}			
-		} else if (post.getVisibility() == PostVisibility.ANONYMOUSLY_PUBLIC || 
-				   post.getVisibility() == PostVisibility.ATTRIBUTED_PUBLIC) {
-			for (Account acct : accountSystem.getRecentlyActiveAccounts()) {
-				if (identitySpider.getNotifyPublicShares(acct.getOwner())) {
-					messageSender.sendPostNotification(acct, post, postType);
-				}
-			}
-			for (Resource r : post.getExpandedRecipients()) {
-				if (!(r instanceof Account)) { // We covered the accounts above
-					messageSender.sendPostNotification(r, post, postType);
-				}
-			}
-		} else {
-			throw new RuntimeException("invalid visibility on post " + post.getId());
+		for (Resource r : getPostRecipients(post)) {
+			messageSender.sendPostNotification(r, post, postType);
 		}
+		logger.debug("Sending out jabber/email notifications...done");		
 	}
 	
 	/**

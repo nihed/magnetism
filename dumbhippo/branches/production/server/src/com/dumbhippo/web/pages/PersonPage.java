@@ -129,4 +129,9 @@ public class PersonPage extends AbstractPersonPage {
 			return null;
 		return "mailto:" + StringUtils.urlEncode(email.getEmail());
 	}
+	
+	@Override
+	protected boolean getNeedExternalAccounts() {
+		return true;
+	}
 }

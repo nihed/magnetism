@@ -3067,11 +3067,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		return current;
 	}
 	
-	private String buildGetFriendsThemesQuery(Viewpoint viewpoint, User user, Set<User> friends, boolean forCount) {
-		
-		if (friends.isEmpty())
-			throw new RuntimeException("Trying to query for friends theme but have no friends " + user);
-		
+	private String buildGetFriendsThemesQuery(Viewpoint viewpoint, User user, Set<Contact> friends, boolean forCount) {
 		String draftClause;
 		if (viewpoint instanceof SystemViewpoint)
 			draftClause = null;
@@ -3093,16 +3089,19 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		 * 200 contacts or so
 		 */
 		sb.append("WHERE t.creator.id IN (");
-		for (User u : friends) {
-			sb.append("'");
-			sb.append(u.getId());
-			sb.append("'");
-			sb.append(",");
+		for (Contact c : friends) {
+			User u = identitySpider.getUser(c);
+			if (u != null) {
+				sb.append("'");
+				sb.append(u.getId());
+				sb.append("'");
+				sb.append(",");
+			}
 		}
 		if (sb.charAt(sb.length() - 1) == ',') {
 			sb.setLength(sb.length() - 1);
 		}
-		sb.append(") ");
+		sb.append(")");
 
 		if (draftClause != null) {
 			sb.append("AND ");
@@ -3115,13 +3114,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	public void getFriendsThemes(Viewpoint viewpoint, User user, Pageable<NowPlayingTheme> pageable) {
 		// this will return no friends if we can't see this person's contacts
 		// from our viewpoint
-		Set<Contact> contacts = identitySpider.getRawContacts(viewpoint, user);
-		Set<User> friends = new HashSet<User>();
-		for (Contact c : contacts) {
-			User u = identitySpider.getUser(c);
-			if (u != null)
-				friends.add(u);
-		}
+		Set<Contact> friends = identitySpider.getRawContacts(viewpoint, user);
 		
 		if (friends.isEmpty()) {
 			pageable.setResults(new ArrayList<NowPlayingTheme>());

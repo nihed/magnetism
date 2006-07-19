@@ -60,7 +60,7 @@ public enum ExternalAccountType {
 		
 		@Override
 		public String getLinkText(String handle, String extra) {
-			return "My Photos";
+			return "My Profile";
 		}
 
 		@Override
