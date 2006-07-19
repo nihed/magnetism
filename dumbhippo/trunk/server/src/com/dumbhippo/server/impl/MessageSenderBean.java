@@ -788,7 +788,7 @@ public class MessageSenderBean implements MessageSender {
 		}
 	}
 
-	public void sendLivePostChanged(LivePost lpost) {
+	public void sendLivePostChanged(LivePost lpost, Guid excludeId) {
 		Post post;
 		try {
 			post = postingBoard.loadRawPost(SystemViewpoint.getInstance(), lpost.getGuid());
@@ -796,6 +796,8 @@ public class MessageSenderBean implements MessageSender {
 			throw new RuntimeException(e);
 		}
 		for (Resource recipientResource : postingBoard.getPostRecipients(post)) {
+			if (recipientResource.getGuid().equals(excludeId))
+				continue;
 			User recipient = identitySpider.getUser(recipientResource);
 			if (recipient != null) {
 				try {
