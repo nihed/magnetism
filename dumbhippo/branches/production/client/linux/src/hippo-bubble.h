@@ -22,7 +22,8 @@ typedef enum {
     HIPPO_BUBBLE_REASON_NEW,
     HIPPO_BUBBLE_REASON_CHAT,
     HIPPO_BUBBLE_REASON_VIEWER,
-    HIPPO_BUBBLE_REASON_MEMBERSHIP_CHANGE    
+    HIPPO_BUBBLE_REASON_MEMBERSHIP_CHANGE,    
+    HIPPO_BUBBLE_REASON_ACTIVITY     
 } HippoBubbleReason;
 
 typedef enum {
@@ -78,6 +79,8 @@ void             hippo_bubble_set_link_description   (HippoBubble *bubble,
 void             hippo_bubble_set_recipients         (HippoBubble *bubble, 
                                                       const HippoRecipientInfo *recipients,
                                                       int          n_recipients);
+void             hippo_bubble_set_total_viewers      (HippoBubble *bubble,
+                                                      int          n_viewers);                                                     
 void             hippo_bubble_set_viewers            (HippoBubble *bubble,
                                                       const HippoViewerInfo    *viewers,
                                                       int          n_viewers);
