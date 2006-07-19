@@ -796,10 +796,10 @@ public class MessageSenderBean implements MessageSender {
 			throw new RuntimeException(e);
 		}
 		for (Resource recipientResource : postingBoard.getPostRecipients(post)) {
-			if (recipientResource.getGuid().equals(excludeId))
-				continue;
-			User recipient = identitySpider.getUser(recipientResource);
+			User recipient = identitySpider.getUser(recipientResource);	
 			if (recipient != null) {
+				if (recipient.getGuid().equals(excludeId))
+					continue;						
 				try {
 					PostView postView = postingBoard.loadPost(new UserViewpoint(recipient), post.getGuid());
 					xmppSender.sendLivePostChanged(recipient, lpost, postView);
