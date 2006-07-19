@@ -10,12 +10,25 @@
 
 class TestListener : public HippoIpcListener {
 public:    
+    virtual void onConnect();
+    virtual void onDisconnect();
     virtual void onUserJoin(HippoEndpointId endpoint, const char *chatId, const char *userId);
     virtual void onUserLeave(HippoEndpointId endpoint, const char *chatId, const char *userId);
     virtual void onMessage(HippoEndpointId endpoint, const char *chatId, const char *userId, const char *message, double timestamp, long serial);
-    virtual void onReconnect(HippoEndpointId endpoint, const char *chatId);
     virtual void userInfo(HippoEndpointId endpoint, const char *userId, const char *name, const char *smallPhotoUrl, const char *currentSong, const char *currentArtist, bool musicPlaying);
 };
+
+void
+TestListener::onConnect()
+{
+    g_print("connect\n");
+}
+
+void
+TestListener::onDisconnect()
+{
+    g_print("disconnect\n");
+}
 
 void
 TestListener::onUserJoin(HippoEndpointId endpoint, const char *chatId, const char *userId)
@@ -42,13 +55,6 @@ TestListener::onMessage(HippoEndpointId endpoint, const char *chatId, const char
     g_print("    message: %s\n", message);
     g_print("    timestamp: %f\n", timestamp);
     g_print("    serial: %ld\n", serial);
-}
-
-void
-TestListener::onReconnect(HippoEndpointId endpoint, const char *chatId)
-{
-    g_print("reconnect\n");
-    g_print("    chatId: %s\n", chatId);
 }
 
 void
@@ -97,7 +103,7 @@ int main(int argc, char **argv)
     HippoIpcListener *listener = new TestListener();
     
     controller->addListener(listener);
-    HippoEndpointId endpoint = controller->connect(listener);
+    HippoEndpointId endpoint = controller->registerEndpoint(listener);
     g_printerr("Connected as %lld\n", endpoint);
 
     if (chatRoom)

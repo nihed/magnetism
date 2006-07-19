@@ -17,8 +17,8 @@ public:
     
     virtual void setListener(HippoIpcListener *listener);
 
-    virtual HippoEndpointId connect();
-    virtual void disconnect(HippoEndpointId endpoint);
+    virtual HippoEndpointId registerEndpoint();
+    virtual void unregisterEndpoint(HippoEndpointId endpoint);
 
     virtual void joinChatRoom(HippoEndpointId endpoint, const char *chatId, bool participant);
     virtual void leaveChatRoom(HippoEndpointId endpoint, const char *chatId);
@@ -101,20 +101,20 @@ HippoDBusIpcProviderImpl::createMethodMessage(const char *name)
 }
 
 HippoEndpointId
-HippoDBusIpcProviderImpl::connect()
+HippoDBusIpcProviderImpl::registerEndpoint()
 {
     DBusError derror;
 
-    DBusMessage *message = createMethodMessage("Connect");
+    DBusMessage *message = createMethodMessage("RegisterEndpoint");
 
     dbus_error_init(&derror);
     DBusMessage *reply = dbus_connection_send_with_reply_and_block(connection_, message, -1,
-                                                      &derror);
+								   &derror);
 
     guint64 endpoint = 0;
 
     if (!reply) {
-	g_warning("Can't send connect() message: %s\n", derror.message);
+	g_warning("Can't send registerEndpoint() message: %s\n", derror.message);
 	dbus_error_free(&derror);
     }
     
@@ -122,7 +122,7 @@ HippoDBusIpcProviderImpl::connect()
 	!dbus_message_get_args(reply, &derror,
 			       DBUS_TYPE_UINT64, &endpoint,
 	                       DBUS_TYPE_INVALID)) {
-	g_warning("connect() message didn't return a endpoint ID: %s\n", derror.message);
+	g_warning("registerEndpoint() message didn't return a endpoint ID: %s\n", derror.message);
 	dbus_error_free(&derror);
     }
 
@@ -134,9 +134,9 @@ HippoDBusIpcProviderImpl::connect()
 }
 
 void
-HippoDBusIpcProviderImpl::disconnect(HippoEndpointId endpoint)
+HippoDBusIpcProviderImpl::unregisterEndpoint(HippoEndpointId endpoint)
 {
-    DBusMessage *message = createMethodMessage("Disconnect");
+    DBusMessage *message = createMethodMessage("UnregisterEndpoint");
     
     dbus_message_append_args(message,
 			     DBUS_TYPE_UINT64, &endpoint,
@@ -225,7 +225,29 @@ HippoDBusIpcProviderImpl::handleMethod(DBusMessage *message)
     if (!interface || strcmp(interface, HIPPO_DBUS_LISTENER_INTERFACE) != 0)
 	return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 
-    if (strcmp(member, "UserJoin") == 0) {
+    if (strcmp(member, "Connect") == 0) {
+	if (dbus_message_get_args(message, NULL,
+				  DBUS_TYPE_INVALID)) {
+	    if (listener_)
+		listener_->onConnect();
+	} else {
+	    reply = dbus_message_new_error(message,
+					  DBUS_ERROR_INVALID_ARGS,
+					  _("Expected Connect()"));
+	}
+	
+    } else if (strcmp(member, "Disconnect") == 0) {
+	if (dbus_message_get_args(message, NULL,
+				  DBUS_TYPE_INVALID)) {
+	    if (listener_)
+		listener_->onDisconnect();
+	} else {
+	    reply = dbus_message_new_error(message,
+					  DBUS_ERROR_INVALID_ARGS,
+					  _("Expected Disconnect()"));
+	}
+	
+     } else if (strcmp(member, "UserJoin") == 0) {
 	dbus_uint64_t endpoint;
 	const char *chatId;
 	const char *userId;
@@ -285,22 +307,6 @@ HippoDBusIpcProviderImpl::handleMethod(DBusMessage *message)
 					  _("Expected Messsage(uint64 endpoint, string chatId, string userId, string text, double timestamp, int32 serial)"));
 	}
 
-    } else if (strcmp(member, "Reconnect") == 0) {
-	dbus_uint64_t endpoint;
-	const char *chatId;
-
-	if (dbus_message_get_args(message, NULL,
-				  DBUS_TYPE_UINT64, &endpoint,
-				  DBUS_TYPE_STRING, &chatId,
-				  DBUS_TYPE_INVALID)) {
-	    if (listener_)
-		listener_->onReconnect(endpoint, chatId);
-	} else {
-	    reply = dbus_message_new_error(message,
-					  DBUS_ERROR_INVALID_ARGS,
-					  _("Expected Reconnect(uint64 endpoint, string chatId)"));
-	}
-	
     } else if (strcmp(member, "UserInfo") == 0) {
 	dbus_uint64_t endpoint;
 	const char *userId;

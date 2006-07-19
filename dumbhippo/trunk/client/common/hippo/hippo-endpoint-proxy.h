@@ -22,8 +22,7 @@ GType hippo_endpoint_proxy_get_type (void) G_GNUC_CONST;
 HippoEndpointProxy *hippo_endpoint_proxy_new (HippoDataCache *data_cache);
 
 guint64 hippo_endpoint_proxy_get_id          (HippoEndpointProxy *proxy);
-void    hippo_endpoint_proxy_connect         (HippoEndpointProxy *proxy);
-void    hippo_endpoint_proxy_disconnect      (HippoEndpointProxy *proxy);
+void    hippo_endpoint_proxy_unregister      (HippoEndpointProxy *proxy);
 void    hippo_endpoint_proxy_join_chat_room  (HippoEndpointProxy *proxy,
 					      const char         *chat_id,
 					      HippoChatState      state);

@@ -22,7 +22,7 @@ public:
     HippoIpcControllerImpl(HippoIpcProvider *provider);
     virtual ~HippoIpcControllerImpl();
 
-    virtual void disconnect(HippoEndpointId endpoint);
+    virtual void unregisterEndpoint(HippoEndpointId endpoint);
     
     virtual void joinChatRoom(HippoEndpointId endpoint, const char *chatId, bool participant);
     virtual void leaveChatRoom(HippoEndpointId endpoint,const char *chatId);
@@ -31,13 +31,14 @@ public:
     
     virtual void addListener(HippoIpcListener *listener);
     virtual void removeListener(HippoIpcListener *listener);
-    virtual HippoEndpointId connect(HippoIpcListener *listener);
+    virtual HippoEndpointId registerEndpoint(HippoIpcListener *listener);
     
     // HippoIpcListener methods
+    virtual void onConnect();
+    virtual void onDisconnect();
     virtual void onUserJoin(HippoEndpointId endpoint, const char *chatId, const char *userId);
     virtual void onUserLeave(HippoEndpointId endpoint, const char *chatId, const char *userId);
     virtual void onMessage(HippoEndpointId endpoint, const char *chatId, const char *userId, const char *message,double timestamp,long serial);
-    virtual void onReconnect(HippoEndpointId endpoint, const char *chatId);
 
     virtual void userInfo(HippoEndpointId endpoint, const char *userId, const char *name, const char *smallPhotoUrl, const char *arrangementName, const char *artistName, bool musicPlaying);
     
@@ -66,9 +67,9 @@ HippoIpcControllerImpl::~HippoIpcControllerImpl()
 }
 
 HippoEndpointId 
-HippoIpcControllerImpl::connect(HippoIpcListener *listener)
+HippoIpcControllerImpl::registerEndpoint(HippoIpcListener *listener)
 {
-    HippoEndpointId id = provider_->connect();
+    HippoEndpointId id = provider_->registerEndpoint();
 
     endpoints_.push_back(HippoIpcControllerEndpoint(listener, id));
 
@@ -76,12 +77,12 @@ HippoIpcControllerImpl::connect(HippoIpcListener *listener)
 }
 
 void
-HippoIpcControllerImpl::disconnect(HippoEndpointId endpoint)
+HippoIpcControllerImpl::unregisterEndpoint(HippoEndpointId endpoint)
 {
     for (std::vector<HippoIpcControllerEndpoint>::iterator i = endpoints_.begin(); i != endpoints_.end(); i++) {
 	if (i->getId() == endpoint) {
 	    endpoints_.erase(i);
-	    provider_->disconnect(endpoint);
+	    provider_->unregisterEndpoint(endpoint);
 	    break;
 	}
     }
@@ -135,6 +136,22 @@ HippoIpcControllerImpl::removeListener(HippoIpcListener *listener)
 }
 
 void
+HippoIpcControllerImpl::onConnect()
+{
+    for (std::vector<HippoIpcListener *>::iterator i = listeners_.begin(); i != listeners_.end(); i++)
+        (*i)->onConnect();
+}
+
+void
+HippoIpcControllerImpl::onDisconnect()
+{
+    endpoints_.clear();
+    
+    for (std::vector<HippoIpcListener *>::iterator i = listeners_.begin(); i != listeners_.end(); i++)
+        (*i)->onDisconnect();
+}
+
+void
 HippoIpcControllerImpl::onUserJoin(HippoEndpointId endpoint, const char *chatId, const char *userId)
 {
     for (std::vector<HippoIpcControllerEndpoint>::iterator i = endpoints_.begin(); i != endpoints_.end(); i++) {
@@ -162,17 +179,6 @@ HippoIpcControllerImpl::onMessage(HippoEndpointId endpoint, const char *chatId, 
     for (std::vector<HippoIpcControllerEndpoint>::iterator i = endpoints_.begin(); i != endpoints_.end(); i++) {
 	if (i->getId() == endpoint) {
 	    i->getListener()->onMessage(endpoint, chatId, userId, message, timestamp, serial);
-	    break;
-	}
-    }
-}
-
-void
-HippoIpcControllerImpl::onReconnect(HippoEndpointId endpoint, const char *chatId)
-{
-    for (std::vector<HippoIpcControllerEndpoint>::iterator i = endpoints_.begin(); i != endpoints_.end(); i++) {
-	if (i->getId() == endpoint) {
-	    i->getListener()->onReconnect(endpoint, chatId);
 	    break;
 	}
     }

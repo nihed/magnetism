@@ -427,8 +427,8 @@ on_endpoint_user_info(HippoEndpointProxy *proxy,
 }
 
 static DBusMessage*
-handle_connect(HippoDBus   *dbus,
-	       DBusMessage *message)
+handle_register_endpoint(HippoDBus   *dbus,
+                         DBusMessage *message)
 {
     HippoDataCache *cache = hippo_app_get_data_cache(hippo_get_app());
     DBusMessage *reply;
@@ -458,8 +458,6 @@ handle_connect(HippoDBus   *dbus,
 		     G_CALLBACK(on_endpoint_user_leave), listener);
     g_signal_connect(proxy, "message",
 		     G_CALLBACK(on_endpoint_message), listener);
-    g_signal_connect(proxy, "reconnect",
-		     G_CALLBACK(on_endpoint_reconnect), listener);
     g_signal_connect(proxy, "user-info",
 		     G_CALLBACK(on_endpoint_user_info), listener);
     
@@ -498,7 +496,7 @@ find_endpoint(HippoDBusListener *listener,
 }
 
 static void
-disconnect_endpoint(HippoDBusListener *listener,
+unregister_endpoint(HippoDBusListener *listener,
 		    HippoEndpointProxy *proxy)
 {
 
@@ -509,7 +507,7 @@ disconnect_endpoint(HippoDBusListener *listener,
     g_signal_handlers_disconnect_by_func(proxy, (void *)on_endpoint_user_info, listener);
 
     listener->endpoints = g_slist_remove(listener->endpoints, proxy);
-    hippo_endpoint_proxy_disconnect(proxy);
+    hippo_endpoint_proxy_unregister(proxy);
     g_object_unref(proxy);
 }
 
@@ -518,7 +516,7 @@ disconnect_listener(HippoDBus         *dbus,
 		    HippoDBusListener *listener)
 {
     while (listener->endpoints != NULL)
-	disconnect_endpoint(listener, listener->endpoints->data);
+	unregister_endpoint(listener, listener->endpoints->data);
 
     dbus->listeners = g_slist_remove(dbus->listeners, listener);
     g_free(listener->name);
@@ -526,8 +524,8 @@ disconnect_listener(HippoDBus         *dbus,
 }
 
 static DBusMessage*
-handle_disconnect(HippoDBus   *dbus,
-		  DBusMessage *message)
+handle_unregister_endpoint(HippoDBus   *dbus,
+                           DBusMessage *message)
 {
     DBusMessage *reply;
     guint64 endpoint;
@@ -547,7 +545,7 @@ handle_disconnect(HippoDBus   *dbus,
     if (!proxy)
 	return reply;
 
-    disconnect_endpoint(listener, proxy);
+    unregister_endpoint(listener, proxy);
     if (listener->endpoints == NULL)
 	disconnect_listener(dbus, listener);
 	
@@ -947,10 +945,10 @@ handle_message(DBusConnection     *connection,
             reply = NULL;
             result = DBUS_HANDLER_RESULT_HANDLED;
             
-            if (strcmp(member, "Connect") == 0) {
-                reply = handle_connect(dbus, message);
-	    } else if (strcmp(member, "Disconnect") == 0) {
-                reply = handle_disconnect(dbus, message);
+            if (strcmp(member, "RegisterEndpoint") == 0) {
+                reply = handle_register_endpoint(dbus, message);
+	    } else if (strcmp(member, "UnregisterEndpoint") == 0) {
+                reply = handle_unregister_endpoint(dbus, message);
 	    } else if (strcmp(member, "JoinChatRoom") == 0) {
                 reply = handle_join_chat_room(dbus, message);
 	    } else if (strcmp(member, "LeaveChatRoom") == 0) {

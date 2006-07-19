@@ -23,7 +23,6 @@ enum {
     USER_JOIN,
     USER_LEAVE,
     MESSAGE,
-    RECONNECT,
     USER_INFO,
     LAST_SIGNAL
 };
@@ -67,14 +66,6 @@ hippo_endpoint_proxy_class_init(HippoEndpointProxyClass *klass)
 		     NULL, NULL,
 		     hippo_common_marshal_VOID__OBJECT_POINTER,
 		     G_TYPE_NONE, 2, G_TYPE_OBJECT, G_TYPE_POINTER);
-    signals[RECONNECT] = 
-	g_signal_new("reconnect",
-		     G_TYPE_FROM_CLASS(object_class),
-		     G_SIGNAL_RUN_LAST,
-		     0,
-		     NULL, NULL,
-		     hippo_common_marshal_VOID__OBJECT,
-		     G_TYPE_NONE, 1, G_TYPE_OBJECT);
     signals[USER_INFO] = 
 	g_signal_new("user-info",
 		     G_TYPE_FROM_CLASS(object_class),
@@ -113,11 +104,6 @@ hippo_endpoint_proxy_get_id (HippoEndpointProxy *proxy)
     return proxy->id;
 }
 
-void
-hippo_endpoint_proxy_connect (HippoEndpointProxy *proxy)
-{
-}
-
 static void
 on_room_user_state_changed(HippoChatRoom      *room,
 			   HippoPerson        *person,
@@ -141,13 +127,6 @@ on_room_message_added(HippoChatRoom      *room,
 }
 
 static void
-on_room_cleared(HippoChatRoom      *room,
-		HippoEndpointProxy *proxy)
-{
-    g_signal_emit(proxy, signals[RECONNECT], 0, room);
-}
-
-static void
 add_to_room_list(HippoEndpointProxy *proxy,
 		 GSList            **list,
 		 HippoChatState      state,
@@ -160,8 +139,6 @@ add_to_room_list(HippoEndpointProxy *proxy,
 		     G_CALLBACK(on_room_user_state_changed), proxy);
     g_signal_connect(room, "message-added",
 		     G_CALLBACK(on_room_message_added), proxy);
-    g_signal_connect(room, "cleared",
-		     G_CALLBACK(on_room_cleared), proxy);
 }
 
 static void
@@ -176,12 +153,11 @@ remove_from_room_list(HippoEndpointProxy *proxy,
 
 	g_signal_handlers_disconnect_by_func(room, (void *)on_room_user_state_changed, proxy);
 	g_signal_handlers_disconnect_by_func(room, (void *)on_room_message_added, proxy);
-	g_signal_handlers_disconnect_by_func(room, (void *)on_room_cleared, proxy);
     }
 }
 
 void
-hippo_endpoint_proxy_disconnect (HippoEndpointProxy *proxy)
+hippo_endpoint_proxy_unregister (HippoEndpointProxy *proxy)
 {
     g_return_if_fail (HIPPO_IS_ENDPOINT_PROXY(proxy));
 
