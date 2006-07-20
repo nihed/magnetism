@@ -6,10 +6,17 @@ libhippoipc_la_CPPFLAGS =			\
 libhippoipc_la_LIBADD =
 
 nodist_libhippoipc_la_SOURCES =					\
+	$(COMMONSRCDIR)/hippo/hippo-basics.h			\
+	$(COMMONSRCDIR)/hippo/hippo-basics.c			\
 	$(COMMONSRCDIR)/hippoipc/hippo-ipc.h			\
-	$(COMMONSRCDIR)/hippoipc/hippo-ipc-controller.cpp
+	$(COMMONSRCDIR)/hippoipc/hippo-ipc-controller.cpp	\
+	$(COMMONSRCDIR)/hippoipc/hippo-ipc-locator.cpp
 
 libhippoipc_la_SOURCES =					\
+	src/hippo-dbus-client.c					\
+	src/hippo-dbus-client.h					\
+	hippoipc/hippo-dbus-ipc-locator.h			\
+	hippoipc/hippo-dbus-ipc-locator.cpp			\
 	hippoipc/hippo-dbus-ipc-provider.h			\
 	hippoipc/hippo-dbus-ipc-provider.cpp
 

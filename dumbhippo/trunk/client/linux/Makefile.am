@@ -10,7 +10,7 @@ endif
 # note that target-specific CPPFLAGS will REPLACE
 # not augment these default flags by default,
 # so we manually put AM_CPPFLAGS in the target flags
-AM_CPPFLAGS=-DHIPPO_COMPILATION -DVERSION_FILE=\"$(pkgdatadir)/version\" -I$(top_builddir)/config -I$(COMMONSRCDIR)
+AM_CPPFLAGS=-DHIPPO_COMPILATION -DHIPPO_OS_LINUX -DVERSION_FILE=\"$(pkgdatadir)/version\" -I$(top_builddir)/config -I$(COMMONSRCDIR)
 
 # the "config" dir seems like a convenient place that's already 
 # in everyone's include path ... I dunno

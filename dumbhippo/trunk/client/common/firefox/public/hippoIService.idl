@@ -3,17 +3,19 @@
 
 [scriptable,uuid(8bf6de0a-ed8f-47af-8757-41551542d196)]
 interface hippoIService : nsISupports {
-    readonly attribute AString serverUrl;
+    readonly attribute AUTF8String serverUrl;
 
-    void connect(in AUTF8String serverUrl);
-    void disconnect();
+    void start(in AUTF8String serverUrl);
+    void stop();
 
+    boolean isConnected();
+    
     void setListener(in hippoIServiceListener listener);
 
-    void joinChatRoom(in AString chatId);
-    void leaveChatRoom(in AString chatId);
-    void showChatWindow(in AString chatId);
-    void sendChatMessage(in AString chatId, in AString text);
+    void joinChatRoom(in AUTF8String chatId, in boolean participant);
+    void leaveChatRoom(in AUTF8String chatId);
+    void showChatWindow(in AUTF8String chatId);
+    void sendChatMessage(in AUTF8String chatId, in AUTF8String text);
 };
 
 

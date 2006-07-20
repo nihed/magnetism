@@ -5,9 +5,7 @@ test_hippo_ipc_CPPFLAGS =		\
 	$(TEST_HIPPO_IPC_CFLAGS)
 
 test_hippo_ipc_LDFLAGS=$(TEST_HIPPO_IPC_LIBS)
-test_hippo_ipc_LDADD= libhippo.la libhippoipc.la
+test_hippo_ipc_LDADD= libhippoipc.la
 
 test_hippo_ipc_SOURCES=				\
-	src/hippo-dbus-client.c			\
-	src/hippo-dbus-client.h			\
 	hippoipc/test-hippo-ipc.cpp

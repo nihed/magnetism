@@ -2,7 +2,7 @@
 #include <glib-object.h>
 #include <stdlib.h>
 #include "src/hippo-dbus-client.h"
-#include "hippo-dbus-ipc-provider.h"
+#include "hippo-dbus-ipc-locator.h"
 #define DBUS_API_SUBJECT_TO_CHANGE 1
 #include <dbus/dbus-glib.h>
 #include <dbus/dbus-glib-lowlevel.h>
@@ -98,8 +98,7 @@ int main(int argc, char **argv)
     if (argc == 3)
 	chatRoom = argv[2];
 
-    HippoIpcProvider *provider = HippoDBusIpcProvider::createInstance(argv[1]);
-    HippoIpcController *controller = HippoIpcController::createInstance(provider);
+    HippoIpcController *controller = HippoDBusIpcLocator::getInstance()->getController(argv[1]);
     HippoIpcListener *listener = new TestListener();
     
     controller->addListener(listener);
@@ -112,5 +111,7 @@ int main(int argc, char **argv)
     GMainLoop *loop = g_main_loop_new(NULL, FALSE);
     g_main_loop_run(loop);
     
+    HippoDBusIpcLocator::getInstance()->releaseController(controller);
+
     return 0;
 }

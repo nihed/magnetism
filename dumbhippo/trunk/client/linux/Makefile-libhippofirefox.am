@@ -34,7 +34,7 @@ component_DATA =				\
 	hippoIServiceListener.xpt
 
 libhippofirefox_la_LDFLAGS = -avoid-version -module
-libhippofirefox_la_LIBADD = $(LIBHIPPOFIREFOX_LIBS)
+libhippofirefox_la_LIBADD = $(LIBHIPPOFIREFOX_LIBS) libhippoipc.la
 
 libhippofirefox_la_CPPFLAGS =			\
 	$(AM_CPPFLAGS)				\
