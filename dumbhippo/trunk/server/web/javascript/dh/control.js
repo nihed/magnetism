@@ -16,125 +16,131 @@ dojo.lang.mixin = function(obj, props){
 	return obj;
 }
 
-var defineConstructor = function(childConstructor, parentConstructor, childProps) {
-	childConstructor.prototype = childProps;
-
-	if (parentConstructor) {
-		// mixin doesn't overwrite the childProps if they exist, so overriding works
-		dojo.lang.mixin(childConstructor.prototype, parentConstructor.prototype);	
+dojo.inherits = function(subclass, superclass){
+	if(typeof superclass != 'function'){ 
+		dojo.raise("superclass: "+superclass+" borken");
 	}
+	subclass.prototype = new superclass();
+	subclass.prototype.constructor = subclass;
+	subclass.superclass = superclass.prototype;
+}
+
+var defineClass = function(childConstructor, parentConstructor, childProps) {
+	if (!parentConstructor)
+		parentConstructor = Object;
+	dojo.inherits(childConstructor, parentConstructor);
+	dojo.lang.mixin(childConstructor.prototype, childProps);
 }
 
 ///////////////////////// auxiliary / data-model objects
 
 dh.control.Entity = function(id) {
-	this.id = id;
+	this._id = id;
+	this._name = "";
+	this._photoUrl = null;
+	
 }
 
-defineConstructor(dh.control.Entity, null, 
+defineClass(dh.control.Entity, null, 
 {
-	name : "",
-	photoUrl : null,
-	
 	onChanged : function() {
 	},
 
 	getId : function() {
-		return this.id;
+		return this._id;
 	},
 
 	getName : function() {
-		return this.name;
+		return this._name;
  	},
 
 	setName : function(name) {
-		this.name = name;
+		this._name = name;
 		this.onChanged();
 	},
 
 	getPhotoUrl : function() {
-		return this.photoUrl;
+		return this._photoUrl;
 	},
 	
 	setPhotoUrl : function(url) {
-		this.photoUrl = url;
+		this._photoUrl = url;
 		this.onChanged();
 	}
 });
 
 dh.control.Person = function(id) {
 	dh.control.Entity.call(this, id);
+	this._currentSong = null;
+	this._currentArtist = null;
+	this._musicPlaying = false;
 }
 
-defineConstructor(dh.control.Person, dh.control.Entity, 
-{
-	currentSong : null,
-	currentArtist : null,
-	musicPlaying : false,
-		
+defineClass(dh.control.Person, dh.control.Entity, 
+{		
 	getCurrentSong : function() {
-		return this.currentSong;
+		return this._currentSong;
 	},
 	
 	setCurrentSong : function(song) {
-		this.currentSong = song;
+		this._currentSong = song;
 		this.onChanged();
 	},
 	
 	getCurrentArtist : function() {
-		return this.currentArtist;
+		return this._currentArtist;
 	},
 	
 	setCurrentArtist : function(artist) {
-		this.currentArtist = artist;
+		this._currentArtist = artist;
 		this.onChanged();
 	},
 	
 	getMusicPlaying : function() {
-		return this.musicPlaying;
+		return this._musicPlaying;
 	},
 	
 	setMusicPlaying : function(playing) {
-		this.musicPlaying = playing;
+		this._musicPlaying = playing;
 		this.onChanged();
 	}
 });
 
 dh.control.ChatMessage = function(entity, message, timestamp, serial) {
-	this.entity = entity;
-	this.message = message;
-	this.timestamp = timestamp;
-	this.serial = serial;
+	this._entity = entity;
+	this._message = message;
+	this._timestamp = timestamp;
+	this._serial = serial;
 }
 
-defineConstructor(dh.control.ChatMessage, null,
+defineClass(dh.control.ChatMessage, null,
 {
 	getEntity : function() {
-		return this.entity;
+		return this._entity;
 	},
 	
 	getMessage : function() {
-		return this.message;
+		return this._message;
 	},
 	
 	getTimestamp : function() {
-		return this.timestamp;
+		return this._timestamp;
 	},
 	
 	getSerial : function() {
-		return this.serial;
+		return this._serial;
 	}
 });
 
 dh.control.ChatRoom = function(control, id) {
-	this.control = control;
-	this.id = id;
+	this._control = control;
+	this._id = id;
 }
 
-defineConstructor(dh.control.ChatRoom, null, 
+defineClass(dh.control.ChatRoom, null, 
 {
 	getId : function() {
-		return this.id;
+		return this._id;
 	},
 	
 	onUserJoined : function(entity) {
@@ -147,18 +153,18 @@ defineConstructor(dh.control.ChatRoom, null,
 	}
 	
 	sendMessage : function(text) {
-		this.control.sendChatMessage(this.id, text);
+		this._control.sendChatMessage(this._id, text);
 	}
 	
 	join : function(participant) {
-		this.control.joinChatRoom(this.id, participant);
+		this._control.joinChatRoom(this._id, participant);
 	}
 	
 	leave : function() {
-		this.control.leaveChatRoom(this.id);
+		this._control.leaveChatRoom(this._id);
 	},
 	
-	addMessage : function(message) {
+	_addMessage : function(message) {
 		// FIXME store the message in a list
 		this.onMessage(message);
 	}
@@ -170,94 +176,92 @@ defineConstructor(dh.control.ChatRoom, null,
 //// AbstractControl shared among all control implementations
 
 dh.control.AbstractControl = function() {
-}
-
-defineConstructor(dh.control.AbstractControl, null, 
-{
-	callbacks : { 
+	this._callbacks = { 
 		onConnected : function() {},
 		onDisconnected : function() {}
-	},
+	};
+	
+	this._connected = false;
+	
+	this._allEntities = {};
+	this._allChatRooms = {};
+}
 
+defineClass(dh.control.AbstractControl, null, 
+{
 	// control users outside this file are supposed to set these
 	setCallbacks : function(callbacks) {
-		this.callbacks = callbacks;
+		this._callbacks = callbacks;
 	},
 
-	connected : false,
-
 	onConnected : function() {
-		this.connected = true;
-		this.callbacks.onConnected();
+		this._connected = true;
+		this._callbacks.onConnected();
 	},
 
 	onDisconnected : function() {
-		this.connected = false;
+		this._connected = false;
 		// dump all our data
-		this.allEntities = {};
-		this.allChatRooms = {};
+		this._allEntities = {};
+		this._allChatRooms = {};
 		// emit signal
-		this.callbacks.onDisconnected();
+		this._callbacks.onDisconnected();
 	},
 
 	isConnected : function() {
-		return connected;
-	}
-	
-	allEntities : {},
+		return this._connected;
+	},
 	
 	getOrCreatePerson : function(id) {
-		var entity = this.allEntities[id];
+		var entity = this._allEntities[id];
 		if (!entity) {
 			entity = new dh.control.Person(id);
-			this.allEntities[id] = entity;
+			this._allEntities[id] = entity;
 		}
 		return entity;
 	},
 	
 	peekEntity : function(id) {
-		return this.allEntities[id];
+		return this._allEntities[id];
 	},
 	
-	allChatRooms : {},
-	
 	getOrCreateChatRoom : function(id) {
-		var room = this.allChatRooms[id];
+		var room = this._allChatRooms[id];
 		if (!room) {
 			room = new dh.control.ChatRoom(this, id);
-			this.allChatRooms[id] = room;
+			this._allChatRooms[id] = room;
 		}
 		return room;	
 	},
 	
 	peekChatRoom : function(id) {
-		return this.allChatRooms[id];
+		return this._allChatRooms[id];
 	},
 	
-	onUserJoined : function(chatId, userId) {
+	_onUserJoined : function(chatId, userId) {
 		var room = this.peekChatRoom(chatId);
 		if (!room)
 			return;
 		room.onUserJoined(this.getOrCreatePerson(userId));		
 	},
 	
-	onUserLeft : function(chatId, userId) {
+	_onUserLeft : function(chatId, userId) {
 		var room = this.peekChatRoom(chatId);
 		if (!room)
 			return;	
 		room.onUserLeft(this.getOrCreatePerson(userId));					
 	},
 	
-	onMessage : function(chatId, userId, text, timestamp, serial) {
+	_onMessage : function(chatId, userId, text, timestamp, serial) {
 		var room = this.peekChatRoom(chatId);
 		if (!room)
 			return;
 		var message = new dh.control.ChatMessage(this.getOrCreatePerson(userId),
 			text, timestamp, serial);
-		room.addMessage(message);
+		room._addMessage(message);
 	}, 
 	
-	onUserInfo : function(userId, name, photoUrl, currentSong, currentArtist, musicPlaying) {
+	_onUserInfo : function(userId, name, photoUrl, currentSong, currentArtist, musicPlaying) {
 		var u = this.getOrCreatePerson(userId);
 		u.setName(name);
 		u.setPhotoUrl(photoUrl);
@@ -272,35 +276,37 @@ defineConstructor(dh.control.AbstractControl, null,
 //// gets onConnected, or someday maybe it does something useful
 
 dh.control.WebOnlyControl = function() {
+	dh.control.AbstractControl.call(this);
 }
 
-defineConstructor(dh.control.WebOnlyControl, dh.control.AbstractControl, {
+defineClass(dh.control.WebOnlyControl, dh.control.AbstractControl, {
 	frobate : function() {
 	}
 });
 
 //// NativeControl wraps the XPCOM or ActiveX object
 dh.control.NativeControl = function(native) {
-	this.native = native;
+	dh.control.AbstractControl.call(this);
+	this._native = native;
 }
 
-defineConstructor(dh.control.NativeControl, dh.control.AbstractControl, {
+defineClass(dh.control.NativeControl, dh.control.AbstractControl, {
 
 	joinChatRoom : function(chatId, participant) {
-		native.joinChatRoom(chatId, participant);
+		this._native.joinChatRoom(chatId, participant);
 		return this.getOrCreateChatRoom(chatId);
 	}
 	
 	leaveChatRoom : function(chatId) {
-		native.leaveChatRoom(chatId);
+		this._native.leaveChatRoom(chatId);
 	}
 
 	sendChatMessage : function(chatId, text) {
-		native.sendChatMessage(chatId, text);
+		this._native.sendChatMessage(chatId, text);
 	},
 	
 	showChatWindow : function(chatId) {
-		native.showChatWindow(chatId);
+		this._native.showChatWindow(chatId);
 	}
 });
 
