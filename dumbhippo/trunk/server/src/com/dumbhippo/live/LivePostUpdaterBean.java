@@ -5,10 +5,12 @@ import java.util.List;
 import javax.annotation.EJB;
 import javax.ejb.Stateless;
 
+import org.slf4j.Logger;
+
+import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.PersonPostData;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.PostMessage;
-import com.dumbhippo.server.MessageSender;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PostView;
 import com.dumbhippo.server.PostingBoard;
@@ -17,11 +19,11 @@ import com.dumbhippo.server.SystemViewpoint;
 // Implementation of LivePostUpdater
 @Stateless
 public class LivePostUpdaterBean implements LivePostUpdater {
-	@EJB
-	PostingBoard postingBoard;
+	@SuppressWarnings("unused")
+	static private final Logger logger = GlobalSetup.getLogger(LivePostUpdaterBean.class);
 	
 	@EJB
-	MessageSender messageSender;
+	private PostingBoard postingBoard;
 
 	public void initialize(LivePost livePost) {
 		int totalViewers = postingBoard.getPostViewerCount(livePost.getGuid());
@@ -39,5 +41,7 @@ public class LivePostUpdaterBean implements LivePostUpdater {
 		Post postObj = pv.getPost();
 		List<PostMessage> messages = postingBoard.getRecentPostMessages(postObj, 60);
 		livePost.setRecentMessageCount(messages.size());
+		
+		logger.debug("livePost {} initialized with {} total viewers", livePost.getGuid(), livePost.getTotalViewerCount());
 	}
 }
