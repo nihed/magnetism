@@ -159,3 +159,25 @@ hippo_dbus_open_chat_blocking(const char   *server,
 
     return result;
 }
+
+void
+hippo_dbus_debug_log_error(const char   *where,
+                           DBusMessage  *message)
+{
+    if (dbus_message_get_type(message) == DBUS_MESSAGE_TYPE_ERROR) {
+        const char *error;
+        const char *text;
+        
+        error = dbus_message_get_error_name(message);
+        text = NULL;
+        if (dbus_message_get_args(message, NULL,
+                                  DBUS_TYPE_STRING, &text,
+                                  DBUS_TYPE_INVALID)) {
+            g_debug("Got error reply at %s %s '%s'",
+                    where, error ? error : "NULL", text ? text : "NULL");
+        } else {
+            g_debug("Got error reply at %s %s",
+                    where, error ? error : "NULL");
+        }
+    }
+}

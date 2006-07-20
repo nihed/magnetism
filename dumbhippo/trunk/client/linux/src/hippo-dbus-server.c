@@ -852,20 +852,7 @@ on_get_song_props_reply(DBusPendingCall *pending,
             emit_song_changed_from_rb_message(dbus, reply);
         }
     } else if (dbus_message_get_type(reply) == DBUS_MESSAGE_TYPE_ERROR) {
-        const char *error;
-        const char *message;
-        
-        error = dbus_message_get_error_name(reply);
-        message = NULL;
-        if (dbus_message_get_args(reply, NULL,
-                DBUS_TYPE_STRING, &message,
-                DBUS_TYPE_INVALID)) {
-            g_debug("Got error reply to getSongProperties %s '%s'",
-                error ? error : "NULL", message ? message : "NULL");
-        } else {
-            g_debug("Got error reply to getSongProperties %s",
-                error ? error : "NULL");
-        }
+        hippo_dbus_debug_log_error("getSongProperties", reply);
     } else {
         g_warning("weird unknown reply type %d to get_song_props_reply",
             dbus_message_get_type(reply));
@@ -998,7 +985,7 @@ handle_message(DBusConnection     *connection,
             handle_rb_playing_uri_changed(dbus, message);
         }
     } else if (dbus_message_get_type(message) == DBUS_MESSAGE_TYPE_ERROR) {
-	g_debug("Got error message %s", dbus_message_get_error_name(message));
+        hippo_dbus_debug_log_error("main connection handler", message);
     } else {
         g_debug("got message type %s\n", 
                 dbus_message_type_to_string(type));    

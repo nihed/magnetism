@@ -6,6 +6,8 @@
 
 #include <glib-object.h>
 #include <hippo/hippo-basics.h>
+#define DBUS_API_SUBJECT_TO_CHANGE 1
+#include <dbus/dbus.h>
 
 G_BEGIN_DECLS
 
@@ -29,6 +31,8 @@ gboolean hippo_dbus_open_chat_blocking(const char   *server,
                                        const char   *chat_id,
                                        GError      **error);
 
+void     hippo_dbus_debug_log_error   (const char   *where,
+                                       DBusMessage  *message);
 
 G_END_DECLS
 
