@@ -63,7 +63,10 @@ public class PostViewedProcessor implements LiveEventProcessor {
 	
 		logger.debug("{} clicked on {}", event.getViewerId(), event.getPostId());
 		logger.debug("Post score is now {}", livePost.getScore());
-		if (countIsInteresting(livePost.getTotalViewerCount()) || countIsInteresting(livePost.getRecentMessageCount())) {
+		// Suppress notification of the poster viewing their own post, and check that the
+		// count is "interesting", presently defined by being close to a power of two.
+		if (!event.getViewerId().equals(post.getPoster().getGuid())
+			&& (countIsInteresting(livePost.getTotalViewerCount()) || countIsInteresting(livePost.getRecentMessageCount()))) {
 			messageSender.sendLivePostChanged(livePost, event.getViewerId());
 		}		
 	}
