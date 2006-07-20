@@ -7,10 +7,14 @@
 
 	<c:choose>
 		<c:when test="${person.self && !person.asOthersWouldSee}">
+            <c:set var="selfView" value='true' scope="page"/>
 			<c:set var="title" value="YOUR FRIENDS" scope="page"/>
+			<c:set var="url" value="/friends" scope="page"/>
 		</c:when>
 		<c:otherwise>
+            <c:set var="selfView" value='false' scope="page"/>
 			<c:set var="title" value="FRIENDS" scope="page"/>
+			<c:set var="url" value="/friends?who=${person.viewedUserId}" scope="page"/>			
 		</c:otherwise>
 	</c:choose>
 	
@@ -20,19 +24,27 @@
 				<c:forEach items="${person.contacts.list}" end="2" var="person">
 					<dht:personItem who="${person}" invited="true"/>
 				</c:forEach>
-				<c:if test="${person.contacts.size > 3}">
-					<dht:moreLink moreName="ALL ${title} (${person.contacts.size})" more="/friends?who=${person.viewedUserId}"/>
-				</c:if>
+				<c:choose>				
+				    <c:when test="${person.contacts.size > 3}">
+					    <dht:moreLink moreName="ALL ${title} (${person.contacts.size})" more="${url}"/>
+				    </c:when>
+				    <c:when test="${(person.followers.size > 0) && selfView}">
+					    <dht:moreLink moreName="ALL YOUR FOLLOWERS (${person.followers.size})" more="${url}"/>
+				    </c:when>				    
+				</c:choose>    
 			</c:when>
 			<c:otherwise>
-			<c:choose>
-				<c:when test="${person.signin.user.account.invitations > 0}">
-					<p class="dh-sidebar-box-empty">Email <a href="/invitation">invites</a> to some friends</p>
-				</c:when>
-				<c:otherwise>
-					<p class="dh-sidebar-box-empty">A loner huh?</p>
-				</c:otherwise>
-			</c:choose>
+			    <c:choose>
+				    <c:when test="${person.signin.user.account.invitations > 0}">
+					    <p class="dh-sidebar-box-empty">Email <a href="/invitation">invites</a> to some friends</p>
+				    </c:when>
+				    <c:otherwise>
+					    <p class="dh-sidebar-box-empty">A loner huh?</p>
+				    </c:otherwise>
+			    </c:choose>
+				<c:if test="${(person.followers.size > 0) && selfView}">
+					<dht:moreLink moreName="ALL YOUR FOLLOWERS (${person.followers.size})" more="${url}"/>
+				</c:if>
 			</c:otherwise>
 		</c:choose>
 	    <dht:sidebarBoxSeparator/>

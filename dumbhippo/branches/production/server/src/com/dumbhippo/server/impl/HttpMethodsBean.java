@@ -1289,7 +1289,9 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			return;
 		}
 		
-		Interpreter bsh = makeInterpreter(new PrintWriter(clientOut));
+		PrintWriter pw = new PrintWriter(clientOut);
+		Interpreter bsh = makeInterpreter(pw);
+		pw.flush();
 
 		try {
 			Object result = bsh.eval(command);

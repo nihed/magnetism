@@ -211,7 +211,7 @@ public class PersonView extends EntityView {
 					name = fallbackName;
 				} else  {
                     // TODO: check if this happens when you aren't logged in and we create a PersonView for anonymous
-					logger.warn("PersonView has no User, Contact, Resource, or fallback name; totally useless: " + this);
+					logger.warn("PersonView has no User, Resource, or fallback name; totally useless: " + this);
 				}
 			} else {
                 name = getPrimaryResource().getHumanReadableString();
