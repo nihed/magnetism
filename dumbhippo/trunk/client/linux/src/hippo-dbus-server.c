@@ -257,20 +257,89 @@ hippo_dbus_blocking_shutdown(HippoDBus   *dbus)
 }
 
 static HippoDBusListener *
-find_listener(HippoDBus   *dbus,
-	      DBusMessage *message)
+find_listener_by_name(HippoDBus   *dbus,
+                      const char  *name)
 {
-    const char *sender = dbus_message_get_sender(message);
     GSList *l;
 
     for (l = dbus->listeners; l; l = l->next) {
 	HippoDBusListener *listener = l->data;
-	if (strcmp(listener->name, sender) == 0) {
+	if (strcmp(listener->name, name) == 0) {
 	    return listener;
 	}
     }
 
     return NULL;
+}
+
+static HippoDBusListener *
+find_listener(HippoDBus   *dbus,
+	      DBusMessage *message)
+{
+    const char *sender = dbus_message_get_sender(message);
+    return find_listener_by_name(dbus, sender);
+}
+
+static char*
+connection_gone_rule(const char *listener_name)
+{
+    return g_strdup_printf("type='signal',sender='%s',member='NameOwnerChanged',arg0='%s',arg1='%s',arg2=''",
+                           DBUS_SERVICE_DBUS, listener_name, listener_name);
+}
+
+/* this can be called more than once since the bus "refcounts" identical rules */
+static void
+watch_for_disconnect(HippoDBus  *dbus,
+                     const char *name)
+{
+    char *rule;
+    DBusError derror;
+
+    if (!dbus_connection_get_is_connected(dbus->connection))
+        return;
+    
+    dbus_error_init(&derror);
+
+    rule = connection_gone_rule(name);
+    
+    dbus_bus_add_match(dbus->connection,
+                       rule,
+                       &derror);
+    if (dbus_error_is_set(&derror)) {
+        g_warning("Failed to add watch rule: %s: %s: %s",
+                  rule,
+                  derror.name,
+                  derror.message);
+        dbus_error_free(&derror);
+    }
+    g_free(rule);
+}
+
+static void
+unwatch_for_disconnect(HippoDBus  *dbus,
+                       const char *name)
+{
+    char *rule;
+    DBusError derror;
+
+    if (!dbus_connection_get_is_connected(dbus->connection))
+        return;
+    
+    dbus_error_init(&derror);
+
+    rule = connection_gone_rule(name);
+    
+    dbus_bus_remove_match(dbus->connection,
+                          rule,
+                          &derror);
+    if (dbus_error_is_set(&derror)) {
+        g_warning("Failed to remove watch rule: %s: %s: %s",
+                  rule,
+                  derror.name,
+                  derror.message);
+        dbus_error_free(&derror);
+    }
+    g_free(rule);
 }
 
 static HippoDBusListener *
@@ -282,6 +351,10 @@ add_new_listener(HippoDBus   *dbus,
     listener->name = g_strdup(dbus_message_get_sender(message));
     dbus->listeners = g_slist_prepend(dbus->listeners, listener);
 
+    watch_for_disconnect(dbus, listener->name);
+
+    g_debug("added listener %s", listener->name);
+    
     return listener;
 }
 
@@ -519,10 +592,15 @@ static void
 disconnect_listener(HippoDBus         *dbus,
 		    HippoDBusListener *listener)
 {
+    g_debug("Disconnecting listener %s", listener->name);
+    
     while (listener->endpoints != NULL)
 	unregister_endpoint(listener, listener->endpoints->data);
 
     dbus->listeners = g_slist_remove(dbus->listeners, listener);
+
+    unwatch_for_disconnect(dbus, listener->name);
+    
     g_free(listener->name);
     g_free(listener);
 }
@@ -974,6 +1052,31 @@ handle_message(DBusConnection     *connection,
             if (dbus_message_get_args(message, NULL, DBUS_TYPE_STRING, &name, DBUS_TYPE_INVALID) && 
                 strcmp(name, dbus->bus_name) == 0) {
                 hippo_dbus_disconnect(dbus);
+            }
+        } else if (dbus_message_has_sender(message, DBUS_SERVICE_DBUS) &&
+                   dbus_message_is_signal(message, DBUS_INTERFACE_DBUS, "NameOwnerChanged")) {
+            const char *name = NULL;
+            const char *old = NULL;
+            const char *new = NULL;
+            if (dbus_message_get_args(message, NULL,
+                                      DBUS_TYPE_STRING, &name,
+                                      DBUS_TYPE_STRING, &old,
+                                      DBUS_TYPE_STRING, &new,
+                                      DBUS_TYPE_INVALID)) {
+                g_debug("NameOwnerChanged %s '%s' -> '%s'", name, old, new);
+                if (*old == '\0')
+                    old = NULL;
+                if (*new == '\0')
+                    new = NULL;
+                if (old && new == NULL && strcmp(name, old) == 0) {
+                    HippoDBusListener *listener = find_listener_by_name(dbus, old);
+                    if (listener != NULL) {
+                        /* free this listener and forget about it (along with all its endpoints) */
+                        disconnect_listener(dbus, listener);
+                    }
+                }
+            } else {
+                g_warning("NameOwnerChanged had wrong args???");
             }
         } else if (dbus_message_is_signal(message, DBUS_INTERFACE_LOCAL, "Disconnected")) {
             /* the "connected" state owns one ref on the HippoDBus */
