@@ -127,6 +127,6 @@ public class PersonPage extends AbstractPersonPage {
 		EmailResource email = pv.getEmail();
 		if (email == null)
 			return null;
-		return "mailto:" + StringUtils.urlEncode(email.getEmail());
+		return "mailto:" + StringUtils.urlEncodeEmail(email.getEmail());
 	}
 }

@@ -27,6 +27,34 @@ public class StringUtils {
 			throw new RuntimeException("broken Java implementation", e);
 		}
 	}
+
+	/**
+	 * Url-encode an email address, not encoding the "@" symbol. 
+	 * This is needed because in a mailto: url, some email apps 
+	 * don't unescape the mailto: url as if it were an url.
+	 * 
+	 * These email apps will probably also break if the email address contains 
+	 * unusual characters, but the theory is that no real email address 
+	 * contains those (and that if one did we really would need to the 
+	 * mail app to properly unencode). We're just trying to 
+	 * avoid evil html exploits here. 
+	 * 
+	 * Not encoding the @ also makes the mailto: url more readable in the 
+	 * browser statusbar.
+	 * 
+	 * @param str the unencoded string
+	 * @return encoded string
+	 */
+	public static String urlEncodeEmail(String str) {
+		String encoded = urlEncode(str);
+		int i = encoded.indexOf("%40");
+		if (i >= 0) {
+			encoded = encoded.substring(0, i) + "@" + encoded.substring(i + "%40".length());
+		} else {
+			throw new RuntimeException("urlEncodeEmail is only for email addresses not '" + str + "'");
+		}
+		return encoded;
+	}
 	
 	public static String join(List<String> strings, String separator) {
 		return joinUngenericList(strings, separator);
