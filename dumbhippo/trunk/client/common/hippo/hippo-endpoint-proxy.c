@@ -239,6 +239,8 @@ add_to_room_list(HippoEndpointProxy *proxy,
 		 HippoChatState      state,
 		 HippoChatRoom      *room)
 {
+    gboolean already_there_once = g_slist_find(*list, room) != NULL;
+    
     *list = g_slist_append(*list, room);
     hippo_chat_room_increment_state_count(room, state);
 
@@ -246,6 +248,26 @@ add_to_room_list(HippoEndpointProxy *proxy,
 		     G_CALLBACK(on_room_user_state_changed), proxy);
     g_signal_connect(room, "message-added",
 		     G_CALLBACK(on_room_message_added), proxy);
+
+    if (!already_there_once) {
+        /* Emit the whole current state of the chat room */
+        GSList *users;
+        GSList *messages;
+        GSList *l;
+        
+        users = hippo_chat_room_get_users(room);
+        for (l = users; l != NULL; l = l->next) {
+            HippoPerson *person = HIPPO_PERSON(l->data);
+            on_room_user_state_changed(room, person, proxy);
+            g_object_unref(person);
+        }
+        g_slist_free(users);
+
+        messages = hippo_chat_room_get_messages(room);
+        for (l = messages; l != NULL; l = l->next) {
+            on_room_message_added(room, l->data, proxy);
+        }
+    }
 }
 
 static void
@@ -307,7 +329,7 @@ hippo_endpoint_proxy_join_chat_room (HippoEndpointProxy *proxy,
 	add_to_room_list(proxy, &proxy->visitor_rooms, HIPPO_CHAT_STATE_VISITOR, room);
     } else if (state == HIPPO_CHAT_STATE_PARTICIPANT) {
 	add_to_room_list(proxy, &proxy->participant_rooms, HIPPO_CHAT_STATE_PARTICIPANT, room);
-    }
+    }    
 }
 
 void
