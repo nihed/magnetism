@@ -269,7 +269,9 @@ HippoDBusIpcProviderImpl::setListener(HippoIpcListener *listener)
 DBusMessage *
 HippoDBusIpcProviderImpl::createMethodMessage(const char *name)
 {
-    DBusMessage *message = dbus_message_new_method_call(busName_,
+    g_assert(busUniqueName_ != NULL);
+    
+    DBusMessage *message = dbus_message_new_method_call(busUniqueName_,
 							HIPPO_DBUS_PATH,
 							HIPPO_DBUS_INTERFACE,
 							name);
