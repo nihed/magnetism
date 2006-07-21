@@ -5,7 +5,7 @@
 <%@ taglib tagdir="/WEB-INF/tags" prefix="dht" %>
 
 <dh:bean id="admin" class="com.dumbhippo.web.pages.AdminPage" scope="request"/>
-
+<c:set var="mode" value='${param["mode"]}' scope="page"/>
 <c:if test="${!admin.valid}">
 	<dht:errorPage>Permission Denied</dht:errorPage>
 </c:if>
@@ -20,6 +20,15 @@
 </head>
 <dht:body>
 
+<c:choose>
+<c:when test="${empty mode}">
+<div><a href="?mode=shell">Interactive Shell</a></div>
+<div><a href="?mode=live">Live State Dump</a></div>
+<div><a href="?mode=users">All User Controls</a></div>
+</c:when>
+<c:when test="${mode == 'shell'}">
+<div><a href="?mode=live">Live State Dump</a></div>
+<div><a href="?mode=users">All User Controls</a></div>
 <h2>Shell</h2>
 <div id="dhAdminSamples">
 Important variables:<br/>
@@ -61,7 +70,10 @@ New features flag is <b><c:out value="${admin.newFeatures}"/></b>
 <p>
 <a href="javascript:dh.admin.reindexAll();">Rebuild all Lucene indexes</a>
 </p>
-
+</c:when>
+<c:when test="${mode == 'live'}">
+<div><a href="?mode=shell">Interactive Shell</a></div>
+<div><a href="?mode=users">All User Controls</a></div>
 <h2>Site Stats</h2>
 <p>
 <b><c:out value="${admin.numberOfAccounts}"/> active accounts</b>
@@ -92,7 +104,12 @@ New features flag is <b><c:out value="${admin.newFeatures}"/></b>
   	<dht:livePostDebug post="${post}"/>
   </c:forEach>
 </p>
+</c:when>
+<c:when test="${mode == 'users'}">
+<div><a href="?mode=shell">Interactive Shell</a></div>
+<div><a href="?mode=live">Live State Dump</a></div>
 <h2>All users: </h2>
+<p>
 <table>
     <tr>
       	<th></th>
@@ -142,5 +159,10 @@ New features flag is <b><c:out value="${admin.newFeatures}"/></b>
   	</c:forEach>
 </table>
 </p>
+</c:when>
+<c:otherwise>
+  Unrecognized mode!  Must be driver error.
+</c:otherwise>
+</c:choose>
 </dht:body>
 </html>
