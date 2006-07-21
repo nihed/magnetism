@@ -736,6 +736,16 @@ on_idle_changed(gboolean  idle,
     hippo_bubble_manager_set_idle(app->cache, idle);
 }                
 
+static void
+on_connected_changed(HippoConnection *connection,
+                     gboolean         connected,
+                     void            *data)
+{
+    HippoApp *app = data;
+
+    hippo_dbus_notify_xmpp_connected(app->dbus, connected);
+}
+
 static HippoApp*
 hippo_app_new(HippoInstanceType  instance_type,
               HippoPlatform     *platform,
@@ -761,13 +771,15 @@ hippo_app_new(HippoInstanceType  instance_type,
                      G_CALLBACK(on_dbus_song_changed), app);
 
     app->connection = hippo_connection_new(app->platform);
-    g_object_unref(app->platform); /* let connection keep it alive */
+    g_object_unref(app->platform); /* let connection keep it alive */    
     app->cache = hippo_data_cache_new(app->connection);
     g_object_unref(app->connection); /* let the data cache keep it alive */
     app->icon = hippo_status_icon_new(app->cache);
     
     g_signal_connect(G_OBJECT(app->connection), "client-info-available", 
                      G_CALLBACK(on_client_info_available), app);
+    g_signal_connect(G_OBJECT(app->connection), "connected-changed",
+                     G_CALLBACK(on_connected_changed), app);
     
     app->photo_cache = hippo_image_cache_new();
     
@@ -804,6 +816,9 @@ hippo_app_free(HippoApp *app)
     g_signal_handlers_disconnect_by_func(G_OBJECT(app->connection),
                              G_CALLBACK(on_client_info_available), app);
 
+    g_signal_handlers_disconnect_by_func(G_OBJECT(app->connection),
+                                         G_CALLBACK(on_connected_changed), app);
+    
     hippo_bubble_manager_unmanage(app->cache);
 
     g_hash_table_destroy(app->chat_windows);

@@ -26,8 +26,6 @@ public:
     
     virtual void sendChatMessage(const char *chatId, const char *text);
     virtual void showChatWindow(const char *chatId);
-
-    virtual bool isConnected();
     
 private:
     DBusMessage *createMethodMessage(const char *name);
@@ -37,7 +35,8 @@ private:
     bool tryIpcConnect();
     void setBusUniqueName(const char *uniqueName);
     void forgetBusConnection();
-    void notifyConnected();
+    void notifyRegisterEndpointOpportunity();
+    void notifyEndpointsInvalidated();
     
     static DBusHandlerResult handleMessageCallback(DBusConnection *connection,
 						   DBusMessage    *message,
@@ -49,8 +48,6 @@ private:
     HippoIpcListener *listener_;
     char *busUniqueName_;
     char *busNameOwnerChangedRule_;
-    // last connected state we provided to the listener
-    bool lastNotifiedConnected_;
     // current connected state of the client (is it online via xmpp)
     bool clientConnected_;
 };
@@ -70,7 +67,6 @@ HippoDBusIpcProviderImpl::HippoDBusIpcProviderImpl(const char *serverName)
                         DBUS_SERVICE_DBUS, busName_);
     listener_ = NULL;
     busUniqueName_ = NULL;
-    lastNotifiedConnected_ = false;
     clientConnected_ = false;
     
     /* If for some reason we can't get a bus connection we want to just go into
@@ -141,19 +137,13 @@ HippoDBusIpcProviderImpl::~HippoDBusIpcProviderImpl()
 }
 
 bool
-HippoDBusIpcProviderImpl::isConnected()
-{
-    // this is semantically what we want - it needs to match
-    // what signals we've sent to the listener.
-    return lastNotifiedConnected_;
-}
-
-bool
 HippoDBusIpcProviderImpl::isIpcConnected()
 {
     return connection_ != NULL && busUniqueName_ != NULL;
 }
 
+// this should not be called from inside methods like registerEndpoint, see
+// comment in front of notifyRegisterEndpointOpportunity()
 bool
 HippoDBusIpcProviderImpl::tryIpcConnect()
 {
@@ -162,7 +152,7 @@ HippoDBusIpcProviderImpl::tryIpcConnect()
 
     if (connection_ == NULL)
         return false;
-
+    
     DBusMessage *message = dbus_message_new_method_call(DBUS_SERVICE_DBUS,
                                                         DBUS_PATH_DBUS,
                                                         DBUS_INTERFACE_DBUS,
@@ -183,8 +173,7 @@ HippoDBusIpcProviderImpl::tryIpcConnect()
     dbus_message_unref(message);
 
     if (reply == NULL) {
-        g_debug("Error getting owner of %s: %s: %s",
-                busName_,
+        g_debug("Error getting owner %s: %s",
                 derror.name, derror.message);
         dbus_error_free(&derror);
         return false;
@@ -195,20 +184,78 @@ HippoDBusIpcProviderImpl::tryIpcConnect()
         dbus_message_unref(reply);
         return false;
     }
+
+    // on initial connect, the client app does not send us a Connect signal; instead, we
+    // start out assuming it has a live xmpp connection, and don't decide otherwise until
+    // we get a Disconnect or registerEndpoint fails.
+    clientConnected_ = true;
+    
     setBusUniqueName(owner);
     dbus_message_unref(reply);
     return true;
+}
+
+static char*
+connected_rule(const char *name)
+{
+    return g_strdup_printf("type='signal',sender='%s',path='%s',interface='%s',member='Connected'",
+                           name, HIPPO_DBUS_LISTENER_PATH, HIPPO_DBUS_LISTENER_INTERFACE);
+}
+
+static char*
+disconnected_rule(const char *name)
+{
+    return g_strdup_printf("type='signal',sender='%s',path='%s',interface='%s',member='Disconnected'",
+                           name, HIPPO_DBUS_LISTENER_PATH, HIPPO_DBUS_LISTENER_INTERFACE);
 }
 
 void
 HippoDBusIpcProviderImpl::setBusUniqueName(const char *uniqueName)
 {
     g_debug("unique name of client: %s", uniqueName ? uniqueName : "NULL");
+
+    if (uniqueName == NULL && busUniqueName_ == NULL)
+        return;
+    if (uniqueName && busUniqueName_ && strcmp(uniqueName, busUniqueName_) == 0)
+        return;
+    
+    if (busUniqueName_ != NULL && connection_) {
+        char *connectedRule = connected_rule(busUniqueName_);
+        char *disconnectedRule = disconnected_rule(busUniqueName_);
+
+        // both of these will fail if the matched busUniqueName_ is disconnected,
+        // since the bus garbage collects the match rules for nonexistent unique
+        // names. we just want to ignore the failure.
+        
+        g_debug("removing rule %s", connectedRule);
+        dbus_bus_remove_match(connection_, connectedRule, NULL);
+        g_debug("removing rule %s", disconnectedRule);
+        dbus_bus_remove_match(connection_, disconnectedRule, NULL);
+
+        g_free(connectedRule);
+        g_free(disconnectedRule);
+    }
     
     /* note the new unique name can be NULL */
     busUniqueName_ = g_strdup(uniqueName);
 
-    notifyConnected();
+    if (busUniqueName_ != NULL && connection_) {
+        char *connectedRule = connected_rule(busUniqueName_);
+        char *disconnectedRule = disconnected_rule(busUniqueName_);
+
+        g_debug("adding rule %s", connectedRule);
+        dbus_bus_add_match(connection_, connectedRule, NULL);
+        g_debug("adding rule %s", disconnectedRule);
+        dbus_bus_add_match(connection_, disconnectedRule, NULL);
+
+        g_free(connectedRule);
+        g_free(disconnectedRule);
+    }
+    
+    if (busUniqueName_ != NULL)
+        notifyRegisterEndpointOpportunity();
+    else
+        notifyEndpointsInvalidated();
 }
 
 void
@@ -233,30 +280,53 @@ HippoDBusIpcProviderImpl::forgetBusConnection()
         g_debug("Dropped bus connection");
     }
 
-    notifyConnected();
+    // this is a pointless extra call really since setting the unique name to NULL
+    // already did it too
+    notifyEndpointsInvalidated();
 }
 
-// the connection state visible "outside" is a composite of:
-// - are we connected to session bus
-// - is there a mugshot client running
-// - is the mugshot client connected via xmpp to the mugshot server
-// if all three are true, we are connected, otherwise we are not.
+// connection notification works as follows:
+// - on initial provider creation, a connection attempt (registerEndpoint)
+//   is assumed possible
+// - if a disconnected event occurs, then all endpoints are invalidated
+// - if a connected event occurs, it's a "connection opportunity" and
+//   registerEndpoint may be attempted
+// We need to always notify on disconnect/connection-oppty in an async way,
+// i.e. not in response to errors on method call attempts, or "during"
+// a method call including during registerEndpoint.
+//
+// A "connection opportunity" exists if all of:
+// - we are connected to session bus
+// - there is a mugshot client running
+// - the mugshot client is connected via xmpp to the mugshot server
+// so we emit onConnected when these become true and were not before.
+//
+// To avoid notifying inside methods, we don't process messages
+// inside messages (so don't become disconnected there) and we don't
+// try to connect inside messages - we only try to connect on
+// provider construction, and in response to dbus events indicating
+// that connection could now succeed.
 void
-HippoDBusIpcProviderImpl::notifyConnected()
+HippoDBusIpcProviderImpl::notifyRegisterEndpointOpportunity()
 {
     bool nowConnected;
 
     nowConnected = isIpcConnected() && clientConnected_;
 
-    if (nowConnected != lastNotifiedConnected_) {
-        lastNotifiedConnected_ = nowConnected;
+    if (listener_ && nowConnected) {
+        listener_->onConnect();
+    }
+}
 
-        if (listener_) {
-            if (nowConnected)
-                listener_->onConnect();
-            else
-                listener_->onDisconnect();
-        }
+void
+HippoDBusIpcProviderImpl::notifyEndpointsInvalidated()
+{
+    bool nowConnected;
+
+    nowConnected = isIpcConnected() && clientConnected_;
+
+    if (listener_ && !nowConnected) {
+        listener_->onDisconnect();
     }
 }
 
@@ -292,6 +362,9 @@ HippoDBusIpcProviderImpl::registerEndpoint()
 {
     DBusError derror;
 
+    // as mentioned several times in this file, and elaborated on above
+    // notifyRegisterEndpointOpportunity()
+    // _do not_ put a tryIpcConnect() call here.
     if (!isIpcConnected())
         return 0;
     
@@ -304,11 +377,16 @@ HippoDBusIpcProviderImpl::registerEndpoint()
     guint64 endpoint = 0;
 
     if (!reply) {
-	g_warning("Can't send registerEndpoint() message: %s\n", derror.message);
+	g_debug("Error from registerEndpoint(): %s", derror.message);
 	dbus_error_free(&derror);
-    }
-    
-    if (reply &&
+        // the mugshot app does not send us the initial clientConnected_ value,
+        // but registerEndpoint is guaranteed not to succeed unless the
+        // mugshot app is connected via xmpp. This may change us to
+        // disconnected but we don't want to notify here since the
+        // failure of registerEndpoint indicates that already and we
+        // don't want to synchronously invoke listeners.
+        clientConnected_ = false;
+    } else if (reply &&
 	!dbus_message_get_args(reply, &derror,
 			       DBUS_TYPE_UINT64, &endpoint,
 	                       DBUS_TYPE_INVALID)) {
@@ -319,7 +397,7 @@ HippoDBusIpcProviderImpl::registerEndpoint()
     dbus_message_unref(message);
     if (reply)
 	dbus_message_unref(reply);
-
+    
     return endpoint;
 }
 
@@ -431,28 +509,7 @@ HippoDBusIpcProviderImpl::handleMethod(DBusMessage *message)
     if (!interface || strcmp(interface, HIPPO_DBUS_LISTENER_INTERFACE) != 0)
 	return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 
-    if (strcmp(member, "Connect") == 0) {
-	if (dbus_message_get_args(message, NULL,
-				  DBUS_TYPE_INVALID)) {
-            clientConnected_ = true;
-            notifyConnected();
-	} else {
-	    reply = dbus_message_new_error(message,
-					  DBUS_ERROR_INVALID_ARGS,
-					  _("Expected Connect()"));
-	}
-    } else if (strcmp(member, "Disconnect") == 0) {
-	if (dbus_message_get_args(message, NULL,
-				  DBUS_TYPE_INVALID)) {
-            clientConnected_ = false;
-            notifyConnected();
-	} else {
-	    reply = dbus_message_new_error(message,
-					  DBUS_ERROR_INVALID_ARGS,
-					  _("Expected Disconnect()"));
-	}
-	
-     } else if (strcmp(member, "UserJoin") == 0) {
+    if (strcmp(member, "UserJoin") == 0) {
 	dbus_uint64_t endpoint;
 	const char *chatId;
 	const char *userId;
@@ -576,12 +633,16 @@ HippoDBusIpcProviderImpl::handleSignal(DBusMessage *message)
                 new_owner = NULL;
 
             if (strcmp(name, busName_) == 0) {
-                if (old_owner == NULL && new_owner) {
-                    setBusUniqueName(new_owner);
-                } else if (busUniqueName_ &&
-                           old_owner &&
-                           strcmp(busUniqueName_, old_owner) == 0) {
+                // this will notify about disconnection from old
+                if (busUniqueName_ &&
+                    old_owner &&
+                    strcmp(busUniqueName_, old_owner) == 0) {
                     setBusUniqueName(NULL);
+                }
+
+                // now notify about connection to something new
+                if (new_owner) {
+                    setBusUniqueName(new_owner);
                 }
             }
         } else {
@@ -589,6 +650,16 @@ HippoDBusIpcProviderImpl::handleSignal(DBusMessage *message)
         }
     } else if (dbus_message_is_signal(message, DBUS_INTERFACE_LOCAL, "Disconnected")) {
         forgetBusConnection();
+    } else if (busUniqueName_ &&
+               dbus_message_has_sender(message, busUniqueName_) &&
+               dbus_message_is_signal(message, HIPPO_DBUS_LISTENER_INTERFACE, "Connected")) {
+        clientConnected_ = true;
+        notifyRegisterEndpointOpportunity();
+    } else if (busUniqueName_ &&
+               dbus_message_has_sender(message, busUniqueName_) &&
+               dbus_message_is_signal(message, HIPPO_DBUS_LISTENER_INTERFACE, "Disconnected")) {
+        clientConnected_ = false;
+        notifyEndpointsInvalidated();
     }
 
     /* we never want to "HANDLED" a signal really, doesn't make sense */

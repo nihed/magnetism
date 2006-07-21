@@ -1,3 +1,4 @@
+/* -*- mode: C++; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 #include <glib.h>
 #include <glib-object.h>
 #include <stdlib.h>
@@ -7,6 +8,11 @@
 #include <dbus/dbus-glib.h>
 #include <dbus/dbus-glib-lowlevel.h>
 #include <stdarg.h>
+
+static HippoIpcController *controller = NULL;
+static HippoIpcListener *listener = NULL;
+static HippoEndpointId endpoint = 0;
+static const char *chatRoom = NULL;
 
 class TestListener : public HippoIpcListener {
 public:    
@@ -21,13 +27,26 @@ public:
 void
 TestListener::onConnect()
 {
-    g_print("connect\n");
+    g_print("connect, current endpoint is %lld\n", endpoint);
+    if (endpoint == 0) {
+        endpoint = controller->registerEndpoint(listener);
+        if (endpoint != 0) {
+            g_printerr("registered, new endpoint %lld\n", endpoint);
+            if (chatRoom)
+                controller->joinChatRoom(endpoint, chatRoom, true);
+        } else {
+            g_printerr("Not able to register yet, endpoint still 0\n");
+        }
+    }
 }
 
 void
 TestListener::onDisconnect()
 {
-    g_print("disconnect\n");
+    g_print("disconnect, endpoint was %lld, forgetting it\n", endpoint);
+    if (endpoint != 0) {
+        endpoint = 0;
+    }
 }
 
 void
@@ -86,7 +105,6 @@ fatal(const char *format, ...)
 int main(int argc, char **argv)
 {
     const char *serverName = NULL;
-    const char *chatRoom = NULL;
     
     g_type_init();
 
@@ -97,17 +115,14 @@ int main(int argc, char **argv)
     serverName = argv[1];
     if (argc == 3)
 	chatRoom = argv[2];
-
-    HippoIpcController *controller = HippoDBusIpcLocator::getInstance()->getController(argv[1]);
-    HippoIpcListener *listener = new TestListener();
+    
+    controller = HippoDBusIpcLocator::getInstance()->getController(argv[1]);
+    listener = new TestListener();
     
     controller->addListener(listener);
-    HippoEndpointId endpoint = controller->registerEndpoint(listener);
-    g_printerr("Connected as %lld\n", endpoint);
-
-    if (chatRoom)
-	controller->joinChatRoom(endpoint, chatRoom, true);
-
+    // assume an initial connection opportunity
+    listener->onConnect();
+    
     GMainLoop *loop = g_main_loop_new(NULL, FALSE);
     g_main_loop_run(loop);
     

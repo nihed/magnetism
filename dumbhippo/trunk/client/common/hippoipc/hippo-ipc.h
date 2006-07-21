@@ -6,7 +6,14 @@ typedef unsigned long long HippoEndpointId;
 
 class HippoIpcListener {
 public:
+    // indicates a "connection opportunity" - endpoints may be possible to register again,
+    // if they were not before. May get multiple of these before getting a disconnect,
+    // extra ones should be ignored.
     virtual void onConnect() = 0;
+    // indicates "all endpoints invalidated"; should retry endpoint registration when
+    // onConnect is received; multiple disconnect may happen before an onConnect,
+    // the extra disconnect can be ignored. But, endpoints can never be kept
+    // across a disconnect notification.
     virtual void onDisconnect() = 0;
 
     virtual void onUserJoin(HippoEndpointId endpoint, const char *chatId, const char *userId) = 0;
@@ -37,7 +44,6 @@ class HippoIpcProvider : public HippoIpcMethods {
 public:
     virtual HippoEndpointId registerEndpoint() = 0;
     virtual void setListener(HippoIpcListener *listener) = 0;
-    virtual bool isConnected() = 0;
 };
 
 class HippoIpcController : public HippoIpcMethods {

@@ -54,7 +54,8 @@ struct _HippoDBus {
     unsigned int in_dispatch : 1; /* dbus is broken and we can't recurse right now */
     unsigned int requested_disconnect : 1;
     unsigned int processed_disconnected : 1;
-
+    unsigned int xmpp_connected : 1;
+    
     GSList *listeners;
 };
 
@@ -273,11 +274,23 @@ find_listener_by_name(HippoDBus   *dbus,
 }
 
 static HippoDBusListener *
-find_listener(HippoDBus   *dbus,
-	      DBusMessage *message)
+find_listener(HippoDBus    *dbus,
+	      DBusMessage  *message,
+              DBusMessage **reply_p)
 {
     const char *sender = dbus_message_get_sender(message);
-    return find_listener_by_name(dbus, sender);
+    HippoDBusListener *listener = find_listener_by_name(dbus, sender);
+
+    if (reply_p) {    
+        if (listener == NULL)
+            *reply_p = dbus_message_new_error(message,
+                                              "com.dumbhippo.Error.BadId",
+                                              _("Can't find any endpoint IDs for this listener"));
+        else
+            *reply_p = NULL;
+    }
+    
+    return listener;
 }
 
 static char*
@@ -442,29 +455,6 @@ on_endpoint_message(HippoEndpointProxy *proxy,
 }
 
 static void
-on_endpoint_reconnect(HippoEndpointProxy *proxy,
-		    HippoChatRoom     *chat_room,
-		    HippoDBusListener *listener)
-{
-    DBusMessage *message;
-    
-    guint64 endpoint = hippo_endpoint_proxy_get_id(proxy);
-    const char *chat_id = hippo_chat_room_get_id(chat_room);
-
-    message = dbus_message_new_method_call(listener->name,
-                                           HIPPO_DBUS_LISTENER_PATH,
-                                           HIPPO_DBUS_LISTENER_INTERFACE,
-                                           "Reconnect");
-    dbus_message_append_args(message,
-			     DBUS_TYPE_UINT64, &endpoint,
-			     DBUS_TYPE_STRING, &chat_id,
-			     DBUS_TYPE_INVALID);
-
-    dbus_connection_send(listener->dbus->connection, message, NULL);
-    dbus_message_unref(message);
-}
-
-static void
 on_endpoint_entity_info(HippoEndpointProxy *proxy,
 		        HippoEntity        *entity,
                         HippoDBusListener  *listener)
@@ -519,8 +509,14 @@ handle_register_endpoint(HippoDBus   *dbus,
 				      DBUS_ERROR_INVALID_ARGS,
 				      _("Expected no arguments"));
     }
+
+    if (!dbus->xmpp_connected) {
+        return dbus_message_new_error(message,
+				      DBUS_ERROR_FAILED,
+				      _("XMPP connection not active"));
+    }
     
-    listener = find_listener(dbus, message);
+    listener = find_listener(dbus, message, NULL);
     if (!listener) {
 	listener = add_new_listener(dbus, message);
     }
@@ -566,7 +562,7 @@ find_endpoint(HippoDBusListener *listener,
     }
 
     *reply = dbus_message_new_error(message,
-				    "org.mugshot.Error.BadId",
+				    "com.dumbhippo.Error.BadId",
 				    _("Can't find endpoint ID"));
 
     return NULL;
@@ -576,11 +572,9 @@ static void
 unregister_endpoint(HippoDBusListener *listener,
 		    HippoEndpointProxy *proxy)
 {
-
     g_signal_handlers_disconnect_by_func(proxy, (void *)on_endpoint_user_join, listener);
     g_signal_handlers_disconnect_by_func(proxy, (void *)on_endpoint_user_leave, listener);
     g_signal_handlers_disconnect_by_func(proxy, (void *)on_endpoint_message, listener);
-    g_signal_handlers_disconnect_by_func(proxy, (void *)on_endpoint_reconnect, listener);
     g_signal_handlers_disconnect_by_func(proxy, (void *)on_endpoint_entity_info, listener);
 
     listener->endpoints = g_slist_remove(listener->endpoints, proxy);
@@ -596,7 +590,7 @@ disconnect_listener(HippoDBus         *dbus,
     
     while (listener->endpoints != NULL)
 	unregister_endpoint(listener, listener->endpoints->data);
-
+    
     dbus->listeners = g_slist_remove(dbus->listeners, listener);
 
     unwatch_for_disconnect(dbus, listener->name);
@@ -622,7 +616,9 @@ handle_unregister_endpoint(HippoDBus   *dbus,
 				      _("Expected one argument, the endpoint ID"));
     }
     
-    listener = find_listener(dbus, message);
+    listener = find_listener(dbus, message, &reply);
+    if (!listener)
+        return reply;
     proxy = find_endpoint(listener, endpoint, message, &reply);
     if (!proxy)
 	return reply;
@@ -658,7 +654,9 @@ handle_join_chat_room(HippoDBus   *dbus,
 				      _("Expected three arguments, the endpoint ID, the chat ID, and participant boolean"));
     }
     
-    listener = find_listener(dbus, message);
+    listener = find_listener(dbus, message, &reply);
+    if (!listener)
+        return reply;
     proxy = find_endpoint(listener, endpoint, message, &reply);
     if (!proxy)
 	return reply;
@@ -691,7 +689,9 @@ handle_leave_chat_room(HippoDBus   *dbus,
 				      _("Expected two arguments, the endpoint ID and the chat ID"));
     }
     
-    listener = find_listener(dbus, message);
+    listener = find_listener(dbus, message, &reply);
+    if (!listener)
+        return reply;
     proxy = find_endpoint(listener, endpoint, message, &reply);
     if (!proxy)
 	return reply;
@@ -1098,4 +1098,35 @@ handle_message(DBusConnection     *connection,
         dbus->in_dispatch = FALSE;
         
     return result;
+}
+
+void
+hippo_dbus_notify_xmpp_connected(HippoDBus   *dbus,
+                                 gboolean     connected)
+{
+    if (dbus->xmpp_connected == (connected != FALSE))
+        return;
+    
+    dbus->xmpp_connected = connected != FALSE;
+
+    if (dbus->xmpp_connected) {
+        /* notify all the listeners */
+        DBusMessage *message = dbus_message_new_signal(HIPPO_DBUS_LISTENER_PATH,
+                                                       HIPPO_DBUS_LISTENER_INTERFACE,
+                                                       "Connected");
+        
+        dbus_connection_send(dbus->connection, message, NULL);
+        dbus_message_unref(message);
+    } else {
+        DBusMessage *message = dbus_message_new_signal(HIPPO_DBUS_LISTENER_PATH,
+                                                       HIPPO_DBUS_LISTENER_INTERFACE,
+                                                       "Disconnected");
+        
+        dbus_connection_send(dbus->connection, message, NULL);
+        dbus_message_unref(message);        
+
+        /* disconnect all the listeners (includes notifying them) */
+        while (dbus->listeners)
+            disconnect_listener(dbus, dbus->listeners->data);
+    }
 }

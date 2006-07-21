@@ -33,6 +33,9 @@ void       hippo_dbus_disconnect               (HippoDBus   *dbus);
  */
 void       hippo_dbus_blocking_shutdown        (HippoDBus   *dbus);
 
+void       hippo_dbus_notify_xmpp_connected    (HippoDBus   *dbus,
+                                                gboolean     connected);
+
 G_END_DECLS
 
 #endif /* __HIPPO_DBUS_SERVER_H__ */
