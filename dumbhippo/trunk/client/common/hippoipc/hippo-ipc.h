@@ -37,6 +37,7 @@ class HippoIpcProvider : public HippoIpcMethods {
 public:
     virtual HippoEndpointId registerEndpoint() = 0;
     virtual void setListener(HippoIpcListener *listener) = 0;
+    virtual bool isConnected() = 0;
 };
 
 class HippoIpcController : public HippoIpcMethods {

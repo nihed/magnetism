@@ -1068,7 +1068,7 @@ handle_message(DBusConnection     *connection,
                     old = NULL;
                 if (*new == '\0')
                     new = NULL;
-                if (old && new == NULL && strcmp(name, old) == 0) {
+                if (old && strcmp(name, old) == 0) {
                     HippoDBusListener *listener = find_listener_by_name(dbus, old);
                     if (listener != NULL) {
                         /* free this listener and forget about it (along with all its endpoints) */
