@@ -645,10 +645,11 @@ dh.bubble.PostData = function(post) {
             var text = viewersCount > 1 ? "people viewed this share" : "person viewed this share"
             dh.util.dom.appendSpanText(viewersCountDiv, "" + viewersCount + " " + text, "dh-notification-viewer-count")
             
-            pages.push({ name: "whosThere", title: "Viewers", div: viewersCountDiv })
-            // World shares don't yet have any other pages
-        } else {
-        if (this.post.CurrentViewers.length > 0) {
+            pages.push({ name: "viewers", title: "Viewers", div: viewersCountDiv })
+        }
+        // Only add the Who's There if we have something interesting to show
+        if (this.post.CurrentViewers.length > 0
+            && !(this.post.CurrentViewers.length == 1 && this.post.CurrentViewers.item(0).Id == dh.selfId)) {
             var whosThereDiv = document.createElement("div")
             whosThereDiv.className  = "dh-notification-whos-there"
             parent.appendChild(whosThereDiv)
@@ -684,7 +685,6 @@ dh.bubble.PostData = function(post) {
             someoneSaidDiv.appendChild(senderDiv)
             
             pages.push({ name: "someoneSaid", title: "Recent Comments", div: someoneSaidDiv })
-        }
         }
         
         return pages

@@ -1655,7 +1655,6 @@ hippo_connection_parse_live_post(HippoConnection *connection,
     GSList *viewers;
     LmMessageNode *subchild;
     
-    viewers = NULL;
     post = NULL;
     
     post_id = lm_message_node_get_attribute (child, "id");
@@ -1675,6 +1674,17 @@ hippo_connection_parse_live_post(HippoConnection *connection,
     viewers = NULL;
     seen_self = FALSE;
 
+    // At present, we aren't using this information.  For addressed
+    // (i.e. shares which have a recipient other than the world)
+    // we can always know who's viewing a share from the chat
+    // room presence.  For world only shares, the current design
+    // is that we only show total viewers.  It's unlikely that
+    // someone would know anyone in the random subset of people
+    // who just happened to look at a share.  In the future,
+    // we might want to have recentViewers include only this
+    // user's friends, to make it more interesting.  Probably
+    // should rename it to recentFriendViewers.
+#if 0
     for (subchild = node->children; subchild; subchild = subchild->next) {
         const char *entity_id;
         HippoEntity *entity;
@@ -1699,6 +1709,7 @@ hippo_connection_parse_live_post(HippoConnection *connection,
         else
             g_warning("entity '%s' in recentViewers on livePost is unknown", entity_id);
     }
+#endif
 
     node = lm_message_node_get_child (child, "chattingUserCount");
     if (!(node && node->value))
