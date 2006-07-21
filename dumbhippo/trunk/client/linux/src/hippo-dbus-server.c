@@ -477,7 +477,13 @@ on_endpoint_entity_info(HippoEndpointProxy *proxy,
                                                HIPPO_DBUS_LISTENER_PATH,
                                                HIPPO_DBUS_LISTENER_INTERFACE,
                                                "UserInfo");
-    
+
+        /* dbus doesn't allow null strings */
+        if (current_song == NULL)
+            current_song = "";
+        if (current_artist == NULL)
+            current_artist = "";
+        
         dbus_message_append_args(message,
                                  DBUS_TYPE_UINT64, &endpoint,
                                  DBUS_TYPE_STRING, &user_id,
