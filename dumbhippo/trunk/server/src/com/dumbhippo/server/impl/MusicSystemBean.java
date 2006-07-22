@@ -6,11 +6,8 @@ import java.util.List;
 import javax.annotation.EJB;
 import javax.ejb.Stateless;
 
-import com.dumbhippo.identity20.Guid;
-import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.AccountFeed;
 import com.dumbhippo.persistence.Group;
-import com.dumbhippo.persistence.NowPlayingTheme;
 import com.dumbhippo.persistence.TrackFeedEntry;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.AlbumView;
@@ -38,34 +35,6 @@ public class MusicSystemBean implements MusicSystem {
 
 	@EJB
 	private MusicSystemInternal internal;
-	
-	public List<NowPlayingTheme> getExampleNowPlayingThemes(Viewpoint viewpoint, int maxResults) {
-		return internal.getExampleNowPlayingThemes(viewpoint, maxResults);
-	}
-	
-	public NowPlayingTheme createNewNowPlayingTheme(UserViewpoint viewpoint, NowPlayingTheme basedOn) {
-		return internal.createNewNowPlayingTheme(viewpoint, basedOn);
-	}
-	
-	public NowPlayingTheme getCurrentNowPlayingTheme(User user) throws NotFoundException {
-		return internal.getCurrentNowPlayingTheme(user);
-	}
-	
-	public void setCurrentNowPlayingTheme(UserViewpoint viewpoint, User user, NowPlayingTheme theme) {
-		internal.setCurrentNowPlayingTheme(viewpoint, user, theme);
-	}
-	
-	public NowPlayingTheme lookupNowPlayingTheme(String id) throws ParseException, NotFoundException {
-		return internal.lookupNowPlayingTheme(id);
-	}
-	
-	public NowPlayingTheme lookupNowPlayingTheme(Guid id) throws NotFoundException {
-		return internal.lookupNowPlayingTheme(id);
-	}
-	
-	public void setNowPlayingThemeImage(UserViewpoint viewpoint, String id, String type, String shaSum) throws NotFoundException, ParseException {
-		internal.setNowPlayingThemeImage(viewpoint, id, type, shaSum);
-	}
 	
 	public TrackView getCurrentTrackView(Viewpoint viewpoint, User user) throws NotFoundException {
 		return internal.getCurrentTrackView(viewpoint, user);
@@ -162,26 +131,6 @@ public class MusicSystemBean implements MusicSystem {
 	
 	public List<TrackView> getTrackSearchTracks(Viewpoint viewpoint, TrackSearchResult searchResult, int start, int count) {
 		return internal.getTrackSearchTracks(viewpoint, searchResult, start, count);
-	}
-
-
-	public NowPlayingTheme getCurrentTheme(Viewpoint viewpoint, User user) {
-		return internal.getCurrentTheme(viewpoint, user);
-	}
-
-
-	public void getFriendsThemes(Viewpoint viewpoint, User user, Pageable<NowPlayingTheme> pageable) {
-		internal.getFriendsThemes(viewpoint, user, pageable);
-	}
-
-
-	public void getMyThemes(Viewpoint viewpoint, User user, Pageable<NowPlayingTheme> pageable) {
-		internal.getMyThemes(viewpoint, user, pageable);
-	}
-
-
-	public void getAllThemes(Viewpoint viewpoint, Pageable<NowPlayingTheme> pageable) {
-		internal.getAllThemes(viewpoint, pageable);
 	}
 	
 	public void addFeedTrack(AccountFeed feed, TrackFeedEntry entry, int entryPosition) {

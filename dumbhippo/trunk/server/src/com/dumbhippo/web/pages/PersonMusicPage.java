@@ -10,7 +10,7 @@ import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.Enabled;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.InvitationSystem;
-import com.dumbhippo.server.MusicSystem;
+import com.dumbhippo.server.NowPlayingThemeSystem;
 import com.dumbhippo.server.PromotionCode;
 import com.dumbhippo.server.TrackView;
 import com.dumbhippo.web.ListBean;
@@ -24,7 +24,7 @@ public class PersonMusicPage extends AbstractPersonPage {
 	
 	private Configuration configuration;
 	private InvitationSystem invitationSystem;
-	private MusicSystem musicSystem;
+	private NowPlayingThemeSystem nowPlayingSystem;
 	private ListBean<TrackView> latestTracks;
 	private ListBean<TrackView> frequentTracks;
 	private ListBean<TrackView> popularTracks;
@@ -36,7 +36,7 @@ public class PersonMusicPage extends AbstractPersonPage {
 		selfInvitations = -1;
 		configuration = WebEJBUtil.defaultLookup(Configuration.class);
 		invitationSystem = WebEJBUtil.defaultLookup(InvitationSystem.class);
-		musicSystem = WebEJBUtil.defaultLookup(MusicSystem.class);
+		nowPlayingSystem = WebEJBUtil.defaultLookup(NowPlayingThemeSystem.class);
 	}
 
 	public ListBean<TrackView> getFrequentTracks() {
@@ -90,7 +90,7 @@ public class PersonMusicPage extends AbstractPersonPage {
 	
 	public ListBean<NowPlayingTheme> getExampleThemes() {
 		if (exampleThemes == null) {
-			exampleThemes = new ListBean<NowPlayingTheme>(musicSystem.getExampleNowPlayingThemes(getSignin().getViewpoint(), 5));
+			exampleThemes = new ListBean<NowPlayingTheme>(nowPlayingSystem.getExampleNowPlayingThemes(getSignin().getViewpoint(), 5));
 		}
 		return exampleThemes;
 	}

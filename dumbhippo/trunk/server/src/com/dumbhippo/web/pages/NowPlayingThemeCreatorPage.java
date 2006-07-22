@@ -2,18 +2,18 @@ package com.dumbhippo.web.pages;
 
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.NowPlayingTheme;
-import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.NotFoundException;
+import com.dumbhippo.server.NowPlayingThemeSystem;
 import com.dumbhippo.web.WebEJBUtil;
 
 public class NowPlayingThemeCreatorPage extends AbstractSigninRequiredPage {
 
-	private MusicSystem musicSystem;
+	private NowPlayingThemeSystem nowPlayingSystem;
 	private NowPlayingTheme theme;
 	
 	public NowPlayingThemeCreatorPage() {
-		musicSystem = WebEJBUtil.defaultLookup(MusicSystem.class);
-	}	
+		nowPlayingSystem = WebEJBUtil.defaultLookup(NowPlayingThemeSystem.class);
+	}
 	
 	public void setThemeId(String id) {
 		if (theme != null)
@@ -21,7 +21,7 @@ public class NowPlayingThemeCreatorPage extends AbstractSigninRequiredPage {
 		if (id == null || id.trim().length() == 0)
 			return;
 		try {
-			theme = musicSystem.lookupNowPlayingTheme(id);
+			theme = nowPlayingSystem.lookupNowPlayingTheme(id);
 		} catch (ParseException e) {
 			theme = null;
 		} catch (NotFoundException e) {

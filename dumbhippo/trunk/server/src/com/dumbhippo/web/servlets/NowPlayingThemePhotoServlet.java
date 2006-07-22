@@ -18,20 +18,20 @@ import com.dumbhippo.persistence.NowPlayingTheme;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HumanVisibleException;
-import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.NotFoundException;
+import com.dumbhippo.server.NowPlayingThemeSystem;
 import com.dumbhippo.server.UserViewpoint;
 import com.dumbhippo.web.WebEJBUtil;
 
 public class NowPlayingThemePhotoServlet extends AbstractPhotoServlet {
 	private static final long serialVersionUID = 1L;
 	
-	private MusicSystem musicSystem;
+	private NowPlayingThemeSystem nowPlayingSystem;
 	
 	@Override
 	public void init() {
 		super.init();
-		musicSystem = WebEJBUtil.defaultLookup(MusicSystem.class);
+		nowPlayingSystem = WebEJBUtil.defaultLookup(NowPlayingThemeSystem.class);
 	}	
 		
 	@Override
@@ -64,7 +64,7 @@ public class NowPlayingThemePhotoServlet extends AbstractPhotoServlet {
 		writePhoto(image, filename, true);
 		
 		try {
-			musicSystem.setNowPlayingThemeImage(new UserViewpoint(user), themeId, mode, hexSum);
+			nowPlayingSystem.setNowPlayingThemeImage(new UserViewpoint(user), themeId, mode, hexSum);
 		} catch (ParseException e) {
 			throw new HttpException(HttpResponseCode.BAD_REQUEST, "Bad theme id", e);
 		} catch (NotFoundException e) {
