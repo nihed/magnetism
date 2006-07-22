@@ -16,8 +16,6 @@ import com.dumbhippo.persistence.Track;
 import com.dumbhippo.persistence.TrackFeedEntry;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.YahooAlbumResult;
-import com.dumbhippo.persistence.YahooArtistResult;
-import com.dumbhippo.persistence.YahooSongDownloadResult;
 import com.dumbhippo.persistence.YahooSongResult;
 
 /**
@@ -45,43 +43,7 @@ public interface MusicSystemInternal extends MusicSystem {
 	 * @param properties props of the track
 	 */
 	public void addHistoricalTrack(User user, Map<String,String> properties);
-	
-	public AmazonAlbumResult getAmazonAlbumSync(final String album, final String artist); 
-	
-	public Future<AmazonAlbumResult> getAmazonAlbumAsync(String album, String artist);
-	
-	public List<YahooSongResult> getYahooSongResultsSync(Track track);
-	
-    public List<YahooSongResult> getYahooSongResultsSync(String albumId);
-	
-	public Future<List<YahooSongResult>> getYahooSongResultsAsync(Track track);
-	
-	public List<YahooSongDownloadResult> getYahooSongDownloadResultsSync(String songId);
-	
-	public Future<List<YahooSongDownloadResult>> getYahooSongDownloadResultsAsync(String songId);
-	
-	public List<YahooAlbumResult> getYahooAlbumResultsSync(YahooArtistResult artist, Pageable<AlbumView> albumsByArtist, YahooAlbumResult albumToExclude);
-	
-    public Future<List<YahooAlbumResult>> getYahooAlbumResultsAsync(YahooArtistResult artist, Pageable<AlbumView> albumsByArtist, YahooAlbumResult albumToExclude);
-    
-	public YahooAlbumResult getYahooAlbumSync(YahooSongResult yahooSong) throws NotFoundException;
-	
-	public Future<YahooAlbumResult> getYahooAlbumAsync(YahooSongResult yahooSong);
 		
-	/*
-	 * Returns a yahoo artist that matches an artist name and an artistId. Might return an artist with a different 
-	 * name, if an artist with a different name matches a passed in artist id, or if multiple artist names match the
-	 * same artist id, and we've been storing a different name mapped to the artistId that the passed in artist name
-	 * also maps to. 
-	 * 
-	 * At least one parameter out of artist and artistId must not be null.
-	 * 
-	 * @param artist name of the artist
-	 * @param artistId yahoo id for the artist
-	 * @return YahooArtistResult that represents the artist
-	 */
-	public YahooArtistResult getYahooArtistResultSync(String artist, String artistId) throws NotFoundException;
-	
 	public TrackView getTrackView(Track track, long lastListen);
 
 	public Future<TrackView> getTrackViewAsync(long trackId, long lastListen);	
