@@ -36,6 +36,12 @@ public class AmazonAlbumResult extends DBUnique {
 	
 	public AmazonAlbumResult(String artist, String album, AmazonAlbumData data) {
 		lastUpdated = -1;
+		
+		if (artist == null)
+			throw new IllegalArgumentException("can't create AmazonAlbumResult with null artist");
+		if (album == null)
+			throw new IllegalArgumentException("can't create AmazonAlbumResult with null album");
+		
 		this.artist = artist;
 		this.album = album;
 		updateData(data);
@@ -129,6 +135,6 @@ public class AmazonAlbumResult extends DBUnique {
 	
 	@Override
 	public String toString() {
-		return "{albumResult album=" + album + " imageUrl=" + smallImageUrl + "}";
+		return "{albumResult album=" + album + " artist=" + artist + " imageUrl=" + smallImageUrl + "}";
 	}
 }

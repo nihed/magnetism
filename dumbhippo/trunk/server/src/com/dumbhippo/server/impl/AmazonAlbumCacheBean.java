@@ -7,6 +7,8 @@ import java.util.concurrent.FutureTask;
 
 import javax.annotation.EJB;
 import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityNotFoundException;
 import javax.persistence.PersistenceContext;
@@ -14,7 +16,9 @@ import javax.persistence.Query;
 
 import org.slf4j.Logger;
 
+import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.KnownFuture;
 import com.dumbhippo.persistence.AmazonAlbumResult;
 import com.dumbhippo.server.AmazonAlbumCache;
 import com.dumbhippo.server.BanFromWebTier;
@@ -57,23 +61,39 @@ public class AmazonAlbumCacheBean extends AbstractCacheBean implements AmazonAlb
 		public AmazonAlbumResult call() {
 			logger.debug("Entering AmazonAlbumSearchTask thread for album {} by artist {}", album, artist);				
 
-			// we do this instead of an inner class to work right with threads
 			AmazonAlbumCache cache = EJBUtil.defaultLookup(AmazonAlbumCache.class);
 
-			logger.debug("Obtained transaction in AmazonAlbumSearchTask thread for album {} by artist {}", album, artist);	
+			logger.debug("In AmazonAlbumSearchTask thread for album {} by artist {}", album, artist);	
 			
-			return cache.getAmazonAlbumSync(album, artist);
+			AmazonAlbumResult result = cache.checkCache(album, artist);
+			
+			if (result != null)
+				return result;
+			
+			AmazonAlbumData data = cache.fetchFromNet(album, artist);
+
+			return cache.saveInCache(album, artist, data);
 		}
 	}
 
-	public Future<AmazonAlbumResult> getAmazonAlbumAsync(String album, String artist) {
+	public Future<AmazonAlbumResult> getAsync(String album, String artist) {
+		if (artist == null || album == null) {
+			logger.debug("missing artist or album, not looking up album {} by artist {} on amazon", 
+					     album, artist);
+			return new KnownFuture<AmazonAlbumResult>(null);
+		}
+		
+		AmazonAlbumResult result = checkCache(album, artist);
+		if (result != null)
+			return new KnownFuture<AmazonAlbumResult>(result);
+				
 		FutureTask<AmazonAlbumResult> futureAlbum =
 			new FutureTask<AmazonAlbumResult>(new AmazonAlbumSearchTask(album, artist));
 		getThreadPool().execute(futureAlbum);
 		return futureAlbum;		
 	}
 	
-	private AmazonAlbumResult albumResultQuery(String artist, String album) {
+	private AmazonAlbumResult albumResultQuery(String album, String artist) {
 		Query q;
 		
 		q = em.createQuery("FROM AmazonAlbumResult album WHERE album.artist = :artist AND album.album = :album");
@@ -84,17 +104,19 @@ public class AmazonAlbumCacheBean extends AbstractCacheBean implements AmazonAlb
 			return (AmazonAlbumResult) q.getSingleResult();
 		} catch (EntityNotFoundException e) {
 			return null;
-		} 
+		}
 	}	
 		
-	public AmazonAlbumResult getAmazonAlbumSync(final String album, final String artist) {	
+	public AmazonAlbumResult getSync(final String album, final String artist) {
+		return getFutureResult(getAsync(album, artist));
+	}
+	
+	public AmazonAlbumResult checkCache(String album, String artist) {
 		if (artist == null || album == null) {
-			logger.debug("missing artist or album, not looking up album {} by artist {} on amazon", 
-					     album, artist);
-			return null;
+			throw new IllegalArgumentException("can't check cache for amazon album info with null artist or album");
 		}
 		
-		AmazonAlbumResult result = albumResultQuery(artist, album);
+		AmazonAlbumResult result = albumResultQuery(album, artist);
 
 		if (result != null) {
 			long now = System.currentTimeMillis();
@@ -105,11 +127,18 @@ public class AmazonAlbumCacheBean extends AbstractCacheBean implements AmazonAlb
 		}
 
 		if (result != null) {
-			logger.debug("Using amazon search result from database for album {} by artist {}: {}", 
-					     new Object[]{album, artist, result});
-			return result;
+			logger.debug("Have cached amazon album result for album {} by artist {}: {}", 
+					new Object[]{album, artist, result});
 		}
-		
+		return result;
+	}
+	
+	@TransactionAttribute(TransactionAttributeType.NEVER)
+	public AmazonAlbumData fetchFromNet(String album, String artist) {
+		if (artist == null || album == null) {
+			throw new IllegalArgumentException("can't fetch amazon album info from net with null artist or album");
+		}
+
 		AmazonItemSearch search = new AmazonItemSearch(REQUEST_TIMEOUT);
 		String amazonKey;
 		final AmazonAlbumData data;
@@ -123,37 +152,41 @@ public class AmazonAlbumCacheBean extends AbstractCacheBean implements AmazonAlb
 		else
 			data = null;
 		
+		return data;
+	}
+	
+	// null result means to save a negative result
+	@TransactionAttribute(TransactionAttributeType.NEVER)
+	public AmazonAlbumResult saveInCache(final String album, final String artist, final AmazonAlbumData data) {
+		if (artist == null || album == null) {
+			throw new IllegalArgumentException("can't cache amazon album info with null artist or album");
+		}
+		
 		try {
-			AmazonAlbumResult detached = runner.runTaskRetryingOnConstraintViolation(new Callable<AmazonAlbumResult>() {
-				
+			return runner.runTaskRetryingOnConstraintViolation(new Callable<AmazonAlbumResult>() {
 				public AmazonAlbumResult call() {
-					AmazonAlbumResult r = albumResultQuery(artist, album);
+					AmazonAlbumResult r = albumResultQuery(album, artist);
 					if (r == null) {
-						// data may be null, in which case the AmazonAlbumResult just 
-						// caches that we have no result
+						// data is allowed to be null which saves the negative result row
+						// in the db
 						r = new AmazonAlbumResult(artist, album, data);
 						r.setLastUpdated(new Date());
 						em.persist(r);
 					} else {
-						if (data != null)
+						if (data != null) // don't ever save a negative result once we have data at some point
 							r.updateData(data);
-						else 
-							; // if we got no data, just keep whatever the old data was
 						r.setLastUpdated(new Date());
 					}
+					
+					logger.debug("Saved new amazon search result for album {} by artist {}: {}", 
+						     new Object[]{album, artist, r});
+			
 					return r;
 				}
-				
 			});
-			
-			result = detached;
 		} catch (Exception e) {
-			result = null;
+			ExceptionUtils.throwAsRuntimeException(e);
+			throw new RuntimeException(e); // not reached
 		}
-		
-		if (result != null)
-			logger.debug("Using new amazon search result for album {} by artist {}: {}", 
-				     new Object[]{album, artist, result});
-		return result;
 	}
 }

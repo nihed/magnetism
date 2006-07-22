@@ -505,7 +505,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		} catch (ExecutionException e) {
 			logger.warn("thread pool worker thread threw execution exception {}", e.getMessage());
 			throw new RuntimeException(e);
-		}		
+		}
 	}
 	
 	private void fillAlbumInfo(YahooAlbumResult yahooAlbum, Future<AmazonAlbumResult> futureAmazonAlbum, AlbumView albumView) {
@@ -690,7 +690,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		
 		YahooSongResult yahooSong = null;
 		Future<YahooAlbumResult> futureYahooAlbum = null;
-		Future<AmazonAlbumResult> futureAmazonAlbum = amazonAlbumCache.getAmazonAlbumAsync(track.getAlbum(), track.getArtist());
+		Future<AmazonAlbumResult> futureAmazonAlbum = amazonAlbumCache.getAsync(track.getAlbum(), track.getArtist());
 		try {
 			// get our song IDs; no point doing it async...
 			List<YahooSongResult> songs = yahooSongCache.getYahooSongResultsSync(track);
@@ -822,7 +822,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		Map<String, YahooAlbumResult> yahooAlbums = new HashMap<String, YahooAlbumResult>();
 		for (YahooAlbumResult yahooAlbum : albums) {
 			if (!yahooAlbum.isNoResultsMarker()) {
-			    futureAmazonAlbums.put(yahooAlbum.getAlbumId(), amazonAlbumCache.getAmazonAlbumAsync(yahooAlbum.getAlbum(), yahooAlbum.getArtist()));			
+			    futureAmazonAlbums.put(yahooAlbum.getAlbumId(), amazonAlbumCache.getAsync(yahooAlbum.getAlbum(), yahooAlbum.getArtist()));			
 			    // getAlbumTracksAsync is responsible for doing all the sorting, so we get a clean sorted list here
 			    futureTracks.put(yahooAlbum.getAlbumId(), yahooSongCache.getYahooSongResultsAsync(yahooAlbum.getAlbumId()));
 			    yahooAlbums.put(yahooAlbum.getAlbumId(), yahooAlbum);
@@ -880,7 +880,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		}
 		
 		if (albumsByArtist.getStart() == 0) {
-            Future<AmazonAlbumResult> amazonAlbum = amazonAlbumCache.getAmazonAlbumAsync(album.getAlbum(), album.getArtist());
+            Future<AmazonAlbumResult> amazonAlbum = amazonAlbumCache.getAsync(album.getAlbum(), album.getArtist());
             Future<List<YahooSongResult>> albumTracks = yahooSongCache.getYahooSongResultsAsync(album.getAlbumId());
 
 		    AlbumView albumView = getAlbumView(viewpoint, song, album, amazonAlbum, albumTracks);
@@ -983,7 +983,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		// spawn threads in parallel
 		List<Future<AlbumView>> futureViews = new ArrayList<Future<AlbumView>>(tracks.size());
 		for (Track t : tracks) {
-			Future<AmazonAlbumResult> futureAmazonAlbum = amazonAlbumCache.getAmazonAlbumAsync(t.getAlbum(), t.getArtist());			
+			Future<AmazonAlbumResult> futureAmazonAlbum = amazonAlbumCache.getAsync(t.getAlbum(), t.getArtist());			
 			List<YahooSongResult> songs = yahooSongCache.getYahooSongResultsSync(t);
 			Future<YahooAlbumResult> futureYahooAlbum = null;
 		

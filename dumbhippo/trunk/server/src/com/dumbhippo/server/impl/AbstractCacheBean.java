@@ -1,7 +1,12 @@
 package com.dumbhippo.server.impl;
 
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 
+import org.slf4j.Logger;
+
+import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.ThreadUtils;
 
 /**
@@ -9,6 +14,9 @@ import com.dumbhippo.ThreadUtils;
  *
  */
 public abstract class AbstractCacheBean {
+	@SuppressWarnings("unused")
+	static private final Logger logger = GlobalSetup.getLogger(AbstractCacheBean.class);
+	
 	// how long to wait on the search API call
 	static protected final int REQUEST_TIMEOUT = 1000 * 12;
 	// 2 days, shared by yahoo-related subclasses
@@ -42,4 +50,15 @@ public abstract class AbstractCacheBean {
 		}	
 	}
 
+	static protected <T> T getFutureResult(Future<T> future) {
+		try {
+			return future.get();
+		} catch (InterruptedException e) {
+			logger.warn("thread pool worker thread interrupted {}", e.getMessage());
+			throw new RuntimeException(e);
+		} catch (ExecutionException e) {
+			logger.warn("thread pool worker thread threw execution exception {}", e.getMessage());
+			throw new RuntimeException(e);
+		}
+	}
 }
