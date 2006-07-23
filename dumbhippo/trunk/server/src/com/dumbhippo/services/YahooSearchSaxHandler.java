@@ -16,7 +16,6 @@ import com.dumbhippo.persistence.SongDownloadSource;
 import com.dumbhippo.persistence.YahooAlbumResult;
 import com.dumbhippo.persistence.YahooArtistResult;
 import com.dumbhippo.persistence.YahooSongDownloadResult;
-import com.dumbhippo.persistence.YahooSongResult;
 
 class YahooSearchSaxHandler extends EnumSaxHandler<YahooSearchSaxHandler.Element> {
 	
@@ -117,6 +116,11 @@ class YahooSearchSaxHandler extends EnumSaxHandler<YahooSearchSaxHandler.Element
 		public void setArtistId(String artistId) {
 			this.artistId = artistId;
 		}
+		
+		@Override
+		public String toString() {
+			return "{Result " + artistId + ", " + albumId + ", " + ", " + id + " " + values.values() + "}";
+		}
 	}
 	
 	private List<Result> results;
@@ -189,11 +193,10 @@ class YahooSearchSaxHandler extends EnumSaxHandler<YahooSearchSaxHandler.Element
 	/*
 	@Override 
 	public void endDocument() throws SAXException {
-		logger.debug("End of yahoo document");
 	}
 	*/
 	
-	private YahooSongResult songFromResult(Result r, String artist, String album, String name) {
+	private YahooSongData songFromResultChecked(Result r, String artist, String album, String name) {
 		// we want to make sure we return results that match supplied fields exactly, 
 		// because otherwise yahoo will include results only subsets of which contain the 
 		// supplied fields, for example search for album "Martina McBride: Greatest Hits"
@@ -204,26 +207,37 @@ class YahooSearchSaxHandler extends EnumSaxHandler<YahooSearchSaxHandler.Element
 		String resultName = r.getValue(Element.Title);
 		if (!resultName.equals(name) || !resultAlbum.equals(album) || !resultArtist.equals(artist)) {
 			return null;
-		}	
+		}
 
-		return songFromResult(r);		
+		return songFromResult(r);
 	}
 
-	private YahooSongResult songFromResult(Result r) {
-		YahooSongResult song = new YahooSongResult();
-		song.setLastUpdated(new Date());
-		song.setSongId(r.getId());
-		song.setName(r.getValue(Element.Title));
-		song.setAlbumId(r.getAlbumId());
-		song.setArtistId(r.getArtistId());
-		song.setPublisher(r.getValue(Element.Publisher));
-		song.setReleaseDate(r.getValue(Element.ReleaseDate));
-		song.setDuration(r.getValueInt(Element.Length));
-		song.setTrackNumber(r.getValueInt(Element.Track));
-		return song;		
+	private YahooSongData songFromResult(Result r) {
+		/* The rest of the code relies on these being non-null */
+		if (r.getId() == null || 
+			r.getId().length() == 0 ||
+			r.getAlbumId() == null || 
+			r.getAlbumId().length() == 0 || 
+			r.getArtistId() == null ||
+			r.getArtistId().length() == 0) {
+			logger.debug("  not using invalid Yahoo song result {}", r);
+			return null;
+		} else {
+			SongData song = new SongData();
+			song.setSongId(r.getId());
+			song.setName(r.getValue(Element.Title));
+			song.setAlbumId(r.getAlbumId());
+			song.setArtistId(r.getArtistId());
+			song.setPublisher(r.getValue(Element.Publisher));
+			song.setReleaseDate(r.getValue(Element.ReleaseDate));
+			song.setDuration(r.getValueInt(Element.Length));
+			song.setTrackNumber(r.getValueInt(Element.Track));
+			
+			return song;
+		}
 	}
 	
-	public List<YahooSongResult> getBestSongs(String artist, String album, String name) {
+	public List<YahooSongData> getBestSongs(String artist, String album, String name) {
 		// FIXME this could doubtless be more sophisticated ...
 		// right now it just hopes the first two results are the 
 		// good ones. you sometimes need two different song IDs 
@@ -234,9 +248,9 @@ class YahooSearchSaxHandler extends EnumSaxHandler<YahooSearchSaxHandler.Element
 			return Collections.emptyList();
 		}
 
-		List<YahooSongResult> list = new ArrayList<YahooSongResult>();
+		List<YahooSongData> list = new ArrayList<YahooSongData>();
 		Result r = results.get(0);
-		YahooSongResult songResult = songFromResult(r, artist, album, name);
+		YahooSongData songResult = songFromResultChecked(r, artist, album, name);
 		boolean usedFirstResult = false;
 		if (songResult != null) {
 		    list.add(songResult);
@@ -252,7 +266,7 @@ class YahooSearchSaxHandler extends EnumSaxHandler<YahooSearchSaxHandler.Element
 				 r.getValue(Element.Publisher) != null && 
 				 !r.getId().equals(results.get(0).getId()))) {
 				
-				songResult = songFromResult(r, artist, album, name);
+				songResult = songFromResultChecked(r, artist, album, name);
 				if (songResult != null) {
 				    list.add(songResult);
 				}
@@ -261,15 +275,17 @@ class YahooSearchSaxHandler extends EnumSaxHandler<YahooSearchSaxHandler.Element
 		return list;
 	}
 	
-	public List<YahooSongResult> getAlbumSongs() {
-		List<YahooSongResult> list = new ArrayList<YahooSongResult>();
+	public List<YahooSongData> getAlbumSongs() {
+		List<YahooSongData> list = new ArrayList<YahooSongData>();
 		
 		if (results.isEmpty()) {
 			logger.debug("No album songs results were parsed");
 		}
 		
 		for (Result r : results) {
-		    list.add(songFromResult(r));
+			YahooSongData song = songFromResult(r);
+			if (song != null)
+				list.add(song);
 		}
 		return list;
 	}
@@ -377,5 +393,86 @@ class YahooSearchSaxHandler extends EnumSaxHandler<YahooSearchSaxHandler.Element
 		}
 		
 		return list;		
+	}
+	
+	private static class SongData implements YahooSongData {
+
+		private String albumId;
+		private String artistId;
+		private int duration;
+		private String publisher;
+		private String releaseDate;
+		private String songId;
+		private String name;
+		private int trackNumber;
+		
+		public SongData() {
+			
+		}
+
+		public String getAlbumId() {
+			return albumId;
+		}
+
+		public void setAlbumId(String albumId) {
+			this.albumId = albumId;
+		}
+
+		public String getArtistId() {
+			return artistId;
+		}
+
+		public void setArtistId(String artistId) {
+			this.artistId = artistId;
+		}
+
+		public int getDuration() {
+			return duration;
+		}
+
+		public void setDuration(int duration) {
+			this.duration = duration;
+		}
+
+		public String getName() {
+			return name;
+		}
+
+		public void setName(String name) {
+			this.name = name;
+		}
+
+		public String getPublisher() {
+			return publisher;
+		}
+
+		public void setPublisher(String publisher) {
+			this.publisher = publisher;
+		}
+
+		public String getReleaseDate() {
+			return releaseDate;
+		}
+
+		public void setReleaseDate(String releaseDate) {
+			this.releaseDate = releaseDate;
+		}
+
+		public String getSongId() {
+			return songId;
+		}
+
+		public void setSongId(String songId) {
+			this.songId = songId;
+		}
+
+		public int getTrackNumber() {
+			return trackNumber;
+		}
+
+		public void setTrackNumber(int trackNumber) {
+			this.trackNumber = trackNumber;
+		}
+		
 	}
 }

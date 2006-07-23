@@ -12,7 +12,6 @@ import com.dumbhippo.StringUtils;
 import com.dumbhippo.persistence.YahooAlbumResult;
 import com.dumbhippo.persistence.YahooArtistResult;
 import com.dumbhippo.persistence.YahooSongDownloadResult;
-import com.dumbhippo.persistence.YahooSongResult;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.NotFoundException;
@@ -48,12 +47,9 @@ public class YahooSearchWebServices extends AbstractXmlRequest<YahooSearchSaxHan
 	 * @param artist
 	 * @param album
 	 * @param name
-	 * @param duration
-	 * @param trackNumber
 	 * @returns list of results (possibly empty)
 	 */
-	public List<YahooSongResult> lookupSong(String artist, String album, String name,
-			int duration, int trackNumber) {
+	public List<YahooSongData> lookupSong(String artist, String album, String name) {
 		
 		if (artist == null || album == null || name == null) {
 			logger.debug("one of artist/album/name missing, can't do yahoo search on this track");
@@ -86,7 +82,7 @@ public class YahooSearchWebServices extends AbstractXmlRequest<YahooSearchSaxHan
 		}
 	}
 	
-	public List<YahooSongResult> lookupAlbumSongs(String album, String artist) {
+	public List<YahooSongData> lookupAlbumSongs(String album, String artist) {
 		StringBuilder sb = new StringBuilder();
 		sb.append("http://api.search.yahoo.com/AudioSearchService/V1/songSearch?results=50&appid=");
 		sb.append(appId);
@@ -107,7 +103,7 @@ public class YahooSearchWebServices extends AbstractXmlRequest<YahooSearchSaxHan
 		}		
 	}
 
-	public List<YahooSongResult> lookupAlbumSongs(String albumId) {
+	public List<YahooSongData> lookupAlbumSongs(String albumId) {
 		StringBuilder sb = new StringBuilder();
 		sb.append("http://api.search.yahoo.com/AudioSearchService/V1/songSearch?results=50&appid=");
 		sb.append(appId);
@@ -237,8 +233,8 @@ public class YahooSearchWebServices extends AbstractXmlRequest<YahooSearchSaxHan
 		config.init();
 		
 		YahooSearchWebServices ws = new YahooSearchWebServices(6000, config);
-		List<YahooSongResult> list = ws.lookupSong("Bob Dylan", "Time Out of Mind", "Tryin' To Get To Heaven", -1, -1);
-		for (YahooSongResult r : list) {
+		List<YahooSongData> list = ws.lookupSong("Bob Dylan", "Time Out of Mind", "Tryin' To Get To Heaven");
+		for (YahooSongData r : list) {
 			System.out.println("Got result: " + r);
 			List<YahooSongDownloadResult> listD = ws.lookupDownloads(r.getSongId());
 			for (YahooSongDownloadResult d : listD) {

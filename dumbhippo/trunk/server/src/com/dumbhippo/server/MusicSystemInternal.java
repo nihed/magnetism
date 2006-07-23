@@ -15,8 +15,8 @@ import com.dumbhippo.persistence.Track;
 import com.dumbhippo.persistence.TrackFeedEntry;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.YahooAlbumResult;
-import com.dumbhippo.persistence.YahooSongResult;
 import com.dumbhippo.services.AmazonAlbumData;
+import com.dumbhippo.services.YahooSongData;
 
 /**
  * These are music system methods used within the ejb tier, but not useful
@@ -54,7 +54,7 @@ public interface MusicSystemInternal extends MusicSystem {
 	
 	public AlbumView getAlbumView(Future<YahooAlbumResult> futureYahooAlbum, Future<AmazonAlbumData> futureAmazonAlbum);
 
-	public AlbumView getAlbumView(Viewpoint viewpoint, YahooSongResult yahooSong, YahooAlbumResult yahooAlbum, Future<AmazonAlbumData> futureAmazonAlbum, Future<List<YahooSongResult>> futureAlbumTracks);
+	public AlbumView getAlbumView(Viewpoint viewpoint, YahooSongData yahooSong, YahooAlbumResult yahooAlbum, Future<AmazonAlbumData> futureAmazonAlbum, Future<List<YahooSongData>> futureAlbumTracks);
 	
 	public Future<AlbumView> getAlbumViewAsync(Future<YahooAlbumResult> futureYahooAlbum, Future<AmazonAlbumData> futureAmazonAlbum);
 	
@@ -94,7 +94,7 @@ public interface MusicSystemInternal extends MusicSystem {
 	 * @return view of an artist that contains requested albums
 	 * @throws NotFoundException
 	 */
-	public ExpandedArtistView getExpandedArtistView(Viewpoint viewpoint, YahooSongResult song, YahooAlbumResult album, Pageable<AlbumView> albumsByArtist) throws NotFoundException;
+	public ExpandedArtistView getExpandedArtistView(Viewpoint viewpoint, YahooSongData song, YahooAlbumResult album, Pageable<AlbumView> albumsByArtist) throws NotFoundException;
 	
 	public Future<ArtistView> getArtistViewAsync(Track track);
 	

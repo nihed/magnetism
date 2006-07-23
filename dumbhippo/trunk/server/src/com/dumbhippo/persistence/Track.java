@@ -4,15 +4,10 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.MessageDigest;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.JoinColumn;
-import javax.persistence.JoinTable;
-import javax.persistence.ManyToMany;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 
@@ -79,12 +74,6 @@ public class Track extends DBUnique {
 	private long fileSize; // in bytes, -1 if unknown
 	private int trackNumber; // -1 if inapplicable/unknown, 1-based, 0 is invalid
 	private String discIdentifier; // CD/DVD ID string, aka MCDI, TOC
-	// each track can have a couple of different song IDs that 
-	// are interesting, in particular yahoo returns 
-	// a different song id for iTunes and everything else
-	// this lets us have a table that maps tracks to yahoo songs, and shouldn't
-	// affect the digest
-	private Set<YahooSongResult> yahooSongResults;
 
 	private void computeDigest() {
 		if (digest != null)
@@ -124,7 +113,6 @@ public class Track extends DBUnique {
 		trackNumber = -1;
 		type = TrackType.UNKNOWN;
 		format = MediaFileFormat.UNKNOWN;
-		yahooSongResults = new HashSet<YahooSongResult>();
 	}
 	
 	public Track(Map<String,String> properties) {
@@ -311,48 +299,7 @@ public class Track extends DBUnique {
 
 	protected void setUrl(String url) {
 		this.url = url;
-	}
-	
-	
-    // This is a @ManyToMany relationship because:
-    // - tracks with slightly different details such as duration or disc identifier
-	//   can map to the same YahooSongResult
-    // - There might be multiple YahooSongResult that match the track information 
-	//   because yahoo returns a different song id for different sources of song
-	//   downloads (in particular Yahoo download and iTunes download)         
-	@ManyToMany
-	@JoinTable(table=@Table(name="Track_YahooSongResult",
-			                uniqueConstraints = 
-		                        {@UniqueConstraint(columnNames={"track_id", "song_id"})}),
-		       joinColumns=@JoinColumn(name="track_id", referencedColumnName="id"),                 
-		       inverseJoinColumns=@JoinColumn(name="song_id", referencedColumnName="id"))		       
-	public Set<YahooSongResult> getYahooSongResults() {
-		return yahooSongResults;
-	}
-	
-	protected void setYahooSongResults(Set<YahooSongResult> yahooSongResults) {
-		if (yahooSongResults == null)
-			throw new IllegalArgumentException("null set of yahoo song results will not be set");
-		this.yahooSongResults = yahooSongResults;
-	}
-	
-	public void addYahooSongResults(Set<YahooSongResult> newYahooSongResults) {
-		if (yahooSongResults == null)
-			throw new IllegalArgumentException("null set of yahoo song results will not be added");
-		this.yahooSongResults.addAll(newYahooSongResults);
-	}
-
-	public void addYahooSongResult(YahooSongResult newYahooSongResult) {
-		if (newYahooSongResult == null)
-			throw new IllegalArgumentException("null yahoo song result will not be added");		
-		this.yahooSongResults.add(newYahooSongResult);
-	}
-
-	public void removeYahooSongResult(YahooSongResult oldYahooSongResult) {
-		if (oldYahooSongResult == null)
-			throw new IllegalArgumentException("null yahoo song result will not be removed");		
-		this.yahooSongResults.remove(oldYahooSongResult);
-	}
+	}	
 	
 	@Override
 	public String toString() {

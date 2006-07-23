@@ -21,7 +21,6 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.Pair;
 import com.dumbhippo.persistence.YahooAlbumResult;
 import com.dumbhippo.persistence.YahooArtistResult;
-import com.dumbhippo.persistence.YahooSongResult;
 import com.dumbhippo.server.AlbumView;
 import com.dumbhippo.server.BanFromWebTier;
 import com.dumbhippo.server.Configuration;
@@ -31,6 +30,7 @@ import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.YahooAlbumCache;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.services.YahooSearchWebServices;
+import com.dumbhippo.services.YahooSongData;
 
 @BanFromWebTier
 @Stateless
@@ -49,9 +49,9 @@ public class YahooAlbumCacheBean extends AbstractCacheBean implements YahooAlbum
 	
 	static private class YahooAlbumSearchTask implements Callable<YahooAlbumResult> {
 		
-		private YahooSongResult yahooSong;
+		private YahooSongData yahooSong;
 
-		public YahooAlbumSearchTask(YahooSongResult yahooSong) {
+		public YahooAlbumSearchTask(YahooSongData yahooSong) {
 			this.yahooSong = yahooSong;
 		}
 		
@@ -286,7 +286,7 @@ public class YahooAlbumCacheBean extends AbstractCacheBean implements YahooAlbum
 
 	}
 	
-	private YahooAlbumResult updateYahooAlbumResultSync(YahooAlbumResult oldResult, YahooSongResult yahooSong) throws NotFoundException {
+	private YahooAlbumResult updateYahooAlbumResultSync(YahooAlbumResult oldResult, YahooSongData yahooSong) throws NotFoundException {
 
 		String albumId = yahooSong.getAlbumId();
 		String artistId = yahooSong.getArtistId();
@@ -327,12 +327,12 @@ public class YahooAlbumCacheBean extends AbstractCacheBean implements YahooAlbum
 		}
 	}
 	
-	public YahooAlbumResult getYahooAlbumSync(YahooSongResult yahooSong) throws NotFoundException {
+	public YahooAlbumResult getYahooAlbumSync(YahooSongData yahooSong) throws NotFoundException {
 
 		String albumId = yahooSong.getAlbumId();
 		String artistId = yahooSong.getArtistId();
 		
-		// all YahooSongResults that are not no results markers must have albumId and artistId, 
+		// all YahooSongDatas that are not no results markers must have albumId and artistId, 
 		// and this function must not be passed in no results markers
 		if ((albumId == null) || (artistId == null)) {
 			logger.error("albumId or artistId is null when requesting a single yahoo album result for a yahoo song");
@@ -348,7 +348,7 @@ public class YahooAlbumCacheBean extends AbstractCacheBean implements YahooAlbum
         try {
 		    yahooAlbum  = (YahooAlbumResult)q.getSingleResult();
 		} catch (EntityNotFoundException e) { 
-			// we must know about the YahooSongResult because we have a track associated with it, 
+			// we must know about the YahooSongData because we have a track associated with it, 
 			// it's time to get the album info too!
 			needNewQuery = true;
 		} catch (NonUniqueResultException e) {
@@ -385,7 +385,7 @@ public class YahooAlbumCacheBean extends AbstractCacheBean implements YahooAlbum
 		return futureAlbums;
 	}
 
-	public Future<YahooAlbumResult> getYahooAlbumAsync(YahooSongResult yahooSong) {
+	public Future<YahooAlbumResult> getYahooAlbumAsync(YahooSongData yahooSong) {
 		FutureTask<YahooAlbumResult> futureAlbum =
 			new FutureTask<YahooAlbumResult>(new YahooAlbumSearchTask(yahooSong));
 		getThreadPool().execute(futureAlbum);

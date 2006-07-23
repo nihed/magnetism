@@ -3,10 +3,17 @@ package com.dumbhippo.persistence;
 import java.util.Date;
 
 import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Transient;
+import javax.persistence.EmbeddableSuperclass;
 
-@Entity
+import com.dumbhippo.services.YahooSongData;
+
+/**
+ * We have two tables, one for songs that are found for album listings, one for 
+ * songs that are found for artist,album,name. This superclass has the common 
+ * bits between those tables (the returned fields from yahoo) while the 
+ * subclasses have the distinct keys used for lookup.
+ */
+@EmbeddableSuperclass
 public class YahooSongResult extends DBUnique {
 	
 	private static final long serialVersionUID = 1L;
@@ -31,20 +38,15 @@ public class YahooSongResult extends DBUnique {
 		trackNumber = -1;
 	}
 
-	public void update(YahooSongResult results) {
-		if (results.lastUpdated < lastUpdated)
-			throw new RuntimeException("Updating song with older results");
-		
-		lastUpdated = results.lastUpdated;
-		songId = results.songId;
-		name = results.name;
-		albumId = results.albumId;
-		artistId = results.artistId;
-		publisher = results.publisher;
-		duration = results.duration;
-		releaseDate = results.releaseDate;
-		trackNumber = results.trackNumber;
-		noResultsMarker = results.noResultsMarker;
+	public void updateData(YahooSongData data) {
+		songId = data.getSongId();
+		name = data.getName();
+		albumId = data.getAlbumId();
+		artistId = data.getArtistId();
+		publisher = data.getPublisher();
+		duration = data.getDuration();
+		releaseDate = data.getReleaseDate();
+		trackNumber = data.getTrackNumber();
 	}
 	
 	@Column(nullable=true)
@@ -117,7 +119,7 @@ public class YahooSongResult extends DBUnique {
 		this.releaseDate = releaseDate;
 	}
 
-	@Column(nullable=true, unique=true)
+	@Column(nullable=true)
 	public String getSongId() {
 		return songId;
 	}
@@ -152,13 +154,43 @@ public class YahooSongResult extends DBUnique {
 			return "{songId=" + songId + " albumId=" + albumId + " artistId=" + artistId + "}";
 	}
 	
-	@Transient
-	public boolean isValid() {
-	    if ((songId != null) && !songId.equals("") 
-	        && (artistId != null) && !artistId.equals("") 
-	        && (albumId != null) && !albumId.equals("")) {
-	    	return true;
-	    }
-	    return false;
+	private class Data implements YahooSongData {
+
+		public String getAlbumId() {
+			return albumId;
+		}
+
+		public String getArtistId() {
+			return artistId;
+		}
+
+		public int getDuration() {
+			return duration;
+		}
+
+		public String getPublisher() {
+			return publisher;
+		}
+
+		public String getReleaseDate() {
+			return releaseDate;
+		}
+
+		public String getSongId() {
+			return songId;
+		}
+
+		public String getName() {
+			return name;
+		}
+
+		public int getTrackNumber() {
+			return trackNumber;
+		}
+		
+	}
+	
+	public YahooSongData toData() {
+		return new Data();
 	}
 }

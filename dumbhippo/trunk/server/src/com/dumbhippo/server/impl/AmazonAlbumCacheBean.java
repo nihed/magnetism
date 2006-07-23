@@ -64,12 +64,7 @@ public class AmazonAlbumCacheBean extends AbstractCacheBean implements AmazonAlb
 			AmazonAlbumCache cache = EJBUtil.defaultLookup(AmazonAlbumCache.class);
 
 			logger.debug("In AmazonAlbumSearchTask thread for album {} by artist {}", album, artist);	
-			
-			AmazonAlbumData result = cache.checkCache(album, artist);
-			
-			if (result != null)
-				return result;
-			
+						
 			AmazonAlbumData data = cache.fetchFromNet(album, artist);
 
 			return cache.saveInCache(album, artist, data);

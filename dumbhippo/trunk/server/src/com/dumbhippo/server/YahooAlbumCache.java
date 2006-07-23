@@ -7,7 +7,7 @@ import javax.ejb.Local;
 
 import com.dumbhippo.persistence.YahooAlbumResult;
 import com.dumbhippo.persistence.YahooArtistResult;
-import com.dumbhippo.persistence.YahooSongResult;
+import com.dumbhippo.services.YahooSongData;
 
 @Local
 public interface YahooAlbumCache {
@@ -15,7 +15,7 @@ public interface YahooAlbumCache {
 	
     public Future<List<YahooAlbumResult>> getYahooAlbumResultsAsync(YahooArtistResult artist, Pageable<AlbumView> albumsByArtist, YahooAlbumResult albumToExclude);
     
-	public YahooAlbumResult getYahooAlbumSync(YahooSongResult yahooSong) throws NotFoundException;
+	public YahooAlbumResult getYahooAlbumSync(YahooSongData yahooSong) throws NotFoundException;
 	
-	public Future<YahooAlbumResult> getYahooAlbumAsync(YahooSongResult yahooSong);	
+	public Future<YahooAlbumResult> getYahooAlbumAsync(YahooSongData yahooSong);	
 }

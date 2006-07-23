@@ -6,15 +6,17 @@ import java.util.concurrent.Future;
 import javax.ejb.Local;
 
 import com.dumbhippo.persistence.Track;
-import com.dumbhippo.persistence.YahooSongResult;
+import com.dumbhippo.services.YahooSongData;
 
 @Local
 public interface YahooSongCache {
-	public List<YahooSongResult> getYahooSongResultsSync(Track track);
+	public List<YahooSongData> getSync(Track track);
 	
-    public List<YahooSongResult> getYahooSongResultsSync(String albumId);
+	public Future<List<YahooSongData>> getAsync(Track track);
 	
-	public Future<List<YahooSongResult>> getYahooSongResultsAsync(Track track);
+	public List<YahooSongData> checkCache(Track track);
 	
-	public Future<List<YahooSongResult>> getYahooSongResultsAsync(String albumId);
+	public List<YahooSongData> fetchFromNet(Track track);
+	
+	public List<YahooSongData> saveInCache(Track track, List<YahooSongData> songs);
 }

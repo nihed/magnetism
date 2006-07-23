@@ -22,22 +22,21 @@ import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.KnownFuture;
 import com.dumbhippo.TypeUtils;
-import com.dumbhippo.persistence.CachedYahooSongData;
-import com.dumbhippo.persistence.Track;
+import com.dumbhippo.persistence.CachedYahooAlbumSongData;
 import com.dumbhippo.server.BanFromWebTier;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.TransactionRunner;
-import com.dumbhippo.server.YahooSongCache;
+import com.dumbhippo.server.YahooAlbumSongsCache;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.services.YahooSearchWebServices;
 import com.dumbhippo.services.YahooSongData;
 
 @BanFromWebTier
 @Stateless
-public class YahooSongCacheBean extends AbstractCacheBean implements YahooSongCache {
+public class YahooAlbumSongsCacheBean extends AbstractCacheBean implements YahooAlbumSongsCache {
 	
 	@SuppressWarnings("unused")
-	static private final Logger logger = GlobalSetup.getLogger(YahooSongCacheBean.class);
+	static private final Logger logger = GlobalSetup.getLogger(YahooAlbumSongsCacheBean.class);
 
 	@PersistenceContext(unitName = "dumbhippo")
 	private EntityManager em;
@@ -48,64 +47,56 @@ public class YahooSongCacheBean extends AbstractCacheBean implements YahooSongCa
 	@EJB
 	private Configuration config;		
 
-	static private class YahooSongTask implements Callable<List<YahooSongData>> {
+	static private class YahooAlbumSongsTask implements Callable<List<YahooSongData>> {
 
-		private Track track;
+		private String albumId;
 		
-		public YahooSongTask(Track track) {
-			this.track = track;
+		public YahooAlbumSongsTask(String albumId) {
+			this.albumId = albumId;
 		}
 		
 		public List<YahooSongData> call() {			
-			logger.debug("Entering YahooSongTask thread for track {}", track);
+			logger.debug("Entering YahooSongTask thread for albumId {}", albumId);
 
 			// we do this instead of an inner class to work right with threads
-			YahooSongCache cache = EJBUtil.defaultLookup(YahooSongCache.class);
+			YahooAlbumSongsCache cache = EJBUtil.defaultLookup(YahooAlbumSongsCache.class);
 			
-			List<YahooSongData> result = cache.fetchFromNet(track);
+			List<YahooSongData> result = cache.fetchFromNet(albumId);
 			
-			return cache.saveInCache(track, result);
+			return cache.saveInCache(albumId, result);
 		}
 	}
 	
-	public List<YahooSongData> getSync(Track track) {
-		return getFutureResult(getAsync(track));
+	public List<YahooSongData> getSync(String albumId) {
+		return getFutureResult(getAsync(albumId));
 	}
 
-	public Future<List<YahooSongData>> getAsync(Track track) {
-		// yahoo lookup requires these fields, so just bail without them
-		if (track.getArtist() == null ||
-			track.getAlbum() == null ||
-			track.getName() == null) {
-			logger.debug("Track {} missing artist album or name, can't get yahoo stuff", track);
-			List<YahooSongData> empty = Collections.emptyList();
-			return new KnownFuture<List<YahooSongData>>(empty);
-		}
+	public Future<List<YahooSongData>> getAsync(String albumId) {
+		if (albumId == null)
+			throw new IllegalArgumentException("null albumId passed to YahooAlbumSongsCacheBean");
 		
-		List<YahooSongData> result = checkCache(track);
+		List<YahooSongData> result = checkCache(albumId);
 		if (result != null)
 			return new KnownFuture<List<YahooSongData>>(result);
 		
 		FutureTask<List<YahooSongData>> futureResult =
-			new FutureTask<List<YahooSongData>>(new YahooSongTask(track));
+			new FutureTask<List<YahooSongData>>(new YahooAlbumSongsTask(albumId));
 		getThreadPool().execute(futureResult);
 		return futureResult;
 	}
 
-	private List<CachedYahooSongData> songDataQuery(Track track) {
-		Query q = em.createQuery("SELECT song FROM CachedYahooSongData song WHERE song.name = :name AND song.artist = :artist AND song.album = :album");
-		q.setParameter("name", track.getName());
-		q.setParameter("artist", track.getArtist());
-		q.setParameter("album", track.getAlbum());
+	private List<CachedYahooAlbumSongData> songDataQuery(String albumId) {
+		Query q = em.createQuery("SELECT song FROM CachedYahooAlbumSongData song WHERE song.albumId = :albumId");
+		q.setParameter("albumId", albumId);
 		
-		List<CachedYahooSongData> results = TypeUtils.castList(CachedYahooSongData.class, q.getResultList());
+		List<CachedYahooAlbumSongData> results = TypeUtils.castList(CachedYahooAlbumSongData.class, q.getResultList());
 		return results;
 	}
 
 	// returning empty list means up-to-date cache of no results, while returning 
 	// null means no up-to-date cache
-	public List<YahooSongData> checkCache(Track track) {
-		List<CachedYahooSongData> old = songDataQuery(track);
+	public List<YahooSongData> checkCache(String albumId) {
+		List<CachedYahooAlbumSongData> old = songDataQuery(albumId);
 
 		if (old.isEmpty())
 			return null;
@@ -113,7 +104,7 @@ public class YahooSongCacheBean extends AbstractCacheBean implements YahooSongCa
 		long now = System.currentTimeMillis();
 		boolean outdated = false;
 		boolean haveNoResultsMarker = false;
-		for (CachedYahooSongData d : old) {
+		for (CachedYahooAlbumSongData d : old) {
 			if ((d.getLastUpdated().getTime() + YAHOO_EXPIRATION_TIMEOUT) < now) {
 				outdated = true;
 			}
@@ -129,7 +120,7 @@ public class YahooSongCacheBean extends AbstractCacheBean implements YahooSongCa
 			return Collections.emptyList();
 		
 		List<YahooSongData> results = new ArrayList<YahooSongData>();
-		for (CachedYahooSongData d : old) {
+		for (CachedYahooAlbumSongData d : old) {
 			results.add(d.toData());
 		}
 		
@@ -137,25 +128,23 @@ public class YahooSongCacheBean extends AbstractCacheBean implements YahooSongCa
 	}
 
 	@TransactionAttribute(TransactionAttributeType.NEVER)
-	public List<YahooSongData> fetchFromNet(Track track) {
+	public List<YahooSongData> fetchFromNet(String albumId) {
 		YahooSearchWebServices ws = new YahooSearchWebServices(REQUEST_TIMEOUT, config);
-		List<YahooSongData> results = ws.lookupSong(track.getArtist(), track.getAlbum(), track.getName());
+		List<YahooSongData> results = ws.lookupAlbumSongs(albumId);
 		
-		logger.debug("New Yahoo song results from web service for track {}: {}", track, results);
+		logger.debug("New Yahoo song results from web service for albumId {}: {}", albumId, results);
 
 		return results;
 	}
 
-	private CachedYahooSongData createCachedSong(Track track) {
-		CachedYahooSongData d = new CachedYahooSongData();
-		d.setAlbum(track.getAlbum());
-		d.setArtist(track.getArtist());
-		d.setName(track.getName());
+	private CachedYahooAlbumSongData createCachedSong(String albumId) {
+		CachedYahooAlbumSongData d = new CachedYahooAlbumSongData();
+		d.setAlbumId(albumId);
 		return d;
 	}
 	
 	@TransactionAttribute(TransactionAttributeType.NEVER)
-	public List<YahooSongData> saveInCache(final Track track, List<YahooSongData> newSongs) {
+	public List<YahooSongData> saveInCache(final String albumId, List<YahooSongData> newSongs) {
 		// null songs doesn't happen but if it did would be the same as empty list
 		if (newSongs == null)
 			newSongs = Collections.emptyList();
@@ -166,8 +155,8 @@ public class YahooSongCacheBean extends AbstractCacheBean implements YahooSongCa
 			return runner.runTaskInNewTransaction(new Callable<List<YahooSongData>>() {
 				public List<YahooSongData> call() {
 					// remove all old results
-					List<CachedYahooSongData> old = songDataQuery(track);
-					for (CachedYahooSongData d : old) {
+					List<CachedYahooAlbumSongData> old = songDataQuery(albumId);
+					for (CachedYahooAlbumSongData d : old) {
 						em.remove(d);
 					}
 					
@@ -175,13 +164,13 @@ public class YahooSongCacheBean extends AbstractCacheBean implements YahooSongCa
 					
 					// save new results
 					if (songs.isEmpty()) {
-						CachedYahooSongData d = createCachedSong(track);
+						CachedYahooAlbumSongData d = createCachedSong(albumId);
 						d.setLastUpdated(now);
 						d.setNoResultsMarker(true);
 						em.persist(d);
 					} else {
 						for (YahooSongData s : songs) {
-							CachedYahooSongData d = createCachedSong(track);
+							CachedYahooAlbumSongData d = createCachedSong(albumId);
 							d.setLastUpdated(now);
 							d.updateData(s);
 							em.persist(d);
