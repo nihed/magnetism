@@ -105,7 +105,7 @@ public class YahooAlbumCacheBean extends AbstractCacheBean implements YahooAlbum
 		boolean getAllResults = false;
 		artist.setInitialAlbumsStored(true);
 		if (albumsByArtist.getStart() + albumsByArtist.getCount() > resultsToReturn) {
-		    resultsToReturn = YahooSearchWebServices.maxResultsToReturn;
+		    resultsToReturn = YahooSearchWebServices.MAX_RESULTS_TO_RETURN;
 		    getAllResults = true;
 			artist.setAllAlbumsStored(true);		    
 		}

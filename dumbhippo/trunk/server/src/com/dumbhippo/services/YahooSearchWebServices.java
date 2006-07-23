@@ -22,7 +22,7 @@ public class YahooSearchWebServices extends AbstractXmlRequest<YahooSearchSaxHan
 	static private final Logger logger = GlobalSetup.getLogger(YahooSearchWebServices.class);
 
 	// 50 is the maximum number of results we can get with one request, 10 is the default number
-	static public final int maxResultsToReturn = 50;
+	static public final int MAX_RESULTS_TO_RETURN = 50;
 
 	private String appId;
 	
