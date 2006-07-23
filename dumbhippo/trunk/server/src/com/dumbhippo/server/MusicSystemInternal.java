@@ -11,12 +11,12 @@ import org.apache.lucene.index.IndexWriter;
 import org.hibernate.lucene.DocumentBuilder;
 
 import com.dumbhippo.persistence.AccountFeed;
-import com.dumbhippo.persistence.AmazonAlbumResult;
 import com.dumbhippo.persistence.Track;
 import com.dumbhippo.persistence.TrackFeedEntry;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.YahooAlbumResult;
 import com.dumbhippo.persistence.YahooSongResult;
+import com.dumbhippo.services.AmazonAlbumData;
 
 /**
  * These are music system methods used within the ejb tier, but not useful
@@ -52,11 +52,11 @@ public interface MusicSystemInternal extends MusicSystem {
 	
 	public Future<TrackView> getCurrentTrackViewAsync(Viewpoint viewpoint, User user) throws NotFoundException;
 	
-	public AlbumView getAlbumView(Future<YahooAlbumResult> futureYahooAlbum, Future<AmazonAlbumResult> futureAmazonAlbum);
+	public AlbumView getAlbumView(Future<YahooAlbumResult> futureYahooAlbum, Future<AmazonAlbumData> futureAmazonAlbum);
 
-	public AlbumView getAlbumView(Viewpoint viewpoint, YahooSongResult yahooSong, YahooAlbumResult yahooAlbum, Future<AmazonAlbumResult> futureAmazonAlbum, Future<List<YahooSongResult>> futureAlbumTracks);
+	public AlbumView getAlbumView(Viewpoint viewpoint, YahooSongResult yahooSong, YahooAlbumResult yahooAlbum, Future<AmazonAlbumData> futureAmazonAlbum, Future<List<YahooSongResult>> futureAlbumTracks);
 	
-	public Future<AlbumView> getAlbumViewAsync(Future<YahooAlbumResult> futureYahooAlbum, Future<AmazonAlbumResult> futureAmazonAlbum);
+	public Future<AlbumView> getAlbumViewAsync(Future<YahooAlbumResult> futureYahooAlbum, Future<AmazonAlbumData> futureAmazonAlbum);
 	
 	public ArtistView getArtistView(Track track);
 	

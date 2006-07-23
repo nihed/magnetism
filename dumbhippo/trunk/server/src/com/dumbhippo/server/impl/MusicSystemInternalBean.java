@@ -40,7 +40,6 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.ThreadUtils;
 import com.dumbhippo.TypeUtils;
 import com.dumbhippo.persistence.AccountFeed;
-import com.dumbhippo.persistence.AmazonAlbumResult;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.MembershipStatus;
 import com.dumbhippo.persistence.SongDownloadSource;
@@ -79,6 +78,7 @@ import com.dumbhippo.server.YahooArtistCache;
 import com.dumbhippo.server.YahooSongCache;
 import com.dumbhippo.server.YahooSongDownloadCache;
 import com.dumbhippo.server.util.EJBUtil;
+import com.dumbhippo.services.AmazonAlbumData;
 
 @Stateless
 public class MusicSystemInternalBean implements MusicSystemInternal {
@@ -467,9 +467,9 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	static private class GetAlbumViewTask implements Callable<AlbumView> {
 
 		private Future<YahooAlbumResult> futureYahooAlbum;
-		private Future<AmazonAlbumResult> futureAmazonAlbum;
+		private Future<AmazonAlbumData> futureAmazonAlbum;
 		
-		public GetAlbumViewTask(Future<YahooAlbumResult> futureYahooAlbum, Future<AmazonAlbumResult> futureAmazonAlbum) {
+		public GetAlbumViewTask(Future<YahooAlbumResult> futureYahooAlbum, Future<AmazonAlbumData> futureAmazonAlbum) {
 			this.futureYahooAlbum = futureYahooAlbum;
 			this.futureAmazonAlbum = futureAmazonAlbum;
 		}
@@ -508,7 +508,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		}
 	}
 	
-	private void fillAlbumInfo(YahooAlbumResult yahooAlbum, Future<AmazonAlbumResult> futureAmazonAlbum, AlbumView albumView) {
+	private void fillAlbumInfo(YahooAlbumResult yahooAlbum, Future<AmazonAlbumData> futureAmazonAlbum, AlbumView albumView) {
 		try {			
 			// Note that if neither Amazon nor Yahoo! has a small image url, we want to leave 
 			// it null so AlbumView can default to our "no image" picture. This also 
@@ -533,7 +533,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			}
 			
 			// now get the amazon stuff
-			AmazonAlbumResult amazonAlbum = getFutureResult(futureAmazonAlbum);
+			AmazonAlbumData amazonAlbum = getFutureResult(futureAmazonAlbum);
 						
 			if (amazonAlbum != null) {
 				// if album artwork was not available from yahoo, we are after album artwork from amazon
@@ -570,7 +570,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		}
 	}
 	
-	private void fillAlbumInfo(Future<YahooAlbumResult> futureYahooAlbum, Future<AmazonAlbumResult> futureAmazonAlbum, AlbumView albumView) {
+	private void fillAlbumInfo(Future<YahooAlbumResult> futureYahooAlbum, Future<AmazonAlbumData> futureAmazonAlbum, AlbumView albumView) {
 		YahooAlbumResult yahooAlbum = null;
 	    if (futureYahooAlbum != null) {
 			try {
@@ -588,7 +588,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		fillAlbumInfo(yahooAlbum, futureAmazonAlbum, albumView);				
 	}
 	
-	private void fillAlbumInfo(Viewpoint viewpoint, YahooSongResult yahooSong, YahooAlbumResult yahooAlbum, Future<AmazonAlbumResult> futureAmazonAlbum, Future<List<YahooSongResult>> futureAlbumTracks, AlbumView albumView) {
+	private void fillAlbumInfo(Viewpoint viewpoint, YahooSongResult yahooSong, YahooAlbumResult yahooAlbum, Future<AmazonAlbumData> futureAmazonAlbum, Future<List<YahooSongResult>> futureAlbumTracks, AlbumView albumView) {
 			fillAlbumInfo(yahooAlbum, futureAmazonAlbum, albumView);
 
 			TreeMap<Integer, TrackView> sortedTracks = new TreeMap<Integer, TrackView>();
@@ -690,7 +690,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		
 		YahooSongResult yahooSong = null;
 		Future<YahooAlbumResult> futureYahooAlbum = null;
-		Future<AmazonAlbumResult> futureAmazonAlbum = amazonAlbumCache.getAsync(track.getAlbum(), track.getArtist());
+		Future<AmazonAlbumData> futureAmazonAlbum = amazonAlbumCache.getAsync(track.getAlbum(), track.getArtist());
 		try {
 			// get our song IDs; no point doing it async...
 			List<YahooSongResult> songs = yahooSongCache.getYahooSongResultsSync(track);
@@ -769,7 +769,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		return view;
 	}
 
-	public AlbumView getAlbumView(Future<YahooAlbumResult> futureYahooAlbum, Future<AmazonAlbumResult> futureAmazonAlbum) {
+	public AlbumView getAlbumView(Future<YahooAlbumResult> futureYahooAlbum, Future<AmazonAlbumData> futureAmazonAlbum) {
 		// this method should never throw due to Yahoo or Amazon failure;
 		// we should just return a view without the extra information.
 		
@@ -778,7 +778,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		return view;
 	}
 	
-	public AlbumView getAlbumView(Viewpoint viewpoint, YahooSongResult yahooSong, YahooAlbumResult yahooAlbum, Future<AmazonAlbumResult> futureAmazonAlbum, Future<List<YahooSongResult>> futureAlbumTracks) {
+	public AlbumView getAlbumView(Viewpoint viewpoint, YahooSongResult yahooSong, YahooAlbumResult yahooAlbum, Future<AmazonAlbumData> futureAmazonAlbum, Future<List<YahooSongResult>> futureAlbumTracks) {
 		AlbumView view = new AlbumView();
 		fillAlbumInfo(viewpoint, yahooSong, yahooAlbum, futureAmazonAlbum, futureAlbumTracks, view);
 		return view;		
@@ -817,7 +817,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		fillArtistInfo(yahooArtist, view);
 		
 		// can start threads to get each album cover and to get songs for each album in parallel 
-		Map<String, Future<AmazonAlbumResult>> futureAmazonAlbums = new HashMap<String, Future<AmazonAlbumResult>>();		
+		Map<String, Future<AmazonAlbumData>> futureAmazonAlbums = new HashMap<String, Future<AmazonAlbumData>>();		
 		Map<String, Future<List<YahooSongResult>>> futureTracks = new HashMap<String, Future<List<YahooSongResult>>>();
 		Map<String, YahooAlbumResult> yahooAlbums = new HashMap<String, YahooAlbumResult>();
 		for (YahooAlbumResult yahooAlbum : albums) {
@@ -832,7 +832,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		// all key sets should be the same
 		for (String albumId : yahooAlbums.keySet()) {
 			YahooAlbumResult yahooAlbum = yahooAlbums.get(albumId);
-			Future<AmazonAlbumResult> futureAmazonAlbum = futureAmazonAlbums.get(albumId);
+			Future<AmazonAlbumData> futureAmazonAlbum = futureAmazonAlbums.get(albumId);
 			Future<List<YahooSongResult>> futureAlbumTracks = futureTracks.get(albumId);
 			AlbumView albumView = getAlbumView(viewpoint, null, yahooAlbum, futureAmazonAlbum, futureAlbumTracks);
 			view.addAlbum(albumView);			
@@ -880,7 +880,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		}
 		
 		if (albumsByArtist.getStart() == 0) {
-            Future<AmazonAlbumResult> amazonAlbum = amazonAlbumCache.getAsync(album.getAlbum(), album.getArtist());
+            Future<AmazonAlbumData> amazonAlbum = amazonAlbumCache.getAsync(album.getAlbum(), album.getArtist());
             Future<List<YahooSongResult>> albumTracks = yahooSongCache.getYahooSongResultsAsync(album.getAlbumId());
 
 		    AlbumView albumView = getAlbumView(viewpoint, song, album, amazonAlbum, albumTracks);
@@ -917,7 +917,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		return getTrackViewAsync(current.getTrack(), current.getLastUpdated().getTime());
 	}
 	
-	public Future<AlbumView> getAlbumViewAsync(Future<YahooAlbumResult> futureYahooAlbum, Future<AmazonAlbumResult> futureAmazonAlbum) {
+	public Future<AlbumView> getAlbumViewAsync(Future<YahooAlbumResult> futureYahooAlbum, Future<AmazonAlbumData> futureAmazonAlbum) {
 		FutureTask<AlbumView> futureView = 
 			new FutureTask<AlbumView>(new GetAlbumViewTask(futureYahooAlbum, futureAmazonAlbum));
 		getThreadPool().execute(futureView);
@@ -983,7 +983,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		// spawn threads in parallel
 		List<Future<AlbumView>> futureViews = new ArrayList<Future<AlbumView>>(tracks.size());
 		for (Track t : tracks) {
-			Future<AmazonAlbumResult> futureAmazonAlbum = amazonAlbumCache.getAsync(t.getAlbum(), t.getArtist());			
+			Future<AmazonAlbumData> futureAmazonAlbum = amazonAlbumCache.getAsync(t.getAlbum(), t.getArtist());			
 			List<YahooSongResult> songs = yahooSongCache.getYahooSongResultsSync(t);
 			Future<YahooAlbumResult> futureYahooAlbum = null;
 		

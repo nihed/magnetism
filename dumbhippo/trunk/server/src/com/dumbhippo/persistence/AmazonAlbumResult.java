@@ -62,7 +62,7 @@ public class AmazonAlbumResult extends DBUnique {
 			smallImageHeight = -1;
 		}
 	}
-	
+		
 	// length of the whole unique key (album+artist) has to be 
 	// under 1000 bytes with mysql, in UTF-8 encoding; mysql 
 	// multiplies this char length by 4, so 4*100 + 4*100 = 800 bytes
@@ -137,4 +137,52 @@ public class AmazonAlbumResult extends DBUnique {
 	public String toString() {
 		return "{albumResult album=" + album + " artist=" + artist + " imageUrl=" + smallImageUrl + "}";
 	}
+
+	/** 
+	 * Implementing AmazonAlbumData in the outer class
+	 * would leak an implementation detail and 
+	 * remove some type safety.
+	 * 
+	 * This trick is slightly shady since changing the 
+	 * album result will also change the album data,
+	 * it would be mildly more kosher
+	 * to make this a static inner class with its own
+	 * data fields I suppose. But since AmazonAlbumResult 
+	 * is only used inside AmazonAlbumCacheBean it's not a 
+	 * big deal exactly.
+	 */
+	private class Data implements AmazonAlbumData {
+
+		public String getASIN() {
+			return ASIN;
+		}
+
+		public String getProductUrl() {
+			return productUrl;
+		}
+
+		public String getSmallImageUrl() {
+			return smallImageUrl;
+		}
+
+		public int getSmallImageWidth() {
+			return smallImageWidth;
+		}
+
+		public int getSmallImageHeight() {
+			return smallImageHeight;
+		}
+
+		public String getAlbum() {
+			return album;
+		}
+
+		public String getArtist() {
+			return artist;
+		}
+	}
+	
+	public AmazonAlbumData toData() {
+		return new Data();
+	}	
 }

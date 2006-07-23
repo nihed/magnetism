@@ -29,7 +29,7 @@ public class AmazonItemSearch extends
 		String wsUrl = sb.toString();
 		logger.debug("Loading amazon web services url {}", wsUrl);
 		
-		AmazonItemSearchSaxHandler handler = parseUrl(new AmazonItemSearchSaxHandler(), wsUrl);
+		AmazonItemSearchSaxHandler handler = parseUrl(new AmazonItemSearchSaxHandler(artist, albumTitle), wsUrl);
 		
 		return handler;
 	}
