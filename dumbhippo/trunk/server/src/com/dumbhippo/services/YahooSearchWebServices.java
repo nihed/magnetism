@@ -11,7 +11,6 @@ import com.dumbhippo.Pair;
 import com.dumbhippo.StringUtils;
 import com.dumbhippo.persistence.YahooAlbumResult;
 import com.dumbhippo.persistence.YahooArtistResult;
-import com.dumbhippo.persistence.YahooSongDownloadResult;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.NotFoundException;
@@ -172,7 +171,7 @@ public class YahooSearchWebServices extends AbstractXmlRequest<YahooSearchSaxHan
 		}
 	}
 	
-	public List<YahooSongDownloadResult> lookupDownloads(String songId) {
+	public List<YahooSongDownloadData> lookupDownloads(String songId) {
 		
 		StringBuilder sb = new StringBuilder();
 		sb.append("http://api.search.yahoo.com/AudioSearchService/V1/songDownloadLocation?appid=");
@@ -183,16 +182,12 @@ public class YahooSearchWebServices extends AbstractXmlRequest<YahooSearchSaxHan
 		String wsUrl = sb.toString();
 		logger.debug("Loading yahoo song download search {}", wsUrl);
 		
-		YahooSearchSaxHandler handler = parseUrl(new YahooSearchSaxHandler(), wsUrl);
+		YahooSearchSaxHandler handler = parseUrl(new YahooSearchSaxHandler(songId), wsUrl);
 		if (handler == null) {
 			logger.error("Download search failed, it is possible that Yahoo rate limit was exceeded, returning nothing");
 			return Collections.emptyList();
 		} else {
-			List<YahooSongDownloadResult> list = handler.getBestDownloads();
-			for (YahooSongDownloadResult result : list) {
-				result.setSongId(songId);
-			}
-			return list;
+			return handler.getBestDownloads();
 		}
 	}
 
@@ -236,8 +231,8 @@ public class YahooSearchWebServices extends AbstractXmlRequest<YahooSearchSaxHan
 		List<YahooSongData> list = ws.lookupSong("Bob Dylan", "Time Out of Mind", "Tryin' To Get To Heaven");
 		for (YahooSongData r : list) {
 			System.out.println("Got result: " + r);
-			List<YahooSongDownloadResult> listD = ws.lookupDownloads(r.getSongId());
-			for (YahooSongDownloadResult d : listD) {
+			List<YahooSongDownloadData> listD = ws.lookupDownloads(r.getSongId());
+			for (YahooSongDownloadData d : listD) {
 				System.out.println("  download: " + d);
 			}
 		}

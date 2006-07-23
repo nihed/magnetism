@@ -8,12 +8,14 @@ import javax.persistence.Table;
 import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
 
+import com.dumbhippo.services.YahooSongDownloadData;
+
 @Entity
-@Table(name="YahooSongDownloadResult", 
+@Table(name="CachedYahooSongDownload", 
 		   uniqueConstraints = 
 		      {@UniqueConstraint(columnNames={"songId","source"})}
 	      )
-public class YahooSongDownloadResult extends DBUnique {
+public class CachedYahooSongDownload extends DBUnique {
 	private static final long serialVersionUID = 1L;
 
 	private String songId;
@@ -24,11 +26,20 @@ public class YahooSongDownloadResult extends DBUnique {
 	private String restrictions;
 	private String formats;
 	
-	public YahooSongDownloadResult() {
+	public CachedYahooSongDownload() {
 		
 	}
 
-	public void update(YahooSongDownloadResult results) {
+	public void updateData(YahooSongDownloadData data) {
+		this.songId = data.getSongId();
+		this.source = data.getSource();
+		this.url = data.getUrl();
+		this.price = data.getPrice();
+		this.restrictions = data.getRestrictions();
+		this.formats = data.getFormats();
+	}
+	
+	public void update(CachedYahooSongDownload results) {
 		if (!songId.equals(results.songId) ||
 				!(source == results.source))
 			throw new RuntimeException("Updating song download with wrong result");
@@ -108,7 +119,7 @@ public class YahooSongDownloadResult extends DBUnique {
 	
 	/**
 	 * For each Yahoo web services request, we can get back multiple 
-	 * YahooSongDownloadResult. If we get back 0, then we save one as a 
+	 * CachedYahooSongDownload. If we get back 0, then we save one as a 
 	 * marker that we got no results. If a song has no rows in the db,
 	 * that means we haven't ever done the web services request.
 	 * @return whether this row marks that we did the request and got nothing
@@ -128,8 +139,39 @@ public class YahooSongDownloadResult extends DBUnique {
 	@Override
 	public String toString() {
 		if (isNoResultsMarker())
-			return "{YahooSongDownloadResult:NoResultsMarker}";
+			return "{CachedYahooSongDownload:NoResultsMarker}";
 		else
 			return "{songId=" + songId + " source=" + source + " url=" + url + "}";
+	}
+	
+	private class Data implements YahooSongDownloadData {
+
+		public String getSongId() {
+			return songId;
+		}
+
+		public String getUrl() {
+			return url;
+		}
+
+		public String getFormats() {
+			return formats;
+		}
+
+		public String getPrice() {
+			return price;
+		}
+
+		public String getRestrictions() {
+			return restrictions;
+		}
+
+		public SongDownloadSource getSource() {
+			return source;
+		}
+	}
+	
+	public YahooSongDownloadData toData() {
+		return new Data();
 	}
 }

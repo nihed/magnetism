@@ -1,31 +1,35 @@
 package com.dumbhippo.server.impl;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 
 import javax.annotation.EJB;
 import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
 import org.slf4j.Logger;
 
+import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
-import com.dumbhippo.persistence.SongDownloadSource;
-import com.dumbhippo.persistence.YahooSongDownloadResult;
+import com.dumbhippo.KnownFuture;
+import com.dumbhippo.TypeUtils;
+import com.dumbhippo.persistence.CachedYahooSongDownload;
 import com.dumbhippo.server.BanFromWebTier;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.YahooSongDownloadCache;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.services.YahooSearchWebServices;
+import com.dumbhippo.services.YahooSongDownloadData;
 
 @BanFromWebTier
 @Stateless
@@ -41,8 +45,9 @@ public class YahooSongDownloadCacheBean extends AbstractCacheBean implements Yah
 
 	@EJB
 	private Configuration config;	
-	
-	static private class YahooSongDownloadTask implements Callable<List<YahooSongDownloadResult>> {
+
+
+	static private class YahooSongDownloadTask implements Callable<List<YahooSongDownloadData>> {
 
 		private String songId;
 		
@@ -50,129 +55,138 @@ public class YahooSongDownloadCacheBean extends AbstractCacheBean implements Yah
 			this.songId = songId;
 		}
 		
-		public List<YahooSongDownloadResult> call() {
+		public List<YahooSongDownloadData> call() {			
 			logger.debug("Entering YahooSongDownloadTask thread for songId {}", songId);
+
 			// we do this instead of an inner class to work right with threads
 			YahooSongDownloadCache cache = EJBUtil.defaultLookup(YahooSongDownloadCache.class);
-
-		    logger.debug("Obtained transaction in YahooSongDownloadTask thread for songId {}", songId);
-		    
-			return cache.getYahooSongDownloadResultsSync(songId);
+			
+			List<YahooSongDownloadData> result = cache.fetchFromNet(songId);
+			
+			return cache.saveInCache(songId, result);
 		}
-	}
-
-	private List<YahooSongDownloadResult> updateSongDownloadResultsSync(List<YahooSongDownloadResult> oldResults, String songId) {
-		YahooSearchWebServices ws = new YahooSearchWebServices(REQUEST_TIMEOUT, config);
-		List<YahooSongDownloadResult> newResults = ws.lookupDownloads(songId);
-		
-		logger.debug("New song download results for songId {}: {}", songId, newResults);
-		
-		// Match new results to old results with same song id, updating the old row.
-		// For new rows, create the row.
-		// For rows not in the new yahoo return, drop the row.
-		// If the new search returned nothing, just change the updated 
-		// times so we don't re-query too often.
-		if (newResults.isEmpty()) {			
-			// ensure we won't update for FAILED_QUERY_TIMEOUT
-			long updateTime = System.currentTimeMillis() - YAHOO_EXPIRATION_TIMEOUT + FAILED_QUERY_TIMEOUT;
-			for (YahooSongDownloadResult old : oldResults) {
-				old.setLastUpdated(new Date(updateTime));
-			}
-			if (oldResults.isEmpty()) {
-				YahooSongDownloadResult marker = new YahooSongDownloadResult();
-				marker.setSongId(songId);
-				marker.setNoResultsMarker(true);
-				marker.setLastUpdated(new Date(updateTime));
-				em.persist(marker);
-				// we don't need to return this marker though, returning empty oldResults is good enough				
-			}
-			return oldResults;
-		}
-
-		List<YahooSongDownloadResult> results = new ArrayList<YahooSongDownloadResult>();
-		for (YahooSongDownloadResult old : oldResults) {
-			boolean stillFound = false;
-			for (YahooSongDownloadResult n : newResults) {
-				if (!old.isNoResultsMarker() &&
-					n.getSource().equals(old.getSource())) {
-					newResults.remove(n);
-					old.update(n); // old is attached, so this gets saved
-					results.add(old);
-					stillFound = true;
-					break;
-				}
-			}
-			// drops the no results marker, and any sources no longer found
-			if (!stillFound) {
-				em.remove(old);
-			}
-		}
-		// remaining newResults weren't previously saved
-		// we are only interested in one result per source, so let's keep a list of sources
-		// we are adding here; if newResults had a result(s) for a source that already existed in the 
-		// database we would have made the appropriate update above
-		Set<SongDownloadSource> addedSources = new HashSet<SongDownloadSource>();
-		for (YahooSongDownloadResult n : newResults) {
-			if (!addedSources.contains(n.getSource())) {
-			   em.persist(n);
-			   results.add(n);
-			   addedSources.add(n.getSource());
-			}
-		}	
-		return results;
 	}
 	
-	public List<YahooSongDownloadResult> getYahooSongDownloadResultsSync(String songId) {
+	public List<YahooSongDownloadData> getSync(String songId) {
+		return getFutureResult(getAsync(songId));
+	}
+
+	public Future<List<YahooSongDownloadData>> getAsync(String songId) {
+		if (songId == null)
+			throw new IllegalArgumentException("null songId passed to YahooSongDownloadCacheBean");
 		
-		// we require the songId field
-		if (songId == null) {
-			logger.error("songId is null when requesting yahoo song downloads for a song");
-			throw new RuntimeException("songId is null when requesting yahoo song downloads for a song");
-		}
+		List<YahooSongDownloadData> result = checkCache(songId);
+		if (result != null)
+			return new KnownFuture<List<YahooSongDownloadData>>(result);
 		
-		Query q;
-		
-		q = em.createQuery("FROM YahooSongDownloadResult download WHERE download.songId = :songId");
+		FutureTask<List<YahooSongDownloadData>> futureResult =
+			new FutureTask<List<YahooSongDownloadData>>(new YahooSongDownloadTask(songId));
+		getThreadPool().execute(futureResult);
+		return futureResult;
+	}
+
+	private List<CachedYahooSongDownload> songDataQuery(String songId) {
+		Query q = em.createQuery("SELECT song FROM CachedYahooSongDownload song WHERE song.songId = :songId");
 		q.setParameter("songId", songId);
 		
-		List<YahooSongDownloadResult> results;
-		List<?> objects = q.getResultList();
-		results = new ArrayList<YahooSongDownloadResult>(); 
-		for (Object o : objects) {
-			results.add((YahooSongDownloadResult) o);
-		}
+		List<CachedYahooSongDownload> results = TypeUtils.castList(CachedYahooSongDownload.class, q.getResultList());
+		return results;
+	}
+
+	// returning empty list means up-to-date cache of no results, while returning 
+	// null means no up-to-date cache
+	public List<YahooSongDownloadData> checkCache(String songId) {
+		List<CachedYahooSongDownload> old = songDataQuery(songId);
+
+		if (old.isEmpty())
+			return null;
 		
-		boolean needNewQuery = results.isEmpty();
-		if (!needNewQuery) {
-			// the outdated results, if any, could be a special magic result with the NoResultsMarker 
-			// flag set, or could be real results
-			long now = System.currentTimeMillis();
-			for (YahooSongDownloadResult r : results) {
-				if ((r.getLastUpdated().getTime() + YAHOO_EXPIRATION_TIMEOUT) < now) {
-					needNewQuery = true;
-					logger.debug("Outdated Yahoo download result, will need to renew the search for songId {}", songId);
-					break;
-				}
+		long now = System.currentTimeMillis();
+		boolean outdated = false;
+		boolean haveNoResultsMarker = false;
+		for (CachedYahooSongDownload d : old) {
+			if ((d.getLastUpdated().getTime() + YAHOO_EXPIRATION_TIMEOUT) < now) {
+				outdated = true;
+			}
+			if (d.isNoResultsMarker()) {
+				haveNoResultsMarker = true;
 			}
 		}
 		
-		if (needNewQuery) {
-			// passing in the old results here is a race, since the db could have 
-			// changed underneath us - but the worst case is that we just fail to
-			// get results once in a while
-			return updateSongDownloadResultsSync(results, songId);
-		} else {
-			logger.debug("Returning Yahoo song download results from database cache for songId {}: {}", songId, results);
-			return results;
+		if (outdated)
+			return null;
+		
+		if (haveNoResultsMarker)
+			return Collections.emptyList();
+		
+		List<YahooSongDownloadData> results = new ArrayList<YahooSongDownloadData>();
+		for (CachedYahooSongDownload d : old) {
+			results.add(d.toData());
 		}
+		
+		return results;
 	}
 
-	public Future<List<YahooSongDownloadResult>> getYahooSongDownloadResultsAsync(String songId) {
-		FutureTask<List<YahooSongDownloadResult>> futureDownload =
-			new FutureTask<List<YahooSongDownloadResult>>(new YahooSongDownloadTask(songId));
-		getThreadPool().execute(futureDownload);
-		return futureDownload;		
+	@TransactionAttribute(TransactionAttributeType.NEVER)
+	public List<YahooSongDownloadData> fetchFromNet(String songId) {
+		YahooSearchWebServices ws = new YahooSearchWebServices(REQUEST_TIMEOUT, config);
+		List<YahooSongDownloadData> results = ws.lookupDownloads(songId);
+		
+		logger.debug("New Yahoo download results from web service for songId {}: {}", songId, results);
+
+		return results;
+	}
+
+	private CachedYahooSongDownload createCachedSong(String songId) {
+		CachedYahooSongDownload d = new CachedYahooSongDownload();
+		d.setSongId(songId);
+		return d;
 	}
 	
+	@TransactionAttribute(TransactionAttributeType.NEVER)
+	public List<YahooSongDownloadData> saveInCache(final String songId, List<YahooSongDownloadData> newSongs) {
+		// null songs doesn't happen but if it did would be the same as empty list
+		if (newSongs == null)
+			newSongs = Collections.emptyList();
 
+		final List<YahooSongDownloadData> songs = newSongs; 
+		
+		try {
+			return runner.runTaskInNewTransaction(new Callable<List<YahooSongDownloadData>>() {
+				public List<YahooSongDownloadData> call() {
+					
+					logger.debug("Saving new song download results in cache");
+					
+					// remove all old results
+					List<CachedYahooSongDownload> old = songDataQuery(songId);
+					for (CachedYahooSongDownload d : old) {
+						em.remove(d);
+					}
+					
+					Date now = new Date();
+					
+					// save new results
+					if (songs.isEmpty()) {
+						CachedYahooSongDownload d = createCachedSong(songId);
+						d.setLastUpdated(now);
+						d.setNoResultsMarker(true);
+						em.persist(d);
+					} else {
+						for (YahooSongDownloadData s : songs) {
+							CachedYahooSongDownload d = createCachedSong(songId);
+							d.setLastUpdated(now);
+							d.updateData(s);
+							em.persist(d);
+						}
+					}
+					
+					return songs;
+				}
+				
+			});
+		} catch (Exception e) {
+			ExceptionUtils.throwAsRuntimeException(e);
+			throw new RuntimeException(e); // not reached			
+		}
+	}
 }

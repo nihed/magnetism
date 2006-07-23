@@ -50,7 +50,6 @@ import com.dumbhippo.persistence.TrackType;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.YahooAlbumResult;
 import com.dumbhippo.persistence.YahooArtistResult;
-import com.dumbhippo.persistence.YahooSongDownloadResult;
 import com.dumbhippo.server.AlbumView;
 import com.dumbhippo.server.AmazonAlbumCache;
 import com.dumbhippo.server.ArtistView;
@@ -80,6 +79,7 @@ import com.dumbhippo.server.YahooSongDownloadCache;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.services.AmazonAlbumData;
 import com.dumbhippo.services.YahooSongData;
+import com.dumbhippo.services.YahooSongDownloadData;
 
 @Stateless
 public class MusicSystemInternalBean implements MusicSystemInternal {
@@ -596,8 +596,8 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			fillAlbumInfo(yahooAlbum, futureAmazonAlbum, albumView);
 
 			TreeMap<Integer, TrackView> sortedTracks = new TreeMap<Integer, TrackView>();
-			TreeMap<Integer, List<Future<List<YahooSongDownloadResult>>>> trackDownloads = 
-				new TreeMap<Integer, List<Future<List<YahooSongDownloadResult>>>>();
+			TreeMap<Integer, List<Future<List<YahooSongDownloadData>>>> trackDownloads = 
+				new TreeMap<Integer, List<Future<List<YahooSongDownloadData>>>>();
 			List<YahooSongData> albumTracks = getFutureResult(futureAlbumTracks);
 			// now we have a fun task of sorting these YahooSongData by track number and filtering out
 			// the ones with -1 or 0 track number (YahooSongData has -1 track number by default, 
@@ -638,27 +638,23 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 					}
 					
 					if (trackDownloads.get(albumTrack.getTrackNumber()) == null) {
-                    	ArrayList<Future<List<YahooSongDownloadResult>>> downloads =
-                    		new ArrayList<Future<List<YahooSongDownloadResult>>>();
+                    	ArrayList<Future<List<YahooSongDownloadData>>> downloads =
+                    		new ArrayList<Future<List<YahooSongDownloadData>>>();
                     	// if the trackNumber was positive this can't be a no results marker,
                     	// so the song id should also not be null
-                    	downloads.add(yahooSongDownloadCache.getYahooSongDownloadResultsAsync(albumTrack.getSongId()));
+                    	downloads.add(yahooSongDownloadCache.getAsync(albumTrack.getSongId()));
                     	trackDownloads.put(albumTrack.getTrackNumber(), downloads);
                     } else {
-                    	trackDownloads.get(albumTrack.getTrackNumber()).add(yahooSongDownloadCache.getYahooSongDownloadResultsAsync(albumTrack.getSongId()));
+                    	trackDownloads.get(albumTrack.getTrackNumber()).add(yahooSongDownloadCache.getAsync(albumTrack.getSongId()));
                     }
 				}
 			}
 			
     		for (Integer trackNumber : sortedTracks.keySet()) {
     			TrackView trackView = sortedTracks.get(trackNumber);       			
-    			for (Future<List<YahooSongDownloadResult>> futureDownloads : trackDownloads.get(trackNumber)) {
-					List<YahooSongDownloadResult> ds = getFutureResult(futureDownloads);					        			
-    			    for (YahooSongDownloadResult d : ds) {
-					    if (d.isNoResultsMarker()) {
-						    // normally, if there is a no results marker result, there won't be other results
-						    break;
-					    }
+    			for (Future<List<YahooSongDownloadData>> futureDownloads : trackDownloads.get(trackNumber)) {
+					List<YahooSongDownloadData> ds = getFutureResult(futureDownloads);					        			
+    			    for (YahooSongDownloadData d : ds) {
 					    // if two search results are for the same source, first is assumed better
 					    if (trackView.getDownloadUrl(d.getSource()) == null) {
 						    trackView.setDownloadUrl(d.getSource(), d.getUrl());
@@ -700,9 +696,9 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			List<YahooSongData> songs = yahooSongCache.getSync(track);
 			
 			// start a thread to get each download url
-			List<Future<List<YahooSongDownloadResult>>> downloads = new ArrayList<Future<List<YahooSongDownloadResult>>>(); 
+			List<Future<List<YahooSongDownloadData>>> downloads = new ArrayList<Future<List<YahooSongDownloadData>>>(); 
 			for (YahooSongData song : songs) {
-				downloads.add(yahooSongDownloadCache.getYahooSongDownloadResultsAsync(song.getSongId()));
+				downloads.add(yahooSongDownloadCache.getAsync(song.getSongId()));
 				// we need one of these song results to get an album info for the track
 				if (yahooSong == null) {
 				 	yahooSong = song;
@@ -713,8 +709,8 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 				futureYahooAlbum = yahooAlbumCache.getYahooAlbumAsync(yahooSong);
 			}
 			
-			for (Future<List<YahooSongDownloadResult>> futureDownloads : downloads) {
-				List<YahooSongDownloadResult> ds;
+			for (Future<List<YahooSongDownloadData>> futureDownloads : downloads) {
+				List<YahooSongDownloadData> ds;
 				try {
 					ds = futureDownloads.get();
 				} catch (InterruptedException e) {
@@ -725,11 +721,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 					throw new RuntimeException(e);
 				}
 
-				for (YahooSongDownloadResult d : ds) {
-					if (d.isNoResultsMarker()) {
-						// normally, if there is a no results marker result, there won't be other results
-						break;
-					}
+				for (YahooSongDownloadData d : ds) {
 					// if two search results are for the same source, first is assumed better
 					if (view.getDownloadUrl(d.getSource()) == null) {
 						view.setDownloadUrl(d.getSource(), d.getUrl());

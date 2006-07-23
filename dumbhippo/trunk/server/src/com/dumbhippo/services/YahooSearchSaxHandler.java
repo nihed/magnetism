@@ -15,7 +15,6 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.SongDownloadSource;
 import com.dumbhippo.persistence.YahooAlbumResult;
 import com.dumbhippo.persistence.YahooArtistResult;
-import com.dumbhippo.persistence.YahooSongDownloadResult;
 
 class YahooSearchSaxHandler extends EnumSaxHandler<YahooSearchSaxHandler.Element> {
 	
@@ -126,6 +125,7 @@ class YahooSearchSaxHandler extends EnumSaxHandler<YahooSearchSaxHandler.Element
 	private List<Result> results;
 	private int totalResultsAvailable;
 	private String errorMessage;
+	private String songId;
 	
 	YahooSearchSaxHandler() {
 		super(Element.class, Element.IGNORED);
@@ -133,6 +133,11 @@ class YahooSearchSaxHandler extends EnumSaxHandler<YahooSearchSaxHandler.Element
 		totalResultsAvailable = -1;
 	}
 
+	YahooSearchSaxHandler(String songId) {
+		this();
+		this.songId = songId;
+	}
+	
 	private Result currentResult() {
 		// note that unlike the other current() things, 
 		// "results" is not a stack, just a list 
@@ -326,7 +331,7 @@ class YahooSearchSaxHandler extends EnumSaxHandler<YahooSearchSaxHandler.Element
 		return totalResultsAvailable;
 	}
 	
-	private YahooSongDownloadResult downloadFromResult(Result r) {
+	private YahooSongDownloadData downloadFromResult(Result r) {
 		
 		// need a known source and an url to be useful
 		String sourceStr = r.getValue(Element.Source);
@@ -341,25 +346,25 @@ class YahooSearchSaxHandler extends EnumSaxHandler<YahooSearchSaxHandler.Element
 			return null;
 		}
 		
-		YahooSongDownloadResult song = new YahooSongDownloadResult();
-		song.setLastUpdated(new Date());
+		SongDownloadData song = new SongDownloadData();
+		song.setSongId(songId);
 		song.setSource(source);
 		song.setUrl(url);
 		song.setFormats(r.getValue(Element.Format));
 		song.setPrice(r.getValue(Element.Price));
 		song.setRestrictions(r.getValue(Element.Restrictions));
-		return song;		
+		return song;
 	}
 	
-	public List<YahooSongDownloadResult> getBestDownloads() {
+	public List<YahooSongDownloadData> getBestDownloads() {
 		if (results.isEmpty()) {
 			logger.debug("No download results were parsed");
 			return Collections.emptyList();
 		}
 
-		List<YahooSongDownloadResult> list = new ArrayList<YahooSongDownloadResult>();
+		List<YahooSongDownloadData> list = new ArrayList<YahooSongDownloadData>();
 		for (Result r : results) {
-			YahooSongDownloadResult d = downloadFromResult(r);
+			YahooSongDownloadData d = downloadFromResult(r);
 			if (d != null)
 				list.add(d);
 		}
@@ -474,5 +479,51 @@ class YahooSearchSaxHandler extends EnumSaxHandler<YahooSearchSaxHandler.Element
 			this.trackNumber = trackNumber;
 		}
 		
+	}
+	
+	private static class SongDownloadData implements YahooSongDownloadData {
+		private String songId;
+		private String url;
+		private String formats;
+		private String price;
+		private String restrictions;
+		private SongDownloadSource source;
+		
+		public String getFormats() {
+			return formats;
+		}
+		public void setFormats(String formats) {
+			this.formats = formats;
+		}
+		public String getPrice() {
+			return price;
+		}
+		public void setPrice(String price) {
+			this.price = price;
+		}
+		public String getRestrictions() {
+			return restrictions;
+		}
+		public void setRestrictions(String restrictions) {
+			this.restrictions = restrictions;
+		}
+		public String getSongId() {
+			return songId;
+		}
+		public void setSongId(String songId) {
+			this.songId = songId;
+		}
+		public SongDownloadSource getSource() {
+			return source;
+		}
+		public void setSource(SongDownloadSource source) {
+			this.source = source;
+		}
+		public String getUrl() {
+			return url;
+		}
+		public void setUrl(String url) {
+			this.url = url;
+		}
 	}
 }

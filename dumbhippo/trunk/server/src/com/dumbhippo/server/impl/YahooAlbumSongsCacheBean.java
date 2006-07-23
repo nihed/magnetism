@@ -154,6 +154,9 @@ public class YahooAlbumSongsCacheBean extends AbstractCacheBean implements Yahoo
 		try {
 			return runner.runTaskInNewTransaction(new Callable<List<YahooSongData>>() {
 				public List<YahooSongData> call() {
+					
+					logger.debug("Saving new album song results in cache");
+					
 					// remove all old results
 					List<CachedYahooAlbumSongData> old = songDataQuery(albumId);
 					for (CachedYahooAlbumSongData d : old) {
