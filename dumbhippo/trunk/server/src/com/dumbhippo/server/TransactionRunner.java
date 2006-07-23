@@ -13,6 +13,7 @@ public interface TransactionRunner {
 	// queueing of non-database operations.
 	public <T> T runTaskNotInNewTransaction(Callable<T> callable) throws Exception;
 	public <T> T runTaskRetryingOnConstraintViolation(Callable<T> callable) throws Exception;
+	public void runTaskRetryingOnConstraintViolation(Runnable runnable) throws Exception;
 	
 	public <T> T runTaskThrowingConstraintViolation(Callable<T> callable) throws Exception;
 	

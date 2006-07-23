@@ -5,10 +5,15 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.Date;
 import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
+import java.util.concurrent.FutureTask;
 
 import javax.annotation.EJB;
 import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityNotFoundException;
 import javax.persistence.PersistenceContext;
@@ -16,11 +21,14 @@ import javax.persistence.Query;
 
 import org.slf4j.Logger;
 
+import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
-import com.dumbhippo.persistence.RhapLink;
+import com.dumbhippo.KnownFuture;
+import com.dumbhippo.persistence.CachedRhapsodyDownload;
 import com.dumbhippo.server.BanFromWebTier;
 import com.dumbhippo.server.RhapsodyDownloadCache;
 import com.dumbhippo.server.TransactionRunner;
+import com.dumbhippo.server.util.EJBUtil;
 
 @BanFromWebTier
 @Stateless
@@ -38,105 +46,26 @@ public class RhapsodyDownloadCacheBean extends AbstractCacheBean implements
 	
 	@EJB
 	private TransactionRunner runner;
-
-	private RhapLink rhapLinkQuery(String rhaplink) {
-		try {
-			Query q = em.createQuery("FROM RhapLink rhaplink WHERE rhaplink.url = :rhaplink");
-			q.setParameter("rhaplink", rhaplink);
-			return (RhapLink)(q.getSingleResult());
-		} catch (EntityNotFoundException e) {
-			//logger.debug("No cached rhaplink status for {}", rhaplink);
-			return null;
-		}
-	}
 	
-	public String getRhapsodyDownloadUrl(String artistName, String albumName, int trackNumber) {
-		if ((trackNumber>0) && (artistName != null) && (albumName != null)) {
-			// Try to concoct a Rhapsody friendly URL; see:
-			//  http://rws-blog.rhapsody.com/rhapsody_web_services/2006/04/new_album_urls.html
-			final String rhaplink = "http://play.rhapsody.com/" + rhapString(artistName) + "/" + rhapString(albumName) + "/track-" + trackNumber;
-			
-			boolean rhapLinkActive = false;
-			RhapLink oldRhapLink = rhapLinkQuery(rhaplink);
-			
-			final long now = System.currentTimeMillis();
-			if ((oldRhapLink == null) || ((oldRhapLink.getLastUpdated() + RHAPLINK_EXPIRATION_TIMEOUT) < now)) {
-				logger.debug("Unknown or outdated Rhapsody link; testing status for rhaplink {}", rhaplink);
-				
-				try {
-					URL u = new URL(rhaplink);
-					URLConnection connection = u.openConnection();
-					if (!(connection instanceof HttpURLConnection)) {
-						logger.warn("Got a weird connection of type {} for URL {}; skipping", connection.getClass().getName(), u);
-					} else {
-						HttpURLConnection httpConnection = (HttpURLConnection)connection;
-						httpConnection.setRequestMethod("HEAD");
-						httpConnection.setInstanceFollowRedirects(false);
-						httpConnection.setConnectTimeout(REQUEST_TIMEOUT);
-						httpConnection.setReadTimeout(REQUEST_TIMEOUT);
-						httpConnection.setAllowUserInteraction(false);
-						httpConnection.connect();
-						
-						// if we get a 200 response it's a playable URL
-						// if we get anything else, it's not
-						
-						int httpResponse = httpConnection.getResponseCode();
-						httpConnection.disconnect();
-						
-						logger.debug("response for rhaplink {} was {}", rhaplink, httpResponse);
-						
-						if (httpResponse == HttpURLConnection.HTTP_OK) {
-							logger.debug("got working rhaplink {}", rhaplink);
-							rhapLinkActive = true;
-						}
-					}
-				} catch (MalformedURLException mue) {
-					logger.warn("malformed URL when trying to fetch rhapsody link: " + mue.getMessage(), mue);
-				} catch (IOException ioe) {
-					logger.warn("IO exception when trying to fetch rhapsody link: " + ioe.getMessage(), ioe);
-				}
-				
-				final boolean isActive = rhapLinkActive;
-				
-				// need to retry on constraint violation to deal with race where multiple TrackViews are
-				// being updated in parallel
-				try {
-					runner.runTaskRetryingOnConstraintViolation(new Callable<RhapLink>() {
-						
-						public RhapLink call() {
-							
-							RhapLink rhapLink = rhapLinkQuery(rhaplink);
-							if (rhapLink == null) {
-								rhapLink = new RhapLink();
-								rhapLink.setUrl(rhaplink);
-								rhapLink.setActive(isActive);
-								rhapLink.setLastUpdated(now);
-								em.persist(rhapLink);
-							} else {
-								rhapLink.setActive(isActive);
-								rhapLink.setLastUpdated(now);
-							}
-							return rhapLink;
-						}
-						
-					});
-				} catch (Exception e) {
-					logger.warn("Exception updating RhapLink entity in getRhapsodyDownloadUrl", e);
-				}
-				
-			} else {
-				// we found a rhaplink result that wasn't outdated, so return it
-				rhapLinkActive = oldRhapLink.isActive();
-				//logger.debug("cached rhaplink status for {} was {}", rhaplink, rhapLinkActive);
-			}
+	static private class RhapsodyLinkTask implements Callable<String> {
 		
-			if (rhapLinkActive) {
-				return rhaplink;
-			} else {
-				return null;
-			}
+		private String link;
+
+		public RhapsodyLinkTask(String link) {
+			this.link = link;
 		}
-		return null;
+		
+		public String call() {
+			logger.debug("In Rhapsody link check thread for {}", link);
+			
+			RhapsodyDownloadCache cache = EJBUtil.defaultLookup(RhapsodyDownloadCache.class);	
+						
+			boolean fetched = cache.fetchFromNet(link);
+
+			cache.saveInCache(link, fetched);
+			
+			return link;
+		}
 	}
 	
 	/*
@@ -147,5 +76,128 @@ public class RhapsodyDownloadCacheBean extends AbstractCacheBean implements
 		// strip all non-word characters, e.g. other than [a-zA-Z0-9]
 		// TODO: figure out how to deal with broader character set, if Rhapsody even supports that?
 		return s.replaceAll("[^a-zA-Z0-9]","").toLowerCase();
+	}
+
+	private CachedRhapsodyDownload rhapLinkQuery(String rhaplink) {
+		try {
+			Query q = em.createQuery("FROM CachedRhapsodyDownload crd WHERE crd.url = :url");
+			q.setParameter("url", rhaplink);
+			return (CachedRhapsodyDownload)(q.getSingleResult());
+		} catch (EntityNotFoundException e) {
+			//logger.debug("No cached rhaplink status for {}", rhaplink);
+			return null;
+		}
+	}
+	
+	public String getSync(String album, String artist, int track) {
+		return getFutureResult(getAsync(album, artist, track));
+	}
+
+	public Future<String> getAsync(String album, String artist, int track) {
+		if (artist == null || album == null || track < 1) {
+			logger.debug("missing artist or album or track, not looking up album {} by artist {} on Rhapsody", 
+					     album, artist);
+			return new KnownFuture<String>(null);
+		}
+		
+		// Try to concoct a Rhapsody friendly URL; see:
+		//  http://rws-blog.rhapsody.com/rhapsody_web_services/2006/04/new_album_urls.html
+		final String link = "http://play.rhapsody.com/" + rhapString(artist) + "/" + rhapString(album) + "/track-" + track;
+		
+		Boolean result = checkCache(link);
+		if (result != null) {
+			if (result)
+				return new KnownFuture<String>(link);
+			else
+				return new KnownFuture<String>(null);
+		}
+		
+		FutureTask<String> futureLink =
+			new FutureTask<String>(new RhapsodyLinkTask(link));
+		getThreadPool().execute(futureLink);
+		return futureLink;
+	}
+
+	public Boolean checkCache(String link) {
+		CachedRhapsodyDownload oldLink = rhapLinkQuery(link);
+		
+		final long now = System.currentTimeMillis();
+		if ((oldLink == null) ||
+			(oldLink.getLastUpdated().getTime() + RHAPLINK_EXPIRATION_TIMEOUT) < now) {
+			logger.debug("Unknown or outdated Rhapsody link {}", link);
+			return null;
+		} else {
+			return oldLink.isActive();
+		}
+	}
+
+	@TransactionAttribute(TransactionAttributeType.NEVER)
+	public boolean fetchFromNet(String link) {
+		boolean found = false;
+		try {
+			URL u = new URL(link);
+			URLConnection connection = u.openConnection();
+			if (!(connection instanceof HttpURLConnection)) {
+				logger.error("Got a weird connection of type {} for URL {}; skipping", connection.getClass().getName(), u);
+			} else {
+				logger.debug("Making http request for link {}", link);
+				
+				HttpURLConnection httpConnection = (HttpURLConnection)connection;
+				httpConnection.setRequestMethod("HEAD");
+				httpConnection.setInstanceFollowRedirects(false);
+				httpConnection.setConnectTimeout(REQUEST_TIMEOUT);
+				httpConnection.setReadTimeout(REQUEST_TIMEOUT);
+				httpConnection.setAllowUserInteraction(false);
+				httpConnection.connect();
+				
+				// if we get a 200 response it's a playable URL
+				// if we get anything else, it's not
+				
+				int httpResponse = httpConnection.getResponseCode();
+				httpConnection.disconnect();
+				
+				// logger.debug("response for rhaplink {} was {}", link, httpResponse);
+				
+				if (httpResponse == HttpURLConnection.HTTP_OK) {
+					logger.debug("got working rhaplink {}", link);
+					found = true;
+				}
+			}
+		} catch (MalformedURLException mue) {
+			logger.error("malformed URL when trying to fetch rhapsody link: " + mue.getMessage(), mue);
+		} catch (IOException ioe) {
+			logger.warn("IO exception when trying to fetch rhapsody link: " + ioe.getMessage(), ioe);
+		}
+		return found;
+	}
+
+	@TransactionAttribute(TransactionAttributeType.NEVER)
+	public void saveInCache(final String link, final boolean valid) {
+		// need to retry on constraint violation to deal with race where multiple TrackViews are
+		// being updated in parallel
+		try {
+			runner.runTaskRetryingOnConstraintViolation(new Runnable() {
+				
+				public void run() {
+					
+					logger.debug("saving status = {} for link {}", valid, link);
+					
+					CachedRhapsodyDownload status = rhapLinkQuery(link);
+					if (status == null) {
+						status = new CachedRhapsodyDownload();
+						status.setUrl(link);
+						status.setActive(valid);
+						status.setLastUpdated(new Date());
+						em.persist(status);
+					} else {
+						status.setActive(valid);
+						status.setLastUpdated(new Date());
+					}
+				}
+			});
+		} catch (Exception e) {
+			ExceptionUtils.throwAsRuntimeException(e);
+			throw new RuntimeException(e); // not reached			
+		}
 	}
 }

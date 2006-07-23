@@ -669,7 +669,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
     			    }
 				}
 				String rhapsodyDownloadUrl = 
-					rhapsodyDownloadCache.getRhapsodyDownloadUrl(trackView.getArtist(), trackView.getAlbum(), trackView.getTrackNumber());
+					rhapsodyDownloadCache.getSync(trackView.getAlbum(), trackView.getArtist(), trackView.getTrackNumber());
 				if (rhapsodyDownloadUrl != null) {
 					trackView.setDownloadUrl(SongDownloadSource.RHAPSODY, rhapsodyDownloadUrl);
 				}
@@ -753,7 +753,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 				}
 				if (yahooAlbum != null) {
 					String rhapsodyDownloadUrl = 
-						rhapsodyDownloadCache.getRhapsodyDownloadUrl(yahooAlbum.getArtist(), yahooAlbum.getAlbum(), yahooSong.getTrackNumber());
+						rhapsodyDownloadCache.getSync(yahooAlbum.getAlbum(), yahooAlbum.getArtist(), yahooSong.getTrackNumber());
 					if (rhapsodyDownloadUrl != null) {
 						view.setDownloadUrl(SongDownloadSource.RHAPSODY, rhapsodyDownloadUrl);
 						//logger.debug("set rhapsody download url {}", rhapsodyDownloadUrl);
