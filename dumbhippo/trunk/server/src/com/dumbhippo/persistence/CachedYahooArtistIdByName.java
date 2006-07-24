@@ -33,7 +33,7 @@ public class CachedYahooArtistIdByName extends DBUnique {
 	}
 
 	// null artistId means a cached negative name lookup
-	@Column(nullable=true)
+	@Column(nullable=true,length=100)
 	public String getArtistId() {
 		return artistId;
 	}
@@ -42,7 +42,7 @@ public class CachedYahooArtistIdByName extends DBUnique {
 		this.artistId = artistId;
 	}
 
-	@Column(nullable=false)
+	@Column(nullable=false,length=100)
 	public String getName() {
 		return name;
 	}
