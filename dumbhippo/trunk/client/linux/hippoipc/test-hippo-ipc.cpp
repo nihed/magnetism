@@ -18,7 +18,7 @@ class TestListener : public HippoIpcListener {
 public:    
     virtual void onConnect();
     virtual void onDisconnect();
-    virtual void onUserJoin(HippoEndpointId endpoint, const char *chatId, const char *userId);
+    virtual void onUserJoin(HippoEndpointId endpoint, const char *chatId, const char *userId, bool participant);
     virtual void onUserLeave(HippoEndpointId endpoint, const char *chatId, const char *userId);
     virtual void onMessage(HippoEndpointId endpoint, const char *chatId, const char *userId, const char *message, double timestamp, long serial);
     virtual void userInfo(HippoEndpointId endpoint, const char *userId, const char *name, const char *smallPhotoUrl, const char *currentSong, const char *currentArtist, bool musicPlaying);
@@ -50,11 +50,12 @@ TestListener::onDisconnect()
 }
 
 void
-TestListener::onUserJoin(HippoEndpointId endpoint, const char *chatId, const char *userId)
+TestListener::onUserJoin(HippoEndpointId endpoint, const char *chatId, const char *userId, bool participant)
 {
     g_print("userJoin\n");
     g_print("    chatId: %s\n", chatId);
     g_print("    userId: %s\n", userId);
+    g_print("    participant: %d\n", participant);
 }
 
 void

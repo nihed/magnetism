@@ -513,18 +513,20 @@ HippoDBusIpcProviderImpl::handleMethod(DBusMessage *message)
 	dbus_uint64_t endpoint;
 	const char *chatId;
 	const char *userId;
+        dbus_bool_t participant;
 	
 	if (dbus_message_get_args(message, NULL,
 				  DBUS_TYPE_UINT64, &endpoint,
 				  DBUS_TYPE_STRING, &chatId,
 				  DBUS_TYPE_STRING, &userId,
+				  DBUS_TYPE_BOOLEAN, &participant,
 				  DBUS_TYPE_INVALID)) {
 	    if (listener_)
-		listener_->onUserJoin(endpoint, chatId, userId);
+		listener_->onUserJoin(endpoint, chatId, userId, participant);
 	} else {
 	    reply = dbus_message_new_error(message,
 					   DBUS_ERROR_INVALID_ARGS,
-					   _("Expected userJoin(uint64 endpoint, string chatId, string userId)"));
+					   _("Expected userJoin(uint64 endpoint, string chatId, string userId, boolean participant)"));
 	}
 	
     } else if (strcmp(member, "UserLeave") == 0) {

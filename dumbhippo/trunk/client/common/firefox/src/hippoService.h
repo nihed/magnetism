@@ -16,7 +16,7 @@ public:
     virtual void onConnect();
     virtual void onDisconnect();
 
-    virtual void onUserJoin(HippoEndpointId endpoint, const char *chatId, const char *userId);
+    virtual void onUserJoin(HippoEndpointId endpoint, const char *chatId, const char *userId, bool participant);
     virtual void onUserLeave(HippoEndpointId endpoint, const char *chatId, const char *userId);
     virtual void onMessage(HippoEndpointId endpoint, const char *chatId, const char *userId, const char *message, double timestamp, long serial);
 

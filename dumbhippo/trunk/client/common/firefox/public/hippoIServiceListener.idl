@@ -4,7 +4,7 @@
 interface hippoIServiceListener : nsISupports {
     void onConnect();
     void onDisconnect();
-    void onUserJoin(in AUTF8String chatId, in AUTF8String userId);
+    void onUserJoin(in AUTF8String chatId, in AUTF8String userId, in boolean participant);
     void onUserLeave(in AUTF8String chatId, in AUTF8String userId);
     void onMessage(in AUTF8String chatId, in AUTF8STring userId, in AUTF8String message, in double timestamp, in long serial);
     void onReconnect(in AUTF8String chatId);

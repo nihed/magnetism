@@ -16,7 +16,7 @@ public:
     // across a disconnect notification.
     virtual void onDisconnect() = 0;
 
-    virtual void onUserJoin(HippoEndpointId endpoint, const char *chatId, const char *userId) = 0;
+    virtual void onUserJoin(HippoEndpointId endpoint, const char *chatId, const char *userId, bool participant) = 0;
     virtual void onUserLeave(HippoEndpointId endpoint, const char *chatId, const char *userId) = 0;
     virtual void onMessage(HippoEndpointId endpoint, const char *chatId, const char *userId, const char *message, double timestamp, long serial) = 0;
 

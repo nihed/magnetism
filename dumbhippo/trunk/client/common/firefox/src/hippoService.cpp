@@ -189,10 +189,10 @@ hippoService::onDisconnect()
 }
 
 void 
-hippoService::onUserJoin(HippoEndpointId endpoint, const char *chatId, const char *userId)
+hippoService::onUserJoin(HippoEndpointId endpoint, const char *chatId, const char *userId, bool participant)
 {
     if (listener_)
-        listener_->OnUserJoin(nsCString(chatId), nsCString(userId));
+        listener_->OnUserJoin(nsCString(chatId), nsCString(userId), participant);
 }
 
 void 

@@ -375,12 +375,14 @@ static void
 on_endpoint_user_join(HippoEndpointProxy *proxy,
 		      HippoChatRoom      *chat_room,
 		      HippoPerson        *user,
+                      gboolean            participant,
 		      HippoDBusListener  *listener)
 {
     DBusMessage *message;
     guint64 endpoint = hippo_endpoint_proxy_get_id(proxy);
     const char *chat_id = hippo_chat_room_get_id(chat_room);
     const char *user_id = hippo_entity_get_guid(HIPPO_ENTITY(user));
+    dbus_bool_t participant_bool = participant;
     
     message = dbus_message_new_method_call(listener->name,
                                            HIPPO_DBUS_LISTENER_PATH,
@@ -390,6 +392,7 @@ on_endpoint_user_join(HippoEndpointProxy *proxy,
 			     DBUS_TYPE_UINT64, &endpoint,
 			     DBUS_TYPE_STRING, &chat_id,
 			     DBUS_TYPE_STRING, &user_id,
+                             DBUS_TYPE_BOOLEAN, &participant_bool,
 			     DBUS_TYPE_INVALID);
 
     dbus_connection_send(listener->dbus->connection, message, NULL);

@@ -54,8 +54,8 @@ hippo_endpoint_proxy_class_init(HippoEndpointProxyClass *klass)
 		     G_SIGNAL_RUN_LAST,
 		     0,
 		     NULL, NULL,
-		     hippo_common_marshal_VOID__OBJECT_OBJECT,
-		     G_TYPE_NONE, 2, G_TYPE_OBJECT, G_TYPE_OBJECT);
+		     hippo_common_marshal_VOID__OBJECT_OBJECT_BOOLEAN,
+		     G_TYPE_NONE, 2, G_TYPE_OBJECT, G_TYPE_OBJECT, G_TYPE_BOOLEAN);
     signals[USER_LEAVE] = 
 	g_signal_new("user-leave",
 		     G_TYPE_FROM_CLASS(object_class),
@@ -215,8 +215,8 @@ on_room_user_state_changed(HippoChatRoom      *room,
 
     track_entity(proxy, HIPPO_ENTITY(person));
     
-    if (new_state == HIPPO_CHAT_STATE_PARTICIPANT) {
-	g_signal_emit(proxy, signals[USER_JOIN], 0, room, person);
+    if (new_state != HIPPO_CHAT_STATE_NONMEMBER) {
+	g_signal_emit(proxy, signals[USER_JOIN], 0, room, person, new_state == HIPPO_CHAT_STATE_PARTICIPANT);
     } else {
 	g_signal_emit(proxy, signals[USER_LEAVE], 0, room, person);
     }

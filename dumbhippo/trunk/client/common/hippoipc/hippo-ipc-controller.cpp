@@ -36,7 +36,7 @@ public:
     // HippoIpcListener methods
     virtual void onConnect();
     virtual void onDisconnect();
-    virtual void onUserJoin(HippoEndpointId endpoint, const char *chatId, const char *userId);
+    virtual void onUserJoin(HippoEndpointId endpoint, const char *chatId, const char *userId, bool participant);
     virtual void onUserLeave(HippoEndpointId endpoint, const char *chatId, const char *userId);
     virtual void onMessage(HippoEndpointId endpoint, const char *chatId, const char *userId, const char *message,double timestamp,long serial);
 
@@ -152,11 +152,11 @@ HippoIpcControllerImpl::onDisconnect()
 }
 
 void
-HippoIpcControllerImpl::onUserJoin(HippoEndpointId endpoint, const char *chatId, const char *userId)
+HippoIpcControllerImpl::onUserJoin(HippoEndpointId endpoint, const char *chatId, const char *userId, bool participant)
 {
     for (std::vector<HippoIpcControllerEndpoint>::iterator i = endpoints_.begin(); i != endpoints_.end(); i++) {
 	if (i->getId() == endpoint) {
-	    i->getListener()->onUserJoin(endpoint, chatId, userId);
+	    i->getListener()->onUserJoin(endpoint, chatId, userId, participant);
 	    break;
 	}
     }
