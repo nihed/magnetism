@@ -83,8 +83,10 @@ public class YahooSongCacheBean extends AbstractCacheBean implements YahooSongCa
 		}
 		
 		List<YahooSongData> result = checkCache(track);
-		if (result != null)
+		if (result != null) {
+			logger.debug("using cached song listing {} song ids for track {}", result.size(), track);
 			return new KnownFuture<List<YahooSongData>>(result);
+		}
 		
 		FutureTask<List<YahooSongData>> futureResult =
 			new FutureTask<List<YahooSongData>>(new YahooSongTask(track));
@@ -93,7 +95,7 @@ public class YahooSongCacheBean extends AbstractCacheBean implements YahooSongCa
 	}
 
 	private List<CachedYahooSongData> songDataQuery(Track track) {
-		Query q = em.createQuery("SELECT song FROM CachedYahooSongData song WHERE song.name = :name AND song.artist = :artist AND song.album = :album");
+		Query q = em.createQuery("SELECT song FROM CachedYahooSongData song WHERE song.searchedName = :name AND song.searchedArtist = :artist AND song.searchedAlbum = :album");
 		q.setParameter("name", track.getName());
 		q.setParameter("artist", track.getArtist());
 		q.setParameter("album", track.getAlbum());
@@ -122,11 +124,15 @@ public class YahooSongCacheBean extends AbstractCacheBean implements YahooSongCa
 			}
 		}
 		
-		if (outdated)
+		if (outdated) {
+			logger.debug("cached yahoo songs for track are outdated, track = {}", track);
 			return null;
+		}
 		
-		if (haveNoResultsMarker)
+		if (haveNoResultsMarker) {
+			logger.debug("negative result in cache for yahoo songs for track {}", track);
 			return Collections.emptyList();
+		}
 		
 		List<YahooSongData> results = new ArrayList<YahooSongData>();
 		for (CachedYahooSongData d : old) {
@@ -148,9 +154,9 @@ public class YahooSongCacheBean extends AbstractCacheBean implements YahooSongCa
 
 	private CachedYahooSongData createCachedSong(Track track) {
 		CachedYahooSongData d = new CachedYahooSongData();
-		d.setAlbum(track.getAlbum());
-		d.setArtist(track.getArtist());
-		d.setName(track.getName());
+		d.setSearchedAlbum(track.getAlbum());
+		d.setSearchedArtist(track.getArtist());
+		d.setSearchedName(track.getName());
 		return d;
 	}
 	

@@ -918,7 +918,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
             Future<List<YahooSongData>> albumTracks = yahooAlbumSongsCache.getAsync(album.getAlbumId());
 
 		    AlbumView albumView = getAlbumView(viewpoint, song, album, amazonAlbum, albumTracks);
-	        view.addAlbum(albumView);			
+	        view.addAlbum(albumView);
 		}
 		
         fillAlbumsByArtist(viewpoint, yahooArtist, albumsByArtist, album, view);
@@ -1405,86 +1405,86 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	}
 
 	public ExpandedArtistView expandedArtistSearch(Viewpoint viewpoint, String artist, Pageable<AlbumView> albumsByArtist) throws NotFoundException {
+		logger.debug("artist page search for '{}'", artist);
         try {
 			// albumsByArtist is a pageable object that contains information on what albums the expanded
 	        // artist view should be loaded with, it also needs to have these albums set in its results field
 			ExpandedArtistView artistView = getExpandedArtistView(viewpoint, artist, albumsByArtist);
 			artistView.pageAlbums(albumsByArtist);
 			return artistView;
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
         	logger.error("artist-based expandedArtistSearch hit an exception", e);
         	throw new NotFoundException("Not found due to an exception in the music system.");
         }
 	}
+
+	private ExpandedArtistView expandedArtistSearchInTrackHistory(Viewpoint viewpoint, String artist, String album, String name, Pageable<AlbumView> albumsByArtist) throws NotFoundException {
+		Track track = getMatchingTrack(viewpoint, artist, album, name);
+
+		List<YahooSongData> songs = yahooSongCache.getSync(track);
+		if (songs.isEmpty())
+			throw new NotFoundException("No Yahoo! songs found for track " + track);
+		
+		// get the primary artist result for this artist, than make sure we use the song result
+		// associated with the primary artist result, if possible.
+		YahooArtistData yahooArtist = yahooArtistCache.getSyncByName(track.getArtist());
+		
+		YahooSongData yahooSong = null;
+		
+		if (yahooArtist != null) {
+		    for (YahooSongData songForTrack : songs) {
+		    	if (songForTrack.getArtistId().equals(yahooArtist.getArtistId())) {
+		    		yahooSong = songForTrack;
+		    		break;
+		    	}
+		    }
+		}
+
+		// but we'd rather use any song result than none
+		if (yahooSong == null) {
+			yahooSong = songs.get(0);
+		}
+		
+	   // information about the album the song is on
+       YahooAlbumData yahooAlbum = yahooAlbumCache.getSync(yahooSong.getAlbumId());
+       
+        // albumsByArtist is a pageable object that contains information on what albums the expanded
+        // artist view should be loaded with, it also needs to have these albums set in its results field
+        YahooSongData songToExpand = null;
+        if (name != null) {
+    	    //this is a search based on a song name, not just an album search
+    	    songToExpand = yahooSong;
+        }
+        
+	    ExpandedArtistView artistView = getExpandedArtistView(viewpoint, songToExpand, yahooAlbum, albumsByArtist);
+ 	    artistView.pageAlbums(albumsByArtist);
+        return artistView;		
+	}
+	
+	private ExpandedArtistView expandedArtistSearchInCachedAlbumListing(Viewpoint viewpoint, String artist, String album, String name, Pageable<AlbumView> albumsByArtist) throws NotFoundException {
+		YahooAlbumData yahooAlbum = yahooArtistAlbumsCache.findAlreadyCachedAlbum(artist, album, name);
+		ExpandedArtistView artistView = getExpandedArtistView(viewpoint, null, yahooAlbum, albumsByArtist);
+		artistView.pageAlbums(albumsByArtist);
+	    return artistView;		
+	}
 	
 	public ExpandedArtistView expandedArtistSearch(Viewpoint viewpoint, String artist, String album, String name, Pageable<AlbumView> albumsByArtist) throws NotFoundException {
-        try {
-			if (artist == null && album == null && name == null) {
-				throw new NotFoundException("Search has no parameters");
-			}
-			
-			// if we only get an artist it's more fun to return a random album, rather than some album we already know about
-			if (album == null && name == null) {
-				return expandedArtistSearch(viewpoint, artist, albumsByArtist);
-			}
+		logger.debug("artist page search for '{}' '{}' '" + name + "'", artist, album);
+		if (artist == null && album == null && name == null) {
+			throw new NotFoundException("Search has no parameters");
+		}
 		
-			// for now, it's good if this function populates the album list of the expanded artist view with one
-			// best-matching album, later it would also add in top (10) albums and a total number of albums for an artist
-			try {
-				Track track = getMatchingTrack(viewpoint, artist, album, name);
-
-				List<YahooSongData> songs = yahooSongCache.getSync(track);
-				if (!songs.isEmpty()) {
-					// get the primary artist result for this artist, than make sure we use the song result
-					// associated with the primary artist result
-					YahooArtistData yahooArtist = yahooArtistCache.getSyncByName(track.getArtist());
-					
-					YahooSongData yahooSong = null;
-					
-					if (yahooArtist != null) {
-					    for (YahooSongData songForTrack : songs) {
-					    	if (songForTrack.getArtistId().equals(yahooArtist.getArtistId())) {
-					    		yahooSong = songForTrack;
-					    		break;
-					    	}
-					    }
-					}
-					
-				    if (yahooSong != null) {
-					    // we want to get yahoo album here synchronously
-	                    YahooAlbumData yahooAlbum = getFutureResult(yahooAlbumCache.getAsync(yahooSong.getAlbumId()));	
-	                    // albumsByArtist is a pageable object that contains information on what albums the expanded
-	                    // artist view should be loaded with, it also needs to have these albums set in its results field
-	                    YahooSongData songToExpand = null;
-	                    if (name != null) {
-	                	    //this is a search based on a song name, not just an album search
-	                	    songToExpand = yahooSong;
-	                    }
-	    			    ExpandedArtistView artistView = getExpandedArtistView(viewpoint, songToExpand, yahooAlbum, albumsByArtist);
-	    		 	    artistView.pageAlbums(albumsByArtist);
-	    		        return artistView;
-				    }
-				}		
-			} catch (NotFoundException e) {
-				// we get this exception if a matching track, a matching artist, or an album with a given id were not found 
-				logger.debug("no matching track, artist, album for expandedArtistSearch: {}", e.getMessage());
-			}
+		if (album == null && name == null) {
+			// just return the artist information (starting with the first album or whatever) 
+			return expandedArtistSearch(viewpoint, artist, albumsByArtist);
+		}
 	
-		    // in other cases we have to do a query to get YahooAlbumData
-			// if we displayed it, we have to have it locally, but in order to update it or to fulfill
-			// arbitrary user-defined searches we will need to use lookupSong, and then lookupAlbum for this song
-			// (or rather with a given album id)
-			YahooAlbumData yahooAlbum = yahooArtistAlbumsCache.findAlreadyCachedAlbum(artist, album, name);
-			ExpandedArtistView artistView = getExpandedArtistView(viewpoint, null, yahooAlbum, albumsByArtist);
-			artistView.pageAlbums(albumsByArtist);
-		    return artistView;
-        } catch (Exception e) {
-        	logger.error("song/album-based expandedArtistSearch hit an exception", e);
-        	if (e instanceof NotFoundException)
-        		throw (NotFoundException) e;
-        	else
-        		throw new NotFoundException("Not found due to an exception in the music system.");
-        }
+		try {
+			return expandedArtistSearchInTrackHistory(viewpoint, artist, album, name, albumsByArtist);
+		} catch (NotFoundException e) { 
+			logger.debug("expandedArtistSearch in track history failed: {}  (will now fall back to search in cached album listings)", e.getMessage());
+			return expandedArtistSearchInCachedAlbumListing(viewpoint, artist, album, name, albumsByArtist);
+		}
 	}
 
 	private static final int MAX_RELATED_FRIENDS_RESULTS = 5;

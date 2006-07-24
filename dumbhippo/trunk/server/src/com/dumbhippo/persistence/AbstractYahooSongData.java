@@ -39,9 +39,12 @@ abstract public class AbstractYahooSongData extends DBUnique {
 	}
 
 	public void updateData(YahooSongData data) {
-		songId = data.getSongId();
-		name = data.getName();
+		// if albumId is our search key, then it's essential
+		// that it matches the albumId set here ...
 		albumId = data.getAlbumId();
+		
+		name = data.getName();		
+		songId = data.getSongId();
 		artistId = data.getArtistId();
 		publisher = data.getPublisher();
 		duration = data.getDuration();

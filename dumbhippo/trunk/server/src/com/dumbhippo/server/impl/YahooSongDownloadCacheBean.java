@@ -113,11 +113,15 @@ public class YahooSongDownloadCacheBean extends AbstractCacheBean implements Yah
 			}
 		}
 		
-		if (outdated)
+		if (outdated) {
+			logger.debug("song download data cache outdated for {}", songId);
 			return null;
+		}
 		
-		if (haveNoResultsMarker)
+		if (haveNoResultsMarker) {
+			logger.debug("negative song download data result cached for {}", songId);
 			return Collections.emptyList();
+		}
 		
 		List<YahooSongDownloadData> results = new ArrayList<YahooSongDownloadData>();
 		for (CachedYahooSongDownload d : old) {
@@ -152,7 +156,7 @@ public class YahooSongDownloadCacheBean extends AbstractCacheBean implements Yah
 		final List<YahooSongDownloadData> songs = newSongs; 
 		
 		try {
-			return runner.runTaskInNewTransaction(new Callable<List<YahooSongDownloadData>>() {
+			return runner.runTaskRetryingOnConstraintViolation(new Callable<List<YahooSongDownloadData>>() {
 				public List<YahooSongDownloadData> call() {
 					
 					logger.debug("Saving new song download results in cache");

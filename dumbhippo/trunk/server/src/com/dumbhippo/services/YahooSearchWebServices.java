@@ -54,7 +54,11 @@ public class YahooSearchWebServices extends AbstractXmlRequest<YahooSearchSaxHan
 		}
 		
 		StringBuilder sb = new StringBuilder();
-		sb.append("http://api.search.yahoo.com/AudioSearchService/V1/songSearch?results=3&appid=");
+		sb.append("http://api.search.yahoo.com/AudioSearchService/V1/songSearch?results=");
+		// it's important to ask for tons of results here because yahoo does a very fuzzy match 
+		// then returns the results in no special order, and we need to dig out the good ones
+		sb.append(Integer.toString(MAX_RESULTS_TO_RETURN));
+		sb.append("&appid=");
 		sb.append(appId);
 		sb.append("&artist=");
 		sb.append(StringUtils.urlEncode(artist));
@@ -99,7 +103,7 @@ public class YahooSearchWebServices extends AbstractXmlRequest<YahooSearchSaxHan
 			return Collections.emptyList();
 		} else {
 			return handler.getAlbumSongs();
-		}		
+		}
 	}
 
 	public List<YahooSongData> lookupAlbumSongs(String albumId) {
@@ -120,7 +124,7 @@ public class YahooSearchWebServices extends AbstractXmlRequest<YahooSearchSaxHan
 			return Collections.emptyList();
 		} else {
 			return handler.getAlbumSongs();
-		}		
+		}
 	}
 	
 	// pass in start as 0-based, Yahoo! wants 1-based but this method converts

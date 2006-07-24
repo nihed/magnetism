@@ -208,7 +208,24 @@ class YahooSearchSaxHandler extends EnumSaxHandler<YahooSearchSaxHandler.Element
 		String resultAlbum = r.getValue(Element.Album);
 		String resultArtist = r.getValue(Element.Artist);
 		String resultName = r.getValue(Element.Title);
-		if (!resultName.equals(name) || !resultAlbum.equals(album) || !resultArtist.equals(artist)) {
+		
+		// would not expect this to happen
+		if (resultAlbum == null || resultArtist == null || resultName == null) {
+			logger.debug("  yahoo song match missing album, artist, or name: {}", r);
+			return null;
+		}
+		
+		// this is paranoia that's probably a no-op
+		resultAlbum = resultAlbum.trim();
+		resultArtist = resultArtist.trim();
+		resultName = resultName.trim();
+		
+		// sometimes the results differ on whether e.g. "the" or "The" so we 
+		// do a case-insensitive compare
+		if (!resultName.toLowerCase().equals(name.toLowerCase()) ||
+				!resultAlbum.toLowerCase().equals(album.toLowerCase()) ||
+				!resultArtist.toLowerCase().equals(artist.toLowerCase())) {
+			logger.debug("  not using imperfect Yahoo! song match {}", r);
 			return null;
 		}
 
@@ -241,39 +258,16 @@ class YahooSearchSaxHandler extends EnumSaxHandler<YahooSearchSaxHandler.Element
 	}
 	
 	public List<YahooSongData> getBestSongs(String artist, String album, String name) {
-		// FIXME this could doubtless be more sophisticated ...
-		// right now it just hopes the first two results are the 
-		// good ones. you sometimes need two different song IDs 
-		// to get all the download urls we care about (iTunes 
-		// in particular)
 		if (results.isEmpty()) {
 			logger.debug("No song results were parsed");
 			return Collections.emptyList();
 		}
 
 		List<YahooSongData> list = new ArrayList<YahooSongData>();
-		Result r = results.get(0);
-		YahooSongData songResult = songFromResultChecked(r, artist, album, name);
-		boolean usedFirstResult = false;
-		if (songResult != null) {
-		    list.add(songResult);
-		    usedFirstResult = true;
-		}
-		if (results.size() > 1) {
-			r = results.get(1);
-			// the rhapsody/yahoo/itunes/etc. good results 
-			// tend to have these fields...
-			if (!usedFirstResult || 
-				(r.getAlbumId() != null &&
-				 r.getValue(Element.ReleaseDate) != null &&
-				 r.getValue(Element.Publisher) != null && 
-				 !r.getId().equals(results.get(0).getId()))) {
-				
-				songResult = songFromResultChecked(r, artist, album, name);
-				if (songResult != null) {
-				    list.add(songResult);
-				}
-			}
+		for (Result r : results) {
+			YahooSongData songResult = songFromResultChecked(r, artist, album, name);
+			if (songResult != null)
+				list.add(songResult);
 		}
 		return list;
 	}

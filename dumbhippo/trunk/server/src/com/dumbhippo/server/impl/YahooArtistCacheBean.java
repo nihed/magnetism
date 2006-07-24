@@ -314,7 +314,8 @@ public class YahooArtistCacheBean extends AbstractCacheBean implements YahooArti
 							CachedYahooArtistIdByName id = new CachedYahooArtistIdByName();
 							id.setLastUpdated(now);
 							// this is important; a.getName() is the "canonical" name 
-							// while "artist" is the name we searched by
+							// while "artist" is the name we searched by. The name we 
+							// searched by has to be in the cache or things won't work.
 							id.setName(artist);
 							id.setArtistId(a.getArtistId());
 							em.persist(id);

@@ -184,6 +184,13 @@ public class YahooArtistAlbumsCacheBean extends AbstractCacheBean implements Yah
 						em.persist(d);
 					} else {
 						for (YahooAlbumData s : albums) {
+							if (!s.getArtistId().equals(artistId)) {
+								// if this happens, either change the yahoo web services stuff to filter it out,
+								// or add a separate db column for the search key id vs. the returned id
+								logger.warn("Yahoo returned an album for artistId {} with wrong artistId {}", artistId, s);
+								continue;
+							}
+							
 							CachedYahooArtistAlbumData d = createCachedAlbum(artistId);
 							d.setLastUpdated(now);
 							d.updateData(s);

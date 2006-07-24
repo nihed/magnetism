@@ -7,30 +7,41 @@ import org.hibernate.annotations.Index;
 
 /**
  * This table maps (album,artist,name) triplet to yahoo song data.
+ * The album,artist,name are the search keys, not anything returned by
+ * Yahoo!, in fact the same yahoo song ID could be under multiple search key triplets.
  */
 @Entity
 @org.hibernate.annotations.Table(name = "CachedYahooSongData", indexes={ 
-		@Index(name="albumArtistSong_index", columnNames = { "album", "artist", "name", "id" } ) 
+		@Index(name="albumArtistSong_index", columnNames = { "searchedAlbum", "searchedArtist", "searchedName", "id" } ) 
 })
 public class CachedYahooSongData extends AbstractYahooSongData {
 	private static final long serialVersionUID = 1L;
 
-	private String artist;
-	private String album;
+	private String searchedArtist;
+	private String searchedAlbum;
+	private String searchedName;
 	
 	@Column(nullable=true, length=100)
-	public String getAlbum() {
-		return album;
+	public String getSearchedAlbum() {
+		return searchedAlbum;
 	}
-	public void setAlbum(String album) {
-		this.album = album;
+	public void setSearchedAlbum(String album) {
+		this.searchedAlbum = album;
 	}
 	
 	@Column(nullable=true, length=100)
-	public String getArtist() {
-		return artist;
+	public String getSearchedArtist() {
+		return searchedArtist;
 	}
-	public void setArtist(String artist) {
-		this.artist = artist;
+	public void setSearchedArtist(String artist) {
+		this.searchedArtist = artist;
+	}
+	
+	@Column(nullable=true, length=100)
+	public String getSearchedName() {
+		return searchedName;
+	}
+	public void setSearchedName(String searchedName) {
+		this.searchedName = searchedName;
 	}
 }

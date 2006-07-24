@@ -76,8 +76,10 @@ public class YahooAlbumSongsCacheBean extends AbstractCacheBean implements Yahoo
 			throw new IllegalArgumentException("null albumId passed to YahooAlbumSongsCacheBean");
 		
 		List<YahooSongData> result = checkCache(albumId);
-		if (result != null)
+		if (result != null) {
+			logger.debug("Using cached song listing for {}", albumId);
 			return new KnownFuture<List<YahooSongData>>(result);
+		}
 		
 		FutureTask<List<YahooSongData>> futureResult =
 			new FutureTask<List<YahooSongData>>(new YahooAlbumSongsTask(albumId));
@@ -177,6 +179,15 @@ public class YahooAlbumSongsCacheBean extends AbstractCacheBean implements Yahoo
 						em.persist(d);
 					} else {
 						for (YahooSongData s : songs) {
+							if (!s.getAlbumId().equals(albumId)) {
+								// this would break since albumId is the key in the cache and also a returned value in the 
+								// song data... if it breaks then we need either the YahooWebServices stuff to filter out
+								// these songs, or we need to add a new column to the cache table in the db for the searched-for albumId
+								// vs. the returned albumId.
+								logger.warn("Yahoo! returned a song with a different albumid than the one in the query for {}: {}", albumId, s);
+								continue;
+							}
+							
 							CachedYahooAlbumSongData d = createCachedSong(albumId);
 							d.setLastUpdated(now);
 							d.updateData(s);
