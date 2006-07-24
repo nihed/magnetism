@@ -113,11 +113,15 @@ public class YahooAlbumSongsCacheBean extends AbstractCacheBean implements Yahoo
 			}
 		}
 		
-		if (outdated)
+		if (outdated) {
+			logger.debug("Cache appears outdated for songs for album {}", albumId);
 			return null;
+		}
 		
-		if (haveNoResultsMarker)
+		if (haveNoResultsMarker) {
+			logger.debug("Negative result cached for songs for album {}", albumId);
 			return Collections.emptyList();
+		}
 		
 		List<YahooSongData> results = new ArrayList<YahooSongData>();
 		for (CachedYahooAlbumSongData d : old) {

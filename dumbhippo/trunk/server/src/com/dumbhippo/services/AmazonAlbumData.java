@@ -16,5 +16,4 @@ public interface AmazonAlbumData {
 	public int getSmallImageWidth();
 
 	public int getSmallImageHeight();
-
 }

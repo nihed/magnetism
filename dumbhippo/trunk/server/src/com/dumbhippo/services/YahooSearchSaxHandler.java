@@ -2,8 +2,8 @@ package com.dumbhippo.services;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.EnumMap;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 
@@ -13,8 +13,6 @@ import org.xml.sax.SAXException;
 import com.dumbhippo.EnumSaxHandler;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.SongDownloadSource;
-import com.dumbhippo.persistence.YahooAlbumResult;
-import com.dumbhippo.persistence.YahooArtistResult;
 
 class YahooSearchSaxHandler extends EnumSaxHandler<YahooSearchSaxHandler.Element> {
 	
@@ -295,9 +293,8 @@ class YahooSearchSaxHandler extends EnumSaxHandler<YahooSearchSaxHandler.Element
 		return list;
 	}
 	
-	private YahooAlbumResult albumFromResult(Result r) {
-		YahooAlbumResult album = new YahooAlbumResult();
-		album.setLastUpdated(new Date());
+	private YahooAlbumData albumFromResultChecked(Result r) {
+		AlbumData album = new AlbumData();
 		album.setAlbumId(r.getId());
 		album.setAlbum( r.getValue(Element.Title));
 		album.setArtistId(r.getArtistId());
@@ -308,23 +305,45 @@ class YahooSearchSaxHandler extends EnumSaxHandler<YahooSearchSaxHandler.Element
 		album.setSmallImageWidth(r.getValueInt(Element.Width));
 		album.setSmallImageHeight(r.getValueInt(Element.Height));
 		album.setReleaseDate(r.getValue(Element.ReleaseDate));
-		return album;		
+		
+		if (album.getAlbumId() == null) {
+			logger.debug("ignoring album result with no id {}", r);
+			return null;
+		}
+
+		if (album.getAlbum() == null) {
+			logger.debug("ignoring album result with no title {}", r);
+			return null;
+		}		
+		
+		if (album.getArtistId() == null) {
+			logger.debug("ignoring album result with no artist id {}", r);
+			return null;
+		}
+
+		if (album.getArtist() == null) {
+			logger.debug("ignoring album result with no artist name {}", r);
+			return null;
+		}
+		
+		return album;
 	}
 	
-	public List<YahooAlbumResult> getBestAlbums() {
+	public List<YahooAlbumData> getAlbums() {
 		logger.debug("total results available is {} when getting best albums ", totalResultsAvailable);
-		List<YahooAlbumResult> list = new ArrayList<YahooAlbumResult>();
+		List<YahooAlbumData> list = new ArrayList<YahooAlbumData>();
 		
 		if (results.isEmpty()) {
 			logger.debug("No album results were parsed");
 		}
 
 		for (Result r : results) {
-			YahooAlbumResult albumResult = albumFromResult(r);
-		    list.add(albumResult);
+			YahooAlbumData albumResult = albumFromResultChecked(r);
+			if (albumResult != null)
+				list.add(albumResult);
 		}
 		//logger.debug("Got {} album results: {}", list.size(), list);
-		return list;			
+		return list;	
 	}
 	
 	public int getTotalResultsAvailable() {
@@ -362,37 +381,53 @@ class YahooSearchSaxHandler extends EnumSaxHandler<YahooSearchSaxHandler.Element
 			return Collections.emptyList();
 		}
 
+		EnumSet<SongDownloadSource> sourcesSeen = EnumSet.noneOf(SongDownloadSource.class);
 		List<YahooSongDownloadData> list = new ArrayList<YahooSongDownloadData>();
 		for (Result r : results) {
 			YahooSongDownloadData d = downloadFromResult(r);
-			if (d != null)
-				list.add(d);
+			if (d != null) {
+				if (sourcesSeen.contains(d.getSource())) {
+					logger.debug("Source " + d.getSource() + " occurs twice in new song download results, ignoring second one: {}",
+						r);
+				} else {
+					sourcesSeen.add(d.getSource());
+
+					list.add(d);
+				}
+			}
 		}
 		//logger.debug("Got {} download results: {}", list.size(), list);
 		return list;		
 	}
 
-	private YahooArtistResult artistFromResult(Result r) {
-		YahooArtistResult artist = new YahooArtistResult();
-		artist.setLastUpdated(new Date());
+	private YahooArtistData artistFromResultChecked(Result r) {
+		ArtistData artist = new ArtistData();
 		artist.setArtistId(r.getId());
 		artist.setArtist(r.getValue(Element.Name));
 		artist.setYahooMusicPageUrl(r.getValue(Element.YahooMusicPage));
 		artist.setSmallImageUrl(r.getValue(Element.Url));
 		artist.setSmallImageWidth(r.getValueInt(Element.Width));
 		artist.setSmallImageHeight(r.getValueInt(Element.Height));
-		return artist;		
+		if (artist.getArtistId() == null) {
+			logger.debug("ignoring an artist result with null id {}", r);
+			return null;
+		}
+		if (artist.getArtist() == null) {
+			logger.debug("ignoring an artist result with null name {}", r);
+			return null;
+		}
+		return artist;
 	}
 	
-	public List<YahooArtistResult> getBestArtists() {
+	public List<YahooArtistData> getArtists() {
 		if (results.isEmpty()) {
 			logger.debug("No artists were found");
 			return Collections.emptyList();
 		}
 		
-		List<YahooArtistResult> list = new ArrayList<YahooArtistResult>();
+		List<YahooArtistData> list = new ArrayList<YahooArtistData>();
 		for (Result r : results) {
-			YahooArtistResult yahooArtist = artistFromResult(r);
+			YahooArtistData yahooArtist = artistFromResultChecked(r);
 			if (yahooArtist != null)
 				list.add(yahooArtist);
 		}
@@ -525,5 +560,127 @@ class YahooSearchSaxHandler extends EnumSaxHandler<YahooSearchSaxHandler.Element
 		public void setUrl(String url) {
 			this.url = url;
 		}
+	}
+	
+	private class ArtistData implements YahooArtistData {
+		
+		private String artist;
+		private String artistId;
+		private String yahooMusicPageUrl;
+		private String smallImageUrl;
+		private int smallImageWidth;
+		private int smallImageHeight;
+
+		public String getArtist() {
+			return artist;
+		}
+		public void setArtist(String artist) {
+			this.artist = artist;
+		}
+		public String getArtistId() {
+			return artistId;
+		}
+		public void setArtistId(String artistId) {
+			this.artistId = artistId;
+		}
+		public int getSmallImageHeight() {
+			return smallImageHeight;
+		}
+		public void setSmallImageHeight(int smallImageHeight) {
+			this.smallImageHeight = smallImageHeight;
+		}
+		public String getSmallImageUrl() {
+			return smallImageUrl;
+		}
+		public void setSmallImageUrl(String smallImageUrl) {
+			this.smallImageUrl = smallImageUrl;
+		}
+		public int getSmallImageWidth() {
+			return smallImageWidth;
+		}
+		public void setSmallImageWidth(int smallImageWidth) {
+			this.smallImageWidth = smallImageWidth;
+		}
+		public String getYahooMusicPageUrl() {
+			return yahooMusicPageUrl;
+		}
+		public void setYahooMusicPageUrl(String yahooMusicPageUrl) {
+			this.yahooMusicPageUrl = yahooMusicPageUrl;
+		}
+	}
+	
+	private class AlbumData implements YahooAlbumData {
+		private String albumId;
+		private String album;
+		private String artistId;
+		private String artist;
+		private String publisher;
+		private String releaseDate;
+		private int tracksNumber;
+		private String smallImageUrl;
+		private int smallImageWidth;
+		private int smallImageHeight;
+		
+		public String getAlbum() {
+			return album;
+		}
+		public void setAlbum(String album) {
+			this.album = album;
+		}
+		public String getAlbumId() {
+			return albumId;
+		}
+		public void setAlbumId(String albumId) {
+			this.albumId = albumId;
+		}
+		public String getArtist() {
+			return artist;
+		}
+		public void setArtist(String artist) {
+			this.artist = artist;
+		}
+		public String getArtistId() {
+			return artistId;
+		}
+		public void setArtistId(String artistId) {
+			this.artistId = artistId;
+		}
+		public String getPublisher() {
+			return publisher;
+		}
+		public void setPublisher(String publisher) {
+			this.publisher = publisher;
+		}
+		public String getReleaseDate() {
+			return releaseDate;
+		}
+		public void setReleaseDate(String releaseDate) {
+			this.releaseDate = releaseDate;
+		}
+		public int getSmallImageHeight() {
+			return smallImageHeight;
+		}
+		public void setSmallImageHeight(int smallImageHeight) {
+			this.smallImageHeight = smallImageHeight;
+		}
+		public String getSmallImageUrl() {
+			return smallImageUrl;
+		}
+		public void setSmallImageUrl(String smallImageUrl) {
+			this.smallImageUrl = smallImageUrl;
+		}
+		public int getSmallImageWidth() {
+			return smallImageWidth;
+		}
+		public void setSmallImageWidth(int smallImageWidth) {
+			this.smallImageWidth = smallImageWidth;
+		}
+		public int getTracksNumber() {
+			return tracksNumber;
+		}
+		public void setTracksNumber(int tracksNumber) {
+			this.tracksNumber = tracksNumber;
+		}
+
 	}
 }

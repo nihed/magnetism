@@ -1,21 +1,21 @@
 package com.dumbhippo.server;
 
-import java.util.List;
 import java.util.concurrent.Future;
 
 import javax.ejb.Local;
 
-import com.dumbhippo.persistence.YahooAlbumResult;
-import com.dumbhippo.persistence.YahooArtistResult;
-import com.dumbhippo.services.YahooSongData;
+import com.dumbhippo.services.YahooAlbumData;
 
 @Local
 public interface YahooAlbumCache {
-	public List<YahooAlbumResult> getYahooAlbumResultsSync(YahooArtistResult artist, Pageable<AlbumView> albumsByArtist, YahooAlbumResult albumToExclude);
 	
-    public Future<List<YahooAlbumResult>> getYahooAlbumResultsAsync(YahooArtistResult artist, Pageable<AlbumView> albumsByArtist, YahooAlbumResult albumToExclude);
-    
-	public YahooAlbumResult getYahooAlbumSync(YahooSongData yahooSong) throws NotFoundException;
+	public YahooAlbumData getSync(String albumId); 
 	
-	public Future<YahooAlbumResult> getYahooAlbumAsync(YahooSongData yahooSong);	
+	public Future<YahooAlbumData> getAsync(String albumId);
+	
+	public YahooAlbumData checkCache(String albumId);
+	
+	public YahooAlbumData fetchFromNet(String albumId);
+	
+	public YahooAlbumData saveInCache(String albumId, YahooAlbumData data);
 }

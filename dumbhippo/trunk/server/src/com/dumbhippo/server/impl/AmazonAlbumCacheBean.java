@@ -61,9 +61,7 @@ public class AmazonAlbumCacheBean extends AbstractCacheBean implements AmazonAlb
 		public AmazonAlbumData call() {
 			logger.debug("Entering AmazonAlbumSearchTask thread for album {} by artist {}", album, artist);				
 
-			AmazonAlbumCache cache = EJBUtil.defaultLookup(AmazonAlbumCache.class);
-
-			logger.debug("In AmazonAlbumSearchTask thread for album {} by artist {}", album, artist);	
+			AmazonAlbumCache cache = EJBUtil.defaultLookup(AmazonAlbumCache.class);	
 						
 			AmazonAlbumData data = cache.fetchFromNet(album, artist);
 
@@ -79,9 +77,12 @@ public class AmazonAlbumCacheBean extends AbstractCacheBean implements AmazonAlb
 		}
 		
 		AmazonAlbumData result = checkCache(album, artist);
-		if (result != null)
+		if (result != null) {
+			if (result.getASIN() == null) // cached negative
+				result = null;
 			return new KnownFuture<AmazonAlbumData>(result);
-				
+		}
+		
 		FutureTask<AmazonAlbumData> futureAlbum =
 			new FutureTask<AmazonAlbumData>(new AmazonAlbumSearchTask(album, artist));
 		getThreadPool().execute(futureAlbum);
@@ -177,8 +178,11 @@ public class AmazonAlbumCacheBean extends AbstractCacheBean implements AmazonAlb
 					
 					logger.debug("Saved new amazon search result for album {} by artist {}: {}", 
 						     new Object[]{album, artist, r});
-			
-					return r.toData();
+					
+					if (r.getASIN() == null)
+						return null; // "no results" marker
+					else
+						return r.toData();
 				}
 			});
 		} catch (Exception e) {

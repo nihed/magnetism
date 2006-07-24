@@ -14,8 +14,8 @@ import com.dumbhippo.persistence.AccountFeed;
 import com.dumbhippo.persistence.Track;
 import com.dumbhippo.persistence.TrackFeedEntry;
 import com.dumbhippo.persistence.User;
-import com.dumbhippo.persistence.YahooAlbumResult;
 import com.dumbhippo.services.AmazonAlbumData;
+import com.dumbhippo.services.YahooAlbumData;
 import com.dumbhippo.services.YahooSongData;
 
 /**
@@ -52,11 +52,11 @@ public interface MusicSystemInternal extends MusicSystem {
 	
 	public Future<TrackView> getCurrentTrackViewAsync(Viewpoint viewpoint, User user) throws NotFoundException;
 	
-	public AlbumView getAlbumView(Future<YahooAlbumResult> futureYahooAlbum, Future<AmazonAlbumData> futureAmazonAlbum);
+	public AlbumView getAlbumView(Future<YahooAlbumData> futureYahooAlbum, Future<AmazonAlbumData> futureAmazonAlbum);
 
-	public AlbumView getAlbumView(Viewpoint viewpoint, YahooSongData yahooSong, YahooAlbumResult yahooAlbum, Future<AmazonAlbumData> futureAmazonAlbum, Future<List<YahooSongData>> futureAlbumTracks);
+	public AlbumView getAlbumView(Viewpoint viewpoint, YahooSongData yahooSong, YahooAlbumData yahooAlbum, Future<AmazonAlbumData> futureAmazonAlbum, Future<List<YahooSongData>> futureAlbumTracks);
 	
-	public Future<AlbumView> getAlbumViewAsync(Future<YahooAlbumResult> futureYahooAlbum, Future<AmazonAlbumData> futureAmazonAlbum);
+	public Future<AlbumView> getAlbumViewAsync(Future<YahooAlbumData> futureYahooAlbum, Future<AmazonAlbumData> futureAmazonAlbum);
 	
 	public ArtistView getArtistView(Track track);
 	
@@ -94,7 +94,7 @@ public interface MusicSystemInternal extends MusicSystem {
 	 * @return view of an artist that contains requested albums
 	 * @throws NotFoundException
 	 */
-	public ExpandedArtistView getExpandedArtistView(Viewpoint viewpoint, YahooSongData song, YahooAlbumResult album, Pageable<AlbumView> albumsByArtist) throws NotFoundException;
+	public ExpandedArtistView getExpandedArtistView(Viewpoint viewpoint, YahooSongData song, YahooAlbumData album, Pageable<AlbumView> albumsByArtist) throws NotFoundException;
 	
 	public Future<ArtistView> getArtistViewAsync(Track track);
 	

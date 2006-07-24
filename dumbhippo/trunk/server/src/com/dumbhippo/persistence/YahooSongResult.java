@@ -14,7 +14,7 @@ import com.dumbhippo.services.YahooSongData;
  * subclasses have the distinct keys used for lookup.
  */
 @EmbeddableSuperclass
-public class YahooSongResult extends DBUnique {
+abstract public class YahooSongResult extends DBUnique {
 	
 	private static final long serialVersionUID = 1L;
 
@@ -128,7 +128,7 @@ public class YahooSongResult extends DBUnique {
 		this.songId = songId;
 	}
 
-	@Column(nullable=true)
+	@Column(nullable=true, length=100)
 	public String getName() {
 		return name;
 	}

@@ -172,7 +172,7 @@ public class YahooSongDownloadCacheBean extends AbstractCacheBean implements Yah
 						d.setNoResultsMarker(true);
 						em.persist(d);
 					} else {
-						for (YahooSongDownloadData s : songs) {
+						for (YahooSongDownloadData s : songs) {							
 							CachedYahooSongDownload d = createCachedSong(songId);
 							d.setLastUpdated(now);
 							d.updateData(s);

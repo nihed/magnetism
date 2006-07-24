@@ -1,10 +1,14 @@
 package com.dumbhippo.server.impl;
 
 import java.io.IOException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -48,8 +52,6 @@ import com.dumbhippo.persistence.TrackFeedEntry;
 import com.dumbhippo.persistence.TrackHistory;
 import com.dumbhippo.persistence.TrackType;
 import com.dumbhippo.persistence.User;
-import com.dumbhippo.persistence.YahooAlbumResult;
-import com.dumbhippo.persistence.YahooArtistResult;
 import com.dumbhippo.server.AlbumView;
 import com.dumbhippo.server.AmazonAlbumCache;
 import com.dumbhippo.server.ArtistView;
@@ -73,11 +75,14 @@ import com.dumbhippo.server.UserViewpoint;
 import com.dumbhippo.server.Viewpoint;
 import com.dumbhippo.server.YahooAlbumCache;
 import com.dumbhippo.server.YahooAlbumSongsCache;
+import com.dumbhippo.server.YahooArtistAlbumsCache;
 import com.dumbhippo.server.YahooArtistCache;
 import com.dumbhippo.server.YahooSongCache;
 import com.dumbhippo.server.YahooSongDownloadCache;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.services.AmazonAlbumData;
+import com.dumbhippo.services.YahooAlbumData;
+import com.dumbhippo.services.YahooArtistData;
 import com.dumbhippo.services.YahooSongData;
 import com.dumbhippo.services.YahooSongDownloadData;
 
@@ -122,6 +127,9 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	
 	@EJB
 	private YahooSongDownloadCache yahooSongDownloadCache;
+	
+	@EJB
+	private YahooArtistAlbumsCache yahooArtistAlbumsCache;
 	
 	private static ExecutorService threadPool;
 	private static boolean shutdown = false;
@@ -470,10 +478,10 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 
 	static private class GetAlbumViewTask implements Callable<AlbumView> {
 
-		private Future<YahooAlbumResult> futureYahooAlbum;
+		private Future<YahooAlbumData> futureYahooAlbum;
 		private Future<AmazonAlbumData> futureAmazonAlbum;
 		
-		public GetAlbumViewTask(Future<YahooAlbumResult> futureYahooAlbum, Future<AmazonAlbumData> futureAmazonAlbum) {
+		public GetAlbumViewTask(Future<YahooAlbumData> futureYahooAlbum, Future<AmazonAlbumData> futureAmazonAlbum) {
 			this.futureYahooAlbum = futureYahooAlbum;
 			this.futureAmazonAlbum = futureAmazonAlbum;
 		}
@@ -512,7 +520,21 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		}
 	}
 	
-	private void fillAlbumInfo(YahooAlbumResult yahooAlbum, Future<AmazonAlbumData> futureAmazonAlbum, AlbumView albumView) {
+	public int parseReleaseYear(String releaseDate) {
+		if (releaseDate == null)
+			return -1;
+		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy MM dd");
+		try {
+		    Date date = dateFormat.parse(releaseDate);
+		    Calendar calendar = new GregorianCalendar();
+		    calendar.setTime(date);
+		    return calendar.get(Calendar.YEAR);
+		} catch (ParseException e) {
+			return -1;
+		}
+	}
+	
+	private void fillAlbumInfo(YahooAlbumData yahooAlbum, Future<AmazonAlbumData> futureAmazonAlbum, AlbumView albumView) {
 		try {			
 			// Note that if neither Amazon nor Yahoo! has a small image url, we want to leave 
 			// it null so AlbumView can default to our "no image" picture. This also 
@@ -520,7 +542,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			
 			// first see what we can get from yahoo album result
 			if (yahooAlbum != null) {
-			    albumView.setReleaseYear(yahooAlbum.getReleaseYear());
+			    albumView.setReleaseYear(parseReleaseYear(yahooAlbum.getReleaseDate()));
                 if (yahooAlbum.getSmallImageUrl() != null) {
 			        albumView.setSmallImageUrl(yahooAlbum.getSmallImageUrl());
 			        albumView.setSmallImageHeight(yahooAlbum.getSmallImageHeight());
@@ -574,8 +596,8 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		}
 	}
 	
-	private void fillAlbumInfo(Future<YahooAlbumResult> futureYahooAlbum, Future<AmazonAlbumData> futureAmazonAlbum, AlbumView albumView) {
-		YahooAlbumResult yahooAlbum = null;
+	private void fillAlbumInfo(Future<YahooAlbumData> futureYahooAlbum, Future<AmazonAlbumData> futureAmazonAlbum, AlbumView albumView) {
+		YahooAlbumData yahooAlbum = null;
 	    if (futureYahooAlbum != null) {
 			try {
 				yahooAlbum = futureYahooAlbum.get();
@@ -592,7 +614,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		fillAlbumInfo(yahooAlbum, futureAmazonAlbum, albumView);				
 	}
 	
-	private void fillAlbumInfo(Viewpoint viewpoint, YahooSongData yahooSong, YahooAlbumResult yahooAlbum, Future<AmazonAlbumData> futureAmazonAlbum, Future<List<YahooSongData>> futureAlbumTracks, AlbumView albumView) {
+	private void fillAlbumInfo(Viewpoint viewpoint, YahooSongData yahooSong, YahooAlbumData yahooAlbum, Future<AmazonAlbumData> futureAmazonAlbum, Future<List<YahooSongData>> futureAlbumTracks, AlbumView albumView) {
 			fillAlbumInfo(yahooAlbum, futureAmazonAlbum, albumView);
 
 			TreeMap<Integer, TrackView> sortedTracks = new TreeMap<Integer, TrackView>();
@@ -689,7 +711,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		// we should just return a view without the extra information.
 		
 		YahooSongData yahooSong = null;
-		Future<YahooAlbumResult> futureYahooAlbum = null;
+		Future<YahooAlbumData> futureYahooAlbum = null;
 		Future<AmazonAlbumData> futureAmazonAlbum = amazonAlbumCache.getAsync(track.getAlbum(), track.getArtist());
 		try {
 			// get our song IDs; no point doing it async...
@@ -704,9 +726,9 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 				 	yahooSong = song;
 				}
 			}
-			// if yahooSong is not null, get a YahooAlbumResult for it, so we can get an album artwork for the track
+			// if yahooSong is not null, get a YahooAlbumData for it, so we can get an album artwork for the track
 			if (yahooSong != null) {
-				futureYahooAlbum = yahooAlbumCache.getYahooAlbumAsync(yahooSong);
+				futureYahooAlbum = yahooAlbumCache.getAsync(yahooSong.getAlbumId());
 			}
 			
 			for (Future<List<YahooSongDownloadData>> futureDownloads : downloads) {
@@ -734,7 +756,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			
 			// if futureYahooAlbum is not null, try to get a Rhapsody download URL for this song and that album
 			if (futureYahooAlbum != null) {
-				YahooAlbumResult yahooAlbum = null;
+				YahooAlbumData yahooAlbum = null;
 				try {
 					yahooAlbum = futureYahooAlbum.get();
 				} catch (InterruptedException e) {
@@ -763,7 +785,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		return view;
 	}
 
-	public AlbumView getAlbumView(Future<YahooAlbumResult> futureYahooAlbum, Future<AmazonAlbumData> futureAmazonAlbum) {
+	public AlbumView getAlbumView(Future<YahooAlbumData> futureYahooAlbum, Future<AmazonAlbumData> futureAmazonAlbum) {
 		// this method should never throw due to Yahoo or Amazon failure;
 		// we should just return a view without the extra information.
 		
@@ -772,7 +794,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		return view;
 	}
 	
-	public AlbumView getAlbumView(Viewpoint viewpoint, YahooSongData yahooSong, YahooAlbumResult yahooAlbum, Future<AmazonAlbumData> futureAmazonAlbum, Future<List<YahooSongData>> futureAlbumTracks) {
+	public AlbumView getAlbumView(Viewpoint viewpoint, YahooSongData yahooSong, YahooAlbumData yahooAlbum, Future<AmazonAlbumData> futureAmazonAlbum, Future<List<YahooSongData>> futureAlbumTracks) {
 		AlbumView view = new AlbumView();
 		fillAlbumInfo(viewpoint, yahooSong, yahooAlbum, futureAmazonAlbum, futureAlbumTracks, view);
 		return view;		
@@ -784,8 +806,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		return view;
 	}
 	
-	private void fillArtistInfo(YahooArtistResult yahooArtist, ExpandedArtistView artistView) {
-		artistView.setTotalAlbumsByArtist(yahooArtist.getTotalAlbumsByArtist());
+	private void fillArtistInfo(YahooArtistData yahooArtist, ExpandedArtistView artistView) {		
 		// set defaults for the image
         artistView.setSmallImageUrl(config.getProperty(HippoProperty.BASEURL) + "/images/no_image_available75x75light.gif");
         artistView.setSmallImageWidth(75);
@@ -801,45 +822,67 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
         }
     }
 	 
-	private void fillAlbumsByArtist(Viewpoint viewpoint, YahooArtistResult yahooArtist, Pageable<AlbumView> albumsByArtist, 
-			                        YahooAlbumResult albumToExclude, ExpandedArtistView view) {
+	private void fillAlbumsByArtist(Viewpoint viewpoint, YahooArtistData yahooArtist, Pageable<AlbumView> albumsByArtist, 
+			                        YahooAlbumData albumToExclude, ExpandedArtistView view) {
 		// get albums using an artistId
-		List<YahooAlbumResult> albums = getFutureResult(yahooAlbumCache.getYahooAlbumResultsAsync(yahooArtist, albumsByArtist, albumToExclude));
+		List<YahooAlbumData> albums = getFutureResult(yahooArtistAlbumsCache.getAsync(yahooArtist.getArtistId()));
+
+		// the artist has this many total albums, but (maybe?) our pageable
+		// should not include the "excluded album" ... so we set the total count
+		// on it below the exclusion code and the artist count above
+		view.setTotalAlbumsByArtist(albums.size());
 		
-		// we want to fill artist info after the above call, because we only might have the total albums
-		// by artist set correctly after we get yahoo album results for the artist
+		if (albumToExclude != null) {
+			Iterator<YahooAlbumData> i = albums.iterator();
+			while (i.hasNext()) {
+				YahooAlbumData album = i.next();
+				if (album.getAlbumId().equals(albumToExclude.getAlbumId())) {
+					i.remove();
+					break;
+				}	
+			}
+		}
+		
+		// sort by title so we get predictable paging
+		Collections.sort(albums, new Comparator<YahooAlbumData>() {
+			public int compare(YahooAlbumData first, YahooAlbumData second) {
+				return String.CASE_INSENSITIVE_ORDER.compare(first.getAlbum(), second.getAlbum());
+			}			
+		});
+		
+		// whack the results we don't need so we don't bother converting them to AlbumView
+		albumsByArtist.chopForPageResults(albums);
+		
 		fillArtistInfo(yahooArtist, view);
 		
 		// can start threads to get each album cover and to get songs for each album in parallel 
 		Map<String, Future<AmazonAlbumData>> futureAmazonAlbums = new HashMap<String, Future<AmazonAlbumData>>();		
 		Map<String, Future<List<YahooSongData>>> futureTracks = new HashMap<String, Future<List<YahooSongData>>>();
-		Map<String, YahooAlbumResult> yahooAlbums = new HashMap<String, YahooAlbumResult>();
-		for (YahooAlbumResult yahooAlbum : albums) {
-			if (!yahooAlbum.isNoResultsMarker()) {
-			    futureAmazonAlbums.put(yahooAlbum.getAlbumId(), amazonAlbumCache.getAsync(yahooAlbum.getAlbum(), yahooAlbum.getArtist()));			
-			    // getAlbumTracksAsync is responsible for doing all the sorting, so we get a clean sorted list here
-			    futureTracks.put(yahooAlbum.getAlbumId(), yahooAlbumSongsCache.getAsync(yahooAlbum.getAlbumId()));
-			    yahooAlbums.put(yahooAlbum.getAlbumId(), yahooAlbum);
-			}
-		}		
+		Map<String, YahooAlbumData> yahooAlbums = new HashMap<String, YahooAlbumData>();
+		for (YahooAlbumData yahooAlbum : albums) {
+			futureAmazonAlbums.put(yahooAlbum.getAlbumId(), amazonAlbumCache.getAsync(yahooAlbum.getAlbum(), yahooAlbum.getArtist()));			
+			// getAlbumTracksAsync is responsible for doing all the sorting, so we get a clean sorted list here
+			futureTracks.put(yahooAlbum.getAlbumId(), yahooAlbumSongsCache.getAsync(yahooAlbum.getAlbumId()));
+			yahooAlbums.put(yahooAlbum.getAlbumId(), yahooAlbum);
+		}
 		
 		// all key sets should be the same
 		for (String albumId : yahooAlbums.keySet()) {
-			YahooAlbumResult yahooAlbum = yahooAlbums.get(albumId);
+			YahooAlbumData yahooAlbum = yahooAlbums.get(albumId);
 			Future<AmazonAlbumData> futureAmazonAlbum = futureAmazonAlbums.get(albumId);
 			Future<List<YahooSongData>> futureAlbumTracks = futureTracks.get(albumId);
 			AlbumView albumView = getAlbumView(viewpoint, null, yahooAlbum, futureAmazonAlbum, futureAlbumTracks);
-			view.addAlbum(albumView);			
-		}		
+			view.addAlbum(albumView);
+		}	
 	}
 	
 	public ExpandedArtistView getExpandedArtistView(Viewpoint viewpoint, String artist, Pageable<AlbumView> albumsByArtist) throws NotFoundException {
 		ExpandedArtistView view = new ExpandedArtistView(artist);
 
 	    // this call would throw a NotFoundException if an artist was not found, and would never return null
-        YahooArtistResult yahooArtist = yahooArtistCache.getYahooArtistResultSync(artist, null);				
+        YahooArtistData yahooArtist = yahooArtistCache.getSyncByName(artist);				
 
-		if (yahooArtist.isNoResultsMarker()) {
+		if (yahooArtist == null) {
 			 throw new NotFoundException("Artist " + artist + " was not found.");
 		}
 		
@@ -848,27 +891,20 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		return view;
 	}
 	
-	public ExpandedArtistView getExpandedArtistView(Viewpoint viewpoint, YahooSongData song, YahooAlbumResult album, Pageable<AlbumView> albumsByArtist) throws NotFoundException {
+	public ExpandedArtistView getExpandedArtistView(Viewpoint viewpoint, YahooSongData song, YahooAlbumData album, Pageable<AlbumView> albumsByArtist) throws NotFoundException {
 		
 		// we require the album field
 		if (album == null) {
 			logger.error("album is null when requesting an expanded artist view with an album");
 			throw new RuntimeException("album is null when requesting an expanded artist view with an album");
 		}
-
-		if (album.isNoResultsMarker()) {
-			 throw new NotFoundException("Cannot provide an expanded artist view based on a no "
-					                     + " results marker album.");
-		}
 		
 		ExpandedArtistView view = new ExpandedArtistView(album.getArtist());		
 
-		// FIXME: (?) this is *almost* the same as the YahooArtistResult the caller has, but we pass
-		// in album.getArtist() here instead of the search album
-	    // this call would throw a NotFoundException if an artist was not found, and would never return null
-        YahooArtistResult yahooArtist = yahooArtistCache.getYahooArtistResultSync(album.getArtist(), album.getArtistId());		
+		// FIXME pass this in from the caller, don't query it again ?
+        YahooArtistData yahooArtist = yahooArtistCache.getSync(album.getArtistId());		
         
-		if (yahooArtist.isNoResultsMarker()) {
+		if (yahooArtist == null) {
 			 throw new NotFoundException("Artist " + album.getArtist() + " artistId " 
 					                     + album.getArtistId() + " was not found.");
 		}
@@ -911,7 +947,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		return getTrackViewAsync(current.getTrack(), current.getLastUpdated().getTime());
 	}
 	
-	public Future<AlbumView> getAlbumViewAsync(Future<YahooAlbumResult> futureYahooAlbum, Future<AmazonAlbumData> futureAmazonAlbum) {
+	public Future<AlbumView> getAlbumViewAsync(Future<YahooAlbumData> futureYahooAlbum, Future<AmazonAlbumData> futureAmazonAlbum) {
 		FutureTask<AlbumView> futureView = 
 			new FutureTask<AlbumView>(new GetAlbumViewTask(futureYahooAlbum, futureAmazonAlbum));
 		getThreadPool().execute(futureView);
@@ -979,11 +1015,11 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		for (Track t : tracks) {
 			Future<AmazonAlbumData> futureAmazonAlbum = amazonAlbumCache.getAsync(t.getAlbum(), t.getArtist());			
 			List<YahooSongData> songs = yahooSongCache.getSync(t);
-			Future<YahooAlbumResult> futureYahooAlbum = null;
+			Future<YahooAlbumData> futureYahooAlbum = null;
 		
 		    if (!songs.isEmpty()) {
-				try {
-		    	    YahooArtistResult yahooArtist = yahooArtistCache.getYahooArtistResultSync(t.getArtist(), null);				
+		    	YahooArtistData yahooArtist = yahooArtistCache.getSyncByName(t.getArtist());
+		    	if (yahooArtist != null) {
 				    YahooSongData yahooSong = null;
 				
 			        for (YahooSongData songForTrack : songs) {
@@ -994,9 +1030,9 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			        }
 		    	
 	                if (yahooSong != null) { 	    
-			            futureYahooAlbum = yahooAlbumCache.getYahooAlbumAsync(yahooSong);
+			            futureYahooAlbum = yahooAlbumCache.getAsync(yahooSong.getAlbumId());
 	                }
-				} catch (NotFoundException e) {
+		    	} else {
 					//nothing to do, it's ok for futureYahooAlbum to be null
 				}
 		    }
@@ -1333,6 +1369,10 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	}
 	
 	private Query buildAlbumQuery(Viewpoint viewpoint, String artist, String album, String name, int maxResults) throws NotFoundException {
+		
+		// FIXME obviously this is totally busted
+		// need to move it into YahooAlbumCacheBean and make it use the new album tables
+		
 		int count = 0;
 		if (artist != null)
 			++count;
@@ -1344,7 +1384,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		if (count == 0)
 			throw new NotFoundException("Search has no parameters");
 		
-		StringBuilder sb = new StringBuilder("SELECT album FROM YahooAlbumResult album");
+		StringBuilder sb = new StringBuilder("SELECT album FROM YahooAlbumData album");
 		if (name != null) {
 			sb.append(", YahooSongData song ");
 		}
@@ -1434,7 +1474,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	
 	public ExpandedArtistView expandedArtistSearch(Viewpoint viewpoint, String artist, String album, String name, Pageable<AlbumView> albumsByArtist) throws NotFoundException {
         try {
-			if (artist== null && album == null && name == null) {
+			if (artist == null && album == null && name == null) {
 				throw new NotFoundException("Search has no parameters");
 			}
 			
@@ -1447,26 +1487,27 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			// best-matching album, later it would also add in top (10) albums and a total number of albums for an artist
 			try {
 				Track track = getMatchingTrack(viewpoint, artist, album, name);
-		        // we could just do track.getYahooSongDatas(), but why don't we
-		        // check if any YahooSongData cache updating is in order 
+
 				List<YahooSongData> songs = yahooSongCache.getSync(track);
 				if (!songs.isEmpty()) {
 					// get the primary artist result for this artist, than make sure we use the song result
 					// associated with the primary artist result
-					YahooArtistResult yahooArtist = yahooArtistCache.getYahooArtistResultSync(track.getArtist(), null);
+					YahooArtistData yahooArtist = yahooArtistCache.getSyncByName(track.getArtist());
 					
 					YahooSongData yahooSong = null;
 					
-				    for (YahooSongData songForTrack : songs) {
-				    	if (songForTrack.getArtistId().equals(yahooArtist.getArtistId())) {
-				    		yahooSong = songForTrack;
-				    		break;
-				    	}
-				    }
-				    
+					if (yahooArtist != null) {
+					    for (YahooSongData songForTrack : songs) {
+					    	if (songForTrack.getArtistId().equals(yahooArtist.getArtistId())) {
+					    		yahooSong = songForTrack;
+					    		break;
+					    	}
+					    }
+					}
+					
 				    if (yahooSong != null) {
 					    // we want to get yahoo album here synchronously
-	                    YahooAlbumResult yahooAlbum = getFutureResult(yahooAlbumCache.getYahooAlbumAsync(yahooSong));	
+	                    YahooAlbumData yahooAlbum = getFutureResult(yahooAlbumCache.getAsync(yahooSong.getAlbumId()));	
 	                    // albumsByArtist is a pageable object that contains information on what albums the expanded
 	                    // artist view should be loaded with, it also needs to have these albums set in its results field
 	                    YahooSongData songToExpand = null;
@@ -1481,17 +1522,19 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 				}		
 			} catch (NotFoundException e) {
 				// we get this exception if a matching track, a matching artist, or an album with a given id were not found 
-				logger.debug(e.getMessage());
+				logger.debug("no matching track, artist, album for expandedArtistSearch: {}", e.getMessage());
 			}
 	
-		    // in other cases we have to do a query to get YahooAlbumResult
+		    // in other cases we have to do a query to get YahooAlbumData
 			// if we displayed it, we have to have it locally, but in order to update it or to fulfill
 			// arbitrary user-defined searches we will need to use lookupSong, and then lookupAlbum for this song
 			// (or rather with a given album id)		
 			Query q = buildAlbumQuery(viewpoint, artist, album, name, 1);
+			if (q != null)
+				throw new NotFoundException("FIXME redo buildAlbumQuery");
 				
 			try {
-				YahooAlbumResult yahooAlbum = (YahooAlbumResult)q.getSingleResult();
+				YahooAlbumData yahooAlbum = (YahooAlbumData)q.getSingleResult();
 				ExpandedArtistView artistView = getExpandedArtistView(viewpoint, null, yahooAlbum, albumsByArtist);
 				artistView.pageAlbums(albumsByArtist);
 			    return artistView;
@@ -1507,7 +1550,10 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			}	
         } catch (Exception e) {
         	logger.error("song/album-based expandedArtistSearch hit an exception", e);
-        	throw new NotFoundException("Not found due to an exception in the music system.");
+        	if (e instanceof NotFoundException)
+        		throw (NotFoundException) e;
+        	else
+        		throw new NotFoundException("Not found due to an exception in the music system.");
         }
 	}
 

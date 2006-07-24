@@ -1,26 +1,36 @@
 package com.dumbhippo.server.impl;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
+import java.util.concurrent.FutureTask;
 
 import javax.annotation.EJB;
 import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityNotFoundException;
-import javax.persistence.NonUniqueResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
 import org.slf4j.Logger;
 
+import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
-import com.dumbhippo.persistence.YahooArtistResult;
+import com.dumbhippo.KnownFuture;
+import com.dumbhippo.TypeUtils;
+import com.dumbhippo.persistence.CachedYahooArtistData;
+import com.dumbhippo.persistence.CachedYahooArtistIdByName;
 import com.dumbhippo.server.BanFromWebTier;
 import com.dumbhippo.server.Configuration;
-import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.YahooArtistCache;
+import com.dumbhippo.server.util.EJBUtil;
+import com.dumbhippo.services.YahooArtistData;
 import com.dumbhippo.services.YahooSearchWebServices;
 
 @BanFromWebTier
@@ -38,180 +48,294 @@ public class YahooArtistCacheBean extends AbstractCacheBean implements YahooArti
 	@EJB
 	private Configuration config;		
 
-	private String updateYahooArtistResultsSync(List<YahooArtistResult> oldResults, String artist, String artistId) {
-		// return an updatedArtistId only if tha passed in artist name will still not be found in the database, 
-		// but there is a different name for the same artist in the database
-		YahooSearchWebServices ws = new YahooSearchWebServices(REQUEST_TIMEOUT, config);
-		List<YahooArtistResult> newResults = ws.lookupArtist(artist, artistId);
+	static private class YahooArtistByIdTask implements Callable<YahooArtistData> {
 		
-		logger.debug("New artist results for artist {} artistId {}: {}", 
-				     new Object[]{artist, artistId, newResults});
-		
-		// Match new results to old results with same artist id, updating the old row.
-		// For new rows, create the row.
-		// For rows not in the new yahoo return, drop the row.
-		// If the new search returned nothing, just change the updated 
-		// times to include a FAILED_QUERY_TIMEOUT so we don't re-query too often.		
-		if (newResults.isEmpty()) {			
-			// here we assume that the query failed, so we don't remove any of the old results
-			// but what if the new set of results is really empty? for now, this is not a typical 
-			// situation when updating an artist	
-			// ensure we won't update for FAILED_QUERY_TIMEOUT
-			long updateTime = System.currentTimeMillis() - YAHOO_EXPIRATION_TIMEOUT + FAILED_QUERY_TIMEOUT;
-			// old results could contain a set of results or a no results marker, in either case
-			// we want to slightly update the date on them
-			for (YahooArtistResult old : oldResults) {				
-				old.setLastUpdated(new Date(updateTime));
-			}
-			if (oldResults.isEmpty()) {
-				// we got no results, so set the no results marker
-				YahooArtistResult marker = new YahooArtistResult();
-				marker.setArtist(artist);
-				marker.setArtistId(artistId);
-				marker.setNoResultsMarker(true);
-				marker.setLastUpdated(new Date(updateTime));
-				em.persist(marker);
-				// we don't need to return this marker though, returning empty oldResults is good enough				
-			}
-			
-			return null;
-		}
+		private String artistId;
 
-		// for each old result, go through new ones, and see if it is
-		// still found among them, if so, update it and remove it from the
-		// new results list, so that after this loop, the results that are
-		// left in the list are completely new		
-		for (YahooArtistResult old : oldResults) {
-			boolean stillFound = false;
-			for (YahooArtistResult n : newResults) {
-				if (!old.isNoResultsMarker() &&
-					n.getArtistId().equals(old.getArtistId())) {
-					newResults.remove(n);
-					old.update(n); // old is attached, so this gets saved
-					stillFound = true;
-					break;
-				}
-			}
-			// drops the no results marker and any artist no longer found
-			// because when we already have multiple artist results in the database for an artist name,
-			// we would call update function individually for each artist id in these results, this
-			// will not remove any results that are still valid
-			if (!stillFound) {
-				em.remove(old);
-			}
-		}
-		// remaining newResults weren't previously saved
-		for (YahooArtistResult n : newResults) {
-			// sometimes different names for the artist map to the same id, i.e. "Belle & Sebastian"  and
-			// "Belle and Sebastian" both map to the same id, so if we were looking up an artist result just 
-			// based on an artist name, we need to double-check that the artist with this id doesn't 
-			// exist in our database
-			if (artistId == null) {
-			    Query q = em.createQuery("FROM YahooArtistResult artist WHERE artist.artistId = :artistId");
-			    q.setParameter("artistId", n.getArtistId());		
-		        try {
-				    YahooArtistResult yahooArtist  = (YahooArtistResult)q.getSingleResult();
-				    logger.debug("Artist with artist id {} already existed in the database: {}", 
-				    		     n.getArtistId(), yahooArtist);
-				    return n.getArtistId();
-				} catch (EntityNotFoundException e) { 
-                    // coast is clear, we can insert the new result					
-					em.persist(n);
-				} catch (NonUniqueResultException e) {
-					// this should not be allowed by the database schema
-					logger.error("Multiple yahoo artist results for artist id {}", n.getArtistId());
-					throw new RuntimeException("Multiple yahoo artist results for artist id " + n.getArtistId());
-				}
-			} else {
-				em.persist(n);		
-			}
-			
+		public YahooArtistByIdTask(String artistId) {
+			this.artistId = artistId;
 		}
 		
-		return null;
+		public YahooArtistData call() {
+			logger.debug("Entering YahooArtistByIdTask thread for {}", artistId);				
+
+			YahooArtistCache cache = EJBUtil.defaultLookup(YahooArtistCache.class);	
+						
+			YahooArtistData data = cache.fetchFromNet(artistId);
+
+			return cache.saveInCache(artistId, data);
+		}
+	}
+
+	static private class YahooArtistByNameTask implements Callable<List<YahooArtistData>> {
+		
+		private String artist;
+
+		public YahooArtistByNameTask(String artist) {
+			this.artist = artist;
+		}
+		
+		public List<YahooArtistData> call() {
+			logger.debug("Entering YahooArtistByNameTask thread for '{}'", artist);				
+
+			YahooArtistCache cache = EJBUtil.defaultLookup(YahooArtistCache.class);	
+						
+			List<YahooArtistData> results = cache.fetchFromNetByName(artist);
+
+			return cache.saveInCacheByName(artist, results);
+		}
 	}
 	
-	public YahooArtistResult getYahooArtistResultSync(String artist, String artistId) throws NotFoundException {	
-		
-		// we require either artist or artistId field
-		if ((artist == null) && (artistId == null)) {
-			logger.error("Both artist and artistId are null when requesting yahoo artist");
-			throw new RuntimeException("Artist is null when requesting yahoo artist");
-		}
-
-		Query q;
-		if (artistId != null) {
-		    q = em.createQuery("FROM YahooArtistResult artist WHERE artist.artistId = :artistId");
-		    q.setParameter("artistId", artistId);
-		} else {
-			// ordering here is important, because it ensures that we always use the same artist id
-			// for a given artist name; otherwise we end up with different results when running the same
-	    	// searches
-		    q = em.createQuery("FROM YahooArtistResult artist WHERE artist.artist = :artist ORDER BY artist.id");
-		    q.setParameter("artist", artist);			
-		}
-		
-		List<?> objects = q.getResultList();
-		List<YahooArtistResult> results = new ArrayList<YahooArtistResult>(); 
-		for (Object o : objects) {
-			assert o != null;
-			results.add((YahooArtistResult) o);
-		}
-		
-		boolean performedUpdate = false;
-		String updatedArtistId = null;
-		if (!results.isEmpty()) {
-			// the outdated results, if any, could be a special magic result with the NoResultsMarker 
-			// flag set, or could be real results
-			long now = System.currentTimeMillis();
-			for (YahooArtistResult r : results) {
-				if ((r.getLastUpdated().getTime() + YAHOO_EXPIRATION_TIMEOUT) < now) {
-					logger.debug("Outdated Yahoo artist result, will need to renew the search for artist {}, artistId {}", artist, artistId);
-					updatedArtistId = updateYahooArtistResultsSync(results, r.getArtist(), r.getArtistId());
-					performedUpdate = true;
-				}
-			}
-		} else {
-			// passing in the old results here is a race, since the db could have 
-			// changed underneath us - but the worst case is that we just fail to
-			// get results once in a while
-			updatedArtistId = updateYahooArtistResultsSync(results, artist, artistId);
-			performedUpdate = true;
-		}
-
-        if (performedUpdate) {
-		    Query newQuery;
-		    if (updatedArtistId != null) {
-		    	newQuery = em.createQuery("FROM YahooArtistResult artist WHERE artist.artistId = :artistId");
-		    	newQuery.setParameter("artistId", updatedArtistId);			
-		    } else if (artistId != null) {
-		    	newQuery = em.createQuery("FROM YahooArtistResult artist WHERE artist.artistId = :artistId");
-		    	newQuery.setParameter("artistId", artistId);
-		     } else {
-				// ordering here is important, because it ensures that we always use the same artist id
-				// for a given artist name; otherwise we end up with different results when running the same
-		    	// searches
-		    	newQuery = em.createQuery("FROM YahooArtistResult artist WHERE artist.artist = :artist ORDER BY artist.id");
-		    	newQuery.setParameter("artist", artist);			
-		    }
-		
-		    List<?> newObjects = newQuery.getResultList();
-		    List<YahooArtistResult> newResults = new ArrayList<YahooArtistResult>(); 
-		    for (Object o : newObjects) {
-			    assert o != null;
-			    newResults.add((YahooArtistResult) o);
-		    }
-		
-		    if (newResults.isEmpty()) {
-			    throw new NotFoundException("No yahoo artists were found for artist " + artist + " artistId " + artistId);
-		    }
-		    return newResults.get(0);
-        } else {
-            // if we didn't perform an update, it means that the original results were not empty	
-	        logger.debug("Returning Yahoo artist result from database cache for artist {} artistId {}: {}", 
-					     new Object[]{artist, artistId, results.get(0)});
-			return results.get(0);
-		}				
+	public YahooArtistData getSync(String artistId) {
+		return getFutureResult(getAsync(artistId));
 	}
 
+	public Future<YahooArtistData> getAsync(String artistId) {
+		if (artistId == null)
+			throw new IllegalArgumentException("null artistId");
+		
+		YahooArtistData result = checkCache(artistId);
+		if (result != null) {
+			if (result.getArtist() == null) // cached negative result
+				result = null;
+			return new KnownFuture<YahooArtistData>(result);
+		}
+				
+		FutureTask<YahooArtistData> future =
+			new FutureTask<YahooArtistData>(new YahooArtistByIdTask(artistId));
+		getThreadPool().execute(future);
+		return future;
+	}
+
+	public YahooArtistData getSyncByName(String artist) {
+		return getFutureResult(getAsyncByName(artist));
+	}
+
+	static private YahooArtistData pickFirstItemOrNull(List<YahooArtistData> list) {
+		if (list == null) {
+			return null;
+		} else if (list.isEmpty()) {
+			return null;
+		} else {
+			if (list.size() > 1)
+				logger.debug("Arbitrarily choosing first artist data of {}", list.size());
+			return list.get(0);
+		}
+	}
+	
+	static private class PickFirstItemOrNullTask implements Callable<YahooArtistData> {
+		
+		private Callable<List<YahooArtistData>> listSource;
+
+		public PickFirstItemOrNullTask(Callable<List<YahooArtistData>> listSource) {
+			this.listSource = listSource;
+		}
+		
+		public YahooArtistData call() throws Exception {
+			return pickFirstItemOrNull(listSource.call());
+		}
+	}
+
+	public Future<YahooArtistData> getAsyncByName(String artist) {
+		if (artist == null)
+			throw new IllegalArgumentException("null artist");
+		
+		List<YahooArtistData> results = checkCacheByName(artist);
+		if (results != null)
+			return new KnownFuture<YahooArtistData>(pickFirstItemOrNull(results));
+				
+		FutureTask<YahooArtistData> future =
+			new FutureTask<YahooArtistData>(new PickFirstItemOrNullTask(new YahooArtistByNameTask(artist)));
+		getThreadPool().execute(future);
+		return future;
+	}
+
+	private CachedYahooArtistData artistByIdQuery(String artistId) {
+		Query q;
+		
+		q = em.createQuery("FROM CachedYahooArtistData cyad WHERE cyad.artistId = :artistId");
+		q.setParameter("artistId", artistId);
+		
+		try {
+			return (CachedYahooArtistData) q.getSingleResult();
+		} catch (EntityNotFoundException e) {
+			return null;
+		}
+	}
+	
+	private List<CachedYahooArtistIdByName> artistIdsForNameQuery(String artist) {
+		Query q;
+		
+		q = em.createQuery("FROM CachedYahooArtistIdByName byName WHERE byName.name = :name");
+		q.setParameter("name", artist);
+		
+		return TypeUtils.castList(CachedYahooArtistIdByName.class, q.getResultList());
+	}
+	
+	public YahooArtistData checkCache(String artistId) {
+		CachedYahooArtistData cached = artistByIdQuery(artistId);
+		if (cached == null)
+			return null;
+		
+		long now = System.currentTimeMillis();
+		Date lastUpdated = cached.getLastUpdated();
+		if (lastUpdated == null || ((lastUpdated.getTime() + YAHOO_EXPIRATION_TIMEOUT) < now)) {
+			return null;
+		}
+		
+		return cached.toData();
+	}
+
+	public List<YahooArtistData> checkCacheByName(String artist) {
+		List<CachedYahooArtistIdByName> ids = artistIdsForNameQuery(artist);
+		if (ids.isEmpty())
+			return null;
+		
+		// if any of the cached name-id mappings is null or outdated, we 
+		// assume they all are.
+		long now = System.currentTimeMillis();
+		boolean outdated = false;
+		boolean haveNoResultsMarker = false;
+		for (CachedYahooArtistIdByName id : ids) {
+			if (id.isNoResultsMarker())
+				haveNoResultsMarker = true;
+			if ((id.getLastUpdated().getTime() + YAHOO_EXPIRATION_TIMEOUT) < now)
+				outdated = true;
+		}
+		
+		if (outdated)
+			return null;
+		
+		if (haveNoResultsMarker)
+			return Collections.emptyList();
+
+		// if any of the artist id info is outdated / no results, we count the whole 
+		// conglomerate of stuff as outdated and redo the yahoo request
+		List<YahooArtistData> datas = new ArrayList<YahooArtistData>();
+		for (CachedYahooArtistIdByName id : ids) {
+			YahooArtistData data = checkCache(id.getArtistId());
+			if (data == null) { 
+				logger.debug("missing data on id {} so redoing query for name '{}'",
+						id.getArtistId(), artist);
+				return null;
+			}
+			datas.add(data);
+		}
+		
+		logger.debug("Using cached data for artist name '{}'", artist);
+		return datas;
+	}
+
+	@TransactionAttribute(TransactionAttributeType.NEVER)
+	public YahooArtistData fetchFromNet(String artistId) {
+		YahooSearchWebServices ws = new YahooSearchWebServices(REQUEST_TIMEOUT, config);
+		YahooArtistData data = ws.lookupArtistById(artistId);
+		logger.debug("Fetched artist data for id {}: {}", artistId, data);
+		return data;
+	}
+
+	@TransactionAttribute(TransactionAttributeType.NEVER)
+	public List<YahooArtistData> fetchFromNetByName(String artist) {
+		YahooSearchWebServices ws = new YahooSearchWebServices(REQUEST_TIMEOUT, config);
+		List<YahooArtistData> datas = ws.lookupArtistByName(artist);
+		logger.debug("Fetched artist ids/data for name '{}': {}", artist, datas);
+		return datas;
+	}
+
+	private void saveInCacheInParentTransaction(String artistId, YahooArtistData data, Date now) {
+		CachedYahooArtistData d = artistByIdQuery(artistId);
+		if (d == null) {
+			d = new CachedYahooArtistData();
+			// if data is null this just sets all fields to null,
+			// which marks negative result
+			d.updateData(data);
+			em.persist(d);
+		} else {
+			// never overwrite data if we got it at some point in the past
+			if (data != null)
+				d.updateData(data);
+		}
+		d.setLastUpdated(now);
+	}
+	
+	@TransactionAttribute(TransactionAttributeType.NEVER)
+	public YahooArtistData saveInCache(final String artistId, final YahooArtistData data) {
+		try {
+			runner.runTaskRetryingOnConstraintViolation(new Runnable() {
+
+				public void run() {
+					saveInCacheInParentTransaction(artistId, data, new Date());
+				}
+				
+			});
+			if (data != null && data.getArtist() == null)
+				return null;
+			else
+				return data;
+		} catch (Exception e) {
+			ExceptionUtils.throwAsRuntimeException(e);
+			throw new RuntimeException(e); // not reached 
+		}
+	}
+
+	@TransactionAttribute(TransactionAttributeType.NEVER)
+	public List<YahooArtistData> saveInCacheByName(final String artist, List<YahooArtistData> newArtists) {
+		// null doesn't happen but if it did would be the same as empty list
+		if (newArtists == null)
+			newArtists = Collections.emptyList();
+
+		final List<YahooArtistData> artists = newArtists;
+		
+		try {
+			// the constraint violation retry is primarily for the CachedYahooArtistData table
+			return runner.runTaskRetryingOnConstraintViolation(new Callable<List<YahooArtistData>>() {
+				public List<YahooArtistData> call() {
+					// We are saving two different things; the list of id's associated with the 
+					// artist name, then the info on each of those ids
+					
+					Date now = new Date();
+					
+					// kill old associations with this name
+					List<CachedYahooArtistIdByName> ids = artistIdsForNameQuery(artist);
+					for (CachedYahooArtistIdByName id : ids) {
+						em.remove(id);
+					}
+					
+					if (artists.isEmpty()) {
+						// save no results marker
+						CachedYahooArtistIdByName id = new CachedYahooArtistIdByName();
+						id.setLastUpdated(now);
+						id.setName(artist);
+						id.setArtistId(null); // this is the "no results marker"
+						assert id.isNoResultsMarker();
+						em.persist(id);	
+					} else {
+						for (YahooArtistData a : artists) {
+							CachedYahooArtistIdByName id = new CachedYahooArtistIdByName();
+							id.setLastUpdated(now);
+							// this is important; a.getName() is the "canonical" name 
+							// while "artist" is the name we searched by
+							id.setName(artist);
+							id.setArtistId(a.getArtistId());
+							em.persist(id);
+						}
+					}
+					
+					// Now for each artist id, kill the old data (note that if we have no 
+					// results, we just do nothing here - there are no artist ids found 
+					// or involved). We would never save negative results here so 
+					// we don't need to filter them out.
+					for (YahooArtistData a : artists) {
+						saveInCacheInParentTransaction(a.getArtistId(), a, now);
+					}
+					
+					return artists;
+				}
+				
+			});
+		} catch (Exception e) {
+			ExceptionUtils.throwAsRuntimeException(e);
+			throw new RuntimeException(e); // not reached			
+		}
+	}
 }

@@ -1,22 +1,44 @@
 package com.dumbhippo.server;
 
+import java.util.List;
+import java.util.concurrent.Future;
+
 import javax.ejb.Local;
 
-import com.dumbhippo.persistence.YahooArtistResult;
+import com.dumbhippo.services.YahooArtistData;
 
+/**
+ * Conceptually this should be two different "web service cache beans," 
+ * one that looks up artist id list by artist name, one that returns
+ * the artist data given an artist id. However, since we let Yahoo!
+ * do both of those conceptual operations in one request, we also 
+ * keep the logic together here so we can sort it out.
+ */
 @Local
 public interface YahooArtistCache {
-	/*
-	 * Returns a yahoo artist that matches an artist name and an artistId. Might return an artist with a different 
-	 * name, if an artist with a different name matches a passed in artist id, or if multiple artist names match the
-	 * same artist id, and we've been storing a different name mapped to the artistId that the passed in artist name
-	 * also maps to. 
-	 * 
-	 * At least one parameter out of artist and artistId must not be null.
-	 * 
-	 * @param artist name of the artist
-	 * @param artistId yahoo id for the artist
-	 * @return YahooArtistResult that represents the artist
-	 */
-	public YahooArtistResult getYahooArtistResultSync(String artist, String artistId) throws NotFoundException;
+	public YahooArtistData getSync(String artistId); 
+	
+	public Future<YahooArtistData> getAsync(String artistId);
+
+	// FIXME these "get by name" should really return a list and then
+	// in the UI we should try to resolve the multiple search results
+	// in some way... for now we pick a result at random if we get more 
+	// than one. Another alternative is that the UI could merge all the
+	// results somehow. For now we keep the list up to this method 
+	// where we pick the one at random.
+	public YahooArtistData getSyncByName(String artist); 
+	
+	public Future<YahooArtistData> getAsyncByName(String artist);	
+	
+	public YahooArtistData checkCache(String artistId);
+	
+	public List<YahooArtistData> checkCacheByName(String artist);
+	
+	public YahooArtistData fetchFromNet(String artistId);
+	
+	public List<YahooArtistData> fetchFromNetByName(String artist);
+	
+	public YahooArtistData saveInCache(String artistId, YahooArtistData data);
+
+	public List<YahooArtistData> saveInCacheByName(String artist, List<YahooArtistData> data);
 }

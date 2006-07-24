@@ -18,7 +18,7 @@ public class CachedYahooSongData extends YahooSongResult {
 	private String artist;
 	private String album;
 	
-	@Column(nullable=true)
+	@Column(nullable=true, length=100)
 	public String getAlbum() {
 		return album;
 	}
@@ -26,7 +26,7 @@ public class CachedYahooSongData extends YahooSongResult {
 		this.album = album;
 	}
 	
-	@Column(nullable=true)
+	@Column(nullable=true, length=100)
 	public String getArtist() {
 		return artist;
 	}
