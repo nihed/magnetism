@@ -159,13 +159,19 @@ public class YahooSongDownloadCacheBean extends AbstractCacheBean implements Yah
 			return runner.runTaskRetryingOnConstraintViolation(new Callable<List<YahooSongDownloadData>>() {
 				public List<YahooSongDownloadData> call() {
 					
-					logger.debug("Saving new song download results in cache");
-					
 					// remove all old results
 					List<CachedYahooSongDownload> old = songDataQuery(songId);
+					
+					logger.debug("Saving new song download results in cache; {} old results removed {} to save", old.size(), songs.size());
+					
 					for (CachedYahooSongDownload d : old) {
 						em.remove(d);
 					}
+					
+					// this seems to be required to be sure the rows we just removed don't
+					// cause constraint violations; otherwise I guess Hibernate isn't 
+					// strict about doing the removes and inserts in order?
+					em.flush();
 					
 					Date now = new Date();
 					
@@ -186,7 +192,6 @@ public class YahooSongDownloadCacheBean extends AbstractCacheBean implements Yah
 					
 					return songs;
 				}
-				
 			});
 		} catch (Exception e) {
 			ExceptionUtils.throwAsRuntimeException(e);

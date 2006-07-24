@@ -163,6 +163,8 @@ public class YahooArtistAlbumsCacheBean extends AbstractCacheBean implements Yah
 		final List<YahooAlbumData> albums = newAlbums; 
 		
 		try {
+			// if there were unique constraints involved here we'd need to retry on constraint
+			// violations and also put in an em.flush after removing old rows			
 			return runner.runTaskInNewTransaction(new Callable<List<YahooAlbumData>>() {
 				public List<YahooAlbumData> call() {
 					

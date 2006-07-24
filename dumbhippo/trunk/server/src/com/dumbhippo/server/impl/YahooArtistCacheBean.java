@@ -287,7 +287,6 @@ public class YahooArtistCacheBean extends AbstractCacheBean implements YahooArti
 		final List<YahooArtistData> artists = newArtists;
 		
 		try {
-			// the constraint violation retry is primarily for the CachedYahooArtistData table
 			return runner.runTaskRetryingOnConstraintViolation(new Callable<List<YahooArtistData>>() {
 				public List<YahooArtistData> call() {
 					// We are saving two different things; the list of id's associated with the 
@@ -300,6 +299,11 @@ public class YahooArtistCacheBean extends AbstractCacheBean implements YahooArti
 					for (CachedYahooArtistIdByName id : ids) {
 						em.remove(id);
 					}
+					
+					// this seems to be required to be sure the rows we just removed don't
+					// cause constraint violations; otherwise I guess Hibernate isn't 
+					// strict about doing the removes and inserts in order?
+					em.flush();					
 					
 					if (artists.isEmpty()) {
 						// save no results marker
