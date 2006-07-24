@@ -26,7 +26,6 @@ import javax.annotation.EJB;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityNotFoundException;
-import javax.persistence.NonUniqueResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
@@ -1373,65 +1372,6 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		return q;
 	}
 	
-	private Query buildAlbumQuery(Viewpoint viewpoint, String artist, String album, String name, int maxResults) throws NotFoundException {
-		
-		// FIXME obviously this is totally busted
-		// need to move it into YahooAlbumCacheBean and make it use the new album tables
-		
-		int count = 0;
-		if (artist != null)
-			++count;
-		if (name != null)
-			++count;
-		if (album != null)
-			++count;
-		
-		if (count == 0)
-			throw new NotFoundException("Search has no parameters");
-		
-		StringBuilder sb = new StringBuilder("SELECT album FROM YahooAlbumData album");
-		if (name != null) {
-			sb.append(", YahooSongData song ");
-		}
-		sb.append(" WHERE ");
-		if (artist != null) {
-			sb.append(" album.artist = :artist ");
-			--count;
-			if (count > 0)
-				sb.append(" AND ");
-		}
-		if (album != null) {
-			sb.append(" album.album = :album ");
-			--count;
-			if (count > 0)
-				sb.append(" AND ");
-		}
-		if (name != null) {
-			sb.append(" song.name = :name AND album.albumId = song.albumId ");
-			--count;
-		}		
-		if (count != 0)
-			throw new RuntimeException("broken code in song search");		    	
-
-		// we want to make this deterministic, so that we always return the same 
-		// album for the same artist-album-song combination, we always use the 
-		// same (earliest-created) row
-		sb.append(" ORDER BY album.id");
-		
-		Query q = em.createQuery(sb.toString());
-		if (artist != null)
-			q.setParameter("artist", artist);
-		if (album != null)
-			q.setParameter("album", album);
-		if (name != null)
-			q.setParameter("name", name);
-		
-		if (maxResults >= 0)
-			q.setMaxResults(maxResults);
-
-		return q;
-	}
-	
 	private Track getMatchingTrack(Viewpoint viewpoint, String artist, String album, String name) throws NotFoundException {
 		// max results of 1 picks one of the matching Track arbitrarily
 		Query q = buildSongQuery(viewpoint, artist, album, name, 1);
@@ -1533,26 +1473,11 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		    // in other cases we have to do a query to get YahooAlbumData
 			// if we displayed it, we have to have it locally, but in order to update it or to fulfill
 			// arbitrary user-defined searches we will need to use lookupSong, and then lookupAlbum for this song
-			// (or rather with a given album id)		
-			Query q = buildAlbumQuery(viewpoint, artist, album, name, 1);
-			if (q != null)
-				throw new NotFoundException("FIXME redo buildAlbumQuery");
-				
-			try {
-				YahooAlbumData yahooAlbum = (YahooAlbumData)q.getSingleResult();
-				ExpandedArtistView artistView = getExpandedArtistView(viewpoint, null, yahooAlbum, albumsByArtist);
-				artistView.pageAlbums(albumsByArtist);
-			    return artistView;
-			} catch (EntityNotFoundException e) { 
-				logger.debug("Did not find a cached yahoo result that matched artist {} album {} name {}", 
-						     new Object[]{artist, album, name});
-				throw new NotFoundException("Did not find a cached yahoo result that matched artist "
-						                    + artist + " album " + album + " name " + name);
-			} catch (NonUniqueResultException e) {
-			    // this should not happen because we requested one result!
-				logger.error("Received multiple yahoo album results when requesting one");
-				throw new RuntimeException("Received multiple yahoo album results when requesting one");
-			}	
+			// (or rather with a given album id)
+			YahooAlbumData yahooAlbum = yahooArtistAlbumsCache.findAlreadyCachedAlbum(artist, album, name);
+			ExpandedArtistView artistView = getExpandedArtistView(viewpoint, null, yahooAlbum, albumsByArtist);
+			artistView.pageAlbums(albumsByArtist);
+		    return artistView;
         } catch (Exception e) {
         	logger.error("song/album-based expandedArtistSearch hit an exception", e);
         	if (e instanceof NotFoundException)

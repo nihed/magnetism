@@ -18,4 +18,6 @@ public interface YahooArtistAlbumsCache {
 	public List<YahooAlbumData> fetchFromNet(String artistId);
 	
 	public List<YahooAlbumData> saveInCache(String artistId, List<YahooAlbumData> songs);
+	
+	public YahooAlbumData findAlreadyCachedAlbum(String artist, String album, String song) throws NotFoundException;
 }

@@ -13,6 +13,7 @@ import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
+import javax.persistence.EntityNotFoundException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
@@ -25,6 +26,7 @@ import com.dumbhippo.TypeUtils;
 import com.dumbhippo.persistence.CachedYahooArtistAlbumData;
 import com.dumbhippo.server.BanFromWebTier;
 import com.dumbhippo.server.Configuration;
+import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.YahooArtistAlbumsCache;
 import com.dumbhippo.server.util.EJBUtil;
@@ -196,6 +198,71 @@ public class YahooArtistAlbumsCacheBean extends AbstractCacheBean implements Yah
 		} catch (Exception e) {
 			ExceptionUtils.throwAsRuntimeException(e);
 			throw new RuntimeException(e); // not reached			
+		}
+	}
+
+	private Query buildSearchQuery(String artist, String album, String name, int maxResults) throws NotFoundException {		
+		int count = 0;
+		if (artist != null)
+			++count;
+		if (name != null)
+			++count;
+		if (album != null)
+			++count;
+		
+		if (count == 0)
+			throw new NotFoundException("Search has no parameters");
+		
+		StringBuilder sb = new StringBuilder("SELECT album FROM CachedYahooArtistAlbumData album");
+		if (name != null) {
+			sb.append(", CachedYahooAlbumSongData song ");
+		}
+		sb.append(" WHERE ");
+		if (artist != null) {
+			sb.append(" album.artist = :artist ");
+			--count;
+			if (count > 0)
+				sb.append(" AND ");
+		}
+		if (album != null) {
+			sb.append(" album.album = :album ");
+			--count;
+			if (count > 0)
+				sb.append(" AND ");
+		}
+		if (name != null) {
+			sb.append(" song.name = :name AND album.albumId = song.albumId ");
+			--count;
+		}		
+		if (count != 0)
+			throw new RuntimeException("broken code in song search");		    	
+
+		// we want to make this deterministic, so that we always return the same 
+		// album for the same artist-album-song combination, we always use the 
+		// same (earliest-created) row
+		sb.append(" ORDER BY album.id");
+		
+		Query q = em.createQuery(sb.toString());
+		if (artist != null)
+			q.setParameter("artist", artist);
+		if (album != null)
+			q.setParameter("album", album);
+		if (name != null)
+			q.setParameter("name", name);
+		
+		if (maxResults >= 0)
+			q.setMaxResults(maxResults);
+
+		return q;
+	}	
+	
+	public YahooAlbumData findAlreadyCachedAlbum(String artist, String album, String song) throws NotFoundException {
+		Query q = buildSearchQuery(artist, album, song, 1);
+		try {
+			CachedYahooArtistAlbumData result = (CachedYahooArtistAlbumData) q.getSingleResult();
+			return result.toData();
+		} catch (EntityNotFoundException e) {
+			throw new NotFoundException("search did not match anything in the database");
 		}
 	}
 }

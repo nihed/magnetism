@@ -159,5 +159,5 @@ public class YahooAlbumCacheBean extends AbstractCacheBean implements YahooAlbum
 			ExceptionUtils.throwAsRuntimeException(e);
 			throw new RuntimeException(e); // not reached
 		}
-	}	
+	}
 }
