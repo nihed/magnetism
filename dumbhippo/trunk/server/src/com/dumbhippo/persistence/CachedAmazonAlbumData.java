@@ -10,11 +10,11 @@ import javax.persistence.UniqueConstraint;
 import com.dumbhippo.services.AmazonAlbumData;
 
 @Entity
-@Table(name="AmazonAlbumResult", 
+@Table(name="CachedAmazonAlbumData", 
 		   uniqueConstraints = 
 		      {@UniqueConstraint(columnNames={"artist","album"})}
 	      )
-public class AmazonAlbumResult extends DBUnique {
+public class CachedAmazonAlbumData extends DBUnique {
 
 	private static final long serialVersionUID = 1L;
 	
@@ -29,18 +29,18 @@ public class AmazonAlbumResult extends DBUnique {
 	private int smallImageWidth;
 	private int smallImageHeight;
 	
-	public AmazonAlbumResult() {
+	public CachedAmazonAlbumData() {
 		lastUpdated = -1;
 		updateData(null);
 	}
 	
-	public AmazonAlbumResult(String artist, String album, AmazonAlbumData data) {
+	public CachedAmazonAlbumData(String artist, String album, AmazonAlbumData data) {
 		lastUpdated = -1;
 		
 		if (artist == null)
-			throw new IllegalArgumentException("can't create AmazonAlbumResult with null artist");
+			throw new IllegalArgumentException("can't create CachedAmazonAlbumData with null artist");
 		if (album == null)
-			throw new IllegalArgumentException("can't create AmazonAlbumResult with null album");
+			throw new IllegalArgumentException("can't create CachedAmazonAlbumData with null album");
 		
 		this.artist = artist;
 		this.album = album;
@@ -147,7 +147,7 @@ public class AmazonAlbumResult extends DBUnique {
 	 * album result will also change the album data,
 	 * it would be mildly more kosher
 	 * to make this a static inner class with its own
-	 * data fields I suppose. But since AmazonAlbumResult 
+	 * data fields I suppose. But since CachedAmazonAlbumData 
 	 * is only used inside AmazonAlbumCacheBean it's not a 
 	 * big deal exactly.
 	 */

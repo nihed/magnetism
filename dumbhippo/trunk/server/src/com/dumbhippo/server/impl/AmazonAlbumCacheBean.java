@@ -19,7 +19,7 @@ import org.slf4j.Logger;
 import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.KnownFuture;
-import com.dumbhippo.persistence.AmazonAlbumResult;
+import com.dumbhippo.persistence.CachedAmazonAlbumData;
 import com.dumbhippo.server.AmazonAlbumCache;
 import com.dumbhippo.server.BanFromWebTier;
 import com.dumbhippo.server.Configuration;
@@ -89,15 +89,15 @@ public class AmazonAlbumCacheBean extends AbstractCacheBean implements AmazonAlb
 		return futureAlbum;		
 	}
 	
-	private AmazonAlbumResult albumResultQuery(String album, String artist) {
+	private CachedAmazonAlbumData albumResultQuery(String album, String artist) {
 		Query q;
 		
-		q = em.createQuery("FROM AmazonAlbumResult album WHERE album.artist = :artist AND album.album = :album");
+		q = em.createQuery("FROM CachedAmazonAlbumData album WHERE album.artist = :artist AND album.album = :album");
 		q.setParameter("artist", artist);
 		q.setParameter("album", album);
 		
 		try {
-			return (AmazonAlbumResult) q.getSingleResult();
+			return (CachedAmazonAlbumData) q.getSingleResult();
 		} catch (EntityNotFoundException e) {
 			return null;
 		}
@@ -112,7 +112,7 @@ public class AmazonAlbumCacheBean extends AbstractCacheBean implements AmazonAlb
 			throw new IllegalArgumentException("can't check cache for amazon album info with null artist or album");
 		}
 		
-		AmazonAlbumResult result = albumResultQuery(album, artist);
+		CachedAmazonAlbumData result = albumResultQuery(album, artist);
 
 		if (result != null) {
 			long now = System.currentTimeMillis();
@@ -163,11 +163,11 @@ public class AmazonAlbumCacheBean extends AbstractCacheBean implements AmazonAlb
 		try {
 			return runner.runTaskRetryingOnConstraintViolation(new Callable<AmazonAlbumData>() {
 				public AmazonAlbumData call() {
-					AmazonAlbumResult r = albumResultQuery(album, artist);
+					CachedAmazonAlbumData r = albumResultQuery(album, artist);
 					if (r == null) {
 						// data is allowed to be null which saves the negative result row
 						// in the db
-						r = new AmazonAlbumResult(artist, album, data);
+						r = new CachedAmazonAlbumData(artist, album, data);
 						r.setLastUpdated(new Date());
 						em.persist(r);
 					} else {
