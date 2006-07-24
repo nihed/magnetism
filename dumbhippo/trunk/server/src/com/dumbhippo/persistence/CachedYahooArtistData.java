@@ -112,6 +112,11 @@ public class CachedYahooArtistData extends DBUnique {
 	
 	private class Data implements YahooArtistData {
 
+		@Override
+		public String toString() {
+			return "{CachedYahooArtistData.Data artistId=" + artistId + " artist='" + artist + "'}";
+		}
+		
 		public String getArtist() {
 			return artist;
 		}

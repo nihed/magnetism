@@ -20,7 +20,7 @@ public class YahooSearchWebServices extends AbstractXmlRequest<YahooSearchSaxHan
 
 	// 50 may be the maximum number of results we can get with one request (but 
 	// on one occasion at least didn't seem to work), 10 is the default number
-	static private final int MAX_RESULTS_TO_RETURN = 20;
+	static private final int MAX_RESULTS_TO_RETURN = 50;
 
 	private String appId;
 	
@@ -123,6 +123,7 @@ public class YahooSearchWebServices extends AbstractXmlRequest<YahooSearchSaxHan
 		}		
 	}
 	
+	// pass in start as 0-based, Yahoo! wants 1-based but this method converts
 	private Pair<Integer, List<YahooAlbumData>> lookupAlbumsByArtistIdPage(String artistId, 
 			                                                 int start,
 			                                                 int resultsToReturn) {		
@@ -130,7 +131,8 @@ public class YahooSearchWebServices extends AbstractXmlRequest<YahooSearchSaxHan
 		sb.append("http://api.search.yahoo.com/AudioSearchService/V1/albumSearch?appid=");
 		sb.append(appId);
 		sb.append("&start=");
-		sb.append(StringUtils.urlEncode(Integer.toString(start)));
+		// convert to 1-based
+		sb.append(StringUtils.urlEncode(Integer.toString(start + 1)));
 		sb.append("&results=");
 		sb.append(StringUtils.urlEncode(Integer.toString(resultsToReturn)));
 		sb.append("&artistid=");		

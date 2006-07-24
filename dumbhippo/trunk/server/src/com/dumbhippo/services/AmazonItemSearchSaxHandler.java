@@ -137,4 +137,9 @@ class AmazonItemSearchSaxHandler extends EnumSaxHandler<AmazonItemSearchSaxHandl
 	public String getArtist() {
 		return artist;
 	}
+	
+	@Override
+	public String toString() {
+		return "{AmazonItemSearchSaxHandler ASIN=" + ASIN + " productUrl=" + productUrl + " album='" + album + "'}";
+	}
 }

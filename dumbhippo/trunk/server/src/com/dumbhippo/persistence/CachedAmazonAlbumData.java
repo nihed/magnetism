@@ -153,6 +153,11 @@ public class CachedAmazonAlbumData extends DBUnique {
 	 */
 	private class Data implements AmazonAlbumData {
 
+		@Override
+		public String toString() {
+			return "{CachedAmazonAlbumData.Data ASIN=" + ASIN + " productUrl=" + productUrl + " album='" + album + "'}";
+		}		
+		
 		public String getASIN() {
 			return ASIN;
 		}

@@ -59,4 +59,9 @@ public class CachedRhapsodyDownload extends DBUnique {
 		else
 			this.lastUpdated = -1;
 	}
+	
+	@Override
+	public String toString() {
+		return "{CachedRhapsodyDownload active=" + active + " url=" + url + "}";
+	}
 }

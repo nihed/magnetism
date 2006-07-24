@@ -450,6 +450,11 @@ class YahooSearchSaxHandler extends EnumSaxHandler<YahooSearchSaxHandler.Element
 			
 		}
 
+		@Override
+		public String toString() {
+			return "{SongData albumId=" + albumId + " songId=" + songId + " trackNumber=" + trackNumber + " name='" + name + "'}";
+		}
+		
 		public String getAlbumId() {
 			return albumId;
 		}
@@ -523,6 +528,11 @@ class YahooSearchSaxHandler extends EnumSaxHandler<YahooSearchSaxHandler.Element
 		private String price;
 		private String restrictions;
 		private SongDownloadSource source;
+
+		@Override
+		public String toString() {
+			return "{SongDownloadData songId=" + songId + " source=" + source + " url='" + url + "'}";
+		}		
 		
 		public String getFormats() {
 			return formats;
@@ -569,8 +579,13 @@ class YahooSearchSaxHandler extends EnumSaxHandler<YahooSearchSaxHandler.Element
 		private String yahooMusicPageUrl;
 		private String smallImageUrl;
 		private int smallImageWidth;
-		private int smallImageHeight;
-
+		private int smallImageHeight;		
+		
+		@Override
+		public String toString() {
+			return "{ArtistData artistId=" + artistId + " artist='" + artist + "'}";
+		}
+		
 		public String getArtist() {
 			return artist;
 		}
@@ -620,6 +635,11 @@ class YahooSearchSaxHandler extends EnumSaxHandler<YahooSearchSaxHandler.Element
 		private String smallImageUrl;
 		private int smallImageWidth;
 		private int smallImageHeight;
+
+		@Override
+		public String toString() {
+			return "{AlbumData albumId=" + albumId + " artistId=" + artistId + " album='" + album + "'}";
+		}
 		
 		public String getAlbum() {
 			return album;
@@ -681,6 +701,5 @@ class YahooSearchSaxHandler extends EnumSaxHandler<YahooSearchSaxHandler.Element
 		public void setTracksNumber(int tracksNumber) {
 			this.tracksNumber = tracksNumber;
 		}
-
 	}
 }

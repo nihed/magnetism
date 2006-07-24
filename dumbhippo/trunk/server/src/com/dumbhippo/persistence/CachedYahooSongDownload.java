@@ -146,6 +146,11 @@ public class CachedYahooSongDownload extends DBUnique {
 	
 	private class Data implements YahooSongDownloadData {
 
+		@Override
+		public String toString() {
+			return "{CachedYahooSongDownload.Data songId=" + songId + " source=" + source + " url='" + url + "'}";
+		}
+		
 		public String getSongId() {
 			return songId;
 		}

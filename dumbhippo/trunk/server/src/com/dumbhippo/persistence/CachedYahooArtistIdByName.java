@@ -64,4 +64,9 @@ public class CachedYahooArtistIdByName extends DBUnique {
 	public boolean isNoResultsMarker() {
 		return artistId == null;
 	}
+	
+	@Override
+	public String toString() {
+		return "{CachedYahooArtistIdByName artistId=" + artistId + " name='" + name + "'}";
+	}
 }

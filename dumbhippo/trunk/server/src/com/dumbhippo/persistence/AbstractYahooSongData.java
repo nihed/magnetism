@@ -156,6 +156,11 @@ abstract public class AbstractYahooSongData extends DBUnique {
 	
 	private class Data implements YahooSongData {
 
+		@Override
+		public String toString() {
+			return "{AbstractYahooSongData.SongData albumId=" + albumId + " songId=" + songId + " trackNumber=" + trackNumber + " name='" + name + "'}";
+		}
+		
 		public String getAlbumId() {
 			return albumId;
 		}
