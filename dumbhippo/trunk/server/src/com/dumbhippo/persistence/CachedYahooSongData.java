@@ -12,7 +12,7 @@ import org.hibernate.annotations.Index;
 @org.hibernate.annotations.Table(name = "CachedYahooSongData", indexes={ 
 		@Index(name="albumArtistSong_index", columnNames = { "album", "artist", "name", "id" } ) 
 })
-public class CachedYahooSongData extends YahooSongResult {
+public class CachedYahooSongData extends AbstractYahooSongData {
 	private static final long serialVersionUID = 1L;
 
 	private String artist;

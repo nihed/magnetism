@@ -129,7 +129,7 @@ public interface MusicSystem {
 	 * as the returned artist view.
 	 * 
 	 * Attempts to find a track that matches parameters among existing tracks. If a track is
-	 * not found, attempts to find a matching YahooSongResult in the existing database cache. Currently,
+	 * not found, attempts to find a matching CachedYahooSongData in the existing database cache. Currently,
 	 * if neither succeeds, does not query an outside web service. Throws a NotFoundException if 
 	 * there is no matching album/song stored locally.
 	 * 

@@ -14,7 +14,7 @@ import com.dumbhippo.services.YahooSongData;
  * subclasses have the distinct keys used for lookup.
  */
 @EmbeddableSuperclass
-abstract public class YahooSongResult extends DBUnique {
+abstract public class AbstractYahooSongData extends DBUnique {
 	
 	private static final long serialVersionUID = 1L;
 
@@ -33,7 +33,7 @@ abstract public class YahooSongResult extends DBUnique {
 	                         // are 1-based
 	private boolean noResultsMarker;
 	
-	public YahooSongResult() {
+	public AbstractYahooSongData() {
 		duration = -1;
 		trackNumber = -1;
 	}
@@ -87,7 +87,7 @@ abstract public class YahooSongResult extends DBUnique {
 
 	/**
 	 * For each Yahoo web services request, we can get back multiple 
-	 * YahooSongResult. If we get back 0, then we save one as a 
+	 * AbstractYahooSongData. If we get back 0, then we save one as a 
 	 * marker that we got no results. If a song has no rows in the db,
 	 * that means we haven't ever done the web services request.
 	 * @return whether this row marks that we did the request and got nothing
@@ -149,7 +149,7 @@ abstract public class YahooSongResult extends DBUnique {
 	@Override
 	public String toString() {
 		if (isNoResultsMarker())
-			return "{YahooSongResult:NoResultsMarker}";
+			return "{AbstractYahooSongData:NoResultsMarker}";
 		else
 			return "{songId=" + songId + " albumId=" + albumId + " artistId=" + artistId + "}";
 	}

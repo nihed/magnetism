@@ -10,7 +10,7 @@ import javax.persistence.Transient;
 import com.dumbhippo.services.YahooAlbumData;
 
 @EmbeddableSuperclass
-abstract public class YahooAlbumResult extends DBUnique {
+abstract public class AbstractYahooAlbumData extends DBUnique {
 	
 	private static final long serialVersionUID = 1L;
 	
@@ -26,7 +26,7 @@ abstract public class YahooAlbumResult extends DBUnique {
 	private int smallImageWidth;
 	private int smallImageHeight;
 	
-	public YahooAlbumResult() {
+	public AbstractYahooAlbumData() {
 		updateData(null);
 	}
 
@@ -61,7 +61,7 @@ abstract public class YahooAlbumResult extends DBUnique {
     // as a single result with an artist like 
     // "B.B. King & Eric Clapton" rather than multiple results.
 	// Every such combination of artists has its own id. 
-	// Thus, we would not get multiple YahooAlbumResult entries
+	// Thus, we would not get multiple AbstractYahooAlbumData entries
 	// when an album has multiple artists, so albumId is unique 
 	// by itself and doesn't need to be combined with artistId to 
 	// provide a unique key.
@@ -169,7 +169,7 @@ abstract public class YahooAlbumResult extends DBUnique {
 	@Override
 	public String toString() {
 		if (isNoResultsMarker())
-			return "{YahooAlbumResult:NoResultsMarker}";
+			return "{AbstractYahooAlbumData:NoResultsMarker}";
 		else
 			return "{artistId=" + artistId + " albumId=" + albumId + " tracksNumber=" + tracksNumber + "}";
 	}

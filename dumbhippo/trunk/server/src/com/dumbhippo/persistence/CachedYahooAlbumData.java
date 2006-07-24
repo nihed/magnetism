@@ -8,7 +8,7 @@ import org.hibernate.annotations.Index;
 @org.hibernate.annotations.Table(name = "CachedYahooAlbumData", indexes={ 
 		@Index(name="artistAlbum_index", columnNames = { "artist", "album", "id" } ) 
 })
-public class CachedYahooAlbumData extends YahooAlbumResult {
+public class CachedYahooAlbumData extends AbstractYahooAlbumData {
 	private static final long serialVersionUID = 1L;
 
 }

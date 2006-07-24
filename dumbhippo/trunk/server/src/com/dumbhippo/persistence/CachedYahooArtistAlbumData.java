@@ -9,7 +9,7 @@ import org.hibernate.annotations.Index;
 		@Index(name="artistId_index", columnNames = { "artistId", "id" }),
 		@Index(name="artistAlbum_index", columnNames = { "artist", "album", "id" }) 
 })
-public class CachedYahooArtistAlbumData extends YahooAlbumResult {
+public class CachedYahooArtistAlbumData extends AbstractYahooAlbumData {
 
 	private static final long serialVersionUID = 1L;
 
