@@ -82,7 +82,7 @@ class AmazonItemLookupSaxHandler extends EnumSaxHandler<AmazonItemLookupSaxHandl
 		if (!isValid()) {
 			if (errorCode != null) {
 				boolean unexpected = !errorCode.equals("AWS.ECommerceService.NoExactMatches");
-				throw new ServiceException(unexpected, errorCode + (errorMessage != null ? errorMessage : "no message"));
+				throw new ServiceException(unexpected, errorCode + " " + (errorMessage != null ? errorMessage : "no message"));
 			} else {
 	 			throw new SAXException("Missing needed amazon fields");
 			}

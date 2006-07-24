@@ -843,11 +843,16 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			}
 		}
 		
-		// sort by title so we get predictable paging
+		// sort the list so we get predictable paging.
+		// this would be much nicer if all the compilation albums with only 
+		// 1 or 2 tracks from the artist sorted later. However, at this point
+		// the YahooAlbumData does not have enough info to decide which things
+		// are compilations - the artistIds are all the same, and there's no 
+		// track counts.
 		Collections.sort(albums, new Comparator<YahooAlbumData>() {
 			public int compare(YahooAlbumData first, YahooAlbumData second) {
 				return String.CASE_INSENSITIVE_ORDER.compare(first.getAlbum(), second.getAlbum());
-			}			
+			}
 		});
 		
 		// whack the results we don't need so we don't bother converting them to AlbumView

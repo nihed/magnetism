@@ -143,7 +143,12 @@ public class YahooArtistAlbumsCacheBean extends AbstractCacheBean implements Yah
 
 	private CachedYahooArtistAlbumData createCachedAlbum(String artistId) {
 		CachedYahooArtistAlbumData d = new CachedYahooArtistAlbumData();
-		d.setAlbumId(artistId);
+		
+		// This is both the lookup key and part of the returned results. 
+		// Yahoo always returns the album with artistId = the artistId 
+		// you searched for, though, so we don't need a separate column
+		// for the artist id of the search vs. of the album.
+		d.setArtistId(artistId);
 		return d;
 	}
 	

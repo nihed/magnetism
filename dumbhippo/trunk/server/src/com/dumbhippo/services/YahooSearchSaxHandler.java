@@ -638,7 +638,7 @@ class YahooSearchSaxHandler extends EnumSaxHandler<YahooSearchSaxHandler.Element
 
 		@Override
 		public String toString() {
-			return "{AlbumData albumId=" + albumId + " artistId=" + artistId + " album='" + album + "'}";
+			return "{AlbumData albumId=" + albumId + " artistId=" + artistId + " album='" + album + "' artist='" + artist + "'}";
 		}
 		
 		public String getAlbum() {
