@@ -3,7 +3,6 @@ package com.dumbhippo.server.impl;
 import java.util.Date;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
-import java.util.concurrent.FutureTask;
 
 import javax.annotation.EJB;
 import javax.ejb.Stateless;
@@ -30,7 +29,7 @@ import com.dumbhippo.services.YahooSearchWebServices;
 
 @BanFromWebTier
 @Stateless
-public class YahooAlbumCacheBean extends AbstractCacheBean implements YahooAlbumCache {
+public class YahooAlbumCacheBean extends AbstractCacheBean<String,YahooAlbumData> implements YahooAlbumCache {
 	@SuppressWarnings("unused")
 	static private final Logger logger = GlobalSetup.getLogger(YahooAlbumCacheBean.class);
 
@@ -43,6 +42,9 @@ public class YahooAlbumCacheBean extends AbstractCacheBean implements YahooAlbum
 	@EJB
 	private Configuration config;
 
+	public YahooAlbumCacheBean() {
+		super(Request.YAHOO_ALBUM);
+	}
 	
 	static private class YahooAlbumSearchTask implements Callable<YahooAlbumData> {
 		
@@ -64,7 +66,7 @@ public class YahooAlbumCacheBean extends AbstractCacheBean implements YahooAlbum
 	}	
 	
 	public YahooAlbumData getSync(String albumId) {
-		return getFutureResult(getAsync(albumId));
+		return getFutureResultNullOnException(getAsync(albumId));
 	}
 
 	public Future<YahooAlbumData> getAsync(String albumId) {
@@ -78,12 +80,8 @@ public class YahooAlbumCacheBean extends AbstractCacheBean implements YahooAlbum
 				result = null;
 			return new KnownFuture<YahooAlbumData>(result);
 		}
-				
-		FutureTask<YahooAlbumData> futureAlbum =
-			new FutureTask<YahooAlbumData>(new YahooAlbumSearchTask(albumId));
-		getThreadPool().execute(futureAlbum);
-		return futureAlbum;		
 
+		return getExecutor().execute(albumId, new YahooAlbumSearchTask(albumId));
 	}
 
 	private CachedYahooAlbumData albumResultQuery(String albumId) {

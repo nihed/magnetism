@@ -6,7 +6,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
-import java.util.concurrent.FutureTask;
 
 import javax.annotation.EJB;
 import javax.ejb.Stateless;
@@ -35,7 +34,7 @@ import com.dumbhippo.services.YahooSearchWebServices;
 
 @BanFromWebTier
 @Stateless
-public class YahooArtistAlbumsCacheBean extends AbstractCacheBean implements YahooArtistAlbumsCache {
+public class YahooArtistAlbumsCacheBean extends AbstractCacheBean<String,List<YahooAlbumData>> implements YahooArtistAlbumsCache {
 	@SuppressWarnings("unused")
 	static private final Logger logger = GlobalSetup.getLogger(YahooArtistAlbumsCacheBean.class);
 
@@ -48,7 +47,10 @@ public class YahooArtistAlbumsCacheBean extends AbstractCacheBean implements Yah
 	@EJB
 	private Configuration config;
 	
-
+	public YahooArtistAlbumsCacheBean() {
+		super(Request.YAHOO_ARTIST_ALBUMS);
+	}
+	
 	static private class YahooArtistAlbumsTask implements Callable<List<YahooAlbumData>> {
 
 		private String artistId;
@@ -70,7 +72,7 @@ public class YahooArtistAlbumsCacheBean extends AbstractCacheBean implements Yah
 	}
 	
 	public List<YahooAlbumData> getSync(String artistId) {
-		return getFutureResult(getAsync(artistId));
+		return getFutureResultEmptyListOnException(getAsync(artistId));
 	}
 
 	public Future<List<YahooAlbumData>> getAsync(String artistId) {
@@ -80,11 +82,8 @@ public class YahooArtistAlbumsCacheBean extends AbstractCacheBean implements Yah
 		List<YahooAlbumData> result = checkCache(artistId);
 		if (result != null)
 			return new KnownFuture<List<YahooAlbumData>>(result);
-		
-		FutureTask<List<YahooAlbumData>> futureResult =
-			new FutureTask<List<YahooAlbumData>>(new YahooArtistAlbumsTask(artistId));
-		getThreadPool().execute(futureResult);
-		return futureResult;
+	
+		return getExecutor().execute(artistId, new YahooArtistAlbumsTask(artistId));
 	}
 
 	private List<CachedYahooArtistAlbumData> albumDataQuery(String artistId) {

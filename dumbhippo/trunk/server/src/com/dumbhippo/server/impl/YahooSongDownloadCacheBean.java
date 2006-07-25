@@ -6,7 +6,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
-import java.util.concurrent.FutureTask;
 
 import javax.annotation.EJB;
 import javax.ejb.Stateless;
@@ -33,7 +32,7 @@ import com.dumbhippo.services.YahooSongDownloadData;
 
 @BanFromWebTier
 @Stateless
-public class YahooSongDownloadCacheBean extends AbstractCacheBean implements YahooSongDownloadCache {
+public class YahooSongDownloadCacheBean extends AbstractCacheBean<String,List<YahooSongDownloadData>> implements YahooSongDownloadCache {
 	@SuppressWarnings("unused")
 	static private final Logger logger = GlobalSetup.getLogger(YahooSongDownloadCacheBean.class);
 	
@@ -46,7 +45,10 @@ public class YahooSongDownloadCacheBean extends AbstractCacheBean implements Yah
 	@EJB
 	private Configuration config;	
 
-
+	public YahooSongDownloadCacheBean() {
+		super(Request.YAHOO_SONG_DOWNLOAD);
+	}
+	
 	static private class YahooSongDownloadTask implements Callable<List<YahooSongDownloadData>> {
 
 		private String songId;
@@ -68,7 +70,7 @@ public class YahooSongDownloadCacheBean extends AbstractCacheBean implements Yah
 	}
 	
 	public List<YahooSongDownloadData> getSync(String songId) {
-		return getFutureResult(getAsync(songId));
+		return getFutureResultEmptyListOnException(getAsync(songId));
 	}
 
 	public Future<List<YahooSongDownloadData>> getAsync(String songId) {
@@ -79,10 +81,7 @@ public class YahooSongDownloadCacheBean extends AbstractCacheBean implements Yah
 		if (result != null)
 			return new KnownFuture<List<YahooSongDownloadData>>(result);
 		
-		FutureTask<List<YahooSongDownloadData>> futureResult =
-			new FutureTask<List<YahooSongDownloadData>>(new YahooSongDownloadTask(songId));
-		getThreadPool().execute(futureResult);
-		return futureResult;
+		return getExecutor().execute(songId, new YahooSongDownloadTask(songId));
 	}
 
 	private List<CachedYahooSongDownload> songDataQuery(String songId) {

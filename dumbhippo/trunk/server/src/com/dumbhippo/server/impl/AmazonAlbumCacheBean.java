@@ -3,7 +3,6 @@ package com.dumbhippo.server.impl;
 import java.util.Date;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
-import java.util.concurrent.FutureTask;
 
 import javax.annotation.EJB;
 import javax.ejb.Stateless;
@@ -32,7 +31,7 @@ import com.dumbhippo.services.AmazonItemSearch;
 
 @BanFromWebTier
 @Stateless
-public class AmazonAlbumCacheBean extends AbstractCacheBean implements AmazonAlbumCache {
+public class AmazonAlbumCacheBean extends AbstractCacheBean<String,AmazonAlbumData> implements AmazonAlbumCache {
 	@SuppressWarnings("unused")
 	static private final Logger logger = GlobalSetup.getLogger(AmazonAlbumCacheBean.class);
 	
@@ -47,6 +46,10 @@ public class AmazonAlbumCacheBean extends AbstractCacheBean implements AmazonAlb
 	
 	@EJB
 	private Configuration config;	
+	
+	public AmazonAlbumCacheBean() {
+		super(Request.AMAZON_ALBUM);
+	}	
 	
 	static private class AmazonAlbumSearchTask implements Callable<AmazonAlbumData> {
 		
@@ -83,10 +86,8 @@ public class AmazonAlbumCacheBean extends AbstractCacheBean implements AmazonAlb
 			return new KnownFuture<AmazonAlbumData>(result);
 		}
 		
-		FutureTask<AmazonAlbumData> futureAlbum =
-			new FutureTask<AmazonAlbumData>(new AmazonAlbumSearchTask(album, artist));
-		getThreadPool().execute(futureAlbum);
-		return futureAlbum;		
+		// the colon in the middle is to avoid "ab c" and "a bc" resulting in the same key
+		return getExecutor().execute(album + ":" + artist, new AmazonAlbumSearchTask(album, artist));		
 	}
 	
 	private CachedAmazonAlbumData albumResultQuery(String album, String artist) {
@@ -104,7 +105,7 @@ public class AmazonAlbumCacheBean extends AbstractCacheBean implements AmazonAlb
 	}	
 		
 	public AmazonAlbumData getSync(final String album, final String artist) {
-		return getFutureResult(getAsync(album, artist));
+		return getFutureResultNullOnException(getAsync(album, artist));
 	}
 	
 	public AmazonAlbumData checkCache(String album, String artist) {

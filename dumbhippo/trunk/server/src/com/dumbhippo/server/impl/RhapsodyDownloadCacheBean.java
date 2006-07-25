@@ -8,7 +8,6 @@ import java.net.URLConnection;
 import java.util.Date;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
-import java.util.concurrent.FutureTask;
 
 import javax.annotation.EJB;
 import javax.ejb.Stateless;
@@ -32,7 +31,7 @@ import com.dumbhippo.server.util.EJBUtil;
 
 @BanFromWebTier
 @Stateless
-public class RhapsodyDownloadCacheBean extends AbstractCacheBean implements
+public class RhapsodyDownloadCacheBean extends AbstractCacheBean<String,String> implements
 		RhapsodyDownloadCache {
 
 	@SuppressWarnings("unused")
@@ -46,6 +45,10 @@ public class RhapsodyDownloadCacheBean extends AbstractCacheBean implements
 	
 	@EJB
 	private TransactionRunner runner;
+	
+	public RhapsodyDownloadCacheBean() {
+		super(Request.RHAPSODY_DOWNLOAD);
+	}
 	
 	static private class RhapsodyLinkTask implements Callable<String> {
 		
@@ -62,9 +65,7 @@ public class RhapsodyDownloadCacheBean extends AbstractCacheBean implements
 						
 			boolean fetched = cache.fetchFromNet(link);
 
-			cache.saveInCache(link, fetched);
-			
-			return link;
+			return cache.saveInCache(link, fetched);
 		}
 	}
 	
@@ -90,7 +91,7 @@ public class RhapsodyDownloadCacheBean extends AbstractCacheBean implements
 	}
 	
 	public String getSync(String album, String artist, int track) {
-		return getFutureResult(getAsync(album, artist, track));
+		return getFutureResultNullOnException(getAsync(album, artist, track));
 	}
 
 	public Future<String> getAsync(String album, String artist, int track) {
@@ -112,10 +113,7 @@ public class RhapsodyDownloadCacheBean extends AbstractCacheBean implements
 				return new KnownFuture<String>(null);
 		}
 		
-		FutureTask<String> futureLink =
-			new FutureTask<String>(new RhapsodyLinkTask(link));
-		getThreadPool().execute(futureLink);
-		return futureLink;
+		return getExecutor().execute(link, new RhapsodyLinkTask(link));
 	}
 
 	public Boolean checkCache(String link) {
@@ -172,7 +170,7 @@ public class RhapsodyDownloadCacheBean extends AbstractCacheBean implements
 	}
 
 	@TransactionAttribute(TransactionAttributeType.NEVER)
-	public void saveInCache(final String link, final boolean valid) {
+	public String saveInCache(final String link, final boolean valid) {
 		// need to retry on constraint violation to deal with race where multiple TrackViews are
 		// being updated in parallel
 		try {
@@ -199,5 +197,9 @@ public class RhapsodyDownloadCacheBean extends AbstractCacheBean implements
 			ExceptionUtils.throwAsRuntimeException(e);
 			throw new RuntimeException(e); // not reached			
 		}
+		if (valid)
+			return link;
+		else
+			return null;
 	}
 }

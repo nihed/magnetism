@@ -6,7 +6,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
-import java.util.concurrent.FutureTask;
 
 import javax.annotation.EJB;
 import javax.ejb.Stateless;
@@ -35,7 +34,7 @@ import com.dumbhippo.services.YahooSearchWebServices;
 
 @BanFromWebTier
 @Stateless
-public class YahooArtistCacheBean extends AbstractCacheBean implements YahooArtistCache {
+public class YahooArtistCacheBean extends AbstractCacheBean<String,YahooArtistData> implements YahooArtistCache {
 	@SuppressWarnings("unused")
 	static private final Logger logger = GlobalSetup.getLogger(YahooArtistCacheBean.class);
 	
@@ -48,6 +47,10 @@ public class YahooArtistCacheBean extends AbstractCacheBean implements YahooArti
 	@EJB
 	private Configuration config;		
 
+	public YahooArtistCacheBean() {
+		super(Request.YAHOO_ARTIST);
+	}
+	
 	static private class YahooArtistByIdTask implements Callable<YahooArtistData> {
 		
 		private String artistId;
@@ -87,7 +90,7 @@ public class YahooArtistCacheBean extends AbstractCacheBean implements YahooArti
 	}
 	
 	public YahooArtistData getSync(String artistId) {
-		return getFutureResult(getAsync(artistId));
+		return getFutureResultNullOnException(getAsync(artistId));
 	}
 
 	public Future<YahooArtistData> getAsync(String artistId) {
@@ -100,15 +103,12 @@ public class YahooArtistCacheBean extends AbstractCacheBean implements YahooArti
 				result = null;
 			return new KnownFuture<YahooArtistData>(result);
 		}
-				
-		FutureTask<YahooArtistData> future =
-			new FutureTask<YahooArtistData>(new YahooArtistByIdTask(artistId));
-		getThreadPool().execute(future);
-		return future;
+
+		return getExecutor().execute(artistId, new YahooArtistByIdTask(artistId));
 	}
 
 	public YahooArtistData getSyncByName(String artist) {
-		return getFutureResult(getAsyncByName(artist));
+		return getFutureResultNullOnException(getAsyncByName(artist));
 	}
 
 	static private YahooArtistData pickFirstItemOrNull(List<YahooArtistData> list) {
@@ -143,11 +143,8 @@ public class YahooArtistCacheBean extends AbstractCacheBean implements YahooArti
 		List<YahooArtistData> results = checkCacheByName(artist);
 		if (results != null)
 			return new KnownFuture<YahooArtistData>(pickFirstItemOrNull(results));
-				
-		FutureTask<YahooArtistData> future =
-			new FutureTask<YahooArtistData>(new PickFirstItemOrNullTask(new YahooArtistByNameTask(artist)));
-		getThreadPool().execute(future);
-		return future;
+
+		return getExecutor(Request.YAHOO_ARTIST_BY_NAME).execute(artist, new PickFirstItemOrNullTask(new YahooArtistByNameTask(artist)));
 	}
 
 	private CachedYahooArtistData artistByIdQuery(String artistId) {

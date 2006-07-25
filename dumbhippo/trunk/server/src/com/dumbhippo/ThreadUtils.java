@@ -4,7 +4,12 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 
+import org.slf4j.Logger;
+
 public class ThreadUtils {
+	@SuppressWarnings("unused")
+	static private final Logger logger = GlobalSetup.getLogger(ThreadUtils.class);
+	
 	/**
 	 * Like Executors.newCachedThreadPool, but you can specify the name of 
 	 * the threads that will be created

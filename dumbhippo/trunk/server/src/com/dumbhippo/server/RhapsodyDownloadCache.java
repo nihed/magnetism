@@ -15,5 +15,5 @@ public interface RhapsodyDownloadCache {
 	
 	public boolean fetchFromNet(String link);
 	
-	public void saveInCache(String link, boolean valid);
+	public String saveInCache(String link, boolean valid);
 }
