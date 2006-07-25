@@ -1447,6 +1447,8 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		
 	   // information about the album the song is on
        YahooAlbumData yahooAlbum = yahooAlbumCache.getSync(yahooSong.getAlbumId());
+       if (yahooAlbum == null)
+    	   throw new NotFoundException("Yahoo! returned no album for song " + yahooSong + " with album id " + yahooSong.getAlbumId());
        
         // albumsByArtist is a pageable object that contains information on what albums the expanded
         // artist view should be loaded with, it also needs to have these albums set in its results field

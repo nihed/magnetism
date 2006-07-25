@@ -269,6 +269,8 @@ public class YahooArtistAlbumsCacheBean extends AbstractCacheBean implements Yah
 		Query q = buildSearchQuery(artist, album, song, 1);
 		try {
 			CachedYahooArtistAlbumData result = (CachedYahooArtistAlbumData) q.getSingleResult();
+			if (result.isNoResultsMarker())
+				throw new NotFoundException("Search returned no results marker (should this happen?)");
 			return result.toData();
 		} catch (EntityNotFoundException e) {
 			throw new NotFoundException("search did not match anything in the database");
