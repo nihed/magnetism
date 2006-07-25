@@ -5,6 +5,8 @@
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 
 <dh:bean id="welcome" class="com.dumbhippo.web.pages.DownloadPage" scope="page"/>
+<jsp:setProperty name="welcome" property="invitationId" param="invite"/>
+<jsp:setProperty name="welcome" property="inviterId" param="inviter"/>
 
 <head>
 	<title>Mugshot</title>
@@ -19,71 +21,165 @@
 </head>
 
 <dht:body>
-	<img src="/images2/${buildStamp}/mugshot_tagline.gif"/>
-	<div class="dh-special-subtitle"><c:if test="${browser.linuxRequested}">A Linux user! </c:if>Thanks for trying us out!  Here's how to start using our tools...</div>
-	<table cellspacing="15px" cellpadding="0" align="center">
-	<c:if test="${signin.needsTermsOfUse}">
-		<tr>
-		<td align="center" colspan="5">
-			<div class="dh-accept-terms-box-normal" id="dhAcceptTermsBox">
-				<div class="dh-accept-terms-warning">
-					You must agree to the Terms of Use before continuing.
-				</div>
-				<input type="checkbox" id="dhAcceptTerms" onclick="dh.download.updateDownload();">
-					I accept the Mugshot <a href="javascript:window.open('/terms', 'dhTermsOfUs', 'menubar=no,scrollbars=yes,width=600,height=600');void(0);">Terms of Use</a> and <a href="javascript:window.open('/privacy', 'dhPrivacy', 'menubar=no,scrollbars=yes,width=600,height=600');void(0);">Privacy Policy</a>.
-				</input>
-			</div>
-		</td>
-		</tr>
-	</c:if>
+	<div id="dhDownloadTopMessageContainer">
+		<img src="/images2/${buildStamp}/downloadheader.gif"/>
+		<div id="dhDownloadTopMessage">Thanks for trying our free anti-productivity tools!</div>
+	</div>
+	<table cellspacing="0" cellpadding="0" align="center" valign="top" style="table-layout: fixed;">
 	<tr valign="top">
+    <td valign="top">
+    	<div id="dhDownloadInfoAreaContainer">
+        <table id="dhDownloadInfoArea" cellspacing="0" cellpadding="0" valign="top">
+            <tr>
+            	<c:choose>
+            		<c:when test="${welcome.inviter != null}">
+		                <td width="50px" align="center"><center><img src="${welcome.inviter.smallPhotoUrl}"/></center></td>               
+        		        <td align="left">    
+	    	            	<div class="dh-download-section-description dh-download-info-area-header">
+	    	            	<strong><c:out value="${welcome.inviter.name}"/> has invited you to become a mugshot member.</strong> Sign
+	    	            	up to use our free and fun tools.<br/>
+	    	            	<a href="${welcome.inviter.homeUrl}">View <c:out value="${welcome.inviter.name}"/>'s Mugshot profile</a>
+	    	            	</div>        		                			
+        		        </td>
+            		</c:when>
+            		<c:otherwise>
+		                <td colspan="2">
+	    	            	<div class="dh-download-info-area-header">
+    	    	            <%-- Text suitable for an invitation from Mugshot: You were invited because you signed up earlier on the site. --%>
+        	    	        <strong>Welcome to Mugshot!</strong> Sign up to use our free and fun tools.
+            	    	    </div>
+   	                    </td>
+                	</c:otherwise>
+                </c:choose>
+            </tr>
+            <tr>
+	            <td colspan="2">
+                    <hr size="1px" width="90%"/>
+                </td>            
+            </tr>
+            <tr>
+                <td width="50px" align="center"><center><img src="/images2/${buildStamp}/buzzer50x44.gif"/></center></td>               
+                <td align="left">
+                	<div class="dh-download-section-description">
+                    <strong>Web Swarm</strong> lets you share and chat about links with friends.        
+                    <br/>
+                    <%-- TODO: make all links on this side open in the same second browser, if this is possible --%>
+                    <a href="/links" target="_blank">See what people are sharing</a> 
+                    </div>
+                </td>
+            </tr>
+            <tr>
+	            <td colspan="2">
+                    <hr size="1px" width="90%"/>
+                </td>            
+            </tr>            
+            <tr>
+                <td width="50px" align="center"><center><img src="/images2/${buildStamp}/beacon32x44.gif"/></center></td>      
+                <td align="left">
+                	<div class="dh-download-section-description">                
+                    <strong>Music Radar</strong> shares your music taste with friends and on your blog.        
+                    <br/>
+                    <a href="/music" target="_blank">See what people are listening to</a> 
+                    </div>
+                </td>                
+            </tr>
+            <tr>
+	            <td colspan="2">
+                    <hr size="1px" width="90%"/>
+                </td>            
+            </tr>                      
+            <tr>
+                <td colspan="2">
+                    <div class="dh-download-more-information"><strong>More information from</strong> <a href="http://blog.mugshot.org/?page_id=245" target="_blank">Mugshot Help</a>:
+                    <ul>
+                    	<li><a href="http://blog.mugshot.org/?page_id=233" target="_blank">Why do I need to download anything to use Mugshot?</a></li>
+                        <li><a href="http://blog.mugshot.org/?page_id=233" target="_blank">What if the download doesn't work?</a></li>
+                    </ul>
+                    </div>
+                </td>                 
+            </tr>                  
+       </table>
+       </div>
+    </td>
+    <td width="15px">&nbsp;</td>
 	<td>
-		<table cellspacing="0" cellpadding="0">
-			<tr><td><img id="dhDownloadImg" src="/images2/${buildStamp}/buzzer63x58.gif"/></td>
-			<td class="dh-download-instructions">
-				<c:if test="${browser.linuxRequested}">
-					<c:set var="forFedora" value=" for Fedora Core 5" scope="page"/>
-				</c:if>	
-				1. <a id="dhDownloadProduct" class="dh-download-product" href="javascript:dh.download.doDownload('${welcome.downloadUrl}')">Click here to download</a><c:out value="${forFedora}"/>.<br/>
-			    <c:choose>
-			        <c:when test="${browser.linuxRequested}">
-			        Install the package, log out of your desktop, and log back in.
-			        </c:when>
-			        <c:otherwise>
-			        The software will install automatically.
-			        </c:otherwise>
-			    </c:choose>
-			</td>
+		<table cellspacing="0" cellpadding="0" valign="top" border="0">
+		    <tr id="dhDownloadInstructionsHeader"><td colspan="2" class="dh-download-purple"><div class="dh-download-instruction">Start using Mugshot in 3 quick steps:</div></td></tr>
+		    <tr>
+		        <td valign="top" class="dh-download-purple dh-download-instruction-number">1.</td> 
+		        <td>
+					<div class="dh-download-instruction">		        
+		            <c:choose>
+			            <c:when test="${signin.needsTermsOfUse}">
+			                <div class="dh-accept-terms-box-normal" id="dhAcceptTermsBox">        
+				                <div class="dh-accept-terms-warning">
+					                Read our <a href="javascript:window.open('/terms', 'dhTermsOfUs', 'menubar=no,scrollbars=yes,width=600,height=600');void(0);">Terms of Use</a> and <a href="javascript:window.open('/privacy', 'dhPrivacy', 'menubar=no,scrollbars=yes,width=600,height=600');void(0);">Privacy Policy</a>.					        
+				                </div>
+				                <input type="checkbox" id="dhAcceptTerms" onclick="dh.download.updateDownload();">
+					                I accept these terms.    
+				                </input>
+			                </div>
+			            </c:when>    
+			            <c:otherwise>
+                            <img src="/images2/${buildStamp}/check10x10.png"/> <span class="dh-purple-text">Done!</span>
+                            <div class="dh-download-accepted">
+                            Agreed to <a href="javascript:window.open('/terms', 'dhTermsOfUs', 'menubar=no,scrollbars=yes,width=600,height=600');void(0);">Terms of Use</a> and <a href="javascript:window.open('/privacy', 'dhPrivacy', 'menubar=no,scrollbars=yes,width=600,height=600');void(0);">Privacy Policy</a>.					        
+			                </div>
+			                <div class="dh-download-accepted">
+			                <%-- TODO: link to the disable you account option of the account page, talk about how disabling your account --%>
+			                <%-- is the closest thing to unaccepting terms of use there --%>
+			                (See your <a href="/account">account page</a> for more info.)
+			                </div>
+			            </c:otherwise>
+			        </c:choose>        			            
+			        </div>
+		        </td>
+		    </tr>
+			<tr>
+			    <td valign="top" class="dh-download-purple dh-download-instruction-number">2.</td>
+			    <td> 
+				    <div class="dh-download-instruction">
+			        <div class="dh-download-instructions">
+				        <a id="dhDownloadProduct" class="dh-download-product" href="javascript:dh.download.doDownload('${welcome.downloadUrl}')">Click here to download Mugshot.</a><br/>
+				    </div>    
+			        <c:choose>
+			            <c:when test="${browser.linuxRequested}">
+			                This download is for Fedora Core 5.  Install it and run 'mugshot'.
+			            </c:when>
+			            <c:otherwise>
+			                The software will install automatically.
+			            </c:otherwise>
+			        </c:choose>			            
+			        </div>
+			    </td>
 			</tr>
-		</table>
-	</td>
-	<td class="dh-download-separator"><div></div></td>
-	<td class="dh-download-instructions">
-	2. Click the link on the bubble that appears.<br/>
-	<img src="/images2/${buildStamp}/minibubble.gif"/>
+			<tr>
+			    <td valign="top" class="dh-download-purple dh-download-instruction-number">3.</td>
+			    <td>
+			    	<c:choose>
+			    		<c:when test="${welcome.receivedTutorialShare}">
+			    			When you see the Mugshot icon in your tool tray, you're ready to share
+			    			links with friends!
+			    			<br/>
+			    			<br/>
+			    			<img src="/images2/${buildStamp}/tooltray.gif"/>
+			    		</c:when>
+			    		<c:otherwise>
+					        When you see this bubble appear, your Mugshot is working! Click the link on the bubble to set up your account. 
+					        <br/>
+	            		    <img src="/images2/${buildStamp}/minibubble_account.gif"/>
+	            		</c:otherwise>
+	            	</c:choose>
+	            </td>
+	        </tr>
+	    </table>
 	</td>
 	</tr>
-	</table>
-	<div class="dh-special-subtitle dh-download-bottom-title">
-	  <div>
-	      That will activate Web Swarm and get you started with Mugshot.
-	  </div>
-	  <div>
-	      Songs you play in 
-	      <c:choose>
-		      <c:when test="${browser.linuxRequested}">
-	      		  Rhythmbox		
-		      </c:when>
-		      <c:otherwise>
-			      iTunes or Yahoo! Music
-		      </c:otherwise>
-	      </c:choose>			
-	      will show up in Music Radar.  Easy!
-	  </div>
+	</table>    
+	<div id="dhDownloadFooter">
+ 		<div class="dh-download-other-options"><a id="dhSkipDownload" href="javascript:dh.download.doDownload()">I can't install on this computer, skip download.</a> (Not recommended.) | Get Mugshot for <a href="/download?platform=windows">Windows</a> | <a href="/download?platform=linux">Linux</a></div>
+		<dht:notevil/>	
 	</div>
-	<dht:notevil/>
-	<div class="dh-disclaimer">Download for <a href="/download?platform=windows">Windows</a> | <a href="/download?platform=linux">Linux</a></div>
-	<div class="dh-disclaimer"><a id="dhSkipDownload" href="javascript:dh.download.doDownload()">I can't install on this computer, skip download.</a> (Not recommended.)</div>
 </dht:body>
 
 </html>

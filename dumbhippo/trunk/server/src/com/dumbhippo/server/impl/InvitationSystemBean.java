@@ -108,6 +108,21 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		return invite;
 	}
 
+
+	public InvitationToken lookupInvitation(UserViewpoint viewpoint, long id) {
+		InvitationToken token;		
+		try {
+			token = em.find(InvitationToken.class, id);
+		} catch (EntityNotFoundException e) {
+			return null;
+		}
+		if (!token.getResultingPerson().equals(viewpoint.getViewer())) {
+			logger.debug("Can't access invitation id " + id + " from user " + viewpoint.getViewer());
+			return null;
+		}
+		return token;
+	}	
+	
 	public InvitationToken lookupInvitation(User inviter, String authKey) {
 		InvitationToken invite;
 		try {
@@ -580,11 +595,15 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 			messageText.append("\n\n");
 		}
 		
+		String inviteUrl = invite.getAuthURL(baseurlObject);
+		inviteUrl += "&inviter=";
+		inviteUrl += inviter.getId();
+		
 		messageHtml.append("<div style=\"padding: 1em;\">");
-		messageHtml.appendTextNode("a", invite.getAuthURL(baseurlObject), "href", invite.getAuthURL(baseurlObject));
+		messageHtml.appendTextNode("a", inviteUrl, "href", inviteUrl);
 		messageHtml.append("</div>\n");
 		
-		messageText.append(invite.getAuthURL(baseurlObject));
+		messageText.append(inviteUrl);
 		messageText.append("\n\n");
 		
 		String noSpamDisclaimer = "If you got this by mistake, just ignore it.  We won't send you email again unless you ask us to.  Thanks!";

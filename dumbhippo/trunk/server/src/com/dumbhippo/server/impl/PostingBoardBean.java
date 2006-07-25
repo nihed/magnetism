@@ -130,7 +130,11 @@ public class PostingBoardBean implements PostingBoard {
 	private RecommenderSystem recommenderSystem;
 	
 	@javax.annotation.Resource
-	private EJBContext ejbContext;	
+	private EJBContext ejbContext;
+	
+	public boolean isAddressedRecipient(Post post, Resource resource) {
+		return post.getExpandedRecipients().contains(resource); 
+	}
 	
 	public Set<Resource> getPostRecipients(Post post) {
 		Set<Resource> addressedRecipients = post.getExpandedRecipients();  

@@ -107,7 +107,12 @@ public class VerifyServlet extends AbstractServlet {
 			return null;
 		} else {
 			// this forwards to we-miss-you.jsp if the account is disabled
-			return redirectToNextPage(request, response, "/download", null);
+			String redirect = "/download?invite=" + invite.getId();
+			String invitingUserId = request.getParameter("inviter");						
+			if (invitingUserId != null)
+				redirect += "&inviter=" + invitingUserId;
+			
+			return redirectToNextPage(request, response, redirect, null);
 		}
 	}
 	
