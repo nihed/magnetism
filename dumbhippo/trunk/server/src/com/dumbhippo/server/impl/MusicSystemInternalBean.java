@@ -17,7 +17,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
@@ -507,17 +506,6 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		});
 	}
 	
-	static private <T> T getFutureResult(Future<T> future) {
-		try {
-			return future.get();
-		} catch (InterruptedException e) {
-			logger.warn("thread pool worker thread interrupted {}", e.getMessage());
-			throw new RuntimeException(e);
-		} catch (ExecutionException e) {
-			logger.warn("thread pool worker thread threw execution exception {}", e.getMessage());
-			throw new RuntimeException(e);
-		}
-	}
 	
 	public int parseReleaseYear(String releaseDate) {
 		if (releaseDate == null)
@@ -558,7 +546,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			}
 			
 			// now get the amazon stuff
-			AmazonAlbumData amazonAlbum = getFutureResult(futureAmazonAlbum);
+			AmazonAlbumData amazonAlbum = ThreadUtils.getFutureResultNullOnException(futureAmazonAlbum);
 						
 			if (amazonAlbum != null) {
 				// if album artwork was not available from yahoo, we are after album artwork from amazon
@@ -598,17 +586,8 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	private void fillAlbumInfo(Future<YahooAlbumData> futureYahooAlbum, Future<AmazonAlbumData> futureAmazonAlbum, AlbumView albumView) {
 		YahooAlbumData yahooAlbum = null;
 	    if (futureYahooAlbum != null) {
-			try {
-				yahooAlbum = futureYahooAlbum.get();
-			} catch (InterruptedException e) {
-				logger.error("yahoo album get thread interrupted {}", e.getMessage());
-				throw new RuntimeException(e);
-			} catch (ExecutionException e) {
- 				// it is ok to call fillAlbumInfo below with yahooAlbum being null
-				// TODO: The backtrace from the exception isn't logged (and should this
-				// whole block be replaced with a getFutureResult variant?)
- 				logger.error("yahoo album get thread execution exception {}", e.getMessage());
-			}
+	    	//it is ok to call fillAlbumInfo below with yahooAlbum being null
+			yahooAlbum = ThreadUtils.getFutureResultNullOnException(futureYahooAlbum);
 	    }
 		fillAlbumInfo(yahooAlbum, futureAmazonAlbum, albumView);				
 	}
@@ -619,7 +598,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			TreeMap<Integer, TrackView> sortedTracks = new TreeMap<Integer, TrackView>();
 			TreeMap<Integer, List<Future<List<YahooSongDownloadData>>>> trackDownloads = 
 				new TreeMap<Integer, List<Future<List<YahooSongDownloadData>>>>();
-			List<YahooSongData> albumTracks = getFutureResult(futureAlbumTracks);
+			List<YahooSongData> albumTracks = ThreadUtils.getFutureResultEmptyListOnException(futureAlbumTracks);
 			// now we have a fun task of sorting these YahooSongData by track number and filtering out
 			// the ones with -1 or 0 track number (YahooSongData has -1 track number by default, 
 			// and 0 track number if it was returned set to that by the web service, which is typical
@@ -674,7 +653,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
     		for (Integer trackNumber : sortedTracks.keySet()) {
     			TrackView trackView = sortedTracks.get(trackNumber);       			
     			for (Future<List<YahooSongDownloadData>> futureDownloads : trackDownloads.get(trackNumber)) {
-					List<YahooSongDownloadData> ds = getFutureResult(futureDownloads);					        			
+					List<YahooSongDownloadData> ds = ThreadUtils.getFutureResultEmptyListOnException(futureDownloads);					        			
     			    for (YahooSongDownloadData d : ds) {
 					    // if two search results are for the same source, first is assumed better
 					    if (trackView.getDownloadUrl(d.getSource()) == null) {
@@ -731,16 +710,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			}
 			
 			for (Future<List<YahooSongDownloadData>> futureDownloads : downloads) {
-				List<YahooSongDownloadData> ds;
-				try {
-					ds = futureDownloads.get();
-				} catch (InterruptedException e) {
-					logger.warn("Thread interrupted getting song download info from yahoo {}", e.getMessage());
-					throw new RuntimeException(e);
-				} catch (ExecutionException e) {
-					logger.warn("Exception getting song download info from yahoo {}", e.getMessage());
-					throw new RuntimeException(e);
-				}
+				List<YahooSongDownloadData> ds = ThreadUtils.getFutureResultEmptyListOnException(futureDownloads);
 
 				for (YahooSongDownloadData d : ds) {
 					// if two search results are for the same source, first is assumed better
@@ -755,15 +725,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			
 			// if futureYahooAlbum is not null, try to get a Rhapsody download URL for this song and that album
 			if (futureYahooAlbum != null) {
-				YahooAlbumData yahooAlbum = null;
-				try {
-					yahooAlbum = futureYahooAlbum.get();
-				} catch (InterruptedException e) {
-					logger.error("yahoo album get thread interrupted {}", e.getMessage());
-					throw new RuntimeException(e);
-				} catch (ExecutionException e) {
-	 				logger.error("yahoo album get thread execution exception {}", e.getMessage());
-				}
+				YahooAlbumData yahooAlbum = ThreadUtils.getFutureResultNullOnException(futureYahooAlbum);
 				if (yahooAlbum != null) {
 					String rhapsodyDownloadUrl = 
 						rhapsodyDownloadCache.getSync(yahooAlbum.getAlbum(), yahooAlbum.getArtist(), yahooSong.getTrackNumber());
@@ -824,7 +786,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	private void fillAlbumsByArtist(Viewpoint viewpoint, YahooArtistData yahooArtist, Pageable<AlbumView> albumsByArtist, 
 			                        YahooAlbumData albumToExclude, ExpandedArtistView view) {
 		// get albums using an artistId
-		List<YahooAlbumData> albums = getFutureResult(yahooArtistAlbumsCache.getAsync(yahooArtist.getArtistId()));
+		List<YahooAlbumData> albums = yahooArtistAlbumsCache.getSync(yahooArtist.getArtistId());
 
 		// the artist has this many total albums, but (maybe?) our pageable
 		// should not include the "excluded album" ... so we set the total count
@@ -988,18 +950,12 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		List<TrackView> views = new ArrayList<TrackView>(futureViews.size());
 		for (TrackHistory t : tracks) {
 			TrackView v;
-			try {
-				v = futureViews.get(t).get();
-				if (includePersonMusicPlay) {
-				    // add the person who made this "track history" 
-		            List<PersonMusicPlayView> personMusicPlayViews = new ArrayList<PersonMusicPlayView>();
-				    personMusicPlayViews.add(new PersonMusicPlayView(identitySpider.getPersonView(viewpoint, t.getUser()), t.getLastUpdated()));
-				    v.setPersonMusicPlayViews(personMusicPlayViews);
-				}
-			} catch (InterruptedException e) {
-				throw new RuntimeException("Future<TrackView> was interrupted: " + e.getMessage(), e);
-			} catch (ExecutionException e) {
-				throw new RuntimeException("Future<TrackView> had execution exception: " + e.getMessage(), e);
+			v = ThreadUtils.getFutureResult(futureViews.get(t)); // throws on exception in the thread
+			if (includePersonMusicPlay) {
+			    // add the person who made this "track history" 
+		        List<PersonMusicPlayView> personMusicPlayViews = new ArrayList<PersonMusicPlayView>();
+			    personMusicPlayViews.add(new PersonMusicPlayView(identitySpider.getPersonView(viewpoint, t.getUser()), t.getLastUpdated()));
+			    v.setPersonMusicPlayViews(personMusicPlayViews);
 			}
 			
 			assert v != null;
@@ -1047,14 +1003,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		// now harvest all the results
 		List<AlbumView> views = new ArrayList<AlbumView>(tracks.size());
 		for (Future<AlbumView> fv : futureViews) {
-			AlbumView v;
-			try {
-				v = fv.get();
-			} catch (InterruptedException e) {
-				throw new RuntimeException("Future<AlbumView> was interrupted", e);
-			} catch (ExecutionException e) {
-				throw new RuntimeException("Future<AlbumView> had execution exception", e);
-			}
+			AlbumView v = ThreadUtils.getFutureResult(fv); // throws on exception in the thread
 			
 			assert v != null;
 			
@@ -1077,14 +1026,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		// now harvest all the results
 		List<ArtistView> views = new ArrayList<ArtistView>(tracks.size());
 		for (Future<ArtistView> fv : futureViews) {
-			ArtistView v;
-			try {
-				v = fv.get();
-			} catch (InterruptedException e) {
-				throw new RuntimeException("Future<ArtistView> was interrupted", e);
-			} catch (ExecutionException e) {
-				throw new RuntimeException("Future<ArtistView> had execution exception", e);
-			}
+			ArtistView v = ThreadUtils.getFutureResult(fv); // throws on exception in the thread
 			
 			assert v != null;
 			
@@ -1179,14 +1121,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		// now harvest all the results
 		List<TrackView> views = new ArrayList<TrackView>(futureViews.size());
 		for (Future<TrackView> fv : futureViews) {
-			TrackView v;
-			try {
-				v = fv.get();
-			} catch (InterruptedException e) {
-				throw new RuntimeException("Future<TrackView> was interrupted: " + e.getMessage(), e);
-			} catch (ExecutionException e) {
-				throw new RuntimeException("Future<TrackView> had execution exception: " + e.getMessage(), e);
-			}
+			TrackView v = ThreadUtils.getFutureResult(fv); // throws on exception in the thread
 			
 			assert v != null;
 			

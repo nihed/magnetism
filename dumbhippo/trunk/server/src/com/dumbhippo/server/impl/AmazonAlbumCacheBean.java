@@ -187,8 +187,13 @@ public class AmazonAlbumCacheBean extends AbstractCacheBean<String,AmazonAlbumDa
 				}
 			});
 		} catch (Exception e) {
-			ExceptionUtils.throwAsRuntimeException(e);
-			throw new RuntimeException(e); // not reached
+			if (EJBUtil.isDatabaseException(e)) {
+				logger.warn("Ignoring database exception {}: {}", e.getClass().getName(), e.getMessage());
+				return data;
+			} else {
+				ExceptionUtils.throwAsRuntimeException(e);
+				throw new RuntimeException(e); // not reached
+			}
 		}
 	}
 }

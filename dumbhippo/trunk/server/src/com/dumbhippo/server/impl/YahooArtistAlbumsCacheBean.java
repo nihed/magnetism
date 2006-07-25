@@ -204,8 +204,13 @@ public class YahooArtistAlbumsCacheBean extends AbstractCacheBean<String,List<Ya
 				
 			});
 		} catch (Exception e) {
-			ExceptionUtils.throwAsRuntimeException(e);
-			throw new RuntimeException(e); // not reached			
+			if (EJBUtil.isDatabaseException(e)) {
+				logger.warn("Ignoring database exception {}: {}", e.getClass().getName(), e.getMessage());
+				return albums;
+			} else {
+				ExceptionUtils.throwAsRuntimeException(e);
+				throw new RuntimeException(e); // not reached
+			}
 		}
 	}
 

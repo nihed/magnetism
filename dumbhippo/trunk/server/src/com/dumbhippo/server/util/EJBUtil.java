@@ -1,14 +1,20 @@
 package com.dumbhippo.server.util;
 
+import java.sql.SQLException;
+
 import javax.ejb.EJBContext;
 import javax.ejb.EJBException;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.persistence.EntityManager;
 
+import org.hibernate.JDBCException;
 import org.hibernate.NonUniqueObjectException;
 import org.hibernate.exception.ConstraintViolationException;
+import org.slf4j.Logger;
 
+import com.dumbhippo.ExceptionUtils;
+import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.StringUtils;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
@@ -16,6 +22,9 @@ import com.dumbhippo.persistence.GuidPersistable;
 import com.dumbhippo.server.NotFoundException;
 
 public class EJBUtil {
+	
+	@SuppressWarnings("unused")
+	static private final Logger logger = GlobalSetup.getLogger(EJBUtil.class);	
 	
 	private static final int MAX_SEARCH_TERMS = 3;
 	// we avoid using \ because by the 
@@ -91,6 +100,17 @@ public class EJBUtil {
 		return ((e instanceof EJBException &&
 				 ((EJBException)e).getCausedByException() instanceof ConstraintViolationException) ||
 	            e instanceof NonUniqueObjectException);
+	}
+	 
+	public static boolean isDatabaseException(Exception e) {
+		Throwable root = ExceptionUtils.getRootCause(e);
+		// FIXME not sure what should really be here or if this will work
+		if (root instanceof JDBCException)
+			return true;
+		else if (root instanceof SQLException)
+			return true;
+		else
+			return false;
 	}
 	
 	public static String likeClauseFromUserSearch(String userSearch, String... fields) {

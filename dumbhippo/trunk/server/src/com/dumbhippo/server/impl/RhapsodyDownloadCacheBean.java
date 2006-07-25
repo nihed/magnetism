@@ -194,8 +194,12 @@ public class RhapsodyDownloadCacheBean extends AbstractCacheBean<String,String> 
 				}
 			});
 		} catch (Exception e) {
-			ExceptionUtils.throwAsRuntimeException(e);
-			throw new RuntimeException(e); // not reached			
+			if (EJBUtil.isDatabaseException(e)) {
+				logger.warn("Ignoring database exception {}: {}", e.getClass().getName(), e.getMessage());
+			} else {
+				ExceptionUtils.throwAsRuntimeException(e);
+				throw new RuntimeException(e); // not reached
+			}
 		}
 		if (valid)
 			return link;

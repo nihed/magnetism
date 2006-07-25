@@ -270,8 +270,13 @@ public class YahooArtistCacheBean extends AbstractCacheBean<String,YahooArtistDa
 			else
 				return data;
 		} catch (Exception e) {
-			ExceptionUtils.throwAsRuntimeException(e);
-			throw new RuntimeException(e); // not reached 
+			if (EJBUtil.isDatabaseException(e)) {
+				logger.warn("Ignoring database exception {}: {}", e.getClass().getName(), e.getMessage());
+				return data;
+			} else {
+				ExceptionUtils.throwAsRuntimeException(e);
+				throw new RuntimeException(e); // not reached
+			}
 		}
 	}
 
@@ -336,8 +341,13 @@ public class YahooArtistCacheBean extends AbstractCacheBean<String,YahooArtistDa
 				
 			});
 		} catch (Exception e) {
-			ExceptionUtils.throwAsRuntimeException(e);
-			throw new RuntimeException(e); // not reached			
+			if (EJBUtil.isDatabaseException(e)) {
+				logger.warn("Ignoring database exception {}: {}", e.getClass().getName(), e.getMessage());
+				return artists;
+			} else {
+				ExceptionUtils.throwAsRuntimeException(e);
+				throw new RuntimeException(e); // not reached
+			}
 		}
 	}
 }

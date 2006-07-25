@@ -202,8 +202,13 @@ public class YahooAlbumSongsCacheBean extends AbstractCacheBean<String,List<Yaho
 				
 			});
 		} catch (Exception e) {
-			ExceptionUtils.throwAsRuntimeException(e);
-			throw new RuntimeException(e); // not reached			
+			if (EJBUtil.isDatabaseException(e)) {
+				logger.warn("Ignoring database exception {}: {}", e.getClass().getName(), e.getMessage());
+				return songs;
+			} else {
+				ExceptionUtils.throwAsRuntimeException(e);
+				throw new RuntimeException(e); // not reached
+			}
 		}
 	}
 }

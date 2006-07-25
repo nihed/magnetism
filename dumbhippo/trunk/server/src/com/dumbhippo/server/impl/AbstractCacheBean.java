@@ -1,14 +1,13 @@
 package com.dumbhippo.server.impl;
 
-import java.util.Collections;
 import java.util.EnumMap;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.ThreadUtils;
 import com.dumbhippo.UniqueTaskExecutor;
 
 /**
@@ -71,27 +70,11 @@ public abstract class AbstractCacheBean<KeyType,ResultType> {
 	}
 	
 	protected static <T> T getFutureResultNullOnException(Future<T> future) {
-		try {
-			return future.get();
-		} catch (InterruptedException e) {
-			logger.warn("future interrupted {}: {}", e.getClass().getName(), e.getMessage());
-			return null;
-		} catch (ExecutionException e) {
-			logger.warn("future threw execution exception {}: {}", e.getClass().getName(), e.getMessage());
-			return null;
-		}
+		return ThreadUtils.getFutureResultNullOnException(future);
 	}
 	
 	protected static <T> List<T> getFutureResultEmptyListOnException(Future<List<T>> future) {
-		try {
-			return future.get();
-		} catch (InterruptedException e) {
-			logger.warn("future interrupted {}: {}", e.getClass().getName(), e.getMessage());
-			return Collections.emptyList();
-		} catch (ExecutionException e) {
-			logger.warn("future threw execution exception {}: {}", e.getClass().getName(), e.getMessage());
-			return Collections.emptyList();
-		}
+		return ThreadUtils.getFutureResultEmptyListOnException(future);
 	}
 	
 	protected AbstractCacheBean(Request defaultRequest) {
