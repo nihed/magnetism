@@ -2264,17 +2264,8 @@ join_or_leave_chat_room(HippoConnection *connection,
     
     new_state = hippo_chat_room_get_desired_state(room);
 
-    if (self && old_state != new_state) {
-        /* FIXME the set_user_state() here would ideally be removed, 
-         * so we only update our data cache to reflect reality heard
-         * back from the server, not "in anticipation" - but 
-         * there might be some odd side effects such as sending 
-         * the same presence messages more than once, or 
-         * I'm not sure the server sends us our own state anyhow
-         */
-        hippo_chat_room_set_user_state(room, self, new_state);
+    if (self && old_state != new_state)
         hippo_connection_send_chat_room_state(connection, room, old_state, new_state);
-    }
 }
 
 void

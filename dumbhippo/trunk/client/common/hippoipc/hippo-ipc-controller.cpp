@@ -71,7 +71,8 @@ HippoIpcControllerImpl::registerEndpoint(HippoIpcListener *listener)
 {
     HippoEndpointId id = provider_->registerEndpoint();
 
-    endpoints_.push_back(HippoIpcControllerEndpoint(listener, id));
+    if (id)
+        endpoints_.push_back(HippoIpcControllerEndpoint(listener, id));
 
     return id;
 }
@@ -121,10 +122,12 @@ HippoIpcControllerImpl::addListener(HippoIpcListener *listener)
 void 
 HippoIpcControllerImpl::removeListener(HippoIpcListener *listener)
 {
-    for (std::vector<HippoIpcControllerEndpoint>::iterator i = endpoints_.begin(); i != endpoints_.end(); i++) {
+    for (std::vector<HippoIpcControllerEndpoint>::iterator i = endpoints_.begin(); i != endpoints_.end();) {
 	if (i->getListener() == listener) {
-	    endpoints_.erase(i);
-	}
+	    i = endpoints_.erase(i);
+	} else {
+            i++;
+        }
     }
 
     for (std::vector<HippoIpcListener *>::iterator i = listeners_.begin(); i != listeners_.end(); i++) {

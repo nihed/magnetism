@@ -1,11 +1,12 @@
 /* -*- mode: C++; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 
 #include "hippo-ipc.h"
+#include <string>
 #include <vector>
 
 class HippoIpcLocatorMapEntry {
 public:
-    const char *url_;
+    std::string url_;
     HippoIpcProvider *provider_;
     HippoIpcController *controller_;
     unsigned int refcount_;
@@ -27,7 +28,7 @@ HippoIpcLocatorMap::get(const char *url)
     for (std::vector<HippoIpcLocatorMapEntry>::iterator i = entries_.begin();
          i != entries_.end();
          i++) {
-        if (strcmp(i->url_, url) == 0) {
+        if (strcmp(i->url_.c_str(), url) == 0) {
             i->refcount_++;
             return i->controller_;
         }

@@ -42,7 +42,9 @@ private:
 						   DBusMessage    *message,
 						   void           *user_data);
 
-    DBusConnection *connection_;
+    // This is static, since with D-Bus versions before 0.90 (mid-2006) the refcount returned
+    // by dbus_connection_get() can't be properly returned
+    static DBusConnection *connection_;
     char *serverName_;
     char *busName_;
     HippoIpcListener *listener_;
@@ -51,6 +53,8 @@ private:
     // current connected state of the client (is it online via xmpp)
     bool clientConnected_;
 };
+
+DBusConnection *HippoDBusIpcProviderImpl::connection_;
 
 HippoDBusIpcProvider *
 HippoDBusIpcProvider::createInstance(const char *serverName)
@@ -81,21 +85,23 @@ HippoDBusIpcProviderImpl::HippoDBusIpcProviderImpl(const char *serverName)
         g_error_free(gerror);
         return;
     }
-    
-    connection_ = dbus_g_connection_get_connection(gconnection);
-    if (!dbus_connection_get_is_connected(connection_)) {
-        /* This should be impossible with newer dbus which sets the
-         * shared bus connection to NULL when it disconnects,
-         * so we should not have gotten a disconnected one.
-         * But we check here for old dbus to be sure we'll get
-         * a Disconnected message later.
-         */
-	g_warning("Connection to the session's message bus is disconnected");
-        dbus_connection_unref(connection_);
-        connection_ = NULL;
-        return;
-    }
 
+    if (!connection_) {
+        connection_ = dbus_g_connection_get_connection(gconnection);
+        if (!dbus_connection_get_is_connected(connection_)) {
+            /* This should be impossible with newer dbus which sets the
+             * shared bus connection to NULL when it disconnects,
+             * so we should not have gotten a disconnected one.
+             * But we check here for old dbus to be sure we'll get
+             * a Disconnected message later.
+             */
+            g_warning("Connection to the session's message bus is disconnected");
+            dbus_connection_unref(connection_);
+            connection_ = NULL;
+            return;
+        }
+    }
+    
     DBusError derror;
     dbus_error_init(&derror);
     /* it's fine if multiple instances do this, the bus refcounts it */
@@ -108,8 +114,9 @@ HippoDBusIpcProviderImpl::HippoDBusIpcProviderImpl(const char *serverName)
                   derror.name,
                   derror.message);
         dbus_error_free(&derror);
-        dbus_connection_unref(connection_);
-        connection_ = NULL;
+        // See comment in forgetBusConnection
+        // dbus_connection_unref(connection_);
+        // connection_ = NULL;
         return;
     }
     
@@ -270,13 +277,16 @@ HippoDBusIpcProviderImpl::forgetBusConnection()
         /* should silently be an error if we're disconnected */
         dbus_bus_remove_match(connection_, busNameOwnerChangedRule_, NULL);
         
-        /* With older dbus versions, this will cause a warning if
-         * we're still connected since it could be the last reference.
-         * In newer versions libdbus is holding a ref so unrefing is safe.
-         * Should not crash with the older versions though.
+        /* With older dbus versions, unreffing the connection from
+         * dbus_bus_get() will cause an assertion failure if this is
+         * the last reference and we're still connected. There's no
+         * way to get around this so we just keep the connection_
+         * object around in a static variable once we've gotten it
+         * once. We'll leak a refcount if this module is unloaded
+         * then loaded again, but that's more or less harmless.
          */
-        dbus_connection_unref(connection_);
-        connection_ = NULL;
+        // dbus_connection_unref(connection_);
+        // connection_ = NULL;
         g_debug("Dropped bus connection");
     }
 
@@ -617,6 +627,16 @@ DBusHandlerResult
 HippoDBusIpcProviderImpl::handleSignal(DBusMessage *message)
 {
     g_assert(connection_ != NULL);
+
+    const char *sender = dbus_message_get_sender(message);
+    const char *interface = dbus_message_get_interface(message);
+    const char *member = dbus_message_get_member(message);
+    const char *path = dbus_message_get_path(message);
+
+    g_debug("signal from %s %s.%s on %s", sender ? sender : "NULL",
+	    interface ? interface : "NULL",
+	    member ? member : "NULL",
+	    path ? path : "NULL");
 
     if (dbus_message_has_sender(message, DBUS_SERVICE_DBUS) &&
         dbus_message_is_signal(message, DBUS_INTERFACE_DBUS, "NameOwnerChanged")) {
