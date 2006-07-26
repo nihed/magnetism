@@ -216,7 +216,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			return track;
 		} catch (Exception e) {
 			ExceptionUtils.throwAsRuntimeException(e);
-			return null; // not reached
+			throw new RuntimeException(e); // not reached
 		}
 	}
 
@@ -249,7 +249,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			});
 		} catch (Exception e) {
 			ExceptionUtils.throwAsRuntimeException(e);
-			// not reached
+			throw new RuntimeException(e); // not reached
 		}
 	}
 	
@@ -268,24 +268,19 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		final String userId = user.getId();
 		
 		// trackId is invalid in this outer transaction, so we need a new one
-		try {
-			runner.runTaskInNewTransaction(new Runnable() {
+		runner.runTaskInNewTransaction(new Runnable() {
 
-				public void run() {
-					Track t = em.find(Track.class, trackId);
-					if (t == null)
-						throw new RuntimeException("database isolation problem (?): track id not found " + trackId);
-					User u = em.find(User.class, userId);
-					if (u == null)
-						throw new RuntimeException("database isolation problem (?): user id not found " + userId);				
-					setCurrentTrack(u, t);
-				}
-				
-			});
-		} catch (RuntimeException e) {
-			logger.error("failed to set user's current track {}", e.getMessage());
-			throw e;
-		}
+			public void run() {
+				Track t = em.find(Track.class, trackId);
+				if (t == null)
+					throw new RuntimeException("database isolation problem (?): track id not found " + trackId);
+				User u = em.find(User.class, userId);
+				if (u == null)
+					throw new RuntimeException("database isolation problem (?): user id not found " + userId);				
+				setCurrentTrack(u, t);
+			}
+			
+		});
 	}
 	
 	public void addHistoricalTrack(User user, Map<String,String> properties) {
@@ -521,66 +516,61 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		}
 	}
 	
-	private void fillAlbumInfo(YahooAlbumData yahooAlbum, Future<AmazonAlbumData> futureAmazonAlbum, AlbumView albumView) {
-		try {			
-			// Note that if neither Amazon nor Yahoo! has a small image url, we want to leave 
-			// it null so AlbumView can default to our "no image" picture. This also 
-			// means that albumView.getSmallImageUrl() never returns null
-			
-			// first see what we can get from yahoo album result
-			if (yahooAlbum != null) {
-			    albumView.setReleaseYear(parseReleaseYear(yahooAlbum.getReleaseDate()));
-                if (yahooAlbum.getSmallImageUrl() != null) {
-			        albumView.setSmallImageUrl(yahooAlbum.getSmallImageUrl());
-			        albumView.setSmallImageHeight(yahooAlbum.getSmallImageHeight());
-			        albumView.setSmallImageWidth(yahooAlbum.getSmallImageWidth());	
-                }
-				// sometimes we get an empty album view passed in, in which case we also
-				// want to fill out the album title and artist name
-				if (albumView.getTitle() == null) {
-					albumView.setTitle(yahooAlbum.getAlbum());
-				}	
-				if (albumView.getArtist() == null) {
-					albumView.setArtist(yahooAlbum.getArtist());            
-				}           
-			}
-			
-			// now get the amazon stuff
-			AmazonAlbumData amazonAlbum = ThreadUtils.getFutureResultNullOnException(futureAmazonAlbum);
-						
-			if (amazonAlbum != null) {
-				// if album artwork was not available from yahoo, we are after album artwork from amazon
-				if (amazonAlbum.getSmallImageUrl() != null && (yahooAlbum == null || yahooAlbum.getSmallImageUrl() == null)) {
-					albumView.setSmallImageUrl(amazonAlbum.getSmallImageUrl());
-					albumView.setSmallImageWidth(amazonAlbum.getSmallImageWidth());
-					albumView.setSmallImageHeight(amazonAlbum.getSmallImageHeight());
-				}
-					
-				// in case we did not find a related yahoo album, but have a related amazon album 
-				if (albumView.getTitle() == null) {
-					albumView.setTitle(amazonAlbum.getAlbum());
-				}	
-				if (albumView.getArtist() == null) {
-					albumView.setArtist(amazonAlbum.getArtist());
-				}
-				
-				logger.debug("Amazon product URL is " + amazonAlbum.getProductUrl());
-				
-				// This is a quick hack for when what we are getting back from Amazon doesn't seem to work
-				//if (amazonAlbum.getASIN() != null) {
-				//	albumView.setProductUrl("http://www.amazon.com/gp/product/" + amazonAlbum.getASIN()); 
-				//}
-				
-				// also drag along the product URL, so we can display that
-				// TODO: handle this in a generic way that supports multiple providers, like downloads
-				if (amazonAlbum.getProductUrl() != null) {
-					albumView.setProductUrl(amazonAlbum.getProductUrl());
-				}			
-			}
-			
-		} catch (Exception e) {
-			logger.debug("Failed to get album information", e);
+	private void fillAlbumInfo(YahooAlbumData yahooAlbum, Future<AmazonAlbumData> futureAmazonAlbum, AlbumView albumView) {			
+		// Note that if neither Amazon nor Yahoo! has a small image url, we want to leave 
+		// it null so AlbumView can default to our "no image" picture. This also 
+		// means that albumView.getSmallImageUrl() never returns null
+		
+		// first see what we can get from yahoo album result
+		if (yahooAlbum != null) {
+		    albumView.setReleaseYear(parseReleaseYear(yahooAlbum.getReleaseDate()));
+            if (yahooAlbum.getSmallImageUrl() != null) {
+		        albumView.setSmallImageUrl(yahooAlbum.getSmallImageUrl());
+		        albumView.setSmallImageHeight(yahooAlbum.getSmallImageHeight());
+		        albumView.setSmallImageWidth(yahooAlbum.getSmallImageWidth());	
+            }
+			// sometimes we get an empty album view passed in, in which case we also
+			// want to fill out the album title and artist name
+			if (albumView.getTitle() == null) {
+				albumView.setTitle(yahooAlbum.getAlbum());
+			}	
+			if (albumView.getArtist() == null) {
+				albumView.setArtist(yahooAlbum.getArtist());            
+			}           
 		}
+		
+		// now get the amazon stuff
+		AmazonAlbumData amazonAlbum = ThreadUtils.getFutureResultNullOnException(futureAmazonAlbum);
+					
+		if (amazonAlbum != null) {
+			// if album artwork was not available from yahoo, we are after album artwork from amazon
+			if (amazonAlbum.getSmallImageUrl() != null && (yahooAlbum == null || yahooAlbum.getSmallImageUrl() == null)) {
+				albumView.setSmallImageUrl(amazonAlbum.getSmallImageUrl());
+				albumView.setSmallImageWidth(amazonAlbum.getSmallImageWidth());
+				albumView.setSmallImageHeight(amazonAlbum.getSmallImageHeight());
+			}
+				
+			// in case we did not find a related yahoo album, but have a related amazon album 
+			if (albumView.getTitle() == null) {
+				albumView.setTitle(amazonAlbum.getAlbum());
+			}	
+			if (albumView.getArtist() == null) {
+				albumView.setArtist(amazonAlbum.getArtist());
+			}
+			
+			logger.debug("Amazon product URL is " + amazonAlbum.getProductUrl());
+			
+			// This is a quick hack for when what we are getting back from Amazon doesn't seem to work
+			//if (amazonAlbum.getASIN() != null) {
+			//	albumView.setProductUrl("http://www.amazon.com/gp/product/" + amazonAlbum.getASIN()); 
+			//}
+			
+			// also drag along the product URL, so we can display that
+			// TODO: handle this in a generic way that supports multiple providers, like downloads
+			if (amazonAlbum.getProductUrl() != null) {
+				albumView.setProductUrl(amazonAlbum.getProductUrl());
+			}			
+		}			
 	}
 	
 	private void fillAlbumInfo(Future<YahooAlbumData> futureYahooAlbum, Future<AmazonAlbumData> futureAmazonAlbum, AlbumView albumView) {
@@ -691,57 +681,52 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		YahooSongData yahooSong = null;
 		Future<YahooAlbumData> futureYahooAlbum = null;
 		Future<AmazonAlbumData> futureAmazonAlbum = amazonAlbumCache.getAsync(track.getAlbum(), track.getArtist());
-		try {
-			// get our song IDs; no point doing it async...
-			List<YahooSongData> songs = yahooSongCache.getSync(track);
-			
-			// start a thread to get each download url
-			List<Future<List<YahooSongDownloadData>>> downloads = new ArrayList<Future<List<YahooSongDownloadData>>>(); 
-			for (YahooSongData song : songs) {
-				downloads.add(yahooSongDownloadCache.getAsync(song.getSongId()));
-				// we need one of these song results to get an album info for the track
-				if (yahooSong == null) {
-				 	yahooSong = song;
-				}
+		// get our song IDs; no point doing it async...
+		List<YahooSongData> songs = yahooSongCache.getSync(track);
+		
+		// start a thread to get each download url
+		List<Future<List<YahooSongDownloadData>>> downloads = new ArrayList<Future<List<YahooSongDownloadData>>>(); 
+		for (YahooSongData song : songs) {
+			downloads.add(yahooSongDownloadCache.getAsync(song.getSongId()));
+			// we need one of these song results to get an album info for the track
+			if (yahooSong == null) {
+			 	yahooSong = song;
 			}
-			// if yahooSong is not null, get a YahooAlbumData for it, so we can get an album artwork for the track
-			if (yahooSong != null) {
-				futureYahooAlbum = yahooAlbumCache.getAsync(yahooSong.getAlbumId());
-			}
-			
-			for (Future<List<YahooSongDownloadData>> futureDownloads : downloads) {
-				List<YahooSongDownloadData> ds = ThreadUtils.getFutureResultEmptyListOnException(futureDownloads);
-
-				for (YahooSongDownloadData d : ds) {
-					// if two search results are for the same source, first is assumed better
-					if (view.getDownloadUrl(d.getSource()) == null) {
-						view.setDownloadUrl(d.getSource(), d.getUrl());
-						//logger.debug("adding download url for {}", d.getSource().getYahooSourceName());
-					} else {
-						logger.debug("ignoring second download url for {}", d.getSource().getYahooSourceName());
-					}
-				}
-			}
-			
-			// if futureYahooAlbum is not null, try to get a Rhapsody download URL for this song and that album
-			if (futureYahooAlbum != null) {
-				YahooAlbumData yahooAlbum = ThreadUtils.getFutureResultNullOnException(futureYahooAlbum);
-				if (yahooAlbum != null) {
-					String rhapsodyDownloadUrl = 
-						rhapsodyDownloadCache.getSync(yahooAlbum.getAlbum(), yahooAlbum.getArtist(), yahooSong.getTrackNumber());
-					if (rhapsodyDownloadUrl != null) {
-						view.setDownloadUrl(SongDownloadSource.RHAPSODY, rhapsodyDownloadUrl);
-						//logger.debug("set rhapsody download url {}", rhapsodyDownloadUrl);
-					}
-				} else {
-					logger.warn("yahooAlbum for {} was null in getTrackView", yahooSong.getName());
-				}
-			}
-			fillAlbumInfo(futureYahooAlbum, futureAmazonAlbum, view.getAlbumView());
-		} catch (Exception e) {
-			logger.error("Failed to get Yahoo! search information for TrackView {}: {}", view, e.getMessage());
-			logger.debug("exception from yahoo failure", e);
 		}
+		// if yahooSong is not null, get a YahooAlbumData for it, so we can get an album artwork for the track
+		if (yahooSong != null) {
+			futureYahooAlbum = yahooAlbumCache.getAsync(yahooSong.getAlbumId());
+		}
+		
+		for (Future<List<YahooSongDownloadData>> futureDownloads : downloads) {
+			List<YahooSongDownloadData> ds = ThreadUtils.getFutureResultEmptyListOnException(futureDownloads);
+
+			for (YahooSongDownloadData d : ds) {
+				// if two search results are for the same source, first is assumed better
+				if (view.getDownloadUrl(d.getSource()) == null) {
+					view.setDownloadUrl(d.getSource(), d.getUrl());
+					//logger.debug("adding download url for {}", d.getSource().getYahooSourceName());
+				} else {
+					logger.debug("ignoring second download url for {}", d.getSource().getYahooSourceName());
+				}
+			}
+		}
+		
+		// if futureYahooAlbum is not null, try to get a Rhapsody download URL for this song and that album
+		if (futureYahooAlbum != null) {
+			YahooAlbumData yahooAlbum = ThreadUtils.getFutureResultNullOnException(futureYahooAlbum);
+			if (yahooAlbum != null) {
+				String rhapsodyDownloadUrl = 
+					rhapsodyDownloadCache.getSync(yahooAlbum.getAlbum(), yahooAlbum.getArtist(), yahooSong.getTrackNumber());
+				if (rhapsodyDownloadUrl != null) {
+					view.setDownloadUrl(SongDownloadSource.RHAPSODY, rhapsodyDownloadUrl);
+					//logger.debug("set rhapsody download url {}", rhapsodyDownloadUrl);
+				}
+			} else {
+				logger.warn("yahooAlbum for {} was null in getTrackView", yahooSong.getName());
+			}
+		}
+		fillAlbumInfo(futureYahooAlbum, futureAmazonAlbum, view.getAlbumView());
 		
 		return view;
 	}
@@ -1341,6 +1326,8 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 
 	public ExpandedArtistView expandedArtistSearch(Viewpoint viewpoint, String artist, Pageable<AlbumView> albumsByArtist) throws NotFoundException {
 		logger.debug("artist page search for '{}'", artist);
+		// FIXME exception catch is a hack that should be removed once we're pretty confident 
+	    // the music system is robust		
         try {
 			// albumsByArtist is a pageable object that contains information on what albums the expanded
 	        // artist view should be loaded with, it also needs to have these albums set in its results field
@@ -1744,7 +1731,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			return new TrackSearchResult(hits);
 			
 		} catch (org.apache.lucene.queryParser.ParseException e) {
-			return new TrackSearchResult("Can't parse query '" + queryString + "'");
+			return new TrackSearchResult("Don't understand the search '" + queryString + "'");
 		} catch (IOException e) {
 			return new TrackSearchResult("System error while searching, please try again");
 		}
@@ -1825,18 +1812,13 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		// Then we need another transaction because this outer transaction
 		// can't see the new track object due to isolation
 		// FIXME retry on db errors ?
-		try {
-			runner.runTaskInNewTransaction(new Runnable() {
-				public void run() {
-					Track t = em.find(Track.class, trackId);
-					if (t == null)
-						throw new RuntimeException("database isolation mistake (?): null track " + trackId);
-					addTrackHistory(user, t, new Date(virtualPlayTime));
-				}
-			});
-		} catch (Exception e) {
-			logger.error("Failed to save track history", e);
-			throw new RuntimeException(e);
-		}
+		runner.runTaskInNewTransaction(new Runnable() {
+			public void run() {
+				Track t = em.find(Track.class, trackId);
+				if (t == null)
+					throw new RuntimeException("database isolation mistake (?): null track " + trackId);
+				addTrackHistory(user, t, new Date(virtualPlayTime));
+			}
+		});
 	}
 }
