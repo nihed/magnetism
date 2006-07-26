@@ -28,8 +28,6 @@ import org.apache.lucene.queryParser.MultiFieldQueryParser;
 import org.apache.lucene.queryParser.QueryParser;
 import org.apache.lucene.queryParser.QueryParser.Operator;
 import org.apache.lucene.search.Hits;
-import org.dom4j.DocumentException;
-import org.dom4j.DocumentHelper;
 import org.hibernate.lucene.DocumentBuilder;
 import org.slf4j.Logger;
 import org.xml.sax.SAXException;
