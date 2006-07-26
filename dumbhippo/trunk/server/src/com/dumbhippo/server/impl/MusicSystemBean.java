@@ -44,6 +44,10 @@ public class MusicSystemBean implements MusicSystem {
 		internal.pageLatestTrackViews(viewpoint, pageable);
 	}
 	
+	public void pageLatestTrackViews(Viewpoint viewpoint, Pageable<TrackView> pageable, boolean filledTracksOnly) {
+		internal.pageLatestTrackViews(viewpoint, pageable, filledTracksOnly);		
+	}
+	
 	public List<TrackView> getPopularTrackViews(Viewpoint viewpoint, int maxResults) {
 		return internal.getPopularTrackViews(viewpoint, maxResults);
 	}

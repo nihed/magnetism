@@ -53,6 +53,13 @@ public class AlbumView {
 
 		return smallImageUrl;
 	}
+	
+	public boolean isSmallImageUrlAvailable() {
+		if (smallImageUrl == null)
+			return false;
+		
+		return true;
+	}
 
 	public void setSmallImageUrl(String smallImageUrl) {
 		this.smallImageUrl = smallImageUrl;

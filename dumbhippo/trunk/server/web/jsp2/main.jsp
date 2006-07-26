@@ -73,7 +73,7 @@
 			<div class="dh-zone-box-content">
 				<dht:requireMusicGlobalBean/>
 				<jsp:setProperty name="musicGlobal" property="initialPerPage" value="5"/>
-				<c:forEach items="${musicGlobal.recentTracks.results}" var="track" varStatus="status">
+				<c:forEach items="${musicGlobal.mainRecentTracks.results}" var="track" varStatus="status">
 					<dht:track track="${track}" albumArt="true"/>
 					<c:if test="${!status.last}">
 						<dht:zoneBoxSeparator/>
