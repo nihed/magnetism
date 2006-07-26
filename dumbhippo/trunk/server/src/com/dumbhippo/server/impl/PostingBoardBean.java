@@ -28,8 +28,11 @@ import org.apache.lucene.queryParser.MultiFieldQueryParser;
 import org.apache.lucene.queryParser.QueryParser;
 import org.apache.lucene.queryParser.QueryParser.Operator;
 import org.apache.lucene.search.Hits;
+import org.dom4j.DocumentException;
+import org.dom4j.DocumentHelper;
 import org.hibernate.lucene.DocumentBuilder;
 import org.slf4j.Logger;
+import org.xml.sax.SAXException;
 
 import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
@@ -1182,11 +1185,27 @@ public class PostingBoardBean implements PostingBoard {
 		}
 	}
 	
+	public boolean postIsGroupNotification(Post post) {
+		try {
+			String infoStr = post.getInfo();
+			if (infoStr != null) {
+				PostInfo info = PostInfo.parse(infoStr);
+				return info.getType() == PostInfoType.SHARE_GROUP;
+			}
+		} catch (SAXException e) {
+			logger.warn("Error parsing post info", e);
+		}		
+		return false;		
+	}
+	
 	public void indexAllPosts(IndexWriter writer, DocumentBuilder<Post> builder) throws IOException {
 		List<?> l = em.createQuery("SELECT p FROM Post p").getResultList();
 		List<Post> posts = TypeUtils.castList(Post.class, l);
 		
 		for (Post post : posts) {
+			// Don't index group updates, they aren't really posts
+			if (postIsGroupNotification(post))
+				continue;
 			Document document = builder.getDocument(post, post.getId());
 			writer.addDocument(document);
 		}
