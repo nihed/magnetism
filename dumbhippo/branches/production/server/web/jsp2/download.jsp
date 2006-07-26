@@ -162,7 +162,15 @@
 			    			links with friends!
 			    			<br/>
 			    			<br/>
-			    			<img src="/images2/${buildStamp}/tooltray.gif"/>
+			    			<c:choose>
+					            <c:when test="${browser.linuxRequested}">	
+				    				<img src="/images2/${buildStamp}/linuxtoolbar.gif"/>					            		    			
+
+				    			</c:when>
+				    			<c:otherwise>
+				    				<img src="/images2/${buildStamp}/tooltray.gif"/>				    				
+				    			</c:otherwise>
+				    		</c:choose>
 			    		</c:when>
 			    		<c:otherwise>
 					        When you see this bubble appear, your Mugshot is working! Click the link on the bubble to set up your account. 
