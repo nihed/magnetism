@@ -145,6 +145,8 @@ dh.notification.Display = function (serverUrl, appletUrl, selfId) {
             this._bubble.setPage("someoneSaid")
         else if ((why & dh.notification.VIEWER) != 0)
             this._bubble.setPage("whosThere")
+        else if ((why & dh.notification.VIEWER) != 0)
+            this._bubble.setPage("viewers")            
     }
 
     // Returns true iff we should show the window if it's hidden. 

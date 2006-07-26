@@ -293,4 +293,6 @@ public interface PostingBoard {
 	 * @return true if an email notification should be sent
 	 */
 	public boolean worthEmailNotification(Post post, Resource recipient);
+	
+	public boolean postIsGroupNotification(Post post);	
 }

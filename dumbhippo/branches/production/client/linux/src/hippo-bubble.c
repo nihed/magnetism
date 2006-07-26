@@ -84,7 +84,8 @@ struct _HippoBubble {
     GtkWidget *invite_label;     
     GtkWidget *last_message;
     GtkWidget *last_message_photo;
-    GtkWidget *viewers;
+    GtkWidget *viewers;    
+    GtkWidget *total_viewers_count;     
     HippoBubbleColor color;
     char      *user_link_header;
     char      *sender_id;
@@ -529,9 +530,14 @@ hippo_bubble_init(HippoBubble       *bubble)
     /* People who've looked at it */
     bubble->viewers = gtk_label_new(NULL);
     hookup_widget(bubble, &bubble->viewers);
-    gtk_widget_hide(bubble->viewers); /* override hookup_widget */        
+    gtk_widget_hide(bubble->viewers); /* override hookup_widget */ 
     
-    /* World share total viewers */
+    /* Total viewers count */
+    bubble->total_viewers_count = gtk_label_new(NULL);
+    hookup_widget(bubble, &bubble->total_viewers_count);
+    gtk_widget_hide(bubble->total_viewers_count); /* override hookup_widget */     
+    
+    /* Total viewers link */
     bubble->total_viewers = g_object_new(GTK_TYPE_EVENT_BOX,
                                          "visible-window", FALSE,
                                          "above-child", TRUE,
@@ -1186,25 +1192,33 @@ compute_extra_widgets_layout(HippoBubble  *bubble,
                              GdkRectangle *last_message_photo_p,
                              GdkRectangle *last_message_p,
                              GdkRectangle *viewers_p,
+                             GdkRectangle *total_viewers_count_p,                             
                              GdkRectangle *all_extra_widgets_p)
 {
     GdkRectangle total_viewers;
+    int total_viewers_width, total_viewers_height;
     GdkRectangle whos_there;
+    int whos_there_width, whos_there_height;    
     GdkRectangle someone_said;
+    int someone_said_width, someone_said_height;    
     GdkRectangle join_chat;
     GdkRectangle ignore;
     GdkRectangle invite;    
     GdkRectangle last_message_photo;
     GdkRectangle last_message;
     GdkRectangle viewers;
+    GdkRectangle total_viewers_count;  
     GdkRectangle all_extra_widgets;
     int total_width;
     int message_pane_width;
     int message_pane_height;
+    int links_count;
     int links_width = -1;
     int links_height;
     int panes_height;
     int panes_y;
+    int current_x;
+    gboolean found_previous_link;
     
     /* First get all the width, height */
 
@@ -1217,6 +1231,7 @@ compute_extra_widgets_layout(HippoBubble  *bubble,
     GET_REQ(last_message_photo);
     GET_REQ(last_message);
     GET_REQ(viewers);
+    GET_REQ(total_viewers_count);    
 
 #define PADDING 4
 #define BETWEEN_LINKS 6
@@ -1230,34 +1245,43 @@ compute_extra_widgets_layout(HippoBubble  *bubble,
         message_pane_height = 0;
     }
     
+    links_count = 0;
     if (bubble->total_viewers_set) {
-        // Currently this is exclusive with whos_there and someone_said
-    	links_width = total_viewers.width;
-    	links_height = total_viewers.height;
-    	panes_height = viewers.height;
-    } else if (bubble->whos_there_set && bubble->someone_said_set) {
-        links_width = whos_there.width + BETWEEN_LINKS + someone_said.width;
-        links_height = MAX(whos_there.height, someone_said.height);
-        panes_height = MAX(message_pane_height, viewers.height);        
-    } else if (bubble->whos_there_set) {
-        links_width = whos_there.width;
-        links_height = whos_there.height;
-        panes_height = viewers.height;
-    } else if (bubble->someone_said_set) {
-        links_width = someone_said.width;
-        links_height = someone_said.height;
-        panes_height = message_pane_height;
+	    total_viewers_width = total_viewers.width;
+    	total_viewers_height = total_viewers.height;   	
+    	links_count++;
     } else {
-        links_width = 0;
-        links_height = 0;
-        panes_height = 0;
+    	total_viewers_width = total_viewers_height = 0;
     }
+    if (bubble->whos_there_set) {
+	    whos_there_width = whos_there.width;
+    	whos_there_height = whos_there.height;
+    	links_count++;    	
+    } else {
+    	whos_there_width = whos_there_height = 0;
+    }
+    if (bubble->someone_said_set) {
+	    someone_said_width = someone_said.width;
+    	someone_said_height = someone_said.height;
+    	links_count++;    	
+    } else {
+    	someone_said_width = someone_said_height = 0;
+    }        
+ 
+  	links_width = total_viewers_width + whos_there_width + someone_said_width;
+  	if (links_count > 1)
+  		links_width += BETWEEN_LINKS * (links_count - 1);
+  	
+   	links_height = MAX(MAX(total_viewers_height, whos_there_height), someone_said_height);
+	panes_height = MAX(MAX(total_viewers_count.height, viewers.height), message_pane_height);
 
-    total_width = links_width + PADDING + join_chat.width + BETWEEN_LINKS + ignore.width + BETWEEN_LINKS + invite.width;
+    total_width = links_width + PADDING + join_chat.width + BETWEEN_LINKS + ignore.width + BETWEEN_LINKS + invite.width; 
+    if (bubble->total_viewers_set)
+        total_width = MAX(total_width, total_viewers_count.width);      
     if (bubble->someone_said_set)
         total_width = MAX(total_width, message_pane_width);
-    if (bubble->whos_there_set || bubble->total_viewers_set)
-        total_width = MAX(total_width, viewers.width);
+    if (bubble->whos_there_set)
+        total_width = MAX(total_width, viewers.width);  
     total_width += PADDING * 2;
 
     /* left-align the "notebook tabs", note 
@@ -1271,18 +1295,28 @@ compute_extra_widgets_layout(HippoBubble  *bubble,
     whos_there.x = 0;
     someone_said.x = 0;
     total_viewers.x = 0;
-
-	if (bubble->total_viewers_set) {
-	    total_viewers.x = PADDING;
-    } else if (bubble->whos_there_set && bubble->someone_said_set) {
-        whos_there.x = PADDING;
-        someone_said.x = whos_there.x + whos_there.width + BETWEEN_LINKS;
-    } else if (bubble->whos_there_set) {
-        whos_there.x = PADDING;
-        someone_said.x = 0; /* irrelevant */
-    } else if (bubble->someone_said_set) {
-        someone_said.x = PADDING;
-        whos_there.x = 0; /* irrelevant */
+    
+    found_previous_link = FALSE;
+    current_x = PADDING;
+    if (bubble->total_viewers_set) {
+    	total_viewers.x = current_x;
+    	current_x += total_viewers.width;
+    	found_previous_link = TRUE;
+    }
+	if (bubble->whos_there_set) {
+		if (found_previous_link) {
+			current_x += BETWEEN_LINKS;
+		}
+        whos_there.x = current_x;
+    	current_x += whos_there.width;        
+		found_previous_link = TRUE;    	
+    }
+	if (bubble->someone_said_set) {
+		if (found_previous_link) {
+			current_x += BETWEEN_LINKS;
+		}	
+        someone_said.x = current_x;
+	   	current_x += someone_said.width;        
     }
 
     /* Right-align the "join chat" and "ignore" */
@@ -1304,6 +1338,8 @@ compute_extra_widgets_layout(HippoBubble  *bubble,
     
     viewers.x = PADDING;
     viewers.y = panes_y + (panes_height - viewers.height) / 2;
+    total_viewers_count.x = PADDING;
+    total_viewers_count.y = panes_y + (panes_height - total_viewers_count.height) / 2;    
 
     if (!(bubble->whos_there_set || bubble->someone_said_set || bubble->total_viewers_set)) {
         all_extra_widgets.x = 0;
@@ -1331,6 +1367,7 @@ compute_extra_widgets_layout(HippoBubble  *bubble,
     OUT(last_message_photo);
     OUT(last_message);
     OUT(viewers);
+    OUT(total_viewers_count);    
     OUT(all_extra_widgets);
 }
 #undef OUT
@@ -1440,7 +1477,7 @@ hippo_bubble_size_request(GtkWidget         *widget,
      
     compute_extra_widgets_layout(bubble, NULL, NULL, NULL,
                                  NULL, NULL, NULL,
-                                 NULL, NULL, NULL,
+                                 NULL, NULL, NULL, NULL,
                                  &all_extra_widgets_rect);
     all_extra_widgets_rect.x += container->border_width;
     if (bubble->total_pages > 1)
@@ -1500,6 +1537,7 @@ hippo_bubble_size_allocate(GtkWidget         *widget,
     GdkRectangle last_message_photo_rect;
     GdkRectangle last_message_rect;
     GdkRectangle viewers_rect;
+    GdkRectangle total_viewers_count_rect;    
     GdkRectangle all_extra_widgets_rect;
     int xoffset_left, xoffset_right, yoffset;
     int extra_widgets_width_allocation;
@@ -1524,6 +1562,7 @@ hippo_bubble_size_allocate(GtkWidget         *widget,
                                  &last_message_photo_rect,
                                  &last_message_rect,
                                  &viewers_rect,
+                                 &total_viewers_count_rect,                                 
                                  &all_extra_widgets_rect);
 
     /* used in expose_event and below in this function */
@@ -1628,6 +1667,7 @@ hippo_bubble_size_allocate(GtkWidget         *widget,
     ALLOC_LEFT(last_message_photo);
     ALLOC_LEFT(last_message);
     ALLOC_LEFT(viewers);
+    ALLOC_LEFT(total_viewers_count);    
 
 #undef ALLOC_LEFT
 #undef ALLOC_RIGHT
@@ -1829,16 +1869,30 @@ update_extra_info(HippoBubble *bubble)
     gboolean someone_said_active;    
     gboolean membership_change_active;    
     
-    total_viewers_active = bubble->active_extra == ACTIVE_EXTRA_TOTAL_VIEWERS;
     whos_there_active = (bubble->whos_there_set &&
-                         !total_viewers_active &&
-                         !bubble->someone_said_set) ||
-                        (bubble->whos_there_set &&
                          bubble->active_extra == ACTIVE_EXTRA_WHOS_THERE);
     membership_change_active = (bubble->someone_said_set && bubble->active_extra == ACTIVE_EXTRA_MEMBERSHIP_CHANGE);
-    someone_said_active = (bubble->someone_said_set && bubble->active_extra == ACTIVE_EXTRA_SOMEONE_SAID);     
+    someone_said_active = (bubble->someone_said_set && bubble->active_extra == ACTIVE_EXTRA_SOMEONE_SAID);
+    total_viewers_active = (bubble->total_viewers_set &&
+                            bubble->active_extra == ACTIVE_EXTRA_TOTAL_VIEWERS)
+                           || (!bubble->whos_there_set && !bubble->someone_said_set);    
+ 
+    if (bubble->total_viewers_set) {
+        GtkWidget *label = GTK_BIN(bubble->total_viewers)->child;
+        if (total_viewers_active) {
+            gtk_label_set_markup(GTK_LABEL(label), _("<b>Viewers</b>"));
+            set_default_fg(label);
+        } else {
+            gtk_label_set_markup(GTK_LABEL(label),
+                                 _("<u>Viewers</u>"));
+            set_blue_fg(label);
+        }
+        gtk_widget_show(bubble->total_viewers);
+    } else {
+        gtk_widget_hide(bubble->total_viewers);    
+    }
      
-    if (bubble->whos_there_set && !total_viewers_active) {
+    if (bubble->whos_there_set) {
         GtkWidget *label = GTK_BIN(bubble->whos_there)->child;
         if (whos_there_active) {
             gtk_label_set_markup(GTK_LABEL(label), _("<b>Who's there</b>"));
@@ -1853,7 +1907,7 @@ update_extra_info(HippoBubble *bubble)
         gtk_widget_hide(bubble->whos_there);    
     }
 
-    if (bubble->someone_said_set && !total_viewers_active) {
+    if (bubble->someone_said_set) {
         GtkWidget *label = GTK_BIN(bubble->someone_said)->child;
         if (someone_said_active) {
             gtk_label_set_markup(GTK_LABEL(label), _("<b>Latest comment</b>"));
@@ -1878,14 +1932,12 @@ update_extra_info(HippoBubble *bubble)
     }
     
     if (total_viewers_active) {
-	    GtkWidget *label = GTK_BIN(bubble->total_viewers)->child;
-        gtk_label_set_markup(GTK_LABEL(label), _("<b>Viewers</b>"));
-        gtk_widget_show(bubble->total_viewers);
+        gtk_widget_show(bubble->total_viewers_count);        
     } else {
-    	gtk_widget_hide(bubble->total_viewers);
+    	gtk_widget_hide(bubble->total_viewers_count);    	
     }
 
-    if (whos_there_active || total_viewers_active) {
+    if (whos_there_active) {
         gtk_widget_show(bubble->viewers);
     } else {
         gtk_widget_hide(bubble->viewers);
@@ -1959,14 +2011,14 @@ hippo_bubble_set_total_viewers(HippoBubble *bubble,
 	    fmt_single = g_strdup_printf(_("%d person has viewed this share"), n_viewers);
     	fmt_plural = g_strdup_printf(_("%d people have viewed this share"), n_viewers);
     
-	    gtk_label_set_text(GTK_LABEL(bubble->viewers), ngettext(fmt_single, fmt_plural, n_viewers));
+	    gtk_label_set_text(GTK_LABEL(bubble->total_viewers_count), ngettext(fmt_single, fmt_plural, n_viewers));
     
     	g_free(fmt_single);
 	    g_free(fmt_plural);
     
     	bubble->total_viewers_set = TRUE; 
     } else {
-        gtk_label_set_text(GTK_LABEL(bubble->viewers), "");    
+        gtk_label_set_text(GTK_LABEL(bubble->total_viewers_count), "");    
     	bubble->total_viewers_set = FALSE;
     }
 

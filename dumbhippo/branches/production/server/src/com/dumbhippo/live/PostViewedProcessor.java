@@ -8,7 +8,6 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.Post;
-import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.MessageSender;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PostingBoard;
@@ -23,13 +22,10 @@ public class PostViewedProcessor implements LiveEventProcessor {
 	static private final Logger logger = GlobalSetup.getLogger(LiveEventProcessor.class);
 	
 	@EJB
-	PostingBoard postingBoard;
+	private PostingBoard postingBoard;
 	
 	@EJB
-	IdentitySpider identitySpider;
-	
-	@EJB
-	MessageSender messageSender;
+	private MessageSender messageSender;
 	
 	private boolean numIsPow2(long num) {
 		return num != 0 && ((num & (num - 1)) == 0);
@@ -61,7 +57,7 @@ public class PostViewedProcessor implements LiveEventProcessor {
 		livePost.setTotalViewerCount(livePost.getTotalViewerCount() + 1);
 		state.updateLivePost(livePost);
 	
-		logger.debug("{} clicked on {}", event.getViewerId(), event.getPostId());
+		logger.debug("{} clicked on {} new viewer count " + livePost.getTotalViewerCount(), event.getViewerId(), event.getPostId());
 		logger.debug("Post score is now {}", livePost.getScore());
 		// Suppress notification of the poster viewing their own post, and check that the
 		// count is "interesting", presently defined by being close to a power of two.

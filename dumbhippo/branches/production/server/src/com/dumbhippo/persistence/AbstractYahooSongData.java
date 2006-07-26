@@ -3,11 +3,18 @@ package com.dumbhippo.persistence;
 import java.util.Date;
 
 import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Transient;
+import javax.persistence.EmbeddableSuperclass;
 
-@Entity
-public class YahooSongResult extends DBUnique {
+import com.dumbhippo.services.YahooSongData;
+
+/**
+ * We have two tables, one for songs that are found for album listings, one for 
+ * songs that are found for artist,album,name. This superclass has the common 
+ * bits between those tables (the returned fields from yahoo) while the 
+ * subclasses have the distinct keys used for lookup.
+ */
+@EmbeddableSuperclass
+abstract public class AbstractYahooSongData extends DBUnique {
 	
 	private static final long serialVersionUID = 1L;
 
@@ -26,25 +33,23 @@ public class YahooSongResult extends DBUnique {
 	                         // are 1-based
 	private boolean noResultsMarker;
 	
-	public YahooSongResult() {
+	public AbstractYahooSongData() {
 		duration = -1;
 		trackNumber = -1;
 	}
 
-	public void update(YahooSongResult results) {
-		if (results.lastUpdated < lastUpdated)
-			throw new RuntimeException("Updating song with older results");
+	public void updateData(YahooSongData data) {
+		// if albumId is our search key, then it's essential
+		// that it matches the albumId set here ...
+		albumId = data.getAlbumId();
 		
-		lastUpdated = results.lastUpdated;
-		songId = results.songId;
-		name = results.name;
-		albumId = results.albumId;
-		artistId = results.artistId;
-		publisher = results.publisher;
-		duration = results.duration;
-		releaseDate = results.releaseDate;
-		trackNumber = results.trackNumber;
-		noResultsMarker = results.noResultsMarker;
+		name = data.getName();		
+		songId = data.getSongId();
+		artistId = data.getArtistId();
+		publisher = data.getPublisher();
+		duration = data.getDuration();
+		releaseDate = data.getReleaseDate();
+		trackNumber = data.getTrackNumber();
 	}
 	
 	@Column(nullable=true)
@@ -85,7 +90,7 @@ public class YahooSongResult extends DBUnique {
 
 	/**
 	 * For each Yahoo web services request, we can get back multiple 
-	 * YahooSongResult. If we get back 0, then we save one as a 
+	 * AbstractYahooSongData. If we get back 0, then we save one as a 
 	 * marker that we got no results. If a song has no rows in the db,
 	 * that means we haven't ever done the web services request.
 	 * @return whether this row marks that we did the request and got nothing
@@ -117,7 +122,7 @@ public class YahooSongResult extends DBUnique {
 		this.releaseDate = releaseDate;
 	}
 
-	@Column(nullable=true, unique=true)
+	@Column(nullable=true)
 	public String getSongId() {
 		return songId;
 	}
@@ -126,7 +131,7 @@ public class YahooSongResult extends DBUnique {
 		this.songId = songId;
 	}
 
-	@Column(nullable=true)
+	@Column(nullable=true, length=100)
 	public String getName() {
 		return name;
 	}
@@ -147,18 +152,53 @@ public class YahooSongResult extends DBUnique {
 	@Override
 	public String toString() {
 		if (isNoResultsMarker())
-			return "{YahooSongResult:NoResultsMarker}";
+			return "{AbstractYahooSongData:NoResultsMarker}";
 		else
 			return "{songId=" + songId + " albumId=" + albumId + " artistId=" + artistId + "}";
 	}
 	
-	@Transient
-	public boolean isValid() {
-	    if ((songId != null) && !songId.equals("") 
-	        && (artistId != null) && !artistId.equals("") 
-	        && (albumId != null) && !albumId.equals("")) {
-	    	return true;
-	    }
-	    return false;
+	private class Data implements YahooSongData {
+
+		@Override
+		public String toString() {
+			return "{AbstractYahooSongData.SongData albumId=" + albumId + " songId=" + songId + " trackNumber=" + trackNumber + " name='" + name + "'}";
+		}
+		
+		public String getAlbumId() {
+			return albumId;
+		}
+
+		public String getArtistId() {
+			return artistId;
+		}
+
+		public int getDuration() {
+			return duration;
+		}
+
+		public String getPublisher() {
+			return publisher;
+		}
+
+		public String getReleaseDate() {
+			return releaseDate;
+		}
+
+		public String getSongId() {
+			return songId;
+		}
+
+		public String getName() {
+			return name;
+		}
+
+		public int getTrackNumber() {
+			return trackNumber;
+		}
+		
+	}
+	
+	public YahooSongData toData() {
+		return new Data();
 	}
 }

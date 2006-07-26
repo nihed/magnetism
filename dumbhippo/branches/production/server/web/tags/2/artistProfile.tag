@@ -10,9 +10,9 @@
             <c:out value="${artist.name}"/>
         </div>
         <div class="dh-artist-bio">
-            Wikipedia entry about the artist is <a href="${artist.wikipediaUrl}" target="_blank">here</a>.
+            <a href="${artist.wikipediaUrl}" target="_blank"><c:out value="${artist.name}"/> on Wikipedia</a>.
             <br/>
-            Yahoo! Music entry about the artist is <a href="${artist.yahooMusicPageUrl}" target="_blank">here</a>.
+            <a href="${artist.yahooMusicPageUrl}" target="_blank"><c:out value="${artist.name}"/> on Yahoo!</a>.
 	    </div>
-	</div>    
+	</div>
 </div>

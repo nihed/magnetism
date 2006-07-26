@@ -1,8 +1,18 @@
 @CHARSET "UTF-8";
 
+#dhDownloadTopMessage {
+	position: relative;
+	top: -50px;
+	left: 140px;
+}
+
 .dh-body-without-sidebar #dhPage {
 	width:			700px;
 	text-align:		center; /* we want centered text */
+}
+
+#dhDownloadInfoAreaContainer {
+	padding: 5px;
 }
 
 .dh-download-separator {
@@ -20,4 +30,23 @@
 
 .dh-download-disclaimer {
 	margin-top: 20px;
+}
+
+.dh-download-section-description {
+	margin-left: 15px;
+}
+
+.dh-download-instruction-number {
+	margin-right: 5px;
+}
+
+.dh-download-instruction {
+	margin-bottom: 10px;
+}
+
+#dhDownloadFooter {
+	margin-top: 15px;
+}
+
+.dh-download-more-information ul {
 }

@@ -38,8 +38,8 @@
         </c:if>
 
 	    <c:set var="songListClosedClass" value=""/>
-	    <c:set var="songListOpenedClass" value="dh-invisible"/>	   	    
-	    <c:if test="${order == 1}">
+	    <c:set var="songListOpenedClass" value="dh-invisible"/>
+	    <c:if test="${order == 1 || album.numberOfTracks < 3}">  <%-- default-expand 1) first album 2) albums with only a track or two, usually these are compilations --%>
 	        <c:set var="songListClosedClass" value="dh-invisible"/>
 	        <c:set var="songListOpenedClass" value=""/>	                            
         </c:if>               

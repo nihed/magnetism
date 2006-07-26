@@ -30,6 +30,8 @@ class AmazonItemSearchSaxHandler extends EnumSaxHandler<AmazonItemSearchSaxHandl
 		IGNORED // anything we don't care about
 	}
 
+	private String artist;
+	private String album;
 	private String ASIN;
 	private String productUrl;
 	private String smallImageUrl;
@@ -37,13 +39,20 @@ class AmazonItemSearchSaxHandler extends EnumSaxHandler<AmazonItemSearchSaxHandl
 	private int smallImageHeight;
 	private String errorCode;
 	private String errorMessage;
-	
+
 	AmazonItemSearchSaxHandler() {
 		super(Element.class, Element.IGNORED);
 		
 		smallImageWidth = -1;
 		smallImageHeight = -1;
 	}
+
+	AmazonItemSearchSaxHandler(String artist, String album) {
+		this();
+		this.artist = artist;
+		this.album = album;
+	}
+
 	
 	@Override
 	protected void closeElement(Element c) throws SAXException {
@@ -119,5 +128,18 @@ class AmazonItemSearchSaxHandler extends EnumSaxHandler<AmazonItemSearchSaxHandl
 
 	public int getSmallImageHeight() {
 		return smallImageHeight;
+	}
+
+	public String getAlbum() {
+		return album;
+	}
+
+	public String getArtist() {
+		return artist;
+	}
+	
+	@Override
+	public String toString() {
+		return "{AmazonItemSearchSaxHandler ASIN=" + ASIN + " productUrl=" + productUrl + " album='" + album + "'}";
 	}
 }

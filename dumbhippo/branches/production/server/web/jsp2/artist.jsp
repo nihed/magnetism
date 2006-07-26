@@ -29,7 +29,7 @@
                     <a name="dhAlbumsByArtist"></a>
                     <div class="dh-artist-zone-title">DISCOGRAPHY</div>
                     <c:if test="${musicsearch.albumsByArtist.resultCount <= 0}">
-                        There were no matching albums.
+                        We couldn't find any albums related to <c:out value="${musicsearch.searchDescription}"/>.
                     </c:if>            
                        
                     <c:set var="count" value="1"/>   
@@ -45,10 +45,25 @@
                     <%-- under the displayed album --%>
                     <dht:zoneBoxSeparator visible="false"/>
                 </c:when>
+                <c:when test="${empty musicsearch.artist && empty musicsearch.album && empty musicsearch.song}">
+                	How'd you get here? This page should have an artist, album, or song name in its link.
+				</c:when>
                 <c:otherwise>
-                    There were no matching results.
+                	We couldn't find any information for <c:out value="${musicsearch.searchDescription}"/>.
+                	<c:if test="${!empty musicsearch.artist && (!empty musicsearch.album || !empty musicsearch.song)}">
+                		<div>
+                			<a href="${musicsearch.artistOnlyUrl}">Try just the artist name '<c:out value="${musicsearch.artist}"/>'</a>.
+                		</div>
+                	</c:if>
+                	<div>
+	                	Try
+                		<c:if test="${!empty musicsearch.lastFmArtistUrl}">
+							<a href="${musicsearch.lastFmArtistUrl}" target="_blank">'<c:out value="${musicsearch.artist}"/>' on last.fm</a>, or
+                		</c:if>
+    	            	<a href="${musicsearch.yahooSearchUrl}" target="_blank">Yahoo! audio search</a>
+    	            </div>
                 </c:otherwise>
-            </c:choose>        
+            </c:choose>
         </dht:zoneBoxArtists>
 	</dht:contentColumn>
 </dht:twoColumnPage>

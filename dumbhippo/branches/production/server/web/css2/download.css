@@ -2,6 +2,16 @@
 @IMPORT url("site.css");
 @IMPORT url("download-positions.css");
 
+#dhDownloadTopMessage {
+	color: white;
+	font-size: 18px;
+}
+
+.dh-download-purple {
+	color: #8c509d;
+	font-weight: bold;
+}
+
 .dh-download-separator {
 	background: black;
 }
@@ -11,9 +21,29 @@
 	font-weight: bold;
 }
 
+#dhDownloadInstructionsHeader {
+	font-size: 18px;
+}
+
 .dh-download-product {
 	font-size: 18px;
 	font-weight: bold;
+}
+
+.dh-download-info-area-header {
+	font-size: 16px;
+}
+
+.dh-download-accepted {
+	color:	#666666;
+}
+
+.dh-download-more-information {
+	font-size: 12px;
+}
+
+.dh-download-other-options {
+	font-size: 10px;
 }
 
 .dh-download-product-disabled {
@@ -37,4 +67,8 @@
 	display: 			block;
 	color:				#cc0033;
 	font-weight:		bold;
+}
+
+#dhDownloadInfoAreaContainer {
+	border: 1px solid black;
 }

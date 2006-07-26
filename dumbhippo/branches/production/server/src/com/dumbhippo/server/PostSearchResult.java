@@ -109,6 +109,11 @@ public class PostSearchResult {
 				
 				Guid guid = new Guid(id);
 				Post post = postingBoard.loadRawPost(viewpoint, guid);
+				// Special case ignoring these; the fact that the
+				// person inviting created a post is basically
+				// an implementation detail
+				if (postingBoard.postIsGroupNotification(post))
+					continue;
 				foundPosts.add(post.getGuid());
 				toGet--;
 				

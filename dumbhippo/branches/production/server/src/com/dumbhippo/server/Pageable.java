@@ -127,4 +127,11 @@ public class Pageable<T> {
 		}
 		setResults(pageResults);
 	}
+	
+	public void chopForPageResults(List<?> allItems) {
+		int i = Math.min(allItems.size(), getStart());
+		int count = Math.min(allItems.size() - getStart(), getCount());
+		allItems.subList(0, i).clear();
+		allItems.subList(count, allItems.size()).clear();
+	}
 }

@@ -637,7 +637,19 @@ dh.bubble.PostData = function(post) {
     this.appendSwarmContent = function(bubble, parent) {
         var pages = []
     
-        if (this.post.CurrentViewers.length > 0) {
+        if (this.post.ToWorld && post.TotalViewers > 0) {
+            var viewersCountDiv = document.createElement("div")
+            viewersCountDiv.className  = "dh-notification-whos-there"
+            parent.appendChild(viewersCountDiv)
+            var viewersCount = this.post.TotalViewers
+            var text = viewersCount > 1 ? "people viewed this share" : "person viewed this share"
+            dh.util.dom.appendSpanText(viewersCountDiv, "" + viewersCount + " " + text, "dh-notification-viewer-count")
+            
+            pages.push({ name: "viewers", title: "Viewers", div: viewersCountDiv })
+        }
+        // Only add the Who's There if we have something interesting to show
+        if (this.post.CurrentViewers.length > 0
+            && !(this.post.CurrentViewers.length == 1 && this.post.CurrentViewers.item(0).Id == dh.selfId)) {
             var whosThereDiv = document.createElement("div")
             whosThereDiv.className  = "dh-notification-whos-there"
             parent.appendChild(whosThereDiv)

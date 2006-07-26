@@ -30,6 +30,8 @@ public interface InvitationSystem {
 	 */
 	public InvitationToken lookupInvitationFor(User inviter, Resource invitee);
 
+	public InvitationToken lookupInvitation(UserViewpoint viewpoint, long id);
+	
 	/**
 	 * Return an invitation token with a given authentication key if it has a 
 	 * given inviter.

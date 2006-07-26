@@ -76,6 +76,7 @@ import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.InvitationSystem;
 import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.NotFoundException;
+import com.dumbhippo.server.NowPlayingThemeSystem;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
 import com.dumbhippo.server.PostIndexer;
@@ -119,6 +120,9 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	@EJB
 	private MusicSystem musicSystem;
 
+	@EJB
+	private NowPlayingThemeSystem nowPlayingSystem;
+	
 	@EJB
 	private InvitationSystem invitationSystem;
 	
@@ -613,14 +617,14 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		if (theme == null) {
 			try {
 				// this falls back to "any random theme" if user doesn't have one
-				themeObject = musicSystem.getCurrentNowPlayingTheme(whoUser);
+				themeObject = nowPlayingSystem.getCurrentNowPlayingTheme(whoUser);
 			} catch (NotFoundException e) {
 				// happens only if no themes are in the system
 				themeObject = null;
 			}
 		} else {
 			try {
-				themeObject = musicSystem.lookupNowPlayingTheme(theme);
+				themeObject = nowPlayingSystem.lookupNowPlayingTheme(theme);
 			} catch (ParseException e) {
 				throw new RuntimeException("bad theme argument", e);
 			} catch (NotFoundException e) {
@@ -714,7 +718,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		NowPlayingTheme basedOnObject;
 		if (basedOn != null) {
 			try {
-				basedOnObject = musicSystem.lookupNowPlayingTheme(basedOn);
+				basedOnObject = nowPlayingSystem.lookupNowPlayingTheme(basedOn);
 			} catch (ParseException e) {
 				throw new RuntimeException(e);
 			} catch (NotFoundException e) {
@@ -724,7 +728,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			basedOnObject = null;
 		}
 		
-		NowPlayingTheme theme = musicSystem.createNewNowPlayingTheme(viewpoint, basedOnObject);
+		NowPlayingTheme theme = nowPlayingSystem.createNewNowPlayingTheme(viewpoint, basedOnObject);
 		out.write(theme.getId().getBytes());
 		out.flush();
 	}
@@ -732,19 +736,19 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	public void doSetNowPlayingTheme(UserViewpoint viewpoint, String themeId) throws IOException {
 		NowPlayingTheme theme;
 		try {
-			theme = musicSystem.lookupNowPlayingTheme(themeId);
+			theme = nowPlayingSystem.lookupNowPlayingTheme(themeId);
 		} catch (ParseException e) {
 			throw new RuntimeException(e);
 		} catch (NotFoundException e) {
 			throw new RuntimeException(e);
 		}
-		musicSystem.setCurrentNowPlayingTheme(viewpoint, viewpoint.getViewer(), theme);
+		nowPlayingSystem.setCurrentNowPlayingTheme(viewpoint, viewpoint.getViewer(), theme);
 	}
 	
 	public void doModifyNowPlayingTheme(UserViewpoint viewpoint, String themeId, String key, String value) throws IOException {
 		NowPlayingTheme theme;
 		try {
-			theme = musicSystem.lookupNowPlayingTheme(themeId);
+			theme = nowPlayingSystem.lookupNowPlayingTheme(themeId);
 		} catch (ParseException e) {
 			throw new RuntimeException(e);
 		} catch (NotFoundException e) {

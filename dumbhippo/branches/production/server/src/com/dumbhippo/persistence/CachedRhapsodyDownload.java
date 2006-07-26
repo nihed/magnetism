@@ -1,5 +1,7 @@
 package com.dumbhippo.persistence;
 
+import java.util.Date;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Table;
@@ -13,15 +15,16 @@ import javax.persistence.UniqueConstraint;
 
 @Entity
 @Table(uniqueConstraints = {@UniqueConstraint(columnNames={"url"})})
-public class RhapLink extends DBUnique {
+public class CachedRhapsodyDownload extends DBUnique {
 	private static final long serialVersionUID = 1L;
 
 	private String url;
 	private boolean active;
 	private long lastUpdated;
 
-	public RhapLink() {
+	public CachedRhapsodyDownload() {
 		super();
+		lastUpdated = -1;
 	}
 
 	@Column(nullable=false)
@@ -43,11 +46,22 @@ public class RhapLink extends DBUnique {
 	}
 
 	@Column(nullable=false)
-	public long getLastUpdated() {
-		return lastUpdated;
+	public Date getLastUpdated() {
+		if (lastUpdated >= 0)
+			return new Date(lastUpdated);
+		else
+			return null;
 	}
 
-	public void setLastUpdated(long lastUpdated) {
-		this.lastUpdated = lastUpdated;
+	public void setLastUpdated(Date lastUpdated) {
+		if (lastUpdated != null)
+			this.lastUpdated = lastUpdated.getTime();
+		else
+			this.lastUpdated = -1;
+	}
+	
+	@Override
+	public String toString() {
+		return "{CachedRhapsodyDownload active=" + active + " url=" + url + "}";
 	}
 }

@@ -10,11 +10,11 @@ import javax.persistence.UniqueConstraint;
 import com.dumbhippo.services.AmazonAlbumData;
 
 @Entity
-@Table(name="AmazonAlbumResult", 
+@Table(name="CachedAmazonAlbumData", 
 		   uniqueConstraints = 
 		      {@UniqueConstraint(columnNames={"artist","album"})}
 	      )
-public class AmazonAlbumResult extends DBUnique {
+public class CachedAmazonAlbumData extends DBUnique {
 
 	private static final long serialVersionUID = 1L;
 	
@@ -29,13 +29,19 @@ public class AmazonAlbumResult extends DBUnique {
 	private int smallImageWidth;
 	private int smallImageHeight;
 	
-	public AmazonAlbumResult() {
+	public CachedAmazonAlbumData() {
 		lastUpdated = -1;
 		updateData(null);
 	}
 	
-	public AmazonAlbumResult(String artist, String album, AmazonAlbumData data) {
+	public CachedAmazonAlbumData(String artist, String album, AmazonAlbumData data) {
 		lastUpdated = -1;
+		
+		if (artist == null)
+			throw new IllegalArgumentException("can't create CachedAmazonAlbumData with null artist");
+		if (album == null)
+			throw new IllegalArgumentException("can't create CachedAmazonAlbumData with null album");
+		
 		this.artist = artist;
 		this.album = album;
 		updateData(data);
@@ -56,7 +62,7 @@ public class AmazonAlbumResult extends DBUnique {
 			smallImageHeight = -1;
 		}
 	}
-	
+		
 	// length of the whole unique key (album+artist) has to be 
 	// under 1000 bytes with mysql, in UTF-8 encoding; mysql 
 	// multiplies this char length by 4, so 4*100 + 4*100 = 800 bytes
@@ -129,6 +135,59 @@ public class AmazonAlbumResult extends DBUnique {
 	
 	@Override
 	public String toString() {
-		return "{albumResult album=" + album + " imageUrl=" + smallImageUrl + "}";
+		return "{albumResult album=" + album + " artist=" + artist + " imageUrl=" + smallImageUrl + "}";
 	}
+
+	/** 
+	 * Implementing AmazonAlbumData in the outer class
+	 * would leak an implementation detail and 
+	 * remove some type safety.
+	 * 
+	 * This trick is slightly shady since changing the 
+	 * album result will also change the album data,
+	 * it would be mildly more kosher
+	 * to make this a static inner class with its own
+	 * data fields I suppose. But since CachedAmazonAlbumData 
+	 * is only used inside AmazonAlbumCacheBean it's not a 
+	 * big deal exactly.
+	 */
+	private class Data implements AmazonAlbumData {
+
+		@Override
+		public String toString() {
+			return "{CachedAmazonAlbumData.Data ASIN=" + ASIN + " productUrl=" + productUrl + " album='" + album + "'}";
+		}		
+		
+		public String getASIN() {
+			return ASIN;
+		}
+
+		public String getProductUrl() {
+			return productUrl;
+		}
+
+		public String getSmallImageUrl() {
+			return smallImageUrl;
+		}
+
+		public int getSmallImageWidth() {
+			return smallImageWidth;
+		}
+
+		public int getSmallImageHeight() {
+			return smallImageHeight;
+		}
+
+		public String getAlbum() {
+			return album;
+		}
+
+		public String getArtist() {
+			return artist;
+		}
+	}
+	
+	public AmazonAlbumData toData() {
+		return new Data();
+	}	
 }

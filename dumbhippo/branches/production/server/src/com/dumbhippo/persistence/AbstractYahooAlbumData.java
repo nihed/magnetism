@@ -1,23 +1,16 @@
 package com.dumbhippo.persistence;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.Date;
-import java.util.GregorianCalendar;
 
 import javax.persistence.Column;
-import javax.persistence.Entity;
+import javax.persistence.EmbeddableSuperclass;
 import javax.persistence.JoinColumn;
 import javax.persistence.Transient;
 
-import org.hibernate.annotations.Index;
+import com.dumbhippo.services.YahooAlbumData;
 
-@Entity
-@org.hibernate.annotations.Table(name = "YahooAlbumResult", indexes={ 
-		@Index(name="artistAlbum_index", columnNames = { "artist", "album", "id" } ) 
-})
-public class YahooAlbumResult extends DBUnique {
+@EmbeddableSuperclass
+abstract public class AbstractYahooAlbumData extends DBUnique {
 	
 	private static final long serialVersionUID = 1L;
 	
@@ -32,31 +25,35 @@ public class YahooAlbumResult extends DBUnique {
 	private String smallImageUrl;
 	private int smallImageWidth;
 	private int smallImageHeight;
-	private boolean noResultsMarker;
-	private boolean allSongsStored;
 	
-	public YahooAlbumResult() {
-		noResultsMarker = false;
-		allSongsStored = false;
+	public AbstractYahooAlbumData() {
+		updateData(null);
 	}
 
-	public void update(YahooAlbumResult results) {
-		if (results.lastUpdated < lastUpdated)
-			throw new RuntimeException("Updating album with older results");
-		
-		lastUpdated = results.lastUpdated;
-		albumId = results.albumId;
-		album = results.album;
-		artistId = results.artistId;
-		artist = results.artist;
-		publisher = results.publisher;
-		releaseDate = results.releaseDate;
-		tracksNumber = results.tracksNumber;
-		smallImageUrl = results.smallImageUrl;
-		smallImageWidth = results.smallImageWidth;
-		smallImageHeight = results.smallImageHeight;
-		noResultsMarker = results.noResultsMarker;
-		allSongsStored = results.allSongsStored;
+	public void updateData(YahooAlbumData data) {
+		if (data != null) {
+			albumId = data.getAlbumId();
+			album = data.getAlbum();
+			artistId = data.getArtistId();
+			artist = data.getArtist();
+			publisher = data.getPublisher();
+			releaseDate = data.getReleaseDate();
+			tracksNumber = data.getTracksNumber();
+			smallImageUrl = data.getSmallImageUrl();
+			smallImageWidth = data.getSmallImageWidth();
+			smallImageHeight = data.getSmallImageHeight();
+		} else {
+			albumId = null;
+			album = null;
+			artistId = null;
+			artist = null;
+			publisher = null;
+			releaseDate = null;
+			tracksNumber = -1;
+			smallImageUrl = null;
+			smallImageWidth = -1;
+			smallImageHeight = -1;
+		}
 	}
 	
 	// Yahoo album results always have a single artist element.
@@ -64,7 +61,7 @@ public class YahooAlbumResult extends DBUnique {
     // as a single result with an artist like 
     // "B.B. King & Eric Clapton" rather than multiple results.
 	// Every such combination of artists has its own id. 
-	// Thus, we would not get multiple YahooAlbumResult entries
+	// Thus, we would not get multiple AbstractYahooAlbumData entries
 	// when an album has multiple artists, so albumId is unique 
 	// by itself and doesn't need to be combined with artistId to 
 	// provide a unique key.
@@ -86,7 +83,7 @@ public class YahooAlbumResult extends DBUnique {
 		this.album = album;
 	}
 	
-	@Column(nullable=false)
+	@Column(nullable=true)
 	public String getArtistId() {
 		return artistId;
 	}
@@ -137,32 +134,9 @@ public class YahooAlbumResult extends DBUnique {
 		this.lastUpdated = lastUpdated.getTime();
 	}
 
-	/**
-	 * For each Yahoo web services request, we can get back multiple 
-	 * YahooAlbumResult. If we get back 0, then we save one as a 
-	 * marker that we got no results. If an artist has no rows in the db,
-	 * that means we haven't ever done the web services request. However,
-	 * if there is one row marked with the no results marker, it means
-	 * that the artist has no albums.
-	 * 
-	 * @return whether this row marks that we did the request and got nothing
-	 */
-	@Column(nullable=false)
+	@Transient
 	public boolean isNoResultsMarker() {
-		return this.noResultsMarker;
-	}
-	
-	public void setNoResultsMarker(boolean noResultsMarker) {
-		this.noResultsMarker = noResultsMarker;
-	}
-
-	@Column(nullable=false)
-	public boolean isAllSongsStored() {
-	    return this.allSongsStored;
-	}
-	
-	public void setAllSongsStored(boolean allSongsStored) {
-	    this.allSongsStored = allSongsStored;
+		return album == null;
 	}
 	
 	@Column(nullable=true)
@@ -191,27 +165,64 @@ public class YahooAlbumResult extends DBUnique {
 	public void setTracksNumber(int tracksNumber) {
 		this.tracksNumber = tracksNumber;
 	}
-	
-	@Transient
-	public int getReleaseYear() {
-		if (releaseDate == null)
-			return -1;
-		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy MM dd");
-		try {
-		    Date date = dateFormat.parse(releaseDate);
-		    Calendar calendar = new GregorianCalendar();
-		    calendar.setTime(date);
-		    return calendar.get(Calendar.YEAR);
-		} catch (ParseException e) {
-			return -1;
-		}		
-	}
-	
+		
 	@Override
 	public String toString() {
 		if (isNoResultsMarker())
-			return "{YahooAlbumResult:NoResultsMarker}";
+			return "{AbstractYahooAlbumData:NoResultsMarker}";
 		else
 			return "{artistId=" + artistId + " albumId=" + albumId + " tracksNumber=" + tracksNumber + "}";
+	}
+	
+	private class Data implements YahooAlbumData {
+
+		@Override
+		public String toString() {
+			return "{AbstractYahooAlbumData.Data albumId=" + getAlbumId() + " artistId=" + getArtistId() + " album='" + getAlbum() + "'}";
+		}		
+		
+		public String getAlbumId() {
+			return albumId;
+		}
+
+		public String getAlbum() {
+			return album;
+		}
+
+		public String getArtistId() {
+			return artistId;
+		}
+
+		public String getArtist() {
+			return artist;
+		}
+
+		public String getPublisher() {
+			return publisher;
+		}
+
+		public String getReleaseDate() {
+			return releaseDate;
+		}
+
+		public int getTracksNumber() {
+			return tracksNumber;
+		}
+
+		public String getSmallImageUrl() {
+			return smallImageUrl;
+		}
+
+		public int getSmallImageWidth() {
+			return smallImageWidth;
+		}
+
+		public int getSmallImageHeight() {
+			return smallImageHeight;
+		}
+	}
+	
+	public YahooAlbumData toData() {
+		return new Data();
 	}
 }
