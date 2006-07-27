@@ -240,22 +240,31 @@ public class PostingBoardBean implements PostingBoard {
 		}			
 		runner.runTaskOnTransactionCommit(new Runnable() {
 			public void run() {
-				PostingBoard board = EJBUtil.defaultLookup(PostingBoard.class);
-				Post currentPost;
-				try {
-					currentPost = board.loadRawPost(SystemViewpoint.getInstance(), post.getGuid());
-				} catch (NotFoundException e) {
-					throw new RuntimeException(e);
-				}
-				
-				// Sends out XMPP notification
-				board.sendPostNotifications(currentPost, postType);
-				
-				LiveState liveState = LiveState.getInstance();			
-				for (Group g : post.getGroupRecipients()) {
-				    liveState.queueUpdate(new GroupEvent(g.getGuid(), post.getGuid(), GroupEvent.Type.POST_ADDED));
-				}
-				liveState.queueUpdate(new PostCreatedEvent(post.getGuid(), poster.getGuid()));				
+				// FIXME this should really NOT be in a transaction, we don't want to hold
+				// a transaction open while sending out the notifications. But currently 
+				// too lazy to test the below for "detached safety" (the issue is if 
+				// sendPostNotifications or post.getGroupRecipients() require an attached
+				// post)
+				runner.runTaskInNewTransaction(new Runnable() {
+					public void run() {
+						PostingBoard board = EJBUtil.defaultLookup(PostingBoard.class);
+						Post currentPost;
+						try {
+							currentPost = board.loadRawPost(SystemViewpoint.getInstance(), post.getGuid());
+						} catch (NotFoundException e) {
+							throw new RuntimeException(e);
+						}
+						
+						// Sends out XMPP notification
+						board.sendPostNotifications(currentPost, postType);
+						
+						LiveState liveState = LiveState.getInstance();			
+						for (Group g : post.getGroupRecipients()) {
+						    liveState.queueUpdate(new GroupEvent(g.getGuid(), post.getGuid(), GroupEvent.Type.POST_ADDED));
+						}
+						liveState.queueUpdate(new PostCreatedEvent(post.getGuid(), poster.getGuid()));				
+					}
+				});
 			}
 		});
 	}

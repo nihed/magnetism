@@ -30,7 +30,27 @@ public class TransactionRunnerBean implements TransactionRunner {
 	@javax.annotation.Resource
 	private EJBContext ejbContext;
 
-	private ExecutorService execService;
+	private static ExecutorService postTransactionExecutor;
+	private static boolean shutdown = false;
+	
+	private static synchronized ExecutorService getPostTransactionExecutor() {
+		if (shutdown)
+			throw new RuntimeException("getPostTransactionExecutor() called after shutdown");
+		
+		if (postTransactionExecutor == null)
+			postTransactionExecutor = ThreadUtils.newSingleThreadExecutor("post-transaction tasks");
+		
+		return postTransactionExecutor;
+	}
+	
+	public synchronized static void shutdown() {
+		shutdown = true;
+		
+		if (postTransactionExecutor != null) {
+			postTransactionExecutor.shutdown();
+			postTransactionExecutor = null;
+		}
+	}
 	
 	public <T> T runTaskInNewTransaction(Callable<T> callable) throws Exception {
 		TransactionRunner proxy = EJBUtil.contextLookup(ejbContext, TransactionRunner.class);
@@ -88,12 +108,6 @@ public class TransactionRunnerBean implements TransactionRunner {
 	public <T> T runTaskThrowingConstraintViolation(Callable<T> callable) throws Exception {
 		return callable.call();
 	}
-
-	private ExecutorService getTransactionExectutor() {
-		if (execService == null)
-			execService = ThreadUtils.newSingleThreadExecutor("TransactionRunner async invocation");
-		return execService;
-	}
 	
 	public void runTaskOnTransactionCommit(final Runnable runnable) {
 		TransactionManager tm;
@@ -105,11 +119,7 @@ public class TransactionRunnerBean implements TransactionRunner {
 				public void afterCompletion(int status) {
 					if (status == Status.STATUS_COMMITTED) {
 						try {
-							getTransactionExectutor().submit(new Runnable() {
-								public void run() {
-									runTaskInNewTransaction(runnable);
-								}
-							});
+							getPostTransactionExecutor().submit(runnable);
 						} catch (RuntimeException e) {
 							logger.error("Post-commit task threw exception", e);
 						}

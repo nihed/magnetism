@@ -9,6 +9,7 @@ import com.dumbhippo.persistence.SchemaUpdater;
 import com.dumbhippo.server.impl.AbstractCacheBean;
 import com.dumbhippo.server.impl.FeedSystemBean;
 import com.dumbhippo.server.impl.MusicSystemInternalBean;
+import com.dumbhippo.server.impl.TransactionRunnerBean;
 
 // The point of this extremely simple MBean is to get notification
 // when our application is loaded and unloaded; in particular, we
@@ -28,9 +29,13 @@ public class HippoService extends ServiceMBeanSupport implements HippoServiceMBe
     @Override
 	protected void stopService() {
 		logger.info("Stopping HippoService MBean");
+		// The order of these matters - if one of them 
+		// uses another one, then it will "resurrect" the one it uses,
+		// or throw an exception ...
 		LiveState.getInstance().shutdown();
 		AbstractCacheBean.shutdown();
 		MusicSystemInternalBean.shutdown();
 		FeedSystemBean.shutdown();
+		TransactionRunnerBean.shutdown();
    }
 }
