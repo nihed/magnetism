@@ -358,6 +358,95 @@ slot (ReturnType (* function) (Arg1Type, Arg2Type, Arg3Type))
   return new FunctionSlot3<ReturnType, Arg1Type, Arg2Type, Arg3Type> (function);
 }
 
+// Abstract base class for slots with 4 argument(s)
+template <class ReturnType, class Arg1Type, class Arg2Type, class Arg3Type, class Arg4Type>
+class Slot4 : public Slot
+{
+protected:
+  Slot4 ()
+  {
+  }
+public:
+  virtual ReturnType invoke (Arg1Type arg1, Arg2Type arg2, Arg3Type arg3, Arg4Type arg4) const
+  {
+    // we're effectively const since we ref/unref in a pair here
+    const_cast<Slot4*>(this)->ref ();
+    return invoke_impl (arg1, arg2, arg3, arg4);
+    const_cast<Slot4*>(this)->unref ();
+  }
+  ReturnType operator() (Arg1Type arg1, Arg2Type arg2, Arg3Type arg3, Arg4Type arg4) const
+  {
+    return invoke (arg1, arg2, arg3, arg4);
+  }
+protected:
+  virtual ReturnType invoke_impl (Arg1Type arg1, Arg2Type arg2, Arg3Type arg3, Arg4Type arg4) const = 0;
+
+};
+
+// Concrete class for slots created from methods with 4 argument(s)
+template <class MethodClassType, class ReturnType, class Arg1Type, class Arg2Type, class Arg3Type, class Arg4Type>
+class MethodSlot4 : public Slot4<ReturnType, Arg1Type, Arg2Type, Arg3Type, Arg4Type>
+{
+private:
+  typedef ReturnType (MethodClassType::* MethodType) (Arg1Type, Arg2Type, Arg3Type, Arg4Type);
+public:
+  MethodSlot4 (MethodClassType *object,
+               MethodType method)
+    : obj_(object), method_(method)
+  {
+  }
+  virtual ReturnType invoke_impl (Arg1Type arg1, Arg2Type arg2, Arg3Type arg3, Arg4Type arg4) const
+  {
+    return (obj_->*method_) (arg1, arg2, arg3, arg4);
+  }
+protected:
+  virtual ~MethodSlot4 ()
+  {
+  }
+private:
+  MethodClassType *obj_;
+  MethodType method_;
+}; // class MethodSlot4
+
+// Concrete class for slots created from static functions with 4 argument(s)
+template <class ReturnType, class Arg1Type, class Arg2Type, class Arg3Type, class Arg4Type>
+class FunctionSlot4 : public Slot4<ReturnType, Arg1Type, Arg2Type, Arg3Type, Arg4Type>
+{
+private:
+  typedef ReturnType (* FunctionType) (Arg1Type, Arg2Type, Arg3Type, Arg4Type);
+public:
+  FunctionSlot4 (FunctionType function)
+    : function_(function)
+  {
+  }
+  virtual ReturnType invoke_impl (Arg1Type arg1, Arg2Type arg2, Arg3Type arg3, Arg4Type arg4) const
+  {
+    return (* function_) (arg1, arg2, arg3, arg4);
+  }
+protected:
+  virtual ~FunctionSlot4 ()
+  {
+  }
+private:
+  FunctionType function_;
+}; // class FunctionSlot4
+
+// convenience function that creates a MethodSlot
+template <class MethodClassType, class ReturnType, class Arg1Type, class Arg2Type, class Arg3Type, class Arg4Type>
+inline Slot4<ReturnType, Arg1Type, Arg2Type, Arg3Type, Arg4Type> *
+slot (MethodClassType *obj, ReturnType (MethodClassType::* method) (Arg1Type, Arg2Type, Arg3Type, Arg4Type))
+{
+  return new MethodSlot4<MethodClassType, ReturnType, Arg1Type, Arg2Type, Arg3Type, Arg4Type> (obj, method);
+}
+
+// convenience function that creates a FunctionSlot
+template <class ReturnType, class Arg1Type, class Arg2Type, class Arg3Type, class Arg4Type>
+inline Slot4<ReturnType, Arg1Type, Arg2Type, Arg3Type, Arg4Type> *
+slot (ReturnType (* function) (Arg1Type, Arg2Type, Arg3Type, Arg4Type))
+{
+  return new FunctionSlot4<ReturnType, Arg1Type, Arg2Type, Arg3Type, Arg4Type> (function);
+}
+
 // slot with 0 argument(s) created from a slot with 1 argument(s)
 template <class ReturnType, class Arg1Type>
 class BoundSlot0_1: public Slot0<ReturnType>
@@ -460,3 +549,36 @@ bind (Slot3<ReturnType, Arg1Type, Arg2Type, Arg3Type> * s, Arg3Type arg3)
   return new BoundSlot2_3<ReturnType, Arg1Type, Arg2Type, Arg3Type> (s, arg3);
 }
 
+// slot with 3 argument(s) created from a slot with 4 argument(s)
+template <class ReturnType, class Arg1Type, class Arg2Type, class Arg3Type, class Arg4Type>
+class BoundSlot3_4: public Slot3<ReturnType, Arg1Type, Arg2Type, Arg3Type>
+{
+public:
+  BoundSlot3_4 (Slot4<ReturnType, Arg1Type, Arg2Type, Arg3Type, Arg4Type> * slot, Arg4Type arg4)
+    : original_slot_(slot), arg4_(arg4)
+  {
+    original_slot_->ref ();
+    original_slot_->sink ();
+  }
+
+  virtual ReturnType invoke_impl (Arg1Type arg1, Arg2Type arg2, Arg3Type arg3) const
+  {
+    return original_slot_->invoke (arg1, arg2, arg3, arg4_);
+  }
+protected:
+  virtual ~BoundSlot3_4 ()
+  {
+    original_slot_->unref ();
+  }
+private:
+  Slot4<ReturnType, Arg1Type, Arg2Type, Arg3Type, Arg4Type> * original_slot_;
+  Arg4Type arg4_;
+}; // class BoundSlot3_4
+
+// convenience function that creates a BoundSlot
+template <class ReturnType, class Arg1Type, class Arg2Type, class Arg3Type, class Arg4Type>
+inline Slot3<ReturnType, Arg1Type, Arg2Type, Arg3Type> *
+bind (Slot4<ReturnType, Arg1Type, Arg2Type, Arg3Type, Arg4Type> * s, Arg4Type arg4)
+{
+  return new BoundSlot3_4<ReturnType, Arg1Type, Arg2Type, Arg3Type, Arg4Type> (s, arg4);
+}

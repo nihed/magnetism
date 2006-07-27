@@ -449,11 +449,13 @@ process_make_slot(ot, "", "0")
 process_make_slot(ot, "", "1")
 process_make_slot(ot, "", "2")
 process_make_slot(ot, "", "3")
+process_make_slot(ot, "", "4")
 
 ## You must make one less bind() than you make slots, since the bind 
 ## converts a slot to one with fewer args, and the src slot must exist
 process_make_bind(ot, "", "0")
 process_make_bind(ot, "", "1")
 process_make_bind(ot, "", "2")
+process_make_bind(ot, "", "3")
 
 
