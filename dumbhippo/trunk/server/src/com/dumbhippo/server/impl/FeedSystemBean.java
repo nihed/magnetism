@@ -1,6 +1,7 @@
 package com.dumbhippo.server.impl;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -55,8 +56,8 @@ import com.sun.syndication.feed.synd.SyndFeed;
 import com.sun.syndication.fetcher.FeedFetcher;
 import com.sun.syndication.fetcher.FetcherException;
 import com.sun.syndication.fetcher.impl.FeedFetcherCache;
-import com.sun.syndication.fetcher.impl.HashMapFeedInfoCache;
 import com.sun.syndication.fetcher.impl.HttpURLFeedFetcher;
+import com.sun.syndication.fetcher.impl.SyndFeedInfo;
 import com.sun.syndication.io.FeedException;
 
 @Stateless
@@ -87,8 +88,15 @@ public class FeedSystemBean implements FeedSystem {
 	@EJB
 	private MusicSystem musicSystem;
 	
+	private static FeedFetcherCache cache = null;
 	private static ExecutorService notificationService;
 	private static boolean shutdown = false;
+	
+	private static synchronized FeedFetcherCache getCache() {
+		if (cache == null)
+			cache = new FeedCache();
+		return cache;
+	}
 	
 	private static synchronized ExecutorService getNotificationService() {
 		if (shutdown)
@@ -120,16 +128,13 @@ public class FeedSystemBean implements FeedSystem {
 			throw new RuntimeException("getFeed passed malformed URL object");
 		}
 		
-		// a static memory cache; might be cute to use the database instead, but this is simple and helps.
-		FeedFetcherCache feedInfoCache = HashMapFeedInfoCache.getInstance();
-		
 		// FIXME unfortunately the timeout on the feed fetcher http download is 
 		// way too long - but there's no way to fix without hacking on ROME.
 		// Doing the HTTP GET by hand is not really desirable since the feed fetcher
 		// is smarter than that (e.g. uses some "get new stuff only" protocols, checks
 		// whether the data has changed, etc.)
 		
-		FeedFetcher feedFetcher = new HttpURLFeedFetcher(feedInfoCache);
+		FeedFetcher feedFetcher = new HttpURLFeedFetcher(getCache());
 		try {
 			return feedFetcher.retrieveFeed(url);
 		} catch (IOException e) {
@@ -733,5 +738,51 @@ public class FeedSystemBean implements FeedSystem {
 			}
 		}
 	}
+	
+	
+	/** 
+	 * For now the only point of this vs. the one that comes with Rome is that
+	 * we can do logging.
+	 *
+	 */
+	private static class FeedCache implements FeedFetcherCache, Serializable {
+		private static final long serialVersionUID = 1L;
 
+		@SuppressWarnings("unused")
+		private static final Logger logger = GlobalSetup.getLogger(FeedCache.class);		
+		
+		private Map<URL,SyndFeedInfo> cache;
+		
+		FeedCache() {
+			cache = new HashMap<URL,SyndFeedInfo>();
+		}
+		
+		static private class InfoStringifier {
+			private SyndFeedInfo info;
+			InfoStringifier(SyndFeedInfo info) {
+				this.info = info;
+			}
+			
+			@Override
+			public String toString() {
+				return "{SyndFeedInfo id='" + info.getId() + "' + url='" + info.getUrl() + "' " +
+				"feed has " + info.getSyndFeed().getEntries().size() + " entries}";
+			}
+		}
+		
+		public synchronized SyndFeedInfo getFeedInfo(URL url) {
+			SyndFeedInfo info = cache.get(url);
+			if (info != null) {
+				logger.debug(" getting cached feed for {}: {}", url, new InfoStringifier(info));
+			}
+			return info;
+		}
+
+		public synchronized void setFeedInfo(URL url, SyndFeedInfo info) {
+			if (info != null) {
+				logger.debug(" storing cached feed for {}: {}", url, new InfoStringifier(info));
+			}
+			cache.put(url, info);
+		}
+	}
 }

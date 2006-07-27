@@ -32,13 +32,13 @@
 	</script>
 </head>
 <dht:twoColumnPage>
-	<dht:sidebarGroup/>
+	<dht:sidebarGroup onAccountPage="true"/>
 	<dht:contentColumn>
 		<dht:zoneBoxGroups back='true'>
 			<c:choose>
 				<c:when test="${group.public}">
 					<dht:zoneBoxTitle>PUBLIC INFO</dht:zoneBoxTitle>
-					<dht:zoneBoxSubtitle>This information will be visible on the group page.</dht:zoneBoxSubtitle>
+					<dht:zoneBoxSubtitle>This information will be visible on the <a href="/group?who=${group.viewedGroupId}">group page</a>.</dht:zoneBoxSubtitle>
 				</c:when>
 				<c:otherwise>
 					<dht:zoneBoxTitle>PRIVATE INFO</dht:zoneBoxTitle>
