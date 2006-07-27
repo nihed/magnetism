@@ -15,8 +15,10 @@ import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.Client;
+import com.dumbhippo.persistence.InvitationToken;
 import com.dumbhippo.persistence.LoginToken;
 import com.dumbhippo.persistence.Resource;
+import com.dumbhippo.persistence.Token;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.HumanVisibleException;
@@ -85,14 +87,25 @@ public class LoginVerifierBean implements LoginVerifier {
 		}
 	}
 
-	public Client signIn(LoginToken token, String clientName) throws HumanVisibleException {
+	public Client signIn(Token token, String clientName) throws HumanVisibleException {
 		
 		if (token.isExpired()) {
-			logger.debug("Expired login token {}", token);
-			throw new HumanVisibleException("The link you followed has expired; you'll need to start over.");
+			logger.debug("Expired token when signing in: {}", token);
+			throw new HumanVisibleException("The link you followed has expired; you'll need to request a new login link.");
 		}
 		
-		Resource resource = token.getResource();
+		Resource resource;
+		if (token instanceof LoginToken) {
+ 		    resource = ((LoginToken)token).getResource();	
+		} else if (token instanceof InvitationToken) {
+			if (!((InvitationToken)token).isViewed()) {
+				throw new RuntimeException("Tried to use an invitation token that was not previously viewed for signing in: " + token);				
+			}
+			resource = ((InvitationToken)token).getInvitee();
+		} else {
+			throw new RuntimeException("Unexpected token type for token " + token);
+		}
+		
 		User user = spider.lookupUserByResource(SystemViewpoint.getInstance(), resource);
 		Account account;
 		
@@ -102,13 +115,14 @@ public class LoginVerifierBean implements LoginVerifier {
 			account = null;
 		
 		if (account == null) {
-			logger.debug("No account for this login token {}", token);
+			logger.debug("No account for resource {}", resource.getHumanReadableString());
 			throw new HumanVisibleException("We don't have an account associated with '" + resource.getHumanReadableString() + "'");
 		}
 		
 		Client client = accounts.authorizeNewClient(account, clientName);
 
 		logger.debug("Signin completed for client={} user={}", client, user);
-		return client;
+		return client;				
 	}
+
 }

@@ -40,7 +40,8 @@ public class VerifyServlet extends AbstractServlet {
 	
 	static final long serialVersionUID = 1;
 
-	private String doInvitationToken(HttpServletRequest request, HttpServletResponse response, InvitationToken invite) throws HttpException, ServletException, IOException {
+	private String doInvitationToken(HttpServletRequest request, HttpServletResponse response, InvitationToken invite) 
+	    throws HumanVisibleException, HttpException, ServletException, IOException {
 		
 		logger.debug("Processing invitation token {}", invite);
 		
@@ -59,7 +60,7 @@ public class VerifyServlet extends AbstractServlet {
 		User user = null;
 		
 		if (invite.isViewed()) {
-			// have been to the link before, nothing to do unless we need to disable
+			// have been to the link before
 			if (disable) {
 				SigninBean signin = SigninBean.getForRequest(request);
 				if (signin.isValid()) {
@@ -72,6 +73,14 @@ public class VerifyServlet extends AbstractServlet {
 					// worth some complicated solution; this will require a signin first
 					redirectToNextPage(request, response, "/account", null);
 				}
+			} else {
+				// if we didn't need to disable the account, we can use the invitation
+				// token to sign the user in, so that they do not need to request a login
+				// link separately
+				LoginVerifier verifier = WebEJBUtil.defaultLookup(LoginVerifier.class);	
+				Client client = verifier.signIn(invite, SigninBean.computeClientIdentifier(request));
+				user = client.getAccount().getOwner();
+				SigninBean.initializeAuthentication(request, response, client);
 			}
 		} else {
 			// first time we've gone to the invite link
