@@ -230,6 +230,14 @@ public class PostingBoardBean implements PostingBoard {
 	}
 	
 	private void postPost(final Post post, final PostType postType) {
+		// Update recommender synchronously; otherwise two things
+		// could try to create a recommendation simultaneously
+		// and cause a constraint violation
+		final User poster = post.getPoster();
+		if (poster != null) {
+			// tell the recommender engine, so ratings can be updated
+			recommenderSystem.addRatingForPostCreatedBy(post, poster);
+		}			
 		runner.runTaskOnTransactionCommit(new Runnable() {
 			public void run() {
 				PostingBoard board = EJBUtil.defaultLookup(PostingBoard.class);
@@ -239,19 +247,15 @@ public class PostingBoardBean implements PostingBoard {
 				} catch (NotFoundException e) {
 					throw new RuntimeException(e);
 				}
-				board.sendPostNotifications(currentPost, postType);
-				LiveState liveState = LiveState.getInstance();			
 				
+				// Sends out XMPP notification
+				board.sendPostNotifications(currentPost, postType);
+				
+				LiveState liveState = LiveState.getInstance();			
 				for (Group g : post.getGroupRecipients()) {
 				    liveState.queueUpdate(new GroupEvent(g.getGuid(), post.getGuid(), GroupEvent.Type.POST_ADDED));
 				}
-				
-				User poster = currentPost.getPoster();
-				if (poster != null) {
-					liveState.queueUpdate(new PostCreatedEvent(post.getGuid(), poster.getGuid()));
-					// tell the recommender engine, so ratings can be updated
-					EJBUtil.defaultLookup(RecommenderSystem.class).addRatingForPostCreatedBy(currentPost, poster);
-				}				
+				liveState.queueUpdate(new PostCreatedEvent(post.getGuid(), poster.getGuid()));				
 			}
 		});
 	}

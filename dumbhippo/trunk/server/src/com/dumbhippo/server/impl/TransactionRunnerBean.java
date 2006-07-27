@@ -1,6 +1,7 @@
 package com.dumbhippo.server.impl;
 
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
 
 import javax.ejb.EJBContext;
 import javax.ejb.Stateless;
@@ -17,6 +18,7 @@ import javax.transaction.TransactionManager;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.ThreadUtils;
 import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.util.EJBUtil;
 
@@ -27,6 +29,8 @@ public class TransactionRunnerBean implements TransactionRunner {
 	
 	@javax.annotation.Resource
 	private EJBContext ejbContext;
+
+	private ExecutorService execService;
 	
 	public <T> T runTaskInNewTransaction(Callable<T> callable) throws Exception {
 		TransactionRunner proxy = EJBUtil.contextLookup(ejbContext, TransactionRunner.class);
@@ -85,6 +89,12 @@ public class TransactionRunnerBean implements TransactionRunner {
 		return callable.call();
 	}
 
+	private ExecutorService getTransactionExectutor() {
+		if (execService == null)
+			execService = ThreadUtils.newSingleThreadExecutor("TransactionRunner async invocation");
+		return execService;
+	}
+	
 	public void runTaskOnTransactionCommit(final Runnable runnable) {
 		TransactionManager tm;
 		try {
@@ -95,7 +105,11 @@ public class TransactionRunnerBean implements TransactionRunner {
 				public void afterCompletion(int status) {
 					if (status == Status.STATUS_COMMITTED) {
 						try {
-							runTaskInNewTransaction(runnable);
+							getTransactionExectutor().submit(new Runnable() {
+								public void run() {
+									runTaskInNewTransaction(runnable);
+								}
+							});
 						} catch (RuntimeException e) {
 							logger.error("Post-commit task threw exception", e);
 						}

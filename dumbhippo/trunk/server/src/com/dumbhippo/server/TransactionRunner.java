@@ -17,6 +17,11 @@ public interface TransactionRunner {
 	
 	public <T> T runTaskThrowingConstraintViolation(Callable<T> callable) throws Exception;
 	
+	/**
+	 * Asynchronously execute a runnable after the current transaction has completed successfully.
+	 * 
+	 * @param runnable executed after transaction completion
+	 */
 	public void runTaskOnTransactionCommit(Runnable runnable);
 	
 	// internal, way to get TransactionAttribute, do not use
