@@ -8,11 +8,11 @@
     <toolbarpalette id="BrowserToolbarPalette">
          <toolbarbutton id="mugshot-button" class="toolbarbutton-1"
               label="&toolbarbutton.label;" tooltiptext="&toolbarbutton.tooltip;"
-              oncommand="HelloWorld.onToolbarButtonCommand(event);"/>
+              oncommand="Hippo.onToolbarButtonCommand(event);"/>
     </toolbarpalette>
 
     <menupopup id="menu_ToolsPopup">
     <menuitem id="mugshot-hello" label="&helloworld;"
-        oncommand="HelloWorld.onMenuItemCommand(event);"/>
+        oncommand="Hippo.onMenuItemCommand(event);"/>
     </menupopup>
 </overlay> 

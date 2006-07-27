@@ -26,6 +26,11 @@ EN_SRCDIR=$(EXTENSION_SRCDIR)/chrome/locale/en-US
 en_DATA =					\
 	$(EN_SRCDIR)/overlay.dtd
 
+prefsdir=$(extensiondir)/defaults/preferences
+PREFS_SRCDIR=$(EXTENSION_SRCDIR)/defaults/preferences
+prefs_DATA =					\
+	$(PREFS_SRCDIR)/prefs.js
+
 componentdir=$(extensiondir)/components
 component_LTLIBRARIES = libhippofirefox.la
 

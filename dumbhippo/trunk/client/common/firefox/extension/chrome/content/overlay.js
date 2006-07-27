@@ -1,7 +1,51 @@
-var HelloWorld = {
+var Hippo = {
+	branch : null,
+	
+	getPrefs : function() {
+		if (!this.branch) {
+			var manager = Components.classes["@mozilla.org/preferences-service;1"]
+	                                .getService(Components.interfaces.nsIPrefBranch);
+			this.branch = manager.getBranch("extensions.mugshot.");
+		}
+		return this.branch;
+	},
+
+	addToolbarButton : function() {
+		// get location entry box
+       	var urlbar = document.getElementById("urlbar-container");
+       	if (!urlbar)
+       		return;
+       	var existingButton = document.getElementById("mugshot-button");
+       	if (existingButton)
+       		return;
+       	var toolbar = urlbar.parentNode;
+       	// http://xulplanet.com/references/elemref/ref_toolbar.html#prop_insertItem
+       	// put our button right before the location entry box
+		toolbar.insertItem("mugshot-button", urlbar);
+		// annoyingly, it seems insertItem does not change toolbar.currentset
+		// which is a comma-separated list of item ids.
+		// there's also "toolbar.currentSet" which seems to be different from 
+		// the lowercase currentset attribute? anyway changing that didn't work
+		currentset = toolbar.getAttribute("currentset");
+		toolbar.setAttribute("currentset", currentset.replace("urlbar-container", "mugshot-button,urlbar-container"));
+		
+       	// save the toolbar settings
+       	document.persist(toolbar.id, "currentset");
+	},
+
     onLoad: function() {
         // initialization code
         this.initialized = true
+        
+        var prefs = this.getPrefs();
+        
+        var addToToolbar = prefs.getBoolPref("addToToolbarOnStartup");
+       	//alert("add to toolbar = " + addToToolbar);
+       	if (addToToolbar) {
+       		this.addToolbarButton();
+       		// don't fight user
+	       	prefs.setBoolPref("addToToolbarOnStartup", false);
+	    }
     },
 
     onMenuItemCommand: function() {
@@ -21,4 +65,4 @@ var HelloWorld = {
     }
 };
 
-window.addEventListener("load", function(e) { HelloWorld.onLoad(e); }, false)
+window.addEventListener("load", function(e) { Hippo.onLoad(e); }, false)
