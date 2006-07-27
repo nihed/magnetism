@@ -249,7 +249,7 @@ public class RewriteServlet extends HttpServlet {
 		
 		SigninBean signin = SigninBean.getForRequest(request);
 		boolean doSigninRedirect;
-
+		
 		// we-miss-you and download are special because they convert from
 		// DisabledSigninBean to UserSigninBean
 		if (afterSlash.equals("we-miss-you")) {
@@ -262,6 +262,10 @@ public class RewriteServlet extends HttpServlet {
 				doSigninRedirect = false;
 			else
 				doSigninRedirect = !signin.isValid();
+		} else if (afterSlash.equals("who-are-you") && (signin instanceof DisabledSigninBean) && signin.getNeedsTermsOfUse()) {
+			// don't allow the person to request a sign in link, redirect them to the
+			// download page right away
+            doSigninRedirect = true;
 		} else {
 			boolean isRequiresSignin = requiresSignin.contains(afterSlash); 
 			boolean isRequiresSigninStealth = requiresSigninStealth.contains(afterSlash);
@@ -291,7 +295,7 @@ public class RewriteServlet extends HttpServlet {
 			if (signin instanceof DisabledSigninBean) {
 				DisabledSigninBean disabledSignin = (DisabledSigninBean)signin;
 				if (disabledSignin.getNeedsTermsOfUse())
-					url = response.encodeRedirectURL("/download");
+					url = response.encodeRedirectURL("/download?acceptMessage=true");
 				else if (disabledSignin.isDisabled())
 					url = response.encodeRedirectURL("/we-miss-you?next=" + afterSlash);
 				else
