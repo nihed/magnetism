@@ -157,8 +157,7 @@ public class PostingBoardBean implements PostingBoard {
 	}
 	
 	
-	private void sendPostNotifications(Post post, PostType postType) {
-		// FIXME I suspect this should be outside the transaction and asynchronous
+	public void sendPostNotifications(Post post, PostType postType) {
 		logger.debug("Sending out jabber/email notifications...");
 		
 		// We only notify "everyone" if the post was explicitly sent to "the world", 
@@ -230,21 +229,31 @@ public class PostingBoardBean implements PostingBoard {
 		return replacement;
 	}
 	
-	private void postPost(Post post, PostType postType) {
-		sendPostNotifications(post, postType);
-		
-		LiveState liveState = LiveState.getInstance();
-		for (Group g : post.getGroupRecipients()) {
-		    liveState.queuePostTransactionUpdate(em, new GroupEvent(g.getGuid(), post.getGuid(), GroupEvent.Type.POST_ADDED));
-		}
-		
-		User poster = post.getPoster();
-		if (poster != null) {
-			liveState.queuePostTransactionUpdate(em, new PostCreatedEvent(post.getGuid(), poster.getGuid()));
-		
-			// tell the recommender engine, so ratings can be updated
-			recommenderSystem.addRatingForPostCreatedBy(post, poster);
-		}
+	private void postPost(final Post post, final PostType postType) {
+		runner.runTaskOnTransactionCommit(new Runnable() {
+			public void run() {
+				PostingBoard board = EJBUtil.defaultLookup(PostingBoard.class);
+				Post currentPost;
+				try {
+					currentPost = board.loadRawPost(SystemViewpoint.getInstance(), post.getGuid());
+				} catch (NotFoundException e) {
+					throw new RuntimeException(e);
+				}
+				board.sendPostNotifications(currentPost, postType);
+				LiveState liveState = LiveState.getInstance();			
+				
+				for (Group g : post.getGroupRecipients()) {
+				    liveState.queueUpdate(new GroupEvent(g.getGuid(), post.getGuid(), GroupEvent.Type.POST_ADDED));
+				}
+				
+				User poster = currentPost.getPoster();
+				if (poster != null) {
+					liveState.queueUpdate(new PostCreatedEvent(post.getGuid(), poster.getGuid()));
+					// tell the recommender engine, so ratings can be updated
+					EJBUtil.defaultLookup(RecommenderSystem.class).addRatingForPostCreatedBy(currentPost, poster);
+				}				
+			}
+		});
 	}
 	
 	private PostVisibility expandVisibilityForGroup(PostVisibility visibility, Group group) {

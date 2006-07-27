@@ -95,7 +95,7 @@ public class TransactionRunnerBean implements TransactionRunner {
 				public void afterCompletion(int status) {
 					if (status == Status.STATUS_COMMITTED) {
 						try {
-							runnable.run();
+							runTaskInNewTransaction(runnable);
 						} catch (RuntimeException e) {
 							logger.error("Post-commit task threw exception", e);
 						}
