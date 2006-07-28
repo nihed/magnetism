@@ -1,10 +1,10 @@
 <?xml version="1.0"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2003/01/wi">
-    <Product Id="48CC3B1F-F02E-4D4C-907B-CC45A01CEA69"
+    <Product Id="357d2c2d-c559-4e11-8206-70f9575d1dfa"
             UpgradeCode="9A9721CB-6D56-478C-9AEE-2AAC1D75BA2F"
             Name="Mugshot" 
             Language="1033"
-            Version="1.1.60"
+            Version="1.1.61"
             Manufacturer="Red Hat">
         <Package Id="????????-????-????-????-????????????"
                 Description="Mugshot client software" 
@@ -21,8 +21,8 @@
         <Property Id="ARPPRODUCTICON" Value="hippoIcon"/>
         
         <Upgrade Id="9A9721CB-6D56-478C-9AEE-2AAC1D75BA2F">
-            <UpgradeVersion Minimum="0" Maximum="1.1.60" Property="DHPREVIOUSVERSIONS"/>
-            <UpgradeVersion Minimum="1.1.60" IncludeMinimum="yes" Property="DHNEWERVERSIONS"/>
+            <UpgradeVersion Minimum="0" Maximum="1.1.61" Property="DHPREVIOUSVERSIONS"/>
+            <UpgradeVersion Minimum="1.1.61" IncludeMinimum="yes" Property="DHNEWERVERSIONS"/>
         </Upgrade>
 
         <!-- Separate "cabinets" would be used if you broke the installer across floppies ... -->
