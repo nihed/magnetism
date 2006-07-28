@@ -12,6 +12,9 @@
 #include "nsServiceManagerUtils.h"
 
 #include "hippoService.h"
+#include "hippoExtension.h"
+
+NS_GENERIC_FACTORY_CONSTRUCTOR(hippoExtension);
 
 NS_GENERIC_FACTORY_CONSTRUCTOR(hippoService);
 NS_DECL_CLASSINFO(hippoService);
@@ -53,6 +56,12 @@ static const nsModuleComponentInfo components[] = {
 	NULL, // mGetLanguageHelperProc
 	&NS_CLASSINFO_NAME(hippoService),
 	nsIClassInfo::DOM_OBJECT
+    },
+    {
+        "Mugshot Extension",
+        HIPPO_EXTENSION_CID,
+        HIPPO_EXTENSION_CONTRACTID,
+        hippoExtensionConstructor
     }
 };
 

@@ -39,6 +39,13 @@ var Hippo = {
         
         var prefs = this.getPrefs();
         
+        var extension = Components.classes["@mugshot.org/hippoExtension"]
+	                                .getService(Components.interfaces.hippoIExtension);
+	    if (!extension)
+	    	alert("failed to load XPCOM control for Mugshot extension");
+	    extension.start("mugshot.org,dogfood.mugshot.org:9080,localinstance.mugshot.org:8080");
+        //alert("urls are: " + extension.servers);
+        
         var addToToolbar = prefs.getBoolPref("addToToolbarOnStartup");
        	//alert("add to toolbar = " + addToToolbar);
        	if (addToToolbar) {

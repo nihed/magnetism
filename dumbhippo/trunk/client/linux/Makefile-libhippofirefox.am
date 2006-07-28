@@ -35,6 +35,7 @@ componentdir=$(extensiondir)/components
 component_LTLIBRARIES = libhippofirefox.la
 
 component_DATA =				\
+	hippoIExtension.xpt			\
 	hippoIService.xpt			\
 	hippoIServiceListener.xpt
 
@@ -62,12 +63,14 @@ libhippofirefox_la_CPPFLAGS +=			\
 	-I $(GECKO_PRIVATE_INCLUDEDIR)
 endif
 
-nodist_libhippofirefox_la_SOURCES=		\
-	$(FIREFOX_SRCDIR)/src/hippoModule.cpp	\
-	$(FIREFOX_SRCDIR)/src/hippoService.cpp	\
+nodist_libhippofirefox_la_SOURCES=			\
+	$(FIREFOX_SRCDIR)/src/hippoExtension.cpp	\
+	$(FIREFOX_SRCDIR)/src/hippoModule.cpp		\
+	$(FIREFOX_SRCDIR)/src/hippoService.cpp		\
 	$(FIREFOX_SRCDIR)/src/hippoService.h
 
 LIBHIPPOFIREFOX_BUILT_SOURCEFILES =			\
+	$(BUILT_SRC_DIR)/hippoIExtension.h		\
 	$(BUILT_SRC_DIR)/hippoIService.h		\
 	$(BUILT_SRC_DIR)/hippoIServiceListener.h
 
@@ -85,6 +88,7 @@ XPIDL_INCLUDES =				\
 endif
 
 IDL_FILES =							\
+	$(FIREFOX_SRCDIR)/public/hippoIExtension.idl		\
 	$(FIREFOX_SRCDIR)/public/hippoIService.idl		\
 	$(FIREFOX_SRCDIR)/public/hippoIServiceListener.idl
 
@@ -102,11 +106,17 @@ GECKO_PRIVATE_INCLUDE_FILES =							\
 	$(FIREFOX_SRCDIR)/gecko-private/include/nsIXPCSecurityManager.h		\
 	$(FIREFOX_SRCDIR)/gecko-private/include/nsNetCID.h
 
+$(BUILT_SRC_DIR)/hippoIExtension.h: $(FIREFOX_SRCDIR)/public/hippoIExtension.idl
+	$(XPIDL) $(XPIDL_INCLUDES)  -m header -e $@ $<
+
 $(BUILT_SRC_DIR)/hippoIService.h: $(FIREFOX_SRCDIR)/public/hippoIService.idl
 	$(XPIDL) $(XPIDL_INCLUDES)  -m header -e $@ $<
 
 $(BUILT_SRC_DIR)/hippoIServiceListener.h: $(FIREFOX_SRCDIR)/public/hippoIServiceListener.idl
 	$(XPIDL) $(XPIDL_INCLUDES)  -m header -e $@ $<
+
+hippoIExtension.xpt: $(FIREFOX_SRCDIR)/public/hippoIExtension.idl
+	$(XPIDL) $(XPIDL_INCLUDES)  -m typelib -e $@ $<
 
 hippoIService.xpt: $(FIREFOX_SRCDIR)/public/hippoIService.idl
 	$(XPIDL) $(XPIDL_INCLUDES)  -m typelib -e $@ $<
@@ -115,6 +125,7 @@ hippoIServiceListener.xpt: $(FIREFOX_SRCDIR)/public/hippoIServiceListener.idl
 	$(XPIDL) $(XPIDL_INCLUDES)  -m typelib -e $@ $<
 
 DISTCLEANFILES +=				\
+	hippoIExtension.xpt			\
 	hippoIService.xpt			\
 	hippoIServiceListener.xpt
 
