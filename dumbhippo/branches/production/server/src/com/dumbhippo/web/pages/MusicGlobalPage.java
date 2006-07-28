@@ -26,6 +26,7 @@ public class MusicGlobalPage extends AbstractSigninOptionalPage {
 	private int initialPerPage;
 	
 	private Pageable<TrackView> recentTracks;
+	private Pageable<TrackView> mainRecentTracks;	
 	private Pageable<TrackView> mostPlayedTracks;
 	private Pageable<TrackView> mostPlayedToday;
 	private Pageable<TrackView> onePlayTracks;
@@ -46,6 +47,15 @@ public class MusicGlobalPage extends AbstractSigninOptionalPage {
 		}
 		
 		return recentTracks;
+	}
+	
+	public Pageable<TrackView> getMainRecentTracks() {
+		if (mainRecentTracks == null) {
+			mainRecentTracks = pagePositions.createBoundedPageable("mainRecentTracks", initialPerPage);
+			musicSystem.pageLatestTrackViews(getSignin().getViewpoint(), mainRecentTracks, true);
+		}
+		
+		return mainRecentTracks;
 	}
 	
 	public Pageable<TrackView> getMostPlayedTracks() {

@@ -22,6 +22,19 @@ public interface MusicSystem {
 	 * @param pageable object providing range to retrieve and in which to store results
 	 */
 	public void pageLatestTrackViews(Viewpoint viewpoint, Pageable<TrackView> pageable);
+	
+	/**
+	 * Retrieve the set of tracks that were played globally on the system most recently,
+	 * return only tracks that are more filled in (i.e. have album art) if 
+	 * filledTracksOnly is set to true.
+	 * 
+	 * @param viewpoint Viewpoint retrieving the information
+	 * @param pageable object providing range to retrieve and in which to store results
+	 * @param filledTracksOnly whether or not all results must be filled in according to
+	 *                         certain requirements, currently the one requirement is that
+	 *                         the result has album art
+	 */
+	public void pageLatestTrackViews(Viewpoint viewpoint, Pageable<TrackView> pageable, boolean filledTracksOnly);
 
 	public List<TrackView> getPopularTrackViews(Viewpoint viewpoint, int maxResults);
 	

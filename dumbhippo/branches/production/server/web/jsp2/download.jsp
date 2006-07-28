@@ -8,6 +8,19 @@
 <jsp:setProperty name="welcome" property="invitationId" param="invite"/>
 <jsp:setProperty name="welcome" property="inviterId" param="inviter"/>
 
+<c:set var="urlParams" value=''/>
+<c:set var="acceptMessage" value='false'/>
+<c:if test='${!empty param["acceptMessage"]}'>
+    <c:set var="acceptMessage" value='${param["acceptMessage"]}'/>
+    <c:set var="urlParams" value='&acceptMessage=${param["acceptMessage"]}'/>    
+</c:if>
+<c:if test='${!empty param["invite"]}'>
+    <c:set var="urlParams" value='${urlParams}&invite=${param["invite"]}'/>    
+</c:if>
+<c:if test='${!empty param["inviter"]}'>
+    <c:set var="urlParams" value='${urlParams}&inviter=${param["inviter"]}'/>    
+</c:if>
+
 <head>
 	<title>Mugshot</title>
 	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/download.css"/>
@@ -38,7 +51,7 @@
 	    	            	<div class="dh-download-section-description dh-download-info-area-header">
 	    	            	<strong><c:out value="${welcome.inviter.name}"/> has invited you to become a mugshot member.</strong> Sign
 	    	            	up to use our free and fun tools.<br/>
-	    	            	<a href="${welcome.inviter.homeUrl}">View <c:out value="${welcome.inviter.name}"/>'s Mugshot profile</a>
+	    	            	<a href="${welcome.inviter.homeUrl}" target="_blank">View <c:out value="${welcome.inviter.name}"/>'s Mugshot profile</a>
 	    	            	</div>        		                			
         		        </td>
             		</c:when>
@@ -104,6 +117,9 @@
     <td width="15px">&nbsp;</td>
 	<td>
 		<table cellspacing="0" cellpadding="0" valign="top" border="0">
+		    <c:if test="${acceptMessage=='true'}">
+                <tr id="dhMustAccept"><td colspan="2">You must agree to our Terms of Sevice and Privacy Policy before logging in to Mugshot.</td></tr>
+            </c:if>    
 		    <tr id="dhDownloadInstructionsHeader"><td colspan="2" class="dh-download-purple"><div class="dh-download-instruction">Start using Mugshot in 3 quick steps:</div></td></tr>
 		    <tr>
 		        <td valign="top" class="dh-download-purple dh-download-instruction-number">1.</td> 
@@ -185,7 +201,7 @@
 	</tr>
 	</table>    
 	<div id="dhDownloadFooter">
- 		<div class="dh-download-other-options"><a id="dhSkipDownload" href="javascript:dh.download.doDownload()">I can't install on this computer, skip download.</a> (Not recommended.) | Get Mugshot for <a href="/download?platform=windows">Windows</a> | <a href="/download?platform=linux">Linux</a></div>
+ 		<div class="dh-download-other-options"><a id="dhSkipDownload" href="javascript:dh.download.doDownload()">I can't install on this computer, skip download.</a> (Not recommended.) | Get Mugshot for <a href="/download?platform=windows${urlParams}">Windows</a> | <a href="/download?platform=linux${urlParams}">Linux</a></div>
 		<dht:notevil/>	
 	</div>
 </dht:body>

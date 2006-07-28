@@ -136,7 +136,7 @@ public abstract class SigninBean  {
 		if (account.isDisabled())
 			return "/we-miss-you";
 		else if (!account.getHasAcceptedTerms())
-			return "/download";
+			return "/download?acceptMessage=true";
 		else
 			return "/";
 	}

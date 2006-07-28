@@ -157,8 +157,7 @@ public class PostingBoardBean implements PostingBoard {
 	}
 	
 	
-	private void sendPostNotifications(Post post, PostType postType) {
-		// FIXME I suspect this should be outside the transaction and asynchronous
+	public void sendPostNotifications(Post post, PostType postType) {
 		logger.debug("Sending out jabber/email notifications...");
 		
 		// We only notify "everyone" if the post was explicitly sent to "the world", 
@@ -230,21 +229,44 @@ public class PostingBoardBean implements PostingBoard {
 		return replacement;
 	}
 	
-	private void postPost(Post post, PostType postType) {
-		sendPostNotifications(post, postType);
-		
-		LiveState liveState = LiveState.getInstance();
-		for (Group g : post.getGroupRecipients()) {
-		    liveState.queuePostTransactionUpdate(em, new GroupEvent(g.getGuid(), post.getGuid(), GroupEvent.Type.POST_ADDED));
-		}
-		
-		User poster = post.getPoster();
+	private void postPost(final Post post, final PostType postType) {
+		// Update recommender synchronously; otherwise two things
+		// could try to create a recommendation simultaneously
+		// and cause a constraint violation
+		final User poster = post.getPoster();
 		if (poster != null) {
-			liveState.queuePostTransactionUpdate(em, new PostCreatedEvent(post.getGuid(), poster.getGuid()));
-		
 			// tell the recommender engine, so ratings can be updated
 			recommenderSystem.addRatingForPostCreatedBy(post, poster);
-		}
+		}			
+		runner.runTaskOnTransactionCommit(new Runnable() {
+			public void run() {
+				// FIXME this should really NOT be in a transaction, we don't want to hold
+				// a transaction open while sending out the notifications. But currently 
+				// too lazy to test the below for "detached safety" (the issue is if 
+				// sendPostNotifications or post.getGroupRecipients() require an attached
+				// post)
+				runner.runTaskInNewTransaction(new Runnable() {
+					public void run() {
+						PostingBoard board = EJBUtil.defaultLookup(PostingBoard.class);
+						Post currentPost;
+						try {
+							currentPost = board.loadRawPost(SystemViewpoint.getInstance(), post.getGuid());
+						} catch (NotFoundException e) {
+							throw new RuntimeException(e);
+						}
+						
+						// Sends out XMPP notification
+						board.sendPostNotifications(currentPost, postType);
+						
+						LiveState liveState = LiveState.getInstance();			
+						for (Group g : post.getGroupRecipients()) {
+						    liveState.queueUpdate(new GroupEvent(g.getGuid(), post.getGuid(), GroupEvent.Type.POST_ADDED));
+						}
+						liveState.queueUpdate(new PostCreatedEvent(post.getGuid(), poster.getGuid()));				
+					}
+				});
+			}
+		});
 	}
 	
 	private PostVisibility expandVisibilityForGroup(PostVisibility visibility, Group group) {

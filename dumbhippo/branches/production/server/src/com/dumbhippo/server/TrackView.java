@@ -141,6 +141,9 @@ public class TrackView {
 		album.setSmallImageUrl(smallImageUrl);
 	}
 
+	public boolean isSmallImageUrlAvailable() {
+	    return album.isSmallImageUrlAvailable();
+	}
 	public int getSmallImageWidth() {
 		return album.getSmallImageWidth();
 	}

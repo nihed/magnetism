@@ -294,5 +294,7 @@ public interface PostingBoard {
 	 */
 	public boolean worthEmailNotification(Post post, Resource recipient);
 	
-	public boolean postIsGroupNotification(Post post);	
+	public boolean postIsGroupNotification(Post post);
+	
+	public void sendPostNotifications(Post post, PostType postType);	
 }

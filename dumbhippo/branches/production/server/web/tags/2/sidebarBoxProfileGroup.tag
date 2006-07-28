@@ -2,6 +2,8 @@
 <%@ taglib uri="/jsp/dumbhippo.tld" prefix="dh" %>
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 
+<%@ attribute name="onAccountPage" required="false" type="java.lang.Boolean" %>
+
 <c:choose>
 	<c:when test="${group.public}">
 		<c:set var="title" value="PUBLIC GROUP" scope="page"/>
@@ -24,9 +26,12 @@
 					<td>
 						<div class="dh-next-to-image">
 							<div id="dhSidebarBoxProfileGroupName" class="dh-name"><c:out value="${group.name}"/></div>
-							<c:if test="${group.canModify}">
+							<c:if test="${group.canModify && !onAccountPage}">
 								<div class="dh-action-link"><a href="/group-account?group=${group.viewedGroupId}" title="Edit the group information">Edit group</a></div>
 							</c:if>
+							<c:if test="${onAccountPage}">
+								<div class="dh-action-link"><a href="/group?who=${group.viewedGroupId}" title="Edit the group information">Group page</a></div>
+							</c:if>							
 							<c:choose>
 								<%-- Be careful if changing this not to show both join and leave at the same time --%>
 								<c:when test="${!empty group.joinAction}">

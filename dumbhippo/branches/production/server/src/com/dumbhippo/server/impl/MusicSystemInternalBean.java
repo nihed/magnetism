@@ -1020,14 +1020,44 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		
 		return views;
 	}
-	
+
 	public void pageLatestTrackViews(Viewpoint viewpoint, Pageable<TrackView> pageable) {
-		Query q = em.createQuery("SELECT h FROM TrackHistory h ORDER BY h.lastUpdated DESC");
-		q.setFirstResult(pageable.getStart());
-		q.setMaxResults(pageable.getCount());
-		List<?> results = q.getResultList();
-		pageable.setResults(getViewsFromTrackHistories(viewpoint, TypeUtils.castList(TrackHistory.class, results), false));
+		pageLatestTrackViews(viewpoint, pageable, false);
+	}
+	
+	public void pageLatestTrackViews(Viewpoint viewpoint, Pageable<TrackView> pageable, boolean filledTracksOnly) {
+        List<TrackView> trackViewResults = new ArrayList<TrackView>();
+	    int count = pageable.getCount();
+	    int totalResults = 0; 
+	    
+		while (trackViewResults.size() < pageable.getCount()) {
+		    Query q = em.createQuery("SELECT h FROM TrackHistory h ORDER BY h.lastUpdated DESC");
+		    q.setFirstResult(pageable.getStart() + totalResults);
+		    if (filledTracksOnly) {
+		    	// always get 3 times more albums than we need, so that there is a good chance we will get enough
+		    	// albums with album art, but not too many albums
+			    count = (pageable.getCount() - trackViewResults.size())*3;
+		    }
+		    q.setMaxResults(count);
+		    List<?> results = q.getResultList();		    
+		    if (results.size() == 0)
+		    	break;
+		    totalResults = totalResults + results.size();
+		    
+		    // filledTracksOnly flag currently means that the album art for the track has to be present
+		    // we do fillAlbumView which sets an album url last when we create a TrackView, so there is no big saving in
+		    // trying to propagate logic about having to have album art to getViewsFromTrackHistories
+		    List<TrackView> trackViews = getViewsFromTrackHistories(viewpoint, TypeUtils.castList(TrackHistory.class, results), false);
+		    for (TrackView trackView : trackViews) {
+		        if (!filledTracksOnly || (filledTracksOnly && trackView.isSmallImageUrlAvailable())) {
+		    	    trackViewResults.add(trackView);
+		            if (trackViewResults.size() == pageable.getCount()) 
+		                break;
+		        }
+		    }
+		}
 		
+		pageable.setResults(trackViewResults);
 		// Doing an exact count is expensive, our assumption is "lots and lots"
 		pageable.setTotalCount(pageable.getBound());
 	}

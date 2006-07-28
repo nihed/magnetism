@@ -596,8 +596,13 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		}
 		
 		String inviteUrl = invite.getAuthURL(baseurlObject);
-		inviteUrl += "&inviter=";
-		inviteUrl += inviter.getId();
+		// Only set the inviter for non-mugshot invitations; the download
+		// page assumes the absence of this parameter implies the invitation
+		// was from mugshot, which we handle specially.
+		if (!isMugshotInvite) {
+			inviteUrl += "&inviter=";
+			inviteUrl += inviter.getId();
+		}
 		
 		messageHtml.append("<div style=\"padding: 1em;\">");
 		messageHtml.appendTextNode("a", inviteUrl, "href", inviteUrl);
