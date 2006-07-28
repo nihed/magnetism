@@ -80,8 +80,10 @@ public class YahooArtistAlbumsCacheBean extends AbstractCacheBean<String,List<Ya
 			throw new IllegalArgumentException("null artistId passed to YahooArtistAlbumsCacheBean");
 		
 		List<YahooAlbumData> result = checkCache(artistId);
-		if (result != null)
+		if (result != null) {
+			logger.debug("Using cached album listing of {} items for artistId {}", result.size(), artistId);
 			return new KnownFuture<List<YahooAlbumData>>(result);
+		}
 	
 		return getExecutor().execute(artistId, new YahooArtistAlbumsTask(artistId));
 	}

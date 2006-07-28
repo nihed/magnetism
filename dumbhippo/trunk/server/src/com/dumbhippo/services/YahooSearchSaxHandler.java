@@ -193,11 +193,10 @@ class YahooSearchSaxHandler extends EnumSaxHandler<YahooSearchSaxHandler.Element
 		}
 	}
 	
-	/*
 	@Override 
 	public void endDocument() throws SAXException {
+		logger.debug("Parsed {} raw results from Yahoo, totalResultsAvailable {}", results.size(), totalResultsAvailable);
 	}
-	*/
 	
 	private YahooSongData songFromResultChecked(Result r, String artist, String album, String name) {
 		// we want to make sure we return results that match supplied fields exactly, 

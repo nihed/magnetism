@@ -80,7 +80,7 @@ public class YahooAlbumSongsCacheBean extends AbstractCacheBean<String,List<Yaho
 		
 		List<YahooSongData> result = checkCache(albumId);
 		if (result != null) {
-			logger.debug("Using cached song listing for {}", albumId);
+			logger.debug("Using cached song listing of {} items for {}", result.size(), albumId);
 			return new KnownFuture<List<YahooSongData>>(result);
 		}
 		
