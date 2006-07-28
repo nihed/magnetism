@@ -6,43 +6,54 @@
 	left: 140px;
 }
 
+#dhMustAccept {
+	padding:            5px;
+	margin-bottom:      10px;
+}
+
 .dh-body-without-sidebar #dhPage {
-	width:			700px;
+	width:			710px;  /* this is the width of the downloadheader.gif */
 	text-align:		center; /* we want centered text */
 }
 
 #dhDownloadInfoAreaContainer {
-	padding: 5px;
+	padding: 10px;
 }
 
 .dh-download-separator {
-	width: 1px;
+	width:  1px;
 	margin: 0px 20px;
 }
 
-.dh-download-bottom-title {
-	margin-bottom: 5px;
+.dh-download-more-information ul {
+    margin-top:    0px;
+    margin-bottom: 0px;
+    margin-left:   17px;
 }
 
-.dh-download-disclaimer {
-	margin-top: 20px;
+.dh-download-information-image {
+    width:         50px;
+    padding-right: 10px;
+    text-align:    center;   
 }
 
-.dh-download-section-description {
-	margin-left: 15px;
+#dhDownloadInstructionsHeader {
+    padding-bottom: 8px;
 }
-
-.dh-download-instruction-number {
-	margin-right: 5px;
-}
-
+ 
 .dh-download-instruction {
+    margin-left:   5px;
 	margin-bottom: 10px;
+}
+
+.dh-accept-terms-box-warning {
+    padding:            2px; 
+}
+
+.dh-download-product {
+    margin-left:   5px;
 }
 
 #dhDownloadFooter {
 	margin-top: 15px;
-}
-
-.dh-download-more-information ul {
 }

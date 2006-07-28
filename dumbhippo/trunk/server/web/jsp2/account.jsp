@@ -189,6 +189,7 @@
 						<a id="dhRemovePasswordLink" style="${removePasswordLinkStyle}" href="javascript:dh.password.unsetPassword();" title="Remove my password">Remove my current password.</a>
 					</dht:formTableRow>
 					<dht:formTableRow label="Disable account">
+					    <a name="accountStatus"></a>
 						<div>
 							<input type="button" value="Disable account" onclick="javascript:dh.actions.disableAccount();"/>
 						</div>
@@ -201,8 +202,9 @@
 				</dht:formTable>
 				</c:when>
 				<c:otherwise>
-					<dht:formTable>
+					<dht:formTable>				
 					<dht:formTableRow label="Enable account">
+					        <a name="accountStatus"></a>
 					        <div class="dh-account-disabled-message">
 						        <c:out value="${signin.user.nickname}" />, your account is disabled.
 						</div>
