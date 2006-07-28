@@ -22,17 +22,16 @@
 	<c:choose>
 		<c:when test="${browser.linuxRequested}">
 			<%-- LINUX RELEASE NOTES GO HERE --%>
-			<p>Version 1.1.11</p>
+			<p>Version 1.1.13</p>
 			<ul>
-				<li>World share swarming: The bubble now shows how many people visited a post.</li>			
+				<li>Several rendering fixes.</li>
 			</ul>
 		</c:when>
 		<c:otherwise>
 			<%-- WINDOWS RELEASE NOTES GO HERE --%>
-			<p>Version 1.1.59</p>
+			<p>Version 1.1.61</p>
 			<ul>
-				<li>World share swarming: The bubble now shows how many people visited a post.</li>
-				<li>Fixed a bug that caused a lot of old bubbles to show up again periodically.</li>				
+				<li>Fixed several display issues with world shares.</li>				
 			</ul>
 		</c:otherwise>
 	</c:choose>
