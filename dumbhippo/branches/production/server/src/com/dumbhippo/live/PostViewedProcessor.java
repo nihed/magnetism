@@ -7,6 +7,7 @@ import org.jboss.annotation.ejb.LocalBinding;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.server.MessageSender;
 import com.dumbhippo.server.NotFoundException;
@@ -59,9 +60,11 @@ public class PostViewedProcessor implements LiveEventProcessor {
 	
 		logger.debug("{} clicked on {} new viewer count " + livePost.getTotalViewerCount(), event.getViewerId(), event.getPostId());
 		logger.debug("Post score is now {}", livePost.getScore());
+		
+		Person poster = post.getPoster();
 		// Suppress notification of the poster viewing their own post, and check that the
 		// count is "interesting", presently defined by being close to a power of two.
-		if (!event.getViewerId().equals(post.getPoster().getGuid())
+		if ((poster == null || !event.getViewerId().equals(poster.getGuid()))
 			&& (countIsInteresting(livePost.getTotalViewerCount()) || countIsInteresting(livePost.getRecentMessageCount()))) {
 			messageSender.sendLivePostChanged(livePost, event.getViewerId());
 		}		
