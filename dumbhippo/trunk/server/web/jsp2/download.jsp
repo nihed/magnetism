@@ -40,7 +40,7 @@
 	</div>
 	<table cellspacing="0" cellpadding="0" align="center" valign="top" style="table-layout: fixed;">
 	<tr valign="top">
-    <td valign="top">
+    <td valign="top" width="49%">
     	<div id="dhDownloadInfoAreaContainer">
         <table id="dhDownloadInfoArea" cellspacing="0" cellpadding="0" valign="top">
             <tr>
@@ -116,8 +116,8 @@
        </table>
        </div>
     </td>
-    <td width="15px">&nbsp;</td>
-	<td>
+    <td width="2%">&nbsp;</td>
+	<td width="49%">
 		<table cellspacing="0" cellpadding="0" valign="top" border="0">
 		    <c:if test="${acceptMessage=='true'}">
                 <tr id="dhMustAccept"><td colspan="2">You must agree to our Terms of Sevice and Privacy Policy before logging in to Mugshot.</td></tr>
