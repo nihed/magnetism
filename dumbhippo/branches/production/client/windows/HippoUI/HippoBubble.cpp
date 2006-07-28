@@ -306,6 +306,8 @@ HippoBubble::initializeUI()
         slot(this, &HippoBubble::onChatRoomLoaded));
     groupMembershipChanged_.connect(G_OBJECT(ui_->getConnection()), "group-membership-changed",
         slot(this, &HippoBubble::onGroupMembershipChanged));
+    postActivity_.connect(G_OBJECT(ui_->getConnection()), "post-activity",
+        slot(this, &HippoBubble::onPostActivity));
 }
 
 void
@@ -528,7 +530,7 @@ HippoBubble::onGroupChatRoomMessageAdded(HippoChatMessage *message,
     variant_t result;
     ie_->createInvocation(L"dhGroupChatRoomMessage")
         .addDispatch(HippoEntityWrapper::getWrapper(entity))
-        .addBool((bool) isReloading)
+        .addBool(isReloading ? true : false)
         .getResult(&result);
     if (result.vt != VT_BOOL || !result.boolVal) {
         return;
@@ -580,7 +582,7 @@ HippoBubble::onMessageAdded(HippoChatMessage *message,
     variant_t result;
     ie_->createInvocation(L"dhChatRoomMessage")
         .addDispatch(HippoPostWrapper::getWrapper(post, ui_->getDataCache()))
-        .addBool((bool) isReloading)
+        .addBool(isReloading ? true : false)
         .getResult(&result);
 
     if (result.vt != VT_BOOL) {
@@ -647,6 +649,24 @@ HippoBubble::onGroupMembershipChanged(HippoEntity *group, HippoEntity *user, con
         return;
     }
 
+    setShown();
+}
+
+void
+HippoBubble::onPostActivity(HippoPost *post)
+{
+    if (!create())
+        return;
+
+    variant_t result;
+    ui_->debugLogW(L"Invoking dhPostActivity");
+    // Note if you change the arguments to this function, you must change notification.js
+    ie_->createInvocation(L"dhPostActivity")
+        .addDispatch(HippoPostWrapper::getWrapper(post, ui_->getDataCache()))
+        .getResult(&result);
+    if (result.vt != VT_BOOL || !result.boolVal) {
+        return;
+    }
     setShown();
 }
 

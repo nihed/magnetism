@@ -82,6 +82,7 @@ private:
     GConnection1<void,HippoPost*> postAdded_;           // HippoDataCache::post-added
     GConnection1<void,HippoChatRoom*> chatRoomLoaded_;  // HippoDataCache::chat-room-loaded
     GConnection3<void,HippoEntity*, HippoEntity*, const char*> groupMembershipChanged_;  // HippoConnection::group-membership-changed
+    GConnection1<void,HippoPost*> postActivity_;           // HippoConnection::post-activity
 
     void onUserJoinedGroupChatRoom(HippoPerson *person, HippoEntity *group);
     void onGroupChatRoomMessageAdded(HippoChatMessage *message, HippoEntity *group);
@@ -90,6 +91,7 @@ private:
     void onMessageAdded(HippoChatMessage *message, HippoPost *post);
     void onPostChanged(HippoPost *post);
     void onPostAdded(HippoPost *post);
+    void onPostActivity(HippoPost *post);
     void onChatRoomLoaded(HippoChatRoom *room);
     
     void connectPost(HippoPost *post);

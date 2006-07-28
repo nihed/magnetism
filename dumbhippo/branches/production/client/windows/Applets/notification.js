@@ -20,6 +20,7 @@ var dhInit = function(serverUrl, appletUrl, selfId) {
 dh.notification.NEW = 1
 dh.notification.VIEWER = 2
 dh.notification.MESSAGE = 4
+dh.notification.ACTIVITY = 8
 
 dh.notification.Display = function (serverUrl, appletUrl, selfId) {
     // Whether the user is currently using the computer
@@ -356,6 +357,18 @@ dhAddLinkShare = function (post) {
         return false
         
     return dh.display.addBubbleUpdate(data, false, dh.notification.NEW)
+}
+
+dhPostActivity = function(post) {
+    dh.display.setVisible(true)
+    
+    dh.util.debug("post activity id=" + post.Id)
+    // Suppress possibly spurious notifications, as well as our own framer view
+    // of the share
+    if (post.TotalViewers == 0 || (post.TotalViewers == 1 && post.Sender.Id == dh.selfId))
+        return false;
+    var data = new dh.bubble.PostData(post)
+    return dh.display.addBubbleUpdate(data, false, dh.notification.ACTIVITY)
 }
 
 dhAddMySpaceComment = function (myId, blogId, commentId, posterId, posterName, posterImgUrl, content) {

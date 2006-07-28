@@ -636,7 +636,7 @@ dh.bubble.PostData = function(post) {
             
     this.appendSwarmContent = function(bubble, parent) {
         var pages = []
-    
+        
         if (this.post.ToWorld && post.TotalViewers > 0) {
             var viewersCountDiv = document.createElement("div")
             viewersCountDiv.className  = "dh-notification-whos-there"
@@ -647,6 +647,7 @@ dh.bubble.PostData = function(post) {
             
             pages.push({ name: "viewers", title: "Viewers", div: viewersCountDiv })
         }
+        
         // Only add the Who's There if we have something interesting to show
         if (this.post.CurrentViewers.length > 0
             && !(this.post.CurrentViewers.length == 1 && this.post.CurrentViewers.item(0).Id == dh.selfId)) {
@@ -685,6 +686,7 @@ dh.bubble.PostData = function(post) {
             someoneSaidDiv.appendChild(senderDiv)
             
             pages.push({ name: "someoneSaid", title: "Recent Comments", div: someoneSaidDiv })
+        }
         }
         
         return pages
