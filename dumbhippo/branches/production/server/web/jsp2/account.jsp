@@ -11,6 +11,11 @@
 
 <dh:bean id="account" class="com.dumbhippo.web.pages.AccountPage" scope="page"/>
 
+<c:set var="termsOfUseNote" value='false'/>
+<c:if test='${!empty param["termsOfUseNote"]}'>
+    <c:set var="termsOfUseNote" value='${param["termsOfUseNote"]}'/> 
+</c:if>
+
 <head>
 	<title>Your Account</title>
 	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/account.css">
@@ -189,6 +194,10 @@
 						<a id="dhRemovePasswordLink" style="${removePasswordLinkStyle}" href="javascript:dh.password.unsetPassword();" title="Remove my password">Remove my current password.</a>
 					</dht:formTableRow>
 					<dht:formTableRow label="Disable account">
+					    <a name="accountStatus"></a>
+					    <c:if test="${termsOfUseNote=='true'}">
+                            <div id="dhTermsOfUseNote">If you no longer agree with <a href="javascript:window.open('/terms', 'dhTermsOfUs', 'menubar=no,scrollbars=yes,width=600,height=600');void(0);">Terms of Use</a> and <a href="javascript:window.open('/privacy', 'dhPrivacy', 'menubar=no,scrollbars=yes,width=600,height=600');void(0);">Privacy Policy</a>, disable your account here.</div>
+                        </c:if>    
 						<div>
 							<input type="button" value="Disable account" onclick="javascript:dh.actions.disableAccount();"/>
 						</div>
@@ -201,10 +210,15 @@
 				</dht:formTable>
 				</c:when>
 				<c:otherwise>
-					<dht:formTable>
+				    <%-- This code is never hit, because we redirect to /we-miss-you in this case. --%>
+					<dht:formTable>				
 					<dht:formTableRow label="Enable account">
-					        <div class="dh-account-disabled-message">
-						        <c:out value="${signin.user.nickname}" />, your account is disabled.
+					    <a name="accountStatus"></a>
+					    <c:if test="${termsOfUseNote=='true'}">
+                            <div id="dhTermsOfUseNote">Your account is already disabled, which means you no longer agree with <a href="javascript:window.open('/terms', 'dhTermsOfUs', 'menubar=no,scrollbars=yes,width=600,height=600');void(0);">Terms of Use</a> and <a href="javascript:window.open('/privacy', 'dhPrivacy', 'menubar=no,scrollbars=yes,width=600,height=600');void(0);">Privacy Policy</a>.</div>
+                        </c:if>     
+					    <div class="dh-account-disabled-message">
+						    <c:out value="${signin.user.nickname}" />, your account is disabled.
 						</div>
 						<div>
 						<p>
