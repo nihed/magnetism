@@ -506,6 +506,10 @@ on_post_activity(HippoConnection *connection,
                  BubbleManager   *manager)
 {
     g_debug("bubble manager, post activity %s", hippo_post_get_guid(post));
+    if (!hippo_post_is_to_world(post)) {
+    	g_debug("suppressing notification of activity on non-world share");
+    	return;    
+    }
     manager_bubble_post(manager, post, HIPPO_BUBBLE_REASON_ACTIVITY);
 }
 

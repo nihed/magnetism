@@ -363,6 +363,10 @@ dhPostActivity = function(post) {
     dh.display.setVisible(true)
     
     dh.util.debug("post activity id=" + post.Id)
+    // Post activity is only interesting for world shares, where we
+    // get the number of viewers
+    if (!post.ToWorld)
+        return false;    
     // Suppress possibly spurious notifications, as well as our own framer view
     // of the share
     if (post.TotalViewers == 0 || (post.TotalViewers == 1 && post.Sender.Id == dh.selfId))
