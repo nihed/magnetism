@@ -1,3 +1,2 @@
-<!ENTITY helloworld "Hello World!">
 <!ENTITY toolbarbutton.label "Link Swarm">
-<!ENTITY toolbarbutton.tooltip "Share page via Mugshot">
+<!ENTITY toolbarbutton.tooltip "Share page on Mugshot">

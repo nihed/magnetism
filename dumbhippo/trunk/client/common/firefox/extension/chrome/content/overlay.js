@@ -47,19 +47,15 @@ var Hippo = {
 	       	prefs.setBoolPref("addToToolbarOnStartup", false);
 	    }
     },
-
-    onMenuItemCommand: function() {
-        alert("HERE")
-    },
     
     onToolbarButtonCommand: function(event) { 
-	var d = content.document
-	var url = encodeURIComponent(d.location.href)
-	var title = encodeURIComponent(d.title)
-	var top = (screen.availHeight - 400) / 2
-	var left = (screen.availWidth - 550) / 2
+		var d = content.document;
+		var url = encodeURIComponent(d.location.href);
+		var title = encodeURIComponent(d.title);
+		var top = (screen.availHeight - 400) / 2;
+		var left = (screen.availWidth - 550) / 2;
 
-        content.open('http://fresnel.dumbhippo.com:8080/sharelink?v=1&url='+url+'&title='+title+'&next=close',
+        content.open('http://mugshot.org/sharelink?v=1&url='+url+'&title='+title+'&next=close',
                      '_NEW',
                      'menubar=no,location=no,toolbar=no,scrollbars=yes,status=no,resizable=yes,height=400,width=550,top='+top+',left='+left)
     }

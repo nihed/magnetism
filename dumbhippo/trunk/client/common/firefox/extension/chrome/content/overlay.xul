@@ -10,9 +10,4 @@
               label="&toolbarbutton.label;" tooltiptext="&toolbarbutton.tooltip;"
               oncommand="Hippo.onToolbarButtonCommand(event);"/>
     </toolbarpalette>
-
-    <menupopup id="menu_ToolsPopup">
-    <menuitem id="mugshot-hello" label="&helloworld;"
-        oncommand="Hippo.onMenuItemCommand(event);"/>
-    </menupopup>
 </overlay> 
