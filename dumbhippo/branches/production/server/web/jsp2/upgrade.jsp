@@ -29,7 +29,7 @@
 		</c:when>
 		<c:otherwise>
 			<%-- WINDOWS RELEASE NOTES GO HERE --%>
-			<p>Version 1.1.61</p>
+			<p>Version 1.1.62</p>
 			<ul>
 				<li>Fixed several display issues with world shares.</li>				
 			</ul>
