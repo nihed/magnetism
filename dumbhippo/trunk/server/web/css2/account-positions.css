@@ -48,3 +48,8 @@ tr.dh-email-address-spacer {
 #dhEmailEntry {
 	margin-right:	10px;
 }
+
+#dhTermsOfUseNote {
+	padding:            5px;
+	margin-bottom:      10px;
+}

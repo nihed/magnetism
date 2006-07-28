@@ -17,3 +17,9 @@ div.dh-account-disabled-message {
 .dh-love-hate {
 	font-size:		14px;
 }
+
+#dhTermsOfUseNote {
+	background-color:	#ffffcc;
+	color:				#cc0033;
+	font-size:          12px;
+}

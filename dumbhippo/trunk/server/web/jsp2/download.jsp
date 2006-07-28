@@ -107,8 +107,8 @@
                     <div class="dh-download-more-information">
                         <strong>More information from <a href="http://blog.mugshot.org/?page_id=245" target="_blank">Mugshot Help</a>:</strong>
                         <ul>
-                    	    <li><a href="http://blog.mugshot.org/?page_id=233" target="_blank">Why do I need to download anything to use Mugshot?</a></li>
-                            <li><a href="http://blog.mugshot.org/?page_id=233" target="_blank">What if the download doesn't work?</a></li>
+                    	    <li><a href="http://blog.mugshot.org/?page_id=233#need_download" target="_blank">Why do I need to download anything to use Mugshot?</a></li>
+                            <li><a href="http://blog.mugshot.org/?page_id=233#download_missing" target="_blank">What if the download doesn't work?</a></li>
                         </ul>
                     </div>
                 </td>                 
@@ -120,7 +120,7 @@
 	<td width="49%">
 		<table cellspacing="0" cellpadding="0" valign="top" border="0">
 		    <c:if test="${acceptMessage=='true'}">
-                <tr id="dhMustAccept"><td colspan="2">You must agree to our Terms of Sevice and Privacy Policy before logging in to Mugshot.</td></tr>
+                <tr id="dhMustAccept"><td colspan="2">You must agree to our Terms of Use and Privacy Policy before logging in to Mugshot.</td></tr>
             </c:if>    
 		    <tr><td colspan="2" id="dhDownloadInstructionsHeader" class="dh-download-purple">Start using Mugshot in 3 quick steps:</td></tr>
 		    <tr>
@@ -138,14 +138,13 @@
 			                </div>
 			            </c:when>    
 			            <c:otherwise>
-                            <img src="/images2/${buildStamp}/check10x10.png"/><span class="dh-download-purple">Done!</span>
+			                <dh:png src="/images2/${buildStamp}/check21x20.png" style="width: 21; height: 20;"/>
+                            &nbsp;<span class="dh-download-purple">Done!</span>
                             <div class="dh-download-accepted">
                             Agreed to <a href="javascript:window.open('/terms', 'dhTermsOfUs', 'menubar=no,scrollbars=yes,width=600,height=600');void(0);">Terms of Use</a> and <a href="javascript:window.open('/privacy', 'dhPrivacy', 'menubar=no,scrollbars=yes,width=600,height=600');void(0);">Privacy Policy</a>.					        
 			                </div>
 			                <div class="dh-download-accepted">
-			                <%-- TODO: link to the disable you account option of the account page, talk about how disabling your account --%>
-			                <%-- is the closest thing to unaccepting terms of use there --%>
-			                (See your <a href="/account#accountStatus">account page</a> for more info.)
+			                (See your <a href="/account?termsOfUseNote=true#accountStatus">account page</a> for more info.)
 			                </div>
 			            </c:otherwise>
 			        </c:choose>        			            
