@@ -4,6 +4,8 @@ var Hippo = {
 	
 	extension : null,
 	
+	observerService : null,
+	
 	getPrefs : function() {
 		if (!this.branch) {
 			var manager = Components.classes["@mozilla.org/preferences-service;1"]
@@ -39,8 +41,7 @@ var Hippo = {
 	findAllBrowsers : function() {
 		var browsers = [];
 		var ifaces = Components.interfaces;
-	  	var mediator =
-	    	Components.classes["@mozilla.org/appshell/window-mediator;1"].
+	  	var mediator = Components.classes["@mozilla.org/appshell/window-mediator;1"].
 		      	getService(ifaces.nsIWindowMediator);
 		// get all browser windows; empty string window type to get all windows period
 		//"navigator:browser"
@@ -88,6 +89,7 @@ var Hippo = {
 
 	// on load of each toplevel window's chrome
     onLoad: function() {
+    	dump("loading mugshot extension for window\n");
 		//dump("mugshot initialized = " + this.initialized + "\n");
 		if (!this.initialized) {
         	this.initialized = true
@@ -108,7 +110,18 @@ var Hippo = {
        			// don't fight user
 	       		prefs.setBoolPref("addToToolbarOnStartup", false);
 	    	}
+	    	
+	    	this.observerService = Components.classes["@mozilla.org/observer-service;1"].
+	            getService(Components.interfaces.nsIObserverService);
+	        // for third arg, true = weakref except I think we need to implement weak ref interface
+	        // before it works
+	        this.observerService.addObserver(this, "hippo-page-shared", false);
 	    }
+    },
+    
+    onUnload: function() {
+    	dump("unloading mugshot extension for window\n");
+	    this.observerService.removeObserver(this, "hippo-page-shared");
     },
     
     onToolbarButtonCommand: function(event) {
@@ -121,7 +134,45 @@ var Hippo = {
         content.open('http://mugshot.org/sharelink?v=1&url='+url+'&title='+title+'&next=close',
                      '_NEW',
                      'menubar=no,location=no,toolbar=no,scrollbars=yes,status=no,resizable=yes,height=400,width=550,top='+top+',left='+left)
+    },
+    
+    QueryInterface: function(aIID) {
+	    var ifaces = Components.interfaces;
+	    if (!aIID.equals(ifaces.nsIObserver) &&
+    	    !aIID.equals(ifaces.nsISupports))
+      		throw Components.results.NS_ERROR_NO_INTERFACE;
+	    return this;
+  	},
+    
+    // implementation of IObserver
+    observe : function(subject, topic, data) {
+       	// this happens if we somehow fail to unregister our observer
+    	if (typeof Components == 'undefined') {
+    		dump("Components undefined in observer\n");
+    		return;
+    	}
+    
+    	dump("observing subject " + subject + " topic " + topic + " data " + data + "\n");
+    	    	
+    	if (topic == "hippo-page-shared") {
+    		if (!data)
+    			return;
+    		var i = data.indexOf(",");
+    		if (i != 14) { // length of guid
+    			dump("comma in data at wrong index " + i + "\n");
+    			return;
+    		}
+    		if (data.length < 16) {
+    			dump("length of data too short " + data.length + "\n");    			
+    			return;
+    		}
+    		var guid = data.substring(0,14);
+    		var url = data.substring(15);
+    		dump("framing pages guid='" + guid + "' url='" + url + "'\n");
+    		this.framePages(guid, url);
+    	}
     }
 };
 
 window.addEventListener("load", function(e) { Hippo.onLoad(e); }, false)
+window.addEventListener("unload", function(e) { Hippo.onUnload(e); }, false)

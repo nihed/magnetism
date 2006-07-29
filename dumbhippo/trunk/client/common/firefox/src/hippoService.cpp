@@ -12,6 +12,7 @@
 #include "nsNetCID.h"
 #include "nsISupportsUtils.h"
 #include "nsIIOService.h"
+#include "nsIObserverService.h"
 #include "nsIURI.h"
 #include "nsIScriptSecurityManager.h"
 #include "nsServiceManagerUtils.h"
@@ -163,6 +164,32 @@ NS_IMETHODIMP hippoService::SendChatMessage(const nsACString &chatId, const nsAC
 
     if (controller_)
         controller_->sendChatMessage(chatId.BeginReading(), text.BeginReading());
+    
+    return NS_OK;
+}
+
+/* void notifyPageShared (in AUTF8String postId, in AUTF8String url); */
+NS_IMETHODIMP hippoService::NotifyPageShared(const nsACString & postId, const nsACString & url)
+{
+    nsresult rv;
+
+    rv = checkGuid(postId);
+    if (NS_FAILED(rv))
+        return rv;
+
+    rv = checkString(url);
+    if (NS_FAILED(rv))
+        return rv;
+
+    nsCOMPtr<nsIObserverService> observerService;
+    observerService = do_GetService("@mozilla.org/observer-service;1", &rv);
+    if (NS_FAILED(rv))
+ 	return rv;
+
+    nsCString notifyData(postId);
+    notifyData.Append(",");
+    notifyData.Append(url);
+    observerService->NotifyObservers(NULL, "hippo-page-shared", NS_ConvertUTF8toUTF16(notifyData).BeginReading());
     
     return NS_OK;
 }

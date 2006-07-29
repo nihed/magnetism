@@ -17,6 +17,8 @@ interface hippoIService : nsISupports {
     void leaveChatRoom(in AUTF8String chatId);
     void showChatWindow(in AUTF8String chatId);
     void sendChatMessage(in AUTF8String chatId, in AUTF8String text);
+
+    void notifyPageShared(in AUTF8String postId, in AUTF8String url);
 };
 
 
