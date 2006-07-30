@@ -821,7 +821,8 @@ public class PostingBoardBean implements PostingBoard {
 		pageable.setTotalCount(getPostsForCount(viewpoint, poster));
 	}
 
-	private Query buildReceivedPostsQuery(UserViewpoint viewpoint, User recipient, String search, boolean isCount) {
+	private Query buildReceivedPostsQuery(UserViewpoint viewpoint, User recipient,
+			String search, boolean isCount, boolean isFeeds) {
 		// There's an efficiency win here by specializing to the case where
 		// viewer == recipient ... we know that posts are always visible
 		// to the recipient; we don't bother implementing the other case for
@@ -833,10 +834,21 @@ public class PostingBoardBean implements PostingBoard {
 		
 		StringBuilder queryText = new StringBuilder("SELECT ");
 		if (isCount)
-			queryText.append("count(post)");
+			queryText.append("COUNT(post)");
 		else
 			queryText.append("post");
-		queryText.append(" FROM Post post WHERE post.poster != :viewer AND NOT EXISTS (SELECT fp.id FROM FeedPost fp WHERE post.id=fp.id) AND " + VIEWER_RECEIVED);
+		
+		if (isFeeds)
+			queryText.append(" FROM FeedPost post ");
+		else
+			queryText.append(" FROM Post post ");
+		
+		queryText.append("WHERE (post.poster IS NULL OR post.poster != :viewer) ");
+		
+		if (!isFeeds)
+			queryText.append(" AND NOT EXISTS (SELECT fp.id FROM FeedPost fp WHERE post.id=fp.id) ");
+		
+		queryText.append("AND " + VIEWER_RECEIVED);
 		
 		appendPostLikeClause(queryText, search);
 
@@ -851,17 +863,29 @@ public class PostingBoardBean implements PostingBoard {
 		return q;
 	}
 	
-	public int getReceivedPostsCount(UserViewpoint viewpoint, User recipient, String search) {
-		Query q = buildReceivedPostsQuery(viewpoint, recipient, search, true);
+	private int getReceivedPostsCount(UserViewpoint viewpoint, User recipient, String search) {
+		Query q = buildReceivedPostsQuery(viewpoint, recipient, search, true, false);
 		Object result = q.getSingleResult();
 		return ((Number) result).intValue();
 	}
 	
-	public List<PostView> getReceivedPosts(UserViewpoint viewpoint, User recipient, String search, int start, int max) {
-		Query q  = buildReceivedPostsQuery(viewpoint, recipient, search, false);
+	private List<PostView> getReceivedPosts(UserViewpoint viewpoint, User recipient, String search, int start, int max) {
+		Query q  = buildReceivedPostsQuery(viewpoint, recipient, search, false, false);
 		return getPostViews(viewpoint, q, search, start, max);
 	}
 
+	private int getReceivedFeedPostsCount(UserViewpoint viewpoint, User recipient, String search) {
+		Query q = buildReceivedPostsQuery(viewpoint, recipient, search, true, true);
+		Object result = q.getSingleResult();
+		//logger.debug("feed posts count {}", result);
+		return ((Number) result).intValue();
+	}
+	
+	private List<PostView> getReceivedFeedPosts(UserViewpoint viewpoint, User recipient, String search, int start, int max) {
+		Query q  = buildReceivedPostsQuery(viewpoint, recipient, search, false, true);
+		return getPostViews(viewpoint, q, search, start, max);
+	}
+	
 	private Query buildGetGroupPostsQuery(Viewpoint viewpoint, Group recipient, String search, boolean isCount) {
 		User viewer = null;
 		Query q;
@@ -1109,14 +1133,19 @@ public class PostingBoardBean implements PostingBoard {
 		pageable.setTotalCount(getGroupPostsCount(viewpoint, recipient));
 	}
 	
-	static final String GET_HOT_POSTS_QUERY = 
-		"SELECT post FROM Post post WHERE ";
-
 	public void pageHotPosts(Viewpoint viewpoint, Pageable<PostView> pageable) {
+		// FIXME
+		pageRecentPosts(viewpoint, pageable);
+	}
+
+	static final private String GET_ALL_POSTS_QUERY = 
+		"SELECT post FROM Post post WHERE ";
+	
+	public void pageRecentPosts(Viewpoint viewpoint, Pageable<PostView> pageable) {
 		User viewer = null;
 		Query q;
 
-		StringBuilder queryText = new StringBuilder(GET_HOT_POSTS_QUERY);
+		StringBuilder queryText = new StringBuilder(GET_ALL_POSTS_QUERY);
 
 		if (viewpoint instanceof SystemViewpoint) {
 		    // No access control clause
@@ -1137,7 +1166,12 @@ public class PostingBoardBean implements PostingBoard {
 		pageable.setResults(getPostViews(viewpoint, q, null, pageable.getStart(), pageable.getCount()));
 		
 		// Doing an exact count is expensive, our assumption is "lots and lots"
-		pageable.setTotalCount(pageable.getBound());
+		pageable.setTotalCount(pageable.getBound());		
+	}
+	
+	public void pageReceivedFeedPosts(UserViewpoint viewpoint, User recipient, Pageable<PostView> pageable) {
+		pageable.setResults(getReceivedFeedPosts(viewpoint, recipient, null, pageable.getStart(), pageable.getCount()));
+		pageable.setTotalCount(getReceivedFeedPostsCount(viewpoint, recipient, null));		
 	}
 	
 	private static final String POST_MESSAGE_QUERY = "SELECT pm from PostMessage pm WHERE pm.post = :post";

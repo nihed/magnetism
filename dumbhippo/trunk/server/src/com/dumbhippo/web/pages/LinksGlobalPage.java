@@ -26,6 +26,8 @@ public class LinksGlobalPage extends AbstractSigninOptionalPage {
 	
 	private Pageable<PostView> hotPosts;
 	
+	private Pageable<PostView> recentPosts;
+	
 	public LinksGlobalPage() {
 		postBoard = WebEJBUtil.defaultLookup(PostingBoard.class);
 		config = WebEJBUtil.defaultLookup(Configuration.class);
@@ -33,10 +35,18 @@ public class LinksGlobalPage extends AbstractSigninOptionalPage {
 
 	public Pageable<PostView> getHotPosts() {
 		if (hotPosts == null) {
-			hotPosts = pagePositions.createBoundedPageable("recentlyShared");
+			hotPosts = pagePositions.createBoundedPageable("hotShared");
 			postBoard.pageHotPosts(getSignin().getViewpoint(), hotPosts);
 		}
 		return hotPosts;
+	}
+
+	public Pageable<PostView> getRecentPosts() {
+		if (recentPosts == null) {
+			recentPosts = pagePositions.createBoundedPageable("recentlyShared");
+			postBoard.pageRecentPosts(getSignin().getViewpoint(), recentPosts);
+		}
+		return recentPosts;
 	}
 	
 	// TODO: find an appropriate place for this method, something like 

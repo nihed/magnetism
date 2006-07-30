@@ -74,10 +74,6 @@ public interface PostingBoard {
 	
 	public List<PostView> getPostsFor(Viewpoint viewpoint, Person poster, String search, int start, int max);
 	
-	public int getReceivedPostsCount(UserViewpoint viewpoint, User recipient, String search);
-	
-	public List<PostView> getReceivedPosts(UserViewpoint viewpoint, User recipient, String search, int start, int max);
-
 	public int getGroupPostsCount(Viewpoint viewpoint, Group recipient, String search);
 	
 	public List<PostView> getGroupPosts(Viewpoint viewpoint, Group recipient, String search, int start, int max);
@@ -95,6 +91,10 @@ public interface PostingBoard {
 	public int getGroupPostsCount(Viewpoint viewpoint, Group group);
 	
 	public void pageHotPosts(Viewpoint viewpoint, Pageable<PostView> pageable);
+	
+	public void pageRecentPosts(Viewpoint viewpoint, Pageable<PostView> pageable);
+	
+	public void pageReceivedFeedPosts(UserViewpoint viewpoint, User recipient, Pageable<PostView> pageable);
 	
 	enum InviteRecipients {
 		DONT_INVITE,         // Just send out plain emails without invitation links
