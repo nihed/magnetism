@@ -588,6 +588,7 @@ public class FeedSystemBean implements FeedSystem {
 
 	private static class FeedUpdater extends Thread {
 		private static FeedUpdater instance;
+		private int generation;
 		
 		static synchronized FeedUpdater getInstance() {
 			if (instance == null)
@@ -600,11 +601,9 @@ public class FeedSystemBean implements FeedSystem {
 			super("FeedUpdater");
 		}
 		
-		@Override
-		public void run() {
+		private boolean runOneGeneration() {
 			int iteration = 0;
-			boolean restart = false;
-			
+			generation += 1;
 			try {
 				// We start off by sleeping for our delay time to reduce the initial
 				// server load on restart
@@ -627,7 +626,7 @@ public class FeedSystemBean implements FeedSystem {
 						
 						logger.debug("FeedUpdater slept " + sleepTime / 1000.0 + " seconds, and now has " + feeds.size() + " feeds in use, iteration " + iteration);
 						
-						ExecutorService threadPool = ThreadUtils.newCachedThreadPool("feed fetcher " + iteration + " ");
+						ExecutorService threadPool = ThreadUtils.newCachedThreadPool("feed fetcher " + generation + " " + iteration);
 
 						int count = 0;
 						for (final Feed feed : feeds) {
@@ -651,7 +650,7 @@ public class FeedSystemBean implements FeedSystem {
 							}
 						}
 						
-						logger.debug("Started " + count + " feed fetching threads for iteration " + iteration);
+						logger.debug("Started {} feed fetching threads for iteration {}", count, iteration);
 						
 						// tell thread pool to terminate once all tasks are run.
 						threadPool.shutdown();
@@ -670,18 +669,24 @@ public class FeedSystemBean implements FeedSystem {
 				}
 			} catch (RuntimeException e) {
 				// not sure jboss will catch and print this since it's our own thread, so doing it here
-				logger.error("Unexpected exception updating feeds, thread exiting abnormally", e);
-				restart = true;
+				logger.error("Unexpected exception updating feeds, generation " + generation + " exiting abnormally", e);
+				return true; // do another generation
 			}
-			if (restart) {
+			logger.debug("Cleanly shutting down feed updater thread generation {}", generation);
+			return false; // shut down
+		}
+		
+		@Override
+		public void run() {
+			generation = 0;
+
+			while (runOneGeneration()) {
 				// sleep protects us from 100% CPU in catastrophic failure case
 				logger.warn("FeedUpdater thread sleeping and then restarting itself");
 				try {
 					Thread.sleep(10000);
 				} catch (InterruptedException e1) {
 				}
-				// tail recursion needs to work or this will suck
-				run();
 			}
 		}
 		
