@@ -18,6 +18,9 @@
 #define RB_PLAYING_URI_CHANGED "playingUriChanged"
 #define RB_GET_SONG_PROPERTIES "getSongProperties"
 
+/* banshee messages */
+#define BANSHEE_MUGSHOT_IFACE  "org.gnome.Banshee.Mugshot"
+#define BANSHEE_STATE_CHANGED  "StateChangedEvent"
 
 typedef struct _HippoDBusListener HippoDBusListener;
 
@@ -182,6 +185,15 @@ hippo_dbus_try_to_acquire(const char  *server,
                        RB_PLAYING_URI_CHANGED
                        "'",
                        &derror);
+
+    if (dbus_error_is_set(&derror)) {
+        g_free(bus_name);
+        propagate_dbus_error(error, &derror);
+        /* FIXME leak bus connection since unref isn't allowed */
+        return NULL;
+    }
+
+    dbus_bus_add_match(connection,"type='signal',interface='" BANSHEE_MUGSHOT_IFACE "',member='" BANSHEE_STATE_CHANGED "'",&derror);
     if (dbus_error_is_set(&derror)) {
         g_free(bus_name);
         propagate_dbus_error(error, &derror);
@@ -949,6 +961,57 @@ on_get_song_props_reply(DBusPendingCall *pending,
 }
 
 static void
+handle_banshee_state_changed( HippoDBus   *dbus,
+                              DBusMessage *message)
+{
+
+    int state,duration;
+    const char *artist, *title, *album;
+   
+    if (!dbus_message_get_args(message, NULL,
+                               DBUS_TYPE_INT32, &state,
+                               DBUS_TYPE_STRING, &artist,
+                               DBUS_TYPE_STRING, &title,
+                               DBUS_TYPE_STRING, &album,
+                               DBUS_TYPE_INT32, &duration,
+                               DBUS_TYPE_INVALID)) {
+        g_warning("Banshee stateChanged signal had unexpected arguments");
+        return;                           
+    }
+
+    if (state) {
+
+        HippoSong song;
+        char **keys;
+        char **values;
+
+        keys = g_new0(char*, 5);
+        values = g_new0(char*, 5);
+        
+        keys[0] = g_strdup("name");
+        values[0] = g_strdup(title);
+
+        keys[1] = g_strdup("artist");
+        values[1] = g_strdup(artist);
+
+        keys[2] = g_strdup("album");
+        values[2] = g_strdup(album);
+
+        keys[3] = g_strdup("duration");
+        values[3] = g_strdup_printf("%u",duration);
+
+        song.keys = keys;
+        song.values = values;
+        g_signal_emit(G_OBJECT(dbus), signals[SONG_CHANGED], 0, &song);
+        g_strfreev(keys);
+        g_strfreev(values);
+
+    }
+    else {
+        /*TODO send music stopped signal */
+    }
+}
+static void
 handle_rb_playing_uri_changed(HippoDBus   *dbus,
                               DBusMessage *message)
 {
@@ -1053,7 +1116,7 @@ handle_message(DBusConnection     *connection,
         const char *member = dbus_message_get_member(message);
 
         g_debug("signal from %s %s.%s", sender ? sender : "NULL", interface, member);
-    
+   
         if (dbus_message_has_sender(message, DBUS_SERVICE_DBUS) &&
             dbus_message_is_signal(message, DBUS_INTERFACE_DBUS, "NameLost")) {
             /* If we lose our name, we disconnect and exit */
@@ -1095,6 +1158,8 @@ handle_message(DBusConnection     *connection,
             dbus = NULL;
         } else if (dbus_message_is_signal(message, RB_PLAYER_IFACE, RB_PLAYING_URI_CHANGED)) {
             handle_rb_playing_uri_changed(dbus, message);
+        } else if (dbus_message_is_signal(message, BANSHEE_MUGSHOT_IFACE, BANSHEE_STATE_CHANGED)) {
+            handle_banshee_state_changed(dbus, message);
         }
     } else if (dbus_message_get_type(message) == DBUS_MESSAGE_TYPE_ERROR) {
         hippo_dbus_debug_log_error("main connection handler", message);
