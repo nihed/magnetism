@@ -54,7 +54,6 @@ import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.UserViewpoint;
 import com.dumbhippo.server.WantsInSystem;
 import com.dumbhippo.server.Configuration.PropertyNotFoundException;
-import com.dumbhippo.server.util.EJBUtil;
 
 @Stateless
 public class InvitationSystemBean implements InvitationSystem, InvitationSystemRemote {
@@ -534,27 +533,9 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 				return "Your invitation was not sent.";
 			}
 			
-			// In all the three of the above cases, we want to send a notification				
+			// In all the three of the above cases, we want to send a notification		
 			if (invitee instanceof EmailResource) {
-				runner.runTaskOnTransactionCommit(new Runnable() {
-					public void run() {
-						runner.runTaskInNewTransaction(new Runnable() {
-							public void run() {
-								try {
-									// reload the user for the viewpoint and the invitation token in here, so that 
-									// we know for sure we'll be able to access all their fields,
-									// need to run this task inside a transaction to do the lookups
-								    User userForEmail = EJBUtil.lookupGuid(em, User.class, viewpoint.getViewer().getGuid());
-									UserViewpoint viewpointForEmail = new UserViewpoint(userForEmail);
-								    InvitationToken ivForEmail = em.find(InvitationToken.class, iv.getId());		
-						            sendEmailNotification(viewpointForEmail, ivForEmail, subject, message);
-								} catch (NotFoundException e) {
-									throw new RuntimeException("Could not send and invitation e-mail, viewer for the viewpoint not found", e);
-								}
-							}
-						});
-					}
-				});
+				sendEmailNotification(viewpoint, iv, subject, message);			
 			} else {
 				throw new RuntimeException("no way to send this invite! unhandled resource type " + invitee.getClass().getName());
 			}
@@ -644,8 +625,14 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		messageHtml.append("</body>\n</html>\n");
 		
 		mailer.setMessageContent(msg, subject, messageText.toString(), messageHtml.toString());
-
-		mailer.sendMessage(msg);
+		
+		final MimeMessage finalizedMessage = msg;
+		
+		runner.runTaskOnTransactionCommit(new Runnable() {
+			public void run() {
+		        mailer.sendMessage(finalizedMessage);
+			}
+		});
 	}
 
 	protected void notifyInvitationViewed(InvitationToken invite) {
