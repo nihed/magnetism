@@ -170,6 +170,7 @@
 			
 			<!-- our static pages, css, etc. -->
 			<fileset dir="${web}" includes="html/*.html" />
+			<fileset dir="${web}" includes="html/robots.txt" />
 			<fileset dir="${web}" includes="images*/*.gif" />
 			<fileset dir="${web}" includes="images*/*.png" />
 			<fileset dir="${web}" includes="images*/*.jpg" />

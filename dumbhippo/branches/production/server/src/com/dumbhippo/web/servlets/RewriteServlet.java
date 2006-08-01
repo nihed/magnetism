@@ -343,7 +343,10 @@ public class RewriteServlet extends HttpServlet {
 		} else if (htmlPages.contains(afterSlash)) {
 			// We could eliminate the use of RewrittenRequest entirely by
 			// adding a mapping for *.html to servlet-info.xml
-			newPath = "/html" + path + ".html";
+			if (afterSlash.equals("robots.txt"))
+				newPath = "/html/robots.txt";
+			else
+				newPath = "/html" + path + ".html";
 			RewrittenRequest rewrittenRequest = new RewrittenRequest(request, newPath);
 			context.getNamedDispatcher("default").forward(rewrittenRequest, response);
 		} else if (jspPages.contains(afterSlash)) {
@@ -409,6 +412,8 @@ public class RewriteServlet extends HttpServlet {
 				String path = (String)o;
 				if (path.endsWith(".html") && path.indexOf('/') != -1)
 					htmlPages.add(path.substring(6, path.length() - 5));
+				else if (path.equals("/html/robots.txt")) // special case this special file
+					htmlPages.add("robots.txt");
 			}
 		}		
 	
