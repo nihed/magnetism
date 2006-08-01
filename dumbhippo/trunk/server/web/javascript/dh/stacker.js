@@ -4,7 +4,6 @@ dh.lang = {}
 
 var dhBaseUrl = "http://localinstance.mugshot.org:8080"
 
-
 ///////////////////////// metalinguistic band-aids
 
 dh.lang.mixin = function(obj, props){
@@ -51,6 +50,7 @@ dh.stacker.Block = function(kind) {
 	
 	// the html div
 	this._div = null;
+	this._innerDiv = null;
 	this._titleDiv = null;
 	this._contentDiv = null;
 	this._stackTimeDiv = null;
@@ -98,21 +98,46 @@ defineClass(dh.stacker.Block, null,
 			dojo.dom.textContent(this._stackTimeDiv, d.getHours() + ":" + d.getMinutes() + ":" + d.getSeconds() + ":" + d.getMilliseconds());
 		}
 	},
+
+	createOuterDiv : function() {
+		var d = document.createElement("div");
+		d.style.display = 'none';
+			
+		dojo.html.setClass(d, "dh-stacked-block-outer");
+		
+		return d;
+	},
+	
+	setNewOuterDiv : function(newOuterDiv) {
+		if (this._div == newOuterDiv)
+			return;
+		if (this._innerDiv.parentNode)
+			this._innerDiv.parentNode.removeChild(this._innerDiv);
+		this._div = newOuterDiv;
+
+		// in IE this has the bizarre side effect of setting
+		// this._div.parentNode to a document fragment
+		this._div.appendChild(this._innerDiv);
+		
+		this._cancelFade();		
+	},
 	
 	realize : function() {
 		if (!this._div) {
-			this._div = document.createElement("div");
-			this._div.style.display = 'none';
+			// we have an inner and outer div which helps with the 
+			// "div moving" animation
 			
-			dojo.html.setClass(this._div, "dh-stacked-block");
+			this._innerDiv = document.createElement("div");
+			dojo.html.setClass(this._innerDiv, "dh-stacked-block");
+			this.setNewOuterDiv(this.createOuterDiv());
 
 			this._titleDiv = document.createElement("div");
-			this._div.appendChild(this._titleDiv);
+			this._innerDiv.appendChild(this._titleDiv);
 			dojo.html.setClass(this._titleDiv, "dh-title");
 			this._updateTitleDiv();
 			
 			this._contentDiv = document.createElement("div");
-			this._div.appendChild(this._contentDiv);
+			this._innerDiv.appendChild(this._contentDiv);
 			dojo.html.setClass(this._contentDiv, "dh-content");
 			
 			this._stackTimeDiv = document.createElement("div");
@@ -125,9 +150,12 @@ defineClass(dh.stacker.Block, null,
 	unrealize : function() {
 		if (this._div) {
 			this._cancelFade();
-			this._div.parentNode.removeChild(this._div);
+			if (this._div.parentNode) {
+				this._div.parentNode.removeChild(this._div);
+			}
 			this._div = null;
 			// null these just to aid in gc
+			this._innerDiv = null;
 			this._titleDiv = null;
 			this._contentDiv = null;
 			this._stackTimeDiv = null;
@@ -308,19 +336,47 @@ defineClass(dh.stacker.Stacker, null,
 	},
 
 	// puts the block's div in the right place in _container,
-	// but should not change visibility or anything
+	// and either animates the move or the initial appearance of 
+	// the block
 	_updateBlockDivLocation : function(block) {
 		if (!block._div)
 			throw new Error("block is not realized, can't update location");
 		
-		if (block._div.parentNode)
-			this._container.removeChild(block._div);
-	
+		var oldOuterDiv;
+		var newOuterDiv;
+		if (block._div.parentNode == this._container) {
+			oldOuterDiv = block._div;
+			newOuterDiv = block.createOuterDiv();
+		} else {
+			oldOuterDiv = block._div;
+			newOuterDiv = block._div;
+		}
+
+		if (newOuterDiv.parentNode == this._container)
+			throw new Error("newOuterDiv should not have parentNode");
+			
 		var olderBlock = this._findOlderBlock(block);
+		
+		if (olderBlock == block)
+			throw new Error("found ourselves for olderBlock");
+		
 		if (olderBlock)
-			this._container.insertBefore(block._div, olderBlock._div);
+			this._container.insertBefore(newOuterDiv, olderBlock._div);
 		else
-			this._container.insertBefore(block._div, this._container.firstChild);	
+			this._container.insertBefore(newOuterDiv, this._container.firstChild);	
+			
+		block.setNewOuterDiv(newOuterDiv);
+		
+		if (oldOuterDiv == newOuterDiv) {
+			block.showWithFade();
+		} else {
+			block.show();
+			if (!oldOuterDiv.parentNode)
+				throw new Error("oldOuterDiv has no parent for some reason " + oldOuterDiv);
+			if (oldOuterDiv.parentNode != this._container)
+				throw new Error("old outer div " + oldOuterDiv + " has wrong parent " + oldOuterDiv.parentNode);
+			oldOuterDiv.parentNode.removeChild(oldOuterDiv);
+		}
 	},
 	
 	_updateBlock : function(block) {
@@ -331,8 +387,6 @@ defineClass(dh.stacker.Stacker, null,
 			block.realize();
 			
 			this._updateBlockDivLocation(block);
-			
-			block.showWithFade();
 		} else {
 			// relocate it
 			var j = this._findInsertPosition(block.getStackTime());
