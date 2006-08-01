@@ -50,9 +50,11 @@ import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
 import com.dumbhippo.server.PromotionCode;
 import com.dumbhippo.server.SystemViewpoint;
+import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.UserViewpoint;
 import com.dumbhippo.server.WantsInSystem;
 import com.dumbhippo.server.Configuration.PropertyNotFoundException;
+import com.dumbhippo.server.util.EJBUtil;
 
 @Stateless
 public class InvitationSystemBean implements InvitationSystem, InvitationSystemRemote {
@@ -70,6 +72,9 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 	
 	@EJB
 	private GroupSystem groupSystem;
+	
+	@EJB
+	private TransactionRunner runner;
 	
 	@EJB
 	private IdentitySpider spider;
@@ -503,11 +508,12 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		return iv;
 	}
 	
-	private String sendInvitation(UserViewpoint viewpoint, PromotionCode promotionCode, Resource invitee, String subject, String message) {
+	private String sendInvitation(final UserViewpoint viewpoint, final PromotionCode promotionCode, 
+			                      final Resource invitee, final String subject, final String message) {
 		User inviter = viewpoint.getViewer();
 		Pair<CreateInvitationResult,InvitationToken> p = createInvitation(inviter, promotionCode, invitee, subject, message);
 		CreateInvitationResult result = p.getFirst();
-		InvitationToken iv = p.getSecond();
+		final InvitationToken iv = p.getSecond();
 		String note = null;
 		if (result == CreateInvitationResult.INVITE_WAS_NOT_CREATED) {
 			return "Your invitation was not sent because you are out of invitation vouchers."; 
@@ -530,7 +536,25 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 			
 			// In all the three of the above cases, we want to send a notification				
 			if (invitee instanceof EmailResource) {
-				sendEmailNotification(viewpoint, iv, subject, message);
+				runner.runTaskOnTransactionCommit(new Runnable() {
+					public void run() {
+						runner.runTaskInNewTransaction(new Runnable() {
+							public void run() {
+								try {
+									// reload the user for the viewpoint and the invitation token in here, so that 
+									// we know for sure we'll be able to access all their fields,
+									// need to run this task inside a transaction to do the lookups
+								    User userForEmail = EJBUtil.lookupGuid(em, User.class, viewpoint.getViewer().getGuid());
+									UserViewpoint viewpointForEmail = new UserViewpoint(userForEmail);
+								    InvitationToken ivForEmail = em.find(InvitationToken.class, iv.getId());		
+						            sendEmailNotification(viewpointForEmail, ivForEmail, subject, message);
+								} catch (NotFoundException e) {
+									throw new RuntimeException("Could not send and invitation e-mail, viewer for the viewpoint not found", e);
+								}
+							}
+						});
+					}
+				});
 			} else {
 				throw new RuntimeException("no way to send this invite! unhandled resource type " + invitee.getClass().getName());
 			}
@@ -544,6 +568,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 	}
 	
 	private void sendEmailNotification(UserViewpoint viewpoint, InvitationToken invite, String subject, String message) {
+		
 		User inviter = viewpoint.getViewer();
 		EmailResource invitee = (EmailResource) invite.getInvitee();
 		
