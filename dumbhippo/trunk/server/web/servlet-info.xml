@@ -186,7 +186,7 @@
            they are listed below for completeness -->
       <init-param>
           <param-name>noSignin</param-name>
-          <param-value>comingsoon,error,flash,public-groups,signup,summit,unknownlink,upgrade,who-are-you</param-value>
+          <param-value>comingsoon,error,flash,public-groups,signup,summit,unknownlink,upgrade,who-are-you,robots.txt</param-value>
       </init-param>
       <init-param>
           <param-name>requiresSigninStealth</param-name>
