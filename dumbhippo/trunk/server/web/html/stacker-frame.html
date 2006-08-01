@@ -54,12 +54,24 @@
 				dh.stacker.simulateNewPost(dh.stacker.getInstance(), "Yay! New Post!");
 			}
 		}
+		var dhSimulateMoreViews = function() {
+			with (dhGetStackerScope()) {
+				dh.stacker.simulateMoreViews(dh.stacker.getInstance());
+			}
+		}
+		var dhSimulateNewStackTime = function() {
+			with (dhGetStackerScope()) {
+				dh.stacker.simulateNewStackTime(dh.stacker.getInstance());
+			}
+		}
 	</script>
 </head>
 <body class="dh-body-without-sidebar">
 	<div id="dhDebugButtons">
 		<div>
 			<input type="button" onclick="dhSimulateNewPost()" value="new post"/>
+			<input type="button" onclick="dhSimulateMoreViews()" value="more views"/>
+			<input type="button" onclick="dhSimulateNewStackTime()" value="new activity"/>
 		</div>
 	</div>
 	<div id="dhPage">

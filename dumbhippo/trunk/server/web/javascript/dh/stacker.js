@@ -53,6 +53,7 @@ dh.stacker.Block = function(kind) {
 	this._div = null;
 	this._titleDiv = null;
 	this._contentDiv = null;
+	this._stackTimeDiv = null;
 	
 	// fading
 	this._fadeTimer = null;
@@ -71,16 +72,11 @@ defineClass(dh.stacker.Block, null,
 	
 	setStackTime : function(stackTime) {
 		this._stackTime = stackTime;
+		this._updateStackTimeDiv();
 	},
 	
 	getTitle : function() {
 		return this._title;
-	},
-	
-	_updateTitleDiv : function() {
-		if (this._div) {
-			dojo.dom.textContent(this._titleDiv, this._title);
-		}
 	},
 	
 	setTitle : function(title) {
@@ -88,12 +84,25 @@ defineClass(dh.stacker.Block, null,
 		
 		this._updateTitleDiv();
 	},
+
 	
-	realize : function(parentNode) {
+	_updateTitleDiv : function() {
+		if (this._div) {
+			dojo.dom.textContent(this._titleDiv, this._title);
+		}
+	},
+
+	_updateStackTimeDiv : function() {
+		if (this._div) {
+			var d = new Date(this._stackTime);
+			dojo.dom.textContent(this._stackTimeDiv, d.getHours() + ":" + d.getMinutes() + ":" + d.getSeconds() + ":" + d.getMilliseconds());
+		}
+	},
+	
+	realize : function() {
 		if (!this._div) {
 			this._div = document.createElement("div");
 			this._div.style.display = 'none';
-			parentNode.insertBefore(this._div, parentNode.firstChild);
 			
 			dojo.html.setClass(this._div, "dh-stacked-block");
 
@@ -105,6 +114,11 @@ defineClass(dh.stacker.Block, null,
 			this._contentDiv = document.createElement("div");
 			this._div.appendChild(this._contentDiv);
 			dojo.html.setClass(this._contentDiv, "dh-content");
+			
+			this._stackTimeDiv = document.createElement("div");
+			this._contentDiv.appendChild(this._stackTimeDiv);
+			dojo.html.setClass(this._stackTimeDiv, "dh-timestamp");
+			this._updateStackTimeDiv();
 		}
 	},
 	
@@ -116,6 +130,7 @@ defineClass(dh.stacker.Block, null,
 			// null these just to aid in gc
 			this._titleDiv = null;
 			this._contentDiv = null;
+			this._stackTimeDiv = null;
 		}
 	},
 
@@ -194,9 +209,9 @@ defineClass(dh.stacker.PostBlock, dh.stacker.Block,
 		}
 	},
 	
-	realize : function(parentNode) {
+	realize : function() {
 		if (!this._div) {
-			dh.stacker.PostBlock.superclass.realize.call(this, parentNode);
+			dh.stacker.PostBlock.superclass.realize.call(this);
 			this._viewsDiv = document.createElement("div");
 			this._contentDiv.appendChild(this._viewsDiv);
 			dojo.html.setClass(this._viewsDiv, "dh-views-count");
@@ -226,7 +241,7 @@ defineClass(dh.stacker.MusicBlock, dh.stacker.Block,
 
 dh.stacker.Stacker = function() {
 	this._container = null;
-	// end of list is top of the screen
+	// end of list is top of the screen, highest stackTime
 	this._stack = [];
 	this._postBlocksById = {};
 }
@@ -262,12 +277,72 @@ defineClass(dh.stacker.Stacker, null,
 		return -1;
 	},
 	
+	_findInsertPosition : function(stackTime) {
+		var i;
+		for (i = 0; i < this._stack.length; ++i) {
+			if (this._stack[i].getStackTime() > stackTime)
+				break;
+		}
+  		// insert before current i; before stack.length for append
+		return i;
+	},
+	
+	_findNewerBlock : function(block) {
+		var i = this._findBlockInStack(block);
+		if (i < 0)
+			throw new Error("can't find block after because argument not in stack");
+		if (i == this._stack.length - 1)
+			return null;
+		else
+			return this._stack[i+1];
+	},
+	
+	_findOlderBlock : function(block) {
+		var i = this._findBlockInStack(block);
+		if (i < 0)
+			throw new Error("can't find block before because argument not in stack");
+		if (i == 0)
+			return null;
+		else
+			return this._stack[i-1];
+	},
+
+	// puts the block's div in the right place in _container,
+	// but should not change visibility or anything
+	_updateBlockDivLocation : function(block) {
+		if (!block._div)
+			throw new Error("block is not realized, can't update location");
+		
+		if (block._div.parentNode)
+			this._container.removeChild(block._div);
+	
+		var olderBlock = this._findOlderBlock(block);
+		if (olderBlock)
+			this._container.insertBefore(block._div, olderBlock._div);
+		else
+			this._container.insertBefore(block._div, this._container.firstChild);	
+	},
+	
 	_updateBlock : function(block) {
 		var i = this._findBlockInStack(block);
 		if (i < 0) {
-			this._stack.push(block);
-			block.realize(this._container);
+			var j = this._findInsertPosition(block.getStackTime());
+			this._stack.splice(j, 0, block);
+			block.realize();
+			
+			this._updateBlockDivLocation(block);
+			
 			block.showWithFade();
+		} else {
+			// relocate it
+			var j = this._findInsertPosition(block.getStackTime());
+			if ((i + 1) != j) {
+				this._stack.splice(i, 1);
+				this._stack.splice(j, 0, block);
+				if (block._div) {
+					this._updateBlockDivLocation(block);
+				}
+			}
 		}
 	}
 
@@ -290,4 +365,27 @@ dh.stacker.getFakeGuid = function() {
 
 dh.stacker.simulateNewPost = function(stacker, title) {
 	stacker.onPostChanged(dh.stacker.getFakeGuid(), title, new Date().getTime(), 1);
+}
+
+dh.stacker.getRandomBlock = function(stacker) {
+	if (stacker._stack.length == 0)
+		return;
+	var r = Math.random();
+	var i = Math.floor(r * stacker._stack.length);
+	if (i >= stacker._stack.length || i < 0)
+		throw new Error("generated bad random index " + i + " random " + r + " len " + stacker._stack.length);
+	var block = stacker._stack[i];
+	return block;
+}
+
+dh.stacker.simulateMoreViews = function(stacker) {
+	var block = dh.stacker.getRandomBlock(stacker);
+	stacker.onPostChanged(block.getPostId(), block.getTitle(), block.getStackTime(), 
+							block.getViewerCount() + 1);
+}
+
+dh.stacker.simulateNewStackTime = function(stacker) {
+	var block = dh.stacker.getRandomBlock(stacker);
+	stacker.onPostChanged(block.getPostId(), block.getTitle(), new Date().getTime(), 
+							block.getViewerCount());
 }
