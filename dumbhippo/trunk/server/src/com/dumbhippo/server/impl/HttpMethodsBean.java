@@ -13,8 +13,11 @@ import java.net.URL;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Set;
 
 import javax.annotation.EJB;
@@ -95,6 +98,12 @@ import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.util.FeedScraper;
 import com.dumbhippo.services.FlickrUser;
 import com.dumbhippo.services.FlickrWebServices;
+import com.dumbhippo.statistics.ColumnDescription;
+import com.dumbhippo.statistics.ColumnMap;
+import com.dumbhippo.statistics.Row;
+import com.dumbhippo.statistics.StatisticsService;
+import com.dumbhippo.statistics.StatisticsSet;
+import com.dumbhippo.statistics.Timescale;
 
 @Stateless
 public class HttpMethodsBean implements HttpMethods, Serializable {
@@ -1597,5 +1606,117 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, e.getMessage());
 		}
 		external.setSentiment(Sentiment.LOVE);
+	}
+
+	private StatisticsService getStatisticsService() throws XmlMethodException {
+		// This probably should be using JNDI, or MX, or EJB injection, but the static
+		// member variable in StatisticsService is sufficient for now and simple
+		StatisticsService service = StatisticsService.getInstance();
+		if (service == null)
+			throw new XmlMethodException(XmlMethodErrorCode.NOT_READY, "Statistics Service isn't started");
+		
+		return service;
+	}
+		
+	public void getStatisticsSets(XmlBuilder xml, UserViewpoint viewpoint) throws IOException, XmlMethodException {
+		List<StatisticsSet> sets = getStatisticsService().listSets();
+		
+		xml.openElement("statisticsSets");
+		for (StatisticsSet set : sets) {
+			xml.openElement("statisticsSet");
+			xml.appendTextNode("filename", set.getFilename());
+			xml.appendTextNode("hostname", set.getHostName());
+			xml.appendTextNode("startTime", Long.toString(set.getStartDate().getTime()));
+			xml.appendTextNode("endTime", Long.toString(set.getEndDate().getTime()));
+			xml.openElement("columns");
+			for (ColumnDescription column : set.getColumns()) {
+				xml.openElement("column", "id", column.getId(), "units", column.getUnits().name(), "type", column.getType().name());
+				xml.appendTextNode("name", column.getName());
+				xml.closeElement();
+			}
+			xml.closeElement();
+			xml.closeElement();
+			
+		}
+		xml.closeElement();
+	}
+	
+	public void getStatistics(XmlBuilder xml, UserViewpoint viewpoint, String filename, String columns, String startString, String endString, String timescaleString) throws IOException, XmlMethodException {
+		StatisticsSet set;
+
+		try {
+			if (filename != null)
+				 set = getStatisticsService().getSet(filename);
+			else
+				set = getStatisticsService().getCurrentSet();
+		} catch (NoSuchElementException e) {
+			throw new XmlMethodException(XmlMethodErrorCode.NOT_FOUND, "Statistics set '" + filename + "' not found");
+		}
+		
+		String[] columnNames = columns.split(",");
+		int[] columnIndexes = new int[columnNames.length];
+		ColumnMap columnMap = set.getColumns();
+		
+		for (int i = 0; i < columnNames.length; i++) {
+			String columnName = columnNames[i];
+			try {
+				columnIndexes[i] = columnMap.getIndex(columnName);
+			} catch (NoSuchElementException e) {
+				throw new XmlMethodException(XmlMethodErrorCode.NOT_FOUND, "Column '" + columnName + "' not found");
+			}
+		}
+		
+		Date start;
+		if (startString != null) {
+			try {
+				start = new Date(Long.parseLong(startString));
+			} catch (NumberFormatException e) {
+				throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, "Bad start time '" + startString + "'");
+			}
+		} else {
+			start = set.getStartDate();
+		}
+			
+		Date end;
+		if (endString != null) {
+			try {
+				end = new Date(Long.parseLong(endString));
+			} catch (NumberFormatException e) {
+				throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, "Bad end time '" + endString + "'");
+			}			
+		} else {
+			end = set.getEndDate();
+		}
+		
+		int timescaleSeconds;
+		if (timescaleString != null) {
+			try {
+				timescaleSeconds = Integer.parseInt(timescaleString);
+				
+			} catch (NumberFormatException e) {
+				throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, "Bad timescale seconds value '" + timescaleString + "'");
+			}
+		} else {
+			// If the user doesn't specify a timescale, try to get about 100 points
+			timescaleSeconds = (int)(end.getTime() - start.getTime()) / 1000 / 100;
+		}
+		
+		Timescale timescale = Timescale.get(timescaleSeconds);
+		
+		xml.openElement("statistics", "timescale", Integer.toString(timescale.getSeconds()));
+		
+		Iterator<Row> iterator = set.getIterator(start, end, timescale, columnIndexes);
+		while (iterator.hasNext()) {
+			Row row = iterator.next();
+			xml.openElement("row", "time", Long.toString(row.getDate().getTime()));
+			for (int i = 0; i < columnIndexes.length; i++) {
+				if (i != 0)
+					xml.append(',');
+				xml.append(Long.toString(row.value(i)));
+			}
+			xml.closeElement();
+		}
+		
+		xml.closeElement();
 	}
 }

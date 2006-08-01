@@ -31,6 +31,7 @@ import com.dumbhippo.web.DisabledSigninBean;
 import com.dumbhippo.web.RewrittenRequest;
 import com.dumbhippo.web.SigninBean;
 import com.dumbhippo.web.WebEJBUtil;
+import com.dumbhippo.web.WebStatistics;
 
 public class RewriteServlet extends HttpServlet {
 	@SuppressWarnings("unused")
@@ -129,9 +130,12 @@ public class RewriteServlet extends HttpServlet {
 			SigninBean.getForRequest(request).resetSessionObjects();
 			
 			context.getRequestDispatcher(newPath).forward(request, response);
+			WebStatistics.getInstance().incrementJspPagesServed();
 			
 			logger.debug("Handled {} in {} milliseconds", newPath, System.currentTimeMillis() - startTime);
 		} catch (Throwable t) {
+			WebStatistics.getInstance().incrementJspPageErrors();
+			
 			try {
 				// We don't try to duplicate the complicated EJB logic for whether
 				// the transaction should be rolled back; we just roll it back
