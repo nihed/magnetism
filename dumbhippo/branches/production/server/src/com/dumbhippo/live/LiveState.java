@@ -508,8 +508,6 @@ public class LiveState {
 			userCache.addStrongReference(liveUser);
 		}
 		userCache.update(liveUser);
-		AccountSystem accounts = EJBUtil.defaultLookup(AccountSystem.class);
-		accounts.touchLoginDate(userId);
 	}
 
 	// Internal function to update the availability count for the user;
