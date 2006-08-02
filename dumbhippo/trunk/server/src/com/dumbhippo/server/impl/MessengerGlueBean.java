@@ -65,6 +65,7 @@ import com.dumbhippo.server.PromotionCode;
 import com.dumbhippo.server.SystemViewpoint;
 import com.dumbhippo.server.TrackView;
 import com.dumbhippo.server.UserViewpoint;
+import com.dumbhippo.server.util.EJBUtil;
 
 @Stateless
 public class MessengerGlueBean implements MessengerGlueRemote {
@@ -223,6 +224,18 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 			}
 			
 			server.userAvailable(account.getOwner().getGuid());
+
+			// FIXME: Updating the last-logged-in-date here means we'll update it if the
+			// Jive/JBoss connection is lost; doing it in LiveState would sometimes
+			// prevent that, but it's bad to modify the database from LiveState.
+			//
+			// The right thing is to pass an extra parameter in here that
+			// says whether the user is newly logged in to the Jive server, or
+			// whether the jive server is just reconnecting to the JBoss server.
+			//
+			// In any case, last-logged-in date is mostly interesting as an 
+			// approximation to last-logged-out date.
+			accountSystem.touchLoginDate(account.getOwner().getGuid());
 			
 			if (!account.getWasSentShareLinkTutorial()) {
 				logger.debug("We have a new user!!!!! WOOOOOOOOOOOOHOOOOOOOOOOOOOOO send them tutorial!");
