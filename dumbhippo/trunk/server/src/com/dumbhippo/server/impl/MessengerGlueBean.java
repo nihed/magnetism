@@ -95,10 +95,19 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 	@EJB
 	private ExternalAccountSystem externalAccounts;
 	
+	static final long EXECUTION_WARN_MILLISECONDS = 5000;
+	
 	@AroundInvoke
-	public Object catchRuntimeExceptions(InvocationContext ctx) throws Exception {
+	public Object timeAndCatchRuntimeExceptions(InvocationContext ctx) throws Exception {
 		try {
-			return ctx.proceed();
+			long start = System.currentTimeMillis();
+			Object result = ctx.proceed();
+			long end = System.currentTimeMillis();
+			if (end - start > EXECUTION_WARN_MILLISECONDS) {
+				logger.warn("Execution of MessengerGlueBean.{} took {} milliseconds", 
+				  	        ctx.getMethod().getName(), end - start);
+			}
+			return result;
 		} catch (RuntimeException e) {
 			logger.error("Unexpected exception: " + e.getMessage(), e);
 			// create a new RuntimeException that won't have any types the XMPP server 
