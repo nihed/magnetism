@@ -15,7 +15,7 @@ public class LiveStatistics implements StatisticsSource {
 			units=ColumnUnit.COUNT, 
 			type=ColumnType.SNAPSHOT)
 	public long getAvailableUserCount() {
-		return LiveState.getInstance().getLiveUserAvailableSnapshot().size();
+		return LiveState.getInstance().getLiveUserAvailableCount();
 	}	
 
 	@Column(id="cachedUserCount",
@@ -23,7 +23,7 @@ public class LiveStatistics implements StatisticsSource {
 			units=ColumnUnit.COUNT, 
 			type=ColumnType.SNAPSHOT)
 	public long getCachedUserCount() {
-		return LiveState.getInstance().getLiveUserCacheSnapshot().size();
+		return LiveState.getInstance().getLiveUserCount();
 	}
 	
 	@Column(id="cachedPostCount",
@@ -31,6 +31,6 @@ public class LiveStatistics implements StatisticsSource {
 			units=ColumnUnit.COUNT, 
 			type=ColumnType.SNAPSHOT)
 	public long getCachePostCount() {
-		return LiveState.getInstance().getLivePostSnapshot().size();
+		return LiveState.getInstance().getLivePostCount();
 	}	
 }

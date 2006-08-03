@@ -128,7 +128,13 @@ public class LiveState {
 	public Set<LiveUser> getLiveUserCacheSnapshot() {
 		return userCache.getAllObjects(false);
 	}
-	
+
+	/**
+	 * Returns the number of LiveUser objects in the memory cache
+	 */
+	public int getLiveUserCount() {
+		return userCache.getObjectCount(false);
+	}
 
 	/**
 	 * Returns a snapshot of the current set of available users.
@@ -136,6 +142,13 @@ public class LiveState {
 	public Set<LiveUser> getLiveUserAvailableSnapshot() {
 		return userCache.getAllObjects(true);
 	}	
+	
+	/**
+	 * Returns the number of available users
+	 */
+	public int getLiveUserAvailableCount() {
+		return userCache.getObjectCount(true);
+	}
 
 	/**
 	 * Locate or create a LivePost cache object for a particular user.
@@ -169,8 +182,19 @@ public class LiveState {
 		postCache.update(post);	
 	}	
 	
+	/**
+	 * Returns a snapshot of the current set of LivePost objects in
+	 * the memory cache.
+	 */
 	public Set<LivePost> getLivePostSnapshot() {
 		return postCache.getAllObjects(false);
+	}
+	
+	/**
+	 * Returns the number of LiveUser objects in the memory cache
+	 */
+	public int getLivePostCount() {
+		return postCache.getObjectCount(false);
 	}
 
 	/**
@@ -545,7 +569,7 @@ public class LiveState {
 	 * The normal way to run this is from the admin console
 	 * 
 	 *  com.dumbhippo.live.LiveState.verboseLogging = true;
-	 *  com.dumbhippo.live.LiveState.stressTest();
+	 *  com.dumbhippo.live.LiveState.getInstance().stressTest();
 	 */
 	public void stressTest() {
 		final List<Guid> toLookup = new ArrayList<Guid>();

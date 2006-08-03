@@ -253,7 +253,7 @@ class LiveObjectCache<T extends LiveObject> {
 	 * @param strongOnly if true, only return strongly referenced objects
 	 * @return a set of the objects currently in the cache
 	 */
-	public Set<T> getAllObjects(boolean strongOnly) {
+	public synchronized Set<T> getAllObjects(boolean strongOnly) {
 		Set<T> result = new HashSet<T>();
 		
 		for (CacheEntry<T> entry : entries.values()) {
@@ -266,6 +266,28 @@ class LiveObjectCache<T extends LiveObject> {
 		}
 		
 		return result;
+	}
+	
+	/**
+	 * Count the number of objects in the cache
+	 * @param strongOnly if true, only count strongly referenced objects
+	 * @return the number of cached objects (this number is approximate;
+	 *   cache entries that are in the process of being created will be
+	 *   counted)
+	 */
+	public synchronized int getObjectCount(boolean strongOnly) {
+		if (strongOnly) {
+			int count = 0;
+			
+			for (CacheEntry<T> entry : entries.values()) {
+				if (entry.strongCount > 0)
+					count++;
+			}
+			
+			return count;
+		} else{
+			return entries.size();
+		}
 	}
 	
 	/**
