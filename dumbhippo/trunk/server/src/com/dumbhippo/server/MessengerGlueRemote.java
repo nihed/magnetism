@@ -315,4 +315,6 @@ public interface MessengerGlueRemote {
 	public String getGroupXML(Guid username, Guid groupid) throws NotFoundException;
 
 	public void addGroupMember(Guid user, Guid groupId, Guid invitee) throws NotFoundException;
+
+	public boolean isServerTooBusy();
 }
