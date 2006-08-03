@@ -60,9 +60,6 @@ public class LiveUser extends LiveObject {
 		this.hotness = hotness;
 	}
 	
-	public void discard() {
-	}
-	
 	@Override
 	public Object clone() {
 		try {

@@ -62,10 +62,10 @@ import com.dumbhippo.server.PersonViewExtra;
 import com.dumbhippo.server.PostView;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.PromotionCode;
+import com.dumbhippo.server.ServerStatus;
 import com.dumbhippo.server.SystemViewpoint;
 import com.dumbhippo.server.TrackView;
 import com.dumbhippo.server.UserViewpoint;
-import com.dumbhippo.server.util.EJBUtil;
 
 @Stateless
 public class MessengerGlueBean implements MessengerGlueRemote {
@@ -92,6 +92,9 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 	
 	@EJB
 	private GroupSystem groupSystem;
+	
+	@EJB
+	private ServerStatus serverStatus;
 	
 	@EJB
 	private ExternalAccountSystem externalAccounts;
@@ -677,6 +680,10 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 		GroupView groupView = groupSystem.loadGroup(viewpoint, groupId);
 		User invitee = getUserFromGuid(inviteeId);		
 		groupSystem.addMember(user, groupView.getGroup(), invitee);
+	}
+
+	public boolean isServerTooBusy() {
+		return serverStatus.throttleXmppConnections(); 
 	}
 
 }

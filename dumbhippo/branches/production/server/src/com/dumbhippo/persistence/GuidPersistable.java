@@ -25,7 +25,6 @@ public abstract class GuidPersistable implements Serializable {
 	private Guid guid;
 	
 	protected GuidPersistable() {
-		setGuid(Guid.createNew());
 	}
 	
 	protected GuidPersistable(Guid guid) {
@@ -39,7 +38,9 @@ public abstract class GuidPersistable implements Serializable {
 	
 	@Transient
 	public Guid getGuid() {
-		assert guid != null;
+		if (guid == null) {
+			setGuid(Guid.createNew());
+		}
 		return guid;
 	}
 
@@ -48,13 +49,19 @@ public abstract class GuidPersistable implements Serializable {
 	public boolean equals(Object arg0) {
 		if (!(arg0 instanceof GuidPersistable))
 			return false;
+		if (arg0 == this)
+			return true;
+		// If the argument is not actually the same object, and
+		// we haven't generated a guid yet, they cannot be equal
+		if (guid == null)
+			return false;
 		return ((GuidPersistable) arg0).getGuid().equals(guid);
 	}
 
 	/* Should be final, except this makes Hibernate CGLIB enhancement barf */	
 	@Override
 	public int hashCode() {
-		return guid.hashCode();
+		return getGuid().hashCode();
 	}
 
 	/** 

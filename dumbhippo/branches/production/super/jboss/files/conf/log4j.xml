@@ -49,6 +49,29 @@
    <!-- Preserve messages in a local file -->
    <!-- ================================= -->
 
+   <appender name="ERROR" class="org.jboss.logging.appender.DailyRollingFileAppender">
+      <errorHandler class="org.jboss.logging.util.OnlyOnceErrorHandler"/>
+      <param name="File" value="${jboss.server.home.dir}/log/error.log"/>
+       <!-- don't truncate, just append -->
+      <param name="Append" value="true"/>
+      <param name="Threshold" value="WARN"/>
+
+      <!-- Rollover at midnight each day -->
+      <param name="DatePattern" value="'.'yyyy-MM-dd"/>
+
+      <layout class="org.apache.log4j.PatternLayout">
+	     <param name="ConversionPattern" value="%d{ABSOLUTE} %-5p [%c] (%t): %m%n"/>
+         
+         <!-- The default pattern: Date Priority [Category] Message\n -->
+         <!-- <param name="ConversionPattern" value="%d %-5p [%c] %m%n"/>
+         -->
+
+         <!-- The full pattern: Date MS Priority [Category] (Thread:NDC) Message\n
+         <param name="ConversionPattern" value="%d %-5r %-5p [%c] (%t:%x) %m%n"/>
+          -->
+      </layout>
+   </appender>
+
    <!-- A time/date based rolling appender -->
    <!--  jboss DailyRollingFileAppender is just a subclass of the standard log4j one that 
    		also creates directories as needed or something like that -->
@@ -215,6 +238,7 @@
       	<!-- this gets overridden for various specific sub-loggers above -->
 	  	<priority value="@@rootLogLevel@@"/>
       	<appender-ref ref="FILE"/>
+      	<appender-ref ref="ERROR"/>      	
    </root>
 
 </log4j:configuration>

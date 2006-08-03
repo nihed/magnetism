@@ -33,6 +33,7 @@ import com.dumbhippo.web.LoginCookie;
 import com.dumbhippo.web.SigninBean;
 import com.dumbhippo.web.UserSigninBean;
 import com.dumbhippo.web.WebEJBUtil;
+import com.dumbhippo.web.WebStatistics;
 
 public class HttpMethodsServlet extends AbstractServlet {
 
@@ -307,6 +308,8 @@ public class HttpMethodsServlet extends AbstractServlet {
 					Throwable rootCause = ExceptionUtils.getRootCause(e);
 					logger.error("Exception root cause " + rootCause.getClass().getName() + " thrown by invoked method: " + rootCause.getMessage(), rootCause);
 					
+					WebStatistics.getInstance().incrementHttpMethodErrors();
+
 					if (cause instanceof HumanVisibleException) {
 						HumanVisibleException visibleException = (HumanVisibleException) cause;
 						if (requestedContentType.equals(HttpResponseData.XMLMETHOD)) {
@@ -327,6 +330,9 @@ public class HttpMethodsServlet extends AbstractServlet {
 						throw new RuntimeException(e);
 					}
 				}
+				
+				if (!trappedError)
+					WebStatistics.getInstance().incrementHttpMethodsServed();
 				
 				// The point of the allowDisabledUser annotations is to allow methods that
 				// take a user from the disabled state to the enabled state; once we are

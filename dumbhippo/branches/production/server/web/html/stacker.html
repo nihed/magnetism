@@ -1,0 +1,90 @@
+<html>
+
+<head>
+	<title>Mugshot Stacker</title>
+	<link rel="stylesheet" type="text/css" href="../css2/site.css"></link>
+	<script>
+// Rather than turning this on globally, it's probably better to
+// add 'djConfig.isDebug = true' to the page your are editing 
+// immediately after including config.js
+var dhDebug = false;
+var dhServerUri = "../";
+var dhScriptRoot = dhServerUri + "javascript/";
+var dhImageRoot = dhServerUri + "images/";
+var dhImageRoot2 = dhServerUri + "images2/";
+if (dhDebug && document.location.toString().substring(0,5) == "file:") {
+	// typical developer setup would use this
+	dhServerUri = "http://127.0.0.1:8080/";
+	dhScriptRoot = "javascript/";
+}
+var dhXmlRoot = dhServerUri + "xml/";
+var dhXmlRpcRoot = dhServerUri + "xmlrpc/";
+var dhTextRoot = dhServerUri + "text/";
+var dhPostRoot = dhServerUri + "action/";
+var dhUploadRoot = dhServerUri + "upload/";
+var dhFilesRoot = dhServerUri + "files/";
+
+// configure Dojo; don't put anything here we expect to change, instead make a 
+// dh variable above then slave djConfig to it.
+var djConfig = { 
+	isDebug: dhDebug,
+	preventBackButtonFix: true,
+//  this loads browser_debug.js which makes module loading a no-op?
+//	debugAtAllCosts: true,
+	baseScriptUri: dhScriptRoot + "dojo/",
+	bindEncoding: "UTF-8" // For post submission. Default is mangled ASCII
+};	
+	</script>
+	<script src="../javascript/dojo/dojo.js" type="text/javascript"></script>
+	<script src="../javascript/common.js" type="text/javascript"></script>	
+	<script src="../javascript/dojo/src/html.js" type="text/javascript"></script>	
+	<script src="../javascript/dh/stacker.js"></script>
+	<style type="text/css">
+		body {
+			/* firefox sets a default body margin of 8px */
+			margin:				0px;
+		}
+		#dhStackerBackground {
+			position:			relative;		
+			background-color:	white;
+			overflow:			hidden;
+			margin:				0px;
+			padding:			0px;
+		}
+		.dh-stacked-block-outer {
+			position:			relative;		
+			margin-bottom:		6px;
+			/* for opacity to work in IE you have to set width or height, or use position absolute */
+			width:				480px;
+		}		
+		.dh-stacked-block {
+			position:			relative;		
+			background-color:	blue;
+			color:				white;
+			text-align:			left;
+			/* for opacity to work in IE you have to set width or height, or use position absolute */
+			width:				480px;
+		}
+		.dh-stacked-block .dh-title {
+			position:			relative;
+		}
+		.dh-stacked-block .dh-content {
+			position:			relative;
+			background-color: 	aqua;
+			margin:				1px;
+		}
+	</style>
+	<script>
+		var dhStackerInit = function() {
+			var stacker = dh.stacker.getInstance();
+			stacker.setContainer(document.getElementById('dhStackerBackground'));
+			dh.stacker.simulateNewPost(stacker, "Awesome Link!");
+			dh.stacker.simulateNewPost(stacker, "Back to the future");
+			dh.stacker.simulateNewPost(stacker, "Wrongness");
+		}
+	</script>
+</head>
+<body onload="dhStackerInit();">
+	<div id="dhStackerBackground">
+	</div>
+</body>

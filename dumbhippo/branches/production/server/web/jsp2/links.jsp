@@ -55,12 +55,24 @@
 					</c:choose>
 					<dht:zoneBoxSeparator/>
 
+					<c:choose>
+						<c:when test="${links.receivedFeedPosts.resultCount > 0}">
+							<dht:zoneBoxTitle a="dhReceivedFeedPosts">YOUR FEEDS</dht:zoneBoxTitle>
+							<dht:postList posts="${links.receivedFeedPosts.results}" format="full" favesMode="add-only"/>
+							<dht:expandablePager pageable="${links.receivedFeedPosts}" anchor="dhReceivedFeedPosts"/>
+							<dht:zoneBoxSeparator/>
+						</c:when>
+						<c:otherwise>
+							<%-- nothing --%>
+						</c:otherwise>
+					</c:choose>
+
 					<dht:requireLinksGlobalBean/>
 					<dht:zoneBoxTitle a="dhRecentlyShared">RECENTLY SHARED</dht:zoneBoxTitle>
 					<c:choose>
-						<c:when test="${linksGlobal.hotPosts.resultCount > 0}">
-							<dht:postList posts="${linksGlobal.hotPosts.results}" format="full" favesMode="add-only"/>
-	 					    <dht:expandablePager pageable="${linksGlobal.hotPosts}" anchor="dhRecentlyShared"/>
+						<c:when test="${linksGlobal.recentPosts.resultCount > 0}">
+							<dht:postList posts="${linksGlobal.recentPosts.results}" format="full" favesMode="add-only"/>
+	 					    <dht:expandablePager pageable="${linksGlobal.recentPosts}" anchor="dhRecentlyShared"/>
 						</c:when>
 						<c:otherwise>
 							Nobody anywhere has ever shared anything!
@@ -94,8 +106,8 @@
 					<dht:zoneBoxSeparator/>
 					<dht:requireLinksGlobalBean/>
 					<dht:zoneBoxTitle a="dhRecentlyShared">RECENTLY SHARED</dht:zoneBoxTitle>
-					<dht:postList posts="${linksGlobal.hotPosts.results}" format="full"/>
-					<dht:expandablePager pageable="${linksGlobal.hotPosts}" anchor="dhRecentlyShared"/>
+					<dht:postList posts="${linksGlobal.recentPosts.results}" format="full"/>
+					<dht:expandablePager pageable="${linksGlobal.recentPosts}" anchor="dhRecentlyShared"/>
 					<%-- not implemented yet 	
 					<dht:zoneBoxTitle>QUIPS</dht:zoneBoxTitle>
 					FIXME

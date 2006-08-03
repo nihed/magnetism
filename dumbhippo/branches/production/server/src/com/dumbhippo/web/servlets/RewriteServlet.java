@@ -27,10 +27,12 @@ import org.slf4j.Logger;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HippoProperty;
+import com.dumbhippo.server.ServerStatus;
 import com.dumbhippo.web.DisabledSigninBean;
 import com.dumbhippo.web.RewrittenRequest;
 import com.dumbhippo.web.SigninBean;
 import com.dumbhippo.web.WebEJBUtil;
+import com.dumbhippo.web.WebStatistics;
 
 public class RewriteServlet extends HttpServlet {
 	@SuppressWarnings("unused")
@@ -60,7 +62,8 @@ public class RewriteServlet extends HttpServlet {
 	private List<String> psaLinks; // used to choose a random one
 	private int nextPsa;
 	
-	private ServletContext context; 
+	private ServletContext context;
+	private ServerStatus serverStatus;
 	
 	private boolean hasSignin(HttpServletRequest request) {
 		return SigninBean.getForRequest(request).isValid();
@@ -98,6 +101,12 @@ public class RewriteServlet extends HttpServlet {
 		//
 		// While we are add it, we time the page for performancing monitoring
 		
+		// If the server says it's too busy, just redirect to a busy page
+		if (serverStatus.isTooBusy()) {
+			context.getRequestDispatcher("/jsp2/busy.jsp").forward(request, response);
+			return;
+		}
+		
 		boolean transactionCreated = false;
 		long startTime = System.currentTimeMillis();
 		UserTransaction tx;
@@ -129,9 +138,12 @@ public class RewriteServlet extends HttpServlet {
 			SigninBean.getForRequest(request).resetSessionObjects();
 			
 			context.getRequestDispatcher(newPath).forward(request, response);
+			WebStatistics.getInstance().incrementJspPagesServed();
 			
 			logger.debug("Handled {} in {} milliseconds", newPath, System.currentTimeMillis() - startTime);
 		} catch (Throwable t) {
+			WebStatistics.getInstance().incrementJspPageErrors();
+			
 			try {
 				// We don't try to duplicate the complicated EJB logic for whether
 				// the transaction should be rolled back; we just roll it back
@@ -372,6 +384,8 @@ public class RewriteServlet extends HttpServlet {
 		ServletConfig config = getServletConfig();
 		context = config.getServletContext();
 
+		serverStatus = WebEJBUtil.defaultLookup(ServerStatus.class);
+		
         Configuration configuration = WebEJBUtil.defaultLookup(Configuration.class);
         
 		String stealthModeString = configuration.getProperty(HippoProperty.STEALTH_MODE);

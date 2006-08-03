@@ -62,10 +62,14 @@ public abstract class AbstractCacheBean<KeyType,ResultType> {
 		synchronized (AbstractCacheBean.class) {
 			shutdown = true;
 			
-			for (UniqueTaskExecutor executor : executors.values()) {
-				executor.shutdown();
+			// executors is null if we've never called getExecutorInternal
+			if (executors != null) {
+				for (UniqueTaskExecutor executor : executors.values()) {
+					executor.shutdown();
+				}
+				executors.clear();
+				executors = null;
 			}
-			executors.clear();
 		}
 	}
 	

@@ -3,6 +3,7 @@ package com.dumbhippo.live;
 import javax.annotation.EJB;
 import javax.ejb.Stateless;
 
+import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.MembershipStatus;
 import com.dumbhippo.server.GroupSystem;
@@ -46,17 +47,27 @@ public class LiveGroupUpdaterBean implements LiveGroupUpdater {
 		initializeMemberCount(liveGroup, group);
 	}
 
-	public void groupPostReceived(LiveGroup liveGroup) {
+	public void groupPostReceived(Guid groupGuid) {
 		LiveState state = LiveState.getInstance();
-		LiveGroup newGroup = (LiveGroup) liveGroup.clone();
-		initializeTotalReceivedPosts(newGroup, loadGroup(newGroup));
-		state.updateLiveGroup(newGroup);		
+		LiveGroup liveGroup = state.peekLiveGroupForUpdate(groupGuid);
+		if (liveGroup != null) {
+			try {
+				initializeTotalReceivedPosts(liveGroup, loadGroup(liveGroup));
+			} finally {
+				state.updateLiveGroup(liveGroup);
+			}
+		}
 	}
 
-	public void groupMemberCountChanged(LiveGroup liveGroup) {
+	public void groupMemberCountChanged(Guid groupGuid) {
 		LiveState state = LiveState.getInstance();
-		LiveGroup newGroup = (LiveGroup) liveGroup.clone();
-		initializeMemberCount(newGroup, loadGroup(newGroup));
-		state.updateLiveGroup(newGroup);				
+		LiveGroup liveGroup = state.peekLiveGroupForUpdate(groupGuid);
+		if (liveGroup != null) {
+			try {
+				initializeMemberCount(liveGroup, loadGroup(liveGroup));
+			} finally {
+				state.updateLiveGroup(liveGroup);
+			}
+		}
 	}
 }

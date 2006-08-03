@@ -41,13 +41,10 @@ public class GroupEventProcessor implements LiveEventProcessor {
 	
 	public void process(LiveState state, LiveEvent abstractEvent) {
 		GroupEvent event = (GroupEvent)abstractEvent;
-		LiveGroup liveGroup = state.peekLiveGroup(event.getGroupId());
+		
 		if (event.getEvent() == GroupEvent.Type.MEMBERSHIP_CHANGE) {
-			if (liveGroup != null)
-				groupUpdater.groupMemberCountChanged(liveGroup);
-			LiveUser liveUser = state.peekLiveUser(event.getResourceId());
-			if (liveUser != null)
-				userUpdater.handleGroupMembershipChanged(liveUser);
+			groupUpdater.groupMemberCountChanged(event.getGroupId());
+			userUpdater.handleGroupMembershipChanged(event.getResourceId());
 
 			try {
 				Group group = groupSystem.lookupGroupById(SystemViewpoint.getInstance(), event.getGroupId());
@@ -62,8 +59,7 @@ public class GroupEventProcessor implements LiveEventProcessor {
 						     new Object[]{e.getMessage(), event.getGroupId(), event.getResourceId()});
 			}
 		} else if (event.getEvent() == GroupEvent.Type.POST_ADDED) {
-			if (liveGroup != null)
-				groupUpdater.groupPostReceived(liveGroup);
+			groupUpdater.groupPostReceived(event.getGroupId());
 		}
 	}
 }

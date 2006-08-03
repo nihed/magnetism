@@ -22,6 +22,7 @@ public class LinksPersonPage extends AbstractPersonPage {
 	private Pageable<PostView> favoritePosts;
 	
 	private Pageable<PostView> receivedPosts;
+	private Pageable<PostView> receivedFeedPosts;
 	private Pageable<PostView> sentPosts;
 	
 	private Boolean notifyPublicShares;
@@ -37,6 +38,15 @@ public class LinksPersonPage extends AbstractPersonPage {
 			postBoard.pageReceivedPosts(getUserSignin().getViewpoint(), getViewedUser(), receivedPosts);
 		}
 		return receivedPosts;
+	}
+
+	public Pageable<PostView> getReceivedFeedPosts() {
+		if (receivedFeedPosts == null) {
+			logger.debug("Getting received feed posts for {}", getViewedUser());
+			receivedFeedPosts = pagePositions.createPageable("receivedFeedPosts");
+			postBoard.pageReceivedFeedPosts(getUserSignin().getViewpoint(), getViewedUser(), receivedFeedPosts);
+		}
+		return receivedFeedPosts;
 	}
 	
 	public Pageable<PostView> getFavoritePosts() {

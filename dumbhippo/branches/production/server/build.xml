@@ -154,6 +154,7 @@
 			<!-- our javascript code -->
 			<fileset dir="${web}" includes="javascript/*.js"/>
 			<fileset dir="${web}" includes="javascript/dh/*.js"/>
+			<fileset dir="${web}" includes="javascript/dh/statistics/*.js"/>
 
 			<!-- dojo.js is either in target/javascript (if compressed) 
 				or web/javascript (if not) -->
@@ -208,6 +209,7 @@
 				<include name="**/services/*.class" />
 				<include name="**/server/**/*.class" />
 				<include name="**/server/**/*.properties" />
+				<include name="**/statistics/**/*.class" />
 			</fileset>
 			<manifest>
 				<attribute name="Class-Path" value="${bundled-classpath}" />

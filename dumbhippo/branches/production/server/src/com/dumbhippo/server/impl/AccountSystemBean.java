@@ -104,7 +104,7 @@ public class AccountSystemBean implements AccountSystem {
 	}
 
 	public Set<Account> getActiveAccounts() {
-		Query q = em.createQuery("FROM Account WHERE a.lastLoginTime ");
+		Query q = em.createQuery("SELECT a FROM Account a WHERE a.wasSentShareLinkTutorial = TRUE");
 		
 		Set<Account> accounts = new HashSet<Account>();
 		List list = q.getResultList();

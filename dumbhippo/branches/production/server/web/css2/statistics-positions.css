@@ -1,0 +1,12 @@
+#dhHourSelector {
+     position: fixed; 
+	 top: 10px; 
+	 left: 650px; 
+}
+
+.dh-graph {
+	position: relative;
+	width: 600px; 
+	height: 200px; 
+}
+

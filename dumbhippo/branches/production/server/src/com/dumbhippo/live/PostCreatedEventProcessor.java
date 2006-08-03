@@ -21,7 +21,6 @@ public class PostCreatedEventProcessor implements LiveEventProcessor {
 	
 	public void process(LiveState state, LiveEvent abstractEvent) {
 		PostCreatedEvent event = (PostCreatedEvent)abstractEvent;
-		LiveUser luser = state.getLiveUser(event.getPosterId());
-		userUpdater.handlePostCreated(luser);	
+		userUpdater.handlePostCreated(event.getPosterId());	
 	}
 }

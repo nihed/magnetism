@@ -50,6 +50,7 @@ import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
 import com.dumbhippo.server.PromotionCode;
 import com.dumbhippo.server.SystemViewpoint;
+import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.UserViewpoint;
 import com.dumbhippo.server.WantsInSystem;
 import com.dumbhippo.server.Configuration.PropertyNotFoundException;
@@ -70,6 +71,9 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 	
 	@EJB
 	private GroupSystem groupSystem;
+	
+	@EJB
+	private TransactionRunner runner;
 	
 	@EJB
 	private IdentitySpider spider;
@@ -503,11 +507,12 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		return iv;
 	}
 	
-	private String sendInvitation(UserViewpoint viewpoint, PromotionCode promotionCode, Resource invitee, String subject, String message) {
+	private String sendInvitation(final UserViewpoint viewpoint, final PromotionCode promotionCode, 
+			                      final Resource invitee, final String subject, final String message) {
 		User inviter = viewpoint.getViewer();
 		Pair<CreateInvitationResult,InvitationToken> p = createInvitation(inviter, promotionCode, invitee, subject, message);
 		CreateInvitationResult result = p.getFirst();
-		InvitationToken iv = p.getSecond();
+		final InvitationToken iv = p.getSecond();
 		String note = null;
 		if (result == CreateInvitationResult.INVITE_WAS_NOT_CREATED) {
 			return "Your invitation was not sent because you are out of invitation vouchers."; 
@@ -528,9 +533,9 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 				return "Your invitation was not sent.";
 			}
 			
-			// In all the three of the above cases, we want to send a notification				
+			// In all the three of the above cases, we want to send a notification		
 			if (invitee instanceof EmailResource) {
-				sendEmailNotification(viewpoint, iv, subject, message);
+				sendEmailNotification(viewpoint, iv, subject, message);			
 			} else {
 				throw new RuntimeException("no way to send this invite! unhandled resource type " + invitee.getClass().getName());
 			}
@@ -544,6 +549,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 	}
 	
 	private void sendEmailNotification(UserViewpoint viewpoint, InvitationToken invite, String subject, String message) {
+		
 		User inviter = viewpoint.getViewer();
 		EmailResource invitee = (EmailResource) invite.getInvitee();
 		
@@ -619,8 +625,14 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		messageHtml.append("</body>\n</html>\n");
 		
 		mailer.setMessageContent(msg, subject, messageText.toString(), messageHtml.toString());
-
-		mailer.sendMessage(msg);
+		
+		final MimeMessage finalizedMessage = msg;
+		
+		runner.runTaskOnTransactionCommit(new Runnable() {
+			public void run() {
+		        mailer.sendMessage(finalizedMessage);
+			}
+		});
 	}
 
 	protected void notifyInvitationViewed(InvitationToken invite) {

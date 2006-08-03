@@ -1,14 +1,17 @@
 package com.dumbhippo.live;
 
-import java.lang.ref.ReferenceQueue;
-import java.lang.ref.WeakReference;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import javax.naming.InitialContext;
 import javax.persistence.EntityManager;
@@ -21,14 +24,19 @@ import org.slf4j.Logger;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.jms.JmsProducer;
+import com.dumbhippo.persistence.Account;
 import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HippoProperty;
+import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.util.EJBUtil;
 
 public class LiveState {
 	@SuppressWarnings("unused")
 	static private final Logger logger = GlobalSetup.getLogger(LiveState.class);
+	
+	// This is for poking from the admin console
+	static public boolean verboseLogging = false;
 	
 	private static LiveState theState;
 	
@@ -38,6 +46,9 @@ public class LiveState {
 	// Maximum number of cleaner intervals for each user
 	private static final int MAX_USER_CACHE_AGE = 30;
 	
+	// Maximum number of cleaner intervals for each group
+	private static final int MAX_GROUP_CACHE_AGE = 30;
+
 	// Maximum number of cleaner intervals for each post
 	private static final int MAX_POST_CACHE_AGE = 30;
 	
@@ -59,307 +70,170 @@ public class LiveState {
 		}
 	}
 	
-
-	// Helper object for LiveObjectCache
-	private static class GuidReference<T> extends WeakReference<T> {
-		private Guid guid;
-		
-		GuidReference(T t, Guid guid) {
-			super(t);
-			this.guid = guid;
-		}
-	}
-	
-	/* This class maintains several possible references to a LiveObject.
-	   First, an object can be explicitly strongly referenced; e.g. for
-	   a LiveUser, we strongly reference users which are currently present.
-	   Second, there is a cache of recently touched objects which can 
-	   be updated via the touch method.
-	   Finally, a pure memory cache of the objects is maintained.  This
-	   may be cleared at any time by the JVM if the object is neither
-	   explicitly strongly referenced nor recently touched.
-	*/
-	private static class LiveObjectCache<T extends LiveObject> {
-		private HashMap<Guid, T> strongReferences;
-		private HashMap<Guid, T> recentReferences;
-		private HashMap<Guid, GuidReference<T>> weakReferences;
-		private ReferenceQueue<T> queue;
-		
-		public LiveObjectCache() {
-			strongReferences = new HashMap<Guid, T>();
-			recentReferences = new HashMap<Guid, T>();			
-			weakReferences = new HashMap<Guid, GuidReference<T>>();
-			queue = new ReferenceQueue<T>();
-		}
-		
-		/**
-		 * Add a LiveObject to the weak cache.
-		 * 
-		 * @param t object to be inserted
-		 */
-		public void poke(T t) {
-			Guid guid = t.getGuid();			
-			GuidReference<T> reference = new GuidReference<T>(t, guid);
-			weakReferences.put(guid, reference);
-		}
-		
-		/**
-		 * Look for a LiveObject in the weak cache.
-		 * 
-		 * @param guid Guid whose associated owner to check for in the weak cache
-		 * @return associated LiveObject, or null
-		 */
-		public T peek(Guid guid) {
-			GuidReference<T> reference = weakReferences.get(guid);
-			if (reference != null)
-				return reference.get();
-			else
-				return null;			
-		}
-		
-		/**
-		 * Records a LiveObject as having been recently accessed.
-		 * 
-		 * @param obj
-		 */
-		public void touch(T obj) {
-			recentReferences.put(obj.getGuid(), obj);
-			obj.setCacheAge(0);			
-			poke(obj);
-		}
-		
-		/**
-		 * Adds an explicit "strong" reference to a LiveObject;
-		 * the object will not be evicted until dropStrongReference
-		 * is invoked.
-		 * 
-		 * @param obj
-		 */
-		public void addStrongReference(T obj) {
-			Guid guid = obj.getGuid();
-			strongReferences.put(guid, obj);
-
-		}
-		
-		/**
-		 * Records a LiveObject as being a candidate for eviction,
-		 * assuming it has not been recently accessed.
-		 * 
-		 * @param obj
-		 */
-		public void dropStrongReference(T obj) {
-			Guid guid = obj.getGuid();
-			strongReferences.remove(guid);
-		}
-		
-		/**
-		 * Returns a modifiable collection view of the recent
-		 * references; this is used by the aging thread.
-		 */
-		public Collection<T> getRecentCache() {
-			return recentReferences.values();
-		}
-		
-		/**
-		 * Returns an unmodifiable copy of the current set
-		 * of strong references.
-		 */
-		public Set<T> getStrongReferenceCopy() {
-			return Collections.unmodifiableSet(new HashSet<T>(strongReferences.values()));
-		}		
-		
-		/**
-		 * Returns an unmodifiable copy of the entire weak
-		 * cache; this is useful for debugging purposes, e.g.
-		 * the admin page.
-		 */
-		public Set<T> getWeakCacheCopy() {
-			Set<T> ret = new HashSet<T>();
-			for (GuidReference<T> ref : weakReferences.values()) {
-				T obj = ref.get();
-				if (obj != null)
-					ret.add(obj);
-			}
-			return Collections.unmodifiableSet(ret);
-		}
-		
-		/**
-		 * Insert a modified LiveObject into the cache.    
-		 */
-		public void update(T obj) {
-			T old = peek(obj.getGuid());
-			// This guid must already exist in the cache, and
-			// the object being inserted must not be the same
-			// one as already exists.
-			assert(old != null && old != obj);
-			if (strongReferences.containsKey(obj.getGuid())) {
-				strongReferences.put(obj.getGuid(), obj);
-			}
-			poke(obj);
-			touch(obj);
-		}		
-		
-		/**
-		 * Invoke periodically to clean up the weak reference cache.
-		 */
-		public void clean() {
-			while (true) {
-				GuidReference<? extends T> reference = (GuidReference<? extends T>)queue.poll();
-				if (reference == null)
-					break;
-				weakReferences.remove(reference.guid);
-			}
-		}
-	}
-		
-	
-	/**
-	 * Get a LiveUser cache object for a particular user if one is
-	 * loaded, but does not create one if one doesn't currently
-	 * exist. The cache age of the returned object is unmodified.
-	 * Generally, this would not be called by code outside the
-	 * com.dumbhippo.live package.
-	 * 
-	 * @param userId the user ID for which we should get a cache object
-	 * @return the LiveUser cache object if one is currently loaded,
-	 *    otherwise null.
-	 */
-	public synchronized LiveUser peekLiveUser(Guid userId) {
-		return userCache.peek(userId);
-	}
-	
 	/**
 	 * Locate or create a LiveUser cache object for a particular user.
-	 * The cache age of the returned object will be reset to zero.
+	 * The cache age for that user will be reset to zero.
 	 * 
 	 * @param userId the user ID for which we should get a cache object
 	 * @return the LiveUser cache object.
 	 */
-	public synchronized LiveUser getLiveUser(Guid userId) {
-		LiveUser liveUser = peekLiveUser(userId);
-		if (liveUser == null) {
-			liveUser = new LiveUser(userId);
-			LiveUserUpdater userUpdater = EJBUtil.defaultLookup(LiveUserUpdater.class);
-			userUpdater.initialize(liveUser);
-			userCache.poke(liveUser);
-		}
-		
-		userCache.touch(liveUser);
-		
-		return liveUser;
+	public LiveUser getLiveUser(Guid userId) {
+		return userCache.get(userId);
 	}
 	
 	/**
-	 * Insert an updated LiveUser object into the cache.  Since LiveUser
-	 * objects are immutable, for updating them it is necessary to clone
-	 * the existing instance, then insert the updated copy into the cache,
-	 * overwriting the previous.
+	 * Get a LiveUser cache object for a particular user in preparation
+	 * for updating it with new values. If the object doesn't already
+	 * exist then nothing is done. On a succesful return, you must
+	 * update the result and then call updateLiveUser() or subsequent
+	 * attempts to retrieve the LiveUser object will hang.  
+	 * 
+	 * @param userId the user ID for which we should get a cache object
+	 * @return a copy of the existing LiveUser cache object if one is currently loaded,
+	 *    otherwise null.
+	 */
+	LiveUser peekLiveUserForUpdate(Guid userId) {
+		LiveUser current = userCache.peekForUpdate(userId);
+		if (current != null)
+			return (LiveUser)current.clone();
+		else
+			return null;
+	}
+	
+	/**
+	 * Get or create a LiveUser cache object for a particular user in 
+	 * preparation for updating it with new values. On a succesful return, 
+	 * you must update the result and then call updateLiveUser() or subsequent
+	 * attempts to retrieve the LiveUser object will hang.  
+	 * 
+	 * The cache age for that user will be reset to zero.
+	 *
+	 * @param userId the user ID for which we should get a cache object
+	 * @return a copy of the existing or newly created object
+	 */
+	LiveUser getLiveUserForUpdate(Guid userId) {
+		return (LiveUser)userCache.getForUpdate(userId).clone();
+	}
+	
+	/**
+	 * Insert an updated LiveUser object into the cache. You must have
+	 * previously called peekLiveUserForUpdate or getLiveUserForUpdate().
 	 * 
 	 * @param user new LiveUser object to insert
-	 * @return the inserted LiveUser object
 	 */
-	public synchronized LiveUser updateLiveUser(LiveUser user) {
+	void updateLiveUser(LiveUser user) {
 		userCache.update(user);
-		return user;
 	}
 	
 	/**
 	 * Returns a snapshot of the current set of LiveUser objects in
 	 * the memory cache.
 	 */
-	public synchronized Set<LiveUser> getLiveUserCacheSnapshot() {
-		return userCache.getWeakCacheCopy();
+	public Set<LiveUser> getLiveUserCacheSnapshot() {
+		return userCache.getAllObjects(false);
 	}
-	
+
+	/**
+	 * Returns the number of LiveUser objects in the memory cache
+	 */
+	public int getLiveUserCount() {
+		return userCache.getObjectCount(false);
+	}
 
 	/**
 	 * Returns a snapshot of the current set of available users.
 	 */
 	public Set<LiveUser> getLiveUserAvailableSnapshot() {
-		return userCache.getStrongReferenceCopy();
+		return userCache.getAllObjects(true);
 	}	
 	
 	/**
-	 * Get a LivePost cache object for a particular post if one is
-	 * loaded, but does not create one if one doesn't currently
-	 * exist. The cache age of the returned object is unmodified.
-	 * Generally, this would not be called by code outside the
-	 * com.dumbhippo.live package.
-	 * 
-	 * @param postId the post ID for which we should get a cache object
-	 * @return the LivePost cache object if one is currently loaded,
-	 *    otherwise null.
+	 * Returns the number of available users
 	 */
-	public synchronized LivePost peekLivePost(Guid postId) {
-		return postCache.peek(postId);
+	public int getLiveUserAvailableCount() {
+		return userCache.getObjectCount(true);
 	}
-	
+
 	/**
-	 * Locate or create a LivePost cache object for a particular post.
-	 * The cache age of the returned object will be reset to zero.
+	 * Locate or create a LivePost cache object for a particular user.
+	 * See getLiveUser().
 	 * 
-	 * @param postId the post ID for which we should get a cache object
+	 * @param userId the post ID for which we should get a cache object
 	 * @return the LivePost cache object.
 	 */
-	public synchronized LivePost getLivePost(Guid postId) {
-		LivePost livePost = peekLivePost(postId);
-		if (livePost == null) {
-
-			livePost = new LivePost(postId);			
-			LivePostUpdater postUpdater = EJBUtil.defaultLookup(LivePostUpdater.class);
-			postUpdater.initialize(livePost);
-			
-			postCache.poke(livePost);
-		}
-
-		postCache.touch(livePost);
-		
-		return livePost;
+	public LivePost getLivePost(Guid postId) {
+		return postCache.get(postId);
 	}
-
+	
 	/**
-	 * Insert an updated LivePost object into the cache.  See updateLiveUser.
+	 * Get or create a LivePost cache object for a particular post in 
+	 * preparation for updating it with new values. See
+	 * getLiveUserForUpdate()
 	 * 
-	 * @param user new LiveUser object to insert
-	 * @return the inserted LiveUser object
+	 * @param userId the post ID for which we should get a cache object
+	 * @return a copy of the existing or newly created object
 	 */
-	public synchronized LivePost updateLivePost(LivePost post) {
+	LivePost getLivePostForUpdate(Guid postId) {
+		return (LivePost)postCache.getForUpdate(postId).clone();
+	}
+	
+	/**
+	 * Insert an updated LivePost object into the cache. See updateLiveUser()
+	 * 
+	 * @param user new LivePost object to insert
+	 */
+	void updateLivePost(LivePost post) {
 		postCache.update(post);	
-		return post;
 	}	
 	
-	public synchronized Set<LivePost> getLivePostSnapshot() {
-		return postCache.getWeakCacheCopy();
+	/**
+	 * Returns a snapshot of the current set of LivePost objects in
+	 * the memory cache.
+	 */
+	public Set<LivePost> getLivePostSnapshot() {
+		return postCache.getAllObjects(false);
+	}
+	
+	/**
+	 * Returns the number of LiveUser objects in the memory cache
+	 */
+	public int getLivePostCount() {
+		return postCache.getObjectCount(false);
 	}
 
 	/**
 	 * Locate or create a LiveGroup cache object for a particular group.
-	 * The cache age of the returned object will be reset to zero.
+	 * See getLiveUser()
 	 * 
 	 * @param groupId the group ID for which we should get a cache object
 	 * @return the LiveGroup cache object.
 	 */
-	public synchronized LiveGroup getLiveGroup(Guid groupId) {
-		LiveGroup liveGroup = peekLiveGroup(groupId);
-		if (liveGroup == null) {
-
-			liveGroup = new LiveGroup(groupId);			
-			LiveGroupUpdater groupUpdater = EJBUtil.defaultLookup(LiveGroupUpdater.class);
-			groupUpdater.initialize(liveGroup);
-			
-			groupCache.poke(liveGroup);
-		}
-
-		groupCache.touch(liveGroup);
-		
-		return liveGroup;
+	public LiveGroup getLiveGroup(Guid groupId) {
+		return groupCache.get(groupId);
 	}
 	
-	public LiveGroup peekLiveGroup(Guid guid) {
-		return groupCache.peek(guid);
+	/**
+	 * Get a LiveGroup cache object for a particular group in preparation
+	 * for updating it with new values. See getLiveUserForUpdate().  
+	 * 
+	 * @param groupId the group ID for which we should get a cache object
+	 * @return a copy of the existing LiveGroup cache object if one is currently loaded,
+	 *    otherwise null.
+	 */
+	public LiveGroup peekLiveGroupForUpdate(Guid guid) {
+		LiveGroup current = groupCache.peekForUpdate(guid);
+		if (current != null)
+			return (LiveGroup)current.clone();
+		else
+			return null;
 	}	
 	
-	public synchronized void updateLiveGroup(LiveGroup newGroup) {
+	/**
+	 * Insert an updated LiveGroup object into the cache. See updateLiveUser()
+	 * 
+	 * @param group new LiveGroup object to insert
+	 */
+	public void updateLiveGroup(LiveGroup newGroup) {
 		groupCache.update(newGroup);
 	}	
 	
@@ -371,7 +245,7 @@ public class LiveState {
 	 * 
 	 * @return the new LiveXmppServer object.
 	 */
-	public synchronized LiveXmppServer createXmppServer() {
+	public LiveXmppServer createXmppServer() {
 		LiveXmppServer xmppServer = new LiveXmppServer(this);
 		xmppServers.put(xmppServer.getServerIdentifier(), xmppServer);
 		
@@ -385,7 +259,7 @@ public class LiveState {
 	 * @param serverIdentifier cookie from LiveXmppServer.getServerIdentifier().
 	 * @return the server, if found, otherwise null.
 	 */
-	public synchronized LiveXmppServer getXmppServer(String serverIdentifier) {
+	public LiveXmppServer getXmppServer(String serverIdentifier) {
 		return xmppServers.get(serverIdentifier);
 	}
 
@@ -481,11 +355,41 @@ public class LiveState {
 	private JmsProducer updateQueue;
 	
 	private LiveState() {
-		userCache = new LiveObjectCache<LiveUser>();
-		postCache = new LiveObjectCache<LivePost>();
-		groupCache = new LiveObjectCache<LiveGroup>();
+		userCache = new LiveObjectCache<LiveUser>(
+				new LiveObjectFactory<LiveUser>() {
+					public LiveUser create(Guid guid) {
+						LiveUser liveUser = new LiveUser(guid);			
+						LiveUserUpdater userUpdater = EJBUtil.defaultLookup(LiveUserUpdater.class);
+						userUpdater.initialize(liveUser);
+
+						return liveUser;
+					}
+				},
+				MAX_USER_CACHE_AGE);
+		postCache = new LiveObjectCache<LivePost>(
+				new LiveObjectFactory<LivePost>() {
+					public LivePost create(Guid guid) {
+						LivePost livePost = new LivePost(guid);			
+						LivePostUpdater postUpdater = EJBUtil.defaultLookup(LivePostUpdater.class);
+						postUpdater.initialize(livePost);
+
+						return livePost;
+					}
+				},
+				MAX_POST_CACHE_AGE);
+		groupCache = new LiveObjectCache<LiveGroup>(
+				new LiveObjectFactory<LiveGroup>() {
+					public LiveGroup create(Guid guid) {
+						LiveGroup liveGroup = new LiveGroup(guid);			
+						LiveGroupUpdater groupUpdater = EJBUtil.defaultLookup(LiveGroupUpdater.class);
+						groupUpdater.initialize(liveGroup);
+
+						return liveGroup;
+					}
+				},
+				MAX_GROUP_CACHE_AGE);
 		
-		xmppServers = new HashMap<String, LiveXmppServer>();
+		xmppServers = new ConcurrentHashMap<String, LiveXmppServer>();
 		
 		updateQueue = new JmsProducer(LiveEvent.QUEUE, true);
 		
@@ -499,44 +403,49 @@ public class LiveState {
 	
 	// Internal function to update the availability count for the user;
 	// see LiveXmppServer.userAvailable().
-	synchronized void userAvailable(Guid userId) {
-		LiveUser liveUser = getLiveUser(userId);
-		liveUser = (LiveUser) liveUser.clone(); // Create a copy to update
-		liveUser.setAvailableCount(liveUser.getAvailableCount() + 1);
-		if (liveUser.getAvailableCount() == 1) {
-			logger.debug("User {} is now available", liveUser.getGuid());			
-			userCache.addStrongReference(liveUser);
+	void userAvailable(Guid userId) {
+		LiveUser liveUser = getLiveUserForUpdate(userId);
+		try {
+			liveUser.setAvailableCount(liveUser.getAvailableCount() + 1);
+			if (liveUser.getAvailableCount() == 1) {
+				logger.debug("User {} is now available", liveUser.getGuid());			
+				userCache.addStrongReference(liveUser);
+			}
+		} finally {
+			updateLiveUser(liveUser);
 		}
-		userCache.update(liveUser);
 	}
 
 	// Internal function to update the availability count for the user;
 	// see LiveXmppServer.userUnavailable().
-	synchronized void userUnavailable(Guid userId) {
-		LiveUser liveUser = getLiveUser(userId);
-		liveUser = (LiveUser) liveUser.clone();		
-		liveUser.setAvailableCount(liveUser.getAvailableCount() - 1);
-		if (liveUser.getAvailableCount() == 0) {
-			logger.debug("User {} is no longer available", liveUser.getGuid());
-			userCache.dropStrongReference(liveUser);
+	void userUnavailable(Guid userId) {
+		LiveUser liveUser = peekLiveUserForUpdate(userId);
+		try {
+			liveUser.setAvailableCount(liveUser.getAvailableCount() - 1);
+			if (liveUser.getAvailableCount() == 0) {
+				logger.debug("User {} is no longer available", liveUser.getGuid());
+				userCache.dropStrongReference(liveUser);
+			}
+		} finally {
+			updateLiveUser(liveUser);
 		}
-		userCache.update(liveUser);
 	}
 	
 	// Internal function to record a user joining the chat room for a post;
 	// see LiveXmppServer.postRoomUserAvailable
-	synchronized void postRoomUserAvailable(Guid postId, Guid userId, boolean isParticipant) {
-		LivePost lpost = getLivePost(postId);
-		lpost = (LivePost) lpost.clone(); // Create a copy to reinsert
-
-		if (lpost.getChattingUserCount() == 0 && lpost.getViewingUserCount() == 0)
-			postCache.addStrongReference(lpost);
-
-		if (isParticipant)
-			lpost.setChattingUserCount(lpost.getChattingUserCount() + 1);
-		else
-			lpost.setViewingUserCount(lpost.getViewingUserCount() + 1);
-		postCache.update(lpost);
+	void postRoomUserAvailable(Guid postId, Guid userId, boolean isParticipant) {
+		LivePost lpost = getLivePostForUpdate(postId);
+		try {
+			if (lpost.getChattingUserCount() == 0 && lpost.getViewingUserCount() == 0)
+				postCache.addStrongReference(lpost);
+	
+			if (isParticipant)
+				lpost.setChattingUserCount(lpost.getChattingUserCount() + 1);
+			else
+				lpost.setViewingUserCount(lpost.getViewingUserCount() + 1);
+		} finally {
+			updateLivePost(lpost);
+		}
 
 		logger.debug("Post {} now has {} viewing users and " + lpost.getChattingUserCount() + " chatting users", 
 				postId, lpost.getViewingUserCount());
@@ -544,54 +453,50 @@ public class LiveState {
 
 	// Internal function to record a user leaving the chat room for a post;
 	// see LiveXmppServer.postRoomUserUnavailable
-	synchronized void postRoomUserUnavailable(Guid postId, Guid userId, boolean wasParticipant) {
-		LivePost lpost = getLivePost(postId);
-		lpost = (LivePost) lpost.clone(); // Create a copy to reinsert
-
-		if (wasParticipant)
-			lpost.setChattingUserCount(lpost.getChattingUserCount() - 1);
-		else
-			lpost.setViewingUserCount(lpost.getViewingUserCount() - 1);
-		postCache.update(lpost);
+	void postRoomUserUnavailable(Guid postId, Guid userId, boolean wasParticipant) {
+		LivePost lpost = getLivePostForUpdate(postId);
+		try {
+			if (wasParticipant)
+				lpost.setChattingUserCount(lpost.getChattingUserCount() - 1);
+			else
+				lpost.setViewingUserCount(lpost.getViewingUserCount() - 1);
+			
+			if (lpost.getChattingUserCount() == 0 && lpost.getViewingUserCount() == 0)
+				postCache.dropStrongReference(lpost);
+		} finally {
+			updateLivePost(lpost);
+		}
 		
-		if (lpost.getChattingUserCount() == 0 && lpost.getViewingUserCount() == 0)
-			postCache.dropStrongReference(lpost);
-					
 		logger.debug("Post {} now has {} viewing users and " + lpost.getChattingUserCount() + " chatting users", 
 				postId, lpost.getViewingUserCount());  
 	}
 
-	public synchronized void resendAllNotifications(Guid guid) {
+	public void resendAllNotifications(Guid guid) {
 		LiveUserUpdater userUpdater = EJBUtil.defaultLookup(LiveUserUpdater.class);
 		LiveUser luser = getLiveUser(guid);
 		userUpdater.sendAllNotifications(luser);
 	}	
-		
-	private <T extends Ageable> void age(Collection<T> set, int maxAge) {
-		for (Iterator<T> i = set.iterator(); i.hasNext();) {
-			T t = i.next();
-			int newAge = t.getCacheAge() + 1;
-			if (newAge < maxAge) {
-				t.setCacheAge(newAge);
-			} else {
-				logger.debug("Discarding timed-out instance of " + t.getClass().getName());
-				t.discard();
-				i.remove();
+
+	
+	private void ageXmppServers() throws InterruptedException {
+		for (Iterator<LiveXmppServer> i = xmppServers.values().iterator(); i.hasNext();) {
+			LiveXmppServer xmppServer = i.next();
+			int newAge = xmppServer.increaseCacheAge();
+			if (newAge >= MAX_XMPP_SERVER_CACHE_AGE) {
+				logger.debug("Discarding timed-out LiveXmppServer");
+		                     i.remove();
+		                     xmppServer.discard();
 			}
 		}
 	}
-	
-	private synchronized void clean() {
+
+	private void clean() throws InterruptedException {
 		// Bump the age of all objects, removing ones that pass the maximum age
-		age(userCache.getRecentCache(), MAX_USER_CACHE_AGE);
-		age(postCache.getRecentCache(), MAX_POST_CACHE_AGE);
-		age(groupCache.getRecentCache(), MAX_USER_CACHE_AGE);
-		age(xmppServers.values(), MAX_XMPP_SERVER_CACHE_AGE);
+		userCache.age();
+		postCache.age();
+		groupCache.age();
 		
-		// Clean up the WeakGuidMap objects
-		userCache.clean();
-		postCache.clean();
-		groupCache.clean();
+		ageXmppServers();
 	}
 
 	// Thread that ages the different types of objects we keep around, and
@@ -650,7 +555,7 @@ public class LiveState {
 					users = getLiveUserCacheSnapshot();
 					
 					for (LiveUser user : users) {
-						userUpdater.periodicUpdate(user);
+						userUpdater.periodicUpdate(user.getGuid());
 					}		
 				} catch (InterruptedException e) {
 					break; // exit the loop
@@ -663,5 +568,80 @@ public class LiveState {
 				}
 			}
 		}
+	}
+	
+	/**
+	 * Do some stress testing of LiveState by dumping all our caches, then trying to
+	 * reload all users from the different threads simulaneously.
+	 * 
+	 * The normal way to run this is from the admin console
+	 * 
+	 *  com.dumbhippo.live.LiveState.verboseLogging = true;
+	 *  com.dumbhippo.live.LiveState.getInstance().stressTest();
+	 */
+	public void stressTest() {
+		final List<Guid> toLookup = new ArrayList<Guid>();
+		
+		final TransactionRunner runner = EJBUtil.defaultLookup(TransactionRunner.class);
+		runner.runTaskInNewTransaction(new Runnable() {
+			public void run() {
+				AccountSystem accountSystem = EJBUtil.defaultLookup(AccountSystem.class);
+				
+				for (Account account : accountSystem.getActiveAccounts()) {
+					toLookup.add(account.getOwner().getGuid());
+				}
+			}
+		});
+		
+		userCache.removeAllWeak();
+		postCache.removeAllWeak();
+		groupCache.removeAllWeak();
+		
+		final int NUM_THREADS = 10;
+		ExecutorService threadPool = Executors.newFixedThreadPool(NUM_THREADS);
+		final long baseSeed = System.currentTimeMillis();
+		
+		List<Future<Object>> futures = new ArrayList<Future<Object>>(); 
+		
+		for (int i = 0; i < NUM_THREADS; i++) {
+			final long seed = baseSeed + i;
+			futures.add(threadPool.submit(new Callable<Object>() {
+				public Object call() {
+					runner.runTaskInNewTransaction(new Runnable() {
+						public void run() {
+							for (Guid guid : shuffle(toLookup, seed)) {
+								getLiveUser(guid);
+							}
+						}
+					});
+					
+					return null;
+				}
+			}));
+		}
+		
+		for (Future<Object> future : futures) {
+			try {
+				future.get();
+			} catch (InterruptedException e) {
+				throw new RuntimeException("Interrupted!", e);
+			} catch (ExecutionException e) {
+				throw new RuntimeException("Test thread hit exception", e);
+			}
+		}
+	}
+	
+	private static <T> List<T> shuffle(List<T> l, long seed) {
+		List<T> result = new ArrayList<T>(l);
+		Random r = new Random(seed);
+		
+		for (int i = 0; i < result.size(); i++) {
+			int index = i + r.nextInt(result.size() - i);
+			T old = result.get(i);
+			result.set(i, result.get(index));
+			result.set(index, old);
+		}
+		
+		return result;
 	}
 }
