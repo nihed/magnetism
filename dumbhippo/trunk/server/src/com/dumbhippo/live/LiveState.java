@@ -1,9 +1,17 @@
 package com.dumbhippo.live;
 
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import javax.naming.InitialContext;
 import javax.persistence.EntityManager;
@@ -16,13 +24,19 @@ import org.slf4j.Logger;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.jms.JmsProducer;
+import com.dumbhippo.persistence.Account;
+import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HippoProperty;
+import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.util.EJBUtil;
 
 public class LiveState {
 	@SuppressWarnings("unused")
 	static private final Logger logger = GlobalSetup.getLogger(LiveState.class);
+	
+	// This is for poking from the admin console
+	static public boolean verboseLogging = false;
 	
 	private static LiveState theState;
 	
@@ -522,5 +536,80 @@ public class LiveState {
 				}
 			}
 		}
+	}
+	
+	/**
+	 * Do some stress testing of LiveState by dumping all our caches, then trying to
+	 * reload all users from the different threads simulaneously.
+	 * 
+	 * The normal way to run this is from the admin console
+	 * 
+	 *  com.dumbhippo.live.LiveState.verboseLogging = true;
+	 *  com.dumbhippo.live.LiveState.stressTest();
+	 */
+	public void stressTest() {
+		final List<Guid> toLookup = new ArrayList<Guid>();
+		
+		final TransactionRunner runner = EJBUtil.defaultLookup(TransactionRunner.class);
+		runner.runTaskInNewTransaction(new Runnable() {
+			public void run() {
+				AccountSystem accountSystem = EJBUtil.defaultLookup(AccountSystem.class);
+				
+				for (Account account : accountSystem.getActiveAccounts()) {
+					toLookup.add(account.getOwner().getGuid());
+				}
+			}
+		});
+		
+		userCache.removeAllWeak();
+		postCache.removeAllWeak();
+		groupCache.removeAllWeak();
+		
+		final int NUM_THREADS = 10;
+		ExecutorService threadPool = Executors.newFixedThreadPool(NUM_THREADS);
+		final long baseSeed = System.currentTimeMillis();
+		
+		List<Future<Object>> futures = new ArrayList<Future<Object>>(); 
+		
+		for (int i = 0; i < NUM_THREADS; i++) {
+			final long seed = baseSeed + i;
+			futures.add(threadPool.submit(new Callable<Object>() {
+				public Object call() {
+					runner.runTaskInNewTransaction(new Runnable() {
+						public void run() {
+							for (Guid guid : shuffle(toLookup, seed)) {
+								getLiveUser(guid);
+							}
+						}
+					});
+					
+					return null;
+				}
+			}));
+		}
+		
+		for (Future<Object> future : futures) {
+			try {
+				future.get();
+			} catch (InterruptedException e) {
+				throw new RuntimeException("Interrupted!", e);
+			} catch (ExecutionException e) {
+				throw new RuntimeException("Test thread hit exception", e);
+			}
+		}
+	}
+	
+	private static <T> List<T> shuffle(List<T> l, long seed) {
+		List<T> result = new ArrayList<T>(l);
+		Random r = new Random(seed);
+		
+		for (int i = 0; i < result.size(); i++) {
+			int index = i + r.nextInt(result.size() - i);
+			T old = result.get(i);
+			result.set(i, result.get(index));
+			result.set(index, old);
+		}
+		
+		return result;
 	}
 }

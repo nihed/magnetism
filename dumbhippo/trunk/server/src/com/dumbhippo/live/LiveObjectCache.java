@@ -24,19 +24,27 @@ class LiveObjectCache<T extends LiveObject> {
 	private int maxAge;
 	LiveObjectFactory<T> factory;
 	
-	private static class CacheEntry<T> {
+	private static class CacheEntry<T extends LiveObject> {
+		private Guid guid;
 		private T t;
 		private boolean inUpdate;
 		int strongCount;
 		int cacheAge;
 		
-		CacheEntry() {
+		CacheEntry(Guid guid) {
+			this.guid = guid;
 			inUpdate = true;
 			strongCount = 0;
 			cacheAge = 0;
 		}
 		
-		public synchronized T get() {
+		private void waitForUpdate() {
+			if (!inUpdate)
+				return;
+			
+			if (LiveState.verboseLogging)
+				logger.debug("Waiting for CacheEntry {} to be finished updating", guid);
+			
 			while (inUpdate) {
 				try {
 					wait();
@@ -44,17 +52,19 @@ class LiveObjectCache<T extends LiveObject> {
 					throw new RuntimeException("Interrupted while waiting for cache update");
 				}
 			}
+			
+			if (LiveState.verboseLogging)
+				logger.debug("CacheEntry {} finished updating", guid);
+		}
+		
+		public synchronized T get() {
+			waitForUpdate();
+			
 			return t;
 		}
 		
 		public synchronized T getForUpdate() {
-			while (inUpdate) {
-				try {
-					wait();
-				} catch (InterruptedException e) {
-					throw new RuntimeException("Interrupted while waiting for cache update");
-				}
-			}
+			waitForUpdate();
 			
 			inUpdate = true;
 			
@@ -63,8 +73,12 @@ class LiveObjectCache<T extends LiveObject> {
 		
 		public synchronized void update(T t) {
 			if (!inUpdate) {
-				throw new RuntimeException("Attempt to update an entry not primed for update");
+				logger.warn("Attempt to update an entry not primed for update");
+				return;
 			}
+			
+			if (LiveState.verboseLogging)
+				logger.debug("Finished update for {}", guid);
 			
 			// If updating failed to result in an object to store in the cache
 			// then things will go pretty badly, since other people waiting on
@@ -80,6 +94,10 @@ class LiveObjectCache<T extends LiveObject> {
 
 		public synchronized T peek() {
 			return t;
+		}
+		
+		public synchronized boolean isInUpdate() {
+			return inUpdate;
 		}
 	}
 	
@@ -113,7 +131,7 @@ class LiveObjectCache<T extends LiveObject> {
 		synchronized(this) {
 			 entry = entries.get(guid);
 			 if (entry == null) {
-				 entry = new CacheEntry<T>();
+				 entry = new CacheEntry<T>(guid);
 				 entries.put(guid, entry);
 				 needNew = true;
 			 }
@@ -152,7 +170,7 @@ class LiveObjectCache<T extends LiveObject> {
 		synchronized(this) {
 			 entry = entries.get(guid);
 			 if (entry == null) {
-				 entry = new CacheEntry<T>();
+				 entry = new CacheEntry<T>(guid);
 				 entries.put(guid, entry);
 				 needNew = true;
 			 }
@@ -199,8 +217,10 @@ class LiveObjectCache<T extends LiveObject> {
 	 */
 	public void update(T obj) {
 		CacheEntry<T> entry = entries.get(obj.getGuid());
-		if (entry == null)
-			throw new RuntimeException("Attempt to update an entry not primed for update");
+		if (entry == null) {
+			logger.warn("Attempt to update an entry not primed for update");
+			return;
+		}
 		
 		entry.update(obj);
 	}		
@@ -256,9 +276,18 @@ class LiveObjectCache<T extends LiveObject> {
 		for (Iterator<CacheEntry<T>> i = entries.values().iterator(); i.hasNext();) {
 			CacheEntry<T> entry = i.next();
 			entry.cacheAge++;
-			if (entry.cacheAge > maxAge && entry.strongCount == 0) {
+			if (entry.cacheAge > maxAge && !entry.isInUpdate() && entry.strongCount == 0) {
 				T t = entry.peek();
 				logger.debug("Discarding timed-out instance of " + t.getClass().getName());
+				i.remove();
+			}
+		}
+	}
+	
+	public synchronized void removeAllWeak() {
+		for (Iterator<CacheEntry<T>> i = entries.values().iterator(); i.hasNext();) {
+			CacheEntry<T> entry = i.next();
+			if (!entry.isInUpdate() && entry.strongCount == 0) {
 				i.remove();
 			}
 		}
