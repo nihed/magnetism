@@ -1,10 +1,9 @@
 package com.dumbhippo.live;
 
-import java.util.Collection;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.naming.InitialContext;
 import javax.persistence.EntityManager;
@@ -200,7 +199,7 @@ public class LiveState {
 	 * 
 	 * @return the new LiveXmppServer object.
 	 */
-	public synchronized LiveXmppServer createXmppServer() {
+	public LiveXmppServer createXmppServer() {
 		LiveXmppServer xmppServer = new LiveXmppServer(this);
 		xmppServers.put(xmppServer.getServerIdentifier(), xmppServer);
 		
@@ -214,7 +213,7 @@ public class LiveState {
 	 * @param serverIdentifier cookie from LiveXmppServer.getServerIdentifier().
 	 * @return the server, if found, otherwise null.
 	 */
-	public synchronized LiveXmppServer getXmppServer(String serverIdentifier) {
+	public LiveXmppServer getXmppServer(String serverIdentifier) {
 		return xmppServers.get(serverIdentifier);
 	}
 
@@ -344,7 +343,7 @@ public class LiveState {
 				},
 				MAX_GROUP_CACHE_AGE);
 		
-		xmppServers = new HashMap<String, LiveXmppServer>();
+		xmppServers = new ConcurrentHashMap<String, LiveXmppServer>();
 		
 		updateQueue = new JmsProducer(LiveEvent.QUEUE, true);
 		
@@ -431,30 +430,27 @@ public class LiveState {
 		LiveUser luser = getLiveUser(guid);
 		userUpdater.sendAllNotifications(luser);
 	}	
-		
-	private <T extends Ageable> void age(Collection<T> set, int maxAge) {
-		for (Iterator<T> i = set.iterator(); i.hasNext();) {
-			T t = i.next();
-			int newAge = t.getCacheAge() + 1;
-			if (newAge < maxAge) {
-				t.setCacheAge(newAge);
-			} else {
-				logger.debug("Discarding timed-out instance of " + t.getClass().getName());
-				t.discard();
-				i.remove();
+
+	
+	private void ageXmppServers() throws InterruptedException {
+		for (Iterator<LiveXmppServer> i = xmppServers.values().iterator(); i.hasNext();) {
+			LiveXmppServer xmppServer = i.next();
+			int newAge = xmppServer.increaseCacheAge();
+			if (newAge >= MAX_XMPP_SERVER_CACHE_AGE) {
+				logger.debug("Discarding timed-out LiveXmppServer");
+		                     i.remove();
+		                     xmppServer.discard();
 			}
 		}
 	}
-	
-	private void clean() {
+
+	private void clean() throws InterruptedException {
 		// Bump the age of all objects, removing ones that pass the maximum age
 		userCache.age();
 		postCache.age();
 		groupCache.age();
 		
-		synchronized(this) {
-			age(xmppServers.values(), MAX_XMPP_SERVER_CACHE_AGE);
-		}
+		ageXmppServers();
 	}
 
 	// Thread that ages the different types of objects we keep around, and
