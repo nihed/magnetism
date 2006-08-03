@@ -30,6 +30,8 @@ import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
 import org.xmpp.packet.StreamError;
 
+import com.dumbhippo.server.util.ServerTooBusyException;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -161,7 +163,10 @@ public class IQAuthHandler extends IQHandler implements IQAuthInfo {
             session.process(response);
         }
         catch (Exception e) {
-            Log.error("Error handling authentication IQ packet", e);
+        	if (!(e instanceof ServerTooBusyException))
+        		Log.error("Error handling authentication IQ packet", e);
+        	else
+        		Log.info("Got ServerTooBusyException, closing connection");
             sessionManager.getSession(packet.getFrom()).getConnection().close();
         }
         return null;

@@ -3,12 +3,13 @@
  */
 package com.dumbhippo.jive;
 
+import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.auth.AuthFactory;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
-import org.jivesoftware.util.Log;
 
 import com.dumbhippo.server.MessengerGlueRemote;
 import com.dumbhippo.server.util.EJBUtil;
+import com.dumbhippo.server.util.ServerTooBusyException;
 
 /**
  * @author hp
@@ -66,7 +67,8 @@ public class HippoAuthProvider implements
             }
 		} else {			
 			if (glue.isServerTooBusy()) {
-				throw new RuntimeException("Server too busy, try again later");
+				// Jive disconnects clients whenever it encounters an unexpected exception
+				throw new ServerTooBusyException();
 			}			
 			if (!glue.authenticateJabberUser(username, token, digest))
 				throw new UnauthorizedException("Not authorized");

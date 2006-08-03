@@ -66,7 +66,6 @@ import com.dumbhippo.server.ServerStatus;
 import com.dumbhippo.server.SystemViewpoint;
 import com.dumbhippo.server.TrackView;
 import com.dumbhippo.server.UserViewpoint;
-import com.dumbhippo.server.util.EJBUtil;
 
 @Stateless
 public class MessengerGlueBean implements MessengerGlueRemote {
@@ -684,7 +683,7 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 	}
 
 	public boolean isServerTooBusy() {
-		return serverStatus.isTooBusy(); 
+		return serverStatus.throttleXmppConnections(); 
 	}
 
 }

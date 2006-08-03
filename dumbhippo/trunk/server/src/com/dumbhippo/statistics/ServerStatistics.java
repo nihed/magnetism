@@ -10,6 +10,7 @@ import org.jboss.mx.util.MBeanServerLocator;
  * @author otaylor
  */
 public class ServerStatistics implements StatisticsSource {
+	private static ServerStatistics instance = new ServerStatistics();
 //	@Column(id="heapSize",
 //			name="Heap Size", 
 //			units=ColumnUnit.BYTES, 
@@ -18,6 +19,10 @@ public class ServerStatistics implements StatisticsSource {
 //		return 0;
 //	}
 	
+	static public ServerStatistics getInstance() {
+		return instance;
+	}
+  	
 	private Object getDBAttribute(String attr) {
 		MBeanServer jboss = MBeanServerLocator.locateJBoss();
 		try {
