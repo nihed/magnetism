@@ -93,7 +93,11 @@ public class LiveState {
 	 *    otherwise null.
 	 */
 	LiveUser peekLiveUserForUpdate(Guid userId) {
-		return (LiveUser)userCache.peekForUpdate(userId).clone();
+		LiveUser current = userCache.peekForUpdate(userId);
+		if (current != null)
+			return (LiveUser)current.clone();
+		else
+			return null;
 	}
 	
 	/**
@@ -217,7 +221,11 @@ public class LiveState {
 	 *    otherwise null.
 	 */
 	public LiveGroup peekLiveGroupForUpdate(Guid guid) {
-		return (LiveGroup)groupCache.peekForUpdate(guid).clone();
+		LiveGroup current = groupCache.peekForUpdate(guid);
+		if (current != null)
+			return (LiveGroup)current.clone();
+		else
+			return null;
 	}	
 	
 	/**
