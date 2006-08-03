@@ -137,18 +137,20 @@ public class LiveUserUpdaterBean implements LiveUserUpdater {
 		user.setActivePosts(activePosts);
 	}
 	
-	private boolean checkUpdate(LiveUser user) {
-		return user.getCacheAge() > 0; 
-	}
-	
-	private void update(LiveUser user) {
+	public void periodicUpdate(Guid userGuid) {
 		LiveState state = LiveState.getInstance();
+		LiveUser user = state.peekLiveUserForUpdate(userGuid);
+		if (user == null) // expired from the cache since we listed all GUIDs
+			return;
+		
 		LiveUser newUser = (LiveUser) user.clone();
 		List<PostView> recentPosts = getRecentPosts(user);
 		initializeFromPosts(newUser, recentPosts); // FIXME - This is inefficient
 		logger.debug("computing hotness for user {} old: {} new: " + newUser.getHotness().name(),
 				user.getGuid(), user.getHotness().name());
 		
+		state.updateLiveUser(newUser);
+
 		// Note that this doesn't notify the user if individual posts in the
 		// list of active posts change their details, only if the *set* of active 
 		// posts changes. Right now, we don't use the details from LivePost for
@@ -156,7 +158,6 @@ public class LiveUserUpdaterBean implements LiveUserUpdater {
 		// start paying more attention to LivePost on the client this needs
 		// to be fixed.
 		if (!newUser.equals(user)) {
-			state.updateLiveUser(newUser);
 			// Remember to update sendAllNotifications if you add a new one here
 			if (!newUser.getHotness().equals(user.getHotness()))
 				msgSender.sendHotnessChanged(newUser);
@@ -165,33 +166,29 @@ public class LiveUserUpdaterBean implements LiveUserUpdater {
 		}
 	}
 
-	public void handlePostViewed(Guid userGuid, LivePost post) {
+	public void handleGroupMembershipChanged(Guid userGuid) {
 		LiveState state = LiveState.getInstance();
-		LiveUser user = state.peekLiveUser(userGuid);
-		if (user == null || !checkUpdate(user))
-			return;
-		update(user);
+		LiveUser liveUser = state.peekLiveUserForUpdate(userGuid);
+		if (liveUser != null) {
+			try {
+				initializeGroups(liveUser);
+			} finally {
+				state.updateLiveUser(liveUser);
+			}
+		}
 	}
 	
-	public void handleGroupMembershipChanged(LiveUser luser) {
+	public void handlePostCreated(Guid userGuid) {
 		LiveState state = LiveState.getInstance();
-		LiveUser newUser = (LiveUser) luser.clone();		
-		initializeGroups(newUser);
-		state.updateLiveUser(newUser);		
-	}
-	
-	public void handlePostCreated(LiveUser luser) {
-		LiveState state = LiveState.getInstance();
-		LiveUser newUser = (LiveUser) luser.clone();		
-		initializePostCount(newUser);
-		state.updateLiveUser(newUser);			
+		LiveUser liveUser = state.peekLiveUserForUpdate(userGuid);
+		if (liveUser != null) {
+			try {
+				initializePostCount(liveUser);
+			} finally {
+				state.updateLiveUser(liveUser);
+			}
+		}
 	}	
-
-	public void periodicUpdate(LiveUser user) {
-		if (!checkUpdate(user))
-			return;		
-		update(user);
-	}
 
 	public void sendAllNotifications(LiveUser luser) {
 		// Remember to change the update method as well when adding

@@ -2,6 +2,8 @@ package com.dumbhippo.live;
 
 import javax.ejb.Local;
 
+import com.dumbhippo.identity20.Guid;
+
 /**
  * Create and update LiveGroup objects using information from the
  * data store.
@@ -15,7 +17,7 @@ public interface LiveGroupUpdater {
 	 */
 	void initialize(LiveGroup group);
 	
-	void groupPostReceived(LiveGroup group);
+	void groupPostReceived(Guid groupGuid);
 	
-	void groupMemberCountChanged(LiveGroup group);
+	void groupMemberCountChanged(Guid groupGuid);
 }

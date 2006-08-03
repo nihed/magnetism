@@ -106,9 +106,10 @@ public class LiveXmppServer implements Ageable {
 		synchronized (state) {
 			if (!availableUsers.containsKey(userId)) {
 				availableUsers.put(userId, new UserInfo(userId));
-				state.userAvailable(userId);
 			}
 		}
+		
+		state.userAvailable(userId);
 	}
 	
 	/**
@@ -118,12 +119,17 @@ public class LiveXmppServer implements Ageable {
 	 * @param userId the user who is no longer present
 	 */
 	public void userUnavailable(Guid userId) {
+		UserInfo info = null;
+		
 		synchronized (state) {
-			UserInfo info = availableUsers.get(userId);
+			info = availableUsers.get(userId);
 			if (info != null) {
 				availableUsers.remove(userId);
-				info.sendUnavailable(state);
 			}
+		}
+		
+		if (info != null) {
+			info.sendUnavailable(state);
 		}
 	}
 	

@@ -52,11 +52,13 @@ public class PostViewedProcessor implements LiveEventProcessor {
 			throw new RuntimeException("PostViewedEvent for non-existant post");
 		}
 		
-		LivePost livePost = state.getLivePost(post.getGuid());
-		livePost = (LivePost) livePost.clone();
-		livePost.addViewer(event.getViewerId(), event.getViewedDate());
-		livePost.setTotalViewerCount(livePost.getTotalViewerCount() + 1);
-		state.updateLivePost(livePost);
+		LivePost livePost = state.getLivePostForUpdate(post.getGuid());
+		try {
+			livePost.addViewer(event.getViewerId(), event.getViewedDate());
+			livePost.setTotalViewerCount(livePost.getTotalViewerCount() + 1);
+		} finally {
+			state.updateLivePost(livePost);
+		}
 	
 		logger.debug("{} clicked on {} new viewer count " + livePost.getTotalViewerCount(), event.getViewerId(), event.getPostId());
 		logger.debug("Post score is now {}", livePost.getScore());

@@ -1,10 +1,8 @@
 package com.dumbhippo.live;
 
 /**
- * Common interface by the objects we keep with an age in the 
- * LiveState cache. We could keep the age in a separate cache-node
- * helper object rather than in the object itself, but this is 
- * a little more efficient. 
+ * An object with an age. After some code rearrangement, this is only
+ * used for LiveXmppServer.  
  * 
  * @author otaylor
  */

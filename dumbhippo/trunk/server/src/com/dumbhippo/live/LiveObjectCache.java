@@ -1,13 +1,13 @@
 package com.dumbhippo.live;
 
-import java.lang.ref.ReferenceQueue;
-import java.lang.ref.WeakReference;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
 
+import org.slf4j.Logger;
+
+import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.identity20.Guid;
 
 /**
@@ -16,67 +16,194 @@ import com.dumbhippo.identity20.Guid;
  * a LiveUser, we strongly reference users which are currently present.
  * Second, there is a cache of recently touched objects which can 
  * be updated via the touch method.
- * Finally, a pure memory cache of the objects is maintained.  This
- * may be cleared at any time by the JVM if the object is neither
- * explicitly strongly referenced nor recently touched.
 */
 class LiveObjectCache<T extends LiveObject> {
-	private static class GuidReference<T> extends WeakReference<T> {
-		private Guid guid;
+	@SuppressWarnings("unused")
+	static private final Logger logger = GlobalSetup.getLogger(LiveObject.class);
+	
+	private int maxAge;
+	LiveObjectFactory<T> factory;
+	
+	private static class CacheEntry<T> {
+		private T t;
+		private boolean inUpdate;
+		int strongCount;
+		int cacheAge;
 		
-		GuidReference(T t, Guid guid) {
-			super(t);
-			this.guid = guid;
+		CacheEntry() {
+			inUpdate = true;
+			strongCount = 0;
+			cacheAge = 0;
+		}
+		
+		public synchronized T get() {
+			while (inUpdate) {
+				try {
+					wait();
+				} catch (InterruptedException e) {
+					throw new RuntimeException("Interrupted while waiting for cache update");
+				}
+			}
+			return t;
+		}
+		
+		public synchronized T getForUpdate() {
+			while (inUpdate) {
+				try {
+					wait();
+				} catch (InterruptedException e) {
+					throw new RuntimeException("Interrupted while waiting for cache update");
+				}
+			}
+			
+			inUpdate = true;
+			
+			return t;
+		}
+		
+		public synchronized void update(T t) {
+			if (!inUpdate) {
+				throw new RuntimeException("Attempt to update an entry not primed for update");
+			}
+			
+			// If updating failed to result in an object to store in the cache
+			// then things will go pretty badly, since other people waiting on
+			// the cache entry to be created will get null as a result, but 
+			// what we very much don't want to do is leave inUpdate = true and
+			// let things hang forever
+			inUpdate = false;
+			if (t != null) {
+				this.t = t;
+			}
+			notifyAll();
+		}
+
+		public synchronized T peek() {
+			return t;
 		}
 	}
+	
+	private HashMap<Guid, CacheEntry<T>> entries;
+
+	/**
+	 * Create a new object cache
+	 * @param factory used to create an object to return on cache miss
+	 * @param maxAge number of times age() can be called without a
+	 *    call to get() before the object is discarded.
+	 */
+	public LiveObjectCache(LiveObjectFactory<T> factory, int maxAge) {
+		this.factory = factory;
+		this.maxAge = maxAge;
+		entries = new HashMap<Guid, CacheEntry<T>>();
+	}
+	
+	/**
+	 * Get an object from the cache; if the object doesn't exist, it
+	 * will be created using the factory passed to the constructor.
+	 * 
+	 * The cache age of the object is set to zero.
+	 * 
+	 * @param guid guid to look up in the cache
+	 * @return the found or newly created object
+	 */
+	public T get(Guid guid) {
+		CacheEntry<T> entry;
+		boolean needNew = false;
 		
-	private HashMap<Guid, T> strongReferences;
-	private HashMap<Guid, T> recentReferences;
-	private HashMap<Guid, GuidReference<T>> weakReferences;
-	private ReferenceQueue<T> queue;
-	
-	public LiveObjectCache() {
-		strongReferences = new HashMap<Guid, T>();
-		recentReferences = new HashMap<Guid, T>();			
-		weakReferences = new HashMap<Guid, GuidReference<T>>();
-		queue = new ReferenceQueue<T>();
+		synchronized(this) {
+			 entry = entries.get(guid);
+			 if (entry == null) {
+				 entry = new CacheEntry<T>();
+				 entries.put(guid, entry);
+				 needNew = true;
+			 }
+			 entry.cacheAge = 0;
+		}
+		
+		if (needNew) {
+			T t = null;
+			try {
+				t = factory.create(guid);
+			} finally {
+				entry.update(t);
+			}
+		}
+		
+		return entry.get();
+	}
+
+	/**
+	 * Get an object from the cache; if the object doesn't exist, it
+	 * will be created using the factory passed to the constructor.
+	 * After the object is created or looked up, it will be marked
+	 * as needing update. You must copy the result then call update()
+	 * passing in the newly copied object. If you fail to call update(),
+	 * then anyone trying to access the object will hang forever.
+	 * 
+	 * The cache age of the object is set to zero.
+	 * 
+	 * @param guid guid to look up in the cache
+	 * @return the found or newly created object
+	 */
+	public T getForUpdate(Guid guid) {
+		CacheEntry<T> entry;
+		boolean needNew = false;
+		
+		synchronized(this) {
+			 entry = entries.get(guid);
+			 if (entry == null) {
+				 entry = new CacheEntry<T>();
+				 entries.put(guid, entry);
+				 needNew = true;
+			 }
+			 entry.cacheAge = 0;
+		}
+		
+		if (needNew) {
+			T t = null;
+			try {
+				t = factory.create(guid);
+			} finally {
+				entry.update(t);
+			}
+		}
+		
+		return entry.getForUpdate();
 	}
 	
 	/**
-	 * Add a LiveObject to the weak cache.
-	 * 
-	 * @param t object to be inserted
+	 * Get an object from the cache; if the object doesn't exist, 
+	 * null will be returned. On succesful lookup, the object will be marked
+	 * as needing update. You must copy the result then call update()
+	 * passing in the newly copied object. If you fail to call update(),
+	 * then anyone trying to access the object will hang forever.
+	 * @param guid guid to look up in the cache
+	 * @return the found or newly created object
 	 */
-	public void poke(T t) {
-		Guid guid = t.getGuid();			
-		GuidReference<T> reference = new GuidReference<T>(t, guid);
-		weakReferences.put(guid, reference);
+	public T peekForUpdate(Guid guid) {
+		CacheEntry<T> entry;
+		
+		synchronized(this) {
+			 entry = entries.get(guid);
+			 if (entry == null) {
+				 return null;
+			 }
+		}
+		
+		return entry.getForUpdate();
 	}
-	
+
 	/**
-	 * Look for a LiveObject in the weak cache.
-	 * 
-	 * @param guid Guid whose associated owner to check for in the weak cache
-	 * @return associated LiveObject, or null
+	 * Insert a modified LiveObject into the cache; the caller must have previously
+	 * either called peekForUpdate() or getForUpdate()    
 	 */
-	public T peek(Guid guid) {
-		GuidReference<T> reference = weakReferences.get(guid);
-		if (reference != null)
-			return reference.get();
-		else
-			return null;			
-	}
-	
-	/**
-	 * Records a LiveObject as having been recently accessed.
-	 * 
-	 * @param obj
-	 */
-	public void touch(T obj) {
-		recentReferences.put(obj.getGuid(), obj);
-		obj.setCacheAge(0);			
-		poke(obj);
-	}
+	public void update(T obj) {
+		CacheEntry<T> entry = entries.get(obj.getGuid());
+		if (entry == null)
+			throw new RuntimeException("Attempt to update an entry not primed for update");
+		
+		entry.update(obj);
+	}		
 	
 	/**
 	 * Adds an explicit "strong" reference to a LiveObject;
@@ -85,10 +212,9 @@ class LiveObjectCache<T extends LiveObject> {
 	 * 
 	 * @param obj
 	 */
-	public void addStrongReference(T obj) {
-		Guid guid = obj.getGuid();
-		strongReferences.put(guid, obj);
-
+	public synchronized void addStrongReference(T obj) {
+		CacheEntry<T> entry = entries.get(obj.getGuid());
+		entry.strongCount++;
 	}
 	
 	/**
@@ -97,67 +223,44 @@ class LiveObjectCache<T extends LiveObject> {
 	 * 
 	 * @param obj
 	 */
-	public void dropStrongReference(T obj) {
-		Guid guid = obj.getGuid();
-		strongReferences.remove(guid);
+	public synchronized void dropStrongReference(T obj) {
+		CacheEntry<T> entry = entries.get(obj.getGuid());
+		entry.strongCount--;
 	}
-	
+
 	/**
-	 * Returns a modifiable collection view of the recent
-	 * references; this is used by the aging thread.
+	 * Return all objects (or only strong objects) from the cache
+	 * @param strongOnly if true, only return strongly referenced objects
+	 * @return a set of the objects currently in the cache
 	 */
-	public Collection<T> getRecentCache() {
-		return recentReferences.values();
-	}
-	
-	/**
-	 * Returns an unmodifiable copy of the current set
-	 * of strong references.
-	 */
-	public Set<T> getStrongReferenceCopy() {
-		return Collections.unmodifiableSet(new HashSet<T>(strongReferences.values()));
-	}		
-	
-	/**
-	 * Returns an unmodifiable copy of the entire weak
-	 * cache; this is useful for debugging purposes, e.g.
-	 * the admin page.
-	 */
-	public Set<T> getWeakCacheCopy() {
-		Set<T> ret = new HashSet<T>();
-		for (GuidReference<T> ref : weakReferences.values()) {
-			T obj = ref.get();
-			if (obj != null)
-				ret.add(obj);
+	public Set<T> getAllObjects(boolean strongOnly) {
+		Set<T> result = new HashSet<T>();
+		
+		for (CacheEntry<T> entry : entries.values()) {
+			if (!strongOnly || entry.strongCount > 0) {
+				T t = entry.peek();
+				if (t != null) {
+					result.add(t);
+				}
+			}
 		}
-		return Collections.unmodifiableSet(ret);
+		
+		return result;
 	}
 	
 	/**
-	 * Insert a modified LiveObject into the cache.    
+	 * Increase the age of all items; discard any that have been aged more maxAge times
+	 * @param maxAge how many times to bump the age before discarding
 	 */
-	public void update(T obj) {
-		T old = peek(obj.getGuid());
-		// This guid must already exist in the cache, and
-		// the object being inserted must not be the same
-		// one as already exists.
-		assert(old != null && old != obj);
-		if (strongReferences.containsKey(obj.getGuid())) {
-			strongReferences.put(obj.getGuid(), obj);
-		}
-		poke(obj);
-		touch(obj);
-	}		
-	
-	/**
-	 * Invoke periodically to clean up the weak reference cache.
-	 */
-	public void clean() {
-		while (true) {
-			GuidReference<? extends T> reference = (GuidReference<? extends T>)queue.poll();
-			if (reference == null)
-				break;
-			weakReferences.remove(reference.guid);
+	public synchronized void age() {
+		for (Iterator<CacheEntry<T>> i = entries.values().iterator(); i.hasNext();) {
+			CacheEntry<T> entry = i.next();
+			entry.cacheAge++;
+			if (entry.cacheAge > maxAge && entry.strongCount == 0) {
+				T t = entry.peek();
+				logger.debug("Discarding timed-out instance of " + t.getClass().getName());
+				i.remove();
+			}
 		}
 	}
 }
