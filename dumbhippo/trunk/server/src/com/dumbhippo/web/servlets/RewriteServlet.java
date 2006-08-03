@@ -27,6 +27,7 @@ import org.slf4j.Logger;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HippoProperty;
+import com.dumbhippo.server.ServerStatus;
 import com.dumbhippo.web.DisabledSigninBean;
 import com.dumbhippo.web.RewrittenRequest;
 import com.dumbhippo.web.SigninBean;
@@ -61,7 +62,8 @@ public class RewriteServlet extends HttpServlet {
 	private List<String> psaLinks; // used to choose a random one
 	private int nextPsa;
 	
-	private ServletContext context; 
+	private ServletContext context;
+	private ServerStatus serverStatus;
 	
 	private boolean hasSignin(HttpServletRequest request) {
 		return SigninBean.getForRequest(request).isValid();
@@ -98,6 +100,12 @@ public class RewriteServlet extends HttpServlet {
 		// that persistance beans returned to the web tier won't be detached.
 		//
 		// While we are add it, we time the page for performancing monitoring
+		
+		// If the server says it's too busy, just redirect to a busy page
+		if (serverStatus.isTooBusy()) {
+			context.getRequestDispatcher("/jsp2/busy.jsp").forward(request, response);
+			return;
+		}
 		
 		boolean transactionCreated = false;
 		long startTime = System.currentTimeMillis();
@@ -376,6 +384,8 @@ public class RewriteServlet extends HttpServlet {
 		ServletConfig config = getServletConfig();
 		context = config.getServletContext();
 
+		serverStatus = WebEJBUtil.defaultLookup(ServerStatus.class);
+		
         Configuration configuration = WebEJBUtil.defaultLookup(Configuration.class);
         
 		String stealthModeString = configuration.getProperty(HippoProperty.STEALTH_MODE);
