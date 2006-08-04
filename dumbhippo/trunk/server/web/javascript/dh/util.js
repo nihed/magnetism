@@ -561,6 +561,21 @@ dh.util.getAltKey = function(ev)
 		return window.event.altKey;
 };
 
+dh.util.getBodyPosition = function(el) {
+	var point = { "x" : 0, "y" : 0 };
+	
+	while (el.offsetParent && el.tagName.toUpperCase() != 'BODY') {
+		point.x += el.offsetLeft;
+		point.y += el.offsetTop;
+		el = el.offsetParent;
+	}
+
+	point.x += el.offsetLeft;
+	point.y += el.offsetTop;
+	
+	return point;
+}
+
 dh.util.showMessage = function(message) {
 	var div = document.getElementById("dhMessageDiv")
 

@@ -1,8 +1,24 @@
-var dh = {}
-dh.stacker = {}
-dh.lang = {}
+var dh = {};
+dh.stacker = {};
+dh.lang = {};
+dh.util = {};
 
-var dhBaseUrl = "http://localinstance.mugshot.org:8080"
+var dhBaseUrl = "http://localinstance.mugshot.org:8080";
+
+dh.util.getBodyPosition = function(el) {
+	var point = { "x" : 0, "y" : 0 };
+	
+	while (el.offsetParent && el.tagName.toUpperCase() != 'BODY') {
+		point.x += el.offsetLeft;
+		point.y += el.offsetTop;
+		el = el.offsetParent;
+	}
+
+	point.x += el.offsetLeft;
+	point.y += el.offsetTop;
+	
+	return point;
+}
 
 ///////////////////////// metalinguistic band-aids
 
@@ -111,13 +127,14 @@ defineClass(dh.stacker.Block, null,
 	setNewOuterDiv : function(newOuterDiv) {
 		if (this._div == newOuterDiv)
 			return;
-		if (this._innerDiv.parentNode)
+		if (this._innerDiv.parentNode && this._innerDiv.parentNode != newOuterDiv)
 			this._innerDiv.parentNode.removeChild(this._innerDiv);
 		this._div = newOuterDiv;
 
 		// in IE this has the bizarre side effect of setting
 		// this._div.parentNode to a document fragment
-		this._div.appendChild(this._innerDiv);
+		if (this._innerDiv.parentNode != this._div)
+			this._div.appendChild(this._innerDiv);
 		
 		this._cancelFade();		
 	},
@@ -267,6 +284,93 @@ defineClass(dh.stacker.MusicBlock, dh.stacker.Block,
 
 });
 
+dh.stacker.RaiseAnimation = function(block, inner, oldOuter, newOuter) {
+
+	if (block._div != oldOuter) {
+		throw new Error("block._div should be oldOuterDiv");
+	}
+
+	this._block = block;
+	this._inner = inner;
+	this._oldOuter = oldOuter;
+	this._newOuter = newOuter;
+	this._interval = null;
+	this._percentage = 0.0;	
+}
+
+defineClass(dh.stacker.RaiseAnimation, null, 
+{
+	_updateOuterHeights : function() {
+		var h = this._inner.offsetHeight;
+		
+		this._oldOuter.style.height = (h * (1.0 - this._percentage)) + "px";
+		this._newOuter.style.height = (h * this._percentage) + "px";
+	},
+
+	_updateInnerPosition : function() {
+		var oldPos = dh.util.getBodyPosition(this._oldOuter);
+		var newPos = dh.util.getBodyPosition(this._newOuter);
+		
+		// oldPos.x == newPos.x so pick either
+		this._inner.style.left = oldPos.x + "px"; 
+		
+		this._inner.style.top = (newPos.y + (oldPos.y - newPos.y) * (1.0 - this._percentage)) + "px";
+	},
+
+	start : function() {
+		if (this._interval)
+			return;
+		
+		this._updateOuterHeights();
+		this._newOuter.style.display = 'block';
+		
+		this._inner.style.position = 'absolute';
+		this._inner.parentNode.removeChild(this._inner);
+		document.body.appendChild(this._inner);
+		this._updateInnerPosition();
+		
+		var anim = this;
+		this._interval = setInterval(function() {
+		
+			if (false && anim._percentage >= 0.5) {
+				clearInterval(this._interval);
+				this._interval = null;
+				return;
+			}
+		
+			if (anim._percentage >= 0.97) {
+				anim.finish();
+				return;
+			}
+			
+			// we want to grow the new outer, shrink old outer, 
+			// and move the inner
+			anim._updateOuterHeights();
+			anim._updateInnerPosition();
+			
+			anim._percentage = anim._percentage + 0.05;
+
+		}, 50);
+	},
+	
+	finish : function() {
+		if (!this._interval)
+			return;
+		clearInterval(this._interval);
+		this._interval = null;
+		this._inner.parentNode.removeChild(this._inner);
+		this._inner.style.top = "0px"
+		this._inner.style.left = "0px"		
+		this._inner.style.position = 'relative';
+		this._newOuter.appendChild(this._inner);
+		this._newOuter.style.height = "auto";
+		this._oldOuter.parentNode.removeChild(this._oldOuter);
+					
+		this._block.setNewOuterDiv(this._newOuter);
+		this._block.show();
+	}
+});
+
 dh.stacker.Stacker = function() {
 	this._container = null;
 	// end of list is top of the screen, highest stackTime
@@ -364,18 +468,16 @@ defineClass(dh.stacker.Stacker, null,
 			this._container.insertBefore(newOuterDiv, olderBlock._div);
 		else
 			this._container.insertBefore(newOuterDiv, this._container.firstChild);	
-			
-		block.setNewOuterDiv(newOuterDiv);
 		
 		if (oldOuterDiv == newOuterDiv) {
 			block.showWithFade();
 		} else {
-			block.show();
 			if (!oldOuterDiv.parentNode)
 				throw new Error("oldOuterDiv has no parent for some reason " + oldOuterDiv);
 			if (oldOuterDiv.parentNode != this._container)
 				throw new Error("old outer div " + oldOuterDiv + " has wrong parent " + oldOuterDiv.parentNode);
-			oldOuterDiv.parentNode.removeChild(oldOuterDiv);
+			var anim = new dh.stacker.RaiseAnimation(block, block._innerDiv, oldOuterDiv, newOuterDiv);
+			anim.start();
 		}
 	},
 	

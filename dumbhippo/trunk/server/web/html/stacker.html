@@ -53,9 +53,11 @@ var djConfig = {
 		}
 		.dh-stacked-block-outer {
 			position:			relative;		
-			margin-bottom:		6px;
 			/* for opacity to work in IE you have to set width or height, or use position absolute */
 			width:				480px;
+			/* don't add a margin here or it makes the animation ugly when blocks move 
+			 * since we modify the height of this block in that animation but not the margin
+			 */
 		}		
 		.dh-stacked-block {
 			position:			relative;		
@@ -64,6 +66,7 @@ var djConfig = {
 			text-align:			left;
 			/* for opacity to work in IE you have to set width or height, or use position absolute */
 			width:				480px;
+			margin-bottom:		6px;			
 		}
 		.dh-stacked-block .dh-title {
 			position:			relative;
