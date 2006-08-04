@@ -50,6 +50,8 @@ var defineClass = function(childConstructor, parentConstructor, childProps) {
 
 ///////////////////////// code!
 
+dh.stacker.BLOCK_MARGIN = 6;
+
 dh.stacker.Kind = {};
 dh.stacker.Kind.POST = 1;
 dh.stacker.Kind.MUSIC = 2;
@@ -120,23 +122,30 @@ defineClass(dh.stacker.Block, null,
 		d.style.display = 'none';
 			
 		dojo.html.setClass(d, "dh-stacked-block-outer");
+
+		var margin = document.createElement("div");
+		margin.style.height = dh.stacker.BLOCK_MARGIN + "px";
+		d.appendChild(margin);
 		
 		return d;
+	},
+	
+	reparentIntoOuterDiv : function(newOuterDiv) {
+		if (this._innerDiv.parentNode && this._innerDiv.parentNode != newOuterDiv)
+			this._innerDiv.parentNode.removeChild(this._innerDiv);
+
+		// in IE this has the bizarre side effect of setting
+		// this._div.parentNode to a document fragment
+		if (this._innerDiv.parentNode != this._div)
+			this._div.insertBefore(this._innerDiv, this._div.firstChild);
+		
+		this._cancelFade();	
 	},
 	
 	setNewOuterDiv : function(newOuterDiv) {
 		if (this._div == newOuterDiv)
 			return;
-		if (this._innerDiv.parentNode && this._innerDiv.parentNode != newOuterDiv)
-			this._innerDiv.parentNode.removeChild(this._innerDiv);
 		this._div = newOuterDiv;
-
-		// in IE this has the bizarre side effect of setting
-		// this._div.parentNode to a document fragment
-		if (this._innerDiv.parentNode != this._div)
-			this._div.appendChild(this._innerDiv);
-		
-		this._cancelFade();		
 	},
 	
 	realize : function() {
@@ -147,6 +156,7 @@ defineClass(dh.stacker.Block, null,
 			this._innerDiv = document.createElement("div");
 			dojo.html.setClass(this._innerDiv, "dh-stacked-block");
 			this.setNewOuterDiv(this.createOuterDiv());
+			this.reparentIntoOuterDiv(this._div);
 
 			this._titleDiv = document.createElement("div");
 			this._innerDiv.appendChild(this._titleDiv);
@@ -286,8 +296,11 @@ defineClass(dh.stacker.MusicBlock, dh.stacker.Block,
 
 dh.stacker.RaiseAnimation = function(block, inner, oldOuter, newOuter) {
 
-	if (block._div != oldOuter) {
-		throw new Error("block._div should be oldOuterDiv");
+	if (block._div != newOuter) {
+		throw new Error("block._div should be newOuterDiv");
+	}
+	if (oldOuter == newOuter) {
+		throw new Error("can't have same div for old and new");
 	}
 
 	this._block = block;
@@ -301,7 +314,7 @@ dh.stacker.RaiseAnimation = function(block, inner, oldOuter, newOuter) {
 defineClass(dh.stacker.RaiseAnimation, null, 
 {
 	_updateOuterHeights : function() {
-		var h = this._inner.offsetHeight;
+		var h = this._inner.offsetHeight + dh.stacker.BLOCK_MARGIN;
 		
 		this._oldOuter.style.height = (h * (1.0 - this._percentage)) + "px";
 		this._newOuter.style.height = (h * this._percentage) + "px";
@@ -362,11 +375,13 @@ defineClass(dh.stacker.RaiseAnimation, null,
 		this._inner.style.top = "0px"
 		this._inner.style.left = "0px"		
 		this._inner.style.position = 'relative';
-		this._newOuter.appendChild(this._inner);
+		this._newOuter.insertBefore(this._inner, this._newOuter.firstChild);
 		this._newOuter.style.height = "auto";
 		this._oldOuter.parentNode.removeChild(this._oldOuter);
 					
-		this._block.setNewOuterDiv(this._newOuter);
+		// we already did the reparent but call this for any 
+		// side effects
+		this._block.reparentIntoOuterDiv(this._newOuter);
 		this._block.show();
 	}
 });
@@ -476,6 +491,9 @@ defineClass(dh.stacker.Stacker, null,
 				throw new Error("oldOuterDiv has no parent for some reason " + oldOuterDiv);
 			if (oldOuterDiv.parentNode != this._container)
 				throw new Error("old outer div " + oldOuterDiv + " has wrong parent " + oldOuterDiv.parentNode);
+			// note this doesn't reparent into the new div yet, but we want to 				
+			// have the invariant that block._div is accurate
+			block.setNewOuterDiv(newOuterDiv);
 			var anim = new dh.stacker.RaiseAnimation(block, block._innerDiv, oldOuterDiv, newOuterDiv);
 			anim.start();
 		}
