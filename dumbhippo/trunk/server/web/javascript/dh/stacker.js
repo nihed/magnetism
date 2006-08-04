@@ -125,6 +125,9 @@ defineClass(dh.stacker.Block, null,
 
 		var margin = document.createElement("div");
 		margin.style.height = dh.stacker.BLOCK_MARGIN + "px";
+		margin.style.width = "10px"; // 0-width can confuse browsers 
+		margin.style.overflow = 'hidden'; // otherwise the font size sets a min height
+		margin.style.position = 'relative';
 		d.appendChild(margin);
 		
 		return d;
