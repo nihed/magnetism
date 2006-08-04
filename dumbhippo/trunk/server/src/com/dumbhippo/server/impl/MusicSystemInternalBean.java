@@ -65,6 +65,7 @@ import com.dumbhippo.server.Pageable;
 import com.dumbhippo.server.PersonMusicPlayView;
 import com.dumbhippo.server.PersonMusicView;
 import com.dumbhippo.server.RhapsodyDownloadCache;
+import com.dumbhippo.server.Stacker;
 import com.dumbhippo.server.TrackIndexer;
 import com.dumbhippo.server.TrackSearchResult;
 import com.dumbhippo.server.TrackView;
@@ -128,6 +129,9 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	
 	@EJB
 	private YahooArtistAlbumsCache yahooArtistAlbumsCache;
+	
+	@EJB
+	private Stacker stacker;
 	
 	private static ExecutorService threadPool;
 	private static boolean shutdown = false;
@@ -221,36 +225,31 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	}
 
 	private void addTrackHistory(final User user, final Track track, final Date now) {
-		try {
-			runner.runTaskRetryingOnConstraintViolation(new Callable<TrackHistory>() {
+		runner.runTaskRetryingOnConstraintViolation(new Runnable() {				
+			public void run() {
+				Query q;
 				
-				public TrackHistory call() throws Exception {
-					Query q;
-					
-					q = em.createQuery("FROM TrackHistory h WHERE h.user = :user " +
-							"AND h.track = :track");
-					q.setParameter("user", user);
-					q.setParameter("track", track);
-					
-					TrackHistory res;
-					try {
-						res = (TrackHistory) q.getSingleResult();
-						res.setLastUpdated(now);
-						res.setTimesPlayed(res.getTimesPlayed() + 1);
-					} catch (EntityNotFoundException e) {
-						res = new TrackHistory(user, track);
-						res.setLastUpdated(now);
-						res.setTimesPlayed(1);
-						em.persist(res);
-					}
-					
-					return res;
+				q = em.createQuery("FROM TrackHistory h WHERE h.user = :user " +
+						"AND h.track = :track");
+				q.setParameter("user", user);
+				q.setParameter("track", track);
+				
+				TrackHistory res;
+				try {
+					res = (TrackHistory) q.getSingleResult();
+					res.setLastUpdated(now);
+					res.setTimesPlayed(res.getTimesPlayed() + 1);
+				} catch (EntityNotFoundException e) {
+					res = new TrackHistory(user, track);
+					res.setLastUpdated(now);
+					res.setTimesPlayed(1);
+					em.persist(res);
 				}
-			});
-		} catch (Exception e) {
-			ExceptionUtils.throwAsRuntimeException(e);
-			throw new RuntimeException(e); // not reached
-		}
+			}
+		});
+		
+		// update the stack with this new listen event
+		stacker.stackMusicPerson(user.getGuid(), now.getTime());
 	}
 	
 	public void setCurrentTrack(final User user, final Track track) {

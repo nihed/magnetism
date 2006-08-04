@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.TypeFilteredCollection;
+import com.dumbhippo.TypeUtils;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.live.LiveUser;
@@ -801,25 +802,30 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		return result;
 	}
 	
-	static final String GET_SELF_A_CONTACT_OF_QUERY = 
-		"SELECT cc.account FROM ContactClaim cc WHERE cc.resource = :accountOfSelf";
+	static final private String GET_ACCOUNTS_WITH_ACCOUNT_AS_CONTACT_QUERY = 
+		"SELECT cc.account FROM ContactClaim cc WHERE cc.resource = :account";
+
+	private List<Account> getAccountsWhoHaveUserAsContact(User user) {
+		Query q = em.createQuery(GET_ACCOUNTS_WITH_ACCOUNT_AS_CONTACT_QUERY);
+		q.setParameter("account", user.getAccount());
+	    List<Account> accounts = TypeUtils.castList(Account.class, q.getResultList());
+	    return accounts;
+	}
 	
 	public Set<PersonView> getFollowers(Viewpoint viewpoint, User user, PersonViewExtra... extras) {
 		
 		Set<PersonView> followers = new HashSet<PersonView>();
-	    if (!viewpoint.isOfUser(user)) {
+	    if (!(viewpoint.isOfUser(user) || viewpoint instanceof SystemViewpoint)) {
 	        // can only see followers if self
 	    	return followers;
 	    }
 	    
 	    // we are only interested in user contacts of self
 	    Set<User> rawContactsOfSelf = getRawUserContacts(viewpoint, user);
-			
-		Query q = em.createQuery(GET_SELF_A_CONTACT_OF_QUERY);
-		q.setParameter("accountOfSelf", user.getAccount());
-		List<?> rawResults = q.getResultList();
-		for (Object o : rawResults) {		
-			User selfAContactOf = ((Account)o).getOwner();
+	    List<Account> accounts = getAccountsWhoHaveUserAsContact(user);
+	    
+		for (Account a : accounts) {		
+			User selfAContactOf = a.getOwner();
 		    if (!rawContactsOfSelf.contains(selfAContactOf)) {
 		    	// this person is our follower, because we don't have them as a contact!
 				PersonView pv = getPersonView(viewpoint, selfAContactOf, extras);
@@ -828,6 +834,18 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		}
 	    
 		return followers;
+	}
+	
+	public Set<User> getUsersWhoHaveUserAsContact(Viewpoint viewpoint, User user) {
+	    if (!(viewpoint.isOfUser(user) || viewpoint instanceof SystemViewpoint)) {
+	    	return Collections.emptySet();
+	    }
+	    List<Account> accounts = getAccountsWhoHaveUserAsContact(user);
+	    Set<User> users = new HashSet<User>();
+	    for (Account a : accounts) {
+	    	users.add(a.getOwner());
+	    }
+	    return users;
 	}
 	
 	/**

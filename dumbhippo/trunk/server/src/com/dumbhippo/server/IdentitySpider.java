@@ -204,6 +204,8 @@ public interface IdentitySpider {
 	 */
 	public Set<PersonView> getFollowers(Viewpoint viewpoint, User user, PersonViewExtra... extras);
 	
+	public Set<User> getUsersWhoHaveUserAsContact(Viewpoint viewpoint, User user);
+	
 	/**
 	 * Checks whether a person has another other as a contact
 	 * @param current viewpoint (only a user can see their contacts, 
