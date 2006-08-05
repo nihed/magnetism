@@ -7,6 +7,7 @@ import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
 
 import org.hibernate.annotations.Cache;
@@ -23,13 +24,13 @@ public class UserBlockData extends DBUnique {
 	
 	private User user;
 	private Block block;
-	private long clickedDate;
+	private long clickedTimestamp;
 	private boolean ignored;
-	private long ignoredDate;
+	private long ignoredTimestamp;
 	
 	public UserBlockData() {
-		this.clickedDate = -1;
-		this.ignoredDate = -1;
+		this.clickedTimestamp = -1;
+		this.ignoredTimestamp = -1;
 		this.ignored = false;
 	}
 	
@@ -60,13 +61,23 @@ public class UserBlockData extends DBUnique {
 	}	
 	
 	@Column(nullable=true)
-	public Date getClickedDate() {
-		return clickedDate >= 0 ? new Date(clickedDate) : null;
+	public Date getClickedTimestamp() {
+		return clickedTimestamp >= 0 ? new Date(clickedTimestamp) : null;
 	}
 
-	public void setClickedDate(Date clickedDate) {
-		this.clickedDate = clickedDate != null ? clickedDate.getTime() : -1;
-	}	
+	@Transient
+	public long getClickedTimestampAsLong() {
+		return clickedTimestamp;
+	}
+	
+	public void setClickedTimestamp(Date clickedTimestamp) {
+		this.clickedTimestamp = clickedTimestamp != null ? clickedTimestamp.getTime() : -1;
+	}
+	
+	@Transient
+	public boolean isClicked() {
+		return this.clickedTimestamp >= 0;
+	}
 	
 	@Column(nullable=false)
 	public boolean isIgnored() {
@@ -78,12 +89,17 @@ public class UserBlockData extends DBUnique {
 	}
 	
 	@Column(nullable=true)
-	public Date getIgnoredDate() {
-		return ignoredDate >= 0 ? new Date(ignoredDate) : null;
+	public Date getIgnoredTimestamp() {
+		return ignoredTimestamp >= 0 ? new Date(ignoredTimestamp) : null;
 	}
 
-	public void setIgnoredDate(Date ignoredDate) {
-		this.ignoredDate = ignoredDate != null ? ignoredDate.getTime() : -1;
+	@Transient
+	public long getIgnoredTimestampAsLong() {
+		return ignoredTimestamp;
+	}
+	
+	public void setIgnoredTimestamp(Date ignoredTimestamp) {
+		this.ignoredTimestamp = ignoredTimestamp != null ? ignoredTimestamp.getTime() : -1;
 	}
 	
 	@Override

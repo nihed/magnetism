@@ -45,6 +45,7 @@ import com.dumbhippo.live.LiveState;
 import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.AccountFeed;
 import com.dumbhippo.persistence.AimResource;
+import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.Contact;
 import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.ExternalAccount;
@@ -61,6 +62,7 @@ import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.Sentiment;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.persistence.ValidationException;
 import com.dumbhippo.persistence.WantsIn;
 import com.dumbhippo.postinfo.PostInfo;
@@ -86,6 +88,7 @@ import com.dumbhippo.server.PostIndexer;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.PromotionCode;
 import com.dumbhippo.server.SigninSystem;
+import com.dumbhippo.server.Stacker;
 import com.dumbhippo.server.SystemViewpoint;
 import com.dumbhippo.server.TrackIndexer;
 import com.dumbhippo.server.TrackView;
@@ -149,6 +152,9 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	
 	@EJB
 	private ExternalAccountSystem externalAccountSystem;
+	
+	@EJB
+	private Stacker stacker;
 	
 	@PersistenceContext(unitName = "dumbhippo")
 	private EntityManager em;	
@@ -1717,6 +1723,62 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			xml.closeElement();
 		}
 		
+		xml.closeElement();
+	}
+	
+	public void getBlocks(XmlBuilder xml, UserViewpoint viewpoint, String userId, String lastTimestampStr, String startStr, String countStr) throws XmlMethodException {
+		long lastTimestamp;
+		int start;
+		int count;
+		
+		try {
+			lastTimestamp = Long.parseLong(lastTimestampStr);
+			start = Integer.parseInt(startStr);
+			count = Integer.parseInt(countStr);
+		} catch (NumberFormatException e) {
+			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, "bad integer");
+		}
+		if (start < 0)
+			throw new XmlMethodException(XmlMethodErrorCode.INVALID_ARGUMENT, "start must be >= 0");
+		if (count < 1)
+			throw new XmlMethodException(XmlMethodErrorCode.INVALID_ARGUMENT, "count must be > 0");
+		if (lastTimestamp < 0)
+			throw new XmlMethodException(XmlMethodErrorCode.INVALID_ARGUMENT, "lastTimestamp must be >= 0");
+		
+		User user;
+		if (userId == null) {
+			user = viewpoint.getViewer();
+		} else {
+			try {
+				user = identitySpider.lookupGuidString(User.class, userId);
+			} catch (ParseException e) {
+				throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, "bad userId");
+			} catch (NotFoundException e) {
+				throw new XmlMethodException(XmlMethodErrorCode.INVALID_ARGUMENT, "no such person");
+			}		
+		}
+		
+		List<UserBlockData> list = stacker.getStack(viewpoint, user, lastTimestamp, start, count);
+		xml.openElement("blocks", "count", Integer.toString(list.size()),
+				"userId", user.getId());
+		for (UserBlockData ubd : list) {
+			Block block = ubd.getBlock();
+			xml.openElement("block", "id", block.getId(),
+					"type", block.getBlockType().name(),
+					"timestamp", Long.toString(block.getTimestampAsLong()),
+					"ignored", Boolean.toString(ubd.isIgnored()),
+					"ignoredTimestamp", Long.toString(ubd.getIgnoredTimestampAsLong()),
+					"clicked", Boolean.toString(ubd.isClicked()),
+					"clickedTimestamp", Long.toString(ubd.getClickedTimestampAsLong()));
+			
+			switch (block.getBlockType()) {
+			case MUSIC_PERSON:
+				xml.appendTextNode("musicPerson", null, "userId", block.getData1());
+				break;
+			}
+			
+			xml.closeElement();
+		}
 		xml.closeElement();
 	}
 }

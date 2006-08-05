@@ -97,14 +97,17 @@ public class Block extends EmbeddedGuidPersistable {
 		return data1;
 	}	
 
-	public void setData1AsGuid(Guid guid) {
+	public void setData1AsGuid(Guid data1) {
 		// no copy since Guid is immutable
-		this.data1 = guid;
+		this.data1 = data1;
 	}
 
 	@Column(length = Guid.STRING_LENGTH, nullable = true)
 	public String getData1() {
-		String s = getGuid().toString();
+		Guid g = getData1AsGuid();
+		if (g == null)
+			return null;
+		String s = g.toString();
 		assert s.length() == Guid.STRING_LENGTH;
 		return s;
 	}

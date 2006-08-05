@@ -346,4 +346,9 @@ public interface HttpMethods {
  	@HttpParams( { "filename", "columns", "start", "end", "timescale" })
  	@HttpOptions( optionalParams = { "filename", "start", "end", "timescale" } )
  	public void getStatistics(XmlBuilder xml, UserViewpoint viewpoint, String filename, String columns, String start, String end, String timescale) throws IOException, XmlMethodException;
+ 	
+ 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
+ 	@HttpParams( { "userId", "lastTimestamp", "start", "count" })
+ 	@HttpOptions( optionalParams = { "userId" } )
+ 	public void getBlocks(XmlBuilder xml, UserViewpoint viewpoint, String userId, String lastTimestamp, String start, String count) throws XmlMethodException;
 }

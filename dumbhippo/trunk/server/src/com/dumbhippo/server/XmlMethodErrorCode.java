@@ -11,5 +11,6 @@ public enum XmlMethodErrorCode {
 	NETWORK_ERROR,
 	PARSE_ERROR,
 	NOT_FOUND,
-	NOT_READY
+	NOT_READY,
+	INVALID_ARGUMENT
 }
