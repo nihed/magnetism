@@ -89,6 +89,15 @@ public class RewriteServlet extends HttpServlet {
     	++nextPsa;
     	return s;
     }
+
+    private boolean canBusyRedirect(HttpServletRequest request) {
+	// The busy page is displayed with /error, so redirecting error
+	// causes an infinite loop. Plus, redirecting /error will make it
+	// hard to tell what is going on.
+	
+	String path = request.getServletPath();
+	return !path.equals("/error");
+    }
     
 	public void handleJsp(HttpServletRequest request, HttpServletResponse response, String newPath) throws IOException, ServletException {
 		// Instead of just forwarding JSP's to the right handler, we surround
@@ -102,7 +111,7 @@ public class RewriteServlet extends HttpServlet {
 		// While we are add it, we time the page for performancing monitoring
 		
 		// If the server says it's too busy, just redirect to a busy page
-		if (serverStatus.isTooBusy()) {
+	    if (serverStatus.isTooBusy() && canBusyRedirect(request)) {
 			context.getRequestDispatcher("/jsp2/busy.jsp").forward(request, response);
 			return;
 		}
