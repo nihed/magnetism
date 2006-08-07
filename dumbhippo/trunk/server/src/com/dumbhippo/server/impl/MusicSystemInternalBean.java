@@ -1808,10 +1808,15 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		properties.put("album", entry.getAlbum());
 		properties.put("url", entry.getPlayHref());
 		
-		Integer duration = Integer.parseInt(entry.getDuration());
-		duration = duration/1000;  // Rhapsody duration info is in milliseconds, elswhere it's seconds
+		try {
+			Integer duration = Integer.parseInt(entry.getDuration());
+			duration = duration/1000;  // Rhapsody duration info is in milliseconds, elswhere it's seconds
 		
-		properties.put("duration", ""+duration);
+			properties.put("duration", ""+duration);
+		} catch (NumberFormatException e) {
+			logger.debug("bad duration in rhapsody feed '{}'", entry.getDuration());
+			// just don't store the duration
+		}
 		
 		//properties.put("format", "");            // could set to 'Rhapsody' or something like that
 		//properties.put("fileSize", "");          // streaming tracks don't have a file size
