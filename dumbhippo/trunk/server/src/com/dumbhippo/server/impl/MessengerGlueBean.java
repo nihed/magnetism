@@ -517,7 +517,7 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 		} catch (NotFoundException e) {
 			throw new RuntimeException(e);
 		}
-		return newChatRoomUser(user);		
+		return newChatRoomUser(user);
 	}
 	
 	public Set<ChatRoomUser> getChatRoomRecipients(String roomName, ChatRoomKind kind) {

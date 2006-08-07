@@ -52,6 +52,7 @@ import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Pageable;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
+import com.dumbhippo.server.Stacker;
 import com.dumbhippo.server.SystemViewpoint;
 import com.dumbhippo.server.UserViewpoint;
 import com.dumbhippo.server.Viewpoint;
@@ -67,6 +68,9 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 	
 	@EJB
 	private IdentitySpider identitySpider;
+	
+	@EJB
+	private Stacker stacker;
 	
 	public Group createGroup(User creator, String name, GroupAccess access, String description) {
 		if (creator == null)
@@ -713,6 +717,10 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		
 		GroupMessage groupMessage = new GroupMessage(group, fromUser, text, timestamp, serial);
 		em.persist(groupMessage);
+
+		// this assumes Group has been committed in a previous transaction, which should 
+		// be safe since nobody can chat about a group until it's created
+		stacker.stackGroupChat(group.getGuid(), timestamp.getTime());
 	}
 
 	public boolean canEditGroup(UserViewpoint viewpoint, Group group) {

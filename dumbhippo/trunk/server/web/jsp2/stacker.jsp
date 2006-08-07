@@ -1,8 +1,14 @@
 <html>
+<%@ page pageEncoding="UTF-8" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="/jsp/dumbhippo.tld" prefix="dh" %>
+<%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 
 <head>
-	<title>Mugshot Action!</title>
-	<link rel="stylesheet" type="text/css" href="../css2/site.css"/>
+	<title>Mugshot Happenings</title>
+	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/site.css"/>
+	<dht:faviconIncludes/>
+	<dht:scriptIncludes/>
 	<style type="text/css">
 		#dhPage {
 			height:		100%;
@@ -64,7 +70,7 @@
 				dh.stacker.simulateNewStackTime(dh.stacker.getInstance());
 			}
 		}
-	</script>
+	</script>	
 </head>
 <body class="dh-body-without-sidebar">
 	<div id="dhDebugButtons">
@@ -79,7 +85,7 @@
 			<tr id="dhStackerFrameRow">
 				<td>
 					<div id="dhStackerFrameContainer">
-						<iframe id="dhStackerFrame" src="stacker.html" frameborder="0" scrolling="yes">
+						<iframe id="dhStackerFrame" src="/stacker-iframe" frameborder="0" scrolling="yes">
 							<div>Your web browser doesn't seem to work with this page. <a href="mailto:feedback@mugshot.org">Let us know!</a></div>
 						</iframe>
 					</div>
@@ -100,3 +106,4 @@
 		</table>
 	</div>
 </body>
+</html>

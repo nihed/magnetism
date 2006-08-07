@@ -1775,6 +1775,9 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			case MUSIC_PERSON:
 				xml.appendTextNode("musicPerson", null, "userId", block.getData1());
 				break;
+			case GROUP_CHAT:
+				xml.appendTextNode("groupChat", null, "groupId", block.getData1());
+				break;
 			}
 			
 			xml.closeElement();

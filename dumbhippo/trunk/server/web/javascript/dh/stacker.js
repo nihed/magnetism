@@ -1,26 +1,9 @@
-var dh = {};
-dh.stacker = {};
-dh.lang = {};
-dh.util = {};
-
-var dhBaseUrl = "http://localinstance.mugshot.org:8080";
-
-dh.util.getBodyPosition = function(el) {
-	var point = { "x" : 0, "y" : 0 };
-	
-	while (el.offsetParent && el.tagName.toUpperCase() != 'BODY') {
-		point.x += el.offsetLeft;
-		point.y += el.offsetTop;
-		el = el.offsetParent;
-	}
-
-	point.x += el.offsetLeft;
-	point.y += el.offsetTop;
-	
-	return point;
-}
+dojo.provide('dh.stacker');
+dojo.require('dh.util');
+dojo.require('dh.server');
 
 ///////////////////////// metalinguistic band-aids
+dh.lang = {};
 
 dh.lang.mixin = function(obj, props){
 	var tobj = {};
@@ -53,13 +36,26 @@ var defineClass = function(childConstructor, parentConstructor, childProps) {
 dh.stacker.BLOCK_MARGIN = 6;
 
 dh.stacker.Kind = {};
+dh.stacker.Kind.UNKNOWN = -1;
 dh.stacker.Kind.POST = 1;
-dh.stacker.Kind.MUSIC = 2;
-dh.stacker.Kind.GROUP = 3;
-dh.stacker.Kind.NETWORK = 4;
+dh.stacker.Kind.MUSIC_PERSON = 2;
+dh.stacker.Kind.GROUP_CHAT = 3;
 
-dh.stacker.Block = function(kind) {
+dh.stacker.kindFromString = function(str) {
+	if (str == "POST")
+		return dh.stacker.Kind.POST;
+	else if (str == "MUSIC_PERSON")
+		return dh.stacker.Kind.MUSIC_PERSON;
+	else if (str == "GROUP_CHAT")
+		return dh.stacker.Kind.GROUP_CHAT;
+	else
+		return dh.stacker.Kind.UNKNOWN;
+}
+
+dh.stacker.Block = function(kind, blockId) {
 	this._kind = kind;
+	this._blockId = blockId;
+	
 	// the stackTime is the sort key for stacker blocks and is the milliseconds
 	// numeric representation of Date()
 	this._stackTime = 0;
@@ -84,6 +80,10 @@ defineClass(dh.stacker.Block, null,
 		return this._kind;
 	},
 	
+	getBlockId : function() {
+		return this._blockId;
+	},
+	
 	getStackTime : function() {
 		return this._stackTime;
 	},
@@ -102,7 +102,6 @@ defineClass(dh.stacker.Block, null,
 		
 		this._updateTitleDiv();
 	},
-
 	
 	_updateTitleDiv : function() {
 		if (this._div) {
@@ -233,11 +232,34 @@ defineClass(dh.stacker.Block, null,
 				block._setOpacity(old + 0.05);
 			}
 		}, 50);
+	},
+	
+	load : function(completeFunc, errorFunc) {
+		throw new Error("load() not implemented");
+	},
+	
+	// return true if update is needed, used in subclass
+	// overrides that chain up to this
+	updateFrom : function(newBlock) {
+		if (newBlock.getBlockId() != this.getBlockId()) {
+			throw new Error("updating block from wrong block");
+		}
+	
+		if (newBlock.getStackTime() <= this.getStackTime()) {
+			// new block isn't really newer
+			return false;
+		}
+		
+		this.setStackTime(newBlock.getStackTime());
+		
+		this.setTitle(newBlock.getTitle());
+		
+		return true;
 	}
 });
 
-dh.stacker.PostBlock = function(postId, title) {
-	dh.stacker.Block.call(this, dh.stacker.Kind.POST);
+dh.stacker.PostBlock = function(blockId, postId, title) {
+	dh.stacker.Block.call(this, dh.stacker.Kind.POST, blockId);
 	this._postId = postId;
 	this._viewerCount = 0;
 	
@@ -280,21 +302,52 @@ defineClass(dh.stacker.PostBlock, dh.stacker.Block,
 	unrealize : function() {
 		dh.stacker.PostBlock.superclass.unrealize.call(this);	
 		this._viewsDiv = null;
+	},
+	
+	load : function(completeFunc, errorFunc) {
+		throw new Error("load() not implemented in PostBlock");		
+	},
+	
+	updateFrom : function(newBlock) {
+		if (!dh.stacker.Block.call(this, newBlock))
+			return false;
+		this.setViewerCount(newBlock.getViewerCount());
+		return true;
 	}
-
 });
 
-dh.stacker.MusicBlock = function(userId) {
-	dh.stacker.Block.call(this, dh.stacker.Kind.MUSIC);
+dh.stacker.MusicPersonBlock = function(blockId, userId) {
+	dh.stacker.Block.call(this, dh.stacker.Kind.MUSIC_PERSON, blockId);
 	this._userId = userId;
 }
 
-defineClass(dh.stacker.MusicBlock, dh.stacker.Block,
+defineClass(dh.stacker.MusicPersonBlock, dh.stacker.Block,
 {
 	getUserId : function() {
 		return this._userId;
-	}
+	},
 
+	load : function(completeFunc, errorFunc) {
+		this.setTitle("Music person " + this._userId);
+		completeFunc(this);
+	}
+});
+
+dh.stacker.GroupChatBlock = function(blockId, groupId) {
+	dh.stacker.Block.call(this, dh.stacker.Kind.GROUP_CHAT, blockId);
+	this._groupId = groupId;
+}
+
+defineClass(dh.stacker.GroupChatBlock, dh.stacker.Block,
+{
+	getGroupId : function() {
+		return this._groupId;
+	},
+
+	load : function(completeFunc, errorFunc) {
+		this.setTitle("Group chat " + this._groupId);
+		completeFunc(this);	
+	}
 });
 
 dh.stacker.RaiseAnimation = function(block, inner, oldOuter, newOuter) {
@@ -389,33 +442,151 @@ defineClass(dh.stacker.RaiseAnimation, null,
 	}
 });
 
+dh.stacker.getAttribute = function(node, name) {
+	var v = node.getAttribute(name);
+	if (!v)
+		throw new Error("node " + node.nodeName + " missing attribute " + name);
+	return v;
+}
+
+dh.stacker.getAttributeInt = function(node, name) {
+	var v = dh.stacker.getAttribute(node, name);
+	var i = parseInt(v);
+	if (i == NaN)
+		throw new Error("failed to parse '" + v + "' as an integer on node " + node.nodeName + " attr " + name);
+	return i;
+}
+
+dh.stacker.getAttributeBool = function(node, name) {
+	return dh.stacker.getAttribute(node, name) == "true";
+}
+
+dh.stacker.parseBlockAttrs = function(node) {
+	var attrs = {};
+	attrs["id"] = dh.stacker.getAttribute(node, "id");
+	attrs["timestamp"] = dh.stacker.getAttributeInt(node, "timestamp");
+	attrs["clicked"] = dh.stacker.getAttributeBool(node, "clicked");
+	attrs["clickedTime"] = dh.stacker.getAttributeInt(node, "clickedTimestamp");
+	attrs["ignored"] = dh.stacker.getAttributeBool(node, "ignored");
+	attrs["ignoredTime"] = dh.stacker.getAttributeInt(node, "ignoredTimestamp");
+	
+	return attrs;
+}
+
+dh.stacker.mergeBlockAttrs = function(block, attrs) {
+	block.setStackTime(attrs["timestamp"]);
+}
+
+dh.stacker.blockParsers = {};
+dh.stacker.blockParsers[dh.stacker.Kind.GROUP_CHAT] = function(node) {
+	var attrs = dh.stacker.parseBlockAttrs(node);
+	var groupChat = node.childNodes.item(0);
+	if (groupChat.nodeName != "groupChat")
+		return null;
+	var groupId = groupChat.getAttribute("groupId");
+	var block = new dh.stacker.GroupChatBlock(attrs["id"], groupId);
+	dh.stacker.mergeBlockAttrs(block, attrs);
+	return block;
+};
+	
+dh.stacker.blockParsers[dh.stacker.Kind.MUSIC_PERSON] = function(node) {
+	var attrs = dh.stacker.parseBlockAttrs(node);
+	var musicPerson = node.childNodes.item(0);
+	if (musicPerson.nodeName != "musicPerson")
+		return null;
+	var userId = musicPerson.getAttribute("userId");
+	var block = new dh.stacker.MusicPersonBlock(attrs["id"], userId);
+	dh.stacker.mergeBlockAttrs(block, attrs);
+	return block;
+};
+
 dh.stacker.Stacker = function() {
 	this._container = null;
 	// end of list is top of the screen, highest stackTime
 	this._stack = [];
-	this._postBlocksById = {};
+	this._blocks = {}; // blocks by block id
 }
 
 defineClass(dh.stacker.Stacker, null, 
 {
+	start : function() {
+		this._pollNewBlocks();
+		
+		var me = this;
+		this._poll = setInterval(function() {
+			me._pollNewBlocks();
+		}, 5000);
+	},
+
 	setContainer : function(container) {
 		this._container = container;
 	},
 
-	onPostChanged : function(postId, title, stackTime, viewerCount) {
-		var block = this._postBlocksById[postId];
-		if (!block) {
-			block = new dh.stacker.PostBlock(postId, title);
-			this._postBlocksById[postId] = block;
+	_newBlockLoaded : function(block) {
+		var old = this._blocks[block.getBlockId()];
+		if (old) {
+			old.updateFrom(block);
+		} else {
+			this._blocks[block.getBlockId()] = block;
+			old = block;
 		}
-		if (stackTime == block.getStackTime() &&
-			viewerCount == block.getViewerCount())
-			return;
-			
-		block.setStackTime(stackTime);
-		block.setViewerCount(viewerCount);
+		this._updateBlock(old);
+	},
+
+	_parseNewBlocks : function(nodes) {
+		// get list of children of <blocks>
+	    nodes = nodes.item(0).childNodes;
+		var i = 0;
+		for (i = 0; i < nodes.length; ++i) {
+			var child = nodes.item(i);
+			if (child.nodeType != dojo.dom.ELEMENT_NODE)
+				continue;
 		
-		this._updateBlock(block);
+			if (child.nodeName == "block") {
+				var blockType = child.getAttribute("type");
+
+				var kind = dh.stacker.kindFromString(blockType);
+				var parseFunc = dh.stacker.blockParsers[kind];
+				if (!parseFunc)
+					continue;
+				var block = parseFunc(child);
+				if (block) {
+					var me = this;
+					block.load(function(block) {
+						me._newBlockLoaded(block);
+					},
+					// on failure to load
+					function(block) {
+					});
+				}
+			}
+		}
+	},
+
+	_pollNewBlocks : function() {
+		var newestTime;
+		if (this._stack.length == 0)
+			newestTime = 0;
+		else
+			newestTime = this._stack[this._stack.length-1].getStackTime();
+		
+		// this only gets the first page of blocks, this means we could miss some stuff if
+		// >pageSize blocks have been updated since the last attempt. We ask for 
+		// few blocks to prime things since we'd expect to always have an infinite list
+		// available, then ask for lots of blocks later to minimize chances of missing 
+		// something (though we expect few blocks)
+		var pageSize = (newestTime == 0) ? 10 : 50;
+		var me = this;
+	   	dh.server.doXmlMethod("blocks",
+					     	{ 	"lastTimestamp" : newestTime,
+					     		"start" : 0,
+					     		"count" : pageSize },
+							function(childNodes, http) {
+								me._parseNewBlocks(childNodes);		
+				 	    	},
+				  	    	function(code, msg, http) {
+				  	    		// failed!
+				  	    	});
 	},
 	
 	_findBlockInStack : function(block) {
@@ -541,7 +712,11 @@ dh.stacker.getFakeGuid = function() {
 };
 
 dh.stacker.simulateNewPost = function(stacker, title) {
-	stacker.onPostChanged(dh.stacker.getFakeGuid(), title, new Date().getTime(), 1);
+	var block = new dh.stacker.PostBlock(dh.stacker.getFakeGuid(), dh.stacker.getFakeGuid(),
+								title);
+	block.setStackTime(new Date().getTime());
+	block.setViewerCount(1);
+	stacker._newBlockLoaded(block);
 }
 
 dh.stacker.getRandomBlock = function(stacker) {
@@ -555,14 +730,26 @@ dh.stacker.getRandomBlock = function(stacker) {
 	return block;
 }
 
+dh.stacker.simulatePostUpdate = function(stacker, oldBlock, newTitle, newTime, newViewerCount) {
+	var newBlock = new dh.stacker.PostBlock(oldBlock.getBlockId(), oldBlock.getPostId(),
+							newTitle);
+	newBlock.setStackTime(newTime);
+	newBlock.setViewerCount(newViewerCount);
+	stacker._newBlockLoaded(newBlock);
+}
+
 dh.stacker.simulateMoreViews = function(stacker) {
 	var block = dh.stacker.getRandomBlock(stacker);
-	stacker.onPostChanged(block.getPostId(), block.getTitle(), block.getStackTime(), 
-							block.getViewerCount() + 1);
+	if (block.getKind() == dh.stacker.Kind.POST) {
+		dh.stacker.simulatePostUpdate(stacker, block, block.getTitle(), block.getStackTime(), 
+			block.getViewerCount() + 1);
+	}
 }
 
 dh.stacker.simulateNewStackTime = function(stacker) {
 	var block = dh.stacker.getRandomBlock(stacker);
-	stacker.onPostChanged(block.getPostId(), block.getTitle(), new Date().getTime(), 
-							block.getViewerCount());
+	if (block.getKind() == dh.stacker.Kind.POST) {
+		dh.stacker.simulatePostUpdate(stacker, block, block.getTitle(), new Date().getTime(), 
+			block.getViewerCount());
+	}
 }
