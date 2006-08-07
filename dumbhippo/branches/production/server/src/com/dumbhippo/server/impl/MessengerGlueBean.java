@@ -99,11 +99,42 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 	@EJB
 	private ExternalAccountSystem externalAccounts;
 	
-	static final long EXECUTION_WARN_MILLISECONDS = 5000;
+	static final private long EXECUTION_WARN_MILLISECONDS = 5000;
+	
+	static private long tooBusyCount;
+	
+	static final private int MAX_ACTIVE_REQUESTS = 7; 
+	
+	static private int activeRequestCount;
+	
+	static private int maxActiveRequestCount;
+	
+	static private synchronized void changeActiveRequestCount(int delta) {
+		activeRequestCount += delta;
+		if (activeRequestCount > maxActiveRequestCount)
+			maxActiveRequestCount = activeRequestCount;
+	}
+	
+	static public synchronized int getActiveRequestCount() {
+		return activeRequestCount;
+	}
+
+	static public synchronized int getMaxActiveRequestCount() {
+		return maxActiveRequestCount;
+	}
+	
+	static private synchronized void incrementTooBusyCount() {
+		tooBusyCount += 1;
+	}
+	
+	static public synchronized long getTooBusyCount() {
+		return tooBusyCount;
+	}
 	
 	@AroundInvoke
 	public Object timeAndCatchRuntimeExceptions(InvocationContext ctx) throws Exception {
 		try {
+			changeActiveRequestCount(1);
 			long start = System.currentTimeMillis();
 			Object result = ctx.proceed();
 			long end = System.currentTimeMillis();
@@ -117,6 +148,8 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 			// create a new RuntimeException that won't have any types the XMPP server 
 			// is unfamiliar with
 			throw new RuntimeException(e.getClass().getName() + ": " + e.getMessage());
+		} finally {
+			changeActiveRequestCount(-1);
 		}
 	}
 	
@@ -683,7 +716,11 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 	}
 
 	public boolean isServerTooBusy() {
-		return serverStatus.throttleXmppConnections(); 
+		if (activeRequestCount >= MAX_ACTIVE_REQUESTS || serverStatus.throttleXmppConnections()) {
+			incrementTooBusyCount();
+			return true;
+		} else {
+			return false;
+		}
 	}
-
 }

@@ -5,6 +5,8 @@ import javax.management.ObjectName;
 
 import org.jboss.mx.util.MBeanServerLocator;
 
+import com.dumbhippo.server.impl.MessengerGlueBean;
+
 /**
  * Statistics source for global values for the server, such as JVM statistics 
  * @author otaylor
@@ -50,5 +52,29 @@ public class ServerStatistics implements StatisticsSource {
 			type=ColumnType.SNAPSHOT)
 	public long getDatabaseConnectionCount() {
 		return getDBNumericAttribute("InUseConnectionCount");
-	}	
+	}
+	
+	@Column(id="xmppActiveMethods",
+			name="Active MessengerGlue Methods", 
+			units=ColumnUnit.COUNT, 
+			type=ColumnType.SNAPSHOT)
+	public long getXmppActiveMethods() {
+		return MessengerGlueBean.getActiveRequestCount();
+	}
+	
+	@Column(id="xmppMaxActiveMethods",
+			name="Max Active MessengerGlue Methods", 
+			units=ColumnUnit.COUNT, 
+			type=ColumnType.SNAPSHOT)
+	public long getXmppMaxActiveMethods() {
+		return MessengerGlueBean.getMaxActiveRequestCount();
+	}
+	
+	@Column(id="xmppTooBusyCount",
+			name="Times MessengerGlue Too Busy", 
+			units=ColumnUnit.COUNT, 
+			type=ColumnType.SNAPSHOT)
+	public long getXmppTooBusyCount() {
+		return MessengerGlueBean.getTooBusyCount();
+	}
 }
