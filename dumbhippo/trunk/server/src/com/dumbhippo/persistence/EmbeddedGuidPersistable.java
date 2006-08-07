@@ -40,7 +40,8 @@ public abstract class EmbeddedGuidPersistable {
 	
 	@Transient
 	public Guid getGuid() {
-		assert guid != null;
+		if (guid == null)
+			setGuid(Guid.createNew());
 		return guid;
 	}
 
@@ -49,13 +50,19 @@ public abstract class EmbeddedGuidPersistable {
 	public boolean equals(Object arg0) {
 		if (!(arg0 instanceof GuidPersistable))
 			return false;
-		return ((GuidPersistable) arg0).getGuid().equals(guid);
+		if (arg0 == this)
+			return true;
+		// If the argument is not actually the same object, and
+		// we haven't generated a guid yet, they cannot be equal
+		if (guid == null)
+			return false;
+		return ((GuidPersistable) arg0).getGuid().equals(getGuid());
 	}
 
 	/* Should be final, except this makes Hibernate CGLIB enhancement barf */	
 	@Override
 	public int hashCode() {
-		return guid.hashCode();
+		return getGuid().hashCode();
 	}
 
 	/** 
