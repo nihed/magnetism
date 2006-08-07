@@ -22,8 +22,10 @@ import com.dumbhippo.TypeUtils;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.BlockType;
+import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.UserBlockData;
+import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Stacker;
@@ -45,6 +47,9 @@ public class StackerBean implements Stacker {
 	
 	@EJB
 	private IdentitySpider identitySpider;
+	
+	@EJB
+	private GroupSystem groupSystem;
 	
 	@EJB
 	private TransactionRunner runner;
@@ -135,24 +140,49 @@ public class StackerBean implements Stacker {
 		}
 	}
 	
+	private void updateUserBlockDatas(Block block, Set<User> desiredUsers) {
+		TimestampCacheTask cacheTask = new TimestampCacheTask(block.getTimestampAsLong());
+		
+		// be sure we have the right UserBlockData. This would be a lot saner to do
+		// at the point where it changes... e.g. when people add/remove friends, 
+		// or join/leave groups, instead of the expensive query and fixup here.
+		// But it would not retroactively fix the existing db or let us change our
+		// rules for who gets what...
+		
+		List<UserBlockData> userDatas = queryUserBlockDatas(block);
+		
+		Map<User,UserBlockData> existing = new HashMap<User,UserBlockData>();
+		for (UserBlockData ubd : userDatas) {
+			existing.put(ubd.getUser(), ubd);
+		}
+		
+		for (User u : desiredUsers) {
+			cacheTask.addNeedsNewTimestamp(u.getGuid());
+			
+			UserBlockData old = existing.get(u);
+			if (old != null) {
+				existing.remove(u);
+			} else {
+				UserBlockData data = new UserBlockData(u, block);
+				em.persist(data);
+			}
+		}
+		// the rest of "existing" is users who no longer are in the desired set
+		for (User u : existing.keySet()) {
+			cacheTask.addNeedsClearTimestamp(u.getGuid());
+			
+			UserBlockData old = existing.get(u);
+			em.remove(old);
+		}
+		
+		runner.runTaskOnTransactionCommit(cacheTask);		
+	}
+	
 	public void stackMusicPerson(final Guid userId, final long activity) {
 		runner.runTaskRetryingOnConstraintViolation(new Runnable() {
 			public void run() {
 				Block block = getOrCreateUpdatingTimestamp(BlockType.MUSIC_PERSON, userId, -1, activity);
-				
-				TimestampCacheTask cacheTask = new TimestampCacheTask(block.getTimestampAsLong());
-				
-				// be sure we have the right UserBlockData. This would be a lot saner to do
-				// when people add/remove friends, instead of here. But it would not retroactively
-				// fix the existing db or let us change our rules for who gets what...
-				
-				List<UserBlockData> userDatas = queryUserBlockDatas(block);
-				
-				Map<User,UserBlockData> existing = new HashMap<User,UserBlockData>();
-				for (UserBlockData ubd : userDatas) {
-					existing.put(ubd.getUser(), ubd);
-				}
-				
+
 				User user;
 				try {
 					user = EJBUtil.lookupGuid(em, User.class, userId);
@@ -161,29 +191,29 @@ public class StackerBean implements Stacker {
 				}
 				Set<User> peopleWhoCare = identitySpider.getUsersWhoHaveUserAsContact(SystemViewpoint.getInstance(), user);
 				peopleWhoCare.add(user); // FIXME include ourselves, this is probably a debug-only thing
-				for (User u : peopleWhoCare) {
-					cacheTask.addNeedsNewTimestamp(u.getGuid());
-					
-					UserBlockData old = existing.get(u);
-					if (old != null) {
-						existing.remove(u);
-					} else {
-						UserBlockData data = new UserBlockData(u, block);
-						em.persist(data);
-					}
-				}
-				// the rest of "existing" is users who no longer are friends of the user in question
-				for (User u : existing.keySet()) {
-					cacheTask.addNeedsClearTimestamp(u.getGuid());
-					
-					UserBlockData old = existing.get(u);
-					em.remove(old);
-				}
 				
-				runner.runTaskOnTransactionCommit(cacheTask);
+				updateUserBlockDatas(block, peopleWhoCare);
 			}
 		});
 	}
+
+	public void stackGroupChat(final Guid groupId, final long activity) {
+		runner.runTaskRetryingOnConstraintViolation(new Runnable() {
+			public void run() {
+				Block block = getOrCreateUpdatingTimestamp(BlockType.GROUP_CHAT, groupId, -1, activity);
+
+				Group group;
+				try {
+					group = EJBUtil.lookupGuid(em, Group.class, groupId);
+				} catch (NotFoundException e) {
+					throw new RuntimeException(e);
+				}
+				Set<User> groupMembers = groupSystem.getUserMembers(SystemViewpoint.getInstance(), group);
+				
+				updateUserBlockDatas(block, groupMembers);
+			}
+		});
+	}	
 	
 	public List<UserBlockData> getStack(Viewpoint viewpoint, User user, long lastTimestamp, int start, int count) {
 		if (!(viewpoint.isOfUser(user) || viewpoint instanceof SystemViewpoint))

@@ -16,6 +16,7 @@ import com.dumbhippo.persistence.UserBlockData;
 @Local
 public interface Stacker {
 	public void stackMusicPerson(Guid userId, long activity);
+	public void stackGroupChat(Guid groupId, long activity);
 	
 	public List<UserBlockData> getStack(Viewpoint viewpoint, User user, long lastTimestamp, int start, int count);
 }

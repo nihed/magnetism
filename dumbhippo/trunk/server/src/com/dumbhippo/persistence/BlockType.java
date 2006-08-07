@@ -9,7 +9,7 @@ package com.dumbhippo.persistence;
 public enum BlockType {
 	POST,
 	GROUP_MEMBER,
-	GROUP,
+	GROUP_CHAT,
 	MUSIC_PERSON,
 	MUSIC_GROUP;
 }
