@@ -1660,6 +1660,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		}
 		
 		String[] columnNames = columns.split(",");
+		// will maintain indexes of requested columns as they appear in the statistics set's columnMap 
 		int[] columnIndexes = new int[columnNames.length];
 		ColumnMap columnMap = set.getColumns();
 		

@@ -1,5 +1,6 @@
 package com.dumbhippo.statistics;
 
+import java.util.Collections;
 import java.util.List;
 
 import org.jboss.system.ServiceMBeanSupport;
@@ -49,7 +50,14 @@ public class StatisticsService extends ServiceMBeanSupport implements Statistics
     }
     
     public List<StatisticsSet> listSets() {
-    	return null;
+    	// TODO: get all the statistics files from the statistics directory
+    	// and convert them into StatisticSet(s)
+    	// right now StatisticsWriter is the only class that implements
+    	// StatisticsSet; it provides a function getIterator() for reading,
+    	// it initializes its rowStore as a ReadWrite RowStore (thereby acting
+    	// more like a Statistics Reader-Writer); we should have a 
+    	// StatisticsReader class for the unearthed statistics files
+    	return Collections.singletonList((StatisticsSet)statisticsWriter);
     }
     
     public StatisticsSet getSet(String filename) {

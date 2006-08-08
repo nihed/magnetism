@@ -2,8 +2,8 @@ dojo.provide("dh.statistics.dataset");
 
 dh.statistics.dataset.Dataset = function() {
 	this.numPoints = 0;
-	this.t = [];
-	this.y = [];
+	this.ta = [];
+	this.ya = [];
 	this.minT = 0;
 	this.maxT = 0;
 	this.minY = 0;
@@ -13,21 +13,21 @@ dh.statistics.dataset.Dataset = function() {
 dojo.lang.extend(dh.statistics.dataset.Dataset,
 {
 	add: function(t, y) {
-		this.t[this.numPoints] = t;
-		this.y[this.numPoints] = y;
+		this.ta[this.numPoints] = t;
+		this.ya[this.numPoints] = y;
 		
 		if (this.numPoints == 0) {
 			this.minT = this.maxT = t;
 			this.minY = this.maxY = y;
-		} else {
-			if (t < this.minT) 
+		} else {	
+			if (parseInt(t) < this.minT) 
 				this.minT = t;
-			if (t > this.maxT)
+			if (parseInt(t) > this.maxT)
 				this.maxT = t;
-			if (y < this.minY)
+			if (parseInt(y) < this.minY)
 				this.minY = y;
-			if (y > this.maxY)
-				this.maxY = y;
+			if (parseInt(y) > this.maxY)
+				this.maxY = y;				
 		}
 		
 		this.numPoints++;

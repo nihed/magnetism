@@ -34,6 +34,10 @@ public class ColumnMap implements Iterable<ColumnDescription> {
 		return columns.size();
 	}
 	
+	public List<ColumnDescription> getColumns() {
+		return columns;
+	}
+	
 	public ColumnDescription get(int index) {
 		return columns.get(index);
 	}

@@ -4,6 +4,8 @@
 <%@ taglib uri="/jsp/dumbhippo.tld" prefix="dh" %>
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 
+<dh:bean id="statistics" class="com.dumbhippo.web.pages.StatisticsPage" scope="page"/>
+
 <head>
 	<title>Mugshot Server Statistics</title>
 	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/statistics.css">
@@ -16,86 +18,45 @@
 </head>
 <body>
     <select>
-        <option>limpopo.dumbhippo.com - 2006--06-10</option>
+        <option><c:out value="${statistics.fileOption}"/></option>
 	</select>
     <table>
-    <tr>
-    <td>
-        <select>
-	    <option>Database Connections</option>
-	    <option>Memory Used</option>
-	    <option>Pages served</option>
-	</select>
+    <tr>     
+    <td colspan="3">
+        <select id="dhColumnSelect" onchange="dh.statistics.onSelectedColumnChange();">
+            <c:forEach items="${statistics.currentSet.columns.columns}" var="column">
+	            <option id="${column.id}">
+	                <c:out value="${column.name} -- ${column.units} -- ${column.type}"/>
+	            </option>				    
+			</c:forEach>
+	    </select>
     </td>
-    <td align="right">
-        <select>
-	    <option>Average</option>
-	    <option>Cumulative</option>
-	</select>
-    </td>
-    <td align="right" style="width: 60px;" >
-        <input type="button" value="Remove" style="width: 100%"></input
-	</td>
     </tr>
     <tr>
-    <td colspan="3">
+    <td width="60px;" valign="top" align="right">
+        <div id="dhMaxVal"><span/></div>
+    </td> 
+    <td colspan="2" rowspan="2">
 	    <div id="dhGraph1" class="dh-graph">
-			<div style="position: absolute; top: 3px; right: 8px; text-align: center; font-size: 18px;">
-		        <div>+</div>
-   			    <div>-</div>
-		    </div>
         </div>
     </td> 
     </tr>
     <tr>
-    <td>
-        <select>
-	    <option>Pages served</option>
-	    <option>Database Connections</option>
-	    <option>Memory Used</option>
-	</select>
+    <td width="60px;" valign="bottom" align="right">     
+        <div id="dhMinVal"><span/></div>
     </td>
-    <td align="right">
-        <select>
-	    <option>Cumulative</option>
-	    <option>Average</option>
-	</select>
-    </td>
-    <td align="right" style="width: 60px;" >
-        <input type="button" value="Remove" style="width: 100%"></input
-	</td>
-    </tr>
-    <tr>
-    <td colspan="3">
-	    <div id="dhGraph2" class="dh-graph">
-			<div style="position: absolute; top: 3px; right: 8px; text-align: center; font-size: 18px;">
-		        <div>+</div>
-   			    <div>-</div>
-		    </div>
-        </div>
-    </td> 
     </tr>
     <tr>
     <td>
-        <select>
-	    <option>---</option>
-	        <option>Pages served</option>
-	        <option>Database Connections</option>
-	        <option>Memory Used</option>
-   	    </select>
+    </td>
+    <td>
+        <div id="dhStartTime"><span/></div>
     </td>
     <td align="right">
-        <select disabled>
-	        <option>Average</option>
-	        <option>Cumulative</option>
-		</select>
-    </td>
-    <td align="right" style="width: 60px;">
-        <input type="button" value="Remove" style="width: 100%" disabled></input
-	</td>
+        <div id="dhEndTime"><span/></div>
     </td>
     </tr>
     </table>
-    <div id="dhHourSelector"></div>
+    <%-- <div id="dhHourSelector"></div> --%>
 </body>
 </html>

@@ -601,3 +601,9 @@ dh.util.contains = function(items, item) {
 dh.util.clientDebug = function(text) {
 	window.external.DebugLog(text)
 }
+
+dh.util.makeTwoDigit = function(number) {
+    if (number <= 9)
+        return "0" + number;
+    return number;    
+}
