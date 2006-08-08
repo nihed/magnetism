@@ -92,7 +92,7 @@ public class AdminPage extends AbstractSigninRequiredPage {
 	}
 	
 	public int getCachedLiveClientDataCount() {
-		return getCachedLiveUsers().size();
+		return getCachedLiveClientData().size();
 	}
 	
 	public int getAvailableLiveUsersCount() {
