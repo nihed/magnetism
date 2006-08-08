@@ -51,8 +51,7 @@ public final class RandomToken {
 	public int hashCode() {
 		int result = 17;
 		for (int i = 0; i < data.length; ++i) {
-			int c = (data[i] ^ (data[i] >>> 32));
-			result = 37 * result + c;
+			result = 37 * result + data[i];
 		}
 		return result;
 	}
