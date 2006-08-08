@@ -151,7 +151,77 @@ public class LiveState {
 	 * Returns the number of available users
 	 */
 	public int getLiveUserAvailableCount() {
-		return userCache.getObjectCount(true);
+		return clientDataCache.getObjectCount(true);
+	}
+
+	/**
+	 * Locate or create a LiveClientData cache object for a particular user.
+	 * See getLiveClientData()
+	 * 
+	 * @param userId the user ID for which we should get a cache object
+	 * @return the LiveClientData cache object.
+	 */
+	public LiveClientData getLiveClientData(Guid userId) {
+		return clientDataCache.get(userId);
+	}
+	
+	/**
+	 * Locate a LiveClientData cache object for a particular user. Does
+	 * not force creation if the object doesn't already exist, does not
+	 * reset the cache age to zero, and doesn't wait for object update.
+	 * (In the last case, it simply returns stale data.)  
+	 * 
+	 * @param userId the user ID for which we should get a cache object
+	 * @return the LiveClientData cache object, or null if the user is
+	 *   no client data has currently been computed 
+	 */
+	public LiveClientData peekLiveClientData(Guid userId) {
+		return clientDataCache.peek(userId);
+	}
+	
+	/**
+	 * Get or create a LiveClientData cache object for a particular user in 
+	 * preparation for updating it with new values. See
+	 * getLiveUserForUpdate()
+	 * 
+	 * @param userId the post ID for which we should get a cache object
+	 * @return a copy of the existing or newly created object
+	 */
+	LiveClientData getLiveClientDataForUpdate(Guid userId) {
+		return (LiveClientData)clientDataCache.getForUpdate(userId).clone();
+	}
+	
+	/**
+	 * Get a LiveClientData cache object for a particular user in preparation
+	 * for updating it with new values. See peekLiveUserForUpdate().  
+	 * 
+	 * @param user the user ID for which we should get a cache object
+	 * @return a copy of the existing LiveClientData cache object if one is currently loaded,
+	 *    otherwise null.
+	 */
+	public LiveClientData peekLiveClientDataForUpdate(Guid userId) {
+		LiveClientData current = clientDataCache.peekForUpdate(userId);
+		if (current != null)
+			return (LiveClientData)current.clone();
+		else
+			return null;
+	}	
+	
+	/**
+	 * Insert an updated LiveClientData object into the cache. See updateLiveUser()
+	 * 
+	 * @param group new LiveClientData object to insert
+	 */
+	public void updateLiveClientData(LiveClientData newClientData) {
+		clientDataCache.update(newClientData);
+	}	
+	
+	/**
+	 * Returns a snapshot of the current set of LiveClientData objects in
+	 * the memory cache.
+	 */
+	public Set<LiveClientData> getLiveClientDataCacheSnapshot() {
+		return clientDataCache.getAllObjects(false);
 	}
 
 	/**
@@ -336,6 +406,8 @@ public class LiveState {
 
 	private LiveObjectCache<LiveUser> userCache;
 	
+	private LiveObjectCache<LiveClientData> clientDataCache;
+	
 	private LiveObjectCache<LivePost> postCache;
 	
 	private LiveObjectCache<LiveGroup> groupCache;
@@ -363,6 +435,17 @@ public class LiveState {
 						userUpdater.initialize(liveUser);
 
 						return liveUser;
+					}
+				},
+				MAX_USER_CACHE_AGE);
+		clientDataCache = new LiveObjectCache<LiveClientData>(
+				new LiveObjectFactory<LiveClientData>() {
+					public LiveClientData create(Guid guid) {
+						LiveClientData clientData = new LiveClientData(guid);			
+						LiveClientDataUpdater dataUpdater = EJBUtil.defaultLookup(LiveClientDataUpdater.class);
+						dataUpdater.initialize(clientData);
+
+						return clientData;
 					}
 				},
 				MAX_USER_CACHE_AGE);
@@ -404,30 +487,30 @@ public class LiveState {
 	// Internal function to update the availability count for the user;
 	// see LiveXmppServer.userAvailable().
 	void userAvailable(Guid userId) {
-		LiveUser liveUser = getLiveUserForUpdate(userId);
+		LiveClientData clientData = getLiveClientDataForUpdate(userId);
 		try {
-			liveUser.setAvailableCount(liveUser.getAvailableCount() + 1);
-			if (liveUser.getAvailableCount() == 1) {
-				logger.debug("User {} is now available", liveUser.getGuid());			
-				userCache.addStrongReference(liveUser);
+			clientData.setAvailableCount(clientData.getAvailableCount() + 1);
+			if (clientData.getAvailableCount() == 1) {
+				logger.debug("User {} is now available", clientData.getGuid());			
+				clientDataCache.addStrongReference(clientData);
 			}
 		} finally {
-			updateLiveUser(liveUser);
+			updateLiveClientData(clientData);
 		}
 	}
 
 	// Internal function to update the availability count for the user;
 	// see LiveXmppServer.userUnavailable().
 	void userUnavailable(Guid userId) {
-		LiveUser liveUser = peekLiveUserForUpdate(userId);
+		LiveClientData clientData = peekLiveClientDataForUpdate(userId);
 		try {
-			liveUser.setAvailableCount(liveUser.getAvailableCount() - 1);
-			if (liveUser.getAvailableCount() == 0) {
-				logger.debug("User {} is no longer available", liveUser.getGuid());
-				userCache.dropStrongReference(liveUser);
+			clientData.setAvailableCount(clientData.getAvailableCount() - 1);
+			if (clientData.getAvailableCount() == 0) {
+				logger.debug("User {} is no longer available", clientData.getGuid());
+				clientDataCache.dropStrongReference(clientData);
 			}
 		} finally {
-			updateLiveUser(liveUser);
+			updateLiveClientData(clientData);
 		}
 	}
 	
@@ -472,9 +555,9 @@ public class LiveState {
 	}
 
 	public void resendAllNotifications(Guid guid) {
-		LiveUserUpdater userUpdater = EJBUtil.defaultLookup(LiveUserUpdater.class);
-		LiveUser luser = getLiveUser(guid);
-		userUpdater.sendAllNotifications(luser);
+		LiveClientDataUpdater updater = EJBUtil.defaultLookup(LiveClientDataUpdater.class);
+		LiveClientData clientData = getLiveClientData(guid);
+		updater.sendAllNotifications(clientData);
 	}	
 
 	
@@ -548,14 +631,14 @@ public class LiveState {
 				try {
 					Thread.sleep(nextTime - System.currentTimeMillis());
 
-					LiveUserUpdater userUpdater = EJBUtil.defaultLookup(LiveUserUpdater.class);					
-					Set<LiveUser> users;
+					LiveClientDataUpdater updater = EJBUtil.defaultLookup(LiveClientDataUpdater.class);					
+					Set<LiveClientData> toUpdate;
 					// Grab a copy of the current user map to avoid locking the whole
 					// object for a long time
-					users = getLiveUserCacheSnapshot();
+					toUpdate = getLiveClientDataCacheSnapshot();
 					
-					for (LiveUser user : users) {
-						userUpdater.periodicUpdate(user.getGuid());
+					for (LiveClientData clientData : toUpdate) {
+						updater.periodicUpdate(clientData.getGuid());
 					}		
 				} catch (InterruptedException e) {
 					break; // exit the loop

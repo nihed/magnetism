@@ -630,7 +630,7 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 	public Hotness getUserHotness(String username) {
 		User user = userFromTrustedUsername(username);
 		LiveState state = LiveState.getInstance();
-		return state.getLiveUser(user.getGuid()).getHotness();
+		return state.getLiveClientData(user.getGuid()).getHotness();
 	}
 	
 	static final String RECENT_POSTS_ELEMENT_NAME = "recentPosts";

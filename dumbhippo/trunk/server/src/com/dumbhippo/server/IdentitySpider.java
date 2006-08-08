@@ -111,6 +111,11 @@ public interface IdentitySpider {
 	 */
 	public User lookupUser(LiveUser luser);
 	
+	/**
+	 * Return the database User object for a GUID
+	 */
+	public User lookupUser(Guid guid);
+	
 	public <T extends GuidPersistable> T lookupGuidString(Class<T> klass, String id) throws ParseException, NotFoundException;
 	public <T extends GuidPersistable> T lookupGuid(Class<T> klass, Guid id) throws NotFoundException;
 	

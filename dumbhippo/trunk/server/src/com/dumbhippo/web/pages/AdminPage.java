@@ -7,9 +7,9 @@ import java.util.List;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.live.LiveObject;
 import com.dumbhippo.live.LivePost;
 import com.dumbhippo.live.LiveState;
-import com.dumbhippo.live.LiveUser;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HippoProperty;
@@ -31,8 +31,8 @@ public class AdminPage extends AbstractSigninRequiredPage {
 
 	private IdentitySpider identitySpider;
 	
-	private Set<PersonView> availableLiveUsers;
 	private Set<PersonView> cachedLiveUsers;
+	private Set<PersonView> cachedLiveClientData;
 	private Set<LivePost> livePosts;
  	private List<PersonView> users;
 	
@@ -65,11 +65,11 @@ public class AdminPage extends AbstractSigninRequiredPage {
 		return identitySpider.isAdministrator(person.getUser());
 	}
 	
-	private Set<PersonView> liveUserSetToPersonView(Set<LiveUser> lusers) {
+	private Set<PersonView> liveObjectSetToPersonView(Set<? extends LiveObject> objects) {
 		Set<PersonView> result = new HashSet<PersonView>();
 
-		for (LiveUser luser : lusers) {
-			User user = identitySpider.lookupUser(luser);
+		for (LiveObject o : objects) {
+			User user = identitySpider.lookupUser(o.getGuid());
 			result.add(identitySpider.getSystemView(user));					
 		}
 		return result;		
@@ -77,7 +77,7 @@ public class AdminPage extends AbstractSigninRequiredPage {
 
 	public Set<PersonView> getCachedLiveUsers() {
 		if (cachedLiveUsers == null)
-			cachedLiveUsers = liveUserSetToPersonView(liveState.getLiveUserCacheSnapshot());
+			cachedLiveUsers = liveObjectSetToPersonView(liveState.getLiveUserCacheSnapshot());
 		return cachedLiveUsers;
 	}
 	
@@ -85,14 +85,18 @@ public class AdminPage extends AbstractSigninRequiredPage {
 		return getCachedLiveUsers().size();
 	}
 	
-	public Set<PersonView> getAvailableLiveUsers() {
-		if (availableLiveUsers == null)
-			availableLiveUsers = liveUserSetToPersonView(liveState.getLiveUserAvailableSnapshot());
-		return availableLiveUsers;
-	}	
-
+	public Set<PersonView> getCachedLiveClientData() {
+		if (cachedLiveClientData == null)
+			cachedLiveClientData = liveObjectSetToPersonView(liveState.getLiveClientDataCacheSnapshot());
+		return cachedLiveClientData;
+	}
+	
+	public int getCachedLiveClientDataCount() {
+		return getCachedLiveUsers().size();
+	}
+	
 	public int getAvailableLiveUsersCount() {
-		return getAvailableLiveUsers().size();
+		return liveState.getLiveUserAvailableCount();
 	}
 	
 	public Set<LivePost> getLivePosts() {

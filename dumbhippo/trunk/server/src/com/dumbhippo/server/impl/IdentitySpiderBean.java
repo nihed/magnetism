@@ -23,6 +23,8 @@ import com.dumbhippo.TypeFilteredCollection;
 import com.dumbhippo.TypeUtils;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
+import com.dumbhippo.live.ContactsChangedEvent;
+import com.dumbhippo.live.LiveState;
 import com.dumbhippo.live.LiveUser;
 import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.AccountClaim;
@@ -118,6 +120,10 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 
 	public User lookupUser(LiveUser luser) {
 		return em.find(User.class, luser.getGuid().toString());
+	}	
+	
+	public User lookupUser(Guid guid) {
+		return em.find(User.class, guid.toString());
 	}	
 	
 	public <T extends GuidPersistable> T lookupGuidString(Class<T> klass, String id) throws ParseException, NotFoundException {
@@ -685,6 +691,9 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		em.persist(cc);
 		
 		contact.getResources().add(cc);
+
+		// After the transaction commits succesfully, update the list of contact resources for this user
+		LiveState.getInstance().queuePostTransactionUpdate(em, new ContactsChangedEvent(user.getGuid()));
 		
 		return contact;
 	}
@@ -751,6 +760,9 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		user.getAccount().removeContact(contact);
 		em.remove(contact);
 		logger.debug("contact deleted");
+		
+		// After the transaction commits succesfully, update the list of contact resources for this user
+		LiveState.getInstance().queuePostTransactionUpdate(em, new ContactsChangedEvent(user.getGuid()));
 	}
 
 	public Set<Contact> getRawContacts(Viewpoint viewpoint, User user) {
@@ -855,7 +867,22 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	 * @return true if contactUser is a contact of user
 	 */
 	private boolean isContactNoViewpoint(User user, User contactUser) {
-		for (Contact contact : user.getAccount().getContacts()) {
+		LiveUser liveUser = LiveState.getInstance().getLiveUser(user.getGuid());
+		for (AccountClaim ac : contactUser.getAccountClaims()) {
+			if (liveUser.hasContactResource(ac.getResource().getGuid()))
+				return true;
+		}
+		
+		return false;
+	}
+	
+	// We don't want to use the general isContactNoViewpoint for this, because
+	// there could be race conditions with the async-updated LiveUser cache.
+	// 
+	// We don't mind reconstituting *the viewer's* contact database from the
+	// hibernate second level cache, so we just do the check directly
+	private boolean viewerHasContact(UserViewpoint viewpoint, User contactUser) {
+		for (Contact contact : viewpoint.getViewer().getAccount().getContacts()) {
 			for (ContactClaim cc : contact.getResources()) {
 				AccountClaim ac = cc.getResource().getAccountClaim();
 				if (ac != null && ac.getOwner().equals(contactUser))
@@ -867,12 +894,15 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	}
 	
 	public boolean isContact(Viewpoint viewpoint, User user, User contactUser) {
-			// see if we're allowed to look at who user's contacts are
-			if (!isViewerSystemOrFriendOf(viewpoint, user))
-				return false;
+		// see if we're allowed to look at who user's contacts are
+		if (!isViewerSystemOrFriendOf(viewpoint, user))
+			return false;
 
-			// if we can see their contacts, return whether this person is one of them
-			return isContactNoViewpoint(user, contactUser);
+		if (viewpoint.isOfUser(user))
+			return viewerHasContact((UserViewpoint)viewpoint, contactUser);
+		
+		// if we can see their contacts, return whether this person is one of them
+		return isContactNoViewpoint(user, contactUser);
 	}
 	
 	public boolean isViewerSystemOrFriendOf(Viewpoint viewpoint, User user) {

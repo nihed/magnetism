@@ -25,9 +25,9 @@ import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.RandomToken;
 import com.dumbhippo.live.Hotness;
+import com.dumbhippo.live.LiveClientData;
 import com.dumbhippo.live.LivePost;
 import com.dumbhippo.live.LiveState;
-import com.dumbhippo.live.LiveUser;
 import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.Group;
@@ -490,24 +490,24 @@ public class MessageSenderBean implements MessageSender {
 			connection.sendPacket(message);
 		}
 
-		public void sendHotnessChanged(LiveUser user) {
+		public void sendHotnessChanged(LiveClientData clientData) {
 			XMPPConnection connection = getConnection();
-			User dbUser = identitySpider.lookupUser(user);			
+			User dbUser = identitySpider.lookupUser(clientData.getGuid());			
 			Message message = createMessageFor(dbUser, Message.Type.HEADLINE);
-			message.addExtension(new HotnessChangedExtension(user.getHotness()));
+			message.addExtension(new HotnessChangedExtension(clientData.getHotness()));
 			logger.debug("Sending hotnessChanged message to {}", message.getTo());			
 			connection.sendPacket(message);
 		}
 
-		public void sendActivePostsChanged(LiveUser user) {
+		public void sendActivePostsChanged(LiveClientData clientData) {
 			XMPPConnection connection = getConnection();
-			User dbUser = identitySpider.lookupUser(user);
+			User dbUser = identitySpider.lookupUser(clientData.getGuid());
 			Viewpoint viewpoint = new UserViewpoint(dbUser);
 			Message message = createMessageFor(dbUser, Message.Type.HEADLINE);
 			List<LivePost> lposts = new ArrayList<LivePost>();
 			List<PostView> posts = new ArrayList<PostView>();
 			Set<EntityView> referencedEntities = new HashSet<EntityView>();			
-			for (Guid id : user.getActivePosts()) {
+			for (Guid id : clientData.getActivePosts()) {
 				LivePost lpost = LiveState.getInstance().getLivePost(id);
 				PostView pv;
 				try {
@@ -832,12 +832,12 @@ public class MessageSenderBean implements MessageSender {
 		xmppSender.sendMySpaceContactCommentNotification(user);
 	}
 
-	public void sendHotnessChanged(LiveUser user) {
-		xmppSender.sendHotnessChanged(user);
+	public void sendHotnessChanged(LiveClientData clientData) {
+		xmppSender.sendHotnessChanged(clientData);
 	}
 
-	public void sendActivePostsChanged(LiveUser user) {
-		xmppSender.sendActivePostsChanged(user);
+	public void sendActivePostsChanged(LiveClientData clientData) {
+		xmppSender.sendActivePostsChanged(clientData);
 	}
 	
 	public void sendPrefChanged(User user, String key, String value) {
