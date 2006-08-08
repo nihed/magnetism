@@ -24,7 +24,7 @@
     <tr>     
     <td colspan="3">
         <select id="dhColumnSelect" onchange="dh.statistics.onSelectedColumnChange();">
-            <c:forEach items="${statistics.currentSet.columns.columns}" var="column">
+            <c:forEach items="${statistics.currentSet.columns}" var="column">
 	            <option id="${column.id}">
 	                <c:out value="${column.name} -- ${column.units} -- ${column.type}"/>
 	            </option>				    
