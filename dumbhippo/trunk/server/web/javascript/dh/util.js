@@ -342,9 +342,8 @@ dh.util.openShareLinkWindow = function(link, title) {
 	dh.util.openShareWindow(url);
 }
 
-dh.util.openFrameSet = function(window, event, obj, postID) {
-	top.window.location.href = "visit?post=" + postID;
-	return false;
+dh.util.useFrameSet = function(window, event, obj, postID) {
+	obj.href="/visit?post=" + postID;
 }
 
 dh.util.getTextWidth = function(text, fontFamily, fontSize, fontStyle, fontVariant, fontWeight) {
