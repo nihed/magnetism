@@ -137,6 +137,15 @@ public interface GroupSystem {
 	public List<GroupMessage> getGroupMessages(Group group);
 	
 	/**
+	 * Get up to maxResults newest messages in the group chat, sorted descending (newest first)
+	 * 
+	 * @param group
+	 * @param maxResults
+	 * @return
+	 */
+	public List<GroupMessage> getNewestGroupMessages(Group group, int maxResults);
+	
+	/**
 	 * Add a new message that was sent to the chatroom about this group
 	 * 
 	 * @param group the group the message is about.

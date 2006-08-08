@@ -54,6 +54,7 @@ import com.dumbhippo.persistence.Feed;
 import com.dumbhippo.persistence.FeedEntry;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupAccess;
+import com.dumbhippo.persistence.GroupMessage;
 import com.dumbhippo.persistence.GuidPersistable;
 import com.dumbhippo.persistence.LinkResource;
 import com.dumbhippo.persistence.NowPlayingTheme;
@@ -614,6 +615,30 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		identitySpider.setMusicBio(viewpoint, viewpoint.getViewer(), bio);
 	}
 	
+	private void returnTrackXml(XmlBuilder xml, TrackView tv) {
+		xml.openElement("song");
+		if (tv != null) {
+			String image = tv.getSmallImageUrl();
+			
+			// flash embed needs an absolute url
+			if (image != null && image.startsWith("/")) {
+				String baseurl = config.getProperty(HippoProperty.BASEURL);
+				image = baseurl + image;
+			}
+			xml.appendTextNode("image", image);
+			xml.appendTextNode("title", tv.getName());
+			xml.appendTextNode("artist", tv.getArtist());
+			xml.appendTextNode("album", tv.getAlbum());
+			xml.appendTextNode("stillPlaying", Boolean.toString(tv.isNowPlaying()));
+		} else {
+			xml.appendTextNode("title", "Song Title");
+			xml.appendTextNode("artist", "Artist");
+			xml.appendTextNode("album", "Album");
+			xml.appendTextNode("stillPlaying", "false");
+		}
+		xml.closeElement();
+	}
+	
 	public void getNowPlaying(OutputStream out, HttpResponseData contentType,
 			String who, String theme) throws IOException {
 		if (contentType != HttpResponseData.XML)
@@ -667,27 +692,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		xml.appendStandaloneFragmentHeader();
 		xml.openElement("nowPlaying");
 		
-		xml.openElement("song");
-		if (tv != null) {
-			String image = tv.getSmallImageUrl();
-			
-			// flash embed needs an absolute url
-			if (image != null && image.startsWith("/")) {
-				String baseurl = config.getProperty(HippoProperty.BASEURL);
-				image = baseurl + image;
-			}
-			xml.appendTextNode("image", image);
-			xml.appendTextNode("title", tv.getName());
-			xml.appendTextNode("artist", tv.getArtist());
-			xml.appendTextNode("album", tv.getAlbum());
-			xml.appendTextNode("stillPlaying", Boolean.toString(tv.isNowPlaying()));
-		} else {
-			xml.appendTextNode("title", "Song Title");
-			xml.appendTextNode("artist", "Artist");
-			xml.appendTextNode("album", "Album");
-			xml.appendTextNode("stillPlaying", "false");
-		}
-		xml.closeElement();
+		returnTrackXml(xml, tv);
 		
 		if (themeObject != null) {
 			xml.openElement("theme");
@@ -1727,6 +1732,27 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		xml.closeElement();
 	}
 	
+	
+	private User parseUserId(String userId) throws XmlMethodException {
+		try {
+			return identitySpider.lookupGuidString(User.class, userId);
+		} catch (ParseException e) {
+			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, "bad userId " + userId);
+		} catch (NotFoundException e) {
+			throw new XmlMethodException(XmlMethodErrorCode.INVALID_ARGUMENT, "no such person " + userId);
+		}
+	}
+
+	private Group parseGroupId(String groupId) throws XmlMethodException {
+		try {
+			return identitySpider.lookupGuidString(Group.class, groupId);
+		} catch (ParseException e) {
+			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, "bad groupId " + groupId);
+		} catch (NotFoundException e) {
+			throw new XmlMethodException(XmlMethodErrorCode.INVALID_ARGUMENT, "no such group " + groupId);
+		}
+	}
+	
 	public void getBlocks(XmlBuilder xml, UserViewpoint viewpoint, String userId, String lastTimestampStr, String startStr, String countStr) throws XmlMethodException {
 		long lastTimestamp;
 		int start;
@@ -1750,13 +1776,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		if (userId == null) {
 			user = viewpoint.getViewer();
 		} else {
-			try {
-				user = identitySpider.lookupGuidString(User.class, userId);
-			} catch (ParseException e) {
-				throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, "bad userId");
-			} catch (NotFoundException e) {
-				throw new XmlMethodException(XmlMethodErrorCode.INVALID_ARGUMENT, "no such person");
-			}		
+			user = parseUserId(userId);
 		}
 		
 		List<UserBlockData> list = stacker.getStack(viewpoint, user, lastTimestamp, start, count);
@@ -1782,6 +1802,32 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			}
 			
 			xml.closeElement();
+		}
+		xml.closeElement();
+	}
+	
+	public void getMusicPersonSummary(XmlBuilder xml, UserViewpoint viewpoint, String userId) throws XmlMethodException {
+		User musicPlayer = parseUserId(userId);
+		// ALL_RESOURCES here is just because returnPersonsXml wants it, the javascript doesn't need it
+		PersonView pv = identitySpider.getPersonView(viewpoint, musicPlayer, PersonViewExtra.ALL_RESOURCES);
+		List<TrackView> tracks = musicSystem.getLatestTrackViews(viewpoint, musicPlayer, 5);
+		xml.openElement("musicPerson", "userId", musicPlayer.getId());
+		returnPersonsXml(xml, viewpoint, Collections.singleton(pv));
+		for (TrackView tv : tracks) {
+			returnTrackXml(xml, tv);
+		}
+		xml.closeElement();
+	}
+	
+	public void getGroupChatSummary(XmlBuilder xml, UserViewpoint viewpoint, String groupId) throws XmlMethodException {
+		Group group = parseGroupId(groupId);
+		xml.openElement("groupChat", "groupId", group.getId());
+		returnGroupsXml(xml, viewpoint, Collections.singleton(group));
+		List<GroupMessage> messages = groupSystem.getNewestGroupMessages(group, 5);
+		for (GroupMessage gm : messages) {
+			xml.appendTextNode("message", gm.getMessageText(), "fromId", gm.getFromUser().getId(),
+						"timestamp", Long.toString(gm.getTimestamp().getTime()),
+						"serial", Integer.toString(gm.getMessageSerial()));
 		}
 		xml.closeElement();
 	}

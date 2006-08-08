@@ -1,6 +1,7 @@
 dojo.provide('dh.stacker');
 dojo.require('dh.util');
 dojo.require('dh.server');
+dojo.require('dh.model');
 
 ///////////////////////// metalinguistic band-aids
 dh.lang = {};
@@ -309,7 +310,7 @@ defineClass(dh.stacker.PostBlock, dh.stacker.Block,
 	},
 	
 	updateFrom : function(newBlock) {
-		if (!dh.stacker.Block.call(this, newBlock))
+		if (!dh.stacker.PostBlock.superclass.updateFrom.call(this, newBlock))
 			return false;
 		this.setViewerCount(newBlock.getViewerCount());
 		return true;
@@ -319,6 +320,8 @@ defineClass(dh.stacker.PostBlock, dh.stacker.Block,
 dh.stacker.MusicPersonBlock = function(blockId, userId) {
 	dh.stacker.Block.call(this, dh.stacker.Kind.MUSIC_PERSON, blockId);
 	this._userId = userId;
+	this._tracks = [];
+	this._tracksDiv = null;
 }
 
 defineClass(dh.stacker.MusicPersonBlock, dh.stacker.Block,
@@ -327,15 +330,90 @@ defineClass(dh.stacker.MusicPersonBlock, dh.stacker.Block,
 		return this._userId;
 	},
 
+	getTracks : function() {
+		return this._tracks;
+	},
+
+	setTracks : function(tracks) {
+		this._tracks = tracks;
+		this._updateTracksDiv();
+	},
+
+	_parse : function(childNodes) {
+		var musicPerson = childNodes.item(0);
+		if (musicPerson.nodeName != "musicPerson") {
+			throw new Error("musicPerson node expected");
+		}
+		childNodes = musicPerson.childNodes;
+		var personNode = childNodes.item(0);
+		if (personNode.nodeName != "person")
+			throw new Error("person node expected");
+		var person = dh.model.personFromXmlNode(personNode);
+		var tracks = [];
+		var i;
+		for (i = 1; i < childNodes.length; ++i) {
+			var trackNode = childNodes.item(i);
+			if (trackNode.nodeName != "song")
+				throw new Error("track node expected");
+			var track = dh.model.trackFromXmlNode(trackNode);
+			tracks.push(track);
+		}
+		this.setTitle(person.displayName + "'s Music");
+		this.setTracks(tracks);
+	},
+
 	load : function(completeFunc, errorFunc) {
-		this.setTitle("Music person " + this._userId);
-		completeFunc(this);
+		var me = this;
+	   	dh.server.doXmlMethod("musicpersonsummary",
+					     	{ "userId" : me._userId },
+							function(childNodes, http) {
+								me._parse(childNodes);
+								completeFunc(me);
+				 	    	},
+				  	    	function(code, msg, http) {
+								errorFunc(me);
+				  	    	});
+	},
+	
+	updateFrom : function(newBlock) {
+		if (!dh.stacker.MusicPersonBlock.superclass.updateFrom.call(this, newBlock))
+			return false;
+		// this is a little unkosher since it doesn't make a copy
+		this.setTracks(newBlock._tracks);
+		return true;
+	},
+
+	_updateTracksDiv : function() {
+		if (this._div) {
+			var str = "";
+			var i;
+			for (i = 0; i < this._tracks.length; ++i) {
+				str = str + " " + this._tracks[i].title;
+			}
+			dojo.dom.textContent(this._tracksDiv, str);
+		}
+	},
+	
+	realize : function() {
+		if (!this._div) {
+			dh.stacker.MusicPersonBlock.superclass.realize.call(this);
+			this._tracksDiv = document.createElement("div");
+			this._contentDiv.appendChild(this._tracksDiv);
+			dojo.html.setClass(this._tracksDiv, "dh-tracks");
+			this._updateTracksDiv();
+		}
+	},
+	
+	unrealize : function() {
+		dh.stacker.MusicPersonBlock.superclass.unrealize.call(this);	
+		this._tracksDiv = null;
 	}
 });
 
 dh.stacker.GroupChatBlock = function(blockId, groupId) {
 	dh.stacker.Block.call(this, dh.stacker.Kind.GROUP_CHAT, blockId);
 	this._groupId = groupId;
+	this._messages = [];
 }
 
 defineClass(dh.stacker.GroupChatBlock, dh.stacker.Block,
@@ -347,7 +425,86 @@ defineClass(dh.stacker.GroupChatBlock, dh.stacker.Block,
 	load : function(completeFunc, errorFunc) {
 		this.setTitle("Group chat " + this._groupId);
 		completeFunc(this);	
-	}
+	},
+	
+	getMessages : function() {
+		return this._messages;
+	},
+
+	setMessages : function(messages) {
+		this._messages = messages;
+		this._updateMessagesDiv();
+	},
+
+	_parse : function(childNodes) {
+		var groupChat = childNodes.item(0);
+		if (groupChat.nodeName != "groupChat") {
+			throw new Error("groupChat node expected");
+		}
+		childNodes = groupChat.childNodes;
+		var groupNode = childNodes.item(0);
+		if (groupNode.nodeName != "group")
+			throw new Error("group node expected");
+		var group = dh.model.groupFromXmlNode(groupNode);
+		var messages = [];
+		var i;
+		for (i = 1; i < childNodes.length; ++i) {
+			var messageNode = childNodes.item(i);
+			if (messageNode.nodeName != "message")
+				throw new Error("message node expected");
+			var message = dh.model.messageFromXmlNode(messageNode);
+			messages.push(message);
+		}
+		this.setTitle(group.displayName + " Group Chat");
+		this.setMessages(messages);
+	},
+
+	load : function(completeFunc, errorFunc) {
+		var me = this;
+	   	dh.server.doXmlMethod("groupchatsummary",
+					     	{ 	"groupId" : me._groupId },
+							function(childNodes, http) {
+								me._parse(childNodes);
+								completeFunc(me);
+				 	    	},
+				  	    	function(code, msg, http) {
+								errorFunc(me);
+				  	    	});
+	},
+	
+	updateFrom : function(newBlock) {
+		if (!dh.stacker.GroupChatBlock.superclass.updateFrom.call(this, newBlock))
+			return false;
+		// this is a little unkosher since it doesn't make a copy
+		this.setMessages(newBlock._messages);
+		return true;
+	},
+
+	_updateMessagesDiv : function() {
+		if (this._div) {
+			var str = "";
+			var i;
+			for (i = 0; i < this._messages.length; ++i) {
+				str = str + " " + this._messages[i].text;
+			}
+			dojo.dom.textContent(this._messagesDiv, str);
+		}
+	},
+	
+	realize : function() {
+		if (!this._div) {
+			dh.stacker.GroupChatBlock.superclass.realize.call(this);
+			this._messagesDiv = document.createElement("div");
+			this._contentDiv.appendChild(this._messagesDiv);
+			dojo.html.setClass(this._messagesDiv, "dh-messages");
+			this._updateMessagesDiv();
+		}
+	},
+	
+	unrealize : function() {
+		dh.stacker.GroupChatBlock.superclass.unrealize.call(this);	
+		this._messagesDiv = null;
+	}	
 });
 
 dh.stacker.RaiseAnimation = function(block, inner, oldOuter, newOuter) {
@@ -505,11 +662,16 @@ dh.stacker.Stacker = function() {
 	// end of list is top of the screen, highest stackTime
 	this._stack = [];
 	this._blocks = {}; // blocks by block id
+	this._poll = null;
 }
 
 defineClass(dh.stacker.Stacker, null, 
 {
 	start : function() {
+		if (this._poll) {
+			throw new Error("stacker started twice");
+		}
+	
 		this._pollNewBlocks();
 		
 		var me = this;
@@ -523,6 +685,9 @@ defineClass(dh.stacker.Stacker, null,
 	},
 
 	_newBlockLoaded : function(block) {
+		if (!block)
+			throw new Error("null block in _newBlockLoaded");
+			
 		var old = this._blocks[block.getBlockId()];
 		if (old) {
 			old.updateFrom(block);
@@ -530,6 +695,7 @@ defineClass(dh.stacker.Stacker, null,
 			this._blocks[block.getBlockId()] = block;
 			old = block;
 		}
+			
 		this._updateBlock(old);
 	},
 
@@ -586,6 +752,7 @@ defineClass(dh.stacker.Stacker, null,
 				 	    	},
 				  	    	function(code, msg, http) {
 				  	    		// failed!
+				  	    		alert("failed to update: " + msg);
 				  	    	});
 	},
 	
@@ -674,6 +841,11 @@ defineClass(dh.stacker.Stacker, null,
 	},
 	
 	_updateBlock : function(block) {
+		if (!block)
+			throw new Error("updating null block");
+		if (!this._blocks[block.getBlockId()])
+			throw new Error("to update block it has to be in _blocks already " + block.getBlockId());
+	
 		var i = this._findBlockInStack(block);
 		if (i < 0) {
 			var j = this._findInsertPosition(block.getStackTime());
@@ -741,7 +913,7 @@ dh.stacker.simulatePostUpdate = function(stacker, oldBlock, newTitle, newTime, n
 dh.stacker.simulateMoreViews = function(stacker) {
 	var block = dh.stacker.getRandomBlock(stacker);
 	if (block.getKind() == dh.stacker.Kind.POST) {
-		dh.stacker.simulatePostUpdate(stacker, block, block.getTitle(), block.getStackTime(), 
+		dh.stacker.simulatePostUpdate(stacker, block, block.getTitle(), block.getStackTime() + 1, 
 			block.getViewerCount() + 1);
 	}
 }

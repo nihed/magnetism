@@ -351,4 +351,12 @@ public interface HttpMethods {
  	@HttpParams( { "userId", "lastTimestamp", "start", "count" })
  	@HttpOptions( optionalParams = { "userId" } )
  	public void getBlocks(XmlBuilder xml, UserViewpoint viewpoint, String userId, String lastTimestamp, String start, String count) throws XmlMethodException;
+ 	
+ 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
+ 	@HttpParams( { "userId" })
+ 	public void getMusicPersonSummary(XmlBuilder xml, UserViewpoint viewpoint, String userId) throws XmlMethodException;
+ 	
+	@HttpContentTypes(HttpResponseData.XMLMETHOD)
+ 	@HttpParams( { "groupId" })
+ 	public void getGroupChatSummary(XmlBuilder xml, UserViewpoint viewpoint, String groupId) throws XmlMethodException;
 }

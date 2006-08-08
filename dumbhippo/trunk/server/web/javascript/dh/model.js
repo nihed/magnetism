@@ -1,6 +1,59 @@
 // This file contains the "model" objects, like Person
 dojo.provide("dh.model");
 
+dh.model.Track = function(image, title, artist, album, stillPlaying) {
+	this.image = image;
+	this.title = title;
+	this.artist = artist;
+	this.album = album;
+	this.stillPlaying = stillPlaying;
+}
+
+dh.model.trackFromXmlNode = function(element) {
+	if (element.nodeName != "song")
+		dojo.raise("not a song element");
+	var image = null;
+	var title = null;
+	var artist = null;
+	var album = null;
+	var stillPlaying = null;
+	
+	var i;
+	for (i = 0; i < element.childNodes.length; ++i) {
+		var n = element.childNodes.item(i);
+		if (n.nodeName == "title")
+			title = dojo.dom.textContent(n);
+		else if (n.nodeName == "image")
+			image = dojo.dom.textContent(n);
+		else if (n.nodeName == "artist")
+			artist = dojo.dom.textContent(n);
+		else if (n.nodeName == "album")
+			album = dojo.dom.textContent(n);
+		else if (n.nodeName == "stillPlaying");
+			stillPlaying = dojo.dom.textContent(n);
+	}
+	
+	return new dh.model.Track(image, title, artist, album, stillPlaying == "true");
+}
+
+dh.model.Message = function(text, fromId, serial, timestamp) {
+	this.text = text;
+	this.fromId = fromId;
+	this.serial = serial;
+	this.timestamp = timestamp;
+}
+
+dh.model.messageFromXmlNode = function(element) {
+	if (element.nodeName != "message")
+		dojo.raise("not a message element");
+	var text = dojo.dom.textContent(element);
+	var from = element.getAttribute("fromId");
+	var serial = element.getAttribute("serial");	
+	var timestamp = element.getAttribute("timestamp");
+
+	return new dh.model.Message(text, from, parseInt(serial), parseInt(timestamp));
+}
+
 dh.model.GuidPersistable = function(id, displayName) {
 	this.id = id;
 	this.displayName = displayName;

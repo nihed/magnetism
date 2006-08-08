@@ -709,6 +709,15 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		return TypeUtils.castList(GroupMessage.class, messages);
 	}
 	
+	public List<GroupMessage> getNewestGroupMessages(Group group, int maxResults) {
+		List<?> messages =  em.createQuery(GROUP_MESSAGE_QUERY + GROUP_MESSAGE_ORDER + " DESC")
+		.setParameter("group", group)
+		.setMaxResults(maxResults)
+		.getResultList();
+		
+		return TypeUtils.castList(GroupMessage.class, messages);		
+	}
+	
 	public void addGroupMessage(Group group, User fromUser, String text, Date timestamp, int serial) {
 		// we use serial = -1 in other places in the system to designate a message that contains
 		// the group description, but we never add this type of message to the database
