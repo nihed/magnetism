@@ -20,9 +20,12 @@ import org.slf4j.Logger;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.TypeUtils;
 import com.dumbhippo.identity20.Guid;
+import com.dumbhippo.persistence.AccountClaim;
 import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.BlockType;
 import com.dumbhippo.persistence.Group;
+import com.dumbhippo.persistence.Post;
+import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.server.GroupSystem;
@@ -37,6 +40,8 @@ import com.dumbhippo.server.util.EJBUtil;
 @Stateless
 public class StackerBean implements Stacker {
 
+	static final private boolean disabled = false;
+	
 	@SuppressWarnings("unused")
 	static private final Logger logger = GlobalSetup.getLogger(StackerBean.class);
 	
@@ -179,6 +184,9 @@ public class StackerBean implements Stacker {
 	}
 	
 	public void stackMusicPerson(final Guid userId, final long activity) {
+		if (disabled)
+			return;
+		
 		runner.runTaskRetryingOnConstraintViolation(new Runnable() {
 			public void run() {
 				Block block = getOrCreateUpdatingTimestamp(BlockType.MUSIC_PERSON, userId, -1, activity);
@@ -198,6 +206,9 @@ public class StackerBean implements Stacker {
 	}
 
 	public void stackGroupChat(final Guid groupId, final long activity) {
+		if (disabled)
+			return;
+		
 		runner.runTaskRetryingOnConstraintViolation(new Runnable() {
 			public void run() {
 				Block block = getOrCreateUpdatingTimestamp(BlockType.GROUP_CHAT, groupId, -1, activity);
@@ -211,6 +222,36 @@ public class StackerBean implements Stacker {
 				Set<User> groupMembers = groupSystem.getUserMembers(SystemViewpoint.getInstance(), group);
 				
 				updateUserBlockDatas(block, groupMembers);
+			}
+		});
+	}	
+
+	// FIXME this is not right; it requires various rationalization with respect to PersonPostData, XMPP, and 
+	// so forth, e.g. to work with world posts and be sure we never delete any ignored flags, clicked dates, etc.
+	// but it's OK for messing around.
+	public void stackPost(final Guid postId, final long activity) {
+		if (disabled)
+			return;		
+		
+		runner.runTaskRetryingOnConstraintViolation(new Runnable() {
+			public void run() {
+				Block block = getOrCreateUpdatingTimestamp(BlockType.POST, postId, -1, activity);
+
+				Post post;
+				try {
+					post = EJBUtil.lookupGuid(em, Post.class, postId);
+				} catch (NotFoundException e) {
+					throw new RuntimeException(e);
+				}
+				Set<User> postRecipients = new HashSet<User>();
+				Set<Resource> resources = post.getExpandedRecipients();
+				for (Resource r : resources) {
+					AccountClaim a = r.getAccountClaim();
+					if (a != null)
+						postRecipients.add(a.getOwner());
+				}
+				
+				updateUserBlockDatas(block, postRecipients);
 			}
 		});
 	}	

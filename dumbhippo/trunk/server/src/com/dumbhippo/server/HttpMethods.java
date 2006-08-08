@@ -359,4 +359,8 @@ public interface HttpMethods {
 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
  	@HttpParams( { "groupId" })
  	public void getGroupChatSummary(XmlBuilder xml, UserViewpoint viewpoint, String groupId) throws XmlMethodException;
+	
+	@HttpContentTypes(HttpResponseData.XMLMETHOD)
+ 	@HttpParams( { "postId" })
+ 	public void getPostSummary(XmlBuilder xml, UserViewpoint viewpoint, String postId) throws XmlMethodException;
 }

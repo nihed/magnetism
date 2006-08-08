@@ -144,6 +144,25 @@ public class XmlBuilder implements Appendable {
 		closeElement();
 	}
 	
+	/**
+	 * Appends an element with "true" or "false" as the content
+	 * @param elementName
+	 * @param content
+	 * @param attributes 
+	 */
+	public void appendBooleanNode(String elementName, boolean content, String... attributes) {
+		appendTextNode(elementName, content ? "true" : "false", attributes);
+	}
+	
+	/** 
+	 * Appends an element with a long integer as the content
+	 * @param elementName
+	 * @param content
+	 * @param attributes
+	 */
+	public void appendLongNode(String elementName, long content, String... attributes) {
+		appendTextNode(elementName, Long.toString(content), attributes);
+	}
 
 	/**
 	 * A convenience function useful when sending html mail or 

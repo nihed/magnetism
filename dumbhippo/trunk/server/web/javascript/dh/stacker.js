@@ -61,7 +61,7 @@ dh.stacker.Block = function(kind, blockId) {
 	// numeric representation of Date()
 	this._stackTime = 0;
 	
-	this._title = null;
+	this._title = "";
 	
 	// the html div
 	this._div = null;
@@ -259,14 +259,15 @@ defineClass(dh.stacker.Block, null,
 	}
 });
 
-dh.stacker.PostBlock = function(blockId, postId, title) {
+dh.stacker.PostBlock = function(blockId, postId) {
 	dh.stacker.Block.call(this, dh.stacker.Kind.POST, blockId);
 	this._postId = postId;
 	this._viewerCount = 0;
 	
 	this._viewsDiv = null;
 	
-	this.setTitle(title);
+	this._link = null;
+	this._description = null;
 }
 
 defineClass(dh.stacker.PostBlock, dh.stacker.Block,
@@ -283,7 +284,23 @@ defineClass(dh.stacker.PostBlock, dh.stacker.Block,
 		this._viewerCount = viewerCount;
 		this._updateViewsDiv();
 	},
-		
+	
+	getDescription : function() {
+		return this._description;
+	}, 
+	
+	setDescription : function(desc) {
+		this._description = desc;
+	},
+	
+	getLink : function() {
+		return this._link;
+	},
+	
+	setLink : function(link) {
+		this._link = link;
+	},
+	
 	_updateViewsDiv : function() {
 		if (this._div) {
 			dojo.dom.textContent(this._viewsDiv, this._viewerCount + " views");
@@ -306,14 +323,46 @@ defineClass(dh.stacker.PostBlock, dh.stacker.Block,
 	},
 	
 	load : function(completeFunc, errorFunc) {
-		throw new Error("load() not implemented in PostBlock");		
+		var me = this;
+	   	dh.server.doXmlMethod("postsummary",
+					     	{ "postId" : me._postId },
+							function(childNodes, http) {
+								me._parse(childNodes);
+								completeFunc(me);
+				 	    	},
+				  	    	function(code, msg, http) {
+								errorFunc(me);
+				  	    	});
 	},
 	
 	updateFrom : function(newBlock) {
 		if (!dh.stacker.PostBlock.superclass.updateFrom.call(this, newBlock))
 			return false;
 		this.setViewerCount(newBlock.getViewerCount());
+		this.setDescription(newBlock.getDescription());
+		this.setLink(newBlock.getLink());
 		return true;
+	},
+	
+	_parse : function(childNodes) {
+		var post = childNodes.item(0);
+		var title = "";
+		var text = "";
+		var link = "";
+		var i;
+		for (i = 0; i < post.childNodes.length; ++i) {
+			var n = post.childNodes.item(i);
+			if (n.nodeName == "title") {
+				title = dojo.dom.textContent(n);
+			} else if (n.nodeName == "text") {
+				text = dojo.dom.textContent(n);
+			} else if (n.nodeName == "href") {
+				link = dojo.dom.textContent(n);
+			}
+		}
+		this.setTitle(title);
+		this.setDescription(text);
+		this.setLink(link);
 	}
 });
 
@@ -635,6 +684,17 @@ dh.stacker.mergeBlockAttrs = function(block, attrs) {
 }
 
 dh.stacker.blockParsers = {};
+dh.stacker.blockParsers[dh.stacker.Kind.POST] = function(node) {
+	var attrs = dh.stacker.parseBlockAttrs(node);
+	var post = node.childNodes.item(0);
+	if (post.nodeName != "post")
+		return null;
+	var postId = post.getAttribute("postId");
+	var block = new dh.stacker.PostBlock(attrs["id"], postId);
+	dh.stacker.mergeBlockAttrs(block, attrs);
+	return block;
+};
+
 dh.stacker.blockParsers[dh.stacker.Kind.GROUP_CHAT] = function(node) {
 	var attrs = dh.stacker.parseBlockAttrs(node);
 	var groupChat = node.childNodes.item(0);
@@ -690,6 +750,8 @@ defineClass(dh.stacker.Stacker, null,
 			
 		var old = this._blocks[block.getBlockId()];
 		if (old) {
+			// FIXME this breaks if the stack time changes, 
+			// updateBlock needs the old time.
 			old.updateFrom(block);
 		} else {
 			this._blocks[block.getBlockId()] = block;
@@ -752,7 +814,7 @@ defineClass(dh.stacker.Stacker, null,
 				 	    	},
 				  	    	function(code, msg, http) {
 				  	    		// failed!
-				  	    		alert("failed to update: " + msg);
+				  	    		//alert("failed to update: " + msg);
 				  	    	});
 	},
 	
@@ -884,8 +946,8 @@ dh.stacker.getFakeGuid = function() {
 };
 
 dh.stacker.simulateNewPost = function(stacker, title) {
-	var block = new dh.stacker.PostBlock(dh.stacker.getFakeGuid(), dh.stacker.getFakeGuid(),
-								title);
+	var block = new dh.stacker.PostBlock(dh.stacker.getFakeGuid(), dh.stacker.getFakeGuid());
+	block.setTitle(title);
 	block.setStackTime(new Date().getTime());
 	block.setViewerCount(1);
 	stacker._newBlockLoaded(block);
@@ -903,8 +965,8 @@ dh.stacker.getRandomBlock = function(stacker) {
 }
 
 dh.stacker.simulatePostUpdate = function(stacker, oldBlock, newTitle, newTime, newViewerCount) {
-	var newBlock = new dh.stacker.PostBlock(oldBlock.getBlockId(), oldBlock.getPostId(),
-							newTitle);
+	var newBlock = new dh.stacker.PostBlock(oldBlock.getBlockId(), oldBlock.getPostId());
+	newBlock.setTitle(newTitle);
 	newBlock.setStackTime(newTime);
 	newBlock.setViewerCount(newViewerCount);
 	stacker._newBlockLoaded(newBlock);

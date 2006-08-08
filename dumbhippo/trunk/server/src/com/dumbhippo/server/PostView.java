@@ -11,8 +11,8 @@ import javax.ejb.EJBContext;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
-import com.dumbhippo.ObjectXmlBuilder;
 import com.dumbhippo.StringUtils;
+import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.live.LivePost;
 import com.dumbhippo.live.LiveState;
 import com.dumbhippo.persistence.PersonPostData;
@@ -237,15 +237,15 @@ public class PostView {
 		}
 	}
 
-	public String toXml() {
-		ObjectXmlBuilder builder = new ObjectXmlBuilder();
+	// CAUTION - used in both HttpMethods AND XMPP, migrate both xmpp client and javascript if you modify this
+	public void writePostNode(XmlBuilder builder) {
 		builder.openElement("post", "id", post.getId());
-		builder.appendMember("poster", posterView.getIdentifyingGuid().toString());
-		builder.appendMember("href", post.getUrl().toString());
-		builder.appendMember("title", post.getTitle());
-		builder.appendMember("text", post.getText());
-		builder.appendMember("toWorld", isToWorld());
-		builder.appendMember("postDate", "" + (post.getPostDate().getTime()/1000));
+		builder.appendTextNode("poster", posterView.getIdentifyingGuid().toString());
+		builder.appendTextNode("href", post.getUrl().toString());
+		builder.appendTextNode("title", post.getTitle());
+		builder.appendTextNode("text", post.getText());
+		builder.appendBooleanNode("toWorld", isToWorld());
+		builder.appendLongNode("postDate", post.getPostDate().getTime()/1000);
 		PostInfo pi = post.getPostInfo();
 		if (pi != null)
 			builder.appendTextNode("postInfo", pi.toXml());
@@ -260,9 +260,14 @@ public class PostView {
 			}			
 		}
 		builder.closeElement();		
-		builder.appendMember("favorite", favorite);
-		builder.appendMember("ignored", ignored);
-
+		builder.appendBooleanNode("favorite", favorite);
+		builder.appendBooleanNode("ignored", ignored);
+		builder.closeElement();
+	}
+	
+	public String toXml() {
+		XmlBuilder builder = new XmlBuilder();
+		writePostNode(builder);
 		return builder.toString();
 	}
 	

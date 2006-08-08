@@ -86,6 +86,7 @@ import com.dumbhippo.server.NowPlayingThemeSystem;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
 import com.dumbhippo.server.PostIndexer;
+import com.dumbhippo.server.PostView;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.PromotionCode;
 import com.dumbhippo.server.SigninSystem;
@@ -1752,6 +1753,16 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			throw new XmlMethodException(XmlMethodErrorCode.INVALID_ARGUMENT, "no such group " + groupId);
 		}
 	}
+
+	private Post parsePostId(String postId) throws XmlMethodException {
+		try {
+			return identitySpider.lookupGuidString(Post.class, postId);
+		} catch (ParseException e) {
+			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, "bad postId " + postId);
+		} catch (NotFoundException e) {
+			throw new XmlMethodException(XmlMethodErrorCode.INVALID_ARGUMENT, "no such post " + postId);
+		}
+	}
 	
 	public void getBlocks(XmlBuilder xml, UserViewpoint viewpoint, String userId, String lastTimestampStr, String startStr, String countStr) throws XmlMethodException {
 		long lastTimestamp;
@@ -1799,6 +1810,9 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			case GROUP_CHAT:
 				xml.appendTextNode("groupChat", null, "groupId", block.getData1());
 				break;
+			case POST:
+				xml.appendTextNode("post", null, "postId", block.getData1());
+				break;
 			}
 			
 			xml.closeElement();
@@ -1831,4 +1845,10 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		}
 		xml.closeElement();
 	}
+	
+ 	public void getPostSummary(XmlBuilder xml, UserViewpoint viewpoint, String postId) throws XmlMethodException {
+ 		Post post = parsePostId(postId);
+ 		PostView pv = postingBoard.getPostView(viewpoint, post);
+ 		pv.writePostNode(xml);
+ 	}
 }

@@ -88,6 +88,7 @@ import com.dumbhippo.server.PostType;
 import com.dumbhippo.server.PostView;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.RecommenderSystem;
+import com.dumbhippo.server.Stacker;
 import com.dumbhippo.server.SystemViewpoint;
 import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.UserViewpoint;
@@ -155,7 +156,6 @@ public class PostingBoardBean implements PostingBoard {
 			throw new RuntimeException("invalid visibility on post " + post.getId());
 		}		
 	}
-	
 	
 	public void sendPostNotifications(Post post, PostType postType) {
 		logger.debug("Sending out jabber/email notifications...");
@@ -254,6 +254,9 @@ public class PostingBoardBean implements PostingBoard {
 						} catch (NotFoundException e) {
 							throw new RuntimeException(e);
 						}
+						
+						Stacker stacker = EJBUtil.defaultLookup(Stacker.class);
+						stacker.stackPost(currentPost.getGuid(), currentPost.getPostDate().getTime());
 						
 						// Sends out XMPP notification
 						board.sendPostNotifications(currentPost, postType);
