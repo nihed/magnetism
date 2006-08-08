@@ -35,9 +35,9 @@ public enum PromotionCode {
 		switch(this) {
 		case MUSIC_INVITE_PAGE_200602:
 			return true;
+		default:
+			return false;
 		}
-		
-		return false;
 	}
 
 	public static PromotionCode check(String code) throws NotFoundException {

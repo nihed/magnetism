@@ -1003,7 +1003,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			throw new RuntimeException("inviteeId and inviteeAddress can't both be null");
 		}
 		
-		GuidPersistable recipient = (GuidPersistable)contact;
+		GuidPersistable recipient = contact;
 		Set<GuidPersistable> recipients = Collections.singleton(recipient);
 		try {
 			postingBoard.doShareGroupPost(viewpoint.getViewer(), group, subject, message, recipients, PostingBoard.InviteRecipients.MUST_INVITE);

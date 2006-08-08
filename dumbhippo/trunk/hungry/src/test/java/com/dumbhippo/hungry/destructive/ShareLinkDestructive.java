@@ -134,7 +134,7 @@ public class ShareLinkDestructive extends SignedInPageTestCase {
 						"Basic Share",
 						"This is an unremarkable link share. Lorem ipsum vita excolatur tres partes.",
 						false,
-						(String[])recipients.toArray(new String[recipients.size()]));
+						recipients.toArray(new String[recipients.size()]));
 				break;
 			case 1:
 				shareLink(ws,
@@ -142,7 +142,7 @@ public class ShareLinkDestructive extends SignedInPageTestCase {
 						"Secret!",
 						"This share is s3kr3t. Lorem ipsum vita excolatur tres partes.",
 						true,
-						(String[])recipients.toArray(new String[recipients.size()]));
+						recipients.toArray(new String[recipients.size()]));
 				break;
 			case 2:
 				shareLink(ws,
@@ -150,7 +150,7 @@ public class ShareLinkDestructive extends SignedInPageTestCase {
 						"Invalid",
 						"This share has an invalid URL with all kinds of HTML special chars in it. Lorem ipsum vita excolatur tres partes.",
 						false,
-						(String[])recipients.toArray(new String[recipients.size()]));
+						recipients.toArray(new String[recipients.size()]));
 				break;
 			case 3:
 				shareLink(ws,
@@ -158,7 +158,7 @@ public class ShareLinkDestructive extends SignedInPageTestCase {
 						"Long link!",
 						"This share has an incredibly long URL.",
 						false,
-						(String[])recipients.toArray(new String[recipients.size()]));
+						recipients.toArray(new String[recipients.size()]));
 				break;
 			case 4:
 				shareLink(ws,
@@ -166,7 +166,7 @@ public class ShareLinkDestructive extends SignedInPageTestCase {
 						"Empty description and secret",
 						"",
 						true,
-						(String[])recipients.toArray(new String[recipients.size()]));
+						recipients.toArray(new String[recipients.size()]));
 				break;
 			default:
 				// just don't do anything

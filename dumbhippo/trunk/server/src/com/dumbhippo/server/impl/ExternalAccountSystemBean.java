@@ -136,6 +136,8 @@ public class ExternalAccountSystemBean implements ExternalAccountSystem {
 			case FLICKR:
 				loadFlickrThumbnails(viewpoint, external);
 				break;
+			default:
+				break;
 			}
 		}
 	}

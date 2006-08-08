@@ -48,7 +48,7 @@ public class LoginCookie {
 			throw new BadTastingException("invalid hex string length " + hexStr.length());
 		for (int i = 0; i < hexStr.length(); i++) {
 			char c = hexStr.charAt(i);
-			int codepoint = (int) c;
+			int codepoint = c;
 			if (!((codepoint >= '0' && codepoint <= '9')
 					|| codepoint >= 'a' && codepoint <= 'f'))
 				throw new BadTastingException("Invalid hex string character '" + c + "'");

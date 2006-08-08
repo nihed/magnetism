@@ -481,7 +481,7 @@ public class PostingBoardBean implements PostingBoard {
 			Person p = ppd.getPerson();
 			if (!(p instanceof User)) // possible? FIXME decide for sure
 				continue;
-			if (user.equals((User) p)) {
+			if (user.equals(p)) {
 				return ppd;
 			}
 		}

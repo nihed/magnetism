@@ -230,6 +230,7 @@ public class GroupPage extends AbstractSigninOptionalPage {
 		case REMOVED:
 			return "Join Group";
 		case ACTIVE:
+		case FOLLOWER:
 			return null;
 		}
 		return null;
@@ -264,6 +265,7 @@ public class GroupPage extends AbstractSigninOptionalPage {
 		case INVITED:
 		case REMOVED:
 			return "Become a group member";
+		case FOLLOWER:
 		case ACTIVE:
 			return null;
 		}

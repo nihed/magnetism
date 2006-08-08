@@ -177,6 +177,7 @@ public class RowStore {
 			return result;
 		}
 		
+		@Override
 		protected void finalize() {
 			if (nextRowBlock != null)
 				unlockBlock(nextRowBlock);

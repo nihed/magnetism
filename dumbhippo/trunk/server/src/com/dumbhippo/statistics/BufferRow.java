@@ -21,7 +21,7 @@ class BufferRow extends Row {
 	
 	@Override
 	public Date getDate() {
-		return new Date(buffer.getLong((int)startOffset));
+		return new Date(buffer.getLong(startOffset));
 	}
 
 	@Override

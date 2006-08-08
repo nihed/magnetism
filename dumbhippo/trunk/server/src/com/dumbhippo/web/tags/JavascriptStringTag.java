@@ -52,13 +52,13 @@ public class JavascriptStringTag extends SimpleTagSupport {
 			case '&':
 			case '<':
 			case '>':
-				sb.append(String.format("\\u%04X", (int) c));
+				sb.append(String.format("\\u%04X", c));
 				break;
 			default:
 				if (c >= 32 && c <= 126) // printable ascii chars
 					sb.append(c);
 				else
-					sb.append(String.format("\\u%04X", (int) c));
+					sb.append(String.format("\\u%04X", c));
 			}
 		}
 		

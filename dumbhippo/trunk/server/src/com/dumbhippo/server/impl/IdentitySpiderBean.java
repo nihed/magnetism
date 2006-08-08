@@ -315,18 +315,18 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 			for (AccountClaim ac : ((User)person).getAccountClaims()) {
 				Resource r = ac.getResource();
 				if (r instanceof EmailResource)
-					resources.add((Resource) r);
+					resources.add(r);
 				else if (r instanceof AimResource)
-					resources.add((Resource) r);
+					resources.add(r);
 				// we filter out any non-"primary" resources for now
 			}
 		} else if (person instanceof Contact) {
 			for (ContactClaim cc : ((Contact)person).getResources()) {
 				Resource r = cc.getResource();
 				if (r instanceof EmailResource)
-					resources.add((Resource) r);
+					resources.add(r);
 				else if (r instanceof AimResource)
-					resources.add((Resource) r);
+					resources.add(r);
 				// we filter out any non-"primary" resources for now
 			}
 		} else {
