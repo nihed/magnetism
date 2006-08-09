@@ -601,8 +601,10 @@ dh.util.clientDebug = function(text) {
 	window.external.DebugLog(text)
 }
 
-dh.util.makeTwoDigit = function(number) {
-    if (number <= 9)
-        return "0" + number;
-    return number;    
+dh.util.zeroPad = function(number, len) {
+    var str = number + "";
+    while (str.length < len) {
+        str = "0" + str;
+    }
+    return str;
 }

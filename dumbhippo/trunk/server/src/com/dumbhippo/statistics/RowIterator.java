@@ -10,7 +10,7 @@ import java.util.Iterator;
  */
 public interface RowIterator extends Iterator<Row> {
 	/** 
-	 * Gets the date of the next row returnred by the iterator 
+	 * Gets the date of the next row returned by the iterator 
 	 * @return the Date, or null if hasNext() is false
 	 */
 	Date nextDate();

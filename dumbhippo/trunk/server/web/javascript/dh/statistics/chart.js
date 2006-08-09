@@ -9,7 +9,6 @@ dh.statistics.chart.Chart = function(width, height) {
 
 	var context = this.canvas.getContext("2d");
 	context.strokeStyle = "#60CC35";
-	context.save();
 }
 
 dojo.lang.extend(dh.statistics.chart.Chart,
@@ -25,17 +24,10 @@ dojo.lang.extend(dh.statistics.chart.Chart,
 	
 	_draw: function() {
 		var context = this.canvas.getContext("2d");
-						
-		context.clearRect(0, 0, this.width, this.height);
-		
-		if (this.dataset.numPoints == 0) {
-			return;
-		}
-		
-		// restore the saved (default) context, otherwise end up applying 
-		// values to previous translate and scale values consecutively, 
-		// get funny flipping of the graph		
-	    context.restore();		
+
+		// save the context and restore it on *all* exit points from the
+		// function, otherwise end up applying values to previous translate 
+		// and scale values consecutively, get funny flipping of the graph
 		context.save();
 		
 		// move the origin to the bottom left corner
@@ -46,6 +38,13 @@ dojo.lang.extend(dh.statistics.chart.Chart,
 	    // positive y values on our graph plane
 		context.scale(1, -1);
 		
+		context.clearRect(0, 0, this.width, this.height);
+		
+		if (this.dataset.numPoints == 0) {
+            context.restore();
+			return;
+		}
+		
 		var xscale;
 		// xscale determines how wide we need a single unit on the canvas to be to fit the 
 		// whole range between minT and maxT
@@ -53,7 +52,7 @@ dojo.lang.extend(dh.statistics.chart.Chart,
 			xscale = this.width / (this.dataset.maxT - this.dataset.minT);
 		else
 			xscale = 1;
-			
+					
 		// our own reference point that will land minT in the bottom left corner	
 		var x0 = - xscale * this.dataset.minT;
 		
@@ -64,7 +63,7 @@ dojo.lang.extend(dh.statistics.chart.Chart,
 			yscale = this.height / (this.dataset.maxY - this.dataset.minY);
 		else
 			yscale = 1;
-			
+					
 		// our own reference point that will land minY in the bottom left corner	
 		var y0 = - yscale * this.dataset.minY;
 		
@@ -75,6 +74,7 @@ dojo.lang.extend(dh.statistics.chart.Chart,
 		}
 		
 		context.stroke();
-
+		
+		context.restore();	
 	}
 });
