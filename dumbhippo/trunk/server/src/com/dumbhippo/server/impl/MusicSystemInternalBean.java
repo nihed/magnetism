@@ -1855,4 +1855,12 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			}
 		});
 	}
+	
+	public long getLatestPlayTime(Viewpoint viewpoint, User user) {
+		List<TrackHistory> history = getTrackHistory(viewpoint, user, History.LATEST, 0, 1);
+		if (history.isEmpty())
+			return 0;
+		else
+			return history.get(0).getLastUpdated().getTime();
+	}
 }

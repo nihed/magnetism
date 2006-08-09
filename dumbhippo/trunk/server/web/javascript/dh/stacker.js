@@ -754,7 +754,8 @@ defineClass(dh.stacker.Stacker, null,
 			
 		var old = this._blocks[block.getBlockId()];
 		if (old) {
-			old.updateFrom(block);
+			if (!old.updateFrom(block))
+				return; // new block not really newer
 		} else {
 			this._blocks[block.getBlockId()] = block;
 			old = block;
@@ -835,7 +836,7 @@ defineClass(dh.stacker.Stacker, null,
 			if (this._stack[i].getStackTime() > stackTime)
 				break;
 		}
-  		// insert before current i; before stack.length for append
+  		// insert at current i; at stack.length for append
 		return i;
 	},
 	
@@ -946,8 +947,13 @@ defineClass(dh.stacker.Stacker, null,
 			var j = this._findInsertPosition(newStackTime);
 			block.setStackTime(newStackTime);
 			if ((i + 1) != j) {
-				this._stack.splice(i, 1);
+				var removed = this._stack.splice(i, 1);
+				if (removed[0] != block)
+					throw new Error("removed the wrong thing: " + removed);
+				// insert position may have changed due to deleting ourselves
+				j = this._findInsertPosition(newStackTime);
 				this._stack.splice(j, 0, block);
+				this._checkStackInOrder();
 				if (block._div) {
 					this._updateBlockDivLocation(block);
 				}
@@ -956,7 +962,7 @@ defineClass(dh.stacker.Stacker, null,
 		this._checkInvariants();
 	},
 	
-	_checkInvariants : function() {
+	_checkStackInOrder : function() {
 		var last = 0;
 		var i;
 		for (i = 0; i < this._stack.length; ++i) {
@@ -964,15 +970,18 @@ defineClass(dh.stacker.Stacker, null,
 				throw new Error("stack out of order");
 			}
 			last = this._stack[i].getStackTime();
-		}
-		
+		}	
+	},
+	
+	_checkInvariants : function() {
+		this._checkStackInOrder();
 		// _container can have old divs during animations,
 		// but all "current" block._div should be in the right 
 		// order
 		if (this._container.childNodes.length < this._stack.length) {
 			throw new Error("some item in the stack has no _div");
 		}
-		var j;
+		var i, j;
 		i = this._stack.length - 1; // newest block (first in the container)
 		for (j = 0; j < this._container.childNodes.length; ++j) {
 			var node = this._container.childNodes.item(j);

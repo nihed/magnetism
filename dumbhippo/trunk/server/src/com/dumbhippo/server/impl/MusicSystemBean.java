@@ -140,4 +140,8 @@ public class MusicSystemBean implements MusicSystem {
 	public void addFeedTrack(AccountFeed feed, TrackFeedEntry entry, int entryPosition) {
 		internal.addFeedTrack(feed, entry, entryPosition);
 	}
+	
+	public long getLatestPlayTime(Viewpoint viewpoint, User user) {
+		return internal.getLatestPlayTime(viewpoint, user);
+	}
 }

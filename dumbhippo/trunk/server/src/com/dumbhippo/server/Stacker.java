@@ -20,4 +20,9 @@ public interface Stacker {
 	public void stackPost(Guid postId, long activity);
 	
 	public List<UserBlockData> getStack(Viewpoint viewpoint, User user, long lastTimestamp, int start, int count);
+
+	public void migrateEverything();
+	public void migratePost(String postId);
+	public void migrateUser(String userId);
+	public void migrateGroup(String groupId);
 }

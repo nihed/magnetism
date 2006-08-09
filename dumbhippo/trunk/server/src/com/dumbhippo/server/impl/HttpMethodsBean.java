@@ -1744,19 +1744,9 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		}
 	}
 
-	private Group parseGroupId(String groupId) throws XmlMethodException {
+	private Post parsePostId(Viewpoint viewpoint, String postId) throws XmlMethodException {
 		try {
-			return identitySpider.lookupGuidString(Group.class, groupId);
-		} catch (ParseException e) {
-			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, "bad groupId " + groupId);
-		} catch (NotFoundException e) {
-			throw new XmlMethodException(XmlMethodErrorCode.INVALID_ARGUMENT, "no such group " + groupId);
-		}
-	}
-
-	private Post parsePostId(String postId) throws XmlMethodException {
-		try {
-			return identitySpider.lookupGuidString(Post.class, postId);
+			return postingBoard.loadRawPost(viewpoint, new Guid(postId));
 		} catch (ParseException e) {
 			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, "bad postId " + postId);
 		} catch (NotFoundException e) {
@@ -1835,7 +1825,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	}
 	
 	public void getGroupChatSummary(XmlBuilder xml, UserViewpoint viewpoint, String groupId) throws XmlMethodException {
-		Group group = parseGroupId(groupId);
+		Group group = parseGroupId(viewpoint, groupId);
 		xml.openElement("groupChat", "groupId", group.getId());
 		returnGroupsXml(xml, viewpoint, Collections.singleton(group));
 		List<GroupMessage> messages = groupSystem.getNewestGroupMessages(group, 5);
@@ -1848,7 +1838,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	}
 	
  	public void getPostSummary(XmlBuilder xml, UserViewpoint viewpoint, String postId) throws XmlMethodException {
- 		Post post = parsePostId(postId);
+ 		Post post = parsePostId(viewpoint, postId);
  		PostView pv = postingBoard.getPostView(viewpoint, post);
  		pv.writePostNode(xml);
  	}

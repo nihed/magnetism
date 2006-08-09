@@ -371,7 +371,7 @@ public class Post extends GuidPersistable {
 				try {
 					cachedUrl = new URL(link);
 				} catch (MalformedURLException e) {
-					logger.warn("Invalid link in database: " + link);
+					logger.warn("Invalid link in database for post " + getId() + ": " + link);
 				}
 			}
 			cachedUrlUpdated = true;

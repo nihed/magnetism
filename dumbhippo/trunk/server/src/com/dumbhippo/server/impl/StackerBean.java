@@ -1,5 +1,6 @@
 package com.dumbhippo.server.impl;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -7,6 +8,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import javax.annotation.EJB;
 import javax.ejb.Stateless;
@@ -20,18 +23,21 @@ import javax.persistence.Query;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.ThreadUtils;
 import com.dumbhippo.TypeUtils;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.AccountClaim;
 import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.BlockType;
 import com.dumbhippo.persistence.Group;
+import com.dumbhippo.persistence.GroupMessage;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.IdentitySpider;
+import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Stacker;
 import com.dumbhippo.server.SystemViewpoint;
@@ -60,6 +66,9 @@ public class StackerBean implements Stacker {
 	
 	@EJB
 	private TransactionRunner runner;
+	
+	@EJB
+	private MusicSystem musicSystem;
 	
 	static synchronized private UserCache getUserCache() {
 		if (userCache == null) {
@@ -156,6 +165,7 @@ public class StackerBean implements Stacker {
 		// or join/leave groups, instead of the expensive query and fixup here.
 		// But it would not retroactively fix the existing db or let us change our
 		// rules for who gets what...
+		//
 		// Also, we need to query UserBlockData anyway to update the user 
 		// timestamp caches and maybe send out XMPP notifications eventually,
 		// so maybe this isn't really adding too much overhead.
@@ -205,7 +215,7 @@ public class StackerBean implements Stacker {
 	}
 	
 	private Set<User> getDesiredUsersForGroupChat(Block block) {
-		if (block.getBlockType() != BlockType.POST)
+		if (block.getBlockType() != BlockType.GROUP_CHAT)
 			throw new IllegalArgumentException("wrong type block");
 		Group group;
 		try {
@@ -468,5 +478,180 @@ public class StackerBean implements Stacker {
 			else
 				return entry.lastTimestamp;
 		}
+	}
+	
+	static private class Migration implements Runnable {
+		@SuppressWarnings("unused")
+		static private final Logger logger = GlobalSetup.getLogger(Migration.class);		
+		
+		private ExecutorService pool;
+		private long processed;
+		private long errorCount;
+		private Collection<String> postIds;
+		private Collection<String> userIds;
+		private Collection<String> groupIds; 
+		
+		public Migration(Collection<String> postIds, Collection<String> userIds, Collection<String> groupIds) {
+			this.postIds = postIds;
+			this.userIds = userIds;
+			this.groupIds = groupIds;
+		}
+
+		private <T> T pop(Collection<T> collection) {
+			Iterator<T> i = collection.iterator();
+			if (i.hasNext()) {
+				T t = i.next();
+				i.remove();
+				return t;
+			} else {
+				return null;
+			}
+		}
+		
+		// the idea is that we can call run() lots of times (potentially concurrently)
+		// and each call migrates one thing
+		public void run() {
+			try {
+				String postId = null;
+				String userId = null;
+				String groupId = null;
+				
+				// synchronize access to the pool of work to do
+				synchronized(this) {
+					postId = pop(postIds);
+					if (postId == null) {
+						userId = pop(userIds);
+						if (userId == null) {
+							groupId = pop(groupIds);
+						}
+					} 
+				}
+				
+				// but do work outside the lock
+				Stacker stacker = EJBUtil.defaultLookup(Stacker.class);
+				if (postId != null) {
+					stacker.migratePost(postId);
+				} else if (userId != null) {
+					stacker.migrateUser(userId);
+				} else if (groupId != null) {
+					stacker.migrateGroup(groupId);
+				} else {
+					// nothing to do, we may have been 
+					// shut down
+				}
+				
+				synchronized(this) {
+					processed += 1;
+				}
+			} catch (RuntimeException e) {
+				// we need to catch the exception ourselves, otherwise it
+				// ends up on stdout instead of in the log, and terminates
+				// the thread for no good reason
+				logger.error("Migration thread threw exception", e);
+				errorCount += 1;
+			}
+		}
+		
+		public synchronized long getRemainingItems() {
+			return postIds.size() + userIds.size() + groupIds.size();
+		}
+		
+		public void start() {
+			if (pool != null)
+				throw new IllegalStateException("Stacker migration started twice");
+			
+			// 8 is a guess at what might be good with 4 cpus
+			pool = ThreadUtils.newFixedThreadPool("stacker migration", 8);
+			
+			// run 1 task per item to migrate, keep in mind
+			// that these tasks will start while we're still 
+			// piling them in, so there's some reentrancy
+			// from this point forward
+			long items = getRemainingItems();
+			
+			logger.info("Starting stacker migration with {} items to process", items);
+			
+			while (items > 0) {
+				pool.execute(this);
+				--items;
+			}
+		}
+		
+		public void shutdown(boolean forceImmediate) {
+			if (pool == null)
+				throw new IllegalStateException("Stacker migration has not been started");
+			
+			if (forceImmediate) {
+				// this will turn any remaining run() calls into no-ops
+				synchronized (this) {
+					postIds.clear();
+					userIds.clear();
+					groupIds.clear();
+				}
+			}
+			
+			logger.info("Shutting down stacker migration forceImmediate={} processed={}", forceImmediate, processed);
+
+			pool.shutdown();
+			try {
+				pool.awaitTermination(60*60, TimeUnit.SECONDS);
+			} catch (InterruptedException e) {
+				logger.warn("Interrupted while waiting for stacker migration to finish");
+			}
+			pool = null;
+			logger.info("Stacker migration shut down, {} items processed, {} errors", processed, errorCount);
+		}
+	}
+	
+	public void migrateEverything() {
+		List<String> postIds;
+		List<String> userIds;
+		List<String> groupIds;
+		
+		Query q = em.createQuery("SELECT post.id FROM Post post");
+		postIds = TypeUtils.castList(String.class, q.getResultList());
+
+		q = em.createQuery("SELECT user.id FROM User user");
+		userIds = TypeUtils.castList(String.class, q.getResultList());
+
+		q = em.createQuery("SELECT group.id FROM Group group");
+		groupIds = TypeUtils.castList(String.class, q.getResultList());
+		
+		final Migration migration = new Migration(postIds, userIds, groupIds);
+		migration.start();
+		
+		// start a thread to clean up the migration ; if we blocked to do this
+		// our transaction would probably time out
+		Thread t = new Thread("stacker migration waiter") {
+			@Override
+			public void run() {
+				migration.shutdown(false); // false = wait for stuff to complete		
+			}
+		};
+		t.setDaemon(true);
+		t.start();
+	}
+	
+	public void migratePost(String postId) {
+		logger.debug("    migrating post {}", postId);
+		Post post = em.find(Post.class, postId);
+		stackPost(post.getGuid(), post.getPostDate().getTime());
+	}
+	
+	public void migrateUser(String userId) {
+		logger.debug("    migrating user {}", userId);
+		User user = em.find(User.class, userId);
+		long lastPlayTime = musicSystem.getLatestPlayTime(SystemViewpoint.getInstance(), user);
+		stackMusicPerson(user.getGuid(), lastPlayTime);
+	}
+	
+	public void migrateGroup(String groupId) {
+		logger.debug("    migrating group {}", groupId);
+		Group group = em.find(Group.class, groupId);
+		List<GroupMessage> messages = groupSystem.getNewestGroupMessages(group, 1);
+		if (messages.isEmpty())
+			stackGroupChat(group.getGuid(), 0);
+		else
+			stackGroupChat(group.getGuid(), messages.get(0).getTimestamp().getTime());
 	}
 }
