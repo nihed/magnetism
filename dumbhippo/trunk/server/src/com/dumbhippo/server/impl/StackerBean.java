@@ -10,6 +10,8 @@ import java.util.Set;
 
 import javax.annotation.EJB;
 import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityNotFoundException;
 import javax.persistence.PersistenceContext;
@@ -73,10 +75,10 @@ public class StackerBean implements Stacker {
 			q.setParameter("data1", data1.toString());
 			q.setParameter("data2", data2);
 		} else if (data1 != null) {
-			q = em.createQuery("SELECT block FROM Block block WHERE block.blockType=:type AND block.data1=:data1");
+			q = em.createQuery("SELECT block FROM Block block WHERE block.blockType=:type AND block.data1=:data1 AND block.data2=-1");
 			q.setParameter("data1", data1.toString());
 		} else if (data2 >= 0) {
-			q = em.createQuery("SELECT block FROM Block block WHERE block.blockType=:type AND block.data2=:data2");
+			q = em.createQuery("SELECT block FROM Block block WHERE block.blockType=:type AND block.data2=:data2 AND block.data1 IS NULL");
 			q.setParameter("data2", data2);
 		} else {
 			throw new IllegalArgumentException("must provide either data1 or data2 in query for block type " + type);
@@ -269,17 +271,24 @@ public class StackerBean implements Stacker {
 		});
 	}
 	
+	// don't create or suspend transaction; we will manage our own 
+	@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 	public void stackMusicPerson(final Guid userId, final long activity) {
 		stack(BlockType.MUSIC_PERSON, userId, -1, activity);
 	}
 
+	// don't create or suspend transaction; we will manage our own 
+	@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 	public void stackGroupChat(final Guid groupId, final long activity) {
 		stack(BlockType.GROUP_CHAT, groupId, -1, activity);
-	}	
+	}
 
 	// FIXME this is not right; it requires various rationalization with respect to PersonPostData, XMPP, and 
 	// so forth, e.g. to work with world posts and be sure we never delete any ignored flags, clicked dates, etc.
 	// but it's OK for messing around.
+	
+	// don't create or suspend transaction; we will manage our own 
+	@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 	public void stackPost(final Guid postId, final long activity) {
 		stack(BlockType.POST, postId, -1, activity);
 	}
