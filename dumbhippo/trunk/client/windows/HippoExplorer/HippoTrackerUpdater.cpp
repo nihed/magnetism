@@ -3,7 +3,7 @@
  * Copyright Red Hat, Inc. 2006
  */
 
-#include "stdafx.h"
+#include "stdafx-hippoexplorer.h"
 #include "Globals.h"
 #include "Guid.h"
 #include "HippoTrackerUpdater.h"

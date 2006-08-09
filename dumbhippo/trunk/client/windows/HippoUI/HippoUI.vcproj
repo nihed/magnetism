@@ -302,7 +302,7 @@
 				RelativePath=".\Resource.h">
 			</File>
 			<File
-				RelativePath=".\stdafx.h">
+				RelativePath=".\stdafx-hippoui.h">
 			</File>
 			<File
 				RelativePath=".\Version.h">

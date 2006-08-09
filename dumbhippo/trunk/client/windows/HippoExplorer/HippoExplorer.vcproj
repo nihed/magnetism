@@ -222,7 +222,7 @@
 				RelativePath=".\Resource.h">
 			</File>
 			<File
-				RelativePath=".\stdafx.h">
+				RelativePath=".\stdafx-hippoexplorer.h">
 			</File>
 		</Filter>
 		<Filter

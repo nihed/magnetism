@@ -2,7 +2,7 @@
  *
  * Copyright Red Hat, Inc. 2005
  */
-#include "stdafx.h"
+#include "stdafx-hippoutil.h"
 #include <limits.h>
 #include "HippoUtil.h"
 #include "HippoConnectionPointContainer.h"

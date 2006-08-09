@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "stdafx-hipposhellext.h"
 
 #include <iostream>
 #include <shlobj.h>

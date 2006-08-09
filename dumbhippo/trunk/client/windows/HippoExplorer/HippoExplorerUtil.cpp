@@ -3,7 +3,7 @@
  * Copyright Red Hat, Inc. 2006
  */
 
-#include "stdafx.h"
+#include "stdafx-hippoexplorer.h"
 #include "HippoExplorerUtil.h"
 
 // "SUFFIX" by itself or "<foo>.SUFFIX" will be allowed. We might want to consider 

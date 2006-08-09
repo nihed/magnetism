@@ -4,7 +4,7 @@
  **/
 #pragma once
 
-#include "stdafx.h"
+#include "stdafx-hippoui.h"
 #include "HippoChatRoom.h"
 #include "HippoLogWindow.h"
 #include <HippoUtilDispId.h>

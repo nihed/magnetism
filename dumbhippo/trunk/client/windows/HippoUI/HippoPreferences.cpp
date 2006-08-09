@@ -3,7 +3,7 @@
  * Copyright Red Hat, Inc. 2005
  **/
 
-#include "stdafx.h"
+#include "stdafx-hippoui.h"
 #include "HippoPreferences.h"
 #include "Guid.h"
 #include "Resource.h"

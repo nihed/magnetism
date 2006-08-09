@@ -2,7 +2,7 @@
  *
  * Copyright Red Hat, Inc. 2005
  */
-#include "stdafx.h"
+#include "stdafx-hippoexplorer.h"
 
 #include "HippoEmbed.h"
 #include "HippoExplorer_h.h"

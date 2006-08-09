@@ -2,7 +2,7 @@
  *
  * Copyright Red Hat, Inc. 2005
  */
-#include "StdAfx.h"
+#include "stdafx-hippoui.h"
 #include "HippoFlickr.h"
 #include "HippoUI.h"
 #include <HippoRegKey.h>

@@ -2,7 +2,7 @@
  *
  * Copyright Red Hat, Inc. 2005
  */
-#include "StdAfx.h"
+#include "stdafx-hippoui.h"
 #include "HippoUIUtil.h"
 
 // The following is adapted from glib/glib/gutils.c:g_escape_uri_string()

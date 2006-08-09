@@ -166,7 +166,7 @@
 				RelativePath=".\HippoShellExt.h">
 			</File>
 			<File
-				RelativePath=".\stdafx.h">
+				RelativePath=".\stdafx-hippshellext.h">
 			</File>
 		</Filter>
 		<Filter

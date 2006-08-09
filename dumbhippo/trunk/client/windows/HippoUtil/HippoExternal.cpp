@@ -2,7 +2,7 @@
  *
  * Copyright Red Hat, Inc. 2005
  */
-#include "stdafx.h"
+#include "stdafx-hippoutil.h"
 
 #import <msxml3.dll>  named_guids  // For CLSID_XMLHTTPRequest
 

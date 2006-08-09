@@ -22,7 +22,7 @@
  */
 
 #ifdef WIN32
-#include <StdAfx.h>
+#include <stdafx-hippoutil.h>
 #endif
 
 #include <stdint.h>

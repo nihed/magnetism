@@ -3,7 +3,7 @@
  * Copyright Red Hat, Inc. 2005
  **/
 
-#include "stdafx.h"
+#include "stdafx-hippoui.h"
 #include <process.h>
 #include "HippoHTTP.h"
 #include "HippoUpgrader.h"

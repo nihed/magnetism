@@ -2,7 +2,7 @@
  *
  * Copyright Red Hat, Inc. 2005
  */
-#include "StdAfx.h"
+#include "stdafx-hippoui.h"
 #include "HippoHTTP.h"
 #include <glib.h>
 #include <wininet.h>

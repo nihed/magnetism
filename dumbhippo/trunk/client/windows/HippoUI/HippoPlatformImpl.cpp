@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "stdafx-hippoui.h"
 
 #include "HippoPlatformImpl.h"
 #include "HippoUIUtil.h"

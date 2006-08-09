@@ -1,4 +1,4 @@
-#include "StdAfx.h"
+#include "stdafx-hippoui.h"
 #include <ExDispid.h>
 #include "HippoLogWindow.h"
 #include "HippoExternalBrowser.h"
