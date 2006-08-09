@@ -199,7 +199,7 @@ hippoService::onConnect()
 {
     if (endpoint_ == 0) {
         endpoint_ = controller_->registerEndpoint(this);
-        if (endpoint_)
+        if (endpoint_ && listener_)
             listener_->OnConnect();
     }
 }
