@@ -542,6 +542,9 @@ public class StackerBean implements Stacker {
 				
 				synchronized(this) {
 					processed += 1;
+					if ((processed % 100) == 0) {
+						logger.debug("processed {} items, {} remaining", processed, getRemainingItems());
+					}
 				}
 			} catch (RuntimeException e) {
 				// we need to catch the exception ourselves, otherwise it
