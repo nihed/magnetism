@@ -113,7 +113,7 @@ defineClass(dh.stacker.Block, null,
 	_updateStackTimeDiv : function() {
 		if (this._div) {
 			var d = new Date(this._stackTime);
-			dojo.dom.textContent(this._stackTimeDiv, d.getHours() + ":" + d.getMinutes() + ":" + d.getSeconds() + ":" + d.getMilliseconds());
+			dojo.dom.textContent(this._stackTimeDiv, d.getFullYear() + "-" + (d.getMonth()+1) + "-" + d.getDate() + " " + d.getHours() + ":" + d.getMinutes() + ":" + d.getSeconds() + ":" + d.getMilliseconds());
 		}
 	},
 
@@ -251,7 +251,10 @@ defineClass(dh.stacker.Block, null,
 			return false;
 		}
 		
-		this.setStackTime(newBlock.getStackTime());
+		// don't do this - it messes up our sorted stack.
+		// instead it gets done by the stack maintenance code
+		// in the appropriate place
+		//this.setStackTime(newBlock.getStackTime());
 		
 		this.setTitle(newBlock.getTitle());
 		
@@ -645,6 +648,7 @@ defineClass(dh.stacker.RaiseAnimation, null,
 		// side effects
 		this._block.reparentIntoOuterDiv(this._newOuter);
 		this._block.show();
+		this._block._anim = null;
 	}
 });
 
@@ -750,15 +754,13 @@ defineClass(dh.stacker.Stacker, null,
 			
 		var old = this._blocks[block.getBlockId()];
 		if (old) {
-			// FIXME this breaks if the stack time changes, 
-			// updateBlock needs the old time.
 			old.updateFrom(block);
 		} else {
 			this._blocks[block.getBlockId()] = block;
 			old = block;
 		}
-			
-		this._updateBlock(old);
+
+		this._updateBlock(old, block.getStackTime());
 	},
 
 	_parseNewBlocks : function(nodes) {
@@ -864,6 +866,11 @@ defineClass(dh.stacker.Stacker, null,
 		if (!block._div)
 			throw new Error("block is not realized, can't update location");
 		
+		if (block._anim)
+			block._anim.finish();
+		if (block._anim)
+			throw new Error("finishing anim on block should have cleared it");
+		
 		var oldOuterDiv;
 		var newOuterDiv;
 		if (block._div.parentNode == this._container) {
@@ -881,11 +888,23 @@ defineClass(dh.stacker.Stacker, null,
 		
 		if (olderBlock == block)
 			throw new Error("found ourselves for olderBlock");
-		
-		if (olderBlock)
+
+		if (newOuterDiv.parentNode)
+			newOuterDiv.parentNode.removeChild(newOuterDiv);				
+		if (olderBlock) {
+			if (olderBlock.getStackTime() > block.getStackTime())
+				throw new Error("olderBlock not older");
+			if (!olderBlock._div)
+				throw new Error("olderBlock not realized");
+			if (olderBlock._div.parentNode != this._container)
+				throw new Error("olderBlock._div has wrong parent");
 			this._container.insertBefore(newOuterDiv, olderBlock._div);
-		else
-			this._container.insertBefore(newOuterDiv, this._container.firstChild);	
+		} else {
+			// we're the oldest (or only) block, so we go on the end
+			this._container.appendChild(newOuterDiv);
+		}
+		if (newOuterDiv.parentNode != this._container)
+			throw new Error("newOuterDiv not in the container");
 		
 		if (oldOuterDiv == newOuterDiv) {
 			block.showWithFade();
@@ -897,27 +916,35 @@ defineClass(dh.stacker.Stacker, null,
 			// note this doesn't reparent into the new div yet, but we want to 				
 			// have the invariant that block._div is accurate
 			block.setNewOuterDiv(newOuterDiv);
-			var anim = new dh.stacker.RaiseAnimation(block, block._innerDiv, oldOuterDiv, newOuterDiv);
-			anim.start();
+			block._anim = new dh.stacker.RaiseAnimation(block, block._innerDiv, oldOuterDiv, newOuterDiv);
+			block._anim.start();
 		}
+		if (block._div != newOuterDiv)
+			throw new Error("block._div is wrong");
 	},
 	
-	_updateBlock : function(block) {
+	_updateBlock : function(block, newStackTime) {
 		if (!block)
 			throw new Error("updating null block");
 		if (!this._blocks[block.getBlockId()])
 			throw new Error("to update block it has to be in _blocks already " + block.getBlockId());
 	
+		this._checkInvariants();
+	
 		var i = this._findBlockInStack(block);
 		if (i < 0) {
-			var j = this._findInsertPosition(block.getStackTime());
+			var j = this._findInsertPosition(newStackTime);
 			this._stack.splice(j, 0, block);
+			
+			block.setStackTime(newStackTime);
+			
 			block.realize();
 			
 			this._updateBlockDivLocation(block);
 		} else {
 			// relocate it
-			var j = this._findInsertPosition(block.getStackTime());
+			var j = this._findInsertPosition(newStackTime);
+			block.setStackTime(newStackTime);
 			if ((i + 1) != j) {
 				this._stack.splice(i, 1);
 				this._stack.splice(j, 0, block);
@@ -926,8 +953,37 @@ defineClass(dh.stacker.Stacker, null,
 				}
 			}
 		}
+		this._checkInvariants();
+	},
+	
+	_checkInvariants : function() {
+		var last = 0;
+		var i;
+		for (i = 0; i < this._stack.length; ++i) {
+			if (this._stack[i].getStackTime() < last) {
+				throw new Error("stack out of order");
+			}
+			last = this._stack[i].getStackTime();
+		}
+		
+		// _container can have old divs during animations,
+		// but all "current" block._div should be in the right 
+		// order
+		if (this._container.childNodes.length < this._stack.length) {
+			throw new Error("some item in the stack has no _div");
+		}
+		var j;
+		i = this._stack.length - 1; // newest block (first in the container)
+		for (j = 0; j < this._container.childNodes.length; ++j) {
+			var node = this._container.childNodes.item(j);
+			if (i < 0 || this._stack[i]._div != node)
+				continue; // an "old" div no longer tied to a block, or an out-of-order div
+			--i;
+		}
+		if (i != -1) {
+			throw new Error("block divs in wrong order, i=" + i + " j=" + j);
+		}
 	}
-
 });
 
 dh.stacker.theInstance = new dh.stacker.Stacker();
