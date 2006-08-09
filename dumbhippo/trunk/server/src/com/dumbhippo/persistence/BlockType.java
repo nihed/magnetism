@@ -10,6 +10,5 @@ public enum BlockType {
 	POST,
 	GROUP_MEMBER,
 	GROUP_CHAT,
-	MUSIC_PERSON,
-	MUSIC_GROUP;
+	MUSIC_PERSON;
 }

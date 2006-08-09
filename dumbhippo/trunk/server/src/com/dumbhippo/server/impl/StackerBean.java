@@ -106,6 +106,7 @@ public class StackerBean implements Stacker {
 		return block;
 	}
 	
+	// note this query includes ubd.deleted=1
 	private List<UserBlockData> queryUserBlockDatas(Block block) {
 		Query q = em.createQuery("SELECT ubd FROM UserBlockData ubd WHERE ubd.block = :block");
 		q.setParameter("block", block);
@@ -153,6 +154,9 @@ public class StackerBean implements Stacker {
 		// or join/leave groups, instead of the expensive query and fixup here.
 		// But it would not retroactively fix the existing db or let us change our
 		// rules for who gets what...
+		// Also, we need to query UserBlockData anyway to update the user 
+		// timestamp caches and maybe send out XMPP notifications eventually,
+		// so maybe this isn't really adding too much overhead.
 		
 		List<UserBlockData> userDatas = queryUserBlockDatas(block);
 		
@@ -167,6 +171,7 @@ public class StackerBean implements Stacker {
 			UserBlockData old = existing.get(u);
 			if (old != null) {
 				existing.remove(u);
+				old.setDeleted(false);
 			} else {
 				UserBlockData data = new UserBlockData(u, block);
 				em.persist(data);
@@ -177,84 +182,107 @@ public class StackerBean implements Stacker {
 			cacheTask.addNeedsClearTimestamp(u.getGuid());
 			
 			UserBlockData old = existing.get(u);
-			em.remove(old);
+			old.setDeleted(true);
 		}
 		
 		runner.runTaskOnTransactionCommit(cacheTask);		
 	}
+
+	private Set<User> getDesiredUsersForMusicPerson(Block block) {
+		if (block.getBlockType() != BlockType.MUSIC_PERSON)
+			throw new IllegalArgumentException("wrong type block");
+		User user;
+		try {
+			user = EJBUtil.lookupGuid(em, User.class, block.getData1AsGuid());
+		} catch (NotFoundException e) {
+			throw new RuntimeException(e);
+		}
+		Set<User> peopleWhoCare = identitySpider.getUsersWhoHaveUserAsContact(SystemViewpoint.getInstance(), user);
+		peopleWhoCare.add(user); // FIXME include ourselves, this is probably a debug-only thing
+		return peopleWhoCare;
+	}
 	
-	public void stackMusicPerson(final Guid userId, final long activity) {
+	private Set<User> getDesiredUsersForGroupChat(Block block) {
+		if (block.getBlockType() != BlockType.POST)
+			throw new IllegalArgumentException("wrong type block");
+		Group group;
+		try {
+			group = EJBUtil.lookupGuid(em, Group.class, block.getData1AsGuid());
+		} catch (NotFoundException e) {
+			throw new RuntimeException(e);
+		}
+		Set<User> groupMembers = groupSystem.getUserMembers(SystemViewpoint.getInstance(), group);
+		return groupMembers;
+	}
+
+	private Set<User> getDesiredUsersForPost(Block block) {
+		if (block.getBlockType() != BlockType.POST)
+			throw new IllegalArgumentException("wrong type block");
+
+		Post post;
+		try {
+			post = EJBUtil.lookupGuid(em, Post.class, block.getData1AsGuid());
+		} catch (NotFoundException e) {
+			throw new RuntimeException(e);
+		}
+		Set<User> postRecipients = new HashSet<User>();
+		Set<Resource> resources = post.getExpandedRecipients();
+		for (Resource r : resources) {
+			AccountClaim a = r.getAccountClaim();
+			if (a != null)
+				postRecipients.add(a.getOwner());
+		}
+		return postRecipients;
+	}
+	
+	private void updateUserBlockDatas(Block block) {
+		Set<User> desiredUsers = null;
+		switch (block.getBlockType()) {
+		case POST:
+			desiredUsers = getDesiredUsersForPost(block);
+			break;
+		case GROUP_CHAT:
+			desiredUsers = getDesiredUsersForGroupChat(block);
+			break;
+		case MUSIC_PERSON:
+			desiredUsers = getDesiredUsersForMusicPerson(block);
+			break;
+			// don't add a default, we want a warning if any cases are missing
+		}
+		
+		if (desiredUsers == null)
+			throw new IllegalStateException("Trying to update user block data for unhandled block type " + block.getBlockType());
+		
+		updateUserBlockDatas(block, desiredUsers);
+	}
+	
+	private void stack(final BlockType type, final Guid data1, final long data2, final long activity) {
 		if (disabled)
 			return;
 		
 		runner.runTaskRetryingOnConstraintViolation(new Runnable() {
 			public void run() {
-				Block block = getOrCreateUpdatingTimestamp(BlockType.MUSIC_PERSON, userId, -1, activity);
+				Block block = getOrCreateUpdatingTimestamp(type, data1, data2, activity);
 
-				User user;
-				try {
-					user = EJBUtil.lookupGuid(em, User.class, userId);
-				} catch (NotFoundException e) {
-					throw new RuntimeException(e);
-				}
-				Set<User> peopleWhoCare = identitySpider.getUsersWhoHaveUserAsContact(SystemViewpoint.getInstance(), user);
-				peopleWhoCare.add(user); // FIXME include ourselves, this is probably a debug-only thing
-				
-				updateUserBlockDatas(block, peopleWhoCare);
+				updateUserBlockDatas(block);
 			}
 		});
 	}
+	
+	public void stackMusicPerson(final Guid userId, final long activity) {
+		stack(BlockType.MUSIC_PERSON, userId, -1, activity);
+	}
 
 	public void stackGroupChat(final Guid groupId, final long activity) {
-		if (disabled)
-			return;
-		
-		runner.runTaskRetryingOnConstraintViolation(new Runnable() {
-			public void run() {
-				Block block = getOrCreateUpdatingTimestamp(BlockType.GROUP_CHAT, groupId, -1, activity);
-
-				Group group;
-				try {
-					group = EJBUtil.lookupGuid(em, Group.class, groupId);
-				} catch (NotFoundException e) {
-					throw new RuntimeException(e);
-				}
-				Set<User> groupMembers = groupSystem.getUserMembers(SystemViewpoint.getInstance(), group);
-				
-				updateUserBlockDatas(block, groupMembers);
-			}
-		});
+		stack(BlockType.GROUP_CHAT, groupId, -1, activity);
 	}	
 
 	// FIXME this is not right; it requires various rationalization with respect to PersonPostData, XMPP, and 
 	// so forth, e.g. to work with world posts and be sure we never delete any ignored flags, clicked dates, etc.
 	// but it's OK for messing around.
 	public void stackPost(final Guid postId, final long activity) {
-		if (disabled)
-			return;		
-		
-		runner.runTaskRetryingOnConstraintViolation(new Runnable() {
-			public void run() {
-				Block block = getOrCreateUpdatingTimestamp(BlockType.POST, postId, -1, activity);
-
-				Post post;
-				try {
-					post = EJBUtil.lookupGuid(em, Post.class, postId);
-				} catch (NotFoundException e) {
-					throw new RuntimeException(e);
-				}
-				Set<User> postRecipients = new HashSet<User>();
-				Set<Resource> resources = post.getExpandedRecipients();
-				for (Resource r : resources) {
-					AccountClaim a = r.getAccountClaim();
-					if (a != null)
-						postRecipients.add(a.getOwner());
-				}
-				
-				updateUserBlockDatas(block, postRecipients);
-			}
-		});
-	}	
+		stack(BlockType.POST, postId, -1, activity);
+	}
 	
 	public List<UserBlockData> getStack(Viewpoint viewpoint, User user, long lastTimestamp, int start, int count) {
 		if (!(viewpoint.isOfUser(user) || viewpoint instanceof SystemViewpoint))
@@ -281,7 +309,7 @@ public class StackerBean implements Stacker {
 		// Then, require the client to sort it out. This may well be right anyway.
 		
 		Query q = em.createQuery("SELECT ubd FROM UserBlockData ubd, Block block WHERE " + 
-				" ubd.user = :user AND ubd.block = block AND block.timestamp >= :timestamp ORDER BY block.timestamp DESC");
+				" ubd.user = :user AND ubd.deleted = 0 AND ubd.block = block AND block.timestamp >= :timestamp ORDER BY block.timestamp DESC");
 		q.setFirstResult(start);
 		q.setMaxResults(count);
 		q.setParameter("user", user);

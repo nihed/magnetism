@@ -27,11 +27,13 @@ public class UserBlockData extends DBUnique {
 	private long clickedTimestamp;
 	private boolean ignored;
 	private long ignoredTimestamp;
+	private boolean deleted;
 	
 	public UserBlockData() {
 		this.clickedTimestamp = -1;
 		this.ignoredTimestamp = -1;
 		this.ignored = false;
+		this.deleted = false;
 	}
 	
 	public UserBlockData(User user, Block block) {
@@ -101,6 +103,16 @@ public class UserBlockData extends DBUnique {
 	public void setIgnoredTimestamp(Date ignoredTimestamp) {
 		this.ignoredTimestamp = ignoredTimestamp != null ? ignoredTimestamp.getTime() : -1;
 	}
+	
+
+	@Column(nullable=false)
+	public boolean isDeleted() {
+		return deleted;
+	}
+
+	public void setDeleted(boolean deleted) {
+		this.deleted = deleted;
+	}	
 	
 	@Override
 	public String toString() {

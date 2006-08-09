@@ -1813,6 +1813,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			case POST:
 				xml.appendTextNode("post", null, "postId", block.getData1());
 				break;
+				// don't add a default case, we want a warning if any cases are missing
 			}
 			
 			xml.closeElement();
