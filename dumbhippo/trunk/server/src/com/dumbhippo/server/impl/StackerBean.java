@@ -31,6 +31,8 @@ import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.BlockType;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupMessage;
+import com.dumbhippo.persistence.Person;
+import com.dumbhippo.persistence.PersonPostData;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
@@ -76,7 +78,7 @@ public class StackerBean implements Stacker {
 		}
 		return userCache;
 	}
-	
+
 	private Block queryBlock(BlockType type, Guid data1, long data2) throws NotFoundException {
 		Query q;
 		if (data1 != null && data2 >= 0) {
@@ -97,6 +99,30 @@ public class StackerBean implements Stacker {
 			return (Block) q.getSingleResult();
 		} catch (EntityNotFoundException e) {
 			throw new NotFoundException("no block with type " + type + " data1 " + data1 + " data2 " + data2, e);
+		}
+	}
+
+	private UserBlockData queryUserBlockData(User user, BlockType type, Guid data1, long data2) throws NotFoundException {
+		Query q;
+		if (data1 != null && data2 >= 0) {
+			q = em.createQuery("SELECT ubd FROM UserBlockData ubd, Block block WHERE ubd.block = block AND ubd.user = :user AND block.blockType=:type AND block.data1=:data1 AND block.data2=:data2");
+			q.setParameter("data1", data1.toString());
+			q.setParameter("data2", data2);
+		} else if (data1 != null) {
+			q = em.createQuery("SELECT ubd FROM UserBlockData ubd, Block block WHERE ubd.block = block AND ubd.user = :user AND block.blockType=:type AND block.data1=:data1 AND block.data2=-1");
+			q.setParameter("data1", data1.toString());
+		} else if (data2 >= 0) {
+			q = em.createQuery("SELECT ubd FROM UserBlockData ubd, Block block WHERE ubd.block = block AND ubd.user = :user AND block.blockType=:type AND block.data2=:data2 AND block.data1 IS NULL");
+			q.setParameter("data2", data2);
+		} else {
+			throw new IllegalArgumentException("must provide either data1 or data2 in query for block type " + type);
+		}
+		q.setParameter("user", user);
+		q.setParameter("type", type.ordinal());
+		try {
+			return (UserBlockData) q.getSingleResult();
+		} catch (EntityNotFoundException e) {
+			throw new NotFoundException("no UserBlockData with type " + type + " data1 " + data1 + " data2 " + data2 + " user " + user, e);
 		}
 	}
 	
@@ -268,10 +294,23 @@ public class StackerBean implements Stacker {
 		updateUserBlockDatas(block, desiredUsers);
 	}
 	
+	private void stack(Block block, long activity) {
+		if (disabled)
+			return;
+
+		if (block.getTimestampAsLong() < activity) {
+			block.setTimestampAsLong(activity);
+			updateUserBlockDatas(block);
+		}
+	}
+	
 	private void stack(final BlockType type, final Guid data1, final long data2, final long activity) {
 		if (disabled)
 			return;
 		
+		// FIXME really we want to retry the whole operation we're part of, not just the block stacking,
+		// but there's no current infrastructure for that and the constraint violation creating 
+		// user block datas would probably happen plenty in practice for now
 		runner.runTaskRetryingOnConstraintViolation(new Runnable() {
 			public void run() {
 				Block block = getOrCreateUpdatingTimestamp(type, data1, data2, activity);
@@ -281,13 +320,42 @@ public class StackerBean implements Stacker {
 		});
 	}
 	
-	// don't create or suspend transaction; we will manage our own 
+	private void click(BlockType type, Guid data1, long data2, User user, long clickTime) {
+		if (disabled)
+			return;
+		
+		UserBlockData ubd;
+		try {
+			ubd = queryUserBlockData(user, type, data1, data2);
+		} catch (NotFoundException e) {
+			// for now assume this means we don't want to record clicks for the given
+			// object, otherwise the ubd should already be created 
+			return;
+		}
+		
+		// if we weren't previously clicked on, then increment the count.
+		// (FIXME is this a race or does it work due to transaction semantics? not sure)
+		if (!ubd.isClicked())
+			ubd.getBlock().setClickedCount(ubd.getBlock().getClickedCount() + 1);
+		
+		if (ubd.getClickedTimestampAsLong() < clickTime)
+			ubd.setClickedTimestampAsLong(clickTime);
+		
+		// we automatically unignore anything you click on
+		if (ubd.isIgnored())
+			ubd.setIgnored(false);
+		
+		// now update the timestamp in the block (if it's newer)
+		// and update user caches for all users
+		stack(ubd.getBlock(), clickTime);
+	}
+	
+	// don't create or suspend transaction; we will manage our own for now (FIXME) 
 	@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 	public void stackMusicPerson(final Guid userId, final long activity) {
 		stack(BlockType.MUSIC_PERSON, userId, -1, activity);
 	}
-
-	// don't create or suspend transaction; we will manage our own 
+	// don't create or suspend transaction; we will manage our own for now (FIXME) 
 	@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 	public void stackGroupChat(final Guid groupId, final long activity) {
 		stack(BlockType.GROUP_CHAT, groupId, -1, activity);
@@ -297,10 +365,14 @@ public class StackerBean implements Stacker {
 	// so forth, e.g. to work with world posts and be sure we never delete any ignored flags, clicked dates, etc.
 	// but it's OK for messing around.
 	
-	// don't create or suspend transaction; we will manage our own 
+	// don't create or suspend transaction; we will manage our own for now (FIXME)	 
 	@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 	public void stackPost(final Guid postId, final long activity) {
 		stack(BlockType.POST, postId, -1, activity);
+	}
+	
+	public void clickedPost(Post post, User user, long clickedTime) {
+		click(BlockType.POST, post.getGuid(), -1, user, clickedTime);
 	}
 	
 	public List<UserBlockData> getStack(Viewpoint viewpoint, User user, long lastTimestamp, int start, int count) {
@@ -607,6 +679,10 @@ public class StackerBean implements Stacker {
 	}
 	
 	public void migrateEverything() {
+		
+		if (disabled)
+			throw new RuntimeException("stacking disabled, can't migrate anything");
+		
 		List<String> postIds;
 		List<String> userIds;
 		List<String> groupIds;
@@ -637,8 +713,83 @@ public class StackerBean implements Stacker {
 	
 	public void migratePost(String postId) {
 		logger.debug("    migrating post {}", postId);
-		Post post = em.find(Post.class, postId);
+		final Post post = em.find(Post.class, postId);
+
+		// this creates its own transaction for now... 
 		stackPost(post.getGuid(), post.getPostDate().getTime());
+
+		// FIXME so we need a new transaction here to see the block we just created
+		runner.runTaskInNewTransaction(new Runnable() {
+			public void run() {
+				// we want to move PersonPostData info into UserBlockData
+				// (this is obviously expensive as hell)
+				
+				Block block;
+				try {
+					block = queryBlock(BlockType.POST, post.getGuid(), -1);
+				} catch (NotFoundException e) {
+					throw new RuntimeException("no block found for post " + post);
+				}
+				List<UserBlockData> userDatas = queryUserBlockDatas(block);
+				Map<User,UserBlockData> byUser = new HashMap<User,UserBlockData>();
+				for (UserBlockData ubd : userDatas) {
+					byUser.put(ubd.getUser(), ubd);
+				}
+
+				Set<PersonPostData> postDatas = post.getPersonPostData();
+				for (PersonPostData ppd : postDatas) {
+					Person p = ppd.getPerson();
+					if (!(p instanceof User))
+						continue;
+					User user = (User) p;
+					UserBlockData ubd = byUser.get(user);
+					if (ubd == null) {
+						// create a deleted UserBlockData to store the info from the ppd
+						ubd = new UserBlockData(user, block);
+						ubd.setDeleted(true);
+						em.persist(ubd);
+					}
+					if (ubd.isIgnored()) {
+						// keep the existing ignored info
+					} else if (ppd.isIgnored()) {
+						// there's no ignored date on ppd, so we use the latest block 
+						// timestamp (the point of the ignored date is to freeze the block's 
+						// stack location so this is perfect really)
+						ubd.setIgnored(true);
+						ubd.setIgnoredTimestampAsLong(block.getTimestampAsLong());
+					} else {
+						// neither one is ignored, nothing to migrate
+					}
+					
+					// if ppd has a clicked date and ubd doesn't, copy in from ppd
+					if (ubd.getClickedTimestampAsLong() < 0 && 
+							ppd.getClickedDateAsLong() >= 0) {
+						ubd.setClickedTimestampAsLong(ppd.getClickedDateAsLong());
+					}
+				}
+				
+				// now count the denormalized number of viewers. the old 
+				// query of UserBlockData is fine since we only added deleted
+				// ones.
+				int clickedCount = 0;
+				long maxClickedTime = 0;
+				for (UserBlockData ubd : userDatas) {
+					if (!ubd.isDeleted() && ubd.isClicked()) {
+						clickedCount += 1;
+						if (ubd.getClickedTimestampAsLong() > maxClickedTime)
+							maxClickedTime = ubd.getClickedTimestampAsLong();
+					}
+				}
+				if (block.getClickedCount() != clickedCount) {
+					logger.debug("  fixing up clicked count from {} to {} for block " + block, block.getClickedCount(), clickedCount);
+					block.setClickedCount(clickedCount);
+				}
+				
+				// update the block's timestamp to match and update user cache
+				if (maxClickedTime > block.getTimestampAsLong())
+					stack(block, maxClickedTime);
+			}
+		});
 	}
 	
 	public void migrateUser(String userId) {

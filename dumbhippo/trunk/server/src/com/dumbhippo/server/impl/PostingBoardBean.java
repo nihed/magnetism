@@ -131,6 +131,9 @@ public class PostingBoardBean implements PostingBoard {
 	@EJB
 	private RecommenderSystem recommenderSystem;
 	
+	@EJB
+	private Stacker stacker;
+	
 	@javax.annotation.Resource
 	private EJBContext ejbContext;
 	
@@ -1095,10 +1098,13 @@ public class PostingBoardBean implements PostingBoard {
 		boolean previouslyViewed = ppd.getClickedDate() != null;
 		ppd.setClicked();
 		setPostIgnored(user, post, false); // Since they viewed it, they implicitly un-ignore it
-		if (previouslyViewed)
-			return;
-	
-        LiveState.getInstance().queueUpdate(new PostViewedEvent(postGuid, user.getGuid(), new Date()));
+		
+		// pass the clicked info over to our new way of recording it also...
+		stacker.clickedPost(post, user, ppd.getClickedDateAsLong());
+		
+		if (!previouslyViewed) {
+			LiveState.getInstance().queueUpdate(new PostViewedEvent(postGuid, user.getGuid(), new Date()));
+		}
 	}
 
 	public int getPostsForCount(Viewpoint viewpoint, Person forPerson) {

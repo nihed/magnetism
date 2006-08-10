@@ -42,9 +42,14 @@
 		.dh-stacked-block .dh-title {
 			position:			relative;
 		}
+		.dh-stacked-block .dh-title a:visited, .dh-stacked-block .dh-title a {
+			position:			relative;
+			color:				white;
+		}
 		.dh-stacked-block .dh-content {
 			position:			relative;
 			background-color: 	aqua;
+			color:				black;
 			margin:				1px;
 		}
 	</style>

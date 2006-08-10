@@ -76,6 +76,10 @@ public class UserBlockData extends DBUnique {
 		this.clickedTimestamp = clickedTimestamp != null ? clickedTimestamp.getTime() : -1;
 	}
 	
+	public void setClickedTimestampAsLong(long clickedTimestamp) {
+		this.clickedTimestamp = clickedTimestamp;
+	}
+	
 	@Transient
 	public boolean isClicked() {
 		return this.clickedTimestamp >= 0;
@@ -104,6 +108,9 @@ public class UserBlockData extends DBUnique {
 		this.ignoredTimestamp = ignoredTimestamp != null ? ignoredTimestamp.getTime() : -1;
 	}
 	
+	public void setIgnoredTimestampAsLong(long ignoredTimestamp) {
+		this.ignoredTimestamp = ignoredTimestamp;
+	}	
 
 	@Column(nullable=false)
 	public boolean isDeleted() {

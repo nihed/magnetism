@@ -63,6 +63,8 @@ dh.stacker.Block = function(kind, blockId) {
 	
 	this._title = "";
 	
+	this._clickedCount = 0;
+	
 	// the html div
 	this._div = null;
 	this._innerDiv = null;
@@ -102,6 +104,19 @@ defineClass(dh.stacker.Block, null,
 		this._title = title;
 		
 		this._updateTitleDiv();
+	},
+		
+	getClickedCount : function() {
+		return this._clickedCount;
+	},
+	
+	setClickedCount : function(clickedCount) {
+		this._clickedCount = clickedCount;
+		this._updateClickedCountDiv();
+	},
+	
+	_updateClickedCountDiv : function() {
+		// no-op since only some subclasses have a clicked count div
 	},
 	
 	_updateTitleDiv : function() {
@@ -257,6 +272,7 @@ defineClass(dh.stacker.Block, null,
 		//this.setStackTime(newBlock.getStackTime());
 		
 		this.setTitle(newBlock.getTitle());
+		this.setClickedCount(newBlock.getClickedCount());
 		
 		return true;
 	}
@@ -265,9 +281,8 @@ defineClass(dh.stacker.Block, null,
 dh.stacker.PostBlock = function(blockId, postId) {
 	dh.stacker.Block.call(this, dh.stacker.Kind.POST, blockId);
 	this._postId = postId;
-	this._viewerCount = 0;
 	
-	this._viewsDiv = null;
+	this._clickedCountDiv = null;
 	
 	this._link = null;
 	this._description = null;
@@ -277,15 +292,6 @@ defineClass(dh.stacker.PostBlock, dh.stacker.Block,
 {
 	getPostId : function() {
 		return this._postId;
-	},
-		
-	getViewerCount : function() {
-		return this._viewerCount;
-	},
-	
-	setViewerCount : function(viewerCount) {
-		this._viewerCount = viewerCount;
-		this._updateViewsDiv();
 	},
 	
 	getDescription : function() {
@@ -303,26 +309,41 @@ defineClass(dh.stacker.PostBlock, dh.stacker.Block,
 	setLink : function(link) {
 		this._link = link;
 	},
-	
-	_updateViewsDiv : function() {
+
+	// override
+	_updateTitleDiv : function() {
 		if (this._div) {
-			dojo.dom.textContent(this._viewsDiv, this._viewerCount + " views");
+			var a = document.createElement('a');
+			a.href = "/visit?post=" + this.getPostId();
+			a.title = this.getTitle();
+			a.target="_blank";
+			dojo.dom.textContent(a, this.getTitle());
+			if (this._titleDiv.firstChild)
+				this._titleDiv.removeChild(this._titleDiv.firstChild);
+			this._titleDiv.appendChild(a);
+		}
+	},
+
+	// override	
+	_updateClickedCountDiv : function() {
+		if (this._div) {
+			dojo.dom.textContent(this._clickedCountDiv, this.getClickedCount() + " views");
 		}
 	},
 	
 	realize : function() {
 		if (!this._div) {
 			dh.stacker.PostBlock.superclass.realize.call(this);
-			this._viewsDiv = document.createElement("div");
-			this._contentDiv.appendChild(this._viewsDiv);
-			dojo.html.setClass(this._viewsDiv, "dh-views-count");
-			this._updateViewsDiv();
+			this._clickedCountDiv = document.createElement("div");
+			this._contentDiv.appendChild(this._clickedCountDiv);
+			dojo.html.setClass(this._clickedCountDiv, "dh-clicked-count");
+			this._updateClickedCountDiv();
 		}
 	},
 	
 	unrealize : function() {
 		dh.stacker.PostBlock.superclass.unrealize.call(this);	
-		this._viewsDiv = null;
+		this._clickedCountDiv = null;
 	},
 	
 	load : function(completeFunc, errorFunc) {
@@ -341,7 +362,6 @@ defineClass(dh.stacker.PostBlock, dh.stacker.Block,
 	updateFrom : function(newBlock) {
 		if (!dh.stacker.PostBlock.superclass.updateFrom.call(this, newBlock))
 			return false;
-		this.setViewerCount(newBlock.getViewerCount());
 		this.setDescription(newBlock.getDescription());
 		this.setLink(newBlock.getLink());
 		return true;
@@ -675,6 +695,7 @@ dh.stacker.parseBlockAttrs = function(node) {
 	var attrs = {};
 	attrs["id"] = dh.stacker.getAttribute(node, "id");
 	attrs["timestamp"] = dh.stacker.getAttributeInt(node, "timestamp");
+	attrs["clickedCount"] = dh.stacker.getAttributeInt(node, "clickedCount");
 	attrs["clicked"] = dh.stacker.getAttributeBool(node, "clicked");
 	attrs["clickedTime"] = dh.stacker.getAttributeInt(node, "clickedTimestamp");
 	attrs["ignored"] = dh.stacker.getAttributeBool(node, "ignored");
@@ -685,6 +706,7 @@ dh.stacker.parseBlockAttrs = function(node) {
 
 dh.stacker.mergeBlockAttrs = function(block, attrs) {
 	block.setStackTime(attrs["timestamp"]);
+	block.setClickedCount(attrs["clickedCount"]);
 }
 
 dh.stacker.blockParsers = {};
@@ -1014,7 +1036,7 @@ dh.stacker.simulateNewPost = function(stacker, title) {
 	var block = new dh.stacker.PostBlock(dh.stacker.getFakeGuid(), dh.stacker.getFakeGuid());
 	block.setTitle(title);
 	block.setStackTime(new Date().getTime());
-	block.setViewerCount(1);
+	block.setClickedCount(1);
 	stacker._newBlockLoaded(block);
 }
 
@@ -1033,7 +1055,7 @@ dh.stacker.simulatePostUpdate = function(stacker, oldBlock, newTitle, newTime, n
 	var newBlock = new dh.stacker.PostBlock(oldBlock.getBlockId(), oldBlock.getPostId());
 	newBlock.setTitle(newTitle);
 	newBlock.setStackTime(newTime);
-	newBlock.setViewerCount(newViewerCount);
+	newBlock.setClickedCount(newViewerCount);
 	stacker._newBlockLoaded(newBlock);
 }
 
@@ -1041,7 +1063,7 @@ dh.stacker.simulateMoreViews = function(stacker) {
 	var block = dh.stacker.getRandomBlock(stacker);
 	if (block.getKind() == dh.stacker.Kind.POST) {
 		dh.stacker.simulatePostUpdate(stacker, block, block.getTitle(), block.getStackTime() + 1, 
-			block.getViewerCount() + 1);
+			block.getClickedCount() + 1);
 	}
 }
 
@@ -1049,6 +1071,6 @@ dh.stacker.simulateNewStackTime = function(stacker) {
 	var block = dh.stacker.getRandomBlock(stacker);
 	if (block.getKind() == dh.stacker.Kind.POST) {
 		dh.stacker.simulatePostUpdate(stacker, block, block.getTitle(), new Date().getTime(), 
-			block.getViewerCount());
+			block.getClickedCount());
 	}
 }

@@ -5,6 +5,7 @@ import java.util.List;
 import javax.ejb.Local;
 
 import com.dumbhippo.identity20.Guid;
+import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.UserBlockData;
 
@@ -18,6 +19,8 @@ public interface Stacker {
 	public void stackMusicPerson(Guid userId, long activity);
 	public void stackGroupChat(Guid groupId, long activity);
 	public void stackPost(Guid postId, long activity);
+	
+	public void clickedPost(Post post, User user, long clickedTime);
 	
 	public List<UserBlockData> getStack(Viewpoint viewpoint, User user, long lastTimestamp, int start, int count);
 

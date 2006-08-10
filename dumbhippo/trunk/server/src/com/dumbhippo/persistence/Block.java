@@ -51,6 +51,7 @@ public class Block extends EmbeddedGuidPersistable {
 	private long timestamp;
 	private Guid data1;
 	private long data2;
+	private int clickedCount;
 	
 	// for hibernate
 	public Block() {
@@ -123,5 +124,16 @@ public class Block extends EmbeddedGuidPersistable {
 	
 	public void setData2(long value) {
 		this.data2 = value;
+	}
+	
+	// this is a denormalized field; it should be equal to the number of 
+	// UserBlockData for this block with a non-null clicked time
+	@Column(nullable=false)
+	public int getClickedCount() {
+		return clickedCount;
+	}
+	
+	public void setClickedCount(int clickedCount) {
+		this.clickedCount = clickedCount;
 	}
 }

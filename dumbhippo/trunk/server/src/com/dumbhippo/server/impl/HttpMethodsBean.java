@@ -1787,6 +1787,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			xml.openElement("block", "id", block.getId(),
 					"type", block.getBlockType().name(),
 					"timestamp", Long.toString(block.getTimestampAsLong()),
+					"clickedCount", Integer.toString(block.getClickedCount()),
 					"ignored", Boolean.toString(ubd.isIgnored()),
 					"ignoredTimestamp", Long.toString(ubd.getIgnoredTimestampAsLong()),
 					"clicked", Boolean.toString(ubd.isClicked()),
