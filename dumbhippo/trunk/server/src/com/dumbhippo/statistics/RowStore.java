@@ -131,7 +131,12 @@ public class RowStore {
 		
 		public RowStoreIterator(long startRow, long endRow) {
 			this.startIndex = startRow;
-			this.endIndex = endRow;
+			if (endRow > numRows) {
+				// don't try to iterate through rows that are not there
+				this.endIndex = numRows;
+			} else {
+			    this.endIndex = endRow;
+			}
 			nextIndex = startRow;
 		}
 		

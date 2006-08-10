@@ -136,8 +136,8 @@ public class StatisticsWriter implements StatisticsSet {
 	
 	public Iterator<Row> getIterator(Date startDate, Date endDate, Timescale timescale, int[] columnIndexes) {
 		long interval = timescale.getSeconds() * 1000;
-		long fileStartTime = header.getStartTime().getTime();
-		long fileEndTime = fileStartTime + INTERVAL * position;
+		long fileStartTime = getStartDate().getTime();
+		long fileEndTime = getEndDate().getTime();
 		long startTime = startDate.getTime();
 		long endTime = endDate.getTime();
 		
@@ -147,11 +147,22 @@ public class StatisticsWriter implements StatisticsSet {
 			endTime = fileEndTime;
 		
 		long startIndex = (startTime - fileStartTime) / interval;
+		// this rounds UP the number of data points we will produce in case aggregation is needed,
+		// if aggregation will not be needed, this produces an index for the end row, where the end 
+		// row is not to be included in the result set 
 		long endIndex = (endTime + interval - 1 - fileStartTime) / interval;
 		
 		int factor = (timescale.getSeconds() * 1000) / INTERVAL;
 		
 		long startRow = startIndex * factor;
+		// endRow might end up being greater than the number of rows we actually have, because
+		// if requested interval is greater than INTERVAL, the last aggregated data point
+		// can be based on fewer original data points, i.e. if we are planning to produce 
+		// 2 points on the 60 second timescale, and our original timescale is 15 seconds,
+		// 2*4 will give us 8 for endRow, while we might only have 6 original data points
+		//
+		// rowStore.getIterator() will handle the endRow value that is greater than the 
+		// number of rows fine
 		long endRow = endIndex * factor;
 		RowIterator baseIterator = rowStore.getIterator(startRow, endRow);
 
