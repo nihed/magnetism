@@ -102,11 +102,6 @@ public class HttpMethodsServlet extends AbstractServlet {
 			i += 1;
 		}
 		
-		if (args.length > i && HttpServletRequest.class.isAssignableFrom(args[i])) {
-			toPassIn.add(request);
-			i++;
-		}
-		
 		if (args.length != i + paramsAnnotation.value().length) {
 			throw new RuntimeException("HTTP method " + m.getName() + " should have params " + Arrays.toString(paramsAnnotation.value()));
 		}

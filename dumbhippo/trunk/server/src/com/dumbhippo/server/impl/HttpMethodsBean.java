@@ -25,7 +25,6 @@ import javax.ejb.Stateless;
 import javax.naming.NamingException;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-import javax.servlet.http.HttpServletRequest;
 
 import org.slf4j.Logger;
 import org.xml.sax.SAXException;
@@ -1298,7 +1297,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		return bsh;
 	}
 
-	public void doAdminShellExec(XmlBuilder xml, UserViewpoint viewpoint, HttpServletRequest request, boolean parseOnly, String command) throws IOException, HumanVisibleException {
+	public void doAdminShellExec(XmlBuilder xml, UserViewpoint viewpoint, boolean parseOnly, String command) throws IOException, HumanVisibleException {
 		StringWriter clientOut = new StringWriter();
 		if (parseOnly) {
 			Parser parser = new Parser(new StringReader(command));

@@ -17,6 +17,12 @@
       <load-on-startup>1</load-on-startup>
     </servlet>   
 
+    <servlet>
+      <servlet-name>HttpMethodsServlet2</servlet-name>
+      <servlet-class>com.dumbhippo.web.servlets.HttpMethodsServlet2</servlet-class>
+      <load-on-startup>1</load-on-startup>
+    </servlet>
+
    <servlet>
       <servlet-name>PostThumbnailServlet</servlet-name>
       <servlet-class>com.dumbhippo.web.servlets.PostThumbnailServlet</servlet-class>
@@ -99,6 +105,11 @@
    <servlet-mapping>
       <servlet-name>HttpMethodsServlet</servlet-name>
       <url-pattern>/action/*</url-pattern>
+   </servlet-mapping>
+
+   <servlet-mapping>
+      <servlet-name>HttpMethodsServlet2</servlet-name>
+      <url-pattern>/api-docs/*</url-pattern>
    </servlet-mapping>
    
    <servlet-mapping>
