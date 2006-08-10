@@ -2,6 +2,7 @@ package com.dumbhippo.server.impl;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -404,7 +405,7 @@ public class StackerBean implements Stacker {
 		q.setFirstResult(start);
 		q.setMaxResults(count);
 		q.setParameter("user", user);
-		q.setParameter("timestamp", lastTimestamp);
+		q.setParameter("timestamp", new Date(lastTimestamp));
 		
 		// If there is 1 block at the lastTimestamp, then the caller for sure already has that
 		// block. If there are >1 blocks, then the caller might have only some of them.
@@ -423,9 +424,14 @@ public class StackerBean implements Stacker {
 		
 		int countAtLastTimestamp = 0; 
 		for (UserBlockData ubd : list) {
-			long stamp = ubd.getBlock().getTimestampAsLong(); 
+			long stamp = ubd.getBlock().getTimestampAsLong();
+			
+			if (stamp < lastTimestamp)
+				logger.error("Query returned block at wrong timestamp lastTimestamp {} block {}", lastTimestamp, ubd.getBlock());
+			
 			if (stamp == lastTimestamp)
 				countAtLastTimestamp += 1;
+			
 			if (stamp > newestTimestamp) {
 				newestTimestamp = stamp;
 				newestTimestampCount = 1;

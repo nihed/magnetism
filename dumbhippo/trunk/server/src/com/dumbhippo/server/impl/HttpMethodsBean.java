@@ -1780,6 +1780,9 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		}
 		
 		List<UserBlockData> list = stacker.getStack(viewpoint, user, lastTimestamp, start, count);
+		
+		logger.debug("Returning {} blocks", list.size());
+		
 		xml.openElement("blocks", "count", Integer.toString(list.size()),
 				"userId", user.getId());
 		for (UserBlockData ubd : list) {
