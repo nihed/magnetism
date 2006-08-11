@@ -50,16 +50,15 @@ public class Block extends EmbeddedGuidPersistable {
 	private BlockType blockType;
 	private long timestamp;
 	private Guid data1;
-	private long data2;
+	private Guid data2;
 	private int clickedCount;
 	
 	// for hibernate
 	public Block() {
 		this.timestamp = 0;
-		this.data2 = -1;
 	}
 
-	public Block(BlockType type, Guid data1, long data2) {
+	public Block(BlockType type, Guid data1, Guid data2) {
 		this();
 		this.blockType = type;
 		this.data1 = data1;
@@ -114,16 +113,31 @@ public class Block extends EmbeddedGuidPersistable {
 	}
 
 	public void setData1(String data1) throws ParseException {
-		setData1AsGuid(new Guid(data1));
+		setData1AsGuid(data1 != null ? new Guid(data1) : null);
 	}
 	
-	@Column(nullable=false)
-	public long getData2() {
+	@Transient
+	public Guid getData2AsGuid() {
 		return data2;
+	}	
+
+	public void setData2AsGuid(Guid data2) {
+		// no copy since Guid is immutable
+		this.data2 = data2;
 	}
-	
-	public void setData2(long value) {
-		this.data2 = value;
+
+	@Column(length = Guid.STRING_LENGTH, nullable = true)
+	public String getData2() {
+		Guid g = getData2AsGuid();
+		if (g == null)
+			return null;
+		String s = g.toString();
+		assert s.length() == Guid.STRING_LENGTH;
+		return s;
+	}
+
+	public void setData2(String data2) throws ParseException {
+		setData2AsGuid(data2 != null ? new Guid(data2) : null);
 	}
 	
 	// this is a denormalized field; it should be equal to the number of 

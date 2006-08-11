@@ -31,6 +31,7 @@ import com.dumbhippo.persistence.AccountClaim;
 import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.BlockType;
 import com.dumbhippo.persistence.Group;
+import com.dumbhippo.persistence.GroupMember;
 import com.dumbhippo.persistence.GroupMessage;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.PersonPostData;
@@ -80,18 +81,18 @@ public class StackerBean implements Stacker {
 		return userCache;
 	}
 
-	private Block queryBlock(BlockType type, Guid data1, long data2) throws NotFoundException {
+	private Block queryBlock(BlockType type, Guid data1, Guid data2) throws NotFoundException {
 		Query q;
-		if (data1 != null && data2 >= 0) {
+		if (data1 != null && data2 != null) {
 			q = em.createQuery("SELECT block FROM Block block WHERE block.blockType=:type AND block.data1=:data1 AND block.data2=:data2");
 			q.setParameter("data1", data1.toString());
-			q.setParameter("data2", data2);
+			q.setParameter("data2", data2.toString());
 		} else if (data1 != null) {
-			q = em.createQuery("SELECT block FROM Block block WHERE block.blockType=:type AND block.data1=:data1 AND block.data2=-1");
+			q = em.createQuery("SELECT block FROM Block block WHERE block.blockType=:type AND block.data1=:data1 AND block.data2 IS NULL");
 			q.setParameter("data1", data1.toString());
-		} else if (data2 >= 0) {
+		} else if (data2 != null) {
 			q = em.createQuery("SELECT block FROM Block block WHERE block.blockType=:type AND block.data2=:data2 AND block.data1 IS NULL");
-			q.setParameter("data2", data2);
+			q.setParameter("data2", data2.toString());
 		} else {
 			throw new IllegalArgumentException("must provide either data1 or data2 in query for block type " + type);
 		}
@@ -103,16 +104,16 @@ public class StackerBean implements Stacker {
 		}
 	}
 
-	private UserBlockData queryUserBlockData(User user, BlockType type, Guid data1, long data2) throws NotFoundException {
+	private UserBlockData queryUserBlockData(User user, BlockType type, Guid data1, Guid data2) throws NotFoundException {
 		Query q;
-		if (data1 != null && data2 >= 0) {
+		if (data1 != null && data2 != null) {
 			q = em.createQuery("SELECT ubd FROM UserBlockData ubd, Block block WHERE ubd.block = block AND ubd.user = :user AND block.blockType=:type AND block.data1=:data1 AND block.data2=:data2");
 			q.setParameter("data1", data1.toString());
-			q.setParameter("data2", data2);
+			q.setParameter("data2", data2.toString());
 		} else if (data1 != null) {
-			q = em.createQuery("SELECT ubd FROM UserBlockData ubd, Block block WHERE ubd.block = block AND ubd.user = :user AND block.blockType=:type AND block.data1=:data1 AND block.data2=-1");
+			q = em.createQuery("SELECT ubd FROM UserBlockData ubd, Block block WHERE ubd.block = block AND ubd.user = :user AND block.blockType=:type AND block.data1=:data1 AND block.data2 IS NULL");
 			q.setParameter("data1", data1.toString());
-		} else if (data2 >= 0) {
+		} else if (data2 != null) {
 			q = em.createQuery("SELECT ubd FROM UserBlockData ubd, Block block WHERE ubd.block = block AND ubd.user = :user AND block.blockType=:type AND block.data2=:data2 AND block.data1 IS NULL");
 			q.setParameter("data2", data2);
 		} else {
@@ -129,7 +130,7 @@ public class StackerBean implements Stacker {
 	
 	// this doesn't retry on constraint violation since we do that for a larger transaction,
 	// see below
-	private Block getOrCreateUpdatingTimestamp(BlockType type, Guid data1, long data2, long activity) {
+	private Block getOrCreateUpdatingTimestamp(BlockType type, Guid data1, Guid data2, long activity) {
 		Block block;
 		try {
 			block = queryBlock(type, data1, data2);
@@ -273,6 +274,16 @@ public class StackerBean implements Stacker {
 		}
 		return postRecipients;
 	}
+
+	private Set<User> getDesiredUsersForGroupMember(Block block) {
+		if (block.getBlockType() != BlockType.GROUP_MEMBER)
+			throw new IllegalArgumentException("wrong type block");
+		
+		Group group = em.find(Group.class, block.getData1());
+		
+		Set<User> recipients = groupSystem.getMembershipChangeRecipients(group);
+		return recipients;
+	}
 	
 	private void updateUserBlockDatas(Block block) {
 		Set<User> desiredUsers = null;
@@ -285,6 +296,9 @@ public class StackerBean implements Stacker {
 			break;
 		case MUSIC_PERSON:
 			desiredUsers = getDesiredUsersForMusicPerson(block);
+			break;
+		case GROUP_MEMBER:
+			desiredUsers = getDesiredUsersForGroupMember(block);
 			break;
 			// don't add a default, we want a warning if any cases are missing
 		}
@@ -305,7 +319,7 @@ public class StackerBean implements Stacker {
 		}
 	}
 	
-	private void stack(final BlockType type, final Guid data1, final long data2, final long activity) {
+	private void stack(final BlockType type, final Guid data1, final Guid data2, final long activity) {
 		if (disabled)
 			return;
 		
@@ -321,7 +335,7 @@ public class StackerBean implements Stacker {
 		});
 	}
 	
-	private void click(BlockType type, Guid data1, long data2, User user, long clickTime) {
+	private void click(BlockType type, Guid data1, Guid data2, User user, long clickTime) {
 		if (disabled)
 			return;
 		
@@ -354,12 +368,12 @@ public class StackerBean implements Stacker {
 	// don't create or suspend transaction; we will manage our own for now (FIXME) 
 	@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 	public void stackMusicPerson(final Guid userId, final long activity) {
-		stack(BlockType.MUSIC_PERSON, userId, -1, activity);
+		stack(BlockType.MUSIC_PERSON, userId, null, activity);
 	}
 	// don't create or suspend transaction; we will manage our own for now (FIXME) 
 	@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 	public void stackGroupChat(final Guid groupId, final long activity) {
-		stack(BlockType.GROUP_CHAT, groupId, -1, activity);
+		stack(BlockType.GROUP_CHAT, groupId, null, activity);
 	}
 
 	// FIXME this is not right; it requires various rationalization with respect to PersonPostData, XMPP, and 
@@ -369,11 +383,37 @@ public class StackerBean implements Stacker {
 	// don't create or suspend transaction; we will manage our own for now (FIXME)	 
 	@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 	public void stackPost(final Guid postId, final long activity) {
-		stack(BlockType.POST, postId, -1, activity);
+		stack(BlockType.POST, postId, null, activity);
+	}
+	
+	// don't create or suspend transaction; we will manage our own for now (FIXME)
+	@TransactionAttribute(TransactionAttributeType.SUPPORTS)
+	public void stackGroupMember(GroupMember member, long activity) {
+		
+		// Note that GroupMember objects can be deleted (and recreated).
+		// They can also be associated with invited addresses and not accounts.
+		// The identity of the Block is thus tied to the groupId,userId pair
+		// rather than the GroupMember.
+		
+		switch (member.getStatus()) {
+		case ACTIVE:
+		case FOLLOWER:
+		case REMOVED:
+			AccountClaim a = member.getMember().getAccountClaim();
+			if (a != null)
+				stack(BlockType.GROUP_MEMBER, member.getGroup().getGuid(), a.getOwner().getGuid(), activity);
+			break;
+		case INVITED:
+		case INVITED_TO_FOLLOW:
+		case NONMEMBER:
+			// moves to these states don't create a new timestamp
+			break;
+			// don't add a default case, we want a warning if any are missing
+		}
 	}
 	
 	public void clickedPost(Post post, User user, long clickedTime) {
-		click(BlockType.POST, post.getGuid(), -1, user, clickedTime);
+		click(BlockType.POST, post.getGuid(), null, user, clickedTime);
 	}
 	
 	public List<UserBlockData> getStack(Viewpoint viewpoint, User user, long lastTimestamp, int start, int count) {
@@ -612,7 +652,8 @@ public class StackerBean implements Stacker {
 				} else if (userId != null) {
 					stacker.migrateUser(userId);
 				} else if (groupId != null) {
-					stacker.migrateGroup(groupId);
+					stacker.migrateGroupChat(groupId);
+					stacker.migrateGroupMembers(groupId);
 				} else {
 					// nothing to do, we may have been 
 					// shut down
@@ -684,6 +725,22 @@ public class StackerBean implements Stacker {
 		}
 	}
 	
+	private void runMigration(Collection<String> postIds, Collection<String> userIds, Collection<String> groupIds) {
+		final Migration migration = new Migration(postIds, userIds, groupIds);
+		migration.start();
+		
+		// start a thread to clean up the migration ; if we blocked to do this
+		// our transaction would probably time out
+		Thread t = new Thread("stacker migration waiter") {
+			@Override
+			public void run() {
+				migration.shutdown(false); // false = wait for stuff to complete		
+			}
+		};
+		t.setDaemon(true);
+		t.start();		
+	}
+	
 	public void migrateEverything() {
 		
 		if (disabled)
@@ -702,19 +759,18 @@ public class StackerBean implements Stacker {
 		q = em.createQuery("SELECT group.id FROM Group group");
 		groupIds = TypeUtils.castList(String.class, q.getResultList());
 		
-		final Migration migration = new Migration(postIds, userIds, groupIds);
-		migration.start();
+		runMigration(postIds, userIds, groupIds);
+	}
+	
+	public void migrateGroups() {
+		if (disabled)
+			throw new RuntimeException("stacking disabled, can't migrate anything");
+
+		Query q = em.createQuery("SELECT group.id FROM Group group");
+		List<String> groupIds = TypeUtils.castList(String.class, q.getResultList());
 		
-		// start a thread to clean up the migration ; if we blocked to do this
-		// our transaction would probably time out
-		Thread t = new Thread("stacker migration waiter") {
-			@Override
-			public void run() {
-				migration.shutdown(false); // false = wait for stuff to complete		
-			}
-		};
-		t.setDaemon(true);
-		t.start();
+		runMigration(TypeUtils.castList(String.class, Collections.emptyList()),
+				TypeUtils.castList(String.class, Collections.emptyList()), groupIds);
 	}
 	
 	public void migratePost(String postId) {
@@ -732,7 +788,7 @@ public class StackerBean implements Stacker {
 				
 				Block block;
 				try {
-					block = queryBlock(BlockType.POST, post.getGuid(), -1);
+					block = queryBlock(BlockType.POST, post.getGuid(), null);
 				} catch (NotFoundException e) {
 					throw new RuntimeException("no block found for post " + post);
 				}
@@ -805,13 +861,24 @@ public class StackerBean implements Stacker {
 		stackMusicPerson(user.getGuid(), lastPlayTime);
 	}
 	
-	public void migrateGroup(String groupId) {
-		logger.debug("    migrating group {}", groupId);
+	public void migrateGroupChat(String groupId) {
+		logger.debug("    migrating group chat for {}", groupId);
 		Group group = em.find(Group.class, groupId);
 		List<GroupMessage> messages = groupSystem.getNewestGroupMessages(group, 1);
 		if (messages.isEmpty())
 			stackGroupChat(group.getGuid(), 0);
 		else
 			stackGroupChat(group.getGuid(), messages.get(0).getTimestamp().getTime());
+	}
+	
+	public void migrateGroupMembers(String groupId) {
+		logger.debug("    migrating group members for {}", groupId);
+		Group group = em.find(Group.class, groupId);
+		for (GroupMember member : group.getMembers()) {
+			// we set a timestamp of 0, since we have no way of knowing the right
+			// timestamp, and we don't want to make a big pile of group member blocks 
+			// at the top of the stack whenever we run a migration
+			stackGroupMember(member, 0);
+		}
 	}
 }

@@ -315,7 +315,10 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 			em.persist(group);
 		}
 		
-        LiveState.getInstance().queuePostTransactionUpdate(em, new GroupEvent(group.getGuid(), groupMember.getMember().getGuid(), GroupEvent.Type.MEMBERSHIP_CHANGE));
+		stacker.stackGroupMember(groupMember, System.currentTimeMillis());
+		
+        LiveState.getInstance().queuePostTransactionUpdate(em, new GroupEvent(group.getGuid(), groupMember.getMember().getGuid(),
+        		GroupEvent.Type.MEMBERSHIP_CHANGE));
 	}
 	
 	public void removeMember(User remover, Group group, Person person) {		
@@ -342,12 +345,18 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 			if (groupMember.getStatus().ordinal() > MembershipStatus.REMOVED.ordinal()) {
 				groupMember.setStatus(MembershipStatus.REMOVED);
 				
-		        LiveState.getInstance().queuePostTransactionUpdate(em, new GroupEvent(group.getGuid(), groupMember.getMember().getGuid(), GroupEvent.Type.MEMBERSHIP_CHANGE));						
+				stacker.stackGroupMember(groupMember, System.currentTimeMillis());
+		        LiveState.getInstance().queuePostTransactionUpdate(em, new GroupEvent(group.getGuid(),
+		        		groupMember.getMember().getGuid(), GroupEvent.Type.MEMBERSHIP_CHANGE));
 			} else if (groupMember.getStatus().ordinal() < MembershipStatus.REMOVED.ordinal()) {
 				// To go from FOLLOWER or INVITED_TO_FOLLOW to removed, we delete the GroupMember
 				group.getMembers().remove(groupMember);
 				em.remove(groupMember);
-				LiveState.getInstance().queuePostTransactionUpdate(em, new GroupEvent(group.getGuid(), groupMember.getMember().getGuid(), GroupEvent.Type.MEMBERSHIP_CHANGE));
+				
+				// we don't stackGroupMember here, we only care about transitions to REMOVED for timestamp 
+				// updating (right now anyway)
+				LiveState.getInstance().queuePostTransactionUpdate(em, new GroupEvent(group.getGuid(),
+						groupMember.getMember().getGuid(), GroupEvent.Type.MEMBERSHIP_CHANGE));
 			} else {
 				// status == REMOVED, nothing to do
 			}
@@ -463,6 +472,11 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		}
 		
 		return result;
+	}
+	
+	// get people who should be notified on new followers/members
+	public Set<User> getMembershipChangeRecipients(Group group) {
+		return getUserMembers(SystemViewpoint.getInstance(), group, MembershipStatus.ACTIVE);
 	}
 	
 	// The selection of Group is only needed for the CAN_SEE checks

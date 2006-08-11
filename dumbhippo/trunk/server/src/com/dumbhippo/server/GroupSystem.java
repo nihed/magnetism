@@ -59,6 +59,8 @@ public interface GroupSystem {
 	
 	public Set<User> getUserMembers(Viewpoint viewpoint, Group group, MembershipStatus status);
 	
+	public Set<User> getMembershipChangeRecipients(Group group);
+	
 	public GroupMember getGroupMember(Viewpoint viewpoint, Group group, User member) throws NotFoundException;
 	
 	public GroupMember getGroupMember(Group group, Resource member) throws NotFoundException;

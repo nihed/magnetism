@@ -1806,6 +1806,10 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			case POST:
 				xml.appendTextNode("post", null, "postId", block.getData1());
 				break;
+			case GROUP_MEMBER:
+				xml.appendTextNode("groupMember", null, "groupId", block.getData1(),
+									   "userId", block.getData2());
+				break;
 				// don't add a default case, we want a warning if any cases are missing
 			}
 			

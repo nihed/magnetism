@@ -845,8 +845,8 @@ public class MessageSenderBean implements MessageSender {
 	}
 
 	public void sendGroupMembershipUpdate(Group group, GroupMember groupMember) {
-		Set<User> members = groupSystem.getUserMembers(SystemViewpoint.getInstance(), group, MembershipStatus.ACTIVE);
-		for (User recipient : members) {
+		Set<User> recipients = groupSystem.getMembershipChangeRecipients(group);
+		for (User recipient : recipients) {
 			xmppSender.sendGroupMembershipUpdate(recipient, group, groupMember);			
 		}
 	}
