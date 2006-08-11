@@ -44,6 +44,10 @@
 			position:			relative;
 			margin:				1px;
 		}
+		.dh-stacked-block .dh-content {
+			background-color: 	white;
+			color:				black;	
+		}		
 		.dh-stacked-block .dh-title a:visited, .dh-stacked-block .dh-title a {
 			color:				white;
 		}
@@ -58,20 +62,11 @@
 		.dh-stacked-block-group-chat {
 			background-color:	#84569B;
 			color:				white;	
+		}
+		.dh-stacked-block-group-member {
+			background-color:	#84569B;
+			color:				white;	
 		}				
-		.dh-stacked-block-music-person .dh-content {
-			background-color: 	white;
-			color:				black;	
-		}
-		.dh-stacked-block-post .dh-content {
-			background-color: 	white;
-			color:				black;		
-		}
-		.dh-stacked-block-group-chat .dh-content {
-			background-color: 	white;
-			color:				black;		
-		}
-		
 	</style>
 	<script>
 		dojo.require('dh.stacker');

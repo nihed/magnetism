@@ -41,6 +41,7 @@ dh.stacker.Kind.UNKNOWN = -1;
 dh.stacker.Kind.POST = 1;
 dh.stacker.Kind.MUSIC_PERSON = 2;
 dh.stacker.Kind.GROUP_CHAT = 3;
+dh.stacker.Kind.GROUP_MEMBER = 4;
 
 dh.stacker.kindFromString = function(str) {
 	if (str == "POST")
@@ -49,6 +50,8 @@ dh.stacker.kindFromString = function(str) {
 		return dh.stacker.Kind.MUSIC_PERSON;
 	else if (str == "GROUP_CHAT")
 		return dh.stacker.Kind.GROUP_CHAT;
+	else if (str == "GROUP_MEMBER")
+		return dh.stacker.Kind.GROUP_MEMBER;
 	else
 		return dh.stacker.Kind.UNKNOWN;
 }
@@ -57,6 +60,7 @@ dh.stacker.kindClasses = {};
 dh.stacker.kindClasses[dh.stacker.Kind.POST] = "dh-stacked-block-post";
 dh.stacker.kindClasses[dh.stacker.Kind.MUSIC_PERSON] = "dh-stacked-block-music-person";
 dh.stacker.kindClasses[dh.stacker.Kind.GROUP_CHAT] = "dh-stacked-block-group-chat";
+dh.stacker.kindClasses[dh.stacker.Kind.GROUP_MEMBER] = "dh-stacked-block-group-member";
 
 dh.stacker.Block = function(kind, blockId) {
 	this._kind = kind;
@@ -514,11 +518,6 @@ defineClass(dh.stacker.GroupChatBlock, dh.stacker.Block,
 		return this._groupId;
 	},
 
-	load : function(completeFunc, errorFunc) {
-		this.setTitle("Group chat " + this._groupId);
-		completeFunc(this);	
-	},
-	
 	getMessages : function() {
 		return this._messages;
 	},
@@ -598,6 +597,52 @@ defineClass(dh.stacker.GroupChatBlock, dh.stacker.Block,
 		this._messagesDiv = null;
 	}	
 });
+
+dh.stacker.GroupMemberBlock = function(blockId, groupId, userId) {
+	dh.stacker.Block.call(this, dh.stacker.Kind.GROUP_MEMBER, blockId);
+	this._groupId = groupId;
+	this._userId = userId;
+}
+
+defineClass(dh.stacker.GroupMemberBlock, dh.stacker.Block,
+{
+	getGroupId : function() {
+		return this._groupId;
+	},
+
+	getUserId : function() {
+		return this._userId;
+	},
+
+	_parse : function(childNodes) {
+
+	},
+
+	load : function(completeFunc, errorFunc) {
+		this.setTitle("Group member " + this._groupId + " user " + this._userId);
+		completeFunc(this);		
+	},
+	
+	updateFrom : function(newBlock) {
+		if (!dh.stacker.GroupMemberBlock.superclass.updateFrom.call(this, newBlock))
+			return false;
+
+		return true;
+	},
+	
+	realize : function() {
+		if (!this._div) {
+			dh.stacker.GroupMemberBlock.superclass.realize.call(this);
+
+		}
+	},
+	
+	unrealize : function() {
+		dh.stacker.GroupMemberBlock.superclass.unrealize.call(this);	
+
+	}	
+});
+
 
 dh.stacker.RaiseAnimation = function(block, inner, oldOuter, newOuter) {
 
@@ -751,7 +796,19 @@ dh.stacker.blockParsers[dh.stacker.Kind.GROUP_CHAT] = function(node) {
 	dh.stacker.mergeBlockAttrs(block, attrs);
 	return block;
 };
-	
+
+dh.stacker.blockParsers[dh.stacker.Kind.GROUP_MEMBER] = function(node) {
+	var attrs = dh.stacker.parseBlockAttrs(node);
+	var groupMember = node.childNodes.item(0);
+	if (groupMember.nodeName != "groupMember")
+		return null;
+	var userId = groupMember.getAttribute("userId");		
+	var groupId = groupMember.getAttribute("groupId");
+	var block = new dh.stacker.GroupMemberBlock(attrs["id"], groupId, userId);
+	dh.stacker.mergeBlockAttrs(block, attrs);
+	return block;
+};
+
 dh.stacker.blockParsers[dh.stacker.Kind.MUSIC_PERSON] = function(node) {
 	var attrs = dh.stacker.parseBlockAttrs(node);
 	var musicPerson = node.childNodes.item(0);
