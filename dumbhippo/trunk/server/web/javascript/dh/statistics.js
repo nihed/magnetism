@@ -3,11 +3,12 @@ dojo.provide("dh.statistics");
 dojo.require("dh.statistics.dataset");
 dojo.require("dh.statistics.chart");
 dojo.require("dh.statistics.selector");
+dojo.require("dh.util");
 
 dh.statistics.graph1 = null;
 
 function dhStatisticsInit() {
-	dh.statistics.graph1 = new dh.statistics.chart.Chart(600, 200);
+	dh.statistics.graph1 = new dh.statistics.chart.Chart(600, 200, "dhCoords1");
 	document.getElementById("dhGraph1").appendChild(dh.statistics.graph1.getCanvas());
     dh.statistics.onSelectedColumnChange();
 }
@@ -31,13 +32,13 @@ dh.statistics.onSelectedColumnChange = function() {
        					    if (dataset.minT == 0) {
        					 	    startTimeDiv.replaceChild(document.createTextNode(""), startTimeDiv.firstChild);       					    
        					    } else {
-       					 	    startTimeDiv.replaceChild(document.createTextNode(dh.statistics.timeString(dataset.minT)), startTimeDiv.firstChild);
+       					 	    startTimeDiv.replaceChild(document.createTextNode(dh.util.timeString(dataset.minT)), startTimeDiv.firstChild);
                             }           
        					 	var endTimeDiv = document.getElementById("dhEndTime");
        					 	if (dataset.minT == dataset.maxT) {
        					 	    endTimeDiv.replaceChild(document.createTextNode(""), endTimeDiv.firstChild);
        					 	} else {
-       					 	    endTimeDiv.replaceChild(document.createTextNode(dh.statistics.timeString(dataset.maxT)), endTimeDiv.firstChild);
+       					 	    endTimeDiv.replaceChild(document.createTextNode(dh.util.timeString(dataset.maxT)), endTimeDiv.firstChild);
        					 	}
        					    
        					    var minValDiv = document.getElementById("dhMinVal");
@@ -56,11 +57,3 @@ dh.statistics.onSelectedColumnChange = function() {
 		  	    	        alert("Cannot load data from server.");
 		  	    	     });
 }	
-
-dh.statistics.timeString = function(timestamp) {
-	var date = new Date();
-	date.setTime(timestamp);
-    return dh.util.zeroPad(date.getMonth()+1, 2) + "/" + dh.util.zeroPad(date.getDate(), 2) + "/" 
-           + date.getFullYear() + " " + dh.util.zeroPad(date.getHours(), 2) + ":" 
-           + dh.util.zeroPad(date.getMinutes(), 2) + ":" + dh.util.zeroPad(date.getSeconds(), 2);
-}

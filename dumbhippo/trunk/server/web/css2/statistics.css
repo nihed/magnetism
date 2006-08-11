@@ -35,5 +35,9 @@
 
 .dh-graph canvas {
 	background: #eeeecc; 
-	border: 1px solid #666666;
+}
+
+.dh-coordinates {
+	background: #d5c5d5;
+	text-align: center;
 }

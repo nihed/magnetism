@@ -381,22 +381,6 @@ dh.autosuggest.AutoSuggest = function(entryNode, buttonNode)
 		}
 	};
 
-	this.getElementPosition = function(el) {
-		var point = { "x" : 0, "y" : 0 };
-		
-		while (el.offsetParent && el.tagName.toUpperCase() != 'BODY')
-		{
-			point.x += el.offsetLeft;
-			point.y += el.offsetTop;
-			el = el.offsetParent;
-		}
-
-		point.x += el.offsetLeft;
-		point.y += el.offsetTop;
-	
-		return point;
-	}
-
 	/********************************************************
 	Position the dropdown div below the input text field.
 	********************************************************/
@@ -404,10 +388,10 @@ dh.autosuggest.AutoSuggest = function(entryNode, buttonNode)
 	{
 		var x;
 		var y;
-		var entryPos = this.getElementPosition(this.elem);
+		var entryPos = dh.util.getBodyPosition(this.elem);
 		var buttonPos;
 		if (this.button)
-			buttonPos = this.getElementPosition(this.button);
+			buttonPos = dh.util.getBodyPosition(this.button);
 		else
 			buttonPos = entryPos;
 		

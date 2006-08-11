@@ -56,6 +56,14 @@
         <div id="dhEndTime"><span/></div>
     </td>
     </tr>
+    <tr>
+    <td>
+    </td>
+    <td colspan="2" align="center">
+	    <div id="dhCoords1" class="dh-coordinates">
+	        <span/>
+        </div>
+    </td> 
     </table>
     <%-- <div id="dhHourSelector"></div> --%>
 </body>

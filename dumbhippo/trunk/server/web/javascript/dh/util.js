@@ -601,6 +601,15 @@ dh.util.clientDebug = function(text) {
 	window.external.DebugLog(text)
 }
 
+dh.util.timeString = function(timestamp) {
+	var date = new Date();
+	date.setTime(timestamp);
+    return dh.util.zeroPad(date.getMonth()+1, 2) + "/" + dh.util.zeroPad(date.getDate(), 2) + "/" 
+           + date.getFullYear() + " " + dh.util.zeroPad(date.getHours(), 2) + ":" 
+           + dh.util.zeroPad(date.getMinutes(), 2) + ":" + dh.util.zeroPad(date.getSeconds(), 2);
+}
+    
+
 dh.util.zeroPad = function(number, len) {
     var str = number + "";
     while (str.length < len) {
