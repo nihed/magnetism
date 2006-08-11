@@ -33,8 +33,6 @@
 		}		
 		.dh-stacked-block {
 			position:			relative;
-			background-color:	blue;
-			color:				white;
 			text-align:			left;
 			/* for opacity to work in IE you have to set width or height, or use position absolute */
 			width:				480px;
@@ -42,16 +40,38 @@
 		.dh-stacked-block .dh-title {
 			position:			relative;
 		}
-		.dh-stacked-block .dh-title a:visited, .dh-stacked-block .dh-title a {
-			position:			relative;
-			color:				white;
-		}
 		.dh-stacked-block .dh-content {
 			position:			relative;
-			background-color: 	aqua;
-			color:				black;
 			margin:				1px;
 		}
+		.dh-stacked-block .dh-title a:visited, .dh-stacked-block .dh-title a {
+			color:				white;
+		}
+		.dh-stacked-block-music-person {
+			background-color:	#36AAE8;
+			color:				white;		
+		}
+		.dh-stacked-block-post {
+			background-color:	#F16D1C;
+			color:				white;
+		}
+		.dh-stacked-block-group-chat {
+			background-color:	#84569B;
+			color:				white;	
+		}				
+		.dh-stacked-block-music-person .dh-content {
+			background-color: 	white;
+			color:				black;	
+		}
+		.dh-stacked-block-post .dh-content {
+			background-color: 	white;
+			color:				black;		
+		}
+		.dh-stacked-block-group-chat .dh-content {
+			background-color: 	white;
+			color:				black;		
+		}
+		
 	</style>
 	<script>
 		dojo.require('dh.stacker');

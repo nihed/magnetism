@@ -53,6 +53,11 @@ dh.stacker.kindFromString = function(str) {
 		return dh.stacker.Kind.UNKNOWN;
 }
 
+dh.stacker.kindClasses = {};
+dh.stacker.kindClasses[dh.stacker.Kind.POST] = "dh-stacked-block-post";
+dh.stacker.kindClasses[dh.stacker.Kind.MUSIC_PERSON] = "dh-stacked-block-music-person";
+dh.stacker.kindClasses[dh.stacker.Kind.GROUP_CHAT] = "dh-stacked-block-group-chat";
+
 dh.stacker.Block = function(kind, blockId) {
 	this._kind = kind;
 	this._blockId = blockId;
@@ -127,8 +132,9 @@ defineClass(dh.stacker.Block, null,
 
 	_updateStackTimeDiv : function() {
 		if (this._div) {
-			var d = new Date(this._stackTime);
-			dojo.dom.textContent(this._stackTimeDiv, d.getFullYear() + "-" + (d.getMonth()+1) + "-" + d.getDate() + " " + d.getHours() + ":" + d.getMinutes() + ":" + d.getSeconds() + ":" + d.getMilliseconds());
+			;
+			//var d = new Date(this._stackTime);
+			//dojo.dom.textContent(this._stackTimeDiv, d.getFullYear() + "-" + (d.getMonth()+1) + "-" + d.getDate() + " " + d.getHours() + ":" + d.getMinutes() + ":" + d.getSeconds() + ":" + d.getMilliseconds());
 		}
 	},
 
@@ -172,7 +178,7 @@ defineClass(dh.stacker.Block, null,
 			// "div moving" animation
 			
 			this._innerDiv = document.createElement("div");
-			dojo.html.setClass(this._innerDiv, "dh-stacked-block");
+			dojo.html.setClass(this._innerDiv, "dh-stacked-block " + dh.stacker.kindClasses[this._kind]);
 			this.setNewOuterDiv(this.createOuterDiv());
 			this.reparentIntoOuterDiv(this._div);
 
@@ -185,10 +191,10 @@ defineClass(dh.stacker.Block, null,
 			this._innerDiv.appendChild(this._contentDiv);
 			dojo.html.setClass(this._contentDiv, "dh-content");
 			
-			this._stackTimeDiv = document.createElement("div");
-			this._contentDiv.appendChild(this._stackTimeDiv);
-			dojo.html.setClass(this._stackTimeDiv, "dh-timestamp");
-			this._updateStackTimeDiv();
+			//this._stackTimeDiv = document.createElement("div");
+			//this._contentDiv.appendChild(this._stackTimeDiv);
+			//dojo.html.setClass(this._stackTimeDiv, "dh-timestamp");
+			//this._updateStackTimeDiv();
 		}
 	},
 	
@@ -283,6 +289,7 @@ dh.stacker.PostBlock = function(blockId, postId) {
 	this._postId = postId;
 	
 	this._clickedCountDiv = null;
+	this._descriptionDiv = null;
 	
 	this._link = null;
 	this._description = null;
@@ -331,19 +338,32 @@ defineClass(dh.stacker.PostBlock, dh.stacker.Block,
 		}
 	},
 	
+	_updateDescriptionDiv : function() {
+		if (this._div) {
+			dojo.dom.textContent(this._descriptionDiv, this.getDescription());
+		}
+	},
+	
 	realize : function() {
 		if (!this._div) {
 			dh.stacker.PostBlock.superclass.realize.call(this);
+
 			this._clickedCountDiv = document.createElement("div");
 			this._contentDiv.appendChild(this._clickedCountDiv);
 			dojo.html.setClass(this._clickedCountDiv, "dh-clicked-count");
 			this._updateClickedCountDiv();
+			
+			this._descriptionDiv = document.createElement('div');
+			this._contentDiv.appendChild(this._descriptionDiv);
+			dojo.html.setClass(this._descriptionDiv, "dh-description");
+			this._updateDescriptionDiv();
 		}
 	},
 	
 	unrealize : function() {
 		dh.stacker.PostBlock.superclass.unrealize.call(this);	
 		this._clickedCountDiv = null;
+		this._descriptionDiv = null;
 	},
 	
 	load : function(completeFunc, errorFunc) {
