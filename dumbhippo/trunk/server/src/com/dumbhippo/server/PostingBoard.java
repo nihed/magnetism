@@ -163,7 +163,7 @@ public interface PostingBoard {
 	 * @return set of EntityView
 	 */
 	public Set<EntityView> getReferencedEntities(Viewpoint viewpoint, Post post);
-	
+		
 	public List<PersonPostData> getPostViewers(Viewpoint viewpoint, Guid guid, int max);
 	
 	public int getPostViewerCount(Guid guid);

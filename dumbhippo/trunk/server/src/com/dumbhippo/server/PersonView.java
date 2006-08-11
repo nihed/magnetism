@@ -668,14 +668,11 @@ public class PersonView extends EntityView {
 	}
 		
 	/**
-	 * This method gives an XML fragment containing most of the interesting
-	 * information about the person or resource being viewed.
-	 * 
-	 * @return an XML fragment
+	 * This method appends an XML node <user> if the view is of 
+	 * a user, and otherwise appends a <resource> node
 	 */	
 	@Override
-	public String toXml() {
-		XmlBuilder builder = new XmlBuilder();
+	public void writeToXmlBuilder(XmlBuilder builder) {
 		if (user != null) {
 			builder.appendTextNode("user", "", "id", user.getId(), 
 				               	   "name", getName(),
@@ -683,8 +680,7 @@ public class PersonView extends EntityView {
 				               	   "smallPhotoUrl", getSmallPhotoUrl());
 		} else {
 			builder.appendTextNode("resource", "", "id", getIdentifyingGuid().toString(), "name", getName());
-		}
-		return builder.toString();		
+		}		
 	}
 	
 	/**

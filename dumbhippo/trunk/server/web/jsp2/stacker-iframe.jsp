@@ -37,7 +37,7 @@
 			/* for opacity to work in IE you have to set width or height, or use position absolute */
 			width:				480px;
 		}
-		.dh-stacked-block .dh-title {
+		.dh-stacked-block .dh-heading {
 			position:			relative;
 		}
 		.dh-stacked-block .dh-content {
@@ -48,7 +48,7 @@
 			background-color: 	white;
 			color:				black;	
 		}		
-		.dh-stacked-block .dh-title a:visited, .dh-stacked-block .dh-title a {
+		.dh-stacked-block .dh-heading a:visited, .dh-stacked-block .dh-heading a {
 			color:				white;
 		}
 		.dh-stacked-block-music-person {

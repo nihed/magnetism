@@ -103,11 +103,9 @@ import com.dumbhippo.persistence.VersionedEntity;
 	}
 	
 	@Override
-	public String toXml() {
-		XmlBuilder builder = new XmlBuilder();
+	public void writeToXmlBuilder(XmlBuilder builder) {
 		builder.appendTextNode("group", "", "id", group.getId(), "name", group.getName(),
-							   "homeUrl", getHomeUrl(), "smallPhotoUrl", getSmallPhotoUrl());
-		return builder.toString();		
+							   "homeUrl", getHomeUrl(), "smallPhotoUrl", getSmallPhotoUrl());		
 	}
 	
 	@Override

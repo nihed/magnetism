@@ -62,6 +62,12 @@ dh.stacker.kindClasses[dh.stacker.Kind.MUSIC_PERSON] = "dh-stacked-block-music-p
 dh.stacker.kindClasses[dh.stacker.Kind.GROUP_CHAT] = "dh-stacked-block-group-chat";
 dh.stacker.kindClasses[dh.stacker.Kind.GROUP_MEMBER] = "dh-stacked-block-group-member";
 
+dh.stacker.kindHeadings = {};
+dh.stacker.kindHeadings[dh.stacker.Kind.POST] = "WEB SWARM";
+dh.stacker.kindHeadings[dh.stacker.Kind.MUSIC_PERSON] = "MUSIC RADAR";
+dh.stacker.kindHeadings[dh.stacker.Kind.GROUP_CHAT] = "GROUP CHAT";
+dh.stacker.kindHeadings[dh.stacker.Kind.GROUP_MEMBER] = "GROUP MEMBERS";
+
 dh.stacker.Block = function(kind, blockId) {
 	this._kind = kind;
 	this._blockId = blockId;
@@ -185,15 +191,20 @@ defineClass(dh.stacker.Block, null,
 			dojo.html.setClass(this._innerDiv, "dh-stacked-block " + dh.stacker.kindClasses[this._kind]);
 			this.setNewOuterDiv(this.createOuterDiv());
 			this.reparentIntoOuterDiv(this._div);
-
-			this._titleDiv = document.createElement("div");
-			this._innerDiv.appendChild(this._titleDiv);
-			dojo.html.setClass(this._titleDiv, "dh-title");
-			this._updateTitleDiv();
+			
+			this._headingDiv = document.createElement("div");
+			this._innerDiv.appendChild(this._headingDiv);
+			dojo.html.setClass(this._headingDiv, "dh-heading");
+			dojo.dom.textContent(this._headingDiv, dh.stacker.kindHeadings[this._kind]);
 			
 			this._contentDiv = document.createElement("div");
 			this._innerDiv.appendChild(this._contentDiv);
 			dojo.html.setClass(this._contentDiv, "dh-content");
+
+			this._titleDiv = document.createElement("div");
+			this._contentDiv.appendChild(this._titleDiv);
+			dojo.html.setClass(this._titleDiv, "dh-title");
+			this._updateTitleDiv();
 			
 			//this._stackTimeDiv = document.createElement("div");
 			//this._contentDiv.appendChild(this._stackTimeDiv);
@@ -211,6 +222,7 @@ defineClass(dh.stacker.Block, null,
 			this._div = null;
 			// null these just to aid in gc
 			this._innerDiv = null;
+			this._headingDiv = null;
 			this._titleDiv = null;
 			this._contentDiv = null;
 			this._stackTimeDiv = null;

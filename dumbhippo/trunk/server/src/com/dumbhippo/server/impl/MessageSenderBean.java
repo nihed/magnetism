@@ -129,9 +129,9 @@ public class MessageSenderBean implements MessageSender {
 			XmlBuilder builder = new XmlBuilder();
 			builder.openElement(ELEMENT_NAME, "xmlns", NAMESPACE);
 			for (EntityView ev: referencedEntities) {
-				builder.append(ev.toXml());
+				ev.writeToXmlBuilder(builder);
 			}
-			builder.append(postView.toXml());
+			postView.writeToXmlBuilder(builder);
 			builder.closeElement();
 			return builder.toString();
 		}
@@ -159,9 +159,9 @@ public class MessageSenderBean implements MessageSender {
 			XmlBuilder builder = new XmlBuilder();
 			builder.openElement(ELEMENT_NAME, "xmlns", NAMESPACE);
 			for (EntityView ev : viewerEntities) {
-				builder.append(ev.toXml());
+				ev.writeToXmlBuilder(builder);
 			}
-			builder.append(post.toXml());
+			post.writeToXmlBuilder(builder);
 			builder.append(lpost.toXml());
 			builder.closeElement();
 			return builder.toString();
@@ -288,9 +288,9 @@ public class MessageSenderBean implements MessageSender {
 			builder.openElement(ELEMENT_NAME, "xmlns", NAMESPACE);
 			for (int i = 0; i < livePosts.size(); i++) {
 				for (EntityView ev: referencedEntities) {
-					builder.append(ev.toXml());
+					ev.writeToXmlBuilder(builder);
 				}				
-				builder.append(postViews.get(i).toXml());
+				postViews.get(i).writeToXmlBuilder(builder);
 				builder.append(livePosts.get(i).toXml());
 			}
 			builder.closeElement();
@@ -356,8 +356,8 @@ public class MessageSenderBean implements MessageSender {
 					            "membershipStatus", status.toString(),
 					            "groupId", groupView.getIdentifyingGuid().toString(), 
 					            "userId", personView.getIdentifyingGuid().toString());
-			builder.append(personView.toXml());
-			builder.append(groupView.toXml());
+			personView.writeToXmlBuilder(builder);
+			groupView.writeToXmlBuilder(builder);
 			builder.closeElement();
 			return builder.toString();
 		}

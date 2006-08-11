@@ -238,7 +238,7 @@ public class PostView {
 	}
 
 	// CAUTION - used in both HttpMethods AND XMPP, migrate both xmpp client and javascript if you modify this
-	public void writePostNode(XmlBuilder builder) {
+	public void writeToXmlBuilder(XmlBuilder builder) {
 		builder.openElement("post", "id", post.getId());
 		builder.appendTextNode("poster", posterView.getIdentifyingGuid().toString());
 		builder.appendTextNode("href", post.getUrl().toString());
@@ -267,7 +267,7 @@ public class PostView {
 	
 	public String toXml() {
 		XmlBuilder builder = new XmlBuilder();
-		writePostNode(builder);
+		writeToXmlBuilder(builder);
 		return builder.toString();
 	}
 	

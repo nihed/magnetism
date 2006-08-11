@@ -69,6 +69,7 @@ import com.dumbhippo.postinfo.PostInfo;
 import com.dumbhippo.server.Character;
 import com.dumbhippo.server.ClaimVerifier;
 import com.dumbhippo.server.Configuration;
+import com.dumbhippo.server.EntityView;
 import com.dumbhippo.server.ExternalAccountSystem;
 import com.dumbhippo.server.FeedSystem;
 import com.dumbhippo.server.GroupIndexer;
@@ -1846,7 +1847,10 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	
  	public void getPostSummary(XmlBuilder xml, UserViewpoint viewpoint, String postId) throws XmlMethodException {
  		Post post = parsePostId(viewpoint, postId);
+ 		
  		PostView pv = postingBoard.getPostView(viewpoint, post);
- 		pv.writePostNode(xml);
+ 		pv.writeToXmlBuilder(xml);
+ 		EntityView poster = pv.getPoster();
+ 		poster.writeToXmlBuilder(xml);
  	}
 }
