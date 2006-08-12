@@ -756,10 +756,10 @@ public class FeedSystemBean implements FeedSystem {
 		@SuppressWarnings("unused")
 		private static final Logger logger = GlobalSetup.getLogger(FeedCache.class);		
 		
-		private Map<URL,SyndFeedInfo> cache;
+		private Map<String,SyndFeedInfo> cache;
 		
 		FeedCache() {
-			cache = new HashMap<URL,SyndFeedInfo>();
+			cache = new HashMap<String,SyndFeedInfo>();
 		}
 		
 		static private class InfoStringifier {
@@ -776,7 +776,7 @@ public class FeedSystemBean implements FeedSystem {
 		}
 		
 		public synchronized SyndFeedInfo getFeedInfo(URL url) {
-			SyndFeedInfo info = cache.get(url);
+			SyndFeedInfo info = cache.get(url.toExternalForm());
 			if (info != null) {
 				logger.debug(" getting cached feed for {}: {}", url, new InfoStringifier(info));
 			}
@@ -787,7 +787,7 @@ public class FeedSystemBean implements FeedSystem {
 			if (info != null) {
 				logger.debug(" storing cached feed for {}: {}", url, new InfoStringifier(info));
 			}
-			cache.put(url, info);
+			cache.put(url.toExternalForm(), info);
 		}
 	}
 }
