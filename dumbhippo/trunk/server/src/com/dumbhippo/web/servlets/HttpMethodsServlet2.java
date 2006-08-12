@@ -66,6 +66,8 @@ public class HttpMethodsServlet2 extends AbstractServlet {
 		
 		private Map<String,HttpMethod> methods;
 
+		private Map<String,HttpMethod> lowercaseMethods;
+		
 		private List<HttpMethod> sortedMethods;
 		
 		HttpMethodRepository() {
@@ -77,6 +79,10 @@ public class HttpMethodsServlet2 extends AbstractServlet {
 	
 				public Object marshal(String s) throws XmlMethodException {
 					return s;
+				}
+				
+				public Class<?> getType() {
+					return String.class;
 				}
 				
 			});
@@ -93,8 +99,12 @@ public class HttpMethodsServlet2 extends AbstractServlet {
 					else
 						throw new XmlMethodException(XmlMethodErrorCode.INVALID_ARGUMENT, "could not parse boolean value: '" + s + "'");
 				}
+
+				public Class<?> getType() {
+					return boolean.class;
+				}
 				
-			});			
+			});		
 		}
 		
 		Marshaller lookupMarshaller(Class<?> klass) {
@@ -134,7 +144,10 @@ public class HttpMethodsServlet2 extends AbstractServlet {
 		}
 		
 		HttpMethod lookupMethod(String name) {
-			return methods.get(name);
+			HttpMethod m = methods.get(name);
+			if (m == null)
+				m = lowercaseMethods.get(name);
+			return m;
 		}
 		
 		void lock() {
@@ -151,8 +164,14 @@ public class HttpMethodsServlet2 extends AbstractServlet {
 					return String.CASE_INSENSITIVE_ORDER.compare(a.getName(), b.getName());
 				}
 			});
-			
+		
+			// so we can return it by reference
 			sortedMethods = Collections.unmodifiableList(sortedMethods);
+			
+			lowercaseMethods = new HashMap<String,HttpMethod>();
+			for (HttpMethod m : methods.values()) {
+				lowercaseMethods.put(m.getName().toLowerCase(), m);
+			}
 		}
 	}
 	
@@ -164,20 +183,20 @@ public class HttpMethodsServlet2 extends AbstractServlet {
 		 * @return the marshaled object (null is allowed)
 		 * @throws XmlMethodException thrown if the string can't be parsed
 		 */
-		public Object marshal(String s) throws XmlMethodException; 
+		public Object marshal(String s) throws XmlMethodException;
+		
+		public Class<?> getType();
 	}
 	
 	private static class HttpMethodParam {
 		private String name;
 		private boolean isOptional;
-		private Class<?> type;
 		private Marshaller marshaller;
 		
-		public HttpMethodParam(String name, boolean isOptional, Class<?> type,
+		public HttpMethodParam(String name, boolean isOptional,
 				Marshaller marshaller) {
 			this.name = name;
 			this.isOptional = isOptional;
-			this.type = type;
 			this.marshaller = marshaller;
 		}
 
@@ -187,10 +206,6 @@ public class HttpMethodsServlet2 extends AbstractServlet {
 		
 		public String getName() {
 			return name;
-		}
-		
-		public Class<?> getType() {
-			return type;
 		}
 		
 		public Marshaller getMarshaller() {
@@ -310,7 +325,7 @@ public class HttpMethodsServlet2 extends AbstractServlet {
 					}
 				}
 				
-				params.add(new HttpMethodParam(pname, isOptional, args[i], marshaller));
+				params.add(new HttpMethodParam(pname, isOptional, marshaller));
 				++i;
 			}
 			// lock it down
@@ -441,7 +456,7 @@ public class HttpMethodsServlet2 extends AbstractServlet {
 					
 					xml.append(" - ");
 					
-					xml.append(p.getType().getName());
+					xml.append(p.getMarshaller().getType().getName());
 					
 					if (p.isOptional()) {
 						xml.appendTextNode("i", "- (optional)");
@@ -503,10 +518,12 @@ public class HttpMethodsServlet2 extends AbstractServlet {
 	
 	@Override
 	protected String wrappedDoGet(HttpServletRequest request, HttpServletResponse response) throws HttpException, IOException, HumanVisibleException {
-		setNoCache(response);
-
 		if (handleApiDocs(request, response))
 			return null;
+		
+		setNoCache(response);
+		
+		
 		
 		return null;
 	}
