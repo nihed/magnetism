@@ -149,7 +149,9 @@ public class RewriteServlet extends HttpServlet {
 			context.getRequestDispatcher(newPath).forward(request, response);
 			WebStatistics.getInstance().incrementJspPagesServed();
 			
-			logger.debug("Handled {} in {} milliseconds", newPath, System.currentTimeMillis() - startTime);
+			long serveTime = System.currentTimeMillis() - startTime;
+			logger.debug("Handled {} in {} milliseconds", newPath, serveTime);
+			WebStatistics.getInstance().addPageServeTime(serveTime);
 		} catch (Throwable t) {
 			WebStatistics.getInstance().incrementJspPageErrors();
 			

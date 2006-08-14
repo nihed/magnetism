@@ -13,10 +13,11 @@ import com.dumbhippo.statistics.StatisticsSource;
 public class WebStatistics implements StatisticsSource {
 	static private WebStatistics instance = new WebStatistics();
 	
-	long jspPagesServed;
-	long jspPageErrors;
-	long httpMethodsServed;
-	long httpMethodErrors;
+	private long jspPagesServed;
+	private long jspPageErrors;
+	private long httpMethodsServed;
+	private long httpMethodErrors;
+	private long pageServeTime;
 	
 	static public WebStatistics getInstance() {
 		return instance;
@@ -68,5 +69,17 @@ public class WebStatistics implements StatisticsSource {
 	
 	public synchronized void incrementHttpMethodErrors() {
 		httpMethodErrors++;
+	}
+
+	@Column(id="pageServeTime",
+			name="HTTP Request Time", 
+			units=ColumnUnit.EVENTS, 
+			type=ColumnType.CUMULATIVE)
+	public synchronized long getPageServeTime() {
+		return pageServeTime;
+	}
+	
+	public synchronized void addPageServeTime(long serveTime) {
+		pageServeTime += serveTime;
 	}
 }
