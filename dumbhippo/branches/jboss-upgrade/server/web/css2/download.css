@@ -1,0 +1,76 @@
+@CHARSET "UTF-8";
+@IMPORT url("site.css");
+@IMPORT url("download-positions.css");
+
+#dhDownloadTopMessage {
+	color: white;
+	font-size: 18px;
+}
+
+#dhMustAccept {
+	background-color:	#ffffcc;
+	color:				#cc0033;
+	font-size:          12px;
+}
+
+.dh-download-purple {
+	color: #8c509d;
+}
+
+#dhDownloadInfoAreaContainer {
+	border: 1px solid black;
+}
+
+.dh-download-separator {
+	background: black;
+}
+
+.dh-download-welcome-information, .dh-download-instruction {
+	font-size: 16px;
+}
+
+.dh-download-information {
+	font-size: 14px;
+}
+
+.dh-download-more-information {
+	font-size: 12px;
+}
+
+#dhDownloadInstructionsHeader {
+	font-size: 18px;
+	font-weight: bold;
+}
+
+.dh-download-instruction-number {
+	font-size: 16px;
+ 	font-weight: bold;
+}
+
+.dh-accept-terms-box-warning {
+	background-color:	#ffffcc;
+	border:				1px solid #cc0033;
+	-moz-border-radius:	5px;
+}
+
+.dh-download-accepted {
+	color:	#666666;
+}
+
+.dh-download-product {
+	font-size: 18px;
+	font-weight: bold;
+}
+
+.dh-download-product-disabled {
+	color: #cccccc;
+	cursor: default;
+}
+
+#dhDownloadFooter {
+	font-size: 10px;
+} 
+
+.dh-download-information a:visited, .dh-download-more-information a:visited, .dh-download-instruction a:visited, .dh-download-footer-text a:visited {
+	color:     blue;
+}

@@ -1,0 +1,543 @@
+[10:04am] slightlyoff: howdy
+[11:46am] tris left the chat room. (Read error: 60 (Operation timed out))
+[12:07pm] tris joined the chat room.
+[12:58pm] slightlyoff: hey tris, do you work on ehtereal?
+[1:30pm] fbos joined the chat room.
+[1:30pm] slightlyoff: howdy
+[1:30pm] fbos: Hi
+[1:31pm] fbos: I understand there's a chat 'round 2 PM PST ?
+[1:31pm] slightlyoff: that's the hope = )
+[1:31pm] slightlyoff: (this is Alex, btw)
+[1:31pm] fbos: About data binding... So, what's to talk about ?
+[1:32pm] fbos: Great, pleased to meet you, I am FranÁois incompatible encoding
+[1:32pm] slightlyoff: so we've known for a long time that Dojo is going to need some sort of nice way to provide data binding
+[1:32pm] slightlyoff: and bi-directional binding at that
+[1:32pm] fbos: Binding to databases or XML ?
+[1:33pm] slightlyoff: does it matter?
+[1:33pm] slightlyoff: one can be the other
+[1:33pm] fbos: Just wanted to make sure we were talking about the same thing
+[1:33pm] slightlyoff: oh, OK
+[1:33pm] fbos: Any plans currently ?
+[1:33pm] fbos: (BTW, anybody keeping a log for offline use ?)
+[1:33pm] slightlyoff: nope, other than to spec out a sane api for dojo to use on the client side
+[1:33pm] slightlyoff: (I am)
+[1:34pm] slightlyoff: and then provide some way for people to map that to data sources on servers
+[1:34pm] fbos: So, the hope is to say something like "bind control X to such and such at URL Y" ?
+[1:34pm] slightlyoff: we have all kinds of issues like paging, flat vs. hierarchial, etc. to work through
+[1:34pm] slightlyoff: if that's what the developer wants, yes
+[1:35pm] slightlyoff: but like all things Dojo, the easy things should be trivial and the hard things easier
+[1:35pm] fbos: I have to admit I stumbled upon Dojo when I was searching for an Ajax-style JavaScript solution.
+[1:35pm] fbos: I only used dojo.io.bind() at the moment.
+[1:35pm] slightlyoff: so if they want to bind a paged data set with bi-directional updates, that doesn't have to be the only thing we design for
+[1:35pm] slightlyoff: how are you finding it?
+[1:36pm] fbos: Great !
+[1:36pm] fbos: It's working just fine.
+[1:36pm] slightlyoff: I built a new package the other day
+[1:36pm] slightlyoff: it fixes some bugs that people were reporting with back-button stuff
+[1:36pm] fbos: Yes, I saw, but I'm using a checked out copy.
+[1:36pm] slightlyoff: ok
+[1:36pm] fbos: I thought I should be expanding my use slightly, because I have something currently. Let me explain, and it will probably be made clear.
+[1:36pm] slightlyoff: ahh = )
+[1:37pm] fbos: It's an eCommerce site (like everyone else). I want to update some values on screen when the user selects a country of destination.
+[1:37pm] slightlyoff: ok
+[1:37pm] fbos: On the server, I have a PHP script which generates XML which in turn contains things like <service class="expedited"><price>12.22</price><name>Expedited</name></service>
+[1:37pm] fbos: yada, yada
+[1:37pm] slightlyoff: righty
+[1:37pm] fbos: There can be multiple <service> items
+[1:37pm] slightlyoff: ok
+[1:38pm] fbos: So, I have an HTML SELECT control at the moment
+[1:38pm] fbos: I'm using dojo.io.bind to get at the XML, and then I'm parsing to create OPTION elements, live
+[1:39pm] slightlyoff: right, makes sense
+[1:40pm] fbos: It's slightly painful to create the elements by-hand
+[1:40pm] fbos: If there is some kind of data binding, I would like to say:
+[1:40pm] fbos: attach(ID of element, URL, XPath expression)
+[1:40pm] slightlyoff: ah, hrm
+[1:41pm] slightlyoff: so I guess I'm a bit wary of xpath right now (on the client, anyway)
+[1:41pm] slightlyoff: but I can see your point
+[1:41pm] fbos: Yeah, sure. That was in an ideal world, of course 
+[1:41pm] slightlyoff: heh
+[1:41pm] slightlyoff: if xpath is ideal, I want a new world 
+[1:42pm] fbos: Of couse, the third argument could be a function instead of a regular parameter, which could be handed off something (an element, perhaps ?), and could return the appropriate values
+[1:42pm] slightlyoff: right
+[1:42pm] slightlyoff: so I think the Dojo approach for something like this would be a widget
+[1:42pm] slightlyoff: which would handle the creation of the elements
+[1:42pm] slightlyoff: and the widget would get bound to the data source
+[1:42pm] slightlyoff: but I'm just ad-libbing here
+[1:42pm] fbos: Ok, NP
+[1:43pm] slightlyoff: since we don't even know what binding will look like yet
+[1:43pm] slightlyoff: I'm in the middle of an article on fast widget authoring
+[1:43pm] slightlyoff: but it's not done yet = \
+[1:43pm] fbos: Refreshing the control's values must || should be manual && automatic.
+[1:43pm] fbos: In my case, I know when to refresh - every time the user changes the destination country
+[1:44pm] fbos: But I can envision use cases where the values should refresh themselves.
+[1:46pm] slightlyoff: refresh themselves? based on what event?
+[1:46pm] fbos: Time ? Other controls changing values ? Randomly ?
+[1:46pm] slightlyoff: ok
+[1:47pm] fbos: Okay, third one's probably not that useful, but time is surely something important.
+[1:47pm] fbos: Some kind of polling, since we can't get a notification when the server's view of the world changes.
+[1:48pm] fbos: HTTP already offers "304 Not Modified" for such cases
+[1:49pm] slightlyoff: so we've already talked about things like mod_pubsub or LivePage for up-to-date communciation w/ the server
+[1:49pm] slightlyoff: but I've already had other requests for polling w/ bind()
+[1:50pm] fbos: Wasn't aware of that.
+[1:50pm] fbos: But it would probably be something interesting.
+[1:50pm] slightlyoff: I've started on the mod_pubsub port, but there are integration issues w/ the current server
+[1:50pm] slightlyoff: I started on the LivePage port yesterday
+[1:51pm] slightlyoff: and that looks more promising
+[1:51pm] PSquad32 joined the chat room.
+[1:51pm] PSquad32: hey there
+[1:51pm] PSquad32: <-- Patrick Lightbody
+[1:51pm] slightlyoff: hi Patrick!
+[1:51pm] fbos: Hello Patrick,
+[1:51pm] PSquad32: i'll mostly be lurking
+[1:51pm] fbos: How do you do ?
+[1:51pm] fbos: Ok
+[1:52pm] progrium joined the chat room.
+[1:52pm] slightlyoff: I'm trying like mad to get the test cases for the combo box data provider to pass so we have something to look at = )
+[1:53pm] fbos: Yummy!
+[1:53pm] slightlyoff: eh, there's not much there
+[1:53pm] slightlyoff: and I dislike the API
+[1:53pm] fbos: Well, something's better than nothing when we want to discuss
+[1:53pm] slightlyoff: but it would at be nice to have it at least semi-functional = )
+[1:54pm] PSquad32: who is the moderator for this meeting?
+[1:56pm] slightlyoff: I guess me = )
+[1:56pm] PSquad32: ok, is there an agenda?
+[1:56pm] slightlyoff: although I'm more inflamitory than most people
+[1:56pm] PSquad32: are you Alex?
+[1:56pm] slightlyoff: other than to come up w/ a sane set of APIs for producers and consumers of data, no
+[1:56pm] slightlyoff: yes, I'm alex
+[1:57pm] PSquad32: ok, well i suggest in the future that an agenda be set -- especially when you get more users, things can get hectic 
+[1:57pm] PSquad32: anyway, my personal feelings are that Dojo is missing a framework for bring users in to the fold and understanding what dojo is
+[1:57pm] progrium: yay for agendas
+[1:58pm] fbos: Okay, I gotta go, since my wife just came in.
+[1:58pm] fbos: Have a nice one, everyone !
+[1:58pm] fbos left the chat room.
+[1:58pm] PSquad32: given that it is 100% javascript, there is no reason you couldn't create a nice tutorial (using frames? eh, maybe) that allows users to enter in some templates/widgets/whatever and render them
+[1:58pm] PSquad32: lemme dig up a good example of this:
+[1:58pm] slightlyoff: well, I've started working on an article that discusses how to easily build widgets
+[1:58pm] slightlyoff: but yes, I see your point
+[1:59pm] PSquad32: http:/​​/​​www.laszlosystems.com/​​lps/​​laszlo-in-ten-minutes/​​
+[1:59pm] dylanks joined the chat room.
+[1:59pm] alerque_ joined the chat room.
+[1:59pm] PSquad32: see how they show you some code, plus what it is renders as? then they let you _change_ the code
+[1:59pm] progrium: or a video of making something cool like ruby on rails, haha
+[1:59pm] PSquad32: that would get people having that "Ah ha!" moment _much_ faster
+[1:59pm] schontz joined the chat room.
+[2:00pm] slightlyoff: so who's gonna help w/ this stuff?
+[2:00pm] slightlyoff: I agree w/ everything you're saying
+[2:00pm] slightlyoff: but I'm swamped
+[2:00pm] PSquad32: yes, help is definitely needed
+[2:00pm] PSquad32: what i found at OpenSymphony is that all you have to do is establish the framework, then others will do the ground work
+[2:01pm] PSquad32: for example, write one tutorial like in that example URL
+[2:01pm] PSquad32: others will write the rest
+[2:01pm] You changed the topic to "data binding for fun and profilt!".
+[2:01pm] dylanks: what's profilt?
+[2:02pm] slightlyoff: you can "/topic" just as well as I can 
+[2:03pm] slightlyoff: one of the things that might good would be a tutorial on how to use JS inside the wiki
+[2:03pm] slightlyoff: since that might be somepalce where people could work on this kind of thing
+[2:03pm] dylanks: are mda or trenka going to join us?
+[2:03pm] slightlyoff: dunno, ping 'em
+[2:03pm] slightlyoff: I would hope for at least one or the other
+[2:05pm] slightlyoff: so it's 2:05 by my clock
+[2:05pm] PSquad32: i concur
+[2:05pm] PSquad32: (that it is 2:05 )
+[2:05pm] dylanks: no from trenka
+[2:05pm] schontz left the chat room.
+[2:05pm] dylanks: no response from mda
+[2:05pm] slightlyoff: hrm
+[2:05pm] dylanks: oh wait, mda is on his way
+[2:05pm] slightlyoff: great!
+[2:06pm] PSquad32: who is mda?
+[2:06pm] slightlyoff: Mark Anderson
+[2:06pm] slightlyoff: author of the the Burst library
+[2:06pm] dylanks: burstlib
+[2:06pm] slightlyoff: and a freaking smart guy
+[2:06pm] slightlyoff: he is a committer to netWindows as well
+[2:07pm] slightlyoff: he also came up w/ the basics of the bind() API and the Dojo bootstrap system
+[2:07pm] mda joined the chat room.
+[2:07pm] slightlyoff: speak of the devil!
+[2:07pm] slightlyoff: hi Mark
+[2:07pm] mda: hi.
+[2:07pm] dylanks: so data binding...
+[2:08pm] schontz joined the chat room.
+[2:08pm] mda: (hopefully i can stay on. currently my mac is in that "let me mysteriously abuse your disk indefinitely" mode.)
+[2:08pm] mda: yes data binding - what has happened since the last time we discussed it?
+[2:08pm] slightlyoff: nada
+[2:08pm] dylanks: well, not exactly
+[2:08pm] slightlyoff: I'm afraid = \
+[2:08pm] dylanks: basically I've implemented some very basic interfaces for it
+[2:09pm] dylanks: basically all it does now though is two things:
+[2:09pm] slightlyoff: as have I (but they're not passing my tests right now)
+[2:09pm] dylanks: fetch an external data file that is a JS object, load/eval it with dojo.io.bind, and provide it to a widget
+[2:09pm] dylanks: by specifying a dataProvider attribute
+[2:10pm] slightlyoff: right
+[2:10pm] dylanks: 2) an abstract dataProvider class
+[2:10pm] dylanks: that basically is something widgets can read and write to
+[2:10pm] mda: what is an example of a dataProvider attribute?
+[2:10pm] dylanks: dataProvider="someUrl" in markup
+[2:11pm] slightlyoff: dyaln, is this checked in somewhere that we can look at?
+[2:11pm] dylanks: the abstract data provider basically can live independently before a widget is created or after it is destroyed
+[2:11pm] dylanks: let me see
+[2:12pm] dylanks: the code to load it is checked in, but no example of the data itself yet
+[2:12pm] slightlyoff: Ok
+[2:12pm] dylanks: basically it is just a JS object of key value pairs
+[2:12pm] slightlyoff: so making this a bit more concrete, my current use case is for a combo box
+[2:12pm] dylanks: of which the value can also be objects
+[2:12pm] slightlyoff: right
+[2:12pm] slightlyoff: and I can easily see one for "grid" type data
+[2:12pm] slightlyoff: as well as tree-style data (trees, menus, etc.)
+[2:13pm] dylanks: basically anything where it isn't just a set of attributes
+[2:13pm] dylanks: or where incremental loading or replacement of data is needed
+[2:13pm] slightlyoff: and I'd like to come up with some set of classes/APIs that allow us to do these things asynchronously, in a paged way, and without tying us too strongly to any server implementation
+[2:14pm] slightlyoff: my first thought was that there should be a couple of mixins/interfaces for data providers
+[2:14pm] schontz left the chat room.
+[2:14pm] slightlyoff: and that they should all be asynchronous
+[2:14pm] dylanks: is everyone following what we're talking about?
+[2:14pm] progrium: yes and no
+[2:15pm] mda: afaik what is currently implemented isn't really data binding.
+[2:16pm] mda: it is more a convenience for a widget declaration to say where some remote data comes from.
+[2:16pm] dylanks: feel free to ask questions...
+[2:16pm] mda: but it is up to that widget implementation to programmatically decide what to do with that data.
+[2:16pm] dylanks: right
+[2:16pm] dylanks: I said it was primitive 
+[2:17pm] progrium: what's the alternative?
+[2:17pm] mda: whereas a "real" data binding would let you say something like: the width of this div should be equal to the temperature in alaska as obtained from some weather service.
+[2:17pm] progrium: ah
+[2:17pm] dylanks: negative widths? 
+[2:17pm] mda: it would be in kelvin 
+[2:18pm] slightlyoff: heh
+[2:18pm] slightlyoff: so lets work backwards from that definition
+[2:18pm] dylanks: so basically we need some ideas for ways of providing useful interfaces for both
+[2:19pm] slightlyoff: MDA's definition implies what you want
+[2:20pm] dylanks: right... just reframing the question...
+[2:20pm] slightlyoff: OK
+[2:20pm] mda: i think the missing (bridging) piece is that there has to be an indicator of what propert of the widget is being set.
+[2:20pm] mda: i mean, i guess it could be some property named "data" 
+[2:20pm] dylanks: yeah, right now it is dataProvider
+[2:21pm] mda: no, dataProvider is the url where you get the value.
+[2:21pm] mda: the question is what is the variable that is being set to that value?
+[2:21pm] mda: it is some property of the widget such as "combochoices" or "tablevalues"
+[2:22pm] mda: i think it has to be thought of that way, so that instead you can say that the width is equal to the result of some remote query.
+[2:22pm] mda: and so that you can actually set multiple distinct properties of a single widget to different data sources.
+[2:22pm] slightlyoff: so throwing a bit of every-more-icky reality into the situation: we can't detect property changes or act on them
+[2:22pm] slightlyoff: we can detect and act on function calls, however
+[2:23pm] progrium: getters and setters : \
+[2:23pm] dylanks: this is what we currently have as an interface:
+[2:23pm] dylanks:  this.getDataProvider = function(objRef, dataUrl) {
+[2:23pm] dylanks:  // FIXME: this is currently sync. To make this async, we made need to move
+[2:23pm] dylanks:  //this step into the widget ctor, so that it is loaded when it is needed
+[2:23pm] dylanks:  // to populate the widget
+[2:23pm] dylanks:  dojo.io.bind({
+[2:23pm] dylanks:  url: dataUrl,
+[2:23pm] dylanks:  load: function(type, evaldObj){
+[2:23pm] dylanks:  if(type=="load"){
+[2:23pm] dylanks:  objRef.dataProvider = evaldObj;
+[2:23pm] dylanks:  }
+[2:23pm] dylanks:  },
+[2:23pm] dylanks:  mimetype: "text/javascript",
+[2:23pm] dylanks:  sync: true
+[2:23pm] dylanks:  });
+[2:23pm] dylanks:  }
+[2:24pm] dylanks: yeah, getters and setters buy us that, but suck in having to have them
+[2:24pm] slightlyoff: or an observer that's keyed by name
+[2:24pm] slightlyoff: which you can listen to
+[2:25pm] slightlyoff: some function that gets called when a property gets set and passes that name in
+[2:25pm] slightlyoff: anyway, that's putting the cart before the horse
+[2:25pm] dylanks: right
+[2:26pm] mda: what i want to do is find a way where the common use cases require no coding at all.
+[2:26pm] slightlyoff: I agree w/ mda that we should be able to bind different properties to different sources
+[2:26pm] slightlyoff: amen = )
+[2:26pm] mda: i mean, except for core implementors.
+[2:26pm] slightlyoff: yes
+[2:26pm] dylanks:
+[2:27pm] slightlyoff: so we have a "mixInProperties" method that gets us some of the way there for properties that are set from the parsed ctor nodes
+[2:27pm] mda: but the person writing the table or combobox widget can just say "hey, i've got this property called griddata, which is an array".
+[2:27pm] mda: it doesn't care or want to know how that value comes in at run time.
+[2:27pm] slightlyoff: sure, but it has to have some kind of method for saying "ok, I've got this property called griddata, and I need to know when it gets updated"
+[2:28pm] dylanks: or when it has expired
+[2:28pm] slightlyoff: or anotherwise implicit syntax for saying "I want this to happen when this is set"
+[2:28pm] mda: and the person using the table or combobox widget can declare their widget instance to have that data come from: static inline content, or remote content as xml, or remote content as js, or some js function call, or some expression (xpath?) applied to another bound variable.
+[2:28pm] slightlyoff: yes
+[2:29pm] slightlyoff: each might also imply some kind of translator that we apply to set the end value
+[2:29pm] mda: i think all widgets have to implement a "redraw" method or something like that.
+[2:29pm] slightlyoff: they then scurry around saying "what changed?"
+[2:29pm] mda: if they *want* to optimize for what in particular has actually changed, they can do that.
+[2:29pm] slightlyoff: ah, hrm
+[2:29pm] mda: but minimally, all widgets have to implement that base method.
+[2:29pm] slightlyoff: damnit, I want watch() back in the language...
+[2:29pm] slightlyoff:
+[2:29pm] mda: that is how X Window widget sets usually did it back in the 80s, as i recall 
+[2:30pm] slightlyoff: yeah, that's how the heavyweight widget sets do it today
+[2:30pm] slightlyoff: (Isomorphic, etc.)
+[2:30pm] manzoid joined the chat room.
+[2:30pm] mda: it would be something like the widget implementing changeNotify(propname, propvalue)
+[2:30pm] mda: and returning a boolean indicating that it has handled it or not.
+[2:31pm] mda: if not, or if the method doesn't exist, it calls the universal redraw() method.
+[2:31pm] slightlyoff: OK
+[2:31pm] slightlyoff: so I want something else for DOM-based widgets
+[2:32pm] slightlyoff: and I'll add this later: but I think I want a way to say "data bound to this property applies to this part of the template"
+[2:32pm] slightlyoff: although perhaps that's a separate but related problem
+[2:32pm] slightlyoff: right now, if I were to implement a redraw() method, it would have to know how to build each part of the widget over
+[2:33pm] mda: i've got this vague notion that your "template" should be merged somehow with metadata declaration of the widget.
+[2:33pm] slightlyoff: could be
+[2:33pm] slightlyoff: you could do that today by setting the templateString property in the ctor
+[2:33pm] dylanks: somewhat unrelated... for things like a grid or combobox, you need add/remove for data that populates subtemplates
+[2:33pm] slightlyoff: but they're usually pretty big/long
+[2:33pm] slightlyoff: yes
+[2:33pm] mda: since something somewhere needs to be able to say that the title property is a string without markup, etc.
+[2:34pm] mda: for kaiser i had to implement the ability to dynamically add new expander definitions for the textarea without a refresh.
+[2:34pm] mda: that was a bit of a pain.
+[2:34pm] slightlyoff: I can imagine
+[2:34pm] mda: because the code was very oriented around doing everything at constructor time.
+[2:34pm] slightlyoff: my bad 
+[2:35pm] mda: so imposing some requirements on widget writers i think is entirely fair.
+[2:35pm] slightlyoff: I agree
+[2:35pm] mda: in particular, doing everything at constructor time is natural for the web apps that are doing page refreshes all the time.
+[2:35pm] mda: but not for what we are imagining where they sit there forever.
+[2:35pm] slightlyoff: agreed
+[2:36pm] slightlyoff: also, I kind of get the feeling that it should always be easy for someone to take boilerplate widget code and wire things up
+[2:36pm] slightlyoff: so whatever constraints we impose shouldn't endanger that
+[2:36pm] slightlyoff: today, it's actually reasonably straightforward
+[2:37pm] mda: i also think there are two levels of declaration complexity.
+[2:37pm] slightlyoff: ?
+[2:37pm] mda: for the person writing a GUI declaration.
+[2:37pm] mda: there is the simple case where they just say that the grid data comes from this remote URL.
+[2:38pm] mda: and then various default policies are used for polling, or fetch once, etc.
+[2:38pm] mda: but then there is the more complex case where there is a level of indirection, so that the person can declare that stuff.
+[2:38pm] mda: they can say that the values of the griddata comes from invoking the "alaskatemp" service.
+[2:39pm] mda: and the "alaskatemp" service is declared elsewhere, with some properties about it.
+[2:39pm] mda: the difference is whether there is an explicit declaration of that data source, or it is all inline.
+[2:39pm] mda: you make it explicit if you want to set non-default treatment of it, or share it among multiple properties, or just make your code cleaner.
+[2:40pm] slightlyoff: sure
+[2:40pm] slightlyoff: this is starting to sound like the propertyset concept that Dylan and I have been working on
+[2:40pm] slightlyoff: but with the second level of indirection added
+[2:40pm] mda: another case of indirection is where you want to set the value to some calculation .
+[2:41pm] mda: some computed value.
+[2:41pm] slightlyoff: yes
+[2:41pm] mda: for example, suppose you want to set the width of the box to the temperature, *and* update a label that gives the temperature in farenheit.
+[2:41pm] slightlyoff: and in that case, you need some sort of selector syntax
+[2:41pm] mda: that *could* be done by a custom change notification handler.
+[2:41pm] mda: but instead i'd rather just declare both properties, and have the infrastructure do it.
+[2:42pm] slightlyoff: so would we then have properties that act as calculations?
+[2:42pm] slightlyoff: (properties of the widget, taht is)
+[2:43pm] dylanks: so we had talked a lot early on about basically providing what is in essence script based transformations of data
+[2:43pm] dylanks: so that the data from a remote source doesn't have to map directly to what a widget expects
+[2:44pm] slightlyoff: you would provide some sort of transformation object that acted as a proxy
+[2:44pm] slightlyoff: but we run into all kinds of dirty-data issues with back-propigation of changes from the UI
+[2:44pm] mda: laszlo and avalon have some support for such dependency tracking, as i recall.
+[2:45pm] mda: it is a familiar problem with every mature gui toolkit.
+[2:45pm] mda: i remember the old days of the motif XmForm....
+[2:45pm] slightlyoff: well, I'm glad that I'm running into problems of mature toolkits and not just immature toolkits = )
+[2:45pm] mda: you drag one thing, and it spends a minute vibrating with dependencies....
+[2:45pm] slightlyoff: heh
+[2:47pm] slightlyoff: I'd like it to be hard for users to hurt themselves like that...or at least an intentional choice
+[2:48pm] dylanks: any thoughts from anyone else, or have we overwhelmed you all?
+[2:49pm] slightlyoff: so I think the easy thing to do is mark data w/ an "isDirty" flag and refuse to back-propigate changes
+[2:49pm] slightlyoff: which is fine
+[2:50pm] slightlyoff: but it gets us back to the question of bi-directional data
+[2:50pm] slightlyoff: should we even try to solve it?
+[2:50pm] dylanks: the approach I've been taking is as follows
+[2:51pm] dylanks: basically I update on the client when I submit
+[2:51pm] dylanks: and then I update from the server when I'm notified of an update
+[2:51pm] dylanks: so basically I update twice
+[2:51pm] dylanks: the isDirty would apply between the two updates
+[2:52pm] slightlyoff: right
+[2:52pm] dylanks: it works ok with small data
+[2:52pm] slightlyoff: so you just make an end-run around synchronization
+[2:52pm] dylanks: not sure how/if it scales
+[2:52pm] dylanks: right
+[2:53pm] slightlyoff: so lets assume that we're working with a paged data set (sane), it won't really ever hurt the client too badly until and unless the server chokes on calculations for the updated ata
+[2:53pm] slightlyoff: data
+[2:53pm] slightlyoff: and if it's offloading some of that to the client anyway, no big deal
+[2:54pm] slightlyoff: which just leaves us w/ specifying how to propagate changes back
+[2:54pm] dylanks: or if the data change isn't accepted/allowed
+[2:54pm] slightlyoff: yes
+[2:54pm] slightlyoff: which should probably be the default?
+[2:55pm] dylanks: right
+[2:55pm] dylanks: so by how to propagate, you are wondering if we have an interface for specifying diffs?
+[2:55pm] slightlyoff: no, just a way to specify a URL or other type of method to pass the new data back to
+[2:56pm] slightlyoff: SOAP, REST, function call, etc.
+[2:56pm] dylanks: gotcha
+[2:56pm] dylanks: so basically something like dojo.io.bind, but that creates the thing to be sent/posted/enveloped/etc.
+[2:57pm] slightlyoff: yes, and a way of specifying it along with the bound data
+[2:57pm] slightlyoff: source
+[2:57pm] dylanks: right... so I'm currently doing this with post, and just populating a form
+[2:58pm] dylanks: for get/post requests at least
+[2:58pm] slightlyoff: right, I think that'll be a common case
+[2:58pm] slightlyoff: we're just turning the widget into a protocol participant
+[2:58pm] dylanks: right
+[2:58pm] slightlyoff: which is, frankly, what I think they should be doing
+[2:58pm] dylanks: so I guess there needs to be a way to specify what properties the server expects
+[2:59pm] slightlyoff: yeah, but I think this goes back to mda's concept of multiple levels of indirection
+[2:59pm] dylanks: for example, if there's a generic url, and then a property to specify the data record
+[2:59pm] dylanks: gotcha
+[2:59pm] slightlyoff: where each level of indirection can specify it's preferred method of handling updates
+[2:59pm] slightlyoff: and the one "closest" to the wire actually wins
+[2:59pm] dylanks: did we lose mda?
+[3:00pm] dylanks: seems like I'm talking a lot more now 
+[3:00pm] slightlyoff: : \
+[3:00pm] mda: mda just got called into a kaiser outage....
+[3:00pm] slightlyoff: ouch
+[3:00pm] slightlyoff: at least they pay you by the hour 
+[3:02pm] slightlyoff: so we've at least got a couple of organizing principles for doing a design:
+[3:03pm] dylanks: yes
+[3:03pm] mda: we haven't talked about xpath vs. javascript vs. something else.
+[3:03pm] mda: but i don't think we need to.
+[3:03pm] slightlyoff: my feeling is that at the end of the day, it's all gotta run through JS anyway
+[3:03pm] mda: because i think the answer is (1) you get a lot of mileage without any expressions, and (2) we can support both.
+[3:04pm] dylanks: agreed
+[3:04pm] slightlyoff: I agree on both counts
+[3:04pm] dylanks: and JS is the one that will get implemented first
+[3:04pm] mda: i might have been imagining it, but i thought i even saw an IETF draft for a "data:" url.
+[3:04pm] mda: for inline values....
+[3:04pm] dylanks: svg has that
+[3:05pm] slightlyoff: they use it for specifying paths, right?
+[3:05pm] dylanks: also for raster image data
+[3:06pm] dylanks: so any questions before Alex summarizes?
+[3:06pm] slightlyoff: well, I don't know that we have enough for a summary yet
+[3:06pm] slightlyoff: we have some principles:
+[3:06pm] slightlyoff: don't make the end-developer work
+[3:06pm] dylanks: (that's what I meant)
+[3:06pm] slightlyoff: make most translations implicit if possible, and put the burden on the widget author where you can't
+[3:07pm] slightlyoff: and allow layering of both data reading and writing activities for those that need it
+[3:07pm] slightlyoff: so, about those APIs...
+[3:07pm] slightlyoff:
+[3:08pm] slightlyoff: what SHOULD this look like to a.)
+[3:08pm] slightlyoff: the end developer
+[3:08pm] slightlyoff: b.) the widget author
+[3:09pm] slightlyoff: c.) the core infrastructure
+[3:09pm] slightlyoff: (in that order)
+[3:09pm] dylanks: well, a probably needs to be possible with just attributes
+[3:09pm] dylanks: for most common cases
+[3:09pm] slightlyoff: well, we've got attribute/subitem duality via the parser
+[3:10pm] dylanks: yes, those are equivalent in my mind... point was just some properties in markup
+[3:10pm] slightlyoff: but I agree, the syntax should lend itself to being settable as just an attr for most cases
+[3:10pm] dylanks: exactly
+[3:11pm] dylanks: ie dataProvider="someUrl"
+[3:11pm] slightlyoff: so how does the end widget author say: "set this property of the widget to be equal to this value from this peice of data"
+[3:11pm] slightlyoff: well, more like:
+[3:12pm] dylanks: something like <dataProvider xlink:href="someUrl"><map source="" target="" /></dataProvider>
+[3:12pm] slightlyoff: dataProvider="name:foo; source: someVariable;" bindData="localAttribute: foo.bar.baz"
+[3:12pm] slightlyoff: mda, suggestions?
+[3:13pm] dylanks: problem with two attributes is how do you tie them together
+[3:13pm] slightlyoff: yes
+[3:13pm] slightlyoff: I agree
+[3:13pm] dylanks: and multiple providers
+[3:13pm] slightlyoff: also true
+[3:14pm] dylanks: so really you need a data provider list
+[3:14pm] slightlyoff: yes
+[3:14pm] slightlyoff: and a compact syntax
+[3:14pm] dylanks: and here's where we run into trouble of how we want to specify them (xpath, js object style, css style, etc.)
+[3:14pm] mda: i guess i'm not a big fan of it being so provider-ish.
+[3:15pm] mda: makes it smell of java 
+[3:15pm] dylanks: meaning the name or how it works?
+[3:15pm] mda: the name.
+[3:15pm] dylanks: alex really like the name canvas
+[3:15pm] dylanks:
+[3:15pm] slightlyoff:
+[3:16pm] dylanks: I'm pretty sure I picked up the idea of Provider from either laszlo or flex
+[3:16pm] slightlyoff: and Java! don't forget how much I love java!
+[3:16pm] mda: <dojo:set name="width" service="alaskatemperature">
+[3:16pm] mda: : <dojo:set name="width" value="10">
+[3:16pm] mda: <dojo:set name="width" src="http:/​​/​​fsdf.org/​​temp.txt​"/​​​>
+[3:17pm] slightlyoff: no selector syntax (even an eval())?
+[3:17pm] mda: dojo:set name="width" expr-type="text/javascript" expr="1 + 1"/>
+[3:18pm] mda: <dojo:set name="width" expr-type="xpath" expr="$height * 2"/>
+[3:18pm] mda: or maybe js-expr and xpath-expr and forget about expr-type
+[3:18pm] slightlyoff: sure
+[3:18pm] slightlyoff: WFM
+[3:19pm] mda: <dojo:set name="width" url="data:10"/>
+[3:19pm] mda: that may be the same as src.....
+[3:19pm] mda: i'm just not sure what to do about things like "data:" and "javascript:"
+[3:20pm] dylanks: well, we have a few choices... attr name, separate attr, or wrap the attr value... is value="js( )"
+[3:22pm] slightlyoff: so MDA, I think we could get layering of this kind of thing using the propertyset mechanism
+[3:23pm] mda: ok.
+[3:23pm] slightlyoff: where you define your <set> tags somewhere, give them a name, and then mix them in by specifying them as properties to get mixed in
+[3:23pm] slightlyoff: or give the <set> a "type" and have it apply to all widgets of that type
+[3:24pm] slightlyoff: so from that perspective, I think we've got some of the layering groundwork done
+[3:24pm] slightlyoff: it doesn't sound like we're coming up w/ a simple syntax that you can use on the widget, though
+[3:25pm] slightlyoff: or rather, as an attribute of widget declaration
+[3:25pm] slightlyoff: like:
+[3:25pm] slightlyoff: <dojo:button set="???" ... />
+[3:25pm] mda: well, you can still say <combobox width="10">
+[3:25pm] mda: but i think for any value that isn't a literal, you have to be nested.
+[3:26pm] slightlyoff: alrighty
+[3:26pm] mda: <combobox width="10"><property name="height" xpath-expr="$width * 2">
+[3:26pm] dylanks: well, unless the data source is just a list of name value pairs
+[3:26pm] dylanks: that applies directly
+[3:26pm] slightlyoff: I'm actually fine with now that we've shown it's not easy 
+[3:27pm] slightlyoff: s/with/with that/
+[3:28pm] slightlyoff: so as for the widget author, what should (s)he be expecting?
+[3:28pm] slightlyoff: we mentioned the need to be notified
+[3:29pm] slightlyoff: and, worst case, provide for a full "repaint"
+[3:30pm] slightlyoff: man, while we're yapping, Schontzler going to town on the animation stuff
+[3:30pm] dylanks: yup
+[3:30pm] dylanks: I'm discussing that with him as well
+[3:31pm] slightlyoff: w00t!
+[3:32pm] slightlyoff: so how do we make this easy for widget authors?
+[3:32pm] mda: what i'd like to see for the widget author is something a bit like what i did in burst, where there is an explicit declaration of all the properties of the widget.
+[3:32pm] slightlyoff: howso?
+[3:32pm] slightlyoff: (pointer to code?)
+[3:32pm] mda: giving type, name, default value, help string in english, optional vs. mandatory, the usual thing.
+[3:33pm] mda: then, if they do that, the widget author is free to simply refer to this.mydata
+[3:33pm] mda: the values are just taken care of by the core, without the widget author knowing.
+[3:33pm] slightlyoff: so would that be a packed structure (object) that you set for every property that can be used this way?
+[3:34pm] slightlyoff: or more like a pre-preocessor?
+[3:36pm] mda: see http:/​​/​​burstproject.org/​​burst/​​webui/​​widgets/​​SortTable.js
+[3:37pm] slightlyoff: hrm, OK
+[3:38pm] dylanks: way too long for me to parse while chatting 
+[3:38pm] slightlyoff: if done this way, we could actually build implicit getters/setters for these things
+[3:38pm] mda: so you can see that PROP_DEFS data structure.
+[3:38pm] mda: which of course could have been done in XML for the true believers.
+[3:39pm] slightlyoff: heh
+[3:39pm] slightlyoff: the last thing this toolkit needs is a strong reliance on XML in environments where it's not free
+[3:40pm] mda: there is extra trickier in the build process where those same property declarations that are used by the code are *also* used in the generated documentation.
+[3:40pm] mda: http:/​​/​​burstproject.org/​​build/​​apidoc/​​html/​​classburst_1_1webui_1_1widgets_1_1SortTable.html
+[3:40pm] slightlyoff: custom parsing for doxygen?
+[3:41pm] mda: right.
+[3:41pm] mda: some bastard combination of perl and java.
+[3:41pm] mda: you don't want to see how the sausage is made.
+[3:42pm] mda: oh wait, you guys have already been exposed to my makefiles.... 
+[3:43pm] dylanks:
+[3:44pm] slightlyoff: yeah, they're the reason I keep clinging to my hope of generating docs straight from Rhino 
+[3:45pm] mda: keep in mind that this declaration can also be the basis some day of a graphical gui builder...
+[3:46pm] slightlyoff: yeah, with automatic property introspection
+[3:46pm] slightlyoff: OK, this is actually pretty siple
+[3:46pm] slightlyoff: simple
+[3:46pm] slightlyoff: and retrofitting the mix-in properties code to handle this is straightforward
+[3:50pm] slightlyoff: so widget authors should be able to expect that any property built this way will be available for binding
+[3:50pm] slightlyoff: are there open loose ends that I'm missing before I go post a log of this discussion the Dojo site?
+[3:53pm] mda: well, there is the aspect of how this relates to styling.
+[3:53pm] dylanks: how so?
+[3:54pm] mda: well, you might want to be able to tie color, width, background image, etc. to remote data.
+[3:54pm] dylanks: how to connect data to style attributes
+[3:55pm] mda: or make it computed.
+[3:55pm] mda: right; the issue is that it is a case where there is no explicit metadata for the properties.
+[3:55pm] mda: the stumbling block is the general problem we've hit before, which is how to support styling of widgets without exposing too much of their internals.
+[3:55pm] slightlyoff: well, those are DOM properties generally, and I say that's up toe the wiget
+[3:55pm] slightlyoff: widget
+[3:56pm] dylanks: I was going to say it's the widget authors pain as well
+[3:56pm] dylanks: but maybe we provide something to widget authors to ease their map
+[3:56pm] dylanks: pain, not map
+[3:56pm] slightlyoff: I can see building a proxy attribute and doing a connect() to the implicit setter
+[3:56pm] slightlyoff: and maybe make a shorthand for that pattern from the template?
+[3:57pm] slightlyoff: or from the widget?
+[3:57pm] mda: one of these other toolkits has a delegation model.
+[3:58pm] mda: i forget which one....
+[3:58pm] slightlyoff: hrm, how would that help?
+[3:58pm] mda: it helps the widget implementor.
+[3:58pm] slightlyoff: I was trying to think through style and DOM value assignment the other day
+[3:58pm] slightlyoff: and given the issues, I eventually wound up w/ some sort of eval()-able JS that the widget author can set
+[3:59pm] mda: they can say that setting the color of the widget (which is the js thing) is equivalent of setting the DOM/CSS color of this member DOM object.
+[3:59pm] slightlyoff: ah, OK
+[4:00pm] slightlyoff: a quick google turns up lots of references to event delegation models
+[4:00pm] slightlyoff: but nothing about property setting (or nothing that I'm seeing)
+[4:01pm] slightlyoff: boodman had mentioned that XBL has an inherits tag that handles something like this
+[4:01pm] slightlyoff: but since we can't count on sanity for property setting, it needs to be more flexible
+[4:01pm] slightlyoff: take the case of setting a CSS class
+[4:02pm] slightlyoff: I SHOULD be able to say node.className = "foo"
+[4:02pm] slightlyoff: but some browsers prefer setAttribute("class", "foo");
+[4:03pm] slightlyoff: so do we just punt on this for now and revisit as necesaray?
+[4:03pm] mda: i think so.
+[4:05pm] slightlyoff: OK
+[4:05pm] slightlyoff: alright, we just crossed the oh-so-magical 2-hour line
+[4:05pm] slightlyoff: I'm gonna cut this off now for the sake of everyone = )

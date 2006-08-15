@@ -1,0 +1,32 @@
+@CHARSET "UTF-8";
+
+@import "sitewide-iefixes.css";
+@import "bubbles-iefixes.css";
+
+#dhTopShadow {
+	background-image: none;
+	filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='/images/framerShadowTop.png', sizingMethod='scale');
+}
+#dhBottomShadow {
+	background-image: none;
+	filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='/images/framerShadow.png', sizingMethod='scale');
+}
+
+/* These font sizes aren't really IE specific; the problem is that  
+ * bubbles-iefixes sets the font sizes and is included after frames.css
+ * The real fix is that we should load sitewide, sitewide-iefixes, 
+ * bubbles, bubbles-iefixes, frames, frames-iefixes instead of all 
+ * the generic, then all the IE-specific - but no good way to do that...
+ */
+.dh-share-from {
+	font-size:	small;
+}
+.dh-share-link {
+	font-size:	small;
+}
+.dh-share-description {
+	font-size:	x-small;
+}
+.dh-share-to {
+	font-size:	x-small;
+}

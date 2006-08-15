@@ -1,0 +1,30 @@
+/* -*- mode: IDL; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
+#include "nsISupports.idl"
+#include "hippoIServiceListener.idl"
+
+[scriptable,uuid(8bf6de0a-ed8f-47af-8757-41551542d196)]
+interface hippoIService : nsISupports {
+    readonly attribute AUTF8String serverUrl;
+
+    void start(in AUTF8String serverUrl);
+    void stop();
+
+    boolean isConnected();
+    
+    void setListener(in hippoIServiceListener listener);
+
+    void joinChatRoom(in AUTF8String chatId, in boolean participant);
+    void leaveChatRoom(in AUTF8String chatId);
+    void showChatWindow(in AUTF8String chatId);
+    void sendChatMessage(in AUTF8String chatId, in AUTF8String text);
+
+    void notifyPageShared(in AUTF8String postId, in AUTF8String url);
+};
+
+
+%{ C++
+#define HIPPO_SERVICE_CID \
+  { 0xfb192a55, 0xb1de, 0x4b23, \
+      { 0xa5, 0xb2, 0xa5, 0xad, 0xf8, 0xa4, 0xe4, 0x46 } }
+#define HIPPO_SERVICE_CONTRACTID "@mugshot.org/hippoService"
+%}

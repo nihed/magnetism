@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<server>
+    <mbean code="com.dumbhippo.mbean.HippoService" name="dumbhippo.com:service=Hippo">
+    	<!-- Initialize this service after our session MBeans are initialized -->
+    	<depends>jboss.j2ee:service=EJB3,module=dumbhippo.ejb3</depends>
+    </mbean>
+    <mbean code="com.dumbhippo.statistics.StatisticsService" name="dumbhippo.com:service=Statistics">
+        <depends>dumbhippo.com:service=Hippo</depends>
+        <depends>jboss.j2ee:service=EJB3,module=dumbhippo.ejb3</depends>
+   </mbean>
+</server>

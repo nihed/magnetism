@@ -1,0 +1,35 @@
+<html>
+<head>
+<link rel="stylesheet" type="text/css" href="http://dojotoolkit.org/css/screen.css" media="screen">
+<link rel="stylesheet" type="text/css" href="http://dojotoolkit.org/css/print.css" media="print">
+</head>
+<body class="community">
+<!--#include virtual="/rest_template/header.html" -->
+<h1>Community</h1>
+<h3>Mailing Lists</h3>
+<ul>
+	<li><a href="/mailman/listinfo/dojo-interest">Dojo Interest and Discussion List (probably what you want)</a> 
+	<a href="http://news.gmane.org/gmane.comp.web.dojo.user">(archives)</a></li>
+	<li><a href="http://netwindows.org/mailman/listinfo/ng-dhtml_netwindows.org">Developer Discussion List (subscription held for approval)</a> 
+	<a href="http://news.gmane.org/gmane.comp.web.dojo.devel">(archives)</a></li>
+	<li><a href="/mailman/listinfo/dojo-checkins">Dojo Toolkit Checkins</a> 
+	<a href="/pipermail/dojo-checkins/">(archives)</a></li>
+</ul>
+
+<h3>IRC</h3>
+<ul>
+	<li>irc.freenode.net #dojo</li>
+	<li>Regular meeting time most Wednesdays @ 2PM PST.</li>
+</ul>
+
+<h3>Wiki</h3>
+<p>
+	Dojo maintains a publicly-editable Wiki at <a
+	href="http://dojo.jot.com">dojo.jot.com</a>. It contains information on how
+	to get Dojo source code and many useful code snippets and HOWTOs.
+</p>
+
+<!--#include virtual="/rest_template/sidebar.html" -->
+<!--#include virtual="/rest_template/footer.html" -->
+</body>
+</html>

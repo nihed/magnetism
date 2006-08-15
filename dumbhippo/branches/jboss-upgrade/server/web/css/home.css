@@ -1,0 +1,164 @@
+@CHARSET "UTF-8";
+
+/* ------------ STYLES SPECIFIC TO /HOME ------------ */
+
+@import "sitewide.css";
+@import "bubbles.css";
+@import "music.css";
+
+/* FIXME: dh-right-box-text is no longer specific to home? */
+.dh-right-box-text {
+	font-size:				x-small;
+	width:                  180px;
+	color:					#cecece;
+	text-align:				justify;
+	padding:				3px;
+	margin:					0;
+}
+
+/* ------------ GROUP LISTING ------------ */
+.dh-groups {
+	text-align:				center;
+	clear:					both;
+	height:					180px;
+}
+a.dh-group {
+	width:					58px;
+    height:				    80px;
+	overflow:               hidden;
+	display:				block;
+	padding:				0px;
+	font-size:				small;
+	text-align:				center;
+	color:					#fff500;
+	background-color:		inherit;
+	border:					0;
+	float:					left;
+}
+a.dh-group img.dh-headshot {
+	cursor:					pointer;
+}
+div.dh-groups a.dh-group {
+	margin-bottom:			3px;
+}
+a.dh-group:link {
+	color:					#fff500;
+	background-color:		inherit;
+}
+a.dh-group:visited {
+	color:					#fff500;
+	background-color:		inherit;
+}
+.dh-group-photo {
+	width:					48px;
+	height:					48px;
+	background-color:		#99cc00;
+	border:					0;
+}
+.dh-group-none {
+
+}
+/* ------------ PEOPLE LISTING ------------ */
+
+.dh-people {
+	text-align:				center;
+	clear:					both;
+	height:					180px;
+}
+.dh-invites-left {
+	color:					#fff500;
+	background-color:		inherit;
+}
+
+.dh-person {
+	font-size:				small;
+	width:				    58px;
+	height:				    80px;
+	overflow:               hidden;
+	display:				block;
+	margin:					1px;
+	padding:				0px;
+	text-align:				center;
+	color:					white;
+	background-color:		inherit;
+	border:					0;
+	float:					left;
+}
+
+a.dh-person {
+	color:					#fff500;
+}
+
+.dh-listed-person {
+	font-size:				small;
+}
+
+.dh-people .dh-listed-person {
+	width:					145px;
+	text-align:				left;	
+	display:				block;	
+	margin-left:            2px;
+	margin-top:			    5px;
+	margin-bottom:			15px;
+	padding:				0px;
+	color:					white;
+	background-color:		inherit;
+	border:					0;
+	float:                  left;
+}
+
+.dh-people .dh-listed-person-with-invite-link {
+	width:					145px;
+	text-align:				left;	
+	display:				block;	
+	margin-left:            2px;
+	margin-top:			    5px;
+	padding:				0px;
+	color:					white;
+	background-color:		inherit;
+	border:					0;
+	float:                  left;
+}
+
+.dh-invite-link {
+    font-size:              small;
+	text-align:				left;	
+	margin-bottom:          15px;
+	margin-left:            2px;
+}
+
+a.dh-listed-person {
+	color:					#fff500;
+}
+
+a.dh-listed-person-with-invite-link {
+	color:					#fff500;
+}
+
+a.dh-invite-link {
+	color:					#fff500;
+}
+
+a.dh-person img.dh-headshot {
+	cursor:					pointer;
+}
+div.dh-people a.dh-person {
+	margin-bottom:			3px;
+}
+a.dh-person:link {
+	color:					#fff500;
+	background-color:		inherit;
+}
+a.dh-person:visited {
+	color:					#fff500;
+	background-color:		inherit;
+}
+.dh-person-photo {
+	width:					48px;
+	height:					48px;
+	background-color:		#99cc00;
+	border:					0;
+}
+.dh-person-none {
+
+}

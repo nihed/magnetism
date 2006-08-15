@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<web-app xmlns="http://java.sun.com/xml/ns/j2ee"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd"
+    version="2.4">
+
+   <display-name>DumbHippo</display-name>
+   <description>
+       The DumbHippo web application  
+   </description>
+   
+   <!-- URLs hard-coded to go to our custom servlets -->
+    
+    <servlet>
+      <servlet-name>HttpMethodsServlet</servlet-name>
+      <servlet-class>com.dumbhippo.web.servlets.HttpMethodsServlet</servlet-class>
+      <load-on-startup>1</load-on-startup>
+    </servlet>   
+
+    <servlet>
+      <servlet-name>HttpMethodsServlet2</servlet-name>
+      <servlet-class>com.dumbhippo.web.servlets.HttpMethodsServlet2</servlet-class>
+      <load-on-startup>1</load-on-startup>
+    </servlet>
+
+   <servlet>
+      <servlet-name>PostThumbnailServlet</servlet-name>
+      <servlet-class>com.dumbhippo.web.servlets.PostThumbnailServlet</servlet-class>
+      <load-on-startup>1</load-on-startup>
+    </servlet>   
+
+   <servlet>
+      <servlet-name>NowPlayingThemePhotoServlet</servlet-name>
+      <servlet-class>com.dumbhippo.web.servlets.NowPlayingThemePhotoServlet</servlet-class>
+      <load-on-startup>1</load-on-startup>
+    </servlet>   
+
+   <servlet>
+      <servlet-name>PersonPhotoServlet</servlet-name>
+      <servlet-class>com.dumbhippo.web.servlets.PersonPhotoServlet</servlet-class>
+      <load-on-startup>1</load-on-startup>
+    </servlet>   
+
+    <servlet>
+      <servlet-name>GroupPhotoServlet</servlet-name>
+      <servlet-class>com.dumbhippo.web.servlets.GroupPhotoServlet</servlet-class>
+	  <load-on-startup>1</load-on-startup>
+	</servlet>
+
+    <servlet>
+      <servlet-name>RedirectServlet</servlet-name>
+      <servlet-class>com.dumbhippo.web.servlets.RedirectServlet</servlet-class>
+      <load-on-startup>1</load-on-startup>
+    </servlet>
+
+    <servlet>
+      <servlet-name>WantsInServlet</servlet-name>
+      <servlet-class>com.dumbhippo.web.servlets.WantsInServlet</servlet-class>
+      <load-on-startup>1</load-on-startup>
+    </servlet> 
+
+    <servlet>
+      <servlet-name>SigninServlet</servlet-name>
+      <servlet-class>com.dumbhippo.web.servlets.SigninServlet</servlet-class>
+      <load-on-startup>1</load-on-startup>
+    </servlet> 
+
+    <servlet>
+      <servlet-name>AbnormalErrorServlet</servlet-name>
+      <servlet-class>com.dumbhippo.web.servlets.AbnormalErrorServlet</servlet-class>
+      <load-on-startup>1</load-on-startup>
+    </servlet>
+
+    <servlet>
+      <servlet-name>SendInviteServlet</servlet-name>
+      <servlet-class>com.dumbhippo.web.servlets.SendInviteServlet</servlet-class>
+    </servlet>    
+
+	<!--  I can't figure out how to handle "all error codes" - "*" doesn't work afaict -->
+	<error-page>
+      <error-code>404</error-code>
+      <location>/unknownlink</location>
+	</error-page>
+
+	<error-page>
+      <error-code>500</error-code>
+      <location>/abnormalerror</location>
+	</error-page>
+
+	<error-page>
+		<exception-type>java.lang.Throwable</exception-type>
+		<location>/abnormalerror</location>
+	</error-page>
+    
+   <servlet-mapping>
+      <servlet-name>HttpMethodsServlet</servlet-name>
+      <url-pattern>/xml/*</url-pattern>
+   </servlet-mapping>
+   
+   <servlet-mapping>
+      <servlet-name>HttpMethodsServlet</servlet-name>
+      <url-pattern>/text/*</url-pattern>
+   </servlet-mapping>
+
+   <servlet-mapping>
+      <servlet-name>HttpMethodsServlet</servlet-name>
+      <url-pattern>/action/*</url-pattern>
+   </servlet-mapping>
+
+   <servlet-mapping>
+      <servlet-name>HttpMethodsServlet2</servlet-name>
+      <url-pattern>/api-docs/*</url-pattern>
+   </servlet-mapping>
+   
+   <servlet-mapping>
+      <servlet-name>RedirectServlet</servlet-name>
+      <url-pattern>/redirect</url-pattern>
+   </servlet-mapping>
+   
+   <servlet-mapping>
+      <servlet-name>SendInviteServlet</servlet-name>
+      <url-pattern>/sendinvite</url-pattern>
+   </servlet-mapping>
+
+   <servlet-mapping>
+      <servlet-name>PersonPhotoServlet</servlet-name>
+      <url-pattern>/upload/headshots</url-pattern>    
+   </servlet-mapping>
+   
+   <servlet-mapping>
+      <servlet-name>PersonPhotoServlet</servlet-name>
+	  <url-pattern>/files/headshots/*</url-pattern>      
+   </servlet-mapping>   
+
+   <servlet-mapping>
+      <servlet-name>GroupPhotoServlet</servlet-name>
+      <url-pattern>/upload/groupshots</url-pattern>
+   </servlet-mapping>
+   
+   <servlet-mapping>
+      <servlet-name>GroupPhotoServlet</servlet-name>
+      <url-pattern>/files/groupshots/*</url-pattern>
+   </servlet-mapping>   
+   
+   <servlet-mapping>
+      <servlet-name>PostThumbnailServlet</servlet-name>
+      <url-pattern>/upload/postinfo</url-pattern>
+   </servlet-mapping>      
+   
+   <servlet-mapping>
+      <servlet-name>PostThumbnailServlet</servlet-name>
+      <url-pattern>/files/postinfo/*</url-pattern>
+   </servlet-mapping>   
+
+   <servlet-mapping>
+      <servlet-name>NowPlayingThemePhotoServlet</servlet-name>
+      <url-pattern>/upload/nowplaying-themes</url-pattern>
+   </servlet-mapping>      
+   
+   <servlet-mapping>
+      <servlet-name>NowPlayingThemePhotoServlet</servlet-name>
+      <url-pattern>/files/nowplaying-themes/*</url-pattern>
+   </servlet-mapping>   
+
+   <servlet>
+      <servlet-name>VerifyServlet</servlet-name>
+      <servlet-class>com.dumbhippo.web.servlets.VerifyServlet</servlet-class>
+   </servlet>   
+   
+   <servlet-mapping>
+      <servlet-name>VerifyServlet</servlet-name>
+      <url-pattern>/verify</url-pattern>
+   </servlet-mapping>
+
+   <servlet-mapping>
+      <servlet-name>AbnormalErrorServlet</servlet-name>
+      <url-pattern>/abnormalerror</url-pattern>
+   </servlet-mapping>
+
+   <servlet-mapping>
+      <servlet-name>WantsInServlet</servlet-name>
+      <url-pattern>/wantsin</url-pattern>
+   </servlet-mapping>
+
+   <servlet-mapping>
+      <servlet-name>SigninServlet</servlet-name>
+      <url-pattern>/signinpost</url-pattern>
+   </servlet-mapping>
+
+   <!-- Map everything else to our URL-Rewriting servlet -->  
+
+   <servlet>
+      <servlet-name>RewriteServlet</servlet-name>
+      <servlet-class>com.dumbhippo.web.servlets.RewriteServlet</servlet-class>
+      <!-- Every page (other than psa-*) must be in one of these lists; please keep them alphabetical
+           note that there is special-casing for download and we-miss-you in RewriteServlet, though
+           they are listed below for completeness -->
+      <init-param>
+          <param-name>noSignin</param-name>
+          <param-value>busy,comingsoon,error,flash,public-groups,signup,summit,unknownlink,upgrade,who-are-you,robots.txt</param-value>
+      </init-param>
+      <init-param>
+          <param-name>requiresSigninStealth</param-name>
+          <param-value>about,artist,bookmark,faq,framer,getradar,group,groups,landing,links,links-learnmore,main,members,music,person,privacy,radar-html,radar-learnmore,radar-themes,search,terms,tv,visit,web-services</param-value>
+      </init-param>
+      <init-param>
+          <param-name>requiresSignin</param-name>
+          <param-value>account,admin,chatwindow,chatwindow-disabled,create-group,download,friends,group-account,group-invitation,group-invitations,home,invitation,invitation-admin,radar-theme-creator,sharelink,sharelink-disabled,sharephotoset,sharephotoset-first,stacker,stacker-iframe,statistics,we-miss-you</param-value>
+      </init-param>
+      <load-on-startup>1</load-on-startup>
+   </servlet>   
+
+   <servlet-mapping>
+      <servlet-name>RewriteServlet</servlet-name>
+      <url-pattern>/</url-pattern>
+   </servlet-mapping>
+  
+   <mime-mapping>
+   		<extension>swf</extension>
+   		<mime-type>application/x-shockwave-flash</mime-type>
+   </mime-mapping>
+
+   <welcome-file-list>
+      <welcome-file>index.html</welcome-file>
+   </welcome-file-list>
+</web-app>
+        

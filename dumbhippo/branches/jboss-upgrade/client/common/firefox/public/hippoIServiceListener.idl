@@ -1,0 +1,14 @@
+/* -*- mode: IDL; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
+#include "nsISupports.idl"
+
+[scriptable, uuid(2308cdf8-9513-4e90-be59-985858d65a66)]
+interface hippoIServiceListener : nsISupports {
+    void onConnect();
+    void onDisconnect();
+    void onUserJoin(in AUTF8String chatId, in AUTF8String userId, in boolean participant);
+    void onUserLeave(in AUTF8String chatId, in AUTF8String userId);
+    void onMessage(in AUTF8String chatId, in AUTF8STring userId, in AUTF8String message, in double timestamp, in long serial);
+    void onReconnect(in AUTF8String chatId);
+
+    void userInfo(in AUTF8String userId, in AUTF8String name, in AUTF8String smallPhotoUrl, in AUTF8String arrangementName, in AUTF8String artistName, in boolean musicPlaying);
+};

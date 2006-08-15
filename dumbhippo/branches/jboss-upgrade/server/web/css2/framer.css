@@ -1,0 +1,464 @@
+@CHARSET "UTF-8";
+
+body {
+	background-color: 	white;
+	font-family: 		sans-serif;
+	margin:				0px;
+	overflow: 			hidden; /* no scrollbar */
+	font-size:          13px;
+}
+#dhMain {
+	position: 	relative;
+	height: 	125px;
+}
+/* white border, without using border attribute
+   which messes us up for firefox vs. ie. Note 
+   that it's important that the width here is 
+   even, or it will trigger an ie bug. */
+#dhPostBubbleContainer {
+	position: absolute;
+	height:	108px;
+	top:	6px;
+	left: 	3px;
+	width:	330px;
+}
+
+#dhPostBubbleContainerBackground {
+	position: absolute;
+	top: 0px;
+	left: 6px;
+	height: 108px;
+	width: 315px;
+	background-color: white;
+}
+
+#dhPostBubbleContainerBackgroundLeft {
+	position: absolute;
+	left: 3px;
+	top: 12px;
+	height: 90px;
+	width: 3px;
+	background-color: white;
+}
+
+#dhPostBubbleContainerBackgroundRight {
+	position: absolute;
+	right: 0px;
+	top: 12px;
+	height: 90px;
+	width: 3px;
+	background-color: white;
+}
+
+/* orange background */
+#dhPostBubbleBackground {
+	position:			absolute;
+	background-color:	#F16D1C;
+	height:				102px;
+	top:				3px;
+	left: 				3px;
+	width:				324px;
+}
+#dhPostBubble {
+	position:			absolute;
+	background-color: 	transparent;
+	height:				92px;
+	top:				3px;
+	left: 				3px;
+	width:				321px;
+	margin-right:		3px;
+	color:				white;
+	overflow:			hidden;
+}
+
+#dhPostBubbleSE {
+	position: 	absolute;
+	bottom:		0px;
+	right:		0px;
+	background-image: url(/images2/framer/ocnr_br.gif);
+	width:		12px;
+	height:		12px;
+	overflow:   hidden;
+}
+
+#dhPostBubbleNE {
+	position: 	absolute;
+	top:		0px;
+	right:		0px;
+	background-image: url(/images2/framer/ocnr_tr.gif);
+	width:		12px;
+	height:		12px;
+	overflow:   hidden;
+}
+#dhPostBubbleNW {
+	position: 	absolute;
+	top:		0px;
+	left:		0px;
+	background-image: url(/images2/framer/ocnr_tl.gif);
+	width:		12px;
+	height:		12px;
+	overflow:   hidden;
+}
+#dhPostBubbleSW {
+	position: 	absolute;
+	bottom:		0px;
+	left:		0px;
+	background-image: url(/images2/framer/ocnr_bl.gif);
+	width:		12px;
+	height:		12px;
+	overflow:   hidden;
+}
+		
+#dhBottomShadow {
+	position:	absolute;
+	width:		100%;
+	height:		12px;
+	left: 		0px;
+	bottom:		0px;
+	background-image: url(/images2/framer/framerShadow.png);
+	background-color: transparent;
+	background-repeat: repeat-x;
+	background-position: bottom;
+	
+	/* In IE we use activex to draw the png */
+}
+#dhTopShadow {
+	position:	absolute;
+	width:		100%;
+	height:		12px;
+	left: 		0px;
+	top:		0px;
+	background-image: url(/images2/framer/framerShadowTop.png);
+	background-color: transparent;
+	background-repeat: repeat-x;
+	z-index:	1;
+	
+	/* In IE we use activex to draw the png */
+}
+
+.dh-framer-share {
+	width:					330px;
+	position:				relative;
+}
+
+.dh-framer-from-container {
+	position:				absolute;
+	left:					5px;
+	top:					5px;
+}
+
+.dh-framer-from-area {
+	position:				relative;
+}
+
+.dh-headshot {
+	border: none;
+}
+
+.dh-framer-headshot {
+	padding:				0px;
+	border:					3px solid white;
+	width:					60px;
+	height:					60px;
+}
+
+.dh-framer-from {
+	font-size:				12px;
+	color:					black;
+	background-color:		inherit;
+	padding-top:			5px;
+	text-align:				center;
+}
+
+a.dh-framer-from {
+	display:				block;
+	color:					black;
+	background-color:		inherit;
+	font-size:				12px;
+	float:					none;
+	margin-left:			auto;
+	margin-right:			auto;
+}
+
+a.dh-headshot:link {
+	color:					#e5e920;
+	background-color:		inherit;
+}
+
+.dh-framer-content-container {
+	position:				absolute;
+	left:					78px;
+	top:					5px;
+	height:					90px;
+}
+
+.dh-framer-content {
+	position:				relative;
+	height:					90px;
+}
+
+#dhFramerDescription {
+	width:					230px;
+	height:					45px;
+	overflow:				hidden;
+}
+
+#dhFramerDescriptionPopup {
+	position:				absolute;
+	overflow:				scroll;
+	border:					1px solid black;
+	background:				#F38E1C;
+	width: 					500px;
+	height:					60px;
+}
+
+.dh-framer-sent-to {
+	position:				absolute;
+	bottom:					0px;
+	left:					5px;
+	width:					230px;
+	text-align:				right;	
+	font-size:				12px;
+}	
+
+a.dh-framer-title {
+	font-weight:			bold;
+	color:					white;
+	background-color:		inherit;
+	position:				relative;
+	display:				block;
+	width:					365px;
+	overflow:				hidden;
+	white-space:			nowrap;
+	text-overflow:			ellipsis;
+}
+
+#dhPostChatAreaContainer {
+	position:			absolute;
+	background-color:	transparent;
+	bottom:				0px;
+	height:				78px;
+	width:				100%;
+}
+
+#dhPostActionsTitle {
+	position: 			absolute;
+	right:				26px; /* 20 + 6 for dhPostChatArea margin */
+	bottom:				78px;
+	background-image: 	url(/images2/framer/lslogoframer.gif);
+	width:				128px;
+	height:				31px;
+	overflow:   		hidden;
+}
+
+#dhPostChatArea {
+	position:			relative;
+	background-color: 	#F38E1C;
+	height: 			78px;
+	margin-left:		6px;
+	margin-right: 		6px;
+}
+
+#dhChatAreaNE {
+	position: 			absolute;
+	top:				0px;
+	right: 				0px;
+	background-image: 	url(/images2/framer/ltocnr_tr.gif);
+	width:				12px;
+	height:				12px;
+	overflow:  			hidden;
+}
+/* If the width of the page is odd, then right aligned elements
+ * like dhChatAreaNE are positioned one pixel too far to the
+ * left. We use a 1px white div aligned in the same way to trim off 
+ * a pixel from the the block to match, leaving only a very hard
+ * to detect problem. (A margin of 7px instead of 6px.) If the browser
+ * is non-buggy, then this div ends up in the white margin and
+ * has no effect.
+ */
+#dhChatAreaBorderWhiteout {
+	position: 	absolute;
+	width:		1px;
+	height:		100%;
+	right:		-1px;
+	top:		0px;
+	background-color: white;
+}
+#dhPostSwarmInfo {
+	position: 		absolute;
+	bottom: 		100%;
+	left: 			340px;
+	margin-bottom: 	2px;
+	font-weight:	bold;
+	color: 		 #014AC4;
+}
+
+#dhPostChatCount {
+}
+
+#dhPostChatLogContainer {
+	position:	absolute;
+	top:		0px;
+	left:		339px;
+	right:		170px;
+}
+#dhPostChatLog {
+	position: 	relative;
+	color:		white;
+	height:		78px;
+	overflow:	hidden; /* don't go over underneath the actions section */
+}
+#dhPostChatNames {
+	position: 		absolute;
+	width:			55px;
+	left:			0px;
+	top:			3px;
+	height:			70px;
+	font-size:		smaller;
+	overflow: 		hidden; /* don't bleed out of blue background */
+}
+#dhPostChatDivider {
+	position: 	absolute;
+	top:		0px;
+	left:		61px;
+	width:		1px;
+	height:		78px;
+	background-color: white;
+}
+
+#dhPostChatMessages {
+	position:		absolute;
+	left:			62px;
+	top:			3px;
+	height: 		70px;
+	margin-left:	6px;
+	font-size:		smaller;
+	overflow: 		hidden; /* don't bleed out of blue background */
+}
+
+.dh-chat-name {
+	position:		relative;
+	right:			0px;
+	text-align:		right;
+	font-weight:	bold;
+	white-space:	nowrap;
+	text-overflow:	ellipsis;
+}
+.dh-chat-message {
+	position:		relative;
+	left:			0px;
+	right:			10px;
+	text-align: 	left;
+	white-space:	nowrap;
+	text-overflow:	ellipsis; /* doesn't work, please fix if you dare */
+}
+
+.dh-chat-message a {
+	color: #fff500;
+}
+
+#dhPostViewingList {
+	position:	absolute;
+	top:		6px;
+	right:		6px;
+	text-align: right;
+	background-color: transparent;
+	
+}
+#dhPostViewingListLabel {
+	text-align:  right;
+	font-weight: bold;
+	color: 		 #F38E1C;
+	font-size:	 9pt;
+}
+#dhPostViewingListPeople {
+	text-align: right;
+	color:		black;
+	font-size:	9pt;
+}
+
+#dhPostActionsContainer {
+	position:			absolute;
+	right:				20px;
+	top:				0px;
+	background-color:	white;
+}
+		
+#dhPostActions {
+	position:			relative;
+	width:				128px;
+}
+
+#dhPostActionsSW {
+	position: 	absolute;
+	bottom:		0px;
+	left:		0px;
+	background-image: url(/images2/framer/wcnr_bl.gif);
+	width:		12px;
+	height:		12px;
+	overflow:   hidden;
+}
+#dhPostActionsSE {
+	position: 	absolute;
+	bottom:		0px;
+	right:		0px;
+	background-image: url(/images2/framer/wcnr_br.gif);
+	width:		12px;
+	height:		12px;
+	overflow:   hidden;
+}
+
+/* See comment for dhChatAreaBorderWhiteout */
+/* Not really blue anymore, but a little white (orange?) lie never hurt */
+#dhPostActionsBorderBlueout {
+	position: 	absolute;
+	width:		1px;
+	height:		78px;
+	top:		0px;
+	right:		-1px;
+	background-color: #F38E1C;
+}
+
+.dh-post-action {
+	position:		relative;
+	margin-top:		3px;
+	margin-bottom:	3px;
+	margin-left:	10px;
+	margin-right:	10px;
+	
+	font-size:		smaller;
+	white-space:    nowrap;
+}
+.dh-post-action-arrow {
+	border:	0px;
+	margin-right: 4px;
+}
+
+.dh-share-from {
+	font-size:		small;
+	padding-top:	18px;
+}
+.dh-share-text {
+	position:	absolute;
+	left:		72px;
+	width:      245px;
+	overflow:	hidden;
+}
+.dh-share-link {
+	font-size:	 small;
+	white-space: nowrap;
+	overflow:      hidden;
+	width:         100%;
+	text-overflow: ellipsis;
+}
+.dh-share-description {
+	font-size:		x-small;
+	margin-top:		5px;
+	height:			33px;
+	overflow:		hidden;
+	text-overflow: 	ellipsis;
+}
+.dh-share-to {
+	font-size:	x-small;
+	overflow:	hidden;
+}

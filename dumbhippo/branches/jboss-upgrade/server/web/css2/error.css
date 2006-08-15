@@ -1,0 +1,7 @@
+@CHARSET "UTF-8";
+@IMPORT url("site.css");
+@IMPORT url("error-positions.css");
+
+.dh-error-header {
+	color: red;
+}

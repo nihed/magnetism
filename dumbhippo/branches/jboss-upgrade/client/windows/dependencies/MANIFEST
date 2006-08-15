@@ -1,0 +1,63 @@
+# This file is theoritically machine-parseable for the purposes
+# of auto-updating, though currently everything is manually
+# maintained.
+#
+# The format is:
+#
+# URL: URL to binary tarball
+# MD5Sum: MD5 sum of downloaded tarballs
+# Source: URL to corresponding source tarball
+# Directory: Directory to change into before unpacking
+# Strip: Number of leading /'s to remove when unpacking (like patch -p<n>)
+# 
+# Followed by a set of shell globs specifying the files to include
+# everything not explicitly included is excluded. A shell glob can
+# be followed by a regular expression to do on the original (after
+# Strip:) filename to get the final filename.
+#
+URL: http://www.gimp.org/~tml/gimp/win32/libiconv-1.9.1.bin.woe32.zip
+MD5sum: a18e9420d6a354b585a77230996b4171
+Source: http://www.gimp.org/~tml/gimp/win32/libiconv-1.9.1.tar.gz
+Directory: libiconv
+Strip: 0
+bin/charset.dll s@.*/@@
+bin/iconv.dll s@*./@@
+
+URL: http://www.gimp.org/~tml/gimp/win32/gettext-0.14.5.zip
+MD5sum: e609b4fb01fa2c495d294de442f13847
+Source: http://www.gimp.org/~tml/gimp/win32/gettext-0.14.5.tar.gz
+Directory: gettext
+Strip: 0
+bin/intl.dll s@.*/@@
+
+URL: http://www.gimp.org/~tml/gimp/win32/gettext-dev-0.14.5.zip
+MD5sum: 48b7cb1ba976fcc4dbbeb6cd75a4a02d
+Source: http://www.gimp.org/~tml/gimp/win32/gettext-0.14.5.tar.gz
+Directory: gettext
+Strip: 0
+lib/intl.lib
+include/libintl.h
+
+URL: ftp://ftp.gtk.org/pub/gtk/v2.10/win32/glib-2.10.1.zip
+MD5sum: 46d8dcfee8a7026478da4a6392a3342a
+Source: ftp://ftp.gtk.org/pub/gtk/v2.10/glib-2.10.1.tar.bz2
+Directory: glib
+Strip: 0
+bin/libglib-2.0-0.dll s@.*/@@
+bin/libthread-2.0-0.dll s@.*/@@
+bin/libgobject-2.0-0.dll s@.*/@@
+
+URL: ftp://ftp.gtk.org/pub/gtk/v2.10/win32/glib-dev-2.10.1.zip
+MD5sum: b1faf34aed8c8b0519f5f26aec30a36f
+Source: ftp://ftp.gtk.org/pub/gtk/v2.10/glib-2.10.1.tar.bz2
+Directory: glib
+Strip: 0
+bin/glib-genmarshal.exe
+include/glib-2.0/glib.h
+include/glib-2.0/glib/*.h
+include/glib-2.0/glib-object.h
+include/glib-2.0/gobject/*.h
+lib/glib-2.0/include/glibconfig.h
+lib/glib-2.0.lib
+lib/gthread-2.0.lib
+lib/gobject-2.0.lib

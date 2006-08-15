@@ -1,0 +1,297 @@
+<project name="dumbhippo-server" default="build" basedir=".">
+	<property name="src" value="src" />
+	<property name="src.tests" value="tests" />
+	<property name="web" value="web" />
+	<property name="target" value="target" />
+	<property name="build" value="${target}/classes" />
+	<property name="build.tests" value="${target}/test-classes" />
+	<property name="build.lib" value="${target}/lib" />
+	<property name="lib" value="lib" />
+	<property name="reports.tests" value="reports" />
+	<property name="jboss.root" value="/opt/jboss" />
+	<property name="buildjar.dir" location="${target}/classes" />
+	<!-- *** stuff in bundled-classpath.external has to be added to application.xml also *** -->
+	<property name="bundled-classpath.external" value="smack-svn-local-build-2005-09-30.jar smackx-svn-local-build-2005-09-30.jar commons-fileupload-1.0.jar slf4j-*.jar rome-*.jar jdom-1.0.jar taste.jar tagsoup-1.0.jar"/>
+	<property name="bundled-classpath" value="dumbhippo-base.jar"/>	
+	<property name="bundled-deps.web" value="standard.jar" />
+	<property name="bundled-deps.client" value="" />
+	
+	<!-- trivial change for testing 
+	-->
+	
+	<path id="project.class.path">
+		<pathelement path="${classpath}" />
+		<fileset dir="${lib}">
+			<include name="**/*.jar" />
+		</fileset>
+		<fileset dir="${build.lib}">
+			<include name="**/*.jar" />
+		</fileset>
+		<!-- without this ant won't find the .class files -->
+		<pathelement location="${build}" />
+		<!-- a little hard-coded, but ... -->
+		<pathelement location="/usr/share/java/junit.jar" />
+		<pathelement location="/usr/share/java/ant/ant-junit.jar" />
+		<pathelement location="${jboss.root}/client/jbossall-client.jar"/>
+		<pathelement location="${jboss.root}/client/javax.servlet.jar"/>		
+		<pathelement location="${jboss.root}/client/mail.jar"/>
+		<pathelement location="${jboss.root}/client/log4j.jar"/>
+		<pathelement location="${jboss.root}/lib/jboss-system.jar"/>
+		<fileset dir="${jboss.root}/server/default/deploy/ejb3.deployer">
+			<include name="*ejb3*.jar"/>
+			<include name="hibernate3.jar"/>
+			<include name="hibernate-annotations.jar"/>
+			<include name="hibernate-entitymanager.jar"/>			
+		</fileset>
+		<fileset dir="${jboss.root}/server/default/lib">
+			<include name="*ejb3*.jar"/>
+			<include name="hibernate3.jar"/>
+			<include name="hibernate-annotations.jar"/>
+		</fileset>
+		<pathelement location="${jboss.root}/server/default/lib/javax.servlet.jsp.jar"/>
+	</path>
+
+	<path id="tests.class.path">
+		<pathelement location="${build.tests}"/>
+		<path refid="project.class.path" />
+	</path>
+		
+	<target name="clean">
+		<delete dir="${target}" />
+	</target>
+			
+	<target name="init">
+		<mkdir dir="${build}" />
+		<mkdir dir="${buildjar.dir}" />
+		<mkdir dir="${reports.tests}" />
+		<mkdir dir="${build.tests}" />		
+		<mkdir dir="${build.lib}" />
+		<copy file="${basedir}/../taste/taste.jar" todir="${build.lib}"/>
+	</target>
+		
+	<target name="compile" depends="init">
+		<!-- Compile the java code -->
+		<javac debug="on" srcdir="${src}" destdir="${build}" source="1.5">
+			<classpath refid="project.class.path" />
+		</javac>
+	</target>
+
+
+	<!-- Move over other files -->
+
+	<patternset id="metadata">
+		<include name="**/*.properties" />
+	</patternset>
+
+	<target name="setupmetadata" depends="copyproperties,makebuildstamp">
+	</target>
+
+	<target name="makebuildstamp" depends="init">
+		<exec executable="/bin/date" output="${build}/com/dumbhippo/server/impl/dumbhippo.properties">
+		      <arg line="+dumbhippo.server.buildstamp=%s"/>
+		</exec>
+	</target>
+
+	<target name="copyproperties" depends="init">
+		<copy todir="${build}">
+			<fileset dir="${src}">
+				<patternset refid="metadata" />
+			</fileset>
+		</copy>
+	</target>
+
+	<target name="test" depends="compile,setupmetadata">
+		<javac srcdir="${src.tests}" destdir="${build.tests}" source="1.5">
+			<classpath refid="tests.class.path" />
+		</javac>
+		<!-- fork=yes required for assertions to be enabled -->
+		<junit printsummary="yes" haltonfailure="yes">
+			<assertions enableSystemAssertions="true">
+				<enable />
+			</assertions>
+			<formatter type="plain" usefile="false" />
+			<formatter type="xml" />
+			<batchtest fork="yes" todir="${reports.tests}">
+				<fileset dir="${src.tests}">
+					<include name="AllTests.java" />
+				</fileset>
+			</batchtest>
+			<classpath refid="tests.class.path"/>
+		</junit>
+	</target>
+
+	<target name="dojobuild" if="dojocompress">
+		<!-- our dojo build.sh is hacked to do what we want,
+		 	which is create a compressed target/javascript/dojo/dojo.js -->
+        <exec dir="web/javascript/dojo/buildscripts" executable="/bin/sh">
+        	<arg line="build.sh"/>
+        </exec>
+		<!-- dojo creates this temporary junk, which we omit from the war
+			(if we left it in the war it would be a security blanket vs.
+			accidentally leaving stuff out of the compression profile... but
+			not doing that for now) -->
+		<delete dir="${target}/javascript/dojo/src"/>
+		<property name="dojo.js.webroot" value="${target}"/>
+	</target>
+	
+	<target name="nodojobuild" unless="dojocompress">
+		<property name="dojo.js.webroot" value="${web}"/>
+	</target>
+	
+	<target name="basejar" depends="compile">
+		<jar destfile="${buildjar.dir}/dumbhippo-base.jar">
+			<fileset dir="${build}">
+				<include name="**/dumbhippo/*.properties" />
+				<include name="**/dumbhippo/*.class" />
+				<include name="**/identity20/**/*.class" />
+				<include name="**/botcom/**/*.class" />
+				<include name="**/xmppcom/**/*.class" />
+				<include name="**/jms/**/*.class" />
+			</fileset>
+		</jar>
+	</target>
+
+	<target name="war" depends="compile, setupmetadata, dojobuild, nodojobuild">
+		<war warfile="${buildjar.dir}/dumbhippo.war" webxml="${web}/servlet-info.xml">
+			
+			<!-- "**" in here is pretty risky since there's a bunch of random junk in
+				javascript/dojo that we don't want, like documentation .html and test .js -->
+			
+			<!-- our javascript code -->
+			<fileset dir="${web}" includes="javascript/*.js"/>
+			<fileset dir="${web}" includes="javascript/dh/*.js"/>
+			<fileset dir="${web}" includes="javascript/dh/statistics/*.js"/>
+
+			<!-- dojo.js is either in target/javascript (if compressed) 
+				or web/javascript (if not) -->
+			<fileset dir="${dojo.js.webroot}" includes="javascript/dojo/*.js"/>
+			<fileset dir="${dojo.js.webroot}" includes="javascript/dojo/src/*.js"/>
+			<fileset dir="${dojo.js.webroot}" includes="javascript/dojo/src/**/*.js"/>		
+
+			<fileset dir="${web}" includes="javascript/dojo/src/*.css"/>
+			<fileset dir="${web}" includes="javascript/dojo/src/**/*.css"/>
+			<fileset dir="${web}" includes="javascript/dojo/iframe_history.html"/>
+			<fileset dir="${web}" includes="javascript/dojo/src/*.html"/>
+			<fileset dir="${web}" includes="javascript/dojo/src/**/*.html"/>
+			<fileset dir="${web}" includes="javascript/dojo/src/**/*.png"/>
+			
+			<!-- our static pages, css, etc. -->
+			<fileset dir="${web}" includes="html/*.html" />
+			<fileset dir="${web}" includes="html/robots.txt" />
+			<fileset dir="${web}" includes="images*/*.gif" />
+			<fileset dir="${web}" includes="images*/*.png" />
+			<fileset dir="${web}" includes="images*/*.jpg" />
+			<fileset dir="${web}" includes="images*/*.ico" />
+			<fileset dir="${web}" includes="images*/**/*.gif" />
+			<fileset dir="${web}" includes="images*/**/*.png" />
+			<fileset dir="${web}" includes="images*/**/*.jpg" />
+			<fileset dir="${web}" includes="images*/**/*.ico" />
+			<fileset dir="${web}" includes="jsp*/*.jsp" />
+			<fileset dir="${web}" includes="jsp*/*.tld" />
+			<fileset dir="${web}" includes="css*/*.css" />
+			<fileset dir="${web}" includes="flash/*.swf" />
+			
+			<!-- tag files -->
+            <webinf dir="${web}" includes="tags/*.tag" />
+           	<webinf dir="${web}" includes="tags/2/*.tag" />
+			
+			<fileset dir="${build}">
+				<include name="**/web/**/*.class" />
+			</fileset>
+			<manifest>
+				<attribute name="Class-Path" value="${bundled-classpath}" />
+			</manifest>
+			<lib dir="${lib}" includes="${bundled-deps.web}"/>
+		</war>
+	</target>
+
+	<target name="ejb3jar" depends="compile">
+		<jar destfile="${buildjar.dir}/dumbhippo.ejb3">
+			<fileset dir="${build}">
+				<include name="rome.properties" />
+				<include name="**/live/*.class" />
+				<include name="**/recommender/*.class" />
+				<include name="**/postinfo/*.class" />
+				<include name="**/services/*.class" />
+				<include name="**/server/**/*.class" />
+				<include name="**/server/**/*.properties" />
+				<include name="**/statistics/**/*.class" />
+			</fileset>
+			<manifest>
+				<attribute name="Class-Path" value="${bundled-classpath}" />
+			</manifest>
+		</jar>
+	</target>
+
+	<target name="par" depends="compile">
+		<jar destfile="${buildjar.dir}/dumbhippo.par">
+			<metainf dir="dd">
+				<include name="persistence.xml" />
+			</metainf>
+			<fileset dir="${build}">
+				<include name="**/persistence/**/*.class" />
+			</fileset>
+			<manifest>
+				<attribute name="Class-Path" value="${bundled-classpath}" />
+			</manifest>
+		</jar>
+	</target>
+
+	<target name="sar" depends="compile">
+		<jar destfile="${buildjar.dir}/dumbhippo.sar">
+			<metainf dir="dd">
+				<include name="jboss-service.xml" />
+			</metainf>
+			<fileset dir="${build}">
+				<include name="**/mbean/**/*.class" />
+			</fileset>
+			<manifest>
+				<attribute name="Class-Path" value="${bundled-classpath}" />
+			</manifest>
+		</jar>
+	</target>
+
+	<target name="ear" depends="war,ejb3jar,par,sar,basejar">
+		<ear destfile="${buildjar.dir}/dumbhippo.ear" appxml="dd/application.xml">
+			<metainf dir="dd">
+				<include name="jboss-app.xml" />
+                        </metainf>
+			<fileset dir="${buildjar.dir}" includes="*.ejb3, *.par, *.sar, *.war, *.jar" />
+			<fileset dir="${lib}" includes="${bundled-classpath.external}"/>
+			<fileset dir="${build.lib}" includes="taste.jar"/>
+		</ear>
+	</target>
+
+	<target name="clientjar" depends="compile">
+		<jar destfile="${buildjar.dir}/dumbhippo-client.jar">
+			<fileset dir="${build}">
+				<include name="*.properties" />
+				<include name="**/dumbhippo/*.class" />
+				<include name="**/live/**/*.class" />				
+				<include name="**/dumbhippo/*.properties" />
+				<include name="**/jms/**/*.class" />
+				<include name="**/botcom/**/*.class" />
+				<include name="**/xmppcom/**/*.class" />
+				<include name="**/identity20/**/*.class" />
+				<include name="**/persistence/**/*.class" />
+				<!-- server+util but not server/impl -->
+				<include name="**/server/*.class" />
+				<include name="**/server/util/*.class" />
+			</fileset>
+		</jar>
+	</target>
+
+	<target name="build" depends="test,ear,clientjar" />
+
+        <target name="reload" depends="build">
+                <exec executable="../super/super">
+                     <arg line="reload all"/>
+                </exec>
+        </target>
+        <target name="restart" depends="build">
+                <exec executable="../super/super">
+                     <arg line="restart all"/>
+                </exec>
+        </target>
+	
+</project>

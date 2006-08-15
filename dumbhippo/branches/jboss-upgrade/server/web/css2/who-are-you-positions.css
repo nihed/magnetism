@@ -1,0 +1,17 @@
+@CHARSET "UTF-8";
+
+/* Override the 500px width that's normal for a zone box */
+
+.dh-body-without-sidebar #dhPageHeader, .dh-zone-box-title-container, #dhContentColumn, .dh-body-without-sidebar #dhPage, .dh-zone-box-header {
+	width:				310px;	
+}
+
+#dhContentColumn .dh-text-input {
+	margin-bottom:		10px;
+	width:				288px;
+}
+
+#dhPasswordHelp {
+	position:	absolute;
+	right:		10px;
+}
