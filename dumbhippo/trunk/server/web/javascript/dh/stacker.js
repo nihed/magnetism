@@ -133,7 +133,7 @@ defineClass(dh.stacker.Block, null,
 	_updateClickedCountDiv : function() {
 		// no-op since only some subclasses have a clicked count div
 	},
-	
+
 	_updateTitleDiv : function() {
 		if (this._div) {
 			dojo.dom.textContent(this._titleDiv, this._title);
@@ -306,9 +306,12 @@ dh.stacker.PostBlock = function(blockId, postId) {
 	
 	this._clickedCountDiv = null;
 	this._descriptionDiv = null;
+	this._fromDiv = null;
+	this._timeDiv = null;
 	
 	this._link = null;
 	this._description = null;
+	this._poster = null;
 }
 
 defineClass(dh.stacker.PostBlock, dh.stacker.Block,
@@ -331,6 +334,15 @@ defineClass(dh.stacker.PostBlock, dh.stacker.Block,
 	
 	setLink : function(link) {
 		this._link = link;
+	},
+	
+	getPoster : function() {
+		return this._poster;
+	},
+	
+	setPoster : function(poster) {
+		this._poster = poster;
+		this._updateFromDiv();
 	},
 
 	// override
@@ -360,9 +372,33 @@ defineClass(dh.stacker.PostBlock, dh.stacker.Block,
 		}
 	},
 	
+	// override
+	_updateStackTimeDiv : function() {
+		if (this._div) {
+			var d = new Date(this._stackTime);
+			dojo.dom.textContent(this._timeDiv, d.getFullYear() + "-" + (d.getMonth()+1) + "-" + d.getDate() + " " + d.getHours() + ":" + d.getMinutes() + ":" + d.getSeconds() + ":" + d.getMilliseconds());
+		}
+	},
+	
+	_updateFromDiv : function() {
+		if (this._div) {
+			dojo.dom.textContent(this._fromDiv, "from " + this._poster.displayName);
+		}
+	},
+	
 	realize : function() {
 		if (!this._div) {
 			dh.stacker.PostBlock.superclass.realize.call(this);
+
+			this._fromDiv = document.createElement("div");
+			this._contentDiv.appendChild(this._fromDiv);
+			dojo.html.setClass(this._fromDiv, "dh-from");
+			this._updateFromDiv();
+
+			this._timeDiv = document.createElement("div");
+			this._contentDiv.appendChild(this._timeDiv);
+			dojo.html.setClass(this._timeDiv, "dh-when");
+			this._updateStackTimeDiv();
 
 			this._clickedCountDiv = document.createElement("div");
 			this._contentDiv.appendChild(this._clickedCountDiv);
@@ -380,6 +416,8 @@ defineClass(dh.stacker.PostBlock, dh.stacker.Block,
 		dh.stacker.PostBlock.superclass.unrealize.call(this);	
 		this._clickedCountDiv = null;
 		this._descriptionDiv = null;
+		this._timeDiv = null;
+		this._fromDiv = null;
 	},
 	
 	load : function(completeFunc, errorFunc) {
@@ -408,6 +446,7 @@ defineClass(dh.stacker.PostBlock, dh.stacker.Block,
 		var title = "";
 		var text = "";
 		var link = "";
+		var posterId = null;
 		var i;
 		for (i = 0; i < post.childNodes.length; ++i) {
 			var n = post.childNodes.item(i);
@@ -417,11 +456,19 @@ defineClass(dh.stacker.PostBlock, dh.stacker.Block,
 				text = dojo.dom.textContent(n);
 			} else if (n.nodeName == "href") {
 				link = dojo.dom.textContent(n);
+			} else if (n.nodeName == "poster") {
+				posterId = dojo.dom.textContent(n);
 			}
 		}
 		this.setTitle(title);
 		this.setDescription(text);
 		this.setLink(link);
+		
+		var posterNode = childNodes.item(1);
+		var poster = dh.model.objectFromXmlNode(posterNode);
+		if (poster.id != posterId)
+			throw new Error("mismatched poster ids");
+		this.setPoster(poster);
 	}
 });
 
