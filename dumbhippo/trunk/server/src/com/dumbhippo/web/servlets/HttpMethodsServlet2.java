@@ -54,15 +54,9 @@ import com.dumbhippo.web.WebEJBUtil;
 import com.dumbhippo.web.WebStatistics;
 
 /** 
- * Redoing HttpMethodsServlet. For now, the point of this is simply to 
- * provide a way to get docs on the web API. But eventually should move
- * the method invocation over to use this "precompiled" approach.
- * 
- * Other stuff to clean up:
- *  - have the urls be studlyCaps instead of all lowercased
- *  - orthogonalize content type vs. xml calling convention
- * 
- * @author Havoc Pennington
+ * This servlet proxies http method invocations ("ajax api") onto 
+ * specially-annotated Java methods. It can also spit out docs for 
+ * the available API.
  *
  */
 public class HttpMethodsServlet2 extends AbstractServlet {
@@ -271,6 +265,8 @@ public class HttpMethodsServlet2 extends AbstractServlet {
 			// so we can return it by reference
 			sortedMethods = Collections.unmodifiableList(sortedMethods);
 			
+			// this is really for legacy javascript, studlyCaps can be used 
+			// now
 			lowercaseMethods = new HashMap<String,HttpMethod>();
 			for (HttpMethod m : methods.values()) {
 				lowercaseMethods.put(m.getName().toLowerCase(), m);
@@ -750,6 +746,8 @@ public class HttpMethodsServlet2 extends AbstractServlet {
 		else
 			viewpoint = AnonymousViewpoint.getInstance();
   
+		// FIXME allow an XmlBuilder arg instead of output stream for 
+		// HttpResponseData.XML as well as XMLMETHOD
 		XmlBuilder xml = null;
 		if (m.isNeedsXmlBuilder() && requestedContentType == HttpResponseData.XMLMETHOD) {
 			xml = new XmlBuilder();

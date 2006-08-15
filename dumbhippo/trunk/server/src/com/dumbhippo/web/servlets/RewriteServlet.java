@@ -257,7 +257,7 @@ public class RewriteServlet extends HttpServlet {
 			
 			if (path.equals("/javascript/config.js")) {
 				// config.js is special and handled by a JSP, but it doesn't need
-				// our usual error/trasnaction stuff in handleJsp since it's just text 
+				// our usual error/transaction stuff in handleJsp since it's just text 
 				// substitution
 				context.getRequestDispatcher("/jsp/configjs.jsp").forward(request, response);
 			} else if (path.equals("/javascript/whereimat.js")) {

@@ -12,12 +12,6 @@
    <!-- URLs hard-coded to go to our custom servlets -->
     
     <servlet>
-      <servlet-name>HttpMethodsServlet</servlet-name>
-      <servlet-class>com.dumbhippo.web.servlets.HttpMethodsServlet</servlet-class>
-      <load-on-startup>1</load-on-startup>
-    </servlet>   
-
-    <servlet>
       <servlet-name>HttpMethodsServlet2</servlet-name>
       <servlet-class>com.dumbhippo.web.servlets.HttpMethodsServlet2</servlet-class>
       <load-on-startup>1</load-on-startup>
@@ -93,17 +87,17 @@
 	</error-page>
     
    <servlet-mapping>
-      <servlet-name>HttpMethodsServlet</servlet-name>
+      <servlet-name>HttpMethodsServlet2</servlet-name>
       <url-pattern>/xml/*</url-pattern>
    </servlet-mapping>
    
    <servlet-mapping>
-      <servlet-name>HttpMethodsServlet</servlet-name>
+      <servlet-name>HttpMethodsServlet2</servlet-name>
       <url-pattern>/text/*</url-pattern>
    </servlet-mapping>
 
    <servlet-mapping>
-      <servlet-name>HttpMethodsServlet</servlet-name>
+      <servlet-name>HttpMethodsServlet2</servlet-name>
       <url-pattern>/action/*</url-pattern>
    </servlet-mapping>
 
