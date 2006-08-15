@@ -68,6 +68,60 @@ dh.stacker.kindHeadings[dh.stacker.Kind.MUSIC_PERSON] = "MUSIC RADAR";
 dh.stacker.kindHeadings[dh.stacker.Kind.GROUP_CHAT] = "GROUP CHAT";
 dh.stacker.kindHeadings[dh.stacker.Kind.GROUP_MEMBER] = "GROUP MEMBERS";
 
+dh.stacker.formatTimeAgo = function(timestamp) {
+	var now = new Date();
+	now = now.getTime();
+	var then = timestamp;
+	
+	var deltaSeconds = (now - timestamp) / 1000;
+	
+	if (deltaSeconds < 0)
+		return "the future";
+	
+	if (deltaSeconds < 120)
+		return "a minute ago";
+		
+	if (deltaSeconds < 60*60) {
+		var deltaMinutes = deltaSeconds / 60;
+		if (deltaMinutes < 5) {
+			return Math.round(deltaMinutes) + " min. ago";
+		} else {
+			deltaMinutes = deltaMinutes - (deltaMinutes % 5);
+			return Math.round(deltaMinutes) + " min. ago";
+		}
+	}
+
+	var deltaHours = deltaSeconds / 60 / 60;
+	
+	if (deltaHours < 1.55) {
+		return "1 hr. ago";
+	} if (deltaHours < 48) {
+		return Math.round(deltaHours) + " hrs. ago";
+	}
+	
+	if (deltaHours < 24*15) {
+		return Math.round(deltaHours / 24) + " days ago";
+	}
+	
+	var deltaWeeks = deltaHours / (24*7);
+	
+	if (deltaWeeks < 6) {
+		return Math.round(deltaWeeks) + " weeks ago";
+	}
+	
+	if (deltaWeeks < 50) {
+		return Math.round(deltaWeeks / 4) + " months ago";
+	}
+	
+	var deltaYears = deltaWeeks / 52;
+	
+	if (deltaYears < 1.55) {
+		return "1 year ago";
+	} else {
+		return  Math.round(deltaYears) + " years ago";
+	}
+}
+
 dh.stacker.Block = function(kind, blockId) {
 	this._kind = kind;
 	this._blockId = blockId;
@@ -375,8 +429,7 @@ defineClass(dh.stacker.PostBlock, dh.stacker.Block,
 	// override
 	_updateStackTimeDiv : function() {
 		if (this._div) {
-			var d = new Date(this._stackTime);
-			dojo.dom.textContent(this._timeDiv, d.getFullYear() + "-" + (d.getMonth()+1) + "-" + d.getDate() + " " + d.getHours() + ":" + d.getMinutes() + ":" + d.getSeconds() + ":" + d.getMilliseconds());
+			dojo.dom.textContent(this._timeDiv, dh.stacker.formatTimeAgo(this._stackTime));
 		}
 	},
 	
