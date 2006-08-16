@@ -69,8 +69,7 @@ dh.stacker.kindHeadings[dh.stacker.Kind.GROUP_CHAT] = "GROUP CHAT";
 dh.stacker.kindHeadings[dh.stacker.Kind.GROUP_MEMBER] = "GROUP MEMBERS";
 
 dh.stacker.formatTimeAgo = function(timestamp) {
-	var now = new Date();
-	now = now.getTime();
+	var now = dh.stacker.getInstance().getServerTime();
 	var then = timestamp;
 	
 	var deltaSeconds = (now - timestamp) / 1000;
@@ -200,6 +199,11 @@ defineClass(dh.stacker.Block, null,
 			//var d = new Date(this._stackTime);
 			//dojo.dom.textContent(this._stackTimeDiv, d.getFullYear() + "-" + (d.getMonth()+1) + "-" + d.getDate() + " " + d.getHours() + ":" + d.getMinutes() + ":" + d.getSeconds() + ":" + d.getMilliseconds());
 		}
+	},
+
+	// called when the server time changes so we need to update the "ago" text
+	timeTick : function() {
+		this._updateStackTimeDiv();
 	},
 
 	createOuterDiv : function() {
@@ -980,6 +984,9 @@ dh.stacker.Stacker = function() {
 	this._stack = [];
 	this._blocks = {}; // blocks by block id
 	this._poll = null;
+	// the server time is the time on the server when our last getBlocks
+	// request returned
+	this._serverTime = 0;
 }
 
 defineClass(dh.stacker.Stacker, null, 
@@ -994,7 +1001,11 @@ defineClass(dh.stacker.Stacker, null,
 		var me = this;
 		this._poll = setInterval(function() {
 			me._pollNewBlocks();
-		}, 5000);
+		}, 10000);
+	},
+
+	getServerTime : function() {
+		return this._serverTime;
 	},
 
 	setContainer : function(container) {
@@ -1019,7 +1030,9 @@ defineClass(dh.stacker.Stacker, null,
 
 	_parseNewBlocks : function(nodes) {
 		// get list of children of <blocks>
-	    nodes = nodes.item(0).childNodes;
+		var blocksNode = nodes.item(0);
+		this._serverTime = parseInt(blocksNode.getAttribute("serverTime"));
+	    nodes = blocksNode.childNodes;
 		var i = 0;
 		for (i = 0; i < nodes.length; ++i) {
 			var child = nodes.item(i);
@@ -1044,6 +1057,9 @@ defineClass(dh.stacker.Stacker, null,
 					});
 				}
 			}
+		}
+		for (i = 0; i < this._stack.length; ++i) {
+			this._stack[i].timeTick();
 		}
 	},
 
@@ -1266,7 +1282,7 @@ dh.stacker.getFakeGuid = function() {
 dh.stacker.simulateNewPost = function(stacker, title) {
 	var block = new dh.stacker.PostBlock(dh.stacker.getFakeGuid(), dh.stacker.getFakeGuid());
 	block.setTitle(title);
-	block.setStackTime(new Date().getTime());
+	block.setStackTime(dh.stacker.getInstance().getServerTime());
 	block.setClickedCount(1);
 	stacker._newBlockLoaded(block);
 }
@@ -1301,7 +1317,7 @@ dh.stacker.simulateMoreViews = function(stacker) {
 dh.stacker.simulateNewStackTime = function(stacker) {
 	var block = dh.stacker.getRandomBlock(stacker);
 	if (block.getKind() == dh.stacker.Kind.POST) {
-		dh.stacker.simulatePostUpdate(stacker, block, block.getTitle(), new Date().getTime(), 
+		dh.stacker.simulatePostUpdate(stacker, block, block.getTitle(), dh.stacker.getInstance().getServerTime(), 
 			block.getClickedCount());
 	}
 }

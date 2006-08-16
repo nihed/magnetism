@@ -1787,7 +1787,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		logger.debug("Returning {} blocks", list.size());
 		
 		xml.openElement("blocks", "count", Integer.toString(list.size()),
-				"userId", user.getId());
+				"userId", user.getId(), "serverTime", Long.toString(System.currentTimeMillis()));
 		for (UserBlockData ubd : list) {
 			Block block = ubd.getBlock();
 			xml.openElement("block", "id", block.getId(),
