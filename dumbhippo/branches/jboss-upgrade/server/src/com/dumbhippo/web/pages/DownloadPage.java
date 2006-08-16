@@ -83,7 +83,7 @@ public class DownloadPage extends AbstractSigninOptionalPage {
 			return;
 		try {
 			User inviterUser = identitySpider.lookupGuidString(User.class, inviterId);
-			inviter = identitySpider.getPersonView(getSignin().getViewpoint(), inviterUser);
+			inviter = personViewer.getPersonView(getSignin().getViewpoint(), inviterUser);
 		} catch (ParseException e) {
 			logger.debug("Failed to parse inviter ID", e);			
 			return;

@@ -17,6 +17,7 @@ import com.dumbhippo.server.HumanVisibleException;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.InvitationSystem;
 import com.dumbhippo.server.PersonView;
+import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.web.WebEJBUtil;
 
 public class AdminPage extends AbstractSigninRequiredPage {
@@ -30,6 +31,7 @@ public class AdminPage extends AbstractSigninRequiredPage {
 	private InvitationSystem invitationSystem;
 
 	private IdentitySpider identitySpider;
+	private PersonViewer personViewer;
 	
 	private Set<PersonView> cachedLiveUsers;
 	private Set<PersonView> cachedLiveClientData;
@@ -46,6 +48,7 @@ public class AdminPage extends AbstractSigninRequiredPage {
 		config = WebEJBUtil.defaultLookup(Configuration.class);
 		invitationSystem = WebEJBUtil.defaultLookup(InvitationSystem.class);
 		identitySpider = WebEJBUtil.defaultLookup(IdentitySpider.class);
+		personViewer = WebEJBUtil.defaultLookup(PersonViewer.class);
 		String isAdminEnabled = config.getProperty(HippoProperty.ENABLE_ADMIN_CONSOLE);
 		logger.debug("admin console enabled: {}", isAdminEnabled);
 		if (!isAdminEnabled.equals("true"))
@@ -70,7 +73,7 @@ public class AdminPage extends AbstractSigninRequiredPage {
 
 		for (LiveObject o : objects) {
 			User user = identitySpider.lookupUser(o.getGuid());
-			result.add(identitySpider.getSystemView(user));					
+			result.add(personViewer.getSystemView(user));					
 		}
 		return result;		
 	}
@@ -133,7 +136,7 @@ public class AdminPage extends AbstractSigninRequiredPage {
  	
  	public List<PersonView> getAllUsers() {
  		if (users == null) {
- 			Set<PersonView> userSet = identitySpider.getAllUsers(getUserSignin().getViewpoint()); 
+ 			Set<PersonView> userSet = personViewer.getAllUsers(getUserSignin().getViewpoint()); 
  			users = PersonView.sortedList(userSet);
  		}
  		return users;

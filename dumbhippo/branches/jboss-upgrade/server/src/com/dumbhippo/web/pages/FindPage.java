@@ -15,6 +15,7 @@ import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.Pageable;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
+import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.PostSearchResult;
 import com.dumbhippo.server.PostView;
 import com.dumbhippo.server.PostingBoard;
@@ -51,6 +52,7 @@ public class FindPage {
 	private MusicSystem musicSystem;
 	private GroupSystem groupSystem;
 	private IdentitySpider identitySpider;
+	private PersonViewer personViewer;
 	
 	private String searchText;
 
@@ -68,6 +70,7 @@ public class FindPage {
 		postBoard = WebEJBUtil.defaultLookup(PostingBoard.class);
 		musicSystem = WebEJBUtil.defaultLookup(MusicSystem.class);
 		identitySpider = WebEJBUtil.defaultLookup(IdentitySpider.class);
+		personViewer = WebEJBUtil.defaultLookup(PersonViewer.class);
 		groupSystem = WebEJBUtil.defaultLookup(GroupSystem.class);
 	}
 
@@ -141,7 +144,7 @@ public class FindPage {
 					user = identitySpider.lookupUserByAim(viewpoint, searchText);
 				
 				if (user != null) {
-					PersonView pv = identitySpider.getPersonView(viewpoint, user, PersonViewExtra.ALL_RESOURCES);
+					PersonView pv = personViewer.getPersonView(viewpoint, user, PersonViewExtra.ALL_RESOURCES);
 					results.add(pv);
 				}
 			}

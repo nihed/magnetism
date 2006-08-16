@@ -27,6 +27,7 @@ import com.dumbhippo.server.LoginVerifier;
 import com.dumbhippo.server.Mailer;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
+import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.SigninSystem;
 import com.dumbhippo.server.SystemViewpoint;
 import com.dumbhippo.server.UserViewpoint;
@@ -38,6 +39,9 @@ public class SigninSystemBean implements SigninSystem {
 	
 	@EJB
 	private IdentitySpider identitySpider;
+	
+	@EJB
+	private PersonViewer personViewer;
 
 	@EJB
 	private AccountSystem accountSystem;
@@ -152,7 +156,7 @@ public class SigninSystemBean implements SigninSystem {
 		
 
 	public void sendRepairLink(User user) throws HumanVisibleException {		
-		PersonView personView = identitySpider.getPersonView(new UserViewpoint(user), user, PersonViewExtra.PRIMARY_EMAIL);
+		PersonView personView = personViewer.getPersonView(new UserViewpoint(user), user, PersonViewExtra.PRIMARY_EMAIL);
 		Resource resource = personView.getPrimaryResource();
 		if (resource == null || !(resource instanceof EmailResource))
 			return;

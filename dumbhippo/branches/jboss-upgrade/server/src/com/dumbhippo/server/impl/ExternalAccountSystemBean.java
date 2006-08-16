@@ -7,6 +7,7 @@ import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
+import org.jboss.annotation.IgnoreDependency;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
@@ -36,9 +37,11 @@ public class ExternalAccountSystemBean implements ExternalAccountSystem {
 	private static final Logger logger = GlobalSetup.getLogger(ExternalAccountSystemBean.class);
 	
 	@EJB
+	@IgnoreDependency
 	private MySpaceTracker mySpaceTracker;
 	
 	@EJB
+	@IgnoreDependency
 	private MessageSender messageSender;	
 	
 	@EJB

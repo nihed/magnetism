@@ -22,6 +22,7 @@ import org.apache.lucene.queryParser.QueryParser;
 import org.apache.lucene.queryParser.QueryParser.Operator;
 import org.apache.lucene.search.Hits;
 import org.hibernate.lucene.DocumentBuilder;
+import org.jboss.annotation.IgnoreDependency;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
@@ -52,6 +53,7 @@ import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Pageable;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
+import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.Stacker;
 import com.dumbhippo.server.SystemViewpoint;
 import com.dumbhippo.server.UserViewpoint;
@@ -70,6 +72,10 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 	private IdentitySpider identitySpider;
 	
 	@EJB
+	private PersonViewer personViewer;
+	
+	@EJB
+	@IgnoreDependency
 	private Stacker stacker;
 	
 	public Group createGroup(User creator, String name, GroupAccess access, String description) {
@@ -449,7 +455,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		
 		Set<PersonView> result = new HashSet<PersonView>();
 		for (Resource r : resourceMembers) {
-			result.add(identitySpider.getPersonView(viewpoint, r, PersonViewExtra.PRIMARY_RESOURCE, extras)); 
+			result.add(personViewer.getPersonView(viewpoint, r, PersonViewExtra.PRIMARY_RESOURCE, extras)); 
 		}
 		
 		return result;
@@ -608,7 +614,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 				if (groupMember.getStatus() == MembershipStatus.INVITED) {
 					Set<User> adders = groupMember.getAdders();
 					for(User adder : adders) {
-						inviters.add(identitySpider.getPersonView(viewpoint, adder));
+						inviters.add(personViewer.getPersonView(viewpoint, adder));
 					}
 				}
 			}
@@ -707,7 +713,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		Set<PersonView> result = new HashSet<PersonView>();
 
 		for (Object o: q.getResultList())
-			result.add(identitySpider.getPersonView(viewpoint, (Person)o, extras));
+			result.add(personViewer.getPersonView(viewpoint, (Person)o, extras));
 		
 		return result;
 	}	

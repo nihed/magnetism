@@ -1,6 +1,5 @@
 package com.dumbhippo.server;
 
-import java.util.Collection;
 import java.util.List;
 
 import javax.ejb.Local;
@@ -178,7 +177,8 @@ public interface InvitationSystem {
 	 * @param invite an invitation
 	 * @return a collection of names
 	 */
-	public Collection<String> getInviterNames(InvitationToken invite);
+	// Not used right now
+	// public Collection<String> getInviterNames(InvitationToken invite);
 	
 	/**
 	 * Return number of invitations the user has left to send.

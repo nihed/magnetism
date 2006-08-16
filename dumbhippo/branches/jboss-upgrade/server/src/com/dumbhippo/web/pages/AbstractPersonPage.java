@@ -136,10 +136,10 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 	public PersonView getViewedPerson() {
 		if (viewedPerson == null) {
 			if (getNeedExternalAccounts())
-				viewedPerson = identitySpider.getPersonView(getSignin().getViewpoint(), getViewedUser(), PersonViewExtra.ALL_RESOURCES,
+				viewedPerson = personViewer.getPersonView(getSignin().getViewpoint(), getViewedUser(), PersonViewExtra.ALL_RESOURCES,
 						PersonViewExtra.EXTERNAL_ACCOUNTS);
 			else
-				viewedPerson = identitySpider.getPersonView(getSignin().getViewpoint(), getViewedUser(), PersonViewExtra.ALL_RESOURCES);
+				viewedPerson = personViewer.getPersonView(getSignin().getViewpoint(), getViewedUser(), PersonViewExtra.ALL_RESOURCES);
 		}
 		
 		return viewedPerson;
@@ -256,7 +256,7 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 	public ListBean<PersonView> getContacts() {
 		if (contacts == null) {
 			Set<PersonView> mingledContacts = 
-				identitySpider.getContacts(getSignin().getViewpoint(), getViewedUser(), 
+				personViewer.getContacts(getSignin().getViewpoint(), getViewedUser(), 
 						                   false, PersonViewExtra.INVITED_STATUS, 
 						                   PersonViewExtra.PRIMARY_EMAIL, 
 						                   PersonViewExtra.PRIMARY_AIM);		
@@ -282,7 +282,7 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 	public ListBean<PersonView> getFollowers() {
 		if (followers == null) {
 		    Set<PersonView> mingledFollowers = 
-			    identitySpider.getFollowers(getSignin().getViewpoint(), getViewedUser());		
+			    personViewer.getFollowers(getSignin().getViewpoint(), getViewedUser());		
 		        followers = new ListBean<PersonView>(PersonView.sortedList(getSignin().getViewpoint(), getViewedUser(), mingledFollowers));
 		}
 		return followers;

@@ -48,7 +48,6 @@ public class GroupPage extends AbstractSigninOptionalPage {
 	private PostingBoard postBoard;
 	private MusicSystem musicSystem;
 	private Configuration configuration;
-	private IdentitySpider identitySpider;
 	private GroupSystem groupSystem;
 	
 	@PagePositions
@@ -350,7 +349,7 @@ public class GroupPage extends AbstractSigninOptionalPage {
 	public PersonView getInviter() {
 		// TODO: display all the adders
 		if (inviter == null && adders.iterator().hasNext()) {
-			inviter = identitySpider.getPersonView(getSignin().getViewpoint(), adders.iterator().next());	
+			inviter = personViewer.getPersonView(getSignin().getViewpoint(), adders.iterator().next());	
 		}
 		
 		return inviter;

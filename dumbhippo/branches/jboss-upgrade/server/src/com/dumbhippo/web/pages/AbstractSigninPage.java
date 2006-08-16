@@ -5,6 +5,7 @@ import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.InvitationSystem;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
+import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.web.SigninBean;
 import com.dumbhippo.web.UserSigninBean;
 import com.dumbhippo.web.WebEJBUtil;
@@ -23,6 +24,7 @@ import com.dumbhippo.web.WebEJBUtil;
 public abstract class AbstractSigninPage {
 
 	protected IdentitySpider identitySpider;
+	protected PersonViewer personViewer;
 	protected AccountSystem accountSystem;
 	protected InvitationSystem invitationSystem;
 	protected int invitations;
@@ -30,6 +32,7 @@ public abstract class AbstractSigninPage {
 	
 	protected AbstractSigninPage() {
 		identitySpider = WebEJBUtil.defaultLookup(IdentitySpider.class);
+		personViewer = WebEJBUtil.defaultLookup(PersonViewer.class);
 		accountSystem = WebEJBUtil.defaultLookup(AccountSystem.class);
 		invitationSystem = WebEJBUtil.defaultLookup(InvitationSystem.class);
 		invitations = -1;
@@ -57,7 +60,7 @@ public abstract class AbstractSigninPage {
 	 */
 	public PersonView getPerson() {
 		if (signinPerson == null && getSignin().isValid())
-			signinPerson = identitySpider.getPersonView(getSignin().getViewpoint(), getUserSignin().getUser(), PersonViewExtra.ALL_RESOURCES);
+			signinPerson = personViewer.getPersonView(getSignin().getViewpoint(), getUserSignin().getUser(), PersonViewExtra.ALL_RESOURCES);
 		
 		return signinPerson;
 	}

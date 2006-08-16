@@ -87,6 +87,7 @@ import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.NowPlayingThemeSystem;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
+import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.PostIndexer;
 import com.dumbhippo.server.PostView;
 import com.dumbhippo.server.PostingBoard;
@@ -123,6 +124,9 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 
 	@EJB
 	private IdentitySpider identitySpider;
+	
+	@EJB
+	private PersonViewer personViewer;
 
 	@EJB
 	private PostingBoard postingBoard;
@@ -335,7 +339,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	public void getContactsAndGroups(OutputStream out,
 			HttpResponseData contentType, UserViewpoint viewpoint) throws IOException {
 
-		Set<PersonView> persons = identitySpider.getContacts(viewpoint, viewpoint.getViewer(),
+		Set<PersonView> persons = personViewer.getContacts(viewpoint, viewpoint.getViewer(),
 				true, PersonViewExtra.ALL_RESOURCES);
 		Set<Group> groups = groupSystem.findRawGroups(viewpoint, viewpoint.getViewer());
 
@@ -357,7 +361,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			throw new RuntimeException(e);
 		}
 		Person contact = identitySpider.createContact(viewpoint.getViewer(), resource);
-		PersonView contactView = identitySpider.getPersonView(viewpoint,
+		PersonView contactView = personViewer.getPersonView(viewpoint,
 				contact, PersonViewExtra.ALL_RESOURCES);
 		returnPersonsXml(xml, viewpoint, Collections.singleton(contactView));
 
@@ -476,7 +480,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			throw new RuntimeException(e);
 		}
 		Contact contact = identitySpider.createContact(viewpoint.getViewer(), emailResource);
-		PersonView contactView = identitySpider.getPersonView(viewpoint,
+		PersonView contactView = personViewer.getPersonView(viewpoint,
 				contact, PersonViewExtra.ALL_RESOURCES);
 
 		returnObjects(out, contentType, viewpoint, Collections
@@ -1025,7 +1029,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		// let's find out if we were inviting to the group or inviting to follow the group
 		boolean adderCanAdd = groupSystem.canAddMembers(viewpoint.getViewer(), group);
 		
-		PersonView contactView = identitySpider.getPersonView(viewpoint, contact, PersonViewExtra.PRIMARY_RESOURCE);
+		PersonView contactView = personViewer.getPersonView(viewpoint, contact, PersonViewExtra.PRIMARY_RESOURCE);
 
 		String note;
 		if (adderCanAdd) {
@@ -1831,7 +1835,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	public void getMusicPersonSummary(XmlBuilder xml, UserViewpoint viewpoint, String userId) throws XmlMethodException {
 		User musicPlayer = parseUserId(userId);
 		// ALL_RESOURCES here is just because returnPersonsXml wants it, the javascript doesn't need it
-		PersonView pv = identitySpider.getPersonView(viewpoint, musicPlayer, PersonViewExtra.ALL_RESOURCES);
+		PersonView pv = personViewer.getPersonView(viewpoint, musicPlayer, PersonViewExtra.ALL_RESOURCES);
 		List<TrackView> tracks = musicSystem.getLatestTrackViews(viewpoint, musicPlayer, 5);
 		xml.openElement("musicPerson", "userId", musicPlayer.getId());
 		returnPersonsXml(xml, viewpoint, Collections.singleton(pv));

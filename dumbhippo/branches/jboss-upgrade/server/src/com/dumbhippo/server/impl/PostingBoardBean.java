@@ -29,6 +29,7 @@ import org.apache.lucene.queryParser.QueryParser;
 import org.apache.lucene.queryParser.QueryParser.Operator;
 import org.apache.lucene.search.Hits;
 import org.hibernate.lucene.DocumentBuilder;
+import org.jboss.annotation.IgnoreDependency;
 import org.slf4j.Logger;
 import org.xml.sax.SAXException;
 
@@ -81,6 +82,7 @@ import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Pageable;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
+import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.PostIndexer;
 import com.dumbhippo.server.PostInfoSystem;
 import com.dumbhippo.server.PostSearchResult;
@@ -105,7 +107,10 @@ public class PostingBoardBean implements PostingBoard {
 	private EntityManager em;	
 	
 	@EJB
-	private IdentitySpider identitySpider;	
+	private IdentitySpider identitySpider;
+	
+	@EJB
+	private PersonViewer personViewer;
 
 	@EJB
 	private AccountSystem accountSystem;
@@ -129,9 +134,11 @@ public class PostingBoardBean implements PostingBoard {
 	private TransactionRunner runner;
 	
 	@EJB
+	@IgnoreDependency
 	private RecommenderSystem recommenderSystem;
 	
 	@EJB
+	@IgnoreDependency
 	private Stacker stacker;
 	
 	@javax.annotation.Resource
@@ -562,7 +569,7 @@ public class PostingBoardBean implements PostingBoard {
 						    member.getStatus() == MembershipStatus.INVITED_TO_FOLLOW) {
 							Set<User> adders = member.getAdders();
 							for (User adder : adders) {
-								inviters.add(identitySpider.getPersonView(viewpoint, adder));
+								inviters.add(personViewer.getPersonView(viewpoint, adder));
 							}
 						}
 						recipients.add(new GroupView(g, member, inviters));
@@ -608,7 +615,7 @@ public class PostingBoardBean implements PostingBoard {
 
 	private EntityView getPosterView(Viewpoint viewpoint, Post post) {
 		if (post.getPoster() != null)
-			return identitySpider.getPersonView(viewpoint, post.getPoster(), PersonViewExtra.ALL_RESOURCES);
+			return personViewer.getPersonView(viewpoint, post.getPoster(), PersonViewExtra.ALL_RESOURCES);
 		else if (post instanceof FeedPost) {
 			return new FeedView(((FeedPost)post).getFeed());
 		} else {
@@ -634,7 +641,7 @@ public class PostingBoardBean implements PostingBoard {
 		}
 		
 		for (Resource recipient : recipientResources) {
-			recipients.add(identitySpider.getPersonView(viewpoint, recipient, PersonViewExtra.PRIMARY_RESOURCE, PersonViewExtra.PRIMARY_AIM));
+			recipients.add(personViewer.getPersonView(viewpoint, recipient, PersonViewExtra.PRIMARY_RESOURCE, PersonViewExtra.PRIMARY_AIM));
 		}
 	
 		if (!em.contains(post))
@@ -1226,7 +1233,7 @@ public class PostingBoardBean implements PostingBoard {
 			result.add(new GroupView(g, null, null));
 		}
 		for (Resource r : post.getPersonRecipients()) {
-			result.add(identitySpider.getPersonView(viewpoint, r, PersonViewExtra.PRIMARY_RESOURCE));	
+			result.add(personViewer.getPersonView(viewpoint, r, PersonViewExtra.PRIMARY_RESOURCE));	
 		}
 		result.add(getPosterView(viewpoint, post));
 		

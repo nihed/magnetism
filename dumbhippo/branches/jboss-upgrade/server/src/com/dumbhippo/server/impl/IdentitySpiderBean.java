@@ -15,6 +15,7 @@ import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
+import org.jboss.annotation.IgnoreDependency;
 import org.slf4j.Logger;
 
 import com.dumbhippo.ExceptionUtils;
@@ -79,12 +80,15 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	private TransactionRunner runner;
 
 	@EJB
+	@IgnoreDependency
 	private MessageSender messageSender;
 
 	@EJB
+	@IgnoreDependency
 	private GroupSystem groupSystem;
 
 	@EJB
+	@IgnoreDependency
 	private ExternalAccountSystem externalAccounts;
 
 	@EJB

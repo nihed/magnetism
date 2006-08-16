@@ -16,6 +16,7 @@ import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.InvitationSystem;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PersonView;
+import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.UserViewpoint;
 import com.dumbhippo.web.Signin;
 import com.dumbhippo.web.SigninBean;
@@ -28,6 +29,7 @@ public abstract class AbstractGroupPage {
 	@Signin
 	protected SigninBean signin;
 	protected IdentitySpider identitySpider;
+	protected PersonViewer personViewer;
 	protected GroupSystem groupSystem;
 	protected InvitationSystem invitationSystem;
 
@@ -42,6 +44,7 @@ public abstract class AbstractGroupPage {
 
 	protected AbstractGroupPage() {
 		identitySpider = WebEJBUtil.defaultLookup(IdentitySpider.class);		
+		personViewer = WebEJBUtil.defaultLookup(PersonViewer.class);
 		groupSystem = WebEJBUtil.defaultLookup(GroupSystem.class);
 		invitationSystem = WebEJBUtil.defaultLookup(InvitationSystem.class);
 		invitations = -1;
@@ -171,7 +174,7 @@ public abstract class AbstractGroupPage {
 	public PersonView getInviter() {
 		// TODO: display all the adders
 		if (inviter == null && adders.iterator().hasNext()) {
-			inviter = identitySpider.getPersonView(signin.getViewpoint(), adders.iterator().next());	
+			inviter = personViewer.getPersonView(signin.getViewpoint(), adders.iterator().next());	
 		}
 		
 		return inviter;

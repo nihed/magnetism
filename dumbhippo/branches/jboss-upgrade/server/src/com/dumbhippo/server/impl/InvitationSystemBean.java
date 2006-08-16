@@ -3,8 +3,6 @@ package com.dumbhippo.server.impl;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -47,6 +45,7 @@ import com.dumbhippo.server.Mailer;
 import com.dumbhippo.server.NoMailSystem;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PersonView;
+import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.PromotionCode;
 import com.dumbhippo.server.SystemViewpoint;
 import com.dumbhippo.server.TransactionRunner;
@@ -61,6 +60,9 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 	
 	@PersistenceContext(unitName = "dumbhippo")
 	private EntityManager em;
+	
+	@EJB
+	private PersonViewer personViewer;
 	
 	@EJB
 	private AccountSystem accounts;
@@ -632,10 +634,11 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		return client;
 	}
 
+	/*
 	public Collection<String> getInviterNames(InvitationToken invite) {
 		Set<String> names = new HashSet<String>();  
 		for (InviterData inviterData : invite.getInviters()) {
-			PersonView view = spider.getSystemView(inviterData.getInviter());
+			PersonView view = personViewer.getSystemView(inviterData.getInviter());
 	        String readable = view.getName();
 	        if (readable != null) {    
 	        	names.add(readable);
@@ -643,6 +646,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		}
 		return Collections.unmodifiableCollection(names);
 	}
+	*/
 	
 	/**
 	 * Returns InviterData if there is one that corresponds to the given user
@@ -718,4 +722,90 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		Query q = em.createQuery("SELECT SUM(a.invitations) FROM Account a");
 		return (Integer) q.getSingleResult();
 	}
+	
+	private void sendEmailNotification(UserViewpoint viewpoint, InvitationToken invite, String subject, String message) {
+		User inviter = viewpoint.getViewer();
+		EmailResource invitee = (EmailResource) invite.getInvitee();
+		
+		if (!noMail.getMailEnabled(invitee)) {
+			logger.debug("Mail is disabled to {} not sending invitation", invitee);
+			return;
+		}
+		
+		String inviteeEmail = invitee.getEmail();
+		
+        // if invite is from a special character, like Mugshot, this function will get the character's viewpoint,
+		// which is fine
+		MimeMessage msg = mailer.createMessage(Mailer.SpecialSender.INVITATION, viewpoint, Mailer.SpecialSender.INVITATION, inviteeEmail);
+
+		PersonView viewedInviter = personViewer.getPersonView(viewpoint, inviter);
+		String inviterName = viewedInviter.getName();
+		
+		String baseurl;
+		URL baseurlObject;
+		try {
+			baseurl = configuration.getProperty(HippoProperty.BASEURL);
+			baseurlObject = new URL(baseurl);
+		} catch (MalformedURLException e) {
+			throw new RuntimeException(e);
+		}
+		
+		User mugshot = accounts.getCharacter(Character.MUGSHOT);
+		boolean isMugshotInvite = (viewedInviter.getUser() == mugshot);
+		
+		if (subject == null || subject.trim().length() == 0) {
+			if (isMugshotInvite)
+				subject = "Your Mugshot Invitation";
+			else
+				subject = "Invitation from " + inviterName + " to join Mugshot";				
+		}
+		
+		StringBuilder messageText = new StringBuilder();
+		XmlBuilder messageHtml = new XmlBuilder();
+		
+		messageHtml.appendHtmlHead("");
+		messageHtml.append("<body>\n");
+
+		if (message != null && message.trim().length() > 0) {
+			messageHtml.append("<div style=\"padding: 1.5em;\">\n");
+			messageHtml.appendTextAsHtml(message, null);
+			messageHtml.append("</div>\n");
+			
+			messageText.append(message);
+			messageText.append("\n\n");
+		}
+		
+		String inviteUrl = invite.getAuthURL(baseurlObject);
+		// Only set the inviter for non-mugshot invitations; the download
+		// page assumes the absence of this parameter implies the invitation
+		// was from mugshot, which we handle specially.
+		if (!isMugshotInvite) {
+			inviteUrl += "&inviter=";
+			inviteUrl += inviter.getId();
+		}
+		
+		messageHtml.append("<div style=\"padding: 1em;\">");
+		messageHtml.appendTextNode("a", inviteUrl, "href", inviteUrl);
+		messageHtml.append("</div>\n");
+		
+		messageText.append(inviteUrl);
+		messageText.append("\n\n");
+		
+		String noSpamDisclaimer = "If you got this by mistake, just ignore it.  We won't send you email again unless you ask us to.  Thanks!";
+		
+		messageHtml.appendTextNode("div", noSpamDisclaimer);
+		messageText.append(noSpamDisclaimer);
+		
+		messageHtml.append("</body>\n</html>\n");
+		
+		mailer.setMessageContent(msg, subject, messageText.toString(), messageHtml.toString());
+		
+		final MimeMessage finalizedMessage = msg;
+		
+		runner.runTaskOnTransactionCommit(new Runnable() {
+			public void run() {
+		        mailer.sendMessage(finalizedMessage);
+			}
+		});
+	}		
 }

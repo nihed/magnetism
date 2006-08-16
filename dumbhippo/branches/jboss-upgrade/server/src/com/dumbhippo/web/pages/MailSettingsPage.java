@@ -4,9 +4,9 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.ToggleNoMailToken;
-import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.NoMailSystem;
 import com.dumbhippo.server.PersonView;
+import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.web.FromJspContext;
 import com.dumbhippo.web.Scope;
 import com.dumbhippo.web.Signin;
@@ -37,7 +37,7 @@ public class MailSettingsPage {
 
 	public PersonView getPerson() {
 		if (person == null) {
-			IdentitySpider spider = WebEJBUtil.defaultLookup(IdentitySpider.class);
+			PersonViewer spider = WebEJBUtil.defaultLookup(PersonViewer.class);
 			person = spider.getPersonView(signin.getViewpoint(), signin.getUser()); // don't get any extras
 		}
 		

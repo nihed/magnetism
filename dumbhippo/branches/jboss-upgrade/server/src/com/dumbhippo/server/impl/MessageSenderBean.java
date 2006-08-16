@@ -1,7 +1,5 @@
 package com.dumbhippo.server.impl;
 
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -15,6 +13,7 @@ import javax.ejb.EJBContext;
 import javax.ejb.Stateless;
 import javax.mail.internet.MimeMessage;
 
+import org.jboss.annotation.IgnoreDependency;
 import org.jivesoftware.smack.XMPPConnection;
 import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.packet.Message;
@@ -40,8 +39,6 @@ import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
-import com.dumbhippo.server.AccountSystem;
-import com.dumbhippo.server.Character;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.EntityView;
 import com.dumbhippo.server.ExternalAccountSystem;
@@ -61,7 +58,6 @@ import com.dumbhippo.server.PostType;
 import com.dumbhippo.server.PostView;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.SystemViewpoint;
-import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.UserViewpoint;
 import com.dumbhippo.server.Viewpoint;
 import com.dumbhippo.server.Configuration.PropertyNotFoundException;
@@ -92,31 +88,32 @@ public class MessageSenderBean implements MessageSender {
 	private Mailer mailer;
 
 	@EJB
+	@IgnoreDependency
 	private IdentitySpider identitySpider;
 	
 	@EJB
-	private AccountSystem accountSystem;
-	
-	@EJB
+	@IgnoreDependency
 	private PersonViewer personViewer;
 	
 	@EJB
+	@IgnoreDependency
 	private PostingBoard postingBoard;
 	
 	@EJB
+	@IgnoreDependency
 	private InvitationSystem invitationSystem;
 
 	@EJB
+	@IgnoreDependency
 	private NoMailSystem noMail;
 	
 	@EJB
+	@IgnoreDependency
 	private GroupSystem groupSystem;
 	
 	@EJB
+	@IgnoreDependency
 	private ExternalAccountSystem externalAccounts;
-	
-	@EJB
-	private TransactionRunner runner;
 	
 	@javax.annotation.Resource
 	private EJBContext ejbContext;
@@ -865,91 +862,4 @@ public class MessageSenderBean implements MessageSender {
 			xmppSender.sendGroupMembershipUpdate(recipient, group, groupMember);			
 		}
 	}
-	
-	public void sendEmailInvitationNotification(UserViewpoint viewpoint, InvitationToken invite, String subject, String message) {
-		
-		User inviter = viewpoint.getViewer();
-		EmailResource invitee = (EmailResource) invite.getInvitee();
-		
-		if (!noMail.getMailEnabled(invitee)) {
-			logger.debug("Mail is disabled to {} not sending invitation", invitee);
-			return;
-		}
-		
-		String inviteeEmail = invitee.getEmail();
-		
-        // if invite is from a special character, like Mugshot, this function will get the character's viewpoint,
-		// which is fine
-		MimeMessage msg = mailer.createMessage(Mailer.SpecialSender.INVITATION, viewpoint, Mailer.SpecialSender.INVITATION, inviteeEmail);
-
-		PersonView viewedInviter = personViewer.getPersonView(viewpoint, inviter);
-		String inviterName = viewedInviter.getName();
-		
-		String baseurl;
-		URL baseurlObject;
-		try {
-			baseurl = config.getProperty(HippoProperty.BASEURL);
-			baseurlObject = new URL(baseurl);
-		} catch (MalformedURLException e) {
-			throw new RuntimeException(e);
-		}
-		
-		User mugshot = accountSystem.getCharacter(Character.MUGSHOT);
-		boolean isMugshotInvite = (viewedInviter.getUser() == mugshot);
-		
-		if (subject == null || subject.trim().length() == 0) {
-			if (isMugshotInvite)
-				subject = "Your Mugshot Invitation";
-			else
-				subject = "Invitation from " + inviterName + " to join Mugshot";				
-		}
-		
-		StringBuilder messageText = new StringBuilder();
-		XmlBuilder messageHtml = new XmlBuilder();
-		
-		messageHtml.appendHtmlHead("");
-		messageHtml.append("<body>\n");
-
-		if (message != null && message.trim().length() > 0) {
-			messageHtml.append("<div style=\"padding: 1.5em;\">\n");
-			messageHtml.appendTextAsHtml(message, null);
-			messageHtml.append("</div>\n");
-			
-			messageText.append(message);
-			messageText.append("\n\n");
-		}
-		
-		String inviteUrl = invite.getAuthURL(baseurlObject);
-		// Only set the inviter for non-mugshot invitations; the download
-		// page assumes the absence of this parameter implies the invitation
-		// was from mugshot, which we handle specially.
-		if (!isMugshotInvite) {
-			inviteUrl += "&inviter=";
-			inviteUrl += inviter.getId();
-		}
-		
-		messageHtml.append("<div style=\"padding: 1em;\">");
-		messageHtml.appendTextNode("a", inviteUrl, "href", inviteUrl);
-		messageHtml.append("</div>\n");
-		
-		messageText.append(inviteUrl);
-		messageText.append("\n\n");
-		
-		String noSpamDisclaimer = "If you got this by mistake, just ignore it.  We won't send you email again unless you ask us to.  Thanks!";
-		
-		messageHtml.appendTextNode("div", noSpamDisclaimer);
-		messageText.append(noSpamDisclaimer);
-		
-		messageHtml.append("</body>\n</html>\n");
-		
-		mailer.setMessageContent(msg, subject, messageText.toString(), messageHtml.toString());
-		
-		final MimeMessage finalizedMessage = msg;
-		
-		runner.runTaskOnTransactionCommit(new Runnable() {
-			public void run() {
-		        mailer.sendMessage(finalizedMessage);
-			}
-		});
-	}	
 }
