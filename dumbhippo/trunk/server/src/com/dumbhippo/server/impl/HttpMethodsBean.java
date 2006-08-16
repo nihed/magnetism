@@ -1878,5 +1878,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	 		if (hushed)
 	 			userBlockData.setIgnoredTimestampAsLong(userBlockData.getBlock().getTimestampAsLong());
  		}
+ 		// send the new block data back, to avoid an extra round trip
+ 		returnBlocks(xml, viewpoint, viewpoint.getViewer(), Collections.singletonList(userBlockData));
  	}
 }

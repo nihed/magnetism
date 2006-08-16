@@ -298,6 +298,11 @@ defineClass(dh.stacker.Block, null,
 			dojo.html.setClass(this._hushDiv, "dh-hush");
 			this._headingDiv.appendChild(this._hushDiv);
 			this._updateHushDiv();
+			
+			this._busyImg = document.createElement("img");
+			this._busyImg.style.display = "none";
+			this._busyImg.src = dhImageRoot2 + "feedspinner.gif";
+			this._hushDiv.appendChild(this._busyImg);
 	
 			var me = this;		
 			dh.util.addEventListener(this._hushDiv, "mousedown", function() {
@@ -334,6 +339,7 @@ defineClass(dh.stacker.Block, null,
 			this._contentDiv = null;
 			this._stackTimeDiv = null;
 			this._hushDiv = null;
+			this._busyImg = null;
 		}
 	},
 
@@ -412,14 +418,19 @@ defineClass(dh.stacker.Block, null,
 	},
 	
 	_toggleHushed : function() {
+		this._busyImg.style.display = "inline";
 		var me = this;
 	   	dh.server.doXmlMethod("setBlockHushed",
 				     	{ "blockId" : me._blockId,
 				     	  "hushed" : ! me._ignored },
 						function(childNodes, http) {
-							dh.stacker.getInstance().reloadBlock(me);
+							dh.stacker.getInstance()._parseNewBlocks(childNodes);
+							if (me._busyImg)
+								me._busyImg.style.display = "none";
 			 	    	},
 			  	    	function(code, msg, http) {
+			  	    		if (me._busyImg)
+					  	    	me._busyImg.style.display = "none";
 			  	    		alert("Could not hush or unhush: " + msg);
 			  	    	});
 	}
@@ -1137,19 +1148,6 @@ defineClass(dh.stacker.Stacker, null,
 		// on failure to load
 		function(block) {
 		});
-	},
-
-	reloadBlock : function(block) {
-		var me = this;
-	   	dh.server.doXmlMethod("block",
-					     	{ 	"blockId" : block.getBlockId() },
-							function(childNodes, http) {
-								me._parseNewBlocks(childNodes);		
-				 	    	},
-				  	    	function(code, msg, http) {
-				  	    		// failed!
-				  	    		//alert("failed to update: " + msg);
-				  	    	});	
 	},
 
 	_pollNewBlocks : function() {
