@@ -36,6 +36,8 @@ public class LivePost extends LiveObject {
 				score += 1.0;
 		}
 		
+		score += getRecentMessageCount();
+		
 		return score;
 	}
 	/**********************************************************************/

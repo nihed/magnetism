@@ -150,4 +150,9 @@ public class Block extends EmbeddedGuidPersistable {
 	public void setClickedCount(int clickedCount) {
 		this.clickedCount = clickedCount;
 	}
+	
+	@Override
+	public String toString() {
+		return "{Block type=" + getBlockType() + " timestamp=" + getTimestampAsLong() + " data1=" + getData1() + " data2=" + getData2() + "}";
+	}
 }

@@ -366,6 +366,7 @@ dh.stacker.PostBlock = function(blockId, postId) {
 	this._link = null;
 	this._description = null;
 	this._poster = null;
+	this._messages = [];
 }
 
 defineClass(dh.stacker.PostBlock, dh.stacker.Block,
@@ -397,6 +398,15 @@ defineClass(dh.stacker.PostBlock, dh.stacker.Block,
 	setPoster : function(poster) {
 		this._poster = poster;
 		this._updateFromDiv();
+	},
+
+	getMessages : function() {
+		return this._messages;
+	},
+
+	setMessages : function(messages) {
+		this._messages = messages;
+		this._updateMessagesDiv();
 	},
 
 	// override
@@ -438,6 +448,17 @@ defineClass(dh.stacker.PostBlock, dh.stacker.Block,
 			dojo.dom.textContent(this._fromDiv, "from " + this._poster.displayName);
 		}
 	},
+
+	_updateMessagesDiv : function() {
+		if (this._div) {
+			var str = "";
+			var i;
+			for (i = 0; i < this._messages.length; ++i) {
+				str = str + " " + this._messages[i].text;
+			}
+			dojo.dom.textContent(this._messagesDiv, str);
+		}
+	},
 	
 	realize : function() {
 		if (!this._div) {
@@ -462,6 +483,11 @@ defineClass(dh.stacker.PostBlock, dh.stacker.Block,
 			this._contentDiv.appendChild(this._descriptionDiv);
 			dojo.html.setClass(this._descriptionDiv, "dh-description");
 			this._updateDescriptionDiv();
+			
+			this._messagesDiv = document.createElement("div");
+			this._contentDiv.appendChild(this._messagesDiv);
+			dojo.html.setClass(this._messagesDiv, "dh-messages");
+			this._updateMessagesDiv();
 		}
 	},
 	
@@ -471,6 +497,7 @@ defineClass(dh.stacker.PostBlock, dh.stacker.Block,
 		this._descriptionDiv = null;
 		this._timeDiv = null;
 		this._fromDiv = null;
+		this._messagesDiv = null;
 	},
 	
 	load : function(completeFunc, errorFunc) {
@@ -491,6 +518,11 @@ defineClass(dh.stacker.PostBlock, dh.stacker.Block,
 			return false;
 		this.setDescription(newBlock.getDescription());
 		this.setLink(newBlock.getLink());
+		this.setPoster(newBlock.getPoster());
+		
+		// this is a little unkosher since it doesn't make a copy
+		this.setMessages(newBlock._messages);
+		
 		return true;
 	},
 	
@@ -522,6 +554,16 @@ defineClass(dh.stacker.PostBlock, dh.stacker.Block,
 		if (poster.id != posterId)
 			throw new Error("mismatched poster ids");
 		this.setPoster(poster);
+		
+		var messages = [];
+		for (i = 2; i < childNodes.length; ++i) {
+			var messageNode = childNodes.item(i);
+			if (messageNode.nodeName != "message")
+				throw new Error("message node expected");
+			var message = dh.model.messageFromXmlNode(messageNode);
+			messages.push(message);
+		}
+		this.setMessages(messages);
 	}
 });
 
@@ -658,8 +700,8 @@ defineClass(dh.stacker.GroupChatBlock, dh.stacker.Block,
 			var message = dh.model.messageFromXmlNode(messageNode);
 			messages.push(message);
 		}
-		this.setTitle(group.displayName + " Group Chat");
 		this.setMessages(messages);
+		this.setTitle(group.displayName + " Group Chat");
 	},
 
 	load : function(completeFunc, errorFunc) {

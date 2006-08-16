@@ -36,6 +36,7 @@ import com.dumbhippo.persistence.GroupMessage;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.PersonPostData;
 import com.dumbhippo.persistence.Post;
+import com.dumbhippo.persistence.PostMessage;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.UserBlockData;
@@ -43,6 +44,7 @@ import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.NotFoundException;
+import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.Stacker;
 import com.dumbhippo.server.SystemViewpoint;
 import com.dumbhippo.server.TransactionRunner;
@@ -73,6 +75,9 @@ public class StackerBean implements Stacker {
 	
 	@EJB
 	private MusicSystem musicSystem;
+	
+	@EJB
+	private PostingBoard postingBoard;
 	
 	static synchronized private UserCache getUserCache() {
 		if (userCache == null) {
@@ -847,9 +852,16 @@ public class StackerBean implements Stacker {
 					block.setClickedCount(clickedCount);
 				}
 				
-				// update the block's timestamp to match and update user cache
-				if (maxClickedTime > block.getTimestampAsLong())
-					stack(block, maxClickedTime);
+				long newestMessageTime = 0;
+				List<PostMessage> messages = postingBoard.getNewestPostMessages(post, 1);
+				if (messages.size() > 0) {
+					PostMessage m = messages.get(0);
+					newestMessageTime = m.getTimestamp().getTime();
+				}
+				
+				// update the block's timestamp to match, and update user cache
+				if (maxClickedTime > block.getTimestampAsLong() || newestMessageTime > block.getTimestampAsLong())
+					stack(block, Math.max(maxClickedTime, newestMessageTime));
 			}
 		});
 	}

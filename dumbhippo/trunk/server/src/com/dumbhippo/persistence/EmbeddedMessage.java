@@ -16,7 +16,7 @@ import javax.persistence.ManyToOne;
  */
 
 @EmbeddableSuperclass
-public abstract class EmbeddedMessage extends DBUnique {
+public abstract class EmbeddedMessage extends DBUnique implements ChatMessage {
 
 	private static final long serialVersionUID = 1L;
 	

@@ -45,6 +45,7 @@ import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.AccountFeed;
 import com.dumbhippo.persistence.AimResource;
 import com.dumbhippo.persistence.Block;
+import com.dumbhippo.persistence.ChatMessage;
 import com.dumbhippo.persistence.Contact;
 import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.ExternalAccount;
@@ -59,6 +60,7 @@ import com.dumbhippo.persistence.LinkResource;
 import com.dumbhippo.persistence.NowPlayingTheme;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Post;
+import com.dumbhippo.persistence.PostMessage;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.Sentiment;
 import com.dumbhippo.persistence.User;
@@ -1832,15 +1834,19 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		xml.closeElement();
 	}
 	
+	private void writeChatMessage(XmlBuilder xml, ChatMessage m) {
+		xml.appendTextNode("message", m.getMessageText(), "fromId", m.getFromUser().getId(),
+				"timestamp", Long.toString(m.getTimestamp().getTime()),
+				"serial", Integer.toString(m.getMessageSerial()));		
+	}
+	
 	public void getGroupChatSummary(XmlBuilder xml, UserViewpoint viewpoint, String groupId) throws XmlMethodException {
 		Group group = parseGroupId(viewpoint, groupId);
 		xml.openElement("groupChat", "groupId", group.getId());
 		returnGroupsXml(xml, viewpoint, Collections.singleton(group));
 		List<GroupMessage> messages = groupSystem.getNewestGroupMessages(group, 5);
 		for (GroupMessage gm : messages) {
-			xml.appendTextNode("message", gm.getMessageText(), "fromId", gm.getFromUser().getId(),
-						"timestamp", Long.toString(gm.getTimestamp().getTime()),
-						"serial", Integer.toString(gm.getMessageSerial()));
+			writeChatMessage(xml, gm);
 		}
 		xml.closeElement();
 	}
@@ -1852,5 +1858,10 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
  		pv.writeToXmlBuilder(xml);
  		EntityView poster = pv.getPoster();
  		poster.writeToXmlBuilder(xml);
+ 		
+		List<PostMessage> messages = postingBoard.getNewestPostMessages(post, 5);
+		for (PostMessage pm : messages) {
+			writeChatMessage(xml, pm);
+		}
  	}
 }

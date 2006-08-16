@@ -40,6 +40,7 @@ import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.live.GroupEvent;
 import com.dumbhippo.live.LiveState;
+import com.dumbhippo.live.PostChatEvent;
 import com.dumbhippo.live.PostCreatedEvent;
 import com.dumbhippo.live.PostViewedEvent;
 import com.dumbhippo.persistence.Account;
@@ -1103,7 +1104,7 @@ public class PostingBoardBean implements PostingBoard {
 		stacker.clickedPost(post, user, ppd.getClickedDateAsLong());
 		
 		if (!previouslyViewed) {
-			LiveState.getInstance().queueUpdate(new PostViewedEvent(postGuid, user.getGuid(), new Date()));
+			LiveState.getInstance().queueUpdate(new PostViewedEvent(postGuid, user.getGuid(), ppd.getClickedDate()));
 		}
 	}
 
@@ -1183,27 +1184,30 @@ public class PostingBoardBean implements PostingBoard {
 		pageable.setTotalCount(getReceivedFeedPostsCount(viewpoint, recipient, null));		
 	}
 	
-	private static final String POST_MESSAGE_QUERY = "SELECT pm from PostMessage pm WHERE pm.post = :post";
-	private static final String POST_MESSAGE_RECENT = " and (pm.timestamp - current_timestamp()) < :recentTime";
-	private static final String POST_MESSAGE_ORDER = " ORDER BY pm.timestamp";
-	
 	public List<PostMessage> getPostMessages(Post post) {
-		@SuppressWarnings("unchecked")
-		List<PostMessage> messages = em.createQuery(POST_MESSAGE_QUERY + POST_MESSAGE_ORDER)
+		List<?> messages = em.createQuery("SELECT pm from PostMessage pm WHERE pm.post = :post ORDER BY pm.timestamp")
 		.setParameter("post", post)
 		.getResultList();
 		
-		return messages;
+		return TypeUtils.castList(PostMessage.class, messages);
 	}
 	
-	public List<PostMessage> getRecentPostMessages(Post post, int seconds) {
-		List<?> messages = em.createQuery(POST_MESSAGE_QUERY + POST_MESSAGE_RECENT +
-													POST_MESSAGE_ORDER)
+	public List<PostMessage> getNewestPostMessages(Post post, int maxResults) {
+		List<?> messages = em.createQuery("SELECT pm from PostMessage pm WHERE pm.post = :post ORDER BY pm.timestamp DESC")
 		.setParameter("post", post)
-		.setParameter("recentTime", seconds)
-		.getResultList();		
-		return TypeUtils.castList(PostMessage.class, messages);
-	}	
+		.setMaxResults(maxResults)
+		.getResultList();
+		
+		return TypeUtils.castList(PostMessage.class, messages);		
+	}
+	
+	public int getRecentPostMessageCount(Post post, int seconds) {
+		Object result = em.createQuery("SELECT COUNT(pm) FROM PostMessage pm WHERE pm.post = :post AND pm.timestamp >= :oldestTimestamp")
+		.setParameter("post", post)
+		.setParameter("oldestTimestamp", new Date(System.currentTimeMillis() - seconds * 1000))
+		.getSingleResult();		
+		return ((Number) result).intValue();
+	}
 	
 	public void addPostMessage(Post post, User fromUser, String text, Date timestamp, int serial) {
 		// we use serial = -1 in other places in the system to designate a message that contains
@@ -1213,6 +1217,9 @@ public class PostingBoardBean implements PostingBoard {
 		
 		PostMessage postMessage = new PostMessage(post, fromUser, text, timestamp, serial);
 		em.persist(postMessage);
+		
+		LiveState.getInstance().queueUpdate(new PostChatEvent(post.getGuid()));
+		stacker.stackPost(post.getGuid(), timestamp.getTime());
 	}
 
 	public Set<EntityView> getReferencedEntities(Viewpoint viewpoint, Post post) {
