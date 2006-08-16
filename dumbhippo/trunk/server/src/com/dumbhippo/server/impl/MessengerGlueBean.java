@@ -9,10 +9,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.annotation.EJB;
-import javax.ejb.AroundInvoke;
-import javax.ejb.InvocationContext;
+import javax.ejb.EJB;
 import javax.ejb.Stateless;
+import javax.interceptor.AroundInvoke;
+import javax.interceptor.InvocationContext;
 
 import org.slf4j.Logger;
 
@@ -59,6 +59,7 @@ import com.dumbhippo.server.MySpaceTracker;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
+import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.PostView;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.PromotionCode;
@@ -74,6 +75,9 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 	
 	@EJB
 	private IdentitySpider identitySpider;
+	
+	@EJB
+	private PersonViewer personViewer;
 		
 	@EJB
 	private AccountSystem accountSystem;
@@ -214,7 +218,7 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 		
 		Account account = accountFromUsername(username);
 		
-		PersonView view = identitySpider.getSystemView(account.getOwner(), PersonViewExtra.PRIMARY_EMAIL);
+		PersonView view = personViewer.getSystemView(account.getOwner(), PersonViewExtra.PRIMARY_EMAIL);
 		
 		String email = null;
 		if (view.getEmail() != null)
@@ -671,7 +675,7 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 				} catch (NotFoundException e) {
 					throw new RuntimeException(e);
 				}
-				viewerEntities.add(identitySpider.getPersonView(viewpoint, viewer));
+				viewerEntities.add(personViewer.getPersonView(viewpoint, viewer));
 			}
 			
 			

@@ -39,7 +39,7 @@ public class ContactsPage extends AbstractPersonPage {
 	public ListBean<PersonView> getContacts() {
 		if (contacts == null) {
 			Set<PersonView> mingledContacts = 
-				identitySpider.getContacts(getSignin().getViewpoint(), getViewedUser(), 
+				personViewer.getContacts(getSignin().getViewpoint(), getViewedUser(), 
 						                   false, PersonViewExtra.INVITED_STATUS, 
 						                   PersonViewExtra.PRIMARY_EMAIL, 
 						                   PersonViewExtra.PRIMARY_AIM);

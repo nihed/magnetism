@@ -197,7 +197,7 @@ public class SchemaUpdater {
 	}
 	
 	private void updateTable(Table tableAnnotation) {
-		String name = tableAnnotation.name();
+		String name = tableAnnotation.appliesTo();
 		TableMetadata tableMeta = meta.getTableMetadata(name , "dumbhippo", null);
 		if (tableMeta == null) {
 			logger.warn("Couldn't find metadata for table {}", name);

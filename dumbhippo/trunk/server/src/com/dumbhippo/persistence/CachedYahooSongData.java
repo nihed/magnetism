@@ -11,7 +11,7 @@ import org.hibernate.annotations.Index;
  * Yahoo!, in fact the same yahoo song ID could be under multiple search key triplets.
  */
 @Entity
-@org.hibernate.annotations.Table(name = "CachedYahooSongData", indexes={ 
+@org.hibernate.annotations.Table(appliesTo = "CachedYahooSongData", indexes={ 
 		@Index(name="albumArtistSong_index", columnNames = { "searchedAlbum", "searchedArtist", "searchedName", "id" } ) 
 })
 public class CachedYahooSongData extends AbstractYahooSongData {

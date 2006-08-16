@@ -19,7 +19,7 @@ import com.dumbhippo.jms.JmsProducer;
 // them to the appropriate "processor bean"
 //
 
-@MessageDriven(activateConfig =
+@MessageDriven(activationConfig =
 {
   @ActivationConfigProperty(propertyName="destinationType",
     propertyValue="javax.jms.Queue"),

@@ -67,6 +67,6 @@ public class NowPlayingThemesPage extends AbstractSigninOptionalPage {
 		if (getSignin().isValid()) {
 			return getUserSignin().getUserId();
 		}
-		return identitySpider.getCharacter(Character.MUGSHOT).getId();
+		return accountSystem.getCharacter(Character.MUGSHOT).getId();
 	}
 }

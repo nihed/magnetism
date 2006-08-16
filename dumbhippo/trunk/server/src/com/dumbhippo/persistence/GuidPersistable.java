@@ -5,7 +5,6 @@ import java.io.Serializable;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.GeneratorType;
 import javax.persistence.Id;
 import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
@@ -70,7 +69,7 @@ public abstract class GuidPersistable implements Serializable {
 	 * 
 	 * @return the hex string form of the GUID
 	 */
-	@Id(generate = GeneratorType.NONE)
+	@Id
 	@Keyword(id=true) // No effect except for subclasses that are @Indexed
 	@Column(length = Guid.STRING_LENGTH, nullable = false)
 	public String getId() {

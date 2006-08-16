@@ -1,9 +1,8 @@
 package com.dumbhippo.persistence;
 
 import javax.persistence.Column;
-import javax.persistence.EmbeddableSuperclass;
-import javax.persistence.GeneratorType;
 import javax.persistence.Id;
+import javax.persistence.MappedSuperclass;
 import javax.persistence.Transient;
 
 import com.dumbhippo.identity20.Guid;
@@ -21,7 +20,7 @@ import com.dumbhippo.identity20.Guid.ParseException;
  * @author Havoc Pennington
  *
  */
-@EmbeddableSuperclass
+@MappedSuperclass
 public abstract class EmbeddedGuidPersistable {
 	private Guid guid;
 	
@@ -71,7 +70,7 @@ public abstract class EmbeddedGuidPersistable {
 	 * 
 	 * @return the hex string form of the GUID
 	 */
-	@Id(generate = GeneratorType.NONE)
+	@Id
 	@Column(length = Guid.STRING_LENGTH, nullable = false)
 	public String getId() {
 		String s = getGuid().toString();

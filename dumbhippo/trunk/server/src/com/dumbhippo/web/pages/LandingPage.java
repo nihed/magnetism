@@ -22,7 +22,7 @@ public class LandingPage extends AbstractPersonPage {
 	
 	public int getSelfInvitations() {
 		if (selfInvitations < 0) {
-			selfInvitations = invitationSystem.getInvitations(getIdentitySpider().getCharacter(Character.MUGSHOT));
+			selfInvitations = invitationSystem.getInvitations(getAccountSystem().getCharacter(Character.MUGSHOT));
 		}
 		return selfInvitations;
 	}

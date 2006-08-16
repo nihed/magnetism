@@ -2,7 +2,7 @@ package com.dumbhippo.live;
 
 import java.util.List;
 
-import javax.annotation.EJB;
+import javax.ejb.EJB;
 import javax.ejb.Stateless;
 
 import org.slf4j.Logger;

@@ -2,7 +2,7 @@ package com.dumbhippo.server.impl;
 
 import java.io.UnsupportedEncodingException;
 
-import javax.annotation.EJB;
+import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.mail.Message;
 import javax.mail.MessagingException;
@@ -19,10 +19,10 @@ import org.slf4j.Logger;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HippoProperty;
-import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.Mailer;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
+import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.UserViewpoint;
 
 
@@ -40,13 +40,13 @@ public class MailerBean implements Mailer {
 	static private final Logger logger = GlobalSetup.getLogger(MailerBean.class);
 	
 	@EJB
-	private IdentitySpider identitySpider;
-	
-	@EJB
 	private Configuration configuration;
 	
-	@javax.annotation.Resource(name="java:/Mail")
+	@javax.annotation.Resource(mappedName="java:/Mail")
 	private Session mailSession;
+
+	@EJB
+	private PersonViewer personViewer;
 
 	private MimeMessage createMessage(InternetAddress fromAddress, InternetAddress toAddress) {
 			MimeMessage msg;
@@ -79,7 +79,7 @@ public class MailerBean implements Mailer {
     }
 	
 	private InternetAddress createAddressFromViewpoint(UserViewpoint viewpoint, SpecialSender fallbackAddress) {
-		PersonView fromViewedBySelf = identitySpider.getPersonView(viewpoint, viewpoint.getViewer(), PersonViewExtra.PRIMARY_EMAIL);	
+		PersonView fromViewedBySelf = personViewer.getPersonView(viewpoint, viewpoint.getViewer(), PersonViewExtra.PRIMARY_EMAIL);	
 	
 		InternetAddress internetAddress;
 		

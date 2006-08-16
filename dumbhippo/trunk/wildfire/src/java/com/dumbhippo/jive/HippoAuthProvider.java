@@ -57,7 +57,7 @@ public class HippoAuthProvider implements
 		
 		Log.debug("authenticate() username = " + username + " token = " + token + " digest = " + digest);
 		
-		MessengerGlueRemote glue = EJBUtil.defaultLookup(MessengerGlueRemote.class);
+		MessengerGlueRemote glue = EJBUtil.defaultLookupRemote(MessengerGlueRemote.class);
 		
 		if (HippoUserProvider.ENABLE_ADMIN_USER && username.equals(HippoUserProvider.getAdminUsername())) {
             String anticipatedDigest = AuthFactory.createDigest(token, HippoUserProvider.getAdminPassword());

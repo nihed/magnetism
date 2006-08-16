@@ -3,13 +3,13 @@ package com.dumbhippo.persistence;
 import java.util.Date;
 
 import javax.persistence.Column;
-import javax.persistence.EmbeddableSuperclass;
 import javax.persistence.JoinColumn;
+import javax.persistence.MappedSuperclass;
 import javax.persistence.Transient;
 
 import com.dumbhippo.services.YahooAlbumData;
 
-@EmbeddableSuperclass
+@MappedSuperclass
 abstract public class AbstractYahooAlbumData extends DBUnique {
 	
 	private static final long serialVersionUID = 1L;

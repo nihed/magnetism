@@ -5,10 +5,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import javax.annotation.EJB;
+import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
-import javax.persistence.EntityNotFoundException;
+import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
@@ -55,7 +55,7 @@ public class NowPlayingThemeSystemBean implements NowPlayingThemeSystem {
 			q.setMaxResults(1);
 			try {
 				theme = (NowPlayingTheme) q.getSingleResult();
-			} catch (EntityNotFoundException e) {
+			} catch (NoResultException e) {
 				theme = null;
 			}
 		}

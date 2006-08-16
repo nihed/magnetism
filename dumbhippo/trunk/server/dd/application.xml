@@ -15,6 +15,9 @@
     	<java>smackx-svn-local-build-2005-09-30.jar</java>
     </module>
     <module>
+    	<java>commons-fileupload-1.0.jar</java>
+    </module>    
+    <module>
     	<java>slf4j-log4j12.jar</java>
     </module>
     <module>

@@ -189,7 +189,7 @@ public class CheatSheet {
 	}
 	
 	public void setNumberOfInvitations(String userId, int invites) {
-		TestGlueRemote testGlue = EJBUtil.defaultLookup(TestGlueRemote.class);
+		TestGlueRemote testGlue = EJBUtil.defaultLookupRemote(TestGlueRemote.class);
 		try {
 			testGlue.setInvitations(userId, invites);
 		} catch (Exception e) {

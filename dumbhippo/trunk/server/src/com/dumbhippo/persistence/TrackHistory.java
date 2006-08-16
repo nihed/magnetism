@@ -38,7 +38,7 @@ import javax.persistence.UniqueConstraint;
 		    // using FieldResult since we return only one entity, and
 		    // the default name for each returned field
 		    
-			@EntityResult(name="com.dumbhippo.persistence.Track")
+			@EntityResult(entityClass=Track.class)
 		}
 //      Doesn't work with our current Hibernate		
 //		columns={
@@ -50,7 +50,7 @@ import javax.persistence.UniqueConstraint;
 // which could be helpful here, though we are't doing that yet.
 @NamedNativeQueries({
 	@NamedNativeQuery(name="trackHistoryMostPopularTracks",
-		queryString=
+		query=
 			"SELECT  " +
 			"  track.album as album, " +
 			"  track.artist as artist, " +
@@ -76,7 +76,7 @@ import javax.persistence.UniqueConstraint;
 		resultSetMapping="trackHistoryAggregateMapping"
 	),
 	@NamedNativeQuery(name="trackHistoryMostPopularTracksSince",
-			queryString=
+			query=
 				"SELECT  " +
 				"  track.album as album, " +
 				"  track.artist as artist, " +
@@ -105,7 +105,7 @@ import javax.persistence.UniqueConstraint;
 			resultSetMapping="trackHistoryAggregateMapping"
 		),
 	@NamedNativeQuery(name="trackHistoryOnePlayTracks",
-			queryString=
+			query=
 				"SELECT  " +
 				"  track.album as album, " +
 				"  track.artist as artist, " +

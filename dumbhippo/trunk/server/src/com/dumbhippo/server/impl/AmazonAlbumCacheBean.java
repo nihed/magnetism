@@ -4,12 +4,12 @@ import java.util.Date;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
-import javax.annotation.EJB;
+import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
-import javax.persistence.EntityNotFoundException;
+import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
@@ -99,7 +99,7 @@ public class AmazonAlbumCacheBean extends AbstractCacheBean<String,AmazonAlbumDa
 		
 		try {
 			return (CachedAmazonAlbumData) q.getSingleResult();
-		} catch (EntityNotFoundException e) {
+		} catch (NoResultException e) {
 			return null;
 		}
 	}	

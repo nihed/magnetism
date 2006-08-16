@@ -12,6 +12,7 @@ import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.MembershipStatus;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.GroupView;
 import com.dumbhippo.server.IdentitySpider;
@@ -45,6 +46,7 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 	private GroupSystem groupSystem;
 	private MusicSystem musicSystem;
 	private PersonView viewedPerson;
+	private AccountSystem accountSystem; 	
 	
 	private ListBean<GroupView> groups;
 	private Pageable<GroupView> pageablePublicGroups;
@@ -64,16 +66,21 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 	protected int totalContacts;
 
 	protected ListBean<PersonView> followers;
-	private Pageable<PersonView> pageableFollowers; 
+	private Pageable<PersonView> pageableFollowers;
 	
 	protected AbstractPersonPage() {	
 		groupSystem = WebEJBUtil.defaultLookup(GroupSystem.class);
 		musicSystem = WebEJBUtil.defaultLookup(MusicSystem.class);
+		accountSystem = WebEJBUtil.defaultLookup(AccountSystem.class);
 		lookedUpCurrentTrack = false;
 	}
 	
 	protected IdentitySpider getIdentitySpider() { 
 		return identitySpider;
+	}
+	
+	protected AccountSystem getAccountSystem() {
+		return accountSystem;
 	}
 	
 	protected GroupSystem getGroupSystem() {
@@ -129,10 +136,10 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 	public PersonView getViewedPerson() {
 		if (viewedPerson == null) {
 			if (getNeedExternalAccounts())
-				viewedPerson = identitySpider.getPersonView(getSignin().getViewpoint(), getViewedUser(), PersonViewExtra.ALL_RESOURCES,
+				viewedPerson = personViewer.getPersonView(getSignin().getViewpoint(), getViewedUser(), PersonViewExtra.ALL_RESOURCES,
 						PersonViewExtra.EXTERNAL_ACCOUNTS);
 			else
-				viewedPerson = identitySpider.getPersonView(getSignin().getViewpoint(), getViewedUser(), PersonViewExtra.ALL_RESOURCES);
+				viewedPerson = personViewer.getPersonView(getSignin().getViewpoint(), getViewedUser(), PersonViewExtra.ALL_RESOURCES);
 		}
 		
 		return viewedPerson;
@@ -249,7 +256,7 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 	public ListBean<PersonView> getContacts() {
 		if (contacts == null) {
 			Set<PersonView> mingledContacts = 
-				identitySpider.getContacts(getSignin().getViewpoint(), getViewedUser(), 
+				personViewer.getContacts(getSignin().getViewpoint(), getViewedUser(), 
 						                   false, PersonViewExtra.INVITED_STATUS, 
 						                   PersonViewExtra.PRIMARY_EMAIL, 
 						                   PersonViewExtra.PRIMARY_AIM);		
@@ -275,7 +282,7 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 	public ListBean<PersonView> getFollowers() {
 		if (followers == null) {
 		    Set<PersonView> mingledFollowers = 
-			    identitySpider.getFollowers(getSignin().getViewpoint(), getViewedUser());		
+			    personViewer.getFollowers(getSignin().getViewpoint(), getViewedUser());		
 		        followers = new ListBean<PersonView>(PersonView.sortedList(getSignin().getViewpoint(), getViewedUser(), mingledFollowers));
 		}
 		return followers;

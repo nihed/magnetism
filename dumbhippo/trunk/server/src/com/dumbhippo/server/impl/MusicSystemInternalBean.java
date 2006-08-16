@@ -21,10 +21,10 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 
-import javax.annotation.EJB;
+import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
-import javax.persistence.EntityNotFoundException;
+import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
@@ -64,6 +64,7 @@ import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Pageable;
 import com.dumbhippo.server.PersonMusicPlayView;
 import com.dumbhippo.server.PersonMusicView;
+import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.RhapsodyDownloadCache;
 import com.dumbhippo.server.Stacker;
 import com.dumbhippo.server.TrackIndexer;
@@ -99,6 +100,9 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	
 	@EJB
 	private IdentitySpider identitySpider;
+	
+	@EJB
+	private PersonViewer personViewer;
 	
 	@EJB
 	private GroupSystem groupSystem;
@@ -199,7 +203,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 					Track res;
 					try {
 						res = (Track) q.getSingleResult();
-					} catch (EntityNotFoundException e) {
+					} catch (NoResultException e) {
 						res = key;
 						em.persist(res);
 						
@@ -239,7 +243,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 					res = (TrackHistory) q.getSingleResult();
 					res.setLastUpdated(now);
 					res.setTimesPlayed(res.getTimesPlayed() + 1);
-				} catch (EntityNotFoundException e) {
+				} catch (NoResultException e) {
 					res = new TrackHistory(user, track);
 					res.setLastUpdated(now);
 					res.setTimesPlayed(1);
@@ -938,7 +942,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			if (includePersonMusicPlay) {
 			    // add the person who made this "track history" 
 		        List<PersonMusicPlayView> personMusicPlayViews = new ArrayList<PersonMusicPlayView>();
-			    personMusicPlayViews.add(new PersonMusicPlayView(identitySpider.getPersonView(viewpoint, t.getUser()), t.getLastUpdated()));
+			    personMusicPlayViews.add(new PersonMusicPlayView(personViewer.getPersonView(viewpoint, t.getUser()), t.getLastUpdated()));
 			    v.setPersonMusicPlayViews(personMusicPlayViews);
 			}
 			
@@ -1328,7 +1332,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		try {
 			Track t = (Track) q.getSingleResult();
 			return t;
-		} catch (EntityNotFoundException e) {
+		} catch (NoResultException e) {
 			throw new NotFoundException("No matching track", e);
 		}
 	}
@@ -1548,7 +1552,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
             // from looking strangely empty.
             if ((viewpoint != null) && viewpoint.isOfUser(user)) {  
                 if (selfMusicPlayView == null) {   
-            	    selfMusicPlayView = new PersonMusicPlayView(identitySpider.getPersonView(viewpoint, user), h.getLastUpdated());
+            	    selfMusicPlayView = new PersonMusicPlayView(personViewer.getPersonView(viewpoint, user), h.getLastUpdated());
                 }
             	continue;
             }
@@ -1559,16 +1563,16 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
             		// it is correct to use the first track history that related to a given contact because we are interested
             		// in the most recent play and track histories were sorted by the time of the last update
             		if (views.get(user) == null) {
-            			views.put(user, new PersonMusicPlayView(identitySpider.getPersonView(viewpoint, user), h.getLastUpdated()));
+            			views.put(user, new PersonMusicPlayView(personViewer.getPersonView(viewpoint, user), h.getLastUpdated()));
             		}
             	} else {
             		if (extraViews.get(user) == null) {    			
-            			extraViews.put(user, new PersonMusicPlayView(identitySpider.getPersonView(viewpoint, user), h.getLastUpdated()));
+            			extraViews.put(user, new PersonMusicPlayView(personViewer.getPersonView(viewpoint, user), h.getLastUpdated()));
               		}            		
             	}
             } else {
         		if (views.get(user) == null) {
-        			views.put(user, new PersonMusicPlayView(identitySpider.getPersonView(viewpoint, user), h.getLastUpdated()));            			
+        			views.put(user, new PersonMusicPlayView(personViewer.getPersonView(viewpoint, user), h.getLastUpdated()));            			
         		}                	
             }
         }
@@ -1663,7 +1667,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			if (pmv == null) {
 				if (isSelf || contacts.contains(user)) {
 					if (contactViews < MAX_RELATED_FRIENDS_RESULTS) {
-						pmv = new PersonMusicView(identitySpider.getPersonView(viewpoint, user));
+						pmv = new PersonMusicView(personViewer.getPersonView(viewpoint, user));
 
 						if (!isSelf) {
 							switch (type) {

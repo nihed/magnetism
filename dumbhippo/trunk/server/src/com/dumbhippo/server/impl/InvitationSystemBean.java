@@ -3,18 +3,16 @@ package com.dumbhippo.server.impl;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import javax.annotation.EJB;
+import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.mail.internet.MimeMessage;
 import javax.persistence.EntityManager;
-import javax.persistence.EntityNotFoundException;
+import javax.persistence.NoResultException;
 import javax.persistence.NonUniqueResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
@@ -47,7 +45,7 @@ import com.dumbhippo.server.Mailer;
 import com.dumbhippo.server.NoMailSystem;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PersonView;
-import com.dumbhippo.server.PersonViewExtra;
+import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.PromotionCode;
 import com.dumbhippo.server.SystemViewpoint;
 import com.dumbhippo.server.TransactionRunner;
@@ -64,7 +62,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 	private EntityManager em;
 	
 	@EJB
-	private IdentitySpider identitySpider;
+	private PersonViewer personViewer;
 	
 	@EJB
 	private AccountSystem accounts;
@@ -106,7 +104,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 			q.setMaxResults(1); // only need the first one
 			invite = (InvitationToken) q.getSingleResult();
 			
-		} catch (EntityNotFoundException e) {
+		} catch (NoResultException e) {
 			invite = null;
 		}
 		return invite;
@@ -117,7 +115,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		InvitationToken token;		
 		try {
 			token = em.find(InvitationToken.class, id);
-		} catch (EntityNotFoundException e) {
+		} catch (NoResultException e) {
 			return null;
 		}
 		if (!token.getResultingPerson().equals(viewpoint.getViewer())) {
@@ -140,7 +138,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
             q.setParameter("inviter", inviter);
 			// we expect there to be at most one result because authentication key must be unique
 			invite = (InvitationToken) q.getSingleResult();		
-		} catch (EntityNotFoundException e) {
+		} catch (NoResultException e) {
 			invite = null;
 		} catch (NonUniqueResultException e) {
 			throw new RuntimeException("Multiple InvitationToken results for authentication key " 
@@ -169,6 +167,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
         return invitationView;		
 	}
 	
+	/*
 	public Set<PersonView> findInviters(UserViewpoint viewpoint, PersonViewExtra... extras) {
 		User invitee = viewpoint.getViewer();
 		
@@ -199,6 +198,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		
 		return result; 
 	}
+	*/
 
 	public List<InvitationView> findOutstandingInvitations(UserViewpoint viewpoint, 
 			                                               int start, 
@@ -548,8 +548,182 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		return sendInvitation(viewpoint, promotionCode, emailRes, subject, message);
 	}
 	
-	private void sendEmailNotification(UserViewpoint viewpoint, InvitationToken invite, String subject, String message) {
+
+	protected void notifyInvitationViewed(InvitationToken invite) {
+		// adding @suppresswarnings here makes javac crash, whee
+		//for (InviterData inviterData : invite.getInviters()) {
+		// TODO send notification via xmpp to inviter that invitee viewed
+		//}
+	}
+	
+	public Client viewInvitation(InvitationToken invite, String firstClientName, boolean disable) {
+		if (invite.isViewed()) {
+			throw new IllegalArgumentException("InvitationToken " + invite + " has already been viewed");
+		}
+
+		EmailResource invitationResource = (EmailResource) invite.getInvitee();
 		
+		Account acct = accounts.createAccountFromResource(invitationResource);
+		if (disable)
+			acct.setDisabled(true);
+
+		Client client = null;
+		if (firstClientName != null) {
+			client = accounts.authorizeNewClient(acct, firstClientName);
+		}
+
+		User newUser = acct.getOwner();
+		
+		invite.setViewed(true);
+		invite.setResultingPerson(newUser);
+		
+		String specialCountString = configuration.getProperty(HippoProperty.SPECIAL_NEW_USER_INVITATION_COUNT);
+		int specialCount = Integer.parseInt(specialCountString);
+		String regularCountString = configuration.getProperty(HippoProperty.NEW_USER_INVITATION_COUNT);
+		int regularCount = Integer.parseInt(regularCountString);
+		
+		if (invite.getPromotionCode() == PromotionCode.MUSIC_INVITE_PAGE_200602) {
+			// we aren't really using this promotion for now, so set the regular number of invitations
+			acct.setInvitations(regularCount);
+			// you are already implicitly wanting this if you came via the music thing;
+			// people can always turn it off
+			acct.setMusicSharingEnabled(true);
+		} else if (invite.getPromotionCode() == PromotionCode.SUMMIT_LANDING_200606) {
+			// we aren't really using this promotion for now, so set the regular number of invitations
+			acct.setInvitations(regularCount);			
+			// current default for enabling music sharing should apply to summit people
+			// we also want summit people to be invited to the common group
+			String groupGuidString = null;
+			try {
+			    groupGuidString = configuration.getPropertyNoDefault(HippoProperty.SUMMIT_GROUP_GUID);
+			    Group summitGroup = groupSystem.lookupGroupById(SystemViewpoint.getInstance(), groupGuidString);
+			    // invite has a List of inviters, let's rather use the Mugshot character explicitly here,
+			    // it is important that Mugshot is already a member of a group we are inviting to,
+			    // which it already is for the summit group
+			    groupSystem.addMember(accounts.getCharacter(Character.MUGSHOT), summitGroup, newUser);
+			} catch (PropertyNotFoundException e) {
+				logger.error("Summit Group guid not found, exception: {}", e.getMessage());				
+		    } catch (NotFoundException e) {
+				logger.error("Summit Group not found, guid: {}, exception: {}", groupGuidString, e.getMessage());
+			}
+		} else if (wantsInSystem.isWantsIn(invitationResource.getEmail())) {
+			// This will give invitations to someone whose e-mail is in the wants in list, 
+			// even if it wasn't us who invited them in. This seems reasonable, as having
+			// "signed up" should give a person a special status. If we want to only give 
+			// invites when it was us who invited the person, we either can check the inviter
+			// is Mugshot or change the behavior of wantsInSystem.isWantsIn() to check that  
+			// we have marked invitationSent for the e-mail as "true", which means it was us
+			// who sent the invitation.
+			acct.setInvitations(specialCount);			
+		} else {
+			acct.setInvitations(regularCount);
+		}
+				
+		// needed to fix newUser.getAccount() returning null inside identitySpider?
+		em.flush();
+		
+		// add all inviters as our contacts
+		for (InviterData inviterData : invite.getInviters()) {
+			Account inviterAccount = inviterData.getInviter().getAccount();
+			spider.createContact(newUser, inviterAccount);
+		}
+		
+		if (!disable)
+			notifyInvitationViewed(invite);
+		
+		return client;
+	}
+
+	/*
+	public Collection<String> getInviterNames(InvitationToken invite) {
+		Set<String> names = new HashSet<String>();  
+		for (InviterData inviterData : invite.getInviters()) {
+			PersonView view = personViewer.getSystemView(inviterData.getInviter());
+	        String readable = view.getName();
+	        if (readable != null) {    
+	        	names.add(readable);
+	        }
+		}
+		return Collections.unmodifiableCollection(names);
+	}
+	*/
+	
+	/**
+	 * Returns InviterData if there is one that corresponds to the given user
+	 * for the given invitation or null.
+	 * 
+	 * @param invite the invitation
+	 * @param inviter the inviter
+	 * @return InviterData if there is one that corresponds to the given user
+	 * for the given invitation or null
+	 */
+    private InviterData getInviterData(InvitationToken invite, User inviter) {
+		for (InviterData inviterData : invite.getInviters()) {
+			if (inviterData.getInviter().equals(inviter)) {
+				return inviterData;
+			}
+		}
+        return null;	  	
+    }
+	
+	public InvitationToken getCreatingInvitation(Account account) {
+		try {
+			return (InvitationToken)em.createQuery("SELECT it FROM InvitationToken it WHERE it.resultingPerson = :owner")
+				.setParameter("owner", account.getOwner())
+				.getSingleResult();
+		} catch (NoResultException e) {
+			return null;
+		}
+	}
+
+	public int getInvitations(User user) {
+		Account account = getAccount(user);
+		return account.getInvitations();
+	}
+
+	public boolean hasInvited(UserViewpoint viewpoint, Resource invitee) {
+		User user = viewpoint.getViewer();
+		
+		// iv will be null if user is not among the inviters
+		InvitationToken iv = lookupInvitationFor(user, invitee);
+		
+		if (iv == null)
+			return false;
+		
+		InviterData ivd = getInviterData(iv, user);
+		
+		// ivd should not be null because we just got back an iv because the
+		// user was among the inviters, but just in case check if ivd != null
+		if (ivd != null && iv.isValid() && !ivd.isDeleted())
+			return true;
+		else 
+			return false;
+	}
+	
+	public int getSystemInvitationCount(UserViewpoint viewpoint) {
+		if (!spider.isAdministrator(viewpoint.getViewer()))
+			throw new RuntimeException("can't do this if you aren't an admin");
+		Set<User> already = new HashSet<User>();
+		int count = 0;
+		for (Character c : Character.values()) {
+			// the character enum has the same user more than once
+			User u = accounts.getCharacter(c);
+			if (already.contains(u))
+				continue;
+			already.add(u);
+			count += u.getAccount().getInvitations();
+		}
+		return count;
+	}
+
+	public int getTotalInvitationCount(UserViewpoint viewpoint) {
+		if (!spider.isAdministrator(viewpoint.getViewer()))
+			throw new RuntimeException("can't do this if you aren't an admin");
+		Query q = em.createQuery("SELECT SUM(a.invitations) FROM Account a");
+		return (Integer) q.getSingleResult();
+	}
+	
+	private void sendEmailNotification(UserViewpoint viewpoint, InvitationToken invite, String subject, String message) {
 		User inviter = viewpoint.getViewer();
 		EmailResource invitee = (EmailResource) invite.getInvitee();
 		
@@ -564,7 +738,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		// which is fine
 		MimeMessage msg = mailer.createMessage(Mailer.SpecialSender.INVITATION, viewpoint, Mailer.SpecialSender.INVITATION, inviteeEmail);
 
-		PersonView viewedInviter = spider.getPersonView(viewpoint, inviter);
+		PersonView viewedInviter = personViewer.getPersonView(viewpoint, inviter);
 		String inviterName = viewedInviter.getName();
 		
 		String baseurl;
@@ -576,7 +750,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 			throw new RuntimeException(e);
 		}
 		
-		User mugshot = identitySpider.getCharacter(Character.MUGSHOT);
+		User mugshot = accounts.getCharacter(Character.MUGSHOT);
 		boolean isMugshotInvite = (viewedInviter.getUser() == mugshot);
 		
 		if (subject == null || subject.trim().length() == 0) {
@@ -633,177 +807,5 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		        mailer.sendMessage(finalizedMessage);
 			}
 		});
-	}
-
-	protected void notifyInvitationViewed(InvitationToken invite) {
-		// adding @suppresswarnings here makes javac crash, whee
-		//for (InviterData inviterData : invite.getInviters()) {
-		// TODO send notification via xmpp to inviter that invitee viewed
-		//}
-	}
-	
-	public Client viewInvitation(InvitationToken invite, String firstClientName, boolean disable) {
-		if (invite.isViewed()) {
-			throw new IllegalArgumentException("InvitationToken " + invite + " has already been viewed");
-		}
-
-		EmailResource invitationResource = (EmailResource) invite.getInvitee();
-		
-		Account acct = accounts.createAccountFromResource(invitationResource);
-		if (disable)
-			acct.setDisabled(true);
-
-		Client client = null;
-		if (firstClientName != null) {
-			client = accounts.authorizeNewClient(acct, firstClientName);
-		}
-
-		User newUser = acct.getOwner();
-		
-		invite.setViewed(true);
-		invite.setResultingPerson(newUser);
-		
-		String specialCountString = configuration.getProperty(HippoProperty.SPECIAL_NEW_USER_INVITATION_COUNT);
-		int specialCount = Integer.parseInt(specialCountString);
-		String regularCountString = configuration.getProperty(HippoProperty.NEW_USER_INVITATION_COUNT);
-		int regularCount = Integer.parseInt(regularCountString);
-		
-		if (invite.getPromotionCode() == PromotionCode.MUSIC_INVITE_PAGE_200602) {
-			// we aren't really using this promotion for now, so set the regular number of invitations
-			acct.setInvitations(regularCount);
-			// you are already implicitly wanting this if you came via the music thing;
-			// people can always turn it off
-			acct.setMusicSharingEnabled(true);
-		} else if (invite.getPromotionCode() == PromotionCode.SUMMIT_LANDING_200606) {
-			// we aren't really using this promotion for now, so set the regular number of invitations
-			acct.setInvitations(regularCount);			
-			// current default for enabling music sharing should apply to summit people
-			// we also want summit people to be invited to the common group
-			String groupGuidString = null;
-			try {
-			    groupGuidString = configuration.getPropertyNoDefault(HippoProperty.SUMMIT_GROUP_GUID);
-			    Group summitGroup = groupSystem.lookupGroupById(SystemViewpoint.getInstance(), groupGuidString);
-			    // invite has a List of inviters, let's rather use the Mugshot character explicitly here,
-			    // it is important that Mugshot is already a member of a group we are inviting to,
-			    // which it already is for the summit group
-			    groupSystem.addMember(identitySpider.getCharacter(Character.MUGSHOT), summitGroup, newUser);
-			} catch (PropertyNotFoundException e) {
-				logger.error("Summit Group guid not found, exception: {}", e.getMessage());				
-		    } catch (NotFoundException e) {
-				logger.error("Summit Group not found, guid: {}, exception: {}", groupGuidString, e.getMessage());
-			}
-		} else if (wantsInSystem.isWantsIn(invitationResource.getEmail())) {
-			// This will give invitations to someone whose e-mail is in the wants in list, 
-			// even if it wasn't us who invited them in. This seems reasonable, as having
-			// "signed up" should give a person a special status. If we want to only give 
-			// invites when it was us who invited the person, we either can check the inviter
-			// is Mugshot or change the behavior of wantsInSystem.isWantsIn() to check that  
-			// we have marked invitationSent for the e-mail as "true", which means it was us
-			// who sent the invitation.
-			acct.setInvitations(specialCount);			
-		} else {
-			acct.setInvitations(regularCount);
-		}
-				
-		// needed to fix newUser.getAccount() returning null inside identitySpider?
-		em.flush();
-		
-		// add all inviters as our contacts
-		for (InviterData inviterData : invite.getInviters()) {
-			Account inviterAccount = inviterData.getInviter().getAccount();
-			spider.createContact(newUser, inviterAccount);
-		}
-		
-		if (!disable)
-			notifyInvitationViewed(invite);
-		
-		return client;
-	}
-
-	public Collection<String> getInviterNames(InvitationToken invite) {
-		Set<String> names = new HashSet<String>();  
-		for (InviterData inviterData : invite.getInviters()) {
-			PersonView view = spider.getSystemView(inviterData.getInviter());
-	        String readable = view.getName();
-	        if (readable != null) {    
-	        	names.add(readable);
-	        }
-		}
-		return Collections.unmodifiableCollection(names);
-	}
-	
-	/**
-	 * Returns InviterData if there is one that corresponds to the given user
-	 * for the given invitation or null.
-	 * 
-	 * @param invite the invitation
-	 * @param inviter the inviter
-	 * @return InviterData if there is one that corresponds to the given user
-	 * for the given invitation or null
-	 */
-    private InviterData getInviterData(InvitationToken invite, User inviter) {
-		for (InviterData inviterData : invite.getInviters()) {
-			if (inviterData.getInviter().equals(inviter)) {
-				return inviterData;
-			}
-		}
-        return null;	  	
-    }
-	
-	public InvitationToken getCreatingInvitation(Account account) {
-		try {
-			return (InvitationToken)em.createQuery("SELECT it FROM InvitationToken it WHERE it.resultingPerson = :owner")
-				.setParameter("owner", account.getOwner())
-				.getSingleResult();
-		} catch (EntityNotFoundException e) {
-			return null;
-		}
-	}
-
-	public int getInvitations(User user) {
-		Account account = getAccount(user);
-		return account.getInvitations();
-	}
-
-	public boolean hasInvited(UserViewpoint viewpoint, Resource invitee) {
-		User user = viewpoint.getViewer();
-		
-		// iv will be null if user is not among the inviters
-		InvitationToken iv = lookupInvitationFor(user, invitee);
-		
-		if (iv == null)
-			return false;
-		
-		InviterData ivd = getInviterData(iv, user);
-		
-		// ivd should not be null because we just got back an iv because the
-		// user was among the inviters, but just in case check if ivd != null
-		if (ivd != null && iv.isValid() && !ivd.isDeleted())
-			return true;
-		else 
-			return false;
-	}
-	
-	public int getSystemInvitationCount(UserViewpoint viewpoint) {
-		if (!spider.isAdministrator(viewpoint.getViewer()))
-			throw new RuntimeException("can't do this if you aren't an admin");
-		Set<User> already = new HashSet<User>();
-		int count = 0;
-		for (Character c : Character.values()) {
-			// the character enum has the same user more than once
-			User u = spider.getCharacter(c);
-			if (already.contains(u))
-				continue;
-			already.add(u);
-			count += u.getAccount().getInvitations();
-		}
-		return count;
-	}
-
-	public int getTotalInvitationCount(UserViewpoint viewpoint) {
-		if (!spider.isAdministrator(viewpoint.getViewer()))
-			throw new RuntimeException("can't do this if you aren't an admin");
-		Query q = em.createQuery("SELECT SUM(a.invitations) FROM Account a");
-		return (Integer) q.getSingleResult();
-	}
+	}		
 }

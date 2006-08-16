@@ -31,7 +31,7 @@ public class HotnessIQHandler extends AbstractIQHandler {
 		JID from = packet.getFrom();
 		IQ reply = IQ.createResultIQ(packet);
 		
-		MessengerGlueRemote glue = EJBUtil.defaultLookup(MessengerGlueRemote.class);
+		MessengerGlueRemote glue = EJBUtil.defaultLookupRemote(MessengerGlueRemote.class);
 		Hotness hotness = glue.getUserHotness(from.getNode());
 		
 		Document document = DocumentFactory.getInstance().createDocument();

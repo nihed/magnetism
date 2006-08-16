@@ -11,7 +11,7 @@
 	<property name="jboss.root" value="/opt/jboss" />
 	<property name="buildjar.dir" location="${target}/classes" />
 	<!-- *** stuff in bundled-classpath.external has to be added to application.xml also *** -->
-	<property name="bundled-classpath.external" value="smack-svn-local-build-2005-09-30.jar smackx-svn-local-build-2005-09-30.jar slf4j-*.jar rome-*.jar jdom-1.0.jar taste.jar tagsoup-1.0.jar"/>
+	<property name="bundled-classpath.external" value="smack-svn-local-build-2005-09-30.jar smackx-svn-local-build-2005-09-30.jar commons-fileupload-1.0.jar slf4j-*.jar rome-*.jar jdom-1.0.jar taste.jar tagsoup-1.0.jar"/>
 	<property name="bundled-classpath" value="dumbhippo-base.jar"/>	
 	<property name="bundled-deps.web" value="standard.jar" />
 	<property name="bundled-deps.client" value="" />
@@ -33,6 +33,7 @@
 		<pathelement location="/usr/share/java/junit.jar" />
 		<pathelement location="/usr/share/java/ant/ant-junit.jar" />
 		<pathelement location="${jboss.root}/client/jbossall-client.jar"/>
+		<pathelement location="${jboss.root}/client/javax.servlet.jar"/>		
 		<pathelement location="${jboss.root}/client/mail.jar"/>
 		<pathelement location="${jboss.root}/client/log4j.jar"/>
 		<pathelement location="${jboss.root}/lib/jboss-system.jar"/>
@@ -41,6 +42,11 @@
 			<include name="hibernate3.jar"/>
 			<include name="hibernate-annotations.jar"/>
 			<include name="hibernate-entitymanager.jar"/>			
+		</fileset>
+		<fileset dir="${jboss.root}/server/default/lib">
+			<include name="*ejb3*.jar"/>
+			<include name="hibernate3.jar"/>
+			<include name="hibernate-annotations.jar"/>
 		</fileset>
 		<pathelement location="${jboss.root}/server/default/lib/javax.servlet.jsp.jar"/>
 	</path>

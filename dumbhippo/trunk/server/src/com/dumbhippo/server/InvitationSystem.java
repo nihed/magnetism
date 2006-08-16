@@ -1,8 +1,6 @@
 package com.dumbhippo.server;
 
-import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 
 import javax.ejb.Local;
 
@@ -62,7 +60,8 @@ public interface InvitationSystem {
 	 * @return a set of all the inviters for the invitee; the
 	 *         resulting PersonView use invitee as the viewpoint.
 	 */
-	public Set<PersonView> findInviters(UserViewpoint viewpoint, PersonViewExtra... extras);
+	// Not used at the moment
+	// public Set<PersonView> findInviters(UserViewpoint viewpoint, PersonViewExtra... extras);
 	
 	
 	/**
@@ -178,7 +177,8 @@ public interface InvitationSystem {
 	 * @param invite an invitation
 	 * @return a collection of names
 	 */
-	public Collection<String> getInviterNames(InvitationToken invite);
+	// Not used right now
+	// public Collection<String> getInviterNames(InvitationToken invite);
 	
 	/**
 	 * Return number of invitations the user has left to send.

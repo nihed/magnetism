@@ -12,7 +12,6 @@ import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
-import javax.persistence.Table;
 import javax.persistence.Transient;
 
 import org.hibernate.annotations.Cache;
@@ -28,7 +27,7 @@ import com.dumbhippo.postinfo.PostInfo;
 
 @Entity
 @Indexed(index="index/post")
-@org.hibernate.annotations.Table(name = "Post", indexes={ 
+@org.hibernate.annotations.Table(appliesTo = "Post", indexes={ 
 		@Index(name="postDate_index", columnNames = { "postDate" } ) }
 )
 public class Post extends GuidPersistable {
@@ -137,7 +136,7 @@ public class Post extends GuidPersistable {
 	}	
 	
 	@ManyToMany
-	@JoinTable(table=@Table(name="Post_PersonRecipient"))
+	@JoinTable(name="Post_PersonRecipient")
 	@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)
 	public Set<Resource> getPersonRecipients() {
 		return personRecipients;
@@ -205,7 +204,7 @@ public class Post extends GuidPersistable {
 	}
 
 	@ManyToMany
-	@JoinTable(table=@Table(name="Post_ExpandedRecipient"))
+	@JoinTable(name="Post_ExpandedRecipient")
 	@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)
 	public Set<Resource> getExpandedRecipients() {
 		return expandedRecipients;

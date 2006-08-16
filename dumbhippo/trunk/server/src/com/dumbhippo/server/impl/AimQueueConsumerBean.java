@@ -1,7 +1,7 @@
 package com.dumbhippo.server.impl;
 
-import javax.annotation.EJB;
 import javax.ejb.ActivationConfigProperty;
+import javax.ejb.EJB;
 import javax.ejb.MessageDriven;
 import javax.jms.JMSException;
 import javax.jms.Message;
@@ -30,7 +30,7 @@ import com.dumbhippo.server.TokenExpiredException;
 import com.dumbhippo.server.TokenSystem;
 import com.dumbhippo.server.TokenUnknownException;
 
-@MessageDriven(activateConfig =
+@MessageDriven(activationConfig =
  {
    @ActivationConfigProperty(propertyName="destinationType",
      propertyValue="javax.jms.Queue"),

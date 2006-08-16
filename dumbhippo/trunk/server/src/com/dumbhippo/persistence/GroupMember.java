@@ -80,9 +80,8 @@ public class GroupMember extends DBUnique {
 	// -- a GroupMember can have multiple adders
 	// -- an adder can add multiple GroupMembers
 	@ManyToMany
-	@JoinTable(table=@Table(name="GroupMember_HippoUser",
-                            uniqueConstraints = 
-                                {@UniqueConstraint(columnNames={"groupMember_id", "adder_id"})}),
+	@JoinTable(name="GroupMember_HippoUser",
+               uniqueConstraints={@UniqueConstraint(columnNames={"groupMember_id", "adder_id"})},
                joinColumns=@JoinColumn(name="groupMember_id", referencedColumnName="id"),               
                inverseJoinColumns=@JoinColumn(name="adder_id", referencedColumnName="id"))	
     @Cache(usage=CacheConcurrencyStrategy.READ_WRITE)

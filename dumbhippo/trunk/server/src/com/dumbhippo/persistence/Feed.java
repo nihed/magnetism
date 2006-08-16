@@ -6,6 +6,7 @@ import java.util.Set;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
@@ -37,8 +38,8 @@ public class Feed extends DBUnique {
 		this.source = source;
 	}
 
-	@Column(nullable = false)
 	@OneToOne
+	@JoinColumn(nullable = false)	
 	public LinkResource getSource() {
 		return source;
 	}

@@ -211,7 +211,7 @@ public class Room {
 	
 	private UserInfo lookupUserInfo(String username) {
 		if (!userInfoCache.containsKey(username)) {
-			MessengerGlueRemote glue = EJBUtil.defaultLookup(MessengerGlueRemote.class);
+			MessengerGlueRemote glue = EJBUtil.defaultLookupRemote(MessengerGlueRemote.class);
 			ChatRoomUser user = glue.getChatRoomUser(roomName, kind, username);
 			userInfoCache.put(username, new UserInfo(user.getUsername(), user.getName(), user.getSmallPhotoUrl()));			
 		}
@@ -219,7 +219,7 @@ public class Room {
 	}
 	
 	private void updateRecipientsCache() {
-		MessengerGlueRemote glue = EJBUtil.defaultLookup(MessengerGlueRemote.class);		
+		MessengerGlueRemote glue = EJBUtil.defaultLookupRemote(MessengerGlueRemote.class);		
 		for (ChatRoomUser user : glue.getChatRoomRecipients(roomName, this.kind)) {
 			Log.debug("Room recipient: " + user.getUsername());
 			recipientsCache.add(user.getUsername());
@@ -287,7 +287,7 @@ public class Room {
 	
 	public static Room loadFromServer(RoomHandler handler, String roomName) {
 		Log.debug("Querying server for information on chat room " + roomName);
-		MessengerGlueRemote glue = EJBUtil.defaultLookup(MessengerGlueRemote.class);
+		MessengerGlueRemote glue = EJBUtil.defaultLookupRemote(MessengerGlueRemote.class);
 		
 		ChatRoomInfo info = glue.getChatRoomInfo(roomName);
 		if (info == null) {
@@ -302,7 +302,7 @@ public class Room {
 	
 	public static Map<String, String> getCurrentMusicFromServer(String username) {
 		Log.debug("Querying server for current music for " + username);
-		MessengerGlueRemote glue = EJBUtil.defaultLookup(MessengerGlueRemote.class);
+		MessengerGlueRemote glue = EJBUtil.defaultLookupRemote(MessengerGlueRemote.class);
 		
 		Map<String, String> musicInfo = glue.getCurrentMusicInfo(username);
 		
@@ -336,7 +336,7 @@ public class Room {
 		roomInfo.addAttribute("kind", kind.name().toLowerCase());
 		if (includeDetails)
 			roomInfo.addAttribute("title", title);
-		MessengerGlueRemote glue = EJBUtil.defaultLookup(MessengerGlueRemote.class);
+		MessengerGlueRemote glue = EJBUtil.defaultLookupRemote(MessengerGlueRemote.class);
 		String objectXml = null;
 		if (includeDetails) {
 			String elementName = "objects";
@@ -499,7 +499,7 @@ public class Room {
 		
 		// Joining a chat implicitly un-ignores a post
 		if (participant && kind == ChatRoomKind.POST) {
-			MessengerGlueRemote glue = EJBUtil.defaultLookup(MessengerGlueRemote.class);
+			MessengerGlueRemote glue = EJBUtil.defaultLookupRemote(MessengerGlueRemote.class);
 			try {
 				glue.setPostIgnored(Guid.parseTrustedJabberId(username), 
 								    Guid.parseTrustedJabberId(roomName), false);
@@ -717,7 +717,7 @@ public class Room {
 	 * @return true if the user can join this room
 	 */
 	public boolean checkUserCanJoin(String username) {
-		MessengerGlueRemote glue = EJBUtil.defaultLookup(MessengerGlueRemote.class);
+		MessengerGlueRemote glue = EJBUtil.defaultLookupRemote(MessengerGlueRemote.class);
 		return glue.canJoinChat(roomName, kind, username);
 	}
 

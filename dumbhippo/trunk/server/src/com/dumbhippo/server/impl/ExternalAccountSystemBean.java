@@ -2,11 +2,12 @@ package com.dumbhippo.server.impl;
 
 import java.util.Set;
 
-import javax.annotation.EJB;
+import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
+import org.jboss.annotation.IgnoreDependency;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
@@ -20,7 +21,6 @@ import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.ValidationException;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.ExternalAccountSystem;
-import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.MessageSender;
 import com.dumbhippo.server.MySpaceTracker;
 import com.dumbhippo.server.NotFoundException;
@@ -37,12 +37,11 @@ public class ExternalAccountSystemBean implements ExternalAccountSystem {
 	private static final Logger logger = GlobalSetup.getLogger(ExternalAccountSystemBean.class);
 	
 	@EJB
-	IdentitySpider identitySpider;
-	
-	@EJB
+	@IgnoreDependency
 	private MySpaceTracker mySpaceTracker;
 	
 	@EJB
+	@IgnoreDependency
 	private MessageSender messageSender;	
 	
 	@EJB

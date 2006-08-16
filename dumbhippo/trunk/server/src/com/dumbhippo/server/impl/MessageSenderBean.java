@@ -8,11 +8,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.annotation.EJB;
+import javax.ejb.EJB;
 import javax.ejb.EJBContext;
 import javax.ejb.Stateless;
 import javax.mail.internet.MimeMessage;
 
+import org.jboss.annotation.IgnoreDependency;
 import org.jivesoftware.smack.XMPPConnection;
 import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.packet.Message;
@@ -52,6 +53,7 @@ import com.dumbhippo.server.NoMailSystem;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
+import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.PostType;
 import com.dumbhippo.server.PostView;
 import com.dumbhippo.server.PostingBoard;
@@ -86,21 +88,31 @@ public class MessageSenderBean implements MessageSender {
 	private Mailer mailer;
 
 	@EJB
+	@IgnoreDependency
 	private IdentitySpider identitySpider;
 	
 	@EJB
+	@IgnoreDependency
+	private PersonViewer personViewer;
+	
+	@EJB
+	@IgnoreDependency
 	private PostingBoard postingBoard;
 	
 	@EJB
+	@IgnoreDependency
 	private InvitationSystem invitationSystem;
 
 	@EJB
+	@IgnoreDependency
 	private NoMailSystem noMail;
 	
 	@EJB
+	@IgnoreDependency
 	private GroupSystem groupSystem;
 	
 	@EJB
+	@IgnoreDependency
 	private ExternalAccountSystem externalAccounts;
 	
 	@javax.annotation.Resource
@@ -458,7 +470,7 @@ public class MessageSenderBean implements MessageSender {
 				} catch (NotFoundException e) {
 					throw new RuntimeException(e);
 				}
-				viewerEntities.add(identitySpider.getPersonView(viewpoint, viewer));
+				viewerEntities.add(personViewer.getPersonView(viewpoint, viewer));
 			}
 			for (EntityView ev : postingBoard.getReferencedEntities(viewpoint, post.getPost())) {
 				viewerEntities.add(ev);
@@ -528,7 +540,7 @@ public class MessageSenderBean implements MessageSender {
 					} catch (NotFoundException e) {
 						throw new RuntimeException(e);
 					}
-					referencedEntities.add(identitySpider.getPersonView(viewpoint, viewer));
+					referencedEntities.add(personViewer.getPersonView(viewpoint, viewer));
 				}
 			}
 
@@ -548,7 +560,7 @@ public class MessageSenderBean implements MessageSender {
 		public void sendGroupMembershipUpdate(User recipient, Group group, GroupMember groupMember) {
 			XMPPConnection connection = getConnection();
 			Message message = createMessageFor(recipient);	
-			PersonView updatedMember = identitySpider.getPersonView(new UserViewpoint(recipient), 
+			PersonView updatedMember = personViewer.getPersonView(new UserViewpoint(recipient), 
 					                                                groupMember.getMember(),
 					                                                PersonViewExtra.PRIMARY_RESOURCE);
 
@@ -618,7 +630,7 @@ public class MessageSenderBean implements MessageSender {
 			
 			// Since the recipient doesn't have an account, we can't get the recipient's view
 			// of the poster. Send out information from the poster's view of themself.
-			PersonView posterViewedBySelf = identitySpider.getPersonView(viewpoint, 
+			PersonView posterViewedBySelf = personViewer.getPersonView(viewpoint, 
 					                                                     poster,
 					                                                     PersonViewExtra.PRIMARY_EMAIL);
 			

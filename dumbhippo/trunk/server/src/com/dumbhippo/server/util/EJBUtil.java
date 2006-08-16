@@ -4,6 +4,7 @@ import java.sql.SQLException;
 
 import javax.ejb.EJBContext;
 import javax.ejb.EJBException;
+import javax.ejb.Local;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.persistence.EntityManager;
@@ -26,6 +27,8 @@ public class EJBUtil {
 	@SuppressWarnings("unused")
 	static private final Logger logger = GlobalSetup.getLogger(EJBUtil.class);	
 	
+	private static final String classPrefix = "dumbhippo/";
+	
 	private static final int MAX_SEARCH_TERMS = 3;
 	// we avoid using \ because by the 
 	// time you go through Java and MySQL also interpreting it
@@ -34,17 +37,17 @@ public class EJBUtil {
 	
 	/**
 	 * Very simple wrapper around InitialContext.lookup that looks up an
-	 * a desired session bean in JNDI by the interface name of its primary 
+	 * a desired local session bean in JNDI by the interface name of its primary 
 	 * interface. 
 	 * 
 	 * If I understand correctly, the fact that this works is relying on JBoss 
-	 * specifics. Thereis no standard way of looking up bean at runtime without 
+	 * specifics. There is no standard way of looking up bean at runtime without 
 	 * having specified a dependency on the bean via an @EJB annotation (On a field or 
 	 * on a class.) We are relying here on the fact that JBoss (in the absence
 	 * of its extension @LocalBinding annotation) uses the fully qualified
-	 * name of the bean's interface as the bean's JNDI name.
+	 * name of a local bean's interface as the bean's JNDI name, suffixed with "/local".
 	 *    
-	 * @param clazz the class of the (local or remote) EJB interface to look up.
+	 * @param clazz the class of the local EJB interface to look up.
 	 * @return the found EJB
 	 */
 	public static <T> T defaultLookup(Class<T> clazz) {
@@ -53,6 +56,42 @@ public class EJBUtil {
 		} catch (NamingException e) {
 			throw new RuntimeException(e);
 		}
+	}
+	
+	/** 
+	 * Like defaultLookup, but for remote interfaces.
+	 * 
+	 * @param clazz the class of the remote EJB interface to look up.
+	 * @return the found EJB
+	 */
+	public static <T> T defaultLookupRemote(Class<T> clazz) {
+		try {
+			return defaultLookupRemoteChecked(clazz);
+		} catch (NamingException e) {
+			throw new RuntimeException(e);
+		}
+	}
+	
+	/**
+	 * Like defaultLookupRemote() but throws a checked NamingException. You should
+	 * use this function only if you have useful recovery to do if lookup fails.
+	 * 
+	 * @param clazz the class of the remote EJB interface to look up.
+	 * @return the found EJB
+	 * @throws NamingException if an error occurs finding the object; this might
+	 *   be because of a network error, or becaus the server providing the object
+	 *   doesn't exist.
+	 */
+	public static <T> T defaultLookupRemoteChecked(Class<T> clazz) throws NamingException {
+
+		if (clazz == null)
+			throw new IllegalArgumentException("Class passed to nameLookup() is null");
+		
+		String name = clazz.getSimpleName();
+		if (!clazz.isInterface())
+			throw new IllegalArgumentException("Class passed to nameLookup() has to be an interface, not " + name);
+
+		return clazz.cast(uncheckedDynamicLookupRemote(name));
 	}
 	
 	/**
@@ -68,18 +107,32 @@ public class EJBUtil {
 	public static <T> T defaultLookupChecked(Class<T> clazz) throws NamingException {
 
 		if (clazz == null)
-			throw new IllegalArgumentException("Class passed to nameLookup() is null");
+			throw new IllegalArgumentException("Class passed to nameLookup() is nNull");
 		
-		String name = clazz.getCanonicalName();		
+		String name = clazz.getSimpleName();		
 		if (!clazz.isInterface())
 			throw new IllegalArgumentException("Class passed to nameLookup() has to be an interface, not " + name);
-
-		return clazz.cast(uncheckedDynamicLookup(name));
-	}
+		if (clazz.isAnnotationPresent(Local.class))		
+			return clazz.cast(uncheckedDynamicLookupLocal(name));
+		else
+			return clazz.cast(uncheckedDynamicLookupRemote(name));
+	}	
+	
+	public static Object uncheckedDynamicLookupLocal(String name) throws NamingException {	
+		return uncheckedDynamicLookup(classPrefix + name + "Bean/local");
+	}	
+	
+	public static Object uncheckedDynamicLookupRemote(String name) throws NamingException {
+		if (name.endsWith("Remote"))
+			name = name.substring(0, name.lastIndexOf("Remote"));
+		name = name + "Bean";
+		return uncheckedDynamicLookup(classPrefix + name + "/remote");
+	}		
 	
 	public static Object uncheckedDynamicLookup(String name) throws NamingException {
 		InitialContext namingContext; // note, if ever caching this, it isn't threadsafe
 		namingContext = new InitialContext();	
+		logger.debug("looking up \"" + name + "\"");
 		return namingContext.lookup(name);
 	}
 	
