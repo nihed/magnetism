@@ -129,6 +129,10 @@ dh.stacker.Block = function(kind, blockId) {
 	// numeric representation of Date()
 	this._stackTime = 0;
 	
+	// if (_ignored) then _ignoredTime overrides our time
+	this._ignored = false;
+	this._ignoredTime = 0;
+	
 	this._title = "";
 	
 	this._clickedCount = 0;
@@ -183,6 +187,32 @@ defineClass(dh.stacker.Block, null,
 		this._updateClickedCountDiv();
 	},
 	
+	getIgnored : function() {
+		return this._ignored;
+	},
+	
+	setIgnored : function(ignored) {
+		if (ignored != this._ignored) {
+			this._ignored = ignored;
+			this._updateHushDiv();
+		}
+	},
+	
+	getIgnoredTime : function() {
+		return this._ignoredTime;
+	},
+	
+	setIgnoredTime : function(t) {
+		this._ignoredTime = t;
+	},
+	
+	getSortTime : function() {
+		if (this._ignored)
+			return this._ignoredTime;
+		else
+			return this._stackTime;
+	},
+	
 	_updateClickedCountDiv : function() {
 		// no-op since only some subclasses have a clicked count div
 	},
@@ -198,6 +228,15 @@ defineClass(dh.stacker.Block, null,
 			;
 			//var d = new Date(this._stackTime);
 			//dojo.dom.textContent(this._stackTimeDiv, d.getFullYear() + "-" + (d.getMonth()+1) + "-" + d.getDate() + " " + d.getHours() + ":" + d.getMinutes() + ":" + d.getSeconds() + ":" + d.getMilliseconds());
+		}
+	},
+
+	_updateHushDiv : function() {
+		if (this._div) {
+			if (this._ignored)
+				dojo.dom.textContent(this._hushDiv, "UNHUSH");
+			else
+				dojo.dom.textContent(this._hushDiv, "HUSH");
 		}
 	},
 
@@ -251,17 +290,27 @@ defineClass(dh.stacker.Block, null,
 			this.reparentIntoOuterDiv(this._div);
 			
 			this._headingDiv = document.createElement("div");
-			this._innerDiv.appendChild(this._headingDiv);
 			dojo.html.setClass(this._headingDiv, "dh-heading");
+			this._innerDiv.appendChild(this._headingDiv);
 			dojo.dom.textContent(this._headingDiv, dh.stacker.kindHeadings[this._kind]);
 			
+			this._hushDiv = document.createElement("div");
+			dojo.html.setClass(this._hushDiv, "dh-hush");
+			this._headingDiv.appendChild(this._hushDiv);
+			this._updateHushDiv();
+	
+			var me = this;		
+			dh.util.addEventListener(this._hushDiv, "mousedown", function() {
+				me._toggleHushed();
+			});
+			
 			this._contentDiv = document.createElement("div");
+			dojo.html.setClass(this._contentDiv, "dh-content");			
 			this._innerDiv.appendChild(this._contentDiv);
-			dojo.html.setClass(this._contentDiv, "dh-content");
 
 			this._titleDiv = document.createElement("div");
+			dojo.html.setClass(this._titleDiv, "dh-title");			
 			this._contentDiv.appendChild(this._titleDiv);
-			dojo.html.setClass(this._titleDiv, "dh-title");
 			this._updateTitleDiv();
 			
 			//this._stackTimeDiv = document.createElement("div");
@@ -284,6 +333,7 @@ defineClass(dh.stacker.Block, null,
 			this._titleDiv = null;
 			this._contentDiv = null;
 			this._stackTimeDiv = null;
+			this._hushDiv = null;
 		}
 	},
 
@@ -341,8 +391,10 @@ defineClass(dh.stacker.Block, null,
 			throw new Error("updating block from wrong block");
 		}
 	
-		if (newBlock.getStackTime() <= this.getStackTime()) {
-			// new block isn't really newer
+		if (newBlock.getStackTime() <= this.getStackTime() &&
+			newBlock.getIgnored() == this.getIgnored() &&
+			newBlock.getIgnoredTime() == this.getIgnoredTime()) {
+			// new block isn't really changed
 			return false;
 		}
 		
@@ -350,11 +402,26 @@ defineClass(dh.stacker.Block, null,
 		// instead it gets done by the stack maintenance code
 		// in the appropriate place
 		//this.setStackTime(newBlock.getStackTime());
+		//this.setIgnoredTime();
+		//this.setIgnored();
 		
 		this.setTitle(newBlock.getTitle());
 		this.setClickedCount(newBlock.getClickedCount());
 		
 		return true;
+	},
+	
+	_toggleHushed : function() {
+		var me = this;
+	   	dh.server.doXmlMethod("setBlockHushed",
+				     	{ "blockId" : me._blockId,
+				     	  "hushed" : ! me._ignored },
+						function(childNodes, http) {
+							dh.stacker.getInstance().reloadBlock(me);
+			 	    	},
+			  	    	function(code, msg, http) {
+			  	    		alert("Could not hush or unhush: " + msg);
+			  	    	});
 	}
 });
 
@@ -930,6 +997,8 @@ dh.stacker.parseBlockAttrs = function(node) {
 dh.stacker.mergeBlockAttrs = function(block, attrs) {
 	block.setStackTime(attrs["timestamp"]);
 	block.setClickedCount(attrs["clickedCount"]);
+	block.setIgnored(attrs["ignored"]);
+	block.setIgnoredTime(attrs["ignoredTime"]);
 }
 
 dh.stacker.blockParsers = {};
@@ -1025,7 +1094,7 @@ defineClass(dh.stacker.Stacker, null,
 			old = block;
 		}
 
-		this._updateBlock(old, block.getStackTime());
+		this._updateBlock(old, block.getStackTime(), block.getIgnored(), block.getIgnoredTime());
 	},
 
 	_parseNewBlocks : function(nodes) {
@@ -1048,13 +1117,7 @@ defineClass(dh.stacker.Stacker, null,
 					continue;
 				var block = parseFunc(child);
 				if (block) {
-					var me = this;
-					block.load(function(block) {
-						me._newBlockLoaded(block);
-					},
-					// on failure to load
-					function(block) {
-					});
+					this.reloadDetails(block);
 				}
 			}
 		}
@@ -1063,12 +1126,40 @@ defineClass(dh.stacker.Stacker, null,
 		}
 	},
 
+	// loads the details for a block, either when we 
+	// think the block has changed, or when we're 
+	// loading up a bunch of blocks for the first time
+	reloadDetails : function(block) {
+		var me = this;
+		block.load(function(block) {
+			me._newBlockLoaded(block);
+		},
+		// on failure to load
+		function(block) {
+		});
+	},
+
+	reloadBlock : function(block) {
+		var me = this;
+	   	dh.server.doXmlMethod("block",
+					     	{ 	"blockId" : block.getBlockId() },
+							function(childNodes, http) {
+								me._parseNewBlocks(childNodes);		
+				 	    	},
+				  	    	function(code, msg, http) {
+				  	    		// failed!
+				  	    		//alert("failed to update: " + msg);
+				  	    	});	
+	},
+
 	_pollNewBlocks : function() {
-		var newestTime;
-		if (this._stack.length == 0)
-			newestTime = 0;
-		else
-			newestTime = this._stack[this._stack.length-1].getStackTime();
+		// we need newest stackTime, not newest sortTime, so 
+		// can't just look at the last block
+		var newestTime = 0;
+		var i;
+		for (i = 0; i < this._stack.length; ++i) {
+			newestTime = Math.max(this._stack[i].getStackTime(), newestTime);
+		}
 		
 		// this only gets the first page of blocks, this means we could miss some stuff if
 		// >pageSize blocks have been updated since the last attempt. We ask for 
@@ -1099,10 +1190,10 @@ defineClass(dh.stacker.Stacker, null,
 		return -1;
 	},
 	
-	_findInsertPosition : function(stackTime) {
+	_findInsertPosition : function(sortTime) {
 		var i;
 		for (i = 0; i < this._stack.length; ++i) {
-			if (this._stack[i].getStackTime() > stackTime)
+			if (this._stack[i].getSortTime() > sortTime)
 				break;
 		}
   		// insert at current i; at stack.length for append
@@ -1162,7 +1253,7 @@ defineClass(dh.stacker.Stacker, null,
 		if (newOuterDiv.parentNode)
 			newOuterDiv.parentNode.removeChild(newOuterDiv);				
 		if (olderBlock) {
-			if (olderBlock.getStackTime() > block.getStackTime())
+			if (olderBlock.getSortTime() > block.getSortTime())
 				throw new Error("olderBlock not older");
 			if (!olderBlock._div)
 				throw new Error("olderBlock not realized");
@@ -1193,7 +1284,7 @@ defineClass(dh.stacker.Stacker, null,
 			throw new Error("block._div is wrong");
 	},
 	
-	_updateBlock : function(block, newStackTime) {
+	_updateBlock : function(block, newStackTime, newIgnored, newIgnoredTime) {
 		if (!block)
 			throw new Error("updating null block");
 		if (!this._blocks[block.getBlockId()])
@@ -1201,26 +1292,33 @@ defineClass(dh.stacker.Stacker, null,
 	
 		this._checkInvariants();
 	
+		var newSortTime = newIgnored ? newIgnoredTime : newStackTime;
+	
 		var i = this._findBlockInStack(block);
 		if (i < 0) {
-			var j = this._findInsertPosition(newStackTime);
+			var j = this._findInsertPosition(newSortTime);
 			this._stack.splice(j, 0, block);
 			
 			block.setStackTime(newStackTime);
+			block.setIgnored(newIgnored);
+			block.setIgnoredTime(newIgnoredTime);
 			
 			block.realize();
 			
 			this._updateBlockDivLocation(block);
 		} else {
 			// relocate it
-			var j = this._findInsertPosition(newStackTime);
+			var j = this._findInsertPosition(newSortTime);
 			block.setStackTime(newStackTime);
+			block.setIgnored(newIgnored);
+			block.setIgnoredTime(newIgnoredTime);
+			
 			if ((i + 1) != j) {
 				var removed = this._stack.splice(i, 1);
 				if (removed[0] != block)
 					throw new Error("removed the wrong thing: " + removed);
 				// insert position may have changed due to deleting ourselves
-				j = this._findInsertPosition(newStackTime);
+				j = this._findInsertPosition(newSortTime);
 				this._stack.splice(j, 0, block);
 				this._checkStackInOrder();
 				if (block._div) {
@@ -1235,10 +1333,10 @@ defineClass(dh.stacker.Stacker, null,
 		var last = 0;
 		var i;
 		for (i = 0; i < this._stack.length; ++i) {
-			if (this._stack[i].getStackTime() < last) {
+			if (this._stack[i].getSortTime() < last) {
 				throw new Error("stack out of order");
 			}
-			last = this._stack[i].getStackTime();
+			last = this._stack[i].getSortTime();
 		}	
 	},
 	

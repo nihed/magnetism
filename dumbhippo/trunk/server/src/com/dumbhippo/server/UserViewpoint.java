@@ -67,4 +67,10 @@ public class UserViewpoint extends Viewpoint {
 		if (cachedFriendOfStatus == null)
 			cachedFriendOfStatus = new HashMap<User,Boolean>();
 		cachedFriendOfStatus.put(user, isFriendOf);
-	}}
+	}
+
+	@Override
+	public String toString() {
+		return "{UserViewpoint " + viewer + "}";
+	}
+}

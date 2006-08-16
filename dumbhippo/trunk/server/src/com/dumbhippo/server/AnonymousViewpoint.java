@@ -14,7 +14,7 @@ public class AnonymousViewpoint extends Viewpoint {
 	private AnonymousViewpoint() {
 	}
 	
-	static private AnonymousViewpoint instance = new AnonymousViewpoint();
+	static final private AnonymousViewpoint instance = new AnonymousViewpoint();
 	
 	/**
 	 * Gets the anonymous viewpoint singleton.
@@ -28,5 +28,10 @@ public class AnonymousViewpoint extends Viewpoint {
 	@Override
 	public boolean isOfUser(User user) {
 		return false;
+	}
+	
+	@Override
+	public String toString() {
+		return "{AnonymousViewpoint}";
 	}
 }

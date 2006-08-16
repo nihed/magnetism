@@ -26,6 +26,8 @@ public interface Stacker {
 	
 	public List<UserBlockData> getStack(Viewpoint viewpoint, User user, long lastTimestamp, int start, int count);
 
+	public UserBlockData lookupUserBlockData(UserViewpoint viewpoint, Guid guid) throws NotFoundException;
+	
 	public void migrateEverything();
 	public void migrateGroups();
 	public void migratePost(String postId);

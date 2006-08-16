@@ -18,6 +18,7 @@ import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityNotFoundException;
+import javax.persistence.NonUniqueResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
@@ -48,6 +49,7 @@ import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.Stacker;
 import com.dumbhippo.server.SystemViewpoint;
 import com.dumbhippo.server.TransactionRunner;
+import com.dumbhippo.server.UserViewpoint;
 import com.dumbhippo.server.Viewpoint;
 import com.dumbhippo.server.util.EJBUtil;
 
@@ -507,6 +509,19 @@ public class StackerBean implements Stacker {
 			}
 		}
 		return list;
+	}
+	
+	public UserBlockData lookupUserBlockData(UserViewpoint viewpoint, Guid guid) throws NotFoundException {
+		Query q = em.createQuery("SELECT ubd FROM UserBlockData ubd, Block block WHERE ubd.block = block AND block.id = :blockId AND ubd.user = :user");
+		q.setParameter("blockId", guid.toString());
+		q.setParameter("user", viewpoint.getViewer());
+		try {
+			return (UserBlockData) q.getSingleResult();
+		} catch (NonUniqueResultException e) {
+			throw new NotFoundException("multiple UserBlockData for this block");
+		} catch (EntityNotFoundException e) {
+			throw new NotFoundException("no UserBlockData for blockId " + guid);
+		}
 	}
 	
 	/** 

@@ -10,6 +10,7 @@ import org.xml.sax.SAXException;
 
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.identity20.Guid.ParseException;
+import com.dumbhippo.persistence.UserBlockData;
 
 /**
  * - Methods must be named getFoo or doFoo
@@ -350,6 +351,10 @@ public interface HttpMethods {
  	@HttpParams( { "userId", "lastTimestamp", "start", "count" })
  	@HttpOptions( optionalParams = { "userId" } )
  	public void getBlocks(XmlBuilder xml, UserViewpoint viewpoint, String userId, String lastTimestamp, String start, String count) throws XmlMethodException;
+
+ 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
+ 	@HttpParams( { "blockId" })
+ 	public void getBlock(XmlBuilder xml, UserViewpoint viewpoint, UserBlockData block) throws XmlMethodException;
  	
  	@HttpContentTypes(HttpResponseData.XMLMETHOD)
  	@HttpParams( { "userId" })
@@ -362,4 +367,8 @@ public interface HttpMethods {
 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
  	@HttpParams( { "postId" })
  	public void getPostSummary(XmlBuilder xml, UserViewpoint viewpoint, String postId) throws XmlMethodException;
+	
+	@HttpContentTypes(HttpResponseData.XMLMETHOD)
+ 	@HttpParams( { "blockId", "hushed" })
+ 	public void doSetBlockHushed(XmlBuilder xml, UserViewpoint viewpoint, UserBlockData userBlockData, boolean hushed) throws XmlMethodException;
 }

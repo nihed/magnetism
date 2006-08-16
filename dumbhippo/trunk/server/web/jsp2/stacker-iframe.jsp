@@ -51,6 +51,14 @@
 		.dh-stacked-block .dh-heading a:visited, .dh-stacked-block .dh-heading a {
 			color:				white;
 		}
+		.dh-stacked-block .dh-hush {
+			position:			absolute;
+			right:				2px;
+			top:				2px;
+			font-weight:		bold;
+			font-size:			9px;
+			background-color: 	inherit; /* so it covers up any text below it */
+		}
 		.dh-stacked-block-music-person {
 			background-color:	#36AAE8;
 			color:				white;		

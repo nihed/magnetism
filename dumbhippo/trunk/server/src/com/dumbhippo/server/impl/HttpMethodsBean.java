@@ -1756,34 +1756,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		}
 	}
 	
-	public void getBlocks(XmlBuilder xml, UserViewpoint viewpoint, String userId, String lastTimestampStr, String startStr, String countStr) throws XmlMethodException {
-		long lastTimestamp;
-		int start;
-		int count;
-		
-		try {
-			lastTimestamp = Long.parseLong(lastTimestampStr);
-			start = Integer.parseInt(startStr);
-			count = Integer.parseInt(countStr);
-		} catch (NumberFormatException e) {
-			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, "bad integer");
-		}
-		if (start < 0)
-			throw new XmlMethodException(XmlMethodErrorCode.INVALID_ARGUMENT, "start must be >= 0");
-		if (count < 1)
-			throw new XmlMethodException(XmlMethodErrorCode.INVALID_ARGUMENT, "count must be > 0");
-		if (lastTimestamp < 0)
-			throw new XmlMethodException(XmlMethodErrorCode.INVALID_ARGUMENT, "lastTimestamp must be >= 0");
-		
-		User user;
-		if (userId == null) {
-			user = viewpoint.getViewer();
-		} else {
-			user = parseUserId(userId);
-		}
-		
-		List<UserBlockData> list = stacker.getStack(viewpoint, user, lastTimestamp, start, count);
-		
+	private void returnBlocks(XmlBuilder xml, UserViewpoint viewpoint, User user, List<UserBlockData> list) throws XmlMethodException {
 		logger.debug("Returning {} blocks", list.size());
 		
 		xml.openElement("blocks", "count", Integer.toString(list.size()),
@@ -1818,7 +1791,41 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			
 			xml.closeElement();
 		}
-		xml.closeElement();
+		xml.closeElement();		
+	}
+	
+	public void getBlocks(XmlBuilder xml, UserViewpoint viewpoint, String userId, String lastTimestampStr, String startStr, String countStr) throws XmlMethodException {
+		long lastTimestamp;
+		int start;
+		int count;
+		
+		try {
+			lastTimestamp = Long.parseLong(lastTimestampStr);
+			start = Integer.parseInt(startStr);
+			count = Integer.parseInt(countStr);
+		} catch (NumberFormatException e) {
+			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, "bad integer");
+		}
+		if (start < 0)
+			throw new XmlMethodException(XmlMethodErrorCode.INVALID_ARGUMENT, "start must be >= 0");
+		if (count < 1)
+			throw new XmlMethodException(XmlMethodErrorCode.INVALID_ARGUMENT, "count must be > 0");
+		if (lastTimestamp < 0)
+			throw new XmlMethodException(XmlMethodErrorCode.INVALID_ARGUMENT, "lastTimestamp must be >= 0");
+		
+		User user;
+		if (userId == null) {
+			user = viewpoint.getViewer();
+		} else {
+			user = parseUserId(userId);
+		}
+		
+		List<UserBlockData> list = stacker.getStack(viewpoint, user, lastTimestamp, start, count);
+		returnBlocks(xml, viewpoint, user, list);
+	}
+	
+	public void getBlock(XmlBuilder xml, UserViewpoint viewpoint, UserBlockData userBlockData) throws XmlMethodException {
+		returnBlocks(xml, viewpoint, viewpoint.getViewer(), Collections.singletonList(userBlockData));
 	}
 	
 	public void getMusicPersonSummary(XmlBuilder xml, UserViewpoint viewpoint, String userId) throws XmlMethodException {
@@ -1863,5 +1870,13 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		for (PostMessage pm : messages) {
 			writeChatMessage(xml, pm);
 		}
+ 	}
+ 	
+ 	public void doSetBlockHushed(XmlBuilder xml, UserViewpoint viewpoint, UserBlockData userBlockData, boolean hushed) throws XmlMethodException {
+ 		if (hushed != userBlockData.isIgnored()) {
+	 		userBlockData.setIgnored(hushed);
+	 		if (hushed)
+	 			userBlockData.setIgnoredTimestampAsLong(userBlockData.getBlock().getTimestampAsLong());
+ 		}
  	}
 }

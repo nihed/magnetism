@@ -30,6 +30,7 @@ import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.server.AnonymousViewpoint;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.HttpContentTypes;
@@ -41,6 +42,7 @@ import com.dumbhippo.server.HumanVisibleException;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PostingBoard;
+import com.dumbhippo.server.Stacker;
 import com.dumbhippo.server.UserViewpoint;
 import com.dumbhippo.server.Viewpoint;
 import com.dumbhippo.server.XmlMethodErrorCode;
@@ -199,6 +201,34 @@ public class HttpMethodsServlet2 extends AbstractServlet {
 
 				public Class<?> getType() {
 					return Post.class;
+				}
+				
+			});
+			
+			marshallers.put(UserBlockData.class, new Marshaller<UserBlockData>() {
+				
+				public UserBlockData marshal(Viewpoint viewpoint, String s) throws XmlMethodException {
+					if (s == null)
+						return null;
+					
+					if (!(viewpoint instanceof UserViewpoint)) {
+						throw new XmlMethodException(XmlMethodErrorCode.NOT_LOGGED_IN, "This method requires login");
+					}
+					
+					UserViewpoint userViewpoint = (UserViewpoint) viewpoint;
+					
+					Stacker stacker = WebEJBUtil.defaultLookup(Stacker.class);
+					try {
+						return stacker.lookupUserBlockData(userViewpoint, new Guid(s));
+					} catch (ParseException e) {
+						throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, "bad block id " + s);
+					} catch (NotFoundException e) {
+						throw new XmlMethodException(XmlMethodErrorCode.INVALID_ARGUMENT, "no such block " + s);
+					}
+				}
+
+				public Class<?> getType() {
+					return UserBlockData.class;
 				}
 				
 			});

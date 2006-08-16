@@ -617,3 +617,13 @@ dh.util.zeroPad = function(number, len) {
     }
     return str;
 }
+
+dh.util.addEventListener = function(node, eventName, func) {
+	if (node.addEventListener) {
+		node.addEventListener(eventName, func, false);
+	} else if (node.attachEvent) {
+		node.attachEvent("on" + eventName, func);
+	} else {
+		throw new Error("browser does not support addEventListener or attachEvent");
+	}
+}
