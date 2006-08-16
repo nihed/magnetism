@@ -11,16 +11,13 @@
 
 package org.jivesoftware.wildfire.interceptor;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import org.jivesoftware.wildfire.Session;
+import org.jivesoftware.util.Log;
+import org.xmpp.packet.Packet;
+
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
-
-import org.jivesoftware.util.Log;
-import org.jivesoftware.wildfire.Session;
-import org.xmpp.packet.Packet;
 
 /**
  * An InterceptorManager manages the list of global interceptors and per-user

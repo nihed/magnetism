@@ -11,8 +11,8 @@
 
 package org.jivesoftware.wildfire.user;
 
-import java.util.Collection;
 import java.util.Date;
+import java.util.Collection;
 import java.util.Set;
 
 /**

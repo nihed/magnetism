@@ -11,19 +11,8 @@
 
 package org.jivesoftware.util;
 
-import java.text.DateFormat;
-import java.text.Format;
-import java.text.MessageFormat;
-import java.text.NumberFormat;
-import java.text.ParseException;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.ResourceBundle;
-import java.util.StringTokenizer;
-import java.util.TimeZone;
+import java.text.*;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**

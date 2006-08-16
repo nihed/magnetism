@@ -11,13 +11,13 @@
 
 package org.jivesoftware.wildfire;
 
-import java.util.Collection;
-
-import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.jivesoftware.wildfire.user.User;
 import org.jivesoftware.wildfire.user.UserNotFoundException;
-import org.xmpp.packet.JID;
+import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.xmpp.packet.Presence;
+import org.xmpp.packet.JID;
+
+import java.util.Collection;
 
 /**
  * The presence manager tracks on a global basis who's online. The presence

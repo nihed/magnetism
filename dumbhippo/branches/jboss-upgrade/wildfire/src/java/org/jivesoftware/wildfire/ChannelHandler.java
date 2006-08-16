@@ -11,8 +11,8 @@
 
 package org.jivesoftware.wildfire;
 
-import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.xmpp.packet.Packet;
+import org.jivesoftware.wildfire.auth.UnauthorizedException;
 
 /**
  * Interface to handle packets delivered by Channels.

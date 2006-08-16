@@ -11,12 +11,12 @@
 
 package org.jivesoftware.wildfire;
 
+import org.jivesoftware.wildfire.auth.AuthToken;
+import org.xmpp.packet.JID;
+
 import java.util.Date;
 import java.util.Map;
 import java.util.TreeMap;
-
-import org.jivesoftware.wildfire.auth.AuthToken;
-import org.xmpp.packet.JID;
 
 /**
  * The session represents a connection between the server and a client (c2s) or

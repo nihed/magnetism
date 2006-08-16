@@ -11,11 +11,11 @@
 
 package org.jivesoftware.wildfire;
 
-import org.jivesoftware.wildfire.container.BasicModule;
-import org.xmpp.packet.IQ;
-import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
+import org.xmpp.packet.Message;
 import org.xmpp.packet.Presence;
+import org.xmpp.packet.IQ;
+import org.jivesoftware.wildfire.container.BasicModule;
 
 /**
  * <p>An uber router that can handle any packet type.</p>

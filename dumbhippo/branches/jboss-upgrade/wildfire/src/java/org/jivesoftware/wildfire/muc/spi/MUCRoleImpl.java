@@ -11,22 +11,20 @@
 
 package org.jivesoftware.wildfire.muc.spi;
 
-import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
+import org.dom4j.DocumentHelper;
 import org.dom4j.QName;
-import org.jivesoftware.util.ElementUtil;
-import org.jivesoftware.wildfire.ClientSession;
 import org.jivesoftware.wildfire.PacketRouter;
-import org.jivesoftware.wildfire.Session;
+import org.jivesoftware.wildfire.ClientSession;
 import org.jivesoftware.wildfire.XMPPServer;
+import org.jivesoftware.wildfire.Session;
 import org.jivesoftware.wildfire.muc.MUCRole;
 import org.jivesoftware.wildfire.muc.MUCRoom;
 import org.jivesoftware.wildfire.muc.MUCUser;
 import org.jivesoftware.wildfire.muc.MultiUserChatServer;
 import org.jivesoftware.wildfire.muc.NotAllowedException;
-import org.xmpp.packet.JID;
-import org.xmpp.packet.Packet;
-import org.xmpp.packet.Presence;
+import org.jivesoftware.util.ElementUtil;
+import org.xmpp.packet.*;
 
 /**
  * Simple in-memory implementation of a role in a chatroom

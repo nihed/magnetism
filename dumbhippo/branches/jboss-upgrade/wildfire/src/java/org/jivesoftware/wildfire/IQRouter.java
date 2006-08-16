@@ -11,19 +11,19 @@
 
 package org.jivesoftware.wildfire;
 
+import org.dom4j.Element;
+import org.jivesoftware.wildfire.container.BasicModule;
+import org.jivesoftware.wildfire.handler.IQHandler;
+import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.Log;
+import org.xmpp.packet.IQ;
+import org.xmpp.packet.JID;
+import org.xmpp.packet.PacketError;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-
-import org.dom4j.Element;
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.wildfire.container.BasicModule;
-import org.jivesoftware.wildfire.handler.IQHandler;
-import org.xmpp.packet.IQ;
-import org.xmpp.packet.JID;
-import org.xmpp.packet.PacketError;
 
 /**
  * Routes iq packets throughout the server. Routing is based on the recipient

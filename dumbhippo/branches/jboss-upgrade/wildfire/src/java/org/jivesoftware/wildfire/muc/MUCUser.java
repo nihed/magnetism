@@ -11,11 +11,11 @@
 
 package org.jivesoftware.wildfire.muc;
 
-import java.util.Iterator;
-
 import org.jivesoftware.util.NotFoundException;
 import org.jivesoftware.wildfire.ChannelHandler;
 import org.xmpp.packet.JID;
+
+import java.util.Iterator;
 
 /**
  * The chat user is a separate user abstraction for interacting with

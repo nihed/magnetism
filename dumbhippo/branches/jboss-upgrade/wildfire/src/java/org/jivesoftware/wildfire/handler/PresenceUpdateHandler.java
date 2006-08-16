@@ -11,37 +11,20 @@
 
 package org.jivesoftware.wildfire.handler;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.WeakHashMap;
-import java.util.concurrent.ConcurrentHashMap;
-
-import org.jivesoftware.util.ConcurrentHashSet;
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.Log;
-import org.jivesoftware.wildfire.ChannelHandler;
-import org.jivesoftware.wildfire.ClientSession;
-import org.jivesoftware.wildfire.OfflineMessage;
-import org.jivesoftware.wildfire.OfflineMessageStore;
-import org.jivesoftware.wildfire.PacketDeliverer;
-import org.jivesoftware.wildfire.PacketException;
-import org.jivesoftware.wildfire.PresenceManager;
-import org.jivesoftware.wildfire.Session;
-import org.jivesoftware.wildfire.SessionManager;
-import org.jivesoftware.wildfire.XMPPServer;
+import org.jivesoftware.wildfire.*;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.jivesoftware.wildfire.container.BasicModule;
 import org.jivesoftware.wildfire.roster.Roster;
 import org.jivesoftware.wildfire.roster.RosterItem;
 import org.jivesoftware.wildfire.roster.RosterManager;
 import org.jivesoftware.wildfire.user.UserNotFoundException;
-import org.xmpp.packet.JID;
-import org.xmpp.packet.Message;
-import org.xmpp.packet.Packet;
-import org.xmpp.packet.PacketError;
-import org.xmpp.packet.Presence;
+import org.jivesoftware.util.ConcurrentHashSet;
+import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.Log;
+import org.xmpp.packet.*;
+
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Implements the presence protocol. Clients use this protocol to
