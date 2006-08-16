@@ -16,6 +16,13 @@
 
 package com.planetj.taste.impl.model;
 
+import com.planetj.taste.impl.common.ArrayIterator;
+import com.planetj.taste.model.Preference;
+import com.planetj.taste.model.User;
+
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Collection;
@@ -23,13 +30,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
-
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import com.planetj.taste.impl.common.ArrayIterator;
-import com.planetj.taste.model.Preference;
-import com.planetj.taste.model.User;
 
 /**
  * <p>A simple {@link User} which has simply an ID and some {@link Collection} of

@@ -16,11 +16,11 @@
 
 package com.planetj.taste.impl.transforms;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-
-import org.jetbrains.annotations.NotNull;
 
 /**
  * <p>A simple, fast utility class that maps keys to counts.</p>

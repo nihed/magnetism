@@ -16,6 +16,19 @@
 
 package com.planetj.taste.impl.model.file;
 
+import com.planetj.taste.common.TasteException;
+import com.planetj.taste.impl.model.GenericDataModel;
+import com.planetj.taste.impl.model.GenericItem;
+import com.planetj.taste.impl.model.GenericPreference;
+import com.planetj.taste.impl.model.GenericUser;
+import com.planetj.taste.model.DataModel;
+import com.planetj.taste.model.Item;
+import com.planetj.taste.model.Preference;
+import com.planetj.taste.model.User;
+import com.planetj.taste.transforms.PreferenceTransform;
+
+import org.jetbrains.annotations.NotNull;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -31,19 +44,6 @@ import java.util.TimerTask;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import org.jetbrains.annotations.NotNull;
-
-import com.planetj.taste.common.TasteException;
-import com.planetj.taste.impl.model.GenericDataModel;
-import com.planetj.taste.impl.model.GenericItem;
-import com.planetj.taste.impl.model.GenericPreference;
-import com.planetj.taste.impl.model.GenericUser;
-import com.planetj.taste.model.DataModel;
-import com.planetj.taste.model.Item;
-import com.planetj.taste.model.Preference;
-import com.planetj.taste.model.User;
-import com.planetj.taste.transforms.PreferenceTransform;
 
 /**
  * <p>A {@link DataModel} backed by a comma-delimited file. This class assumes that each line of the
