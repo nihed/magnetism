@@ -30,6 +30,7 @@
 /deploy/snmp-adaptor.sar
 /deploy/juddi-service.sar
 /deploy/juddiws.war
+/deploy/tc5-cluster.sar
 /deploy/tc5-cluster-service.xml
 
 # this is an extra copy of commons-logging that throws
