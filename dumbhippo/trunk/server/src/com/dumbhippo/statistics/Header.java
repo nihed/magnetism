@@ -29,6 +29,7 @@ import java.util.Formatter;
  * the header information to disk. 
  */
 public class Header {
+
 	static private final int MAGIC = 0x30655407; 
 	static private final int VERSION = 0x00010000;
 	static private final int N_RECORDS_OFFSET = 32;
@@ -79,6 +80,10 @@ public class Header {
 
 	public void setStartTime(Date startTime) {
 		this.startTime = startTime;
+	}
+
+	public ColumnMap getColumns() {
+		return columns;
 	}
 	
 	public void setColumns(ColumnMap columns) {

@@ -1,6 +1,8 @@
 package com.dumbhippo.statistics;
 
-import java.util.Collections;
+import java.io.File;
+import java.io.FilenameFilter;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.jboss.system.ServiceMBeanSupport;
@@ -50,18 +52,33 @@ public class StatisticsService extends ServiceMBeanSupport implements Statistics
     }
     
     public List<StatisticsSet> listSets() {
-    	// TODO: get all the statistics files from the statistics directory
-    	// and convert them into StatisticSet(s)
-    	// right now StatisticsWriter is the only class that implements
-    	// StatisticsSet; it provides a function getIterator() for reading,
-    	// it initializes its rowStore as a ReadWrite RowStore (thereby acting
-    	// more like a Statistics Reader-Writer); we should have a 
-    	// StatisticsReader class for the unearthed statistics files
-    	return Collections.singletonList((StatisticsSet)statisticsWriter);
+    	List<StatisticsSet> sets = new ArrayList<StatisticsSet>(); 
+    	File dir = new File("statistics");
+    	
+    	FilenameFilter filter = new FilenameFilter() {
+    	    public boolean accept(File dir, String name) {
+    	        return (name.endsWith(".stats") && !statisticsWriter.getFilename().endsWith(name));
+    	    }
+    	};
+    	String[] fileNames = dir.list(filter);
+        
+    	if (fileNames == null) {
+            throw new RuntimeException("Either " + dir.getAbsolutePath() + " does not exist or is not a directory");
+        }
+        
+        for (int i=0; i<fileNames.length; i++) {
+            sets.add(new StatisticsReader("statistics/" + fileNames[i]));          
+        }
+        sets.add(statisticsWriter);
+    	
+        return sets;
     }
     
     public StatisticsSet getSet(String filename) {
-    	return null;
+    	if (!filename.equals(statisticsWriter.getFilename()))
+            return new StatisticsReader(filename);
+    	else 
+    		return statisticsWriter;
     }
     
     public StatisticsSet getCurrentSet() {

@@ -8,6 +8,7 @@ import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 
 class FileUtils {
+
 	/**
 	 * Read a string from an input stream in the format we use for serialization:
 	 * UTF-8 data proceeded by a 32-bit byte length, and padded out to a multiples
@@ -19,17 +20,14 @@ class FileUtils {
 	 */
 	static public String readString(DataInput input) throws IOException, ParseException {
 		int length = input.readInt();
-		
 		int paddedLength = (length + 3) & ~3;
 		if (length < 0 || paddedLength < 0)
 			throw new ParseException("Bad Length");
 		
 		byte[] bytes = new byte[length];
 		input.readFully(bytes);
-		
 		CharBuffer result = Charset.forName("UTF-8").decode(ByteBuffer.wrap(bytes));
 		input.skipBytes(paddedLength - length);
-		
 		return result.toString();
 	}
 	
@@ -43,12 +41,13 @@ class FileUtils {
 	static void writeString(DataOutput output, String s) throws IOException {
 		ByteBuffer buffer = Charset.forName("UTF-8").encode(s);
 		byte[] bytes = buffer.array();
-		int paddedLength = ((bytes.length + 3) & ~3);
-		output.writeInt(bytes.length);
-		output.write(bytes);
-		if (paddedLength > bytes.length) {
+		int length = buffer.limit();
+		int paddedLength = ((length + 3) & ~3);
+		output.writeInt(length);
+		output.write(bytes, 0, length);
+		if (paddedLength > length) {
 			byte[] padBytes = new byte[] { 0, 0, 0 };
-			output.write(padBytes, 0, paddedLength - bytes.length);
+			output.write(padBytes, 0, paddedLength - length);
 		}
 	}
 

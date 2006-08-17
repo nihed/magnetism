@@ -339,8 +339,9 @@ public interface HttpMethods {
 	public void doSetRhapsodyHistoryFeed(XmlBuilder xml, UserViewpoint viewpoint, String url) throws XmlMethodException;
     
  	@HttpContentTypes(HttpResponseData.XMLMETHOD)
- 	@HttpParams( {})
- 	public void getStatisticsSets(XmlBuilder xml, UserViewpoint viewpoint) throws IOException, XmlMethodException;
+ 	@HttpParams( { "filename" })
+ 	@HttpOptions( optionalParams = { "filename" } )
+ 	public void getStatisticsSets(XmlBuilder xml, UserViewpoint viewpoint, String filename) throws IOException, XmlMethodException;
  
  	@HttpContentTypes(HttpResponseData.XMLMETHOD)
  	@HttpParams( { "filename", "columns", "start", "end", "timescale" })

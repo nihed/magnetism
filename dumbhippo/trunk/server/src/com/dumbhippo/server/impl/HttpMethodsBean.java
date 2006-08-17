@@ -1645,9 +1645,13 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		return service;
 	}
 		
-	public void getStatisticsSets(XmlBuilder xml, UserViewpoint viewpoint) throws IOException, XmlMethodException {
-		List<StatisticsSet> sets = getStatisticsService().listSets();
-		
+	public void getStatisticsSets(XmlBuilder xml, UserViewpoint viewpoint, String filename) throws IOException, XmlMethodException {
+		List<StatisticsSet> sets;
+		if (filename == null) {
+		    sets = getStatisticsService().listSets();
+		} else {
+			sets = Collections.singletonList(getStatisticsService().getSet(filename));
+		}
 		xml.openElement("statisticsSets");
 		for (StatisticsSet set : sets) {
 			xml.openElement("statisticsSet");
