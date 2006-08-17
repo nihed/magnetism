@@ -499,5 +499,10 @@ public class RewriteServlet extends HttpServlet {
         
         // We store the builtstamp in the servlet context so we can reference it from JSP pages
         getServletContext().setAttribute("buildStamp", buildStamp);
+        
+        // Also store the server's base URL
+        String baseUrl = configuration.getPropertyFatalIfUnset(HippoProperty.BASEURL);
+        getServletContext().setAttribute("baseUrl", baseUrl); 
+ 
 	}
 }
