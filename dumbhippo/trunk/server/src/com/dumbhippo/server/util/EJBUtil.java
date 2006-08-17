@@ -140,11 +140,12 @@ public class EJBUtil {
 		if (clazz == null)
 			throw new IllegalArgumentException("Class passed to contextLookup() is null");
 		
-		String name = clazz.getCanonicalName();		
+		String name = clazz.getSimpleName();		
 		if (!clazz.isInterface())
 			throw new IllegalArgumentException("Class passed to contextLookup() has to be an interface, not " + name);
-
-		return clazz.cast(ejbContext.lookup(name));
+		String suffix = clazz.isAnnotationPresent(Local.class) ? "local" : "remote";	
+		name = name + "Bean";
+		return clazz.cast(ejbContext.lookup(classPrefix + name + "/" + suffix));
 	}
 	
 	// Returns true if this is an exception we would get with a race condition

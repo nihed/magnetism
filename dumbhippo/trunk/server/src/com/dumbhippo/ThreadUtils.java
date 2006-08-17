@@ -75,11 +75,17 @@ public class ThreadUtils {
 		});
 	}
 	
-	private static void logException(Exception e) {
+	private static void logException(Exception e, boolean fullLog) {
 		if (e instanceof InterruptedException) {
-			logger.warn("future interrupted {}: {}", e.getClass().getName(), e.getMessage());
+			if (!fullLog)
+				logger.warn("future interrupted {}: {}", e.getClass().getName(), e.getMessage());
+			else
+				logger.warn("future interrupted", e);
 		} else if (e instanceof ExecutionException) {
-			logger.warn("future threw execution exception {}: {}", e.getClass().getName(), e.getMessage());
+			if (!fullLog)
+				logger.warn("future threw execution exception {}: {}", e.getClass().getName(), e.getMessage());
+			else
+				logger.warn("future threw execution exception", e);
 			Throwable cause = e.getCause();
 			if (cause != null && cause != e) {
 				logger.warn("cause of execution exception was {}: {}", cause.getClass().getName(), cause.getMessage());
@@ -89,7 +95,10 @@ public class ThreadUtils {
 				logger.warn("root cause of execution exception was {}: {}", root.getClass().getName(), root.getMessage());
 			}
 		} else {
-			logger.warn("future got unexpected exception {}: {}", e.getClass().getName(), e.getMessage());
+			if (!fullLog)
+				logger.warn("future got unexpected exception {}: {}", e.getClass().getName(), e.getMessage());
+			else
+				logger.warn("future got unexpected exception", e);
 		}
 	}
 	
@@ -97,10 +106,10 @@ public class ThreadUtils {
 		try {
 			return future.get();
 		} catch (InterruptedException e) {
-			logException(e);
+			logException(e, false);
 			throw new RuntimeException(e);
 		} catch (ExecutionException e) {
-			logException(e);
+			logException(e, false);
 			throw new RuntimeException(e);
 		}
 	}
@@ -109,10 +118,10 @@ public class ThreadUtils {
 		try {
 			return future.get();
 		} catch (InterruptedException e) {
-			logException(e);
+			logException(e, true);
 			return null;
 		} catch (ExecutionException e) {
-			logException(e);
+			logException(e, true);
 			return null;
 		}
 	}
@@ -121,10 +130,10 @@ public class ThreadUtils {
 		try {
 			return future.get();
 		} catch (InterruptedException e) {
-			logException(e);
+			logException(e, true);
 			return Collections.emptyList();
 		} catch (ExecutionException e) {
-			logException(e);
+			logException(e, true);
 			return Collections.emptyList();
 		}
 	}

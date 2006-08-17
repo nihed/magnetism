@@ -21,6 +21,7 @@ import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.live.Hotness;
+import com.dumbhippo.live.LiveClientData;
 import com.dumbhippo.live.LivePost;
 import com.dumbhippo.live.LiveState;
 import com.dumbhippo.live.LiveXmppServer;
@@ -147,7 +148,7 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 				  	        ctx.getMethod().getName(), end - start);
 			}
 			return result;
-		} catch (RuntimeException e) {
+		} catch (Exception e) {
 			logger.error("Unexpected exception: " + e.getMessage(), e);
 			// create a new RuntimeException that won't have any types the XMPP server 
 			// is unfamiliar with
@@ -634,7 +635,8 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 	public Hotness getUserHotness(String username) {
 		User user = userFromTrustedUsername(username);
 		LiveState state = LiveState.getInstance();
-		return state.getLiveClientData(user.getGuid()).getHotness();
+		LiveClientData data = state.getLiveClientData(user.getGuid());
+		return data.getHotness();
 	}
 	
 	static final String RECENT_POSTS_ELEMENT_NAME = "recentPosts";
