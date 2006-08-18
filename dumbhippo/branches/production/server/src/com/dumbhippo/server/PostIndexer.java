@@ -19,7 +19,7 @@ public class PostIndexer extends Indexer<Post> {
 	}
 	
 	private PostIndexer() {
-		builder = new DocumentBuilder<Post>(Post.class);
+		builder = new DocumentBuilder<Post>(Post.class, createAnalyzer(), null);
 	}
 	
 	@Override

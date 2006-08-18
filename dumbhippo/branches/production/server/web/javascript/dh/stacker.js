@@ -1,10 +1,10 @@
-var dh = {}
-dh.stacker = {}
-dh.lang = {}
-
-var dhBaseUrl = "http://localinstance.mugshot.org:8080"
+dojo.provide('dh.stacker');
+dojo.require('dh.util');
+dojo.require('dh.server');
+dojo.require('dh.model');
 
 ///////////////////////// metalinguistic band-aids
+dh.lang = {};
 
 dh.lang.mixin = function(obj, props){
 	var tobj = {};
@@ -34,19 +34,108 @@ var defineClass = function(childConstructor, parentConstructor, childProps) {
 
 ///////////////////////// code!
 
-dh.stacker.Kind = {};
-dh.stacker.Kind.POST = 1;
-dh.stacker.Kind.MUSIC = 2;
-dh.stacker.Kind.GROUP = 3;
-dh.stacker.Kind.NETWORK = 4;
+dh.stacker.BLOCK_MARGIN = 6;
 
-dh.stacker.Block = function(kind) {
+dh.stacker.Kind = {};
+dh.stacker.Kind.UNKNOWN = -1;
+dh.stacker.Kind.POST = 1;
+dh.stacker.Kind.MUSIC_PERSON = 2;
+dh.stacker.Kind.GROUP_CHAT = 3;
+dh.stacker.Kind.GROUP_MEMBER = 4;
+
+dh.stacker.kindFromString = function(str) {
+	if (str == "POST")
+		return dh.stacker.Kind.POST;
+	else if (str == "MUSIC_PERSON")
+		return dh.stacker.Kind.MUSIC_PERSON;
+	else if (str == "GROUP_CHAT")
+		return dh.stacker.Kind.GROUP_CHAT;
+	else if (str == "GROUP_MEMBER")
+		return dh.stacker.Kind.GROUP_MEMBER;
+	else
+		return dh.stacker.Kind.UNKNOWN;
+}
+
+dh.stacker.kindClasses = {};
+dh.stacker.kindClasses[dh.stacker.Kind.POST] = "dh-stacked-block-post";
+dh.stacker.kindClasses[dh.stacker.Kind.MUSIC_PERSON] = "dh-stacked-block-music-person";
+dh.stacker.kindClasses[dh.stacker.Kind.GROUP_CHAT] = "dh-stacked-block-group-chat";
+dh.stacker.kindClasses[dh.stacker.Kind.GROUP_MEMBER] = "dh-stacked-block-group-member";
+
+dh.stacker.kindHeadings = {};
+dh.stacker.kindHeadings[dh.stacker.Kind.POST] = "WEB SWARM";
+dh.stacker.kindHeadings[dh.stacker.Kind.MUSIC_PERSON] = "MUSIC RADAR";
+dh.stacker.kindHeadings[dh.stacker.Kind.GROUP_CHAT] = "GROUP CHAT";
+dh.stacker.kindHeadings[dh.stacker.Kind.GROUP_MEMBER] = "GROUP MEMBERS";
+
+dh.stacker.formatTimeAgo = function(timestamp) {
+	var now = dh.stacker.getInstance().getServerTime();
+	var then = timestamp;
+	
+	var deltaSeconds = (now - timestamp) / 1000;
+	
+	if (deltaSeconds < 0)
+		return "the future";
+	
+	if (deltaSeconds < 120)
+		return "a minute ago";
+		
+	if (deltaSeconds < 60*60) {
+		var deltaMinutes = deltaSeconds / 60;
+		if (deltaMinutes < 5) {
+			return Math.round(deltaMinutes) + " min. ago";
+		} else {
+			deltaMinutes = deltaMinutes - (deltaMinutes % 5);
+			return Math.round(deltaMinutes) + " min. ago";
+		}
+	}
+
+	var deltaHours = deltaSeconds / 60 / 60;
+	
+	if (deltaHours < 1.55) {
+		return "1 hr. ago";
+	} if (deltaHours < 48) {
+		return Math.round(deltaHours) + " hrs. ago";
+	}
+	
+	if (deltaHours < 24*15) {
+		return Math.round(deltaHours / 24) + " days ago";
+	}
+	
+	var deltaWeeks = deltaHours / (24*7);
+	
+	if (deltaWeeks < 6) {
+		return Math.round(deltaWeeks) + " weeks ago";
+	}
+	
+	if (deltaWeeks < 50) {
+		return Math.round(deltaWeeks / 4) + " months ago";
+	}
+	
+	var deltaYears = deltaWeeks / 52;
+	
+	if (deltaYears < 1.55) {
+		return "1 year ago";
+	} else {
+		return  Math.round(deltaYears) + " years ago";
+	}
+}
+
+dh.stacker.Block = function(kind, blockId) {
 	this._kind = kind;
+	this._blockId = blockId;
+	
 	// the stackTime is the sort key for stacker blocks and is the milliseconds
 	// numeric representation of Date()
 	this._stackTime = 0;
 	
-	this._title = null;
+	// if (_ignored) then _ignoredTime overrides our time
+	this._ignored = false;
+	this._ignoredTime = 0;
+	
+	this._title = "";
+	
+	this._clickedCount = 0;
 	
 	// the html div
 	this._div = null;
@@ -64,6 +153,10 @@ defineClass(dh.stacker.Block, null,
 {
 	getKind : function() {
 		return this._kind;
+	},
+	
+	getBlockId : function() {
+		return this._blockId;
 	},
 	
 	getStackTime : function() {
@@ -84,8 +177,46 @@ defineClass(dh.stacker.Block, null,
 		
 		this._updateTitleDiv();
 	},
-
+		
+	getClickedCount : function() {
+		return this._clickedCount;
+	},
 	
+	setClickedCount : function(clickedCount) {
+		this._clickedCount = clickedCount;
+		this._updateClickedCountDiv();
+	},
+	
+	getIgnored : function() {
+		return this._ignored;
+	},
+	
+	setIgnored : function(ignored) {
+		if (ignored != this._ignored) {
+			this._ignored = ignored;
+			this._updateHushDiv();
+		}
+	},
+	
+	getIgnoredTime : function() {
+		return this._ignoredTime;
+	},
+	
+	setIgnoredTime : function(t) {
+		this._ignoredTime = t;
+	},
+	
+	getSortTime : function() {
+		if (this._ignored)
+			return this._ignoredTime;
+		else
+			return this._stackTime;
+	},
+	
+	_updateClickedCountDiv : function() {
+		// no-op since only some subclasses have a clicked count div
+	},
+
 	_updateTitleDiv : function() {
 		if (this._div) {
 			dojo.dom.textContent(this._titleDiv, this._title);
@@ -94,9 +225,24 @@ defineClass(dh.stacker.Block, null,
 
 	_updateStackTimeDiv : function() {
 		if (this._div) {
-			var d = new Date(this._stackTime);
-			dojo.dom.textContent(this._stackTimeDiv, d.getHours() + ":" + d.getMinutes() + ":" + d.getSeconds() + ":" + d.getMilliseconds());
+			;
+			//var d = new Date(this._stackTime);
+			//dojo.dom.textContent(this._stackTimeDiv, d.getFullYear() + "-" + (d.getMonth()+1) + "-" + d.getDate() + " " + d.getHours() + ":" + d.getMinutes() + ":" + d.getSeconds() + ":" + d.getMilliseconds());
 		}
+	},
+
+	_updateHushDiv : function() {
+		if (this._div) {
+			if (this._ignored)
+				dojo.dom.textContent(this._hushDiv, "UNHUSH");
+			else
+				dojo.dom.textContent(this._hushDiv, "HUSH");
+		}
+	},
+
+	// called when the server time changes so we need to update the "ago" text
+	timeTick : function() {
+		this._updateStackTimeDiv();
 	},
 
 	createOuterDiv : function() {
@@ -104,22 +250,33 @@ defineClass(dh.stacker.Block, null,
 		d.style.display = 'none';
 			
 		dojo.html.setClass(d, "dh-stacked-block-outer");
+
+		var margin = document.createElement("div");
+		margin.style.height = dh.stacker.BLOCK_MARGIN + "px";
+		margin.style.width = "10px"; // 0-width can confuse browsers 
+		margin.style.overflow = 'hidden'; // otherwise the font size sets a min height
+		margin.style.position = 'relative';
+		d.appendChild(margin);
 		
 		return d;
+	},
+	
+	reparentIntoOuterDiv : function(newOuterDiv) {
+		if (this._innerDiv.parentNode && this._innerDiv.parentNode != newOuterDiv)
+			this._innerDiv.parentNode.removeChild(this._innerDiv);
+
+		// in IE this has the bizarre side effect of setting
+		// this._div.parentNode to a document fragment
+		if (this._innerDiv.parentNode != this._div)
+			this._div.insertBefore(this._innerDiv, this._div.firstChild);
+		
+		this._cancelFade();	
 	},
 	
 	setNewOuterDiv : function(newOuterDiv) {
 		if (this._div == newOuterDiv)
 			return;
-		if (this._innerDiv.parentNode)
-			this._innerDiv.parentNode.removeChild(this._innerDiv);
 		this._div = newOuterDiv;
-
-		// in IE this has the bizarre side effect of setting
-		// this._div.parentNode to a document fragment
-		this._div.appendChild(this._innerDiv);
-		
-		this._cancelFade();		
 	},
 	
 	realize : function() {
@@ -128,22 +285,43 @@ defineClass(dh.stacker.Block, null,
 			// "div moving" animation
 			
 			this._innerDiv = document.createElement("div");
-			dojo.html.setClass(this._innerDiv, "dh-stacked-block");
+			dojo.html.setClass(this._innerDiv, "dh-stacked-block " + dh.stacker.kindClasses[this._kind]);
 			this.setNewOuterDiv(this.createOuterDiv());
-
-			this._titleDiv = document.createElement("div");
-			this._innerDiv.appendChild(this._titleDiv);
-			dojo.html.setClass(this._titleDiv, "dh-title");
-			this._updateTitleDiv();
+			this.reparentIntoOuterDiv(this._div);
+			
+			this._headingDiv = document.createElement("div");
+			dojo.html.setClass(this._headingDiv, "dh-heading");
+			this._innerDiv.appendChild(this._headingDiv);
+			dojo.dom.textContent(this._headingDiv, dh.stacker.kindHeadings[this._kind]);
+			
+			this._hushDiv = document.createElement("div");
+			dojo.html.setClass(this._hushDiv, "dh-hush");
+			this._headingDiv.appendChild(this._hushDiv);
+			this._updateHushDiv();
+			
+			this._busyImg = document.createElement("img");
+			this._busyImg.style.display = "none";
+			this._busyImg.src = dhImageRoot2 + "feedspinner.gif";
+			this._hushDiv.appendChild(this._busyImg);
+	
+			var me = this;		
+			dh.util.addEventListener(this._hushDiv, "mousedown", function() {
+				me._toggleHushed();
+			});
 			
 			this._contentDiv = document.createElement("div");
+			dojo.html.setClass(this._contentDiv, "dh-content");			
 			this._innerDiv.appendChild(this._contentDiv);
-			dojo.html.setClass(this._contentDiv, "dh-content");
+
+			this._titleDiv = document.createElement("div");
+			dojo.html.setClass(this._titleDiv, "dh-title");			
+			this._contentDiv.appendChild(this._titleDiv);
+			this._updateTitleDiv();
 			
-			this._stackTimeDiv = document.createElement("div");
-			this._contentDiv.appendChild(this._stackTimeDiv);
-			dojo.html.setClass(this._stackTimeDiv, "dh-timestamp");
-			this._updateStackTimeDiv();
+			//this._stackTimeDiv = document.createElement("div");
+			//this._contentDiv.appendChild(this._stackTimeDiv);
+			//dojo.html.setClass(this._stackTimeDiv, "dh-timestamp");
+			//this._updateStackTimeDiv();
 		}
 	},
 	
@@ -156,9 +334,12 @@ defineClass(dh.stacker.Block, null,
 			this._div = null;
 			// null these just to aid in gc
 			this._innerDiv = null;
+			this._headingDiv = null;
 			this._titleDiv = null;
 			this._contentDiv = null;
 			this._stackTimeDiv = null;
+			this._hushDiv = null;
+			this._busyImg = null;
 		}
 	},
 
@@ -203,17 +384,71 @@ defineClass(dh.stacker.Block, null,
 				block._setOpacity(old + 0.05);
 			}
 		}, 50);
+	},
+	
+	load : function(completeFunc, errorFunc) {
+		throw new Error("load() not implemented");
+	},
+	
+	// return true if update is needed, used in subclass
+	// overrides that chain up to this
+	updateFrom : function(newBlock) {
+		if (newBlock.getBlockId() != this.getBlockId()) {
+			throw new Error("updating block from wrong block");
+		}
+	
+		if (newBlock.getStackTime() <= this.getStackTime() &&
+			newBlock.getIgnored() == this.getIgnored() &&
+			newBlock.getIgnoredTime() == this.getIgnoredTime()) {
+			// new block isn't really changed
+			return false;
+		}
+		
+		// don't do this - it messes up our sorted stack.
+		// instead it gets done by the stack maintenance code
+		// in the appropriate place
+		//this.setStackTime(newBlock.getStackTime());
+		//this.setIgnoredTime();
+		//this.setIgnored();
+		
+		this.setTitle(newBlock.getTitle());
+		this.setClickedCount(newBlock.getClickedCount());
+		
+		return true;
+	},
+	
+	_toggleHushed : function() {
+		this._busyImg.style.display = "inline";
+		var me = this;
+	   	dh.server.doXmlMethod("setBlockHushed",
+				     	{ "blockId" : me._blockId,
+				     	  "hushed" : ! me._ignored },
+						function(childNodes, http) {
+							dh.stacker.getInstance()._parseNewBlocks(childNodes);
+							if (me._busyImg)
+								me._busyImg.style.display = "none";
+			 	    	},
+			  	    	function(code, msg, http) {
+			  	    		if (me._busyImg)
+					  	    	me._busyImg.style.display = "none";
+			  	    		alert("Could not hush or unhush: " + msg);
+			  	    	});
 	}
 });
 
-dh.stacker.PostBlock = function(postId, title) {
-	dh.stacker.Block.call(this, dh.stacker.Kind.POST);
+dh.stacker.PostBlock = function(blockId, postId) {
+	dh.stacker.Block.call(this, dh.stacker.Kind.POST, blockId);
 	this._postId = postId;
-	this._viewerCount = 0;
 	
-	this._viewsDiv = null;
+	this._clickedCountDiv = null;
+	this._descriptionDiv = null;
+	this._fromDiv = null;
+	this._timeDiv = null;
 	
-	this.setTitle(title);
+	this._link = null;
+	this._description = null;
+	this._poster = null;
+	this._messages = [];
 }
 
 defineClass(dh.stacker.PostBlock, dh.stacker.Block,
@@ -221,79 +456,727 @@ defineClass(dh.stacker.PostBlock, dh.stacker.Block,
 	getPostId : function() {
 		return this._postId;
 	},
-		
-	getViewerCount : function() {
-		return this._viewerCount;
+	
+	getDescription : function() {
+		return this._description;
+	}, 
+	
+	setDescription : function(desc) {
+		this._description = desc;
 	},
 	
-	setViewerCount : function(viewerCount) {
-		this._viewerCount = viewerCount;
-		this._updateViewsDiv();
+	getLink : function() {
+		return this._link;
 	},
-		
-	_updateViewsDiv : function() {
+	
+	setLink : function(link) {
+		this._link = link;
+	},
+	
+	getPoster : function() {
+		return this._poster;
+	},
+	
+	setPoster : function(poster) {
+		this._poster = poster;
+		this._updateFromDiv();
+	},
+
+	getMessages : function() {
+		return this._messages;
+	},
+
+	setMessages : function(messages) {
+		this._messages = messages;
+		this._updateMessagesDiv();
+	},
+
+	// override
+	_updateTitleDiv : function() {
 		if (this._div) {
-			dojo.dom.textContent(this._viewsDiv, this._viewerCount + " views");
+			var a = document.createElement('a');
+			a.href = "/visit?post=" + this.getPostId();
+			a.title = this.getTitle();
+			a.target="_blank";
+			dojo.dom.textContent(a, this.getTitle());
+			if (this._titleDiv.firstChild)
+				this._titleDiv.removeChild(this._titleDiv.firstChild);
+			this._titleDiv.appendChild(a);
+		}
+	},
+
+	// override	
+	_updateClickedCountDiv : function() {
+		if (this._div) {
+			dojo.dom.textContent(this._clickedCountDiv, this.getClickedCount() + " views");
+		}
+	},
+	
+	_updateDescriptionDiv : function() {
+		if (this._div) {
+			dojo.dom.textContent(this._descriptionDiv, this.getDescription());
+		}
+	},
+	
+	// override
+	_updateStackTimeDiv : function() {
+		if (this._div) {
+			dojo.dom.textContent(this._timeDiv, dh.stacker.formatTimeAgo(this._stackTime));
+		}
+	},
+	
+	_updateFromDiv : function() {
+		if (this._div) {
+			dojo.dom.textContent(this._fromDiv, "from " + this._poster.displayName);
+		}
+	},
+
+	_updateMessagesDiv : function() {
+		if (this._div) {
+			var str = "";
+			var i;
+			for (i = 0; i < this._messages.length; ++i) {
+				str = str + " " + this._messages[i].text;
+			}
+			dojo.dom.textContent(this._messagesDiv, str);
 		}
 	},
 	
 	realize : function() {
 		if (!this._div) {
 			dh.stacker.PostBlock.superclass.realize.call(this);
-			this._viewsDiv = document.createElement("div");
-			this._contentDiv.appendChild(this._viewsDiv);
-			dojo.html.setClass(this._viewsDiv, "dh-views-count");
-			this._updateViewsDiv();
+
+			this._fromDiv = document.createElement("div");
+			this._contentDiv.appendChild(this._fromDiv);
+			dojo.html.setClass(this._fromDiv, "dh-from");
+			this._updateFromDiv();
+
+			this._timeDiv = document.createElement("div");
+			this._contentDiv.appendChild(this._timeDiv);
+			dojo.html.setClass(this._timeDiv, "dh-when");
+			this._updateStackTimeDiv();
+
+			this._clickedCountDiv = document.createElement("div");
+			this._contentDiv.appendChild(this._clickedCountDiv);
+			dojo.html.setClass(this._clickedCountDiv, "dh-clicked-count");
+			this._updateClickedCountDiv();
+			
+			this._descriptionDiv = document.createElement('div');
+			this._contentDiv.appendChild(this._descriptionDiv);
+			dojo.html.setClass(this._descriptionDiv, "dh-description");
+			this._updateDescriptionDiv();
+			
+			this._messagesDiv = document.createElement("div");
+			this._contentDiv.appendChild(this._messagesDiv);
+			dojo.html.setClass(this._messagesDiv, "dh-messages");
+			this._updateMessagesDiv();
 		}
 	},
 	
 	unrealize : function() {
 		dh.stacker.PostBlock.superclass.unrealize.call(this);	
-		this._viewsDiv = null;
+		this._clickedCountDiv = null;
+		this._descriptionDiv = null;
+		this._timeDiv = null;
+		this._fromDiv = null;
+		this._messagesDiv = null;
+	},
+	
+	load : function(completeFunc, errorFunc) {
+		var me = this;
+	   	dh.server.doXmlMethod("postsummary",
+					     	{ "postId" : me._postId },
+							function(childNodes, http) {
+								me._parse(childNodes);
+								completeFunc(me);
+				 	    	},
+				  	    	function(code, msg, http) {
+								errorFunc(me);
+				  	    	});
+	},
+	
+	updateFrom : function(newBlock) {
+		if (!dh.stacker.PostBlock.superclass.updateFrom.call(this, newBlock))
+			return false;
+		this.setDescription(newBlock.getDescription());
+		this.setLink(newBlock.getLink());
+		this.setPoster(newBlock.getPoster());
+		
+		// this is a little unkosher since it doesn't make a copy
+		this.setMessages(newBlock._messages);
+		
+		return true;
+	},
+	
+	_parse : function(childNodes) {
+		var post = childNodes.item(0);
+		var title = "";
+		var text = "";
+		var link = "";
+		var posterId = null;
+		var i;
+		for (i = 0; i < post.childNodes.length; ++i) {
+			var n = post.childNodes.item(i);
+			if (n.nodeName == "title") {
+				title = dojo.dom.textContent(n);
+			} else if (n.nodeName == "text") {
+				text = dojo.dom.textContent(n);
+			} else if (n.nodeName == "href") {
+				link = dojo.dom.textContent(n);
+			} else if (n.nodeName == "poster") {
+				posterId = dojo.dom.textContent(n);
+			}
+		}
+		this.setTitle(title);
+		this.setDescription(text);
+		this.setLink(link);
+		
+		var posterNode = childNodes.item(1);
+		var poster = dh.model.objectFromXmlNode(posterNode);
+		if (poster.id != posterId)
+			throw new Error("mismatched poster ids");
+		this.setPoster(poster);
+		
+		var messages = [];
+		for (i = 2; i < childNodes.length; ++i) {
+			var messageNode = childNodes.item(i);
+			if (messageNode.nodeName != "message")
+				throw new Error("message node expected");
+			var message = dh.model.messageFromXmlNode(messageNode);
+			messages.push(message);
+		}
+		this.setMessages(messages);
 	}
-
 });
 
-dh.stacker.MusicBlock = function(userId) {
-	dh.stacker.Block.call(this, dh.stacker.Kind.MUSIC);
+dh.stacker.MusicPersonBlock = function(blockId, userId) {
+	dh.stacker.Block.call(this, dh.stacker.Kind.MUSIC_PERSON, blockId);
 	this._userId = userId;
+	this._tracks = [];
+	this._tracksDiv = null;
 }
 
-defineClass(dh.stacker.MusicBlock, dh.stacker.Block,
+defineClass(dh.stacker.MusicPersonBlock, dh.stacker.Block,
 {
 	getUserId : function() {
 		return this._userId;
+	},
+
+	getTracks : function() {
+		return this._tracks;
+	},
+
+	setTracks : function(tracks) {
+		this._tracks = tracks;
+		this._updateTracksDiv();
+	},
+
+	_parse : function(childNodes) {
+		var musicPerson = childNodes.item(0);
+		if (musicPerson.nodeName != "musicPerson") {
+			throw new Error("musicPerson node expected");
+		}
+		childNodes = musicPerson.childNodes;
+		var personNode = childNodes.item(0);
+		if (personNode.nodeName != "person")
+			throw new Error("person node expected");
+		var person = dh.model.personFromXmlNode(personNode);
+		var tracks = [];
+		var i;
+		for (i = 1; i < childNodes.length; ++i) {
+			var trackNode = childNodes.item(i);
+			if (trackNode.nodeName != "song")
+				throw new Error("track node expected");
+			var track = dh.model.trackFromXmlNode(trackNode);
+			tracks.push(track);
+		}
+		this.setTitle(person.displayName + "'s Music");
+		this.setTracks(tracks);
+	},
+
+	load : function(completeFunc, errorFunc) {
+		var me = this;
+	   	dh.server.doXmlMethod("musicpersonsummary",
+					     	{ "userId" : me._userId },
+							function(childNodes, http) {
+								me._parse(childNodes);
+								completeFunc(me);
+				 	    	},
+				  	    	function(code, msg, http) {
+								errorFunc(me);
+				  	    	});
+	},
+	
+	updateFrom : function(newBlock) {
+		if (!dh.stacker.MusicPersonBlock.superclass.updateFrom.call(this, newBlock))
+			return false;
+		// this is a little unkosher since it doesn't make a copy
+		this.setTracks(newBlock._tracks);
+		return true;
+	},
+
+	_updateTracksDiv : function() {
+		if (this._div) {
+			var str = "";
+			var i;
+			for (i = 0; i < this._tracks.length; ++i) {
+				str = str + " " + this._tracks[i].title;
+			}
+			dojo.dom.textContent(this._tracksDiv, str);
+		}
+	},
+	
+	realize : function() {
+		if (!this._div) {
+			dh.stacker.MusicPersonBlock.superclass.realize.call(this);
+			this._tracksDiv = document.createElement("div");
+			this._contentDiv.appendChild(this._tracksDiv);
+			dojo.html.setClass(this._tracksDiv, "dh-tracks");
+			this._updateTracksDiv();
+		}
+	},
+	
+	unrealize : function() {
+		dh.stacker.MusicPersonBlock.superclass.unrealize.call(this);	
+		this._tracksDiv = null;
+	}
+});
+
+dh.stacker.GroupChatBlock = function(blockId, groupId) {
+	dh.stacker.Block.call(this, dh.stacker.Kind.GROUP_CHAT, blockId);
+	this._groupId = groupId;
+	this._messages = [];
+}
+
+defineClass(dh.stacker.GroupChatBlock, dh.stacker.Block,
+{
+	getGroupId : function() {
+		return this._groupId;
+	},
+
+	getMessages : function() {
+		return this._messages;
+	},
+
+	setMessages : function(messages) {
+		this._messages = messages;
+		this._updateMessagesDiv();
+	},
+
+	_parse : function(childNodes) {
+		var groupChat = childNodes.item(0);
+		if (groupChat.nodeName != "groupChat") {
+			throw new Error("groupChat node expected");
+		}
+		childNodes = groupChat.childNodes;
+		var groupNode = childNodes.item(0);
+		if (groupNode.nodeName != "group")
+			throw new Error("group node expected");
+		var group = dh.model.groupFromXmlNode(groupNode);
+		var messages = [];
+		var i;
+		for (i = 1; i < childNodes.length; ++i) {
+			var messageNode = childNodes.item(i);
+			if (messageNode.nodeName != "message")
+				throw new Error("message node expected");
+			var message = dh.model.messageFromXmlNode(messageNode);
+			messages.push(message);
+		}
+		this.setMessages(messages);
+		this.setTitle(group.displayName + " Group Chat");
+	},
+
+	load : function(completeFunc, errorFunc) {
+		var me = this;
+	   	dh.server.doXmlMethod("groupchatsummary",
+					     	{ 	"groupId" : me._groupId },
+							function(childNodes, http) {
+								me._parse(childNodes);
+								completeFunc(me);
+				 	    	},
+				  	    	function(code, msg, http) {
+								errorFunc(me);
+				  	    	});
+	},
+	
+	updateFrom : function(newBlock) {
+		if (!dh.stacker.GroupChatBlock.superclass.updateFrom.call(this, newBlock))
+			return false;
+		// this is a little unkosher since it doesn't make a copy
+		this.setMessages(newBlock._messages);
+		return true;
+	},
+
+	_updateMessagesDiv : function() {
+		if (this._div) {
+			var str = "";
+			var i;
+			for (i = 0; i < this._messages.length; ++i) {
+				str = str + " " + this._messages[i].text;
+			}
+			dojo.dom.textContent(this._messagesDiv, str);
+		}
+	},
+	
+	realize : function() {
+		if (!this._div) {
+			dh.stacker.GroupChatBlock.superclass.realize.call(this);
+			this._messagesDiv = document.createElement("div");
+			this._contentDiv.appendChild(this._messagesDiv);
+			dojo.html.setClass(this._messagesDiv, "dh-messages");
+			this._updateMessagesDiv();
+		}
+	},
+	
+	unrealize : function() {
+		dh.stacker.GroupChatBlock.superclass.unrealize.call(this);	
+		this._messagesDiv = null;
+	}	
+});
+
+dh.stacker.GroupMemberBlock = function(blockId, groupId, userId) {
+	dh.stacker.Block.call(this, dh.stacker.Kind.GROUP_MEMBER, blockId);
+	this._groupId = groupId;
+	this._userId = userId;
+}
+
+defineClass(dh.stacker.GroupMemberBlock, dh.stacker.Block,
+{
+	getGroupId : function() {
+		return this._groupId;
+	},
+
+	getUserId : function() {
+		return this._userId;
+	},
+
+	_parse : function(childNodes) {
+
+	},
+
+	load : function(completeFunc, errorFunc) {
+		this.setTitle("Group member " + this._groupId + " user " + this._userId);
+		completeFunc(this);		
+	},
+	
+	updateFrom : function(newBlock) {
+		if (!dh.stacker.GroupMemberBlock.superclass.updateFrom.call(this, newBlock))
+			return false;
+
+		return true;
+	},
+	
+	realize : function() {
+		if (!this._div) {
+			dh.stacker.GroupMemberBlock.superclass.realize.call(this);
+
+		}
+	},
+	
+	unrealize : function() {
+		dh.stacker.GroupMemberBlock.superclass.unrealize.call(this);	
+
+	}	
+});
+
+
+dh.stacker.RaiseAnimation = function(block, inner, oldOuter, newOuter) {
+
+	if (block._div != newOuter) {
+		throw new Error("block._div should be newOuterDiv");
+	}
+	if (oldOuter == newOuter) {
+		throw new Error("can't have same div for old and new");
 	}
 
+	this._block = block;
+	this._inner = inner;
+	this._oldOuter = oldOuter;
+	this._newOuter = newOuter;
+	this._interval = null;
+	this._percentage = 0.0;	
+}
+
+defineClass(dh.stacker.RaiseAnimation, null, 
+{
+	_updateOuterHeights : function() {
+		var h = this._inner.offsetHeight + dh.stacker.BLOCK_MARGIN;
+		
+		this._oldOuter.style.height = (h * (1.0 - this._percentage)) + "px";
+		this._newOuter.style.height = (h * this._percentage) + "px";
+	},
+
+	_updateInnerPosition : function() {
+		var oldPos = dh.util.getBodyPosition(this._oldOuter);
+		var newPos = dh.util.getBodyPosition(this._newOuter);
+		
+		// oldPos.x == newPos.x so pick either
+		this._inner.style.left = oldPos.x + "px"; 
+		
+		this._inner.style.top = (newPos.y + (oldPos.y - newPos.y) * (1.0 - this._percentage)) + "px";
+	},
+
+	start : function() {
+		if (this._interval)
+			return;
+		
+		this._updateOuterHeights();
+		this._newOuter.style.display = 'block';
+		
+		this._inner.style.position = 'absolute';
+		this._inner.parentNode.removeChild(this._inner);
+		document.body.appendChild(this._inner);
+		this._updateInnerPosition();
+		
+		var anim = this;
+		this._interval = setInterval(function() {
+		
+			if (false && anim._percentage >= 0.5) {
+				clearInterval(this._interval);
+				this._interval = null;
+				return;
+			}
+		
+			if (anim._percentage >= 0.97) {
+				anim.finish();
+				return;
+			}
+			
+			// we want to grow the new outer, shrink old outer, 
+			// and move the inner
+			anim._updateOuterHeights();
+			anim._updateInnerPosition();
+			
+			anim._percentage = anim._percentage + 0.05;
+
+		}, 50);
+	},
+	
+	finish : function() {
+		if (!this._interval)
+			return;
+		clearInterval(this._interval);
+		this._interval = null;
+		this._inner.parentNode.removeChild(this._inner);
+		this._inner.style.top = "0px"
+		this._inner.style.left = "0px"		
+		this._inner.style.position = 'relative';
+		this._newOuter.insertBefore(this._inner, this._newOuter.firstChild);
+		this._newOuter.style.height = "auto";
+		this._oldOuter.parentNode.removeChild(this._oldOuter);
+					
+		// we already did the reparent but call this for any 
+		// side effects
+		this._block.reparentIntoOuterDiv(this._newOuter);
+		this._block.show();
+		this._block._anim = null;
+	}
 });
+
+dh.stacker.getAttribute = function(node, name) {
+	var v = node.getAttribute(name);
+	if (!v)
+		throw new Error("node " + node.nodeName + " missing attribute " + name);
+	return v;
+}
+
+dh.stacker.getAttributeInt = function(node, name) {
+	var v = dh.stacker.getAttribute(node, name);
+	var i = parseInt(v);
+	if (i == NaN)
+		throw new Error("failed to parse '" + v + "' as an integer on node " + node.nodeName + " attr " + name);
+	return i;
+}
+
+dh.stacker.getAttributeBool = function(node, name) {
+	return dh.stacker.getAttribute(node, name) == "true";
+}
+
+dh.stacker.parseBlockAttrs = function(node) {
+	var attrs = {};
+	attrs["id"] = dh.stacker.getAttribute(node, "id");
+	attrs["timestamp"] = dh.stacker.getAttributeInt(node, "timestamp");
+	attrs["clickedCount"] = dh.stacker.getAttributeInt(node, "clickedCount");
+	attrs["clicked"] = dh.stacker.getAttributeBool(node, "clicked");
+	attrs["clickedTime"] = dh.stacker.getAttributeInt(node, "clickedTimestamp");
+	attrs["ignored"] = dh.stacker.getAttributeBool(node, "ignored");
+	attrs["ignoredTime"] = dh.stacker.getAttributeInt(node, "ignoredTimestamp");
+	
+	return attrs;
+}
+
+dh.stacker.mergeBlockAttrs = function(block, attrs) {
+	block.setStackTime(attrs["timestamp"]);
+	block.setClickedCount(attrs["clickedCount"]);
+	block.setIgnored(attrs["ignored"]);
+	block.setIgnoredTime(attrs["ignoredTime"]);
+}
+
+dh.stacker.blockParsers = {};
+dh.stacker.blockParsers[dh.stacker.Kind.POST] = function(node) {
+	var attrs = dh.stacker.parseBlockAttrs(node);
+	var post = node.childNodes.item(0);
+	if (post.nodeName != "post")
+		return null;
+	var postId = post.getAttribute("postId");
+	var block = new dh.stacker.PostBlock(attrs["id"], postId);
+	dh.stacker.mergeBlockAttrs(block, attrs);
+	return block;
+};
+
+dh.stacker.blockParsers[dh.stacker.Kind.GROUP_CHAT] = function(node) {
+	var attrs = dh.stacker.parseBlockAttrs(node);
+	var groupChat = node.childNodes.item(0);
+	if (groupChat.nodeName != "groupChat")
+		return null;
+	var groupId = groupChat.getAttribute("groupId");
+	var block = new dh.stacker.GroupChatBlock(attrs["id"], groupId);
+	dh.stacker.mergeBlockAttrs(block, attrs);
+	return block;
+};
+
+dh.stacker.blockParsers[dh.stacker.Kind.GROUP_MEMBER] = function(node) {
+	var attrs = dh.stacker.parseBlockAttrs(node);
+	var groupMember = node.childNodes.item(0);
+	if (groupMember.nodeName != "groupMember")
+		return null;
+	var userId = groupMember.getAttribute("userId");		
+	var groupId = groupMember.getAttribute("groupId");
+	var block = new dh.stacker.GroupMemberBlock(attrs["id"], groupId, userId);
+	dh.stacker.mergeBlockAttrs(block, attrs);
+	return block;
+};
+
+dh.stacker.blockParsers[dh.stacker.Kind.MUSIC_PERSON] = function(node) {
+	var attrs = dh.stacker.parseBlockAttrs(node);
+	var musicPerson = node.childNodes.item(0);
+	if (musicPerson.nodeName != "musicPerson")
+		return null;
+	var userId = musicPerson.getAttribute("userId");
+	var block = new dh.stacker.MusicPersonBlock(attrs["id"], userId);
+	dh.stacker.mergeBlockAttrs(block, attrs);
+	return block;
+};
 
 dh.stacker.Stacker = function() {
 	this._container = null;
 	// end of list is top of the screen, highest stackTime
 	this._stack = [];
-	this._postBlocksById = {};
+	this._blocks = {}; // blocks by block id
+	this._poll = null;
+	// the server time is the time on the server when our last getBlocks
+	// request returned
+	this._serverTime = 0;
 }
 
 defineClass(dh.stacker.Stacker, null, 
 {
+	start : function() {
+		if (this._poll) {
+			throw new Error("stacker started twice");
+		}
+	
+		this._pollNewBlocks();
+		
+		var me = this;
+		this._poll = setInterval(function() {
+			me._pollNewBlocks();
+		}, 10000);
+	},
+
+	getServerTime : function() {
+		return this._serverTime;
+	},
+
 	setContainer : function(container) {
 		this._container = container;
 	},
 
-	onPostChanged : function(postId, title, stackTime, viewerCount) {
-		var block = this._postBlocksById[postId];
-		if (!block) {
-			block = new dh.stacker.PostBlock(postId, title);
-			this._postBlocksById[postId] = block;
-		}
-		if (stackTime == block.getStackTime() &&
-			viewerCount == block.getViewerCount())
-			return;
+	_newBlockLoaded : function(block) {
+		if (!block)
+			throw new Error("null block in _newBlockLoaded");
 			
-		block.setStackTime(stackTime);
-		block.setViewerCount(viewerCount);
+		var old = this._blocks[block.getBlockId()];
+		if (old) {
+			if (!old.updateFrom(block))
+				return; // new block not really newer
+		} else {
+			this._blocks[block.getBlockId()] = block;
+			old = block;
+		}
+
+		this._updateBlock(old, block.getStackTime(), block.getIgnored(), block.getIgnoredTime());
+	},
+
+	_parseNewBlocks : function(nodes) {
+		// get list of children of <blocks>
+		var blocksNode = nodes.item(0);
+		this._serverTime = parseInt(blocksNode.getAttribute("serverTime"));
+	    nodes = blocksNode.childNodes;
+		var i = 0;
+		for (i = 0; i < nodes.length; ++i) {
+			var child = nodes.item(i);
+			if (child.nodeType != dojo.dom.ELEMENT_NODE)
+				continue;
 		
-		this._updateBlock(block);
+			if (child.nodeName == "block") {
+				var blockType = child.getAttribute("type");
+
+				var kind = dh.stacker.kindFromString(blockType);
+				var parseFunc = dh.stacker.blockParsers[kind];
+				if (!parseFunc)
+					continue;
+				var block = parseFunc(child);
+				if (block) {
+					this.reloadDetails(block);
+				}
+			}
+		}
+		for (i = 0; i < this._stack.length; ++i) {
+			this._stack[i].timeTick();
+		}
+	},
+
+	// loads the details for a block, either when we 
+	// think the block has changed, or when we're 
+	// loading up a bunch of blocks for the first time
+	reloadDetails : function(block) {
+		var me = this;
+		block.load(function(block) {
+			me._newBlockLoaded(block);
+		},
+		// on failure to load
+		function(block) {
+		});
+	},
+
+	_pollNewBlocks : function() {
+		// we need newest stackTime, not newest sortTime, so 
+		// can't just look at the last block
+		var newestTime = 0;
+		var i;
+		for (i = 0; i < this._stack.length; ++i) {
+			newestTime = Math.max(this._stack[i].getStackTime(), newestTime);
+		}
+		
+		// this only gets the first page of blocks, this means we could miss some stuff if
+		// >pageSize blocks have been updated since the last attempt. We ask for 
+		// few blocks to prime things since we'd expect to always have an infinite list
+		// available, then ask for lots of blocks later to minimize chances of missing 
+		// something (though we expect few blocks)
+		var pageSize = (newestTime == 0) ? 10 : 50;
+		var me = this;
+	   	dh.server.doXmlMethod("blocks",
+					     	{ 	"lastTimestamp" : newestTime,
+					     		"start" : 0,
+					     		"count" : pageSize },
+							function(childNodes, http) {
+								me._parseNewBlocks(childNodes);		
+				 	    	},
+				  	    	function(code, msg, http) {
+				  	    		// failed!
+				  	    		//alert("failed to update: " + msg);
+				  	    	});
 	},
 	
 	_findBlockInStack : function(block) {
@@ -305,13 +1188,13 @@ defineClass(dh.stacker.Stacker, null,
 		return -1;
 	},
 	
-	_findInsertPosition : function(stackTime) {
+	_findInsertPosition : function(sortTime) {
 		var i;
 		for (i = 0; i < this._stack.length; ++i) {
-			if (this._stack[i].getStackTime() > stackTime)
+			if (this._stack[i].getSortTime() > sortTime)
 				break;
 		}
-  		// insert before current i; before stack.length for append
+  		// insert at current i; at stack.length for append
 		return i;
 	},
 	
@@ -342,6 +1225,11 @@ defineClass(dh.stacker.Stacker, null,
 		if (!block._div)
 			throw new Error("block is not realized, can't update location");
 		
+		if (block._anim)
+			block._anim.finish();
+		if (block._anim)
+			throw new Error("finishing anim on block should have cleared it");
+		
 		var oldOuterDiv;
 		var newOuterDiv;
 		if (block._div.parentNode == this._container) {
@@ -359,47 +1247,117 @@ defineClass(dh.stacker.Stacker, null,
 		
 		if (olderBlock == block)
 			throw new Error("found ourselves for olderBlock");
-		
-		if (olderBlock)
+
+		if (newOuterDiv.parentNode)
+			newOuterDiv.parentNode.removeChild(newOuterDiv);				
+		if (olderBlock) {
+			if (olderBlock.getSortTime() > block.getSortTime())
+				throw new Error("olderBlock not older");
+			if (!olderBlock._div)
+				throw new Error("olderBlock not realized");
+			if (olderBlock._div.parentNode != this._container)
+				throw new Error("olderBlock._div has wrong parent");
 			this._container.insertBefore(newOuterDiv, olderBlock._div);
-		else
-			this._container.insertBefore(newOuterDiv, this._container.firstChild);	
-			
-		block.setNewOuterDiv(newOuterDiv);
+		} else {
+			// we're the oldest (or only) block, so we go on the end
+			this._container.appendChild(newOuterDiv);
+		}
+		if (newOuterDiv.parentNode != this._container)
+			throw new Error("newOuterDiv not in the container");
 		
 		if (oldOuterDiv == newOuterDiv) {
 			block.showWithFade();
 		} else {
-			block.show();
 			if (!oldOuterDiv.parentNode)
 				throw new Error("oldOuterDiv has no parent for some reason " + oldOuterDiv);
 			if (oldOuterDiv.parentNode != this._container)
 				throw new Error("old outer div " + oldOuterDiv + " has wrong parent " + oldOuterDiv.parentNode);
-			oldOuterDiv.parentNode.removeChild(oldOuterDiv);
+			// note this doesn't reparent into the new div yet, but we want to 				
+			// have the invariant that block._div is accurate
+			block.setNewOuterDiv(newOuterDiv);
+			block._anim = new dh.stacker.RaiseAnimation(block, block._innerDiv, oldOuterDiv, newOuterDiv);
+			block._anim.start();
 		}
+		if (block._div != newOuterDiv)
+			throw new Error("block._div is wrong");
 	},
 	
-	_updateBlock : function(block) {
+	_updateBlock : function(block, newStackTime, newIgnored, newIgnoredTime) {
+		if (!block)
+			throw new Error("updating null block");
+		if (!this._blocks[block.getBlockId()])
+			throw new Error("to update block it has to be in _blocks already " + block.getBlockId());
+	
+		this._checkInvariants();
+	
+		var newSortTime = newIgnored ? newIgnoredTime : newStackTime;
+	
 		var i = this._findBlockInStack(block);
 		if (i < 0) {
-			var j = this._findInsertPosition(block.getStackTime());
+			var j = this._findInsertPosition(newSortTime);
 			this._stack.splice(j, 0, block);
+			
+			block.setStackTime(newStackTime);
+			block.setIgnored(newIgnored);
+			block.setIgnoredTime(newIgnoredTime);
+			
 			block.realize();
 			
 			this._updateBlockDivLocation(block);
 		} else {
 			// relocate it
-			var j = this._findInsertPosition(block.getStackTime());
+			var j = this._findInsertPosition(newSortTime);
+			block.setStackTime(newStackTime);
+			block.setIgnored(newIgnored);
+			block.setIgnoredTime(newIgnoredTime);
+			
 			if ((i + 1) != j) {
-				this._stack.splice(i, 1);
+				var removed = this._stack.splice(i, 1);
+				if (removed[0] != block)
+					throw new Error("removed the wrong thing: " + removed);
+				// insert position may have changed due to deleting ourselves
+				j = this._findInsertPosition(newSortTime);
 				this._stack.splice(j, 0, block);
+				this._checkStackInOrder();
 				if (block._div) {
 					this._updateBlockDivLocation(block);
 				}
 			}
 		}
+		this._checkInvariants();
+	},
+	
+	_checkStackInOrder : function() {
+		var last = 0;
+		var i;
+		for (i = 0; i < this._stack.length; ++i) {
+			if (this._stack[i].getSortTime() < last) {
+				throw new Error("stack out of order");
+			}
+			last = this._stack[i].getSortTime();
+		}	
+	},
+	
+	_checkInvariants : function() {
+		this._checkStackInOrder();
+		// _container can have old divs during animations,
+		// but all "current" block._div should be in the right 
+		// order
+		if (this._container.childNodes.length < this._stack.length) {
+			throw new Error("some item in the stack has no _div");
+		}
+		var i, j;
+		i = this._stack.length - 1; // newest block (first in the container)
+		for (j = 0; j < this._container.childNodes.length; ++j) {
+			var node = this._container.childNodes.item(j);
+			if (i < 0 || this._stack[i]._div != node)
+				continue; // an "old" div no longer tied to a block, or an out-of-order div
+			--i;
+		}
+		if (i != -1) {
+			throw new Error("block divs in wrong order, i=" + i + " j=" + j);
+		}
 	}
-
 });
 
 dh.stacker.theInstance = new dh.stacker.Stacker();
@@ -418,7 +1376,11 @@ dh.stacker.getFakeGuid = function() {
 };
 
 dh.stacker.simulateNewPost = function(stacker, title) {
-	stacker.onPostChanged(dh.stacker.getFakeGuid(), title, new Date().getTime(), 1);
+	var block = new dh.stacker.PostBlock(dh.stacker.getFakeGuid(), dh.stacker.getFakeGuid());
+	block.setTitle(title);
+	block.setStackTime(dh.stacker.getInstance().getServerTime());
+	block.setClickedCount(1);
+	stacker._newBlockLoaded(block);
 }
 
 dh.stacker.getRandomBlock = function(stacker) {
@@ -432,14 +1394,26 @@ dh.stacker.getRandomBlock = function(stacker) {
 	return block;
 }
 
+dh.stacker.simulatePostUpdate = function(stacker, oldBlock, newTitle, newTime, newViewerCount) {
+	var newBlock = new dh.stacker.PostBlock(oldBlock.getBlockId(), oldBlock.getPostId());
+	newBlock.setTitle(newTitle);
+	newBlock.setStackTime(newTime);
+	newBlock.setClickedCount(newViewerCount);
+	stacker._newBlockLoaded(newBlock);
+}
+
 dh.stacker.simulateMoreViews = function(stacker) {
 	var block = dh.stacker.getRandomBlock(stacker);
-	stacker.onPostChanged(block.getPostId(), block.getTitle(), block.getStackTime(), 
-							block.getViewerCount() + 1);
+	if (block.getKind() == dh.stacker.Kind.POST) {
+		dh.stacker.simulatePostUpdate(stacker, block, block.getTitle(), block.getStackTime() + 1, 
+			block.getClickedCount() + 1);
+	}
 }
 
 dh.stacker.simulateNewStackTime = function(stacker) {
 	var block = dh.stacker.getRandomBlock(stacker);
-	stacker.onPostChanged(block.getPostId(), block.getTitle(), new Date().getTime(), 
-							block.getViewerCount());
+	if (block.getKind() == dh.stacker.Kind.POST) {
+		dh.stacker.simulatePostUpdate(stacker, block, block.getTitle(), dh.stacker.getInstance().getServerTime(), 
+			block.getClickedCount());
+	}
 }

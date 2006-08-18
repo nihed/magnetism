@@ -1,3 +1,4 @@
+/* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 #include "hippo-entity-protected.h"
 #include "hippo-person.h"
 #include "hippo-chat-room.h"

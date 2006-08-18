@@ -16,7 +16,7 @@ public class ThreadUtils {
 	
 	/**
 	 * Like Executors.newCachedThreadPool, but you can specify the name of 
-	 * the threads that will be created
+	 * the threads that will be created and the threads are daemon threads.
 	 * 
 	 * @param baseName identifier of the thread pool. The threads in the
 	 *   thread pool will be named "[baseName] 1", "[baseName] 2", and
@@ -35,12 +35,30 @@ public class ThreadUtils {
 				nextThreadId += 1;
 				return t;
 			}
-		});		
+		});
 	}
-	
+
+	/**
+	 * Like Executors.newFixedThreadPool, but you can specify the name of 
+	 * the thread that will be created and the threads are daemon threads.
+	 */
+	public static ExecutorService newFixedThreadPool(final String baseName, int numThreads) {
+		return Executors.newFixedThreadPool(numThreads, new ThreadFactory() {
+			private int nextThreadId = 0;
+			
+			public synchronized Thread newThread(Runnable r) {
+				Thread t = new Thread(r);
+				t.setDaemon(true);
+				t.setName(baseName + " " + nextThreadId);
+				nextThreadId += 1;
+				return t;
+			}
+		});
+	}
+
 	/**
 	 * Like Executors.newSingleThreadExecutor, but you can specify the name of 
-	 * the thread that will be created
+	 * the thread that will be created and the threads are daemon threads.
 	 * 
 	 * @param name name of the thread
 	 * @return a newly created ExecutorService. You should call shutdown()
@@ -57,11 +75,17 @@ public class ThreadUtils {
 		});
 	}
 	
-	private static void logException(Exception e) {
+	private static void logException(Exception e, boolean fullLog) {
 		if (e instanceof InterruptedException) {
-			logger.warn("future interrupted {}: {}", e.getClass().getName(), e.getMessage());
+			if (!fullLog)
+				logger.warn("future interrupted {}: {}", e.getClass().getName(), e.getMessage());
+			else
+				logger.warn("future interrupted", e);
 		} else if (e instanceof ExecutionException) {
-			logger.warn("future threw execution exception {}: {}", e.getClass().getName(), e.getMessage());
+			if (!fullLog)
+				logger.warn("future threw execution exception {}: {}", e.getClass().getName(), e.getMessage());
+			else
+				logger.warn("future threw execution exception", e);
 			Throwable cause = e.getCause();
 			if (cause != null && cause != e) {
 				logger.warn("cause of execution exception was {}: {}", cause.getClass().getName(), cause.getMessage());
@@ -71,7 +95,10 @@ public class ThreadUtils {
 				logger.warn("root cause of execution exception was {}: {}", root.getClass().getName(), root.getMessage());
 			}
 		} else {
-			logger.warn("future got unexpected exception {}: {}", e.getClass().getName(), e.getMessage());
+			if (!fullLog)
+				logger.warn("future got unexpected exception {}: {}", e.getClass().getName(), e.getMessage());
+			else
+				logger.warn("future got unexpected exception", e);
 		}
 	}
 	
@@ -79,10 +106,10 @@ public class ThreadUtils {
 		try {
 			return future.get();
 		} catch (InterruptedException e) {
-			logException(e);
+			logException(e, false);
 			throw new RuntimeException(e);
 		} catch (ExecutionException e) {
-			logException(e);
+			logException(e, false);
 			throw new RuntimeException(e);
 		}
 	}
@@ -91,10 +118,10 @@ public class ThreadUtils {
 		try {
 			return future.get();
 		} catch (InterruptedException e) {
-			logException(e);
+			logException(e, true);
 			return null;
 		} catch (ExecutionException e) {
-			logException(e);
+			logException(e, true);
 			return null;
 		}
 	}
@@ -103,10 +130,10 @@ public class ThreadUtils {
 		try {
 			return future.get();
 		} catch (InterruptedException e) {
-			logException(e);
+			logException(e, true);
 			return Collections.emptyList();
 		} catch (ExecutionException e) {
-			logException(e);
+			logException(e, true);
 			return Collections.emptyList();
 		}
 	}

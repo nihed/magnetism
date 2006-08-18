@@ -6,12 +6,12 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.concurrent.Callable;
 
-import javax.annotation.EJB;
+import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.persistence.EntityManager;
-import javax.persistence.EntityNotFoundException;
+import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import javax.sql.DataSource;
@@ -97,7 +97,7 @@ public class RecommenderSystemBean implements RecommenderSystem {
 				            .setParameter("user", user)
 				            .getSingleResult();
 						return false;
-					} catch (EntityNotFoundException e) {
+					} catch (NoResultException e) {
 						rating = new Rating(user, item, score, reason, type); 
 						em.persist(rating);
 						return true;

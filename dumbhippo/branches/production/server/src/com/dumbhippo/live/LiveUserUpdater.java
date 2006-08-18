@@ -17,11 +17,9 @@ public interface LiveUserUpdater {
 	 */
 	void initialize(LiveUser user);
 	
-	void periodicUpdate(Guid userGuid);
-	
 	void handlePostCreated(Guid userGuid);
 	
-	public void handleGroupMembershipChanged(Guid userGuid);	
-
-	void sendAllNotifications(LiveUser luser);
+	public void handleGroupMembershipChanged(Guid userGuid);
+	
+	void handleContactsChanged(Guid userGuid);
 }

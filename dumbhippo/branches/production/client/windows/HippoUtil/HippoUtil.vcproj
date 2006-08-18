@@ -227,7 +227,7 @@
 				RelativePath=".\resource.h">
 			</File>
 			<File
-				RelativePath=".\stdafx.h">
+				RelativePath=".\stdafx-hippoutil.h">
 			</File>
 		</Filter>
 		<File

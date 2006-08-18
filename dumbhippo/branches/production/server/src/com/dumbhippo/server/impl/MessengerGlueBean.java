@@ -9,10 +9,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.annotation.EJB;
-import javax.ejb.AroundInvoke;
-import javax.ejb.InvocationContext;
+import javax.ejb.EJB;
 import javax.ejb.Stateless;
+import javax.interceptor.AroundInvoke;
+import javax.interceptor.InvocationContext;
 
 import org.slf4j.Logger;
 
@@ -21,6 +21,7 @@ import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.live.Hotness;
+import com.dumbhippo.live.LiveClientData;
 import com.dumbhippo.live.LivePost;
 import com.dumbhippo.live.LiveState;
 import com.dumbhippo.live.LiveXmppServer;
@@ -59,6 +60,7 @@ import com.dumbhippo.server.MySpaceTracker;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
+import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.PostView;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.PromotionCode;
@@ -74,6 +76,9 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 	
 	@EJB
 	private IdentitySpider identitySpider;
+	
+	@EJB
+	private PersonViewer personViewer;
 		
 	@EJB
 	private AccountSystem accountSystem;
@@ -143,7 +148,7 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 				  	        ctx.getMethod().getName(), end - start);
 			}
 			return result;
-		} catch (RuntimeException e) {
+		} catch (Exception e) {
 			logger.error("Unexpected exception: " + e.getMessage(), e);
 			// create a new RuntimeException that won't have any types the XMPP server 
 			// is unfamiliar with
@@ -214,7 +219,7 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 		
 		Account account = accountFromUsername(username);
 		
-		PersonView view = identitySpider.getSystemView(account.getOwner(), PersonViewExtra.PRIMARY_EMAIL);
+		PersonView view = personViewer.getSystemView(account.getOwner(), PersonViewExtra.PRIMARY_EMAIL);
 		
 		String email = null;
 		if (view.getEmail() != null)
@@ -517,7 +522,7 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 		} catch (NotFoundException e) {
 			throw new RuntimeException(e);
 		}
-		return newChatRoomUser(user);		
+		return newChatRoomUser(user);
 	}
 	
 	public Set<ChatRoomUser> getChatRoomRecipients(String roomName, ChatRoomKind kind) {
@@ -630,7 +635,8 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 	public Hotness getUserHotness(String username) {
 		User user = userFromTrustedUsername(username);
 		LiveState state = LiveState.getInstance();
-		return state.getLiveUser(user.getGuid()).getHotness();
+		LiveClientData data = state.getLiveClientData(user.getGuid());
+		return data.getHotness();
 	}
 	
 	static final String RECENT_POSTS_ELEMENT_NAME = "recentPosts";
@@ -671,7 +677,7 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 				} catch (NotFoundException e) {
 					throw new RuntimeException(e);
 				}
-				viewerEntities.add(identitySpider.getPersonView(viewpoint, viewer));
+				viewerEntities.add(personViewer.getPersonView(viewpoint, viewer));
 			}
 			
 			

@@ -8,11 +8,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.annotation.EJB;
+import javax.ejb.EJB;
 import javax.ejb.EJBContext;
 import javax.ejb.Stateless;
 import javax.mail.internet.MimeMessage;
 
+import org.jboss.annotation.IgnoreDependency;
 import org.jivesoftware.smack.XMPPConnection;
 import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.packet.Message;
@@ -25,9 +26,9 @@ import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.RandomToken;
 import com.dumbhippo.live.Hotness;
+import com.dumbhippo.live.LiveClientData;
 import com.dumbhippo.live.LivePost;
 import com.dumbhippo.live.LiveState;
-import com.dumbhippo.live.LiveUser;
 import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.Group;
@@ -52,6 +53,7 @@ import com.dumbhippo.server.NoMailSystem;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
+import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.PostType;
 import com.dumbhippo.server.PostView;
 import com.dumbhippo.server.PostingBoard;
@@ -86,21 +88,31 @@ public class MessageSenderBean implements MessageSender {
 	private Mailer mailer;
 
 	@EJB
+	@IgnoreDependency
 	private IdentitySpider identitySpider;
 	
 	@EJB
+	@IgnoreDependency
+	private PersonViewer personViewer;
+	
+	@EJB
+	@IgnoreDependency
 	private PostingBoard postingBoard;
 	
 	@EJB
+	@IgnoreDependency
 	private InvitationSystem invitationSystem;
 
 	@EJB
+	@IgnoreDependency
 	private NoMailSystem noMail;
 	
 	@EJB
+	@IgnoreDependency
 	private GroupSystem groupSystem;
 	
 	@EJB
+	@IgnoreDependency
 	private ExternalAccountSystem externalAccounts;
 	
 	@javax.annotation.Resource
@@ -129,9 +141,9 @@ public class MessageSenderBean implements MessageSender {
 			XmlBuilder builder = new XmlBuilder();
 			builder.openElement(ELEMENT_NAME, "xmlns", NAMESPACE);
 			for (EntityView ev: referencedEntities) {
-				builder.append(ev.toXml());
+				ev.writeToXmlBuilder(builder);
 			}
-			builder.append(postView.toXml());
+			postView.writeToXmlBuilder(builder);
 			builder.closeElement();
 			return builder.toString();
 		}
@@ -159,9 +171,9 @@ public class MessageSenderBean implements MessageSender {
 			XmlBuilder builder = new XmlBuilder();
 			builder.openElement(ELEMENT_NAME, "xmlns", NAMESPACE);
 			for (EntityView ev : viewerEntities) {
-				builder.append(ev.toXml());
+				ev.writeToXmlBuilder(builder);
 			}
-			builder.append(post.toXml());
+			post.writeToXmlBuilder(builder);
 			builder.append(lpost.toXml());
 			builder.closeElement();
 			return builder.toString();
@@ -288,9 +300,9 @@ public class MessageSenderBean implements MessageSender {
 			builder.openElement(ELEMENT_NAME, "xmlns", NAMESPACE);
 			for (int i = 0; i < livePosts.size(); i++) {
 				for (EntityView ev: referencedEntities) {
-					builder.append(ev.toXml());
+					ev.writeToXmlBuilder(builder);
 				}				
-				builder.append(postViews.get(i).toXml());
+				postViews.get(i).writeToXmlBuilder(builder);
 				builder.append(livePosts.get(i).toXml());
 			}
 			builder.closeElement();
@@ -356,8 +368,8 @@ public class MessageSenderBean implements MessageSender {
 					            "membershipStatus", status.toString(),
 					            "groupId", groupView.getIdentifyingGuid().toString(), 
 					            "userId", personView.getIdentifyingGuid().toString());
-			builder.append(personView.toXml());
-			builder.append(groupView.toXml());
+			personView.writeToXmlBuilder(builder);
+			groupView.writeToXmlBuilder(builder);
 			builder.closeElement();
 			return builder.toString();
 		}
@@ -458,7 +470,7 @@ public class MessageSenderBean implements MessageSender {
 				} catch (NotFoundException e) {
 					throw new RuntimeException(e);
 				}
-				viewerEntities.add(identitySpider.getPersonView(viewpoint, viewer));
+				viewerEntities.add(personViewer.getPersonView(viewpoint, viewer));
 			}
 			for (EntityView ev : postingBoard.getReferencedEntities(viewpoint, post.getPost())) {
 				viewerEntities.add(ev);
@@ -490,24 +502,24 @@ public class MessageSenderBean implements MessageSender {
 			connection.sendPacket(message);
 		}
 
-		public void sendHotnessChanged(LiveUser user) {
+		public void sendHotnessChanged(LiveClientData clientData) {
 			XMPPConnection connection = getConnection();
-			User dbUser = identitySpider.lookupUser(user);			
+			User dbUser = identitySpider.lookupUser(clientData.getGuid());			
 			Message message = createMessageFor(dbUser, Message.Type.HEADLINE);
-			message.addExtension(new HotnessChangedExtension(user.getHotness()));
+			message.addExtension(new HotnessChangedExtension(clientData.getHotness()));
 			logger.debug("Sending hotnessChanged message to {}", message.getTo());			
 			connection.sendPacket(message);
 		}
 
-		public void sendActivePostsChanged(LiveUser user) {
+		public void sendActivePostsChanged(LiveClientData clientData) {
 			XMPPConnection connection = getConnection();
-			User dbUser = identitySpider.lookupUser(user);
+			User dbUser = identitySpider.lookupUser(clientData.getGuid());
 			Viewpoint viewpoint = new UserViewpoint(dbUser);
 			Message message = createMessageFor(dbUser, Message.Type.HEADLINE);
 			List<LivePost> lposts = new ArrayList<LivePost>();
 			List<PostView> posts = new ArrayList<PostView>();
 			Set<EntityView> referencedEntities = new HashSet<EntityView>();			
-			for (Guid id : user.getActivePosts()) {
+			for (Guid id : clientData.getActivePosts()) {
 				LivePost lpost = LiveState.getInstance().getLivePost(id);
 				PostView pv;
 				try {
@@ -528,7 +540,7 @@ public class MessageSenderBean implements MessageSender {
 					} catch (NotFoundException e) {
 						throw new RuntimeException(e);
 					}
-					referencedEntities.add(identitySpider.getPersonView(viewpoint, viewer));
+					referencedEntities.add(personViewer.getPersonView(viewpoint, viewer));
 				}
 			}
 
@@ -548,7 +560,7 @@ public class MessageSenderBean implements MessageSender {
 		public void sendGroupMembershipUpdate(User recipient, Group group, GroupMember groupMember) {
 			XMPPConnection connection = getConnection();
 			Message message = createMessageFor(recipient);	
-			PersonView updatedMember = identitySpider.getPersonView(new UserViewpoint(recipient), 
+			PersonView updatedMember = personViewer.getPersonView(new UserViewpoint(recipient), 
 					                                                groupMember.getMember(),
 					                                                PersonViewExtra.PRIMARY_RESOURCE);
 
@@ -618,7 +630,7 @@ public class MessageSenderBean implements MessageSender {
 			
 			// Since the recipient doesn't have an account, we can't get the recipient's view
 			// of the poster. Send out information from the poster's view of themself.
-			PersonView posterViewedBySelf = identitySpider.getPersonView(viewpoint, 
+			PersonView posterViewedBySelf = personViewer.getPersonView(viewpoint, 
 					                                                     poster,
 					                                                     PersonViewExtra.PRIMARY_EMAIL);
 			
@@ -832,12 +844,12 @@ public class MessageSenderBean implements MessageSender {
 		xmppSender.sendMySpaceContactCommentNotification(user);
 	}
 
-	public void sendHotnessChanged(LiveUser user) {
-		xmppSender.sendHotnessChanged(user);
+	public void sendHotnessChanged(LiveClientData clientData) {
+		xmppSender.sendHotnessChanged(clientData);
 	}
 
-	public void sendActivePostsChanged(LiveUser user) {
-		xmppSender.sendActivePostsChanged(user);
+	public void sendActivePostsChanged(LiveClientData clientData) {
+		xmppSender.sendActivePostsChanged(clientData);
 	}
 	
 	public void sendPrefChanged(User user, String key, String value) {
@@ -845,8 +857,8 @@ public class MessageSenderBean implements MessageSender {
 	}
 
 	public void sendGroupMembershipUpdate(Group group, GroupMember groupMember) {
-		Set<User> members = groupSystem.getUserMembers(SystemViewpoint.getInstance(), group, MembershipStatus.ACTIVE);
-		for (User recipient : members) {
+		Set<User> recipients = groupSystem.getMembershipChangeRecipients(group);
+		for (User recipient : recipients) {
 			xmppSender.sendGroupMembershipUpdate(recipient, group, groupMember);			
 		}
 	}

@@ -7,6 +7,7 @@ import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
 
 import org.hibernate.annotations.Cache;
@@ -64,6 +65,11 @@ public class PersonPostData extends DBUnique {
 	@Column(nullable=true)
 	public Date getClickedDate() {
 		return clickedDate >= 0 ? new Date(clickedDate) : null;
+	}
+	
+	@Transient
+	public long getClickedDateAsLong() {
+		return clickedDate;
 	}
 	
 	@Column(nullable=false)

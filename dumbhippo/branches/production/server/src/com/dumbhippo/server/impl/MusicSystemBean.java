@@ -3,7 +3,7 @@ package com.dumbhippo.server.impl;
 import java.util.Date;
 import java.util.List;
 
-import javax.annotation.EJB;
+import javax.ejb.EJB;
 import javax.ejb.Stateless;
 
 import com.dumbhippo.persistence.AccountFeed;
@@ -139,5 +139,9 @@ public class MusicSystemBean implements MusicSystem {
 	
 	public void addFeedTrack(AccountFeed feed, TrackFeedEntry entry, int entryPosition) {
 		internal.addFeedTrack(feed, entry, entryPosition);
+	}
+	
+	public long getLatestPlayTime(Viewpoint viewpoint, User user) {
+		return internal.getLatestPlayTime(viewpoint, user);
 	}
 }

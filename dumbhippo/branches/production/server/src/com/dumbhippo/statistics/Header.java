@@ -29,6 +29,7 @@ import java.util.Formatter;
  * the header information to disk. 
  */
 public class Header {
+
 	static private final int MAGIC = 0x30655407; 
 	static private final int VERSION = 0x00010000;
 	static private final int N_RECORDS_OFFSET = 32;
@@ -79,6 +80,10 @@ public class Header {
 
 	public void setStartTime(Date startTime) {
 		this.startTime = startTime;
+	}
+
+	public ColumnMap getColumns() {
+		return columns;
 	}
 	
 	public void setColumns(ColumnMap columns) {
@@ -159,9 +164,9 @@ public class Header {
 		formatter.format("statistics/%s-%04d%02d%02d-%02d:%02d:%02d.stats",
 						 hostName,
 					     calendar.get(Calendar.YEAR),
-					     calendar.get(Calendar.MONTH),
+					     calendar.get(Calendar.MONTH) + 1,
 					     calendar.get(Calendar.DAY_OF_MONTH),
-					     calendar.get(Calendar.HOUR),
+					     calendar.get(Calendar.HOUR_OF_DAY),
 					     calendar.get(Calendar.MINUTE),
 					     calendar.get(Calendar.SECOND));
 

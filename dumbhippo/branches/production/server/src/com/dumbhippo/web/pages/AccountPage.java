@@ -11,10 +11,10 @@ import com.dumbhippo.server.ClaimVerifier;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.ExternalAccountSystem;
 import com.dumbhippo.server.HippoProperty;
-import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
+import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.Configuration.PropertyNotFoundException;
 import com.dumbhippo.web.Signin;
 import com.dumbhippo.web.SigninBean;
@@ -33,14 +33,14 @@ public class AccountPage {
 	@Signin
 	private UserSigninBean signin;
 	
-	private IdentitySpider identitySpider;
+	private PersonViewer personViewer;
 	private PersonView person;
 	private Configuration config;
 	private ClaimVerifier claimVerifier;
 	private ExternalAccountSystem externalAccounts;
 	
 	public AccountPage() {
-		identitySpider = WebEJBUtil.defaultLookup(IdentitySpider.class);
+		personViewer = WebEJBUtil.defaultLookup(PersonViewer.class);
 		config = WebEJBUtil.defaultLookup(Configuration.class);
 		claimVerifier = WebEJBUtil.defaultLookup(ClaimVerifier.class);
 		externalAccounts = WebEJBUtil.defaultLookup(ExternalAccountSystem.class);
@@ -52,7 +52,7 @@ public class AccountPage {
 
 	public PersonView getPerson() {
 		if (person == null)
-			person = identitySpider.getPersonView(signin.getViewpoint(), signin.getUser(), PersonViewExtra.ALL_RESOURCES);
+			person = personViewer.getPersonView(signin.getViewpoint(), signin.getUser(), PersonViewExtra.ALL_RESOURCES);
 		
 		return person;
 	}

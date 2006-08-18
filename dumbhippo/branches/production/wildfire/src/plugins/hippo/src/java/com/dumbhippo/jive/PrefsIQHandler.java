@@ -42,7 +42,7 @@ public class PrefsIQHandler extends AbstractIQHandler {
 		
 		Map<String,String> prefs;
 		try {
-			MessengerGlueRemote glue = EJBUtil.defaultLookup(MessengerGlueRemote.class);
+			MessengerGlueRemote glue = EJBUtil.defaultLookupRemote(MessengerGlueRemote.class);
 			prefs = glue.getPrefs(from.getNode());
 		} catch (Exception e) {
 			makeError(reply, "Failed to get prefs from app server: " + ExceptionUtils.getRootCause(e).getMessage());

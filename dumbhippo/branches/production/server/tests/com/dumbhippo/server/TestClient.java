@@ -35,7 +35,7 @@ public class TestClient {
 	public TestClient() {
 		XMPPConnection.DEBUG_ENABLED = true;
 
-		test = EJBUtil.defaultLookup(TestGlueRemote.class);
+		test = EJBUtil.defaultLookupRemote(TestGlueRemote.class);
 		
 		if (test == null)
 			System.err.println("TestGlueRemote is null");

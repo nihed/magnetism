@@ -1,3 +1,4 @@
+/* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 #ifndef __HIPPO_CHAT_WINDOW_H__
 #define __HIPPO_CHAT_WINDOW_H__
 

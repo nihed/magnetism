@@ -1,3 +1,4 @@
+/* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 #include <config.h>
 #include <glib/gi18n-lib.h>
 #include <string.h>
@@ -124,7 +125,7 @@ hippo_dbus_open_chat_blocking(const char   *server,
     message = dbus_message_new_method_call(bus_name,
                                            HIPPO_DBUS_PATH,
                                            HIPPO_DBUS_INTERFACE,
-                                           "JoinChat");                                          
+                                           "ShowChatWindow");
     if (message == NULL)
         g_error("out of memory");
         
@@ -135,7 +136,6 @@ hippo_dbus_open_chat_blocking(const char   *server,
     
     if (!dbus_message_append_args(message,
                                   DBUS_TYPE_STRING, &chat_id,
-                                  DBUS_TYPE_STRING, &kind_str,
                                   DBUS_TYPE_INVALID))
         g_error("out of memory");                                  
 
@@ -158,4 +158,26 @@ hippo_dbus_open_chat_blocking(const char   *server,
     /* any cleanup goes here */
 
     return result;
+}
+
+void
+hippo_dbus_debug_log_error(const char   *where,
+                           DBusMessage  *message)
+{
+    if (dbus_message_get_type(message) == DBUS_MESSAGE_TYPE_ERROR) {
+        const char *error;
+        const char *text;
+        
+        error = dbus_message_get_error_name(message);
+        text = NULL;
+        if (dbus_message_get_args(message, NULL,
+                                  DBUS_TYPE_STRING, &text,
+                                  DBUS_TYPE_INVALID)) {
+            g_debug("Got error reply at %s %s '%s'",
+                    where, error ? error : "NULL", text ? text : "NULL");
+        } else {
+            g_debug("Got error reply at %s %s",
+                    where, error ? error : "NULL");
+        }
+    }
 }

@@ -7,7 +7,6 @@ import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel.MapMode;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -17,12 +16,12 @@ import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.util.EJBUtil;
 
 /**
- * This class implements recording data collected from  number of statistics sources
+ * This class implements recording data collected from number of statistics sources
  * into an on-disk file.
  *  
  * @author otaylor
  */
-public class StatisticsWriter implements StatisticsSet {
+public class StatisticsWriter extends StatisticsSet {
 	static private final Logger logger = GlobalSetup.getLogger(StatisticsWriter.class);	
 
 	static final int INTERVAL = 15000; 
@@ -30,11 +29,8 @@ public class StatisticsWriter implements StatisticsSet {
 	private List<ColumnSource> columnSources = new ArrayList<ColumnSource>();
 	private ColumnMap columnMap = new ColumnMap();
 	private WriterThread writerThread = new WriterThread();
-	private String filename;
-	private Header header;
 	private RandomAccessFile output;
 	private MappedByteBuffer headerBuffer;
-	private RowStore rowStore;
 	private boolean started = false;
 	private long position = 0;
 	
@@ -111,55 +107,6 @@ public class StatisticsWriter implements StatisticsSet {
 				columnSources.add(columnSource);
 				columnMap.add(columnSource);
 			}
-		}
-	}
-	
-	public String getHostName() {
-		return header.getHostName();
-	}
-	
-	public Date getStartDate() {
-		return header.getStartTime();
-	}
-	
-	public Date getEndDate() {
-		return new Date(header.getStartTime().getTime() + INTERVAL * position);
-	}
-	
-	public String getFilename() {
-		return filename; 
-	}
-	
-	public ColumnMap getColumns() {
-		return columnMap;
-	}
-	
-	public Iterator<Row> getIterator(Date startDate, Date endDate, Timescale timescale, int[] columnIndexes) {
-		long interval = timescale.getSeconds() * 1000;
-		long fileStartTime = header.getStartTime().getTime();
-		long fileEndTime = fileStartTime + INTERVAL * position;
-		long startTime = startDate.getTime();
-		long endTime = endDate.getTime();
-		
-		if (startTime < fileStartTime)
-			startTime = fileStartTime;
-		if (endTime > fileEndTime)
-			endTime = fileEndTime;
-		
-		long startIndex = (startTime - fileStartTime) / interval;
-		long endIndex = (endTime + interval - 1 - fileStartTime) / interval;
-		
-		int factor = (timescale.getSeconds() * 1000) / INTERVAL;
-		
-		long startRow = startIndex * factor;
-		long endRow = endIndex * factor;
-		RowIterator baseIterator = rowStore.getIterator(startRow, endRow);
-
-		if (factor == 1)
-			return new FilteredRowIterator(baseIterator, columnIndexes);
-		else {
-			Date resultStartDate = new Date(fileStartTime + startIndex * interval);
-			return new AggregatedRowIterator(baseIterator, columnMap, columnIndexes, resultStartDate, timescale);
 		}
 	}
 

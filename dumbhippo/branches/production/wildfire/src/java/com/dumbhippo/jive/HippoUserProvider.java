@@ -29,7 +29,7 @@ public class HippoUserProvider implements UserProvider {
 		
 		Log.debug("loadUser() username = " + username);
 		
-		MessengerGlueRemote glue = EJBUtil.defaultLookup(MessengerGlueRemote.class);
+		MessengerGlueRemote glue = EJBUtil.defaultLookupRemote(MessengerGlueRemote.class);
 	
 		if (ENABLE_ADMIN_USER && username.equals(getAdminUsername())) {
 			return new User(getAdminUsername(), "Administrator", null, null, null);
@@ -66,7 +66,7 @@ public class HippoUserProvider implements UserProvider {
 		
 		Log.debug("getUserCount()");
 		
-		MessengerGlueRemote glue = EJBUtil.defaultLookup(MessengerGlueRemote.class);
+		MessengerGlueRemote glue = EJBUtil.defaultLookupRemote(MessengerGlueRemote.class);
 	
 		long result = glue.getJabberUserCount();
 		// Is there such a thing as optimistic paranoia?
@@ -120,7 +120,7 @@ public class HippoUserProvider implements UserProvider {
 		if (ENABLE_ADMIN_USER && username.equals(getAdminUsername()))
 			return;
 		
-		MessengerGlueRemote glue = EJBUtil.defaultLookup(MessengerGlueRemote.class);
+		MessengerGlueRemote glue = EJBUtil.defaultLookupRemote(MessengerGlueRemote.class);
 
 		try {
 			glue.setName(username, name);
@@ -137,7 +137,7 @@ public class HippoUserProvider implements UserProvider {
 		if (ENABLE_ADMIN_USER && username.equals(getAdminUsername()))
 			return;
 
-		MessengerGlueRemote glue = EJBUtil.defaultLookup(MessengerGlueRemote.class);		
+		MessengerGlueRemote glue = EJBUtil.defaultLookupRemote(MessengerGlueRemote.class);		
 
 		try {
 			glue.setEmail(username, email);

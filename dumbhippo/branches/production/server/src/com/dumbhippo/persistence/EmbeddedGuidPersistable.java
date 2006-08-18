@@ -1,9 +1,8 @@
 package com.dumbhippo.persistence;
 
 import javax.persistence.Column;
-import javax.persistence.EmbeddableSuperclass;
-import javax.persistence.GeneratorType;
 import javax.persistence.Id;
+import javax.persistence.MappedSuperclass;
 import javax.persistence.Transient;
 
 import com.dumbhippo.identity20.Guid;
@@ -21,7 +20,7 @@ import com.dumbhippo.identity20.Guid.ParseException;
  * @author Havoc Pennington
  *
  */
-@EmbeddableSuperclass
+@MappedSuperclass
 public abstract class EmbeddedGuidPersistable {
 	private Guid guid;
 	
@@ -40,7 +39,8 @@ public abstract class EmbeddedGuidPersistable {
 	
 	@Transient
 	public Guid getGuid() {
-		assert guid != null;
+		if (guid == null)
+			setGuid(Guid.createNew());
 		return guid;
 	}
 
@@ -49,13 +49,19 @@ public abstract class EmbeddedGuidPersistable {
 	public boolean equals(Object arg0) {
 		if (!(arg0 instanceof GuidPersistable))
 			return false;
-		return ((GuidPersistable) arg0).getGuid().equals(guid);
+		if (arg0 == this)
+			return true;
+		// If the argument is not actually the same object, and
+		// we haven't generated a guid yet, they cannot be equal
+		if (guid == null)
+			return false;
+		return ((GuidPersistable) arg0).getGuid().equals(getGuid());
 	}
 
 	/* Should be final, except this makes Hibernate CGLIB enhancement barf */	
 	@Override
 	public int hashCode() {
-		return guid.hashCode();
+		return getGuid().hashCode();
 	}
 
 	/** 
@@ -64,7 +70,7 @@ public abstract class EmbeddedGuidPersistable {
 	 * 
 	 * @return the hex string form of the GUID
 	 */
-	@Id(generate = GeneratorType.NONE)
+	@Id
 	@Column(length = Guid.STRING_LENGTH, nullable = false)
 	public String getId() {
 		String s = getGuid().toString();

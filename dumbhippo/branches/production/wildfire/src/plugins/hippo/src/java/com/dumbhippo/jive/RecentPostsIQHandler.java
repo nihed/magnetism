@@ -39,7 +39,7 @@ public class RecentPostsIQHandler extends AbstractIQHandler {
 		Element element = packet.getChildElement();
 		String id = element.attributeValue("id");
 		
-		MessengerGlueRemote glue = EJBUtil.defaultLookup(MessengerGlueRemote.class);
+		MessengerGlueRemote glue = EJBUtil.defaultLookupRemote(MessengerGlueRemote.class);
 		
 		String recentPostsString;
 		try {

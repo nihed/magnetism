@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
-import javax.annotation.EJB;
+import javax.ejb.EJB;
 import javax.ejb.EJBContext;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
@@ -29,6 +29,7 @@ import org.apache.lucene.queryParser.QueryParser;
 import org.apache.lucene.queryParser.QueryParser.Operator;
 import org.apache.lucene.search.Hits;
 import org.hibernate.lucene.DocumentBuilder;
+import org.jboss.annotation.IgnoreDependency;
 import org.slf4j.Logger;
 import org.xml.sax.SAXException;
 
@@ -40,6 +41,7 @@ import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.live.GroupEvent;
 import com.dumbhippo.live.LiveState;
+import com.dumbhippo.live.PostChatEvent;
 import com.dumbhippo.live.PostCreatedEvent;
 import com.dumbhippo.live.PostViewedEvent;
 import com.dumbhippo.persistence.Account;
@@ -81,6 +83,7 @@ import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Pageable;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
+import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.PostIndexer;
 import com.dumbhippo.server.PostInfoSystem;
 import com.dumbhippo.server.PostSearchResult;
@@ -88,6 +91,7 @@ import com.dumbhippo.server.PostType;
 import com.dumbhippo.server.PostView;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.RecommenderSystem;
+import com.dumbhippo.server.Stacker;
 import com.dumbhippo.server.SystemViewpoint;
 import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.UserViewpoint;
@@ -104,7 +108,10 @@ public class PostingBoardBean implements PostingBoard {
 	private EntityManager em;	
 	
 	@EJB
-	private IdentitySpider identitySpider;	
+	private IdentitySpider identitySpider;
+	
+	@EJB
+	private PersonViewer personViewer;
 
 	@EJB
 	private AccountSystem accountSystem;
@@ -128,7 +135,12 @@ public class PostingBoardBean implements PostingBoard {
 	private TransactionRunner runner;
 	
 	@EJB
+	@IgnoreDependency
 	private RecommenderSystem recommenderSystem;
+	
+	@EJB
+	@IgnoreDependency
+	private Stacker stacker;
 	
 	@javax.annotation.Resource
 	private EJBContext ejbContext;
@@ -155,7 +167,6 @@ public class PostingBoardBean implements PostingBoard {
 			throw new RuntimeException("invalid visibility on post " + post.getId());
 		}		
 	}
-	
 	
 	public void sendPostNotifications(Post post, PostType postType) {
 		logger.debug("Sending out jabber/email notifications...");
@@ -254,6 +265,9 @@ public class PostingBoardBean implements PostingBoard {
 						} catch (NotFoundException e) {
 							throw new RuntimeException(e);
 						}
+						
+						Stacker stacker = EJBUtil.defaultLookup(Stacker.class);
+						stacker.stackPost(currentPost.getGuid(), currentPost.getPostDate().getTime());
 						
 						// Sends out XMPP notification
 						board.sendPostNotifications(currentPost, postType);
@@ -389,7 +403,7 @@ public class PostingBoardBean implements PostingBoard {
 
 	private void doTutorialPost(User recipient, Character sender, String urlText, String title, String text) {
 		logger.debug("Sending tutorial post to {}", recipient);
-		User poster = identitySpider.getCharacter(sender);
+		User poster = accountSystem.getCharacter(sender);
 		URL url;
 		try {
 			url = new URL(urlText);
@@ -481,7 +495,7 @@ public class PostingBoardBean implements PostingBoard {
 			Person p = ppd.getPerson();
 			if (!(p instanceof User)) // possible? FIXME decide for sure
 				continue;
-			if (user.equals((User) p)) {
+			if (user.equals(p)) {
 				return ppd;
 			}
 		}
@@ -556,7 +570,7 @@ public class PostingBoardBean implements PostingBoard {
 						    member.getStatus() == MembershipStatus.INVITED_TO_FOLLOW) {
 							Set<User> adders = member.getAdders();
 							for (User adder : adders) {
-								inviters.add(identitySpider.getPersonView(viewpoint, adder));
+								inviters.add(personViewer.getPersonView(viewpoint, adder));
 							}
 						}
 						recipients.add(new GroupView(g, member, inviters));
@@ -602,7 +616,7 @@ public class PostingBoardBean implements PostingBoard {
 
 	private EntityView getPosterView(Viewpoint viewpoint, Post post) {
 		if (post.getPoster() != null)
-			return identitySpider.getPersonView(viewpoint, post.getPoster(), PersonViewExtra.ALL_RESOURCES);
+			return personViewer.getPersonView(viewpoint, post.getPoster(), PersonViewExtra.ALL_RESOURCES);
 		else if (post instanceof FeedPost) {
 			return new FeedView(((FeedPost)post).getFeed());
 		} else {
@@ -628,7 +642,7 @@ public class PostingBoardBean implements PostingBoard {
 		}
 		
 		for (Resource recipient : recipientResources) {
-			recipients.add(identitySpider.getPersonView(viewpoint, recipient, PersonViewExtra.PRIMARY_RESOURCE, PersonViewExtra.PRIMARY_AIM));
+			recipients.add(personViewer.getPersonView(viewpoint, recipient, PersonViewExtra.PRIMARY_RESOURCE, PersonViewExtra.PRIMARY_AIM));
 		}
 	
 		if (!em.contains(post))
@@ -1092,10 +1106,13 @@ public class PostingBoardBean implements PostingBoard {
 		boolean previouslyViewed = ppd.getClickedDate() != null;
 		ppd.setClicked();
 		setPostIgnored(user, post, false); // Since they viewed it, they implicitly un-ignore it
-		if (previouslyViewed)
-			return;
-	
-        LiveState.getInstance().queueUpdate(new PostViewedEvent(postGuid, user.getGuid(), new Date()));
+		
+		// pass the clicked info over to our new way of recording it also...
+		stacker.clickedPost(post, user, ppd.getClickedDateAsLong());
+		
+		if (!previouslyViewed) {
+			LiveState.getInstance().queueUpdate(new PostViewedEvent(postGuid, user.getGuid(), ppd.getClickedDate()));
+		}
 	}
 
 	public int getPostsForCount(Viewpoint viewpoint, Person forPerson) {
@@ -1174,27 +1191,30 @@ public class PostingBoardBean implements PostingBoard {
 		pageable.setTotalCount(getReceivedFeedPostsCount(viewpoint, recipient, null));		
 	}
 	
-	private static final String POST_MESSAGE_QUERY = "SELECT pm from PostMessage pm WHERE pm.post = :post";
-	private static final String POST_MESSAGE_RECENT = " and (pm.timestamp - current_timestamp()) < :recentTime";
-	private static final String POST_MESSAGE_ORDER = " ORDER BY pm.timestamp";
-	
 	public List<PostMessage> getPostMessages(Post post) {
-		@SuppressWarnings("unchecked")
-		List<PostMessage> messages = em.createQuery(POST_MESSAGE_QUERY + POST_MESSAGE_ORDER)
+		List<?> messages = em.createQuery("SELECT pm from PostMessage pm WHERE pm.post = :post ORDER BY pm.timestamp")
 		.setParameter("post", post)
 		.getResultList();
 		
-		return messages;
+		return TypeUtils.castList(PostMessage.class, messages);
 	}
 	
-	public List<PostMessage> getRecentPostMessages(Post post, int seconds) {
-		List<?> messages = em.createQuery(POST_MESSAGE_QUERY + POST_MESSAGE_RECENT +
-													POST_MESSAGE_ORDER)
+	public List<PostMessage> getNewestPostMessages(Post post, int maxResults) {
+		List<?> messages = em.createQuery("SELECT pm from PostMessage pm WHERE pm.post = :post ORDER BY pm.timestamp DESC")
 		.setParameter("post", post)
-		.setParameter("recentTime", seconds)
-		.getResultList();		
-		return TypeUtils.castList(PostMessage.class, messages);
-	}	
+		.setMaxResults(maxResults)
+		.getResultList();
+		
+		return TypeUtils.castList(PostMessage.class, messages);		
+	}
+	
+	public int getRecentPostMessageCount(Post post, int seconds) {
+		Object result = em.createQuery("SELECT COUNT(pm) FROM PostMessage pm WHERE pm.post = :post AND pm.timestamp >= :oldestTimestamp")
+		.setParameter("post", post)
+		.setParameter("oldestTimestamp", new Date(System.currentTimeMillis() - seconds * 1000))
+		.getSingleResult();		
+		return ((Number) result).intValue();
+	}
 	
 	public void addPostMessage(Post post, User fromUser, String text, Date timestamp, int serial) {
 		// we use serial = -1 in other places in the system to designate a message that contains
@@ -1204,6 +1224,9 @@ public class PostingBoardBean implements PostingBoard {
 		
 		PostMessage postMessage = new PostMessage(post, fromUser, text, timestamp, serial);
 		em.persist(postMessage);
+		
+		LiveState.getInstance().queueUpdate(new PostChatEvent(post.getGuid()));
+		stacker.stackPost(post.getGuid(), timestamp.getTime());
 	}
 
 	public Set<EntityView> getReferencedEntities(Viewpoint viewpoint, Post post) {
@@ -1217,7 +1240,7 @@ public class PostingBoardBean implements PostingBoard {
 			result.add(new GroupView(g, null, null));
 		}
 		for (Resource r : post.getPersonRecipients()) {
-			result.add(identitySpider.getPersonView(viewpoint, r, PersonViewExtra.PRIMARY_RESOURCE));	
+			result.add(personViewer.getPersonView(viewpoint, r, PersonViewExtra.PRIMARY_RESOURCE));	
 		}
 		result.add(getPosterView(viewpoint, post));
 		

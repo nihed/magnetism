@@ -7,7 +7,7 @@ mugshot_CPPFLAGS = 			\
 	$(MUGSHOT_CFLAGS)
 
 mugshot_LDFLAGS=$(MUGSHOT_LIBS)
-mugshot_LDADD= libhippo.la libgtkcopy.la
+mugshot_LDADD= libhippoipc.la libhippo.la libgtkcopy.la
 
 mugshot_SOURCES	=				\
 	src/hippo-bubble.c			\

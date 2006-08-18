@@ -2,7 +2,7 @@
  *
  * Copyright Red Hat, Inc. 2005
  */
-#include "StdAfx.h"
+#include "stdafx-hippoutil.h"
 #include <mshtml.h>
 
 #import <msxml3.dll>  named_guids

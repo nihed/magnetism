@@ -2,10 +2,10 @@ package com.dumbhippo.server.impl;
 
 import java.util.concurrent.Callable;
 
-import javax.annotation.EJB;
+import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
-import javax.persistence.EntityNotFoundException;
+import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
@@ -49,7 +49,7 @@ public class NoMailSystemBean implements NoMailSystem {
 		try {
 			NoMail noMail = (NoMail) q.getSingleResult();
 			return noMail.getMailEnabled();
-		} catch (EntityNotFoundException e) {
+		} catch (NoResultException e) {
 			return true; // enabled if not disabled
 		}
 	}
@@ -68,7 +68,7 @@ public class NoMailSystemBean implements NoMailSystem {
 					NoMail result;
 					try {
 						result = (NoMail) q.getSingleResult();
-					} catch (EntityNotFoundException e) {
+					} catch (NoResultException e) {
 						result = new NoMail(email);
 						em.persist(result);
 					}
@@ -113,9 +113,9 @@ public class NoMailSystemBean implements NoMailSystem {
 						if (token.isExpired()) {
 							em.remove(token);
 							em.flush(); // Sync to database before creating a new token
-							throw new EntityNotFoundException("found expired nomail token, making a new one");
+							throw new NoResultException("found expired nomail token, making a new one");
 						}
-					} catch (EntityNotFoundException e) {
+					} catch (NoResultException e) {
 						token = new ToggleNoMailToken(email);
 						em.persist(token);
 					}

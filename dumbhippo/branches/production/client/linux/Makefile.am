@@ -10,7 +10,7 @@ endif
 # note that target-specific CPPFLAGS will REPLACE
 # not augment these default flags by default,
 # so we manually put AM_CPPFLAGS in the target flags
-AM_CPPFLAGS=-DHIPPO_COMPILATION -DVERSION_FILE=\"$(pkgdatadir)/version\" -I$(top_builddir)/config -I$(COMMONSRCDIR)
+AM_CPPFLAGS=-DHIPPO_COMPILATION -DHIPPO_OS_LINUX -DVERSION_FILE=\"$(pkgdatadir)/version\" -I$(top_builddir)/config -I$(COMMONSRCDIR)
 
 # the "config" dir seems like a convenient place that's already 
 # in everyone's include path ... I dunno
@@ -33,14 +33,23 @@ distclean-local:
 	  rmdir $(BUILT_SRC_DIR) ;		\
 	fi
 
+dist-hook: libhippo-dist-hook libhippoipc-dist-hook libhippofirefox-dist-hook
+.PHONY: libhippo-dist-hook libhippoipc-dist-hook libhippofirefox-dist-hook
+
 # These are added to using += in the included files
 bin_PROGRAMS = 
+noinst_PROGRAMS =
 noinst_LTLIBRARIES =
+DISTCLEANFILES =
 MAINTAINERCLEANFILES =
 BUILT_SOURCES =
 
+include Makefile-libhippoipc.am
 include Makefile-libhippo.am
 include Makefile-libgtkcopy.am
+include Makefile-libhippofirefox.am
 include Makefile-mugshot.am
 include Makefile-mugshot-uri-handler.am
+include Makefile-test-hippo-ipc.am
 include Makefile-icons.am
+

@@ -636,7 +636,7 @@ dh.bubble.PostData = function(post) {
             
     this.appendSwarmContent = function(bubble, parent) {
         var pages = []
-        
+    
         if (this.post.ToWorld && post.TotalViewers > 0) {
             var viewersCountDiv = document.createElement("div")
             viewersCountDiv.className  = "dh-notification-whos-there"
@@ -647,7 +647,6 @@ dh.bubble.PostData = function(post) {
             
             pages.push({ name: "viewers", title: "Viewers", div: viewersCountDiv })
         }
-        
         // Only add the Who's There if we have something interesting to show
         if (this.post.CurrentViewers.length > 0
             && !(this.post.CurrentViewers.length == 1 && this.post.CurrentViewers.item(0).Id == dh.selfId)) {
@@ -839,9 +838,6 @@ dh.bubble.GroupMembershipChangeData = function(group, user, status) {
     }
            
     this.getId = function() {
-        // different group membership changes are treated as differnet activities,
-        // so we do not want the previous bubbles with membership changes to be replaced, 
-        // and this id is used as a key in notification.js for bubble identity
         return this.group.Id + "-" + this.user.Id
     }
         

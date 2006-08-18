@@ -71,9 +71,9 @@ public class ServerStatistics implements StatisticsSource {
 	}
 	
 	@Column(id="xmppTooBusyCount",
-			name="Times MessengerGlue Too Busy", 
-			units=ColumnUnit.COUNT, 
-			type=ColumnType.SNAPSHOT)
+			name="MessengerGlue Too Busy Responses", 
+			units=ColumnUnit.EVENTS, 
+			type=ColumnType.CUMULATIVE)
 	public long getXmppTooBusyCount() {
 		return MessengerGlueBean.getTooBusyCount();
 	}

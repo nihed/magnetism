@@ -102,7 +102,6 @@ public abstract class Indexer<T> {
 	}
 	
 	public Analyzer createAnalyzer() {
-		// FIXME: StopAnalyzer is quite crude; it doesn't do any stemming, for example
 		return new StopAnalyzer();
 	}
 	
@@ -142,7 +141,7 @@ public abstract class Indexer<T> {
 						// It's not completely clear that passing 'create = true' here when
 						// reindexing is safe when there is an existing IndexReader open,
 						// but transient errors during reindexing aren't a big problem
-						IndexWriter writer = new IndexWriter(getBuilder().getFile(), createAnalyzer(), reindex);
+						IndexWriter writer = new IndexWriter(getBuilder().getFile(), getBuilder().getAnalyzer(), reindex);
 						
 						if (reindex) {
 							doIndexAll(writer);

@@ -3,7 +3,7 @@
  *
  * Copyright Red Hat, Inc. 2005
  */
-#include "StdAfx.h"
+#include "stdafx-hippoui.h"
 #include "HippoUI.h"
 #include "HippoUIUtil.h"
 #include "HippoRemoteWindow.h"

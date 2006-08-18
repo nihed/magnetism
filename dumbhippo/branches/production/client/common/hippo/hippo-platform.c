@@ -1,3 +1,4 @@
+/* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 #include "hippo-platform.h"
 
 static void hippo_platform_base_init(void *klass);

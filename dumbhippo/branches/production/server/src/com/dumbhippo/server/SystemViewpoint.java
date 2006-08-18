@@ -21,7 +21,7 @@ public class SystemViewpoint extends Viewpoint {
 	private SystemViewpoint() {
 	}
 	
-	static private SystemViewpoint instance = new SystemViewpoint();
+	static private final SystemViewpoint instance = new SystemViewpoint();
 	
 	/**
 	 * Gets the system viewpoint singleton.
@@ -37,4 +37,8 @@ public class SystemViewpoint extends Viewpoint {
 		return false;
 	}
 
+	@Override
+	public String toString() {
+		return "{SystemViewpoint}";
+	}
 }

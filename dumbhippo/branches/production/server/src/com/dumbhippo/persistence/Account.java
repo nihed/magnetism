@@ -17,7 +17,6 @@ import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
-import javax.persistence.Table;
 import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
 
@@ -556,11 +555,10 @@ public class Account extends Resource {
     // -- a user with a given account can have many favorite posts
 	// -- the same post can have many users that marked it as a favorite post
 	@ManyToMany
-	@JoinTable(table=@Table(name="Account_Post",
-			                uniqueConstraints = 
-		                        {@UniqueConstraint(columnNames={"Account_id", "favoritePosts_id"})}),
+	@JoinTable(name="Account_Post",
 		       joinColumns=@JoinColumn(name="Account_id", referencedColumnName="id"),                 
-		       inverseJoinColumns=@JoinColumn(name="favoritePosts_id", referencedColumnName="id"))	
+		       inverseJoinColumns=@JoinColumn(name="favoritePosts_id", referencedColumnName="id"),
+		       uniqueConstraints=@UniqueConstraint(columnNames={"Account_id", "favoritePosts_id"}))	
 	@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)
 	public Set<Post> getFavoritePosts() {
 		if (favoritePosts == null)

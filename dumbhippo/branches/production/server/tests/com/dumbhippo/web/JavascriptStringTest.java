@@ -14,7 +14,7 @@ public class JavascriptStringTest extends TestCase {
 				sb.append(c);
 				sb.append(' ');
 			} else {
-				sb.append(String.format("%04x ", (int) c));
+				sb.append(String.format("%04x ", new Integer(c)));
 			}
 		}
 		if (sb.length() > 1)

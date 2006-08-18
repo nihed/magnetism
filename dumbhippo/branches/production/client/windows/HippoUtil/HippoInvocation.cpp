@@ -2,7 +2,7 @@
  *
  * Copyright Red Hat, Inc. 2006
  */
-#include "StdAfx.h"
+#include "stdafx-hippoutil.h"
 #include "HippoInvocation.h"
 
 class HippoInvocationImpl

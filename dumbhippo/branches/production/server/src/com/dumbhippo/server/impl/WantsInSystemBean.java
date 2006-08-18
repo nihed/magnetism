@@ -4,10 +4,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 
-import javax.annotation.EJB;
+import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
-import javax.persistence.EntityNotFoundException;
+import javax.persistence.NoResultException;
 import javax.persistence.NonUniqueResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
@@ -60,7 +60,7 @@ public class WantsInSystemBean implements WantsInSystem {
 							wantsIn.incrementCount();
 							em.persist(wantsIn);
 						}
-					} catch (EntityNotFoundException e) {
+					} catch (NoResultException e) {
 						wantsIn = new WantsIn(address);
 						if (increment)
 							wantsIn.incrementCount();
@@ -120,7 +120,7 @@ public class WantsInSystemBean implements WantsInSystem {
 		try {
 		    q.getSingleResult();
 		    return true;
-		} catch (EntityNotFoundException e) { 
+		} catch (NoResultException e) { 
 			return false;
 		} catch (NonUniqueResultException e) {
 			// this should not be allowed by the database schema

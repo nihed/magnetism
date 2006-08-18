@@ -163,7 +163,7 @@ public interface PostingBoard {
 	 * @return set of EntityView
 	 */
 	public Set<EntityView> getReferencedEntities(Viewpoint viewpoint, Post post);
-	
+		
 	public List<PersonPostData> getPostViewers(Viewpoint viewpoint, Guid guid, int max);
 	
 	public int getPostViewerCount(Guid guid);
@@ -186,13 +186,16 @@ public interface PostingBoard {
 	 */
 	public List<PostMessage> getPostMessages(Post post);
 	
+	public List<PostMessage> getNewestPostMessages(Post post, int maxResults);
+	
 	/**
-	 * Get recent messages that were posted in the chatroom about this post.
+	 * Count of recent messages that were posted in the chatroom about this post.
 	 * 
 	 * @param post the post the look up the messages for
-	 * @return the list of mesages, sorted by date (newest last)
+	 * @param seconds number of seconds that count as "recent"
+	 * @return count of how many messages have happened in the time window 
 	 */
-	public List<PostMessage> getRecentPostMessages(Post post, int seconds);	
+	public int getRecentPostMessageCount(Post post, int seconds);
 	
 	/**
 	 * Add a new message that was sent to the chatroom about this post

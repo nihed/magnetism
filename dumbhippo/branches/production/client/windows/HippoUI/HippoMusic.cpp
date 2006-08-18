@@ -1,4 +1,4 @@
-#include "StdAfx.h"
+#include "stdafx-hippoui.h"
 #include "HippoMusic.h"
 #include "HippoUI.h"
 

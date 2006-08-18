@@ -1,5 +1,8 @@
 package com.dumbhippo.statistics;
 
+import java.io.File;
+import java.io.FilenameFilter;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.jboss.system.ServiceMBeanSupport;
@@ -49,11 +52,33 @@ public class StatisticsService extends ServiceMBeanSupport implements Statistics
     }
     
     public List<StatisticsSet> listSets() {
-    	return null;
+    	List<StatisticsSet> sets = new ArrayList<StatisticsSet>(); 
+    	File dir = new File("statistics");
+    	
+    	FilenameFilter filter = new FilenameFilter() {
+    	    public boolean accept(File dir, String name) {
+    	        return (name.endsWith(".stats") && !statisticsWriter.getFilename().endsWith(name));
+    	    }
+    	};
+    	String[] fileNames = dir.list(filter);
+        
+    	if (fileNames == null) {
+            throw new RuntimeException("Either " + dir.getAbsolutePath() + " does not exist or is not a directory");
+        }
+        
+        for (int i=0; i<fileNames.length; i++) {
+            sets.add(new StatisticsReader("statistics/" + fileNames[i]));          
+        }
+        sets.add(statisticsWriter);
+    	
+        return sets;
     }
     
     public StatisticsSet getSet(String filename) {
-    	return null;
+    	if (!filename.equals(statisticsWriter.getFilename()))
+            return new StatisticsReader(filename);
+    	else 
+    		return statisticsWriter;
     }
     
     public StatisticsSet getCurrentSet() {

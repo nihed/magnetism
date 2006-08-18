@@ -2,7 +2,7 @@ package com.dumbhippo.server.impl;
 
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
-import javax.persistence.EntityNotFoundException;
+import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 
 import org.slf4j.Logger;
@@ -27,7 +27,7 @@ public class TokenSystemBean implements TokenSystem {
 			ret = (Token) em.createQuery(
 				"SELECT t FROM Token t WHERE t.authKey = :key")
 				.setParameter("key", authKey).getSingleResult();
-		} catch (EntityNotFoundException e) {
+		} catch (NoResultException e) {
 			logger.debug("Token key {} not found in db", authKey);
 			throw new TokenUnknownException(authKey, e);
 		} catch (Exception e) {

@@ -1,7 +1,7 @@
 // HippoUtil.cpp : Defines the entry point for the application.
 //
 
-#include "stdafx.h"
+#include "stdafx-hippoutil.h"
 #include <ole2.h>
 #include "HippoUtil.h"
 #include "HippoRegistrar.h"

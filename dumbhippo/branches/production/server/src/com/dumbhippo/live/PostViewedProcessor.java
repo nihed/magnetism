@@ -1,6 +1,6 @@
 package com.dumbhippo.live;
 
-import javax.annotation.EJB;
+import javax.ejb.EJB;
 import javax.ejb.Stateless;
 
 import org.jboss.annotation.ejb.LocalBinding;

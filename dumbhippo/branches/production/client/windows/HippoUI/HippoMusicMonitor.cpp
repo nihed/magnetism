@@ -1,4 +1,4 @@
-#include "StdAfx.h"
+#include "stdafx-hippoui.h"
 #include "HippoMusicMonitor.h"
 #include "HippoITunesMonitor.h"
 #include "HippoYahooMonitor.h"

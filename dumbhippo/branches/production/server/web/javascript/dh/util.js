@@ -342,9 +342,8 @@ dh.util.openShareLinkWindow = function(link, title) {
 	dh.util.openShareWindow(url);
 }
 
-dh.util.openFrameSet = function(window, event, obj, postID) {
-	top.window.location.href = "visit?post=" + postID;
-	return false;
+dh.util.useFrameSet = function(window, event, obj, postID) {
+	obj.href="/visit?post=" + postID;
 }
 
 dh.util.getTextWidth = function(text, fontFamily, fontSize, fontStyle, fontVariant, fontWeight) {
@@ -561,6 +560,21 @@ dh.util.getAltKey = function(ev)
 		return window.event.altKey;
 };
 
+dh.util.getBodyPosition = function(el) {
+	var point = { "x" : 0, "y" : 0 };
+	
+	while (el.offsetParent && el.tagName.toUpperCase() != 'BODY') {
+		point.x += el.offsetLeft;
+		point.y += el.offsetTop;
+		el = el.offsetParent;
+	}
+
+	point.x += el.offsetLeft;
+	point.y += el.offsetTop;
+	
+	return point;
+}
+
 dh.util.showMessage = function(message) {
 	var div = document.getElementById("dhMessageDiv")
 
@@ -585,4 +599,31 @@ dh.util.contains = function(items, item) {
 // This function only works if you have the client running, on Windows
 dh.util.clientDebug = function(text) {
 	window.external.DebugLog(text)
+}
+
+dh.util.timeString = function(timestamp) {
+	var date = new Date();
+	date.setTime(timestamp);
+    return dh.util.zeroPad(date.getMonth()+1, 2) + "/" + dh.util.zeroPad(date.getDate(), 2) + "/" 
+           + date.getFullYear() + " " + dh.util.zeroPad(date.getHours(), 2) + ":" 
+           + dh.util.zeroPad(date.getMinutes(), 2) + ":" + dh.util.zeroPad(date.getSeconds(), 2);
+}
+    
+
+dh.util.zeroPad = function(number, len) {
+    var str = number + "";
+    while (str.length < len) {
+        str = "0" + str;
+    }
+    return str;
+}
+
+dh.util.addEventListener = function(node, eventName, func) {
+	if (node.addEventListener) {
+		node.addEventListener(eventName, func, false);
+	} else if (node.attachEvent) {
+		node.attachEvent("on" + eventName, func);
+	} else {
+		throw new Error("browser does not support addEventListener or attachEvent");
+	}
 }

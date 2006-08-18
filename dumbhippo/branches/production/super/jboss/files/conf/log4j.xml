@@ -192,24 +192,24 @@
 		JCL (chaining to log4j) instead of stdout. This is really verbose so 
 		it goes to NOISE -->
    <category name="org.hibernate.SQL" additivity="false">
-   		<appender-ref ref="NOISE"/>
    		<priority value="@@noiseLogLevel@@"/>
+  		<appender-ref ref="NOISE"/>   		
    </category>
    <category name="org.hibernate.transaction" additivity="false">
+   		<priority value="@@noiseLogLevel@@"/>   
    		<appender-ref ref="NOISE"/>
-   		<priority value="@@noiseLogLevel@@"/>
    </category>
    <category name="org.hibernate.tool.hbm2ddl" additivity="false">
+   		<priority value="@@noiseLogLevel@@"/>   
    		<appender-ref ref="NOISE"/>
-   		<priority value="@@noiseLogLevel@@"/>
    </category>
    <category name="org.hibernate.type" additivity="false">
+   		<priority value="@@noiseLogLevel@@"/>   
    		<appender-ref ref="NOISE"/>
-   		<priority value="@@noiseLogLevel@@"/>
    </category>
    <category name="org.hibernate.cache" additivity="false">
+   		<priority value="@@noiseLogLevel@@"/>   
    		<appender-ref ref="NOISE"/>
-   		<priority value="@@noiseLogLevel@@"/>
    </category>
 	<!-- END HIBERNATE SPAM -->
 
@@ -220,13 +220,13 @@
 	<!-- send these two servlets to NOISE *in addition* to the normal log, 
 		so we get the markers when each web request begins/ends  -->
    <category name="com.dumbhippo.web.RewriteServlet">
+   		<priority value="@@dumbhippoLogLevel@@"/>   
    		<appender-ref ref="NOISE"/>
-   		<priority value="@@dumbhippoLogLevel@@"/>
    </category>
 
    <category name="com.dumbhippo.web.AbstractServlet">
+   		<priority value="@@dumbhippoLogLevel@@"/>   
    		<appender-ref ref="NOISE"/>
-   		<priority value="@@dumbhippoLogLevel@@"/>
    </category>
 
    <!-- allow changing log level for our packages from super.conf -->

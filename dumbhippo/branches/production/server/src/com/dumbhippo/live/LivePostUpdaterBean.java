@@ -2,7 +2,7 @@ package com.dumbhippo.live;
 
 import java.util.List;
 
-import javax.annotation.EJB;
+import javax.ejb.EJB;
 import javax.ejb.Stateless;
 
 import org.slf4j.Logger;
@@ -10,7 +10,6 @@ import org.slf4j.Logger;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.PersonPostData;
 import com.dumbhippo.persistence.Post;
-import com.dumbhippo.persistence.PostMessage;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PostView;
 import com.dumbhippo.server.PostingBoard;
@@ -21,6 +20,8 @@ import com.dumbhippo.server.SystemViewpoint;
 public class LivePostUpdaterBean implements LivePostUpdater {
 	@SuppressWarnings("unused")
 	static private final Logger logger = GlobalSetup.getLogger(LivePostUpdaterBean.class);
+	
+	static public final int RECENT_MESSAGES_AGE_IN_SECONDS = 180;
 	
 	@EJB
 	private PostingBoard postingBoard;
@@ -39,9 +40,9 @@ public class LivePostUpdaterBean implements LivePostUpdater {
 			throw new RuntimeException(e);
 		}
 		Post postObj = pv.getPost();
-		List<PostMessage> messages = postingBoard.getRecentPostMessages(postObj, 60);
-		livePost.setRecentMessageCount(messages.size());
+		livePost.setRecentMessageCount(postingBoard.getRecentPostMessageCount(postObj, RECENT_MESSAGES_AGE_IN_SECONDS));
 		
-		logger.debug("livePost {} initialized with {} total viewers", livePost.getGuid(), livePost.getTotalViewerCount());
+		logger.debug("livePost {} initialized with {} total viewers " + livePost.getRecentMessageCount() + " recent messages",
+				livePost.getGuid(), livePost.getTotalViewerCount());
 	}
 }

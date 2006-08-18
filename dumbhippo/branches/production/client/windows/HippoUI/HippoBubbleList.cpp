@@ -2,7 +2,7 @@
  *
  * Copyright Red Hat, Inc. 2006
  **/
-#include "stdafx.h"
+#include "stdafx-hippoui.h"
 
 #include <stdarg.h>
 #include <HippoUtil.h>

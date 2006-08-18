@@ -149,7 +149,9 @@ public class RewriteServlet extends HttpServlet {
 			context.getRequestDispatcher(newPath).forward(request, response);
 			WebStatistics.getInstance().incrementJspPagesServed();
 			
-			logger.debug("Handled {} in {} milliseconds", newPath, System.currentTimeMillis() - startTime);
+			long serveTime = System.currentTimeMillis() - startTime;
+			logger.debug("Handled {} in {} milliseconds", newPath, serveTime);
+			WebStatistics.getInstance().addPageServeTime(serveTime);
 		} catch (Throwable t) {
 			WebStatistics.getInstance().incrementJspPageErrors();
 			
@@ -254,8 +256,12 @@ public class RewriteServlet extends HttpServlet {
 			}
 			
 			if (path.equals("/javascript/config.js")) {
-				// config.js is special and handled by a JSP
+				// config.js is special and handled by a JSP, but it doesn't need
+				// our usual error/transaction stuff in handleJsp since it's just text 
+				// substitution
 				context.getRequestDispatcher("/jsp/configjs.jsp").forward(request, response);
+			} else if (path.equals("/javascript/whereimat.js")) {
+				handleJsp(request, response, "/jsp2/whereimatjs.jsp");
 			} else if (newPath != null) {
 				RewrittenRequest rewrittenRequest = new RewrittenRequest(request, newPath);
 				context.getNamedDispatcher("default").forward(rewrittenRequest, response);
@@ -493,5 +499,10 @@ public class RewriteServlet extends HttpServlet {
         
         // We store the builtstamp in the servlet context so we can reference it from JSP pages
         getServletContext().setAttribute("buildStamp", buildStamp);
+        
+        // Also store the server's base URL
+        String baseUrl = configuration.getPropertyFatalIfUnset(HippoProperty.BASEURL);
+        getServletContext().setAttribute("baseUrl", baseUrl); 
+ 
 	}
 }

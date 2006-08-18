@@ -1,3 +1,4 @@
+/* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 #include "hippo-myspace.h"
 
 /* a little paranoia to help with our C++ skillz */

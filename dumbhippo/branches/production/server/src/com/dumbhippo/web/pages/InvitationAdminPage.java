@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.MembershipStatus;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.Character;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.GroupSystem;
@@ -27,6 +28,7 @@ public class InvitationAdminPage extends AbstractSigninRequiredPage {
 	private Configuration config;
 	
 	private IdentitySpider identitySpider;
+	private AccountSystem accountSystem;
 	private WantsInSystem wantsInSystem;
 	private GroupSystem groupSystem;
 	
@@ -43,6 +45,7 @@ public class InvitationAdminPage extends AbstractSigninRequiredPage {
 		if (!isAdminEnabled.equals("true"))
 			throw new HumanVisibleException("Administrator console not enabled");
 		identitySpider = WebEJBUtil.defaultLookup(IdentitySpider.class);
+		accountSystem = WebEJBUtil.defaultLookup(AccountSystem.class);		
 		wantsInSystem = WebEJBUtil.defaultLookup(WantsInSystem.class);	
 		groupSystem = WebEJBUtil.defaultLookup(GroupSystem.class);
 		countToInvite = 50;
@@ -75,7 +78,7 @@ public class InvitationAdminPage extends AbstractSigninRequiredPage {
 	public ListBean<GroupView> getGroups() {
 		if (groups == null) {
 		    Character character = Character.MUGSHOT;
-		    User inviter = identitySpider.getCharacter(character);
+		    User inviter = accountSystem.getCharacter(character);
 			groups = new ListBean<GroupView>(GroupView.sortedList(groupSystem.findGroups(new UserViewpoint(inviter), inviter, MembershipStatus.ACTIVE)));
 		}
 		return groups;		

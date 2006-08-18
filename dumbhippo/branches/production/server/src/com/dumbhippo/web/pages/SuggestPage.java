@@ -4,9 +4,9 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.Rating;
-import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
+import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.PostView;
 import com.dumbhippo.server.RecommenderSystem;
 import com.dumbhippo.web.ListBean;
@@ -29,7 +29,7 @@ public class SuggestPage {
 	@Signin
 	private UserSigninBean signin;
 	
-	private IdentitySpider identitySpider;
+	private PersonViewer personViewer;
 	private PersonView person;
 	private RecommenderSystem recommenderSystem;
 	
@@ -37,7 +37,7 @@ public class SuggestPage {
 	private ListBean<Rating> ratings;
 
 	public SuggestPage() {
-		identitySpider = WebEJBUtil.defaultLookup(IdentitySpider.class);		
+		personViewer = WebEJBUtil.defaultLookup(PersonViewer.class);			
 		recommenderSystem = WebEJBUtil.defaultLookup(RecommenderSystem.class);
 	}
 	
@@ -47,7 +47,7 @@ public class SuggestPage {
 
 	public PersonView getPerson() {
 		if (person == null)
-			person = identitySpider.getPersonView(signin.getViewpoint(), signin.getUser(), PersonViewExtra.ALL_RESOURCES);
+			person = personViewer.getPersonView(signin.getViewpoint(), signin.getUser(), PersonViewExtra.ALL_RESOURCES);
 		
 		return person;
 	}

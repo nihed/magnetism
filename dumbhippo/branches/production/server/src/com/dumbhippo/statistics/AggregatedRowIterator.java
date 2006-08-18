@@ -4,10 +4,11 @@ import java.util.Date;
 
 /**
  * A row iterator that wraps an underlying RowIterator that returns fine-grained
- * data  and aggregates the fine-grained data into coarser timescales.  
+ * data and aggregates the fine-grained data into coarser timescales.  
  * @author otaylor
  */
 class AggregatedRowIterator implements RowIterator {
+	
 	RowIterator baseIterator;
 	ColumnType[] columnTypes;
 	int[] columns;
@@ -43,7 +44,8 @@ class AggregatedRowIterator implements RowIterator {
 		long beforeValue = before.value(column);
 		long afterTime = after.getDate().getTime();
 		long afterValue = after.value(column);
-		
+		// produce a value at time "time", based on values at beforeTime and endTime, weighted by how close 
+		// they are to "time"
 		return ((time - beforeTime) * afterValue + (afterTime - time) * beforeValue) / (afterTime - beforeTime);
 	}
 	
@@ -51,23 +53,28 @@ class AggregatedRowIterator implements RowIterator {
 		SimpleRow row = new SimpleRow(columns.length);
 		int numRows = 0;
 
-		long startTime = nextRowStartTime();
-		long endTime = startTime + timescale.getSeconds() * 1000;
-		long rowTime = (startTime + endTime) / 2;
+		long rowTime = nextDate().getTime();
+		long endTime = rowTime + (timescale.getSeconds() * 500);
+		
 		row.setDate(new Date(rowTime));
 		Row beforeRow = null;
 		Row afterRow = null;
 
 		do { 
 			Row baseRow = baseIterator.next();
+
+			// set the closest before and after rows for this rowTime
 			if (baseRow.getDate().getTime() < rowTime)
 				beforeRow = baseRow;
 			else if (afterRow == null)
 				afterRow = baseRow;
 			
+			
 			for (int i = 0; i < columns.length; i++) {
-				if (columnTypes[i] == ColumnType.SNAPSHOT)
+				// for SNAPSHOT data we add up all data points during the interval
+				if (columnTypes[i] == ColumnType.SNAPSHOT)  {
 					row.setValue(i, row.value(i) + baseRow.value(columns[i]));
+				}
 			}
 			
 			numRows++;

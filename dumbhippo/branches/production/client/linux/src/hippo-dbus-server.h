@@ -1,3 +1,4 @@
+/* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 #ifndef __HIPPO_DBUS_SERVER_H__
 #define __HIPPO_DBUS_SERVER_H__
 
@@ -31,6 +32,9 @@ void       hippo_dbus_disconnect               (HippoDBus   *dbus);
  * to and including the Disconnected message
  */
 void       hippo_dbus_blocking_shutdown        (HippoDBus   *dbus);
+
+void       hippo_dbus_notify_xmpp_connected    (HippoDBus   *dbus,
+                                                gboolean     connected);
 
 G_END_DECLS
 

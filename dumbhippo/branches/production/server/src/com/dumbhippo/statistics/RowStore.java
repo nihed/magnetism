@@ -131,7 +131,12 @@ public class RowStore {
 		
 		public RowStoreIterator(long startRow, long endRow) {
 			this.startIndex = startRow;
-			this.endIndex = endRow;
+			if (endRow > numRows) {
+				// don't try to iterate through rows that are not there
+				this.endIndex = numRows;
+			} else {
+			    this.endIndex = endRow;
+			}
 			nextIndex = startRow;
 		}
 		
@@ -140,43 +145,46 @@ public class RowStore {
 		}
 		
 		public boolean hasNext() {
+			getNextRow(false);
 			return nextIndex < endIndex;
 		}
 		
-		private Row getNextRow() {
-			if (nextIndex == endIndex)
+		// only advances nextRow if nextRow is null
+		private Row getNextRow(boolean mustHaveNext) {
+			if (mustHaveNext && (nextIndex == endIndex))
 				throw new NoSuchElementException();
 
-			if (nextRow == null) {
+			// keep advancing nextIndex and nextRow if nextRow time is 0 (i.e. nextRow is a placeholder)
+			while (((nextRow == null) || (nextRow.getDate().getTime() == 0)) && (nextIndex < endIndex)) {
 				if (nextRowBlock == null)
 					nextRowBlock = lockBlock(nextIndex, false);
+								
+				nextRow = new BufferRow(nextRowBlock.buffer, (int)(nextIndex - nextRowBlock.startRow), numColumns);		
 				
-				nextRow = new BufferRow(nextRowBlock.buffer, (int)(nextIndex - nextRowBlock.startRow), numColumns);
+				nextIndex++;
+
+				// if we won't need nextRowBlock anymore, unlock it
+				if (nextIndex >= nextRowBlock.startRow + BLOCK_ROWS || nextIndex == endIndex) {
+					unlockBlock(nextRowBlock);
+				}
 			}
 			
 			return nextRow;
 		}
 		
 		public Date nextDate() {
-			return getNextRow().getDate(); 
+			return getNextRow(true).getDate(); 
 		}
 		
 		public Row next() {
-			if (nextRowBlock == null)
-				nextRowBlock = lockBlock(nextIndex, false);
-			
-			Row result = getNextRow();
-			
-			nextIndex++;
+			Row result = getNextRow(true);
+			// set nextRow to null so that it is advanced next time getNextRow() is called
 			nextRow = null;
-			
-			if (nextIndex >= nextRowBlock.startRow + BLOCK_ROWS || nextIndex == endIndex) {
-				unlockBlock(nextRowBlock);
-			}
 			
 			return result;
 		}
 		
+		@Override
 		protected void finalize() {
 			if (nextRowBlock != null)
 				unlockBlock(nextRowBlock);

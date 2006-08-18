@@ -3,7 +3,7 @@
  * Copyright Red Hat, Inc. 2005
  **/
 
-#include "stdafx.h"
+#include "stdafx-hipposhellext.h"
 
 #include <HippoUtil.h>
 

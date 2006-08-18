@@ -4,6 +4,7 @@ import java.util.List;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import javax.persistence.Transient;
@@ -52,7 +53,7 @@ public class ExternalAccount extends DBUnique {
 	}
 	
 	@ManyToOne
-	@Column(nullable=false)
+	@JoinColumn(nullable=false)
 	public Account getAccount() {
 		return account;
 	}

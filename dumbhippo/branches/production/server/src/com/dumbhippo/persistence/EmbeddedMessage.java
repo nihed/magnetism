@@ -3,9 +3,9 @@ package com.dumbhippo.persistence;
 import java.util.Date;
 
 import javax.persistence.Column;
-import javax.persistence.EmbeddableSuperclass;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.MappedSuperclass;
 
 /**
  * A chat message, we have subclasses that put the chat in a context
@@ -15,8 +15,8 @@ import javax.persistence.ManyToOne;
  * @author otaylor
  */
 
-@EmbeddableSuperclass
-public abstract class EmbeddedMessage extends DBUnique {
+@MappedSuperclass
+public abstract class EmbeddedMessage extends DBUnique implements ChatMessage {
 
 	private static final long serialVersionUID = 1L;
 	

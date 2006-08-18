@@ -115,19 +115,10 @@ class LiveObjectCache<T extends LiveObject> {
 		entries = new HashMap<Guid, CacheEntry<T>>();
 	}
 	
-	/**
-	 * Get an object from the cache; if the object doesn't exist, it
-	 * will be created using the factory passed to the constructor.
-	 * 
-	 * The cache age of the object is set to zero.
-	 * 
-	 * @param guid guid to look up in the cache
-	 * @return the found or newly created object
-	 */
-	public T get(Guid guid) {
+	private CacheEntry<T> getEntry(Guid guid) {
 		CacheEntry<T> entry;
 		boolean needNew = false;
-		
+
 		synchronized(this) {
 			 entry = entries.get(guid);
 			 if (entry == null) {
@@ -146,6 +137,21 @@ class LiveObjectCache<T extends LiveObject> {
 				entry.update(t);
 			}
 		}
+		
+		return entry;
+	}
+	
+	/**
+	 * Get an object from the cache; if the object doesn't exist, it
+	 * will be created using the factory passed to the constructor.
+	 * 
+	 * The cache age of the object is set to zero.
+	 * 
+	 * @param guid guid to look up in the cache
+	 * @return the found or newly created object
+	 */
+	public T get(Guid guid) {
+		CacheEntry<T> entry = getEntry(guid);
 		
 		return entry.get();
 	}
@@ -164,29 +170,31 @@ class LiveObjectCache<T extends LiveObject> {
 	 * @return the found or newly created object
 	 */
 	public T getForUpdate(Guid guid) {
-		CacheEntry<T> entry;
-		boolean needNew = false;
-		
-		synchronized(this) {
-			 entry = entries.get(guid);
-			 if (entry == null) {
-				 entry = new CacheEntry<T>(guid);
-				 entries.put(guid, entry);
-				 needNew = true;
-			 }
-			 entry.cacheAge = 0;
-		}
-		
-		if (needNew) {
-			T t = null;
-			try {
-				t = factory.create(guid);
-			} finally {
-				entry.update(t);
-			}
-		}
-		
+		CacheEntry<T> entry = getEntry(guid);
+
 		return entry.getForUpdate();
+	}
+	
+	private synchronized CacheEntry<T> peekEntry(Guid guid) {
+		return entries.get(guid);
+	}
+
+	/**
+	 * Get an object from the cache if it exists and has a value.
+	 * Does not reset the cache age of the object. Does not wait
+	 * for creation or pending updates, but returns null if the
+	 * object is currently being created and a stale object if 
+	 * it is currently being updated.
+	 * 
+	 * @param guid guid to look up in the cache
+	 * @return the found object or null
+	 */
+	public T peek(Guid guid) {
+		CacheEntry<T> entry = peekEntry(guid);
+		if (entry == null)
+			return null;
+		
+		return entry.peek();
 	}
 	
 	/**
@@ -199,14 +207,9 @@ class LiveObjectCache<T extends LiveObject> {
 	 * @return the found or newly created object
 	 */
 	public T peekForUpdate(Guid guid) {
-		CacheEntry<T> entry;
-		
-		synchronized(this) {
-			 entry = entries.get(guid);
-			 if (entry == null) {
-				 return null;
-			 }
-		}
+		CacheEntry<T> entry = peekEntry(guid);
+		if (entry == null)
+			return null;
 		
 		return entry.getForUpdate();
 	}

@@ -1,5 +1,6 @@
 package com.dumbhippo.server;
 
+import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.VersionedEntity;
 
@@ -18,9 +19,17 @@ public abstract class EntityView {
 	
 	public abstract Guid getIdentifyingGuid();
 	
-	public abstract String toXml();
+	public abstract void writeToXmlBuilder(XmlBuilder builder);
 	
 	public abstract String toIdentifyingXml();
+	
+	// final since changing this would break the guarantee that it 
+	// returns the same thing as writeToXmlBuilder 
+	final public String toXml() {
+		XmlBuilder xml = new XmlBuilder();
+		writeToXmlBuilder(xml);
+		return xml.toString();
+	}
 	
 	@Override
 	public boolean equals(Object o) {

@@ -20,12 +20,12 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
-import javax.annotation.EJB;
+import javax.ejb.EJB;
 import javax.ejb.Stateless;
+import javax.naming.NameNotFoundException;
 import javax.naming.NamingException;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-import javax.servlet.http.HttpServletRequest;
 
 import org.slf4j.Logger;
 import org.xml.sax.SAXException;
@@ -45,6 +45,8 @@ import com.dumbhippo.live.LiveState;
 import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.AccountFeed;
 import com.dumbhippo.persistence.AimResource;
+import com.dumbhippo.persistence.Block;
+import com.dumbhippo.persistence.ChatMessage;
 import com.dumbhippo.persistence.Contact;
 import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.ExternalAccount;
@@ -53,20 +55,25 @@ import com.dumbhippo.persistence.Feed;
 import com.dumbhippo.persistence.FeedEntry;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupAccess;
+import com.dumbhippo.persistence.GroupMessage;
 import com.dumbhippo.persistence.GuidPersistable;
 import com.dumbhippo.persistence.LinkResource;
 import com.dumbhippo.persistence.NowPlayingTheme;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Post;
+import com.dumbhippo.persistence.PostMessage;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.Sentiment;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.persistence.ValidationException;
 import com.dumbhippo.persistence.WantsIn;
 import com.dumbhippo.postinfo.PostInfo;
+import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.Character;
 import com.dumbhippo.server.ClaimVerifier;
 import com.dumbhippo.server.Configuration;
+import com.dumbhippo.server.EntityView;
 import com.dumbhippo.server.ExternalAccountSystem;
 import com.dumbhippo.server.FeedSystem;
 import com.dumbhippo.server.GroupIndexer;
@@ -82,10 +89,13 @@ import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.NowPlayingThemeSystem;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
+import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.PostIndexer;
+import com.dumbhippo.server.PostView;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.PromotionCode;
 import com.dumbhippo.server.SigninSystem;
+import com.dumbhippo.server.Stacker;
 import com.dumbhippo.server.SystemViewpoint;
 import com.dumbhippo.server.TrackIndexer;
 import com.dumbhippo.server.TrackView;
@@ -116,9 +126,15 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 
 	@EJB
 	private IdentitySpider identitySpider;
+	
+	@EJB
+	private PersonViewer personViewer;
 
 	@EJB
 	private PostingBoard postingBoard;
+	
+	@EJB
+	private AccountSystem accountSystem;
 
 	@EJB
 	private GroupSystem groupSystem;
@@ -149,6 +165,9 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	
 	@EJB
 	private ExternalAccountSystem externalAccountSystem;
+	
+	@EJB
+	private Stacker stacker;
 	
 	@PersistenceContext(unitName = "dumbhippo")
 	private EntityManager em;	
@@ -322,7 +341,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	public void getContactsAndGroups(OutputStream out,
 			HttpResponseData contentType, UserViewpoint viewpoint) throws IOException {
 
-		Set<PersonView> persons = identitySpider.getContacts(viewpoint, viewpoint.getViewer(),
+		Set<PersonView> persons = personViewer.getContacts(viewpoint, viewpoint.getViewer(),
 				true, PersonViewExtra.ALL_RESOURCES);
 		Set<Group> groups = groupSystem.findRawGroups(viewpoint, viewpoint.getViewer());
 
@@ -344,7 +363,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			throw new RuntimeException(e);
 		}
 		Person contact = identitySpider.createContact(viewpoint.getViewer(), resource);
-		PersonView contactView = identitySpider.getPersonView(viewpoint,
+		PersonView contactView = personViewer.getPersonView(viewpoint,
 				contact, PersonViewExtra.ALL_RESOURCES);
 		returnPersonsXml(xml, viewpoint, Collections.singleton(contactView));
 
@@ -463,7 +482,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			throw new RuntimeException(e);
 		}
 		Contact contact = identitySpider.createContact(viewpoint.getViewer(), emailResource);
-		PersonView contactView = identitySpider.getPersonView(viewpoint,
+		PersonView contactView = personViewer.getPersonView(viewpoint,
 				contact, PersonViewExtra.ALL_RESOURCES);
 
 		returnObjects(out, contentType, viewpoint, Collections
@@ -608,6 +627,30 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		identitySpider.setMusicBio(viewpoint, viewpoint.getViewer(), bio);
 	}
 	
+	private void returnTrackXml(XmlBuilder xml, TrackView tv) {
+		xml.openElement("song");
+		if (tv != null) {
+			String image = tv.getSmallImageUrl();
+			
+			// flash embed needs an absolute url
+			if (image != null && image.startsWith("/")) {
+				String baseurl = config.getProperty(HippoProperty.BASEURL);
+				image = baseurl + image;
+			}
+			xml.appendTextNode("image", image);
+			xml.appendTextNode("title", tv.getName());
+			xml.appendTextNode("artist", tv.getArtist());
+			xml.appendTextNode("album", tv.getAlbum());
+			xml.appendTextNode("stillPlaying", Boolean.toString(tv.isNowPlaying()));
+		} else {
+			xml.appendTextNode("title", "Song Title");
+			xml.appendTextNode("artist", "Artist");
+			xml.appendTextNode("album", "Album");
+			xml.appendTextNode("stillPlaying", "false");
+		}
+		xml.closeElement();
+	}
+	
 	public void getNowPlaying(OutputStream out, HttpResponseData contentType,
 			String who, String theme) throws IOException {
 		if (contentType != HttpResponseData.XML)
@@ -661,27 +704,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		xml.appendStandaloneFragmentHeader();
 		xml.openElement("nowPlaying");
 		
-		xml.openElement("song");
-		if (tv != null) {
-			String image = tv.getSmallImageUrl();
-			
-			// flash embed needs an absolute url
-			if (image != null && image.startsWith("/")) {
-				String baseurl = config.getProperty(HippoProperty.BASEURL);
-				image = baseurl + image;
-			}
-			xml.appendTextNode("image", image);
-			xml.appendTextNode("title", tv.getName());
-			xml.appendTextNode("artist", tv.getArtist());
-			xml.appendTextNode("album", tv.getAlbum());
-			xml.appendTextNode("stillPlaying", Boolean.toString(tv.isNowPlaying()));
-		} else {
-			xml.appendTextNode("title", "Song Title");
-			xml.appendTextNode("artist", "Artist");
-			xml.appendTextNode("album", "Album");
-			xml.appendTextNode("stillPlaying", "false");
-		}
-		xml.closeElement();
+		returnTrackXml(xml, tv);
 		
 		if (themeObject != null) {
 			xml.openElement("theme");
@@ -826,7 +849,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		if (character == null) {
 			note = "The limited-time offer has expired!";
 		} else {
-			User inviter = identitySpider.getCharacter(character);
+			User inviter = accountSystem.getCharacter(character);
 			
 			if (!inviter.getAccount().canSendInvitations(1)) {
 				note = "Someone got there first! No more invitations available right now.";
@@ -893,7 +916,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		String note = null;
 		
 		Character character = Character.MUGSHOT;
-		User inviter = identitySpider.getCharacter(character);
+		User inviter = accountSystem.getCharacter(character);
 			
 		if (!inviter.getAccount().canSendInvitations(countToInviteValue)) {
             logger.debug("Mugshot character does not have enough invitations to invite {} people.", countToInviteValue);
@@ -997,7 +1020,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			throw new RuntimeException("inviteeId and inviteeAddress can't both be null");
 		}
 		
-		GuidPersistable recipient = (GuidPersistable)contact;
+		GuidPersistable recipient = contact;
 		Set<GuidPersistable> recipients = Collections.singleton(recipient);
 		try {
 			postingBoard.doShareGroupPost(viewpoint.getViewer(), group, subject, message, recipients, PostingBoard.InviteRecipients.MUST_INVITE);
@@ -1008,7 +1031,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		// let's find out if we were inviting to the group or inviting to follow the group
 		boolean adderCanAdd = groupSystem.canAddMembers(viewpoint.getViewer(), group);
 		
-		PersonView contactView = identitySpider.getPersonView(viewpoint, contact, PersonViewExtra.PRIMARY_RESOURCE);
+		PersonView contactView = personViewer.getPersonView(viewpoint, contact, PersonViewExtra.PRIMARY_RESOURCE);
 
 		String note;
 		if (adderCanAdd) {
@@ -1256,7 +1279,11 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			if (!name.contains(".")) {
 				name = defaultPackage + "." + name;
 			}
-			return EJBUtil.uncheckedDynamicLookup(name);
+			try {
+				return EJBUtil.uncheckedDynamicLookupLocal(name);
+			} catch (NameNotFoundException e) {
+				return EJBUtil.uncheckedDynamicLookupRemote(name);
+			}
 		}		
 	}
 	
@@ -1286,7 +1313,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		return bsh;
 	}
 
-	public void doAdminShellExec(XmlBuilder xml, UserViewpoint viewpoint, HttpServletRequest request, boolean parseOnly, String command) throws IOException, HumanVisibleException {
+	public void doAdminShellExec(XmlBuilder xml, UserViewpoint viewpoint, boolean parseOnly, String command) throws IOException, HumanVisibleException {
 		StringWriter clientOut = new StringWriter();
 		if (parseOnly) {
 			Parser parser = new Parser(new StringReader(command));
@@ -1618,9 +1645,13 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		return service;
 	}
 		
-	public void getStatisticsSets(XmlBuilder xml, UserViewpoint viewpoint) throws IOException, XmlMethodException {
-		List<StatisticsSet> sets = getStatisticsService().listSets();
-		
+	public void getStatisticsSets(XmlBuilder xml, UserViewpoint viewpoint, String filename) throws IOException, XmlMethodException {
+		List<StatisticsSet> sets;
+		if (filename == null) {
+		    sets = getStatisticsService().listSets();
+		} else {
+			sets = Collections.singletonList(getStatisticsService().getSet(filename));
+		}
 		xml.openElement("statisticsSets");
 		for (StatisticsSet set : sets) {
 			xml.openElement("statisticsSet");
@@ -1654,6 +1685,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		}
 		
 		String[] columnNames = columns.split(",");
+		// will maintain indexes of requested columns as they appear in the statistics set's columnMap 
 		int[] columnIndexes = new int[columnNames.length];
 		ColumnMap columnMap = set.getColumns();
 		
@@ -1719,4 +1751,151 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		
 		xml.closeElement();
 	}
+	
+	
+	private User parseUserId(String userId) throws XmlMethodException {
+		try {
+			return identitySpider.lookupGuidString(User.class, userId);
+		} catch (ParseException e) {
+			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, "bad userId " + userId);
+		} catch (NotFoundException e) {
+			throw new XmlMethodException(XmlMethodErrorCode.INVALID_ARGUMENT, "no such person " + userId);
+		}
+	}
+
+	private Post parsePostId(Viewpoint viewpoint, String postId) throws XmlMethodException {
+		try {
+			return postingBoard.loadRawPost(viewpoint, new Guid(postId));
+		} catch (ParseException e) {
+			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, "bad postId " + postId);
+		} catch (NotFoundException e) {
+			throw new XmlMethodException(XmlMethodErrorCode.INVALID_ARGUMENT, "no such post " + postId);
+		}
+	}
+	
+	private void returnBlocks(XmlBuilder xml, UserViewpoint viewpoint, User user, List<UserBlockData> list) throws XmlMethodException {
+		logger.debug("Returning {} blocks", list.size());
+		
+		xml.openElement("blocks", "count", Integer.toString(list.size()),
+				"userId", user.getId(), "serverTime", Long.toString(System.currentTimeMillis()));
+		for (UserBlockData ubd : list) {
+			Block block = ubd.getBlock();
+			xml.openElement("block", "id", block.getId(),
+					"type", block.getBlockType().name(),
+					"timestamp", Long.toString(block.getTimestampAsLong()),
+					"clickedCount", Integer.toString(block.getClickedCount()),
+					"ignored", Boolean.toString(ubd.isIgnored()),
+					"ignoredTimestamp", Long.toString(ubd.getIgnoredTimestampAsLong()),
+					"clicked", Boolean.toString(ubd.isClicked()),
+					"clickedTimestamp", Long.toString(ubd.getClickedTimestampAsLong()));
+			
+			switch (block.getBlockType()) {
+			case MUSIC_PERSON:
+				xml.appendTextNode("musicPerson", null, "userId", block.getData1());
+				break;
+			case GROUP_CHAT:
+				xml.appendTextNode("groupChat", null, "groupId", block.getData1());
+				break;
+			case POST:
+				xml.appendTextNode("post", null, "postId", block.getData1());
+				break;
+			case GROUP_MEMBER:
+				xml.appendTextNode("groupMember", null, "groupId", block.getData1(),
+									   "userId", block.getData2());
+				break;
+				// don't add a default case, we want a warning if any cases are missing
+			}
+			
+			xml.closeElement();
+		}
+		xml.closeElement();		
+	}
+	
+	public void getBlocks(XmlBuilder xml, UserViewpoint viewpoint, String userId, String lastTimestampStr, String startStr, String countStr) throws XmlMethodException {
+		long lastTimestamp;
+		int start;
+		int count;
+		
+		try {
+			lastTimestamp = Long.parseLong(lastTimestampStr);
+			start = Integer.parseInt(startStr);
+			count = Integer.parseInt(countStr);
+		} catch (NumberFormatException e) {
+			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, "bad integer");
+		}
+		if (start < 0)
+			throw new XmlMethodException(XmlMethodErrorCode.INVALID_ARGUMENT, "start must be >= 0");
+		if (count < 1)
+			throw new XmlMethodException(XmlMethodErrorCode.INVALID_ARGUMENT, "count must be > 0");
+		if (lastTimestamp < 0)
+			throw new XmlMethodException(XmlMethodErrorCode.INVALID_ARGUMENT, "lastTimestamp must be >= 0");
+		
+		User user;
+		if (userId == null) {
+			user = viewpoint.getViewer();
+		} else {
+			user = parseUserId(userId);
+		}
+		
+		List<UserBlockData> list = stacker.getStack(viewpoint, user, lastTimestamp, start, count);
+		returnBlocks(xml, viewpoint, user, list);
+	}
+	
+	public void getBlock(XmlBuilder xml, UserViewpoint viewpoint, UserBlockData userBlockData) throws XmlMethodException {
+		returnBlocks(xml, viewpoint, viewpoint.getViewer(), Collections.singletonList(userBlockData));
+	}
+	
+	public void getMusicPersonSummary(XmlBuilder xml, UserViewpoint viewpoint, String userId) throws XmlMethodException {
+		User musicPlayer = parseUserId(userId);
+		// ALL_RESOURCES here is just because returnPersonsXml wants it, the javascript doesn't need it
+		PersonView pv = personViewer.getPersonView(viewpoint, musicPlayer, PersonViewExtra.ALL_RESOURCES);
+		List<TrackView> tracks = musicSystem.getLatestTrackViews(viewpoint, musicPlayer, 5);
+		xml.openElement("musicPerson", "userId", musicPlayer.getId());
+		returnPersonsXml(xml, viewpoint, Collections.singleton(pv));
+		for (TrackView tv : tracks) {
+			returnTrackXml(xml, tv);
+		}
+		xml.closeElement();
+	}
+	
+	private void writeChatMessage(XmlBuilder xml, ChatMessage m) {
+		xml.appendTextNode("message", m.getMessageText(), "fromId", m.getFromUser().getId(),
+				"timestamp", Long.toString(m.getTimestamp().getTime()),
+				"serial", Integer.toString(m.getMessageSerial()));		
+	}
+	
+	public void getGroupChatSummary(XmlBuilder xml, UserViewpoint viewpoint, String groupId) throws XmlMethodException {
+		Group group = parseGroupId(viewpoint, groupId);
+		xml.openElement("groupChat", "groupId", group.getId());
+		returnGroupsXml(xml, viewpoint, Collections.singleton(group));
+		List<GroupMessage> messages = groupSystem.getNewestGroupMessages(group, 5);
+		for (GroupMessage gm : messages) {
+			writeChatMessage(xml, gm);
+		}
+		xml.closeElement();
+	}
+	
+ 	public void getPostSummary(XmlBuilder xml, UserViewpoint viewpoint, String postId) throws XmlMethodException {
+ 		Post post = parsePostId(viewpoint, postId);
+ 		
+ 		PostView pv = postingBoard.getPostView(viewpoint, post);
+ 		pv.writeToXmlBuilder(xml);
+ 		EntityView poster = pv.getPoster();
+ 		poster.writeToXmlBuilder(xml);
+ 		
+		List<PostMessage> messages = postingBoard.getNewestPostMessages(post, 5);
+		for (PostMessage pm : messages) {
+			writeChatMessage(xml, pm);
+		}
+ 	}
+ 	
+ 	public void doSetBlockHushed(XmlBuilder xml, UserViewpoint viewpoint, UserBlockData userBlockData, boolean hushed) throws XmlMethodException {
+ 		if (hushed != userBlockData.isIgnored()) {
+	 		userBlockData.setIgnored(hushed);
+	 		if (hushed)
+	 			userBlockData.setIgnoredTimestampAsLong(userBlockData.getBlock().getTimestampAsLong());
+ 		}
+ 		// send the new block data back, to avoid an extra round trip
+ 		returnBlocks(xml, viewpoint, viewpoint.getViewer(), Collections.singletonList(userBlockData));
+ 	}
 }

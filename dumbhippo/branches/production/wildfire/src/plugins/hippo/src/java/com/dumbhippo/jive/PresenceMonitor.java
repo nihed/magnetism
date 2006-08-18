@@ -260,7 +260,7 @@ public class PresenceMonitor implements SessionManagerListener {
 		// don't cache this for now, so jive will be robust against jboss redeploy,
 		// and so we're thread safe automatically (note that our notification queue
 		// calls this from another thread)
-		return EJBUtil.defaultLookupChecked(MessengerGlueRemote.class);
+		return EJBUtil.defaultLookupRemoteChecked(MessengerGlueRemote.class);
 	}
 
 	private void setServerIdentifier(String serverIdentifier) {	

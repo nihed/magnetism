@@ -40,14 +40,17 @@ class FilteredRowIterator implements RowIterator {
 			this.baseRow = baseRow;
 		}
 		
+		@Override
 		public Date getDate() {
 			return baseRow.getDate();
 		}
 		
+		@Override
 		public long value(int column) {
 			return baseRow.value(columns[column]);
 		}
 		
+		@Override
 		public int numColumns() {
 			return columns.length;
 		}

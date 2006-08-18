@@ -2,8 +2,8 @@ dojo.provide("dh.statistics.dataset");
 
 dh.statistics.dataset.Dataset = function() {
 	this.numPoints = 0;
-	this.t = [];
-	this.y = [];
+	this.ta = [];
+	this.ya = [];
 	this.minT = 0;
 	this.maxT = 0;
 	this.minY = 0;
@@ -12,14 +12,14 @@ dh.statistics.dataset.Dataset = function() {
 
 dojo.lang.extend(dh.statistics.dataset.Dataset,
 {
-	add: function(t, y) {
-		this.t[this.numPoints] = t;
-		this.y[this.numPoints] = y;
+	add: function(t, y) {	
+		this.ta[this.numPoints] = t;
+		this.ya[this.numPoints] = y;
 		
 		if (this.numPoints == 0) {
 			this.minT = this.maxT = t;
 			this.minY = this.maxY = y;
-		} else {
+		} else {	
 			if (t < this.minT) 
 				this.minT = t;
 			if (t > this.maxT)
@@ -27,11 +27,29 @@ dojo.lang.extend(dh.statistics.dataset.Dataset,
 			if (y < this.minY)
 				this.minY = y;
 			if (y > this.maxY)
-				this.maxY = y;
+				this.maxY = y;				
 		}
 		
 		this.numPoints++;
+	},
+	
+	// this assumes that t is between ta[0] and ta[numPoints-1]
+	getIndexBelow: function(t) {
+        var index = parseInt(this.numPoints / 2);
+        var interval = index;
+           
+	    while (((index < this.numPoints - 1) && (t > this.ta[index+1])) || (t < this.ta[index])) {
+	     	interval = parseInt(interval / 2 + 0.5);
+	        if (t > this.ta[index]) {	        
+	            index = index + interval; 
+	        } else if (t < this.ta[index]) {
+	            index = index - interval;
+	        }
+	    }  
+	    
+	    return index; 
 	}
+	
 });
 
 dh.statistics.dataset.createRandomCumulative = function() {

@@ -85,14 +85,14 @@ public class TransactionRunnerBean implements TransactionRunner {
 		}
 	}
 
-	public void runTaskRetryingOnConstraintViolation(Runnable runnable) throws Exception {
+	public void runTaskRetryingOnConstraintViolation(Runnable runnable) {
 		int retries = 1;
 		
 		while (true) {
 			try {
 				runTaskInNewTransaction(runnable);
 				return;
-			} catch (Exception e) {
+			} catch (RuntimeException e) {
 				if (retries > 0 && EJBUtil.isDuplicateException(e)) {
 					// log at .info so we can get a sense of whether/how-often this happens
 					logger.info("Constraint violation race condition detected, retrying. {}: {}", e.getClass().getName(), e.getMessage());

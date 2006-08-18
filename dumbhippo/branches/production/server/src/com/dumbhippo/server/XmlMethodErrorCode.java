@@ -6,10 +6,15 @@ package com.dumbhippo.server;
  * 
  */
 public enum XmlMethodErrorCode {
+	INTERNAL_SERVER_ERROR,
+	FAILED,
 	UNKNOWN_GROUP,
 	INVALID_URL,
 	NETWORK_ERROR,
 	PARSE_ERROR,
 	NOT_FOUND,
-	NOT_READY
+	NOT_READY,
+	INVALID_ARGUMENT,
+	NOT_LOGGED_IN,
+	FORBIDDEN
 }

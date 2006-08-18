@@ -36,7 +36,7 @@ public class PostControlsIQHandler extends AbstractIQHandler {
 		String type = element.attributeValue("type");		
 		String id = element.attributeValue("id");
 		
-		MessengerGlueRemote glue = EJBUtil.defaultLookup(MessengerGlueRemote.class);
+		MessengerGlueRemote glue = EJBUtil.defaultLookupRemote(MessengerGlueRemote.class);
 		if (type.equals("ignore")) {
 			try {
 				glue.setPostIgnored(Guid.parseTrustedJabberId(from.getNode()), 

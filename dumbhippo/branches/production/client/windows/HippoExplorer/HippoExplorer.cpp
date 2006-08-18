@@ -4,7 +4,7 @@
  
  **/
 
-#include "stdafx.h"
+#include "stdafx-hippoexplorer.h"
 #include "ClassFactory.h"
 #include "Globals.h"
 #include "Resource.h"

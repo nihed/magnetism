@@ -6,11 +6,11 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 
-import javax.annotation.EJB;
-import javax.ejb.PostConstruct;
+import javax.annotation.PostConstruct;
+import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
-import javax.persistence.EntityNotFoundException;
+import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 
 import org.slf4j.Logger;
@@ -63,7 +63,7 @@ public class MySpaceTrackerBean implements MySpaceTracker {
 			.setParameter("owner", user)
 			.setParameter("commentId", commentId)
 			.getSingleResult();
-		} catch (EntityNotFoundException e) {
+		} catch (NoResultException e) {
 			return null;
 		}
 	}	

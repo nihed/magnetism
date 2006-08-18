@@ -21,10 +21,10 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 
-import javax.annotation.EJB;
+import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
-import javax.persistence.EntityNotFoundException;
+import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
@@ -64,7 +64,9 @@ import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Pageable;
 import com.dumbhippo.server.PersonMusicPlayView;
 import com.dumbhippo.server.PersonMusicView;
+import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.RhapsodyDownloadCache;
+import com.dumbhippo.server.Stacker;
 import com.dumbhippo.server.TrackIndexer;
 import com.dumbhippo.server.TrackSearchResult;
 import com.dumbhippo.server.TrackView;
@@ -100,6 +102,9 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	private IdentitySpider identitySpider;
 	
 	@EJB
+	private PersonViewer personViewer;
+	
+	@EJB
 	private GroupSystem groupSystem;
 
 	@EJB
@@ -128,6 +133,9 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	
 	@EJB
 	private YahooArtistAlbumsCache yahooArtistAlbumsCache;
+	
+	@EJB
+	private Stacker stacker;
 	
 	private static ExecutorService threadPool;
 	private static boolean shutdown = false;
@@ -195,7 +203,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 					Track res;
 					try {
 						res = (Track) q.getSingleResult();
-					} catch (EntityNotFoundException e) {
+					} catch (NoResultException e) {
 						res = key;
 						em.persist(res);
 						
@@ -221,36 +229,31 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	}
 
 	private void addTrackHistory(final User user, final Track track, final Date now) {
-		try {
-			runner.runTaskRetryingOnConstraintViolation(new Callable<TrackHistory>() {
+		runner.runTaskRetryingOnConstraintViolation(new Runnable() {				
+			public void run() {
+				Query q;
 				
-				public TrackHistory call() throws Exception {
-					Query q;
-					
-					q = em.createQuery("FROM TrackHistory h WHERE h.user = :user " +
-							"AND h.track = :track");
-					q.setParameter("user", user);
-					q.setParameter("track", track);
-					
-					TrackHistory res;
-					try {
-						res = (TrackHistory) q.getSingleResult();
-						res.setLastUpdated(now);
-						res.setTimesPlayed(res.getTimesPlayed() + 1);
-					} catch (EntityNotFoundException e) {
-						res = new TrackHistory(user, track);
-						res.setLastUpdated(now);
-						res.setTimesPlayed(1);
-						em.persist(res);
-					}
-					
-					return res;
+				q = em.createQuery("FROM TrackHistory h WHERE h.user = :user " +
+						"AND h.track = :track");
+				q.setParameter("user", user);
+				q.setParameter("track", track);
+				
+				TrackHistory res;
+				try {
+					res = (TrackHistory) q.getSingleResult();
+					res.setLastUpdated(now);
+					res.setTimesPlayed(res.getTimesPlayed() + 1);
+				} catch (NoResultException e) {
+					res = new TrackHistory(user, track);
+					res.setLastUpdated(now);
+					res.setTimesPlayed(1);
+					em.persist(res);
 				}
-			});
-		} catch (Exception e) {
-			ExceptionUtils.throwAsRuntimeException(e);
-			throw new RuntimeException(e); // not reached
-		}
+			}
+		});
+		
+		// update the stack with this new listen event
+		stacker.stackMusicPerson(user.getGuid(), now.getTime());
 	}
 	
 	public void setCurrentTrack(final User user, final Track track) {
@@ -939,7 +942,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			if (includePersonMusicPlay) {
 			    // add the person who made this "track history" 
 		        List<PersonMusicPlayView> personMusicPlayViews = new ArrayList<PersonMusicPlayView>();
-			    personMusicPlayViews.add(new PersonMusicPlayView(identitySpider.getPersonView(viewpoint, t.getUser()), t.getLastUpdated()));
+			    personMusicPlayViews.add(new PersonMusicPlayView(personViewer.getPersonView(viewpoint, t.getUser()), t.getLastUpdated()));
 			    v.setPersonMusicPlayViews(personMusicPlayViews);
 			}
 			
@@ -1329,7 +1332,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		try {
 			Track t = (Track) q.getSingleResult();
 			return t;
-		} catch (EntityNotFoundException e) {
+		} catch (NoResultException e) {
 			throw new NotFoundException("No matching track", e);
 		}
 	}
@@ -1549,7 +1552,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
             // from looking strangely empty.
             if ((viewpoint != null) && viewpoint.isOfUser(user)) {  
                 if (selfMusicPlayView == null) {   
-            	    selfMusicPlayView = new PersonMusicPlayView(identitySpider.getPersonView(viewpoint, user), h.getLastUpdated());
+            	    selfMusicPlayView = new PersonMusicPlayView(personViewer.getPersonView(viewpoint, user), h.getLastUpdated());
                 }
             	continue;
             }
@@ -1560,16 +1563,16 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
             		// it is correct to use the first track history that related to a given contact because we are interested
             		// in the most recent play and track histories were sorted by the time of the last update
             		if (views.get(user) == null) {
-            			views.put(user, new PersonMusicPlayView(identitySpider.getPersonView(viewpoint, user), h.getLastUpdated()));
+            			views.put(user, new PersonMusicPlayView(personViewer.getPersonView(viewpoint, user), h.getLastUpdated()));
             		}
             	} else {
             		if (extraViews.get(user) == null) {    			
-            			extraViews.put(user, new PersonMusicPlayView(identitySpider.getPersonView(viewpoint, user), h.getLastUpdated()));
+            			extraViews.put(user, new PersonMusicPlayView(personViewer.getPersonView(viewpoint, user), h.getLastUpdated()));
               		}            		
             	}
             } else {
         		if (views.get(user) == null) {
-        			views.put(user, new PersonMusicPlayView(identitySpider.getPersonView(viewpoint, user), h.getLastUpdated()));            			
+        			views.put(user, new PersonMusicPlayView(personViewer.getPersonView(viewpoint, user), h.getLastUpdated()));            			
         		}                	
             }
         }
@@ -1664,7 +1667,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			if (pmv == null) {
 				if (isSelf || contacts.contains(user)) {
 					if (contactViews < MAX_RELATED_FRIENDS_RESULTS) {
-						pmv = new PersonMusicView(identitySpider.getPersonView(viewpoint, user));
+						pmv = new PersonMusicView(personViewer.getPersonView(viewpoint, user));
 
 						if (!isSelf) {
 							switch (type) {
@@ -1809,10 +1812,15 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		properties.put("album", entry.getAlbum());
 		properties.put("url", entry.getPlayHref());
 		
-		Integer duration = Integer.parseInt(entry.getDuration());
-		duration = duration/1000;  // Rhapsody duration info is in milliseconds, elswhere it's seconds
+		try {
+			Integer duration = Integer.parseInt(entry.getDuration());
+			duration = duration/1000;  // Rhapsody duration info is in milliseconds, elswhere it's seconds
 		
-		properties.put("duration", ""+duration);
+			properties.put("duration", ""+duration);
+		} catch (NumberFormatException e) {
+			logger.debug("bad duration in rhapsody feed '{}'", entry.getDuration());
+			// just don't store the duration
+		}
 		
 		//properties.put("format", "");            // could set to 'Rhapsody' or something like that
 		//properties.put("fileSize", "");          // streaming tracks don't have a file size
@@ -1850,5 +1858,13 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 				addTrackHistory(user, t, new Date(virtualPlayTime));
 			}
 		});
+	}
+	
+	public long getLatestPlayTime(Viewpoint viewpoint, User user) {
+		List<TrackHistory> history = getTrackHistory(viewpoint, user, History.LATEST, 0, 1);
+		if (history.isEmpty())
+			return 0;
+		else
+			return history.get(0).getLastUpdated().getTime();
 	}
 }

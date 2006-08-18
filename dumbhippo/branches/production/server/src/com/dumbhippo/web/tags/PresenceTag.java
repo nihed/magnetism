@@ -25,9 +25,12 @@ public class PresenceTag extends SimpleTagSupport {
 		
 		if (o instanceof PersonView) {
 			PersonView view = (PersonView)o;
-			if (view.isOnline()) {
-				AimResource primaryAim = view.getAim();
-				if (primaryAim != null) {
+			AimResource primaryAim = view.getAim();
+			if (primaryAim != null) {
+				// Is this right? isOnline is the Mugshot status, not
+				// the aim status, but if you've entered your aim address into the
+				// account page, maybe they are close enough?
+				if (view.isOnline()) {
 					returnString = "<a href=\"aim:GoIm?ScreenName=" + primaryAim.getScreenName() + "\" alt=\"Send an message to " + primaryAim.getScreenName() + " via AIM\"><img src=\"/images/online.gif\" height=16 width=16 border=0 valign=center></a>";		
 				}
 			}

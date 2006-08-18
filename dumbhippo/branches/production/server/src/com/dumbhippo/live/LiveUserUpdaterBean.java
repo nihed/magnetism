@@ -1,10 +1,10 @@
 package com.dumbhippo.live;
 
-import java.util.ArrayList;
-import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
-import javax.annotation.EJB;
+import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -13,15 +13,13 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.identity20.Guid;
+import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.MembershipStatus;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.IdentitySpider;
-import com.dumbhippo.server.MessageSender;
-import com.dumbhippo.server.PostView;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.SystemViewpoint;
-import com.dumbhippo.server.UserViewpoint;
 
 // Implementation of LiveUserUpdater
 @Stateless
@@ -30,70 +28,16 @@ public class LiveUserUpdaterBean implements LiveUserUpdater {
 	static private final Logger logger = GlobalSetup.getLogger(LiveUserUpdaterBean.class);
 	
 	@EJB
-	IdentitySpider identitySpider;
+	private IdentitySpider identitySpider;
 	
 	@EJB
-	GroupSystem groupSystem;
+	private GroupSystem groupSystem;
 	
 	@EJB
-	PostingBoard postingBoard;
+	private PostingBoard postingBoard;
 	
 	@PersistenceContext(unitName = "dumbhippo")
-	EntityManager em;
-	
-	@EJB
-	MessageSender msgSender;
-	
-	static final int MAX_ACTIVE_POSTS = 3;
-	
-	static final int RECENT_POSTS_MAX_HISTORY = 20;
-	
-	static final int CURRENT_POSTS_SEC = 60 * 60;
-	
-	private boolean postIsCurrent(PostView post) {
-		Date postDate = post.getPost().getPostDate();
-		Date cur = new Date();
-		long timeDiff = cur.getTime() - postDate.getTime();
-		// Should probably push this into DB query
-		return timeDiff < (CURRENT_POSTS_SEC * 1000);		
-	}
-	
-	private List<PostView> getRecentPosts(LiveUser user) {
-		User dbUser = identitySpider.lookupUser(user);
-		UserViewpoint viewpoint = new UserViewpoint(dbUser);
-		// FIXME this filters out feed posts now, I don't think that's the intention here
-		List<PostView> posts = postingBoard.getReceivedPosts(viewpoint, dbUser, 0, RECENT_POSTS_MAX_HISTORY);
-		logger.debug("Got {} for getReceivedPosts for user {}", posts.size(), user.getGuid());
-		return posts;
-	}
-
-	private double computeInitialTemperature(LiveUser user, List<PostView> posts) {
-		double score = 0.0;	
-		for (PostView post : posts) {
-			// Look for max of 3 unviewed posts			
-			if (score >= 3.0)
-				break;
-			 if (postIsCurrent(post) && !post.isViewerHasViewed())
-				 score += 1.0;
-		}
-		return score;
-	}
-	
-	// This probably needs to scale dynamically somehow based on
-	// past hotness.
-	private Hotness hotnessFromScore(LiveUser user, double score) {
-		if (score < 1.0) {
-			return Hotness.COLD;
-		} else if (score < 4.0) {
-			return Hotness.COOL;
-		} else if (score < 8.0) {
-			return Hotness.WARM;
-		} else if (score < 16.0) {
-			return Hotness.GETTING_HOT;
-		} else {
-			return Hotness.HOT;
-		}
-	}
+	private EntityManager em;
 	
 	private void initializeGroups(LiveUser user) {
 		User dbUser = identitySpider.lookupUser(user);		
@@ -105,67 +49,32 @@ public class LiveUserUpdaterBean implements LiveUserUpdater {
 		user.setSentPostsCount(postingBoard.getPostsForCount(SystemViewpoint.getInstance(), dbUser));		
 	}
 	
+	private void initializeContactResources(LiveUser user) {
+		User dbUser = identitySpider.lookupUser(user);		
+		
+		List l = em.createQuery("SELECT cc.resource.id FROM ContactClaim cc WHERE cc.account = :account")
+			.setParameter("account", dbUser.getAccount())
+			.getResultList();
+
+		Set<Guid> guids = new HashSet<Guid>();
+
+		try {
+			for (Object o : l) {
+				guids.add(new Guid((String)o));
+			}
+		} catch (ParseException e) {
+			throw new RuntimeException("Database contained a bad GUID");
+		}
+	
+		user.setContactResources(guids);
+	}
+	
 	public void initialize(LiveUser user) {
-		initializeFromPosts(user, getRecentPosts(user));
 		initializeGroups(user);
 		initializePostCount(user);
+		initializeContactResources(user);
 	}
 	
-	private void initializeFromPosts(LiveUser user, List<PostView> recentPosts) {
-		LiveState state = LiveState.getInstance();		
-		double score = computeInitialTemperature(user, recentPosts);
-		Hotness hotness = hotnessFromScore(user, score);
-		user.setHotness(hotness);
-		List<Guid> activePosts = new ArrayList<Guid>();
-		List<LivePost> livePosts = new ArrayList<LivePost>();
-		for (PostView post : recentPosts) {
-			livePosts.add(state.getLivePost(post.getPost().getGuid()));
-		}
-		// First add in all the posts with active chats
-		for (LivePost post : livePosts) {
-			if (activePosts.size() >= MAX_ACTIVE_POSTS)
-				break;
-			if (post.getChattingUserCount() > 0)
-				activePosts.add(post.getGuid());			
-		}
-		for (LivePost post : livePosts) {
-			if (activePosts.size() >= MAX_ACTIVE_POSTS)
-				break;
-			if (post.getViewingUserCount() > 0)
-				activePosts.add(post.getGuid());			
-		}
-		user.setActivePosts(activePosts);
-	}
-	
-	public void periodicUpdate(Guid userGuid) {
-		LiveState state = LiveState.getInstance();
-		LiveUser user = state.peekLiveUserForUpdate(userGuid);
-		if (user == null) // expired from the cache since we listed all GUIDs
-			return;
-		
-		LiveUser newUser = (LiveUser) user.clone();
-		List<PostView> recentPosts = getRecentPosts(user);
-		initializeFromPosts(newUser, recentPosts); // FIXME - This is inefficient
-		logger.debug("computing hotness for user {} old: {} new: " + newUser.getHotness().name(),
-				user.getGuid(), user.getHotness().name());
-		
-		state.updateLiveUser(newUser);
-
-		// Note that this doesn't notify the user if individual posts in the
-		// list of active posts change their details, only if the *set* of active 
-		// posts changes. Right now, we don't use the details from LivePost for
-		// anything important in the client so this doesn't matter, but if we
-		// start paying more attention to LivePost on the client this needs
-		// to be fixed.
-		if (!newUser.equals(user)) {
-			// Remember to update sendAllNotifications if you add a new one here
-			if (!newUser.getHotness().equals(user.getHotness()))
-				msgSender.sendHotnessChanged(newUser);
-			if (!newUser.getActivePosts().equals(user.getActivePosts()))
-				msgSender.sendActivePostsChanged(newUser);
-		}
-	}
-
 	public void handleGroupMembershipChanged(Guid userGuid) {
 		LiveState state = LiveState.getInstance();
 		LiveUser liveUser = state.peekLiveUserForUpdate(userGuid);
@@ -189,11 +98,16 @@ public class LiveUserUpdaterBean implements LiveUserUpdater {
 			}
 		}
 	}	
-
-	public void sendAllNotifications(LiveUser luser) {
-		// Remember to change the update method as well when adding
-		// a new notification
-		msgSender.sendHotnessChanged(luser);
-		msgSender.sendActivePostsChanged(luser);		
+	
+	public void handleContactsChanged(Guid userGuid) {
+		LiveState state = LiveState.getInstance();
+		LiveUser liveUser = state.peekLiveUserForUpdate(userGuid);
+		if (liveUser != null) {
+			try {
+				initializeContactResources(liveUser);
+			} finally {
+				state.updateLiveUser(liveUser);
+			}
+		}
 	}
 }

@@ -16,6 +16,7 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.TypeFilteredCollection;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.identity20.Guid;
+import com.dumbhippo.live.LiveClientData;
 import com.dumbhippo.live.LiveState;
 import com.dumbhippo.live.LiveUser;
 import com.dumbhippo.persistence.Account;
@@ -253,6 +254,15 @@ public class PersonView extends EntityView {
 			return null;
 		LiveState state = LiveState.getInstance();
 		return state.getLiveUser(user.getGuid());
+	}
+	
+	// This peeks rather than gets because LiveClientData is expensive to compute,
+	// and not particularly interesting for offline users.
+	public LiveClientData getLiveClientData() {
+		if (user == null)
+			return null;
+		LiveState state = LiveState.getInstance();
+		return state.peekLiveClientData(user.getGuid());
 	}
 	
 	private <T extends Resource> T getOne(PersonViewExtra extra, Class<T> resourceClass) {
@@ -644,9 +654,12 @@ public class PersonView extends EntityView {
 	 * @return true if user is online, false otherwise
 	 */
 	public boolean isOnline() {
-		//return ChatRoomStatusCache.isOnline(this.getViewPersonPageId());
-		// TODO: implement this without using a global static class variable
-		return false;
+		if (user == null)
+			return false;
+		
+		LiveState state = LiveState.getInstance();
+		LiveClientData clientData = state.peekLiveClientData(user.getGuid());
+		return clientData != null && clientData.isAvailable();
 	}
 
 	@Override
@@ -655,14 +668,11 @@ public class PersonView extends EntityView {
 	}
 		
 	/**
-	 * This method gives an XML fragment containing most of the interesting
-	 * information about the person or resource being viewed.
-	 * 
-	 * @return an XML fragment
+	 * This method appends an XML node <user> if the view is of 
+	 * a user, and otherwise appends a <resource> node
 	 */	
 	@Override
-	public String toXml() {
-		XmlBuilder builder = new XmlBuilder();
+	public void writeToXmlBuilder(XmlBuilder builder) {
 		if (user != null) {
 			builder.appendTextNode("user", "", "id", user.getId(), 
 				               	   "name", getName(),
@@ -670,8 +680,7 @@ public class PersonView extends EntityView {
 				               	   "smallPhotoUrl", getSmallPhotoUrl());
 		} else {
 			builder.appendTextNode("resource", "", "id", getIdentifyingGuid().toString(), "name", getName());
-		}
-		return builder.toString();		
+		}		
 	}
 	
 	/**

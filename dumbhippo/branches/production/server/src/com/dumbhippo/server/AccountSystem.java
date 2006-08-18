@@ -112,5 +112,16 @@ public interface AccountSystem {
 	 * 
 	 * @param userId the guid of a user
 	 */
-	public void touchLoginDate(Guid userId);		
+	public void touchLoginDate(Guid userId);
+	
+	
+	/**
+	 * Gets one of our special users, like the music butterfly or 
+	 * photo hippo or whatever. Supposed to be like any other user in 
+	 * all respects, to avoid weird special cases. The only special case
+	 * is that we autocreate the account.
+	 *
+	 * @return the character's User
+	 */
+	public User getCharacter(Character whichOne);	
 }

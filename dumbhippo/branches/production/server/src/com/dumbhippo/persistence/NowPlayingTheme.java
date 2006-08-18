@@ -4,6 +4,7 @@ import java.util.Date;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Transient;
 
@@ -228,7 +229,7 @@ public class NowPlayingTheme extends EmbeddedGuidPersistable {
 		this.artistTextY = artistTextY;
 	}
 
-	@Column(nullable=true)
+	@JoinColumn(nullable=true)
 	@ManyToOne
 	public NowPlayingTheme getBasedOn() {
 		return basedOn;
@@ -238,7 +239,7 @@ public class NowPlayingTheme extends EmbeddedGuidPersistable {
 		this.basedOn = basedOn;
 	}
 
-	@Column(nullable=false)
+	@JoinColumn(nullable=false)
 	@ManyToOne
 	public User getCreator() {
 		return creator;

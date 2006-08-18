@@ -1,3 +1,4 @@
+/* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 #include <hippo/hippo-common-internal.h>
 #include "hippo-chat-room.h"
 #include "hippo-connection.h"
@@ -645,6 +646,8 @@ hippo_chat_message_new(HippoPerson *person,
                        int          serial)
 {
     HippoChatMessage *message;
+
+    g_return_val_if_fail(text != NULL, NULL);
     
     message = g_new0(HippoChatMessage, 1);
     message->magic = HIPPO_CHAT_MESSAGE_MAGIC;

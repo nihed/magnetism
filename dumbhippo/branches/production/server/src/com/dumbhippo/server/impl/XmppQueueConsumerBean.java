@@ -5,7 +5,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import javax.annotation.EJB;
+import javax.ejb.EJB;
 import javax.ejb.ActivationConfigProperty;
 import javax.ejb.MessageDriven;
 import javax.jms.JMSException;
@@ -32,7 +32,7 @@ import com.dumbhippo.xmppcom.XmppEventChatMessage;
 import com.dumbhippo.xmppcom.XmppEventMusicChanged;
 import com.dumbhippo.xmppcom.XmppEventPrimingTracks;
 
-@MessageDriven(activateConfig =
+@MessageDriven(activationConfig =
 {
   @ActivationConfigProperty(propertyName="destinationType",
     propertyValue="javax.jms.Queue"),

@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "stdafx-hippoutil.h"
 #include <HippoURLParser.h>
 
 HippoURLParser::HippoURLParser(const HippoBSTR &url)

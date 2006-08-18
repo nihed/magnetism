@@ -21,7 +21,8 @@
 			<div class="dh-framer-title">
 				<jsp:element name="a">
 					<jsp:attribute name="href"><c:out value="${post.url}"/></jsp:attribute>
-					<jsp:attribute name="onClick">return dh.util.openFrameSet(window,event,this,'${post.post.id}');</jsp:attribute>
+					<jsp:attribute name="target">_top</jsp:attribute>
+					<jsp:attribute name="onMouseDown">dh.util.useFrameSet(window,event,this,'${post.post.id}');</jsp:attribute>
 					<jsp:body><c:out value="${post.titleAsHtml}" escapeXml="false"/></jsp:body>
 				</jsp:element>
 			</div>

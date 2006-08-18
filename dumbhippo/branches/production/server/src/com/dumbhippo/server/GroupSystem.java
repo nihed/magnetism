@@ -59,6 +59,8 @@ public interface GroupSystem {
 	
 	public Set<User> getUserMembers(Viewpoint viewpoint, Group group, MembershipStatus status);
 	
+	public Set<User> getMembershipChangeRecipients(Group group);
+	
 	public GroupMember getGroupMember(Viewpoint viewpoint, Group group, User member) throws NotFoundException;
 	
 	public GroupMember getGroupMember(Group group, Resource member) throws NotFoundException;
@@ -135,6 +137,15 @@ public interface GroupSystem {
 	 * @return the list of mesages, sorted by date (newest last)
 	 */
 	public List<GroupMessage> getGroupMessages(Group group);
+	
+	/**
+	 * Get up to maxResults newest messages in the group chat, sorted descending (newest first)
+	 * 
+	 * @param group
+	 * @param maxResults
+	 * @return
+	 */
+	public List<GroupMessage> getNewestGroupMessages(Group group, int maxResults);
 	
 	/**
 	 * Add a new message that was sent to the chatroom about this group

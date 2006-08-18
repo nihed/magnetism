@@ -3,7 +3,7 @@
  * Copyright Red Hat, Inc. 2005
  **/
 
-#include "stdafx.h"
+#include "stdafx-hippoui.h"
 #include <ShlGuid.h> // For CLSID_InternetButtons
 #include <HippoUtil.h>
 #include "HippoRegKey.h"

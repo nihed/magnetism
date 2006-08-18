@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<entity-manager>
-    <name>dumbhippo</name>
+<persistence xmlns="http://java.sun.com/xml/ns/persistence"
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://java.sun.com/xml/ns/persistence http://java.sun.com/xml/ns/persistence/persistence_1_0.xsd"
+   version="1.0">
+    <persistence-unit name="dumbhippo">
     <!-- Remember to also look at the definition of this data source 
     	for settings -->
     <jta-data-source>java:/DumbHippoDS</jta-data-source>
@@ -38,4 +41,5 @@
         value="org.hibernate.lucene.event.LuceneEventListener"/>
     	-->
   	</properties>
-</entity-manager>
+  	</persistence-unit>
+</persistence>

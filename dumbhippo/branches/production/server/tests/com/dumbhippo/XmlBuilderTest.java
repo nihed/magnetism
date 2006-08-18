@@ -1,7 +1,5 @@
 package com.dumbhippo;
 
-import com.dumbhippo.XmlBuilder;
-
 import junit.framework.TestCase;
 
 public class XmlBuilderTest extends TestCase {

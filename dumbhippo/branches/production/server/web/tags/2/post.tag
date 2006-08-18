@@ -28,7 +28,7 @@
 	</c:if>
 	<div class="dh-next-to-image">
 		<div class="dh-title">
-			<a href="${post.url}" onClick="return dh.util.openFrameSet(window,event,this,'${post.post.id}');"
+			<a href="${post.url}" onMouseDown="dh.util.useFrameSet(window,event,this,'${post.post.id}');"
 				title="${post.url}">
 				<c:out value="${post.titleAsHtml}" escapeXml="false"/>
 			</a>

@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "stdafx-hippoui.h"
 
 #import <msxml3.dll>  named_guids
 #include <mshtml.h>

@@ -1,7 +1,7 @@
 #dhHourSelector {
      position: fixed; 
 	 top: 10px; 
-	 left: 650px; 
+	 left: 700px; 
 }
 
 .dh-graph {
@@ -10,3 +10,9 @@
 	height: 200px; 
 }
 
+.dh-coordinates {
+	width:      260px;
+	height:     20px;
+	margin-top: 2px;
+	padding:    2px; 
+}

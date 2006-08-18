@@ -1,3 +1,4 @@
+/* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 #ifndef __HIPPO_DATA_CACHE_INTERNAL_H__
 #define __HIPPO_DATA_CACHE_INTERNAL_H__
 

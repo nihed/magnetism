@@ -6,7 +6,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Properties;
 
-import javax.ejb.PostConstruct;
+import javax.annotation.PostConstruct;
 import javax.ejb.Stateless;
 
 import org.slf4j.Logger;
@@ -27,7 +27,6 @@ public class ConfigurationBean implements Configuration {
 	static private Properties overridenProperties = new Properties();
 	
 	private Properties props;
-
 	
 	private URL baseurl;
 	

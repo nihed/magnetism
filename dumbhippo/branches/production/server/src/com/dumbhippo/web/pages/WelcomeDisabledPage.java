@@ -5,9 +5,9 @@ import org.slf4j.Logger;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HippoProperty;
-import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
+import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.web.Signin;
 import com.dumbhippo.web.SigninBean;
 import com.dumbhippo.web.UserSigninBean;
@@ -21,12 +21,12 @@ public class WelcomeDisabledPage {
 	private UserSigninBean signin;
 	
 	private Configuration configuration;
-	private IdentitySpider identitySpider;
+	private PersonViewer personViewer;
 	private PersonView person;
 	
 	public WelcomeDisabledPage() {
 		configuration = WebEJBUtil.defaultLookup(Configuration.class);
-		identitySpider = WebEJBUtil.defaultLookup(IdentitySpider.class);
+		personViewer = WebEJBUtil.defaultLookup(PersonViewer.class);
 	}
 	
 	public SigninBean getSignin() {
@@ -35,7 +35,7 @@ public class WelcomeDisabledPage {
 
 	public PersonView getPerson() {
 		if (person == null)
-			person = identitySpider.getPersonView(signin.getViewpoint(), signin.getUser(), PersonViewExtra.PRIMARY_EMAIL);
+			person = personViewer.getPersonView(signin.getViewpoint(), signin.getUser(), PersonViewExtra.PRIMARY_EMAIL);
 		
 		return person;
 	}

@@ -3,7 +3,7 @@ package com.dumbhippo.persistence;
 import java.util.Date;
 
 import javax.persistence.Column;
-import javax.persistence.EmbeddableSuperclass;
+import javax.persistence.MappedSuperclass;
 
 import com.dumbhippo.services.YahooSongData;
 
@@ -13,7 +13,7 @@ import com.dumbhippo.services.YahooSongData;
  * bits between those tables (the returned fields from yahoo) while the 
  * subclasses have the distinct keys used for lookup.
  */
-@EmbeddableSuperclass
+@MappedSuperclass
 abstract public class AbstractYahooSongData extends DBUnique {
 	
 	private static final long serialVersionUID = 1L;

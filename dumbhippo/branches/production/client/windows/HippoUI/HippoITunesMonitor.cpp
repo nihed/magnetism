@@ -1,4 +1,4 @@
-#include "StdAfx.h"
+#include "stdafx-hippoui.h"
 #include "HippoUtil.h"
 #include "HippoITunesMonitor.h"
 #include "HippoLogWindow.h"

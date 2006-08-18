@@ -18,12 +18,12 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
-import javax.annotation.EJB;
+import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
-import javax.persistence.EntityNotFoundException;
+import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 
 import org.slf4j.Logger;
@@ -115,7 +115,7 @@ public class FeedSystemBean implements FeedSystem {
 			  .getSingleResult();
 			
 			return feed;
-		} catch (EntityNotFoundException e) {
+		} catch (NoResultException e) {
 			return null;
 		}
 	}
@@ -756,10 +756,10 @@ public class FeedSystemBean implements FeedSystem {
 		@SuppressWarnings("unused")
 		private static final Logger logger = GlobalSetup.getLogger(FeedCache.class);		
 		
-		private Map<URL,SyndFeedInfo> cache;
+		private Map<String,SyndFeedInfo> cache;
 		
 		FeedCache() {
-			cache = new HashMap<URL,SyndFeedInfo>();
+			cache = new HashMap<String,SyndFeedInfo>();
 		}
 		
 		static private class InfoStringifier {
@@ -776,7 +776,7 @@ public class FeedSystemBean implements FeedSystem {
 		}
 		
 		public synchronized SyndFeedInfo getFeedInfo(URL url) {
-			SyndFeedInfo info = cache.get(url);
+			SyndFeedInfo info = cache.get(url.toExternalForm());
 			if (info != null) {
 				logger.debug(" getting cached feed for {}: {}", url, new InfoStringifier(info));
 			}
@@ -787,7 +787,7 @@ public class FeedSystemBean implements FeedSystem {
 			if (info != null) {
 				logger.debug(" storing cached feed for {}: {}", url, new InfoStringifier(info));
 			}
-			cache.put(url, info);
+			cache.put(url.toExternalForm(), info);
 		}
 	}
 }

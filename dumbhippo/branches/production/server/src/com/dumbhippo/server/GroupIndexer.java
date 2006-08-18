@@ -19,7 +19,7 @@ public final class GroupIndexer extends Indexer<Group> {
 	}
 	
 	private GroupIndexer() {
-		builder = new DocumentBuilder<Group>(Group.class);
+		builder = new DocumentBuilder<Group>(Group.class, createAnalyzer(), null);
 	}
 	
 	@Override

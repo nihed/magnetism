@@ -19,7 +19,7 @@ public class TrackIndexer extends Indexer<Track> {
 	}
 	
 	private TrackIndexer() {
-		builder = new DocumentBuilder<Track>(Track.class);
+		builder = new DocumentBuilder<Track>(Track.class, createAnalyzer(), null);
 	}
 	
 	@Override

@@ -4,35 +4,47 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.Callable;
 
-import javax.annotation.EJB;
+import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
-import javax.persistence.EntityNotFoundException;
+import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
+import org.slf4j.Logger;
+
+import com.dumbhippo.ExceptionUtils;
+import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.TypeUtils;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.Client;
+import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.ValidationException;
 import com.dumbhippo.server.AccountSystem;
+import com.dumbhippo.server.Character;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.NotFoundException;
+import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.UnauthorizedException;
 import com.dumbhippo.server.util.EJBUtil;
 
 @Stateless
 public class AccountSystemBean implements AccountSystem {
+	static private final Logger logger = GlobalSetup.getLogger(AccountSystem.class);	
 	
 	@PersistenceContext(unitName = "dumbhippo")
 	private EntityManager em;
 	
 	@EJB
 	private IdentitySpider spider;
+	
+	@EJB
+	private TransactionRunner runner;
 
 	public Account createAccountFromResource(Resource res) {
 		User user = new User();
@@ -98,7 +110,7 @@ public class AccountSystemBean implements AccountSystem {
 		try {
 			Number num = (Number) em.createQuery("SELECT COUNT(a) FROM Account a").getSingleResult();
 			return num.longValue();
-		} catch (EntityNotFoundException e) {
+		} catch (NoResultException e) {
 			throw new RuntimeException("Failed to count number of accounts", e);
 		}
 	}
@@ -130,4 +142,35 @@ public class AccountSystemBean implements AccountSystem {
 			throw new RuntimeException("User doesn't exist");
 		}
 	}
+	
+	public User getCharacter(final Character whichOne) {
+		try {
+			return runner.runTaskThrowingConstraintViolation(new Callable<User>() {
+				public User call() {
+					EmailResource email;
+					try {
+						email = spider.getEmail(whichOne.getEmail());
+					} catch (ValidationException e) {
+						throw new RuntimeException("Character has invalid email address!");
+					}
+					User user = spider.getUser(email);
+					if (user == null) {
+						// don't add any special handling in here - it should be OK if 
+						// someone just creates the character accounts manually without running
+						// this code. We don't want to start doing "if (character) ; else ;" all
+						// over the place.
+						logger.info("Creating special user " + whichOne);
+						Account account = createAccountFromResource(email);
+						user = account.getOwner();
+						user.setNickname(whichOne.getDefaultNickname());
+					}
+					return user;
+				}
+			});
+			
+		} catch (Exception e) {
+			ExceptionUtils.throwAsRuntimeException(e);
+			return null; // not reached
+		}
+	}	
 }

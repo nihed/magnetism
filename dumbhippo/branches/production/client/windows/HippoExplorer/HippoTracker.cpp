@@ -2,7 +2,7 @@
  *
  * Copyright Red Hat, Inc. 2005
  */
-#include "stdafx.h"
+#include "stdafx-hippoexplorer.h"
 #include "HippoTracker.h"
 #include "Guid.h"
 #include "Globals.h"
