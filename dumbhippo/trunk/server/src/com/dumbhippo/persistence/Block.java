@@ -102,18 +102,21 @@ public class Block extends EmbeddedGuidPersistable {
 		this.data1 = data1;
 	}
 
-	@Column(length = Guid.STRING_LENGTH, nullable = true)
-	public String getData1() {
+	// this must not be nullable or the unique constraint breaks;
+	// protected to be sure we don't leak the weird empty string 
+	// magic to mean null
+	@Column(length = Guid.STRING_LENGTH, nullable = false)
+	protected String getData1() {
 		Guid g = getData1AsGuid();
 		if (g == null)
-			return null;
+			return "";
 		String s = g.toString();
 		assert s.length() == Guid.STRING_LENGTH;
 		return s;
 	}
 
 	public void setData1(String data1) throws ParseException {
-		setData1AsGuid(data1 != null ? new Guid(data1) : null);
+		setData1AsGuid(data1.length() > 0 ? new Guid(data1) : null);
 	}
 	
 	@Transient
@@ -126,18 +129,21 @@ public class Block extends EmbeddedGuidPersistable {
 		this.data2 = data2;
 	}
 
-	@Column(length = Guid.STRING_LENGTH, nullable = true)
-	public String getData2() {
+	// this must not be nullable or the unique constraint breaks;
+	// protected to be sure we don't leak the weird empty string 
+	// magic to mean null	
+	@Column(length = Guid.STRING_LENGTH, nullable = false)
+	protected String getData2() {
 		Guid g = getData2AsGuid();
 		if (g == null)
-			return null;
+			return "";
 		String s = g.toString();
 		assert s.length() == Guid.STRING_LENGTH;
 		return s;
 	}
 
-	public void setData2(String data2) throws ParseException {
-		setData2AsGuid(data2 != null ? new Guid(data2) : null);
+	protected void setData2(String data2) throws ParseException {
+		setData2AsGuid(data2.length() > 0 ? new Guid(data2) : null);
 	}
 	
 	// this is a denormalized field; it should be equal to the number of 
