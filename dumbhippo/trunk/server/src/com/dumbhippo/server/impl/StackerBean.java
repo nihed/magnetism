@@ -107,7 +107,7 @@ public class StackerBean implements Stacker {
 		} else {
 			throw new IllegalArgumentException("must provide either data1 or data2 in query for block type " + type);
 		}
-		q.setParameter("type", type.ordinal());
+		q.setParameter("type", type);
 		try {
 			return (Block) q.getSingleResult();
 		} catch (NoResultException e) {
@@ -131,7 +131,7 @@ public class StackerBean implements Stacker {
 			throw new IllegalArgumentException("must provide either data1 or data2 in query for block type " + type);
 		}
 		q.setParameter("user", user);
-		q.setParameter("type", type.ordinal());
+		q.setParameter("type", type);
 		try {
 			return (UserBlockData) q.getSingleResult();
 		} catch (NoResultException e) {
