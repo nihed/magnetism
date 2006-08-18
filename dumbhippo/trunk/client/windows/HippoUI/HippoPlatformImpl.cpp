@@ -310,7 +310,7 @@ hippo_platform_impl_get_jabber_resource(HippoPlatform *platform)
         HW_PROFILE_INFO hwProfile;
         if (GetCurrentHwProfile(&hwProfile)) {
             HippoUStr guidUTF(hwProfile.szHwProfileGuid);
-            impl->jabber_resource = guidUTF.steal();                      
+            impl->jabber_resource = g_strdup(guidUTF.c_str());
         } else {
             hippoDebugLogW(L"Failed to get hardware profile!");
 
@@ -335,7 +335,7 @@ hippo_platform_impl_get_message_server(HippoPlatform *platform)
     impl->preferences->getMessageServer(&messageServer);
 
     HippoUStr messageServerUTF(messageServer);
-    return messageServerUTF.steal();
+    return g_strdup(messageServerUTF.c_str());
 }
 
 static char*
@@ -348,7 +348,7 @@ hippo_platform_impl_get_web_server(HippoPlatform *platform)
     impl->preferences->getWebServer(&webServer);
 
     HippoUStr webServerUTF(webServer);
-    return webServerUTF.steal();
+    return g_strdup(webServerUTF.c_str());
 }
 
 static gboolean
