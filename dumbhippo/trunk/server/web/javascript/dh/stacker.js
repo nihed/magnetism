@@ -531,7 +531,21 @@ defineClass(dh.stacker.PostBlock, dh.stacker.Block,
 	
 	_updateFromDiv : function() {
 		if (this._div) {
-			dojo.dom.textContent(this._fromDiv, "from " + this._poster.displayName);
+			while (this._fromDiv.firstChild)
+				this._fromDiv.removeChild(this._fromDiv.firstChild);		
+			if (this._poster.homeUrl) {
+				var a = document.createElement('a');
+				a.href = this._poster.homeUrl;
+				a.title = this._poster.displayName;
+				a.target = "_blank";
+				dojo.dom.textContent(a, this._poster.displayName);
+				var from = document.createElement('span');
+				dojo.dom.textContent(from, "from ");
+				this._fromDiv.appendChild(from);
+				this._fromDiv.appendChild(a);
+			} else {
+				dojo.dom.textContent(this._fromDiv, "from " + this._poster.displayName);
+			}
 		}
 	},
 
