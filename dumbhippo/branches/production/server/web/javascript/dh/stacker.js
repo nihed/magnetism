@@ -94,8 +94,14 @@ dh.stacker.formatTimeAgo = function(timestamp) {
 	
 	if (deltaHours < 1.55) {
 		return "1 hr. ago";
-	} if (deltaHours < 48) {
+	} 
+
+	if (deltaHours < 24) {
 		return Math.round(deltaHours) + " hrs. ago";
+	}
+
+	if (deltaHours < 48) {
+		return "Yesterday";
 	}
 	
 	if (deltaHours < 24*15) {

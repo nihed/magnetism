@@ -720,7 +720,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		if (!spider.isAdministrator(viewpoint.getViewer()))
 			throw new RuntimeException("can't do this if you aren't an admin");
 		Query q = em.createQuery("SELECT SUM(a.invitations) FROM Account a");
-		return (Integer) q.getSingleResult();
+		return ((Number) q.getSingleResult()).intValue();
 	}
 	
 	private void sendEmailNotification(UserViewpoint viewpoint, InvitationToken invite, String subject, String message) {
