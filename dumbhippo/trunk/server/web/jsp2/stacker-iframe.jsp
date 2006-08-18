@@ -39,12 +39,22 @@
 		}
 		.dh-stacked-block .dh-heading {
 			position:			relative;
+			font-size:			11px;
+			margin:				2px;
+		}
+		.dh-stacked-block .dh-title {
+			font-size:			11px;
+		}
+		.dh-stacked-block .dh-content-padding {
+			position:			relative;
+			width:				480px;			
 		}
 		.dh-stacked-block .dh-content {
 			position:			relative;
-			margin:				1px;
+			margin:				7px;
+			width:				466px;
 		}
-		.dh-stacked-block .dh-content {
+		.dh-stacked-block .dh-content-padding {
 			background-color: 	white;
 			color:				black;	
 		}		
@@ -56,7 +66,7 @@
 			right:				2px;
 			top:				2px;
 			font-weight:		bold;
-			font-size:			9px;
+			font-size:			10px;
 			background-color: 	inherit; /* so it covers up any text below it */
 		}
 		.dh-stacked-block-music-person {
@@ -74,7 +84,43 @@
 		.dh-stacked-block-group-member {
 			background-color:	#84569B;
 			color:				white;	
-		}				
+		}	
+		.dh-stacked-block .dh-left-column {
+			position:	relative;
+			width: 		350px;
+		}
+		.dh-stacked-block .dh-right-column {
+			position:	absolute;
+			top:		0px;
+			right:		0px;
+			width:		100px;
+		}
+		.dh-stacked-block .dh-right-column .dh-from {
+			position:	relative;
+			width:		100px;
+			text-align:	center;
+			font-size:	10px;
+			font-style: italic;
+		}
+		.dh-stacked-block .dh-right-column .dh-details {
+			position:	relative;
+			width:		100px;
+			font-size:	10px;
+		}
+		.dh-stacked-block .dh-right-column .dh-details .dh-pipe {
+			margin-left:	3px;
+			margin-right:	3px;
+		}
+		.dh-stacked-block .dh-right-column .dh-details div {
+			float:		right;
+		}
+		.dh-stacked-block .dh-left-column .dh-description {
+			font-size: 	10px;
+		}
+		.dh-stacked-block .dh-left-column .dh-messages {
+			font-size: 	10px;
+			font-style: italic;
+		}
 	</style>
 	<script>
 		dojo.require('dh.stacker');

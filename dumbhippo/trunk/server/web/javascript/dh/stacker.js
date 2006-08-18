@@ -63,10 +63,10 @@ dh.stacker.kindClasses[dh.stacker.Kind.GROUP_CHAT] = "dh-stacked-block-group-cha
 dh.stacker.kindClasses[dh.stacker.Kind.GROUP_MEMBER] = "dh-stacked-block-group-member";
 
 dh.stacker.kindHeadings = {};
-dh.stacker.kindHeadings[dh.stacker.Kind.POST] = "WEB SWARM";
-dh.stacker.kindHeadings[dh.stacker.Kind.MUSIC_PERSON] = "MUSIC RADAR";
-dh.stacker.kindHeadings[dh.stacker.Kind.GROUP_CHAT] = "GROUP CHAT";
-dh.stacker.kindHeadings[dh.stacker.Kind.GROUP_MEMBER] = "GROUP MEMBERS";
+dh.stacker.kindHeadings[dh.stacker.Kind.POST] = "Web Swarm";
+dh.stacker.kindHeadings[dh.stacker.Kind.MUSIC_PERSON] = "Music Radar";
+dh.stacker.kindHeadings[dh.stacker.Kind.GROUP_CHAT] = "Group Chat";
+dh.stacker.kindHeadings[dh.stacker.Kind.GROUP_MEMBER] = "Group Members";
 
 dh.stacker.formatTimeAgo = function(timestamp) {
 	var now = dh.stacker.getInstance().getServerTime();
@@ -308,10 +308,14 @@ defineClass(dh.stacker.Block, null,
 			dh.util.addEventListener(this._hushDiv, "mousedown", function() {
 				me._toggleHushed();
 			});
+
+			var contentPaddingDiv = document.createElement("div");
+			dojo.html.setClass(contentPaddingDiv, "dh-content-padding");		
+			this._innerDiv.appendChild(contentPaddingDiv);
 			
 			this._contentDiv = document.createElement("div");
 			dojo.html.setClass(this._contentDiv, "dh-content");			
-			this._innerDiv.appendChild(this._contentDiv);
+			contentPaddingDiv.appendChild(this._contentDiv);
 
 			this._titleDiv = document.createElement("div");
 			dojo.html.setClass(this._titleDiv, "dh-title");			
@@ -546,28 +550,49 @@ defineClass(dh.stacker.PostBlock, dh.stacker.Block,
 		if (!this._div) {
 			dh.stacker.PostBlock.superclass.realize.call(this);
 
+			var leftDiv = document.createElement("div");
+			dojo.html.setClass(leftDiv, "dh-left-column");
+			this._contentDiv.appendChild(leftDiv);
+
+			var rightDiv = document.createElement("div");
+			dojo.html.setClass(rightDiv, "dh-right-column");
+			this._contentDiv.appendChild(rightDiv);
+			
+			// move the title created in superclass method
+			this._titleDiv.parentNode.removeChild(this._titleDiv);
+			leftDiv.appendChild(this._titleDiv);
+
 			this._fromDiv = document.createElement("div");
-			this._contentDiv.appendChild(this._fromDiv);
+			rightDiv.appendChild(this._fromDiv);
 			dojo.html.setClass(this._fromDiv, "dh-from");
 			this._updateFromDiv();
 
-			this._timeDiv = document.createElement("div");
-			this._contentDiv.appendChild(this._timeDiv);
-			dojo.html.setClass(this._timeDiv, "dh-when");
-			this._updateStackTimeDiv();
+			var detailDiv = document.createElement("div");
+			dojo.html.setClass(detailDiv, "dh-details");
+			rightDiv.appendChild(detailDiv);	
 
 			this._clickedCountDiv = document.createElement("div");
-			this._contentDiv.appendChild(this._clickedCountDiv);
+			detailDiv.appendChild(this._clickedCountDiv);
 			dojo.html.setClass(this._clickedCountDiv, "dh-clicked-count");
 			this._updateClickedCountDiv();
+
+			var pipeDiv = document.createElement("div");
+			dojo.html.setClass(pipeDiv, "dh-pipe");
+			dojo.dom.textContent(pipeDiv, "|");
+			detailDiv.appendChild(pipeDiv);
+
+			this._timeDiv = document.createElement("div");
+			detailDiv.appendChild(this._timeDiv);
+			dojo.html.setClass(this._timeDiv, "dh-when");
+			this._updateStackTimeDiv();
 			
 			this._descriptionDiv = document.createElement('div');
-			this._contentDiv.appendChild(this._descriptionDiv);
+			leftDiv.appendChild(this._descriptionDiv);
 			dojo.html.setClass(this._descriptionDiv, "dh-description");
 			this._updateDescriptionDiv();
 			
 			this._messagesDiv = document.createElement("div");
-			this._contentDiv.appendChild(this._messagesDiv);
+			leftDiv.appendChild(this._messagesDiv);
 			dojo.html.setClass(this._messagesDiv, "dh-messages");
 			this._updateMessagesDiv();
 		}
