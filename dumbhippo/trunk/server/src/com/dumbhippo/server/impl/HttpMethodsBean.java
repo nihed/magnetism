@@ -1788,17 +1788,17 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			
 			switch (block.getBlockType()) {
 			case MUSIC_PERSON:
-				xml.appendTextNode("musicPerson", null, "userId", block.getData1());
+				xml.appendTextNode("musicPerson", null, "userId", block.getData1AsGuid().toString());
 				break;
 			case GROUP_CHAT:
-				xml.appendTextNode("groupChat", null, "groupId", block.getData1());
+				xml.appendTextNode("groupChat", null, "groupId", block.getData1AsGuid().toString());
 				break;
 			case POST:
-				xml.appendTextNode("post", null, "postId", block.getData1());
+				xml.appendTextNode("post", null, "postId", block.getData1AsGuid().toString());
 				break;
 			case GROUP_MEMBER:
-				xml.appendTextNode("groupMember", null, "groupId", block.getData1(),
-									   "userId", block.getData2());
+				xml.appendTextNode("groupMember", null, "groupId", block.getData1AsGuid().toString(),
+									   "userId", block.getData2AsGuid().toString());
 				break;
 				// don't add a default case, we want a warning if any cases are missing
 			}
