@@ -4,16 +4,10 @@
  */
 #pragma once
 
-#include "stdafx.h"
 #include <shlobj.h>
 #include <mshtml.h>
 #include <HippoUtil.h>
-
-#ifdef BUILDING_HIPPO_UTIL
-#define DLLEXPORT __declspec(dllexport)
-#else
-#define DLLEXPORT __declspec(dllimport)
-#endif
+#include <HippoUtilExport.h>
 
 class HippoInvocation;
 
@@ -78,6 +72,9 @@ public:
 
     // Actually instantiate
     virtual void embedBrowser() = 0;
+
+    // Explicit shutdown, necessary since there are refcount cycles
+    virtual void shutdown() = 0;
 
     // Navigate to a new location programmatically
     virtual void setLocation(const HippoBSTR &location) = 0;

@@ -4,7 +4,6 @@
  */
 #pragma once
 
-#include "stdafx.h"
 #include <vector>
 #include <set>
 #include <HippoUtil.h>

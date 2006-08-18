@@ -4,7 +4,6 @@
  */
 #pragma once
 
-#include "stdafx.h"
 #include <HippoUtil.h>
 #include <HippoArray.h>
 #include <glib-object.h>

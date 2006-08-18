@@ -4,7 +4,8 @@
  **/
 #pragma once
 
-#include "HippoIE.h"
+#include <HippoIE.h>
+#include <HippoMessageHook.h>
 
 class HippoUI;
 
@@ -43,6 +44,11 @@ public:
      * FIXME: We possibly should do this behind the scenes
      */
     bool create();
+
+    /**
+     * Destroy the window and shutdown the underlying Internet Explorer instance
+     */
+    void destroy();
 
     /**
      * Make the window visible onscreen.
@@ -235,6 +241,7 @@ private:
     bool embedIE(void);
     bool createWindow(void);
     bool registerClass();
+    void onWindowDestroyed();
 
     static LRESULT CALLBACK windowProc(HWND   window,
                                        UINT   message,

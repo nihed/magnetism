@@ -28,6 +28,7 @@
 				TreatWChar_tAsBuiltInType="TRUE"
 				ForceConformanceInForLoopScope="TRUE"
 				UsePrecompiledHeader="1"
+				PrecompiledHeaderThrough="stdafx-hippoui.h"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="TRUE"
 				DebugInformationFormat="4"/>
@@ -76,6 +77,7 @@
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
 				RuntimeLibrary="4"
 				UsePrecompiledHeader="3"
+				PrecompiledHeaderThrough="stdafx-hippoui.h"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="TRUE"
 				DebugInformationFormat="3"/>
@@ -132,6 +134,9 @@
 				RelativePath=".\HippoBubbleList.cpp">
 			</File>
 			<File
+				RelativePath=".\HippoChatManager.cpp">
+			</File>
+			<File
 				RelativePath=".\HippoChatWindow.cpp">
 			</File>
 			<File
@@ -157,6 +162,12 @@
 			</File>
 			<File
 				RelativePath=".\HippoITunesMonitor.cpp">
+			</File>
+			<File
+				RelativePath=".\HippoJScriptEngine.cpp">
+			</File>
+			<File
+				RelativePath=".\HippoListenerProxy.cpp">
 			</File>
 			<File
 				RelativePath=".\HippoLogWindow.cpp">
@@ -233,6 +244,9 @@
 				RelativePath=".\HippoBubbleList.h">
 			</File>
 			<File
+				RelativePath=".\HippoChatManager.h">
+			</File>
+			<File
 				RelativePath=".\HippoChatWindow.h">
 			</File>
 			<File
@@ -258,6 +272,12 @@
 			</File>
 			<File
 				RelativePath=".\HippoITunesMonitor.h">
+			</File>
+			<File
+				RelativePath=".\HippoJScriptEngine.h">
+			</File>
+			<File
+				RelativePath=".\HippoListenerProxy.h">
 			</File>
 			<File
 				RelativePath=".\HippoLogWindow.h">

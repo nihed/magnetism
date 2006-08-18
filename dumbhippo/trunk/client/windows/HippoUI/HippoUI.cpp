@@ -19,6 +19,7 @@
 #include <wininet.h>  // for cookie retrieval
 #include <limits>
 #include "Resource.h"
+#include "HippoChatManager.h"
 #include "HippoHTTP.h"
 #include "HippoToolbarEdit.h"
 #include "HippoRegKey.h"
@@ -96,6 +97,7 @@ HippoUI::HippoUI(HippoInstanceType instanceType, bool replaceExisting, bool init
     hotnessBlinkCount_ = 0;
     idleHotnessBlinkId_ = 0;
 
+    chatManager_ = NULL;
     preferencesDialog_ = NULL;
 
     registered_ = false;
@@ -127,6 +129,8 @@ HippoUI::~HippoUI()
 {
     if (recentPostList_)
         delete recentPostList_;
+    if (chatManager_)
+        delete chatManager_;
 
     DestroyIcon(smallIcon_);
     DestroyIcon(bigIcon_);
@@ -605,11 +609,6 @@ HippoUI::create(HINSTANCE instance)
 void
 HippoUI::destroy()
 {
-    for (unsigned long i = chatWindows_.length(); i > 0; i--) {
-        delete chatWindows_[i - 1];
-        chatWindows_.remove(i - 1);
-    }
-
     if (currentShare_) {
         delete currentShare_;
         currentShare_ = NULL;
@@ -724,23 +723,10 @@ HippoUI::BeginFlickrShare(BSTR filePath)
 HRESULT
 HippoUI::ShowChatWindow(BSTR chatId)
 {
-    // If a chat window already exists for the post, just raise it
-    for (unsigned i = 0; i < chatWindows_.length(); i++) {
-        if (wcscmp(chatWindows_[i]->getChatId(), chatId) == 0) {
-            chatWindows_[i]->setForegroundWindow();
-            return S_OK;
-        }
-    }
+    if (!chatManager_)
+        chatManager_ = HippoChatManager::createInstance(this);
 
-    HippoChatWindow *window = new HippoChatWindow();
-    window->setUI(this);
-    window->setChatId(chatId);
-
-    chatWindows_.append(window);
-
-    window->create();
-    window->show();
-    window->setForegroundWindow();
+    chatManager_->showChatWindow(chatId);
 
     return S_OK;
 }
@@ -803,6 +789,156 @@ HippoUI::ShareLinkComplete(BSTR postId, BSTR url)
             break;
         }
     }
+    return S_OK;
+}
+
+HippoListenerProxy *
+HippoUI::findListenerById(UINT64 listenerId)
+{
+    for (std::vector<HippoPtr<HippoListenerProxy> >::iterator i = listeners_.begin();
+         i != listeners_.end();
+         i++) 
+    {
+        HippoListenerProxy *proxy = *i;
+
+        if (proxy->getId() == listenerId)
+            return proxy;
+    }
+
+    return NULL;
+}
+
+HippoListenerProxy *
+HippoUI::findListenerByEndpoint(UINT64 endpointId)
+{
+    for (std::vector<HippoPtr<HippoListenerProxy> >::iterator i = listeners_.begin();
+         i != listeners_.end();
+         i++) 
+    {
+        HippoListenerProxy *proxy = *i;
+
+        if (proxy->hasEndpoint(endpointId))
+            return proxy;
+    }
+
+    return NULL;
+}
+
+STDMETHODIMP 
+HippoUI::RegisterListener(IHippoUIListener *listener, UINT64 *listenerId)
+{
+    HippoListenerProxy *proxy = HippoListenerProxy::createInstance(dataCache_, listener);
+    listeners_.push_back(proxy);
+   
+    *listenerId = proxy->getId();
+
+    return S_OK;
+}
+ 
+STDMETHODIMP 
+HippoUI::UnregisterListener(UINT64 listenerId)
+{
+    for (std::vector<HippoPtr<HippoListenerProxy> >::iterator i = listeners_.begin();
+         i != listeners_.end();
+         i++) 
+    {
+        HippoListenerProxy *proxy = *i;
+
+        if (proxy->getId() == listenerId) {
+            proxy->unregister();
+            listeners_.erase(i);
+            break;
+        }
+    }
+
+    return S_OK;
+}
+
+STDMETHODIMP 
+HippoUI::RegisterEndpoint(UINT64 listenerId, UINT64 *endpointId)
+{
+    HippoListenerProxy *proxy = findListenerById(listenerId);
+    if (proxy)
+        *endpointId = proxy->registerEndpoint();
+
+    return S_OK;
+}
+
+STDMETHODIMP 
+HippoUI::UnregisterEndpoint(UINT64 endpointId)
+{
+    HippoListenerProxy *proxy = findListenerByEndpoint(endpointId);
+    if (proxy)
+        proxy->unregisterEndpoint(endpointId);
+
+    return S_OK;
+}
+    
+STDMETHODIMP 
+HippoUI::JoinChatRoom(UINT64 endpointId, BSTR chatId, BOOL participant)
+{
+    HippoListenerProxy *proxy = findListenerByEndpoint(endpointId);
+    if (proxy)
+        proxy->joinChatRoom(endpointId, chatId, participant);
+
+    return S_OK;
+}
+ 
+STDMETHODIMP 
+HippoUI::LeaveChatRoom(UINT64 endpointId, BSTR chatId)
+{
+    HippoListenerProxy *proxy = findListenerByEndpoint(endpointId);
+    if (proxy)
+        proxy->leaveChatRoom(endpointId, chatId);
+
+    return S_OK;
+}
+
+STDMETHODIMP 
+HippoUI::SendChatMessage(BSTR chatId, BSTR text)
+{
+    HippoUStr chatIdU(chatId);
+    HippoUStr textU(text);
+
+    HippoChatRoom *room = hippo_data_cache_ensure_chat_room(dataCache_, chatIdU.c_str(), HIPPO_CHAT_KIND_UNKNOWN);
+    hippo_connection_send_chat_room_message(hippo_data_cache_get_connection(dataCache_), room, textU.c_str());
+
+    return S_OK;
+}
+
+STDMETHODIMP
+HippoUI::GetServerName(BSTR *serverName)
+{
+    // We can't use the value from preferences_ directly, since we want to include
+    // the port even for the default value of 80, so rebuild the host:port value
+    // from the parsed version.
+
+    char *hostU;
+    int port;
+    hippo_platform_get_web_host_port(platform_, &hostU, &port);
+
+    HippoBSTR result = HippoBSTR::fromUTF8(hostU, -1);
+    result.Append(L":");
+
+    WCHAR buffer[16];
+    StringCchPrintfW(buffer, sizeof(buffer), L"%d", port);
+    result.Append(buffer);
+
+    g_free(hostU);
+
+    result.CopyTo(serverName);
+
+    return S_OK;
+}
+
+STDMETHODIMP 
+HippoUI::LaunchBrowser(BSTR url)
+{
+    if (!url)
+        return E_INVALIDARG;
+
+    launchBrowser(url);
+
     return S_OK;
 }
 
@@ -1155,21 +1291,6 @@ HippoUI::isShareActive(HippoPost *post)
         }
     }
     return false;
-}
-
-void 
-HippoUI::onChatWindowClosed(HippoChatWindow *chatWindow)
-{
-    for (unsigned i = 0; i < chatWindows_.length(); i++) {
-        if (chatWindows_[i] == chatWindow) {
-            chatWindows_.remove(i);
-            delete chatWindow; // should be safe, called from WM_CLOSE only
-
-            return;
-        }
-    }
-
-    assert(false);
 }
 
 void
@@ -1783,25 +1904,22 @@ closeDownload()
 
 }
 
-static HippoArray<HWND> *windowHookKeys = NULL;
-static HippoArray<HippoMessageHook*> *windowHookValues = NULL;
+HippoMessageHookList *messageHooks = NULL;
 
 void 
-HippoUI::registerWindowMsgHook(HWND window, HippoMessageHook *hook)
+HippoUI::registerMessageHook(HWND window, HippoMessageHook *hook)
 {
-    if (!windowHookKeys) {
-        windowHookKeys = new HippoArray<HWND>;
-        windowHookValues = new HippoArray<HippoMessageHook*>;
-    }
+    if (!messageHooks)
+        messageHooks = new HippoMessageHookList();
     
-    windowHookKeys->append(window);
-    windowHookValues->append(hook);
+    messageHooks->registerMessageHook(window, hook);
 }
 
 void 
-HippoUI::unregisterWindowMsgHook(HWND window)
+HippoUI::unregisterMessageHook(HWND window)
 {
-    // fixme
+    if (messageHooks)
+        messageHooks->unregisterMessageHook(window);
 }
 
 // notification from HippoMySpace when we have a new comment to bubble
@@ -1864,15 +1982,8 @@ win32SourceDispatch(GSource     *source,
         return FALSE;
     }
 
-    if (windowHookKeys) {
-        for (UINT i = 0; i < windowHookKeys->length(); i++) {
-            HWND hookWin = (*windowHookKeys)[i];
-            if (IsChild(hookWin, msg.hwnd)) {
-                if ((*windowHookValues)[i]->hookMessage(&msg))
-                    return TRUE;
-            }
-        }
-    }
+    if (messageHooks && messageHooks->processMessage(&msg))
+        return TRUE;
 
     try {
         TranslateMessage(&msg);

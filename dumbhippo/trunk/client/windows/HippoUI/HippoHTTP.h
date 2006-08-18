@@ -4,7 +4,6 @@
  */
 #pragma once
 
-#include "stdafx.h"
 #include <wininet.h>
 #include <new>
 

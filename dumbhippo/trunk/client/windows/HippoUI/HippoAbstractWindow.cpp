@@ -29,8 +29,10 @@ HippoAbstractWindow::HippoAbstractWindow()
 
 HippoAbstractWindow::~HippoAbstractWindow(void)
 {
-    ui_->unregisterWindowMsgHook(window_);
-    DestroyWindow(window_);
+    destroy();
+
+    assert(window_ == NULL);
+    assert(ie_ == NULL);
 
     delete ieCallback_;
 }
@@ -144,7 +146,7 @@ HippoAbstractWindow::createWindow(void)
 {
     window_ = CreateWindowEx(extendedStyle_, className_, title_, windowStyle_,
                              CW_USEDEFAULT, CW_USEDEFAULT, BASE_WIDTH, BASE_HEIGHT,
-                             useParent_ ? ui_->getWindow() : NULL, 
+                             (useParent_ && ui_) ? ui_->getWindow() : NULL, 
                              NULL, instance_, NULL);
     if (!window_) {
         hippoDebugLastErr(L"Couldn't create window!");
@@ -154,7 +156,7 @@ HippoAbstractWindow::createWindow(void)
     EnableScrollBar(window_, SB_BOTH, ESB_DISABLE_BOTH);
 
     hippoSetWindowData<HippoAbstractWindow>(window_, this);
-    ui_->registerWindowMsgHook(window_, this);
+    ui_->registerMessageHook(window_, this);
 
     initializeWindow();
 
@@ -219,18 +221,42 @@ HippoAbstractWindow::create(void)
         return true;
     }
     if (!registerClass()) {
-        ui_->debugLogW(L"Failed to register window class");
+        hippoDebugLogW(L"Failed to register window class");
         return false;
     }
     if (!createWindow()) {
-        ui_->debugLogW(L"Failed to create window");
+        hippoDebugLogW(L"Failed to create window");
         return false;
     }
     if (!embedIE()) {
-        ui_->debugLogW(L"Failed to embed IE");
+        hippoDebugLogW(L"Failed to embed IE");
         return false;
     }
     return true;
+}
+
+void 
+HippoAbstractWindow::destroy()
+{
+    // The actual work is done in the WM_DESTROY handler, onWindowDestroyed()
+    if (window_ != NULL)
+        DestroyWindow(window_);
+}
+
+void
+HippoAbstractWindow::onWindowDestroyed(void)
+{
+    if (window_) {
+        ui_->unregisterMessageHook(window_);
+        hippoSetWindowData<HippoAbstractWindow>(window_, NULL);
+
+        window_ = NULL;
+    }
+
+    if (ie_) {
+        ie_->shutdown();
+        ie_ = NULL;
+    }
 }
 
 HippoIE *
@@ -349,6 +375,9 @@ HippoAbstractWindow::processMessage(UINT   message,
         }
     case WM_CLOSE:
         onClose(false);
+        return true;
+    case WM_DESTROY:
+        onWindowDestroyed();
         return true;
     case WM_SIZE:
         if (ie_) {

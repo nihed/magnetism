@@ -46,6 +46,7 @@ public:
     void setXsltTransform(WCHAR *styleSrc, ...);
     void setThreeDBorder(bool threeDBorder);
     void embedBrowser();
+    void shutdown();
     void setLocation(const HippoBSTR &location);
     IWebBrowser2 *getBrowser();
     void resize(RECT *rect);
@@ -217,14 +218,10 @@ HippoIEImpl::HippoIEImpl(HWND window, WCHAR *src, HippoIECallback *cb, IDispatch
 
 HippoIEImpl::~HippoIEImpl(void)
 {
-    if (connectionPoint_) {
-        if (connectionCookie_) {
-            connectionPoint_->Unadvise(connectionCookie_);
-            connectionCookie_ = 0;
-        }
-        connectionPoint_ = NULL;
-    }
-    ie_->Release();
+    hippoDebugLogW(L"Finalizing HippoIEImpl");
+    // Really we should never get here until we are already shut down because
+    // of circular references, but in case we do, do the shutdown stuff anyways
+    shutdown();
 }
 
 HippoInvocation
@@ -374,6 +371,26 @@ HippoIEImpl::embedBrowser()
     
     SafeArrayDestroy(sfArray);
     iceCream->Release();
+}
+
+void
+HippoIEImpl::shutdown()
+{
+    if (connectionPoint_) {
+        if (connectionCookie_) {
+            connectionPoint_->Unadvise(connectionCookie_);
+            connectionCookie_ = 0;
+        }
+        connectionPoint_ = NULL;
+    }
+
+    if (ie_) {
+        ie_->Close(OLECLOSE_NOSAVE);
+        ie_ = NULL;
+    }
+
+    external_ = NULL;
+    browser_ = NULL;
 }
 
 void 
@@ -821,6 +838,7 @@ HippoIEImpl::GetWindowContext(
     LPRECT prcClipRect,
     LPOLEINPLACEFRAMEINFO lpFrameInfo)
 {
+    AddRef();
     *ppFrame = this;
     *ppDoc = NULL;
     GetClientRect(window_,prcPosRect);

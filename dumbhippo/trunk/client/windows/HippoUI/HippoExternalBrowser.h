@@ -9,7 +9,6 @@
 
 #pragma once
 
-#include "stdafx.h"
 #include <mshtml.h>
 #include <HippoUtil.h>
 

@@ -1,6 +1,5 @@
 #pragma once
 
-#include "stdafx.h"
 #include <ole2.h>
 #include <assert.h>
 #include <strsafe.h>

@@ -4,15 +4,15 @@
  **/
 #pragma once
 
-#include "stdafx.h"
 #include <glib.h>
 #include <hippo/hippo-common.h>
 #include <HippoUtil.h>
 #include <HippoArray.h>
+#include <HippoMessageHook.h>
 #include "HippoBubble.h"
 #include "HippoBubbleList.h"
-#include "HippoChatWindow.h"
 #include "HippoIcon.h"
+#include "HippoListenerProxy.h"
 #include "HippoLogWindow.h"
 #include "HippoMenu.h"
 #include "HippoUpgrader.h"
@@ -24,6 +24,9 @@
 #include "HippoUIUtil.h"
 #include "HippoGSignal.h"
 
+#include <vector>
+
+class HippoChatManager;
 class HippoPreferences;
 
 struct HippoBrowserInfo
@@ -73,6 +76,16 @@ public:
     STDMETHODIMP DoUpgrade();
     STDMETHODIMP ShareLinkComplete(BSTR postId, BSTR url);
 
+    STDMETHODIMP RegisterListener(IHippoUIListener *listener, UINT64 *listenerId);
+    STDMETHODIMP UnregisterListener(UINT64 listenerId);
+    STDMETHODIMP RegisterEndpoint(UINT64 listenerId, UINT64 *endpointId);
+    STDMETHODIMP UnregisterEndpoint(UINT64 endpointId);
+    STDMETHODIMP JoinChatRoom(UINT64 endpointId, BSTR chatId, BOOL participant);
+    STDMETHODIMP LeaveChatRoom(UINT64 endpointId, BSTR chatId);
+    STDMETHODIMP SendChatMessage(BSTR chatId, BSTR text);
+    STDMETHODIMP GetServerName(BSTR *serverName);
+    STDMETHODIMP LaunchBrowser(BSTR url);
+
     bool create(HINSTANCE instance);
     void destroy();
 
@@ -104,7 +117,6 @@ public:
 
     bool isGroupChatActive(HippoEntity *entity);
     bool isShareActive(HippoPost *post);
-    void onChatWindowClosed(HippoChatWindow *chatWindow);
 
     void getRemoteURL(BSTR appletName, BSTR *result) throw (std::bad_alloc, HResultException);
     void getAppletPath(BSTR filename, BSTR *result) throw (std::bad_alloc, HResultException);
@@ -112,8 +124,8 @@ public:
 
     void showAppletWindow(BSTR url, HippoPtr<IWebBrowser2> &webBrowser);
 
-    void registerWindowMsgHook(HWND window, HippoMessageHook *hook);
-    void unregisterWindowMsgHook(HWND window);
+    void registerMessageHook(HWND window, HippoMessageHook *hook);
+    void unregisterMessageHook(HWND window);
     HWND getWindow() { return window_; }
     HICON getSmallIcon() { return smallIcon_; }
     HICON getBigIcon() { return bigIcon_; }
@@ -194,6 +206,9 @@ private:
     void onAuthFailed();
     void onAuthSucceeded();
 
+    HippoListenerProxy *findListenerById(UINT64 listenerId);
+    HippoListenerProxy *findListenerByEndpoint(UINT64 endpointId);
+
 private:
     // If true, this is a debug instance, acts as a separate global
     // singleton and has a separate registry namespace
@@ -239,6 +254,7 @@ private:
     HippoUpgrader upgrader_;
     HippoMusic music_;
     HippoMySpace mySpace_;
+    HippoChatManager *chatManager_;
 
     HippoBubbleList *recentPostList_;
     HippoRemoteWindow *currentShare_;
@@ -252,7 +268,7 @@ private:
 
     HippoArray<HippoPtr<HippoExternalBrowser> > internalBrowsers_;
     HippoArray<HippoBrowserInfo> browsers_;
-    HippoArray<HippoChatWindow *> chatWindows_;
+    std::vector<HippoPtr<HippoListenerProxy> > listeners_;
 
     DWORD nextBrowserCookie_;
 

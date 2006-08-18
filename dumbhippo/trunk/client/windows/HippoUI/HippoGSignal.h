@@ -4,9 +4,11 @@
  */
 #pragma once
 
-#include "stdafx.h"
 #include <glib-object.h>
 
+// Docs can be found at http://developer.mugshot.org/wiki/HippoGSignal. If you make changes
+// here, please make sure that the docs stay up to date.
+//
 // This file has underscore_names instead of studlyCaps for no particular reason 
 // (well, it's copied from the old Inti codebase that was like that, and it 
 // feels sort of natural since it's a GLib related file)
@@ -148,7 +150,33 @@ private:
     }
 };
 
-// We don't like 2
+// A connection to a signal with 2 arguments
+template <class ReturnType, class Arg1Type, class Arg2Type>
+class GConnection2 : public GConnection
+{
+public:
+    GConnection2()
+    {
+    }
+
+    void connect(GObject *object, const char *signal, Slot2<ReturnType,Arg1Type,Arg2Type> *slot) {
+        connect_impl(object, signal, (GCallback) gcallback, slot);
+    }
+
+    static unsigned int unmanaged_connect(GObject *object, const char *signal, Slot2<ReturnType,Arg1Type,Arg2Type> *slot) {
+        return unmanaged_connect_impl(object, signal, (GCallback) gcallback, slot);
+    }
+    
+    static void named_connect(GObject *object, const char *connection_name, const char *signal, Slot2<ReturnType,Arg1Type,Arg2Type> *slot) {
+        return named_connect_impl(object, connection_name, signal, (GCallback) gcallback, slot);
+    }
+
+private:
+    static ReturnType gcallback(GObject *object, Arg1Type arg1, Arg2Type arg2, void *data) {
+        Slot2<ReturnType,Arg1Type,Arg2Type> *slot = static_cast<Slot2<ReturnType,Arg1Type,Arg2Type>*>(data);
+        return slot->invoke(arg1, arg2);
+    }
+};
 
 // A connection to a signal with 3 arguments
 template <class ReturnType, class Arg1Type, class Arg2Type, class Arg3Type>
