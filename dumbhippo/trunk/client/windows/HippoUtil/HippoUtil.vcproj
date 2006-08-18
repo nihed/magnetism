@@ -27,6 +27,7 @@
 				TreatWChar_tAsBuiltInType="TRUE"
 				ForceConformanceInForLoopScope="TRUE"
 				UsePrecompiledHeader="3"
+				PrecompiledHeaderThrough="stdafx-hippoutil.h"
 				PrecompiledHeaderFile="$(IntDir)/$(TargetName).pch"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="TRUE"
@@ -78,6 +79,7 @@
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
 				RuntimeLibrary="4"
 				UsePrecompiledHeader="3"
+				PrecompiledHeaderThrough="stdafx-hippoutil.h"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="TRUE"
 				DebugInformationFormat="3"/>
@@ -123,6 +125,9 @@
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
 			<File
+				RelativePath=".\HippoArray.h">
+			</File>
+			<File
 				RelativePath=".\HippoConnectionPoint.cpp">
 			</File>
 			<File
@@ -138,6 +143,9 @@
 				RelativePath=".\HippoInvocation.cpp">
 			</File>
 			<File
+				RelativePath=".\HippoMessageHook.cpp">
+			</File>
+			<File
 				RelativePath=".\HippoRegistrar.cpp">
 			</File>
 			<File
@@ -147,7 +155,16 @@
 				RelativePath=".\HippoRegKey.h">
 			</File>
 			<File
+				RelativePath=".\HippoThreadBridge.cpp">
+			</File>
+			<File
+				RelativePath=".\HippoThreadExecutor.cpp">
+			</File>
+			<File
 				RelativePath=".\HippoURLParser.cpp">
+			</File>
+			<File
+				RelativePath=".\HippoUTF8.cpp">
 			</File>
 			<File
 				RelativePath=".\HippoUtil.cpp">
@@ -185,9 +202,6 @@
 				RelativePath=".\cleangdiplus.h">
 			</File>
 			<File
-				RelativePath=".\HippoArray.h">
-			</File>
-			<File
 				RelativePath=".\HippoConnectionPoint.h">
 			</File>
 			<File
@@ -206,10 +220,22 @@
 				RelativePath=".\HippoInvocation.h">
 			</File>
 			<File
+				RelativePath=".\HippoMessageHook.h">
+			</File>
+			<File
 				RelativePath=".\HippoRegistrar.h">
 			</File>
 			<File
 				RelativePath=".\HippoStdAfx.h">
+			</File>
+			<File
+				RelativePath=".\HippoThreadBridge.h">
+			</File>
+			<File
+				RelativePath=".\HippoThreadExecutor.h">
+			</File>
+			<File
+				RelativePath=".\HippoThreadLock.h">
 			</File>
 			<File
 				RelativePath=".\HippoURLParser.h">
@@ -219,6 +245,9 @@
 			</File>
 			<File
 				RelativePath=".\HippoUtilDispId.h">
+			</File>
+			<File
+				RelativePath=".\HippoUtilExport.h">
 			</File>
 			<File
 				RelativePath=".\md5.h">

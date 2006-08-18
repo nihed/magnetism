@@ -7,16 +7,11 @@
 #include <new>
 #include <string>
 #include <sstream>
+#include <HippoUtilExport.h>
 #include "HippoUtil_h.h"
 
 #ifdef min
 #error "min macro should not be defined"
-#endif
-
-#ifdef BUILDING_HIPPO_UTIL
-#define DLLEXPORT __declspec(dllexport)
-#else
-#define DLLEXPORT __declspec(dllimport)
 #endif
 
 #define HIPPO_REGISTRY_KEY L"Software\\Mugshot"
@@ -335,7 +330,7 @@ public:
 
     // note that NULL utf8 is allowed if len<=0
     // FIXME could be more efficient
-    static HippoBSTR fromUTF8(const char *utf8, int len) throw (std::bad_alloc, HResultException) {
+    static HippoBSTR fromUTF8(const char *utf8, int len = -1) throw (std::bad_alloc, HResultException) {
         HippoBSTR tmp;
         tmp.setUTF8(utf8, len);
         return tmp;
@@ -393,6 +388,84 @@ public:
     BSTR m_str;
 };
 
+DLLEXPORT BSTR
+hippo_utf8_to_bstr (const char *str,
+                    long        len) throw (std::bad_alloc);
+DLLEXPORT char *
+hippo_utf16_to_utf8 (const WCHAR  *str,
+                     long          len) throw (std::bad_alloc);
+
+// Free the result of hippo_utf16_to_utf8
+DLLEXPORT void
+hippo_utf8_free (char *str);
+
+DLLEXPORT bool
+hippo_utf8_validate (const char   *str,
+                     long          max_len,    
+                     const char  **end);
+
+DLLEXPORT bool
+hippo_utf16_validate (const WCHAR  *str,
+                      long          max_len);
+
+// Basically just a wrapper for UTF-16 to UTF-8 conversion, think three times before extending it
+class HippoUStr 
+{
+public:
+
+    HippoUStr() {
+        str = NULL;
+    }
+
+    HippoUStr(const HippoBSTR &bstr) {
+        if (bstr.m_str)       
+            str = hippo_utf16_to_utf8(bstr.m_str, SysStringLen(bstr.m_str));
+        else
+            str = NULL;
+    }
+
+    HippoUStr(WCHAR *wstr) {
+        if (wstr)
+            str = hippo_utf16_to_utf8(wstr, -1);
+        else
+            str = NULL;
+    }
+
+    HippoUStr(WCHAR *wstr, int len) {
+        if (wstr)
+            str = hippo_utf16_to_utf8(wstr, len);
+        else
+            str = NULL;
+    }
+
+    ~HippoUStr() {
+        if (str != NULL)
+            hippo_utf8_free(str);
+    }
+
+    char** operator&() {
+        assert(str == NULL);
+        return &str;
+    }
+
+    const char *c_str() const {
+        return str;
+    }
+
+    HippoBSTR toBSTR() const {
+        if (str == NULL)
+            return HippoBSTR();
+        else
+            return HippoBSTR::fromUTF8(str, -1);
+    }
+
+private:
+    HippoUStr(const HippoUStr &other) {}
+    HippoUStr operator=(const HippoUStr &other) {}
+
+    char *str;
+};
+
 inline bool
 hippoHresultToString(HRESULT hr, HippoBSTR &str)
 {
@@ -445,13 +518,6 @@ inline T *hippoGetWindowData(HWND window)
 }
 #pragma warning(pop)
 
-// Put here to avoid circular references between HippoUI and HippoIEWindow
-class HippoMessageHook
-{
-public:
-    virtual bool hookMessage(MSG *msg) = 0;
-};
-
 DLLEXPORT HRESULT hippoLoadTypeInfo(const WCHAR *libraryName, 
                                     ...);
 
@@ -459,3 +525,4 @@ DLLEXPORT HRESULT  hippoLoadRegTypeInfo(const GUID    &libraryId,
                                         unsigned short majorVersion, 
                                         unsigned short minorVersion 
                                         ...);
+

@@ -12,6 +12,7 @@ public:
     void add(const HippoBSTR &value); // Common, so gets the simple name
     void addBool(bool value);
     void addLong(long value);
+    void addDouble(double value);
     void addDispatch(IDispatch *dispatch);
     void addStringVector(const std::vector<HippoBSTR> &value);
     HRESULT run();
@@ -73,6 +74,14 @@ HippoInvocation &
 HippoInvocation::addLong(long value)
 {
     impl_->addLong(value);
+
+    return *this;
+}
+
+HippoInvocation &
+HippoInvocation::addDouble(double value)
+{
+    impl_->addDouble(value);
 
     return *this;
 }
@@ -150,6 +159,12 @@ HippoInvocationImpl::addLong(long value)
 }
 
 void
+HippoInvocationImpl::addDouble(double value)
+{
+    params_.push_back(variant_t(value));
+}
+
+void
 HippoInvocationImpl::addDispatch(IDispatch *value)
 {
     params_.push_back(variant_t(value));
@@ -190,8 +205,11 @@ HippoInvocationImpl::getResult(variant_t *result)
                                         &(functionName_.m_str), 1,
                                         LOCALE_SYSTEM_DEFAULT, 
                                         &id);
-    if (FAILED(hr))
+
+    if (FAILED(hr)) {
+        hippoDebugLogW(L"HippoInvocationImpl::getResult: GetIDsOfNames failed, %x", hr);
         return hr;
+    }
 
     DISPPARAMS args;
     ZeroMemory(&args, sizeof(args));

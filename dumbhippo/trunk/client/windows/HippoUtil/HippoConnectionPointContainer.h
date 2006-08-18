@@ -7,12 +7,7 @@
 #include <olectl.h>
 #include "HippoArray.h"
 #include "HippoConnectionPoint.h"
-
-#ifdef BUILDING_HIPPO_UTIL
-#define DLLEXPORT __declspec(dllexport)
-#else
-#define DLLEXPORT __declspec(dllimport)
-#endif
+#include <HippoUtilExport.h>
 
 // This is just a private member, but export the instantiation to avoid
 // annoying warnings.

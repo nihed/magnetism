@@ -20,20 +20,16 @@
  * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
  * Boston, MA 02111-1307, USA.
  */
+#include "stdafx-hippoutil.h"
 
-#ifdef WIN32
-#include <stdafx-hippoutil.h>
-#endif
-
-#include <stdint.h>
 #include <new>
 #include <string>
 
+#include "HippoUtil.h"
+
 typedef unsigned char guchar;
 typedef unsigned int guint;
-typedef uint32_t gunichar;
-
-typedef uint16_t WCHAR;
+typedef unsigned int gunichar;
 
 #define REPLACEMENT_CHARACTER 0xFFFD
 
@@ -479,6 +475,7 @@ utf8_to_utf16_output(const char *str,
   return n16;
 }
 
+#ifdef BUILD_TEST
 /**
  * utf8_to_utf16:
  * @str: a UTF-8 encoded string
@@ -508,6 +505,7 @@ hippo_utf8_to_utf16 (const char *str,
 
   return result;
 }
+#endif
 
 #ifdef WIN32
 /**
@@ -692,6 +690,18 @@ fast_validate_len (const char *str,
 }
 
 /**
+ * hippo_utf8_free:
+ * @str the string to free
+ * 
+ * Free the result of hippo_utf16_to_utf8
+ **/
+void
+hippo_utf8_free (char *str)
+{
+    delete[] str;
+}
+
+/**
  * utf8_validate:
  * @str: a pointer to character data
  * @max_len: max bytes to validate, or -1 to go until NUL
@@ -717,7 +727,7 @@ fast_validate_len (const char *str,
  **/
 bool
 hippo_utf8_validate (const char   *str,
-                     ssize_t       max_len,    
+                     long          max_len,    
                      const char  **end)
 
 {
