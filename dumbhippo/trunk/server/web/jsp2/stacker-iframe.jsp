@@ -68,6 +68,7 @@
 			font-weight:		bold;
 			font-size:			10px;
 			background-color: 	inherit; /* so it covers up any text below it */
+			cursor:			pointer;
 		}
 		.dh-stacked-block-music-person {
 			background-color:	#36AAE8;
