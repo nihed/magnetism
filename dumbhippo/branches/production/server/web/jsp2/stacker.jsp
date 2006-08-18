@@ -44,6 +44,7 @@
 			color:				white;
 		}
 		#dhDebugButtons {
+			display:			none;
 			position:			absolute;
 			right:				0px;
 			top:				0px;

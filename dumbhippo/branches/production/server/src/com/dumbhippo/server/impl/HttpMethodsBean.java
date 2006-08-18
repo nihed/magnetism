@@ -1276,9 +1276,6 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		}
 		
 		public Object getEJB(String name) throws ClassNotFoundException, NamingException {
-			if (!name.contains(".")) {
-				name = defaultPackage + "." + name;
-			}
 			try {
 				return EJBUtil.uncheckedDynamicLookupLocal(name);
 			} catch (NameNotFoundException e) {
