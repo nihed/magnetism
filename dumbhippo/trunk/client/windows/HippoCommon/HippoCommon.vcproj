@@ -121,7 +121,8 @@
 					Name="Debug|Win32">
 					<Tool
 						Name="VCCustomBuildTool"
-						CommandLine="genmarshal.bat"
+						CommandLine="genmarshal.bat
+"
 						Outputs="hippo-common-marshal.c;hippo-common-marshal.h"/>
 				</FileConfiguration>
 			</File>
@@ -133,6 +134,9 @@
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\hippo-data-cache.c">
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-endpoint-proxy.c">
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\hippo-entity.c">
@@ -177,6 +181,9 @@
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\hippo-data-cache.h">
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-endpoint-proxy.h">
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\hippo-entity-protected.h">

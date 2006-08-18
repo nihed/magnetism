@@ -1,6 +1,6 @@
 /* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 #include "hippo-endpoint-proxy.h"
-#include <hippo/hippo-common-marshal.h>
+#include "hippo-common-marshal.h"
 
 static void hippo_endpoint_proxy_finalize(GObject *object);
 

@@ -1653,7 +1653,6 @@ hippo_connection_parse_live_post(HippoConnection *connection,
     long viewing_user_count;
     long total_viewers;
     GSList *viewers;
-    LmMessageNode *subchild;
     
     post = NULL;
     
