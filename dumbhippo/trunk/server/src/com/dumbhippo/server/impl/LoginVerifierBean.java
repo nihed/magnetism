@@ -5,7 +5,6 @@ import java.util.concurrent.Callable;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
-import javax.persistence.EntityNotFoundException;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
@@ -71,7 +70,7 @@ public class LoginVerifierBean implements LoginVerifier {
 						if (token.isExpired()) {
 							em.remove(token);
 							em.flush();
-							throw new EntityNotFoundException("found expired token, making a new one");
+							throw new NoResultException("found expired token, making a new one");
 						}
 					} catch (NoResultException e) {
 						token = new LoginToken(resource);
