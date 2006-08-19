@@ -15,6 +15,9 @@ class HippoDBusIpcProviderImpl : public HippoDBusIpcProvider {
 public:
     HippoDBusIpcProviderImpl(const char *serverName);
     virtual ~HippoDBusIpcProviderImpl();
+
+    virtual void ref();
+    virtual void unref();
     
     virtual void setListener(HippoIpcListener *listener);
 
@@ -52,6 +55,7 @@ private:
     char *busNameOwnerChangedRule_;
     // current connected state of the client (is it online via xmpp)
     bool clientConnected_;
+    int refCount_;
 };
 
 DBusConnection *HippoDBusIpcProviderImpl::connection_;
@@ -64,6 +68,7 @@ HippoDBusIpcProvider::createInstance(const char *serverName)
 
 HippoDBusIpcProviderImpl::HippoDBusIpcProviderImpl(const char *serverName)
 {
+    refCount_ = 1;
     serverName_ = g_strdup(serverName);
     busName_ = hippo_dbus_full_bus_name(serverName);
     busNameOwnerChangedRule_ =
@@ -141,6 +146,20 @@ HippoDBusIpcProviderImpl::~HippoDBusIpcProviderImpl()
     g_free(serverName_);
     g_free(busUniqueName_);
     g_free(busNameOwnerChangedRule_);
+}
+
+void
+HippoDBusIpcProviderImpl::ref()
+{
+    refCount_++;
+}
+
+void
+HippoDBusIpcProviderImpl::unref()
+{
+    refCount_--;
+    if (refCount_ == 0)
+        delete this;
 }
 
 bool
