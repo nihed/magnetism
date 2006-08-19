@@ -16,6 +16,8 @@
 #include "HippoExplorer_h.h"
 #include "HippoExplorer_i.c"
 
+#include "hippo-com-ipc-hub.h"
+
 // Definitions of GUIDs
 #pragma data_seg(".text")
 #define INITGUID
@@ -63,7 +65,13 @@ DllMain(HINSTANCE hInstance,
            return FALSE;
 
        dllInstance = hInstance;
+
+       HippoComIpcHub::startup(hInstance); // Initialize criticial section, etc.
+
        break;
+    case DLL_PROCESS_DETACH:
+        HippoComIpcHub::shutdown(); // Clean up resources
+        break;
     }
        
     return TRUE;
@@ -84,6 +92,7 @@ DllGetClassObject(const CLSID &classID,
     HRESULT hr;
 
     if (!IsEqualCLSID(classID, CLSID_HippoChatControl) &&
+        !IsEqualCLSID(classID, CLSID_HippoControl) &&
         !IsEqualCLSID(classID, CLSID_HippoEmbed) &&
         !IsEqualCLSID(classID, CLSID_HippoExplorerBar) &&
         !IsEqualCLSID(classID, CLSID_HippoToolbarAction) &&
@@ -214,6 +223,13 @@ DllRegisterServer(void)
 
     hr = registrar.registerInprocServer(CLSID_HippoEmbed,
                                         TEXT("Mugshot Embed"));
+    if (FAILED(hr))
+        return hr;
+
+    hr = registrar.registerInprocServer(CLSID_HippoControl,
+                                        TEXT("Mugshot Web Page Control"),
+                                        TEXT("Hippo.Control"),
+                                        TEXT("Hippo.Control.0.1"));
     if (FAILED(hr))
         return hr;
 

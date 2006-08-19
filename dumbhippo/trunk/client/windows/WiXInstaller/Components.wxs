@@ -32,6 +32,9 @@
 		        <TypeLib Id="39794B35-15C8-43b8-A1D7-AEB345E8355C" Language="0"/>
 		        <Class Id="509D3C6C-7BD2-49F7-B0F9-6C32AC4A8836" Server="hippoExplorerDll" Description="Mugshot Tracker" Context="InprocServer32" ThreadingModel="apartment"/>
 		        <Class Id="5A96BF90-0D8A-4200-A23B-1C8DABC0CC04" Server="hippoExplorerDll" Description="Mugshot Embeddable Control" Context="InprocServer32" ThreadingModel="apartment"/>
+		        <Class Id="1C3A1AED-4166-4A4C-96CE-5C3D47D20CCA" Server="hippoExplorerDll" Description="Mugshot Web Page Control" Context="InprocServer32" ThreadingModel="apartment" Version="0.1">
+		            <ProgId Id="Hippo.Control"/>
+		        </Class>
 		        <Class Id="8DCDF228-AFDD-41F4-A6FB-D4B1B63CC91F" Server="hippoExplorerDll" Description="Mugshot Toolbar Action" Context="InprocServer32" ThreadingModel="apartment"/>
 		        <Class Id="2D40665F-8139-4CB5-BA39-A6E25A147F5D" Server="hippoExplorerDll" Description="Mugshot Chat Control" Context="InprocServer32" ThreadingModel="apartment"/>
 		        <Class Id="174D2323-9AF2-4257-B8BD-849865E4F1AE" Server="hippoExplorerDll" Description="&amp;Mugshot Bar" Context="InprocServer32" ThreadingModel="apartment"/>

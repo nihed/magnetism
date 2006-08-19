@@ -42,6 +42,34 @@ library HippoExplorer {
         [id(HIPPO_DISPID_LOCATIONCHANGED)] HRESULT LocationChanged(BSTR locationURL);
     }
     [
+        uuid(B9E30962-D43E-4038-9028-7FF8D830C994),
+        helpstring("DumbHippo Control Object"),
+        dual,
+        oleautomation
+    ]
+    interface IHippoControl : IDispatch
+    {
+        // Standard HippoControl interface shared with firefox
+        HRESULT start([in] BSTR serverUrl);
+        HRESULT stop();
+        
+        HRESULT isConnected([out, retval] BOOL *isConnected);
+
+        HRESULT setListener([in] IDispatch *listener); 
+
+        HRESULT joinChatRoom([in] BSTR chatId, [in] BOOL participant);
+        HRESULT leaveChatRoom([in] BSTR chatId);
+        HRESULT showChatWindow([in] BSTR chatId);
+        HRESULT sendChatMessage([in] BSTR chatId, [in] BSTR text);
+
+        // IE specific operations
+        [helpstring("Open the post information bar (the post will be determined from the current URL)")]
+        HRESULT OpenBrowserBar();
+        [helpstring("Close the post information bar")]
+        HRESULT CloseBrowserBar();
+
+    }
+    [
         uuid(5A96BF90-0D8A-4200-A23B-1C8DABC0CC04) // CLSID_HippoEmbed
     ]
     coclass HippoEmbed
@@ -57,5 +85,12 @@ library HippoExplorer {
         [default] interface IHippoChatRoom;
         [default, source] interface IHippoChatRoomEvents;
         interface IHippoChatRoomEvents;
+    }
+    [
+        uuid(1C3A1AED-4166-4A4C-96CE-5C3D47D20CCA) // CLSID_HippoControl
+    ]
+    coclass HippoControl
+    {
+        [default] interface IHippoControl;
     }
 }
