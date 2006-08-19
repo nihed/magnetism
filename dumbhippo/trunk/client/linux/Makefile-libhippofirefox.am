@@ -36,8 +36,8 @@ component_LTLIBRARIES = libhippofirefox.la
 
 component_DATA =				\
 	hippoIExtension.xpt			\
-	hippoIService.xpt			\
-	hippoIServiceListener.xpt
+	hippoIControl.xpt			\
+	hippoIControlListener.xpt
 
 libhippofirefox_la_LDFLAGS = -avoid-version -module
 libhippofirefox_la_LIBADD = $(LIBHIPPOFIREFOX_LIBS) libhippoipc.la
@@ -67,13 +67,13 @@ nodist_libhippofirefox_la_SOURCES=			\
 	$(FIREFOX_SRCDIR)/src/hippoExtension.cpp	\
 	$(FIREFOX_SRCDIR)/src/hippoExtension.h		\
 	$(FIREFOX_SRCDIR)/src/hippoModule.cpp		\
-	$(FIREFOX_SRCDIR)/src/hippoService.cpp		\
-	$(FIREFOX_SRCDIR)/src/hippoService.h
+	$(FIREFOX_SRCDIR)/src/hippoControl.cpp		\
+	$(FIREFOX_SRCDIR)/src/hippoControl.h
 
 LIBHIPPOFIREFOX_BUILT_SOURCEFILES =			\
 	$(BUILT_SRC_DIR)/hippoIExtension.h		\
-	$(BUILT_SRC_DIR)/hippoIService.h		\
-	$(BUILT_SRC_DIR)/hippoIServiceListener.h
+	$(BUILT_SRC_DIR)/hippoIControl.h		\
+	$(BUILT_SRC_DIR)/hippoIControlListener.h
 
 MAINTAINERCLEANFILES +=	$(LIBHIPPOFIREFOX_BUILT_SOURCEFILES)
 BUILT_SOURCES += $(LIBHIPPOFIREFOX_BUILT_SOURCEFILES)
@@ -90,8 +90,8 @@ endif
 
 IDL_FILES =							\
 	$(FIREFOX_SRCDIR)/public/hippoIExtension.idl		\
-	$(FIREFOX_SRCDIR)/public/hippoIService.idl		\
-	$(FIREFOX_SRCDIR)/public/hippoIServiceListener.idl
+	$(FIREFOX_SRCDIR)/public/hippoIControl.idl		\
+	$(FIREFOX_SRCDIR)/public/hippoIControlListener.idl
 
 GECKO_PRIVATE_FILES = $(FIREFOX_SRCDIR)/gecko-private/README
 GECKO_PRIVATE_IDL_FILES =							\
@@ -112,25 +112,25 @@ dist_pkgdata_SCRIPTS = firefox-update.sh
 $(BUILT_SRC_DIR)/hippoIExtension.h: $(FIREFOX_SRCDIR)/public/hippoIExtension.idl
 	$(XPIDL) $(XPIDL_INCLUDES)  -m header -e $@ $<
 
-$(BUILT_SRC_DIR)/hippoIService.h: $(FIREFOX_SRCDIR)/public/hippoIService.idl
+$(BUILT_SRC_DIR)/hippoIControl.h: $(FIREFOX_SRCDIR)/public/hippoIControl.idl
 	$(XPIDL) $(XPIDL_INCLUDES)  -m header -e $@ $<
 
-$(BUILT_SRC_DIR)/hippoIServiceListener.h: $(FIREFOX_SRCDIR)/public/hippoIServiceListener.idl
+$(BUILT_SRC_DIR)/hippoIControlListener.h: $(FIREFOX_SRCDIR)/public/hippoIControlListener.idl
 	$(XPIDL) $(XPIDL_INCLUDES)  -m header -e $@ $<
 
 hippoIExtension.xpt: $(FIREFOX_SRCDIR)/public/hippoIExtension.idl
 	$(XPIDL) $(XPIDL_INCLUDES)  -m typelib -e $@ $<
 
-hippoIService.xpt: $(FIREFOX_SRCDIR)/public/hippoIService.idl
+hippoIControl.xpt: $(FIREFOX_SRCDIR)/public/hippoIControl.idl
 	$(XPIDL) $(XPIDL_INCLUDES)  -m typelib -e $@ $<
 
-hippoIServiceListener.xpt: $(FIREFOX_SRCDIR)/public/hippoIServiceListener.idl
+hippoIControlListener.xpt: $(FIREFOX_SRCDIR)/public/hippoIControlListener.idl
 	$(XPIDL) $(XPIDL_INCLUDES)  -m typelib -e $@ $<
 
 DISTCLEANFILES +=				\
 	hippoIExtension.xpt			\
-	hippoIService.xpt			\
-	hippoIServiceListener.xpt
+	hippoIControl.xpt			\
+	hippoIControlListener.xpt
 
 libhippofirefox-dist-hook:
 	-mkdir $(distdir)/common-dist

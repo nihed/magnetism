@@ -17,9 +17,9 @@
 #include "nsIScriptSecurityManager.h"
 #include "nsServiceManagerUtils.h"
 #include "nsStringAPI.h"
-#include "hippoService.h"
+#include "hippoControl.h"
 
-hippoService::hippoService()
+hippoControl::hippoControl()
 {
 #ifdef HIPPO_OS_LINUX
     locator_ = HippoDBusIpcLocator::getInstance();
@@ -30,7 +30,7 @@ hippoService::hippoService()
     endpoint_ = 0;
 }
 
-hippoService::~hippoService()
+hippoControl::~hippoControl()
 {
     Stop();
     
@@ -38,11 +38,11 @@ hippoService::~hippoService()
 	listener_->Release();
 }
 
-NS_IMPL_ISUPPORTS1_CI(hippoService, hippoIService);
+NS_IMPL_ISUPPORTS1_CI(hippoControl, hippoIControl);
 
 
 /* attribute AUTF8String serverUrl; */
-NS_IMETHODIMP hippoService::GetServerUrl(nsACString &aServerUrl)
+NS_IMETHODIMP hippoControl::GetServerUrl(nsACString &aServerUrl)
 {
     aServerUrl.Assign(serverUrl_);
     
@@ -50,7 +50,7 @@ NS_IMETHODIMP hippoService::GetServerUrl(nsACString &aServerUrl)
 }
 
 /* void start(AUTF8String serverUrl); */
-NS_IMETHODIMP hippoService::Start(const nsACString &serverUrl)
+NS_IMETHODIMP hippoControl::Start(const nsACString &serverUrl)
 {
     nsresult rv;
 
@@ -71,7 +71,7 @@ NS_IMETHODIMP hippoService::Start(const nsACString &serverUrl)
 }
 
 /* void stop(); */
-NS_IMETHODIMP hippoService::Stop()
+NS_IMETHODIMP hippoControl::Stop()
 {
     if (controller_) {
         if (endpoint_ != 0) {
@@ -86,15 +86,15 @@ NS_IMETHODIMP hippoService::Stop()
 }
 
 /* boolean isConnected (); */
-NS_IMETHODIMP hippoService::IsConnected(PRBool *_retval)
+NS_IMETHODIMP hippoControl::IsConnected(PRBool *_retval)
 {
     *_retval = endpoint_ != 0;
 
     return NS_OK;
 }
 
-/* void setListener (in hippoIServiceListener listener); */
-NS_IMETHODIMP hippoService::SetListener(hippoIServiceListener *listener)
+/* void setListener (in hippoIControlListener listener); */
+NS_IMETHODIMP hippoControl::SetListener(hippoIControlListener *listener)
 {
     listener->AddRef();
     if (listener_)
@@ -105,7 +105,7 @@ NS_IMETHODIMP hippoService::SetListener(hippoIServiceListener *listener)
 }
 
 /* void joinChatRoom (in AUTF8String chatId, in boolean participant); */
-NS_IMETHODIMP hippoService::JoinChatRoom(const nsACString &chatId, PRBool participant)
+NS_IMETHODIMP hippoControl::JoinChatRoom(const nsACString &chatId, PRBool participant)
 {
     nsresult rv;
 
@@ -120,7 +120,7 @@ NS_IMETHODIMP hippoService::JoinChatRoom(const nsACString &chatId, PRBool partic
 }
 
 /* void leaveChatRoom (in AUTF8String chatId); */
-NS_IMETHODIMP hippoService::LeaveChatRoom(const nsACString &chatId)
+NS_IMETHODIMP hippoControl::LeaveChatRoom(const nsACString &chatId)
 {
     nsresult rv;
 
@@ -135,7 +135,7 @@ NS_IMETHODIMP hippoService::LeaveChatRoom(const nsACString &chatId)
 }
 
 /* void showChatWindow (in AUTF8String chatId); */
-NS_IMETHODIMP hippoService::ShowChatWindow(const nsACString &chatId)
+NS_IMETHODIMP hippoControl::ShowChatWindow(const nsACString &chatId)
 {
     nsresult rv;
 
@@ -150,7 +150,7 @@ NS_IMETHODIMP hippoService::ShowChatWindow(const nsACString &chatId)
 }
 
 /* void sendChatMessage (in AUTF8String chatId, in AUTF8String text); */
-NS_IMETHODIMP hippoService::SendChatMessage(const nsACString &chatId, const nsACString &text)
+NS_IMETHODIMP hippoControl::SendChatMessage(const nsACString &chatId, const nsACString &text)
 {
     nsresult rv;
 
@@ -169,7 +169,7 @@ NS_IMETHODIMP hippoService::SendChatMessage(const nsACString &chatId, const nsAC
 }
 
 /* void notifyPageShared (in AUTF8String postId, in AUTF8String url); */
-NS_IMETHODIMP hippoService::NotifyPageShared(const nsACString & postId, const nsACString & url)
+NS_IMETHODIMP hippoControl::NotifyPageShared(const nsACString & postId, const nsACString & url)
 {
     nsresult rv;
 
@@ -195,7 +195,7 @@ NS_IMETHODIMP hippoService::NotifyPageShared(const nsACString & postId, const ns
 }
 
 void 
-hippoService::onConnect()
+hippoControl::onConnect()
 {
     if (endpoint_ == 0) {
         endpoint_ = controller_->registerEndpoint(this);
@@ -205,7 +205,7 @@ hippoService::onConnect()
 }
  
 void 
-hippoService::onDisconnect()
+hippoControl::onDisconnect()
 {
     if (endpoint_ != 0) {
         endpoint_ = 0;
@@ -216,28 +216,28 @@ hippoService::onDisconnect()
 }
 
 void 
-hippoService::onUserJoin(HippoEndpointId endpoint, const char *chatId, const char *userId, bool participant)
+hippoControl::onUserJoin(HippoEndpointId endpoint, const char *chatId, const char *userId, bool participant)
 {
     if (listener_)
         listener_->OnUserJoin(nsCString(chatId), nsCString(userId), participant);
 }
 
 void 
-hippoService::onUserLeave(HippoEndpointId endpoint, const char *chatId, const char *userId)
+hippoControl::onUserLeave(HippoEndpointId endpoint, const char *chatId, const char *userId)
 {
     if (listener_)
         listener_->OnUserLeave(nsCString(chatId), nsCString(userId));
 }
 
 void 
-hippoService::onMessage(HippoEndpointId endpoint, const char *chatId, const char *userId, const char *message, double timestamp, long serial)
+hippoControl::onMessage(HippoEndpointId endpoint, const char *chatId, const char *userId, const char *message, double timestamp, long serial)
 {
     if (listener_)
         listener_->OnMessage(nsCString(chatId), nsCString(userId), nsCString(message), timestamp, serial);
 }
 
 void 
-hippoService::userInfo(HippoEndpointId endpoint, const char *userId, const char *name, const char *smallPhotoUrl, const char *currentSong, const char *currentArtist, bool musicPlaying)
+hippoControl::userInfo(HippoEndpointId endpoint, const char *userId, const char *name, const char *smallPhotoUrl, const char *currentSong, const char *currentArtist, bool musicPlaying)
 {
     if (listener_)
         listener_->UserInfo(nsCString(userId), nsCString(name), nsCString(smallPhotoUrl),
@@ -245,7 +245,7 @@ hippoService::userInfo(HippoEndpointId endpoint, const char *userId, const char 
 }
  
 nsresult 
-hippoService::checkServerUrl(const nsACString &serverUrl, nsACString &hostPort)
+hippoControl::checkServerUrl(const nsACString &serverUrl, nsACString &hostPort)
 {
     static NS_DEFINE_CID(kIOServiceCID, NS_IOSERVICE_CID);
 
@@ -297,7 +297,7 @@ hippoService::checkServerUrl(const nsACString &serverUrl, nsACString &hostPort)
 }
 
 nsresult 
-hippoService::checkGuid(const nsACString &guid)
+hippoControl::checkGuid(const nsACString &guid)
 {
     const char *start = guid.BeginReading();
     const char *p;
@@ -319,7 +319,7 @@ hippoService::checkGuid(const nsACString &guid)
 }
 
 nsresult
-hippoService::checkString(const nsACString &str)
+hippoControl::checkString(const nsACString &str)
 {
     // This is a bit paranoid, but check that the valid we got from Javascript
     // is valid UTF-8 and doesn't contain any embedded NUL characters.

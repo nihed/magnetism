@@ -2,7 +2,7 @@
 #include "nsISupports.idl"
 
 [scriptable, uuid(2308cdf8-9513-4e90-be59-985858d65a66)]
-interface hippoIServiceListener : nsISupports {
+interface hippoIControlListener : nsISupports {
     void onConnect();
     void onDisconnect();
     void onUserJoin(in AUTF8String chatId, in AUTF8String userId, in boolean participant);

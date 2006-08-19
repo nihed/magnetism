@@ -454,7 +454,7 @@ defineClass(dh.control.NativeControlListener, null, {
     // The QueryInterface function is used only for Firefox, where the callback
     // is used as a XPCOM object for IE, we just need a javascript object
     QueryInterface: function(aIID) {
-        if (!aIID.equals(Components.interfaces.hippoIServiceListener) &&
+        if (!aIID.equals(Components.interfaces.hippoIControlListener) &&
             !aIID.equals(Components.interfaces.nsISupports))
             throw new Components.results.NS_ERROR_NO_INTERFACE
         return this
@@ -468,7 +468,7 @@ dh.control.createControl = function() {
 	if (!dh.control.control) {
 		var firefoxControl
 		try { 
-			firefoxControl  = new HippoService(); 
+			firefoxControl  = new HippoControl(); 
 		} catch (e) {}
 	
 		if (firefoxControl)

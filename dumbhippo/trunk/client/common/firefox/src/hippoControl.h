@@ -1,15 +1,15 @@
 /* -*- mode: C++; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
-#include "hippoIService.h"
+#include "hippoIControl.h"
 #include "hippoipc/hippo-ipc.h"
 #include "nsCOMPtr.h"
 
-class hippoService: public hippoIService, public HippoIpcListener
+class hippoControl: public hippoIControl, public HippoIpcListener
 {
 public:
-    hippoService();
+    hippoControl();
 
     NS_DECL_ISUPPORTS
-    NS_DECL_HIPPOISERVICE
+    NS_DECL_HIPPOICONTROL
 
     // HippoIpcListener methods
 
@@ -27,10 +27,10 @@ private:
     nsresult checkGuid(const nsACString &guid);
     nsresult checkString(const nsACString &str);
     
-    ~hippoService();
+    ~hippoControl();
     
     nsCString serverUrl_;
-    hippoIServiceListener *listener_;
+    hippoIControlListener *listener_;
     HippoIpcLocator *locator_;
     HippoIpcController *controller_;
     HippoEndpointId endpoint_;
