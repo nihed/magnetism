@@ -598,7 +598,10 @@ dh.util.contains = function(items, item) {
 
 // This function only works if you have the client running, on Windows
 dh.util.clientDebug = function(text) {
-	window.external.DebugLog(text)
+	try {
+		window.external.DebugLog(text);
+	} catch (e) {
+	}
 }
 
 dh.util.timeString = function(timestamp) {

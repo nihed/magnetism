@@ -1,52 +1,11 @@
 dojo.provide("dh.framer")
 
 dojo.require("dh.chat")
+dojo.require("dh.control")
 dojo.require("dh.util")
 dojo.require("dojo.event")
 
 dh.framer._selfId = null
-dh.framer._messageList = new dh.chat.MessageList(
-	function(message, before) { dh.framer._addMessage(message, before) },
-	function(message) { dh.framer._removeMessage(message) },
-	3)
-dh.framer._participantList = new dh.chat.UserList(
-	function(user, before) { dh.framer._addUser(user, before, true) },
-	function(user) { dh.framer._removeUser(user, true) })
-dh.framer._visitorList = new dh.chat.UserList(
-	function(user, before) { dh.framer._addUser(user, before, false) },
-	function(user) { dh.framer._removeUser(user, false) })
-
-// Add a user to the list of current users
-dh.framer.onUserJoin = function(userId, photoUrl, name, participant) {
-	var user = new dh.chat.User(userId, photoUrl, name)
-	if (participant) {
-		this._visitorList.userLeave(userId)
-		this._participantList.userJoin(user)
-	} else {
-		this._participantList.userLeave(userId)
-		this._visitorList.userJoin(user)
-	}
-}
-
-// Remove the user from the list of current users
-dh.framer.onUserLeave = function(userId) {
-	this._visitorList.userLeave(userId)
-	this._participantList.userLeave(userId)
-}
-
-// Add a message to the message area
-dh.framer.onMessage = function(userId, photoUrl, name, text, timestamp, serial) {
-	var message = new dh.chat.Message(userId, photoUrl, name, text, timestamp, serial)
-	this._messageList.addMessage(message)
-}
-
-// Clear all messages and users (called on reconnect)
-dh.framer.onReconnect = function() {
-	this._participantList.clear()
-	this._visitorList.clear()
-	this._messageList.clear()
-	this._updateChatCount()
-}
 
 // Go back to the user's home page, possibly closing the browser bar
 dh.framer.goHome = function() {
@@ -56,38 +15,77 @@ dh.framer.goHome = function() {
 	window.open("/", "_top")
 }
 
+dh.framer.setSelfId = function(id) {
+	this._selfId = id
+}
+
+dh.framer.openForwardWindow = function() {
+	dh.util.openShareLinkWindow(this.forwardUrl, this.forwardTitle);
+}
+
+dh.framer._messageDivId = function(message) {
+	return "dhPostChatDiv-" + message.getSerial()
+}
+
+dh.framer._messageDiv = function(message) {
+	return document.getElementById(this._messageDivId(message))
+}
+
+dh.framer._messageNameDivId = function(message) {
+	return "dhPostChatNameDiv-" + message.getSerial()
+}
+
+dh.framer._messageNameDiv = function(message) {
+	return document.getElementById(this._messageNameDivId(message))
+}
+
+dh.framer._userSpanId = function(user) {
+	return "dhPostUserSpan-" + user.getId()
+}
+
+dh.framer._userSpan = function(user) {
+	return document.getElementById(this._userSpanId(user))
+}
+
 dh.framer._addMessage = function(message, before) {
-	message.nameDiv = document.createElement("div")
-    message.nameDiv.className = "dh-chat-name"
-  	message.nameDiv.appendChild(document.createTextNode(message.name))
+	var nameDiv = document.createElement("div")
+    nameDiv.id = this._messageNameDivId(message)
+    nameDiv.className = "dh-chat-name"
+  	nameDiv.appendChild(document.createTextNode(message.getEntity().getName()))
   	 
     var messageFontStyle = dh.chat.getMessageFontStyle(message)
     
-    message.div = document.createElement("div")
-    message.div.className = "dh-chat-message"	
-    dh.util.insertTextWithLinks(message.div, message.text) 
- 	message.div.style.fontStyle = messageFontStyle
+    var messageDiv = document.createElement("div")
+	messageDiv.id = this._messageDivId(message)
+    messageDiv.className = "dh-chat-message"	
+    dh.util.insertTextWithLinks(messageDiv, message.getMessage()) 
+ 	messageDiv.style.fontStyle = messageFontStyle
+	
+	var beforeMessageDiv = before ? this._messageDiv(message) : null;
+	var beforeNameDiv = before ? this._messageNameDiv(message) : null;
 	
 	var namesArea = document.getElementById('dhPostChatNames')
-	namesArea.insertBefore(message.nameDiv, before ? before.nameDiv : null)
+	namesArea.insertBefore(nameDiv, beforeNameDiv)
 	var messageArea = document.getElementById('dhPostChatMessages')
-	messageArea.insertBefore(message.div, before ? before.div : null)
+	messageArea.insertBefore(messageDiv, beforeMessageDiv)
 }
 
 dh.framer._removeMessage = function(message) {
-	if (message.div && message.div.parentNode) {
-	    message.div.parentNode.removeChild(message.div)
-	    message.div = null
+	var messageDiv = this._messageDiv(message)
+	var messageNameDiv = this._messageNameDiv(message)
+
+	if (messageDiv && messageDiv.parentNode) {
+	    messageDiv.parentNode.removeChild(messageDiv)
 	}
-	if (message.nameDiv && message.nameDiv.parentNode) {
-	    message.nameDiv.parentNode.removeChild(message.nameDiv)
-	    message.nameDiv = null;
+	if (messageNameDiv && messageNameDiv.parentNode) {
+	    messageNameDiv.parentNode.removeChild(messageNameDiv)
+	    messageNameDiv = null;
 	}
 }
 
 dh.framer._updateChatCount = function() {
 	var chatCountNode = document.getElementById('dhPostChatCount')
-	var count = dh.framer._participantList.numUsers() // only chatters, not viewers
+	var count = this._participantList.numUsers() // only chatters, not viewers
 	var countText;
 	
 	if (count == 0)
@@ -103,43 +101,66 @@ dh.framer._updateChatCount = function() {
 dh.framer._addUser = function(user, before, participant) {
 	var userList = document.getElementById("dhPostViewingListPeople")
     
-    user.span = document.createElement("span")
-    user.span.appendChild(document.createTextNode(user.name))
+    var span = document.createElement("span")
+    span.id = this._userSpanId(user)
+    span.appendChild(document.createTextNode(user.getName()))
 
-	userList.insertBefore(user.span, before ? before.span : null)
-	if (user.span.nextSibling)
-		userList.insertBefore(document.createTextNode(", "), user.span.nextSibling);
-	else if (user.span.previousSibling)
-		userList.insertBefore(document.createTextNode(", "), user.span);
+	userList.insertBefore(span, before ? this._userSpan(before) : null)
+	if (span.nextSibling)
+		userList.insertBefore(document.createTextNode(", "), span.nextSibling);
+	else if (span.previousSibling)
+		userList.insertBefore(document.createTextNode(", "), span);
 
-	dh.framer._updateChatCount()
+	this._updateChatCount()
 }
 
-dh.framer._removeUser = function(user, participant) {
+dh.framer._removeUser = function(user) {
 	var userList = document.getElementById("dhPostViewingListPeople")
+	var span = this._userSpan(user)
     
-    if (user.span.nextSibling)
-	    userList.removeChild(user.span.nextSibling)
-    else if (user.span.previousSibling)
-	    userList.removeChild(user.span.previousSibling)
-    userList.removeChild(user.span)
+    if (span.nextSibling)
+	    userList.removeChild(span.nextSibling)
+    else if (span.previousSibling)
+	    userList.removeChild(span.previousSibling)
+    userList.removeChild(span)
     
-    dh.framer._updateChatCount()
+    this._updateChatCount()
 }
 
-dh.framer.setSelfId = function(id) {
-	this._selfId = id
+dh.framer._updateUser = function(user) {
+	var span = this._userSpan(user)
+	span.replaceChild(document.createTextNode(user.getName()), span.firstChild)
 }
 
 dh.framer.init = function() {
-	var chatControl = document.getElementById("dhChatControl")
-    if (chatControl && chatControl.readyState && chatControl.readyState == 4) {
-		chatControl.Rescan()
-	} else {
+	this._chatRoom = dh.control.control.getOrCreateChatRoom(this.chatId)
+
+	this._messageList = new dh.chat.MessageList(
+		this._chatRoom,
+		function(message, before) { dh.framer._addMessage(message, before) },
+		function(message) { dh.framer._removeMessage(message) },
+		3);
+		
+	this._participantList = new dh.chat.UserList(
+		this._chatRoom,
+		function(user, before, participant) { dh.framer._addUser(user, before, true) },
+		function(user) { dh.framer._removeUser(user) },
+		function(user) { dh.framer._updateUser(user) },
+		function(user, participant) { return participant });
+
+	dh.framer._visitorList = new dh.chat.UserList(
+		this._chatRoom,
+		function(user, before, participant) { dh.framer._addUser(user, before, false) },
+		function(user) { dh.framer._removeUser(user) },
+		function(user) { dh.framer._updateUser(user) },
+		function(user, participant) { return !participant });
+		
+	this._chatRoom.join(false)
+
+	if (!dh.control.control.haveLiveChat()) {
 		// NOTE this is currently partially handled in the jsp, where 
 		// we have non-activex fallbacks sometimes. So be careful.
 		
-		// If we don't have the ActiveX controls available to chat, hide them
     	document.getElementById("dhPostSwarmInfo").style.visibility = "hidden"
     	document.getElementById("dhPostChatLog").style.visibility = "hidden"
     	// there's a fallback for this at least part of the time
