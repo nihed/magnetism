@@ -128,10 +128,10 @@ public class AccountSystemBean implements AccountSystem {
 		return accounts;
 	}
 
-	public List<Account> getRecentlyActiveAccounts() {		
-		Query q = em.createQuery("FROM Account where (lastLoginDate - current_timestamp()) < :weekSecs")
-			.setParameter("weekSecs",  7 * 24 * 60 * 60);
-		return TypeUtils.castList(Account.class, q.getResultList());		
+	public List<Account> getRecentlyActiveAccounts() {	
+		Query q = em.createQuery("SELECT a FROM Account a WHERE a.lastLoginDate >= :weekAgo");
+		q.setParameter("weekAgo",  new Date(System.currentTimeMillis() - (7 * 24 * 60 * 60 * 1000)));
+		return TypeUtils.castList(Account.class, q.getResultList());
 	}
 
 	public void touchLoginDate(Guid userId) {

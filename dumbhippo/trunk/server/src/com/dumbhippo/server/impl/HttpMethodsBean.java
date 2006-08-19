@@ -1258,8 +1258,6 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	
 	public class Server implements Serializable {
 		private static final long serialVersionUID = 1L;
-
-		private String defaultPackage = "com.dumbhippo.server";
 		
 		public Object getLiveState() {
 			return LiveState.getInstance();
