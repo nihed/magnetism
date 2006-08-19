@@ -58,12 +58,14 @@ HippoIpcController::createInstance(HippoIpcProvider *provider)
 HippoIpcControllerImpl::HippoIpcControllerImpl(HippoIpcProvider *provider)
 {
     provider_ = provider;
+    provider_->ref();
     provider_->setListener(this);
 }
 
 HippoIpcControllerImpl::~HippoIpcControllerImpl()
 {
     provider_->setListener(NULL);
+    provider_->unref();
 }
 
 HippoEndpointId 
