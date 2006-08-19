@@ -1,13 +1,12 @@
 Name:           mugshot
-Version:        1.1.11
+Version:        1.1.12
 Release:        1%{?dist}
 Summary:        Companion software for mugshot.org
 
 Group:          Applications/Internet
 License:        GPL
 URL:            http://mugshot.org/
-## FIXME get the full download url
-Source0:        mugshot-%{version}.tar.gz
+Source0:        http://download.mugshot.org/client/sources/linux/mugshot-%{version}.tar.gz
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 BuildRequires:  glib2-devel >= 2.6
@@ -16,6 +15,11 @@ BuildRequires:  loudmouth-devel >= 1.0.3-3
 BuildRequires:  dbus-devel >= 0.61
 BuildRequires:  curl-devel >= 7.15
 BuildRequires:  GConf2-devel >= 2.8
+# This is just the gecko-sdk from mozilla.org dumped into /opt/gecko-sdk
+# See http://developer.mugshot.org/download/extra for the spec file
+# If you are porting this to a distribution with a firefox-devel package
+# you can just depend on that and change the configure line appropriately
+BuildRequires:  gecko-sdk >= 1.8.0.4
 
 # 1.0.3-3 has a backport from 1.0.4 to fix various segfaults
 Requires:       loudmouth >= 1.0.3-3
@@ -31,7 +35,7 @@ a "live social experience." It's fun and easy.
 
 
 %build
-%configure
+%configure --with-gecko-sdk=/opt/gecko-sdk
 make %{?_smp_mflags}
 
 
@@ -44,6 +48,25 @@ unset GCONF_DISABLE_MAKEFILE_SCHEMA_INSTALL
 %clean
 rm -rf $RPM_BUILD_ROOT
 
+# Annoyingly, firefox installs itself into versioned directories,
+# so we have to make a new symlink into the right directory when
+# firefox is installed or upgraded. But we would rather not leave
+# our old symlinks behind, since that will cause the firefox
+# directories not to be removed. (flash-player leaves its old
+# symlinks behind, but that's no excuse for us to do the same...)
+#
+# Because I don't know any way of finding out what the new version
+# is on installation or old version on uninstallation, we have
+# to do things in a somewhat non-intuitive way
+#
+# The order on upgrade is:
+#
+#  1. new package installed
+#  2. triggerin for new package - we add all symlinks
+#  3. triggerun for old package - we remove all symlinks
+#  4. old package uninstalled
+#  5. triggerpostun for old package - we add all symlinks
+
 %post
 export GCONF_CONFIG_SOURCE=`gconftool-2 --get-default-source`
 SCHEMAS="mugshot-uri-handler.schemas"
@@ -55,6 +78,12 @@ touch --no-create %{_datadir}/icons/hicolor
 if [ -x /usr/bin/gtk-update-icon-cache ]; then
   gtk-update-icon-cache -q %{_datadir}/icons/hicolor
 fi
+%{_datadir}/mugshot/firefox-update.sh install
+
+%preun
+if [ $1 = 0 ] ; then
+    %{_datadir}/mugshot/firefox-update.sh remove
+fi
 
 %postun
 touch --no-create %{_datadir}/icons/hicolor
@@ -62,6 +91,14 @@ if [ -x /usr/bin/gtk-update-icon-cache ]; then
   gtk-update-icon-cache -q %{_datadir}/icons/hicolor
 fi
 
+%triggerin -- firefox
+%{_datadir}/mugshot/firefox-update.sh install
+
+%triggerun -- firefox
+%{_datadir}/mugshot/firefox-update.sh remove
+
+%triggerpostun -- firefox
+%{_datadir}/mugshot/firefox-update.sh install
 
 %files
 %defattr(-,root,root,-)
@@ -77,10 +114,14 @@ fi
 %{_datadir}/icons/hicolor/48x48/apps/*.gif
 %{_datadir}/icons/hicolor/128x128/apps/*.png
 %{_datadir}/mugshot
+%{_libdir}/mugshot
 %{_datadir}/gnome/autostart/mugshot.desktop
 %{_sysconfdir}/gconf/schemas/*.schemas
 
 %changelog
+* Sat Aug 19 2006 Owen Taylor <otaylor@redhat.com> - 1.1.11-1
+- Add firefox extension
+
 * Wed Jul 19 2006 Colin Walters <walters@redhat.com> - 1.1.11-1
 - 1.1.11
 

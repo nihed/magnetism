@@ -65,6 +65,7 @@ endif
 
 nodist_libhippofirefox_la_SOURCES=			\
 	$(FIREFOX_SRCDIR)/src/hippoExtension.cpp	\
+	$(FIREFOX_SRCDIR)/src/hippoExtension.h		\
 	$(FIREFOX_SRCDIR)/src/hippoModule.cpp		\
 	$(FIREFOX_SRCDIR)/src/hippoService.cpp		\
 	$(FIREFOX_SRCDIR)/src/hippoService.h
@@ -106,6 +107,8 @@ GECKO_PRIVATE_INCLUDE_FILES =							\
 	$(FIREFOX_SRCDIR)/gecko-private/include/nsIXPCSecurityManager.h		\
 	$(FIREFOX_SRCDIR)/gecko-private/include/nsNetCID.h
 
+dist_pkgdata_SCRIPTS = firefox-update.sh
+
 $(BUILT_SRC_DIR)/hippoIExtension.h: $(FIREFOX_SRCDIR)/public/hippoIExtension.idl
 	$(XPIDL) $(XPIDL_INCLUDES)  -m header -e $@ $<
 
@@ -142,6 +145,9 @@ libhippofirefox-dist-hook:
 	mkdir $(distdir)/common-dist/firefox/extension/chrome/locale
 	mkdir $(distdir)/common-dist/firefox/extension/chrome/locale/en-US
 	cp $(en_DATA) $(distdir)/common-dist/firefox/extension/chrome/locale/en-US
+	mkdir $(distdir)/common-dist/firefox/extension/defaults
+	mkdir $(distdir)/common-dist/firefox/extension/defaults/preferences
+	cp $(prefs_DATA) $(distdir)/common-dist/firefox/extension/defaults/preferences
 	mkdir $(distdir)/common-dist/firefox/public
 	cp $(IDL_FILES) $(distdir)/common-dist/firefox/public
 	mkdir $(distdir)/common-dist/firefox/src
