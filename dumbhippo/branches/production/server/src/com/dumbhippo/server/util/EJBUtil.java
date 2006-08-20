@@ -132,7 +132,6 @@ public class EJBUtil {
 	public static Object uncheckedDynamicLookup(String name) throws NamingException {
 		InitialContext namingContext; // note, if ever caching this, it isn't threadsafe
 		namingContext = new InitialContext();	
-		logger.debug("looking up \"" + name + "\"");
 		return namingContext.lookup(name);
 	}
 	
