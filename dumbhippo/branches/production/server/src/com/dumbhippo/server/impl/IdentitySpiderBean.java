@@ -651,7 +651,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	private Resource getFirstContactResource(Contact contact) {
 		// An invariant we retain in the database is that every contact
 		// has at least one resource, so we don't need to check for
-		// EntityNotFoundException
+		// NoResultException
 		return (Resource) em.createQuery(GET_CONTACT_RESOURCES_QUERY)
 				.setParameter("contact", contact).setMaxResults(1)
 				.getSingleResult();
