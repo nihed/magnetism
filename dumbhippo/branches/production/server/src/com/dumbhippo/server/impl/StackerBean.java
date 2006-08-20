@@ -99,10 +99,10 @@ public class StackerBean implements Stacker {
 			q.setParameter("data1", data1.toString());
 			q.setParameter("data2", data2.toString());
 		} else if (data1 != null) {
-			q = em.createQuery("SELECT block FROM Block block WHERE block.blockType=:type AND block.data1=:data1 AND block.data2 IS NULL");
+			q = em.createQuery("SELECT block FROM Block block WHERE block.blockType=:type AND block.data1=:data1 AND block.data2=''");
 			q.setParameter("data1", data1.toString());
 		} else if (data2 != null) {
-			q = em.createQuery("SELECT block FROM Block block WHERE block.blockType=:type AND block.data2=:data2 AND block.data1 IS NULL");
+			q = em.createQuery("SELECT block FROM Block block WHERE block.blockType=:type AND block.data2=:data2 AND block.data1=''");
 			q.setParameter("data2", data2.toString());
 		} else {
 			throw new IllegalArgumentException("must provide either data1 or data2 in query for block type " + type);
@@ -122,10 +122,10 @@ public class StackerBean implements Stacker {
 			q.setParameter("data1", data1.toString());
 			q.setParameter("data2", data2.toString());
 		} else if (data1 != null) {
-			q = em.createQuery("SELECT ubd FROM UserBlockData ubd, Block block WHERE ubd.block = block AND ubd.user = :user AND block.blockType=:type AND block.data1=:data1 AND block.data2 IS NULL");
+			q = em.createQuery("SELECT ubd FROM UserBlockData ubd, Block block WHERE ubd.block = block AND ubd.user = :user AND block.blockType=:type AND block.data1=:data1 AND block.data2=''");
 			q.setParameter("data1", data1.toString());
 		} else if (data2 != null) {
-			q = em.createQuery("SELECT ubd FROM UserBlockData ubd, Block block WHERE ubd.block = block AND ubd.user = :user AND block.blockType=:type AND block.data2=:data2 AND block.data1 IS NULL");
+			q = em.createQuery("SELECT ubd FROM UserBlockData ubd, Block block WHERE ubd.block = block AND ubd.user = :user AND block.blockType=:type AND block.data2=:data2 AND block.data1=''");
 			q.setParameter("data2", data2);
 		} else {
 			throw new IllegalArgumentException("must provide either data1 or data2 in query for block type " + type);
