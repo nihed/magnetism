@@ -290,7 +290,7 @@ public class StackerBean implements Stacker {
 		if (block.getBlockType() != BlockType.GROUP_MEMBER)
 			throw new IllegalArgumentException("wrong type block");
 		
-		Group group = em.find(Group.class, block.getData1());
+		Group group = em.find(Group.class, block.getData1AsGuid().toString());
 		
 		Set<User> recipients = groupSystem.getMembershipChangeRecipients(group);
 		return recipients;
