@@ -39,7 +39,7 @@
 
 
 # Then we exclude more stuff we don't need
-#/deploy/jmx-console.war				# No JMX Console
+/deploy/jmx-console.war				# No JMX Console
 /deploy/bsh-deployer.xml                        # BeanShell? No thanks.
 /deploy/deploy/cache-invalidation-service.xml   # All commented out anyways
 /deploy/client-deployer-service.xml             # Download .jar to clients
