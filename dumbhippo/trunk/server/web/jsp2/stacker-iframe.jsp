@@ -122,6 +122,14 @@
 			font-size: 	10px;
 			font-style: italic;
 		}
+		.dh-stacked-block-music-person .dh-tracks .dh-track-list {
+			padding: 		0;
+			margin: 		5px;
+		}
+		.dh-stacked-block-music-person .dh-tracks .dh-track {
+			list-style: 		none;
+			font-size:		12px;
+		}
 	</style>
 	<script>
 		dojo.require('dh.stacker');

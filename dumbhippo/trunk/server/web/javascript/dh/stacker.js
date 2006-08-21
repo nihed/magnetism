@@ -762,12 +762,19 @@ defineClass(dh.stacker.MusicPersonBlock, dh.stacker.Block,
 
 	_updateTracksDiv : function() {
 		if (this._div) {
-			var str = "";
+			while (this._tracksDiv.firstChild)
+				this._tracksDiv.removeChild(this._tracksDiv.firstChild);
+
+			var ul = document.createElement("ul");
+			dojo.html.setClass(ul, "dh-track-list");
 			var i;
 			for (i = 0; i < this._tracks.length; ++i) {
-				str = str + " " + this._tracks[i].title;
+				var li = document.createElement("li");
+				dojo.dom.textContent(li, this._tracks[i].title);
+				dojo.html.setClass(li, "dh-track");
+				ul.appendChild(li);
 			}
-			dojo.dom.textContent(this._tracksDiv, str);
+			this._tracksDiv.appendChild(ul);
 		}
 	},
 	
