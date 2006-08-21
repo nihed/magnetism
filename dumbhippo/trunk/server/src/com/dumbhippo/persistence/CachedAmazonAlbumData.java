@@ -5,6 +5,7 @@ import java.util.Date;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
 
 import com.dumbhippo.services.AmazonAlbumData;
@@ -24,7 +25,8 @@ public class CachedAmazonAlbumData extends DBUnique {
 	private String artist;
 	
 	private String ASIN;
-	private String productUrl;
+	private String productUrlPart1;
+	private String productUrlPart2;
 	private String smallImageUrl;
 	private int smallImageWidth;
 	private int smallImageHeight;
@@ -50,13 +52,13 @@ public class CachedAmazonAlbumData extends DBUnique {
 	public void updateData(AmazonAlbumData data) {
 		if (data != null) {
 			ASIN = data.getASIN();
-			productUrl = data.getProductUrl();
+			setProductUrl(data.getProductUrl());
 			smallImageUrl = data.getSmallImageUrl();
 			smallImageWidth = data.getSmallImageWidth();
 			smallImageHeight = data.getSmallImageHeight();
 		} else {
 			ASIN = null;
-			productUrl = null;
+			setProductUrl(null);
 			smallImageUrl = null;
 			smallImageWidth = -1;
 			smallImageHeight = -1;
@@ -105,11 +107,44 @@ public class CachedAmazonAlbumData extends DBUnique {
 			this.lastUpdated = lastUpdated.getTime();
 	}
 	@Column(nullable=true)
+	public String getProductUrlPart1() {
+		return productUrlPart1;
+	}
+	public void setProductUrlPart1(String productUrlPart1) {
+		this.productUrlPart1 = productUrlPart1;
+	}
+	@Column(nullable=true)
+	public String getProductUrlPart2() {
+		return productUrlPart2;
+	}
+	public void setProductUrlPart2(String productUrlPart2) {
+		this.productUrlPart2 = productUrlPart2;
+	}
+	@Transient
 	public String getProductUrl() {
-		return productUrl;
+		String part1 = getProductUrlPart1();
+		String part2 = getProductUrlPart2();
+		if (part2 != null) {
+			return part1+part2;
+		} else {
+			return part1;
+		}
 	}
 	public void setProductUrl(String productUrl) {
-		this.productUrl = productUrl;
+		if (productUrl == null) {
+			setProductUrlPart1(null);
+			setProductUrlPart2(null);
+			return;
+		}
+		if (productUrl.length()<=255) {
+			setProductUrlPart1(productUrl);
+			setProductUrlPart2(null);
+		} else {
+			String part1 = productUrl.substring(0, 255);
+			String part2 = productUrl.substring(255);
+			setProductUrlPart1(part1);
+			setProductUrlPart2(part2);
+		}
 	}
 	@Column(nullable=false)
 	public int getSmallImageHeight() {
@@ -155,7 +190,7 @@ public class CachedAmazonAlbumData extends DBUnique {
 
 		@Override
 		public String toString() {
-			return "{CachedAmazonAlbumData.Data ASIN=" + ASIN + " productUrl=" + productUrl + " album='" + album + "'}";
+			return "{CachedAmazonAlbumData.Data ASIN=" + ASIN + " productUrl=" + productUrlPart1+productUrlPart2 + " album='" + album + "'}";
 		}		
 		
 		public String getASIN() {
@@ -163,7 +198,13 @@ public class CachedAmazonAlbumData extends DBUnique {
 		}
 
 		public String getProductUrl() {
-			return productUrl;
+			String part1 = getProductUrlPart1();
+			String part2 = getProductUrlPart2();
+			if (part2 != null) {
+				return part1+part2;
+			} else {
+				return part1;
+			}
 		}
 
 		public String getSmallImageUrl() {

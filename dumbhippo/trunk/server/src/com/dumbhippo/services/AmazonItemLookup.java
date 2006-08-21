@@ -49,11 +49,15 @@ public class AmazonItemLookup extends AbstractXmlRequest<AmazonItemLookupSaxHand
 		return null;
 	}
 	
-	public AmazonItemData getItem(String amazonAccessKeyId, String itemId) {
+	public AmazonItemData getItem(String amazonAccessKeyId, String amazonAssociateTag, String itemId) {
 		StringBuilder sb = new StringBuilder();
 		sb.append("http://webservices.amazon.com/onca/xml?Service=AWSECommerceService&Operation=ItemLookup"
 				+ "&ResponseGroup=Images,OfferSummary&AWSAccessKeyId=");
 		sb.append(amazonAccessKeyId);
+		if (amazonAssociateTag != null) {
+			sb.append("&AssociateTag=");
+			sb.append(amazonAssociateTag);
+		}
 		sb.append("&ItemId=");
 		sb.append(StringUtils.urlEncode(itemId));		
 
@@ -65,7 +69,7 @@ public class AmazonItemLookup extends AbstractXmlRequest<AmazonItemLookupSaxHand
 		return handler;
 	}
 	
-	public AmazonItemData getItemForUrl(String amazonAccessKeyId, URL url) {
+	public AmazonItemData getItemForUrl(String amazonAccessKeyId, String amazonAssociateTag, URL url) {
 		String itemId = parseItemIdFromUrl(url);
 		if (itemId == null) {
 			// at .info so we can find new kinds of url to handle
@@ -73,7 +77,7 @@ public class AmazonItemLookup extends AbstractXmlRequest<AmazonItemLookupSaxHand
 			return null;
 		}
 		
-		AmazonItemData itemData = getItem(amazonAccessKeyId, itemId); 
+		AmazonItemData itemData = getItem(amazonAccessKeyId, amazonAssociateTag, itemId); 
 		if (itemData == null) {
 			logger.debug("failed to load amazon data, we parsed item ID '{}' from url {}", itemId, url);
 		}

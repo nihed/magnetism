@@ -140,14 +140,24 @@ public class AmazonAlbumCacheBean extends AbstractCacheBean<String,AmazonAlbumDa
 
 		AmazonItemSearch search = new AmazonItemSearch(REQUEST_TIMEOUT);
 		String amazonKey;
+		String amazonAssociateTag;
 		final AmazonAlbumData data;
 		try {
 			amazonKey = config.getPropertyNoDefault(HippoProperty.AMAZON_ACCESS_KEY_ID);
 		} catch (PropertyNotFoundException e) {
 			amazonKey = null;
 		}
+		
+		try {
+			amazonAssociateTag = config.getPropertyNoDefault(HippoProperty.AMAZON_ASSOCIATE_TAG_ID);
+			if (amazonAssociateTag.trim().length() == 0)
+				amazonAssociateTag = null;
+		} catch (PropertyNotFoundException e) {
+			amazonAssociateTag = null;
+		}
+		
 		if (amazonKey != null)
-			data = search.searchAlbum(amazonKey, artist, album);
+			data = search.searchAlbum(amazonKey, amazonAssociateTag, artist, album);
 		else
 			data = null;
 		

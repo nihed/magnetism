@@ -18,6 +18,7 @@ public enum HippoProperty {
 	AIMBOT_NAME("dumbhippo.server.aimbot.name", null),
 	AIM_PRESENCE_KEY("dumbhippo.server.aim.presence.key", null),
 	AMAZON_ACCESS_KEY_ID("dumbhippo.server.amazon.accesskeyid", null),
+	AMAZON_ASSOCIATE_TAG_ID("dumbhippo.server.amazon.associatetag", null),
 	YAHOO_APP_ID("dumbhippo.server.yahoo.appid", null),
 	EBAY_DEVID("dumbhippo.server.ebay.devid", null),
 	EBAY_APPID("dumbhippo.server.ebay.appid", null),

@@ -15,12 +15,16 @@ public class AmazonItemSearch extends
 		super(timeoutMilliseconds);
 	}
 
-	public AmazonAlbumData searchAlbum(String amazonAccessKeyId, String artist, String albumTitle) {
+	public AmazonAlbumData searchAlbum(String amazonAccessKeyId, String amazonAssociateTag, String artist, String albumTitle) {
 		StringBuilder sb = new StringBuilder();
 		sb.append("http://webservices.amazon.com/onca/xml?Service=AWSECommerceService"
 				+ "&Operation=ItemSearch&MerchantId=All&Condition=All&SearchIndex=Music"
 				+ "&ResponseGroup=Small,Images&AWSAccessKeyId=");
 		sb.append(amazonAccessKeyId);
+		if (amazonAssociateTag != null) {
+			sb.append("&AssociateTag=");
+			sb.append(amazonAssociateTag);
+		}
 		sb.append("&Artist=");
 		sb.append(StringUtils.urlEncode(artist));		
 		sb.append("&Title=");
@@ -37,7 +41,7 @@ public class AmazonItemSearch extends
 
 	public static void main(String[] args) {
 		AmazonItemSearch itemSearch = new AmazonItemSearch(10000);
-		AmazonAlbumData album = itemSearch.searchAlbum("", 
+		AmazonAlbumData album = itemSearch.searchAlbum("", "",
 				"Wilco", "Summerteeth");
 		if (album == null)
 			logger.debug("Failed to get a result");
