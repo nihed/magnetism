@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.StringUtils;
+import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.persistence.AimResource;
 import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.ExternalAccount;
@@ -128,5 +129,43 @@ public class PersonPage extends AbstractPersonPage {
 		if (email == null)
 			return null;
 		return "mailto:" + StringUtils.urlEncodeEmail(email.getEmail());
+	}
+	
+	private String getFullProfileUrl() {
+		return config.getBaseUrl().toExternalForm() + "/person?who=" + getViewedUserId();
+	}
+	
+	// this is done in Java instead of in the jsp because the escaping is too mind-melting otherwise
+	public String getWhereImAtHtml() {
+		XmlBuilder xml = new XmlBuilder();
+		if (getViewedUser() == null) {
+			xml.openElement("div", "class", "mugshot-error");
+			xml.append("The script url should have ?who=userId where userId matches your profile page url");
+			xml.closeElement();			
+		} else if (isDisabled()) {
+			xml.openElement("div", "class", "mugshot-error");
+			xml.appendTextNode("a", "This account is disabled - no web 2.0 for you!",
+					"href", getFullProfileUrl());
+			xml.closeElement();						
+		} else {
+			List<ExternalAccount> loved = getLovedAccounts().getList();
+			if (loved.size() == 0) {
+				xml.openElement("div", "class", "mugshot-error");
+				xml.appendTextNode("a", "Where's the love?", "href",
+						getFullProfileUrl());
+				xml.closeElement();
+			} else {
+				xml.openElement("ul", "class", "mugshot-external-accounts");
+				xml.append("\n");
+				for (ExternalAccount a : loved) {
+					xml.openElement("li", "class", "mugshot-external-account");
+					xml.appendTextNode("a", a.getSiteName(), "href", a.getLink());
+					xml.append("\n");
+				}
+				xml.closeElement();
+			}
+		}
+		xml.append("\n");
+		return xml.toString();
 	}
 }

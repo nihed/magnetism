@@ -1,4 +1,6 @@
-<%@page contentType="text/javascript" %>
+<%-- the contentType breaks the Eclipse jsp editor,
+     you need to do Open With, Text Editor instead --%>
+<%@ page pageEncoding="UTF-8" contentType="text/javascript"%>
 <%@ taglib uri="/jsp/dumbhippo.tld" prefix="dh" %>
 
 // config.js runs before we load dojo.js
