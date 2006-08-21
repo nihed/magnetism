@@ -10,17 +10,17 @@
     </target>
 
     <target name="dar" depends="compile">
-	<exec dir="${basedir}" executable="${basedir}/super/super">
-		 <!-- this parameter doesn't matter; super barfs though if
-		      $HOME isn't set, which is true for the autobuilder. -->
-		<arg value="-Dhome=/enoent"/>
-		<arg value="deploy"/>
-		<arg value="all"/>
-	</exec>
+		<exec dir="${basedir}" executable="${basedir}/super/super">
+			 <!-- this parameter doesn't matter; super barfs though if
+			      $HOME isn't set, which is true for the autobuilder. -->
+			<arg value="-Dhome=/enoent"/>
+			<arg value="deploy"/>
+			<arg value="all"/>
+		</exec>
     </target>
 
     <target name="clean">
-	<ant dir="server" target="clean"/>
+		<ant dir="server" target="clean"/>
     	<ant dir="taste" target="clean"/>
         <ant dir="wildfire/" antfile="build/build.xml" target="clean"/>    	
         <ant dir="imbot" target="clean"/>

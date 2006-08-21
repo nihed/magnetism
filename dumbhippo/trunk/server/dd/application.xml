@@ -41,11 +41,12 @@
     <module>
         <ejb>dumbhippo.ejb3</ejb>
     </module>
+    <!--  war can be separate, see jboss-web.xml, comment the below out if so -->
+    <!-- empty context-root means to deploy at / -->
     <module>
         <web>
             <web-uri>dumbhippo.war</web-uri>
-            <!-- empty context-root means to deploy at / -->
-            <context-root></context-root>
+			<context-root></context-root>
         </web>
     </module>
 </application>

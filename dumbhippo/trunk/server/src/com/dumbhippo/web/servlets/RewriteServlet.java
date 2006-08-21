@@ -1,10 +1,22 @@
 package com.dumbhippo.web.servlets;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
@@ -25,6 +37,7 @@ import javax.transaction.UserTransaction;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.ThreadUtils;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.ServerStatus;
@@ -64,6 +77,12 @@ public class RewriteServlet extends HttpServlet {
 	
 	private ServletContext context;
 	private ServerStatus serverStatus;
+	
+	private File buildstampFile;
+	private ExecutorService buildstampThread;
+	private long buildstampFileLastModified;
+	private Lock buildstampLock;
+	private Condition buildstampCondition;
 	
 	private boolean hasSignin(HttpServletRequest request) {
 		return SigninBean.getForRequest(request).isValid();
@@ -394,6 +413,114 @@ public class RewriteServlet extends HttpServlet {
 		return set;
 	}
 	
+	private void initBuildStampScan() { 
+		URL url = RewriteServlet.class.getResource("buildstamp.properties");
+		File file;
+		try {
+			 file = new File(new URI(url.toExternalForm()));
+		} catch (URISyntaxException e) {
+			logger.error("Failed to get buildstamp.properties URI", e);
+			throw new RuntimeException(e);
+		}
+		// the lock covers buildstampFile, buildstampFileLastModified, and updating the build stamp
+		buildstampLock = new ReentrantLock();
+		buildstampCondition = buildstampLock.newCondition();
+		buildstampFile = file;
+		buildstampFileLastModified = 0;
+		
+		buildstampThread = ThreadUtils.newSingleThreadExecutor("buildstamp scanner");
+		buildstampThread.execute(new Runnable() {
+			public void run() {
+				logger.debug("Entering build stamp scanner thread");
+				
+				buildstampLock.lock();
+				try {
+					while (buildstampFile != null) {
+						try {
+							loadBuildStamp();
+						} catch (IOException e) {
+							logger.warn("Build stamp load failed", e);
+						}
+						try {
+							buildstampCondition.await(2, TimeUnit.SECONDS);
+						} catch (InterruptedException e) {
+						}
+					}
+				} finally {
+					buildstampLock.unlock();
+				}
+				
+				logger.debug("Leaving build stamp scanner thread");
+			}
+		});
+	}
+	
+	private void stopBuildStampScan() {
+		logger.debug("Asking build stamp scanner thread to exit");
+		
+		buildstampLock.lock();
+		try {
+			buildstampFile = null;
+			// this just saves us the timeout of the scanner thread
+			buildstampCondition.signalAll();
+		} finally {
+			buildstampLock.unlock();
+		}
+		
+		buildstampThread.shutdown();
+		try {
+			buildstampThread.awaitTermination(30, TimeUnit.SECONDS);
+		} catch (InterruptedException e) {
+			logger.warn("Buildstamp properties thread shutdown interrupted", e);
+		}
+		logger.debug("Done waiting for buildstamp scanner thread, terminated={}", buildstampThread.isTerminated());
+		buildstampThread = null;
+	}
+	
+	// when called from the buildstamp scanner thread, we'll already 
+	// have the buildstampLock; but we take the lock ourselves also
+	// because on startup the scanner thread and the init() method 
+	// both call this
+	private void loadBuildStamp() throws IOException {
+		buildstampLock.lock();
+		try {
+			if (buildstampFile == null) // indicates that load thread has been asked to shut down
+				return;
+			
+			Properties props = new Properties();
+			long modified = buildstampFile.lastModified();
+			if (modified == buildstampFileLastModified) {
+				return;
+			}
+			
+			logger.debug("New timestamp on buildstamp.properties: {}", modified);
+			buildstampFileLastModified = modified;
+			
+			InputStream str = new FileInputStream(buildstampFile);
+			props.load(str);
+	
+	        buildStamp = props.getProperty("dumbhippo.server.buildstamp");
+	        
+	        if (buildStamp == null || buildStamp.trim().length() == 0) {
+	        	logger.error("buildstamp.properties does not contain build stamp");
+	        	// IOException so the calling thread will catch it and not exit;
+	        	// this can possibly happen in normal circumstances if the props
+	        	// file isn't written atomically
+	        	throw new IOException("buildstamp.properties does not contain build stamp");
+	        }
+	     
+			logger.debug("Loaded build stamp '{}'", buildStamp);
+	        
+	        // We store the builtstamp in the servlet context so we can reference it from JSP pages.
+	        // This could change the buildstamp while a jsp and related items are in the process of being served,
+	        // but not sure how to avoid that. Should not matter on the production server since 
+	        // we won't change the build stamp there.
+	        getServletContext().setAttribute("buildStamp", buildStamp);
+		} finally {
+			buildstampLock.unlock();
+		}
+	}
+	
 	@Override
 	public void init() throws ServletException {
 		ServletConfig config = getServletConfig();
@@ -493,16 +620,23 @@ public class RewriteServlet extends HttpServlet {
 			if (p.startsWith("psa-"))
 				psaLinks.add(p);
 		}
-		logger.debug("Added {} PSAs: {}", psaLinks.size(), psaLinks);
+		logger.debug("Added {} PSAs: {}", psaLinks.size(), psaLinks);		
+        
+		initBuildStampScan();
+		try {
+			loadBuildStamp();
+		} catch (IOException e) {
+			logger.error("Initial build stamp load failed: {}", e.getMessage());
+			throw new ServletException("Failed to load build stamp", e);
+		}
 		
-        buildStamp = configuration.getProperty(HippoProperty.BUILDSTAMP);
-        
-        // We store the builtstamp in the servlet context so we can reference it from JSP pages
-        getServletContext().setAttribute("buildStamp", buildStamp);
-        
-        // Also store the server's base URL
+        // Store the server's base URL for reference from JSP pages
         String baseUrl = configuration.getPropertyFatalIfUnset(HippoProperty.BASEURL);
-        getServletContext().setAttribute("baseUrl", baseUrl); 
- 
+        getServletContext().setAttribute("baseUrl", baseUrl);
+	}
+	
+	@Override
+	public void destroy() {
+		stopBuildStampScan();
 	}
 }

@@ -6,6 +6,9 @@
 	<property name="build" value="${target}/classes" />
 	<property name="build.tests" value="${target}/test-classes" />
 	<property name="build.lib" value="${target}/lib" />
+	<property name="build.deploy" value="${target}/deploy" />
+	<property name="build.deploy.ear" value="${build.deploy}/dumbhippo.ear" />
+	<property name="build.deploy.war" value="${build.deploy.ear}/dumbhippo.war" />
 	<property name="lib" value="lib" />
 	<property name="reports.tests" value="reports" />
 	<property name="jboss.root" value="/opt/jboss" />
@@ -15,10 +18,7 @@
 	<property name="bundled-classpath" value="dumbhippo-base.jar"/>	
 	<property name="bundled-deps.web" value="standard.jar" />
 	<property name="bundled-deps.client" value="" />
-	
-	<!-- trivial change for testing 
-	-->
-	
+		
 	<path id="project.class.path">
 		<pathelement path="${classpath}" />
 		<fileset dir="${lib}">
@@ -66,6 +66,9 @@
 		<mkdir dir="${reports.tests}" />
 		<mkdir dir="${build.tests}" />		
 		<mkdir dir="${build.lib}" />
+		<mkdir dir="${build.deploy}" />
+		<mkdir dir="${build.deploy.ear}" />
+		<mkdir dir="${build.deploy.war}" />
 		<copy file="${basedir}/../taste/taste.jar" todir="${build.lib}"/>
 	</target>
 		
@@ -74,33 +77,16 @@
 		<javac debug="on" srcdir="${src}" destdir="${build}" source="1.5">
 			<classpath refid="project.class.path" />
 		</javac>
-	</target>
-
-
-	<!-- Move over other files -->
-
-	<patternset id="metadata">
-		<include name="**/*.properties" />
-	</patternset>
-
-	<target name="setupmetadata" depends="copyproperties,makebuildstamp">
-	</target>
-
-	<target name="makebuildstamp" depends="init">
-		<exec executable="/bin/date" output="${build}/com/dumbhippo/server/impl/dumbhippo.properties">
-		      <arg line="+dumbhippo.server.buildstamp=%s"/>
-		</exec>
-	</target>
-
-	<target name="copyproperties" depends="init">
+		
+		<!-- copy over properties files -->
 		<copy todir="${build}">
 			<fileset dir="${src}">
-				<patternset refid="metadata" />
+				<include name="**/*.properties" />
 			</fileset>
 		</copy>
 	</target>
 
-	<target name="test" depends="compile,setupmetadata">
+	<target name="test" depends="compile">
 		<javac srcdir="${src.tests}" destdir="${build.tests}" source="1.5">
 			<classpath refid="tests.class.path" />
 		</javac>
@@ -151,60 +137,6 @@
 		</jar>
 	</target>
 
-	<target name="war" depends="compile, setupmetadata, dojobuild, nodojobuild">
-		<war warfile="${buildjar.dir}/dumbhippo.war" webxml="${web}/servlet-info.xml">
-			
-			<!-- "**" in here is pretty risky since there's a bunch of random junk in
-				javascript/dojo that we don't want, like documentation .html and test .js -->
-			
-			<!-- our javascript code -->
-			<fileset dir="${web}" includes="javascript/*.js"/>
-			<fileset dir="${web}" includes="javascript/dh/*.js"/>
-			<fileset dir="${web}" includes="javascript/dh/statistics/*.js"/>
-
-			<!-- dojo.js is either in target/javascript (if compressed) 
-				or web/javascript (if not) -->
-			<fileset dir="${dojo.js.webroot}" includes="javascript/dojo/*.js"/>
-			<fileset dir="${dojo.js.webroot}" includes="javascript/dojo/src/*.js"/>
-			<fileset dir="${dojo.js.webroot}" includes="javascript/dojo/src/**/*.js"/>		
-
-			<fileset dir="${web}" includes="javascript/dojo/src/*.css"/>
-			<fileset dir="${web}" includes="javascript/dojo/src/**/*.css"/>
-			<fileset dir="${web}" includes="javascript/dojo/iframe_history.html"/>
-			<fileset dir="${web}" includes="javascript/dojo/src/*.html"/>
-			<fileset dir="${web}" includes="javascript/dojo/src/**/*.html"/>
-			<fileset dir="${web}" includes="javascript/dojo/src/**/*.png"/>
-			
-			<!-- our static pages, css, etc. -->
-			<fileset dir="${web}" includes="html/*.html" />
-			<fileset dir="${web}" includes="html/robots.txt" />
-			<fileset dir="${web}" includes="images*/*.gif" />
-			<fileset dir="${web}" includes="images*/*.png" />
-			<fileset dir="${web}" includes="images*/*.jpg" />
-			<fileset dir="${web}" includes="images*/*.ico" />
-			<fileset dir="${web}" includes="images*/**/*.gif" />
-			<fileset dir="${web}" includes="images*/**/*.png" />
-			<fileset dir="${web}" includes="images*/**/*.jpg" />
-			<fileset dir="${web}" includes="images*/**/*.ico" />
-			<fileset dir="${web}" includes="jsp*/*.jsp" />
-			<fileset dir="${web}" includes="jsp*/*.tld" />
-			<fileset dir="${web}" includes="css*/*.css" />
-			<fileset dir="${web}" includes="flash/*.swf" />
-			
-			<!-- tag files -->
-            <webinf dir="${web}" includes="tags/*.tag" />
-           	<webinf dir="${web}" includes="tags/2/*.tag" />
-			
-			<fileset dir="${build}">
-				<include name="**/web/**/*.class" />
-			</fileset>
-			<manifest>
-				<attribute name="Class-Path" value="${bundled-classpath}" />
-			</manifest>
-			<lib dir="${lib}" includes="${bundled-deps.web}"/>
-		</war>
-	</target>
-
 	<target name="ejb3jar" depends="compile">
 		<jar destfile="${buildjar.dir}/dumbhippo.ejb3">
 			<fileset dir="${build}">
@@ -250,16 +182,158 @@
 			</manifest>
 		</jar>
 	</target>
-
-	<target name="ear" depends="war,ejb3jar,par,sar,basejar">
-		<ear destfile="${buildjar.dir}/dumbhippo.ear" appxml="dd/application.xml">
-			<metainf dir="dd">
-				<include name="jboss-app.xml" />
-                        </metainf>
-			<fileset dir="${buildjar.dir}" includes="*.ejb3, *.par, *.sar, *.war, *.jar" />
+	
+	<target name="exploded-war" depends="compile, dojobuild, nodojobuild">
+		<mkdir dir="${build.deploy.war}/WEB-INF"/>
+		<copy tofile="${build.deploy.war}/WEB-INF/web.xml" file="${web}/servlet-info.xml"/>
+		<copy todir="${build.deploy.war}/WEB-INF" file="dd/jboss-web.xml"/>
+		<mkdir dir="${build.deploy.war}/WEB-INF/tags"/>
+		<copy todir="${build.deploy.war}/WEB-INF/tags">
+			<fileset id="tag-files" dir="${web}/tags">
+				<include name="*.tag"/>
+				<include name="2/*.tag"/>
+			</fileset>			
+		</copy>
+		<mkdir dir="${build.deploy.war}/WEB-INF/lib"/>
+		<copy todir="${build.deploy.war}/WEB-INF/lib">
+			<fileset dir="${lib}" includes="${bundled-deps.web}"/>
+		</copy>
+		<mkdir dir="${build.deploy.war}/META-INF"/>
+		<manifest file="${build.deploy.war}/META-INF/MANIFEST.MF">
+			<attribute name="Class-Path" value="${bundled-classpath}" />
+		</manifest>
+		
+		<copy todir="${build.deploy.war}">
+			<!-- "**" in here is pretty risky since there's a bunch of random junk in
+				javascript/dojo that we don't want, like documentation .html and test .js -->
+			
+			<!-- our javascript code -->
+			<fileset dir="${web}" includes="javascript/*.js"/>
+			<fileset dir="${web}" includes="javascript/dh/*.js"/>
+			<fileset dir="${web}" includes="javascript/dh/statistics/*.js"/>
+		
+			<!-- dojo.js is either in target/javascript (if compressed) 
+				or web/javascript (if not) -->
+			<fileset dir="${dojo.js.webroot}" includes="javascript/dojo/*.js"/>
+			<fileset dir="${dojo.js.webroot}" includes="javascript/dojo/src/*.js"/>
+			<fileset dir="${dojo.js.webroot}" includes="javascript/dojo/src/**/*.js"/>		
+		
+			<fileset dir="${web}" includes="javascript/dojo/src/*.css"/>
+			<fileset dir="${web}" includes="javascript/dojo/src/**/*.css"/>
+			<fileset dir="${web}" includes="javascript/dojo/iframe_history.html"/>
+			<fileset dir="${web}" includes="javascript/dojo/src/*.html"/>
+			<fileset dir="${web}" includes="javascript/dojo/src/**/*.html"/>
+			<fileset dir="${web}" includes="javascript/dojo/src/**/*.png"/>
+			
+			<!-- our static pages, css, etc. -->
+			<fileset dir="${web}" includes="html/*.html" />
+			<fileset dir="${web}" includes="html/robots.txt" />
+			<fileset dir="${web}" includes="images*/*.gif" />
+			<fileset dir="${web}" includes="images*/*.png" />
+			<fileset dir="${web}" includes="images*/*.jpg" />
+			<fileset dir="${web}" includes="images*/*.ico" />
+			<fileset dir="${web}" includes="images*/**/*.gif" />
+			<fileset dir="${web}" includes="images*/**/*.png" />
+			<fileset dir="${web}" includes="images*/**/*.jpg" />
+			<fileset dir="${web}" includes="images*/**/*.ico" />
+			<fileset dir="${web}" includes="jsp*/*.jsp" />
+			<fileset dir="${web}" includes="jsp*/*.tld" />
+			<fileset dir="${web}" includes="css*/*.css" />
+			<fileset dir="${web}" includes="flash/*.swf" />
+			
+			<fileset dir="${build}">
+				<include name="**/web/**/*.class" />
+			</fileset>
+		</copy>
+		
+		<!-- create build stamp for web -->
+		<exec executable="/bin/date" output="${build.deploy.war}/com/dumbhippo/web/servlets/buildstamp.properties">
+			<arg line="+dumbhippo.server.buildstamp=%s"/>
+		</exec>
+	</target>		
+	
+	<target name="exploded-ear-do-work" depends="ejb3jar,par,sar,basejar,exploded-war">
+		<copy file="${buildjar.dir}/dumbhippo-base.jar" todir="${build.deploy.ear}"/>
+		<copy file="${buildjar.dir}/dumbhippo.ejb3" todir="${build.deploy.ear}"/>
+		<copy file="${buildjar.dir}/dumbhippo.par" todir="${build.deploy.ear}"/>
+		<copy file="${buildjar.dir}/dumbhippo.sar" todir="${build.deploy.ear}"/>
+		<copy todir="${build.deploy.ear}">
 			<fileset dir="${lib}" includes="${bundled-classpath.external}"/>
+		</copy>
+		<copy todir="${build.deploy.ear}">
 			<fileset dir="${build.lib}" includes="taste.jar"/>
-		</ear>
+		</copy>
+		<mkdir dir="${build.deploy.ear}/META-INF"/>
+		<copy file="dd/jboss-app.xml" todir="${build.deploy.ear}/META-INF"/>
+		<copy file="dd/application.xml" todir="${build.deploy.ear}/META-INF"/>
+		
+		<!-- Now be sure we touch both the .ear directory and the application.xml if 
+			 config files or classes have changed -->
+		<uptodate property="application.xml.is.new.enough" targetfile="${build.deploy.ear}/META-INF/application.xml">
+			<!-- reload if anything in the war dir, excluding the web files, has changed -->
+			<srcfiles dir="${build.deploy.war}">
+				<exclude name="WEB-INF/tags/**"/>
+				<exclude name="images*/**"/>
+				<exclude name="html/**"/>
+				<exclude name="flash/**"/>
+				<exclude name="javascript/**"/>
+				<exclude name="css*/**"/>
+				<exclude name="jsp*/*.jsp"/>
+				<exclude name="**/buildstamp.properties"/>
+			</srcfiles>
+			<!-- reload if anything in the ear has changed-->
+			<srcfiles dir="${build.deploy.ear}">
+				<!-- the above fileset already covered the .war inside the .ear -->
+				<exclude name="dumbhippo.war/**"/>
+				<!-- ant may handle this anyway, but paranoid. avoid circular deps 
+					 on things we're going to touch below -->
+				<exclude name="META-INF/application.xml"/>
+				<exclude name="META-INF"/>
+			</srcfiles>
+		</uptodate>
+		<!-- <echo message="application.xml.is.new.enough: ${application.xml.is.new.enough}"/> -->
+	</target>
+	
+	<target name="exploded-ear-need-reload" depends="exploded-ear-do-work" unless="application.xml.is.new.enough">
+		<echo message="Application classes or configuration have changed, will need to reload"/>
+		<!-- trigger the reload by ensuring super will update the timestamp on these things -->
+		<touch>
+			<fileset file="${build.deploy.ear}/META-INF/application.xml"/>
+		</touch>
+		<!-- the touch task touches everything in a dir if you touch the dir, which is not desired,
+		 	 so bail out and use exec -->
+		<exec executable="touch">
+			<arg value="${build.deploy.ear}/META-INF"/>
+		</exec>
+		<exec executable="touch">
+			<arg value="${build.deploy.ear}"/>
+		</exec>		
+	</target>
+
+	<target name="exploded-ear-no-reload" depends="exploded-ear-do-work" if="application.xml.is.new.enough">
+		<echo message="Classes and config apparently haven't changed, only web stuff, so may not need to reload"/>
+	</target>
+	
+	<target name="exploded-ear" depends="exploded-ear-do-work,exploded-ear-need-reload,exploded-ear-no-reload"/>
+	
+	<!-- this archived war is only used in the archived ear, which doesn't work 
+	     with the exploded war in it -->
+	<target name="war" depends="exploded-war">
+		<zip destfile="${buildjar.dir}/dumbhippo.war" basedir="${build.deploy.war}">
+		</zip>
+	</target>
+	
+	<target name="ear" depends="exploded-ear,war">
+		<!-- Some hoops to jump through because an exploded war in an archived ear does
+		     not work. So we make the archived war, then include it and exclude the exploded one.
+		     Without this complication we'd just zip up the exploded ear dir and that's it. -->
+		<zip destfile="${buildjar.dir}/dumbhippo.ear">
+			<fileset dir="${build.deploy.ear}" excludes="dumbhippo.war,dumbhippo.war/**">
+			</fileset>
+			<fileset dir="${buildjar.dir}">
+				<include name="dumbhippo.war"/>
+			</fileset>			
+		</zip>
 	</target>
 
 	<target name="clientjar" depends="compile">
@@ -281,17 +355,20 @@
 		</jar>
 	</target>
 
-	<target name="build" depends="test,ear,clientjar" />
+	<target name="build-notest" depends="exploded-ear,clientjar" />
 
-        <target name="reload" depends="build">
-                <exec executable="../super/super">
-                     <arg line="reload all"/>
-                </exec>
-        </target>
-        <target name="restart" depends="build">
-                <exec executable="../super/super">
-                     <arg line="restart all"/>
-                </exec>
-        </target>
-	
+	<target name="build" depends="test,build-notest" />
+
+    <target name="reload" depends="build-notest">
+		<exec executable="../super/super">
+        	<arg line="reload jboss"/>
+        </exec>
+    </target>
+
+    <target name="restart" depends="build">
+		<exec executable="../super/super">
+        	<arg line="restart jboss"/>
+		</exec>
+    </target>
+
 </project>
