@@ -39,37 +39,39 @@ public class Main {
 		public void run() {
 			JmsProducer producer = new JmsProducer(queue, false);
 			
-			logger.info("Starting event reader thread for queue " + queue);
-			
-			while (true) {
+			try {
+				logger.info("Starting event reader thread for queue " + queue);
 				
-				if (this.quit) {
-					logger.info("Exiting queue dispatcher for queue " + queue);
-					break;
-				}
-				
-				logger.debug("Waiting for events from bot pool");
-				BotEvent event;
-				try {
-					event = pool.take();
+				while (true) {
 					
-					logger.debug("{}", event);
-					
-					if ((event instanceof BotEventToken) ||
-					    (event instanceof BotEventLogin)) {
-						
-						logger.debug("Sending event type " + event.getClass().getName());
-						
-						ObjectMessage message = producer.createObjectMessage(event);
-						producer.send(message);
+					if (this.quit) {
+						logger.info("Exiting queue dispatcher for queue " + queue);
+						break;
 					}
 					
-				} catch (InterruptedException e) {
-					// will check the quit flag now
+					logger.debug("Waiting for events from bot pool");
+					BotEvent event;
+					try {
+						event = pool.take();
+						
+						logger.debug("{}", event);
+						
+						if ((event instanceof BotEventToken) ||
+						    (event instanceof BotEventLogin)) {
+							
+							logger.debug("Sending event type " + event.getClass().getName());
+							
+							ObjectMessage message = producer.createObjectMessage(event);
+							producer.send(message);
+						}
+						
+					} catch (InterruptedException e) {
+						// will check the quit flag now
+					}
 				}
+			} finally {
+				producer.close();
 			}
-			
-			producer.close();
 		}
 	}
 	
@@ -92,43 +94,45 @@ public class Main {
 		public void run() {
 			JmsConsumer consumer = new JmsConsumer(queue);
 			
-			logger.info("Starting dispatch thread for queue " + queue);
+			try {
+				logger.info("Starting dispatch thread for queue " + queue);
+				
+				while (true) {
 			
-			while (true) {
-		
-				if (this.quit) {
-					logger.info("Exiting queue dispatcher for queue " + queue);
-					break;
-				}
-				
-				logger.debug("Waiting for message in queue " + queue);
-				Message received = consumer.receive();
-				
-				logger.debug("received message " + received);
-				
-				if (received instanceof ObjectMessage) {
-					
-					ObjectMessage objectReceived = (ObjectMessage) received;
-					
-					Object obj;
-					
-					try {
-						 obj = objectReceived.getObject();
-					} catch (JMSException e) {
-						e.printStackTrace();
-						continue; // not much else to do...
+					if (this.quit) {
+						logger.info("Exiting queue dispatcher for queue " + queue);
+						break;
 					}
 					
-					logger.debug("Message contained object: " + obj.getClass().getCanonicalName());
+					logger.debug("Waiting for message in queue " + queue);
+					Message received = consumer.receive();
 					
-					if (obj instanceof BotTask) {
-						pool.put((BotTask) obj);
+					logger.debug("received message " + received);
+					
+					if (received instanceof ObjectMessage) {
+						
+						ObjectMessage objectReceived = (ObjectMessage) received;
+						
+						Object obj;
+						
+						try {
+							 obj = objectReceived.getObject();
+						} catch (JMSException e) {
+							e.printStackTrace();
+							continue; // not much else to do...
+						}
+						
+						logger.debug("Message contained object: " + obj.getClass().getCanonicalName());
+						
+						if (obj instanceof BotTask) {
+							pool.put((BotTask) obj);
+						}
 					}
 				}
+			} finally {
+				consumer.close();
 			}
-
-			consumer.close();
-		}		
+		}	
 	}
 	
 	private static Thread watchQueue(String queue, BotPool pool) {

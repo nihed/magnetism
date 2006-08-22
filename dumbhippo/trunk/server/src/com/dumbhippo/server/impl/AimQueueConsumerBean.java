@@ -55,9 +55,13 @@ public class AimQueueConsumerBean implements MessageListener {
 	private void sendHtmlReplyMessage(BotEvent event, String aimName, String htmlMessage) {
 		BotTaskMessage message = new BotTaskMessage(event.getBotName(), aimName, htmlMessage);
 		JmsProducer producer = new JmsProducer(BotTask.QUEUE, true);
-		ObjectMessage jmsMessage = producer.createObjectMessage(message);
-		// logger.debug("Sending JMS message to " + BotTask.QUEUE + ": " + jmsMessage);
-		producer.send(jmsMessage);
+		try {
+			ObjectMessage jmsMessage = producer.createObjectMessage(message);
+			// logger.debug("Sending JMS message to " + BotTask.QUEUE + ": " + jmsMessage);
+			producer.send(jmsMessage);
+		} finally {
+			producer.close();
+		}
 	}
 	
 	private void sendReplyMessage(BotEvent event, String aimName, String textMessage) {

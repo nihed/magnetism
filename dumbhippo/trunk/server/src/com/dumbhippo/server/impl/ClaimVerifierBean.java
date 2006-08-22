@@ -149,8 +149,12 @@ public class ClaimVerifierBean implements ClaimVerifier {
 			
 			BotTaskMessage message = new BotTaskMessage(null, resource.getScreenName(), bodyHtml.toString());
 			JmsProducer producer = new JmsProducer(BotTask.QUEUE, true);
-			ObjectMessage jmsMessage = producer.createObjectMessage(message);
-			producer.send(jmsMessage);
+			try {
+				ObjectMessage jmsMessage = producer.createObjectMessage(message);
+				producer.send(jmsMessage);
+			} finally {
+				producer.close();
+			}
 		}
 	}
 	

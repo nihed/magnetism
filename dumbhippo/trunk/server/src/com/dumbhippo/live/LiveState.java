@@ -399,7 +399,11 @@ public class LiveState {
 		try {
 			liveUserUpdater.join();
 			logger.info("Successfully stopped LiveState user updater thread");
-		} catch (InterruptedException e) {}
+		} catch (InterruptedException e) {
+			
+		}
+		
+		updateQueue.close();
 	}
 	
 	/**************************************************************************/

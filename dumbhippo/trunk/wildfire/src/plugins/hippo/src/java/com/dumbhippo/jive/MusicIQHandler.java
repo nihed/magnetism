@@ -34,12 +34,19 @@ public class MusicIQHandler extends AbstractIQHandler {
 		
 		Log.debug("creaing Music handler");
 		info = new IQHandlerInfo("music", "http://dumbhippo.com/protocol/music");
-		
+				
 		Log.debug("Opening JmsProducer for " + XmppEvent.QUEUE);
 		queue = new JmsProducer(XmppEvent.QUEUE, false);
 		
 		this.roomHandler = roomHandler;
 		Log.debug("Done constructing Music IQ handler");
+	}
+	
+	@Override
+	public void destroy() {
+		super.destroy();
+		queue.close();
+		queue = null;
 	}
 	
 	@Override
