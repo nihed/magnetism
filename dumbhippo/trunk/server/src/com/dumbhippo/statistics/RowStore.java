@@ -166,6 +166,7 @@ public class RowStore {
 				// if we won't need nextRowBlock anymore, unlock it
 				if (nextIndex >= nextRowBlock.startRow + BLOCK_ROWS || nextIndex == endIndex) {
 					unlockBlock(nextRowBlock);
+					nextRowBlock = null;
 				}
 			}
 			
@@ -188,6 +189,7 @@ public class RowStore {
 		protected void finalize() {
 			if (nextRowBlock != null)
 				unlockBlock(nextRowBlock);
+			    nextRowBlock = null;
 		}
 	}	
 }
