@@ -256,4 +256,12 @@ public abstract class JmsQueue {
 			initLock.unlock();
 		}
 	}
+	
+	@Override
+	public void finalize() {
+		if (init != null) {
+			System.err.println("ERROR JmsQueue object finalized without being closed, will leak a thread: " + queue);
+			logger.error("JmsQueue object finalized without being closed, will leak a thread {} {}", queue, local);
+		}
+	}
 }
