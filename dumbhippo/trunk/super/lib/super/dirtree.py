@@ -8,7 +8,7 @@ import super.service
 from super.expander import Expander
 
 def verbose(msg):
-    #print >>sys.stderr, msg
+   # print >>sys.stderr, msg
     pass
 
 # Return values for DirTree.check()
@@ -295,14 +295,16 @@ class DirTree:
         if dest_stat is None or not stat.S_ISDIR(dest_stat.st_mode):
             os.mkdir(dest)
         
-        n = self.nodes[path]
-        
-        # set the directory's timestamps to match the source
-        if n.times:
-            os.utime(dest, n.times)
-        
         for f in self.nodes[path].children:
             self._write_path(f)
+        
+        n = self.nodes[path]
+        
+        # set the directory's timestamps to match the source,
+        # AFTER writing child files so writing the children
+        # doesn't break things
+        if n.times:
+            os.utime(dest, n.times)
         
     def _write_path(self, path):
         """Write out a node, including children, if any."""
@@ -530,13 +532,17 @@ class DirTree:
                 # hot-update if allowed
                 if result == UPDATE_HOT or result == UPDATE_OK:
                     result = UPDATE_HOT
-                    hotcopies.extend([path])
+                    # dir added to hotcopies further down
                 else:
                     pass # result should already be UPDATE_NEEDED
             else:
                 verbose("target dir %s has correct mtime" % dest)
 
         if result == UPDATE_HOT:
+            # if we update any files in a dir we need to also hot update
+            # the directory, otherwise creating the files might break
+            # the mtime on the dir
+            hotcopies.extend([path])
             return (result, hotcopies)
         else:
             return (result, [])
