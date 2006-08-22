@@ -861,12 +861,26 @@ defineClass(dh.stacker.GroupChatBlock, dh.stacker.Block,
 
 	_updateMessagesDiv : function() {
 		if (this._div) {
-			var str = "";
+			while (this._messagesDiv.firstChild)
+				this._messagesDiv.removeChild(this._messagesDiv.firstChild);
+
+			var msgs = document.createElement("div");
+			dojo.html.setClass(msgs, "dh-group-chat-messages");
 			var i;
 			for (i = 0; i < this._messages.length; ++i) {
-				str = str + " " + this._messages[i].text;
+				var msg = document.createElement("div");
+				dojo.html.setClass(msg, "dh-group-chat-message");
+				dojo.dom.textContent(msg, this._messages[i].text + " - ");
+				var a = document.createElement("a");
+				dojo.html.setClass(a, "dh-group-chat-message-author");
+				a.href = "/person?who=" + this._messages[i].fromId;
+				a.title = "wouldn't it be nice to see their name...";
+				a.target = "_blank";
+				dojo.dom.textContent(a, this._messages[i].fromId);
+				msg.appendChild(a);
+				msgs.appendChild(msg);
 			}
-			dojo.dom.textContent(this._messagesDiv, str);
+			this._messagesDiv.appendChild(msgs);
 		}
 	},
 	

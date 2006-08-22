@@ -130,6 +130,12 @@
 			list-style: 		none;
 			font-size:		12px;
 		}
+		.dh-stacked-block-group-chat .dh-group-chat-messages .dh-group-chat-message {
+			font-size:		10px;
+		}
+		.dh-stacked-block-group-chat .dh-group-chat-messages .dh-group-chat-message .dh-group-chat-message-author {
+			font-size:		10px;
+		}
 	</style>
 	<script>
 		dojo.require('dh.stacker');
