@@ -260,6 +260,9 @@ public abstract class JmsQueue {
 	@Override
 	public void finalize() {
 		if (init != null) {
+			// the jboss implementation of jms creates a thread for open connections, if we don't close
+			// the jms connection it leaks said thread and thus our whole app since our class loader
+			// is in Thread.contextClassLoader
 			System.err.println("ERROR JmsQueue object finalized without being closed, will leak a thread: " + queue);
 			logger.error("JmsQueue object finalized without being closed, will leak a thread {} {}", queue, local);
 		}

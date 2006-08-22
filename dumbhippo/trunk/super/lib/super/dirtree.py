@@ -251,7 +251,16 @@ class DirTree:
         """When writing, create a symlink."""
         src = self.nodes[path].src
         dest = os.path.join(self.target, path)
-        os.symlink(src, dest)
+        try:
+            os.symlink(src, dest)
+        except OSError, e:
+            if e.errno == errno.EEXIST:
+                current_src = os.readlink(dest)
+                if current_src != src:
+                    print >>sys.stderr, 'symlink %s->%s is messed up' % (dest,src)
+                    raise e
+            else:
+                raise e
 
     def _copy_file(self, path):
         """When writing, copy a file without expansion."""
