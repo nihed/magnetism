@@ -39,7 +39,7 @@ fi
 # so change the cwd to the right place; when we upgrade hibernate-annotations
 # to a newer version, we can set a property for the index location
 cd $targetdir/data
-JAVA_OPTS="-XX:MaxPermGen=128M -Xmx${javaMaxHeap}m -Xms${javaMaxHeap}m -Xdebug -Xrunjdwp:server=y,transport=dt_socket,address=$jdwpPort,suspend=n" \
+JAVA_OPTS="-XX:MaxPermSize=128M -Xmx${javaMaxHeap}m -Xms${javaMaxHeap}m -Xdebug -Xrunjdwp:server=y,transport=dt_socket,address=$jdwpPort,suspend=n" \
 $jbossdir/bin/run.sh -Djboss.server.home.dir=$targetdir -Djboss.server.home.url=file://$targetdir > /dev/null 2>&1 &
 pid=$!
 started=false
