@@ -935,7 +935,7 @@ defineClass(dh.stacker.GroupMemberBlock, dh.stacker.Block,
 	},
 
 	load : function(completeFunc, errorFunc) {
-		this.setTitle("Group member " + this._groupId + " user " + this._userId);
+		this.setTitle(" has a new group member ");
 		completeFunc(this);		
 	},
 	
@@ -956,7 +956,33 @@ defineClass(dh.stacker.GroupMemberBlock, dh.stacker.Block,
 	unrealize : function() {
 		dh.stacker.GroupMemberBlock.superclass.unrealize.call(this);	
 
-	}	
+	},
+
+	// override
+	_updateTitleDiv : function() {
+		if (this._div) {
+			while (this._titleDiv.firstChild)
+				this._titleDiv.removeChild(this._titleDiv.firstChild);
+
+			var group = document.createElement("a");
+			group.href = "/group?who=" + this._groupId;
+			group.title = "A group title would be nice";
+			group.target = "_blank";
+			dojo.dom.textContent(group, this._groupId);
+			this._titleDiv.appendChild(group);
+			
+			var hasa = document.createElement("span");
+			dojo.dom.textContent(hasa, this.getTitle());
+			this._titleDiv.appendChild(hasa);
+
+			var member = document.createElement('a');
+			member.href = "/person?who=" + this._userId;
+			member.title = "A person name would be nice";
+			member.target="_blank";
+			dojo.dom.textContent(member, this._userId);
+			this._titleDiv.appendChild(member);
+		}
+	}
 });
 
 
