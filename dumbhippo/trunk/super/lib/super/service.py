@@ -12,6 +12,7 @@ IGNORE = 1               # Skip in target when checking for updateness
 PRESERVE = 2             # Don't erase for 'build', just fir 'init' 
 FUZZY = 4                # Do approximate comparisons ... right now,
                          # defined as "ignore trailing whitespace"
+HOT_UPDATE_LAST = 8      # if hot updating, do this file last
 
 class Service:
 
@@ -48,7 +49,7 @@ class Service:
         """Add a <requiredService/> element to the service."""
         self.required_services[service_name] = 1
 
-    def add_target_attributes(self, pattern, ignore, preserve, fuzzy):
+    def add_target_attributes(self, pattern, ignore, preserve, fuzzy, hot_update_last):
         flags = 0
         if ignore:
             flags |= IGNORE
@@ -56,6 +57,8 @@ class Service:
             flags |= PRESERVE
         if fuzzy:
             flags |= FUZZY
+        if hot_update_last:
+            flags |= HOT_UPDATE_LAST
 
         (pattern, pattern_flags) = super.dirtree.compile_pattern(pattern)
             

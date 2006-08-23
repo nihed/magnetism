@@ -128,7 +128,7 @@ class DirTree:
     def write(self):
         """Write the tree out into the output location. Any cleanup
         of existing content must be done beforehand. """
-        self._write_path('')
+        self._write_path('', False)
         
     def check(self, target_attributes):
         """Check that the contents of the output location match the tree.
@@ -141,13 +141,22 @@ class DirTree:
                        returned as the second item in the tuple
         UPDATE_NEEDED --  The trees differed, write() must be called
         """
-        return self._check_path('', target_attributes)
+        (result, hotcopies) = self._check_path('', target_attributes)
+        move_to_end = []
+        for path in hotcopies:
+            hot_update_last = self._has_target_attribute(path, target_attributes, super.service.HOT_UPDATE_LAST)
+            if hot_update_last:
+                move_to_end.append(path)
+        for path in move_to_end:
+            hotcopies.remove(path)
+            hotcopies.append(path)
+        return (result, hotcopies)
 
     def hot_update(self, hot_files):
         """Do a hot update based on the files returned from check()"""
         # the "files" can also be directories that need their timestamp updated
         for path in hot_files:
-            self._write_path(path)
+            self._write_path(path, True)
 
     def list_sources(self, path=''):
         """Return an array of files and directories (excluding symlinked
@@ -288,8 +297,8 @@ class DirTree:
         src_stat = os.stat(src)
         os.chmod(dest, stat.S_IMODE(src_stat.st_mode))
 
-    def write_dir(self, path):
-        """Write out a directory node with its children."""
+    def _write_dir(self, path, hot):
+        """Write out a directory node, including its children if not hot, without children if hot"""
         if (path != ''):
             dest = os.path.join(self.target, path)
         else:
@@ -303,9 +312,10 @@ class DirTree:
 
         if dest_stat is None or not stat.S_ISDIR(dest_stat.st_mode):
             os.mkdir(dest)
-        
-        for f in self.nodes[path].children:
-            self._write_path(f)
+
+        if not hot:
+            for f in self.nodes[path].children:
+                self._write_path(f)
         
         n = self.nodes[path]
         
@@ -315,12 +325,12 @@ class DirTree:
         if n.times:
             os.utime(dest, n.times)
         
-    def _write_path(self, path):
-        """Write out a node, including children, if any."""
+    def _write_path(self, path, hot):
+        """Write out a node, including children, if any. hot=True if we're walking hot update list so need not recurse."""
         if self._test_flag(path, SYMLINK):
             self._symlink(path)
         elif self._test_flag(path, DIR):
-            self.write_dir(path)
+            self._write_dir(path, hot)
         elif self._test_flag(path, EXPAND):
             self._expand_file(path)
         else:
@@ -551,7 +561,8 @@ class DirTree:
             # if we update any files in a dir we need to also hot update
             # the directory, otherwise creating the files might break
             # the mtime on the dir
-            hotcopies.extend([path])
+            if path != '': # root node has path of ''
+                hotcopies.extend([path])
             return (result, hotcopies)
         else:
             return (result, [])

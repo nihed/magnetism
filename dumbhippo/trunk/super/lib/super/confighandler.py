@@ -102,17 +102,19 @@ class ConfigHandler (xml.sax.ContentHandler):
                 self.state = SERVICE_REQUIREDSERVICE
                 return
             elif (name == 'targetAttributes'):
-                (pattern, ignore, preserve, fuzzy) = \
+                (pattern, ignore, preserve, fuzzy, hot_update_last) = \
                     self._parse_attributes(name, attrs, 
                                            'pattern',  True,
                                            'ignore',   False,
                                            'preserve', False,
-                                           'fuzzy',    False)
+                                           'fuzzy',    False,
+                                           'hot_update_last', False)
                 
                 self.service.add_target_attributes(pattern,
                                                    self._parse_bool('ignore', ignore),
                                                    self._parse_bool('preserve', preserve),
-                                                   self._parse_bool('fuzzy', fuzzy))
+                                                   self._parse_bool('fuzzy', fuzzy),
+                                                   self._parse_bool('hot_update_last', hot_update_last))
                 self.state = SERVICE_TARGETATTRIBUTES
                 return
             elif (name == 'directory'):
