@@ -22,17 +22,20 @@
 	<c:choose>
 		<c:when test="${browser.linuxRequested}">
 			<%-- LINUX RELEASE NOTES GO HERE --%>
-			<p>Version 1.1.11</p>
+			<p>Version 1.1.14</p>
 			<ul>
-				<li>World share swarming: The bubble now shows how many people visited a post.</li>			
+				<li>Live chat previews in Mugshot bar.</li>			
+				<li>Better tracking of who's at a page.</li>			
+				<li>Firefox toolbar button to share links.</li>			
 			</ul>
 		</c:when>
 		<c:otherwise>
 			<%-- WINDOWS RELEASE NOTES GO HERE --%>
-			<p>Version 1.1.59</p>
+			<p>Version 1.1.64</p>
 			<ul>
-				<li>World share swarming: The bubble now shows how many people visited a post.</li>
-				<li>Fixed a bug that caused a lot of old bubbles to show up again periodically.</li>				
+				<li>Support for new server version.</li>
+				<li>Mugshot bar works better on on network reconnection.</li>
+				<li>Memory leak fixes.</li>
 			</ul>
 		</c:otherwise>
 	</c:choose>
