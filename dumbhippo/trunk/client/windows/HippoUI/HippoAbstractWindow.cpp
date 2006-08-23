@@ -184,14 +184,17 @@ HippoAbstractWindow::HippoAbstractWindowIECallback::launchBrowser(const HippoBST
 bool
 HippoAbstractWindow::HippoAbstractWindowIECallback::isOurServer(const HippoBSTR &host)
 {
-    HippoUStr serverHost;
+    char *serverHostU;
     int port;
     HippoPlatform *platform;
 
     platform = abstractWindow_->ui_->getPlatform();
-    hippo_platform_get_web_host_port(platform, &serverHost, &port);
+    hippo_platform_get_web_host_port(platform, &serverHostU, &port);
 
-    return host == serverHost.toBSTR();
+    HippoBSTR serverHost = HippoBSTR::fromUTF8(serverHostU);
+    g_free(serverHostU);
+
+    return host == serverHost;
 }
 
 HRESULT 
@@ -392,13 +395,21 @@ HippoAbstractWindow::processMessage(UINT   message,
 
 LRESULT CALLBACK 
 HippoAbstractWindow::windowProc(HWND   window,
-                            UINT   message,
-                            WPARAM wParam,
-                            LPARAM lParam)
+                                UINT   message,
+                                WPARAM wParam,
+                                LPARAM lParam)
 {
-    HippoAbstractWindow *AbstractWindow = hippoGetWindowData<HippoAbstractWindow>(window);
-    if (AbstractWindow) {
-        if (AbstractWindow->processMessage(message, wParam, lParam))
+    // Our only content is the IE browser, and it erases everything itself
+    // on repaint, so we tell windows not to repaint by returning 1. This
+    // prevents flicker on resize.
+    if (message == WM_ERASEBKGND)
+        return 1;
+
+    // It would be nice to ref the abstractWindow here, but we don't enforce subclasses
+    // of HippoAbstractWindow being refcountable, though some are.
+    HippoAbstractWindow *abstractWindow = hippoGetWindowData<HippoAbstractWindow>(window);
+    if (abstractWindow) {
+        if (abstractWindow->processMessage(message, wParam, lParam))
             return 0;
     }
 

@@ -444,14 +444,14 @@ HippoChatWindowImpl::windowProc(HWND   window,
                                 WPARAM wParam,
                                 LPARAM lParam)
 {
-    HippoChatWindowImpl *chatWindow = hippoGetWindowData<HippoChatWindowImpl>(window);
+    // Our only content is the IE browser, and it erases everything itself
+    // on repaint, so we tell windows not to repaint by returning 1. This
+    // prevents flicker on resize.
+    if (message == WM_ERASEBKGND)
+        return 1;
+
+    HippoPtr<HippoChatWindowImpl> chatWindow = hippoGetWindowData<HippoChatWindowImpl>(window);
     if (chatWindow) {
-        // Our only content is the IE browser, and it erases everything itself
-        // on repaint, so we tell windows not to repaint by returning 1. This
-        // prevents flicker on resize.
-        if (message == WM_ERASEBKGND)
-            return 1;
-        HippoPtr<HippoChatWindowImpl> ref = chatWindow;
         bool result = chatWindow->processMessage(message, wParam, lParam);
         if (result)
             return 0;

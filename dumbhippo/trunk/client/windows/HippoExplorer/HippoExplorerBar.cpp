@@ -625,13 +625,14 @@ HippoExplorerBar::windowProc(HWND   window,
                              WPARAM wParam,
                              LPARAM lParam)
 {
-    HippoExplorerBar *explorerBar = hippoGetWindowData<HippoExplorerBar>(window);
+    // Our only content is the IE browser, and it erases everything itself
+    // on repaint, so we tell windows not to repaint by returning 1. This
+    // prevents flicker on resize.
+    if (message == WM_ERASEBKGND)
+        return 1;
+
+    HippoPtr<HippoExplorerBar> explorerBar = hippoGetWindowData<HippoExplorerBar>(window);
     if (explorerBar) {
-        // Our only content is the IE browser, and it erases everything itself
-        // on repaint, so we tell windows not to repaint by returning 1. This
-        // prevents flicker on resize.
-        if (message == WM_ERASEBKGND)
-            return 1;
         if (explorerBar->processMessage(message, wParam, lParam))
             return 0;
     }

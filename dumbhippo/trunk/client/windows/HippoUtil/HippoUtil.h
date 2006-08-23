@@ -442,11 +442,6 @@ public:
             hippo_utf8_free(str);
     }
 
-    char** operator&() {
-        assert(str == NULL);
-        return &str;
-    }
-
     const char *c_str() const {
         return str;
     }
