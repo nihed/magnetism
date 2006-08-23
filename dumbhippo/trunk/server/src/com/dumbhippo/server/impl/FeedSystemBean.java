@@ -648,7 +648,7 @@ public class FeedSystemBean implements FeedSystem {
 											if (o != null)
 												feedSystem.updateFeedStoreFeed(o);
 										} catch (XmlMethodException e) {
-											logger.warn("Couldn't update feed", e);
+											logger.warn("Couldn't update feed {}: {}", feed, e.getCodeString() + ": " + e.getMessage());
 											feedSystem.markFeedFailedLastUpdate(feed);											
 										}
 									}
