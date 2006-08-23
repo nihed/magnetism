@@ -61,7 +61,10 @@ HippoIpcController *
 HippoComIpcLocatorImpl::createController(const char *serverName)
 {   
     HippoComIpcProvider *provider = HippoComIpcProvider::createInstance(serverName);
-    return HippoBridgedIpcController::createInstance(provider);
+    HippoIpcController *controller = HippoBridgedIpcController::createInstance(provider);
+    provider->unref();
+
+    return controller;
 }
 
 HippoIpcController *
