@@ -31,7 +31,7 @@
 		</c:when>
 		<c:otherwise>
 			<%-- WINDOWS RELEASE NOTES GO HERE --%>
-			<p>Version 1.1.64</p>
+			<p>Version 1.1.65</p>
 			<ul>
 				<li>Support for new server version.</li>
 				<li>Mugshot bar works better on on network reconnection.</li>
