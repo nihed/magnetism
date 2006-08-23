@@ -6,7 +6,6 @@ import java.util.List;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 
-import com.dumbhippo.persistence.AccountFeed;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.TrackFeedEntry;
 import com.dumbhippo.persistence.User;
@@ -137,8 +136,8 @@ public class MusicSystemBean implements MusicSystem {
 		return internal.getTrackSearchTracks(viewpoint, searchResult, start, count);
 	}
 	
-	public void addFeedTrack(AccountFeed feed, TrackFeedEntry entry, int entryPosition) {
-		internal.addFeedTrack(feed, entry, entryPosition);
+	public void addFeedTrack(User user, TrackFeedEntry entry, int entryPosition) {
+		internal.addFeedTrack(user, entry, entryPosition);
 	}
 	
 	public long getLatestPlayTime(Viewpoint viewpoint, User user) {

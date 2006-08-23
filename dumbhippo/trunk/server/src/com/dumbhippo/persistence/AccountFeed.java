@@ -12,6 +12,26 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 /**
  * Link between an Account and a Feed; used for example for Rhapsody history feeds.
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * This class is dead/obsolete; it's still here so we can use Java code to migrate 
+ * the old AccountFeed to RHAPSODY ExternalAccount objects. But once that's done this
+ * can be deleted. 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
  */
 
 @Entity

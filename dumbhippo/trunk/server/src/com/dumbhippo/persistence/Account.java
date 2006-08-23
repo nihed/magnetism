@@ -105,8 +105,6 @@ public class Account extends Resource {
 
 	private Set<ExternalAccount> externalAccounts; 
 	
-	private Set<AccountFeed> feeds;
-	
 	/**
 	 * Used only for Hibernate 
 	 */
@@ -114,8 +112,7 @@ public class Account extends Resource {
 		this(null);
 	}
 	
-	public Account(User owner) {	
-		feeds = new HashSet<AccountFeed>();		
+	public Account(User owner) {			
 		clients = new HashSet<Client>();
 		contacts = new HashSet<Contact>();
 		favoritePosts = new HashSet<Post>();
@@ -662,35 +659,6 @@ public class Account extends Resource {
 
 	public void touchGroupInvitationReceived() {
 		this.groupInvitationReceived = System.currentTimeMillis();
-	}
-	
-	@OneToMany(mappedBy="account")
-	@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)
-	public Set<AccountFeed> getFeeds() {
-		return feeds;
-	}
-	
-	/**
-	 * Only hibernate should call this probably
-	 * @param feeds
-	 */
-	protected void setFeeds(Set<AccountFeed> feeds) {
-		if (feeds == null)
-			throw new IllegalArgumentException("null passed for feed");
-		this.feeds = feeds;
-	}
-	
-	
-	@Transient
-	public AccountFeed getRhapsodyHistoryFeed() {
-		Set<AccountFeed> accountFeeds = getFeeds();
-		// we assume there are zero or one not removed AccountFeeds for now, which 
-		// will be pretty bogus in the end 
-		for (AccountFeed f : accountFeeds) {
-			if (!f.isRemoved())
-				return f;
-		}
-		return null;
 	}
 	
 	@Transient

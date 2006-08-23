@@ -3,7 +3,6 @@ package com.dumbhippo.web.pages;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
-import com.dumbhippo.persistence.AccountFeed;
 import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.Sentiment;
@@ -80,11 +79,16 @@ public class AccountPage {
 	}
 	
 	public String getRhapsodyListeningHistoryFeedUrl() {
-		AccountFeed rhapsodyHistoryFeed = signin.getUser().getAccount().getRhapsodyHistoryFeed();
-		if (rhapsodyHistoryFeed != null) {
-			return rhapsodyHistoryFeed.getFeed().getSource().getUrl();
-		} else {
+		ExternalAccount external;
+		try {
+			external = externalAccounts.lookupExternalAccount(signin.getViewpoint(), signin.getUser(), ExternalAccountType.RHAPSODY);
+		} catch (NotFoundException e) {
 			return null;
+		}
+		if (external.getSentiment() != Sentiment.LOVE) {
+			return null;
+		} else {
+			return external.getFeed().getSource().getUrl();
 		}
 	}
 	

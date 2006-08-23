@@ -10,9 +10,7 @@ import javax.ejb.Local;
 import org.apache.lucene.index.IndexWriter;
 import org.hibernate.lucene.DocumentBuilder;
 
-import com.dumbhippo.persistence.AccountFeed;
 import com.dumbhippo.persistence.Track;
-import com.dumbhippo.persistence.TrackFeedEntry;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.services.AmazonAlbumData;
 import com.dumbhippo.services.YahooAlbumData;
@@ -118,6 +116,4 @@ public interface MusicSystemInternal extends MusicSystem {
 	 * @throws IOException
 	 */
 	public void indexAllTracks(IndexWriter writer, DocumentBuilder<Track> builder) throws IOException;
-	
-	public void addFeedTrack(AccountFeed feed, TrackFeedEntry entry, int entryPosition);
 }

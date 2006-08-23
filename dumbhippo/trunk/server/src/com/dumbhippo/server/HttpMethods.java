@@ -3,6 +3,7 @@ package com.dumbhippo.server;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.MalformedURLException;
+import java.net.URL;
 
 import javax.ejb.Local;
 
@@ -338,6 +339,10 @@ public interface HttpMethods {
 	@HttpParams( { "url" })
 	public void doSetRhapsodyHistoryFeed(XmlBuilder xml, UserViewpoint viewpoint, String url) throws XmlMethodException;
     
+	@HttpContentTypes(HttpResponseData.XMLMETHOD)
+	@HttpParams( { "url" })
+	public void doSetBlog(XmlBuilder xml, UserViewpoint viewpoint, URL url) throws XmlMethodException;	
+	
  	@HttpContentTypes(HttpResponseData.XMLMETHOD)
  	@HttpParams( { "filename" })
  	@HttpOptions( optionalParams = { "filename" } )

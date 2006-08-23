@@ -196,6 +196,57 @@ public enum ExternalAccountType {
 		public String getLinkText(String handle, String extra) {
 			throw new UnsupportedOperationException("Not implemented yet");
 		}
+	},
+	BLOG("Blog") {
+		@Override
+		public String getLink(String handle, String extra) {
+			// handle is the blog url (human-readable, not the feed url)
+			return handle;
+		}
+		
+		@Override
+		public String getLinkText(String handle, String extra) {
+			// prettier without the http://
+			if (handle.startsWith("http://"))
+				return handle.substring("http://".length());
+			else
+				return handle;
+		}
+		
+		@Override
+		public String canonicalizeHandle(String handle) throws ValidationException {
+			handle = super.canonicalizeHandle(handle);
+			if (handle != null) {
+				try {
+					handle = new URL(handle).toExternalForm();
+				} catch (MalformedURLException e) {
+					throw new ValidationException("Invalid URL: " + e.getMessage());
+				}
+			}
+			return handle;
+		}
+	},
+	RHAPSODY("Rhapsody") {
+		@Override
+		public String getLink(String handle, String extra) {
+			// handle is the rhapUserId in the feed url
+			return "http://feeds.rhapsody.com/user-track-history.rss?rhapUserId=" + handle + "&userName=I";
+		}
+		
+		@Override
+		public String getLinkText(String handle, String extra) {
+			return "Recent Tracks RSS";
+		}
+		
+		@Override
+		public String canonicalizeHandle(String handle) throws ValidationException {
+			handle = super.canonicalizeHandle(handle);
+			if (handle != null) {
+				if (handle.trim().length() == 0)
+					throw new ValidationException("empty rhapUserId in Rhapsody URL");
+			}
+			return handle;
+		}
 	};
 	
 	private String siteName;

@@ -42,8 +42,6 @@ import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.live.LiveState;
-import com.dumbhippo.persistence.Account;
-import com.dumbhippo.persistence.AccountFeed;
 import com.dumbhippo.persistence.AimResource;
 import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.ChatMessage;
@@ -310,7 +308,13 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		}
 	}	
 	
+	private void throwIfUrlNotHttp(URL url) throws XmlMethodException {
+		if (!(url.getProtocol().equals("http") || url.getProtocol().equals("https")))
+			throw new XmlMethodException(XmlMethodErrorCode.INVALID_URL, "URL must be http or https: '" + url.toExternalForm() + "'");
+	}
+	
 	// FIXME if we change doShareLink to be an "XMLMETHOD" then this can throw XmlMethodException directly
+	// FIXME this method is deprecated; just make your method take an URL then use throwIfUrlNotHttp as required
 	private URL parseUserEnteredUrl(String url, boolean httpOnly) throws MalformedURLException {
 		url = url.trim();
 		URL urlObject;
@@ -1344,12 +1348,16 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		} catch (MalformedURLException e) {
 			throw new XmlMethodException(XmlMethodErrorCode.INVALID_URL, "Invalid URL: " + e.getMessage());
 		}
+		return scrapeFeedFromUrl(urlObject);
+	}
+	
+	private Feed scrapeFeedFromUrl(URL url) throws XmlMethodException {
 		FeedScraper scraper = new FeedScraper();
 		try {
 			// This downloads the url contents, and if it's already an RSS feed then FeedSystem will do it again 
 			// if it's not cached... but since 1) usually we'll be downloading html and not rss here and 2) many feeds
 			// will be cached, it's really not worth making a mess to move the downloaded bytes from FeedScraper to FeedSystem
-			scraper.analzyeURL(urlObject);
+			scraper.analzyeURL(url);
 		} catch (IOException e) {
 			throw new XmlMethodException(XmlMethodErrorCode.NETWORK_ERROR, "Unable to contact the site (" + e.getMessage() + ")");
 		}
@@ -1437,31 +1445,48 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		feedSystem.removeGroupFeed(group, feed);		
 	}
 	
-	public void doSetRhapsodyHistoryFeed(XmlBuilder xml, UserViewpoint viewpoint, String url) throws XmlMethodException {
-		User user = viewpoint.getViewer();
-		Account account = user.getAccount();
-		AccountFeed rhapsodyHistoryFeed = account.getRhapsodyHistoryFeed();
-		
+	// FIXME this doesn't match the other external account manipulation methods exactly since its 
+	// API predates them
+	public void doSetRhapsodyHistoryFeed(XmlBuilder xml, UserViewpoint viewpoint, String urlStr) throws XmlMethodException {
 		// empty string means unset the value
-		if (url.trim().length() == 0) {
-			if (rhapsodyHistoryFeed != null)
-				feedSystem.removeAccountFeed(account, rhapsodyHistoryFeed.getFeed());
+		if (urlStr.trim().length() == 0) {
+			doRemoveExternalAccount(xml, viewpoint, ExternalAccountType.RHAPSODY.name());
 			return;
 		}
-		
+
 		// otherwise, set a new value
-		Feed feed = getFeedFromUserEnteredUrl(url);
-
-		if (rhapsodyHistoryFeed != null && rhapsodyHistoryFeed.getFeed().equals(feed)) {
-			// no change
-			return;
+		
+		URL url;
+		try {
+			url = parseUserEnteredUrl(urlStr, true);
+		} catch (MalformedURLException e) {
+			throw new XmlMethodException(XmlMethodErrorCode.INVALID_URL, "Doesn't look like a Rhapsody RSS URL : " + e.getMessage());
 		}
 		
-		if (rhapsodyHistoryFeed != null)
-			feedSystem.removeAccountFeed(account, rhapsodyHistoryFeed.getFeed());
-		feedSystem.addAccountFeed(account, feed);
-	}
+		String q = url.getQuery();
+		if (q == null)
+			throw new XmlMethodException(XmlMethodErrorCode.INVALID_URL, "Doesn't look like a Rhapsody RSS URL: " + urlStr);
+		
+		int i = q.indexOf("rhapUserId=");
+		int j = q.indexOf("&", i);
+		if (i < 0 || j < 0 || i == j) {
+			throw new XmlMethodException(XmlMethodErrorCode.INVALID_URL, "Doesn't look like a Rhapsody RSS URL: " + url);
+		}
+		String rhapUserId = q.substring(i, j);
+		Feed feed = scrapeFeedFromUrl(url);
+		
+		ExternalAccount external = externalAccountSystem.getOrCreateExternalAccount(viewpoint, ExternalAccountType.RHAPSODY);
+		
+		try {
+			external.setHandleValidating(rhapUserId);
+		} catch (ValidationException e) {
+			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, e.getMessage());
+		}
 
+		external.setSentiment(Sentiment.LOVE);
+		external.setFeed(feed);
+	}
+	
 	private ExternalAccountType parseExternalAccountType(String type) throws XmlMethodException {
 		try {
 			return ExternalAccountType.valueOf(type);
@@ -1630,6 +1655,23 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		external.setSentiment(Sentiment.LOVE);
 	}
 
+	public void doSetBlog(XmlBuilder xml, UserViewpoint viewpoint, URL url) throws XmlMethodException {
+		throwIfUrlNotHttp(url);
+		
+		Feed feed = scrapeFeedFromUrl(url);
+		
+		ExternalAccount external = externalAccountSystem.getOrCreateExternalAccount(viewpoint, ExternalAccountType.BLOG);
+		
+		try {
+			external.setHandleValidating(url.toExternalForm());
+		} catch (ValidationException e) {
+			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, e.getMessage());
+		}
+
+		external.setSentiment(Sentiment.LOVE);
+		external.setFeed(feed);
+	}
+	
 	private StatisticsService getStatisticsService() throws XmlMethodException {
 		// This probably should be using JNDI, or MX, or EJB injection, but the static
 		// member variable in StatisticsService is sufficient for now and simple

@@ -31,13 +31,14 @@ import org.slf4j.Logger;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.ThreadUtils;
 import com.dumbhippo.TypeUtils;
-import com.dumbhippo.persistence.Account;
-import com.dumbhippo.persistence.AccountFeed;
+import com.dumbhippo.persistence.ExternalAccount;
+import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.Feed;
 import com.dumbhippo.persistence.FeedEntry;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupFeed;
 import com.dumbhippo.persistence.LinkResource;
+import com.dumbhippo.persistence.Sentiment;
 import com.dumbhippo.persistence.TrackFeedEntry;
 import com.dumbhippo.server.FeedSystem;
 import com.dumbhippo.server.IdentitySpider;
@@ -260,9 +261,10 @@ public class FeedSystemBean implements FeedSystem {
 		if (entry.getFeed().getAccounts() == null) {
 			logger.warn("addTrackFromFeedEntry called for {}, but no accounts associated with feed", entry);
 		}
-		for (AccountFeed afeed : entry.getFeed().getAccounts()) {
+		for (ExternalAccount external : entry.getFeed().getAccounts()) {
 			// logger.debug("Processing feed event {} for account {}", entry.getTitle(), afeed.getAccount());
-			musicSystem.addFeedTrack(afeed, entry, entryPosition);
+			if (external.getAccountType() == ExternalAccountType.RHAPSODY)
+				musicSystem.addFeedTrack(external.getAccount().getOwner(), entry, entryPosition);
 		}
 	}
 	
@@ -540,7 +542,11 @@ public class FeedSystemBean implements FeedSystem {
 	}
 	
 	public List<Feed> getInUseFeeds() {
-		List l = em.createQuery("SELECT f FROM Feed f WHERE EXISTS (SELECT gf FROM GroupFeed gf WHERE gf.feed = f AND gf.removed = 0) OR EXISTS (SELECT af FROM AccountFeed af WHERE af.feed = f AND af.removed = 0)").getResultList();
+		List l = em.createQuery("SELECT f FROM Feed f WHERE EXISTS " + 
+				" (SELECT gf FROM GroupFeed gf WHERE gf.feed = f AND gf.removed = 0) OR " +
+				" EXISTS (SELECT ea FROM ExternalAccount ea WHERE ea.feed = f AND ea.sentiment = :loved)")
+				.setParameter("loved", Sentiment.LOVE)
+				.getResultList();
 		return TypeUtils.castList(Feed.class, l);
 	}
 	
@@ -722,29 +728,7 @@ public class FeedSystemBean implements FeedSystem {
 			}
 		}
 	}
-	
-	public void addAccountFeed(Account account, Feed feed) {
-		for (AccountFeed old : account.getFeeds()) {
-			if (old.getFeed().equals(feed)) {
-				old.setRemoved(false);
-				return;
-			}
-		}
-		AccountFeed accountFeed = new AccountFeed(account, feed);
-		em.persist(accountFeed);
-		account.getFeeds().add(accountFeed);
-	}
-	
-	public void removeAccountFeed(Account account, Feed feed) {
-		for (AccountFeed old : account.getFeeds()) {
-			if (old.getFeed().equals(feed)) {
-				old.setRemoved(true);
-				return;
-			}
-		}
-	}
-	
-	
+		
 	/** 
 	 * For now the only point of this vs. the one that comes with Rome is that
 	 * we can do logging.

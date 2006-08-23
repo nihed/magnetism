@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -231,6 +233,30 @@ public class HttpMethodsServlet2 extends AbstractServlet {
 					return UserBlockData.class;
 				}
 				
+			});
+			
+			marshallers.put(URL.class, new Marshaller<URL>() {
+				public URL marshal(Viewpoint viewpoint, String s) throws XmlMethodException {
+					if (s == null)
+						return null;
+					s = s.trim();
+					URL url;
+					try {
+						url = new URL(s);
+					} catch (MalformedURLException e) {
+						if (!s.startsWith("http://")) {
+							// let users type just "example.com" instead of "http://example.com"
+							return marshal(viewpoint, "http://" + s);	
+						} else {
+							throw new XmlMethodException(XmlMethodErrorCode.INVALID_URL, "Invalid URL: '" + s + "'");
+						}
+					}
+					return url;
+				}
+
+				public Class<?> getType() {
+					return URL.class;
+				}
 			});
 		}
 		

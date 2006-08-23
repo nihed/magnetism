@@ -41,7 +41,6 @@ import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.ThreadUtils;
 import com.dumbhippo.TypeUtils;
-import com.dumbhippo.persistence.AccountFeed;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.MembershipStatus;
 import com.dumbhippo.persistence.SongDownloadSource;
@@ -1802,23 +1801,38 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	}
 
 	
-	public void addFeedTrack(AccountFeed feed, TrackFeedEntry entry, int entryPosition) {
-		final User user = feed.getAccount().getOwner();
-		
+	public void addFeedTrack(final User user, TrackFeedEntry entry, int entryPosition) {
 		final Map<String,String> properties = new HashMap<String,String>();
 		properties.put("type", ""+TrackType.NETWORK_STREAM);
-		properties.put("name", entry.getTrack());
-		properties.put("artist", entry.getArtist());
-		properties.put("album", entry.getAlbum());
-		properties.put("url", entry.getPlayHref());
 		
-		try {
-			Integer duration = Integer.parseInt(entry.getDuration());
-			duration = duration/1000;  // Rhapsody duration info is in milliseconds, elswhere it's seconds
+		// Rhapsody has a tendency to leave stuff blank, e.g. artist and duration are known to be sometimes blank
+		String name = entry.getTrack();
+		String album = entry.getAlbum();
+		String url = entry.getPlayHref();
+		String duration = entry.getDuration();
+		String artist = entry.getArtist();
+		if (artist == null || artist.trim().length() == 0) {
+			logger.debug("Rhapsody feed has blank artist field");
+			artist = "Unknown";
+		}
 		
-			properties.put("duration", ""+duration);
-		} catch (NumberFormatException e) {
-			logger.debug("bad duration in rhapsody feed '{}'", entry.getDuration());
+		properties.put("name", name);
+		properties.put("artist", artist);
+		properties.put("album", album);
+		properties.put("url", url);
+		
+		if (duration != null && duration.trim().length() > 0) {
+			try {
+				Integer durationInt = Integer.parseInt(duration);
+				durationInt = durationInt/1000;  // Rhapsody duration info is in milliseconds, elswhere it's seconds
+			
+				properties.put("duration", ""+duration);
+			} catch (NumberFormatException e) {
+				logger.debug("bad duration in rhapsody feed '{}'", duration);
+				// just don't store the duration
+			}
+		} else {
+			logger.debug("Rhapsody feed has empty duration field");
 			// just don't store the duration
 		}
 		
@@ -1855,7 +1869,10 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 				Track t = em.find(Track.class, trackId);
 				if (t == null)
 					throw new RuntimeException("database isolation mistake (?): null track " + trackId);
-				addTrackHistory(user, t, new Date(virtualPlayTime));
+				User u = em.find(User.class, user.getId());
+				if (u == null)
+					throw new RuntimeException("failed to reattach user");
+				addTrackHistory(u, t, new Date(virtualPlayTime));
 			}
 		});
 	}
