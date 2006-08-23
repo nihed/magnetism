@@ -100,7 +100,7 @@ public abstract class JmsQueue {
 				}
 				closeSub();
 			} catch (JMSException e) {
-				logger.warn("Exception closing JMS session/connection, ignoring", e);
+				logger.warn("Exception closing JMS session/connection, ignoring, will probably create memory leak", e);
 			} finally {
 				// just forget about anything we couldn't close, what else 
 				// are we supposed to do?

@@ -14,4 +14,11 @@
 	<natures>
 		<nature>org.eclipse.jdt.core.javanature</nature>
 	</natures>
+	<linkedResources>
+		<link>
+			<name>eclipse-build</name>
+			<type>2</type>
+			<location>ECLIPSE_BUILD_DIR</location>
+		</link>
+	</linkedResources>
 </projectDescription>
