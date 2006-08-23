@@ -315,7 +315,7 @@ class DirTree:
 
         if not hot:
             for f in self.nodes[path].children:
-                self._write_path(f)
+                self._write_path(f, hot)
         
         n = self.nodes[path]
         
