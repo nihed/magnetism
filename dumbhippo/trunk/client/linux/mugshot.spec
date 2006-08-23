@@ -1,5 +1,5 @@
 Name:           mugshot
-Version:        1.1.12
+Version:        1.1.14
 Release:        1%{?dist}
 Summary:        Companion software for mugshot.org
 
