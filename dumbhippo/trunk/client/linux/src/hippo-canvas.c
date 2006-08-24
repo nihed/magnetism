@@ -77,7 +77,7 @@ hippo_canvas_finalize(GObject *object)
     HippoCanvas *canvas = HIPPO_CANVAS(object);
 
     hippo_canvas_set_root(canvas, NULL);
-    
+
     G_OBJECT_CLASS(hippo_canvas_parent_class)->finalize(object);
 }
 
@@ -122,18 +122,18 @@ hippo_canvas_expose_event(GtkWidget         *widget,
     HippoCanvas *canvas = HIPPO_CANVAS(widget);
     HippoDrawable *hdrawable;
     cairo_t *cr;
-    
+
     if (canvas->root == NULL)
         return FALSE;
 
     cr = gdk_cairo_create(event->window);
     hdrawable = hippo_drawable_new(cr);
-    
+
     hippo_canvas_item_paint(canvas->root, hdrawable);
 
     hippo_drawable_free(hdrawable);
     cairo_destroy(cr);
-    
+
     return FALSE;
 }
 
@@ -162,7 +162,7 @@ hippo_canvas_size_allocate(GtkWidget         *widget,
 
     /* assign widget->allocation and resize widget->window */
     GTK_WIDGET_CLASS(hippo_canvas_parent_class)->size_allocate(widget, allocation);
-    
+
     if (canvas->root != NULL) {
         int x, y;
         if (GTK_WIDGET_NO_WINDOW(widget)) {
@@ -172,7 +172,7 @@ hippo_canvas_size_allocate(GtkWidget         *widget,
             x = 0;
             y = 0;
         }
-            
+
         hippo_canvas_item_allocate(canvas->root,
                                    x, y,
                                    allocation->width,
@@ -186,7 +186,7 @@ hippo_canvas_new(void)
     HippoCanvas *canvas;
 
     canvas = g_object_new(HIPPO_TYPE_CANVAS, NULL);
-    
+
     return GTK_WIDGET(canvas);
 }
 
@@ -271,7 +271,7 @@ hippo_canvas_item_push_cairo(HippoCanvasItem *item,
                              cairo_t         *cr)
 {
     int x, y, width, height;
-    
+
     cairo_save(cr);
 
     hippo_canvas_item_get_allocation(item, &x, &y, &width, &height);
@@ -310,13 +310,13 @@ hippo_canvas_open_test_window(void)
     canvas = hippo_canvas_new();
     gtk_widget_show(canvas);
     gtk_container_add(GTK_CONTAINER(window), canvas);
-    
+
     root = HIPPO_CANVAS_ITEM(hippo_canvas_box_new());
 
     shape1 = g_object_new(HIPPO_TYPE_CANVAS_SHAPE,
                           "width", 50, "height", 100,
                           NULL);
-                          
+
     shape2 = g_object_new(HIPPO_TYPE_CANVAS_SHAPE,
                           "width", 70, "height", 40,
                           "color", 0x00ff00ff,
@@ -326,7 +326,7 @@ hippo_canvas_open_test_window(void)
                             shape1, 0);
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(root),
                             shape2, 0);
-    
+
     hippo_canvas_set_root(HIPPO_CANVAS(canvas), root);
     g_object_unref(root);
 

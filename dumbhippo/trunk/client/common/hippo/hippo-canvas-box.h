@@ -38,12 +38,12 @@ struct _HippoCanvasBox {
     int allocated_height;
 
     int forced_width; /* -1 if unset, use "natural" */
-    
+
     guint8 padding_top;
     guint8 padding_bottom;
     guint8 padding_left;
     guint8 padding_right;
-    
+
     guint request_changed_since_allocate : 1;
 };
 

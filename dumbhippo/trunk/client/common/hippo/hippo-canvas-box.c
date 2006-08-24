@@ -140,7 +140,7 @@ hippo_canvas_box_class_init(HippoCanvasBoxClass *klass)
                                                      0,
                                                      255,
                                                      0,
-                                                     G_PARAM_READABLE | G_PARAM_WRITABLE)); 
+                                                     G_PARAM_READABLE | G_PARAM_WRITABLE));
     g_object_class_install_property(object_class,
                                     PROP_PADDING_RIGHT,
                                     g_param_spec_int("padding-right",
@@ -158,7 +158,7 @@ hippo_canvas_box_class_init(HippoCanvasBoxClass *klass)
                                                      -1,
                                                      255,
                                                      -1,
-                                                     G_PARAM_READABLE | G_PARAM_WRITABLE));   
+                                                     G_PARAM_READABLE | G_PARAM_WRITABLE));
 }
 
 static void
@@ -285,7 +285,7 @@ hippo_canvas_box_get_width_request(HippoCanvasItem *item)
 
     if (box->forced_width >= 0)
         return box->forced_width;
-    
+
     total = 0;
 
     for (link = box->children; link != NULL; link = link->next) {
@@ -319,7 +319,7 @@ hippo_canvas_box_get_height_request(HippoCanvasItem *item,
 
     total += box->padding_top;
     total += box->padding_bottom;
-    
+
     return total;
 }
 
@@ -334,8 +334,8 @@ hippo_canvas_box_allocate(HippoCanvasItem *item,
     int used;
     int expandable_count;
     int extra;
-    GSList *link;        
-    
+    GSList *link;
+
     box->allocated_x = x;
     box->allocated_y = y;
     box->allocated_width = width;
@@ -351,11 +351,11 @@ hippo_canvas_box_allocate(HippoCanvasItem *item,
             used += child->height_request;
         else
             used += child->width_request;
-        
+
         if (child->expand)
             expandable_count += 1;
     }
-    
+
     if (expandable_count == 0) {
         extra = 0;
     } else if (box->orientation == HIPPO_ORIENTATION_VERTICAL) {
@@ -371,7 +371,7 @@ hippo_canvas_box_allocate(HippoCanvasItem *item,
     /* got less than requested, currently not handled sanely in general... */
     if (extra < 0)
         extra = 0;
-    
+
     if (box->orientation == HIPPO_ORIENTATION_VERTICAL) {
         int top_y;
         int bottom_y;
@@ -385,7 +385,7 @@ hippo_canvas_box_allocate(HippoCanvasItem *item,
             req = child->height_request;
             if (child->expand)
                 req += extra;
-            
+
             hippo_canvas_item_allocate(child->item,
                                        x + box->padding_left,
                                        child->end ? bottom_y : top_y,
@@ -409,7 +409,7 @@ hippo_canvas_box_allocate(HippoCanvasItem *item,
             req = child->width_request;
             if (child->expand)
                 req += extra;
-            
+
             hippo_canvas_item_allocate(child->item,
                                        child->end ? right_x : left_x,
                                        y + box->padding_top,
@@ -461,7 +461,7 @@ hippo_canvas_box_button_press_event (HippoCanvasItem *item,
                                                    event);
         }
     }
-    
+
     return FALSE;
 }
 
@@ -469,7 +469,7 @@ static void
 hippo_canvas_box_request_changed(HippoCanvasItem *item)
 {
     HippoCanvasBox *box = HIPPO_CANVAS_BOX(item);
-    
+
     box->request_changed_since_allocate = TRUE;
 }
 
@@ -477,7 +477,7 @@ static gboolean
 hippo_canvas_box_get_needs_resize(HippoCanvasItem *item)
 {
     HippoCanvasBox *box = HIPPO_CANVAS_BOX(item);
-    
+
     return box->request_changed_since_allocate;
 }
 

@@ -80,7 +80,7 @@ static void
 hippo_canvas_shape_iface_init(HippoCanvasItemClass *item_class)
 {
     item_parent_class = g_type_interface_peek_parent(item_class);
-    
+
     item_class->paint = hippo_canvas_shape_paint;
     item_class->get_width_request = hippo_canvas_shape_get_width_request;
     item_class->get_height_request = hippo_canvas_shape_get_height_request;
@@ -91,12 +91,12 @@ static void
 hippo_canvas_shape_class_init(HippoCanvasShapeClass *klass)
 {
     GObjectClass *object_class = G_OBJECT_CLASS (klass);
-    
+
     object_class->set_property = hippo_canvas_shape_set_property;
     object_class->get_property = hippo_canvas_shape_get_property;
 
     object_class->finalize = hippo_canvas_shape_finalize;
-    
+
     /* we're supposed to register the enum yada yada, but doesn't matter */
     g_object_class_install_property(object_class,
                                     PROP_WIDTH,
@@ -125,7 +125,7 @@ hippo_canvas_shape_class_init(HippoCanvasShapeClass *klass)
                                                       G_MAXUINT,
                                                       DEFAULT_FOREGROUND,
                                                       G_PARAM_READABLE | G_PARAM_WRITABLE));
-    
+
     g_object_class_install_property(object_class,
                                     PROP_BACKGROUND_COLOR,
                                     g_param_spec_uint("background-color",
@@ -141,7 +141,7 @@ static void
 hippo_canvas_shape_finalize(GObject *object)
 {
     /* HippoCanvasShape *shape = HIPPO_CANVAS_SHAPE(object); */
-    
+
 
     G_OBJECT_CLASS(hippo_canvas_shape_parent_class)->finalize(object);
 }
@@ -255,10 +255,10 @@ hippo_canvas_shape_paint(HippoCanvasItem *item,
     cairo_rectangle(cr, 0, 0, shape->width, shape->height);
     cairo_set_line_width(cr, 3.0);
     cairo_stroke(cr);
-    
+
     /* Draw any children */
     item_parent_class->paint(item, drawable);
-    
+
     hippo_canvas_item_pop_cairo(item, cr);
 }
 
@@ -267,9 +267,9 @@ hippo_canvas_shape_get_width_request(HippoCanvasItem *item)
 {
     HippoCanvasShape *shape = HIPPO_CANVAS_SHAPE(item);
     int children_width;
-    
+
     children_width = item_parent_class->get_width_request(item);
-    
+
     return MAX(shape->width, children_width);
 }
 
