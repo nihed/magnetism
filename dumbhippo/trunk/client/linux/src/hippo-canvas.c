@@ -2,10 +2,13 @@
 #include <config.h>
 #include <glib/gi18n-lib.h>
 #include "hippo-canvas.h"
+#include "hippo-canvas-context.h"
 
-static void      hippo_canvas_init                (HippoCanvas       *canvas);
-static void      hippo_canvas_class_init          (HippoCanvasClass  *klass);
-static void      hippo_canvas_finalize            (GObject           *object);
+static void hippo_canvas_init       (HippoCanvas             *canvas);
+static void hippo_canvas_class_init (HippoCanvasClass        *klass);
+static void hippo_canvas_finalize   (GObject                 *object);
+static void hippo_canvas_iface_init (HippoCanvasContextClass *klass);
+
 
 static void hippo_canvas_set_property (GObject      *object,
                                        guint         prop_id,
@@ -23,6 +26,7 @@ static void      hippo_canvas_size_request        (GtkWidget         *widget,
 static void      hippo_canvas_size_allocate       (GtkWidget         *widget,
             	       	                           GtkAllocation     *allocation);
 
+static PangoLayout* hippo_canvas_create_layout    (HippoCanvasContext *context);
 
 struct _HippoCanvas {
     GtkWidget parent;
@@ -46,7 +50,9 @@ enum {
     PROP_0
 };
 
-G_DEFINE_TYPE(HippoCanvas, hippo_canvas, GTK_TYPE_WIDGET);
+G_DEFINE_TYPE_WITH_CODE(HippoCanvas, hippo_canvas, GTK_TYPE_WIDGET,
+                        G_IMPLEMENT_INTERFACE(HIPPO_TYPE_CANVAS_CONTEXT,
+                                              hippo_canvas_iface_init));
 
 static void
 hippo_canvas_init(HippoCanvas *canvas)
@@ -69,6 +75,12 @@ hippo_canvas_class_init(HippoCanvasClass *klass)
     widget_class->expose_event = hippo_canvas_expose_event;
     widget_class->size_request = hippo_canvas_size_request;
     widget_class->size_allocate = hippo_canvas_size_allocate;
+}
+
+static void
+hippo_canvas_iface_init (HippoCanvasContextClass *klass)
+{
+    klass->create_layout = hippo_canvas_create_layout;
 }
 
 static void
@@ -180,6 +192,13 @@ hippo_canvas_size_allocate(GtkWidget         *widget,
     }
 }
 
+static PangoLayout*
+hippo_canvas_create_layout(HippoCanvasContext *context)
+{
+    HippoCanvas *canvas = HIPPO_CANVAS(context);
+    return gtk_widget_create_pango_layout(GTK_WIDGET(canvas), NULL);
+}
+
 GtkWidget*
 hippo_canvas_new(void)
 {
@@ -211,16 +230,18 @@ hippo_canvas_set_root(HippoCanvas     *canvas,
         g_signal_handlers_disconnect_by_func(canvas->root,
                                              G_CALLBACK(canvas_root_request_changed),
                                              canvas);
+        hippo_canvas_item_set_context(canvas->root, NULL);
         g_object_unref(canvas->root);
         canvas->root = NULL;
     }
 
     if (root != NULL) {
         g_object_ref(root);
+        canvas->root = root;
         g_signal_connect(root, "request-changed",
                          G_CALLBACK(canvas_root_request_changed),
                          canvas);
-        canvas->root = root;
+        hippo_canvas_item_set_context(canvas->root, HIPPO_CANVAS_CONTEXT(canvas));
     }
 
     gtk_widget_queue_resize(GTK_WIDGET(canvas));
@@ -388,6 +409,7 @@ hippo_canvas_open_test_window(void)
     HippoCanvasItem *root;
     HippoCanvasItem *shape1;
     HippoCanvasItem *shape2;
+    HippoCanvasItem *text;
     int i;
     
     window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
@@ -396,7 +418,9 @@ hippo_canvas_open_test_window(void)
     gtk_widget_show(canvas);
     gtk_container_add(GTK_CONTAINER(window), canvas);
 
-    root = HIPPO_CANVAS_ITEM(hippo_canvas_box_new());
+    root = g_object_new(HIPPO_TYPE_CANVAS_BOX,
+                        "fixed-width", 400,
+                        NULL);
 
 #if 0
     shape1 = g_object_new(HIPPO_TYPE_CANVAS_SHAPE,
@@ -421,7 +445,17 @@ hippo_canvas_open_test_window(void)
         hippo_canvas_box_append(HIPPO_CANVAS_BOX(root), row, 0);
         g_object_unref(row);
     }
-    
+
+
+    text = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
+                        "text",
+                        "This is some long text that may help in testing resize behavior. It goes "
+                        "on for a while, so don't get impatient. More and more and  more text. "
+                        "Text text text. Lorem ipsum! Text! This is the story of text.",
+                        "background-color", 0x0000ff00,
+                        NULL);
+    hippo_canvas_box_append(HIPPO_CANVAS_BOX(root), text, HIPPO_PACK_EXPAND);
+    g_object_unref(text);
     
     hippo_canvas_set_root(HIPPO_CANVAS(canvas), root);
     g_object_unref(root);

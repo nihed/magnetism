@@ -3,6 +3,7 @@
 #define __HIPPO_CANVAS_ITEM_H__
 
 #include <hippo/hippo-basics.h>
+#include "hippo-canvas-context.h"
 
 G_BEGIN_DECLS
 
@@ -36,6 +37,8 @@ typedef struct _HippoCanvasItemClass HippoCanvasItemClass;
 struct _HippoCanvasItemClass {
     GTypeInterface base_iface;
 
+    void     (* set_context)        (HippoCanvasItem  *canvas_item,
+                                     HippoCanvasContext *context);
     void     (* paint)              (HippoCanvasItem  *canvas_item,
                                      HippoDrawable    *drawable);
     int      (* get_width_request)  (HippoCanvasItem *canvas_item);
@@ -59,6 +62,8 @@ struct _HippoCanvasItemClass {
 
 GType        	 hippo_canvas_item_get_type               (void) G_GNUC_CONST;
 
+void     hippo_canvas_item_set_context             (HippoCanvasItem *canvas_item,
+                                                    HippoCanvasContext *context);
 void     hippo_canvas_item_paint                   (HippoCanvasItem *canvas_item,
                                                     HippoDrawable   *drawable);
 int      hippo_canvas_item_get_width_request       (HippoCanvasItem *canvas_item);

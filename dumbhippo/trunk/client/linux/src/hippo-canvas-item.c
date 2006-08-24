@@ -70,6 +70,15 @@ hippo_canvas_item_base_init(void *klass)
 }
 
 void
+hippo_canvas_item_set_context(HippoCanvasItem    *canvas_item,
+                              HippoCanvasContext *context)
+{
+    g_return_if_fail(HIPPO_IS_CANVAS_ITEM(canvas_item));
+
+    HIPPO_CANVAS_ITEM_GET_CLASS(canvas_item)->set_context(canvas_item, context);
+}
+
+void
 hippo_canvas_item_paint(HippoCanvasItem *canvas_item,
                         HippoDrawable   *drawable)
 {

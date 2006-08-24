@@ -7,11 +7,13 @@
 #endif
 #include "hippo-canvas-box.h"
 
-static void      hippo_canvas_box_init                (HippoCanvasBox       *box);
-static void      hippo_canvas_box_class_init          (HippoCanvasBoxClass  *klass);
-static void      hippo_canvas_box_iface_init          (HippoCanvasItemClass *klass);
-static void      hippo_canvas_box_dispose             (GObject              *object);
-static void      hippo_canvas_box_finalize            (GObject              *object);
+static void hippo_canvas_box_init               (HippoCanvasBox          *box);
+static void hippo_canvas_box_class_init         (HippoCanvasBoxClass     *klass);
+static void hippo_canvas_box_iface_init         (HippoCanvasItemClass    *klass);
+static void hippo_canvas_box_iface_init_context (HippoCanvasContextClass *klass);
+static void hippo_canvas_box_dispose            (GObject                 *object);
+static void hippo_canvas_box_finalize           (GObject                 *object);
+
 
 static void hippo_canvas_box_set_property (GObject      *object,
                                            guint         prop_id,
@@ -23,27 +25,32 @@ static void hippo_canvas_box_get_property (GObject      *object,
                                            GParamSpec   *pspec);
 
 
-/* Canvas item methods */
-static void     hippo_canvas_box_paint              (HippoCanvasItem *item,
-                                                     HippoDrawable   *drawable);
-static int      hippo_canvas_box_get_width_request  (HippoCanvasItem *item);
-static int      hippo_canvas_box_get_height_request (HippoCanvasItem *item,
-                                                     int              for_width);
-static void     hippo_canvas_box_allocate           (HippoCanvasItem *item,
-                                                     int              x,
-                                                     int              y,
-                                                     int              width,
-                                                     int              height);
-static void     hippo_canvas_box_get_allocation     (HippoCanvasItem *item,
-                                                     int             *x_p,
-                                                     int             *y_p,
-                                                     int             *width_p,
-                                                     int             *height_p);
-static gboolean hippo_canvas_box_button_press_event (HippoCanvasItem *item,
-                                                     HippoEvent      *event);
+/* Canvas context methods */
+static PangoLayout* hippo_canvas_create_layout      (HippoCanvasContext *context);
 
-static void     hippo_canvas_box_request_changed    (HippoCanvasItem *item);
-static gboolean hippo_canvas_box_get_needs_resize   (HippoCanvasItem *canvas_item);
+/* Canvas item methods */
+static void     hippo_canvas_box_set_context        (HippoCanvasItem    *item,
+                                                     HippoCanvasContext *context);
+static void     hippo_canvas_box_paint              (HippoCanvasItem    *item,
+                                                     HippoDrawable      *drawable);
+static int      hippo_canvas_box_get_width_request  (HippoCanvasItem    *item);
+static int      hippo_canvas_box_get_height_request (HippoCanvasItem    *item,
+                                                     int                 for_width);
+static void     hippo_canvas_box_allocate           (HippoCanvasItem    *item,
+                                                     int                 x,
+                                                     int                 y,
+                                                     int                 width,
+                                                     int                 height);
+static void     hippo_canvas_box_get_allocation     (HippoCanvasItem    *item,
+                                                     int                *x_p,
+                                                     int                *y_p,
+                                                     int                *width_p,
+                                                     int                *height_p);
+static gboolean hippo_canvas_box_button_press_event (HippoCanvasItem    *item,
+                                                     HippoEvent         *event);
+static void     hippo_canvas_box_request_changed    (HippoCanvasItem    *item);
+static gboolean hippo_canvas_box_get_needs_resize   (HippoCanvasItem    *canvas_item);
+
 
 
 /* Our own methods */
@@ -72,15 +79,17 @@ enum {
     PROP_PADDING_BOTTOM,
     PROP_PADDING_LEFT,
     PROP_PADDING_RIGHT,
-    PROP_WIDTH
+    PROP_FIXED_WIDTH
 };
 
 G_DEFINE_TYPE_WITH_CODE(HippoCanvasBox, hippo_canvas_box, G_TYPE_OBJECT,
-                        G_IMPLEMENT_INTERFACE(HIPPO_TYPE_CANVAS_ITEM, hippo_canvas_box_iface_init));
+                        G_IMPLEMENT_INTERFACE(HIPPO_TYPE_CANVAS_ITEM, hippo_canvas_box_iface_init);
+                        G_IMPLEMENT_INTERFACE(HIPPO_TYPE_CANVAS_CONTEXT, hippo_canvas_box_iface_init_context));
 
 static void
 hippo_canvas_box_iface_init(HippoCanvasItemClass *klass)
 {
+    klass->set_context = hippo_canvas_box_set_context;
     klass->paint = hippo_canvas_box_paint;
     klass->get_width_request = hippo_canvas_box_get_width_request;
     klass->get_height_request = hippo_canvas_box_get_height_request;
@@ -92,10 +101,16 @@ hippo_canvas_box_iface_init(HippoCanvasItemClass *klass)
 }
 
 static void
+hippo_canvas_box_iface_init_context (HippoCanvasContextClass *klass)
+{
+    klass->create_layout = hippo_canvas_create_layout;
+}
+
+static void
 hippo_canvas_box_init(HippoCanvasBox *box)
 {
     box->orientation = HIPPO_ORIENTATION_VERTICAL;
-    box->forced_width = -1;
+    box->fixed_width = -1;
 }
 
 static void
@@ -156,12 +171,12 @@ hippo_canvas_box_class_init(HippoCanvasBoxClass *klass)
                                                      0,
                                                      G_PARAM_READABLE | G_PARAM_WRITABLE));
     g_object_class_install_property(object_class,
-                                    PROP_WIDTH,
-                                    g_param_spec_int("width",
+                                    PROP_FIXED_WIDTH,
+                                    g_param_spec_int("fixed-width",
                                                      _("Fixed Width"),
-                                                     _("Width of the canvas item, or -1 to use natural width"),
+                                                     _("Width request of the canvas item, or -1 to use natural width"),
                                                      -1,
-                                                     255,
+                                                     G_MAXINT,
                                                      -1,
                                                      G_PARAM_READABLE | G_PARAM_WRITABLE));
 }
@@ -221,8 +236,8 @@ hippo_canvas_box_set_property(GObject         *object,
     case PROP_PADDING_RIGHT:
         box->padding_right = g_value_get_int(value);
         break;
-    case PROP_WIDTH:
-        box->forced_width = g_value_get_int(value);
+    case PROP_FIXED_WIDTH:
+        box->fixed_width = g_value_get_int(value);
         break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
@@ -259,13 +274,30 @@ hippo_canvas_box_get_property(GObject         *object,
     case PROP_PADDING_RIGHT:
         g_value_set_int(value, box->padding_right);
         break;
-    case PROP_WIDTH:
-        g_value_set_int(value, box->forced_width);
+    case PROP_FIXED_WIDTH:
+        g_value_set_int(value, box->fixed_width);
         break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
         break;
     }
+}
+
+static PangoLayout*
+hippo_canvas_create_layout(HippoCanvasContext *context)
+{
+    HippoCanvasBox *box = HIPPO_CANVAS_BOX(context);
+
+    /* just chain to our parent */
+    return hippo_canvas_context_create_layout(box->context);
+}
+
+static void
+hippo_canvas_box_set_context(HippoCanvasItem    *item,
+                             HippoCanvasContext *context)
+{
+    HippoCanvasBox *box = HIPPO_CANVAS_BOX(item);
+    box->context = context;
 }
 
 static void
@@ -288,9 +320,6 @@ hippo_canvas_box_get_width_request(HippoCanvasItem *item)
     int total;
     GSList *link;
 
-    if (box->forced_width >= 0)
-        return box->forced_width;
-
     total = 0;
     for (link = box->children; link != NULL; link = link->next) {
         HippoBoxChild *child = link->data;
@@ -304,6 +333,14 @@ hippo_canvas_box_get_width_request(HippoCanvasItem *item)
     total += box->padding_left;
     total += box->padding_right;
 
+    /* This ignored "total" but we needed to be sure we called width_request
+     * on all children so we have the width requests to do layout later
+     * and so they can rely on the invariant that the sizing cycle always
+     * happens in its entirety (width req, height req, allocate)
+     */
+    if (box->fixed_width >= 0)
+        return box->fixed_width;
+    
     return total;
 }
 
@@ -314,17 +351,24 @@ hippo_canvas_box_get_height_request(HippoCanvasItem *item,
     HippoCanvasBox *box = HIPPO_CANVAS_BOX(item);
     int total;
     GSList *link;
-
+    
     total = 0;
 
     for (link = box->children; link != NULL; link = link->next) {
         HippoBoxChild *child = link->data;
-        child->height_request = hippo_canvas_item_get_height_request(child->item,
-                                                                     child->width_request);
-        if (box->orientation == HIPPO_ORIENTATION_VERTICAL)
+
+        if (box->orientation == HIPPO_ORIENTATION_VERTICAL) {
+            child->height_request = hippo_canvas_item_get_height_request(child->item,
+                                                                         for_width);
             total += child->height_request;
-        else
+        } else {
+            /* FIXME this is wrong, we need to do the layout algorithm from allocate()
+             * and pass in the width that algorithm would give to the child
+             */
+            child->height_request = hippo_canvas_item_get_height_request(child->item,
+                                                                         child->width_request);
             total = MAX(total, child->height_request);
+        }
     }
 
     total += box->padding_top;
@@ -548,7 +592,8 @@ hippo_canvas_box_append(HippoCanvasBox  *box,
     c->expand = (flags & HIPPO_PACK_EXPAND) != 0;
     c->end = (flags & HIPPO_PACK_END) != 0;
     box->children = g_slist_append(box->children, c);
-
+    hippo_canvas_item_set_context(child, HIPPO_CANVAS_CONTEXT(box));
+    
     hippo_canvas_item_emit_request_changed(HIPPO_CANVAS_ITEM(box));
 }
 
@@ -571,6 +616,7 @@ hippo_canvas_box_remove(HippoCanvasBox  *box,
 
     box->children = g_slist_remove(box->children, c);
     disconnect_child(box, child);
+    hippo_canvas_item_set_context(child, NULL);
     g_object_unref(child);
     g_free(c);
 
@@ -584,4 +630,12 @@ hippo_canvas_box_free_children(HippoCanvasBox *box)
         HippoBoxChild *child = box->children->data;
         hippo_canvas_box_remove(box, child->item);
     }
+}
+
+HippoCanvasContext*
+hippo_canvas_box_get_context(HippoCanvasBox *box)
+{
+    g_return_val_if_fail(HIPPO_IS_CANVAS_BOX(box), NULL);
+
+    return box->context;
 }

@@ -278,7 +278,6 @@ hippo_canvas_shape_get_height_request(HippoCanvasItem *item,
     return MAX(shape->height, children_height);
 }
 
-
 static gboolean
 hippo_canvas_shape_button_press_event (HippoCanvasItem *item,
                                        HippoEvent      *event)

@@ -201,6 +201,27 @@ hippo_canvas_text_get_property(GObject         *object,
     }
 }
 
+static PangoLayout*
+create_layout(HippoCanvasText *text)
+{
+    HippoCanvasContext *context;
+    PangoLayout *layout;
+    PangoFontDescription *font;
+    
+    context = hippo_canvas_box_get_context(HIPPO_CANVAS_BOX(text));
+    
+    layout = hippo_canvas_context_create_layout(context);
+    pango_layout_set_text(layout, text->text, -1);
+    font = pango_font_description_from_string("Sans 12");
+    pango_layout_set_font_description(layout, font);
+    pango_font_description_free(font);
+
+    if (text->text != NULL)
+        pango_layout_set_text(layout, text->text, -1);
+    
+    return layout;
+}
+
 static void
 hippo_canvas_text_paint(HippoCanvasItem *item,
                         HippoDrawable   *drawable)
@@ -221,7 +242,6 @@ hippo_canvas_text_paint(HippoCanvasItem *item,
     /* draw foreground */
     if ((text->color_rgba & 0xff) != 0 && text->text != NULL) {
         PangoLayout *layout;
-        PangoFontDescription *font;
         int width, height;
         int layout_width, layout_height;
         int x, y;
@@ -230,11 +250,8 @@ hippo_canvas_text_paint(HippoCanvasItem *item,
         
         hippo_cairo_set_source_rgba32(cr, text->color_rgba);
 
-        layout = pango_cairo_create_layout(cr);
-        pango_layout_set_text(layout, text->text, -1);
-        font = pango_font_description_from_string("Sans 12");
-        pango_layout_set_font_description(layout, font);
-        pango_font_description_free(font);
+        layout = create_layout(text);
+        pango_layout_set_width(layout, width * PANGO_SCALE); /* force the height for the width */
 
         /* center it */
         pango_layout_get_size(layout, &layout_width, &layout_height);
@@ -263,29 +280,37 @@ hippo_canvas_text_paint(HippoCanvasItem *item,
 static int
 hippo_canvas_text_get_width_request(HippoCanvasItem *item)
 {
-    /* HippoCanvasText *text = HIPPO_CANVAS_TEXT(item); */
+    HippoCanvasText *text = HIPPO_CANVAS_TEXT(item);
     int children_width;
-
-    /* FIXME to do this we need the cairo or gdk context in order to create a layout
-     * I think, so it requires some concept of "realized"? or at least an idea that
-     * the platform-specific canvas widget provides an interface to items including
-     * stuff like create_layout()
-     */
+    PangoLayout *layout;
+    int layout_width;
+    
     children_width = item_parent_class->get_width_request(item);
 
-    return children_width;
+    layout = create_layout(text);
+    pango_layout_get_size(layout, &layout_width, NULL);
+    layout_width /= PANGO_SCALE;
+
+    return MAX(children_width, layout_width);
 }
 
 static int
 hippo_canvas_text_get_height_request(HippoCanvasItem *item,
                                      int              for_width)
 {
-    /* HippoCanvasText *text = HIPPO_CANVAS_TEXT(item); */
+    HippoCanvasText *text = HIPPO_CANVAS_TEXT(item);
     int children_height;
+    PangoLayout *layout;
+    int layout_height;
     
     children_height = item_parent_class->get_height_request(item, for_width);
 
-    return children_height;
+    layout = create_layout(text);
+    pango_layout_set_width(layout, for_width * PANGO_SCALE);
+    pango_layout_get_size(layout, NULL, &layout_height);
+    layout_height /= PANGO_SCALE;
+    
+    return MAX(layout_height, children_height);
 }
 
 
