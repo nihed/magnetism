@@ -1,5 +1,8 @@
 <project name="build-dumbhippo" default="dar" basedir=".">
 
+    <property file="${user.home}/.dumbhippo.properties"/>
+    <property name="deploy.hosts" value=""/>
+
     <target name="compile">
     	<ant dir="taste" target="build"/>
         <ant dir="server" target="build"/>
@@ -16,6 +19,13 @@
 			<arg value="-Dhome=/enoent"/>
 			<arg value="deploy"/>
 			<arg value="all"/>
+		</exec>
+    </target>
+
+    <target name="deploy" depends="dar">
+		<exec dir="${basedir}" executable="${basedir}/tools/deploy.sh">
+			<arg value="super/dumbhippo.dar"/>
+			<arg value="${deploy.hosts}"/>
 		</exec>
     </target>
 
