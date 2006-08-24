@@ -38,7 +38,6 @@ struct _HippoCanvasShape {
     int width;
     int height;
     guint32 color_rgba;
-    guint32 background_color_rgba;
 };
 
 struct _HippoCanvasShapeClass {
@@ -56,13 +55,11 @@ enum {
 enum {
     PROP_0,
     PROP_COLOR,
-    PROP_BACKGROUND_COLOR,
     PROP_WIDTH,
     PROP_HEIGHT
 };
 
 #define DEFAULT_FOREGROUND 0x000000ff
-#define DEFAULT_BACKGROUND 0xffffffff
 
 G_DEFINE_TYPE_WITH_CODE(HippoCanvasShape, hippo_canvas_shape, HIPPO_TYPE_CANVAS_BOX,
                         G_IMPLEMENT_INTERFACE(HIPPO_TYPE_CANVAS_ITEM, hippo_canvas_shape_iface_init));
@@ -71,7 +68,6 @@ static void
 hippo_canvas_shape_init(HippoCanvasShape *shape)
 {
     shape->color_rgba = DEFAULT_FOREGROUND;
-    shape->background_color_rgba = DEFAULT_BACKGROUND;
 }
 
 static HippoCanvasItemClass *item_parent_class;
@@ -124,16 +120,6 @@ hippo_canvas_shape_class_init(HippoCanvasShapeClass *klass)
                                                       G_MAXUINT,
                                                       DEFAULT_FOREGROUND,
                                                       G_PARAM_READABLE | G_PARAM_WRITABLE));
-
-    g_object_class_install_property(object_class,
-                                    PROP_BACKGROUND_COLOR,
-                                    g_param_spec_uint("background-color",
-                                                      _("Background Color"),
-                                                      _("32-bit RGBA background color"),
-                                                      0,
-                                                      G_MAXUINT,
-                                                      DEFAULT_BACKGROUND,
-                                                      G_PARAM_READABLE | G_PARAM_WRITABLE));
 }
 
 static void
@@ -177,10 +163,6 @@ hippo_canvas_shape_set_property(GObject         *object,
         shape->color_rgba = g_value_get_uint(value);
         hippo_canvas_item_emit_paint_needed(HIPPO_CANVAS_ITEM(shape), 0, 0, -1, -1);
         break;
-    case PROP_BACKGROUND_COLOR:
-        shape->background_color_rgba = g_value_get_uint(value);
-        hippo_canvas_item_emit_paint_needed(HIPPO_CANVAS_ITEM(shape), 0, 0, -1, -1);
-        break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
         break;
@@ -207,9 +189,6 @@ hippo_canvas_shape_get_property(GObject         *object,
     case PROP_COLOR:
         g_value_set_uint(value, shape->color_rgba);
         break;
-    case PROP_BACKGROUND_COLOR:
-        g_value_set_uint(value, shape->background_color_rgba);
-        break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
         break;
@@ -221,43 +200,39 @@ hippo_canvas_shape_paint(HippoCanvasItem *item,
                          cairo_t         *cr)
 {
     HippoCanvasShape *shape = HIPPO_CANVAS_SHAPE(item);
+    int x, y, w, h;
+    
+    /* Draw the background and any children */
+    item_parent_class->paint(item, cr);
 
-    /* fill background */
-    if ((shape->background_color_rgba & 0xff) != 0) {
-        hippo_cairo_set_source_rgba32(cr, shape->background_color_rgba);
-        cairo_paint(cr);
-    }
+    /* Draw the shape */
+    x = 0;
+    y = 0;
+    w = shape->width;
+    h = shape->height;
 
-    /* draw foreground */
+    hippo_canvas_box_align(HIPPO_CANVAS_BOX(item), &x, &y, &w, &h);
+    
     if ((shape->color_rgba & 0xff) != 0) {
-        int width, height;
-        int x, y;
-
-        hippo_canvas_item_get_allocation(item, &width, &height);
-
-        x = (width - shape->width) / 2;
-        y = (height - shape->height) / 2;
-        
         hippo_cairo_set_source_rgba32(cr, shape->color_rgba);
-        cairo_rectangle(cr, x, y, shape->width, shape->height);
-        cairo_set_line_width(cr, 3.0);
+        cairo_set_line_width(cr, 2.0);
+        cairo_rectangle(cr, x, y, w, h);
         cairo_stroke(cr);
     }
-    
-    /* Draw any children */
-    item_parent_class->paint(item, cr);
 }
 
 static int
 hippo_canvas_shape_get_width_request(HippoCanvasItem *item)
 {
     HippoCanvasShape *shape = HIPPO_CANVAS_SHAPE(item);
+    HippoCanvasBox *box = HIPPO_CANVAS_BOX(item);
     int children_width;
 
+    /* get width of children and the box padding */
     children_width = item_parent_class->get_width_request(item);
 
     if (hippo_canvas_box_get_fixed_width(HIPPO_CANVAS_BOX(item)) < 0) {
-        return MAX(shape->width, children_width);
+        return MAX(shape->width + box->padding_left + box->padding_right, children_width);
     } else {
         return children_width;
     }
@@ -268,11 +243,13 @@ hippo_canvas_shape_get_height_request(HippoCanvasItem *item,
                                       int              for_width)
 {
     HippoCanvasShape *shape = HIPPO_CANVAS_SHAPE(item);
+    HippoCanvasBox *box = HIPPO_CANVAS_BOX(item);
     int children_height;
 
+    /* get height of children and the box padding */
     children_height = item_parent_class->get_height_request(item, for_width);
 
-    return MAX(shape->height, children_height);
+    return MAX(shape->height + box->padding_top + box->padding_bottom, children_height);
 }
 
 static gboolean

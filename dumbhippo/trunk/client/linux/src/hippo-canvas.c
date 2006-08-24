@@ -284,24 +284,34 @@ typedef struct {
     int height;
     guint32 color;
     HippoPackFlags flags;
+    HippoItemAlignment alignment;
 } BoxAttrs;
 
-static BoxAttrs single_start[] = { { 40, 80, 0x0000ffff, 0 }, { 0, 0, 0, 0 } };
-static BoxAttrs single_end[] = { { 100, 60, 0x00ff00ff, HIPPO_PACK_END }, { 0, 0, 0, 0 } };
-static BoxAttrs double_start[] = { { 50, 90, 0x0000ffff, 0 }, { 50, 90, 0xff000099, 0 }, { 0, 0, 0, 0 } };
-static BoxAttrs double_end[] = { { 45, 55, 0x00ff00ff, HIPPO_PACK_END }, { 45, 55, 0x00ff0077, HIPPO_PACK_END }, { 0, 0, 0, 0 } };
-static BoxAttrs single_expand[] = { { 100, 60, 0x0000ffff, HIPPO_PACK_EXPAND }, { 0, 0, 0, 0 } };
-static BoxAttrs single_expand_end[] = { { 100, 60, 0x0000ffff, HIPPO_PACK_EXPAND | HIPPO_PACK_END }, { 0, 0, 0, 0 } };
+static BoxAttrs single_start[] = { { 40, 80, 0x0000ffff, 0, HIPPO_ALIGNMENT_FILL }, { 0, 0, 0, 0 } };
+static BoxAttrs single_end[] = { { 100, 60, 0x00ff00ff, HIPPO_PACK_END, HIPPO_ALIGNMENT_FILL }, { 0, 0, 0, 0 } };
+static BoxAttrs double_start[] = { { 50, 90, 0x0000ffff, 0, HIPPO_ALIGNMENT_FILL },
+                                   { 50, 90, 0xff000099, HIPPO_PACK_EXPAND, HIPPO_ALIGNMENT_FILL }, { 0, 0, 0, 0 } };
+static BoxAttrs double_end[] = { { 45, 55, 0x00ff00ff, HIPPO_PACK_END, HIPPO_ALIGNMENT_FILL },
+                                 { 45, 55, 0x00ff0077, HIPPO_PACK_END, HIPPO_ALIGNMENT_FILL }, { 0, 0, 0, 0 } };
+static BoxAttrs single_expand[] = { { 100, 60, 0x0000ffff, HIPPO_PACK_EXPAND, HIPPO_ALIGNMENT_FILL }, { 0, 0, 0, 0 } };
+static BoxAttrs single_expand_end[] = { { 100, 60, 0x0000ffff, HIPPO_PACK_EXPAND | HIPPO_PACK_END, HIPPO_ALIGNMENT_FILL }, { 0, 0, 0, 0 } };
 static BoxAttrs everything[] = {
-    { 120, 50, 0x00ccccff, 0 },
-    { 120, 50, 0x00ccccff, HIPPO_PACK_END },
-    { 120, 50, 0x00ccccff, HIPPO_PACK_EXPAND },
-    { 120, 50, 0x00ccccff, HIPPO_PACK_EXPAND | HIPPO_PACK_END },
+    { 120, 50, 0x00ccccff, 0, HIPPO_ALIGNMENT_FILL },
+    { 120, 50, 0x00ccccff, HIPPO_PACK_END, HIPPO_ALIGNMENT_FILL },
+    { 120, 50, 0x00ccccff, HIPPO_PACK_EXPAND, HIPPO_ALIGNMENT_FILL },
+    { 120, 50, 0x00ccccff, HIPPO_PACK_EXPAND | HIPPO_PACK_END, HIPPO_ALIGNMENT_FILL },
+    { 0, 0, 0, 0 }
+};
+static BoxAttrs alignments[] = {
+    { 120, 50, 0x00ffcccc, HIPPO_PACK_EXPAND, HIPPO_ALIGNMENT_FILL },
+    { 120, 50, 0x00ccffcc, HIPPO_PACK_EXPAND, HIPPO_ALIGNMENT_START },
+    { 120, 50, 0x00cffffc, HIPPO_PACK_EXPAND, HIPPO_ALIGNMENT_CENTER },
+    { 120, 50, 0x00ccccff, HIPPO_PACK_EXPAND, HIPPO_ALIGNMENT_END },
     { 0, 0, 0, 0 }
 };
 
 static BoxAttrs* box_rows[] = { single_start, double_start, single_end, double_end,
-                                single_expand, single_expand_end, everything };
+                                single_expand, everything, alignments };
 
 static HippoCanvasItem*
 create_row(BoxAttrs *boxes)
@@ -315,29 +325,53 @@ create_row(BoxAttrs *boxes)
         BoxAttrs *attrs = &boxes[i];
         HippoCanvasItem *shape;
         HippoCanvasItem *label;
-        const char *text;
-
+        const char *flags_text;
+        const char *align_text;
+        char *s;
+        
         shape = g_object_new(HIPPO_TYPE_CANVAS_SHAPE,
                              "width", attrs->width,
                              "height", attrs->height,
                              "color", attrs->color,
+                             "background-color", 0xffffffff,
+                             "xalign", attrs->alignment,
                              NULL);
         hippo_canvas_box_append(HIPPO_CANVAS_BOX(row), shape, attrs->flags);
         g_object_unref(shape);
         
         if (attrs->flags == (HIPPO_PACK_END | HIPPO_PACK_EXPAND))
-            text = "END | EXPAND";
+            flags_text = "END | EXPAND";
         else if (attrs->flags == HIPPO_PACK_END)
-            text = "END";
+            flags_text = "END";
         else if (attrs->flags == HIPPO_PACK_EXPAND)
-            text = "EXPAND";
+            flags_text = "EXPAND";
         else
-            text = "0";
-        
+            flags_text = "0";
+
+        switch (attrs->alignment) {
+        case HIPPO_ALIGNMENT_FILL:
+            align_text = "FILL";
+            break;
+        case HIPPO_ALIGNMENT_START:
+            align_text = "START";
+            break;
+        case HIPPO_ALIGNMENT_END:
+            align_text = "END";
+            break;
+        case HIPPO_ALIGNMENT_CENTER:
+            align_text = "CENTER";
+            break;
+        default:
+            align_text = NULL;
+            break;
+        }
+
+        s = g_strdup_printf("%s, %s", flags_text, align_text);
         label = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
-                             "text", text,
+                             "text", s,
                              "background-color", 0x0000ff00,
                              NULL);
+        g_free(s);
         hippo_canvas_box_append(HIPPO_CANVAS_BOX(shape), label, HIPPO_PACK_EXPAND);
         g_object_unref(label);
     }
@@ -364,14 +398,17 @@ hippo_canvas_open_test_window(void)
     root = g_object_new(HIPPO_TYPE_CANVAS_BOX,
                         NULL);
 
-#if 0
+#if 1
     shape1 = g_object_new(HIPPO_TYPE_CANVAS_SHAPE,
-                          "width", 50, "height", 100,
+                          "width", 50, "height", 30,
+                          "color", 0xaeaeaeff,
+                          "padding", 20,
                           NULL);
 
     shape2 = g_object_new(HIPPO_TYPE_CANVAS_SHAPE,
-                          "width", 70, "height", 40,
+                          "width", 50, "height", 30,
                           "color", 0x00ff00ff,
+                          "padding", 10,
                           NULL);
 
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(root),
@@ -395,6 +432,7 @@ hippo_canvas_open_test_window(void)
                         "on for a while, so don't get impatient. More and more and  more text. "
                         "Text text text. Lorem ipsum! Text! This is the story of text.",
                         "background-color", 0x0000ff00,
+                        "yalign", HIPPO_ALIGNMENT_END,
                         NULL);
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(root), text, HIPPO_PACK_EXPAND);
     g_object_unref(text);

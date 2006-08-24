@@ -34,21 +34,23 @@ typedef struct _HippoCanvasBoxClass HippoCanvasBoxClass;
 struct _HippoCanvasBox {
     GObject parent;
     HippoCanvasContext *context;
-    HippoOrientation orientation;
     GSList *children;
-    int allocated_x;
-    int allocated_y;
     int allocated_width;
     int allocated_height;
 
     int fixed_width; /* -1 if unset, use "natural" */
 
+    guint32 background_color_rgba;
+    
     guint8 padding_top;
     guint8 padding_bottom;
     guint8 padding_left;
     guint8 padding_right;
 
     guint request_changed_since_allocate : 1;
+    guint orientation : 2; /* enum only has 2 values so it fits with extra */
+    guint x_align : 3;     /* enum only has 4 values so it fits with extra */
+    guint y_align : 3;     /* enum only has 4 values so it fits with extra */
 };
 
 struct _HippoCanvasBoxClass {
@@ -72,6 +74,11 @@ void            hippo_canvas_box_remove (HippoCanvasBox  *box,
 /* Protected accessors for subclasses */
 HippoCanvasContext* hippo_canvas_box_get_context     (HippoCanvasBox *box);
 int                 hippo_canvas_box_get_fixed_width (HippoCanvasBox *box);
+void                hippo_canvas_box_align           (HippoCanvasBox *box,
+                                                      int            *x_p,
+                                                      int            *y_p,
+                                                      int            *width_p,
+                                                      int            *height_p);
 
 G_END_DECLS
 

@@ -229,8 +229,6 @@ hippo_canvas_item_process_paint(HippoCanvasItem *canvas_item,
 
     hippo_canvas_item_get_allocation(canvas_item, &width, &height);
     cairo_translate(cr, allocation_x, allocation_y);
-    cairo_rectangle(cr, 0, 0, width, height);
-    cairo_clip(cr);
 
     g_signal_emit(canvas_item, signals[PAINT], 0, cr);
 

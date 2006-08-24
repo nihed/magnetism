@@ -19,6 +19,14 @@ struct _HippoEvent {
     int y;
 };
 
+/* How an item deals with extra allocation in a single (x or y) dimension */
+typedef enum {
+    HIPPO_ALIGNMENT_FILL,
+    HIPPO_ALIGNMENT_START, /* left or top */
+    HIPPO_ALIGNMENT_CENTER,
+    HIPPO_ALIGNMENT_END    /* right or bottom */
+} HippoItemAlignment;
+
 typedef struct _HippoCanvasItem      HippoCanvasItem;
 typedef struct _HippoCanvasItemClass HippoCanvasItemClass;
 
