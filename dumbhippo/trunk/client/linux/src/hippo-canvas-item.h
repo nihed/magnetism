@@ -48,6 +48,7 @@ struct _HippoCanvasItemClass {
     gboolean (* button_press_event) (HippoCanvasItem *canvas_item,
                                      HippoEvent      *event);
     void     (* request_changed)    (HippoCanvasItem *canvas_item);
+    void     (* paint_needed)       (HippoCanvasItem *canvas_item);
     gboolean (* get_needs_resize)   (HippoCanvasItem *canvas_item);
 };
 
@@ -74,6 +75,11 @@ void     hippo_canvas_item_get_request             (HippoCanvasItem *canvas_item
 gboolean hippo_canvas_item_emit_button_press_event (HippoCanvasItem *canvas_item,
                                                     int              x,
                                                     int              y);
+void     hippo_canvas_item_emit_paint_needed       (HippoCanvasItem *canvas_item,
+                                                    int              x,
+                                                    int              y,
+                                                    int              width,
+                                                    int              height);
 void     hippo_canvas_item_emit_request_changed    (HippoCanvasItem *canvas_item);
 gboolean hippo_canvas_item_process_event           (HippoCanvasItem *canvas_item,
                                                     HippoEvent      *event,

@@ -9,14 +9,11 @@
 #include <hippo/hippo-common-marshal.h>
 
 static void     hippo_canvas_item_base_init (void                  *klass);
-static gboolean boolean_handled_accumulator (GSignalInvocationHint *ihint,
-                                             GValue                *return_accumulated,
-                                             const GValue          *handler_return,
-                                             gpointer               dummy);
-
 
 enum {
+    PAINT,
     REQUEST_CHANGED,      /* The size we want to request may have changed */
+    PAINT_NEEDED,
     BUTTON_PRESS_EVENT,
     LAST_SIGNAL
 };
@@ -47,6 +44,14 @@ hippo_canvas_item_base_init(void *klass)
 
     if (!initialized) {
         /* create signals in here */
+        signals[PAINT] =
+            g_signal_new ("paint",
+                          HIPPO_TYPE_CANVAS_ITEM,
+            		  G_SIGNAL_RUN_LAST,
+                          G_STRUCT_OFFSET(HippoCanvasItemClass, paint),
+            		  NULL, NULL,
+                          g_cclosure_marshal_VOID__POINTER,
+                          G_TYPE_NONE, 1, G_TYPE_POINTER);
         signals[REQUEST_CHANGED] =
             g_signal_new ("request-changed",
                           HIPPO_TYPE_CANVAS_ITEM,
@@ -55,13 +60,20 @@ hippo_canvas_item_base_init(void *klass)
             		  NULL, NULL,
                           g_cclosure_marshal_VOID__VOID,
                           G_TYPE_NONE, 0);
-
+        signals[PAINT_NEEDED] =
+            g_signal_new ("paint-needed",
+                          HIPPO_TYPE_CANVAS_ITEM,
+            		  G_SIGNAL_RUN_LAST,
+                          G_STRUCT_OFFSET(HippoCanvasItemClass, paint_needed),
+            		  NULL, NULL,
+                          hippo_common_marshal_VOID__INT_INT_INT_INT,
+                          G_TYPE_NONE, 4, G_TYPE_INT, G_TYPE_INT, G_TYPE_INT, G_TYPE_INT);
         signals[BUTTON_PRESS_EVENT] =
             g_signal_new ("button-press-event",
                           HIPPO_TYPE_CANVAS_ITEM,
             		  G_SIGNAL_RUN_LAST,
             		  G_STRUCT_OFFSET(HippoCanvasItemClass, button_press_event),
-            		  boolean_handled_accumulator, NULL,
+            		  g_signal_accumulator_true_handled, NULL,
                           hippo_common_marshal_BOOLEAN__POINTER,
             		  G_TYPE_BOOLEAN, 1, G_TYPE_POINTER);
 
@@ -76,15 +88,6 @@ hippo_canvas_item_set_context(HippoCanvasItem    *canvas_item,
     g_return_if_fail(HIPPO_IS_CANVAS_ITEM(canvas_item));
 
     HIPPO_CANVAS_ITEM_GET_CLASS(canvas_item)->set_context(canvas_item, context);
-}
-
-void
-hippo_canvas_item_paint(HippoCanvasItem *canvas_item,
-                        cairo_t         *cr)
-{
-    g_return_if_fail(HIPPO_IS_CANVAS_ITEM(canvas_item));
-
-    HIPPO_CANVAS_ITEM_GET_CLASS(canvas_item)->paint(canvas_item, cr);
 }
 
 int
@@ -164,26 +167,30 @@ hippo_canvas_item_emit_button_press_event (HippoCanvasItem  *canvas_item,
 }
 
 void
+hippo_canvas_item_emit_paint_needed(HippoCanvasItem *canvas_item,
+                                    int              x,
+                                    int              y,
+                                    int              width,
+                                    int              height)
+{
+    if (width < 0 || height < 0) {
+        int w, h;
+        hippo_canvas_item_get_allocation(canvas_item, &w, &h);
+        if (width < 0)
+            width = w;
+        if (height < 0)
+            height = h;
+    }
+    
+    g_signal_emit(canvas_item, signals[PAINT_NEEDED], 0,
+                  x, y, width, height);
+}
+
+void
 hippo_canvas_item_emit_request_changed(HippoCanvasItem *canvas_item)
 {
     if (!hippo_canvas_item_get_needs_resize(canvas_item))
         g_signal_emit(canvas_item, signals[REQUEST_CHANGED], 0);
-}
-
-static gboolean
-boolean_handled_accumulator(GSignalInvocationHint *ihint,
-                            GValue                *return_accumulated,
-                            const GValue          *handler_return,
-                            gpointer               dummy)
-{
-    gboolean continue_emission;
-    gboolean signal_handled;
-
-    signal_handled = g_value_get_boolean (handler_return);
-    g_value_set_boolean (return_accumulated, signal_handled);
-    continue_emission = !signal_handled;
-
-    return continue_emission;
 }
 
 gboolean
@@ -225,7 +232,7 @@ hippo_canvas_item_process_paint(HippoCanvasItem *canvas_item,
     cairo_rectangle(cr, 0, 0, width, height);
     cairo_clip(cr);
 
-    hippo_canvas_item_paint(canvas_item, cr);
+    g_signal_emit(canvas_item, signals[PAINT], 0, cr);
 
     cairo_restore(cr);
 }

@@ -526,29 +526,6 @@ hippo_canvas_box_get_needs_resize(HippoCanvasItem *item)
     return box->request_changed_since_allocate;
 }
 
-static void
-child_request_changed(HippoCanvasItem *child,
-                      HippoCanvasBox  *box)
-{
-    hippo_canvas_item_emit_request_changed(HIPPO_CANVAS_ITEM(box));
-}
-
-static void
-connect_child(HippoCanvasBox  *box,
-              HippoCanvasItem *child)
-{
-    g_signal_connect(G_OBJECT(child), "request-changed",
-                     G_CALLBACK(child_request_changed), box);
-}
-
-static void
-disconnect_child(HippoCanvasBox  *box,
-                 HippoCanvasItem *child)
-{
-    g_signal_handlers_disconnect_by_func(G_OBJECT(child),
-                                         G_CALLBACK(child_request_changed), box);
-}
-
 static HippoBoxChild*
 find_child(HippoCanvasBox  *box,
            HippoCanvasItem *item)
@@ -561,6 +538,53 @@ find_child(HippoCanvasBox  *box,
             return child;
     }
     return NULL;
+}
+
+static void
+child_request_changed(HippoCanvasItem *child,
+                      HippoCanvasBox  *box)
+{
+    hippo_canvas_item_emit_request_changed(HIPPO_CANVAS_ITEM(box));
+}
+
+static void
+child_paint_needed(HippoCanvasItem *item,
+                   int              x,
+                   int              y,
+                   int              width,
+                   int              height,
+                   HippoCanvasBox  *box)
+{
+    HippoBoxChild *child;
+
+    /* translate to our own coordinates then emit the signal again */
+    
+    child = find_child(box, item);
+    
+    hippo_canvas_item_emit_paint_needed(HIPPO_CANVAS_ITEM(box),
+                                        x + child->x,
+                                        y + child->y,
+                                        width, height);
+}
+
+static void
+connect_child(HippoCanvasBox  *box,
+              HippoCanvasItem *child)
+{
+    g_signal_connect(G_OBJECT(child), "request-changed",
+                     G_CALLBACK(child_request_changed), box);
+    g_signal_connect(G_OBJECT(child), "paint-needed",
+                     G_CALLBACK(child_paint_needed), box);
+}
+
+static void
+disconnect_child(HippoCanvasBox  *box,
+                 HippoCanvasItem *child)
+{
+    g_signal_handlers_disconnect_by_func(G_OBJECT(child),
+                                         G_CALLBACK(child_request_changed), box);
+    g_signal_handlers_disconnect_by_func(G_OBJECT(child),
+                                         G_CALLBACK(child_paint_needed), box);    
 }
 
 void

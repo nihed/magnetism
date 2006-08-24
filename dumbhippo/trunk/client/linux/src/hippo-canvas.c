@@ -219,6 +219,22 @@ canvas_root_request_changed(HippoCanvasItem *root,
     gtk_widget_queue_resize(GTK_WIDGET(canvas));
 }
 
+static void
+canvas_root_paint_needed(HippoCanvasItem *root,
+                         int              x,
+                         int              y,
+                         int              width,
+                         int              height,
+                         HippoCanvas     *canvas)
+{
+    GtkWidget *widget = GTK_WIDGET(canvas);
+    
+    gtk_widget_queue_draw_area(widget,
+                               widget->allocation.x + x,
+                               widget->allocation.y + y,
+                               width, height);
+}
+
 void
 hippo_canvas_set_root(HippoCanvas     *canvas,
                       HippoCanvasItem *root)
@@ -233,6 +249,9 @@ hippo_canvas_set_root(HippoCanvas     *canvas,
         g_signal_handlers_disconnect_by_func(canvas->root,
                                              G_CALLBACK(canvas_root_request_changed),
                                              canvas);
+        g_signal_handlers_disconnect_by_func(canvas->root,
+                                             G_CALLBACK(canvas_root_paint_needed),
+                                             canvas);        
         hippo_canvas_item_set_context(canvas->root, NULL);
         g_object_unref(canvas->root);
         canvas->root = NULL;
@@ -243,6 +262,9 @@ hippo_canvas_set_root(HippoCanvas     *canvas,
         canvas->root = root;
         g_signal_connect(root, "request-changed",
                          G_CALLBACK(canvas_root_request_changed),
+                         canvas);
+        g_signal_connect(root, "paint-needed",
+                         G_CALLBACK(canvas_root_paint_needed),
                          canvas);
         hippo_canvas_item_set_context(canvas->root, HIPPO_CANVAS_CONTEXT(canvas));
     }

@@ -159,20 +159,20 @@ hippo_canvas_text_set_property(GObject         *object,
     case PROP_TEXT:
         g_free(text->text);
         text->text = g_value_dup_string(value);
+        hippo_canvas_item_emit_request_changed(HIPPO_CANVAS_ITEM(text));
         break;
     case PROP_COLOR:
         text->color_rgba = g_value_get_uint(value);
+        hippo_canvas_item_emit_paint_needed(HIPPO_CANVAS_ITEM(text), 0, 0, -1, -1);
         break;
     case PROP_BACKGROUND_COLOR:
         text->background_color_rgba = g_value_get_uint(value);
+        hippo_canvas_item_emit_paint_needed(HIPPO_CANVAS_ITEM(text), 0, 0, -1, -1);        
         break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
         break;
     }
-
-    /* FIXME add a way to only trigger a redraw, not a resize */
-    hippo_canvas_item_emit_request_changed(HIPPO_CANVAS_ITEM(text));
 }
 
 static void

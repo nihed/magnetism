@@ -167,23 +167,24 @@ hippo_canvas_shape_set_property(GObject         *object,
     switch (prop_id) {
     case PROP_WIDTH:
         shape->width = g_value_get_int(value);
+        hippo_canvas_item_emit_request_changed(HIPPO_CANVAS_ITEM(shape));
         break;
     case PROP_HEIGHT:
         shape->height = g_value_get_int(value);
+        hippo_canvas_item_emit_request_changed(HIPPO_CANVAS_ITEM(shape));        
         break;
     case PROP_COLOR:
         shape->color_rgba = g_value_get_uint(value);
+        hippo_canvas_item_emit_paint_needed(HIPPO_CANVAS_ITEM(shape), 0, 0, -1, -1);
         break;
     case PROP_BACKGROUND_COLOR:
         shape->background_color_rgba = g_value_get_uint(value);
+        hippo_canvas_item_emit_paint_needed(HIPPO_CANVAS_ITEM(shape), 0, 0, -1, -1);
         break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
         break;
     }
-
-    /* FIXME add a way to only trigger a redraw, not a resize */
-    hippo_canvas_item_emit_request_changed(HIPPO_CANVAS_ITEM(shape));
 }
 
 static void
