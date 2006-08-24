@@ -1,0 +1,42 @@
+<project name="build-dumbhippo" default="dar" basedir=".">
+
+    <target name="compile">
+    	<ant dir="taste" target="build"/>
+        <ant dir="server" target="build"/>
+    	<!-- jive has a weird ant file -->
+        <ant dir="wildfire/" antfile="build/build.xml" target="plugins"/>    	
+        <ant dir="imbot" target="all"/>
+    	<ant dir="hungry" target="build"/>    	
+    </target>
+
+    <target name="dar" depends="compile">
+		<exec dir="${basedir}" executable="${basedir}/super/super">
+			 <!-- this parameter doesn't matter; super barfs though if
+			      $HOME isn't set, which is true for the autobuilder. -->
+			<arg value="-Dhome=/enoent"/>
+			<arg value="deploy"/>
+			<arg value="all"/>
+		</exec>
+    </target>
+
+    <target name="clean">
+		<ant dir="server" target="clean"/>
+    	<ant dir="taste" target="clean"/>
+        <ant dir="wildfire/" antfile="build/build.xml" target="clean"/>    	
+        <ant dir="imbot" target="clean"/>
+    </target>
+ 
+    <target name="cleandar" depends="clean,dar"/>
+
+    <target name="reload" depends="compile">
+        <exec executable="super/super">
+             <arg line="reload all"/>
+        </exec>
+    </target>
+
+    <target name="restart" depends="compile">
+        <exec executable="super/super">
+            <arg line="restart all"/>
+        </exec>
+    </target>
+</project>

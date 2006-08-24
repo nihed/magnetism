@@ -1,0 +1,63 @@
+@CHARSET "UTF-8";
+
+#dhContentColumn .dh-form-table .dh-spacer-row {
+	height:			5px;
+}
+
+#dhContentColumn .dh-form-table input {
+	vertical-align: middle;
+}
+
+#dhContentColumn .dh-form-table img {
+	vertical-align: middle;
+}
+
+#dhContentColumn #dhAddressEntry {
+	width:			183px;
+}
+
+#dhContentColumn #dhSubjectEntry {
+	width:			309px;
+}
+
+#dhContentColumn #dhMessageEntry {
+	width:			309px;
+}
+
+#dhContentColumn #dhSuggestedGroupsWithInvitationDiv {
+	width:			309px;
+}
+
+#dhContentColumn .dh-zone-box .dh-invitation .dh-address {
+	padding-right:	10px;
+}
+
+#dhSuggestGroupsPopup {
+	position:		absolute;
+	left:			180px; 
+	top:			18px;
+	width:			300px;
+	height:         160px;
+	padding:		5px;
+	z-index:		2;
+}
+
+#dhSuggestGroupsArea {
+	height:         84px; 
+}
+
+#dhSuggestGroupsControls {
+	position:       relative;
+	margin-top:     5px;
+	text-align:     center;
+}
+
+#dhSuggestGroupsOk, #dhSuggestGroupsCancel {
+    width:          65px;
+}
+
+#dhSuggestGroupsPopup .dh-title {
+	margin-bottom:	0px;
+	padding-bottom: 0px;
+}
+

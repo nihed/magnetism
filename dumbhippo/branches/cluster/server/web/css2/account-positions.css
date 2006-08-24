@@ -1,0 +1,55 @@
+@CHARSET "UTF-8";
+
+#dhContentColumn .dh-form-table .dh-label-cell {
+	width:			120px;
+}
+
+#dhContentColumn .dh-form-table .dh-control-cell {
+	width:			358px;
+}
+
+#dhContentColumn .dh-form-table .dh-control-cell .dh-control-cell-div {
+	position:		relative;
+	width:			358px;
+}
+
+#dhContentColumn .dh-form-table .dh-control-cell .dh-control-cell-div img {
+	vertical-align:		middle;
+}
+
+#dhContentColumn .dh-form-table .dh-control-cell .dh-control-cell-div input {
+	vertical-align:		middle;
+}
+
+#dhContentColumn .dh-form-table .dh-control-cell .dh-text-input {
+	width:			250px;
+}
+
+#dhContentColumn .dh-form-table .dh-control-cell .dh-password-input {
+	width:			180px;
+}
+
+#dhContentColumn .dh-form-table .dh-control-cell .dh-username-input {
+	width:			180px;
+}
+
+.dh-aim-address {
+	padding-bottom:	5px;
+}
+
+.dh-aim-address a {
+	margin-left:	10px;	
+}
+
+tr.dh-email-address-spacer {
+	height:			5px;
+}
+
+#dhEmailEntry {
+	margin-right:	10px;
+}
+
+#dhTermsOfUseNote {
+	padding:            5px;
+	margin-bottom:      10px;
+}

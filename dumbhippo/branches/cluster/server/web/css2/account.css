@@ -1,0 +1,25 @@
+@CHARSET "UTF-8";
+@IMPORT url("site.css");
+@IMPORT url("account-positions.css");
+@IMPORT url("photo-chooser.css");
+
+#dhContentColumn .dh-form-table .dh-address-table td
+{
+	font-size:			12px;
+}
+
+div.dh-account-disabled-message {
+	color:			#cc0033;
+	background-color:	inherit;
+	font-weight:		bold;
+}
+
+.dh-love-hate {
+	font-size:		14px;
+}
+
+#dhTermsOfUseNote {
+	background-color:	#ffffcc;
+	color:				#cc0033;
+	font-size:          12px;
+}

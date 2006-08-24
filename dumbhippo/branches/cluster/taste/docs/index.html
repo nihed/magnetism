@@ -1,0 +1,401 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+
+<head>
+	<title>Taste Documentation</title>
+	<style type="text/css">
+		<!--
+		a, a:visited {color: green}
+		body, td, th {font: 9pt Verdana,Arial,sans-serif;}
+		td, th {text-align: left; vertical-align: top; padding: 0.1cm 0.3cm 0.1cm 0.3cm}
+		th {vertical-align: bottom; font-weight: bold;}
+		pre {color: #003300; border: 1px solid black; padding: 0.1cm}
+		code {color: #003300}
+		pre {background-color: #DDDDDD}
+		img {border: 0px}
+		h2, h3 {padding-top: 0.1cm}
+		-->
+	</style>
+</head>
+
+<body>
+
+<table style="width: 20cm">
+
+<tr>
+<td colspan="2">
+<table>
+<tr>
+<td><img src="Taste.png" alt="Taste" width="190" height="129"/></td>
+<td>
+<span style="font-size: 36pt">Taste</span><br/>
+Collaborative Filtering for Java
+<ul>
+  <li><strong><a href="http://sourceforge.net/projects/taste/">Project SourceForge Page</a></strong></li>
+  <li><strong><a href="javadoc/index.html">Javadoc</a></strong></li>
+  <li><strong><a href="http://sourceforge.net/project/showfiles.php?group_id=138771">Download latest version</a></strong></li>
+</ul>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+
+<tr>
+<td colspan="2">
+<a href="#overview">Overview</a> | <a href="#architecture">Architecture</a> |
+<a href="#requirements">Requirements</a> | <a href="#examples">Examples</a> |
+<a href="#demo">Demo</a> | <a href="#integration">Integration</a> |
+<a href="#useful">Useful Links</a> | <a href="#services">Services</a> |
+<a href="#about">About...</a>
+</td>
+</tr>
+
+<tr>
+<td style="width: 50%">
+
+<h2><a id="overview">Overview</a></h2>
+
+<p>Taste is a flexible, fast collaborative filtering engine for Java. The engine takes users'
+preferences for items ("tastes") and returns estimated preferences for other items. For example, a
+site that sells books or CDs could easily use Taste to figure out, from past purchase data, which
+CDs a customer might be interested in listening to.</p>
+
+<p>Taste provides a rich set of components from which you can construct a customized recommender
+system from a selection of algorithms. Taste is designed to be enterprise-ready; it's designed for
+performance, scalability and flexibility. It supports a standard <a href="http://java.sun.com/products/ejb/">EJB</a>
+(Enterprise Java Beans) interface for J2EE-based applications,
+but Taste is not just for Java; it can be run as an external server which exposes recommendation logic
+to your application via web services and HTTP.</p>
+
+<p>Top-level packages define the Taste interfaces to these key abstractions:</p>
+
+<ul>
+	<li><a href="javadoc/com/planetj/taste/model/DataModel.html">DataModel</a></li>
+	<li><a href="javadoc/com/planetj/taste/transforms/PreferenceTransform.html">PreferenceTransform</a></li>
+	<li><a href="javadoc/com/planetj/taste/correlation/UserCorrelation.html">UserCorrelation</a> and
+		<a href="javadoc/com/planetj/taste/correlation/ItemCorrelation.html">ItemCorrelation</a></li>
+	<li><a href="javadoc/com/planetj/taste/neighborhood/UserNeighborhood.html">UserNeighborhood</a></li>
+	<li><a href="javadoc/com/planetj/taste/recommender/Recommender.html">Recommender</a></li>
+</ul>
+
+<p>Subpackages of <code>comp.planetj.taste.impl</code> hold implementations of these interfaces.
+These are the pieces from which you will build your own recommendation engine. That's it!
+For the academically inclined, Taste supports both <em>memory-based</em> and <em>item-based</em>
+recommender systems. It does not currently support <em>model-based</em> recommenders.</p>
+
+<h2><a id="architecture">Architecture</a></h2>
+
+<p><img src="Architecture.png" alt="Architecture" height="744" width="284"/></p>
+
+<p>This diagram shows the relationship between various Taste components in a user-based recommender.
+An item-based recommender system is similar except that there are no PreferenceInferrers or Neighborhood
+algorithms involved.</p>
+
+<h3>Recommender</h3>
+
+<p>A <code>Recommender</code> is the core abstraction in Taste. Given a <code>DataModel</code>, it can produce
+recommendations. Applications will most likely use the <code>GenericUserBasedRecommender</code> implementation
+or <code>GenericItemBasedRecommender</code>, possibly decorated by
+<code>CachingRecommender</code>.</p>
+
+<h3>DataModel</h3>
+
+<p>A <code>DataModel</code> is the interface to information about user preferences. An implementation might
+draw this data from any source, but a database is the most likely source. Taste provides <code>MySQLJDBCDataModel</code>
+to access preference data from a database via JDBC, though many applications will want to write their own.
+Taste also provides a <code>FileDataModel</code>.</p>
+
+<p>Along with <code>DataModel</code>, Taste uses the <code>User</code>, <code>Item</code> and
+<code>Preference</code> abstractions to represent the users, items, and preferences for those items in the
+recommendation engine. Custom <code>DataModel</code> implementations would return implementations of these
+interfaces that are appropriate to the application - maybe an <code>OnlineUser</code> implementation
+that represents an online store user, and a <code>BookItem</code> implementation representing a book.</p>
+
+<h3>PreferenceTransforms</h3>
+
+<p>A <code>PreferenceTransform</code> alters preference values in some way, possibly normalizing or
+exaggerating them. These may be attached to a <code>DataModel</code>.</p>
+
+<h3>UserCorrelation, ItemCorrelation</h3>
+
+<p>A <code>UserCorrelation</code> defines a notion of similarity between two <code>User</code>s.
+This is a crucial part of a recommendation engine. These are attached to a <code>Neighborhood</code> implementation.
+<code>ItemCorrelation</code>s are analagous, but find similarity between <code>Item</code>s.</p>
+
+<h3>UserNeighborhood</h3>
+
+<p>In a user-based recommender, recommendations are produced by finding a "neighborhood" of
+similar users near a given user. A <code>UserNeighborhood</code> defines a means of determining
+that neighborhood &mdash; for example, nearest 10 users. Implementations typically need a
+<code>UserCorrelation</code> to operate.</p>
+
+<h2><a id="requirements">Requirements</a></h2>
+
+<h3>Required</h3>
+<ul>
+ <li><a href="http://java.sun.com/j2se/1.5.0/index.jsp">Java / J2SE 5.0</a></li>
+</ul>
+
+<h3>Optional</h3>
+<ul>
+ <li><a href="http://ant.apache.org/">Apache Ant</a> 1.5 or later,
+  if you want to build from source or build examples.</li>
+ <li>Taste web applications require a <a href="http://java.sun.com/products/servlet/index.jsp">Servlet 2.3+</a>
+  container, such as
+  <a href="http://jakarta.apache.org/tomcat/">Jakarta Tomcat</a>. It may in fact work with older
+  containers with slight modification.</li>
+ <li>Taste EJB requires an <a href="http://java.sun.com/products/ejb/index.jsp">EJB 2.x</a> container.
+  It may work with older EJB containers with slight changes to the deployment descriptor.</li>
+ <li><code>MySQLJDBCDataModel</code> implementation requires a
+  <a href="http://www.mysql.com/products/mysql/">MySQL 4.x</a> database. Again, it may be made to work with earlier
+  versions or other databases with slight changes.</li>
+</ul>
+
+</td>
+<td>
+
+<h2><a id="examples">Examples</a></h2>
+
+<h3>User-based Recommender</h3>
+
+<p>User-based recommenders are the "original", conventional style of recommender system. They can produce good
+recommendations when tweaked properly; they are not necessarily the fastest recommender systems and
+are thus suitable for small data sets (roughly, less than a million ratings). We'll start with an example of this.</p>
+
+<p>First, create a <code>DataModel</code> of some kind. Here, we'll use a simple on based
+on data in a file:</p>
+
+<pre>
+DataModel model = new FileDataModel(new File("data.txt"));
+</pre>
+
+<p>It can be optionally instrumented with <code>PreferenceTransform</code>s:</p>
+
+<pre>
+model.addTransform(new ZScore());
+model.addTransform(new CaseAmplification(1.5));
+model.addTransform(new InverseUserFrequency(model));
+</pre>
+
+<p>We'll use the Pearson implementation of <code>UserCorrelation</code> as our user
+correlation algorithm, and add an optional preference inference algorithm:</p>
+
+<pre>
+UserCorrelation userCorrelation = new PearsonCorrelation(model);
+userCorrelation.setPreferenceInferrer(new AveragingPreferenceInferrer());
+</pre>
+
+<p>Now we create a <code>UserNeighborhood</code> algorithm. Here we use nearest-10:</p>
+
+<pre>
+UserNeighborhood neighborhood =
+  new NearestNUserNeighborhood(10, userCorrelation, model);
+</pre>
+
+<p>Now we can create our <code>Recommender</code>, and add a caching decorator:</p>
+
+<pre>
+Recommender recommender =
+	new GenericUserBasedRecommender(model, neighborhood);
+Recommender cachingRecommender = new CachingRecommender(recommender);
+</pre>
+
+<p>Now we can get 10 recommendations for user ID "1234" &mdash; done!</p>
+
+<pre>
+List&lt;RecommendedItem&gt; recommendations = cachingRecommender.recommend("1234", 10);
+</pre>
+
+<h3>Item-based Recommender</h3>
+
+<p>We could have created an item-based recommender instead. Item-based recommender base recommendation
+not on user similarity, but on item similarity. In theory these are about the same approach to the
+problem, just from different angles. However the similarity of two items is relatively fixed, more so
+than the similarity of two users. So, item-based recommenders can use pre-computed similarity values
+in the computations, which make them much faster. For large data sets, item-based recommenders
+are more appropriate.</p>
+
+<p>Let's start over, again with a <code>FileDataModel</code> to start:</p>
+
+<pre>
+DataModel model = new FileDataModel(new File("data.txt"));
+</pre>
+
+<p>We'll also need an <code>ItemCorrelation</code>. We could use <code>PearsonCorrelation</code>,
+which computes item similarity in realtime, but, this is generally too slow to be useful.
+Instead, in a real application, you would feed a list of pre-computed correlations to
+a <code>GenericItemCorrelation</code>:</p>
+
+<pre>
+// Construct the list of pre-compted correlations
+Collection&lt;GenericItemCorrelation.ItemItemCorrelation&gt; correlations = ...
+ItemCorrelation itemCorrelation = new GenericItemCorrelation(correlations);
+</pre>
+
+<p>Then we can finish as before to produce recommendations:</p>
+
+<pre>
+Recommender recommender =
+  new GenericItemBasedRecommender(model, itemCorrelation);
+Recommender cachingRecommender = new CachingRecommender(recommender);
+...
+List&lt;RecommendedItem&gt; recommendations = cachingRecommender.recommend("1234", 10);
+</pre>
+
+<h2><a id="demo">Demo</a></h2>
+
+<p>Want to see this thing run right now? Taste comes with an example web application which can recommend movies
+based on publicly-available research data available from the University of Minnesota's fantastic
+<a href="http://www.grouplens.org/">GroupLens</a> project. (No endorsement or connection with the University of
+Minnesota or GroupLens is implied.)</p>
+
+<p>Try this (bare-bones) demo online, which I keep running as much possible:</p>
+
+<hr/>
+<form action="http://percolateur.dyndns.org:8080/taste/RecommenderServlet" method="get">
+<table>
+<tr><td>User ID:</td><td><input type="text" name="userID" value="123"/></td></tr>
+<tr><td>How Many?</td><td><input type="text" name="howMany" value="20"/></td></tr>
+<tr><td><input type="hidden" name="debug" value="true"/></td><td><input type="submit"/></td></tr>
+</table>
+</form>
+<hr/>
+
+<p>To build and run it yourself, follow the instructions below, which are written for Unix-like operating systems:</p>
+
+<ol>
+	<li>Download the "1 Million MovieLens Dataset" from
+	 <a href="http://www.grouplens.org/">http://www.grouplens.org/</a>.</li>
+	<li>Unpack the archive and copy <code>movies.dat</code> and <code>ratings.dat</code> to
+	 <code>src/example/com/planetj/taste/example/grouplens</code> under the Taste distribution
+	 directory.</li>
+	<li>Build the example web application by executing <code>ant build-grouplens-example</code> in the directory
+	  where you unpacked the Taste distribution. This produces <code>taste.war</code>.</li>
+	<li><a href="http://tomcat.apache.org/download-55.cgi">Download</a> and install Tomcat.</li>
+	<li>Copy <code>taste.war</code> to the <code>webapps</code> directory under the Tomcat installation directory.</li>
+	<li>Increase the heap space that is given to Tomcat by setting the <code>JAVA_OPTS</code>
+      environment variable to <code>-Xmx320m</code>, to allow 320MB of heap space. Using <code>bash</code>,
+      one can do this with the command <code>export JAVA_OPTS="-Xmx320m"</code></li>
+	<li>Start Tomcat. This is usually done by running <code>bin/startup.sh</code>
+      from the Tomcat installation directory. You may get an error asking you to set <code>JAVA_HOME</code>; do
+      so as above.</li>
+	<li>Get recommendations by accessing the web application in your browser:<br/>
+	  <code>http://localhost:8080/taste/RecommenderServlet?userID=1&amp;howMany=10</code><br/>
+	  This will produce a simple preference-item ID list which could be consumed by a client application.
+	  Get more useful human-readable output with the <code>debug</code> parameter:<br/>
+	  <code>http://localhost:8080/taste/RecommenderServlet?userID=1&amp;howMany=10&amp;debug=true</code></li>
+</ol>
+
+<p>Incidentally, Taste's web service interface may then be found at:<br/>
+<code>http://localhost:8080/taste/RecommenderService.jws</code><br/>
+Its WSDL file will be here...<br/>
+<code>http://localhost:8080/taste/RecommenderService.jws?wsdl</code><br/>
+... and you can even access it in your browser via a simple HTTP request:<br/>
+<code>http://localhost:8080/taste/RecommenderService.jws?method=recommend&amp;userID=1&amp;howMany=10</code></p>
+
+<h2><a id="integration">Integration with your application</a></h2>
+
+<h3>Direct</h3>
+
+<p>You can create a <code>Recommender</code>, as shown above, wherever you like in your Java application, and use it. This
+includes simple Java applications or GUI applications, server applications, and J2EE web applications.</p>
+
+<h3>Standalone server</h3>
+
+<p>Taste can also be run as an external server, which may be the only option for non-Java applications.
+A Taste Recommender can be exposed as a web application via <code>com.planetj.taste.web.RecommenderServlet</code>,
+and your application can then access recommendations via simple HTTP requests and response, or as a
+full-fledged SOAP web service. See above, and see
+<a href="javadoc/com/planetj/taste/web/RecommenderServlet.html">the javadoc</a> for details.</p>
+
+<p>To deploy your <code>Recommender</code> as an external server:</p>
+
+<ol>
+	<li>Create an implementation of <code>com.planetj.taste.recommender.Recommender</code>.</li>
+	<li>Compile it and create a JAR file containing your implementation.</li>
+	<li>Build a WAR file that will run your Recommender as a web application:<br/>
+	<code>ant -Dmy-recommender.jar=yourJARfile.jar -Dmy-recommender-class=com.foo.YourRecommender build-taste-server</code></li>
+	<li>Follow from the "Install Tomcat" step above under <a href="#demo">Demo</a>.</li>
+</ol>
+
+<h3>EJB</h3>
+
+<p>Taste provides a stateless session EJB interface to a <code>Recommender</code>. Deploying Taste as an EJB
+is similar:</p>
+
+<ol>
+	<li>Create an implementation of <code>com.planetj.taste.recommender.Recommender</code>.
+	See the example above, or see <code>src/example/com/acme/AcmeRecommender</code>.</li>
+	<li>Create a JAR file containing your implementation.</li>
+	<li>Build an EJB JAR file containing your Recommender:<br/>
+	<code>ant -Dmy-recommender.jar=yourJARfile.jar -Dmy-recommender-class=com.foo.YourRecommender build-taste-ejb</code></li>
+	<li>Install, for example, <a href="http://www.jboss.com/developers/index">JBoss 4</a></li>
+	<li>Copy the file <code>taste-ejb.jar</code> to JBoss's deployment directory.</li>
+	<li>Start JBoss.</li>
+</ol>
+
+<h2><a id="useful">Useful Links</a></h2>
+
+<p>How will you decide which algorithms to use? The right answer depends on the nature of your data,
+and on your speed and memory constraints. Here are some links to good background reading on these
+algorithms, and useful comparisons of these algorithms:</p>
+
+<blockquote cite="http://www.research.microsoft.com/users/breese/cfalgs.html"><p>J.S. Breese, D. Heckerman
+ and C. Kadie, "<a href="http://www.research.microsoft.com/users/breese/cfalgs.html">Empirical Analysis of
+ Predictive Algorithms for Collaborative Filtering</a>,"
+ in Proceedings of the Fourteenth Conference on Uncertainity in Artificial Intelligence (UAI 1998),
+ 1998.</p></blockquote>
+<blockquote cite="http://www10.org/cdrom/papers/519/"><p>B. Sarwar, G. Karypis, J. Konstan and J. Riedl,
+ "<a href="http://www10.org/cdrom/papers/519/">Item-based collaborative filtering recommendation
+ algorithms</a>," in Proceedings of the Tenth International Conference on the World Wide Web (WWW 10),
+ pp. 285-295, 2001.</p></blockquote>
+<blockquote cite="http://doi.acm.org/10.1145/192844.192905"><p>P. Resnick, N. Iacovou, M. Suchak, P. Bergstrom and J. Riedl,
+ "<a href="http://doi.acm.org/10.1145/192844.192905">GroupLens: an open architecture for
+ collaborative filtering of netnews</a>," in Proceedings of the 1994 ACM conference on Computer Supported Cooperative
+ Work (CSCW 1994), pp. 175-186, 1994.</p></blockquote>
+<blockquote cite="http://www.grouplens.org/papers/pdf/algs.pdf"><p>J.L. Herlocker, J.A. Konstan,
+ A. Borchers and J. Riedl, "<a href="http://www.grouplens.org/papers/pdf/algs.pdf">An algorithmic framework for
+ performing collaborative filtering</a>," in Proceedings of the 22nd annual international ACM SIGIR Conference
+ on Research and Development in Information Retrieval (SIGIR 99), pp. 230-237, 1999.</p></blockquote>
+<blockquote cite="http://materialobjects.com/cf/MovieRecommender.pdf"><p>Clifford Lyon,
+ "<a href="http://materialobjects.com/cf/MovieRecommender.pdf">Movie Recommender</a>,"
+ CSCI E-280 final project, Harvard University, 2004.</p></blockquote>
+
+<p>These links will take you to all the collaborative filtering reading you could ever want!</p>
+
+<ul>
+ <li><a href="http://www.paulperry.net/notes/cf.asp">Paul Perry's notes</a></li>
+ <li><a href="http://jamesthornton.com/cf/">James Thornton's collaborative filtering resources</a></li>
+</ul>
+
+<h2><a id="services">Need Services?</a></h2>
+
+<p>Taste is free, open-source software. As we develop it, we're also gearing up to offer professional
+services to organizations that want help integrating Taste into their applications. Why not get
+assistance straight from the developers? <a href="http://sourceforge.net/sendmessage.php?touser=253907">
+Contact us at SourceForge</a> to inquire.</p>
+
+<h2><a id="about">About...</a></h2>
+
+<p>Taste, &copy;2005 and onwards, <a href="http://sourceforge.net/users/srowen/">Sean Owen</a>.
+Taste is provided as-is with no warranty.
+Comments, bug reports, suggestions, patches, and all other input are most welcome. Get in touch at the
+<a href="http://sourceforge.net/projects/taste/">Taste project page</a> on SourceForge.</p>
+
+<p>
+<a href="http://validator.w3.org/check?uri=referer">
+<img src="http://www.w3.org/Icons/valid-xhtml11" alt="Valid XHTML 1.1!" height="31" width="88"/></a>
+<a href="http://sourceforge.net">
+<img src="http://sourceforge.net/sflogo.php?group_id=138771&amp;type=1" width="88" height="31" alt="SourceForge.net Logo"/></a>
+</p>
+
+</td>
+</tr>
+
+</table>
+
+</body>
+</html>

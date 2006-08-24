@@ -1,0 +1,7 @@
+@CHARSET "UTF-8";
+@IMPORT url("site.css");
+@IMPORT url("upgrade-positions.css");
+
+.dh-gray-hr {
+	color: #999999;
+}

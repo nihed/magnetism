@@ -1,0 +1,45 @@
+@CHARSET "UTF-8";
+@IMPORT url("site.css");
+@IMPORT url("search-positions.css");
+
+.dh-zone-box .dh-search-title {
+	font-size:		14px;
+	font-weight:	bold;
+	color:			#36AAE8;
+}
+
+.dh-zone-box .dh-search-info {
+	font-size:		12px;
+}
+
+.dh-zone-box .dh-search-result-person .dh-name {
+	font-size:		16px;
+}
+
+.dh-zone-box .dh-search-info .dh-search-keyword {
+	font-weight:	bold;
+}
+
+#dhContentColumn .dh-zone-box .dh-item-with-numeral .dh-numeral {
+	color:			#B7B7B7;
+	font-size:		12px;
+}
+
+#dhContentColumn .dh-zone-box .dh-item-with-numeral .dh-title {
+	font-size:		12px;
+}
+
+#dhPeople, #dhGroups {
+	color:			#84569b;
+	background-color:	inherit;
+}
+
+#dhMusicRadar {
+	color:			#36aae8;
+	background-color:	inherit;
+}
+
+#dhLinkSwarm {
+	color:			#f16d1c;
+	background-color:	inherit;
+}

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE jboss-web PUBLIC
+          "-//JBoss//DTD Web Application 2.3V2//EN"
+          "http://www.jboss.org/j2ee/dtd/jboss-web_4_0.dtd">
+<jboss-web>
+  <!-- empty context-root means to deploy at / -->
+  <!-- uncomment if splitting war from ear -->
+  <!--  <context-root></context-root> -->
+  
+  <!-- if you change this you must also change it in jboss-app.xml -->
+  <!-- uncomment if splitting war from ear -->
+  <!-- <class-loading java2ClassLoadingCompliance="false"><loader-repository>dumbhippo.com:loader=dumbhippo.ear</loader-repository></class-loading>  -->
+  
+  <!-- <security-domain>java:/jaas/other</security-domain> -->  
+</jboss-web>

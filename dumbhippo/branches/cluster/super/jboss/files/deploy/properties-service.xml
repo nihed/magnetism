@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE server>
+<!-- $Id: properties-service.xml,v 1.5 2003/08/27 04:34:12 patriot1burke Exp $ -->
+<!-- Modified for use with dumbhippo, since I can't figure out a simpler way
+     to do external configuration -->
+
+<server>
+
+  <mbean code="org.jboss.varia.property.PropertyEditorManagerService"
+         name="jboss:type=Service,name=PropertyEditorManager">
+
+  </mbean>
+
+  <mbean code="org.jboss.varia.property.SystemPropertiesService"
+         name="jboss:type=Service,name=SystemProperties">
+
+    <!-- do not put trailing whitespace here, or we put you in the iron maiden -->
+    <attribute name="Properties">
+	    dumbhippo.server.disable.authentication=@@disableAuthentication@@
+	    dumbhippo.server.email.disable=@@disableEmail@@
+		dumbhippo.server.xmpp.address=@@jiveHost@@
+		dumbhippo.server.xmpp.port=@@jivePlainPort@@
+		dumbhippo.server.xmpp.adminuser=admin
+		dumbhippo.server.xmpp.password=@@jivePassword@@
+		dumbhippo.server.baseurl=@@baseurl@@
+		dumbhippo.server.files.saveurl=file://@@filesavedir@@
+		dumbhippo.server.aimbot.name=@@imbotScreenName@@
+		dumbhippo.server.aim.presence.key=@@aimPresenceKey@@
+		dumbhippo.server.downloadurl.windows=@@clientWindowsDownload@@
+		dumbhippo.server.downloadurl.windows.source=@@clientWindowsDownloadSource@@
+		dumbhippo.server.downloadurl.linux=@@clientLinuxDownload@@
+		dumbhippo.server.downloadurl.linux.tar=@@clientLinuxDownloadTar@@
+		dumbhippo.server.downloadurl.linux.srpm=@@clientLinuxDownloadSRPM@@
+		dumbhippo.server.amazon.accesskeyid=@@amazonAccessKeyId@@
+		dumbhippo.server.amazon.associatetag=@@amazonAssociateTag@@
+		dumbhippo.server.yahoo.appid=@@yahooAppId@@
+		dumbhippo.server.ebay.devid=@@ebayDevId@@
+		dumbhippo.server.ebay.appid=@@ebayAppId@@
+		dumbhippo.server.ebay.certid=@@ebayCertId@@
+		dumbhippo.server.flickr.apiid=@@flickrApiId@@
+		dumbhippo.server.adminconsole.enable=@@adminConsole@@
+		dumbhippo.server.newfeatures = @@newFeatures@@
+		dumbhippo.server.stealthmode=@@stealthMode@@
+		dumbhippo.server.userupdateinterval=@@userUpdateInterval@@
+		dumbhippo.server.summitgroupguid=@@summitGroupGuid@@
+		dumbhippo.server.newuserinvitationcount=@@newUserInvitationCount@@
+		dumbhippo.server.specialnewuserinvitationcount=@@specialNewUserInvitationCount@@		
+    </attribute>
+  </mbean>
+  
+</server>

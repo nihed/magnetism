@@ -1,0 +1,116 @@
+@CHARSET "UTF-8";
+
+#dhContentColumn .dh-zone-box .dh-artist-profile {
+    position:      relative;
+    width:         100%;
+	margin-bottom: 10px;
+}
+
+.dh-artist-image {
+    position: relative;
+    float:    left;
+    width:    80px;
+    overflow: hidden;
+	margin-bottom: 10px;
+}
+
+.dh-artist-info {
+    position: relative;
+    float:    left;
+    clear:    right;
+}
+
+.dh-artist-bio {
+}
+
+#dhContentColumn .dh-zone-box .dh-album {
+	margin-top:    7px;
+	margin-bottom: 10px;
+}
+
+.dh-album-image {
+    position: relative;
+    float:    left;
+    clear:    left;
+    width:    80px;
+    height:   80px;
+    overflow: hidden;
+}
+
+.dh-album-info {
+    position: relative;
+    float:    left;
+    clear:    right;
+    display:  table;
+    width:    390px;
+}
+
+.dh-album-title {
+    float:          left;
+    display:        table-cell;
+    margin-right:   2px;
+}
+
+.dh-album-year {
+    float:          left;
+    display:        table-cell;
+    margin-right:   2px;
+}
+
+.dh-album-buy {
+    float:        right;
+    display:      table-cell;
+    /* in Firefox, the buy link does not align to the right of the table without this */
+    margin-right: -8px; 
+}
+
+.dh-songs {
+    float:   left;
+    display: table-row;
+    clear:   left;
+}
+
+.dh-album-track {
+    float:   left;
+    display: table-row;
+    clear:   left;
+    width:   100%;
+    padding: 3px;
+}
+
+.dh-album-track .dh-song-info .dh-song-name {
+    float:       left;
+    display:     inline;
+    width:       220px;
+	overflow:    hidden;
+	white-space: nowrap;
+}
+
+.dh-album-track .dh-song-info .dh-song-links {
+    float:   right;
+    display: inline;
+}
+
+.dh-album-track .dh-song-info .dh-song-plays {
+    float:       left;
+    display:     block;
+    margin-left: 5px;
+}
+
+.dh-album-track .dh-song-info .dh-double-digit-track-song-plays {
+    margin-left: 8px;
+}
+
+.dh-album-track .dh-song-info .dh-song-plays ul {
+    margin-top:    0px;
+    margin-left:   25px;
+    margin-bottom: 0px;
+}
+
+#dhContentColumn .dh-zone-box .dh-artist-more .dh-more {
+    position:      relative;
+    float:         left;
+    clear:         both; 
+    margin-top:    5px;
+    margin-bottom: 0px;
+}

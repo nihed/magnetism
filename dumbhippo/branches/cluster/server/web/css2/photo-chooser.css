@@ -1,0 +1,6 @@
+@CHARSET "UTF-8";
+@IMPORT url("photo-chooser-positions.css");
+
+.dh-photo-chooser .dh-content .dh-image-grid .dh-image {
+	background-color:	white;
+}

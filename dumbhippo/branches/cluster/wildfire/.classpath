@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="src" path="src/java"/>
+	<classpathentry excluding="dist/|merge/|ant/jar/|ant-contrib/jar/|ant-subdirtask/jar/|commons-el/jar/|jasper-compiler/jar/|jasper-runtime/jar/|junit/jar/|xmltask/jar/" kind="src" path="build/lib"/>
+	<classpathentry excluding="activation/jar/|hsqldb/jar/|mail/jar/|mysql/jar/|postgres/jar/|servlet/jar/" kind="src" path="build/lib/dist"/>
+	<classpathentry excluding="commons-logging/jar/|dom4j/jar/|jaxen/jar/|jdic/jar/|jetty/jar/|jmdns/jar/|jstl/jar/|shaj/jar/|standard/jar/|whack/jar/|xpp3/jar/" kind="src" path="build/lib/merge"/>
+	<classpathentry kind="lib" path="build/lib/merge/commons-logging.jar"/>
+	<classpathentry kind="lib" path="build/lib/merge/dom4j.jar"/>
+	<classpathentry kind="lib" path="build/lib/merge/jaxen.jar"/>
+	<classpathentry kind="lib" path="build/lib/merge/jdic.jar"/>
+	<classpathentry kind="lib" path="build/lib/merge/jetty.jar"/>
+	<classpathentry kind="lib" path="build/lib/merge/jmdns.jar"/>
+	<classpathentry kind="lib" path="build/lib/merge/jstl.jar"/>
+	<classpathentry kind="lib" path="build/lib/merge/shaj.jar"/>
+	<classpathentry kind="lib" path="build/lib/merge/standard.jar"/>
+	<classpathentry kind="lib" path="build/lib/merge/whack.jar"/>
+	<classpathentry kind="lib" path="build/lib/merge/xpp3.jar"/>
+	<classpathentry kind="lib" path="build/lib/dist/activation.jar"/>
+	<classpathentry kind="lib" path="build/lib/dist/hsqldb.jar"/>
+	<classpathentry kind="lib" path="build/lib/dist/mail.jar"/>
+	<classpathentry kind="lib" path="build/lib/dist/mysql.jar"/>
+	<classpathentry kind="lib" path="build/lib/dist/postgres.jar"/>
+	<classpathentry kind="lib" path="build/lib/dist/servlet.jar"/>
+	<classpathentry kind="lib" path="build/lib/ant.jar"/>
+	<classpathentry kind="lib" path="build/lib/ant-contrib.jar"/>
+	<classpathentry kind="lib" path="build/lib/ant-subdirtask.jar"/>
+	<classpathentry kind="lib" path="build/lib/commons-el.jar"/>
+	<classpathentry kind="lib" path="build/lib/jasper-compiler.jar"/>
+	<classpathentry kind="lib" path="build/lib/jasper-runtime.jar"/>
+	<classpathentry kind="lib" path="build/lib/junit.jar"/>
+	<classpathentry kind="lib" path="build/lib/xmltask.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/server"/>
+	<classpathentry kind="src" path="src/plugins/hippo/src/java"/>
+	<classpathentry kind="output" path="target/classes"/>
+</classpath>

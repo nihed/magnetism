@@ -1,0 +1,268 @@
+cpp_quote("#pragma once")
+
+import "oaidl.idl";
+import "ocidl.idl";
+import "exdisp.idl";
+
+#include "HippoUtilDispID.h"
+
+[
+    uuid(BC81C530-2099-4121-9B66-969D89B22E3C), // LIBID_HippoUtil
+    helpstring("DumbHippo Utilities"),
+    lcid(0x0000),
+    version(0.1)
+]
+library HippoUtil {
+    interface IHippoChatRoom;
+    interface IHippoUIListener;
+
+    [
+        uuid(F596AE04-94E7-4cdd-8CD8-5D4361F962E5), // IID_IHippoUI
+        helpstring("DumbHippo User Interface"),
+        dual,
+        oleautomation
+    ]
+    interface IHippoUI : IDispatch
+    {
+        [id(100), helpstring("Register a browser")]
+        HRESULT RegisterBrowser([in] IWebBrowser2 *browser, [out, retval] DWORD* cookie);
+        [id(101), helpstring("Unregister a previously registered browser")]
+        HRESULT UnregisterBrowser([in] DWORD cookie);
+        [id(102), helpstring("Update information about a browser")]
+        HRESULT UpdateBrowser([in] DWORD cookie, [in] BSTR url, [in] BSTR title);
+        [id(103), helpstring("Unregister and exit, returns process ID so caller can wait for exit")]
+        HRESULT Quit([out, retval] DWORD *processId);
+        [id(104), helpstring("Show recently shared links")]
+        HRESULT ShowRecent();
+        [id(105), helpstring("Upload a photo file to flickr and share link to it")]
+        HRESULT BeginFlickrShare([in] BSTR path);
+        [id(106), helpstring("Share a specific URL")]
+        HRESULT ShareLink([in] BSTR url, [in] BSTR title);
+        [id(107), helpstring("Open a chat window about a post")]
+        HRESULT ShowChatWindow([in] BSTR postId);
+        [id(108), helpstring("Get the user ID of the logged-in user")]
+        HRESULT GetLoginId([out, retval] BSTR *loginId);
+        [id(109), helpstring("Get a chat room object for a post")]
+        HRESULT GetChatRoom([in] BSTR postId, [out, retval] IHippoChatRoom **chatRoom);
+        [id(110), helpstring("Start upgrade process")]
+        HRESULT DoUpgrade();
+        [id(111), helpstring("Signal a share as complete")]
+        HRESULT ShareLinkComplete([in] BSTR postId, [in] BSTR url);
+
+        [id(112), helpstring("Register a listener for callbacks")]
+        HRESULT RegisterListener([in] IHippoUIListener *listener, [out] UINT64 *listenerId);
+        [id(113), helpstring("Unregister a listener added with RegisterListener")]
+        HRESULT UnregisterListener([in] UINT64 listenerId);
+        [id(114), helpstring("Register a single recipient of callbacks within a listener")]
+        HRESULT RegisterEndpoint([in] UINT64 listenerId, [out] UINT64 *endpointId);
+        [id(116), helpstring("Unregister an endpoint registered with RegisterEndpoint")]
+        HRESULT UnregisterEndpoint([in] UINT64 endpointId);
+        [id(117), helpstring("Join a chat room, sending events to the given endpoint")]
+        HRESULT JoinChatRoom([in] UINT64 endpointId, [in] BSTR chatId, [in] BOOL participant);
+        [id(118), helpstring("Leave a chatroom joined with JoinChatRoom")]
+        HRESULT LeaveChatRoom([in] UINT64 endpointId, [in] BSTR chatId);
+        [id(119), helpstring("Send a chat message to a particular room")]
+        HRESULT SendChatMessage([in] BSTR chatId, [in] BSTR text);
+
+        [id(120), helpstring("Get the name of the server we connect to in host:port format")]
+        HRESULT GetServerName([out, retval] BSTR *serverName);
+        [id(121), helpstring("Launch a web browser for the given URL, reusing existing windows if appropriate")]
+        HRESULT LaunchBrowser([in] BSTR url);
+
+        // up to 129
+    }
+    [
+        uuid(BB761F87-493F-43F5-A1F2-2DDD1045B62F),
+        helpstring("DumbHippo User Interface Listener"),
+        dual,
+        oleautomation
+    ]
+    interface IHippoUIListener : IDispatch
+    {
+        HRESULT OnConnect();
+        HRESULT OnDisconnect();
+        HRESULT OnUserJoin([in] UINT64 endpointId, [in] BSTR chatId, [in] BSTR userId, [in] BOOL participant);
+        HRESULT OnUserLeave([in] UINT64 endpointId, [in] BSTR chatId, [in] BSTR userId);
+        HRESULT OnMessage([in] UINT64 endpointId, [in] BSTR chatId, [in] BSTR userId, [in] BSTR message, [in] double timestamp, [in] int serial);
+        HRESULT UserInfo([in]  UINT64 endpointId, [in] BSTR userId, [in] BSTR name, [in] BSTR smallPhotoUrl, [in] BSTR currentSong, [in] BSTR currentArtist, [in] BOOL musicPlaying);
+    }
+    [
+        uuid(58C5A8FC-5DD5-4005-A267-5511D9128ADF), // IID_IHippoChatRoom
+        helpstring("DumbHippo Chat Room"),
+        dual,
+        oleautomation
+    ]
+    interface IHippoChatRoom : IDispatch
+    {
+        [helpstring("Join the chatroom, either as a guest or as a participant")]
+        HRESULT Join([in] BOOL participant);
+        [helpstring("Leave the chatroom, the value of 'participant' should match the call to Join()")]
+        HRESULT Leave([in] BOOL participant);
+        [helpstring("Send a new message with the given text")]
+        HRESULT SendMessage(BSTR text);
+        [helpstring("Replay all users and messages for the chatroom")]
+        HRESULT Rescan();
+    }
+    [
+        uuid(C54A5E00-EFB6-40f6-BFC0-A0345BA56BD1),
+        helpstring("DumbHippo Chat Room Control"),
+        dual,
+        oleautomation
+    ]
+    interface IHippoChatRoomEvents : IDispatch
+    {
+        [helpstring("User joined the chat room")]
+        [id(HIPPO_DISPID_ONUSERJOIN)] HRESULT OnUserJoin([in] BSTR userId, [in] BSTR photoUrl, [in] BSTR name, [in] BOOL partipant);
+        [helpstring("User left the chat room")]
+        [id(HIPPO_DISPID_ONUSERLEAVE)] HRESULT OnUserLeave([in] BSTR userId);
+        [helpstring("New message in the chat room")]
+        [id(HIPPO_DISPID_ONMESSAGE)] HRESULT OnMessage([in] BSTR userId, [in] BSTR photoUrl, [in] BSTR name, [in] BSTR message, [in] double timestamp, [in] int serial);
+        [helpstring("Reconnect to the chatroom, clear existing state")]
+        [id(HIPPO_DISPID_ONRECONNECT)] HRESULT OnReconnect();
+        [helpstring("User's music changed")]
+        [id(HIPPO_DISPID_ONUSERMUSICCHANGE)] HRESULT OnUserMusicChange([in] BSTR userId, [in] BSTR arrangementName, [in] BSTR artist, [in] BOOL musicPlaying);
+        }
+    [
+        uuid(49214430-579E-4c01-92DC-4BFDA2377EB7), // IID_IHippoExternal
+        helpstring("DumbHippo Javascript external object"),
+        dual,
+        oleautomation
+    ]
+    interface IHippoExternal : IUnknown
+    {
+        [id(130), propget, helpstring("Get the application object")]
+        HRESULT Application([out, retval] IDispatch **application);
+        [id(135), helpstring("Log to the debug log")]
+        HRESULT DebugLog([in] BSTR msg);
+        [id(136), helpstring("Create an xmlhttp object")]
+        HRESULT GetXmlHttp([out, retval] IXmlHttpRequest **request);
+    }
+    
+    interface IHippoEntityCollection;
+
+    [
+        uuid(58749FB7-80D9-4BCD-9390-07E0BC98863E),
+        helpstring("DumbHippo Entity"),
+        dual,
+        oleautomation
+    ]
+    interface IHippoEntity : IUnknown
+    {
+        [id(200), propget, helpstring("Type of entity (0=resource, 1=person, 2=group)")]
+        HRESULT Type([out, retval] int *type);
+        [id(201), propget, helpstring("GUID of the entity")]
+        HRESULT Id([out, retval] BSTR *id);
+        [id(202), propget, helpstring("Human readable name for the entity")]
+        HRESULT Name([out, retval] BSTR *name);
+        [id(203), propget, helpstring("URL to a small image representing the entity")]
+        HRESULT SmallPhotoUrl([out, retval] BSTR *smallPhotoUrl);
+        [id(204), propget, helpstring("Number of people currently chatting in group chat")]
+        HRESULT ChattingUserCount([out, retval] int *chattingUserCount);
+        [id(205), propget, helpstring("Last message sent to the chatroom")]
+        HRESULT LastChatMessage([out, retval] BSTR *message);
+        [id(206), propget, helpstring("Sender of the last chat message")]
+        HRESULT LastChatSender([out, retval] IHippoEntity **sender);
+        [id(207), propget, helpstring("Whether or not group membership updates are ignored")]
+        HRESULT Ignored([out, retval] BOOL *ignored);
+        [id(208), propget, helpstring("URL to a web page with information about the entity")]
+        HRESULT HomeUrl([out, retval] BSTR *homeUrl);
+        [id(209), propget, helpstring("People currently participating in the group chat")]
+        HRESULT ChattingUsers([out, retval] IHippoEntityCollection **users);
+        [id(210), propget, helpstring("Whether or not group chat is currently ignored")]
+        HRESULT ChatIgnored([out, retval] BOOL *ignored);
+    }
+    [
+        uuid(89503F0C-B401-4AAB-9F99-9B4D2EFA7AD6),
+        helpstring("DumbHippo Entity Collection"),
+        dual,
+        oleautomation
+    ]
+    interface IHippoEntityCollection : IUnknown
+    {
+        [id(210), propget, helpstring("Number of elements in the collection")]
+        HRESULT length([out, retval] int *length);
+        [id(211), helpstring("Retrieve a given element")]
+        HRESULT item([in] int index, [out, retval] IHippoEntity **entity);
+    }
+    [
+        uuid(1E81E9E2-8A0E-4A00-8A25-C3948CDAF06B),
+        helpstring("DumbHippo Post"),
+        dual,
+        oleautomation
+    ]
+    interface IHippoPost : IUnknown
+    {
+        [id(220), propget, helpstring("GUID of the post")]
+        HRESULT Id([out, retval] BSTR *id);
+        [id(221), propget, helpstring("Sender of the post")]
+        HRESULT Sender([out, retval] IHippoEntity **sender);
+        [id(222), propget, helpstring("URL of the post")]
+        HRESULT Url([out, retval] BSTR *url);
+        [id(223), propget, helpstring("Title of the post")]
+        HRESULT Title([out, retval] BSTR *title);
+        [id(224), propget, helpstring("Post description text")]
+        HRESULT Description([out, retval] BSTR *description);
+        [id(225), propget, helpstring("Recipients of the post")]
+        HRESULT Recipients([out, retval] IHippoEntityCollection **recipients);
+        [id(226), propget, helpstring("Viewers of the post")]
+        HRESULT Viewers([out, retval] IHippoEntityCollection **viewers);
+        [id(227), propget, helpstring("Extra XML blob of information about the post")]
+        HRESULT Info([out, retval] BSTR *info);
+        [id(228), propget, helpstring("Date that the post was posted, as a Unix time (seconds since January 1, 1971)")]
+        HRESULT PostDate([out, retval] int *postDate);
+        [id(229), propget, helpstring("Number of seconds the post should be displayed")]
+        HRESULT Timeout([out, retval] int *timeout);
+        [id(230), propget, helpstring("Number of people currently viewing the post")]
+        HRESULT ViewingUserCount([out, retval] int *viewingUserCount);
+        [id(231), propget, helpstring("Number of people currently chatting about the post")]
+        HRESULT ChattingUserCount([out, retval] int *chattingUserCount);
+        [id(232), propget, helpstring("Total number of people who have ever viewed the post")]
+        HRESULT TotalViewers([out, retval] int *totalViewers);
+        [id(233), propget, helpstring("Whether the user has previously viewed the post")]
+        HRESULT HaveViewed([out, retval] BOOL *haveViewed);
+
+        // It's probably better to add a ChatRoom property and put these methods on the
+        // chatroom, but we'll delay doing that until we make HippoChatRoom use HippoEntity
+        // more thoroughly
+        [id(234), propget, helpstring("Last message sent to the chatroom")]
+        HRESULT LastChatMessage([out, retval] BSTR *message);
+        [id(235), propget, helpstring("Sender of the last chat message")]
+        HRESULT LastChatSender([out, retval] IHippoEntity **sender);
+        [id(236), propget, helpstring("People currently viewing the message")]
+        HRESULT CurrentViewers([out, retval] IHippoEntityCollection **currentViewers);
+        [id(237), propget, helpstring("Whether or not post was sent to the world")]
+        HRESULT ToWorld([out, retval] BOOL *toWorld);
+        [id(238), propget, helpstring("Whether or not post is currently ignored")]
+        HRESULT Ignored([out, retval] BOOL *ignored);
+    }
+    [
+        uuid(C79153EE-79EB-4269-8EA3-5E57722776F3),
+        helpstring("DumbHippo Inter-thread Call Interface"),
+        dual
+    ]
+    interface IHippoCallable : IUnknown
+    {
+        HRESULT call([in] UINT64 param, [out, retval] UINT64 *reval);
+    }
+    [
+        uuid(FD2D3BEE-477E-4625-B35F-BF497FF601D9)
+    ]
+    coclass HippoUI 
+    {
+        [default] interface IHippoUI;
+    }
+    [
+        uuid(EE8E46EB-CDC7-4f89-A8AE-AF09946C9685)
+    ]
+    coclass HippoUI_Debug
+    {
+        [default] interface IHippoUI;
+    }
+    [
+        uuid(B3124A18-A7AB-41a8-AB11-A0D6452209C6)
+    ]
+    coclass HippoUI_Dogfood 
+    {
+        [default] interface IHippoUI;
+    }
+}

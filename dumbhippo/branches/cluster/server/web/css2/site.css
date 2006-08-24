@@ -1,0 +1,411 @@
+@CHARSET "UTF-8";
+@IMPORT url("site-positions.css");
+
+body {
+	font-family: 		Arial, sans;
+}
+
+body.dh-gray-background-page {
+	background-color:	#efefef; /* this might kick in if a browser doesn't do background-image */
+	background-image: 	url("/images2/graybgpattern.gif");
+	background-repeat:  repeat;
+}
+
+a {
+	text-decoration: 	none;
+}
+
+img {
+	border-style:		none;	
+}
+
+/* This class violates the naming conventions for backward compatibility, since
+   it's referenced from javascript which may apply to old pages.
+ */
+.dhInvisible {
+	display:			none;
+}
+
+.dh-color-web {
+	background-color: 	#F16D1C;
+	color:				white;
+}
+
+.dh-color-music {
+	background-color:	#36AAE8;
+	color:				white;
+}
+
+.dh-color-tv {
+	background-color:	#60B635;
+	color:				white;
+}
+
+.dh-color-where-im-at {
+	background-color:	#84569B;
+	color:				white;
+}
+
+.dh-color-group, .dh-color-account, .dh-color-artists, .dh-color-system, .dh-color-friend {
+	background-color:	#666666;
+	color:				white;
+}
+
+.dh-color-web a:visited, .dh-color-music a:visited, .dh-color-tv a:visited, .dh-color-group a:visited, .dh-color-account a:visited, .dh-color-artists a:visited, .dh-color-where-im-at a:visited {
+	color:				white;
+}
+
+.dh-color-normal {
+	background-color:	white;
+	color:				black;
+}
+
+.dh-color-normal a:visited {
+	color:				purple;
+}
+
+.dh-color-web-foreground {
+	color: 		#F16D1C;
+}
+
+.dh-color-music-foreground {
+	color:		#36AAE8;
+}
+
+.dh-color-tv-foreground {
+	color:		#60B635;
+}
+
+.dh-color-group-foreground, .dh-color-account-foreground, .dh-color-artists-foreground .dh-color-system-foreground, .dh-color-where-im-at-foreground {
+	color:		#000000;
+}
+
+.dh-separator {
+	background-color:	#999999;
+	height:				1px;
+}
+
+.dh-separator-invisible {
+	background-color:	white;
+}
+
+.dh-album-art {
+	width:				75px;
+	height:				75px;	
+	background-color:	#CCCCCC;
+}
+
+#dhPageTopMessage {
+	font-size: 			14px;
+	font-weight:		bold;
+	background-color:	#ffffcc;
+	-moz-border-radius:	5px;	
+}
+
+#dhPageFooter {
+	font-size:			12px;
+	color:				#666666;
+}
+
+
+#dhSearchBox {
+	font-size:			14px;
+	color:				white;
+	font-weight:		bold;
+}
+
+#dhSearchBox .dh-text-input { 
+	border-color:		#666666;
+	border-width:		1px;
+	font-weight:		bold;
+	color:				black;
+}
+
+#dhSearchBox .dh-text-input-showing-default { 
+	font-weight:		normal;
+	color:				#aaaaaa;
+}
+
+#dhHeaderOptions, #dhHeaderLinks {
+	font-size:			12px;
+	font-weight:		bold;
+	color:				white;
+}
+
+#dhHeaderOptions a:link, #dhHeaderOptions a:visited, #dhHeaderLinks a:link, #dhHeaderLinks a:visited {
+	color:				white;
+}
+
+#dhWebServices {
+    font-size:			12px;
+    font-weight:		500; /* 400 is same as normal, 700 is same as bold */
+    color:              black;
+}
+
+#dhWebServices a:link, #dhWebServices a:visited {
+    color:              black;  
+}
+
+#dhWebServices a:hover {
+    color:              blue; /* this looks better than text-decoration: underline; */
+}
+
+.dh-sidebar-box {
+	background-color:	#CFCFCF;
+	font-size:			12px;
+	-moz-border-radius:	10px;
+}
+
+.dh-sidebar-box .dh-title {
+	font-weight:		bold;
+	font-size:			14px;
+}
+
+.dh-sidebar-box .dh-sidebar-box-empty {
+	text-align:		center;
+	color:			#666666;
+}
+
+.dh-sidebar-box .dh-sidebar-box-empty a {
+	color:			#666666;
+	text-decoration:	underline;
+}
+
+.dh-sidebar-box .dh-new-invited-groups {
+	font-weight:		bold;
+}
+
+.dh-sidebar-box .dh-new-invited-groups:visited {
+	color:			blue;
+}
+
+.dh-sidebar-box .dh-sidebar-box-empty a:visited {
+	color:			#666666;
+}
+
+.dh-sidebar-box .dh-follower-actions {
+	font-size: 11px;
+}
+
+.dh-compact-item .dh-next-to-image .dh-name {
+	font-weight:		bold;
+	font-size:			12px;
+}
+
+/* the name in the profile is a little larger than elsewhere */
+.dh-profile-box .dh-compact-item .dh-next-to-image .dh-name {
+	font-size:			14px;
+}
+
+.dh-compact-item .dh-next-to-image .dh-presence {
+	font-size:			11px;
+}
+
+.dh-profile-box .dh-compact-item .dh-next-to-image .dh-action-link {
+	font-size:			12px;
+}
+
+.dh-compact-item .dh-next-to-image .dh-info {
+	font-size:			11px;
+}
+
+.dh-sidebar-box .dh-more, .dh-zone-box .dh-more {
+	font-size:			12px;
+	font-weight:		bold;
+}
+
+.dh-more-count a:link, .dh-more-count a:visited {
+    color:              black;  
+}
+
+.dh-zone-box .dh-bottom-image, .dh-zone-box .dh-header-image {
+	background: 		#EFEFEF;
+}
+
+.dh-zone-box-header-system {
+	background:			#efefef;
+}
+
+.dh-zone-box-title-container {
+	background:			url("/images2/header_blank500.gif");
+}
+
+.dh-zone-box-title-text {
+	font-size:			18px;
+	color:				white;
+}
+
+#dhContentColumn .dh-zone-box .dh-shared-link {
+	font-size:			14px;
+	font-weight:		bold;
+}
+
+#dhContentColumn .dh-zone-box .dh-title {
+	font-size:			16px;
+	font-weight:		bold;
+}
+
+#dhContentColumn .dh-zone-box .dh-subtitle {
+	font-weight:		bold;
+	color:				#999999;
+}
+
+#dhContentColumn .dh-zone-box .dh-song {
+	font-size:			14px;
+	font-weight:		bold;
+}
+
+#dhContentColumn .dh-zone-box .dh-song-details {
+	font-size:			11px;
+	font-weight:		normal;
+	color:				#666666;
+}
+
+.dh-zone-box-header-links a {
+	text-decoration:	underline;
+}
+
+.dh-zone-box-header-links a:link, .dh-zone-box-header-links a:visited {
+	color:				white;
+}
+
+.dh-zone-box-header-links {
+	font-size:			14px;
+	font-weight:		bold;
+}
+
+#dhContentColumn .dh-zone-box .dh-item .dh-title {
+	font-size:			14px;
+	font-weight:		bold;
+}
+
+#dhContentColumn .dh-zone-box .dh-item .dh-blurb {
+	font-size:			12px;
+}
+
+#dhContentColumn .dh-zone-box .dh-bio {
+	font-size:			12px;
+}
+	
+#dhContentColumn .dh-zone-box .dh-extra-info td {
+	font-size:			11px;
+	color:				#666666;
+}
+
+.dh-song-info {
+	font-size:			11px;
+	overflow:			hidden;
+	color:				#666666;
+}
+
+.dh-song-name {
+	font-size:			14px;
+	font-weight:		bold;
+}
+
+.dh-text-input {
+    font-family:		sans-serif;
+	font-size:		13px;
+	border:				1px solid #CCCCCC;
+	background-color:	#FFFFFF;
+	color:				#000000;
+	/* this would look much nicer with internal padding of a few px,
+	 * which works in firefox but is kind of f'd up in IE
+	 */
+}
+
+.dh-text-input-showing-default {
+	color:				#aaaaaa;
+}
+
+.dh-special-subtitle {
+	color: rgb(145,50,92);
+	font-size: 16px;
+	font-weight: bold;
+}
+
+.dh-disclaimer {
+	font-size: 10px;
+}
+
+.dh-disclaimer-own-section {
+	font-size:  16px;
+	text-align: left;
+}
+
+.dh-promo-description {
+	font-size:		14px;
+}
+
+#dhBeaconSample {
+	border: 1px solid black;	
+}
+
+.dh-option-list {
+	font-size: 12px;
+}
+
+#dhContentColumn .dh-form-table {
+	font-size:			12px;
+}
+
+#dhContentColumn .dh-form-table textarea {
+	font-size:			12px;
+}
+
+div.dh-notification {
+	background-color:	#ffffcc;
+	font-weight:		bold;
+	-moz-border-radius:	5px;	
+}
+
+div.dh-save-status {
+	color:				#cc0033;
+}
+
+/* the Undo link in the save status thing */
+.dh-save-status a, .dh-save-status a:visited {
+	font-weight:		normal;
+	color:				#cc0033;
+	margin-left:		5px;
+	text-decoration:	underline;
+}
+
+div.dh-async-action-link-working {
+	font-weight:		bold;
+}
+
+div.dh-async-action-link-complete {
+	font-weight:		bold;
+}
+
+#dhContentColumn .dh-zone-box .dh-message {
+	background-color:	#ffffcc;
+	color:				#cc0033;
+	font-weight:		bold;
+	border:				1px solid #cc0033;
+	-moz-border-radius:	5px;
+}
+
+.dh-popup {
+	/* drop shadow color */
+	background-color:	#b3b3b3;
+}
+
+.dh-popup .dh-border {
+	background-color:	black;
+}
+
+.dh-popup .dh-content-padding {
+	background-color:	white;
+}
+
+.dh-popup .dh-title {
+	font-size:			16px;
+	font-weight:		bold;
+	text-align:			left;
+}
+
+.dh-popup .dh-controls {
+	font-size:			12px;
+}

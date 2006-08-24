@@ -1,0 +1,48 @@
+<?xml version="1.0" ?>
+<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" 
+        xmlns:dh="http://dumbhippo.com/schema/clientjs"
+        version="1.0">
+    <xsl:param name="appleturl"/>
+    <xsl:output method="html" encoding="UTF-8"/>
+    <xsl:template match="dh:base">
+        <base href="${appleturl}"></base>
+    </xsl:template>
+    <xsl:template match="dh:bubbleListScript">
+        <script language="javascript" src="{$appleturl}bubble.js"></script>
+        <script language="javascript" src="{$appleturl}bubbleList.js"></script>
+        <script language="javascript" src="{$appleturl}flickr.js"></script>        
+    </xsl:template>
+    <xsl:template match="dh:coreScript"> 
+        <script language="javascript" src="{$appleturl}dh.js"></script>
+    </xsl:template>
+    <xsl:template match="dh:menuScript">
+        <script language="javascript" src="{$appleturl}menu.js"></script>
+    </xsl:template>
+    <xsl:template match="dh:notificationScript">
+        <script language="javascript" src="{$appleturl}bubble.js"></script>
+        <script language="javascript" src="{$appleturl}notification.js"></script>
+        <script language="javascript" src="{$appleturl}flickr.js"></script>        
+    </xsl:template>
+    <xsl:template match="dh:bubbleListStyle">
+        <link rel="stylesheet" type="text/css" href="{$appleturl}bubbleList.css"/>    
+    </xsl:template>
+    <xsl:template match="dh:coreStyle">
+        <link rel="stylesheet" type="text/css" href="{$appleturl}dh.css"/>    
+    </xsl:template>
+    <xsl:template match="dh:menuStyle">
+        <link rel="stylesheet" type="text/css" href="{$appleturl}menu.css"/>    
+    </xsl:template>
+    <xsl:template match="dh:notificationStyle">
+        <link rel="stylesheet" type="text/css" href="{$appleturl}notification.css"/>    
+    </xsl:template>
+    <xsl:template match="dh:closeButton">
+        <img id="dh-close-button" class="dh-close-button" src="{$appleturl}close.png"></img>
+    </xsl:template> 
+    <!-- pass through everything else verbatim -->
+    <xsl:template match="*">
+        <xsl:element name="{name()}">
+            <xsl:copy-of select="@*" />
+            <xsl:apply-templates />
+        </xsl:element>
+    </xsl:template>
+</xsl:stylesheet>

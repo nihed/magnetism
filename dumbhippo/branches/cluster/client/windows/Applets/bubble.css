@@ -1,0 +1,489 @@
+body 
+{
+    border: none;
+    background-color: White;    
+    font-family: Sans-Serif;
+}
+
+.dh-notification-top
+{
+    overflow: hidden;
+}
+
+.dh-notification-main
+{
+    padding-top: 3px;
+    padding-bottom: 3px;
+    position: relative;
+    width: 396px;
+}
+
+.dh-close-button 
+{
+    width: 23px;
+    height: 23px;
+}
+
+.dh-close-button-link-swarm
+{
+    background-image: url(bubclose.png);
+}
+
+.dh-close-button-group-update
+{
+    background-image: url(bubclose_purple.png);
+}
+
+.dh-notification-color
+{
+    position: relative;
+
+    width: 384px;
+    left: 3px;
+}
+
+.dh-notification-color-link-swarm 
+{
+    background-color: #F16D1C;
+}
+
+.dh-notification-color-group-update
+{
+    background-color: #AA86B6;
+}
+
+.dh-notification-color-whiteout
+{
+    background-color: white;
+    position: absolute;
+    width: 384px;
+    height: 1px;
+    left: 0px;
+    bottom: -1px;
+    overflow: hidden;
+}
+
+.dh-fix-position-absolute-hack 
+{
+    width: 0px;
+    height: 0px;
+    overflow: hidden
+}
+
+.dh-notification-leftside
+{
+    float: left;
+    width: 78px;
+    left: 0px;
+    top: 3px;
+    color: White;
+    text-align: center;
+}
+
+.dh-notification-photo-div
+{
+    border-style: none; 
+    display: block;
+    margin-top: 8px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.dh-notification-photo
+{
+    /* Right now the Java code scales headshots to a max of 60px in each
+     * dimension, but preserving aspect ratio. If height < width the below
+     * will mangle the aspect again. If changing from 60px, also change the 
+     * Java code. We need to fix the Java code to always produce exactly 
+     * 60x60 images though (i.e. pad images with transparency) since 
+     * css can't be smart about "max size of largest dimension".
+     * height is fixed here because for a headshot height>width seems more 
+     * likely than width>height.
+     */
+    display: block;
+    width: 60px;
+    height: 60px;
+    border: 1px solid White;
+}
+
+.dh-notification-photolink 
+{
+    margin-top:             2px;
+    margin-bottom:          2px;
+    text-align:             center;
+    width:                  100%;
+    text-overflow:          ellipsis;
+    overflow:               hidden;
+    font-size:              12px;
+    color:                  Black;
+}
+
+.dh-notification-navigation
+{
+    color: Blue;
+    position: relative;
+    font-size: 12px;
+    position: absolute;
+    text-align: center;
+    left: 0px;
+    bottom: 0px;
+    width: 68px;
+}
+
+.dh-notification-navigation-text
+{
+    color: Gray;
+}
+
+.dh-notification-navigation-buttons
+{
+    overflow: hidden;
+    margin-top: 1px;
+    margin-bottom: 4px;
+}
+
+.dh-notification-arrow 
+{
+    width: 12px;
+    margin-left: 3px;
+    margin-right: 3px;
+    height: 11px;
+    overflow: hidden;
+    background-repeat: no-repeat;
+    background-position: center top;
+}
+
+.dh-notification-left-arrow-active
+{
+    background-image: url(blueleftarrow.gif);
+}
+
+.dh-notification-left-arrow-inactive
+{
+    background-image: url(grayleftarrow.gif);
+}
+
+.dh-notification-right-arrow-active
+{
+    background-image: url(bluerightarrow.gif);
+}
+
+.dh-notification-right-arrow-inactive
+{
+    background-image: url(grayrightarrow.gif);
+}
+
+.dh-notification-rightside
+{
+    padding-top: 5px;
+    float: left;
+    color: White;
+    position: relative;
+    width: 306px;
+}
+
+.dh-clear
+{
+    clear: both;
+}
+
+.dh-notification-logo 
+{
+    margin-top: 3px;
+    margin-bottom: 2px;
+    background-repeat: no-repeat;
+    height: 17px;
+}
+
+.dh-notification-logo-link-swarm 
+{
+    width: 112px;
+    background-image: url(bublinkswarm.gif);
+}
+
+.dh-notification-logo-group-update
+{
+    width: 120px;
+    background-image: url(bubgroupupdate.gif);
+}
+
+.dh-notification-title 
+{
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    font-size: 16px;
+    font-weight: bold;
+    width: 303px;
+}
+
+.dh-notification-title a
+{
+    color: White;
+}
+
+.dh-notification-body
+{
+    width: 100%;
+    vertical-align: top;
+    font-size: 12px;
+}
+
+.dh-notification-meta-outer
+{
+    font-size: 12px;
+    color: Black;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    width: 384px;
+    text-align: right;
+    padding-right: 6px;
+    padding-bottom: 5px;
+}
+
+.dh-notification-meta
+{
+    font-size: 12px;
+    color: Black;
+    text-align: right;
+}
+
+span.dh-notification-recipient
+{
+    font-weight: bold
+}
+
+span.dh-notification-self-recipient
+{
+    font-weight: bold;
+    font-style: italic;
+}
+
+span.dh-notification-group-recipient
+{
+    font-weight: bold;
+    font-size: 120%;
+}
+
+.dh-notification-swarm-nav
+{
+    position: relative;
+    left: 3px;
+    width: 384px;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.dh-notification-swarm-controls
+{
+    color: Black;
+    position: absolute;
+    right: 0px;
+}
+
+.dh-notification-swarm-control
+{
+    padding-left: 5px;
+}
+
+.dh-notification-swarm-control-img {
+    margin-right: 5px;
+}
+
+.dh-notification-swarm-nav-link
+{
+    color: Blue;
+}
+
+.dh-notification-swarm-nav-link-current
+{
+    color: Black;
+    font-weight: bold;
+}
+
+.dh-notification-swarm-nav-link:visited 
+{
+    color: Blue;
+}
+
+.dh-notification-swarm
+{
+    position: relative;
+    padding-top: 4px;
+    height: 36px;
+    left: 3px;
+    width: 384px;
+}
+
+.dh-notification-whos-there
+{
+    text-align: center;
+    width: 100%;
+}
+
+.dh-notification-someone-said
+{
+    width: 100%;
+}
+
+.dh-notification-chat-message
+{
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    width: 100%;
+}
+
+.dh-notification-chat-sender
+{
+    font-style: italic;
+    font-size: 12px;
+}
+
+.dh-notification-chat-count
+{
+    position: absolute;
+    right: 0px;
+    bottom: 0px;
+    font-size: 12px;
+}
+
+.dh-notification-chat-sender-photo
+{
+    position: relative;
+    float: left;
+    top: 0px;
+    width: 30px;
+    height: 30px;
+}
+
+span.dh-notification-viewer
+{
+}
+
+span.dh-notification-self-viewer
+{
+    font-weight: bold;
+}
+
+.dh-l 
+{
+    position: absolute;
+    left: 0px;
+    height: 1024px;
+    color: red;
+    z-index: -2;
+    overflow: hidden;
+}
+
+.dh-r
+{
+    position: absolute;
+    right: 0px;
+    height: 1024px;
+    z-index: -2;
+    overflow: hidden;
+}
+
+.dh-t
+{
+    position: absolute;
+    top: 0px;
+    width: 100%;
+    z-index: -2;
+    overflow: hidden;
+}
+
+.dh-b
+{
+    position: absolute;
+    bottom: 0px;
+    width: 100%;
+    z-index: -2;
+    overflow: hidden;
+}
+
+.dh-tl
+{
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    z-index: -1;
+    overflow: hidden;
+}
+
+.dh-tr
+{
+    position: absolute;
+    top: 0px;
+    right: 0px;
+    z-index: -1;
+    overflow: hidden;
+}
+
+.dh-bl
+{
+    position: absolute;
+    bottom: 0px;
+    left: 0px;
+    z-index: -1;
+    overflow: hidden;
+}
+
+.dh-br
+{
+    position: absolute;
+    bottom: 0px;
+    right: 0px;
+    z-index: -1;
+    overflow: hidden;
+}
+
+.dh-notification-color-tl
+{
+    width: 8px;
+    height: 8px;
+}
+
+.dh-notification-color-tl-link-swarm
+{
+    background-image: url(lsorange_tl.png);   
+}
+
+.dh-notification-color-tl-group-update
+{
+    background-image: url(lspurple_tl.png);   
+}
+
+.dh-notification-color-bl
+{
+    width: 8px;
+    height: 8px;
+}
+
+.dh-notification-color-bl-link-swarm
+{
+    background-image: url(lsorange_bl.png);
+}
+
+.dh-notification-color-bl-group-update
+{
+    background-image: url(lspurple_bl.png);
+}
+
+.dh-notification-color-br
+{
+    width: 8px;
+    height: 8px;
+}
+
+.dh-notification-color-br-link-swarm
+{
+    background-image: url(lsorange_br.png);
+}
+
+.dh-notification-color-br-group-update
+{
+    background-image: url(lspurple_br.png);
+}

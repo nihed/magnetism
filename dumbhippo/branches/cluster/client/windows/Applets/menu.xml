@@ -1,0 +1,32 @@
+<?xml version="1.0" ?>
+<!-- note this file must actually be XML to make XSLT work -->
+<html xmlns:dh="http://dumbhippo.com/schema/clientjs">
+    <head>
+        <dh:base/>
+        <dh:coreStyle/>
+        <dh:menuStyle/>
+        <title>Mugshot Menu</title>
+        <dh:coreScript/>
+        <dh:menuScript/>
+    </head>
+    <body scroll="no">
+        <table id="dhMenuTable" cellspacing="0" cellpadding="0">
+            <tbody id="dhMenuTableBody">
+                <tr class="dh-menu-header-row">
+                    <td class="dh-menu-title-column">
+                        <div class="dh-menu-logo"></div>
+                    </td>
+                    <td class="dh-menu-meta-cell dh-menu-action-cell">
+                        <a href="#" onclick="dh.display.showRecent()" id="dhMenuRecent" class="dh-menu-link-disabled">Recent Links (<span id="dhRecentLinkCount"/>) &#x00BB;</a>
+                    </td>
+                </tr>
+                <tr class="dh-menu-footer-row">
+                    <td></td>
+                    <td class="dh-menu-meta-column dh-menu-action-cell">
+                        <a href="#" onclick="dh.display.showHome()" id="dhMenuHome" class="dh-menu-link">My Mugshot home page &#x00BB;</a>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </body>    
+</html>

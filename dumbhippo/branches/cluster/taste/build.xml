@@ -1,0 +1,216 @@
+<?xml version="1.0"?>
+
+<project basedir="." default="build" name="taste">
+
+	<description>Taste recommendation engine build script</description>
+
+	<property file="build.properties"/>
+	<property name="name" value="${ant.project.name}"/>
+	<property name="release-jar" value="${name}.jar"/>
+	<property name="release-ejb-jar" value="${name}-ejb.jar"/>
+	<property name="release-war" value="${name}.war"/>
+	<property name="release-zip" value="${name}-${version}.zip"/>
+
+	<target name="init">
+		<tstamp/>
+	</target>
+
+	<target depends="init" name="build" description="Compiles all code">
+		<mkdir dir="build"/>
+		<javac source="1.5"
+		       target="1.5"
+		       deprecation="true"
+		       optimize="true"
+		       debug="true"
+		       destdir="build"
+		       srcdir="src/main">
+			<compilerarg value="-Xlint:all"/>
+			<classpath>
+				<pathelement location="${annotations.jar}"/>
+				<pathelement location="${ejb.jar}"/>
+				<pathelement location="${servlet.jar}"/>
+			</classpath>
+		</javac>
+		<jar jarfile="${release-jar}">
+			<fileset dir="build">
+				<exclude name="com/planetj/taste/example/**"/>				
+			</fileset>
+		</jar>
+	</target>
+
+	<target depends="init,build" name="build-taste-ejb" description="Builds deployable EJB component">
+		<fail unless="my-recommender.jar" message="Please set -Dmy-recommender.jar=XXX"/>
+		<fail unless="my-recommender-class" message="Please set -Dmy-recommender-class=XXX"/>
+		<property name="my-ejb-jar.xml" value="${java.io.tmpdir}/ejb-jar.xml"/>
+		<copy file="src/main/com/planetj/taste/ejb/ejb-jar.xml" tofile="${my-ejb-jar.xml}">
+			<filterset>
+				<filter token="RECOMMENDER_CLASS" value="${my-recommender-class}"/>
+			</filterset>
+		</copy>
+		<jar jarfile="${release-ejb-jar}">
+			<fileset dir="build">
+				<exclude name="com/planetj/taste/web/**"/>
+			</fileset>
+			<metainf file="${my-ejb-jar.xml}"/>
+		</jar>
+		<delete file="${my-ejb-jar.xml}"/>
+	</target>
+
+	<target depends="init,build" name="build-test">
+		<mkdir dir="build-test"/>
+		<javac source="1.5"
+		       target="1.5"
+		       deprecation="true"
+		       optimize="false"
+		       debug="true"
+		       destdir="build-test"
+		       srcdir="src/test">
+			<compilerarg value="-Xlint:all"/>
+			<classpath>
+				<pathelement location="${junit.jar}"/>
+				<pathelement location="${mysql.jar}"/>
+				<pathelement location="build"/>
+			</classpath>
+		</javac>
+	</target>
+
+	<target depends="init,build" name="build-taste-server" description="Builds deployable web-based Taste server">
+		<fail unless="my-recommender.jar" message="Please set -Dmy-recommender.jar=XXX"/>
+		<fail unless="my-recommender-class" message="Please set -Dmy-recommender-class=XXX"/>
+		<tempfile property="my-web.xml"/>
+		<copy file="src/main/com/planetj/taste/web/web.xml" tofile="${my-web.xml}">
+			<filterset>
+				<filter token="RECOMMENDER_CLASS" value="${my-recommender-class}"/>
+			</filterset>
+		</copy>
+		<war destfile="${release-war}" webxml="${my-web.xml}">
+			<lib dir=".">
+				<include name="${release-jar}"/>
+				<include name="${my-recommender.jar}"/>
+			</lib>
+			<lib dir="lib/axis"/>
+			<classes dir="build">
+				<include name="com/planetj/taste/web/**"/>
+			</classes>
+			<fileset dir="src/main/com/planetj/taste/web">
+				<include name="RecommenderService.jws"/>
+			</fileset>
+		</war>
+		<delete file="${my-web.xml}"/>
+	</target>
+
+	<target depends="init,build" name="build-grouplens-example" description="Builds deployable GroupLens example">
+		<javac source="1.5"
+		       target="1.5"
+		       deprecation="true"
+		       optimize="false"
+		       debug="true"
+		       destdir="build"
+		       srcdir="src/example">
+			<compilerarg value="-Xlint:all"/>
+			<classpath>
+				<pathelement location="build"/>
+				<pathelement location="${annotations.jar}"/>				
+			</classpath>
+		</javac>
+		<jar jarfile="grouplens.jar">
+			<fileset dir="src/example">
+				<include name="com/planetj/taste/example/grouplens/ratings.dat"/>
+				<include name="com/planetj/taste/example/grouplens/movies.dat"/>
+			</fileset>
+			<fileset dir="build">
+				<include name="com/planetj/taste/example/grouplens/**"/>
+			</fileset>
+		</jar>
+		<property name="my-recommender.jar" value="grouplens.jar"/>
+		<property name="my-recommender-class" value="com.planetj.taste.example.grouplens.GroupLensRecommender"/>
+		<antcall target="build-taste-server"/>
+		<delete file="grouplens.jar"/>
+	</target>
+
+	<target depends="init,build,build-test,test-jdbc" name="test" description="Runs unit tests (except JDBC tests)">
+		<junit printsummary="on" haltonfailure="on" haltonerror="on" fork="on">
+			<formatter type="plain" usefile="false"/>
+			<classpath>
+				<pathelement location="${junit.jar}"/>
+				<pathelement location="build"/>
+				<pathelement location="build-test"/>
+			</classpath>
+			<assertions>
+				<enable/>
+			</assertions>
+			<jvmarg value="-Xms128m"/>
+			<jvmarg value="-Xmx128m"/>
+			<batchtest>
+				<fileset dir="src/test">
+					<include name="**/*Test.java"/>
+					<exclude name="com/planetj/taste/impl/model/jdbc/*.java"/>
+				</fileset>
+			</batchtest>
+		</junit>
+	</target>
+
+	<target depends="init,build,build-test" name="test-jdbc" unless="notestjdbc" description="Runs JDBC unit tests">
+		<junit printsummary="on" haltonfailure="on" haltonerror="on" fork="on">
+			<formatter type="plain" usefile="false"/>
+			<classpath>
+				<pathelement location="${junit.jar}"/>
+				<pathelement location="${mysql.jar}"/>
+				<pathelement location="build"/>
+				<pathelement location="build-test"/>
+			</classpath>
+			<assertions>
+				<enable/>
+			</assertions>
+			<batchtest>
+				<fileset dir="src/test">
+					<include name="com/planetj/taste/impl/model/jdbc/*Test.java"/>
+				</fileset>
+			</batchtest>
+		</junit>
+	</target>
+
+	<target depends="init" name="javadoc" description="Builds javadoc documentation">
+		<mkdir dir="docs/javadoc"/>
+		<javadoc destdir="docs/javadoc">
+			<packageset dir="src/main">
+				<include name="**"/>
+			</packageset>
+			<classpath>
+				<pathelement location="${annotations.jar}"/>
+				<pathelement location="${ejb.jar}"/>
+				<pathelement location="${servlet.jar}"/>
+			</classpath>
+			<group title="Implementations" packages="com.planetj.taste.impl.*"/>
+			<group title="Interfaces" packages="com.planetj.taste.*"/>
+		</javadoc>
+	</target>
+
+	<target depends="init,clean,build,test,javadoc,build-grouplens-example" name="release"
+	        description="Builds a release package">
+		<zip destfile="${release-zip}" basedir=".">
+			<include name="${release-jar}"/>
+			<include name="src/**"/>
+			<!-- Make sure GroupLens data is not redistributed -->
+			<exclude name="src/example/com/planetj/taste/example/grouplens/*.dat"/>
+			<exclude name="src/enterprise/**"/>
+			<include name="docs/**"/>
+			<include name="lib/**"/>
+			<include name="build.xml"/>
+			<include name="build.properties"/>
+			<include name="CHANGES.txt"/>
+			<include name="LICENSE.txt"/>
+			<include name="README.txt"/>
+		</zip>
+	</target>
+
+	<target depends="init" name="clean" description="Deletes build products">
+		<delete dir="build"/>
+		<delete dir="build-test"/>
+		<delete dir="docs/javadoc"/>
+		<delete file="${release-jar}"/>
+		<delete file="${release-zip}"/>
+		<delete file="${release-war}"/>
+	</target>
+
+</project>
