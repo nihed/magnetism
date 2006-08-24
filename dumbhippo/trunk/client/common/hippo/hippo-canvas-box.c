@@ -5,6 +5,7 @@
 static void      hippo_canvas_box_init                (HippoCanvasBox       *box);
 static void      hippo_canvas_box_class_init          (HippoCanvasBoxClass  *klass);
 static void      hippo_canvas_box_iface_init          (HippoCanvasItemClass *klass);
+static void      hippo_canvas_box_dispose             (GObject              *object);
 static void      hippo_canvas_box_finalize            (GObject              *object);
 
 static void hippo_canvas_box_set_property (GObject      *object,
@@ -36,9 +37,12 @@ static void     hippo_canvas_box_get_allocation     (HippoCanvasItem *item,
 static gboolean hippo_canvas_box_button_press_event (HippoCanvasItem *item,
                                                      HippoEvent      *event);
 
+static void     hippo_canvas_box_request_changed    (HippoCanvasItem *item);
+static gboolean hippo_canvas_box_get_needs_resize   (HippoCanvasItem *canvas_item);
+
 
 /* Our own methods */
-static void hippo_canvas_box_emit_request_changed (HippoCanvasBox *box);
+
 static void hippo_canvas_box_free_children        (HippoCanvasBox *box);
 
 typedef struct {
@@ -48,28 +52,6 @@ typedef struct {
     guint            expand : 1;
     guint            end : 1;
 } HippoBoxChild;
-
-struct _HippoCanvasBox {
-    GObject parent;
-    HippoOrientation orientation;
-    GSList *children;
-    int allocated_x;
-    int allocated_y;
-    int allocated_width;
-    int allocated_height;
-
-    guint8 padding_top;
-    guint8 padding_bottom;
-    guint8 padding_left;
-    guint8 padding_right;
-    
-    guint request_changed_since_allocate : 1;
-};
-
-struct _HippoCanvasBoxClass {
-    GObjectClass parent_class;
-
-};
 
 enum {
     NO_SIGNALS_YET,
@@ -84,7 +66,8 @@ enum {
     PROP_PADDING_TOP,
     PROP_PADDING_BOTTOM,
     PROP_PADDING_LEFT,
-    PROP_PADDING_RIGHT
+    PROP_PADDING_RIGHT,
+    PROP_WIDTH
 };
 
 G_DEFINE_TYPE_WITH_CODE(HippoCanvasBox, hippo_canvas_box, G_TYPE_OBJECT,
@@ -99,12 +82,15 @@ hippo_canvas_box_iface_init(HippoCanvasItemClass *klass)
     klass->allocate = hippo_canvas_box_allocate;
     klass->get_allocation = hippo_canvas_box_get_allocation;
     klass->button_press_event = hippo_canvas_box_button_press_event;
+    klass->request_changed = hippo_canvas_box_request_changed;
+    klass->get_needs_resize = hippo_canvas_box_get_needs_resize;
 }
 
 static void
 hippo_canvas_box_init(HippoCanvasBox *box)
 {
     box->orientation = HIPPO_ORIENTATION_VERTICAL;
+    box->forced_width = -1;
 }
 
 static void
@@ -115,6 +101,7 @@ hippo_canvas_box_class_init(HippoCanvasBoxClass *klass)
     object_class->set_property = hippo_canvas_box_set_property;
     object_class->get_property = hippo_canvas_box_get_property;
 
+    object_class->dispose = hippo_canvas_box_dispose;
     object_class->finalize = hippo_canvas_box_finalize;
 
     /* we're supposed to register the enum yada yada, but doesn't matter */
@@ -162,7 +149,26 @@ hippo_canvas_box_class_init(HippoCanvasBoxClass *klass)
                                                      0,
                                                      255,
                                                      0,
+                                                     G_PARAM_READABLE | G_PARAM_WRITABLE));
+    g_object_class_install_property(object_class,
+                                    PROP_WIDTH,
+                                    g_param_spec_int("width",
+                                                     _("Fixed Width"),
+                                                     _("Width of the canvas item, or -1 to use natural width"),
+                                                     -1,
+                                                     255,
+                                                     -1,
                                                      G_PARAM_READABLE | G_PARAM_WRITABLE));   
+}
+
+static void
+hippo_canvas_box_dispose(GObject *object)
+{
+    HippoCanvasBox *box = HIPPO_CANVAS_BOX(object);
+
+    hippo_canvas_box_free_children(box);
+
+    G_OBJECT_CLASS(hippo_canvas_box_parent_class)->dispose(object);
 }
 
 static void
@@ -170,7 +176,7 @@ hippo_canvas_box_finalize(GObject *object)
 {
     HippoCanvasBox *box = HIPPO_CANVAS_BOX(object);
 
-    hippo_canvas_box_free_children(box);
+    g_assert(box->children == NULL); /* should have vanished in dispose */
 
     G_OBJECT_CLASS(hippo_canvas_box_parent_class)->finalize(object);
 }
@@ -210,10 +216,16 @@ hippo_canvas_box_set_property(GObject         *object,
     case PROP_PADDING_RIGHT:
         box->padding_right = g_value_get_int(value);
         break;
+    case PROP_WIDTH:
+        box->forced_width = g_value_get_int(value);
+        break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
         break;
     }
+
+    /* Right now all our properties require this */
+    hippo_canvas_item_emit_request_changed(HIPPO_CANVAS_ITEM(box));
 }
 
 static void
@@ -242,6 +254,9 @@ hippo_canvas_box_get_property(GObject         *object,
     case PROP_PADDING_RIGHT:
         g_value_set_int(value, box->padding_right);
         break;
+    case PROP_WIDTH:
+        g_value_set_int(value, box->forced_width);
+        break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
         break;
@@ -268,6 +283,9 @@ hippo_canvas_box_get_width_request(HippoCanvasItem *item)
     int total;
     GSList *link;
 
+    if (box->forced_width >= 0)
+        return box->forced_width;
+    
     total = 0;
 
     for (link = box->children; link != NULL; link = link->next) {
@@ -439,8 +457,8 @@ hippo_canvas_box_button_press_event (HippoCanvasItem *item,
         if (event->x >= x && event->y >= y &&
             event->x < (x + width) &&
             event->y < (y + height)) {
-            return hippo_canvas_item_emit_button_press_event(HIPPO_CANVAS_ITEM(child->item),
-                                                             event);
+            return hippo_canvas_item_process_event(HIPPO_CANVAS_ITEM(child->item),
+                                                   event);
         }
     }
     
@@ -448,10 +466,26 @@ hippo_canvas_box_button_press_event (HippoCanvasItem *item,
 }
 
 static void
+hippo_canvas_box_request_changed(HippoCanvasItem *item)
+{
+    HippoCanvasBox *box = HIPPO_CANVAS_BOX(item);
+    
+    box->request_changed_since_allocate = TRUE;
+}
+
+static gboolean
+hippo_canvas_box_get_needs_resize(HippoCanvasItem *item)
+{
+    HippoCanvasBox *box = HIPPO_CANVAS_BOX(item);
+    
+    return box->request_changed_since_allocate;
+}
+
+static void
 child_request_changed(HippoCanvasItem *child,
                       HippoCanvasBox  *box)
 {
-    hippo_canvas_box_emit_request_changed(box);
+    hippo_canvas_item_emit_request_changed(HIPPO_CANVAS_ITEM(box));
 }
 
 static void
@@ -503,7 +537,7 @@ hippo_canvas_box_append(HippoCanvasBox  *box,
     c->end = (flags & HIPPO_PACK_END) != 0;
     box->children = g_slist_append(box->children, c);
 
-    hippo_canvas_box_emit_request_changed(box);
+    hippo_canvas_item_emit_request_changed(HIPPO_CANVAS_ITEM(box));
 }
 
 void
@@ -528,18 +562,7 @@ hippo_canvas_box_remove(HippoCanvasBox  *box,
     g_object_unref(child);
     g_free(c);
 
-    hippo_canvas_box_emit_request_changed(box);
-}
-
-static void
-hippo_canvas_box_emit_request_changed(HippoCanvasBox *box)
-{
-    g_return_if_fail(HIPPO_IS_CANVAS_BOX(box));
-
-    if (!box->request_changed_since_allocate) {
-        box->request_changed_since_allocate = TRUE;
-        hippo_canvas_item_emit_request_changed(HIPPO_CANVAS_ITEM(box));
-    }
+    hippo_canvas_item_emit_request_changed(HIPPO_CANVAS_ITEM(box));
 }
 
 static void

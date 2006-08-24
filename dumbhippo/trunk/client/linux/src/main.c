@@ -13,6 +13,7 @@
 #include "hippo-bubble-manager.h"
 #include "hippo-dbus-server.h"
 #include "hippo-idle.h"
+#include "hippo-canvas.h"
 
 static const char *hippo_version_file = NULL;
 
@@ -890,6 +891,12 @@ main(int argc, char **argv)
     gtk_init(&argc, &argv);
     gtk_window_set_default_icon_name("mugshot");
 
+    {
+        hippo_canvas_open_test_window();
+        gtk_main();
+        return 0;
+    }
+    
     if (!hippo_parse_options(&argc, &argv, &options))
         return 1;
 

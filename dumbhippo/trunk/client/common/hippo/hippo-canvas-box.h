@@ -28,6 +28,31 @@ typedef struct _HippoCanvasBoxClass HippoCanvasBoxClass;
 #define HIPPO_IS_CANVAS_BOX_CLASS(klass)   (G_TYPE_CHECK_CLASS_TYPE ((klass), HIPPO_TYPE_CANVAS_BOX))
 #define HIPPO_CANVAS_BOX_GET_CLASS(obj)    (G_TYPE_INSTANCE_GET_CLASS ((obj), HIPPO_TYPE_CANVAS_BOX, HippoCanvasBoxClass))
 
+struct _HippoCanvasBox {
+    GObject parent;
+    HippoOrientation orientation;
+    GSList *children;
+    int allocated_x;
+    int allocated_y;
+    int allocated_width;
+    int allocated_height;
+
+    int forced_width; /* -1 if unset, use "natural" */
+    
+    guint8 padding_top;
+    guint8 padding_bottom;
+    guint8 padding_left;
+    guint8 padding_right;
+    
+    guint request_changed_since_allocate : 1;
+};
+
+struct _HippoCanvasBoxClass {
+    GObjectClass parent_class;
+
+};
+
+
 GType        	 hippo_canvas_box_get_type               (void) G_GNUC_CONST;
 
 HippoCanvasBox* hippo_canvas_box_new    (void);

@@ -53,6 +53,8 @@ struct _HippoCanvasItemClass {
                                      int             *height_p);
     gboolean (* button_press_event) (HippoCanvasItem *canvas_item,
                                      HippoEvent      *event);
+    void     (* request_changed)    (HippoCanvasItem *canvas_item);
+    gboolean (* get_needs_resize)   (HippoCanvasItem *canvas_item);
 };
 
 GType        	 hippo_canvas_item_get_type               (void) G_GNUC_CONST;
@@ -72,15 +74,17 @@ void     hippo_canvas_item_get_allocation          (HippoCanvasItem *canvas_item
                                                     int             *y_p,
                                                     int             *width_p,
                                                     int             *height_p);
-
+gboolean hippo_canvas_item_get_needs_resize        (HippoCanvasItem *canvas_item);
 
 void     hippo_canvas_item_get_request             (HippoCanvasItem *canvas_item,
                                                     int             *width_p,
                                                     int             *height_p);
 gboolean hippo_canvas_item_emit_button_press_event (HippoCanvasItem *canvas_item,
-                                                    HippoEvent      *event);
+                                                    int              x,
+                                                    int              y);
 void     hippo_canvas_item_emit_request_changed    (HippoCanvasItem *canvas_item);
-
+gboolean hippo_canvas_item_process_event           (HippoCanvasItem *canvas_item,
+                                                    HippoEvent      *event);
 
 G_END_DECLS
 

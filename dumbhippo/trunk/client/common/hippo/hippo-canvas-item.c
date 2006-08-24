@@ -42,20 +42,18 @@ hippo_canvas_item_base_init(void *klass)
 
     if (!initialized) {
         /* create signals in here */
-        GObjectClass *object_class = G_OBJECT_CLASS (klass);
-
         signals[REQUEST_CHANGED] =
             g_signal_new ("request-changed",
-            		  G_TYPE_FROM_CLASS (object_class),
+                          HIPPO_TYPE_CANVAS_ITEM,
             		  G_SIGNAL_RUN_LAST,
-                          0,
+                          G_STRUCT_OFFSET(HippoCanvasItemClass, request_changed),
             		  NULL, NULL,
                           g_cclosure_marshal_VOID__VOID,
                           G_TYPE_NONE, 0);
-            
+
         signals[BUTTON_PRESS_EVENT] =
             g_signal_new ("button-press-event",
-            		  G_TYPE_FROM_CLASS (object_class),
+                          HIPPO_TYPE_CANVAS_ITEM,
             		  G_SIGNAL_RUN_LAST,
             		  G_STRUCT_OFFSET(HippoCanvasItemClass, button_press_event),
             		  boolean_handled_accumulator, NULL,
@@ -131,22 +129,35 @@ hippo_canvas_item_get_request (HippoCanvasItem *canvas_item,
 }
 
 gboolean
-hippo_canvas_item_emit_button_press_event (HippoCanvasItem  *canvas_item,
-                                           HippoEvent       *event)
+hippo_canvas_item_get_needs_resize(HippoCanvasItem *canvas_item)
 {
-    gboolean handled;
+    g_return_val_if_fail(HIPPO_IS_CANVAS_ITEM(canvas_item), FALSE);
+
+    return HIPPO_CANVAS_ITEM_GET_CLASS(canvas_item)->get_needs_resize(canvas_item);
+}
+
+
+gboolean
+hippo_canvas_item_emit_button_press_event (HippoCanvasItem  *canvas_item,
+                                           int               x,
+                                           int               y)
+{
+    HippoEvent event;
 
     g_return_val_if_fail(HIPPO_IS_CANVAS_ITEM(canvas_item), FALSE);
 
-    handled = FALSE;
-    g_signal_emit(canvas_item, signals[BUTTON_PRESS_EVENT], 0, event, &handled);
-    return handled;
+    event.type = HIPPO_EVENT_BUTTON_PRESS;
+    event.x = x;
+    event.y = y;
+
+    return hippo_canvas_item_process_event(canvas_item, &event);
 }
 
 void
 hippo_canvas_item_emit_request_changed(HippoCanvasItem *canvas_item)
 {
-    g_signal_emit(canvas_item, signals[REQUEST_CHANGED], 0);
+    if (!hippo_canvas_item_get_needs_resize(canvas_item))
+        g_signal_emit(canvas_item, signals[REQUEST_CHANGED], 0);
 }
 
 static gboolean
@@ -163,4 +174,21 @@ boolean_handled_accumulator(GSignalInvocationHint *ihint,
     continue_emission = !signal_handled;
 
     return continue_emission;
+}
+
+gboolean
+hippo_canvas_item_process_event(HippoCanvasItem *canvas_item,
+                                HippoEvent      *event)
+{
+    gboolean handled;
+
+    handled = FALSE;
+    switch (event->type) {
+    case HIPPO_EVENT_BUTTON_PRESS:
+        g_signal_emit(canvas_item, signals[BUTTON_PRESS_EVENT], 0, &event, &handled);
+        break;
+        /* don't add a default, you'll break the compiler warnings */
+    }
+
+    return handled;
 }
