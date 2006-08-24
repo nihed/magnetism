@@ -143,13 +143,14 @@ class DirTree:
         """
         (result, hotcopies) = self._check_path('', target_attributes)
         move_to_end = []
-        for path in hotcopies:
-            hot_update_last = self._has_target_attribute(path, target_attributes, super.service.HOT_UPDATE_LAST)
-            if hot_update_last:
-                move_to_end.append(path)
-        for path in move_to_end:
-            hotcopies.remove(path)
-            hotcopies.append(path)
+        if hotcopies:
+            for path in hotcopies:
+                hot_update_last = self._has_target_attribute(path, target_attributes, super.service.HOT_UPDATE_LAST)
+                if hot_update_last:
+                    move_to_end.append(path)
+            for path in move_to_end:
+                hotcopies.remove(path)
+                hotcopies.append(path)
         return (result, hotcopies)
 
     def hot_update(self, hot_files):
