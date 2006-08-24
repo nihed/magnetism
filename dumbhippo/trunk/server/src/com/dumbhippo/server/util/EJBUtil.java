@@ -1,12 +1,14 @@
 package com.dumbhippo.server.util;
 
 import java.sql.SQLException;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.ejb.EJBContext;
-import javax.ejb.EJBException;
 import javax.ejb.Local;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
+import javax.persistence.EntityExistsException;
 import javax.persistence.EntityManager;
 
 import org.hibernate.JDBCException;
@@ -147,14 +149,21 @@ public class EJBUtil {
 		return clazz.cast(ejbContext.lookup(classPrefix + name + "/" + suffix));
 	}
 	
-	// Returns true if this is an exception we would get with a race condition
-	// between two people trying to create the same object at once
-	public static boolean isDuplicateException(Exception e) {
-		return ((e instanceof EJBException &&
-				 ((EJBException)e).getCausedByException() instanceof ConstraintViolationException) ||
-	            e instanceof NonUniqueObjectException);
+	public static Set<Class<?>> getConstraintViolationExceptions() {
+		HashSet<Class<?>> exceptions = new HashSet<Class<?>>();
+		exceptions.add(ConstraintViolationException.class);
+		exceptions.add(NonUniqueObjectException.class);		
+		return exceptions;
 	}
-	 
+
+	// Returns an exception we would get with a race condition
+	// between two transactions trying to create the same object at once
+	public static Set<Class<?>> getDuplicateEntryExceptions() {
+		HashSet<Class<?>> exceptions = new HashSet<Class<?>>();
+		exceptions.add(EntityExistsException.class);
+		return exceptions;
+	}
+	
 	public static boolean isDatabaseException(Exception e) {
 		Throwable root = ExceptionUtils.getRootCause(e);
 		// FIXME not sure what should really be here or if this will work

@@ -257,15 +257,23 @@ public class FeedSystemBean implements FeedSystem {
 		return entry;
 	}
 	
-	private void addTrackFromFeedEntry(TrackFeedEntry entry, int entryPosition) {
-		if (entry.getFeed().getAccounts() == null) {
-			logger.warn("addTrackFromFeedEntry called for {}, but no accounts associated with feed", entry);
-		}
+	private void processFeedExternalAccounts(FeedEntry entry, int entryPosition) {
+		// this is just a check for debugging purposes to make sure we handle all TrackFeedEntry objects well
+		if ((entry instanceof TrackFeedEntry) && entry.getFeed().getAccounts().isEmpty()) {
+			logger.warn("processExternalAccountFeed called for TrackFeedEntry {}, but no accounts associated with feed", entry);
+		}		
+		
 		for (ExternalAccount external : entry.getFeed().getAccounts()) {
 			// logger.debug("Processing feed event {} for account {}", entry.getTitle(), afeed.getAccount());
-			if (external.getAccountType() == ExternalAccountType.RHAPSODY)
-				musicSystem.addFeedTrack(external.getAccount().getOwner(), entry, entryPosition);
-		}
+			if (external.getAccountType() == ExternalAccountType.RHAPSODY) {
+				assert (entry instanceof TrackFeedEntry);
+				musicSystem.addFeedTrack(external.getAccount().getOwner(), (TrackFeedEntry)entry, entryPosition);
+			} else if (external.getAccountType() == ExternalAccountType.BLOG) {
+				logger.debug("We have a feed update from a blog! {}", entry);
+				// TODO: stack it here!
+			}	
+		}		
+		
 	}
 	
 	private void setLinkFromSyndFeed(Feed feed, SyndFeed syndFeed) throws XmlMethodException {
@@ -299,10 +307,9 @@ public class FeedSystemBean implements FeedSystem {
 					foundGuids.add(guid);
 					em.persist(entry);
 					feed.getEntries().add(entry);
-					if (entry instanceof TrackFeedEntry) {
-						// This won't work at the moment because the feed hasn't yet been associated with an account yet
-						// addTrackFromFeedEntry((TrackFeedEntry)entry, entryPosition++);
-					}
+					// This won't work at the moment because the feed hasn't yet been associated with an account yet
+					// Would also need to figure out what entryPosition should be
+				    // processFeedExternalAccounts(entry, 0);
 				} catch (MalformedURLException e) {
 					logger.debug("ignoring feed entry with bogus url on {}: {}", feed.getSource(), e.getMessage());
 					continue;
@@ -352,9 +359,9 @@ public class FeedSystemBean implements FeedSystem {
 					foundGuids.add(guid);
 					em.persist(entry);
 					feed.getEntries().add(entry);
-					if (entry instanceof TrackFeedEntry) {
-						addTrackFromFeedEntry((TrackFeedEntry)entry, entryPosition++);
-					}
+					// if this feed is associated with some external account(s), this function will take 
+					// care of what needs to happen
+					processFeedExternalAccounts(entry, entryPosition++);
 				} catch (MalformedURLException e) {
 					logger.debug("ignoring feed entry with bogus url on {}: {}", feed.getSource(), e.getMessage());
 					continue;
@@ -489,12 +496,22 @@ public class FeedSystemBean implements FeedSystem {
 		}
 	}
 
-	public void updateFeedStoreFeed(Object contextObject) throws XmlMethodException {
-		UpdateFeedContext context = (UpdateFeedContext) contextObject;
-		SyndFeed syndFeed = context.getSyndFeed();
-		Feed feed = em.find(Feed.class, context.getFeedId());
-		logger.debug("  Saving feed update results in db for {}", feed.getSource());
-		updateFeedFromSyndFeed(feed, syndFeed);
+	public void updateFeedStoreFeed(final Object contextObject) {
+		runner.runTaskRetryingOnDuplicateEntry(new Runnable() {
+			public void run() {
+				UpdateFeedContext context = (UpdateFeedContext) contextObject;
+				SyndFeed syndFeed = context.getSyndFeed();
+				Feed feed = em.find(Feed.class, context.getFeedId());
+				logger.debug("  Saving feed update results in db for {}", feed.getSource());
+				try {
+				    updateFeedFromSyndFeed(feed, syndFeed);		
+				} catch (XmlMethodException e) {
+					logger.warn("Couldn't update feed {}: {}", feed, e.getCodeString() + ": " + e.getMessage());
+					markFeedFailedLastUpdate(feed);											
+				}
+			}
+		});
+
 	}
 	
 	public void markFeedFailedLastUpdate(Feed feed) {

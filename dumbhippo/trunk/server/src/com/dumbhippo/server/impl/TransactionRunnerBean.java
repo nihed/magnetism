@@ -1,5 +1,6 @@
 package com.dumbhippo.server.impl;
 
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 
@@ -17,6 +18,7 @@ import javax.transaction.TransactionManager;
 
 import org.slf4j.Logger;
 
+import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.ThreadUtils;
 import com.dumbhippo.server.TransactionRunner;
@@ -66,16 +68,45 @@ public class TransactionRunnerBean implements TransactionRunner {
 		return callable.call();
 	}
 	
-	public <T> T runTaskRetryingOnConstraintViolation(Callable<T> callable) throws Exception {
+	
+	public <T> T runTaskRetryingOnTransactionException(Callable<T> callable,  Set<Class<?>> retryExceptions) throws Exception {
 		int retries = 1;
 		
 		while (true) {
 			try {
 				return runTaskInNewTransaction(callable);
 			} catch (Exception e) {
-				if (retries > 0 && EJBUtil.isDuplicateException(e)) {
+				if (retries > 0 && ExceptionUtils.hasCause(e, retryExceptions)) {
 					// log at .info so we can get a sense of whether/how-often this happens
-					logger.info("Constraint violation race condition detected, retrying. {}: {}", e.getClass().getName(), e.getMessage());
+					logger.info("Caught an exception inside a transaction, retrying. {}: {}", e.getClass().getName(), e.getMessage());
+					retries--;
+				} else {
+					logger.error("Fatal error running task: {} {}", e.getClass().getName(), e.getMessage());
+					throw e;
+				}
+			}
+		}
+	}
+	
+	public <T> T runTaskRetryingOnConstraintViolation(Callable<T> callable) throws Exception {	
+		return runTaskRetryingOnTransactionException(callable, EJBUtil.getConstraintViolationExceptions());
+	}
+	
+	public <T> T runTaskRetryingOnDuplicateEntry(Callable<T> callable) throws Exception {
+		return runTaskRetryingOnTransactionException(callable, EJBUtil.getDuplicateEntryExceptions());
+	}
+
+	public void runTaskRetryingOnTransactionException(Runnable runnable, Set<Class<?>> retryExceptions) {
+		int retries = 1;
+		
+		while (true) {
+			try {
+				runTaskInNewTransaction(runnable);
+				return;
+			} catch (RuntimeException e) {
+				if (retries > 0 && ExceptionUtils.hasCause(e, retryExceptions)) {
+					// log at .info so we can get a sense of whether/how-often this happens
+					logger.info("Caught an exception inside a transaction, retrying. {}: {}", e.getClass().getName(), e.getMessage());
 					retries--;
 				} else {
 					logger.error("Fatal error running task: {} {}", e.getClass().getName(), e.getMessage());
@@ -86,25 +117,13 @@ public class TransactionRunnerBean implements TransactionRunner {
 	}
 
 	public void runTaskRetryingOnConstraintViolation(Runnable runnable) {
-		int retries = 1;
-		
-		while (true) {
-			try {
-				runTaskInNewTransaction(runnable);
-				return;
-			} catch (RuntimeException e) {
-				if (retries > 0 && EJBUtil.isDuplicateException(e)) {
-					// log at .info so we can get a sense of whether/how-often this happens
-					logger.info("Constraint violation race condition detected, retrying. {}: {}", e.getClass().getName(), e.getMessage());
-					retries--;
-				} else {
-					logger.error("Fatal error running task: {} {}", e.getClass().getName(), e.getMessage());
-					throw e;
-				}
-			}
-		}
+		runTaskRetryingOnTransactionException(runnable, EJBUtil.getConstraintViolationExceptions());
 	}
-	
+
+	public void runTaskRetryingOnDuplicateEntry(Runnable runnable) {
+		runTaskRetryingOnTransactionException(runnable, EJBUtil.getDuplicateEntryExceptions());
+	}
+
 	public <T> T runTaskThrowingConstraintViolation(Callable<T> callable) throws Exception {
 		return callable.call();
 	}

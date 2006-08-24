@@ -40,9 +40,8 @@ public interface FeedSystem {
 	 * Does "step two" of updating a feed, stores the results 
 	 * of fetching the feed.
 	 * @param context the opaque context return from updateFeedFetchFeed
-	 * @throws XmlMethodException 
 	 */
-	void updateFeedStoreFeed(Object context) throws XmlMethodException;
+	void updateFeedStoreFeed(Object context);
 	
 	/**
 	 * Mark a feed as failed after an unsuccessful update.

@@ -29,7 +29,8 @@
 			'dhBioEntry' : <dh:jsString value="${signin.user.account.bio}"/>,
 			'dhMusicBioEntry' : <dh:jsString value="${signin.user.account.musicBio}"/>,
 			'dhRhapsodyListeningHistoryEntry' : <dh:jsString value="${account.rhapsodyListeningHistoryFeedUrl}"/>,
-			'dhWebsiteEntry' : <dh:jsString value="${account.websiteUrl}"/>
+			'dhWebsiteEntry' : <dh:jsString value="${account.websiteUrl}"/>,
+			'dhBlogEntry' : <dh:jsString value="${account.blogUrl}"/>
 		};
 		dh.account.userId = <dh:jsString value="${signin.user.id}"/>
 		dh.account.reloadPhoto = function() {
@@ -121,6 +122,10 @@
 				<dht:formTableRowStatus controlId='dhWebsiteEntry'></dht:formTableRowStatus>
 				<dht:formTableRow label="My website">
 					<dht:textInput id="dhWebsiteEntry" maxlength="255"/>
+				</dht:formTableRow>
+				<dht:formTableRowStatus controlId='dhBlogEntry'></dht:formTableRowStatus>
+				<dht:formTableRow label="My blog">
+					<dht:textInput id="dhBlogEntry" maxlength="255"/>
 				</dht:formTableRow>
 			</dht:formTable>
 			<dht:zoneBoxSeparator/>

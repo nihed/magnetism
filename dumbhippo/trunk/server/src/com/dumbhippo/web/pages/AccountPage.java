@@ -187,6 +187,12 @@ public class AccountPage {
 	}
 		
 	public String getWebsiteUrl() {
+		logger.debug("returning {} for website ", getExternalAccountHandle(ExternalAccountType.WEBSITE));
 		return getExternalAccountHandle(ExternalAccountType.WEBSITE);
 	}
+	
+	public String getBlogUrl() {
+		logger.debug("returning {} for blog ", getExternalAccountHandle(ExternalAccountType.BLOG));
+		return getExternalAccountHandle(ExternalAccountType.BLOG);
+	}	
 }
