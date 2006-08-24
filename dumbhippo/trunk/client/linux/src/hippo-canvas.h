@@ -41,6 +41,9 @@ void hippo_canvas_item_push_cairo(HippoCanvasItem *item,
 void hippo_canvas_item_pop_cairo (HippoCanvasItem *item,
                                   cairo_t         *cr);
 
+void hippo_cairo_set_source_rgba32(cairo_t *cr,
+                                   guint32  color);
+
 G_END_DECLS
 
 #endif /* __HIPPO_CANVAS_H__ */

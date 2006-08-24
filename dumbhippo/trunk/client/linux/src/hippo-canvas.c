@@ -289,12 +289,96 @@ hippo_canvas_item_pop_cairo (HippoCanvasItem *item,
     cairo_restore(cr);
 }
 
+#define RED(rgba)    (((rgba) >> 24)                / 255.0)
+#define GREEN(rgba)  ((((rgba) & 0x00ff0000) >> 16) / 255.0)
+#define BLUE(rgba)   ((((rgba) & 0x0000ff00) >> 8)  / 255.0)
+#define ALPHA(rgba)  (((rgba)  & 0x000000ff)        / 255.0)
+
+void
+hippo_cairo_set_source_rgba32(cairo_t *cr,
+                              guint32  color)
+{
+    /* trying to avoid alpha 255 becoming a double alpha that isn't quite opaque ?
+     * not sure this is needed.
+     */
+    if ((color & 0xff) == 0xff) {
+        cairo_set_source_rgb(cr, RED(color), GREEN(color), BLUE(color));
+    } else {
+        cairo_set_source_rgba(cr, RED(color), GREEN(color), BLUE(color), ALPHA(color));
+    }
+}
 
 /* TEST CODE */
 #if 1
 #include <gtk/gtk.h>
 #include <hippo/hippo-canvas-box.h>
 #include "hippo-canvas-shape.h"
+#include "hippo-canvas-text.h"
+
+typedef struct {
+    int width;
+    int height;
+    guint32 color;
+    HippoPackFlags flags;
+} BoxAttrs;
+
+static BoxAttrs single_start[] = { { 40, 80, 0x0000ffff, 0 }, { 0, 0, 0, 0 } };
+static BoxAttrs single_end[] = { { 100, 60, 0x00ff00ff, HIPPO_PACK_END }, { 0, 0, 0, 0 } };
+static BoxAttrs double_start[] = { { 50, 90, 0x0000ffff, 0 }, { 50, 90, 0xff000099, 0 }, { 0, 0, 0, 0 } };
+static BoxAttrs double_end[] = { { 45, 55, 0x00ff00ff, HIPPO_PACK_END }, { 45, 55, 0x00ff0077, HIPPO_PACK_END }, { 0, 0, 0, 0 } };
+static BoxAttrs single_expand[] = { { 100, 60, 0x0000ffff, HIPPO_PACK_EXPAND }, { 0, 0, 0, 0 } };
+static BoxAttrs single_expand_end[] = { { 100, 60, 0x0000ffff, HIPPO_PACK_EXPAND | HIPPO_PACK_END }, { 0, 0, 0, 0 } };
+static BoxAttrs everything[] = {
+    { 120, 50, 0x00ccccff, 0 },
+    { 120, 50, 0x00ccccff, HIPPO_PACK_END },
+    { 120, 50, 0x00ccccff, HIPPO_PACK_EXPAND },
+    { 120, 50, 0x00ccccff, HIPPO_PACK_EXPAND | HIPPO_PACK_END },
+    { 0, 0, 0, 0 }
+};
+
+static BoxAttrs* box_rows[] = { single_start, double_start, single_end, double_end,
+                                single_expand, single_expand_end, everything };
+
+static HippoCanvasItem*
+create_row(BoxAttrs *boxes)
+{
+    HippoCanvasItem *row;
+    int i;
+    
+    row = g_object_new(HIPPO_TYPE_CANVAS_BOX, "orientation", HIPPO_ORIENTATION_HORIZONTAL, NULL);
+
+    for (i = 0; boxes[i].width > 0; ++i) {
+        BoxAttrs *attrs = &boxes[i];
+        HippoCanvasItem *shape;
+        HippoCanvasItem *label;
+        const char *text;
+
+        shape = g_object_new(HIPPO_TYPE_CANVAS_SHAPE,
+                             "width", attrs->width,
+                             "height", attrs->height,
+                             "color", attrs->color,
+                             NULL);
+        hippo_canvas_box_append(HIPPO_CANVAS_BOX(row), shape, attrs->flags);
+        g_object_unref(shape);
+        
+        if (attrs->flags == (HIPPO_PACK_END | HIPPO_PACK_EXPAND))
+            text = "END | EXPAND";
+        else if (attrs->flags == HIPPO_PACK_END)
+            text = "END";
+        else if (attrs->flags == HIPPO_PACK_EXPAND)
+            text = "EXPAND";
+        else
+            text = "0";
+        
+        label = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
+                             "text", text,
+                             "background-color", 0x0000ff00,
+                             NULL);
+        hippo_canvas_box_append(HIPPO_CANVAS_BOX(shape), label, HIPPO_PACK_EXPAND);
+        g_object_unref(label);
+    }
+    return row;
+}
 
 void
 hippo_canvas_open_test_window(void)
@@ -304,7 +388,8 @@ hippo_canvas_open_test_window(void)
     HippoCanvasItem *root;
     HippoCanvasItem *shape1;
     HippoCanvasItem *shape2;
-
+    int i;
+    
     window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     gtk_container_set_border_width(GTK_CONTAINER(window), 10);
     canvas = hippo_canvas_new();
@@ -313,6 +398,7 @@ hippo_canvas_open_test_window(void)
 
     root = HIPPO_CANVAS_ITEM(hippo_canvas_box_new());
 
+#if 0
     shape1 = g_object_new(HIPPO_TYPE_CANVAS_SHAPE,
                           "width", 50, "height", 100,
                           NULL);
@@ -324,9 +410,19 @@ hippo_canvas_open_test_window(void)
 
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(root),
                             shape1, 0);
+    g_object_unref(shape1);
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(root),
                             shape2, 0);
-
+    g_object_unref(shape2);
+#endif
+    
+    for (i = 0; i < (int) G_N_ELEMENTS(box_rows); ++i) {
+        HippoCanvasItem *row = create_row(box_rows[i]);
+        hippo_canvas_box_append(HIPPO_CANVAS_BOX(root), row, 0);
+        g_object_unref(row);
+    }
+    
+    
     hippo_canvas_set_root(HIPPO_CANVAS(canvas), root);
     g_object_unref(root);
 

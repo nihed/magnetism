@@ -20,6 +20,8 @@ mugshot_SOURCES	=				\
 	src/hippo-canvas.h			\
 	src/hippo-canvas-shape.c		\
 	src/hippo-canvas-shape.h		\
+	src/hippo-canvas-text.c			\
+	src/hippo-canvas-text.h			\
 	src/hippo-chat-window.c		    	\
 	src/hippo-chat-window.h		    	\
 	src/hippo-cookies-linux.c		\

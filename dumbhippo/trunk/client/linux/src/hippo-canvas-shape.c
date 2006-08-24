@@ -97,7 +97,6 @@ hippo_canvas_shape_class_init(HippoCanvasShapeClass *klass)
 
     object_class->finalize = hippo_canvas_shape_finalize;
 
-    /* we're supposed to register the enum yada yada, but doesn't matter */
     g_object_class_install_property(object_class,
                                     PROP_WIDTH,
                                     g_param_spec_int("width",
@@ -146,13 +145,13 @@ hippo_canvas_shape_finalize(GObject *object)
     G_OBJECT_CLASS(hippo_canvas_shape_parent_class)->finalize(object);
 }
 
-HippoCanvasShape*
+HippoCanvasItem*
 hippo_canvas_shape_new(void)
 {
     HippoCanvasShape *shape = g_object_new(HIPPO_TYPE_CANVAS_SHAPE, NULL);
 
 
-    return shape;
+    return HIPPO_CANVAS_ITEM(shape);
 }
 
 static void
@@ -216,25 +215,6 @@ hippo_canvas_shape_get_property(GObject         *object,
     }
 }
 
-#define RED(rgba)    (((rgba) >> 24)                / 255.0)
-#define GREEN(rgba)  ((((rgba) & 0x00ff0000) >> 16) / 255.0)
-#define BLUE(rgba)   ((((rgba) & 0x0000ff00) >> 8)  / 255.0)
-#define ALPHA(rgba)  (((rgba)  & 0x000000ff)        / 255.0)
-
-static void
-set_source_rgba32(cairo_t *cr,
-                  guint32  color)
-{
-    /* trying to avoid alpha 255 becoming a double alpha that isn't quite opaque ?
-     * not sure this is needed.
-     */
-    if ((color & 0xff) == 0xff) {
-        cairo_set_source_rgb(cr, RED(color), GREEN(color), BLUE(color));
-    } else {
-        cairo_set_source_rgba(cr, RED(color), GREEN(color), BLUE(color), ALPHA(color));
-    }
-}
-
 static void
 hippo_canvas_shape_paint(HippoCanvasItem *item,
                          HippoDrawable   *drawable)
@@ -247,19 +227,32 @@ hippo_canvas_shape_paint(HippoCanvasItem *item,
     hippo_canvas_item_push_cairo(item, cr); /* FIXME do this in container items on behalf of children */
 
     /* fill background */
-    set_source_rgba32(cr, shape->background_color_rgba);
-    cairo_paint(cr);
+    if ((shape->background_color_rgba & 0xff) != 0) {
+        hippo_cairo_set_source_rgba32(cr, shape->background_color_rgba);
+        cairo_paint(cr);
+    }
 
     /* draw foreground */
-    set_source_rgba32(cr, shape->color_rgba);
-    cairo_rectangle(cr, 0, 0, shape->width, shape->height);
-    cairo_set_line_width(cr, 3.0);
-    cairo_stroke(cr);
+    if ((shape->color_rgba & 0xff) != 0) {
+        int width, height;
+        int x, y;
 
-    /* Draw any children */
-    item_parent_class->paint(item, drawable);
+        hippo_canvas_item_get_allocation(item, NULL, NULL, &width, &height);
 
+        x = (width - shape->width) / 2;
+        y = (height - shape->height) / 2;
+        
+        hippo_cairo_set_source_rgba32(cr, shape->color_rgba);
+        cairo_rectangle(cr, x, y, shape->width, shape->height);
+        cairo_set_line_width(cr, 3.0);
+        cairo_stroke(cr);
+    }
     hippo_canvas_item_pop_cairo(item, cr);
+    
+    /* Draw any children (FIXME inside pop_cairo once HippoCanvasBox::paint() is fixed
+     * to automatically push/pop cairo coords)
+     */
+    item_parent_class->paint(item, drawable);
 }
 
 static int
@@ -269,7 +262,7 @@ hippo_canvas_shape_get_width_request(HippoCanvasItem *item)
     int children_width;
 
     children_width = item_parent_class->get_width_request(item);
-
+    
     return MAX(shape->width, children_width);
 }
 

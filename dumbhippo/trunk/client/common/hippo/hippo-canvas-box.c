@@ -181,13 +181,13 @@ hippo_canvas_box_finalize(GObject *object)
     G_OBJECT_CLASS(hippo_canvas_box_parent_class)->finalize(object);
 }
 
-HippoCanvasBox*
+HippoCanvasItem*
 hippo_canvas_box_new(void)
 {
     HippoCanvasBox *box = g_object_new(HIPPO_TYPE_CANVAS_BOX, NULL);
 
 
-    return box;
+    return HIPPO_CANVAS_ITEM(box);
 }
 
 static void
@@ -287,11 +287,13 @@ hippo_canvas_box_get_width_request(HippoCanvasItem *item)
         return box->forced_width;
 
     total = 0;
-
     for (link = box->children; link != NULL; link = link->next) {
         HippoBoxChild *child = link->data;
         child->width_request = hippo_canvas_item_get_width_request(child->item);
-        total += child->width_request;
+        if (box->orientation == HIPPO_ORIENTATION_VERTICAL)
+            total = MAX(total, child->width_request);
+        else
+            total += child->width_request;
     }
 
     total += box->padding_left;
@@ -314,7 +316,10 @@ hippo_canvas_box_get_height_request(HippoCanvasItem *item,
         HippoBoxChild *child = link->data;
         child->height_request = hippo_canvas_item_get_height_request(child->item,
                                                                      child->width_request);
-        total += child->height_request;
+        if (box->orientation == HIPPO_ORIENTATION_VERTICAL)
+            total += child->height_request;
+        else
+            total = MAX(total, child->height_request);
     }
 
     total += box->padding_top;
@@ -387,9 +392,10 @@ hippo_canvas_box_allocate(HippoCanvasItem *item,
                 req += extra;
 
             hippo_canvas_item_allocate(child->item,
+                                       /* FIXME -= x,y to make it relative to container once we fix paint() */
                                        x + box->padding_left,
-                                       child->end ? bottom_y : top_y,
-                                       child->width_request,
+                                       child->end ? (bottom_y - req) : top_y,
+                                       width, /* child->width_request, */
                                        req);
             if (child->end)
                 bottom_y -= req;
@@ -401,7 +407,7 @@ hippo_canvas_box_allocate(HippoCanvasItem *item,
         int right_x;
 
         left_x = x + box->padding_left;
-        right_x = x - box->padding_right;
+        right_x = x + width - box->padding_right;
         for (link = box->children; link != NULL; link = link->next) {
             HippoBoxChild *child = link->data;
             int req;
@@ -411,10 +417,11 @@ hippo_canvas_box_allocate(HippoCanvasItem *item,
                 req += extra;
 
             hippo_canvas_item_allocate(child->item,
-                                       child->end ? right_x : left_x,
+                                       /* FIXME -= x,y to make it relative to container once we fix paint() */
+                                       child->end ? (right_x - req) : left_x,
                                        y + box->padding_top,
                                        req,
-                                       child->height_request);
+                                       height); /* child->height_request); */
             if (child->end)
                 right_x -= req;
             else
