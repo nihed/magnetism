@@ -52,3 +52,26 @@ hippo_canvas_context_create_layout(HippoCanvasContext *context)
 
     return HIPPO_CANVAS_CONTEXT_GET_CLASS(context)->create_layout(context);
 }
+
+
+
+
+#define RED(rgba)    (((rgba) >> 24)                / 255.0)
+#define GREEN(rgba)  ((((rgba) & 0x00ff0000) >> 16) / 255.0)
+#define BLUE(rgba)   ((((rgba) & 0x0000ff00) >> 8)  / 255.0)
+#define ALPHA(rgba)  (((rgba)  & 0x000000ff)        / 255.0)
+
+void
+hippo_cairo_set_source_rgba32(cairo_t *cr,
+                              guint32  color)
+{
+    /* trying to avoid alpha 255 becoming a double alpha that isn't quite opaque ?
+     * not sure this is needed.
+     */
+    if ((color & 0xff) == 0xff) {
+        cairo_set_source_rgb(cr, RED(color), GREEN(color), BLUE(color));
+    } else {
+        cairo_set_source_rgba(cr, RED(color), GREEN(color), BLUE(color), ALPHA(color));
+    }
+}
+

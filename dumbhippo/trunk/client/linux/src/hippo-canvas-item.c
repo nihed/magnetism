@@ -80,11 +80,11 @@ hippo_canvas_item_set_context(HippoCanvasItem    *canvas_item,
 
 void
 hippo_canvas_item_paint(HippoCanvasItem *canvas_item,
-                        HippoDrawable   *drawable)
+                        cairo_t         *cr)
 {
     g_return_if_fail(HIPPO_IS_CANVAS_ITEM(canvas_item));
 
-    HIPPO_CANVAS_ITEM_GET_CLASS(canvas_item)->paint(canvas_item, drawable);
+    HIPPO_CANVAS_ITEM_GET_CLASS(canvas_item)->paint(canvas_item, cr);
 }
 
 int
@@ -106,25 +106,21 @@ hippo_canvas_item_get_height_request(HippoCanvasItem *canvas_item,
 
 void
 hippo_canvas_item_allocate(HippoCanvasItem *canvas_item,
-                           int              x,
-                           int              y,
                            int              width,
                            int              height)
 {
     g_return_if_fail(HIPPO_IS_CANVAS_ITEM(canvas_item));
 
-    HIPPO_CANVAS_ITEM_GET_CLASS(canvas_item)->allocate(canvas_item, x, y, width, height);
+    HIPPO_CANVAS_ITEM_GET_CLASS(canvas_item)->allocate(canvas_item, width, height);
 }
 
 void
 hippo_canvas_item_get_allocation(HippoCanvasItem *canvas_item,
-                                 int             *x_p,
-                                 int             *y_p,
                                  int             *width_p,
                                  int             *height_p)
 {
     g_return_if_fail(HIPPO_IS_CANVAS_ITEM(canvas_item));
-    HIPPO_CANVAS_ITEM_GET_CLASS(canvas_item)->get_allocation(canvas_item, x_p, y_p, width_p, height_p);
+    HIPPO_CANVAS_ITEM_GET_CLASS(canvas_item)->get_allocation(canvas_item, width_p, height_p);
 }
 
 void
@@ -164,7 +160,7 @@ hippo_canvas_item_emit_button_press_event (HippoCanvasItem  *canvas_item,
     event.x = x;
     event.y = y;
 
-    return hippo_canvas_item_process_event(canvas_item, &event);
+    return hippo_canvas_item_process_event(canvas_item, &event, 0, 0);
 }
 
 void
@@ -192,17 +188,44 @@ boolean_handled_accumulator(GSignalInvocationHint *ihint,
 
 gboolean
 hippo_canvas_item_process_event(HippoCanvasItem *canvas_item,
-                                HippoEvent      *event)
+                                HippoEvent      *event,
+                                int              allocation_x,
+                                int              allocation_y)
 {
     gboolean handled;
+    HippoEvent translated;
 
+    translated = *event;
+    translated.x -= allocation_x;
+    translated.y -= allocation_y;
+    
     handled = FALSE;
     switch (event->type) {
     case HIPPO_EVENT_BUTTON_PRESS:
-        g_signal_emit(canvas_item, signals[BUTTON_PRESS_EVENT], 0, &event, &handled);
+        g_signal_emit(canvas_item, signals[BUTTON_PRESS_EVENT], 0, &translated, &handled);
         break;
         /* don't add a default, you'll break the compiler warnings */
     }
 
     return handled;
+}
+
+void
+hippo_canvas_item_process_paint(HippoCanvasItem *canvas_item,
+                                cairo_t         *cr,
+                                int              allocation_x,
+                                int              allocation_y)
+{
+    int width, height;
+
+    cairo_save(cr);
+
+    hippo_canvas_item_get_allocation(canvas_item, &width, &height);
+    cairo_translate(cr, allocation_x, allocation_y);
+    cairo_rectangle(cr, 0, 0, width, height);
+    cairo_clip(cr);
+
+    hippo_canvas_item_paint(canvas_item, cr);
+
+    cairo_restore(cr);
 }

@@ -27,7 +27,7 @@ static void hippo_canvas_text_get_property (GObject      *object,
 
 /* Canvas item methods */
 static void     hippo_canvas_text_paint              (HippoCanvasItem *item,
-                                                      HippoDrawable   *drawable);
+                                                      cairo_t         *cr);
 static int      hippo_canvas_text_get_width_request  (HippoCanvasItem *item);
 static int      hippo_canvas_text_get_height_request (HippoCanvasItem *item,
                                                       int              for_width);
@@ -224,14 +224,9 @@ create_layout(HippoCanvasText *text)
 
 static void
 hippo_canvas_text_paint(HippoCanvasItem *item,
-                        HippoDrawable   *drawable)
+                        cairo_t         *cr)
 {
     HippoCanvasText *text = HIPPO_CANVAS_TEXT(item);
-    cairo_t *cr;
-
-    cr = hippo_drawable_get_cairo(drawable);
-
-    hippo_canvas_item_push_cairo(item, cr); /* FIXME do this in container items on behalf of children */
 
     /* fill background */
     if ((text->background_color_rgba & 0xff) != 0) {
@@ -246,7 +241,7 @@ hippo_canvas_text_paint(HippoCanvasItem *item,
         int layout_width, layout_height;
         int x, y;
         
-        hippo_canvas_item_get_allocation(item, NULL, NULL, &width, &height);
+        hippo_canvas_item_get_allocation(item, &width, &height);
         
         hippo_cairo_set_source_rgba32(cr, text->color_rgba);
 
@@ -268,13 +263,9 @@ hippo_canvas_text_paint(HippoCanvasItem *item,
         
         g_object_unref(layout);
     }
-
-    hippo_canvas_item_pop_cairo(item, cr);
     
-    /* Draw any children (FIXME inside pop_cairo once HippoCanvasBox::paint() is fixed
-     * to automatically push/pop cairo coords)
-     */
-    item_parent_class->paint(item, drawable);
+    /* Draw any children */
+    item_parent_class->paint(item, cr);
 }
 
 static int
@@ -282,14 +273,18 @@ hippo_canvas_text_get_width_request(HippoCanvasItem *item)
 {
     HippoCanvasText *text = HIPPO_CANVAS_TEXT(item);
     int children_width;
-    PangoLayout *layout;
     int layout_width;
     
     children_width = item_parent_class->get_width_request(item);
 
-    layout = create_layout(text);
-    pango_layout_get_size(layout, &layout_width, NULL);
-    layout_width /= PANGO_SCALE;
+    if (hippo_canvas_box_get_fixed_width(HIPPO_CANVAS_BOX(item)) < 0) {
+        PangoLayout *layout = create_layout(text);
+        pango_layout_get_size(layout, &layout_width, NULL);
+        layout_width /= PANGO_SCALE;
+    } else {
+        /* keep the fixed width the box will have returned */
+        layout_width = children_width;
+    }
 
     return MAX(children_width, layout_width);
 }

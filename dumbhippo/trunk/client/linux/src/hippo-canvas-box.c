@@ -32,18 +32,14 @@ static PangoLayout* hippo_canvas_create_layout      (HippoCanvasContext *context
 static void     hippo_canvas_box_set_context        (HippoCanvasItem    *item,
                                                      HippoCanvasContext *context);
 static void     hippo_canvas_box_paint              (HippoCanvasItem    *item,
-                                                     HippoDrawable      *drawable);
+                                                     cairo_t            *cr);
 static int      hippo_canvas_box_get_width_request  (HippoCanvasItem    *item);
 static int      hippo_canvas_box_get_height_request (HippoCanvasItem    *item,
                                                      int                 for_width);
 static void     hippo_canvas_box_allocate           (HippoCanvasItem    *item,
-                                                     int                 x,
-                                                     int                 y,
                                                      int                 width,
                                                      int                 height);
 static void     hippo_canvas_box_get_allocation     (HippoCanvasItem    *item,
-                                                     int                *x_p,
-                                                     int                *y_p,
                                                      int                *width_p,
                                                      int                *height_p);
 static gboolean hippo_canvas_box_button_press_event (HippoCanvasItem    *item,
@@ -59,6 +55,10 @@ static void hippo_canvas_box_free_children        (HippoCanvasBox *box);
 
 typedef struct {
     HippoCanvasItem *item;
+    /* allocated x, y */
+    int              x;
+    int              y;
+    /* last-requested size */
     int              width_request;
     int              height_request;
     guint            expand : 1;
@@ -302,14 +302,15 @@ hippo_canvas_box_set_context(HippoCanvasItem    *item,
 
 static void
 hippo_canvas_box_paint(HippoCanvasItem *item,
-                       HippoDrawable   *drawable)
+                       cairo_t         *cr)
 {
     HippoCanvasBox *box = HIPPO_CANVAS_BOX(item);
     GSList *link;
 
     for (link = box->children; link != NULL; link = link->next) {
         HippoBoxChild *child = link->data;
-        hippo_canvas_item_paint(HIPPO_CANVAS_ITEM(child->item), drawable);
+        hippo_canvas_item_process_paint(HIPPO_CANVAS_ITEM(child->item), cr,
+                                        child->x, child->y);
     }
 }
 
@@ -379,8 +380,6 @@ hippo_canvas_box_get_height_request(HippoCanvasItem *item,
 
 static void
 hippo_canvas_box_allocate(HippoCanvasItem *item,
-                          int              x,
-                          int              y,
                           int              width,
                           int              height)
 {
@@ -390,8 +389,6 @@ hippo_canvas_box_allocate(HippoCanvasItem *item,
     int extra;
     GSList *link;
 
-    box->allocated_x = x;
-    box->allocated_y = y;
     box->allocated_width = width;
     box->allocated_height = height;
     box->request_changed_since_allocate = FALSE;
@@ -429,9 +426,9 @@ hippo_canvas_box_allocate(HippoCanvasItem *item,
     if (box->orientation == HIPPO_ORIENTATION_VERTICAL) {
         int top_y;
         int bottom_y;
-
-        top_y = y + box->padding_top;
-        bottom_y = y + height - box->padding_bottom;
+        
+        top_y = box->padding_top;
+        bottom_y = height - box->padding_bottom;
         for (link = box->children; link != NULL; link = link->next) {
             HippoBoxChild *child = link->data;
             int req;
@@ -440,10 +437,9 @@ hippo_canvas_box_allocate(HippoCanvasItem *item,
             if (child->expand)
                 req += extra;
 
+            child->x = box->padding_left;
+            child->y = child->end ? (bottom_y - req) : top_y;
             hippo_canvas_item_allocate(child->item,
-                                       /* FIXME -= x,y to make it relative to container once we fix paint() */
-                                       x + box->padding_left,
-                                       child->end ? (bottom_y - req) : top_y,
                                        width, /* child->width_request, */
                                        req);
             if (child->end)
@@ -455,8 +451,8 @@ hippo_canvas_box_allocate(HippoCanvasItem *item,
         int left_x;
         int right_x;
 
-        left_x = x + box->padding_left;
-        right_x = x + width - box->padding_right;
+        left_x = box->padding_left;
+        right_x = width - box->padding_right;
         for (link = box->children; link != NULL; link = link->next) {
             HippoBoxChild *child = link->data;
             int req;
@@ -465,10 +461,9 @@ hippo_canvas_box_allocate(HippoCanvasItem *item,
             if (child->expand)
                 req += extra;
 
+            child->x = child->end ? (right_x - req) : left_x;
+            child->y = box->padding_top;
             hippo_canvas_item_allocate(child->item,
-                                       /* FIXME -= x,y to make it relative to container once we fix paint() */
-                                       child->end ? (right_x - req) : left_x,
-                                       y + box->padding_top,
                                        req,
                                        height); /* child->height_request); */
             if (child->end)
@@ -481,17 +476,11 @@ hippo_canvas_box_allocate(HippoCanvasItem *item,
 
 static void
 hippo_canvas_box_get_allocation(HippoCanvasItem *item,
-                                int              *x_p,
-                                int              *y_p,
                                 int              *width_p,
                                 int              *height_p)
 {
     HippoCanvasBox *box = HIPPO_CANVAS_BOX(item);
 
-    if (x_p)
-        *x_p = box->allocated_x;
-    if (y_p)
-        *y_p = box->allocated_y;
     if (width_p)
         *width_p = box->allocated_width;
     if (height_p)
@@ -507,14 +496,14 @@ hippo_canvas_box_button_press_event (HippoCanvasItem *item,
 
     for (link = box->children; link != NULL; link = link->next) {
         HippoBoxChild *child = link->data;
-        int x, y, width, height;
-        hippo_canvas_item_get_allocation(child->item, &x, &y, &width, &height);
+        int width, height;
+        hippo_canvas_item_get_allocation(child->item, &width, &height);
 
-        if (event->x >= x && event->y >= y &&
-            event->x < (x + width) &&
-            event->y < (y + height)) {
+        if (event->x >= child->x && event->y >= child->y &&
+            event->x < (child->x + width) &&
+            event->y < (child->y + height)) {
             return hippo_canvas_item_process_event(HIPPO_CANVAS_ITEM(child->item),
-                                                   event);
+                                                   event, child->x, child->y);
         }
     }
 
@@ -638,4 +627,12 @@ hippo_canvas_box_get_context(HippoCanvasBox *box)
     g_return_val_if_fail(HIPPO_IS_CANVAS_BOX(box), NULL);
 
     return box->context;
+}
+
+int
+hippo_canvas_box_get_fixed_width (HippoCanvasBox *box)
+{
+    g_return_val_if_fail(HIPPO_IS_CANVAS_BOX(box), 0);
+
+    return box->fixed_width;
 }

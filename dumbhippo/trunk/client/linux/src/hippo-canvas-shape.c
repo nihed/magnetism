@@ -26,7 +26,7 @@ static void hippo_canvas_shape_get_property (GObject      *object,
 
 /* Canvas item methods */
 static void     hippo_canvas_shape_paint              (HippoCanvasItem *item,
-                                                       HippoDrawable   *drawable);
+                                                       cairo_t         *cr);
 static int      hippo_canvas_shape_get_width_request  (HippoCanvasItem *item);
 static int      hippo_canvas_shape_get_height_request (HippoCanvasItem *item,
                                                        int              for_width);
@@ -217,14 +217,9 @@ hippo_canvas_shape_get_property(GObject         *object,
 
 static void
 hippo_canvas_shape_paint(HippoCanvasItem *item,
-                         HippoDrawable   *drawable)
+                         cairo_t         *cr)
 {
     HippoCanvasShape *shape = HIPPO_CANVAS_SHAPE(item);
-    cairo_t *cr;
-
-    cr = hippo_drawable_get_cairo(drawable);
-
-    hippo_canvas_item_push_cairo(item, cr); /* FIXME do this in container items on behalf of children */
 
     /* fill background */
     if ((shape->background_color_rgba & 0xff) != 0) {
@@ -237,7 +232,7 @@ hippo_canvas_shape_paint(HippoCanvasItem *item,
         int width, height;
         int x, y;
 
-        hippo_canvas_item_get_allocation(item, NULL, NULL, &width, &height);
+        hippo_canvas_item_get_allocation(item, &width, &height);
 
         x = (width - shape->width) / 2;
         y = (height - shape->height) / 2;
@@ -247,12 +242,9 @@ hippo_canvas_shape_paint(HippoCanvasItem *item,
         cairo_set_line_width(cr, 3.0);
         cairo_stroke(cr);
     }
-    hippo_canvas_item_pop_cairo(item, cr);
     
-    /* Draw any children (FIXME inside pop_cairo once HippoCanvasBox::paint() is fixed
-     * to automatically push/pop cairo coords)
-     */
-    item_parent_class->paint(item, drawable);
+    /* Draw any children */
+    item_parent_class->paint(item, cr);
 }
 
 static int
@@ -262,8 +254,12 @@ hippo_canvas_shape_get_width_request(HippoCanvasItem *item)
     int children_width;
 
     children_width = item_parent_class->get_width_request(item);
-    
-    return MAX(shape->width, children_width);
+
+    if (hippo_canvas_box_get_fixed_width(HIPPO_CANVAS_BOX(item)) < 0) {
+        return MAX(shape->width, children_width);
+    } else {
+        return children_width;
+    }
 }
 
 static int

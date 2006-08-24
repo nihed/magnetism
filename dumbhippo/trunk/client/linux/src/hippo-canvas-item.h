@@ -7,11 +7,6 @@
 
 G_BEGIN_DECLS
 
-/* not sure we need this or can just use cairo_t; maybe we want to
- * stick our own extensions onto the cairo_t though or something.
- */
-typedef struct _HippoDrawable HippoDrawable;
-
 typedef enum {
     HIPPO_EVENT_BUTTON_PRESS
 } HippoEventType;
@@ -40,18 +35,14 @@ struct _HippoCanvasItemClass {
     void     (* set_context)        (HippoCanvasItem  *canvas_item,
                                      HippoCanvasContext *context);
     void     (* paint)              (HippoCanvasItem  *canvas_item,
-                                     HippoDrawable    *drawable);
+                                     cairo_t          *cr);
     int      (* get_width_request)  (HippoCanvasItem *canvas_item);
     int      (* get_height_request) (HippoCanvasItem *canvas_item,
                                      int              for_width);
     void     (* allocate)           (HippoCanvasItem *canvas_item,
-                                     int              x,
-                                     int              y,
                                      int              width,
                                      int              height);
     void     (* get_allocation)     (HippoCanvasItem *canvas_item,
-                                     int             *x_p,
-                                     int             *y_p,
                                      int             *width_p,
                                      int             *height_p);
     gboolean (* button_press_event) (HippoCanvasItem *canvas_item,
@@ -65,18 +56,14 @@ GType        	 hippo_canvas_item_get_type               (void) G_GNUC_CONST;
 void     hippo_canvas_item_set_context             (HippoCanvasItem *canvas_item,
                                                     HippoCanvasContext *context);
 void     hippo_canvas_item_paint                   (HippoCanvasItem *canvas_item,
-                                                    HippoDrawable   *drawable);
+                                                    cairo_t         *cr);
 int      hippo_canvas_item_get_width_request       (HippoCanvasItem *canvas_item);
 int      hippo_canvas_item_get_height_request      (HippoCanvasItem *canvas_item,
                                                     int              for_width);
 void     hippo_canvas_item_allocate                (HippoCanvasItem *canvas_item,
-                                                    int              x,
-                                                    int              y,
                                                     int              width,
                                                     int              height);
 void     hippo_canvas_item_get_allocation          (HippoCanvasItem *canvas_item,
-                                                    int             *x_p,
-                                                    int             *y_p,
                                                     int             *width_p,
                                                     int             *height_p);
 gboolean hippo_canvas_item_get_needs_resize        (HippoCanvasItem *canvas_item);
@@ -89,7 +76,14 @@ gboolean hippo_canvas_item_emit_button_press_event (HippoCanvasItem *canvas_item
                                                     int              y);
 void     hippo_canvas_item_emit_request_changed    (HippoCanvasItem *canvas_item);
 gboolean hippo_canvas_item_process_event           (HippoCanvasItem *canvas_item,
-                                                    HippoEvent      *event);
+                                                    HippoEvent      *event,
+                                                    int              allocation_x,
+                                                    int              allocation_y);
+
+void     hippo_canvas_item_process_paint           (HippoCanvasItem *canvas_item,
+                                                    cairo_t         *cr,
+                                                    int              allocation_x,
+                                                    int              allocation_y);
 
 G_END_DECLS
 

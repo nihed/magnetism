@@ -70,7 +70,8 @@ void            hippo_canvas_box_remove (HippoCanvasBox  *box,
 
 
 /* Protected accessors for subclasses */
-HippoCanvasContext* hippo_canvas_box_get_context(HippoCanvasBox *box);
+HippoCanvasContext* hippo_canvas_box_get_context     (HippoCanvasBox *box);
+int                 hippo_canvas_box_get_fixed_width (HippoCanvasBox *box);
 
 G_END_DECLS
 

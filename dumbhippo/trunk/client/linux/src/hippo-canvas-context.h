@@ -35,6 +35,10 @@ GType        	 hippo_canvas_context_get_type               (void) G_GNUC_CONST;
 PangoLayout*     hippo_canvas_context_create_layout          (HippoCanvasContext *context);
 
 
+/* Random utility function that shouldn't really be in this file */
+void hippo_cairo_set_source_rgba32(cairo_t *cr,
+                                   guint32  color);
+
 G_END_DECLS
 
 #endif /* __HIPPO_CANVAS_CONTEXT_H__ */

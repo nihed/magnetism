@@ -27,23 +27,6 @@ void         hippo_canvas_set_root (HippoCanvas     *canvas,
 
 void hippo_canvas_open_test_window(void);
 
-/* These may be moved to cross-platform once we set up Cairo to build on Windows,
- * or maybe we'll just drop it and use cairo_t bare, or maybe they need to
- * be platform-specific, don't know yet
- */
-HippoDrawable* hippo_drawable_new          (cairo_t         *cr);
-void           hippo_drawable_free         (HippoDrawable   *drawable);
-cairo_t*       hippo_drawable_get_cairo    (HippoDrawable   *drawable);
-
-/* These might also belong cross-platform */
-void hippo_canvas_item_push_cairo(HippoCanvasItem *item,
-                                  cairo_t         *cr);
-void hippo_canvas_item_pop_cairo (HippoCanvasItem *item,
-                                  cairo_t         *cr);
-
-void hippo_cairo_set_source_rgba32(cairo_t *cr,
-                                   guint32  color);
-
 G_END_DECLS
 
 #endif /* __HIPPO_CANVAS_H__ */

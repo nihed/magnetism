@@ -25,6 +25,8 @@ static void      hippo_canvas_size_request        (GtkWidget         *widget,
             	       	                           GtkRequisition    *requisition);
 static void      hippo_canvas_size_allocate       (GtkWidget         *widget,
             	       	                           GtkAllocation     *allocation);
+static gboolean  hippo_canvas_button_press        (GtkWidget         *widget,
+            	       	                           GdkEventButton    *event);
 
 static PangoLayout* hippo_canvas_create_layout    (HippoCanvasContext *context);
 
@@ -75,6 +77,7 @@ hippo_canvas_class_init(HippoCanvasClass *klass)
     widget_class->expose_event = hippo_canvas_expose_event;
     widget_class->size_request = hippo_canvas_size_request;
     widget_class->size_allocate = hippo_canvas_size_allocate;
+    widget_class->button_press_event = hippo_canvas_button_press;
 }
 
 static void
@@ -132,18 +135,14 @@ hippo_canvas_expose_event(GtkWidget         *widget,
                           GdkEventExpose    *event)
 {
     HippoCanvas *canvas = HIPPO_CANVAS(widget);
-    HippoDrawable *hdrawable;
     cairo_t *cr;
-
+    
     if (canvas->root == NULL)
         return FALSE;
 
     cr = gdk_cairo_create(event->window);
-    hdrawable = hippo_drawable_new(cr);
-
-    hippo_canvas_item_paint(canvas->root, hdrawable);
-
-    hippo_drawable_free(hdrawable);
+    hippo_canvas_item_process_paint(canvas->root, cr,
+                                    widget->allocation.x, widget->allocation.y);
     cairo_destroy(cr);
 
     return FALSE;
@@ -176,20 +175,24 @@ hippo_canvas_size_allocate(GtkWidget         *widget,
     GTK_WIDGET_CLASS(hippo_canvas_parent_class)->size_allocate(widget, allocation);
 
     if (canvas->root != NULL) {
-        int x, y;
-        if (GTK_WIDGET_NO_WINDOW(widget)) {
-            x = allocation->x;
-            y = allocation->y;
-        } else {
-            x = 0;
-            y = 0;
-        }
-
         hippo_canvas_item_allocate(canvas->root,
-                                   x, y,
                                    allocation->width,
                                    allocation->height);
     }
+}
+
+static gboolean
+hippo_canvas_button_press(GtkWidget         *widget,
+                          GdkEventButton    *event)
+{
+    HippoCanvas *canvas = HIPPO_CANVAS(widget);
+
+    if (canvas->root == NULL)
+        return FALSE;
+
+    return hippo_canvas_item_emit_button_press_event(canvas->root,
+                                                     event->x - widget->allocation.x,
+                                                     event->y - widget->allocation.y);
 }
 
 static PangoLayout*
@@ -245,88 +248,6 @@ hippo_canvas_set_root(HippoCanvas     *canvas,
     }
 
     gtk_widget_queue_resize(GTK_WIDGET(canvas));
-}
-
-/*
- * Move this HippoDrawable stuff cross-platform
- * once we have Cairo set up on Windows.
- * Though I'm not sure this is what we want; we might
- * want it platform-specific so we can have each paint
- * method get a new cairo_t from gdk_cairo_create() which
- * requires the GdkDrawable
- */
-struct _HippoDrawable {
-    cairo_t *cr;
-};
-
-HippoDrawable*
-hippo_drawable_new(cairo_t *cr)
-{
-    HippoDrawable *d;
-
-    d = g_new0(HippoDrawable, 1);
-    d->cr = cr;
-    cairo_reference(d->cr);
-
-    return d;
-}
-
-void
-hippo_drawable_free(HippoDrawable *drawable)
-{
-    cairo_destroy(drawable->cr);
-    g_free(drawable);
-}
-
-cairo_t*
-hippo_drawable_get_cairo(HippoDrawable *drawable)
-{
-    return drawable->cr;
-}
-
-/* FIXME ideally these are called automatically, not inside paint() implementations,
- * but right now we don't have cairo available in hippo-canvas-box.c so can't
- */
-void
-hippo_canvas_item_push_cairo(HippoCanvasItem *item,
-                             cairo_t         *cr)
-{
-    int x, y, width, height;
-
-    cairo_save(cr);
-
-    hippo_canvas_item_get_allocation(item, &x, &y, &width, &height);
-    /* Make our allocation x,y the origin */
-    cairo_translate(cr, x, y);
-    /* Set our allocation as the clip region */
-    cairo_rectangle(cr, 0, 0, width, height);
-    cairo_clip(cr);
-}
-
-void
-hippo_canvas_item_pop_cairo (HippoCanvasItem *item,
-                             cairo_t         *cr)
-{
-    cairo_restore(cr);
-}
-
-#define RED(rgba)    (((rgba) >> 24)                / 255.0)
-#define GREEN(rgba)  ((((rgba) & 0x00ff0000) >> 16) / 255.0)
-#define BLUE(rgba)   ((((rgba) & 0x0000ff00) >> 8)  / 255.0)
-#define ALPHA(rgba)  (((rgba)  & 0x000000ff)        / 255.0)
-
-void
-hippo_cairo_set_source_rgba32(cairo_t *cr,
-                              guint32  color)
-{
-    /* trying to avoid alpha 255 becoming a double alpha that isn't quite opaque ?
-     * not sure this is needed.
-     */
-    if ((color & 0xff) == 0xff) {
-        cairo_set_source_rgb(cr, RED(color), GREEN(color), BLUE(color));
-    } else {
-        cairo_set_source_rgba(cr, RED(color), GREEN(color), BLUE(color), ALPHA(color));
-    }
 }
 
 /* TEST CODE */
@@ -419,7 +340,6 @@ hippo_canvas_open_test_window(void)
     gtk_container_add(GTK_CONTAINER(window), canvas);
 
     root = g_object_new(HIPPO_TYPE_CANVAS_BOX,
-                        "fixed-width", 400,
                         NULL);
 
 #if 0
@@ -445,9 +365,9 @@ hippo_canvas_open_test_window(void)
         hippo_canvas_box_append(HIPPO_CANVAS_BOX(root), row, 0);
         g_object_unref(row);
     }
-
-
+    
     text = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
+                        "fixed-width", 400,
                         "text",
                         "This is some long text that may help in testing resize behavior. It goes "
                         "on for a while, so don't get impatient. More and more and  more text. "
