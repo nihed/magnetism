@@ -83,7 +83,7 @@ class Config:
                     print >>sys.stderr, "Was OK"
                 if service.is_runnable():
                     print >>sys.stderr, "Starting:", service_name
-                    self.services[service_name].start()
+                    service.start()
         elif action == 'stop':
             services = self.filter_runnable(services)
             
@@ -91,8 +91,12 @@ class Config:
             stop_order = copy.copy(services)
             stop_order.reverse()
             for service_name in stop_order:
-                print >>sys.stderr, "Stopping", service_name
-                self.services[service_name].stop()
+                service = self.services[service_name]
+                if service.status():
+                    print >>sys.stderr, "Stopping", service_name
+                    service.stop()
+                else:
+                    print >>sys.stderr, service_name, "is not running"
         elif action == 'restart':
             services = self.filter_runnable(services)
             
