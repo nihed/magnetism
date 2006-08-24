@@ -891,11 +891,13 @@ main(int argc, char **argv)
     gtk_init(&argc, &argv);
     gtk_window_set_default_icon_name("mugshot");
 
+#if 0
     {
         hippo_canvas_open_test_window();
         gtk_main();
         return 0;
     }
+#endif
     
     if (!hippo_parse_options(&argc, &argv, &options))
         return 1;
