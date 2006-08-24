@@ -5,7 +5,7 @@
 /* A widget that contains a root HippoCanvasItem */
 
 #include <gtk/gtkwidget.h>
-#include <hippo/hippo-canvas-item.h>
+#include "hippo-canvas-item.h"
 
 G_BEGIN_DECLS
 

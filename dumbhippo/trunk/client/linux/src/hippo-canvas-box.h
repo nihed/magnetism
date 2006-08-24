@@ -2,7 +2,7 @@
 #ifndef __HIPPO_CANVAS_BOX_H__
 #define __HIPPO_CANVAS_BOX_H__
 
-#include <hippo/hippo-canvas-item.h>
+#include "hippo-canvas-item.h"
 
 G_BEGIN_DECLS
 

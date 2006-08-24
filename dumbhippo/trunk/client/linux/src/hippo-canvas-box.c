@@ -1,5 +1,10 @@
 /* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
+#if 1
+#include <config.h>
+#include <glib/gi18n-lib.h>
+#else
 #include "hippo-common-internal.h"
+#endif
 #include "hippo-canvas-box.h"
 
 static void      hippo_canvas_box_init                (HippoCanvasBox       *box);

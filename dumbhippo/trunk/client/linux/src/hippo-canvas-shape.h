@@ -4,7 +4,7 @@
 
 /* A cairo path canvas item. (will be cross-platform once windows has Cairo support) */
 
-#include <hippo/hippo-canvas-item.h>
+#include "hippo-canvas-item.h"
 #include <cairo/cairo.h>
 
 G_BEGIN_DECLS

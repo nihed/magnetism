@@ -311,7 +311,7 @@ hippo_cairo_set_source_rgba32(cairo_t *cr,
 /* TEST CODE */
 #if 1
 #include <gtk/gtk.h>
-#include <hippo/hippo-canvas-box.h>
+#include "hippo-canvas-box.h"
 #include "hippo-canvas-shape.h"
 #include "hippo-canvas-text.h"
 

@@ -7,7 +7,7 @@
 #include "hippo-common-internal.h"
 #endif
 #include "hippo-canvas-shape.h"
-#include <hippo/hippo-canvas-box.h>
+#include "hippo-canvas-box.h"
 
 static void      hippo_canvas_shape_init                (HippoCanvasShape       *shape);
 static void      hippo_canvas_shape_class_init          (HippoCanvasShapeClass  *klass);

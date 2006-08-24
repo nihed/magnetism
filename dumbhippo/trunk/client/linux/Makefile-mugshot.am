@@ -18,6 +18,10 @@ mugshot_SOURCES	=				\
 	src/hippo-bubble-util.h			\
 	src/hippo-canvas.c			\
 	src/hippo-canvas.h			\
+	src/hippo-canvas-box.c			\
+	src/hippo-canvas-box.h			\
+	src/hippo-canvas-item.c			\
+	src/hippo-canvas-item.h			\
 	src/hippo-canvas-shape.c		\
 	src/hippo-canvas-shape.h		\
 	src/hippo-canvas-text.c			\

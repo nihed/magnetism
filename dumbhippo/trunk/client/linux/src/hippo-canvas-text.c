@@ -7,7 +7,7 @@
 #include "hippo-common-internal.h"
 #endif
 #include "hippo-canvas-text.h"
-#include <hippo/hippo-canvas-box.h>
+#include "hippo-canvas-box.h"
 #include <pango/pangocairo.h>
 
 static void      hippo_canvas_text_init                (HippoCanvasText       *text);
