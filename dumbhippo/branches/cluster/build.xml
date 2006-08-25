@@ -29,6 +29,12 @@
 		</exec>
     </target>
 
+    <target name="deploy-stop">
+		<exec dir="${basedir}" executable="${basedir}/tools/deploy-stop.sh">
+			<arg value="${deploy.hosts}"/>
+		</exec>
+    </target>
+
     <target name="clean">
 		<ant dir="server" target="clean"/>
     	<ant dir="taste" target="clean"/>

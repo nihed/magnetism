@@ -3,17 +3,27 @@
 set -e
 
 prompt() {
-   echo -n "$2 ($3)? "
-   read v
-   if [ x$v = x"" ] ; then
-       eval $1=$3
-   else
-       eval $1=$v
-   fi
+   success=false
+   while ! $success ; do
+       echo -n "$2 ($3)? "
+       read v
+       if [ x$v = x"" ] ; then
+	   v=$3
+       fi
+
+       if [ "${4+set}" != "set" ] ; then
+	   success=true
+       else
+	   if echo "$v" | grep -E "^$4$" > /dev/null ; then
+	       success=true
+	   fi
+       fi
+   done
+   eval $1=$v
 }
 
-prompt N "How many test instances do you want to create" 3
-prompt BASE_ADDR "What is the network address base" 192.168.1.50
+prompt N "How many test instances do you want to create" 3 "[0-9]+"
+prompt BASE_ADDR "What is the network address base" 192.168.1.31 "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+"
 prompt SERVER_NAME "What should be the cluster's public name" localinstance.mugshot.org
 
 group=$USER-test
