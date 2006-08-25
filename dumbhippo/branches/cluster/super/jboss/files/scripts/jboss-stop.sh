@@ -3,6 +3,7 @@
 targetdir=@@targetdir@@
 jbossdir=@@jbossdir@@
 jnpPort=@@jnpPort@@
+jbossBind="@@jbossBind@@"
 
 pidfile=$targetdir/run/jboss.pid
 
@@ -14,8 +15,13 @@ if [ \! -f $pidfile ] ; then
 fi
 
 pid=`cat $pidfile`
+if test "$jbossBind" = 'all'; then
+  jnphost="localhost"
+else
+  jnphost="$jbossBind"
+fi
 
-$jbossdir/bin/shutdown.sh -s jnp://localhost:$jnpPort > /dev/null &
+$jbossdir/bin/shutdown.sh -s jnp://$jnphost:$jnpPort > /dev/null &
 
 timeout=30
 interval=1
