@@ -24,7 +24,6 @@ prompt() {
 
 prompt N "How many test instances do you want to create" 3 "[0-9]+"
 prompt BASE_ADDR "What is the network address base" 192.168.1.31 "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+"
-prompt SERVER_NAME "What should be the cluster's public name" localinstance.mugshot.org
 
 group=$USER-test
 
@@ -41,8 +40,11 @@ setvars() {
     addr="$start$((end+$i-1))"
 }
 
+clusterconfig="$HOME/.super-cluster.conf"
+
 echo
 echo "Group: $group"
+echo "Cluster config file: $clusterconfig"
 for i in `seq 1 $N` ; do
     setvars
     echo "User: $user"
@@ -59,6 +61,18 @@ fi
 
 sudo groupadd -f $USER-test
 sudo usermod -a -G $USER-test $USER
+
+if ! test -e $clusterconfig ; then
+    cat <<EOF > $clusterconfig
+<?xml version="1.0" encoding="UTF-8"?><!-- -*- tab-width: 4; indent-tabs-mode: t -*- -->
+<superconf>
+    <parameter name="serverHost">localinstance.mugshot.org</parameter>
+</superconf>
+EOF
+fi
+
+chown $USER:$group $clusterconfig
+chmod 0660 $clusterconfig
 
 for i in `seq 1 $N` ; do
     setvars
@@ -84,7 +98,7 @@ for i in `seq 1 $N` ; do
 	cat <<EOF > $home/.super.conf
 <?xml version="1.0" encoding="UTF-8"?><!-- -*- tab-width: 4; indent-tabs-mode: t -*- -->
 <superconf>
-    <parameter name="serverHost">$SERVER_NAME</parameter>
+    <include file="$clusterconfig"/>
     <service name="jboss">
         <parameter name="jbossBind">$addr</parameter>
     </service>
@@ -94,7 +108,7 @@ EOF
 	cat <<EOF > $home/.super.conf
 <?xml version="1.0" encoding="UTF-8"?><!-- -*- tab-width: 4; indent-tabs-mode: t -*- -->
 <superconf>
-    <parameter name="serverHost">$SERVER_NAME</parameter>
+    <include file="$clusterconfig"/>
     <parameter name="slaveMode">yes</parameter>
     <service name="jboss">
        <parameter name="jbossBind">$addr</parameter>
