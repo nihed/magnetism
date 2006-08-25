@@ -28,14 +28,14 @@ class Config:
         self.params= { 'superdir' : superdir }
         self.services={}
 
-        self._load_config(os.path.join(superdir, 'base.conf'), True)
+        self.load_config(os.path.join(superdir, 'base.conf'), True)
         if (os.environ.has_key('HOME')):
             self.params['home'] = os.environ['HOME'];
             
         if conffile is not None:
-            self._load_config(conffile, True)
+            self.load_config(conffile, True)
         elif (os.environ.has_key('HOME')):
-            self._load_config(os.path.join(os.environ['HOME'], '.super.conf'), False)
+            self.load_config(os.path.join(os.environ['HOME'], '.super.conf'), False)
         for (name, value) in init_params.items():
             self._set_init_parameter(name, value)
 
@@ -321,7 +321,7 @@ class Config:
         """Gets the (expanded) value of a parameter and checks if it is true"""
         return self.is_true(self.expand_parameter(name))
 
-    def _load_config(self, filename, must_exist):
+    def load_config(self, filename, must_exist):
         """Load a single config file and merge it into the existing state.
 
         filename -- filename to load
