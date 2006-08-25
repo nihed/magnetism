@@ -23,7 +23,7 @@ prompt() {
 }
 
 prompt N "How many addresses do you want to bind" 3 "[0-9]+"
-prompt BASE_ADDR "What is the network address base" 192.168.1.30 "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+"
+prompt BASE_ADDR "What is the network address base" 192.168.1.31 "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+"
 
 setvars() {
     start=`echo $BASE_ADDR | sed -r s/\[0-9]\+$//`
