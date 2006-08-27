@@ -15,8 +15,8 @@ typedef enum
 typedef enum
 {
     HIPPO_PACK_EXPAND = 1, /* This is equivalent to both EXPAND and FILL for GtkBox,
-                            * the way you'd get FILL=false is to have a child item
-                            * like GtkMisc or with its own "align" property.
+                            * the way you'd get FILL=false is to set the alignment
+                            * on the child item
                             */
     HIPPO_PACK_END = 2
 } HippoPackFlags;
@@ -47,6 +47,8 @@ struct _HippoCanvasBox {
     guint8 padding_left;
     guint8 padding_right;
 
+    guint8 spacing;
+    
     guint request_changed_since_allocate : 1;
     guint orientation : 2; /* enum only has 2 values so it fits with extra */
     guint x_align : 3;     /* enum only has 4 values so it fits with extra */

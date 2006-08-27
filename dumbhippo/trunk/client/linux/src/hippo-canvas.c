@@ -319,7 +319,8 @@ create_row(BoxAttrs *boxes)
     HippoCanvasItem *row;
     int i;
     
-    row = g_object_new(HIPPO_TYPE_CANVAS_BOX, "orientation", HIPPO_ORIENTATION_HORIZONTAL, NULL);
+    row = g_object_new(HIPPO_TYPE_CANVAS_BOX, "orientation", HIPPO_ORIENTATION_HORIZONTAL,
+                       "spacing", 5, NULL);
 
     for (i = 0; boxes[i].width > 0; ++i) {
         BoxAttrs *attrs = &boxes[i];
@@ -396,6 +397,7 @@ hippo_canvas_open_test_window(void)
     gtk_container_add(GTK_CONTAINER(window), canvas);
 
     root = g_object_new(HIPPO_TYPE_CANVAS_BOX,
+                        "spacing", 8,
                         NULL);
 
 #if 1
