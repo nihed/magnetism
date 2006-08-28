@@ -15,6 +15,7 @@ enum {
     REQUEST_CHANGED,      /* The size we want to request may have changed */
     PAINT_NEEDED,
     BUTTON_PRESS_EVENT,
+    MOTION_NOTIFY_EVENT,
     LAST_SIGNAL
 };
 static int signals[LAST_SIGNAL];
@@ -76,7 +77,15 @@ hippo_canvas_item_base_init(void *klass)
             		  g_signal_accumulator_true_handled, NULL,
                           hippo_common_marshal_BOOLEAN__POINTER,
             		  G_TYPE_BOOLEAN, 1, G_TYPE_POINTER);
-
+        signals[MOTION_NOTIFY_EVENT] =
+            g_signal_new ("motion-notify-event",
+                          HIPPO_TYPE_CANVAS_ITEM,
+            		  G_SIGNAL_RUN_LAST,
+            		  G_STRUCT_OFFSET(HippoCanvasItemClass, motion_notify_event),
+            		  g_signal_accumulator_true_handled, NULL,
+                          hippo_common_marshal_BOOLEAN__POINTER,
+            		  G_TYPE_BOOLEAN, 1, G_TYPE_POINTER);
+        
         initialized = TRUE;
     }
 }
@@ -149,6 +158,25 @@ hippo_canvas_item_get_needs_resize(HippoCanvasItem *canvas_item)
     return HIPPO_CANVAS_ITEM_GET_CLASS(canvas_item)->get_needs_resize(canvas_item);
 }
 
+char*
+hippo_canvas_item_get_tooltip(HippoCanvasItem *canvas_item,
+                              int              x,
+                              int              y)
+{
+    g_return_val_if_fail(HIPPO_IS_CANVAS_ITEM(canvas_item), NULL);
+
+    return HIPPO_CANVAS_ITEM_GET_CLASS(canvas_item)->get_tooltip(canvas_item, x, y);
+}
+
+HippoCanvasPointer
+hippo_canvas_item_get_pointer(HippoCanvasItem *canvas_item,
+                              int              x,
+                              int              y)
+{
+    g_return_val_if_fail(HIPPO_IS_CANVAS_ITEM(canvas_item), FALSE);
+
+    return HIPPO_CANVAS_ITEM_GET_CLASS(canvas_item)->get_pointer(canvas_item, x, y);
+}
 
 gboolean
 hippo_canvas_item_emit_button_press_event (HippoCanvasItem  *canvas_item,
@@ -160,6 +188,22 @@ hippo_canvas_item_emit_button_press_event (HippoCanvasItem  *canvas_item,
     g_return_val_if_fail(HIPPO_IS_CANVAS_ITEM(canvas_item), FALSE);
 
     event.type = HIPPO_EVENT_BUTTON_PRESS;
+    event.x = x;
+    event.y = y;
+
+    return hippo_canvas_item_process_event(canvas_item, &event, 0, 0);
+}
+
+gboolean
+hippo_canvas_item_emit_motion_notify_event (HippoCanvasItem  *canvas_item,
+                                            int               x,
+                                            int               y)
+{
+    HippoEvent event;
+
+    g_return_val_if_fail(HIPPO_IS_CANVAS_ITEM(canvas_item), FALSE);
+
+    event.type = HIPPO_EVENT_MOTION_NOTIFY;
     event.x = x;
     event.y = y;
 
@@ -210,6 +254,9 @@ hippo_canvas_item_process_event(HippoCanvasItem *canvas_item,
     switch (event->type) {
     case HIPPO_EVENT_BUTTON_PRESS:
         g_signal_emit(canvas_item, signals[BUTTON_PRESS_EVENT], 0, &translated, &handled);
+        break;
+    case HIPPO_EVENT_MOTION_NOTIFY:
+        g_signal_emit(canvas_item, signals[MOTION_NOTIFY_EVENT], 0, &translated, &handled);
         break;
         /* don't add a default, you'll break the compiler warnings */
     }

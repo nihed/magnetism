@@ -26,13 +26,18 @@ static void hippo_canvas_link_get_property (GObject      *object,
 
 
 /* Canvas item methods */
-static void     hippo_canvas_link_paint              (HippoCanvasItem *item,
-                                                       cairo_t         *cr);
-static int      hippo_canvas_link_get_width_request  (HippoCanvasItem *item);
-static int      hippo_canvas_link_get_height_request (HippoCanvasItem *item,
-                                                       int              for_width);
-static gboolean hippo_canvas_link_button_press_event (HippoCanvasItem *item,
-                                                       HippoEvent      *event);
+static void               hippo_canvas_link_paint               (HippoCanvasItem *item,
+                                                                 cairo_t         *cr);
+static int                hippo_canvas_link_get_width_request   (HippoCanvasItem *item);
+static int                hippo_canvas_link_get_height_request  (HippoCanvasItem *item,
+                                                                 int              for_width);
+static gboolean           hippo_canvas_link_button_press_event  (HippoCanvasItem *item,
+                                                                 HippoEvent      *event);
+static gboolean           hippo_canvas_link_motion_notify_event (HippoCanvasItem *item,
+                                                                 HippoEvent      *event);
+static HippoCanvasPointer hippo_canvas_link_get_pointer         (HippoCanvasItem *item,
+                                                                 int              x,
+                                                                 int              y);
 
 struct _HippoCanvasLink {
     HippoCanvasText text;
@@ -89,6 +94,8 @@ hippo_canvas_link_iface_init(HippoCanvasItemClass *item_class)
     item_class->get_width_request = hippo_canvas_link_get_width_request;
     item_class->get_height_request = hippo_canvas_link_get_height_request;
     item_class->button_press_event = hippo_canvas_link_button_press_event;
+    item_class->motion_notify_event = hippo_canvas_link_motion_notify_event;
+    item_class->get_pointer = hippo_canvas_link_get_pointer;
 }
 
 static void
@@ -193,12 +200,48 @@ hippo_canvas_link_get_height_request(HippoCanvasItem *item,
 }
 
 static gboolean
-hippo_canvas_link_button_press_event (HippoCanvasItem *item,
+hippo_canvas_link_button_press_event(HippoCanvasItem *item,
+                                     HippoEvent      *event)
+{
+    /* HippoCanvasLink *link = HIPPO_CANVAS_LINK(item); */
+
+    /* see if a child wants it */
+    if (item_parent_class->button_press_event(item, event))
+        return TRUE;
+
+    /* g_debug("button on link %d,%d", event->x, event->y); */
+    
+    g_signal_emit(item, signals[ACTIVATED], 0);
+    
+    return TRUE;
+}
+
+static gboolean
+hippo_canvas_link_motion_notify_event(HippoCanvasItem *item,
                                       HippoEvent      *event)
 {
     /* HippoCanvasLink *link = HIPPO_CANVAS_LINK(item); */
 
-    g_signal_emit(item, signals[ACTIVATED], 0);
+    /* see if a child wants it */
+    if (item_parent_class->motion_notify_event(item, event))
+        return TRUE;
     
-    return TRUE;
+    /* g_debug("motion on link %d,%d", event->x, event->y); */
+    
+    return FALSE;
+}
+
+static HippoCanvasPointer
+hippo_canvas_link_get_pointer(HippoCanvasItem *item,
+                              int              x,
+                              int              y)
+{
+    HippoCanvasPointer pointer;
+
+    /* see if a child wants to set it */
+    pointer = item_parent_class->get_pointer(item, x, y);
+    if (pointer != HIPPO_CANVAS_POINTER_UNSET)
+        return pointer;
+
+    return HIPPO_CANVAS_POINTER_HAND;
 }

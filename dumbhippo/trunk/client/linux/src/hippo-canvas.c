@@ -3,6 +3,7 @@
 #include <glib/gi18n-lib.h>
 #include "hippo-canvas.h"
 #include "hippo-canvas-context.h"
+#include <gtk/gtkeventbox.h>
 
 static void hippo_canvas_init       (HippoCanvas             *canvas);
 static void hippo_canvas_class_init (HippoCanvasClass        *klass);
@@ -27,17 +28,25 @@ static void      hippo_canvas_size_allocate       (GtkWidget         *widget,
             	       	                           GtkAllocation     *allocation);
 static gboolean  hippo_canvas_button_press        (GtkWidget         *widget,
             	       	                           GdkEventButton    *event);
+static gboolean  hippo_canvas_enter_notify        (GtkWidget         *widget,
+            	       	                           GdkEventCrossing  *event);
+static gboolean  hippo_canvas_leave_notify        (GtkWidget         *widget,
+            	       	                           GdkEventCrossing  *event);
+static gboolean  hippo_canvas_motion_notify       (GtkWidget         *widget,
+            	       	                           GdkEventMotion    *event);
 
 static PangoLayout* hippo_canvas_create_layout    (HippoCanvasContext *context);
 
 struct _HippoCanvas {
-    GtkWidget parent;
+    GtkEventBox parent;
 
     HippoCanvasItem *root;
+
+    HippoCanvasPointer pointer;
 };
 
 struct _HippoCanvasClass {
-    GtkWidgetClass parent_class;
+    GtkEventBoxClass parent_class;
 
 };
 
@@ -52,15 +61,22 @@ enum {
     PROP_0
 };
 
-G_DEFINE_TYPE_WITH_CODE(HippoCanvas, hippo_canvas, GTK_TYPE_WIDGET,
+G_DEFINE_TYPE_WITH_CODE(HippoCanvas, hippo_canvas, GTK_TYPE_EVENT_BOX,
                         G_IMPLEMENT_INTERFACE(HIPPO_TYPE_CANVAS_CONTEXT,
                                               hippo_canvas_iface_init));
 
 static void
 hippo_canvas_init(HippoCanvas *canvas)
 {
-    /* should maybe have a window, but for now I'm too lazy to implement _realize() */
-    GTK_WIDGET_SET_FLAGS(canvas, GTK_NO_WINDOW);
+    GtkWidget *widget = GTK_WIDGET(canvas);
+    
+    /* tells event box to create an input-only window on top */
+    GTK_WIDGET_SET_FLAGS(widget, GTK_NO_WINDOW);
+
+    gtk_widget_add_events(widget, GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK |
+                          GDK_ENTER_NOTIFY_MASK | GDK_LEAVE_NOTIFY_MASK | GDK_BUTTON_PRESS);
+
+    canvas->pointer = HIPPO_CANVAS_POINTER_UNSET;
 }
 
 static void
@@ -78,6 +94,9 @@ hippo_canvas_class_init(HippoCanvasClass *klass)
     widget_class->size_request = hippo_canvas_size_request;
     widget_class->size_allocate = hippo_canvas_size_allocate;
     widget_class->button_press_event = hippo_canvas_button_press;
+    widget_class->motion_notify_event = hippo_canvas_motion_notify;
+    widget_class->enter_notify_event = hippo_canvas_enter_notify;
+    widget_class->leave_notify_event = hippo_canvas_leave_notify;
 }
 
 static void
@@ -128,6 +147,98 @@ hippo_canvas_get_property(GObject         *object,
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
         break;
     }
+}
+
+/* whee, circumvent GtkEventBoxPrivate */
+static GdkWindow*
+event_box_get_event_window(GtkEventBox *event_box)
+{
+    GList *children;
+    GdkWindow *event_window;
+    GList *link;
+    void *user_data;
+    GtkWidget *widget;
+    
+    g_return_val_if_fail(GTK_IS_EVENT_BOX(event_box), NULL);
+    g_return_val_if_fail(GTK_WIDGET_REALIZED(event_box), NULL);
+    
+    widget = GTK_WIDGET(event_box);
+    g_return_val_if_fail(widget->window != NULL, NULL);
+    
+    if (gtk_event_box_get_visible_window(event_box)) {
+        return widget->window;
+    }
+    
+    /* event_box->window is the parent window of the event box */
+    
+    children = gdk_window_get_children(widget->window);
+    
+    event_window = NULL;
+    for (link = children; link != NULL; link = link->next) {
+        event_window = children->data;
+        user_data = NULL;
+        gdk_window_get_user_data(event_window, &user_data);        
+        if (GDK_WINDOW_OBJECT(event_window)->input_only &&
+            user_data == event_box) {
+            break;
+        }
+        event_window = NULL;
+    }
+
+    if (event_window == NULL) {
+        g_warning("did not find event box input window, %d children of %s",
+                  g_list_length(children), G_OBJECT_TYPE_NAME(event_box));
+    }
+    
+    g_list_free(children);
+    
+    return event_window;
+}
+
+static void
+set_pointer(HippoCanvas       *canvas,
+            HippoCanvasPointer pointer)
+{
+    GdkCursor *cursor;
+    GdkWindow *event_window;
+    GtkWidget *widget;
+    GtkEventBox *event_box;
+
+    /* important optimization since we do this on all motion notify */
+    if (canvas->pointer == pointer)
+        return;
+
+    widget = GTK_WIDGET(canvas);
+    event_box = GTK_EVENT_BOX(canvas);
+
+    canvas->pointer = pointer;
+
+    if (pointer == HIPPO_CANVAS_POINTER_UNSET ||
+        pointer == HIPPO_CANVAS_POINTER_DEFAULT)
+        cursor = NULL;
+    else {
+        GdkCursorType type = GDK_X_CURSOR;
+        switch (pointer) {
+        case HIPPO_CANVAS_POINTER_HAND:
+            type = GDK_HAND2;
+            break;
+        case HIPPO_CANVAS_POINTER_UNSET:
+        case HIPPO_CANVAS_POINTER_DEFAULT:
+            g_assert_not_reached();
+            break;
+            /* don't add a default, breaks compiler warnings */
+        }
+        cursor = gdk_cursor_new_for_display(gtk_widget_get_display(widget),
+                                            type);
+    }
+
+    event_window = event_box_get_event_window(event_box);
+    gdk_window_set_cursor(event_window, cursor);
+    
+    gdk_display_flush(gtk_widget_get_display(widget));
+
+    if (cursor != NULL)
+        gdk_cursor_unref(cursor);
 }
 
 static gboolean
@@ -190,9 +301,71 @@ hippo_canvas_button_press(GtkWidget         *widget,
     if (canvas->root == NULL)
         return FALSE;
 
+    /*
+    g_debug("canvas button press at %d,%d allocation %d,%d", (int) event->x, (int) event->y,
+            widget->allocation.x, widget->allocation.y);
+    */
+    
     return hippo_canvas_item_emit_button_press_event(canvas->root,
-                                                     event->x - widget->allocation.x,
-                                                     event->y - widget->allocation.y);
+                                                     event->x, event->y);
+}
+
+static void
+handle_new_mouse_location(HippoCanvas *canvas,
+                          GdkWindow   *event_window)
+{
+    int x, y;
+    HippoCanvasPointer pointer;
+    
+    gdk_window_get_pointer(event_window, &x, &y, NULL);
+
+    pointer = hippo_canvas_item_get_pointer(canvas->root, x, y);
+    set_pointer(canvas, pointer);
+    
+    hippo_canvas_item_emit_motion_notify_event(canvas->root,
+                                               x, y);
+}
+
+static gboolean
+hippo_canvas_enter_notify(GtkWidget         *widget,
+                          GdkEventCrossing  *event)
+{
+    HippoCanvas *canvas = HIPPO_CANVAS(widget);
+    
+    if (canvas->root == NULL)
+        return FALSE;
+
+    handle_new_mouse_location(canvas, event->window);
+    
+    return FALSE;
+}
+
+static gboolean
+hippo_canvas_leave_notify(GtkWidget         *widget,
+                          GdkEventCrossing  *event)
+{
+    HippoCanvas *canvas = HIPPO_CANVAS(widget);
+    
+    if (canvas->root == NULL)
+        return FALSE;
+    
+    handle_new_mouse_location(canvas, event->window);
+    
+    return FALSE;
+}
+
+static gboolean
+hippo_canvas_motion_notify(GtkWidget         *widget,
+                           GdkEventMotion    *event)
+{
+    HippoCanvas *canvas = HIPPO_CANVAS(widget);    
+    
+    if (canvas->root == NULL)
+        return FALSE;
+
+    handle_new_mouse_location(canvas, event->window);
+    
+    return FALSE;
 }
 
 static PangoLayout*
@@ -431,6 +604,7 @@ hippo_canvas_open_test_window(void)
     text = g_object_new(HIPPO_TYPE_CANVAS_LINK,
                         "text",
                         "Click here",
+                        "background-color", 0x990000ff,
                         NULL);
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(root), text, HIPPO_PACK_EXPAND);
     g_object_unref(text);

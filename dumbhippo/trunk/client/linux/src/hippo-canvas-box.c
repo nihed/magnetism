@@ -31,24 +31,31 @@ static void hippo_canvas_box_get_property (GObject      *object,
 static PangoLayout* hippo_canvas_create_layout      (HippoCanvasContext *context);
 
 /* Canvas item methods */
-static void     hippo_canvas_box_set_context        (HippoCanvasItem    *item,
-                                                     HippoCanvasContext *context);
-static void     hippo_canvas_box_paint              (HippoCanvasItem    *item,
-                                                     cairo_t            *cr);
-static int      hippo_canvas_box_get_width_request  (HippoCanvasItem    *item);
-static int      hippo_canvas_box_get_height_request (HippoCanvasItem    *item,
-                                                     int                 for_width);
-static void     hippo_canvas_box_allocate           (HippoCanvasItem    *item,
-                                                     int                 width,
-                                                     int                 height);
-static void     hippo_canvas_box_get_allocation     (HippoCanvasItem    *item,
-                                                     int                *width_p,
-                                                     int                *height_p);
-static gboolean hippo_canvas_box_button_press_event (HippoCanvasItem    *item,
-                                                     HippoEvent         *event);
-static void     hippo_canvas_box_request_changed    (HippoCanvasItem    *item);
-static gboolean hippo_canvas_box_get_needs_resize   (HippoCanvasItem    *canvas_item);
-
+static void               hippo_canvas_box_set_context         (HippoCanvasItem    *item,
+                                                                HippoCanvasContext *context);
+static void               hippo_canvas_box_paint               (HippoCanvasItem    *item,
+                                                                cairo_t            *cr);
+static int                hippo_canvas_box_get_width_request   (HippoCanvasItem    *item);
+static int                hippo_canvas_box_get_height_request  (HippoCanvasItem    *item,
+                                                                int                 for_width);
+static void               hippo_canvas_box_allocate            (HippoCanvasItem    *item,
+                                                                int                 width,
+                                                                int                 height);
+static void               hippo_canvas_box_get_allocation      (HippoCanvasItem    *item,
+                                                                int                *width_p,
+                                                                int                *height_p);
+static gboolean           hippo_canvas_box_button_press_event  (HippoCanvasItem    *item,
+                                                                HippoEvent         *event);
+static gboolean           hippo_canvas_box_motion_notify_event (HippoCanvasItem    *item,
+                                                                HippoEvent         *event);
+static void               hippo_canvas_box_request_changed     (HippoCanvasItem    *item);
+static gboolean           hippo_canvas_box_get_needs_resize    (HippoCanvasItem    *canvas_item);
+static char*              hippo_canvas_box_get_tooltip         (HippoCanvasItem    *item,
+                                                                int                 x,
+                                                                int                 y);
+static HippoCanvasPointer hippo_canvas_box_get_pointer         (HippoCanvasItem    *item,
+                                                                int                 x,
+                                                                int                 y);
 
 
 /* Our own methods */
@@ -103,8 +110,11 @@ hippo_canvas_box_iface_init(HippoCanvasItemClass *klass)
     klass->allocate = hippo_canvas_box_allocate;
     klass->get_allocation = hippo_canvas_box_get_allocation;
     klass->button_press_event = hippo_canvas_box_button_press_event;
+    klass->motion_notify_event = hippo_canvas_box_motion_notify_event;
     klass->request_changed = hippo_canvas_box_request_changed;
     klass->get_needs_resize = hippo_canvas_box_get_needs_resize;
+    klass->get_tooltip = hippo_canvas_box_get_tooltip;
+    klass->get_pointer = hippo_canvas_box_get_pointer;
 }
 
 static void
@@ -696,27 +706,60 @@ hippo_canvas_box_get_allocation(HippoCanvasItem *item,
         *height_p = box->allocated_height;
 }
 
-static gboolean
-hippo_canvas_box_button_press_event (HippoCanvasItem *item,
-                                     HippoEvent      *event)
+static HippoBoxChild*
+find_child_at_point(HippoCanvasBox *box,
+                    int             x,
+                    int             y)
 {
-    HippoCanvasBox *box = HIPPO_CANVAS_BOX(item);
     GSList *link;
-
+    
     for (link = box->children; link != NULL; link = link->next) {
         HippoBoxChild *child = link->data;
         int width, height;
         hippo_canvas_item_get_allocation(child->item, &width, &height);
 
-        if (event->x >= child->x && event->y >= child->y &&
-            event->x < (child->x + width) &&
-            event->y < (child->y + height)) {
-            return hippo_canvas_item_process_event(HIPPO_CANVAS_ITEM(child->item),
-                                                   event, child->x, child->y);
+        if (x >= child->x && y >= child->y &&
+            x < (child->x + width) &&
+            y < (child->y + height)) {
+
+            return child;
         }
     }
 
-    return FALSE;
+    return NULL;
+}
+
+static gboolean
+forward_event(HippoCanvasBox *box,
+              HippoEvent     *event)
+{
+    HippoBoxChild *child;
+
+    child = find_child_at_point(box, event->x, event->y);
+
+    if (child != NULL)
+        return hippo_canvas_item_process_event(HIPPO_CANVAS_ITEM(child->item),
+                                               event, child->x, child->y);
+    else
+        return FALSE;
+}
+
+static gboolean
+hippo_canvas_box_button_press_event (HippoCanvasItem *item,
+                                     HippoEvent      *event)
+{
+    HippoCanvasBox *box = HIPPO_CANVAS_BOX(item);
+
+    return forward_event(box, event);
+}
+
+static gboolean
+hippo_canvas_box_motion_notify_event (HippoCanvasItem *item,
+                                      HippoEvent      *event)
+{
+    HippoCanvasBox *box = HIPPO_CANVAS_BOX(item);
+
+    return forward_event(box, event);
 }
 
 static void
@@ -747,6 +790,42 @@ find_child(HippoCanvasBox  *box,
             return child;
     }
     return NULL;
+}
+
+static char*
+hippo_canvas_box_get_tooltip(HippoCanvasItem    *item,
+                             int                 x,
+                             int                 y)
+{
+    HippoCanvasBox *box = HIPPO_CANVAS_BOX(item);    
+    HippoBoxChild *child;
+
+    child = find_child_at_point(box, x, y);
+
+    if (child != NULL)
+        return hippo_canvas_item_get_tooltip(child->item,
+                                             x - child->x,
+                                             y - child->y);
+    else
+        return NULL;
+}
+
+static HippoCanvasPointer
+hippo_canvas_box_get_pointer(HippoCanvasItem    *item,
+                             int                 x,
+                             int                 y)
+{
+    HippoCanvasBox *box = HIPPO_CANVAS_BOX(item);    
+    HippoBoxChild *child;
+
+    child = find_child_at_point(box, x, y);
+
+    if (child != NULL)
+        return hippo_canvas_item_get_pointer(child->item,
+                                             x - child->x,
+                                             y - child->y);
+    else
+        return HIPPO_CANVAS_POINTER_UNSET;
 }
 
 static void

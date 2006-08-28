@@ -258,5 +258,6 @@ hippo_canvas_shape_button_press_event (HippoCanvasItem *item,
 {
     /* HippoCanvasShape *shape = HIPPO_CANVAS_SHAPE(item); */
 
+    /* see if a child wants it */
     return item_parent_class->button_press_event(item, event);
 }

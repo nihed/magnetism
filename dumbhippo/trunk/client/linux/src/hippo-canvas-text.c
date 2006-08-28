@@ -334,5 +334,6 @@ hippo_canvas_text_button_press_event (HippoCanvasItem *item,
 {
     /* HippoCanvasText *text = HIPPO_CANVAS_TEXT(item); */
 
+    /* see if a child wants it */
     return item_parent_class->button_press_event(item, event);
 }

@@ -8,7 +8,14 @@
 G_BEGIN_DECLS
 
 typedef enum {
-    HIPPO_EVENT_BUTTON_PRESS
+    HIPPO_CANVAS_POINTER_UNSET,
+    HIPPO_CANVAS_POINTER_DEFAULT,
+    HIPPO_CANVAS_POINTER_HAND
+} HippoCanvasPointer;
+
+typedef enum {
+    HIPPO_EVENT_BUTTON_PRESS,
+    HIPPO_EVENT_MOTION_NOTIFY
 } HippoEventType;
 
 typedef struct _HippoEvent HippoEvent;
@@ -55,32 +62,51 @@ struct _HippoCanvasItemClass {
                                      int             *height_p);
     gboolean (* button_press_event) (HippoCanvasItem *canvas_item,
                                      HippoEvent      *event);
+    gboolean (* motion_notify_event)(HippoCanvasItem *canvas_item,
+                                     HippoEvent      *event);    
     void     (* request_changed)    (HippoCanvasItem *canvas_item);
     void     (* paint_needed)       (HippoCanvasItem *canvas_item);
     gboolean (* get_needs_resize)   (HippoCanvasItem *canvas_item);
+
+    char*              (* get_tooltip) (HippoCanvasItem *canvas_item,
+                                        int              x,
+                                        int              y);
+    HippoCanvasPointer (* get_pointer) (HippoCanvasItem *canvas_item,
+                                        int              x,
+                                        int              y);
 };
 
 GType        	 hippo_canvas_item_get_type               (void) G_GNUC_CONST;
 
-void     hippo_canvas_item_set_context             (HippoCanvasItem *canvas_item,
-                                                    HippoCanvasContext *context);
-void     hippo_canvas_item_paint                   (HippoCanvasItem *canvas_item,
-                                                    cairo_t         *cr);
-int      hippo_canvas_item_get_width_request       (HippoCanvasItem *canvas_item);
-int      hippo_canvas_item_get_height_request      (HippoCanvasItem *canvas_item,
-                                                    int              for_width);
-void     hippo_canvas_item_allocate                (HippoCanvasItem *canvas_item,
-                                                    int              width,
-                                                    int              height);
-void     hippo_canvas_item_get_allocation          (HippoCanvasItem *canvas_item,
-                                                    int             *width_p,
-                                                    int             *height_p);
-gboolean hippo_canvas_item_get_needs_resize        (HippoCanvasItem *canvas_item);
+void               hippo_canvas_item_set_context        (HippoCanvasItem    *canvas_item,
+                                                         HippoCanvasContext *context);
+void               hippo_canvas_item_paint              (HippoCanvasItem    *canvas_item,
+                                                         cairo_t            *cr);
+int                hippo_canvas_item_get_width_request  (HippoCanvasItem    *canvas_item);
+int                hippo_canvas_item_get_height_request (HippoCanvasItem    *canvas_item,
+                                                         int                 for_width);
+void               hippo_canvas_item_allocate           (HippoCanvasItem    *canvas_item,
+                                                         int                 width,
+                                                         int                 height);
+void               hippo_canvas_item_get_allocation     (HippoCanvasItem    *canvas_item,
+                                                         int                *width_p,
+                                                         int                *height_p);
+gboolean           hippo_canvas_item_get_needs_resize   (HippoCanvasItem    *canvas_item);
+char*              hippo_canvas_item_get_tooltip        (HippoCanvasItem    *canvas_item,
+                                                         int                 x,
+                                                         int                 y);
+HippoCanvasPointer hippo_canvas_item_get_pointer        (HippoCanvasItem    *canvas_item,
+                                                         int                 x,
+                                                         int                 y);
+
 
 void     hippo_canvas_item_get_request             (HippoCanvasItem *canvas_item,
                                                     int             *width_p,
                                                     int             *height_p);
 gboolean hippo_canvas_item_emit_button_press_event (HippoCanvasItem *canvas_item,
+                                                    int              x,
+                                                    int              y);
+gboolean hippo_canvas_item_emit_motion_notify_event (HippoCanvasItem *canvas_item,
                                                     int              x,
                                                     int              y);
 void     hippo_canvas_item_emit_paint_needed       (HippoCanvasItem *canvas_item,
