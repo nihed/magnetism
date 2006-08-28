@@ -34,17 +34,6 @@ static int      hippo_canvas_text_get_height_request (HippoCanvasItem *item,
 static gboolean hippo_canvas_text_button_press_event (HippoCanvasItem *item,
                                                       HippoEvent      *event);
 
-struct _HippoCanvasText {
-    HippoCanvasBox box;
-    guint32 color_rgba;
-    char *text;
-};
-
-struct _HippoCanvasTextClass {
-    HippoCanvasBoxClass parent_class;
-
-};
-
 enum {
     NO_SIGNALS_YET,
     LAST_SIGNAL

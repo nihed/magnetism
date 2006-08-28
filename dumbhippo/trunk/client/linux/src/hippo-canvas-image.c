@@ -187,6 +187,11 @@ hippo_canvas_image_paint(HippoCanvasItem *item,
     w = cairo_image_surface_get_width(image->surface);
     h = cairo_image_surface_get_height(image->surface);
 
+    /* note that if an alignment is FILL the w/h will be increased
+     * beyond the image's natural size, which will result in
+     * a tiled image
+     */
+    
     hippo_canvas_box_align(HIPPO_CANVAS_BOX(item), &x, &y, &w, &h);
     
     cairo_set_source_surface(cr, image->surface, x, y);

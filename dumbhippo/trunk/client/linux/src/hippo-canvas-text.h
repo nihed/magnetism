@@ -4,7 +4,7 @@
 
 /* A cairo path canvas item. (will be cross-platform once windows has Cairo support) */
 
-#include "hippo-canvas-item.h"
+#include "hippo-canvas-box.h"
 #include <cairo/cairo.h>
 
 G_BEGIN_DECLS
@@ -18,6 +18,17 @@ typedef struct _HippoCanvasTextClass HippoCanvasTextClass;
 #define HIPPO_IS_CANVAS_TEXT(object)        (G_TYPE_CHECK_INSTANCE_TYPE ((object), HIPPO_TYPE_CANVAS_TEXT))
 #define HIPPO_IS_CANVAS_TEXT_CLASS(klass)   (G_TYPE_CHECK_CLASS_TYPE ((klass), HIPPO_TYPE_CANVAS_TEXT))
 #define HIPPO_CANVAS_TEXT_GET_CLASS(obj)    (G_TYPE_INSTANCE_GET_CLASS ((obj), HIPPO_TYPE_CANVAS_TEXT, HippoCanvasTextClass))
+
+struct _HippoCanvasText {
+    HippoCanvasBox box;
+    guint32 color_rgba;
+    char *text;
+};
+
+struct _HippoCanvasTextClass {
+    HippoCanvasBoxClass parent_class;
+
+};
 
 GType        	 hippo_canvas_text_get_type               (void) G_GNUC_CONST;
 
