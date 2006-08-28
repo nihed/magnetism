@@ -8,6 +8,9 @@
 #endif
 #include "hippo-canvas-block.h"
 #include "hippo-canvas-box.h"
+#include "hippo-canvas-image.h"
+#include "hippo-canvas-text.h"
+#include "hippo-canvas-link.h"
 
 static void      hippo_canvas_block_init                (HippoCanvasBlock       *block);
 static void      hippo_canvas_block_class_init          (HippoCanvasBlockClass  *klass);
@@ -30,6 +33,7 @@ static void     hippo_canvas_block_paint              (HippoCanvasItem *item,
 
 struct _HippoCanvasBlock {
     HippoCanvasBox box;
+
 };
 
 struct _HippoCanvasBlockClass {
@@ -54,7 +58,153 @@ G_DEFINE_TYPE_WITH_CODE(HippoCanvasBlock, hippo_canvas_block, HIPPO_TYPE_CANVAS_
 static void
 hippo_canvas_block_init(HippoCanvasBlock *block)
 {
+    HippoCanvasItem *item;
+    HippoCanvasBox *box;
+    HippoCanvasBox *left_column;
+    HippoCanvasBox *right_column;
 
+    
+    /* Create top bar */
+
+    
+    box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
+                       "orientation", HIPPO_ORIENTATION_HORIZONTAL,
+                       NULL);
+    hippo_canvas_box_append(HIPPO_CANVAS_BOX(block),
+                            HIPPO_CANVAS_ITEM(box), 0);
+    g_object_unref(box);
+    
+    item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
+                        "text", "Web Swarm",
+                        "xalign", HIPPO_ALIGNMENT_START,
+                        NULL);
+    hippo_canvas_box_append(box, item, HIPPO_PACK_EXPAND);
+    g_object_unref(item);
+
+    item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
+                        "text", "\\/",
+                        NULL);
+    hippo_canvas_box_append(box, item, HIPPO_PACK_END);
+    g_object_unref(item);
+    
+    item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
+                        "text", "X",
+                        NULL);
+    hippo_canvas_box_append(box, item, HIPPO_PACK_END);
+    g_object_unref(item);
+
+    
+    /* Create left and right columns */
+
+    
+    box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
+                       "orientation", HIPPO_ORIENTATION_HORIZONTAL,
+                       NULL);
+    hippo_canvas_box_append(HIPPO_CANVAS_BOX(block),
+                            HIPPO_CANVAS_ITEM(box), HIPPO_PACK_EXPAND);
+    g_object_unref(box);
+
+    left_column = g_object_new(HIPPO_TYPE_CANVAS_BOX,
+                               "orientation", HIPPO_ORIENTATION_VERTICAL,
+                               "xalign", HIPPO_ALIGNMENT_FILL,
+                               "yalign", HIPPO_ALIGNMENT_START,
+                               NULL);
+    hippo_canvas_box_append(box, HIPPO_CANVAS_ITEM(left_column), HIPPO_PACK_EXPAND);
+    g_object_unref(left_column);
+    
+    right_column = g_object_new(HIPPO_TYPE_CANVAS_BOX,
+                                "orientation", HIPPO_ORIENTATION_VERTICAL,
+                                "xalign", HIPPO_ALIGNMENT_END,
+                                "yalign", HIPPO_ALIGNMENT_START,
+                               NULL);
+    hippo_canvas_box_append(box, HIPPO_CANVAS_ITEM(right_column), HIPPO_PACK_END);
+    g_object_unref(right_column);
+
+
+    /* Fill in left column */
+    
+    
+    item = g_object_new(HIPPO_TYPE_CANVAS_LINK,
+                        "fixed-width", 400,
+                        "xalign", HIPPO_ALIGNMENT_START,
+                        "yalign", HIPPO_ALIGNMENT_START,
+                        "text", "Recycling medical devices raises concerns",
+                        NULL);
+    hippo_canvas_box_append(left_column, item, 0);
+    g_object_unref(item);
+    
+    item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
+                        "fixed-width", 400,
+                        "xalign", HIPPO_ALIGNMENT_START,
+                        "yalign", HIPPO_ALIGNMENT_START,
+                        "text",
+                        "Federal regulators say reprocessing is safe, but original "
+                        "device manufacturers say they can't guarantee recycled "
+                        "products will work correctly - and that they are wrongly blamed "
+                        "for problems when they break.",
+                        NULL);
+    hippo_canvas_box_append(left_column, item, HIPPO_PACK_EXPAND);
+    g_object_unref(item);
+
+
+    /* Fill in right column */
+
+
+    box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
+                       "orientation", HIPPO_ORIENTATION_HORIZONTAL,
+                       "xalign", HIPPO_ALIGNMENT_END,
+                       "yalign", HIPPO_ALIGNMENT_START,
+                       NULL);
+    hippo_canvas_box_append(right_column, HIPPO_CANVAS_ITEM(box), 0);
+    g_object_unref(box);
+
+
+    item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
+                        "text", "[photo]",
+                        NULL);
+    hippo_canvas_box_append(box, item, HIPPO_PACK_END);
+    g_object_unref(item);
+    
+    item = g_object_new(HIPPO_TYPE_CANVAS_LINK,
+                        "text", "LizardBoy",
+                        NULL);
+    hippo_canvas_box_append(box, item, HIPPO_PACK_END);
+    g_object_unref(item);
+
+    item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
+                        "text", "from ",
+                        NULL);
+    hippo_canvas_box_append(box, item, HIPPO_PACK_END);
+    g_object_unref(item);
+
+
+    
+    box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
+                       "orientation", HIPPO_ORIENTATION_HORIZONTAL,
+                       "xalign", HIPPO_ALIGNMENT_END,
+                       "yalign", HIPPO_ALIGNMENT_START,
+                       NULL);
+    hippo_canvas_box_append(right_column, HIPPO_CANVAS_ITEM(box), 0);
+    g_object_unref(box);
+
+
+    item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
+                        "text", "56 views",
+                        NULL);
+    hippo_canvas_box_append(box, item, HIPPO_PACK_END);
+    g_object_unref(item);
+
+    item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
+                        "text", " | ",
+                        NULL);
+    hippo_canvas_box_append(box, item, HIPPO_PACK_END);
+    g_object_unref(item);
+    
+    item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
+                        "text", "1 hr. ago",
+                        NULL);
+    hippo_canvas_box_append(box, item, HIPPO_PACK_END);
+    g_object_unref(item);    
 }
 
 static HippoCanvasItemClass *item_parent_class;

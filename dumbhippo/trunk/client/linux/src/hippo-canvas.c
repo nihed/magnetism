@@ -564,6 +564,7 @@ hippo_canvas_set_root(HippoCanvas     *canvas,
 #include "hippo-canvas-text.h"
 #include "hippo-canvas-link.h"
 #include "hippo-canvas-image.h"
+#include "hippo-canvas-block.h"
 
 typedef struct {
     int width;
@@ -688,6 +689,16 @@ hippo_canvas_open_test_window(void)
                         "spacing", 8,
                         NULL);
 
+    row = g_object_new(HIPPO_TYPE_CANVAS_BLOCK,
+                       "xalign", HIPPO_ALIGNMENT_FILL,
+                       "yalign", HIPPO_ALIGNMENT_FILL,
+                       NULL);
+    hippo_canvas_box_append(HIPPO_CANVAS_BOX(root),
+                            row, HIPPO_PACK_EXPAND);
+    g_object_unref(row);
+    
+
+#if 0
 #if 1
     shape1 = g_object_new(HIPPO_TYPE_CANVAS_SHAPE,
                           "width", 50, "height", 30,
@@ -758,6 +769,7 @@ hippo_canvas_open_test_window(void)
                         NULL);
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(root), text, HIPPO_PACK_EXPAND);
     g_object_unref(text);
+#endif
     
     hippo_canvas_set_root(HIPPO_CANVAS(canvas), root);
     g_object_unref(root);

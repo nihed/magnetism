@@ -201,7 +201,11 @@ hippo_canvas_box_class_init(HippoCanvasBoxClass *klass)
                                                      0,
                                                      255,
                                                      0,
-                                                     G_PARAM_WRITABLE));    
+                                                     G_PARAM_WRITABLE));
+
+    /* FIXME this is mis-named, since it's really a request/minimum width, not
+     * a fixed width - i.e. can get wider
+     */
     g_object_class_install_property(object_class,
                                     PROP_FIXED_WIDTH,
                                     g_param_spec_int("fixed-width",
