@@ -27,13 +27,18 @@ typedef struct _HippoCanvasContextClass HippoCanvasContextClass;
 struct _HippoCanvasContextClass {
     GTypeInterface base_iface;
 
-    PangoLayout* (* create_layout)  (HippoCanvasContext  *context);
+    PangoLayout*     (* create_layout)  (HippoCanvasContext  *context);
+
+    cairo_surface_t* (* load_image)     (HippoCanvasContext  *context,
+                                         const char          *image_name);
 };
 
 GType        	 hippo_canvas_context_get_type               (void) G_GNUC_CONST;
 
 PangoLayout*     hippo_canvas_context_create_layout          (HippoCanvasContext *context);
 
+cairo_surface_t* hippo_canvas_context_load_image             (HippoCanvasContext *context,
+                                                              const char         *image_name);
 
 /* Random utility function that shouldn't really be in this file */
 void hippo_cairo_set_source_rgba32(cairo_t *cr,

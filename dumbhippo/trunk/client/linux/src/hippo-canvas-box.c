@@ -28,7 +28,9 @@ static void hippo_canvas_box_get_property (GObject      *object,
 
 
 /* Canvas context methods */
-static PangoLayout* hippo_canvas_create_layout      (HippoCanvasContext *context);
+static PangoLayout*     hippo_canvas_box_create_layout      (HippoCanvasContext *context);
+static cairo_surface_t* hippo_canvas_box_load_image         (HippoCanvasContext *context,
+                                                             const char         *image_name);
 
 /* Canvas item methods */
 static void               hippo_canvas_box_set_context         (HippoCanvasItem    *item,
@@ -120,7 +122,8 @@ hippo_canvas_box_iface_init(HippoCanvasItemClass *klass)
 static void
 hippo_canvas_box_iface_init_context (HippoCanvasContextClass *klass)
 {
-    klass->create_layout = hippo_canvas_create_layout;
+    klass->create_layout = hippo_canvas_box_create_layout;
+    klass->load_image = hippo_canvas_box_load_image;
 }
 
 static void
@@ -385,12 +388,26 @@ hippo_canvas_box_get_property(GObject         *object,
 }
 
 static PangoLayout*
-hippo_canvas_create_layout(HippoCanvasContext *context)
+hippo_canvas_box_create_layout(HippoCanvasContext *context)
 {
     HippoCanvasBox *box = HIPPO_CANVAS_BOX(context);
 
-    /* just chain to our parent */
+    g_assert(box->context != NULL);
+    
+    /* just chain to our parent context */
     return hippo_canvas_context_create_layout(box->context);
+}
+
+static cairo_surface_t*
+hippo_canvas_box_load_image(HippoCanvasContext *context,
+                            const char         *image_name)
+{
+    HippoCanvasBox *box = HIPPO_CANVAS_BOX(context);
+
+    g_assert(box->context != NULL);
+    
+    /* just chain to our parent context */
+    return hippo_canvas_context_load_image(box->context, image_name);
 }
 
 static void
@@ -398,7 +415,27 @@ hippo_canvas_box_set_context(HippoCanvasItem    *item,
                              HippoCanvasContext *context)
 {
     HippoCanvasBox *box = HIPPO_CANVAS_BOX(item);
+    GSList *link;
+    HippoCanvasContext *child_context;
+    
+    /* this shortcut most importantly catches NULL == NULL */
+    if (box->context == context)
+        return;
+    
+    /* Note that we do not ref this; the parent is responsible for setting
+     * it back to NULL before dropping the ref to the item
+     */
     box->context = context;
+
+    if (box->context != NULL)
+        child_context = HIPPO_CANVAS_CONTEXT(box);
+    else
+        child_context = NULL;
+    
+    for (link = box->children; link != NULL; link = link->next) {
+        HippoBoxChild *child = link->data;
+        hippo_canvas_item_set_context(child->item, child_context);
+    }
 }
 
 static void
@@ -893,7 +930,11 @@ hippo_canvas_box_append(HippoCanvasBox  *box,
     c->expand = (flags & HIPPO_PACK_EXPAND) != 0;
     c->end = (flags & HIPPO_PACK_END) != 0;
     box->children = g_slist_append(box->children, c);
-    hippo_canvas_item_set_context(child, HIPPO_CANVAS_CONTEXT(box));
+
+    if (box->context != NULL)
+        hippo_canvas_item_set_context(child, HIPPO_CANVAS_CONTEXT(box));
+    else
+        hippo_canvas_item_set_context(child, NULL);
     
     hippo_canvas_item_emit_request_changed(HIPPO_CANVAS_ITEM(box));
 }

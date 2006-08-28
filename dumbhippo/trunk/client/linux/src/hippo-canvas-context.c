@@ -53,7 +53,14 @@ hippo_canvas_context_create_layout(HippoCanvasContext *context)
     return HIPPO_CANVAS_CONTEXT_GET_CLASS(context)->create_layout(context);
 }
 
+cairo_surface_t*
+hippo_canvas_context_load_image(HippoCanvasContext *context,
+                                const char         *image_name)
+{
+    g_return_val_if_fail(HIPPO_IS_CANVAS_CONTEXT(context), NULL);
 
+    return HIPPO_CANVAS_CONTEXT_GET_CLASS(context)->load_image(context, image_name);
+}
 
 
 #define RED(rgba)    (((rgba) >> 24)                / 255.0)

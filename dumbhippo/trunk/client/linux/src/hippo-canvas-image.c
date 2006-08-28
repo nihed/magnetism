@@ -6,6 +6,7 @@
 #else
 #include "hippo-common-internal.h"
 #endif
+#include <string.h>
 #include <cairo/cairo.h>
 #include "hippo-canvas-image.h"
 #include "hippo-canvas-box.h"
@@ -26,6 +27,8 @@ static void hippo_canvas_image_get_property (GObject      *object,
 
 
 /* Canvas item methods */
+static void     hippo_canvas_image_set_context        (HippoCanvasItem    *item,
+                                                       HippoCanvasContext *context);
 static void     hippo_canvas_image_paint              (HippoCanvasItem *item,
                                                        cairo_t         *cr);
 static int      hippo_canvas_image_get_width_request  (HippoCanvasItem *item);
@@ -35,6 +38,7 @@ static int      hippo_canvas_image_get_height_request (HippoCanvasItem *item,
 struct _HippoCanvasImage {
     HippoCanvasBox box;
     cairo_surface_t *surface;
+    char *image_name;
 };
 
 struct _HippoCanvasImageClass {
@@ -50,7 +54,8 @@ enum {
 
 enum {
     PROP_0,
-    PROP_IMAGE
+    PROP_IMAGE,
+    PROP_IMAGE_NAME
 };
 
 G_DEFINE_TYPE_WITH_CODE(HippoCanvasImage, hippo_canvas_image, HIPPO_TYPE_CANVAS_BOX,
@@ -69,6 +74,7 @@ hippo_canvas_image_iface_init(HippoCanvasItemClass *item_class)
 {
     item_parent_class = g_type_interface_peek_parent(item_class);
 
+    item_class->set_context = hippo_canvas_image_set_context;
     item_class->paint = hippo_canvas_image_paint;
     item_class->get_width_request = hippo_canvas_image_get_width_request;
     item_class->get_height_request = hippo_canvas_image_get_height_request;
@@ -90,6 +96,14 @@ hippo_canvas_image_class_init(HippoCanvasImageClass *klass)
                                                          _("Image"),
                                                          _("Image as cairo_surface_t"),
                                                          G_PARAM_READABLE | G_PARAM_WRITABLE));
+
+    g_object_class_install_property(object_class,
+                                    PROP_IMAGE_NAME,
+                                    g_param_spec_string("image-name",
+                                                        _("Image Name"),
+                                                        _("Image name to be loaded into the item"),
+                                                        NULL,
+                                                        G_PARAM_READABLE | G_PARAM_WRITABLE));    
 }
 
 static void
@@ -100,6 +114,9 @@ hippo_canvas_image_finalize(GObject *object)
     if (image->surface)
         cairo_surface_destroy(image->surface);
 
+    g_free(image->image_name);
+    image->image_name = NULL;
+    
     G_OBJECT_CLASS(hippo_canvas_image_parent_class)->finalize(object);
 }
 
@@ -110,6 +127,35 @@ hippo_canvas_image_new(void)
 
 
     return HIPPO_CANVAS_ITEM(image);
+}
+
+static void
+set_surface_from_name(HippoCanvasImage *image)
+{
+    if (image->image_name == NULL) {
+        g_object_set(image, "image", NULL, NULL);
+    } else {
+        cairo_surface_t *surface;
+        HippoCanvasContext *context;
+
+        context = hippo_canvas_box_get_context(HIPPO_CANVAS_BOX(image));
+
+        /* If context is NULL, we'll call set_surface_from_name again
+         * when a new context is set
+         */
+        if (context != NULL) {
+            /* may return NULL */
+            surface = hippo_canvas_context_load_image(context,
+                                                      image->image_name);
+            
+            g_object_set(image, "image", surface, NULL);
+            
+            if (surface != NULL)
+                cairo_surface_destroy(surface);
+        } else {
+            g_object_set(image, "image", NULL, NULL);
+        }
+    }
 }
 
 static void
@@ -133,12 +179,30 @@ hippo_canvas_image_set_property(GObject         *object,
                     g_warning("Image canvas item only supports image surfaces");
                     return;
                 }
-#endif                
-                cairo_surface_reference(surface);
+#endif
+                if (surface)
+                    cairo_surface_reference(surface);
                 if (image->surface)
                     cairo_surface_destroy(image->surface);
                 image->surface = surface;
                 hippo_canvas_item_emit_request_changed(HIPPO_CANVAS_ITEM(image));
+            }
+        }
+        break;
+    case PROP_IMAGE_NAME:
+        {
+            const char *name = g_value_get_string(value);
+            
+            if (!(image->image_name == name ||
+                  (image->image_name && name && strcmp(image->image_name,
+                                                       name) == 0))) {
+                g_free(image->image_name);
+                image->image_name = g_strdup(name);
+                set_surface_from_name(image);
+
+                /* will recursively call set_property("image") which
+                 * will result in a request_changed if required
+                 */
             }
         }
         break;
@@ -162,10 +226,24 @@ hippo_canvas_image_get_property(GObject         *object,
     case PROP_IMAGE:
         g_value_set_pointer(value, image->surface);
         break;
+    case PROP_IMAGE_NAME:
+        g_value_set_string(value, image->image_name);
+        break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
         break;
     }
+}
+
+static void
+hippo_canvas_image_set_context(HippoCanvasItem    *item,
+                               HippoCanvasContext *context)
+{
+    HippoCanvasImage *image = HIPPO_CANVAS_IMAGE(item);
+    
+    item_parent_class->set_context(item, context);
+
+    set_surface_from_name(image);
 }
 
 static void
@@ -193,11 +271,13 @@ hippo_canvas_image_paint(HippoCanvasItem *item,
      */
     
     hippo_canvas_box_align(HIPPO_CANVAS_BOX(item), &x, &y, &w, &h);
-    
+
     cairo_set_source_surface(cr, image->surface, x, y);
+    /* tile */
+    cairo_pattern_set_extend(cairo_get_source(cr), CAIRO_EXTEND_REPEAT);
     cairo_rectangle(cr, x, y, w, h);
     cairo_clip(cr);
-    cairo_fill(cr);
+    cairo_paint(cr);
 }
 
 static int

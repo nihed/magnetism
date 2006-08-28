@@ -4,6 +4,7 @@
 #include "hippo-canvas.h"
 #include "hippo-canvas-context.h"
 #include <gtk/gtkeventbox.h>
+#include "hippo-embedded-image.h"
 
 static void hippo_canvas_init       (HippoCanvas             *canvas);
 static void hippo_canvas_class_init (HippoCanvasClass        *klass);
@@ -35,7 +36,9 @@ static gboolean  hippo_canvas_leave_notify        (GtkWidget         *widget,
 static gboolean  hippo_canvas_motion_notify       (GtkWidget         *widget,
             	       	                           GdkEventMotion    *event);
 
-static PangoLayout* hippo_canvas_create_layout    (HippoCanvasContext *context);
+static PangoLayout*     hippo_canvas_create_layout    (HippoCanvasContext *context);
+static cairo_surface_t* hippo_canvas_load_image       (HippoCanvasContext *context,
+                                                       const char         *image_name);
 
 struct _HippoCanvas {
     GtkEventBox parent;
@@ -103,6 +106,7 @@ static void
 hippo_canvas_iface_init (HippoCanvasContextClass *klass)
 {
     klass->create_layout = hippo_canvas_create_layout;
+    klass->load_image = hippo_canvas_load_image;
 }
 
 static void
@@ -375,6 +379,113 @@ hippo_canvas_create_layout(HippoCanvasContext *context)
     return gtk_widget_create_pango_layout(GTK_WIDGET(canvas), NULL);
 }
 
+/* This is copied from gdk_cairo_set_source_pixbuf()
+ * in GDK
+ */
+static cairo_surface_t*
+cairo_surface_from_pixbuf(GdkPixbuf *pixbuf)
+{
+    int width = gdk_pixbuf_get_width (pixbuf);
+    int height = gdk_pixbuf_get_height (pixbuf);
+    guchar *gdk_pixels = gdk_pixbuf_get_pixels (pixbuf);
+    int gdk_rowstride = gdk_pixbuf_get_rowstride (pixbuf);
+    int n_channels = gdk_pixbuf_get_n_channels (pixbuf);
+    guchar *cairo_pixels;
+    cairo_format_t format;
+    cairo_surface_t *surface;
+    static const cairo_user_data_key_t key;
+    int j;
+    
+    if (n_channels == 3)
+        format = CAIRO_FORMAT_RGB24;
+    else
+        format = CAIRO_FORMAT_ARGB32;
+
+    cairo_pixels = g_malloc(4 * width * height);
+    surface = cairo_image_surface_create_for_data((unsigned char *)cairo_pixels,
+                                                  format,
+                                                  width, height, 4 * width);
+    cairo_surface_set_user_data(surface, &key,
+                                cairo_pixels, (cairo_destroy_func_t)g_free);
+
+    for (j = height; j; j--) {
+        guchar *p = gdk_pixels;
+        guchar *q = cairo_pixels;
+
+        if (n_channels == 3) {
+            guchar *end = p + 3 * width;
+	  
+            while (p < end) {
+#if G_BYTE_ORDER == G_LITTLE_ENDIAN
+                q[0] = p[2];
+                q[1] = p[1];
+                q[2] = p[0];
+#else	  
+                q[1] = p[0];
+                q[2] = p[1];
+                q[3] = p[2];
+#endif
+                p += 3;
+                q += 4;
+            }
+        } else {
+            guchar *end = p + 4 * width;
+            guint t1,t2,t3;
+	    
+#define MULT(d,c,a,t) G_STMT_START { t = c * a + 0x7f; d = ((t >> 8) + t) >> 8; } G_STMT_END
+
+            while (p < end) {
+#if G_BYTE_ORDER == G_LITTLE_ENDIAN
+                MULT(q[0], p[2], p[3], t1);
+                MULT(q[1], p[1], p[3], t2);
+                MULT(q[2], p[0], p[3], t3);
+                q[3] = p[3];
+#else	  
+                q[0] = p[3];
+                MULT(q[1], p[0], p[3], t1);
+                MULT(q[2], p[1], p[3], t2);
+                MULT(q[3], p[2], p[3], t3);
+#endif
+                
+                p += 4;
+                q += 4;
+            }            
+#undef MULT
+        }
+
+        gdk_pixels += gdk_rowstride;
+        cairo_pixels += 4 * width;
+    }
+    return surface;
+}
+
+static cairo_surface_t*
+hippo_canvas_load_image(HippoCanvasContext *context,
+                        const char         *image_name)
+{
+    /* HippoCanvas *canvas = HIPPO_CANVAS(context); */
+    GdkPixbuf *pixbuf;
+    cairo_surface_t *surface;
+
+    pixbuf = hippo_embedded_image_get(image_name);
+    if (pixbuf == NULL) {
+        return NULL;
+    }
+
+    surface = g_object_get_data(G_OBJECT(pixbuf),
+                                "hippo-cairo-surface");
+    if (surface == NULL) {
+        surface = cairo_surface_from_pixbuf(pixbuf);
+        g_object_set_data_full(G_OBJECT(pixbuf),
+                               "hippo-cairo-surface",
+                               surface,
+                               (GDestroyNotify) cairo_surface_destroy);
+    }
+
+    cairo_surface_reference(surface);
+    return surface;
+}
+
 GtkWidget*
 hippo_canvas_new(void)
 {
@@ -452,6 +563,7 @@ hippo_canvas_set_root(HippoCanvas     *canvas,
 #include "hippo-canvas-shape.h"
 #include "hippo-canvas-text.h"
 #include "hippo-canvas-link.h"
+#include "hippo-canvas-image.h"
 
 typedef struct {
     int width;
@@ -562,6 +674,8 @@ hippo_canvas_open_test_window(void)
     HippoCanvasItem *shape1;
     HippoCanvasItem *shape2;
     HippoCanvasItem *text;
+    HippoCanvasItem *image;
+    HippoCanvasItem *row;
     int i;
     
     window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
@@ -596,7 +710,7 @@ hippo_canvas_open_test_window(void)
 #endif
     
     for (i = 0; i < (int) G_N_ELEMENTS(box_rows); ++i) {
-        HippoCanvasItem *row = create_row(box_rows[i]);
+        row = create_row(box_rows[i]);
         hippo_canvas_box_append(HIPPO_CANVAS_BOX(root), row, 0);
         g_object_unref(row);
     }
@@ -608,6 +722,30 @@ hippo_canvas_open_test_window(void)
                         NULL);
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(root), text, HIPPO_PACK_EXPAND);
     g_object_unref(text);
+
+    row = g_object_new(HIPPO_TYPE_CANVAS_BOX, "orientation", HIPPO_ORIENTATION_HORIZONTAL,
+                       "spacing", 5, NULL);    
+    hippo_canvas_box_append(HIPPO_CANVAS_BOX(root), row, HIPPO_PACK_EXPAND);
+    g_object_unref(row);
+
+    image = g_object_new(HIPPO_TYPE_CANVAS_IMAGE,
+                         "image-name", "chaticon",
+                         "xalign", HIPPO_ALIGNMENT_START,
+                         "yalign", HIPPO_ALIGNMENT_END,
+                         "background-color", 0xffff00ff,
+                         NULL);
+    hippo_canvas_box_append(HIPPO_CANVAS_BOX(row), image, 0);
+    g_object_unref(image);
+
+    image = g_object_new(HIPPO_TYPE_CANVAS_IMAGE,
+                         "image-name", "ignoreicon",
+                         "xalign", HIPPO_ALIGNMENT_FILL,
+                         "yalign", HIPPO_ALIGNMENT_FILL,
+                         "background-color", 0x00ff00ff,
+                         NULL);
+    hippo_canvas_box_append(HIPPO_CANVAS_BOX(row), image, HIPPO_PACK_EXPAND);
+    g_object_unref(image);
+
     
     text = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
                         "fixed-width", 400,
