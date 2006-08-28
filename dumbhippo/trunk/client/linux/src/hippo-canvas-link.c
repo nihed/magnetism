@@ -63,8 +63,19 @@ static void
 hippo_canvas_link_init(HippoCanvasLink *link)
 {
     HippoCanvasText *text = HIPPO_CANVAS_TEXT(link);
+    PangoAttrList *attrs;
+    PangoAttribute *a;
     
     text->color_rgba = DEFAULT_FOREGROUND;
+
+    attrs = pango_attr_list_new();
+
+    a = pango_attr_underline_new(PANGO_UNDERLINE_SINGLE);
+    a->start_index = 0;
+    a->end_index = G_MAXUINT;
+    pango_attr_list_insert(attrs, a);
+    g_object_set(link, "attributes", attrs, NULL);
+    pango_attr_list_unref(attrs);
 }
 
 static HippoCanvasItemClass *item_parent_class;

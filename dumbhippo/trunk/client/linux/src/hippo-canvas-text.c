@@ -44,7 +44,8 @@ enum {
 enum {
     PROP_0,
     PROP_TEXT,
-    PROP_COLOR
+    PROP_COLOR,
+    PROP_ATTRIBUTES
 };
 
 #define DEFAULT_FOREGROUND 0x000000ff
@@ -97,6 +98,13 @@ hippo_canvas_text_class_init(HippoCanvasTextClass *klass)
                                                       G_MAXUINT,
                                                       DEFAULT_FOREGROUND,
                                                       G_PARAM_READABLE | G_PARAM_WRITABLE));
+    g_object_class_install_property(object_class,
+                                    PROP_ATTRIBUTES,
+                                    g_param_spec_boxed ("attributes",
+                                                        _("Attributes"),
+                                                        _("A list of style attributes to apply to the text"),
+                                                        PANGO_TYPE_ATTR_LIST,
+                                                        G_PARAM_READABLE | G_PARAM_WRITABLE));
 }
 
 static void
@@ -106,6 +114,11 @@ hippo_canvas_text_finalize(GObject *object)
 
     g_free(text->text);
     text->text = NULL;
+
+    if (text->attributes) {
+        pango_attr_list_unref(text->attributes);
+        text->attributes = NULL;
+    }
     
     G_OBJECT_CLASS(hippo_canvas_text_parent_class)->finalize(object);
 }
@@ -140,6 +153,17 @@ hippo_canvas_text_set_property(GObject         *object,
         text->color_rgba = g_value_get_uint(value);
         hippo_canvas_item_emit_paint_needed(HIPPO_CANVAS_ITEM(text), 0, 0, -1, -1);
         break;
+    case PROP_ATTRIBUTES:
+        {
+            PangoAttrList *attrs = g_value_get_boxed(value);
+            if (attrs)
+                pango_attr_list_ref(attrs);
+            if (text->attributes)
+                pango_attr_list_unref(text->attributes);            
+            text->attributes = attrs;
+            hippo_canvas_item_emit_request_changed(HIPPO_CANVAS_ITEM(text));
+        }
+        break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
         break;
@@ -163,6 +187,9 @@ hippo_canvas_text_get_property(GObject         *object,
     case PROP_COLOR:
         g_value_set_uint(value, text->color_rgba);
         break;
+    case PROP_ATTRIBUTES:
+        g_value_set_boxed(value, text->attributes);
+        break;        
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
         break;
@@ -186,6 +213,9 @@ create_layout(HippoCanvasText *text)
 
     if (text->text != NULL)
         pango_layout_set_text(layout, text->text, -1);
+
+    if (text->attributes)
+        pango_layout_set_attributes(layout, text->attributes);
     
     return layout;
 }

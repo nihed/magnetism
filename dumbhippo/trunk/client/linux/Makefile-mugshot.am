@@ -26,6 +26,8 @@ mugshot_SOURCES	=				\
 	src/hippo-canvas-image.h		\
 	src/hippo-canvas-item.c			\
 	src/hippo-canvas-item.h			\
+	src/hippo-canvas-link.c			\
+	src/hippo-canvas-link.h			\
 	src/hippo-canvas-shape.c		\
 	src/hippo-canvas-shape.h		\
 	src/hippo-canvas-text.c			\

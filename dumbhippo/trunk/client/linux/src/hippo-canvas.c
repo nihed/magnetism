@@ -278,6 +278,7 @@ hippo_canvas_set_root(HippoCanvas     *canvas,
 #include "hippo-canvas-box.h"
 #include "hippo-canvas-shape.h"
 #include "hippo-canvas-text.h"
+#include "hippo-canvas-link.h"
 
 typedef struct {
     int width;
@@ -310,7 +311,7 @@ static BoxAttrs alignments[] = {
     { 0, 0, 0, 0 }
 };
 
-static BoxAttrs* box_rows[] = { single_start, double_start, single_end, double_end,
+static BoxAttrs* box_rows[] = { single_start, /* double_start,*/ single_end, /* double_end, */
                                 single_expand, everything, alignments };
 
 static HippoCanvasItem*
@@ -426,6 +427,13 @@ hippo_canvas_open_test_window(void)
         hippo_canvas_box_append(HIPPO_CANVAS_BOX(root), row, 0);
         g_object_unref(row);
     }
+
+    text = g_object_new(HIPPO_TYPE_CANVAS_LINK,
+                        "text",
+                        "Click here",
+                        NULL);
+    hippo_canvas_box_append(HIPPO_CANVAS_BOX(root), text, HIPPO_PACK_EXPAND);
+    g_object_unref(text);
     
     text = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
                         "fixed-width", 400,

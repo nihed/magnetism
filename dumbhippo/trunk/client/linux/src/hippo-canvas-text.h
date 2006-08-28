@@ -6,6 +6,7 @@
 
 #include "hippo-canvas-box.h"
 #include <cairo/cairo.h>
+#include <pango/pango.h>
 
 G_BEGIN_DECLS
 
@@ -23,6 +24,7 @@ struct _HippoCanvasText {
     HippoCanvasBox box;
     guint32 color_rgba;
     char *text;
+    PangoAttrList *attributes;
 };
 
 struct _HippoCanvasTextClass {
