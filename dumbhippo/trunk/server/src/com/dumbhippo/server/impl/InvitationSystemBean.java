@@ -522,12 +522,12 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		} else { 
 			// note should be null or contain INVITATION_SUCCESS_STRING to indicate a successful invitation
 			if (result == CreateInvitationResult.REPEAT_INVITE) {
-				note = INVITATION_SUCCESS_STRING + ", the invitation to " + invitee.getHumanReadableString() + " was resent.";				
+				note = INVITATION_SUCCESS_STRING + ", another invitation was sent to " + invitee.getHumanReadableString() + ".";				
 			} else if (result == CreateInvitationResult.NEW_INVITER) {
-				note = INVITATION_SUCCESS_STRING + ", the invitation to " + invitee.getHumanReadableString() + " was sent."
+				note = INVITATION_SUCCESS_STRING + ", an invitation was sent to " + invitee.getHumanReadableString() + "."
 				       + " You didn't have to spend an invitation because they were already invited by someone else."; 			
 			} else if (result == CreateInvitationResult.INVITE_CREATED) {
-				note = INVITATION_SUCCESS_STRING + ", the invitation to " + invitee.getHumanReadableString() + " was sent.";
+				note = INVITATION_SUCCESS_STRING + ", an invitation was sent to " + invitee.getHumanReadableString() + ".";
 			} else {
 				// unknown case
 				return "Your invitation was not sent.";

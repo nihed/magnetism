@@ -841,6 +841,9 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 				character = null;
 				// character = Character.MUGSHOT;
 				break;
+			case OPEN_SIGNUP_200609:
+				character = Character.MUGSHOT;
+				break;
 			default:
 				character = null;
 				break;
