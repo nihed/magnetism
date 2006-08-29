@@ -63,6 +63,8 @@ hippo_canvas_block_init(HippoCanvasBlock *block)
     HippoCanvasBox *left_column;
     HippoCanvasBox *right_column;
 
+
+    HIPPO_CANVAS_BOX(block)->background_color_rgba = 0xffffffff;
     
     /* Create top bar */
 
@@ -72,20 +74,20 @@ hippo_canvas_block_init(HippoCanvasBlock *block)
                        NULL);
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(block),
                             HIPPO_CANVAS_ITEM(box), 0);
-    
+
     item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
                         "text", "Web Swarm",
                         "xalign", HIPPO_ALIGNMENT_START,
                         NULL);
-    hippo_canvas_box_append(box, item, HIPPO_PACK_EXPAND);
+    hippo_canvas_box_append(box, item, 0);
 
     item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
-                        "text", "\\/",
+                        "text", "[\\/]",
                         NULL);
     hippo_canvas_box_append(box, item, HIPPO_PACK_END);
     
     item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
-                        "text", "X",
+                        "text", "[X]",
                         NULL);
     hippo_canvas_box_append(box, item, HIPPO_PACK_END);
 
@@ -121,6 +123,7 @@ hippo_canvas_block_init(HippoCanvasBlock *block)
                         "fixed-width", 400,
                         "xalign", HIPPO_ALIGNMENT_START,
                         "yalign", HIPPO_ALIGNMENT_START,
+                        "font", "Bold",
                         "text", "Recycling medical devices raises concerns",
                         NULL);
     hippo_canvas_box_append(left_column, item, 0);
@@ -129,6 +132,7 @@ hippo_canvas_block_init(HippoCanvasBlock *block)
                         "fixed-width", 400,
                         "xalign", HIPPO_ALIGNMENT_START,
                         "yalign", HIPPO_ALIGNMENT_START,
+                        "font-scale", PANGO_SCALE_SMALL,
                         "text",
                         "Federal regulators say reprocessing is safe, but original "
                         "device manufacturers say they can't guarantee recycled "
@@ -155,11 +159,15 @@ hippo_canvas_block_init(HippoCanvasBlock *block)
     hippo_canvas_box_append(box, item, HIPPO_PACK_END);
     
     item = g_object_new(HIPPO_TYPE_CANVAS_LINK,
+                        "font-scale", PANGO_SCALE_SMALL,
+                        "font", "Italic",
                         "text", "LizardBoy",
                         NULL);
     hippo_canvas_box_append(box, item, HIPPO_PACK_END);
 
     item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
+                        "font-scale", PANGO_SCALE_SMALL,
+                        "font", "Italic",
                         "text", "from ",
                         NULL);
     hippo_canvas_box_append(box, item, HIPPO_PACK_END);
@@ -174,17 +182,20 @@ hippo_canvas_block_init(HippoCanvasBlock *block)
 
 
     item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
+                        "font-scale", PANGO_SCALE_SMALL,
                         "text", "56 views",
                         NULL);
     hippo_canvas_box_append(box, item, HIPPO_PACK_END);
 
     item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
+                        "font-scale", PANGO_SCALE_SMALL,
                         "text", " | ",
                         NULL);
     hippo_canvas_box_append(box, item, HIPPO_PACK_END);
 
     
     item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
+                        "font-scale", PANGO_SCALE_SMALL,
                         "text", "1 hr. ago",
                         NULL);
     hippo_canvas_box_append(box, item, HIPPO_PACK_END);

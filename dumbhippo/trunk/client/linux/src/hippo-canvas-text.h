@@ -25,6 +25,8 @@ struct _HippoCanvasText {
     guint32 color_rgba;
     char *text;
     PangoAttrList *attributes;
+    PangoFontDescription *font_desc;
+    double font_scale;    
 };
 
 struct _HippoCanvasTextClass {

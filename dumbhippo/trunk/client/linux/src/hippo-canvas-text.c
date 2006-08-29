@@ -45,7 +45,10 @@ enum {
     PROP_0,
     PROP_TEXT,
     PROP_COLOR,
-    PROP_ATTRIBUTES
+    PROP_ATTRIBUTES,
+    PROP_FONT,
+    PROP_FONT_DESC,
+    PROP_FONT_SCALE
 };
 
 #define DEFAULT_FOREGROUND 0x000000ff
@@ -57,6 +60,7 @@ static void
 hippo_canvas_text_init(HippoCanvasText *text)
 {
     text->color_rgba = DEFAULT_FOREGROUND;
+    text->font_scale = 1.0;
 }
 
 static HippoCanvasItemClass *item_parent_class;
@@ -105,6 +109,29 @@ hippo_canvas_text_class_init(HippoCanvasTextClass *klass)
                                                         _("A list of style attributes to apply to the text"),
                                                         PANGO_TYPE_ATTR_LIST,
                                                         G_PARAM_READABLE | G_PARAM_WRITABLE));
+    g_object_class_install_property(object_class,
+                                    PROP_FONT,
+                                    g_param_spec_string("font",
+                                                        _("Font"),
+                                                        _("Font description as a string"),
+                                                        NULL,
+                                                        G_PARAM_READABLE | G_PARAM_WRITABLE));
+    g_object_class_install_property(object_class,
+                                    PROP_FONT_DESC,
+                                    g_param_spec_boxed ("font-desc",
+                                                        _("Font Description"),
+                                                        _("Font description as a PangoFontDescription object"),
+                                                        PANGO_TYPE_FONT_DESCRIPTION,
+                                                        G_PARAM_READABLE | G_PARAM_WRITABLE));
+    g_object_class_install_property(object_class,
+                                    PROP_FONT_SCALE,
+                                    g_param_spec_double("font-scale",
+                                                        _("Font scale"),
+                                                        _("Scale factor for fonts"),
+                                                        0.0,
+                                                        100.0,
+                                                        1.0,
+                                                        G_PARAM_READABLE | G_PARAM_WRITABLE));
 }
 
 static void
@@ -118,6 +145,11 @@ hippo_canvas_text_finalize(GObject *object)
     if (text->attributes) {
         pango_attr_list_unref(text->attributes);
         text->attributes = NULL;
+    }
+
+    if (text->font_desc) {
+        pango_font_description_free(text->font_desc);
+        text->font_desc = NULL;
     }
     
     G_OBJECT_CLASS(hippo_canvas_text_parent_class)->finalize(object);
@@ -164,6 +196,50 @@ hippo_canvas_text_set_property(GObject         *object,
             hippo_canvas_item_emit_request_changed(HIPPO_CANVAS_ITEM(text));
         }
         break;
+    case PROP_FONT:
+        {
+            const char *s;
+            PangoFontDescription *desc;
+            s = g_value_get_string(value);
+            if (s != NULL) {
+                desc = pango_font_description_from_string(s);
+                if (desc == NULL) {
+                    g_warning("Failed to parse font description string '%s'", s);
+                } else {
+                    if ((pango_font_description_get_set_fields(desc) & PANGO_FONT_MASK_SIZE) != 0 &&
+                        pango_font_description_get_size(desc) <= 0) {
+                        g_warning("font size set to 0, not going to work well");
+                    }
+                }
+            } else {
+                desc = NULL;
+            }
+            /* this handles whether to queue repaint/resize */
+            g_object_set(object, "font-desc", desc, NULL);
+            if (desc)
+                pango_font_description_free(desc);
+        }
+        break;
+    case PROP_FONT_DESC:
+        {
+            PangoFontDescription *desc = g_value_get_boxed(value);
+
+            if (!(desc == NULL && text->font_desc == NULL)) {
+                if (text->font_desc) {
+                    pango_font_description_free(text->font_desc);
+                    text->font_desc = NULL;
+                }
+                if (desc != NULL) {
+                    text->font_desc = pango_font_description_copy(desc);
+                }
+                hippo_canvas_item_emit_request_changed(HIPPO_CANVAS_ITEM(text));
+            }
+        }
+        break;
+    case PROP_FONT_SCALE:
+        text->font_scale = g_value_get_double(value);
+        hippo_canvas_item_emit_request_changed(HIPPO_CANVAS_ITEM(text));
+        break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
         break;
@@ -190,6 +266,22 @@ hippo_canvas_text_get_property(GObject         *object,
     case PROP_ATTRIBUTES:
         g_value_set_boxed(value, text->attributes);
         break;        
+    case PROP_FONT:
+        {
+            char *s;
+            if (text->font_desc)
+                s = pango_font_description_to_string(text->font_desc);
+            else
+                s = NULL;
+            g_value_take_string(value, s);
+        }
+        break;
+    case PROP_FONT_DESC:
+        g_value_set_boxed(value, text->font_desc);
+        break;
+    case PROP_FONT_SCALE:
+        g_value_set_double(value, text->font_scale);
+        break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
         break;
@@ -197,25 +289,70 @@ hippo_canvas_text_get_property(GObject         *object,
 }
 
 static PangoLayout*
-create_layout(HippoCanvasText *text)
+create_layout(HippoCanvasText *text,
+              int              allocation_width)
 {
     HippoCanvasContext *context;
     PangoLayout *layout;
-    PangoFontDescription *font;
     
     context = hippo_canvas_box_get_context(HIPPO_CANVAS_BOX(text));
     
     layout = hippo_canvas_context_create_layout(context);
-    pango_layout_set_text(layout, text->text, -1);
-    font = pango_font_description_from_string("Sans 12");
-    pango_layout_set_font_description(layout, font);
-    pango_font_description_free(font);
+    
+    if (text->font_desc) {
+        const PangoFontDescription *old;
+        PangoFontDescription *composite;
 
-    if (text->text != NULL)
+        composite = pango_font_description_new();
+        
+        old = pango_layout_get_font_description(layout);
+        if (old != NULL)
+            pango_font_description_merge(composite, old, TRUE);
+        if (text->font_desc != NULL)
+            pango_font_description_merge(composite, text->font_desc, TRUE);
+        
+        pango_layout_set_font_description(layout, composite);
+        
+        pango_font_description_free(composite);
+    }
+    
+    {
+        PangoAttrList *attrs;
+        
+        if (text->attributes)
+            attrs = pango_attr_list_copy(text->attributes);
+        else
+            attrs = pango_attr_list_new();
+
+        if (ABS(1.0 - text->font_scale) > .000001) {
+            PangoAttribute *attr = pango_attr_scale_new(text->font_scale);
+            attr->start_index = 0;
+            attr->end_index = G_MAXUINT;
+            pango_attr_list_insert(attrs, attr);
+        }
+
+        pango_layout_set_attributes(layout, attrs);
+        pango_attr_list_unref(attrs);
+    }
+    
+    if (text->text != NULL) {
         pango_layout_set_text(layout, text->text, -1);
+    }
 
-    if (text->attributes)
-        pango_layout_set_attributes(layout, text->attributes);
+    if (allocation_width >= 0) {
+        int layout_width, layout_height;
+        pango_layout_get_size(layout, &layout_width, &layout_height);
+        layout_width /= PANGO_SCALE;
+        layout_height /= PANGO_SCALE;
+        
+        /* Force layout smaller if required, but we don't want to make
+         * the layout _wider_ because it breaks alignment, so only do
+         * this if required.
+         */
+        if (layout_width > allocation_width) {
+            pango_layout_set_width(layout, allocation_width * PANGO_SCALE);
+        }
+    }
     
     return layout;
 }
@@ -238,21 +375,10 @@ hippo_canvas_text_paint(HippoCanvasItem *item,
 
         hippo_canvas_item_get_allocation(item, &allocation_width, &allocation_height);
         
-        layout = create_layout(text);
+        layout = create_layout(text, allocation_width);
         pango_layout_get_size(layout, &layout_width, &layout_height);
         layout_width /= PANGO_SCALE;
         layout_height /= PANGO_SCALE;
-
-        /* Force layout smaller if required, but we don't want to make
-         * the layout _wider_ because it breaks alignment, so only do
-         * this if required.
-         */
-        if (layout_width > allocation_width) {
-            pango_layout_set_width(layout, allocation_width * PANGO_SCALE);
-            pango_layout_get_size(layout, &layout_width, &layout_height);
-            layout_width /= PANGO_SCALE;
-            layout_height /= PANGO_SCALE;
-        }
 
         x = 0;
         y = 0;
@@ -277,6 +403,7 @@ hippo_canvas_text_paint(HippoCanvasItem *item,
         cairo_save(cr);
         cairo_rectangle(cr, 0, 0, allocation_width, allocation_height);
         cairo_clip(cr);
+
         cairo_move_to (cr, x, y);
         hippo_cairo_set_source_rgba32(cr, text->color_rgba);
         pango_cairo_show_layout(cr, layout);
@@ -297,7 +424,7 @@ hippo_canvas_text_get_width_request(HippoCanvasItem *item)
     children_width = item_parent_class->get_width_request(item);
 
     if (hippo_canvas_box_get_fixed_width(HIPPO_CANVAS_BOX(item)) < 0) {
-        PangoLayout *layout = create_layout(text);
+        PangoLayout *layout = create_layout(text, -1);
         pango_layout_get_size(layout, &layout_width, NULL);
         layout_width /= PANGO_SCALE;
     } else {
@@ -320,8 +447,7 @@ hippo_canvas_text_get_height_request(HippoCanvasItem *item,
     
     children_height = item_parent_class->get_height_request(item, for_width);
 
-    layout = create_layout(text);
-    pango_layout_set_width(layout, for_width * PANGO_SCALE);
+    layout = create_layout(text, for_width);
     pango_layout_get_size(layout, NULL, &layout_height);
     layout_height /= PANGO_SCALE;
     

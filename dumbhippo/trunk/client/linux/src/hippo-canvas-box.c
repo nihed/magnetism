@@ -272,6 +272,7 @@ hippo_canvas_box_finalize(GObject *object)
 {
     HippoCanvasBox *box = HIPPO_CANVAS_BOX(object);
 
+    g_assert(!box->floating);        /* if there's still a floating ref how did we get finalized? */
     g_assert(box->children == NULL); /* should have vanished in dispose */
 
     G_OBJECT_CLASS(hippo_canvas_box_parent_class)->finalize(object);
