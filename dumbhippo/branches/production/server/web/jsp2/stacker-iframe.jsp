@@ -122,6 +122,35 @@
 			font-size: 	10px;
 			font-style: italic;
 		}
+		.dh-stacked-block-music-person .dh-songs .dh-song-list {
+			padding: 		0;
+			margin: 		5px;
+		}
+		.dh-stacked-block-music-person .dh-songs .dh-song {
+			list-style: 		none;
+			font-size:		12px;
+		}
+		.dh-stacked-block-music-person .dh-songs .dh-song-artist {
+			font-size:		12px;
+		}
+		.dh-stacked-block-music-person .dh-songs .dh-song-title {
+			font-size:		12px;
+		}
+		.dh-stacked-block-group-chat .dh-group-chat-messages .dh-group-chat-message {
+			font-size:		10px;
+			font-style: italic;
+		}
+		.dh-stacked-block-group-chat .dh-group-chat-messages .dh-group-chat-message .dh-group-chat-message-author {
+			font-size:		10px;
+		}
+		.dh-stacked-block-post .dh-post-chat-messages .dh-post-chat-message {
+			font-size: 	10px;
+			font-style: italic;
+		}
+		.dh-stacked-block-post .dh-post-chat-messages .dh-post-chat-message .dh-post-chat-message-author {
+			font-size: 	10px;
+		}
+
 	</style>
 	<script>
 		dojo.require('dh.stacker');

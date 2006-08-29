@@ -32,6 +32,7 @@
 		dumbhippo.server.downloadurl.linux.tar=@@clientLinuxDownloadTar@@
 		dumbhippo.server.downloadurl.linux.srpm=@@clientLinuxDownloadSRPM@@
 		dumbhippo.server.amazon.accesskeyid=@@amazonAccessKeyId@@
+		dumbhippo.server.amazon.associatetag=@@amazonAssociateTag@@
 		dumbhippo.server.yahoo.appid=@@yahooAppId@@
 		dumbhippo.server.ebay.devid=@@ebayDevId@@
 		dumbhippo.server.ebay.appid=@@ebayAppId@@

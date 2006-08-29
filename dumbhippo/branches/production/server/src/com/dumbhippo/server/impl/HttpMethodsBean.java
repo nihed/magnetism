@@ -837,6 +837,9 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 				character = null;
 				// character = Character.MUGSHOT;
 				break;
+			case OPEN_SIGNUP_200609:
+				character = Character.MUGSHOT;
+				break;
 			default:
 				character = null;
 				break;
@@ -851,20 +854,22 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		} else {
 			User inviter = accountSystem.getCharacter(character);
 			
-			if (!inviter.getAccount().canSendInvitations(1)) {
-				note = "Someone got there first! No more invitations available right now.";
-			} else {
-				// this does NOT check whether the account has invitations left,
-				// that's why we do it above.
-				try {
+			try {
+				if (!inviter.getAccount().canSendInvitations(1)) {
+					wantsInSystem.addWantsIn(address);				    
+					note = "Sorry, someone got there first! No more invitations available right now. We saved your address and will let you know when we have room for more.";
+				} else {
+					// this does NOT check whether the account has invitations left,
+					// that's why we do it above.
 					note = invitationSystem.sendEmailInvitation(new UserViewpoint(inviter), promotionCode, address,
 								"Mugshot Download", "Hey!\n\nClick here to get the Mugshot Music Radar and Web Swarm.");
-				} catch (ValidationException e) {
-					// FIXME should be displayed to user somehow
-					throw new RuntimeException("Invalid email address", e); 
+					if (note == null)
+						note = "Your invitation is on its way (check your email)";
 				}
-				if (note == null)
-					note = "Your invitation is on its way (check your email)";
+			} catch (ValidationException e) {
+			    // FIXME should be displayed to user somehow
+				// "Something went wrong! Reload the page and try again." message we display looks ok for now
+			    throw new RuntimeException("Invalid email address", e);				
 			}
 		}
 		

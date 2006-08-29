@@ -557,12 +557,26 @@ defineClass(dh.stacker.PostBlock, dh.stacker.Block,
 
 	_updateMessagesDiv : function() {
 		if (this._div) {
-			var str = "";
+			while (this._messagesDiv.firstChild)
+				this._messagesDiv.removeChild(this._messagesDiv.firstChild);
+
+			var msgs = document.createElement("div");
+			dojo.html.setClass(msgs, "dh-group-chat-messages");
 			var i;
 			for (i = 0; i < this._messages.length; ++i) {
-				str = str + " " + this._messages[i].text;
+				var msg = document.createElement("div");
+				dojo.html.setClass(msg, "dh-post-chat-message");
+				dojo.dom.textContent(msg, this._messages[i].text + " - ");
+				var a = document.createElement("a");
+				dojo.html.setClass(a, "dh-post-chat-message-author");
+				a.href = "/person?who=" + this._messages[i].fromId;
+				a.title = "wouldn't it be nice to see their name...";
+				a.target = "_blank";
+				dojo.dom.textContent(a, this._messages[i].fromId);
+				msg.appendChild(a);
+				msgs.appendChild(msg);
 			}
-			dojo.dom.textContent(this._messagesDiv, str);
+			this._messagesDiv.appendChild(msgs);
 		}
 	},
 	
@@ -762,12 +776,39 @@ defineClass(dh.stacker.MusicPersonBlock, dh.stacker.Block,
 
 	_updateTracksDiv : function() {
 		if (this._div) {
-			var str = "";
+			while (this._tracksDiv.firstChild)
+				this._tracksDiv.removeChild(this._tracksDiv.firstChild);
+
+			var ul = document.createElement("ul");
+			dojo.html.setClass(ul, "dh-song-list");
 			var i;
 			for (i = 0; i < this._tracks.length; ++i) {
-				str = str + " " + this._tracks[i].title;
+				var li = document.createElement("li");
+				dojo.html.setClass(li, "dh-song");
+				
+				if (this._tracks[i].artist) {
+					var artist = document.createElement("a");
+					artist.href = "/artist" + dh.util.encodeQueryString( {"artist" : this._tracks[i].artist} )
+					artist.target = "_blank";
+					dojo.html.setClass(artist, "dh-song-artist");
+					dojo.dom.textContent(artist, this._tracks[i].artist);
+					li.appendChild(artist);
+
+					var dash = document.createElement("span");
+					dojo.dom.textContent(dash, " - ");
+					li.appendChild(dash);
+				}
+
+				var title = document.createElement("a")
+				title.href = "/artist" + dh.util.encodeQueryString( {"artist" : this._tracks[i].artist, "track": this._tracks[i].title} );
+				title.target = "_blank";
+				dojo.html.setClass(title, "dh-song-title");
+				dojo.dom.textContent(title, this._tracks[i].title);
+				li.appendChild(title);
+
+				ul.appendChild(li);
 			}
-			dojo.dom.textContent(this._tracksDiv, str);
+			this._tracksDiv.appendChild(ul);
 		}
 	},
 	
@@ -776,7 +817,7 @@ defineClass(dh.stacker.MusicPersonBlock, dh.stacker.Block,
 			dh.stacker.MusicPersonBlock.superclass.realize.call(this);
 			this._tracksDiv = document.createElement("div");
 			this._contentDiv.appendChild(this._tracksDiv);
-			dojo.html.setClass(this._tracksDiv, "dh-tracks");
+			dojo.html.setClass(this._tracksDiv, "dh-songs");
 			this._updateTracksDiv();
 		}
 	},
@@ -854,12 +895,26 @@ defineClass(dh.stacker.GroupChatBlock, dh.stacker.Block,
 
 	_updateMessagesDiv : function() {
 		if (this._div) {
-			var str = "";
+			while (this._messagesDiv.firstChild)
+				this._messagesDiv.removeChild(this._messagesDiv.firstChild);
+
+			var msgs = document.createElement("div");
+			dojo.html.setClass(msgs, "dh-group-chat-messages");
 			var i;
 			for (i = 0; i < this._messages.length; ++i) {
-				str = str + " " + this._messages[i].text;
+				var msg = document.createElement("div");
+				dojo.html.setClass(msg, "dh-group-chat-message");
+				dojo.dom.textContent(msg, this._messages[i].text + " - ");
+				var a = document.createElement("a");
+				dojo.html.setClass(a, "dh-group-chat-message-author");
+				a.href = "/person?who=" + this._messages[i].fromId;
+				a.title = "wouldn't it be nice to see their name...";
+				a.target = "_blank";
+				dojo.dom.textContent(a, this._messages[i].fromId);
+				msg.appendChild(a);
+				msgs.appendChild(msg);
 			}
-			dojo.dom.textContent(this._messagesDiv, str);
+			this._messagesDiv.appendChild(msgs);
 		}
 	},
 	
@@ -900,7 +955,7 @@ defineClass(dh.stacker.GroupMemberBlock, dh.stacker.Block,
 	},
 
 	load : function(completeFunc, errorFunc) {
-		this.setTitle("Group member " + this._groupId + " user " + this._userId);
+		this.setTitle(" has a new group member ");
 		completeFunc(this);		
 	},
 	
@@ -921,7 +976,33 @@ defineClass(dh.stacker.GroupMemberBlock, dh.stacker.Block,
 	unrealize : function() {
 		dh.stacker.GroupMemberBlock.superclass.unrealize.call(this);	
 
-	}	
+	},
+
+	// override
+	_updateTitleDiv : function() {
+		if (this._div) {
+			while (this._titleDiv.firstChild)
+				this._titleDiv.removeChild(this._titleDiv.firstChild);
+
+			var group = document.createElement("a");
+			group.href = "/group?who=" + this._groupId;
+			group.title = "A group title would be nice";
+			group.target = "_blank";
+			dojo.dom.textContent(group, this._groupId);
+			this._titleDiv.appendChild(group);
+			
+			var hasa = document.createElement("span");
+			dojo.dom.textContent(hasa, this.getTitle());
+			this._titleDiv.appendChild(hasa);
+
+			var member = document.createElement('a');
+			member.href = "/person?who=" + this._userId;
+			member.title = "A person name would be nice";
+			member.target="_blank";
+			dojo.dom.textContent(member, this._userId);
+			this._titleDiv.appendChild(member);
+		}
+	}
 });
 
 

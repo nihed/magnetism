@@ -27,6 +27,7 @@ public class AmazonUpdater extends AbstractUpdater<AmazonPostInfo> {
 	}
 
 	private String amazonAccessKeyId;
+	private String amazonAssociateTag;
 	
 	public AmazonUpdater(Configuration config) {
 		super(AmazonPostInfo.class);
@@ -40,6 +41,18 @@ public class AmazonUpdater extends AbstractUpdater<AmazonPostInfo> {
 		
 		if (amazonAccessKeyId == null)
 			logger.warn("Amazon web services access key is not set, can't make Amazon calls.");
+		
+		try {
+			amazonAssociateTag = config.getPropertyNoDefault(HippoProperty.AMAZON_ASSOCIATE_TAG_ID);
+			if (amazonAssociateTag.trim().length() == 0)
+				amazonAssociateTag = null;
+		} catch (PropertyNotFoundException e) {
+			amazonAssociateTag = null;
+		}
+		
+		if (amazonAssociateTag == null)
+			logger.warn("Amazon associate tag is not set: Amazon calls will work, but without associate program");
+
 	}
 
 	@Override
@@ -58,7 +71,7 @@ public class AmazonUpdater extends AbstractUpdater<AmazonPostInfo> {
 		if (amazonAccessKeyId == null)
 			return;
 		AmazonItemLookup itemLookup = new AmazonItemLookup(getUpdateTimeoutMilliseconds());
-		AmazonItemData itemData = itemLookup.getItemForUrl(amazonAccessKeyId, url);
+		AmazonItemData itemData = itemLookup.getItemForUrl(amazonAccessKeyId, amazonAssociateTag, url);
 		
 		// if the update fails, just stick with whatever old information we had
 		if (itemData != null) {
