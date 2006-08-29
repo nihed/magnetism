@@ -303,7 +303,11 @@ class LiveObjectCache<T extends LiveObject> {
 			entry.cacheAge++;
 			if (entry.cacheAge > maxAge && !entry.isInUpdate() && entry.strongCount == 0) {
 				T t = entry.peek();
-				logger.debug("Discarding timed-out instance of " + t.getClass().getName());
+				if (t == null) {
+					logger.debug("Discarding timed-out entry with null object");
+				} else {
+				    logger.debug("Discarding timed-out instance of " + t.getClass().getName());
+				}
 				i.remove();
 			}
 		}
