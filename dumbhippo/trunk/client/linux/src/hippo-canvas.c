@@ -685,6 +685,7 @@ hippo_canvas_open_test_window(void)
     gtk_container_add(GTK_CONTAINER(window), canvas);
 
     root = g_object_new(HIPPO_TYPE_CANVAS_BOX,
+                        "fixed-width", 400,
                         "spacing", 8,
                         NULL);
 
@@ -750,7 +751,7 @@ hippo_canvas_open_test_window(void)
 
     
     text = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
-                        "fixed-width", 400,
+                        "size-mode", HIPPO_CANVAS_SIZE_WRAP_WORD,
                         "text",
                         "This is some long text that may help in testing resize behavior. It goes "
                         "on for a while, so don't get impatient. More and more and  more text. "

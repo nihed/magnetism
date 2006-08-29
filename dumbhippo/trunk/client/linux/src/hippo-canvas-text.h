@@ -10,6 +10,12 @@
 
 G_BEGIN_DECLS
 
+typedef enum {
+    HIPPO_CANVAS_SIZE_FULL_WIDTH,
+    HIPPO_CANVAS_SIZE_WRAP_WORD,
+    HIPPO_CANVAS_SIZE_ELLIPSIZE_END
+} HippoCanvasSizeMode;
+
 typedef struct _HippoCanvasText      HippoCanvasText;
 typedef struct _HippoCanvasTextClass HippoCanvasTextClass;
 
@@ -26,7 +32,8 @@ struct _HippoCanvasText {
     char *text;
     PangoAttrList *attributes;
     PangoFontDescription *font_desc;
-    double font_scale;    
+    double font_scale;
+    guint size_mode : 3;
 };
 
 struct _HippoCanvasTextClass {

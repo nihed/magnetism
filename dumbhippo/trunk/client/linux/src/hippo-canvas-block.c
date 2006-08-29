@@ -65,6 +65,10 @@ hippo_canvas_block_init(HippoCanvasBlock *block)
 
 
     HIPPO_CANVAS_BOX(block)->background_color_rgba = 0xffffffff;
+    HIPPO_CANVAS_BOX(block)->padding_left = 4;
+    HIPPO_CANVAS_BOX(block)->padding_right = 4;
+    HIPPO_CANVAS_BOX(block)->padding_top = 4;
+    HIPPO_CANVAS_BOX(block)->padding_bottom = 4;
     
     /* Create top bar */
 
@@ -110,8 +114,9 @@ hippo_canvas_block_init(HippoCanvasBlock *block)
     
     right_column = g_object_new(HIPPO_TYPE_CANVAS_BOX,
                                 "orientation", HIPPO_ORIENTATION_VERTICAL,
-                                "xalign", HIPPO_ALIGNMENT_END,
+                                "xalign", HIPPO_ALIGNMENT_END,                                
                                 "yalign", HIPPO_ALIGNMENT_START,
+                                "padding-left", 8,
                                NULL);
     hippo_canvas_box_append(box, HIPPO_CANVAS_ITEM(right_column), HIPPO_PACK_END);
 
@@ -120,7 +125,7 @@ hippo_canvas_block_init(HippoCanvasBlock *block)
     
     
     item = g_object_new(HIPPO_TYPE_CANVAS_LINK,
-                        "fixed-width", 400,
+                        "size-mode", HIPPO_CANVAS_SIZE_ELLIPSIZE_END,
                         "xalign", HIPPO_ALIGNMENT_START,
                         "yalign", HIPPO_ALIGNMENT_START,
                         "font", "Bold",
@@ -129,7 +134,7 @@ hippo_canvas_block_init(HippoCanvasBlock *block)
     hippo_canvas_box_append(left_column, item, 0);
     
     item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
-                        "fixed-width", 400,
+                        "size-mode", HIPPO_CANVAS_SIZE_WRAP_WORD,
                         "xalign", HIPPO_ALIGNMENT_START,
                         "yalign", HIPPO_ALIGNMENT_START,
                         "font-scale", PANGO_SCALE_SMALL,

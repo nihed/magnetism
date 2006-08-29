@@ -48,7 +48,8 @@ enum {
     PROP_ATTRIBUTES,
     PROP_FONT,
     PROP_FONT_DESC,
-    PROP_FONT_SCALE
+    PROP_FONT_SCALE,
+    PROP_SIZE_MODE
 };
 
 #define DEFAULT_FOREGROUND 0x000000ff
@@ -61,6 +62,7 @@ hippo_canvas_text_init(HippoCanvasText *text)
 {
     text->color_rgba = DEFAULT_FOREGROUND;
     text->font_scale = 1.0;
+    text->size_mode = HIPPO_CANVAS_SIZE_FULL_WIDTH;
 }
 
 static HippoCanvasItemClass *item_parent_class;
@@ -132,6 +134,16 @@ hippo_canvas_text_class_init(HippoCanvasTextClass *klass)
                                                         100.0,
                                                         1.0,
                                                         G_PARAM_READABLE | G_PARAM_WRITABLE));
+
+    g_object_class_install_property(object_class,
+                                    PROP_SIZE_MODE,
+                                    g_param_spec_int("size-mode",
+                                                     _("Size mode"),
+                                                     _("Mode for size request and allocation"),
+                                                     0,
+                                                     10,
+                                                     HIPPO_CANVAS_SIZE_FULL_WIDTH,
+                                                     G_PARAM_READABLE | G_PARAM_WRITABLE));    
 }
 
 static void
@@ -240,6 +252,10 @@ hippo_canvas_text_set_property(GObject         *object,
         text->font_scale = g_value_get_double(value);
         hippo_canvas_item_emit_request_changed(HIPPO_CANVAS_ITEM(text));
         break;
+    case PROP_SIZE_MODE:
+        text->size_mode = g_value_get_int(value);
+        hippo_canvas_item_emit_request_changed(HIPPO_CANVAS_ITEM(text));
+        break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
         break;
@@ -281,6 +297,9 @@ hippo_canvas_text_get_property(GObject         *object,
         break;
     case PROP_FONT_SCALE:
         g_value_set_double(value, text->font_scale);
+        break;
+    case PROP_SIZE_MODE:
+        g_value_set_int(value, text->size_mode);
         break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
@@ -351,6 +370,16 @@ create_layout(HippoCanvasText *text,
          */
         if (layout_width > allocation_width) {
             pango_layout_set_width(layout, allocation_width * PANGO_SCALE);
+
+            /* If we set ellipsize, then it overrides wrapping. If we get
+             * too-small allocation for HIPPO_CANVAS_SIZE_FULL_WIDTH, then
+             * we want to ellipsize instead of wrapping.
+             */
+            if (text->size_mode == HIPPO_CANVAS_SIZE_WRAP_WORD) {
+                pango_layout_set_ellipsize(layout, PANGO_ELLIPSIZE_NONE);
+            } else {
+                pango_layout_set_ellipsize(layout, PANGO_ELLIPSIZE_END);
+            }
         }
     }
     
@@ -362,18 +391,19 @@ hippo_canvas_text_paint(HippoCanvasItem *item,
                         cairo_t         *cr)
 {
     HippoCanvasText *text = HIPPO_CANVAS_TEXT(item);
-
+    int allocation_width, allocation_height;
+    
     /* Draw the background and any child items */
     item_parent_class->paint(item, cr);
 
     /* draw text on top */
-    if ((text->color_rgba & 0xff) != 0 && text->text != NULL) {
+    hippo_canvas_item_get_allocation(item, &allocation_width, &allocation_height);
+    
+    if ((text->color_rgba & 0xff) != 0 && text->text != NULL &&
+        allocation_width > 0 && allocation_height > 0) {
         PangoLayout *layout;
         int layout_width, layout_height;
-        int allocation_width, allocation_height;
         int x, y, w, h;
-
-        hippo_canvas_item_get_allocation(item, &allocation_width, &allocation_height);
         
         layout = create_layout(text, allocation_width);
         pango_layout_get_size(layout, &layout_width, &layout_height);
@@ -424,9 +454,13 @@ hippo_canvas_text_get_width_request(HippoCanvasItem *item)
     children_width = item_parent_class->get_width_request(item);
 
     if (hippo_canvas_box_get_fixed_width(HIPPO_CANVAS_BOX(item)) < 0) {
-        PangoLayout *layout = create_layout(text, -1);
-        pango_layout_get_size(layout, &layout_width, NULL);
-        layout_width /= PANGO_SCALE;
+        if (text->size_mode != HIPPO_CANVAS_SIZE_FULL_WIDTH) {
+            layout_width = 0;
+        } else {
+            PangoLayout *layout = create_layout(text, -1);
+            pango_layout_get_size(layout, &layout_width, NULL);
+            layout_width /= PANGO_SCALE;
+        }
     } else {
         /* keep the fixed width the box will have returned */
         layout_width = children_width;
@@ -447,9 +481,13 @@ hippo_canvas_text_get_height_request(HippoCanvasItem *item,
     
     children_height = item_parent_class->get_height_request(item, for_width);
 
-    layout = create_layout(text, for_width);
-    pango_layout_get_size(layout, NULL, &layout_height);
-    layout_height /= PANGO_SCALE;
+    if (for_width > 0) {
+        layout = create_layout(text, for_width);
+        pango_layout_get_size(layout, NULL, &layout_height);
+        layout_height /= PANGO_SCALE;
+    } else {
+        layout_height = 0;
+    }
     
     return MAX(layout_height + box->padding_top + box->padding_bottom, children_height);
 }

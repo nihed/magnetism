@@ -70,9 +70,10 @@ typedef struct {
     /* allocated x, y */
     int              x;
     int              y;
-    /* last-requested size */
+    /* cache of last-requested sizes */
     int              width_request;
     int              height_request;
+    int              height_request_for_width;
     guint            expand : 1;
     guint            end : 1;
 } HippoBoxChild;
@@ -481,6 +482,68 @@ hippo_canvas_box_paint(HippoCanvasItem *item,
     }
 }
 
+/* This is intended to not rely on size request/allocation state,
+ * so it can be called from request/allocation methods
+ */
+static void
+align_internal(HippoCanvasBox *box,
+               int             allocated_width,
+               int             allocated_height,
+               int            *x_p,
+               int            *y_p,
+               int            *width_p,
+               int            *height_p)
+{
+    int unpadded_width = allocated_width - box->padding_left - box->padding_right;
+    int unpadded_height = allocated_height - box->padding_top - box->padding_bottom;
+    
+    /* If we got a too-small allocation go ahead and clamp our
+     * usable area down to it
+     */    
+    if (*width_p > unpadded_width)
+        *width_p = unpadded_width;
+    if (*height_p > unpadded_height)
+        *height_p = unpadded_height;
+
+    /* -1 for w/h means to use the allocated size of the item */
+    if (*width_p < 0)
+        *width_p = unpadded_width;
+    if (*height_p < 0)
+        *height_p = unpadded_height;
+    
+    switch (box->x_align) {
+    case HIPPO_ALIGNMENT_FILL:
+        *x_p = box->padding_left;
+        *width_p = unpadded_width;
+        break;
+    case HIPPO_ALIGNMENT_START:
+        *x_p = box->padding_left;
+        break;
+    case HIPPO_ALIGNMENT_END:
+        *x_p = box->allocated_width - box->padding_right - *width_p;
+        break;
+    case HIPPO_ALIGNMENT_CENTER:
+        *x_p = box->padding_left + (unpadded_width - *width_p) / 2;
+        break;
+    }
+
+    switch (box->y_align) {
+    case HIPPO_ALIGNMENT_FILL:
+        *y_p = box->padding_top;
+        *height_p = unpadded_height;
+        break;
+    case HIPPO_ALIGNMENT_START:
+        *y_p = box->padding_top;
+        break;
+    case HIPPO_ALIGNMENT_END:
+        *y_p = box->allocated_height - box->padding_bottom - *height_p;
+        break;
+    case HIPPO_ALIGNMENT_CENTER:
+        *y_p = box->padding_top + (unpadded_height - *height_p) / 2;
+        break;
+    }
+}
+
 static int
 hippo_canvas_box_get_width_request_internal(HippoCanvasItem *item,
                                             int             *expandable_count_p)
@@ -499,8 +562,10 @@ hippo_canvas_box_get_width_request_internal(HippoCanvasItem *item,
         HippoBoxChild *child = link->data;
 
         n_children += 1;
+
+        if (child->width_request < 0)
+            child->width_request = hippo_canvas_item_get_width_request(child->item);
         
-        child->width_request = hippo_canvas_item_get_width_request(child->item);
         if (box->orientation == HIPPO_ORIENTATION_VERTICAL)
             total = MAX(total, child->width_request);
         else {
@@ -551,30 +616,70 @@ hippo_canvas_box_get_height_request_internal(HippoCanvasItem *item,
     n_children = 0;
     total = 0;
 
-    for (link = box->children; link != NULL; link = link->next) {
-        HippoBoxChild *child = link->data;
+    if (box->orientation == HIPPO_ORIENTATION_VERTICAL) {
+        for (link = box->children; link != NULL; link = link->next) {
+            HippoBoxChild *child = link->data;
+            
+            n_children += 1;
 
-        n_children += 1;
-        
-        if (box->orientation == HIPPO_ORIENTATION_VERTICAL) {
-            child->height_request = hippo_canvas_item_get_height_request(child->item,
-                                                                         for_width);
+            if (child->height_request < 0 ||
+                child->height_request_for_width != for_width) {
+                child->height_request = hippo_canvas_item_get_height_request(child->item,
+                                                                             for_width);
+                child->height_request_for_width = for_width;
+            }
+            
             total += child->height_request;
 
             if (child->expand && expandable_count_p)
                 *expandable_count_p += 1;
-        } else {
-            /* FIXME this is wrong, we need to do the layout algorithm from allocate()
-             * and pass in the width that algorithm would give to the child
-             */
-            child->height_request = hippo_canvas_item_get_height_request(child->item,
-                                                                         child->width_request);
+        }
+
+        total += box->spacing * (n_children - 1);
+    } else {
+        int requested_width;
+        int horizontal_expand_count;
+        int horizontal_expand_space;
+        int x, y, width, height;
+
+        /* Note that this algorithm must be kept in sync with the one in allocate() */
+        
+        requested_width = hippo_canvas_box_get_width_request_internal(item, &horizontal_expand_count);
+
+        align_internal(box, for_width, 100 /* dummy height */,
+                       &x, &y, &width, &height);
+
+        horizontal_expand_space = width - requested_width;
+        if (horizontal_expand_space < 0)
+            horizontal_expand_space = 0;
+        
+        for (link = box->children; link != NULL; link = link->next) {
+            HippoBoxChild *child = link->data;
+            int req;
+            
+            n_children += 1;
+
+            g_assert(child->width_request >= 0);
+            
+            req = child->width_request;
+            
+            if (child->expand) {
+                int extra = (horizontal_expand_space / horizontal_expand_count);
+                horizontal_expand_count -= 1;
+                horizontal_expand_space -= extra;
+                req += extra;
+            }
+
+            if (child->height_request < 0 ||
+                child->height_request_for_width != req) {            
+                child->height_request = hippo_canvas_item_get_height_request(child->item,
+                                                                             req);
+                child->height_request_for_width = req;
+            }
+            
             total = MAX(total, child->height_request);
         }
     }
-
-    if (box->orientation == HIPPO_ORIENTATION_VERTICAL)
-        total += box->spacing * (n_children - 1);
     
     total += box->padding_top;
     total += box->padding_bottom;
@@ -599,54 +704,8 @@ hippo_canvas_box_align(HippoCanvasBox *box,
                        int            *width_p,
                        int            *height_p)
 {
-    int unpadded_width = box->allocated_width - box->padding_left - box->padding_right;
-    int unpadded_height = box->allocated_height - box->padding_top - box->padding_bottom;
-    
-    /* If we got a too-small allocation go ahead and clamp our
-     * usable area down to it
-     */    
-    if (*width_p > unpadded_width)
-        *width_p = unpadded_width;
-    if (*height_p > unpadded_height)
-        *height_p = unpadded_height;
-
-    /* -1 for w/h means to use the allocated size of the item */
-    if (*width_p < 0)
-        *width_p = unpadded_width;
-    if (*height_p < 0)
-        *height_p = unpadded_height;
-    
-    switch (box->x_align) {
-    case HIPPO_ALIGNMENT_FILL:
-        *x_p = box->padding_left;
-        *width_p = unpadded_width;
-        break;
-    case HIPPO_ALIGNMENT_START:
-        *x_p = box->padding_left;
-        break;
-    case HIPPO_ALIGNMENT_END:
-        *x_p = box->allocated_width - box->padding_right - *width_p;
-        break;
-    case HIPPO_ALIGNMENT_CENTER:
-        *x_p = box->padding_left + (unpadded_width - *width_p) / 2;
-        break;
-    }
-
-    switch (box->y_align) {
-    case HIPPO_ALIGNMENT_FILL:
-        *y_p = box->padding_top;
-        *height_p = unpadded_height;
-        break;
-    case HIPPO_ALIGNMENT_START:
-        *y_p = box->padding_top;
-        break;
-    case HIPPO_ALIGNMENT_END:
-        *y_p = box->allocated_height - box->padding_bottom - *height_p;
-        break;
-    case HIPPO_ALIGNMENT_CENTER:
-        *y_p = box->padding_top + (unpadded_height - *height_p) / 2;
-        break;
-    }
+    align_internal(box, box->allocated_width, box->allocated_height,
+                   x_p, y_p, width_p, height_p);
 }
 
 static void
@@ -661,13 +720,11 @@ hippo_canvas_box_allocate(HippoCanvasItem *item,
     int vertical_expand_count;
     GSList *link;
     int x, y, width, height;
-    int horizontal_expand_space;
-    int vertical_expand_space;
 
     box->allocated_width = full_width;
     box->allocated_height = full_height;
     box->request_changed_since_allocate = FALSE;
-
+    
     requested_width = hippo_canvas_box_get_width_request_internal(item, &horizontal_expand_count);
     requested_height = hippo_canvas_box_get_height_request_internal(item, full_width,
                                                                     &vertical_expand_count);
@@ -675,24 +732,23 @@ hippo_canvas_box_allocate(HippoCanvasItem *item,
     x = 0;
     y = 0;
     width = requested_width;
-    height = requested_height;
+    if (box->fixed_width < 0) {
+        width = width - box->padding_left - box->padding_right;
+    }
+    height = requested_height - box->padding_top - box->padding_bottom;
+    
     /* This gets us the box we want to lay out into, with padding already removed */
-    hippo_canvas_box_align(box, &x, &y, &width, &height);
-
-    /* width/height are larger than request if ALIGNMENT_FILL and
-     * the same size as request otherwise, naturally making this
-     * expand stuff work out.
-     */
-    horizontal_expand_space = width - requested_width;
-    if (horizontal_expand_space < 0)
-        horizontal_expand_space = 0;
-    vertical_expand_space = height - requested_height;
-    if (vertical_expand_space < 0)
-        vertical_expand_space = 0;
+    align_internal(box, box->allocated_width, box->allocated_height,
+                   &x, &y, &width, &height);
     
     if (box->orientation == HIPPO_ORIENTATION_VERTICAL) {
         int top_y;
         int bottom_y;
+        int vertical_expand_space;
+
+        vertical_expand_space = height - requested_height;
+        if (vertical_expand_space < 0)
+            vertical_expand_space = 0;
         
         top_y = y;
         bottom_y = y + height;
@@ -721,7 +777,12 @@ hippo_canvas_box_allocate(HippoCanvasItem *item,
     } else {
         int left_x;
         int right_x;
+        int horizontal_expand_space;
 
+        horizontal_expand_space = width - requested_width;
+        if (horizontal_expand_space < 0)
+            horizontal_expand_space = 0;
+        
         left_x = x;
         right_x = x + width;
         for (link = box->children; link != NULL; link = link->next) {
@@ -888,6 +949,16 @@ static void
 child_request_changed(HippoCanvasItem *child,
                       HippoCanvasBox  *box)
 {
+    HippoBoxChild *box_child;
+
+    box_child = find_child(box, child);
+
+    /* invalidate cached request for this child */
+    box_child->width_request = -1;
+    box_child->height_request = -1;
+    box_child->height_request_for_width = -1;
+
+    /* no-op if we already emitted since last allocate */
     hippo_canvas_item_emit_request_changed(HIPPO_CANVAS_ITEM(box));
 }
 
@@ -949,6 +1020,9 @@ hippo_canvas_box_append(HippoCanvasBox  *box,
     c->item = child;
     c->expand = (flags & HIPPO_PACK_EXPAND) != 0;
     c->end = (flags & HIPPO_PACK_END) != 0;
+    c->width_request = -1;
+    c->height_request = -1;
+    c->height_request_for_width = -1;
     box->children = g_slist_append(box->children, c);
 
     if (box->context != NULL)
