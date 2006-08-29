@@ -99,6 +99,7 @@ for i in `seq 1 $N` ; do
 <?xml version="1.0" encoding="UTF-8"?><!-- -*- tab-width: 4; indent-tabs-mode: t -*- -->
 <superconf>
     <include file="$clusterconfig"/>
+    <parameter name="jnpHost">$addr</parameter>
     <service name="jboss">
         <parameter name="jbossBind">$addr</parameter>
     </service>
@@ -110,6 +111,7 @@ EOF
 <superconf>
     <include file="$clusterconfig"/>
     <parameter name="slaveMode">yes</parameter>
+    <parameter name="jnpHost">$addr</parameter>
     <service name="jboss">
        <parameter name="jbossBind">$addr</parameter>
     </service>

@@ -2,7 +2,7 @@
 
 jbossdir=@@jbossdir@@
 targetdir=@@targetdir@@
-jnpPort=@@jnpPort@@
+twiddle="@@twiddle@@"
 jdwpPort=@@jdwpPort@@
 javaMaxHeap=@@javaMaxHeap@@
 jbossBind="@@jbossBind@@"
@@ -47,10 +47,8 @@ fi
 cd $targetdir/data
 if test "$jbossBind" = 'all'; then
   bindopt=''
-  jnphost="localhost"
 else
   bindopt="-b $jbossBind"
-  jnphost="$jbossBind"
 fi
 
 if test x"$slaveMode" = xyes; then
@@ -68,7 +66,7 @@ for i in `seq 1 30` ; do
 	break
     fi
     sleep 2
-    result="`JAVA_OPTS=-Dorg.jboss.logging.Logger.pluginClass=org.jboss.logging.NullLoggerPlugin $jbossdir/bin/twiddle.sh -s jnp://$jnphost:$jnpPort get jboss.system:type=Server Started --noprefix`"
+    result="`eval $twiddle get jboss.system:type=Server Started --noprefix`"
     if [ $? == 0 -a x"$result" == x"true" ] ; then
 	started=true
 	break

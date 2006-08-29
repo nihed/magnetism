@@ -137,10 +137,15 @@ public class Log {
         createLogger(warnPattern, logNameWarn, maxWarnSize, warnLog, Priority.WARN);
         createLogger(errorPattern, logNameError, maxErrorSize, errorLog, Priority.ERROR);
 
+        // Running inside, JBoss it's really bad to redirect java.util.logging
+        //
+        // A) Because it's none of our business
+        // B) Because it prevents us from cleanly being unloaded and loaded again
+        
         // set up the ties into jdk logging
-        Handler jdkLogHandler = new JiveLogHandler();
-        jdkLogHandler.setLevel(Level.ALL);
-        java.util.logging.Logger.getLogger("").addHandler(jdkLogHandler);
+        // Handler jdkLogHandler = new JiveLogHandler();
+        // jdkLogHandler.setLevel(Level.ALL);
+        // java.util.logging.Logger.getLogger("").addHandler(jdkLogHandler);
     }
 
     private static void createLogger(String pattern, String logName, long maxLogSize,
