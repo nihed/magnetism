@@ -566,6 +566,7 @@ hippo_canvas_set_root(HippoCanvas     *canvas,
 #include "hippo-canvas-link.h"
 #include "hippo-canvas-image.h"
 #include "hippo-canvas-block.h"
+#include "hippo-canvas-stack.h"
 
 typedef struct {
     int width;
@@ -684,19 +685,21 @@ hippo_canvas_open_test_window(void)
     gtk_widget_show(canvas);
     gtk_container_add(GTK_CONTAINER(window), canvas);
 
-    root = g_object_new(HIPPO_TYPE_CANVAS_BOX,
+    root = g_object_new(HIPPO_TYPE_CANVAS_STACK,
                         "fixed-width", 400,
                         "spacing", 8,
                         NULL);
 
     row = g_object_new(HIPPO_TYPE_CANVAS_BLOCK,
-                       "xalign", HIPPO_ALIGNMENT_FILL,
-                       "yalign", HIPPO_ALIGNMENT_FILL,
                        NULL);
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(root),
-                            row, HIPPO_PACK_EXPAND);
+                            row, 0);
     
-
+    row = g_object_new(HIPPO_TYPE_CANVAS_BLOCK,
+                       NULL);
+    hippo_canvas_box_append(HIPPO_CANVAS_BOX(root),
+                            row, 0);
+    
 #if 0
 #if 1
     shape1 = g_object_new(HIPPO_TYPE_CANVAS_SHAPE,
