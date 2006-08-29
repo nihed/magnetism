@@ -780,12 +780,32 @@ defineClass(dh.stacker.MusicPersonBlock, dh.stacker.Block,
 				this._tracksDiv.removeChild(this._tracksDiv.firstChild);
 
 			var ul = document.createElement("ul");
-			dojo.html.setClass(ul, "dh-track-list");
+			dojo.html.setClass(ul, "dh-song-list");
 			var i;
 			for (i = 0; i < this._tracks.length; ++i) {
 				var li = document.createElement("li");
-				dojo.dom.textContent(li, this._tracks[i].title);
-				dojo.html.setClass(li, "dh-track");
+				dojo.html.setClass(li, "dh-song");
+				
+				if (this._tracks[i].artist) {
+					var artist = document.createElement("a");
+					artist.href = "/artist" + dh.util.encodeQueryString( {"artist" : this._tracks[i].artist} )
+					artist.target = "_blank";
+					dojo.html.setClass(artist, "dh-song-artist");
+					dojo.dom.textContent(artist, this._tracks[i].artist);
+					li.appendChild(artist);
+
+					var dash = document.createElement("span");
+					dojo.dom.textContent(dash, " - ");
+					li.appendChild(dash);
+				}
+
+				var title = document.createElement("a")
+				title.href = "/artist" + dh.util.encodeQueryString( {"artist" : this._tracks[i].artist, "track": this._tracks[i].title} );
+				title.target = "_blank";
+				dojo.html.setClass(title, "dh-song-title");
+				dojo.dom.textContent(title, this._tracks[i].title);
+				li.appendChild(title);
+
 				ul.appendChild(li);
 			}
 			this._tracksDiv.appendChild(ul);
@@ -797,7 +817,7 @@ defineClass(dh.stacker.MusicPersonBlock, dh.stacker.Block,
 			dh.stacker.MusicPersonBlock.superclass.realize.call(this);
 			this._tracksDiv = document.createElement("div");
 			this._contentDiv.appendChild(this._tracksDiv);
-			dojo.html.setClass(this._tracksDiv, "dh-tracks");
+			dojo.html.setClass(this._tracksDiv, "dh-songs");
 			this._updateTracksDiv();
 		}
 	},
