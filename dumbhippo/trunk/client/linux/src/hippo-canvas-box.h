@@ -48,7 +48,8 @@ struct _HippoCanvasBox {
     guint8 padding_right;
 
     guint8 spacing;
-    
+
+    guint floating : 1;
     guint request_changed_since_allocate : 1;
     guint orientation : 2; /* enum only has 2 values so it fits with extra */
     guint x_align : 3;     /* enum only has 4 values so it fits with extra */

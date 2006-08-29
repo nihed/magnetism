@@ -91,6 +91,14 @@ hippo_canvas_item_base_init(void *klass)
 }
 
 void
+hippo_canvas_item_sink(HippoCanvasItem    *canvas_item)
+{
+    g_return_if_fail(HIPPO_IS_CANVAS_ITEM(canvas_item));
+
+    HIPPO_CANVAS_ITEM_GET_CLASS(canvas_item)->sink(canvas_item);
+}
+
+void
 hippo_canvas_item_set_context(HippoCanvasItem    *canvas_item,
                               HippoCanvasContext *context)
 {

@@ -47,6 +47,8 @@ typedef struct _HippoCanvasItemClass HippoCanvasItemClass;
 struct _HippoCanvasItemClass {
     GTypeInterface base_iface;
 
+    void     (* sink)               (HippoCanvasItem  *canvas_item);
+    
     void     (* set_context)        (HippoCanvasItem  *canvas_item,
                                      HippoCanvasContext *context);
     void     (* paint)              (HippoCanvasItem  *canvas_item,
@@ -77,6 +79,8 @@ struct _HippoCanvasItemClass {
 };
 
 GType        	 hippo_canvas_item_get_type               (void) G_GNUC_CONST;
+
+void               hippo_canvas_item_sink               (HippoCanvasItem    *canvas_item);
 
 void               hippo_canvas_item_set_context        (HippoCanvasItem    *canvas_item,
                                                          HippoCanvasContext *context);

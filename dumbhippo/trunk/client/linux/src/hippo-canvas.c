@@ -543,6 +543,7 @@ hippo_canvas_set_root(HippoCanvas     *canvas,
 
     if (root != NULL) {
         g_object_ref(root);
+        hippo_canvas_item_sink(root);
         canvas->root = root;
         g_signal_connect(root, "request-changed",
                          G_CALLBACK(canvas_root_request_changed),
@@ -625,7 +626,6 @@ create_row(BoxAttrs *boxes)
                              "xalign", attrs->alignment,
                              NULL);
         hippo_canvas_box_append(HIPPO_CANVAS_BOX(row), shape, attrs->flags);
-        g_object_unref(shape);
         
         if (attrs->flags == (HIPPO_PACK_END | HIPPO_PACK_EXPAND))
             flags_text = "END | EXPAND";
@@ -661,7 +661,6 @@ create_row(BoxAttrs *boxes)
                              NULL);
         g_free(s);
         hippo_canvas_box_append(HIPPO_CANVAS_BOX(shape), label, HIPPO_PACK_EXPAND);
-        g_object_unref(label);
     }
     return row;
 }
@@ -695,7 +694,6 @@ hippo_canvas_open_test_window(void)
                        NULL);
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(root),
                             row, HIPPO_PACK_EXPAND);
-    g_object_unref(row);
     
 
 #if 0
@@ -714,16 +712,13 @@ hippo_canvas_open_test_window(void)
 
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(root),
                             shape1, 0);
-    g_object_unref(shape1);
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(root),
                             shape2, 0);
-    g_object_unref(shape2);
 #endif
     
     for (i = 0; i < (int) G_N_ELEMENTS(box_rows); ++i) {
         row = create_row(box_rows[i]);
         hippo_canvas_box_append(HIPPO_CANVAS_BOX(root), row, 0);
-        g_object_unref(row);
     }
 
     text = g_object_new(HIPPO_TYPE_CANVAS_LINK,
@@ -732,12 +727,10 @@ hippo_canvas_open_test_window(void)
                         "background-color", 0x990000ff,
                         NULL);
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(root), text, HIPPO_PACK_EXPAND);
-    g_object_unref(text);
 
     row = g_object_new(HIPPO_TYPE_CANVAS_BOX, "orientation", HIPPO_ORIENTATION_HORIZONTAL,
                        "spacing", 5, NULL);    
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(root), row, HIPPO_PACK_EXPAND);
-    g_object_unref(row);
 
     image = g_object_new(HIPPO_TYPE_CANVAS_IMAGE,
                          "image-name", "chaticon",
@@ -746,7 +739,6 @@ hippo_canvas_open_test_window(void)
                          "background-color", 0xffff00ff,
                          NULL);
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(row), image, 0);
-    g_object_unref(image);
 
     image = g_object_new(HIPPO_TYPE_CANVAS_IMAGE,
                          "image-name", "ignoreicon",
@@ -755,7 +747,6 @@ hippo_canvas_open_test_window(void)
                          "background-color", 0x00ff00ff,
                          NULL);
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(row), image, HIPPO_PACK_EXPAND);
-    g_object_unref(image);
 
     
     text = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
@@ -768,11 +759,9 @@ hippo_canvas_open_test_window(void)
                         "yalign", HIPPO_ALIGNMENT_END,
                         NULL);
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(root), text, HIPPO_PACK_EXPAND);
-    g_object_unref(text);
 #endif
     
     hippo_canvas_set_root(HIPPO_CANVAS(canvas), root);
-    g_object_unref(root);
 
     gtk_widget_show(window);
 }

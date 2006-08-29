@@ -33,6 +33,7 @@ static cairo_surface_t* hippo_canvas_box_load_image         (HippoCanvasContext 
                                                              const char         *image_name);
 
 /* Canvas item methods */
+static void               hippo_canvas_box_sink                (HippoCanvasItem    *item);
 static void               hippo_canvas_box_set_context         (HippoCanvasItem    *item,
                                                                 HippoCanvasContext *context);
 static void               hippo_canvas_box_paint               (HippoCanvasItem    *item,
@@ -105,6 +106,7 @@ G_DEFINE_TYPE_WITH_CODE(HippoCanvasBox, hippo_canvas_box, G_TYPE_OBJECT,
 static void
 hippo_canvas_box_iface_init(HippoCanvasItemClass *klass)
 {
+    klass->sink = hippo_canvas_box_sink;
     klass->set_context = hippo_canvas_box_set_context;
     klass->paint = hippo_canvas_box_paint;
     klass->get_width_request = hippo_canvas_box_get_width_request;
@@ -129,6 +131,7 @@ hippo_canvas_box_iface_init_context (HippoCanvasContextClass *klass)
 static void
 hippo_canvas_box_init(HippoCanvasBox *box)
 {
+    box->floating = TRUE;
     box->orientation = HIPPO_ORIENTATION_VERTICAL;
     box->x_align = HIPPO_ALIGNMENT_FILL;
     box->y_align = HIPPO_ALIGNMENT_FILL;
@@ -412,6 +415,17 @@ hippo_canvas_box_load_image(HippoCanvasContext *context,
     
     /* just chain to our parent context */
     return hippo_canvas_context_load_image(box->context, image_name);
+}
+
+static void
+hippo_canvas_box_sink(HippoCanvasItem    *item)
+{
+    HippoCanvasBox *box = HIPPO_CANVAS_BOX(item);
+
+    if (box->floating) {
+        box->floating = FALSE;
+        g_object_unref(box);
+    }
 }
 
 static void
@@ -928,6 +942,7 @@ hippo_canvas_box_append(HippoCanvasBox  *box,
     g_return_if_fail(find_child(box, child) == NULL);
 
     g_object_ref(child);
+    hippo_canvas_item_sink(child);
     connect_child(box, child);
     c = g_new0(HippoBoxChild, 1);
     c->item = child;
