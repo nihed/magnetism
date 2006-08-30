@@ -31,6 +31,14 @@ public interface TransactionRunner {
 	 */
 	public void runTaskOnTransactionCommit(Runnable runnable);
 	
+	/**
+	 * Asynchronously execute a runnable after the current transaction has completed, regardless
+	 * of whether it got commited or rolled back.
+	 * 
+	 * @param runnable executed after transaction completion
+	 */	
+	public void runTaskOnTransactionComplete(Runnable runnable);
+	
 	// internal, way to get TransactionAttribute, do not use
 	public <T> T internalRunTaskInNewTransaction(Callable<T> callable) throws Exception;
 	public void internalRunTaskInNewTransaction(Runnable runnable);

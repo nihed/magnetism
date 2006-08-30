@@ -366,6 +366,10 @@ public interface HttpMethods {
  	@HttpParams( { "userId" })
  	public void getMusicPersonSummary(XmlBuilder xml, UserViewpoint viewpoint, String userId) throws XmlMethodException;
  	
+ 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
+ 	@HttpParams( { "userId", "accountType" }) 	
+ 	public void getExternalAccountSummary(XmlBuilder xml, UserViewpoint viewpoint, String userId, String accountType) throws XmlMethodException, NotFoundException;
+
 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
  	@HttpParams( { "groupId" })
  	public void getGroupChatSummary(XmlBuilder xml, UserViewpoint viewpoint, String groupId) throws XmlMethodException;

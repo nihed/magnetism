@@ -40,8 +40,9 @@ public interface FeedSystem {
 	 * Does "step two" of updating a feed, stores the results 
 	 * of fetching the feed.
 	 * @param context the opaque context return from updateFeedFetchFeed
+	 * @throws XmlMethodException 
 	 */
-	void updateFeedStoreFeed(Object context);
+	void updateFeedStoreFeed(Object context) throws XmlMethodException;
 	
 	/**
 	 * Mark a feed as failed after an unsuccessful update.
@@ -49,7 +50,21 @@ public interface FeedSystem {
 	 */
 	void markFeedFailedLastUpdate(Feed feed);
 	
+	/**
+	 * Returns feed entries with sorted by publishing date, with the latest entry first.
+	 * 
+	 * @param feed
+	 * @return feed entries
+	 */
 	List<FeedEntry> getCurrentEntries(Feed feed);
+	
+	/**
+	 * Returns the latest entry for a feed.
+	 * 
+	 * @param feed
+	 * @return the latest entry for a feed
+	 */
+	FeedEntry getLastEntry(Feed feed);
 	
 	List<Feed> getInUseFeeds();
 	

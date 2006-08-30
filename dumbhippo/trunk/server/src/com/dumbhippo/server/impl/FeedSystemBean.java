@@ -44,6 +44,7 @@ import com.dumbhippo.server.FeedSystem;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.PostingBoard;
+import com.dumbhippo.server.Stacker;
 import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.XmlMethodErrorCode;
 import com.dumbhippo.server.XmlMethodException;
@@ -88,6 +89,9 @@ public class FeedSystemBean implements FeedSystem {
 
 	@EJB
 	private MusicSystem musicSystem;
+	
+	@EJB
+	private Stacker stacker;
 	
 	private static FeedFetcherCache cache = null;
 	private static ExecutorService notificationService;
@@ -264,14 +268,17 @@ public class FeedSystemBean implements FeedSystem {
 		}		
 		
 		for (ExternalAccount external : entry.getFeed().getAccounts()) {
-			// logger.debug("Processing feed event {} for account {}", entry.getTitle(), afeed.getAccount());
+			// logger.debug("Processing feed event {} for account {}", entry.getTitle(), external);
 			if (external.getAccountType() == ExternalAccountType.RHAPSODY) {
 				assert (entry instanceof TrackFeedEntry);
 				musicSystem.addFeedTrack(external.getAccount().getOwner(), (TrackFeedEntry)entry, entryPosition);
 			} else if (external.getAccountType() == ExternalAccountType.BLOG) {
-				logger.debug("We have a feed update from a blog! {}", entry);
-				// TODO: stack it here!
-			}	
+				// entry.getDate().getTime() creates a timestamp that is too old, at least with blogspot
+				// so it is unreliable, because we update blocks based on timestamps
+				stacker.stackAccountUpdate(external.getAccount().getOwner().getGuid(), ExternalAccountType.BLOG, (new Date()).getTime());
+			} else {
+				logger.warn("unexpected account type");
+			}
 		}		
 		
 	}
@@ -324,7 +331,6 @@ public class FeedSystemBean implements FeedSystem {
 	private void updateFeedFromSyndFeed(Feed feed, SyndFeed syndFeed) throws XmlMethodException {
 		feed.setTitle(syndFeed.getTitle());
 		setLinkFromSyndFeed(feed, syndFeed);
-		
 		Map<String, FeedEntry> oldEntries = new HashMap<String, FeedEntry>();
 		
 		for (FeedEntry entry : feed.getEntries()) {
@@ -332,7 +338,6 @@ public class FeedSystemBean implements FeedSystem {
 		}
 		
 		Set<String> foundGuids = new HashSet<String>();
-		
 		int entryPosition = 0;
 		for (Object o : syndFeed.getEntries()) {
 			SyndEntry syndEntry = (SyndEntry)o;
@@ -340,7 +345,6 @@ public class FeedSystemBean implements FeedSystem {
 			String guid = syndEntry.getUri();
 			if (foundGuids.contains(guid))
 				continue;
-			
 			if (oldEntries.containsKey(guid)) {
 				// We don't try to update old entries, because it is painful and expensive:
 				// The most interesting thing to update is the description, and we only store the 
@@ -496,22 +500,12 @@ public class FeedSystemBean implements FeedSystem {
 		}
 	}
 
-	public void updateFeedStoreFeed(final Object contextObject) {
-		runner.runTaskRetryingOnDuplicateEntry(new Runnable() {
-			public void run() {
-				UpdateFeedContext context = (UpdateFeedContext) contextObject;
-				SyndFeed syndFeed = context.getSyndFeed();
-				Feed feed = em.find(Feed.class, context.getFeedId());
-				logger.debug("  Saving feed update results in db for {}", feed.getSource());
-				try {
-				    updateFeedFromSyndFeed(feed, syndFeed);		
-				} catch (XmlMethodException e) {
-					logger.warn("Couldn't update feed {}: {}", feed, e.getCodeString() + ": " + e.getMessage());
-					markFeedFailedLastUpdate(feed);											
-				}
-			}
-		});
-
+	public void updateFeedStoreFeed(Object contextObject) throws XmlMethodException {
+		UpdateFeedContext context = (UpdateFeedContext) contextObject;
+		SyndFeed syndFeed = context.getSyndFeed();
+		Feed feed = em.find(Feed.class, context.getFeedId());
+		logger.debug("  Saving feed update results in db for {}", feed.getSource());
+		updateFeedFromSyndFeed(feed, syndFeed);
 	}
 	
 	public void markFeedFailedLastUpdate(Feed feed) {
@@ -556,6 +550,18 @@ public class FeedSystemBean implements FeedSystem {
 		});
 		
 		return result;
+	}
+	
+	public FeedEntry getLastEntry(Feed feed) {
+		// this could get smarter if we want to return the entry that was added last,
+		// which might not necessarily be the same one that has the latest publishing date
+		// (for example, if some blogs allow back dating entries)
+		// this could also be change to return a given number of recent entries
+		List<FeedEntry> entries = getCurrentEntries(feed);
+		if (entries.size() < 1)
+			return null;
+		
+		return entries.get(0);
 	}
 	
 	public List<Feed> getInUseFeeds() {
@@ -644,7 +650,7 @@ public class FeedSystemBean implements FeedSystem {
 						// bean method to get a separate transaction for each method on
 						// feedSystem rather than holding a single transaction over the whole
 						// process.
-						FeedSystem feedSystem = EJBUtil.defaultLookup(FeedSystem.class);
+						final FeedSystem feedSystem = EJBUtil.defaultLookup(FeedSystem.class);
 						List<Feed> feeds = feedSystem.getInUseFeeds();
 						
 						logger.debug("FeedUpdater slept " + sleepTime / 1000.0 + " seconds, and now has " + feeds.size() + " feeds in use, iteration " + iteration);
@@ -657,17 +663,33 @@ public class FeedSystemBean implements FeedSystem {
 								++count;
 								threadPool.execute(new Runnable() {
 									public void run() {
-										FeedSystem feedSystem = EJBUtil.defaultLookup(FeedSystem.class);
 										try {
 											// updateFeedFetchFeed is marked to not create a transaction if none already,
 											// and we should have none here in theory.
-											Object o = feedSystem.updateFeedFetchFeed(feed);
-											if (o != null)
-												feedSystem.updateFeedStoreFeed(o);
+											final Object o = feedSystem.updateFeedFetchFeed(feed);
+											if (o != null) {				
+												final TransactionRunner runner = EJBUtil.defaultLookup(TransactionRunner.class);
+												runner.runTaskRetryingOnDuplicateEntry(new Runnable() {
+													public void run() {
+														try {
+														    feedSystem.updateFeedStoreFeed(o);
+														} catch (final XmlMethodException e) {	
+															runner.runTaskOnTransactionComplete(new Runnable() {
+																public void run() {
+																	// we want to do this in a separate transaction to not be dependant on whether 
+																	// updateFeedStoreFeed() transaction had a problem committing to the database
+																	logger.warn("Couldn't update feed {}: {}", feed, e.getCodeString() + ": " + e.getMessage());
+																	feedSystem.markFeedFailedLastUpdate(feed);	
+																}
+															});																									
+														} 
+													}
+												});
+											}												
 										} catch (XmlMethodException e) {
 											logger.warn("Couldn't update feed {}: {}", feed, e.getCodeString() + ": " + e.getMessage());
 											feedSystem.markFeedFailedLastUpdate(feed);											
-										}
+										} 
 									}
 								});
 							}

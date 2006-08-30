@@ -42,6 +42,7 @@ dh.stacker.Kind.POST = 1;
 dh.stacker.Kind.MUSIC_PERSON = 2;
 dh.stacker.Kind.GROUP_CHAT = 3;
 dh.stacker.Kind.GROUP_MEMBER = 4;
+dh.stacker.Kind.EXT_ACCOUNT_UPDATE = 5;
 
 dh.stacker.kindFromString = function(str) {
 	if (str == "POST")
@@ -52,6 +53,8 @@ dh.stacker.kindFromString = function(str) {
 		return dh.stacker.Kind.GROUP_CHAT;
 	else if (str == "GROUP_MEMBER")
 		return dh.stacker.Kind.GROUP_MEMBER;
+	else if (str == "EXT_ACCOUNT_UPDATE")
+	    return dh.stacker.Kind.EXT_ACCOUNT_UPDATE;	
 	else
 		return dh.stacker.Kind.UNKNOWN;
 }
@@ -61,12 +64,14 @@ dh.stacker.kindClasses[dh.stacker.Kind.POST] = "dh-stacked-block-post";
 dh.stacker.kindClasses[dh.stacker.Kind.MUSIC_PERSON] = "dh-stacked-block-music-person";
 dh.stacker.kindClasses[dh.stacker.Kind.GROUP_CHAT] = "dh-stacked-block-group-chat";
 dh.stacker.kindClasses[dh.stacker.Kind.GROUP_MEMBER] = "dh-stacked-block-group-member";
+dh.stacker.kindClasses[dh.stacker.Kind.EXT_ACCOUNT_UPDATE] = "dh-stacked-block-account-update";
 
 dh.stacker.kindHeadings = {};
 dh.stacker.kindHeadings[dh.stacker.Kind.POST] = "Web Swarm";
 dh.stacker.kindHeadings[dh.stacker.Kind.MUSIC_PERSON] = "Music Radar";
 dh.stacker.kindHeadings[dh.stacker.Kind.GROUP_CHAT] = "Group Chat";
 dh.stacker.kindHeadings[dh.stacker.Kind.GROUP_MEMBER] = "Group Members";
+dh.stacker.kindHeadings[dh.stacker.Kind.EXT_ACCOUNT_UPDATE] = "Friend Update";
 
 dh.stacker.formatTimeAgo = function(timestamp) {
 	var now = dh.stacker.getInstance().getServerTime();
@@ -140,6 +145,7 @@ dh.stacker.Block = function(kind, blockId) {
 	this._ignoredTime = 0;
 	
 	this._title = "";
+	this._heading = null;
 	
 	this._clickedCount = 0;
 	
@@ -179,11 +185,22 @@ defineClass(dh.stacker.Block, null,
 	},
 	
 	setTitle : function(title) {
-		this._title = title;
-		
+		this._title = title;	
 		this._updateTitleDiv();
 	},
+
+	getHeading : function() {
+		if (this._heading == null)
+		    return dh.stacker.kindHeadings[this._kind];
 		
+		return this._heading;    
+	},
+	
+	setHeading : function(heading) {
+		this._heading = heading;	
+		this._updateHeadingDiv();
+	},
+			
 	getClickedCount : function() {
 		return this._clickedCount;
 	},
@@ -228,10 +245,15 @@ defineClass(dh.stacker.Block, null,
 			dojo.dom.textContent(this._titleDiv, this._title);
 		}
 	},
+	
+    _updateHeadingDiv : function(headingText) {
+		if (this._div) {
+			dojo.dom.textContent(this._headingDiv, headingText);
+		}	
+	},
 
 	_updateStackTimeDiv : function() {
 		if (this._div) {
-			;
 			//var d = new Date(this._stackTime);
 			//dojo.dom.textContent(this._stackTimeDiv, d.getFullYear() + "-" + (d.getMonth()+1) + "-" + d.getDate() + " " + d.getHours() + ":" + d.getMinutes() + ":" + d.getSeconds() + ":" + d.getMilliseconds());
 		}
@@ -298,7 +320,7 @@ defineClass(dh.stacker.Block, null,
 			this._headingDiv = document.createElement("div");
 			dojo.html.setClass(this._headingDiv, "dh-heading");
 			this._innerDiv.appendChild(this._headingDiv);
-			dojo.dom.textContent(this._headingDiv, dh.stacker.kindHeadings[this._kind]);
+			dojo.dom.textContent(this._headingDiv, this.getHeading());
 			
 			this._hushDiv = document.createElement("div");
 			dojo.html.setClass(this._hushDiv, "dh-hush");
@@ -1006,6 +1028,173 @@ defineClass(dh.stacker.GroupMemberBlock, dh.stacker.Block,
 	}
 });
 
+dh.stacker.AccountUpdateBlock = function(blockId, userId, accountType) {
+	dh.stacker.Block.call(this, dh.stacker.Kind.EXT_ACCOUNT_UPDATE, blockId);
+	this._userId = userId;
+	this._accountType = accountType;
+
+	this._timeDiv = null;
+	this._accountUpdateTextDiv = null;
+		
+	this._updateLink = null;
+	this._updateText = null;
+	
+	// possibly also need this._accountTypeStr
+}
+
+defineClass(dh.stacker.AccountUpdateBlock, dh.stacker.Block,
+{
+	getUserId : function() {
+		return this._userId;
+	},
+
+    getAccountType : function() {
+        return this._accountType;
+    },
+
+	getUpdateLink : function() {
+		return this._updateLink;
+	},	
+	
+	setUpdateLink : function(updateLink) {
+	    this._updateLink = updateLink;
+	    this._updateTitleDiv();
+	},
+	    	
+	getUpdateText : function() {
+		return this._updateText;
+	},	
+	
+	setUpdateText : function(updateText) {
+	    this._updateText = updateText;
+	    this._updateUpdateTextDiv();
+	},
+	
+	_parse : function(childNodes) {
+		var accountUpdate = childNodes.item(0);
+		if (accountUpdate.nodeName != "accountUpdate") {
+			throw new Error("accountUpdate node expected");
+		}
+		childNodes = accountUpdate.childNodes;
+		var personNode = childNodes.item(0);
+		if (personNode.nodeName != "person")
+			throw new Error("person node expected");
+		var person = dh.model.personFromXmlNode(personNode);
+
+		var accountTypeNode = childNodes.item(1);
+		if (accountTypeNode.nodeName != "accountType")
+			throw new Error("accountType node expected");
+		var accountType = dojo.dom.textContent(accountTypeNode);	
+			
+		var updateTitleNode = childNodes.item(2);
+		if (updateTitleNode.nodeName != "updateTitle")
+			throw new Error("updateTitle node expected");
+		var updateTitle = dojo.dom.textContent(updateTitleNode);
+
+		var updateLinkNode = childNodes.item(3);
+		if (updateLinkNode.nodeName != "updateLink")
+			throw new Error("updateLink node expected");
+		var updateLink = dojo.dom.textContent(updateLinkNode);
+				
+		var updateTextNode = childNodes.item(4);
+		if (updateTextNode.nodeName != "updateText")
+			throw new Error("updateText node expected");
+		var updateText = dojo.dom.textContent(updateTextNode);
+		
+		this.setHeading(person.displayName + "'s " + accountType);
+		this.setTitle(updateTitle);
+		this.setUpdateLink(updateLink);
+		this.setUpdateText(updateText);
+	},
+
+	load : function(completeFunc, errorFunc) {
+		var me = this;
+	   	dh.server.doXmlMethod("externalaccountsummary",
+					     	{ "userId" : me._userId,
+					     	  "accountType" : me._accountType },
+							function(childNodes, http) {
+								me._parse(childNodes);
+								completeFunc(me);
+				 	    	},
+				  	    	function(code, msg, http) {
+								errorFunc(me);
+				  	    	});
+	},
+	
+	updateFrom : function(newBlock) {
+		if (!dh.stacker.AccountUpdateBlock.superclass.updateFrom.call(this, newBlock))
+			return false;	
+		this.setHeading(newBlock.getHeading());
+		this.setUpdateLink(newBlock.getUpdateLink());
+		this.setUpdateText(newBlock.getUpdateText());				
+		return true;
+	},
+	
+	// override
+	_updateStackTimeDiv : function() {
+		if (this._div) {
+			dojo.dom.textContent(this._timeDiv, dh.stacker.formatTimeAgo(this._stackTime));
+		}
+	},
+	
+	// override
+	_updateTitleDiv : function() {
+		if (this._div) {
+			var a = document.createElement('a');
+			a.href = this._updateLink;
+			a.title = this._title;
+			a.target="_blank";
+			dojo.dom.textContent(a, this._title);
+			if (this._titleDiv.firstChild)
+				this._titleDiv.removeChild(this._titleDiv.firstChild);
+			this._titleDiv.appendChild(a);
+		}
+	},	   
+	
+	_updateUpdateTextDiv : function() {
+		if (this._div) {
+		    dojo.dom.textContent(this._accountUpdateTextDiv, this._updateText);
+		}
+	},	
+	
+	realize : function() {
+		if (!this._div) {
+			dh.stacker.AccountUpdateBlock.superclass.realize.call(this);
+			
+			var leftDiv = document.createElement("div");
+			dojo.html.setClass(leftDiv, "dh-left-column");
+			this._contentDiv.appendChild(leftDiv);
+
+			var rightDiv = document.createElement("div");
+			dojo.html.setClass(rightDiv, "dh-right-column");
+			this._contentDiv.appendChild(rightDiv);
+			
+			// move the title created in superclass method
+			this._titleDiv.parentNode.removeChild(this._titleDiv);
+			leftDiv.appendChild(this._titleDiv);
+
+			var detailDiv = document.createElement("div");
+			dojo.html.setClass(detailDiv, "dh-details");
+			rightDiv.appendChild(detailDiv);	
+			
+		    this._timeDiv = document.createElement("div");
+			detailDiv.appendChild(this._timeDiv);
+			dojo.html.setClass(this._timeDiv, "dh-when");
+			this._updateStackTimeDiv();
+
+	        this._accountUpdateTextDiv = document.createElement("div");
+	        leftDiv.appendChild(this._accountUpdateTextDiv);
+	        dojo.html.setClass(this._accountUpdateTextDiv, "dh-description");
+			this._updateUpdateTextDiv();
+		}
+	},
+	
+	unrealize : function() {
+		dh.stacker.AccountUpdateBlock.superclass.unrealize.call(this);
+		this._accountUpdateTextDiv = null;
+	}
+});
+
 
 dh.stacker.RaiseAnimation = function(block, inner, oldOuter, newOuter) {
 
@@ -1181,6 +1370,18 @@ dh.stacker.blockParsers[dh.stacker.Kind.MUSIC_PERSON] = function(node) {
 		return null;
 	var userId = musicPerson.getAttribute("userId");
 	var block = new dh.stacker.MusicPersonBlock(attrs["id"], userId);
+	dh.stacker.mergeBlockAttrs(block, attrs);
+	return block;
+};
+
+dh.stacker.blockParsers[dh.stacker.Kind.EXT_ACCOUNT_UPDATE] = function(node) {
+	var attrs = dh.stacker.parseBlockAttrs(node);
+	var extAccountUpdate = node.childNodes.item(0);
+	if (extAccountUpdate.nodeName != "extAccountUpdate")
+		return null;
+	var userId = extAccountUpdate.getAttribute("userId");
+	var accountType = extAccountUpdate.getAttribute("accountType");
+	var block = new dh.stacker.AccountUpdateBlock(attrs["id"], userId, accountType);
 	dh.stacker.mergeBlockAttrs(block, attrs);
 	return block;
 };

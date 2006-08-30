@@ -32,6 +32,7 @@ import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.AccountClaim;
 import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.BlockType;
+import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupMember;
 import com.dumbhippo.persistence.GroupMessage;
@@ -92,18 +93,24 @@ public class StackerBean implements Stacker {
 		return userCache;
 	}
 
-	private Block queryBlock(BlockType type, Guid data1, Guid data2) throws NotFoundException {
+	private Block queryBlock(BlockType type, Guid data1, Guid data2, long data3) throws NotFoundException {
 		Query q;
 		if (data1 != null && data2 != null) {
-			q = em.createQuery("SELECT block FROM Block block WHERE block.blockType=:type AND block.data1=:data1 AND block.data2=:data2");
+			q = em.createQuery("SELECT block FROM Block block WHERE block.blockType=:type " +
+					           "AND block.data1=:data1 AND block.data2=:data2 AND block.data3=:data3");
 			q.setParameter("data1", data1.toString());
 			q.setParameter("data2", data2.toString());
+			q.setParameter("data3", data3);			
 		} else if (data1 != null) {
-			q = em.createQuery("SELECT block FROM Block block WHERE block.blockType=:type AND block.data1=:data1 AND block.data2=''");
+			q = em.createQuery("SELECT block FROM Block block WHERE block.blockType=:type " +
+					           "AND block.data1=:data1 AND block.data2='' AND block.data3=:data3");
 			q.setParameter("data1", data1.toString());
+			q.setParameter("data3", data3);	
 		} else if (data2 != null) {
-			q = em.createQuery("SELECT block FROM Block block WHERE block.blockType=:type AND block.data2=:data2 AND block.data1=''");
+			q = em.createQuery("SELECT block FROM Block block WHERE block.blockType=:type " +
+					           "AND block.data2=:data2 AND block.data1='' AND block.data3=:data3");
 			q.setParameter("data2", data2.toString());
+			q.setParameter("data3", data3);	
 		} else {
 			throw new IllegalArgumentException("must provide either data1 or data2 in query for block type " + type);
 		}
@@ -111,7 +118,7 @@ public class StackerBean implements Stacker {
 		try {
 			return (Block) q.getSingleResult();
 		} catch (NoResultException e) {
-			throw new NotFoundException("no block with type " + type + " data1 " + data1 + " data2 " + data2, e);
+			throw new NotFoundException("no block with type " + type + " data1 " + data1 + " data2 " + data2 + " data3 " + data3, e);
 		}
 	}
 
@@ -141,13 +148,15 @@ public class StackerBean implements Stacker {
 	
 	// this doesn't retry on constraint violation since we do that for a larger transaction,
 	// see below
-	private Block getOrCreateUpdatingTimestamp(BlockType type, Guid data1, Guid data2, long activity) {
+	private Block getOrCreateUpdatingTimestamp(BlockType type, Guid data1, Guid data2, long data3, long activity) {
 		Block block;
 		try {
-			block = queryBlock(type, data1, data2);
+			logger.debug("will query for a block with data1: {}, data2: {}, data3: {}", new Object[]{data1, data2, data3});
+			block = queryBlock(type, data1, data2, data3);
+			logger.debug("found block");
 		} catch (NotFoundException e) {
-			logger.debug("creating new block type {} data1 {} data2 " + data2, type, data1);
-			block = new Block(type, data1, data2);
+			logger.debug("creating new block type {} data1 {} data2 {} data3 {} ", new Object[]{type, data1, data2, data3});
+			block = new Block(type, data1, data2, data3);
 			em.persist(block);
 		}
 		if (block.getTimestampAsLong() < activity) // never "roll back"
@@ -239,9 +248,7 @@ public class StackerBean implements Stacker {
 		runner.runTaskOnTransactionCommit(cacheTask);		
 	}
 
-	private Set<User> getDesiredUsersForMusicPerson(Block block) {
-		if (block.getBlockType() != BlockType.MUSIC_PERSON)
-			throw new IllegalArgumentException("wrong type block");
+	private Set<User> getUsersWhoCare(Block block) {
 		User user;
 		try {
 			user = EJBUtil.lookupGuid(em, User.class, block.getData1AsGuid());
@@ -249,8 +256,19 @@ public class StackerBean implements Stacker {
 			throw new RuntimeException(e);
 		}
 		Set<User> peopleWhoCare = identitySpider.getUsersWhoHaveUserAsContact(SystemViewpoint.getInstance(), user);
-		peopleWhoCare.add(user); // FIXME include ourselves, this is probably a debug-only thing
-		return peopleWhoCare;
+        // FIXME include ourselves, this is probably a debug-only thing, or pass in an argument
+		// whether the user should be included, could be more applicable for external account updates, and not 
+		// as applicable for music updates
+		peopleWhoCare.add(user);  
+		
+		return peopleWhoCare;	
+	}
+	
+	private Set<User> getDesiredUsersForMusicPerson(Block block) {
+		if (block.getBlockType() != BlockType.MUSIC_PERSON)
+			throw new IllegalArgumentException("wrong type block");
+        
+		return getUsersWhoCare(block);
 	}
 	
 	private Set<User> getDesiredUsersForGroupChat(Block block) {
@@ -296,6 +314,13 @@ public class StackerBean implements Stacker {
 		return recipients;
 	}
 	
+	private Set<User> getDesiredUsersForExternalAccountUpdate(Block block) {
+		if (block.getBlockType() != BlockType.EXT_ACCOUNT_UPDATE)
+			throw new IllegalArgumentException("wrong type block");
+
+		return getUsersWhoCare(block);
+	}
+	
 	private void updateUserBlockDatas(Block block) {
 		Set<User> desiredUsers = null;
 		switch (block.getBlockType()) {
@@ -311,6 +336,8 @@ public class StackerBean implements Stacker {
 		case GROUP_MEMBER:
 			desiredUsers = getDesiredUsersForGroupMember(block);
 			break;
+		case EXT_ACCOUNT_UPDATE:
+			desiredUsers = getDesiredUsersForExternalAccountUpdate(block);
 			// don't add a default, we want a warning if any cases are missing
 		}
 		
@@ -330,7 +357,7 @@ public class StackerBean implements Stacker {
 		}
 	}
 	
-	private void stack(final BlockType type, final Guid data1, final Guid data2, final long activity) {
+	private void stack(final BlockType type, final Guid data1, final Guid data2, final long data3, final long activity) {
 		if (disabled)
 			return;
 		
@@ -339,11 +366,15 @@ public class StackerBean implements Stacker {
 		// user block datas would probably happen plenty in practice for now
 		runner.runTaskRetryingOnConstraintViolation(new Runnable() {
 			public void run() {
-				Block block = getOrCreateUpdatingTimestamp(type, data1, data2, activity);
+				Block block = getOrCreateUpdatingTimestamp(type, data1, data2, data3, activity);
 
 				updateUserBlockDatas(block);
 			}
 		});
+	}
+
+	private void stack(final BlockType type, final Guid data1, final Guid data2, final long activity) {
+        stack(type, data1, data2, -1, activity);
 	}
 	
 	private void click(BlockType type, Guid data1, Guid data2, User user, long clickTime) {
@@ -411,8 +442,9 @@ public class StackerBean implements Stacker {
 		case FOLLOWER:
 		case REMOVED:
 			AccountClaim a = member.getMember().getAccountClaim();
-			if (a != null)
+			if (a != null) {
 				stack(BlockType.GROUP_MEMBER, member.getGroup().getGuid(), a.getOwner().getGuid(), activity);
+			}
 			break;
 		case INVITED:
 		case INVITED_TO_FOLLOW:
@@ -421,6 +453,12 @@ public class StackerBean implements Stacker {
 			break;
 			// don't add a default case, we want a warning if any are missing
 		}
+	}
+	
+	// don't create or suspend transaction; we will manage our own for now (FIXME)
+	@TransactionAttribute(TransactionAttributeType.SUPPORTS)
+	public void stackAccountUpdate(Guid userId, ExternalAccountType type, long activity) {
+		stack(BlockType.EXT_ACCOUNT_UPDATE, userId, null, type.ordinal(), activity);
 	}
 	
 	public void clickedPost(Post post, User user, long clickedTime) {
@@ -812,7 +850,7 @@ public class StackerBean implements Stacker {
 				
 				Block block;
 				try {
-					block = queryBlock(BlockType.POST, post.getGuid(), null);
+					block = queryBlock(BlockType.POST, post.getGuid(), null, -1);
 				} catch (NotFoundException e) {
 					throw new RuntimeException("no block found for post " + post);
 				}

@@ -86,6 +86,10 @@
 			background-color:	#84569B;
 			color:				white;	
 		}	
+		.dh-stacked-block-account-update {
+		    background-color:   #666666;
+		    color:              white; 
+		}
 		.dh-stacked-block .dh-left-column {
 			position:	relative;
 			width: 		350px;

@@ -1480,6 +1480,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		String rhapUserId = q.substring(i, j);
 		Feed feed = scrapeFeedFromUrl(url);
 		
+		logger.debug("found feed: {}", feed);
 		ExternalAccount external = externalAccountSystem.getOrCreateExternalAccount(viewpoint, ExternalAccountType.RHAPSODY);
 		
 		try {
@@ -1845,6 +1846,10 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 				xml.appendTextNode("groupMember", null, "groupId", block.getData1AsGuid().toString(),
 									   "userId", block.getData2AsGuid().toString());
 				break;
+			case EXT_ACCOUNT_UPDATE:
+				xml.appendTextNode("extAccountUpdate", null, "userId", block.getData1AsGuid().toString(),
+				  	                "accountType", Long.toString(block.getData3()));
+                break;			
 				// don't add a default case, we want a warning if any cases are missing
 			}
 			
@@ -1896,6 +1901,24 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		returnPersonsXml(xml, viewpoint, Collections.singleton(pv));
 		for (TrackView tv : tracks) {
 			returnTrackXml(xml, tv);
+		}
+		xml.closeElement();
+	}
+	
+	public void getExternalAccountSummary(XmlBuilder xml, UserViewpoint viewpoint, String userId, String accountType) throws XmlMethodException, NotFoundException {
+		User user = parseUserId(userId);
+		// ALL_RESOURCES here is just because returnPersonsXml wants it, the javascript doesn't need it
+		PersonView pv = personViewer.getPersonView(viewpoint, user, PersonViewExtra.ALL_RESOURCES);
+   		xml.openElement("accountUpdate", "userId", user.getId(), "accountType", accountType);
+		returnPersonsXml(xml, viewpoint, Collections.singleton(pv));
+		int accountTypeOrdinal = Integer.parseInt(accountType);
+		if (accountTypeOrdinal == ExternalAccountType.BLOG.ordinal()) {
+			ExternalAccount blogAccount = externalAccountSystem.lookupExternalAccount(viewpoint, user, ExternalAccountType.BLOG);  
+			FeedEntry lastEntry = feedSystem.getLastEntry(blogAccount.getFeed());
+			xml.appendTextNode("accountType", "Blog");
+			xml.appendTextNode("updateTitle", lastEntry.getTitle());
+			xml.appendTextNode("updateLink", lastEntry.getLink().getUrl());
+			xml.appendTextNode("updateText", lastEntry.getDescription());			
 		}
 		xml.closeElement();
 	}

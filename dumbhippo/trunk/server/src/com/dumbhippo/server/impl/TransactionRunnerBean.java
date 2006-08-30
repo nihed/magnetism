@@ -129,6 +129,14 @@ public class TransactionRunnerBean implements TransactionRunner {
 	}
 	
 	public void runTaskOnTransactionCommit(final Runnable runnable) {
+		runTaskOnTransactionComplete(runnable, true);
+	}
+
+	public void runTaskOnTransactionComplete(final Runnable runnable) {
+		runTaskOnTransactionComplete(runnable, false);
+	}
+	
+	private void runTaskOnTransactionComplete(final Runnable runnable, final boolean checkCommited) {
 		TransactionManager tm;
 		try {
 			tm = (TransactionManager) (new InitialContext()).lookup("java:/TransactionManager");
@@ -136,7 +144,7 @@ public class TransactionRunnerBean implements TransactionRunner {
 				public void beforeCompletion() {}
 
 				public void afterCompletion(int status) {
-					if (status == Status.STATUS_COMMITTED) {
+					if ((!checkCommited) || (status == Status.STATUS_COMMITTED)) {
 						try {
 							getPostTransactionExecutor().submit(runnable);
 						} catch (RuntimeException e) {
