@@ -2,8 +2,6 @@ package com.dumbhippo.recommender;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.logging.ConsoleHandler;
-import java.util.logging.Level;
 
 import javax.sql.DataSource;
 
@@ -11,7 +9,6 @@ import com.planetj.taste.common.TasteException;
 import com.planetj.taste.correlation.UserCorrelation;
 import com.planetj.taste.impl.correlation.AveragingPreferenceInferrer;
 import com.planetj.taste.impl.correlation.PearsonCorrelation;
-import com.planetj.taste.impl.model.jdbc.AbstractJDBCDataModel;
 import com.planetj.taste.impl.model.jdbc.MySQLJDBCDataModel;
 import com.planetj.taste.impl.neighborhood.NearestNUserNeighborhood;
 import com.planetj.taste.impl.recommender.GenericUserBasedRecommender;
@@ -33,11 +30,15 @@ public final class HippoRecommender implements Recommender {
 	// size of neighborhood to calculate for Nearest-N Neighborhood
 	// TODO: probably bump this up once we have more users
 	private static int NEIGHBORHOOD_SIZE = 5;
-
+	
 	public HippoRecommender(DataSource dataSource) throws IOException, TasteException {	
 
 		// force some SQL debug information out of Taste's JDBC data model
-		ConsoleHandler handler = new ConsoleHandler();
+		// FIXME printing to console makes a mess in jboss; we could install a handler
+		// to chain to slf4j, but that could create issues with unloading the app
+		// since it would store our classes in a static jdk variable
+		/* 
+		Handler handler = new ConsoleHandler();
 		handler.setLevel(Level.ALL);
 	    java.util.logging.Logger other_logger = 
 	    	java.util.logging.Logger.getLogger(AbstractJDBCDataModel.class.getName());
@@ -48,6 +49,7 @@ public final class HippoRecommender implements Recommender {
 	    other_logger = java.util.logging.Logger.getLogger(GenericUserBasedRecommender.class.getName());
 	    other_logger.addHandler(handler);
 	    other_logger.setLevel(Level.ALL);
+	    */
 	    
 		DataModel dataModel = new MySQLJDBCDataModel(dataSource, "Rating", "user_id", "item_id", "score");
 		//dataModel.addTransform(new ZScore());
