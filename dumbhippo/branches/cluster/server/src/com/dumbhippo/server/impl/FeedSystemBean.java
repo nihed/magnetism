@@ -19,13 +19,16 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 import javax.ejb.EJB;
-import javax.ejb.Stateless;
+import javax.ejb.Local;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 
+import org.jboss.annotation.ejb.Clustered;
+import org.jboss.annotation.ejb.Management;
+import org.jboss.annotation.ejb.Service;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
@@ -41,6 +44,7 @@ import com.dumbhippo.persistence.LinkResource;
 import com.dumbhippo.persistence.Sentiment;
 import com.dumbhippo.persistence.TrackFeedEntry;
 import com.dumbhippo.server.FeedSystem;
+import com.dumbhippo.server.FeedSystemBeanManagement;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.PostingBoard;
@@ -61,8 +65,10 @@ import com.sun.syndication.fetcher.impl.HttpURLFeedFetcher;
 import com.sun.syndication.fetcher.impl.SyndFeedInfo;
 import com.sun.syndication.io.FeedException;
 
-@Stateless
-public class FeedSystemBean implements FeedSystem {
+@Service
+@Clustered
+@Management(FeedSystemBeanManagement.class)
+public class FeedSystemBean implements FeedSystem, FeedSystemBeanManagement {
 	@SuppressWarnings("unused")
 	private static final Logger logger = GlobalSetup.getLogger(FeedSystemBean.class);
 	
@@ -640,7 +646,7 @@ public class FeedSystemBean implements FeedSystem {
 								++count;
 								threadPool.execute(new Runnable() {
 									public void run() {
-										FeedSystem feedSystem = EJBUtil.defaultLookup(FeedSystem.class);
+										FeedSystem feedSystem = EJBUtil.defaultHALookup(FeedSystem.class);
 										try {
 											// updateFeedFetchFeed is marked to not create a transaction if none already,
 											// and we should have none here in theory.
@@ -773,5 +779,21 @@ public class FeedSystemBean implements FeedSystem {
 			}
 			cache.put(url.toExternalForm(), info);
 		}
+	}
+
+	public void create() throws Exception {
+		logger.info("Creating FeedSystemBean");
+	}
+
+	public void destroy() {
+		logger.info("Destroying FeedSystemBean");
+	}
+
+	public void start() throws Exception {
+		logger.info("Starting FeedSystemBean");
+	}
+
+	public void stop() {
+		logger.info("Stopping FeedSystemBean");
 	}
 }

@@ -114,6 +114,7 @@ EOF
     <parameter name="jnpHost">$addr</parameter>
     <service name="jboss">
        <parameter name="jbossBind">$addr</parameter>
+       <parameter name="jbossPartition">$USER</parameter>
     </service>
     <service name="jive" enabled="no"/>
     <service name="mysql" enabled="no"/>

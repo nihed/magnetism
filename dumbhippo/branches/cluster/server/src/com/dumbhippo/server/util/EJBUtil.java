@@ -1,10 +1,12 @@
 package com.dumbhippo.server.util;
 
 import java.sql.SQLException;
+import java.util.Properties;
 
 import javax.ejb.EJBContext;
 import javax.ejb.EJBException;
 import javax.ejb.Local;
+import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.persistence.EntityManager;
@@ -20,7 +22,9 @@ import com.dumbhippo.StringUtils;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.GuidPersistable;
+import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.NotFoundException;
+import com.dumbhippo.server.Configuration.PropertyNotFoundException;
 
 public class EJBUtil {
 	
@@ -34,6 +38,32 @@ public class EJBUtil {
 	// time you go through Java and MySQL also interpreting it
 	// it becomes really confusing
 	private static final char LIKE_ESCAPE_CHAR = '^';
+	
+	public static Context getHAContext() throws NamingException {
+		Configuration config = defaultLookup(Configuration.class);
+		Properties p = new Properties();
+		p.put(Context.INITIAL_CONTEXT_FACTORY, "org.jnp.interfaces.NamingContextFactory");
+		p.put(Context.URL_PKG_PREFIXES, "jboss.naming:org.jnp.interfaces");
+		String bind;
+		String port;
+		try {
+			bind = System.getProperty("jboss.bind.address", "localhost");
+			port = config.getProperty("dumbhippo.server.hajndiPort");
+		} catch (PropertyNotFoundException e) {
+			bind = "localhost";
+			port = "1100";
+		}
+		p.put(Context.PROVIDER_URL, bind + ":" + port);
+		return new InitialContext(p);
+	}
+	
+	public static <T> T defaultHALookup(Class<T> clazz) {
+		try {
+			return defaultHALookupChecked(clazz);
+		} catch (NamingException e) {
+			throw new RuntimeException(e);
+		}
+	}	
 	
 	/**
 	 * Very simple wrapper around InitialContext.lookup that looks up an
@@ -118,20 +148,46 @@ public class EJBUtil {
 			return clazz.cast(uncheckedDynamicLookupRemote(name));
 	}	
 	
+	public static <T> T defaultHALookupChecked(Class<T> clazz) throws NamingException {
+
+		if (clazz == null)
+			throw new IllegalArgumentException("Class passed to nameLookup() is nNull");
+		
+		String name = clazz.getSimpleName();		
+		if (!clazz.isInterface())
+			throw new IllegalArgumentException("Class passed to nameLookup() has to be an interface, not " + name);
+		if (clazz.isAnnotationPresent(Local.class))		
+			return clazz.cast(uncheckedDynamicLookupLocal(name, true));
+		else
+			return clazz.cast(uncheckedDynamicLookupRemote(name, true));
+	}	
+	
 	public static Object uncheckedDynamicLookupLocal(String name) throws NamingException {	
-		return uncheckedDynamicLookup(classPrefix + name + "Bean/local");
+		return uncheckedDynamicLookupLocal(name, false);
+	}
+	
+	public static Object uncheckedDynamicLookupLocal(String name, boolean ha) throws NamingException {	
+		return uncheckedDynamicLookup(classPrefix + name + "Bean/local", ha);
 	}	
 	
 	public static Object uncheckedDynamicLookupRemote(String name) throws NamingException {
+		return uncheckedDynamicLookupRemote(name, false);
+	}
+	
+	public static Object uncheckedDynamicLookupRemote(String name, boolean ha) throws NamingException {
 		if (name.endsWith("Remote"))
 			name = name.substring(0, name.lastIndexOf("Remote"));
 		name = name + "Bean";
-		return uncheckedDynamicLookup(classPrefix + name + "/remote");
+		return uncheckedDynamicLookup(classPrefix + name + "/remote", ha);
 	}		
 	
 	public static Object uncheckedDynamicLookup(String name) throws NamingException {
-		InitialContext namingContext; // note, if ever caching this, it isn't threadsafe
-		namingContext = new InitialContext();	
+		return uncheckedDynamicLookup(name, false);
+	}	
+	
+	public static Object uncheckedDynamicLookup(String name, boolean ha) throws NamingException {
+		Context namingContext; // note, if ever caching this, it isn't threadsafe
+		namingContext = ha ? getHAContext() : new InitialContext();	
 		return namingContext.lookup(name);
 	}
 	

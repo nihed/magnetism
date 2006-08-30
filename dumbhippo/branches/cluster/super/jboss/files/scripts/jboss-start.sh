@@ -58,7 +58,7 @@ else
 fi
 
 JAVA_OPTS="-XX:MaxPermSize=128M -Xmx${javaMaxHeap}m -Xms${javaMaxHeap}m -Xdebug $jdwpopt" \
-$jbossdir/bin/run.sh -Djboss.server.home.dir=$targetdir -Djboss.server.home.url=file://$targetdir $bindopt > /dev/null 2>&1 &
+$jbossdir/bin/run.sh --partition=@@jbossPartition@@ -Djboss.server.home.dir=$targetdir -Djboss.server.home.url=file://$targetdir $bindopt > /dev/null 2>&1 &
 pid=$!
 started=false
 for i in `seq 1 30` ; do

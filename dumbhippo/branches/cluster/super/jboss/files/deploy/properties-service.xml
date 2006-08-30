@@ -17,6 +17,7 @@
     <!-- do not put trailing whitespace here, or we put you in the iron maiden -->
     <attribute name="Properties">
 	    java.awt.headless=true
+            dumbhippo.server.hajndiPort=@@hajndiPort@@
 	    dumbhippo.server.disable.authentication=@@disableAuthentication@@
 	    dumbhippo.server.email.disable=@@disableEmail@@
 		dumbhippo.server.xmpp.address=@@jiveHost@@
@@ -42,6 +43,7 @@
 		dumbhippo.server.adminconsole.enable=@@adminConsole@@
 		dumbhippo.server.newfeatures = @@newFeatures@@
 		dumbhippo.server.stealthmode=@@stealthMode@@
+		dumbhippo.server.slavemode=@@slaveMode@@
 		dumbhippo.server.userupdateinterval=@@userUpdateInterval@@
 		dumbhippo.server.summitgroupguid=@@summitGroupGuid@@
 		dumbhippo.server.newuserinvitationcount=@@newUserInvitationCount@@
