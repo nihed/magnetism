@@ -36,9 +36,10 @@ dh.model.trackFromXmlNode = function(element) {
 	return new dh.model.Track(image, title, artist, album, stillPlaying == "true");
 }
 
-dh.model.Message = function(text, fromId, serial, timestamp) {
+dh.model.Message = function(text, fromId, fromNickname, serial, timestamp) {
 	this.text = text;
 	this.fromId = fromId;
+	this.fromNickname = fromNickname;
 	this.serial = serial;
 	this.timestamp = timestamp;
 }
@@ -48,10 +49,11 @@ dh.model.messageFromXmlNode = function(element) {
 		dojo.raise("not a message element");
 	var text = dojo.dom.textContent(element);
 	var from = element.getAttribute("fromId");
+	var nick = element.getAttribute("fromNickname");
 	var serial = element.getAttribute("serial");	
 	var timestamp = element.getAttribute("timestamp");
 
-	return new dh.model.Message(text, from, parseInt(serial), parseInt(timestamp));
+	return new dh.model.Message(text, from, nick ,parseInt(serial), parseInt(timestamp));
 }
 
 dh.model.GuidPersistable = function(id, displayName) {

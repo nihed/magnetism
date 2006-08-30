@@ -570,11 +570,12 @@ defineClass(dh.stacker.PostBlock, dh.stacker.Block,
 				var a = document.createElement("a");
 				dojo.html.setClass(a, "dh-post-chat-message-author");
 				a.href = "/person?who=" + this._messages[i].fromId;
-				a.title = "wouldn't it be nice to see their name...";
+				a.title = this._messages[i].fromNickname;
 				a.target = "_blank";
-				dojo.dom.textContent(a, this._messages[i].fromId);
+				dojo.dom.textContent(a, this._messages[i].fromNickname);
 				msg.appendChild(a);
 				msgs.appendChild(msg);
+
 			}
 			this._messagesDiv.appendChild(msgs);
 		}
@@ -908,9 +909,9 @@ defineClass(dh.stacker.GroupChatBlock, dh.stacker.Block,
 				var a = document.createElement("a");
 				dojo.html.setClass(a, "dh-group-chat-message-author");
 				a.href = "/person?who=" + this._messages[i].fromId;
-				a.title = "wouldn't it be nice to see their name...";
+				a.title = this._messages[i].fromNickname;
 				a.target = "_blank";
-				dojo.dom.textContent(a, this._messages[i].fromId);
+				dojo.dom.textContent(a, this._messages[i].fromNickname);
 				msg.appendChild(a);
 				msgs.appendChild(msg);
 			}

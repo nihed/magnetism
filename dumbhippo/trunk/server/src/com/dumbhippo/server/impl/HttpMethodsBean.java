@@ -1902,6 +1902,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	
 	private void writeChatMessage(XmlBuilder xml, ChatMessage m) {
 		xml.appendTextNode("message", m.getMessageText(), "fromId", m.getFromUser().getId(),
+				"fromNickname", m.getFromUser().getNickname(),
 				"timestamp", Long.toString(m.getTimestamp().getTime()),
 				"serial", Integer.toString(m.getMessageSerial()));		
 	}
