@@ -344,13 +344,13 @@ public class Room {
 			
 			if (kind == ChatRoomKind.GROUP) {
 				try {			
-					objectXml = glue.getGroupXML(Guid.parseTrustedJabberId(viewpointGuid), 
+					objectXml = glue.getGroupXml(Guid.parseTrustedJabberId(viewpointGuid), 
 							                     Guid.parseTrustedJabberId(roomName));
 				} catch (NotFoundException e) {
 					Log.error("failed to find group", e);				
 				}				
 			} else if (kind == ChatRoomKind.POST) {
-			       objectXml = glue.getPostsXML(Guid.parseTrustedJabberId(viewpointGuid), 
+			       objectXml = glue.getPostsXml(Guid.parseTrustedJabberId(viewpointGuid), 
 			    		                        Guid.parseTrustedJabberId(roomName), 
 			    		                        elementName);
 			}

@@ -39,6 +39,7 @@ import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.EntityView;
 import com.dumbhippo.server.ExternalAccountSystem;
@@ -382,6 +383,33 @@ public class MessageSenderBean implements MessageSender {
 			return NAMESPACE;
 		}
 	}
+
+	private static class BlocksExtension implements PacketExtension {
+
+		private static final String ELEMENT_NAME = "blocks";
+
+		private static final String NAMESPACE = CommonXmlWriter.NAMESPACE_BLOCKS;
+		
+		private String xml;
+		
+		public BlocksExtension(UserViewpoint viewpoint, User user, List<UserBlockData> list) {
+			XmlBuilder builder = new XmlBuilder();
+			CommonXmlWriter.writeBlocks(builder, viewpoint, user, list, NAMESPACE);
+			this.xml = builder.toString();
+		}
+
+		public String toXML() {
+			return this.xml;
+		}
+		
+		public String getElementName() {
+			return ELEMENT_NAME;
+		}
+
+		public String getNamespace() {
+			return NAMESPACE;
+		}
+	}
 	
 	private class XMPPSender {
 
@@ -494,7 +522,7 @@ public class MessageSenderBean implements MessageSender {
 			connection.sendPacket(message);			
 		}
 
-		public void sendMySpaceContactCommentNotification(User user) {
+		public synchronized void sendMySpaceContactCommentNotification(User user) {
 			XMPPConnection connection = getConnection();
 			Message message = createMessageFor(user, Message.Type.HEADLINE);
 			message.addExtension(new MySpaceContactCommentExtension());
@@ -502,7 +530,7 @@ public class MessageSenderBean implements MessageSender {
 			connection.sendPacket(message);
 		}
 
-		public void sendHotnessChanged(LiveClientData clientData) {
+		public synchronized void sendHotnessChanged(LiveClientData clientData) {
 			XMPPConnection connection = getConnection();
 			User dbUser = identitySpider.lookupUser(clientData.getGuid());			
 			Message message = createMessageFor(dbUser, Message.Type.HEADLINE);
@@ -511,7 +539,7 @@ public class MessageSenderBean implements MessageSender {
 			connection.sendPacket(message);
 		}
 
-		public void sendActivePostsChanged(LiveClientData clientData) {
+		public synchronized void sendActivePostsChanged(LiveClientData clientData) {
 			XMPPConnection connection = getConnection();
 			User dbUser = identitySpider.lookupUser(clientData.getGuid());
 			Viewpoint viewpoint = new UserViewpoint(dbUser);
@@ -549,7 +577,7 @@ public class MessageSenderBean implements MessageSender {
 			connection.sendPacket(message);						
 		}
 		
-		public void sendPrefChanged(User user, String key, String value) {
+		public synchronized void sendPrefChanged(User user, String key, String value) {
 			XMPPConnection connection = getConnection();
 			Message message = createMessageFor(user, Message.Type.HEADLINE);
 			message.addExtension(new PrefsChangedExtension(key, value));
@@ -557,7 +585,7 @@ public class MessageSenderBean implements MessageSender {
 			connection.sendPacket(message);
 		}
 		
-		public void sendGroupMembershipUpdate(User recipient, Group group, GroupMember groupMember) {
+		public synchronized void sendGroupMembershipUpdate(User recipient, Group group, GroupMember groupMember) {
 			XMPPConnection connection = getConnection();
 			Message message = createMessageFor(recipient);	
 			PersonView updatedMember = personViewer.getPersonView(new UserViewpoint(recipient), 
@@ -572,6 +600,13 @@ public class MessageSenderBean implements MessageSender {
 			connection.sendPacket(message);
 		}
 		
+		public synchronized void sendBlocks(UserViewpoint viewpoint, User user, List<UserBlockData> list) {
+			XMPPConnection connection = getConnection();
+			Message message = createMessageFor(viewpoint.getViewer());
+			message.addExtension(new BlocksExtension(viewpoint, user, list));
+			logger.debug("Sending blocks list message to {}", message.getTo());			
+			connection.sendPacket(message);
+		}
 	}
 
 	private class EmailSender {
@@ -861,5 +896,9 @@ public class MessageSenderBean implements MessageSender {
 		for (User recipient : recipients) {
 			xmppSender.sendGroupMembershipUpdate(recipient, group, groupMember);			
 		}
+	}
+	
+	public void sendBlocks(UserViewpoint viewpoint, User user, List<UserBlockData> list) {
+		xmppSender.sendBlocks(viewpoint, user, list);
 	}
 }
