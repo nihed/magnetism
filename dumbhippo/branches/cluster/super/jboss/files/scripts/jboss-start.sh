@@ -26,7 +26,7 @@ EOF
 fi
 fi
 @@elif pgsqlEnabled
-if test "$slaveMode" != xno; then
+if test x"$slaveMode" != xyes; then
 pgsqlOptions="@@pgsqlOptions@@"
 dbcommand="/usr/bin/psql $pgsqlOptions dumbhippo"
 

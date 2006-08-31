@@ -19,16 +19,13 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 import javax.ejb.EJB;
-import javax.ejb.Local;
+import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 
-import org.jboss.annotation.ejb.Clustered;
-import org.jboss.annotation.ejb.Management;
-import org.jboss.annotation.ejb.Service;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
@@ -44,7 +41,7 @@ import com.dumbhippo.persistence.LinkResource;
 import com.dumbhippo.persistence.Sentiment;
 import com.dumbhippo.persistence.TrackFeedEntry;
 import com.dumbhippo.server.FeedSystem;
-import com.dumbhippo.server.FeedSystemBeanManagement;
+import com.dumbhippo.server.FeedUpdaterBeanManagement;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.PostingBoard;
@@ -65,10 +62,8 @@ import com.sun.syndication.fetcher.impl.HttpURLFeedFetcher;
 import com.sun.syndication.fetcher.impl.SyndFeedInfo;
 import com.sun.syndication.io.FeedException;
 
-@Service
-@Clustered
-@Management(FeedSystemBeanManagement.class)
-public class FeedSystemBean implements FeedSystem, FeedSystemBeanManagement {
+@Stateless
+public class FeedSystemBean implements FeedSystem, FeedUpdaterBeanManagement {
 	@SuppressWarnings("unused")
 	private static final Logger logger = GlobalSetup.getLogger(FeedSystemBean.class);
 	
@@ -584,133 +579,14 @@ public class FeedSystemBean implements FeedSystem, FeedSystemBeanManagement {
 	}
 	
 	public synchronized static void startup() {
-		logger.info("Starting FeedUpdater");
-		FeedUpdater.getInstance().start();
 	}
 	
 	public synchronized static void shutdown() {
 		shutdown = true;
 		
-		FeedUpdater.getInstance().shutdown();
 		if (notificationService != null) {
 			notificationService.shutdown();
 			notificationService = null;
-		}
-	}
-
-	private static class FeedUpdater extends Thread {
-		private static FeedUpdater instance;
-		private int generation;
-		
-		static synchronized FeedUpdater getInstance() {
-			if (instance == null)
-				instance = new FeedUpdater();
-			
-			return instance;
-		}
-		
-		public FeedUpdater() {
-			super("FeedUpdater");
-		}
-		
-		private boolean runOneGeneration() {
-			int iteration = 0;
-			generation += 1;
-			try {
-				// We start off by sleeping for our delay time to reduce the initial
-				// server load on restart
-				long lastUpdate = System.currentTimeMillis();
-				
-				while (true) {
-					iteration += 1;
-					try {
-						long sleepTime = lastUpdate + UPDATE_THREAD_TIME - System.currentTimeMillis();
-						if (sleepTime < 0)
-							sleepTime = 0;
-						Thread.sleep(sleepTime);
-						
-						// We intentionally iterate here rather than inside a session
-						// bean method to get a separate transaction for each method on
-						// feedSystem rather than holding a single transaction over the whole
-						// process.
-						FeedSystem feedSystem = EJBUtil.defaultLookup(FeedSystem.class);
-						List<Feed> feeds = feedSystem.getInUseFeeds();
-						
-						logger.debug("FeedUpdater slept " + sleepTime / 1000.0 + " seconds, and now has " + feeds.size() + " feeds in use, iteration " + iteration);
-						
-						ExecutorService threadPool = ThreadUtils.newCachedThreadPool("feed fetcher " + generation + " " + iteration);
-
-						int count = 0;
-						for (final Feed feed : feeds) {
-							if (feedSystem.updateFeedNeedsFetch(feed)) {
-								++count;
-								threadPool.execute(new Runnable() {
-									public void run() {
-										FeedSystem feedSystem = EJBUtil.defaultHALookup(FeedSystem.class);
-										try {
-											// updateFeedFetchFeed is marked to not create a transaction if none already,
-											// and we should have none here in theory.
-											Object o = feedSystem.updateFeedFetchFeed(feed);
-											if (o != null)
-												feedSystem.updateFeedStoreFeed(o);
-										} catch (XmlMethodException e) {
-											logger.warn("Couldn't update feed {}: {}", feed, e.getCodeString() + ": " + e.getMessage());
-											feedSystem.markFeedFailedLastUpdate(feed);											
-										}
-									}
-								});
-							}
-						}
-						
-						logger.debug("Started {} feed fetching threads for iteration {}", count, iteration);
-						
-						// tell thread pool to terminate once all tasks are run.
-						threadPool.shutdown();
-						
-						// The idea is to avoid "piling up" (only have one thread pool
-						// doing anything at a time). There's a timeout here 
-						// though and if it expired we would indeed pile up.
-						if (!threadPool.awaitTermination(60 * 30, TimeUnit.SECONDS)) {
-							logger.warn("FeedUpdater thread pool timed out; some updater thread is still live and we're continuing anyway");
-						}
-						
-						lastUpdate = System.currentTimeMillis();
-					} catch (InterruptedException e) {
-						break;
-					}
-				}
-			} catch (RuntimeException e) {
-				// not sure jboss will catch and print this since it's our own thread, so doing it here
-				logger.error("Unexpected exception updating feeds, generation " + generation + " exiting abnormally", e);
-				return true; // do another generation
-			}
-			logger.debug("Cleanly shutting down feed updater thread generation {}", generation);
-			return false; // shut down
-		}
-		
-		@Override
-		public void run() {
-			generation = 0;
-
-			while (runOneGeneration()) {
-				// sleep protects us from 100% CPU in catastrophic failure case
-				logger.warn("FeedUpdater thread sleeping and then restarting itself");
-				try {
-					Thread.sleep(10000);
-				} catch (InterruptedException e1) {
-				}
-			}
-		}
-		
-		public void shutdown() {
-			interrupt();
-			
-			try {
-				join();
-				logger.info("Successfully stopped FeedUpdater thread");
-			} catch (InterruptedException e) {
-				// Shouldn't happen, just ignore
-			}
 		}
 	}
 

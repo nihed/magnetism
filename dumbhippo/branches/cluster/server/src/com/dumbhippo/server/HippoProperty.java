@@ -26,6 +26,7 @@ public enum HippoProperty {
 	ENABLE_ADMIN_CONSOLE("dumbhippo.server.adminconsole.enable", "false"),
 	NEW_FEATURES("dumbhippo.server.newfeatures", "false"),
 	STEALTH_MODE("dumbhippo.server.stealthmode", "false"),
+	SLAVE_MODE("dumbhippo.server.slavemode", "false"),	
 	USER_UPDATE_INTERVAL("dumbhippo.server.userupdateinterval", "300"), // 5 minutes
 	SUMMIT_GROUP_GUID("dumbhippo.server.summitgroupguid", null),	
 	NEW_USER_INVITATION_COUNT("dumbhippo.server.newuserinvitationcount", "0"),

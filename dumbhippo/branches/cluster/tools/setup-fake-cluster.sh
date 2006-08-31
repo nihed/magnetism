@@ -116,7 +116,6 @@ EOF
        <parameter name="jbossBind">$addr</parameter>
        <parameter name="jbossPartition">$USER</parameter>
     </service>
-    <service name="jive" enabled="no"/>
     <service name="mysql" enabled="no"/>
     <service name="imbot" enabled="no"/>
 </superconf>
