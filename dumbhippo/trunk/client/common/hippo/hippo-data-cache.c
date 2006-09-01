@@ -95,102 +95,102 @@ hippo_data_cache_class_init(HippoDataCacheClass *klass)
           
     signals[POST_ADDED] =
         g_signal_new ("post-added",
-            		  G_TYPE_FROM_CLASS (object_class),
-            		  G_SIGNAL_RUN_LAST,
-            		  0,
-            		  NULL, NULL,
-            		  g_cclosure_marshal_VOID__OBJECT,
-            		  G_TYPE_NONE, 1, G_TYPE_OBJECT);
+                      G_TYPE_FROM_CLASS (object_class),
+                      G_SIGNAL_RUN_LAST,
+                      0,
+                      NULL, NULL,
+                      g_cclosure_marshal_VOID__OBJECT,
+                      G_TYPE_NONE, 1, G_TYPE_OBJECT);
 
     signals[POST_REMOVED] =
         g_signal_new ("post-removed",
-            		  G_TYPE_FROM_CLASS (object_class),
-            		  G_SIGNAL_RUN_LAST,
-            		  0,
-            		  NULL, NULL,
-            		  g_cclosure_marshal_VOID__OBJECT,
-            		  G_TYPE_NONE, 1, G_TYPE_OBJECT);
+                      G_TYPE_FROM_CLASS (object_class),
+                      G_SIGNAL_RUN_LAST,
+                      0,
+                      NULL, NULL,
+                      g_cclosure_marshal_VOID__OBJECT,
+                      G_TYPE_NONE, 1, G_TYPE_OBJECT);
 
     signals[ENTITY_ADDED] =
         g_signal_new ("entity-added",
-            		  G_TYPE_FROM_CLASS (object_class),
-            		  G_SIGNAL_RUN_LAST,
-            		  0,
-            		  NULL, NULL,
-            		  g_cclosure_marshal_VOID__OBJECT,
-            		  G_TYPE_NONE, 1, G_TYPE_OBJECT);
+                      G_TYPE_FROM_CLASS (object_class),
+                      G_SIGNAL_RUN_LAST,
+                      0,
+                      NULL, NULL,
+                      g_cclosure_marshal_VOID__OBJECT,
+                      G_TYPE_NONE, 1, G_TYPE_OBJECT);
 
     signals[ENTITY_REMOVED] =
         g_signal_new ("entity-removed",
-            		  G_TYPE_FROM_CLASS (object_class),
-            		  G_SIGNAL_RUN_LAST,
-            		  0,
-            		  NULL, NULL,
-            		  g_cclosure_marshal_VOID__OBJECT,
-            		  G_TYPE_NONE, 1, G_TYPE_OBJECT);
+                      G_TYPE_FROM_CLASS (object_class),
+                      G_SIGNAL_RUN_LAST,
+                      0,
+                      NULL, NULL,
+                      g_cclosure_marshal_VOID__OBJECT,
+                      G_TYPE_NONE, 1, G_TYPE_OBJECT);
 
     signals[MUSIC_SHARING_CHANGED] =
         g_signal_new ("music-sharing-changed",
-            		  G_TYPE_FROM_CLASS (object_class),
-            		  G_SIGNAL_RUN_LAST,
-            		  0,
-            		  NULL, NULL,
-            		  g_cclosure_marshal_VOID__VOID,
-            		  G_TYPE_NONE, 0);
+                      G_TYPE_FROM_CLASS (object_class),
+                      G_SIGNAL_RUN_LAST,
+                      0,
+                      NULL, NULL,
+                      g_cclosure_marshal_VOID__VOID,
+                      G_TYPE_NONE, 0);
 
     signals[HOTNESS_CHANGED] =
         g_signal_new ("hotness-changed",
-            		  G_TYPE_FROM_CLASS (object_class),
-            		  G_SIGNAL_RUN_LAST,
-            		  0,
-            		  NULL, NULL,
-            		  g_cclosure_marshal_VOID__INT,
-            		  G_TYPE_NONE, 1, G_TYPE_INT);
+                      G_TYPE_FROM_CLASS (object_class),
+                      G_SIGNAL_RUN_LAST,
+                      0,
+                      NULL, NULL,
+                      g_cclosure_marshal_VOID__INT,
+                      G_TYPE_NONE, 1, G_TYPE_INT);
 
     signals[ACTIVE_POSTS_CHANGED] =
         g_signal_new ("active-posts-changed",
-            		  G_TYPE_FROM_CLASS (object_class),
-            		  G_SIGNAL_RUN_LAST,
-            		  0,
-            		  NULL, NULL,
-            		  g_cclosure_marshal_VOID__VOID,
-            		  G_TYPE_NONE, 0);
+                      G_TYPE_FROM_CLASS (object_class),
+                      G_SIGNAL_RUN_LAST,
+                      0,
+                      NULL, NULL,
+                      g_cclosure_marshal_VOID__VOID,
+                      G_TYPE_NONE, 0);
 
     signals[MYSPACE_NAME_CHANGED] =
         g_signal_new ("myspace-name-changed",
-            		  G_TYPE_FROM_CLASS (object_class),
-            		  G_SIGNAL_RUN_LAST,
-            		  0,
-            		  NULL, NULL,
-            		  g_cclosure_marshal_VOID__STRING,
-            		  G_TYPE_NONE, 1, G_TYPE_STRING);
+                      G_TYPE_FROM_CLASS (object_class),
+                      G_SIGNAL_RUN_LAST,
+                      0,
+                      NULL, NULL,
+                      g_cclosure_marshal_VOID__STRING,
+                      G_TYPE_NONE, 1, G_TYPE_STRING);
 
     signals[MYSPACE_COMMENTS_CHANGED] =
         g_signal_new ("myspace-comments-changed",
-            		  G_TYPE_FROM_CLASS (object_class),
-            		  G_SIGNAL_RUN_LAST,
-            		  0,
-            		  NULL, NULL,
-            		  g_cclosure_marshal_VOID__VOID,
-            		  G_TYPE_NONE, 0);
+                      G_TYPE_FROM_CLASS (object_class),
+                      G_SIGNAL_RUN_LAST,
+                      0,
+                      NULL, NULL,
+                      g_cclosure_marshal_VOID__VOID,
+                      G_TYPE_NONE, 0);
 
     signals[MYSPACE_CONTACTS_CHANGED] =
         g_signal_new ("myspace-contacts-changed",
-            		  G_TYPE_FROM_CLASS (object_class),
-            		  G_SIGNAL_RUN_LAST,
-            		  0,
-            		  NULL, NULL,
-            		  g_cclosure_marshal_VOID__VOID,
-            		  G_TYPE_NONE, 0);
+                      G_TYPE_FROM_CLASS (object_class),
+                      G_SIGNAL_RUN_LAST,
+                      0,
+                      NULL, NULL,
+                      g_cclosure_marshal_VOID__VOID,
+                      G_TYPE_NONE, 0);
 
     signals[CHAT_ROOM_LOADED] =
         g_signal_new ("chat-room-loaded",
-            		  G_TYPE_FROM_CLASS (object_class),
-            		  G_SIGNAL_RUN_LAST,
-            		  0,
-            		  NULL, NULL,
-            		  g_cclosure_marshal_VOID__OBJECT,
-            		  G_TYPE_NONE, 1, G_TYPE_OBJECT);
+                      G_TYPE_FROM_CLASS (object_class),
+                      G_SIGNAL_RUN_LAST,
+                      0,
+                      NULL, NULL,
+                      g_cclosure_marshal_VOID__OBJECT,
+                      G_TYPE_NONE, 1, G_TYPE_OBJECT);
 
     object_class->finalize = hippo_data_cache_finalize;
 }
@@ -236,7 +236,7 @@ hippo_data_cache_finalize(GObject *object)
     }
 
     g_signal_handlers_disconnect_by_func(cache->connection,
-                                 G_CALLBACK(hippo_data_cache_on_connect), cache);
+                                         G_CALLBACK(hippo_data_cache_on_connect), cache);
     hippo_connection_set_cache(cache->connection, NULL);
     g_object_unref(cache->connection);
 
@@ -303,7 +303,7 @@ hippo_data_cache_set_hotness(HippoDataCache  *cache,
     if (hotness != cache->hotness) {
         HippoHotness old = cache->hotness;
         g_debug("new hotness %s from %s", hippo_hotness_debug_string(hotness),
-            hippo_hotness_debug_string(old));
+                hippo_hotness_debug_string(old));
         cache->hotness = hotness;
         g_signal_emit(cache, signals[HOTNESS_CHANGED], 0, old);
     }
@@ -382,9 +382,9 @@ hippo_data_cache_add_post(HippoDataCache *cache,
     g_object_ref(post);
     g_hash_table_replace(cache->posts, g_strdup(hippo_post_get_guid(post)), post);
  
-	// we always want to create a chat room for a post
+    // we always want to create a chat room for a post
     room = hippo_data_cache_ensure_chat_room(cache, hippo_post_get_guid(post),
-                                      HIPPO_CHAT_KIND_POST);
+                                             HIPPO_CHAT_KIND_POST);
     if (hippo_post_get_chat_room(post) == NULL) {
         hippo_post_set_chat_room(post, room);
     }
@@ -719,31 +719,31 @@ hippo_data_cache_ensure_chat_room(HippoDataCache  *cache,
         HippoEntity *group = NULL;
 
         if (kind == HIPPO_CHAT_KIND_POST || kind == HIPPO_CHAT_KIND_UNKNOWN) {
-			post = hippo_data_cache_lookup_post(cache, chat_id);
+            post = hippo_data_cache_lookup_post(cache, chat_id);
             
-			if (post != NULL && kind == HIPPO_CHAT_KIND_UNKNOWN) {
+            if (post != NULL && kind == HIPPO_CHAT_KIND_UNKNOWN) {
                 kind = HIPPO_CHAT_KIND_POST;
-			}
-		}
-
-		if (kind == HIPPO_CHAT_KIND_GROUP || kind == HIPPO_CHAT_KIND_UNKNOWN) {
+            }
+        }
+        
+        if (kind == HIPPO_CHAT_KIND_GROUP || kind == HIPPO_CHAT_KIND_UNKNOWN) {
             group = hippo_data_cache_lookup_entity(cache, chat_id);
             
-			if (group != NULL && hippo_entity_get_entity_type(group) != HIPPO_ENTITY_GROUP)
-				group = NULL;
+            if (group != NULL && hippo_entity_get_entity_type(group) != HIPPO_ENTITY_GROUP)
+                group = NULL;
             
-			if (group != NULL && kind == HIPPO_CHAT_KIND_UNKNOWN) {
+            if (group != NULL && kind == HIPPO_CHAT_KIND_UNKNOWN) {
                 kind = HIPPO_CHAT_KIND_GROUP;
-			}
-		}
+            }
+        }
         
         room = hippo_chat_room_new(chat_id, kind);
 
         if (post)
             hippo_post_set_chat_room(post, room);
 
-		if (group) {
-			hippo_entity_set_chat_room(group, room);
+        if (group) {
+            hippo_entity_set_chat_room(group, room);
         }
 
         g_signal_connect(room, "loaded",
@@ -983,7 +983,7 @@ hippo_data_cache_add_debug_data(HippoDataCache *cache)
                                "cause differences from what we would have if we had a short title without "
                                "the kind of excessive length that you see here.");
     hippo_post_set_recipients(linkshare1, recipients);
-	hippo_post_set_to_world(linkshare1, TRUE);
+    hippo_post_set_to_world(linkshare1, TRUE);
     hippo_post_set_timeout(linkshare1, 0);
     hippo_post_set_new(linkshare1, TRUE);
 
@@ -995,22 +995,22 @@ hippo_data_cache_add_debug_data(HippoDataCache *cache)
     hippo_post_set_sender(linkshare2, hippo_entity_get_guid(person1));
     hippo_post_set_description(linkshare2, "Wow, this photo is funny");
     hippo_post_set_recipients(linkshare2, recipients);
-	hippo_post_set_to_world(linkshare2, FALSE);
+    hippo_post_set_to_world(linkshare2, FALSE);
     hippo_post_set_timeout(linkshare2, 0);
     hippo_post_set_new(linkshare2, TRUE);
 
     hippo_post_set_info(linkshare2, 
-        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-        "<postInfo>"
-        "    <flickr>"
-        "        <photos>"
-        "             <photo>"
-        "                  <photoUrl>/files/postinfo/0eacc4088d8fc92edb2a9299e15acae6efa710f1</photoUrl>"
-        "                  <photoId>73029609</photoId>"
-        "             </photo>"
-        "        </photos>"
-        "    </flickr>"
-        "</postInfo>");
+                        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                        "<postInfo>"
+                        "    <flickr>"
+                        "        <photos>"
+                        "             <photo>"
+                        "                  <photoUrl>/files/postinfo/0eacc4088d8fc92edb2a9299e15acae6efa710f1</photoUrl>"
+                        "                  <photoId>73029609</photoId>"
+                        "             </photo>"
+                        "        </photos>"
+                        "    </flickr>"
+                        "</postInfo>");
     
     hippo_data_cache_add_post(cache, linkshare2);
 }
