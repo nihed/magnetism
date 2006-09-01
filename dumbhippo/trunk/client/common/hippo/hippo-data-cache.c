@@ -51,6 +51,8 @@ enum {
     POST_REMOVED,
     ENTITY_ADDED,
     ENTITY_REMOVED,
+    BLOCK_ADDED,
+    BLOCK_REMOVED,    
     MUSIC_SHARING_CHANGED,
     HOTNESS_CHANGED,
     ACTIVE_POSTS_CHANGED,
@@ -129,6 +131,24 @@ hippo_data_cache_class_init(HippoDataCacheClass *klass)
                       g_cclosure_marshal_VOID__OBJECT,
                       G_TYPE_NONE, 1, G_TYPE_OBJECT);
 
+    signals[BLOCK_ADDED] =
+        g_signal_new ("block-added",
+                      G_TYPE_FROM_CLASS (object_class),
+                      G_SIGNAL_RUN_LAST,
+                      0,
+                      NULL, NULL,
+                      g_cclosure_marshal_VOID__OBJECT,
+                      G_TYPE_NONE, 1, G_TYPE_OBJECT);
+
+    signals[BLOCK_REMOVED] =
+        g_signal_new ("block-removed",
+                      G_TYPE_FROM_CLASS (object_class),
+                      G_SIGNAL_RUN_LAST,
+                      0,
+                      NULL, NULL,
+                      g_cclosure_marshal_VOID__OBJECT,
+                      G_TYPE_NONE, 1, G_TYPE_OBJECT);
+    
     signals[MUSIC_SHARING_CHANGED] =
         g_signal_new ("music-sharing-changed",
                       G_TYPE_FROM_CLASS (object_class),
@@ -441,6 +461,22 @@ hippo_data_cache_ensure_bare_entity(HippoDataCache *cache,
     return entity;
 }                                    
 
+void
+hippo_data_cache_add_block(HippoDataCache *cache,
+                           HippoBlock     *block)
+{
+    HippoChatRoom *room;
+    
+    g_return_if_fail(hippo_data_cache_lookup_block(cache, hippo_block_get_guid(block)) == NULL);
+
+    g_object_ref(block);
+    g_hash_table_replace(cache->blocks, g_strdup(hippo_block_get_guid(block)), block);
+ 
+
+    g_debug("Block %s added, emitting block-added", hippo_block_get_guid(block));
+    g_signal_emit(cache, signals[BLOCK_ADDED], 0, block);
+}
+
 HippoPost*
 hippo_data_cache_lookup_post(HippoDataCache  *cache, 
                              const char      *guid)
@@ -457,6 +493,15 @@ hippo_data_cache_lookup_entity(HippoDataCache  *cache,
     g_return_val_if_fail(HIPPO_IS_DATA_CACHE(cache), NULL);
    
     return g_hash_table_lookup(cache->entities, guid);
+}
+
+HippoBlock*
+hippo_data_cache_lookup_block(HippoDataCache  *cache,
+                              const char      *guid)
+{
+    g_return_val_if_fail(HIPPO_IS_DATA_CACHE(cache), NULL);
+   
+    return g_hash_table_lookup(cache->blocks, guid);
 }
 
 HippoPerson*

@@ -1623,6 +1623,64 @@ hippo_connection_request_hotness(HippoConnection *connection)
     g_debug("Sent request for hotness");
 }
 
+static gboolean
+hippo_connection_parse_block(HippoConnection *connection,
+                             LmMessageNode   *block_node)
+{
+    HippoBlock *block;
+    const char *guid;
+    gboolean created_block;
+    
+    g_assert(connection->cache != NULL);
+
+    guid = lm_message_node_get_attribute(block_node, "id");
+    if (!guid)
+        return FALSE;
+
+    block = hippo_data_cache_lookup_block(connection->cache, guid);
+    if (block == NULL) {
+        block = hippo_block_new(guid);
+        created_block = TRUE;
+    } else {
+        g_object_ref(block);
+        created_block = FALSE;
+    }
+    g_assert(block != NULL);
+
+    g_debug("Parsed block %s created = %d", guid, created_block);
+
+    if (created_block) {
+        hippo_data_cache_add_block(connection->cache, block);
+    }
+    
+    g_object_unref(block);
+
+    return TRUE;
+}
+
+static gboolean
+is_block(LmMessageNode *node)
+{
+    return node_matches(node, "block", NULL);
+}
+
+static gboolean
+hippo_connection_parse_blocks(HippoConnection *connection,
+                              LmMessageNode   *node)
+{
+    LmMessageNode *subchild;
+
+    for (subchild = node->children; subchild; subchild = subchild->next) {
+        if (is_block(subchild)) {
+            if (!hippo_connection_parse_block(connection, subchild)) {
+                g_warning("failed to parse block");
+                return FALSE;
+            }
+        }
+    }
+    return TRUE;
+}
+
 static LmHandlerResult
 on_request_blocks_reply(LmMessageHandler *handler,
                         LmConnection     *lconnection,
@@ -1639,8 +1697,12 @@ on_request_blocks_reply(LmMessageHandler *handler,
     if (!message_is_iq_with_namespace(message, "http://dumbhippo.com/protocol/blocks", "blocks")) {
         return LM_HANDLER_RESULT_REMOVE_MESSAGE;
     }
-    
-    /* FIXME */
+
+    if (child == NULL) {
+        g_warning("blocks reply has no blocks");
+    } else {
+        hippo_connection_parse_blocks(connection, child);
+    }
     
     return LM_HANDLER_RESULT_REMOVE_MESSAGE;
 }

@@ -27,6 +27,8 @@ $(COMMON_MARSHAL_BODY): $(COMMON_MARSHAL_LIST)
 LIBHIPPO_SOURCEFILES =						\
 	$(COMMONSRCDIR)/hippo/hippo-basics.c			\
 	$(COMMONSRCDIR)/hippo/hippo-basics.h			\
+	$(COMMONSRCDIR)/hippo/hippo-block.c			\
+	$(COMMONSRCDIR)/hippo/hippo-block.h			\
 	$(COMMONSRCDIR)/hippo/hippo-chat-room.c			\
 	$(COMMONSRCDIR)/hippo/hippo-chat-room.h			\
 	$(COMMONSRCDIR)/hippo/hippo-common.h			\
