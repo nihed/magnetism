@@ -30,6 +30,7 @@ struct _HippoDataCache {
     GSList          *active_posts;
     GHashTable      *entities;
     GHashTable      *chats;
+    GHashTable      *blocks;
     HippoPerson     *cached_self;
     char            *myspace_name;
     GSList          *myspace_contacts;
@@ -73,6 +74,8 @@ hippo_data_cache_init(HippoDataCache *cache)
                                             g_free, (GFreeFunc) g_object_unref);
     cache->chats = g_hash_table_new_full(g_str_hash, g_str_equal,
                                          g_free, (GFreeFunc) g_object_unref);
+    cache->blocks = g_hash_table_new_full(g_str_hash, g_str_equal,
+                                          g_free, (GFreeFunc) g_object_unref);
                                                
     /* these defaults are important to be sure we
      * do nothing until we hear otherwise
@@ -222,6 +225,8 @@ hippo_data_cache_finalize(GObject *object)
     hippo_data_cache_foreach_chat_room(cache, TRUE, disconnect_chat_room, cache);
     g_hash_table_destroy(cache->chats);
 
+    g_hash_table_destroy(cache->blocks);
+    
     /* destroy entities after stuff pointing to entities */
     g_hash_table_destroy(cache->entities);
 
@@ -393,26 +398,26 @@ void
 hippo_data_cache_add_entity(HippoDataCache *cache,
                             HippoEntity    *entity)
 {
-	HippoChatRoom* chat;
-
-	g_return_if_fail(hippo_data_cache_lookup_entity(cache, hippo_entity_get_guid(entity)) == NULL);
-
+    HippoChatRoom* chat;
+    
+    g_return_if_fail(hippo_data_cache_lookup_entity(cache, hippo_entity_get_guid(entity)) == NULL);
+    
     g_object_ref(entity);
-	g_hash_table_replace(cache->entities, g_strdup(hippo_entity_get_guid(entity)), entity);
-	g_debug("Entity %s of type %d added, emitting entity-added", 
-		    hippo_entity_get_guid(entity), hippo_entity_get_entity_type(entity));
-
-	if (hippo_entity_get_entity_type(entity) == HIPPO_ENTITY_GROUP) {
-		// we do not want to create a chat room for every group that the client learns about,
-		// but we should look up if we already have the chat room, and then associate it with
-		// the group, because we should only set the chat room to be fully loaded once it has 
-		// an associated entity or post
+    g_hash_table_replace(cache->entities, g_strdup(hippo_entity_get_guid(entity)), entity);
+    g_debug("Entity %s of type %d added, emitting entity-added", 
+            hippo_entity_get_guid(entity), hippo_entity_get_entity_type(entity));
+    
+    if (hippo_entity_get_entity_type(entity) == HIPPO_ENTITY_GROUP) {
+        // we do not want to create a chat room for every group that the client learns about,
+        // but we should look up if we already have the chat room, and then associate it with
+        // the group, because we should only set the chat room to be fully loaded once it has 
+        // an associated entity or post
         chat = hippo_data_cache_lookup_chat_room(cache, hippo_entity_get_guid(entity), NULL);
-
-		if (chat) {
-			hippo_entity_set_chat_room(entity, chat);
+        
+        if (chat) {
+            hippo_entity_set_chat_room(entity, chat);
         }
-	}
+    }
 
     g_signal_emit(cache, signals[ENTITY_ADDED], 0, entity);    
 }
