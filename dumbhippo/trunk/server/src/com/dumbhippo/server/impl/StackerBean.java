@@ -782,7 +782,7 @@ public class StackerBean implements Stacker {
 					}
 			});
 			
-			flusher.run();
+			flusher.start();
 		}
 	}
 	
