@@ -467,12 +467,8 @@ public class RewriteServlet extends HttpServlet {
 			buildstampLock.unlock();
 		}
 		
-		buildstampThread.shutdown();
-		try {
-			buildstampThread.awaitTermination(30, TimeUnit.SECONDS);
-		} catch (InterruptedException e) {
-			logger.warn("Buildstamp properties thread shutdown interrupted", e);
-		}
+		ThreadUtils.shutdownAndAwaitTermination(buildstampThread);
+
 		logger.debug("Done waiting for buildstamp scanner thread, terminated={}", buildstampThread.isTerminated());
 		buildstampThread = null;
 	}

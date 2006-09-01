@@ -33,11 +33,11 @@ public final class UniqueTaskExecutor<KeyType,ResultType> {
 		return threadPool;
 	}
 	
-	public synchronized void shutdown() {
+	public synchronized void shutdownAndAwaitTermination() {
 		shutdown = true;
 			
 		if (threadPool != null) {
-			threadPool.shutdown();
+			ThreadUtils.shutdownAndAwaitTermination(threadPool);
 			threadPool = null;
 		}
 	}

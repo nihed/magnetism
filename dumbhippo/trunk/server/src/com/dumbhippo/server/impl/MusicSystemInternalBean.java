@@ -155,7 +155,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			shutdown = true;
 			
 			if (threadPool != null) {
-				threadPool.shutdown();
+				ThreadUtils.shutdownAndAwaitTermination(threadPool);
 				threadPool = null;
 			}
 		}	

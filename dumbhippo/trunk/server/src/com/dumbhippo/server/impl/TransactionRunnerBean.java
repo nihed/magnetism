@@ -40,7 +40,7 @@ public class TransactionRunnerBean implements TransactionRunner {
 			throw new RuntimeException("getPostTransactionExecutor() called after shutdown");
 		
 		if (postTransactionExecutor == null)
-			postTransactionExecutor = ThreadUtils.newSingleThreadExecutor("post-transaction tasks");
+			postTransactionExecutor = ThreadUtils.newCachedThreadPool("post-transaction tasks");
 		
 		return postTransactionExecutor;
 	}
@@ -49,9 +49,10 @@ public class TransactionRunnerBean implements TransactionRunner {
 		shutdown = true;
 		
 		if (postTransactionExecutor != null) {
-			postTransactionExecutor.shutdown();
+			ThreadUtils.shutdownAndAwaitTermination(postTransactionExecutor);
 			postTransactionExecutor = null;
 		}
+		logger.debug("TransactionRunner shut down");
 	}
 	
 	public <T> T runTaskInNewTransaction(Callable<T> callable) throws Exception {
@@ -132,8 +133,33 @@ public class TransactionRunnerBean implements TransactionRunner {
 		runTaskOnTransactionComplete(runnable, true);
 	}
 
-	public void runTaskOnTransactionComplete(final Runnable runnable) {
+	public void runTaskOnTransactionCommitOrRollback(final Runnable runnable) {
 		runTaskOnTransactionComplete(runnable, false);
+	}
+
+	static private String transactionStatusString(int status) {
+		switch (status) {
+		case Status.STATUS_ACTIVE:
+			return "ACTIVE - " + status;
+		case Status.STATUS_COMMITTED:
+			return "COMMITTED - " + status;
+		case Status.STATUS_MARKED_ROLLBACK:
+			return "MARKED_ROLLBACK - " + status;
+		case Status.STATUS_NO_TRANSACTION:
+			return "NO_TRANSACTION - " + status;
+		case Status.STATUS_PREPARED:
+			return "PREPARED - " + status;
+		case Status.STATUS_PREPARING:
+			return "PREPARING - " + status;
+		case Status.STATUS_ROLLEDBACK:
+			return "ROLLEDBACK - " + status;
+		case Status.STATUS_ROLLING_BACK:
+			return "ROLLING_BACK - " + status;
+		case Status.STATUS_UNKNOWN:
+			return "UNKNOWN - " + status;
+		default:
+			return "NOT HANDLED - " + status;
+		}
 	}
 	
 	private void runTaskOnTransactionComplete(final Runnable runnable, final boolean checkCommited) {
@@ -141,15 +167,20 @@ public class TransactionRunnerBean implements TransactionRunner {
 		try {
 			tm = (TransactionManager) (new InitialContext()).lookup("java:/TransactionManager");
 			tm.getTransaction().registerSynchronization(new Synchronization() {
-				public void beforeCompletion() {}
+				public void beforeCompletion() {
+					// logger.debug("Post-commit task before completion {}", runnable.getClass().getName());
+				}
 
 				public void afterCompletion(int status) {
+					//logger.debug("Post-commit task after completion status is {} {}", transactionStatusString(status),
+					//		runnable.getClass().getName());
+					
 					if ((!checkCommited) || (status == Status.STATUS_COMMITTED)) {
-						try {
-							getPostTransactionExecutor().submit(runnable);
-						} catch (RuntimeException e) {
-							logger.error("Post-commit task threw exception", e);
-						}
+						getPostTransactionExecutor().execute(runnable);
+						//logger.debug("Post-commit task submitted");
+					} else {
+						logger.debug("Not running post-commit task since checkCommited={} and status={}",
+								checkCommited, transactionStatusString(status));
 					}
 				}
 			});

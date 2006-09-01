@@ -159,7 +159,7 @@ public class Block extends EmbeddedGuidPersistable {
 		return data3;
 	}
 
-	public void setData3(long data3){
+	public void setData3(long data3) {
 		this.data3 = data3;
 	}
 	

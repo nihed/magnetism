@@ -12,9 +12,6 @@ import java.util.Set;
 import javax.jms.ObjectMessage;
 
 import org.dom4j.Attribute;
-import org.dom4j.Document;
-import org.dom4j.DocumentException;
-import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.SessionManager;
@@ -31,6 +28,7 @@ import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
+import com.dumbhippo.jive.XmlParser;
 import com.dumbhippo.jms.JmsProducer;
 import com.dumbhippo.server.ChatRoomInfo;
 import com.dumbhippo.server.ChatRoomKind;
@@ -355,16 +353,7 @@ public class Room {
 			    		                        elementName);
 			}
 			if (objectXml != null) {
-				Document xmlDumpDoc;
-				try {
-					xmlDumpDoc = DocumentHelper.parseText(objectXml);
-				} catch (DocumentException e) {
-					throw new RuntimeException("Couldn't parse result for an object associated with a room");
-				}
-				
-				Element childElement = xmlDumpDoc.getRootElement();
-				childElement.detach();
-				
+				Element childElement = XmlParser.elementFromXml(objectXml);
 				if (kind == ChatRoomKind.GROUP) { 
 				    Element objectElt = roomInfo.addElement(elementName);
 				    objectElt.add(childElement);

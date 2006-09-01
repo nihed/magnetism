@@ -1623,6 +1623,50 @@ hippo_connection_request_hotness(HippoConnection *connection)
     g_debug("Sent request for hotness");
 }
 
+static LmHandlerResult
+on_request_blocks_reply(LmMessageHandler *handler,
+                        LmConnection     *lconnection,
+                        LmMessage        *message,
+                        gpointer          data)
+{
+    HippoConnection *connection = HIPPO_CONNECTION(data);
+    LmMessageNode *child;
+
+    child = message->node->children;
+
+    g_debug("got reply for blocks");
+
+    if (!message_is_iq_with_namespace(message, "http://dumbhippo.com/protocol/blocks", "blocks")) {
+        return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+    }
+    
+    /* FIXME */
+    
+    return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+}
+
+void
+hippo_connection_request_blocks(HippoConnection *connection)
+{
+    LmMessage *message;
+    LmMessageNode *node;
+    LmMessageNode *child;
+    
+    message = lm_message_new_with_sub_type(HIPPO_ADMIN_JID, LM_MESSAGE_TYPE_IQ,
+                                           LM_MESSAGE_SUB_TYPE_GET);
+    node = lm_message_get_node(message);
+    
+    child = lm_message_node_add_child (node, "blocks", NULL);
+    lm_message_node_set_attribute(child, "xmlns", "http://dumbhippo.com/protocol/blocks");
+
+    hippo_connection_send_message_with_reply(connection, message,
+                                             on_request_blocks_reply, SEND_MODE_AFTER_AUTH);
+
+    lm_message_unref(message);
+
+    g_debug("Sent request for blocks");
+}
+
 static gboolean
 get_entity_guid(LmMessageNode *node,
                 const char   **guid_p)

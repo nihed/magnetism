@@ -30,7 +30,7 @@ public class ConfigurationBean implements Configuration {
 	
 	@PostConstruct
 	public void init() {
-		logger.debug("Loading dumbhippo configuration properties");
+		logger.debug("Loading dumbhippo configuration properties (happens once per ConfigurationBean instance)");
 		
 		Properties systemProperties = System.getProperties();
 		

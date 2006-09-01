@@ -848,6 +848,7 @@ hippo_data_cache_on_connect(HippoConnection      *connection,
          */
         hippo_connection_request_hotness(connection);
         hippo_connection_request_recent_posts(connection);
+        hippo_connection_request_blocks(connection);
     } else {
         /* Clear stuff, so we get "changed" signals both on disconnect 
          * and again on reconnect, and so we don't have stale data on

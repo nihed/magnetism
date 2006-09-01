@@ -39,7 +39,6 @@ import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
-import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.EntityView;
 import com.dumbhippo.server.ExternalAccountSystem;
@@ -384,22 +383,23 @@ public class MessageSenderBean implements MessageSender {
 		}
 	}
 
-	private static class BlocksExtension implements PacketExtension {
+	private static class BlocksChangedExtension implements PacketExtension {
 
-		private static final String ELEMENT_NAME = "blocks";
+		private static final String ELEMENT_NAME = "blocksChanged";
 
 		private static final String NAMESPACE = CommonXmlWriter.NAMESPACE_BLOCKS;
 		
-		private String xml;
+		private long lastTimestamp;
 		
-		public BlocksExtension(UserViewpoint viewpoint, User user, List<UserBlockData> list) {
-			XmlBuilder builder = new XmlBuilder();
-			CommonXmlWriter.writeBlocks(builder, viewpoint, user, list, NAMESPACE);
-			this.xml = builder.toString();
+		public BlocksChangedExtension(long lastTimestamp) {
+			this.lastTimestamp = lastTimestamp;
 		}
 
 		public String toXML() {
-			return this.xml;
+			XmlBuilder builder = new XmlBuilder();
+			builder.openElement(ELEMENT_NAME, "xmlns", NAMESPACE, "lastTimestamp", Long.toString(lastTimestamp));
+			builder.closeElement();
+			return builder.toString();
 		}
 		
 		public String getElementName() {
@@ -442,10 +442,14 @@ public class MessageSenderBean implements MessageSender {
 
 			return connection;
 		}
+
+		private Message createMessageFor(Guid userId, Message.Type type) {
+			// FIXME should dumbhippo.com domain be hardcoded here?			
+			return new Message(userId.toJabberId("dumbhippo.com"), type);
+		}		
 		
 		private Message createMessageFor(User user, Message.Type type) {
-			// FIXME should dumbhippo.com domain be hardcoded here?			
-			return new Message(user.getGuid().toJabberId("dumbhippo.com"), type);
+			return createMessageFor(user.getGuid(), type);
 		}
 		
 		private Message createMessageFor(User user) {
@@ -600,11 +604,14 @@ public class MessageSenderBean implements MessageSender {
 			connection.sendPacket(message);
 		}
 		
-		public synchronized void sendBlocks(UserViewpoint viewpoint, User user, List<UserBlockData> list) {
+		public synchronized void sendBlocksChanged(Guid userId, long lastTimestamp) {
+			/* Note that this is HEADLINE i.e. we don't backlog it; on login the client asks for new stuff,
+			 * and while logged in it sees any changes
+			 */
 			XMPPConnection connection = getConnection();
-			Message message = createMessageFor(viewpoint.getViewer());
-			message.addExtension(new BlocksExtension(viewpoint, user, list));
-			logger.debug("Sending blocks list message to {}", message.getTo());			
+			Message message = createMessageFor(userId, Message.Type.HEADLINE);
+			message.addExtension(new BlocksChangedExtension(lastTimestamp));
+			logger.debug("Sending blocks changed message to {}", message.getTo());			
 			connection.sendPacket(message);
 		}
 	}
@@ -898,7 +905,16 @@ public class MessageSenderBean implements MessageSender {
 		}
 	}
 	
-	public void sendBlocks(UserViewpoint viewpoint, User user, List<UserBlockData> list) {
-		xmppSender.sendBlocks(viewpoint, user, list);
+	public void sendBlocksChanged(Guid userId, long lastTimestamp) {
+		// we don't want to be doing all the work for users who aren't online anyway,
+		// this should be the common case
+		LiveState state = LiveState.getInstance();
+		LiveClientData clientData = state.peekLiveClientData(userId);
+		if (clientData == null || !clientData.isAvailable()) {
+			logger.debug("user {} is offline, not notifying of blocks changed", userId);
+			return;
+		}
+
+		xmppSender.sendBlocksChanged(userId, lastTimestamp);
 	}
 }

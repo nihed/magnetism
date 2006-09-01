@@ -37,7 +37,7 @@ public interface TransactionRunner {
 	 * 
 	 * @param runnable executed after transaction completion
 	 */	
-	public void runTaskOnTransactionComplete(Runnable runnable);
+	public void runTaskOnTransactionCommitOrRollback(Runnable runnable);
 	
 	// internal, way to get TransactionAttribute, do not use
 	public <T> T internalRunTaskInNewTransaction(Callable<T> callable) throws Exception;

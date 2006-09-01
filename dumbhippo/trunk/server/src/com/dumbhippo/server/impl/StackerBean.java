@@ -45,6 +45,7 @@ import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.IdentitySpider;
+import com.dumbhippo.server.MessageSender;
 import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PostingBoard;
@@ -99,21 +100,19 @@ public class StackerBean implements Stacker {
 			q = em.createQuery("SELECT block FROM Block block WHERE block.blockType=:type " +
 					           "AND block.data1=:data1 AND block.data2=:data2 AND block.data3=:data3");
 			q.setParameter("data1", data1.toString());
-			q.setParameter("data2", data2.toString());
-			q.setParameter("data3", data3);			
+			q.setParameter("data2", data2.toString());			
 		} else if (data1 != null) {
 			q = em.createQuery("SELECT block FROM Block block WHERE block.blockType=:type " +
 					           "AND block.data1=:data1 AND block.data2='' AND block.data3=:data3");
 			q.setParameter("data1", data1.toString());
-			q.setParameter("data3", data3);	
 		} else if (data2 != null) {
 			q = em.createQuery("SELECT block FROM Block block WHERE block.blockType=:type " +
 					           "AND block.data2=:data2 AND block.data1='' AND block.data3=:data3");
-			q.setParameter("data2", data2.toString());
-			q.setParameter("data3", data3);	
+			q.setParameter("data2", data2.toString());	
 		} else {
 			throw new IllegalArgumentException("must provide either data1 or data2 in query for block type " + type);
 		}
+		q.setParameter("data3", data3);
 		q.setParameter("type", type);
 		try {
 			return (Block) q.getSingleResult();
@@ -122,21 +121,22 @@ public class StackerBean implements Stacker {
 		}
 	}
 
-	private UserBlockData queryUserBlockData(User user, BlockType type, Guid data1, Guid data2) throws NotFoundException {
+	private UserBlockData queryUserBlockData(User user, BlockType type, Guid data1, Guid data2, long data3) throws NotFoundException {
 		Query q;
 		if (data1 != null && data2 != null) {
-			q = em.createQuery("SELECT ubd FROM UserBlockData ubd, Block block WHERE ubd.block = block AND ubd.user = :user AND block.blockType=:type AND block.data1=:data1 AND block.data2=:data2");
+			q = em.createQuery("SELECT ubd FROM UserBlockData ubd, Block block WHERE ubd.block = block AND ubd.user = :user AND block.blockType=:type AND block.data1=:data1 AND block.data2=:data2 AND block.data3=:data3");
 			q.setParameter("data1", data1.toString());
 			q.setParameter("data2", data2.toString());
 		} else if (data1 != null) {
-			q = em.createQuery("SELECT ubd FROM UserBlockData ubd, Block block WHERE ubd.block = block AND ubd.user = :user AND block.blockType=:type AND block.data1=:data1 AND block.data2=''");
+			q = em.createQuery("SELECT ubd FROM UserBlockData ubd, Block block WHERE ubd.block = block AND ubd.user = :user AND block.blockType=:type AND block.data1=:data1 AND block.data2='' AND block.data3=:data3");
 			q.setParameter("data1", data1.toString());
 		} else if (data2 != null) {
-			q = em.createQuery("SELECT ubd FROM UserBlockData ubd, Block block WHERE ubd.block = block AND ubd.user = :user AND block.blockType=:type AND block.data2=:data2 AND block.data1=''");
+			q = em.createQuery("SELECT ubd FROM UserBlockData ubd, Block block WHERE ubd.block = block AND ubd.user = :user AND block.blockType=:type AND block.data2=:data2 AND block.data1='' AND block.data3=:data3");
 			q.setParameter("data2", data2);
 		} else {
 			throw new IllegalArgumentException("must provide either data1 or data2 in query for block type " + type);
 		}
+		q.setParameter("data3", data3);
 		q.setParameter("user", user);
 		q.setParameter("type", type);
 		try {
@@ -195,12 +195,20 @@ public class StackerBean implements Stacker {
 		}
 		
 		public void run() {
+			logger.debug("updating cached stack timestamp for {} users and clearing for {} users",
+					needNewTimestamp != null ? needNewTimestamp.size() : 0, 
+							needClearTimestamp != null ? needClearTimestamp.size() : 0);
+			
 			UserCache cache = getUserCache();
-			for (Guid g : needNewTimestamp) {
-				cache.updateLastTimestamp(g, newTimestamp);
+			if (needNewTimestamp != null) {
+				for (Guid g : needNewTimestamp) {
+					cache.updateLastTimestamp(g, newTimestamp);
+				}
 			}
-			for (Guid g : needClearTimestamp) {
-				cache.clearLastTimestamp(g);
+			if (needClearTimestamp != null) {
+				for (Guid g : needClearTimestamp) {
+					cache.clearLastTimestamp(g);
+				}
 			}
 		}
 	}
@@ -245,7 +253,8 @@ public class StackerBean implements Stacker {
 			old.setDeleted(true);
 		}
 		
-		runner.runTaskOnTransactionCommit(cacheTask);		
+		logger.debug("{} existing and {} desired users for block, queuing cache update task", userDatas.size(), desiredUsers.size());
+		runner.runTaskOnTransactionCommit(cacheTask);
 	}
 
 	private Set<User> getUsersWhoCare(Block block) {
@@ -377,16 +386,17 @@ public class StackerBean implements Stacker {
         stack(type, data1, data2, -1, activity);
 	}
 	
-	private void click(BlockType type, Guid data1, Guid data2, User user, long clickTime) {
+	private void click(BlockType type, Guid data1, Guid data2, long data3, User user, long clickTime) {
 		if (disabled)
 			return;
 		
 		UserBlockData ubd;
 		try {
-			ubd = queryUserBlockData(user, type, data1, data2);
+			ubd = queryUserBlockData(user, type, data1, data2, data3);
 		} catch (NotFoundException e) {
 			// for now assume this means we don't want to record clicks for the given
-			// object, otherwise the ubd should already be created 
+			// object, otherwise the ubd should already be created
+			logger.debug("No UserBlockData for user {} block type {} data1 " + data1, user, type);
 			return;
 		}
 		
@@ -402,6 +412,7 @@ public class StackerBean implements Stacker {
 		if (ubd.isIgnored())
 			ubd.setIgnored(false);
 		
+		logger.debug("due to click, restacking block {} with new time {}", ubd.getBlock(), clickTime);
 		// now update the timestamp in the block (if it's newer)
 		// and update user caches for all users
 		stack(ubd.getBlock(), clickTime);
@@ -462,7 +473,7 @@ public class StackerBean implements Stacker {
 	}
 	
 	public void clickedPost(Post post, User user, long clickedTime) {
-		click(BlockType.POST, post.getGuid(), null, user, clickedTime);
+		click(BlockType.POST, post.getGuid(), null, -1, user, clickedTime);
 	}
 	
 	public List<UserBlockData> getStack(Viewpoint viewpoint, User user, long lastTimestamp, int start, int count) {
@@ -515,8 +526,13 @@ public class StackerBean implements Stacker {
 		for (UserBlockData ubd : list) {
 			long stamp = ubd.getBlock().getTimestampAsLong();
 			
-			if (stamp < lastTimestamp)
-				logger.error("Query returned block at wrong timestamp lastTimestamp {} block {}", lastTimestamp, ubd.getBlock());
+			if (stamp < lastTimestamp) {
+				// FIXME I think the problem here may be that the database only goes to seconds not milliseconds,
+				// at least when doing comparisons
+				boolean secondsMatch = ((cached / 1000) == (newestTimestamp / 1000));
+				logger.error("Query returned block at wrong timestamp lastTimestamp {} block {}: match at seconds resolution: " + secondsMatch,
+						lastTimestamp, ubd.getBlock());
+			}
 			
 			if (stamp == lastTimestamp)
 				countAtLastTimestamp += 1;
@@ -531,7 +547,10 @@ public class StackerBean implements Stacker {
 		if (newestTimestamp < 0)
 			throw new RuntimeException("had a block with negative timestamp? " + list);
 		if (cached >= 0 && cached < newestTimestamp) {
-			logger.error("Cached timestamp {} was somehow older than actual newest timestamp {}",
+			//	FIXME I think the problem here may be that the database only goes to seconds not milliseconds,
+			// at least when doing comparisons
+			boolean secondsMatch = ((cached / 1000) == (newestTimestamp / 1000));
+			logger.error("Cached timestamp {} was somehow older than actual newest timestamp {}, match at seconds resolution: " + secondsMatch,
 					cached, newestTimestamp);
 		}
 		
@@ -570,12 +589,15 @@ public class StackerBean implements Stacker {
 	 * Tracks the newest block timestamp for a given user, which allows us to avoid
 	 * querying the db if someone asks for blocks at or after this cached timestamp.
 	 * 
+	 * Note this object is accessed from the web threads and the xmpp notifier thread,
+	 * so has to be fully threadsafe
+	 * 
 	 * @author Havoc Pennington
 	 *
 	 */
 	static private class UserCache {
 		@SuppressWarnings("unused")
-		static private final Logger logger = GlobalSetup.getLogger(UserCache.class);		
+		static private final Logger logger = GlobalSetup.getLogger(UserCache.class);
 		
 		static private class CacheEntry {
 			public long lastTimestamp;
@@ -594,8 +616,11 @@ public class StackerBean implements Stacker {
 		
 		private Map<Guid,CacheEntry> entries;
 		
+		private XmppNotifier notifier;
+		
 		UserCache() {
 			entries = new HashMap<Guid,CacheEntry>();
+			notifier = new XmppNotifier(this);
 		}
 		
 		// called if e.g. we remove a block from a user's list, and thus
@@ -603,6 +628,7 @@ public class StackerBean implements Stacker {
 		synchronized void clearLastTimestamp(Guid guid) {
 			//logger.debug("clearing last block timestamp for user {}", guid);
 			entries.remove(guid);
+			notifier.add(guid);
 		}
 		
 		// called whenever we save a new block timestamp, if it's the newest
@@ -623,6 +649,7 @@ public class StackerBean implements Stacker {
 					entry.count = 1;
 				}
 			}
+			notifier.add(guid);
 			//logger.debug("updating block timestamp for user {} to {}", guid, entry);
 		}
 		
@@ -642,6 +669,7 @@ public class StackerBean implements Stacker {
 					entry.count = blockCount;
 				}
 			}
+			notifier.add(guid);
 			//logger.debug("saving block timestamp for user {} as {}", guid, entry);
 		}
 		
@@ -657,6 +685,104 @@ public class StackerBean implements Stacker {
 				return -1;
 			else
 				return entry.lastTimestamp;
+		}
+	}
+	
+	static private class XmppNotifier {		
+		private UserCache cache;
+		private Set<Guid> users;
+		private Thread flusher;
+		
+		XmppNotifier(UserCache cache) {
+			this.cache = cache;
+		}
+		
+		synchronized void add(Guid user) {
+			if (users == null)
+				users = new HashSet<Guid>();
+			this.users.add(user);
+			
+			flush();
+		}
+		
+		// This goofy setup with multiple possible threads is an attempt to 
+		// avoid having to hold a static handle to the thread and startup/shutdown, 
+		// instead the threads just exit on their own. But not sure it turned out
+		// to be a good approach.
+		synchronized private void flush() {
+			if (users == null)
+				return;
+		
+			if (flusher != null) {
+				if (flusher.isAlive()) {
+					// if there's an existing flush thread, then 
+					// it does not have the lock on the XmppNotifier
+					// since we have it; this means it will check
+					// again for users != null and process any users
+					// that have appeared. There's a little bit of 
+					// race just after the thread drops the XmppNotifier
+					// lock and before the thread has died; this case
+					// is currently broken, but a new thread will be 
+					// kicked off as soon as any block changes, so not 
+					// high-impact. "harmless race" hahahaha
+					
+					return;
+				} else {
+					// existing thread has exited since there was a pause with no 
+					// work
+					flusher = null;
+				}
+			}
+			
+			// This thread will exit as soon as there's no work to do, but will keep
+			// draining the set of users that need notifying as long as it's not empty
+			flusher = ThreadUtils.newDaemonThread("Stacker XMPP Notifier",
+				new Runnable() {
+					public void run() {
+						final Logger logger = GlobalSetup.getLogger(this.getClass());
+
+						logger.debug("Entering stacker xmpp notification thread");
+						while (true) {
+							// sleep a bit before starting; this increases the amount of work
+							// we get in each batch, and means we "compress" notifications for the same
+							// user inside this time gap. But this can't be too long or the user
+							// sense that things are "instant" could suffer.
+							boolean mayHaveWork;
+							synchronized (XmppNotifier.this) {
+								mayHaveWork = users != null;
+							}
+							
+							if (mayHaveWork) {
+								try {
+									Thread.sleep(500);
+								} catch (InterruptedException e) {
+								}
+							}
+							
+							// steal the current set of users and process it, while the main thread can 
+							// create and add to a new set
+							final Set<Guid> flushedUsers;
+							synchronized (XmppNotifier.this) {
+								if (users == null) {
+									logger.debug("No stacker notifications left to flush, exiting notifier thread");
+									return;
+								}
+								flushedUsers = users;
+								users = null;
+							}
+
+							MessageSender sender = EJBUtil.defaultLookup(MessageSender.class);
+							for (Guid g : flushedUsers) {
+								// note that we always send the latest cached timestamp, not 
+								// the one at time of notification
+								sender.sendBlocksChanged(g, cache.getLastTimestamp(g));
+							}
+							logger.debug("Sent {} xmpp notifications of changed blocks", flushedUsers.size());
+						}
+					}
+			});
+			
+			flusher.run();
 		}
 	}
 	

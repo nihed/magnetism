@@ -1112,6 +1112,8 @@ public class PostingBoardBean implements PostingBoard {
 		
 		if (!previouslyViewed) {
 			LiveState.getInstance().queueUpdate(new PostViewedEvent(postGuid, user.getGuid(), ppd.getClickedDate()));
+		} else {
+			logger.debug("Post {} had already been clicked by {}", postId, user);
 		}
 	}
 

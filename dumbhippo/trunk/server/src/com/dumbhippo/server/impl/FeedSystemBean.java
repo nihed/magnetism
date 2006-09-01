@@ -400,7 +400,7 @@ public class FeedSystemBean implements FeedSystem {
 				public void run() {
 					logger.debug("  Transaction committed, running new entry notification for {} entries", newEntryIds.size());
 					for (final long entryId : newEntryIds) {
-						getNotificationService().submit(new Runnable() {
+						getNotificationService().execute(new Runnable() {
 							public void run() {
 								try {
 									EJBUtil.defaultLookup(FeedSystem.class).handleNewEntryNotification(entryId);
@@ -610,7 +610,7 @@ public class FeedSystemBean implements FeedSystem {
 		
 		FeedUpdater.getInstance().shutdown();
 		if (notificationService != null) {
-			notificationService.shutdown();
+			ThreadUtils.shutdownAndAwaitTermination(notificationService);
 			notificationService = null;
 		}
 	}
@@ -673,19 +673,16 @@ public class FeedSystemBean implements FeedSystem {
 													public void run() {
 														try {
 														    feedSystem.updateFeedStoreFeed(o);
-														} catch (final XmlMethodException e) {	
-															runner.runTaskOnTransactionComplete(new Runnable() {
-																public void run() {
-																	// we want to do this in a separate transaction to not be dependant on whether 
-																	// updateFeedStoreFeed() transaction had a problem committing to the database
-																	logger.warn("Couldn't update feed {}: {}", feed, e.getCodeString() + ": " + e.getMessage());
-																	feedSystem.markFeedFailedLastUpdate(feed);	
-																}
-															});																									
-														} 
+														} catch (final XmlMethodException e) {
+															logger.warn("Couldn't store feed update results {}: {}", feed, e.getCodeString() + ": " + e.getMessage());
+															// XmlMethodException here should be some kind of feed parse error, not a database error.
+															// we don't want to mark a feed failed due to a db error anyway since the expected db
+															// error is that another thread successfully saved the feed first.
+															feedSystem.markFeedFailedLastUpdate(feed);
+														}
 													}
 												});
-											}												
+											}									
 										} catch (XmlMethodException e) {
 											logger.warn("Couldn't update feed {}: {}", feed, e.getCodeString() + ": " + e.getMessage());
 											feedSystem.markFeedFailedLastUpdate(feed);											

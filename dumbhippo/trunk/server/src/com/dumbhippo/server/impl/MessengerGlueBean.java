@@ -726,8 +726,8 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 		groupSystem.addMember(user, groupView.getGroup(), invitee);
 	}
 
-	public String getBlocksXml(Guid userId, long lastTimestamp, int start, int count) {
-		User user = getUserFromGuid(userId);
+	public String getBlocksXml(String username, long lastTimestamp, int start, int count) {
+		User user = getUserFromUsername(username);
 		UserViewpoint viewpoint = new UserViewpoint(user);
 		List<UserBlockData> list = stacker.getStack(viewpoint, user, lastTimestamp, start, count);
 		XmlBuilder xml = new XmlBuilder();
