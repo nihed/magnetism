@@ -37,6 +37,10 @@ public class LiveState {
 	
 	// This is for poking from the admin console
 	static public boolean verboseLogging = false;
+	static private boolean throwRandomExceptionOnEntryCreation = false;
+	
+	static public final String testExceptionText = "Test exception creating a cache entry.";
+	static public final String objectCreationFailedText = "Waited for object creation that failed.";
 	
 	private static LiveState theState;
 	
@@ -664,57 +668,78 @@ public class LiveState {
 	 * The normal way to run this is from the admin console
 	 * 
 	 *  com.dumbhippo.live.LiveState.verboseLogging = true;
-	 *  com.dumbhippo.live.LiveState.getInstance().stressTest();
+	 *  com.dumbhippo.live.LiveState.getInstance().stressTest(false); 
 	 */
-	public void stressTest() {
-		final List<Guid> toLookup = new ArrayList<Guid>();
+	public void stressTest(boolean throwRandomExceptionOnEntryCreation) {
+		LiveState.throwRandomExceptionOnEntryCreation = throwRandomExceptionOnEntryCreation;
 		
-		final TransactionRunner runner = EJBUtil.defaultLookup(TransactionRunner.class);
-		runner.runTaskInNewTransaction(new Runnable() {
-			public void run() {
-				AccountSystem accountSystem = EJBUtil.defaultLookup(AccountSystem.class);
-				
-				for (Account account : accountSystem.getActiveAccounts()) {
-					toLookup.add(account.getOwner().getGuid());
-				}
-			}
-		});
-		
-		userCache.removeAllWeak();
-		postCache.removeAllWeak();
-		groupCache.removeAllWeak();
-		
-		final int NUM_THREADS = 10;
-		ExecutorService threadPool = Executors.newFixedThreadPool(NUM_THREADS);
-		final long baseSeed = System.currentTimeMillis();
-		
-		List<Future<Object>> futures = new ArrayList<Future<Object>>(); 
-		
-		for (int i = 0; i < NUM_THREADS; i++) {
-			final long seed = baseSeed + i;
-			futures.add(threadPool.submit(new Callable<Object>() {
-				public Object call() {
-					runner.runTaskInNewTransaction(new Runnable() {
-						public void run() {
-							for (Guid guid : shuffle(toLookup, seed)) {
-								getLiveUser(guid);
-							}
-						}
-					});
+		try {
+			
+			final List<Guid> toLookup = new ArrayList<Guid>();
+			
+			final TransactionRunner runner = EJBUtil.defaultLookup(TransactionRunner.class);
+			runner.runTaskInNewTransaction(new Runnable() {
+				public void run() {
+					AccountSystem accountSystem = EJBUtil.defaultLookup(AccountSystem.class);
 					
-					return null;
+					for (Account account : accountSystem.getActiveAccounts()) {
+						toLookup.add(account.getOwner().getGuid());
+					}
 				}
-			}));
-		}
-		
-		for (Future<Object> future : futures) {
-			try {
-				future.get();
-			} catch (InterruptedException e) {
-				throw new RuntimeException("Interrupted!", e);
-			} catch (ExecutionException e) {
-				throw new RuntimeException("Test thread hit exception", e);
+			});
+			
+			userCache.removeAllWeak();
+			postCache.removeAllWeak();
+			groupCache.removeAllWeak();
+			
+			final int NUM_THREADS = 10;
+			ExecutorService threadPool = Executors.newFixedThreadPool(NUM_THREADS);
+			final long baseSeed = System.currentTimeMillis();
+			
+			List<Future<Object>> futures = new ArrayList<Future<Object>>(); 
+			
+			for (int i = 0; i < NUM_THREADS; i++) {
+				final long seed = baseSeed + i;
+				futures.add(threadPool.submit(new Callable<Object>() {
+					public Object call() {
+						runner.runTaskInNewTransaction(new Runnable() {
+							public void run() {
+								for (Guid guid : shuffle(toLookup, seed)) {
+									try {
+									    getLiveUser(guid);
+									} catch (RuntimeException e) {
+								    	if (LiveState.throwRandomExceptionOnEntryCreation) {
+								    		if ((e.getMessage().startsWith(LiveState.testExceptionText)) ||
+								    		    (e.getMessage().startsWith(LiveState.objectCreationFailedText))) {
+								    			logger.debug(e.getMessage());
+								    		} else {
+								    			throw e;
+								    		}
+								    	} else {
+								    		throw e;
+								    	}
+									}
+								}
+							}
+						});
+						
+						return null;
+					}
+				}));
 			}
+			
+			for (Future<Object> future : futures) {
+				try {
+					future.get();
+				} catch (InterruptedException e) {
+				    throw new RuntimeException("Interrupted!", e);
+				} catch (ExecutionException e) {
+					throw new RuntimeException("Test thread hit exception", e);
+				}
+			}
+		
+		} finally {
+		    LiveState.throwRandomExceptionOnEntryCreation = false;
 		}
 	}
 	
@@ -730,5 +755,9 @@ public class LiveState {
 		}
 		
 		return result;
+	}
+	
+	public static boolean getThrowRandomExceptionOnEntryCreation() {
+		return LiveState.throwRandomExceptionOnEntryCreation;
 	}
 }
