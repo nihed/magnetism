@@ -38,9 +38,6 @@ struct _HippoDataCache {
     unsigned int     music_sharing_enabled : 1;
     unsigned int     music_sharing_primed : 1;    
     HippoClientInfo  client_info;
-
-	char            *current_element;
-	GString         *current_text;
 };
 
 struct _HippoDataCacheClass {
