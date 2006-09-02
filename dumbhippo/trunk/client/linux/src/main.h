@@ -69,6 +69,10 @@ void       hippo_app_load_photo     (HippoApp               *app,
 
 void       hippo_app_put_window_by_icon(HippoApp  *app,
                                         GtkWindow *window);
+void       hippo_app_get_screen_info   (HippoApp         *app,
+                                        HippoRectangle   *monitor_rect_p,
+                                        HippoRectangle   *tray_icon_rect_p,
+                                        HippoOrientation *tray_icon_orientation_p);
 
 /* less typing */
 #define ADD_WEAK(ptr)    g_object_add_weak_pointer(G_OBJECT(*(ptr)), (void**) (char*) (ptr))

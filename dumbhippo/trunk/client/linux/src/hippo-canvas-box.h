@@ -8,12 +8,6 @@ G_BEGIN_DECLS
 
 typedef enum
 {
-    HIPPO_ORIENTATION_VERTICAL,
-    HIPPO_ORIENTATION_HORIZONTAL
-} HippoOrientation;
-
-typedef enum
-{
     HIPPO_PACK_EXPAND = 1, /* This is equivalent to both EXPAND and FILL for GtkBox,
                             * the way you'd get FILL=false is to set the alignment
                             * on the child item

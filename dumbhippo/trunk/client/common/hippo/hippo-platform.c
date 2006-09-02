@@ -33,6 +33,28 @@ hippo_platform_base_init(void *klass)
     }
 }
 
+HippoWindow*
+hippo_platform_create_window(HippoPlatform    *platform)
+{
+    g_return_val_if_fail(HIPPO_IS_PLATFORM(platform), NULL);
+    
+    return HIPPO_PLATFORM_GET_CLASS(platform)->create_window(platform);
+}
+
+void
+hippo_platform_get_screen_info(HippoPlatform    *platform,
+                               HippoRectangle   *monitor_rect_p,
+                               HippoRectangle   *tray_icon_rect_p,
+                               HippoOrientation *tray_icon_orientation_p)
+{
+    g_return_if_fail(HIPPO_IS_PLATFORM(platform));
+    
+    HIPPO_PLATFORM_GET_CLASS(platform)->get_screen_info(platform,
+                                                        monitor_rect_p,
+                                                        tray_icon_rect_p,
+                                                        tray_icon_orientation_p);
+}
+
 gboolean
 hippo_platform_read_login_cookie(HippoPlatform    *platform,
                                  HippoBrowserKind *origin_browser_p,

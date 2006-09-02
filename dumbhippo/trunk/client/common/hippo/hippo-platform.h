@@ -17,32 +17,44 @@ typedef struct _HippoPlatformClass HippoPlatformClass;
 #define HIPPO_PLATFORM_GET_CLASS(obj)    (G_TYPE_INSTANCE_GET_INTERFACE ((obj), HIPPO_TYPE_PLATFORM, HippoPlatformClass))
 
 struct _HippoPlatformClass {
-	GTypeInterface base_iface;
+    GTypeInterface base_iface;
+    
+    HippoWindow* (* create_window)    (HippoPlatform  *platform);
 
-	gboolean  (* read_login_cookie)   (HippoPlatform  *platform,
-	                                   HippoBrowserKind *origin_browser_p,
-	                                   char          **username,
-	                                   char          **password);
-	void      (* delete_login_cookie) (HippoPlatform  *platform);                                   
-	
-	const char* (* get_jabber_resource) (HippoPlatform  *platform);
-	
-	/* Preferences */
-	char*     (* get_message_server)  (HippoPlatform *platform);
-	char*     (* get_web_server)      (HippoPlatform *platform);
-	gboolean  (* get_signin)          (HippoPlatform *platform);
-	
-	void     (* set_message_server)  (HippoPlatform *platform, const char *value);
-	void     (* set_web_server)      (HippoPlatform *platform, const char *value);
-	void     (* set_signin)          (HippoPlatform *platform, gboolean    value);
+    void      (* get_screen_info)     (HippoPlatform    *platform,
+                                       HippoRectangle   *monitor_rect_p,
+                                       HippoRectangle   *tray_icon_rect_p,
+                                       HippoOrientation *tray_icon_orientation_p);
+    
+    gboolean  (* read_login_cookie)   (HippoPlatform  *platform,
+                                       HippoBrowserKind *origin_browser_p,
+                                       char          **username,
+                                       char          **password);
+    void      (* delete_login_cookie) (HippoPlatform  *platform);                                   
+    
+    const char* (* get_jabber_resource) (HippoPlatform  *platform);
+    
+    /* Preferences */
+    char*     (* get_message_server)  (HippoPlatform *platform);
+    char*     (* get_web_server)      (HippoPlatform *platform);
+    gboolean  (* get_signin)          (HippoPlatform *platform);
+    
+    void     (* set_message_server)  (HippoPlatform *platform, const char *value);
+    void     (* set_web_server)      (HippoPlatform *platform, const char *value);
+    void     (* set_signin)          (HippoPlatform *platform, gboolean    value);
 };
 
 GType        	 hippo_platform_get_type               (void) G_GNUC_CONST;
 
+HippoWindow*     hippo_platform_create_window          (HippoPlatform    *platform);
+void             hippo_platform_get_screen_info        (HippoPlatform    *platform,
+                                                        HippoRectangle   *monitor_rect_p,
+                                                        HippoRectangle   *tray_icon_rect_p,
+                                                        HippoOrientation *tray_icon_orientation_p);
 gboolean         hippo_platform_read_login_cookie      (HippoPlatform    *platform,
-                 	                                    HippoBrowserKind *origin_browser_p,
-	                                                    char            **username_p,
-                  	                                    char            **password_p);
+                                                        HippoBrowserKind *origin_browser_p,
+                                                        char            **username_p,
+                                                        char            **password_p);
 void             hippo_platform_delete_login_cookie    (HippoPlatform *platform); 	                                    
 const char*      hippo_platform_get_jabber_resource    (HippoPlatform *platform); 
 

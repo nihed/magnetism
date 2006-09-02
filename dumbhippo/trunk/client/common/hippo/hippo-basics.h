@@ -6,6 +6,9 @@
 
 G_BEGIN_DECLS
 
+typedef struct _HippoWindow      HippoWindow;
+typedef struct _HippoWindowClass HippoWindowClass;
+
 typedef struct _HippoDataCache      HippoDataCache;
 typedef struct _HippoDataCacheClass HippoDataCacheClass;
 
@@ -63,8 +66,21 @@ typedef enum
     HIPPO_URI_ACTION_JOIN_CHAT
 } HippoUriAction;
 
+typedef enum
+{
+    HIPPO_ORIENTATION_VERTICAL,
+    HIPPO_ORIENTATION_HORIZONTAL
+} HippoOrientation;
+
 #define HIPPO_URI_SCHEME     "mugshot"
 #define HIPPO_URI_SCHEME_LEN 7
+
+typedef struct {
+    int x;
+    int y;
+    int width;
+    int height;
+} HippoRectangle;
 
 typedef struct {
     HippoUriAction action;
@@ -97,7 +113,8 @@ typedef struct {
 #define HIPPO_DEFAULT_LOCAL_HOST_L     L"localinstance.mugshot.org"
 #define HIPPO_DEFAULT_LOCAL_WEB_SERVER_L     HIPPO_DEFAULT_LOCAL_HOST_L L":8080"
 #define HIPPO_DEFAULT_LOCAL_MESSAGE_SERVER_L HIPPO_DEFAULT_LOCAL_HOST_L L":21020"
-#endif
+
+#endif /* G_OS_WIN32 */
 
 #define HIPPO_JID_DOMAIN "dumbhippo.com"
 #define HIPPO_ROOMS_JID_DOMAIN "rooms." HIPPO_JID_DOMAIN

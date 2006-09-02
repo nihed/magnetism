@@ -2,6 +2,9 @@
 #include <config.h>
 #include "hippo-platform-impl.h"
 #include "hippo-cookies-linux.h"
+#include "hippo-window-gtk.h"
+#include "hippo-status-icon.h"
+#include "main.h"
 
 static void      hippo_platform_impl_init                (HippoPlatformImpl       *impl);
 static void      hippo_platform_impl_class_init          (HippoPlatformImplClass  *klass);
@@ -9,22 +12,28 @@ static void      hippo_platform_impl_iface_init          (HippoPlatformClass    
 
 static void      hippo_platform_impl_finalize            (GObject                 *object);
 
-static gboolean  hippo_platform_impl_read_login_cookie   (HippoPlatform           *platform,
-                                                          HippoBrowserKind        *origin_browser_p,
-                                                          char                   **username_p,
-                                                          char                   **password_p);
-static void      hippo_platform_impl_delete_login_cookie (HippoPlatform           *platform);                                                          
-static const char* hippo_platform_impl_get_jabber_resource (HippoPlatform           *platform);
 
-static char*     hippo_platform_impl_get_message_server  (HippoPlatform           *platform); 
-static char*     hippo_platform_impl_get_web_server      (HippoPlatform           *platform); 
-static gboolean  hippo_platform_impl_get_signin          (HippoPlatform           *platform);
-static void      hippo_platform_impl_set_message_server  (HippoPlatform           *platform,
-                                                          const char              *value); 
-static void      hippo_platform_impl_set_web_server      (HippoPlatform           *platform,
-                                                          const char              *value); 
-static void      hippo_platform_impl_set_signin          (HippoPlatform           *platform,
-                                                          gboolean                 value);
+static HippoWindow* hippo_platform_impl_create_window       (HippoPlatform     *platform);
+static void         hippo_platform_impl_get_screen_info     (HippoPlatform     *platform,
+                                                             HippoRectangle    *monitor_rect_p,
+                                                             HippoRectangle    *tray_icon_rect_p,
+                                                             HippoOrientation  *tray_icon_orientation_p);
+static gboolean     hippo_platform_impl_read_login_cookie   (HippoPlatform     *platform,
+                                                             HippoBrowserKind  *origin_browser_p,
+                                                             char             **username_p,
+                                                             char             **password_p);
+static void         hippo_platform_impl_delete_login_cookie (HippoPlatform     *platform);
+static const char*  hippo_platform_impl_get_jabber_resource (HippoPlatform     *platform);
+static char*        hippo_platform_impl_get_message_server  (HippoPlatform     *platform);
+static char*        hippo_platform_impl_get_web_server      (HippoPlatform     *platform);
+static gboolean     hippo_platform_impl_get_signin          (HippoPlatform     *platform);
+static void         hippo_platform_impl_set_message_server  (HippoPlatform     *platform,
+                                                             const char        *value);
+static void         hippo_platform_impl_set_web_server      (HippoPlatform     *platform,
+                                                             const char        *value);
+static void         hippo_platform_impl_set_signin          (HippoPlatform     *platform,
+                                                             gboolean           value);
+
 
 
 struct _HippoPlatformImpl {
@@ -45,6 +54,8 @@ G_DEFINE_TYPE_WITH_CODE(HippoPlatformImpl, hippo_platform_impl, G_TYPE_OBJECT,
 static void
 hippo_platform_impl_iface_init(HippoPlatformClass *klass)
 {
+    klass->create_window = hippo_platform_impl_create_window;
+    klass->get_screen_info = hippo_platform_impl_get_screen_info;
     klass->read_login_cookie = hippo_platform_impl_read_login_cookie;
     klass->delete_login_cookie = hippo_platform_impl_delete_login_cookie;
     klass->get_jabber_resource = hippo_platform_impl_get_jabber_resource;
@@ -88,6 +99,26 @@ hippo_platform_impl_finalize(GObject *object)
     g_free(impl->jabber_resource);
     
     G_OBJECT_CLASS(hippo_platform_impl_parent_class)->finalize(object);
+}
+
+static HippoWindow*
+hippo_platform_impl_create_window(HippoPlatform *platform)
+{
+    HippoWindow *window;
+
+    window = HIPPO_WINDOW(hippo_window_gtk_new());
+
+    return window;
+}
+
+static void
+hippo_platform_impl_get_screen_info(HippoPlatform    *platform,
+                                    HippoRectangle   *monitor_rect_p,
+                                    HippoRectangle   *tray_icon_rect_p,
+                                    HippoOrientation *tray_icon_orientation_p)
+{
+    hippo_app_get_screen_info(hippo_get_app(), monitor_rect_p, tray_icon_rect_p,
+                              tray_icon_orientation_p);
 }
 
 static gboolean
