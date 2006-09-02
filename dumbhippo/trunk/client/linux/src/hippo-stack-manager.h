@@ -11,7 +11,15 @@
 
 G_BEGIN_DECLS
 
-void hippo_stack_manager_manage   (HippoDataCache  *cache);
+
+typedef enum {
+    HIPPO_STACK_MODE_HIDDEN,
+    HIPPO_STACK_MODE_SINGLE_BLOCK,
+    HIPPO_STACK_MODE_STACK
+} HippoStackMode;
+
+void hippo_stack_manager_manage   (HippoDataCache  *cache,
+                                   HippoPlatform   *platform);
 
 void hippo_stack_manager_unmanage (HippoDataCache  *cache);
 

@@ -2,7 +2,7 @@
 #ifndef __HIPPO_CANVAS_BLOCK_H__
 #define __HIPPO_CANVAS_BLOCK_H__
 
-/* A cairo path canvas item. (will be cross-platform once windows has Cairo support) */
+/* A canvas item that displays a stacker block */
 
 #include "hippo-canvas-item.h"
 #include <cairo/cairo.h>
