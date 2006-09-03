@@ -276,7 +276,8 @@ public class PostingBoardBean implements PostingBoard {
 						for (Group g : post.getGroupRecipients()) {
 						    liveState.queueUpdate(new GroupEvent(g.getGuid(), post.getGuid(), GroupEvent.Type.POST_ADDED));
 						}
-						liveState.queueUpdate(new PostCreatedEvent(post.getGuid(), poster.getGuid()));				
+						liveState.queueUpdate(new PostCreatedEvent(post.getGuid(), poster != null ? 
+								poster.getGuid() : null));				
 					}
 				});
 			}
