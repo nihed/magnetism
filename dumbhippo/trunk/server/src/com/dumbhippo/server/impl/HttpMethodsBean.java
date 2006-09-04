@@ -22,6 +22,8 @@ import java.util.Set;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.naming.NameNotFoundException;
 import javax.naming.NamingException;
 import javax.persistence.EntityManager;
@@ -61,6 +63,7 @@ import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.PostMessage;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.Sentiment;
+import com.dumbhippo.persistence.StorageState;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.persistence.ValidationException;
@@ -84,6 +87,7 @@ import com.dumbhippo.server.InvitationSystem;
 import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.NowPlayingThemeSystem;
+import com.dumbhippo.server.PermissionDeniedException;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
 import com.dumbhippo.server.PersonViewer;
@@ -91,6 +95,7 @@ import com.dumbhippo.server.PostIndexer;
 import com.dumbhippo.server.PostView;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.PromotionCode;
+import com.dumbhippo.server.SharedFileSystem;
 import com.dumbhippo.server.SigninSystem;
 import com.dumbhippo.server.Stacker;
 import com.dumbhippo.server.SystemViewpoint;
@@ -165,6 +170,9 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	
 	@EJB
 	private Stacker stacker;
+	
+	@EJB
+	private SharedFileSystem sharedFileSystem;
 	
 	@PersistenceContext(unitName = "dumbhippo")
 	private EntityManager em;	
@@ -1926,5 +1934,41 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
  		}
  		// send the new block data back, to avoid an extra round trip
  		returnBlocks(xml, viewpoint, viewpoint.getViewer(), Collections.singletonList(userBlockData));
+ 	}
+ 	
+ 	@TransactionAttribute(TransactionAttributeType.NEVER)
+ 	public void doDeleteFile(XmlBuilder xml, UserViewpoint viewpoint, Guid fileId) throws XmlMethodException {
+ 		// Transaction 1 - set state to DELETING
+ 		try {
+			sharedFileSystem.setFileState(viewpoint, fileId, StorageState.DELETING, -1);
+		} catch (NotFoundException e) {
+			throw new XmlMethodException(XmlMethodErrorCode.NOT_FOUND, "No such file");
+		} catch (PermissionDeniedException e) {
+			throw new XmlMethodException(XmlMethodErrorCode.FORBIDDEN, "You aren't allowed to delete this file");
+		}
+		try {
+			// Outside transaction - remove from local or remote file storage
+			sharedFileSystem.deleteFileOutsideDatabase(fileId);
+		} catch (Exception e) {
+			logger.error("Failed to delete file", e);
+			try {
+				// Transaction 2 - emergency revert of DELETING state
+				sharedFileSystem.setFileState(viewpoint, fileId, StorageState.STORED, -1);
+			} catch (Exception e2) {
+				logger.error("Failed in last-ditch effort to fix state of file {}, must be set back to STORED manually",
+						fileId);
+				logger.error("Exception was", e2);
+			}
+			throw new XmlMethodException(XmlMethodErrorCode.FAILED, "Something went wrong while deleting this file");
+		}
+		// Transaction 3 - set the state to DELETED to indicate success
+		try {
+			sharedFileSystem.setFileState(viewpoint, fileId, StorageState.DELETED, -1);
+		} catch (Exception e) {
+			logger.error("Successfully deleted file {} but failed to set its state to DELETED", fileId);
+			logger.error("Exception was", e);
+			// don't return an error from the method, this will appear to have worked from user 
+			// standpoint
+		}
  	}
 }

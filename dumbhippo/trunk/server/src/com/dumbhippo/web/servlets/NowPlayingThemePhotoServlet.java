@@ -85,7 +85,7 @@ public class NowPlayingThemePhotoServlet extends AbstractPhotoServlet {
 	}
 
 	@Override
-	protected boolean requiresTransaction() {
+	protected boolean requiresTransaction(HttpServletRequest request) {
 		return false;
 	}
 

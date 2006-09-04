@@ -20,5 +20,6 @@ public @interface HttpOptions {
 	boolean invalidatesSession() default false;
 	boolean allowDisabledAccount() default false;
 	boolean adminOnly() default false;	
+	boolean transaction() default true;
 	String[] optionalParams() default {};
 }

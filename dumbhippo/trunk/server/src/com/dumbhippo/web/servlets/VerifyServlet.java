@@ -233,7 +233,7 @@ public class VerifyServlet extends AbstractServlet {
 	}
 
 	@Override
-	protected boolean requiresTransaction() {
+	protected boolean requiresTransaction(HttpServletRequest request) {
 		return true;
 	}
 }

@@ -5,7 +5,8 @@ dojo.require("dh.util");
 // inside on pressing Enter.
 // IE on the other hand does do it on pressing Enter.
 // Right now all this class does is add the Enter handler
-// and the activate() convenience method.
+// and the activate() convenience method, and an onchange 
+// handler that activates
 
 dh.fileinput.Entry = function(entryNode)
 {

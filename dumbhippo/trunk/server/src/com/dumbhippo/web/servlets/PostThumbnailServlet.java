@@ -63,7 +63,7 @@ public class PostThumbnailServlet extends AbstractSmallImageServlet {
 	}
 
 	@Override
-	protected boolean requiresTransaction() {
+	protected boolean requiresTransaction(HttpServletRequest request) {
 		return false;
 	}
 

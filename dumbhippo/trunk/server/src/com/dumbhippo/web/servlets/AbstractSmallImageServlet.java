@@ -18,9 +18,11 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.fileupload.DiskFileUpload;
 import org.apache.commons.fileupload.FileItem;
+import org.apache.commons.fileupload.FileUpload;
 import org.apache.commons.fileupload.FileUploadException;
+import org.apache.commons.fileupload.disk.DiskFileItemFactory;
+import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
@@ -151,7 +153,7 @@ public abstract class AbstractSmallImageServlet extends AbstractServlet {
 		}
 	}
 	
-	private void startUpload(HttpServletRequest request, HttpServletResponse response, DiskFileUpload upload, List items)
+	private void startUpload(HttpServletRequest request, HttpServletResponse response, FileUpload upload, List items)
 			throws HttpException, IOException, ServletException, HumanVisibleException {
 
 		FileItem photo = null;
@@ -188,7 +190,7 @@ public abstract class AbstractSmallImageServlet extends AbstractServlet {
 	
 	@Override
 	protected String wrappedDoPost(HttpServletRequest request, HttpServletResponse response) throws HttpException, IOException, ServletException, HumanVisibleException {
-		DiskFileUpload upload = new DiskFileUpload();
+		ServletFileUpload upload = new ServletFileUpload(new DiskFileItemFactory());
 		upload.setSizeMax(MAX_FILE_SIZE);
 
 		try {

@@ -127,7 +127,7 @@ public class RedirectServlet extends AbstractServlet {
 	}
 
 	@Override
-	protected boolean requiresTransaction() {
+	protected boolean requiresTransaction(HttpServletRequest request) {
 		return false;
 	}
 }
