@@ -111,9 +111,8 @@ EOF
 <superconf>
     <include file="$clusterconfig"/>
     <parameter name="slaveMode">yes</parameter>
-    <parameter name="jnpHost">$addr</parameter>
+    <parameter name="bindHost">$addr</parameter>
     <service name="jboss">
-       <parameter name="jbossBind">$addr</parameter>
        <parameter name="jbossPartition">$USER</parameter>
     </service>
     <service name="mysql" enabled="no"/>

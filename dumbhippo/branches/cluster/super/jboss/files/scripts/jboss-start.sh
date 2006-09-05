@@ -5,7 +5,7 @@ targetdir=@@targetdir@@
 twiddle="@@twiddle@@"
 jdwpPort=@@jdwpPort@@
 javaMaxHeap=@@javaMaxHeap@@
-jbossBind="@@jbossBind@@"
+bindHost="@@bindHost@@"
 slaveMode="@@slaveMode@@"
 
 echo "Starting jboss..."
@@ -45,10 +45,10 @@ fi
 # so change the cwd to the right place; when we upgrade hibernate-annotations
 # to a newer version, we can set a property for the index location
 cd $targetdir/data
-if test "$jbossBind" = 'all'; then
+if test "$bindHost" = 'all'; then
   bindopt=''
 else
-  bindopt="-b $jbossBind"
+  bindopt="-b $bindHost"
 fi
 
 if test x"$slaveMode" = xyes; then

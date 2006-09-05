@@ -3,7 +3,7 @@
 jbossdir=@@jbossdir@@
 targetdir=@@targetdir@@
 twiddle="@@twiddle@@"
-jbossBind="@@jbossBind@@"
+bindHost="@@bindHost@@"
 
 #
 # Running twiddle can be quite slow, so check first by pid/ps
