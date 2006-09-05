@@ -17,7 +17,7 @@ username sa
 password
 EOF
 
-(cat wildfire/src/database/wildfire_hsqldb.sql wildfire/src/database/upgrade/2.3_to_2.4/wildfire_hsqldb.sql && echo 'commit;' && echo 'shutdown;') | java -cp wildfire/build/lib/dist/hsqldb.jar org.hsqldb.util.SqlTool --autoCommit --stdinput --rcfile $targetdir/hsqldb.rc jivedb - >/dev/null 
+(cat $targetdir/resources/database/wildfire_hsqldb.sql $targetdir/resources/database/upgrade/2.3_to_2.4/wildfire_hsqldb.sql && echo 'commit;' && echo 'shutdown;') | java -cp $targetdir/resources/hsqldb.jar org.hsqldb.util.SqlTool --autoCommit --stdinput --rcfile $targetdir/hsqldb.rc jivedb - >/dev/null 
 
 sleep 2
 perl -pi -e "s/CREATE USER SA PASSWORD .*\$/CREATE USER SA PASSWORD \"$dbpassword\"/" $dbpath.script
@@ -29,7 +29,7 @@ username sa
 password $dbpassword
 EOF
 
-java -cp wildfire/build/lib/dist/hsqldb.jar org.hsqldb.util.SqlTool --autoCommit --stdinput --rcfile $targetdir/hsqldb.rc jivedb 1>/dev/null <<EOF
+java -cp $targetdir/resources/hsqldb.jar org.hsqldb.util.SqlTool --autoCommit --stdinput --rcfile $targetdir/hsqldb.rc jivedb 1>/dev/null <<EOF
 DELETE FROM jiveProperty ;
 INSERT INTO jiveProperty VALUES ( 'xmpp.socket.plain.interface', '@@bindHost@@') ;
 INSERT INTO jiveProperty VALUES ( 'xmpp.socket.plain.port', @@jivePlainPort@@ ) ;
@@ -41,6 +41,8 @@ INSERT INTO jiveProperty VALUES ( 'xmpp.component.socket.interface', '@@bindHost
 INSERT INTO jiveProperty VALUES ( 'xmpp.component.socket.port', @@jiveComponentPort@@ ) ;
 INSERT INTO jiveProperty VALUES ( 'xmpp.domain', 'dumbhippo.com' ) ;
 INSERT INTO jiveProperty VALUES ( 'xmpp.client.tls.policy', 'disabled') ;
+commit;
+shutdown;
 EOF
 
 eval $twiddle invoke jboss.system:service=MainDeployer deploy file://$targetdir/deploy/wildfire.sar/ > /dev/null
