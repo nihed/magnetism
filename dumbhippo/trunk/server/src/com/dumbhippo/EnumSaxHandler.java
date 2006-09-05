@@ -1,7 +1,13 @@
 package com.dumbhippo;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
 
 import org.slf4j.Logger;
 import org.xml.sax.Attributes;
@@ -12,6 +18,8 @@ import org.xml.sax.helpers.DefaultHandler;
 public abstract class EnumSaxHandler<E extends Enum<E>> extends DefaultHandler {
 	@SuppressWarnings("unused")
 	static private final Logger logger = GlobalSetup.getLogger(EnumSaxHandler.class);
+
+	private static SAXParserFactory saxFactory;	
 	
 	private Class<E> enumClass;
 	private E ignoredValue;
@@ -20,6 +28,35 @@ public abstract class EnumSaxHandler<E extends Enum<E>> extends DefaultHandler {
 	private List<E> stack;
 	private StringBuilder content;
 
+	// putting these general SAX convenience methods in this class is a little bogus, but 
+	// oh well
+	
+	public static SAXParser newSAXParser() {
+		try {
+			synchronized (EnumSaxHandler.class) {
+				if (saxFactory == null)
+					saxFactory = SAXParserFactory.newInstance();
+
+				return saxFactory.newSAXParser();
+			}
+		} catch (ParserConfigurationException e) {
+			logger.error("failed to create sax parser: {}", e.getMessage());
+			throw new RuntimeException(e);
+		} catch (SAXException e) {
+			logger.error("failed to create sax parser: {}", e.getMessage());
+			throw new RuntimeException(e);
+		}
+	}
+	
+	public static void parse(InputStream input, DefaultHandler handler)
+			throws SAXException, IOException {
+		newSAXParser().parse(input, handler);
+	}
+	
+	public void parse(InputStream input) throws SAXException, IOException {
+		parse(input, this);
+	}
+	
 	protected EnumSaxHandler(Class<E> enumClass, E ignoredValue) {
 		this.enumClass = enumClass;
 		this.ignoredValue = ignoredValue;
@@ -76,7 +113,7 @@ public abstract class EnumSaxHandler<E extends Enum<E>> extends DefaultHandler {
 	}
 	
 	@Override
-	public final void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
+	public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
 		 // logger.debug("start element " + qName);
 		 // debugLogAttributes(attributes);
 		 

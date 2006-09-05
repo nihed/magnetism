@@ -145,6 +145,7 @@
 				<include name="**/recommender/*.class" />
 				<include name="**/postinfo/*.class" />
 				<include name="**/services/*.class" />
+				<include name="**/dav/*.class" />
 				<include name="**/storage/*.class" />
 				<include name="**/server/**/*.class" />
 				<include name="**/server/**/*.properties" />

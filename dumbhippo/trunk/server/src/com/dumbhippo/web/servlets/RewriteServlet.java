@@ -213,13 +213,30 @@ public class RewriteServlet extends HttpServlet {
     
 	@Override
 	public void service(HttpServletRequest request,	HttpServletResponse response) throws IOException, ServletException {
+
+		// be sure we only handle appropriate http methods, not e.g. DAV methods.
+		// also, appropriately implement OPTIONS method.
+		String httpMethod = request.getMethod().toUpperCase();
+		if (!(httpMethod.equals("GET") ||
+				httpMethod.equals("HEAD") ||
+				httpMethod.equals("POST"))) {
+			// If an unexpected method is received, the reply is the same as 
+			// for the OPTIONS method, but with this error. See the 
+			// http spec where it defines 405 Method Not Allowed.
+			if (!httpMethod.equals("OPTIONS")) {
+				logger.warn("Got unusual method {} on rewrite servlet", httpMethod);
+				response.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED);	
+			}
+			response.setHeader("Allow", "GET, HEAD, POST, OPTIONS");
+			return;
+		}
 		
 		String newPath = null;
 		
 		String path = request.getServletPath();
 		
 		// this line of debug is cut-and-pasted over to AbstractServlet also
-		logger.debug("--------------- HTTP {} for '{}' content-type=" + request.getContentType(), request.getMethod(), path);
+		logger.debug("--------------- HTTP {} for '{}' content-type=" + request.getContentType(), httpMethod, path);
 		
 		// Support for legacy /home, main, and /comingsoon URLs;
 		// forward them all to the root URL; see next stanza for

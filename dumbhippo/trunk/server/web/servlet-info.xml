@@ -23,6 +23,12 @@
 	  <load-on-startup>1</load-on-startup>
 	</servlet>
 
+    <servlet>
+      <servlet-name>WebDavServlet</servlet-name>
+      <servlet-class>com.dumbhippo.web.servlets.WebDavServlet</servlet-class>
+	  <load-on-startup>1</load-on-startup>
+	</servlet>
+
    <servlet>
       <servlet-name>PostThumbnailServlet</servlet-name>
       <servlet-class>com.dumbhippo.web.servlets.PostThumbnailServlet</servlet-class>
@@ -146,6 +152,11 @@
       <servlet-name>FileStorageServlet</servlet-name>
       <url-pattern>/files/user/*</url-pattern>
    </servlet-mapping> 
+
+   <servlet-mapping>
+      <servlet-name>WebDavServlet</servlet-name>
+      <url-pattern>/dav/*</url-pattern>
+   </servlet-mapping>
    
    <servlet-mapping>
       <servlet-name>PostThumbnailServlet</servlet-name>

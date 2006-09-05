@@ -120,6 +120,10 @@ public abstract class AbstractServlet extends HttpServlet {
 		}
 	}
 	
+	protected void logRequest(HttpServletRequest request, String type) {
+		logRequest(request, type, false); // FIXME false for requires transaction is misleading
+	}
+	
 	private void logRequest(HttpServletRequest request, String type, boolean requiresTransaction) {
 		if (!logger.isDebugEnabled()) // avoid this expense entirely in production
 			return;
