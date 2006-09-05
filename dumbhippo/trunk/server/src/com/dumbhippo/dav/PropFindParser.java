@@ -13,7 +13,6 @@ import org.xml.sax.SAXException;
 import com.dumbhippo.EnumSaxHandler;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.StreamUtils;
-import com.dumbhippo.StringUtils;
 
 class PropFindParser extends EnumSaxHandler<DavXmlElement> {
 
@@ -23,6 +22,7 @@ class PropFindParser extends EnumSaxHandler<DavXmlElement> {
 	private Set<String> propertiesRequested;
 	private boolean allRequested;
 	private boolean namesRequested;
+	private boolean sawAnyElements;
 	
 	PropFindParser() {
 		super(DavXmlElement.class, DavXmlElement.IGNORED);
@@ -30,9 +30,11 @@ class PropFindParser extends EnumSaxHandler<DavXmlElement> {
 
 	@Override
 	public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
+		sawAnyElements = true;
+		
 		//logger.debug("uri = {} localName = {}", uri, localName);
 		if (incompletePropertiesRequested != null) {
-			incompletePropertiesRequested.add(qName);
+			incompletePropertiesRequested.add(getUnqualifiedName(uri, localName, qName));
 		}
 		super.startElement(uri, localName, qName, attributes);
 	}
@@ -88,6 +90,12 @@ class PropFindParser extends EnumSaxHandler<DavXmlElement> {
 			requests += 1;
 		if (namesRequested)
 			requests += 1;
+		if (requests == 0 && !sawAnyElements) {
+			// empty request body means "all properties"
+			logger.debug("empty propfind, treating as request for all properties");
+			requests = 1;
+			allRequested = true;
+		}
 		if (requests == 0)
 			throw new SAXException("PROPFIND didn't ask to do anything");
 		else if (requests > 1)

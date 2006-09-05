@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import org.xml.sax.SAXException;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.StreamUtils;
 import com.dumbhippo.StringUtils;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.server.NotFoundException;
@@ -261,11 +262,20 @@ public class DavHandler {
 		
 		PropFindParser parser = new PropFindParser();
 		try {
-			parser.parse(requestContent);
+			// we have to read the stream into memory just to see if it's empty...
+			// the SAX parser normally throws an error on an empty document, instead
+			// we just immediately endDocument().
+			String content = StreamUtils.readStreamUTF8(requestContent, 1024*640); // 640K ought to be enough for anyone! ;-)
+			
+			if (content.trim().length() == 0)
+				parser.endDocument();
+			else {
+				parser.parse(content);
+			}
 		} catch (SAXException e) {
-			throw new DavHttpStatusException(DavStatusCode.BAD_REQUEST, "bad XML in request", e);
+			throw new DavHttpStatusException(DavStatusCode.BAD_REQUEST, "bad XML in request: " + e.getMessage(), e);
 		} catch (IOException e) {
-			throw new DavHttpStatusException(DavStatusCode.BAD_REQUEST, "failed to read request xml", e);
+			throw new DavHttpStatusException(DavStatusCode.BAD_REQUEST, "failed to read request xml: " + e.getMessage(), e);
 		}
 		
 		//logger.debug("parsed request");

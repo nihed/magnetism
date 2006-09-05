@@ -1,7 +1,9 @@
 package com.dumbhippo;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -11,6 +13,7 @@ import javax.xml.parsers.SAXParserFactory;
 
 import org.slf4j.Logger;
 import org.xml.sax.Attributes;
+import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
 import org.xml.sax.helpers.DefaultHandler;
@@ -32,12 +35,17 @@ public abstract class EnumSaxHandler<E extends Enum<E>> extends DefaultHandler {
 	// oh well
 	
 	public static SAXParser newSAXParser() {
+		SAXParser parser;
 		try {
 			synchronized (EnumSaxHandler.class) {
-				if (saxFactory == null)
+				if (saxFactory == null) {
 					saxFactory = SAXParserFactory.newInstance();
-
-				return saxFactory.newSAXParser();
+					saxFactory.setNamespaceAware(true);
+					saxFactory.setValidating(false);
+					logger.debug("New SAX parser factory validating {} namespaces {}",
+							saxFactory.isValidating(), saxFactory.isNamespaceAware());				}
+				
+				parser = saxFactory.newSAXParser();
 			}
 		} catch (ParserConfigurationException e) {
 			logger.error("failed to create sax parser: {}", e.getMessage());
@@ -46,6 +54,7 @@ public abstract class EnumSaxHandler<E extends Enum<E>> extends DefaultHandler {
 			logger.error("failed to create sax parser: {}", e.getMessage());
 			throw new RuntimeException(e);
 		}
+		return parser;
 	}
 	
 	public static void parse(InputStream input, DefaultHandler handler)
@@ -53,7 +62,16 @@ public abstract class EnumSaxHandler<E extends Enum<E>> extends DefaultHandler {
 		newSAXParser().parse(input, handler);
 	}
 	
+	public static void parse(String input, DefaultHandler handler)
+		throws SAXException, IOException {
+		newSAXParser().parse(new InputSource(new StringReader(input)), handler);
+	}
+	
 	public void parse(InputStream input) throws SAXException, IOException {
+		parse(input, this);
+	}
+	
+	public void parse(String input) throws SAXException, IOException {
 		parse(input, this);
 	}
 	
@@ -112,12 +130,27 @@ public abstract class EnumSaxHandler<E extends Enum<E>> extends DefaultHandler {
 			return null;		
 	}
 	
+	// FIXME check that the uri is the right namespace if using localName
+	protected String getUnqualifiedName(String uri, String localName, String qName) throws SAXException {
+		if (localName != null && localName.length() > 0)
+			return localName;
+		else if (qName != null && qName.length() > 0) {
+			int colon = qName.indexOf(':');
+			if (colon >= 0)
+				return qName.substring(colon);
+			else
+				return qName;
+		} else {
+			throw new SAXException("element has no name, uri=" + uri + " localName=" + localName + " qName=" + qName);
+		}
+	}
+	
 	@Override
 	public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
-		 // logger.debug("start element " + qName);
+		 logger.debug("start element uri '{}' localName '{}' qName '" + qName + "'", uri, localName);
 		 // debugLogAttributes(attributes);
 		 
-		 push(qName, attributes);
+		 push(getUnqualifiedName(uri, localName, qName), attributes);
 		 
 		 openElement(current());
 	}
@@ -131,7 +164,7 @@ public abstract class EnumSaxHandler<E extends Enum<E>> extends DefaultHandler {
 		
 		closeElement(c);
 		
-		pop(qName);
+		pop(getUnqualifiedName(uri, localName, qName));
 	}
 	
 	@Override
