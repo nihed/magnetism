@@ -575,6 +575,13 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	}
 
 	/**
+	 * This function is not currently being used, if you are using it,
+	 * consider whether you will need to create a live user for the user in
+	 * question to get other information, and whether creating the live user 
+	 * is the most effective way of getting the contacts.
+	 * If not this function could be changed to peek the live user, and if 
+	 * one does not already exist, use a function like userHasContact() which
+	 * could be similar to the viewerHasContact() below.
 	 * 
 	 * @param user
 	 *            the user we're looking at the contacts of
@@ -616,9 +623,10 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 
 		if (viewpoint.isOfUser(user))
 			return viewerHasContact((UserViewpoint) viewpoint, contactUser);
-
-		// if we can see their contacts, return whether this person is one of
-		// them
+	
+		// if we can see their contacts, return whether this person is one of them
+		// this function will create a live user, consider if this is desirable, 
+		// and change its behavior if not
 		return isContactNoViewpoint(user, contactUser);
 	}
 
@@ -632,15 +640,13 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 			if (userViewpoint.isFriendOfStatusCached(user))
 				return userViewpoint.getCachedFriendOfStatus(user);
 
-			boolean isFriendOf = isContactNoViewpoint(user, userViewpoint
-					.getViewer());
-			userViewpoint.setCachedFriendOfStatus(user, isFriendOf);
-			return isFriendOf;
+			userViewpoint.cacheAllFriendOfStatus(getUsersWhoHaveUserAsContact(viewpoint, userViewpoint.getViewer()));
+			return userViewpoint.getCachedFriendOfStatus(user);
 		} else {
 			return false;
 		}
 	}
-
+    
 	public boolean isViewerWeirdTo(Viewpoint viewpoint, User user) {
 		// FIXME haven't implemented this feature yet
 		return false;

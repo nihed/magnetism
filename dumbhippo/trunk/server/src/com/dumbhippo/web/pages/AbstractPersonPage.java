@@ -146,6 +146,8 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 	}
 	
 	public boolean isContact() {
+		// this determines if the viewed user is a contact of the signed in user, it is used to decide 
+		// whether to offer a link to add or to remove viewed user as a contact of the signed in user
 		if (getSignin().isValid())
 			return identitySpider.isContact(getSignin().getViewpoint(), getUserSignin().getUser(), getViewedUser());
 		else
