@@ -15,7 +15,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 import javax.ejb.EJB;
@@ -41,7 +40,6 @@ import com.dumbhippo.persistence.LinkResource;
 import com.dumbhippo.persistence.Sentiment;
 import com.dumbhippo.persistence.TrackFeedEntry;
 import com.dumbhippo.server.FeedSystem;
-import com.dumbhippo.server.FeedUpdaterBeanManagement;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.PostingBoard;
@@ -63,7 +61,7 @@ import com.sun.syndication.fetcher.impl.SyndFeedInfo;
 import com.sun.syndication.io.FeedException;
 
 @Stateless
-public class FeedSystemBean implements FeedSystem, FeedUpdaterBeanManagement {
+public class FeedSystemBean implements FeedSystem {
 	@SuppressWarnings("unused")
 	private static final Logger logger = GlobalSetup.getLogger(FeedSystemBean.class);
 	
