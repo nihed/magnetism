@@ -58,6 +58,13 @@ position_alongside(HippoWindow     *window,
     }
     hippo_window_set_position(window, window_x, window_y);
 
+#if 0
+    g_debug("alongside %d,%d %dx%d  window %d,%d %dx%d\n",
+            alongside->x, alongside->y,
+            alongside->width, alongside->height,
+            window_x, window_y, window_width, window_height);
+#endif
+    
     if (window_position_p) {
         window_position_p->x = window_x;
         window_position_p->y = window_y;
@@ -213,9 +220,11 @@ manager_attach(StackManager    *manager,
     manager->stack_window = hippo_platform_create_window(platform);
 
     manager->base_item = hippo_canvas_base_new();
+    g_object_set(manager->base_item, "fixed-width", 400, NULL);
     hippo_window_set_contents(manager->base_window, manager->base_item);
     
     manager->stack_item = hippo_canvas_stack_new();
+    g_object_set(manager->stack_item, "fixed-width", 400, NULL);
     hippo_window_set_contents(manager->stack_window, manager->stack_item);
 }
 
@@ -260,4 +269,15 @@ hippo_stack_manager_set_idle (HippoDataCache  *cache,
     manager = g_object_get_data(G_OBJECT(cache), "stack-manager");
 
     manager->idle = idle != FALSE;
+}
+
+void
+hippo_stack_manager_set_mode (HippoDataCache  *cache,
+                              HippoStackMode   mode)
+{
+    StackManager *manager;
+
+    manager = g_object_get_data(G_OBJECT(cache), "stack-manager");
+
+    manager_set_mode(manager, mode);
 }

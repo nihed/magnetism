@@ -11,6 +11,7 @@
 #include "hippo-chat-window.h"
 #include "hippo-bubble.h"
 #include "hippo-bubble-manager.h"
+#include "hippo-stack-manager.h"
 #include "hippo-dbus-server.h"
 #include "hippo-idle.h"
 #include "hippo-canvas.h"
@@ -831,6 +832,7 @@ hippo_app_new(HippoInstanceType  instance_type,
     app->chat_windows = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
 
     hippo_bubble_manager_manage(app->cache);
+    hippo_stack_manager_manage(app->cache, app->platform);
     
     /* initially be sure we are the latest installed, though it's 
      * tough to imagine this happening outside of testing 
@@ -865,7 +867,8 @@ hippo_app_free(HippoApp *app)
                                          G_CALLBACK(on_connected_changed), app);
     
     hippo_bubble_manager_unmanage(app->cache);
-
+    hippo_stack_manager_unmanage(app->cache);
+    
     g_hash_table_destroy(app->chat_windows);
     app->chat_windows = NULL;
 
@@ -1023,7 +1026,10 @@ main(int argc, char **argv)
         gtk_container_add(GTK_CONTAINER(window), bubble);
         gtk_widget_show_all(window);
     }
-#endif    
+#endif
+
+    hippo_stack_manager_set_mode(the_app->cache, HIPPO_STACK_MODE_STACK);
+    
     g_main_loop_run(the_app->loop);
 
     g_debug("Main loop exited");

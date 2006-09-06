@@ -24,7 +24,9 @@ void hippo_stack_manager_manage   (HippoDataCache  *cache,
 void hippo_stack_manager_unmanage (HippoDataCache  *cache);
 
 void hippo_stack_manager_set_idle (HippoDataCache  *cache,
-                                    gboolean         idle);
+                                    gboolean        idle);
+void hippo_stack_manager_set_mode (HippoDataCache  *cache,
+                                   HippoStackMode   mode);
 
 G_END_DECLS
 

@@ -147,7 +147,7 @@ public abstract class EnumSaxHandler<E extends Enum<E>> extends DefaultHandler {
 	
 	@Override
 	public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
-		 logger.debug("start element uri '{}' localName '{}' qName '" + qName + "'", uri, localName);
+		 //logger.debug("start element uri '{}' localName '{}' qName '" + qName + "'", uri, localName);
 		 // debugLogAttributes(attributes);
 		 
 		 push(getUnqualifiedName(uri, localName, qName), attributes);

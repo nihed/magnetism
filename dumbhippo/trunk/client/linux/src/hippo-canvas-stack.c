@@ -7,6 +7,7 @@
 #include "hippo-common-internal.h"
 #endif
 #include "hippo-canvas-stack.h"
+#include "hippo-canvas-block.h"
 #include "hippo-canvas-box.h"
 
 static void      hippo_canvas_stack_init                (HippoCanvasStack       *stack);
@@ -88,8 +89,18 @@ HippoCanvasItem*
 hippo_canvas_stack_new(void)
 {
     HippoCanvasStack *stack = g_object_new(HIPPO_TYPE_CANVAS_STACK, NULL);
+    HippoCanvasItem *item;
 
+    HIPPO_CANVAS_BOX(stack)->background_color_rgba = 0xffffffff;
 
+    item = g_object_new(HIPPO_TYPE_CANVAS_BLOCK,
+                        NULL);
+    hippo_canvas_box_append(HIPPO_CANVAS_BOX(stack), item, 0);
+
+    item = g_object_new(HIPPO_TYPE_CANVAS_BLOCK,
+                        NULL);
+    hippo_canvas_box_append(HIPPO_CANVAS_BOX(stack), item, 0);
+    
     return HIPPO_CANVAS_ITEM(stack);
 }
 

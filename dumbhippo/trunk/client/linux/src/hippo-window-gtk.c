@@ -59,7 +59,7 @@ enum {
     PROP_0
 };
 
-G_DEFINE_TYPE_WITH_CODE(HippoWindowGtk, hippo_window_gtk, HIPPO_TYPE_WINDOW_GTK,
+G_DEFINE_TYPE_WITH_CODE(HippoWindowGtk, hippo_window_gtk, GTK_TYPE_WINDOW,
                         G_IMPLEMENT_INTERFACE(HIPPO_TYPE_WINDOW, hippo_window_gtk_iface_init));
 
 static void
