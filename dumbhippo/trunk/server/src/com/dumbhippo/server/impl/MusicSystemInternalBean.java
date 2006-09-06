@@ -398,6 +398,13 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		
 		Set<User> members = groupSystem.getUserMembers(viewpoint, group, MembershipStatus.ACTIVE);
 		List<TrackHistory> results = new ArrayList<TrackHistory>();
+		// we care about who has the viewer as a friend, because right now there is this 1 track limit
+		// for seeing tracks of someone you are not a friend of, so if you are not a friend of a group
+		// member you will only see one last track they played
+		if (viewpoint instanceof UserViewpoint) {
+			UserViewpoint userViewpoint = (UserViewpoint)viewpoint;
+		    userViewpoint.cacheAllFriendOfStatus(identitySpider.getUsersWhoHaveUserAsContact(viewpoint, userViewpoint.getViewer()));
+		}
 		for (User m : members) {
 			List<TrackHistory> memberHistory = getTrackHistory(viewpoint, m, type, 0,
 							MAX_GROUP_HISTORY_TRACKS_PER_MEMBER);

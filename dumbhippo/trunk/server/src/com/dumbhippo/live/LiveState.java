@@ -86,6 +86,20 @@ public class LiveState {
 	}
 	
 	/**
+	 * Return a LiveUser cache object if one exists for a given userId.
+	 * 
+	 * @param userId
+	 * @return a LiveUser cache object if one exists for a given userId
+	 */
+	public LiveUser peekLiveUser(Guid userId) {
+		LiveUser current = userCache.peek(userId);
+		if (current != null)
+			return current;
+		else
+			return null;
+	}
+	
+	/**
 	 * Get a LiveUser cache object for a particular user in preparation
 	 * for updating it with new values. If the object doesn't already
 	 * exist then nothing is done. On a succesful return, you must

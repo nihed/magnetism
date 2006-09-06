@@ -204,7 +204,7 @@ public interface IdentitySpider {
 	 * Checks whether a person has another other as a contact
 	 * This function will create a live user for the user, unless the user is same as the viewer,
 	 * consider whether this is efficient in terms of performance, and change the behavior of the
-	 * function if not.
+	 * function or what information is initialized when a live user is created if not.
 	 *  
 	 * @param current viewpoint (only the system, the user or one of their contacts can see user's contacts, 
 	 *                           so if viewpoint isn't for one of those, the result will be false) 

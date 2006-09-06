@@ -298,6 +298,12 @@ public class PersonViewerBean implements PersonViewer {
 
 		boolean sawSelf = false;
 		Set<PersonView> result = new HashSet<PersonView>();
+
+		if (viewpoint instanceof UserViewpoint) {
+			UserViewpoint userViewpoint = (UserViewpoint)viewpoint;
+		    userViewpoint.cacheAllFriendOfStatus(identitySpider.getUsersWhoHaveUserAsContact(viewpoint, userViewpoint.getViewer()));
+		}
+
 		for (Person p : identitySpider.getRawContacts(viewpoint, user)) {
 			PersonView pv = getPersonView(viewpoint, p, extras);
 
