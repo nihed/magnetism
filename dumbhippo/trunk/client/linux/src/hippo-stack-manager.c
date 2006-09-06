@@ -74,41 +74,50 @@ position_alongside(HippoWindow     *window,
 }
 
 static void
-update_window_positions(StackManager *manager)
+update_for_screen_info (StackManager    *manager,
+                        HippoRectangle  *monitor,
+                        HippoRectangle  *icon,
+                        HippoOrientation icon_orientation)
 {
-    HippoOrientation icon_orientation;
-    HippoRectangle monitor;
-    HippoRectangle icon;
     HippoRectangle base;
     gboolean is_west;
-    gboolean is_north;
-    
-    hippo_platform_get_screen_info(manager->platform,
-                                   &monitor, &icon, &icon_orientation);
-
-    is_west = ((icon.x + icon.width / 2) < (monitor.x + monitor.width / 2));
-    is_north = ((icon.y + icon.height / 2) < (monitor.y + monitor.height / 2));
+    gboolean is_north;   
+ 
+    is_west = ((icon->x + icon->width / 2) < (monitor->x + monitor->width / 2));
+    is_north = ((icon->y + icon->height / 2) < (monitor->y + monitor->height / 2));
 
     /* We pretend the icon is always in the corner */
     if (is_west) {
-        icon.x = monitor.x;
+        icon->x = monitor->x;
     } else {
-        icon.x = monitor.x + monitor.width - icon.width;
+        icon->x = monitor->x + monitor->width - icon->width;
     }
     
     if (is_north) {
-        icon.y = monitor.y;
+        icon->y = monitor->y;
     } else {
-        icon.y = monitor.y + monitor.height - icon.height;
+        icon->y = monitor->y + monitor->height - icon->height;
     }
 
-    position_alongside(manager->base_window, 3, &icon,
+    position_alongside(manager->base_window, 3, icon,
                        icon_orientation,
                        is_west, is_north, &base);
     position_alongside(manager->single_block_window, 0, &base,
                        HIPPO_ORIENTATION_HORIZONTAL, is_west, is_north, NULL);
     position_alongside(manager->stack_window, 0, &base,
                        HIPPO_ORIENTATION_HORIZONTAL, is_west, is_north, NULL);
+}
+
+static void
+update_window_positions(StackManager    *manager)
+{
+   HippoRectangle monitor;
+   HippoRectangle icon;
+   HippoOrientation icon_orientation;
+   
+   hippo_platform_get_screen_info(manager->platform, &monitor, &icon, &icon_orientation);
+
+   update_for_screen_info(manager, &monitor, &icon, icon_orientation);
 }
 
 static void
@@ -280,4 +289,17 @@ hippo_stack_manager_set_mode (HippoDataCache  *cache,
     manager = g_object_get_data(G_OBJECT(cache), "stack-manager");
 
     manager_set_mode(manager, mode);
+}
+
+void
+hippo_stack_manager_set_screen_info(HippoDataCache  *cache,
+                                    HippoRectangle  *monitor,
+                                    HippoRectangle  *icon,
+                                    HippoOrientation icon_orientation)
+{
+    StackManager *manager;
+
+    manager = g_object_get_data(G_OBJECT(cache), "stack-manager");
+    
+    update_for_screen_info(manager, monitor, icon, icon_orientation);
 }

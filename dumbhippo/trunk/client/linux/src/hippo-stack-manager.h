@@ -18,15 +18,18 @@ typedef enum {
     HIPPO_STACK_MODE_STACK
 } HippoStackMode;
 
-void hippo_stack_manager_manage   (HippoDataCache  *cache,
-                                   HippoPlatform   *platform);
+void hippo_stack_manager_manage           (HippoDataCache  *cache,
+                                           HippoPlatform   *platform);
+void hippo_stack_manager_unmanage         (HippoDataCache  *cache);
 
-void hippo_stack_manager_unmanage (HippoDataCache  *cache);
-
-void hippo_stack_manager_set_idle (HippoDataCache  *cache,
-                                    gboolean        idle);
-void hippo_stack_manager_set_mode (HippoDataCache  *cache,
-                                   HippoStackMode   mode);
+void hippo_stack_manager_set_idle         (HippoDataCache  *cache,
+                                           gboolean         idle);
+void hippo_stack_manager_set_mode         (HippoDataCache  *cache,
+                                           HippoStackMode   mode);
+void hippo_stack_manager_set_screen_info  (HippoDataCache  *cache,
+                                           HippoRectangle  *monitor,
+                                           HippoRectangle  *icon,
+                                           HippoOrientation icon_orientation);
 
 G_END_DECLS
 

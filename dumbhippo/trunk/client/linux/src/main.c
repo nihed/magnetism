@@ -373,6 +373,7 @@ hippo_app_load_photo(HippoApp               *app,
     }
 }
 
+/* FIXME this function should be nuked once we drop the bubble */
 void
 hippo_app_put_window_by_icon(HippoApp  *app,
                              GtkWindow *window)
@@ -792,6 +793,35 @@ on_connected_changed(HippoConnection *connection,
     hippo_dbus_notify_xmpp_connected(app->dbus, connected);
 }
 
+/* Since we're doing this anyway, hippo_platform_get_screen_info becomes mostly
+ * pointless... really should either remove screen info from HippoPlatform,
+ * or put a "screen-info-changed" signal on HippoPlatform.
+ * 
+ * Also, this callback is kind of wrong; the icon size is not the geometry of
+ * the underlying GdkWindow, it's a separate property; and we should probably
+ * watch for size changes on the screen also to handle xrandr type stuff.
+ */
+static gboolean
+on_icon_size_changed(GtkStatusIcon *tray_icon,
+                     int            size,
+                     void          *data)
+{
+    HippoApp *app = data;
+    HippoRectangle monitor;
+    HippoRectangle icon;
+    HippoOrientation icon_orientation;
+
+    hippo_app_get_screen_info(app, &monitor, &icon, &icon_orientation);
+
+    hippo_stack_manager_set_screen_info(app->cache,
+                                        &monitor, &icon, icon_orientation);
+
+    /* TRUE to keep gtk from scaling our pixbuf, FALSE to do the default pixbuf
+     * scaling.
+     */
+    return FALSE;
+}
+
 static HippoApp*
 hippo_app_new(HippoInstanceType  instance_type,
               HippoPlatform     *platform,
@@ -856,12 +886,12 @@ hippo_app_free(HippoApp *app)
         g_source_remove(app->check_installed_timeout);
 
     g_signal_handlers_disconnect_by_func(G_OBJECT(app->dbus),
-                             G_CALLBACK(on_dbus_disconnected), app);
+                                         G_CALLBACK(on_dbus_disconnected), app);
     g_signal_handlers_disconnect_by_func(G_OBJECT(app->dbus),
-                             G_CALLBACK(on_dbus_song_changed), app);
-
+                                         G_CALLBACK(on_dbus_song_changed), app);
+    
     g_signal_handlers_disconnect_by_func(G_OBJECT(app->connection),
-                             G_CALLBACK(on_client_info_available), app);
+                                         G_CALLBACK(on_client_info_available), app);
 
     g_signal_handlers_disconnect_by_func(G_OBJECT(app->connection),
                                          G_CALLBACK(on_connected_changed), app);
@@ -877,7 +907,12 @@ hippo_app_free(HippoApp *app)
     if (app->upgrade_dialog)
         gtk_object_destroy(GTK_OBJECT(app->upgrade_dialog));
     if (app->installed_dialog)
-        gtk_object_destroy(GTK_OBJECT(app->installed_dialog)); 
+        gtk_object_destroy(GTK_OBJECT(app->installed_dialog));
+
+    g_signal_handlers_disconnect_by_func(G_OBJECT(app->icon),
+                                         G_CALLBACK(on_icon_size_changed),
+                                         app);
+    
     g_object_unref(app->icon);
     g_object_unref(app->cache);
     g_object_unref(app->photo_cache);
@@ -1011,6 +1046,11 @@ main(int argc, char **argv)
 
     gtk_status_icon_set_visible(GTK_STATUS_ICON(the_app->icon), TRUE);
 
+    g_signal_connect(G_OBJECT(the_app->icon),
+                     "size-changed",
+                     G_CALLBACK(on_icon_size_changed),
+                     the_app);
+    
     if (options.initial_debug_share) {
         /* timeout removes itself */
         g_timeout_add(1000, show_debug_share_timeout, the_app);
