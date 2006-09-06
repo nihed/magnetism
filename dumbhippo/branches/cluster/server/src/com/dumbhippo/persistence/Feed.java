@@ -15,7 +15,7 @@ import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 @Entity
-@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)	   
+@Cache(usage=CacheConcurrencyStrategy.TRANSACTIONAL)	   
 public class Feed extends DBUnique {
 	private static final long serialVersionUID = 1L;
 
@@ -83,7 +83,7 @@ public class Feed extends DBUnique {
 	}
 	
 	@OneToMany(mappedBy="feed")
-	@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)
+	@Cache(usage=CacheConcurrencyStrategy.TRANSACTIONAL)
 	public Set<GroupFeed> getGroups() {
 		return groups;
 	}
@@ -97,7 +97,7 @@ public class Feed extends DBUnique {
 	}
 	
 	@OneToMany(mappedBy="feed")
-	@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)
+	@Cache(usage=CacheConcurrencyStrategy.TRANSACTIONAL)
 	public Set<ExternalAccount> getAccounts() {
 		return accounts;
 	}

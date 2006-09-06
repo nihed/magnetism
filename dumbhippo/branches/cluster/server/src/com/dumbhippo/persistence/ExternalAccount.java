@@ -20,7 +20,7 @@ import com.dumbhippo.Thumbnail;
 		   uniqueConstraints = 
 			      {@UniqueConstraint(columnNames={"account_id", "accountType"})}
 		   )
-@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)
+@Cache(usage=CacheConcurrencyStrategy.TRANSACTIONAL)
 public class ExternalAccount extends DBUnique {
 	private static final long serialVersionUID = 1L;
 

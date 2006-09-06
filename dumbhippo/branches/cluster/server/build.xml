@@ -37,6 +37,7 @@
 		<pathelement location="${jboss.root}/client/mail.jar"/>
 		<pathelement location="${jboss.root}/client/log4j.jar"/>
 		<pathelement location="${jboss.root}/lib/jboss-system.jar"/>
+		<pathelement location="${jboss.root}/server/all/lib/jboss-cache.jar"/>
 		<fileset dir="${jboss.root}/server/default/deploy/ejb3.deployer">
 			<include name="*ejb3*.jar"/>
 			<include name="hibernate3.jar"/>

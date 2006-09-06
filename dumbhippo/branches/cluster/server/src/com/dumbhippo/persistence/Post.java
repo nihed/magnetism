@@ -137,7 +137,7 @@ public class Post extends GuidPersistable {
 	
 	@ManyToMany
 	@JoinTable(name="Post_PersonRecipient")
-	@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)
+	@Cache(usage=CacheConcurrencyStrategy.TRANSACTIONAL)
 	public Set<Resource> getPersonRecipients() {
 		return personRecipients;
 	}
@@ -151,7 +151,7 @@ public class Post extends GuidPersistable {
 	}
 	
 	@ManyToMany
-	@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)
+	@Cache(usage=CacheConcurrencyStrategy.TRANSACTIONAL)
 	public Set<Group> getGroupRecipients() {
 		return groupRecipients;
 	}
@@ -165,7 +165,7 @@ public class Post extends GuidPersistable {
 	}
 	
 	@ManyToMany
-	@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)
+	@Cache(usage=CacheConcurrencyStrategy.TRANSACTIONAL)
 	public Set<Resource> getResources() {
 		return resources;
 	}
@@ -205,7 +205,7 @@ public class Post extends GuidPersistable {
 
 	@ManyToMany
 	@JoinTable(name="Post_ExpandedRecipient")
-	@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)
+	@Cache(usage=CacheConcurrencyStrategy.TRANSACTIONAL)
 	public Set<Resource> getExpandedRecipients() {
 		return expandedRecipients;
 	}
@@ -337,7 +337,7 @@ public class Post extends GuidPersistable {
 	}
 	
 	@OneToMany(mappedBy="post")
-	@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)
+	@Cache(usage=CacheConcurrencyStrategy.TRANSACTIONAL)
 	public Set<PersonPostData> getPersonPostData() {
 		return personPostData;
 	}

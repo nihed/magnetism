@@ -16,7 +16,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
  * @author otaylor
  */
 @Entity
-@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)
+@Cache(usage=CacheConcurrencyStrategy.TRANSACTIONAL)
 public class AccountClaim extends DBUnique {
 	private static final long serialVersionUID = 1L;
 

@@ -41,7 +41,7 @@ public class User extends Person implements VersionedEntity {
 	// to properly initialize the combination of Acount
 	// and User in that case.
 	@OneToMany(fetch=FetchType.LAZY, mappedBy="owner")
-	@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)
+	@Cache(usage=CacheConcurrencyStrategy.TRANSACTIONAL)
 	protected Set<Account> getAccounts() {
 		return accounts;
 	}
@@ -74,7 +74,7 @@ public class User extends Person implements VersionedEntity {
 	}
 	
 	@OneToMany(fetch=FetchType.LAZY, mappedBy="owner")
-	@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)
+	@Cache(usage=CacheConcurrencyStrategy.TRANSACTIONAL)
 	public Set<AccountClaim> getAccountClaims() {
 		if (accountClaims == null)
 			accountClaims = new HashSet<AccountClaim>();

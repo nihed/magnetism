@@ -47,7 +47,7 @@ public class Contact extends Person {
 	// The main reason for the inverse mapping is so that we can
 	// cascade removal to resources if we remove a contact.
 	
-	@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)
+	@Cache(usage=CacheConcurrencyStrategy.TRANSACTIONAL)
 	@OneToMany(cascade={ CascadeType.REMOVE }, mappedBy="contact")
 	public Set<ContactClaim> getResources() {
 		if (resources == null)

@@ -3,6 +3,7 @@
 /conf/axis-config.xml
 /conf/jacorb.properties
 #/deploy-hasingleton
+deploy-hasingleton/jms/hsqldb-jdbc-state-service.xml
 #/farm
 /lib/avalon-framework.jar
 /lib/axis.jar
@@ -16,9 +17,9 @@
 #/lib/jbossmqha.jar
 /lib/xmlsec.jar
 #/deploy/cluster-service.xml
-/deploy/deploy-hasingleton-service.xml
-/deploy/ejb3-entity-cache-service.xml
-/deploy/ejb3-clustered-sfsbcache-service.xml
+#/deploy/deploy-hasingleton-service.xml
+#/deploy/ejb3-entity-cache-service.xml
+#/deploy/ejb3-clustered-sfsbcache-service.xml
 /deploy/iiop-service.xml
 /deploy/httpha-invoker.sar
 /deploy/jbossweb-ejb.jar

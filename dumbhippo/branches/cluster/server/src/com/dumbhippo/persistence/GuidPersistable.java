@@ -19,7 +19,7 @@ import com.dumbhippo.identity20.Guid.ParseException;
 
 @Entity
 @Inheritance(strategy = InheritanceType.JOINED)
-@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)
+@Cache(usage=CacheConcurrencyStrategy.TRANSACTIONAL)
 public abstract class GuidPersistable implements Serializable {
 	private Guid guid;
 	

@@ -1,5 +1,14 @@
 package com.dumbhippo.mbean;
 
+import javax.management.MBeanServer;
+import javax.management.MalformedObjectNameException;
+
+import org.jboss.cache.CacheException;
+import org.jboss.cache.RegionNotEmptyException;
+import org.jboss.cache.TreeCacheMBean;
+import org.jboss.cache.marshall.RegionNameConflictException;
+import org.jboss.mx.util.MBeanProxyExt;
+import org.jboss.mx.util.MBeanServerLocator;
 import org.jboss.system.ServiceMBeanSupport;
 import org.slf4j.Logger;
 
@@ -31,6 +40,27 @@ public class HippoService extends ServiceMBeanSupport implements HippoServiceMBe
 		SchemaUpdater.update();
 		if (!config.getProperty(HippoProperty.SLAVE_MODE).equals("yes"))
 			FeedUpdaterBean.startup();
+		
+		MBeanServer server = MBeanServerLocator.locateJBoss();
+		TreeCacheMBean cache;		
+		try {
+			cache = (TreeCacheMBean) MBeanProxyExt.create(TreeCacheMBean.class, "jboss.cache:service=EJB3EntityTreeCache", server);
+			cache.registerClassLoader("/", Thread.currentThread().getContextClassLoader());
+			
+		} catch (MalformedObjectNameException e) {
+			throw new RuntimeException(e);
+		} catch (RegionNameConflictException e) {
+			throw new RuntimeException(e);
+		}
+		try {
+			cache.activateRegion("/");
+		} catch (RegionNotEmptyException e) {
+			throw new RuntimeException(e);
+		} catch (RegionNameConflictException e) {
+			throw new RuntimeException(e);
+		} catch (CacheException e) {
+			throw new RuntimeException(e);
+		}
     }
 	
     @Override

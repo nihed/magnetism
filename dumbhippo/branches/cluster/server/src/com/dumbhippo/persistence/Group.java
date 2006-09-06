@@ -77,7 +77,7 @@ public class Group extends GuidPersistable implements VersionedEntity {
 	}
 
 	@OneToMany(mappedBy="group")
-	@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)
+	@Cache(usage=CacheConcurrencyStrategy.TRANSACTIONAL)
 	public Set<GroupMember> getMembers() {
 		return members;
 	}
@@ -150,7 +150,7 @@ public class Group extends GuidPersistable implements VersionedEntity {
 	}
 
 	@OneToMany(mappedBy="group")
-	@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)
+	@Cache(usage=CacheConcurrencyStrategy.TRANSACTIONAL)
 	public Set<GroupFeed> getFeeds() {
 		return feeds;
 	}
