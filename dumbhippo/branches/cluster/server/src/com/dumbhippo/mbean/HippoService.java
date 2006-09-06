@@ -41,6 +41,11 @@ public class HippoService extends ServiceMBeanSupport implements HippoServiceMBe
 		if (!config.getProperty(HippoProperty.SLAVE_MODE).equals("yes"))
 			FeedUpdaterBean.startup();
 		
+		/* We need to register this context's class loader in order for the JBoss TreeCache
+		 * to be able to deserialize enumeration values recieved from other nodes.  
+		 * 
+		 * See: http://jboss.org/index.html?module=bb&op=viewtopic&p=3968318
+		 */
 		MBeanServer server = MBeanServerLocator.locateJBoss();
 		TreeCacheMBean cache;		
 		try {
@@ -52,6 +57,11 @@ public class HippoService extends ServiceMBeanSupport implements HippoServiceMBe
 		} catch (RegionNameConflictException e) {
 			throw new RuntimeException(e);
 		}
+		
+		/*
+		 * The cache starts deactivated (per XML config) until we've set the
+		 * classloader, activate it now.
+		 */
 		try {
 			cache.activateRegion("/");
 		} catch (RegionNotEmptyException e) {
