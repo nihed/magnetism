@@ -36,7 +36,7 @@
 
     <!-- Name of cluster. Needs to be the same for all clusters, in order
              to find each other -->
-    <attribute name="ClusterName">EJB3-entity-cache</attribute>
+    <attribute name="ClusterName">${jboss.partition.name:DefaultPartition}-EJB3-entity-cache</attribute>
 
     <attribute name="UseMarshalling">true</attribute>
     <attribute name="InactiveOnStartup">true</attribute>
@@ -50,7 +50,8 @@
                  being broken with multicast (even after disabling media sense)
                  set the loopback attribute to true
         -->
-        <UDP mcast_addr="${jboss.partition.udpGroup:228.1.2.3}" mcast_port="43333" ip_ttl="2" ip_mcast="true"
+        <UDP mcast_addr="${jboss.partition.udpGroup:228.1.2.3}" mcast_port="43333" bind_addr="${jboss.bind.address}"
+           ip_ttl="2" ip_mcast="true"
            mcast_send_buf_size="150000" mcast_recv_buf_size="80000" ucast_send_buf_size="150000"
            ucast_recv_buf_size="80000" loopback="false" />
         <PING timeout="2000" num_initial_members="3" up_thread="false" down_thread="false" />
