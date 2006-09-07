@@ -306,11 +306,6 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	
 	private List<TrackHistory> getTrackHistory(Viewpoint viewpoint, User user, History type, int firstResult, int maxResults) {
 		//logger.debug("getTrackHistory() type {} for {} max results " + maxResults, type, user);
-		
-		if (!identitySpider.isViewerSystemOrFriendOf(viewpoint, user) && maxResults != 1) {
-			// A non-friend can only see one result
-			maxResults = 1;
-		}
 
 		if (!identitySpider.getMusicSharingEnabled(user, Enabled.AND_ACCOUNT_IS_ACTIVE)) {
 			return Collections.emptyList();
@@ -361,11 +356,6 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		
 		Object o = q.getSingleResult();
 		int count = ((Number)o).intValue();
-		
-		if (!identitySpider.isViewerSystemOrFriendOf(viewpoint, user) && count > 1) {
-			// A non-friend can only see one result
-			count = 1;
-		}
 
 		return count;		
 	}
@@ -398,13 +388,6 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		
 		Set<User> members = groupSystem.getUserMembers(viewpoint, group, MembershipStatus.ACTIVE);
 		List<TrackHistory> results = new ArrayList<TrackHistory>();
-		// we care about who has the viewer as a friend, because right now there is this 1 track limit
-		// for seeing tracks of someone you are not a friend of, so if you are not a friend of a group
-		// member you will only see one last track they played
-		if (viewpoint instanceof UserViewpoint) {
-			UserViewpoint userViewpoint = (UserViewpoint)viewpoint;
-		    userViewpoint.cacheAllFriendOfStatus(identitySpider.getUsersWhoHaveUserAsContact(viewpoint, userViewpoint.getViewer()));
-		}
 		for (User m : members) {
 			List<TrackHistory> memberHistory = getTrackHistory(viewpoint, m, type, 0,
 							MAX_GROUP_HISTORY_TRACKS_PER_MEMBER);
