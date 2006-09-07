@@ -4,6 +4,7 @@
 /conf/jacorb.properties
 #/deploy-hasingleton
 deploy-hasingleton/jms/hsqldb-jdbc-state-service.xml
+deploy-hasingleton/jms/hsqldb-jdbc2-service.xml
 #/farm
 /lib/avalon-framework.jar
 /lib/axis.jar

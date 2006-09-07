@@ -63,10 +63,8 @@ public abstract class JmsQueue {
 				
 				ConnectionFactory connectionFactory;
 				
-				if (local)
-					connectionFactory = (ConnectionFactory) ctx.lookup("OILConnectionFactory");
-				else
-					connectionFactory = (ConnectionFactory) ctx.lookup("RMIConnectionFactory");
+				// We used to conditionalize on local, but using UIL should be sufficient
+				connectionFactory = (ConnectionFactory) ctx.lookup("ConnectionFactory");
 				
 				connection = connectionFactory.createConnection();
 				
