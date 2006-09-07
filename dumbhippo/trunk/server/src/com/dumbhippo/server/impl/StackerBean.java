@@ -324,7 +324,7 @@ public class StackerBean implements Stacker {
 	}
 	
 	private Set<User> getDesiredUsersForExternalAccountUpdate(Block block) {
-		if (block.getBlockType() != BlockType.EXT_ACCOUNT_UPDATE)
+		if (block.getBlockType() != BlockType.EXTERNAL_ACCOUNT_UPDATE)
 			throw new IllegalArgumentException("wrong type block");
 
 		return getUsersWhoCare(block);
@@ -345,7 +345,7 @@ public class StackerBean implements Stacker {
 		case GROUP_MEMBER:
 			desiredUsers = getDesiredUsersForGroupMember(block);
 			break;
-		case EXT_ACCOUNT_UPDATE:
+		case EXTERNAL_ACCOUNT_UPDATE:
 			desiredUsers = getDesiredUsersForExternalAccountUpdate(block);
 			// don't add a default, we want a warning if any cases are missing
 		}
@@ -469,7 +469,7 @@ public class StackerBean implements Stacker {
 	// don't create or suspend transaction; we will manage our own for now (FIXME)
 	@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 	public void stackAccountUpdate(Guid userId, ExternalAccountType type, long activity) {
-		stack(BlockType.EXT_ACCOUNT_UPDATE, userId, null, type.ordinal(), activity);
+		stack(BlockType.EXTERNAL_ACCOUNT_UPDATE, userId, null, type.ordinal(), activity);
 	}
 	
 	public void clickedPost(Post post, User user, long clickedTime) {

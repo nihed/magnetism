@@ -47,7 +47,7 @@ class CommonXmlWriter {
 				xml.appendTextNode("groupMember", null, "groupId", block.getData1AsGuid().toString(),
 									   "userId", block.getData2AsGuid().toString());
 				break;
-			case EXT_ACCOUNT_UPDATE:
+			case EXTERNAL_ACCOUNT_UPDATE:
 				xml.appendTextNode("extAccountUpdate", null, "userId", block.getData1AsGuid().toString(),
 				  	                "accountType", Long.toString(block.getData3()));
                 break;				

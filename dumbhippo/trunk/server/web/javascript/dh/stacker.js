@@ -42,7 +42,7 @@ dh.stacker.Kind.POST = 1;
 dh.stacker.Kind.MUSIC_PERSON = 2;
 dh.stacker.Kind.GROUP_CHAT = 3;
 dh.stacker.Kind.GROUP_MEMBER = 4;
-dh.stacker.Kind.EXT_ACCOUNT_UPDATE = 5;
+dh.stacker.Kind.EXTERNAL_ACCOUNT_UPDATE = 5;
 
 dh.stacker.kindFromString = function(str) {
 	if (str == "POST")
@@ -53,8 +53,8 @@ dh.stacker.kindFromString = function(str) {
 		return dh.stacker.Kind.GROUP_CHAT;
 	else if (str == "GROUP_MEMBER")
 		return dh.stacker.Kind.GROUP_MEMBER;
-	else if (str == "EXT_ACCOUNT_UPDATE")
-	    return dh.stacker.Kind.EXT_ACCOUNT_UPDATE;	
+	else if (str == "EXTERNAL_ACCOUNT_UPDATE")
+	    return dh.stacker.Kind.EXTERNAL_ACCOUNT_UPDATE;	
 	else
 		return dh.stacker.Kind.UNKNOWN;
 }
@@ -64,14 +64,14 @@ dh.stacker.kindClasses[dh.stacker.Kind.POST] = "dh-stacked-block-post";
 dh.stacker.kindClasses[dh.stacker.Kind.MUSIC_PERSON] = "dh-stacked-block-music-person";
 dh.stacker.kindClasses[dh.stacker.Kind.GROUP_CHAT] = "dh-stacked-block-group-chat";
 dh.stacker.kindClasses[dh.stacker.Kind.GROUP_MEMBER] = "dh-stacked-block-group-member";
-dh.stacker.kindClasses[dh.stacker.Kind.EXT_ACCOUNT_UPDATE] = "dh-stacked-block-account-update";
+dh.stacker.kindClasses[dh.stacker.Kind.EXTERNAL_ACCOUNT_UPDATE] = "dh-stacked-block-account-update";
 
 dh.stacker.kindHeadings = {};
 dh.stacker.kindHeadings[dh.stacker.Kind.POST] = "Web Swarm";
 dh.stacker.kindHeadings[dh.stacker.Kind.MUSIC_PERSON] = "Music Radar";
 dh.stacker.kindHeadings[dh.stacker.Kind.GROUP_CHAT] = "Group Chat";
 dh.stacker.kindHeadings[dh.stacker.Kind.GROUP_MEMBER] = "Group Members";
-dh.stacker.kindHeadings[dh.stacker.Kind.EXT_ACCOUNT_UPDATE] = "Friend Update";
+dh.stacker.kindHeadings[dh.stacker.Kind.EXTERNAL_ACCOUNT_UPDATE] = "Friend Update";
 
 dh.stacker.formatTimeAgo = function(timestamp) {
 	var now = dh.stacker.getInstance().getServerTime();
@@ -1029,7 +1029,7 @@ defineClass(dh.stacker.GroupMemberBlock, dh.stacker.Block,
 });
 
 dh.stacker.AccountUpdateBlock = function(blockId, userId, accountType) {
-	dh.stacker.Block.call(this, dh.stacker.Kind.EXT_ACCOUNT_UPDATE, blockId);
+	dh.stacker.Block.call(this, dh.stacker.Kind.EXTERNAL_ACCOUNT_UPDATE, blockId);
 	this._userId = userId;
 	this._accountType = accountType;
 
@@ -1374,7 +1374,7 @@ dh.stacker.blockParsers[dh.stacker.Kind.MUSIC_PERSON] = function(node) {
 	return block;
 };
 
-dh.stacker.blockParsers[dh.stacker.Kind.EXT_ACCOUNT_UPDATE] = function(node) {
+dh.stacker.blockParsers[dh.stacker.Kind.EXTERNAL_ACCOUNT_UPDATE] = function(node) {
 	var attrs = dh.stacker.parseBlockAttrs(node);
 	var extAccountUpdate = node.childNodes.item(0);
 	if (extAccountUpdate.nodeName != "extAccountUpdate")
