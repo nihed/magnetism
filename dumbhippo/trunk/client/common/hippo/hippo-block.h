@@ -6,6 +6,15 @@
 
 G_BEGIN_DECLS
 
+typedef enum {
+    HIPPO_BLOCK_TYPE_UNKNOWN,
+    HIPPO_BLOCK_TYPE_POST,
+    HIPPO_BLOCK_TYPE_GROUP_MEMBER,
+    HIPPO_BLOCK_TYPE_GROUP_CHAT,
+    HIPPO_BLOCK_TYPE_MUSIC_PERSON,
+    HIPPO_BLOCK_TYPE_EXTERNAL_ACCOUNT_UPDATE
+} HippoBlockType;
+
 typedef struct _HippoBlock      HippoBlock;
 typedef struct _HippoBlockClass HippoBlockClass;
 
@@ -20,6 +29,26 @@ GType        	 hippo_block_get_type                  (void) G_GNUC_CONST;
 HippoBlock*      hippo_block_new                       (const char *guid);
 
 const char*      hippo_block_get_guid                  (HippoBlock *block);
+
+gint64   hippo_block_get_timestamp         (HippoBlock *block);
+void     hippo_block_set_timestamp         (HippoBlock *block,
+                                            gint64      value);
+gint64   hippo_block_get_clicked_timestamp (HippoBlock *block);
+void     hippo_block_set_clicked_timestamp (HippoBlock *block,
+                                            gint64      value);
+gint64   hippo_block_get_ignored_timestamp (HippoBlock *block);
+void     hippo_block_set_ignored_timestamp (HippoBlock *block,
+                                            gint64      value);
+gint64   hippo_block_get_sort_timestamp    (HippoBlock *block);
+int      hippo_block_get_clicked_count     (HippoBlock *block);
+void     hippo_block_set_clicked_count     (HippoBlock *block,
+                                            int         value);
+gboolean hippo_block_get_clicked           (HippoBlock *block);
+void     hippo_block_set_clicked           (HippoBlock *block,
+                                            gboolean    value);
+gboolean hippo_block_get_ignored           (HippoBlock *block);
+void     hippo_block_set_ignored           (HippoBlock *block,
+                                            gboolean    value);
 
 G_END_DECLS
 

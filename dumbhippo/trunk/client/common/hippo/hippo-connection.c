@@ -1072,6 +1072,65 @@ hippo_connection_flush_outgoing(HippoConnection *connection)
 #endif
 }
 
+/* requires string to have no trailing junk */
+static gint64
+parse_int64(const char *s)
+{
+    char *end;
+    guint64 v;
+    gboolean had_minus = FALSE;
+    
+    /* FC5's glib does not have g_ascii_strtoll, only strtoull, so
+     * we have a hoop or two to jump through
+     */
+    while (*s && g_ascii_isspace(*s))
+        ++s;
+    if (*s == '-') {
+        ++s;
+        had_minus = TRUE;
+    }
+
+    end = NULL;
+    v = g_ascii_strtoull(s, &end, 10);
+
+    if (end == NULL || *end != '\0') {
+        g_warning("Failed to parse '%s' as 64-bit integer", s);
+        return 0;
+    }
+
+    if (had_minus) {
+        /* this should probably check for overflow, but we basically trust the server. */
+        return - (gint64) v;
+    } else {
+        return (gint64) v;
+    }
+}
+
+/* requires string to have no trailing junk */
+static int
+parse_int32(const char *s)
+{
+    char *end;
+    long v;
+    
+    end = NULL;
+    v = strtol(s, &end, 10);
+
+    if (end == NULL || *end != '\0') {
+        g_warning("Failed to parse '%s' as 32-bit integer", s);
+        return 0;
+    }
+
+    return v;
+}
+
+
+static gboolean
+parse_bool(const char *str) 
+{
+    return strcmp(str, "true") == 0;
+}
+
 static gboolean
 node_matches(LmMessageNode *node, const char *name, const char *expectedNamespace)
 {
@@ -1281,10 +1340,10 @@ hippo_connection_parse_prefs_node(HippoConnection *connection,
         }
         
         if (strcmp(key, "musicSharingEnabled") == 0) {
-            music_sharing_enabled = value != NULL && g_ascii_strcasecmp(value, "TRUE") == 0;
+            music_sharing_enabled = value != NULL && parse_bool(value);
             saw_music_sharing_enabled = TRUE;
         } else if (strcmp(key, "musicSharingPrimed") == 0) {
-            music_sharing_primed = value != NULL && g_ascii_strcasecmp(value, "TRUE") == 0;
+            music_sharing_primed = value != NULL && parse_bool(value);
             saw_music_sharing_primed = TRUE;
         } else {
             g_debug("Unknown pref '%s'", key);
@@ -1385,7 +1444,7 @@ on_get_myspace_blog_comments_reply(LmMessageHandler *handler,
             return LM_HANDLER_RESULT_REMOVE_MESSAGE;
         }
         
-        comment_id = strtol(comment_node->value, NULL, 10);
+        comment_id = parse_int32(comment_node->value);
 
         comment_node = lm_message_node_get_child (subchild, "posterId");
         if (!(comment_node && comment_node->value)) {
@@ -1623,12 +1682,44 @@ hippo_connection_request_hotness(HippoConnection *connection)
     g_debug("Sent request for hotness");
 }
 
+static HippoBlockType
+block_type_from_string(const char *s)
+{
+    static const struct { const char *name; HippoBlockType type; } types[] = {
+        { "POST", HIPPO_BLOCK_TYPE_POST },
+        { "GROUP_MEMBER", HIPPO_BLOCK_TYPE_GROUP_MEMBER },
+        { "GROUP_CHAT", HIPPO_BLOCK_TYPE_GROUP_CHAT },
+        { "MUSIC_PERSON", HIPPO_BLOCK_TYPE_MUSIC_PERSON },
+        { "EXTERNAL_ACCOUNT_UPDATE", HIPPO_BLOCK_TYPE_EXTERNAL_ACCOUNT_UPDATE }
+    };
+    unsigned int i;
+    for (i = 0; i < G_N_ELEMENTS(types); ++i) {
+        if (strcmp(s, types[i].name) == 0)
+            return types[i].type;
+    }
+    return HIPPO_BLOCK_TYPE_UNKNOWN;
+}
+
 static gboolean
 hippo_connection_parse_block(HippoConnection *connection,
                              LmMessageNode   *block_node)
 {
     HippoBlock *block;
     const char *guid;
+    const char *type_str;
+    const char *timestamp_str;
+    const char *clicked_timestamp_str;
+    const char *ignored_timestamp_str;
+    const char *clicked_count_str;
+    const char *clicked_str;
+    const char *ignored_str;
+    HippoBlockType type;
+    gint64 timestamp;
+    gint64 clicked_timestamp;
+    gint64 ignored_timestamp;
+    int clicked_count;
+    gboolean clicked;
+    gboolean ignored;
     gboolean created_block;
     
     g_assert(connection->cache != NULL);
@@ -1637,6 +1728,31 @@ hippo_connection_parse_block(HippoConnection *connection,
     if (!guid)
         return FALSE;
 
+    type_str = lm_message_node_get_attribute(block_node, "type");
+    if (!type_str)
+        return FALSE;
+    
+    timestamp_str = lm_message_node_get_attribute(block_node, "timestamp");
+    clicked_timestamp_str = lm_message_node_get_attribute(block_node, "clickedTimestamp");
+    ignored_timestamp_str = lm_message_node_get_attribute(block_node, "ignoredTimestamp");
+    clicked_count_str = lm_message_node_get_attribute(block_node, "clickedCount");
+    clicked_str = lm_message_node_get_attribute(block_node, "clicked");
+    ignored_str = lm_message_node_get_attribute(block_node, "ignored");
+    if (!timestamp_str || !clicked_timestamp_str || !ignored_timestamp_str ||
+        !clicked_count_str || !clicked_str || !ignored_str)
+        return FALSE;
+        
+    type = block_type_from_string(type_str);
+    if (type == HIPPO_BLOCK_TYPE_UNKNOWN)
+        return FALSE;
+
+    timestamp = parse_int64(timestamp_str);
+    clicked_timestamp = parse_int64(clicked_timestamp_str);
+    ignored_timestamp = parse_int64(ignored_timestamp_str);
+    clicked_count = parse_int32(clicked_count_str);
+    clicked = parse_bool(clicked_str);
+    ignored = parse_bool(ignored_str);
+    
     block = hippo_data_cache_lookup_block(connection->cache, guid);
     if (block == NULL) {
         block = hippo_block_new(guid);
@@ -1647,8 +1763,18 @@ hippo_connection_parse_block(HippoConnection *connection,
     }
     g_assert(block != NULL);
 
-    g_debug("Parsed block %s created = %d", guid, created_block);
+    hippo_block_set_timestamp(block, timestamp);
+    hippo_block_set_clicked_timestamp(block, clicked_timestamp);
+    hippo_block_set_ignored_timestamp(block, ignored_timestamp);
+    hippo_block_set_clicked_count(block, clicked_count);
+    hippo_block_set_clicked(block, clicked);
+    hippo_block_set_ignored(block, ignored);
 
+    /* FIXME we need to figure out what to do with the type */
+
+    g_debug("Parsed block %s created = %d timestamp = %" G_GINT64_FORMAT,
+            guid, created_block, timestamp);
+    
     if (created_block) {
         hippo_data_cache_add_block(connection->cache, block);
     }
@@ -1987,12 +2113,6 @@ static gboolean
 is_post(LmMessageNode *node)
 {
     return node_matches(node, "post", NULL);
-}
-
-static gboolean
-parse_bool(const char *str) 
-{
-    return strcmp(str, "true") == 0;
 }
 
 static gboolean
@@ -2710,7 +2830,7 @@ parse_chat_user_info(HippoConnection *connection,
             return FALSE;
         }        
 
-        music_playing_bool = music_playing ? g_ascii_strcasecmp(music_playing, "TRUE") == 0 : FALSE;
+        music_playing_bool = music_playing ? parse_bool(music_playing) : FALSE;
         
         if (!role)
             status = HIPPO_CHAT_STATE_PARTICIPANT;
@@ -2753,6 +2873,7 @@ parse_chat_message_info(HippoConnection  *connection,
         const char *small_photo_url_str = lm_message_node_get_attribute(info_node, "smallPhotoUrl");
         const char *timestamp_str = lm_message_node_get_attribute(info_node, "timestamp");
         const char *serial_str = lm_message_node_get_attribute(info_node, "serial");
+        gint64 timestamp_milliseconds;
         GTime timestamp;
         int serial;
 
@@ -2764,8 +2885,9 @@ parse_chat_message_info(HippoConnection  *connection,
         *name_p = name_str;
         *small_photo_url_p = small_photo_url_str;
 
-        timestamp = strtol(timestamp_str, NULL, 10);
-        serial = atoi(serial_str);
+        timestamp_milliseconds = parse_int64(timestamp_str);
+        timestamp = timestamp_milliseconds / 1000;
+        serial = parse_int32(serial_str);
         
         return hippo_chat_message_new(sender, text, timestamp, serial);
     }

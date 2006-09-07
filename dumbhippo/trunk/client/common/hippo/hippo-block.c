@@ -9,6 +9,13 @@ static void     hippo_block_finalize             (GObject *object);
 struct _HippoBlock {
     GObject parent;
     char   *guid;
+    HippoBlockType type;
+    gint64 timestamp;
+    gint64 clicked_timestamp;
+    gint64 ignored_timestamp;
+    int clicked_count;
+    guint clicked : 1;
+    guint ignored : 1;
 };
 
 struct _HippoBlockClass {
@@ -79,4 +86,136 @@ hippo_block_get_guid(HippoBlock *block)
 {
     g_return_val_if_fail(HIPPO_IS_BLOCK(block), NULL);
     return block->guid;
+}
+
+gint64
+hippo_block_get_timestamp(HippoBlock *block)
+{
+    g_return_val_if_fail(HIPPO_IS_BLOCK(block), -1);
+
+    return block->timestamp;
+}
+
+void
+hippo_block_set_timestamp (HippoBlock *block,
+                           gint64      value)
+{
+    g_return_if_fail(HIPPO_IS_BLOCK(block));
+
+    if (value != block->timestamp) {
+        block->timestamp = value;
+        hippo_block_emit_changed(block);
+    }
+}
+
+gint64
+hippo_block_get_clicked_timestamp (HippoBlock *block)
+{
+    g_return_val_if_fail(HIPPO_IS_BLOCK(block), -1);
+
+    return block->clicked_timestamp;
+}
+
+void
+hippo_block_set_clicked_timestamp (HippoBlock *block,
+                                   gint64      value)
+{
+    g_return_if_fail(HIPPO_IS_BLOCK(block));
+
+    if (value != block->clicked_timestamp) {
+        block->clicked_timestamp = value;
+        hippo_block_emit_changed(block);
+    }
+}
+
+gint64
+hippo_block_get_ignored_timestamp (HippoBlock *block)
+{
+    g_return_val_if_fail(HIPPO_IS_BLOCK(block), -1);
+
+    return block->ignored_timestamp;
+}
+
+void
+hippo_block_set_ignored_timestamp (HippoBlock *block,
+                                   gint64      value)
+{
+    g_return_if_fail(HIPPO_IS_BLOCK(block));
+
+    if (value != block->ignored_timestamp) {
+        block->ignored_timestamp = value;
+        hippo_block_emit_changed(block);
+    }
+}
+
+gint64
+hippo_block_get_sort_timestamp(HippoBlock *block)
+{
+    g_return_val_if_fail(HIPPO_IS_BLOCK(block), -1);
+
+    if (block->ignored)
+        return block->ignored_timestamp;
+    else
+        return block->timestamp;
+}
+
+int
+hippo_block_get_clicked_count(HippoBlock *block)
+{
+    g_return_val_if_fail(HIPPO_IS_BLOCK(block), 0);
+
+    return block->clicked_count;
+}
+
+void
+hippo_block_set_clicked_count(HippoBlock *block,
+                              int         value)
+{
+    g_return_if_fail(HIPPO_IS_BLOCK(block));
+
+    if (value != block->clicked_count) {
+        block->clicked_count = value;
+        hippo_block_emit_changed(block);
+    }
+}
+
+gboolean
+hippo_block_get_clicked(HippoBlock *block)
+{
+    g_return_val_if_fail(HIPPO_IS_BLOCK(block), FALSE);
+
+    return block->clicked;
+}
+
+void
+hippo_block_set_clicked(HippoBlock *block,
+                        gboolean    value)
+{
+    g_return_if_fail(HIPPO_IS_BLOCK(block));
+
+    value = value != FALSE;
+    if (value != block->clicked) {
+        block->clicked = value;
+        hippo_block_emit_changed(block);
+    }
+}
+
+gboolean
+hippo_block_get_ignored(HippoBlock *block)
+{
+    g_return_val_if_fail(HIPPO_IS_BLOCK(block), FALSE);
+
+    return block->ignored;
+}
+
+void
+hippo_block_set_ignored(HippoBlock *block,
+                        gboolean    value)
+{
+    g_return_if_fail(HIPPO_IS_BLOCK(block));
+
+    if (value != block->ignored) {
+        block->ignored = value;
+        hippo_block_emit_changed(block);
+    }
 }
