@@ -48,7 +48,7 @@ public class LiveQueueConsumerBean implements MessageListener {
 		processor.process(LiveState.getInstance(), event);
 		
 		// Reflect LiveEvents to XMPP server
-		JmsProducer producer = new JmsProducer(LiveEvent.XMPP_QUEUE, false);
+		JmsProducer producer = new JmsProducer(LiveEvent.XMPP_QUEUE, true);
 		try {
 			ObjectMessage jmsMessage = producer.createObjectMessage(event);
 			producer.send(jmsMessage);		

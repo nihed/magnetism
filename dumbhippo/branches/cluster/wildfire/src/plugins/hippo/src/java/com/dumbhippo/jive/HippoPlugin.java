@@ -96,7 +96,7 @@ public class HippoPlugin implements Plugin {
 			iqRouter.addHandler(new PostControlsIQHandler());
 			iqRouter.addHandler(new GroupIQHandler());			
 			
-			incomingQueue = new JmsConsumer(LiveEvent.XMPP_QUEUE);
+			incomingQueue = new JmsConsumer(LiveEvent.XMPP_QUEUE, true);
 			queueConsumer = new MessageQueueConsumer();
 			queueConsumerThread = new Thread(queueConsumer);
 			queueConsumerThread.start();

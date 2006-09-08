@@ -21,8 +21,8 @@ import javax.naming.NamingException;
  *
  */
 public class JmsProducer extends JmsQueue {
-	public JmsProducer(String queue, boolean local) {
-		super(queue, local);
+	public JmsProducer(String queue, boolean inServer) {
+		super(queue, inServer);
 	}
 	
 	public MessageProducer getProducer() {
@@ -66,8 +66,8 @@ public class JmsProducer extends JmsQueue {
 	private static class ProducerInit extends Init {
 		private MessageProducer messageProducer;
 
-		ProducerInit(String queue, boolean local) throws JMSException, NamingException {
-			super(queue, local);
+		ProducerInit(String queue, boolean inServer) throws JMSException, NamingException {
+			super(queue, inServer);
 		}
 		
 		@Override
@@ -92,7 +92,7 @@ public class JmsProducer extends JmsQueue {
 	}
 
 	@Override
-	protected Init newInit(String queue, boolean local) throws JMSException, NamingException {
-		return new ProducerInit(queue, local);
+	protected Init newInit(String queue, boolean inServer) throws JMSException, NamingException {
+		return new ProducerInit(queue, inServer);
 	}
 }

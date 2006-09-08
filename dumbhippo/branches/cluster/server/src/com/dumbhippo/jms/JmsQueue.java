@@ -12,6 +12,7 @@ import javax.jms.ExceptionListener;
 import javax.jms.JMSException;
 import javax.jms.Session;
 import javax.naming.CommunicationException;
+import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.NameNotFoundException;
 import javax.naming.NamingException;
@@ -19,6 +20,7 @@ import javax.naming.NamingException;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.server.util.EJBUtil;
 
 /**
  * Utility base class that creates a JMS connection, session, and destination.
@@ -35,12 +37,11 @@ public abstract class JmsQueue {
 	private static final int RETRY_INTERVAL_MILLISECONDS = 10000;
 	
 	private String queue;
-	private boolean local;
+	private boolean inServer;
 	
 	private Lock initLock;
 	private Condition initCondition;
 	private Init init;
-	
 	
 	/**
 	 * This class is sort of an "init connection transaction," which 
@@ -57,13 +58,20 @@ public abstract class JmsQueue {
 		protected abstract void openSub() throws JMSException, NamingException;
 		protected abstract void closeSub() throws JMSException;
 		
-		Init(String queue, boolean local) throws JMSException, NamingException {
+		Init(String queue, boolean inServer) throws JMSException, NamingException {
 			try {
-				InitialContext ctx = new InitialContext();
+				Context ctx;
+				
+				// For a client app, like imbot, we configure the default JNDI setup
+				// to be the HA JNDI, but inside the application server, the default
+				// JNDI setup is the local JNDI not the clustered HA JNDI.
+				if (inServer)
+					ctx = EJBUtil.getHAContext();
+				else
+					ctx = new InitialContext();
 				
 				ConnectionFactory connectionFactory;
 				
-				// We used to conditionalize on local, but using UIL should be sufficient
 				connectionFactory = (ConnectionFactory) ctx.lookup("ConnectionFactory");
 				
 				connection = connectionFactory.createConnection();
@@ -128,11 +136,11 @@ public abstract class JmsQueue {
 	 * server or not.
 	 * 
 	 * @param queue name of the queue, e.g. "FooQueue"
-	 * @param local true if we're inside the app server
+	 * @param inServer true if we're inside an app server
 	 */
-	protected JmsQueue(String queue, boolean local) {
+	protected JmsQueue(String queue, boolean inServer) {
 		this.queue = queue;
-		this.local = local;
+		this.inServer = inServer;
 		
 		// these protect lazily filling in the connection, etc.
 		initLock = new ReentrantLock();
@@ -190,7 +198,7 @@ public abstract class JmsQueue {
 		try {
 			while (init == null) {
 				try {
-					init = newInit(queue, local);
+					init = newInit(queue, inServer);
 				} catch (CommunicationException e) {
 					logger.warn("Failed to communicate with Java naming context", e);
 				} catch (NameNotFoundException e) {
@@ -262,7 +270,7 @@ public abstract class JmsQueue {
 			// the jms connection it leaks said thread and thus our whole app since our class loader
 			// is in Thread.contextClassLoader
 			System.err.println("ERROR JmsQueue object finalized without being closed, will leak a thread: " + queue);
-			logger.error("JmsQueue object finalized without being closed, will leak a thread {} {}", queue, local);
+			logger.error("JmsQueue object finalized without being closed, will leak a thread {} {}", queue, inServer);
 		}
 	}
 }

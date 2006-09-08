@@ -92,7 +92,7 @@ public class Main {
 		}
 		
 		public void run() {
-			JmsConsumer consumer = new JmsConsumer(queue);
+			JmsConsumer consumer = new JmsConsumer(queue, false);
 			
 			try {
 				logger.info("Starting dispatch thread for queue " + queue);

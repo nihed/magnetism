@@ -19,8 +19,8 @@ import javax.naming.NamingException;
  */
 public class JmsConsumer extends JmsQueue {
 	
-	public JmsConsumer(String queue) {
-		super(queue, false);
+	public JmsConsumer(String queue, boolean inServer) {
+		super(queue, inServer);
 	}
 	
 	public MessageConsumer getConsumer() {
@@ -52,8 +52,8 @@ public class JmsConsumer extends JmsQueue {
 	private static class ConsumerInit extends Init {
 		private MessageConsumer messageConsumer;
 		
-		ConsumerInit(String queue, boolean local) throws JMSException, NamingException {
-			super(queue, local);
+		ConsumerInit(String queue, boolean inServer) throws JMSException, NamingException {
+			super(queue, inServer);
 		}
 
 		@Override
@@ -82,8 +82,8 @@ public class JmsConsumer extends JmsQueue {
 	}
 
 	@Override
-	protected Init newInit(String queue, boolean local) throws JMSException, NamingException {
-		return new ConsumerInit(queue, local);
+	protected Init newInit(String queue, boolean inServer) throws JMSException, NamingException {
+		return new ConsumerInit(queue, inServer);
 	}
 }
 
