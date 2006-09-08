@@ -10,10 +10,12 @@ typedef struct {
     HippoPlatform   *platform;
     HippoDataCache  *cache;
     HippoConnection *connection;
-    HippoStackMode mode;
+    GSList          *blocks;
+    HippoStackMode   mode;
     HippoWindow     *base_window;
     HippoCanvasItem *base_item;
     HippoWindow     *single_block_window;
+    HippoCanvasItem *single_block_item;
     HippoWindow     *stack_window;
     HippoCanvasItem *stack_item;
     guint            idle : 1;
@@ -150,10 +152,76 @@ manager_set_mode(StackManager     *manager,
     }
 }
 
+static int
+block_sort_func(gconstpointer a,
+                gconstpointer b)
+{
+    HippoBlock *block_a = (HippoBlock*) a;
+    HippoBlock *block_b = (HippoBlock*) b;
+    gint64 stamp_a = hippo_block_get_sort_timestamp(block_a);
+    gint64 stamp_b = hippo_block_get_sort_timestamp(block_b);
+
+    if (stamp_a < stamp_b)
+        return -1;
+    else if (stamp_a > stamp_b)
+        return 1;
+    else
+        return 0;
+}
+
+static void
+on_block_added(HippoDataCache *cache,
+               HippoBlock     *block,
+               void           *data)
+{
+    StackManager *manager = data;
+
+    if (g_slist_find(manager->blocks, block) != NULL)
+        return;
+
+    g_object_ref(block);
+    manager->blocks = g_slist_insert_sorted(manager->blocks,
+                                            block,
+                                            block_sort_func);
+
+    g_object_set(G_OBJECT(manager->single_block_item),
+                 "block", manager->blocks->data,
+                 NULL);
+}
+
+static void
+on_block_removed(HippoDataCache *cache,
+                 HippoBlock     *block,
+                 void           *data)
+{
+    StackManager *manager = data;
+    GSList *link;
+
+    link = g_slist_find(manager->blocks, block);
+    if (link != NULL) {
+        manager->blocks = g_slist_remove(manager->blocks, block);
+        g_object_unref(block);
+    }
+
+    g_object_set(G_OBJECT(manager->single_block_item),
+                 "block", manager->blocks ? manager->blocks->data : NULL,
+                 NULL);
+}
+
 static void
 manager_disconnect(StackManager *manager)
 {
     if (manager->cache) {
+        g_signal_handlers_disconnect_by_func(manager->cache,
+                                             G_CALLBACK(on_block_added),
+                                             manager);
+        g_signal_handlers_disconnect_by_func(manager->cache,
+                                             G_CALLBACK(on_block_removed),
+                                             manager);
+
+        g_slist_foreach(manager->blocks, (GFunc) g_object_unref, NULL);
+        g_slist_free(manager->blocks);
+        
         g_object_unref(manager->base_window);
         g_object_unref(manager->single_block_window);
         g_object_unref(manager->stack_window);
@@ -227,14 +295,23 @@ manager_attach(StackManager    *manager,
     manager->base_window = hippo_platform_create_window(platform);
     manager->single_block_window = hippo_platform_create_window(platform);
     manager->stack_window = hippo_platform_create_window(platform);
-
+    
     manager->base_item = hippo_canvas_base_new();
     g_object_set(manager->base_item, "fixed-width", 400, NULL);
     hippo_window_set_contents(manager->base_window, manager->base_item);
+
+    manager->single_block_item = hippo_canvas_block_new();
+    hippo_window_set_contents(manager->single_block_window,
+                              manager->single_block_item);
     
     manager->stack_item = hippo_canvas_stack_new();
     g_object_set(manager->stack_item, "fixed-width", 400, NULL);
     hippo_window_set_contents(manager->stack_window, manager->stack_item);
+    
+    g_signal_connect(manager->cache, "block-added",
+                     G_CALLBACK(on_block_added), manager);
+    g_signal_connect(manager->cache, "block-removed",
+                     G_CALLBACK(on_block_removed), manager);
 }
 
 static void

@@ -6,6 +6,7 @@
 
 #include "hippo-canvas-item.h"
 #include <cairo/cairo.h>
+#include <hippo/hippo-block.h>
 
 G_BEGIN_DECLS
 
@@ -19,10 +20,12 @@ typedef struct _HippoCanvasBlockClass HippoCanvasBlockClass;
 #define HIPPO_IS_CANVAS_BLOCK_CLASS(klass)   (G_TYPE_CHECK_CLASS_TYPE ((klass), HIPPO_TYPE_CANVAS_BLOCK))
 #define HIPPO_CANVAS_BLOCK_GET_CLASS(obj)    (G_TYPE_INSTANCE_GET_CLASS ((obj), HIPPO_TYPE_CANVAS_BLOCK, HippoCanvasBlockClass))
 
-GType        	 hippo_canvas_block_get_type               (void) G_GNUC_CONST;
+GType        	 hippo_canvas_block_get_type    (void) G_GNUC_CONST;
 
-HippoCanvasItem* hippo_canvas_block_new    (void);
+HippoCanvasItem* hippo_canvas_block_new         (void);
 
+void             hippo_canvas_block_set_block   (HippoCanvasBlock *canvas_block,
+                                                 HippoBlock       *block);
 
 G_END_DECLS
 

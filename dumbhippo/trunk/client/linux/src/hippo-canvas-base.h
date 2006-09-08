@@ -1,6 +1,6 @@
 /* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
-#ifndef __HIPPO_CANVAS_BLOCK_H__
-#define __HIPPO_CANVAS_BLOCK_H__
+#ifndef __HIPPO_CANVAS_BASE_H__
+#define __HIPPO_CANVAS_BASE_H__
 
 /* Canvas item for the purple "base" of the stacker */
 

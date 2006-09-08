@@ -105,8 +105,11 @@ hippo_window_gtk_finalize(GObject *object)
 HippoWindow*
 hippo_window_gtk_new(void)
 {
-    HippoWindowGtk *gtk = g_object_new(HIPPO_TYPE_WINDOW_GTK, NULL);
+    HippoWindowGtk *gtk;
 
+    gtk = g_object_new(HIPPO_TYPE_WINDOW_GTK,
+                       "resizable", FALSE,
+                       NULL);
 
     return HIPPO_WINDOW(gtk);
 }

@@ -95,7 +95,7 @@ dh.stacker.formatTimeAgo = function(timestamp) {
 		}
 	}
 
-	var deltaHours = deltaSeconds / 60 / 60;
+	var deltaHours = deltaSeconds / (60 * 60);
 	
 	if (deltaHours < 1.55) {
 		return "1 hr. ago";

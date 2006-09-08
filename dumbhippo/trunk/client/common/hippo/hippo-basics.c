@@ -8,6 +8,7 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <math.h>
 #include "hippo-common-internal.h"
 
 static void hippo_basic_self_test(void);
@@ -1040,6 +1041,64 @@ hippo_compare_versions(const char *version_a,
         return 1;
     else
         return 0;
+}
+
+/* improvements to this should probably go in the javascript version too */
+char*
+hippo_format_time_ago(GTime now,
+                      GTime then)
+{
+    GTime delta = now - then;
+    double delta_hours;
+    double delta_weeks;
+    double delta_years;
+    
+    if (delta < 0)
+        return g_strdup("the future");
+
+    if (delta < 120)
+        return g_strdup("a minute ago");
+
+    if (delta < 60*60) {
+        int delta_minutes = delta / 60;
+        if (delta_minutes > 5)
+            delta_minutes = delta_minutes - (delta_minutes % 5);
+        return g_strdup_printf("%d minutes ago", delta_minutes);
+    }
+
+    delta_hours = delta / 60 * 60;
+
+    if (delta_hours < 1.55)
+        return g_strdup("1 hr. ago");
+
+    if (delta_hours < 24) {
+        return g_strdup_printf("%.0f hrs. ago", rint(delta_hours));
+    }
+
+    if (delta_hours < 48) {
+        return g_strdup("Yesterday");
+    }
+    
+    if (delta_hours < 24*15) {
+        return g_strdup_printf("%.0f days ago", rint(delta_hours / 24));
+    }
+
+    delta_weeks = delta_hours / (24 * 7);
+
+    if (delta_weeks < 6) {
+        return g_strdup_printf("%.0f weeks ago", rint(delta_weeks));
+    }
+
+    if (delta_weeks < 50) {
+        return g_strdup_printf("%.0f months ago", rint(delta_weeks / 4));
+    }
+
+    delta_years = delta_weeks / 52;
+
+    if (delta_years < 1.55)
+        return g_strdup_printf("1 year ago");
+
+    return g_strdup_printf("%.0f years ago", rint(delta_years));
 }
 
 static const char*

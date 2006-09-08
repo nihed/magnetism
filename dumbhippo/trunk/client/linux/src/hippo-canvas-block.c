@@ -15,6 +15,7 @@
 static void      hippo_canvas_block_init                (HippoCanvasBlock       *block);
 static void      hippo_canvas_block_class_init          (HippoCanvasBlockClass  *klass);
 static void      hippo_canvas_block_iface_init          (HippoCanvasItemClass   *item_class);
+static void      hippo_canvas_block_dispose             (GObject                *object);
 static void      hippo_canvas_block_finalize            (GObject                *object);
 
 static void hippo_canvas_block_set_property (GObject      *object,
@@ -33,7 +34,8 @@ static void     hippo_canvas_block_paint              (HippoCanvasItem *item,
 
 struct _HippoCanvasBlock {
     HippoCanvasBox box;
-
+    HippoBlock *block;
+    HippoCanvasItem *age_item;
 };
 
 struct _HippoCanvasBlockClass {
@@ -49,6 +51,7 @@ enum {
 /* static int signals[LAST_SIGNAL]; */
 
 enum {
+    PROP_BLOCK,
     PROP_0
 };
 
@@ -199,11 +202,10 @@ hippo_canvas_block_init(HippoCanvasBlock *block)
     hippo_canvas_box_append(box, item, HIPPO_PACK_END);
 
     
-    item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
-                        "font-scale", PANGO_SCALE_SMALL,
-                        "text", "1 hr. ago",
-                        NULL);
-    hippo_canvas_box_append(box, item, HIPPO_PACK_END);
+    block->age_item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
+                                   "font-scale", PANGO_SCALE_SMALL,
+                                   NULL);
+    hippo_canvas_box_append(box, block->age_item, HIPPO_PACK_END);
 }
 
 static HippoCanvasItemClass *item_parent_class;
@@ -224,14 +226,83 @@ hippo_canvas_block_class_init(HippoCanvasBlockClass *klass)
     object_class->set_property = hippo_canvas_block_set_property;
     object_class->get_property = hippo_canvas_block_get_property;
 
+    object_class->dispose = hippo_canvas_block_dispose;
     object_class->finalize = hippo_canvas_block_finalize;
+
+    g_object_class_install_property(object_class,
+                                    PROP_BLOCK,
+                                    g_param_spec_object("block",
+                                                        _("Block"),
+                                                        _("Block to display"),
+                                                        HIPPO_TYPE_BLOCK,
+                                                        G_PARAM_READABLE | G_PARAM_WRITABLE));        
+}
+
+static void
+on_block_changed(HippoBlock *block,
+                 void       *data)
+{
+    HippoCanvasBlock *canvas_block = HIPPO_CANVAS_BLOCK(data);
+    GTimeVal tv;
+    char *when;
+
+    if (block == NULL) /* should be impossible */
+        return;
+    
+    g_get_current_time(&tv);
+
+    when = hippo_format_time_ago(tv.tv_sec,
+                                 (int) (hippo_block_get_timestamp(block) / 1000));
+
+    g_object_set(G_OBJECT(canvas_block->age_item),
+                 "text", when,
+                 NULL);
+
+    g_free(when);
+
+    /* FIXME update all the other info */
+}
+
+static void
+set_block(HippoCanvasBlock *canvas_block,
+          HippoBlock       *new_block)
+{
+    if (new_block != canvas_block->block) {
+        if (new_block) {
+            g_object_ref(new_block);
+            g_signal_connect(G_OBJECT(new_block), "changed",
+                             G_CALLBACK(on_block_changed), canvas_block);
+        }
+        if (canvas_block->block) {
+            g_signal_handlers_disconnect_by_func(G_OBJECT(canvas_block->block),
+                                                 G_CALLBACK(on_block_changed), canvas_block);
+            g_object_unref(canvas_block->block);
+        }
+        canvas_block->block = new_block;
+
+        on_block_changed(new_block, canvas_block);
+        
+        g_object_notify(G_OBJECT(canvas_block), "block");
+        hippo_canvas_item_emit_request_changed(HIPPO_CANVAS_ITEM(canvas_block));
+    }
+}
+
+static void
+hippo_canvas_block_dispose(GObject *object)
+{
+    HippoCanvasBlock *block = HIPPO_CANVAS_BLOCK(object);
+
+    set_block(block, NULL);
+
+    block->age_item = NULL;
+    
+    G_OBJECT_CLASS(hippo_canvas_block_parent_class)->dispose(object);
 }
 
 static void
 hippo_canvas_block_finalize(GObject *object)
 {
     /* HippoCanvasBlock *block = HIPPO_CANVAS_BLOCK(object); */
-
 
     G_OBJECT_CLASS(hippo_canvas_block_parent_class)->finalize(object);
 }
@@ -256,7 +327,12 @@ hippo_canvas_block_set_property(GObject         *object,
     block = HIPPO_CANVAS_BLOCK(object);
 
     switch (prop_id) {
-
+    case PROP_BLOCK:
+        {
+            HippoBlock *new_block = (HippoBlock*) g_value_get_object(value);
+            set_block(block, new_block);
+        }
+        break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
         break;
@@ -274,6 +350,9 @@ hippo_canvas_block_get_property(GObject         *object,
     block = HIPPO_CANVAS_BLOCK (object);
 
     switch (prop_id) {
+    case PROP_BLOCK:
+        g_value_set_object(value, G_OBJECT(block->block));
+        break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
         break;
@@ -288,4 +367,11 @@ hippo_canvas_block_paint(HippoCanvasItem *item,
 
     /* Draw the background and any children */
     item_parent_class->paint(item, cr);
+}
+
+void
+hippo_canvas_block_set_block(HippoCanvasBlock *canvas_block,
+                             HippoBlock       *block)
+{
+    g_object_set(G_OBJECT(canvas_block), "block", block, NULL);
 }
