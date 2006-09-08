@@ -29,6 +29,8 @@ LIBHIPPO_SOURCEFILES =						\
 	$(COMMONSRCDIR)/hippo/hippo-basics.h			\
 	$(COMMONSRCDIR)/hippo/hippo-block.c			\
 	$(COMMONSRCDIR)/hippo/hippo-block.h			\
+	$(COMMONSRCDIR)/hippo/hippo-block-post.c		\
+	$(COMMONSRCDIR)/hippo/hippo-block-post.h		\
 	$(COMMONSRCDIR)/hippo/hippo-chat-room.c			\
 	$(COMMONSRCDIR)/hippo/hippo-chat-room.h			\
 	$(COMMONSRCDIR)/hippo/hippo-common.h			\

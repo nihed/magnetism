@@ -1201,9 +1201,13 @@ find_child_node(LmMessageNode *node,
 {
     LmMessageNode *child;
     for (child = node->children; child; child = child->next) {
-        const char *ns = lm_message_node_get_attribute(child, "xmlns");
-        if (!(ns && strcmp(ns, element_namespace) == 0 && child->name))
+        if (child->name == NULL)
             continue;
+        if (element_namespace) {
+            const char *ns = lm_message_node_get_attribute(child, "xmlns");
+            if (!(ns && strcmp(ns, element_namespace) == 0))
+                continue;
+        }
         if (strcmp(child->name, element_name) != 0)
             continue;
 
@@ -1761,6 +1765,7 @@ hippo_connection_parse_block(HippoConnection *connection,
                              LmMessageNode   *block_node)
 {
     HippoBlock *block;
+    LmMessageNode *child;
     const char *guid;
     const char *type_str;
     const char *timestamp_str;
@@ -1777,6 +1782,7 @@ hippo_connection_parse_block(HippoConnection *connection,
     gboolean clicked;
     gboolean ignored;
     gboolean created_block;
+    const char *post_guid;
     
     g_assert(connection->cache != NULL);
 
@@ -1802,6 +1808,22 @@ hippo_connection_parse_block(HippoConnection *connection,
     if (type == HIPPO_BLOCK_TYPE_UNKNOWN)
         return FALSE;
 
+    post_guid = NULL;
+    switch (type) {
+    case HIPPO_BLOCK_TYPE_POST:
+        child = find_child_node(block_node, NULL, "post");
+        if (child == NULL) {
+            g_warning("missing <post> child node");
+            return FALSE;
+        }
+        post_guid = lm_message_node_get_attribute(child, "postId");
+        if (!post_guid) {
+            g_warning("missing postId on <post>");
+            return FALSE;
+        }
+        break;
+    }
+    
     timestamp = parse_int64(timestamp_str);
     clicked_timestamp = parse_int64(clicked_timestamp_str);
     ignored_timestamp = parse_int64(ignored_timestamp_str);
@@ -1811,9 +1833,15 @@ hippo_connection_parse_block(HippoConnection *connection,
     
     block = hippo_data_cache_lookup_block(connection->cache, guid);
     if (block == NULL) {
-        block = hippo_block_new(guid);
+        block = hippo_block_new(guid, type);
         created_block = TRUE;
     } else {
+        if (hippo_block_get_block_type(block) != type) {
+            g_warning("Block changed its type from %d to %d",
+                      hippo_block_get_block_type(block), type);
+            return FALSE;
+        }
+        
         g_object_ref(block);
         created_block = FALSE;
     }
@@ -1828,6 +1856,13 @@ hippo_connection_parse_block(HippoConnection *connection,
     hippo_block_set_clicked_count(block, clicked_count);
     hippo_block_set_clicked(block, clicked);
     hippo_block_set_ignored(block, ignored);
+
+    switch (type) {
+    case HIPPO_BLOCK_TYPE_POST:
+        g_object_set(G_OBJECT(block), "post-id", post_guid, NULL);
+        break;
+    }
+    
     g_object_thaw_notify(G_OBJECT(block));
 
     /* FIXME we need to figure out what to do with the type */

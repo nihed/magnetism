@@ -1,6 +1,7 @@
 /* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 #include "hippo-common-internal.h"
 #include "hippo-block.h"
+#include "hippo-block-post.h"
 #include <string.h>
 
 static void     hippo_block_finalize             (GObject *object);
@@ -28,7 +29,7 @@ static int signals[LAST_SIGNAL];
 enum {
     PROP_0,
     PROP_GUID,
-    PROP_TYPE,
+    PROP_BLOCK_TYPE,
     PROP_SORT_TIMESTAMP,
     PROP_UPDATE_TIME,
     PROP_SERVER_TIMESTAMP,
@@ -64,8 +65,8 @@ hippo_block_class_init(HippoBlockClass *klass)
                                                         G_PARAM_READABLE));
 
     g_object_class_install_property(object_class,
-                                    PROP_TYPE,
-                                    g_param_spec_int("type",
+                                    PROP_BLOCK_TYPE,
+                                    g_param_spec_int("block-type",
                                                      _("Type"),
                                                      _("What kind of block this is"),
                                                      0, G_MAXINT,
@@ -200,7 +201,7 @@ hippo_block_set_property(GObject         *object,
                                 g_value_get_boolean(value));        
         break;
     case PROP_GUID:                  /* read-only */
-    case PROP_TYPE:                  /* read-only */
+    case PROP_BLOCK_TYPE:            /* read-only */
     case PROP_SORT_TIMESTAMP:        /* read-only */
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
@@ -222,7 +223,7 @@ hippo_block_get_property(GObject         *object,
     case PROP_GUID:
         g_value_set_string(value, block->guid);
         break;
-    case PROP_TYPE:
+    case PROP_BLOCK_TYPE:
         g_value_set_int(value, block->type);
         break;
     case PROP_UPDATE_TIME:
@@ -265,10 +266,26 @@ hippo_block_get_property(GObject         *object,
 
 
 HippoBlock*
-hippo_block_new(const char *guid)
+hippo_block_new(const char    *guid,
+                HippoBlockType type)
 {
-    HippoBlock *block = g_object_new(HIPPO_TYPE_BLOCK, NULL);
+    HippoBlock *block;
+    GType object_type;
+
+    object_type = HIPPO_TYPE_BLOCK;
+    switch (type) {
+    case HIPPO_BLOCK_TYPE_UNKNOWN:
+        object_type = HIPPO_TYPE_BLOCK;
+        break;
+    case HIPPO_BLOCK_TYPE_POST:
+        object_type = HIPPO_TYPE_BLOCK_POST;
+        break;
+        /* don't add default case, it hides warnings */
+    }
     
+    block = g_object_new(object_type,
+                         NULL);
+    block->type = type;
     block->guid = g_strdup(guid);
     
     return block;
@@ -279,6 +296,13 @@ hippo_block_get_guid(HippoBlock *block)
 {
     g_return_val_if_fail(HIPPO_IS_BLOCK(block), NULL);
     return block->guid;
+}
+
+HippoBlockType
+hippo_block_get_block_type(HippoBlock *block)
+{
+    g_return_val_if_fail(HIPPO_IS_BLOCK(block), HIPPO_BLOCK_TYPE_UNKNOWN);
+    return block->type;
 }
 
 GTime

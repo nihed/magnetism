@@ -23,8 +23,6 @@ typedef struct _HippoBlockPostClass HippoBlockPostClass;
 
 GType        	 hippo_block_post_get_type               (void) G_GNUC_CONST;
 
-HippoBlock*      hippo_block_post_new                    (void);
-
 G_END_DECLS
 
 #endif /* __HIPPO_BLOCK_POST_H__ */

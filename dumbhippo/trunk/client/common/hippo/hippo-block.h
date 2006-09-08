@@ -45,9 +45,11 @@ struct _HippoBlockClass {
 };
 
 GType        	 hippo_block_get_type                  (void) G_GNUC_CONST;
-HippoBlock*      hippo_block_new                       (const char *guid);
+HippoBlock*      hippo_block_new                       (const char    *guid,
+                                                        HippoBlockType type);
 
 const char*      hippo_block_get_guid                  (HippoBlock *block);
+HippoBlockType   hippo_block_get_block_type            (HippoBlock *block);
 
 GTime    hippo_block_get_update_time       (HippoBlock *block);
 void     hippo_block_set_update_time       (HippoBlock *block,

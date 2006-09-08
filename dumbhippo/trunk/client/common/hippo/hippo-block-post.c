@@ -1,4 +1,5 @@
 /* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
+#include "hippo-common-internal.h"
 #include "hippo-block.h"
 #include "hippo-block-post.h"
 #include "hippo-post.h"
@@ -8,6 +9,7 @@ static void      hippo_block_post_init                (HippoBlockPost       *blo
 static void      hippo_block_post_class_init          (HippoBlockPostClass  *klass);
 
 static void      hippo_block_post_dispose             (GObject              *object);
+static void      hippo_block_post_finalize            (GObject              *object);
 
 static void hippo_block_post_set_property (GObject      *object,
                                            guint         prop_id,
@@ -20,7 +22,8 @@ static void hippo_block_post_get_property (GObject      *object,
 
 struct _HippoBlockPost {
     HippoBlock       parent;
-    HippoPost       *post;
+    char            *post_id;
+    HippoPost       *cached_post;
 };
 
 struct _HippoBlockPostClass {
@@ -37,7 +40,8 @@ static int signals[LAST_SIGNAL];
 
 enum {
     PROP_0,
-    PROP_POST
+    PROP_CACHED_POST,
+    PROP_POST_ID
 };
 
 G_DEFINE_TYPE(HippoBlockPost, hippo_block_post, HIPPO_TYPE_BLOCK);
@@ -57,31 +61,39 @@ hippo_block_post_class_init(HippoBlockPostClass *klass)
     object_class->get_property = hippo_block_post_get_property;
 
     object_class->dispose = hippo_block_post_dispose;
-
+    object_class->finalize = hippo_block_post_finalize;
+    
     g_object_class_install_property(object_class,
-                                    PROP_POST,
-                                    g_param_spec_object("post",
-                                                        _("Post"),
-                                                        _("Post matching the block"),
+                                    PROP_CACHED_POST,
+                                    g_param_spec_object("cached-post",
+                                                        _("Cached post"),
+                                                        _("Cached object matching the post ID"),
                                                         HIPPO_TYPE_POST,
                                                         G_PARAM_READABLE | G_PARAM_WRITABLE));
+    g_object_class_install_property(object_class,
+                                    PROP_POST_ID,
+                                    g_param_spec_string("post-id",
+                                                        _("Post ID"),
+                                                        _("Post ID matching the block"),
+                                                        NULL,
+                                                        G_PARAM_READABLE | G_PARAM_WRITABLE));    
 }
 
 static void
 set_post(HippoBlockPost *block_post,
          HippoPost      *post)
 {
-    if (post == block_post->post)
+    if (post == block_post->cached_post)
         return;
     
-    if (block_post->post) {
-        g_object_unref(block_post->post);
-        block_post->post = NULL;
+    if (block_post->cached_post) {
+        g_object_unref(block_post->cached_post);
+        block_post->cached_post = NULL;
     }
 
     if (post) {
         g_object_ref(post);
-        block_post->post = post;
+        block_post->cached_post = post;
     }
 }
 
@@ -95,14 +107,14 @@ hippo_block_post_dispose(GObject *object)
     G_OBJECT_CLASS(hippo_block_post_parent_class)->dispose(object); 
 }
 
-HippoBlock*
-hippo_block_post_new(void);
+static void
+hippo_block_post_finalize(GObject *object)
 {
-    HippoBlockPost *block_post;
-
-    block_post = g_object_new(HIPPO_TYPE_BLOCK_POST, NULL);
-
-    return HIPPO_BLOCK(block_post);
+    HippoBlockPost *block_post = HIPPO_BLOCK_POST(object);
+    
+    g_free(block_post->post_id);
+    
+    G_OBJECT_CLASS(hippo_block_post_parent_class)->finalize(object); 
 }
 
 static void
@@ -116,11 +128,15 @@ hippo_block_post_set_property(GObject         *object,
     block_post = HIPPO_BLOCK_POST(object);
 
     switch (prop_id) {
-    case PROP_POST:
+    case PROP_CACHED_POST:
         {
             HippoPost *new_post = (HippoPost*) g_value_get_object(value);
             set_post(block_post, new_post);
         }
+        break;
+    case PROP_POST_ID:
+        g_free(block_post->post_id);
+        block_post->post_id = g_value_dup_string(value);
         break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
@@ -139,8 +155,11 @@ hippo_block_post_get_property(GObject         *object,
     block_post = HIPPO_BLOCK_POST(object);
 
     switch (prop_id) {
-    case PROP_POST:
-        g_value_set_object(value, G_OBJECT(block_post->post));
+    case PROP_CACHED_POST:
+        g_value_set_object(value, G_OBJECT(block_post->cached_post));
+        break;
+    case PROP_POST_ID:
+        g_value_set_string(value, block_post->post_id);
         break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
