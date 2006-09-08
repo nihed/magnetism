@@ -20,7 +20,8 @@ deploy-hasingleton/jms/hsqldb-jdbc2-service.xml
 #/deploy/cluster-service.xml
 #/deploy/deploy-hasingleton-service.xml
 #/deploy/ejb3-entity-cache-service.xml
-#/deploy/ejb3-clustered-sfsbcache-service.xml
+# We don't have any stateful session beans, so we don't need to cluster them
+/deploy/ejb3-clustered-sfsbcache-service.xml
 /deploy/iiop-service.xml
 /deploy/httpha-invoker.sar
 /deploy/jbossweb-ejb.jar
@@ -32,8 +33,8 @@ deploy-hasingleton/jms/hsqldb-jdbc2-service.xml
 /deploy/snmp-adaptor.sar
 /deploy/juddi-service.sar
 /deploy/juddiws.war
-#/deploy/tc5-cluster.sar
-#/deploy/tc5-cluster-service.xml
+# This is for replication of HTTP sessions, which we don't need to do
+/deploy/tc5-cluster.sar
 
 # this is an extra copy of commons-logging that throws
 # an exception since it can't find log4j.jar
