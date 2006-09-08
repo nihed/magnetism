@@ -27,8 +27,8 @@
        jnp.disableDiscovery=false
        jnp.partitionName=${jboss.partition.name:DefaultPartition}
        jnp.discoveryGroup=${jboss.partition.udpGroup:230.0.0.4}
-       jnp.discoveryPort=1102
-       jnp.discoveryTTL=16
+       jnp.discoveryPort=@@jnpDiscoveryPort@@
+       jnp.discoveryTTL=@@multicastTTL@@
        jnp.discoveryTimeout=5000
        jnp.maxRetries=1
     </attribute>

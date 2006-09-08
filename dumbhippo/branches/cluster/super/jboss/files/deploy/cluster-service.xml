@@ -132,9 +132,9 @@
       <attribute name="AutoDiscoveryBindAddress">${jboss.bind.address}</attribute>
       <!-- Multicast Address and group port used for auto-discovery -->
       <attribute name="AutoDiscoveryAddress">${jboss.partition.udpGroup:230.0.0.4}</attribute>
-      <attribute name="AutoDiscoveryGroup">1102</attribute>
+      <attribute name="AutoDiscoveryGroup">@@jnpDiscoveryPort@@</attribute>
       <!-- The TTL (time-to-live) for autodiscovery IP multicast packets -->
-      <attribute name="AutoDiscoveryTTL">16</attribute>
+      <attribute name="AutoDiscoveryTTL">@@multicastTTL@@</attribute>
       <!-- The load balancing policy for HA-JNDI -->
       <attribute name="LoadBalancePolicy">org.jboss.ha.framework.interfaces.RoundRobin</attribute>
       

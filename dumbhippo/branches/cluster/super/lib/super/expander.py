@@ -77,7 +77,7 @@ class Expander:
         the regular expression only once per file and still
         encapsulate the substitution"""
         
-        subst = re.compile("@@([a-zA-Z_][a-zA-Z0-9_]*)@@")
+        subst = re.compile("@@((?:[a-zA-Z_][a-zA-Z_0-9]*\\.)?[a-zA-Z_][a-zA-Z0-9_]*)@@")
         def repl(m):
             return scope.expand_parameter(m.group(1))
         

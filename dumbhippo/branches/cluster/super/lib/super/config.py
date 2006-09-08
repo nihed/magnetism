@@ -250,7 +250,15 @@ class Config:
 
     def get_parameter(self, name):
         """Get the unexpanded value of a parameter."""
-        return self.params[name]
+        dot = name.find(".")
+        if dot >= 0:
+            service_name = name[0:dot]
+            if not self.services.has_key(service_name):
+                print >>sys.stderr, "Can't find service '%s' when expanding '%s'" % (service_name, name)
+                sys.exit(1)
+            return self.services[service_name].get_parameter(name[dot + 1:])
+        else:
+            return self.params[name]
 
     def has_parameter(self, name):
         """Return True if the given parameter was set."""
@@ -276,7 +284,7 @@ class Config:
         if scope is None:
             scope = self
 
-        ident = '[a-zA-Z_][a-zA-Z_0-9]*'
+        ident = '(?:[a-zA-Z_][a-zA-Z_0-9]*\\.)?[a-zA-Z_][a-zA-Z_0-9]*'
         arithmetic = '\$\(\(\s*(%s)\s*\+\s*([0-9]+)\s*\)\)' % ident
         
         def repl(m):
@@ -297,7 +305,6 @@ class Config:
 
                     return self.expand_parameter(param_name, scope)
 
-        ident = "[a-zA-Z_][a-zA-Z_0-9]*"
         # \x5C = backslash, trying to avoid "\\\\\\\\\\\\" syndrome
         expr = '\x5C\x5C\x5C$|%s|\$%s' % (arithmetic, ident)
         return re.sub(expr, repl, str)
