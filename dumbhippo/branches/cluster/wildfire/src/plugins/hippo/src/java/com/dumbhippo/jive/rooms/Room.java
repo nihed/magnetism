@@ -187,7 +187,7 @@ public class Room {
 	private Room(RoomHandler handler, ChatRoomInfo info) {
 		this.handler = handler; 
 		// FIXME this gets leaked, need to call close()
-		queue = new JmsProducer(XmppEvent.QUEUE, false);
+		queue = new JmsProducer(XmppEvent.QUEUE, true);
 		
 		userInfoCache = new HashMap<String, UserInfo>();
 		participantResources = new HashMap<JID, UserInfo>();
