@@ -235,12 +235,13 @@ hippo_canvas_block_class_init(HippoCanvasBlockClass *klass)
                                                         _("Block"),
                                                         _("Block to display"),
                                                         HIPPO_TYPE_BLOCK,
-                                                        G_PARAM_READABLE | G_PARAM_WRITABLE));        
+                                                        G_PARAM_READABLE | G_PARAM_WRITABLE)); 
 }
 
 static void
-on_block_changed(HippoBlock *block,
-                 void       *data)
+on_block_timestamp_changed(HippoBlock *block,
+                           GParamSpec *arg, /* null when we invoke callback manually */
+                           void       *data)
 {
     HippoCanvasBlock *canvas_block = HIPPO_CANVAS_BLOCK(data);
     GTimeVal tv;
@@ -286,17 +287,19 @@ set_block(HippoCanvasBlock *canvas_block,
     if (new_block != canvas_block->block) {
         if (new_block) {
             g_object_ref(new_block);
-            g_signal_connect(G_OBJECT(new_block), "changed",
-                             G_CALLBACK(on_block_changed), canvas_block);
+            g_signal_connect(G_OBJECT(new_block), "notify::timestamp",
+                             G_CALLBACK(on_block_timestamp_changed),
+                             canvas_block);
         }
         if (canvas_block->block) {
             g_signal_handlers_disconnect_by_func(G_OBJECT(canvas_block->block),
-                                                 G_CALLBACK(on_block_changed), canvas_block);
+                                                 G_CALLBACK(on_block_timestamp_changed),
+                                                 canvas_block);
             g_object_unref(canvas_block->block);
         }
         canvas_block->block = new_block;
 
-        on_block_changed(new_block, canvas_block);
+        on_block_timestamp_changed(new_block, NULL, canvas_block);
         
         g_object_notify(G_OBJECT(canvas_block), "block");
         hippo_canvas_item_emit_request_changed(HIPPO_CANVAS_ITEM(canvas_block));

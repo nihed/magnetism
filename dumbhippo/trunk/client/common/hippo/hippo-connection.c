@@ -1819,6 +1819,7 @@ hippo_connection_parse_block(HippoConnection *connection,
     }
     g_assert(block != NULL);
 
+    g_object_freeze_notify(G_OBJECT(block));
     hippo_block_set_update_time(block, now);
     hippo_block_set_server_timestamp(block, server_timestamp);
     hippo_block_set_timestamp(block, timestamp);
@@ -1827,6 +1828,7 @@ hippo_connection_parse_block(HippoConnection *connection,
     hippo_block_set_clicked_count(block, clicked_count);
     hippo_block_set_clicked(block, clicked);
     hippo_block_set_ignored(block, ignored);
+    g_object_thaw_notify(G_OBJECT(block));
 
     /* FIXME we need to figure out what to do with the type */
 

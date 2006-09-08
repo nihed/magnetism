@@ -197,8 +197,9 @@ resort_block(StackManager *manager,
 }
 
 static void
-on_block_changed(HippoBlock *block,
-                 void       *data)
+on_block_sort_changed(HippoBlock *block,
+                      GParamSpec *arg,
+                      void       *data)
 {
     StackManager *manager = data;
 
@@ -217,8 +218,8 @@ on_block_added(HippoDataCache *cache,
 
     g_object_ref(block);
 
-    g_signal_connect(G_OBJECT(block), "changed",
-                     G_CALLBACK(on_block_changed),
+    g_signal_connect(G_OBJECT(block), "notify::sort-timestamp",
+                     G_CALLBACK(on_block_sort_changed),
                      manager);
 
     resort_block(manager, block);
@@ -234,7 +235,7 @@ remove_block(HippoBlock   *block,
     if (link != NULL) {
         manager->blocks = g_slist_remove(manager->blocks, block);
         g_signal_handlers_disconnect_by_func(G_OBJECT(block),
-                                             G_CALLBACK(on_block_changed),
+                                             G_CALLBACK(on_block_sort_changed),
                                              manager);
         g_object_unref(block);
     }

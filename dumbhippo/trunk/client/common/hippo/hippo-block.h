@@ -25,6 +25,25 @@ typedef struct _HippoBlockClass HippoBlockClass;
 #define HIPPO_IS_BLOCK_CLASS(klass)   (G_TYPE_CHECK_CLASS_TYPE ((klass), HIPPO_TYPE_BLOCK))
 #define HIPPO_BLOCK_GET_CLASS(obj)    (G_TYPE_INSTANCE_GET_CLASS ((obj), HIPPO_TYPE_BLOCK, HippoBlockClass))
 
+
+struct _HippoBlock {
+    GObject parent;
+    char   *guid;
+    HippoBlockType type;
+    GTime  update_time;
+    gint64 server_timestamp;
+    gint64 timestamp;
+    gint64 clicked_timestamp;
+    gint64 ignored_timestamp;
+    int clicked_count;
+    guint clicked : 1;
+    guint ignored : 1;
+};
+
+struct _HippoBlockClass {
+    GObjectClass parent;
+};
+
 GType        	 hippo_block_get_type                  (void) G_GNUC_CONST;
 HippoBlock*      hippo_block_new                       (const char *guid);
 

@@ -1,37 +1,44 @@
 /* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
+#include "hippo-common-internal.h"
 #include "hippo-block.h"
 #include <string.h>
 
-/* === HippoBlock implementation === */
-
 static void     hippo_block_finalize             (GObject *object);
 
-struct _HippoBlock {
-    GObject parent;
-    char   *guid;
-    HippoBlockType type;
-    GTime  update_time;
-    gint64 server_timestamp;
-    gint64 timestamp;
-    gint64 clicked_timestamp;
-    gint64 ignored_timestamp;
-    int clicked_count;
-    guint clicked : 1;
-    guint ignored : 1;
-};
+static void hippo_block_set_property (GObject      *object,
+                                      guint         prop_id,
+                                      const GValue *value,
+                                      GParamSpec   *pspec);
+static void hippo_block_get_property (GObject      *object,
+                                      guint         prop_id,
+                                      GValue       *value,
+                                      GParamSpec   *pspec);
 
-struct _HippoBlockClass {
-    GObjectClass parent;
-};
 
 G_DEFINE_TYPE(HippoBlock, hippo_block, G_TYPE_OBJECT);
 
+/*
 enum {
-    CHANGED,
     LAST_SIGNAL
 };
 
 static int signals[LAST_SIGNAL];
+*/
+
+enum {
+    PROP_0,
+    PROP_GUID,
+    PROP_TYPE,
+    PROP_SORT_TIMESTAMP,
+    PROP_UPDATE_TIME,
+    PROP_SERVER_TIMESTAMP,
+    PROP_TIMESTAMP,
+    PROP_CLICKED_TIMESTAMP,
+    PROP_IGNORED_TIMESTAMP,
+    PROP_CLICKED_COUNT,
+    PROP_CLICKED,
+    PROP_IGNORED
+};
 
 static void
 hippo_block_init(HippoBlock *block)
@@ -43,16 +50,100 @@ hippo_block_class_init(HippoBlockClass *klass)
 {
     GObjectClass *object_class = G_OBJECT_CLASS (klass);  
           
-    signals[CHANGED] =
-        g_signal_new ("changed",
-                      G_TYPE_FROM_CLASS (object_class),
-                      G_SIGNAL_RUN_LAST,
-                      0,
-                      NULL, NULL,
-                      g_cclosure_marshal_VOID__VOID,
-                      G_TYPE_NONE, 0);
-          
     object_class->finalize = hippo_block_finalize;
+
+    object_class->set_property = hippo_block_set_property;
+    object_class->get_property = hippo_block_get_property;
+
+    g_object_class_install_property(object_class,
+                                    PROP_GUID,
+                                    g_param_spec_string("guid",
+                                                        _("GUID"),
+                                                        _("GUID of the block"),
+                                                        NULL,
+                                                        G_PARAM_READABLE));
+
+    g_object_class_install_property(object_class,
+                                    PROP_TYPE,
+                                    g_param_spec_int("type",
+                                                     _("Type"),
+                                                     _("What kind of block this is"),
+                                                     0, G_MAXINT,
+                                                     HIPPO_BLOCK_TYPE_UNKNOWN,
+                                                     G_PARAM_READABLE));
+    
+    g_object_class_install_property(object_class,
+                                    PROP_SORT_TIMESTAMP,
+                                    g_param_spec_int64("sort-timestamp",
+                                                       _("Sort timestamp"),
+                                                       _("Timestamp to sort by"),
+                                                       -1, G_MAXINT64,
+                                                       0,
+                                                       G_PARAM_READABLE));
+
+    g_object_class_install_property(object_class,
+                                    PROP_UPDATE_TIME,
+                                    g_param_spec_int("update-time",
+                                                     _("Update time"),
+                                                     _("Client-side current time when we parsed the server time"),
+                                                     -1, G_MAXINT,
+                                                     0,
+                                                     G_PARAM_READABLE | G_PARAM_WRITABLE));    
+    g_object_class_install_property(object_class,
+                                    PROP_TIMESTAMP,
+                                    g_param_spec_int64("timestamp",
+                                                       _("Timestamp"),
+                                                       _("When the block last changed"),
+                                                       -1, G_MAXINT64,
+                                                       0,
+                                                       G_PARAM_READABLE | G_PARAM_WRITABLE));
+    g_object_class_install_property(object_class,
+                                    PROP_SERVER_TIMESTAMP,
+                                    g_param_spec_int64("server-timestamp",
+                                                       _("Server timestamp"),
+                                                       _("Server time when it sent us the last update"),
+                                                       -1, G_MAXINT64,
+                                                       0,
+                                                       G_PARAM_READABLE | G_PARAM_WRITABLE));
+    g_object_class_install_property(object_class,
+                                    PROP_CLICKED_TIMESTAMP,
+                                    g_param_spec_int64("clicked-timestamp",
+                                                       _("Clicked timestamp"),
+                                                       _("When the block was clicked by us"),
+                                                       -1, G_MAXINT64,
+                                                       0,
+                                                       G_PARAM_READABLE | G_PARAM_WRITABLE));
+    g_object_class_install_property(object_class,
+                                    PROP_IGNORED_TIMESTAMP,
+                                    g_param_spec_int64("ignored-timestamp",
+                                                       _("Ignored timestamp"),
+                                                       _("When the block was ignored by us"),
+                                                       -1, G_MAXINT64,
+                                                       0,
+                                                       G_PARAM_READABLE | G_PARAM_WRITABLE));
+    g_object_class_install_property(object_class,
+                                    PROP_CLICKED_COUNT,
+                                    g_param_spec_int("clicked-count",
+                                                     _("Clicked count"),
+                                                     _("Number of people who clicked on the block"),
+                                                     0, G_MAXINT,
+                                                     0,
+                                                     G_PARAM_READABLE | G_PARAM_WRITABLE));
+
+    g_object_class_install_property(object_class,
+                                    PROP_CLICKED,
+                                    g_param_spec_boolean("clicked",
+                                                         _("Clicked"),
+                                                         _("Whether we clicked on the block"),
+                                                         FALSE,
+                                                         G_PARAM_READABLE | G_PARAM_WRITABLE));
+    g_object_class_install_property(object_class,
+                                    PROP_IGNORED,
+                                    g_param_spec_boolean("ignored",
+                                                         _("Ignored"),
+                                                         _("Whether we ignored the block"),
+                                                         FALSE,
+                                                         G_PARAM_READABLE | G_PARAM_WRITABLE)); 
 }
 
 static void
@@ -65,13 +156,113 @@ hippo_block_finalize(GObject *object)
     G_OBJECT_CLASS(hippo_block_parent_class)->finalize(object); 
 }
 
-static void 
-hippo_block_emit_changed(HippoBlock *block)
+static void
+hippo_block_set_property(GObject         *object,
+                         guint            prop_id,
+                         const GValue    *value,
+                         GParamSpec      *pspec)
 {
-    g_signal_emit(block, signals[CHANGED], 0);
+    HippoBlock *block;
+
+    block = HIPPO_BLOCK(object);
+
+    switch (prop_id) {
+    case PROP_UPDATE_TIME:
+        hippo_block_set_update_time(block,
+                                    g_value_get_int(value));
+        break;
+    case PROP_SERVER_TIMESTAMP:
+        hippo_block_set_server_timestamp(block,
+                                         g_value_get_int64(value));
+        break;
+    case PROP_TIMESTAMP:
+        hippo_block_set_timestamp(block,
+                                  g_value_get_int64(value));
+        break;
+    case PROP_CLICKED_TIMESTAMP:
+        hippo_block_set_clicked_timestamp(block,
+                                          g_value_get_int64(value));
+        break;
+    case PROP_IGNORED_TIMESTAMP:
+        hippo_block_set_ignored_timestamp(block,
+                                          g_value_get_int64(value));        
+        break;
+    case PROP_CLICKED_COUNT:
+        hippo_block_set_clicked_count(block,
+                                      g_value_get_int(value));
+        break;
+    case PROP_CLICKED:
+        hippo_block_set_clicked(block,
+                                g_value_get_boolean(value));
+        break;
+    case PROP_IGNORED:
+        hippo_block_set_ignored(block,
+                                g_value_get_boolean(value));        
+        break;
+    case PROP_GUID:                  /* read-only */
+    case PROP_TYPE:                  /* read-only */
+    case PROP_SORT_TIMESTAMP:        /* read-only */
+    default:
+        G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
+        break;
+    }
 }
 
+static void
+hippo_block_get_property(GObject         *object,
+                         guint            prop_id,
+                         GValue          *value,
+                         GParamSpec      *pspec)
+{
+    HippoBlock *block;
+
+    block = HIPPO_BLOCK(object);
+
+    switch (prop_id) {
+    case PROP_GUID:
+        g_value_set_string(value, block->guid);
+        break;
+    case PROP_TYPE:
+        g_value_set_int(value, block->type);
+        break;
+    case PROP_UPDATE_TIME:
+        g_value_set_int(value, block->update_time);
+        break;
+    case PROP_SORT_TIMESTAMP:
+        g_value_set_int64(value,
+                          hippo_block_get_sort_timestamp(block));
+        break;
+    case PROP_SERVER_TIMESTAMP:
+        g_value_set_int64(value, block->server_timestamp);
+        break;
+    case PROP_TIMESTAMP:
+        g_value_set_int64(value, block->timestamp);
+        break;
+    case PROP_CLICKED_TIMESTAMP:
+        g_value_set_int64(value, block->clicked_timestamp);
+        break;
+    case PROP_IGNORED_TIMESTAMP:
+        g_value_set_int64(value, block->ignored_timestamp);
+        break;
+    case PROP_CLICKED_COUNT:
+        g_value_set_int(value, block->clicked_count);
+        break;
+    case PROP_CLICKED:
+        g_value_set_boolean(value, block->clicked);
+        break;
+    case PROP_IGNORED:
+        g_value_set_boolean(value, block->ignored);
+        break;        
+    default:
+        G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
+        break;
+    }
+}
+
+
 /* === HippoBlock exported API === */
+
+
 
 HippoBlock*
 hippo_block_new(const char *guid)
@@ -106,7 +297,7 @@ hippo_block_set_update_time(HippoBlock *block,
 
     if (value != block->update_time) {
         block->update_time = value;
-        hippo_block_emit_changed(block);
+        g_object_notify(G_OBJECT(block), "update-time");
     }
 }
 
@@ -126,7 +317,7 @@ hippo_block_set_server_timestamp (HippoBlock *block,
 
     if (value != block->server_timestamp) {
         block->server_timestamp = value;
-        hippo_block_emit_changed(block);
+        g_object_notify(G_OBJECT(block), "server-timestamp");
     }
 }
 
@@ -146,7 +337,8 @@ hippo_block_set_timestamp (HippoBlock *block,
 
     if (value != block->timestamp) {
         block->timestamp = value;
-        hippo_block_emit_changed(block);
+        g_object_notify(G_OBJECT(block), "timestamp");
+        g_object_notify(G_OBJECT(block), "sort-timestamp");
     }
 }
 
@@ -166,7 +358,7 @@ hippo_block_set_clicked_timestamp (HippoBlock *block,
 
     if (value != block->clicked_timestamp) {
         block->clicked_timestamp = value;
-        hippo_block_emit_changed(block);
+        g_object_notify(G_OBJECT(block), "clicked-timestamp");
     }
 }
 
@@ -186,7 +378,8 @@ hippo_block_set_ignored_timestamp (HippoBlock *block,
 
     if (value != block->ignored_timestamp) {
         block->ignored_timestamp = value;
-        hippo_block_emit_changed(block);
+        g_object_notify(G_OBJECT(block), "ignored-timestamp");
+        g_object_notify(G_OBJECT(block), "sort-timestamp");
     }
 }
 
@@ -217,7 +410,7 @@ hippo_block_set_clicked_count(HippoBlock *block,
 
     if (value != block->clicked_count) {
         block->clicked_count = value;
-        hippo_block_emit_changed(block);
+        g_object_notify(G_OBJECT(block), "clicked-count");
     }
 }
 
@@ -238,7 +431,7 @@ hippo_block_set_clicked(HippoBlock *block,
     value = value != FALSE;
     if (value != block->clicked) {
         block->clicked = value;
-        hippo_block_emit_changed(block);
+        g_object_notify(G_OBJECT(block), "clicked");
     }
 }
 
@@ -258,6 +451,6 @@ hippo_block_set_ignored(HippoBlock *block,
 
     if (value != block->ignored) {
         block->ignored = value;
-        hippo_block_emit_changed(block);
+        g_object_notify(G_OBJECT(block), "ignored");
     }
 }
