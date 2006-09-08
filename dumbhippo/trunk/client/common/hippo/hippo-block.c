@@ -10,6 +10,8 @@ struct _HippoBlock {
     GObject parent;
     char   *guid;
     HippoBlockType type;
+    GTime  update_time;
+    gint64 server_timestamp;
     gint64 timestamp;
     gint64 clicked_timestamp;
     gint64 ignored_timestamp;
@@ -86,6 +88,46 @@ hippo_block_get_guid(HippoBlock *block)
 {
     g_return_val_if_fail(HIPPO_IS_BLOCK(block), NULL);
     return block->guid;
+}
+
+GTime
+hippo_block_get_update_time(HippoBlock *block)
+{
+    g_return_val_if_fail(HIPPO_IS_BLOCK(block), -1);
+
+    return block->update_time;
+}
+
+void
+hippo_block_set_update_time(HippoBlock *block,
+                            GTime       value)
+{
+    g_return_if_fail(HIPPO_IS_BLOCK(block));
+
+    if (value != block->update_time) {
+        block->update_time = value;
+        hippo_block_emit_changed(block);
+    }
+}
+
+gint64
+hippo_block_get_server_timestamp(HippoBlock *block)
+{
+    g_return_val_if_fail(HIPPO_IS_BLOCK(block), -1);
+
+    return block->server_timestamp;
+}
+
+void
+hippo_block_set_server_timestamp (HippoBlock *block,
+                                  gint64      value)
+{
+    g_return_if_fail(HIPPO_IS_BLOCK(block));
+
+    if (value != block->server_timestamp) {
+        block->server_timestamp = value;
+        hippo_block_emit_changed(block);
+    }
 }
 
 gint64

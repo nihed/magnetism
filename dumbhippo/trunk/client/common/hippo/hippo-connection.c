@@ -102,6 +102,8 @@ static void     hippo_connection_start_signin_timeout (HippoConnection *connecti
 static void     hippo_connection_stop_signin_timeout  (HippoConnection *connection);
 static void     hippo_connection_start_retry_timeout  (HippoConnection *connection);
 static void     hippo_connection_stop_retry_timeout   (HippoConnection *connection);
+static void     hippo_connection_queue_request_blocks (HippoConnection *connection);
+static void     hippo_connection_unqueue_request_blocks (HippoConnection *connection);
 static void     hippo_connection_connect              (HippoConnection *connection);
 static void     hippo_connection_disconnect           (HippoConnection *connection);
 static void     hippo_connection_state_change         (HippoConnection *connection,
@@ -173,9 +175,11 @@ struct _HippoConnection {
     HippoBrowserKind login_browser;
     char *username;
     char *password;
+    char *download_url;
+    int request_blocks_id;
+    gint64 last_blocks_timestamp;
     unsigned int too_old : 1;
     unsigned int upgrade_available : 1;
-    char *download_url;
 };
 
 struct _HippoConnectionClass {
@@ -325,6 +329,7 @@ hippo_connection_finalize(GObject *object)
 
     g_debug("Finalizing connection");
 
+    hippo_connection_unqueue_request_blocks(connection);
     hippo_connection_stop_signin_timeout(connection);
     hippo_connection_stop_retry_timeout(connection);
     
@@ -1072,6 +1077,55 @@ hippo_connection_flush_outgoing(HippoConnection *connection)
 #endif
 }
 
+typedef struct {
+    HippoConnection *connection;
+} RequestBlocksData;
+
+static gboolean
+request_blocks_idle(void *data)
+{
+    RequestBlocksData *rbd = data;
+
+    rbd->connection->request_blocks_id = 0;
+
+    g_debug("Firing request_blocks_idle");
+    
+    /* if the latest block's timestamp is still <= last_blocks_timestamp,
+     * this will return an empty list of blocks
+     */
+    hippo_connection_request_blocks(rbd->connection,
+                                    rbd->connection->last_blocks_timestamp);
+
+    return FALSE;
+}
+
+static void
+hippo_connection_queue_request_blocks (HippoConnection *connection)
+{
+    RequestBlocksData *rbd;
+    
+    hippo_connection_unqueue_request_blocks(connection);
+
+    g_debug("adding request blocks idle");
+
+    rbd = g_new0(RequestBlocksData, 1);
+    rbd->connection = connection;
+    
+    connection->request_blocks_id = g_idle_add_full(G_PRIORITY_DEFAULT,
+                                                    request_blocks_idle,
+                                                    rbd, g_free);
+}
+
+static void
+hippo_connection_unqueue_request_blocks (HippoConnection *connection)
+{
+    if (connection->request_blocks_id != 0) {
+        g_debug("removing request blocks idle");
+        g_source_remove(connection->request_blocks_id);
+        connection->request_blocks_id = 0;
+    }
+}
+
 /* requires string to have no trailing junk */
 static gint64
 parse_int64(const char *s)
@@ -1702,6 +1756,8 @@ block_type_from_string(const char *s)
 
 static gboolean
 hippo_connection_parse_block(HippoConnection *connection,
+                             gint64           server_timestamp,
+                             GTime            now,
                              LmMessageNode   *block_node)
 {
     HippoBlock *block;
@@ -1763,6 +1819,8 @@ hippo_connection_parse_block(HippoConnection *connection,
     }
     g_assert(block != NULL);
 
+    hippo_block_set_update_time(block, now);
+    hippo_block_set_server_timestamp(block, server_timestamp);
     hippo_block_set_timestamp(block, timestamp);
     hippo_block_set_clicked_timestamp(block, clicked_timestamp);
     hippo_block_set_ignored_timestamp(block, ignored_timestamp);
@@ -1781,6 +1839,11 @@ hippo_connection_parse_block(HippoConnection *connection,
     
     g_object_unref(block);
 
+    if (timestamp >= connection->last_blocks_timestamp) {
+        g_debug("Have new latest block timestamp %" G_GINT64_FORMAT, timestamp);
+        connection->last_blocks_timestamp = timestamp;
+    }
+    
     return TRUE;
 }
 
@@ -1795,10 +1858,21 @@ hippo_connection_parse_blocks(HippoConnection *connection,
                               LmMessageNode   *node)
 {
     LmMessageNode *subchild;
+    const char *server_timestamp_str;
+    gint64 server_timestamp;
+    GTimeVal now;
+    
+    server_timestamp_str = lm_message_node_get_attribute(node, "serverTime");
+    if (!server_timestamp_str)
+        return FALSE;
 
+    g_get_current_time(&now);
+    server_timestamp = parse_int64(server_timestamp_str);
+    
     for (subchild = node->children; subchild; subchild = subchild->next) {
         if (is_block(subchild)) {
-            if (!hippo_connection_parse_block(connection, subchild)) {
+            if (!hippo_connection_parse_block(connection, server_timestamp,
+                                              now.tv_sec, subchild)) {
                 g_warning("failed to parse block");
                 return FALSE;
             }
@@ -1827,18 +1901,21 @@ on_request_blocks_reply(LmMessageHandler *handler,
     if (child == NULL) {
         g_warning("blocks reply has no blocks");
     } else {
-        hippo_connection_parse_blocks(connection, child);
+        if (!hippo_connection_parse_blocks(connection, child))
+            g_warning("Failed to parse <blocks>");
     }
     
     return LM_HANDLER_RESULT_REMOVE_MESSAGE;
 }
 
 void
-hippo_connection_request_blocks(HippoConnection *connection)
+hippo_connection_request_blocks(HippoConnection *connection,
+                                gint64           last_timestamp)
 {
     LmMessage *message;
     LmMessageNode *node;
     LmMessageNode *child;
+    char *s;
     
     message = lm_message_new_with_sub_type(HIPPO_ADMIN_JID, LM_MESSAGE_TYPE_IQ,
                                            LM_MESSAGE_SUB_TYPE_GET);
@@ -1846,13 +1923,16 @@ hippo_connection_request_blocks(HippoConnection *connection)
     
     child = lm_message_node_add_child (node, "blocks", NULL);
     lm_message_node_set_attribute(child, "xmlns", "http://dumbhippo.com/protocol/blocks");
-
+    s = g_strdup_printf("%" G_GINT64_FORMAT, last_timestamp);
+    lm_message_node_set_attribute(child, "lastTimestamp", s);
+    g_free(s);
+    
     hippo_connection_send_message_with_reply(connection, message,
                                              on_request_blocks_reply, SEND_MODE_AFTER_AUTH);
 
     lm_message_unref(message);
 
-    g_debug("Sent request for blocks");
+    g_debug("Sent request for blocks lastTimestamp %" G_GINT64_FORMAT, last_timestamp);
 }
 
 static gboolean
@@ -3168,6 +3248,41 @@ hippo_connection_process_pending_room_messages(HippoConnection *connection)
 /* === HippoConnection Loudmouth handlers === */
 
 static gboolean
+handle_blocks_changed(HippoConnection *connection,
+                      LmMessage       *message)
+{
+    LmMessageNode *child;
+    const char *last_timestamp_str;
+    gint64 last_timestamp;
+    
+    if (lm_message_get_sub_type(message) != LM_MESSAGE_SUB_TYPE_HEADLINE)
+        return FALSE;
+
+    child = find_child_node(message->node, "http://dumbhippo.com/protocol/blocks", "blocksChanged");
+    if (child == NULL)
+        return FALSE;
+
+    last_timestamp_str = lm_message_node_get_attribute(child, "lastTimestamp");
+    if (!last_timestamp_str) {
+        g_warning("no lastTimestamp on blocksChanged");
+        return TRUE;
+    }
+
+    last_timestamp = parse_int64(last_timestamp_str);
+    
+    g_debug("handling blocksChanged message timestamp %" G_GINT64_FORMAT " our latest timestamp %" G_GINT64_FORMAT,
+            last_timestamp, connection->last_blocks_timestamp);
+
+    /* last_timestamp of -1 means the server has lost track of what the latest timestamp
+     * is, but something has potentially changed
+     */
+    if (last_timestamp < 0 || last_timestamp > connection->last_blocks_timestamp)
+        hippo_connection_queue_request_blocks(connection);
+    
+    return TRUE;
+}
+
+static gboolean
 handle_live_post_changed(HippoConnection *connection,
                          LmMessage       *message)
 {
@@ -3416,6 +3531,10 @@ handle_message (LmMessageHandler *handler,
         return LM_HANDLER_RESULT_REMOVE_MESSAGE;
     }
 
+    if (handle_blocks_changed(connection, message)) {
+        return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+    }
+    
     if (handle_active_posts_changed(connection, message)) {
         return LM_HANDLER_RESULT_REMOVE_MESSAGE;
     }

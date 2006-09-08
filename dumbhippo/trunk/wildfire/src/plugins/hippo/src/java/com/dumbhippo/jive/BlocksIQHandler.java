@@ -27,8 +27,24 @@ public class BlocksIQHandler extends AbstractIQHandler {
 		// Element iq = packet.getChildElement();
 		JID from = packet.getFrom();
 		
+		Element iq = packet.getChildElement();
+		
+        String lastTimestampStr = iq.attributeValue("lastTimestamp");
+        if (lastTimestampStr == null) {
+        	makeError(reply, "blocks IQ missing lastTimestamp attribute");
+        	return reply;
+        }
+        
+        long lastTimestamp;
+        try {
+        	lastTimestamp = Long.parseLong(lastTimestampStr);
+        } catch (NumberFormatException e) {
+        	makeError(reply, "blocks IQ lastTimestamp attribute not valid");
+        	return reply;
+        }
+		
 		MessengerGlueRemote glue = EJBUtil.defaultLookupRemote(MessengerGlueRemote.class);
-		Element childElement = XmlParser.elementFromXml(glue.getBlocksXml(from.getNode(), 0 /* timestamp */,
+		Element childElement = XmlParser.elementFromXml(glue.getBlocksXml(from.getNode(), lastTimestamp,
 				0 /* start */, 10 /* count */));		
 
 		reply.setChildElement(childElement);

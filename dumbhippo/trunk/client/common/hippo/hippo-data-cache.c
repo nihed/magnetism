@@ -465,8 +465,6 @@ void
 hippo_data_cache_add_block(HippoDataCache *cache,
                            HippoBlock     *block)
 {
-    HippoChatRoom *room;
-    
     g_return_if_fail(hippo_data_cache_lookup_block(cache, hippo_block_get_guid(block)) == NULL);
 
     g_object_ref(block);
@@ -895,7 +893,7 @@ hippo_data_cache_on_connect(HippoConnection      *connection,
          */
         hippo_connection_request_hotness(connection);
         hippo_connection_request_recent_posts(connection);
-        hippo_connection_request_blocks(connection);
+        hippo_connection_request_blocks(connection, 0);
     } else {
         /* Clear stuff, so we get "changed" signals both on disconnect 
          * and again on reconnect, and so we don't have stale data on

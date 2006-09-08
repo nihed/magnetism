@@ -1066,7 +1066,7 @@ hippo_format_time_ago(GTime now,
         return g_strdup_printf("%d minutes ago", delta_minutes);
     }
 
-    delta_hours = delta / 60 * 60;
+    delta_hours = delta / (60.0 * 60.0);
 
     if (delta_hours < 1.55)
         return g_strdup("1 hr. ago");
@@ -1083,7 +1083,7 @@ hippo_format_time_ago(GTime now,
         return g_strdup_printf("%.0f days ago", rint(delta_hours / 24));
     }
 
-    delta_weeks = delta_hours / (24 * 7);
+    delta_weeks = delta_hours / (24.0 * 7.0);
 
     if (delta_weeks < 6) {
         return g_strdup_printf("%.0f weeks ago", rint(delta_weeks));

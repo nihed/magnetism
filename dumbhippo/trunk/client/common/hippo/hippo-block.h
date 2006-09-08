@@ -30,6 +30,12 @@ HippoBlock*      hippo_block_new                       (const char *guid);
 
 const char*      hippo_block_get_guid                  (HippoBlock *block);
 
+GTime    hippo_block_get_update_time       (HippoBlock *block);
+void     hippo_block_set_update_time       (HippoBlock *block,
+                                            GTime       t);
+gint64   hippo_block_get_server_timestamp  (HippoBlock *block);
+void     hippo_block_set_server_timestamp  (HippoBlock *block,
+                                            gint64      value);
 gint64   hippo_block_get_timestamp         (HippoBlock *block);
 void     hippo_block_set_timestamp         (HippoBlock *block,
                                             gint64      value);

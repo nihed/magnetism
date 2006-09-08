@@ -51,8 +51,8 @@ enum {
 /* static int signals[LAST_SIGNAL]; */
 
 enum {
-    PROP_BLOCK,
-    PROP_0
+    PROP_0,
+    PROP_BLOCK
 };
 
 G_DEFINE_TYPE_WITH_CODE(HippoCanvasBlock, hippo_canvas_block, HIPPO_TYPE_CANVAS_BOX,
@@ -244,6 +244,11 @@ on_block_changed(HippoBlock *block,
 {
     HippoCanvasBlock *canvas_block = HIPPO_CANVAS_BLOCK(data);
     GTimeVal tv;
+    GTime update_time;
+    GTime server_time;
+    GTime offset_time;
+    GTime now;
+    GTime then;
     char *when;
 
     if (block == NULL) /* should be impossible */
@@ -251,9 +256,20 @@ on_block_changed(HippoBlock *block,
     
     g_get_current_time(&tv);
 
-    when = hippo_format_time_ago(tv.tv_sec,
-                                 (int) (hippo_block_get_timestamp(block) / 1000));
+    update_time = hippo_block_get_update_time(block);
+    server_time = (int) (hippo_block_get_server_timestamp(block) / 1000);
+    offset_time = server_time - update_time;
+    now = tv.tv_sec + offset_time;
+    then = ((int) (hippo_block_get_timestamp(block) / 1000)) + offset_time;
+    
+    when = hippo_format_time_ago(now, then);
 
+#if 0
+    g_debug("Formatted offset %d now %d then %d delta %d seconds %d hours to '%s'",
+            offset_time, now, then, now - then, (now - then) / (60*60),
+            when);
+#endif
+    
     g_object_set(G_OBJECT(canvas_block->age_item),
                  "text", when,
                  NULL);
