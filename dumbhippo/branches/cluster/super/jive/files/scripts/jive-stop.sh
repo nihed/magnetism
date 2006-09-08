@@ -5,4 +5,4 @@ twiddle="@@twiddle@@"
 
 echo "Stopping Jive Wildfire..."
 
-eval $twiddle invoke jboss.system:service=MainDeployer undeploy file://$targetdir/deploy/wildfire.sar/ > /dev/null
+$twiddle invoke jboss.system:service=MainDeployer undeploy file://$targetdir/deploy/wildfire.sar/ > /dev/null

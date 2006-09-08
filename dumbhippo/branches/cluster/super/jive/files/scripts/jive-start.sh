@@ -46,7 +46,7 @@ commit;
 shutdown;
 EOF
 
-eval $twiddle invoke jboss.system:service=MainDeployer deploy file://$targetdir/deploy/wildfire.sar/ > /dev/null
+$twiddle invoke jboss.system:service=MainDeployer deploy file://$targetdir/deploy/wildfire.sar/ > /dev/null
 
 started=false
 

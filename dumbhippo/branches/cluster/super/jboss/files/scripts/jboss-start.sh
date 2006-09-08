@@ -66,7 +66,7 @@ for i in `seq 1 30` ; do
 	break
     fi
     sleep 2
-    result="`eval $twiddle get jboss.system:type=Server Started --noprefix`"
+    result="`$twiddle get jboss.system:type=Server Started --noprefix`"
     if [ $? == 0 -a x"$result" == x"true" ] ; then
 	started=true
 	break
