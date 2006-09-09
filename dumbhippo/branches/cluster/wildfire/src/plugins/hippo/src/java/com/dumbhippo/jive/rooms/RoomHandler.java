@@ -15,10 +15,8 @@ import org.xmpp.packet.Packet;
 import org.xmpp.packet.PacketError;
 
 import com.dumbhippo.identity20.Guid;
-import com.dumbhippo.jive.PresenceMonitor;
 
 public class RoomHandler implements Component {
-	private PresenceMonitor presenceMonitor;
 	private JID address;
 	private Map<String, Room> rooms;
 	
@@ -36,24 +34,18 @@ public class RoomHandler implements Component {
 	public void start() {
 	}
 	
-	public void stop() {
-	}
-	
 	public void shutdown() {
+		for (Room room : rooms.values())
+			room.shutdown();
 	}
 	
 	private String getServiceDomain() {
 		return "rooms." + XMPPServer.getInstance().getServerInfo().getName();
 	}
 
-	public RoomHandler(PresenceMonitor presenceMonitor) {
-		this.presenceMonitor = presenceMonitor;
+	public RoomHandler() {
 		address = new JID(null, getServiceDomain(), null);
 		rooms = new HashMap<String, Room>();
-	}
-	
-	public PresenceMonitor getPresenceMonitor() {
-		return presenceMonitor;
 	}
 	
 	public JID getAddress() {
@@ -124,16 +116,19 @@ public class RoomHandler implements Component {
 	}
 	
 	private Room getRoom(String roomName, String userId, boolean create) {
-		Room room = rooms.get(roomName);
-		if (room == null && create) {
-			room = Room.loadFromServer(this, roomName);
-			if (room == null) {
-				Log.debug("  room doesn't seem to exist");
+		Room room;
+		synchronized (rooms) {
+			room = rooms.get(roomName);
+			if (room == null && create) {
+				room = Room.loadFromServer(roomName);
+				if (room == null) {
+					Log.debug("  room doesn't seem to exist");
+					return null;
+				}
+				rooms.put(roomName, room);			
+			} else if (room == null) {
 				return null;
 			}
-			rooms.put(roomName, room);			
-		} else if (room == null) {
-			return null;
 		}
 		if (userId == null)
 			return room;
@@ -152,12 +147,14 @@ public class RoomHandler implements Component {
 	 * @return a list of rooms the user is present in
 	 */
 	public List<Room> getRoomsForUser(String userId) {
-		List<Room> roomsForUser = new ArrayList<Room>();
-		for (Room room : rooms.values()) {
-			if (room.checkUserPresent(userId)) {
-				roomsForUser.add(room);
-			}			
+		synchronized (rooms) {
+			List<Room> roomsForUser = new ArrayList<Room>();
+			for (Room room : rooms.values()) {
+				if (room.checkUserPresent(userId)) {
+					roomsForUser.add(room);
+				}			
+			}
+			return roomsForUser;
 		}
-		return roomsForUser;
 	}
 }

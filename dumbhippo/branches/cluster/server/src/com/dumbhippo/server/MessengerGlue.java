@@ -5,14 +5,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.ejb.Remote;
+import javax.ejb.Local;
 
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.live.Hotness;
 
-@Remote
-public interface MessengerGlueRemote {
+@Local
+public interface MessengerGlue {
 
 	/** 
 	 * Simple immutable data blob
@@ -169,69 +169,12 @@ public interface MessengerGlueRemote {
 	}
 	
 	/**
-	 * Called when Jabber server starts up. After calling this method you must
-	 * call serverPing periodically or it will be assumed that the server
-	 * has died and cached state for the server will be discarded. 
-	 * (Once a minute is the recommended ping period.)
-	 *  
-	 * @param timestamp when the server is starting, from System.currentTimeMillis()
-	 * @return a string that will be used to identify this server
-	 *        instance in subsequent communication. Each time the server is
-	 *        restarted, a new server identifier should be generated.
-	 *        If an attempt to use this ID throws NoSuchServerException, then
-	 *        the server must call serverStartup() again, then re-register
-	 *        all present users by calling onUserAvailable().
-	 */
-	public String serverStartup(long timestamp);
-
-	/**
-	 * Keep resources associated with a Jabber server from timing out.
-	 * 
-	 * @param serverIdentifier identifying string for the server returned from serverStartup()
-	 */
-	public void serverPing(String serverIdentifier) throws NoSuchServerException;
-	
-	/**
-	 * Called each time a user opens their first session.
-	 * 
-	 * @param serverIdentifier identifying string for the server returned from serverStartup()
-	 * @param username the username that has a new session available
-	 */
-	public void onUserAvailable(String serverIdentifier, String username) throws NoSuchServerException;
-
-	/**
-	 * Called each time a user has zero sessions available.
-	 * 
-	 * @param serverIdentifier identifying string for the server returned from serverStartup()
-	 * @param username the username that became unavailable
-	 */
-	public void onUserUnavailable(String serverIdentifier, String username) throws NoSuchServerException;
-	
-	/**
-	 * Called when a user leaves the chatroom for a post.
-	 * 
-	 * @param serverIdentifier identifying string for the server returned from serverStartup()
-	 * @param username the username that has a new session available
-	 */
-	public void onRoomUserAvailable(String serverIdentifier, ChatRoomKind kind, String roomname, String username, boolean participant) throws NoSuchServerException;
-
-	/**
-	 * Called when a user joins the chatroom for a post.
-	 * 
-	 * @param serverIdentifier identifying string for the server returned from serverStartup()
-	 * @param username the username that became unavailable
-	 */
-	public void onRoomUserUnavailable(String serverIdentifier, ChatRoomKind kind, String roomname, String username) throws NoSuchServerException;
-
-
-	/**
 	 * Called whenever a new resource connects associated with a user.
 	 * 
-	 * @param serverIdentifier identifying string for the server returned from serverStartup()
 	 * @param user the username associated with resource
 	 * @throws NoSuchServerException 
 	 */
-	public void onResourceConnected(String serverIdentifier, String user) throws NoSuchServerException;	
+	public void onResourceConnected(String user);	
 	
 	/**
 	 * Returns the information associated with the potential user of a chat room.

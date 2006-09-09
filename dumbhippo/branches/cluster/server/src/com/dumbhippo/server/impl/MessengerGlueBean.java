@@ -2,7 +2,6 @@ package com.dumbhippo.server.impl;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -24,7 +23,6 @@ import com.dumbhippo.live.Hotness;
 import com.dumbhippo.live.LiveClientData;
 import com.dumbhippo.live.LivePost;
 import com.dumbhippo.live.LiveState;
-import com.dumbhippo.live.LiveXmppServer;
 import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.EmbeddedMessage;
 import com.dumbhippo.persistence.ExternalAccount;
@@ -54,7 +52,7 @@ import com.dumbhippo.server.GroupView;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.InvitationSystem;
 import com.dumbhippo.server.JabberUserNotFoundException;
-import com.dumbhippo.server.MessengerGlueRemote;
+import com.dumbhippo.server.MessengerGlue;
 import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.MySpaceTracker;
 import com.dumbhippo.server.NotFoundException;
@@ -70,7 +68,7 @@ import com.dumbhippo.server.TrackView;
 import com.dumbhippo.server.UserViewpoint;
 
 @Stateless
-public class MessengerGlueBean implements MessengerGlueRemote {
+public class MessengerGlueBean implements MessengerGlue {
 	
 	static private final Logger logger = GlobalSetup.getLogger(MessengerGlueBean.class);
 	
@@ -229,141 +227,55 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 	
 		return user;
 	}
+	
+	private void doShareLinkTutorial(Account account) {
+		logger.debug("We have a new user!!!!! WOOOOOOOOOOOOHOOOOOOOOOOOOOOO send them tutorial!");
 
-	public String serverStartup(long timestamp) {
-		logger.info("Jabber server startup at {}", new Date(timestamp));
+		InvitationToken invite = invitationSystem.getCreatingInvitation(account);
 		
-		return LiveState.getInstance().createXmppServer().getServerIdentifier();
-	}
-	
-	public void serverPing(String serverIdentifier) throws NoSuchServerException {
-		LiveXmppServer server = LiveState.getInstance().getXmppServer(serverIdentifier);
-		if (server == null)
-			throw new NoSuchServerException(null);
+		// see what feature the user was sold on originally, and share the right thing 
+		// with them accordingly
 		
-		server.ping();
-	}
-	
-	public void onUserAvailable(String serverIdentifier, String username) throws NoSuchServerException {
-		logger.debug("Jabber user {} now available", username);
-
-		LiveXmppServer server = LiveState.getInstance().getXmppServer(serverIdentifier);
-		if (server == null)
-			throw new NoSuchServerException(null);
-
-		try {
-			// account could be missing due to debug users or our own
-			// send-notifications
-			// user, i.e. any user on the jabber server that we don't know about
-			Account account;
-			try {
-				account = accountFromUsername(username);
-			} catch (JabberUserNotFoundException e) {
-				if (!username.equals("admin"))
-					logger.warn("username signed on that we don't know: {}", username);
-				return;
-			}
-			
-			server.userAvailable(account.getOwner().getGuid());
-
-			// FIXME: Updating the last-logged-in-date here means we'll update it if the
-			// Jive/JBoss connection is lost; doing it in LiveState would sometimes
-			// prevent that, but it's bad to modify the database from LiveState.
-			//
-			// The right thing is to pass an extra parameter in here that
-			// says whether the user is newly logged in to the Jive server, or
-			// whether the jive server is just reconnecting to the JBoss server.
-			//
-			// In any case, last-logged-in date is mostly interesting as an 
-			// approximation to last-logged-out date.
-			accountSystem.touchLoginDate(account.getOwner().getGuid());
-			
-			if (!account.getWasSentShareLinkTutorial()) {
-				logger.debug("We have a new user!!!!! WOOOOOOOOOOOOHOOOOOOOOOOOOOOO send them tutorial!");
-	
-				InvitationToken invite = invitationSystem.getCreatingInvitation(account);
-				
-				// see what feature the user was sold on originally, and share the right thing 
-				// with them accordingly
-				
-				User owner = account.getOwner();
-				if (invite != null && invite.getPromotionCode() == PromotionCode.MUSIC_INVITE_PAGE_200602)
-					postingBoard.doNowPlayingTutorialPost(owner);
-				else {
-					UserViewpoint viewpoint = new UserViewpoint(owner);
-					Set<Group> invitedToGroups = groupSystem.findRawGroups(viewpoint, owner, MembershipStatus.INVITED);
-					Set<Group> invitedToFollowGroups = groupSystem.findRawGroups(viewpoint, owner, MembershipStatus.INVITED_TO_FOLLOW);
-					invitedToGroups.addAll(invitedToFollowGroups);
-					if (invitedToGroups.size() == 0) {
-						postingBoard.doShareLinkTutorialPost(account.getOwner());
-					} else {
-						for (Group group : invitedToGroups) {
-							postingBoard.doGroupInvitationPost(owner, group);
-						}
-					}
+		User owner = account.getOwner();
+		if (invite != null && invite.getPromotionCode() == PromotionCode.MUSIC_INVITE_PAGE_200602)
+			postingBoard.doNowPlayingTutorialPost(owner);
+		else {
+			UserViewpoint viewpoint = new UserViewpoint(owner);
+			Set<Group> invitedToGroups = groupSystem.findRawGroups(viewpoint, owner, MembershipStatus.INVITED);
+			Set<Group> invitedToFollowGroups = groupSystem.findRawGroups(viewpoint, owner, MembershipStatus.INVITED_TO_FOLLOW);
+			invitedToGroups.addAll(invitedToFollowGroups);
+			if (invitedToGroups.size() == 0) {
+				postingBoard.doShareLinkTutorialPost(account.getOwner());
+			} else {
+				for (Group group : invitedToGroups) {
+					postingBoard.doGroupInvitationPost(owner, group);
 				}
-	
-				account.setWasSentShareLinkTutorial(true);
 			}
-		} catch (RuntimeException e) {
-			logger.error("Failed to do share link tutorial");
-			throw e;
 		}
+
+		account.setWasSentShareLinkTutorial(true);
 	}
 
-	public void onUserUnavailable(String serverIdentifier, String username) throws NoSuchServerException {
-		logger.debug("Jabber user {} now unavailable", username);
-		LiveXmppServer server = LiveState.getInstance().getXmppServer(serverIdentifier);
-		if (server == null)
-			throw new NoSuchServerException(null);
-		
+	public void onResourceConnected(String username) {
+		// account could be missing due to debug users or our own
+		// send-notifications
+		// user, i.e. any user on the jabber server that we don't know about
+		Account account;
 		try {
-			server.userUnavailable(Guid.parseJabberId(username));
-		} catch (ParseException e) {
-			logger.warn("Corrupt username passed to onUserUnavailable", e);
-		}
-	}
-
-	public void onRoomUserAvailable(String serverIdentifier, ChatRoomKind kind, String roomname, String username, boolean participant) throws NoSuchServerException  {
-		logger.debug("Jabber user {} has joined chatroom {}", username, roomname);
-		LiveXmppServer server = LiveState.getInstance().getXmppServer(serverIdentifier);
-		if (server == null)
-			throw new NoSuchServerException(null);
-		
-		if (kind == ChatRoomKind.POST) {
-			try {
-				server.postRoomUserAvailable(Guid.parseJabberId(roomname), Guid.parseJabberId(username), participant);
-			} catch (ParseException e) {
-				logger.warn("Corrupt roomname or username passed to onUserUnavailable", e);
-			}
-		}
-	}
-
-	public void onRoomUserUnavailable(String serverIdentifier, ChatRoomKind kind, String roomname, String username) throws NoSuchServerException {
-		logger.debug("Jabber user {} has left chatroom {}", username, roomname);
-		LiveXmppServer server = LiveState.getInstance().getXmppServer(serverIdentifier);
-		if (server == null)
-			throw new NoSuchServerException(null);
-		
-		if (kind == ChatRoomKind.POST) {
-			try {
-				server.postRoomUserUnavailable(Guid.parseJabberId(roomname), Guid.parseJabberId(username));
-			} catch (ParseException e) {
-				logger.warn("Corrupt roomname or username passed to onUserUnavailable", e);
-			}
-		}
-	}
-	
-	public void onResourceConnected(String serverIdentifier, String username) throws NoSuchServerException {
-		LiveXmppServer server = LiveState.getInstance().getXmppServer(serverIdentifier);
-		if (server == null)
-			throw new NoSuchServerException(null);
-		try {
-			server.resourceConnected(Guid.parseJabberId(username));
-		} catch (ParseException e) {
+			account = accountFromUsername(username);
+		} catch (JabberUserNotFoundException e) {
 			if (!username.equals("admin"))
-				logger.warn("Corrupt username passed to onResourceConnected", e);
-		}		
+				logger.warn("username signed on that we don't know: {}", username);
+			return;
+		}
+		
+		LiveState.getInstance().resendAllNotifications(account.getOwner().getGuid());
+		
+		accountSystem.touchLoginDate(account.getOwner().getGuid());
+			
+		if (!account.getWasSentShareLinkTutorial()) {
+			doShareLinkTutorial(account);
+		}
 	}	
 	
 	public String getMySpaceName(String username) {

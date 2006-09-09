@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.TypeFilteredCollection;
 import com.dumbhippo.identity20.Guid;
+import com.dumbhippo.live.PresenceService;
 import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.AccountClaim;
 import com.dumbhippo.persistence.AimResource;
@@ -242,6 +243,14 @@ public class PersonViewerBean implements PersonViewer {
 		}
 	}
 	
+	// Should the online status be an "extra"? it's relatively cheap to compute,
+	// since it only involves in-memory data, but not completely free.
+	private void initOnline(PersonView personView) {
+		User user = personView.getUser();
+		if (user != null && PresenceService.getInstance().getPresence("/users", user.getGuid()) > 0)
+			personView.setOnline(true);
+	}
+	
 	public PersonView getPersonView(Viewpoint viewpoint, Person p, PersonViewExtra... extras) {
 		if (viewpoint == null)
 			throw new IllegalArgumentException("null viewpoint");
@@ -252,6 +261,7 @@ public class PersonViewerBean implements PersonViewer {
 		PersonView pv = new PersonView(contact, user);
 				
 		addPersonViewExtras(viewpoint, pv, null, extras);
+		initOnline(pv);
 		
 		return pv;
 	}
@@ -272,6 +282,7 @@ public class PersonViewerBean implements PersonViewer {
 		}
 		
 		PersonView pv = new PersonView(contact, user);
+		initOnline(pv);
 		
 		PersonViewExtra allExtras[] = new PersonViewExtra[extras.length + 1];
 		allExtras[0] = firstExtra;
@@ -285,7 +296,10 @@ public class PersonViewerBean implements PersonViewer {
 
 	public PersonView getSystemView(User user, PersonViewExtra... extras) {
 		PersonView pv = new PersonView(null, user);
+		
 		addPersonViewExtras(SystemViewpoint.getInstance(), pv, null, extras);
+		initOnline(pv);
+		
 		return pv;
 	}
 

@@ -38,6 +38,7 @@
 		<pathelement location="${jboss.root}/client/log4j.jar"/>
 		<pathelement location="${jboss.root}/lib/jboss-system.jar"/>
 		<pathelement location="${jboss.root}/server/all/lib/jboss-cache.jar"/>
+		<pathelement location="${jboss.root}/server/all/lib/jgroups.jar"/>
 		<fileset dir="${jboss.root}/server/default/deploy/ejb3.deployer">
 			<include name="*ejb3*.jar"/>
 			<include name="hibernate3.jar"/>
@@ -143,6 +144,7 @@
 			<fileset dir="${build}">
 				<include name="rome.properties" />
 				<include name="**/live/*.class" />
+				<include name="**/mbean/*.class" />
 				<include name="**/recommender/*.class" />
 				<include name="**/postinfo/*.class" />
 				<include name="**/services/*.class" />
@@ -170,20 +172,6 @@
 		</jar>
 	</target>
 
-	<target name="sar" depends="compile">
-		<jar destfile="${buildjar.dir}/dumbhippo.sar">
-			<metainf dir="dd">
-				<include name="jboss-service.xml" />
-			</metainf>
-			<fileset dir="${build}">
-				<include name="**/mbean/**/*.class" />
-			</fileset>
-			<manifest>
-				<attribute name="Class-Path" value="${bundled-classpath}" />
-			</manifest>
-		</jar>
-	</target>
-	
 	<target name="exploded-war" depends="compile, dojobuild, nodojobuild">
 		<mkdir dir="${build.deploy.war}/WEB-INF"/>
 		<copy tofile="${build.deploy.war}/WEB-INF/web.xml" file="${web}/servlet-info.xml"/>
@@ -253,11 +241,10 @@
 		</exec>
 	</target>		
 	
-	<target name="exploded-ear-do-work" depends="ejb3jar,par,sar,basejar,exploded-war">
+	<target name="exploded-ear-do-work" depends="ejb3jar,par,basejar,exploded-war">
 		<copy file="${buildjar.dir}/dumbhippo-base.jar" todir="${build.deploy.ear}"/>
 		<copy file="${buildjar.dir}/dumbhippo.ejb3" todir="${build.deploy.ear}"/>
 		<copy file="${buildjar.dir}/dumbhippo.par" todir="${build.deploy.ear}"/>
-		<copy file="${buildjar.dir}/dumbhippo.sar" todir="${build.deploy.ear}"/>
 		<copy todir="${build.deploy.ear}">
 			<fileset dir="${lib}" includes="${bundled-classpath.external}"/>
 		</copy>

@@ -12,7 +12,7 @@ import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 
 import com.dumbhippo.ExceptionUtils;
-import com.dumbhippo.server.MessengerGlueRemote;
+import com.dumbhippo.server.MessengerGlue;
 import com.dumbhippo.server.util.EJBUtil;
 
 public class PrefsIQHandler extends AbstractIQHandler {
@@ -42,7 +42,7 @@ public class PrefsIQHandler extends AbstractIQHandler {
 		
 		Map<String,String> prefs;
 		try {
-			MessengerGlueRemote glue = EJBUtil.defaultLookupRemote(MessengerGlueRemote.class);
+			MessengerGlue glue = EJBUtil.defaultLookup(MessengerGlue.class);
 			prefs = glue.getPrefs(from.getNode());
 		} catch (Exception e) {
 			makeError(reply, "Failed to get prefs from app server: " + ExceptionUtils.getRootCause(e).getMessage());

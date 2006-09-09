@@ -85,5 +85,6 @@
 	<classpathentry kind="var" path="JBOSS_HOME/client/javax.servlet.jar"/>
 	<classpathentry kind="var" path="JBOSS_HOME/server/default/deploy/ejb3.deployer/jboss-annotations-ejb3.jar"/>
 	<classpathentry kind="lib" path="/opt/jboss/server/all/lib/jboss-cache.jar"/>
+	<classpathentry kind="var" path="JBOSS_HOME/server/all/lib/jgroups.jar"/>
 	<classpathentry kind="output" path="eclipse-build"/>
 </classpath>

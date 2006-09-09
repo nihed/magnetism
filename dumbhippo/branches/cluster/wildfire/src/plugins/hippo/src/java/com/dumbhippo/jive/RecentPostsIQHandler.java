@@ -13,7 +13,7 @@ import org.xmpp.packet.PacketError.Condition;
 
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
-import com.dumbhippo.server.MessengerGlueRemote;
+import com.dumbhippo.server.MessengerGlue;
 import com.dumbhippo.server.util.EJBUtil;
 
 public class RecentPostsIQHandler extends AbstractIQHandler {
@@ -39,7 +39,7 @@ public class RecentPostsIQHandler extends AbstractIQHandler {
 		Element element = packet.getChildElement();
 		String id = element.attributeValue("id");
 		
-		MessengerGlueRemote glue = EJBUtil.defaultLookupRemote(MessengerGlueRemote.class);
+		MessengerGlue glue = EJBUtil.defaultLookup(MessengerGlue.class);
 		
 		String recentPostsString;
 		try {

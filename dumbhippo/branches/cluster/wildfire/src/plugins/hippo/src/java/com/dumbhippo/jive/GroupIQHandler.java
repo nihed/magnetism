@@ -10,7 +10,7 @@ import org.xmpp.packet.PacketError.Condition;
 
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
-import com.dumbhippo.server.MessengerGlueRemote;
+import com.dumbhippo.server.MessengerGlue;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.util.EJBUtil;
 
@@ -37,7 +37,7 @@ public class GroupIQHandler extends AbstractIQHandler {
 		String groupId = element.attributeValue("groupId");
 		String userId = element.attributeValue("userId");
 		
-		MessengerGlueRemote glue = EJBUtil.defaultLookupRemote(MessengerGlueRemote.class);
+		MessengerGlue glue = EJBUtil.defaultLookup(MessengerGlue.class);
 		if (type.equals("addMember")) {
 			try {
 				glue.addGroupMember(Guid.parseTrustedJabberId(from.getNode()), 

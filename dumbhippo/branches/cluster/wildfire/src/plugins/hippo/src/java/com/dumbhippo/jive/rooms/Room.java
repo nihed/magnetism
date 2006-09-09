@@ -1,6 +1,7 @@
 package com.dumbhippo.jive.rooms;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -8,6 +9,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import javax.jms.ObjectMessage;
 
@@ -32,20 +35,49 @@ import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.jms.JmsProducer;
+import com.dumbhippo.live.PresenceListener;
+import com.dumbhippo.live.PresenceService;
 import com.dumbhippo.server.ChatRoomInfo;
 import com.dumbhippo.server.ChatRoomKind;
 import com.dumbhippo.server.ChatRoomMessage;
 import com.dumbhippo.server.ChatRoomUser;
-import com.dumbhippo.server.MessengerGlueRemote;
+import com.dumbhippo.server.MessengerGlue;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.xmppcom.XmppEvent;
 import com.dumbhippo.xmppcom.XmppEventChatMessage;
 
-public class Room {
-	private RoomHandler handler;
-	
+public class Room implements PresenceListener {
 	static final int MAX_HISTORY_COUNT = 100;
+	
+	/* NOTES: Concurrency and Thread Safety
+	 *
+	 * Packets from a client are delivered in the thread that reads from that
+	 * client's socket. In addition, our PresenceListener is called from an internal
+	 * thread of PresenceServer and reloadCaches() can be called the HippoPlugin JMS
+	 * consumer thread. Rather than trying sort out which of all these accesses affect
+	 * which of our data structures, we take the simple approach of synchronizing all
+	 * public methods (except for ones that clearly don't access mutable data structures).
+	 * 
+	 * The one concern about this is it does mean holding a global lock while calling
+	 * MessengerGlue methods such as cgetChatRoomUser(), which may do database accesses,
+	 * but doing better would take a lot of careful work.
+	 * 
+	 * The one thing we handle specially is outgoing messages; if we delivered them
+	 * directly from within our lock, we could block for arbitrary amounts of time 
+	 * with the lock held, on the other hand, delivering them unlocked would lose ordering.
+	 * So what we do is queue outgoing packets for delivery, and use a thread to handle
+	 * delivery.
+	 * 
+	 * It might be better to use a per-client thread rather than a per-chatroom since
+	 * with a per-chatroom thread, stalled delivery to one client can block delivery
+	 * to another client, but if we go that route, it should be done globally, not
+	 * within the chatroom code.
+	 * 
+	 * The actual characteristics we need are: a) we can queue outgoing packets for 
+	 * delivery without blocking and b) two packets queued from the same chatroom
+	 * to the same user are delivered in that order. 
+	 **/ 
 	
 	private static class UserInfo {
 		private String username;
@@ -56,7 +88,7 @@ public class Room {
 		private boolean musicPlaying;
 		private int participantCount;
 		private int presentCount;
-		
+		private RoomUserStatus globalStatus;
 		
 		public UserInfo(String username, String name, String smallPhotoUrl) {
 			this.username = username;
@@ -65,6 +97,9 @@ public class Room {
 			this.arrangementName = "";
 			this.artist = "";
 			this.musicPlaying = false;
+			this.participantCount = 0;
+			this.presentCount = 0;
+			this.globalStatus = RoomUserStatus.NONMEMBER;
 		}
 		
 		public String getUsername() {
@@ -128,13 +163,21 @@ public class Room {
 			    this.musicPlaying = musicPlaying;
 		}
 		
-		public RoomUserStatus getStatus() {
+		public RoomUserStatus getLocalStatus() {
 			if (presentCount == 0)
 				return RoomUserStatus.NONMEMBER;
 			else if (participantCount == 0)
 				return RoomUserStatus.VISITOR;
 			else
 				return RoomUserStatus.PARTICIPANT;
+		}
+		
+		public RoomUserStatus getGlobalStatus() {
+			return globalStatus;
+		}
+		
+		public void setGlobalStatus(RoomUserStatus status) {
+			this.globalStatus = status;
 		}
 	}
 	
@@ -167,7 +210,48 @@ public class Room {
 			return timestamp;
 		}
 	}
+	
+	// Encapsulates a Packet with a list of resources or users to deliver it to. The
+	// advantage of using these objects in sendQueue rather than just a list of 
+	// Packets with their destination set is that we can avoid copying the Packet
+	//.once per recipient.
+	private static class DeliveryPacket {
+		private Packet packet;
+		private Set<?> to;
+		
+		private DeliveryPacket(Packet packet, Set<?> to) {
+			this.packet = packet;
+			this.to = to;
+		}
+		
+		public static DeliveryPacket createForResources(Packet packet, Set<JID> to) {
+			return new DeliveryPacket(packet, to);
+		}
+		
+		public static DeliveryPacket createForUsers(Packet packet, Set<String> to) {
+			return new DeliveryPacket(packet, to);
+		}
 
+		public void deliver() {
+			for (Object o : to) {
+				if (o instanceof JID) {
+					packet.setTo((JID)o);
+					XMPPServer.getInstance().getPacketRouter().route(packet);
+				} else if (o instanceof String) {
+					try {
+						SessionManager.getInstance().userBroadcast((String)o, packet);
+					} catch (UnauthorizedException e) {
+						// Ignore
+					}
+				}
+			}
+		}
+	}
+
+	private String title;
+	private ChatRoomKind kind;
+	private String roomName;	
+	
 	private Set<String> recipientsCache;
 	private Map<String, UserInfo> userInfoCache;
 	private Map<JID, UserInfo> participantResources;
@@ -176,17 +260,11 @@ public class Room {
 	private List<MessageInfo> messages;
 	private int nextSerial;
 	
-	private String roomName;
-	
+	private BlockingQueue<DeliveryPacket> sendQueue;
+	private Thread sendThread;
 	private JmsProducer queue;
 	
-	private ChatRoomKind kind;
-
-	private String title;
-	
-	private Room(RoomHandler handler, ChatRoomInfo info) {
-		this.handler = handler; 
-		// FIXME this gets leaked, need to call close()
+	private Room(ChatRoomInfo info) {
 		queue = new JmsProducer(XmppEvent.QUEUE, true);
 		
 		userInfoCache = new HashMap<String, UserInfo>();
@@ -196,9 +274,9 @@ public class Room {
 		messages = new ArrayList<MessageInfo>();
 		nextSerial = 0;
 		
-		this.roomName = info.getChatId();
-		this.kind = info.getKind();
-		this.title = info.getTitle();
+		roomName = info.getChatId();
+		kind = info.getKind();
+		title = info.getTitle();
 		
 		for (ChatRoomMessage message : info.getHistory()) {
 			UserInfo userInfo = lookupUserInfo(message.getFromUsername());
@@ -208,11 +286,33 @@ public class Room {
 			if (message.getSerial() >= nextSerial)
 				nextSerial = message.getSerial() + 1;
 		}
+		
+		sendQueue = new LinkedBlockingQueue<DeliveryPacket>();
+		sendThread = new Thread(new Sender(), "Room-Sender-" + roomName);
+		sendThread.start();
+		
+		PresenceService.getInstance().addListener(getPresenceLocation(), this);
+	}
+	
+	public void shutdown() {
+		PresenceService.getInstance().removeListener(getPresenceLocation(), this);
+		
+		queue.close();
+		sendThread.interrupt();
+		try {
+			// We take some precautions here because it's conceivable that the sender thread
+			// could be blocking trying to write to a client's socket 
+			sendThread.join(10 * 1000); // Wait for at most 10 seconds
+			if (sendThread.isAlive())
+				Log.warn("Timed out waiting for " + sendThread.getName() + " to exit");
+		} catch (InterruptedException e) {
+			// Shouldn't happen, just ignore
+		}
 	}
 	
 	private UserInfo lookupUserInfo(String username) {
 		if (!userInfoCache.containsKey(username)) {
-			MessengerGlueRemote glue = EJBUtil.defaultLookupRemote(MessengerGlueRemote.class);
+			MessengerGlue glue = EJBUtil.defaultLookup(MessengerGlue.class);
 			ChatRoomUser user = glue.getChatRoomUser(roomName, kind, username);
 			userInfoCache.put(username, new UserInfo(user.getUsername(), user.getName(), user.getSmallPhotoUrl()));			
 		}
@@ -220,7 +320,7 @@ public class Room {
 	}
 	
 	private void updateRecipientsCache() {
-		MessengerGlueRemote glue = EJBUtil.defaultLookupRemote(MessengerGlueRemote.class);		
+		MessengerGlue glue = EJBUtil.defaultLookup(MessengerGlue.class);		
 		for (ChatRoomUser user : glue.getChatRoomRecipients(roomName, this.kind)) {
 			Log.debug("Room recipient: " + user.getUsername());
 			recipientsCache.add(user.getUsername());
@@ -239,6 +339,14 @@ public class Room {
 		return "rooms." + XMPPServer.getInstance().getServerInfo().getName();
 	}
 
+	private void sendDeliveryPacket(DeliveryPacket packet) {
+		try {
+			sendQueue.put(packet);
+		} catch (InterruptedException e) {
+			Log.warn("Interrupted exception delivering Room packet");
+		}
+	}
+	
 	/**
 	 * Send a packet to a particular resource
 	 * 
@@ -246,8 +354,7 @@ public class Room {
 	 * @param to recipient resource
 	 */
 	private void sendPacketToResource(Packet packet, JID to) {
-		packet.setTo(to);
-		XMPPServer.getInstance().getPacketRouter().route(packet);		
+		sendDeliveryPacket(new DeliveryPacket(packet, Collections.singleton(to)));
 	}
 
 	/**
@@ -266,13 +373,8 @@ public class Room {
 		for (UserInfo userInfo : presentUsers.values()) {
 			targets.add(userInfo.getUsername());
 		}
-		for (String userName : targets) {
-			try {
-				SessionManager.getInstance().userBroadcast(userName, packet);
-			} catch (UnauthorizedException e) {
-				// Ignore
-			}
-		}		
+		
+		sendDeliveryPacket(new DeliveryPacket(packet, targets));
 	}
 	
 	/**
@@ -281,14 +383,12 @@ public class Room {
 	 * @param packet the packet to send
 	 */
 	private void sendPacketToPresent(Packet packet) {
-		for (JID member : presentResources.keySet()) {
-			sendPacketToResource(packet, member);
-		}
+		sendDeliveryPacket(new DeliveryPacket(packet, new HashSet<JID>(presentResources.keySet())));
 	}
 	
-	public static Room loadFromServer(RoomHandler handler, String roomName) {
+	public static Room loadFromServer(String roomName) {
 		Log.debug("Querying server for information on chat room " + roomName);
-		MessengerGlueRemote glue = EJBUtil.defaultLookupRemote(MessengerGlueRemote.class);
+		MessengerGlue glue = EJBUtil.defaultLookup(MessengerGlue.class);
 		
 		ChatRoomInfo info = glue.getChatRoomInfo(roomName);
 		if (info == null) {
@@ -298,12 +398,12 @@ public class Room {
 
 		Log.debug("  got response from server, title is " + info.getTitle());
 		
-		return new Room(handler, info);
+		return new Room(info);
 	}
 	
-	public static Map<String, String> getCurrentMusicFromServer(String username) {
+	private static Map<String, String> getCurrentMusicFromServer(String username) {
 		Log.debug("Querying server for current music for " + username);
-		MessengerGlueRemote glue = EJBUtil.defaultLookupRemote(MessengerGlueRemote.class);
+		MessengerGlue glue = EJBUtil.defaultLookup(MessengerGlue.class);
 		
 		Map<String, String> musicInfo = glue.getCurrentMusicInfo(username);
 		
@@ -318,7 +418,7 @@ public class Room {
 		
 	}
 	
-	private String roleString(RoomUserStatus status) {
+	private static String roleString(RoomUserStatus status) {
 		switch (status) {
 		case NONMEMBER:
 			return "nonmember";
@@ -337,7 +437,7 @@ public class Room {
 		roomInfo.addAttribute("kind", kind.name().toLowerCase());
 		if (includeDetails)
 			roomInfo.addAttribute("title", title);
-		MessengerGlueRemote glue = EJBUtil.defaultLookupRemote(MessengerGlueRemote.class);
+		MessengerGlue glue = EJBUtil.defaultLookup(MessengerGlue.class);
 		String objectXml = null;
 		if (includeDetails) {
 			String elementName = "objects";
@@ -388,7 +488,7 @@ public class Room {
 		Element info = child.addElement("userInfo", "http://dumbhippo.com/protocol/rooms");
 		info.addAttribute("name", userInfo.getName());
 		info.addAttribute("smallPhotoUrl", userInfo.getSmallPhotoUrl());
-		info.addAttribute("role", roleString(userInfo.getStatus()));
+		info.addAttribute("role", roleString(userInfo.getGlobalStatus()));
 		if (oldStatus != null) {
 			info.addAttribute("oldRole", roleString(oldStatus));
 		}
@@ -410,13 +510,11 @@ public class Room {
 		return presence;
 	}
 	
-	private void sendRoomDetails(boolean excludeSelf, JID to) {
+	private void sendRoomDetails(JID to) {
 		// Send the list of current members
 		for (UserInfo memberInfo : presentUsers.values()) {
-			if (!(excludeSelf && memberInfo.getUsername().equals(to.getNode()))) {
-				Presence presence = makePresenceAvailable(memberInfo, null);
-				sendPacketToResource(presence, to);
-			}
+			Presence presence = makePresenceAvailable(memberInfo, null);
+			sendPacketToResource(presence, to);
 		}
 		
 		// And a a history of recent messages
@@ -461,7 +559,7 @@ public class Room {
 		boolean resourceWasPresent = (presentResources.get(jid) != null);
 		boolean resourceWasParticipant = (participantResources.get(jid) != null);
 		
-		boolean needNotify = false; // Do we need to broadcast a change to other users
+		boolean statusChanged = false;
 
 		if (!resourceWasPresent) {
 			presentResources.put(jid, userInfo);
@@ -469,8 +567,7 @@ public class Room {
 		
 			// User is joining the channel for the first time
 			if (userInfo.getPresentCount() == 1) {
-				presentUsers.put(username, userInfo);
-				needNotify = true;
+				statusChanged = true;
 			}
 		}
 
@@ -488,19 +585,19 @@ public class Room {
 			userInfo.setParticipantCount(userInfo.getParticipantCount() + 1);
 			if (userInfo.getParticipantCount() == 1) {
 				participantResources.put(jid, userInfo);
-				needNotify = true;
+				statusChanged = true;
 			}			
 		} else if (!participant && resourceWasParticipant) {
 			userInfo.setParticipantCount(userInfo.getParticipantCount() - 1);
 			if (userInfo.getParticipantCount() == 0) {
 				participantResources.remove(jid);
-				needNotify = true;
+				statusChanged = true;
 			}
 		}
 		
 		// Joining a chat implicitly un-ignores a post
 		if (participant && kind == ChatRoomKind.POST) {
-			MessengerGlueRemote glue = EJBUtil.defaultLookupRemote(MessengerGlueRemote.class);
+			MessengerGlue glue = EJBUtil.defaultLookup(MessengerGlue.class);
 			try {
 				glue.setPostIgnored(Guid.parseTrustedJabberId(username), 
 								    Guid.parseTrustedJabberId(roomName), false);
@@ -511,30 +608,18 @@ public class Room {
 			}					
 		}		
 
-		if (needNotify) {
-			if (resourceWasPresent)
-				handler.getPresenceMonitor().onRoomUserUnavailable(kind, roomName, username);
-			handler.getPresenceMonitor().onRoomUserAvailable(kind, roomName, username, userInfo.getStatus());
-			RoomUserStatus oldStatus;
-			if (resourceWasParticipant)
-				oldStatus = RoomUserStatus.PARTICIPANT;
-			else if (resourceWasPresent)
-				oldStatus = RoomUserStatus.VISITOR;
-			else
-				oldStatus = RoomUserStatus.NONMEMBER;
-			
-			Presence presence = makePresenceAvailable(userInfo, oldStatus);
-			sendPacketToAll(presence);
-		}
+		if (statusChanged)
+			setLocalPresence(userInfo);
 		
 		// Send the list of current membmers and a complete history of past messages
+		// if the above caused a notification to be sent out then the user may get
+		// notified of themself twice - that's harmless
 		if (!resourceWasPresent)
-			sendRoomDetails(needNotify, jid);
+			sendRoomDetails(jid);
 	}
 	
 	private void processPresenceUnavailable(Presence packet) {
 		JID jid = packet.getFrom();
-		String username = jid.getNode();
 		
 		Log.debug("Got unavailable presence from : " + jid);
 
@@ -542,34 +627,22 @@ public class Room {
 		if (userInfo == null)
 			return; // Not present, nothing to do
 			
-		boolean needNotify = false; // Do we need to broadcast a change to other users
+		boolean statusChanged = false;
 
 		presentResources.remove(jid);
 		userInfo.setPresentCount(userInfo.getPresentCount() - 1);
-		if (userInfo.getPresentCount() == 0) {
-			presentUsers.remove(username);
-			needNotify = true;
-		}
+		if (userInfo.getPresentCount() == 0)
+			statusChanged = true;
 		
 		if (participantResources.get(jid) != null) {
 			participantResources.remove(jid);
 			userInfo.setParticipantCount(userInfo.getParticipantCount() - 1);
 			if (userInfo.getParticipantCount() == 0)
-				needNotify = true;
+				statusChanged = true;
 		}
 
-		if (needNotify) {
-			handler.getPresenceMonitor().onRoomUserUnavailable(kind, roomName, username);
-			if (userInfo.getStatus() != RoomUserStatus.NONMEMBER)
-				handler.getPresenceMonitor().onRoomUserAvailable(kind, roomName, username, userInfo.getStatus());
-			
-			Presence presence;
-			if (userInfo.getStatus() == RoomUserStatus.NONMEMBER)
-				presence = makePresenceUnavailable(userInfo);
-			else
-				presence = makePresenceAvailable(userInfo, RoomUserStatus.PARTICIPANT);
-			sendPacketToAll(presence);
-		}
+		if (statusChanged)
+			setLocalPresence(userInfo);
 	}
 	
 	private Message makeMessage(MessageInfo messageInfo, boolean isDelayed) {
@@ -648,7 +721,7 @@ public class Room {
 			// side, we simply send all that information as <presence/> and
 			// <message/> elements, *then* we send the result of the IQ
 			// to indicate that we are finished.
-			sendRoomDetails(false, fromJid);
+			sendRoomDetails(fromJid);
 		
 			addRoomInfo(reply, true, fromJid.getNode());
 		} else {
@@ -663,7 +736,7 @@ public class Room {
 	 * @param propeties a map containing all the information about a new track
 	 * @param username username of a person whose music has changed
 	 */
-	public void processMusicChange(Element iq, Map<String,String> properties, String username) {
+	public synchronized void processMusicChange(Element iq, Map<String,String> properties, String username) {
 		// update UserInfo for username
 		UserInfo userInfo = presentUsers.get(username);
 		if (userInfo == null)
@@ -693,7 +766,7 @@ public class Room {
 	 * 
 	 * @param packet a packet sent to the room
 	 */
-	public void processPacket(Packet packet) {
+	public synchronized void processPacket(Packet packet) {
 		if (packet instanceof Presence) {
 			Presence presence = (Presence)packet;
 			if (presence.isAvailable())
@@ -718,7 +791,7 @@ public class Room {
 	 * @return true if the user can join this room
 	 */
 	public boolean checkUserCanJoin(String username) {
-		MessengerGlueRemote glue = EJBUtil.defaultLookupRemote(MessengerGlueRemote.class);
+		MessengerGlue glue = EJBUtil.defaultLookup(MessengerGlue.class);
 		return glue.canJoinChat(roomName, kind, username);
 	}
 
@@ -727,7 +800,7 @@ public class Room {
 	 * 
 	 * @return the count of present users
 	 */
-	public int getPresenceCount() {
+	public synchronized int getPresenceCount() {
 		return presentUsers.size(); 
 	}
 	
@@ -737,11 +810,90 @@ public class Room {
 	 * @param username
 	 * @return true if user is present in this room
 	 */
-	public boolean checkUserPresent(String username) {
+	public synchronized boolean checkUserPresent(String username) {
 	    return presentUsers.containsKey(username);	
 	}
 
-	public void reloadCaches() {
+	/**
+	 * Update cached information that we've retrieved from the server, such as
+	 * the set of users allowed to join the chatroom.
+	 */
+	public synchronized void reloadCaches() {
 		updateRecipientsCache();
+	}
+	
+	private String getPresenceLocation() {
+		return "/rooms/" + roomName;
+	}
+
+	private void setLocalPresence(UserInfo userInfo) {
+		int presence = 0;
+		
+		switch (userInfo.getLocalStatus()) {
+		case NONMEMBER:
+			presence = 0;
+			break;
+		case VISITOR:
+			presence = 1;
+			break;
+		case PARTICIPANT:
+			presence = 2;
+			break;
+		}
+		
+		PresenceService presenceService = PresenceService.getInstance();
+		presenceService.setLocalPresence(getPresenceLocation(), Guid.parseTrustedJabberId(userInfo.getUsername()), presence);
+	}
+	
+	// Callback from PresenceService
+	public synchronized void presenceChanged(Guid guid) {
+		UserInfo userInfo = lookupUserInfo(guid.toJabberId(null));
+		
+		RoomUserStatus oldStatus = userInfo.getGlobalStatus();
+		
+		PresenceService presenceService = PresenceService.getInstance();
+		int newPresence = presenceService.getPresence(getPresenceLocation(), guid);
+
+		RoomUserStatus newStatus = RoomUserStatus.NONMEMBER;
+		switch (newPresence) {
+		case 1:
+			newStatus = RoomUserStatus.VISITOR;
+			break;
+		case 2:
+			newStatus = RoomUserStatus.PARTICIPANT;
+			break;
+		}
+		
+		if (newStatus == oldStatus)
+			return;
+		
+		if (newStatus == RoomUserStatus.NONMEMBER)
+			presentUsers.remove(userInfo.getUsername());
+		else if (newStatus == RoomUserStatus.PARTICIPANT)
+			presentUsers.put(userInfo.getUsername(), userInfo);
+
+		userInfo.setGlobalStatus(newStatus);
+		
+		Presence presence;
+		if (newStatus == RoomUserStatus.NONMEMBER)
+			presence = makePresenceUnavailable(userInfo);
+		else
+			presence = makePresenceAvailable(userInfo, oldStatus);
+
+		sendPacketToAll(presence);
+	}
+	
+	private class Sender implements Runnable {
+		public void run() {
+			while (true) {
+				try {
+					DeliveryPacket packet = sendQueue.take();
+					packet.deliver();
+				} catch (InterruptedException e) {
+					// Thread was shut down
+					break;
+				}
+			}
+		}
 	}
 }

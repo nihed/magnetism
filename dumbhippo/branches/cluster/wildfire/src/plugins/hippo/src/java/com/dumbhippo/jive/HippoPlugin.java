@@ -21,6 +21,7 @@ import com.dumbhippo.jive.rooms.RoomHandler;
 import com.dumbhippo.jms.JmsConsumer;
 import com.dumbhippo.live.GroupEvent;
 import com.dumbhippo.live.LiveEvent;
+import com.dumbhippo.live.PresenceService;
 
 /**
  * Our plugin for Jive Messenger
@@ -78,7 +79,7 @@ public class HippoPlugin implements Plugin {
 			SessionManager sessionManager = XMPPServer.getInstance().getSessionManager();
 			sessionManager.registerListener(presenceMonitor);
 					
-			roomHandler = new RoomHandler(presenceMonitor);			
+			roomHandler = new RoomHandler();			
 			try {
 				InternalComponentManager.getInstance().addComponent("rooms", roomHandler);
 			} catch (ComponentException e) {
@@ -120,6 +121,8 @@ public class HippoPlugin implements Plugin {
 		queueConsumer.shutdown();
 		queueConsumerThread.interrupt();
 		incomingQueue.close();
+		
+		PresenceService.getInstance().clearLocalPresence();
 
 		Log.debug("... done unloading Hippo plugin");
 	}

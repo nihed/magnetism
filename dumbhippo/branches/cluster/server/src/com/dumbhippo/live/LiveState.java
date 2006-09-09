@@ -1,13 +1,10 @@
 package com.dumbhippo.live;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -52,9 +49,6 @@ public class LiveState {
 	// Maximum number of cleaner intervals for each post
 	private static final int MAX_POST_CACHE_AGE = 30;
 	
-	// Maximum number of cleaner intervals for un-pinged XMPP servers
-	private static final int MAX_XMPP_SERVER_CACHE_AGE = 2;
-
 	/**
 	 * Get the global singleton LiveState object. The methods of the
 	 * LiveState object may safely be called from any thread.
@@ -308,32 +302,6 @@ public class LiveState {
 	}	
 	
 	/**
-	 * Create a new LiveXmppServer object representing a newly connected
-	 * instance of a Jabber server. The object can be looked up in
-	 * the future by calling getXmppServer() with the unique cookie
-	 * from LiveXmppServer.getServerIdentifier().
-	 * 
-	 * @return the new LiveXmppServer object.
-	 */
-	public LiveXmppServer createXmppServer() {
-		LiveXmppServer xmppServer = new LiveXmppServer(this);
-		xmppServers.put(xmppServer.getServerIdentifier(), xmppServer);
-		
-		return xmppServer;
-	}
-	
-	/**
-	 * Looks up a previously created LiveXmppServer, if it hasn't been
-	 * timed out in between.
-	 * 
-	 * @param serverIdentifier cookie from LiveXmppServer.getServerIdentifier().
-	 * @return the server, if found, otherwise null.
-	 */
-	public LiveXmppServer getXmppServer(String serverIdentifier) {
-		return xmppServers.get(serverIdentifier);
-	}
-
-	/**
 	 * Queue an event representing a change to the database state. The
 	 * event will be processed asynchronously resulting in updates to
 	 * the live state objects and also possibly in notifications sent
@@ -416,14 +384,6 @@ public class LiveState {
 	
 	private LiveObjectCache<LiveGroup> groupCache;
 
-	// Current LiveXmppServer objects. This is simpler than the post and
-	// user caches, since we don't want to keep around stray LiveXmppServer
-	// objects. If the server fails to ping, we want to unconditionally
-	// discard it. We, however, do use some of the same code to implement
-	// aging and timing out of xmppServers as is used for cachedUsers and
-	// cachedPosts.
-	private Map<String, LiveXmppServer> xmppServers;
-
 	private Cleaner cleaner;
 	
 	private LiveUserPeriodicUpdater liveUserUpdater;
@@ -476,8 +436,6 @@ public class LiveState {
 				},
 				MAX_GROUP_CACHE_AGE);
 		
-		xmppServers = new ConcurrentHashMap<String, LiveXmppServer>();
-		
 		updateQueue = new JmsProducer(LiveEvent.QUEUE, true);
 		
 		cleaner = new Cleaner();
@@ -487,37 +445,7 @@ public class LiveState {
 		liveUserUpdater.setName("LiveUserUpdater");		
 		liveUserUpdater.start();
 	}
-	
-	// Internal function to update the availability count for the user;
-	// see LiveXmppServer.userAvailable().
-	void userAvailable(Guid userId) {
-		LiveClientData clientData = getLiveClientDataForUpdate(userId);
-		try {
-			clientData.setAvailableCount(clientData.getAvailableCount() + 1);
-			if (clientData.getAvailableCount() == 1) {
-				logger.debug("User {} is now available", clientData.getGuid());			
-				clientDataCache.addStrongReference(clientData);
-			}
-		} finally {
-			updateLiveClientData(clientData);
-		}
-	}
-
-	// Internal function to update the availability count for the user;
-	// see LiveXmppServer.userUnavailable().
-	void userUnavailable(Guid userId) {
-		LiveClientData clientData = peekLiveClientDataForUpdate(userId);
-		try {
-			clientData.setAvailableCount(clientData.getAvailableCount() - 1);
-			if (clientData.getAvailableCount() == 0) {
-				logger.debug("User {} is no longer available", clientData.getGuid());
-				clientDataCache.dropStrongReference(clientData);
-			}
-		} finally {
-			updateLiveClientData(clientData);
-		}
-	}
-	
+		
 	// Internal function to record a user joining the chat room for a post;
 	// see LiveXmppServer.postRoomUserAvailable
 	void postRoomUserAvailable(Guid postId, Guid userId, boolean isParticipant) {
@@ -565,25 +493,12 @@ public class LiveState {
 	}	
 
 	
-	private void ageXmppServers() throws InterruptedException {
-		for (Iterator<LiveXmppServer> i = xmppServers.values().iterator(); i.hasNext();) {
-			LiveXmppServer xmppServer = i.next();
-			int newAge = xmppServer.increaseCacheAge();
-			if (newAge >= MAX_XMPP_SERVER_CACHE_AGE) {
-				logger.debug("Discarding timed-out LiveXmppServer");
-		                     i.remove();
-		                     xmppServer.discard();
-			}
-		}
-	}
-
 	private void clean() throws InterruptedException {
 		// Bump the age of all objects, removing ones that pass the maximum age
 		userCache.age();
+		clientDataCache.age();
 		postCache.age();
 		groupCache.age();
-		
-		ageXmppServers();
 	}
 
 	// Thread that ages the different types of objects we keep around, and
@@ -634,15 +549,13 @@ public class LiveState {
 			while (true) {
 				try {
 					Thread.sleep(nextTime - System.currentTimeMillis());
+					
+					Set<Guid> toUpdate = PresenceService.getInstance().getPresentUsers("/users", 1);
 
 					LiveClientDataUpdater updater = EJBUtil.defaultLookup(LiveClientDataUpdater.class);					
-					Set<LiveClientData> toUpdate;
-					// Grab a copy of the current user map to avoid locking the whole
-					// object for a long time
-					toUpdate = getLiveClientDataCacheSnapshot();
 					
-					for (LiveClientData clientData : toUpdate) {
-						updater.periodicUpdate(clientData.getGuid());
+					for (Guid guid : toUpdate) {
+						updater.periodicUpdate(guid);
 					}		
 				} catch (InterruptedException e) {
 					break; // exit the loop

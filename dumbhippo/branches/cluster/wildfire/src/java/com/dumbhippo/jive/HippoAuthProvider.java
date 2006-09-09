@@ -7,7 +7,7 @@ import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.auth.AuthFactory;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
 
-import com.dumbhippo.server.MessengerGlueRemote;
+import com.dumbhippo.server.MessengerGlue;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.util.ServerTooBusyException;
 
@@ -57,7 +57,7 @@ public class HippoAuthProvider implements
 		
 		Log.debug("authenticate() username = " + username + " token = " + token + " digest = " + digest);
 		
-		MessengerGlueRemote glue = EJBUtil.defaultLookupRemote(MessengerGlueRemote.class);
+		MessengerGlue glue = EJBUtil.defaultLookup(MessengerGlue.class);
 		
 		if (HippoUserProvider.ENABLE_ADMIN_USER && username.equals(HippoUserProvider.getAdminUsername())) {
             String anticipatedDigest = AuthFactory.createDigest(token, HippoUserProvider.getAdminPassword());
