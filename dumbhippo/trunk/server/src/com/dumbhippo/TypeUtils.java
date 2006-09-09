@@ -1,4 +1,5 @@
 package com.dumbhippo;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -24,5 +25,13 @@ public class TypeUtils {
 	@SuppressWarnings("unchecked")
 	public static <T> Set<T> castSet(Class<T> klass, Set set) {
 		return set;
+	}
+	
+	public static <T> List<T> emptyList(Class<T> klass) {
+		return TypeUtils.castList(klass, Collections.emptyList());
+	}
+	
+	public static <T> Set<T> emptySet(Class<T> klass) {
+		return TypeUtils.castSet(klass, Collections.emptySet());
 	}
 }

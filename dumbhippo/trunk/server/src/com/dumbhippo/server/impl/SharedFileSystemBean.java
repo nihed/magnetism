@@ -30,6 +30,7 @@ import com.dumbhippo.persistence.StorageState;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.HumanVisibleException;
+import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Pageable;
 import com.dumbhippo.server.PermissionDeniedException;
@@ -55,6 +56,9 @@ public class SharedFileSystemBean implements SharedFileSystem {
 
 	@EJB
 	private GroupSystem groupSystem;	
+	
+	@EJB
+	private IdentitySpider identitySpider;
 	
 	private Storage storage;
 	
@@ -120,6 +124,25 @@ public class SharedFileSystemBean implements SharedFileSystem {
 	public void pagePublicFiles(Viewpoint viewpoint, Pageable<SharedFile> pageable) {
 		// TODO Auto-generated method stub
 		
+	}
+	
+	/** 
+	 * This is different from IdentitySpider.lookupUser because we might eventually 
+	 * have a separate setting to enable/disable browsing of files. 
+	 * Also, SharedFileDavFactory has a ref to SharedFileSystem but not to 
+	 * IdentitySpider.
+	 */
+	public User openUserDirectory(Viewpoint viewpoint, Guid userId) throws NotFoundException {
+		// note that this throws NotFoundException while lookupUser does not.
+		return identitySpider.lookupGuid(User.class, userId);
+	}
+	
+	public Collection<User> listUserDirectoriesWithPublicShares(Viewpoint viewpoint) {
+		Query q = em.createQuery("SELECT user FROM User user WHERE EXISTS " +
+				"(SELECT sf FROM SharedFile sf WHERE sf.creator = user AND " +
+				" sf.state = " + StorageState.STORED.ordinal() + " AND sf.worldReadable = TRUE)");
+		List<User> list = TypeUtils.castList(User.class, q.getResultList());
+		return list;
 	}
 	
 	private static String friendlySize(double bytes) {

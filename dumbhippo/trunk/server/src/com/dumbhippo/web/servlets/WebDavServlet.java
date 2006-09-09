@@ -4,8 +4,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.HashSet;
-import java.util.Set;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -20,9 +18,11 @@ import com.dumbhippo.dav.DavHttpStatusException;
 import com.dumbhippo.dav.DavNode;
 import com.dumbhippo.dav.DavResourceType;
 import com.dumbhippo.dav.DavStatusCode;
-import com.dumbhippo.dav.DavTestNode;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.NotFoundException;
+import com.dumbhippo.server.SharedFileDavFactory;
+import com.dumbhippo.server.SharedFileSystem;
+import com.dumbhippo.web.SigninBean;
 import com.dumbhippo.web.WebEJBUtil;
 
 public class WebDavServlet extends AbstractServlet {
@@ -136,7 +136,7 @@ public class WebDavServlet extends AbstractServlet {
 	
 	protected void doPropFind(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException, DavHttpStatusException {
-		DavHandler handler = getDavHandler();
+		DavHandler handler = getDavHandler(request);
 		
 		XmlBuilder xml = new XmlBuilder();
 		xml.appendStandaloneFragmentHeader();
@@ -221,7 +221,7 @@ public class WebDavServlet extends AbstractServlet {
 	protected String wrappedDoGet(HttpServletRequest request, HttpServletResponse response)
 		throws ServletException, IOException, HttpException {
 		
-		DavHandler handler = getDavHandler();
+		DavHandler handler = getDavHandler(request);
 		DavNode node;
 		try {
 			node = handler.findNodeByPath(getNodePath(request));
@@ -276,7 +276,7 @@ public class WebDavServlet extends AbstractServlet {
 	}
 	
 	// just always produces a new instance so we can ignore thread-related stuff
-	private DavHandler getDavHandler() {
+	private DavHandler getDavHandler(HttpServletRequest request) {
 		Configuration config = WebEJBUtil.defaultLookup(Configuration.class);
 		URL url;
 		try {
@@ -286,6 +286,7 @@ public class WebDavServlet extends AbstractServlet {
 		}
 		logger.debug("Full URL of dav servlet is '{}'", url.toExternalForm());
 		
+		/*
 		Set<DavTestNode> children = new HashSet<DavTestNode>();
 		
 		children.add(new DavTestNode("file-c-1"));
@@ -296,6 +297,10 @@ public class WebDavServlet extends AbstractServlet {
 		children.add(new DavTestNode("file-a-0"));
 		children.add(new DavTestNode("file-b-0"));
 		DavNode root = new DavTestNode(null, children);
+		*/
+		DavNode root = SharedFileDavFactory.newRoot(SigninBean.getForRequest(request).getViewpoint(),
+				WebEJBUtil.defaultLookup(SharedFileSystem.class));
+		
 		return new DavHandler(root, url);
 	}
 }

@@ -44,14 +44,16 @@ public enum DavProperty {
 	
 	public void writeNode(XmlBuilder xml, Object value) {
 		// default implementation
-		if (value instanceof String) {
+		if (value == null) {
+			throw new RuntimeException("don't know how to write null node for " + this.name());
+		} else if (value instanceof String) {
 			xml.appendTextNode(element, (String) value);
 		} else if (value instanceof Number) {
 			xml.appendLongNode(element, ((Number) value).longValue());
 		} else if (value instanceof Boolean) {
 			xml.appendBooleanNode(element, (Boolean) value);
 		} else {
-			throw new RuntimeException("don't know how to write node " + this.name());
+			throw new RuntimeException("don't know how to write node " + this.name() + " of type " + value.getClass().getName());
 		}
 	}
 	

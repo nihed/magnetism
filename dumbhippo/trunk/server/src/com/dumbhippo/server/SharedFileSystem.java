@@ -70,6 +70,10 @@ public interface SharedFileSystem {
 	
 	public String getQuotaRemainingString(UserViewpoint viewpoint);
 	
+	public User openUserDirectory(Viewpoint viewpoint, Guid userId) throws NotFoundException;
+	
+	public Collection<User> listUserDirectoriesWithPublicShares(Viewpoint viewpoint);
+	
 	/** 
 	 * Creates a new SharedFile but does not yet save it in non-database storage.
 	 * The SharedFile is in state StorageState.NOT_STORED and has the entire
