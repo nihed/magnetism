@@ -11,7 +11,6 @@ import java.util.Set;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import org.jboss.system.ServiceMBeanSupport;
 import org.jgroups.Address;
@@ -27,6 +26,7 @@ import org.slf4j.Logger;
 import org.w3c.dom.Element;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.ThreadUtils;
 import com.dumbhippo.identity20.Guid;
 
 /**
@@ -206,9 +206,9 @@ public class PresenceService extends ServiceMBeanSupport implements PresenceServ
 				} catch (ChannelNotConnectedException e) {
 				} catch (ChannelClosedException e) {
 				}
-			
-				scheduleNotification(guid);
 			}
+			
+			scheduleNotification(oldUsers.keySet());
 		}
 
 		public synchronized LocationState getState() {
@@ -237,22 +237,33 @@ public class PresenceService extends ServiceMBeanSupport implements PresenceServ
 			}
 		}
 		
+		private void ensureNotifyUsers() {
+			if (notifyUsers == null) {
+				notifyUsers = new HashSet<Guid>();
+				notifyExecutor.execute(new Runnable() {
+					public void run() {
+						doNotifications();
+					}
+				});
+			}
+		}
+		
 		public synchronized void scheduleNotification(Guid guid) {
 			if (listeners.isEmpty())
 				return;
 			
-			if (notifyUsers == null) {
-				notifyUsers = new HashSet<Guid>();
-			}
-			
+			ensureNotifyUsers();
 			notifyUsers.add(guid);
-			notifyExecutor.execute(new Runnable() {
-				public void run() {
-					doNotifications();
-				}
-			});
 		}
 		
+		public synchronized void scheduleNotification(Set<Guid> guids) {
+			if (listeners.isEmpty())
+				return;
+			
+			ensureNotifyUsers();
+			notifyUsers.addAll(guids);
+		}
+
 		public void doNotifications() {
 			Set<Guid> guids;
 			List<PresenceListener> toNotify; 
@@ -278,8 +289,9 @@ public class PresenceService extends ServiceMBeanSupport implements PresenceServ
 	}
 
 	// Information about the users at one location on a remote server 
-	private static class RemoteLocationInfo extends LocationInfo {
+	private class RemoteLocationInfo extends LocationInfo {
 		private Address address; // Only needed for debug logging
+		private String location;
 		
 		// The awaitingInitialState flag is used to track whether we need to keep around
 		// the serial numbers for users that are *not* present but were present earlier.
@@ -288,8 +300,9 @@ public class PresenceService extends ServiceMBeanSupport implements PresenceServ
 		// between multicast PresenceChanged and unicast CurrentState messages. 
 		private boolean awaitingInitialState;
 		
-		public RemoteLocationInfo(Address address, boolean awaitingInitialState) {
+		public RemoteLocationInfo(Address address, String location, boolean awaitingInitialState) {
 			this.address = address;
+			this.location = location;
 			this.awaitingInitialState = awaitingInitialState;
 		}
 		
@@ -328,15 +341,20 @@ public class PresenceService extends ServiceMBeanSupport implements PresenceServ
 			
 			awaitingInitialState = false;
 		}
+
+		// This is called after removing a server on cluster view change
+		public void notifyAllRemoved() {
+			scheduleNotification(location, users.keySet());
+		}
 		
 		@Override
 		public String toString() {
-			return "[RemoteLocationInfo: " + address + "]";
+			return "[RemoteLocationInfo: " + address + " - " + location + "]";
 		}
 	}
 	
 	// Information about users on a remote server
-	private static class ServerInfo {
+	private class ServerInfo {
 		// RemoteLocationInfo is read from application threads, but only ever updated from the
 		// thread handling incoming JGroups messages. This allows us to use ConcurrentHashMap
 		// rather than explicit locking, since the reader threads just need a snapshot
@@ -363,7 +381,7 @@ public class PresenceService extends ServiceMBeanSupport implements PresenceServ
 		public RemoteLocationInfo getLocationInfo(String location) {
 			RemoteLocationInfo locationInfo = locations.get(location);
 			if (locationInfo == null) {
-				locationInfo = new RemoteLocationInfo(address, awaitingInitialState);
+				locationInfo = new RemoteLocationInfo(address, location, awaitingInitialState);
 				locations.put(location, locationInfo);
 			}
 			
@@ -410,6 +428,12 @@ public class PresenceService extends ServiceMBeanSupport implements PresenceServ
 			
 			if (locationInfo.getUserCount() == 0)
 				locations.remove(location);
+		}
+		
+		// This is called after removing a server on cluster view change
+		public void notifyAllRemoved() {
+			for (RemoteLocationInfo location : locations.values())
+				location.notifyAllRemoved();
 		}
 	}
 	
@@ -564,7 +588,7 @@ public class PresenceService extends ServiceMBeanSupport implements PresenceServ
 		receiveThread = new ReceiveThread();
 		receiveThread.start();
 		
-		notifyExecutor = Executors.newSingleThreadExecutor();
+		notifyExecutor = ThreadUtils.newSingleThreadExecutor("PresenceService-notify");
 		
 		instance = this;
 		
@@ -797,6 +821,12 @@ public class PresenceService extends ServiceMBeanSupport implements PresenceServ
 			locationInfo.scheduleNotification(guid);
 	}
 	
+	private void scheduleNotification(String location, Set<Guid> guids) {
+		LocalLocationInfo locationInfo = peekLocalLocationInfo(location);
+		if (locationInfo != null)
+			locationInfo.scheduleNotification(guids);
+	}
+	
 	private void handleViewChange(View newView) {
 		logger.debug("New view: {}", newView.toString());
 		
@@ -828,8 +858,11 @@ public class PresenceService extends ServiceMBeanSupport implements PresenceServ
 
 		for (Iterator<Address> i = servers.keySet().iterator(); i.hasNext();) {
 			Address address = i.next();
-			if (!newMembers.contains(address))
+			if (!newMembers.contains(address)) {
+				ServerInfo server = servers.get(address);
 				i.remove();
+				server.notifyAll();
+			}
 		}
 	}
 
