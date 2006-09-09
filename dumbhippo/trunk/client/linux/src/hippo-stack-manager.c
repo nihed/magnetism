@@ -348,7 +348,7 @@ manager_attach(StackManager    *manager,
     g_object_set(manager->base_item, "fixed-width", WIDTH, NULL);
     hippo_window_set_contents(manager->base_window, manager->base_item);
 
-    manager->single_block_item = hippo_canvas_block_new();
+    manager->single_block_item = hippo_canvas_block_new(HIPPO_BLOCK_TYPE_UNKNOWN);
     g_object_set(manager->single_block_item, "fixed-width", WIDTH, NULL);    
     hippo_window_set_contents(manager->single_block_window,
                               manager->single_block_item);

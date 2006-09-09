@@ -7,6 +7,7 @@
 #include "hippo-common-internal.h"
 #endif
 #include "hippo-canvas-block.h"
+#include "hippo-canvas-block-post.h"
 #include "hippo-canvas-box.h"
 #include "hippo-canvas-image.h"
 #include "hippo-canvas-text.h"
@@ -31,17 +32,6 @@ static void hippo_canvas_block_get_property (GObject      *object,
 /* Canvas item methods */
 static void     hippo_canvas_block_paint              (HippoCanvasItem *item,
                                                        cairo_t         *cr);
-
-struct _HippoCanvasBlock {
-    HippoCanvasBox box;
-    HippoBlock *block;
-    HippoCanvasItem *age_item;
-};
-
-struct _HippoCanvasBlockClass {
-    HippoCanvasBoxClass parent_class;
-
-};
 
 enum {
     NO_SIGNALS_YET,
@@ -286,6 +276,14 @@ set_block(HippoCanvasBlock *canvas_block,
 {
     if (new_block != canvas_block->block) {
         if (new_block) {
+            if (canvas_block->required_type != HIPPO_BLOCK_TYPE_UNKNOWN &&
+                hippo_block_get_block_type(new_block) != canvas_block->required_type) {
+                g_warning("Trying to set block type %d on canvas block type %s",
+                          hippo_block_get_block_type(new_block),
+                          g_type_name_from_instance((GTypeInstance*)canvas_block));
+                return;
+            }
+            
             g_object_ref(new_block);
             g_signal_connect(G_OBJECT(new_block), "notify::timestamp",
                              G_CALLBACK(on_block_timestamp_changed),
@@ -327,10 +325,23 @@ hippo_canvas_block_finalize(GObject *object)
 }
 
 HippoCanvasItem*
-hippo_canvas_block_new(void)
+hippo_canvas_block_new(HippoBlockType type)
 {
-    HippoCanvasBlock *block = g_object_new(HIPPO_TYPE_CANVAS_BLOCK, NULL);
+    HippoCanvasBlock *block;
+    GType object_type;
 
+    object_type = HIPPO_TYPE_CANVAS_BLOCK;
+    switch (type) {
+    case HIPPO_BLOCK_TYPE_UNKNOWN:
+        object_type = HIPPO_TYPE_CANVAS_BLOCK;
+        break;
+    case HIPPO_BLOCK_TYPE_POST:
+        object_type = HIPPO_TYPE_CANVAS_BLOCK_POST;
+        break;
+        /* FIXME add the other types */
+    }
+
+    block = g_object_new(object_type, NULL);
 
     return HIPPO_CANVAS_ITEM(block);
 }
