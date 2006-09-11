@@ -265,7 +265,8 @@ public class Room implements PresenceListener {
 	private JmsProducer queue;
 	
 	private Room(ChatRoomInfo info) {
-		queue = new JmsProducer(XmppEvent.QUEUE, true);
+		// FIXMEFIXMEFIXME
+		// queue = new JmsProducer(XmppEvent.QUEUE, true);
 		
 		userInfoCache = new HashMap<String, UserInfo>();
 		participantResources = new HashMap<JID, UserInfo>();
@@ -694,10 +695,11 @@ public class Room implements PresenceListener {
 		Message outgoing = makeMessage(messageInfo, false);
 		sendPacketToAll(outgoing);
 		
+		// FIXMEFIXMEFIXME
 		// Send over to the server via JMS
-		XmppEventChatMessage event = new XmppEventChatMessage(roomName, kind, messageInfo.getUser().getUsername(), messageInfo.getText(), messageInfo.getTimestamp(), messageInfo.getSerial());
-        ObjectMessage message = queue.createObjectMessage(event);
-        queue.send(message);
+		// XmppEventChatMessage event = new XmppEventChatMessage(roomName, kind, messageInfo.getUser().getUsername(), messageInfo.getText(), messageInfo.getTimestamp(), messageInfo.getSerial());
+        // ObjectMessage message = queue.createObjectMessage(event);
+        // queue.send(message);
 	}
 	
 	private void processIQPacket(IQ packet) {

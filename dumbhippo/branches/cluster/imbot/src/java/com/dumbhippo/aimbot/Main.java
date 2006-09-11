@@ -14,6 +14,7 @@ import com.dumbhippo.botcom.BotEvent;
 import com.dumbhippo.botcom.BotEventLogin;
 import com.dumbhippo.botcom.BotEventToken;
 import com.dumbhippo.botcom.BotTask;
+import com.dumbhippo.jms.JmsConnectionType;
 import com.dumbhippo.jms.JmsConsumer;
 import com.dumbhippo.jms.JmsProducer;
 
@@ -37,7 +38,7 @@ public class Main {
 		}
 		
 		public void run() {
-			JmsProducer producer = new JmsProducer(queue, false);
+			JmsProducer producer = new JmsProducer(queue, JmsConnectionType.NONTRANSACTED_IN_CLIENT);
 			
 			try {
 				logger.info("Starting event reader thread for queue " + queue);
@@ -61,8 +62,7 @@ public class Main {
 							
 							logger.debug("Sending event type " + event.getClass().getName());
 							
-							ObjectMessage message = producer.createObjectMessage(event);
-							producer.send(message);
+							producer.sendObjectMessage(event);
 						}
 						
 					} catch (InterruptedException e) {
@@ -92,7 +92,7 @@ public class Main {
 		}
 		
 		public void run() {
-			JmsConsumer consumer = new JmsConsumer(queue, false);
+			JmsConsumer consumer = new JmsConsumer(queue, JmsConnectionType.NONTRANSACTED_IN_CLIENT);
 			
 			try {
 				logger.info("Starting dispatch thread for queue " + queue);
@@ -167,8 +167,8 @@ public class Main {
 		BotPool pool = new BotPool();
 		
 		// outgoing queue is outgoing from jboss, incoming goes to jboss
-		Thread queueWatcher = watchQueue(BotTask.QUEUE, pool);
-		Thread eventWatcher = watchEvents(BotEvent.QUEUE, pool);
+		Thread queueWatcher = watchQueue(BotTask.QUEUE_NAME, pool);
+		Thread eventWatcher = watchEvents(BotEvent.QUEUE_NAME, pool);
 		
 		pool.start();
 		

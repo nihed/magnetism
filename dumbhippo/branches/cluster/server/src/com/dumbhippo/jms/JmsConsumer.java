@@ -2,88 +2,70 @@ package com.dumbhippo.jms;
 
 import javax.jms.JMSException;
 import javax.jms.Message;
-import javax.jms.MessageConsumer;
-import javax.naming.NamingException;
 
+import org.slf4j.Logger;
+
+import com.dumbhippo.GlobalSetup;
 
 /**
+ * This class provides a simple robust way of fetching messages from a JMS
+ * queue or topic; it internally creates Connection and Session objects and
+ * if it gets an exception reading from a Connection will close the connection
+ * and try again to connect, sleeping between connection attempts.
  * 
- * There is no reason to use this inside the app server, just 
- * create a message-driven bean. Outside the app server it lets you 
- * read messages from a JMS queue without fighting all the JMS 
- * boilerplate. Also makes communication failures block/retry instead
- * of throwing an exception.
+ * You would generally use this class inside a thread that reads messages
+ * and processes them. (Possible enhancement: have a generic class that handles
+ * the thread management and calls an interface for received messages.)  
+ * 
+ * Note that messages will be acknowledged before they are returned to you,
+ * so if you fail to process a message it will not be redelivered. (This
+ * has upsides and downsides; you lose the ability to handle intermittant
+ * failure, but you don't get your logs chocked with debug spew if the
+ * error occurs on every delivery.)
+ * 
+ * There is no reason to use this inside the app server, just create a 
+ * message-driven bean.
  * 
  * @author hp
- *
+ * @author otaylor
  */
-public class JmsConsumer extends JmsQueue {
-	
-	public JmsConsumer(String queue, boolean inServer) {
-		super(queue, inServer);
+public class JmsConsumer extends JmsDestination {
+	private static final Logger logger = GlobalSetup.getLogger(JmsProducer.class);
+
+	JmsSession session;
+
+	/**
+	 * Create a JmsConsumer for the specified destination
+	 * 
+	 * @param destinationName name of the queue or topic to receive messages from.
+	 * @param connectionType the type of connection to the server to create. Transactional
+	 *   connections are disallowed since they don't really make sense in our mode
+	 *   of operation where we keep a single session open for the life of the
+	 *   thread (which is likely the life of the server process.)
+	 */
+	public JmsConsumer(String destinationName, JmsConnectionType connectionType) {
+		super(destinationName, connectionType);
+		if (connectionType.isTransacted())
+			throw new IllegalArgumentException("JmsConsumer can't be used with transactions");
 	}
 	
-	public MessageConsumer getConsumer() {
-		return ((ConsumerInit)open()).getConsumer();
-	}
-	
+	/**
+	 * Fetch a single message from the queue and return it. Blocks until a message
+	 * is received.
+	 * 
+	 * @return the received message
+	 */
 	public Message receive() {
 		while (true) {
 			try {
-				return getConsumer().receive();
+				if (session == null)
+					session = createSession();
+				return session.getConsumer(getDestination()).receive();
 			} catch (JMSException e) {
-				logger.warn("Exception in receive()", e);
-				// There are probably exceptions we shouldn't do this with,
-				// but JMS kindly uses the same exception for everything
-				close();
+				logger.warn("Got exception waiting for JMS message", e);
+				closeOnFailure(); // will close session as a side-effect
+				session = null;
 			}
 		}
-	}
-	
-	public Message receive(long timeout) {
-		try {
-			return getConsumer().receive(timeout);
-		} catch (JMSException e) {
-			logger.warn("Exception in receive()", e);
-			return null;
-		}
-	}
-	
-	private static class ConsumerInit extends Init {
-		private MessageConsumer messageConsumer;
-		
-		ConsumerInit(String queue, boolean inServer) throws JMSException, NamingException {
-			super(queue, inServer);
-		}
-
-		@Override
-		protected void openSub() throws NamingException, JMSException {
-			messageConsumer = getSession().createConsumer(getDestination());
-			
-			// is it OK to do this more than once? of course right now 
-			// we always close consumer and connection at the same time
-			getConnection().start();				
-		}
-		
-		@Override
-		protected void closeSub() throws JMSException {
-			try {
-				if (messageConsumer != null) {
-					messageConsumer.close();
-				}
-			} finally {
-				messageConsumer = null;
-			}
-		}
-
-		public MessageConsumer getConsumer() {
-			return messageConsumer;
-		}
-	}
-
-	@Override
-	protected Init newInit(String queue, boolean inServer) throws JMSException, NamingException {
-		return new ConsumerInit(queue, inServer);
 	}
 }
-

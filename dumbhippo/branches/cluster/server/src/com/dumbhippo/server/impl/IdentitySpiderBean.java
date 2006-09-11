@@ -453,8 +453,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 
 		// After the transaction commits succesfully, update the list of contact
 		// resources for this user
-		LiveState.getInstance().queuePostTransactionUpdate(em,
-				new ContactsChangedEvent(user.getGuid()));
+		LiveState.getInstance().queueUpdate(new ContactsChangedEvent(user.getGuid()));
 
 		return contact;
 	}
@@ -529,8 +528,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 
 		// After the transaction commits succesfully, update the list of contact
 		// resources for this user
-		LiveState.getInstance().queuePostTransactionUpdate(em,
-				new ContactsChangedEvent(user.getGuid()));
+		LiveState.getInstance().queueUpdate(new ContactsChangedEvent(user.getGuid()));
 	}
 
 	public Set<Contact> getRawContacts(Viewpoint viewpoint, User user) {

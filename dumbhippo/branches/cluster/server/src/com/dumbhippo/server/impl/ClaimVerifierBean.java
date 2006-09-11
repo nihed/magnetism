@@ -4,7 +4,6 @@ import java.util.concurrent.Callable;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
-import javax.jms.ObjectMessage;
 import javax.mail.internet.MimeMessage;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
@@ -16,15 +15,14 @@ import org.slf4j.Logger;
 import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.XmlBuilder;
-import com.dumbhippo.botcom.BotTask;
 import com.dumbhippo.botcom.BotTaskMessage;
-import com.dumbhippo.jms.JmsProducer;
 import com.dumbhippo.persistence.AimResource;
 import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.ResourceClaimToken;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.ValidationException;
+import com.dumbhippo.server.AimQueueSender;
 import com.dumbhippo.server.ClaimVerifier;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HippoProperty;
@@ -60,6 +58,9 @@ public class ClaimVerifierBean implements ClaimVerifier {
 	
 	@EJB
 	private Mailer mailer;
+	
+	@EJB
+	private AimQueueSender aimQueueSender;
 	
 	private ResourceClaimToken getToken(final User user, final Resource resource) {	
 		if (user == null && resource == null)
@@ -148,13 +149,7 @@ public class ClaimVerifierBean implements ClaimVerifier {
 			bodyHtml.appendTextNode("p", "NOTE: anyone with access to this AIM account will be able to log in to your Mugshot account.");
 			
 			BotTaskMessage message = new BotTaskMessage(null, resource.getScreenName(), bodyHtml.toString());
-			JmsProducer producer = new JmsProducer(BotTask.QUEUE, true);
-			try {
-				ObjectMessage jmsMessage = producer.createObjectMessage(message);
-				producer.send(jmsMessage);
-			} finally {
-				producer.close();
-			}
+			aimQueueSender.sendMessage(message);
 		}
 	}
 	

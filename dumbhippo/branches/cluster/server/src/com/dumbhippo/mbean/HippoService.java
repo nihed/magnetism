@@ -42,7 +42,7 @@ public class HippoService extends ServiceMBeanSupport implements HippoServiceMBe
 			FeedUpdaterBean.startup();
 		
 		/* We need to register this context's class loader in order for the JBoss TreeCache
-		 * to be able to deserialize enumeration values recieved from other nodes.  
+		 * to be able to deserialize enumeration values r ecieved from other nodes.  
 		 * 
 		 * See: http://jboss.org/index.html?module=bb&op=viewtopic&p=3968318
 		 */

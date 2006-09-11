@@ -10,16 +10,11 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-import javax.naming.InitialContext;
-import javax.persistence.EntityManager;
-import javax.transaction.Status;
-import javax.transaction.Synchronization;
-import javax.transaction.TransactionManager;
-
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.identity20.Guid;
+import com.dumbhippo.jms.JmsConnectionType;
 import com.dumbhippo.jms.JmsProducer;
 import com.dumbhippo.persistence.Account;
 import com.dumbhippo.server.AccountSystem;
@@ -307,41 +302,14 @@ public class LiveState {
 	 * the live state objects and also possibly in notifications sent
 	 * to present users via XMPPP.
 	 * 
+	 * The event is queued as part of the current transaction, and will be
+	 * sent out upon commit or discarded if the current transaction is
+	 * rolled back.
+	 * 
 	 * @param event the event
 	 */
 	public void queueUpdate(LiveEvent event) {
-		synchronized(updateQueue) {
-			updateQueue.send(updateQueue.createObjectMessage(event));
-		}
-	}
-	
-	private class LiveStateTransactionSynchronization implements Synchronization {
-		private LiveEvent event;
-		
-		public LiveStateTransactionSynchronization(LiveEvent event) {
-			this.event = event;
-		}
-		
-		public void beforeCompletion() {
-		}
-
-		public void afterCompletion(int status) {
-			if (status == Status.STATUS_COMMITTED) {
-				logger.debug("running post-transaction event " + event);
-				LiveState.getInstance().queueUpdate(event);
-			}
-		}
-	}
-	
-	public void queuePostTransactionUpdate(EntityManager em, LiveEvent event) {
-		Synchronization hook = new LiveStateTransactionSynchronization(event);
-		TransactionManager tm;
-		try {		
-			tm = (TransactionManager) (new InitialContext()).lookup("java:/TransactionManager");
-			tm.getTransaction().registerSynchronization(hook);
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
+		updateQueue.sendObjectMessage(event);
 	}
 	
 	/**
@@ -436,7 +404,7 @@ public class LiveState {
 				},
 				MAX_GROUP_CACHE_AGE);
 		
-		updateQueue = new JmsProducer(LiveEvent.QUEUE, true);
+		updateQueue = new JmsProducer(LiveEvent.TOPIC_NAME, JmsConnectionType.TRANSACTED_IN_SERVER);
 		
 		cleaner = new Cleaner();
 		cleaner.start();

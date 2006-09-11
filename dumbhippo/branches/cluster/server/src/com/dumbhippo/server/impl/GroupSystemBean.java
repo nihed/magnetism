@@ -323,7 +323,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		
 		stacker.stackGroupMember(groupMember, System.currentTimeMillis());
 		
-        LiveState.getInstance().queuePostTransactionUpdate(em, new GroupEvent(group.getGuid(), groupMember.getMember().getGuid(),
+        LiveState.getInstance().queueUpdate(new GroupEvent(group.getGuid(), groupMember.getMember().getGuid(),
         		GroupEvent.Type.MEMBERSHIP_CHANGE));
 	}
 	
@@ -352,7 +352,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 				groupMember.setStatus(MembershipStatus.REMOVED);
 				
 				stacker.stackGroupMember(groupMember, System.currentTimeMillis());
-		        LiveState.getInstance().queuePostTransactionUpdate(em, new GroupEvent(group.getGuid(),
+		        LiveState.getInstance().queueUpdate(new GroupEvent(group.getGuid(),
 		        		groupMember.getMember().getGuid(), GroupEvent.Type.MEMBERSHIP_CHANGE));
 			} else if (groupMember.getStatus().ordinal() < MembershipStatus.REMOVED.ordinal()) {
 				// To go from FOLLOWER or INVITED_TO_FOLLOW to removed, we delete the GroupMember
@@ -361,7 +361,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 				
 				// we don't stackGroupMember here, we only care about transitions to REMOVED for timestamp 
 				// updating (right now anyway)
-				LiveState.getInstance().queuePostTransactionUpdate(em, new GroupEvent(group.getGuid(),
+				LiveState.getInstance().queueUpdate(new GroupEvent(group.getGuid(),
 						groupMember.getMember().getGuid(), GroupEvent.Type.MEMBERSHIP_CHANGE));
 			} else {
 				// status == REMOVED, nothing to do

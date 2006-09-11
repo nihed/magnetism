@@ -5,7 +5,7 @@ import java.io.Serializable;
 public abstract class BotTask implements Serializable {
 
 	private String botName;
-	static public final String QUEUE = "OutgoingAimQueue";
+	static public final String QUEUE_NAME = "queue/OutgoingAimQueue";
 
 	public BotTask(String botName) {
 		this.botName = botName;

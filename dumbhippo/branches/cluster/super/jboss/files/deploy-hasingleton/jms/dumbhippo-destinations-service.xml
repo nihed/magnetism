@@ -2,13 +2,12 @@
 
 <server>
    <!-- ==================================================================== -->
-   <!-- JMS Queues 															 -->
+   <!-- JMS Queues and Topics                                                -->
    <!-- ==================================================================== -->
 
 	<!-- Incoming queue for adding an AIM address to an account for example -->
 	<mbean code="org.jboss.mq.server.jmx.Queue"
 		name="jboss.mq.destination:service=Queue,name=IncomingAimQueue">
-		<!--  we need to start DestinationManager first before creating a queue -->
 		<depends optional-attribute-name="DestinationManager">
 			jboss.mq:service=DestinationManager
 		</depends>
@@ -17,43 +16,14 @@
 	<!-- Outgoing queue for IM'ing someone something -->
 	<mbean code="org.jboss.mq.server.jmx.Queue"
 		name="jboss.mq.destination:service=Queue,name=OutgoingAimQueue">
-		<!--  we need to start DestinationManager first before creating a queue -->
 		<depends optional-attribute-name="DestinationManager">
 			jboss.mq:service=DestinationManager
 		</depends>
 	</mbean>
 
-	<!-- Incoming queue for XMPP server -->
-	<mbean code="org.jboss.mq.server.jmx.Queue"
-		name="jboss.mq.destination:service=Queue,name=IncomingXMPPQueue">
-		<!--  we need to start DestinationManager first before creating a queue -->
-		<depends optional-attribute-name="DestinationManager">
-			jboss.mq:service=DestinationManager
-		</depends>
-	</mbean>
-
-	<!-- Outgoing queue for XMPP server -->
-	<mbean code="org.jboss.mq.server.jmx.Queue"
-		name="jboss.mq.destination:service=Queue,name=OutgoingXMPPQueue">
-		<!--  we need to start DestinationManager first before creating a queue -->
-		<depends optional-attribute-name="DestinationManager">
-			jboss.mq:service=DestinationManager
-		</depends>
-	</mbean>
-
-        <!-- Queue for asynchronous updates to cached state -->
-	<mbean code="org.jboss.mq.server.jmx.Queue"
-		name="jboss.mq.destination:service=Queue,name=LiveUpdateQueue">
-		<!--  we need to start DestinationManager first before creating a queue -->
-		<depends optional-attribute-name="DestinationManager">
-			jboss.mq:service=DestinationManager
-		</depends>
-	</mbean>
-	
-	<!-- Queue for live state reflected to XMPP -->
-	<mbean code="org.jboss.mq.server.jmx.Queue"
-		name="jboss.mq.destination:service=Queue,name=LiveUpdateXmppQueue">
-		<!--  we need to start DestinationManager first before creating a queue -->
+        <!-- Topic for asynchronous updates to cached state -->
+	<mbean code="org.jboss.mq.server.jmx.Topic"
+		name="jboss.mq.destination:service=Topic,name=LiveUpdateTopic">
 		<depends optional-attribute-name="DestinationManager">
 			jboss.mq:service=DestinationManager
 		</depends>
