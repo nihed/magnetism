@@ -33,6 +33,11 @@ static void hippo_canvas_block_get_property (GObject      *object,
 static void     hippo_canvas_block_paint              (HippoCanvasItem *item,
                                                        cairo_t         *cr);
 
+/* our own methods */
+
+static void hippo_canvas_block_set_block_impl (HippoCanvasBlock *canvas_block,
+                                               HippoBlock       *block);
+
 enum {
     NO_SIGNALS_YET,
     LAST_SIGNAL
@@ -72,11 +77,11 @@ hippo_canvas_block_init(HippoCanvasBlock *block)
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(block),
                             HIPPO_CANVAS_ITEM(box), 0);
 
-    item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
-                        "text", "Web Swarm",
-                        "xalign", HIPPO_ALIGNMENT_START,
-                        NULL);
-    hippo_canvas_box_append(box, item, 0);
+    block->heading_text_item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
+                                            "text", NULL,
+                                            "xalign", HIPPO_ALIGNMENT_START,
+                                            NULL);
+    hippo_canvas_box_append(box, block->heading_text_item, 0);
 
     item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
                         "text", "[\\/]",
@@ -117,14 +122,14 @@ hippo_canvas_block_init(HippoCanvasBlock *block)
     /* Fill in left column */
     
     
-    item = g_object_new(HIPPO_TYPE_CANVAS_LINK,
-                        "size-mode", HIPPO_CANVAS_SIZE_ELLIPSIZE_END,
-                        "xalign", HIPPO_ALIGNMENT_START,
-                        "yalign", HIPPO_ALIGNMENT_START,
-                        "font", "Bold",
-                        "text", "Recycling medical devices raises concerns",
-                        NULL);
-    hippo_canvas_box_append(left_column, item, 0);
+    block->title_link_item = g_object_new(HIPPO_TYPE_CANVAS_LINK,
+                                          "size-mode", HIPPO_CANVAS_SIZE_ELLIPSIZE_END,
+                                          "xalign", HIPPO_ALIGNMENT_START,
+                                          "yalign", HIPPO_ALIGNMENT_START,
+                                          "font", "Bold",
+                                          "text", NULL,
+                                          NULL);
+    hippo_canvas_box_append(left_column, block->title_link_item, 0);
     
     item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
                         "size-mode", HIPPO_CANVAS_SIZE_WRAP_WORD,
@@ -179,11 +184,11 @@ hippo_canvas_block_init(HippoCanvasBlock *block)
     hippo_canvas_box_append(right_column, HIPPO_CANVAS_ITEM(box), 0);
 
 
-    item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
-                        "font-scale", PANGO_SCALE_SMALL,
-                        "text", "56 views",
-                        NULL);
-    hippo_canvas_box_append(box, item, HIPPO_PACK_END);
+    block->clicked_count_item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
+                                             "font-scale", PANGO_SCALE_SMALL,
+                                             "text", NULL,
+                                             NULL);
+    hippo_canvas_box_append(box, block->clicked_count_item, HIPPO_PACK_END);
 
     item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
                         "font-scale", PANGO_SCALE_SMALL,
@@ -219,6 +224,8 @@ hippo_canvas_block_class_init(HippoCanvasBlockClass *klass)
     object_class->dispose = hippo_canvas_block_dispose;
     object_class->finalize = hippo_canvas_block_finalize;
 
+    klass->set_block = hippo_canvas_block_set_block_impl;
+    
     g_object_class_install_property(object_class,
                                     PROP_BLOCK,
                                     g_param_spec_object("block",
@@ -229,87 +236,11 @@ hippo_canvas_block_class_init(HippoCanvasBlockClass *klass)
 }
 
 static void
-on_block_timestamp_changed(HippoBlock *block,
-                           GParamSpec *arg, /* null when we invoke callback manually */
-                           void       *data)
-{
-    HippoCanvasBlock *canvas_block = HIPPO_CANVAS_BLOCK(data);
-    GTimeVal tv;
-    GTime update_time;
-    GTime server_time;
-    GTime offset_time;
-    GTime now;
-    GTime then;
-    char *when;
-
-    if (block == NULL) /* should be impossible */
-        return;
-    
-    g_get_current_time(&tv);
-
-    update_time = hippo_block_get_update_time(block);
-    server_time = (int) (hippo_block_get_server_timestamp(block) / 1000);
-    offset_time = server_time - update_time;
-    now = tv.tv_sec + offset_time;
-    then = ((int) (hippo_block_get_timestamp(block) / 1000)) + offset_time;
-    
-    when = hippo_format_time_ago(now, then);
-
-#if 0
-    g_debug("Formatted offset %d now %d then %d delta %d seconds %d hours to '%s'",
-            offset_time, now, then, now - then, (now - then) / (60*60),
-            when);
-#endif
-    
-    g_object_set(G_OBJECT(canvas_block->age_item),
-                 "text", when,
-                 NULL);
-
-    g_free(when);
-
-    /* FIXME update all the other info */
-}
-
-static void
-set_block(HippoCanvasBlock *canvas_block,
-          HippoBlock       *new_block)
-{
-    if (new_block != canvas_block->block) {
-        if (new_block) {
-            if (canvas_block->required_type != HIPPO_BLOCK_TYPE_UNKNOWN &&
-                hippo_block_get_block_type(new_block) != canvas_block->required_type) {
-                g_warning("Trying to set block type %d on canvas block type %s",
-                          hippo_block_get_block_type(new_block),
-                          g_type_name_from_instance((GTypeInstance*)canvas_block));
-                return;
-            }
-            
-            g_object_ref(new_block);
-            g_signal_connect(G_OBJECT(new_block), "notify::timestamp",
-                             G_CALLBACK(on_block_timestamp_changed),
-                             canvas_block);
-        }
-        if (canvas_block->block) {
-            g_signal_handlers_disconnect_by_func(G_OBJECT(canvas_block->block),
-                                                 G_CALLBACK(on_block_timestamp_changed),
-                                                 canvas_block);
-            g_object_unref(canvas_block->block);
-        }
-        canvas_block->block = new_block;
-
-        on_block_timestamp_changed(new_block, NULL, canvas_block);
-        
-        g_object_notify(G_OBJECT(canvas_block), "block");
-        hippo_canvas_item_emit_request_changed(HIPPO_CANVAS_ITEM(canvas_block));
-    }
-}
-
-static void
 hippo_canvas_block_dispose(GObject *object)
 {
     HippoCanvasBlock *block = HIPPO_CANVAS_BLOCK(object);
 
-    set_block(block, NULL);
+    hippo_canvas_block_set_block(block, NULL);
 
     block->age_item = NULL;
     
@@ -360,7 +291,7 @@ hippo_canvas_block_set_property(GObject         *object,
     case PROP_BLOCK:
         {
             HippoBlock *new_block = (HippoBlock*) g_value_get_object(value);
-            set_block(block, new_block);
+            hippo_canvas_block_set_block(block, new_block);
         }
         break;
     default:
@@ -381,7 +312,7 @@ hippo_canvas_block_get_property(GObject         *object,
 
     switch (prop_id) {
     case PROP_BLOCK:
-        g_value_set_object(value, G_OBJECT(block->block));
+        g_value_set_object(value, (GObject*) block->block);
         break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
@@ -399,9 +330,140 @@ hippo_canvas_block_paint(HippoCanvasItem *item,
     item_parent_class->paint(item, cr);
 }
 
+
+static void
+on_block_clicked_count_changed(HippoBlock *block,
+                               GParamSpec *arg, /* null when we invoke callback manually */
+                               void       *data)
+{
+    HippoCanvasBlock *canvas_block = HIPPO_CANVAS_BLOCK(data);
+    char *s;
+
+    s = g_strdup_printf(_("%d views"), hippo_block_get_clicked_count(block));
+    
+    g_object_set(G_OBJECT(canvas_block->clicked_count_item),
+                 "text", s,
+                 NULL);
+    g_free(s);
+}
+
+static void
+on_block_timestamp_changed(HippoBlock *block,
+                           GParamSpec *arg, /* null when we invoke callback manually */
+                           void       *data)
+{
+    HippoCanvasBlock *canvas_block = HIPPO_CANVAS_BLOCK(data);
+    GTimeVal tv;
+    GTime update_time;
+    GTime server_time;
+    GTime offset_time;
+    GTime now;
+    GTime then;
+    char *when;
+
+    if (block == NULL) /* should be impossible */
+        return;
+    
+    g_get_current_time(&tv);
+
+    update_time = hippo_block_get_update_time(block);
+    server_time = (int) (hippo_block_get_server_timestamp(block) / 1000);
+    offset_time = server_time - update_time;
+    now = tv.tv_sec + offset_time;
+    then = ((int) (hippo_block_get_timestamp(block) / 1000)) + offset_time;
+    
+    when = hippo_format_time_ago(now, then);
+
+#if 0
+    g_debug("Formatted offset %d now %d then %d delta %d seconds %d hours to '%s'",
+            offset_time, now, then, now - then, (now - then) / (60*60),
+            when);
+#endif
+    
+    g_object_set(G_OBJECT(canvas_block->age_item),
+                 "text", when,
+                 NULL);
+
+    g_free(when);
+
+    /* FIXME update all the other info */
+}
+
+static void
+hippo_canvas_block_set_block_impl(HippoCanvasBlock *canvas_block,
+                                  HippoBlock       *new_block)
+{
+#if 0
+    g_debug("setting block on canvas block to %s",
+            new_block ? hippo_block_get_guid(new_block) : "null");
+#endif
+    
+    if (new_block != canvas_block->block) {
+        if (new_block) {
+            if (canvas_block->required_type != HIPPO_BLOCK_TYPE_UNKNOWN &&
+                hippo_block_get_block_type(new_block) != canvas_block->required_type) {
+                g_warning("Trying to set block type %d on canvas block type %s",
+                          hippo_block_get_block_type(new_block),
+                          g_type_name_from_instance((GTypeInstance*)canvas_block));
+                return;
+            }
+            
+            g_object_ref(new_block);
+            g_signal_connect(G_OBJECT(new_block), "notify::timestamp",
+                             G_CALLBACK(on_block_timestamp_changed),
+                             canvas_block);
+            g_signal_connect(G_OBJECT(new_block), "notify::clicked-count",
+                             G_CALLBACK(on_block_clicked_count_changed),
+                             canvas_block);            
+        }
+        if (canvas_block->block) {
+            g_signal_handlers_disconnect_by_func(G_OBJECT(canvas_block->block),
+                                                 G_CALLBACK(on_block_timestamp_changed),
+                                                 canvas_block);
+            g_signal_handlers_disconnect_by_func(G_OBJECT(canvas_block->block),
+                                                 G_CALLBACK(on_block_clicked_count_changed),
+                                                 canvas_block);
+            g_object_unref(canvas_block->block);
+        }
+        canvas_block->block = new_block;
+
+        on_block_timestamp_changed(new_block, NULL, canvas_block);
+        on_block_clicked_count_changed(new_block, NULL, canvas_block);
+        
+        g_object_notify(G_OBJECT(canvas_block), "block");
+        hippo_canvas_item_emit_request_changed(HIPPO_CANVAS_ITEM(canvas_block));
+    }
+}
+
 void
 hippo_canvas_block_set_block(HippoCanvasBlock *canvas_block,
                              HippoBlock       *block)
 {
-    g_object_set(G_OBJECT(canvas_block), "block", block, NULL);
+    HippoCanvasBlockClass *klass;
+
+    if (canvas_block->block == block)
+        return;
+    
+    klass = HIPPO_CANVAS_BLOCK_GET_CLASS(canvas_block);
+    
+    (* klass->set_block) (canvas_block, block);
+}
+
+void
+hippo_canvas_block_set_heading (HippoCanvasBlock *canvas_block,
+                                const char       *heading)
+{
+    g_object_set(G_OBJECT(canvas_block->heading_text_item),
+                 "text", heading,
+                 NULL);
+}
+
+void
+hippo_canvas_block_set_title(HippoCanvasBlock *canvas_block,
+                             const char       *text,
+                             const char       *url)
+{
+    g_object_set(G_OBJECT(canvas_block->title_link_item),
+                 "text", text,
+                 NULL);
 }

@@ -83,6 +83,14 @@ static void
 set_post(HippoBlockPost *block_post,
          HippoPost      *post)
 {
+#if 0
+    g_debug("set_post old post %s new post %s",
+            block_post->cached_post ?
+            hippo_post_get_guid(block_post->cached_post) : "null",
+            post ?
+            hippo_post_get_guid(post) : "null");
+#endif
+    
     if (post == block_post->cached_post)
         return;
     
@@ -95,6 +103,8 @@ set_post(HippoBlockPost *block_post,
         g_object_ref(post);
         block_post->cached_post = post;
     }
+
+    g_object_notify(G_OBJECT(block_post), "cached-post");
 }
 
 static void
@@ -156,7 +166,7 @@ hippo_block_post_get_property(GObject         *object,
 
     switch (prop_id) {
     case PROP_CACHED_POST:
-        g_value_set_object(value, G_OBJECT(block_post->cached_post));
+        g_value_set_object(value, (GObject*) block_post->cached_post);
         break;
     case PROP_POST_ID:
         g_value_set_string(value, block_post->post_id);

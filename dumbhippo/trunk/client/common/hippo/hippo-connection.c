@@ -1867,8 +1867,9 @@ hippo_connection_parse_block(HippoConnection *connection,
 
     /* FIXME we need to figure out what to do with the type */
 
-    g_debug("Parsed block %s created = %d timestamp = %" G_GINT64_FORMAT,
-            guid, created_block, timestamp);
+    g_debug("Parsed block %s type %s - %s created = %d timestamp = %" G_GINT64_FORMAT,
+            guid, g_type_name_from_instance((GTypeInstance*) block), type_str,
+            created_block, timestamp);
     
     if (created_block) {
         hippo_data_cache_add_block(connection->cache, block);
@@ -2501,13 +2502,20 @@ hippo_connection_request_posts_impl(HippoConnection *connection,
 
     lm_message_unref(message);
 
-    g_debug("Sent request for recent posts");
+    g_debug("Sent request for recent posts id=%s", post_id ? post_id : "null");
 }
 
 void
 hippo_connection_request_recent_posts(HippoConnection *connection)
 {
     hippo_connection_request_posts_impl(connection, NULL);
+}
+
+void
+hippo_connection_request_post(HippoConnection *connection,
+                              const char      *post_id)
+{
+    hippo_connection_request_posts_impl(connection, post_id);
 }
 
 static void 

@@ -1,6 +1,7 @@
 /* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 #include "hippo-data-cache-internal.h"
 #include "hippo-connection.h"
+#include "hippo-block-post.h"
 #include <string.h>
 
 typedef void (* HippoChatRoomFunc) (HippoChatRoom *room,
@@ -21,7 +22,8 @@ static void      hippo_data_cache_on_connect          (HippoConnection      *con
                                                        void                 *data);
 static void      hippo_data_cache_on_chat_room_loaded (HippoChatRoom        *chat_room,
                                                        void                 *data);
-
+static void      hippo_data_cache_disconnect_block    (HippoDataCache       *cache,
+                                                       HippoBlock           *block);
 
 struct _HippoDataCache {
     GObject          parent;
@@ -31,6 +33,7 @@ struct _HippoDataCache {
     GHashTable      *entities;
     GHashTable      *chats;
     GHashTable      *blocks;
+    GSList          *blocks_without_posts;
     HippoPerson     *cached_self;
     char            *myspace_name;
     GSList          *myspace_contacts;
@@ -66,7 +69,7 @@ enum {
 static int signals[LAST_SIGNAL];
 
 G_DEFINE_TYPE(HippoDataCache, hippo_data_cache, G_TYPE_OBJECT);
-                       
+
 static void
 hippo_data_cache_init(HippoDataCache *cache)
 {
@@ -216,11 +219,21 @@ hippo_data_cache_class_init(HippoDataCacheClass *klass)
 }
 
 static void
-disconnect_chat_room(HippoChatRoom *chat_room,
-                     void          *data)
+disconnect_chat_room_foreach(HippoChatRoom *chat_room,
+                             void          *data)
 {
     HippoDataCache *cache = (HippoDataCache *)data;
     g_signal_handlers_disconnect_by_func(chat_room, (void *)hippo_data_cache_on_chat_room_loaded, cache);
+}
+
+static void
+disconnect_block_foreach(void       *key,
+                         void       *value,
+                         void       *data)
+{
+    HippoBlock *block = HIPPO_BLOCK(value);
+    HippoDataCache *cache = HIPPO_DATA_CACHE(data);
+    hippo_data_cache_disconnect_block(cache, block);
 }
 
 static void
@@ -240,12 +253,13 @@ hippo_data_cache_finalize(GObject *object)
 
     /* FIXME need to emit signals for these things going away here, POST_REMOVED/ENTITY_REMOVED */
 
+    g_hash_table_foreach(cache->blocks, disconnect_block_foreach, cache);
+    g_hash_table_destroy(cache->blocks);
+    
     g_hash_table_destroy(cache->posts);
 
-    hippo_data_cache_foreach_chat_room(cache, TRUE, disconnect_chat_room, cache);
+    hippo_data_cache_foreach_chat_room(cache, TRUE, disconnect_chat_room_foreach, cache);
     g_hash_table_destroy(cache->chats);
-
-    g_hash_table_destroy(cache->blocks);
     
     /* destroy entities after stuff pointing to entities */
     g_hash_table_destroy(cache->entities);
@@ -391,6 +405,49 @@ hippo_data_cache_set_myspace_name(HippoDataCache  *cache,
     }
 }
 
+static void
+check_new_post_needed_by_blocks(HippoDataCache *cache,
+                                HippoPost      *post)
+{
+    const char *post_id;
+    GSList *link;
+
+    post_id = hippo_post_get_guid(post);
+        
+    link = cache->blocks_without_posts;
+    while (link != NULL) {
+        char *block_post_id;
+        HippoBlock *block;
+            
+        block = HIPPO_BLOCK(link->data);
+        link = link->next; /* do now so we can invalidate the link later */
+            
+        block_post_id = NULL;
+        g_object_get(G_OBJECT(block), "post-id", &block_post_id,
+                     NULL);
+
+        if (block_post_id == NULL)
+            g_warning("block with null post id should not be in blocks_without_posts list");
+        else if (strcmp(block_post_id, post_id) == 0) {
+#if 1
+            g_debug("setting cached post %s on block %s",
+                    post_id,
+                    hippo_block_get_guid(HIPPO_BLOCK(block)));
+#endif
+            
+            /* note, invalidates current list node */
+            cache->blocks_without_posts = g_slist_remove(cache->blocks_without_posts,
+                                                         block /* == link->data */);
+            g_object_set(G_OBJECT(block),
+                         "cached-post", post,
+                         NULL);
+        }
+
+        g_free(block_post_id);
+    }
+}
+
+
 void
 hippo_data_cache_add_post(HippoDataCache *cache,
                           HippoPost      *post)
@@ -409,9 +466,13 @@ hippo_data_cache_add_post(HippoDataCache *cache,
         hippo_post_set_chat_room(post, room);
     }
     g_assert(hippo_post_get_chat_room(post) == room);
-
+    
     g_debug("Post %s added, emitting post-added", hippo_post_get_guid(post));
+
+    g_object_ref(post);
     g_signal_emit(cache, signals[POST_ADDED], 0, post);
+    check_new_post_needed_by_blocks(cache, post);
+    g_object_unref(post);
 }
 
 void
@@ -459,7 +520,70 @@ hippo_data_cache_ensure_bare_entity(HippoDataCache *cache,
         g_object_unref(entity);
     }
     return entity;
-}                                    
+}
+
+
+static void
+on_block_post_id_changed(HippoBlock *block,
+                         GParamSpec *arg, /* null on initial block add */
+                         void       *data)
+{
+    HippoDataCache *cache = HIPPO_DATA_CACHE(data);
+    HippoPost *cached_post;
+    char *post_id;
+
+    post_id = NULL;
+    cached_post = NULL;
+    
+    cache->blocks_without_posts = g_slist_remove(cache->blocks_without_posts,
+                                                 block);
+    
+    g_object_get(G_OBJECT(block), "post-id", &post_id, "cached-post", &cached_post,
+                 NULL);
+
+#if 0
+    g_debug("block post-id changed post-id %s cached_post %s",
+            post_id ? post_id : "null",
+            cached_post ? hippo_post_get_guid(cached_post) : "null");
+#endif
+    
+    if (post_id && cached_post &&
+        strcmp(post_id, hippo_post_get_guid(cached_post)) == 0) {
+        /* nothing to do */
+    } else if (post_id == NULL) {
+        g_object_set(G_OBJECT(block), "cached-post", NULL, NULL);
+    } else {
+        cached_post = hippo_data_cache_lookup_post(cache, post_id);
+        if (cached_post != NULL) {
+            g_object_set(G_OBJECT(block), "cached-post", cached_post, NULL);
+        } else {
+            cache->blocks_without_posts = g_slist_prepend(cache->blocks_without_posts,
+                                                          block);
+            /* FIXME we may want to avoid multiple outstanding requests for the
+             * same post, but just an optimization to do so
+             */
+            g_debug("Requesting the post %s to go with the block %s",
+                    post_id, hippo_block_get_guid(block));
+            hippo_connection_request_post(cache->connection, post_id);
+        }
+    }
+
+    g_free(post_id);
+}
+
+static void
+hippo_data_cache_disconnect_block(HippoDataCache *cache,
+                                  HippoBlock     *block)
+{
+    if (HIPPO_IS_BLOCK_POST(block)) {
+        /* remove from this list if it's in there (may not be) */
+        cache->blocks_without_posts = g_slist_remove(cache->blocks_without_posts, block);
+        
+        g_signal_handlers_disconnect_by_func(G_OBJECT(block),
+                                             G_CALLBACK(on_block_post_id_changed),
+                                             cache);
+    }
+}
 
 void
 hippo_data_cache_add_block(HippoDataCache *cache,
@@ -468,11 +592,18 @@ hippo_data_cache_add_block(HippoDataCache *cache,
     g_return_if_fail(hippo_data_cache_lookup_block(cache, hippo_block_get_guid(block)) == NULL);
 
     g_object_ref(block);
-    g_hash_table_replace(cache->blocks, g_strdup(hippo_block_get_guid(block)), block);
- 
 
+    g_hash_table_replace(cache->blocks, g_strdup(hippo_block_get_guid(block)), block);
+    
     g_debug("Block %s added, emitting block-added", hippo_block_get_guid(block));
     g_signal_emit(cache, signals[BLOCK_ADDED], 0, block);
+
+    
+    if (HIPPO_IS_BLOCK_POST(block)) {
+        g_signal_connect(G_OBJECT(block), "notify::post-id",
+                         G_CALLBACK(on_block_post_id_changed), cache);
+        on_block_post_id_changed(block, NULL, cache);
+    }
 }
 
 HippoPost*
@@ -891,8 +1022,8 @@ hippo_data_cache_on_connect(HippoConnection      *connection,
         /* FIXME the server seems to send the hotness spontaneously anyway,
          * so this request is pointless?
          */
-        hippo_connection_request_hotness(connection);
-        hippo_connection_request_recent_posts(connection);
+        /* hippo_connection_request_hotness(connection); */
+        /* hippo_connection_request_recent_posts(connection); */
         hippo_connection_request_blocks(connection, 0);
     } else {
         /* Clear stuff, so we get "changed" signals both on disconnect 

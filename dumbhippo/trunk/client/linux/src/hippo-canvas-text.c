@@ -325,6 +325,12 @@ create_layout(HippoCanvasText *text,
         composite = pango_font_description_new();
         
         old = pango_layout_get_font_description(layout);
+        /* if no font desc is set on the layout, the layout uses the one
+         * from the context, so emulate that here.
+         */
+        if (old == NULL)
+            old = pango_context_get_font_description(pango_layout_get_context(layout));
+        
         if (old != NULL)
             pango_font_description_merge(composite, old, TRUE);
         if (text->font_desc != NULL)

@@ -26,11 +26,16 @@ struct _HippoCanvasBlock {
     HippoBlockType required_type;
     HippoBlock *block;
     HippoCanvasItem *age_item;
+    HippoCanvasItem *heading_text_item;
+    HippoCanvasItem *title_link_item;
+    HippoCanvasItem *clicked_count_item;
 };
 
 struct _HippoCanvasBlockClass {
     HippoCanvasBoxClass parent_class;
 
+    void (* set_block) (HippoCanvasBlock *canvas_block,
+                        HippoBlock       *block);
 };
 
 GType        	 hippo_canvas_block_get_type    (void) G_GNUC_CONST;
@@ -39,6 +44,14 @@ HippoCanvasItem* hippo_canvas_block_new         (HippoBlockType type);
 
 void             hippo_canvas_block_set_block   (HippoCanvasBlock *canvas_block,
                                                  HippoBlock       *block);
+
+
+/* Protected methods */
+void hippo_canvas_block_set_heading (HippoCanvasBlock *canvas_block,
+                                     const char       *heading);
+void hippo_canvas_block_set_title   (HippoCanvasBlock *canvas_block,
+                                     const char       *text,
+                                     const char       *url);
 
 G_END_DECLS
 

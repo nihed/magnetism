@@ -5,6 +5,8 @@
 #include "hippo-canvas-block.h"
 #include "hippo-window.h"
 
+#define UI_WIDTH 400
+
 typedef struct {
     int              refcount;
     HippoPlatform   *platform;
@@ -172,9 +174,29 @@ block_sort_newest_first_func(gconstpointer a,
 static void
 update_current_block(StackManager *manager)
 {
-    g_object_set(G_OBJECT(manager->single_block_item),
-                 "block", manager->blocks ? manager->blocks->data : NULL,
-                 NULL);
+    HippoBlock *new_block = manager->blocks ? manager->blocks->data : NULL;
+    
+    if (manager->single_block_item) {
+        HippoBlock *old_block;
+        old_block = NULL;
+        g_object_get(G_OBJECT(manager->single_block_item),
+                     "block", &old_block,
+                     NULL);
+        if (old_block == new_block)
+            return;
+    }
+
+    if (new_block)
+        manager->single_block_item = hippo_canvas_block_new(hippo_block_get_block_type(new_block));
+    else
+        manager->single_block_item = hippo_canvas_block_new(HIPPO_BLOCK_TYPE_UNKNOWN);
+
+    hippo_canvas_block_set_block(HIPPO_CANVAS_BLOCK(manager->single_block_item),
+                                 new_block);
+    
+    g_object_set(manager->single_block_item, "fixed-width", UI_WIDTH, NULL);
+    hippo_window_set_contents(manager->single_block_window,
+                              manager->single_block_item);
 }
 
 static void
@@ -341,20 +363,13 @@ manager_attach(StackManager    *manager,
     manager->base_window = hippo_platform_create_window(platform);
     manager->single_block_window = hippo_platform_create_window(platform);
     manager->stack_window = hippo_platform_create_window(platform);
-
-#define WIDTH 400
     
     manager->base_item = hippo_canvas_base_new();
-    g_object_set(manager->base_item, "fixed-width", WIDTH, NULL);
+    g_object_set(manager->base_item, "fixed-width", UI_WIDTH, NULL);
     hippo_window_set_contents(manager->base_window, manager->base_item);
-
-    manager->single_block_item = hippo_canvas_block_new(HIPPO_BLOCK_TYPE_UNKNOWN);
-    g_object_set(manager->single_block_item, "fixed-width", WIDTH, NULL);    
-    hippo_window_set_contents(manager->single_block_window,
-                              manager->single_block_item);
     
     manager->stack_item = hippo_canvas_stack_new();
-    g_object_set(manager->stack_item, "fixed-width", WIDTH, NULL);
+    g_object_set(manager->stack_item, "fixed-width", UI_WIDTH, NULL);
     hippo_window_set_contents(manager->stack_window, manager->stack_item);
     
     g_signal_connect(manager->cache, "block-added",
