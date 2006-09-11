@@ -29,6 +29,7 @@ struct _HippoCanvasBlock {
     HippoCanvasItem *heading_text_item;
     HippoCanvasItem *title_link_item;
     HippoCanvasItem *clicked_count_item;
+    HippoCanvasItem *content_container_item;
 };
 
 struct _HippoCanvasBlockClass {
@@ -52,6 +53,8 @@ void hippo_canvas_block_set_heading (HippoCanvasBlock *canvas_block,
 void hippo_canvas_block_set_title   (HippoCanvasBlock *canvas_block,
                                      const char       *text,
                                      const char       *url);
+void hippo_canvas_block_set_content (HippoCanvasBlock *canvas_block,
+                                     HippoCanvasItem  *content_item);
 
 G_END_DECLS
 

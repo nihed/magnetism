@@ -130,19 +130,10 @@ hippo_canvas_block_init(HippoCanvasBlock *block)
                                           "text", NULL,
                                           NULL);
     hippo_canvas_box_append(left_column, block->title_link_item, 0);
-    
-    item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
-                        "size-mode", HIPPO_CANVAS_SIZE_WRAP_WORD,
-                        "xalign", HIPPO_ALIGNMENT_START,
-                        "yalign", HIPPO_ALIGNMENT_START,
-                        "font-scale", PANGO_SCALE_SMALL,
-                        "text",
-                        "Federal regulators say reprocessing is safe, but original "
-                        "device manufacturers say they can't guarantee recycled "
-                        "products will work correctly - and that they are wrongly blamed "
-                        "for problems when they break.",
-                        NULL);
-    hippo_canvas_box_append(left_column, item, HIPPO_PACK_EXPAND);
+
+    block->content_container_item = g_object_new(HIPPO_TYPE_CANVAS_BOX,
+                                                 NULL);
+    hippo_canvas_box_append(left_column, block->content_container_item, HIPPO_PACK_EXPAND);
 
     
     /* Fill in right column */
@@ -466,4 +457,20 @@ hippo_canvas_block_set_title(HippoCanvasBlock *canvas_block,
     g_object_set(G_OBJECT(canvas_block->title_link_item),
                  "text", text,
                  NULL);
+}
+
+void
+hippo_canvas_block_set_content(HippoCanvasBlock *canvas_block,
+                               HippoCanvasItem  *content_item)
+{
+    if (content_item)
+        g_object_ref(content_item); /* in case we remove it below */
+    
+    hippo_canvas_box_remove_all(HIPPO_CANVAS_BOX(canvas_block->content_container_item));
+
+    if (content_item) {
+        hippo_canvas_box_append(HIPPO_CANVAS_BOX(canvas_block->content_container_item),
+                                content_item, HIPPO_PACK_EXPAND);
+        g_object_unref(content_item);
+    }
 }

@@ -46,6 +46,7 @@ static void hippo_canvas_block_post_set_post (HippoCanvasBlockPost *canvas_block
 struct _HippoCanvasBlockPost {
     HippoCanvasBlock canvas_block;
     HippoPost *post;
+    HippoCanvasItem *description_item;
 };
 
 struct _HippoCanvasBlockPostClass {
@@ -77,6 +78,15 @@ hippo_canvas_block_post_init(HippoCanvasBlockPost *block_post)
     block->required_type = HIPPO_BLOCK_TYPE_POST;
 
     hippo_canvas_block_set_heading(block, _("Web Swarm"));
+
+    block_post->description_item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
+                                                "size-mode", HIPPO_CANVAS_SIZE_WRAP_WORD,
+                                                "xalign", HIPPO_ALIGNMENT_START,
+                                                "yalign", HIPPO_ALIGNMENT_START,
+                                                "font-scale", PANGO_SCALE_SMALL,
+                                                "text", NULL,
+                                                NULL);
+    hippo_canvas_block_set_content(block, block_post->description_item);
 }
 
 static HippoCanvasItemClass *item_parent_class;
@@ -233,10 +243,16 @@ update_post(HippoCanvasBlockPost *canvas_block_post)
     if (post == NULL) {
         hippo_canvas_block_set_title(HIPPO_CANVAS_BLOCK(canvas_block_post),
                                      NULL, NULL);
+        g_object_set(G_OBJECT(canvas_block_post->description_item),
+                     "text", NULL,
+                     NULL);
     } else {
         hippo_canvas_block_set_title(HIPPO_CANVAS_BLOCK(canvas_block_post),
                                      hippo_post_get_title(post),
                                      NULL);
+        g_object_set(G_OBJECT(canvas_block_post->description_item),
+                     "text", hippo_post_get_description(post),
+                     NULL);
     }
 }
 

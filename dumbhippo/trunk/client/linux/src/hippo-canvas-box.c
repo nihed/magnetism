@@ -61,9 +61,7 @@ static HippoCanvasPointer hippo_canvas_box_get_pointer         (HippoCanvasItem 
                                                                 int                 y);
 
 
-/* Our own methods */
 
-static void hippo_canvas_box_free_children        (HippoCanvasBox *box);
 
 typedef struct {
     HippoCanvasItem *item;
@@ -263,7 +261,7 @@ hippo_canvas_box_dispose(GObject *object)
 {
     HippoCanvasBox *box = HIPPO_CANVAS_BOX(object);
 
-    hippo_canvas_box_free_children(box);
+    hippo_canvas_box_remove_all(box);
 
     G_OBJECT_CLASS(hippo_canvas_box_parent_class)->dispose(object);
 }
@@ -740,6 +738,15 @@ hippo_canvas_box_allocate(HippoCanvasItem *item,
     /* This gets us the box we want to lay out into, with padding already removed */
     align_internal(box, box->allocated_width, box->allocated_height,
                    &x, &y, &width, &height);
+
+#if 0
+    if (box->x_align == HIPPO_ALIGNMENT_START && box->y_align == HIPPO_ALIGNMENT_START) {
+        g_debug("box %p allocated %dx%d  requested %dx%d lay out into %d,%d %dx%d",
+                box, box->allocated_width, box->allocated_height,
+                requested_width, requested_height,
+                x, y, width, height);
+    }
+#endif
     
     if (box->orientation == HIPPO_ORIENTATION_VERTICAL) {
         int top_y;
@@ -1059,8 +1066,8 @@ hippo_canvas_box_remove(HippoCanvasBox  *box,
     hippo_canvas_item_emit_request_changed(HIPPO_CANVAS_ITEM(box));
 }
 
-static void
-hippo_canvas_box_free_children(HippoCanvasBox *box)
+void
+hippo_canvas_box_remove_all(HippoCanvasBox *box)
 {
     while (box->children != NULL) {
         HippoBoxChild *child = box->children->data;
@@ -1082,4 +1089,23 @@ hippo_canvas_box_get_fixed_width (HippoCanvasBox *box)
     g_return_val_if_fail(HIPPO_IS_CANVAS_BOX(box), 0);
 
     return box->fixed_width;
+}
+
+void
+hippo_canvas_box_foreach(HippoCanvasBox  *box,
+                         HippoCanvasForeachChildFunc func,
+                         void            *data)
+{
+    GSList *link;
+    GSList *next;
+
+    link = box->children;
+    while (link != NULL) {
+        HippoBoxChild *child = link->data;
+        next = link->next; /* allow removal of children in the foreach */
+        
+        (* func) (child->item, data);
+
+        link = next;
+    }
 }

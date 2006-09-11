@@ -89,17 +89,8 @@ HippoCanvasItem*
 hippo_canvas_stack_new(void)
 {
     HippoCanvasStack *stack = g_object_new(HIPPO_TYPE_CANVAS_STACK, NULL);
-    HippoCanvasItem *item;
 
     HIPPO_CANVAS_BOX(stack)->background_color_rgba = 0xffffffff;
-
-    item = g_object_new(HIPPO_TYPE_CANVAS_BLOCK,
-                        NULL);
-    hippo_canvas_box_append(HIPPO_CANVAS_BOX(stack), item, 0);
-
-    item = g_object_new(HIPPO_TYPE_CANVAS_BLOCK,
-                        NULL);
-    hippo_canvas_box_append(HIPPO_CANVAS_BOX(stack), item, 0);
     
     return HIPPO_CANVAS_ITEM(stack);
 }
@@ -135,5 +126,77 @@ hippo_canvas_stack_get_property(GObject         *object,
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
         break;
+    }
+}
+
+typedef struct {
+    HippoBlock *block;
+    HippoCanvasItem *found;
+} FindItemData;
+
+static void
+foreach_find_item(HippoCanvasItem *child,
+                  void            *data)
+{
+    FindItemData *fid = data;
+    HippoBlock *child_block = NULL;
+
+    if (fid->found)
+        return;
+    
+    g_object_get(G_OBJECT(child), "block", &child_block, NULL);
+    if (child_block == fid->block) {
+        fid->found = child;
+    }
+}
+
+static HippoCanvasItem*
+find_block_item(HippoCanvasStack *canvas_stack,
+                HippoBlock       *block)
+{
+    FindItemData fid;
+
+    fid.block = block;
+    fid.found = NULL;
+    
+    hippo_canvas_box_foreach(HIPPO_CANVAS_BOX(canvas_stack),
+                             foreach_find_item,
+                             &fid);
+
+    return fid.found;
+}
+
+void
+hippo_canvas_stack_add_block(HippoCanvasStack *canvas_stack,
+                             HippoBlock       *block)
+{
+    HippoCanvasItem *item;
+
+    item = find_block_item(canvas_stack, block);
+
+    if (item != NULL) {
+        g_object_ref(item);
+        hippo_canvas_box_remove(HIPPO_CANVAS_BOX(canvas_stack), item);
+    } else {
+        item = hippo_canvas_block_new(hippo_block_get_block_type(block));
+        g_object_ref(item);
+    }
+
+    g_object_set(G_OBJECT(item), "block", block, NULL);
+    hippo_canvas_box_append(HIPPO_CANVAS_BOX(canvas_stack), item, 0);
+
+    g_object_unref(item);
+}
+
+void
+hippo_canvas_stack_remove_block(HippoCanvasStack *canvas_stack,
+                                HippoBlock       *block)
+{
+    HippoCanvasItem *item;
+
+    item = find_block_item(canvas_stack, block);
+
+    if (item != NULL) {
+        hippo_canvas_box_remove(HIPPO_CANVAS_BOX(canvas_stack), item);
     }
 }

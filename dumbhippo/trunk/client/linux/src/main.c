@@ -1068,7 +1068,7 @@ main(int argc, char **argv)
     }
 #endif
 
-    hippo_stack_manager_set_mode(the_app->cache, HIPPO_STACK_MODE_SINGLE_BLOCK);
+    hippo_stack_manager_set_mode(the_app->cache, HIPPO_STACK_MODE_STACK);
     
     g_main_loop_run(the_app->loop);
 

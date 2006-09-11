@@ -2,9 +2,10 @@
 #ifndef __HIPPO_CANVAS_STACK_H__
 #define __HIPPO_CANVAS_STACK_H__
 
-/* A cairo path canvas item. (will be cross-platform once windows has Cairo support) */
+/* canvas item for a stack of blocks */
 
 #include "hippo-canvas-item.h"
+#include <hippo/hippo-block.h>
 #include <cairo/cairo.h>
 
 G_BEGIN_DECLS
@@ -23,6 +24,11 @@ GType        	 hippo_canvas_stack_get_type               (void) G_GNUC_CONST;
 
 HippoCanvasItem* hippo_canvas_stack_new    (void);
 
+void hippo_canvas_stack_add_block   (HippoCanvasStack *canvas_stack,
+                                     HippoBlock       *block);
+
+void hippo_canvas_stack_remove_block(HippoCanvasStack *canvas_stack,
+                                     HippoBlock       *block);
 
 G_END_DECLS
 

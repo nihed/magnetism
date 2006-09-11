@@ -15,6 +15,9 @@ typedef enum
     HIPPO_PACK_END = 2
 } HippoPackFlags;
 
+typedef void (* HippoCanvasForeachChildFunc) (HippoCanvasItem *child,
+                                              void            *data);  
+
 typedef struct _HippoCanvasBox      HippoCanvasBox;
 typedef struct _HippoCanvasBoxClass HippoCanvasBoxClass;
 
@@ -60,13 +63,15 @@ GType        	 hippo_canvas_box_get_type               (void) G_GNUC_CONST;
 
 HippoCanvasItem* hippo_canvas_box_new    (void);
 
-void            hippo_canvas_box_append (HippoCanvasBox  *box,
-                                         HippoCanvasItem *child,
-                                         HippoPackFlags   flags);
-void            hippo_canvas_box_remove (HippoCanvasBox  *box,
-                                         HippoCanvasItem *child);
-
-
+void hippo_canvas_box_append     (HippoCanvasBox  *box,
+                                  HippoCanvasItem *child,
+                                  HippoPackFlags   flags);
+void hippo_canvas_box_remove     (HippoCanvasBox  *box,
+                                  HippoCanvasItem *child);
+void hippo_canvas_box_remove_all (HippoCanvasBox  *box);
+void hippo_canvas_box_foreach    (HippoCanvasBox  *box,
+                                  HippoCanvasForeachChildFunc func,
+                                  void            *data);
 
 /* Protected accessors for subclasses */
 HippoCanvasContext* hippo_canvas_box_get_context     (HippoCanvasBox *box);
