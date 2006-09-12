@@ -205,17 +205,22 @@ hippo_canvas_item_emit_button_press_event (HippoCanvasItem  *canvas_item,
 gboolean
 hippo_canvas_item_emit_motion_notify_event (HippoCanvasItem  *canvas_item,
                                             int               x,
-                                            int               y)
+                                            int               y,
+                                            HippoMotionDetail detail)
 {
     HippoEvent event;
-
+    gboolean result;
+    
     g_return_val_if_fail(HIPPO_IS_CANVAS_ITEM(canvas_item), FALSE);
 
     event.type = HIPPO_EVENT_MOTION_NOTIFY;
     event.x = x;
-    event.y = y;
+    event.y = y;    
+    event.u.motion.detail = detail;
+    
+    result = hippo_canvas_item_process_event(canvas_item, &event, 0, 0);
 
-    return hippo_canvas_item_process_event(canvas_item, &event, 0, 0);
+    return result;
 }
 
 void

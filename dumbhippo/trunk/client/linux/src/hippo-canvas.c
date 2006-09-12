@@ -316,7 +316,8 @@ hippo_canvas_button_press(GtkWidget         *widget,
 
 static void
 handle_new_mouse_location(HippoCanvas *canvas,
-                          GdkWindow   *event_window)
+                          GdkWindow   *event_window,
+                          HippoMotionDetail detail)
 {
     int x, y;
     HippoCanvasPointer pointer;
@@ -327,7 +328,7 @@ handle_new_mouse_location(HippoCanvas *canvas,
     set_pointer(canvas, pointer);
     
     hippo_canvas_item_emit_motion_notify_event(canvas->root,
-                                               x, y);
+                                               x, y, detail);
 }
 
 static gboolean
@@ -339,7 +340,7 @@ hippo_canvas_enter_notify(GtkWidget         *widget,
     if (canvas->root == NULL)
         return FALSE;
 
-    handle_new_mouse_location(canvas, event->window);
+    handle_new_mouse_location(canvas, event->window, HIPPO_MOTION_DETAIL_ENTER);
     
     return FALSE;
 }
@@ -353,7 +354,7 @@ hippo_canvas_leave_notify(GtkWidget         *widget,
     if (canvas->root == NULL)
         return FALSE;
     
-    handle_new_mouse_location(canvas, event->window);
+    handle_new_mouse_location(canvas, event->window, HIPPO_MOTION_DETAIL_LEAVE);
     
     return FALSE;
 }
@@ -367,7 +368,7 @@ hippo_canvas_motion_notify(GtkWidget         *widget,
     if (canvas->root == NULL)
         return FALSE;
 
-    handle_new_mouse_location(canvas, event->window);
+    handle_new_mouse_location(canvas, event->window, HIPPO_MOTION_DETAIL_WITHIN);
     
     return FALSE;
 }

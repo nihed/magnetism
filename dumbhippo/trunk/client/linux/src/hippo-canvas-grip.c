@@ -27,11 +27,13 @@ static void hippo_canvas_grip_get_property (GObject      *object,
 
 
 /* Canvas item methods */
-static void     hippo_canvas_grip_paint              (HippoCanvasItem *item,
-                                                      cairo_t         *cr);
-static int      hippo_canvas_grip_get_width_request  (HippoCanvasItem *item);
-static int      hippo_canvas_grip_get_height_request (HippoCanvasItem *item,
-                                                      int              for_width);
+static void     hippo_canvas_grip_paint               (HippoCanvasItem *item,
+                                                       cairo_t         *cr);
+static int      hippo_canvas_grip_get_width_request   (HippoCanvasItem *item);
+static int      hippo_canvas_grip_get_height_request  (HippoCanvasItem *item,
+                                                       int              for_width);
+static gboolean hippo_canvas_grip_motion_notify_event (HippoCanvasItem *item,
+                                                       HippoEvent      *event);
 
 struct _HippoCanvasGrip {
     HippoCanvasBox box;
@@ -74,6 +76,7 @@ hippo_canvas_grip_iface_init(HippoCanvasItemClass *item_class)
     item_class->paint = hippo_canvas_grip_paint;
     item_class->get_width_request = hippo_canvas_grip_get_width_request;
     item_class->get_height_request = hippo_canvas_grip_get_height_request;
+    item_class->motion_notify_event = hippo_canvas_grip_motion_notify_event;
 }
 
 static void
@@ -243,4 +246,29 @@ hippo_canvas_grip_get_height_request(HippoCanvasItem *item,
 
     get_grip_request(grip, NULL, &grip_height);
     return MAX(grip_height + box->padding_top + box->padding_bottom, children_height);
+}
+
+static gboolean
+hippo_canvas_grip_motion_notify_event (HippoCanvasItem *item,
+                                       HippoEvent      *event)
+{
+    HippoCanvasGrip *grip = HIPPO_CANVAS_GRIP(item);
+    gboolean result;
+    gboolean prelighted;
+
+    /* chain up so the box item can track child hovering */
+    result = item_parent_class->motion_notify_event(item, event);
+
+    /* but also update our prelight */
+    if (event->u.motion.detail == HIPPO_MOTION_DETAIL_LEAVE)
+        prelighted = FALSE;
+    else
+        prelighted = TRUE;
+
+    if (grip->prelighted != prelighted) {
+        grip->prelighted = prelighted;
+        hippo_canvas_item_emit_paint_needed(item, 0, 0, -1, -1);
+    }
+
+    return result;
 }

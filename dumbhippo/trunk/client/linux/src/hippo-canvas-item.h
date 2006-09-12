@@ -18,12 +18,23 @@ typedef enum {
     HIPPO_EVENT_MOTION_NOTIFY
 } HippoEventType;
 
+typedef enum {
+    HIPPO_MOTION_DETAIL_ENTER,
+    HIPPO_MOTION_DETAIL_LEAVE,
+    HIPPO_MOTION_DETAIL_WITHIN
+} HippoMotionDetail;
+
 typedef struct _HippoEvent HippoEvent;
 
 struct _HippoEvent {
     HippoEventType type;
     int x;
     int y;
+    union {
+        struct {
+            HippoMotionDetail detail;
+        } motion;
+    } u;
 };
 
 /* How an item deals with extra allocation in a single (x or y) dimension */
@@ -110,9 +121,14 @@ void     hippo_canvas_item_get_request             (HippoCanvasItem *canvas_item
 gboolean hippo_canvas_item_emit_button_press_event (HippoCanvasItem *canvas_item,
                                                     int              x,
                                                     int              y);
-gboolean hippo_canvas_item_emit_motion_notify_event (HippoCanvasItem *canvas_item,
-                                                    int              x,
-                                                    int              y);
+gboolean hippo_canvas_item_emit_motion_notify_event (HippoCanvasItem  *canvas_item,
+                                                     int               x,
+                                                     int               y,
+                                                     HippoMotionDetail detail);
+gboolean hippo_canvas_item_emit_hover_event         (HippoCanvasItem  *canvas_item,
+                                                     gboolean          enter,
+                                                     int               x,
+                                                     int               y);
 void     hippo_canvas_item_emit_paint_needed       (HippoCanvasItem *canvas_item,
                                                     int              x,
                                                     int              y,

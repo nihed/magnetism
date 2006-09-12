@@ -74,6 +74,7 @@ typedef struct {
     int              height_request_for_width;
     guint            expand : 1;
     guint            end : 1;
+    guint            hovering : 1;
 } HippoBoxChild;
 
 enum {
@@ -853,19 +854,113 @@ find_child_at_point(HippoCanvasBox *box,
     return NULL;
 }
 
+static HippoBoxChild*
+find_hovering_child(HippoCanvasBox *box)
+{
+    GSList *link;
+    
+    for (link = box->children; link != NULL; link = link->next) {
+        HippoBoxChild *child = link->data;
+        if (child->hovering)
+            return child;
+    }
+
+    return NULL;
+}
+
+/* the odd thing here is that sometimes we have an enter/leave from the parent,
+ * and sometimes we have just a motion from the parent, and in both cases
+ * we may need to send an enter/leave to one of our children
+ */
+static gboolean
+forward_motion_event(HippoCanvasBox *box,
+                     HippoEvent     *event)
+{
+    HippoBoxChild *child;
+    HippoBoxChild *was_hovering;
+    gboolean result;
+    
+    if (event->u.motion.detail == HIPPO_MOTION_DETAIL_ENTER ||
+        event->u.motion.detail == HIPPO_MOTION_DETAIL_WITHIN)
+        child = find_child_at_point(box, event->x, event->y);
+    else
+        child = NULL; /* leave events never have a new hover target */
+    
+    was_hovering = find_hovering_child(box);
+
+    /* If our parent context/item gave us an enter or leave, be sure
+     * we record it
+     */
+    if (child) {
+        child->hovering = TRUE;
+    }
+
+    if (was_hovering && child != was_hovering) {
+        was_hovering->hovering = FALSE;
+    }
+
+    /* need to generate an enter event if we aren't already processing one
+     * and the child is about to get a motion event
+     */
+    if (child && child != was_hovering &&
+        event->u.motion.detail != HIPPO_MOTION_DETAIL_ENTER) {
+        hippo_canvas_item_emit_motion_notify_event(child->item,
+                                                   event->x - child->x,
+                                                   event->y - child->y,
+                                                   HIPPO_MOTION_DETAIL_ENTER);
+    }
+
+    result = FALSE; /* we only overwrite this when forwarding the current event,
+                     * not with synthesized enter/leaves
+                     */
+    
+    /* Remember child is always null for leave event.
+     */
+    if (child) {
+        g_assert(event->u.motion.detail != HIPPO_MOTION_DETAIL_LEAVE);
+        
+        /* forward an enter or motion within event */
+        result = hippo_canvas_item_process_event(child->item,
+                                                 event, child->x, child->y);
+    }
+
+    /* Now be sure the old hover child gets a leave event, if it is not the
+     * current hover child.
+     */
+    if (was_hovering && was_hovering != child) {
+        if (event->u.motion.detail != HIPPO_MOTION_DETAIL_LEAVE)
+            hippo_canvas_item_emit_motion_notify_event(was_hovering->item,
+                                                       event->x - was_hovering->x,
+                                                       event->y - was_hovering->y,
+                                                       HIPPO_MOTION_DETAIL_LEAVE);
+        else
+            result = hippo_canvas_item_process_event(was_hovering->item,
+                                                     event, was_hovering->x, was_hovering->y);
+    }
+
+    return result;
+}
+
+
 static gboolean
 forward_event(HippoCanvasBox *box,
               HippoEvent     *event)
 {
     HippoBoxChild *child;
 
-    child = find_child_at_point(box, event->x, event->y);
-
-    if (child != NULL)
-        return hippo_canvas_item_process_event(HIPPO_CANVAS_ITEM(child->item),
-                                               event, child->x, child->y);
-    else
-        return FALSE;
+    if (event->type == HIPPO_EVENT_MOTION_NOTIFY) {
+        /* Motion events are a bit more complicated than the others */
+        return forward_motion_event(box, event);
+    } else {
+        child = find_child_at_point(box, event->x, event->y);
+        
+        if (child != NULL) {
+            return hippo_canvas_item_process_event(child->item,
+                                                   event, child->x, child->y);
+        } else {
+            return FALSE;
+        }
+    }
 }
 
 static gboolean

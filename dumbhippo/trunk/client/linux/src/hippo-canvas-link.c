@@ -222,7 +222,7 @@ hippo_canvas_link_motion_notify_event(HippoCanvasItem *item,
 {
     /* HippoCanvasLink *link = HIPPO_CANVAS_LINK(item); */
 
-    /* see if a child wants it */
+    /* see if a child wants it, and let box track the hover child */
     if (item_parent_class->motion_notify_event(item, event))
         return TRUE;
     

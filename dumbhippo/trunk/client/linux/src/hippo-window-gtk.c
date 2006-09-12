@@ -126,9 +126,15 @@ hippo_window_gtk_init(HippoWindowGtk *window_gtk)
 
     gtk_widget_show_all(window_gtk->vbox);
 
+    /* not sure there's a sane type hint for our window. it's sort of a dock, but
+     * metacity forces !resizeable on docks, so that doesn't work. bad metacity.
+     */
+    /* gtk_window_set_type_hint(GTK_WINDOW(window_gtk), GDK_WINDOW_TYPE_HINT_DOCK); */
     gtk_window_set_resizable(GTK_WINDOW(window_gtk), FALSE);
     gtk_window_set_decorated(GTK_WINDOW(window_gtk), FALSE);
     gtk_window_stick(GTK_WINDOW(window_gtk));
+    gtk_window_set_skip_taskbar_hint(GTK_WINDOW(window_gtk), TRUE);
+    gtk_window_set_skip_pager_hint(GTK_WINDOW(window_gtk), TRUE);
 }
 
 static void
@@ -275,7 +281,7 @@ hippo_window_gtk_set_scrollbar(HippoWindow      *window,
         geometry.max_height = window_gtk->has_vscrollbar ? G_MAXSHORT : -1;
         gtk_window_set_geometry_hints(GTK_WINDOW (window), NULL,
                                       &geometry,
-                                      GDK_HINT_MIN_SIZE | GDK_HINT_MAX_SIZE);
+                                      GDK_HINT_MIN_SIZE | GDK_HINT_MAX_SIZE);        
     } else {
         gtk_window_set_resizable(GTK_WINDOW(window_gtk), FALSE);
         gtk_window_set_geometry_hints(GTK_WINDOW(window_gtk), NULL, NULL, 0);
