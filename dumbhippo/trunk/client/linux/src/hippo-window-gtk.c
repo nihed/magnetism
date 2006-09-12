@@ -354,8 +354,6 @@ on_grip_button_press(GtkWidget      *widget,
 {
     GtkWidget *toplevel;
     GdkWindowEdge edge;
-
-    g_debug("button press on resize grip");
     
     toplevel = gtk_widget_get_ancestor(widget, GTK_TYPE_WINDOW);
     if (toplevel == NULL)
@@ -378,8 +376,6 @@ on_grip_button_press(GtkWidget      *widget,
         g_warning("Unknown window side");
         return FALSE;
     }
-
-    g_debug("starting resize drag");
     
     gtk_window_begin_resize_drag(GTK_WINDOW(toplevel),
                                  edge,
@@ -388,20 +384,6 @@ on_grip_button_press(GtkWidget      *widget,
                                  event->y_root,
                                  event->time);
     return TRUE;
-}
-
-static gboolean
-on_crossing_event(GtkWidget        *widget,
-                  GdkEventCrossing *event,
-                  void             *data)
-{
-    if (event->type == GDK_ENTER_NOTIFY) {
-        gtk_widget_set_state(widget, GTK_STATE_PRELIGHT);
-    } else if (event->type == GDK_LEAVE_NOTIFY) {
-        gtk_widget_set_state(widget, GTK_STATE_NORMAL);
-    }
-    
-    return FALSE;
 }
 
 static GtkWidget*
@@ -421,16 +403,6 @@ create_resize_grip(HippoSide side)
                      "button-press-event",
                      G_CALLBACK(on_grip_button_press),
                      GINT_TO_POINTER(side));
-
-    g_signal_connect(G_OBJECT(grip),
-                     "enter-notify-event",
-                     G_CALLBACK(on_crossing_event),
-                     NULL);
-
-    g_signal_connect(G_OBJECT(grip),
-                     "leave-notify-event",
-                     G_CALLBACK(on_crossing_event),
-                     NULL);
     
     return grip;
 }
