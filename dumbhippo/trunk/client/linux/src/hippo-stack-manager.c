@@ -14,8 +14,8 @@ typedef struct {
     HippoConnection *connection;
     GSList          *blocks;
     HippoStackMode   mode;
-    HippoWindow     *base_window;
-    HippoCanvasItem *base_item;
+    HippoCanvasItem *stack_base_item;
+    HippoCanvasItem *single_block_base_item;
     HippoWindow     *single_block_window;
     HippoCanvasItem *single_block_item;
     HippoWindow     *stack_window;
@@ -85,7 +85,9 @@ update_for_screen_info (StackManager    *manager,
 {
     HippoRectangle base;
     gboolean is_west;
-    gboolean is_north;   
+    gboolean is_north;
+    HippoSide current_base_side;
+    HippoSide old_base_side;
  
     is_west = ((icon->x + icon->width / 2) < (monitor->x + monitor->width / 2));
     is_north = ((icon->y + icon->height / 2) < (monitor->y + monitor->height / 2));
@@ -109,14 +111,35 @@ update_for_screen_info (StackManager    *manager,
     hippo_window_set_resize_grip(manager->stack_window,
                                  HIPPO_SIDE_BOTTOM,
                                  is_north);
+
+    if (is_north) {
+        current_base_side = HIPPO_SIDE_TOP;
+        old_base_side = HIPPO_SIDE_BOTTOM;
+    } else {
+        current_base_side = HIPPO_SIDE_BOTTOM;
+        old_base_side = HIPPO_SIDE_TOP;
+    }
+
+    hippo_window_set_side_item(manager->stack_window,
+                               old_base_side,
+                               NULL);
+    hippo_window_set_side_item(manager->single_block_window,
+                               old_base_side,
+                               NULL);
     
-    position_alongside(manager->base_window, 3, icon,
+    hippo_window_set_side_item(manager->stack_window,
+                               current_base_side,
+                               manager->stack_base_item);
+    hippo_window_set_side_item(manager->single_block_window,
+                               current_base_side,
+                               manager->single_block_base_item);
+    
+    position_alongside(manager->single_block_window, 3, icon,
                        icon_orientation,
                        is_west, is_north, &base);
-    position_alongside(manager->single_block_window, 0, &base,
-                       HIPPO_ORIENTATION_HORIZONTAL, is_west, is_north, NULL);
-    position_alongside(manager->stack_window, 0, &base,
-                       HIPPO_ORIENTATION_HORIZONTAL, is_west, is_north, NULL);
+    position_alongside(manager->stack_window, 3, icon,
+                       icon_orientation,
+                       is_west, is_north, &base);
 }
 
 static void
@@ -142,19 +165,16 @@ manager_set_mode(StackManager     *manager,
     
     switch (mode) {
     case HIPPO_STACK_MODE_HIDDEN:
-        hippo_window_set_visible(manager->base_window, FALSE);
         hippo_window_set_visible(manager->single_block_window, FALSE);
         hippo_window_set_visible(manager->stack_window, FALSE);
         break;
     case HIPPO_STACK_MODE_SINGLE_BLOCK:
         update_window_positions(manager);
-        hippo_window_set_visible(manager->base_window, TRUE);
         hippo_window_set_visible(manager->single_block_window, TRUE);
         hippo_window_set_visible(manager->stack_window, FALSE);
         break;
     case HIPPO_STACK_MODE_STACK:
         update_window_positions(manager);
-        hippo_window_set_visible(manager->base_window, TRUE);
         hippo_window_set_visible(manager->single_block_window, FALSE);
         hippo_window_set_visible(manager->stack_window, TRUE);
         break;
@@ -303,10 +323,13 @@ manager_disconnect(StackManager *manager)
             remove_block(manager->blocks->data, manager);
         }
         
-        g_object_unref(manager->base_window);
+        g_object_unref(manager->stack_base_item);
+        g_object_unref(manager->single_block_base_item);
+        manager->stack_base_item = NULL;
+        manager->single_block_base_item = NULL;
+        
         g_object_unref(manager->single_block_window);
         g_object_unref(manager->stack_window);
-        manager->base_window = NULL;
         manager->single_block_window = NULL;
         manager->stack_window = NULL;
 
@@ -373,17 +396,23 @@ manager_attach(StackManager    *manager,
                            manager, (GFreeFunc) manager_unref);
 
 
-    manager->base_window = hippo_platform_create_window(platform);
     manager->single_block_window = hippo_platform_create_window(platform);
     manager->stack_window = hippo_platform_create_window(platform);
 
     hippo_window_set_scrollbar(manager->stack_window,
                                HIPPO_ORIENTATION_VERTICAL,
                                TRUE);
-    
-    manager->base_item = hippo_canvas_base_new();
-    g_object_set(manager->base_item, "fixed-width", UI_WIDTH, NULL);
-    hippo_window_set_contents(manager->base_window, manager->base_item);
+
+    /* we have to ref-sink the base items since we pop them in
+     * and out of the container
+     */
+    manager->stack_base_item = hippo_canvas_base_new();
+    g_object_ref(manager->stack_base_item);
+    hippo_canvas_item_sink(manager->stack_base_item);
+
+    manager->single_block_base_item = hippo_canvas_base_new();
+    g_object_ref(manager->single_block_base_item);
+    hippo_canvas_item_sink(manager->single_block_base_item);    
     
     manager->stack_item = hippo_canvas_stack_new();
     g_object_set(manager->stack_item, "fixed-width", UI_WIDTH, NULL);

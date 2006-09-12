@@ -12,6 +12,7 @@
 #include <gtk/gtkhbox.h>
 #include <gtk/gtkvbox.h>
 #include <gtk/gtkdrawingarea.h>
+#include <gtk/gtkcontainer.h>
 #include "hippo-canvas.h"
 #include "hippo-canvas-grip.h"
 
@@ -47,6 +48,9 @@ static void     hippo_window_gtk_set_scrollbar      (HippoWindow     *window,
 static void     hippo_window_gtk_set_resize_grip    (HippoWindow     *window,
                                                      HippoSide        side,
                                                      gboolean         visible);
+static void     hippo_window_gtk_set_side_item      (HippoWindow      *window,
+                                                     HippoSide         side,
+                                                     HippoCanvasItem  *item);
 
 /* internal stuff */
 
@@ -62,6 +66,10 @@ struct _HippoWindowGtk {
     GtkWidget *right_grip;
     GtkWidget *top_grip;
     GtkWidget *bottom_grip;
+    GtkWidget *left_canvas;
+    GtkWidget *right_canvas;
+    GtkWidget *top_canvas;
+    GtkWidget *bottom_canvas;
     HippoCanvasItem *contents;
     guint has_vscrollbar : 1;
     guint has_hscrollbar : 1;
@@ -95,6 +103,7 @@ hippo_window_gtk_iface_init(HippoWindowClass *window_class)
     window_class->get_size = hippo_window_gtk_get_size;
     window_class->set_scrollbar = hippo_window_gtk_set_scrollbar;
     window_class->set_resize_grip = hippo_window_gtk_set_resize_grip;
+    window_class->set_side_item = hippo_window_gtk_set_side_item;
 }
 
 static void
@@ -296,6 +305,51 @@ hippo_window_gtk_set_scrollbar(HippoWindow      *window,
                                    GTK_POLICY_NEVER);
 }
 
+/* this is kind of a lame hack; it would probably be better to just
+ * create all the widgets up front instead of on-demand, instead of
+ * trying to keep everything in the right order when only some of
+ * them might exist.
+ */
+static void
+ensure_more_inside_than(GtkWidget *inside_child,
+                        GtkWidget *outside_child)
+{
+    int outside_position;
+    int inside_position;
+    GtkPackType pack;
+    GtkPackType inside_pack;
+    GtkBox *box;
+    
+    if (outside_child == NULL || inside_child == NULL)
+        return;
+
+    g_return_if_fail(gtk_widget_get_parent(inside_child) == gtk_widget_get_parent(outside_child));
+    
+    box = GTK_BOX(gtk_widget_get_parent(inside_child));
+    
+    gtk_container_child_get(GTK_CONTAINER(box), outside_child,
+                            "position", &outside_position,
+                            "pack-type", &pack,
+                            NULL);
+
+    gtk_container_child_get(GTK_CONTAINER(box), inside_child,
+                            "position", &inside_position,
+                            "pack-type", &inside_pack,
+                            NULL);
+
+    g_return_if_fail(inside_position != outside_position);
+    g_return_if_fail(inside_pack == pack);
+    
+    /* reorder_child wants a position from 0 to (n_children - 1)
+     * and inserts before whatever was at that position such
+     * that the inside_child now has that position.
+     */
+    if (pack == GTK_PACK_START && inside_position < outside_position)
+        gtk_box_reorder_child(box, inside_child, outside_position + 1);
+    else if (pack == GTK_PACK_END && inside_position > outside_position)
+        gtk_box_reorder_child(box, inside_child, outside_position);
+}
+
 static void
 hippo_window_gtk_set_resize_grip(HippoWindow      *window,
                                  HippoSide         side,
@@ -313,6 +367,10 @@ hippo_window_gtk_set_resize_grip(HippoWindow      *window,
             window_gtk->top_grip = create_resize_grip(side);
             gtk_box_pack_start(GTK_BOX(window_gtk->vbox), window_gtk->top_grip,
                                FALSE, FALSE, 0);
+            ensure_more_inside_than(window_gtk->hbox,
+                                    window_gtk->top_canvas);
+            ensure_more_inside_than(window_gtk->top_canvas,
+                                    window_gtk->top_grip);
         }
         if (window_gtk->top_grip)
             g_object_set(GTK_WIDGET(window_gtk->top_grip), "visible", visible, NULL);
@@ -322,6 +380,10 @@ hippo_window_gtk_set_resize_grip(HippoWindow      *window,
             window_gtk->bottom_grip = create_resize_grip(side);
             gtk_box_pack_end(GTK_BOX(window_gtk->vbox), window_gtk->bottom_grip,
                              FALSE, FALSE, 0);
+            ensure_more_inside_than(window_gtk->hbox,
+                                    window_gtk->bottom_canvas);
+            ensure_more_inside_than(window_gtk->bottom_canvas,
+                                    window_gtk->bottom_grip);
         }
         if (window_gtk->bottom_grip)
             g_object_set(GTK_WIDGET(window_gtk->bottom_grip), "visible", visible, NULL);
@@ -331,6 +393,10 @@ hippo_window_gtk_set_resize_grip(HippoWindow      *window,
             window_gtk->left_grip = create_resize_grip(side);
             gtk_box_pack_start(GTK_BOX(window_gtk->hbox), window_gtk->left_grip,
                                FALSE, FALSE, 0);
+            ensure_more_inside_than(window_gtk->left_canvas,
+                                    window_gtk->left_grip);
+            ensure_more_inside_than(window_gtk->scroll,
+                                    window_gtk->left_grip);
         }
         if (window_gtk->left_grip)
             g_object_set(GTK_WIDGET(window_gtk->left_grip), "visible", visible, NULL);
@@ -340,9 +406,88 @@ hippo_window_gtk_set_resize_grip(HippoWindow      *window,
             window_gtk->right_grip = create_resize_grip(side);
             gtk_box_pack_end(GTK_BOX(window_gtk->hbox), window_gtk->right_grip,
                              FALSE, FALSE, 0);
+            ensure_more_inside_than(window_gtk->right_canvas,
+                                    window_gtk->right_grip);
+            ensure_more_inside_than(window_gtk->scroll,
+                                    window_gtk->right_grip);
         }
         if (window_gtk->right_grip)
             g_object_set(GTK_WIDGET(window_gtk->right_grip), "visible", visible, NULL);
+        break;
+    }
+}
+
+static void
+hippo_window_gtk_set_side_item(HippoWindow      *window,
+                               HippoSide         side,
+                               HippoCanvasItem  *item)
+{
+    HippoWindowGtk *window_gtk = HIPPO_WINDOW_GTK(window);
+
+    /* we create the side canvases the first time they are visible,
+     * but never bother destroying them again, just hide
+     */
+    
+    switch (side) {
+    case HIPPO_SIDE_TOP:
+        if (item && window_gtk->top_canvas == NULL) {
+            window_gtk->top_canvas = hippo_canvas_new();
+            gtk_box_pack_start(GTK_BOX(window_gtk->vbox), window_gtk->top_canvas,
+                               FALSE, FALSE, 0);
+            ensure_more_inside_than(window_gtk->hbox,
+                                    window_gtk->top_canvas);
+            ensure_more_inside_than(window_gtk->top_canvas,
+                                    window_gtk->top_grip);
+        }
+        if (window_gtk->top_canvas) {
+            g_object_set(GTK_WIDGET(window_gtk->top_canvas), "visible", item != NULL, NULL);
+            hippo_canvas_set_root(HIPPO_CANVAS(window_gtk->top_canvas), item);
+        }
+        break;
+    case HIPPO_SIDE_BOTTOM:
+        if (item && window_gtk->bottom_canvas == NULL) {
+            window_gtk->bottom_canvas = hippo_canvas_new();
+            gtk_box_pack_end(GTK_BOX(window_gtk->vbox), window_gtk->bottom_canvas,
+                             FALSE, FALSE, 0);
+            ensure_more_inside_than(window_gtk->hbox,
+                                    window_gtk->bottom_canvas);
+            ensure_more_inside_than(window_gtk->bottom_canvas,
+                                    window_gtk->bottom_grip);
+        }
+        if (window_gtk->bottom_canvas) {
+            g_object_set(GTK_WIDGET(window_gtk->bottom_canvas), "visible", item != NULL, NULL);
+            hippo_canvas_set_root(HIPPO_CANVAS(window_gtk->bottom_canvas), item);
+        }
+        break;
+    case HIPPO_SIDE_LEFT:
+        if (item && window_gtk->left_canvas == NULL) {
+            window_gtk->left_canvas = hippo_canvas_new();
+            gtk_box_pack_start(GTK_BOX(window_gtk->hbox), window_gtk->left_canvas,
+                               FALSE, FALSE, 0);
+            ensure_more_inside_than(window_gtk->left_canvas,
+                                    window_gtk->left_grip);
+            ensure_more_inside_than(window_gtk->scroll,
+                                    window_gtk->left_canvas);
+        }
+        if (window_gtk->left_canvas) {
+            g_object_set(GTK_WIDGET(window_gtk->left_canvas), "visible", item != NULL, NULL);
+            hippo_canvas_set_root(HIPPO_CANVAS(window_gtk->left_canvas), item);
+        }
+        break;
+    case HIPPO_SIDE_RIGHT:
+        if (item && window_gtk->right_canvas == NULL) {
+            window_gtk->right_canvas = hippo_canvas_new();
+            gtk_box_pack_end(GTK_BOX(window_gtk->hbox), window_gtk->right_canvas,
+                             FALSE, FALSE, 0);
+            ensure_more_inside_than(window_gtk->right_canvas,
+                                    window_gtk->right_grip);
+            ensure_more_inside_than(window_gtk->scroll,
+                                    window_gtk->right_canvas);
+        }
+        if (window_gtk->right_canvas) {
+            g_object_set(GTK_WIDGET(window_gtk->right_canvas), "visible", item != NULL, NULL);
+            hippo_canvas_set_root(HIPPO_CANVAS(window_gtk->right_canvas), item);
+        }
         break;
     }
 }

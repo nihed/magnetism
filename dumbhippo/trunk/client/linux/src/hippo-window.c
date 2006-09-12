@@ -103,3 +103,13 @@ hippo_window_set_resize_grip(HippoWindow      *window,
 
     return HIPPO_WINDOW_GET_CLASS(window)->set_resize_grip(window, side, visible);
 }
+
+void
+hippo_window_set_side_item(HippoWindow      *window,
+                           HippoSide         side,
+                           HippoCanvasItem  *item)
+{
+    g_return_if_fail(HIPPO_IS_WINDOW(window));
+
+    return HIPPO_WINDOW_GET_CLASS(window)->set_side_item(window, side, item);
+}

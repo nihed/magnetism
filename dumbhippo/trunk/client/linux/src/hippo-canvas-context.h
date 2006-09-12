@@ -5,7 +5,13 @@
 /*
  * Canvas context gives an item a way to communicate with its "parent"
  * but in a more controlled fashion than just giving each item a pointer
- * to the canvas widget and parent item.
+ * to the canvas widget and parent item. Setting a context is sort
+ * of like the GTK concept of "realization" - it does not necessarily
+ * map to the item being in a container, and in fact the root item
+ * has a context but would not have a parent item, for example.
+ * Also an item can be in a container item and not have a context if the
+ * container item does not have a context, for example if the tree of
+ * items is not in a HippoCanvas widget.
  */
 
 #include <hippo/hippo-basics.h>

@@ -35,7 +35,10 @@ struct _HippoWindowClass {
                                gboolean         visible);
     void (* set_resize_grip)  (HippoWindow     *window,
                                HippoSide        side,
-                               gboolean         visible); 
+                               gboolean         visible);
+    void (* set_side_item)    (HippoWindow     *window,
+                               HippoSide        side,
+                               HippoCanvasItem *item);
 };
 
 GType        	 hippo_window_get_type               (void) G_GNUC_CONST;
@@ -57,6 +60,9 @@ void hippo_window_set_scrollbar   (HippoWindow      *window,
 void hippo_window_set_resize_grip (HippoWindow      *window,
                                    HippoSide         side,
                                    gboolean          visible);
+void hippo_window_set_side_item   (HippoWindow      *window,
+                                   HippoSide         side,
+                                   HippoCanvasItem  *item);
  
 
 G_END_DECLS
