@@ -72,6 +72,14 @@ typedef enum
     HIPPO_ORIENTATION_HORIZONTAL
 } HippoOrientation;
 
+typedef enum
+{
+    HIPPO_SIDE_TOP,
+    HIPPO_SIDE_BOTTOM,
+    HIPPO_SIDE_LEFT,
+    HIPPO_SIDE_RIGHT
+} HippoSide;
+
 #define HIPPO_URI_SCHEME     "mugshot"
 #define HIPPO_URI_SCHEME_LEN 7
 

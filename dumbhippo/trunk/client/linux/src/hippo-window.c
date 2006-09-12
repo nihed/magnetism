@@ -83,3 +83,23 @@ hippo_window_get_size(HippoWindow     *window,
 
     return HIPPO_WINDOW_GET_CLASS(window)->get_size(window, width_p, height_p);
 }
+
+void
+hippo_window_set_scrollbar(HippoWindow      *window,
+                           HippoOrientation  orientation,
+                           gboolean          visible)
+{
+    g_return_if_fail(HIPPO_IS_WINDOW(window));
+
+    return HIPPO_WINDOW_GET_CLASS(window)->set_scrollbar(window, orientation, visible);
+}
+
+void
+hippo_window_set_resize_grip(HippoWindow      *window,
+                             HippoSide         side,
+                             gboolean          visible)
+{
+    g_return_if_fail(HIPPO_IS_WINDOW(window));
+
+    return HIPPO_WINDOW_GET_CLASS(window)->set_resize_grip(window, side, visible);
+}

@@ -103,6 +103,13 @@ update_for_screen_info (StackManager    *manager,
         icon->y = monitor->y + monitor->height - icon->height;
     }
 
+    hippo_window_set_resize_grip(manager->stack_window,
+                                 HIPPO_SIDE_TOP,
+                                 !is_north);
+    hippo_window_set_resize_grip(manager->stack_window,
+                                 HIPPO_SIDE_BOTTOM,
+                                 is_north);
+    
     position_alongside(manager->base_window, 3, icon,
                        icon_orientation,
                        is_west, is_north, &base);
@@ -369,6 +376,10 @@ manager_attach(StackManager    *manager,
     manager->base_window = hippo_platform_create_window(platform);
     manager->single_block_window = hippo_platform_create_window(platform);
     manager->stack_window = hippo_platform_create_window(platform);
+
+    hippo_window_set_scrollbar(manager->stack_window,
+                               HIPPO_ORIENTATION_VERTICAL,
+                               TRUE);
     
     manager->base_item = hippo_canvas_base_new();
     g_object_set(manager->base_item, "fixed-width", UI_WIDTH, NULL);

@@ -8,7 +8,12 @@
 #endif
 #include "hippo-window-gtk.h"
 #include <gtk/gtkwindow.h>
+#include <gtk/gtkscrolledwindow.h>
+#include <gtk/gtkhbox.h>
+#include <gtk/gtkvbox.h>
+#include <gtk/gtkdrawingarea.h>
 #include "hippo-canvas.h"
+#include "hippo-canvas-grip.h"
 
 static void      hippo_window_gtk_init                (HippoWindowGtk       *window_gtk);
 static void      hippo_window_gtk_class_init          (HippoWindowGtkClass  *klass);
@@ -36,11 +41,30 @@ static void     hippo_window_gtk_set_position       (HippoWindow     *window,
 static void     hippo_window_gtk_get_size           (HippoWindow     *window,
                                                      int             *width_p,
                                                      int             *height_p);
+static void     hippo_window_gtk_set_scrollbar      (HippoWindow     *window,
+                                                     HippoOrientation orientation,
+                                                     gboolean         visible);
+static void     hippo_window_gtk_set_resize_grip    (HippoWindow     *window,
+                                                     HippoSide        side,
+                                                     gboolean         visible);
+
+/* internal stuff */
+
+static GtkWidget* create_resize_grip                (HippoSide        side);
 
 struct _HippoWindowGtk {
     GtkWindow window;
+    GtkWidget *vbox;
+    GtkWidget *hbox;
+    GtkWidget *scroll;
     GtkWidget *canvas;
+    GtkWidget *left_grip;
+    GtkWidget *right_grip;
+    GtkWidget *top_grip;
+    GtkWidget *bottom_grip;
     HippoCanvasItem *contents;
+    guint has_vscrollbar : 1;
+    guint has_hscrollbar : 1;
 };
 
 struct _HippoWindowGtkClass {
@@ -69,6 +93,8 @@ hippo_window_gtk_iface_init(HippoWindowClass *window_class)
     window_class->set_visible = hippo_window_gtk_set_visible;
     window_class->set_position = hippo_window_gtk_set_position;
     window_class->get_size = hippo_window_gtk_get_size;
+    window_class->set_scrollbar = hippo_window_gtk_set_scrollbar;
+    window_class->set_resize_grip = hippo_window_gtk_set_resize_grip;
 }
 
 static void
@@ -85,12 +111,24 @@ hippo_window_gtk_class_init(HippoWindowGtkClass *klass)
 static void
 hippo_window_gtk_init(HippoWindowGtk *window_gtk)
 {
+    window_gtk->scroll = gtk_scrolled_window_new(NULL, NULL);
+    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(window_gtk->scroll),
+                                   GTK_POLICY_NEVER,
+                                   GTK_POLICY_NEVER);
+    window_gtk->vbox = gtk_vbox_new(FALSE, 0);
+    window_gtk->hbox = gtk_hbox_new(FALSE, 0);
     window_gtk->canvas = hippo_canvas_new();
-    gtk_container_add(GTK_CONTAINER(window_gtk), window_gtk->canvas);
-    gtk_widget_show(window_gtk->canvas);
+
+    gtk_container_add(GTK_CONTAINER(window_gtk), window_gtk->vbox);
+    gtk_container_add(GTK_CONTAINER(window_gtk->vbox), window_gtk->hbox);
+    gtk_container_add(GTK_CONTAINER(window_gtk->hbox), window_gtk->scroll);
+    gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(window_gtk->scroll), window_gtk->canvas);
+
+    gtk_widget_show_all(window_gtk->vbox);
 
     gtk_window_set_resizable(GTK_WINDOW(window_gtk), FALSE);
     gtk_window_set_decorated(GTK_WINDOW(window_gtk), FALSE);
+    gtk_window_stick(GTK_WINDOW(window_gtk));
 }
 
 static void
@@ -203,4 +241,190 @@ hippo_window_gtk_get_size(HippoWindow     *window,
     HippoWindowGtk *window_gtk = HIPPO_WINDOW_GTK(window);
 
     gtk_window_get_size(GTK_WINDOW(window_gtk), width_p, height_p);
+}
+
+static void
+hippo_window_gtk_set_scrollbar(HippoWindow      *window,
+                               HippoOrientation  orientation,
+                               gboolean          visible)
+{
+    HippoWindowGtk *window_gtk = HIPPO_WINDOW_GTK(window);
+    
+    visible = visible != FALSE;
+
+    if (orientation == HIPPO_ORIENTATION_VERTICAL) {
+        if (window_gtk->has_vscrollbar == visible)
+            return;
+        window_gtk->has_vscrollbar = visible;
+    } else {
+        if (window_gtk->has_hscrollbar == visible)
+            return;
+        window_gtk->has_hscrollbar = visible;
+    }
+
+
+    if (window_gtk->has_vscrollbar || window_gtk->has_hscrollbar) {
+        GdkGeometry geometry;
+
+        gtk_window_set_resizable(GTK_WINDOW(window_gtk), TRUE);
+
+        /* -1 = size request */
+        geometry.min_width = -1;
+        geometry.min_height = -1;
+        geometry.max_width = window_gtk->has_hscrollbar ? G_MAXSHORT : -1;
+        geometry.max_height = window_gtk->has_vscrollbar ? G_MAXSHORT : -1;
+        gtk_window_set_geometry_hints(GTK_WINDOW (window), NULL,
+                                      &geometry,
+                                      GDK_HINT_MIN_SIZE | GDK_HINT_MAX_SIZE);
+    } else {
+        gtk_window_set_resizable(GTK_WINDOW(window_gtk), FALSE);
+        gtk_window_set_geometry_hints(GTK_WINDOW(window_gtk), NULL, NULL, 0);
+    }
+    
+    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(window_gtk->scroll),
+                                   window_gtk->has_hscrollbar ?
+                                   GTK_POLICY_AUTOMATIC :
+                                   GTK_POLICY_NEVER,
+                                   window_gtk->has_vscrollbar ?
+                                   GTK_POLICY_AUTOMATIC :
+                                   GTK_POLICY_NEVER);
+}
+
+static void
+hippo_window_gtk_set_resize_grip(HippoWindow      *window,
+                                 HippoSide         side,
+                                 gboolean          visible)
+{
+    HippoWindowGtk *window_gtk = HIPPO_WINDOW_GTK(window);
+
+    /* we create the grips the first time they are visible,
+     * but never bother destroying them again, just hide
+     */
+    
+    switch (side) {
+    case HIPPO_SIDE_TOP:
+        if (visible && window_gtk->top_grip == NULL) {
+            window_gtk->top_grip = create_resize_grip(side);
+            gtk_box_pack_start(GTK_BOX(window_gtk->vbox), window_gtk->top_grip,
+                               FALSE, FALSE, 0);
+        }
+        if (window_gtk->top_grip)
+            g_object_set(GTK_WIDGET(window_gtk->top_grip), "visible", visible, NULL);
+        break;
+    case HIPPO_SIDE_BOTTOM:
+        if (visible && window_gtk->bottom_grip == NULL) {
+            window_gtk->bottom_grip = create_resize_grip(side);
+            gtk_box_pack_end(GTK_BOX(window_gtk->vbox), window_gtk->bottom_grip,
+                             FALSE, FALSE, 0);
+        }
+        if (window_gtk->bottom_grip)
+            g_object_set(GTK_WIDGET(window_gtk->bottom_grip), "visible", visible, NULL);
+        break;
+    case HIPPO_SIDE_LEFT:
+        if (visible && window_gtk->left_grip == NULL) {
+            window_gtk->left_grip = create_resize_grip(side);
+            gtk_box_pack_start(GTK_BOX(window_gtk->hbox), window_gtk->left_grip,
+                               FALSE, FALSE, 0);
+        }
+        if (window_gtk->left_grip)
+            g_object_set(GTK_WIDGET(window_gtk->left_grip), "visible", visible, NULL);
+        break;
+    case HIPPO_SIDE_RIGHT:
+        if (visible && window_gtk->right_grip == NULL) {
+            window_gtk->right_grip = create_resize_grip(side);
+            gtk_box_pack_end(GTK_BOX(window_gtk->hbox), window_gtk->right_grip,
+                             FALSE, FALSE, 0);
+        }
+        if (window_gtk->right_grip)
+            g_object_set(GTK_WIDGET(window_gtk->right_grip), "visible", visible, NULL);
+        break;
+    }
+}
+
+static gboolean
+on_grip_button_press(GtkWidget      *widget,
+                     GdkEventButton *event,
+                     void           *data)
+{
+    GtkWidget *toplevel;
+    GdkWindowEdge edge;
+
+    g_debug("button press on resize grip");
+    
+    toplevel = gtk_widget_get_ancestor(widget, GTK_TYPE_WINDOW);
+    if (toplevel == NULL)
+        return FALSE;
+
+    switch ((HippoSide) GPOINTER_TO_INT(data)) {
+    case HIPPO_SIDE_TOP:
+        edge = GDK_WINDOW_EDGE_NORTH;
+        break;
+    case HIPPO_SIDE_BOTTOM:
+        edge = GDK_WINDOW_EDGE_SOUTH;
+        break;
+    case HIPPO_SIDE_LEFT:
+        edge = GDK_WINDOW_EDGE_WEST;
+        break;
+    case HIPPO_SIDE_RIGHT:
+        edge = GDK_WINDOW_EDGE_EAST;
+        break;
+    default:
+        g_warning("Unknown window side");
+        return FALSE;
+    }
+
+    g_debug("starting resize drag");
+    
+    gtk_window_begin_resize_drag(GTK_WINDOW(toplevel),
+                                 edge,
+                                 event->button,
+                                 event->x_root,
+                                 event->y_root,
+                                 event->time);
+    return TRUE;
+}
+
+static gboolean
+on_crossing_event(GtkWidget        *widget,
+                  GdkEventCrossing *event,
+                  void             *data)
+{
+    if (event->type == GDK_ENTER_NOTIFY) {
+        gtk_widget_set_state(widget, GTK_STATE_PRELIGHT);
+    } else if (event->type == GDK_LEAVE_NOTIFY) {
+        gtk_widget_set_state(widget, GTK_STATE_NORMAL);
+    }
+    
+    return FALSE;
+}
+
+static GtkWidget*
+create_resize_grip(HippoSide side)
+{
+    GtkWidget *grip;
+    HippoCanvasItem *grip_item;
+
+    grip = hippo_canvas_new();
+
+    grip_item = hippo_canvas_grip_new();
+    hippo_canvas_set_root(HIPPO_CANVAS(grip), grip_item);
+    
+    gtk_widget_add_events(grip, GDK_BUTTON_PRESS_MASK | GDK_ENTER_NOTIFY_MASK | GDK_LEAVE_NOTIFY_MASK);
+    
+    g_signal_connect(G_OBJECT(grip),
+                     "button-press-event",
+                     G_CALLBACK(on_grip_button_press),
+                     GINT_TO_POINTER(side));
+
+    g_signal_connect(G_OBJECT(grip),
+                     "enter-notify-event",
+                     G_CALLBACK(on_crossing_event),
+                     NULL);
+
+    g_signal_connect(G_OBJECT(grip),
+                     "leave-notify-event",
+                     G_CALLBACK(on_crossing_event),
+                     NULL);
+    
+    return grip;
 }
