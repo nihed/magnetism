@@ -1362,7 +1362,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		if (feedSource == null) {
 			throw new XmlMethodException(XmlMethodErrorCode.INVALID_URL, "Couldn't find a feed at " + url);
 		}
-		FeedSystem feedSystem = EJBUtil.defaultHALookup(FeedSystem.class);			
+		FeedSystem feedSystem = EJBUtil.defaultLookup(FeedSystem.class);			
 		LinkResource link = identitySpider.getLink(feedSource);
 		Feed feed = feedSystem.getFeed(link);
 		return feed;
@@ -1371,7 +1371,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	public void getFeedDump(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint, String url) throws HumanVisibleException, IOException {
 		try {
 			PrintStream printer = new PrintStream(out);
-			FeedSystem feedSystem = EJBUtil.defaultHALookup(FeedSystem.class);				
+			FeedSystem feedSystem = EJBUtil.defaultLookup(FeedSystem.class);				
 			
 			Feed feed = getFeedFromUserEnteredUrl(url);
 			feedSystem.updateFeed(feed);
@@ -1403,7 +1403,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	}
 
 	public void doFeedPreview(XmlBuilder xml, UserViewpoint viewpoint, String url) throws XmlMethodException {
-		FeedSystem feedSystem = EJBUtil.defaultHALookup(FeedSystem.class);			
+		FeedSystem feedSystem = EJBUtil.defaultLookup(FeedSystem.class);			
 		Feed feed = getFeedFromUserEnteredUrl(url);
 		feedSystem.updateFeed(feed);
 
@@ -1432,7 +1432,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	}
 	
 	public void doAddGroupFeed(XmlBuilder xml, UserViewpoint viewpoint, String groupId, String url) throws XmlMethodException {
-		FeedSystem feedSystem = EJBUtil.defaultHALookup(FeedSystem.class);			
+		FeedSystem feedSystem = EJBUtil.defaultLookup(FeedSystem.class);			
 		Group group = parseGroupId(viewpoint, groupId);
 		Feed feed = getFeedFromUserEnteredUrl(url);
 		
@@ -1440,7 +1440,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	}
 
 	public void doRemoveGroupFeed(XmlBuilder xml, UserViewpoint viewpoint, String groupId, String url) throws XmlMethodException {
-		FeedSystem feedSystem = EJBUtil.defaultHALookup(FeedSystem.class);			
+		FeedSystem feedSystem = EJBUtil.defaultLookup(FeedSystem.class);			
 		Group group = parseGroupId(viewpoint, groupId);
 		Feed feed = getFeedFromUserEnteredUrl(url);
 		

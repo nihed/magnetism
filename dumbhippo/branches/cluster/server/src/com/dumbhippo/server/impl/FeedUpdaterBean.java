@@ -86,7 +86,7 @@ public class FeedUpdaterBean implements FeedUpdater {
 								++count;
 								threadPool.execute(new Runnable() {
 									public void run() {
-										FeedSystem feedSystem = EJBUtil.defaultHALookup(FeedSystem.class);
+										FeedSystem feedSystem = EJBUtil.defaultLookup(FeedSystem.class);
 										try {
 											// updateFeedFetchFeed is marked to not create a transaction if none already,
 											// and we should have none here in theory.
