@@ -19,6 +19,16 @@ hippo_error_quark(void)
     return g_quark_from_static_string("hippo-error-quark");
 }
 
+/* rint doesn't exist on Windows */
+static double 
+hippo_rint(double n)
+{
+    double ci, fl;
+    ci = ceil(n);
+    fl = floor(n);
+    return (((ci-n) >= (n-fl)) ? fl :ci);
+}
+
 /* should be robust against untrusted data, e.g. we 
  * parse urls and config files with it
  */
@@ -1072,7 +1082,7 @@ hippo_format_time_ago(GTime now,
         return g_strdup("1 hr. ago");
 
     if (delta_hours < 24) {
-        return g_strdup_printf("%.0f hrs. ago", rint(delta_hours));
+        return g_strdup_printf("%.0f hrs. ago", hippo_rint(delta_hours));
     }
 
     if (delta_hours < 48) {
@@ -1080,17 +1090,17 @@ hippo_format_time_ago(GTime now,
     }
     
     if (delta_hours < 24*15) {
-        return g_strdup_printf("%.0f days ago", rint(delta_hours / 24));
+        return g_strdup_printf("%.0f days ago", hippo_rint(delta_hours / 24));
     }
 
     delta_weeks = delta_hours / (24.0 * 7.0);
 
     if (delta_weeks < 6) {
-        return g_strdup_printf("%.0f weeks ago", rint(delta_weeks));
+        return g_strdup_printf("%.0f weeks ago", hippo_rint(delta_weeks));
     }
 
     if (delta_weeks < 50) {
-        return g_strdup_printf("%.0f months ago", rint(delta_weeks / 4));
+        return g_strdup_printf("%.0f months ago", hippo_rint(delta_weeks / 4));
     }
 
     delta_years = delta_weeks / 52;
@@ -1098,7 +1108,7 @@ hippo_format_time_ago(GTime now,
     if (delta_years < 1.55)
         return g_strdup_printf("1 year ago");
 
-    return g_strdup_printf("%.0f years ago", rint(delta_years));
+    return g_strdup_printf("%.0f years ago", hippo_rint(delta_years));
 }
 
 static const char*
