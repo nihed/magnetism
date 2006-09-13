@@ -145,8 +145,20 @@ hippo_block_post_set_property(GObject         *object,
         }
         break;
     case PROP_POST_ID:
-        g_free(block_post->post_id);
-        block_post->post_id = g_value_dup_string(value);
+        {
+            char *new_id = g_value_dup_string(value);
+            if (!((new_id == NULL && block_post->post_id == NULL) ||
+                  (new_id && block_post->post_id &&
+                   strcmp(new_id, block_post->post_id) == 0))) {
+                g_free(block_post->post_id);
+                block_post->post_id = new_id;
+
+                /* invalidate cached-post */
+                set_post(block_post, NULL);
+            } else {
+                g_free(new_id);
+            }
+        }
         break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);

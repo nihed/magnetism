@@ -4,6 +4,7 @@
 #include "hippo-cookies-linux.h"
 #include "hippo-window-gtk.h"
 #include "hippo-status-icon.h"
+#include "hippo-http.h"
 #include "main.h"
 
 static void      hippo_platform_impl_init                (HippoPlatformImpl       *impl);
@@ -27,7 +28,10 @@ static const char*  hippo_platform_impl_get_jabber_resource (HippoPlatform     *
 static void         hippo_platform_impl_open_url            (HippoPlatform     *platform,
                                                              HippoBrowserKind   browser,
                                                              const char        *url);
-
+static void         hippo_platform_impl_http_request        (HippoPlatform     *platform,
+                                                             const char        *url,
+                                                             HippoHttpFunc      func,
+                                                             void              *data);
 static char*        hippo_platform_impl_get_message_server  (HippoPlatform     *platform);
 static char*        hippo_platform_impl_get_web_server      (HippoPlatform     *platform);
 static gboolean     hippo_platform_impl_get_signin          (HippoPlatform     *platform);
@@ -64,6 +68,7 @@ hippo_platform_impl_iface_init(HippoPlatformClass *klass)
     klass->delete_login_cookie = hippo_platform_impl_delete_login_cookie;
     klass->get_jabber_resource = hippo_platform_impl_get_jabber_resource;
     klass->open_url = hippo_platform_impl_open_url;
+    klass->http_request = hippo_platform_impl_http_request;
     
     klass->get_message_server = hippo_platform_impl_get_message_server;
     klass->get_web_server = hippo_platform_impl_get_web_server;
@@ -283,6 +288,16 @@ hippo_platform_impl_open_url(HippoPlatform     *platform,
     g_free(command);
     g_free(quoted);
 }
+
+static void
+hippo_platform_impl_http_request(HippoPlatform   *platform,
+                                 const char      *url,
+                                 HippoHttpFunc    func,
+                                 void            *data)
+{
+    hippo_http_get(url, func, data);
+}
+
 
 static const char *
 get_debug_server(void)

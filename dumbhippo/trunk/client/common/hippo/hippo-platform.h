@@ -38,6 +38,11 @@ struct _HippoPlatformClass {
     void      (* open_url)            (HippoPlatform   *platform,
                                        HippoBrowserKind browser,
                                        const char      *url);
+
+    void      (* http_request)        (HippoPlatform   *platform,
+                                       const char      *url,
+                                       HippoHttpFunc    func,
+                                       void            *data);
     
     /* Preferences */
     char*     (* get_message_server)  (HippoPlatform *platform);
@@ -67,6 +72,10 @@ void             hippo_platform_open_url               (HippoPlatform   *platfor
                                                         HippoBrowserKind browser,
                                                         const char      *url);
 
+void             hippo_platform_http_request           (HippoPlatform   *platform,
+                                                        const char      *url,
+                                                        HippoHttpFunc    func,
+                                                        void            *data);
 
 /* Preferences */
 char*            hippo_platform_get_message_server     (HippoPlatform *platform); 

@@ -95,6 +95,20 @@ hippo_platform_open_url(HippoPlatform   *platform,
                                                  url);
 }
 
+void
+hippo_platform_http_request(HippoPlatform   *platform,
+                            const char      *url,
+                            HippoHttpFunc    func,
+                            void            *data)
+{
+    g_return_if_fail(HIPPO_IS_PLATFORM(platform));
+
+    HIPPO_PLATFORM_GET_CLASS(platform)->http_request(platform,
+                                                     url,
+                                                     func,
+                                                     data);
+}
+
 char*
 hippo_platform_get_message_server(HippoPlatform *platform)
 {

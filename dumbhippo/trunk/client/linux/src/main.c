@@ -796,7 +796,7 @@ hippo_app_new(HippoInstanceType  instance_type,
     g_signal_connect(G_OBJECT(app->connection), "connected-changed",
                      G_CALLBACK(on_connected_changed), app);
     
-    app->photo_cache = hippo_image_cache_new();
+    app->photo_cache = hippo_image_cache_new(app->platform);
     
     app->chat_windows = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
 

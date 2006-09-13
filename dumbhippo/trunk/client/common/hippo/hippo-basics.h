@@ -148,6 +148,13 @@ typedef struct {
 
 typedef void (* HippoPrintDebugFunc) (const char *message);
 
+/* if content_type == NULL then we failed to get any content and the string is an error
+ * message. If content_type != NULL then the string is the content.
+ */
+typedef void (* HippoHttpFunc) (const char *content_type,
+                                GString    *content_or_error,
+                                void       *data);
+
 gboolean hippo_parse_server          (const char *server,
                                       char      **host,
                                       int        *port);                 

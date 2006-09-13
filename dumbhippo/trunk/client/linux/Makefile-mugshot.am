@@ -60,6 +60,8 @@ mugshot_SOURCES	=				\
 	src/hippo-idle.h                	\
 	src/hippo-image-cache.c			\
 	src/hippo-image-cache.h			\
+	src/hippo-object-cache.c		\
+	src/hippo-object-cache.h		\
 	src/hippo-person-renderer.c		\
 	src/hippo-person-renderer.h		\
 	src/hippo-platform-impl.c		\

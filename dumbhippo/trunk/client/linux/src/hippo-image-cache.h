@@ -3,6 +3,7 @@
 #define __HIPPO_IMAGE_CACHE_H__
 
 #include <gdk-pixbuf/gdk-pixbuf.h>
+#include "hippo-object-cache.h"
 
 G_BEGIN_DECLS
 
@@ -22,7 +23,7 @@ typedef struct _HippoImageCacheClass HippoImageCacheClass;
 
 GType        	 hippo_image_cache_get_type               (void) G_GNUC_CONST;
 
-HippoImageCache* hippo_image_cache_new                    (void);
+HippoImageCache* hippo_image_cache_new                    (HippoPlatform            *platform);
 
 /* callback is invoked synchronously if there's a cache hit */
 void             hippo_image_cache_load                   (HippoImageCache          *cache,
