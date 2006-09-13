@@ -206,12 +206,10 @@ hippo_canvas_shape_paint(HippoCanvasItem *item,
     item_parent_class->paint(item, cr);
 
     /* Draw the shape */
-    x = 0;
-    y = 0;
     w = shape->width;
     h = shape->height;
 
-    hippo_canvas_box_align(HIPPO_CANVAS_BOX(item), &x, &y, &w, &h);
+    hippo_canvas_box_align(HIPPO_CANVAS_BOX(item), w, h, &x, &y, &w, &h);
     
     if ((shape->color_rgba & 0xff) != 0) {
         hippo_cairo_set_source_rgba32(cr, shape->color_rgba);
@@ -232,7 +230,7 @@ hippo_canvas_shape_get_width_request(HippoCanvasItem *item)
     children_width = item_parent_class->get_width_request(item);
 
     if (hippo_canvas_box_get_fixed_width(HIPPO_CANVAS_BOX(item)) < 0) {
-        return MAX(shape->width + box->padding_left + box->padding_right, children_width);
+        return MAX(shape->width + box->padding_left + box->padding_right + box->border_left + box->border_right, children_width);
     } else {
         return children_width;
     }
@@ -249,7 +247,8 @@ hippo_canvas_shape_get_height_request(HippoCanvasItem *item,
     /* get height of children and the box padding */
     children_height = item_parent_class->get_height_request(item, for_width);
 
-    return MAX(shape->height + box->padding_top + box->padding_bottom, children_height);
+    return MAX(shape->height + box->padding_top + box->padding_bottom + box->border_top + box->border_bottom,
+               children_height);
 }
 
 static gboolean

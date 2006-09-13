@@ -297,8 +297,6 @@ hippo_canvas_image_paint(HippoCanvasItem *item,
     if (image->surface == NULL)
         return;
     
-    x = 0;
-    y = 0;
     if (image->scale_width >= 0)
         w = image->scale_width;
     else
@@ -313,7 +311,7 @@ hippo_canvas_image_paint(HippoCanvasItem *item,
      * a tiled image
      */
     
-    hippo_canvas_box_align(HIPPO_CANVAS_BOX(item), &x, &y, &w, &h);
+    hippo_canvas_box_align(HIPPO_CANVAS_BOX(item), w, h, &x, &y, &w, &h);
 
     cairo_rectangle(cr, x, y, w, h);
     cairo_clip(cr);
@@ -371,7 +369,7 @@ hippo_canvas_image_get_width_request(HippoCanvasItem *item)
             image_width = image->scale_width;
         else
             image_width = image->surface ? cairo_image_surface_get_width(image->surface) : 0;
-        return MAX(image_width + box->padding_left + box->padding_right, children_width);
+        return MAX(image_width + box->padding_left + box->padding_right + box->border_left + box->border_right, children_width);
     } else {
         return children_width;
     }
@@ -394,5 +392,6 @@ hippo_canvas_image_get_height_request(HippoCanvasItem *item,
     else
         image_height = image->surface ? cairo_image_surface_get_height(image->surface) : 0;
     
-    return MAX(image_height + box->padding_top + box->padding_bottom, children_height);
+    return MAX(image_height + box->padding_top + box->padding_bottom +
+               box->border_top + box->border_bottom, children_height);
 }

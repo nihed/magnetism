@@ -671,6 +671,7 @@ void
 hippo_canvas_open_test_window(void)
 {
     GtkWidget *window;
+    GtkWidget *scrolled;
     GtkWidget *canvas;
     HippoCanvasItem *root;
     HippoCanvasItem *shape1;
@@ -684,8 +685,18 @@ hippo_canvas_open_test_window(void)
     gtk_container_set_border_width(GTK_CONTAINER(window), 10);
     canvas = hippo_canvas_new();
     gtk_widget_show(canvas);
-    gtk_container_add(GTK_CONTAINER(window), canvas);
 
+    scrolled = gtk_scrolled_window_new(NULL,NULL);
+    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled),
+                                   GTK_POLICY_AUTOMATIC,
+                                   GTK_POLICY_AUTOMATIC);
+    gtk_container_add(GTK_CONTAINER(window), scrolled);
+    gtk_widget_show(scrolled);
+    
+    gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scrolled),
+                                          canvas);
+
+#if 0
     root = g_object_new(HIPPO_TYPE_CANVAS_STACK,
                         "fixed-width", 400,
                         "spacing", 8,
@@ -765,9 +776,36 @@ hippo_canvas_open_test_window(void)
                         NULL);
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(root), text, HIPPO_PACK_EXPAND);
 #endif
+#endif
+
+    root = g_object_new(HIPPO_TYPE_CANVAS_BOX,
+                        "orientation", HIPPO_ORIENTATION_VERTICAL,
+                        "border", 15,
+                        "border-color", 0xff0000ff,
+                        "padding", 25,
+                        "background-color", 0x00ff00ff,
+                        NULL);
+
+#if 1
+    text = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
+                        "text",
+                        "Click here",
+                        "color", 0xffffffff,
+                        "background-color", 0x0000ffff,
+                        NULL);
+#else
+    text = g_object_new(HIPPO_TYPE_CANVAS_IMAGE,
+                        "image-name", "nophoto",
+                        "background-color", 0x0000ffff,
+                        "xalign", HIPPO_ALIGNMENT_CENTER,
+                        "yalign", HIPPO_ALIGNMENT_CENTER,
+                        NULL);
+#endif
+    hippo_canvas_box_append(HIPPO_CANVAS_BOX(root), text, HIPPO_PACK_EXPAND);
     
     hippo_canvas_set_root(HIPPO_CANVAS(canvas), root);
 
+    gtk_window_set_default_size(GTK_WINDOW(window), 300, 300);
     gtk_widget_show(window);
 }
 

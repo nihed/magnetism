@@ -165,23 +165,16 @@ hippo_canvas_block_init(HippoCanvasBlock *block)
                        "yalign", HIPPO_ALIGNMENT_START,
                        NULL);
     hippo_canvas_box_append(right_column, HIPPO_CANVAS_ITEM(box), 0);
-
-    /* border around headshot */
-    item = g_object_new(HIPPO_TYPE_CANVAS_BOX,
-                        "xalign", HIPPO_ALIGNMENT_END,
-                        "yalign", HIPPO_ALIGNMENT_START,
-                        "background-color", 0x000000ff,
-                        NULL);
-    hippo_canvas_box_append(box, item, HIPPO_PACK_END);                        
     
     block->headshot_item = g_object_new(HIPPO_TYPE_CANVAS_ENTITY_PHOTO,
                                         "scale-width", 15,
                                         "scale-height", 15,
-                                        "xalign", HIPPO_ALIGNMENT_CENTER,
-                                        "yalign", HIPPO_ALIGNMENT_CENTER,
-                                        "padding", 1,
+                                        "xalign", HIPPO_ALIGNMENT_END,
+                                        "yalign", HIPPO_ALIGNMENT_START,
+                                        "border", 1,
+                                        "border-color", 0xffffffff,
                                         NULL);
-    hippo_canvas_box_append(HIPPO_CANVAS_BOX(item), block->headshot_item, 0);
+    hippo_canvas_box_append(box, block->headshot_item, HIPPO_PACK_END);
     
     block->name_item = g_object_new(HIPPO_TYPE_CANVAS_ENTITY_NAME,
                                     "font-scale", PANGO_SCALE_SMALL,

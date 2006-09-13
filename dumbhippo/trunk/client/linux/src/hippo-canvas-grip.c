@@ -195,11 +195,9 @@ hippo_canvas_grip_paint(HippoCanvasItem *item,
 
     /* Draw the grip */
 
-    x = 0;
-    y = 0;
     get_grip_request(grip, &w, &h);
 
-    hippo_canvas_box_align(HIPPO_CANVAS_BOX(item), &x, &y, &w, &h);
+    hippo_canvas_box_align(HIPPO_CANVAS_BOX(item), w, h, &x, &y, &w, &h);
 
     cairo_rectangle(cr, x, y, w, h);
     cairo_clip(cr);
@@ -226,7 +224,7 @@ hippo_canvas_grip_get_width_request(HippoCanvasItem *item)
     if (hippo_canvas_box_get_fixed_width(HIPPO_CANVAS_BOX(item)) < 0) {
         int grip_width;
         get_grip_request(grip, &grip_width, NULL);
-        return MAX(grip_width + box->padding_left + box->padding_right, children_width);
+        return MAX(grip_width + box->padding_left + box->padding_right + box->border_left + box->border_right, children_width);
     } else {
         return children_width;
     }
@@ -245,7 +243,9 @@ hippo_canvas_grip_get_height_request(HippoCanvasItem *item,
     children_height = item_parent_class->get_height_request(item, for_width);
 
     get_grip_request(grip, NULL, &grip_height);
-    return MAX(grip_height + box->padding_top + box->padding_bottom, children_height);
+    return MAX(grip_height + box->padding_top + box->padding_bottom +
+               box->border_top + box->border_bottom,
+               children_height);
 }
 
 static gboolean

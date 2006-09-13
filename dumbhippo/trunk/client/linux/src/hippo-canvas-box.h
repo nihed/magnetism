@@ -38,12 +38,24 @@ struct _HippoCanvasBox {
     int fixed_width; /* -1 if unset, use "natural" */
 
     guint32 background_color_rgba;
-    
+    guint32 border_color_rgba;
+
+    /* padding is empty space around all children with the
+     * background color
+     */
     guint8 padding_top;
     guint8 padding_bottom;
     guint8 padding_left;
     guint8 padding_right;
 
+    /* padding is empty space around the padding, with
+     * the border color
+     */
+    guint8 border_top;
+    guint8 border_bottom;
+    guint8 border_left;
+    guint8 border_right;
+    
     guint8 spacing;
 
     guint floating : 1;
@@ -77,6 +89,8 @@ void hippo_canvas_box_foreach    (HippoCanvasBox  *box,
 HippoCanvasContext* hippo_canvas_box_get_context     (HippoCanvasBox *box);
 int                 hippo_canvas_box_get_fixed_width (HippoCanvasBox *box);
 void                hippo_canvas_box_align           (HippoCanvasBox *box,
+                                                      int             requested_content_width,
+                                                      int             requested_content_height,
                                                       int            *x_p,
                                                       int            *y_p,
                                                       int            *width_p,

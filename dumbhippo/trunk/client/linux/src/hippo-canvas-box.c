@@ -62,7 +62,6 @@ static HippoCanvasPointer hippo_canvas_box_get_pointer         (HippoCanvasItem 
 
 
 
-
 typedef struct {
     HippoCanvasItem *item;
     /* allocated x, y */
@@ -92,10 +91,16 @@ enum {
     PROP_PADDING_LEFT,
     PROP_PADDING_RIGHT,
     PROP_PADDING,
+    PROP_BORDER_TOP,
+    PROP_BORDER_BOTTOM,
+    PROP_BORDER_LEFT,
+    PROP_BORDER_RIGHT,
+    PROP_BORDER,
     PROP_FIXED_WIDTH,
     PROP_XALIGN,
     PROP_YALIGN,
     PROP_BACKGROUND_COLOR,
+    PROP_BORDER_COLOR,
     PROP_SPACING
 };
 
@@ -206,6 +211,54 @@ hippo_canvas_box_class_init(HippoCanvasBoxClass *klass)
                                                      0,
                                                      G_PARAM_WRITABLE));
 
+    
+    g_object_class_install_property(object_class,
+                                    PROP_BORDER_TOP,
+                                    g_param_spec_int("border-top",
+                                                     _("Top Border"),
+                                                     _("Border above the box"),
+                                                     0,
+                                                     255,
+                                                     0,
+                                                     G_PARAM_READABLE | G_PARAM_WRITABLE));
+    g_object_class_install_property(object_class,
+                                    PROP_BORDER_BOTTOM,
+                                    g_param_spec_int("border-bottom",
+                                                     _("Bottom Border"),
+                                                     _("Border below the box"),
+                                                     0,
+                                                     255,
+                                                     0,
+                                                     G_PARAM_READABLE | G_PARAM_WRITABLE));
+    g_object_class_install_property(object_class,
+                                    PROP_BORDER_LEFT,
+                                    g_param_spec_int("border-left",
+                                                     _("Left Border"),
+                                                     _("Border to left of the box"),
+                                                     0,
+                                                     255,
+                                                     0,
+                                                     G_PARAM_READABLE | G_PARAM_WRITABLE));
+    g_object_class_install_property(object_class,
+                                    PROP_BORDER_RIGHT,
+                                    g_param_spec_int("border-right",
+                                                     _("Right Border"),
+                                                     _("Border to right of the box"),
+                                                     0,
+                                                     255,
+                                                     0,
+                                                     G_PARAM_READABLE | G_PARAM_WRITABLE));
+    g_object_class_install_property(object_class,
+                                    PROP_BORDER,
+                                    g_param_spec_int("border",
+                                                     _("Border"),
+                                                     _("Set all four borders at once"),
+                                                     0,
+                                                     255,
+                                                     0,
+                                                     G_PARAM_WRITABLE));
+
+    
     /* FIXME this is mis-named, since it's really a request/minimum width, not
      * a fixed width - i.e. can get wider
      */
@@ -213,7 +266,7 @@ hippo_canvas_box_class_init(HippoCanvasBoxClass *klass)
                                     PROP_FIXED_WIDTH,
                                     g_param_spec_int("fixed-width",
                                                      _("Fixed Width"),
-                                                     _("Width request of the canvas item, or -1 to use natural width"),
+                                                     _("Width request of the canvas item, or -1 to use natural width; includes border and padding"),
                                                      -1,
                                                      G_MAXINT,
                                                      -1,
@@ -246,6 +299,17 @@ hippo_canvas_box_class_init(HippoCanvasBoxClass *klass)
                                                       G_MAXUINT,
                                                       DEFAULT_BACKGROUND,
                                                       G_PARAM_READABLE | G_PARAM_WRITABLE));
+
+    g_object_class_install_property(object_class,
+                                    PROP_BORDER_COLOR,
+                                    g_param_spec_uint("border-color",
+                                                      _("Border Color"),
+                                                      _("32-bit RGBA border color"),
+                                                      0,
+                                                      G_MAXUINT,
+                                                      DEFAULT_BACKGROUND,
+                                                      G_PARAM_READABLE | G_PARAM_WRITABLE));
+    
     g_object_class_install_property(object_class,
                                     PROP_SPACING,
                                     g_param_spec_int("spacing",
@@ -322,6 +386,25 @@ hippo_canvas_box_set_property(GObject         *object,
             box->padding_left = box->padding_right = p;
         }
         break;
+    case PROP_BORDER_TOP:
+        box->border_top = g_value_get_int(value);
+        break;
+    case PROP_BORDER_BOTTOM:
+        box->border_bottom = g_value_get_int(value);
+        break;
+    case PROP_BORDER_LEFT:
+        box->border_left = g_value_get_int(value);
+        break;
+    case PROP_BORDER_RIGHT:
+        box->border_right = g_value_get_int(value);
+        break;
+    case PROP_BORDER:
+        {
+            int p = g_value_get_int(value);
+            box->border_top = box->border_bottom = p;
+            box->border_left = box->border_right = p;
+        }
+        break;        
     case PROP_FIXED_WIDTH:
         box->fixed_width = g_value_get_int(value);
         break;
@@ -333,6 +416,11 @@ hippo_canvas_box_set_property(GObject         *object,
         break;
     case PROP_BACKGROUND_COLOR:
         box->background_color_rgba = g_value_get_uint(value);
+        hippo_canvas_item_emit_paint_needed(HIPPO_CANVAS_ITEM(box), 0, 0, -1, -1);
+        need_resize = FALSE;
+        break;
+    case PROP_BORDER_COLOR:
+        box->border_color_rgba = g_value_get_uint(value);
         hippo_canvas_item_emit_paint_needed(HIPPO_CANVAS_ITEM(box), 0, 0, -1, -1);
         need_resize = FALSE;
         break;
@@ -374,6 +462,18 @@ hippo_canvas_box_get_property(GObject         *object,
     case PROP_PADDING_RIGHT:
         g_value_set_int(value, box->padding_right);
         break;
+    case PROP_BORDER_TOP:
+        g_value_set_int(value, box->border_top);
+        break;
+    case PROP_BORDER_BOTTOM:
+        g_value_set_int(value, box->border_bottom);
+        break;
+    case PROP_BORDER_LEFT:
+        g_value_set_int(value, box->border_left);
+        break;
+    case PROP_BORDER_RIGHT:
+        g_value_set_int(value, box->border_right);
+        break;        
     case PROP_FIXED_WIDTH:
         g_value_set_int(value, box->fixed_width);
         break;
@@ -385,6 +485,9 @@ hippo_canvas_box_get_property(GObject         *object,
         break;
     case PROP_BACKGROUND_COLOR:
         g_value_set_uint(value, box->background_color_rgba);
+        break;
+    case PROP_BORDER_COLOR:
+        g_value_set_uint(value, box->border_color_rgba);
         break;
     case PROP_SPACING:
         g_value_set_int(value, box->spacing);
@@ -465,80 +568,119 @@ hippo_canvas_box_paint(HippoCanvasItem *item,
     GSList *link;
 
     /* fill background, with html div type semantics - covers entire
-     * item allocation, including padding
+     * item allocation, including padding but not border
      */
     if ((box->background_color_rgba & 0xff) != 0) {
         hippo_cairo_set_source_rgba32(cr, box->background_color_rgba);
-        cairo_rectangle(cr, 0, 0, box->allocated_width, box->allocated_height);
+        cairo_rectangle(cr,
+                        box->border_left, box->border_top,
+                        box->allocated_width - box->border_left - box->border_right,
+                        box->allocated_height - box->border_top - box->border_bottom);
+        cairo_fill(cr);
+    }
+
+    /* draw the borders, in four non-overlapping rectangles */
+    if ((box->border_color_rgba & 0xff) != 0) {
+        hippo_cairo_set_source_rgba32(cr, box->border_color_rgba);
+        /* top */
+        cairo_rectangle(cr,
+                        0, 0,
+                        box->allocated_width,
+                        box->border_top);
+        cairo_fill(cr);
+        /* left */
+        cairo_rectangle(cr,
+                        0, box->border_top,
+                        box->border_left,
+                        box->allocated_height - box->border_top - box->border_bottom);
+        cairo_fill(cr);
+        /* right */
+        cairo_rectangle(cr,
+                        box->allocated_width - box->border_right,
+                        box->border_top,
+                        box->border_right,
+                        box->allocated_height - box->border_top - box->border_bottom);
+        cairo_fill(cr);
+        /* bottom */
+        cairo_rectangle(cr,
+                        0, box->allocated_height - box->border_bottom,
+                        box->allocated_width,
+                        box->border_bottom);
         cairo_fill(cr);
     }
 
     /* Now draw children */
     for (link = box->children; link != NULL; link = link->next) {
-        HippoBoxChild *child = link->data;
+        HippoBoxChild *child = link->data;        
+                        
         hippo_canvas_item_process_paint(HIPPO_CANVAS_ITEM(child->item), cr,
                                         child->x, child->y);
     }
 }
 
 /* This is intended to not rely on size request/allocation state,
- * so it can be called from request/allocation methods
+ * so it can be called from request/allocation methods.
+ * So for example don't use box->allocated_width in here.
  */
 static void
-align_internal(HippoCanvasBox *box,
-               int             allocated_width,
-               int             allocated_height,
-               int            *x_p,
-               int            *y_p,
-               int            *width_p,
-               int            *height_p)
+get_content_area(HippoCanvasBox *box,
+                 int             requested_content_width,
+                 int             requested_content_height,
+                 int             allocated_box_width,
+                 int             allocated_box_height,
+                 int            *x_p,
+                 int            *y_p,
+                 int            *width_p,
+                 int            *height_p)
 {
-    int unpadded_width = allocated_width - box->padding_left - box->padding_right;
-    int unpadded_height = allocated_height - box->padding_top - box->padding_bottom;
-    
-    /* If we got a too-small allocation go ahead and clamp our
-     * usable area down to it
-     */    
-    if (*width_p > unpadded_width)
-        *width_p = unpadded_width;
-    if (*height_p > unpadded_height)
-        *height_p = unpadded_height;
+    int left = box->border_left + box->padding_left;
+    int right = box->border_right + box->padding_right;
+    int top = box->border_top + box->padding_top;
+    int bottom = box->border_bottom + box->padding_bottom;
+    int unpadded_box_width;
+    int unpadded_box_height;
 
-    /* -1 for w/h means to use the allocated size of the item */
-    if (*width_p < 0)
-        *width_p = unpadded_width;
-    if (*height_p < 0)
-        *height_p = unpadded_height;
+    g_return_if_fail(requested_content_width >= 0);
+    g_return_if_fail(requested_content_height >= 0);
+    
+    unpadded_box_width = allocated_box_width - left - right;
+    unpadded_box_height = allocated_box_height - top - bottom;
     
     switch (box->x_align) {
     case HIPPO_ALIGNMENT_FILL:
-        *x_p = box->padding_left;
-        *width_p = unpadded_width;
+        *x_p = left;
+        *width_p = unpadded_box_width;
         break;
     case HIPPO_ALIGNMENT_START:
-        *x_p = box->padding_left;
+        *x_p = left;
+        *width_p = requested_content_width;
         break;
     case HIPPO_ALIGNMENT_END:
-        *x_p = box->allocated_width - box->padding_right - *width_p;
+        *x_p = allocated_box_width - right - requested_content_width;
+        *width_p = requested_content_width;
         break;
     case HIPPO_ALIGNMENT_CENTER:
-        *x_p = box->padding_left + (unpadded_width - *width_p) / 2;
+        *x_p = left + (unpadded_box_width - requested_content_width) / 2;
+        *width_p = requested_content_width;
         break;
     }
 
     switch (box->y_align) {
     case HIPPO_ALIGNMENT_FILL:
-        *y_p = box->padding_top;
-        *height_p = unpadded_height;
+        *y_p = top;
+        *height_p = unpadded_box_height;
         break;
     case HIPPO_ALIGNMENT_START:
-        *y_p = box->padding_top;
+        *y_p = top;
+        *height_p = requested_content_height;
         break;
     case HIPPO_ALIGNMENT_END:
-        *y_p = box->allocated_height - box->padding_bottom - *height_p;
+        *y_p = allocated_box_height - bottom - requested_content_height;
+        *height_p = requested_content_height;
         break;
     case HIPPO_ALIGNMENT_CENTER:
-        *y_p = box->padding_top + (unpadded_height - *height_p) / 2;
+        *y_p = top + (unpadded_box_height - requested_content_height) / 2;
+        *height_p = requested_content_height;
         break;
     }
 }
@@ -578,8 +720,8 @@ hippo_canvas_box_get_width_request_internal(HippoCanvasItem *item,
     if (box->orientation == HIPPO_ORIENTATION_HORIZONTAL)
         total += box->spacing * (n_children - 1);
 
-    total += box->padding_left;
-    total += box->padding_right;
+    total += box->padding_left + box->border_left;
+    total += box->padding_right + box->border_right;
 
     /* This ignored "total" but we needed to be sure we called width_request
      * on all children so we have the width requests to do layout later
@@ -639,16 +781,23 @@ hippo_canvas_box_get_height_request_internal(HippoCanvasItem *item,
         int requested_width;
         int horizontal_expand_count;
         int horizontal_expand_space;
-        int x, y, width, height;
+        int children_width;
 
         /* Note that this algorithm must be kept in sync with the one in allocate() */
         
         requested_width = hippo_canvas_box_get_width_request_internal(item, &horizontal_expand_count);
 
-        align_internal(box, for_width, 100 /* dummy height */,
-                       &x, &y, &width, &height);
-
-        horizontal_expand_space = width - requested_width;
+        if (box->x_align == HIPPO_ALIGNMENT_FILL)
+            children_width = for_width;
+        else
+            children_width = requested_width;
+        if (box->fixed_width < 0) {
+            children_width = children_width
+                - box->border_left - box->border_right
+                - box->padding_left - box->padding_right;
+        }
+        
+        horizontal_expand_space = children_width - requested_width;
         if (horizontal_expand_space < 0)
             horizontal_expand_space = 0;
         
@@ -680,8 +829,8 @@ hippo_canvas_box_get_height_request_internal(HippoCanvasItem *item,
         }
     }
     
-    total += box->padding_top;
-    total += box->padding_bottom;
+    total += box->padding_top + box->border_top;
+    total += box->padding_bottom + box->border_bottom;
     
     return total;
 }
@@ -694,17 +843,22 @@ hippo_canvas_box_get_height_request(HippoCanvasItem *item,
 }
 
 /* Pass in a size request, and have it converted to the right place
- * to actually draw, with padding removed and alignment performed
+ * to actually draw, with padding/border removed and alignment performed
  */
 void
 hippo_canvas_box_align(HippoCanvasBox *box,
+                       int             requested_content_width,
+                       int             requested_content_height,
                        int            *x_p,
                        int            *y_p,
                        int            *width_p,
                        int            *height_p)
 {
-    align_internal(box, box->allocated_width, box->allocated_height,
-                   x_p, y_p, width_p, height_p);
+    get_content_area(box,
+                     requested_content_width,
+                     requested_content_height,
+                     box->allocated_width, box->allocated_height,
+                     x_p, y_p, width_p, height_p);
 }
 
 static void
@@ -727,18 +881,20 @@ hippo_canvas_box_allocate(HippoCanvasItem *item,
     requested_width = hippo_canvas_box_get_width_request_internal(item, &horizontal_expand_count);
     requested_height = hippo_canvas_box_get_height_request_internal(item, full_width,
                                                                     &vertical_expand_count);
-    
-    x = 0;
-    y = 0;
-    width = requested_width;
     if (box->fixed_width < 0) {
-        width = width - box->padding_left - box->padding_right;
+        requested_width = requested_width
+            - box->padding_left - box->padding_right
+            - box->border_left - box->border_right;
     }
-    height = requested_height - box->padding_top - box->padding_bottom;
+    requested_height = requested_height
+        - box->padding_top - box->padding_bottom
+        - box->border_top - box->border_bottom;    
     
-    /* This gets us the box we want to lay out into, with padding already removed */
-    align_internal(box, box->allocated_width, box->allocated_height,
-                   &x, &y, &width, &height);
+    /* This gets us the box we want to lay out into, with padding/border already removed */
+    get_content_area(box,
+                     requested_width, requested_height,
+                     box->allocated_width, box->allocated_height,
+                     &x, &y, &width, &height);
 
 #if 0
     if (box->x_align == HIPPO_ALIGNMENT_START && box->y_align == HIPPO_ALIGNMENT_START) {

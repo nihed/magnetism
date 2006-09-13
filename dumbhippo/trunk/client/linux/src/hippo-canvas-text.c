@@ -415,13 +415,10 @@ hippo_canvas_text_paint(HippoCanvasItem *item,
         pango_layout_get_size(layout, &layout_width, &layout_height);
         layout_width /= PANGO_SCALE;
         layout_height /= PANGO_SCALE;
-
-        x = 0;
-        y = 0;
-        w = layout_width;
-        h = layout_height;
         
-        hippo_canvas_box_align(HIPPO_CANVAS_BOX(item), &x, &y, &w, &h);
+        hippo_canvas_box_align(HIPPO_CANVAS_BOX(item),
+                               layout_width, layout_height,
+                               &x, &y, &w, &h);
 
         /* we can't really "fill" so we fall back to center if we seem to be
          * in fill mode
@@ -472,7 +469,7 @@ hippo_canvas_text_get_width_request(HippoCanvasItem *item)
         layout_width = children_width;
     }
 
-    return MAX(children_width, layout_width + box->padding_left + box->padding_right);
+    return MAX(children_width, layout_width + box->padding_left + box->padding_right + box->border_left + box->border_right);
 }
 
 static int
@@ -495,7 +492,7 @@ hippo_canvas_text_get_height_request(HippoCanvasItem *item,
         layout_height = 0;
     }
     
-    return MAX(layout_height + box->padding_top + box->padding_bottom, children_height);
+    return MAX(layout_height + box->padding_top + box->padding_bottom + box->border_top + box->border_bottom, children_height);
 }
 
 static gboolean
