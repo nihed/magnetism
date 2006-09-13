@@ -31,7 +31,7 @@ import com.dumbhippo.identity20.Guid.ParseException;
 @Cache(usage=CacheConcurrencyStrategy.TRANSACTIONAL)
 @Table(name="Block", 
 	   uniqueConstraints = {
-			@UniqueConstraint(columnNames={"blockType", "data1", "data2"})
+			@UniqueConstraint(columnNames={"blockType", "data1", "data2", "data3"})
 		})
 /*
  This doesn't work because hibernate sets the index length for data1 to 20 but the column 
@@ -42,7 +42,8 @@ import com.dumbhippo.identity20.Guid.ParseException;
 		indexes = {
 			@Index(name="timestamp_index", columnNames = { "timestamp" }),
 			@Index(name="data1_index", columnNames = { "data1" }),
-			@Index(name="data2_index", columnNames = { "data2" })
+			@Index(name="data2_index", columnNames = { "data2" }),
+			@Index(name="data3_index", columnNames = { "data3" })
 		})
 		*/
 public class Block extends EmbeddedGuidPersistable {
@@ -51,18 +52,25 @@ public class Block extends EmbeddedGuidPersistable {
 	private long timestamp;
 	private Guid data1;
 	private Guid data2;
+	private long data3;
 	private int clickedCount;
 	
 	// for hibernate
 	public Block() {
 		this.timestamp = 0;
+		this.data3 = -1;
 	}
-
-	public Block(BlockType type, Guid data1, Guid data2) {
+	
+	public Block(BlockType type, Guid data1, Guid data2, long data3) {
 		this();
 		this.blockType = type;
 		this.data1 = data1;
 		this.data2 = data2;
+		this.data3 = data3;
+	}
+	
+	public Block(BlockType type, Guid data1, Guid data2) {
+		this(type, data1, data2, -1);
 	}
 	
 	@Column(nullable=false)
@@ -144,6 +152,15 @@ public class Block extends EmbeddedGuidPersistable {
 
 	protected void setData2(String data2) throws ParseException {
 		setData2AsGuid(data2.length() > 0 ? new Guid(data2) : null);
+	}
+	
+	@Column(nullable = false)
+	public long getData3() {
+		return data3;
+	}
+
+	public void setData3(long data3) {
+		this.data3 = data3;
 	}
 	
 	// this is a denormalized field; it should be equal to the number of 

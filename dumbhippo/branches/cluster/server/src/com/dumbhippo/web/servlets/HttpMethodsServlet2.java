@@ -31,6 +31,7 @@ import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.Post;
+import com.dumbhippo.persistence.SharedFile;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.server.AnonymousViewpoint;
@@ -44,6 +45,7 @@ import com.dumbhippo.server.HumanVisibleException;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PostingBoard;
+import com.dumbhippo.server.SharedFileSystem;
 import com.dumbhippo.server.Stacker;
 import com.dumbhippo.server.UserViewpoint;
 import com.dumbhippo.server.Viewpoint;
@@ -258,6 +260,43 @@ public class HttpMethodsServlet2 extends AbstractServlet {
 					return URL.class;
 				}
 			});
+			
+			marshallers.put(SharedFile.class, new Marshaller<SharedFile>() {
+				public SharedFile marshal(Viewpoint viewpoint, String s) throws XmlMethodException {
+					if (s == null)
+						return null;
+					
+					SharedFileSystem sharedFileSystem = WebEJBUtil.defaultLookup(SharedFileSystem.class);
+					try {
+						return sharedFileSystem.lookupFile(viewpoint, new Guid(s), true);
+					} catch (ParseException e) {
+						throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, "bad file id " + s);
+					} catch (NotFoundException e) {
+						throw new XmlMethodException(XmlMethodErrorCode.INVALID_ARGUMENT, "no such file " + s);
+					}
+				}
+
+				public Class<?> getType() {
+					return SharedFile.class;
+				}
+			});
+			
+			marshallers.put(Guid.class, new Marshaller<Guid>() {
+				public Guid marshal(Viewpoint viewpoint, String s) throws XmlMethodException {
+					if (s == null)
+						return null;
+					
+					try {
+						return new Guid(s);
+					} catch (ParseException e) {
+						throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, e.getMessage());
+					}
+				}
+
+				public Class<?> getType() {
+					return Guid.class;
+				}
+			});
 		}
 		
 		Marshaller lookupMarshaller(Class<?> klass) {
@@ -388,6 +427,7 @@ public class HttpMethodsServlet2 extends AbstractServlet {
 		private Set<HttpResponseData> contentTypes;
 		private boolean adminOnly;
 		private boolean allowsDisabledAccount;
+		private boolean requiresTransaction;
 		private Method method;
 		
 		HttpMethod(Method m,
@@ -406,6 +446,9 @@ public class HttpMethodsServlet2 extends AbstractServlet {
 				adminOnly = optionsAnnotation.adminOnly();
 				allowsDisabledAccount = optionsAnnotation.allowDisabledAccount();
 				invalidatesSession = optionsAnnotation.invalidatesSession();
+				requiresTransaction = optionsAnnotation.transaction();
+			} else {
+				requiresTransaction = true;
 			}
 			
 			if (m.getReturnType() != void.class)
@@ -524,6 +567,10 @@ public class HttpMethodsServlet2 extends AbstractServlet {
 			return adminOnly;
 		}
 
+		public boolean isRequiresTransaction() {
+			return requiresTransaction;
+		}
+		
 		public boolean isAllowsDisabledAccount() {
 			return allowsDisabledAccount;
 		}
@@ -573,7 +620,7 @@ public class HttpMethodsServlet2 extends AbstractServlet {
 		public boolean included(HttpMethod m);
 	}
 	
-	private void appendIndexSection(XmlBuilder xml,
+	static private void appendIndexSection(XmlBuilder xml,
 			String title,
 			Collection<HttpMethod> methods,
 			MethodFilter filter) {
@@ -591,7 +638,7 @@ public class HttpMethodsServlet2 extends AbstractServlet {
 		xml.closeElement();		
 	}
 	
-	private void handleApiDocsIndex(HttpServletRequest request,
+	static private void handleApiDocsIndex(HttpServletRequest request,
 				HttpServletResponse response) throws HttpException, IOException {
 		// probably we should just use a jsp for this sooner or later
 		XmlBuilder xml = new XmlBuilder();
@@ -628,7 +675,7 @@ public class HttpMethodsServlet2 extends AbstractServlet {
 		response.getOutputStream().write(xml.getBytes());
 	}
 
-	private void handleApiDocsMethod(HttpServletRequest request,
+	static private void handleApiDocsMethod(HttpServletRequest request,
 			HttpServletResponse response, String methodName) throws HttpException, IOException {
 		HttpMethod method = getRepository().lookupMethod(methodName);
 		if (method == null)
@@ -704,28 +751,7 @@ public class HttpMethodsServlet2 extends AbstractServlet {
 		response.getOutputStream().write(xml.getBytes());		
 	}
 	
-	private boolean tryApiDocs(HttpServletRequest request, HttpServletResponse response) throws HttpException,
-		IOException {
-		String requestUri = request.getRequestURI();
-
-		if (requestUri.equals("/api-docs"))
-			requestUri = "/api-docs/";
-		
-		if (!requestUri.startsWith("/api-docs/"))
-			return false;
-		
-		String docsOn = requestUri.substring("/api-docs/".length());
-		
-		if (docsOn.length() == 0) {
-			handleApiDocsIndex(request, response);
-		} else {
-			handleApiDocsMethod(request, response, docsOn);
-		}
-		
-		return true;
-	}
-	
-	private String arrayToStringXmlBuilderWorkaround(Object[] array) {
+	static private String arrayToStringXmlBuilderWorkaround(Object[] array) {
 		// XmlBuilder.toString() has kind of a broken side effect of closing the XML document, 
 		// so we can't use Arrays.toString()
 		StringBuilder sb = new StringBuilder();
@@ -763,7 +789,7 @@ public class HttpMethodsServlet2 extends AbstractServlet {
 	 * @throws IOException
 	 * @throws XmlMethodException
 	 */
-	private void invokeMethod(HttpMethod m, HttpResponseData requestedContentType, HttpServletRequest request, HttpServletResponse response) throws IOException, XmlMethodException {
+	static private void invokeMethod(HttpMethod m, HttpResponseData requestedContentType, HttpServletRequest request, HttpServletResponse response) throws IOException, XmlMethodException {
 		Class<?> iface = m.getMethod().getDeclaringClass();
 		Object instance = WebEJBUtil.defaultLookup(iface);
 		Method javaMethod = m.getMethod();
@@ -910,7 +936,7 @@ public class HttpMethodsServlet2 extends AbstractServlet {
 		logger.debug("Reply for {} sent", m.getName());
 	}
 	
-	private void writeXmlMethodError(HttpServletResponse response, String code, String message) throws IOException {
+	static private void writeXmlMethodError(HttpServletResponse response, String code, String message) throws IOException {
 		XmlBuilder xml = new XmlBuilder();
 		xml.appendStandaloneFragmentHeader();
 		xml.openElement("rsp", "stat", "fail");
@@ -925,15 +951,107 @@ public class HttpMethodsServlet2 extends AbstractServlet {
 		out.close();
 	}
 	
-	private void writeXmlMethodError(HttpServletResponse response, XmlMethodException exception) throws IOException {
+	static private void writeXmlMethodError(HttpServletResponse response, XmlMethodException exception) throws IOException {
 		writeXmlMethodError(response, exception.getCodeString(), exception.getMessage());
 	}
 	
-	private String[] parseUri(String uri) throws HttpException {
+	private interface RequestHandler {
+		public boolean getNoCache();
+		public boolean getRequiresTransaction();
+		public void handle(HttpServletRequest request, HttpServletResponse response, boolean isPost)
+			throws HttpException, IOException;
+	}
+	
+	private static class HttpMethodRequestHandler implements RequestHandler {
+
+		private String typeDir;
+		private HttpMethod method;
 		
-		if (uri.length() < 4) // "/a/b".length() == 4
-			throw new HttpException(HttpResponseCode.NOT_FOUND,
-					"URI is too short to be valid, should be of the form /typeprefix/methodname, e.g. /xml/frobate");
+		HttpMethodRequestHandler(String typeDir, HttpMethod method) {
+			this.typeDir = typeDir;
+			this.method = method;
+		}
+		
+		public boolean getNoCache() {
+			return true;
+		}
+		
+		public boolean getRequiresTransaction() {
+			return method.isRequiresTransaction();
+		}
+
+		public void handle(HttpServletRequest request, HttpServletResponse response, boolean isPost) throws HttpException, IOException {
+			HttpResponseData requestedContentType;
+			if (typeDir.equals("xml")) {
+				// gets overwritten with XMLMETHOD later if appropriate
+				requestedContentType = HttpResponseData.XML;
+			} else if (typeDir.equals("text"))
+				requestedContentType = HttpResponseData.TEXT;
+			else if (isPost && typeDir.equals("action"))
+				requestedContentType = HttpResponseData.NONE;
+			else {
+				throw new HttpException(HttpResponseCode.NOT_FOUND,
+						"Don't know about URI path /" + typeDir + " , only /xml, /text for GET plus /action for POST only)");
+			}
+
+			if (requestedContentType == HttpResponseData.XML && 
+					method.getContentTypes().contains(HttpResponseData.XMLMETHOD))
+				requestedContentType = HttpResponseData.XMLMETHOD;
+			
+			if (!method.getContentTypes().contains(requestedContentType)) {
+				throw new HttpException(HttpResponseCode.NOT_FOUND, "Wrong content type requested "
+						+ requestedContentType + " valid types for method are " + method.getContentTypes());
+			}
+			
+			if (!isPost && method.isRequiresPost())
+				throw new HttpException(HttpResponseCode.BAD_REQUEST, "Method only works via POST not GET");
+			
+			try {
+				invokeMethod(method, requestedContentType, request, response);
+			} catch (XmlMethodException e) {
+				WebStatistics.getInstance().incrementHttpMethodErrors();
+				
+				if (requestedContentType == HttpResponseData.XMLMETHOD) {
+					writeXmlMethodError(response, e);
+					return;
+				} else {
+					throw new HttpException(HttpResponseCode.BAD_REQUEST,
+							e.getCodeString() + ": " + e.getMessage());
+				}
+			}
+			
+			////// Note that we always throw or return on exception... so this code 
+			////// runs only on method success
+			WebStatistics.getInstance().incrementHttpMethodsServed();
+			
+			// The point of the allowDisabledUser annotations is to allow methods that
+			// take a user from the disabled state to the enabled state; once we are
+			// enabled, we need to persistant cookies, so we check that here. This
+			// is a little hacky, but simpler than creating custom servlets.
+			//
+			// Note that this won't work well with methods that have write
+			// output, since the output buffer may already have been flushed, and it
+			// will be too late to set cookies. So we disallow that when first 
+			// scanning the method.
+			if (method.isAllowsDisabledAccount()) {
+				SigninBean.updateAuthentication(request, response);
+			}
+			
+			if (method.isInvalidatesSession()) {
+				HttpSession sess = request.getSession(false);
+				if (sess != null)
+					sess.invalidate();	
+			}			
+		}
+		
+	}
+	
+	private String[] parseUri(String uri) {
+		
+		if (uri.length() < 4) { // "/a/b".length() == 4
+			logger.debug("URI is too short to be valid, should be of the form /typeprefix/methodname, e.g. /xml/frobate");
+			return null;
+		}
 		
 		// ignore trailing /
 		if (uri.endsWith("/"))
@@ -941,129 +1059,125 @@ public class HttpMethodsServlet2 extends AbstractServlet {
 		
 		// split into the two components, the result is { "", "xml", "frobate" }
 		String[] ret = uri.split("/");
-		if (ret.length != 3)
-			throw new HttpException(HttpResponseCode.NOT_FOUND,
-					"All URIs are of the form /typeprefix/methodname, e.g. /xml/frobate, split into: " + Arrays.toString(ret));
+		if (ret.length != 3) {
+			logger.debug("All URIs are of the form /typeprefix/methodname, e.g. /xml/frobate, split into: " + Arrays.toString(ret));
+			return null;
+		}
 		
 		return new String[] { ret[1], ret[2] };
 	}
 	
-	private void invokeHttpRequest(HttpServletRequest request, HttpServletResponse response)
-		throws HttpException, IOException {
-		String requestUri = request.getRequestURI();
-		boolean isPost = request.getMethod().toUpperCase().equals("POST"); 
+	private RequestHandler tryHttpRequest(HttpServletRequest request) {
+		String requestUri = request.getRequestURI(); 
 		String[] uriComponents = parseUri(requestUri);
-		String typeDir = uriComponents[0];
+		if (uriComponents == null)
+			return null;
 		String requestedMethod = uriComponents[1];
-
-		HttpResponseData requestedContentType;
-		if (typeDir.equals("xml")) {
-			// gets overwritten with XMLMETHOD later if appropriate
-			requestedContentType = HttpResponseData.XML;
-		} else if (typeDir.equals("text"))
-			requestedContentType = HttpResponseData.TEXT;
-		else if (isPost && typeDir.equals("action"))
-			requestedContentType = HttpResponseData.NONE;
-		else {
-			throw new HttpException(HttpResponseCode.NOT_FOUND,
-					"Don't know about URI path /" + typeDir + " , only /xml, /text for GET plus /action for POST only)");
-		}
 
 		HttpMethodRepository repo = getRepository();
 		HttpMethod m = repo.lookupMethod(requestedMethod);
 		if (m == null)
-			throw new HttpException(HttpResponseCode.NOT_FOUND,
-					"Don't know about API method " + requestedMethod);
-
-		if (requestedContentType == HttpResponseData.XML && 
-				m.getContentTypes().contains(HttpResponseData.XMLMETHOD))
-			requestedContentType = HttpResponseData.XMLMETHOD;
-		
-		if (!m.getContentTypes().contains(requestedContentType)) {
-			throw new HttpException(HttpResponseCode.NOT_FOUND, "Wrong content type requested "
-					+ requestedContentType + " valid types for method are " + m.getContentTypes());
-		}
-		
-		if (!isPost && m.isRequiresPost())
-			throw new HttpException(HttpResponseCode.BAD_REQUEST, "Method only works via POST not GET");
-		
-		try {
-			invokeMethod(m, requestedContentType, request, response);
-		} catch (XmlMethodException e) {
-			WebStatistics.getInstance().incrementHttpMethodErrors();
-			
-			if (requestedContentType == HttpResponseData.XMLMETHOD) {
-				writeXmlMethodError(response, e);
-				return;
-			} else {
-				throw new HttpException(HttpResponseCode.BAD_REQUEST,
-						e.getCodeString() + ": " + e.getMessage());
-			}
-		}
-		
-		////// Note that we always throw or return on exception... so this code 
-		////// runs only on method success
-		WebStatistics.getInstance().incrementHttpMethodsServed();
-		
-		// The point of the allowDisabledUser annotations is to allow methods that
-		// take a user from the disabled state to the enabled state; once we are
-		// enabled, we need to persistant cookies, so we check that here. This
-		// is a little hacky, but simpler than creating custom servlets.
-		//
-		// Note that this won't work well with methods that have write
-		// output, since the output buffer may already have been flushed, and it
-		// will be too late to set cookies. So we disallow that when first 
-		// scanning the method.
-		if (m.isAllowsDisabledAccount()) {
-			SigninBean.updateAuthentication(request, response);
-		}
-		
-		if (m.isInvalidatesSession()) {
-			HttpSession sess = request.getSession(false);
-			if (sess != null)
-				sess.invalidate();	
-		}
+			return null;
+		else
+			return new HttpMethodRequestHandler(uriComponents[0], m);
 	}
 	
-	private boolean tryLoginRequests(HttpServletRequest request, HttpServletResponse response) throws IOException, HttpException {
-		// special method that magically causes us to look at your cookie and log you 
-		// in if it's set, then return person you're logged in as or "false"
-		
+	private RequestHandler tryLoginRequests(HttpServletRequest request) {
 		if (!(request.getRequestURI().equals("/text/dologin") &&
 				request.getMethod().toUpperCase().equals("POST"))
 				&& !request.getRequestURI().equals("/text/checklogin")) {
-			return false;
+			return null;
+		} else {
+			return new RequestHandler() {
+				public boolean getNoCache() {
+					return true;
+				}				
+				
+				public boolean getRequiresTransaction() {
+					return true;
+				}
+
+				public void handle(HttpServletRequest request, HttpServletResponse response, boolean isPost)
+					throws HttpException, IOException {
+					// special method that magically causes us to look at your cookie and log you 
+					// in if it's set, then return person you're logged in as or "false"		
+						
+					User user = getUser(request);
+						
+					response.setContentType("text/plain");
+					OutputStream out = response.getOutputStream();
+					if (user != null)
+						out.write(user.getId().getBytes());
+					else
+						out.write("false".getBytes());
+					out.flush();					
+				}
+				
+			};
 		}
-			
-		User user = getUser(request);
-			
-		response.setContentType("text/plain");
-		OutputStream out = response.getOutputStream();
-		if (user != null)
-			out.write(user.getId().getBytes());
-		else
-			out.write("false".getBytes());
-		out.flush();
-		
-		return true;
 	}
 
-	private boolean trySignoutRequest(HttpServletRequest request, HttpServletResponse response) throws IOException, HttpException { 
+	private RequestHandler trySignoutRequest(HttpServletRequest request) {
 		if (!request.getRequestURI().equals("/action/signout") ||
-		    !request.getMethod().toUpperCase().equals("POST"))
-			return false;
-		
-		HttpSession session = request.getSession();
-		if (session != null)
-			session.invalidate();		
-		
-		// FIXME we need to drop the Client object when we do this,
-		// both to save our own disk space, and in case someone stole the 
-		// cookie.
-		
-		response.addCookie(LoginCookie.newDeleteCookie());
-		
-		return true;
+			!request.getMethod().toUpperCase().equals("POST")) {
+			return null;
+		} else {
+			return new RequestHandler() {
+				public boolean getNoCache() {
+					return true;
+				}
+				
+				public boolean getRequiresTransaction() {
+					return false;
+				}
+				
+				public void handle(HttpServletRequest request, HttpServletResponse response, boolean isPost)
+					throws HttpException, IOException {
+					HttpSession session = request.getSession();
+					if (session != null)
+						session.invalidate();		
+					
+					// FIXME we need to drop the Client object when we do this,
+					// both to save our own disk space, and in case someone stole the 
+					// cookie.
+					
+					response.addCookie(LoginCookie.newDeleteCookie());
+				}
+			};
+		}
+	}
+
+	private RequestHandler tryApiDocs(HttpServletRequest request) {
+		String requestUri = request.getRequestURI();
+	
+		if (requestUri.equals("/api-docs"))
+			requestUri = "/api-docs/";
+	
+		if (!requestUri.startsWith("/api-docs/"))
+			return null;
+	
+		final String docsOn = requestUri.substring("/api-docs/".length());
+
+		return new RequestHandler() {
+
+			public boolean getNoCache() {
+				return false;
+			}
+			
+			public boolean getRequiresTransaction() {
+				return false;
+			}
+
+			public void handle(HttpServletRequest request, HttpServletResponse response, boolean isPost)
+				throws HttpException, IOException {
+				if (docsOn.length() == 0) {
+					handleApiDocsIndex(request, response);
+				} else {
+					handleApiDocsMethod(request, response, docsOn);
+				}
+			}
+			
+		};
 	}
 	
 	@Override
@@ -1073,40 +1187,61 @@ public class HttpMethodsServlet2 extends AbstractServlet {
 		getRepository();
 	} 
 	
+	private void doRequest(HttpServletRequest request, HttpServletResponse response, boolean isPost)
+		throws HttpException, IOException {
+		RequestHandler handler = (RequestHandler) request.getAttribute("request-handler");
+		if (handler == null) {
+			logger.debug("Found no handler for url '{}'", request.getRequestURI());
+			throw new HttpException(HttpResponseCode.NOT_FOUND, "unknown URI");
+		}
+		if (handler.getNoCache())
+			setNoCache(response);
+		handler.handle(request, response, isPost);
+	}
+	
 	@Override
 	protected String wrappedDoPost(HttpServletRequest request, HttpServletResponse response) throws HttpException,
 			IOException {
 		
-		setNoCache(response);
-		
-		if (tryLoginRequests(request, response) ||
-		    trySignoutRequest(request, response)) {
-				/* nothing */
-		} else {
-			invokeHttpRequest(request, response);
-		}
-		
+		doRequest(request, response, true);
+
 		return null;
 	}
 	
 	@Override
 	protected String wrappedDoGet(HttpServletRequest request, HttpServletResponse response) throws HttpException, IOException {
 
-		if (tryApiDocs(request, response)) {
-			/* nothing */
-		} else {
-			setNoCache(response);
-		
-			invokeHttpRequest(request, response);
-		}
+		doRequest(request, response, false);
 		
 		return null;
 	}
 
-	// FIXME we don't especially want a transaction for /api-docs, but if 
-	// we start handling actual data we would want one for that
 	@Override
-	protected boolean requiresTransaction() {
-		return true;
+	protected boolean requiresTransaction(HttpServletRequest request) {
+		
+		// the idea is to do the "request analysis" only once, rather than both 
+		// here and also in the doGet/doPost
+		
+		RequestHandler handler = null;
+		boolean isPost = request.getMethod().toUpperCase().equals("POST");
+		if (isPost) {
+			if (handler == null)
+				handler = tryLoginRequests(request);
+			if (handler == null)
+				handler = trySignoutRequest(request);
+		} else {
+			if (handler == null)
+				handler = tryApiDocs(request);
+		}
+		if (handler == null)
+			handler = tryHttpRequest(request);
+		
+		if (handler != null) {
+			request.setAttribute("request-handler", handler);
+			return handler.getRequiresTransaction();
+		} else {
+			// we're going to throw an error later
+			return false;
+		}
 	}
 }

@@ -29,6 +29,7 @@ import com.dumbhippo.live.Hotness;
 import com.dumbhippo.live.LiveClientData;
 import com.dumbhippo.live.LivePost;
 import com.dumbhippo.live.LiveState;
+import com.dumbhippo.live.PresenceService;
 import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.Group;
@@ -382,6 +383,34 @@ public class MessageSenderBean implements MessageSender {
 			return NAMESPACE;
 		}
 	}
+
+	private static class BlocksChangedExtension implements PacketExtension {
+
+		private static final String ELEMENT_NAME = "blocksChanged";
+
+		private static final String NAMESPACE = CommonXmlWriter.NAMESPACE_BLOCKS;
+		
+		private long lastTimestamp;
+		
+		public BlocksChangedExtension(long lastTimestamp) {
+			this.lastTimestamp = lastTimestamp;
+		}
+
+		public String toXML() {
+			XmlBuilder builder = new XmlBuilder();
+			builder.openElement(ELEMENT_NAME, "xmlns", NAMESPACE, "lastTimestamp", Long.toString(lastTimestamp));
+			builder.closeElement();
+			return builder.toString();
+		}
+		
+		public String getElementName() {
+			return ELEMENT_NAME;
+		}
+
+		public String getNamespace() {
+			return NAMESPACE;
+		}
+	}
 	
 	private class XMPPSender {
 
@@ -414,10 +443,14 @@ public class MessageSenderBean implements MessageSender {
 
 			return connection;
 		}
+
+		private Message createMessageFor(Guid userId, Message.Type type) {
+			// FIXME should dumbhippo.com domain be hardcoded here?			
+			return new Message(userId.toJabberId("dumbhippo.com"), type);
+		}		
 		
 		private Message createMessageFor(User user, Message.Type type) {
-			// FIXME should dumbhippo.com domain be hardcoded here?			
-			return new Message(user.getGuid().toJabberId("dumbhippo.com"), type);
+			return createMessageFor(user.getGuid(), type);
 		}
 		
 		private Message createMessageFor(User user) {
@@ -494,7 +527,7 @@ public class MessageSenderBean implements MessageSender {
 			connection.sendPacket(message);			
 		}
 
-		public void sendMySpaceContactCommentNotification(User user) {
+		public synchronized void sendMySpaceContactCommentNotification(User user) {
 			XMPPConnection connection = getConnection();
 			Message message = createMessageFor(user, Message.Type.HEADLINE);
 			message.addExtension(new MySpaceContactCommentExtension());
@@ -502,7 +535,7 @@ public class MessageSenderBean implements MessageSender {
 			connection.sendPacket(message);
 		}
 
-		public void sendHotnessChanged(LiveClientData clientData) {
+		public synchronized void sendHotnessChanged(LiveClientData clientData) {
 			XMPPConnection connection = getConnection();
 			User dbUser = identitySpider.lookupUser(clientData.getGuid());			
 			Message message = createMessageFor(dbUser, Message.Type.HEADLINE);
@@ -511,7 +544,7 @@ public class MessageSenderBean implements MessageSender {
 			connection.sendPacket(message);
 		}
 
-		public void sendActivePostsChanged(LiveClientData clientData) {
+		public synchronized void sendActivePostsChanged(LiveClientData clientData) {
 			XMPPConnection connection = getConnection();
 			User dbUser = identitySpider.lookupUser(clientData.getGuid());
 			Viewpoint viewpoint = new UserViewpoint(dbUser);
@@ -549,7 +582,7 @@ public class MessageSenderBean implements MessageSender {
 			connection.sendPacket(message);						
 		}
 		
-		public void sendPrefChanged(User user, String key, String value) {
+		public synchronized void sendPrefChanged(User user, String key, String value) {
 			XMPPConnection connection = getConnection();
 			Message message = createMessageFor(user, Message.Type.HEADLINE);
 			message.addExtension(new PrefsChangedExtension(key, value));
@@ -557,7 +590,7 @@ public class MessageSenderBean implements MessageSender {
 			connection.sendPacket(message);
 		}
 		
-		public void sendGroupMembershipUpdate(User recipient, Group group, GroupMember groupMember) {
+		public synchronized void sendGroupMembershipUpdate(User recipient, Group group, GroupMember groupMember) {
 			XMPPConnection connection = getConnection();
 			Message message = createMessageFor(recipient);	
 			PersonView updatedMember = personViewer.getPersonView(new UserViewpoint(recipient), 
@@ -572,6 +605,16 @@ public class MessageSenderBean implements MessageSender {
 			connection.sendPacket(message);
 		}
 		
+		public synchronized void sendBlocksChanged(Guid userId, long lastTimestamp) {
+			/* Note that this is HEADLINE i.e. we don't backlog it; on login the client asks for new stuff,
+			 * and while logged in it sees any changes
+			 */
+			XMPPConnection connection = getConnection();
+			Message message = createMessageFor(userId, Message.Type.HEADLINE);
+			message.addExtension(new BlocksChangedExtension(lastTimestamp));
+			logger.debug("Sending blocks changed message to {}", message.getTo());			
+			connection.sendPacket(message);
+		}
 	}
 
 	private class EmailSender {
@@ -861,5 +904,14 @@ public class MessageSenderBean implements MessageSender {
 		for (User recipient : recipients) {
 			xmppSender.sendGroupMembershipUpdate(recipient, group, groupMember);			
 		}
+	}
+	
+	public void sendBlocksChanged(Guid userId, long lastTimestamp) {
+		if (PresenceService.getInstance().getPresence("/users", userId) == 0) {
+			logger.debug("user {} is offline, not notifying of blocks changed", userId);
+			return;
+		}
+
+		xmppSender.sendBlocksChanged(userId, lastTimestamp);
 	}
 }

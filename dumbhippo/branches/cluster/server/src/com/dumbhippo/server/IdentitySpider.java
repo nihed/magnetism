@@ -202,11 +202,15 @@ public interface IdentitySpider {
 	
 	/**
 	 * Checks whether a person has another other as a contact
-	 * @param current viewpoint (only a user can see their contacts, 
-	 *          so if viewpoint.getviewer() doesn't match user, the result will 
-	 *          be false) 
+	 * This function will create a live user for the user, unless the user is same as the viewer,
+	 * consider whether this is efficient in terms of performance, and change the behavior of the
+	 * function or what information is initialized when a live user is created if not.
+	 *  
+	 * @param current viewpoint (only the system, the user or one of their contacts can see user's contacts, 
+	 *                           so if viewpoint isn't for one of those, the result will be false) 
 	 * @param user who to look in the contacts of
 	 * @param contact person to look for in the contacts
+	 * @return true is we could look at user's contacts and supplied contact is their contact
 	 */
 	public boolean isContact(Viewpoint viewpoint, User user, User contact);
 	

@@ -17,6 +17,18 @@
       <load-on-startup>1</load-on-startup>
     </servlet>
 
+    <servlet>
+      <servlet-name>FileStorageServlet</servlet-name>
+      <servlet-class>com.dumbhippo.web.servlets.FileStorageServlet</servlet-class>
+	  <load-on-startup>1</load-on-startup>
+	</servlet>
+
+    <servlet>
+      <servlet-name>WebDavServlet</servlet-name>
+      <servlet-class>com.dumbhippo.web.servlets.WebDavServlet</servlet-class>
+	  <load-on-startup>1</load-on-startup>
+	</servlet>
+
    <servlet>
       <servlet-name>PostThumbnailServlet</servlet-name>
       <servlet-class>com.dumbhippo.web.servlets.PostThumbnailServlet</servlet-class>
@@ -135,6 +147,16 @@
       <servlet-name>GroupPhotoServlet</servlet-name>
       <url-pattern>/files/groupshots/*</url-pattern>
    </servlet-mapping>   
+
+   <servlet-mapping>
+      <servlet-name>FileStorageServlet</servlet-name>
+      <url-pattern>/files/user/*</url-pattern>
+   </servlet-mapping> 
+
+   <servlet-mapping>
+      <servlet-name>WebDavServlet</servlet-name>
+      <url-pattern>/dav/*</url-pattern>
+   </servlet-mapping>
    
    <servlet-mapping>
       <servlet-name>PostThumbnailServlet</servlet-name>
@@ -191,7 +213,7 @@
            they are listed below for completeness -->
       <init-param>
           <param-name>noSignin</param-name>
-          <param-value>busy,comingsoon,error,flash,public-groups,signup,summit,unknownlink,upgrade,who-are-you,robots.txt</param-value>
+          <param-value>busy,comingsoon,error,files,flash,group-files,public-groups,signup,summit,unknownlink,upgrade,who-are-you,robots.txt</param-value>
       </init-param>
       <init-param>
           <param-name>requiresSigninStealth</param-name>

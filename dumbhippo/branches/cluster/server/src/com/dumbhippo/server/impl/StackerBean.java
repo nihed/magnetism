@@ -1,5 +1,6 @@
 package com.dumbhippo.server.impl;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -32,6 +33,7 @@ import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.AccountClaim;
 import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.BlockType;
+import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupMember;
 import com.dumbhippo.persistence.GroupMessage;
@@ -44,6 +46,7 @@ import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.IdentitySpider;
+import com.dumbhippo.server.MessageSender;
 import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PostingBoard;
@@ -83,6 +86,7 @@ public class StackerBean implements Stacker {
 	private MusicSystem musicSystem;
 	
 	@EJB
+	@IgnoreDependency
 	private PostingBoard postingBoard;
 	
 	static synchronized private UserCache getUserCache() {
@@ -92,44 +96,49 @@ public class StackerBean implements Stacker {
 		return userCache;
 	}
 
-	private Block queryBlock(BlockType type, Guid data1, Guid data2) throws NotFoundException {
+	private Block queryBlock(BlockType type, Guid data1, Guid data2, long data3) throws NotFoundException {
 		Query q;
 		if (data1 != null && data2 != null) {
-			q = em.createQuery("SELECT block FROM Block block WHERE block.blockType=:type AND block.data1=:data1 AND block.data2=:data2");
+			q = em.createQuery("SELECT block FROM Block block WHERE block.blockType=:type " +
+					           "AND block.data1=:data1 AND block.data2=:data2 AND block.data3=:data3");
 			q.setParameter("data1", data1.toString());
-			q.setParameter("data2", data2.toString());
+			q.setParameter("data2", data2.toString());			
 		} else if (data1 != null) {
-			q = em.createQuery("SELECT block FROM Block block WHERE block.blockType=:type AND block.data1=:data1 AND block.data2=''");
+			q = em.createQuery("SELECT block FROM Block block WHERE block.blockType=:type " +
+					           "AND block.data1=:data1 AND block.data2='' AND block.data3=:data3");
 			q.setParameter("data1", data1.toString());
 		} else if (data2 != null) {
-			q = em.createQuery("SELECT block FROM Block block WHERE block.blockType=:type AND block.data2=:data2 AND block.data1=''");
-			q.setParameter("data2", data2.toString());
+			q = em.createQuery("SELECT block FROM Block block WHERE block.blockType=:type " +
+					           "AND block.data2=:data2 AND block.data1='' AND block.data3=:data3");
+			q.setParameter("data2", data2.toString());	
 		} else {
 			throw new IllegalArgumentException("must provide either data1 or data2 in query for block type " + type);
 		}
+		q.setParameter("data3", data3);
 		q.setParameter("type", type);
 		try {
 			return (Block) q.getSingleResult();
 		} catch (NoResultException e) {
-			throw new NotFoundException("no block with type " + type + " data1 " + data1 + " data2 " + data2, e);
+			throw new NotFoundException("no block with type " + type + " data1 " + data1 + " data2 " + data2 + " data3 " + data3, e);
 		}
 	}
 
-	private UserBlockData queryUserBlockData(User user, BlockType type, Guid data1, Guid data2) throws NotFoundException {
+	private UserBlockData queryUserBlockData(User user, BlockType type, Guid data1, Guid data2, long data3) throws NotFoundException {
 		Query q;
 		if (data1 != null && data2 != null) {
-			q = em.createQuery("SELECT ubd FROM UserBlockData ubd, Block block WHERE ubd.block = block AND ubd.user = :user AND block.blockType=:type AND block.data1=:data1 AND block.data2=:data2");
+			q = em.createQuery("SELECT ubd FROM UserBlockData ubd, Block block WHERE ubd.block = block AND ubd.user = :user AND block.blockType=:type AND block.data1=:data1 AND block.data2=:data2 AND block.data3=:data3");
 			q.setParameter("data1", data1.toString());
 			q.setParameter("data2", data2.toString());
 		} else if (data1 != null) {
-			q = em.createQuery("SELECT ubd FROM UserBlockData ubd, Block block WHERE ubd.block = block AND ubd.user = :user AND block.blockType=:type AND block.data1=:data1 AND block.data2=''");
+			q = em.createQuery("SELECT ubd FROM UserBlockData ubd, Block block WHERE ubd.block = block AND ubd.user = :user AND block.blockType=:type AND block.data1=:data1 AND block.data2='' AND block.data3=:data3");
 			q.setParameter("data1", data1.toString());
 		} else if (data2 != null) {
-			q = em.createQuery("SELECT ubd FROM UserBlockData ubd, Block block WHERE ubd.block = block AND ubd.user = :user AND block.blockType=:type AND block.data2=:data2 AND block.data1=''");
+			q = em.createQuery("SELECT ubd FROM UserBlockData ubd, Block block WHERE ubd.block = block AND ubd.user = :user AND block.blockType=:type AND block.data2=:data2 AND block.data1='' AND block.data3=:data3");
 			q.setParameter("data2", data2);
 		} else {
 			throw new IllegalArgumentException("must provide either data1 or data2 in query for block type " + type);
 		}
+		q.setParameter("data3", data3);
 		q.setParameter("user", user);
 		q.setParameter("type", type);
 		try {
@@ -139,16 +148,37 @@ public class StackerBean implements Stacker {
 		}
 	}
 	
-	// this doesn't retry on constraint violation since we do that for a larger transaction,
-	// see below
-	private Block getOrCreateUpdatingTimestamp(BlockType type, Guid data1, Guid data2, long activity) {
+	private Block createBlock(BlockType type, Guid data1, Guid data2, long data3) {
+		Block block = new Block(type, data1, data2, data3);
+		em.persist(block);
+		
+		return block;
+	}
+	
+	private Block createBlock(BlockType type, Guid data1, Guid data2) {
+		return createBlock(type, data1, data2, -1);
+	}
+	
+	private Block getOrCreateBlock(BlockType type, Guid data1, Guid data2, long data3) {
+		try {
+			return queryBlock(type, data1, data2, data3);
+		} catch (NotFoundException e) {
+			return createBlock(type, data1, data2, data3);
+		}
+	}
+	
+	private Block getOrCreateBlock(BlockType type, Guid data1, Guid data2) {
+		return getOrCreateBlock(type, data1, data2, -1);
+	}
+	
+	private Block getUpdatingTimestamp(BlockType type, Guid data1, Guid data2, long data3, long activity) {
 		Block block;
 		try {
-			block = queryBlock(type, data1, data2);
+			logger.debug("will query for a block with data1: {}, data2: {}, data3: {}", new Object[]{data1, data2, data3});
+			block = queryBlock(type, data1, data2, data3);
+			logger.debug("found block");
 		} catch (NotFoundException e) {
-			logger.debug("creating new block type {} data1 {} data2 " + data2, type, data1);
-			block = new Block(type, data1, data2);
-			em.persist(block);
+			return null;
 		}
 		if (block.getTimestampAsLong() < activity) // never "roll back"
 			block.setTimestampAsLong(activity);
@@ -186,12 +216,20 @@ public class StackerBean implements Stacker {
 		}
 		
 		public void run() {
+			logger.debug("updating cached stack timestamp for {} users and clearing for {} users",
+					needNewTimestamp != null ? needNewTimestamp.size() : 0, 
+							needClearTimestamp != null ? needClearTimestamp.size() : 0);
+			
 			UserCache cache = getUserCache();
-			for (Guid g : needNewTimestamp) {
-				cache.updateLastTimestamp(g, newTimestamp);
+			if (needNewTimestamp != null) {
+				for (Guid g : needNewTimestamp) {
+					cache.updateLastTimestamp(g, newTimestamp);
+				}
 			}
-			for (Guid g : needClearTimestamp) {
-				cache.clearLastTimestamp(g);
+			if (needClearTimestamp != null) {
+				for (Guid g : needClearTimestamp) {
+					cache.clearLastTimestamp(g);
+				}
 			}
 		}
 	}
@@ -236,12 +274,11 @@ public class StackerBean implements Stacker {
 			old.setDeleted(true);
 		}
 		
-		runner.runTaskOnTransactionCommit(cacheTask);		
+		logger.debug("{} existing and {} desired users for block, queuing cache update task", userDatas.size(), desiredUsers.size());
+		runner.runTaskOnTransactionCommit(cacheTask);
 	}
 
-	private Set<User> getDesiredUsersForMusicPerson(Block block) {
-		if (block.getBlockType() != BlockType.MUSIC_PERSON)
-			throw new IllegalArgumentException("wrong type block");
+	private Set<User> getUsersWhoCare(Block block) {
 		User user;
 		try {
 			user = EJBUtil.lookupGuid(em, User.class, block.getData1AsGuid());
@@ -249,8 +286,19 @@ public class StackerBean implements Stacker {
 			throw new RuntimeException(e);
 		}
 		Set<User> peopleWhoCare = identitySpider.getUsersWhoHaveUserAsContact(SystemViewpoint.getInstance(), user);
-		peopleWhoCare.add(user); // FIXME include ourselves, this is probably a debug-only thing
-		return peopleWhoCare;
+        // FIXME include ourselves, this is probably a debug-only thing, or pass in an argument
+		// whether the user should be included, could be more applicable for external account updates, and not 
+		// as applicable for music updates
+		peopleWhoCare.add(user);  
+		
+		return peopleWhoCare;	
+	}
+	
+	private Set<User> getDesiredUsersForMusicPerson(Block block) {
+		if (block.getBlockType() != BlockType.MUSIC_PERSON)
+			throw new IllegalArgumentException("wrong type block");
+        
+		return getUsersWhoCare(block);
 	}
 	
 	private Set<User> getDesiredUsersForGroupChat(Block block) {
@@ -296,6 +344,13 @@ public class StackerBean implements Stacker {
 		return recipients;
 	}
 	
+	private Set<User> getDesiredUsersForExternalAccountUpdate(Block block) {
+		if (block.getBlockType() != BlockType.EXTERNAL_ACCOUNT_UPDATE)
+			throw new IllegalArgumentException("wrong type block");
+
+		return getUsersWhoCare(block);
+	}
+	
 	private void updateUserBlockDatas(Block block) {
 		Set<User> desiredUsers = null;
 		switch (block.getBlockType()) {
@@ -311,6 +366,8 @@ public class StackerBean implements Stacker {
 		case GROUP_MEMBER:
 			desiredUsers = getDesiredUsersForGroupMember(block);
 			break;
+		case EXTERNAL_ACCOUNT_UPDATE:
+			desiredUsers = getDesiredUsersForExternalAccountUpdate(block);
 			// don't add a default, we want a warning if any cases are missing
 		}
 		
@@ -330,32 +387,50 @@ public class StackerBean implements Stacker {
 		}
 	}
 	
-	private void stack(final BlockType type, final Guid data1, final Guid data2, final long activity) {
+	private void stack(final BlockType type, final Guid data1, final Guid data2, final long data3, final long activity) {
 		if (disabled)
 			return;
 		
-		// FIXME really we want to retry the whole operation we're part of, not just the block stacking,
-		// but there's no current infrastructure for that and the constraint violation creating 
-		// user block datas would probably happen plenty in practice for now
-		runner.runTaskRetryingOnConstraintViolation(new Runnable() {
-			public void run() {
-				Block block = getOrCreateUpdatingTimestamp(type, data1, data2, activity);
+		// Updating the block timestamp is something we want to do as part of the enclosing transaction;
+		// if the enclosing transaction is rolled back, the timestamp needs to be rolled back
+		final Block block = getUpdatingTimestamp(type, data1, data2, data3, activity);
+		if (block == null) {
+			logger.warn("No block exists when stacking type={}, data1={}, data2={}, data3{}, migration needed or bug",
+					    new Object[] { type, data1, data2, data3 });
+			return;
+		}
 
-				updateUserBlockDatas(block);
+		// Now we need to create demand-create user block data objects and update the
+		// cached user timestamps. updateUserBlockDatas(block) always safe to call
+		// at any point without worrying about ordering. We queue it asynchronously
+		// after commit, so we can do retries when demand-creating UserBlockData.
+		runner.runTaskOnTransactionCommit(new Runnable() {
+			public void run() {
+				runner.runTaskRetryingOnConstraintViolation(new Runnable() {
+					public void run() {
+						Block attached = em.find(Block.class, block.getId());
+						updateUserBlockDatas(attached);
+					}
+				});
 			}
 		});
 	}
+
+	private void stack(final BlockType type, final Guid data1, final Guid data2, final long activity) {
+        stack(type, data1, data2, -1, activity);
+	}
 	
-	private void click(BlockType type, Guid data1, Guid data2, User user, long clickTime) {
+	private void click(BlockType type, Guid data1, Guid data2, long data3, User user, long clickTime) {
 		if (disabled)
 			return;
 		
 		UserBlockData ubd;
 		try {
-			ubd = queryUserBlockData(user, type, data1, data2);
+			ubd = queryUserBlockData(user, type, data1, data2, data3);
 		} catch (NotFoundException e) {
 			// for now assume this means we don't want to record clicks for the given
-			// object, otherwise the ubd should already be created 
+			// object, otherwise the ubd should already be created
+			logger.debug("No UserBlockData for user {} block type {} data1 " + data1, user, type);
 			return;
 		}
 		
@@ -371,9 +446,37 @@ public class StackerBean implements Stacker {
 		if (ubd.isIgnored())
 			ubd.setIgnored(false);
 		
+		logger.debug("due to click, restacking block {} with new time {}", ubd.getBlock(), clickTime);
 		// now update the timestamp in the block (if it's newer)
 		// and update user caches for all users
 		stack(ubd.getBlock(), clickTime);
+	}
+	
+	public void onUserCreated(Guid userId) {
+		createBlock(BlockType.MUSIC_PERSON, userId, null);
+	}
+	
+	public void onExternalAccountCreated(Guid userId, ExternalAccountType type) {
+		createBlock(BlockType.EXTERNAL_ACCOUNT_UPDATE, userId, null, type.ordinal());
+	}
+	
+	public void onGroupCreated(Guid groupId) {
+		createBlock(BlockType.GROUP_CHAT, groupId, null);
+	}
+	
+	public void onGroupMemberCreated(GroupMember member) {
+		// Blocks only exist for group members which correspond to accounts in the
+		// system. If the group member is (say) an email resource, and later joins
+		// the system, when they join, we'll delete this GroupMember, add a new one 
+		// for the Account and create a block for that GroupMember. 
+		AccountClaim a = member.getMember().getAccountClaim();
+		if (a != null) {
+			createBlock(BlockType.GROUP_CHAT, member.getGroup().getGuid(), a.getOwner().getGuid());
+		}
+	}
+	
+	public void onPostCreated(Guid postId) {
+		createBlock(BlockType.POST, postId, null);
 	}
 	
 	// don't create or suspend transaction; we will manage our own for now (FIXME) 
@@ -411,8 +514,9 @@ public class StackerBean implements Stacker {
 		case FOLLOWER:
 		case REMOVED:
 			AccountClaim a = member.getMember().getAccountClaim();
-			if (a != null)
+			if (a != null) {
 				stack(BlockType.GROUP_MEMBER, member.getGroup().getGuid(), a.getOwner().getGuid(), activity);
+			}
 			break;
 		case INVITED:
 		case INVITED_TO_FOLLOW:
@@ -423,8 +527,14 @@ public class StackerBean implements Stacker {
 		}
 	}
 	
+	// don't create or suspend transaction; we will manage our own for now (FIXME)
+	@TransactionAttribute(TransactionAttributeType.SUPPORTS)
+	public void stackAccountUpdate(Guid userId, ExternalAccountType type, long activity) {
+		stack(BlockType.EXTERNAL_ACCOUNT_UPDATE, userId, null, type.ordinal(), activity);
+	}
+	
 	public void clickedPost(Post post, User user, long clickedTime) {
-		click(BlockType.POST, post.getGuid(), null, user, clickedTime);
+		click(BlockType.POST, post.getGuid(), null, -1, user, clickedTime);
 	}
 	
 	public List<UserBlockData> getStack(Viewpoint viewpoint, User user, long lastTimestamp, int start, int count) {
@@ -477,8 +587,13 @@ public class StackerBean implements Stacker {
 		for (UserBlockData ubd : list) {
 			long stamp = ubd.getBlock().getTimestampAsLong();
 			
-			if (stamp < lastTimestamp)
-				logger.error("Query returned block at wrong timestamp lastTimestamp {} block {}", lastTimestamp, ubd.getBlock());
+			if (stamp < lastTimestamp) {
+				// FIXME I think the problem here may be that the database only goes to seconds not milliseconds,
+				// at least when doing comparisons
+				boolean secondsMatch = ((cached / 1000) == (newestTimestamp / 1000));
+				logger.error("Query returned block at wrong timestamp lastTimestamp {} block {}: match at seconds resolution: " + secondsMatch,
+						lastTimestamp, ubd.getBlock());
+			}
 			
 			if (stamp == lastTimestamp)
 				countAtLastTimestamp += 1;
@@ -493,7 +608,10 @@ public class StackerBean implements Stacker {
 		if (newestTimestamp < 0)
 			throw new RuntimeException("had a block with negative timestamp? " + list);
 		if (cached >= 0 && cached < newestTimestamp) {
-			logger.error("Cached timestamp {} was somehow older than actual newest timestamp {}",
+			//	FIXME I think the problem here may be that the database only goes to seconds not milliseconds,
+			// at least when doing comparisons
+			boolean secondsMatch = ((cached / 1000) == (newestTimestamp / 1000));
+			logger.error("Cached timestamp {} was somehow older than actual newest timestamp {}, match at seconds resolution: " + secondsMatch,
 					cached, newestTimestamp);
 		}
 		
@@ -532,12 +650,15 @@ public class StackerBean implements Stacker {
 	 * Tracks the newest block timestamp for a given user, which allows us to avoid
 	 * querying the db if someone asks for blocks at or after this cached timestamp.
 	 * 
+	 * Note this object is accessed from the web threads and the xmpp notifier thread,
+	 * so has to be fully threadsafe
+	 * 
 	 * @author Havoc Pennington
 	 *
 	 */
 	static private class UserCache {
 		@SuppressWarnings("unused")
-		static private final Logger logger = GlobalSetup.getLogger(UserCache.class);		
+		static private final Logger logger = GlobalSetup.getLogger(UserCache.class);
 		
 		static private class CacheEntry {
 			public long lastTimestamp;
@@ -556,8 +677,11 @@ public class StackerBean implements Stacker {
 		
 		private Map<Guid,CacheEntry> entries;
 		
+		private XmppNotifier notifier;
+		
 		UserCache() {
 			entries = new HashMap<Guid,CacheEntry>();
+			notifier = new XmppNotifier(this);
 		}
 		
 		// called if e.g. we remove a block from a user's list, and thus
@@ -565,6 +689,7 @@ public class StackerBean implements Stacker {
 		synchronized void clearLastTimestamp(Guid guid) {
 			//logger.debug("clearing last block timestamp for user {}", guid);
 			entries.remove(guid);
+			notifier.add(guid);
 		}
 		
 		// called whenever we save a new block timestamp, if it's the newest
@@ -585,6 +710,7 @@ public class StackerBean implements Stacker {
 					entry.count = 1;
 				}
 			}
+			notifier.add(guid);
 			//logger.debug("updating block timestamp for user {} to {}", guid, entry);
 		}
 		
@@ -604,6 +730,7 @@ public class StackerBean implements Stacker {
 					entry.count = blockCount;
 				}
 			}
+			notifier.add(guid);
 			//logger.debug("saving block timestamp for user {} as {}", guid, entry);
 		}
 		
@@ -622,6 +749,144 @@ public class StackerBean implements Stacker {
 		}
 	}
 	
+	static private class XmppNotifier {		
+		private UserCache cache;
+		private Set<Guid> users;
+		private Thread flusher;
+		
+		XmppNotifier(UserCache cache) {
+			this.cache = cache;
+		}
+		
+		synchronized void add(Guid user) {
+			if (users == null)
+				users = new HashSet<Guid>();
+			this.users.add(user);
+			
+			flush();
+		}
+		
+		// This goofy setup with multiple possible threads is an attempt to 
+		// avoid having to hold a static handle to the thread and startup/shutdown, 
+		// instead the threads just exit on their own. But not sure it turned out
+		// to be a good approach.
+		synchronized private void flush() {
+			if (users == null)
+				return;
+		
+			if (flusher != null) {
+				if (flusher.isAlive()) {
+					// if there's an existing flush thread, then 
+					// it does not have the lock on the XmppNotifier
+					// since we have it; this means it will check
+					// again for users != null and process any users
+					// that have appeared. There's a little bit of 
+					// race just after the thread drops the XmppNotifier
+					// lock and before the thread has died; this case
+					// is currently broken, but a new thread will be 
+					// kicked off as soon as any block changes, so not 
+					// high-impact. "harmless race" hahahaha
+					
+					return;
+				} else {
+					// existing thread has exited since there was a pause with no 
+					// work
+					flusher = null;
+				}
+			}
+			
+			// This thread will exit as soon as there's no work to do, but will keep
+			// draining the set of users that need notifying as long as it's not empty
+			flusher = ThreadUtils.newDaemonThread("Stacker XMPP Notifier",
+				new Runnable() {
+					public void run() {
+						final Logger logger = GlobalSetup.getLogger(this.getClass());
+
+						logger.debug("Entering stacker xmpp notification thread");
+						while (true) {
+							// sleep a bit before starting; this increases the amount of work
+							// we get in each batch, and means we "compress" notifications for the same
+							// user inside this time gap. But this can't be too long or the user
+							// sense that things are "instant" could suffer.
+							boolean mayHaveWork;
+							synchronized (XmppNotifier.this) {
+								mayHaveWork = users != null;
+							}
+							
+							if (mayHaveWork) {
+								try {
+									Thread.sleep(500);
+								} catch (InterruptedException e) {
+								}
+							}
+							
+							// steal the current set of users and process it, while the main thread can 
+							// create and add to a new set
+							final Set<Guid> flushedUsers;
+							synchronized (XmppNotifier.this) {
+								if (users == null) {
+									logger.debug("No stacker notifications left to flush, exiting notifier thread");
+									return;
+								}
+								flushedUsers = users;
+								users = null;
+							}
+
+							MessageSender sender = EJBUtil.defaultLookup(MessageSender.class);
+							for (Guid g : flushedUsers) {
+								// note that we always send the latest cached timestamp, not 
+								// the one at time of notification
+								sender.sendBlocksChanged(g, cache.getLastTimestamp(g));
+							}
+							logger.debug("Sent {} xmpp notifications of changed blocks", flushedUsers.size());
+						}
+					}
+			});
+			
+			flusher.start();
+		}
+	}
+	
+	static private class PostMigrationTask implements Runnable {
+		private String postId;
+		
+		PostMigrationTask(String postId) {
+			this.postId = postId;
+		}
+		
+		public void run() {
+			Stacker stacker = EJBUtil.defaultLookup(Stacker.class);
+			stacker.migratePost(postId);
+		}
+	}
+
+	static private class UserMigrationTask implements Runnable {
+		private String userId;
+		
+		UserMigrationTask(String postId) {
+			this.userId = postId;
+		}
+		
+		public void run() {
+			Stacker stacker = EJBUtil.defaultLookup(Stacker.class);
+			stacker.migrateUser(userId);
+		}
+	}
+
+	static private class GroupMigrationTask implements Runnable {
+		private String groupId;
+		
+		GroupMigrationTask(String postId) {
+			this.groupId = postId;
+		}
+		
+		public void run() {
+			Stacker stacker = EJBUtil.defaultLookup(Stacker.class);
+			stacker.migrateGroupChat(groupId);
+			stacker.migrateGroupMembers(groupId);
+		}
+	}
+
 	static private class Migration implements Runnable {
 		@SuppressWarnings("unused")
 		static private final Logger logger = GlobalSetup.getLogger(Migration.class);		
@@ -629,14 +894,10 @@ public class StackerBean implements Stacker {
 		private ExecutorService pool;
 		private long processed;
 		private long errorCount;
-		private Collection<String> postIds;
-		private Collection<String> userIds;
-		private Collection<String> groupIds; 
+		private Collection<Runnable> tasks;
 		
-		public Migration(Collection<String> postIds, Collection<String> userIds, Collection<String> groupIds) {
-			this.postIds = postIds;
-			this.userIds = userIds;
-			this.groupIds = groupIds;
+		public Migration(Collection<Runnable> tasks) {
+			this.tasks = tasks;
 		}
 
 		private <T> T pop(Collection<T> collection) {
@@ -654,34 +915,22 @@ public class StackerBean implements Stacker {
 		// and each call migrates one thing
 		public void run() {
 			try {
-				String postId = null;
-				String userId = null;
-				String groupId = null;
+				final Runnable task;
 				
 				// synchronize access to the pool of work to do
 				synchronized(this) {
-					postId = pop(postIds);
-					if (postId == null) {
-						userId = pop(userIds);
-						if (userId == null) {
-							groupId = pop(groupIds);
-						}
-					} 
+					task = pop(tasks);
 				}
 				
-				// but do work outside the lock
-				Stacker stacker = EJBUtil.defaultLookup(Stacker.class);
-				if (postId != null) {
-					stacker.migratePost(postId);
-				} else if (userId != null) {
-					stacker.migrateUser(userId);
-				} else if (groupId != null) {
-					stacker.migrateGroupChat(groupId);
-					stacker.migrateGroupMembers(groupId);
-				} else {
-					// nothing to do, we may have been 
-					// shut down
-				}
+				// but do work outside the lock; one reason for doing the retry is
+				// that we do "if Block doesn't exist, create it". That should only really 
+				// be a problem if two copies of the migration task were run simultaneously.
+				// since we never create Blocks for existing database objects in other
+				// cases. A more important reason in the long term is that other operations
+				// performed by a migration task could need the retry - see, for example,
+				// the comment in migratePost().
+				TransactionRunner runner = EJBUtil.defaultLookup(TransactionRunner.class);
+				runner.runTaskRetryingOnConstraintViolation(task);
 				
 				synchronized(this) {
 					processed += 1;
@@ -699,7 +948,7 @@ public class StackerBean implements Stacker {
 		}
 		
 		public synchronized long getRemainingItems() {
-			return postIds.size() + userIds.size() + groupIds.size();
+			return tasks.size();
 		}
 		
 		public void start() {
@@ -730,9 +979,7 @@ public class StackerBean implements Stacker {
 			if (forceImmediate) {
 				// this will turn any remaining run() calls into no-ops
 				synchronized (this) {
-					postIds.clear();
-					userIds.clear();
-					groupIds.clear();
+					tasks.clear();
 				}
 			}
 			
@@ -749,8 +996,8 @@ public class StackerBean implements Stacker {
 		}
 	}
 	
-	private void runMigration(Collection<String> postIds, Collection<String> userIds, Collection<String> groupIds) {
-		final Migration migration = new Migration(postIds, userIds, groupIds);
+	private void runMigration(Collection<Runnable> tasks) {
+		final Migration migration = new Migration(tasks);
 		migration.start();
 		
 		// start a thread to clean up the migration ; if we blocked to do this
@@ -770,124 +1017,124 @@ public class StackerBean implements Stacker {
 		if (disabled)
 			throw new RuntimeException("stacking disabled, can't migrate anything");
 		
-		List<String> postIds;
-		List<String> userIds;
-		List<String> groupIds;
+		List<Runnable> tasks = new ArrayList<Runnable>();
 		
 		Query q = em.createQuery("SELECT post.id FROM Post post");
-		postIds = TypeUtils.castList(String.class, q.getResultList());
+		for (String id : TypeUtils.castList(String.class, q.getResultList()))
+			tasks.add(new PostMigrationTask(id));
 
 		q = em.createQuery("SELECT user.id FROM User user");
-		userIds = TypeUtils.castList(String.class, q.getResultList());
+		for (String id : TypeUtils.castList(String.class, q.getResultList()))
+			tasks.add(new UserMigrationTask(id));
 
 		q = em.createQuery("SELECT group.id FROM Group group");
-		groupIds = TypeUtils.castList(String.class, q.getResultList());
+		for (String id : TypeUtils.castList(String.class, q.getResultList()))
+			tasks.add(new GroupMigrationTask(id));
 		
-		runMigration(postIds, userIds, groupIds);
+		runMigration(tasks);
 	}
 	
 	public void migrateGroups() {
 		if (disabled)
 			throw new RuntimeException("stacking disabled, can't migrate anything");
 
+		List<Runnable> tasks = new ArrayList<Runnable>();
+
 		Query q = em.createQuery("SELECT group.id FROM Group group");
-		List<String> groupIds = TypeUtils.castList(String.class, q.getResultList());
-		
-		runMigration(TypeUtils.castList(String.class, Collections.emptyList()),
-				TypeUtils.castList(String.class, Collections.emptyList()), groupIds);
+		for (String id : TypeUtils.castList(String.class, q.getResultList()))
+			tasks.add(new GroupMigrationTask(id));
+
+		runMigration(tasks);
 	}
 	
 	public void migratePost(String postId) {
 		logger.debug("    migrating post {}", postId);
-		final Post post = em.find(Post.class, postId);
+		Post post = em.find(Post.class, postId);
+		Block block = getOrCreateBlock(BlockType.POST, post.getGuid(), null);
+		long activity = post.getPostDate().getTime();
 
-		// this creates its own transaction for now... 
-		stackPost(post.getGuid(), post.getPostDate().getTime());
+		// we want to move PersonPostData info into UserBlockData
+		// (this is obviously expensive as hell)
+		List<UserBlockData> userDatas = queryUserBlockDatas(block);
+		Map<User,UserBlockData> byUser = new HashMap<User,UserBlockData>();
+		for (UserBlockData ubd : userDatas) {
+			byUser.put(ubd.getUser(), ubd);
+		}
 
-		// FIXME so we need a new transaction here to see the block we just created
-		runner.runTaskInNewTransaction(new Runnable() {
-			public void run() {
-				// we want to move PersonPostData info into UserBlockData
-				// (this is obviously expensive as hell)
-				
-				Block block;
-				try {
-					block = queryBlock(BlockType.POST, post.getGuid(), null);
-				} catch (NotFoundException e) {
-					throw new RuntimeException("no block found for post " + post);
-				}
-				List<UserBlockData> userDatas = queryUserBlockDatas(block);
-				Map<User,UserBlockData> byUser = new HashMap<User,UserBlockData>();
-				for (UserBlockData ubd : userDatas) {
-					byUser.put(ubd.getUser(), ubd);
-				}
-
-				Set<PersonPostData> postDatas = post.getPersonPostData();
-				for (PersonPostData ppd : postDatas) {
-					Person p = ppd.getPerson();
-					if (!(p instanceof User))
-						continue;
-					User user = (User) p;
-					UserBlockData ubd = byUser.get(user);
-					if (ubd == null) {
-						// create a deleted UserBlockData to store the info from the ppd
-						ubd = new UserBlockData(user, block);
-						ubd.setDeleted(true);
-						em.persist(ubd);
-					}
-					if (ubd.isIgnored()) {
-						// keep the existing ignored info
-					} else if (ppd.isIgnored()) {
-						// there's no ignored date on ppd, so we use the latest block 
-						// timestamp (the point of the ignored date is to freeze the block's 
-						// stack location so this is perfect really)
-						ubd.setIgnored(true);
-						ubd.setIgnoredTimestampAsLong(block.getTimestampAsLong());
-					} else {
-						// neither one is ignored, nothing to migrate
-					}
-					
-					// if ppd has a clicked date and ubd doesn't, copy in from ppd
-					if (ubd.getClickedTimestampAsLong() < 0 && 
-							ppd.getClickedDateAsLong() >= 0) {
-						ubd.setClickedTimestampAsLong(ppd.getClickedDateAsLong());
-					}
-				}
-				
-				// now count the denormalized number of viewers. the old 
-				// query of UserBlockData is fine since we only added deleted
-				// ones.
-				int clickedCount = 0;
-				long maxClickedTime = 0;
-				for (UserBlockData ubd : userDatas) {
-					if (!ubd.isDeleted() && ubd.isClicked()) {
-						clickedCount += 1;
-						if (ubd.getClickedTimestampAsLong() > maxClickedTime)
-							maxClickedTime = ubd.getClickedTimestampAsLong();
-					}
-				}
-				if (block.getClickedCount() != clickedCount) {
-					logger.debug("  fixing up clicked count from {} to {} for block " + block, block.getClickedCount(), clickedCount);
-					block.setClickedCount(clickedCount);
-				}
-				
-				long newestMessageTime = 0;
-				List<PostMessage> messages = postingBoard.getNewestPostMessages(post, 1);
-				if (messages.size() > 0) {
-					PostMessage m = messages.get(0);
-					newestMessageTime = m.getTimestamp().getTime();
-				}
-				
-				// update the block's timestamp to match, and update user cache
-				if (maxClickedTime > block.getTimestampAsLong() || newestMessageTime > block.getTimestampAsLong())
-					stack(block, Math.max(maxClickedTime, newestMessageTime));
+		// There is a race condition if a UserBlockData is created for the Block by
+		// some other thread, but that can only happen if the getOrCreateBlock() finds 
+		// an existing Block but the UserBlockData for that Block are missing. If it 
+		// does happen (indicating that some earlier version of the migration code was 
+		// run, perhaps) then the retry-on-constraint-violation that we wrap migration
+		// tasks in should task care of it.
+		
+		Set<PersonPostData> postDatas = post.getPersonPostData();
+		for (PersonPostData ppd : postDatas) {
+			Person p = ppd.getPerson();
+			if (!(p instanceof User))
+				continue;
+			User user = (User) p;
+			UserBlockData ubd = byUser.get(user);
+			if (ubd == null) {
+				// create a deleted UserBlockData to store the info from the ppd
+				ubd = new UserBlockData(user, block);
+				ubd.setDeleted(true);
+				em.persist(ubd);
 			}
-		});
+			if (ubd.isIgnored()) {
+				// keep the existing ignored info
+			} else if (ppd.isIgnored()) {
+				// there's no ignored date on ppd, so we use the latest block 
+				// timestamp (the point of the ignored date is to freeze the block's 
+				// stack location so this is perfect really)
+				ubd.setIgnored(true);
+				ubd.setIgnoredTimestampAsLong(block.getTimestampAsLong());
+			} else {
+				// neither one is ignored, nothing to migrate
+			}
+			
+			// if ppd has a clicked date and ubd doesn't, copy in from ppd
+			if (ubd.getClickedTimestampAsLong() < 0 && 
+					ppd.getClickedDateAsLong() >= 0) {
+				ubd.setClickedTimestampAsLong(ppd.getClickedDateAsLong());
+			}
+		}
+		
+		// now count the denormalized number of viewers. the old 
+		// query of UserBlockData is fine since we only added deleted
+		// ones.
+		int clickedCount = 0;
+		for (UserBlockData ubd : userDatas) {
+			if (!ubd.isDeleted() && ubd.isClicked()) {
+				clickedCount += 1;
+				if (ubd.getClickedTimestampAsLong() > activity)
+					activity = ubd.getClickedTimestampAsLong();
+			}
+		}
+		if (block.getClickedCount() != clickedCount) {
+			logger.debug("  fixing up clicked count from {} to {} for block " + block, block.getClickedCount(), clickedCount);
+			block.setClickedCount(clickedCount);
+		}
+		
+		List<PostMessage> messages = postingBoard.getNewestPostMessages(post, 1);
+		if (messages.size() > 0) {
+			PostMessage m = messages.get(0);
+			long newestMessageTime = m.getTimestamp().getTime();
+			if (newestMessageTime > activity)
+				activity = newestMessageTime;
+		}
+		
+		// This will update the block timestamp then asynchronously update the
+		// cached user timestamps after this transaction commits. It would also 
+		// create any  UserBlockData objects that didn't exist at that point, but 
+		// they should have all been created above by migrating PersonPostData
+		stack(block, activity);
 	}
 	
 	public void migrateUser(String userId) {
 		logger.debug("    migrating user {}", userId);
 		User user = em.find(User.class, userId);
+		getOrCreateBlock(BlockType.MUSIC_PERSON, user.getGuid(), null);
 		long lastPlayTime = musicSystem.getLatestPlayTime(SystemViewpoint.getInstance(), user);
 		stackMusicPerson(user.getGuid(), lastPlayTime);
 	}
@@ -895,6 +1142,7 @@ public class StackerBean implements Stacker {
 	public void migrateGroupChat(String groupId) {
 		logger.debug("    migrating group chat for {}", groupId);
 		Group group = em.find(Group.class, groupId);
+		getOrCreateBlock(BlockType.GROUP_CHAT, group.getGuid(), null);
 		List<GroupMessage> messages = groupSystem.getNewestGroupMessages(group, 1);
 		if (messages.isEmpty())
 			stackGroupChat(group.getGuid(), 0);
@@ -906,10 +1154,14 @@ public class StackerBean implements Stacker {
 		logger.debug("    migrating group members for {}", groupId);
 		Group group = em.find(Group.class, groupId);
 		for (GroupMember member : group.getMembers()) {
-			// we set a timestamp of 0, since we have no way of knowing the right
-			// timestamp, and we don't want to make a big pile of group member blocks 
-			// at the top of the stack whenever we run a migration
-			stackGroupMember(member, 0);
+			AccountClaim a = member.getMember().getAccountClaim();
+			if (a != null) {
+				getOrCreateBlock(BlockType.GROUP_CHAT, member.getGroup().getGuid(), a.getOwner().getGuid());
+				// we set a timestamp of 0, since we have no way of knowing the right
+				// timestamp, and we don't want to make a big pile of group member blocks 
+				// at the top of the stack whenever we run a migration
+				stackGroupMember(member, 0);
+			}
 		}
 	}
 }

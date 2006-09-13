@@ -30,8 +30,10 @@ import javax.transaction.UserTransaction;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.StreamUtils;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.HumanVisibleException;
+import com.dumbhippo.server.Viewpoint;
 import com.dumbhippo.web.SigninBean;
 import com.dumbhippo.web.UserSigninBean;
 
@@ -119,11 +121,17 @@ public abstract class AbstractServlet extends HttpServlet {
 	}
 	
 	protected void logRequest(HttpServletRequest request, String type) {
+		logRequest(request, type, false); // FIXME false for requires transaction is misleading
+	}
+	
+	private void logRequest(HttpServletRequest request, String type, boolean requiresTransaction) {
 		if (!logger.isDebugEnabled()) // avoid this expense entirely in production
 			return;
 		
 		// this line of debug is cut-and-pasted over to RewriteServlet also
-		logger.debug("--------------- HTTP {} for '{}' content-type=" + request.getContentType(), type, request.getRequestURI());
+		logger.debug("--------------- HTTP {} for '{}' content-type='" +
+				request.getContentType() + "' transaction=" + requiresTransaction,
+				type, request.getRequestURI());
 		
 		Enumeration names = request.getAttributeNames(); 
 		while (names.hasMoreElements()) {
@@ -132,7 +140,7 @@ public abstract class AbstractServlet extends HttpServlet {
 			logger.debug("request attr {} = {}", name, request.getAttribute(name));
 		}
 		
-		names = request.getParameterNames();		
+		names = request.getParameterNames();
 		while (names.hasMoreElements()) {
 			String name = (String) names.nextElement();
 			String[] values = request.getParameterValues(name);
@@ -147,6 +155,11 @@ public abstract class AbstractServlet extends HttpServlet {
 				showValue = "[SUPPRESSED FROM LOG]";
 			logger.debug("param {} = {}", name, showValue);
 		}
+	}
+	
+	protected Viewpoint getViewpoint(HttpServletRequest request) {
+		SigninBean signin = SigninBean.getForRequest(request);
+		return signin.getViewpoint();
 	}
 	
 	protected User getUser(HttpServletRequest request) {
@@ -183,28 +196,16 @@ public abstract class AbstractServlet extends HttpServlet {
 			HumanVisibleException, IOException, ServletException {
 		throw new HttpException(HttpResponseCode.NOT_FOUND, "GET not implemented");				 
 	}
-	
-	private void copy(InputStream in, OutputStream out) throws IOException {
-		byte[] buffer = new byte[256];
-        int bytesRead;
-
-        for (;;) {
-        	bytesRead = in.read(buffer, 0, buffer.length);
-        	if (bytesRead == -1)
-        		break; // all done (NOT an error, that throws IOException)
-
-            out.write(buffer, 0, bytesRead);
-        }
-	}	
-	
+		
 	void sendFile(HttpServletRequest request, HttpServletResponse response, String contentType, File file) throws IOException {
 		if (logger.isDebugEnabled())
 			logger.debug("sending file {}", file.getCanonicalPath());
 		response.setContentType(contentType);
 		InputStream in = new FileInputStream(file);
 		OutputStream out = response.getOutputStream();
-		copy(in, out);
-		out.flush();		
+		StreamUtils.copy(in, out);
+		out.flush();
+		in.close();
 	}
 
 	/** 
@@ -253,7 +254,7 @@ public abstract class AbstractServlet extends HttpServlet {
 		response.setHeader("Expires", expires);	
 	}
 	
-	protected abstract boolean requiresTransaction();
+	protected abstract boolean requiresTransaction(HttpServletRequest request);
 	
 	private Object runWithTransaction(HttpServletRequest request, Callable func) throws HumanVisibleException, HttpException {
 		long startTime = System.currentTimeMillis();
@@ -325,7 +326,7 @@ public abstract class AbstractServlet extends HttpServlet {
 		} catch (RuntimeException e) {
 			Throwable cause = e.getCause();
 			if (cause instanceof HttpException) {
-				logger.debug("http exception processing POST", e);
+				logger.debug("http exception processing " + request.getMethod(), e);
 				((HttpException) cause).send(response);
 				return null;
 			} else if (cause instanceof HumanVisibleException) {
@@ -362,9 +363,10 @@ public abstract class AbstractServlet extends HttpServlet {
 	protected void doPost(final HttpServletRequest request, final HttpServletResponse response) throws ServletException,
 			IOException {
 		ensureRequestEncoding(request);
-		logRequest(request, "POST");
+		boolean requiresTransaction = requiresTransaction(request);
+		logRequest(request, "POST", requiresTransaction);
 		String forwardUrl;
-		if (requiresTransaction()) {
+		if (requiresTransaction) {
 			 forwardUrl = (String)runWithTransactionAndErrorPage(request, response, new Callable() { 
 				public Object call() throws Exception {
 					return wrappedDoPost(request, response);
@@ -385,9 +387,10 @@ public abstract class AbstractServlet extends HttpServlet {
 	@Override
 	protected void doGet(final HttpServletRequest request, final HttpServletResponse response) throws ServletException, IOException {
 		ensureRequestEncoding(request);
-		logRequest(request, "GET");
+		boolean requiresTransaction = requiresTransaction(request); 
+		logRequest(request, "GET", requiresTransaction);
 		String forwardUrl;
-		if (requiresTransaction()) {
+		if (requiresTransaction) {
 			forwardUrl = (String)runWithTransactionAndErrorPage(request, response, new Callable() { 
 				public Object call() throws Exception {
 					return wrappedDoGet(request, response);

@@ -65,7 +65,7 @@ public abstract class AbstractCacheBean<KeyType,ResultType> {
 			// executors is null if we've never called getExecutorInternal
 			if (executors != null) {
 				for (UniqueTaskExecutor executor : executors.values()) {
-					executor.shutdown();
+					executor.shutdownAndAwaitTermination();
 				}
 				executors.clear();
 				executors = null;

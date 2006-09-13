@@ -14,6 +14,7 @@
 			<accessrule kind="accessible" pattern="**/awt/Rectangle"/>
 			<accessrule kind="accessible" pattern="**/awt/Image"/>
 			<accessrule kind="discouraged" pattern="**/awt/**"/>
+                        <accessrule kind="nonaccessible" pattern="**/awt/List"/>
 		</accessrules>
 	</classpathentry>
 	<classpathentry sourcepath="ECLIPSE_HOME/plugins/org.eclipse.jdt.source_3.0.0/src/org.junit_3.8.1/junitsrc.zip" kind="var" path="JUNIT_HOME/junit.jar"/>
@@ -25,7 +26,6 @@
 	<classpathentry kind="lib" path="server/lib/jboss-remoting.jar"/>
 	<classpathentry kind="lib" path="server/lib/commons-codec-1.3.jar"/>
 	<classpathentry kind="lib" path="server/lib/commons-httpclient-2.0.2.jar"/>
-	<classpathentry kind="lib" path="server/lib/commons-fileupload-1.0.jar"/>
 	<classpathentry kind="var" path="JBOSS_HOME/server/default/deploy/ejb3.deployer/jboss-ejb3.jar"/>
 	<classpathentry kind="var" path="JBOSS_HOME/server/default/deploy/ejb3.deployer/jboss-ejb3x.jar"/>
 	<classpathentry kind="var" path="JBOSS_HOME/client/mail.jar"/>
@@ -87,5 +87,7 @@
 	<classpathentry kind="var" path="JBOSS_HOME/server/default/deploy/ejb3.deployer/jboss-annotations-ejb3.jar"/>
 	<classpathentry kind="lib" path="/opt/jboss/server/all/lib/jboss-cache.jar"/>
 	<classpathentry kind="var" path="JBOSS_HOME/server/all/lib/jgroups.jar"/>
+        <classpathentry kind="lib" path="server/lib/commons-fileupload-1.1.1.jar"/>
+        <classpathentry kind="lib" path="server/lib/commons-io-1.2.jar"/>
 	<classpathentry kind="output" path="eclipse-build"/>
 </classpath>

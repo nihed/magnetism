@@ -114,7 +114,7 @@ dh.formtable._onValueChanged = function(entryObject, isXmlMethod, postMethod, ar
 			  	    		msg = "Failed to save this setting.";
 			  	    		if (isXmlMethod)
 			  	    			msg = msg + " (" + arg2 + ")";
-							dh.formtable.showStatusMessage(controlId, "Failed to save this setting.");
+							dh.formtable.showStatusMessage(controlId, msg);
 			  	    	});
 }
 

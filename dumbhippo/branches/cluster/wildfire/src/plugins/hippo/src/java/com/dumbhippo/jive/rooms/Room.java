@@ -15,9 +15,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 import javax.jms.ObjectMessage;
 
 import org.dom4j.Attribute;
-import org.dom4j.Document;
-import org.dom4j.DocumentException;
-import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.SessionManager;
@@ -34,6 +31,7 @@ import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
+import com.dumbhippo.jive.XmlParser;
 import com.dumbhippo.jms.JmsProducer;
 import com.dumbhippo.live.PresenceListener;
 import com.dumbhippo.live.PresenceService;
@@ -445,27 +443,18 @@ public class Room implements PresenceListener {
 			
 			if (kind == ChatRoomKind.GROUP) {
 				try {			
-					objectXml = glue.getGroupXML(Guid.parseTrustedJabberId(viewpointGuid), 
+					objectXml = glue.getGroupXml(Guid.parseTrustedJabberId(viewpointGuid), 
 							                     Guid.parseTrustedJabberId(roomName));
 				} catch (NotFoundException e) {
 					Log.error("failed to find group", e);				
 				}				
 			} else if (kind == ChatRoomKind.POST) {
-			       objectXml = glue.getPostsXML(Guid.parseTrustedJabberId(viewpointGuid), 
+			       objectXml = glue.getPostsXml(Guid.parseTrustedJabberId(viewpointGuid), 
 			    		                        Guid.parseTrustedJabberId(roomName), 
 			    		                        elementName);
 			}
 			if (objectXml != null) {
-				Document xmlDumpDoc;
-				try {
-					xmlDumpDoc = DocumentHelper.parseText(objectXml);
-				} catch (DocumentException e) {
-					throw new RuntimeException("Couldn't parse result for an object associated with a room");
-				}
-				
-				Element childElement = xmlDumpDoc.getRootElement();
-				childElement.detach();
-				
+				Element childElement = XmlParser.elementFromXml(objectXml);
 				if (kind == ChatRoomKind.GROUP) { 
 				    Element objectElt = roomInfo.addElement(elementName);
 				    objectElt.add(childElement);

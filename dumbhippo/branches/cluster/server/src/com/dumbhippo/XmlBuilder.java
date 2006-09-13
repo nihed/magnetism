@@ -86,6 +86,10 @@ public class XmlBuilder implements Appendable {
 		appendEscaped(text, null);
 	}
 	
+	public void openElement(Enum elementName, String... attributes) {
+		openElement(elementName.name(), attributes);
+	}
+	
 	/**
 	 * Add new open element to stream; must be paired with a closeElement()
 	 * 
@@ -130,6 +134,19 @@ public class XmlBuilder implements Appendable {
 		}
 	}
 	
+	public void appendEmptyNode(Enum element, String... attributes) {
+		appendEmptyNode(element.name(), attributes);
+	}
+	
+	public void appendEmptyNode(String elementName, String... attributes) {
+		openElement(elementName, attributes);
+		closeElement();
+	}
+	
+	public void appendTextNode(Enum element, String content, String... attributes) {
+		appendTextNode(element.name(), content, attributes);
+	}
+	
 	/**
 	 * Appends an element with only text as element child.
 	 * 
@@ -144,6 +161,10 @@ public class XmlBuilder implements Appendable {
 		closeElement();
 	}
 	
+	public void appendBooleanNode(Enum element, boolean content, String... attributes) {
+		appendBooleanNode(element.name(), content, attributes);
+	}
+	
 	/**
 	 * Appends an element with "true" or "false" as the content
 	 * @param elementName
@@ -152,6 +173,10 @@ public class XmlBuilder implements Appendable {
 	 */
 	public void appendBooleanNode(String elementName, boolean content, String... attributes) {
 		appendTextNode(elementName, content ? "true" : "false", attributes);
+	}
+	
+	public void appendLongNode(Enum element, long content, String... attributes) {
+		appendLongNode(element.name(), content, attributes);
 	}
 	
 	/** 
@@ -229,7 +254,7 @@ public class XmlBuilder implements Appendable {
 	
 	@Override
 	public String toString() {
-		for (int i = 0; i < elementStack.size(); i++) {
+		while (elementStack.size() > 0) {
 			closeElement();
 		}
 		return builder.toString();

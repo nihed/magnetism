@@ -50,7 +50,21 @@ public interface FeedSystem {
 	 */
 	void markFeedFailedLastUpdate(Feed feed);
 	
+	/**
+	 * Returns feed entries with sorted by publishing date, with the latest entry first.
+	 * 
+	 * @param feed
+	 * @return feed entries
+	 */
 	List<FeedEntry> getCurrentEntries(Feed feed);
+	
+	/**
+	 * Returns the latest entry for a feed.
+	 * 
+	 * @param feed
+	 * @return the latest entry for a feed
+	 */
+	FeedEntry getLastEntry(Feed feed);
 	
 	List<Feed> getInUseFeeds();
 	

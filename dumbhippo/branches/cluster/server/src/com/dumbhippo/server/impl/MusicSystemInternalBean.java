@@ -155,7 +155,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			shutdown = true;
 			
 			if (threadPool != null) {
-				threadPool.shutdown();
+				ThreadUtils.shutdownAndAwaitTermination(threadPool);
 				threadPool = null;
 			}
 		}	
@@ -310,11 +310,6 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	
 	private List<TrackHistory> getTrackHistory(Viewpoint viewpoint, User user, History type, int firstResult, int maxResults) {
 		//logger.debug("getTrackHistory() type {} for {} max results " + maxResults, type, user);
-		
-		if (!identitySpider.isViewerSystemOrFriendOf(viewpoint, user) && maxResults != 1) {
-			// A non-friend can only see one result
-			maxResults = 1;
-		}
 
 		if (!identitySpider.getMusicSharingEnabled(user, Enabled.AND_ACCOUNT_IS_ACTIVE)) {
 			return Collections.emptyList();
@@ -365,11 +360,6 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		
 		Object o = q.getSingleResult();
 		int count = ((Number)o).intValue();
-		
-		if (!identitySpider.isViewerSystemOrFriendOf(viewpoint, user) && count > 1) {
-			// A non-friend can only see one result
-			count = 1;
-		}
 
 		return count;		
 	}

@@ -234,7 +234,7 @@ public interface MessengerGlue {
 	 *     if id is specified and is not the id of a post visible to the
 	 *     user, returns null.
 	 */
-	public String getPostsXML(Guid userId, Guid id, String elementName);
+	public String getPostsXml(Guid userId, Guid id, String elementName);
 
 	/**
 	 * Signal whether or not the user wants to ignore future notifications about
@@ -255,9 +255,11 @@ public interface MessengerGlue {
 	 * @return xml dump as string
 	 * @throws NotFoundException when passed an invalid group id 
 	 */
-	public String getGroupXML(Guid username, Guid groupid) throws NotFoundException;
+	public String getGroupXml(Guid username, Guid groupid) throws NotFoundException;
 
 	public void addGroupMember(Guid user, Guid groupId, Guid invitee) throws NotFoundException;
 
 	public boolean isServerTooBusy();
+	
+	public String getBlocksXml(String username, long lastTimestamp, int start, int count);
 }

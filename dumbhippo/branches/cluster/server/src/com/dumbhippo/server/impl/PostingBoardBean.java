@@ -276,7 +276,8 @@ public class PostingBoardBean implements PostingBoard {
 						for (Group g : post.getGroupRecipients()) {
 						    liveState.queueUpdate(new GroupEvent(g.getGuid(), post.getGuid(), GroupEvent.Type.POST_ADDED));
 						}
-						liveState.queueUpdate(new PostCreatedEvent(post.getGuid(), poster.getGuid()));				
+						liveState.queueUpdate(new PostCreatedEvent(post.getGuid(), poster != null ? 
+								poster.getGuid() : null));				
 					}
 				});
 			}
@@ -472,6 +473,7 @@ public class PostingBoardBean implements PostingBoard {
 					Post post = new Post(poster, visibility, toWorld, title, text, personRecipients, groupRecipients, expandedRecipients, resources);
 					post.setPostInfo(postInfo);
 					em.persist(post);
+					stacker.onPostCreated(post.getGuid());
 					logger.debug("saved new Post {}", post);
 					return post;
 				}
@@ -483,6 +485,7 @@ public class PostingBoardBean implements PostingBoard {
 			public Post call() {
 				FeedPost post = new FeedPost(feed, entry, expandVisibilityForGroup(PostVisibility.RECIPIENTS_ONLY, feed.getGroup()));
 				em.persist(post);
+				stacker.onPostCreated(post.getGuid());
 
 				logger.debug("saved new FeedPost {}", post);
 				return post;
@@ -1112,6 +1115,8 @@ public class PostingBoardBean implements PostingBoard {
 		
 		if (!previouslyViewed) {
 			LiveState.getInstance().queueUpdate(new PostViewedEvent(postGuid, user.getGuid(), ppd.getClickedDate()));
+		} else {
+			logger.debug("Post {} had already been clicked by {}", postId, user);
 		}
 	}
 

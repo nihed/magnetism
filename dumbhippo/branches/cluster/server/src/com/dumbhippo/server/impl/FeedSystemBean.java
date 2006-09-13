@@ -43,6 +43,7 @@ import com.dumbhippo.server.FeedSystem;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.PostingBoard;
+import com.dumbhippo.server.Stacker;
 import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.XmlMethodErrorCode;
 import com.dumbhippo.server.XmlMethodException;
@@ -87,6 +88,9 @@ public class FeedSystemBean implements FeedSystem {
 
 	@EJB
 	private MusicSystem musicSystem;
+	
+	@EJB
+	private Stacker stacker;
 	
 	private static FeedFetcherCache cache = null;
 	private static ExecutorService notificationService;
@@ -256,15 +260,26 @@ public class FeedSystemBean implements FeedSystem {
 		return entry;
 	}
 	
-	private void addTrackFromFeedEntry(TrackFeedEntry entry, int entryPosition) {
-		if (entry.getFeed().getAccounts() == null) {
-			logger.warn("addTrackFromFeedEntry called for {}, but no accounts associated with feed", entry);
-		}
+	private void processFeedExternalAccounts(FeedEntry entry, int entryPosition) {
+		// this is just a check for debugging purposes to make sure we handle all TrackFeedEntry objects well
+		if ((entry instanceof TrackFeedEntry) && entry.getFeed().getAccounts().isEmpty()) {
+			logger.warn("processExternalAccountFeed called for TrackFeedEntry {}, but no accounts associated with feed", entry);
+		}		
+		
 		for (ExternalAccount external : entry.getFeed().getAccounts()) {
-			// logger.debug("Processing feed event {} for account {}", entry.getTitle(), afeed.getAccount());
-			if (external.getAccountType() == ExternalAccountType.RHAPSODY)
-				musicSystem.addFeedTrack(external.getAccount().getOwner(), entry, entryPosition);
-		}
+			// logger.debug("Processing feed event {} for account {}", entry.getTitle(), external);
+			if (external.getAccountType() == ExternalAccountType.RHAPSODY) {
+				assert (entry instanceof TrackFeedEntry);
+				musicSystem.addFeedTrack(external.getAccount().getOwner(), (TrackFeedEntry)entry, entryPosition);
+			} else if (external.getAccountType() == ExternalAccountType.BLOG) {
+				// entry.getDate().getTime() creates a timestamp that is too old, at least with blogspot
+				// so it is unreliable, because we update blocks based on timestamps
+				stacker.stackAccountUpdate(external.getAccount().getOwner().getGuid(), ExternalAccountType.BLOG, (new Date()).getTime());
+			} else {
+				logger.warn("unexpected account type");
+			}
+		}		
+		
 	}
 	
 	private void setLinkFromSyndFeed(Feed feed, SyndFeed syndFeed) throws XmlMethodException {
@@ -298,10 +313,9 @@ public class FeedSystemBean implements FeedSystem {
 					foundGuids.add(guid);
 					em.persist(entry);
 					feed.getEntries().add(entry);
-					if (entry instanceof TrackFeedEntry) {
-						// This won't work at the moment because the feed hasn't yet been associated with an account yet
-						// addTrackFromFeedEntry((TrackFeedEntry)entry, entryPosition++);
-					}
+					// This won't work at the moment because the feed hasn't yet been associated with an account yet
+					// Would also need to figure out what entryPosition should be
+				    // processFeedExternalAccounts(entry, 0);
 				} catch (MalformedURLException e) {
 					logger.debug("ignoring feed entry with bogus url on {}: {}", feed.getSource(), e.getMessage());
 					continue;
@@ -316,7 +330,6 @@ public class FeedSystemBean implements FeedSystem {
 	private void updateFeedFromSyndFeed(Feed feed, SyndFeed syndFeed) throws XmlMethodException {
 		feed.setTitle(syndFeed.getTitle());
 		setLinkFromSyndFeed(feed, syndFeed);
-		
 		Map<String, FeedEntry> oldEntries = new HashMap<String, FeedEntry>();
 		
 		for (FeedEntry entry : feed.getEntries()) {
@@ -324,7 +337,6 @@ public class FeedSystemBean implements FeedSystem {
 		}
 		
 		Set<String> foundGuids = new HashSet<String>();
-		
 		int entryPosition = 0;
 		for (Object o : syndFeed.getEntries()) {
 			SyndEntry syndEntry = (SyndEntry)o;
@@ -332,7 +344,6 @@ public class FeedSystemBean implements FeedSystem {
 			String guid = syndEntry.getUri();
 			if (foundGuids.contains(guid))
 				continue;
-			
 			if (oldEntries.containsKey(guid)) {
 				// We don't try to update old entries, because it is painful and expensive:
 				// The most interesting thing to update is the description, and we only store the 
@@ -351,9 +362,9 @@ public class FeedSystemBean implements FeedSystem {
 					foundGuids.add(guid);
 					em.persist(entry);
 					feed.getEntries().add(entry);
-					if (entry instanceof TrackFeedEntry) {
-						addTrackFromFeedEntry((TrackFeedEntry)entry, entryPosition++);
-					}
+					// if this feed is associated with some external account(s), this function will take 
+					// care of what needs to happen
+					processFeedExternalAccounts(entry, entryPosition++);
 				} catch (MalformedURLException e) {
 					logger.debug("ignoring feed entry with bogus url on {}: {}", feed.getSource(), e.getMessage());
 					continue;
@@ -388,7 +399,7 @@ public class FeedSystemBean implements FeedSystem {
 				public void run() {
 					logger.debug("  Transaction committed, running new entry notification for {} entries", newEntryIds.size());
 					for (final long entryId : newEntryIds) {
-						getNotificationService().submit(new Runnable() {
+						getNotificationService().execute(new Runnable() {
 							public void run() {
 								try {
 									EJBUtil.defaultLookup(FeedSystem.class).handleNewEntryNotification(entryId);
@@ -540,6 +551,18 @@ public class FeedSystemBean implements FeedSystem {
 		return result;
 	}
 	
+	public FeedEntry getLastEntry(Feed feed) {
+		// this could get smarter if we want to return the entry that was added last,
+		// which might not necessarily be the same one that has the latest publishing date
+		// (for example, if some blogs allow back dating entries)
+		// this could also be change to return a given number of recent entries
+		List<FeedEntry> entries = getCurrentEntries(feed);
+		if (entries.size() < 1)
+			return null;
+		
+		return entries.get(0);
+	}
+	
 	public List<Feed> getInUseFeeds() {
 		List l = em.createQuery("SELECT f FROM Feed f WHERE EXISTS " + 
 				" (SELECT gf FROM GroupFeed gf WHERE gf.feed = f AND gf.removed = 0) OR " +
@@ -583,7 +606,7 @@ public class FeedSystemBean implements FeedSystem {
 		shutdown = true;
 		
 		if (notificationService != null) {
-			notificationService.shutdown();
+			ThreadUtils.shutdownAndAwaitTermination(notificationService);
 			notificationService = null;
 		}
 	}

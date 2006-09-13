@@ -10,6 +10,7 @@ import javax.ejb.Local;
 import org.xml.sax.SAXException;
 
 import com.dumbhippo.XmlBuilder;
+import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.UserBlockData;
 
@@ -366,6 +367,10 @@ public interface HttpMethods {
  	@HttpParams( { "userId" })
  	public void getMusicPersonSummary(XmlBuilder xml, UserViewpoint viewpoint, String userId) throws XmlMethodException;
  	
+ 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
+ 	@HttpParams( { "userId", "accountType" }) 	
+ 	public void getExternalAccountSummary(XmlBuilder xml, UserViewpoint viewpoint, String userId, String accountType) throws XmlMethodException, NotFoundException;
+
 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
  	@HttpParams( { "groupId" })
  	public void getGroupChatSummary(XmlBuilder xml, UserViewpoint viewpoint, String groupId) throws XmlMethodException;
@@ -377,4 +382,9 @@ public interface HttpMethods {
 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
  	@HttpParams( { "blockId", "hushed" })
  	public void doSetBlockHushed(XmlBuilder xml, UserViewpoint viewpoint, UserBlockData userBlockData, boolean hushed) throws XmlMethodException;
+	
+	@HttpContentTypes(HttpResponseData.XMLMETHOD)
+	@HttpParams( { "fileId" })
+	@HttpOptions(transaction=false)
+	public void doDeleteFile(XmlBuilder xml, UserViewpoint viewpoint, Guid fileId) throws XmlMethodException;
 }

@@ -39,6 +39,7 @@ import com.dumbhippo.persistence.PostVisibility;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.Sentiment;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.ChatRoomInfo;
 import com.dumbhippo.server.ChatRoomKind;
@@ -63,6 +64,7 @@ import com.dumbhippo.server.PostView;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.PromotionCode;
 import com.dumbhippo.server.ServerStatus;
+import com.dumbhippo.server.Stacker;
 import com.dumbhippo.server.SystemViewpoint;
 import com.dumbhippo.server.TrackView;
 import com.dumbhippo.server.UserViewpoint;
@@ -101,6 +103,9 @@ public class MessengerGlueBean implements MessengerGlue {
 	
 	@EJB
 	private ExternalAccountSystem externalAccounts;
+	
+	@EJB
+	private Stacker stacker;
 	
 	static final private long EXECUTION_WARN_MILLISECONDS = 5000;
 	
@@ -554,7 +559,7 @@ public class MessengerGlueBean implements MessengerGlue {
 	static final String RECENT_POSTS_ELEMENT_NAME = "recentPosts";
 	static final String RECENT_POSTS_NAMESPACE = "http://dumbhippo.com/protocol/post";
 	
-	public String getPostsXML(Guid userId, Guid id, String elementName) {
+	public String getPostsXml(Guid userId, Guid id, String elementName) {
 		User user = getUserFromGuid(userId);
 		UserViewpoint viewpoint = new UserViewpoint(user);
 		LiveState liveState = LiveState.getInstance();
@@ -618,8 +623,8 @@ public class MessengerGlueBean implements MessengerGlue {
 		postingBoard.setPostIgnored(user, post, ignore);
 	}
 
-	public String getGroupXML(Guid username, Guid groupId) throws NotFoundException {
-		User user = getUserFromGuid(username);
+	public String getGroupXml(Guid userId, Guid groupId) throws NotFoundException {
+		User user = getUserFromGuid(userId);
 		UserViewpoint viewpoint = new UserViewpoint(user);		
 		GroupView groupView = groupSystem.loadGroup(viewpoint, groupId);
 		return groupView.toXml();
@@ -633,6 +638,15 @@ public class MessengerGlueBean implements MessengerGlue {
 		groupSystem.addMember(user, groupView.getGroup(), invitee);
 	}
 
+	public String getBlocksXml(String username, long lastTimestamp, int start, int count) {
+		User user = getUserFromUsername(username);
+		UserViewpoint viewpoint = new UserViewpoint(user);
+		List<UserBlockData> list = stacker.getStack(viewpoint, user, lastTimestamp, start, count);
+		XmlBuilder xml = new XmlBuilder();
+		CommonXmlWriter.writeBlocks(xml, viewpoint, user, list, CommonXmlWriter.NAMESPACE_BLOCKS);
+		return xml.toString();
+	}
+	
 	public boolean isServerTooBusy() {
 		if (activeRequestCount >= MAX_ACTIVE_REQUESTS || serverStatus.throttleXmppConnections()) {
 			incrementTooBusyCount();

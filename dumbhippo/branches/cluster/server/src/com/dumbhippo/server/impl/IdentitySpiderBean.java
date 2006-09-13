@@ -573,14 +573,13 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	}
 
 	/**
-	 * 
 	 * @param user
 	 *            the user we're looking at the contacts of
 	 * @param contactUser
 	 *            is this person a contact of user?
 	 * @return true if contactUser is a contact of user
 	 */
-	private boolean isContactNoViewpoint(User user, User contactUser) {
+	private boolean userHasContact(User user, User contactUser) {
 		LiveUser liveUser = LiveState.getInstance().getLiveUser(user.getGuid());
 		for (AccountClaim ac : contactUser.getAccountClaims()) {
 			if (liveUser.hasContactResource(ac.getResource().getGuid()))
@@ -589,9 +588,10 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 
 		return false;
 	}
-
+	
 	// We don't want to use the general isContactNoViewpoint for this, because
-	// there could be race conditions with the async-updated LiveUser cache.
+	// there could be race conditions with the async-updated LiveUser cache,
+	// and the viewer needs to see accurate information about their own contacts.
 	// 
 	// We don't mind reconstituting *the viewer's* contact database from the
 	// hibernate second level cache, so we just do the check directly
@@ -606,18 +606,17 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 
 		return false;
 	}
-
+	
 	public boolean isContact(Viewpoint viewpoint, User user, User contactUser) {
 		// see if we're allowed to look at who user's contacts are
 		if (!isViewerSystemOrFriendOf(viewpoint, user))
 			return false;
 
 		if (viewpoint.isOfUser(user))
-			return viewerHasContact((UserViewpoint) viewpoint, contactUser);
-
-		// if we can see their contacts, return whether this person is one of
-		// them
-		return isContactNoViewpoint(user, contactUser);
+			return viewerHasContact((UserViewpoint)viewpoint, contactUser);
+	
+		// if we can see their contacts, return whether this person is one of them
+		return userHasContact(user, contactUser);
 	}
 
 	public boolean isViewerSystemOrFriendOf(Viewpoint viewpoint, User user) {
@@ -627,18 +626,20 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 			UserViewpoint userViewpoint = (UserViewpoint) viewpoint;
 			if (user.equals(userViewpoint.getViewer()))
 				return true;
-			if (userViewpoint.isFriendOfStatusCached(user))
+			if (userViewpoint.isFriendOfStatusCached(user)) {
+			    logger.debug("Returning cached status for viewpoint {}", userViewpoint);
 				return userViewpoint.getCachedFriendOfStatus(user);
-
-			boolean isFriendOf = isContactNoViewpoint(user, userViewpoint
-					.getViewer());
-			userViewpoint.setCachedFriendOfStatus(user, isFriendOf);
+			}
+			
+			logger.debug("will create a live user for user {}", user);
+			boolean isFriendOf = userHasContact(user, userViewpoint.getViewer());
+            userViewpoint.setCachedFriendOfStatus(user, isFriendOf);
 			return isFriendOf;
 		} else {
 			return false;
 		}
 	}
-
+    
 	public boolean isViewerWeirdTo(Viewpoint viewpoint, User user) {
 		// FIXME haven't implemented this feature yet
 		return false;

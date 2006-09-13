@@ -77,9 +77,9 @@
 				    </c:when>
 				    <c:otherwise>
 				        <div class="dh-special-subtitle">
-				            Enter your email address to get our fun and free stuff.
+				            To sign up for Mugshot, enter your email address.
 				            <br/>
-					        Then check your email for a link to our download page.
+					        Then, check your email for a sign-in link.
 				        </div>		   
 				    </c:otherwise>
 				</c:choose>

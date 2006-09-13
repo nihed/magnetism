@@ -13,6 +13,7 @@ import com.dumbhippo.ThreadUtils;
 import com.dumbhippo.persistence.Feed;
 import com.dumbhippo.server.FeedSystem;
 import com.dumbhippo.server.FeedUpdater;
+import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.XmlMethodException;
 import com.dumbhippo.server.util.EJBUtil;
 
@@ -86,13 +87,25 @@ public class FeedUpdaterBean implements FeedUpdater {
 								++count;
 								threadPool.execute(new Runnable() {
 									public void run() {
-										FeedSystem feedSystem = EJBUtil.defaultLookup(FeedSystem.class);
+										final FeedSystem feedSystem = EJBUtil.defaultLookup(FeedSystem.class);
 										try {
-											// updateFeedFetchFeed is marked to not create a transaction if none already,
-											// and we should have none here in theory.
-											Object o = feedSystem.updateFeedFetchFeed(feed);
-											if (o != null)
-												feedSystem.updateFeedStoreFeed(o);
+                                            final Object o = feedSystem.updateFeedFetchFeed(feed);
+                                            if (o != null) {
+                                                    final TransactionRunner runner = EJBUtil.defaultLookup(TransactionRunner.class);
+                                                    runner.runTaskRetryingOnDuplicateEntry(new Runnable() {
+                                                            public void run() {
+                                                                    try {
+                                                                        feedSystem.updateFeedStoreFeed(o);
+                                                                    } catch (final XmlMethodException e) {
+                                                                            logger.warn("Couldn't store feed update results {}: {}", feed, e.getCodeString() + ": " + e.getMessage());
+                                                                            // XmlMethodException here should be some kind of feed parse error, not a database error.
+                                                                            // we don't want to mark a feed failed due to a db error anyway since the expected db
+                                                                            // error is that another thread successfully saved the feed first.
+                                                                            feedSystem.markFeedFailedLastUpdate(feed);
+                                                                    }
+                                                            }
+                                                    });
+                                            }
 										} catch (XmlMethodException e) {
 											logger.info("Couldn't update feed {}: {}", feed, e.getCodeString() + ": " + e.getMessage());
 											feedSystem.markFeedFailedLastUpdate(feed);											

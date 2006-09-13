@@ -22,6 +22,8 @@ import java.util.Set;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.naming.NameNotFoundException;
 import javax.naming.NamingException;
 import javax.persistence.EntityManager;
@@ -43,7 +45,6 @@ import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.live.LiveState;
 import com.dumbhippo.persistence.AimResource;
-import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.ChatMessage;
 import com.dumbhippo.persistence.Contact;
 import com.dumbhippo.persistence.EmailResource;
@@ -62,6 +63,7 @@ import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.PostMessage;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.Sentiment;
+import com.dumbhippo.persistence.StorageState;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.persistence.ValidationException;
@@ -85,6 +87,7 @@ import com.dumbhippo.server.InvitationSystem;
 import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.NowPlayingThemeSystem;
+import com.dumbhippo.server.PermissionDeniedException;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
 import com.dumbhippo.server.PersonViewer;
@@ -92,6 +95,7 @@ import com.dumbhippo.server.PostIndexer;
 import com.dumbhippo.server.PostView;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.PromotionCode;
+import com.dumbhippo.server.SharedFileSystem;
 import com.dumbhippo.server.SigninSystem;
 import com.dumbhippo.server.Stacker;
 import com.dumbhippo.server.SystemViewpoint;
@@ -158,11 +162,17 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	@EJB
 	private Configuration config;
 	
+    @EJB
+    private FeedSystem feedSystem;
+	
 	@EJB
 	private ExternalAccountSystem externalAccountSystem;
 	
 	@EJB
 	private Stacker stacker;
+	
+	@EJB
+	private SharedFileSystem sharedFileSystem;
 	
 	@PersistenceContext(unitName = "dumbhippo")
 	private EntityManager em;
@@ -838,6 +848,9 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 				character = null;
 				// character = Character.MUGSHOT;
 				break;
+			case OPEN_SIGNUP_200609:
+				character = Character.MUGSHOT;
+				break;
 			default:
 				character = null;
 				break;
@@ -852,20 +865,22 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		} else {
 			User inviter = accountSystem.getCharacter(character);
 			
-			if (!inviter.getAccount().canSendInvitations(1)) {
-				note = "Someone got there first! No more invitations available right now.";
-			} else {
-				// this does NOT check whether the account has invitations left,
-				// that's why we do it above.
-				try {
+			try {
+				if (!inviter.getAccount().canSendInvitations(1)) {
+					wantsInSystem.addWantsIn(address);				    
+					note = "Sorry, someone got there first! No more invitations available right now. We saved your address and will let you know when we have room for more.";
+				} else {
+					// this does NOT check whether the account has invitations left,
+					// that's why we do it above.
 					note = invitationSystem.sendEmailInvitation(new UserViewpoint(inviter), promotionCode, address,
 								"Mugshot Download", "Hey!\n\nClick here to get the Mugshot Music Radar and Web Swarm.");
-				} catch (ValidationException e) {
-					// FIXME should be displayed to user somehow
-					throw new RuntimeException("Invalid email address", e); 
+					if (note == null)
+						note = "Your invitation is on its way (check your email)";
 				}
-				if (note == null)
-					note = "Your invitation is on its way (check your email)";
+			} catch (ValidationException e) {
+			    // FIXME should be displayed to user somehow
+				// "Something went wrong! Reload the page and try again." message we display looks ok for now
+			    throw new RuntimeException("Invalid email address", e);				
 			}
 		}
 		
@@ -1477,6 +1492,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		String rhapUserId = q.substring(i, j);
 		Feed feed = scrapeFeedFromUrl(url);
 		
+		logger.debug("found feed: {}", feed);
 		ExternalAccount external = externalAccountSystem.getOrCreateExternalAccount(viewpoint, ExternalAccountType.RHAPSODY);
 		
 		try {
@@ -1815,39 +1831,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	private void returnBlocks(XmlBuilder xml, UserViewpoint viewpoint, User user, List<UserBlockData> list) throws XmlMethodException {
 		logger.debug("Returning {} blocks", list.size());
 		
-		xml.openElement("blocks", "count", Integer.toString(list.size()),
-				"userId", user.getId(), "serverTime", Long.toString(System.currentTimeMillis()));
-		for (UserBlockData ubd : list) {
-			Block block = ubd.getBlock();
-			xml.openElement("block", "id", block.getId(),
-					"type", block.getBlockType().name(),
-					"timestamp", Long.toString(block.getTimestampAsLong()),
-					"clickedCount", Integer.toString(block.getClickedCount()),
-					"ignored", Boolean.toString(ubd.isIgnored()),
-					"ignoredTimestamp", Long.toString(ubd.getIgnoredTimestampAsLong()),
-					"clicked", Boolean.toString(ubd.isClicked()),
-					"clickedTimestamp", Long.toString(ubd.getClickedTimestampAsLong()));
-			
-			switch (block.getBlockType()) {
-			case MUSIC_PERSON:
-				xml.appendTextNode("musicPerson", null, "userId", block.getData1AsGuid().toString());
-				break;
-			case GROUP_CHAT:
-				xml.appendTextNode("groupChat", null, "groupId", block.getData1AsGuid().toString());
-				break;
-			case POST:
-				xml.appendTextNode("post", null, "postId", block.getData1AsGuid().toString());
-				break;
-			case GROUP_MEMBER:
-				xml.appendTextNode("groupMember", null, "groupId", block.getData1AsGuid().toString(),
-									   "userId", block.getData2AsGuid().toString());
-				break;
-				// don't add a default case, we want a warning if any cases are missing
-			}
-			
-			xml.closeElement();
-		}
-		xml.closeElement();		
+		CommonXmlWriter.writeBlocks(xml, viewpoint, user, list, null);
 	}
 	
 	public void getBlocks(XmlBuilder xml, UserViewpoint viewpoint, String userId, String lastTimestampStr, String startStr, String countStr) throws XmlMethodException {
@@ -1897,8 +1881,27 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		xml.closeElement();
 	}
 	
+	public void getExternalAccountSummary(XmlBuilder xml, UserViewpoint viewpoint, String userId, String accountType) throws XmlMethodException, NotFoundException {
+		User user = parseUserId(userId);
+		// ALL_RESOURCES here is just because returnPersonsXml wants it, the javascript doesn't need it
+		PersonView pv = personViewer.getPersonView(viewpoint, user, PersonViewExtra.ALL_RESOURCES);
+   		xml.openElement("accountUpdate", "userId", user.getId(), "accountType", accountType);
+		returnPersonsXml(xml, viewpoint, Collections.singleton(pv));
+		int accountTypeOrdinal = Integer.parseInt(accountType);
+		if (accountTypeOrdinal == ExternalAccountType.BLOG.ordinal()) {
+			ExternalAccount blogAccount = externalAccountSystem.lookupExternalAccount(viewpoint, user, ExternalAccountType.BLOG);  
+			FeedEntry lastEntry = feedSystem.getLastEntry(blogAccount.getFeed());
+			xml.appendTextNode("accountType", "Blog");
+			xml.appendTextNode("updateTitle", lastEntry.getTitle());
+			xml.appendTextNode("updateLink", lastEntry.getLink().getUrl());
+			xml.appendTextNode("updateText", lastEntry.getDescription());			
+		}
+		xml.closeElement();
+	}
+	
 	private void writeChatMessage(XmlBuilder xml, ChatMessage m) {
 		xml.appendTextNode("message", m.getMessageText(), "fromId", m.getFromUser().getId(),
+				"fromNickname", m.getFromUser().getNickname(),
 				"timestamp", Long.toString(m.getTimestamp().getTime()),
 				"serial", Integer.toString(m.getMessageSerial()));		
 	}
@@ -1936,5 +1939,41 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
  		}
  		// send the new block data back, to avoid an extra round trip
  		returnBlocks(xml, viewpoint, viewpoint.getViewer(), Collections.singletonList(userBlockData));
+ 	}
+ 	
+ 	@TransactionAttribute(TransactionAttributeType.NEVER)
+ 	public void doDeleteFile(XmlBuilder xml, UserViewpoint viewpoint, Guid fileId) throws XmlMethodException {
+ 		// Transaction 1 - set state to DELETING
+ 		try {
+			sharedFileSystem.setFileState(viewpoint, fileId, StorageState.DELETING, -1);
+		} catch (NotFoundException e) {
+			throw new XmlMethodException(XmlMethodErrorCode.NOT_FOUND, "No such file");
+		} catch (PermissionDeniedException e) {
+			throw new XmlMethodException(XmlMethodErrorCode.FORBIDDEN, "You aren't allowed to delete this file");
+		}
+		try {
+			// Outside transaction - remove from local or remote file storage
+			sharedFileSystem.deleteFileOutsideDatabase(fileId);
+		} catch (Exception e) {
+			logger.error("Failed to delete file", e);
+			try {
+				// Transaction 2 - emergency revert of DELETING state
+				sharedFileSystem.setFileState(viewpoint, fileId, StorageState.STORED, -1);
+			} catch (Exception e2) {
+				logger.error("Failed in last-ditch effort to fix state of file {}, must be set back to STORED manually",
+						fileId);
+				logger.error("Exception was", e2);
+			}
+			throw new XmlMethodException(XmlMethodErrorCode.FAILED, "Something went wrong while deleting this file");
+		}
+		// Transaction 3 - set the state to DELETED to indicate success
+		try {
+			sharedFileSystem.setFileState(viewpoint, fileId, StorageState.DELETED, -1);
+		} catch (Exception e) {
+			logger.error("Successfully deleted file {} but failed to set its state to DELETED", fileId);
+			logger.error("Exception was", e);
+			// don't return an error from the method, this will appear to have worked from user 
+			// standpoint
+		}
  	}
 }

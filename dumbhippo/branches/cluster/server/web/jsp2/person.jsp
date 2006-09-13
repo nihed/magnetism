@@ -37,20 +37,30 @@
 				<c:if test="${haveWhereAtSection}">
 					<div class="dh-where-at-viewport">
 						<div class="dh-where-at-list">
-							<c:if test="${!empty person.viewedPerson.aim}">
-								<div class="dh-where-at-item">
-									<c:if test="${!empty person.aimPresenceImageLink}">
-										<img src="${person.aimPresenceImageLink}" border="0"/>
-									</c:if>
-									<dht:whereAtItem label="AIM" linkText="${person.viewedPerson.aim.screenName}" linkTarget="${person.aimLink}"/>
-								</div>
-							</c:if>
-							<c:if test="${!empty person.viewedPerson.email}">
-								<div class="dh-where-at-item">
-									<dh:png src="/images2/${buildStamp}/email_icon.png" style="width: 16px; height: 11px;"/>
-									<dht:whereAtItem linkText="Send me email" linkTarget="${person.emailLink}"/>
-								</div>
-							</c:if>
+							<div class="dh-where-at-item">
+								<c:if test="${!empty person.aimPresenceImageLink}">
+									<img src="${person.aimPresenceImageLink}" border="0"/>
+								</c:if>
+								<c:choose>
+									<c:when test="${!empty person.viewedPerson.aim}">
+										<dht:whereAtItem label="AIM" linkText="${person.viewedPerson.aim.screenName}" linkTarget="${person.aimLink}"/>
+									</c:when>
+									<c:otherwise>
+										<span class="dh-where-at-empty">No AIM Address</span>
+									</c:otherwise>
+								</c:choose>
+							</div>
+							<div class="dh-where-at-item">
+								<dh:png src="/images2/${buildStamp}/email_icon.png" style="width: 16px; height: 11px;"/>
+								<c:choose>
+									<c:when test="${!empty person.viewedPerson.email}">
+										<dht:whereAtItem linkText="Send me email" linkTarget="${person.emailLink}"/>
+									</c:when>
+									<c:otherwise>
+										<span class="dh-where-at-empty">No Email Address</span>
+									</c:otherwise>
+								</c:choose>
+							</div>
 							<div class="dh-grow-div-around-floats"><div></div></div>
 						</div>
 						<%-- Loved items with just links --%>

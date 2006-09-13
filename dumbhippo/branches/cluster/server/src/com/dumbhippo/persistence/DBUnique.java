@@ -1,7 +1,5 @@
 package com.dumbhippo.persistence;
 
-import java.io.Serializable;
-
 import javax.persistence.Column;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -11,7 +9,7 @@ import javax.persistence.MappedSuperclass;
 import org.hibernate.lucene.Keyword;
 
 @MappedSuperclass
-public abstract class DBUnique implements Serializable {
+public abstract class DBUnique {
 	private long id;
 	
 	protected DBUnique() {

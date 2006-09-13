@@ -86,6 +86,10 @@
 			background-color:	#84569B;
 			color:				white;	
 		}	
+		.dh-stacked-block-account-update {
+		    background-color:   #666666;
+		    color:              white; 
+		}
 		.dh-stacked-block .dh-left-column {
 			position:	relative;
 			width: 		350px;
@@ -122,12 +126,18 @@
 			font-size: 	10px;
 			font-style: italic;
 		}
-		.dh-stacked-block-music-person .dh-tracks .dh-track-list {
+		.dh-stacked-block-music-person .dh-songs .dh-song-list {
 			padding: 		0;
 			margin: 		5px;
 		}
-		.dh-stacked-block-music-person .dh-tracks .dh-track {
+		.dh-stacked-block-music-person .dh-songs .dh-song {
 			list-style: 		none;
+			font-size:		12px;
+		}
+		.dh-stacked-block-music-person .dh-songs .dh-song-artist {
+			font-size:		12px;
+		}
+		.dh-stacked-block-music-person .dh-songs .dh-song-title {
 			font-size:		12px;
 		}
 		.dh-stacked-block-group-chat .dh-group-chat-messages .dh-group-chat-message {

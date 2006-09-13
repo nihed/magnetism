@@ -44,7 +44,7 @@ public class RecentPostsIQHandler extends AbstractIQHandler {
 		String recentPostsString;
 		try {
 			Guid postId = (id == null ? null : new Guid(id));
-			recentPostsString = glue.getPostsXML(Guid.parseTrustedJabberId(from.getNode()), 
+			recentPostsString = glue.getPostsXml(Guid.parseTrustedJabberId(from.getNode()), 
 					                             postId, null);
 		} catch (ParseException e) {
 			recentPostsString = null;

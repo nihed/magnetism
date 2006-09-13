@@ -52,7 +52,7 @@ public class PersonPhotoServlet extends AbstractPhotoServlet {
 	}
 
 	@Override
-	protected boolean requiresTransaction() {
+	protected boolean requiresTransaction(HttpServletRequest request) {
 		return true;
 	}
 

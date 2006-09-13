@@ -31,6 +31,7 @@ public class Feed extends DBUnique {
 	protected Feed() {
 		this.entries = new HashSet<FeedEntry>();
 		this.groups = new HashSet<GroupFeed>();
+		this.accounts = new HashSet<ExternalAccount>();
 	}
 	
 	public Feed(LinkResource source) {

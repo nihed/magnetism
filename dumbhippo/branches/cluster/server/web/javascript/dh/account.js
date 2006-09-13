@@ -284,6 +284,16 @@ dhAccountInit = function() {
 		"Saving your website address...",
 		"Your website link has been updated.");  // phrasing "updated" is because it could also be removed
 	}
+
+	dh.account.blogEntryNode = document.getElementById('dhBlogEntry');
+	dh.account.blogEntry = new dh.textinput.Entry(dh.account.blogEntryNode, "Your blog URL", dh.formtable.currentValues['dhBlogEntry']);
+
+	dh.formtable.undoValues['dhBlogEntry'] = dh.account.blogEntry.getValue();
+	dh.account.blogEntry.onValueChanged = function(value) {
+		dh.formtable.onValueChangedXmlMethod(dh.account.blogEntry, 'setblog', 'url', value,
+		"Saving your blog address...",
+		"Your blog link has been updated.");  // phrasing "updated" is because it could also be removed
+	}
 	
 	// add some event handlers on the file input
 	dh.account.photoEntry = new dh.fileinput.Entry(document.getElementById('dhPictureEntry'));

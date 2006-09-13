@@ -24,6 +24,7 @@ import com.dumbhippo.server.ExternalAccountSystem;
 import com.dumbhippo.server.MessageSender;
 import com.dumbhippo.server.MySpaceTracker;
 import com.dumbhippo.server.NotFoundException;
+import com.dumbhippo.server.Stacker;
 import com.dumbhippo.server.UserViewpoint;
 import com.dumbhippo.server.Viewpoint;
 import com.dumbhippo.services.FlickrPhotoSize;
@@ -42,7 +43,10 @@ public class ExternalAccountSystemBean implements ExternalAccountSystem {
 	
 	@EJB
 	@IgnoreDependency
-	private MessageSender messageSender;	
+	private MessageSender messageSender;
+	
+	@EJB
+	private Stacker stacker;
 	
 	@EJB
 	private Configuration config;
@@ -61,6 +65,8 @@ public class ExternalAccountSystemBean implements ExternalAccountSystem {
 			external.setAccount(a);
 			em.persist(external);
 			a.getExternalAccounts().add(external);
+			
+			stacker.onExternalAccountCreated(a.getOwner().getGuid(), type);
 		}
 		return external;
 	}
