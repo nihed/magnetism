@@ -10,6 +10,7 @@
         <ant dir="wildfire/" antfile="build/build.xml" target="plugins"/>    	
         <ant dir="imbot" target="all"/>
     	<ant dir="hungry" target="build"/>    	
+    	<ant dir="cluster" target="build"/>    	
     </target>
 
     <target name="dar" depends="compile">
