@@ -124,94 +124,31 @@ hippo_app_open_url(HippoApp   *app,
                    gboolean    use_login_browser,
                    const char *url)
 {
-    HippoBrowserKind browser;
-    char *command;
-    char *quoted;
-    GError *error;
-    
-    g_debug("Opening url '%s'", url);
-    
-    browser = hippo_connection_get_auth_browser(app->connection);
-    
-    quoted = g_shell_quote(url);
-    
-    switch (browser) {
-    case HIPPO_BROWSER_EPIPHANY:
-        command = g_strdup_printf("epiphany %s", quoted);
-        break;
-    case HIPPO_BROWSER_FIREFOX:
-    default:
-        command = g_strdup_printf("firefox %s", quoted);    
-        break;
-    }
-  
-    error = NULL;
-    if (!g_spawn_command_line_async(command, &error)) {
-        GtkWidget *dialog;
-        
-        dialog = gtk_message_dialog_new(NULL, 0, GTK_MESSAGE_ERROR,
-                                        GTK_BUTTONS_CLOSE,
-                                        _("Couldn't start your web browser!"));
-        gtk_message_dialog_format_secondary_text(GTK_MESSAGE_DIALOG(dialog), "%s", error->message);
-        g_signal_connect(dialog, "response", G_CALLBACK(gtk_widget_destroy), NULL);
-        
-        gtk_widget_show(dialog);
-        
-        g_debug("Failed to launch browser: %s", error->message);
-        g_error_free(error);
-    }
-    
-    g_free(command);
-    g_free(quoted);
-}
-
-static char*
-make_absolute_url(HippoApp   *app,
-                  const char *relative)
-{
-    char *server;
-    char *url;
-    g_return_val_if_fail(*relative == '/', NULL);
-    server = hippo_platform_get_web_server(app->platform);
-    url = g_strdup_printf("http://%s%s", server, relative);
-    g_free(server);
-    return url;
+    hippo_platform_open_url(app->platform,
+                            use_login_browser ?
+                            hippo_connection_get_auth_browser(app->connection) :
+                            HIPPO_BROWSER_UNKNOWN,
+                            url);
 }
 
 void
 hippo_app_show_home(HippoApp *app)
 {
-    char *url;
-    url = make_absolute_url(app, "/");
-    hippo_app_open_url(app, TRUE, url);
-    g_free(url);
+    hippo_connection_open_relative_url(app->connection, "/");
 }
 
 void
 hippo_app_visit_post(HippoApp   *app,
                      HippoPost  *post)
 {
-    char *url;
-    char *relative;
-    relative = g_strdup_printf("/visit?post=%s", hippo_post_get_guid(post));
-    url = make_absolute_url(app, relative);
-    hippo_app_open_url(app, TRUE, url);
-    g_free(relative);
-    g_free(url);
+    hippo_connection_visit_post(app->connection, post);
 }
 
 void
 hippo_app_visit_post_id(HippoApp   *app,
                         const char *guid)
 {
-    HippoPost *post;
-    
-    post = hippo_data_cache_lookup_post(app->cache, guid);
-    if (post == NULL) {
-        g_warning("don't know about post '%s' can't open its page", guid);
-        return;
-    }
-    hippo_app_visit_post(app, post);
+    hippo_connection_visit_post_id(app->connection, guid);
 }
 
 void
@@ -346,7 +283,7 @@ gboolean
 hippo_app_chat_is_active(HippoApp   *app,
                          const char *post_id)
 {
-	return g_hash_table_lookup(app->chat_windows, post_id) != NULL;    
+    return g_hash_table_lookup(app->chat_windows, post_id) != NULL;    
 }
 
 void
@@ -367,7 +304,8 @@ hippo_app_load_photo(HippoApp               *app,
         /* not gonna succeed in loading this... */
         (* func)(NULL, data);
     } else {
-        char *absolute = make_absolute_url(app, url);
+        char *absolute = hippo_connection_make_absolute_url(app->connection,
+                                                            url);
         hippo_image_cache_load(app->photo_cache, absolute, func, data);
         g_free(absolute);
     }
@@ -650,7 +588,8 @@ open_upgrade_page(HippoApp *app)
 {
     char *s;
     
-    s = make_absolute_url(app, "/upgrade?platform=linux");
+    s = hippo_connection_make_absolute_url(app->connection,
+                                           "/upgrade?platform=linux");
     hippo_app_open_url(app, TRUE, s);
     g_free(s);
     

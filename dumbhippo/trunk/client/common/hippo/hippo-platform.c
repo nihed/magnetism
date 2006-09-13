@@ -1,5 +1,6 @@
 /* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 #include "hippo-platform.h"
+#include "hippo-connection.h"
 
 static void hippo_platform_base_init(void *klass);
 
@@ -79,7 +80,19 @@ hippo_platform_get_jabber_resource(HippoPlatform *platform)
 {
     g_return_val_if_fail(HIPPO_IS_PLATFORM(platform), NULL);
 
-    return HIPPO_PLATFORM_GET_CLASS(platform)->get_jabber_resource(platform);    
+    return HIPPO_PLATFORM_GET_CLASS(platform)->get_jabber_resource(platform);
+}
+
+void
+hippo_platform_open_url(HippoPlatform   *platform,
+                        HippoBrowserKind browser,
+                        const char      *url)
+{
+    g_return_if_fail(HIPPO_IS_PLATFORM(platform));
+
+    HIPPO_PLATFORM_GET_CLASS(platform)->open_url(platform,
+                                                 browser,
+                                                 url);
 }
 
 char*

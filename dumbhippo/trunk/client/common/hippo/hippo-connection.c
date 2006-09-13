@@ -3793,3 +3793,47 @@ hippo_state_debug_string(HippoState state)
     /* not a default case so we get a warning if we omit one from the switch */
     return "WHAT THE?";
 }
+
+char*
+hippo_connection_make_absolute_url(HippoConnection *connection,
+                                   const char      *relative)
+{
+    char *server;
+    char *url;
+    g_return_val_if_fail(*relative == '/', NULL);
+    server = hippo_platform_get_web_server(connection->platform);
+    url = g_strdup_printf("http://%s%s", server, relative);
+    g_free(server);
+    return url;
+}
+
+void
+hippo_connection_open_relative_url(HippoConnection *connection,
+                                   const char      *relative_url)
+{
+    char *url;
+    url = hippo_connection_make_absolute_url(connection,
+                                             relative_url);
+    hippo_platform_open_url(connection->platform,
+                            connection->login_browser,
+                            url);
+    g_free(url);
+}
+
+void
+hippo_connection_visit_post(HippoConnection *connection,
+                            HippoPost       *post)
+{
+    hippo_connection_visit_post_id(connection,
+                                   hippo_post_get_guid(post));
+}
+
+void
+hippo_connection_visit_post_id(HippoConnection *connection,
+                               const char      *guid)
+{
+    char *relative;
+    relative = g_strdup_printf("/visit?post=%s", guid);
+    hippo_connection_open_relative_url(connection, relative);
+    g_free(relative);
+}

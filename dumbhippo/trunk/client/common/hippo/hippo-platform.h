@@ -3,6 +3,7 @@
 #define __HIPPO_PLATFORM_H__
 
 #include <hippo/hippo-basics.h>
+#include <hippo/hippo-post.h>
 
 G_BEGIN_DECLS
 
@@ -33,6 +34,10 @@ struct _HippoPlatformClass {
     void      (* delete_login_cookie) (HippoPlatform  *platform);                                   
     
     const char* (* get_jabber_resource) (HippoPlatform  *platform);
+
+    void      (* open_url)            (HippoPlatform   *platform,
+                                       HippoBrowserKind browser,
+                                       const char      *url);
     
     /* Preferences */
     char*     (* get_message_server)  (HippoPlatform *platform);
@@ -57,6 +62,11 @@ gboolean         hippo_platform_read_login_cookie      (HippoPlatform    *platfo
                                                         char            **password_p);
 void             hippo_platform_delete_login_cookie    (HippoPlatform *platform); 	                                    
 const char*      hippo_platform_get_jabber_resource    (HippoPlatform *platform); 
+
+void             hippo_platform_open_url               (HippoPlatform   *platform,
+                                                        HippoBrowserKind browser,
+                                                        const char      *url);
+
 
 /* Preferences */
 char*            hippo_platform_get_message_server     (HippoPlatform *platform); 

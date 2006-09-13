@@ -24,6 +24,10 @@ static gboolean     hippo_platform_impl_read_login_cookie   (HippoPlatform     *
                                                              char             **password_p);
 static void         hippo_platform_impl_delete_login_cookie (HippoPlatform     *platform);
 static const char*  hippo_platform_impl_get_jabber_resource (HippoPlatform     *platform);
+static void         hippo_platform_impl_open_url            (HippoPlatform     *platform,
+                                                             HippoBrowserKind   browser,
+                                                             const char        *url);
+
 static char*        hippo_platform_impl_get_message_server  (HippoPlatform     *platform);
 static char*        hippo_platform_impl_get_web_server      (HippoPlatform     *platform);
 static gboolean     hippo_platform_impl_get_signin          (HippoPlatform     *platform);
@@ -59,6 +63,8 @@ hippo_platform_impl_iface_init(HippoPlatformClass *klass)
     klass->read_login_cookie = hippo_platform_impl_read_login_cookie;
     klass->delete_login_cookie = hippo_platform_impl_delete_login_cookie;
     klass->get_jabber_resource = hippo_platform_impl_get_jabber_resource;
+    klass->open_url = hippo_platform_impl_open_url;
+    
     klass->get_message_server = hippo_platform_impl_get_message_server;
     klass->get_web_server = hippo_platform_impl_get_web_server;
     klass->get_signin = hippo_platform_impl_get_signin;
@@ -232,6 +238,50 @@ hippo_platform_impl_get_jabber_resource(HippoPlatform *platform)
         g_debug("jabber resource: '%s'", impl->jabber_resource);
     }
     return impl->jabber_resource;
+}
+
+static void
+hippo_platform_impl_open_url(HippoPlatform     *platform,
+                             HippoBrowserKind   browser,
+                             const char        *url)
+{
+    char *command;
+    char *quoted;
+    GError *error;
+    
+    g_debug("Opening url '%s'", url);
+    
+    quoted = g_shell_quote(url);
+    
+    switch (browser) {
+    case HIPPO_BROWSER_EPIPHANY:
+        command = g_strdup_printf("epiphany %s", quoted);
+        break;
+    case HIPPO_BROWSER_FIREFOX:
+    case HIPPO_BROWSER_UNKNOWN: /* FIXME get user's default from gnome */
+    default:
+        command = g_strdup_printf("firefox %s", quoted);    
+        break;
+    }
+  
+    error = NULL;
+    if (!g_spawn_command_line_async(command, &error)) {
+        GtkWidget *dialog;
+        
+        dialog = gtk_message_dialog_new(NULL, 0, GTK_MESSAGE_ERROR,
+                                        GTK_BUTTONS_CLOSE,
+                                        _("Couldn't start your web browser!"));
+        gtk_message_dialog_format_secondary_text(GTK_MESSAGE_DIALOG(dialog), "%s", error->message);
+        g_signal_connect(dialog, "response", G_CALLBACK(gtk_widget_destroy), NULL);
+        
+        gtk_widget_show(dialog);
+        
+        g_debug("Failed to launch browser: %s", error->message);
+        g_error_free(error);
+    }
+    
+    g_free(command);
+    g_free(quoted);
 }
 
 static const char *

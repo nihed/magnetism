@@ -40,8 +40,15 @@ typedef enum {
     HIPPO_HOTNESS_UNKNOWN
 } HippoHotness;
 
+
+/* This can be used to specify which browser to use,
+ * in which case UNKNOWN = use system default,
+ * or to specify which browser was used (e.g. for cookies)
+ * in which case UNKNOWN = don't know.
+ */
 typedef enum 
 {
+    HIPPO_BROWSER_UNKNOWN,
     HIPPO_BROWSER_IE,
     HIPPO_BROWSER_FIREFOX,
     HIPPO_BROWSER_EPIPHANY
