@@ -111,7 +111,7 @@
 	<target name="dojobuild" if="dojocompress">
 		<!-- our dojo build.sh is hacked to do what we want,
 		 	which is create a compressed target/javascript/dojo/dojo.js -->
-        <exec dir="web/javascript/dojo/buildscripts" executable="/bin/sh">
+        <exec dir="web/javascript/dojo/buildscripts" executable="/bin/sh" failonerror="true">
         	<arg line="build.sh"/>
         </exec>
 		<!-- dojo creates this temporary junk, which we omit from the war
@@ -350,13 +350,13 @@
 	<target name="build" depends="test,build-notest" />
 
     <target name="reload" depends="build-notest">
-		<exec executable="../super/super">
+		<exec executable="../super/super" failonerror="true">
         	<arg line="reload jboss"/>
         </exec>
     </target>
 
     <target name="restart" depends="build">
-		<exec executable="../super/super">
+		<exec executable="../super/super" failonerror="true">
         	<arg line="restart jboss"/>
 		</exec>
     </target>
