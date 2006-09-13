@@ -4,6 +4,7 @@
 	<classpathentry kind="src" path="taste/src/main"/>
 	<classpathentry kind="src" path="imbot/src/java"/>
 	<classpathentry kind="src" path="hungry/src/test/java"/>
+	<classpathentry kind="src" path="cluster"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER">
 		<accessrules>
 			<accessrule kind="accessible" pattern="**/awt/image/**"/>
