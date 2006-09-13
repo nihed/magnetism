@@ -663,6 +663,7 @@ public class FeedSystemBean implements FeedSystem {
 								++count;
 								threadPool.execute(new Runnable() {
 									public void run() {
+									    final FeedSystem feedSystem = EJBUtil.defaultLookup(FeedSystem.class);
 										try {
 											// updateFeedFetchFeed is marked to not create a transaction if none already,
 											// and we should have none here in theory.
