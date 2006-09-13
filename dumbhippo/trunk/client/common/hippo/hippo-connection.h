@@ -33,6 +33,8 @@ typedef struct {
 GType        	 hippo_connection_get_type                  (void) G_GNUC_CONST;
 HippoConnection *hippo_connection_new                       (HippoPlatform    *platform);
 
+HippoPlatform*   hippo_connection_get_platform              (HippoConnection  *connection);
+
 int              hippo_connection_get_generation            (HippoConnection  *connection);
 
 gboolean         hippo_connection_get_too_old               (HippoConnection  *connection);

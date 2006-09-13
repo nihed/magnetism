@@ -6,6 +6,7 @@
 
 #include "hippo-canvas-item.h"
 #include "hippo-canvas-box.h"
+#include "hippo-actions.h"
 #include <cairo/cairo.h>
 #include <hippo/hippo-block.h>
 
@@ -25,6 +26,7 @@ struct _HippoCanvasBlock {
     HippoCanvasBox box;
     HippoBlockType required_type;
     HippoBlock *block;
+    HippoActions *actions;
     HippoCanvasItem *age_item;
     HippoCanvasItem *heading_text_item;
     HippoCanvasItem *title_link_item;
@@ -37,6 +39,7 @@ struct _HippoCanvasBlockClass {
 
     void (* set_block) (HippoCanvasBlock *canvas_block,
                         HippoBlock       *block);
+    void (* title_activated) (HippoCanvasBlock *canvas_block);
 };
 
 GType        	 hippo_canvas_block_get_type    (void) G_GNUC_CONST;
@@ -55,6 +58,8 @@ void hippo_canvas_block_set_title   (HippoCanvasBlock *canvas_block,
                                      const char       *url);
 void hippo_canvas_block_set_content (HippoCanvasBlock *canvas_block,
                                      HippoCanvasItem  *content_item);
+
+HippoActions* hippo_canvas_block_get_actions  (HippoCanvasBlock *canvas_block);
 
 G_END_DECLS
 

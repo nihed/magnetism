@@ -10,6 +10,8 @@ mugshot_LDFLAGS=$(MUGSHOT_LIBS)
 mugshot_LDADD= libhippoipc.la libhippo.la libgtkcopy.la
 
 mugshot_SOURCES	=				\
+	src/hippo-actions.c			\
+	src/hippo-actions.h			\
 	src/hippo-bubble.c			\
 	src/hippo-bubble.h			\
 	src/hippo-bubble-manager.c		\

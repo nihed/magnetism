@@ -18,8 +18,7 @@ typedef enum {
     HIPPO_STACK_MODE_STACK
 } HippoStackMode;
 
-void hippo_stack_manager_manage           (HippoDataCache  *cache,
-                                           HippoPlatform   *platform);
+void hippo_stack_manager_manage           (HippoDataCache  *cache);
 void hippo_stack_manager_unmanage         (HippoDataCache  *cache);
 
 void hippo_stack_manager_set_idle         (HippoDataCache  *cache,

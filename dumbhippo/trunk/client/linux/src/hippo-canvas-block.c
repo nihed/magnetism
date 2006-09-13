@@ -12,6 +12,7 @@
 #include "hippo-canvas-image.h"
 #include "hippo-canvas-text.h"
 #include "hippo-canvas-link.h"
+#include "hippo-actions.h"
 
 static void      hippo_canvas_block_init                (HippoCanvasBlock       *block);
 static void      hippo_canvas_block_class_init          (HippoCanvasBlockClass  *klass);
@@ -47,11 +48,24 @@ enum {
 
 enum {
     PROP_0,
-    PROP_BLOCK
+    PROP_BLOCK,
+    PROP_ACTIONS
 };
 
 G_DEFINE_TYPE_WITH_CODE(HippoCanvasBlock, hippo_canvas_block, HIPPO_TYPE_CANVAS_BOX,
                         G_IMPLEMENT_INTERFACE(HIPPO_TYPE_CANVAS_ITEM, hippo_canvas_block_iface_init));
+
+static void
+on_title_activated(HippoCanvasLink *title_item,
+                   void            *data)
+{
+    HippoCanvasBlock *canvas_block = HIPPO_CANVAS_BLOCK(data);
+    HippoCanvasBlockClass *klass = HIPPO_CANVAS_BLOCK_GET_CLASS(canvas_block);
+
+    if (klass->title_activated != NULL) {
+        (* klass->title_activated) (canvas_block);
+    }
+}
 
 static void
 hippo_canvas_block_init(HippoCanvasBlock *block)
@@ -131,6 +145,10 @@ hippo_canvas_block_init(HippoCanvasBlock *block)
                                           NULL);
     hippo_canvas_box_append(left_column, block->title_link_item, 0);
 
+    g_signal_connect(G_OBJECT(block->title_link_item), "activated",
+                     G_CALLBACK(on_title_activated), block);
+
+    
     block->content_container_item = g_object_new(HIPPO_TYPE_CANVAS_BOX,
                                                  NULL);
     hippo_canvas_box_append(left_column, block->content_container_item, HIPPO_PACK_EXPAND);
@@ -223,7 +241,35 @@ hippo_canvas_block_class_init(HippoCanvasBlockClass *klass)
                                                         _("Block"),
                                                         _("Block to display"),
                                                         HIPPO_TYPE_BLOCK,
+                                                        G_PARAM_READABLE | G_PARAM_WRITABLE));
+
+    g_object_class_install_property(object_class,
+                                    PROP_ACTIONS,
+                                    g_param_spec_object("actions",
+                                                        _("Actions"),
+                                                        _("UI actions object"),
+                                                        HIPPO_TYPE_ACTIONS,
                                                         G_PARAM_READABLE | G_PARAM_WRITABLE)); 
+}
+
+static void
+set_actions(HippoCanvasBlock *block,
+            HippoActions     *actions)
+{
+    if (actions == block->actions)
+        return;
+    
+    if (block->actions) {
+        g_object_unref(block->actions);
+        block->actions = NULL;
+    }
+
+    if (actions) {
+        block->actions = actions;
+        g_object_ref(block->actions);
+    }
+
+    g_object_notify(G_OBJECT(block), "actions");
 }
 
 static void
@@ -233,6 +279,8 @@ hippo_canvas_block_dispose(GObject *object)
 
     hippo_canvas_block_set_block(block, NULL);
 
+    set_actions(block, NULL);
+    
     block->age_item = NULL;
     
     G_OBJECT_CLASS(hippo_canvas_block_parent_class)->dispose(object);
@@ -285,6 +333,12 @@ hippo_canvas_block_set_property(GObject         *object,
             hippo_canvas_block_set_block(block, new_block);
         }
         break;
+    case PROP_ACTIONS:
+        {
+            HippoActions *new_actions = (HippoActions*) g_value_get_object(value);
+            set_actions(block, new_actions);
+        }
+        break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
         break;
@@ -304,6 +358,9 @@ hippo_canvas_block_get_property(GObject         *object,
     switch (prop_id) {
     case PROP_BLOCK:
         g_value_set_object(value, (GObject*) block->block);
+        break;
+    case PROP_ACTIONS:
+        g_value_set_object(value, (GObject*) block->actions);
         break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
@@ -418,8 +475,10 @@ hippo_canvas_block_set_block_impl(HippoCanvasBlock *canvas_block,
         }
         canvas_block->block = new_block;
 
-        on_block_timestamp_changed(new_block, NULL, canvas_block);
-        on_block_clicked_count_changed(new_block, NULL, canvas_block);
+        if (new_block) {
+            on_block_timestamp_changed(new_block, NULL, canvas_block);
+            on_block_clicked_count_changed(new_block, NULL, canvas_block);
+        }
         
         g_object_notify(G_OBJECT(canvas_block), "block");
         hippo_canvas_item_emit_request_changed(HIPPO_CANVAS_ITEM(canvas_block));
@@ -473,4 +532,10 @@ hippo_canvas_block_set_content(HippoCanvasBlock *canvas_block,
                                 content_item, HIPPO_PACK_EXPAND);
         g_object_unref(content_item);
     }
+}
+
+HippoActions*
+hippo_canvas_block_get_actions(HippoCanvasBlock *canvas_block)
+{
+    return canvas_block->actions;
 }

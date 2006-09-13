@@ -35,9 +35,10 @@ static void     hippo_canvas_block_post_paint              (HippoCanvasItem *ite
                                                             cairo_t         *cr);
 
 /* Canvas block methods */
-static void hippo_canvas_block_post_set_block (HippoCanvasBlock *canvas_block,
-                                               HippoBlock       *block);
+static void hippo_canvas_block_post_set_block       (HippoCanvasBlock *canvas_block,
+                                                     HippoBlock       *block);
 
+static void hippo_canvas_block_post_title_activated (HippoCanvasBlock *canvas_block);
 
 /* Our own methods */
 static void hippo_canvas_block_post_set_post (HippoCanvasBlockPost *canvas_block_post,
@@ -112,6 +113,7 @@ hippo_canvas_block_post_class_init(HippoCanvasBlockPostClass *klass)
     object_class->finalize = hippo_canvas_block_post_finalize;
 
     canvas_block_class->set_block = hippo_canvas_block_post_set_block;
+    canvas_block_class->title_activated = hippo_canvas_block_post_title_activated;
 }
 
 static void
@@ -299,4 +301,26 @@ hippo_canvas_block_post_set_post (HippoCanvasBlockPost *canvas_block_post,
     }
 
     update_post(canvas_block_post);
+}
+
+static void
+hippo_canvas_block_post_title_activated(HippoCanvasBlock *canvas_block)
+{
+    HippoActions *actions;
+    HippoPost *post;
+
+    if (canvas_block->block == NULL)
+        return;
+    
+    actions = hippo_canvas_block_get_actions(canvas_block);
+
+    post = NULL;
+    g_object_get(G_OBJECT(canvas_block->block),
+                 "cached-post", &post,
+                 NULL);
+
+    if (post == NULL)
+        return;
+    
+    hippo_actions_visit_post(actions, post);
 }

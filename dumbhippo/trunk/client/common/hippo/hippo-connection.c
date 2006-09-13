@@ -374,6 +374,14 @@ hippo_connection_new(HippoPlatform *platform)
     return connection;
 }
 
+HippoPlatform*
+hippo_connection_get_platform(HippoConnection  *connection)
+{
+    g_return_val_if_fail(HIPPO_IS_CONNECTION(connection), NULL);
+    
+    return connection->platform;
+}
+
 int
 hippo_connection_get_generation(HippoConnection  *connection)
 {

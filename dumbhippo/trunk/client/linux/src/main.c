@@ -801,7 +801,7 @@ hippo_app_new(HippoInstanceType  instance_type,
     app->chat_windows = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
 
     hippo_bubble_manager_manage(app->cache);
-    hippo_stack_manager_manage(app->cache, app->platform);
+    hippo_stack_manager_manage(app->cache);
     
     /* initially be sure we are the latest installed, though it's 
      * tough to imagine this happening outside of testing 

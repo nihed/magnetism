@@ -4,13 +4,14 @@
 #include "hippo-canvas-stack.h"
 #include "hippo-canvas-block.h"
 #include "hippo-window.h"
+#include "hippo-actions.h"
 
 #define UI_WIDTH 400
 
 typedef struct {
     int              refcount;
-    HippoPlatform   *platform;
     HippoDataCache  *cache;
+    HippoActions    *actions;
     HippoConnection *connection;
     GSList          *blocks;
     HippoStackMode   mode;
@@ -148,8 +149,12 @@ update_window_positions(StackManager    *manager)
    HippoRectangle monitor;
    HippoRectangle icon;
    HippoOrientation icon_orientation;
+   HippoPlatform *platform;
+
+   platform = hippo_connection_get_platform(manager->connection);
    
-   hippo_platform_get_screen_info(manager->platform, &monitor, &icon, &icon_orientation);
+   hippo_platform_get_screen_info(platform,
+                                  &monitor, &icon, &icon_orientation);
 
    update_for_screen_info(manager, &monitor, &icon, icon_orientation);
 }
@@ -333,8 +338,8 @@ manager_disconnect(StackManager *manager)
         manager->single_block_window = NULL;
         manager->stack_window = NULL;
 
-        g_object_unref(manager->platform);
-        manager->platform = NULL;
+        g_object_unref(manager->actions);
+        manager->actions = NULL;
         
         g_object_unref(manager->cache);
         manager->cache = NULL;
@@ -374,18 +379,27 @@ manager_new(void)
 
 static void
 manager_attach(StackManager    *manager,
-               HippoDataCache  *cache,
-               HippoPlatform   *platform)
+               HippoDataCache  *cache)
 {
+    HippoPlatform *platform;
+    
     g_debug("Stack manager attaching to data cache");
-
-    manager->platform = platform;
-    g_object_ref(manager->platform);
     
     manager->cache = cache;
     g_object_ref(manager->cache);
     manager->connection = hippo_data_cache_get_connection(manager->cache);
 
+    /* FIXME really the "actions" should probably be more global, e.g.
+     * shared with the tray icon, but the way I wanted to do that
+     * is to stuff it on the data cache, but that requires moving
+     * hippo-actions to the common library which can't be done with
+     * right this second since a bunch of eventually xp stuff is in
+     * the linux dir.
+     */
+    manager->actions = hippo_actions_new(manager->cache);
+    
+    platform = hippo_connection_get_platform(manager->connection);
+    
     /* this creates a refcount cycle, but
      * hippo_stack_manager_unmanage breaks it.
      * Also, too lazy right now to key to the cache/icon
@@ -415,7 +429,9 @@ manager_attach(StackManager    *manager,
     hippo_canvas_item_sink(manager->single_block_base_item);    
     
     manager->stack_item = hippo_canvas_stack_new();
-    g_object_set(manager->stack_item, "fixed-width", UI_WIDTH, NULL);
+    g_object_set(manager->stack_item, "fixed-width", UI_WIDTH,
+                 "actions", manager->actions,
+                 NULL);
     hippo_window_set_contents(manager->stack_window, manager->stack_item);
     
     g_signal_connect(manager->cache, "block-added",
@@ -439,14 +455,13 @@ manager_detach(HippoDataCache  *cache)
 }
 
 void
-hippo_stack_manager_manage(HippoDataCache  *cache,
-                           HippoPlatform   *platform)
+hippo_stack_manager_manage(HippoDataCache  *cache)
 {
     StackManager *manager;
 
     manager = manager_new();
 
-    manager_attach(manager, cache, platform);
+    manager_attach(manager, cache);
     manager_unref(manager);
 }
 
