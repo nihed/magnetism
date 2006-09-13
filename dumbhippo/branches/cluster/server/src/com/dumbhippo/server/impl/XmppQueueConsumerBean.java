@@ -85,6 +85,14 @@ public class XmppQueueConsumerBean implements MessageListener {
 		}
 	}
 
+	// FIXMEFIXMEFIXME - setCurrentTrack addHistoricalTrack should be 
+	// attributed to mandate no transaction since they will hang if called twice
+	// for the same track within the same transaction. We can't
+	// do that in the MDB context since we'll inherently have
+	// a transaction, but we are about to switch these to MessengerGlue
+	// methods. If we didn't do that, we could queue the track
+	// additions to be asynchronous.
+	
 	private void processMusicChangedEvent(XmppEventMusicChanged event) {
 		User user = getUserFromUsername(event.getJabberId());
 		musicSystem.setCurrentTrack(user, event.getProperties());

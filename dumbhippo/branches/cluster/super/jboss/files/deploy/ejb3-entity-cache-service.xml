@@ -19,6 +19,12 @@
     <!-- Configure the TransactionManager -->
     <attribute name="TransactionManagerLookupClass">org.jboss.cache.JBossTransactionManagerLookup</attribute>
 
+    <!-- You also need to switch the provider in the hibernate configuration to 
+         use this. I couldn't get optimistic locking to work well, due to what
+         seemed to be bugs in Hibernate or JBossCache. In addition there are some
+         concerns about correctness.  -->
+    <!-- <attribute name="NodeLockingScheme">OPTIMISTIC</attribute> -->
+`
     <!--
             Node locking level : SERIALIZABLE
                                  REPEATABLE_READ (default)

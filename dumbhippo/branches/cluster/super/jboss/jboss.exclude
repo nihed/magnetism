@@ -13,7 +13,11 @@ deploy-hasingleton/jms/hsqldb-jdbc2-service.xml
 /lib/jacorb.jar
 /lib/jaxr-client.jar
 /lib/jboss-iiop.jar
-#/lib/jboss-cache.jar
+# We supply our own more recent jar of this instead
+/lib/jboss-cache.jar
+# Same for these
+/lib/hibernate3.jar
+/lib/hibernate-annotations.jar
 #/lib/jbossha.jar
 #/lib/jbossmqha.jar
 /lib/xmlsec.jar

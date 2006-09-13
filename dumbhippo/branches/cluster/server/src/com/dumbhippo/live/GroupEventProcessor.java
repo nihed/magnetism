@@ -51,7 +51,7 @@ public class GroupEventProcessor implements LiveEventProcessor {
 				GroupMember groupMember = groupSystem.getGroupMember(group, event.getResourceId());
 				if (groupMember.getStatus().equals(MembershipStatus.FOLLOWER) ||
 				    groupMember.getStatus().equals(MembershipStatus.ACTIVE)) {					
-				    messageSender.sendGroupMembershipUpdate(group, groupMember);
+				    // messageSender.sendGroupMembershipUpdate(group, groupMember);
 				}
 			} catch (NotFoundException e) {
 				// probably a follower or an invited e-mail resource was deleted

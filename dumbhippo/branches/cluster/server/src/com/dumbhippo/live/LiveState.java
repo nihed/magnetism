@@ -550,6 +550,11 @@ public class LiveState {
 	public void stressTest() {
 		final List<Guid> toLookup = new ArrayList<Guid>();
 		
+		// The use of runTaskInNewTransaction here could deadlock if we were
+		// called from a transaction that also made database modifications;
+		// but since we're just going to be called explicitly from the admin
+		// console we are pretty safe.
+		
 		final TransactionRunner runner = EJBUtil.defaultLookup(TransactionRunner.class);
 		runner.runTaskInNewTransaction(new Runnable() {
 			public void run() {

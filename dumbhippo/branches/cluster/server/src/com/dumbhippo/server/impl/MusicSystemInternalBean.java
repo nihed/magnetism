@@ -167,6 +167,10 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	 * can't use this id, but can pass it to a new transaction for 
 	 * use.
 	 * 
+	 * Note that if the caller has previously looked up and modified
+	 * the same track (acquiring a write lock), this will deadlock, 
+	 * so use with great caution.
+	 * 
 	 * @param properties properties of the track
 	 * @return the track id
 	 */
@@ -1800,7 +1804,12 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		}
 	}
 
-	
+	// FIXMEFIXMEFIXME - this needs to be annotated to mandate no transaction,
+    // since it can deadlock if called for the same track twice in the same transaction
+	//
+	// Alternatively, and maybe better, unify the last segment of code with 
+	// setCurrentTrack and make adding tracks to the track database always async.
+	//
 	public void addFeedTrack(final User user, TrackFeedEntry entry, int entryPosition) {
 		final Map<String,String> properties = new HashMap<String,String>();
 		properties.put("type", ""+TrackType.NETWORK_STREAM);
