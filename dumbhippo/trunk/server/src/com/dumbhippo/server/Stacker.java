@@ -18,6 +18,10 @@ import com.dumbhippo.persistence.UserBlockData;
  */
 @Local
 public interface Stacker {
+	public void onUserCreated();
+	public void onGroupCreated();
+	public void onPostCreated();
+	
 	public void stackMusicPerson(Guid userId, long activity);
 	public void stackGroupChat(Guid groupId, long activity);
 	public void stackPost(Guid postId, long activity);
