@@ -244,14 +244,17 @@ update_post(HippoCanvasBlockPost *canvas_block_post)
 
     if (post == NULL) {
         hippo_canvas_block_set_title(HIPPO_CANVAS_BLOCK(canvas_block_post),
-                                     NULL, NULL);
+                                     NULL);
+        hippo_canvas_block_set_sender(HIPPO_CANVAS_BLOCK(canvas_block_post),
+                                      hippo_post_get_sender(post));
         g_object_set(G_OBJECT(canvas_block_post->description_item),
                      "text", NULL,
                      NULL);
     } else {
         hippo_canvas_block_set_title(HIPPO_CANVAS_BLOCK(canvas_block_post),
-                                     hippo_post_get_title(post),
-                                     NULL);
+                                     hippo_post_get_title(post));
+        hippo_canvas_block_set_sender(HIPPO_CANVAS_BLOCK(canvas_block_post),
+                                      NULL);
         g_object_set(G_OBJECT(canvas_block_post->description_item),
                      "text", hippo_post_get_description(post),
                      NULL);

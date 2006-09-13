@@ -2,13 +2,13 @@
 #ifndef __HIPPO_IMAGE_CACHE_H__
 #define __HIPPO_IMAGE_CACHE_H__
 
-#include <gdk-pixbuf/gdk-pixbuf.h>
 #include "hippo-object-cache.h"
+#include "hippo-surface.h"
 
 G_BEGIN_DECLS
 
-/* pixbuf == NULL on error */
-typedef void (* HippoImageCacheLoadFunc) (GdkPixbuf       *pixbuf,
+/* surface == NULL on error */
+typedef void (* HippoImageCacheLoadFunc) (HippoSurface    *surface,
                                           void            *data);
 
 typedef struct _HippoImageCache      HippoImageCache;

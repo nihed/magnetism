@@ -39,6 +39,8 @@ struct _HippoCanvasImage {
     HippoCanvasBox box;
     cairo_surface_t *surface;
     char *image_name;
+    int scale_width;
+    int scale_height;
 };
 
 struct _HippoCanvasImageClass {
@@ -55,7 +57,9 @@ enum {
 enum {
     PROP_0,
     PROP_IMAGE,
-    PROP_IMAGE_NAME
+    PROP_IMAGE_NAME,
+    PROP_SCALE_WIDTH,
+    PROP_SCALE_HEIGHT
 };
 
 G_DEFINE_TYPE_WITH_CODE(HippoCanvasImage, hippo_canvas_image, HIPPO_TYPE_CANVAS_BOX,
@@ -64,7 +68,8 @@ G_DEFINE_TYPE_WITH_CODE(HippoCanvasImage, hippo_canvas_image, HIPPO_TYPE_CANVAS_
 static void
 hippo_canvas_image_init(HippoCanvasImage *image)
 {
-
+    image->scale_width = -1;
+    image->scale_height = -1;
 }
 
 static HippoCanvasItemClass *item_parent_class;
@@ -103,7 +108,26 @@ hippo_canvas_image_class_init(HippoCanvasImageClass *klass)
                                                         _("Image Name"),
                                                         _("Image name to be loaded into the item"),
                                                         NULL,
-                                                        G_PARAM_READABLE | G_PARAM_WRITABLE));    
+                                                        G_PARAM_READABLE | G_PARAM_WRITABLE));
+
+    g_object_class_install_property(object_class,
+                                    PROP_SCALE_WIDTH,
+                                    g_param_spec_int("scale-width",
+                                                     _("Scale width"),
+                                                     _("Width to scale to or -1 for no scale"),
+                                                     -1,
+                                                     G_MAXINT,
+                                                     -1,
+                                                     G_PARAM_READABLE | G_PARAM_WRITABLE));
+    g_object_class_install_property(object_class,
+                                    PROP_SCALE_HEIGHT,
+                                    g_param_spec_int("scale-height",
+                                                     _("Scale height"),
+                                                     _("Height to scale to or -1 for no scale"),
+                                                     -1,
+                                                     G_MAXINT,
+                                                     -1,
+                                                     G_PARAM_READABLE | G_PARAM_WRITABLE));    
 }
 
 static void
@@ -206,6 +230,25 @@ hippo_canvas_image_set_property(GObject         *object,
             }
         }
         break;
+    case PROP_SCALE_WIDTH:
+        {
+            int w = g_value_get_int(value);
+            if (w != image->scale_width) {
+                image->scale_width = w;
+                hippo_canvas_item_emit_request_changed(HIPPO_CANVAS_ITEM(image));
+            } 
+        }
+        break;
+    case PROP_SCALE_HEIGHT:
+        {
+            int h = g_value_get_int(value);
+            if (h != image->scale_height) {
+                image->scale_height = h;
+                hippo_canvas_item_emit_request_changed(HIPPO_CANVAS_ITEM(image));
+            }
+        }
+        break;
+        break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
         break;
@@ -228,6 +271,12 @@ hippo_canvas_image_get_property(GObject         *object,
         break;
     case PROP_IMAGE_NAME:
         g_value_set_string(value, image->image_name);
+        break;
+    case PROP_SCALE_WIDTH:
+        g_value_set_int(value, image->scale_width);
+        break;
+    case PROP_SCALE_HEIGHT:
+        g_value_set_int(value, image->scale_height);
         break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
@@ -252,6 +301,7 @@ hippo_canvas_image_paint(HippoCanvasItem *item,
 {
     HippoCanvasImage *image = HIPPO_CANVAS_IMAGE(item);
     int x, y, w, h;
+    cairo_matrix_t matrix;
     
     /* Draw the background and any children */
     item_parent_class->paint(item, cr);
@@ -262,8 +312,14 @@ hippo_canvas_image_paint(HippoCanvasItem *item,
     
     x = 0;
     y = 0;
-    w = cairo_image_surface_get_width(image->surface);
-    h = cairo_image_surface_get_height(image->surface);
+    if (image->scale_width >= 0)
+        w = image->scale_width;
+    else
+        w = cairo_image_surface_get_width(image->surface);
+    if (image->scale_height >= 0)
+        h = image->scale_height;
+    else
+        h = cairo_image_surface_get_height(image->surface);
 
     /* note that if an alignment is FILL the w/h will be increased
      * beyond the image's natural size, which will result in
@@ -275,6 +331,26 @@ hippo_canvas_image_paint(HippoCanvasItem *item,
     cairo_set_source_surface(cr, image->surface, x, y);
     /* tile */
     cairo_pattern_set_extend(cairo_get_source(cr), CAIRO_EXTEND_REPEAT);
+
+    if (image->scale_width >= 0 || image->scale_height >= 0) {
+        /* OK this is wonky; the pattern's matrix has to be the inverse
+         * of the scale factor, because it's the ratio of our cairo_t's coords
+         * to the pattern coords, not vice versa.
+         */
+        double xscale;
+        double yscale;
+        if (image->scale_width >= 0)
+            xscale = cairo_image_surface_get_width(image->surface) / (double) image->scale_width;
+        else
+            xscale = 1.0;
+        if (image->scale_height >= 0)
+            yscale = cairo_image_surface_get_height(image->surface) / (double) image->scale_height;
+        else
+            yscale = 1.0;
+        cairo_matrix_init_scale(&matrix, xscale, yscale);
+        cairo_pattern_set_matrix(cairo_get_source(cr), &matrix);
+    }
+    
     cairo_rectangle(cr, x, y, w, h);
     cairo_clip(cr);
     cairo_paint(cr);
@@ -291,7 +367,11 @@ hippo_canvas_image_get_width_request(HippoCanvasItem *item)
     children_width = item_parent_class->get_width_request(item);
 
     if (hippo_canvas_box_get_fixed_width(HIPPO_CANVAS_BOX(item)) < 0) {
-        int image_width = image->surface ? cairo_image_surface_get_width(image->surface) : 0;
+        int image_width;
+        if (image->scale_width >= 0)
+            image_width = image->scale_width;
+        else
+            image_width = image->surface ? cairo_image_surface_get_width(image->surface) : 0;
         return MAX(image_width + box->padding_left + box->padding_right, children_width);
     } else {
         return children_width;
@@ -310,6 +390,10 @@ hippo_canvas_image_get_height_request(HippoCanvasItem *item,
     /* get height of children and the box padding */
     children_height = item_parent_class->get_height_request(item, for_width);
 
-    image_height = image->surface ? cairo_image_surface_get_height(image->surface) : 0;
+    if (image->scale_height >= 0)
+        image_height = image->scale_height;
+    else
+        image_height = image->surface ? cairo_image_surface_get_height(image->surface) : 0;
+    
     return MAX(image_height + box->padding_top + box->padding_bottom, children_height);
 }

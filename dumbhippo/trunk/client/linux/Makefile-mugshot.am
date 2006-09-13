@@ -62,6 +62,8 @@ mugshot_SOURCES	=				\
 	src/hippo-image-cache.h			\
 	src/hippo-object-cache.c		\
 	src/hippo-object-cache.h		\
+	src/hippo-pixbuf-cache.c		\
+	src/hippo-pixbuf-cache.h		\
 	src/hippo-person-renderer.c		\
 	src/hippo-person-renderer.h		\
 	src/hippo-platform-impl.c		\
@@ -70,6 +72,8 @@ mugshot_SOURCES	=				\
 	src/hippo-stack-manager.h		\
 	src/hippo-status-icon.c			\
 	src/hippo-status-icon.h			\
+	src/hippo-surface.c			\
+	src/hippo-surface.h			\
 	src/hippo-window.c			\
 	src/hippo-window.h			\
 	src/hippo-window-gtk.c			\
@@ -88,6 +92,7 @@ EMBEDDED_IMAGES=				\
 	$(EMBEDDEDIMAGEDIR)/grayleftarrow.gif	\
 	$(EMBEDDEDIMAGEDIR)/grayrightarrow.gif	\
 	$(EMBEDDEDIMAGEDIR)/ignoreicon.png	\
+	$(EMBEDDEDIMAGEDIR)/nophoto.gif		\
 	$(EMBEDDEDIMAGEDIR)/pbubcnr_blmix.png	\
 	$(EMBEDDEDIMAGEDIR)/pbubcnr_bl.png	\
 	$(EMBEDDEDIMAGEDIR)/pbubcnr_brmix.png	\

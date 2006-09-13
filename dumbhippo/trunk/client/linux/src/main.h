@@ -21,7 +21,7 @@
 #include <gtk/gtkaboutdialog.h>
 #include <gtk/gtkmessagedialog.h>
 #include <glib/gi18n-lib.h>
-#include "hippo-image-cache.h"
+#include "hippo-pixbuf-cache.h"
 
 G_BEGIN_DECLS
 
@@ -62,10 +62,10 @@ gboolean   hippo_app_chat_is_active (HippoApp   *app,
 /* use this only for user and group photos, caching is weird 
  * if the cache for lots of image types interacts
  */
-void       hippo_app_load_photo     (HippoApp               *app,
-                                     HippoEntity            *entity,
-                                     HippoImageCacheLoadFunc func,
-                                     void                   *data);
+void       hippo_app_load_photo     (HippoApp                *app,
+                                     HippoEntity             *entity,
+                                     HippoPixbufCacheLoadFunc func,
+                                     void                    *data);
 
 void       hippo_app_put_window_by_icon(HippoApp  *app,
                                         GtkWindow *window);

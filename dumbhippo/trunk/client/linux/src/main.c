@@ -26,7 +26,7 @@ struct HippoApp {
     HippoStatusIcon *icon;
     GtkWidget *about_dialog;
     GHashTable *chat_windows;
-    HippoImageCache *photo_cache;
+    HippoPixbufCache *photo_cache;
     HippoDBus *dbus;
     char **restart_argv;
     int restart_argc;
@@ -287,10 +287,10 @@ hippo_app_chat_is_active(HippoApp   *app,
 }
 
 void
-hippo_app_load_photo(HippoApp               *app,
-                     HippoEntity            *entity,
-                     HippoImageCacheLoadFunc func,
-                     void                   *data)
+hippo_app_load_photo(HippoApp                *app,
+                     HippoEntity             *entity,
+                     HippoPixbufCacheLoadFunc func,
+                     void                    *data)
 {
     const char *url;
     
@@ -306,7 +306,7 @@ hippo_app_load_photo(HippoApp               *app,
     } else {
         char *absolute = hippo_connection_make_absolute_url(app->connection,
                                                             url);
-        hippo_image_cache_load(app->photo_cache, absolute, func, data);
+        hippo_pixbuf_cache_load(app->photo_cache, absolute, func, data);
         g_free(absolute);
     }
 }
@@ -796,7 +796,7 @@ hippo_app_new(HippoInstanceType  instance_type,
     g_signal_connect(G_OBJECT(app->connection), "connected-changed",
                      G_CALLBACK(on_connected_changed), app);
     
-    app->photo_cache = hippo_image_cache_new(app->platform);
+    app->photo_cache = hippo_pixbuf_cache_new(app->platform);
     
     app->chat_windows = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
 

@@ -285,7 +285,8 @@ hippo_object_cache_class_init(HippoObjectCacheClass  *klass)
                                     g_param_spec_object("platform",
                                                         _("Platform"),
                                                         _("Platform object"),
-                                                        HIPPO_TYPE_PLATFORM,
+                                                        /* interfaces can't go here it seems */
+                                                        G_TYPE_OBJECT,
                                                         G_PARAM_READABLE | G_PARAM_WRITABLE)); 
     
     g_type_class_add_private(object_class, sizeof(HippoObjectCachePrivate));

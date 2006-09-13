@@ -32,6 +32,9 @@ struct _HippoCanvasBlock {
     HippoCanvasItem *title_link_item;
     HippoCanvasItem *clicked_count_item;
     HippoCanvasItem *content_container_item;
+    HippoCanvasItem *headshot_item;
+    HippoCanvasItem *name_item;
+    HippoEntity *last_sender_entity; /* just used to detect whether to reload photo */
 };
 
 struct _HippoCanvasBlockClass {
@@ -54,10 +57,12 @@ void             hippo_canvas_block_set_block   (HippoCanvasBlock *canvas_block,
 void hippo_canvas_block_set_heading (HippoCanvasBlock *canvas_block,
                                      const char       *heading);
 void hippo_canvas_block_set_title   (HippoCanvasBlock *canvas_block,
-                                     const char       *text,
-                                     const char       *url);
+                                     const char       *text);
 void hippo_canvas_block_set_content (HippoCanvasBlock *canvas_block,
                                      HippoCanvasItem  *content_item);
+/* probably has to get factored out into subclass */
+void hippo_canvas_block_set_sender  (HippoCanvasBlock *canvas_block,
+                                     const char       *entity_guid);
 
 HippoActions* hippo_canvas_block_get_actions  (HippoCanvasBlock *canvas_block);
 

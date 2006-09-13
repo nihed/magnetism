@@ -63,6 +63,32 @@ hippo_image_cache_finalize(GObject *object)
     G_OBJECT_CLASS(hippo_image_cache_parent_class)->finalize(object);
 }
 
+typedef struct {
+    GString *str;
+    unsigned int already_read;
+} GStringReader;
+
+static cairo_status_t
+gstring_read_func(void		*closure,
+                  unsigned char	*buffer,
+                  unsigned int	 buffer_length)
+{
+    GStringReader *reader = closure;
+    unsigned int remaining;
+
+    remaining = reader->str->len - reader->already_read;
+
+    if (buffer_length > remaining) {
+        return CAIRO_STATUS_READ_ERROR;
+    }
+
+    memcpy(buffer, reader->str->str + reader->already_read,
+           buffer_length);
+
+    reader->already_read += buffer_length;
+
+    return CAIRO_STATUS_SUCCESS;
+}
 
 static GObject*
 hippo_image_cache_parse(HippoObjectCache      *cache,
@@ -71,35 +97,34 @@ hippo_image_cache_parse(HippoObjectCache      *cache,
                         GString               *content,
                         GError               **error_p)
 {
-    GdkPixbufLoader *loader;
-    GdkPixbuf *pixbuf;
+    cairo_surface_t *csurface;
+    HippoSurface *surface;
+    GStringReader reader;
 
-    loader = gdk_pixbuf_loader_new();
-
-    if (!gdk_pixbuf_loader_write(loader, (guchar*) content->str, content->len, error_p))
-        goto failed;
+    reader.str = content;
+    reader.already_read = 0;
     
-    if (!gdk_pixbuf_loader_close(loader, error_p))
-        goto failed;
+    csurface =
+        cairo_image_surface_create_from_png_stream(gstring_read_func,
+                                                   &reader);
+    
 
-    pixbuf = gdk_pixbuf_loader_get_pixbuf(loader);
-    if (pixbuf == NULL) {
+    if (csurface != NULL) {
+        surface = hippo_surface_new(csurface);
+        cairo_surface_destroy(csurface);
+    } else {
+        surface = NULL;
         g_set_error(error_p,
-                    GDK_PIXBUF_ERROR,
-                    GDK_PIXBUF_ERROR_FAILED,
-                    _("Could not load image"));
+                    g_quark_from_string("cairo-surface-error"),
+                    0,
+                    _("Corrupt image"));
         goto failed;
     }
 
-    g_object_ref(pixbuf);
-    g_object_unref(loader);
-    return G_OBJECT(pixbuf);
-
-  failed:
-    g_assert(error_p == NULL || *error_p != NULL);
+    return G_OBJECT(surface);
     
-    if (loader)
-        g_object_unref(loader);
+  failed:
+    g_assert(error_p == NULL || *error_p != NULL);    
 
     return NULL;
 }

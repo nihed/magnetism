@@ -165,17 +165,17 @@ hippo_canvas_block_init(HippoCanvasBlock *block)
     hippo_canvas_box_append(right_column, HIPPO_CANVAS_ITEM(box), 0);
 
 
-    item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
-                        "text", "[photo]",
-                        NULL);
-    hippo_canvas_box_append(box, item, HIPPO_PACK_END);
+    block->headshot_item = g_object_new(HIPPO_TYPE_CANVAS_IMAGE,
+                                        "image-name", "nophoto",
+                                        NULL);
+    hippo_canvas_box_append(box, block->headshot_item, HIPPO_PACK_END);
     
-    item = g_object_new(HIPPO_TYPE_CANVAS_LINK,
-                        "font-scale", PANGO_SCALE_SMALL,
-                        "font", "Italic",
-                        "text", "LizardBoy",
-                        NULL);
-    hippo_canvas_box_append(box, item, HIPPO_PACK_END);
+    block->name_item = g_object_new(HIPPO_TYPE_CANVAS_LINK,
+                                    "font-scale", PANGO_SCALE_SMALL,
+                                    "font", "Italic",
+                                    "text", NULL,
+                                    NULL);
+    hippo_canvas_box_append(box, block->name_item, HIPPO_PACK_END);
 
     item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
                         "font-scale", PANGO_SCALE_SMALL,
@@ -510,8 +510,7 @@ hippo_canvas_block_set_heading (HippoCanvasBlock *canvas_block,
 
 void
 hippo_canvas_block_set_title(HippoCanvasBlock *canvas_block,
-                             const char       *text,
-                             const char       *url)
+                             const char       *text)
 {
     g_object_set(G_OBJECT(canvas_block->title_link_item),
                  "text", text,
@@ -531,6 +530,47 @@ hippo_canvas_block_set_content(HippoCanvasBlock *canvas_block,
         hippo_canvas_box_append(HIPPO_CANVAS_BOX(canvas_block->content_container_item),
                                 content_item, HIPPO_PACK_EXPAND);
         g_object_unref(content_item);
+    }
+}
+
+void
+hippo_canvas_block_set_sender(HippoCanvasBlock *canvas_block,
+                              const char       *entity_guid)
+{    
+    if (entity_guid) {
+        HippoEntity *entity;
+
+        entity = hippo_actions_lookup_entity(canvas_block->actions,
+                                             entity_guid);
+        if (entity == NULL) {
+            g_warning("needed entity is unknown %s", entity_guid);
+            return;
+        }
+
+        if (entity == canvas_block->last_sender_entity)
+            return;
+
+        canvas_block->last_sender_entity = entity;
+        
+        hippo_actions_load_entity_photo_async(canvas_block->actions,
+                                              entity,
+                                              canvas_block->headshot_item);
+        g_object_set(G_OBJECT(canvas_block->name_item),
+                     "text",
+                     hippo_entity_get_name(entity),
+                     NULL);
+    } else {
+        if (canvas_block->last_sender_entity == NULL)
+            return;
+        
+        canvas_block->last_sender_entity = NULL;
+        
+        g_object_set(G_OBJECT(canvas_block->headshot_item),
+                     "image-name", "nophoto",
+                     NULL);
+        g_object_set(G_OBJECT(canvas_block->name_item),
+                     "text", NULL,
+                     NULL);
     }
 }
 

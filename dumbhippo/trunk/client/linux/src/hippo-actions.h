@@ -11,9 +11,14 @@
  * In general all methods on HippoActions should:
  *  - either get a UI element, like an image, or map directly to the user clicking something
  *  - contain little intelligence and just chain to a lower level
+ *
+ * If this starts replicating most of DataCache we should probably pack it in and
+ * just pass around the data cache.
+ * 
  */
 
 #include <hippo/hippo-data-cache.h>
+#include "hippo-canvas-item.h"
 
 G_BEGIN_DECLS
 
@@ -29,10 +34,17 @@ typedef struct _HippoActionsClass HippoActionsClass;
 
 GType        	 hippo_actions_get_type               (void) G_GNUC_CONST;
 
-HippoActions* hippo_actions_new                       (HippoDataCache *cache);
+HippoActions* hippo_actions_new                       (HippoDataCache  *cache);
 
-void          hippo_actions_visit_post                (HippoActions   *actions,
-                                                       HippoPost      *post);
+void          hippo_actions_visit_post                (HippoActions    *actions,
+                                                       HippoPost       *post);
+
+void          hippo_actions_load_entity_photo_async   (HippoActions    *actions,
+                                                       HippoEntity     *entity,
+                                                       HippoCanvasItem *image_item);
+
+HippoEntity*  hippo_actions_lookup_entity             (HippoActions    *actions,
+                                                       const char      *entity_guid);
 
 G_END_DECLS
 
