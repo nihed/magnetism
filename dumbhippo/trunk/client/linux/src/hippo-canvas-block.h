@@ -34,7 +34,6 @@ struct _HippoCanvasBlock {
     HippoCanvasItem *content_container_item;
     HippoCanvasItem *headshot_item;
     HippoCanvasItem *name_item;
-    HippoEntity *last_sender_entity; /* just used to detect whether to reload photo */
 };
 
 struct _HippoCanvasBlockClass {
@@ -47,7 +46,8 @@ struct _HippoCanvasBlockClass {
 
 GType        	 hippo_canvas_block_get_type    (void) G_GNUC_CONST;
 
-HippoCanvasItem* hippo_canvas_block_new         (HippoBlockType type);
+HippoCanvasItem* hippo_canvas_block_new         (HippoBlockType type,
+                                                 HippoActions  *actions);
 
 void             hippo_canvas_block_set_block   (HippoCanvasBlock *canvas_block,
                                                  HippoBlock       *block);

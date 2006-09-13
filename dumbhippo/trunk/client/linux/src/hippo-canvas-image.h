@@ -5,6 +5,7 @@
 /* A canvas item that renders a Cairo image surface */
 
 #include "hippo-canvas-item.h"
+#include "hippo-canvas-box.h"
 #include <cairo/cairo.h>
 
 G_BEGIN_DECLS
@@ -18,6 +19,18 @@ typedef struct _HippoCanvasImageClass HippoCanvasImageClass;
 #define HIPPO_IS_CANVAS_IMAGE(object)        (G_TYPE_CHECK_INSTANCE_TYPE ((object), HIPPO_TYPE_CANVAS_IMAGE))
 #define HIPPO_IS_CANVAS_IMAGE_CLASS(klass)   (G_TYPE_CHECK_CLASS_TYPE ((klass), HIPPO_TYPE_CANVAS_IMAGE))
 #define HIPPO_CANVAS_IMAGE_GET_CLASS(obj)    (G_TYPE_INSTANCE_GET_CLASS ((obj), HIPPO_TYPE_CANVAS_IMAGE, HippoCanvasImageClass))
+
+struct _HippoCanvasImage {
+    HippoCanvasBox box;
+    cairo_surface_t *surface;
+    char *image_name;
+    int scale_width;
+    int scale_height;
+};
+
+struct _HippoCanvasImageClass {
+    HippoCanvasBoxClass parent_class;
+};
 
 GType        	 hippo_canvas_image_get_type               (void) G_GNUC_CONST;
 

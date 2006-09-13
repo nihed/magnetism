@@ -9,7 +9,6 @@
 #include <string.h>
 #include <cairo/cairo.h>
 #include "hippo-canvas-image.h"
-#include "hippo-canvas-box.h"
 
 static void      hippo_canvas_image_init                (HippoCanvasImage       *image);
 static void      hippo_canvas_image_class_init          (HippoCanvasImageClass  *klass);
@@ -34,18 +33,6 @@ static void     hippo_canvas_image_paint              (HippoCanvasItem *item,
 static int      hippo_canvas_image_get_width_request  (HippoCanvasItem *item);
 static int      hippo_canvas_image_get_height_request (HippoCanvasItem *item,
                                                        int              for_width);
-
-struct _HippoCanvasImage {
-    HippoCanvasBox box;
-    cairo_surface_t *surface;
-    char *image_name;
-    int scale_width;
-    int scale_height;
-};
-
-struct _HippoCanvasImageClass {
-    HippoCanvasBoxClass parent_class;
-};
 
 enum {
     NO_SIGNALS_YET,
@@ -328,32 +315,44 @@ hippo_canvas_image_paint(HippoCanvasItem *item,
     
     hippo_canvas_box_align(HIPPO_CANVAS_BOX(item), &x, &y, &w, &h);
 
+    cairo_rectangle(cr, x, y, w, h);
+    cairo_clip(cr);
+    
     cairo_set_source_surface(cr, image->surface, x, y);
     /* tile */
     cairo_pattern_set_extend(cairo_get_source(cr), CAIRO_EXTEND_REPEAT);
 
-    if (image->scale_width >= 0 || image->scale_height >= 0) {
+    /* scale size of 0 is handled by simply not painting anything */
+    if (image->scale_width > 0 || image->scale_height > 0) {
         /* OK this is wonky; the pattern's matrix has to be the inverse
          * of the scale factor, because it's the ratio of our cairo_t's coords
          * to the pattern coords, not vice versa.
          */
         double xscale;
         double yscale;
-        if (image->scale_width >= 0)
+        
+        if (image->scale_width > 0)
             xscale = cairo_image_surface_get_width(image->surface) / (double) image->scale_width;
         else
             xscale = 1.0;
-        if (image->scale_height >= 0)
+        
+        if (image->scale_height > 0)
             yscale = cairo_image_surface_get_height(image->surface) / (double) image->scale_height;
         else
             yscale = 1.0;
+
         cairo_matrix_init_scale(&matrix, xscale, yscale);
         cairo_pattern_set_matrix(cairo_get_source(cr), &matrix);
     }
+
+    /* g_debug("paint image %d,%d %dx%d scale %dx%d",
+       x, y, w, h, image->scale_width, image->scale_height); */
     
-    cairo_rectangle(cr, x, y, w, h);
-    cairo_clip(cr);
-    cairo_paint(cr);
+    if (image->scale_width != 0 && image->scale_height != 0) {
+        cairo_paint(cr);
+    }
+
+    /* g_debug("cairo status %s", cairo_status_to_string(cairo_status(cr))); */
 }
 
 static int

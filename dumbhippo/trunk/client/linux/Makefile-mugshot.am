@@ -30,6 +30,10 @@ mugshot_SOURCES	=				\
 	src/hippo-canvas-box.h			\
 	src/hippo-canvas-context.c		\
 	src/hippo-canvas-context.h		\
+	src/hippo-canvas-entity-name.c		\
+	src/hippo-canvas-entity-name.h		\
+	src/hippo-canvas-entity-photo.c		\
+	src/hippo-canvas-entity-photo.h		\
 	src/hippo-canvas-grip.c			\
 	src/hippo-canvas-grip.h			\
 	src/hippo-canvas-image.c		\

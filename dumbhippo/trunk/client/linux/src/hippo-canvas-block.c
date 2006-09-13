@@ -8,6 +8,8 @@
 #endif
 #include "hippo-canvas-block.h"
 #include "hippo-canvas-block-post.h"
+#include "hippo-canvas-entity-photo.h"
+#include "hippo-canvas-entity-name.h"
 #include "hippo-canvas-box.h"
 #include "hippo-canvas-image.h"
 #include "hippo-canvas-text.h"
@@ -164,16 +166,29 @@ hippo_canvas_block_init(HippoCanvasBlock *block)
                        NULL);
     hippo_canvas_box_append(right_column, HIPPO_CANVAS_ITEM(box), 0);
 
-
-    block->headshot_item = g_object_new(HIPPO_TYPE_CANVAS_IMAGE,
-                                        "image-name", "nophoto",
-                                        NULL);
-    hippo_canvas_box_append(box, block->headshot_item, HIPPO_PACK_END);
+    /* border around headshot */
+    item = g_object_new(HIPPO_TYPE_CANVAS_BOX,
+                        "xalign", HIPPO_ALIGNMENT_END,
+                        "yalign", HIPPO_ALIGNMENT_START,
+                        "background-color", 0x000000ff,
+                        NULL);
+    hippo_canvas_box_append(box, item, HIPPO_PACK_END);                        
     
-    block->name_item = g_object_new(HIPPO_TYPE_CANVAS_LINK,
+    block->headshot_item = g_object_new(HIPPO_TYPE_CANVAS_ENTITY_PHOTO,
+                                        "scale-width", 15,
+                                        "scale-height", 15,
+                                        "xalign", HIPPO_ALIGNMENT_CENTER,
+                                        "yalign", HIPPO_ALIGNMENT_CENTER,
+                                        "padding", 1,
+                                        NULL);
+    hippo_canvas_box_append(HIPPO_CANVAS_BOX(item), block->headshot_item, 0);
+    
+    block->name_item = g_object_new(HIPPO_TYPE_CANVAS_ENTITY_NAME,
                                     "font-scale", PANGO_SCALE_SMALL,
                                     "font", "Italic",
-                                    "text", NULL,
+                                    "xalign", HIPPO_ALIGNMENT_END,
+                                    "yalign", HIPPO_ALIGNMENT_START,
+                                    "padding-right", 8,
                                     NULL);
     hippo_canvas_box_append(box, block->name_item, HIPPO_PACK_END);
 
@@ -269,6 +284,13 @@ set_actions(HippoCanvasBlock *block,
         g_object_ref(block->actions);
     }
 
+    g_object_set(G_OBJECT(block->headshot_item),
+                 "actions", actions,
+                 NULL);
+    g_object_set(G_OBJECT(block->name_item),
+                 "actions", actions,
+                 NULL);
+    
     g_object_notify(G_OBJECT(block), "actions");
 }
 
@@ -295,7 +317,8 @@ hippo_canvas_block_finalize(GObject *object)
 }
 
 HippoCanvasItem*
-hippo_canvas_block_new(HippoBlockType type)
+hippo_canvas_block_new(HippoBlockType type,
+                       HippoActions  *actions)
 {
     HippoCanvasBlock *block;
     GType object_type;
@@ -311,7 +334,9 @@ hippo_canvas_block_new(HippoBlockType type)
         /* FIXME add the other types */
     }
 
-    block = g_object_new(object_type, NULL);
+    block = g_object_new(object_type,
+                         "actions", actions,
+                         NULL);
 
     return HIPPO_CANVAS_ITEM(block);
 }
@@ -540,36 +565,31 @@ hippo_canvas_block_set_sender(HippoCanvasBlock *canvas_block,
     if (entity_guid) {
         HippoEntity *entity;
 
+        if (canvas_block->actions == NULL) {
+            g_warning("setting block sender before setting actions");
+            return;
+        }
+        
         entity = hippo_actions_lookup_entity(canvas_block->actions,
                                              entity_guid);
         if (entity == NULL) {
             g_warning("needed entity is unknown %s", entity_guid);
             return;
         }
-
-        if (entity == canvas_block->last_sender_entity)
-            return;
-
-        canvas_block->last_sender_entity = entity;
-        
-        hippo_actions_load_entity_photo_async(canvas_block->actions,
-                                              entity,
-                                              canvas_block->headshot_item);
-        g_object_set(G_OBJECT(canvas_block->name_item),
-                     "text",
-                     hippo_entity_get_name(entity),
-                     NULL);
-    } else {
-        if (canvas_block->last_sender_entity == NULL)
-            return;
-        
-        canvas_block->last_sender_entity = NULL;
         
         g_object_set(G_OBJECT(canvas_block->headshot_item),
-                     "image-name", "nophoto",
+                     "entity", entity,
+                     NULL);
+        
+        g_object_set(G_OBJECT(canvas_block->name_item),
+                     "entity", entity,
+                     NULL);
+    } else {        
+        g_object_set(G_OBJECT(canvas_block->headshot_item),
+                     "entity", NULL,
                      NULL);
         g_object_set(G_OBJECT(canvas_block->name_item),
-                     "text", NULL,
+                     "entity", NULL,
                      NULL);
     }
 }

@@ -109,15 +109,23 @@ hippo_image_cache_parse(HippoObjectCache      *cache,
                                                    &reader);
     
 
-    if (csurface != NULL) {
+    if (csurface != NULL && cairo_surface_status(csurface) == CAIRO_STATUS_SUCCESS) {
         surface = hippo_surface_new(csurface);
         cairo_surface_destroy(csurface);
     } else {
+        const char *msg;
+        
+        if (csurface) {
+            msg = cairo_status_to_string(cairo_surface_status(csurface));
+            cairo_surface_destroy(csurface);
+        } else {
+            msg = _("Corrupt image");
+        }
+        
         surface = NULL;
         g_set_error(error_p,
                     g_quark_from_string("cairo-surface-error"),
-                    0,
-                    _("Corrupt image"));
+                    0, msg);                    
         goto failed;
     }
 
@@ -135,6 +143,7 @@ hippo_image_cache_load(HippoImageCache          *cache,
                        HippoImageCacheLoadFunc   func,
                        void                     *data)
 {
+    /* g_debug("image cache load '%s'", url); */
     hippo_object_cache_load(HIPPO_OBJECT_CACHE(cache),
                             url,
                             (HippoObjectCacheLoadFunc) func,

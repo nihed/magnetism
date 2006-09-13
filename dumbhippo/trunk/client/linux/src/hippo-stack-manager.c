@@ -219,9 +219,11 @@ update_current_block(StackManager *manager)
     }
 
     if (new_block)
-        manager->single_block_item = hippo_canvas_block_new(hippo_block_get_block_type(new_block));
+        manager->single_block_item = hippo_canvas_block_new(hippo_block_get_block_type(new_block),
+                                                            manager->actions);
     else
-        manager->single_block_item = hippo_canvas_block_new(HIPPO_BLOCK_TYPE_UNKNOWN);
+        manager->single_block_item = hippo_canvas_block_new(HIPPO_BLOCK_TYPE_UNKNOWN,
+                                                            manager->actions);
 
     hippo_canvas_block_set_block(HIPPO_CANVAS_BLOCK(manager->single_block_item),
                                  new_block);

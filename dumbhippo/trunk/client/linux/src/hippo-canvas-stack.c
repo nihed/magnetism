@@ -239,7 +239,8 @@ hippo_canvas_stack_add_block(HippoCanvasStack *canvas_stack,
         g_object_ref(item);
         hippo_canvas_box_remove(HIPPO_CANVAS_BOX(canvas_stack), item);
     } else {
-        item = hippo_canvas_block_new(hippo_block_get_block_type(block));
+        item = hippo_canvas_block_new(hippo_block_get_block_type(block),
+                                      canvas_stack->actions);
         g_object_ref(item);
     }
 
@@ -258,7 +259,10 @@ hippo_canvas_stack_remove_block(HippoCanvasStack *canvas_stack,
     item = find_block_item(canvas_stack, block);
 
     if (item != NULL) {
-        g_object_set(G_OBJECT(item), "actions", NULL, NULL);
+        g_object_set(G_OBJECT(item),
+                     "block", NULL,
+                     "actions", NULL,
+                     NULL);
         hippo_canvas_box_remove(HIPPO_CANVAS_BOX(canvas_stack), item);
     }
 }
