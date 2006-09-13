@@ -9,6 +9,7 @@ import com.dumbhippo.persistence.Sentiment;
 import com.dumbhippo.server.ClaimVerifier;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.ExternalAccountSystem;
+import com.dumbhippo.server.FacebookTracker;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PersonView;
@@ -37,12 +38,16 @@ public class AccountPage {
 	private Configuration config;
 	private ClaimVerifier claimVerifier;
 	private ExternalAccountSystem externalAccounts;
+	private FacebookTracker facebookTracker;
+	private String facebookAuthToken;
 	
 	public AccountPage() {
 		personViewer = WebEJBUtil.defaultLookup(PersonViewer.class);
 		config = WebEJBUtil.defaultLookup(Configuration.class);
 		claimVerifier = WebEJBUtil.defaultLookup(ClaimVerifier.class);
 		externalAccounts = WebEJBUtil.defaultLookup(ExternalAccountSystem.class);
+		facebookTracker = WebEJBUtil.defaultLookup(FacebookTracker.class);
+		facebookAuthToken = null;
 	}
 	
 	public SigninBean getSignin() {
@@ -195,4 +200,18 @@ public class AccountPage {
 		logger.debug("returning {} for blog ", getExternalAccountHandle(ExternalAccountType.BLOG));
 		return getExternalAccountHandle(ExternalAccountType.BLOG);
 	}	
+	
+    public void setFacebookAuthToken(String facebookAuthToken) {
+    	this.facebookAuthToken = facebookAuthToken;  	
+    	// request a session key for the signed in user and set it in the database 
+    	facebookTracker.updateOrCreateFacebookAccount(signin.getViewpoint(), facebookAuthToken);
+    }
+    
+    public String getFacebookAuthToken() {
+    	return facebookAuthToken;
+    }
+    
+    public String getFacebookApiKey() {
+        return facebookTracker.getApiKey();
+    }
 }

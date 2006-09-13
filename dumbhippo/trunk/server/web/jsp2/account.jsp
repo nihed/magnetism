@@ -10,6 +10,9 @@
 </c:if>
 
 <dh:bean id="account" class="com.dumbhippo.web.pages.AccountPage" scope="page"/>
+<%-- This is a Facebook authetication token, we can create a seperate post-facebook-login landing page --%>
+<%-- or land people on their account page, get a token, and display a message --%>
+<jsp:setProperty name="account" property="facebookAuthToken" param="auth_token"/>
 
 <c:set var="termsOfUseNote" value='false'/>
 <c:if test='${!empty param["termsOfUseNote"]}'>
@@ -43,7 +46,7 @@
 		dh.account.initialFlickrEmail = <dh:jsString value="${account.flickrEmail}"/>;
 		dh.account.initialFlickrHateQuip = <dh:jsString value="${account.flickrHateQuip}"/>;
 		dh.account.initialLinkedInName = <dh:jsString value="${account.linkedInName}"/>;
-		dh.account.initialLinkedInHateQuip = <dh:jsString value="${account.linkedInHateQuip}"/>;		
+		dh.account.initialLinkedInHateQuip = <dh:jsString value="${account.linkedInHateQuip}"/>;	
 	</script>
 </head>
 <dht:twoColumnPage neverShowSidebar="true">
@@ -126,6 +129,16 @@
 				<dht:formTableRowStatus controlId='dhBlogEntry'></dht:formTableRowStatus>
 				<dht:formTableRow label="My blog">
 					<dht:textInput id="dhBlogEntry" maxlength="255"/>
+				</dht:formTableRow>				
+				<tr valign="top">
+	                <td colspan="2">
+	                    <c:if test="${account.facebookAuthToken != null}">
+                            <div id="dhFacebookNote">Thank you for logging in to Facebook! You and your friends will now be getting Facebook updates.</div>                     
+                        </c:if>   	                
+                    </td>
+                </tr>     
+				<dht:formTableRow label="Login to Facebook">
+					<a href="http://api.facebook.com/login.php?api_key=${account.facebookApiKey}&next=/account" target="_blank"><img src="http://static.facebook.com/images/devsite/facebook_login.gif"></a>
 				</dht:formTableRow>
 			</dht:formTable>
 			<dht:zoneBoxSeparator/>

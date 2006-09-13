@@ -348,6 +348,25 @@ public class StackerBean implements Stacker {
 		if (block.getBlockType() != BlockType.EXTERNAL_ACCOUNT_UPDATE)
 			throw new IllegalArgumentException("wrong type block");
 
+		// right now we display a number of unread messages and a reqest to re-login
+		// for facebook accounts, so only the user to whom the account belongs should
+		// care to see these, when we get other information about one's facebook updates
+		// we will need to decide who we want to show the block to based on the update 
+		// we want to show
+		// it is arguable whether we want to display the number of unread messages someone
+		// has to other people
+		// pros: it tells others how active the person is on facebook
+		// cons: it is information that is somewhat private and others do not normally see it,
+		//       others can not do anything with this information, i.e. they can't go and read 
+		//       the messages
+		if (block.getData3() == ExternalAccountType.FACEBOOK.ordinal()) {
+			try {
+				return Collections.singleton(EJBUtil.lookupGuid(em, User.class, block.getData1AsGuid()));
+			} catch (NotFoundException e) {
+				throw new RuntimeException(e);
+			}
+		}
+	
 		return getUsersWhoCare(block);
 	}
 	

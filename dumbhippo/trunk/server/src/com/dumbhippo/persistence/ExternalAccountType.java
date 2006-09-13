@@ -39,7 +39,7 @@ public enum ExternalAccountType {
 		// friend ID
 		@Override
 		public String canonicalizeExtra(String extra) throws ValidationException {
-			extra = super.canonicalizeHandle(extra);
+			extra = super.canonicalizeExtra(extra);
 			if (extra != null) {
 				try {
 					long val = Long.parseLong(extra);
@@ -146,6 +146,20 @@ public enum ExternalAccountType {
 		@Override
 		public String getLinkText(String handle, String extra) {
 			return "My Profile";
+		}		
+        // id in FacebookAccount
+		@Override
+		public String canonicalizeExtra(String extra) throws ValidationException {
+			extra = super.canonicalizeExtra(extra);
+			if (extra != null) {
+				try {
+					long val = Long.parseLong(extra);
+					extra = Long.toString(val); // a little extra paranoia
+				} catch (NumberFormatException e) {
+					throw new ValidationException("FacebookAccount id is not a number: " + extra);
+				}
+			}
+			return extra;
 		}
 	},
 	ORKUT("Orkut")  {

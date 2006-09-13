@@ -30,7 +30,9 @@ public enum HippoProperty {
 	SUMMIT_GROUP_GUID("dumbhippo.server.summitgroupguid", null),	
 	NEW_USER_INVITATION_COUNT("dumbhippo.server.newuserinvitationcount", "0"),
 	SPECIAL_NEW_USER_INVITATION_COUNT("dumbhippo.server.specialnewuserinvitationcount", "5"), 
-	FLICKR_API_ID("dumbhippo.server.flickr.apiid", null);
+	FLICKR_API_ID("dumbhippo.server.flickr.apiid", null),
+	FACEBOOK_API_KEY("dumbhippo.server.facebook.apikey", null),
+	FACEBOOK_SECRET("dumbhippo.server.facebook.secret", null);	
 	
 	private String key;
 	private String def;

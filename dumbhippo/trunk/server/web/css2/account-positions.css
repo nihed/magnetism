@@ -49,7 +49,7 @@ tr.dh-email-address-spacer {
 	margin-right:	10px;
 }
 
-#dhTermsOfUseNote {
+#dhTermsOfUseNote, #dhFacebookNote {
 	padding:            5px;
 	margin-bottom:      10px;
 }

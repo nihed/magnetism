@@ -50,6 +50,7 @@ import com.dumbhippo.persistence.Contact;
 import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.ExternalAccountType;
+import com.dumbhippo.persistence.FacebookAccount;
 import com.dumbhippo.persistence.Feed;
 import com.dumbhippo.persistence.FeedEntry;
 import com.dumbhippo.persistence.Group;
@@ -75,6 +76,7 @@ import com.dumbhippo.server.ClaimVerifier;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.EntityView;
 import com.dumbhippo.server.ExternalAccountSystem;
+import com.dumbhippo.server.FacebookTracker;
 import com.dumbhippo.server.FeedSystem;
 import com.dumbhippo.server.GroupIndexer;
 import com.dumbhippo.server.GroupSystem;
@@ -167,6 +169,9 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	
 	@EJB
 	private ExternalAccountSystem externalAccountSystem;
+	
+	@EJB
+	private FacebookTracker facebookTracker;
 	
 	@EJB
 	private Stacker stacker;
@@ -1890,6 +1895,18 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			xml.appendTextNode("updateTitle", lastEntry.getTitle());
 			xml.appendTextNode("updateLink", lastEntry.getLink().getUrl());
 			xml.appendTextNode("updateText", lastEntry.getDescription());			
+		} else if (accountTypeOrdinal == ExternalAccountType.FACEBOOK.ordinal()) {
+			FacebookAccount facebookAccount = facebookTracker.lookupFacebookAccount(viewpoint, user);
+			xml.appendTextNode("accountType", "Facebook");
+			if (facebookAccount.isSessionKeyValid()) {
+			    xml.appendTextNode("updateTitle", "You have " + facebookAccount.getUnreadMessageCount() + " unread messages in your Facebook account");
+			    xml.appendTextNode("updateLink", "http://www.facebook.com");
+			    xml.appendTextNode("updateText", "");	 
+			} else {
+			    xml.appendTextNode("updateTitle", "Please re-login to Facebook to continue getting Facebook updates");
+			    xml.appendTextNode("updateLink", "http://api.facebook.com/login.php?api_key=" + facebookTracker.getApiKey() +"&next=/account");
+			    xml.appendTextNode("updateText", "");				
+			}
 		}
 		xml.closeElement();
 	}

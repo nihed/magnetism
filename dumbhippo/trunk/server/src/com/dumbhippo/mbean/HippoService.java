@@ -7,6 +7,7 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.live.LiveState;
 import com.dumbhippo.persistence.SchemaUpdater;
 import com.dumbhippo.server.impl.AbstractCacheBean;
+import com.dumbhippo.server.impl.FacebookTrackerBean;
 import com.dumbhippo.server.impl.FeedSystemBean;
 import com.dumbhippo.server.impl.MusicSystemInternalBean;
 import com.dumbhippo.server.impl.TransactionRunnerBean;
@@ -23,6 +24,7 @@ public class HippoService extends ServiceMBeanSupport implements HippoServiceMBe
 	protected void startService() {
 		logger.info("Starting HippoService MBean");
 		SchemaUpdater.update();
+		FacebookTrackerBean.startup();
 		FeedSystemBean.startup();
     }
 	
@@ -36,6 +38,7 @@ public class HippoService extends ServiceMBeanSupport implements HippoServiceMBe
 		AbstractCacheBean.shutdown();
 		MusicSystemInternalBean.shutdown();
 		FeedSystemBean.shutdown();
+		FacebookTrackerBean.shutdown();
 		TransactionRunnerBean.shutdown();
    }
 }
