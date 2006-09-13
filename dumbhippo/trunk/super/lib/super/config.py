@@ -28,14 +28,14 @@ class Config:
         self.params= { 'superdir' : superdir }
         self.services={}
 
-        self._load_config(os.path.join(superdir, 'base.conf'), True)
+        self.load_config(os.path.join(superdir, 'base.conf'), True)
         if (os.environ.has_key('HOME')):
             self.params['home'] = os.environ['HOME'];
             
         if conffile is not None:
-            self._load_config(conffile, True)
+            self.load_config(conffile, True)
         elif (os.environ.has_key('HOME')):
-            self._load_config(os.path.join(os.environ['HOME'], '.super.conf'), False)
+            self.load_config(os.path.join(os.environ['HOME'], '.super.conf'), False)
         for (name, value) in init_params.items():
             self._set_init_parameter(name, value)
 
@@ -83,7 +83,7 @@ class Config:
                     print >>sys.stderr, "Was OK"
                 if service.is_runnable():
                     print >>sys.stderr, "Starting:", service_name
-                    self.services[service_name].start()
+                    service.start()
         elif action == 'stop':
             services = self.filter_runnable(services)
             
@@ -91,8 +91,12 @@ class Config:
             stop_order = copy.copy(services)
             stop_order.reverse()
             for service_name in stop_order:
-                print >>sys.stderr, "Stopping", service_name
-                self.services[service_name].stop()
+                service = self.services[service_name]
+                if service.status():
+                    print >>sys.stderr, "Stopping", service_name
+                    service.stop()
+                else:
+                    print >>sys.stderr, service_name, "is not running"
         elif action == 'restart':
             services = self.filter_runnable(services)
             
@@ -246,7 +250,15 @@ class Config:
 
     def get_parameter(self, name):
         """Get the unexpanded value of a parameter."""
-        return self.params[name]
+        dot = name.find(".")
+        if dot >= 0:
+            service_name = name[0:dot]
+            if not self.services.has_key(service_name):
+                print >>sys.stderr, "Can't find service '%s' when expanding '%s'" % (service_name, name)
+                sys.exit(1)
+            return self.services[service_name].get_parameter(name[dot + 1:])
+        else:
+            return self.params[name]
 
     def has_parameter(self, name):
         """Return True if the given parameter was set."""
@@ -272,7 +284,7 @@ class Config:
         if scope is None:
             scope = self
 
-        ident = '[a-zA-Z_][a-zA-Z_0-9]*'
+        ident = '(?:[a-zA-Z_][a-zA-Z_0-9]*\\.)?[a-zA-Z_][a-zA-Z_0-9]*'
         arithmetic = '\$\(\(\s*(%s)\s*\+\s*([0-9]+)\s*\)\)' % ident
         
         def repl(m):
@@ -293,7 +305,6 @@ class Config:
 
                     return self.expand_parameter(param_name, scope)
 
-        ident = "[a-zA-Z_][a-zA-Z_0-9]*"
         # \x5C = backslash, trying to avoid "\\\\\\\\\\\\" syndrome
         expr = '\x5C\x5C\x5C$|%s|\$%s' % (arithmetic, ident)
         return re.sub(expr, repl, str)
@@ -317,7 +328,7 @@ class Config:
         """Gets the (expanded) value of a parameter and checks if it is true"""
         return self.is_true(self.expand_parameter(name))
 
-    def _load_config(self, filename, must_exist):
+    def load_config(self, filename, must_exist):
         """Load a single config file and merge it into the existing state.
 
         filename -- filename to load

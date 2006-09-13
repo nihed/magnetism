@@ -13,13 +13,14 @@ from super.merge import Merge
 # <superconf><service><parameter>...</parameter></service></superconf>
 OUTSIDE = 0
 SUPERCONF = 1
-PARAMETER = 2
-SERVICE = 3
-SERVICE_PARAMETER = 4
-SERVICE_MERGE = 5
-SERVICE_DIRECTORY = 6
-SERVICE_REQUIREDSERVICE = 6
-SERVICE_TARGETATTRIBUTES = 6
+INCLUDE = 2
+PARAMETER = 3
+SERVICE = 4
+SERVICE_PARAMETER = 5
+SERVICE_MERGE = 6
+SERVICE_DIRECTORY = 7
+SERVICE_REQUIREDSERVICE = 8
+SERVICE_TARGETATTRIBUTES = 9
     
 class ConfigHandler (xml.sax.ContentHandler):
 
@@ -45,7 +46,12 @@ class ConfigHandler (xml.sax.ContentHandler):
             else:
                 self._report("Root element must be 'superconf'")
         elif (self.state == SUPERCONF):
-            if (name == 'parameter'):
+            if (name == 'include'):
+                (filename,) = self._parse_attributes(name, attrs, 'file', True)
+                self.config.load_config(os.path.expanduser(filename), True)
+                self.state = INCLUDE
+                return
+            elif (name == 'parameter'):
                 (self.param_name,) = self._parse_attributes(name, attrs, 'name', True)
                 self.param_value = ""
                 self.state = PARAMETER
@@ -128,6 +134,8 @@ class ConfigHandler (xml.sax.ContentHandler):
             pass
         elif (self.state == SUPERCONF):
             self.state = OUTSIDE
+        elif (self.state == INCLUDE):
+            self.state = SUPERCONF
         elif (self.state == PARAMETER):
             self.config.set_parameter(self.param_name, self.param_value.strip())
             self.state = SUPERCONF
