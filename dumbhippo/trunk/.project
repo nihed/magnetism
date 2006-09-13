@@ -18,7 +18,7 @@
 		<link>
 			<name>eclipse-build</name>
 			<type>2</type>
-			<location>ECLIPSE_BUILD_DIR</location>
+			<location>ECLIPSE_BUILD_DIR/dumbhippo</location>
 		</link>
 	</linkedResources>
 </projectDescription>
