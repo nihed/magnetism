@@ -473,6 +473,7 @@ public class PostingBoardBean implements PostingBoard {
 					Post post = new Post(poster, visibility, toWorld, title, text, personRecipients, groupRecipients, expandedRecipients, resources);
 					post.setPostInfo(postInfo);
 					em.persist(post);
+					stacker.onPostCreated(post.getGuid());
 					logger.debug("saved new Post {}", post);
 					return post;
 				}
@@ -484,6 +485,7 @@ public class PostingBoardBean implements PostingBoard {
 			public Post call() {
 				FeedPost post = new FeedPost(feed, entry, expandVisibilityForGroup(PostVisibility.RECIPIENTS_ONLY, feed.getGroup()));
 				em.persist(post);
+				stacker.onPostCreated(post.getGuid());
 
 				logger.debug("saved new FeedPost {}", post);
 				return post;

@@ -29,6 +29,7 @@ import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.Character;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.NotFoundException;
+import com.dumbhippo.server.Stacker;
 import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.UnauthorizedException;
 import com.dumbhippo.server.util.EJBUtil;
@@ -45,6 +46,9 @@ public class AccountSystemBean implements AccountSystem {
 	
 	@EJB
 	private TransactionRunner runner;
+	
+	@EJB
+	private Stacker stacker;
 
 	public Account createAccountFromResource(Resource res) {
 		User user = new User();
@@ -57,6 +61,9 @@ public class AccountSystemBean implements AccountSystem {
 		// the GroupMember canonicalization code assumes this for example.
 		spider.addVerifiedOwnershipClaim(user, account);		
 		spider.addVerifiedOwnershipClaim(user, res);
+		
+		stacker.onUserCreated(user.getGuid());
+		
 		return account;
 	}
 
