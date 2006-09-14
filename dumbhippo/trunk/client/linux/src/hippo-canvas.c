@@ -562,7 +562,6 @@ hippo_canvas_set_root(HippoCanvas     *canvas,
 #if 1
 #include <gtk/gtk.h>
 #include "hippo-canvas-box.h"
-#include "hippo-canvas-shape.h"
 #include "hippo-canvas-text.h"
 #include "hippo-canvas-link.h"
 #include "hippo-canvas-image.h"
@@ -620,10 +619,10 @@ create_row(BoxAttrs *boxes)
         const char *align_text;
         char *s;
         
-        shape = g_object_new(HIPPO_TYPE_CANVAS_SHAPE,
-                             "width", attrs->width,
-                             "height", attrs->height,
-                             "color", attrs->color,
+        shape = g_object_new(HIPPO_TYPE_CANVAS_BOX,
+                             /* "width", attrs->width,
+                                "height", attrs->height, */
+                             /* "color", attrs->color, */
                              "background-color", 0xffffffff,
                              "xalign", attrs->alignment,
                              NULL);

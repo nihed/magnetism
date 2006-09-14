@@ -642,8 +642,27 @@ hippo_canvas_box_paint(HippoCanvasItem *item,
     HippoCanvasBox *box = HIPPO_CANVAS_BOX(item);
     HippoCanvasBoxClass *klass = HIPPO_CANVAS_BOX_GET_CLASS(box);
 
+    g_return_if_fail(box->allocated_width > 0 && box->allocated_height > 0);
+    
+    cairo_save(cr);
     (* klass->paint_background) (box, cr);
+    cairo_restore(cr);
+    
+    if (klass->paint_below_children != NULL) {
+        cairo_save(cr);
+        (* klass->paint_below_children) (box, cr);
+        cairo_restore(cr);
+    }
+
+    cairo_save(cr);
     (* klass->paint_children) (box, cr);
+    cairo_restore(cr);
+    
+    if (klass->paint_above_children != NULL) {
+        cairo_save(cr);
+        (* klass->paint_above_children) (box, cr);
+        cairo_restore(cr);
+    }
 }
 
 /* This is intended to not rely on size request/allocation state,
@@ -1442,14 +1461,6 @@ hippo_canvas_box_get_context(HippoCanvasBox *box)
     g_return_val_if_fail(HIPPO_IS_CANVAS_BOX(box), NULL);
 
     return box->context;
-}
-
-int
-hippo_canvas_box_get_fixed_width (HippoCanvasBox *box)
-{
-    g_return_val_if_fail(HIPPO_IS_CANVAS_BOX(box), 0);
-
-    return box->fixed_width;
 }
 
 void

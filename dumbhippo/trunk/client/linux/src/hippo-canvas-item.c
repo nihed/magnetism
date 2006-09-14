@@ -285,12 +285,18 @@ hippo_canvas_item_process_paint(HippoCanvasItem *canvas_item,
 {
     int width, height;
 
-    cairo_save(cr);
-
+    /* some items may rely on this check - paint is guaranteed to not
+     * be called if an item has any 0 allocation
+     */
     hippo_canvas_item_get_allocation(canvas_item, &width, &height);
-    cairo_translate(cr, allocation_x, allocation_y);
 
-    g_signal_emit(canvas_item, signals[PAINT], 0, cr);
+    if (width > 0 && height > 0) {
+        cairo_save(cr);
+        
+        cairo_translate(cr, allocation_x, allocation_y);
+        
+        g_signal_emit(canvas_item, signals[PAINT], 0, cr);
 
-    cairo_restore(cr);
+        cairo_restore(cr);
+    }
 }

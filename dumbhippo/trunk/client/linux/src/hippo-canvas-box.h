@@ -35,7 +35,7 @@ struct _HippoCanvasBox {
     int allocated_width;
     int allocated_height;
 
-    int fixed_width; /* -1 if unset, use "natural" */
+    int fixed_width; /* -1 if unset, which means use "natural size" */
 
     guint32 background_color_rgba;
     guint32 border_color_rgba;
@@ -71,7 +71,12 @@ struct _HippoCanvasBoxClass {
     void     (* paint_background)             (HippoCanvasBox   *box,
                                                cairo_t          *cr);
     void     (* paint_children)               (HippoCanvasBox   *box,
+                                               cairo_t          *cr);
+    void     (* paint_below_children)         (HippoCanvasBox   *box,
                                                cairo_t          *cr);    
+    void     (* paint_above_children)         (HippoCanvasBox   *box,
+                                               cairo_t          *cr);
+    
     int      (* get_content_width_request)    (HippoCanvasBox   *box);
     int      (* get_content_height_request)   (HippoCanvasBox   *box,
                                                int               for_width);
@@ -94,7 +99,6 @@ void hippo_canvas_box_foreach    (HippoCanvasBox  *box,
 
 /* Protected accessors for subclasses */
 HippoCanvasContext* hippo_canvas_box_get_context     (HippoCanvasBox *box);
-int                 hippo_canvas_box_get_fixed_width (HippoCanvasBox *box);
 void                hippo_canvas_box_align           (HippoCanvasBox *box,
                                                       int             requested_content_width,
                                                       int             requested_content_height,

@@ -26,11 +26,7 @@ static void hippo_canvas_link_get_property (GObject      *object,
 
 
 /* Canvas item methods */
-static void               hippo_canvas_link_paint               (HippoCanvasItem *item,
-                                                                 cairo_t         *cr);
-static int                hippo_canvas_link_get_width_request   (HippoCanvasItem *item);
-static int                hippo_canvas_link_get_height_request  (HippoCanvasItem *item,
-                                                                 int              for_width);
+
 static gboolean           hippo_canvas_link_button_press_event  (HippoCanvasItem *item,
                                                                  HippoEvent      *event);
 static gboolean           hippo_canvas_link_motion_notify_event (HippoCanvasItem *item,
@@ -90,9 +86,6 @@ hippo_canvas_link_iface_init(HippoCanvasItemClass *item_class)
 {
     item_parent_class = g_type_interface_peek_parent(item_class);
 
-    item_class->paint = hippo_canvas_link_paint;
-    item_class->get_width_request = hippo_canvas_link_get_width_request;
-    item_class->get_height_request = hippo_canvas_link_get_height_request;
     item_class->button_press_event = hippo_canvas_link_button_press_event;
     item_class->motion_notify_event = hippo_canvas_link_motion_notify_event;
     item_class->get_pointer = hippo_canvas_link_get_pointer;
@@ -168,35 +161,6 @@ hippo_canvas_link_get_property(GObject         *object,
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
         break;
     }
-}
-
-static void
-hippo_canvas_link_paint(HippoCanvasItem *item,
-                         cairo_t         *cr)
-{
-    /* HippoCanvasLink *link = HIPPO_CANVAS_LINK(item); */
-    
-    /* Just chain up */
-    item_parent_class->paint(item, cr);
-}
-
-static int
-hippo_canvas_link_get_width_request(HippoCanvasItem *item)
-{
-    /* HippoCanvasLink *link = HIPPO_CANVAS_LINK(item); */
-
-    /* Just chain up */
-    return item_parent_class->get_width_request(item);
-}
-
-static int
-hippo_canvas_link_get_height_request(HippoCanvasItem *item,
-                                      int              for_width)
-{
-    /* HippoCanvasLink *link = HIPPO_CANVAS_LINK(item); */
-
-    /* Just chain up */
-    return item_parent_class->get_height_request(item, for_width);
 }
 
 static gboolean
