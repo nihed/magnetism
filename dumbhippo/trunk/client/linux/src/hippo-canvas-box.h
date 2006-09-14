@@ -101,14 +101,17 @@ void hippo_canvas_box_foreach    (HippoCanvasBox  *box,
                                   void            *data);
 
 /* Protected accessors for subclasses */
-HippoCanvasContext* hippo_canvas_box_get_context     (HippoCanvasBox *box);
-void                hippo_canvas_box_align           (HippoCanvasBox *box,
-                                                      int             requested_content_width,
-                                                      int             requested_content_height,
-                                                      int            *x_p,
-                                                      int            *y_p,
-                                                      int            *width_p,
-                                                      int            *height_p);
+HippoCanvasContext* hippo_canvas_box_get_context         (HippoCanvasBox *box);
+void                hippo_canvas_box_get_background_area (HippoCanvasBox *box,
+                                                          HippoRectangle *area);
+void                hippo_canvas_box_align               (HippoCanvasBox *box,
+                                                          int             requested_content_width,
+                                                          int             requested_content_height,
+                                                          int            *x_p,
+                                                          int            *y_p,
+                                                          int            *width_p,
+                                                          int            *height_p);
+
 
 G_END_DECLS
 

@@ -20,6 +20,11 @@
 
 G_BEGIN_DECLS
 
+typedef enum {
+    HIPPO_STOCK_COLOR_BG_NORMAL,
+    HIPPO_STOCK_COLOR_BG_PRELIGHT
+} HippoStockColor;
+
 typedef struct _HippoCanvasContext      HippoCanvasContext;
 typedef struct _HippoCanvasContextClass HippoCanvasContextClass;
 
@@ -37,6 +42,9 @@ struct _HippoCanvasContextClass {
 
     cairo_surface_t* (* load_image)     (HippoCanvasContext  *context,
                                          const char          *image_name);
+
+    guint32          (* get_color)      (HippoCanvasContext  *context,
+                                         HippoStockColor      color);
 };
 
 GType        	 hippo_canvas_context_get_type               (void) G_GNUC_CONST;
@@ -45,10 +53,16 @@ PangoLayout*     hippo_canvas_context_create_layout          (HippoCanvasContext
 
 cairo_surface_t* hippo_canvas_context_load_image             (HippoCanvasContext *context,
                                                               const char         *image_name);
+guint32          hippo_canvas_context_get_color              (HippoCanvasContext *context,
+                                                              HippoStockColor     color);
 
 /* Random utility function that shouldn't really be in this file */
-void hippo_cairo_set_source_rgba32(cairo_t *cr,
-                                   guint32  color);
+void hippo_cairo_set_source_rgba32       (cairo_t         *cr,
+                                          guint32          color);
+void hippo_cairo_pattern_add_stop_rgba32 (cairo_pattern_t *pattern,
+                                          double           offset,
+                                          guint32          color);
+
 
 G_END_DECLS
 

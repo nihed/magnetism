@@ -38,9 +38,12 @@ static gboolean  hippo_canvas_leave_notify        (GtkWidget         *widget,
 static gboolean  hippo_canvas_motion_notify       (GtkWidget         *widget,
             	       	                           GdkEventMotion    *event);
 
-static PangoLayout*     hippo_canvas_create_layout    (HippoCanvasContext *context);
-static cairo_surface_t* hippo_canvas_load_image       (HippoCanvasContext *context,
-                                                       const char         *image_name);
+static PangoLayout*     hippo_canvas_create_layout (HippoCanvasContext *context);
+static cairo_surface_t* hippo_canvas_load_image    (HippoCanvasContext *context,
+                                                    const char         *image_name);
+static guint32          hippo_canvas_get_color     (HippoCanvasContext *context,
+                                                    HippoStockColor     color);
+
 
 struct _HippoCanvas {
     GtkEventBox parent;
@@ -110,6 +113,7 @@ hippo_canvas_iface_init (HippoCanvasContextClass *klass)
 {
     klass->create_layout = hippo_canvas_create_layout;
     klass->load_image = hippo_canvas_load_image;
+    klass->get_color = hippo_canvas_get_color;
 }
 
 static void
@@ -508,6 +512,46 @@ hippo_canvas_load_image(HippoCanvasContext *context,
 
     cairo_surface_reference(surface);
     return surface;
+}
+
+static guint32
+convert_color(GdkColor *gdk_color)
+{
+    guint32 rgba;
+    
+    rgba = gdk_color->red / 256;
+    rgba <<= 8;
+    rgba &= gdk_color->green / 256;
+    rgba <<= 8;
+    rgba &= gdk_color->blue / 256;
+    rgba <<= 8;
+    rgba &= 0xff; /* alpha */
+
+    return rgba;
+}
+
+static guint32
+hippo_canvas_get_color(HippoCanvasContext *context,
+                       HippoStockColor     color)
+{
+    HippoCanvas *canvas = HIPPO_CANVAS(context);
+    GtkWidget *widget = GTK_WIDGET(canvas);
+    GtkStyle *style = gtk_widget_get_style(widget);
+
+    if (style == NULL) /* not realized yet, should not happen really */
+        return 0;
+    
+    switch (color) {
+    case HIPPO_STOCK_COLOR_BG_NORMAL:
+        return convert_color(&style->bg[GTK_STATE_NORMAL]);
+        break;
+    case HIPPO_STOCK_COLOR_BG_PRELIGHT:
+        return convert_color(&style->bg[GTK_STATE_PRELIGHT]);
+        break;
+    }
+
+    g_warning("unknown stock color %d", color);
+    return 0;
 }
 
 GtkWidget*

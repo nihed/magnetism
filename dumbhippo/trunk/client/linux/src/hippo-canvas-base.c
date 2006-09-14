@@ -61,14 +61,13 @@ hippo_canvas_base_init(HippoCanvasBase *base)
     HippoCanvasItem *item;
     HippoCanvasBox *box;
 
-    HIPPO_CANVAS_BOX(base)->background_color_rgba = 0xff00ffff;
+    HIPPO_CANVAS_BOX(base)->background_color_rgba = 0xa555bdff;
     HIPPO_CANVAS_BOX(base)->padding_left = 4;
     HIPPO_CANVAS_BOX(base)->padding_right = 4;
     HIPPO_CANVAS_BOX(base)->padding_top = 4;
     HIPPO_CANVAS_BOX(base)->padding_bottom = 4;
     
     /* Create top bar */
-
     
     box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
                        "orientation", HIPPO_ORIENTATION_HORIZONTAL,
@@ -77,8 +76,9 @@ hippo_canvas_base_init(HippoCanvasBase *base)
                             HIPPO_CANVAS_ITEM(box), 0);
 
     item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
-                        "text", "Mugshot",
+                        "text", "MUGSHOT",
                         "xalign", HIPPO_ALIGNMENT_START,
+                        "color", 0xffffffff,
                         NULL);
     hippo_canvas_box_append(box, item, 0);
 }

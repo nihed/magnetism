@@ -34,6 +34,8 @@ mugshot_SOURCES	=				\
 	src/hippo-canvas-entity-name.h		\
 	src/hippo-canvas-entity-photo.c		\
 	src/hippo-canvas-entity-photo.h		\
+	src/hippo-canvas-gradient.c		\
+	src/hippo-canvas-gradient.h		\
 	src/hippo-canvas-grip.c			\
 	src/hippo-canvas-grip.h			\
 	src/hippo-canvas-image.c		\

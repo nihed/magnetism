@@ -13,6 +13,7 @@
 #include "hippo-canvas-box.h"
 #include "hippo-canvas-image.h"
 #include "hippo-canvas-text.h"
+#include "hippo-canvas-gradient.h"
 #include "hippo-canvas-link.h"
 #include "hippo-actions.h"
 
@@ -32,9 +33,6 @@ static void hippo_canvas_block_get_property (GObject      *object,
                                              GParamSpec   *pspec);
 
 
-/* Canvas item methods */
-static void     hippo_canvas_block_paint              (HippoCanvasItem *item,
-                                                       cairo_t         *cr);
 
 /* our own methods */
 
@@ -79,42 +77,44 @@ hippo_canvas_block_init(HippoCanvasBlock *block)
 
 
     HIPPO_CANVAS_BOX(block)->background_color_rgba = 0xffffffff;
-    HIPPO_CANVAS_BOX(block)->padding_left = 4;
-    HIPPO_CANVAS_BOX(block)->padding_right = 4;
-    HIPPO_CANVAS_BOX(block)->padding_top = 4;
-    HIPPO_CANVAS_BOX(block)->padding_bottom = 4;
     
     /* Create top bar */
-
     
     box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
                        "orientation", HIPPO_ORIENTATION_HORIZONTAL,
+                       "background-color", 0xf76d18ff,
+                       "padding", 4,
                        NULL);
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(block),
                             HIPPO_CANVAS_ITEM(box), 0);
 
     block->heading_text_item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
                                             "text", NULL,
+                                            "color", 0xffffffff,
                                             "xalign", HIPPO_ALIGNMENT_START,
                                             NULL);
     hippo_canvas_box_append(box, block->heading_text_item, 0);
 
     item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
                         "text", "[\\/]",
+                        "color", 0xffffffff,
                         NULL);
     hippo_canvas_box_append(box, item, HIPPO_PACK_END);
     
     item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
                         "text", "[X]",
+                        "color", 0xffffffff,
                         NULL);
     hippo_canvas_box_append(box, item, HIPPO_PACK_END);
 
     
     /* Create left and right columns */
-
     
-    box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
+    box = g_object_new(HIPPO_TYPE_CANVAS_GRADIENT,
                        "orientation", HIPPO_ORIENTATION_HORIZONTAL,
+                       "start-color", 0xffc7adff,
+                       "end-color", 0xffc7ad00,
+                       "padding", 4,
                        NULL);
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(block),
                             HIPPO_CANVAS_ITEM(box), HIPPO_PACK_EXPAND);
@@ -225,14 +225,13 @@ static void
 hippo_canvas_block_iface_init(HippoCanvasItemClass *item_class)
 {
     item_parent_class = g_type_interface_peek_parent(item_class);
-
-    item_class->paint = hippo_canvas_block_paint;
 }
 
 static void
 hippo_canvas_block_class_init(HippoCanvasBlockClass *klass)
 {
-    GObjectClass *object_class = G_OBJECT_CLASS (klass);
+    GObjectClass *object_class = G_OBJECT_CLASS(klass);
+    /* HippoCanvasBoxClass *box_class = HIPPO_CANVAS_BOX_CLASS(klass); */
 
     object_class->set_property = hippo_canvas_block_set_property;
     object_class->get_property = hippo_canvas_block_get_property;
@@ -384,17 +383,6 @@ hippo_canvas_block_get_property(GObject         *object,
         break;
     }
 }
-
-static void
-hippo_canvas_block_paint(HippoCanvasItem *item,
-                         cairo_t         *cr)
-{
-    /* HippoCanvasBlock *block = HIPPO_CANVAS_BLOCK(item); */
-
-    /* Draw the background and any children */
-    item_parent_class->paint(item, cr);
-}
-
 
 static void
 on_block_clicked_count_changed(HippoBlock *block,

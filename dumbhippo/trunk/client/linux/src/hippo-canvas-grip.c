@@ -202,11 +202,14 @@ hippo_canvas_grip_paint_below_children(HippoCanvasBox  *box,
     cairo_rectangle(cr, x, y, w, h);
     cairo_clip(cr);
 
-    /* FIXME pick a sane color - add canvas_context_get_color(PRELIGHT) ? */
     if (grip->prelighted)
-        hippo_cairo_set_source_rgba32(cr, 0xff0000ff);
+        hippo_cairo_set_source_rgba32(cr,
+                                      hippo_canvas_context_get_color(box->context,
+                                                                     HIPPO_STOCK_COLOR_BG_PRELIGHT));
     else
-        hippo_cairo_set_source_rgba32(cr, 0x770000ff);
+        hippo_cairo_set_source_rgba32(cr,
+                                      hippo_canvas_context_get_color(box->context,
+                                                                     HIPPO_STOCK_COLOR_BG_NORMAL));
     
     cairo_paint(cr);
 }

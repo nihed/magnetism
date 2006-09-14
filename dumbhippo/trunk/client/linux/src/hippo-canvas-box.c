@@ -31,6 +31,8 @@ static void hippo_canvas_box_get_property (GObject      *object,
 static PangoLayout*     hippo_canvas_box_create_layout      (HippoCanvasContext *context);
 static cairo_surface_t* hippo_canvas_box_load_image         (HippoCanvasContext *context,
                                                              const char         *image_name);
+static guint32          hippo_canvas_box_get_color          (HippoCanvasContext *context,
+                                                             HippoStockColor     color);
 
 /* Canvas item methods */
 static void               hippo_canvas_box_sink                (HippoCanvasItem    *item);
@@ -140,6 +142,7 @@ hippo_canvas_box_iface_init_context (HippoCanvasContextClass *klass)
 {
     klass->create_layout = hippo_canvas_box_create_layout;
     klass->load_image = hippo_canvas_box_load_image;
+    klass->get_color = hippo_canvas_box_get_color;
 }
 
 static void
@@ -546,6 +549,18 @@ hippo_canvas_box_load_image(HippoCanvasContext *context,
     return hippo_canvas_context_load_image(box->context, image_name);
 }
 
+static guint32
+hippo_canvas_box_get_color(HippoCanvasContext *context,
+                           HippoStockColor     color)
+{
+    HippoCanvasBox *box = HIPPO_CANVAS_BOX(context);
+
+    g_assert(box->context != NULL);
+
+    /* chain to our parent context */
+    return hippo_canvas_context_get_color(box->context, color);
+}
+
 static void
 hippo_canvas_box_sink(HippoCanvasItem    *item)
 {
@@ -585,6 +600,16 @@ hippo_canvas_box_set_context(HippoCanvasItem    *item,
     }
 }
 
+void
+hippo_canvas_box_get_background_area (HippoCanvasBox *box,
+                                      HippoRectangle *area)
+{
+    area->x = box->border_left;
+    area->y = box->border_top;
+    area->width = box->allocated_width - box->border_left - box->border_right;
+    area->height = box->allocated_height - box->border_top - box->border_bottom;
+}
+
 static void
 hippo_canvas_box_paint_background(HippoCanvasBox *box,
                                   cairo_t        *cr)
@@ -593,11 +618,14 @@ hippo_canvas_box_paint_background(HippoCanvasBox *box,
      * item allocation, including padding but not border
      */
     if ((box->background_color_rgba & 0xff) != 0) {
+        HippoRectangle area;
+
+        hippo_canvas_box_get_background_area(box, &area);
+        
         hippo_cairo_set_source_rgba32(cr, box->background_color_rgba);
         cairo_rectangle(cr,
-                        box->border_left, box->border_top,
-                        box->allocated_width - box->border_left - box->border_right,
-                        box->allocated_height - box->border_top - box->border_bottom);
+                        area.x, area.y,
+                        area.width, area.height);
         cairo_fill(cr);
     }
 
