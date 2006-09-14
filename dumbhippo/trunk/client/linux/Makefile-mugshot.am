@@ -12,12 +12,6 @@ mugshot_LDADD= libhippoipc.la libhippo.la libgtkcopy.la
 mugshot_SOURCES	=				\
 	src/hippo-actions.c			\
 	src/hippo-actions.h			\
-	src/hippo-bubble.c			\
-	src/hippo-bubble.h			\
-	src/hippo-bubble-manager.c		\
-	src/hippo-bubble-manager.h		\
-	src/hippo-bubble-util.c			\
-	src/hippo-bubble-util.h			\
 	src/hippo-canvas.c			\
 	src/hippo-canvas.h			\
 	src/hippo-canvas-base.c			\

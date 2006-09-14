@@ -9,8 +9,6 @@
 #include "hippo-platform-impl.h"
 #include "hippo-status-icon.h"
 #include "hippo-chat-window.h"
-#include "hippo-bubble.h"
-#include "hippo-bubble-manager.h"
 #include "hippo-stack-manager.h"
 #include "hippo-dbus-server.h"
 #include "hippo-idle.h"
@@ -304,83 +302,6 @@ hippo_app_load_photo(HippoApp                *app,
         hippo_pixbuf_cache_load(app->photo_cache, absolute, func, data);
         g_free(absolute);
     }
-}
-
-/* FIXME this function should be nuked once we drop the bubble */
-void
-hippo_app_put_window_by_icon(HippoApp  *app,
-                             GtkWindow *window)
-{
-    GtkOrientation orientation;
-    int x, y, width, height;
-    GdkScreen *screen;
-    GdkRectangle monitor;
-    int monitor_num;
-    int window_x, window_y;
-    GtkRequisition req;
-    gboolean is_west;
-    gboolean is_north;
-
-    orientation = hippo_gtk_status_icon_get_orientation(GTK_STATUS_ICON(app->icon));
-    hippo_gtk_status_icon_get_screen_geometry(GTK_STATUS_ICON(app->icon), &screen,
-        &x, &y, &width, &height);
-
-    monitor_num = gdk_screen_get_monitor_at_point(screen, x, y);
-    if (monitor_num < 0)
-        monitor_num = 0;
-
-    gdk_screen_get_monitor_geometry(screen, monitor_num, &monitor);
-
-#define GAP 3
-
-    is_west = ((x + width / 2) < (monitor.x + monitor.width / 2));
-    is_north = ((y + height / 2) < (monitor.y + monitor.height / 2));
-
-    /* Let's try pretending the status icon is always in the corner; if it isn't,
-     * the bubble gets too annoying
-     */
-    if (is_west) {
-        x = monitor.x;
-    } else {
-        x = monitor.x + monitor.width - width;
-    }
-    
-    if (is_north) {
-        y = monitor.y;
-    } else {
-        y = monitor.y + monitor.height - height;
-    }
-
-    /* this just assumes a borderless window for now, doesn't mess with gravity,
-     * though it would be easily fixed if we ever cared
-     */
-
-    gtk_widget_size_request(GTK_WIDGET(window), &req);
-    if (orientation == GTK_ORIENTATION_VERTICAL) {
-        if (is_west) {
-            window_x = x + width + GAP;
-        } else {
-            window_x = x - req.width - GAP;
-        }
-        if (is_north) {
-            window_y = y;
-        } else {
-            window_y = y + height - req.height;
-        }
-    } else {
-        if (is_west) {
-            window_x = x;
-        } else {
-            window_x = x + width - req.width;
-        }
-        if (is_north) {
-            window_y = y + height + GAP;
-        } else {
-            window_y = y - req.height - GAP;
-        }
-    }
-    
-    gtk_window_move(window, window_x, window_y);
 }
 
 void
@@ -714,7 +635,7 @@ on_idle_changed(gboolean  idle,
 {
     HippoApp *app = data;
 
-    hippo_bubble_manager_set_idle(app->cache, idle);
+    hippo_stack_manager_set_idle(app->cache, idle);
 }                
 
 static void
@@ -795,7 +716,6 @@ hippo_app_new(HippoInstanceType  instance_type,
     
     app->chat_windows = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
 
-    hippo_bubble_manager_manage(app->cache);
     hippo_stack_manager_manage(app->cache);
     
     /* initially be sure we are the latest installed, though it's 
@@ -830,7 +750,6 @@ hippo_app_free(HippoApp *app)
     g_signal_handlers_disconnect_by_func(G_OBJECT(app->connection),
                                          G_CALLBACK(on_connected_changed), app);
     
-    hippo_bubble_manager_unmanage(app->cache);
     hippo_stack_manager_unmanage(app->cache);
     
     g_hash_table_destroy(app->chat_windows);
@@ -991,16 +910,6 @@ main(int argc, char **argv)
     }
     
     hippo_options_free_fields(&options);
-
-#if 0
-    {
-        GtkWidget *window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-        GtkWidget *bubble = hippo_bubble_new();
-        gtk_container_set_border_width(GTK_CONTAINER(bubble), 10);
-        gtk_container_add(GTK_CONTAINER(window), bubble);
-        gtk_widget_show_all(window);
-    }
-#endif
 
     hippo_stack_manager_set_mode(the_app->cache, HIPPO_STACK_MODE_STACK);
     

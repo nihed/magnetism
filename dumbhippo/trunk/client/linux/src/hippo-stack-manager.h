@@ -25,6 +25,7 @@ void hippo_stack_manager_set_idle         (HippoDataCache  *cache,
                                            gboolean         idle);
 void hippo_stack_manager_set_mode         (HippoDataCache  *cache,
                                            HippoStackMode   mode);
+void hippo_stack_manager_toggle_stack     (HippoDataCache  *cache);
 void hippo_stack_manager_set_screen_info  (HippoDataCache  *cache,
                                            HippoRectangle  *monitor,
                                            HippoRectangle  *icon,

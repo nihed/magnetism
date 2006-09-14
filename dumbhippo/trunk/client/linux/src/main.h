@@ -66,9 +66,6 @@ void       hippo_app_load_photo     (HippoApp                *app,
                                      HippoEntity             *entity,
                                      HippoPixbufCacheLoadFunc func,
                                      void                    *data);
-
-void       hippo_app_put_window_by_icon(HippoApp  *app,
-                                        GtkWindow *window);
 void       hippo_app_get_screen_info   (HippoApp         *app,
                                         HippoRectangle   *monitor_rect_p,
                                         HippoRectangle   *tray_icon_rect_p,

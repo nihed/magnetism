@@ -3,6 +3,7 @@
 #include "hippo-status-icon.h"
 #include <gtk/gtkstatusicon.h>
 #include "main.h"
+#include "hippo-stack-manager.h"
 
 typedef struct {
     const HippoHotness hotness;
@@ -134,11 +135,15 @@ hippo_status_icon_activate(GtkStatusIcon *gtk_icon)
     if (event != NULL && event->type == GDK_BUTTON_PRESS)
         button = event->button.button;
     else
-        button = 0;
+        button = 1;
+
+    if (button == 1) {
+        hippo_stack_manager_toggle_stack(icon->cache);
+    } else if (button == 3) {
+        time = gtk_get_current_event_time();
     
-    time = gtk_get_current_event_time();
-    
-    hippo_status_icon_popup_menu(gtk_icon, button, time);
+        hippo_status_icon_popup_menu(gtk_icon, button, time);
+    }
 }
 
 static void
@@ -152,98 +157,6 @@ append_escaped(GString    *str,
 }
 
 static void
-on_activate_post_item(GtkWidget *menu_item,
-                      HippoPost *post)
-{
-    g_return_if_fail(HIPPO_IS_POST(post));
- 
-    hippo_app_visit_post(hippo_get_app(), post);
-}                      
-
-static GtkWidget*
-menu_item_from_post(HippoPost *post)
-{
-    GtkWidget *item;
-    GtkWidget *label;
-    int chatting;
-    int viewing;
-    const char *title;
-    GString *item_markup;
-    
-    chatting = hippo_post_get_chatting_user_count(post);
-    viewing = hippo_post_get_viewing_user_count(post);
-    title = hippo_post_get_title(post);
-    
-    item_markup = g_string_new(NULL);
-    
-    g_string_append(item_markup, "<b>");
-    append_escaped(item_markup, title);
-    g_string_append(item_markup, "</b>");
-    
-    if (chatting > 0 || viewing > 0) {
-        g_string_append(item_markup, "\n");                     
-        if (chatting == 1) {
-            append_escaped(item_markup, _("1 person chatting right now"));
-        } else if (chatting > 1) {
-            char *s = g_strdup_printf(_("%d people chatting right now"), chatting);
-            append_escaped(item_markup, s);
-            g_free(s);
-        } else if (viewing == 1) {
-            append_escaped(item_markup, _("1 person looking at this"));
-        } else if (viewing > 1) {
-            char *s = g_strdup_printf(_("%d people looking at this"), viewing);
-            append_escaped(item_markup, s);
-            g_free(s);
-        } else {
-            g_assert_not_reached();
-        }
-    }
-    
-    item = gtk_menu_item_new_with_label("");
-    label = gtk_bin_get_child(GTK_BIN(item));
-    gtk_label_set_markup(GTK_LABEL(label), item_markup->str);
-    gtk_label_set_ellipsize(GTK_LABEL(label), PANGO_ELLIPSIZE_END);
-    gtk_widget_set_size_request(label, 250, -1); /* so the ellipsizing works */
-    
-    g_string_free(item_markup, TRUE);
-    
-    g_object_ref(post);
-    g_signal_connect_data(G_OBJECT(item), "activate", G_CALLBACK(on_activate_post_item), post,
-                          (GClosureNotify) g_object_unref, G_CONNECT_AFTER);
-    
-    return item;
-}
-
-#define MAX_POSTS_IN_MENU 6
-static void
-add_posts(GtkWidget *menu,
-          GSList   **posts,
-          GSList   **so_far_p)
-{
-    GSList *link;
-    
-    for (link = *posts; link != NULL; link = link->next) {
-        HippoPost *post = HIPPO_POST(link->data);
-        
-        /* O(n^2) awesome */
-        if (g_slist_length(*so_far_p) < MAX_POSTS_IN_MENU && 
-            g_slist_find(*so_far_p, post) == NULL) {
-            GtkWidget *item = menu_item_from_post(post);
-            
-            gtk_widget_show(item);
-            gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
-            
-            *so_far_p = g_slist_prepend(*so_far_p, post);
-        } else {        
-            /* displayed too much already */;
-        }
-        g_object_unref(post);
-    }
-    g_slist_free(*posts);
-    *posts = NULL;
-}
-
-static void
 hippo_status_icon_popup_menu(GtkStatusIcon *gtk_icon,
                              guint          button,
                              guint32        activate_time)
@@ -253,8 +166,6 @@ hippo_status_icon_popup_menu(GtkStatusIcon *gtk_icon,
     GtkWidget *label;
     GdkModifierType state;
     gboolean leet_mode;
-    GSList *so_far;
-    GSList *posts;
     
     leet_mode = FALSE;
     if (gtk_get_current_event_state(&state)) {
@@ -266,23 +177,6 @@ hippo_status_icon_popup_menu(GtkStatusIcon *gtk_icon,
     
     icon->popup_menu = gtk_menu_new();
 
-    /* add_posts frees the post lists */
-    so_far = NULL;
-    posts = hippo_data_cache_get_active_posts(icon->cache);
-    add_posts(icon->popup_menu, &posts, &so_far);
-    if (g_slist_length(so_far) < MAX_POSTS_IN_MENU) {
-        posts = hippo_data_cache_get_recent_posts(icon->cache);
-        add_posts(icon->popup_menu, &posts, &so_far);
-    }
-
-    if (so_far != NULL) {
-        menu_item = gtk_separator_menu_item_new();
-        gtk_widget_show(menu_item);
-        gtk_menu_shell_append(GTK_MENU_SHELL(icon->popup_menu), menu_item);
-    }
-    
-    g_slist_free(so_far);
-    
     menu_item = gtk_image_menu_item_new_from_stock(GTK_STOCK_HOME, NULL);
     label = gtk_bin_get_child(GTK_BIN(menu_item));
     gtk_label_set_text(GTK_LABEL(label), _("My Mugshot home page"));
@@ -332,5 +226,6 @@ static void
 on_state_changed(HippoConnection         *connection,
                  HippoStatusIcon         *icon)
 {
-    gtk_status_icon_set_tooltip(GTK_STATUS_ICON(icon), hippo_connection_get_tooltip(connection));
+    gtk_status_icon_set_tooltip(GTK_STATUS_ICON(icon),
+                                hippo_connection_get_tooltip(connection));
 }

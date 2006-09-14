@@ -496,6 +496,20 @@ hippo_stack_manager_set_mode (HippoDataCache  *cache,
 }
 
 void
+hippo_stack_manager_toggle_stack(HippoDataCache  *cache)
+{
+    StackManager *manager;
+
+    manager = g_object_get_data(G_OBJECT(cache), "stack-manager");
+
+    if (manager->mode == HIPPO_STACK_MODE_STACK) {
+        manager_set_mode(manager, HIPPO_STACK_MODE_HIDDEN);
+    } else {
+        manager_set_mode(manager, HIPPO_STACK_MODE_STACK);
+    }
+}
+
+void
 hippo_stack_manager_set_screen_info(HippoDataCache  *cache,
                                     HippoRectangle  *monitor,
                                     HippoRectangle  *icon,
