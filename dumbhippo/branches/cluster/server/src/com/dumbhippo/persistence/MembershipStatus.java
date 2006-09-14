@@ -11,18 +11,22 @@ package com.dumbhippo.persistence;
  * @author otaylor
  */
 public enum MembershipStatus {
-	NONMEMBER(false),         // 0 - This shouldn't be in the database; it may be used elsewhere
-	                          //     to indicate that there was no entry in the database
-	INVITED_TO_FOLLOW(true),  // 1 - Invited to be a follower (by another follower)
-	FOLLOWER(true),           // 2 - You read the group but can't post, invite people, etc.
-	REMOVED(false),           // 3 - Was removed (probably by themself), can choose to rejoin
-	INVITED(true),            // 4 - Invited to group, hasn't indicated acceptance
-	ACTIVE(true);             // 5 - Normal member
+	NONMEMBER        (false, false, false), // 0 - This shouldn't be in the database; it may be used elsewhere
+	                                        //     to indicate that there was no entry in the database
+	INVITED_TO_FOLLOW(true,  false, false), // 1 - Invited to be a follower (by another follower)
+	FOLLOWER         (true,  false, false), // 2 - You read the group but can't post, invite people, etc.
+	REMOVED          (false, true,  false), // 3 - Was removed (probably by themself), can choose to rejoin
+	INVITED          (true,  true,  true),  // 4 - Invited to group, hasn't indicated acceptance
+	ACTIVE           (true,  true,  true);  // 5 - Normal member
 	
 	private boolean receivesPosts;
+	private boolean canSeeSecretGroup;
+	private boolean canSeeSecretMembers;
 	
-	private MembershipStatus(boolean receivesPosts) {
+	private MembershipStatus(boolean receivesPosts, boolean canSeeSecretGroup, boolean canSeeSecretMembers) {
 		this.receivesPosts = receivesPosts;  
+		this.canSeeSecretGroup = canSeeSecretGroup;
+		this.canSeeSecretMembers = canSeeSecretMembers;
 	}
 	
 	/**
@@ -31,5 +35,23 @@ public enum MembershipStatus {
 	 */
 	public boolean getReceivesPosts() {
 		return receivesPosts;
+	}
+	
+	/**
+	 * @return true if a member of this status can see that a SECRET group exists and join it.
+	 */
+	public boolean getCanSeeSecretGroup() {
+		return canSeeSecretGroup;
+	}
+	
+	/**
+	 * @return true if a member of this status can see the members and posts to a SECRET group.
+	 * The idea of separating this from canSeeSecretGroup is that we don't want people to
+	 * be able to spy on a secret group without being in it (for social, not security reasons,
+	 * you can always join-look-leave), but if we made the group vanish when you left it,
+	 * it would make it hard to undo the operation and join it again.l
+	 */
+	public boolean getCanSeeSecretMembers() {
+		return canSeeSecretMembers;
 	}
 }

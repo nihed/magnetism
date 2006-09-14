@@ -11,7 +11,6 @@ import java.util.Set;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
-import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
@@ -28,6 +27,7 @@ import org.slf4j.Logger;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.TypeUtils;
 import com.dumbhippo.identity20.Guid;
+import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.live.GroupEvent;
 import com.dumbhippo.live.LiveState;
 import com.dumbhippo.persistence.Account;
@@ -58,6 +58,7 @@ import com.dumbhippo.server.Stacker;
 import com.dumbhippo.server.SystemViewpoint;
 import com.dumbhippo.server.UserViewpoint;
 import com.dumbhippo.server.Viewpoint;
+import com.dumbhippo.server.util.EJBUtil;
 
 @Stateless
 public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
@@ -495,31 +496,29 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		return getUserMembers(SystemViewpoint.getInstance(), group, MembershipStatus.ACTIVE);
 	}
 	
-	// The selection of Group is only needed for the CAN_SEE checks
-	private static final String GET_GROUP_MEMBER_QUERY = 
-		"SELECT gm FROM GroupMember gm, AccountClaim ac, Group g " +
-        "WHERE gm.group = :group AND ac.resource = gm.member AND ac.owner = :member AND g = :group";
-	
-	public GroupMember getGroupMember(Viewpoint viewpoint, Group group, User member) throws NotFoundException {
-		Query query;
-		
-		if (viewpoint.isOfUser(member) || viewpoint instanceof SystemViewpoint) {
-			query = em.createQuery(GET_GROUP_MEMBER_QUERY);
+	private MembershipStatus getViewerStatus(Viewpoint viewpoint, Group group) {
+		if (viewpoint instanceof SystemViewpoint) {
+			// System viewpoint as the same visibility as a member
+			return MembershipStatus.ACTIVE;
 		} else if (viewpoint instanceof UserViewpoint) {
 			User viewer = ((UserViewpoint)viewpoint).getViewer();
-			query = em.createQuery(GET_GROUP_MEMBER_QUERY + " AND " + CAN_SEE);
-			query.setParameter("viewer", viewer);
-		} else  {
-			query = em.createQuery(GET_GROUP_MEMBER_QUERY + " AND " + CAN_SEE_ANONYMOUS);			
+			try {
+				GroupMember viewerGroupMember = getGroupMember(group, viewer);
+				return viewerGroupMember.getStatus();
+			} catch (NotFoundException e) {
+				return MembershipStatus.NONMEMBER;
+			}
+		} else {			
+			return MembershipStatus.NONMEMBER;
 		}
-		query.setParameter("group", group);
-		query.setParameter("member", member);
-		
-		try {
-			return (GroupMember)query.getSingleResult();
-		} catch (NoResultException e) {
-			throw new NotFoundException("GroupMember for resource " + member + " not found", e);
-		}
+	}
+	
+	public GroupMember getGroupMember(Viewpoint viewpoint, Group group, User member) throws NotFoundException {
+		if (group.getAccess() == GroupAccess.SECRET &&
+			!getViewerStatus(viewpoint, group).getCanSeeSecretMembers())
+			throw new NotFoundException("GroupMember for user " + member + " not found");
+			
+		return getGroupMember(group, member);
 	}
 	
 	// The selection of Group is only needed for the CAN_SEE checks
@@ -670,33 +669,27 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		group.setVersion(group.getVersion() + 1);
 	}
 	
-	// The selection of Group is only needed for the CAN_SEE checks
-	private static final String LOOKUP_GROUP_QUERY = "SELECT g FROM Group g where g.id = :groupId";
-
 	// some usages of this don't necessarily trust the groupId to be valid, keep that in mind
 	public Group lookupGroupById(Viewpoint viewpoint, String groupId) throws NotFoundException {
-		Query query;
-		
-		if (viewpoint instanceof SystemViewpoint) {
-			query = em.createQuery(LOOKUP_GROUP_QUERY);
-		} else if (viewpoint instanceof UserViewpoint) {
-			User viewer = ((UserViewpoint)viewpoint).getViewer();
-			query = em.createQuery(LOOKUP_GROUP_QUERY + " AND " + CAN_SEE_GROUP);
-			query.setParameter("viewer", viewer);
-		} else {
-			query = em.createQuery(LOOKUP_GROUP_QUERY + " AND " + CAN_SEE_ANONYMOUS);
-		}
-		query.setParameter("groupId", groupId);
+		Guid guid;
 		
 		try {
-			return (Group)query.getSingleResult();
-		} catch (NoResultException e) {
-			throw new NotFoundException("No such group with ID " + groupId + " for the given viewpoint", e);
+			guid = new Guid(groupId);
+		} catch (ParseException e) {
+			throw new NotFoundException("Invalid group ID " + groupId);
 		}
+
+		return lookupGroupById(viewpoint, guid);
 	}
 	
 	public Group lookupGroupById(Viewpoint viewpoint, Guid guid) throws NotFoundException {
-		return lookupGroupById(viewpoint, guid.toString());
+		Group group = EJBUtil.lookupGuid(em, Group.class, guid);
+		
+		if (group.getAccess() == GroupAccess.SECRET &&
+			!getViewerStatus(viewpoint, group).getCanSeeSecretGroup())
+			throw new NotFoundException("No such group with ID " + guid + " for the given viewpoint");
+		
+		return group;
 	}
 	
 	private static final String CONTACT_IS_MEMBER =
