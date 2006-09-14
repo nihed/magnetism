@@ -104,7 +104,8 @@ enum {
     PROP_BORDER_LEFT,
     PROP_BORDER_RIGHT,
     PROP_BORDER,
-    PROP_FIXED_WIDTH,
+    PROP_BOX_WIDTH,
+    PROP_BOX_HEIGHT,
     PROP_XALIGN,
     PROP_YALIGN,
     PROP_BACKGROUND_COLOR,
@@ -148,7 +149,8 @@ hippo_canvas_box_init(HippoCanvasBox *box)
     box->orientation = HIPPO_ORIENTATION_VERTICAL;
     box->x_align = HIPPO_ALIGNMENT_FILL;
     box->y_align = HIPPO_ALIGNMENT_FILL;
-    box->fixed_width = -1;
+    box->box_width = -1;
+    box->box_height = -1;
     box->background_color_rgba = DEFAULT_BACKGROUND;
 }
 
@@ -223,8 +225,6 @@ hippo_canvas_box_class_init(HippoCanvasBoxClass *klass)
                                                      255,
                                                      0,
                                                      G_PARAM_WRITABLE));
-
-    
     g_object_class_install_property(object_class,
                                     PROP_BORDER_TOP,
                                     g_param_spec_int("border-top",
@@ -270,20 +270,26 @@ hippo_canvas_box_class_init(HippoCanvasBoxClass *klass)
                                                      255,
                                                      0,
                                                      G_PARAM_WRITABLE));
-
     
-    /* FIXME this is mis-named, since it's really a request/minimum width, not
-     * a fixed width - i.e. can get wider
-     */
     g_object_class_install_property(object_class,
-                                    PROP_FIXED_WIDTH,
-                                    g_param_spec_int("fixed-width",
-                                                     _("Fixed Width"),
-                                                     _("Width request of the canvas item, or -1 to use natural width; includes border and padding"),
+                                    PROP_BOX_WIDTH,
+                                    g_param_spec_int("box-width",
+                                                     _("Box Width"),
+                                                     _("Width request of the box including padding/border, or -1 to use natural width"),
                                                      -1,
                                                      G_MAXINT,
                                                      -1,
                                                      G_PARAM_READABLE | G_PARAM_WRITABLE));
+    g_object_class_install_property(object_class,
+                                    PROP_BOX_HEIGHT,
+                                    g_param_spec_int("box-height",
+                                                     _("Box Height"),
+                                                     _("Height request of the box including padding/border, or -1 to use natural height"),
+                                                     -1,
+                                                     G_MAXINT,
+                                                     -1,
+                                                     G_PARAM_READABLE | G_PARAM_WRITABLE));
+    
     g_object_class_install_property(object_class,
                                     PROP_XALIGN,
                                     g_param_spec_int("xalign",
@@ -418,8 +424,11 @@ hippo_canvas_box_set_property(GObject         *object,
             box->border_left = box->border_right = p;
         }
         break;        
-    case PROP_FIXED_WIDTH:
-        box->fixed_width = g_value_get_int(value);
+    case PROP_BOX_WIDTH:
+        box->box_width = g_value_get_int(value);
+        break;
+    case PROP_BOX_HEIGHT:
+        box->box_height = g_value_get_int(value);
         break;
     case PROP_XALIGN:
         box->x_align = g_value_get_int(value);
@@ -487,8 +496,11 @@ hippo_canvas_box_get_property(GObject         *object,
     case PROP_BORDER_RIGHT:
         g_value_set_int(value, box->border_right);
         break;        
-    case PROP_FIXED_WIDTH:
-        g_value_set_int(value, box->fixed_width);
+    case PROP_BOX_WIDTH:
+        g_value_set_int(value, box->box_width);
+        break;
+    case PROP_BOX_HEIGHT:
+        g_value_set_int(value, box->box_height);
         break;
     case PROP_XALIGN:
         g_value_set_int(value, box->x_align);
@@ -928,14 +940,14 @@ hippo_canvas_box_get_width_request(HippoCanvasItem *item)
     box = HIPPO_CANVAS_BOX(item);
     klass = HIPPO_CANVAS_BOX_GET_CLASS(box);
 
-    /* We need to call this even if just returning the fixed width,
+    /* We need to call this even if just returning the box-width prop,
      * so that children can rely on getting the full request, allocate
      * cycle in order every time, and so we compute the cached requests.
      */
     content_width = (* klass->get_content_width_request)(box);
 
-    if (box->fixed_width >= 0) {
-        return box->fixed_width;
+    if (box->box_width >= 0) {
+        return box->box_width;
     } else {
         return content_width
             + box->padding_left + box->padding_right
@@ -959,11 +971,19 @@ hippo_canvas_box_get_height_request(HippoCanvasItem *item,
         - box->padding_left - box->padding_right
         - box->border_left - box->border_right;
 
+    /* We need to call this even if just returning the box-height prop,
+     * so that children can rely on getting the full request, allocate
+     * cycle in order every time, and so we compute the cached requests.
+     */
     content_height = (* klass->get_content_height_request)(box, content_for_width);
 
-    return content_height
-        + box->padding_top + box->padding_bottom
-        + box->border_top + box->border_bottom;
+    if (box->box_height >= 0) {
+        return box->box_height;
+    } else {
+        return content_height
+            + box->padding_top + box->padding_bottom
+            + box->border_top + box->border_bottom;
+    }
 }
 
 /* Pass in a size request, and have it converted to the right place

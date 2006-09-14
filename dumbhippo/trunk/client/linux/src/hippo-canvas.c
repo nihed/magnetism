@@ -720,7 +720,7 @@ hippo_canvas_open_test_window(void)
 
 #if 0
     root = g_object_new(HIPPO_TYPE_CANVAS_STACK,
-                        "fixed-width", 400,
+                        "box-width", 400,
                         "spacing", 8,
                         NULL);
 

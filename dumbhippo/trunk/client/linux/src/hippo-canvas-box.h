@@ -35,7 +35,9 @@ struct _HippoCanvasBox {
     int allocated_width;
     int allocated_height;
 
-    int fixed_width; /* -1 if unset, which means use "natural size" */
+    /* these are -1 if unset, which means use natural size request */
+    int box_width;
+    int box_height;
 
     guint32 background_color_rgba;
     guint32 border_color_rgba;

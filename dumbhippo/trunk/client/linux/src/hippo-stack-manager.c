@@ -228,7 +228,7 @@ update_current_block(StackManager *manager)
     hippo_canvas_block_set_block(HIPPO_CANVAS_BLOCK(manager->single_block_item),
                                  new_block);
     
-    g_object_set(manager->single_block_item, "fixed-width", UI_WIDTH, NULL);
+    g_object_set(manager->single_block_item, "box-width", UI_WIDTH, NULL);
     hippo_window_set_contents(manager->single_block_window,
                               manager->single_block_item);
 }
@@ -431,7 +431,7 @@ manager_attach(StackManager    *manager,
     hippo_canvas_item_sink(manager->single_block_base_item);    
     
     manager->stack_item = hippo_canvas_stack_new();
-    g_object_set(manager->stack_item, "fixed-width", UI_WIDTH,
+    g_object_set(manager->stack_item, "box-width", UI_WIDTH,
                  "actions", manager->actions,
                  NULL);
     hippo_window_set_contents(manager->stack_window, manager->stack_item);
