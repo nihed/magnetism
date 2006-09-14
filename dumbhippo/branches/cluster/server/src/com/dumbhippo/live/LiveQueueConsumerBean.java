@@ -38,13 +38,16 @@ public class LiveQueueConsumerBean implements MessageListener {
 		// is no standard way of finding a bean at runtime.
 		
 		Class<? extends LiveEventProcessor> clazz = event.getProcessorClass();
-		LiveEventProcessor processor = (LiveEventProcessor)context.lookup(clazz.getCanonicalName());
-		if (processor == null) {
-			logger.warn("Could not lookup event processor bean " + clazz.getCanonicalName());
-			return;
+		if (clazz != null) {
+			LiveEventProcessor processor = (LiveEventProcessor)context.lookup(clazz.getCanonicalName());
+			if (processor == null) {
+				logger.warn("Could not lookup event processor bean " + clazz.getCanonicalName());
+			} else {
+				processor.process(LiveState.getInstance(), event);
+			}
 		}
 		
-		processor.process(LiveState.getInstance(), event);
+		LiveState.getInstance().invokeEventListeners(event);
 	}
 
 	public void onMessage(Message message) {

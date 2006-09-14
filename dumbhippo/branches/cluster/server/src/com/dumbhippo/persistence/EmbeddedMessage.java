@@ -21,22 +21,18 @@ public abstract class EmbeddedMessage extends DBUnique implements ChatMessage {
 	private static final long serialVersionUID = 1L;
 	
 	private User fromUser;
-	private int messageSerial;
 	private String messageText;
 	private long timestamp;
 	
 	protected EmbeddedMessage() {
-		// we use serial = -1 in other places in the system to designate a message that contains
-		// the post description, but we never add this type of message to the database
-		this(null, null, null, -1);
+		this(null, null, null);
 	}
 
-	protected EmbeddedMessage(User fromUser, String messageText, Date timestamp, int messageSerial) {
+	protected EmbeddedMessage(User fromUser, String messageText, Date timestamp) {
 		super();
 		this.fromUser = fromUser;
 		this.messageText = messageText;
 		this.setTimestamp(timestamp);
-		this.messageSerial = messageSerial;
 	}
 	
 	@ManyToOne
@@ -47,15 +43,6 @@ public abstract class EmbeddedMessage extends DBUnique implements ChatMessage {
 
 	public void setFromUser(User fromUser) {
 		this.fromUser = fromUser;
-	}
-
-	@Column(nullable=false)
-	public int getMessageSerial() {
-		return messageSerial;
-	}
-
-	public void setMessageSerial(int messageSerial) {
-		this.messageSerial = messageSerial;
 	}
 
 	@Column(nullable=false)

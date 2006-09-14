@@ -25,13 +25,11 @@ public class PostMessage extends EmbeddedMessage {
 	private Post post;
 	
 	public PostMessage() {
-		// we use serial = -1 in other places in the system to designate a message that contains
-		// the post description, but we never add this type of message to the database
-		this(null, null, null, null, -1);
+		this(null, null, null, null);
 	}
 
-	public PostMessage(Post post, User fromUser, String messageText, Date timestamp, int messageSerial) {
-		super(fromUser, messageText, timestamp, messageSerial);
+	public PostMessage(Post post, User fromUser, String messageText, Date timestamp) {
+		super(fromUser, messageText, timestamp);
 		this.post = post;
 	}
 	

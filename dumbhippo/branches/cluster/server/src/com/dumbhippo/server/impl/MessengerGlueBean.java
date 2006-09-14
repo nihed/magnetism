@@ -2,6 +2,7 @@ package com.dumbhippo.server.impl;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -19,6 +20,7 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
+import com.dumbhippo.live.ChatRoomEvent;
 import com.dumbhippo.live.Hotness;
 import com.dumbhippo.live.LiveClientData;
 import com.dumbhippo.live.LivePost;
@@ -355,7 +357,7 @@ public class MessengerGlueBean implements MessengerGlue {
 	private ChatRoomMessage newChatRoomMessage(EmbeddedMessage message) {
 		String username = message.getFromUser().getGuid().toJabberId(null);
 		return new ChatRoomMessage(username, message.getMessageText(),
-				message.getTimestamp(), message.getMessageSerial()); 		
+				message.getTimestamp(), message.getId()); 		
 	}
 	
 	private ChatRoomUser newChatRoomUser(User user) {
@@ -373,15 +375,19 @@ public class MessengerGlueBean implements MessengerGlue {
 	}
 		
 	
-	private ChatRoomInfo getChatRoomInfo(String roomName, Group group) {
-		List<GroupMessage> messages = groupSystem.getGroupMessages(group);
+	private List<ChatRoomMessage> getChatRoomMessages(Group group, long lastSeenSerial) {
+		List<GroupMessage> messages = groupSystem.getGroupMessages(group, lastSeenSerial);
 
 		List<ChatRoomMessage> history = new ArrayList<ChatRoomMessage>();
 		
-		for (GroupMessage m : messages) {
+		for (GroupMessage m : messages)
 			history.add(newChatRoomMessage(m));
-		}
-		
+
+		return history;
+	}
+
+	private ChatRoomInfo getChatRoomInfo(String roomName, Group group) {
+		List<ChatRoomMessage> history = getChatRoomMessages(group, -2);
 		return new ChatRoomInfo(ChatRoomKind.GROUP, roomName, group.getName(), history, false);
 	}
 
@@ -402,30 +408,36 @@ public class MessengerGlueBean implements MessengerGlue {
 		}
 		return recipients;
 	}
-	
-	private ChatRoomInfo getChatRoomInfo(String roomName, Post post) {
-		User poster = post.getPoster();
-		
-		List<PostMessage> messages = postingBoard.getPostMessages(post);
+
+	private List<ChatRoomMessage> getChatRoomMessages(Post post, long lastSeenSerial) {
+		List<PostMessage> messages = postingBoard.getPostMessages(post, lastSeenSerial);
 
 		List<ChatRoomMessage> history = new ArrayList<ChatRoomMessage>();
-	
-		// if post description is not empty, add it to the history of chat room messages, designate this type
-		// of message that contains post description with serial = -1
-		// FIXME: Should handle the case of a FeedPost where the effective poster is a GroupFeed
-		if (poster != null && post.getText().trim().length() != 0) {
-            ChatRoomMessage message = new ChatRoomMessage(poster.getGuid().toJabberId(null), post.getText(), post.getPostDate(), -1);	 
-            history.add(message);
+
+		if (lastSeenSerial < -1) {
+			// if post description is not empty, add it to the history of chat room messages.
+			// We mark this message that contains post description with the serial = -1
+			// FIXME: Should handle the case of a FeedPost where the effective poster is a GroupFeed
+			User poster = post.getPoster();
+			if (poster != null && post.getText().trim().length() != 0) {
+	            ChatRoomMessage message = new ChatRoomMessage(poster.getGuid().toJabberId(null), post.getText(), post.getPostDate(), -1);	 
+	            history.add(message);
+			}
 		}
 		
 		for (PostMessage postMessage : messages) {
 			history.add(newChatRoomMessage(postMessage));
 		}
 		
+		return history;
+	}
+	
+	private ChatRoomInfo getChatRoomInfo(String roomName, Post post) {
 		boolean worldAccessible = true;
 		if (post.getVisibility() == PostVisibility.RECIPIENTS_ONLY)
 			worldAccessible = false;
 		
+		List<ChatRoomMessage> history = getChatRoomMessages(post, -2);
 		return new ChatRoomInfo(ChatRoomKind.POST, roomName, post.getTitle(), history, worldAccessible);
 	}
 	
@@ -488,6 +500,56 @@ public class MessengerGlueBean implements MessengerGlue {
 			logger.debug("Room name {} doesn't correspond to a post or group, or user not allowed to see it", roomName);
 			return null;
 		}
+	}
+	
+	public List<ChatRoomMessage> getChatRoomMessages(String roomName, ChatRoomKind kind, long lastSeenSerial) {
+		switch (kind) {
+		case POST:
+			Post post;
+			try {
+				post = postingBoard.loadRawPost(SystemViewpoint.getInstance(), Guid.parseTrustedJabberId(roomName));
+			} catch (NotFoundException e) {
+				throw new RuntimeException("post chat not found", e);
+			}
+			return getChatRoomMessages(post, lastSeenSerial);
+		case GROUP:
+			Group group;
+			try {
+				group = groupSystem.lookupGroupById(SystemViewpoint.getInstance(), Guid.parseTrustedJabberId(roomName));
+			} catch (NotFoundException e) {
+				throw new RuntimeException("group chat not found", e);
+			}
+			return getChatRoomMessages(group, lastSeenSerial);
+		}
+		throw new IllegalArgumentException("Bad chat room type");
+	}
+
+	public void addChatRoomMessage(String roomName, ChatRoomKind kind, String userName, String text, Date timestamp) {
+		Guid chatRoomId = Guid.parseTrustedJabberId(roomName);
+		User fromUser = getUserFromUsername(userName);
+		UserViewpoint viewpoint = new UserViewpoint(fromUser);
+		switch (kind) {
+		case POST:
+			Post post;
+			try {
+				post = postingBoard.loadRawPost(viewpoint, Guid.parseTrustedJabberId(roomName));
+			} catch (NotFoundException e) {
+				throw new RuntimeException("post chat not found", e);
+			}
+			postingBoard.addPostMessage(post, fromUser, text, timestamp);
+			break;
+		case GROUP:
+			Group group;
+			try {
+				group = groupSystem.lookupGroupById(viewpoint, Guid.parseTrustedJabberId(roomName));
+			} catch (NotFoundException e) {
+				throw new RuntimeException("group chat not found", e);
+			}
+			groupSystem.addGroupMessage(group, fromUser, text, timestamp);
+			break;
+		}
+		
+		LiveState.getInstance().queueUpdate(new ChatRoomEvent(chatRoomId, ChatRoomEvent.Detail.MESSAGES_CHANGED));
 	}
 
 	public boolean canJoinChat(String roomName, ChatRoomKind kind, String username) {

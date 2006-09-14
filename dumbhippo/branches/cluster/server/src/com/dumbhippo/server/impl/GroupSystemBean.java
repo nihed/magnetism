@@ -330,7 +330,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		stacker.stackGroupMember(groupMember, System.currentTimeMillis());
 		
         LiveState.getInstance().queueUpdate(new GroupEvent(group.getGuid(), groupMember.getMember().getGuid(),
-        		GroupEvent.Type.MEMBERSHIP_CHANGE));
+        		GroupEvent.Detail.MEMBERS_CHANGED));
 	}
 	
 	public void removeMember(User remover, Group group, Person person) {		
@@ -359,7 +359,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 				
 				stacker.stackGroupMember(groupMember, System.currentTimeMillis());
 		        LiveState.getInstance().queueUpdate(new GroupEvent(group.getGuid(),
-		        		groupMember.getMember().getGuid(), GroupEvent.Type.MEMBERSHIP_CHANGE));
+		        		groupMember.getMember().getGuid(), GroupEvent.Detail.MEMBERS_CHANGED));
 			} else if (groupMember.getStatus().ordinal() < MembershipStatus.REMOVED.ordinal()) {
 				// To go from FOLLOWER or INVITED_TO_FOLLOW to removed, we delete the GroupMember
 				group.getMembers().remove(groupMember);
@@ -368,7 +368,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 				// we don't stackGroupMember here, we only care about transitions to REMOVED for timestamp 
 				// updating (right now anyway)
 				LiveState.getInstance().queueUpdate(new GroupEvent(group.getGuid(),
-						groupMember.getMember().getGuid(), GroupEvent.Type.MEMBERSHIP_CHANGE));
+						groupMember.getMember().getGuid(), GroupEvent.Detail.MEMBERS_CHANGED));
 			} else {
 				// status == REMOVED, nothing to do
 			}
@@ -721,12 +721,17 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		return result;
 	}	
 	
-	private static final String GROUP_MESSAGE_QUERY = "SELECT pm from GroupMessage pm WHERE pm.group = :group";
-	private static final String GROUP_MESSAGE_ORDER = " ORDER BY pm.timestamp";
+	// We order and select on pm.id, though in rare cases the order by pm.id and by pm.timestamp
+	// might be different if two messages arrive almost at once. In this case, the timestamps will
+	// likely be within a second of each other and its much cheaper this way.
+	private static final String GROUP_MESSAGE_QUERY = "SELECT pm from GroupMessage pm WHERE pm.group = :group AND pm.id > :lastSeenSerial ";
+	private static final String GROUP_MESSAGE_SELECT = " AND pm.id >= :lastSeenSerial ";
+	private static final String GROUP_MESSAGE_ORDER = " ORDER BY pm.id";
 	
-	public List<GroupMessage> getGroupMessages(Group group) {
-		List<?> messages =  em.createQuery(GROUP_MESSAGE_QUERY + GROUP_MESSAGE_ORDER)
+	public List<GroupMessage> getGroupMessages(Group group, long lastSeenSerial) {
+		List<?> messages = em.createQuery(GROUP_MESSAGE_QUERY + GROUP_MESSAGE_SELECT + GROUP_MESSAGE_ORDER)
 		.setParameter("group", group)
+		.setParameter("lastSeenSerial", lastSeenSerial)
 		.getResultList();
 		
 		return TypeUtils.castList(GroupMessage.class, messages);
@@ -741,13 +746,8 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		return TypeUtils.castList(GroupMessage.class, messages);		
 	}
 	
-	public void addGroupMessage(Group group, User fromUser, String text, Date timestamp, int serial) {
-		// we use serial = -1 in other places in the system to designate a message that contains
-		// the group description, but we never add this type of message to the database
-		if (serial < 0) 
-			throw new IllegalArgumentException("Negative serial");
-		
-		GroupMessage groupMessage = new GroupMessage(group, fromUser, text, timestamp, serial);
+	public void addGroupMessage(Group group, User fromUser, String text, Date timestamp) {
+		GroupMessage groupMessage = new GroupMessage(group, fromUser, text, timestamp);
 		em.persist(groupMessage);
 
 		// this assumes Group has been committed in a previous transaction, which should 

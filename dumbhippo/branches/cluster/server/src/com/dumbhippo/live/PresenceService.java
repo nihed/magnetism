@@ -26,6 +26,7 @@ import org.slf4j.Logger;
 import org.w3c.dom.Element;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.ListenerList;
 import com.dumbhippo.ThreadUtils;
 import com.dumbhippo.identity20.Guid;
 
@@ -147,7 +148,7 @@ public class PresenceService extends ServiceMBeanSupport implements PresenceServ
 		// Protecting both listeners and notifyListeners with the same synchronization
 		// (on the object) is important to prevent race conditions when we check
 		// listeners.isEmpty() in scheduleNotification.  
-		private List<PresenceListener> listeners = new ArrayList<PresenceListener>();
+		private ListenerList<PresenceListener> listeners = new ListenerList<PresenceListener>();
 		private Set<Guid> notifyUsers = null;
 
 		// This has to be updated atomically along with changes to the users map
@@ -223,7 +224,7 @@ public class PresenceService extends ServiceMBeanSupport implements PresenceServ
 		}
 		
 		public synchronized void addListener(PresenceListener listener) {
-			listeners.add(listener);
+			listeners.addListener(listener);
 		}
 
 		public synchronized void removeListener(PresenceListener listener) {
@@ -266,17 +267,18 @@ public class PresenceService extends ServiceMBeanSupport implements PresenceServ
 
 		public void doNotifications() {
 			Set<Guid> guids;
-			List<PresenceListener> toNotify; 
+			Iterator<PresenceListener> toNotify; 
 			
-			// We make a copy of listeners and move the notificationUsers set aside
+			// We snapshot listeners and move the notificationUsers set aside
 			// so that we don't need to hold a lock during notification.
 			synchronized(this) {
 				guids = notifyUsers;
 				notifyUsers = null;
-				toNotify = new ArrayList<PresenceListener>(listeners);
+				toNotify = listeners.iterator();
 			}
 			
-			for (PresenceListener listener : toNotify) {
+			while (toNotify.hasNext()) {
+				PresenceListener listener = toNotify.next();
 				for (Guid guid : guids)
 					listener.presenceChanged(guid);
 			}

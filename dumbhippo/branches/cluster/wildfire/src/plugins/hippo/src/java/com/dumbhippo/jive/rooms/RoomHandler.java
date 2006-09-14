@@ -15,10 +15,42 @@ import org.xmpp.packet.Packet;
 import org.xmpp.packet.PacketError;
 
 import com.dumbhippo.identity20.Guid;
+import com.dumbhippo.live.ChatRoomEvent;
+import com.dumbhippo.live.GroupEvent;
+import com.dumbhippo.live.LiveEventListener;
+import com.dumbhippo.live.LiveState;
 
 public class RoomHandler implements Component {
 	private JID address;
 	private Map<String, Room> rooms;
+	
+	private LiveEventListener<ChatRoomEvent> chatRoomEventListener = new LiveEventListener<ChatRoomEvent>() {
+		public void onEvent(ChatRoomEvent event) {
+			switch (event.getDetail()) {
+			case MESSAGES_CHANGED:
+				Room room = peekRoom(event.getChatRoomId());
+				if (room != null)
+					room.onMessagesChanged();
+				break;
+			default:
+				break;
+			}
+		}
+	};
+	
+	private LiveEventListener<GroupEvent> groupEventListener = new LiveEventListener<GroupEvent>() {
+		public void onEvent(GroupEvent event) {
+			switch (event.getDetail()) {
+			case MEMBERS_CHANGED:
+				Room room = peekRoom(event.getGroupId());
+				if (room != null)
+					room.onMembersChanged();
+				break;
+			default:
+				break;
+			}
+		}
+	};
 	
 	public String getDescription() {
 		return "Handler for DumbHippo chat rooms";
@@ -32,9 +64,16 @@ public class RoomHandler implements Component {
 	}
 	
 	public void start() {
+		LiveState liveState = LiveState.getInstance();
+		liveState.addEventListener(ChatRoomEvent.class, chatRoomEventListener);
+		liveState.addEventListener(GroupEvent.class, groupEventListener);
 	}
 	
 	public void shutdown() {
+		LiveState liveState = LiveState.getInstance();
+		liveState.removeEventListener(ChatRoomEvent.class, chatRoomEventListener);
+		liveState.removeEventListener(GroupEvent.class, groupEventListener);
+
 		for (Room room : rooms.values())
 			room.shutdown();
 	}
@@ -99,16 +138,12 @@ public class RoomHandler implements Component {
 		room.processPacket(packet);			
 	}
 	
-	public void roomChanged(Guid roomGuid) {
-		Room room = peekRoom(roomGuid.toJabberId(null));
-		if (room == null)
-			return;
-		else
-			room.reloadCaches();
-	}
-	
 	public Room peekRoom(String roomName) {
 		return getRoom(roomName, null, false);
+	}
+	
+	public Room peekRoom(Guid roomGuid) {
+		return peekRoom(roomGuid.toJabberId(null));
 	}
 	
 	private Room getRoom(String roomName, String userId) {

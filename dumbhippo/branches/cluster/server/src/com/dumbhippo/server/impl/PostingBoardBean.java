@@ -274,7 +274,7 @@ public class PostingBoardBean implements PostingBoard {
 						
 						LiveState liveState = LiveState.getInstance();			
 						for (Group g : post.getGroupRecipients()) {
-						    liveState.queueUpdate(new GroupEvent(g.getGuid(), post.getGuid(), GroupEvent.Type.POST_ADDED));
+						    liveState.queueUpdate(new GroupEvent(g.getGuid(), post.getGuid(), GroupEvent.Detail.POST_ADDED));
 						}
 						liveState.queueUpdate(new PostCreatedEvent(post.getGuid(), poster != null ? 
 								poster.getGuid() : null));				
@@ -1196,9 +1196,17 @@ public class PostingBoardBean implements PostingBoard {
 		pageable.setTotalCount(getReceivedFeedPostsCount(viewpoint, recipient, null));		
 	}
 	
-	public List<PostMessage> getPostMessages(Post post) {
-		List<?> messages = em.createQuery("SELECT pm from PostMessage pm WHERE pm.post = :post ORDER BY pm.timestamp")
+	// We order and select on pm.id, though in rare cases the order by pm.id and by pm.timestamp
+	// might be different if two messages arrive almost at once. In this case, the timestamps will
+	// likely be within a second of each other and its much cheaper this way.
+	private static final String POST_MESSAGE_QUERY = "SELECT pm from PostMessage pm WHERE pm.post = :post";
+	private static final String POST_MESSAGE_SELECT = " AND pm.id >= :lastSeenSerial ";
+	private static final String POST_MESSAGE_ORDER = " ORDER BY pm.id";
+	
+	public List<PostMessage> getPostMessages(Post post, long lastSeenSerial) {
+		List<?> messages = em.createQuery(POST_MESSAGE_QUERY + POST_MESSAGE_SELECT + POST_MESSAGE_ORDER)
 		.setParameter("post", post)
+		.setParameter("lastSeenSerial", lastSeenSerial)
 		.getResultList();
 		
 		return TypeUtils.castList(PostMessage.class, messages);
@@ -1221,13 +1229,8 @@ public class PostingBoardBean implements PostingBoard {
 		return ((Number) result).intValue();
 	}
 	
-	public void addPostMessage(Post post, User fromUser, String text, Date timestamp, int serial) {
-		// we use serial = -1 in other places in the system to designate a message that contains
-		// the post description, but we never add this type of message to the database
-		if (serial < 0) 
-			throw new IllegalArgumentException("Negative serial");
-		
-		PostMessage postMessage = new PostMessage(post, fromUser, text, timestamp, serial);
+	public void addPostMessage(Post post, User fromUser, String text, Date timestamp) {
+		PostMessage postMessage = new PostMessage(post, fromUser, text, timestamp);
 		em.persist(postMessage);
 		
 		LiveState.getInstance().queueUpdate(new PostChatEvent(post.getGuid()));

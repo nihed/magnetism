@@ -17,18 +17,11 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.identity20.Guid;
-import com.dumbhippo.persistence.Group;
-import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.User;
-import com.dumbhippo.server.ChatRoomKind;
-import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.MusicSystemInternal;
 import com.dumbhippo.server.NotFoundException;
-import com.dumbhippo.server.PostingBoard;
-import com.dumbhippo.server.UserViewpoint;
 import com.dumbhippo.xmppcom.XmppEvent;
-import com.dumbhippo.xmppcom.XmppEventChatMessage;
 import com.dumbhippo.xmppcom.XmppEventMusicChanged;
 import com.dumbhippo.xmppcom.XmppEventPrimingTracks;
 
@@ -47,12 +40,6 @@ public class XmppQueueConsumerBean implements MessageListener {
 	private MusicSystemInternal musicSystem;
 	
 	@EJB
-	private PostingBoard postingBoard;
-
-	@EJB
-	private GroupSystem groupSystem;
-	
-	@EJB
 	IdentitySpider identitySpider;
 	
 	public void onMessage(Message message) {
@@ -66,9 +53,6 @@ public class XmppQueueConsumerBean implements MessageListener {
 				if (obj instanceof XmppEventMusicChanged) {
 					XmppEventMusicChanged event = (XmppEventMusicChanged) obj;
 					processMusicChangedEvent(event);
-				} else if (obj instanceof XmppEventChatMessage) {
-					XmppEventChatMessage event = (XmppEventChatMessage) obj;
-					processChatMessageEvent(event);					
 				} else if (obj instanceof XmppEventPrimingTracks) {
 					XmppEventPrimingTracks event = (XmppEventPrimingTracks) obj;
 					processPrimingTracksEvent(event);
@@ -127,37 +111,4 @@ public class XmppQueueConsumerBean implements MessageListener {
 		}
 	}
 	
-	private Post getPostFromRoomName(UserViewpoint viewpoint, String roomName) throws NotFoundException {
-		return postingBoard.loadRawPost(viewpoint, Guid.parseTrustedJabberId(roomName));
-	}
-	
-	private Group getGroupFromRoomName(UserViewpoint viewpoint, String roomName) throws NotFoundException {
-		return groupSystem.lookupGroupById(viewpoint, Guid.parseTrustedJabberId(roomName));
-	}
-	
-	public void processChatMessageEvent(XmppEventChatMessage event) {
-		User fromUser = getUserFromUsername(event.getFromUsername());
-		ChatRoomKind kind = event.getKind();
-		UserViewpoint viewpoint = new UserViewpoint(fromUser);
-		switch (kind) {
-		case POST:
-			Post post;
-			try {
-				post = getPostFromRoomName(viewpoint, event.getRoomName());
-			} catch (NotFoundException e) {
-				throw new RuntimeException("post chat not found", e);
-			}
-			postingBoard.addPostMessage(post, fromUser, event.getText(), event.getTimestamp(), event.getSerial());
-			break;
-		case GROUP:
-			Group group;
-			try {
-				group = getGroupFromRoomName(viewpoint, event.getRoomName());
-			} catch (NotFoundException e) {
-				throw new RuntimeException("group chat not found", e);
-			}
-			groupSystem.addGroupMessage(group, fromUser, event.getText(), event.getTimestamp(), event.getSerial());
-			break;
-		}
-	}
 }

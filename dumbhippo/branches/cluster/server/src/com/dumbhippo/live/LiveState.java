@@ -1,7 +1,9 @@
 package com.dumbhippo.live;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -13,6 +15,7 @@ import java.util.concurrent.Future;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.ListenerList;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.jms.JmsConnectionType;
 import com.dumbhippo.jms.JmsProducer;
@@ -478,6 +481,43 @@ public class LiveState {
 		updater.sendAllNotifications(clientData);
 	}	
 
+	private Map<Class<?>, ListenerList<?>> listenerLists = new HashMap<Class<?>, ListenerList<?>>();
+	
+	@SuppressWarnings("unchecked")
+	public <T extends LiveEvent> ListenerList<LiveEventListener<T>> getListenerList(Class<T> clazz, boolean create) {
+		ListenerList<LiveEventListener<T>> listeners;
+		
+		synchronized(listenerLists) {
+			 listeners = (ListenerList<LiveEventListener<T>>)listenerLists.get(clazz);
+			 if (listeners == null && create) {
+				 listeners = new ListenerList<LiveEventListener<T>>();
+				 listenerLists.put(clazz, listeners);
+			 }
+		}
+		
+		return listeners;
+	}
+
+	public <T extends LiveEvent> void addEventListener(Class<T> clazz, LiveEventListener<T> listener) {
+		ListenerList<LiveEventListener<T>> listeners = getListenerList(clazz, true);
+		listeners.addListener(listener);
+	}
+	
+	public <T extends LiveEvent> void removeEventListener(Class<T> clazz, LiveEventListener<T> listener) {
+		ListenerList<LiveEventListener<T>> listeners = getListenerList(clazz, false);
+		if (listeners != null)
+			listeners.removeListener(listener);
+	}
+	
+	@SuppressWarnings("unchecked")
+	public void invokeEventListeners(LiveEvent event) {
+		ListenerList listeners = getListenerList(event.getClass(), false);
+		if (listeners != null) {
+			for (Object o : listeners) {
+				((LiveEventListener)o).onEvent(event);
+			}
+		}
+	}
 	
 	private void clean() throws InterruptedException {
 		// Bump the age of all objects, removing ones that pass the maximum age

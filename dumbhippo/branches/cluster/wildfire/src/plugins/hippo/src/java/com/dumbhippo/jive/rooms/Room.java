@@ -12,8 +12,6 @@ import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import javax.jms.ObjectMessage;
-
 import org.dom4j.Attribute;
 import org.dom4j.Element;
 import org.jivesoftware.util.Log;
@@ -42,8 +40,6 @@ import com.dumbhippo.server.ChatRoomUser;
 import com.dumbhippo.server.MessengerGlue;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.util.EJBUtil;
-import com.dumbhippo.xmppcom.XmppEvent;
-import com.dumbhippo.xmppcom.XmppEventChatMessage;
 
 public class Room implements PresenceListener {
 	static final int MAX_HISTORY_COUNT = 100;
@@ -183,9 +179,9 @@ public class Room implements PresenceListener {
 		private UserInfo user;
 		private String text;
 		private Date timestamp;
-		private int serial;
+		private long serial;
 		
-		public MessageInfo(UserInfo user, String text, Date timestamp, int serial) {
+		public MessageInfo(UserInfo user, String text, Date timestamp, long serial) {
 			this.user = user;
 			this.text = text;
 			this.timestamp = timestamp;
@@ -196,7 +192,7 @@ public class Room implements PresenceListener {
 			return user;
 		}
 		
-		public int getSerial() {
+		public long getSerial() {
 			return serial;
 		}
 		
@@ -256,41 +252,45 @@ public class Room implements PresenceListener {
 	private Map<JID, UserInfo> presentResources;
 	private Map<String, UserInfo> presentUsers;
 	private List<MessageInfo> messages;
-	private int nextSerial;
+	private long maxMessageSerial = -1;
 	
 	private BlockingQueue<DeliveryPacket> sendQueue;
 	private Thread sendThread;
 	private JmsProducer queue;
 	
 	private Room(ChatRoomInfo info) {
-		// FIXMEFIXMEFIXME
-		// queue = new JmsProducer(XmppEvent.QUEUE, true);
-		
 		userInfoCache = new HashMap<String, UserInfo>();
 		participantResources = new HashMap<JID, UserInfo>();
 		presentResources = new HashMap<JID, UserInfo>();
 		presentUsers = new HashMap<String, UserInfo>();
 		messages = new ArrayList<MessageInfo>();
-		nextSerial = 0;
 		
 		roomName = info.getChatId();
 		kind = info.getKind();
 		title = info.getTitle();
 		
-		for (ChatRoomMessage message : info.getHistory()) {
-			UserInfo userInfo = lookupUserInfo(message.getFromUsername());
-			MessageInfo messageInfo = new MessageInfo(userInfo, message.getText(), message.getTimestamp(), message.getSerial());
-			messages.add(messageInfo);
-			
-			if (message.getSerial() >= nextSerial)
-				nextSerial = message.getSerial() + 1;
-		}
+		addMessages(info.getHistory(), false);
 		
 		sendQueue = new LinkedBlockingQueue<DeliveryPacket>();
 		sendThread = new Thread(new Sender(), "Room-Sender-" + roomName);
 		sendThread.start();
 		
 		PresenceService.getInstance().addListener(getPresenceLocation(), this);
+	}
+	
+	private void addMessages(List<ChatRoomMessage> toAdd, boolean notify) {
+		for (ChatRoomMessage message : toAdd) {
+			UserInfo userInfo = lookupUserInfo(message.getFromUsername());
+			MessageInfo messageInfo = new MessageInfo(userInfo, message.getText(), message.getTimestamp(), message.getSerial());
+			messages.add(messageInfo);
+			if (messageInfo.getSerial() > maxMessageSerial)
+				maxMessageSerial = messageInfo.getSerial();
+			
+			if (notify) {
+				Message outgoing = makeMessage(messageInfo, false);
+				sendPacketToAll(outgoing);
+			}
+		}
 	}
 	
 	public void shutdown() {
@@ -647,7 +647,7 @@ public class Room implements PresenceListener {
 		info.addAttribute("name", userInfo.getName());
 		info.addAttribute("smallPhotoUrl", userInfo.getSmallPhotoUrl());
 		info.addAttribute("timestamp", Long.toString(messageInfo.getTimestamp().getTime()));
-		info.addAttribute("serial", Integer.toString(messageInfo.getSerial()));
+		info.addAttribute("serial", Long.toString(messageInfo.getSerial()));
 
 		if (isDelayed) {
 			Element delay = messageElement.addElement("x", "jabber:x:delay");
@@ -673,22 +673,12 @@ public class Room implements PresenceListener {
 			return;
 		
 		String username = fromJid.getNode();
-		UserInfo userInfo = lookupUserInfo(username);
 		
-		Date timestamp = new Date(); // Current time
-		int serial = nextSerial++;
-		
-		MessageInfo messageInfo = new MessageInfo(userInfo, packet.getBody(), timestamp, serial);
-		messages.add(messageInfo);
-		
-		Message outgoing = makeMessage(messageInfo, false);
-		sendPacketToAll(outgoing);
-		
-		// FIXMEFIXMEFIXME
-		// Send over to the server via JMS
-		// XmppEventChatMessage event = new XmppEventChatMessage(roomName, kind, messageInfo.getUser().getUsername(), messageInfo.getText(), messageInfo.getTimestamp(), messageInfo.getSerial());
-        // ObjectMessage message = queue.createObjectMessage(event);
-        // queue.send(message);
+		// We call a MessengerGlue method to stick the message into the database. A message
+		// will then be sent to all nodes, including us, saying that there are new messages.
+		// We'll (in onMessagesChanged) query for new messages and send them to the connected clients.
+		MessengerGlue glue = EJBUtil.defaultLookup(MessengerGlue.class);
+		glue.addChatRoomMessage(roomName, kind, username, packet.getBody(), new Date());
 	}
 	
 	private void processIQPacket(IQ packet) {
@@ -806,11 +796,20 @@ public class Room implements PresenceListener {
 	}
 
 	/**
-	 * Update cached information that we've retrieved from the server, such as
-	 * the set of users allowed to join the chatroom.
+	 * Called when the set of members in a group chat room changes 
 	 */
-	public synchronized void reloadCaches() {
+	public synchronized void onMembersChanged() {
 		updateRecipientsCache();
+	}
+	
+	/**
+	 * Called when the messages for the chat room have changed 
+	 */
+	public synchronized void onMessagesChanged() {
+		MessengerGlue glue = EJBUtil.defaultLookup(MessengerGlue.class);
+		List<ChatRoomMessage> newMessages = glue.getChatRoomMessages(roomName, kind, maxMessageSerial);
+		
+		addMessages(newMessages, true);
 	}
 	
 	private String getPresenceLocation() {
@@ -883,6 +882,8 @@ public class Room implements PresenceListener {
 				} catch (InterruptedException e) {
 					// Thread was shut down
 					break;
+				} catch (RuntimeException e) {
+					Log.error("Unexpected exception deliverying packet", e);
 				}
 			}
 		}

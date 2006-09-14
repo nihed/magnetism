@@ -2,10 +2,6 @@ package com.dumbhippo.jive;
 
 import java.io.File;
 
-import javax.jms.JMSException;
-import javax.jms.Message;
-import javax.jms.ObjectMessage;
-
 import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.IQRouter;
 import org.jivesoftware.wildfire.SessionManager;
@@ -16,11 +12,7 @@ import org.jivesoftware.wildfire.container.PluginManager;
 import org.xmpp.component.ComponentException;
 
 import com.dumbhippo.ExceptionUtils;
-import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.jive.rooms.RoomHandler;
-import com.dumbhippo.jms.JmsConsumer;
-import com.dumbhippo.live.GroupEvent;
-import com.dumbhippo.live.LiveEvent;
 import com.dumbhippo.live.PresenceService;
 
 /**
@@ -28,58 +20,17 @@ import com.dumbhippo.live.PresenceService;
  */
 public class HippoPlugin implements Plugin {
 	
-	private RoomHandler roomHandler;
-	private PresenceMonitor presenceMonitor;
-	
-	private JmsConsumer incomingQueue;
-	
-	private class MessageQueueConsumer implements Runnable {
-		private boolean shutdown;
-		public synchronized void shutdown() {
-			shutdown = true;
-		}
-		public void run() {
-			while (true) {
-				Message msg = incomingQueue.receive();
-				if (shutdown)
-					break;
-				if (msg instanceof ObjectMessage) {
-					
-					ObjectMessage objectMsg = (ObjectMessage) msg;
-					Object obj;
-					
-					try {
-						 obj = objectMsg.getObject();
-					} catch (JMSException e) {
-						e.printStackTrace();
-						continue; // not much else to do...
-					}
-					
-					Log.debug("Message contained object: " + obj.getClass().getCanonicalName());
-					
-					if (obj instanceof GroupEvent) {
-						GroupEvent groupEvent = (GroupEvent) obj;
-						Guid groupId = groupEvent.getGroupId();
-						roomHandler.roomChanged(groupId);
-					}
-				}				
-			}
-		}		
-	}
-	
-	private MessageQueueConsumer queueConsumer;
-	private Thread queueConsumerThread;
+	private RoomHandler roomHandler = new RoomHandler();
+	private PresenceMonitor presenceMonitor = new PresenceMonitor();
 	
 	public void initializePlugin(PluginManager pluginManager, File pluginDirectory) {
 		try {
 			Log.debug("Initializing Hippo plugin");
 			
 			Log.debug("Adding PresenceMonitor");
-			presenceMonitor = new PresenceMonitor();
 			SessionManager sessionManager = XMPPServer.getInstance().getSessionManager();
 			sessionManager.registerListener(presenceMonitor);
 					
-			roomHandler = new RoomHandler();			
 			try {
 				InternalComponentManager.getInstance().addComponent("rooms", roomHandler);
 			} catch (ComponentException e) {
@@ -98,12 +49,6 @@ public class HippoPlugin implements Plugin {
 			iqRouter.addHandler(new GroupIQHandler());			
 			iqRouter.addHandler(new BlocksIQHandler());
 			
-			// FIXMEFIXMEFIXME
-			// incomingQueue = new JmsConsumer(LiveEvent.XMPP_QUEUE, true);
-			//queueConsumer = new MessageQueueConsumer();
-			//queueConsumerThread = new Thread(queueConsumer);
-			//queueConsumerThread.start();
-			
 			Log.debug("... done initializing Hippo plugin");
 		} catch (Exception e) {
 			Log.debug("Failed to init hippo plugin: " + ExceptionUtils.getRootCause(e).getMessage(), e);
@@ -118,11 +63,6 @@ public class HippoPlugin implements Plugin {
 		
 		Log.debug("Shutting down presence monitor");
 		presenceMonitor.shutdown();
-		
-		Log.debug("Shutting down queue consumer");		
-		queueConsumer.shutdown();
-		queueConsumerThread.interrupt();
-		incomingQueue.close();
 		
 		PresenceService.getInstance().clearLocalPresence();
 

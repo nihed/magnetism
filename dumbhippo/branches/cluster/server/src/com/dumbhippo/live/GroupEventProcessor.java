@@ -42,7 +42,7 @@ public class GroupEventProcessor implements LiveEventProcessor {
 	public void process(LiveState state, LiveEvent abstractEvent) {
 		GroupEvent event = (GroupEvent)abstractEvent;
 		
-		if (event.getEvent() == GroupEvent.Type.MEMBERSHIP_CHANGE) {
+		if (event.getDetail() == GroupEvent.Detail.MEMBERS_CHANGED) {
 			groupUpdater.groupMemberCountChanged(event.getGroupId());
 			userUpdater.handleGroupMembershipChanged(event.getResourceId());
 
@@ -58,7 +58,7 @@ public class GroupEventProcessor implements LiveEventProcessor {
 				logger.debug("Group with guid {} or groupMember for resource with guid {} could not be found: {}",
 						     new Object[]{e.getMessage(), event.getGroupId(), event.getResourceId()});
 			}
-		} else if (event.getEvent() == GroupEvent.Type.POST_ADDED) {
+		} else if (event.getDetail() == GroupEvent.Detail.POST_ADDED) {
 			groupUpdater.groupPostReceived(event.getGroupId());
 		}
 	}

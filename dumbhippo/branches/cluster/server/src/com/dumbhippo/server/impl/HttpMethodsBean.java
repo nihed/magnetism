@@ -1903,7 +1903,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		xml.appendTextNode("message", m.getMessageText(), "fromId", m.getFromUser().getId(),
 				"fromNickname", m.getFromUser().getNickname(),
 				"timestamp", Long.toString(m.getTimestamp().getTime()),
-				"serial", Integer.toString(m.getMessageSerial()));		
+				"serial", Long.toString(m.getId()));		
 	}
 	
 	public void getGroupChatSummary(XmlBuilder xml, UserViewpoint viewpoint, String groupId) throws XmlMethodException {

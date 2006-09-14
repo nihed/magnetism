@@ -1,6 +1,7 @@
 package com.dumbhippo.server;
 
 import java.io.Serializable;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -199,7 +200,30 @@ public interface MessengerGlue {
 	 */
 	public ChatRoomInfo getChatRoomInfo(String roomName);
 	
+	/**
+	 * Get messages that have been sent to the chatroom since the specified serial
+	 * 
+	 * @param roomName the GUID of the group or post the chat is about, in jabber node form.
+	 *        This must exist or an exception will be thrown
+	 * @param kind the kind of chatroom (group or post)
+	 * @param lastSeenSerial retrieve only messages with serials greater than this (use -1
+	 *        to get all messages)
+	 * @return a list of chat room messages.
+	 */
+	List<ChatRoomMessage> getChatRoomMessages(String roomName, ChatRoomKind kind, long lastSeenSerial);
+	
 	public boolean canJoinChat(String roomName, ChatRoomKind kind, String username);
+	
+	/**
+	 * Adds a new message to a chatroom.
+	 * 
+	 * @param roomName the GUID of the group or post the chat is about, in jabber node form
+	 * @param kind the kind of chatroom (group or post)
+	 * @param userName the GUID of the user posting the message, in jabber node form
+	 * @param text the text of the message
+	 * @param timestamp the timestamp for the message
+	 */
+	public void addChatRoomMessage(String roomName, ChatRoomKind kind, String userName, String text, Date timestamp);
 	
 	/**
 	 * Get current music info for a given user.
