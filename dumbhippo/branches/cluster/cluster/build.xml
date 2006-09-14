@@ -4,7 +4,7 @@
 	<property name="target" value="target" />
         <property name="target.lib" value="${target}/lib" />
 	<property name="build" value="${target}/classes" />
-	<property name="src" value="." />
+	<property name="src" value="balancer/src" />
         <fileset dir="${hippo.server.path}" id="dependency.jars.server">
                 <include name="target/classes/dumbhippo-client.jar"/>
                 <include name="lib/slf4j-*.jar"/>

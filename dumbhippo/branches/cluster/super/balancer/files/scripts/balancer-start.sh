@@ -4,6 +4,7 @@ targetdir=@@targetdir@@
 xmppHost="@@serverHost@@"
 xmppPort="@@jivePlainPort@@"
 clusterHosts="@@clusterHosts@@"
+balancerBind="@@balancerBind@@"
 
 echo "Starting XMPP connection balancer..."
 
@@ -23,7 +24,7 @@ done
 "$JAVA" -Xdebug 					\
      -server 						\
      -classpath $deps:$targetdir/dumbhippo-xmpp-balancer.jar    \
-     com.dumbhippo.xmpp.Balancer "$xmppHost" "$xmppPort" $clusterHosts >$targetdir/logs/balancer.log 2>&1 &
+     com.dumbhippo.xmpp.Balancer "$balancerBind" "$xmppHost" "$xmppPort" $clusterHosts >$targetdir/logs/balancer.log 2>&1 &
 
 pid=$!
 
