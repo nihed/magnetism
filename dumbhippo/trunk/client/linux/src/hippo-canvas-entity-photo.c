@@ -28,6 +28,9 @@ static void hippo_canvas_entity_photo_get_property (GObject      *object,
                                                     GParamSpec   *pspec);
 
 
+/* canvas item methods */
+static void hippo_canvas_entity_photo_activated  (HippoCanvasItem *item);
+
 /* Our own methods */
 static void hippo_canvas_entity_photo_set_entity (HippoCanvasEntityPhoto *canvas_entity_photo,
                                                   HippoEntity            *entity);
@@ -70,6 +73,8 @@ G_DEFINE_TYPE_WITH_CODE(HippoCanvasEntityPhoto, hippo_canvas_entity_photo, HIPPO
 static void
 hippo_canvas_entity_photo_init(HippoCanvasEntityPhoto *entity_photo)
 {
+    HIPPO_CANVAS_BOX(entity_photo)->clickable = TRUE;
+    
     hippo_canvas_entity_photo_update_image(entity_photo);
 }
 
@@ -79,6 +84,8 @@ static void
 hippo_canvas_entity_photo_iface_init(HippoCanvasItemClass *item_class)
 {
     item_parent_class = g_type_interface_peek_parent(item_class);
+
+    item_class->activated = hippo_canvas_entity_photo_activated;
 }
 
 static void
@@ -270,3 +277,13 @@ hippo_canvas_entity_photo_set_actions(HippoCanvasEntityPhoto *entity_photo,
     g_object_notify(G_OBJECT(entity_photo), "actions");
 }
 
+static void
+hippo_canvas_entity_photo_activated(HippoCanvasItem *item)
+{
+    HippoCanvasEntityPhoto *entity_photo = HIPPO_CANVAS_ENTITY_PHOTO(item);
+
+    if (entity_photo->actions && entity_photo->entity) {
+        hippo_actions_visit_entity(entity_photo->actions,
+                                   entity_photo->entity);
+    }
+}

@@ -2,7 +2,7 @@
 #ifndef __HIPPO_CANVAS_TEXT_H__
 #define __HIPPO_CANVAS_TEXT_H__
 
-/* A cairo path canvas item. (will be cross-platform once windows has Cairo support) */
+/* A text paragraph canvas item. */
 
 #include "hippo-canvas-box.h"
 #include <cairo/cairo.h>

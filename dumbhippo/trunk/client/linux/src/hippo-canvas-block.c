@@ -128,7 +128,7 @@ hippo_canvas_block_init(HippoCanvasBlock *block)
     
     right_column = g_object_new(HIPPO_TYPE_CANVAS_BOX,
                                 "orientation", HIPPO_ORIENTATION_VERTICAL,
-                                "xalign", HIPPO_ALIGNMENT_END,                                
+                                "xalign", HIPPO_ALIGNMENT_FILL,                                
                                 "yalign", HIPPO_ALIGNMENT_START,
                                 "padding-left", 8,
                                NULL);
@@ -161,15 +161,14 @@ hippo_canvas_block_init(HippoCanvasBlock *block)
 
     box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
                        "orientation", HIPPO_ORIENTATION_HORIZONTAL,
-                       "xalign", HIPPO_ALIGNMENT_END,
+                       "xalign", HIPPO_ALIGNMENT_FILL,
                        "yalign", HIPPO_ALIGNMENT_START,
                        NULL);
-    hippo_canvas_box_append(right_column, HIPPO_CANVAS_ITEM(box), 0);
+    hippo_canvas_box_append(right_column, HIPPO_CANVAS_ITEM(box), HIPPO_PACK_EXPAND);
     
     block->headshot_item = g_object_new(HIPPO_TYPE_CANVAS_ENTITY_PHOTO,
                                         "scale-width", 15,
                                         "scale-height", 15,
-                                        "xalign", HIPPO_ALIGNMENT_END,
                                         "yalign", HIPPO_ALIGNMENT_START,
                                         "border", 1,
                                         "border-color", 0xffffffff,
@@ -179,19 +178,19 @@ hippo_canvas_block_init(HippoCanvasBlock *block)
     block->name_item = g_object_new(HIPPO_TYPE_CANVAS_ENTITY_NAME,
                                     "font-scale", PANGO_SCALE_SMALL,
                                     "font", "Italic",
-                                    "xalign", HIPPO_ALIGNMENT_END,
+                                    "xalign", HIPPO_ALIGNMENT_FILL,
                                     "yalign", HIPPO_ALIGNMENT_START,
-                                    "padding-right", 8,
+                                    "border-right", 8,
                                     NULL);
-    hippo_canvas_box_append(box, block->name_item, HIPPO_PACK_END);
+    hippo_canvas_box_append(box, block->name_item, HIPPO_PACK_END | HIPPO_PACK_EXPAND);
 
     item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
                         "font-scale", PANGO_SCALE_SMALL,
                         "font", "Italic",
                         "text", "from ",
+                        "yalign", HIPPO_ALIGNMENT_START,
                         NULL);
     hippo_canvas_box_append(box, item, HIPPO_PACK_END);
-
     
     box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
                        "orientation", HIPPO_ORIENTATION_HORIZONTAL,

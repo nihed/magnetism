@@ -198,12 +198,7 @@ void
 hippo_app_visit_entity(HippoApp    *app,
                        HippoEntity *entity)
 {
-    const char *home_url = hippo_entity_get_home_url(entity);
-    if (home_url) {
-	hippo_app_open_url(app, TRUE, home_url);
-    } else {
-	g_warning("Don't know how to go to the home page for entity '%s'", hippo_entity_get_guid(entity));
-    }
+    hippo_connection_visit_entity(app->connection, entity);
 }
                        
 void

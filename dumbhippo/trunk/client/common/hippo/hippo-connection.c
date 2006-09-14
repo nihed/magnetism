@@ -3845,3 +3845,20 @@ hippo_connection_visit_post_id(HippoConnection *connection,
     hippo_connection_open_relative_url(connection, relative);
     g_free(relative);
 }
+
+void
+hippo_connection_visit_entity(HippoConnection *connection,
+                              HippoEntity     *entity)
+{
+
+    const char *home_url;
+
+    home_url = hippo_entity_get_home_url(entity);
+    if (home_url) {
+	hippo_platform_open_url(connection->platform,
+                                connection->login_browser,
+                                home_url);
+    } else {
+	g_warning("Don't know how to go to the home page for entity '%s'", hippo_entity_get_guid(entity));
+    }
+}

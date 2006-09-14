@@ -25,27 +25,8 @@ static void hippo_canvas_link_get_property (GObject      *object,
                                             GParamSpec   *pspec);
 
 
-/* Canvas item methods */
-
-static gboolean           hippo_canvas_link_button_press_event  (HippoCanvasItem *item,
-                                                                 HippoEvent      *event);
-static gboolean           hippo_canvas_link_motion_notify_event (HippoCanvasItem *item,
-                                                                 HippoEvent      *event);
-static HippoCanvasPointer hippo_canvas_link_get_pointer         (HippoCanvasItem *item,
-                                                                 int              x,
-                                                                 int              y);
-
-struct _HippoCanvasLink {
-    HippoCanvasText text;
-};
-
-struct _HippoCanvasLinkClass {
-    HippoCanvasTextClass parent_class;
-
-};
-
+#if 0
 enum {
-    ACTIVATED,
     LAST_SIGNAL
 };
 
@@ -54,6 +35,7 @@ static int signals[LAST_SIGNAL];
 enum {
     PROP_0
 };
+#endif
 
 #define DEFAULT_FOREGROUND 0x0000ffff
 
@@ -66,6 +48,8 @@ hippo_canvas_link_init(HippoCanvasLink *link)
     HippoCanvasText *text = HIPPO_CANVAS_TEXT(link);
     PangoAttrList *attrs;
     PangoAttribute *a;
+    
+    HIPPO_CANVAS_BOX(link)->clickable = TRUE;
     
     text->color_rgba = DEFAULT_FOREGROUND;
 
@@ -85,10 +69,6 @@ static void
 hippo_canvas_link_iface_init(HippoCanvasItemClass *item_class)
 {
     item_parent_class = g_type_interface_peek_parent(item_class);
-
-    item_class->button_press_event = hippo_canvas_link_button_press_event;
-    item_class->motion_notify_event = hippo_canvas_link_motion_notify_event;
-    item_class->get_pointer = hippo_canvas_link_get_pointer;
 }
 
 static void
@@ -100,15 +80,6 @@ hippo_canvas_link_class_init(HippoCanvasLinkClass *klass)
     object_class->get_property = hippo_canvas_link_get_property;
 
     object_class->finalize = hippo_canvas_link_finalize;
-    
-    signals[ACTIVATED] =
-        g_signal_new ("activated",
-                      G_TYPE_FROM_CLASS (object_class),
-                      G_SIGNAL_RUN_LAST,
-                      0,
-                      NULL, NULL,
-                      g_cclosure_marshal_VOID__VOID,
-                      G_TYPE_NONE, 0);
 }
 
 static void
@@ -163,49 +134,3 @@ hippo_canvas_link_get_property(GObject         *object,
     }
 }
 
-static gboolean
-hippo_canvas_link_button_press_event(HippoCanvasItem *item,
-                                     HippoEvent      *event)
-{
-    /* HippoCanvasLink *link = HIPPO_CANVAS_LINK(item); */
-
-    /* see if a child wants it */
-    if (item_parent_class->button_press_event(item, event))
-        return TRUE;
-
-    /* g_debug("button on link %d,%d", event->x, event->y); */
-    
-    g_signal_emit(item, signals[ACTIVATED], 0);
-    
-    return TRUE;
-}
-
-static gboolean
-hippo_canvas_link_motion_notify_event(HippoCanvasItem *item,
-                                      HippoEvent      *event)
-{
-    /* HippoCanvasLink *link = HIPPO_CANVAS_LINK(item); */
-
-    /* see if a child wants it, and let box track the hover child */
-    if (item_parent_class->motion_notify_event(item, event))
-        return TRUE;
-    
-    /* g_debug("motion on link %d,%d", event->x, event->y); */
-    
-    return FALSE;
-}
-
-static HippoCanvasPointer
-hippo_canvas_link_get_pointer(HippoCanvasItem *item,
-                              int              x,
-                              int              y)
-{
-    HippoCanvasPointer pointer;
-
-    /* see if a child wants to set it */
-    pointer = item_parent_class->get_pointer(item, x, y);
-    if (pointer != HIPPO_CANVAS_POINTER_UNSET)
-        return pointer;
-
-    return HIPPO_CANVAS_POINTER_HAND;
-}

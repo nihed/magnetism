@@ -1254,7 +1254,19 @@ hippo_canvas_box_button_press_event (HippoCanvasItem *item,
 {
     HippoCanvasBox *box = HIPPO_CANVAS_BOX(item);
 
-    return forward_event(box, event);
+    if (forward_event(box, event)) {
+        return TRUE;
+    } else if (box->clickable && event->u.button.button == 1) {
+        /* FIXME we should really do this on release iff the same
+         * item got the press, but this requires emulating "passive
+         * grabs" for canvas items and right now just not important
+         * enough to bother with
+         */
+        hippo_canvas_item_emit_activated(item);
+        return TRUE;
+    } else {
+        return FALSE;
+    }
 }
 
 static gboolean
@@ -1321,13 +1333,20 @@ hippo_canvas_box_get_pointer(HippoCanvasItem    *item,
 {
     HippoCanvasBox *box = HIPPO_CANVAS_BOX(item);    
     HippoBoxChild *child;
-
+    
     child = find_child_at_point(box, x, y);
 
-    if (child != NULL)
-        return hippo_canvas_item_get_pointer(child->item,
-                                             x - child->x,
-                                             y - child->y);
+    if (child != NULL) {
+        HippoCanvasPointer p;
+        p = hippo_canvas_item_get_pointer(child->item,
+                                          x - child->x,
+                                          y - child->y);
+        if (p != HIPPO_CANVAS_POINTER_UNSET)
+            return p;
+    }
+
+    if (box->clickable)
+        return HIPPO_CANVAS_POINTER_HAND;
     else
         return HIPPO_CANVAS_POINTER_UNSET;
 }

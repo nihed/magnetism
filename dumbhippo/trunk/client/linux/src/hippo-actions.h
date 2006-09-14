@@ -38,7 +38,8 @@ HippoActions* hippo_actions_new                       (HippoDataCache  *cache);
 
 void          hippo_actions_visit_post                (HippoActions    *actions,
                                                        HippoPost       *post);
-
+void          hippo_actions_visit_entity              (HippoActions    *actions,
+                                                       HippoEntity     *entity);
 void          hippo_actions_load_entity_photo_async   (HippoActions    *actions,
                                                        HippoEntity     *entity,
                                                        HippoCanvasItem *image_item);

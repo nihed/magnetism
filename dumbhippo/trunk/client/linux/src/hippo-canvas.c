@@ -29,6 +29,8 @@ static void      hippo_canvas_size_allocate       (GtkWidget         *widget,
             	       	                           GtkAllocation     *allocation);
 static gboolean  hippo_canvas_button_press        (GtkWidget         *widget,
             	       	                           GdkEventButton    *event);
+static gboolean  hippo_canvas_button_release      (GtkWidget         *widget,
+            	       	                           GdkEventButton    *event);
 static gboolean  hippo_canvas_enter_notify        (GtkWidget         *widget,
             	       	                           GdkEventCrossing  *event);
 static gboolean  hippo_canvas_leave_notify        (GtkWidget         *widget,
@@ -97,6 +99,7 @@ hippo_canvas_class_init(HippoCanvasClass *klass)
     widget_class->size_request = hippo_canvas_size_request;
     widget_class->size_allocate = hippo_canvas_size_allocate;
     widget_class->button_press_event = hippo_canvas_button_press;
+    widget_class->button_release_event = hippo_canvas_button_release;
     widget_class->motion_notify_event = hippo_canvas_motion_notify;
     widget_class->enter_notify_event = hippo_canvas_enter_notify;
     widget_class->leave_notify_event = hippo_canvas_leave_notify;
@@ -311,7 +314,27 @@ hippo_canvas_button_press(GtkWidget         *widget,
     */
     
     return hippo_canvas_item_emit_button_press_event(canvas->root,
-                                                     event->x, event->y);
+                                                     event->x, event->y,
+                                                     event->button);
+}
+
+static gboolean
+hippo_canvas_button_release(GtkWidget         *widget,
+                            GdkEventButton    *event)
+{
+    HippoCanvas *canvas = HIPPO_CANVAS(widget);
+
+    if (canvas->root == NULL)
+        return FALSE;
+
+    /*
+    g_debug("canvas button release at %d,%d allocation %d,%d", (int) event->x, (int) event->y,
+            widget->allocation.x, widget->allocation.y);
+    */
+    
+    return hippo_canvas_item_emit_button_release_event(canvas->root,
+                                                       event->x, event->y,
+                                                       event->button);
 }
 
 static void

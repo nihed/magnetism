@@ -15,6 +15,7 @@ typedef enum {
 
 typedef enum {
     HIPPO_EVENT_BUTTON_PRESS,
+    HIPPO_EVENT_BUTTON_RELEASE,
     HIPPO_EVENT_MOTION_NOTIFY
 } HippoEventType;
 
@@ -34,6 +35,9 @@ struct _HippoEvent {
         struct {
             HippoMotionDetail detail;
         } motion;
+        struct {
+            int button;
+        } button;
     } u;
 };
 
@@ -75,8 +79,11 @@ struct _HippoCanvasItemClass {
                                      int             *height_p);
     gboolean (* button_press_event) (HippoCanvasItem *canvas_item,
                                      HippoEvent      *event);
+    gboolean (* button_release_event) (HippoCanvasItem *canvas_item,
+                                     HippoEvent      *event);
     gboolean (* motion_notify_event)(HippoCanvasItem *canvas_item,
-                                     HippoEvent      *event);    
+                                     HippoEvent      *event);
+    void     (* activated)          (HippoCanvasItem *canvas_item);
     void     (* request_changed)    (HippoCanvasItem *canvas_item);
     void     (* paint_needed)       (HippoCanvasItem *canvas_item);
     gboolean (* get_needs_resize)   (HippoCanvasItem *canvas_item);
@@ -120,15 +127,17 @@ void     hippo_canvas_item_get_request             (HippoCanvasItem *canvas_item
                                                     int             *height_p);
 gboolean hippo_canvas_item_emit_button_press_event (HippoCanvasItem *canvas_item,
                                                     int              x,
-                                                    int              y);
+                                                    int              y,
+                                                    int              button);
+gboolean hippo_canvas_item_emit_button_release_event (HippoCanvasItem *canvas_item,
+                                                    int              x,
+                                                    int              y,
+                                                    int              button);
 gboolean hippo_canvas_item_emit_motion_notify_event (HippoCanvasItem  *canvas_item,
                                                      int               x,
                                                      int               y,
                                                      HippoMotionDetail detail);
-gboolean hippo_canvas_item_emit_hover_event         (HippoCanvasItem  *canvas_item,
-                                                     gboolean          enter,
-                                                     int               x,
-                                                     int               y);
+void     hippo_canvas_item_emit_activated          (HippoCanvasItem *canvas_item);
 void     hippo_canvas_item_emit_paint_needed       (HippoCanvasItem *canvas_item,
                                                     int              x,
                                                     int              y,

@@ -63,6 +63,7 @@ struct _HippoCanvasBox {
     guint orientation : 2; /* enum only has 2 values so it fits with extra */
     guint x_align : 3;     /* enum only has 4 values so it fits with extra */
     guint y_align : 3;     /* enum only has 4 values so it fits with extra */
+    guint clickable : 1;   /* show a hand pointer */
 };
 
 struct _HippoCanvasBoxClass {

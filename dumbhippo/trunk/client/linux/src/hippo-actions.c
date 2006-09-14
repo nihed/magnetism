@@ -108,6 +108,13 @@ hippo_actions_visit_post(HippoActions   *actions,
     hippo_connection_visit_post(get_connection(actions), post);
 }
 
+void
+hippo_actions_visit_entity(HippoActions    *actions,
+                           HippoEntity     *entity)
+{
+    hippo_connection_visit_entity(get_connection(actions), entity);
+}
+
 static void
 image_set_on_canvas_item_func(HippoSurface *surface,
                               void         *data)

@@ -129,6 +129,8 @@ void  hippo_connection_visit_post        (HippoConnection *connection,
                                           HippoPost       *post);
 void  hippo_connection_visit_post_id     (HippoConnection *connection,
                                           const char      *guid);
+void  hippo_connection_visit_entity      (HippoConnection *connection,
+                                          HippoEntity     *entity);
 
 
 

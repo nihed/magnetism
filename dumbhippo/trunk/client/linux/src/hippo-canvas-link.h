@@ -2,9 +2,9 @@
 #ifndef __HIPPO_CANVAS_LINK_H__
 #define __HIPPO_CANVAS_LINK_H__
 
-/* A cairo path canvas item. (will be cross-platform once windows has Cairo support) */
+/* An href-link canvas item. */
 
-#include "hippo-canvas-item.h"
+#include "hippo-canvas-text.h"
 #include <cairo/cairo.h>
 
 G_BEGIN_DECLS
@@ -18,6 +18,14 @@ typedef struct _HippoCanvasLinkClass HippoCanvasLinkClass;
 #define HIPPO_IS_CANVAS_LINK(object)        (G_TYPE_CHECK_INSTANCE_TYPE ((object), HIPPO_TYPE_CANVAS_LINK))
 #define HIPPO_IS_CANVAS_LINK_CLASS(klass)   (G_TYPE_CHECK_CLASS_TYPE ((klass), HIPPO_TYPE_CANVAS_LINK))
 #define HIPPO_CANVAS_LINK_GET_CLASS(obj)    (G_TYPE_INSTANCE_GET_CLASS ((obj), HIPPO_TYPE_CANVAS_LINK, HippoCanvasLinkClass))
+
+struct _HippoCanvasLink {
+    HippoCanvasText text;
+};
+
+struct _HippoCanvasLinkClass {
+    HippoCanvasTextClass parent_class;
+};
 
 GType        	 hippo_canvas_link_get_type               (void) G_GNUC_CONST;
 

@@ -10,7 +10,7 @@
 #include "hippo-actions.h"
 #include "hippo-canvas-entity-name.h"
 #include "hippo-canvas-box.h"
-#include "hippo-canvas-text.h"
+#include "hippo-canvas-link.h"
 
 static void      hippo_canvas_entity_name_init                (HippoCanvasEntityName       *text);
 static void      hippo_canvas_entity_name_class_init          (HippoCanvasEntityNameClass  *klass);
@@ -28,6 +28,9 @@ static void hippo_canvas_entity_name_get_property (GObject      *object,
                                                    GParamSpec   *pspec);
 
 
+/* Canvas item methods */
+static void hippo_canvas_entity_name_activated   (HippoCanvasItem       *item);
+
 /* Our own methods */
 static void hippo_canvas_entity_name_set_entity  (HippoCanvasEntityName *canvas_entity_name,
                                                   HippoEntity           *entity);
@@ -37,14 +40,15 @@ static void hippo_canvas_entity_name_update_text (HippoCanvasEntityName *entity_
 
 
 struct _HippoCanvasEntityName {
-    HippoCanvasText canvas_text;
+    HippoCanvasLink canvas_link;
     HippoActions *actions;
     HippoEntity  *entity;
 };
 
 struct _HippoCanvasEntityNameClass {
-    HippoCanvasTextClass parent_class;
+    HippoCanvasLinkClass parent_class;
 
+    void (* activated) (HippoCanvasLink *link);
 };
 
 #if 0
@@ -63,12 +67,15 @@ enum {
 };
 
 
-G_DEFINE_TYPE_WITH_CODE(HippoCanvasEntityName, hippo_canvas_entity_name, HIPPO_TYPE_CANVAS_TEXT,
+G_DEFINE_TYPE_WITH_CODE(HippoCanvasEntityName, hippo_canvas_entity_name, HIPPO_TYPE_CANVAS_LINK,
                         G_IMPLEMENT_INTERFACE(HIPPO_TYPE_CANVAS_ITEM, hippo_canvas_entity_name_iface_init));
 
 static void
 hippo_canvas_entity_name_init(HippoCanvasEntityName *entity_name)
 {
+    g_object_set(G_OBJECT(entity_name),
+                 "size-mode", HIPPO_CANVAS_SIZE_ELLIPSIZE_END,
+                 NULL);
     hippo_canvas_entity_name_update_text(entity_name);
 }
 
@@ -78,6 +85,8 @@ static void
 hippo_canvas_entity_name_iface_init(HippoCanvasItemClass *item_class)
 {
     item_parent_class = g_type_interface_peek_parent(item_class);
+
+    item_class->activated = hippo_canvas_entity_name_activated;
 }
 
 static void
@@ -263,3 +272,13 @@ hippo_canvas_entity_name_set_actions(HippoCanvasEntityName *entity_name,
     g_object_notify(G_OBJECT(entity_name), "actions");
 }
 
+static void
+hippo_canvas_entity_name_activated(HippoCanvasItem *item)
+{
+    HippoCanvasEntityName *entity_name = HIPPO_CANVAS_ENTITY_NAME(item);
+
+    if (entity_name->actions && entity_name->entity) {
+        hippo_actions_visit_entity(entity_name->actions,
+                                   entity_name->entity);
+    }
+}
