@@ -37,6 +37,8 @@
     <!--     Valid modes are LOCAL
                              REPL_ASYNC
                              REPL_SYNC
+                             INVALIDATION_ASYNC
+                             INVALIDATION_SYNC
     -->
     <attribute name="CacheMode">REPL_SYNC</attribute>
 
@@ -44,7 +46,7 @@
              to find each other -->
     <attribute name="ClusterName">${jboss.partition.name:DefaultPartition}-EJB3-entity-cache</attribute>
 
-    <attribute name="UseMarshalling">true</attribute>
+    <attribute name="UseRegionBasedMarshalling">true</attribute>
     <attribute name="InactiveOnStartup">true</attribute>
 
     <attribute name="ClusterConfig">
