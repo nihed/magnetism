@@ -68,6 +68,13 @@ struct _HippoCanvasBox {
 struct _HippoCanvasBoxClass {
     GObjectClass parent_class;
 
+    void     (* paint_background)             (HippoCanvasBox   *box,
+                                               cairo_t          *cr);
+    void     (* paint_children)               (HippoCanvasBox   *box,
+                                               cairo_t          *cr);    
+    int      (* get_content_width_request)    (HippoCanvasBox   *box);
+    int      (* get_content_height_request)   (HippoCanvasBox   *box,
+                                               int               for_width);
 };
 
 
