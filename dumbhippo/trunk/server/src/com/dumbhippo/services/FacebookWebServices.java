@@ -52,10 +52,11 @@ public class FacebookWebServices extends AbstractXmlRequest<FacebookSaxHandler> 
 	}
 	
 	/**
-	 * Return true if the user has new messages, and some of them are unread messages.
+	 * Return true if the number of unread messages changed or the number of total messages 
+	 * increased and some of them are unread messages.
 	 * 
 	 * @param facebookAccount
-	 * @return true if unread message count was updated
+	 * @return true if the set of unread messages changed
 	 */
 	public boolean updateMessageCount(FacebookAccount facebookAccount) {
 	    // generate messages request using session from facebookAccount
@@ -66,15 +67,15 @@ public class FacebookWebServices extends AbstractXmlRequest<FacebookSaxHandler> 
 		String wsUrl = generateFacebookRequest(params);
 
 		FacebookSaxHandler handler = parseUrl(new FacebookSaxHandler(), wsUrl);
-		boolean hasNewMessages = false;
+		boolean newMessagesChanged = false;
 		int newUnread = handler.getUnreadMessageCount(); 
 		int newTotal = handler.getTotalMessageCount();
 		int oldUnread = facebookAccount.getUnreadMessageCount();
 		int oldTotal = facebookAccount.getTotalMessageCount();
 		if ((newUnread != -1) && (newTotal != -1)) {
-			// with the current api, we can only know for sure that the user has new messages
-			// if newUnread > oldUnread; however this is not the only situation when the user
-			// could have new messages, if newTotal > oldTotal, the user must have received 
+			// with the current api, we can only know for sure that the set of new messages
+			// changed if newUnread != oldUnread; however there is another situation when 
+			// the user could have new messages: if newTotal > oldTotal, the user must have received 
 			// new messages, though we do not know if they read the new ones and left the 
 			// old unread messages unread or actually read the old unread messages, and then 
 			// received the new ones			
@@ -82,10 +83,10 @@ public class FacebookWebServices extends AbstractXmlRequest<FacebookSaxHandler> 
 			// from facebook, which prevents us from always notifying the user if they possibly
 			// have new messages
 			// so we would not detect that the person has new messages if, for example, between 
-			// our requests they read 2 of their new messages, deleted them, and received 1 other 
+			// our requests they read 2 of their new messages, deleted them, and received 2 other 
 			// new message 
-			if (((newTotal > oldTotal) || (newUnread > oldUnread)) && (newUnread > 0)) {
-				hasNewMessages = true;							
+			if ((newUnread != oldUnread) || ((newTotal > oldTotal) && (newUnread > 0)))  {
+				newMessagesChanged = true;							
 			}
 			// update the number of messages fields on facebookAccount
 			facebookAccount.setUnreadMessageCount(newUnread);
@@ -97,7 +98,7 @@ public class FacebookWebServices extends AbstractXmlRequest<FacebookSaxHandler> 
 			logger.error("Did not receive a valid response for facebook.messages.getCount request, error message {}, error code {}",
 					     handler.getErrorMessage(), handler.getErrorCode());
 		}
-        return hasNewMessages;
+        return newMessagesChanged;
 	}
 	
 	private String generateFacebookRequest(List<String> params) {

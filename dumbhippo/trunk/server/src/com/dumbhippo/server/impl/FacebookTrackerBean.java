@@ -113,8 +113,8 @@ public class FacebookTrackerBean implements FacebookTracker {
 		if (facebookAccount == null)
 			throw new RuntimeException("Invalid FacebookAccount id " + facebookAccountId + " is passed in to updateMessageCount()");
 		FacebookWebServices ws = new FacebookWebServices(REQUEST_TIMEOUT, config);
-		boolean hasNewMessages = ws.updateMessageCount(facebookAccount);
-		if (hasNewMessages || !facebookAccount.isSessionKeyValid()) {
+		boolean newMessagesChanged = ws.updateMessageCount(facebookAccount);
+		if (newMessagesChanged || !facebookAccount.isSessionKeyValid()) {
 			stacker.stackAccountUpdate(facebookAccount.getExternalAccount().getAccount().getOwner().getGuid(), 
 					                   ExternalAccountType.FACEBOOK, (new Date()).getTime());
 		}
