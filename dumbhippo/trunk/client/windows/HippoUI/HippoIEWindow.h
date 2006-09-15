@@ -5,7 +5,7 @@
 #pragma once
 
 #include <HippoUtil.h>
-#include "HippoAbstractWindow.h"
+#include "HippoAbstractIEWindow.h"
 
 class HippoIEWindowCallback
 {
@@ -17,7 +17,7 @@ public:
     }
 };
 
-class HippoIEWindow : public HippoAbstractWindow
+class HippoIEWindow : public HippoAbstractIEWindow
 {
 public:
     HippoIEWindow(WCHAR *src, HippoIEWindowCallback *cb);

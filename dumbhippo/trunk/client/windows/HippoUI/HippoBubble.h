@@ -6,7 +6,7 @@
 
 #include <HippoUtil.h>
 #include <hippo/hippo-common.h>
-#include "HippoAbstractWindow.h"
+#include "HippoAbstractIEWindow.h"
 #include "HippoIE.h"
 #include "HippoMySpace.h"
 #include "HippoDispatchableObject.h"
@@ -17,7 +17,7 @@ class HippoBubbleImages;
 
 class HippoBubble :
     public HippoDispatchableObject<IHippoBubble, HippoBubble>,
-    public HippoAbstractWindow
+    public HippoAbstractIEWindow
 {
 public:
     HippoBubble();

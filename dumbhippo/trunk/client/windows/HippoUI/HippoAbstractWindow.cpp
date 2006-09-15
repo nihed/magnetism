@@ -22,19 +22,12 @@ HippoAbstractWindow::HippoAbstractWindow()
 
     instance_ = GetModuleHandle(NULL);
     window_ = NULL;
-    ie_ = NULL;
-
-    ieCallback_ = new HippoAbstractWindowIECallback(this);
 }
 
 HippoAbstractWindow::~HippoAbstractWindow(void)
 {
     destroy();
-
     assert(window_ == NULL);
-    assert(ie_ == NULL);
-
-    delete ieCallback_;
 }
 
 void 
@@ -43,12 +36,6 @@ HippoAbstractWindow::setUI(HippoUI *ui)
     ui_ = ui;
     if (ui_)
         initializeUI();
-}
-
-void
-HippoAbstractWindow::setApplication(IDispatch *application)
-{
-    application_ = application;
 }
 
 void
@@ -88,12 +75,6 @@ HippoAbstractWindow::setExtendedStyle(DWORD extendedStyle)
 }
 
 void 
-HippoAbstractWindow::setURL(const HippoBSTR &url)
-{
-    url_ = url;   
-}
-
-void 
 HippoAbstractWindow::setClassName(const HippoBSTR &className)
 {
     className_ = className;
@@ -105,24 +86,8 @@ HippoAbstractWindow::setTitle(const HippoBSTR &title)
     title_ = title;
 }
 
-HippoBSTR
-HippoAbstractWindow::getURL()
-{
-    return url_;
-}
-
 void 
 HippoAbstractWindow::initializeWindow()
-{
-}
-
-void 
-HippoAbstractWindow::initializeIE()
-{
-}
-
-void 
-HippoAbstractWindow::initializeBrowser()
 {
 }
 
@@ -133,11 +98,6 @@ HippoAbstractWindow::initializeUI()
 
 void 
 HippoAbstractWindow::onClose(bool fromScript)
-{
-}
-
-void
-HippoAbstractWindow::onDocumentComplete()
 {
 }
 
@@ -163,60 +123,6 @@ HippoAbstractWindow::createWindow(void)
     return true;
 }
 
-void 
-HippoAbstractWindow::HippoAbstractWindowIECallback::onClose()
-{
-    abstractWindow_->onClose(true);
-}
-
-void 
-HippoAbstractWindow::HippoAbstractWindowIECallback::onDocumentComplete()
-{
-    abstractWindow_->onDocumentComplete();
-}
-
-void 
-HippoAbstractWindow::HippoAbstractWindowIECallback::launchBrowser(const HippoBSTR &url)
-{
-    abstractWindow_->ui_->launchBrowser(url.m_str);
-}
-
-bool
-HippoAbstractWindow::HippoAbstractWindowIECallback::isOurServer(const HippoBSTR &host)
-{
-    char *serverHostU;
-    int port;
-    HippoPlatform *platform;
-
-    platform = abstractWindow_->ui_->getPlatform();
-    hippo_platform_get_web_host_port(platform, &serverHostU, &port);
-
-    HippoBSTR serverHost = HippoBSTR::fromUTF8(serverHostU);
-    g_free(serverHostU);
-
-    return host == serverHost;
-}
-
-HRESULT 
-HippoAbstractWindow::HippoAbstractWindowIECallback::getToplevelBrowser(const IID &ifaceID, void **toplevelBrowser)
-{
-    return E_UNEXPECTED;
-}
-
-bool
-HippoAbstractWindow::embedIE(void)
-{
-    ie_ = HippoIE::create(window_, getURL(), ieCallback_, application_);
-    ie_->setThreeDBorder(false);
-    initializeIE();
-    ie_->embedBrowser();
-    browser_ = ie_->getBrowser();
-
-    initializeBrowser();
-
-    return true;
-}
-
 bool
 HippoAbstractWindow::create(void)
 {
@@ -231,19 +137,20 @@ HippoAbstractWindow::create(void)
         hippoDebugLogW(L"Failed to create window");
         return false;
     }
-    if (!embedIE()) {
-        hippoDebugLogW(L"Failed to embed IE");
-        return false;
-    }
     return true;
 }
 
 void 
 HippoAbstractWindow::destroy()
 {
+    // This method should be safe against multiple calls, since a subclass is allowed
+    // to call it before our destructor runs
+
     // The actual work is done in the WM_DESTROY handler, onWindowDestroyed()
-    if (window_ != NULL)
+    if (window_ != NULL) {
         DestroyWindow(window_);
+        window_ = NULL;
+    }
 }
 
 void
@@ -255,17 +162,6 @@ HippoAbstractWindow::onWindowDestroyed(void)
 
         window_ = NULL;
     }
-
-    if (ie_) {
-        ie_->shutdown();
-        ie_ = NULL;
-    }
-}
-
-HippoIE *
-HippoAbstractWindow::getIE()
-{
-    return ie_;
 }
 
 bool
@@ -351,14 +247,8 @@ HippoAbstractWindow::moveResize(int x, int y, int width, int height)
 bool
 HippoAbstractWindow::hookMessage(MSG *msg)
 {
-    if ((msg->message >= WM_KEYFIRST && msg->message <= WM_KEYLAST))
-    {
-        HippoPtr<IWebBrowser> browser(ie_->getBrowser());
-        HippoQIPtr<IOleInPlaceActiveObject> active(ie_->getBrowser());
-        HRESULT res = active->TranslateAccelerator(msg);
-        return res == S_OK;
-    }
-    return FALSE;
+
+    return false;
 }
 
 bool
@@ -368,25 +258,11 @@ HippoAbstractWindow::processMessage(UINT   message,
 {
     switch (message) 
     {
-    case WM_ACTIVATE:
-        {
-            // It's not completely clear that this is necessary
-            HippoQIPtr<IOleInPlaceActiveObject> active(ie_->getBrowser());
-            if (active)
-                active->OnFrameWindowActivate(LOWORD(wParam) != WA_INACTIVE);
-            return true;
-        }
     case WM_CLOSE:
         onClose(false);
         return true;
     case WM_DESTROY:
         onWindowDestroyed();
-        return true;
-    case WM_SIZE:
-        if (ie_) {
-            RECT rect = { 0, 0, LOWORD(lParam), HIWORD(lParam) };
-            ie_->resize(&rect);
-        }
         return true;
     default:
         return false;

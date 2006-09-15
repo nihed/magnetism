@@ -366,7 +366,7 @@ HippoBubble::processMessage(UINT   message,
         return true;
     }
 
-    return HippoAbstractWindow::processMessage(message, wParam, lParam);
+    return HippoAbstractIEWindow::processMessage(message, wParam, lParam);
 }
 
 void 

@@ -8,14 +8,14 @@
 #include <HippoUtil.h>
 #include <hippo/hippo-common.h>
 #include "HippoGSignal.h"
-#include "HippoAbstractWindow.h"
+#include "HippoAbstractIEWindow.h"
 #include "HippoIE.h"
 #include "HippoMySpace.h"
 
 class HippoBubbleList :
     public IHippoBubbleList,
     public IDispatch,
-    public HippoAbstractWindow
+    public HippoAbstractIEWindow
 {
 public:
     HippoBubbleList();

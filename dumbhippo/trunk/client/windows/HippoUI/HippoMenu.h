@@ -5,7 +5,7 @@
 #pragma once
 
 #include <HippoUtil.h>
-#include "HippoAbstractWindow.h"
+#include "HippoAbstractIEWindow.h"
 #include "HippoUIUtil.h"
 #include "HippoGSignal.h"
 #include <vector>
@@ -14,7 +14,7 @@
 class HippoMenu :
     public IHippoMenu,
     public IDispatch,
-    public HippoAbstractWindow
+    public HippoAbstractIEWindow
 {
 public:
     HippoMenu();

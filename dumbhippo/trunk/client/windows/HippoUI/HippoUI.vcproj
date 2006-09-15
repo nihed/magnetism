@@ -24,7 +24,7 @@
 				GeneratePreprocessedFile="0"
 				MinimalRebuild="TRUE"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="5"
+				RuntimeLibrary="2"
 				TreatWChar_tAsBuiltInType="TRUE"
 				ForceConformanceInForLoopScope="TRUE"
 				UsePrecompiledHeader="1"
@@ -36,7 +36,8 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="Gdiplus.lib shlwapi.lib glib-2.0.lib gthread-2.0.lib gobject-2.0.lib loudmouth.lib ws2_32.lib wininet.lib urlmon.lib thrownew.obj advapi32.lib gdi32.lib shell32.lib"
+				AdditionalOptions="/VERBOSE:LIB /NODEFAULTLIB:libc.lib /NODEFAULTLIB:libcmt.lib /NODEFAULTLIB:libcd.lib /NODEFAULTLIB:libcmtd.lib /NODEFAULTLIB:msvcrtd.lib"
+				AdditionalDependencies="Gdiplus.lib shlwapi.lib glib-2.0.lib gthread-2.0.lib gobject-2.0.lib loudmouth.lib pango-1.0.lib pangocairo-1.0.lib pangowin32-1.0.lib cairo.lib ws2_32.lib wininet.lib urlmon.lib thrownew.obj advapi32.lib gdi32.lib shell32.lib"
 				OutputFile="$(OutDir)/Mugshot.exe"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="../debug;../dependencies/glib/lib;../dependencies/cairo/lib;../dependencies/pango/lib"
@@ -124,6 +125,9 @@
 			Name="Source Files"
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
+			<File
+				RelativePath=".\HippoAbstractIEWindow.cpp">
+			</File>
 			<File
 				RelativePath=".\HippoAbstractWindow.cpp">
 			</File>
@@ -233,6 +237,9 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}">
 			<File
 				RelativePath=".\Guid.h">
+			</File>
+			<File
+				RelativePath=".\HippoAbstractIEWindow.h">
 			</File>
 			<File
 				RelativePath=".\HippoAbstractWindow.h">
