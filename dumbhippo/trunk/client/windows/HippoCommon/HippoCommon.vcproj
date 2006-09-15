@@ -110,6 +110,12 @@
 				RelativePath="..\..\common\hippo\hippo-basics.c">
 			</File>
 			<File
+				RelativePath="..\..\common\hippo\hippo-block-post.c">
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-block.c">
+			</File>
+			<File
 				RelativePath="..\..\common\hippo\hippo-chat-room.c">
 			</File>
 			<File
@@ -162,7 +168,16 @@
 				RelativePath="..\..\common\hippo\hippo-basics.h">
 			</File>
 			<File
+				RelativePath="..\..\common\hippo\hippo-block-post.h">
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-block.h">
+			</File>
+			<File
 				RelativePath="..\..\common\hippo\hippo-chat-room.h">
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-common-internal.h">
 			</File>
 			<File
 				RelativePath=".\hippo-common-marshal.h">
