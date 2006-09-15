@@ -3,6 +3,7 @@
 #include "HippoPlatformImpl.h"
 #include "HippoUIUtil.h"
 #include "HippoHttp.h"
+#include "HippoUI.h"
 #include <HippoUtil.h>
 #include <Windows.h>
 #include <mshtml.h>
@@ -50,6 +51,7 @@ struct _HippoPlatformImpl {
     char *jabber_resource;
     HippoPreferences *preferences;
     HippoHTTP *http;
+    HippoUI *ui;
 };
 
 struct _HippoPlatformImplClass {
@@ -116,6 +118,13 @@ hippo_platform_impl_finalize(GObject *object)
         delete impl->http;
 
     G_OBJECT_CLASS(hippo_platform_impl_parent_class)->finalize(object);
+}
+
+void
+hippo_platform_impl_set_ui(HippoPlatformImpl *impl,
+                           HippoUI           *ui)
+{
+    impl->ui = ui;
 }
 
 HippoPreferences*
@@ -428,8 +437,17 @@ hippo_platform_impl_open_url(HippoPlatform     *platform,
                              HippoBrowserKind   browser,
                              const char        *url)
 {
-    // FIXME
-    assert(FALSE);
+    HippoPlatformImpl *impl = HIPPO_PLATFORM_IMPL(platform);
+    if (!impl->ui) {
+        g_warning("trying to hippo_platform_open_url before ui set on platform object");
+        return;
+    }
+
+    // FIXME this really is not right at all, it ignores the browser kind, 
+    // but let's sort it out as part of getting firefox to work since 
+    // I'm not even sure what API HippoPlatform should have here.
+
+    impl->ui->LaunchBrowser(HippoBSTR::fromUTF8(url));
 }
 
 class HttpHandler : public HippoHTTPAsyncHandler

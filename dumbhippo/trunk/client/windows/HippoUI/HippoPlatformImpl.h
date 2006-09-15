@@ -4,6 +4,8 @@
 #include <hippo/hippo-platform.h>
 #include "HippoPreferences.h"
 
+class HippoUI;
+
 typedef struct _HippoPlatformImpl      HippoPlatformImpl;
 typedef struct _HippoPlatformImplClass HippoPlatformImplClass;
 
@@ -17,6 +19,8 @@ typedef struct _HippoPlatformImplClass HippoPlatformImplClass;
 GType             hippo_platform_impl_get_type               (void) G_GNUC_CONST;
 
 HippoPlatform*    hippo_platform_impl_new                    (HippoInstanceType  instance);
+void              hippo_platform_impl_set_ui                 (HippoPlatformImpl *impl,
+                                                              HippoUI           *ui); 
 HippoPreferences* hippo_platform_impl_get_preferences        (HippoPlatformImpl *impl);
 
 // Here so we can share cookie reading code with the standard cookie handling

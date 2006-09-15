@@ -86,6 +86,7 @@ HippoUI::HippoUI(HippoInstanceType instanceType, bool replaceExisting, bool init
     authFailed_.connect(G_OBJECT(connection), "auth-failed", slot(this, &HippoUI::onAuthFailed));
     authSucceeded_.connect(G_OBJECT(connection), "auth-succeeded", slot(this, &HippoUI::onAuthSucceeded));
 
+    hippo_platform_impl_set_ui(HIPPO_PLATFORM_IMPL(platform_), this);
     notificationIcon_.setUI(this);
     upgrader_.setUI(this);
     music_.setUI(this);
