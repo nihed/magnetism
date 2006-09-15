@@ -19,7 +19,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="../HippoUtil;../dependencies/glib/include/glib-2.0;../dependencies/glib/lib/glib-2.0/include;../loudmouth;../../common"
+				AdditionalIncludeDirectories="../HippoUtil;../dependencies/glib/include/glib-2.0;../dependencies/cairo/include/cairo;../dependencies/pango/include/pango-1.0;../dependencies/glib/lib/glib-2.0/include;../loudmouth;../../common"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;NOMINMAX"
 				GeneratePreprocessedFile="0"
 				MinimalRebuild="TRUE"
@@ -39,7 +39,7 @@
 				AdditionalDependencies="Gdiplus.lib shlwapi.lib glib-2.0.lib gthread-2.0.lib gobject-2.0.lib loudmouth.lib ws2_32.lib wininet.lib urlmon.lib thrownew.obj advapi32.lib gdi32.lib shell32.lib"
 				OutputFile="$(OutDir)/Mugshot.exe"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="../debug;../dependencies/glib/lib"
+				AdditionalLibraryDirectories="../debug;../dependencies/glib/lib;../dependencies/cairo/lib;../dependencies/pango/lib"
 				GenerateDebugInformation="TRUE"
 				ProgramDatabaseFile="$(OutDir)/HippoUI.pdb"
 				SubSystem="2"
