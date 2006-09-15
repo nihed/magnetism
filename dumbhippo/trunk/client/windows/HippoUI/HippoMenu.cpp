@@ -5,6 +5,7 @@
 #include "stdafx-hippoui.h"
 
 #include <HippoUtil.h>
+#include <HippoInvocation.h>
 #include "HippoMenu.h"
 #include "HippoUI.h"
 #include "HippoComWrappers.h"

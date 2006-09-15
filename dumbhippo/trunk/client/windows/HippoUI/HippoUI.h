@@ -9,18 +9,13 @@
 #include <HippoUtil.h>
 #include <HippoArray.h>
 #include <HippoMessageHook.h>
-#include "HippoBubble.h"
-#include "HippoBubbleList.h"
 #include "HippoIcon.h"
 #include "HippoListenerProxy.h"
 #include "HippoLogWindow.h"
-#include "HippoMenu.h"
 #include "HippoUpgrader.h"
-#include "HippoFlickr.h"
 #include "HippoExternalBrowser.h"
 #include "HippoRemoteWindow.h"
 #include "HippoMusic.h"
-#include "HippoMySpace.h"
 #include "HippoUIUtil.h"
 #include "HippoGSignal.h"
 
@@ -66,9 +61,8 @@ public:
     STDMETHODIMP UnregisterBrowser(DWORD);
     STDMETHODIMP UpdateBrowser(DWORD, BSTR, BSTR);
     STDMETHODIMP Quit(DWORD *processId);
-    STDMETHODIMP ShowMissed();
     STDMETHODIMP ShowRecent();
-    STDMETHODIMP BeginFlickrShare(BSTR filePath);
+    STDMETHODIMP BeginFlickrShare(BSTR path);
     STDMETHODIMP ShareLink(BSTR url, BSTR title);
     STDMETHODIMP ShowChatWindow(BSTR postId);
     STDMETHODIMP GetLoginId(BSTR *result);
@@ -111,8 +105,6 @@ public:
 
     void onUpgradeReady();
 
-    void setHaveMissedBubbles(bool haveMissed);
-
     int getRecentMessageCount();
 
     bool isGroupChatActive(HippoEntity *entity);
@@ -129,8 +121,6 @@ public:
     HWND getWindow() { return window_; }
     HICON getSmallIcon() { return smallIcon_; }
     HICON getBigIcon() { return bigIcon_; }
-
-    void bubbleNewMySpaceComment(long myId, long blogId, const HippoMySpaceCommentData &comment);
 
 private:
     class HippoUIUpgradeWindowCallback : public HippoIEWindowCallback
@@ -178,7 +168,6 @@ private:
     void unregisterStartup();
 
     static int doQuit(gpointer data);
-    static gboolean idleCreateMySpace(gpointer data);
 
     static LRESULT CALLBACK windowProc(HWND   window,
                                        UINT   message,
@@ -246,17 +235,12 @@ private:
     GTimeout showDebugShareTimeout_;
     GTimeout checkIdleTimeout_;
 
-    HippoBubble bubble_;
-    HippoMenu menu_;
     HippoLogWindow logWindow_;
     HippoIcon notificationIcon_;
-    HippoFlickr *flickr_;
     HippoUpgrader upgrader_;
     HippoMusic music_;
-    HippoMySpace mySpace_;
     HippoChatManager *chatManager_;
 
-    HippoBubbleList *recentPostList_;
     HippoRemoteWindow *currentShare_;
     HippoRemoteWindow *upgradeWindow_;
     HippoRemoteWindow *signinWindow_;

@@ -6,6 +6,7 @@
 
 #include <stdarg.h>
 #include <HippoUtil.h>
+#include <HippoInvocation.h>
 #include "HippoBubble.h"
 #include "HippoUI.h"
 #include "HippoComWrappers.h"
@@ -877,7 +878,8 @@ HippoBubble::Resize(int width, int height)
 STDMETHODIMP 
 HippoBubble::SetHaveMissedBubbles(BOOL haveMissed)
 {
-    ui_->setHaveMissedBubbles(!!haveMissed);
+    // HippoUI doesn't have bubble support anymore
+    //ui_->setHaveMissedBubbles(!!haveMissed);
     return S_OK;
 }
 

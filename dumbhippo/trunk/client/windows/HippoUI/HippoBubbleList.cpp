@@ -6,6 +6,7 @@
 
 #include <stdarg.h>
 #include <HippoUtil.h>
+#include <HippoInvocation.h>
 #include "HippoBubbleList.h"
 #include "HippoUI.h"
 #include "HippoComWrappers.h"

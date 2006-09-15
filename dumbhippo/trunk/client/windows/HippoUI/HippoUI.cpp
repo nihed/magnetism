@@ -87,12 +87,8 @@ HippoUI::HippoUI(HippoInstanceType instanceType, bool replaceExisting, bool init
     authSucceeded_.connect(G_OBJECT(connection), "auth-succeeded", slot(this, &HippoUI::onAuthSucceeded));
 
     notificationIcon_.setUI(this);
-    bubble_.setUI(this);
-    menu_.setUI(this);
     upgrader_.setUI(this);
     music_.setUI(this);
-    // FIXME this is disabled since it's hosed up, see HippoMySpace.h comments
-    // mySpace_.setUI(this);
 
     hotnessBlinkCount_ = 0;
     idleHotnessBlinkId_ = 0;
@@ -101,8 +97,6 @@ HippoUI::HippoUI(HippoInstanceType instanceType, bool replaceExisting, bool init
     preferencesDialog_ = NULL;
 
     registered_ = false;
-
-    flickr_ = NULL;
 
     nextBrowserCookie_ = 0;
 
@@ -118,7 +112,6 @@ HippoUI::HippoUI(HippoInstanceType instanceType, bool replaceExisting, bool init
     haveMissedBubbles_ = FALSE;
     screenSaverRunning_ = FALSE;
 
-    recentPostList_ = NULL;
     currentShare_ = NULL;
     upgradeWindowCallback_ = NULL;
     upgradeWindow_ = NULL;
@@ -127,8 +120,6 @@ HippoUI::HippoUI(HippoInstanceType instanceType, bool replaceExisting, bool init
 
 HippoUI::~HippoUI()
 {
-    if (recentPostList_)
-        delete recentPostList_;
     if (chatManager_)
         delete chatManager_;
 
@@ -262,7 +253,7 @@ HippoUI::UpdateBrowser(DWORD cookie, BSTR url, BSTR title)
             browsers_[i].url = url;
             browsers_[i].title = title;
 
-            mySpace_.browserChanged(browsers_[i]);
+            // mySpace_.browserChanged(browsers_[i]);
 
             return S_OK;
         }
@@ -295,42 +286,6 @@ HippoUI::Quit(DWORD *processId)
     return S_OK;
 }
 
-STDMETHODIMP
-HippoUI::ShowMissed()
-{
-    bubble_.showMissedBubbles();
-    return S_OK;
-}
-
-STDMETHODIMP
-HippoUI::ShowRecent()
-{
-    GSList *recent;
-
-    recent = hippo_data_cache_get_recent_posts(dataCache_);
-
-    if (recent == NULL) // No recent links, just ignore
-        return S_OK;
-
-    if (!recentPostList_) {
-        recentPostList_ = new HippoBubbleList();
-        recentPostList_->setUI(this);
-        recentPostList_->create();
-    } else {
-        recentPostList_->hide();
-        recentPostList_->clear();
-    }
-    
-    for (GSList *link = recent; link != NULL; link = link->next) {
-        recentPostList_->addLinkShare(HIPPO_POST(link->data));
-    }
-    g_slist_foreach(recent, (GFunc) g_object_unref, NULL);
-    g_slist_free(recent);
-
-    recentPostList_->show();
-
-    return S_OK;
-}
 
 ////////////////////////////////////////////////////////////////////////////
 
@@ -502,17 +457,6 @@ bool
 HippoUI::timeoutShowDebugShare()
 {
     hippo_data_cache_add_debug_data(dataCache_);
-
-    HippoMySpaceCommentData blogComment;
-
-    // Bryan commenting on Colin's blog
-    blogComment.commentId = -1;
-    blogComment.posterId = 29366619;
-    blogComment.posterImgUrl.setUTF8("http://myspace-714.vo.llnwd.net/00227/41/75/227675714_s.jpg");
-    blogComment.posterName.setUTF8("Bryan");
-    blogComment.content.setUTF8("Blah, blah, blah... Blah!");
-
-    bubble_.addMySpaceCommentNotification(48113941, 80801051, blogComment);
 
     return false; // remove idle
 }
@@ -693,6 +637,24 @@ HippoUI::showAppletWindow(BSTR url, HippoPtr<IWebBrowser2> &webBrowser)
     webBrowser->put_Visible(VARIANT_TRUE);
 }
 
+HRESULT
+HippoUI::ShowRecent()
+{
+    // FIXME this is not used, but it's in the COM IDL so maybe
+    // it's bad to just delete
+
+    return S_OK;
+}
+
+HRESULT
+HippoUI::BeginFlickrShare(BSTR path)
+{
+    // FIXME this is not used, but it's in the COM IDL so maybe
+    // it's bad to just delete
+
+    return S_OK;
+}
+
 // Show a window offering to share the given URL
 HRESULT
 HippoUI::ShareLink(BSTR url, BSTR title)
@@ -703,20 +665,6 @@ HippoUI::ShareLink(BSTR url, BSTR title)
     currentShare_->showShare(url, title);
     currentShare_->setForegroundWindow();
 
-    return S_OK;
-}
-
-STDMETHODIMP 
-HippoUI::BeginFlickrShare(BSTR filePath)
-{
-    debugLogW(L"sharing photo: path=%s", filePath);
-
-    if (flickr_ == NULL || flickr_->isCommitted()) {
-        if (flickr_ != NULL)
-            flickr_->Release();
-        flickr_ = new HippoFlickr(this);
-    }
-    flickr_->uploadPhoto(filePath);
     return S_OK;
 }
 
@@ -983,9 +931,7 @@ HippoUI::showMenu(UINT buttonFlag)
 
         PostMessage(window_, WM_NULL, 0, 0);
     } else {
-        SetForegroundWindow(window_);
-        menu_.popup(pt.x, pt.y);
-        PostMessage(window_, WM_NULL, 0, 0);
+        // FIXME show the stacker
     }
 }
 
@@ -1319,15 +1265,6 @@ HippoUI::onUpgradeReady()
     upgradeWindow_->navigate(url);
 }
 
-void 
-HippoUI::setHaveMissedBubbles(bool haveMissed)
-{
-    if (haveMissedBubbles_ != haveMissed) {
-        haveMissedBubbles_ = haveMissed;
-    }
-    updateIcon();
-}
-
 int
 HippoUI::getRecentMessageCount()
 {
@@ -1524,12 +1461,14 @@ HippoUI::timeoutCheckIdle()
     if (currentTime - lastInput.dwTime > USER_IDLE_TIME) {
         if (!idle_) {
             idle_ = true;
-            bubble_.setIdle(true);
+            // FIXME hippo_stack_manager_set_idle
+            // bubble_.setIdle(true);
         }
     } else {
         if (idle_) {
             idle_ = false;
-            bubble_.setIdle(false);
+            // FIXME hippo_stack_manager_set_idle
+            // bubble_.setIdle(false);
         }
     }
 
@@ -1542,7 +1481,8 @@ HippoUI::timeoutCheckIdle()
     SystemParametersInfo(SPI_GETSCREENSAVERRUNNING, 0, (void *)&screenSaverRunning, 0);
     if (!screenSaverRunning_ != !screenSaverRunning) {
         screenSaverRunning_ = screenSaverRunning != FALSE;
-        bubble_.setScreenSaverRunning(screenSaverRunning_);
+        // FIXME would want to forward this to stack manager
+        // bubble_.setScreenSaverRunning(screenSaverRunning_);
     }
 
     return true;
@@ -1754,9 +1694,6 @@ HippoUI::processMessage(UINT   message,
         case IDM_RECENT:
             ShowRecent();
             return true;
-        case IDM_MISSED:
-            ShowMissed();
-            return true;
         case IDM_PREFERENCES:
             showPreferences();
             return true;
@@ -1920,13 +1857,6 @@ HippoUI::unregisterMessageHook(HWND window)
 {
     if (messageHooks)
         messageHooks->unregisterMessageHook(window);
-}
-
-// notification from HippoMySpace when we have a new comment to bubble
-void 
-HippoUI::bubbleNewMySpaceComment(long myId, long blogId, const HippoMySpaceCommentData &comment)
-{
-    bubble_.addMySpaceCommentNotification(myId, blogId, comment);
 }
 
 /* Define a custom main loop source for integrating the Glib main loop with Win32

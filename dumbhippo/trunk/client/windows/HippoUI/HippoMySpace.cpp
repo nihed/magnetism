@@ -481,8 +481,11 @@ HippoMySpace::mergeBlogComment(const HippoMySpaceCommentData &newComment)
     // them as seen - we don't want to display all the comments the first time
     // they log in
     bool doDisplay = (state_ == COMMENT_CHANGE_POLL);
+#if 0
+    // disabled since HippoUI no longer has bubbles
     if (doDisplay)
         ui_->bubbleNewMySpaceComment(friendId_, blogId_, newComment);
+#endif
 }
 
 void
