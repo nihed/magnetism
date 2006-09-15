@@ -2,6 +2,7 @@
 
 #include "HippoPlatformImpl.h"
 #include "HippoUIUtil.h"
+#include "HippoHttp.h"
 #include <HippoUtil.h>
 #include <Windows.h>
 #include <mshtml.h>
@@ -29,6 +30,18 @@ static void      hippo_platform_impl_set_web_server      (HippoPlatform         
                                                           const char              *value); 
 static void      hippo_platform_impl_set_signin          (HippoPlatform           *platform,
                                                           gboolean                 value);
+static HippoWindow* hippo_platform_impl_create_window       (HippoPlatform     *platform);
+static void         hippo_platform_impl_get_screen_info     (HippoPlatform     *platform,
+                                                             HippoRectangle    *monitor_rect_p,
+                                                             HippoRectangle    *tray_icon_rect_p,
+                                                             HippoOrientation  *tray_icon_orientation_p);
+static void         hippo_platform_impl_open_url            (HippoPlatform     *platform,
+                                                             HippoBrowserKind   browser,
+                                                             const char        *url);
+static void         hippo_platform_impl_http_request        (HippoPlatform     *platform,
+                                                             const char        *url,
+                                                             HippoHttpFunc      func,
+                                                             void              *data);
 
 
 struct _HippoPlatformImpl {
@@ -36,6 +49,7 @@ struct _HippoPlatformImpl {
     HippoInstanceType instance;
     char *jabber_resource;
     HippoPreferences *preferences;
+    HippoHTTP *http;
 };
 
 struct _HippoPlatformImplClass {
@@ -50,9 +64,13 @@ G_DEFINE_TYPE_WITH_CODE(HippoPlatformImpl, hippo_platform_impl, G_TYPE_OBJECT,
 static void
 hippo_platform_impl_iface_init(HippoPlatformClass *klass)
 {
+    klass->create_window = hippo_platform_impl_create_window;
+    klass->get_screen_info = hippo_platform_impl_get_screen_info;
     klass->read_login_cookie = hippo_platform_impl_read_login_cookie;
     klass->delete_login_cookie = hippo_platform_impl_delete_login_cookie;
     klass->get_jabber_resource = hippo_platform_impl_get_jabber_resource;
+    klass->open_url = hippo_platform_impl_open_url;
+    klass->http_request = hippo_platform_impl_http_request;
     klass->get_message_server = hippo_platform_impl_get_message_server;
     klass->get_web_server = hippo_platform_impl_get_web_server;
     klass->get_signin = hippo_platform_impl_get_signin;
@@ -93,7 +111,10 @@ hippo_platform_impl_finalize(GObject *object)
 
     g_free(impl->jabber_resource);
     delete impl->preferences;
-    
+
+    if (impl->http)
+        delete impl->http;
+
     G_OBJECT_CLASS(hippo_platform_impl_parent_class)->finalize(object);
 }
 
@@ -382,4 +403,105 @@ hippo_platform_impl_set_signin(HippoPlatform  *platform,
 {
     HippoPlatformImpl *impl = HIPPO_PLATFORM_IMPL(platform);
     impl->preferences->setSignIn(value != FALSE);
+}
+
+static HippoWindow*
+hippo_platform_impl_create_window(HippoPlatform     *platform)
+{
+    // FIXME
+    assert(FALSE);
+    return NULL;
+}
+
+static void
+hippo_platform_impl_get_screen_info(HippoPlatform     *platform,
+                                    HippoRectangle    *monitor_rect_p,
+                                    HippoRectangle    *tray_icon_rect_p,
+                                    HippoOrientation  *tray_icon_orientation_p)
+{
+    // FIXME
+    assert(FALSE);
+}
+
+static void
+hippo_platform_impl_open_url(HippoPlatform     *platform,
+                             HippoBrowserKind   browser,
+                             const char        *url)
+{
+    // FIXME
+    assert(FALSE);
+}
+
+class HttpHandler : public HippoHTTPAsyncHandler
+{
+public:
+    HttpHandler(HippoHttpFunc cCallback, void *cCallbackData)
+        : cCallback_(cCallback), cCallbackData_(cCallbackData), errorCode_(S_OK) {
+        
+    }
+
+    ~HttpHandler() {
+        
+    }
+
+    virtual void handleError(HRESULT result) {
+        errorCode_ = result;
+        finish(NULL, 0);
+    }
+    virtual void handleGotSize(long responseSize) { };
+    virtual void handleContentType(WCHAR *mimetype, WCHAR *charset) {
+        contentType_.setUTF16(mimetype);
+    }
+    virtual void handleBytesRead(void *responseData, long responseBytes) { };
+    virtual void handleComplete(void *responseData, long responseBytes) {
+        finish(responseData, responseBytes);
+    }
+
+private:
+    HippoHttpFunc cCallback_;
+    void *cCallbackData_;
+    HippoUStr contentType_;
+    HRESULT errorCode_;
+
+    // my reading of HippoHTTP.h is that exactly one of handleError or handleComplete
+    // is guaranteed to be called, so if those each call finish() it's safe to 
+    // "delete this" here.
+    void finish(void *responseData, long responseBytes) {
+        if (cCallback_ == NULL) // pointless since we'll self-delete anyway
+            return;
+        if (contentType_.c_str() != NULL && responseData) {
+            GString *str = g_string_new_len((char*) responseData, responseBytes);
+            (* cCallback_) (contentType_.c_str(), str, cCallbackData_);
+            g_string_free(str, TRUE);
+        } else {
+            GString *str = g_string_new(NULL);
+            g_string_append_printf(str, "HTTP error: %d", errorCode_);
+            (* cCallback_) (NULL, str, cCallbackData_);
+            g_string_free(str, TRUE);
+        }
+        cCallback_ = NULL;
+        cCallbackData_ = NULL;
+
+        delete this;
+    }
+};
+
+static void
+hippo_platform_impl_http_request(HippoPlatform     *platform,
+                                 const char        *url,
+                                 HippoHttpFunc      func,
+                                 void              *data)
+{
+    HippoPlatformImpl *impl = HIPPO_PLATFORM_IMPL(platform);
+
+    if (impl->http == NULL) {
+        impl->http = new HippoHTTP();
+    }
+
+    // we use the cache here, even though on Linux the http handler 
+    // does not, so maybe we should not either. Also on linux 
+    // we'll never use cookies from the browser while I bet we do 
+    // here.
+    HippoBSTR urlW = HippoBSTR::fromUTF8(url);
+    impl->http->doGet(urlW, true /* use cache */, new HttpHandler(func, data));
 }

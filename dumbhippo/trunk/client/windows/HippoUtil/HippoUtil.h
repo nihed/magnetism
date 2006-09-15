@@ -423,18 +423,14 @@ public:
             str = NULL;
     }
 
-    HippoUStr(WCHAR *wstr) {
-        if (wstr)
-            str = hippo_utf16_to_utf8(wstr, -1);
-        else
-            str = NULL;
+    HippoUStr(WCHAR *wstr)
+        : str(NULL) {
+        setUTF16(wstr, -1);
     }
 
-    HippoUStr(WCHAR *wstr, int len) {
-        if (wstr)
-            str = hippo_utf16_to_utf8(wstr, len);
-        else
-            str = NULL;
+    HippoUStr(WCHAR *wstr, int len) 
+        : str(NULL) {
+        setUTF16(wstr, len);
     }
 
     ~HippoUStr() {
@@ -444,6 +440,15 @@ public:
 
     const char *c_str() const {
         return str;
+    }
+
+    void setUTF16(WCHAR *wstr, int len=-1) {
+        if (str != NULL)
+            hippo_utf8_free(str);
+        if (wstr)
+            str = hippo_utf16_to_utf8(wstr, len);
+        else
+            str = NULL;
     }
 
     HippoBSTR toBSTR() const {
