@@ -1,7 +1,7 @@
 /* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 #include "hippo-common-internal.h"
 #include "hippo-canvas-item.h"
-#include <hippo/hippo-common-marshal.h>
+#include "hippo-common-marshal.h"
 
 static void     hippo_canvas_item_base_init (void                  *klass);
 
