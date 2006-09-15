@@ -88,9 +88,15 @@ public class Balancer {
 							builder.appendTextNode("see-other-host", host, "xmlns", "urn:ietf:params:xml:ns:xmpp-streams");
 							out.write(builder.toString());
 							out.flush();
+							/* FIXME - this is needed since the loudmouth client library appears to
+							 * not process any pending data when it receives a connection shutdown
+							 * immediately following.  Thus it won't see our redirect.
+							 */
+							Thread.sleep(4000);
 							socket.close();
 						} catch (IOException e) {
 							System.out.println("IOException: " + e.getMessage());
+						} catch (InterruptedException e) {
 						}					
 					}
 				}));
