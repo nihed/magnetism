@@ -19,6 +19,7 @@ import org.xml.sax.SAXParseException;
 import org.xml.sax.helpers.DefaultHandler;
 
 import com.dumbhippo.XmlBuilder;
+import com.dumbhippo.identity20.Guid;
 
 public class Balancer {
 	
@@ -28,10 +29,12 @@ public class Balancer {
 	private static class WriterThread extends Thread {
 		private Socket socket;
 		private String host;
+		private Guid id;
 		
-		public WriterThread(Socket sock, String host) {
+		public WriterThread(Socket sock, String host, Guid id) {
 			this.socket = sock;
 			this.host = host;
+			this.id = id;
 		}
 		
 		// Waits until we see the client's stream:stream to emit our response
@@ -79,7 +82,7 @@ public class Balancer {
 						try {
 							PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
 							XmlBuilder builder = new XmlBuilder();
-							builder.openElement("stream:stream", "from", messageHost, 
+							builder.openElement("stream:stream", "from", messageHost, "id", id.toString(), 
 									"xmlns", "jabber:client", "xmlns:stream", "http://etherx.jabber.org/streams", "version", "1.0");
 							builder.openElement("stream:error", "from", messageHost);
 							builder.appendTextNode("see-other-host", host, "xmlns", "urn:ietf:params:xml:ns:xmpp-streams");
@@ -113,7 +116,7 @@ public class Balancer {
 		socket.bind(new InetSocketAddress(bindInterface, Integer.parseInt(args[2])));
 		int currentHost = 0;
 		while (true) {
-			WriterThread wt = new WriterThread(socket.accept(), hosts.get(currentHost));
+			WriterThread wt = new WriterThread(socket.accept(), hosts.get(currentHost), Guid.createNew());
 			wt.start();
 			currentHost++;
 			if (currentHost >= hosts.size())
