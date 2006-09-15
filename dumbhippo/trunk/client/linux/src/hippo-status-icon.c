@@ -3,7 +3,7 @@
 #include "hippo-status-icon.h"
 #include <gtk/gtkstatusicon.h>
 #include "main.h"
-#include "hippo-stack-manager.h"
+#include <hippo/hippo-stack-manager.h>
 
 typedef struct {
     const HippoHotness hotness;

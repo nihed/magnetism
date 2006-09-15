@@ -3,7 +3,7 @@
 #define __HIPPO_PIXBUF_CACHE_H__
 
 #include <gdk-pixbuf/gdk-pixbuf.h>
-#include "hippo-object-cache.h"
+#include <hippo/hippo-object-cache.h>
 
 G_BEGIN_DECLS
 

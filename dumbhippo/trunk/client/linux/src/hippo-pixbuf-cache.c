@@ -1,8 +1,8 @@
 /* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 #include <config.h>
-#include "hippo-pixbuf-cache.h"
-#include "hippo-object-cache.h"
 #include "main.h"
+#include "hippo-pixbuf-cache.h"
+#include <hippo/hippo-object-cache.h>
 #include <string.h>
 
 static void      hippo_pixbuf_cache_init                (HippoPixbufCache       *cache);

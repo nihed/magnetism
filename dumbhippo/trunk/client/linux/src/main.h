@@ -71,9 +71,9 @@ void       hippo_app_get_screen_info   (HippoApp         *app,
                                         HippoRectangle   *tray_icon_rect_p,
                                         HippoOrientation *tray_icon_orientation_p);
 
-/* less typing */
-#define ADD_WEAK(ptr)    g_object_add_weak_pointer(G_OBJECT(*(ptr)), (void**) (char*) (ptr))
-#define REMOVE_WEAK(ptr) do { if (*ptr) { g_object_remove_weak_pointer(G_OBJECT(*(ptr)), (void**) (char*) (ptr)); *ptr = NULL; } } while(0)
+/* FIXME just change all references to have the HIPPO_ */
+#define ADD_WEAK(ptr)    HIPPO_ADD_WEAK(ptr)
+#define REMOVE_WEAK(ptr) HIPPO_REMOVE_WEAK(ptr)
 
 G_END_DECLS
 

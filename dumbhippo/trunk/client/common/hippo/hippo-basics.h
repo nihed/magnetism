@@ -135,6 +135,10 @@ typedef struct {
 #define HIPPO_ROOMS_JID_DOMAIN "rooms." HIPPO_JID_DOMAIN
 #define HIPPO_ADMIN_JID "admin@" HIPPO_JID_DOMAIN
 
+#define HIPPO_ADD_WEAK(ptr)    g_object_add_weak_pointer(G_OBJECT(*(ptr)), (void**) (char*) (ptr))
+#define HIPPO_REMOVE_WEAK(ptr) do { if (*ptr) { g_object_remove_weak_pointer(G_OBJECT(*(ptr)), (void**) (char*) (ptr)); *ptr = NULL; } } while(0)
+
+
 typedef struct {
     HippoInstanceType instance_type;
     guint install_launch : 1;

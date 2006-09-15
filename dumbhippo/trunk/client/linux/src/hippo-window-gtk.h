@@ -4,8 +4,8 @@
 
 /* Implementation of HippoWindow for GTK+ */
 
-#include "hippo-window.h"
-#include <cairo/cairo.h>
+#include <hippo/hippo-window.h>
+#include <cairo.h>
 
 G_BEGIN_DECLS
 

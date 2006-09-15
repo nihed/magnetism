@@ -1,11 +1,7 @@
 /* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
-#if 1
 #include <config.h>
 #include <glib/gi18n-lib.h>
-#include "hippo-window.h"
-#else
-#include "hippo-common-internal.h"
-#endif
+#include <hippo/hippo-window.h>
 #include "hippo-window-gtk.h"
 #include <gtk/gtkwindow.h>
 #include <gtk/gtkscrolledwindow.h>
@@ -14,7 +10,7 @@
 #include <gtk/gtkdrawingarea.h>
 #include <gtk/gtkcontainer.h>
 #include "hippo-canvas.h"
-#include "hippo-canvas-grip.h"
+#include <hippo/hippo-canvas-grip.h>
 
 static void      hippo_window_gtk_init                (HippoWindowGtk       *window_gtk);
 static void      hippo_window_gtk_class_init          (HippoWindowGtkClass  *klass);

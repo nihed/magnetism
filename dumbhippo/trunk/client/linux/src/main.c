@@ -6,10 +6,10 @@
 #include <unistd.h>
 #include <errno.h>
 #include "main.h"
+#include <hippo/hippo-stack-manager.h>
 #include "hippo-platform-impl.h"
 #include "hippo-status-icon.h"
 #include "hippo-chat-window.h"
-#include "hippo-stack-manager.h"
 #include "hippo-dbus-server.h"
 #include "hippo-idle.h"
 #include "hippo-canvas.h"

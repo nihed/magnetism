@@ -2,7 +2,7 @@
 #include <config.h>
 #include <glib/gi18n-lib.h>
 #include "hippo-canvas.h"
-#include "hippo-canvas-context.h"
+#include <hippo/hippo-canvas-context.h>
 #include <gtk/gtkeventbox.h>
 #include "hippo-embedded-image.h"
 
@@ -628,12 +628,12 @@ hippo_canvas_set_root(HippoCanvas     *canvas,
 /* TEST CODE */
 #if 1
 #include <gtk/gtk.h>
-#include "hippo-canvas-box.h"
-#include "hippo-canvas-text.h"
-#include "hippo-canvas-link.h"
-#include "hippo-canvas-image.h"
-#include "hippo-canvas-block.h"
-#include "hippo-canvas-stack.h"
+#include <hippo/hippo-canvas-box.h>
+#include <hippo/hippo-canvas-text.h>
+#include <hippo/hippo-canvas-link.h>
+#include <hippo/hippo-canvas-image.h>
+#include <hippo/hippo-canvas-block.h>
+#include <hippo/hippo-canvas-stack.h>
 
 typedef struct {
     int width;

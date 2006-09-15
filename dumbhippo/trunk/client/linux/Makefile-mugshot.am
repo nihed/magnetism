@@ -10,38 +10,8 @@ mugshot_LDFLAGS=$(MUGSHOT_LIBS)
 mugshot_LDADD= libhippoipc.la libhippo.la libgtkcopy.la
 
 mugshot_SOURCES	=				\
-	src/hippo-actions.c			\
-	src/hippo-actions.h			\
 	src/hippo-canvas.c			\
 	src/hippo-canvas.h			\
-	src/hippo-canvas-base.c			\
-	src/hippo-canvas-base.h			\
-	src/hippo-canvas-block.c		\
-	src/hippo-canvas-block.h		\
-	src/hippo-canvas-block-post.c		\
-	src/hippo-canvas-block-post.h		\
-	src/hippo-canvas-box.c			\
-	src/hippo-canvas-box.h			\
-	src/hippo-canvas-context.c		\
-	src/hippo-canvas-context.h		\
-	src/hippo-canvas-entity-name.c		\
-	src/hippo-canvas-entity-name.h		\
-	src/hippo-canvas-entity-photo.c		\
-	src/hippo-canvas-entity-photo.h		\
-	src/hippo-canvas-gradient.c		\
-	src/hippo-canvas-gradient.h		\
-	src/hippo-canvas-grip.c			\
-	src/hippo-canvas-grip.h			\
-	src/hippo-canvas-image.c		\
-	src/hippo-canvas-image.h		\
-	src/hippo-canvas-item.c			\
-	src/hippo-canvas-item.h			\
-	src/hippo-canvas-link.c			\
-	src/hippo-canvas-link.h			\
-	src/hippo-canvas-stack.c		\
-	src/hippo-canvas-stack.h		\
-	src/hippo-canvas-text.c			\
-	src/hippo-canvas-text.h			\
 	src/hippo-chat-window.c		    	\
 	src/hippo-chat-window.h		    	\
 	src/hippo-cookies-linux.c		\
@@ -56,24 +26,14 @@ mugshot_SOURCES	=				\
 	src/hippo-http.h			\
 	src/hippo-idle.c                	\
 	src/hippo-idle.h                	\
-	src/hippo-image-cache.c			\
-	src/hippo-image-cache.h			\
-	src/hippo-object-cache.c		\
-	src/hippo-object-cache.h		\
 	src/hippo-pixbuf-cache.c		\
 	src/hippo-pixbuf-cache.h		\
 	src/hippo-person-renderer.c		\
 	src/hippo-person-renderer.h		\
 	src/hippo-platform-impl.c		\
 	src/hippo-platform-impl.h		\
-	src/hippo-stack-manager.c		\
-	src/hippo-stack-manager.h		\
 	src/hippo-status-icon.c			\
 	src/hippo-status-icon.h			\
-	src/hippo-surface.c			\
-	src/hippo-surface.h			\
-	src/hippo-window.c			\
-	src/hippo-window.h			\
 	src/hippo-window-gtk.c			\
 	src/hippo-window-gtk.h			\
 	src/main.c				\
