@@ -10,6 +10,7 @@ G_BEGIN_DECLS
 typedef enum {
     HIPPO_STATE_SIGNED_OUT,     // User hasn't asked to connect
     HIPPO_STATE_SIGN_IN_WAIT,   // Waiting for the user to sign in
+    HIPPO_STATE_PRE_CONNECTING, // Retrieving list of XMPP servers
     HIPPO_STATE_CONNECTING,     // Waiting for connecting to server
     HIPPO_STATE_RETRYING,       // Connection to server failed, retrying
     HIPPO_STATE_AUTHENTICATING, // Waiting for authentication

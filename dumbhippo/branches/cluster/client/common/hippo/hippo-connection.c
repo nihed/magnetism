@@ -141,6 +141,10 @@ static LmHandlerResult handle_message     (LmMessageHandler *handler,
                                            LmConnection     *connection,
                                            LmMessage        *message,
                                            gpointer          data);
+static LmHandlerResult handle_preconnect_message     (LmMessageHandler *handler,
+                                                      LmConnection     *connection,
+                                                      LmMessage        *message,
+                                                      gpointer          data);
 static LmHandlerResult handle_presence    (LmMessageHandler *handler,
                                            LmConnection     *connection,
                                            LmMessage        *message,
@@ -171,6 +175,8 @@ struct _HippoConnection {
     /* queue of LmMessage */
     GQueue *pending_room_messages;
     HippoBrowserKind login_browser;
+    int message_port;
+    char *redirect_host;
     char *username;
     char *password;
     unsigned int too_old : 1;
@@ -805,24 +811,22 @@ hippo_connection_stop_retry_timeout(HippoConnection *connection)
 }
 
 static void
-hippo_connection_connect(HippoConnection *connection)
+hippo_connection_connect_direct(HippoConnection *connection)
 {
     char *message_host;
     int message_port;
     LmMessageHandler *handler;
     GError *error;
-    
-    hippo_platform_get_message_host_port(connection->platform, &message_host, &message_port);
 
-    if (connection->lm_connection != NULL) {
-        g_warning("hippo_connection_connect() called when already connected");
-        return;
-    }
+    message_host = connection->redirect_host;
+    message_port = connection->message_port;
+
+    hippo_connection_disconnect(connection);
 
     g_debug("Connecting to %s port %d", message_host, message_port);
 
     connection->lm_connection = lm_connection_new(message_host);
-    
+
     hippo_override_loudmouth_log(); /* lm installed its log handler the first time we did connection_new */
 
     lm_connection_set_port(connection->lm_connection, message_port);
@@ -843,7 +847,63 @@ hippo_connection_connect(HippoConnection *connection)
     lm_connection_set_disconnect_function(connection->lm_connection,
             handle_disconnect, connection, NULL);
 
+    error = NULL;
+
     hippo_connection_state_change(connection, HIPPO_STATE_CONNECTING);
+
+    /* If lm_connection returns FALSE, then handle_open won't be called
+     * at all. On a TRUE return it will be called exactly once, but that 
+     * call might occur before or after lm_connection_open() returns, and
+     * may occur for success or for failure.
+     */
+    if (!lm_connection_open(connection->lm_connection, 
+                            handle_open, connection, NULL, 
+                            &error)) {
+        g_debug("lm_connection_open returned false");
+        hippo_connection_connect_failure(connection, error ? error->message : "");
+        if (error)
+            g_error_free(error);
+    } else {
+        g_debug("lm_connection_open returned true, waiting for callback");
+    }
+}
+
+static void
+hippo_connection_connect(HippoConnection *connection)
+{
+    char *message_host;
+    int message_port;
+    LmMessageHandler *handler;
+    GError *error;
+    
+    hippo_platform_get_message_host_port(connection->platform, &message_host, &message_port);
+
+    if (connection->lm_connection != NULL) {
+        g_warning("hippo_connection_connect() called when already connected");
+        return;
+    }
+    /* Save the port for reconnecting to the real server */
+    connection->message_port = message_port;
+
+    g_debug("Connecting to balancer at %s port %d", message_host, message_port);
+
+    connection->lm_connection = lm_connection_new(message_host);
+    
+    hippo_override_loudmouth_log(); /* lm installed its log handler the first time we did connection_new */
+
+    lm_connection_set_port(connection->lm_connection, message_port);
+    lm_connection_set_keep_alive_rate(connection->lm_connection, KEEP_ALIVE_RATE);
+
+    handler = lm_message_handler_new(handle_preconnect_message, connection, NULL);
+    lm_connection_register_message_handler(connection->lm_connection, handler, 
+                                           LM_MESSAGE_TYPE_STREAM_ERROR,
+                                           LM_HANDLER_PRIORITY_NORMAL);
+    lm_message_handler_unref(handler);
+
+    lm_connection_set_disconnect_function(connection->lm_connection,
+            handle_disconnect, connection, NULL);
+
+    hippo_connection_state_change(connection, HIPPO_STATE_PRE_CONNECTING);
 
     error = NULL;
 
@@ -1089,7 +1149,7 @@ find_child_node(LmMessageNode *node,
     LmMessageNode *child;
     for (child = node->children; child; child = child->next) {
         const char *ns = lm_message_node_get_attribute(child, "xmlns");
-        if (!(ns && strcmp(ns, element_namespace) == 0 && child->name))
+        if (element_namespace && !(ns && strcmp(ns, element_namespace) == 0 && child->name))
             continue;
         if (strcmp(child->name, element_name) != 0)
             continue;
@@ -3170,6 +3230,34 @@ handle_group_membership_change(HippoConnection *connection,
 }
 
 static LmHandlerResult 
+handle_preconnect_message (LmMessageHandler *handler,
+                           LmConnection     *lconnection,
+                           LmMessage        *message,
+                           gpointer          data)
+{
+    HippoConnection *connection = HIPPO_CONNECTION(data);
+    LmMessageNode *child;
+
+    g_debug("handling preconnect message");
+
+    child = find_child_node(message->node, NULL, "see-other-host");
+
+    if (connection->redirect_host != NULL)
+        g_free(connection->redirect_host);
+    if (child) {
+        connection->redirect_host = g_strdup(child->value);
+        hippo_connection_connect_direct(connection);
+        return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+    } else {
+        connection->redirect_host = NULL;
+    }
+
+    g_debug("handle_message: message not handled by any of our handlers");
+
+    return LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
+}
+
+static LmHandlerResult 
 handle_message (LmMessageHandler *handler,
                 LmConnection     *lconnection,
                 LmMessage        *message,
@@ -3301,7 +3389,15 @@ handle_open (LmConnection *lconnection,
     g_debug("handle_open success=%d", success);
 
     if (success) {
-        hippo_connection_authenticate(connection);
+        switch (connection->state) {
+            case HIPPO_STATE_PRE_CONNECTING:
+                break;
+            case HIPPO_STATE_CONNECTING:
+                hippo_connection_authenticate(connection);
+                break;
+            default:
+                g_warning("Unknown connection state %d in handle_open!", connection->state);
+        }
     } else {
         hippo_connection_connect_failure(connection, NULL);
     }
@@ -3357,6 +3453,7 @@ hippo_connection_get_tooltip(HippoConnection *connection)
         tip = _("Mugshot (please log in to mugshot.org)");
         break;
     case HIPPO_STATE_CONNECTING:
+    case HIPPO_STATE_PRE_CONNECTING:
     case HIPPO_STATE_AUTHENTICATING:
         tip = _("Mugshot (connecting)");
         break;    
@@ -3385,6 +3482,8 @@ hippo_state_debug_string(HippoState state)
         return "SIGNED_OUT";
     case HIPPO_STATE_SIGN_IN_WAIT:
         return "SIGN_IN_WAIT";
+    case HIPPO_STATE_PRE_CONNECTING:
+        return "PRE_CONNECTING";
     case HIPPO_STATE_CONNECTING:
         return "CONNECTING";
     case HIPPO_STATE_RETRYING:

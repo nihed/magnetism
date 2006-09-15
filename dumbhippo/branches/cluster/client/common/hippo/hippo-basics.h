@@ -77,7 +77,7 @@ typedef struct {
     } u;
 } HippoUriActionData;
 
-#define HIPPO_DEFAULT_MESSAGE_HOST     "messages.mugshot.org"
+#define HIPPO_DEFAULT_MESSAGE_HOST     "message-router.mugshot.org"
 #define HIPPO_DEFAULT_MESSAGE_PORT     5222
 #define HIPPO_DEFAULT_MESSAGE_SERVER   HIPPO_DEFAULT_MESSAGE_HOST ":5222"
 #define HIPPO_DEFAULT_WEB_HOST         "mugshot.org"
@@ -90,7 +90,7 @@ typedef struct {
 
 #ifdef G_OS_WIN32
 
-#define HIPPO_DEFAULT_MESSAGE_HOST_L   L"messages.mugshot.org"
+#define HIPPO_DEFAULT_MESSAGE_HOST_L   L"message-router.mugshot.org"
 #define HIPPO_DEFAULT_MESSAGE_SERVER_L HIPPO_DEFAULT_MESSAGE_HOST_L L":5222"
 #define HIPPO_DEFAULT_WEB_HOST_L       L"mugshot.org"
 #define HIPPO_DEFAULT_WEB_SERVER_L     HIPPO_DEFAULT_WEB_HOST_L L":80"
