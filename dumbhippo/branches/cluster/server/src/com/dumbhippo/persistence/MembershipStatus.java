@@ -49,7 +49,7 @@ public enum MembershipStatus {
 	 * The idea of separating this from canSeeSecretGroup is that we don't want people to
 	 * be able to spy on a secret group without being in it (for social, not security reasons,
 	 * you can always join-look-leave), but if we made the group vanish when you left it,
-	 * it would make it hard to undo the operation and join it again.l
+	 * it would make it hard to undo the operation and join it again.
 	 */
 	public boolean getCanSeeSecretMembers() {
 		return canSeeSecretMembers;
