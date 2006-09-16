@@ -14,6 +14,7 @@ import javax.ejb.Stateless;
 import javax.interceptor.AroundInvoke;
 import javax.interceptor.InvocationContext;
 
+import org.jboss.annotation.IgnoreDependency;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
@@ -107,6 +108,7 @@ public class MessengerGlueBean implements MessengerGlue {
 	private ExternalAccountSystem externalAccounts;
 	
 	@EJB
+	@IgnoreDependency
 	private Stacker stacker;
 	
 	static final private long EXECUTION_WARN_MILLISECONDS = 5000;

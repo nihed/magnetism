@@ -35,6 +35,7 @@ import org.apache.lucene.queryParser.QueryParser;
 import org.apache.lucene.queryParser.QueryParser.Operator;
 import org.apache.lucene.search.Hits;
 import org.hibernate.lucene.DocumentBuilder;
+import org.jboss.annotation.IgnoreDependency;
 import org.slf4j.Logger;
 
 import com.dumbhippo.ExceptionUtils;
@@ -134,6 +135,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	private YahooArtistAlbumsCache yahooArtistAlbumsCache;
 	
 	@EJB
+	@IgnoreDependency
 	private Stacker stacker;
 	
 	private static ExecutorService threadPool;

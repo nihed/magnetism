@@ -14,6 +14,8 @@ import org.xmpp.component.ComponentException;
 import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.jive.rooms.RoomHandler;
 import com.dumbhippo.live.PresenceService;
+import com.dumbhippo.server.XmppMessageSender;
+import com.dumbhippo.server.util.EJBUtil;
 
 /**
  * Our plugin for Jive Messenger
@@ -22,10 +24,14 @@ public class HippoPlugin implements Plugin {
 	
 	private RoomHandler roomHandler = new RoomHandler();
 	private PresenceMonitor presenceMonitor = new PresenceMonitor();
+	private MessageSender messageSenderProvider = new MessageSender();
 	
 	public void initializePlugin(PluginManager pluginManager, File pluginDirectory) {
 		try {
 			Log.debug("Initializing Hippo plugin");
+			
+			XmppMessageSender messageSender = EJBUtil.defaultLookup(XmppMessageSender.class);
+			messageSender.setProvider(messageSenderProvider);
 			
 			Log.debug("Adding PresenceMonitor");
 			SessionManager sessionManager = XMPPServer.getInstance().getSessionManager();
@@ -66,6 +72,10 @@ public class HippoPlugin implements Plugin {
 		
 		PresenceService.getInstance().clearLocalPresence();
 
+		XmppMessageSender messageSender = EJBUtil.defaultLookup(XmppMessageSender.class);
+		messageSender.setProvider(null);
+		messageSenderProvider.shutdown();
+		
 		Log.debug("... done unloading Hippo plugin");
 	}
 }

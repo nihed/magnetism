@@ -25,6 +25,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 
+import org.jboss.annotation.IgnoreDependency;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
@@ -90,6 +91,7 @@ public class FeedSystemBean implements FeedSystem {
 	private MusicSystem musicSystem;
 	
 	@EJB
+	@IgnoreDependency
 	private Stacker stacker;
 	
 	private static FeedFetcherCache cache = null;

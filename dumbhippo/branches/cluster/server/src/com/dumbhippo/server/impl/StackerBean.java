@@ -14,7 +14,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import javax.ejb.EJB;
-import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
@@ -23,13 +22,17 @@ import javax.persistence.NonUniqueResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
-import org.jboss.annotation.IgnoreDependency;
+import org.jboss.annotation.ejb.Service;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.ThreadUtils;
 import com.dumbhippo.TypeUtils;
+import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.identity20.Guid;
+import com.dumbhippo.live.BlockEvent;
+import com.dumbhippo.live.LiveEventListener;
+import com.dumbhippo.live.LiveState;
 import com.dumbhippo.persistence.AccountClaim;
 import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.BlockType;
@@ -46,10 +49,11 @@ import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.IdentitySpider;
-import com.dumbhippo.server.MessageSender;
+import com.dumbhippo.server.XmppMessageSender;
 import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PostingBoard;
+import com.dumbhippo.server.SimpleServiceMBean;
 import com.dumbhippo.server.Stacker;
 import com.dumbhippo.server.SystemViewpoint;
 import com.dumbhippo.server.TransactionRunner;
@@ -57,45 +61,45 @@ import com.dumbhippo.server.UserViewpoint;
 import com.dumbhippo.server.Viewpoint;
 import com.dumbhippo.server.util.EJBUtil;
 
-@Stateless
-public class StackerBean implements Stacker {
+@Service
+public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListener<BlockEvent> {
 
 	static final private boolean disabled = false;
 	
 	@SuppressWarnings("unused")
 	static private final Logger logger = GlobalSetup.getLogger(StackerBean.class);
 	
-	static private UserCache userCache;
-	
 	@PersistenceContext(unitName = "dumbhippo")
 	private EntityManager em;
 	
 	@EJB
-	@IgnoreDependency
 	private IdentitySpider identitySpider;
 	
 	@EJB
-	@IgnoreDependency
 	private GroupSystem groupSystem;
 	
 	@EJB
 	private TransactionRunner runner;
 	
 	@EJB
-	@IgnoreDependency
 	private MusicSystem musicSystem;
 	
 	@EJB
-	@IgnoreDependency
 	private PostingBoard postingBoard;
 	
-	static synchronized private UserCache getUserCache() {
-		if (userCache == null) {
-			userCache = new UserCache();
-		}
-		return userCache;
+	@EJB
+	private XmppMessageSender xmppMessageSystem;
+	
+	private Map<Guid,CacheEntry> userCacheEntries = new HashMap<Guid,CacheEntry>();
+	
+	public void start() throws Exception {
+		LiveState.getInstance().addEventListener(BlockEvent.class, this);
 	}
 
+	public void stop() throws Exception {
+		LiveState.getInstance().removeEventListener(BlockEvent.class, this);
+	}
+	
 	private Block queryBlock(BlockType type, Guid data1, Guid data2, long data3) throws NotFoundException {
 		Query q;
 		if (data1 != null && data2 != null) {
@@ -194,48 +198,8 @@ public class StackerBean implements Stacker {
 	}
 	
 	
-	private static class TimestampCacheTask implements Runnable {
-		private long newTimestamp;
-		private Set<Guid> needNewTimestamp;
-		private Set<Guid> needClearTimestamp;
-		
-		TimestampCacheTask(long newTimestamp) {
-			this.newTimestamp = newTimestamp;
-		}
-		
-		void addNeedsNewTimestamp(Guid guid) {
-			if (needNewTimestamp == null)
-				needNewTimestamp = new HashSet<Guid>();
-			needNewTimestamp.add(guid);
-		}
-		
-		void addNeedsClearTimestamp(Guid guid) {
-			if (needClearTimestamp == null)
-				needClearTimestamp = new HashSet<Guid>();
-			needClearTimestamp.add(guid);
-		}
-		
-		public void run() {
-			logger.debug("updating cached stack timestamp for {} users and clearing for {} users",
-					needNewTimestamp != null ? needNewTimestamp.size() : 0, 
-							needClearTimestamp != null ? needClearTimestamp.size() : 0);
-			
-			UserCache cache = getUserCache();
-			if (needNewTimestamp != null) {
-				for (Guid g : needNewTimestamp) {
-					cache.updateLastTimestamp(g, newTimestamp);
-				}
-			}
-			if (needClearTimestamp != null) {
-				for (Guid g : needClearTimestamp) {
-					cache.clearLastTimestamp(g);
-				}
-			}
-		}
-	}
-	
 	private void updateUserBlockDatas(Block block, Set<User> desiredUsers) {
-		TimestampCacheTask cacheTask = new TimestampCacheTask(block.getTimestampAsLong());
+		Set<Guid> affectedGuids = new HashSet<Guid>();
 		
 		// be sure we have the right UserBlockData. This would be a lot saner to do
 		// at the point where it changes... e.g. when people add/remove friends, 
@@ -255,7 +219,7 @@ public class StackerBean implements Stacker {
 		}
 		
 		for (User u : desiredUsers) {
-			cacheTask.addNeedsNewTimestamp(u.getGuid());
+			affectedGuids.add(u.getGuid());
 			
 			UserBlockData old = existing.get(u);
 			if (old != null) {
@@ -268,14 +232,12 @@ public class StackerBean implements Stacker {
 		}
 		// the rest of "existing" is users who no longer are in the desired set
 		for (User u : existing.keySet()) {
-			cacheTask.addNeedsClearTimestamp(u.getGuid());
-			
 			UserBlockData old = existing.get(u);
 			old.setDeleted(true);
 		}
 		
-		logger.debug("{} existing and {} desired users for block, queuing cache update task", userDatas.size(), desiredUsers.size());
-		runner.runTaskOnTransactionCommit(cacheTask);
+		BlockEvent event = new BlockEvent(block.getGuid(), block.getTimestampAsLong(), affectedGuids);
+		LiveState.getInstance().queueUpdate(event);
 	}
 
 	private Set<User> getUsersWhoCare(Block block) {
@@ -547,9 +509,7 @@ public class StackerBean implements Stacker {
 		if (count < 1)
 			throw new IllegalArgumentException("count must be >0 not " + count);
 		
-		UserCache cache = getUserCache();
-		
-		long cached = cache.getLastTimestamp(user.getGuid());
+		long cached = getLastTimestamp(user.getGuid());
 		if (cached >= 0 && cached <= lastTimestamp)
 			return Collections.emptyList(); // nothing new
 		
@@ -617,7 +577,7 @@ public class StackerBean implements Stacker {
 		
 		// we only know the timestamp is globally newest if start is 0
 		if (start == 0)
-			cache.saveLastTimestamp(user.getGuid(), newestTimestamp, newestTimestampCount);
+			saveLastTimestamp(user.getGuid(), newestTimestamp, newestTimestampCount);
 		
 		// remove any single blocks that have the requested stamp
 		if (countAtLastTimestamp == 1) {
@@ -646,207 +606,93 @@ public class StackerBean implements Stacker {
 		}
 	}
 	
-	/** 
-	 * Tracks the newest block timestamp for a given user, which allows us to avoid
-	 * querying the db if someone asks for blocks at or after this cached timestamp.
-	 * 
-	 * Note this object is accessed from the web threads and the xmpp notifier thread,
-	 * so has to be fully threadsafe
-	 * 
-	 * @author Havoc Pennington
-	 *
-	 */
-	static private class UserCache {
-		@SuppressWarnings("unused")
-		static private final Logger logger = GlobalSetup.getLogger(UserCache.class);
+	static private class CacheEntry {
+		public long lastTimestamp;
+		public int count;
 		
-		static private class CacheEntry {
-			public long lastTimestamp;
-			public int count;
-			
-			CacheEntry(long lastTimestamp, int count) {
-				this.lastTimestamp = lastTimestamp;
-				this.count = count;
-			}
-			
-			@Override
-			public String toString() {
-				return "{time " + lastTimestamp + " count " + count + "}";
-			}
+		CacheEntry(long lastTimestamp, int count) {
+			this.lastTimestamp = lastTimestamp;
+			this.count = count;
 		}
 		
-		private Map<Guid,CacheEntry> entries;
-		
-		private XmppNotifier notifier;
-		
-		UserCache() {
-			entries = new HashMap<Guid,CacheEntry>();
-			notifier = new XmppNotifier(this);
-		}
-		
-		// called if e.g. we remove a block from a user's list, and thus
-		// no longer know the saved last timestamp is truly the latest one
-		synchronized void clearLastTimestamp(Guid guid) {
-			//logger.debug("clearing last block timestamp for user {}", guid);
-			entries.remove(guid);
-			notifier.add(guid);
-		}
-		
-		// called whenever we save a new block timestamp, if it's the newest
-		// timestamp we've seen for a given user then we save it as the 
-		// newest timestamp for that user. We also keep a count of 
-		// how many times a given timestamp was saved since we need to 
-		// do a db query if >1 block has the same stamp.
-		synchronized void updateLastTimestamp(Guid guid, long lastTimestamp) {
-			CacheEntry entry = entries.get(guid);
-			if (entry == null) {
-				entry = new CacheEntry(lastTimestamp, 1);
-				entries.put(guid, entry);
-			} else {
-				if (entry.lastTimestamp == lastTimestamp) {
-					entry.count += 1;
-				} else if (entry.lastTimestamp < lastTimestamp) {
-					entry.lastTimestamp = lastTimestamp;
-					entry.count = 1;
-				}
-			}
-			notifier.add(guid);
-			//logger.debug("updating block timestamp for user {} to {}", guid, entry);
-		}
-		
-		// called when we do a db query and discover the last timestamp and number of blocks
-		// with said timestamp. This avoids doing the same db query again, at least 
-		// until updateLastTimestamp saves a newer timestamp.
-		synchronized void saveLastTimestamp(Guid guid, long lastTimestamp, int blockCount) {
-			CacheEntry entry = entries.get(guid);
-			if (entry == null) {
-				entry = new CacheEntry(lastTimestamp, blockCount);
-				entries.put(guid, entry);
-			} else {
-				if (entry.lastTimestamp == lastTimestamp) {
-					entry.count = blockCount;
-				} else if (entry.lastTimestamp < lastTimestamp) {
-					entry.lastTimestamp = lastTimestamp;
-					entry.count = blockCount;
-				}
-			}
-			notifier.add(guid);
-			//logger.debug("saving block timestamp for user {} as {}", guid, entry);
-		}
-		
-		// returns the newest timestamp for which only one block
-		// exists, or -1 if nothing cached or if >1 block for the 
-		// newest timestamp, i.e. returns -1 if we need to do a db
-		// query
-		synchronized long getLastTimestamp(Guid guid) {
-			CacheEntry entry = entries.get(guid);
-			if (entry == null)
-				return -1;
-			else if (entry.count > 1)
-				return -1;
-			else
-				return entry.lastTimestamp;
+		@Override
+		public String toString() {
+			return "{time " + lastTimestamp + " count " + count + "}";
 		}
 	}
-	
-	static private class XmppNotifier {		
-		private UserCache cache;
-		private Set<Guid> users;
-		private Thread flusher;
 		
-		XmppNotifier(UserCache cache) {
-			this.cache = cache;
-		}
-		
-		synchronized void add(Guid user) {
-			if (users == null)
-				users = new HashSet<Guid>();
-			this.users.add(user);
-			
-			flush();
-		}
-		
-		// This goofy setup with multiple possible threads is an attempt to 
-		// avoid having to hold a static handle to the thread and startup/shutdown, 
-		// instead the threads just exit on their own. But not sure it turned out
-		// to be a good approach.
-		synchronized private void flush() {
-			if (users == null)
-				return;
-		
-			if (flusher != null) {
-				if (flusher.isAlive()) {
-					// if there's an existing flush thread, then 
-					// it does not have the lock on the XmppNotifier
-					// since we have it; this means it will check
-					// again for users != null and process any users
-					// that have appeared. There's a little bit of 
-					// race just after the thread drops the XmppNotifier
-					// lock and before the thread has died; this case
-					// is currently broken, but a new thread will be 
-					// kicked off as soon as any block changes, so not 
-					// high-impact. "harmless race" hahahaha
-					
-					return;
-				} else {
-					// existing thread has exited since there was a pause with no 
-					// work
-					flusher = null;
-				}
+	// called whenever we save a new block timestamp, if it's the newest
+	// timestamp we've seen for a given user then we save it as the 
+	// newest timestamp for that user. We also keep a count of 
+	// how many times a given timestamp was saved since we need to 
+	// do a db query if >1 block has the same stamp.
+	synchronized void updateLastTimestamp(Guid guid, long lastTimestamp) {
+		CacheEntry entry = userCacheEntries.get(guid);
+		if (entry == null) {
+			entry = new CacheEntry(lastTimestamp, 1);
+			userCacheEntries.put(guid, entry);
+		} else {
+			if (entry.lastTimestamp == lastTimestamp) {
+				entry.count += 1;
+			} else if (entry.lastTimestamp < lastTimestamp) {
+				entry.lastTimestamp = lastTimestamp;
+				entry.count = 1;
 			}
-			
-			// This thread will exit as soon as there's no work to do, but will keep
-			// draining the set of users that need notifying as long as it's not empty
-			flusher = ThreadUtils.newDaemonThread("Stacker XMPP Notifier",
-				new Runnable() {
-					public void run() {
-						final Logger logger = GlobalSetup.getLogger(this.getClass());
-
-						logger.debug("Entering stacker xmpp notification thread");
-						while (true) {
-							// sleep a bit before starting; this increases the amount of work
-							// we get in each batch, and means we "compress" notifications for the same
-							// user inside this time gap. But this can't be too long or the user
-							// sense that things are "instant" could suffer.
-							boolean mayHaveWork;
-							synchronized (XmppNotifier.this) {
-								mayHaveWork = users != null;
-							}
-							
-							if (mayHaveWork) {
-								try {
-									Thread.sleep(500);
-								} catch (InterruptedException e) {
-								}
-							}
-							
-							// steal the current set of users and process it, while the main thread can 
-							// create and add to a new set
-							final Set<Guid> flushedUsers;
-							synchronized (XmppNotifier.this) {
-								if (users == null) {
-									logger.debug("No stacker notifications left to flush, exiting notifier thread");
-									return;
-								}
-								flushedUsers = users;
-								users = null;
-							}
-
-							MessageSender sender = EJBUtil.defaultLookup(MessageSender.class);
-							for (Guid g : flushedUsers) {
-								// note that we always send the latest cached timestamp, not 
-								// the one at time of notification
-								sender.sendBlocksChanged(g, cache.getLastTimestamp(g));
-							}
-							logger.debug("Sent {} xmpp notifications of changed blocks", flushedUsers.size());
-						}
-					}
-			});
-			
-			flusher.start();
 		}
+		//logger.debug("updating block timestamp for user {} to {}", guid, entry);
 	}
 	
+	// called when we do a db query and discover the last timestamp and number of blocks
+	// with said timestamp. This avoids doing the same db query again, at least 
+	// until updateLastTimestamp saves a newer timestamp.
+	synchronized void saveLastTimestamp(Guid guid, long lastTimestamp, int blockCount) {
+		CacheEntry entry = userCacheEntries.get(guid);
+		if (entry == null) {
+			entry = new CacheEntry(lastTimestamp, blockCount);
+			userCacheEntries.put(guid, entry);
+		} else {
+			if (entry.lastTimestamp == lastTimestamp) {
+				entry.count = blockCount;
+			} else if (entry.lastTimestamp < lastTimestamp) {
+				entry.lastTimestamp = lastTimestamp;
+				entry.count = blockCount;
+			}
+		}
+		//logger.debug("saving block timestamp for user {} as {}", guid, entry);
+	}
+	
+	// returns the newest timestamp for which only one block
+	// exists, or -1 if nothing cached or if >1 block for the 
+	// newest timestamp, i.e. returns -1 if we need to do a db
+	// query
+	synchronized long getLastTimestamp(Guid guid) {
+		CacheEntry entry = userCacheEntries.get(guid);
+		if (entry == null)
+			return -1;
+		else if (entry.count > 1)
+			return -1;
+		else
+			return entry.lastTimestamp;
+	}
+
+	private static final String ELEMENT_NAME = "blocksChanged";
+	private static final String NAMESPACE = CommonXmlWriter.NAMESPACE_BLOCKS;
+	
+	public void onEvent(BlockEvent event) {
+		for (Guid guid : event.getAffectedUsers()) {
+			updateLastTimestamp(guid, event.getStackTimestamp());
+		}
+		
+		XmlBuilder builder = new XmlBuilder();
+		builder.openElement(ELEMENT_NAME, 
+				            "xmlns", NAMESPACE, 
+				            "blockId", event.getBlockId().toString(),
+				            "lastTimestamp", Long.toString(event.getStackTimestamp()));
+		builder.closeElement();
+		
+		xmppMessageSystem.sendLocalMessage(event.getAffectedUsers(), builder.toString());
+	}
+		
 	static private class PostMigrationTask implements Runnable {
 		private String postId;
 		
@@ -1164,4 +1010,5 @@ public class StackerBean implements Stacker {
 			}
 		}
 	}
+
 }

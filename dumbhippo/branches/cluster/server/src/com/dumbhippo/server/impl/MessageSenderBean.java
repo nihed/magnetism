@@ -29,7 +29,6 @@ import com.dumbhippo.live.Hotness;
 import com.dumbhippo.live.LiveClientData;
 import com.dumbhippo.live.LivePost;
 import com.dumbhippo.live.LiveState;
-import com.dumbhippo.live.PresenceService;
 import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.Group;
@@ -384,34 +383,6 @@ public class MessageSenderBean implements MessageSender {
 		}
 	}
 
-	private static class BlocksChangedExtension implements PacketExtension {
-
-		private static final String ELEMENT_NAME = "blocksChanged";
-
-		private static final String NAMESPACE = CommonXmlWriter.NAMESPACE_BLOCKS;
-		
-		private long lastTimestamp;
-		
-		public BlocksChangedExtension(long lastTimestamp) {
-			this.lastTimestamp = lastTimestamp;
-		}
-
-		public String toXML() {
-			XmlBuilder builder = new XmlBuilder();
-			builder.openElement(ELEMENT_NAME, "xmlns", NAMESPACE, "lastTimestamp", Long.toString(lastTimestamp));
-			builder.closeElement();
-			return builder.toString();
-		}
-		
-		public String getElementName() {
-			return ELEMENT_NAME;
-		}
-
-		public String getNamespace() {
-			return NAMESPACE;
-		}
-	}
-	
 	private class XMPPSender {
 
 		private XMPPConnection connection;
@@ -602,17 +573,6 @@ public class MessageSenderBean implements MessageSender {
 			message.addExtension(
                 new GroupMembershipUpdateExtension(updatedMember, groupView, groupMember.getStatus()));
 			logger.debug("Sending groupMembershipUpdate message to {}", message.getTo());			
-			connection.sendPacket(message);
-		}
-		
-		public synchronized void sendBlocksChanged(Guid userId, long lastTimestamp) {
-			/* Note that this is HEADLINE i.e. we don't backlog it; on login the client asks for new stuff,
-			 * and while logged in it sees any changes
-			 */
-			XMPPConnection connection = getConnection();
-			Message message = createMessageFor(userId, Message.Type.HEADLINE);
-			message.addExtension(new BlocksChangedExtension(lastTimestamp));
-			logger.debug("Sending blocks changed message to {}", message.getTo());			
 			connection.sendPacket(message);
 		}
 	}
@@ -904,14 +864,5 @@ public class MessageSenderBean implements MessageSender {
 		for (User recipient : recipients) {
 			xmppSender.sendGroupMembershipUpdate(recipient, group, groupMember);			
 		}
-	}
-	
-	public void sendBlocksChanged(Guid userId, long lastTimestamp) {
-		if (PresenceService.getInstance().getPresence("/users", userId) == 0) {
-			logger.debug("user {} is offline, not notifying of blocks changed", userId);
-			return;
-		}
-
-		xmppSender.sendBlocksChanged(userId, lastTimestamp);
 	}
 }

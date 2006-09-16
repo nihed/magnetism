@@ -30,6 +30,4 @@ public interface MessageSender {
 	public void sendPrefChanged(User user, String key, String value);
 
 	public void sendGroupMembershipUpdate(Group group, GroupMember groupMember);
-	
-	public void sendBlocksChanged(Guid userId, long lastTimestamp);
 }
