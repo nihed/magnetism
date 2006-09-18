@@ -1,33 +1,26 @@
 package com.dumbhippo.jive;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-
-import javax.jms.ObjectMessage;
 
 import org.dom4j.Element;
 import org.dom4j.Node;
 import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.IQHandlerInfo;
-import org.jivesoftware.wildfire.XMPPServer;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 
-import com.dumbhippo.jive.rooms.Room;
+import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.jive.rooms.RoomHandler;
-import com.dumbhippo.jms.JmsProducer;
-import com.dumbhippo.xmppcom.XmppEvent;
-import com.dumbhippo.xmppcom.XmppEventMusicChanged;
-import com.dumbhippo.xmppcom.XmppEventPrimingTracks;
+import com.dumbhippo.server.MessengerGlue;
+import com.dumbhippo.server.util.EJBUtil;
 
 public class MusicIQHandler extends AbstractIQHandler {
 
 	private IQHandlerInfo info;
-	private JmsProducer queue;
-	
-	// we need it to know which rooms to send a message about a music change to
-	private RoomHandler roomHandler;
 	
 	public MusicIQHandler(RoomHandler roomHandler) {
 		super("DumbHippo Music IQ Handler");
@@ -35,19 +28,12 @@ public class MusicIQHandler extends AbstractIQHandler {
 		Log.debug("creaing Music handler");
 		info = new IQHandlerInfo("music", "http://dumbhippo.com/protocol/music");
 			
-		// FIXMEFIXMEFIXME
-		// Log.debug("Opening JmsProducer for " + XmppEvent.QUEUE);
-		// queue = new JmsProducer(XmppEvent.QUEUE, true);
-		
-		this.roomHandler = roomHandler;
 		Log.debug("Done constructing Music IQ handler");
 	}
 	
 	@Override
 	public void destroy() {
 		super.destroy();
-		queue.close();
-		queue = null;
 	}
 	
 	@Override
@@ -106,7 +92,6 @@ public class MusicIQHandler extends AbstractIQHandler {
 	}
 	
 	private IQ processMusicChanged(JID from, Element iq, IQ reply) {
-		XmppEventMusicChanged event = new XmppEventMusicChanged(from.getNode());
 		Map<String,String> properties;
 		try {
 			properties = parseTrackNode(iq);
@@ -116,32 +101,14 @@ public class MusicIQHandler extends AbstractIQHandler {
 			return reply;
 		}
 		
-		event.addProperties(properties);
+		MessengerGlue glue = EJBUtil.defaultLookup(MessengerGlue.class);
+		glue.handleMusicChanged(Guid.parseTrustedJabberId(from.getNode()), properties);
 		
-		// FIXMEFIXMEFIXME
-        // ObjectMessage message = queue.createObjectMessage(event);
-        // queue.send(message);
-        
-		// Let's make sure this is a DumbHippo user, so we can use the node name as an
-        // identifier
-		if (from.getDomain().equals(XMPPServer.getInstance().getServerInfo().getName())) {
-            String username = from.getNode();
-            for (Room room : roomHandler.getRoomsForUser(username))	{
-    			// createCopy creates a deep copy of the element. 
-    			// The new element is detached from its parent, 
-    			// and getParent() on the clone will return null, so we can have
-    			// it have a new parent!
-            	room.processMusicChange(iq.createCopy(), properties, username);
-            }
-		}
 		return reply;
 	}
 
 	private IQ processPrimingTracks(JID from, Element iq, IQ reply) {	
-		XmppEventPrimingTracks event = new XmppEventPrimingTracks(from.getNode());
-
-		// Log.debug("priming tracks xml: " + iq.asXML());
-		
+		List<Map<String,String>> primingTracks = new ArrayList<Map<String,String>>();		
 		for (Object argObj : iq.elements()) {
         	Node node = (Node) argObj;
         	
@@ -161,15 +128,12 @@ public class MusicIQHandler extends AbstractIQHandler {
 					makeError(reply, e.getMessage());
 					return reply;
 				}
-        		
-				event.addTrack(properties);
+        		primingTracks.add(properties);
         	}
         }
+		MessengerGlue glue = EJBUtil.defaultLookup(MessengerGlue.class);
+		glue.handleMusicPriming(Guid.parseTrustedJabberId(from.getNode()), primingTracks);		
         
-		// FIXMEFIXMEFIXME
-        // ObjectMessage message = queue.createObjectMessage(event);
-        // queue.send(message);
-		
 		return reply;
 	}
 	

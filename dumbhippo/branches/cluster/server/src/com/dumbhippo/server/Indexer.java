@@ -82,7 +82,7 @@ public abstract class Indexer<T> {
 	
 	public synchronized Searcher getSearcher() throws IOException {
 		if (searcher == null) {
-			reader = IndexReader.open(getBuilder().getFile());
+			reader = IndexReader.open(getBuilder().getDirectoryProvider().getDirectory());
 			searcher = new IndexSearcher(reader);
 		}
 		
@@ -141,7 +141,7 @@ public abstract class Indexer<T> {
 						// It's not completely clear that passing 'create = true' here when
 						// reindexing is safe when there is an existing IndexReader open,
 						// but transient errors during reindexing aren't a big problem
-						IndexWriter writer = new IndexWriter(getBuilder().getFile(), getBuilder().getAnalyzer(), reindex);
+						IndexWriter writer = new IndexWriter(getBuilder().getDirectoryProvider().getDirectory(), getBuilder().getAnalyzer(), reindex);
 						
 						if (reindex) {
 							doIndexAll(writer);

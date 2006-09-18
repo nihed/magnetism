@@ -23,6 +23,8 @@ import java.util.concurrent.FutureTask;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
@@ -176,6 +178,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	 * @param properties properties of the track
 	 * @return the track id
 	 */
+	@TransactionAttribute(TransactionAttributeType.SUPPORTS)	
 	private long getTrackIdIsolated(final Map<String, String> properties) {
 		Track detached;
 		try {
@@ -261,10 +264,12 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		stacker.stackMusicPerson(user.getGuid(), now.getTime());
 	}
 	
+	@TransactionAttribute(TransactionAttributeType.NEVER)	
 	public void setCurrentTrack(final User user, final Track track) {
 		addTrackHistory(user, track, new Date());
 	}
 	 
+	@TransactionAttribute(TransactionAttributeType.NEVER)	
 	public void setCurrentTrack(User user, Map<String,String> properties) {
 		// empty properties means "not listening to any track" - we always
 		// keep the latest track with content, we don't set CurrentTrack to null
@@ -291,6 +296,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		});
 	}
 	
+	@TransactionAttribute(TransactionAttributeType.NEVER)	
 	public void addHistoricalTrack(User user, Map<String,String> properties) {
 		// for now there's no difference here, but eventually we might have the 
 		// client supply some properties like the date of listening instead of 

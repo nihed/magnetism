@@ -41,14 +41,10 @@
 		<pathelement location="${jboss.root}/server/all/lib/jgroups.jar"/>
 		<fileset dir="${jboss.root}/server/default/deploy/ejb3.deployer">
 			<include name="*ejb3*.jar"/>
-			<include name="hibernate3.jar"/>
-			<include name="hibernate-annotations.jar"/>
 			<include name="hibernate-entitymanager.jar"/>			
 		</fileset>
 		<fileset dir="${jboss.root}/server/default/lib">
 			<include name="*ejb3*.jar"/>
-			<include name="hibernate3.jar"/>
-			<include name="hibernate-annotations.jar"/>
 		</fileset>
 		<pathelement location="${jboss.root}/server/default/lib/javax.servlet.jsp.jar"/>
 	</path>

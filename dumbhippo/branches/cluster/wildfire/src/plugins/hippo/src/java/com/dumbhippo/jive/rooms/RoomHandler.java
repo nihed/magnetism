@@ -19,6 +19,7 @@ import com.dumbhippo.live.ChatRoomEvent;
 import com.dumbhippo.live.GroupEvent;
 import com.dumbhippo.live.LiveEventListener;
 import com.dumbhippo.live.LiveState;
+import com.dumbhippo.live.UserDetailChangedEvent;
 
 public class RoomHandler implements Component {
 	private JID address;
@@ -52,6 +53,15 @@ public class RoomHandler implements Component {
 		}
 	};
 	
+	private LiveEventListener<UserDetailChangedEvent> userDetailEventListener = new LiveEventListener<UserDetailChangedEvent>() {
+		public void onEvent(UserDetailChangedEvent event) {
+			String username = event.getUserId().toJabberId(null);
+			for (Room room : getRoomsForUser(username)) {
+				room.processUserDetailChange(username);
+			}
+		}
+	};	
+	
 	public String getDescription() {
 		return "Handler for DumbHippo chat rooms";
 	}
@@ -67,13 +77,15 @@ public class RoomHandler implements Component {
 		LiveState liveState = LiveState.getInstance();
 		liveState.addEventListener(ChatRoomEvent.class, chatRoomEventListener);
 		liveState.addEventListener(GroupEvent.class, groupEventListener);
+		liveState.addEventListener(UserDetailChangedEvent.class, userDetailEventListener);
 	}
 	
 	public void shutdown() {
 		LiveState liveState = LiveState.getInstance();
 		liveState.removeEventListener(ChatRoomEvent.class, chatRoomEventListener);
 		liveState.removeEventListener(GroupEvent.class, groupEventListener);
-
+		liveState.removeEventListener(UserDetailChangedEvent.class, userDetailEventListener);
+		
 		for (Room room : rooms.values())
 			room.shutdown();
 	}

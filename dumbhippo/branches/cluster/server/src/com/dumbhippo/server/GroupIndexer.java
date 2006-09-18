@@ -2,11 +2,14 @@ package com.dumbhippo.server;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Properties;
 
 import org.apache.lucene.index.IndexWriter;
 import org.hibernate.lucene.DocumentBuilder;
+import org.hibernate.lucene.store.FSDirectoryProvider;
 
 import com.dumbhippo.persistence.Group;
+import com.dumbhippo.persistence.Post;
 import com.dumbhippo.server.util.EJBUtil;
 
 public final class GroupIndexer extends Indexer<Group> {
@@ -19,7 +22,9 @@ public final class GroupIndexer extends Indexer<Group> {
 	}
 	
 	private GroupIndexer() {
-		builder = new DocumentBuilder<Group>(Group.class, createAnalyzer(), null);
+		FSDirectoryProvider directory = new FSDirectoryProvider();
+		directory.initialize(Group.class, null, new Properties());		
+		builder = new DocumentBuilder<Group>(Group.class, createAnalyzer(), directory);
 	}
 	
 	@Override

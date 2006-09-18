@@ -286,4 +286,8 @@ public interface MessengerGlue {
 	public boolean isServerTooBusy();
 	
 	public String getBlocksXml(String username, long lastTimestamp, int start, int count);
+
+	public void handleMusicChanged(Guid userId, Map<String, String> properties);
+
+	public void handleMusicPriming(Guid userId, List<Map<String, String>> primingTracks);
 }

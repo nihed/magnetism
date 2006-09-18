@@ -26,6 +26,7 @@ import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.live.ContactsChangedEvent;
 import com.dumbhippo.live.LiveState;
 import com.dumbhippo.live.LiveUser;
+import com.dumbhippo.live.UserDetailChangedEvent;
 import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.AccountClaim;
 import com.dumbhippo.persistence.Administrator;
@@ -809,6 +810,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 			throw new RuntimeException("invalid stock photo name");
 
 		user.setStockPhoto(photo);
+		LiveState.getInstance().queueUpdate(new UserDetailChangedEvent(user.getGuid())); 		
 	}
 
 	public Set<User> getMySpaceContacts(UserViewpoint viewpoint) {

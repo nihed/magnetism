@@ -393,7 +393,7 @@ public class MessageSenderBean implements MessageSender {
 			}
 			if (connection == null || !connection.isConnected()) {			
 				try {
-					String addr = config.getPropertyNoDefault(HippoProperty.XMPP_ADDRESS);
+					String addr = config.getPropertyNoDefault(HippoProperty.BIND_HOST);
 					String port = config.getPropertyNoDefault(HippoProperty.XMPP_PORT);
 					String user = config.getPropertyNoDefault(HippoProperty.XMPP_ADMINUSER);
 					String password = config.getPropertyNoDefault(HippoProperty.XMPP_PASSWORD);

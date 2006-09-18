@@ -173,6 +173,10 @@ public class Room implements PresenceListener {
 		public void setGlobalStatus(RoomUserStatus status) {
 			this.globalStatus = status;
 		}
+
+		public void setSmallPhotoUrl(String smallPhotoUrl) {
+			this.smallPhotoUrl = smallPhotoUrl;
+		}
 	}
 	
 	private static class MessageInfo {
@@ -309,13 +313,33 @@ public class Room implements PresenceListener {
 		}
 	}
 	
-	private UserInfo lookupUserInfo(String username) {
-		if (!userInfoCache.containsKey(username)) {
+	private UserInfo lookupUserInfo(String username, boolean refresh) {
+		UserInfo info;
+		if (refresh || !userInfoCache.containsKey(username)) {
 			MessengerGlue glue = EJBUtil.defaultLookup(MessengerGlue.class);
-			ChatRoomUser user = glue.getChatRoomUser(roomName, kind, username);
-			userInfoCache.put(username, new UserInfo(user.getUsername(), user.getName(), user.getSmallPhotoUrl()));			
+			ChatRoomUser user = glue.getChatRoomUser(roomName, kind, username);		
+			if (!userInfoCache.containsKey(username)) {
+				info = new UserInfo(user.getUsername(), user.getName(), user.getSmallPhotoUrl());
+				userInfoCache.put(username, info);				
+			} else {
+				info = userInfoCache.get(username);		
+			}
+			// TODO - presently we only handle user photo changes in chat rooms
+			// we probably also want to support nickname changes, although this
+			// would likely require more extensive UI changes in order to not
+			// be very confusing
+			if (refresh) {
+				info.setSmallPhotoUrl(user.getSmallPhotoUrl());
+			}
+			return info;
+		} else {
+			info = userInfoCache.get(username);
 		}
-		return userInfoCache.get(username);
+		return info; 
+	}
+	
+	private UserInfo lookupUserInfo(String username) {
+		return lookupUserInfo(username, false);
 	}
 	
 	private void updateRecipientsCache() {
@@ -712,20 +736,14 @@ public class Room implements PresenceListener {
 		XMPPServer.getInstance().getPacketRouter().route(reply);
 	}
 
-	/**
-	 * @param iq an Element containing all the information about a new track
-	 * @param propeties a map containing all the information about a new track
-	 * @param username username of a person whose music has changed
-	 */
-	public synchronized void processMusicChange(Element iq, Map<String,String> properties, String username) {
+	public synchronized void processUserDetailChange(String username) {
 		// update UserInfo for username
-		UserInfo userInfo = presentUsers.get(username);
-		if (userInfo == null)
-			throw new RuntimeException("User " + username + " isn't in presentUsers");
+		UserInfo userInfo = lookupUserInfo(username, true);
+		Map<String,String> properties = getCurrentMusicFromServer(username);
         // if name and artist are not set in the element, it means that we got a message
         // about the music having stopped, preserve the information about the last played 
         // arrangement and set the nowPlaying flag to false  
-		if ((properties.get("name") == null) && (properties.get("artist") == null)) {
+		if (properties == null || ((properties.get("name") == null) && (properties.get("artist") == null))) {
 			userInfo.setMusicPlaying(false);
 		} else {
 		    userInfo.setArrangementName(properties.get("name"));

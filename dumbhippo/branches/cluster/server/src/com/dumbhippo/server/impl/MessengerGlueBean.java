@@ -11,6 +11,8 @@ import java.util.Set;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.interceptor.AroundInvoke;
 import javax.interceptor.InvocationContext;
 
@@ -26,6 +28,7 @@ import com.dumbhippo.live.Hotness;
 import com.dumbhippo.live.LiveClientData;
 import com.dumbhippo.live.LivePost;
 import com.dumbhippo.live.LiveState;
+import com.dumbhippo.live.UserDetailChangedEvent;
 import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.EmbeddedMessage;
 import com.dumbhippo.persistence.ExternalAccount;
@@ -58,6 +61,7 @@ import com.dumbhippo.server.InvitationSystem;
 import com.dumbhippo.server.JabberUserNotFoundException;
 import com.dumbhippo.server.MessengerGlue;
 import com.dumbhippo.server.MusicSystem;
+import com.dumbhippo.server.MusicSystemInternal;
 import com.dumbhippo.server.MySpaceTracker;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PersonView;
@@ -94,6 +98,9 @@ public class MessengerGlueBean implements MessengerGlue {
 	
 	@EJB
 	private MusicSystem musicSystem;
+	
+	@EJB
+	private MusicSystemInternal musicSystemInternal;	
 	
 	@EJB
 	private InvitationSystem invitationSystem;
@@ -718,5 +725,34 @@ public class MessengerGlueBean implements MessengerGlue {
 		} else {
 			return false;
 		}
+	}
+
+	@TransactionAttribute(TransactionAttributeType.NEVER)
+	public void handleMusicChanged(Guid userId, Map<String, String> properties) {
+		User user = getUserFromGuid(userId);
+		musicSystemInternal.setCurrentTrack(user, properties);
+		LiveState.getInstance().queueUpdate(new UserDetailChangedEvent(userId)); 
+	}
+
+	@TransactionAttribute(TransactionAttributeType.NEVER)
+	public void handleMusicPriming(Guid userId, List<Map<String, String>> tracks) {
+		User user = getUserFromGuid(userId);
+		if (identitySpider.getMusicSharingPrimed(user)) {
+			// at log .info, since it isn't really a problem, but if it happened a lot we'd 
+			// want to investigate why
+			logger.info("Ignoring priming data for music sharing, already primed");
+			return;
+		}
+		// the tracks are in order from most to least highly-ranked, we want to 
+		// timestamp the most highly-ranked one as most recent, so do this backward
+		tracks = new ArrayList<Map<String,String>>(tracks);
+		Collections.reverse(tracks);
+		for (Map<String,String> properties : tracks) {
+			musicSystemInternal.addHistoricalTrack(user, properties);
+		}
+		// don't do this again
+		identitySpider.setMusicSharingPrimed(user, true);
+		logger.debug("Primed user with {} tracks", tracks.size());	
+		LiveState.getInstance().queueUpdate(new UserDetailChangedEvent(userId)); 		
 	}
 }

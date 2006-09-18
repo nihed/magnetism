@@ -2,9 +2,11 @@ package com.dumbhippo.server;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Properties;
 
 import org.apache.lucene.index.IndexWriter;
 import org.hibernate.lucene.DocumentBuilder;
+import org.hibernate.lucene.store.FSDirectoryProvider;
 
 import com.dumbhippo.persistence.Track;
 import com.dumbhippo.server.util.EJBUtil;
@@ -19,7 +21,9 @@ public class TrackIndexer extends Indexer<Track> {
 	}
 	
 	private TrackIndexer() {
-		builder = new DocumentBuilder<Track>(Track.class, createAnalyzer(), null);
+		FSDirectoryProvider directory = new FSDirectoryProvider();
+		directory.initialize(Track.class, null, new Properties());		
+		builder = new DocumentBuilder<Track>(Track.class, createAnalyzer(), directory);
 	}
 	
 	@Override
