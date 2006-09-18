@@ -47,6 +47,14 @@ public abstract class StatisticsSet {
 		return filename;
 	}
 	
+	/**
+	 * Return whether the set is the set where statistics are currently
+	 * being stored. Clients may want to act differently in that case
+	 * (for example, periodically update their display.)
+	 * @return true if the set is the set being currently updated
+	 */
+	abstract public boolean isCurrent();
+	
 	/** Get information about the columns stored in the statistics set
 	 * @return a ColumnMap object holding information about the column
 	 */

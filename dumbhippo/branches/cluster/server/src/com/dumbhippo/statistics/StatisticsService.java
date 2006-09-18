@@ -60,14 +60,15 @@ public class StatisticsService extends ServiceMBeanSupport implements Statistics
     	        return (name.endsWith(".stats") && !statisticsWriter.getFilename().endsWith(name));
     	    }
     	};
-    	String[] fileNames = dir.list(filter);
+    	String[] filenames = dir.list(filter);
         
-    	if (fileNames == null) {
+    	if (filenames == null) {
             throw new RuntimeException("Either " + dir.getAbsolutePath() + " does not exist or is not a directory");
         }
         
-        for (int i=0; i<fileNames.length; i++) {
-            sets.add(new StatisticsReader("statistics/" + fileNames[i]));          
+        for (String filename : filenames) {
+        	if (!filename.equals(statisticsWriter.getFilename()))
+        		sets.add(new StatisticsReader("statistics/" + filename));          
         }
         sets.add(statisticsWriter);
     	

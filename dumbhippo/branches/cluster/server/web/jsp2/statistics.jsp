@@ -11,9 +11,14 @@
 	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/statistics.css">
 	<dht:faviconIncludes/>
 	<dht:scriptIncludes/>
+	<script type="text/javascript" src="javascript/dh/statistics.js"></script>
 	<script type="text/javascript">
-		dojo.require("dh.statistics");
+//		dojo.require("dh.statistics");
 		dojo.event.connect(dojo, "loaded", dj_global, "dhStatisticsInit");
+		dh.statistics.servers = [ <c:forEach items="${statistics.servers}" var="server">
+		    <dh:jsString value="${server}"/>,
+		</c:forEach> ];
+		dh.statistics.thisServer = <dh:jsString value="${statistics.thisServer}"/>;
 	</script>
 </head>
 <body>
@@ -25,8 +30,12 @@
 	</select>
     <table>
     <tr>     
-    <td colspan="3">
+    <td colspan="2">
         <select id="dhColumnSelect" onchange="dh.statistics.onSelectedColumnChange();">
+	    </select>
+    </td>
+    <td colspan="1">
+        <select id="dhServerSelect" onchange="dh.statistics.onSelectedServerChange();">
 	    </select>
     </td>
     </tr>

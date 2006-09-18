@@ -34,6 +34,11 @@ public class StatisticsWriter extends StatisticsSet {
 	private boolean started = false;
 	private long position = 0;
 	
+	@Override
+	public boolean isCurrent() {
+		return true;
+	}
+	
 	/**
 	 * Start recording data. All data sources must already have been added with
 	 * addSource() before calling this method.

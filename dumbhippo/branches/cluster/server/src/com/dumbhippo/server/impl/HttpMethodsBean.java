@@ -1708,8 +1708,11 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			sets = Collections.singletonList(getStatisticsService().getSet(filename));
 		}
 		xml.openElement("statisticsSets");
-		for (StatisticsSet set : sets) {
+		for (StatisticsSet set : sets) {			
 			xml.openElement("statisticsSet");
+			// Doing these as child nodes is a little weird to me; it would 
+			// be easier on the javascript if they were attributes.
+			xml.appendTextNode("current", set.isCurrent() ? "true" : "false");
 			xml.appendTextNode("filename", set.getFilename());
 			xml.appendTextNode("hostname", set.getHostName());
 			xml.appendTextNode("startTime", Long.toString(set.getStartDate().getTime()));

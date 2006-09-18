@@ -7,6 +7,11 @@ public class StatisticsReader extends StatisticsSet {
 	
 	private RandomAccessFile input;
 	
+	@Override
+	public boolean isCurrent() {
+		return false;
+	}
+	
 	public StatisticsReader(String filename) {
 		this.filename = filename;
 		try {

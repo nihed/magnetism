@@ -13,7 +13,52 @@ function dhStatisticsInit() {
     dh.statistics.onSelectedFileChange();
 }
 
+dh.statistics._getSelectedSetFilename = function() {
+    var fileSelect = document.getElementById("dhFileSelect");
+    var fileSelectIndex = fileSelect.selectedIndex;
+	return "statistics/" +fileSelect.options[fileSelectIndex].value + ".stats";
+}
+
+dh.statistics._isSetCurrent = function() {
+    var fileSelect = document.getElementById("dhFileSelect");
+    // The current set is always the first one
+    return fileSelect.selectedIndex == 0;
+}
+
+dh.statistics._getSelectedServer = function() {
+	var serverSelect = document.getElementById("dhServerSelect");
+	return this.servers[serverSelect.selectedIndex];
+}
+
+// Offer a choice of servers if the statistics set is the current set
+// (the server information might be inaccurate for older filesets, and 
+// looking at different servers there is less interesting in any case.)
+dh.statistics._fillServerSelect = function(serverSelect) {
+    serverSelect.options.length = 0;
+    
+    var oldIndex = serverSelect.selectedIndex;
+	if (this._isSetCurrent()) {
+		serverSelect.disabled = false;
+		for (var i = 0; i < this.servers.length; i++) {
+			var defaultSelected = this.servers[i] == this.thisServer;
+			var selected = oldIndex >= 0 ? i == oldIndex : defaultSelected;
+			serverSelect.options[i] = new Option(this.servers[i],
+			                                     this.servers[i],
+			                                     defaultSelected,
+			                                     selected);
+		}
+	} else {
+		serverSelect.disabled = true
+		serverSelect.options[0] = new Option(dh.statistics.thisServer,
+											 dh.statistics.thisServer,
+											 true,
+											 true);
+	}
+}
+
 dh.statistics.onSelectedFileChange = function() {
+	this._fillServerSelect(document.getElementById("dhServerSelect"));
+
     var columnSelect = document.getElementById("dhColumnSelect");
     var columnSelectIndex = columnSelect.selectedIndex;
     // preserve the option that was currently selected
@@ -22,12 +67,10 @@ dh.statistics.onSelectedFileChange = function() {
         oldSelectedColumnId = columnSelect.options[columnSelectIndex].id
     // remove all options from the column select
     columnSelect.options.length = 0;
-    var fileSelect = document.getElementById("dhFileSelect");
-    var fileSelectIndex = fileSelect.selectedIndex;
-    
+    		  	    	   
     // get statistics set for a given file
-	dh.server.doXmlMethod("statisticssets",
-				     { "filename" : "statistics/" + fileSelect.options[fileSelectIndex].value + ".stats" },
+	dh.server.doXmlMethodGET("statisticssets",
+				     { "filename" : this._getSelectedSetFilename() },
 				       function(childNodes, http) {
 				           var dataset = new dh.statistics.dataset.Dataset();
 				     	   // switch to the child nodes of the statisticsSet
@@ -60,14 +103,27 @@ dh.statistics.onSelectedFileChange = function() {
 		  	    	   });
 }
 	
+dh.statistics.onSelectedServerChange = function() {
+	dh.statistics.onSelectedColumnChange();
+}
+
 dh.statistics.onSelectedColumnChange = function() {
     var columnSelect = document.getElementById("dhColumnSelect");
     var columnSelectIndex = columnSelect.selectedIndex;
-    var fileSelect = document.getElementById("dhFileSelect");
-    var fileSelectIndex = fileSelect.selectedIndex;
-	dh.server.doXmlMethod("statistics",
-				     { "filename" : "statistics/" + fileSelect.options[fileSelectIndex].value + ".stats",
-				       "columns" : columnSelect.options[columnSelectIndex].id },
+	// we need to use GET rather than
+    // the default POST because "runOnServer" only works with GET. (Implementation
+    // limitation in the server ... proxying a POST is harder.)	
+    
+    var params = {}
+    
+    params.columns = columnSelect.options[columnSelectIndex].id
+    if (this._getSelectedServer() == this.thisServer)
+    	params.filename = this._getSelectedSetFilename()
+	else
+		params.runOnServer = this._getSelectedServer();
+    
+	dh.server.doXmlMethodGET("statistics",
+	                    params,
 				     	function(childNodes, http) {
 				     		var dataset = new dh.statistics.dataset.Dataset();
 				     	    // switch to the childNodes that represent rows
