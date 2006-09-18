@@ -20,7 +20,7 @@
             dumbhippo.server.hajndiPort=@@hajndiPort@@
 	    dumbhippo.server.disable.authentication=@@disableAuthentication@@
 	    dumbhippo.server.email.disable=@@disableEmail@@
-		dumbhippo.server.xmpp.address=@@jiveHost@@
+            dumbhippo.server.bind.host=@@bindHost@@
 		dumbhippo.server.xmpp.port=@@jivePlainPort@@
 		dumbhippo.server.xmpp.adminuser=admin
 		dumbhippo.server.xmpp.password=@@jivePassword@@
