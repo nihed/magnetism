@@ -736,19 +736,21 @@ public class Room implements PresenceListener {
 		XMPPServer.getInstance().getPacketRouter().route(reply);
 	}
 
-	public synchronized void processUserDetailChange(String username) {
+	public synchronized void processUserChange(String username, boolean music) {
 		// update UserInfo for username
 		UserInfo userInfo = lookupUserInfo(username, true);
-		Map<String,String> properties = getCurrentMusicFromServer(username);
-        // if name and artist are not set in the element, it means that we got a message
-        // about the music having stopped, preserve the information about the last played 
-        // arrangement and set the nowPlaying flag to false  
-		if (properties == null || ((properties.get("name") == null) && (properties.get("artist") == null))) {
-			userInfo.setMusicPlaying(false);
-		} else {
-		    userInfo.setArrangementName(properties.get("name"));
-		    userInfo.setArtist(properties.get("artist"));
-			userInfo.setMusicPlaying(true);		    
+		if (music) {
+			Map<String,String> properties = getCurrentMusicFromServer(username);
+			// if name and artist are not set in the element, it means that we got a message
+			// about the music having stopped, preserve the information about the last played 
+			// arrangement and set the nowPlaying flag to false  
+			if (properties == null || ((properties.get("name") == null) && (properties.get("artist") == null))) {
+				userInfo.setMusicPlaying(false);
+			} else {
+				userInfo.setArrangementName(properties.get("name"));
+				userInfo.setArtist(properties.get("artist"));
+				userInfo.setMusicPlaying(true);		    
+			}
 		}
 		
 		// To communicate the change in music, we send a new Presence message

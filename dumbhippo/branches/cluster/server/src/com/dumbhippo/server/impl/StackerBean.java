@@ -93,11 +93,11 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	private Map<Guid,CacheEntry> userCacheEntries = new HashMap<Guid,CacheEntry>();
 	
 	public void start() throws Exception {
-		LiveState.getInstance().addEventListener(BlockEvent.class, this);
+		LiveState.addEventListener(BlockEvent.class, this);
 	}
 
 	public void stop() throws Exception {
-		LiveState.getInstance().removeEventListener(BlockEvent.class, this);
+		LiveState.removeEventListener(BlockEvent.class, this);
 	}
 	
 	private Block queryBlock(BlockType type, Guid data1, Guid data2, long data3) throws NotFoundException {

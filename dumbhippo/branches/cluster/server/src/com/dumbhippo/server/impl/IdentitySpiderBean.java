@@ -26,7 +26,8 @@ import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.live.ContactsChangedEvent;
 import com.dumbhippo.live.LiveState;
 import com.dumbhippo.live.LiveUser;
-import com.dumbhippo.live.UserDetailChangedEvent;
+import com.dumbhippo.live.UserChangedEvent;
+import com.dumbhippo.live.UserPrefChangedEvent;
 import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.AccountClaim;
 import com.dumbhippo.persistence.Administrator;
@@ -53,7 +54,6 @@ import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.IdentitySpiderRemote;
-import com.dumbhippo.server.MessageSender;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.SystemViewpoint;
 import com.dumbhippo.server.TransactionRunner;
@@ -79,10 +79,6 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 
 	@EJB
 	private TransactionRunner runner;
-
-	@EJB
-	@IgnoreDependency
-	private MessageSender messageSender;
 
 	@EJB
 	@IgnoreDependency
@@ -730,10 +726,9 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 
 	public void setMusicSharingEnabled(User user, boolean enabled) {
 		Account account = getAttachedAccount(user);
-		if (account.isMusicSharingEnabled() != enabled) {
+		if (account.isMusicSharingEnabled() == null || account.isMusicSharingEnabled() != enabled) {
 			account.setMusicSharingEnabled(enabled);
-			messageSender.sendPrefChanged(user, "musicSharingEnabled", Boolean
-					.toString(enabled));
+			LiveState.getInstance().queueUpdate(new UserPrefChangedEvent(user.getGuid(), "musicSharingEnabled", Boolean.toString(enabled)));
 		}
 	}
 
@@ -746,8 +741,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		Account account = getAttachedAccount(user);
 		if (account.isMusicSharingPrimed() != primed) {
 			account.setMusicSharingPrimed(primed);
-			messageSender.sendPrefChanged(user, "musicSharingPrimed", Boolean
-					.toString(primed));
+			LiveState.getInstance().queueUpdate(new UserPrefChangedEvent(user.getGuid(), "musicSharingPrimed", Boolean.toString(primed)));			
 		}
 	}
 
@@ -810,7 +804,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 			throw new RuntimeException("invalid stock photo name");
 
 		user.setStockPhoto(photo);
-		LiveState.getInstance().queueUpdate(new UserDetailChangedEvent(user.getGuid())); 		
+		LiveState.getInstance().queueUpdate(new UserChangedEvent(user.getGuid(), UserChangedEvent.Detail.PHOTO)); 		
 	}
 
 	public Set<User> getMySpaceContacts(UserViewpoint viewpoint) {

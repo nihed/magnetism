@@ -481,10 +481,10 @@ public class LiveState {
 		updater.sendAllNotifications(clientData);
 	}	
 
-	private Map<Class<?>, ListenerList<?>> listenerLists = new HashMap<Class<?>, ListenerList<?>>();
+	private static Map<Class<?>, ListenerList<?>> listenerLists = new HashMap<Class<?>, ListenerList<?>>();
 	
 	@SuppressWarnings("unchecked")
-	public <T extends LiveEvent> ListenerList<LiveEventListener<T>> getListenerList(Class<T> clazz, boolean create) {
+	public static <T extends LiveEvent> ListenerList<LiveEventListener<T>> getListenerList(Class<T> clazz, boolean create) {
 		ListenerList<LiveEventListener<T>> listeners;
 		
 		synchronized(listenerLists) {
@@ -498,12 +498,12 @@ public class LiveState {
 		return listeners;
 	}
 
-	public <T extends LiveEvent> void addEventListener(Class<T> clazz, LiveEventListener<T> listener) {
+	public static <T extends LiveEvent> void addEventListener(Class<T> clazz, LiveEventListener<T> listener) {
 		ListenerList<LiveEventListener<T>> listeners = getListenerList(clazz, true);
 		listeners.addListener(listener);
 	}
 	
-	public <T extends LiveEvent> void removeEventListener(Class<T> clazz, LiveEventListener<T> listener) {
+	public static <T extends LiveEvent> void removeEventListener(Class<T> clazz, LiveEventListener<T> listener) {
 		ListenerList<LiveEventListener<T>> listeners = getListenerList(clazz, false);
 		if (listeners != null)
 			listeners.removeListener(listener);
@@ -512,6 +512,7 @@ public class LiveState {
 	@SuppressWarnings("unchecked")
 	public void invokeEventListeners(LiveEvent event) {
 		ListenerList listeners = getListenerList(event.getClass(), false);
+		logger.info("Processing event: " + event);
 		if (listeners != null) {
 			for (Object o : listeners) {
 				((LiveEventListener)o).onEvent(event);

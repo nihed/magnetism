@@ -9,7 +9,6 @@ import org.hibernate.lucene.DocumentBuilder;
 import org.hibernate.lucene.store.FSDirectoryProvider;
 
 import com.dumbhippo.persistence.Group;
-import com.dumbhippo.persistence.Post;
 import com.dumbhippo.server.util.EJBUtil;
 
 public final class GroupIndexer extends Indexer<Group> {

@@ -28,7 +28,7 @@ import com.dumbhippo.live.Hotness;
 import com.dumbhippo.live.LiveClientData;
 import com.dumbhippo.live.LivePost;
 import com.dumbhippo.live.LiveState;
-import com.dumbhippo.live.UserDetailChangedEvent;
+import com.dumbhippo.live.UserChangedEvent;
 import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.EmbeddedMessage;
 import com.dumbhippo.persistence.ExternalAccount;
@@ -731,7 +731,7 @@ public class MessengerGlueBean implements MessengerGlue {
 	public void handleMusicChanged(Guid userId, Map<String, String> properties) {
 		User user = getUserFromGuid(userId);
 		musicSystemInternal.setCurrentTrack(user, properties);
-		LiveState.getInstance().queueUpdate(new UserDetailChangedEvent(userId)); 
+		LiveState.getInstance().queueUpdate(new UserChangedEvent(userId, UserChangedEvent.Detail.MUSIC)); 
 	}
 
 	@TransactionAttribute(TransactionAttributeType.NEVER)
@@ -753,6 +753,6 @@ public class MessengerGlueBean implements MessengerGlue {
 		// don't do this again
 		identitySpider.setMusicSharingPrimed(user, true);
 		logger.debug("Primed user with {} tracks", tracks.size());	
-		LiveState.getInstance().queueUpdate(new UserDetailChangedEvent(userId)); 		
+		LiveState.getInstance().queueUpdate(new UserChangedEvent(userId, UserChangedEvent.Detail.MUSIC)); 		
 	}
 }

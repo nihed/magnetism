@@ -8,16 +8,25 @@ import com.dumbhippo.identity20.Guid;
  * 
  * @author walters
  */
-public class UserDetailChangedEvent implements LiveEvent {
+public class UserChangedEvent implements LiveEvent {
 	private static final long serialVersionUID = 1L;
 	
 	private Guid userId;
+
+	private Detail detail;
+	
+	public enum Detail {
+		MUSIC,
+		PHOTO,
+		PREFS
+	}
 	
 	/**
 	 * @param userId the userID
 	 */
-	public UserDetailChangedEvent(Guid userID) {
+	public UserChangedEvent(Guid userID, Detail detail) {
 		this.userId = userID;
+		this.detail = detail;
 	}
 
 	public Guid getUserId() {
@@ -26,5 +35,9 @@ public class UserDetailChangedEvent implements LiveEvent {
 	
 	public Class<? extends LiveEventProcessor> getProcessorClass() {
 		return null;
+	}
+
+	public Detail getDetail() {
+		return detail;
 	}
 }
