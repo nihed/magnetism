@@ -13,6 +13,7 @@ static const int BASE_HEIGHT = 600;
 
 HippoAbstractWindow::HippoAbstractWindow()
 {
+    ui_ = NULL;
     animate_ = false;
     useParent_ = false;
     updateOnShow_ = false;

@@ -5,6 +5,7 @@
 #pragma once
 
 #include <HippoMessageHook.h>
+#include <HippoUtil.h>
 
 class HippoUI;
 

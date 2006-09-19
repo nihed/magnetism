@@ -4,6 +4,7 @@
 #include "HippoUIUtil.h"
 #include "HippoHttp.h"
 #include "HippoUI.h"
+#include "HippoWindowWin.h"
 #include <HippoUtil.h>
 #include <Windows.h>
 #include <mshtml.h>
@@ -417,9 +418,7 @@ hippo_platform_impl_set_signin(HippoPlatform  *platform,
 static HippoWindow*
 hippo_platform_impl_create_window(HippoPlatform     *platform)
 {
-    // FIXME
-    assert(FALSE);
-    return NULL;
+    return hippo_window_win_new(HIPPO_PLATFORM_IMPL(platform)->ui);
 }
 
 static void
@@ -428,11 +427,19 @@ hippo_platform_impl_get_screen_info(HippoPlatform     *platform,
                                     HippoRectangle    *tray_icon_rect_p,
                                     HippoOrientation  *tray_icon_orientation_p)
 {
+    /*
+    Incidentally, if we ever want the whole screen and not work area I couldn't
+    find out how forever but stumbled on this which might be right:
+    GetSystemMetrics(SM_CXSCREEN); 
+    GetSystemMetrics(SM_CYSCREEN); 
+    */
+
     RECT desktopRect;
     HRESULT hr = SystemParametersInfo(SPI_GETWORKAREA, NULL, &desktopRect, 0);
 
     RECT taskbarRect;
     APPBARDATA abd;
+    abd.cbSize = sizeof(abd);
     if (!SHAppBarMessage(ABM_GETTASKBARPOS, &abd)) {
         g_warning("Failed to get task bar extents");
         return;

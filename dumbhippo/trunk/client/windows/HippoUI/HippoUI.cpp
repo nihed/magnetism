@@ -28,6 +28,7 @@
 #include "HippoPlatformImpl.h"
 #include "HippoUIUtil.h"
 #include "HippoComWrappers.h"
+#include <hippo/hippo-stack-manager.h>
 
 #include <glib.h>
 
@@ -544,6 +545,9 @@ HippoUI::create(HINSTANCE instance)
 
     registerStartup();
 
+    // and very last once we're all ready, fire up the stacker
+    hippo_stack_manager_manage(dataCache_);
+
     if (initialShowDebugShare_) {
         showDebugShareTimeout_.add(3000, slot(this, &HippoUI::timeoutShowDebugShare));
     }
@@ -554,6 +558,8 @@ HippoUI::create(HINSTANCE instance)
 void
 HippoUI::destroy()
 {
+    hippo_stack_manager_unmanage(dataCache_);
+
     if (currentShare_) {
         delete currentShare_;
         currentShare_ = NULL;
@@ -932,7 +938,7 @@ HippoUI::showMenu(UINT buttonFlag)
 
         PostMessage(window_, WM_NULL, 0, 0);
     } else {
-        // FIXME show the stacker
+        hippo_stack_manager_toggle_stack(dataCache_);
     }
 }
 
