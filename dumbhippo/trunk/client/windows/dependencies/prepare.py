@@ -50,7 +50,8 @@ all_packages = {
                    'contrib/libpng/1.2.8/depends-GnuWin32.lst',
                    'contrib/*/README',
                    'contrib/*/LICENSE',
-                   'bin/*',
+                   'bin/*.exe',
+                   'bin/*-config',
                    'manifest/*' ]
     },
     'cairo' : {
