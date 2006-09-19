@@ -58,7 +58,7 @@ public class StatisticsWriter extends StatisticsSet {
 		
 		filename = header.makeFilename();
 		try {
-			output = new RandomAccessFile(filename, "rw");
+			output = new RandomAccessFile("statistics/" + filename, "rw");
 		} catch (IOException e) {
 			throw new RuntimeException("Can't open output file");
 		}

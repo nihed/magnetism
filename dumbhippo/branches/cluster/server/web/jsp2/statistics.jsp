@@ -24,8 +24,8 @@
 <body>
     <select id="dhFileSelect" onchange="dh.statistics.onSelectedFileChange();">
         <%-- because the list is sorted, current set will be selected, since it will show up first in the list --%>
-        <c:forEach items="${statistics.fileOptions}" var="filename">
-	        <option><c:out value="${filename}"/></option>				    
+        <c:forEach items="${statistics.sets}" var="set">
+	        <option value="${set.filename}"><c:out value="${set.name}"/></option>				    
         </c:forEach>
 	</select>
     <table>

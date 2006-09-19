@@ -1705,7 +1705,11 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		if (filename == null) {
 		    sets = getStatisticsService().listSets();
 		} else {
-			sets = Collections.singletonList(getStatisticsService().getSet(filename));
+			try {
+				sets = Collections.singletonList(getStatisticsService().getSet(filename));
+			} catch (NotFoundException e) {
+				throw new XmlMethodException(XmlMethodErrorCode.NOT_FOUND, e.getMessage());
+			}
 		}
 		xml.openElement("statisticsSets");
 		for (StatisticsSet set : sets) {			
@@ -1738,8 +1742,8 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 				 set = getStatisticsService().getSet(filename);
 			else
 				set = getStatisticsService().getCurrentSet();
-		} catch (NoSuchElementException e) {
-			throw new XmlMethodException(XmlMethodErrorCode.NOT_FOUND, "Statistics set '" + filename + "' not found");
+		} catch (NotFoundException e) {
+			throw new XmlMethodException(XmlMethodErrorCode.NOT_FOUND, e.getMessage());
 		}
 		
 		String[] columnNames = columns.split(",");

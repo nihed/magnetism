@@ -15,27 +15,53 @@ import com.dumbhippo.statistics.StatisticsSet;
 
 public class StatisticsPage {
     StatisticsService statisticsService;	
-    List<String> fileNames;
+    List<SetInfo> sets;
     List<String> servers;
     String thisServer;
+    
+    public static class SetInfo {
+    	String name;
+    	String filename;
+    	
+    	public SetInfo(StatisticsSet set) {
+    		filename = set.getFilename();
+    		if (this.filename.endsWith(".stats"))
+    			name = this.filename.substring(0, this.filename.length() - ".stats".length());
+    		else
+    			name = this.filename;
+    	}
+    	
+    	public String getName() { 
+			return name; 
+    	}
+    	
+    	public String getFilename() {
+    		return filename;
+    	}
+    }
     
 	public StatisticsPage() {
 	    statisticsService = StatisticsService.getInstance();
 	    if (statisticsService == null)
 		    throw new RuntimeException("Statistics Service isn't started");
 	    
-	    fileNames = new ArrayList<String>();	
+	    sets = new ArrayList<SetInfo>();	
 		
 		for (StatisticsSet set : statisticsService.listSets()) {
-		    String fullName = set.getFilename(); 
-		    fileNames.add(fullName.substring(fullName.indexOf("/")+1, fullName.lastIndexOf(".")));
+			if (!set.isCurrent())
+				sets.add(new SetInfo(set));
 		}
-		
-		Collections.sort(fileNames, new Comparator<String>() {
-			public int compare(String filename1, String filename2) {
-				return - String.CASE_INSENSITIVE_ORDER.compare(filename1, filename2);
+
+		Collections.sort(sets, new Comparator<SetInfo>() {
+			public int compare(SetInfo set1, SetInfo set2) {
+				return - String.CASE_INSENSITIVE_ORDER.compare(set1.getName(), set2.getName());
 			}			
 		});
+		
+		// Always put the current set at the front; we count on that in the javascript
+		// code. It would normally work this way for our standard names, but people
+		// can drop other files into the statistics/ directory.
+		sets.add(0, new SetInfo(statisticsService.getCurrentSet()));
 		
 		HAPartition partition = ClusterUtil.getPartition();
 		
@@ -47,8 +73,8 @@ public class StatisticsPage {
 		thisServer = partition.getClusterNode().getIpAddress().getHostAddress();
 	}
 
-	public List<String> getFileOptions() {
-		return fileNames;
+	public List<SetInfo> getSets() {
+		return sets;
 	}
 	
 	public List<String> getServers() {

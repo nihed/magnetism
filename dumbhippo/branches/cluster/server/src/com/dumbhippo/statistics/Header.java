@@ -161,7 +161,7 @@ public class Header {
 		calendar.setTime(startTime);
 		
 		Formatter formatter = new Formatter();
-		formatter.format("statistics/%s-%04d%02d%02d-%02d:%02d:%02d.stats",
+		formatter.format("%s-%04d%02d%02d-%02d:%02d:%02d.stats",
 						 hostName,
 					     calendar.get(Calendar.YEAR),
 					     calendar.get(Calendar.MONTH) + 1,

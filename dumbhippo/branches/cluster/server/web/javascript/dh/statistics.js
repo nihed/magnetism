@@ -15,8 +15,7 @@ function dhStatisticsInit() {
 
 dh.statistics._getSelectedSetFilename = function() {
     var fileSelect = document.getElementById("dhFileSelect");
-    var fileSelectIndex = fileSelect.selectedIndex;
-	return "statistics/" +fileSelect.options[fileSelectIndex].value + ".stats";
+	return fileSelect.value;
 }
 
 dh.statistics._isSetCurrent = function() {

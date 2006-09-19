@@ -12,23 +12,23 @@ public class StatisticsReader extends StatisticsSet {
 		return false;
 	}
 	
-	public StatisticsReader(String filename) {
+	public StatisticsReader(String filename) throws IOException, ParseException {
 		this.filename = filename;
-		try {
-			input = new RandomAccessFile(filename, "r");
-		} catch (IOException e) {
-			throw new RuntimeException("Can't open input file");
-		}
+		input = new RandomAccessFile("statistics/" + filename, "r");
 		
-		try {
-		    header = Header.read(input);
-		} catch (ParseException e) {
-			throw new RuntimeException("ParseException creating header for the input", e);			
-		} catch (IOException e) {
-			throw new RuntimeException("IOException creating header for the input", e);
-		}
+	    header = Header.read(input);
 		
 		rowStore = RowStore.createReadOnly(input.getChannel(), header.getHeaderSize(), 
 				                           header.getColumns().size(), header.getNumRecords());
+	}
+	
+	@Override
+	public void finalize() {
+		// Unlike FileInputStream/FileOutputStream, RandomAccessFile doesn't have an 
+		// "emergency" finalizer that closes the file. (See bugs.sun.com: 4081750)
+		try {
+			input.close();
+		} catch (IOException e) {
+		}
 	}
 }
