@@ -1,6 +1,7 @@
 package com.dumbhippo.server;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.ejb.Local;
@@ -123,5 +124,14 @@ public interface AccountSystem {
 	 *
 	 * @return the character's User
 	 */
-	public User getCharacter(Character whichOne);	
+	public User getCharacter(Character whichOne);
+
+	/**
+	 * Return the "preferences" for this user.  Currently just two keys:
+	 *   musicSharingEnabled
+	 *   musicSharingPrimed
+	 * @param account user's account
+	 * @return preferences mapping
+	 */
+	public Map<String, String> getPrefs(Account account);	
 }

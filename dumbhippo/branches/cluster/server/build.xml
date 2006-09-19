@@ -1,4 +1,7 @@
 <project name="dumbhippo-server" default="build" basedir=".">
+
+	<import file="../common.xml"/>
+
 	<property name="src" value="src" />
 	<property name="src.tests" value="tests" />
 	<property name="web" value="web" />
@@ -32,21 +35,11 @@
 		<!-- a little hard-coded, but ... -->
 		<pathelement location="/usr/share/java/junit.jar" />
 		<pathelement location="/usr/share/java/ant/ant-junit.jar" />
-		<pathelement location="${jboss.root}/client/jbossall-client.jar"/>
 		<pathelement location="${jboss.root}/client/javax.servlet.jar"/>		
 		<pathelement location="${jboss.root}/client/mail.jar"/>
 		<pathelement location="${jboss.root}/client/log4j.jar"/>
-		<pathelement location="${jboss.root}/lib/jboss-system.jar"/>
-		<pathelement location="${jboss.root}/server/all/lib/jboss-cache.jar"/>
-		<pathelement location="${jboss.root}/server/all/lib/jgroups.jar"/>
-		<fileset dir="${jboss.root}/server/default/deploy/ejb3.deployer">
-			<include name="*ejb3*.jar"/>
-			<include name="hibernate-entitymanager.jar"/>			
-		</fileset>
-		<fileset dir="${jboss.root}/server/default/lib">
-			<include name="*ejb3*.jar"/>
-		</fileset>
 		<pathelement location="${jboss.root}/server/default/lib/javax.servlet.jsp.jar"/>
+	 	<fileset refid="dumbhippo.global.jboss.jars"/>
 	</path>
 
 	<path id="tests.class.path">

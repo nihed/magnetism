@@ -1,14 +1,18 @@
 package com.dumbhippo.jive;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.IQRouter;
 import org.jivesoftware.wildfire.SessionManager;
 import org.jivesoftware.wildfire.XMPPServer;
 import org.jivesoftware.wildfire.component.InternalComponentManager;
+import org.jivesoftware.wildfire.container.Module;
 import org.jivesoftware.wildfire.container.Plugin;
 import org.jivesoftware.wildfire.container.PluginManager;
+import org.jivesoftware.wildfire.handler.IQHandler;
 import org.xmpp.component.ComponentException;
 
 import com.dumbhippo.ExceptionUtils;
@@ -25,6 +29,14 @@ public class HippoPlugin implements Plugin {
 	private RoomHandler roomHandler = new RoomHandler();
 	private PresenceMonitor presenceMonitor = new PresenceMonitor();
 	private MessageSender messageSenderProvider = new MessageSender();
+	private List<Module> internalModules = new ArrayList<Module>();
+	
+	private void addIQHandler(IQHandler handler) {
+		IQRouter iqRouter = XMPPServer.getInstance().getIQRouter();
+		internalModules.add(handler);
+		handler.start();
+		iqRouter.addHandler(handler);
+	}
 	
 	public void initializePlugin(PluginManager pluginManager, File pluginDirectory) {
 		try {
@@ -32,6 +44,7 @@ public class HippoPlugin implements Plugin {
 			
 			XmppMessageSender messageSender = EJBUtil.defaultLookup(XmppMessageSender.class);
 			messageSender.setProvider(messageSenderProvider);
+			messageSenderProvider.start();
 			
 			Log.debug("Adding PresenceMonitor");
 			SessionManager sessionManager = XMPPServer.getInstance().getSessionManager();
@@ -43,17 +56,16 @@ public class HippoPlugin implements Plugin {
 				throw new RuntimeException("Error adding Rooms component", e);
 			}
 			
-			IQRouter iqRouter = XMPPServer.getInstance().getIQRouter();
-			iqRouter.addHandler(new ClientMethodIQHandler());		
-			iqRouter.addHandler(new ClientInfoIQHandler());
-			iqRouter.addHandler(new MySpaceIQHandler());					
-			iqRouter.addHandler(new MusicIQHandler(roomHandler));
-			iqRouter.addHandler(new PrefsIQHandler());
-			iqRouter.addHandler(new HotnessIQHandler());	
-			iqRouter.addHandler(new RecentPostsIQHandler());
-			iqRouter.addHandler(new PostControlsIQHandler());
-			iqRouter.addHandler(new GroupIQHandler());			
-			iqRouter.addHandler(new BlocksIQHandler());
+			addIQHandler(new ClientMethodIQHandler());		
+			addIQHandler(new ClientInfoIQHandler());
+			addIQHandler(new MySpaceIQHandler());					
+			addIQHandler(new MusicIQHandler(roomHandler));
+			addIQHandler(new PrefsIQHandler());
+			addIQHandler(new HotnessIQHandler());	
+			addIQHandler(new RecentPostsIQHandler());
+			addIQHandler(new PostControlsIQHandler());
+			addIQHandler(new GroupIQHandler());			
+			addIQHandler(new BlocksIQHandler());
 			
 			Log.debug("... done initializing Hippo plugin");
 		} catch (Exception e) {
@@ -63,6 +75,11 @@ public class HippoPlugin implements Plugin {
 
 	public void destroyPlugin() {
 		Log.debug("Unloading Hippo plugin");
+	
+		for (Module m : internalModules) {
+			m.stop();
+		}
+		internalModules = null;
 		
 		Log.debug("Removing rooms route");
 		InternalComponentManager.getInstance().removeComponent("rooms");

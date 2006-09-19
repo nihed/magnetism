@@ -51,7 +51,6 @@ import com.dumbhippo.server.ChatRoomInfo;
 import com.dumbhippo.server.ChatRoomKind;
 import com.dumbhippo.server.ChatRoomMessage;
 import com.dumbhippo.server.ChatRoomUser;
-import com.dumbhippo.server.Enabled;
 import com.dumbhippo.server.EntityView;
 import com.dumbhippo.server.ExternalAccountSystem;
 import com.dumbhippo.server.GroupSystem;
@@ -609,15 +608,7 @@ public class MessengerGlueBean implements MessengerGlue {
 			return prefs;
 		}
 		
-		// account.isMusicSharingEnabled() could return null, so we should use getMusicSharingEnabled()
-		// method in identitySpider to get the right default
-		prefs.put("musicSharingEnabled", Boolean.toString(identitySpider.getMusicSharingEnabled(account.getOwner(),
-																			Enabled.AND_ACCOUNT_IS_ACTIVE)));
-
-		// not strictly a "pref" but this is a convenient place to send this to the client
-		prefs.put("musicSharingPrimed", Boolean.toString(account.isMusicSharingPrimed()));
-		
-		return prefs;
+		return accountSystem.getPrefs(account);
 	}
 
 	public Hotness getUserHotness(String username) {

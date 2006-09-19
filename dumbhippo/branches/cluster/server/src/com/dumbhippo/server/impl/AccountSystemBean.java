@@ -1,8 +1,10 @@
 package com.dumbhippo.server.impl;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
@@ -28,6 +30,7 @@ import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.ValidationException;
 import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.Character;
+import com.dumbhippo.server.Enabled;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Stacker;
@@ -181,5 +184,17 @@ public class AccountSystemBean implements AccountSystem {
 			ExceptionUtils.throwAsRuntimeException(e);
 			return null; // not reached
 		}
+	}
+
+	public Map<String, String> getPrefs(Account account) {
+		Map<String,String> prefs = new HashMap<String, String>();
+		// account.isMusicSharingEnabled() could return null, so we should use getMusicSharingEnabled()
+		// method in identitySpider to get the right default
+		prefs.put("musicSharingEnabled", Boolean.toString(spider.getMusicSharingEnabled(account.getOwner(),
+																			Enabled.AND_ACCOUNT_IS_ACTIVE)));
+
+		// not strictly a "pref" but this is a convenient place to send this to the client
+		prefs.put("musicSharingPrimed", Boolean.toString(account.isMusicSharingPrimed()));
+		return prefs;
 	}	
 }

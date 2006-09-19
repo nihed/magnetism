@@ -1,0 +1,13 @@
+<project>
+    <property name="dumbhippo.global.jboss.root" value="/opt/jboss" />
+    <fileset id="dumbhippo.global.jboss.jars" dir="${dumbhippo.global.jboss.root}/">
+        <include name="lib/jboss-system.jar"/>
+        <include name="client/jbossall-client.jar"/>
+        <include name="server/all/lib/jboss-cache.jar"/>
+        <include name="server/all/lib/hibernate-annotations.jar"/>
+        <include name="server/all/lib/jgroups.jar"/>
+        <include name="server/default/deploy/ejb3.deployer/*ejb3*.jar"/>
+        <include name="server/default/deploy/ejb3.deployer/hibernate-entitymanager.jar"/>
+        <include name="server/default/lib/*ejb3*.jar"/>
+    </fileset>
+</project>

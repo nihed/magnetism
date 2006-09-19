@@ -2,12 +2,13 @@
 
     <property file="${user.home}/.dumbhippo.properties"/>
     <property name="deploy.hosts" value=""/>
-
+    
     <target name="compile">
     	<ant dir="taste" target="build"/>
         <ant dir="server" target="build"/>
     	<!-- jive has a weird ant file -->
-        <ant dir="wildfire/" antfile="build/build.xml" target="plugins"/>    	
+        <ant dir="wildfire/" antfile="build/build.xml" target="plugins">    	
+	</ant>
         <ant dir="imbot" target="all"/>
     	<ant dir="hungry" target="build"/>    	
     	<ant dir="cluster" target="all"/>    	
