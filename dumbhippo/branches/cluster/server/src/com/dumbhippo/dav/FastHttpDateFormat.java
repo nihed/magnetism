@@ -208,6 +208,7 @@ final class FastHttpDateFormat {
     /**
      * Update cache.
      */
+    @SuppressWarnings("unchecked")
     private static final void updateCache(HashMap cache, Object key, 
                                           Object value) {
         if (value == null) {
