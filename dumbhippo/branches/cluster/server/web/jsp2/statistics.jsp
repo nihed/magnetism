@@ -11,9 +11,7 @@
 	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/statistics.css">
 	<dht:faviconIncludes/>
 	<dht:scriptIncludes/>
-	<script type="text/javascript" src="javascript/dh/statistics.js"></script>
 	<script type="text/javascript">
-//		dojo.require("dh.statistics");
 		dojo.event.connect(dojo, "loaded", dj_global, "dhStatisticsInit");
 		dh.statistics.servers = [ <c:forEach items="${statistics.servers}" var="server">
 		    <dh:jsString value="${server}"/>,
