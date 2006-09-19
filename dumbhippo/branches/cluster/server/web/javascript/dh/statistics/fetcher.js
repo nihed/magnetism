@@ -102,7 +102,7 @@ dojo.lang.extend(dh.statistics.fetcher.Fetcher,
 			columnString += column;
 			columnOrder.push(column);
 		}
-
+		
 		params = {};
 		params.columns = columnString;
 		if (server == dh.statistics.thisServer)
@@ -130,9 +130,11 @@ dojo.lang.extend(dh.statistics.fetcher.Fetcher,
 		
 		// Parse the result, add to the datasets
  	    var childNodes = topElement.childNodes;
+ 	    var first = true;
         for (var i = 0; i < childNodes.length; ++i) {
 	        var child = childNodes.item(i);
 	        var time = child.getAttribute("time");
+	        var content = dojo.dom.textContent(child);
 	        var values = dojo.dom.textContent(child).split(",");
 			for (var j = 0; j < values.length; j++) {
 				datasets[j].add(time, parseInt(values[j]));

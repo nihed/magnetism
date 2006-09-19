@@ -7,7 +7,9 @@ dojo.require("dh.statistics.selector");
 dojo.require("dh.statistics.set");
 dojo.require("dh.util");
 
-dh.statistics._graph1 = null;
+dh.statistics._blocks = {};
+dh.statistics._nextBlockId = 1;
+dh.statistics._set = null;
 
 function dhStatisticsInit() {
 	dh.statistics._fetcher = new dh.statistics.fetcher.Fetcher();
@@ -15,8 +17,7 @@ function dhStatisticsInit() {
 		dh.statistics._onFetch(ids);
 	}
 	
-	dh.statistics._graph1 = new dh.statistics.chart.Chart(600, 200, "dhCoords1");
-	document.getElementById("dhGraph1").appendChild(dh.statistics._graph1.getCanvas());
+	dh.statistics.addBlock(false);
 	
     dh.statistics.onSelectedFileChange();
 }
@@ -26,134 +27,67 @@ dh.statistics._getSelectedFilename = function() {
 	return fileSelect.value;
 }
 
-dh.statistics._isSetCurrent = function() {
-    var fileSelect = document.getElementById("dhFileSelect");
-    // The current set is always the first one
-    return fileSelect.selectedIndex == 0;
-}
-
-dh.statistics._getSelectedServer = function() {
-	var serverSelect = document.getElementById("dhServerSelect");
-	return serverSelect.value;
-}
-
-dh.statistics._getSelectedColumn = function() {
-	var columnSelect = document.getElementById("dhColumnSelect");
-	return columnSelect.value;
-}
-
-// Offer a choice of servers if the statistics set is the current set
-// (the server information might be inaccurate for older filesets, and 
-// looking at different servers there is less interesting in any case.)
-dh.statistics._fillServerSelect = function(serverSelect) {
-    serverSelect.options.length = 0;
-    
-    var oldIndex = serverSelect.selectedIndex;
-	if (this._isSetCurrent()) {
-		serverSelect.disabled = false;
-		for (var i = 0; i < this.servers.length; i++) {
-			var defaultSelected = this.servers[i] == this.thisServer;
-			var selected = oldIndex >= 0 ? i == oldIndex : defaultSelected;
-			serverSelect.options[i] = new Option(this.servers[i],
-			                                     this.servers[i],
-			                                     defaultSelected,
-			                                     selected);
-		}
-	} else {
-		serverSelect.disabled = true
-		serverSelect.options[0] = new Option(dh.statistics.thisServer,
-											 dh.statistics.thisServer,
-											 true,
-											 true);
-	}
-}
-
-dh.statistics._fillColumnSelect = function(set) {
-	var columnSelect = document.getElementById("dhColumnSelect");
-	var oldSelected = columnSelect.value
-	
-	columnSelect.options.length = 0;
-	for (var i = 0; i < set.length; i++) {
-		var column = set.item(i);
-		var defaultSelected = i == 0;
-		var selected = oldSelected ? column.id == oldSelected : defaultSelected;
-		
-		columnSelect.options[i] = 
-			new Option(column.name, column.id, defaultSelected, selected);
-	}
-}
-
-
-dh.statistics._updateFetcher = function() {
-	var server = this._getSelectedServer();
-	var filename = this._getSelectedFilename();
-	var column = this._getSelectedColumn();
-
-	var specification = new dh.statistics.fetcher.Specification(server, filename, column);
-	this._fetcher.setSpecification("chart1", specification);
-}
-
 dh.statistics.onSelectedFileChange = function() {
-	this._fillServerSelect(document.getElementById("dhServerSelect"));
-
-    var columnSelect = document.getElementById("dhColumnSelect");
-    var columnSelectIndex = columnSelect.selectedIndex;
-    // preserve the option that was currently selected
-    var oldSelectedColumnId = "";
-    if (columnSelectIndex >= 0)
-        oldSelectedColumnId = columnSelect.options[columnSelectIndex].id
-    // remove all options from the column select
-    columnSelect.options.length = 0;
-    		  	    	   
     // get statistics set for a given file
 	dh.server.doXmlMethodGET("statisticssets",
 				     { "filename" : this._getSelectedFilename() },
 				       function(childNodes, http) {
 				       	   var server = dh.statistics.thisServer;
-				       	   var filename = dh.statistics._getSelectedServer();
+				       	   var filename = dh.statistics._getSelectedFilename();
 				       	   var set = dh.statistics.set.fromXml(childNodes.item(0).firstChild, server, filename);
-				       	   dh.statistics._fillColumnSelect(set);
-				           dh.statistics._updateFetcher();
+				       	   
+				       	   dh.statistics._setSet(set);
 			           },
 		  	    	   function(code, msg, http) {
 		  	    	      alert("Cannot get statistics sets: " + msg);
 		  	    	   });
 }
+
+dh.statistics.addBlock = function() {
+	var block = new dh.statistics.block.Block();
+	var id = this._nextBlockId++;
+	var table = block.getTable();
+
+	this._blocks[id] = block;
 	
-dh.statistics.onSelectedServerChange = function() {
-	this._updateFetcher();
-}
- 
-dh.statistics.onSelectedColumnChange = function() {
-	this._updateFetcher();
+	block.onSpecificationChanged = function() {
+		dh.statistics._onSpecificationChanged(id);
+	};
+	
+	block.onRemove = function() {
+		table.parentNode.removeChild(table);
+		dh.statistics._fetcher.remove(id);
+		delete dh.statistics._blocks[id];
+	};
+	
+	document.getElementById("dhBlocksDiv").appendChild(table);
+	
+	if (this._set)
+		block.setSet(this._set);
 }
 
+dh.statistics._setSet = function(set) {
+	this._set = set;
+
+   	for (var id in this._blocks) {
+   	     var block = this._blocks[id];
+       	 block.setSet(set);
+   	}
+}
+	
 dh.statistics._onFetch = function(ids) {
-	var dataset = this._fetcher.getDataset("chart1");
+	for (var i = 0; i < ids.length; i++) {
+		var id = ids[i];
+		var block = this._blocks[id];
+		if (!block)
+			continue;
+			
+		var dataset = this._fetcher.getDataset(id);
+		block.setDataset(dataset);
+	}
+}
 
-    var startTimeDiv = document.getElementById("dhStartTime"); 
-    if (dataset.minT == 0) {
- 	    startTimeDiv.replaceChild(document.createTextNode(""), startTimeDiv.firstChild);       					    
-    } else {
- 	    startTimeDiv.replaceChild(document.createTextNode(dh.util.timeString(dataset.minT)), startTimeDiv.firstChild);
-    }           
-
-	var endTimeDiv = document.getElementById("dhEndTime");
-	if (dataset.minT == dataset.maxT) {
-	    endTimeDiv.replaceChild(document.createTextNode(""), endTimeDiv.firstChild);
- 	} else {
-	    endTimeDiv.replaceChild(document.createTextNode(dh.util.timeString(dataset.maxT)), endTimeDiv.firstChild);
- 	}
-    					    
-    var minValDiv = document.getElementById("dhMinVal");
-    // this will display 0 next to the origin point if there is no data in the dataset
-    minValDiv.replaceChild(document.createTextNode(dataset.minY), minValDiv.firstChild);
-    var maxValDiv = document.getElementById("dhMaxVal");
-    if (dataset.minY == dataset.maxY) {
-        maxValDiv.replaceChild(document.createTextNode(""), maxValDiv.firstChild);     
-    } else {        					        
-        maxValDiv.replaceChild(document.createTextNode(dataset.maxY), maxValDiv.firstChild);       	
-    }
-       					    
-    dh.statistics._graph1.setDataset(dataset);
+dh.statistics._onSpecificationChanged = function(id) {
+	var block = this._blocks[id];
+	this._fetcher.setSpecification(id, block.getSpecification());
 }
