@@ -6,7 +6,7 @@
 class HippoCanvasWindow : public HippoAbstractWindow {
 public:
     HippoCanvasWindow(HippoAbstractWindow *parent) 
-        : width_(25), height_(25), created_(false) {
+        : width_(25), height_(25) {
 
         setClassName(L"HippoCanvasWindowClass");
         setClassStyle(CS_HREDRAW | CS_VREDRAW);
@@ -32,7 +32,6 @@ private:
     HippoGObjectPtr<HippoCanvasItem> root_;
     int width_;
     int height_;
-    unsigned int created_ : 1;
 };
 
 class HippoWindowImpl : public HippoAbstractWindow {
