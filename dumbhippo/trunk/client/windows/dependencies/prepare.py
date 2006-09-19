@@ -66,8 +66,8 @@ all_packages = {
     'url' : 'ftp://ftp.gtk.org/pub/glib/2.12/win32/glib-2.12.3.zip',
     'md5' : '13712dc1907f132918a47202961f5070',
     'excludes' : [ 'bin/gspawn-win32-helper.exe',
-                   'bin/gspawn-win32-helper-console.exe',
-                   '*/libgmodule*.dll' ]
+                   'bin/gspawn-win32-helper-console.exe'
+                   ]
     },
     'glib-dev' : {
     'url' : 'ftp://ftp.gtk.org/pub/glib/2.12/win32/glib-dev-2.12.3.zip',
@@ -76,9 +76,7 @@ all_packages = {
     'excludes' : [ 'bin/glib-mkenums', 'bin/glib-gettextize',
                    'bin/gobject-query.exe',
                    'share/glib-2.0/gettext/*',
-                   'make/*', '*/gobjectnotifyqueue.c',
-                   '*/gmodule-2.0.lib',
-                   '*/gmodule.h'
+                   'make/*', '*/gobjectnotifyqueue.c'
                   ]
     },
     'pango' : {
@@ -249,6 +247,8 @@ class Package:
 
 # returns true if it already existed
 def ensure_dir(dirname):
+    if not dirname:
+        raise "no directory name"
     try:
         os.makedirs(dirname)
         return False
@@ -261,7 +261,7 @@ def ensure_dir(dirname):
 def do_init(packages):
     ensure_dir(download_dir)
     ensure_dir(unpack_dir)
-    ensure_dir(install_dir)
+    ensure_dir(test_install_dir)
 
 # total_file_size is -1 if server did not provide one
 def download_progress_hook(blocks_so_far, block_size, total_file_size):
@@ -338,8 +338,9 @@ def get_install_info(p, absolute_src_dir, relative_src_dir, name, is_dir):
     else:
         raise "broken map result"
     
-    
-def do_install_or_overwrite(packages, dir):
+INSTALL=1
+OVERWRITE=2
+def do_install_or_overwrite(mode, packages, dir):
     global install_dir
     install_dir = dir
     ensure_dir(install_dir)
@@ -415,12 +416,15 @@ def do_install_or_overwrite(packages, dir):
         shutil.copy2(src, dest)
         installed_count = installed_count + 1
 
-    print "Installed %d files to %s" % (installed_count, install_dir)
-    print "You can use './dirdiff.py client/windows/dependencies %s' to see what may have changed" % install_dir
-    print "Then run 'prepare.py overwrite'"
+    if mode == INSTALL:
+        print "Installed %d files to %s" % (installed_count, install_dir)
+        print "You can use './dirdiff.py client/windows/dependencies %s' to see what may have changed" % install_dir
+        print "Then run 'prepare.py overwrite'"
+    else:
+        print "Overwrote %d files in %s" % (installed_count, install_dir)
 
 def do_install(packages):
-    do_install_or_overwrite(packages, test_install_dir)
+    do_install_or_overwrite(INSTALL, packages, test_install_dir)
     
 def do_all(packages):
     do_init(packages)
@@ -430,10 +434,10 @@ def do_all(packages):
     # deliberately does not include overwrite
 
 def do_overwrite(packages):
-    do_install_or_overwrite(packages, overwrite_install_dir)
+    do_install_or_overwrite(OVERWRITE, packages, overwrite_install_dir)
 
 def usage():
-    print >>sys.stderr,  "Usage: "
+    print >>sys.stderr,  "Usage: prepare.py ACTION PACKAGE"
 
 def main():
     try:
@@ -461,7 +465,7 @@ def main():
     action = remaining[0]
 
     if not known_actions.has_key(action):
-        print >>sys.stderr, "Known actions are: %s" % ' '.join(known_actions.keys())
+        print >>sys.stderr, "Known actions are: %s (not '%s')" % (' '.join(known_actions.keys()), action)
         sys.exit(1)
 
     packages = {}
@@ -475,7 +479,7 @@ def main():
             print >>sys.stderr, "don't know package %s" % pkg
             sys.exit(1)
         else:
-            packges[pkg] = Package(pkg, all_packages[pkg])
+            packages[pkg] = Package(pkg, all_packages[pkg])
 
     print "will do %s for packages %s" % (action, packages.keys())
 
