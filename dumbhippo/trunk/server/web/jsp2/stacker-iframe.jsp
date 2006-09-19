@@ -92,10 +92,14 @@
 		}
 		.dh-stacked-block .dh-left-column {
 			position:	relative;
+			float:      left;
+			display:    block;
 			width: 		350px;
 		}
 		.dh-stacked-block .dh-right-column {
-			position:	absolute;
+			position:	relative;
+			float:      right;
+			display:    block;
 			top:		0px;
 			right:		0px;
 			width:		100px;

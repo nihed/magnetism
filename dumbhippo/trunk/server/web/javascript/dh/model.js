@@ -36,6 +36,53 @@ dh.model.trackFromXmlNode = function(element) {
 	return new dh.model.Track(image, title, artist, album, stillPlaying == "true");
 }
 
+dh.model.UpdateItem = function(title, link, text, timestamp) {
+	this.title = title;
+	this.link = link;
+	this.text = text;
+	this.timestamp = timestamp;
+}
+
+dh.model.updateItemFromXmlNode = function(element) {		
+    if (element.nodeName != "updateItem")
+        dojo.raise("updateItem node expected");		
+			
+	var title = null;
+	var link = null;
+	var text = null;
+	var timestamp = null;
+			
+	itemChildNodes = element.childNodes;	
+		
+	var updateTitleNode = itemChildNodes.item(0);
+	if (updateTitleNode.nodeName != "updateTitle")
+		dojo.raise("updateTitle node expected");
+	title = dojo.dom.textContent(updateTitleNode);
+
+	var updateLinkNode = itemChildNodes.item(1);
+	if (updateLinkNode.nodeName != "updateLink")
+		dojo.raise("updateLink node expected");
+	link = dojo.dom.textContent(updateLinkNode);
+				
+	var updateTextNode = itemChildNodes.item(2);
+	if (updateTextNode.nodeName != "updateText")
+		dojo.raise("updateText node expected");
+	text = dojo.dom.textContent(updateTextNode);
+	
+	// "updateTimestamp" is optional
+	if (itemChildNodes.length > 3) {
+	    var updateTimestampNode = itemChildNodes.item(3);
+	    if (updateTimestampNode.nodeName != "updateTimestamp")
+		    dojo.raise("updateTimestamp node expected");
+	    timestampString = dojo.dom.textContent(updateTimestampNode);	    	
+	    timestamp = parseInt(timestampString);
+	    if (timestamp == NaN)
+		    dojo.raise("failed to parse '" + timestampString + "' as an integer for a timestamp");
+	}
+	
+	return new dh.model.UpdateItem(title, link, text, timestamp);
+}
+
 dh.model.Message = function(text, fromId, fromNickname, serial, timestamp) {
 	this.text = text;
 	this.fromId = fromId;

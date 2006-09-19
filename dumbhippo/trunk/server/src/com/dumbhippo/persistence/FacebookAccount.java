@@ -1,9 +1,14 @@
 package com.dumbhippo.persistence;
 
+import java.util.Date;
+import java.util.List;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
+import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
+import javax.persistence.Transient;
 
 @Entity
 public class FacebookAccount extends DBUnique {
@@ -16,6 +21,9 @@ public class FacebookAccount extends DBUnique {
 	private ExternalAccount externalAccount;
 	private int unreadMessageCount;
 	private int totalMessageCount;
+	private long messageCountTimestamp;
+	private int wallMessageCount;
+	private List<FacebookEvent> facebookEvents; 
 	
 	private FacebookAccount() {
 	}
@@ -26,6 +34,8 @@ public class FacebookAccount extends DBUnique {
 		this.sessionKeyValid = false;
 		this.unreadMessageCount = -1;
 		this.totalMessageCount = -1;
+		this.messageCountTimestamp = -1;
+		this.wallMessageCount = -1;
 	}
 	
 	@Column(nullable=true)
@@ -81,4 +91,44 @@ public class FacebookAccount extends DBUnique {
     public void setTotalMessageCount(int totalMessageCount) {
     	this.totalMessageCount = totalMessageCount;
     }
+
+	@Column(nullable=false)
+	public Date getMessageCountTimestamp() {
+		return new Date(messageCountTimestamp);
+	}
+
+	@Transient
+	public long getMessageCountTimestampAsLong() {
+		return messageCountTimestamp;
+	}
+	
+	public void setMessageCountTimestamp(Date messageCountTimestamp) {
+		this.messageCountTimestamp = messageCountTimestamp.getTime();
+	}
+	
+	public void setMessageCountTimestampAsLong(long messageCountTimestamp) {
+		this.messageCountTimestamp = messageCountTimestamp;
+	}
+	
+    @OneToMany(mappedBy="facebookAccount")
+	public List<FacebookEvent> getFacebookEvents() {
+		return facebookEvents;
+	}
+
+	public void setFacebookEvents(List<FacebookEvent> facebookEvents) {
+		this.facebookEvents = facebookEvents;
+	}
+
+	public void addFacebookEvent(FacebookEvent facebookEvent) {
+		facebookEvents.add(facebookEvent);
+	}
+	
+	@Column(nullable=false)
+	public int getWallMessageCount() {
+		return wallMessageCount;
+	}
+
+	public void setWallMessageCount(int wallMessageCount) {
+		this.wallMessageCount = wallMessageCount;
+	}
 }

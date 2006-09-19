@@ -51,6 +51,8 @@ import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.FacebookAccount;
+import com.dumbhippo.persistence.FacebookEvent;
+import com.dumbhippo.persistence.FacebookEventType;
 import com.dumbhippo.persistence.Feed;
 import com.dumbhippo.persistence.FeedEntry;
 import com.dumbhippo.persistence.Group;
@@ -1892,20 +1894,37 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			ExternalAccount blogAccount = externalAccountSystem.lookupExternalAccount(viewpoint, user, ExternalAccountType.BLOG);  
 			FeedEntry lastEntry = feedSystem.getLastEntry(blogAccount.getFeed());
 			xml.appendTextNode("accountType", "Blog");
+			xml.openElement("updateItem");
 			xml.appendTextNode("updateTitle", lastEntry.getTitle());
 			xml.appendTextNode("updateLink", lastEntry.getLink().getUrl());
-			xml.appendTextNode("updateText", lastEntry.getDescription());			
-		} else if (accountTypeOrdinal == ExternalAccountType.FACEBOOK.ordinal()) {
+			xml.appendTextNode("updateText", lastEntry.getDescription());
+			xml.closeElement();
+		} else if (accountTypeOrdinal == ExternalAccountType.FACEBOOK.ordinal()) {			
 			FacebookAccount facebookAccount = facebookTracker.lookupFacebookAccount(viewpoint, user);
 			xml.appendTextNode("accountType", "Facebook");
-			if (facebookAccount.isSessionKeyValid()) {
-			    xml.appendTextNode("updateTitle", "You have " + facebookAccount.getUnreadMessageCount() + " unread messages in your Facebook account");
-			    xml.appendTextNode("updateLink", "http://www.facebook.com");
-			    xml.appendTextNode("updateText", "");	 
-			} else {
+			int eventsToRequestCount = 3;
+			if (!facebookAccount.isSessionKeyValid()) {
+				xml.openElement("updateItem");
 			    xml.appendTextNode("updateTitle", "Please re-login to Facebook to continue getting Facebook updates");
 			    xml.appendTextNode("updateLink", "http://api.facebook.com/login.php?api_key=" + facebookTracker.getApiKey() +"&next=/account");
-			    xml.appendTextNode("updateText", "");				
+			    xml.appendTextNode("updateText", "");	
+			    xml.closeElement();
+			    eventsToRequestCount = 2;
+			}
+			List<FacebookEvent> facebookEvents = facebookTracker.getLatestEvents(facebookAccount, eventsToRequestCount);
+			for (FacebookEvent facebookEvent : facebookEvents) {
+				xml.openElement("updateItem");
+				if (facebookEvent.getEventType().equals(FacebookEventType.UNREAD_MESSAGES_UPDATE)) {
+				    xml.appendTextNode("updateTitle", "You have " + facebookEvent.getCount() + " unread messages in your Facebook account");
+				} else if (facebookEvent.getEventType().equals(FacebookEventType.NEW_WALL_MESSAGES_EVENT)) {
+					 xml.appendTextNode("updateTitle", "You have " + facebookEvent.getCount() + " new wall messages in your Facebook account");					
+				} else {
+					throw new RuntimeException("Unexpected event type in HttpMethodsBean::getExternalAccountSummary(): " + facebookEvent.getEventType());
+				}
+			    xml.appendTextNode("updateLink", "http://www.facebook.com");
+			    xml.appendTextNode("updateText", "");
+			    xml.appendTextNode("updateTimestamp", Long.toString(facebookEvent.getEventTimestampAsLong()));
+			    xml.closeElement();
 			}
 		}
 		xml.closeElement();

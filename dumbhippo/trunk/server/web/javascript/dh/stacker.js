@@ -1033,12 +1033,10 @@ dh.stacker.AccountUpdateBlock = function(blockId, userId, accountType) {
 	this._userId = userId;
 	this._accountType = accountType;
 
-	this._timeDiv = null;
-	this._accountUpdateTextDiv = null;
-		
-	this._updateLink = null;
-	this._updateText = null;
+    this._items = [];		
+	this._itemsDiv = null;
 	
+	this._timeDivs = [];
 	// possibly also need this._accountTypeStr
 }
 
@@ -1052,24 +1050,15 @@ defineClass(dh.stacker.AccountUpdateBlock, dh.stacker.Block,
         return this._accountType;
     },
 
-	getUpdateLink : function() {
-		return this._updateLink;
-	},	
-	
-	setUpdateLink : function(updateLink) {
-	    this._updateLink = updateLink;
-	    this._updateTitleDiv();
+	getItems : function() {
+		return this._items;
 	},
-	    	
-	getUpdateText : function() {
-		return this._updateText;
+
+	setItems : function(items) {
+		this._items = items;
+		this._updateItemsDiv();
 	},	
-	
-	setUpdateText : function(updateText) {
-	    this._updateText = updateText;
-	    this._updateUpdateTextDiv();
-	},
-	
+		
 	_parse : function(childNodes) {
 		var accountUpdate = childNodes.item(0);
 		if (accountUpdate.nodeName != "accountUpdate") {
@@ -1085,26 +1074,17 @@ defineClass(dh.stacker.AccountUpdateBlock, dh.stacker.Block,
 		if (accountTypeNode.nodeName != "accountType")
 			throw new Error("accountType node expected");
 		var accountType = dojo.dom.textContent(accountTypeNode);	
-			
-		var updateTitleNode = childNodes.item(2);
-		if (updateTitleNode.nodeName != "updateTitle")
-			throw new Error("updateTitle node expected");
-		var updateTitle = dojo.dom.textContent(updateTitleNode);
-
-		var updateLinkNode = childNodes.item(3);
-		if (updateLinkNode.nodeName != "updateLink")
-			throw new Error("updateLink node expected");
-		var updateLink = dojo.dom.textContent(updateLinkNode);
-				
-		var updateTextNode = childNodes.item(4);
-		if (updateTextNode.nodeName != "updateText")
-			throw new Error("updateText node expected");
-		var updateText = dojo.dom.textContent(updateTextNode);
 		
+		var items = [];
+		var i;
+		for (i = 2; i < childNodes.length; ++i) {
+			var itemNode = childNodes.item(i);
+			var item = dh.model.updateItemFromXmlNode(itemNode);
+			items.push(item);
+		}
+				
 		this.setHeading(person.displayName + "'s " + accountType);
-		this.setTitle(updateTitle);
-		this.setUpdateLink(updateLink);
-		this.setUpdateText(updateText);
+		this.setItems(items);
 	},
 
 	load : function(completeFunc, errorFunc) {
@@ -1125,73 +1105,90 @@ defineClass(dh.stacker.AccountUpdateBlock, dh.stacker.Block,
 		if (!dh.stacker.AccountUpdateBlock.superclass.updateFrom.call(this, newBlock))
 			return false;	
 		this.setHeading(newBlock.getHeading());
-		this.setUpdateLink(newBlock.getUpdateLink());
-		this.setUpdateText(newBlock.getUpdateText());				
+		this.setItems(newBlock.getItems());				
 		return true;
+	},
+	
+	_updateItemsDiv : function() {
+	    if (this._div) {
+			while (this._itemsDiv.firstChild)
+				this._itemsDiv.removeChild(this._itemsDiv.firstChild);
+            this._timeDivs = []; 
+
+			var items = document.createElement("div");
+			dojo.html.setClass(items, "dh-account-update-items");
+			var i;
+			for (i = 0; i < this._items.length; ++i) {
+				var item = document.createElement("div");
+				dojo.html.setClass(item, "dh-account-update-item");
+
+			    var leftDiv = document.createElement("div");
+			    dojo.html.setClass(leftDiv, "dh-left-column");
+			    item.appendChild(leftDiv);
+
+			    var rightDiv = document.createElement("div");
+			    dojo.html.setClass(rightDiv, "dh-right-column");
+			    item.appendChild(rightDiv);
+			
+			    var titleDiv = document.createElement("div");
+			    dojo.html.setClass(titleDiv, "dh-title");	
+			    var a = document.createElement('a');
+			    a.href = this._items[i].link;
+			    a.title = this._items[i].title;
+			    a.target="_blank";
+			    dojo.dom.textContent(a, this._items[i].title);
+			    titleDiv.appendChild(a);
+			    leftDiv.appendChild(titleDiv);
+
+			    var detailDiv = document.createElement("div");
+			    dojo.html.setClass(detailDiv, "dh-details");
+			    rightDiv.appendChild(detailDiv);	
+			
+		        var timeDiv = document.createElement("div");
+			    detailDiv.appendChild(timeDiv);
+			    dojo.html.setClass(timeDiv, "dh-when");
+			    var time = this._items[i].timestamp;
+			    if (time == null)
+			        time = this._stackTime;
+			    dojo.dom.textContent(timeDiv, dh.stacker.formatTimeAgo(time));
+			    this._timeDivs.push(timeDiv);
+
+	            var textDiv = document.createElement("div");
+	            leftDiv.appendChild(textDiv);
+	            dojo.html.setClass(textDiv, "dh-description");
+			    dojo.dom.textContent(textDiv, this._items[i].text);
+			   
+			    items.appendChild(item);
+			}
+			this._itemsDiv.appendChild(items);
+		}
 	},
 	
 	// override
 	_updateStackTimeDiv : function() {
 		if (this._div) {
-			dojo.dom.textContent(this._timeDiv, dh.stacker.formatTimeAgo(this._stackTime));
-		}
+		    for (i = 0; i < this._items.length; ++i) {	
+			    var time = this._items[i].timestamp;
+			    if (time == null)
+			        time = this._stackTime;		
+	            dojo.dom.textContent(this._timeDivs[i], dh.stacker.formatTimeAgo(time));
+	        }
+	    }
 	},
 	
-	// override
-	_updateTitleDiv : function() {
-		if (this._div) {
-			var a = document.createElement('a');
-			a.href = this._updateLink;
-			a.title = this._title;
-			a.target="_blank";
-			dojo.dom.textContent(a, this._title);
-			if (this._titleDiv.firstChild)
-				this._titleDiv.removeChild(this._titleDiv.firstChild);
-			this._titleDiv.appendChild(a);
-		}
-	},	   
-	
-	_updateUpdateTextDiv : function() {
-		if (this._div) {
-		    dojo.dom.textContent(this._accountUpdateTextDiv, this._updateText);
-		}
-	},	
-	
 	realize : function() {
-		if (!this._div) {
-			dh.stacker.AccountUpdateBlock.superclass.realize.call(this);
-			
-			var leftDiv = document.createElement("div");
-			dojo.html.setClass(leftDiv, "dh-left-column");
-			this._contentDiv.appendChild(leftDiv);
-
-			var rightDiv = document.createElement("div");
-			dojo.html.setClass(rightDiv, "dh-right-column");
-			this._contentDiv.appendChild(rightDiv);
-			
-			// move the title created in superclass method
-			this._titleDiv.parentNode.removeChild(this._titleDiv);
-			leftDiv.appendChild(this._titleDiv);
-
-			var detailDiv = document.createElement("div");
-			dojo.html.setClass(detailDiv, "dh-details");
-			rightDiv.appendChild(detailDiv);	
-			
-		    this._timeDiv = document.createElement("div");
-			detailDiv.appendChild(this._timeDiv);
-			dojo.html.setClass(this._timeDiv, "dh-when");
-			this._updateStackTimeDiv();
-
-	        this._accountUpdateTextDiv = document.createElement("div");
-	        leftDiv.appendChild(this._accountUpdateTextDiv);
-	        dojo.html.setClass(this._accountUpdateTextDiv, "dh-description");
-			this._updateUpdateTextDiv();
+		if (!this._div) {		
+			dh.stacker.AccountUpdateBlock.superclass.realize.call(this);			
+			this._itemsDiv = document.createElement("div");
+			this._contentDiv.appendChild(this._itemsDiv);
+			dojo.html.setClass(this._itemsDiv, "dh-items");
+			this._updateItemsDiv();
 		}
 	},
 	
 	unrealize : function() {
 		dh.stacker.AccountUpdateBlock.superclass.unrealize.call(this);
-		this._accountUpdateTextDiv = null;
+		this._itemsDiv = null;
 	}
 });
 

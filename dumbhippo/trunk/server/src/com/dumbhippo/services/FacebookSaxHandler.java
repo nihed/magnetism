@@ -1,6 +1,7 @@
 package com.dumbhippo.services;
 
 import org.slf4j.Logger;
+import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 
 import com.dumbhippo.EnumSaxHandler;
@@ -10,6 +11,9 @@ public class FacebookSaxHandler extends EnumSaxHandler<FacebookSaxHandler.Elemen
 	static private final Logger logger = GlobalSetup.getLogger(FacebookSaxHandler.class);
 	
 	enum Element {	
+		// General
+		result,
+		
 		// facebook.auth.getSession
 		session_key,
 		uid,
@@ -19,6 +23,7 @@ public class FacebookSaxHandler extends EnumSaxHandler<FacebookSaxHandler.Elemen
 		total,
 		
 		// error message
+		fb_error,
 		code,
         msg,
             
@@ -50,6 +55,7 @@ public class FacebookSaxHandler extends EnumSaxHandler<FacebookSaxHandler.Elemen
 	private String facebookUserId;
 	private int unreadMessageCount;
 	private int totalMessageCount;
+	private int wallMessageCount;
 	private int errorCode;
 	private String errorMessage;
 
@@ -57,30 +63,49 @@ public class FacebookSaxHandler extends EnumSaxHandler<FacebookSaxHandler.Elemen
 		super(Element.class, Element.IGNORED);
 		unreadMessageCount = -1;
 		totalMessageCount = -1;
+		wallMessageCount = -1;
 		errorCode = -1;
 	}
 
 	@Override
 	protected void closeElement(Element c) throws SAXException {	
-		if (c == Element.session_key) {
-			sessionKey = getCurrentContent();
-			logger.debug("Parsed out sessionKey {}", sessionKey);
-		} else if (c == Element.uid) {
-			facebookUserId = getCurrentContent();
-			logger.debug("Parsed out uid {}", facebookUserId);
-		} else if (c == Element.unread) {
-			unreadMessageCount = Integer.parseInt(getCurrentContent());
-			logger.debug("Parsed out unread message count {}", unreadMessageCount);		
-		} else if (c == Element.total) {
-			totalMessageCount = Integer.parseInt(getCurrentContent());
-			logger.debug("Parsed out total message count {}", totalMessageCount);
-		} else if (c == Element.code) {
-			errorCode = Integer.parseInt(getCurrentContent());	
-			logger.debug("Parsed out error code {}", errorCode);
-		} else if (c == Element.msg) {
-			errorMessage = getCurrentContent(); 
-			logger.debug("Parsed out error message {}", errorMessage);
-		}	
+		String currentContent = getCurrentContent().trim();
+		try {
+			if (c == Element.session_key) {
+				sessionKey = currentContent;
+				logger.debug("Parsed out sessionKey {}", sessionKey);
+			} else if (c == Element.uid) {
+				facebookUserId = currentContent;
+				logger.debug("Parsed out uid {}", facebookUserId);
+			} else if (c == Element.unread) {
+				unreadMessageCount = Integer.parseInt(currentContent);
+				logger.debug("Parsed out unread message count {}", unreadMessageCount);		
+			} else if (c == Element.total) {
+				totalMessageCount = Integer.parseInt(currentContent);
+				logger.debug("Parsed out total message count {}", totalMessageCount);
+			} else if (c == Element.result) {
+				// we will parse our an error message before we will be closing
+				// the result element; we should not try to parse out regular contents
+				// if we got back an error message
+				if (errorMessage != null) {
+					return;
+				}
+				Attributes attrs = currentAttributes();
+				if (attrs.getValue("method").equals("facebook.wall.getCount")) {
+					wallMessageCount = Integer.parseInt(currentContent);
+					logger.debug("Parsed out wall message count {}", wallMessageCount);
+				}
+			} else if (c == Element.code) {
+				errorCode = Integer.parseInt(currentContent);	
+				logger.debug("Parsed out error code {}", errorCode);
+			} else if (c == Element.msg) {
+				errorMessage = currentContent; 
+				logger.debug("Parsed out error message {}", errorMessage);
+			}	
+		} catch (NumberFormatException e) {
+			logger.warn("Facebook web services content {} for element {} was not a valid number",
+					    currentContent, c);
+		}
 	}
 	
 	public int getErrorCode() {
@@ -109,5 +134,9 @@ public class FacebookSaxHandler extends EnumSaxHandler<FacebookSaxHandler.Elemen
 
 	public int getUnreadMessageCount() {
 		return unreadMessageCount;
+	}
+
+	public int getWallMessageCount() {
+		return wallMessageCount;
 	}
 }

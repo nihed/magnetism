@@ -5,6 +5,7 @@ import java.util.List;
 import javax.ejb.Local;
 
 import com.dumbhippo.persistence.FacebookAccount;
+import com.dumbhippo.persistence.FacebookEvent;
 import com.dumbhippo.persistence.User;
 
 @Local
@@ -17,6 +18,8 @@ public interface FacebookTracker {
 	public List<FacebookAccount> getAccountsWithValidSession();
 	
 	public void updateMessageCount(long facebookAccountId);
+	
+	public List<FacebookEvent> getLatestEvents(FacebookAccount facebookAccount, int eventsCount);
 	
 	public String getApiKey();	
 }

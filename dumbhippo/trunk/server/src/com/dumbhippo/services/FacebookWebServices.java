@@ -4,12 +4,15 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.FacebookAccount;
+import com.dumbhippo.persistence.FacebookEvent;
+import com.dumbhippo.persistence.FacebookEventType;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.Configuration.PropertyNotFoundException;
@@ -52,13 +55,13 @@ public class FacebookWebServices extends AbstractXmlRequest<FacebookSaxHandler> 
 	}
 	
 	/**
-	 * Return true if the number of unread messages changed or the number of total messages 
+	 * Return update time if the number of unread messages changed or the number of total messages 
 	 * increased and some of them are unread messages.
 	 * 
 	 * @param facebookAccount
-	 * @return true if the set of unread messages changed
+	 * @return update time if the set of unread messages changed
 	 */
-	public boolean updateMessageCount(FacebookAccount facebookAccount) {
+	public long updateMessageCount(FacebookAccount facebookAccount) {
 	    // generate messages request using session from facebookAccount
 		List<String> params = new ArrayList<String>();
         params.add("method=facebook.messages.getCount");
@@ -67,7 +70,6 @@ public class FacebookWebServices extends AbstractXmlRequest<FacebookSaxHandler> 
 		String wsUrl = generateFacebookRequest(params);
 
 		FacebookSaxHandler handler = parseUrl(new FacebookSaxHandler(), wsUrl);
-		boolean newMessagesChanged = false;
 		int newUnread = handler.getUnreadMessageCount(); 
 		int newTotal = handler.getTotalMessageCount();
 		int oldUnread = facebookAccount.getUnreadMessageCount();
@@ -85,12 +87,15 @@ public class FacebookWebServices extends AbstractXmlRequest<FacebookSaxHandler> 
 			// so we would not detect that the person has new messages if, for example, between 
 			// our requests they read 2 of their new messages, deleted them, and received 2 other 
 			// new message 
+			facebookAccount.setTotalMessageCount(newTotal);		
 			if ((newUnread != oldUnread) || ((newTotal > oldTotal) && (newUnread > 0)))  {
-				newMessagesChanged = true;							
+				long time = (new Date()).getTime();
+				// we want the timestamp to correspond to the times when we signigy change
+				// in unread messages
+				facebookAccount.setMessageCountTimestampAsLong(time);
+				facebookAccount.setUnreadMessageCount(newUnread);
+				return time; 
 			}
-			// update the number of messages fields on facebookAccount
-			facebookAccount.setUnreadMessageCount(newUnread);
-			facebookAccount.setTotalMessageCount(newTotal);
 		} else if (handler.getErrorCode() == FacebookSaxHandler.FacebookErrorCode.API_EC_PARAM_SESSION_KEY.getCode()) {
 			// setSessionKeyValid to false if we received the response that the session key is no longer valid
 			facebookAccount.setSessionKeyValid(false);
@@ -98,7 +103,38 @@ public class FacebookWebServices extends AbstractXmlRequest<FacebookSaxHandler> 
 			logger.error("Did not receive a valid response for facebook.messages.getCount request, error message {}, error code {}",
 					     handler.getErrorMessage(), handler.getErrorCode());
 		}
-        return newMessagesChanged;
+        return -1;
+	}
+	
+	public FacebookEvent updateWallMessageCount(FacebookAccount facebookAccount) {
+		List<String> params = new ArrayList<String>();
+        params.add("method=facebook.wall.getCount");
+		params.add("session_key=" + facebookAccount.getSessionKey());
+		params.add("id=" + facebookAccount.getFacebookUserId());
+
+		String wsUrl = generateFacebookRequest(params);
+
+		FacebookSaxHandler handler = parseUrl(new FacebookSaxHandler(), wsUrl);
+		
+		int newCount = handler.getWallMessageCount();
+		int oldCount = facebookAccount.getWallMessageCount();
+		
+		if (newCount != -1) {
+			facebookAccount.setWallMessageCount(newCount);
+			// if it is the first time we get the wall message count, we do not want to create
+			// an event about it
+			if ((newCount > oldCount) && (oldCount != -1)) {
+			        return new FacebookEvent(facebookAccount, FacebookEventType.NEW_WALL_MESSAGES_EVENT, 
+			    	  	                     newCount - oldCount, (new Date()).getTime());
+			}			
+		} else if (handler.getErrorCode() == FacebookSaxHandler.FacebookErrorCode.API_EC_PARAM_SESSION_KEY.getCode()) {
+			// setSessionKeyValid to false if we received the response that the session key is no longer valid
+			facebookAccount.setSessionKeyValid(false);
+		} else {
+			logger.error("Did not receive a valid response for facebook.wall.getCount request, error message {}, error code {}",
+					     handler.getErrorMessage(), handler.getErrorCode());
+		}
+		return null;
 	}
 	
 	private String generateFacebookRequest(List<String> params) {

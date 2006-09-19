@@ -1,5 +1,8 @@
 package com.dumbhippo.server.impl;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -18,6 +21,8 @@ import com.dumbhippo.TypeUtils;
 import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.FacebookAccount;
+import com.dumbhippo.persistence.FacebookEvent;
+import com.dumbhippo.persistence.FacebookEventType;
 import com.dumbhippo.persistence.Sentiment;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.Configuration;
@@ -77,11 +82,18 @@ public class FacebookTrackerBean implements FacebookTracker {
 		FacebookWebServices ws = new FacebookWebServices(REQUEST_TIMEOUT, config);
 		ws.updateSession(facebookAccount, facebookAuthToken);
 		
-		ws.updateMessageCount(facebookAccount);
+		long updateTime = (new Date()).getTime();
+		long time = ws.updateMessageCount(facebookAccount);
+		if (time != -1) {
+		    updateTime = time;
+		} else {
+			// we also want to make sure the message count timestamp is refreshed
+			facebookAccount.setMessageCountTimestampAsLong(updateTime);
+		}
 		// we want to stack an update regardless of whether they have new messages, so that they know
-		// they logged in successfully
+		// they logged in successfully; 
 		stacker.stackAccountUpdate(facebookAccount.getExternalAccount().getAccount().getOwner().getGuid(), 
-                ExternalAccountType.FACEBOOK, (new Date()).getTime());
+                ExternalAccountType.FACEBOOK, updateTime);
 	}
 	
 	public FacebookAccount lookupFacebookAccount(Viewpoint viewpoint, User user) throws NotFoundException {
@@ -113,11 +125,50 @@ public class FacebookTrackerBean implements FacebookTracker {
 		if (facebookAccount == null)
 			throw new RuntimeException("Invalid FacebookAccount id " + facebookAccountId + " is passed in to updateMessageCount()");
 		FacebookWebServices ws = new FacebookWebServices(REQUEST_TIMEOUT, config);
-		boolean newMessagesChanged = ws.updateMessageCount(facebookAccount);
-		if (newMessagesChanged || !facebookAccount.isSessionKeyValid()) {
-			stacker.stackAccountUpdate(facebookAccount.getExternalAccount().getAccount().getOwner().getGuid(), 
-					                   ExternalAccountType.FACEBOOK, (new Date()).getTime());
+		boolean newFacebookEvent = false;
+		long updateTime = (new Date()).getTime();
+		// we could do these requests in parallel, but be careful about updating the same facebookAccount
+		long time = ws.updateMessageCount(facebookAccount);
+		if (time != -1) {
+		    newFacebookEvent = true;
+		    updateTime = time;
 		}
+		if (facebookAccount.isSessionKeyValid()) {
+		    FacebookEvent newWallMessagesEvent = ws.updateWallMessageCount(facebookAccount);
+		    if (newWallMessagesEvent != null) {
+		    	em.persist(newWallMessagesEvent);
+		    	facebookAccount.addFacebookEvent(newWallMessagesEvent);
+		    	newFacebookEvent = true;
+			    updateTime = newWallMessagesEvent.getEventTimestampAsLong();		    	
+		    }
+		}
+		if (newFacebookEvent || !facebookAccount.isSessionKeyValid()) {
+			stacker.stackAccountUpdate(facebookAccount.getExternalAccount().getAccount().getOwner().getGuid(), 
+					                   ExternalAccountType.FACEBOOK, updateTime);
+		}
+	}
+	
+	public List<FacebookEvent> getLatestEvents(FacebookAccount facebookAccount, int eventsCount) {
+		ArrayList<FacebookEvent> list = new ArrayList<FacebookEvent>();
+		list.addAll(facebookAccount.getFacebookEvents());
+		if (facebookAccount.getUnreadMessageCount() != -1) {
+            list.add(new FacebookEvent(facebookAccount, FacebookEventType.UNREAD_MESSAGES_UPDATE, 
+        		                       facebookAccount.getUnreadMessageCount(), facebookAccount.getMessageCountTimestampAsLong()));
+		}
+
+		// we want newer(greater) timestamps to be in the front of the list
+		Collections.sort(list, new Comparator<FacebookEvent>() {
+			public int compare (FacebookEvent fe1, FacebookEvent fe2) {
+				if (fe1.getEventTimestampAsLong() < fe2.getEventTimestampAsLong())
+					return 1;
+				else if (fe1.getEventTimestampAsLong() > fe2.getEventTimestampAsLong())
+					return -1;
+				else
+					return 0;
+			}
+		});
+		
+		return list.subList(0, Math.min(eventsCount, list.size()));
 	}
 	
 	public String getApiKey() {
