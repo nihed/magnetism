@@ -47,12 +47,12 @@ public:
     /**
      * Make the window visible onscreen.
      */
-    void show(BOOL activate = true);
+    virtual void show(BOOL activate = true);
 
     /**
      * Hide the window 
      */
-    void hide();
+    virtual void hide();
 
     /**
      * Set the window as the "foreground window". This will either bring the window to
@@ -124,6 +124,11 @@ protected:
      */
     void setClassName(const HippoBSTR &className);
 
+    /**
+     * Sets the parent window 
+     */
+    void setParent(HippoAbstractWindow* parent);
+        
     /********************************************************/
 
     /**
@@ -168,6 +173,7 @@ protected:
 
 private:
     bool useParent_;
+    HippoAbstractWindow *parent_;
     bool animate_;
     bool updateOnShow_;
     UINT classStyle_;
@@ -175,6 +181,9 @@ private:
     HippoBSTR title_;
 
     HINSTANCE instance_;
+
+    unsigned int created_ : 1;
+    unsigned int showing_ : 1;
 
     bool createWindow(void);
     bool registerClass();

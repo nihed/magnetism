@@ -16,10 +16,13 @@ HippoAbstractWindow::HippoAbstractWindow()
     ui_ = NULL;
     animate_ = false;
     useParent_ = false;
+    parent_ = NULL;
     updateOnShow_ = false;
     classStyle_ = CS_HREDRAW | CS_VREDRAW;
     windowStyle_ = WS_OVERLAPPEDWINDOW;
     extendedStyle_ = 0;
+    created_ = false;
+    showing_ = false;
 
     instance_ = GetModuleHandle(NULL);
     window_ = NULL;
@@ -43,6 +46,16 @@ void
 HippoAbstractWindow::setUseParent(bool useParent)
 {
     useParent_ = useParent;
+    if (parent_)
+        g_warning("can't useParent and set parent");
+}
+
+void 
+HippoAbstractWindow::setParent(HippoAbstractWindow *parent)
+{
+    parent_ = parent;
+    if (useParent_)
+        g_warning("can't set parent and useParent");
 }
 
 void 
@@ -107,7 +120,7 @@ HippoAbstractWindow::createWindow(void)
 {
     window_ = CreateWindowEx(extendedStyle_, className_, title_, windowStyle_,
                              CW_USEDEFAULT, CW_USEDEFAULT, BASE_WIDTH, BASE_HEIGHT,
-                             (useParent_ && ui_) ? ui_->getWindow() : NULL, 
+                             (useParent_ && ui_) ? ui_->getWindow() : (parent_ ? parent_->window_ : NULL), 
                              NULL, instance_, NULL);
     if (!window_) {
         hippoDebugLastErr(L"Couldn't create window!");
@@ -127,6 +140,9 @@ HippoAbstractWindow::createWindow(void)
 bool
 HippoAbstractWindow::create(void)
 {
+    if (created_)
+        return true;
+
     if (window_ != NULL) {
         return true;
     }
@@ -138,6 +154,9 @@ HippoAbstractWindow::create(void)
         hippoDebugLogW(L"Failed to create window");
         return false;
     }
+
+    created_ = true;
+
     return true;
 }
 
@@ -198,6 +217,9 @@ HippoAbstractWindow::registerClass()
 void
 HippoAbstractWindow::show(BOOL activate) 
 {   
+    if (showing_)
+        return;
+
     if (animate_)
         AnimateWindow(window_, 400, AW_BLEND);
     else
@@ -205,15 +227,22 @@ HippoAbstractWindow::show(BOOL activate)
 
     if (updateOnShow_) 
         RedrawWindow(window_, NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW | RDW_ALLCHILDREN);
+
+    showing_= true;
 }
 
 void
 HippoAbstractWindow::hide(void)
 {
+    if (!showing_)
+        return;
+
     if (animate_)
         AnimateWindow(window_, 400, AW_BLEND | AW_HIDE);
     else
         ShowWindow(window_, SW_HIDE);
+
+    showing_ = false;
 }
 
 void 

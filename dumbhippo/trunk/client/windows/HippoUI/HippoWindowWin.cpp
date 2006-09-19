@@ -3,28 +3,74 @@
 #include "HippoAbstractWindow.h"
 #include "HippoUIUtil.h"
 
+class HippoCanvasWindow : public HippoAbstractWindow {
+public:
+    HippoCanvasWindow(HippoAbstractWindow *parent) 
+        : width_(25), height_(25), created_(false) {
+
+        setClassName(L"HippoCanvasWindowClass");
+        setClassStyle(CS_HREDRAW | CS_VREDRAW);
+        setWindowStyle(WS_CHILD);
+        //setExtendedStyle(WS_EX_TOPMOST);
+        setTitle(L"Canvas");
+        setParent(parent);
+    }
+
+    virtual bool create();
+
+    void setRoot(HippoCanvasItem *item);
+
+    int getWidth() { return width_; }
+    int getHeight() { return height_; }
+
+protected:
+    bool processMessage(UINT   message,
+                        WPARAM wParam,
+                        LPARAM lParam);
+
+private:
+    HippoGObjectPtr<HippoCanvasItem> root_;
+    int width_;
+    int height_;
+    unsigned int created_ : 1;
+};
+
 class HippoWindowImpl : public HippoAbstractWindow {
 public:
     HippoWindowImpl() 
-        : width_(100), height_(100), created_(false) {
+        : width_(100), height_(100) {
 
         setClassName(L"HippoWindowWinClass");
         setClassStyle(CS_HREDRAW | CS_VREDRAW);
         //setWindowStyle(WS_POPUP);
         //setExtendedStyle(WS_EX_TOPMOST);
         setTitle(L"Mugshot");
+        contentsWindow_ = new HippoCanvasWindow(this);
     }
-    
+
+    ~HippoWindowImpl() {
+        delete contentsWindow_;
+    }
+
+    virtual void show(bool activate);
+
     void setContents(HippoCanvasItem *item);
     void setVisible(bool visible);
     void setPosition(int x, int y);
     void getSize(int *x_p, int *y_p);
 
+    virtual bool create();
+
+protected:
+    bool processMessage(UINT   message,
+                        WPARAM wParam,
+                        LPARAM lParam);
+
 private:
     HippoGObjectPtr<HippoCanvasItem> contents_;
+    HippoCanvasWindow *contentsWindow_;
     int width_;
     int height_;
-    unsigned int created_;
 };
 
 static void      hippo_window_win_init                (HippoWindowWin       *window_win);
@@ -249,14 +295,31 @@ HippoWindowImpl::setContents(HippoCanvasItem *item)
     // hippo_canvas_set_root(HIPPO_CANVAS(canvas), contents);
 }
 
+bool
+HippoWindowImpl::create()
+{
+    bool result;
+
+    // we need to create the parent window first
+    result = HippoAbstractWindow::create();
+
+    contentsWindow_->create();
+
+    return result;
+}
+
+void
+HippoWindowImpl::show(bool activate)
+{
+    contentsWindow_->show(false);
+    HippoAbstractWindow::show(activate);
+}
+
 void
 HippoWindowImpl::setVisible(bool visible)
 {
     if (visible) {
-        if (!created_) {
-            create();
-            created_ = 1;
-        }
+        create();
         show(false);
     } else {
         hide();
@@ -276,4 +339,72 @@ HippoWindowImpl::getSize(int *width_p, int *height_p)
         *width_p = width_;
     if (height_p)
         *height_p = height_;
+}
+
+bool 
+HippoWindowImpl::processMessage(UINT   message,
+                                WPARAM wParam,
+                                LPARAM lParam)
+{
+    switch (message) {
+        case WM_PAINT:
+            RECT region;
+            if (GetUpdateRect(window_, &region, true)) {
+                PAINTSTRUCT paint;
+                HDC hdc = BeginPaint(window_, &paint);
+
+                FillRect(hdc, &region, (HBRUSH) (COLOR_WINDOW+1));
+
+                TextOut(hdc, 0, 0, L"Hello, Windows!", 15);
+
+                EndPaint(window_, &paint);
+            }
+            return true;
+        case WM_SIZE:
+            width_ = LOWORD(lParam);
+            height_ = HIWORD(lParam);
+            return true;
+    }
+
+    return HippoAbstractWindow::processMessage(message, wParam, lParam);
+}
+
+void
+HippoCanvasWindow::setRoot(HippoCanvasItem *item)
+{
+    root_ = item;
+}
+
+bool
+HippoCanvasWindow::create()
+{
+    return HippoAbstractWindow::create();
+}
+
+bool 
+HippoCanvasWindow::processMessage(UINT   message,
+                                  WPARAM wParam,
+                                  LPARAM lParam)
+{
+    switch (message) {
+        case WM_PAINT:
+            RECT region;
+            if (GetUpdateRect(window_, &region, true)) {
+                PAINTSTRUCT paint;
+                HDC hdc = BeginPaint(window_, &paint);
+
+                FillRect(hdc, &region, (HBRUSH) (COLOR_WINDOW+2));
+
+                TextOut(hdc, 0, 0, L"Canvas!", 15);
+
+                EndPaint(window_, &paint);
+            }
+            return true;
+        case WM_SIZE:
+            width_ = LOWORD(lParam);
+            height_ = HIWORD(lParam);
+            return true;
+    }
+
+    return HippoAbstractWindow::processMessage(message, wParam, lParam);
 }
