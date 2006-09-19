@@ -23,6 +23,9 @@ public class FacebookAccount extends DBUnique {
 	private int totalMessageCount;
 	private long messageCountTimestamp;
 	private int wallMessageCount;
+	private int unseenPokeCount;
+	private int totalPokeCount;
+	private long pokeCountTimestamp;
 	private List<FacebookEvent> facebookEvents; 
 	
 	private FacebookAccount() {
@@ -36,6 +39,9 @@ public class FacebookAccount extends DBUnique {
 		this.totalMessageCount = -1;
 		this.messageCountTimestamp = -1;
 		this.wallMessageCount = -1;
+		this.unseenPokeCount = -1;
+		this.totalPokeCount = -1;
+		this.pokeCountTimestamp = -1;		
 	}
 	
 	@Column(nullable=true)
@@ -130,5 +136,41 @@ public class FacebookAccount extends DBUnique {
 
 	public void setWallMessageCount(int wallMessageCount) {
 		this.wallMessageCount = wallMessageCount;
+	}
+	
+	@Column(nullable=false)
+	public int getUnseenPokeCount() {
+		return unseenPokeCount;
+	}
+	
+    public void setUnseenPokeCount(int unseenPokeCount) {
+    	this.unseenPokeCount = unseenPokeCount;
+    }
+
+	@Column(nullable=false)
+	public int getTotalPokeCount() {
+		return totalPokeCount;
+	}
+	
+    public void setTotalPokeCount(int totalPokeCount) {
+    	this.totalPokeCount = totalPokeCount;
+    }
+
+	@Column(nullable=false)
+	public Date getPokeCountTimestamp() {
+		return new Date(pokeCountTimestamp);
+	}
+
+	@Transient
+	public long getPokeCountTimestampAsLong() {
+		return pokeCountTimestamp;
+	}
+	
+	public void setPokeCountTimestamp(Date pokeCountTimestamp) {
+		this.pokeCountTimestamp = pokeCountTimestamp.getTime();
+	}
+	
+	public void setPokeCountTimestampAsLong(long pokeCountTimestamp) {
+		this.pokeCountTimestamp = pokeCountTimestamp;
 	}
 }

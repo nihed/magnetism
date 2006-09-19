@@ -1914,11 +1914,16 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			List<FacebookEvent> facebookEvents = facebookTracker.getLatestEvents(facebookAccount, eventsToRequestCount);
 			for (FacebookEvent facebookEvent : facebookEvents) {
 				xml.openElement("updateItem");
+				String multiple = "";
+				if (facebookEvent.getCount() != 1)
+					multiple = "s";
 				if (facebookEvent.getEventType().equals(FacebookEventType.UNREAD_MESSAGES_UPDATE)) {
-				    xml.appendTextNode("updateTitle", "You have " + facebookEvent.getCount() + " unread messages in your Facebook account");
+				    xml.appendTextNode("updateTitle", "You have " + facebookEvent.getCount() + " unread message" + multiple);
 				} else if (facebookEvent.getEventType().equals(FacebookEventType.NEW_WALL_MESSAGES_EVENT)) {
-					 xml.appendTextNode("updateTitle", "You have " + facebookEvent.getCount() + " new wall messages in your Facebook account");					
-				} else {
+					xml.appendTextNode("updateTitle", "You have " + facebookEvent.getCount() + " new wall message" + multiple);					
+				} else if (facebookEvent.getEventType().equals(FacebookEventType.UNSEEN_POKES_UPDATE)) {
+				    xml.appendTextNode("updateTitle", "You have " + facebookEvent.getCount() + " unseen poke" + multiple);					
+			    } else {
 					throw new RuntimeException("Unexpected event type in HttpMethodsBean::getExternalAccountSummary(): " + facebookEvent.getEventType());
 				}
 			    xml.appendTextNode("updateLink", "http://www.facebook.com");

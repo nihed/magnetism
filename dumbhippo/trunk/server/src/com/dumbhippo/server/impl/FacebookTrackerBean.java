@@ -141,6 +141,14 @@ public class FacebookTrackerBean implements FacebookTracker {
 		    	newFacebookEvent = true;
 			    updateTime = newWallMessagesEvent.getEventTimestampAsLong();		    	
 		    }
+		    
+		    if (facebookAccount.isSessionKeyValid()) {
+		    	long pokeTime = ws.updatePokeCount(facebookAccount);
+		    	if (pokeTime != -1) {
+		    		newFacebookEvent = true;
+				    updateTime = pokeTime;
+		    	}
+		    }
 		}
 		if (newFacebookEvent || !facebookAccount.isSessionKeyValid()) {
 			stacker.stackAccountUpdate(facebookAccount.getExternalAccount().getAccount().getOwner().getGuid(), 
@@ -151,11 +159,15 @@ public class FacebookTrackerBean implements FacebookTracker {
 	public List<FacebookEvent> getLatestEvents(FacebookAccount facebookAccount, int eventsCount) {
 		ArrayList<FacebookEvent> list = new ArrayList<FacebookEvent>();
 		list.addAll(facebookAccount.getFacebookEvents());
-		if (facebookAccount.getUnreadMessageCount() != -1) {
+		if (facebookAccount.getMessageCountTimestampAsLong() > 0) {
             list.add(new FacebookEvent(facebookAccount, FacebookEventType.UNREAD_MESSAGES_UPDATE, 
         		                       facebookAccount.getUnreadMessageCount(), facebookAccount.getMessageCountTimestampAsLong()));
 		}
-
+		if (facebookAccount.getPokeCountTimestampAsLong() > 0) {
+            list.add(new FacebookEvent(facebookAccount, FacebookEventType.UNSEEN_POKES_UPDATE, 
+        		                       facebookAccount.getUnseenPokeCount(), facebookAccount.getPokeCountTimestampAsLong()));
+		}
+		
 		// we want newer(greater) timestamps to be in the front of the list
 		Collections.sort(list, new Comparator<FacebookEvent>() {
 			public int compare (FacebookEvent fe1, FacebookEvent fe2) {

@@ -1188,6 +1188,7 @@ defineClass(dh.stacker.AccountUpdateBlock, dh.stacker.Block,
 	
 	unrealize : function() {
 		dh.stacker.AccountUpdateBlock.superclass.unrealize.call(this);
+		this._timeDivs = [];
 		this._itemsDiv = null;
 	}
 });

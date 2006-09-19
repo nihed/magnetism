@@ -90,7 +90,7 @@ public class FacebookWebServices extends AbstractXmlRequest<FacebookSaxHandler> 
 			facebookAccount.setTotalMessageCount(newTotal);		
 			if ((newUnread != oldUnread) || ((newTotal > oldTotal) && (newUnread > 0)))  {
 				long time = (new Date()).getTime();
-				// we want the timestamp to correspond to the times when we signigy change
+				// we want the timestamp to correspond to the times when we signify change
 				// in unread messages
 				facebookAccount.setMessageCountTimestampAsLong(time);
 				facebookAccount.setUnreadMessageCount(newUnread);
@@ -135,6 +135,41 @@ public class FacebookWebServices extends AbstractXmlRequest<FacebookSaxHandler> 
 					     handler.getErrorMessage(), handler.getErrorCode());
 		}
 		return null;
+	}
+	
+	public long updatePokeCount(FacebookAccount facebookAccount) {
+	    // generate messages request using session from facebookAccount
+		List<String> params = new ArrayList<String>();
+        params.add("method=facebook.pokes.getCount");
+		params.add("session_key=" + facebookAccount.getSessionKey());
+
+		String wsUrl = generateFacebookRequest(params);
+
+		FacebookSaxHandler handler = parseUrl(new FacebookSaxHandler(), wsUrl);
+		int newUnseen = handler.getUnseenPokeCount(); 
+		int newTotal = handler.getTotalPokeCount();
+		int oldUnseen = facebookAccount.getUnseenPokeCount();
+		int oldTotal = facebookAccount.getTotalPokeCount();
+		if ((newUnseen != -1) && (newTotal != -1)) {
+			facebookAccount.setTotalPokeCount(newTotal);		
+			if ((newUnseen != oldUnseen) || ((newTotal > oldTotal) && (newUnseen > 0)))  {
+				facebookAccount.setUnseenPokeCount(newUnseen);
+				if ((newUnseen > 0) || (oldUnseen != -1)) {
+				    long time = (new Date()).getTime();
+				    // we want the timestamp to correspond to the times when we signify change
+				    // in unseen pokes
+				    facebookAccount.setPokeCountTimestampAsLong(time);
+				    return time; 
+				}				
+			}
+		} else if (handler.getErrorCode() == FacebookSaxHandler.FacebookErrorCode.API_EC_PARAM_SESSION_KEY.getCode()) {
+			// setSessionKeyValid to false if we received the response that the session key is no longer valid
+			facebookAccount.setSessionKeyValid(false);
+		} else {
+			logger.error("Did not receive a valid response for facebook.pokes.getCount request, error message {}, error code {}",
+					     handler.getErrorMessage(), handler.getErrorCode());
+		}
+        return -1;
 	}
 	
 	private String generateFacebookRequest(List<String> params) {
