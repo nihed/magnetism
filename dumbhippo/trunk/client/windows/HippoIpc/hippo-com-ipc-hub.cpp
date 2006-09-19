@@ -369,7 +369,7 @@ HippoComIpcHubImpl::onUIStarted(void)
          i != listeners_.end();
          i++) 
     {
-        doAsync(new HippoListenerTask(this, *i, HippoComIpcHubImpl::doNotifyUIStarted));
+        doAsync(new HippoListenerTask(this, *i, &HippoComIpcHubImpl::doNotifyUIStarted));
     }
 }
 

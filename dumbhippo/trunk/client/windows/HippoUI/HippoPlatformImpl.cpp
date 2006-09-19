@@ -428,8 +428,61 @@ hippo_platform_impl_get_screen_info(HippoPlatform     *platform,
                                     HippoRectangle    *tray_icon_rect_p,
                                     HippoOrientation  *tray_icon_orientation_p)
 {
-    // FIXME
-    assert(FALSE);
+    RECT desktopRect;
+    HRESULT hr = SystemParametersInfo(SPI_GETWORKAREA, NULL, &desktopRect, 0);
+
+    RECT taskbarRect;
+    APPBARDATA abd;
+    if (!SHAppBarMessage(ABM_GETTASKBARPOS, &abd)) {
+        g_warning("Failed to get task bar extents");
+        return;
+    }
+    if (tray_icon_orientation_p) {
+        switch (abd.uEdge) {
+            case ABE_BOTTOM:
+            case ABE_TOP:
+                *tray_icon_orientation_p = HIPPO_ORIENTATION_HORIZONTAL;
+                break;
+            case ABE_LEFT:
+            case ABE_RIGHT:
+                *tray_icon_orientation_p = HIPPO_ORIENTATION_VERTICAL;
+                break;
+            default:
+                g_warning("unknown tray icon orientation");
+                break;
+        }
+    }
+
+    // we have the rect of the entire taskbar; not sure if 
+    // there's a way to get the position of the actual icon.
+    // we kind of just make up something for now.
+    taskbarRect = abd.rc;
+    if (tray_icon_rect_p) {
+        if (abd.uEdge == ABE_LEFT || abd.uEdge == ABE_RIGHT) {
+            tray_icon_rect_p->height = 24;
+            tray_icon_rect_p->width = taskbarRect.right - taskbarRect.left;
+            tray_icon_rect_p->y = taskbarRect.top;
+            if (abd.uEdge == ABE_LEFT)
+                tray_icon_rect_p->x = taskbarRect.left;
+            else
+                tray_icon_rect_p->x = taskbarRect.right - tray_icon_rect_p->width;
+        } else {
+            tray_icon_rect_p->height = taskbarRect.bottom - taskbarRect.top;
+            tray_icon_rect_p->width = 24;
+            tray_icon_rect_p->x = taskbarRect.right - tray_icon_rect_p->width;
+            if (abd.uEdge == ABE_TOP)
+                tray_icon_rect_p->y = taskbarRect.top;
+            else
+                tray_icon_rect_p->y = taskbarRect.bottom - tray_icon_rect_p->height;
+        }
+    }
+
+    if (monitor_rect_p) {
+        monitor_rect_p->x = desktopRect.left;
+        monitor_rect_p->y = desktopRect.top;
+        monitor_rect_p->width = desktopRect.right - desktopRect.left;
+        monitor_rect_p->height = desktopRect.bottom - desktopRect.top;
+    }
 }
 
 static void
