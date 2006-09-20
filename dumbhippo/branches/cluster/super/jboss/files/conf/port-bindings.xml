@@ -47,6 +47,14 @@
         </delegate-config>
         <binding port="@@jbossInvokerLocatorPort@@" host="${jboss.bind.address}"/>
       </service-config>
+
+      <service-config name="jboss.mq:service=InvocationLayer,type=UIL2"
+         delegateClass="org.jboss.services.binding.AttributeMappingDelegate"
+         >
+         <delegate-config portName="ServerBindPort"/>
+         <binding port="@@uil2MQPort@@"/>
+      </service-config>
+
       
       <!-- ********************* tomcat ********************** -->
 

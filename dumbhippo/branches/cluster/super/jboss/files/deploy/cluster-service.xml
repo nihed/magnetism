@@ -151,7 +151,7 @@
    <mbean code="org.jboss.invocation.jrmp.server.JRMPInvokerHA"
       name="jboss:service=invoker,type=jrmpha">
       <attribute name="ServerAddress">${jboss.bind.address}</attribute>
-      <attribute name="RMIObjectPort">4447</attribute>
+      <attribute name="RMIObjectPort">@@haRmiObjectPort@@</attribute>
       <!--
       <attribute name="RMIClientSocketFactory">custom</attribute>
       <attribute name="RMIServerSocketFactory">custom</attribute>
@@ -167,7 +167,7 @@
       <attribute name="ClientMaxPoolSize">300</attribute>
       <attribute name="SocketTimeout">60000</attribute>
       <attribute name="ServerBindAddress">${jboss.bind.address}</attribute>
-      <attribute name="ServerBindPort">4446</attribute>
+      <attribute name="ServerBindPort">@@haInvokerPort@@</attribute>
       <attribute name="ClientConnectAddress">${jboss.bind.address}</attribute>
       <attribute name="ClientConnectPort">0</attribute>
       <attribute name="EnableTcpNoDelay">false</attribute>
