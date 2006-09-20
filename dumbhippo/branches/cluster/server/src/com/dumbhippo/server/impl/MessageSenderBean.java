@@ -29,7 +29,6 @@ import com.dumbhippo.live.Hotness;
 import com.dumbhippo.live.LiveClientData;
 import com.dumbhippo.live.LivePost;
 import com.dumbhippo.live.LiveState;
-import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupMember;
@@ -122,40 +121,6 @@ public class MessageSenderBean implements MessageSender {
 	
 	private XMPPSender xmppSender;
 	private EmailSender emailSender;
-	
-	private static class NewPostExtension implements PacketExtension {
-
-		private static final String ELEMENT_NAME = "newPost";
-
-		private static final String NAMESPACE = "http://dumbhippo.com/protocol/post";
-		
-		private PostView postView;
-		private Set<EntityView> referencedEntities;
-
-		public NewPostExtension(PostView pv, Set<EntityView> referenced) {
-			postView = pv;
-			referencedEntities = referenced;
-		}
-
-		public String toXML() {
-			XmlBuilder builder = new XmlBuilder();
-			builder.openElement(ELEMENT_NAME, "xmlns", NAMESPACE);
-			for (EntityView ev: referencedEntities) {
-				ev.writeToXmlBuilder(builder);
-			}
-			postView.writeToXmlBuilder(builder);
-			builder.closeElement();
-			return builder.toString();
-		}
-		
-		public String getElementName() {
-			return ELEMENT_NAME;
-		}
-
-		public String getNamespace() {
-			return NAMESPACE;
-		}
-	}
 	
 	private static class LivePostChangedExtension implements PacketExtension {
 
@@ -429,37 +394,6 @@ public class MessageSenderBean implements MessageSender {
 		}
 
 		public synchronized void sendPostNotification(User recipient, Post post, List<User> viewers, PostType postType) {
-			XMPPConnection connection = getConnection();
-
-			if (connection == null || !connection.isConnected()) {
-				logger.warn("Connection to XMPP is not active, not sending notification for post {}", post.getId());
-				return;
-			}
-			
-			Message message = createMessageFor(recipient); 
-
-			String title = post.getTitle();
-			
-			String url = post.getUrl() != null ? post.getUrl().toExternalForm() : null;
-			
-			if (url == null) {
-				// this particular jabber message protocol has no point without an url
-				logger.debug("no url found on post, not sending xmpp");
-				return;
-			}
-			
-			Viewpoint viewpoint = new UserViewpoint(recipient);
-
-			PostView postView = postingBoard.getPostView(viewpoint, post);
-			Set<EntityView> referenced = postingBoard.getReferencedEntities(viewpoint, post);
-			
-			NewPostExtension extension = new NewPostExtension(postView, referenced);
-			message.addExtension(extension);
-
-			message.setBody(String.format("%s\n%s", title, url));
-
-			logger.debug("Sending jabber message to {}", message.getTo());
-			connection.sendPacket(message);
 		}
 		
 		public synchronized void sendLivePostChanged(User user, LivePost lpost, PostView post) {
@@ -794,8 +728,8 @@ public class MessageSenderBean implements MessageSender {
 	public void sendPostNotification(Resource recipient, Post post, PostType postType) {
 		User user = identitySpider.getUser(recipient);
 		if (user != null) {
-			Account account = user.getAccount();
-			xmppSender.sendPostNotification(account.getOwner(), post, null, postType);
+			// Nothing to do here; will be sent out from the XMPP server based on the 
+			// PostCreatedEvent notification
 		} else if (recipient instanceof EmailResource) {
 			emailSender.sendPostNotification((EmailResource)recipient, post, postType);
 		} else {

@@ -15,9 +15,7 @@ import org.dom4j.DocumentException;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.jivesoftware.wildfire.SessionManager;
-import org.jivesoftware.wildfire.XMPPServer;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
-import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 
 import com.dumbhippo.ThreadUtils;
@@ -45,7 +43,6 @@ import com.dumbhippo.server.XmppMessageSenderProvider;
 public class MessageSender implements XmppMessageSenderProvider {
 	ExecutorService pool = ThreadUtils.newCachedThreadPool("MessageSender-pool");
 	private Map<Guid, UserMessageQueue> userQueues = new HashMap<Guid, UserMessageQueue>();
-	private JID defaultFrom = defaultFrom = new JID("admin", XMPPServer.getInstance().getServerInfo().getName(), null);
 	static private MessageSender instance;
 	
 	public void start() {
@@ -98,6 +95,18 @@ public class MessageSender implements XmppMessageSenderProvider {
 				}
 			}
 		}
+	}
+	
+	/**
+	 * Check to see if a user is present on the system. This check will
+	 * be done automatically when you call sendMessage(), but if you
+	 * are sending to only one user and creating the message payload
+	 * is significantly expensive, then it may be useful to check ahead
+	 * of time.
+	 */ 
+	public boolean userIsPresent(Guid guid) {
+		String node = guid.toJabberId(null);
+		return (SessionManager.getInstance().getSessionCount(node) > 0);
 	}
 	
 	/**
@@ -154,7 +163,6 @@ public class MessageSender implements XmppMessageSenderProvider {
         Element payloadElement = payloadDocument.getRootElement();
         payloadElement.detach();
         Message template = new Message();
-        template.setFrom(defaultFrom);
         template.setType(Message.Type.headline);
         template.getElement().add(payloadElement);
         sendMessage(to, template);
