@@ -24,7 +24,7 @@
 				GeneratePreprocessedFile="0"
 				MinimalRebuild="TRUE"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="2"
+				RuntimeLibrary="1"
 				TreatWChar_tAsBuiltInType="TRUE"
 				ForceConformanceInForLoopScope="TRUE"
 				UsePrecompiledHeader="1"
@@ -36,7 +36,7 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalOptions="/VERBOSE:LIB /NODEFAULTLIB:libc.lib /NODEFAULTLIB:libcmt.lib /NODEFAULTLIB:libcd.lib /NODEFAULTLIB:libcmtd.lib /NODEFAULTLIB:msvcrtd.lib"
+				AdditionalOptions="/VERBOSE:LIB"
 				AdditionalDependencies="Gdiplus.lib shlwapi.lib glib-2.0.lib gthread-2.0.lib gobject-2.0.lib loudmouth.lib pango-1.0.lib pangocairo-1.0.lib pangowin32-1.0.lib cairo.lib ws2_32.lib wininet.lib urlmon.lib thrownew.obj advapi32.lib gdi32.lib shell32.lib"
 				OutputFile="$(OutDir)/Mugshot.exe"
 				LinkIncremental="2"
@@ -201,6 +201,9 @@
 				RelativePath=".\HippoUpgrader.cpp">
 			</File>
 			<File
+				RelativePath=".\HippoWindowWin.cpp">
+			</File>
+			<File
 				RelativePath=".\HippoYahooMonitor.cpp">
 			</File>
 			<File
@@ -297,6 +300,9 @@
 			</File>
 			<File
 				RelativePath=".\HippoUpgrader.h">
+			</File>
+			<File
+				RelativePath=".\HippoWindowWin.h">
 			</File>
 			<File
 				RelativePath=".\HippoYahooMonitor.h">

@@ -12,6 +12,7 @@ all:
 	copy libpangowin32-1.0-0.dll $(OUTDIR)
 	copy libcairo-2.dll $(OUTDIR)
 	copy libpng13.dll $(OUTDIR)
+	copy zlib1.dll $(OUTDIR)
 
 clean:
 	del $(OUTDIR)\charset.dll
@@ -26,5 +27,6 @@ clean:
 	del $(OUTDIR)\libpangowin32-1.0-0.dll
 	del $(OUTDIR)\libcairo-2.dll
 	del $(OUTDIR)\libpng13.dll
+	del $(OUTDIR)\zlib1.dll
 
 
