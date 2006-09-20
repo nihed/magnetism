@@ -1903,7 +1903,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			FacebookAccount facebookAccount = facebookTracker.lookupFacebookAccount(viewpoint, user);
 			xml.appendTextNode("accountType", "Facebook");
 			int eventsToRequestCount = 3;
-			if (!facebookAccount.isSessionKeyValid()) {
+			if (!facebookAccount.isSessionKeyValid() && viewpoint.isOfUser(facebookAccount.getExternalAccount().getAccount().getOwner())) {
 				xml.openElement("updateItem");
 			    xml.appendTextNode("updateTitle", "Please re-login to Facebook to continue getting Facebook updates");
 			    xml.appendTextNode("updateLink", "http://api.facebook.com/login.php?api_key=" + facebookTracker.getApiKey() +"&next=/account");
@@ -1911,22 +1911,22 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			    xml.closeElement();
 			    eventsToRequestCount = 2;
 			}
-			List<FacebookEvent> facebookEvents = facebookTracker.getLatestEvents(facebookAccount, eventsToRequestCount);
+			List<FacebookEvent> facebookEvents = facebookTracker.getLatestEvents(viewpoint, facebookAccount, eventsToRequestCount);
 			for (FacebookEvent facebookEvent : facebookEvents) {
 				xml.openElement("updateItem");
 				String multiple = "";
 				if (facebookEvent.getCount() != 1)
 					multiple = "s";
 				if (facebookEvent.getEventType().equals(FacebookEventType.UNREAD_MESSAGES_UPDATE)) {
-				    xml.appendTextNode("updateTitle", "You have " + facebookEvent.getCount() + " unread message" + multiple);
+				    xml.appendTextNode("updateTitle", facebookEvent.getCount() + " unread message" + multiple);
 				} else if (facebookEvent.getEventType().equals(FacebookEventType.NEW_WALL_MESSAGES_EVENT)) {
-					xml.appendTextNode("updateTitle", "You have " + facebookEvent.getCount() + " new wall message" + multiple);					
+					xml.appendTextNode("updateTitle", facebookEvent.getCount() + " new wall message" + multiple);					
 				} else if (facebookEvent.getEventType().equals(FacebookEventType.UNSEEN_POKES_UPDATE)) {
-				    xml.appendTextNode("updateTitle", "You have " + facebookEvent.getCount() + " unseen poke" + multiple);					
+				    xml.appendTextNode("updateTitle", facebookEvent.getCount() + " unseen poke" + multiple);					
 			    } else {
 					throw new RuntimeException("Unexpected event type in HttpMethodsBean::getExternalAccountSummary(): " + facebookEvent.getEventType());
 				}
-			    xml.appendTextNode("updateLink", "http://www.facebook.com");
+			    xml.appendTextNode("updateLink", "http://www.facebook.com/profile.php?uid=" + facebookAccount.getFacebookUserId() + "&api_key=" + facebookTracker.getApiKey());
 			    xml.appendTextNode("updateText", "");
 			    xml.appendTextNode("updateTimestamp", Long.toString(facebookEvent.getEventTimestampAsLong()));
 			    xml.closeElement();

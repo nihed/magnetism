@@ -279,6 +279,10 @@ public class StackerBean implements Stacker {
 	}
 
 	private Set<User> getUsersWhoCare(Block block) {
+		return getUsersWhoCare(block, true);
+	}
+	
+	private Set<User> getUsersWhoCare(Block block, boolean includeSelf) {
 		User user;
 		try {
 			user = EJBUtil.lookupGuid(em, User.class, block.getData1AsGuid());
@@ -286,10 +290,8 @@ public class StackerBean implements Stacker {
 			throw new RuntimeException(e);
 		}
 		Set<User> peopleWhoCare = identitySpider.getUsersWhoHaveUserAsContact(SystemViewpoint.getInstance(), user);
-        // FIXME include ourselves, this is probably a debug-only thing, or pass in an argument
-		// whether the user should be included, could be more applicable for external account updates, and not 
-		// as applicable for music updates
-		peopleWhoCare.add(user);  
+        if (includeSelf) 
+		    peopleWhoCare.add(user);  
 		
 		return peopleWhoCare;	
 	}
@@ -347,27 +349,24 @@ public class StackerBean implements Stacker {
 	private Set<User> getDesiredUsersForExternalAccountUpdate(Block block) {
 		if (block.getBlockType() != BlockType.EXTERNAL_ACCOUNT_UPDATE)
 			throw new IllegalArgumentException("wrong type block");
-
-		// right now we display a number of unread messages and a reqest to re-login
-		// for facebook accounts, so only the user to whom the account belongs should
-		// care to see these, when we get other information about one's facebook updates
-		// we will need to decide who we want to show the block to based on the update 
-		// we want to show
-		// it is arguable whether we want to display the number of unread messages someone
-		// has to other people
-		// pros: it tells others how active the person is on facebook
-		// cons: it is information that is somewhat private and others do not normally see it,
-		//       others can not do anything with this information, i.e. they can't go and read 
-		//       the messages
+		
 		if (block.getData3() == ExternalAccountType.FACEBOOK.ordinal()) {
-			try {
-				return Collections.singleton(EJBUtil.lookupGuid(em, User.class, block.getData1AsGuid()));
-			} catch (NotFoundException e) {
-				throw new RuntimeException(e);
-			}
+			return getUsersWhoCare(block, false);
 		}
 	
 		return getUsersWhoCare(block);
+	}
+
+	private Set<User> getDesiredUsersForExternalAccountUpdateSelf(Block block) {
+		if (block.getBlockType() != BlockType.EXTERNAL_ACCOUNT_UPDATE_SELF)
+			throw new IllegalArgumentException("wrong type block");
+
+        try {
+			return Collections.singleton(EJBUtil.lookupGuid(em, User.class, block.getData1AsGuid()));
+		} catch (NotFoundException e) {
+			throw new RuntimeException(e);
+		}
+		
 	}
 	
 	private void updateUserBlockDatas(Block block) {
@@ -387,6 +386,9 @@ public class StackerBean implements Stacker {
 			break;
 		case EXTERNAL_ACCOUNT_UPDATE:
 			desiredUsers = getDesiredUsersForExternalAccountUpdate(block);
+			break;
+		case EXTERNAL_ACCOUNT_UPDATE_SELF:
+			desiredUsers = getDesiredUsersForExternalAccountUpdateSelf(block);
 			// don't add a default, we want a warning if any cases are missing
 		}
 		
@@ -477,6 +479,7 @@ public class StackerBean implements Stacker {
 	
 	public void onExternalAccountCreated(Guid userId, ExternalAccountType type) {
 		createBlock(BlockType.EXTERNAL_ACCOUNT_UPDATE, userId, null, type.ordinal());
+		createBlock(BlockType.EXTERNAL_ACCOUNT_UPDATE_SELF, userId, null, type.ordinal());
 	}
 	
 	public void onGroupCreated(Guid groupId) {
@@ -550,6 +553,12 @@ public class StackerBean implements Stacker {
 	@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 	public void stackAccountUpdate(Guid userId, ExternalAccountType type, long activity) {
 		stack(BlockType.EXTERNAL_ACCOUNT_UPDATE, userId, null, type.ordinal(), activity);
+	}
+
+	// don't create or suspend transaction; we will manage our own for now (FIXME)
+	@TransactionAttribute(TransactionAttributeType.SUPPORTS)
+	public void stackAccountUpdateSelf(Guid userId, ExternalAccountType type, long activity) {
+		stack(BlockType.EXTERNAL_ACCOUNT_UPDATE_SELF, userId, null, type.ordinal(), activity);
 	}
 	
 	public void clickedPost(Post post, User user, long clickedTime) {

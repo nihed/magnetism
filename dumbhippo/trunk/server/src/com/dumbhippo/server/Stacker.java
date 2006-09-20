@@ -38,6 +38,7 @@ public interface Stacker {
 	public void stackPost(Guid postId, long activity);
 	public void stackGroupMember(GroupMember member, long activity);
 	public void stackAccountUpdate(Guid userId, ExternalAccountType type, long activity);
+	public void stackAccountUpdateSelf(Guid userId, ExternalAccountType type, long activity);
 	
 	public void clickedPost(Post post, User user, long clickedTime);
 	

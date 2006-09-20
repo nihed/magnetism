@@ -92,7 +92,7 @@ public class FacebookTrackerBean implements FacebookTracker {
 		}
 		// we want to stack an update regardless of whether they have new messages, so that they know
 		// they logged in successfully; 
-		stacker.stackAccountUpdate(facebookAccount.getExternalAccount().getAccount().getOwner().getGuid(), 
+		stacker.stackAccountUpdateSelf(facebookAccount.getExternalAccount().getAccount().getOwner().getGuid(), 
                 ExternalAccountType.FACEBOOK, updateTime);
 	}
 	
@@ -125,12 +125,13 @@ public class FacebookTrackerBean implements FacebookTracker {
 		if (facebookAccount == null)
 			throw new RuntimeException("Invalid FacebookAccount id " + facebookAccountId + " is passed in to updateMessageCount()");
 		FacebookWebServices ws = new FacebookWebServices(REQUEST_TIMEOUT, config);
-		boolean newFacebookEvent = false;
+		boolean newFacebookEventSelf = false;
+		boolean newFacebookEventOthers = false;
 		long updateTime = (new Date()).getTime();
 		// we could do these requests in parallel, but be careful about updating the same facebookAccount
 		long time = ws.updateMessageCount(facebookAccount);
 		if (time != -1) {
-		    newFacebookEvent = true;
+		    newFacebookEventSelf = true;
 		    updateTime = time;
 		}
 		if (facebookAccount.isSessionKeyValid()) {
@@ -138,34 +139,41 @@ public class FacebookTrackerBean implements FacebookTracker {
 		    if (newWallMessagesEvent != null) {
 		    	em.persist(newWallMessagesEvent);
 		    	facebookAccount.addFacebookEvent(newWallMessagesEvent);
-		    	newFacebookEvent = true;
+		    	newFacebookEventSelf = true;
+		    	newFacebookEventOthers = true;
 			    updateTime = newWallMessagesEvent.getEventTimestampAsLong();		    	
 		    }
 		    
 		    if (facebookAccount.isSessionKeyValid()) {
 		    	long pokeTime = ws.updatePokeCount(facebookAccount);
 		    	if (pokeTime != -1) {
-		    		newFacebookEvent = true;
+		    		newFacebookEventSelf = true;
 				    updateTime = pokeTime;
 		    	}
 		    }
 		}
-		if (newFacebookEvent || !facebookAccount.isSessionKeyValid()) {
+		if (newFacebookEventSelf || !facebookAccount.isSessionKeyValid()) {
+			stacker.stackAccountUpdateSelf(facebookAccount.getExternalAccount().getAccount().getOwner().getGuid(), 
+					                       ExternalAccountType.FACEBOOK, updateTime);			
+		}
+		if (newFacebookEventOthers) {
 			stacker.stackAccountUpdate(facebookAccount.getExternalAccount().getAccount().getOwner().getGuid(), 
-					                   ExternalAccountType.FACEBOOK, updateTime);
+                                       ExternalAccountType.FACEBOOK, updateTime);				
 		}
 	}
 	
-	public List<FacebookEvent> getLatestEvents(FacebookAccount facebookAccount, int eventsCount) {
+	public List<FacebookEvent> getLatestEvents(Viewpoint viewpoint, FacebookAccount facebookAccount, int eventsCount) {
 		ArrayList<FacebookEvent> list = new ArrayList<FacebookEvent>();
 		list.addAll(facebookAccount.getFacebookEvents());
-		if (facebookAccount.getMessageCountTimestampAsLong() > 0) {
-            list.add(new FacebookEvent(facebookAccount, FacebookEventType.UNREAD_MESSAGES_UPDATE, 
-        		                       facebookAccount.getUnreadMessageCount(), facebookAccount.getMessageCountTimestampAsLong()));
-		}
-		if (facebookAccount.getPokeCountTimestampAsLong() > 0) {
-            list.add(new FacebookEvent(facebookAccount, FacebookEventType.UNSEEN_POKES_UPDATE, 
-        		                       facebookAccount.getUnseenPokeCount(), facebookAccount.getPokeCountTimestampAsLong()));
+		if (viewpoint.isOfUser(facebookAccount.getExternalAccount().getAccount().getOwner())) {
+			if (facebookAccount.getMessageCountTimestampAsLong() > 0) {
+	            list.add(new FacebookEvent(facebookAccount, FacebookEventType.UNREAD_MESSAGES_UPDATE, 
+	        		                       facebookAccount.getUnreadMessageCount(), facebookAccount.getMessageCountTimestampAsLong()));
+			}
+			if (facebookAccount.getPokeCountTimestampAsLong() > 0) {
+	            list.add(new FacebookEvent(facebookAccount, FacebookEventType.UNSEEN_POKES_UPDATE, 
+	        		                       facebookAccount.getUnseenPokeCount(), facebookAccount.getPokeCountTimestampAsLong()));
+			}
 		}
 		
 		// we want newer(greater) timestamps to be in the front of the list

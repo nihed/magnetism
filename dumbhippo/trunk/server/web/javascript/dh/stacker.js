@@ -53,7 +53,7 @@ dh.stacker.kindFromString = function(str) {
 		return dh.stacker.Kind.GROUP_CHAT;
 	else if (str == "GROUP_MEMBER")
 		return dh.stacker.Kind.GROUP_MEMBER;
-	else if (str == "EXTERNAL_ACCOUNT_UPDATE")
+	else if (str == "EXTERNAL_ACCOUNT_UPDATE" || str == "EXTERNAL_ACCOUNT_UPDATE_SELF")
 	    return dh.stacker.Kind.EXTERNAL_ACCOUNT_UPDATE;	
 	else
 		return dh.stacker.Kind.UNKNOWN;

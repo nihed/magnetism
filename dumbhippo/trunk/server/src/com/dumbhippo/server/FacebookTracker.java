@@ -19,7 +19,7 @@ public interface FacebookTracker {
 	
 	public void updateMessageCount(long facebookAccountId);
 	
-	public List<FacebookEvent> getLatestEvents(FacebookAccount facebookAccount, int eventsCount);
+	public List<FacebookEvent> getLatestEvents(Viewpoint viewpoint, FacebookAccount facebookAccount, int eventsCount);
 	
 	public String getApiKey();	
 }

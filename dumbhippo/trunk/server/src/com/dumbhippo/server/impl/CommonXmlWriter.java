@@ -51,7 +51,12 @@ class CommonXmlWriter {
 				xml.appendTextNode("extAccountUpdate", null, "userId", block.getData1AsGuid().toString(),
 				  	                "accountType", Long.toString(block.getData3()));
                 break;				
-				// don't add a default case, we want a warning if any cases are missing
+			case EXTERNAL_ACCOUNT_UPDATE_SELF:
+				// external account update for self and others are represented with the same xml structure
+				xml.appendTextNode("extAccountUpdate", null, "userId", block.getData1AsGuid().toString(),
+				  	                "accountType", Long.toString(block.getData3()));
+                break;	
+                // don't add a default case, we want a warning if any cases are missing
 			}
 			
 			xml.closeElement();
