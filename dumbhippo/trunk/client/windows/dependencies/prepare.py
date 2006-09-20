@@ -55,12 +55,12 @@ all_packages = {
     },
     'zlib-lib' : {
     'url' : 'http://superb-west.dl.sourceforge.net/sourceforge/gnuwin32/zlib-1.2.3-lib.zip',
-    'md5' : None,
+    'md5' : 'b0a2df1a2b0dd0bd801d71d06ce42360',
     'excludes' : [ 'manifest/*', 'lib/zlib-bcc.lib', 'include/*' ]
     },
     'zlib-bin' : {
     'url' : 'http://superb-west.dl.sourceforge.net/sourceforge/gnuwin32/zlib-1.2.3-bin.zip',
-    'md5' : None,
+    'md5' : '0b431b557399c1b3948c13c803a22c95',
     'excludes' : [ 'contrib/*', 'manifest/*', 'lib/zlib-bcc.lib', 'include/*' ]
     },    
     'cairo' : {
