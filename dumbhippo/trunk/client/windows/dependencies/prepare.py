@@ -25,8 +25,7 @@ all_packages = {
     'url' : 'ftp://ftp.gtk.org/pub/glib/2.12/win32/dependencies/libiconv-1.9.1.bin.woe32.zip',
     'md5' : 'a18e9420d6a354b585a77230996b4171',
     'excludes' : [ 'bin/iconv.exe',
-                   'include/*',
-                   '*.lib' ],
+                   'include/*' ],
     'includes' : [ 'README.libiconv' ]
     },
     'gettext' : {
@@ -54,6 +53,16 @@ all_packages = {
                    'bin/*-config',
                    'manifest/*' ]
     },
+    'zlib-lib' : {
+    'url' : 'http://superb-west.dl.sourceforge.net/sourceforge/gnuwin32/zlib-1.2.3-lib.zip',
+    'md5' : None,
+    'excludes' : [ 'manifest/*', 'lib/zlib-bcc.lib', 'include/*' ]
+    },
+    'zlib-bin' : {
+    'url' : 'http://superb-west.dl.sourceforge.net/sourceforge/gnuwin32/zlib-1.2.3-bin.zip',
+    'md5' : None,
+    'excludes' : [ 'contrib/*', 'manifest/*', 'lib/zlib-bcc.lib', 'include/*' ]
+    },    
     'cairo' : {
     'url' : 'ftp://ftp.gtk.org/pub/gtk/v2.8/win32/cairo-1.2.4.zip',
     'md5' : 'c4f01404ddfbe802462164be7db57204'
