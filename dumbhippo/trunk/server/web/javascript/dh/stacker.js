@@ -772,7 +772,7 @@ defineClass(dh.stacker.MusicPersonBlock, dh.stacker.Block,
 			var track = dh.model.trackFromXmlNode(trackNode);
 			tracks.push(track);
 		}
-		this.setTitle(person.displayName + "'s Music");
+		this.setTitle(person.displayName);
 		this.setTracks(tracks);
 	},
 
@@ -795,6 +795,23 @@ defineClass(dh.stacker.MusicPersonBlock, dh.stacker.Block,
 		// this is a little unkosher since it doesn't make a copy
 		this.setTracks(newBlock._tracks);
 		return true;
+	},
+	
+	// override
+	_updateTitleDiv : function() {
+		if (this._div) {
+			while (this._titleDiv.firstChild)
+				this._titleDiv.removeChild(this._titleDiv.firstChild);
+
+			var a = document.createElement("a");
+			dojo.html.setClass(a, "dh-person");
+			a.href = "/person?who=" + this._userId;
+			a.title = this._title;
+			a.target = "_blank";
+			dojo.dom.textContent(a, this._title);
+			this._titleDiv.appendChild(a);
+			this._titleDiv.appendChild(document.createTextNode("'s Music"));
+		}
 	},
 
 	_updateTracksDiv : function() {
