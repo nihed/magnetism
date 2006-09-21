@@ -4,6 +4,8 @@
 #include "hippo-canvas-base.h"
 #include "hippo-canvas-stack.h"
 #include "hippo-canvas-block.h"
+#include "hippo-canvas-grip.h"
+#include "hippo-canvas-widgets.h"
 #include "hippo-window.h"
 #include "hippo-actions.h"
 
@@ -16,12 +18,21 @@ typedef struct {
     HippoConnection *connection;
     GSList          *blocks;
     HippoStackMode   mode;
-    HippoCanvasItem *stack_base_item;
-    HippoCanvasItem *single_block_base_item;
-    HippoWindow     *single_block_window;
-    HippoCanvasItem *single_block_item;
+
     HippoWindow     *stack_window;
+    HippoCanvasItem *stack_box;
+    HippoCanvasItem *stack_base_item;
+    HippoCanvasItem *stack_scroll_item;
     HippoCanvasItem *stack_item;
+    HippoCanvasItem *stack_resize_grip;
+    
+    HippoWindow     *single_block_window;
+    HippoCanvasItem *single_block_box;
+    HippoCanvasItem *single_block_base_item;
+    HippoCanvasItem *single_block_item;
+
+    guint            base_on_bottom : 1;
+    
     guint            idle : 1;
 } StackManager;
 
@@ -88,8 +99,6 @@ update_for_screen_info (StackManager    *manager,
     HippoRectangle base;
     gboolean is_west;
     gboolean is_north;
-    HippoSide current_base_side;
-    HippoSide old_base_side;
  
     is_west = ((icon->x + icon->width / 2) < (monitor->x + monitor->width / 2));
     is_north = ((icon->y + icon->height / 2) < (monitor->y + monitor->height / 2));
@@ -107,34 +116,12 @@ update_for_screen_info (StackManager    *manager,
         icon->y = monitor->y + monitor->height - icon->height;
     }
 
-    hippo_window_set_resize_grip(manager->stack_window,
-                                 HIPPO_SIDE_TOP,
-                                 !is_north);
-    hippo_window_set_resize_grip(manager->stack_window,
-                                 HIPPO_SIDE_BOTTOM,
-                                 is_north);
-
-    if (is_north) {
-        current_base_side = HIPPO_SIDE_TOP;
-        old_base_side = HIPPO_SIDE_BOTTOM;
-    } else {
-        current_base_side = HIPPO_SIDE_BOTTOM;
-        old_base_side = HIPPO_SIDE_TOP;
+    if ((manager->base_on_bottom && is_north) ||
+        (!manager->base_on_bottom && !is_north)) {
+        hippo_canvas_box_reverse(HIPPO_CANVAS_BOX(manager->stack_box));
+        hippo_canvas_box_reverse(HIPPO_CANVAS_BOX(manager->single_block_box));
+        manager->base_on_bottom = !manager->base_on_bottom;
     }
-
-    hippo_window_set_side_item(manager->stack_window,
-                               old_base_side,
-                               NULL);
-    hippo_window_set_side_item(manager->single_block_window,
-                               old_base_side,
-                               NULL);
-    
-    hippo_window_set_side_item(manager->stack_window,
-                               current_base_side,
-                               manager->stack_base_item);
-    hippo_window_set_side_item(manager->single_block_window,
-                               current_base_side,
-                               manager->single_block_base_item);
     
     position_alongside(manager->single_block_window, 3, icon,
                        icon_orientation,
@@ -217,8 +204,12 @@ update_current_block(StackManager *manager)
                      NULL);
         if (old_block == new_block)
             return;
-    }
 
+        hippo_canvas_box_remove(HIPPO_CANVAS_BOX(manager->single_block_box),
+                                manager->single_block_item);
+        manager->single_block_item = NULL;
+    }
+    
     if (new_block)
         manager->single_block_item = hippo_canvas_block_new(hippo_block_get_block_type(new_block),
                                                             manager->actions);
@@ -230,8 +221,11 @@ update_current_block(StackManager *manager)
                                  new_block);
     
     g_object_set(manager->single_block_item, "box-width", UI_WIDTH, NULL);
-    hippo_window_set_contents(manager->single_block_window,
-                              manager->single_block_item);
+
+    hippo_canvas_box_append(HIPPO_CANVAS_BOX(manager->single_block_box),
+                            manager->single_block_item,
+                            manager->base_on_bottom ?
+                            0 : HIPPO_PACK_END);
 }
 
 static void
@@ -330,16 +324,18 @@ manager_disconnect(StackManager *manager)
         while (manager->blocks != NULL) {
             remove_block(manager->blocks->data, manager);
         }
-        
-        g_object_unref(manager->stack_base_item);
-        g_object_unref(manager->single_block_base_item);
-        manager->stack_base_item = NULL;
-        manager->single_block_base_item = NULL;
-        
+
         g_object_unref(manager->single_block_window);
-        g_object_unref(manager->stack_window);
         manager->single_block_window = NULL;
+        manager->single_block_base_item = NULL;
+        manager->single_block_item = NULL;
+        
+        g_object_unref(manager->stack_window);
         manager->stack_window = NULL;
+        manager->stack_base_item = NULL;
+        manager->stack_scroll_item = NULL;
+        manager->stack_item = NULL;
+        manager->stack_resize_grip = NULL;
 
         g_object_unref(manager->actions);
         manager->actions = NULL;
@@ -380,6 +376,21 @@ manager_new(void)
     return manager;
 }
 
+static gboolean
+on_stack_resize_grip_button_press(HippoCanvasItem *item,
+                                  HippoEvent      *event,
+                                  void            *data)
+{
+    StackManager *manager = data;
+
+    hippo_window_begin_resize_drag(manager->stack_window,
+                                   manager->base_on_bottom ?
+                                   HIPPO_SIDE_TOP : HIPPO_SIDE_BOTTOM,
+                                   event);
+
+    return TRUE;
+}
+
 static void
 manager_attach(StackManager    *manager,
                HippoDataCache  *cache)
@@ -412,30 +423,62 @@ manager_attach(StackManager    *manager,
     g_object_set_data_full(G_OBJECT(cache), "stack-manager",
                            manager, (GFreeFunc) manager_unref);
 
-
-    manager->single_block_window = hippo_platform_create_window(platform);
     manager->stack_window = hippo_platform_create_window(platform);
 
-    hippo_window_set_scrollbar(manager->stack_window,
+    hippo_window_set_resizable(manager->stack_window,
                                HIPPO_ORIENTATION_VERTICAL,
                                TRUE);
-
-    /* we have to ref-sink the base items since we pop them in
-     * and out of the container
-     */
+    
     manager->stack_base_item = hippo_canvas_base_new();
-    g_object_ref(manager->stack_base_item);
-    hippo_canvas_item_sink(manager->stack_base_item);
+    
+    manager->stack_item = g_object_new(HIPPO_TYPE_CANVAS_STACK,
+                                       "box-width", UI_WIDTH,
+                                       "actions", manager->actions,
+                                       NULL);
+    manager->stack_scroll_item = hippo_canvas_scrollbars_new();
+    hippo_canvas_scrollbars_set_enabled(HIPPO_CANVAS_SCROLLBARS(manager->stack_scroll_item),
+                                        HIPPO_ORIENTATION_HORIZONTAL,
+                                        FALSE);
+    
+    manager->stack_resize_grip = g_object_new(HIPPO_TYPE_CANVAS_GRIP,
+                                              NULL);
+
+    g_signal_connect(G_OBJECT(manager->stack_resize_grip),
+                     "button-press-event",
+                     G_CALLBACK(on_stack_resize_grip_button_press),
+                     manager);
+    
+    manager->stack_box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
+                                      "orientation", HIPPO_ORIENTATION_VERTICAL,
+                                      NULL);
+    
+    hippo_canvas_box_append(HIPPO_CANVAS_BOX(manager->stack_box),
+                            manager->stack_base_item,
+                            0);
+    hippo_canvas_scrollbars_set_root(HIPPO_CANVAS_SCROLLBARS(manager->stack_scroll_item),
+                                     manager->stack_item);
+    hippo_canvas_box_append(HIPPO_CANVAS_BOX(manager->stack_box),
+                            manager->stack_scroll_item,
+                            HIPPO_PACK_EXPAND);
+    hippo_canvas_box_append(HIPPO_CANVAS_BOX(manager->stack_box),
+                            manager->stack_resize_grip,
+                            0);
+    
+    hippo_window_set_contents(manager->stack_window, manager->stack_box);
+
+    manager->single_block_window = hippo_platform_create_window(platform);
 
     manager->single_block_base_item = hippo_canvas_base_new();
-    g_object_ref(manager->single_block_base_item);
-    hippo_canvas_item_sink(manager->single_block_base_item);    
-    
-    manager->stack_item = hippo_canvas_stack_new();
-    g_object_set(manager->stack_item, "box-width", UI_WIDTH,
-                 "actions", manager->actions,
-                 NULL);
-    hippo_window_set_contents(manager->stack_window, manager->stack_item);
+    manager->single_block_item = NULL; /* filled in later */
+
+    manager->single_block_box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
+                                             "orientation", HIPPO_ORIENTATION_VERTICAL,
+                                             NULL);
+
+    hippo_canvas_box_append(HIPPO_CANVAS_BOX(manager->single_block_box),
+                            manager->single_block_base_item, 0);
+
+    hippo_window_set_contents(manager->single_block_window, manager->single_block_box);
     
     g_signal_connect(manager->cache, "block-added",
                      G_CALLBACK(on_block_added), manager);

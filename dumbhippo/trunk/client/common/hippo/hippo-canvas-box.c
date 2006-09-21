@@ -1577,6 +1577,8 @@ hippo_canvas_box_remove(HippoCanvasBox  *box,
 void
 hippo_canvas_box_remove_all(HippoCanvasBox *box)
 {
+    g_return_if_fail(HIPPO_IS_CANVAS_BOX(box));
+    
     while (box->children != NULL) {
         HippoBoxChild *child = box->children->data;
         hippo_canvas_box_remove(box, child->item);
@@ -1599,6 +1601,8 @@ hippo_canvas_box_foreach(HippoCanvasBox  *box,
     GSList *link;
     GSList *next;
 
+    g_return_if_fail(HIPPO_IS_CANVAS_BOX(box));
+    
     link = box->children;
     while (link != NULL) {
         HippoBoxChild *child = link->data;
@@ -1608,4 +1612,29 @@ hippo_canvas_box_foreach(HippoCanvasBox  *box,
 
         link = next;
     }
+}
+
+/* reverse children's order and toggle all the start/end flags */
+void
+hippo_canvas_box_reverse(HippoCanvasBox  *box)
+{
+    GSList *link;
+    
+    g_return_if_fail(HIPPO_IS_CANVAS_BOX(box));
+
+    if (box->children == NULL)
+        return;
+    
+    box->children = g_slist_reverse(box->children);
+
+    link = box->children;
+    while (link != NULL) {
+        HippoBoxChild *child = link->data;
+        
+        child->end = !child->end;
+
+        link = link->next;
+    }
+
+    hippo_canvas_item_emit_request_changed(HIPPO_CANVAS_ITEM(box));
 }

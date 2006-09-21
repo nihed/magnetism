@@ -99,6 +99,7 @@ void hippo_canvas_box_remove_all (HippoCanvasBox  *box);
 void hippo_canvas_box_foreach    (HippoCanvasBox  *box,
                                   HippoCanvasForeachChildFunc func,
                                   void            *data);
+void hippo_canvas_box_reverse    (HippoCanvasBox  *box);
 
 /* Protected accessors for subclasses */
 HippoCanvasContext* hippo_canvas_box_get_context         (HippoCanvasBox *box);

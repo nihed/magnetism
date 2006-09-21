@@ -4,17 +4,13 @@
 #include <hippo/hippo-window.h>
 #include "hippo-window-gtk.h"
 #include <gtk/gtkwindow.h>
-#include <gtk/gtkscrolledwindow.h>
-#include <gtk/gtkhbox.h>
-#include <gtk/gtkvbox.h>
-#include <gtk/gtkdrawingarea.h>
 #include <gtk/gtkcontainer.h>
 #include "hippo-canvas.h"
-#include <hippo/hippo-canvas-grip.h>
 
 static void      hippo_window_gtk_init                (HippoWindowGtk       *window_gtk);
 static void      hippo_window_gtk_class_init          (HippoWindowGtkClass  *klass);
 static void      hippo_window_gtk_iface_init          (HippoWindowClass     *window_class);
+static void      hippo_window_gtk_dispose             (GObject              *object);
 static void      hippo_window_gtk_finalize            (GObject              *object);
 
 static void hippo_window_gtk_set_property (GObject      *object,
@@ -28,47 +24,30 @@ static void hippo_window_gtk_get_property (GObject      *object,
 
 
 /* Window methods */
-static void     hippo_window_gtk_set_contents       (HippoWindow     *window,
-                                                     HippoCanvasItem *item);
-static void     hippo_window_gtk_set_visible        (HippoWindow     *window,
-                                                     gboolean         visible);
-static void     hippo_window_gtk_set_position       (HippoWindow     *window,
-                                                     int              x,
-                                                     int              y);
-static void     hippo_window_gtk_get_size           (HippoWindow     *window,
-                                                     int             *width_p,
-                                                     int             *height_p);
-static void     hippo_window_gtk_set_scrollbar      (HippoWindow     *window,
-                                                     HippoOrientation orientation,
-                                                     gboolean         visible);
-static void     hippo_window_gtk_set_resize_grip    (HippoWindow     *window,
-                                                     HippoSide        side,
-                                                     gboolean         visible);
-static void     hippo_window_gtk_set_side_item      (HippoWindow      *window,
-                                                     HippoSide         side,
-                                                     HippoCanvasItem  *item);
+static void hippo_window_gtk_set_contents      (HippoWindow      *window,
+                                                HippoCanvasItem  *item);
+static void hippo_window_gtk_set_visible       (HippoWindow      *window,
+                                                gboolean          visible);
+static void hippo_window_gtk_set_position      (HippoWindow      *window,
+                                                int               x,
+                                                int               y);
+static void hippo_window_gtk_get_size          (HippoWindow      *window,
+                                                int              *width_p,
+                                                int              *height_p);
+static void hippo_window_gtk_set_resizable     (HippoWindow      *window,
+                                                HippoOrientation  orientation,
+                                                gboolean          value);
+static void hippo_window_gtk_begin_resize_drag (HippoWindow      *window,
+                                                HippoSide         side,
+                                                HippoEvent       *event);
 
-/* internal stuff */
-
-static GtkWidget* create_resize_grip                (HippoSide        side);
 
 struct _HippoWindowGtk {
     GtkWindow window;
-    GtkWidget *vbox;
-    GtkWidget *hbox;
-    GtkWidget *scroll;
     GtkWidget *canvas;
-    GtkWidget *left_grip;
-    GtkWidget *right_grip;
-    GtkWidget *top_grip;
-    GtkWidget *bottom_grip;
-    GtkWidget *left_canvas;
-    GtkWidget *right_canvas;
-    GtkWidget *top_canvas;
-    GtkWidget *bottom_canvas;
     HippoCanvasItem *contents;
-    guint has_vscrollbar : 1;
-    guint has_hscrollbar : 1;
+    guint hresizable : 1;
+    guint vresizable : 1;
 };
 
 struct _HippoWindowGtkClass {
@@ -97,9 +76,8 @@ hippo_window_gtk_iface_init(HippoWindowClass *window_class)
     window_class->set_visible = hippo_window_gtk_set_visible;
     window_class->set_position = hippo_window_gtk_set_position;
     window_class->get_size = hippo_window_gtk_get_size;
-    window_class->set_scrollbar = hippo_window_gtk_set_scrollbar;
-    window_class->set_resize_grip = hippo_window_gtk_set_resize_grip;
-    window_class->set_side_item = hippo_window_gtk_set_side_item;
+    window_class->set_resizable = hippo_window_gtk_set_resizable;
+    window_class->begin_resize_drag = hippo_window_gtk_begin_resize_drag;
 }
 
 static void
@@ -110,26 +88,18 @@ hippo_window_gtk_class_init(HippoWindowGtkClass *klass)
     object_class->set_property = hippo_window_gtk_set_property;
     object_class->get_property = hippo_window_gtk_get_property;
 
+    object_class->dispose = hippo_window_gtk_dispose;
     object_class->finalize = hippo_window_gtk_finalize;
 }
 
 static void
 hippo_window_gtk_init(HippoWindowGtk *window_gtk)
 {
-    window_gtk->scroll = gtk_scrolled_window_new(NULL, NULL);
-    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(window_gtk->scroll),
-                                   GTK_POLICY_NEVER,
-                                   GTK_POLICY_NEVER);
-    window_gtk->vbox = gtk_vbox_new(FALSE, 0);
-    window_gtk->hbox = gtk_hbox_new(FALSE, 0);
     window_gtk->canvas = hippo_canvas_new();
 
-    gtk_container_add(GTK_CONTAINER(window_gtk), window_gtk->vbox);
-    gtk_container_add(GTK_CONTAINER(window_gtk->vbox), window_gtk->hbox);
-    gtk_container_add(GTK_CONTAINER(window_gtk->hbox), window_gtk->scroll);
-    gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(window_gtk->scroll), window_gtk->canvas);
+    gtk_container_add(GTK_CONTAINER(window_gtk), window_gtk->canvas);
 
-    gtk_widget_show_all(window_gtk->vbox);
+    gtk_widget_show(window_gtk->canvas);
 
     /* not sure there's a sane type hint for our window. it's sort of a dock, but
      * metacity forces !resizeable on docks, so that doesn't work. bad metacity.
@@ -140,6 +110,18 @@ hippo_window_gtk_init(HippoWindowGtk *window_gtk)
     gtk_window_stick(GTK_WINDOW(window_gtk));
     gtk_window_set_skip_taskbar_hint(GTK_WINDOW(window_gtk), TRUE);
     gtk_window_set_skip_pager_hint(GTK_WINDOW(window_gtk), TRUE);
+
+    window_gtk->hresizable = FALSE;
+    window_gtk->vresizable = FALSE;
+}
+
+static void
+hippo_window_gtk_dispose(GObject *object)
+{
+    /* HippoWindowGtk *gtk = HIPPO_WINDOW_GTK(object); */
+
+
+    G_OBJECT_CLASS(hippo_window_gtk_parent_class)->dispose(object);
 }
 
 static void
@@ -157,9 +139,8 @@ hippo_window_gtk_new(void)
     HippoWindowGtk *gtk;
 
     gtk = g_object_new(HIPPO_TYPE_WINDOW_GTK,
-                       "resizable", FALSE,
                        NULL);
-
+    
     return HIPPO_WINDOW(gtk);
 }
 
@@ -255,26 +236,26 @@ hippo_window_gtk_get_size(HippoWindow     *window,
 }
 
 static void
-hippo_window_gtk_set_scrollbar(HippoWindow      *window,
+hippo_window_gtk_set_resizable(HippoWindow      *window,
                                HippoOrientation  orientation,
-                               gboolean          visible)
+                               gboolean          value)
 {
     HippoWindowGtk *window_gtk = HIPPO_WINDOW_GTK(window);
     
-    visible = visible != FALSE;
+    value = value != FALSE;
 
     if (orientation == HIPPO_ORIENTATION_VERTICAL) {
-        if (window_gtk->has_vscrollbar == visible)
+        if (window_gtk->vresizable == value)
             return;
-        window_gtk->has_vscrollbar = visible;
+        window_gtk->vresizable = value;
     } else {
-        if (window_gtk->has_hscrollbar == visible)
+        if (window_gtk->hresizable == value)
             return;
-        window_gtk->has_hscrollbar = visible;
+        window_gtk->hresizable = value;
     }
 
 
-    if (window_gtk->has_vscrollbar || window_gtk->has_hscrollbar) {
+    if (window_gtk->hresizable || window_gtk->vresizable) {
         GdkGeometry geometry;
 
         gtk_window_set_resizable(GTK_WINDOW(window_gtk), TRUE);
@@ -282,8 +263,8 @@ hippo_window_gtk_set_scrollbar(HippoWindow      *window,
         /* -1 = size request */
         geometry.min_width = -1;
         geometry.min_height = -1;
-        geometry.max_width = window_gtk->has_hscrollbar ? G_MAXSHORT : -1;
-        geometry.max_height = window_gtk->has_vscrollbar ? G_MAXSHORT : -1;
+        geometry.max_width = window_gtk->hresizable ? G_MAXSHORT : -1;
+        geometry.max_height = window_gtk->vresizable ? G_MAXSHORT : -1;
         gtk_window_set_geometry_hints(GTK_WINDOW (window), NULL,
                                       &geometry,
                                       GDK_HINT_MIN_SIZE | GDK_HINT_MAX_SIZE);        
@@ -291,216 +272,17 @@ hippo_window_gtk_set_scrollbar(HippoWindow      *window,
         gtk_window_set_resizable(GTK_WINDOW(window_gtk), FALSE);
         gtk_window_set_geometry_hints(GTK_WINDOW(window_gtk), NULL, NULL, 0);
     }
-    
-    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(window_gtk->scroll),
-                                   window_gtk->has_hscrollbar ?
-                                   GTK_POLICY_AUTOMATIC :
-                                   GTK_POLICY_NEVER,
-                                   window_gtk->has_vscrollbar ?
-                                   GTK_POLICY_AUTOMATIC :
-                                   GTK_POLICY_NEVER);
-}
-
-/* this is kind of a lame hack; it would probably be better to just
- * create all the widgets up front instead of on-demand, instead of
- * trying to keep everything in the right order when only some of
- * them might exist.
- */
-static void
-ensure_more_inside_than(GtkWidget *inside_child,
-                        GtkWidget *outside_child)
-{
-    int outside_position;
-    int inside_position;
-    GtkPackType pack;
-    GtkPackType inside_pack;
-    GtkBox *box;
-    
-    if (outside_child == NULL || inside_child == NULL)
-        return;
-
-    g_return_if_fail(gtk_widget_get_parent(inside_child) == gtk_widget_get_parent(outside_child));
-    
-    box = GTK_BOX(gtk_widget_get_parent(inside_child));
-    
-    gtk_container_child_get(GTK_CONTAINER(box), outside_child,
-                            "position", &outside_position,
-                            "pack-type", &pack,
-                            NULL);
-
-    gtk_container_child_get(GTK_CONTAINER(box), inside_child,
-                            "position", &inside_position,
-                            "pack-type", &inside_pack,
-                            NULL);
-
-    g_return_if_fail(inside_position != outside_position);
-    g_return_if_fail(inside_pack == pack);
-    
-    /* reorder_child wants a position from 0 to (n_children - 1)
-     * and inserts before whatever was at that position such
-     * that the inside_child now has that position.
-     */
-    if (pack == GTK_PACK_START && inside_position < outside_position)
-        gtk_box_reorder_child(box, inside_child, outside_position + 1);
-    else if (pack == GTK_PACK_END && inside_position > outside_position)
-        gtk_box_reorder_child(box, inside_child, outside_position);
 }
 
 static void
-hippo_window_gtk_set_resize_grip(HippoWindow      *window,
-                                 HippoSide         side,
-                                 gboolean          visible)
+hippo_window_gtk_begin_resize_drag(HippoWindow *window,
+                                   HippoSide    side,
+                                   HippoEvent  *event)
 {
-    HippoWindowGtk *window_gtk = HIPPO_WINDOW_GTK(window);
-
-    /* we create the grips the first time they are visible,
-     * but never bother destroying them again, just hide
-     */
-    
-    switch (side) {
-    case HIPPO_SIDE_TOP:
-        if (visible && window_gtk->top_grip == NULL) {
-            window_gtk->top_grip = create_resize_grip(side);
-            gtk_box_pack_start(GTK_BOX(window_gtk->vbox), window_gtk->top_grip,
-                               FALSE, FALSE, 0);
-            ensure_more_inside_than(window_gtk->hbox,
-                                    window_gtk->top_canvas);
-            ensure_more_inside_than(window_gtk->top_canvas,
-                                    window_gtk->top_grip);
-        }
-        if (window_gtk->top_grip)
-            g_object_set(GTK_WIDGET(window_gtk->top_grip), "visible", visible, NULL);
-        break;
-    case HIPPO_SIDE_BOTTOM:
-        if (visible && window_gtk->bottom_grip == NULL) {
-            window_gtk->bottom_grip = create_resize_grip(side);
-            gtk_box_pack_end(GTK_BOX(window_gtk->vbox), window_gtk->bottom_grip,
-                             FALSE, FALSE, 0);
-            ensure_more_inside_than(window_gtk->hbox,
-                                    window_gtk->bottom_canvas);
-            ensure_more_inside_than(window_gtk->bottom_canvas,
-                                    window_gtk->bottom_grip);
-        }
-        if (window_gtk->bottom_grip)
-            g_object_set(GTK_WIDGET(window_gtk->bottom_grip), "visible", visible, NULL);
-        break;
-    case HIPPO_SIDE_LEFT:
-        if (visible && window_gtk->left_grip == NULL) {
-            window_gtk->left_grip = create_resize_grip(side);
-            gtk_box_pack_start(GTK_BOX(window_gtk->hbox), window_gtk->left_grip,
-                               FALSE, FALSE, 0);
-            ensure_more_inside_than(window_gtk->left_canvas,
-                                    window_gtk->left_grip);
-            ensure_more_inside_than(window_gtk->scroll,
-                                    window_gtk->left_grip);
-        }
-        if (window_gtk->left_grip)
-            g_object_set(GTK_WIDGET(window_gtk->left_grip), "visible", visible, NULL);
-        break;
-    case HIPPO_SIDE_RIGHT:
-        if (visible && window_gtk->right_grip == NULL) {
-            window_gtk->right_grip = create_resize_grip(side);
-            gtk_box_pack_end(GTK_BOX(window_gtk->hbox), window_gtk->right_grip,
-                             FALSE, FALSE, 0);
-            ensure_more_inside_than(window_gtk->right_canvas,
-                                    window_gtk->right_grip);
-            ensure_more_inside_than(window_gtk->scroll,
-                                    window_gtk->right_grip);
-        }
-        if (window_gtk->right_grip)
-            g_object_set(GTK_WIDGET(window_gtk->right_grip), "visible", visible, NULL);
-        break;
-    }
-}
-
-static void
-hippo_window_gtk_set_side_item(HippoWindow      *window,
-                               HippoSide         side,
-                               HippoCanvasItem  *item)
-{
-    HippoWindowGtk *window_gtk = HIPPO_WINDOW_GTK(window);
-
-    /* we create the side canvases the first time they are visible,
-     * but never bother destroying them again, just hide
-     */
-    
-    switch (side) {
-    case HIPPO_SIDE_TOP:
-        if (item && window_gtk->top_canvas == NULL) {
-            window_gtk->top_canvas = hippo_canvas_new();
-            gtk_box_pack_start(GTK_BOX(window_gtk->vbox), window_gtk->top_canvas,
-                               FALSE, FALSE, 0);
-            ensure_more_inside_than(window_gtk->hbox,
-                                    window_gtk->top_canvas);
-            ensure_more_inside_than(window_gtk->top_canvas,
-                                    window_gtk->top_grip);
-        }
-        if (window_gtk->top_canvas) {
-            g_object_set(GTK_WIDGET(window_gtk->top_canvas), "visible", item != NULL, NULL);
-            hippo_canvas_set_root(HIPPO_CANVAS(window_gtk->top_canvas), item);
-        }
-        break;
-    case HIPPO_SIDE_BOTTOM:
-        if (item && window_gtk->bottom_canvas == NULL) {
-            window_gtk->bottom_canvas = hippo_canvas_new();
-            gtk_box_pack_end(GTK_BOX(window_gtk->vbox), window_gtk->bottom_canvas,
-                             FALSE, FALSE, 0);
-            ensure_more_inside_than(window_gtk->hbox,
-                                    window_gtk->bottom_canvas);
-            ensure_more_inside_than(window_gtk->bottom_canvas,
-                                    window_gtk->bottom_grip);
-        }
-        if (window_gtk->bottom_canvas) {
-            g_object_set(GTK_WIDGET(window_gtk->bottom_canvas), "visible", item != NULL, NULL);
-            hippo_canvas_set_root(HIPPO_CANVAS(window_gtk->bottom_canvas), item);
-        }
-        break;
-    case HIPPO_SIDE_LEFT:
-        if (item && window_gtk->left_canvas == NULL) {
-            window_gtk->left_canvas = hippo_canvas_new();
-            gtk_box_pack_start(GTK_BOX(window_gtk->hbox), window_gtk->left_canvas,
-                               FALSE, FALSE, 0);
-            ensure_more_inside_than(window_gtk->left_canvas,
-                                    window_gtk->left_grip);
-            ensure_more_inside_than(window_gtk->scroll,
-                                    window_gtk->left_canvas);
-        }
-        if (window_gtk->left_canvas) {
-            g_object_set(GTK_WIDGET(window_gtk->left_canvas), "visible", item != NULL, NULL);
-            hippo_canvas_set_root(HIPPO_CANVAS(window_gtk->left_canvas), item);
-        }
-        break;
-    case HIPPO_SIDE_RIGHT:
-        if (item && window_gtk->right_canvas == NULL) {
-            window_gtk->right_canvas = hippo_canvas_new();
-            gtk_box_pack_end(GTK_BOX(window_gtk->hbox), window_gtk->right_canvas,
-                             FALSE, FALSE, 0);
-            ensure_more_inside_than(window_gtk->right_canvas,
-                                    window_gtk->right_grip);
-            ensure_more_inside_than(window_gtk->scroll,
-                                    window_gtk->right_canvas);
-        }
-        if (window_gtk->right_canvas) {
-            g_object_set(GTK_WIDGET(window_gtk->right_canvas), "visible", item != NULL, NULL);
-            hippo_canvas_set_root(HIPPO_CANVAS(window_gtk->right_canvas), item);
-        }
-        break;
-    }
-}
-
-static gboolean
-on_grip_button_press(GtkWidget      *widget,
-                     GdkEventButton *event,
-                     void           *data)
-{
-    GtkWidget *toplevel;
+    HippoWindowGtk *window_gtk = HIPPO_WINDOW_GTK(window);    
     GdkWindowEdge edge;
     
-    toplevel = gtk_widget_get_ancestor(widget, GTK_TYPE_WINDOW);
-    if (toplevel == NULL)
-        return FALSE;
-
-    switch ((HippoSide) GPOINTER_TO_INT(data)) {
+    switch (side) {
     case HIPPO_SIDE_TOP:
         edge = GDK_WINDOW_EDGE_NORTH;
         break;
@@ -515,35 +297,13 @@ on_grip_button_press(GtkWidget      *widget,
         break;
     default:
         g_warning("Unknown window side");
-        return FALSE;
+        return;
     }
     
-    gtk_window_begin_resize_drag(GTK_WINDOW(toplevel),
+    gtk_window_begin_resize_drag(GTK_WINDOW(window_gtk),
                                  edge,
-                                 event->button,
-                                 event->x_root,
-                                 event->y_root,
-                                 event->time);
-    return TRUE;
-}
-
-static GtkWidget*
-create_resize_grip(HippoSide side)
-{
-    GtkWidget *grip;
-    HippoCanvasItem *grip_item;
-
-    grip = hippo_canvas_new();
-
-    grip_item = hippo_canvas_grip_new();
-    hippo_canvas_set_root(HIPPO_CANVAS(grip), grip_item);
-    
-    gtk_widget_add_events(grip, GDK_BUTTON_PRESS_MASK | GDK_ENTER_NOTIFY_MASK | GDK_LEAVE_NOTIFY_MASK);
-    
-    g_signal_connect(G_OBJECT(grip),
-                     "button-press-event",
-                     G_CALLBACK(on_grip_button_press),
-                     GINT_TO_POINTER(side));
-    
-    return grip;
+                                 event->u.button.button,
+                                 event->u.button.x11_x_root,
+                                 event->u.button.x11_y_root,
+                                 event->u.button.x11_time);
 }

@@ -80,31 +80,22 @@ hippo_window_get_size(HippoWindow     *window,
 }
 
 void
-hippo_window_set_scrollbar(HippoWindow      *window,
+hippo_window_set_resizable(HippoWindow      *window,
                            HippoOrientation  orientation,
-                           gboolean          visible)
+                           gboolean          value)
 {
     g_return_if_fail(HIPPO_IS_WINDOW(window));
 
-    return HIPPO_WINDOW_GET_CLASS(window)->set_scrollbar(window, orientation, visible);
+    return HIPPO_WINDOW_GET_CLASS(window)->set_resizable(window, orientation, value);
 }
 
 void
-hippo_window_set_resize_grip(HippoWindow      *window,
-                             HippoSide         side,
-                             gboolean          visible)
+hippo_window_begin_resize_drag (HippoWindow      *window,
+                                HippoSide         side,
+                                HippoEvent       *event)
 {
     g_return_if_fail(HIPPO_IS_WINDOW(window));
 
-    return HIPPO_WINDOW_GET_CLASS(window)->set_resize_grip(window, side, visible);
+    return HIPPO_WINDOW_GET_CLASS(window)->begin_resize_drag(window, side, event);
 }
 
-void
-hippo_window_set_side_item(HippoWindow      *window,
-                           HippoSide         side,
-                           HippoCanvasItem  *item)
-{
-    g_return_if_fail(HIPPO_IS_WINDOW(window));
-
-    return HIPPO_WINDOW_GET_CLASS(window)->set_side_item(window, side, item);
-}

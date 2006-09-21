@@ -42,6 +42,7 @@ hippo_canvas_scrollbars_new(void)
                                    GTK_POLICY_AUTOMATIC,
                                    GTK_POLICY_AUTOMATIC);
     canvas = hippo_canvas_new();
+    gtk_widget_show(canvas);
     gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(widget), canvas);
     
     return g_object_new(HIPPO_TYPE_CANVAS_SCROLLBARS,
@@ -55,16 +56,38 @@ hippo_canvas_scrollbars_set_root(HippoCanvasScrollbars *scrollbars,
 {
     GtkWidget *sw;
     HippoCanvas *canvas;
+    GtkWidget *viewport;
 
     g_return_if_fail(HIPPO_IS_CANVAS_SCROLLBARS(scrollbars));
     
     sw = NULL;
-    g_object_get(G_OBJECT(item), "widget", &sw, NULL);
+    g_object_get(G_OBJECT(scrollbars), "widget", &sw, NULL);
     g_return_if_fail(GTK_IS_SCROLLED_WINDOW(sw));
     
-    canvas = HIPPO_CANVAS(gtk_bin_get_child(GTK_BIN(sw)));
-
+    viewport = gtk_bin_get_child(GTK_BIN(sw));
+    canvas = HIPPO_CANVAS(gtk_bin_get_child(GTK_BIN(viewport)));
+    
     hippo_canvas_set_root(canvas, item);
+}
+
+void
+hippo_canvas_scrollbars_set_enabled (HippoCanvasScrollbars *scrollbars,
+                                     HippoOrientation       orientation,
+                                     gboolean               value)
+{
+    GtkWidget *sw;
+
+    g_return_if_fail(HIPPO_IS_CANVAS_SCROLLBARS(scrollbars));
+    
+    sw = NULL;
+    g_object_get(G_OBJECT(scrollbars), "widget", &sw, NULL);
+    g_return_if_fail(GTK_IS_SCROLLED_WINDOW(sw));
+
+    g_object_set(G_OBJECT(sw),
+                 orientation == HIPPO_ORIENTATION_VERTICAL ?
+                 "vscrollbar-policy" : "hscrollbar-policy",
+                 value ? GTK_POLICY_AUTOMATIC : GTK_POLICY_NEVER,
+                 NULL);
 }
 
 HippoCanvasItem*

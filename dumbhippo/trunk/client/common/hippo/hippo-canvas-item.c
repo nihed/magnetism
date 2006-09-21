@@ -203,7 +203,10 @@ gboolean
 hippo_canvas_item_emit_button_press_event (HippoCanvasItem  *canvas_item,
                                            int               x,
                                            int               y,
-                                           int               button)
+                                           int               button,
+                                           int               x11_x_root,
+                                           int               x11_y_root,
+                                           guint32           x11_time)
 {
     HippoEvent event;
 
@@ -213,7 +216,10 @@ hippo_canvas_item_emit_button_press_event (HippoCanvasItem  *canvas_item,
     event.x = x;
     event.y = y;
     event.u.button.button = button;
-
+    event.u.button.x11_x_root = x11_x_root;
+    event.u.button.x11_y_root = x11_y_root;
+    event.u.button.x11_time = x11_time;
+    
     return hippo_canvas_item_process_event(canvas_item, &event, 0, 0);
 }
 
@@ -221,7 +227,10 @@ gboolean
 hippo_canvas_item_emit_button_release_event(HippoCanvasItem  *canvas_item,
                                             int               x,
                                             int               y,
-                                            int               button)
+                                            int               button,
+                                            int               x11_x_root,
+                                            int               x11_y_root,
+                                            guint32           x11_time)
 {
     HippoEvent event;
 
@@ -231,7 +240,10 @@ hippo_canvas_item_emit_button_release_event(HippoCanvasItem  *canvas_item,
     event.x = x;
     event.y = y;
     event.u.button.button = button;
-
+    event.u.button.x11_x_root = x11_x_root;
+    event.u.button.x11_y_root = x11_y_root;
+    event.u.button.x11_time = x11_time;
+    
     return hippo_canvas_item_process_event(canvas_item, &event, 0, 0);
 }
 

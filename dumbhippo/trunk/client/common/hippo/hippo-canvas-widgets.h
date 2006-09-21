@@ -58,8 +58,12 @@ HIPPO_DECLARE_WIDGET_ITEM(entry, Entry)
 
 /* METHODS */
 
-void hippo_canvas_scrollbars_set_root (HippoCanvasScrollbars *scrollbars,
-                                       HippoCanvasItem       *item);
+void hippo_canvas_scrollbars_set_root    (HippoCanvasScrollbars *scrollbars,
+                                          HippoCanvasItem       *item);
+void hippo_canvas_scrollbars_set_enabled (HippoCanvasScrollbars *scrollbars,
+                                          HippoOrientation       orientation,
+                                          gboolean               value);
+
 
 G_END_DECLS
 

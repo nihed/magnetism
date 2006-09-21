@@ -370,7 +370,9 @@ hippo_canvas_button_press(GtkWidget         *widget,
     
     return hippo_canvas_item_emit_button_press_event(canvas->root,
                                                      event->x - window_x, event->y - window_y,
-                                                     event->button);
+                                                     event->button,
+                                                     event->x_root, event->y_root,
+                                                     event->time);
 }
 
 static gboolean
@@ -392,7 +394,9 @@ hippo_canvas_button_release(GtkWidget         *widget,
     
     return hippo_canvas_item_emit_button_release_event(canvas->root,
                                                        event->x - window_x, event->y - window_y,
-                                                       event->button);
+                                                       event->button,
+                                                       event->x_root, event->y_root,
+                                                       event->time);
 }
 
 static void

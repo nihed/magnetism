@@ -37,6 +37,11 @@ struct _HippoEvent {
         } motion;
         struct {
             int button;
+
+            /* we pass these through for gtk_window_begin_resize_drag() */
+            int x11_x_root;
+            int x11_y_root;
+            guint32 x11_time;
         } button;
     } u;
 };
@@ -125,11 +130,17 @@ void     hippo_canvas_item_get_request             (HippoCanvasItem *canvas_item
 gboolean hippo_canvas_item_emit_button_press_event (HippoCanvasItem *canvas_item,
                                                     int              x,
                                                     int              y,
-                                                    int              button);
+                                                    int              button,
+                                                    int              x11_x_root,
+                                                    int              x11_y_root,
+                                                    guint32          x11_time);
 gboolean hippo_canvas_item_emit_button_release_event (HippoCanvasItem *canvas_item,
-                                                    int              x,
-                                                    int              y,
-                                                    int              button);
+                                                      int              x,
+                                                      int              y,
+                                                      int              button,
+                                                      int              x11_x_root,
+                                                      int              x11_y_root,
+                                                      guint32          x11_time);
 gboolean hippo_canvas_item_emit_motion_notify_event (HippoCanvasItem  *canvas_item,
                                                      int               x,
                                                      int               y,

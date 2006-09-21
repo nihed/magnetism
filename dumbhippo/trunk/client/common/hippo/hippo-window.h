@@ -20,50 +20,44 @@ G_BEGIN_DECLS
 struct _HippoWindowClass {
     GTypeInterface base_iface;
     
-    void (* set_contents)     (HippoWindow     *window,
-                               HippoCanvasItem *item);
-    void (* set_visible)      (HippoWindow     *window,
-                               gboolean         visible);
-    void (* set_position)     (HippoWindow     *window,
-                               int              x,
-                               int              y);
-    void (* get_size)         (HippoWindow     *window,
-                               int             *width_p,
-                               int             *height_p);
-    void (* set_scrollbar)    (HippoWindow     *window,
-                               HippoOrientation orientation,
-                               gboolean         visible);
-    void (* set_resize_grip)  (HippoWindow     *window,
-                               HippoSide        side,
-                               gboolean         visible);
-    void (* set_side_item)    (HippoWindow     *window,
-                               HippoSide        side,
-                               HippoCanvasItem *item);
+    void (* set_contents)      (HippoWindow     *window,
+                                HippoCanvasItem *item);
+    void (* set_visible)       (HippoWindow     *window,
+                                gboolean         visible);
+    void (* set_position)      (HippoWindow     *window,
+                                int              x,
+                                int              y);
+    void (* get_size)          (HippoWindow     *window,
+                                int             *width_p,
+                                int             *height_p);
+    void (* set_resizable)     (HippoWindow     *window,
+                                HippoOrientation orientation,
+                                gboolean         visible);
+    void (* begin_resize_drag) (HippoWindow      *window,
+                                HippoSide         side,
+                                HippoEvent       *event);
+    
 };
 
 GType        	 hippo_window_get_type               (void) G_GNUC_CONST;
 
 
-void hippo_window_set_contents    (HippoWindow      *window,
-                                   HippoCanvasItem  *item);
-void hippo_window_set_visible     (HippoWindow      *window,
-                                   gboolean          visible);
-void hippo_window_set_position    (HippoWindow      *window,
-                                   int               x,
-                                   int               y);
-void hippo_window_get_size        (HippoWindow      *window,
-                                   int              *width_p,
-                                   int              *height_p);
-void hippo_window_set_scrollbar   (HippoWindow      *window,
-                                   HippoOrientation  orientation,
-                                   gboolean          visible);
-void hippo_window_set_resize_grip (HippoWindow      *window,
-                                   HippoSide         side,
-                                   gboolean          visible);
-void hippo_window_set_side_item   (HippoWindow      *window,
-                                   HippoSide         side,
-                                   HippoCanvasItem  *item);
- 
+void hippo_window_set_contents      (HippoWindow      *window,
+                                     HippoCanvasItem  *item);
+void hippo_window_set_visible       (HippoWindow      *window,
+                                     gboolean          visible);
+void hippo_window_set_position      (HippoWindow      *window,
+                                     int               x,
+                                     int               y);
+void hippo_window_get_size          (HippoWindow      *window,
+                                     int              *width_p,
+                                     int              *height_p);
+void hippo_window_set_resizable     (HippoWindow      *window,
+                                     HippoOrientation  orientation,
+                                     gboolean          value);
+void hippo_window_begin_resize_drag (HippoWindow      *window,
+                                     HippoSide         side,
+                                     HippoEvent       *event);
 
 G_END_DECLS
 
