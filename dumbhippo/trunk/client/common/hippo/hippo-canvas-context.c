@@ -2,6 +2,7 @@
 #include "hippo-common-internal.h"
 #include "hippo-canvas-context.h"
 #include "hippo-common-marshal.h"
+#include "hippo-canvas-item.h"
 
 static void     hippo_canvas_context_base_init (void                  *klass);
 
@@ -65,6 +66,39 @@ hippo_canvas_context_get_color(HippoCanvasContext *context,
 
     return HIPPO_CANVAS_CONTEXT_GET_CLASS(context)->get_color(context, color);
 }
+
+void
+hippo_canvas_context_register_widget_item(HippoCanvasContext *context,
+                                          HippoCanvasItem    *item)
+{
+    g_return_if_fail(HIPPO_IS_CANVAS_CONTEXT(context));
+    g_return_if_fail(HIPPO_IS_CANVAS_ITEM(item));
+    
+    return HIPPO_CANVAS_CONTEXT_GET_CLASS(context)->register_widget_item(context, item);
+}
+
+void
+hippo_canvas_context_unregister_widget_item (HippoCanvasContext *context,
+                                             HippoCanvasItem    *item)
+{
+    g_return_if_fail(HIPPO_IS_CANVAS_CONTEXT(context));
+    g_return_if_fail(HIPPO_IS_CANVAS_ITEM(item));
+    
+    return HIPPO_CANVAS_CONTEXT_GET_CLASS(context)->unregister_widget_item(context, item);
+}
+    
+void
+hippo_canvas_context_translate_to_widget(HippoCanvasContext *context,
+                                         HippoCanvasItem    *item,
+                                         int                *x_p,
+                                         int                *y_p)
+{
+    g_return_if_fail(HIPPO_IS_CANVAS_CONTEXT(context));
+    g_return_if_fail(HIPPO_IS_CANVAS_ITEM(item));
+    
+    return HIPPO_CANVAS_CONTEXT_GET_CLASS(context)->translate_to_widget(context, item, x_p, y_p);
+}
+
 
 #define HIPPO_GET_RED(rgba)    (((rgba) >> 24)                / 255.0)
 #define HIPPO_GET_GREEN(rgba)  ((((rgba) & 0x00ff0000) >> 16) / 255.0)

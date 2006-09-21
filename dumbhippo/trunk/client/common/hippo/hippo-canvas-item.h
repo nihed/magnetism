@@ -3,7 +3,7 @@
 #define __HIPPO_CANVAS_ITEM_H__
 
 #include <hippo/hippo-basics.h>
-#include "hippo-canvas-context.h"
+#include <hippo/hippo-canvas-context.h>
 
 G_BEGIN_DECLS
 
@@ -48,9 +48,6 @@ typedef enum {
     HIPPO_ALIGNMENT_CENTER,
     HIPPO_ALIGNMENT_END    /* right or bottom */
 } HippoItemAlignment;
-
-typedef struct _HippoCanvasItem      HippoCanvasItem;
-typedef struct _HippoCanvasItemClass HippoCanvasItemClass;
 
 #define HIPPO_TYPE_CANVAS_ITEM              (hippo_canvas_item_get_type ())
 #define HIPPO_CANVAS_ITEM(object)           (G_TYPE_CHECK_INSTANCE_CAST ((object), HIPPO_TYPE_CANVAS_ITEM, HippoCanvasItem))

@@ -23,11 +23,20 @@ static void hippo_canvas_box_get_property (GObject      *object,
 
 
 /* Canvas context methods */
-static PangoLayout*     hippo_canvas_box_create_layout      (HippoCanvasContext *context);
-static cairo_surface_t* hippo_canvas_box_load_image         (HippoCanvasContext *context,
-                                                             const char         *image_name);
-static guint32          hippo_canvas_box_get_color          (HippoCanvasContext *context,
-                                                             HippoStockColor     color);
+static PangoLayout*     hippo_canvas_box_create_layout          (HippoCanvasContext *context);
+static cairo_surface_t* hippo_canvas_box_load_image             (HippoCanvasContext *context,
+                                                                 const char         *image_name);
+static guint32          hippo_canvas_box_get_color              (HippoCanvasContext *context,
+                                                                 HippoStockColor     color);
+static void             hippo_canvas_box_register_widget_item   (HippoCanvasContext *context,
+                                                                 HippoCanvasItem    *item);
+static void             hippo_canvas_box_unregister_widget_item (HippoCanvasContext *context,
+                                                                 HippoCanvasItem    *item);
+static void             hippo_canvas_box_translate_to_widget    (HippoCanvasContext *context,
+                                                                 HippoCanvasItem    *item,
+                                                                 int                *x_p,
+                                                                 int                *y_p);
+
 
 /* Canvas item methods */
 static void               hippo_canvas_box_sink                (HippoCanvasItem    *item);
@@ -138,6 +147,9 @@ hippo_canvas_box_iface_init_context (HippoCanvasContextClass *klass)
     klass->create_layout = hippo_canvas_box_create_layout;
     klass->load_image = hippo_canvas_box_load_image;
     klass->get_color = hippo_canvas_box_get_color;
+    klass->register_widget_item = hippo_canvas_box_register_widget_item;
+    klass->unregister_widget_item = hippo_canvas_box_unregister_widget_item;
+    klass->translate_to_widget = hippo_canvas_box_translate_to_widget;
 }
 
 static void
@@ -521,6 +533,20 @@ hippo_canvas_box_get_property(GObject         *object,
     }
 }
 
+static HippoBoxChild*
+find_child(HippoCanvasBox  *box,
+           HippoCanvasItem *item)
+{
+    GSList *link;
+
+    for (link = box->children; link != NULL; link = link->next) {
+        HippoBoxChild *child = link->data;
+        if (child->item == item)
+            return child;
+    }
+    return NULL;
+}
+
 static PangoLayout*
 hippo_canvas_box_create_layout(HippoCanvasContext *context)
 {
@@ -557,6 +583,50 @@ hippo_canvas_box_get_color(HippoCanvasContext *context,
 }
 
 static void
+hippo_canvas_box_register_widget_item(HippoCanvasContext *context,
+                                      HippoCanvasItem    *item)
+{
+    HippoCanvasBox *box = HIPPO_CANVAS_BOX(context);
+
+    g_assert(box->context != NULL);
+
+    return hippo_canvas_context_register_widget_item(box->context, item);
+}
+
+static void
+hippo_canvas_box_unregister_widget_item (HippoCanvasContext *context,
+                                         HippoCanvasItem    *item)
+{
+    HippoCanvasBox *box = HIPPO_CANVAS_BOX(context);
+
+    g_assert(box->context != NULL);
+
+    return hippo_canvas_context_unregister_widget_item(box->context, item);
+}
+    
+static void
+hippo_canvas_box_translate_to_widget(HippoCanvasContext *context,
+                                     HippoCanvasItem    *item,
+                                     int                *x_p,
+                                     int                *y_p)
+{
+    HippoCanvasBox *box = HIPPO_CANVAS_BOX(context);
+    HippoBoxChild *child;
+    
+    g_assert(box->context != NULL);
+
+    child = find_child(box, item);
+    g_assert(child != NULL);
+
+    if (x_p)
+        *x_p += child->x;
+    if (y_p)
+        *y_p += child->y;
+    
+    return hippo_canvas_context_translate_to_widget(box->context, item, x_p, y_p);
+}
+
+static void
 hippo_canvas_box_sink(HippoCanvasItem    *item)
 {
     HippoCanvasBox *box = HIPPO_CANVAS_BOX(item);
@@ -579,20 +649,30 @@ hippo_canvas_box_set_context(HippoCanvasItem    *item,
     if (box->context == context)
         return;
     
-    /* Note that we do not ref this; the parent is responsible for setting
-     * it back to NULL before dropping the ref to the item
+    /* Note that we do not ref the context; the parent is responsible for setting
+     * it back to NULL before dropping the ref to the item.
+     *
+     * Also, we set box->context to non-NULL *before* setting child contexts,
+     * so they see a valid context; and set it to NULL *after* setting child
+     * contexts, so they see a valid context again. i.e. the context the
+     * child sees is always valid.
      */
-    box->context = context;
 
-    if (box->context != NULL)
+    if (context != NULL)
         child_context = HIPPO_CANVAS_CONTEXT(box);
     else
         child_context = NULL;
+
+    if (child_context)
+        box->context = context; /* set to non-NULL before sending to children */
     
     for (link = box->children; link != NULL; link = link->next) {
         HippoBoxChild *child = link->data;
         hippo_canvas_item_set_context(child->item, child_context);
     }
+
+    if (child_context == NULL)
+        box->context = context; /* set box context to NULL after removing it from children */
 }
 
 void
@@ -1335,20 +1415,6 @@ hippo_canvas_box_get_needs_resize(HippoCanvasItem *item)
     HippoCanvasBox *box = HIPPO_CANVAS_BOX(item);
 
     return box->request_changed_since_allocate;
-}
-
-static HippoBoxChild*
-find_child(HippoCanvasBox  *box,
-           HippoCanvasItem *item)
-{
-    GSList *link;
-
-    for (link = box->children; link != NULL; link = link->next) {
-        HippoBoxChild *child = link->data;
-        if (child->item == item)
-            return child;
-    }
-    return NULL;
 }
 
 static char*

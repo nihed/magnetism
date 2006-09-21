@@ -12,6 +12,8 @@ mugshot_LDADD= libhippoipc.la libhippo.la libgtkcopy.la
 mugshot_SOURCES	=				\
 	src/hippo-canvas.c			\
 	src/hippo-canvas.h			\
+	src/hippo-canvas-widget.c		\
+	src/hippo-canvas-widget.h		\
 	src/hippo-chat-window.c		    	\
 	src/hippo-chat-window.h		    	\
 	src/hippo-cookies-linux.c		\

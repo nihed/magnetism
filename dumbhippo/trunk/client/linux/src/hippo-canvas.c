@@ -3,11 +3,19 @@
 #include <glib/gi18n-lib.h>
 #include "hippo-canvas.h"
 #include <hippo/hippo-canvas-context.h>
-#include <gtk/gtkeventbox.h>
+#include <gtk/gtkcontainer.h>
 #include "hippo-embedded-image.h"
+#include "hippo-canvas-widget.h"
+
+typedef struct
+{
+    HippoCanvasItem *item;
+    GtkWidget       *widget;
+} RegisteredWidgetItem;
 
 static void hippo_canvas_init       (HippoCanvas             *canvas);
 static void hippo_canvas_class_init (HippoCanvasClass        *klass);
+static void hippo_canvas_dispose    (GObject                 *object);
 static void hippo_canvas_finalize   (GObject                 *object);
 static void hippo_canvas_iface_init (HippoCanvasContextClass *klass);
 
@@ -38,23 +46,45 @@ static gboolean  hippo_canvas_leave_notify        (GtkWidget         *widget,
 static gboolean  hippo_canvas_motion_notify       (GtkWidget         *widget,
             	       	                           GdkEventMotion    *event);
 
-static PangoLayout*     hippo_canvas_create_layout (HippoCanvasContext *context);
-static cairo_surface_t* hippo_canvas_load_image    (HippoCanvasContext *context,
-                                                    const char         *image_name);
-static guint32          hippo_canvas_get_color     (HippoCanvasContext *context,
-                                                    HippoStockColor     color);
+static void  hippo_canvas_realize    (GtkWidget    *widget);
+static void  hippo_canvas_add        (GtkContainer *container,
+                                      GtkWidget    *widget);
+static void  hippo_canvas_remove     (GtkContainer *container,
+                                      GtkWidget    *widget);
+static void  hippo_canvas_forall     (GtkContainer *container,
+                                      gboolean      include_internals,
+                                      GtkCallback   callback,
+                                      gpointer      callback_data);
+static GType hippo_canvas_child_type (GtkContainer *container);
 
+
+
+static PangoLayout*     hippo_canvas_create_layout          (HippoCanvasContext *context);
+static cairo_surface_t* hippo_canvas_load_image             (HippoCanvasContext *context,
+                                                             const char         *image_name);
+static guint32          hippo_canvas_get_color              (HippoCanvasContext *context,
+                                                             HippoStockColor     color);
+static void             hippo_canvas_register_widget_item   (HippoCanvasContext *context,
+                                                             HippoCanvasItem    *item);
+static void             hippo_canvas_unregister_widget_item (HippoCanvasContext *context,
+                                                             HippoCanvasItem    *item);
+static void             hippo_canvas_translate_to_widget    (HippoCanvasContext *context,
+                                                             HippoCanvasItem    *item,
+                                                             int                *x_p,
+                                                             int                *y_p);
 
 struct _HippoCanvas {
-    GtkEventBox parent;
+    GtkContainer parent;
 
     HippoCanvasItem *root;
 
     HippoCanvasPointer pointer;
+
+    GSList *widget_items;
 };
 
 struct _HippoCanvasClass {
-    GtkEventBoxClass parent_class;
+    GtkContainerClass parent_class;
 
 };
 
@@ -69,7 +99,7 @@ enum {
     PROP_0
 };
 
-G_DEFINE_TYPE_WITH_CODE(HippoCanvas, hippo_canvas, GTK_TYPE_EVENT_BOX,
+G_DEFINE_TYPE_WITH_CODE(HippoCanvas, hippo_canvas, GTK_TYPE_CONTAINER,
                         G_IMPLEMENT_INTERFACE(HIPPO_TYPE_CANVAS_CONTEXT,
                                               hippo_canvas_iface_init));
 
@@ -77,9 +107,6 @@ static void
 hippo_canvas_init(HippoCanvas *canvas)
 {
     GtkWidget *widget = GTK_WIDGET(canvas);
-    
-    /* tells event box to create an input-only window on top */
-    GTK_WIDGET_SET_FLAGS(widget, GTK_NO_WINDOW);
 
     gtk_widget_add_events(widget, GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK |
                           GDK_ENTER_NOTIFY_MASK | GDK_LEAVE_NOTIFY_MASK | GDK_BUTTON_PRESS);
@@ -92,10 +119,12 @@ hippo_canvas_class_init(HippoCanvasClass *klass)
 {
     GObjectClass *object_class = G_OBJECT_CLASS (klass);
     GtkWidgetClass *widget_class = GTK_WIDGET_CLASS(klass);
-
+    GtkContainerClass *container_class = GTK_CONTAINER_CLASS(klass);
+    
     object_class->set_property = hippo_canvas_set_property;
     object_class->get_property = hippo_canvas_get_property;
 
+    object_class->dispose = hippo_canvas_dispose;
     object_class->finalize = hippo_canvas_finalize;
 
     widget_class->expose_event = hippo_canvas_expose_event;
@@ -106,6 +135,13 @@ hippo_canvas_class_init(HippoCanvasClass *klass)
     widget_class->motion_notify_event = hippo_canvas_motion_notify;
     widget_class->enter_notify_event = hippo_canvas_enter_notify;
     widget_class->leave_notify_event = hippo_canvas_leave_notify;
+
+    widget_class->realize = hippo_canvas_realize;
+
+    container_class->add = hippo_canvas_add;
+    container_class->remove = hippo_canvas_remove;
+    container_class->forall = hippo_canvas_forall;
+    container_class->child_type = hippo_canvas_child_type;
 }
 
 static void
@@ -114,14 +150,27 @@ hippo_canvas_iface_init (HippoCanvasContextClass *klass)
     klass->create_layout = hippo_canvas_create_layout;
     klass->load_image = hippo_canvas_load_image;
     klass->get_color = hippo_canvas_get_color;
+    klass->register_widget_item = hippo_canvas_register_widget_item;
+    klass->unregister_widget_item = hippo_canvas_unregister_widget_item;
+    klass->translate_to_widget = hippo_canvas_translate_to_widget;
+}
+
+static void
+hippo_canvas_dispose(GObject *object)
+{
+    HippoCanvas *canvas = HIPPO_CANVAS(object);
+
+    hippo_canvas_set_root(canvas, NULL);
+
+    g_assert(canvas->widget_items == NULL);
+    
+    G_OBJECT_CLASS(hippo_canvas_parent_class)->dispose(object);
 }
 
 static void
 hippo_canvas_finalize(GObject *object)
 {
-    HippoCanvas *canvas = HIPPO_CANVAS(object);
-
-    hippo_canvas_set_root(canvas, NULL);
+    /* HippoCanvas *canvas = HIPPO_CANVAS(object); */
 
     G_OBJECT_CLASS(hippo_canvas_parent_class)->finalize(object);
 }
@@ -160,50 +209,14 @@ hippo_canvas_get_property(GObject         *object,
     }
 }
 
-/* whee, circumvent GtkEventBoxPrivate */
-static GdkWindow*
-event_box_get_event_window(GtkEventBox *event_box)
+GtkWidget*
+hippo_canvas_new(void)
 {
-    GList *children;
-    GdkWindow *event_window;
-    GList *link;
-    void *user_data;
-    GtkWidget *widget;
-    
-    g_return_val_if_fail(GTK_IS_EVENT_BOX(event_box), NULL);
-    g_return_val_if_fail(GTK_WIDGET_REALIZED(event_box), NULL);
-    
-    widget = GTK_WIDGET(event_box);
-    g_return_val_if_fail(widget->window != NULL, NULL);
-    
-    if (gtk_event_box_get_visible_window(event_box)) {
-        return widget->window;
-    }
-    
-    /* event_box->window is the parent window of the event box */
-    
-    children = gdk_window_get_children(widget->window);
-    
-    event_window = NULL;
-    for (link = children; link != NULL; link = link->next) {
-        event_window = children->data;
-        user_data = NULL;
-        gdk_window_get_user_data(event_window, &user_data);        
-        if (GDK_WINDOW_OBJECT(event_window)->input_only &&
-            user_data == event_box) {
-            break;
-        }
-        event_window = NULL;
-    }
+    HippoCanvas *canvas;
 
-    if (event_window == NULL) {
-        g_warning("did not find event box input window, %d children of %s",
-                  g_list_length(children), G_OBJECT_TYPE_NAME(event_box));
-    }
-    
-    g_list_free(children);
-    
-    return event_window;
+    canvas = g_object_new(HIPPO_TYPE_CANVAS, NULL);
+
+    return GTK_WIDGET(canvas);
 }
 
 static void
@@ -211,16 +224,14 @@ set_pointer(HippoCanvas       *canvas,
             HippoCanvasPointer pointer)
 {
     GdkCursor *cursor;
-    GdkWindow *event_window;
     GtkWidget *widget;
-    GtkEventBox *event_box;
-
+    GdkWindow *event_window;
+    
     /* important optimization since we do this on all motion notify */
     if (canvas->pointer == pointer)
         return;
 
     widget = GTK_WIDGET(canvas);
-    event_box = GTK_EVENT_BOX(canvas);
 
     canvas->pointer = pointer;
 
@@ -243,7 +254,7 @@ set_pointer(HippoCanvas       *canvas,
                                             type);
     }
 
-    event_window = event_box_get_event_window(event_box);
+    event_window = widget->window;
     gdk_window_set_cursor(event_window, cursor);
     
     gdk_display_flush(gtk_widget_get_display(widget));
@@ -252,21 +263,49 @@ set_pointer(HippoCanvas       *canvas,
         gdk_cursor_unref(cursor);
 }
 
+static void
+get_root_item_window_coords(HippoCanvas *canvas,
+                            int         *x_p,
+                            int         *y_p)
+{
+    GtkWidget *widget = GTK_WIDGET(canvas);
+
+    if (x_p)
+        *x_p = GTK_CONTAINER(widget)->border_width;
+    if (y_p)
+        *y_p = GTK_CONTAINER(widget)->border_width;
+    
+    if (GTK_WIDGET_NO_WINDOW(widget)) {
+        if (x_p)
+            *x_p += widget->allocation.x;
+        if (y_p)
+            *y_p += widget->allocation.y;
+    }
+}                     
+
 static gboolean
 hippo_canvas_expose_event(GtkWidget         *widget,
                           GdkEventExpose    *event)
 {
     HippoCanvas *canvas = HIPPO_CANVAS(widget);
     cairo_t *cr;
-    
+    int window_x, window_y;
+
     if (canvas->root == NULL)
         return FALSE;
 
     cr = gdk_cairo_create(event->window);
+    get_root_item_window_coords(canvas, &window_x, &window_y);
+
     hippo_canvas_item_process_paint(canvas->root, cr,
-                                    widget->allocation.x, widget->allocation.y);
+                                    window_x, window_y);
     cairo_destroy(cr);
 
+    /* default GtkContainer::expose_event will use forall
+     * to draw the child widget items
+     */
+    GTK_WIDGET_CLASS(hippo_canvas_parent_class)->expose_event(widget, event);
+    
     return FALSE;
 }
 
@@ -285,6 +324,9 @@ hippo_canvas_size_request(GtkWidget         *widget,
     hippo_canvas_item_get_request(canvas->root,
                                   &requisition->width,
                                   &requisition->height);
+
+    requisition->width += GTK_CONTAINER(widget)->border_width * 2;
+    requisition->height += GTK_CONTAINER(widget)->border_width * 2;
 }
 
 static void
@@ -293,13 +335,19 @@ hippo_canvas_size_allocate(GtkWidget         *widget,
 {
     HippoCanvas *canvas = HIPPO_CANVAS(widget);
 
-    /* assign widget->allocation and resize widget->window */
-    GTK_WIDGET_CLASS(hippo_canvas_parent_class)->size_allocate(widget, allocation);
+    widget->allocation = *allocation;
+    
+    if (GTK_WIDGET_REALIZED(widget))
+	gdk_window_move_resize(widget->window,
+                               allocation->x, 
+                               allocation->y,
+                               allocation->width, 
+                               allocation->height);    
 
     if (canvas->root != NULL) {
         hippo_canvas_item_allocate(canvas->root,
-                                   allocation->width,
-                                   allocation->height);
+                                   allocation->width - GTK_CONTAINER(widget)->border_width * 2,
+                                   allocation->height  - GTK_CONTAINER(widget)->border_width * 2);
     }
 }
 
@@ -308,17 +356,20 @@ hippo_canvas_button_press(GtkWidget         *widget,
                           GdkEventButton    *event)
 {
     HippoCanvas *canvas = HIPPO_CANVAS(widget);
-
+    int window_x, window_y;
+    
     if (canvas->root == NULL)
         return FALSE;
 
+    get_root_item_window_coords(canvas, &window_x, &window_y);
+    
     /*
     g_debug("canvas button press at %d,%d allocation %d,%d", (int) event->x, (int) event->y,
             widget->allocation.x, widget->allocation.y);
     */
     
     return hippo_canvas_item_emit_button_press_event(canvas->root,
-                                                     event->x, event->y,
+                                                     event->x - window_x, event->y - window_y,
                                                      event->button);
 }
 
@@ -327,17 +378,20 @@ hippo_canvas_button_release(GtkWidget         *widget,
                             GdkEventButton    *event)
 {
     HippoCanvas *canvas = HIPPO_CANVAS(widget);
-
+    int window_x, window_y;
+    
     if (canvas->root == NULL)
         return FALSE;
 
+    get_root_item_window_coords(canvas, &window_x, &window_y);
+    
     /*
     g_debug("canvas button release at %d,%d allocation %d,%d", (int) event->x, (int) event->y,
             widget->allocation.x, widget->allocation.y);
     */
     
     return hippo_canvas_item_emit_button_release_event(canvas->root,
-                                                       event->x, event->y,
+                                                       event->x - window_x, event->y - window_y,
                                                        event->button);
 }
 
@@ -348,14 +402,17 @@ handle_new_mouse_location(HippoCanvas *canvas,
 {
     int x, y;
     HippoCanvasPointer pointer;
+    int window_x, window_y;
+
+    get_root_item_window_coords(canvas, &window_x, &window_y);
     
     gdk_window_get_pointer(event_window, &x, &y, NULL);
 
-    pointer = hippo_canvas_item_get_pointer(canvas->root, x, y);
+    pointer = hippo_canvas_item_get_pointer(canvas->root, x - window_x, y - window_y);
     set_pointer(canvas, pointer);
     
     hippo_canvas_item_emit_motion_notify_event(canvas->root,
-                                               x, y, detail);
+                                               x - window_x, y - window_y, detail);
 }
 
 static gboolean
@@ -398,6 +455,95 @@ hippo_canvas_motion_notify(GtkWidget         *widget,
     handle_new_mouse_location(canvas, event->window, HIPPO_MOTION_DETAIL_WITHIN);
     
     return FALSE;
+}
+
+static void
+hippo_canvas_realize(GtkWidget    *widget)
+{
+  GdkWindowAttr attributes;
+  gint attributes_mask;
+  
+  GTK_WIDGET_SET_FLAGS (widget, GTK_REALIZED);
+
+  attributes.window_type = GDK_WINDOW_CHILD;
+  attributes.x = widget->allocation.x;
+  attributes.y = widget->allocation.y;
+  attributes.width = widget->allocation.width;
+  attributes.height = widget->allocation.height;
+  attributes.wclass = GDK_INPUT_OUTPUT;
+  attributes.visual = gtk_widget_get_visual (widget);
+  attributes.colormap = gtk_widget_get_colormap (widget);
+  attributes.event_mask = gtk_widget_get_events (widget);
+  attributes.event_mask |= GDK_EXPOSURE_MASK | GDK_BUTTON_PRESS_MASK;
+      
+  attributes_mask = GDK_WA_X | GDK_WA_Y | GDK_WA_VISUAL | GDK_WA_COLORMAP;
+      
+  widget->window = gdk_window_new (gtk_widget_get_parent_window (widget), &attributes, 
+                                   attributes_mask);
+  gdk_window_set_user_data (widget->window, widget);
+      
+  widget->style = gtk_style_attach (widget->style, widget->window);
+  gtk_style_set_background (widget->style, widget->window, GTK_STATE_NORMAL);
+}
+
+static void
+hippo_canvas_add(GtkContainer *container,
+                 GtkWidget    *widget)
+{
+    g_warning("hippo_canvas_add called, you have to just add an item with a widget in it, you can't do gtk_container_add directly");
+}
+
+static void
+hippo_canvas_remove(GtkContainer *container,
+                    GtkWidget    *widget)
+{
+    HippoCanvas *canvas = HIPPO_CANVAS(container);
+    GSList *link;
+
+    /* We go a little roundabout here - we remove the widget from the canvas
+     * item, which causes us to remove it from ourselves.
+     * The only time we expect gtk_container_remove to be called is from
+     * gtk_object_destroy on e.g. the toplevel window, or something of
+     * that nature.
+     */
+    
+    for (link = canvas->widget_items;
+         link != NULL;
+         link = link->next) {
+        RegisteredWidgetItem *witem = link->data;
+
+        if (witem->widget == widget) {
+            g_object_set(G_OBJECT(witem->item), "widget", NULL, NULL);
+            return;
+        }
+    }
+
+    g_warning("tried to remove widget %p that is not in the canvas", widget);
+}
+
+static void
+hippo_canvas_forall(GtkContainer *container,
+                    gboolean      include_internals,
+                    GtkCallback   callback,
+                    gpointer      callback_data)
+{
+    HippoCanvas *canvas = HIPPO_CANVAS(container);
+    GSList *link;
+    
+    for (link = canvas->widget_items;
+         link != NULL;
+         link = link->next) {
+        RegisteredWidgetItem *witem = link->data;
+
+        if (witem->widget)
+            (* callback) (witem->widget, callback_data);
+    }
+}
+
+static GType
+hippo_canvas_child_type(GtkContainer *container)
+{
+    return GTK_TYPE_WIDGET;
 }
 
 static PangoLayout*
@@ -554,14 +700,145 @@ hippo_canvas_get_color(HippoCanvasContext *context,
     return 0;
 }
 
-GtkWidget*
-hippo_canvas_new(void)
+static void
+update_widget(HippoCanvas          *canvas,
+              RegisteredWidgetItem *witem)
 {
-    HippoCanvas *canvas;
+    GtkWidget *new_widget;
 
-    canvas = g_object_new(HIPPO_TYPE_CANVAS, NULL);
+    new_widget = NULL;
+    g_object_get(G_OBJECT(witem->item), "widget", &new_widget, NULL);
 
-    return GTK_WIDGET(canvas);
+    if (new_widget == witem->widget)
+        return;
+    
+    if (new_widget) {
+        /* note that this ref/sinks the widget */
+        gtk_widget_set_parent(new_widget, GTK_WIDGET(canvas));
+    }
+
+    if (witem->widget) {
+        /* and this unrefs the widget */
+        gtk_widget_unparent(witem->widget);
+    }
+    
+    witem->widget = new_widget;
+}
+
+static void
+on_item_widget_changed(HippoCanvasItem *item,
+                       GParamSpec      *arg,
+                       void            *data)
+{
+    HippoCanvas *canvas = HIPPO_CANVAS(data);
+    RegisteredWidgetItem *witem;
+    GSList *link;
+    
+    witem = NULL;
+    for (link = canvas->widget_items;
+         link != NULL;
+         link = link->next) {
+        witem = link->data;
+        if (witem->item == item) {
+            update_widget(canvas, witem);
+            return;
+        }
+    }
+
+    g_warning("got widget changed for an unregistered widget item");
+}
+
+static void
+add_widget_item(HippoCanvas     *canvas,
+                HippoCanvasItem *item)
+{
+    RegisteredWidgetItem *witem = g_new0(RegisteredWidgetItem, 1);
+
+    witem->item = item;
+    g_object_ref(witem->item);    
+    canvas->widget_items = g_slist_prepend(canvas->widget_items, witem);
+
+    update_widget(canvas, witem);
+    
+    g_signal_connect(G_OBJECT(item), "notify::widget",
+                     G_CALLBACK(on_item_widget_changed),
+                     canvas);
+}
+
+static void
+remove_widget_item(HippoCanvas     *canvas,
+                   HippoCanvasItem *item)
+{
+    RegisteredWidgetItem *witem;
+    GSList *link;
+    
+    witem = NULL;
+    for (link = canvas->widget_items;
+         link != NULL;
+         link = link->next) {
+        witem = link->data;
+        if (witem->item == item)
+            break;
+    }
+    if (link == NULL) {
+        g_warning("removing a not-registered widget item");
+        return;
+    }
+
+    canvas->widget_items = g_slist_remove(canvas->widget_items, witem);
+    
+    g_signal_handlers_disconnect_by_func(G_OBJECT(witem->item),
+                                         G_CALLBACK(on_item_widget_changed),
+                                         canvas);
+    if (witem->widget) {
+        gtk_widget_unparent(witem->widget);
+        witem->widget = NULL;
+    }
+    g_object_unref(witem->item);
+    g_free(witem);
+}
+
+static void
+hippo_canvas_register_widget_item(HippoCanvasContext *context,
+                                  HippoCanvasItem    *item)
+{
+    HippoCanvas *canvas = HIPPO_CANVAS(context);
+
+    add_widget_item(canvas, item);
+}
+
+static void
+hippo_canvas_unregister_widget_item (HippoCanvasContext *context,
+                                     HippoCanvasItem    *item)
+{
+    HippoCanvas *canvas = HIPPO_CANVAS(context);
+
+    remove_widget_item(canvas, item);
+}
+
+static void
+hippo_canvas_translate_to_widget(HippoCanvasContext *context,
+                                 HippoCanvasItem    *item,
+                                 int                *x_p,
+                                 int                *y_p)
+{
+    GtkWidget *widget = GTK_WIDGET(context);
+
+    /* convert coords of root canvas item to coords of
+     * widget->window
+     */
+
+    if (GTK_WIDGET_NO_WINDOW(widget)) {
+        if (x_p)
+            *x_p += widget->allocation.x;
+        if (y_p)
+            *y_p += widget->allocation.y;
+    }
+
+    if (x_p)
+        *x_p += GTK_CONTAINER(widget)->border_width;
+    if (y_p)
+        *y_p += GTK_CONTAINER(widget)->border_width;
 }
 
 static void
@@ -580,10 +857,13 @@ canvas_root_paint_needed(HippoCanvasItem *root,
                          HippoCanvas     *canvas)
 {
     GtkWidget *widget = GTK_WIDGET(canvas);
+    int window_x, window_y;
+    
+    get_root_item_window_coords(canvas, &window_x, &window_y);
     
     gtk_widget_queue_draw_area(widget,
-                               widget->allocation.x + x,
-                               widget->allocation.y + y,
+                               x + window_x,
+                               y + window_y,
                                width, height);
 }
 
@@ -852,7 +1132,7 @@ hippo_canvas_open_test_window(void)
                         "background-color", 0x00ff00ff,
                         NULL);
 
-#if 1
+#if 0
     text = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
                         "text",
                         "Click here",
@@ -867,6 +1147,17 @@ hippo_canvas_open_test_window(void)
                         "yalign", HIPPO_ALIGNMENT_CENTER,
                         NULL);
 #endif
+    {
+        GtkWidget *widget = gtk_label_new("FOOO!");
+        gtk_widget_show(widget);
+        text = g_object_new(HIPPO_TYPE_CANVAS_WIDGET,
+                            "widget", widget,
+                            "background-color", 0x0000ffff,
+                            "xalign", HIPPO_ALIGNMENT_CENTER,
+                            "yalign", HIPPO_ALIGNMENT_CENTER,
+                            NULL);
+    }
+                        
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(root), text, HIPPO_PACK_EXPAND);
     
     hippo_canvas_set_root(HIPPO_CANVAS(canvas), root);

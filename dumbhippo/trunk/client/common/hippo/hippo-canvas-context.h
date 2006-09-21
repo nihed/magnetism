@@ -20,6 +20,9 @@
 
 G_BEGIN_DECLS
 
+typedef struct _HippoCanvasItem      HippoCanvasItem;
+typedef struct _HippoCanvasItemClass HippoCanvasItemClass;
+
 typedef enum {
     HIPPO_STOCK_COLOR_BG_NORMAL,
     HIPPO_STOCK_COLOR_BG_PRELIGHT
@@ -45,6 +48,15 @@ struct _HippoCanvasContextClass {
 
     guint32          (* get_color)      (HippoCanvasContext  *context,
                                          HippoStockColor      color);
+
+    void             (* register_widget_item)   (HippoCanvasContext *context,
+                                                 HippoCanvasItem    *item);
+    void             (* unregister_widget_item) (HippoCanvasContext *context,
+                                                 HippoCanvasItem    *item);    
+    void             (* translate_to_widget)    (HippoCanvasContext *context,
+                                                 HippoCanvasItem    *item,
+                                                 int                *x_p,
+                                                 int                *y_p);
 };
 
 GType        	 hippo_canvas_context_get_type               (void) G_GNUC_CONST;
@@ -55,6 +67,16 @@ cairo_surface_t* hippo_canvas_context_load_image             (HippoCanvasContext
                                                               const char         *image_name);
 guint32          hippo_canvas_context_get_color              (HippoCanvasContext *context,
                                                               HippoStockColor     color);
+
+void hippo_canvas_context_register_widget_item   (HippoCanvasContext *context,
+                                                  HippoCanvasItem    *item);
+void hippo_canvas_context_unregister_widget_item (HippoCanvasContext *context,
+                                                  HippoCanvasItem    *item);
+void hippo_canvas_context_translate_to_widget    (HippoCanvasContext *context,
+                                                  HippoCanvasItem    *item,
+                                                  int                *x_p,
+                                                  int                *y_p);
+
 
 /* Random utility function that shouldn't really be in this file */
 void hippo_cairo_set_source_rgba32       (cairo_t         *cr,
