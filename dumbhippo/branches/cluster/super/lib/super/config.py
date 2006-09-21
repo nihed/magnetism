@@ -234,11 +234,18 @@ class Config:
         return self.services[name]
 
     def list_services(self):
-        """Return all configured services."""
+        """Return enabled services."""
         result = []
         for service in self.services.values():
             if (service.get_enabled()):
                 result.append(service.get_name())
+        return result
+
+    def list_all_services(self):
+        """Return all configured services, even if disabled"""
+        result = []
+        for service in self.services.values():
+            result.append(service.get_name())
         return result
 
     #### Parameter handling. The following methods make up a common

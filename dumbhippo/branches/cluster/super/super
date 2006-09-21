@@ -44,7 +44,12 @@ def main():
         print >>sys.stderr, "Known actions are: %s" % ' '.join(known_actions)
         sys.exit(1)
 
-    available_services = config.list_services()
+    # 'all' means something different for deploy
+    if remaining[0] == 'deploy':
+        available_services = config.list_all_services()
+    else:
+        available_services = config.list_services()
+        
     services = remaining[1:]
 
     for service in services:
