@@ -147,6 +147,11 @@ hippo_canvas_widget_set_property(GObject         *object,
                     g_object_unref(widget->widget);
                 widget->widget = w;
 
+                /* when/if canvas items have a visibility flag,
+                 * we'd force the widget to match it here
+                 */
+                if (widget->widget)
+                    gtk_widget_show(widget->widget);
                 hippo_canvas_item_emit_request_changed(HIPPO_CANVAS_ITEM(widget));
             }
         }

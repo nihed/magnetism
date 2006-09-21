@@ -2,7 +2,7 @@
 #ifndef __HIPPO_CANVAS_WIDGET_H__
 #define __HIPPO_CANVAS_WIDGET_H__
 
-/* A canvas item that renders a Cairo widget surface */
+/* A canvas item that holds a spot in the canvas for a widget */
 
 #include <hippo/hippo-canvas-item.h>
 #include <hippo/hippo-canvas-box.h>

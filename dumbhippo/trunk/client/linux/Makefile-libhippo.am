@@ -61,6 +61,7 @@ LIBHIPPO_SOURCEFILES =						\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-stack.h		\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-text.c		\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-text.h		\
+	$(COMMONSRCDIR)/hippo/hippo-canvas-widgets.h		\
 	$(COMMONSRCDIR)/hippo/hippo-chat-room.c			\
 	$(COMMONSRCDIR)/hippo/hippo-chat-room.h			\
 	$(COMMONSRCDIR)/hippo/hippo-common.h			\
