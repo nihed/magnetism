@@ -23,6 +23,7 @@
 		dumbhippo.server.xmpp.adminuser=admin
 		dumbhippo.server.xmpp.password=@@jivePassword@@
 		dumbhippo.server.baseurl=@@baseurl@@
+		dumbhippo.server.web.version=@@webVersion@@
 		dumbhippo.server.files.saveurl=file://@@filesavedir@@
 		dumbhippo.server.aimbot.name=@@imbotScreenName@@
 		dumbhippo.server.aim.presence.key=@@aimPresenceKey@@

@@ -10,6 +10,7 @@ public enum HippoProperty {
 	DOWNLOADURL_LINUX("dumbhippo.server.downloadurl.linux", null),
 	DOWNLOADURL_LINUX_TAR("dumbhippo.server.downloadurl.linux.tar", null),
 	DOWNLOADURL_LINUX_SRPM("dumbhippo.server.downloadurl.linux.srpm", null),
+	WEB_VERSION("dumbhippo.server.web.version", null),
 	XMPP_ADDRESS("dumbhippo.server.xmpp.address", null),
 	XMPP_PORT("dumbhippo.server.xmpp.port", null),
 	XMPP_ADMINUSER("dumbhippo.server.xmpp.adminuser", null),

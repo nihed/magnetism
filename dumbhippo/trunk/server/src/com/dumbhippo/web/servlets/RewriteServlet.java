@@ -8,8 +8,10 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
@@ -67,8 +69,7 @@ public class RewriteServlet extends HttpServlet {
 	private Set<String> requiresSignin;
 	private Set<String> requiresSigninStealth;
 	private Set<String> noSignin;
-	private Set<String> jspPages;
-	private Set<String> jsp2Pages;	
+	private Map<String, Integer> jspPages;
 	private Set<String> htmlPages;
 	private String buildStamp;
 	
@@ -118,6 +119,18 @@ public class RewriteServlet extends HttpServlet {
 	return !path.equals("/error");
     }
     
+    private String getVersionedJspPath(String name) {
+		Integer version = jspPages.get(name);
+		String suffix = version.intValue() > 1 ? version.toString() : ""; 	
+		return "/jsp" + suffix + "/" + name + ".jsp";
+    }
+	
+	private void handleVersionedJsp(HttpServletRequest request, HttpServletResponse response, String name) throws IOException, ServletException {
+		// We can't use RewrittenRequest for JSP's because it breaks the
+		// handling of <jsp:forward/> and is generally unreliable
+		handleJsp(request, response, getVersionedJspPath(name));		
+	}
+    
 	public void handleJsp(HttpServletRequest request, HttpServletResponse response, String newPath) throws IOException, ServletException {
 		// Instead of just forwarding JSP's to the right handler, we surround
 		// them in a transaction; this doesn't have anything to do with 
@@ -131,7 +144,7 @@ public class RewriteServlet extends HttpServlet {
 		
 		// If the server says it's too busy, just redirect to a busy page
 	    if (serverStatus.isTooBusy() && canBusyRedirect(request)) {
-			context.getRequestDispatcher("/jsp2/busy.jsp").forward(request, response);
+			context.getRequestDispatcher(getVersionedJspPath("busy")).forward(request, response);
 			return;
 		}
 		
@@ -210,7 +223,7 @@ public class RewriteServlet extends HttpServlet {
 			}
 		}		
 	}
-    
+
 	@Override
 	public void service(HttpServletRequest request,	HttpServletResponse response) throws IOException, ServletException {
 
@@ -252,11 +265,11 @@ public class RewriteServlet extends HttpServlet {
 		
 		if (path.equals("/")) {
 			if (hasSignin(request))
-				handleJsp(request, response, "/jsp2/home.jsp");
+				handleVersionedJsp(request, response, "home");
 			else if (stealthMode)
-				handleJsp(request, response, "/jsp2/comingsoon.jsp");
+				handleVersionedJsp(request, response, "comingsoon");
 			else
-				handleJsp(request, response, "/jsp2/main.jsp");
+				handleVersionedJsp(request, response, "main");
 			return;
 		}
 		
@@ -278,12 +291,10 @@ public class RewriteServlet extends HttpServlet {
 			RewrittenRequest rewrittenRequest = new RewrittenRequest(request, "/images2/favicon.ico");
 			context.getNamedDispatcher("default").forward(rewrittenRequest, response);
 			return;
-		} else if (path.startsWith("/javascript/") || 
-			path.startsWith("/css/") ||
-			path.startsWith("/images/") ||
-			path.startsWith("/css2/") ||
-			path.startsWith("/images2/") ||
-			path.startsWith("/flash/")) {
+		} else if (path.startsWith("/javascript/") ||
+				path.matches("/css\\d*/.*") ||
+				path.matches("/images\\d*/.*") ||
+				path.startsWith("/flash/")) {
 			
 			newPath = checkBuildStamp(path);
 			if (newPath != null) {
@@ -295,9 +306,9 @@ public class RewriteServlet extends HttpServlet {
 				// config.js is special and handled by a JSP, but it doesn't need
 				// our usual error/transaction stuff in handleJsp since it's just text 
 				// substitution
-				context.getRequestDispatcher("/jsp/configjs.jsp").forward(request, response);
+				context.getRequestDispatcher(getVersionedJspPath("configjs")).forward(request, response);
 			} else if (path.equals("/javascript/whereimat.js")) {
-				handleJsp(request, response, "/jsp2/whereimatjs.jsp");
+				handleVersionedJsp(request, response, "whereimatjs");
 			} else if (newPath != null) {
 				RewrittenRequest rewrittenRequest = new RewrittenRequest(request, newPath);
 				context.getNamedDispatcher("default").forward(rewrittenRequest, response);
@@ -396,13 +407,8 @@ public class RewriteServlet extends HttpServlet {
 			}
 		}
 		
-		if (jsp2Pages.contains(afterSlash)) {
-			// We can't use RewrittenRequest for JSP's because it breaks the
-			// handling of <jsp:forward/> and is generally unreliable.
-			newPath = "/jsp2" + path + ".jsp";
-			
-			handleJsp(request, response, newPath);
-			
+		if (jspPages.containsKey(afterSlash)) {
+			handleVersionedJsp(request, response, afterSlash);
 		} else if (htmlPages.contains(afterSlash)) {
 			// We could eliminate the use of RewrittenRequest entirely by
 			// adding a mapping for *.html to servlet-info.xml
@@ -412,10 +418,6 @@ public class RewriteServlet extends HttpServlet {
 				newPath = "/html" + path + ".html";
 			RewrittenRequest rewrittenRequest = new RewrittenRequest(request, newPath);
 			context.getNamedDispatcher("default").forward(rewrittenRequest, response);
-		} else if (jspPages.contains(afterSlash)) {
-			newPath = "/jsp" + path + ".jsp";
-			
-			handleJsp(request, response, newPath);
 		} else {
 			response.sendError(HttpServletResponse.SC_NOT_FOUND);
 		}
@@ -544,6 +546,8 @@ public class RewriteServlet extends HttpServlet {
         Configuration configuration = WebEJBUtil.defaultLookup(Configuration.class);
         
 		String stealthModeString = configuration.getProperty(HippoProperty.STEALTH_MODE);
+		int webVersion = Integer.parseInt(configuration.getPropertyFatalIfUnset(HippoProperty.WEB_VERSION));
+		
 		stealthMode = Boolean.parseBoolean(stealthModeString);
 		
 		logger.debug("Stealth mode: " + stealthMode);
@@ -552,27 +556,16 @@ public class RewriteServlet extends HttpServlet {
 		requiresSigninStealth = getStringSet(config, "requiresSigninStealth");
 		noSignin = getStringSet(config, "noSignin");
 		
-		jspPages = new HashSet<String>();
-		Set jspPaths = context.getResourcePaths("/jsp/");
-		if (jspPaths != null) {
-			for (Object o : jspPaths) {
+		jspPages = new HashMap<String, Integer>();
+		for (int i = 1; i <= webVersion; i++) {
+			String prefix = "/jsp" + (i == 1 ? "" : i) + "/";		
+			for (Object o : context.getResourcePaths(prefix)) {
 				String path = (String)o;
 				if (path.endsWith(".jsp") && path.indexOf('/') != -1)
-					jspPages.add(path.substring(5, path.length() - 4));
-			}
+					jspPages.put(path.substring(prefix.length(), path.length() - 4), i);
+			}			
 		}
 		logger.debug("jsp pages are {}", jspPages);
-		
-		jsp2Pages = new HashSet<String>();
-		Set jsp2Paths = context.getResourcePaths("/jsp2/");
-		if (jsp2Paths != null) {
-			for (Object o : jsp2Paths) {
-				String path = (String)o;
-				if (path.endsWith(".jsp") && path.indexOf('/') != -1)
-					jsp2Pages.add(path.substring(6, path.length() - 4));
-			}
-		}
-		logger.debug("jsp2 pages are {}", jsp2Pages);
 		
 		htmlPages = new HashSet<String>();
 		Set htmlPaths = context.getResourcePaths("/html/");
@@ -590,28 +583,18 @@ public class RewriteServlet extends HttpServlet {
 		withSigninRequirements.addAll(requiresSigninStealth);
 		withSigninRequirements.addAll(noSignin);
 		
-		for (String p : jspPages) {
+		for (String p : jspPages.keySet()) {
 			if (!withSigninRequirements.contains(p)) {
 				if (p.startsWith("psa-"))
 					noSignin.add(p);
 				else {
 					// This warning is generated superfluously on some unused /jsp pages
 					// for now
-					logger.error(".jsp {} does not have its signin requirements specified", p);
+					logger.error(".jsp {} at version {} does not have its signin requirements specified", p, jspPages.get(p));
 				}
 			}
 		}
 
-		for (String p : jsp2Pages) {
-			if (!withSigninRequirements.contains(p)) {
-				if (p.startsWith("psa-"))
-					noSignin.add(p);
-				else {
-					logger.error(".jsp {} does not have its signin requirements specified", p);
-				}
-			}
-		}
-		
 		for (String p : htmlPages) {
 			if (!withSigninRequirements.contains(p)) {
 				if (p.startsWith("psa-"))
@@ -623,7 +606,7 @@ public class RewriteServlet extends HttpServlet {
 		}
 		
 		for (String p : withSigninRequirements) {
-			if (!jspPages.contains(p) && !htmlPages.contains(p) && !jsp2Pages.contains(p)) {
+			if (!jspPages.containsKey(p) && !htmlPages.contains(p)) {
 				logger.warn("Page '{}' in servlet config is not a .jsp or .html we know about", p);
 			}
 		}

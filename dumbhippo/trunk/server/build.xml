@@ -194,6 +194,7 @@
 			<fileset id="tag-files" dir="${web}/tags">
 				<include name="*.tag"/>
 				<include name="2/*.tag"/>
+				<include name="3/*.tag"/>				
 			</fileset>			
 		</copy>
 		<mkdir dir="${build.deploy.war}/WEB-INF/lib"/>
