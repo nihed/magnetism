@@ -263,10 +263,16 @@ add_to_room_list(HippoEndpointProxy *proxy,
         }
         g_slist_free(users);
 
+        // It's unfriendly to send the messages in reverse chronological order,
+        // as they are stored in room->messages, so reverse them before replaying
         messages = hippo_chat_room_get_messages(room);
+        messages = g_slist_reverse(g_slist_copy(messages));
+        
         for (l = messages; l != NULL; l = l->next) {
             on_room_message_added(room, l->data, proxy);
         }
+        
+        g_slist_free(messages);
     }
 }
 
