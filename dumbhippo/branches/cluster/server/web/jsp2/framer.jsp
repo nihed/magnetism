@@ -39,10 +39,8 @@
 	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/framer-iefixes.css">
 	<![endif]-->
 	<dht:scriptIncludes/>
-	<script type="text/javascript" src="/javascript/${buildStamp}/dh/control.js"></script>
-	<script type="text/javascript" src="/javascript/${buildStamp}/dh/framer.js"></script>
     <script type="text/javascript">
-//    	dojo.require("dh.framer")
+    	dojo.require("dh.framer");
     	dh.framer.setSelfId("${framer.signin.userId}")
     	dh.framer.chatId = "${framer.post.post.id}"
     	dh.framer.forwardUrl = <dh:jsString value="${url}"/>;
