@@ -313,6 +313,8 @@ create_layout(HippoCanvasText *text,
     PangoLayout *layout;
     
     context = hippo_canvas_box_get_context(HIPPO_CANVAS_BOX(text));
+
+    g_return_val_if_fail(context != NULL, NULL);
     
     layout = hippo_canvas_context_create_layout(context);
     
@@ -453,9 +455,13 @@ hippo_canvas_text_get_content_width_request(HippoCanvasBox *box)
     if (text->size_mode != HIPPO_CANVAS_SIZE_FULL_WIDTH) {
         layout_width = 0;
     } else {
-        PangoLayout *layout = create_layout(text, -1);
-        pango_layout_get_size(layout, &layout_width, NULL);
-        layout_width /= PANGO_SCALE;
+        if (box->context != NULL) {
+            PangoLayout *layout = create_layout(text, -1);
+            pango_layout_get_size(layout, &layout_width, NULL);
+            layout_width /= PANGO_SCALE;
+        } else {
+            layout_width = 0;
+        }
     }
 
     return MAX(children_width, layout_width);
@@ -474,9 +480,13 @@ hippo_canvas_text_get_content_height_request(HippoCanvasBox  *box,
                                                                                                          for_width);
 
     if (for_width > 0) {
-        layout = create_layout(text, for_width);
-        pango_layout_get_size(layout, NULL, &layout_height);
-        layout_height /= PANGO_SCALE;
+        if (box->context != NULL) {
+            layout = create_layout(text, for_width);
+            pango_layout_get_size(layout, NULL, &layout_height);
+            layout_height /= PANGO_SCALE;
+        } else {
+            layout_height = 0;
+        }
     } else {
         layout_height = 0;
     }
