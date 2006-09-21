@@ -15,11 +15,6 @@ if [ \! -f $pidfile ] ; then
 fi
 
 pid=`cat $pidfile`
-if test "$jbossBind" = 'all'; then
-  jnphost="localhost"
-else
-  jnphost="$jbossBind"
-fi
 
 $jbossdir/bin/shutdown.sh -s jnp://$bindHost:$jnpPort > /dev/null &
 
