@@ -141,6 +141,17 @@
       </layout>
    </appender>
 
+   <!-- used for random components we're logging at level TRACE -->
+   <appender name="TRACING" class="org.jboss.logging.appender.DailyRollingFileAppender">
+      <errorHandler class="org.jboss.logging.util.OnlyOnceErrorHandler"/>
+      <param name="File" value="${jboss.server.home.dir}/log/tracing.log"/>
+      <param name="Append" value="true"/>
+      <param name="DatePattern" value="'.'yyyy-MM-dd"/>
+      <layout class="org.apache.log4j.PatternLayout">
+             <param name="ConversionPattern" value="%d{ABSOLUTE} %-5p [%c] (%t): %m%n"/>
+      </layout>
+   </appender>
+
    <!-- Limit the org.apache category to INFO as its DEBUG is verbose -->
    <!-- (does nothing right now as root logger defaults to INFO) -->
    <category name="org.apache">
@@ -168,6 +179,13 @@
 @@if jbossCacheTrace
    <category name="org.jboss.cache">
       <priority value="TRACE" class="org.jboss.logging.XLevel"/>
+   </category>
+@@endif
+
+@@if jbossClusterTrace
+   <category name="org.jboss.ha">
+      <priority value="TRACE" class="org.jboss.logging.XLevel"/>
+      <appender-ref ref="TRACING"/>
    </category>
 @@endif
 
