@@ -14,7 +14,6 @@ class HippoAbstractIEWindow : public HippoAbstractWindow
 {
 public:
     HippoAbstractIEWindow();
-    virtual ~HippoAbstractIEWindow();
 
     /**
      * Provide an (optional) object that will be available as window.external.application
@@ -42,6 +41,8 @@ public:
     virtual bool hookMessage(MSG *msg);
 
 protected:
+
+    virtual void destroy();
 
     /**
      * Set the URL that will be loaded into the window. Mandatory to
@@ -85,6 +86,8 @@ protected:
 
     HippoIE *ie_;
     HippoPtr<IWebBrowser2> browser_;
+
+    ~HippoAbstractIEWindow() {}
 
 private:
 

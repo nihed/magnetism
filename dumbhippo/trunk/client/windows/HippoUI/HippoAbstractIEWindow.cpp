@@ -14,13 +14,10 @@ HippoAbstractIEWindow::HippoAbstractIEWindow()
     ieCallback_ = new HippoAbstractWindowIECallback(this);
 }
 
-HippoAbstractIEWindow::~HippoAbstractIEWindow(void)
+void
+HippoAbstractIEWindow::destroy()
 {
-    // normally C++ would destruct this subclass first, 
-    // then call the parent. So we call the parent destroy() 
-    // function manually here so it goes in front of our stuff.
-    // HippoAbstractWindow will call it too but it will no-op then.
-    destroy();
+    HippoAbstractWindow::destroy();
 
     assert(window_ == NULL);
     assert(ie_ == NULL);
@@ -188,6 +185,7 @@ HippoAbstractIEWindow::processMessage(UINT   message,
             RECT rect = { 0, 0, LOWORD(lParam), HIWORD(lParam) };
             ie_->resize(&rect);
         }
+        HippoAbstractWindow::processMessage(message, wParam, lParam);
         return true;
     default:
         return false;

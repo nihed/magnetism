@@ -189,6 +189,7 @@ hippoDebugLastErr(WCHAR *fmt, ...)
     va_end(vap);
     str.Append(buf);
     hippoHresultToString(res, errstr);
+    str.Append(L" ");
     str.Append(errstr);
     MessageBoxW(NULL, str, L"Hippo Debug", MB_OK);
 }

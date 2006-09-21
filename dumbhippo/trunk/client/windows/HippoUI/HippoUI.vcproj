@@ -126,10 +126,22 @@
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
 			<File
+				RelativePath=".\HippoAbstractControl.cpp">
+			</File>
+			<File
 				RelativePath=".\HippoAbstractIEWindow.cpp">
 			</File>
 			<File
 				RelativePath=".\HippoAbstractWindow.cpp">
+			</File>
+			<File
+				RelativePath=".\HippoCanvas.cpp">
+			</File>
+			<File
+				RelativePath=".\HippoCanvasControl.cpp">
+			</File>
+			<File
+				RelativePath=".\HippoCanvasWidgets.cpp">
 			</File>
 			<File
 				RelativePath=".\HippoChatManager.cpp">
@@ -230,10 +242,19 @@
 				RelativePath=".\Guid.h">
 			</File>
 			<File
+				RelativePath=".\HippoAbstractControl.h">
+			</File>
+			<File
 				RelativePath=".\HippoAbstractIEWindow.h">
 			</File>
 			<File
 				RelativePath=".\HippoAbstractWindow.h">
+			</File>
+			<File
+				RelativePath=".\HippoCanvas.h">
+			</File>
+			<File
+				RelativePath=".\HippoCanvasControl.h">
 			</File>
 			<File
 				RelativePath=".\HippoChatManager.h">

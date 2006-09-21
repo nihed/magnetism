@@ -11,18 +11,22 @@
 static const int BASE_WIDTH = 600;
 static const int BASE_HEIGHT = 600;
 
+HIPPO_DEFINE_REFCOUNTING(HippoAbstractWindow)
+
 HippoAbstractWindow::HippoAbstractWindow()
 {
+    refCount_ = 1;
     ui_ = NULL;
     animate_ = false;
     useParent_ = false;
-    parent_ = NULL;
+    createWithParent_ = NULL;
     updateOnShow_ = false;
     classStyle_ = CS_HREDRAW | CS_VREDRAW;
     windowStyle_ = WS_OVERLAPPEDWINDOW;
     extendedStyle_ = 0;
     created_ = false;
     showing_ = false;
+    destroyed_ = false;
 
     instance_ = GetModuleHandle(NULL);
     window_ = NULL;
@@ -46,14 +50,14 @@ void
 HippoAbstractWindow::setUseParent(bool useParent)
 {
     useParent_ = useParent;
-    if (parent_)
+    if (createWithParent_)
         g_warning("can't useParent and set parent");
 }
 
 void 
-HippoAbstractWindow::setParent(HippoAbstractWindow *parent)
+HippoAbstractWindow::setCreateWithParent(HippoAbstractWindow *parent)
 {
-    parent_ = parent;
+    createWithParent_ = parent;
     if (useParent_)
         g_warning("can't set parent and useParent");
 }
@@ -120,7 +124,7 @@ HippoAbstractWindow::createWindow(void)
 {
     window_ = CreateWindowEx(extendedStyle_, className_, title_, windowStyle_,
                              CW_USEDEFAULT, CW_USEDEFAULT, BASE_WIDTH, BASE_HEIGHT,
-                             (useParent_ && ui_) ? ui_->getWindow() : (parent_ ? parent_->window_ : NULL), 
+                             (useParent_ && ui_) ? ui_->getWindow() : (createWithParent_ ? createWithParent_->window_ : NULL), 
                              NULL, instance_, NULL);
     if (!window_) {
         hippoDebugLastErr(L"Couldn't create window!");
@@ -165,6 +169,10 @@ HippoAbstractWindow::destroy()
 {
     // This method should be safe against multiple calls, since a subclass is allowed
     // to call it before our destructor runs
+    if (destroyed_)
+        return;
+
+    destroyed_ = true;
 
     // The actual work is done in the WM_DESTROY handler, onWindowDestroyed()
     if (window_ != NULL) {
@@ -274,6 +282,65 @@ HippoAbstractWindow::moveResize(int x, int y, int width, int height)
     MoveWindow(window_, x, y, width, height, TRUE);
 }
 
+void
+HippoAbstractWindow::move(int x, int y)
+{
+    moveResize(x, y, getWidth(), getHeight());
+}
+
+void
+HippoAbstractWindow::resize(int width, int height)
+{
+    RECT area;
+    if (!GetWindowRect(window_, &area)) {
+        return;
+    }
+    moveResize(area.left, area.top, width, height);
+}
+
+// InvalidateRect queues a WM_PAINT, while UpdateRect sends WM_PAINT synchronously
+void
+HippoAbstractWindow::invalidate(int x, int y, int width, int height)
+{
+    RECT area;
+
+    area.left = x;
+    area.top = y;
+    area.right = area.left + width;
+    area.bottom = area.top + height;
+
+    // false = don't clear the area
+    InvalidateRect(window_, &area, false);
+}
+
+int
+HippoAbstractWindow::getWidth() 
+{
+    if (!window_)
+        return 0;
+
+    RECT area;
+    if (!GetWindowRect(window_, &area)) {
+        g_warning("failed to get window rect");
+        return 0;
+    }
+    return area.right - area.left;
+}
+
+int
+HippoAbstractWindow::getHeight()
+{
+    if (!window_)
+        return 0;
+
+    RECT area;
+    if (!GetWindowRect(window_, &area)) {
+        g_warning("failed to get window rect");
+        return 0;
+    }
+    return area.bottom - area.top;
+}
+
 bool
 HippoAbstractWindow::hookMessage(MSG *msg)
 {
@@ -311,12 +378,15 @@ HippoAbstractWindow::windowProc(HWND   window,
     if (message == WM_ERASEBKGND)
         return 1;
 
-    // It would be nice to ref the abstractWindow here, but we don't enforce subclasses
-    // of HippoAbstractWindow being refcountable, though some are.
     HippoAbstractWindow *abstractWindow = hippoGetWindowData<HippoAbstractWindow>(window);
     if (abstractWindow) {
-        if (abstractWindow->processMessage(message, wParam, lParam))
+        abstractWindow->AddRef();
+        if (abstractWindow->processMessage(message, wParam, lParam)) {
+            abstractWindow->Release();
             return 0;
+        } else {
+            abstractWindow->Release();
+        }
     }
 
     return DefWindowProc(window, message, wParam, lParam);

@@ -12,8 +12,9 @@ class HippoUI;
 class HippoAbstractWindow : public HippoMessageHook
 {
 public:
+    HIPPO_DECLARE_REFCOUNTING;
+
     HippoAbstractWindow();
-    virtual ~HippoAbstractWindow();
 
     /**
      * Provide a pointer to the main UI object for the application. Mandatory to call
@@ -70,6 +71,18 @@ public:
      */
     void moveResize(int x, int y, int width, int height);
 
+    void move(int x, int y);
+
+    void resize(int width, int height);
+
+    void invalidate(int x, int y, int width, int height);
+
+    int getWidth();
+
+    int getHeight();
+
+    bool isCreated() { return created_; }
+
     ////////////////////////////////////////////////////////////
 
     virtual bool hookMessage(MSG *msg);
@@ -125,9 +138,9 @@ protected:
     void setClassName(const HippoBSTR &className);
 
     /**
-     * Sets the parent window 
+     * Sets the parent window to create the control with
      */
-    void setParent(HippoAbstractWindow* parent);
+    void setCreateWithParent(HippoAbstractWindow* parent);
         
     /********************************************************/
 
@@ -171,9 +184,13 @@ protected:
     DWORD windowStyle_;
     DWORD extendedStyle_;
 
+    // private since we're refcounted; subclasses
+    // ideally override destroy() instead
+    virtual ~HippoAbstractWindow();
+
 private:
     bool useParent_;
-    HippoAbstractWindow *parent_;
+    HippoAbstractWindow *createWithParent_;
     bool animate_;
     bool updateOnShow_;
     UINT classStyle_;
@@ -182,8 +199,11 @@ private:
 
     HINSTANCE instance_;
 
+    DWORD refCount_;
+
     unsigned int created_ : 1;
     unsigned int showing_ : 1;
+    unsigned int destroyed_ : 1;
 
     bool createWindow(void);
     bool registerClass();

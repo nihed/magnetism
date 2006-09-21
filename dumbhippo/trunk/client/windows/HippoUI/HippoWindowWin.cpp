@@ -1,54 +1,21 @@
 #include "stdafx-hippoui.h"
 #include "HippoWindowWin.h"
-#include "HippoAbstractWindow.h"
+#include "HippoAbstractControl.h"
 #include "HippoUIUtil.h"
+#include "HippoCanvas.h"
+#include "HippoGSignal.h"
 
-class HippoCanvasWindow : public HippoAbstractWindow {
+class HippoWindowImpl : public HippoAbstractControl {
 public:
-    HippoCanvasWindow(HippoAbstractWindow *parent) 
-        : width_(25), height_(25) {
-
-        setClassName(L"HippoCanvasWindowClass");
-        setClassStyle(CS_HREDRAW | CS_VREDRAW);
-        setWindowStyle(WS_CHILD);
-        //setExtendedStyle(WS_EX_TOPMOST);
-        setTitle(L"Canvas");
-        setParent(parent);
-    }
-
-    virtual bool create();
-
-    void setRoot(HippoCanvasItem *item);
-
-    int getWidth() { return width_; }
-    int getHeight() { return height_; }
-
-protected:
-    bool processMessage(UINT   message,
-                        WPARAM wParam,
-                        LPARAM lParam);
-
-private:
-    HippoGObjectPtr<HippoCanvasItem> root_;
-    int width_;
-    int height_;
-};
-
-class HippoWindowImpl : public HippoAbstractWindow {
-public:
-    HippoWindowImpl() 
-        : width_(100), height_(100) {
-
+    HippoWindowImpl() {
         setClassName(L"HippoWindowWinClass");
         setClassStyle(CS_HREDRAW | CS_VREDRAW);
-        //setWindowStyle(WS_POPUP);
+        setWindowStyle(WS_OVERLAPPEDWINDOW);
         //setExtendedStyle(WS_EX_TOPMOST);
         setTitle(L"Mugshot");
-        contentsWindow_ = new HippoCanvasWindow(this);
-    }
-
-    ~HippoWindowImpl() {
-        delete contentsWindow_;
+        contentsControl_ = new HippoCanvas();
+        contentsControl_->Release(); // remove extra ref
+        contentsControl_->setParent(this);
     }
 
     virtual void show(bool activate);
@@ -61,15 +28,24 @@ public:
     virtual bool create();
 
 protected:
+
+    virtual void queueResize();
+    virtual int getWidthRequestImpl();
+    virtual int getHeightRequestImpl(int forWidth);
+
     bool processMessage(UINT   message,
                         WPARAM wParam,
                         LPARAM lParam);
 
+    virtual void destroy();
+
 private:
+    GIdle resizeIdle_;
+
+    bool idleResize();
+
     HippoGObjectPtr<HippoCanvasItem> contents_;
-    HippoCanvasWindow *contentsWindow_;
-    int width_;
-    int height_;
+    HippoPtr<HippoCanvas> contentsControl_;
 };
 
 static void      hippo_window_win_init                (HippoWindowWin       *window_win);
@@ -98,15 +74,12 @@ static void     hippo_window_win_set_position       (HippoWindow     *window,
 static void     hippo_window_win_get_size           (HippoWindow     *window,
                                                      int             *width_p,
                                                      int             *height_p);
-static void     hippo_window_win_set_scrollbar      (HippoWindow     *window,
+static void     hippo_window_win_set_resizable      (HippoWindow     *window,
                                                      HippoOrientation orientation,
-                                                     gboolean         visible);
-static void     hippo_window_win_set_resize_grip    (HippoWindow     *window,
+                                                     gboolean         value);
+static void     hippo_window_win_begin_resize_drag  (HippoWindow     *window,
                                                      HippoSide        side,
-                                                     gboolean         visible);
-static void     hippo_window_win_set_side_item      (HippoWindow      *window,
-                                                     HippoSide         side,
-                                                     HippoCanvasItem  *item);
+                                                     HippoEvent      *event);
 
 /* internal stuff */
 
@@ -141,9 +114,8 @@ hippo_window_win_iface_init(HippoWindowClass *window_class)
     window_class->set_visible = hippo_window_win_set_visible;
     window_class->set_position = hippo_window_win_set_position;
     window_class->get_size = hippo_window_win_get_size;
-    window_class->set_scrollbar = hippo_window_win_set_scrollbar;
-    window_class->set_resize_grip = hippo_window_win_set_resize_grip;
-    window_class->set_side_item = hippo_window_win_set_side_item;
+    window_class->set_resizable = hippo_window_win_set_resizable;
+    window_class->begin_resize_drag = hippo_window_win_begin_resize_drag;
 }
 
 static void
@@ -168,7 +140,7 @@ hippo_window_win_finalize(GObject *object)
 {
     HippoWindowWin *win = HIPPO_WINDOW_WIN(object);
 
-    delete win->impl;
+    win->impl->Release();
 
     G_OBJECT_CLASS(hippo_window_win_parent_class)->finalize(object);
 }
@@ -257,9 +229,9 @@ hippo_window_win_get_size(HippoWindow     *window,
 }
 
 static void
-hippo_window_win_set_scrollbar(HippoWindow      *window,
+hippo_window_win_set_resizable(HippoWindow      *window,
                                HippoOrientation  orientation,
-                               gboolean          visible)
+                               gboolean          value)
 {
     HippoWindowWin *window_win = HIPPO_WINDOW_WIN(window);
 
@@ -267,19 +239,9 @@ hippo_window_win_set_scrollbar(HippoWindow      *window,
 }
 
 static void
-hippo_window_win_set_resize_grip(HippoWindow      *window,
-                                 HippoSide         side,
-                                 gboolean          visible)
-{
-    HippoWindowWin *window_win = HIPPO_WINDOW_WIN(window);
-
-    // FIXME
-}
-
-static void
-hippo_window_win_set_side_item(HippoWindow      *window,
-                               HippoSide         side,
-                               HippoCanvasItem  *item)
+hippo_window_win_begin_resize_drag(HippoWindow      *window,
+                                   HippoSide         side,
+                                   HippoEvent       *event)
 {
     HippoWindowWin *window_win = HIPPO_WINDOW_WIN(window);
 
@@ -287,11 +249,17 @@ hippo_window_win_set_side_item(HippoWindow      *window,
 }
 
 void
+HippoWindowImpl::destroy()
+{
+    contentsControl_ = NULL;
+    HippoAbstractControl::destroy();
+}
+
+void
 HippoWindowImpl::setContents(HippoCanvasItem *item)
 {
     contents_ = item;
-
-    // hippo_canvas_set_root(HIPPO_CANVAS(canvas), contents);
+    contentsControl_->setRoot(item);
 }
 
 bool
@@ -300,9 +268,9 @@ HippoWindowImpl::create()
     bool result;
 
     // we need to create the parent window first
-    result = HippoAbstractWindow::create();
+    result = HippoAbstractControl::create();
 
-    contentsWindow_->create();
+    contentsControl_->create();
 
     return result;
 }
@@ -310,8 +278,28 @@ HippoWindowImpl::create()
 void
 HippoWindowImpl::show(bool activate)
 {
-    contentsWindow_->show(false);
-    HippoAbstractWindow::show(activate);
+    create();            // so we can do the resizing
+    idleResize();          // so we have the right size prior to showing
+    contentsControl_->show(false);
+    HippoAbstractControl::show(activate);
+}
+
+void
+HippoWindowImpl::queueResize()
+{
+    resizeIdle_.add(slot(this, &HippoWindowImpl::idleResize));
+}
+
+bool
+HippoWindowImpl::idleResize()
+{
+    int w = getWidthRequest();
+    int h = getHeightRequest(w);
+    resize(w, h);
+
+    resizeIdle_.remove();
+
+    return false; // remove idle
 }
 
 void
@@ -328,16 +316,28 @@ HippoWindowImpl::setVisible(bool visible)
 void
 HippoWindowImpl::setPosition(int x, int y)
 {
-    moveResize(x, y, width_, height_);
+    moveResize(x, y, getWidth(), getHeight());
 }
 
 void
 HippoWindowImpl::getSize(int *width_p, int *height_p)
 {
     if (width_p)
-        *width_p = width_;
+        *width_p = getWidth();
     if (height_p)
-        *height_p = height_;
+        *height_p = getHeight();
+}
+
+int
+HippoWindowImpl::getWidthRequestImpl()
+{
+    return contentsControl_->getWidthRequest();
+}
+
+int
+HippoWindowImpl::getHeightRequestImpl(int forWidth)
+{
+    return contentsControl_->getHeightRequest(forWidth);
 }
 
 bool 
@@ -351,59 +351,21 @@ HippoWindowImpl::processMessage(UINT   message,
             if (GetUpdateRect(window_, &region, true)) {
                 PAINTSTRUCT paint;
                 HDC hdc = BeginPaint(window_, &paint);
-
+#if 0
                 FillRect(hdc, &region, (HBRUSH) (COLOR_WINDOW+1));
 
                 TextOut(hdc, 0, 0, L"Hello, Windows!", 15);
-
+#endif
                 EndPaint(window_, &paint);
             }
             return true;
         case WM_SIZE:
-            width_ = LOWORD(lParam);
-            height_ = HIWORD(lParam);
+            int width = LOWORD(lParam);
+            int height = HIWORD(lParam);
+            contentsControl_->moveResize(0, 0, width, height);
+            HippoAbstractControl::processMessage(message, wParam, lParam);
             return true;
     }
 
-    return HippoAbstractWindow::processMessage(message, wParam, lParam);
-}
-
-void
-HippoCanvasWindow::setRoot(HippoCanvasItem *item)
-{
-    root_ = item;
-}
-
-bool
-HippoCanvasWindow::create()
-{
-    return HippoAbstractWindow::create();
-}
-
-bool 
-HippoCanvasWindow::processMessage(UINT   message,
-                                  WPARAM wParam,
-                                  LPARAM lParam)
-{
-    switch (message) {
-        case WM_PAINT:
-            RECT region;
-            if (GetUpdateRect(window_, &region, true)) {
-                PAINTSTRUCT paint;
-                HDC hdc = BeginPaint(window_, &paint);
-
-                FillRect(hdc, &region, (HBRUSH) (COLOR_WINDOW+2));
-
-                TextOut(hdc, 0, 0, L"Canvas!", 15);
-
-                EndPaint(window_, &paint);
-            }
-            return true;
-        case WM_SIZE:
-            width_ = LOWORD(lParam);
-            height_ = HIWORD(lParam);
-            return true;
-    }
-
-    return HippoAbstractWindow::processMessage(message, wParam, lParam);
+    return HippoAbstractControl::processMessage(message, wParam, lParam);
 }

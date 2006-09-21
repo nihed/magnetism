@@ -2103,6 +2103,8 @@ WinMain(HINSTANCE hInstance,
     char **argv;
     HippoOptions options;
 
+    putenv("G_DEBUG=fatal_warnings");
+
     g_thread_init(NULL);
     g_type_init();
 
