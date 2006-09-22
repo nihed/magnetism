@@ -509,7 +509,7 @@ dh.chatwindow._createLists = function() {
 		this._chatRoom,
 		function(message, before) { dh.chatwindow._addMessage(message, before) },
 		function(message) { dh.chatwindow._removeMessage(message) },
-		3);
+		dh.chatwindow.MAX_HISTORY_COUNT);
 		
 	this._participantList = new dh.chat.UserList(
 		this._chatRoom,
