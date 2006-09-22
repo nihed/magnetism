@@ -22,11 +22,12 @@
 	<c:choose>
 		<c:when test="${browser.linuxRequested}">
 			<%-- LINUX RELEASE NOTES GO HERE --%>
-			<p>Version 1.1.14</p>
+			<p>Version 1.1.15</p>
 			<ul>
 				<li>Live chat previews in Mugshot bar.</li>			
 				<li>Better tracking of who's at a page.</li>			
-				<li>Firefox toolbar button to share links.</li>			
+				<li>Firefox toolbar button to share links.</li>
+				<li>Support for load-balancing between multiple servers.</li>			
 			</ul>
 		</c:when>
 		<c:otherwise>
