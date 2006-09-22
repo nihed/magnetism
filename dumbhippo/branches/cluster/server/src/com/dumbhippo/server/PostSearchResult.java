@@ -101,9 +101,9 @@ public class PostSearchResult {
 		for (int i = nChecked; toGet > 0 && i < hits.length(); i++) {
 			try {
 				Document d = hits.doc(i);
-				String id = d.get("Id");
+				String id = d.get("id");
 				if (id == null) {
-					logger.error("Document didn't have Id field");
+					logger.error("Document didn't have id field");
 					continue;
 				}
 				

@@ -27,6 +27,7 @@
                 dumbhippo.server.http.port=@@tomcatHttpPort@@
 		dumbhippo.server.baseurl=@@baseurl@@
 		dumbhippo.server.files.saveurl=file://@@filesavedir@@
+		dumbhippo.server.lucene.indexdir=@@luceneIndexDir@@
 		dumbhippo.server.aimbot.name=@@imbotScreenName@@
 		dumbhippo.server.aim.presence.key=@@aimPresenceKey@@
 		dumbhippo.server.downloadurl.windows=@@clientWindowsDownload@@

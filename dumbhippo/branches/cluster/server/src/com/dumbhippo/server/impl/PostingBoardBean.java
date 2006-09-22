@@ -1297,7 +1297,7 @@ public class PostingBoardBean implements PostingBoard {
 	}
 	
 	public PostSearchResult searchPosts(Viewpoint viewpoint, String queryString) {
-		final String[] fields = { "ExplicitTitle", "Text" };
+		final String[] fields = { "explicitTitle", "text" };
 		QueryParser queryParser = new MultiFieldQueryParser(fields, PostIndexer.getInstance().createAnalyzer());
 		queryParser.setDefaultOperator(Operator.AND);
 		org.apache.lucene.search.Query query;

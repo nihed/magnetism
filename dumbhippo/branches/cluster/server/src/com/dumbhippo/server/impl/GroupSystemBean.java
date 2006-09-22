@@ -834,7 +834,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 	}
 
 	public GroupSearchResult searchGroups(Viewpoint viewpoint, String queryString) {
-		final String[] fields = { "Name", "Description" };
+		final String[] fields = { "name", "description" };
 		QueryParser queryParser = new MultiFieldQueryParser(fields, GroupIndexer.getInstance().createAnalyzer());
 		queryParser.setDefaultOperator(Operator.AND);
 		org.apache.lucene.search.Query query;

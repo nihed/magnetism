@@ -26,7 +26,7 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.postinfo.PostInfo;
 
 @Entity
-@Indexed(index="index/post")
+@Indexed(index="post")
 @org.hibernate.annotations.Table(appliesTo = "Post", indexes={ 
 		@Index(name="postDate_index", columnNames = { "postDate" } ) }
 )

@@ -58,7 +58,7 @@ import com.dumbhippo.GlobalSetup;
 		   uniqueConstraints = 
 		      {@UniqueConstraint(columnNames={"digest"})}
 	      )
-@Indexed(index="index/track")
+@Indexed(index="track")
 public class Track extends DBUnique {
 	private static final long serialVersionUID = 1L;
 	static private final Logger logger = GlobalSetup.getLogger(Track.class);

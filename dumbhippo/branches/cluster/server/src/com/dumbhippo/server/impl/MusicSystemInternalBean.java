@@ -1753,7 +1753,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	}
 
 	public TrackSearchResult searchTracks(Viewpoint viewpoint, String queryString) {
-		final String[] fields = { "Artist", "Album", "Name" };
+		final String[] fields = { "artist", "album", "name" };
 		QueryParser queryParser = new MultiFieldQueryParser(fields, TrackIndexer.getInstance().createAnalyzer());
 		queryParser.setDefaultOperator(Operator.AND);
 		org.apache.lucene.search.Query query;

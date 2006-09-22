@@ -16,6 +16,7 @@ public enum HippoProperty {
 	XMPP_PASSWORD("dumbhippo.server.xmpp.password", null),
 	HTTP_PORT("dumbhippo.server.http.port", "8080"),
 	FILES_SAVEURL("dumbhippo.server.files.saveurl", null),
+	LUCENE_INDEXDIR("dumbhippo.server.lucene.indexdir", null),
 	AIMBOT_NAME("dumbhippo.server.aimbot.name", null),
 	AIM_PRESENCE_KEY("dumbhippo.server.aim.presence.key", null),
 	AMAZON_ACCESS_KEY_ID("dumbhippo.server.amazon.accesskeyid", null),

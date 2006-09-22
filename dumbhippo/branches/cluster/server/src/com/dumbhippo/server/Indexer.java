@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Properties;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -14,6 +15,7 @@ import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Searcher;
 import org.hibernate.lucene.DocumentBuilder;
+import org.hibernate.lucene.store.FSDirectoryProvider;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
@@ -24,15 +26,25 @@ public abstract class Indexer<T> {
 	static private final Logger logger = GlobalSetup.getLogger(Indexer.class);
 	
 	public BlockingQueue<Object> pending;
-	
+	private DocumentBuilder<T> builder;
+
 	private IndexReader reader;
 	private IndexSearcher searcher;
 	private IndexerThread indexerThread;
 	
 	private static class ReindexMarker {}
 	
-	public Indexer() {
+	protected Indexer(Class<T> clazz) {
 		pending = new LinkedBlockingQueue<Object>();
+		
+		Configuration config = EJBUtil.defaultLookup(Configuration.class);
+		String indexBase = config.getPropertyFatalIfUnset(HippoProperty.LUCENE_INDEXDIR);
+		Properties properties = new Properties();
+		properties.setProperty("indexBase", indexBase);
+		
+		FSDirectoryProvider directory = new FSDirectoryProvider();
+		directory.initialize(clazz, null, properties);		
+		builder = new DocumentBuilder<T>(clazz, createAnalyzer(), directory);
 	}
 	
 	private synchronized void ensureThread() {
@@ -105,9 +117,11 @@ public abstract class Indexer<T> {
 		return new StopAnalyzer();
 	}
 	
+	protected DocumentBuilder<T> getBuilder() {
+		return builder;
+	}
 	
 	protected abstract String getIndexName();
-	protected abstract DocumentBuilder<T> getBuilder();
 	protected abstract void doIndex(IndexWriter writer, List<Object> ids) throws IOException;
 	protected abstract void doIndexAll(IndexWriter writer) throws IOException;
 	
@@ -158,6 +172,9 @@ public abstract class Indexer<T> {
 							logger.info("Finished reindexing {}", getIndexName());
 						
 					} catch (IOException e) {
+						logger.error("IOException while indexing " + getIndexName(), e);
+					} catch (RuntimeException e) {
+						logger.error("Unexpected exception while indexing " + getIndexName(), e);
 					}
 				}
 			} catch (InterruptedException e) {
