@@ -88,7 +88,7 @@
     </UI>
     
     <!-- Used for the page header -->
-    <Binary Id="fogJpg" src="../WixInstaller/fog.jpg"/>
+    <Binary Id="bannerBmp" src="../WixInstaller/mugshotBanner.bmp"/>
     
     <Icon Id="hippoIcon" src="../HippoUI/Mugshot.ico"/>
     </Product>
