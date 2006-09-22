@@ -107,8 +107,8 @@ dojo.lang.extend(dh.statistics.fetcher.Fetcher,
 		params.columns = columnString;
 		if (server == dh.statistics.thisServer)
 	    	params.filename = filename;
-		else
-			params.runOnServer = server;
+	    	
+		params.runOnServer = server;
     
     	var me = this;
 		dh.server.doXmlMethodGET("statistics",

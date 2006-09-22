@@ -30,7 +30,8 @@ dh.statistics._getSelectedFilename = function() {
 dh.statistics.onSelectedFileChange = function() {
     // get statistics set for a given file
 	dh.server.doXmlMethodGET("statisticssets",
-				     { "filename" : this._getSelectedFilename() },
+				     { "filename" : this._getSelectedFilename(),
+				       "runOnServer" : this.thisServer },
 				       function(childNodes, http) {
 				       	   var server = dh.statistics.thisServer;
 				       	   var filename = dh.statistics._getSelectedFilename();
