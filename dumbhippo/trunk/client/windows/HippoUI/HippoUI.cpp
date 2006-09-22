@@ -31,6 +31,7 @@
 #include <hippo/hippo-stack-manager.h>
 #include <hippo/hippo-canvas-box.h>
 #include <hippo/hippo-canvas-text.h>
+#include <hippo/hippo-canvas-widgets.h>
 #include <hippo/hippo-window.h>
 
 #include <glib.h>
@@ -561,6 +562,14 @@ HippoUI::create(HINSTANCE instance)
     HippoCanvasItem *text = hippo_canvas_text_new();
     g_object_set(G_OBJECT(text), "text", "Hello, World", NULL);
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(box), text, HippoPackFlags(0));
+
+    HippoCanvasItem *scrollbars = hippo_canvas_scrollbars_new();
+    text = hippo_canvas_text_new();
+    g_object_set(G_OBJECT(text), "text", "Inside Scrollbars This Text is Longer",
+        "background-color", 0x999900ff, "border", 10, NULL);
+    hippo_canvas_scrollbars_set_root(HIPPO_CANVAS_SCROLLBARS(scrollbars), text);
+    hippo_canvas_box_append(HIPPO_CANVAS_BOX(box), scrollbars, HippoPackFlags(0));
+
     hippo_window_set_contents(window, box);
     hippo_window_set_visible(window, TRUE);
 #endif

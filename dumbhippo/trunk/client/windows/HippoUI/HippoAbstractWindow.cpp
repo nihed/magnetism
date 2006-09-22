@@ -228,6 +228,9 @@ HippoAbstractWindow::show(BOOL activate)
     if (showing_)
         return;
 
+    if (!create())
+        return;
+
     if (animate_)
         AnimateWindow(window_, 400, AW_BLEND);
     else
@@ -291,8 +294,12 @@ HippoAbstractWindow::move(int x, int y)
 void
 HippoAbstractWindow::resize(int width, int height)
 {
+    if (!window_)
+        return;
+
     RECT area;
     if (!GetWindowRect(window_, &area)) {
+        g_warning("Failed to get window area in resize()");
         return;
     }
     moveResize(area.left, area.top, width, height);

@@ -473,8 +473,6 @@ hippo_canvas_context_win_register_widget_item(HippoCanvasContext *context,
 
     g_return_if_fail(HIPPO_IS_CANVAS_CONTEXT(context));
 
-    // FIXME
-
     add_control_item(canvas_win, item);
 }
 
