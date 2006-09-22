@@ -26,6 +26,7 @@ public:
     void getSize(int *x_p, int *y_p);
 
     virtual bool create();
+    virtual void onSizeChanged();
 
 protected:
 
@@ -278,9 +279,9 @@ HippoWindowImpl::create()
 void
 HippoWindowImpl::show(bool activate)
 {
-    create();            // so we can do the resizing
-    idleResize();          // so we have the right size prior to showing
+    create();              // so we can do the resizing
     contentsControl_->show(false);
+    idleResize();          // so we have the right size prior to showing
     HippoAbstractControl::show(activate);
 }
 
@@ -306,7 +307,6 @@ void
 HippoWindowImpl::setVisible(bool visible)
 {
     if (visible) {
-        create();
         show(false);
     } else {
         hide();
@@ -316,7 +316,7 @@ HippoWindowImpl::setVisible(bool visible)
 void
 HippoWindowImpl::setPosition(int x, int y)
 {
-    moveResize(x, y, getWidth(), getHeight());
+    move(x, y);
 }
 
 void
@@ -340,6 +340,12 @@ HippoWindowImpl::getHeightRequestImpl(int forWidth)
     return contentsControl_->getHeightRequest(forWidth);
 }
 
+void
+HippoWindowImpl::onSizeChanged()
+{
+    contentsControl_->resize(getWidth(), getHeight());
+}
+
 bool 
 HippoWindowImpl::processMessage(UINT   message,
                                 WPARAM wParam,
@@ -358,12 +364,6 @@ HippoWindowImpl::processMessage(UINT   message,
 #endif
                 EndPaint(window_, &paint);
             }
-            return true;
-        case WM_SIZE:
-            int width = LOWORD(lParam);
-            int height = HIWORD(lParam);
-            contentsControl_->moveResize(0, 0, width, height);
-            HippoAbstractControl::processMessage(message, wParam, lParam);
             return true;
     }
 

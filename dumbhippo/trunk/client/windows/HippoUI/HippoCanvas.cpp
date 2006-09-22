@@ -76,6 +76,13 @@ HippoCanvas::create()
     return result;
 }
 
+void
+HippoCanvas::onSizeChanged()
+{
+    if (root_ != (HippoCanvasItem*) NULL)
+        hippo_canvas_item_allocate(root_, getWidth(), getHeight());
+}
+
 bool 
 HippoCanvas::processMessage(UINT   message,
                             WPARAM wParam,
@@ -110,14 +117,6 @@ HippoCanvas::processMessage(UINT   message,
                 cairo_surface_destroy(surface);
                 EndPaint(window_, &paint);
             }
-            return true;
-        case WM_SIZE:
-            int width = LOWORD(lParam);
-            int height = HIWORD(lParam);
-    
-            if (root_ != (HippoCanvasItem*) NULL)
-                hippo_canvas_item_allocate(root_, width, height);
-            HippoAbstractControl::processMessage(message, wParam, lParam);
             return true;
     }
 

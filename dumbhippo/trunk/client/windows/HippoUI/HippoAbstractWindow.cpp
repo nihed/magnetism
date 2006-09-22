@@ -8,8 +8,8 @@
 #include <HippoUtil.h>
 #include "HippoAbstractWindow.h"
 
-static const int BASE_WIDTH = 600;
-static const int BASE_HEIGHT = 600;
+static const int DEFAULT_WIDTH = 600;
+static const int DEFAULT_HEIGHT = 600;
 
 HIPPO_DEFINE_REFCOUNTING(HippoAbstractWindow)
 
@@ -27,6 +27,14 @@ HippoAbstractWindow::HippoAbstractWindow()
     created_ = false;
     showing_ = false;
     destroyed_ = false;
+
+    x_ = 0;
+    y_ = 0;
+    width_ = 0;
+    height_ = 0;
+
+    positionSet_ = false;
+    sizeSet_ = false;
 
     instance_ = GetModuleHandle(NULL);
     window_ = NULL;
@@ -123,9 +131,12 @@ bool
 HippoAbstractWindow::createWindow(void)
 {
     window_ = CreateWindowEx(extendedStyle_, className_, title_, windowStyle_,
-                             CW_USEDEFAULT, CW_USEDEFAULT, BASE_WIDTH, BASE_HEIGHT,
-                             (useParent_ && ui_) ? ui_->getWindow() : (createWithParent_ ? createWithParent_->window_ : NULL), 
-                             NULL, instance_, NULL);
+        positionSet_ ? x_ : CW_USEDEFAULT,
+        positionSet_ ? y_ : CW_USEDEFAULT,
+        getWidth(),
+        getHeight(),
+        (useParent_ && ui_) ? ui_->getWindow() : (createWithParent_ ? createWithParent_->window_ : NULL), 
+        NULL, instance_, NULL);
     if (!window_) {
         hippoDebugLastErr(L"Couldn't create window!");
         return false;
@@ -264,7 +275,24 @@ HippoAbstractWindow::setForegroundWindow()
 }
 
 void
+HippoAbstractWindow::syncSize()
+{
+    if (window_) {
+        MoveWindow(window_, x_, y_, width_, height_, TRUE);
+    }
+}
+
+void
 HippoAbstractWindow::moveResize(int x, int y, int width, int height)
+{
+    // the move depends on the resize if x or y is CW_DEFAULT
+    resize(width, height);
+    move(x, y);
+    syncSize();
+}
+
+void
+HippoAbstractWindow::move(int x, int y)
 {
     if (x == CW_DEFAULT || y == CW_DEFAULT) {
         RECT workArea;
@@ -272,8 +300,8 @@ HippoAbstractWindow::moveResize(int x, int y, int width, int height)
         int centerY = 0;
      
         if (::SystemParametersInfo(SPI_GETWORKAREA, 0, &workArea, 0)) {
-            centerX = (workArea.left + workArea.right - width) / 2;
-            centerY = (workArea.bottom + workArea.top - height) / 2;
+            centerX = (workArea.left + workArea.right - getWidth()) / 2;
+            centerY = (workArea.bottom + workArea.top - getHeight()) / 2;
         }
         
         if (x == CW_DEFAULT)
@@ -282,33 +310,42 @@ HippoAbstractWindow::moveResize(int x, int y, int width, int height)
             y = centerY;
     }
 
-    MoveWindow(window_, x, y, width, height, TRUE);
-}
+    if (x == x_ && y == y_ && positionSet_)
+        return;
 
-void
-HippoAbstractWindow::move(int x, int y)
-{
-    moveResize(x, y, getWidth(), getHeight());
+    x_ = x;
+    y_ = y;
+    
+    positionSet_ = true;  // only matters prior to create()
+
+    syncSize();
 }
 
 void
 HippoAbstractWindow::resize(int width, int height)
 {
-    if (!window_)
+    if (width == width_ && height == height_ && sizeSet_)
         return;
 
-    RECT area;
-    if (!GetWindowRect(window_, &area)) {
-        g_warning("Failed to get window area in resize()");
-        return;
-    }
-    moveResize(area.left, area.top, width, height);
+    width_ = width;
+    height_ = height;
+
+    sizeSet_ = true; // only matters prior to create()
+
+    syncSize();
+
+    // this would happen with WM_SIZE anyway, but here so it happens 
+    // synchronously and immediately
+    onSizeChanged();
 }
 
 // InvalidateRect queues a WM_PAINT, while UpdateRect sends WM_PAINT synchronously
 void
 HippoAbstractWindow::invalidate(int x, int y, int width, int height)
 {
+    if (!window_)
+        return;
+
     RECT area;
 
     area.left = x;
@@ -320,32 +357,22 @@ HippoAbstractWindow::invalidate(int x, int y, int width, int height)
     InvalidateRect(window_, &area, false);
 }
 
+void
+HippoAbstractWindow::onSizeChanged()
+{
+    // just a callback, doesn't do anything in base class
+}
+
 int
 HippoAbstractWindow::getWidth() 
 {
-    if (!window_)
-        return 0;
-
-    RECT area;
-    if (!GetWindowRect(window_, &area)) {
-        g_warning("failed to get window rect");
-        return 0;
-    }
-    return area.right - area.left;
+    return sizeSet_ ? width_ : DEFAULT_WIDTH;
 }
 
 int
 HippoAbstractWindow::getHeight()
 {
-    if (!window_)
-        return 0;
-
-    RECT area;
-    if (!GetWindowRect(window_, &area)) {
-        g_warning("failed to get window rect");
-        return 0;
-    }
-    return area.bottom - area.top;
+    return sizeSet_ ? height_ : DEFAULT_HEIGHT;
 }
 
 bool
@@ -367,6 +394,20 @@ HippoAbstractWindow::processMessage(UINT   message,
         return true;
     case WM_DESTROY:
         onWindowDestroyed();
+        return true;
+    case WM_SIZE:
+        RECT clientRect;
+        if (GetClientRect(window_, &clientRect)) {
+            int newW = clientRect.right - clientRect.left;
+            int newH = clientRect.bottom - clientRect.top;
+            if (newW != width_ || newH != height_) {
+                width_ = newW;
+                height_ = newH;
+                onSizeChanged();
+            }
+        } else {
+            g_warning("Failed to get client rect of window");
+        }
         return true;
     default:
         return false;

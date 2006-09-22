@@ -23,9 +23,11 @@ protected:
     virtual int getWidthRequestImpl();
     virtual int getHeightRequestImpl(int forWidth);
 
-    bool processMessage(UINT   message,
-                        WPARAM wParam,
-                        LPARAM lParam);
+    virtual bool processMessage(UINT   message,
+                                WPARAM wParam,
+                                LPARAM lParam);
+
+    virtual void onSizeChanged();
 
 private:
     HippoGObjectPtr<HippoCanvasItem> root_;

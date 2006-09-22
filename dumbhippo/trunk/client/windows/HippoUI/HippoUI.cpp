@@ -540,7 +540,7 @@ HippoUI::create(HINSTANCE instance)
         return false;
     }
 
-#if 0
+#if 1
     if (hippo_platform_get_signin(platform_)) {
         if (hippo_connection_signin(getConnection()))
             showSignInWindow();

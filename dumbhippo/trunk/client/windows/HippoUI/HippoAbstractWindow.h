@@ -179,6 +179,8 @@ protected:
 
     virtual void onWindowDestroyed();
 
+    virtual void onSizeChanged();
+
     HippoUI* ui_;
     HWND window_;
     DWORD windowStyle_;
@@ -201,12 +203,22 @@ private:
 
     DWORD refCount_;
 
+    int x_;
+    int y_;
+    int width_;
+    int height_;
+
+    unsigned int positionSet_ : 1;
+    unsigned int sizeSet_ : 1;
+
     unsigned int created_ : 1;
     unsigned int showing_ : 1;
     unsigned int destroyed_ : 1;
 
     bool createWindow(void);
     bool registerClass();
+
+    void syncSize();
 
     static LRESULT CALLBACK windowProc(HWND   window,
                                        UINT   message,
