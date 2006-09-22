@@ -28,6 +28,11 @@ dojo.lang.extend(dh.statistics.fetcher.Fetcher,
 		delete this.specs[id];
 	},
 	
+	refetchAll: function(id) {
+		this._lastFetched = {};
+		this._queueIdleFetch();
+	},
+	
 	getDataset: function(id) {
 		var dataset = this._datasets[id];
 		if (dataset)

@@ -1,6 +1,6 @@
 dojo.provide("dh.statistics");
 
-dojo.require("dh.statistics.chart");
+dojo.require("dh.statistics.block");
 dojo.require("dh.statistics.fetcher");
 dojo.require("dh.statistics.dataset");
 dojo.require("dh.statistics.selector");
@@ -65,6 +65,10 @@ dh.statistics.addBlock = function() {
 	
 	if (this._set)
 		block.setSet(this._set);
+}
+
+dh.statistics.refresh = function() {
+	this._fetcher.refetchAll();
 }
 
 dh.statistics._setSet = function(set) {

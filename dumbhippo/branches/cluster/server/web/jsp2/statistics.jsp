@@ -11,12 +11,8 @@
 	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/statistics.css">
 	<dht:faviconIncludes/>
 	<dht:scriptIncludes/>
-	<script type="text/javascript" src="javascript/dh/statistics/set.js"></script>
-	<script type="text/javascript" src="javascript/dh/statistics/fetcher.js"></script>
-	<script type="text/javascript" src="javascript/dh/statistics/block.js"></script>
-	<script type="text/javascript" src="javascript/dh/statistics.js"></script>
 	<script type="text/javascript">
-//		dojo.require("dh.statistics");
+		dojo.require("dh.statistics");
 		dojo.event.connect(dojo, "loaded", dj_global, "dhStatisticsInit");
 		dh.statistics.servers = [ <c:forEach items="${statistics.servers}" var="server">
 		    <dh:jsString value="${server}"/>,
@@ -25,11 +21,21 @@
 	</script>
 </head>
 <body>
-    <select id="dhFileSelect" onchange="dh.statistics.onSelectedFileChange();">
-        <c:forEach items="${statistics.sets}" var="set">
-	        <option value="${set.filename}"><c:out value="${set.name}"/></option>				    
-        </c:forEach>
-	</select>
+	<table id="dhHeaderTable">
+	<tr>
+	<td id="dhFileSelectCell">
+	    <select id="dhFileSelect" onchange="dh.statistics.onSelectedFileChange();">
+    		<c:forEach items="${statistics.sets}" var="set">
+		        <option value="${set.filename}"><c:out value="${set.name}"/></option>				    
+        	</c:forEach>
+		</select>
+	</td>
+	<td id="dhRefreshCell">
+		<input type="button" value="Refresh" onclick="dh.statistics.refresh();"></input>
+	</td>
+	</td>
+	</table>
+	
 	<div id="dhBlocksDiv">
 	</div>
 	<input type="button" value="Add" onclick="dh.statistics.addBlock();"></input>
