@@ -1174,7 +1174,28 @@ defineClass(dh.stacker.AccountUpdateBlock, dh.stacker.Block,
 	            leftDiv.appendChild(textDiv);
 	            dojo.html.setClass(textDiv, "dh-description");
 			    dojo.dom.textContent(textDiv, this._items[i].text);
-			   
+	
+	            if (this._items[i].photos.length > 0) {
+	                var photosDiv = document.createElement("div");	   			   
+			        dojo.html.setClass(photosDiv, "dh-photos");
+			        var j;
+			        for (j = 0; j < this._items[i].photos.length; ++j) {
+			            var photo =  this._items[i].photos[j];
+			            var photoDiv = document.createElement("div");	
+			            dojo.html.setClass(photoDiv, "dh-photo");
+			            var a = document.createElement('a');
+			            a.href = photo.link;
+		  	            a.title = photo.caption;
+			            a.target="_blank";
+			            var photoImg = document.createElement("img");
+			            photoImg.src = photo.source;
+			            a.appendChild(photoImg);
+			            photoDiv.appendChild(a);
+			            photosDiv.appendChild(photoDiv);
+			        }		        
+			        leftDiv.appendChild(photosDiv);
+			    }    
+			        
 			    items.appendChild(item);
 			}
 			this._itemsDiv.appendChild(items);

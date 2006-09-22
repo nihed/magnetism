@@ -1,7 +1,8 @@
 package com.dumbhippo.persistence;
 
 import java.util.Date;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -26,10 +27,12 @@ public class FacebookAccount extends DBUnique {
 	private int unseenPokeCount;
 	private int totalPokeCount;
 	private long pokeCountTimestamp;
-	private List<FacebookEvent> facebookEvents; 
+	private Set<FacebookEvent> facebookEvents; 
+	// photos tagged with the user
+	private Set<FacebookPhotoData> taggedPhotos;
+	private boolean taggedPhotosPrimed;
 	
-	private FacebookAccount() {
-	}
+	protected FacebookAccount() {}
 	
 	public FacebookAccount(ExternalAccount externalAccount) {
 		assert(externalAccount.getAccountType().equals(ExternalAccountType.FACEBOOK));
@@ -41,7 +44,10 @@ public class FacebookAccount extends DBUnique {
 		this.wallMessageCount = -1;
 		this.unseenPokeCount = -1;
 		this.totalPokeCount = -1;
-		this.pokeCountTimestamp = -1;		
+		this.pokeCountTimestamp = -1;
+		this.facebookEvents = new HashSet<FacebookEvent>();
+		this.taggedPhotos = new HashSet<FacebookPhotoData>();	
+		this.taggedPhotosPrimed = false;
 	}
 	
 	@Column(nullable=true)
@@ -117,11 +123,11 @@ public class FacebookAccount extends DBUnique {
 	}
 	
     @OneToMany(mappedBy="facebookAccount")
-	public List<FacebookEvent> getFacebookEvents() {
+	public Set<FacebookEvent> getFacebookEvents() {
 		return facebookEvents;
 	}
 
-	public void setFacebookEvents(List<FacebookEvent> facebookEvents) {
+	public void setFacebookEvents(Set<FacebookEvent> facebookEvents) {
 		this.facebookEvents = facebookEvents;
 	}
 
@@ -172,5 +178,37 @@ public class FacebookAccount extends DBUnique {
 	
 	public void setPokeCountTimestampAsLong(long pokeCountTimestamp) {
 		this.pokeCountTimestamp = pokeCountTimestamp;
+	}
+	
+    // This is one to many because we don't know if facebook will return 
+	// the same photo data when requests are made for different facebook
+	// users who are in the same photo, so we just store all photos returned
+	// for each account.
+	@OneToMany(mappedBy="facebookAccount")
+	public Set<FacebookPhotoData> getTaggedPhotos() {
+		return taggedPhotos;
+	}
+	
+	public void setTaggedPhotos(Set<FacebookPhotoData> taggedPhotos) {
+		if (taggedPhotos == null)
+			throw new IllegalArgumentException("null taggedPhotos");
+		this.taggedPhotos = taggedPhotos;
+	}
+	
+	public void addTaggedPhoto(FacebookPhotoData taggedPhoto) {
+		taggedPhotos.add(taggedPhoto);
+	}
+	
+	public void removeTaggedPhoto(FacebookPhotoData taggedPhoto) {
+		taggedPhotos.remove(taggedPhoto);
+	}
+	
+	@Column(nullable=false)
+	public boolean getTaggedPhotosPrimed() {
+		return taggedPhotosPrimed;
+	}
+
+	public void setTaggedPhotosPrimed(boolean taggedPhotosPrimed) {
+		this.taggedPhotosPrimed = taggedPhotosPrimed;
 	}
 }

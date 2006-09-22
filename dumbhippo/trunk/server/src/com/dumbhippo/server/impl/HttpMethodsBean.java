@@ -53,6 +53,7 @@ import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.FacebookAccount;
 import com.dumbhippo.persistence.FacebookEvent;
 import com.dumbhippo.persistence.FacebookEventType;
+import com.dumbhippo.persistence.FacebookPhotoData;
 import com.dumbhippo.persistence.Feed;
 import com.dumbhippo.persistence.FeedEntry;
 import com.dumbhippo.persistence.Group;
@@ -1914,6 +1915,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			List<FacebookEvent> facebookEvents = facebookTracker.getLatestEvents(viewpoint, facebookAccount, eventsToRequestCount);
 			for (FacebookEvent facebookEvent : facebookEvents) {
 				xml.openElement("updateItem");
+				String pageName = "profile";
 				String multiple = "";
 				if (facebookEvent.getCount() != 1)
 					multiple = "s";
@@ -1922,13 +1924,27 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 				} else if (facebookEvent.getEventType().equals(FacebookEventType.NEW_WALL_MESSAGES_EVENT)) {
 					xml.appendTextNode("updateTitle", facebookEvent.getCount() + " new wall message" + multiple);					
 				} else if (facebookEvent.getEventType().equals(FacebookEventType.UNSEEN_POKES_UPDATE)) {
-				    xml.appendTextNode("updateTitle", facebookEvent.getCount() + " unseen poke" + multiple);					
-			    } else {
+				    xml.appendTextNode("updateTitle", facebookEvent.getCount() + " unseen poke" + multiple);			
+				} else if (facebookEvent.getEventType().equals(FacebookEventType.NEW_TAGGED_PHOTOS_EVENT)) {
+					xml.appendTextNode("updateTitle", facebookEvent.getCount() + " new photo" + multiple);		
+					pageName = "photo_search";
+				} else {
 					throw new RuntimeException("Unexpected event type in HttpMethodsBean::getExternalAccountSummary(): " + facebookEvent.getEventType());
 				}
-			    xml.appendTextNode("updateLink", "http://www.facebook.com/profile.php?uid=" + facebookAccount.getFacebookUserId() + "&api_key=" + facebookTracker.getApiKey());
+			    xml.appendTextNode("updateLink", "http://www.facebook.com/" + pageName + ".php?uid=" + facebookAccount.getFacebookUserId() + "&api_key=" + facebookTracker.getApiKey());
 			    xml.appendTextNode("updateText", "");
 			    xml.appendTextNode("updateTimestamp", Long.toString(facebookEvent.getEventTimestampAsLong()));
+			    if (facebookEvent.getPhotos().size() > 0) {
+					xml.openElement("updatePhotos");	
+					for (FacebookPhotoData photoData : facebookEvent.getPhotos()) {
+						xml.openElement("photo");
+					    xml.appendTextNode("photoLink", photoData.getLink());
+					    xml.appendTextNode("photoSource", photoData.getSource() + "&size=thumb");
+					    xml.appendTextNode("photoCaption", photoData.getCaption());
+					    xml.closeElement();
+					}
+					xml.closeElement();
+				}			    
 			    xml.closeElement();
 			}
 		}

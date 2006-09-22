@@ -36,11 +36,12 @@ dh.model.trackFromXmlNode = function(element) {
 	return new dh.model.Track(image, title, artist, album, stillPlaying == "true");
 }
 
-dh.model.UpdateItem = function(title, link, text, timestamp) {
+dh.model.UpdateItem = function(title, link, text, timestamp, photos) {
 	this.title = title;
 	this.link = link;
 	this.text = text;
 	this.timestamp = timestamp;
+	this.photos = photos;
 }
 
 dh.model.updateItemFromXmlNode = function(element) {		
@@ -51,7 +52,8 @@ dh.model.updateItemFromXmlNode = function(element) {
 	var link = null;
 	var text = null;
 	var timestamp = null;
-			
+	var photos = [];
+	    			
 	itemChildNodes = element.childNodes;	
 		
 	var updateTitleNode = itemChildNodes.item(0);
@@ -80,9 +82,58 @@ dh.model.updateItemFromXmlNode = function(element) {
 		    dojo.raise("failed to parse '" + timestampString + "' as an integer for a timestamp");
 	}
 	
-	return new dh.model.UpdateItem(title, link, text, timestamp);
+	if (itemChildNodes.length > 4) {
+	    var updatePhotosNode = itemChildNodes.item(4);
+	    if (updatePhotosNode.nodeName != "updatePhotos")
+		    dojo.raise("updatePhotos node expected");
+	    
+	    photoNodes = updatePhotosNode.childNodes;
+		var i;
+		for (i = 0; i < photoNodes.length; ++i) {
+			var photoNode = photoNodes.item(i);
+			var photo = dh.model.updatePhotoDataFromXmlNode(photoNode);
+			photos.push(photo);
+		}
+	    	    
+	}	    	    
+	
+	return new dh.model.UpdateItem(title, link, text, timestamp, photos);
 }
 
+dh.model.PhotoData = function(link, source, caption) {
+	this.link = link;
+	this.source = source;
+	this.caption = caption;
+}
+
+dh.model.updatePhotoDataFromXmlNode = function(element) {		
+    if (element.nodeName != "photo")
+        dojo.raise("photo node expected");		
+			
+	var link = null;
+	var source = null;
+	var caption = null;
+	    			
+	photoChildNodes = element.childNodes;	
+		
+	var linkNode = photoChildNodes.item(0);
+	if (linkNode.nodeName != "photoLink")
+		dojo.raise("photoLink node expected");
+	link = dojo.dom.textContent(linkNode);
+
+	var sourceNode = photoChildNodes.item(1);
+	if (sourceNode.nodeName != "photoSource")
+		dojo.raise("photoSource node expected");
+	source = dojo.dom.textContent(sourceNode);
+	
+    var captionNode = photoChildNodes.item(2);
+	if (captionNode.nodeName != "photoCaption")
+		dojo.raise("photoCaption node expected");
+	caption = dojo.dom.textContent(captionNode);
+	
+	return new dh.model.PhotoData(link, source, caption);
+}	
+	
 dh.model.Message = function(text, fromId, fromNickname, serial, timestamp) {
 	this.text = text;
 	this.fromId = fromId;

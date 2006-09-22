@@ -126,6 +126,15 @@
 		.dh-stacked-block .dh-left-column .dh-description {
 			font-size: 	10px;
 		}
+		.dh-stacked-block .dh-left-column .dh-photos {
+		}
+		.dh-stacked-block .dh-left-column .dh-photos .dh-photo {
+			float:      left;
+			height:     75px;
+			width:      75px;
+			margin:     3px 3px 0px 0px;
+            overflow:   hidden;
+		}		
 		.dh-stacked-block .dh-left-column .dh-messages {
 			font-size: 	10px;
 			font-style: italic;

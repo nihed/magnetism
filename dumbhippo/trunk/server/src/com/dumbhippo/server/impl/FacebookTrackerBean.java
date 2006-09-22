@@ -5,6 +5,8 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
+import java.util.HashSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -23,6 +25,7 @@ import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.FacebookAccount;
 import com.dumbhippo.persistence.FacebookEvent;
 import com.dumbhippo.persistence.FacebookEventType;
+import com.dumbhippo.persistence.FacebookPhotoData;
 import com.dumbhippo.persistence.Sentiment;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.Configuration;
@@ -162,6 +165,76 @@ public class FacebookTrackerBean implements FacebookTracker {
 		}
 	}
 	
+	public void updatePhotoData(long facebookAccountId) {
+		FacebookAccount facebookAccount = em.find(FacebookAccount.class, facebookAccountId);
+		if (facebookAccount == null)
+			throw new RuntimeException("Invalid FacebookAccount id " + facebookAccountId + " is passed in to updateMessageCount()");
+		FacebookWebServices ws = new FacebookWebServices(REQUEST_TIMEOUT, config);
+		List<FacebookPhotoData> newPhotos = ws.updateTaggedPhotos(facebookAccount);
+		
+		if (newPhotos == null) {
+			if (!facebookAccount.isSessionKeyValid()) {
+			    stacker.stackAccountUpdateSelf(facebookAccount.getExternalAccount().getAccount().getOwner().getGuid(), 
+					                           ExternalAccountType.FACEBOOK, (new Date()).getTime());			
+		    }
+			return;
+		}
+		
+		Set<FacebookPhotoData> oldPhotos = facebookAccount.getTaggedPhotos();
+		Set<FacebookPhotoData> oldPhotosToRemove = new HashSet<FacebookPhotoData>(oldPhotos);
+		List<FacebookPhotoData> newPhotosToAdd = new ArrayList<FacebookPhotoData>(newPhotos);
+		
+		for (FacebookPhotoData oldPhoto : oldPhotos) {
+			FacebookPhotoData foundPhoto = null;
+			for (FacebookPhotoData newPhoto : newPhotosToAdd) {
+				if (newPhoto.getSource().equals(oldPhoto.getSource())) {
+					oldPhoto.updateCachedData(newPhoto);					
+					oldPhotosToRemove.remove(oldPhoto);
+					foundPhoto = newPhoto;
+					break;
+				}
+			}
+			if (foundPhoto != null)
+			    newPhotosToAdd.remove(foundPhoto);
+		}
+		
+		for (FacebookPhotoData oldPhotoToRemove : oldPhotosToRemove) {
+			facebookAccount.removeTaggedPhoto(oldPhotoToRemove);
+			// we do not remove the photo from its FacebookEvent and from the database,
+			// we leave the association in
+		}
+		
+		if (newPhotosToAdd.size() > 0) {
+			if (!facebookAccount.getTaggedPhotosPrimed()) {
+				// this covers the case when a user has some photos tagged with them on facebook prior to adding
+				// their facebook account to mugshot
+			    for (FacebookPhotoData newPhotoToAdd : newPhotosToAdd) {
+				    em.persist(newPhotoToAdd);
+				    facebookAccount.addTaggedPhoto(newPhotoToAdd);
+			    }
+				facebookAccount.setTaggedPhotosPrimed(true);
+				return;
+			}
+				
+		    FacebookEvent taggedPhotosEvent = new FacebookEvent(facebookAccount, FacebookEventType.NEW_TAGGED_PHOTOS_EVENT, 
+                                                                newPhotosToAdd.size(), (new Date()).getTime());		
+		    
+		    em.persist(taggedPhotosEvent);
+		    for (FacebookPhotoData newPhotoToAdd : newPhotosToAdd) {
+		    	newPhotoToAdd.setFacebookEvent(taggedPhotosEvent);
+			    em.persist(newPhotoToAdd);
+			    taggedPhotosEvent.addPhoto(newPhotoToAdd);
+			    facebookAccount.addTaggedPhoto(newPhotoToAdd);
+		    }
+		    
+		    facebookAccount.addFacebookEvent(taggedPhotosEvent);
+	    	stacker.stackAccountUpdateSelf(facebookAccount.getExternalAccount().getAccount().getOwner().getGuid(), 
+                    ExternalAccountType.FACEBOOK, taggedPhotosEvent.getEventTimestampAsLong());			
+            stacker.stackAccountUpdate(facebookAccount.getExternalAccount().getAccount().getOwner().getGuid(), 
+                ExternalAccountType.FACEBOOK, taggedPhotosEvent.getEventTimestampAsLong());		
+		}
+	}
+	
 	public List<FacebookEvent> getLatestEvents(Viewpoint viewpoint, FacebookAccount facebookAccount, int eventsCount) {
 		ArrayList<FacebookEvent> list = new ArrayList<FacebookEvent>();
 		list.addAll(facebookAccount.getFacebookEvents());
@@ -263,7 +336,11 @@ public class FacebookTrackerBean implements FacebookTracker {
 						    threadPool.execute(new Runnable() {
 								public void run() {
 									final FacebookTracker facebookTracker = EJBUtil.defaultLookup(FacebookTracker.class);
+									// FIXME: we might end up calling web services twice with an expired session
+									// key, perhaps have the first function return a boolean on whether the session key
+									// is still fine or unite them in one function
 									facebookTracker.updateMessageCount(facebookAccount.getId());
+									facebookTracker.updatePhotoData(facebookAccount.getId());
 								}
 							});
 						}

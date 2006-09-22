@@ -1,11 +1,14 @@
 package com.dumbhippo.persistence;
 
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
 import javax.persistence.Transient;
 
 @Entity
@@ -16,10 +19,14 @@ public class FacebookEvent extends DBUnique {
 	private FacebookAccount facebookAccount;
 	private int count;  
 	private long eventTimestamp;
+	private Set<FacebookPhotoData> photos;
 
-	protected FacebookEvent() {}
+	protected FacebookEvent() {
+		photos = new HashSet<FacebookPhotoData>();
+	}
 	
 	public FacebookEvent(FacebookAccount facebookAccount, FacebookEventType eventType, int count, long eventTimestamp) {
+		this();
 	    this.facebookAccount = facebookAccount;
 	    this.eventType = eventType;
 	    this.count = count;
@@ -32,7 +39,7 @@ public class FacebookEvent extends DBUnique {
 		return facebookAccount;
 	}
 	
-	protected void setFacebookAccount(FacebookAccount facebookAccount) {
+	public void setFacebookAccount(FacebookAccount facebookAccount) {
 		this.facebookAccount = facebookAccount;
 	}
 
@@ -70,5 +77,26 @@ public class FacebookEvent extends DBUnique {
 	
 	public void setEventTimestampAsLong(long eventTimestamp) {
 		this.eventTimestamp = eventTimestamp;
+	}
+	
+	// this is one to many because we currently store multiple
+	// FacebookPhotoData if different people are tagged in the same photo
+	@OneToMany(mappedBy="facebookEvent")
+	public Set<FacebookPhotoData> getPhotos() {
+		return photos;
+	}
+	
+	public void setPhotos(Set<FacebookPhotoData> photos) {
+		if (photos == null)
+			throw new IllegalArgumentException("null photos");
+		this.photos = photos;
+	}
+	
+	public void addPhoto(FacebookPhotoData photo) {
+		photos.add(photo);
+	}
+	
+	public void removePhoto(FacebookPhotoData photo) {
+		photos.remove(photo);
 	}
 }

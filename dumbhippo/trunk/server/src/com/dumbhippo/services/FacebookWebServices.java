@@ -13,6 +13,7 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.FacebookAccount;
 import com.dumbhippo.persistence.FacebookEvent;
 import com.dumbhippo.persistence.FacebookEventType;
+import com.dumbhippo.persistence.FacebookPhotoData;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.Configuration.PropertyNotFoundException;
@@ -170,6 +171,47 @@ public class FacebookWebServices extends AbstractXmlRequest<FacebookSaxHandler> 
 					     handler.getErrorMessage(), handler.getErrorCode());
 		}
         return -1;
+	}
+	
+	public List<FacebookPhotoData> updateTaggedPhotos(FacebookAccount facebookAccount) {
+		List<String> params = new ArrayList<String>();
+        params.add("method=facebook.photos.getOfUser");
+		params.add("session_key=" + facebookAccount.getSessionKey());
+		params.add("id=" + facebookAccount.getFacebookUserId());
+		
+		String wsUrl = generateFacebookRequest(params);		
+		
+		FacebookSaxHandler handler = parseUrl(new FacebookSaxHandler(facebookAccount), wsUrl);
+		
+		// TODO: move error code checking to a common function
+		if (handler.getErrorCode() > 0) {
+		    if (handler.getErrorCode() == FacebookSaxHandler.FacebookErrorCode.API_EC_PARAM_SESSION_KEY.getCode()) {
+			    // setSessionKeyValid to false if we received the response that the session key is no longer valid
+			    facebookAccount.setSessionKeyValid(false);
+		    } else {
+			    logger.error("Did not receive a valid response for facebook.pokes.getCount request, error message {}, error code {}",
+					     handler.getErrorMessage(), handler.getErrorCode());
+		    }
+			return null;
+		}
+		
+		int newCount = handler.getTaggedPhotoCount();
+		int oldCount = facebookAccount.getTaggedPhotos().size();
+
+		if (newCount != oldCount) {
+			// we do not want to go over all photos if the count did not change, even if there was an
+			// equal number of photos added and removed, we we'll get all the new photos next time
+			// the count changes
+			// the reason we have this logic here and not in the FacebookTrackerBean is because it 
+			// would be nice to change the code so that we parse through all the returned photos only
+			// if the count did change
+			return handler.getTaggedPhotos();
+		} else if (!facebookAccount.getTaggedPhotosPrimed()) {
+            // this covers the case when the first time we get tagged photos from facebook, the user has none 
+			facebookAccount.setTaggedPhotosPrimed(true);
+		}
+		
+		return null;
 	}
 	
 	private String generateFacebookRequest(List<String> params) {
