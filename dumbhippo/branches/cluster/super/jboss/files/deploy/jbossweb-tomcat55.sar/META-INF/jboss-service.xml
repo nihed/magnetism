@@ -139,7 +139,7 @@
 
       For clustering purpose only.
       -->
-      <attribute name="UseJK">false</attribute>
+      <attribute name="UseJK">true</attribute>
 
       <attribute name="Domain">jboss.web</attribute>
 
