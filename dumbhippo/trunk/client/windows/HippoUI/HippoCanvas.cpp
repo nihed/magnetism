@@ -22,7 +22,7 @@ typedef struct _HippoCanvasContextWinClass HippoCanvasContextWinClass;
 #define HIPPO_IS_CANVAS_CONTEXT_WIN_CLASS(klass)   (G_TYPE_CHECK_CLASS_TYPE ((klass), HIPPO_TYPE_CANVAS_CONTEXT_WIN))
 #define HIPPO_CANVAS_CONTEXT_WIN_GET_CLASS(obj)    (G_TYPE_INSTANCE_GET_CLASS ((obj), HIPPO_TYPE_CANVAS_CONTEXT_WIN, HippoCanvasContextWinClass))
 
-static GType        	      hippo_canvas_context_win_get_type               (void) G_GNUC_CONST;
+static GType                  hippo_canvas_context_win_get_type               (void) G_GNUC_CONST;
 static HippoCanvasContextWin* hippo_canvas_context_win_new                    (HippoCanvas *canvas);
 
 HippoCanvas::HippoCanvas()

@@ -30,7 +30,7 @@ struct _HippoCanvasControlClass {
     HippoCanvasBoxClass parent_class;
 };
 
-GType        	 hippo_canvas_control_get_type               (void) G_GNUC_CONST;
+GType            hippo_canvas_control_get_type               (void) G_GNUC_CONST;
 
 HippoCanvasItem* hippo_canvas_control_new    (void);
 
