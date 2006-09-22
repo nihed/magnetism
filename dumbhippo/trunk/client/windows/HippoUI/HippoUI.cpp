@@ -29,6 +29,9 @@
 #include "HippoUIUtil.h"
 #include "HippoComWrappers.h"
 #include <hippo/hippo-stack-manager.h>
+#include <hippo/hippo-canvas-box.h>
+#include <hippo/hippo-canvas-text.h>
+#include <hippo/hippo-window.h>
 
 #include <glib.h>
 
@@ -536,17 +539,31 @@ HippoUI::create(HINSTANCE instance)
         return false;
     }
 
+#if 0
     if (hippo_platform_get_signin(platform_)) {
         if (hippo_connection_signin(getConnection()))
             showSignInWindow();
     }
+#endif
 
     checkIdleTimeout_.add(CHECK_IDLE_TIME, slot(this, &HippoUI::timeoutCheckIdle));
 
     registerStartup();
 
+#if 1
     // and very last once we're all ready, fire up the stacker
     hippo_stack_manager_manage(dataCache_);
+#endif
+
+#if 0
+    HippoWindow *window = hippo_platform_create_window(platform_);
+    HippoCanvasItem *box = hippo_canvas_box_new();
+    HippoCanvasItem *text = hippo_canvas_text_new();
+    g_object_set(G_OBJECT(text), "text", "Hello, World", NULL);
+    hippo_canvas_box_append(HIPPO_CANVAS_BOX(box), text, HippoPackFlags(0));
+    hippo_window_set_contents(window, box);
+    hippo_window_set_visible(window, TRUE);
+#endif
 
     if (initialShowDebugShare_) {
         showDebugShareTimeout_.add(3000, slot(this, &HippoUI::timeoutShowDebugShare));

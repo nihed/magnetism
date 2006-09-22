@@ -12,6 +12,7 @@
 #undef STRICT
 #include <pango/pangowin32.h>
 #define STRICT
+#include <pango/pangocairo.h>
 
 typedef struct _HippoCanvasContextWinClass HippoCanvasContextWinClass;
 
@@ -24,6 +25,8 @@ typedef struct _HippoCanvasContextWinClass HippoCanvasContextWinClass;
 
 static GType                  hippo_canvas_context_win_get_type               (void) G_GNUC_CONST;
 static HippoCanvasContextWin* hippo_canvas_context_win_new                    (HippoCanvas *canvas);
+static void                   hippo_canvas_context_win_update_pango           (HippoCanvasContextWin *context_win,
+                                                                               cairo_t               *cr);
 
 HippoCanvas::HippoCanvas()
 {
@@ -85,14 +88,22 @@ HippoCanvas::processMessage(UINT   message,
                 PAINTSTRUCT paint;
                 HDC hdc = BeginPaint(window_, &paint);
 
-                // FIXME this background is not needed perhaps
-                FillRect(hdc, &region, (HBRUSH) (COLOR_WINDOW+2));
+                // FIXME not the right background color (on linux it's the default gtk background)
+                // should use system color, maybe GetThemeSysColorBrush is right
+                HBRUSH hbrush = CreateSolidBrush(RGB(255,255,255));
+                HGDIOBJ oldBrush;
+
+                oldBrush = SelectObject(hdc, hbrush);
+                FillRect(hdc, &region, hbrush);
+                SelectObject(hdc, oldBrush);
+                DeleteObject(hbrush);
 
                 cairo_surface_t *surface = cairo_win32_surface_create(hdc);
-                cairo_t *cr = cairo_create(surface);
+                cairo_t *cr = cairo_create(surface);                
+                hippo_canvas_context_win_update_pango(context_, cr);
 
                 if (root_ != (HippoCanvasItem*) NULL) {
-                    hippo_canvas_item_process_paint(root_, cr, -1, -1);
+                    hippo_canvas_item_process_paint(root_, cr, 0, 0);
                 }
 
                 cairo_destroy(cr);
@@ -200,7 +211,10 @@ static void
 hippo_canvas_context_win_init(HippoCanvasContextWin *canvas_win)
 {
     canvas_win->pointer = HIPPO_CANVAS_POINTER_UNSET;
-    canvas_win->pango = pango_win32_get_context();
+    /* canvas_win->pango = pango_win32_get_context(); */
+    PangoCairoFontMap *font_map = (PangoCairoFontMap*) pango_cairo_font_map_get_default();
+    canvas_win->pango = pango_cairo_font_map_create_context(font_map);
+    g_object_unref((void*) font_map);
 }
 
 static void
@@ -336,7 +350,7 @@ hippo_canvas_context_win_get_color(HippoCanvasContext *context,
 
     switch (color) {
     case HIPPO_STOCK_COLOR_BG_NORMAL:
-        // FIXME use real system color
+        // FIXME use real system color - GetThemeColor?
         return 0x777777ff;
     case HIPPO_STOCK_COLOR_BG_PRELIGHT:
         // FIXME use real system color
@@ -521,4 +535,11 @@ hippo_canvas_context_win_new(HippoCanvas *canvas)
     context_win->canvas = canvas;
     
     return context_win;
+}
+
+static void
+hippo_canvas_context_win_update_pango(HippoCanvasContextWin *context_win,
+                                      cairo_t               *cr)
+{
+    pango_cairo_update_context(cr, context_win->pango);
 }
