@@ -59,7 +59,7 @@ rm -rf $RPM_BUILD_ROOT
 # is on installation or old version on uninstallation, we have
 # to do things in a somewhat non-intuitive way
 #
-# The order on upgrade is:
+# The order on upgrade of firefox is:
 #
 #  1. new package installed
 #  2. triggerin for new package - we add all symlinks
@@ -95,10 +95,22 @@ fi
 %{_datadir}/mugshot/firefox-update.sh install
 
 %triggerun -- firefox
-%{_datadir}/mugshot/firefox-update.sh remove
+# triggerin/triggerun are run when we are installed/upgraded 
+# in addition to when firefox is installed/upgraded. We need to 
+# differentiate because %trigpostun is not run on self-upgrade 
+# or self-uninstall. (In contrast to RPM documentation.)
+#
+# This is an awful hack to detect a self-upgrade; it is actually
+# supposed to work to run rpm inside a scriptlet.
+copies=`( rpm -q mugshot || : ) | grep -v 'is not installed' | wc -l`
+if [ "$copies" -le 1 ] ; then
+  %{_datadir}/mugshot/firefox-update.sh remove
+fi
 
 %triggerpostun -- firefox
-%{_datadir}/mugshot/firefox-update.sh install
+# Guard against being run post-self-uninstall, even though that
+# doesn't happen currently (see comment for triggerun)
+test -x %{_datadir}/mugshot/firefox-update.sh && %{_datadir}/mugshot/firefox-update.sh install
 
 %files
 %defattr(-,root,root,-)
