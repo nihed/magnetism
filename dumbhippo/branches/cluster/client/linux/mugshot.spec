@@ -90,27 +90,25 @@ touch --no-create %{_datadir}/icons/hicolor
 if [ -x /usr/bin/gtk-update-icon-cache ]; then
   gtk-update-icon-cache -q %{_datadir}/icons/hicolor
 fi
+# This is needed not to reverse the effect of our preun, which
+# is guarded against upgrade, but because of our triggerun,
+# which is run on self-upgrade, though triggerpostun isn't
+if [ "$1" != 0 ] ; then
+  test -x %{_datadir}/mugshot/firefox-update.sh && %{_datadir}/mugshot/firefox-update.sh install
+fi
 
 %triggerin -- firefox
 %{_datadir}/mugshot/firefox-update.sh install
 
 %triggerun -- firefox
-# triggerin/triggerun are run when we are installed/upgraded 
-# in addition to when firefox is installed/upgraded. We need to 
-# differentiate because %trigpostun is not run on self-upgrade 
-# or self-uninstall. (In contrast to RPM documentation.)
-#
-# This is an awful hack to detect a self-upgrade; it is actually
-# supposed to work to run rpm inside a scriptlet.
-copies=`( rpm -q mugshot || : ) | grep -v 'is not installed' | wc -l`
-if [ "$copies" -le 1 ] ; then
-  %{_datadir}/mugshot/firefox-update.sh remove
-fi
+%{_datadir}/mugshot/firefox-update.sh remove
 
 %triggerpostun -- firefox
 # Guard against being run post-self-uninstall, even though that
 # doesn't happen currently (see comment for triggerun)
-test -x %{_datadir}/mugshot/firefox-update.sh && %{_datadir}/mugshot/firefox-update.sh install
+if [ "$1" != 0 ] ; then
+  test -x %{_datadir}/mugshot/firefox-update.sh && %{_datadir}/mugshot/firefox-update.sh install
+fi
 
 %files
 %defattr(-,root,root,-)
