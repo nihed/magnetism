@@ -69,6 +69,7 @@ import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.persistence.ValidationException;
 import com.dumbhippo.persistence.WantsIn;
 import com.dumbhippo.postinfo.PostInfo;
+import com.dumbhippo.search.SearchSystem;
 import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.Character;
 import com.dumbhippo.server.ClaimVerifier;
@@ -76,7 +77,6 @@ import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.EntityView;
 import com.dumbhippo.server.ExternalAccountSystem;
 import com.dumbhippo.server.FeedSystem;
-import com.dumbhippo.server.GroupIndexer;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.HttpMethods;
@@ -91,7 +91,6 @@ import com.dumbhippo.server.PermissionDeniedException;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
 import com.dumbhippo.server.PersonViewer;
-import com.dumbhippo.server.PostIndexer;
 import com.dumbhippo.server.PostView;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.PromotionCode;
@@ -99,7 +98,6 @@ import com.dumbhippo.server.SharedFileSystem;
 import com.dumbhippo.server.SigninSystem;
 import com.dumbhippo.server.Stacker;
 import com.dumbhippo.server.SystemViewpoint;
-import com.dumbhippo.server.TrackIndexer;
 import com.dumbhippo.server.TrackView;
 import com.dumbhippo.server.UserViewpoint;
 import com.dumbhippo.server.Viewpoint;
@@ -167,6 +165,9 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	
 	@EJB
 	private ExternalAccountSystem externalAccountSystem;
+	
+	@EJB
+	private SearchSystem searchSystem;
 	
 	@EJB
 	private Stacker stacker;
@@ -526,6 +527,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 				throw new RuntimeException("Only active members can edit a group");
 						
 			group.setName(name);
+			searchSystem.indexGroup(group, true);
 		} catch (NotFoundException e) {
 			throw new RuntimeException(e);
 		}		
@@ -541,6 +543,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			description = description.trim();
 			
 			group.setDescription(description);
+			searchSystem.indexGroup(group, true);
 		} catch (NotFoundException e) {
 			throw new RuntimeException(e);
 		}		
@@ -1120,9 +1123,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			throw new RuntimeException("Only administrators can recreate the search indices");
 		}
 		
-		PostIndexer.getInstance().reindex();
-		TrackIndexer.getInstance().reindex();
-		GroupIndexer.getInstance().reindex();
+		searchSystem.reindexAll();
 	}
 	
 	public void doSetFavoritePost(UserViewpoint viewpoint, String postId, boolean favorite) {

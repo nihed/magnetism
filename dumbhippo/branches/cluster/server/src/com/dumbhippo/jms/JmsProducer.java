@@ -38,6 +38,8 @@ public class JmsProducer extends JmsDestination {
 				return;
 			} catch (JMSException e) {
 				lastException = e;
+			} catch (JmsShutdownException e) {
+				throw new RuntimeException("Attempt to send a message to a destination that has been shut down.");
 			}
 			
 			logger.warn("Got exception trying to send ObjectMessage", lastException);

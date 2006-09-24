@@ -2,7 +2,6 @@ package com.dumbhippo.server;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.BlockingQueue;
@@ -32,7 +31,18 @@ public abstract class Indexer<T> {
 	private IndexSearcher searcher;
 	private IndexerThread indexerThread;
 	
-	private static class ReindexMarker {}
+	private static class Reindex {
+		private Object id;
+		
+		public Reindex(Object id) {
+			this.id = id;
+		}
+		
+		public Object getId() {
+			return id;
+		}
+	}
+	private static class ReindexAllMarker {}
 	
 	protected Indexer(Class<T> clazz) {
 		pending = new LinkedBlockingQueue<Object>();
@@ -65,38 +75,29 @@ public abstract class Indexer<T> {
 		}
 	}
 	
-	public void index(List<Object> ids) {
-		pending.addAll(ids);
-		ensureThread();
-	}
-
-	public void index(Object id) {
-		pending.add(id);
-		ensureThread();
-	}
-	
-	public void reindex() {
-		pending.add(new ReindexMarker());
+	public void index(Object id, boolean reindex) {
+		if (reindex)
+			pending.add(new Reindex(id));
+		else
+			pending.add(id);
 		ensureThread();
 	}
 	
-	public void indexAfterTransaction(final List<Object> ids) {
-		EJBUtil.defaultLookup(TransactionRunner.class).runTaskOnTransactionCommit(new Runnable() {
-			public void run() {
-				index(ids);
-			}
-		});
+	public void reindexAll() {
+		pending.add(new ReindexAllMarker());
+		ensureThread();
 	}
 	
-	public void indexAfterTransaction(Object id) {
-		indexAfterTransaction(Collections.singletonList(id));
+	public synchronized IndexReader getReader() throws IOException {
+		if (reader == null)
+			reader = IndexReader.open(getBuilder().getDirectoryProvider().getDirectory());
+		
+		return reader;
 	}
 	
 	public synchronized Searcher getSearcher() throws IOException {
-		if (searcher == null) {
-			reader = IndexReader.open(getBuilder().getDirectoryProvider().getDirectory());
-			searcher = new IndexSearcher(reader);
-		}
+		if (searcher == null)
+			searcher = new IndexSearcher(getReader());
 		
 		return searcher;
 	}
@@ -105,11 +106,16 @@ public abstract class Indexer<T> {
 		if (searcher != null) {
 			try {
 				searcher.close();
-				searcher = null;
-				reader.close();
-				reader = null;
 			} catch (IOException e) {
 			}
+			searcher = null;
+		}
+		if (reader != null) {
+			try {
+				reader.close();
+			} catch (IOException e) {
+			}
+			reader = null;
 		}
 	}
 	
@@ -122,6 +128,7 @@ public abstract class Indexer<T> {
 	}
 	
 	protected abstract String getIndexName();
+	protected abstract void doDelete(IndexReader reader, List<Object> ids) throws IOException;
 	protected abstract void doIndex(IndexWriter writer, List<Object> ids) throws IOException;
 	protected abstract void doIndexAll(IndexWriter writer) throws IOException;
 	
@@ -134,23 +141,33 @@ public abstract class Indexer<T> {
 		public void run() {
 			try {
 				while (true) {
-					List<Object> ids = new ArrayList<Object>();
+					List<Object> toDelete = new ArrayList<Object>();
+					List<Object> toIndex = new ArrayList<Object>();
 					boolean reindex = false;
 					
-					Object id = pending.take();
-					while (id != null) {
-						if (id instanceof ReindexMarker) {
+					Object item = pending.take();
+					while (item != null) {
+						if (item instanceof ReindexAllMarker) {
 							reindex = true;
-							ids.clear();
+							toDelete.clear(); 
+							toIndex.clear();
+						} else if (item instanceof Reindex) {
+							toDelete.add(((Reindex)item).getId());
+							toIndex.add(((Reindex)item).getId());
 						} else {
-							ids.add(id);
+							toIndex.add(item);
 						}
-						id = pending.poll();
+						item = pending.poll();
 					}
 					
 					try {
 						if (reindex)
 							logger.info("Reindexing {}", getIndexName());
+						
+						if (!reindex && !toDelete.isEmpty()) {
+							doDelete(getReader(), toDelete);
+							clearSearcher();
+						}
 
 						// It's not completely clear that passing 'create = true' here when
 						// reindexing is safe when there is an existing IndexReader open,
@@ -160,7 +177,7 @@ public abstract class Indexer<T> {
 						if (reindex) {
 							doIndexAll(writer);
 						} else {
-							doIndex(writer, ids);
+							doIndex(writer, toIndex);
 						}
 						writer.close();
 

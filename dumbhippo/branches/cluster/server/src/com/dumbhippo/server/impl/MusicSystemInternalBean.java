@@ -52,6 +52,7 @@ import com.dumbhippo.persistence.TrackFeedEntry;
 import com.dumbhippo.persistence.TrackHistory;
 import com.dumbhippo.persistence.TrackType;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.search.SearchSystem;
 import com.dumbhippo.server.AlbumView;
 import com.dumbhippo.server.AmazonAlbumCache;
 import com.dumbhippo.server.ArtistView;
@@ -111,6 +112,9 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 
 	@EJB
 	private Configuration config;
+	
+	@EJB
+	private SearchSystem searchSystem;
 	
 	@EJB
 	private AmazonAlbumCache amazonAlbumCache;
@@ -228,7 +232,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 					return res;	
 				}			
 			});
-			TrackIndexer.getInstance().indexAfterTransaction(track.getId());
+			searchSystem.indexTrack(track);
 			return track;
 		} catch (Exception e) {
 			ExceptionUtils.throwAsRuntimeException(e);

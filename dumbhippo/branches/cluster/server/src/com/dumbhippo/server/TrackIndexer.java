@@ -3,6 +3,7 @@ package com.dumbhippo.server;
 import java.io.IOException;
 import java.util.List;
 
+import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 
 import com.dumbhippo.persistence.Track;
@@ -33,4 +34,9 @@ public class TrackIndexer extends Indexer<Track> {
 	protected void doIndexAll(IndexWriter writer) throws IOException {
 		EJBUtil.defaultLookup(MusicSystemInternal.class).indexAllTracks(writer, getBuilder());
 	}
+	
+	@Override
+	protected void doDelete(IndexReader reader, List<Object> ids) throws IOException {
+		throw new UnsupportedOperationException("Tracks are unmodifiable, so reindexing them doesn't make sense");
+	}	
 }

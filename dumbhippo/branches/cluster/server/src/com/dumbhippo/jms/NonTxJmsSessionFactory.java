@@ -19,6 +19,9 @@ class NonTxJmsSessionFactory implements JmsSessionFactory {
 	public NonTxJmsSessionFactory(Context namingContext) throws NamingException, JMSException {
 		ConnectionFactory factory = (ConnectionFactory)namingContext.lookup("ConnectionFactory");
 		connection = factory.createConnection();
+		// There may be some amount of inefficiency in calling start() on a connection that
+		// we are only using to send messages.
+		connection.start();
 	}
 	
 	public JmsSession createSession() throws JMSException {

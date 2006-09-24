@@ -3,8 +3,11 @@ package com.dumbhippo.server;
 import java.io.IOException;
 import java.util.List;
 
+import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
+import org.apache.lucene.index.Term;
 
+import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.server.util.EJBUtil;
 
@@ -33,4 +36,13 @@ public final class GroupIndexer extends Indexer<Group> {
 	protected void doIndexAll(IndexWriter writer) throws IOException {
 		EJBUtil.defaultLookup(GroupSystem.class).indexAllGroups(writer, getBuilder());
 	}
+	
+	@Override
+	protected void doDelete(IndexReader reader, List<Object> ids) throws IOException {
+		for (Object o : ids) {
+			Guid guid = (Guid)o;
+			Term term = new Term("id", guid.toString());
+			reader.deleteDocuments(term);
+		}
+	}	
 }

@@ -17,6 +17,7 @@ import com.dumbhippo.botcom.BotTask;
 import com.dumbhippo.jms.JmsConnectionType;
 import com.dumbhippo.jms.JmsConsumer;
 import com.dumbhippo.jms.JmsProducer;
+import com.dumbhippo.jms.JmsShutdownException;
 
 public class Main {
 	private static Logger logger = GlobalSetup.getLogger(Main.class);
@@ -129,6 +130,9 @@ public class Main {
 						}
 					}
 				}
+			} catch (JmsShutdownException e) {
+				// This is thrown on explicit shutdown(), which shouldn't happen here
+				logger.warn("Our connection was shut down. Who did that?");
 			} finally {
 				consumer.close();
 			}

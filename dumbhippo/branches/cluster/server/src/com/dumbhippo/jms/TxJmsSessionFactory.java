@@ -56,6 +56,9 @@ class TxJmsSessionFactory implements JmsSessionFactory {
 		
 		connectionFactory = (XAConnectionFactory) namingContext.lookup("XAConnectionFactory");
 		connection = connectionFactory.createXAConnection();
+		// There may be some amount of inefficiency in calling start() on a connection that
+		// we are only using to send messages.
+		connection.start();
 	}
 
 	/**

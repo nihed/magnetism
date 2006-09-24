@@ -66,6 +66,7 @@ import com.dumbhippo.postinfo.NodeName;
 import com.dumbhippo.postinfo.PostInfo;
 import com.dumbhippo.postinfo.PostInfoType;
 import com.dumbhippo.postinfo.ShareGroupPostInfo;
+import com.dumbhippo.search.SearchSystem;
 import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.AnonymousViewpoint;
 import com.dumbhippo.server.Character;
@@ -130,6 +131,9 @@ public class PostingBoardBean implements PostingBoard {
 	
 	@EJB
 	private GroupSystem groupSystem;
+	
+	@EJB
+	private SearchSystem searchSystem;
 	
 	@EJB
 	private TransactionRunner runner;
@@ -453,7 +457,7 @@ public class PostingBoardBean implements PostingBoard {
 	private Post createAndIndexPost(Callable<Post> creator) {
 		try {
 			Post detached = runner.runTaskNotInNewTransaction(creator);
-			PostIndexer.getInstance().indexAfterTransaction(detached.getGuid());
+			searchSystem.indexPost(detached, false);
 			Post post = em.find(Post.class, detached.getId());
 			if (post == null)
 				logger.error("reattach after creating new post FAILED ...");

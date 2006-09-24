@@ -31,4 +31,24 @@
             </config>
     </attribute>
   </mbean>
+
+    <!-- The cluster singleton service for adding and reindexing objects in our lucene index -->
+    <mbean code="com.dumbhippo.search.IndexerService" name="dumbhippo.com:service=Indexer">
+    	<!-- Initialize this service after our session MBeans are initialized -->
+    	<depends>jboss.j2ee:service=EJB3,module=dumbhippo.ejb3</depends>
+        <!-- Mark that we depend on the JMS queue we are consuming -->
+    	<depends>jboss.mq.destination:service=Queue,name=IndexQueue</depends>
+    </mbean>
+
+    <!-- This sets up the MBean above to act as a singleton -->
+    <mbean code="org.jboss.ha.singleton.HASingletonController" name="dumbhippo.com:service=Indexer-HASingletonController">
+        <depends optional-attribute-name="ClusterPartition" proxy-type="attribute">
+            jboss:service=${jboss.partition.name:DefaultPartition}
+        </depends>
+        <depends optional-attribute-name="TargetName">
+            dumbhippo.com:service=Indexer
+        </depends>
+        <attribute name="TargetStartMethod">startSingleton</attribute>
+        <attribute name="TargetStopMethod">stopSingleton</attribute>
+    </mbean>
 </server>

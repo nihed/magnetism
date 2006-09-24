@@ -43,6 +43,7 @@ import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.Validators;
+import com.dumbhippo.search.SearchSystem;
 import com.dumbhippo.server.GroupIndexer;
 import com.dumbhippo.server.GroupSearchResult;
 import com.dumbhippo.server.GroupSystem;
@@ -76,6 +77,9 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 	private PersonViewer personViewer;
 	
 	@EJB
+	private SearchSystem searchSystem;
+	
+	@EJB
 	@IgnoreDependency
 	private Stacker stacker;
 	
@@ -96,8 +100,8 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		g.getMembers().add(groupMember);
 		
 		stacker.onGroupMemberCreated(groupMember);
-
-		GroupIndexer.getInstance().indexAfterTransaction(g.getGuid());
+		
+		searchSystem.indexGroup(g, false);
 		
 		return g;
 	}

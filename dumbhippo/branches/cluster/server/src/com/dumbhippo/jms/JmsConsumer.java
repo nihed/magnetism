@@ -30,7 +30,7 @@ import com.dumbhippo.GlobalSetup;
  * @author otaylor
  */
 public class JmsConsumer extends JmsDestination {
-	private static final Logger logger = GlobalSetup.getLogger(JmsProducer.class);
+	private static final Logger logger = GlobalSetup.getLogger(JmsConsumer.class);
 
 	JmsSession session;
 
@@ -55,17 +55,26 @@ public class JmsConsumer extends JmsDestination {
 	 * 
 	 * @return the received message
 	 */
-	public Message receive() {
+	public Message receive() throws JmsShutdownException {
 		while (true) {
 			try {
-				if (session == null)
+				if (session == null) {
 					session = createSession();
-				return session.getConsumer(getDestination()).receive();
+				}
+				Message message = session.getConsumer(getDestination()).receive();
+				if (message != null)
+					return message;
+				
+				// If the message is null, our connection was closed. The retry
+				// will throw JmsShutdownException() if it was closed via a
+				// call to shutdown()
+				session = null;
+				
 			} catch (JMSException e) {
 				logger.warn("Got exception waiting for JMS message", e);
 				closeOnFailure(); // will close session as a side-effect
 				session = null;
-			}
+			} 
 		}
 	}
 }
