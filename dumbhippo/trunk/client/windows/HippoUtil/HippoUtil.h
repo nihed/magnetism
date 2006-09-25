@@ -179,6 +179,29 @@ public:
     }
 };
 
+// Unicode utility functions
+
+DLLEXPORT BSTR
+hippo_utf8_to_bstr (const char *str,
+                    long        len) throw (std::bad_alloc);
+DLLEXPORT char *
+hippo_utf16_to_utf8 (const WCHAR  *str,
+                     long          len) throw (std::bad_alloc);
+
+// Free the result of hippo_utf16_to_utf8
+DLLEXPORT void
+hippo_utf8_free (char *str);
+
+DLLEXPORT bool
+hippo_utf8_validate (const char   *str,
+                     long          max_len,    
+                     const char  **end);
+
+DLLEXPORT bool
+hippo_utf16_validate (const WCHAR  *str,
+                      long          max_len);
+
+
 // Very simple version of CComBSTR
 
 class HippoBSTR
@@ -300,23 +323,11 @@ public:
             assign(L"");
             return;
         }
-        // "len" is WITHOUT nul. That means that MultiByteToWideChar will not 
-        // nul-terminate the wide char string it returns.
 
-        int reqlen = MultiByteToWideChar(CP_UTF8, 0, utf8, len, NULL, 0);
-        if (reqlen == 0)
-            throw HResultException(GetLastError(), "MultiByteToWideChar returned 0");
-        WCHAR *buf = new WCHAR[reqlen+1]; // add 1 so we can nul-terminate.
-        buf[reqlen] = 0; // nul-terminate
-        int ret = MultiByteToWideChar(CP_UTF8, 0, utf8, len, buf, reqlen);
-        assert(buf[reqlen] == 0); // still nul
-        if (ret == 0) {
-            delete [] buf;
-            throw HResultException(GetLastError(), "MultiByteToWideChar returned 0");
-        }
-        assert(ret == reqlen);
-        assign(buf, ret);
-        delete [] buf;
+        BSTR new_bstr = hippo_utf8_to_bstr(utf8, len);
+        assign(NULL);
+        assert(m_str == NULL);
+        m_str = new_bstr;
     }
 
     // note that NULL utf8 is allowed if len<=0
@@ -386,26 +397,6 @@ public:
 
     BSTR m_str;
 };
-
-DLLEXPORT BSTR
-hippo_utf8_to_bstr (const char *str,
-                    long        len) throw (std::bad_alloc);
-DLLEXPORT char *
-hippo_utf16_to_utf8 (const WCHAR  *str,
-                     long          len) throw (std::bad_alloc);
-
-// Free the result of hippo_utf16_to_utf8
-DLLEXPORT void
-hippo_utf8_free (char *str);
-
-DLLEXPORT bool
-hippo_utf8_validate (const char   *str,
-                     long          max_len,    
-                     const char  **end);
-
-DLLEXPORT bool
-hippo_utf16_validate (const WCHAR  *str,
-                      long          max_len);
 
 // Basically just a wrapper for UTF-16 to UTF-8 conversion, think three times before extending it
 class HippoUStr 
