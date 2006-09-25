@@ -30,10 +30,7 @@ import com.dumbhippo.live.LiveClientData;
 import com.dumbhippo.live.LivePost;
 import com.dumbhippo.live.LiveState;
 import com.dumbhippo.persistence.EmailResource;
-import com.dumbhippo.persistence.Group;
-import com.dumbhippo.persistence.GroupMember;
 import com.dumbhippo.persistence.InvitationToken;
-import com.dumbhippo.persistence.MembershipStatus;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.Resource;
@@ -41,8 +38,6 @@ import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.EntityView;
 import com.dumbhippo.server.ExternalAccountSystem;
-import com.dumbhippo.server.GroupSystem;
-import com.dumbhippo.server.GroupView;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.InvitationSystem;
@@ -105,10 +100,6 @@ public class MessageSenderBean implements MessageSender {
 	@EJB
 	@IgnoreDependency
 	private NoMailSystem noMail;
-	
-	@EJB
-	@IgnoreDependency
-	private GroupSystem groupSystem;
 	
 	@EJB
 	@IgnoreDependency
@@ -308,45 +299,6 @@ public class MessageSenderBean implements MessageSender {
 			return builder.toString();
 		}
 	}
-	
-	private static class GroupMembershipUpdateExtension implements PacketExtension {
-
-		private static final String ELEMENT_NAME = "membershipChange";
-
-		private static final String NAMESPACE = "http://dumbhippo.com/protocol/group";
-		
-		private PersonView personView;
-		private GroupView groupView;
-		private MembershipStatus status;
-
-		public GroupMembershipUpdateExtension(PersonView personView, 
-				                              GroupView groupView, 
-				                              MembershipStatus status) {
-			this.personView = personView;
-			this.groupView = groupView;
-			this.status = status;
-		}
-
-		public String toXML() {
-			XmlBuilder builder = new XmlBuilder();
-			builder.openElement(ELEMENT_NAME, "xmlns", NAMESPACE, 
-					            "membershipStatus", status.toString(),
-					            "groupId", groupView.getIdentifyingGuid().toString(), 
-					            "userId", personView.getIdentifyingGuid().toString());
-			personView.writeToXmlBuilder(builder);
-			groupView.writeToXmlBuilder(builder);
-			builder.closeElement();
-			return builder.toString();
-		}
-		
-		public String getElementName() {
-			return ELEMENT_NAME;
-		}
-
-		public String getNamespace() {
-			return NAMESPACE;
-		}
-	}
 
 	private class XMPPSender {
 
@@ -389,10 +341,6 @@ public class MessageSenderBean implements MessageSender {
 			return createMessageFor(user.getGuid(), type);
 		}
 		
-		private Message createMessageFor(User user) {
-			return createMessageFor(user, Message.Type.NORMAL);
-		}
-
 		public synchronized void sendPostNotification(User recipient, Post post, List<User> viewers, PostType postType) {
 		}
 		
@@ -492,21 +440,6 @@ public class MessageSenderBean implements MessageSender {
 			Message message = createMessageFor(user, Message.Type.HEADLINE);
 			message.addExtension(new PrefsChangedExtension(key, value));
 			logger.debug("Sending prefs changed message to {}", message.getTo());			
-			connection.sendPacket(message);
-		}
-		
-		public synchronized void sendGroupMembershipUpdate(User recipient, Group group, GroupMember groupMember) {
-			XMPPConnection connection = getConnection();
-			Message message = createMessageFor(recipient);	
-			PersonView updatedMember = personViewer.getPersonView(new UserViewpoint(recipient), 
-					                                                groupMember.getMember(),
-					                                                PersonViewExtra.PRIMARY_RESOURCE);
-
-			GroupView groupView = groupSystem.getGroupView(new UserViewpoint(recipient), group);
-			
-			message.addExtension(
-                new GroupMembershipUpdateExtension(updatedMember, groupView, groupMember.getStatus()));
-			logger.debug("Sending groupMembershipUpdate message to {}", message.getTo());			
 			connection.sendPacket(message);
 		}
 	}
@@ -791,12 +724,5 @@ public class MessageSenderBean implements MessageSender {
 	
 	public void sendPrefChanged(User user, String key, String value) {
 		xmppSender.sendPrefChanged(user, key, value);
-	}
-
-	public void sendGroupMembershipUpdate(Group group, GroupMember groupMember) {
-		Set<User> recipients = groupSystem.getMembershipChangeRecipients(group);
-		for (User recipient : recipients) {
-			xmppSender.sendGroupMembershipUpdate(recipient, group, groupMember);			
-		}
 	}
 }

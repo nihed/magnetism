@@ -22,9 +22,15 @@ import org.xmpp.packet.Message;
 import com.dumbhippo.ThreadUtils;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.identity20.Guid;
+import com.dumbhippo.persistence.GroupMember;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.EntityView;
+import com.dumbhippo.server.GroupSystem;
+import com.dumbhippo.server.GroupView;
+import com.dumbhippo.server.PersonView;
+import com.dumbhippo.server.PersonViewExtra;
+import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.PostView;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.UserViewpoint;
@@ -55,7 +61,15 @@ public class MessageSender implements XmppMessageSenderProvider {
 	private Map<Guid, UserMessageQueue> userQueues = new HashMap<Guid, UserMessageQueue>();
 	static private MessageSender instance;
 	
+	private GroupSystem groupSystem;
+	private PersonViewer personViewer;
+	private PostingBoard postingBoard;
+
 	public void start() {
+		groupSystem = EJBUtil.defaultLookup(GroupSystem.class);
+		personViewer = EJBUtil.defaultLookup(PersonViewer.class);
+		postingBoard = EJBUtil.defaultLookup(PostingBoard.class);
+		
 		instance = this;
 	}
 
@@ -160,26 +174,31 @@ public class MessageSender implements XmppMessageSenderProvider {
 		sendMessage(Collections.singleton(to), template);
 	}
 
-	// This is the sendMessage() variant used by the Session beans to avoid
-	// having to access Wildfire XMPP types. 
-	public void sendMessage(Set<Guid> to, String payload) {
-        Document payloadDocument;
+	private Element elementFromXml(String xmlString) {
+        Document document;
         try {
-            payloadDocument = DocumentHelper.parseText(payload);
+            document = DocumentHelper.parseText(xmlString);
         } catch (DocumentException e) {
             throw new RuntimeException("Couldn't parse payload as XML");
         }
         
-        Element payloadElement = payloadDocument.getRootElement();
-        payloadElement.detach();
+        Element element = document.getRootElement();
+        element.detach();
+        
+        return element;
+	}
+	
+	// This is the sendMessage() variant used by the Session beans to avoid
+	// having to access Wildfire XMPP types. 
+	public void sendMessage(Set<Guid> to, String payload) {
         Message template = new Message();
         template.setType(Message.Type.headline);
-        template.getElement().add(payloadElement);
+        template.getElement().add(elementFromXml(payload));
         sendMessage(to, template);
 	}
 
-	private static final String ELEMENT_NAME = "newPost";
-	private static final String NAMESPACE = "http://dumbhippo.com/protocol/post";
+	private static final String NEW_POST_ELEMENT_NAME = "newPost";
+	private static final String NEW_POST_NAMESPACE = "http://dumbhippo.com/protocol/post";
 	
 	private void addNewPostExtension(Message message, PostView postView, Set<EntityView> referencedEntities) {
 		// Add the extra XML elements to the message that convey all our
@@ -187,7 +206,7 @@ public class MessageSender implements XmppMessageSenderProvider {
 		// parsing it is gross, but avoids larger code changes.
 		
 		XmlBuilder builder = new XmlBuilder();
-		builder.openElement(ELEMENT_NAME, "xmlns", NAMESPACE);
+		builder.openElement(NEW_POST_ELEMENT_NAME, "xmlns", NEW_POST_NAMESPACE);
 		for (EntityView ev: referencedEntities) {
 			ev.writeToXmlBuilder(builder);
 		}
@@ -204,11 +223,13 @@ public class MessageSender implements XmppMessageSenderProvider {
         Element extensionElement = extensionDocument.getRootElement();
         extensionElement.detach();
         
-        message.getElement().add(extensionElement);
+        message.getElement().add(elementFromXml(builder.toString()));
 	}
 	
 	public void sendNewPostMessage(User recipient, Post post) {
-		PostingBoard postingBoard = EJBUtil.defaultLookup(PostingBoard.class);
+		// Short-circuit message creation
+		if (!userIsPresent(recipient.getGuid()))
+			return;
 		
 		String title = post.getTitle();
 		String url = post.getUrl() != null ? post.getUrl().toExternalForm() : null;
@@ -225,10 +246,45 @@ public class MessageSender implements XmppMessageSenderProvider {
 		Set<EntityView> referenced = postingBoard.getReferencedEntities(viewpoint, post);
 		
         Message message = new Message();
-        message.setType(Message.Type.headline);
+        message.setType(Message.Type.normal);
         message.setBody(String.format("%s\n%s", title, url));
         addNewPostExtension(message, postView, referenced);
         
         sendMessage(recipient.getGuid(), message);
+	}
+	
+	private static final String MEMBERSHIP_CHANGE_ELEMENT_NAME = "membershipChange";
+	private static final String MEMBERSHIP_CHANGE_NAMESPACE = "http://dumbhippo.com/protocol/group";
+	
+	private void addMembershipChangeExtension(Message message, GroupView groupView, GroupMember member, PersonView memberView) {
+		XmlBuilder builder = new XmlBuilder();
+		builder.openElement(MEMBERSHIP_CHANGE_ELEMENT_NAME, "xmlns", MEMBERSHIP_CHANGE_NAMESPACE, 
+				            "membershipStatus", member.getStatus().toString(),
+				            "groupId", groupView.getIdentifyingGuid().toString(), 
+				            "userId", memberView.getIdentifyingGuid().toString());
+		memberView.writeToXmlBuilder(builder);
+		groupView.writeToXmlBuilder(builder);
+		builder.closeElement();
+		
+        message.getElement().add(elementFromXml(builder.toString()));
+	}
+	
+	public void sendGroupMembershipChange(User recipient, GroupMember groupMember) {
+		// Short-circuit message creation
+		if (!userIsPresent(recipient.getGuid()))
+			return;
+		
+		Viewpoint viewpoint = new UserViewpoint(recipient);
+		
+		PersonView memberView = personViewer.getPersonView(viewpoint, 
+				groupMember.getMember(), PersonViewExtra.PRIMARY_RESOURCE);
+
+		GroupView groupView = groupSystem.getGroupView(viewpoint, groupMember.getGroup());
+		
+        Message message = new Message();
+        message.setType(Message.Type.normal);
+        addMembershipChangeExtension(message, groupView, groupMember, memberView);
+        
+		sendMessage(recipient.getGuid(), message);
 	}
 }

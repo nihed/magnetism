@@ -5,8 +5,6 @@ import javax.ejb.Local;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.live.LiveClientData;
 import com.dumbhippo.live.LivePost;
-import com.dumbhippo.persistence.Group;
-import com.dumbhippo.persistence.GroupMember;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
@@ -28,6 +26,4 @@ public interface MessageSender {
 	public void sendActivePostsChanged(LiveClientData clientData);
 	
 	public void sendPrefChanged(User user, String key, String value);
-
-	public void sendGroupMembershipUpdate(Group group, GroupMember groupMember);
 }

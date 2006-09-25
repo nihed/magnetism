@@ -846,9 +846,15 @@ public class PostingBoardBean implements PostingBoard {
 		pageable.setResults(getPostsFor(viewpoint, poster, pageable.getStart(), pageable.getCount()));
 		pageable.setTotalCount(getPostsForCount(viewpoint, poster));
 	}
+	
+	private enum PostFilter {
+		NO_FEEDS,
+		ONLY_FEEDS,
+		ALL_POSTS
+	}
 
 	private Query buildReceivedPostsQuery(UserViewpoint viewpoint, User recipient,
-			String search, boolean isCount, boolean isFeeds, Date since) {
+			String search, boolean isCount, PostFilter filter, Date since) {
 		// There's an efficiency win here by specializing to the case where
 		// viewer == recipient ... we know that posts are always visible
 		// to the recipient; we don't bother implementing the other case for
@@ -864,14 +870,19 @@ public class PostingBoardBean implements PostingBoard {
 		else
 			queryText.append("post");
 		
-		if (isFeeds)
-			queryText.append(" FROM FeedPost post ");
-		else
+		switch (filter) {
+		case NO_FEEDS:
+		case ALL_POSTS:
 			queryText.append(" FROM Post post ");
+			break;
+		case ONLY_FEEDS:
+			queryText.append(" FROM FeedPost post ");
+			break;
+		}
 		
 		queryText.append("WHERE (post.poster IS NULL OR post.poster != :viewer) ");
 		
-		if (!isFeeds)
+		if (filter == PostFilter.NO_FEEDS)
 			queryText.append(" AND NOT EXISTS (SELECT fp.id FROM FeedPost fp WHERE post.id=fp.id) ");
 		
 		queryText.append("AND " + VIEWER_RECEIVED);
@@ -898,25 +909,25 @@ public class PostingBoardBean implements PostingBoard {
 	}
 	
 	private int getReceivedPostsCount(UserViewpoint viewpoint, User recipient, String search) {
-		Query q = buildReceivedPostsQuery(viewpoint, recipient, search, true, false, null);
+		Query q = buildReceivedPostsQuery(viewpoint, recipient, search, true, PostFilter.NO_FEEDS, null);
 		Object result = q.getSingleResult();
 		return ((Number) result).intValue();
 	}
 	
 	private List<PostView> getReceivedPosts(UserViewpoint viewpoint, User recipient, String search, int start, int max) {
-		Query q  = buildReceivedPostsQuery(viewpoint, recipient, search, false, false, null);
+		Query q  = buildReceivedPostsQuery(viewpoint, recipient, search, false, PostFilter.NO_FEEDS, null);
 		return getPostViews(viewpoint, q, search, start, max);
 	}
 
 	private int getReceivedFeedPostsCount(UserViewpoint viewpoint, User recipient, String search) {
-		Query q = buildReceivedPostsQuery(viewpoint, recipient, search, true, true, null);
+		Query q = buildReceivedPostsQuery(viewpoint, recipient, search, true, PostFilter.ONLY_FEEDS, null);
 		Object result = q.getSingleResult();
 		//logger.debug("feed posts count {}", result);
 		return ((Number) result).intValue();
 	}
 	
 	private List<PostView> getReceivedFeedPosts(UserViewpoint viewpoint, User recipient, String search, int start, int max) {
-		Query q  = buildReceivedPostsQuery(viewpoint, recipient, search, false, true, null);
+		Query q  = buildReceivedPostsQuery(viewpoint, recipient, search, false,  PostFilter.ONLY_FEEDS, null);
 		return getPostViews(viewpoint, q, search, start, max);
 	}
 	
@@ -1405,7 +1416,7 @@ public class PostingBoardBean implements PostingBoard {
 	public void sendBacklog(User user, Date lastLogoutDate) {
 		UserViewpoint viewpoint = new UserViewpoint(user);
 		
-		Query q  = buildReceivedPostsQuery(viewpoint, user, null, false, false, lastLogoutDate);
+		Query q = buildReceivedPostsQuery(viewpoint, user, null, false, PostFilter.ALL_POSTS, lastLogoutDate);
 		q.setMaxResults(MAX_BACKLOG);
 		List<Post> posts = TypeUtils.castList(Post.class, q.getResultList());
 		
