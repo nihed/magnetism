@@ -29,6 +29,7 @@ public class HippoPlugin implements Plugin {
 	private RoomHandler roomHandler = new RoomHandler();
 	private PresenceMonitor presenceMonitor = new PresenceMonitor();
 	private MessageSender messageSenderProvider = new MessageSender();
+	private CompatibilityNotifier compatibilityNotifier = new CompatibilityNotifier();
 	private List<Module> internalModules = new ArrayList<Module>();
 	
 	private void addIQHandler(IQHandler handler) {
@@ -56,6 +57,8 @@ public class HippoPlugin implements Plugin {
 				throw new RuntimeException("Error adding Rooms component", e);
 			}
 			
+			compatibilityNotifier.start();
+			
 			addIQHandler(new ClientMethodIQHandler());		
 			addIQHandler(new ClientInfoIQHandler());
 			addIQHandler(new MySpaceIQHandler());					
@@ -81,6 +84,8 @@ public class HippoPlugin implements Plugin {
 		}
 		internalModules = null;
 		
+		compatibilityNotifier.stop();
+
 		Log.debug("Removing rooms route");
 		InternalComponentManager.getInstance().removeComponent("rooms");
 		
