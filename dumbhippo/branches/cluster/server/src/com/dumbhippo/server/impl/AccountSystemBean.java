@@ -146,15 +146,6 @@ public class AccountSystemBean implements AccountSystem {
 		return TypeUtils.castList(Account.class, q.getResultList());
 	}
 
-	public void touchLoginDate(Guid userId) {
-		try {
-			Account acct = lookupAccountByOwnerId(userId);
-			acct.setLastLoginDate(new Date());
-		} catch (NotFoundException e) {
-			throw new RuntimeException("User doesn't exist");
-		}
-	}
-	
 	public User getCharacter(final Character whichOne) {
 		try {
 			return runner.runTaskThrowingConstraintViolation(new Callable<User>() {

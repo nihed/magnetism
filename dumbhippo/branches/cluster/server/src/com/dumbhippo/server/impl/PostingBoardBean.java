@@ -12,6 +12,7 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
@@ -97,6 +98,7 @@ import com.dumbhippo.server.SystemViewpoint;
 import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.UserViewpoint;
 import com.dumbhippo.server.Viewpoint;
+import com.dumbhippo.server.XmppMessageSender;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.util.GuidNotFoundException;
 
@@ -137,6 +139,9 @@ public class PostingBoardBean implements PostingBoard {
 	
 	@EJB
 	private TransactionRunner runner;
+	
+	@EJB
+	private XmppMessageSender xmppMessageSender;
 	
 	@EJB
 	@IgnoreDependency
@@ -843,7 +848,7 @@ public class PostingBoardBean implements PostingBoard {
 	}
 
 	private Query buildReceivedPostsQuery(UserViewpoint viewpoint, User recipient,
-			String search, boolean isCount, boolean isFeeds) {
+			String search, boolean isCount, boolean isFeeds, Date since) {
 		// There's an efficiency win here by specializing to the case where
 		// viewer == recipient ... we know that posts are always visible
 		// to the recipient; we don't bother implementing the other case for
@@ -871,6 +876,10 @@ public class PostingBoardBean implements PostingBoard {
 		
 		queryText.append("AND " + VIEWER_RECEIVED);
 		
+		if (since != null) {
+			queryText.append(" AND post.postDate > :since");
+		}
+		
 		appendPostLikeClause(queryText, search);
 
 		if (!isCount)
@@ -881,29 +890,33 @@ public class PostingBoardBean implements PostingBoard {
 		q = em.createQuery(queryText.toString());
 		
 		q.setParameter("viewer", recipient);
+		
+		if (since != null)
+			q.setParameter("since", since);
+		
 		return q;
 	}
 	
 	private int getReceivedPostsCount(UserViewpoint viewpoint, User recipient, String search) {
-		Query q = buildReceivedPostsQuery(viewpoint, recipient, search, true, false);
+		Query q = buildReceivedPostsQuery(viewpoint, recipient, search, true, false, null);
 		Object result = q.getSingleResult();
 		return ((Number) result).intValue();
 	}
 	
 	private List<PostView> getReceivedPosts(UserViewpoint viewpoint, User recipient, String search, int start, int max) {
-		Query q  = buildReceivedPostsQuery(viewpoint, recipient, search, false, false);
+		Query q  = buildReceivedPostsQuery(viewpoint, recipient, search, false, false, null);
 		return getPostViews(viewpoint, q, search, start, max);
 	}
 
 	private int getReceivedFeedPostsCount(UserViewpoint viewpoint, User recipient, String search) {
-		Query q = buildReceivedPostsQuery(viewpoint, recipient, search, true, true);
+		Query q = buildReceivedPostsQuery(viewpoint, recipient, search, true, true, null);
 		Object result = q.getSingleResult();
 		//logger.debug("feed posts count {}", result);
 		return ((Number) result).intValue();
 	}
 	
 	private List<PostView> getReceivedFeedPosts(UserViewpoint viewpoint, User recipient, String search, int start, int max) {
-		Query q  = buildReceivedPostsQuery(viewpoint, recipient, search, false, true);
+		Query q  = buildReceivedPostsQuery(viewpoint, recipient, search, false, true, null);
 		return getPostViews(viewpoint, q, search, start, max);
 	}
 	
@@ -1385,5 +1398,20 @@ public class PostingBoardBean implements PostingBoard {
 		}
 		
 		return false;
+	}
+	
+	static final int MAX_BACKLOG = 20;
+
+	public void sendBacklog(User user, Date lastLogoutDate) {
+		UserViewpoint viewpoint = new UserViewpoint(user);
+		
+		Query q  = buildReceivedPostsQuery(viewpoint, user, null, false, false, lastLogoutDate);
+		q.setMaxResults(MAX_BACKLOG);
+		List<Post> posts = TypeUtils.castList(Post.class, q.getResultList());
+		
+		// Send the messages in reverse order - oldest first
+		ListIterator<Post> i = posts.listIterator(posts.size());
+		while (i.hasPrevious())
+			xmppMessageSender.sendNewPostMessage(user, i.previous());
 	}
 }

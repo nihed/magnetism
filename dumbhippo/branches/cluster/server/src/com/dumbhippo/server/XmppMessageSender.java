@@ -5,6 +5,8 @@ import java.util.Set;
 import javax.ejb.Local;
 
 import com.dumbhippo.identity20.Guid;
+import com.dumbhippo.persistence.Post;
+import com.dumbhippo.persistence.User;
 
 /**
  * This interface is used to send out XMPP messages from the session beans.
@@ -47,6 +49,15 @@ public interface XmppMessageSender {
 	 *   currently be a single element.
 	 */
 	public void sendLocalMessage(Set<Guid> to, String payload);
+	
+	/**
+	 * Sends a notification of a new post to a particular user if they
+	 * are logged in to the current server. Otherwise does nothing
+	 * 
+	 * @param recipient the recipentt of the
+	 * @param post the post to send to the recipient
+	 */
+	public void sendNewPostMessage(User recipient, Post post);
 	
 	/**
 	 * Set the singleton provider that does the work of sending out

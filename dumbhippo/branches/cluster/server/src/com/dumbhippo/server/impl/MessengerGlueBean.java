@@ -271,7 +271,7 @@ public class MessengerGlueBean implements MessengerGlue {
 		account.setWasSentShareLinkTutorial(true);
 	}
 
-	public void onResourceConnected(String username) {
+	public void onResourceConnected(String username, boolean wasAlreadyConnected) {
 		// account could be missing due to debug users or our own
 		// send-notifications
 		// user, i.e. any user on the jabber server that we don't know about
@@ -285,13 +285,38 @@ public class MessengerGlueBean implements MessengerGlue {
 		}
 		
 		LiveState.getInstance().resendAllNotifications(account.getOwner().getGuid());
+
+		account.setLastLoginDate(new Date());
 		
-		accountSystem.touchLoginDate(account.getOwner().getGuid());
+		// We can't reliably tell if the user is currently logged in by checking
+		// for loginDate > logoutDate, since that could happen if the server
+		// crashed while the user was logged in as well, so instead we check
+		// wasAlreadyConnected. wasAlreadyConnected isn't 100% reliable if two 
+		// resources are connecting simultaneously, but the worst that will happen 
+		// is that the user gets backlog replayed to both accounts, which might be 
+		// considered a feature.
+		if (!wasAlreadyConnected) {
+			postingBoard.sendBacklog(account.getOwner(), account.getLastLogoutDate());
+		}
 			
 		if (!account.getWasSentShareLinkTutorial()) {
 			doShareLinkTutorial(account);
 		}
 	}	
+	
+
+	public void onUserLogout(String username) {
+		Account account;
+		try {
+			account = accountFromUsername(username);
+		} catch (JabberUserNotFoundException e) {
+			if (!username.equals("admin"))
+				logger.warn("username logged out that we don't know: {}", username);
+			return;
+		}
+		
+		account.setLastLogoutDate(new Date());
+	}
 	
 	public String getMySpaceName(String username) {
 		User user = userFromTrustedUsername(username);

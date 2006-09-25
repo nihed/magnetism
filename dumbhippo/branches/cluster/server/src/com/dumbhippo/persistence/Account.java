@@ -62,6 +62,7 @@ public class Account extends Resource {
 	
 	private long creationDate;
 	private long lastLoginDate;
+	private long lastLogoutDate;
 	private int invitations;
 	
 	private boolean wasSentShareLinkTutorial;
@@ -119,6 +120,7 @@ public class Account extends Resource {
 		externalAccounts = new HashSet<ExternalAccount>();
 		creationDate = -1;
 		lastLoginDate = -1;
+		lastLogoutDate = -1;
 		wasSentShareLinkTutorial = false;
 		hasDoneShareLinkTutorial = false;
 		disabled = false;
@@ -313,6 +315,21 @@ public class Account extends Resource {
 			this.lastLoginDate = date.getTime();
 		else
 			this.lastLoginDate = -1;
+	}	
+
+	@Column(nullable=true)
+	public Date getLastLogoutDate() {
+		if (lastLogoutDate < 0) {
+			return null;
+		}
+		return new Date(lastLogoutDate);
+	}
+
+	public void setLastLogoutDate(Date date) {
+		if (date != null)
+			this.lastLogoutDate = date.getTime();
+		else
+			this.lastLogoutDate = -1;
 	}	
 
 	@Column(nullable = false)

@@ -83,10 +83,15 @@ public class PresenceMonitor implements SessionManagerListener {
 			
 			PresenceService presenceService = PresenceService.getInstance();
 			
+			final boolean wasAlreadyConnected = presenceService.getPresence("/users", userGuid) > 0;
+			
 			// We queue this stuff so we aren't invoking some database operation in jboss
 			// with the lock held and blocking all new clients in the meantime
 			if (oldCount > 0 && newCount == 0) {
 				presenceService.setLocalPresence("/users", userGuid, 0);
+				
+				MessengerGlue glue = EJBUtil.defaultLookup(MessengerGlue.class);
+				glue.onUserLogout(user);
 			} else if (oldCount == 0 && newCount > 0) {
 				presenceService.setLocalPresence("/users", userGuid, 1);
 			}
@@ -98,7 +103,7 @@ public class PresenceMonitor implements SessionManagerListener {
 				executor.execute(new Runnable() {
 					public void run() {
 						MessengerGlue glue = EJBUtil.defaultLookup(MessengerGlue.class);
-						glue.onResourceConnected(user);
+						glue.onResourceConnected(user, wasAlreadyConnected);
 					}
 				});
 			}

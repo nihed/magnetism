@@ -14,13 +14,23 @@ import org.dom4j.Document;
 import org.dom4j.DocumentException;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
+import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.SessionManager;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.xmpp.packet.Message;
 
 import com.dumbhippo.ThreadUtils;
+import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.identity20.Guid;
+import com.dumbhippo.persistence.Post;
+import com.dumbhippo.persistence.User;
+import com.dumbhippo.server.EntityView;
+import com.dumbhippo.server.PostView;
+import com.dumbhippo.server.PostingBoard;
+import com.dumbhippo.server.UserViewpoint;
+import com.dumbhippo.server.Viewpoint;
 import com.dumbhippo.server.XmppMessageSenderProvider;
+import com.dumbhippo.server.util.EJBUtil;
 
 /**
  * This class implements sending messages to a particular user or list of users;
@@ -166,5 +176,59 @@ public class MessageSender implements XmppMessageSenderProvider {
         template.setType(Message.Type.headline);
         template.getElement().add(payloadElement);
         sendMessage(to, template);
+	}
+
+	private static final String ELEMENT_NAME = "newPost";
+	private static final String NAMESPACE = "http://dumbhippo.com/protocol/post";
+	
+	private void addNewPostExtension(Message message, PostView postView, Set<EntityView> referencedEntities) {
+		// Add the extra XML elements to the message that convey all our
+		// structured information. Doing this by building an XML string then
+		// parsing it is gross, but avoids larger code changes.
+		
+		XmlBuilder builder = new XmlBuilder();
+		builder.openElement(ELEMENT_NAME, "xmlns", NAMESPACE);
+		for (EntityView ev: referencedEntities) {
+			ev.writeToXmlBuilder(builder);
+		}
+		postView.writeToXmlBuilder(builder);
+		builder.closeElement();
+		
+        Document extensionDocument;
+        try {
+            extensionDocument = DocumentHelper.parseText(builder.toString());
+        } catch (DocumentException e) {
+            throw new RuntimeException("Couldn't parse payload as XML");
+        }
+        
+        Element extensionElement = extensionDocument.getRootElement();
+        extensionElement.detach();
+        
+        message.getElement().add(extensionElement);
+	}
+	
+	public void sendNewPostMessage(User recipient, Post post) {
+		PostingBoard postingBoard = EJBUtil.defaultLookup(PostingBoard.class);
+		
+		String title = post.getTitle();
+		String url = post.getUrl() != null ? post.getUrl().toExternalForm() : null;
+		
+		if (url == null) {
+			// this particular jabber message protocol has no point without an url
+			Log.debug("no url found on post, not sending xmpp message");
+			return;
+		}
+		
+		Viewpoint viewpoint = new UserViewpoint(recipient);
+
+		PostView postView = postingBoard.getPostView(viewpoint, post);
+		Set<EntityView> referenced = postingBoard.getReferencedEntities(viewpoint, post);
+		
+        Message message = new Message();
+        message.setType(Message.Type.headline);
+        message.setBody(String.format("%s\n%s", title, url));
+        addNewPostExtension(message, postView, referenced);
+        
+        sendMessage(recipient.getGuid(), message);
 	}
 }

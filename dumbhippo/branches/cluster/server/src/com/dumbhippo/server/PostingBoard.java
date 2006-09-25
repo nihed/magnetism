@@ -299,5 +299,13 @@ public interface PostingBoard {
 	
 	public boolean postIsGroupNotification(Post post);
 	
-	public void sendPostNotifications(Post post, PostType postType);	
+	public void sendPostNotifications(Post post, PostType postType);
+
+	/**
+	 * Sends messages that the user might have missed to them via XMPP.
+	 * 
+	 * @param user the user to send backlog to
+	 * @param lastLogoutDate date the user was last logged in, or %null
+	 */
+	public void sendBacklog(User user, Date lastLogoutDate);	
 }

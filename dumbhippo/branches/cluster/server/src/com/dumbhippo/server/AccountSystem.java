@@ -108,15 +108,6 @@ public interface AccountSystem {
 	public Account lookupAccountByOwnerId(Guid ownerId) throws NotFoundException;
 
 	/**
-	 * Update the last login time for the account associated with the user; throws
-	 * a RuntimeException if the user doesn't exist.
-	 * 
-	 * @param userId the guid of a user
-	 */
-	public void touchLoginDate(Guid userId);
-	
-	
-	/**
 	 * Gets one of our special users, like the music butterfly or 
 	 * photo hippo or whatever. Supposed to be like any other user in 
 	 * all respects, to avoid weird special cases. The only special case
