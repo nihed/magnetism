@@ -83,6 +83,8 @@ public:
 
     bool isCreated() { return created_; }
 
+    bool isShowing() { return showing_; }
+
     ////////////////////////////////////////////////////////////
 
     virtual bool hookMessage(MSG *msg);

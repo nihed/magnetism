@@ -565,10 +565,10 @@ HippoUI::create(HINSTANCE instance)
 
     HippoCanvasItem *scrollbars = hippo_canvas_scrollbars_new();
     text = hippo_canvas_text_new();
-    g_object_set(G_OBJECT(text), "text", "Inside Scrollbars This Text is Longer",
-        "background-color", 0x999900ff, "border", 10, NULL);
+    g_object_set(G_OBJECT(text), "text", "Inside Scrollbars This Text is Longer\nBlah blah blah! This goes on longer\nmore text",
+        "background-color", 0x999900ff, "border", 10, "border-color", 0x444444ff, NULL);
     hippo_canvas_scrollbars_set_root(HIPPO_CANVAS_SCROLLBARS(scrollbars), text);
-    hippo_canvas_box_append(HIPPO_CANVAS_BOX(box), scrollbars, HippoPackFlags(0));
+    hippo_canvas_box_append(HIPPO_CANVAS_BOX(box), scrollbars, HippoPackFlags(HIPPO_PACK_EXPAND));
 
     hippo_window_set_contents(window, box);
     hippo_window_set_visible(window, TRUE);
@@ -2174,6 +2174,13 @@ WinMain(HINSTANCE hInstance,
     // Initialize OLE and COM; We need to use this rather than CoInitialize
     // in order to get cut-and-paste and drag-and-drop to work
     OleInitialize(NULL);
+
+    // Initialize common control window classes; needed to use e.g. SCROLLBAR
+    INITCOMMONCONTROLSEX initControls;
+    initControls.dwSize = sizeof(initControls);
+    initControls.dwICC = ICC_STANDARD_CLASSES;
+    if (!InitCommonControlsEx(&initControls))
+        g_warning("Failed to initialize common controls");
 
     if (!initializeWinSock())
         return 0;

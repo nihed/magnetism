@@ -5,6 +5,7 @@
 #include "stdafx-hippoui.h"
 
 #include "HippoCanvas.h"
+#include "HippoScrollbar.h"
 
 #include <cairo-win32.h>
 
@@ -29,6 +30,7 @@ static void                   hippo_canvas_context_win_update_pango           (H
                                                                                cairo_t               *cr);
 
 HippoCanvas::HippoCanvas()
+    : canvasWidth_(0), canvasHeight_(0), canvasX_(0), canvasY_(0), hscrollNeeded_(false), vscrollNeeded_(false), scrollable_(false)
 {
     HippoCanvasContextWin *context;
 
@@ -40,6 +42,16 @@ HippoCanvas::HippoCanvas()
     context_ = context;
     g_object_unref((void*) context); // lose the extra reference
     g_assert(HIPPO_IS_CANVAS_CONTEXT(context_));
+
+    hscroll_ = new HippoScrollbar();
+    hscroll_->Release(); // lose extra ref
+    hscroll_->setOrientation(HIPPO_ORIENTATION_HORIZONTAL);
+
+    vscroll_ = new HippoScrollbar();
+    vscroll_->Release();
+    
+    hscroll_->setParent(this);
+    vscroll_->setParent(this);
 }
 
 void
@@ -58,6 +70,17 @@ HippoCanvas::setRoot(HippoCanvasItem *item)
     queueResize();
 }
 
+void
+HippoCanvas::setScrollable(bool value)
+{
+    if (value == scrollable_)
+        return;
+
+    scrollable_ = value;
+
+    queueResize();
+}
+
 bool
 HippoCanvas::create()
 {
@@ -67,6 +90,9 @@ HippoCanvas::create()
     if (!result)
         return false;
     
+    hscroll_->create();
+    vscroll_->create();
+
     if (root_ != (HippoCanvasItem*) NULL) {
         g_assert(HIPPO_IS_CANVAS_CONTEXT(context_));
         hippo_canvas_item_set_context(root_, HIPPO_CANVAS_CONTEXT(context_));
@@ -76,11 +102,134 @@ HippoCanvas::create()
     return result;
 }
 
+void 
+HippoCanvas::show(bool activate)
+{
+    if (!create()) // because scrollbars will need us created
+        return;
+
+    updateScrollbars(); // may show scrollbars
+
+    HippoAbstractControl::show(activate);
+}
+
 void
 HippoCanvas::onSizeChanged()
 {
-    if (root_ != (HippoCanvasItem*) NULL)
-        hippo_canvas_item_allocate(root_, getWidth(), getHeight());
+    if (scrollable_)
+        g_debug("control size changed %d x %d scrollable %d canvas %d x %d", getWidth(), getHeight(), scrollable_,
+            canvasWidth_, canvasHeight_);
+
+    if (root_ != (HippoCanvasItem*) NULL) {
+        int w = getWidth();
+        int h = getHeight();
+        if (scrollable_)
+            hippo_canvas_item_allocate(root_, MAX(canvasWidth_, w), MAX(canvasHeight_, h));
+        else
+            hippo_canvas_item_allocate(root_, w, h);
+    }
+
+    // size and position the scrollbars
+    updateScrollbars();
+}
+
+int
+HippoCanvas::getWidthRequestImpl()
+{
+    if (root_ != (HippoCanvasItem*) NULL) {
+        // see what size our canvas wants to be, for "do we need scrollbars" 
+        // purposes and so the canvasWidth_/canvasHeight variables are set.
+        // These should NOT depend on size allocation and thus not on forWidth
+        canvasWidth_ = hippo_canvas_item_get_width_request(root_);
+    } else {
+        canvasWidth_ = 0;
+    }
+
+    if (scrollable_) {
+        // return a minimum width that assumes we need both scrollbars
+        return hscroll_->getWidthRequest() + vscroll_->getWidthRequest();
+    } else {
+        return canvasWidth_;
+    }
+}
+
+int
+HippoCanvas::getHeightRequestImpl(int forWidth)
+{
+    if (root_ != (HippoCanvasItem*) NULL) {
+        canvasHeight_ = hippo_canvas_item_get_height_request(root_,
+            scrollable_ ? canvasWidth_ : forWidth);
+    } else {
+        canvasHeight_ = 0;
+    }
+    if (scrollable_) {
+        // assume we need vertical scrollbar always, but 
+        // only factor in horizontal scrollbar if needed
+        if (canvasWidth_ > forWidth) {
+            // don't need horizontal scrollbar
+            return vscroll_->getHeightRequest(forWidth);
+        } else {
+            return hscroll_->getHeightRequest(forWidth/2) + vscroll_->getHeightRequest(forWidth/2);
+        }
+    } else {
+        return canvasHeight_;
+    }
+}
+
+void
+HippoCanvas::updateScrollbars()
+{
+    int w = getWidth();
+    int h = getHeight();
+
+    hscrollNeeded_ = scrollable_ && canvasWidth_ > w;
+    vscrollNeeded_ = scrollable_ && canvasHeight_ > h;
+
+    if (scrollable_)
+        g_debug("updating scrollbars %d x %d h=%d v=%d",
+        w, h, hscrollNeeded_, vscrollNeeded_);
+
+    // hide if needed, then resize, then show if needed,
+    // means less flashing
+
+    if (!vscrollNeeded_) {
+        vscroll_->hide();
+    }
+    if (!hscrollNeeded_) {
+        hscroll_->hide();
+    }
+
+    int vWidth = vscrollNeeded_ ? vscroll_->getWidthRequest() : 0;
+    int hWidth = hscrollNeeded_ ? w - vWidth : 0;
+    int hHeight = hscrollNeeded_ ? hscroll_->getHeightRequest(hWidth) : 0;
+    int vHeight = vscrollNeeded_ ? h - hHeight : 0;
+   
+    if (vscrollNeeded_ && isShowing()) {
+        g_debug("setting size of vscrollbar to %d,%d %dx%d", w - vWidth, 0, vWidth, vHeight);
+        vscroll_->moveResize(w - vWidth, 0, vWidth, vHeight);
+        vscroll_->setBounds(0, canvasHeight_, vHeight);
+        vscroll_->show(false);
+    }
+
+    if (hscrollNeeded_ && isShowing()) {
+        g_debug("setting size of hscrollbar %d,%d %dx%d", 0, h - hHeight, hWidth, hHeight);
+        hscroll_->moveResize(0, h - hHeight, hWidth, hHeight);
+        hscroll_->setBounds(0, canvasWidth_, hWidth);
+        hscroll_->show(false);
+    }
+}
+
+void
+HippoCanvas::getCanvasOrigin(int *x_p, int *y_p)
+{
+    if (hscrollNeeded_)
+        *x_p = - canvasX_;
+    else
+        *x_p = 0;
+    if (vscrollNeeded_)
+        *y_p = - canvasY_;
+    else
+        *y_p = 0;
 }
 
 bool 
@@ -110,35 +259,40 @@ HippoCanvas::processMessage(UINT   message,
                 hippo_canvas_context_win_update_pango(context_, cr);
 
                 if (root_ != (HippoCanvasItem*) NULL) {
-                    hippo_canvas_item_process_paint(root_, cr, 0, 0);
+                    int x, y;
+                    getCanvasOrigin(&x, &y);
+                    hippo_canvas_item_process_paint(root_, cr, x, y);
                 }
 
                 cairo_destroy(cr);
                 cairo_surface_destroy(surface);
+
                 EndPaint(window_, &paint);
+            }
+            return true;
+        case WM_HSCROLL:
+            if (scrollable_) {
+                int newX = hscroll_->handleScrollMessage(message, wParam, lParam);
+                // FIXME we could use ScrollWindowEx instead of repainting everything
+                if (newX != canvasX_) {
+                    canvasX_ = newX;
+                    invalidate(0, 0, getWidth(), getHeight());
+                }
+            }
+            return true;
+        case WM_VSCROLL:
+            if (scrollable_) {
+                int newY = vscroll_->handleScrollMessage(message, wParam, lParam);
+                // FIXME we could use ScrollWindowEx instead of repainting everything
+                if (newY != canvasY_) {
+                    canvasY_ = newY;
+                    invalidate(0, 0, getWidth(), getHeight());
+                }
             }
             return true;
     }
 
     return HippoAbstractControl::processMessage(message, wParam, lParam);
-}
-
-int
-HippoCanvas::getWidthRequestImpl()
-{
-    if (root_ != (HippoCanvasItem*) NULL)
-        return hippo_canvas_item_get_width_request(root_);
-    else
-        return 0;
-}
-
-int
-HippoCanvas::getHeightRequestImpl(int forWidth)
-{
-    if (root_ != (HippoCanvasItem*) NULL)
-        return hippo_canvas_item_get_height_request(root_, forWidth);
-    else
-        return 0;
 }
 
 typedef struct
@@ -492,13 +646,22 @@ hippo_canvas_context_win_translate_to_widget(HippoCanvasContext *context,
                                              int                *x_p,
                                              int                *y_p)
 {
+    HippoCanvasContextWin *canvas_win;
+
     g_return_if_fail(HIPPO_IS_CANVAS_CONTEXT(context));
+
+    canvas_win = HIPPO_CANVAS_CONTEXT_WIN(context);
 
     /* convert coords of root canvas item to coords of
      * the HWND
      */
+    int cx, cy;
+    canvas_win->canvas->getCanvasOrigin(&cx, &cy);
 
-    // right now, they are identical
+    if (x_p)
+        *x_p += cx;
+    if (y_p)
+        *y_p += cy;
 }
 
 static void
@@ -516,8 +679,9 @@ canvas_root_paint_needed(HippoCanvasItem *root,
                          int                    height,
                          HippoCanvasContextWin *canvas_win)
 {
-    // canvas root coords are currently the same as control coords
-    canvas_win->canvas->invalidate(x, y, width, height);
+    int cx, cy;
+    canvas_win->canvas->getCanvasOrigin(&cx, &cy);
+    canvas_win->canvas->invalidate(cx + x, cy + y, width, height);
 }
 
 static HippoCanvasContextWin*

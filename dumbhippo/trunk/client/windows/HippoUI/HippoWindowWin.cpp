@@ -8,7 +8,7 @@
 class HippoWindowImpl : public HippoAbstractControl {
 public:
     HippoWindowImpl() {
-        setClassName(L"HippoWindowWinClass");
+        setClassName(L"HippoWindow");
         setClassStyle(CS_HREDRAW | CS_VREDRAW);
         setWindowStyle(WS_OVERLAPPEDWINDOW);
         //setExtendedStyle(WS_EX_TOPMOST);

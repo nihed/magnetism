@@ -133,8 +133,7 @@ HippoAbstractWindow::createWindow(void)
     window_ = CreateWindowEx(extendedStyle_, className_, title_, windowStyle_,
         positionSet_ ? x_ : CW_USEDEFAULT,
         positionSet_ ? y_ : CW_USEDEFAULT,
-        getWidth(),
-        getHeight(),
+        getWidth(), getHeight(),
         (useParent_ && ui_) ? ui_->getWindow() : (createWithParent_ ? createWithParent_->window_ : NULL), 
         NULL, instance_, NULL);
     if (!window_) {
@@ -142,7 +141,7 @@ HippoAbstractWindow::createWindow(void)
         return false;
     }
 
-    EnableScrollBar(window_, SB_BOTH, ESB_DISABLE_BOTH);
+    //EnableScrollBar(window_, SB_BOTH, ESB_DISABLE_BOTH);
 
     hippoSetWindowData<HippoAbstractWindow>(window_, this);
     ui_->registerMessageHook(window_, this);
@@ -207,30 +206,47 @@ bool
 HippoAbstractWindow::registerClass()
 {
     WNDCLASSEX wcex;
+    
+    // note that the class may be a predefined Windows control class,
+    // and that RegisterClassEx does NOT fail if the class is already
+    // registered
 
-    ZeroMemory(&wcex, sizeof(WNDCLASSEX));
-    wcex.cbSize = sizeof(WNDCLASSEX); 
+    HippoUStr uName(className_);
+    if (GetClassInfoEx(instance_, className_.m_str, &wcex) != 0) {
+        g_debug("Got existing window class %s", uName.c_str());
+        return true;
+    } else if (GetClassInfoEx(NULL, className_.m_str, &wcex) != 0) {
+        g_debug("Got existing system window class %s", uName.c_str());
+        return true;
+    } else {
+        ZeroMemory(&wcex, sizeof(WNDCLASSEX));
+        wcex.cbSize = sizeof(WNDCLASSEX); 
 
-    wcex.style = classStyle_;
-    wcex.lpfnWndProc = windowProc;
-    wcex.cbClsExtra = 0;
-    wcex.cbWndExtra = 0;
-    wcex.hInstance  = instance_;
-    wcex.hCursor    = LoadCursor(NULL, IDC_ARROW);
-    wcex.hbrBackground  = (HBRUSH)(COLOR_WINDOW+1);
-    wcex.lpszMenuName   = NULL;
-    wcex.lpszClassName  = className_.m_str;
-    if (ui_) {
-        wcex.hIcon = ui_->getBigIcon();
-        wcex.hIconSm = ui_->getSmallIcon();;
-    }
+        wcex.style = classStyle_;
+        wcex.lpfnWndProc = windowProc;
+        wcex.cbClsExtra = 0;
+        wcex.cbWndExtra = 0;
+        wcex.hInstance  = instance_;
+        wcex.hCursor    = LoadCursor(NULL, IDC_ARROW);
+        wcex.hbrBackground  = (HBRUSH)(COLOR_WINDOW+1);
+        wcex.lpszMenuName   = NULL;
+        wcex.lpszClassName  = className_.m_str;
+        if (ui_) {
+            wcex.hIcon = ui_->getBigIcon();
+            wcex.hIconSm = ui_->getSmallIcon();;
+        }
 
-    if (RegisterClassEx(&wcex) == 0) {
-        if (GetClassInfoEx(instance_, className_.m_str, &wcex) != 0)
+        if (RegisterClassEx(&wcex) == 0) {
+            HippoBSTR err;
+            hippoHresultToString(GetLastError(), err);
+            g_warning("Failed to register window class and failed to get existing class %s: %s", uName.c_str(),
+                HippoUStr(err).c_str());
+            return false;
+        } else {
+            g_debug("Registered new window class %s", uName.c_str());
             return true;
-        return false;
+        }
     }
-    return true;
 }
 
 void
@@ -408,7 +424,7 @@ HippoAbstractWindow::processMessage(UINT   message,
         } else {
             g_warning("Failed to get client rect of window");
         }
-        return true;
+        return false; // for e.g. standard Windows controls we want to run DefWindowProc() ?
     default:
         return false;
     }

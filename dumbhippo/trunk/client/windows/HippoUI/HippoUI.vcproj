@@ -37,7 +37,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/VERBOSE:LIB"
-				AdditionalDependencies="Gdiplus.lib shlwapi.lib glib-2.0.lib gthread-2.0.lib gobject-2.0.lib loudmouth.lib pango-1.0.lib pangocairo-1.0.lib pangowin32-1.0.lib cairo.lib ws2_32.lib wininet.lib urlmon.lib thrownew.obj advapi32.lib gdi32.lib shell32.lib"
+				AdditionalDependencies="Gdiplus.lib shlwapi.lib glib-2.0.lib gthread-2.0.lib gobject-2.0.lib loudmouth.lib pango-1.0.lib pangocairo-1.0.lib pangowin32-1.0.lib cairo.lib ws2_32.lib wininet.lib urlmon.lib thrownew.obj advapi32.lib gdi32.lib shell32.lib comctl32.lib"
 				OutputFile="$(OutDir)/Mugshot.exe"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="../debug;../dependencies/glib/lib;../dependencies/cairo/lib;../dependencies/pango/lib"
@@ -198,6 +198,9 @@
 				RelativePath=".\HippoRemoteWindow.cpp">
 			</File>
 			<File
+				RelativePath=".\HippoScrollbar.cpp">
+			</File>
+			<File
 				RelativePath=".\HippoToolbarEdit.cpp">
 			</File>
 			<File
@@ -309,6 +312,9 @@
 			</File>
 			<File
 				RelativePath=".\HippoRemoteWindow.h">
+			</File>
+			<File
+				RelativePath=".\HippoScrollbar.h">
 			</File>
 			<File
 				RelativePath=".\HippoToolbarEdit.h">

@@ -10,14 +10,19 @@
 #include <hippo/hippo-canvas-item.h>
 
 typedef struct _HippoCanvasContextWin      HippoCanvasContextWin;
+class HippoScrollbar;
 
 class HippoCanvas : public HippoAbstractControl {
 public:
     HippoCanvas(); 
 
     virtual bool create();
+    virtual void show(bool activate);
 
     void setRoot(HippoCanvasItem *item);
+    void setScrollable(bool value);
+
+    void getCanvasOrigin(int *x_p, int *y_p);
 
 protected:
     virtual int getWidthRequestImpl();
@@ -30,6 +35,17 @@ protected:
     virtual void onSizeChanged();
 
 private:
+    void updateScrollbars();
+
     HippoGObjectPtr<HippoCanvasItem> root_;
     HippoGObjectPtr<HippoCanvasContextWin> context_;
+    HippoPtr<HippoScrollbar> hscroll_;
+    HippoPtr<HippoScrollbar> vscroll_;
+    int canvasWidth_;
+    int canvasHeight_;
+    int canvasX_;
+    int canvasY_;
+    unsigned int hscrollNeeded_ : 1;
+    unsigned int vscrollNeeded_ : 1;
+    unsigned int scrollable_ : 1;
 };
