@@ -624,11 +624,9 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 			if (user.equals(userViewpoint.getViewer()))
 				return true;
 			if (userViewpoint.isFriendOfStatusCached(user)) {
-			    logger.debug("Returning cached status for viewpoint {}", userViewpoint);
 				return userViewpoint.getCachedFriendOfStatus(user);
 			}
 			
-			logger.debug("will create a live user for user {}", user);
 			boolean isFriendOf = userHasContact(user, userViewpoint.getViewer());
             userViewpoint.setCachedFriendOfStatus(user, isFriendOf);
 			return isFriendOf;

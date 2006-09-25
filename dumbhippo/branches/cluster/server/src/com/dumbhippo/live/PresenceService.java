@@ -111,13 +111,9 @@ public class PresenceService extends ServiceMBeanSupport implements PresenceServ
 		public final synchronized int getPresence(Guid guid) {
 			UserInfo userInfo = users.get(guid);
 			if (userInfo != null) {
-				logger.debug("{}: Presence for {} is {}", 
-						     new Object[] { this, guid, userInfo.presence });
 				return userInfo.presence;
 			}
 			else {
-				logger.debug("{}: {} is not present", 
-					         new Object[] { this, guid });
 				return 0;
 			}
 		}
@@ -180,7 +176,7 @@ public class PresenceService extends ServiceMBeanSupport implements PresenceServ
 			PresenceChangedMessage message = new PresenceChangedMessage(location, serial, guid, localPresence); 
 			
 			try {
-				logger.debug("Broadcasting {}", message);
+				// logger.debug("Broadcasting {}", message);
 				channel.send(null, null, message);
 			} catch (ChannelNotConnectedException e) {
 			} catch (ChannelClosedException e) {
@@ -202,7 +198,7 @@ public class PresenceService extends ServiceMBeanSupport implements PresenceServ
 				PresenceChangedMessage message = new PresenceChangedMessage(location, serial, guid, 0); 
 			
 				try {
-					logger.debug("Broadcasting {}", message);
+					// logger.debug("Broadcasting {}", message);
 					channel.send(null, null, message);
 				} catch (ChannelNotConnectedException e) {
 				} catch (ChannelClosedException e) {
@@ -318,13 +314,13 @@ public class PresenceService extends ServiceMBeanSupport implements PresenceServ
 					users.put(guid, userInfo);
 				}
 				if (updateSerial > userInfo.serial) {
-					logger.debug("{}: Updating presence for {} to {}, serial {}", 
-								 new Object[] { this, guid, presence, updateSerial });
+					// logger.debug("{}: Updating presence for {} to {}, serial {}", 
+					//			 new Object[] { this, guid, presence, updateSerial });
 					userInfo.serial = updateSerial;
 					userInfo.presence = presence;
 				} else {
-					logger.debug("{}: Not updating presence, since update serial {} is older than {}", 
-							     new Object[] { this, updateSerial, userInfo.serial } );
+					// logger.debug("{}: Not updating presence, since update serial {} is older than {}", 
+					//		     new Object[] { this, updateSerial, userInfo.serial } );
 				}
 			}
 		}
@@ -393,11 +389,8 @@ public class PresenceService extends ServiceMBeanSupport implements PresenceServ
 		public int getPresence(String location, Guid guid) {
 			LocationInfo locationInfo = peekLocationInfo(location);
 			if (locationInfo != null) {
-				logger.debug("{}: Fetching presence for {}/{}", 
-						     new Object[] { address, location, guid });
 				return locationInfo.getPresence(guid);
 			} else {
-				logger.debug("{}: No information about location {}", address, location); 
 				return 0;
 			}
 		}
@@ -846,7 +839,7 @@ public class PresenceService extends ServiceMBeanSupport implements PresenceServ
 				servers.put(address, server);
 				
 				RequestStateMessage message = new RequestStateMessage();
-				logger.debug("Sending {} to {}", message, address);
+				// logger.debug("Sending {} to {}", message, address);
 				
 				try {
 					channel.send(address, null, message);
@@ -886,7 +879,7 @@ public class PresenceService extends ServiceMBeanSupport implements PresenceServ
 			i++;
 		}
 		CurrentStateMessage response = new CurrentStateMessage(locationStates);
-		logger.debug("Sending {} to {}", response, source);
+		// logger.debug("Sending {} to {}", response, source);
 		channel.send(source, null, response);
 	}
 	
@@ -922,11 +915,11 @@ public class PresenceService extends ServiceMBeanSupport implements PresenceServ
 		try {
 		  	object = org.jgroups.util.Util.objectFromByteBuffer(message.getBuffer());
 		} catch (Exception e) {
-			logger.debug("Can't deserialize contents of Presence channel message");
+			logger.warn("Can't deserialize contents of Presence channel message");
 			return; // ignore
 		}
 		
-		logger.debug("Received {} from {}", object, message.getSrc());
+		// logger.debug("Received {} from {}", object, message.getSrc());
 		
 		if (object instanceof RequestStateMessage)
 			handleRequestState(message.getSrc(), (RequestStateMessage)object);
@@ -935,7 +928,7 @@ public class PresenceService extends ServiceMBeanSupport implements PresenceServ
 		else if (object instanceof PresenceChangedMessage) 
 			handlePresenceChanged(message.getSrc(), (PresenceChangedMessage)object);
 		else
-			logger.debug("Unknown type of message received on Presence channel", object.getClass().getName());
+			logger.warn("Unknown type of message received on Presence channel", object.getClass().getName());
 			
 	}
 	
