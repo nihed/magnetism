@@ -34,7 +34,8 @@ hippo_canvas_scrollbars_new(void)
     HippoCanvasItem *item;
 
     canvas = new HippoCanvas();
-    canvas->setScrollable(true);
+    canvas->setScrollable(HIPPO_ORIENTATION_VERTICAL, true);
+    canvas->setScrollable(HIPPO_ORIENTATION_HORIZONTAL, true);
 
     item = HIPPO_CANVAS_ITEM(g_object_new(HIPPO_TYPE_CANVAS_SCROLLBARS,
                             "control", canvas,
@@ -64,8 +65,17 @@ hippo_canvas_scrollbars_set_enabled (HippoCanvasScrollbars *scrollbars,
                                      HippoOrientation       orientation,
                                      gboolean               value)
 {
+    HippoCanvas *control;
+
+    g_return_if_fail(HIPPO_IS_CANVAS_SCROLLBARS(scrollbars));
+
     g_return_if_fail(HIPPO_IS_CANVAS_SCROLLBARS(scrollbars));
     
+    control = NULL;
+    g_object_get(G_OBJECT(scrollbars), "control", &control,
+                 NULL);
+    g_assert(control != NULL);
+    control->setScrollable(orientation, value != FALSE);
 }
 
 HippoCanvasItem*

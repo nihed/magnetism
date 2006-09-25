@@ -20,7 +20,8 @@ public:
     virtual void show(bool activate);
 
     void setRoot(HippoCanvasItem *item);
-    void setScrollable(bool value);
+    void setScrollable(HippoOrientation orientation,
+                       bool value);
 
     void getCanvasOrigin(int *x_p, int *y_p);
     void getViewport(RECT *rect_p);
@@ -49,5 +50,6 @@ private:
     int canvasY_;
     unsigned int hscrollNeeded_ : 1;
     unsigned int vscrollNeeded_ : 1;
-    unsigned int scrollable_ : 1;
+    unsigned int hscrollable_ : 1;
+    unsigned int vscrollable_ : 1;
 };
