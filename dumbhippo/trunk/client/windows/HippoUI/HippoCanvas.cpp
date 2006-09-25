@@ -30,7 +30,7 @@ static void                   hippo_canvas_context_win_update_pango           (H
                                                                                cairo_t               *cr);
 
 HippoCanvas::HippoCanvas()
-    : canvasWidth_(0), canvasHeight_(0), canvasX_(0), canvasY_(0), hscrollNeeded_(false), vscrollNeeded_(false), scrollable_(false)
+    : canvasWidthReq_(0), canvasHeightReq_(0), canvasX_(0), canvasY_(0), hscrollNeeded_(false), vscrollNeeded_(false), scrollable_(false)
 {
     HippoCanvasContextWin *context;
 
@@ -118,13 +118,13 @@ HippoCanvas::onSizeChanged()
 {
     if (scrollable_)
         g_debug("control size changed %d x %d scrollable %d canvas %d x %d", getWidth(), getHeight(), scrollable_,
-            canvasWidth_, canvasHeight_);
+            canvasWidthReq_, canvasHeightReq_);
 
     if (root_ != (HippoCanvasItem*) NULL) {
         int w = getWidth();
         int h = getHeight();
         if (scrollable_)
-            hippo_canvas_item_allocate(root_, MAX(canvasWidth_, w), MAX(canvasHeight_, h));
+            hippo_canvas_item_allocate(root_, MAX(canvasWidthReq_, w), MAX(canvasHeightReq_, h));
         else
             hippo_canvas_item_allocate(root_, w, h);
     }
@@ -140,16 +140,16 @@ HippoCanvas::getWidthRequestImpl()
         // see what size our canvas wants to be, for "do we need scrollbars" 
         // purposes and so the canvasWidth_/canvasHeight variables are set.
         // These should NOT depend on size allocation and thus not on forWidth
-        canvasWidth_ = hippo_canvas_item_get_width_request(root_);
+        canvasWidthReq_ = hippo_canvas_item_get_width_request(root_);
     } else {
-        canvasWidth_ = 0;
+        canvasWidthReq_ = 0;
     }
 
     if (scrollable_) {
         // return a minimum width that assumes we need both scrollbars
         return hscroll_->getWidthRequest() + vscroll_->getWidthRequest();
     } else {
-        return canvasWidth_;
+        return canvasWidthReq_;
     }
 }
 
@@ -157,22 +157,23 @@ int
 HippoCanvas::getHeightRequestImpl(int forWidth)
 {
     if (root_ != (HippoCanvasItem*) NULL) {
-        canvasHeight_ = hippo_canvas_item_get_height_request(root_,
-            scrollable_ ? canvasWidth_ : forWidth);
+        canvasHeightReq_ = hippo_canvas_item_get_height_request(root_,
+            scrollable_ ? canvasWidthReq_ : forWidth);
     } else {
         canvasHeight_ = 0;
     }
     if (scrollable_) {
         // assume we need vertical scrollbar always, but 
         // only factor in horizontal scrollbar if needed
-        if (canvasWidth_ > forWidth) {
+        if (canvasWidthReq_ > forWidth) {
             // don't need horizontal scrollbar
             return vscroll_->getHeightRequest(forWidth);
         } else {
+            // forWidth/2 is bogus, but scrollbar ignores forWidth anyhow
             return hscroll_->getHeightRequest(forWidth/2) + vscroll_->getHeightRequest(forWidth/2);
         }
     } else {
-        return canvasHeight_;
+        return canvasHeightReq_;
     }
 }
 
@@ -182,8 +183,16 @@ HippoCanvas::updateScrollbars()
     int w = getWidth();
     int h = getHeight();
 
-    hscrollNeeded_ = scrollable_ && canvasWidth_ > w;
-    vscrollNeeded_ = scrollable_ && canvasHeight_ > h;
+    int canvasWidthAlloc, canvasHeightAlloc;
+    if (root_ != (HippoCanvasItem*) NULL) {
+        hippo_canvas_item_get_allocation(root_, &canvasWidthAlloc, &canvasHeightAlloc);
+    } else {
+        canvasWidthAlloc = 0;
+        canvasHeightAlloc = 0;
+    }
+
+    hscrollNeeded_ = scrollable_ && canvasWidthAlloc > w;
+    vscrollNeeded_ = scrollable_ && canvasHeightAlloc > h;
 
     if (scrollable_)
         g_debug("updating scrollbars %d x %d h=%d v=%d",
@@ -207,14 +216,14 @@ HippoCanvas::updateScrollbars()
     if (vscrollNeeded_ && isShowing()) {
         g_debug("setting size of vscrollbar to %d,%d %dx%d", w - vWidth, 0, vWidth, vHeight);
         vscroll_->moveResize(w - vWidth, 0, vWidth, vHeight);
-        vscroll_->setBounds(0, canvasHeight_, vHeight);
+        vscroll_->setBounds(0, canvasHeightAlloc, vHeight);
         vscroll_->show(false);
     }
 
     if (hscrollNeeded_ && isShowing()) {
         g_debug("setting size of hscrollbar %d,%d %dx%d", 0, h - hHeight, hWidth, hHeight);
         hscroll_->moveResize(0, h - hHeight, hWidth, hHeight);
-        hscroll_->setBounds(0, canvasWidth_, hWidth);
+        hscroll_->setBounds(0, canvasWidthAlloc, hWidth);
         hscroll_->show(false);
     }
 }
@@ -232,6 +241,39 @@ HippoCanvas::getCanvasOrigin(int *x_p, int *y_p)
         *y_p = 0;
 }
 
+
+void
+HippoCanvas::getViewport(RECT *rect_p)
+{
+    rect_p->left = 0;
+    rect_p->top = 0;
+    rect_p->right = rect_p->left + getWidth() - (vscrollNeeded_ ? vscroll_->getWidth() : 0);
+    rect_p->bottom = rect_p->top + getHeight() - (hscrollNeeded_ ? hscroll_->getHeight() : 0);
+}
+
+void
+HippoCanvas::scrollTo(int newX, int newY)
+{
+    g_return_if_fail(scrollable_);
+    int dx = canvasX_ - newX;
+    int dy = canvasY_ - newY;
+    if (dx == 0 && dy == 0)
+        return;
+
+    canvasX_ = newX;
+    canvasY_ = newY;
+
+    RECT viewport;
+    getViewport(&viewport);
+    ScrollWindowEx(window_, 
+                   dx, dy,
+                   &viewport, // portion of client area to scroll
+                   &viewport, // clip region (do not modify bits outside it)
+                   NULL,      // return for invalid region
+                   NULL,      // return for invalid rectangle
+                   SW_INVALIDATE | SW_SCROLLCHILDREN | SW_ERASE);
+}
+
 bool 
 HippoCanvas::processMessage(UINT   message,
                             WPARAM wParam,
@@ -245,7 +287,9 @@ HippoCanvas::processMessage(UINT   message,
                 HDC hdc = BeginPaint(window_, &paint);
 
                 // FIXME not the right background color (on linux it's the default gtk background)
-                // should use system color, maybe GetThemeSysColorBrush is right
+                // should use system color, maybe GetThemeSysColorBrush is right. Note that 
+                // this rectangle draws the little corner between the scrollbars in 
+                // addition to the viewport background.
                 HBRUSH hbrush = CreateSolidBrush(RGB(255,255,255));
                 HGDIOBJ oldBrush;
 
@@ -255,13 +299,24 @@ HippoCanvas::processMessage(UINT   message,
                 DeleteObject(hbrush);
 
                 cairo_surface_t *surface = cairo_win32_surface_create(hdc);
-                cairo_t *cr = cairo_create(surface);                
+                cairo_t *cr = cairo_create(surface);
                 hippo_canvas_context_win_update_pango(context_, cr);
 
                 if (root_ != (HippoCanvasItem*) NULL) {
+                    RECT viewport;
+
+                    getViewport(&viewport);
+                    
+                    cairo_save(cr);
+                    cairo_rectangle(cr, viewport.left, viewport.top,
+                        viewport.right - viewport.left, viewport.bottom - viewport.top);     
+                    cairo_clip(cr);
+
                     int x, y;
-                    getCanvasOrigin(&x, &y);
+                    getCanvasOrigin(&x, &y);                    
                     hippo_canvas_item_process_paint(root_, cr, x, y);
+                    
+                    cairo_restore(cr);
                 }
 
                 cairo_destroy(cr);
@@ -273,21 +328,13 @@ HippoCanvas::processMessage(UINT   message,
         case WM_HSCROLL:
             if (scrollable_) {
                 int newX = hscroll_->handleScrollMessage(message, wParam, lParam);
-                // FIXME we could use ScrollWindowEx instead of repainting everything
-                if (newX != canvasX_) {
-                    canvasX_ = newX;
-                    invalidate(0, 0, getWidth(), getHeight());
-                }
+                scrollTo(newX, canvasY_);
             }
             return true;
         case WM_VSCROLL:
             if (scrollable_) {
                 int newY = vscroll_->handleScrollMessage(message, wParam, lParam);
-                // FIXME we could use ScrollWindowEx instead of repainting everything
-                if (newY != canvasY_) {
-                    canvasY_ = newY;
-                    invalidate(0, 0, getWidth(), getHeight());
-                }
+                scrollTo(canvasX_, newY);
             }
             return true;
     }
@@ -680,6 +727,7 @@ canvas_root_paint_needed(HippoCanvasItem *root,
                          HippoCanvasContextWin *canvas_win)
 {
     int cx, cy;
+
     canvas_win->canvas->getCanvasOrigin(&cx, &cy);
     canvas_win->canvas->invalidate(cx + x, cy + y, width, height);
 }

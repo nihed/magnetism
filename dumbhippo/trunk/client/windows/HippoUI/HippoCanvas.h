@@ -23,6 +23,7 @@ public:
     void setScrollable(bool value);
 
     void getCanvasOrigin(int *x_p, int *y_p);
+    void getViewport(RECT *rect_p);
 
 protected:
     virtual int getWidthRequestImpl();
@@ -36,13 +37,14 @@ protected:
 
 private:
     void updateScrollbars();
+    void scrollTo(int newX, int newY);
 
     HippoGObjectPtr<HippoCanvasItem> root_;
     HippoGObjectPtr<HippoCanvasContextWin> context_;
     HippoPtr<HippoScrollbar> hscroll_;
     HippoPtr<HippoScrollbar> vscroll_;
-    int canvasWidth_;
-    int canvasHeight_;
+    int canvasWidthReq_;
+    int canvasHeightReq_;
     int canvasX_;
     int canvasY_;
     unsigned int hscrollNeeded_ : 1;

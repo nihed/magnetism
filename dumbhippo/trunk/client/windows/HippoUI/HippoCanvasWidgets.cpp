@@ -36,12 +36,8 @@ hippo_canvas_scrollbars_new(void)
     canvas = new HippoCanvas();
     canvas->setScrollable(true);
 
-    // FIXME actually have scrollbars around or as part of the canvas control
-
     item = HIPPO_CANVAS_ITEM(g_object_new(HIPPO_TYPE_CANVAS_SCROLLBARS,
                             "control", canvas,
-                             // FIXME debug-only, so we can see if the window is in the wrong spot
-                            "background-color", 0xff0000ff,
                             NULL));
     canvas->Release();
 
