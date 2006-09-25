@@ -13,8 +13,12 @@ BuildRequires:  glib2-devel >= 2.6
 BuildRequires:  gtk2-devel >= 2.6
 BuildRequires:  loudmouth-devel >= 1.0.3-3
 BuildRequires:  dbus-devel >= 0.61
+# dbus-glib-devel is split out from dbus-devel as of Fedora Core 6
+# BuildRequires: dbus-glib-devel >= 0.61 
 BuildRequires:  curl-devel >= 7.15
 BuildRequires:  GConf2-devel >= 2.8
+BuildRequires:  libXScrnSaver-devel
+
 # This is just the gecko-sdk from mozilla.org dumped into /opt/gecko-sdk
 # See http://developer.mugshot.org/download/extra for the spec file
 # If you are porting this to a distribution with a firefox-devel package
