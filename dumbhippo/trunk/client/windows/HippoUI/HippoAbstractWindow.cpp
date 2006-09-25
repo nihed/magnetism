@@ -417,6 +417,7 @@ HippoAbstractWindow::processMessage(UINT   message,
             int newW = clientRect.right - clientRect.left;
             int newH = clientRect.bottom - clientRect.top;
             if (newW != width_ || newH != height_) {
+                //g_debug("new size %dx%d", newW, newH);
                 width_ = newW;
                 height_ = newH;
                 onSizeChanged();

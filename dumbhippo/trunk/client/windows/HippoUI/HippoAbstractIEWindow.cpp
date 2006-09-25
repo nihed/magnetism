@@ -161,6 +161,15 @@ HippoAbstractIEWindow::hookMessage(MSG *msg)
     return false;
 }
 
+void
+HippoAbstractIEWindow::onSizeChanged()
+{
+    if (ie_) {
+        RECT ieSize = { 0, 0, getWidth(), getHeight() };
+        ie_->resize(&ieSize);
+    }
+}
+
 bool
 HippoAbstractIEWindow::processMessage(UINT   message,
                                       WPARAM wParam,
@@ -180,13 +189,6 @@ HippoAbstractIEWindow::processMessage(UINT   message,
                 active->OnFrameWindowActivate(LOWORD(wParam) != WA_INACTIVE);
             return true;
         }
-    case WM_SIZE:
-        if (ie_) {
-            RECT rect = { 0, 0, LOWORD(lParam), HIWORD(lParam) };
-            ie_->resize(&rect);
-        }
-        HippoAbstractWindow::processMessage(message, wParam, lParam);
-        return true;
     default:
         return false;
     }

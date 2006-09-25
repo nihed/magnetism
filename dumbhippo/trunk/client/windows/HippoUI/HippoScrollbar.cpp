@@ -94,16 +94,16 @@ HippoScrollbar::handleScrollMessage(UINT   message,
 
     switch (LOWORD(wParam)) {
     case SB_PAGEUP:
-        newPos -= MAX((pageSize_ * 0.9), 1);
+        newPos -= MAX((int) (pageSize_ * 0.9), 1);
         break;
     case SB_PAGEDOWN:
-        newPos += MAX((pageSize_ * 0.9), 1);
+        newPos += MAX((int) (pageSize_ * 0.9), 1);
         break;
     case SB_LINEUP:
-        newPos -= MAX((pageSize_ * 0.1), 1);
+        newPos -= MAX((int) (pageSize_ * 0.1), 1);
         break;
     case SB_LINEDOWN:
-        newPos += MAX((pageSize_ * 0.1), 1);
+        newPos += MAX((int) (pageSize_ * 0.1), 1);
         break;
     case SB_THUMBPOSITION:
         // this is an update when we set the scroll position ourselves

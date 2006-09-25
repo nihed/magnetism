@@ -10,7 +10,7 @@ public:
     HippoWindowImpl() {
         setClassName(L"HippoWindow");
         setClassStyle(CS_HREDRAW | CS_VREDRAW);
-        setWindowStyle(WS_OVERLAPPEDWINDOW);
+        setWindowStyle(WS_OVERLAPPEDWINDOW); // FIXME change this to 0 to get rid of the decorations
         //setExtendedStyle(WS_EX_TOPMOST);
         setTitle(L"Mugshot");
         contentsControl_ = new HippoCanvas();
@@ -294,6 +294,7 @@ HippoWindowImpl::queueResize()
 bool
 HippoWindowImpl::idleResize()
 {
+    //g_debug("idleResize");
     int w = getWidthRequest();
     int h = getHeightRequest(w);
     resize(w, h);

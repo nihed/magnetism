@@ -29,6 +29,10 @@ protected:
     virtual int getWidthRequestImpl();
     virtual int getHeightRequestImpl(int forWidth);
 
+    virtual bool processMessage(UINT   message,
+                                WPARAM wParam,
+                                LPARAM lParam);
+
     HippoAbstractControl *parent_;
 private:
     int lastWidthRequest_;

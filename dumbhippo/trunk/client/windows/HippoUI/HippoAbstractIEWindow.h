@@ -80,6 +80,8 @@ protected:
 
     virtual void onWindowDestroyed();
 
+    virtual void onSizeChanged();
+
     virtual bool processMessage(UINT   message,
                                 WPARAM wParam,
                                 LPARAM lParam);

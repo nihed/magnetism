@@ -5,6 +5,7 @@
 #include "stdafx-hippoui.h"
 
 #include "HippoAbstractControl.h"
+#include <glib.h>
 
 HippoAbstractControl::HippoAbstractControl()
     : lastWidthRequest_(0), lastHeightRequest_(0), parent_(0)
@@ -94,4 +95,29 @@ HippoAbstractControl::getLastRequest(int *width_p,
         *width_p = lastWidthRequest_;
     if (height_p)
         *height_p = lastHeightRequest_;
+}
+
+bool
+HippoAbstractControl::processMessage(UINT   message,
+                                     WPARAM wParam,
+                                     LPARAM lParam)
+{
+    if (HippoAbstractWindow::processMessage(message, wParam, lParam))
+        return true;
+
+    switch (message) {
+        case WM_GETMINMAXINFO:
+            if (parent_ == NULL) {
+                // Override the minimum width/height of the window if it's a toplevel
+                MINMAXINFO *mmi = (MINMAXINFO*) lParam;
+                // according to docs, the structure is supposed to be initialized with the system defaults
+                mmi->ptMinTrackSize.x = MAX(lastWidthRequest_, mmi->ptMinTrackSize.x);
+                mmi->ptMinTrackSize.y = MAX(lastHeightRequest_, mmi->ptMinTrackSize.y);
+                //g_debug("setting min size to %dx%d", mmi->ptMinTrackSize.x, mmi->ptMinTrackSize.y);
+                return true;
+            }
+            break;
+    }
+
+    return false;
 }
