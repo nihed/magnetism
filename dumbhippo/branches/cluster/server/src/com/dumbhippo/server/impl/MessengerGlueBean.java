@@ -73,6 +73,7 @@ import com.dumbhippo.server.ServerStatus;
 import com.dumbhippo.server.Stacker;
 import com.dumbhippo.server.SystemViewpoint;
 import com.dumbhippo.server.TrackView;
+import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.UserViewpoint;
 
 @Stateless
@@ -109,6 +110,9 @@ public class MessengerGlueBean implements MessengerGlue {
 	
 	@EJB
 	private ServerStatus serverStatus;
+	
+	@EJB
+	private TransactionRunner transactionRunner;
 	
 	@EJB
 	private ExternalAccountSystem externalAccounts;
@@ -743,11 +747,22 @@ public class MessengerGlueBean implements MessengerGlue {
 		}
 	}
 
+	private void queueMusicChange(final Guid userId) {
+		// LiveState.queueUpdate() expects to be called in a transaction, and we
+		// don't have one since the music system code needs to be called not
+		// in a transaction.
+		transactionRunner.runTaskInNewTransaction(new Runnable() {
+			public void run() {
+				LiveState.getInstance().queueUpdate(new UserChangedEvent(userId, UserChangedEvent.Detail.MUSIC)); 
+			}
+		});
+	}
+	
 	@TransactionAttribute(TransactionAttributeType.NEVER)
 	public void handleMusicChanged(Guid userId, Map<String, String> properties) {
 		User user = getUserFromGuid(userId);
 		musicSystemInternal.setCurrentTrack(user, properties);
-		LiveState.getInstance().queueUpdate(new UserChangedEvent(userId, UserChangedEvent.Detail.MUSIC)); 
+		queueMusicChange(userId);
 	}
 
 	@TransactionAttribute(TransactionAttributeType.NEVER)
@@ -769,6 +784,6 @@ public class MessengerGlueBean implements MessengerGlue {
 		// don't do this again
 		identitySpider.setMusicSharingPrimed(user, true);
 		logger.debug("Primed user with {} tracks", tracks.size());	
-		LiveState.getInstance().queueUpdate(new UserChangedEvent(userId, UserChangedEvent.Detail.MUSIC)); 		
+		queueMusicChange(userId);
 	}
 }
