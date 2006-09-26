@@ -1,5 +1,5 @@
 Name:           mugshot
-Version:        1.1.15
+Version:        1.1.16
 Release:        1%{?dist}
 Summary:        Companion software for mugshot.org
 
@@ -133,7 +133,10 @@ fi
 %{_sysconfdir}/gconf/schemas/*.schemas
 
 %changelog
-* Sat Aug 19 2006 Owen Taylor <otaylor@redhat.com> - 1.1.11-1
+* Sat Sep 26 2006 Owen Taylor <otaylor@redhat.com> - 1.1.16-1
+- Fix triggers/scriptlets to work right on upgrades
+
+* Sat Aug 19 2006 Owen Taylor <otaylor@redhat.com> - 1.1.12-1
 - Add firefox extension
 
 * Wed Jul 19 2006 Colin Walters <walters@redhat.com> - 1.1.11-1
