@@ -35,10 +35,6 @@ form {
 	width:			100%;
 }
 
-#dhPageHeaderInnerBox {
-	position:		relative;
-}
-
 #dhPageHeaderLeft {
 }
 
@@ -46,9 +42,6 @@ form {
 }
 
 #dhHeaderControls {
-	position:		absolute;
-	right:			10px;
-	bottom:			7px;
 }
 
 #dhHeaderControls #dhHeaderOptions {
@@ -69,20 +62,27 @@ form {
 }
 
 #dhSearchBox {
-	position:		absolute;
-	right:			10px;
-	top:			10px;
-	height:			16px;
 }
 
-#dhSearchBox .dh-text-input {
-	width:			140px;
-	padding:		2px;
+#dhSearchForm {
+	height:			16px;
+	padding:		0px;
+	margin:			0px;
 }
+
 /* specific only to input entries and not textarea's which have specified rows  */
 input.dh-text-input {
 	height:			23px;
 }
+
+#dhSearchBoxEntry {
+	border:			0;
+	margin-right:	2px;
+	width:			220px;
+	height:			16px;
+	padding:		0px;
+}
+
 #dhHeaderLogo {
 	position:		relative;
 	left:			0px;

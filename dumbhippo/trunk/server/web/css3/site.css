@@ -52,9 +52,9 @@ img {
 	font-weight:		bold;
 }
 
-#dhSearchBox .dh-text-input { 
-	border-color:		#666666;
-	border-width:		1px;
+#dhSearchBoxEntry { 
+	border:				0px;
+	padding:			0px;
 	font-weight:		bold;
 	color:				black;
 }
