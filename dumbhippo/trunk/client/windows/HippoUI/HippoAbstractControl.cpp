@@ -8,7 +8,8 @@
 #include <glib.h>
 
 HippoAbstractControl::HippoAbstractControl()
-    : lastWidthRequest_(0), lastHeightRequest_(0), parent_(0)
+    : lastWidthRequest_(0), lastHeightRequest_(0), parent_(0),
+      hresizable_(true), vresizable_(true)
 {
     setWindowStyle(WS_CHILD);
 }
@@ -28,6 +29,22 @@ HippoAbstractControl::setParent(HippoAbstractControl *parent)
     }
     parent_ = parent;
     setCreateWithParent(parent_);
+    queueResize();
+}
+
+void
+HippoAbstractControl::setResizable(HippoOrientation orientation,
+                                   bool             value)
+{
+    if (orientation == HIPPO_ORIENTATION_VERTICAL) {
+        if (value == vresizable_)
+            return;
+        vresizable_ = value;
+    } else {
+        if (value == hresizable_)
+            return;
+        hresizable_ = value;
+    }
     queueResize();
 }
 
@@ -106,6 +123,17 @@ HippoAbstractControl::processMessage(UINT   message,
                 mmi->ptMinTrackSize.x = MAX(hrequest, mmi->ptMinTrackSize.x);
                 mmi->ptMinTrackSize.y = MAX(vrequest, mmi->ptMinTrackSize.y);
                 //g_debug("setting min size to %dx%d", mmi->ptMinTrackSize.x, mmi->ptMinTrackSize.y);
+
+                // don't be deceived by mmi->ptMaxSize which is the maximized size, not the maximum size
+
+                if (!hresizable_) {
+                    mmi->ptMaxTrackSize.x = mmi->ptMinTrackSize.x;
+                }
+
+                if (!vresizable_) {
+                    mmi->ptMaxTrackSize.y = mmi->ptMinTrackSize.y;
+                }
+
                 return true;
             }
             break;

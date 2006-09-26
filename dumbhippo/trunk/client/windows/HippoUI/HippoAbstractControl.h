@@ -6,6 +6,7 @@
 #pragma once
 
 #include "HippoAbstractWindow.h"
+#include <hippo/hippo-basics.h>
 
 class HippoAbstractControl : public HippoAbstractWindow {
 public:
@@ -19,11 +20,17 @@ public:
 
     void setParent(HippoAbstractControl *parent);
 
+    void setResizable(HippoOrientation orientation,
+                      bool             value);
+
     virtual void queueResize();
 
     virtual bool create();
 
     virtual void show(bool activate);
+
+    bool isHResizable() { return hresizable_; }
+    bool isVResizable() { return vresizable_; }
 
 protected:
     virtual int getWidthRequestImpl() = 0;
@@ -37,4 +44,6 @@ protected:
 private:
     int lastWidthRequest_;
     int lastHeightRequest_;
+    unsigned int hresizable_ : 1;
+    unsigned int vresizable_ : 1;
 };

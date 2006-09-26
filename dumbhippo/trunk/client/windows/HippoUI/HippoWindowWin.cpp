@@ -13,6 +13,8 @@ public:
         setWindowStyle(WS_OVERLAPPEDWINDOW); // FIXME change this to 0 to get rid of the decorations
         //setExtendedStyle(WS_EX_TOPMOST);
         setTitle(L"Mugshot");
+        setResizable(HIPPO_ORIENTATION_VERTICAL, false);
+        setResizable(HIPPO_ORIENTATION_HORIZONTAL, false);
         contentsControl_ = new HippoCanvas();
         contentsControl_->Release(); // remove extra ref
         contentsControl_->setParent(this);
@@ -236,7 +238,7 @@ hippo_window_win_set_resizable(HippoWindow      *window,
 {
     HippoWindowWin *window_win = HIPPO_WINDOW_WIN(window);
 
-    // FIXME
+    window_win->impl->setResizable(orientation, value != FALSE);
 }
 
 static void
@@ -297,7 +299,32 @@ HippoWindowImpl::idleResize()
     //g_debug("idleResize");
     int w = getWidthRequest();
     int h = getHeightRequest(w);
-    resize(w, h);
+
+    int oldW = getWidth();
+    int oldH = getHeight();
+
+    int newW, newH;
+
+    if (isHResizable()) {
+        newW = MAX(w, oldW);
+    } else {
+        newW = w;
+    }
+
+    if (isVResizable()) {
+        newH = MAX(h, oldH);
+    } else {
+        newH = h;
+    }
+
+    resize(newW, newH);
+
+    // kind of a lame hack - if we short-circuited the 
+    // size allocate, send it out anyway since a resize
+    // was queued
+    if (newW == oldW && newH == oldH) {
+        onSizeChanged();
+    }
 
     resizeIdle_.remove();
 
