@@ -20,8 +20,10 @@ static void hippo_canvas_text_get_property (GObject      *object,
 
 
 /* Canvas item methods */
-static gboolean hippo_canvas_text_button_press_event (HippoCanvasItem *item,
-                                                      HippoEvent      *event);
+static gboolean hippo_canvas_text_button_press_event (HippoCanvasItem    *item,
+                                                      HippoEvent         *event);
+static void     hippo_canvas_text_set_context        (HippoCanvasItem    *item,
+                                                      HippoCanvasContext *context);
 
 /* Box methods */
 static void hippo_canvas_text_paint_below_children       (HippoCanvasBox *box,
@@ -70,6 +72,8 @@ hippo_canvas_text_iface_init(HippoCanvasItemClass *item_class)
     item_parent_class = g_type_interface_peek_parent(item_class);
 
     item_class->button_press_event = hippo_canvas_text_button_press_event;
+
+    item_class->set_context = hippo_canvas_text_set_context;
 }
 
 static void
@@ -304,6 +308,25 @@ hippo_canvas_text_get_property(GObject         *object,
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
         break;
     }
+}
+
+static void
+hippo_canvas_text_set_context(HippoCanvasItem    *item,
+                              HippoCanvasContext *context)
+{
+    HippoCanvasBox *box = HIPPO_CANVAS_BOX(item);
+    gboolean changed;
+    
+    changed = context != box->context;
+    
+    item_parent_class->set_context(item, context);
+
+    /* we can't create a layout until we have a context,
+     * so we have to queue a size change when the context
+     * is set.
+     */
+    if (changed)
+        hippo_canvas_item_emit_request_changed(HIPPO_CANVAS_ITEM(item));
 }
 
 static PangoLayout*
