@@ -91,7 +91,7 @@ public class CompatibilityNotifier {
 		try {
 			groupMember = groupSystem.getGroupMember(group, event.getResourceId());
 		} catch (NotFoundException e) {
-			Log.error("Got GroupEvent for non-existent group member");
+			// This can happen legitimately when someone goes from FOLLOWER => NONMEMBER
 			return;
 		}
 
