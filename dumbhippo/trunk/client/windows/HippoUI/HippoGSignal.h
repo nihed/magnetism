@@ -239,6 +239,7 @@ public:
     }
 
     void add(Slot0<bool> *slot);
+    void add(Slot0<bool> *slot, int priority);
 
 private:
     static gboolean gcallback(void *data);

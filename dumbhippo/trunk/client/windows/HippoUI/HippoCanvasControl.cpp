@@ -31,7 +31,8 @@ static void hippo_canvas_control_allocate    (HippoCanvasItem    *item,
 
 /* Canvas box methods */
 static void hippo_canvas_control_paint_below_children       (HippoCanvasBox  *box,
-                                                             cairo_t         *cr);
+                                                             cairo_t         *cr,
+                                                             HippoRectangle  *damage_box);
 static int  hippo_canvas_control_get_content_width_request  (HippoCanvasBox  *box);
 static int  hippo_canvas_control_get_content_height_request (HippoCanvasBox  *box,
                                                              int              for_width);
@@ -232,7 +233,8 @@ hippo_canvas_control_allocate(HippoCanvasItem *item,
 
 static void
 hippo_canvas_control_paint_below_children(HippoCanvasBox  *box,
-                                          cairo_t         *cr)
+                                          cairo_t         *cr,
+                                          HippoRectangle  *damage_box)
 {
     HippoCanvasControl *control = HIPPO_CANVAS_CONTROL(box);
 

@@ -26,8 +26,8 @@ public:
     virtual void show(bool activate);
 
 protected:
-    virtual int getWidthRequestImpl();
-    virtual int getHeightRequestImpl(int forWidth);
+    virtual int getWidthRequestImpl() = 0;
+    virtual int getHeightRequestImpl(int forWidth) = 0;
 
     virtual bool processMessage(UINT   message,
                                 WPARAM wParam,

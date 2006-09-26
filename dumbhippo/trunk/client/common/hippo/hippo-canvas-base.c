@@ -68,7 +68,7 @@ hippo_canvas_base_init(HippoCanvasBase *base)
                        "orientation", HIPPO_ORIENTATION_HORIZONTAL,
                        NULL);
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(base),
-                            HIPPO_CANVAS_ITEM(box), 0);
+                            HIPPO_CANVAS_ITEM(box), HIPPO_PACK_EXPAND);
 
     item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
                         "text", "MUGSHOT",

@@ -5,13 +5,18 @@
 #include "stdafx-hippoui.h"
 
 #include "HippoScrollbar.h"
+#include <glib.h>
 
 HippoScrollbar::HippoScrollbar()
-    : orientation_(HIPPO_ORIENTATION_VERTICAL), minPos_(0), maxPos_(0), pageSize_(0)
+    : orientation_(HIPPO_ORIENTATION_HORIZONTAL), minPos_(0), maxPos_(0), pageSize_(0), widthReq_(0), heightReq_(0)
 {
     // standard Windows control
     setClassName(L"SCROLLBAR");
-    setWindowStyle(WS_CHILD | SBS_VERT);
+
+    // we defaulted to orientation horizontal, change to 
+    // vertical (the default) to trigger setting window style,
+    // widthReq_ and heightReq_
+    setOrientation(HIPPO_ORIENTATION_VERTICAL);
 }
 
 bool
@@ -39,6 +44,16 @@ HippoScrollbar::setOrientation(HippoOrientation orientation)
     orientation_ = orientation;
     setWindowStyle(WS_CHILD | (orientation_ == HIPPO_ORIENTATION_VERTICAL ? 
                    SBS_VERT : SBS_HORZ));
+
+    if (orientation_ == HIPPO_ORIENTATION_VERTICAL) {
+        widthReq_ = GetSystemMetrics(SM_CXVSCROLL); // width of vscrollbar
+        heightReq_ = GetSystemMetrics(SM_CYVSCROLL) * 2 + 5; // height of two scroll arrows plus arbitrary 5 for the bar
+    } else {
+        widthReq_ = GetSystemMetrics(SM_CXHSCROLL) * 2 + 5; // width of two scroll arrows plus arbitrary 5 for the bar
+        heightReq_ = GetSystemMetrics(SM_CYHSCROLL); // height of hscrollbar
+    }
+
+    // g_debug("scrollbar widthReq_ %d heightReq_ %d", widthReq_, heightReq_);
 }
 
 void
@@ -143,19 +158,11 @@ HippoScrollbar::processMessage(UINT   message,
 int
 HippoScrollbar::getWidthRequestImpl()
 {
-    if (orientation_ == HIPPO_ORIENTATION_VERTICAL) {
-        return GetSystemMetrics(SM_CXVSCROLL); // width of vscrollbar
-    } else {
-        return GetSystemMetrics(SM_CXHSCROLL) * 2 + 5; // width of two scroll arrows plus arbitrary 5 for the bar
-    }
+    return widthReq_;
 }
 
 int
 HippoScrollbar::getHeightRequestImpl(int forWidth)
 {
-    if (orientation_ == HIPPO_ORIENTATION_VERTICAL) {
-        return GetSystemMetrics(SM_CYVSCROLL) * 2 + 5; // height of two scroll arrows plus arbitrary 5 for the bar
-    } else {
-        return GetSystemMetrics(SM_CYHSCROLL); // height of hscrollbar
-    }
+    return heightReq_;
 }

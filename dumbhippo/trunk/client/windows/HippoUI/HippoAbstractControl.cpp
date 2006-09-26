@@ -72,21 +72,6 @@ HippoAbstractControl::getHeightRequest(int forWidth)
     return h;
 }
 
-int
-HippoAbstractControl::getWidthRequestImpl()
-{
-    // default is to return current window size
-    return getWidth();
-}
-
-int
-HippoAbstractControl::getHeightRequestImpl(int forWidth)
-{
-    // default is to return current window size
-    return getHeight();
-}
-
-
 void
 HippoAbstractControl::getLastRequest(int *width_p, 
                                      int *height_p)
@@ -107,12 +92,19 @@ HippoAbstractControl::processMessage(UINT   message,
 
     switch (message) {
         case WM_GETMINMAXINFO:
+            // Override the minimum width/height of the window if it's a toplevel
             if (parent_ == NULL) {
-                // Override the minimum width/height of the window if it's a toplevel
+                RECT windowArea_;
+                RECT clientArea_;
+                GetWindowRect(window_, &windowArea_);
+                GetClientRect(window_, &clientArea_);
+                int hrequest = lastWidthRequest_ + (windowArea_.right - windowArea_.left) - (clientArea_.right - clientArea_.left);
+                int vrequest = lastHeightRequest_ + (windowArea_.bottom - windowArea_.top) - (clientArea_.bottom - clientArea_.top);
                 MINMAXINFO *mmi = (MINMAXINFO*) lParam;
-                // according to docs, the structure is supposed to be initialized with the system defaults
-                mmi->ptMinTrackSize.x = MAX(lastWidthRequest_, mmi->ptMinTrackSize.x);
-                mmi->ptMinTrackSize.y = MAX(lastHeightRequest_, mmi->ptMinTrackSize.y);
+                // according to docs, the structure is supposed to be initialized with the system defaults.
+                // The min/max track sizes include the window frame, not just client area.
+                mmi->ptMinTrackSize.x = MAX(hrequest, mmi->ptMinTrackSize.x);
+                mmi->ptMinTrackSize.y = MAX(vrequest, mmi->ptMinTrackSize.y);
                 //g_debug("setting min size to %dx%d", mmi->ptMinTrackSize.x, mmi->ptMinTrackSize.y);
                 return true;
             }

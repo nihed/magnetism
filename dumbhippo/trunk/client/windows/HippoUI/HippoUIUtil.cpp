@@ -152,3 +152,12 @@ HippoGObjectRefcounter::unref(GObject *object)
         G_BREAKPOINT();
     g_object_unref(object);
 }
+
+void
+hippo_rectangle_from_rect(HippoRectangle *hippo_rect, RECT *windows_rect)
+{
+    hippo_rect->x = windows_rect->left;
+    hippo_rect->y = windows_rect->top;
+    hippo_rect->width = windows_rect->right - windows_rect->left;
+    hippo_rect->height = windows_rect->bottom - windows_rect->top;
+}

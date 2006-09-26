@@ -288,7 +288,7 @@ HippoWindowImpl::show(bool activate)
 void
 HippoWindowImpl::queueResize()
 {
-    resizeIdle_.add(slot(this, &HippoWindowImpl::idleResize));
+    resizeIdle_.add(slot(this, &HippoWindowImpl::idleResize), (G_PRIORITY_DEFAULT_IDLE + G_PRIORITY_LOW) / 2);
 }
 
 bool

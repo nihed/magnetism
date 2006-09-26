@@ -38,5 +38,8 @@ private:
     int maxPos_;
     int pageSize_;
 
+    int widthReq_;
+    int heightReq_;
+
     void syncBounds();
 };

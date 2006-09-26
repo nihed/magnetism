@@ -7,6 +7,7 @@
 #include <HippoUtil.h>
 #include <HippoArray.h>
 #include <glib-object.h>
+#include <hippo/hippo-basics.h>
 
 class HippoUIUtil
 {
@@ -112,3 +113,5 @@ private:
         raw_ = t;
     }
 };
+
+void hippo_rectangle_from_rect(HippoRectangle *hippo_rect, RECT *windows_rect);

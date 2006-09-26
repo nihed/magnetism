@@ -136,9 +136,6 @@ int
 HippoCanvas::getWidthRequestImpl()
 {
     if (root_ != (HippoCanvasItem*) NULL) {
-        // see what size our canvas wants to be, for "do we need scrollbars" 
-        // purposes and so the canvasWidth_/canvasHeight variables are set.
-        // These should NOT depend on size allocation and thus not on forWidth
         canvasWidthReq_ = hippo_canvas_item_get_width_request(root_);
     } else {
         canvasWidthReq_ = 0;
@@ -339,19 +336,27 @@ HippoCanvas::processMessage(UINT   message,
 
                 if (root_ != (HippoCanvasItem*) NULL) {
                     RECT viewport;
+                    HippoRectangle viewport_hippo;
+                    HippoRectangle region_hippo;
 
                     getViewport(&viewport);
                     
-                    cairo_save(cr);
-                    cairo_rectangle(cr, viewport.left, viewport.top,
-                        viewport.right - viewport.left, viewport.bottom - viewport.top);     
-                    cairo_clip(cr);
+                    hippo_rectangle_from_rect(&viewport_hippo, &viewport);
+                    hippo_rectangle_from_rect(&region_hippo, &region);
 
-                    int x, y;
-                    getCanvasOrigin(&x, &y);                    
-                    hippo_canvas_item_process_paint(root_, cr, x, y);
-                    
-                    cairo_restore(cr);
+                    if (hippo_rectangle_intersect(&viewport_hippo, &region_hippo, &region_hippo)) {
+                        // we have to clip so we don't draw outside the viewport - the canvas
+                        // doesn't have its own window
+                        cairo_save(cr);
+                        cairo_rectangle(cr, region_hippo.x, region_hippo.y, region_hippo.width, region_hippo.height);     
+                        cairo_clip(cr);
+
+                        int x, y;
+                        getCanvasOrigin(&x, &y);
+                        hippo_canvas_item_process_paint(root_, cr, &region_hippo, x, y);
+
+                        cairo_restore(cr);
+                    }
                 }
 
                 cairo_destroy(cr);

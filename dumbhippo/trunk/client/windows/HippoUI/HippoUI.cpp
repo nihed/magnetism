@@ -513,20 +513,23 @@ HippoUI::create(HINSTANCE instance)
     oldMenu_ = LoadMenu(instance, MAKEINTRESOURCE(IDR_NOTIFY));
     debugMenu_ = LoadMenu(instance, MAKEINTRESOURCE(IDR_DEBUG));
 
-    if (!registerClass())
+    if (!registerClass()) {
+        hippoDebugLastErr(L"Failed to register class %s", CLASS_NAME);
         return false;
+    }
 
     if (!registerActive())
         return false;
 
-
     if (!createWindow()) {
+        g_debug("Failed to createWindow()");
         revokeActive();
         return false;
     }
 
     notificationIcon_.setIcon(trayIcon_);
     if (!notificationIcon_.create(window_)) {
+        g_debug("Failed to create notification icon");
         revokeActive();
         return false;
     }
@@ -535,6 +538,7 @@ HippoUI::create(HINSTANCE instance)
     logWindow_.setBigIcon(bigIcon_);
     logWindow_.setSmallIcon(smallIcon_);
     if (!logWindow_.create()) {
+        g_debug("Failed to create log window");
         revokeActive();
         notificationIcon_.destroy();
         return false;
@@ -1349,6 +1353,8 @@ RETRY_REGISTER:
                 oldUI->ShowRecent();
         }
 
+        g_debug("Another copy already running, will exit");
+
         return false;
     }
 
@@ -2129,7 +2135,7 @@ WinMain(HINSTANCE hInstance,
     char **argv;
     HippoOptions options;
 
-    putenv("G_DEBUG=fatal_warnings");
+    _putenv("G_DEBUG=fatal_warnings");
 
     g_thread_init(NULL);
     g_type_init();
@@ -2179,8 +2185,13 @@ WinMain(HINSTANCE hInstance,
     INITCOMMONCONTROLSEX initControls;
     initControls.dwSize = sizeof(initControls);
     initControls.dwICC = ICC_STANDARD_CLASSES;
-    if (!InitCommonControlsEx(&initControls))
-        g_warning("Failed to initialize common controls");
+    if (!InitCommonControlsEx(&initControls)) {
+        // ALREADY_EXISTS seems to be harmless, though 
+        // the error codes for this function are not documented
+        // anywhere I can find
+        if (GetLastError() != ERROR_ALREADY_EXISTS)
+            hippoDebugLastErr(L"Failed to initialize common controls");
+    }
 
     if (!initializeWinSock())
         return 0;
@@ -2194,8 +2205,10 @@ WinMain(HINSTANCE hInstance,
     migrateCookie();
 
     ui = new HippoUI(options.instance_type, options.replace_existing, options.initial_debug_share);
-    if (!ui->create(hInstance))
+    if (!ui->create(hInstance)) {
+        g_debug("Failed to create UI");
         return 0;
+    }
 
     loop = g_main_loop_new(NULL, FALSE);
 
