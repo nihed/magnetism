@@ -26,6 +26,7 @@ public:
     void setVisible(bool visible);
     void setPosition(int x, int y);
     void getSize(int *x_p, int *y_p);
+    void beginResize(HippoSide side, int x, int y);
 
     virtual bool create();
     virtual void onSizeChanged();
@@ -247,8 +248,9 @@ hippo_window_win_begin_resize_drag(HippoWindow      *window,
                                    HippoEvent       *event)
 {
     HippoWindowWin *window_win = HIPPO_WINDOW_WIN(window);
-
-    // FIXME
+    
+    // FIXME change coordinates to be window coords
+    window_win->impl->beginResize(side, event->x, event->y);
 }
 
 void
@@ -354,6 +356,35 @@ HippoWindowImpl::getSize(int *width_p, int *height_p)
         *width_p = getWidth();
     if (height_p)
         *height_p = getHeight();
+}
+
+void
+HippoWindowImpl::beginResize(HippoSide side, int x, int y)
+{
+    // Simulate a button click on the window frame.
+    // There's an official WM_SYSCOMMAND to start a resize, but it's the 
+    // keyboard resize as if you chose it from the window menu.
+
+    WPARAM wParam;
+    switch (side) {
+        case HIPPO_SIDE_LEFT:
+            wParam = HTLEFT;
+            break;
+        case HIPPO_SIDE_TOP:
+            wParam = HTTOP;
+            break;
+        case HIPPO_SIDE_RIGHT:
+            wParam = HTRIGHT;
+            break;
+        case HIPPO_SIDE_BOTTOM:
+            wParam = HTBOTTOM;
+            break;
+        default:
+            g_warning("bad window side");
+            return;
+    }
+
+    DefWindowProc(window_, WM_NCLBUTTONDOWN, wParam, MAKELPARAM(x, y));
 }
 
 int

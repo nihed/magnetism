@@ -39,6 +39,13 @@ protected:
 private:
     void updateScrollbars();
     void scrollTo(int newX, int newY);
+    bool getMouseCoords(LPARAM lParam, int *x_p, int *y_p);
+    void updatePointer(int rootItemX, int rootItemY);
+    void onPaint(WPARAM wParam, LPARAM lParam);
+    void onMouseDown(int button, WPARAM wParam, LPARAM lParam);
+    void onMouseUp(int button, WPARAM wParam, LPARAM lParam);
+    void onMouseMove(WPARAM wParam, LPARAM lParam);
+    void onMouseLeave(WPARAM wParam, LPARAM lParam);
 
     HippoGObjectPtr<HippoCanvasItem> root_;
     HippoGObjectPtr<HippoCanvasContextWin> context_;
@@ -48,8 +55,10 @@ private:
     int canvasHeightReq_;
     int canvasX_;
     int canvasY_;
+    HippoCanvasPointer pointer_;
     unsigned int hscrollNeeded_ : 1;
     unsigned int vscrollNeeded_ : 1;
     unsigned int hscrollable_ : 1;
     unsigned int vscrollable_ : 1;
+    unsigned int containsMouse_ : 1;
 };

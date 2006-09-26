@@ -1631,7 +1631,10 @@ hippo_canvas_box_reverse(HippoCanvasBox  *box)
     if (box->children == NULL)
         return;
     
-    box->children = g_slist_reverse(box->children);
+    /* we don't want this, because if we toggle the "end" flag 
+     * that already reverses the order
+     */
+    /* box->children = g_slist_reverse(box->children); */
 
     link = box->children;
     while (link != NULL) {

@@ -3,7 +3,7 @@
  * Copyright Red Hat, Inc. 2006
  **/
 #include "stdafx-hippoui.h"
-
+#include <windowsx.h> // GET_X_LPARAM seems to be in here, though I'm not sure it's the right file to include
 #include "HippoCanvas.h"
 #include "HippoScrollbar.h"
 
@@ -31,7 +31,7 @@ static void                   hippo_canvas_context_win_update_pango           (H
 
 HippoCanvas::HippoCanvas()
     : canvasWidthReq_(0), canvasHeightReq_(0), canvasX_(0), canvasY_(0), hscrollNeeded_(false), vscrollNeeded_(false),
-      hscrollable_(false), vscrollable_(false)
+    hscrollable_(false), vscrollable_(false), containsMouse_(false), pointer_(HIPPO_CANVAS_POINTER_UNSET)
 {
     HippoCanvasContextWin *context;
 
@@ -239,7 +239,7 @@ HippoCanvas::updateScrollbars()
         canvasWidthAlloc -= vWidth;
 
     if (vscrollNeeded_) {
-        g_debug("setting size of vscrollbar to %d,%d %dx%d", w - vWidth, 0, vWidth, vHeight);
+        //g_debug("setting size of vscrollbar to %d,%d %dx%d", w - vWidth, 0, vWidth, vHeight);
         vscroll_->moveResize(w - vWidth, 0, vWidth, vHeight);
         vscroll_->setBounds(0, canvasHeightAlloc, vHeight);
         if (isShowing())
@@ -247,7 +247,7 @@ HippoCanvas::updateScrollbars()
     }
 
     if (hscrollNeeded_) {
-        g_debug("setting size of hscrollbar %d,%d %dx%d", 0, h - hHeight, hWidth, hHeight);
+        //g_debug("setting size of hscrollbar %d,%d %dx%d", 0, h - hHeight, hWidth, hHeight);
         hscroll_->moveResize(0, h - hHeight, hWidth, hHeight);
         hscroll_->setBounds(0, canvasWidthAlloc, hWidth);
         if (isShowing())
@@ -306,6 +306,202 @@ HippoCanvas::scrollTo(int newX, int newY)
                    SW_INVALIDATE | SW_SCROLLCHILDREN | SW_ERASE);
 }
 
+void
+HippoCanvas::updatePointer(int rootItemX, int rootItemY)
+{
+    HippoCanvasPointer newPointer = HIPPO_CANVAS_POINTER_UNSET;
+
+    if (root_ != (HippoCanvasItem*) NULL && containsMouse_) {
+        newPointer = hippo_canvas_item_get_pointer(root_, rootItemX, rootItemY);
+    }
+
+    /* this ensures we always go unset->default or default->unset on enter/leave, 
+     * so we change the pointer from e.g. the resize arrow on the window border
+     */
+    if (containsMouse_ && newPointer == HIPPO_CANVAS_POINTER_UNSET)
+        newPointer = HIPPO_CANVAS_POINTER_DEFAULT;
+
+    g_assert((containsMouse_ && newPointer != HIPPO_CANVAS_POINTER_UNSET) ||
+             (!containsMouse_ && newPointer == HIPPO_CANVAS_POINTER_UNSET));
+
+    if (newPointer != pointer_) {
+        HCURSOR hcursor = NULL;
+        switch (newPointer) {
+            case HIPPO_CANVAS_POINTER_UNSET:
+                hcursor = LoadCursor(NULL, IDC_ARROW);
+                break;
+            case HIPPO_CANVAS_POINTER_DEFAULT:
+                hcursor = LoadCursor(NULL, IDC_ARROW);
+                break;
+            case HIPPO_CANVAS_POINTER_HAND:
+                hcursor = LoadCursor(NULL, IDC_HAND);
+                break;
+        }
+        if (hcursor == NULL) {
+            g_warning("Failed to load mouse cursor");
+            return;
+        }
+        SetCursor(hcursor);
+        pointer_ = newPointer;
+    }
+}
+
+// returns true if mouse is inside client area
+bool
+HippoCanvas::getMouseCoords(LPARAM lParam, int *x_p, int *y_p)
+{
+    int cx, cy;
+    getCanvasOrigin(&cx, &cy);
+    int mx = GET_X_LPARAM(lParam);
+    int my = GET_Y_LPARAM(lParam);
+
+    bool outsideClient = (mx < 0 || my < 0 || mx >= getWidth() || my >= getHeight());
+
+    *x_p = mx - cx;
+    *y_p = my - cy;
+
+    return !outsideClient;
+}
+
+void
+HippoCanvas::onMouseDown(int button, WPARAM wParam, LPARAM lParam)
+{
+    if (root_ != (HippoCanvasItem*) NULL) {
+        int x, y;
+        if (getMouseCoords(lParam, &x, &y)) {
+            hippo_canvas_item_emit_button_press_event(root_,
+                x, y, button,
+                0, 0, 0);
+        }
+    }
+}
+
+void
+HippoCanvas::onMouseUp(int button, WPARAM wParam, LPARAM lParam)
+{
+    if (root_ != (HippoCanvasItem*) NULL) {
+        int x, y;
+        getMouseCoords(lParam, &x, &y); // don't check return value - emit even if outside the area
+        hippo_canvas_item_emit_button_release_event(root_,
+                x, y, button,
+                0, 0, 0);
+    }
+}
+
+void
+HippoCanvas::onMouseMove(WPARAM wParam, LPARAM lParam)
+{
+    int x, y;
+    if (!getMouseCoords(lParam, &x, &y))
+        return;
+
+    bool entered;
+
+    entered = false;
+    if (!containsMouse_) {
+        // request a WM_MOUSELEAVE message
+        TRACKMOUSEEVENT tme;
+        tme.cbSize = sizeof(tme);
+        tme.dwFlags = TME_LEAVE;
+        tme.hwndTrack = window_;
+        if (TrackMouseEvent(&tme) != 0) {
+            containsMouse_ = true;
+            entered = true;
+        } else {
+            g_warning("Failed to track mouse leave");
+            return;
+        }
+    }
+
+    g_assert(containsMouse_);
+
+    if (root_ != (HippoCanvasItem*) NULL) {
+        if (entered) {
+            hippo_canvas_item_emit_motion_notify_event(root_,
+                x, y, HIPPO_MOTION_DETAIL_ENTER);
+        }
+        hippo_canvas_item_emit_motion_notify_event(root_,
+            x, y, HIPPO_MOTION_DETAIL_WITHIN);
+    }
+
+    updatePointer(x, y);
+}
+
+void
+HippoCanvas::onMouseLeave(WPARAM wParam, LPARAM lParam)
+{
+    if (!containsMouse_)
+        return;
+
+    containsMouse_ = false;
+
+    if (root_ != (HippoCanvasItem*) NULL) {
+        // FIXME Windows does not provide coordinates here, so we'd have to save
+        // the last move event coordinates or request the current coords or something
+        // like that
+        hippo_canvas_item_emit_motion_notify_event(root_,
+                0, 0, HIPPO_MOTION_DETAIL_LEAVE);
+    }
+
+    updatePointer(-1, -1);
+}
+
+void
+HippoCanvas::onPaint(WPARAM wParam, LPARAM lParam)
+{
+    RECT region;
+    if (GetUpdateRect(window_, &region, true)) {
+        PAINTSTRUCT paint;
+        HDC hdc = BeginPaint(window_, &paint);
+
+        // FIXME not the right background color (on linux it's the default gtk background)
+        // should use system color, maybe GetThemeSysColorBrush is right. Note that 
+        // this rectangle draws the little corner between the scrollbars in 
+        // addition to the viewport background.
+        HBRUSH hbrush = CreateSolidBrush(RGB(255,255,255));
+        HGDIOBJ oldBrush;
+
+        oldBrush = SelectObject(hdc, hbrush);
+        FillRect(hdc, &region, hbrush);
+        SelectObject(hdc, oldBrush);
+        DeleteObject(hbrush);
+
+        cairo_surface_t *surface = cairo_win32_surface_create(hdc);
+        cairo_t *cr = cairo_create(surface);
+        hippo_canvas_context_win_update_pango(context_, cr);
+
+        if (root_ != (HippoCanvasItem*) NULL) {
+            RECT viewport;
+            HippoRectangle viewport_hippo;
+            HippoRectangle region_hippo;
+
+            getViewport(&viewport);
+            
+            hippo_rectangle_from_rect(&viewport_hippo, &viewport);
+            hippo_rectangle_from_rect(&region_hippo, &region);
+
+            if (hippo_rectangle_intersect(&viewport_hippo, &region_hippo, &region_hippo)) {
+                // we have to clip so we don't draw outside the viewport - the canvas
+                // doesn't have its own window
+                cairo_save(cr);
+                cairo_rectangle(cr, region_hippo.x, region_hippo.y, region_hippo.width, region_hippo.height);     
+                cairo_clip(cr);
+
+                int x, y;
+                getCanvasOrigin(&x, &y);
+                hippo_canvas_item_process_paint(root_, cr, &region_hippo, x, y);
+
+                cairo_restore(cr);
+            }
+        }
+
+        cairo_destroy(cr);
+        cairo_surface_destroy(surface);
+
+        EndPaint(window_, &paint);
+    }
+}
+
 bool 
 HippoCanvas::processMessage(UINT   message,
                             WPARAM wParam,
@@ -313,57 +509,7 @@ HippoCanvas::processMessage(UINT   message,
 {
     switch (message) {
         case WM_PAINT:
-            RECT region;
-            if (GetUpdateRect(window_, &region, true)) {
-                PAINTSTRUCT paint;
-                HDC hdc = BeginPaint(window_, &paint);
-
-                // FIXME not the right background color (on linux it's the default gtk background)
-                // should use system color, maybe GetThemeSysColorBrush is right. Note that 
-                // this rectangle draws the little corner between the scrollbars in 
-                // addition to the viewport background.
-                HBRUSH hbrush = CreateSolidBrush(RGB(255,255,255));
-                HGDIOBJ oldBrush;
-
-                oldBrush = SelectObject(hdc, hbrush);
-                FillRect(hdc, &region, hbrush);
-                SelectObject(hdc, oldBrush);
-                DeleteObject(hbrush);
-
-                cairo_surface_t *surface = cairo_win32_surface_create(hdc);
-                cairo_t *cr = cairo_create(surface);
-                hippo_canvas_context_win_update_pango(context_, cr);
-
-                if (root_ != (HippoCanvasItem*) NULL) {
-                    RECT viewport;
-                    HippoRectangle viewport_hippo;
-                    HippoRectangle region_hippo;
-
-                    getViewport(&viewport);
-                    
-                    hippo_rectangle_from_rect(&viewport_hippo, &viewport);
-                    hippo_rectangle_from_rect(&region_hippo, &region);
-
-                    if (hippo_rectangle_intersect(&viewport_hippo, &region_hippo, &region_hippo)) {
-                        // we have to clip so we don't draw outside the viewport - the canvas
-                        // doesn't have its own window
-                        cairo_save(cr);
-                        cairo_rectangle(cr, region_hippo.x, region_hippo.y, region_hippo.width, region_hippo.height);     
-                        cairo_clip(cr);
-
-                        int x, y;
-                        getCanvasOrigin(&x, &y);
-                        hippo_canvas_item_process_paint(root_, cr, &region_hippo, x, y);
-
-                        cairo_restore(cr);
-                    }
-                }
-
-                cairo_destroy(cr);
-                cairo_surface_destroy(surface);
-
-                EndPaint(window_, &paint);
-            }
+            onPaint(wParam, lParam);
             return true;
         case WM_HSCROLL:
             if (hscrollable_) {
@@ -376,6 +522,34 @@ HippoCanvas::processMessage(UINT   message,
                 int newY = vscroll_->handleScrollMessage(message, wParam, lParam);
                 scrollTo(canvasX_, newY);
             }
+            return true;
+        case WM_SETCURSOR:
+            // kill DefWindowProc setting the cursor, so we are the only 
+            // ones that do (in the mouse move handler)
+            return true;
+        case WM_LBUTTONDOWN:
+            onMouseDown(1, wParam, lParam);
+            return true;
+        case WM_LBUTTONUP:
+            onMouseUp(1, wParam, lParam);
+            return true;
+        case WM_MBUTTONDOWN:
+            onMouseDown(2, wParam, lParam);
+            return true;
+        case WM_MBUTTONUP:
+            onMouseUp(2, wParam, lParam);
+            return true;
+        case WM_RBUTTONDOWN:
+            onMouseDown(3, wParam, lParam);
+            return true;
+        case WM_RBUTTONUP:
+            onMouseUp(3, wParam, lParam);
+            return true;
+        case WM_MOUSEMOVE:
+            onMouseMove(wParam, lParam);
+            return true;
+        case WM_MOUSELEAVE:
+            onMouseLeave(wParam, lParam);
             return true;
     }
 

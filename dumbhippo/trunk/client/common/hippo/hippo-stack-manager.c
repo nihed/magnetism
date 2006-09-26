@@ -99,7 +99,14 @@ update_for_screen_info (StackManager    *manager,
     HippoRectangle base;
     gboolean is_west;
     gboolean is_north;
- 
+
+#if 0
+    g_debug("Monitor %d,%d %dx%d icon %d,%d %dx%d orientation %d",
+        monitor->x, monitor->y, monitor->width,  monitor->height,
+        icon->x, icon->y, icon->width, icon->height, 
+        icon_orientation);
+#endif
+
     is_west = ((icon->x + icon->width / 2) < (monitor->x + monitor->width / 2));
     is_north = ((icon->y + icon->height / 2) < (monitor->y + monitor->height / 2));
 
@@ -115,6 +122,8 @@ update_for_screen_info (StackManager    *manager,
     } else {
         icon->y = monitor->y + monitor->height - icon->height;
     }
+
+    /* g_debug("base_on_bottom %d is_north %d", manager->base_on_bottom, is_north); */
 
     if ((manager->base_on_bottom && is_north) ||
         (!manager->base_on_bottom && !is_north)) {
