@@ -74,7 +74,7 @@ hippo_canvas_context_register_widget_item(HippoCanvasContext *context,
     g_return_if_fail(HIPPO_IS_CANVAS_CONTEXT(context));
     g_return_if_fail(HIPPO_IS_CANVAS_ITEM(item));
     
-    return HIPPO_CANVAS_CONTEXT_GET_CLASS(context)->register_widget_item(context, item);
+    HIPPO_CANVAS_CONTEXT_GET_CLASS(context)->register_widget_item(context, item);
 }
 
 void
@@ -84,7 +84,7 @@ hippo_canvas_context_unregister_widget_item (HippoCanvasContext *context,
     g_return_if_fail(HIPPO_IS_CANVAS_CONTEXT(context));
     g_return_if_fail(HIPPO_IS_CANVAS_ITEM(item));
     
-    return HIPPO_CANVAS_CONTEXT_GET_CLASS(context)->unregister_widget_item(context, item);
+    HIPPO_CANVAS_CONTEXT_GET_CLASS(context)->unregister_widget_item(context, item);
 }
     
 void
@@ -96,7 +96,7 @@ hippo_canvas_context_translate_to_widget(HippoCanvasContext *context,
     g_return_if_fail(HIPPO_IS_CANVAS_CONTEXT(context));
     g_return_if_fail(HIPPO_IS_CANVAS_ITEM(item));
     
-    return HIPPO_CANVAS_CONTEXT_GET_CLASS(context)->translate_to_widget(context, item, x_p, y_p);
+    HIPPO_CANVAS_CONTEXT_GET_CLASS(context)->translate_to_widget(context, item, x_p, y_p);
 }
 
 

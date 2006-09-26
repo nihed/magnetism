@@ -593,7 +593,7 @@ hippo_canvas_box_register_widget_item(HippoCanvasContext *context,
 
     g_assert(box->context != NULL);
 
-    return hippo_canvas_context_register_widget_item(box->context, item);
+    hippo_canvas_context_register_widget_item(box->context, item);
 }
 
 static void
@@ -604,7 +604,7 @@ hippo_canvas_box_unregister_widget_item (HippoCanvasContext *context,
 
     g_assert(box->context != NULL);
 
-    return hippo_canvas_context_unregister_widget_item(box->context, item);
+    hippo_canvas_context_unregister_widget_item(box->context, item);
 }
     
 static void
@@ -626,7 +626,7 @@ hippo_canvas_box_translate_to_widget(HippoCanvasContext *context,
     if (y_p)
         *y_p += child->y;
     
-    return hippo_canvas_context_translate_to_widget(box->context, item, x_p, y_p);
+    hippo_canvas_context_translate_to_widget(box->context, item, x_p, y_p);
 }
 
 static void

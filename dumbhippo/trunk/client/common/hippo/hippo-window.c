@@ -47,7 +47,7 @@ hippo_window_set_contents(HippoWindow     *window,
     g_return_if_fail(HIPPO_IS_WINDOW(window));
     g_return_if_fail(item == NULL || HIPPO_IS_CANVAS_ITEM(item));
 
-    return HIPPO_WINDOW_GET_CLASS(window)->set_contents(window, item);
+    HIPPO_WINDOW_GET_CLASS(window)->set_contents(window, item);
 }
 
 void
@@ -56,7 +56,7 @@ hippo_window_set_visible(HippoWindow     *window,
 {
     g_return_if_fail(HIPPO_IS_WINDOW(window));
 
-    return HIPPO_WINDOW_GET_CLASS(window)->set_visible(window, visible);
+    HIPPO_WINDOW_GET_CLASS(window)->set_visible(window, visible);
 }
 
 void
@@ -66,7 +66,7 @@ hippo_window_set_position(HippoWindow     *window,
 {
     g_return_if_fail(HIPPO_IS_WINDOW(window));
 
-    return HIPPO_WINDOW_GET_CLASS(window)->set_position(window, x, y);
+    HIPPO_WINDOW_GET_CLASS(window)->set_position(window, x, y);
 }
 
 void
@@ -76,7 +76,7 @@ hippo_window_get_size(HippoWindow     *window,
 {
     g_return_if_fail(HIPPO_IS_WINDOW(window));
 
-    return HIPPO_WINDOW_GET_CLASS(window)->get_size(window, width_p, height_p);
+    HIPPO_WINDOW_GET_CLASS(window)->get_size(window, width_p, height_p);
 }
 
 void
@@ -86,7 +86,7 @@ hippo_window_set_resizable(HippoWindow      *window,
 {
     g_return_if_fail(HIPPO_IS_WINDOW(window));
 
-    return HIPPO_WINDOW_GET_CLASS(window)->set_resizable(window, orientation, value);
+    HIPPO_WINDOW_GET_CLASS(window)->set_resizable(window, orientation, value);
 }
 
 void
@@ -96,6 +96,6 @@ hippo_window_begin_resize_drag (HippoWindow      *window,
 {
     g_return_if_fail(HIPPO_IS_WINDOW(window));
 
-    return HIPPO_WINDOW_GET_CLASS(window)->begin_resize_drag(window, side, event);
+    HIPPO_WINDOW_GET_CLASS(window)->begin_resize_drag(window, side, event);
 }
 

@@ -3019,7 +3019,7 @@ parse_chat_message_info(HippoConnection  *connection,
         *small_photo_url_p = small_photo_url_str;
 
         timestamp_milliseconds = parse_int64(timestamp_str);
-        timestamp = timestamp_milliseconds / 1000;
+        timestamp = (GTime) (timestamp_milliseconds / 1000);
         serial = parse_int32(serial_str);
         
         return hippo_chat_message_new(sender, text, timestamp, serial);
