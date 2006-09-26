@@ -23,7 +23,8 @@ static void hippo_canvas_base_get_property (GObject      *object,
 
 /* Canvas item methods */
 static void     hippo_canvas_base_paint              (HippoCanvasItem *item,
-                                                      cairo_t         *cr);
+                                                      cairo_t         *cr,
+                                                      HippoRectangle  *damaged_box);
 
 struct _HippoCanvasBase {
     HippoCanvasBox box;
@@ -153,10 +154,11 @@ hippo_canvas_base_get_property(GObject         *object,
 
 static void
 hippo_canvas_base_paint(HippoCanvasItem *item,
-                        cairo_t         *cr)
+                        cairo_t         *cr,
+                        HippoRectangle  *damaged_box)
 {
     /* HippoCanvasBase *base = HIPPO_CANVAS_BASE(item); */
 
     /* Draw the background and any children */
-    item_parent_class->paint(item, cr);
+    item_parent_class->paint(item, cr, damaged_box);
 }

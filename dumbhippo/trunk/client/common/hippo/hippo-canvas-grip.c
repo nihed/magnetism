@@ -26,7 +26,8 @@ static gboolean hippo_canvas_grip_motion_notify_event (HippoCanvasItem *item,
 
 /* Canvas box methods */
 static void hippo_canvas_grip_paint_below_children       (HippoCanvasBox *box,
-                                                          cairo_t        *cr);
+                                                          cairo_t        *cr,
+                                                          HippoRectangle *damaged_box);
 static int  hippo_canvas_grip_get_content_width_request  (HippoCanvasBox *box);
 static int  hippo_canvas_grip_get_content_height_request (HippoCanvasBox *box,
                                                           int             for_width);
@@ -184,7 +185,8 @@ get_grip_request(HippoCanvasGrip *grip,
 
 static void
 hippo_canvas_grip_paint_below_children(HippoCanvasBox  *box,
-                                       cairo_t         *cr)
+                                       cairo_t         *cr,
+                                       HippoRectangle  *damaged_box)
 {
     HippoCanvasGrip *grip = HIPPO_CANVAS_GRIP(box);
     int x, y, w, h;

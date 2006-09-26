@@ -22,7 +22,8 @@ static void hippo_canvas_gradient_get_property (GObject      *object,
 
 /* Canvas box methods */
 static void hippo_canvas_gradient_paint_below_children (HippoCanvasBox *box,
-                                                        cairo_t        *cr);
+                                                        cairo_t        *cr,
+                                                        HippoRectangle *damaged_box);
 
 struct _HippoCanvasGradient {
     HippoCanvasBox box;
@@ -177,7 +178,8 @@ hippo_canvas_gradient_get_property(GObject         *object,
 
 static void
 hippo_canvas_gradient_paint_below_children(HippoCanvasBox  *box,
-                                           cairo_t         *cr)
+                                           cairo_t         *cr,
+                                           HippoRectangle  *damaged_box)
 {
     HippoCanvasGradient *gradient = HIPPO_CANVAS_GRADIENT(box);
     cairo_pattern_t *pattern;

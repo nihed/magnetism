@@ -205,6 +205,10 @@ int      hippo_compare_versions            (const char *version_a,
 char*    hippo_format_time_ago             (GTime       now,
                                             GTime       then);
 
+gboolean hippo_rectangle_intersect         (const HippoRectangle *src1,
+                                            const HippoRectangle *src2,
+                                            HippoRectangle       *dest);
+
 G_END_DECLS
 
 #endif /* __HIPPO_BASICS_H__ */

@@ -69,7 +69,8 @@ struct _HippoCanvasItemClass {
     void     (* set_context)        (HippoCanvasItem  *canvas_item,
                                      HippoCanvasContext *context);
     void     (* paint)              (HippoCanvasItem  *canvas_item,
-                                     cairo_t          *cr);
+                                     cairo_t          *cr,
+                                     HippoRectangle   *damaged_box);
     int      (* get_width_request)  (HippoCanvasItem *canvas_item);
     int      (* get_height_request) (HippoCanvasItem *canvas_item,
                                      int              for_width);
@@ -104,8 +105,6 @@ void               hippo_canvas_item_sink               (HippoCanvasItem    *can
 
 void               hippo_canvas_item_set_context        (HippoCanvasItem    *canvas_item,
                                                          HippoCanvasContext *context);
-void               hippo_canvas_item_paint              (HippoCanvasItem    *canvas_item,
-                                                         cairo_t            *cr);
 int                hippo_canvas_item_get_width_request  (HippoCanvasItem    *canvas_item);
 int                hippo_canvas_item_get_height_request (HippoCanvasItem    *canvas_item,
                                                          int                 for_width);
@@ -159,6 +158,7 @@ gboolean hippo_canvas_item_process_event           (HippoCanvasItem *canvas_item
 
 void     hippo_canvas_item_process_paint           (HippoCanvasItem *canvas_item,
                                                     cairo_t         *cr,
+                                                    HippoRectangle  *damaged_box,
                                                     int              allocation_x,
                                                     int              allocation_y);
 

@@ -25,7 +25,8 @@ static gboolean hippo_canvas_text_button_press_event (HippoCanvasItem *item,
 
 /* Box methods */
 static void hippo_canvas_text_paint_below_children       (HippoCanvasBox *box,
-                                                          cairo_t        *cr);
+                                                          cairo_t        *cr,
+                                                          HippoRectangle *damaged_box);
 static int  hippo_canvas_text_get_content_width_request  (HippoCanvasBox *box);
 static int  hippo_canvas_text_get_content_height_request (HippoCanvasBox *box,
                                                           int             for_width);
@@ -394,7 +395,8 @@ create_layout(HippoCanvasText *text,
 
 static void
 hippo_canvas_text_paint_below_children(HippoCanvasBox  *box,
-                                       cairo_t         *cr)
+                                       cairo_t         *cr,
+                                       HippoRectangle  *damaged_box)
 {
     HippoCanvasText *text = HIPPO_CANVAS_TEXT(box);
     

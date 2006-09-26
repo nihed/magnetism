@@ -25,7 +25,8 @@ static void     hippo_canvas_image_set_context        (HippoCanvasItem    *item,
 
 /* Canvas box methods */
 static void hippo_canvas_image_paint_below_children       (HippoCanvasBox *box,
-                                                           cairo_t        *cr);
+                                                           cairo_t        *cr,
+                                                           HippoRectangle  *damaged_box);
 static int  hippo_canvas_image_get_content_width_request  (HippoCanvasBox *box);
 static int  hippo_canvas_image_get_content_height_request (HippoCanvasBox *box,
                                                            int             for_width);
@@ -283,7 +284,8 @@ hippo_canvas_image_set_context(HippoCanvasItem    *item,
 
 static void
 hippo_canvas_image_paint_below_children(HippoCanvasBox  *box,
-                                        cairo_t         *cr)
+                                        cairo_t         *cr,
+                                        HippoRectangle  *damaged_box)
 {
     HippoCanvasImage *image = HIPPO_CANVAS_IMAGE(box);
     int x, y, w, h;

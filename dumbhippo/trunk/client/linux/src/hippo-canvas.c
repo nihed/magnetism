@@ -290,6 +290,7 @@ hippo_canvas_expose_event(GtkWidget         *widget,
     HippoCanvas *canvas = HIPPO_CANVAS(widget);
     cairo_t *cr;
     int window_x, window_y;
+    HippoRectangle damage_box;
 
     if (canvas->root == NULL)
         return FALSE;
@@ -297,7 +298,11 @@ hippo_canvas_expose_event(GtkWidget         *widget,
     cr = gdk_cairo_create(event->window);
     get_root_item_window_coords(canvas, &window_x, &window_y);
 
-    hippo_canvas_item_process_paint(canvas->root, cr,
+    damage_box.x = event->area.x;
+    damage_box.y = event->area.y;
+    damage_box.width = event->area.width;
+    damage_box.height = event->area.height;
+    hippo_canvas_item_process_paint(canvas->root, cr, &damage_box,
                                     window_x, window_y);
     cairo_destroy(cr);
 

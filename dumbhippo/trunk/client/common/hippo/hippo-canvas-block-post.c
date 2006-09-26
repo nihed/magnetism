@@ -26,7 +26,8 @@ static void hippo_canvas_block_post_get_property (GObject      *object,
 
 /* Canvas item methods */
 static void     hippo_canvas_block_post_paint              (HippoCanvasItem *item,
-                                                            cairo_t         *cr);
+                                                            cairo_t         *cr,
+                                                            HippoRectangle  *damaged_box);
 
 /* Canvas block methods */
 static void hippo_canvas_block_post_set_block       (HippoCanvasBlock *canvas_block,
@@ -174,12 +175,13 @@ hippo_canvas_block_post_get_property(GObject         *object,
 
 static void
 hippo_canvas_block_post_paint(HippoCanvasItem *item,
-                              cairo_t         *cr)
+                              cairo_t         *cr,
+                              HippoRectangle  *damaged_box)
 {
     /* HippoCanvasBlockPost *block = HIPPO_CANVAS_BLOCK_POST(item); */
 
     /* Draw the background and any children */
-    item_parent_class->paint(item, cr);
+    item_parent_class->paint(item, cr, damaged_box);
 }
 
 static void

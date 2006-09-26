@@ -48,8 +48,8 @@ hippo_canvas_item_base_init(void *klass)
             		  G_SIGNAL_RUN_LAST,
                           G_STRUCT_OFFSET(HippoCanvasItemClass, paint),
             		  NULL, NULL,
-                          g_cclosure_marshal_VOID__POINTER,
-                          G_TYPE_NONE, 1, G_TYPE_POINTER);
+                          hippo_common_marshal_VOID__POINTER_POINTER,
+                          G_TYPE_NONE, 2, G_TYPE_POINTER, G_TYPE_POINTER);
         signals[REQUEST_CHANGED] =
             g_signal_new ("request-changed",
                           HIPPO_TYPE_CANVAS_ITEM,
@@ -332,26 +332,42 @@ hippo_canvas_item_process_event(HippoCanvasItem *canvas_item,
     return handled;
 }
 
+// the cairo_t and damaged_box are in the coordinate system in which canvas_item
+// is at (allocation_x, allocation_y), so they are both translated before
+// passing them to the child
 void
 hippo_canvas_item_process_paint(HippoCanvasItem *canvas_item,
                                 cairo_t         *cr,
+                                HippoRectangle  *damaged_box,
                                 int              allocation_x,
                                 int              allocation_y)
 {
-    int width, height;
-
-    /* some items may rely on this check - paint is guaranteed to not
-     * be called if an item has any 0 allocation
+    HippoRectangle item_box;
+    HippoRectangle translated_box;
+    
+    /* HippoCanvasItem::paint() is guaranteed to not be called if an item has any 0 allocation,
+     * that invariant should be maintained here.
      */
-    hippo_canvas_item_get_allocation(canvas_item, &width, &height);
+    
+    item_box.x = allocation_x;
+    item_box.y = allocation_y;
+    hippo_canvas_item_get_allocation(canvas_item, &item_box.width, &item_box.height);
+    
+    if (hippo_rectangle_intersect(damaged_box, &item_box, &translated_box)) {
+        translated_box.x -= allocation_x;
+        translated_box.y -= allocation_y;
 
-    if (width > 0 && height > 0) {
+        g_assert(translated_box.x >= 0);
+        g_assert(translated_box.y >= 0);
+        g_assert(translated_box.width > 0);
+        g_assert(translated_box.height > 0);
+
         cairo_save(cr);
         
         cairo_translate(cr, allocation_x, allocation_y);
         
-        g_signal_emit(canvas_item, signals[PAINT], 0, cr);
-
+        g_signal_emit(canvas_item, signals[PAINT], 0, cr, &translated_box);
+        
         cairo_restore(cr);
     }
 }

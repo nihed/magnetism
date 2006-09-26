@@ -43,7 +43,8 @@ static void               hippo_canvas_box_sink                (HippoCanvasItem 
 static void               hippo_canvas_box_set_context         (HippoCanvasItem    *item,
                                                                 HippoCanvasContext *context);
 static void               hippo_canvas_box_paint               (HippoCanvasItem    *item,
-                                                                cairo_t            *cr);
+                                                                cairo_t            *cr,
+                                                                HippoRectangle     *damaged_box);
 static int                hippo_canvas_box_get_width_request   (HippoCanvasItem    *item);
 static int                hippo_canvas_box_get_height_request  (HippoCanvasItem    *item,
                                                                 int                 for_width);
@@ -68,9 +69,11 @@ static HippoCanvasPointer hippo_canvas_box_get_pointer         (HippoCanvasItem 
 
 /* Canvas box methods */
 static void hippo_canvas_box_paint_background           (HippoCanvasBox *box,
-                                                         cairo_t        *cr);
+                                                         cairo_t        *cr,
+                                                         HippoRectangle *damaged_box);
 static void hippo_canvas_box_paint_children             (HippoCanvasBox *box,
-                                                         cairo_t        *cr);
+                                                         cairo_t        *cr,
+                                                         HippoRectangle *damaged_box);
 static int  hippo_canvas_box_get_content_width_request  (HippoCanvasBox *box);
 static int  hippo_canvas_box_get_content_height_request (HippoCanvasBox *box,
                                                          int             for_width);
@@ -687,7 +690,8 @@ hippo_canvas_box_get_background_area (HippoCanvasBox *box,
 
 static void
 hippo_canvas_box_paint_background(HippoCanvasBox *box,
-                                  cairo_t        *cr)
+                                  cairo_t        *cr,
+                                  HippoRectangle *damaged_box)
 {
     /* fill background, with html div type semantics - covers entire
      * item allocation, including padding but not border
@@ -737,7 +741,8 @@ hippo_canvas_box_paint_background(HippoCanvasBox *box,
 
 static void
 hippo_canvas_box_paint_children(HippoCanvasBox *box,
-                                cairo_t        *cr)
+                                cairo_t        *cr,
+                                HippoRectangle *damaged_box)
 {
     GSList *link;
 
@@ -745,14 +750,15 @@ hippo_canvas_box_paint_children(HippoCanvasBox *box,
     for (link = box->children; link != NULL; link = link->next) {
         HippoBoxChild *child = link->data;        
                         
-        hippo_canvas_item_process_paint(HIPPO_CANVAS_ITEM(child->item), cr,
+        hippo_canvas_item_process_paint(HIPPO_CANVAS_ITEM(child->item), cr, damaged_box,
                                         child->x, child->y);
     }
 }
 
 static void
 hippo_canvas_box_paint(HippoCanvasItem *item,
-                       cairo_t         *cr)
+                       cairo_t         *cr,
+                       HippoRectangle  *damaged_box)
 {
     HippoCanvasBox *box = HIPPO_CANVAS_BOX(item);
     HippoCanvasBoxClass *klass = HIPPO_CANVAS_BOX_GET_CLASS(box);
@@ -760,22 +766,22 @@ hippo_canvas_box_paint(HippoCanvasItem *item,
     g_return_if_fail(box->allocated_width > 0 && box->allocated_height > 0);
     
     cairo_save(cr);
-    (* klass->paint_background) (box, cr);
+    (* klass->paint_background) (box, cr, damaged_box);
     cairo_restore(cr);
     
     if (klass->paint_below_children != NULL) {
         cairo_save(cr);
-        (* klass->paint_below_children) (box, cr);
+        (* klass->paint_below_children) (box, cr, damaged_box);
         cairo_restore(cr);
     }
 
     cairo_save(cr);
-    (* klass->paint_children) (box, cr);
+    (* klass->paint_children) (box, cr, damaged_box);
     cairo_restore(cr);
     
     if (klass->paint_above_children != NULL) {
         cairo_save(cr);
-        (* klass->paint_above_children) (box, cr);
+        (* klass->paint_above_children) (box, cr, damaged_box);
         cairo_restore(cr);
     }
 }
