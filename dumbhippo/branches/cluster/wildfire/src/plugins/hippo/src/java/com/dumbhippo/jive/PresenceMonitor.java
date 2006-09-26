@@ -50,6 +50,10 @@ public class PresenceMonitor implements SessionManagerListener {
 			return;
 		}
 		
+		// TODO remove this later when we don't have a special admin user
+		if (user.equals("admin"))
+			return;
+		
 		Guid userGuid;
 		try {
 			userGuid = Guid.parseJabberId(user);
@@ -57,10 +61,6 @@ public class PresenceMonitor implements SessionManagerListener {
 			Log.error("Can't parse username as a guid");
 			return;
 		}
-		
-		// TODO remove this later when we don't have a special admin user
-		if (user.equals("admin"))
-			return;
 		
 		Log.debug("User '" + user + "' session count incrementing by " + increment);
 		
