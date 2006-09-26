@@ -484,7 +484,7 @@ public abstract class AbstractServlet extends HttpServlet {
 		HAPartition partition = ClusterUtil.getPartition();
 		
 		if (partition.getClusterNode().getIpAddress().equals(address)) {
-			logger.warn("Skipping runOnServer=" + server + ", that's us");
+			logger.debug("Skipping runOnServer=" + server + ", that's us");
 			// Already running on that server, handle normally
 			return false;
 		}
