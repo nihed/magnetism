@@ -10,7 +10,7 @@ public:
     HippoWindowImpl() {
         setClassName(L"HippoWindow");
         setClassStyle(CS_HREDRAW | CS_VREDRAW);
-        setWindowStyle(WS_OVERLAPPEDWINDOW); // FIXME change this to 0 to get rid of the decorations
+        setWindowStyle(WS_POPUP); // change to WS_OVERLAPPEDWINDOW if you want resize/maximize etc. controls
         //setExtendedStyle(WS_EX_TOPMOST);
         setTitle(L"Mugshot");
         setResizable(HIPPO_ORIENTATION_VERTICAL, false);
@@ -26,7 +26,7 @@ public:
     void setVisible(bool visible);
     void setPosition(int x, int y);
     void getSize(int *x_p, int *y_p);
-    void beginResize(HippoSide side, int x, int y);
+    void beginResize(HippoSide side);
 
     virtual bool create();
     virtual void onSizeChanged();
@@ -249,8 +249,9 @@ hippo_window_win_begin_resize_drag(HippoWindow      *window,
 {
     HippoWindowWin *window_win = HIPPO_WINDOW_WIN(window);
     
-    // FIXME change coordinates to be window coords
-    window_win->impl->beginResize(side, event->x, event->y);
+    // the coordinates in the HippoEvent are on any random canvas item,
+    // so not useful.
+    window_win->impl->beginResize(side);
 }
 
 void
@@ -359,7 +360,7 @@ HippoWindowImpl::getSize(int *width_p, int *height_p)
 }
 
 void
-HippoWindowImpl::beginResize(HippoSide side, int x, int y)
+HippoWindowImpl::beginResize(HippoSide side)
 {
     // Simulate a button click on the window frame.
     // There's an official WM_SYSCOMMAND to start a resize, but it's the 
@@ -383,8 +384,13 @@ HippoWindowImpl::beginResize(HippoSide side, int x, int y)
             g_warning("bad window side");
             return;
     }
-
-    DefWindowProc(window_, WM_NCLBUTTONDOWN, wParam, MAKELPARAM(x, y));
+    
+    // this is slightly bogus, since there may not be a message for 
+    // GetMessagePos() to get the coords from, but I think it will work
+    // for when we use it. Otherwise we probably need to add HippoWindow coords
+    // to HippoEvent. It seems a bit like these coords aren't used anyway - 
+    // I had them totally wrong at one point and things still worked.
+    DefWindowProc(window_, WM_NCLBUTTONDOWN, wParam, GetMessagePos());
 }
 
 int
