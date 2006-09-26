@@ -1,0 +1,243 @@
+@CHARSET "UTF-8";
+
+body {
+	margin-top:		0px;
+	padding-top:	0px;
+}
+
+/* browsers have default margins on forms it seems */
+form {
+	margin:			0px;	
+}
+
+/* post descriptions have <p> tags, avoid extra space from them */
+.dh-blurb p {
+	margin-top:		1px;
+	margin-bottom:	1px;
+}
+
+#dhPage {
+	position:		relative;	
+	margin-top:		0px;
+}
+
+#dhPageHeader {
+	position:		relative;
+	left:			0px;
+	top:			0px;
+	/* the image itself has about 7px of blank space already in it, so this gives total 12px */
+	margin-bottom:	5px;
+	overflow:		hidden;
+	width:			100%;
+}
+
+#dhPageHeaderInner {
+	width:			100%;
+}
+
+#dhPageHeaderInnerBox {
+	position:		relative;
+}
+
+#dhPageHeaderLeft {
+}
+
+#dhPageHeaderRight {
+}
+
+#dhHeaderControls {
+	position:		absolute;
+	right:			10px;
+	bottom:			7px;
+}
+
+#dhHeaderControls #dhHeaderOptions {
+	margin-bottom:	4px;
+	text-align:		right;
+}
+
+#dhHeaderOptions .dh-action-link {
+	display:		inline;
+}
+
+
+#dhPageTopMessage {
+	position:		relative;
+	left:			0px;
+	top:			0px;
+	margin-bottom:	12px;
+}
+
+#dhSearchBox {
+	position:		absolute;
+	right:			10px;
+	top:			10px;
+	height:			16px;
+}
+
+#dhSearchBox .dh-text-input {
+	width:			140px;
+	padding:		2px;
+}
+/* specific only to input entries and not textarea's which have specified rows  */
+input.dh-text-input {
+	height:			23px;
+}
+#dhHeaderLogo {
+	position:		relative;
+	left:			0px;
+	top:			0px;
+}
+
+#dhWebServices {
+	text-align:		center;
+}
+
+.dh-amazon-attribution, .dh-yahoo-attribution {
+    margin:         15px; /* Yahoo! request */
+}
+
+.dh-compact-item {
+	margin-top:			10px;	
+}
+
+.dh-compact-item .dh-image {
+	width:				60px;
+	height:				60px;
+	background-color:	white; /* debug */
+	
+	/* without this IE will grow the box a bit apparently */
+	overflow:			hidden;
+}
+
+.dh-compact-item .dh-next-to-image {
+	width:				110px;
+	margin-left:		10px;
+	overflow:			hidden;
+}
+
+.dh-compact-item .dh-next-to-image .dh-name {
+	/* on the page this is 10px, not sure where the extra px come from */
+	margin-bottom:		3px;
+}
+
+.dh-compact-item .dh-next-to-image .dh-action-link, .dh-compact-item .dh-next-to-image .dh-presence {
+	margin-top:			2px;
+}
+
+#dhPageFooter {
+	clear:			both;
+	margin-top:		10px;
+	text-align:		right;
+}
+
+.dh-nowplaying {
+	width:				440px;
+	height:				120px;
+}
+
+.dh-grow-div-around-floats {
+	clear:			both;
+}
+
+.dh-song-with-art {
+	position: 			relative;
+}
+
+.dh-song-image {
+	float:				left;
+	width:				75px;
+	text-align:			center;
+}
+
+.dh-song-with-art .dh-song-info {
+	float:				left;
+	margin-left:		8px;
+	width:				147px;
+}
+
+.dh-one-line-song div {
+	display:			inline;
+}
+
+.dh-one-line-song {
+	width:				100%;
+}
+
+.dh-invisible {
+    display:    none;
+}
+
+.dh-option-list-option {
+	margin-left: 5px;
+	margin-right: 5px;
+}
+
+/* Position this so the stock photo popup is relative to it */
+#dhChooseStockLinkContainer {
+	position:		relative;
+}
+
+div.dh-notification {
+	padding:		4px;
+	width:			468px;
+}
+
+.dh-popup {
+	position:		absolute;
+}
+
+/* For the nested div onion creating the borders of the popup,
+ * position: relative would make more sense but seems to 
+ * confuse firefox into drawing the background color of the outermost
+ * div over the top and bottom of the chooser.
+ * Using float: left fixes firefox, but creates the "double margin" 
+ * bug in IE, which is fixed with display:inline
+ * (inline is invalid on floats, but gets ignored except
+ * to mysteriously fix the IE double margin bug)
+ */
+
+.dh-popup .dh-border {
+	/* hacks! see comment above */
+	float:				left;
+	display:			inline;
+	/* end hacks */
+	margin-left:		0px;
+	margin-top:			0px;
+	/* background of parent is drop shadow */
+	margin-bottom:		1px;
+}
+
+.dh-popup .dh-content-padding {
+	/* hacks! see comment above */
+	float:				left;
+	display:			inline;
+	/* end hacks */
+	/* background of parent is the black border */
+	margin-top:			1px;
+	margin-bottom:		1px;
+	margin-left:		1px;
+}
+
+.dh-popup .dh-content {
+	/* hacks! see comment above */
+	float:				left;
+	display:			inline;
+	/* end hacks */	
+	margin-top:			10px;
+	margin-left:		10px;
+	/* IE seems to ignore margin-bottom, I don't know why,
+	 * since we don't set any heights padding works too
+	 */
+	padding-bottom:		10px;
+	/* if we have a fixed width, don't exceed it */
+	overflow:			hidden;
+}
+
+.dh-popup .dh-content .dh-title {
+	position:			relative;
+}
+
+.dh-shiny-box-content {
+	padding:			0px 8px;
+}
