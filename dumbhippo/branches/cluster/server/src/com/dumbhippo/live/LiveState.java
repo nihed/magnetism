@@ -2,6 +2,7 @@ package com.dumbhippo.live;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -154,14 +155,18 @@ public class LiveState {
 	 * Returns a snapshot of the current set of available users.
 	 */
 	public Set<LiveUser> getLiveUserAvailableSnapshot() {
-		return userCache.getAllObjects(true);
+		Set<LiveUser> result = new HashSet<LiveUser>();
+		for (Guid guid : PresenceService.getInstance().getPresentUsers("/users", 1))
+			result.add(getLiveUser(guid));
+		
+		return result;
 	}	
 	
 	/**
 	 * Returns the number of available users
 	 */
 	public int getLiveUserAvailableCount() {
-		return clientDataCache.getObjectCount(true);
+		return PresenceService.getInstance().getPresentUsers("/users", 1).size();
 	}
 
 	/**
