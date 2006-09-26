@@ -6,11 +6,14 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
+import java.util.HashSet;
 
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.FacebookAccount;
+import com.dumbhippo.persistence.FacebookAlbumData;
 import com.dumbhippo.persistence.FacebookEvent;
 import com.dumbhippo.persistence.FacebookEventType;
 import com.dumbhippo.persistence.FacebookPhotoData;
@@ -65,12 +68,18 @@ public class FacebookWebServices extends AbstractXmlRequest<FacebookSaxHandler> 
 	public long updateMessageCount(FacebookAccount facebookAccount) {
 	    // generate messages request using session from facebookAccount
 		List<String> params = new ArrayList<String>();
-        params.add("method=facebook.messages.getCount");
+		String methodName = "facebook.messages.getCount";
+        params.add("method=" + methodName);
 		params.add("session_key=" + facebookAccount.getSessionKey());
 
 		String wsUrl = generateFacebookRequest(params);
 
 		FacebookSaxHandler handler = parseUrl(new FacebookSaxHandler(), wsUrl);
+		
+		if (handleErrorCode(facebookAccount, handler, methodName)) {
+			return -1;
+		}
+		
 		int newUnread = handler.getUnreadMessageCount(); 
 		int newTotal = handler.getTotalMessageCount();
 		int oldUnread = facebookAccount.getUnreadMessageCount();
@@ -97,25 +106,27 @@ public class FacebookWebServices extends AbstractXmlRequest<FacebookSaxHandler> 
 				facebookAccount.setUnreadMessageCount(newUnread);
 				return time; 
 			}
-		} else if (handler.getErrorCode() == FacebookSaxHandler.FacebookErrorCode.API_EC_PARAM_SESSION_KEY.getCode()) {
-			// setSessionKeyValid to false if we received the response that the session key is no longer valid
-			facebookAccount.setSessionKeyValid(false);
 		} else {
-			logger.error("Did not receive a valid response for facebook.messages.getCount request, error message {}, error code {}",
-					     handler.getErrorMessage(), handler.getErrorCode());
+			logger.error("Did not receive a valid response for facebook.messages.getCount request, did not receive an error either."
+					     + " Error message {}, error code {}", handler.getErrorMessage(), handler.getErrorCode());
 		}
         return -1;
 	}
 	
 	public FacebookEvent updateWallMessageCount(FacebookAccount facebookAccount) {
 		List<String> params = new ArrayList<String>();
-        params.add("method=facebook.wall.getCount");
+		String methodName = "facebook.wall.getCount";
+        params.add("method=" + methodName);
 		params.add("session_key=" + facebookAccount.getSessionKey());
 		params.add("id=" + facebookAccount.getFacebookUserId());
 
 		String wsUrl = generateFacebookRequest(params);
 
 		FacebookSaxHandler handler = parseUrl(new FacebookSaxHandler(), wsUrl);
+
+		if (handleErrorCode(facebookAccount, handler, methodName)) {
+			return null;
+		}
 		
 		int newCount = handler.getWallMessageCount();
 		int oldCount = facebookAccount.getWallMessageCount();
@@ -128,12 +139,9 @@ public class FacebookWebServices extends AbstractXmlRequest<FacebookSaxHandler> 
 			        return new FacebookEvent(facebookAccount, FacebookEventType.NEW_WALL_MESSAGES_EVENT, 
 			    	  	                     newCount - oldCount, (new Date()).getTime());
 			}			
-		} else if (handler.getErrorCode() == FacebookSaxHandler.FacebookErrorCode.API_EC_PARAM_SESSION_KEY.getCode()) {
-			// setSessionKeyValid to false if we received the response that the session key is no longer valid
-			facebookAccount.setSessionKeyValid(false);
 		} else {
-			logger.error("Did not receive a valid response for facebook.wall.getCount request, error message {}, error code {}",
-					     handler.getErrorMessage(), handler.getErrorCode());
+			logger.error("Did not receive a valid response for facebook.wall.getCount request, did not receive an error either."
+					     + " Error message {}, error code {}", handler.getErrorMessage(), handler.getErrorCode());
 		}
 		return null;
 	}
@@ -141,12 +149,18 @@ public class FacebookWebServices extends AbstractXmlRequest<FacebookSaxHandler> 
 	public long updatePokeCount(FacebookAccount facebookAccount) {
 	    // generate messages request using session from facebookAccount
 		List<String> params = new ArrayList<String>();
-        params.add("method=facebook.pokes.getCount");
+		String methodName = "facebook.pokes.getCount";
+        params.add("method=" + methodName);
 		params.add("session_key=" + facebookAccount.getSessionKey());
 
 		String wsUrl = generateFacebookRequest(params);
 
 		FacebookSaxHandler handler = parseUrl(new FacebookSaxHandler(), wsUrl);
+
+		if (handleErrorCode(facebookAccount, handler, methodName)) {
+			return -1;
+		}
+		
 		int newUnseen = handler.getUnseenPokeCount(); 
 		int newTotal = handler.getTotalPokeCount();
 		int oldUnseen = facebookAccount.getUnseenPokeCount();
@@ -163,19 +177,18 @@ public class FacebookWebServices extends AbstractXmlRequest<FacebookSaxHandler> 
 				    return time; 
 				}				
 			}
-		} else if (handler.getErrorCode() == FacebookSaxHandler.FacebookErrorCode.API_EC_PARAM_SESSION_KEY.getCode()) {
-			// setSessionKeyValid to false if we received the response that the session key is no longer valid
-			facebookAccount.setSessionKeyValid(false);
 		} else {
-			logger.error("Did not receive a valid response for facebook.pokes.getCount request, error message {}, error code {}",
-					     handler.getErrorMessage(), handler.getErrorCode());
+			logger.error("Did not receive a valid response for facebook.pokes.getCount request, did not receive an error either."
+					     + " Error message {}, error code {}", handler.getErrorMessage(), handler.getErrorCode());
 		}
+		
         return -1;
 	}
 	
 	public List<FacebookPhotoData> updateTaggedPhotos(FacebookAccount facebookAccount) {
 		List<String> params = new ArrayList<String>();
-        params.add("method=facebook.photos.getOfUser");
+		String methodName = "facebook.photos.getOfUser";
+        params.add("method=" + methodName);
 		params.add("session_key=" + facebookAccount.getSessionKey());
 		params.add("id=" + facebookAccount.getFacebookUserId());
 		
@@ -183,15 +196,7 @@ public class FacebookWebServices extends AbstractXmlRequest<FacebookSaxHandler> 
 		
 		FacebookSaxHandler handler = parseUrl(new FacebookSaxHandler(facebookAccount), wsUrl);
 		
-		// TODO: move error code checking to a common function
-		if (handler.getErrorCode() > 0) {
-		    if (handler.getErrorCode() == FacebookSaxHandler.FacebookErrorCode.API_EC_PARAM_SESSION_KEY.getCode()) {
-			    // setSessionKeyValid to false if we received the response that the session key is no longer valid
-			    facebookAccount.setSessionKeyValid(false);
-		    } else {
-			    logger.error("Did not receive a valid response for facebook.pokes.getCount request, error message {}, error code {}",
-					     handler.getErrorMessage(), handler.getErrorCode());
-		    }
+		if (handleErrorCode(facebookAccount, handler, methodName)) {
 			return null;
 		}
 		
@@ -210,8 +215,44 @@ public class FacebookWebServices extends AbstractXmlRequest<FacebookSaxHandler> 
             // this covers the case when the first time we get tagged photos from facebook, the user has none 
 			facebookAccount.setTaggedPhotosPrimed(true);
 		}
-		
 		return null;
+	}
+	
+	public Set<FacebookAlbumData> getModifiedAlbums(FacebookAccount facebookAccount) {
+		List<String> params = new ArrayList<String>();
+		String methodName = "facebook.photos.getAlbums"; 
+        params.add("method=" + methodName);
+		params.add("session_key=" + facebookAccount.getSessionKey());
+		params.add("id=" + facebookAccount.getFacebookUserId());
+		
+		String wsUrl = generateFacebookRequest(params);		
+		
+		FacebookSaxHandler handler = parseUrl(new FacebookSaxHandler(facebookAccount), wsUrl);
+		
+		 Set<FacebookAlbumData> modifiedAlbums = new HashSet<FacebookAlbumData>();
+		 
+		if (handleErrorCode(facebookAccount, handler, methodName)) {
+			return modifiedAlbums;
+		}
+		
+		// because it is typical that the album would be created, and then photos would be 
+		// added to it over a period of time, we want to check the modification date for each album,
+		// rather than the count of albums
+		// this assumes that the modification date for a newly added album will be later than the
+		// last album modification date we are storing, so that's how we will learn than the album 
+		// is new, rather than based on the total count of albums 
+		for (FacebookAlbumData album : handler.getAlbums()) {
+			if (album.getModifiedTimestampAsLong() > facebookAccount.getAlbumsModifiedTimestampAsLong()) {
+				modifiedAlbums.add(album);
+			}
+		}
+		
+		if (modifiedAlbums.isEmpty() && facebookAccount.getAlbumsModifiedTimestampAsLong() < 0) {	 
+			 // this covers the case when the first time we get albums from facebook, the user has none 
+	    	facebookAccount.setAlbumsModifiedTimestampAsLong((new Date()).getTime());
+	    }
+		
+        return modifiedAlbums;
 	}
 	
 	private String generateFacebookRequest(List<String> params) {
@@ -259,4 +300,18 @@ public class FacebookWebServices extends AbstractXmlRequest<FacebookSaxHandler> 
 		logger.debug("Created facebook web request {}", requestBuffer.toString());
 	    return requestBuffer.toString();
 	}
-}
+	
+	private boolean handleErrorCode(FacebookAccount facebookAccount, FacebookSaxHandler handler, String requestName) {
+		if (handler.getErrorCode() > 0) {
+		    if (handler.getErrorCode() == FacebookSaxHandler.FacebookErrorCode.API_EC_PARAM_SESSION_KEY.getCode()) {
+			    // setSessionKeyValid to false if we received the response that the session key is no longer valid
+			    facebookAccount.setSessionKeyValid(false);
+		    } else {
+			    logger.error("Did not receive a valid response for {} request, error message {}, error code {}",
+					         new String[]{requestName, handler.getErrorMessage(), Integer.toString(handler.getErrorCode())});
+		    }
+			return true;
+		}		
+		return false;
+	}
+ }

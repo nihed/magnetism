@@ -1916,6 +1916,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			for (FacebookEvent facebookEvent : facebookEvents) {
 				xml.openElement("updateItem");
 				String pageName = "profile";
+				String updateText = "";
 				String multiple = "";
 				if (facebookEvent.getCount() != 1)
 					multiple = "s";
@@ -1928,20 +1929,42 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 				} else if (facebookEvent.getEventType().equals(FacebookEventType.NEW_TAGGED_PHOTOS_EVENT)) {
 					xml.appendTextNode("updateTitle", facebookEvent.getCount() + " new photo" + multiple);		
 					pageName = "photo_search";
+				} else if (facebookEvent.getEventType().equals(FacebookEventType.NEW_ALBUM_EVENT)) {
+					xml.appendTextNode("updateTitle", "Created new album \"" + facebookEvent.getAlbum().getName() + "\"");
+					if (!facebookEvent.getAlbum().getLocation().equals("")) {
+						updateText = "Location: " + facebookEvent.getAlbum().getLocation() + " ";						
+					}
+					updateText = updateText + facebookEvent.getAlbum().getDescription();	
+					pageName = "photos";
+				} else if (facebookEvent.getEventType().equals(FacebookEventType.MODIFIED_ALBUM_EVENT)) {
+					xml.appendTextNode("updateTitle", "Modified album \"" + facebookEvent.getAlbum().getName() + "\"");
+					if (!facebookEvent.getAlbum().getLocation().equals("")) {
+						updateText = "Location: " + facebookEvent.getAlbum().getLocation() + " ";						
+					}
+					updateText = updateText + facebookEvent.getAlbum().getDescription();	
+					pageName = "photos";
 				} else {
 					throw new RuntimeException("Unexpected event type in HttpMethodsBean::getExternalAccountSummary(): " + facebookEvent.getEventType());
 				}
 			    xml.appendTextNode("updateLink", "http://www.facebook.com/" + pageName + ".php?uid=" + facebookAccount.getFacebookUserId() + "&api_key=" + facebookTracker.getApiKey());
-			    xml.appendTextNode("updateText", "");
+			    xml.appendTextNode("updateText", updateText);
 			    xml.appendTextNode("updateTimestamp", Long.toString(facebookEvent.getEventTimestampAsLong()));
-			    if (facebookEvent.getPhotos().size() > 0) {
-					xml.openElement("updatePhotos");	
-					for (FacebookPhotoData photoData : facebookEvent.getPhotos()) {
-						xml.openElement("photo");
-					    xml.appendTextNode("photoLink", photoData.getLink());
-					    xml.appendTextNode("photoSource", photoData.getSource() + "&size=thumb");
-					    xml.appendTextNode("photoCaption", photoData.getCaption());
-					    xml.closeElement();
+			    if ((facebookEvent.getPhotos().size() > 0) || (facebookEvent.getAlbum() != null)) {
+					xml.openElement("updatePhotos");								
+					Set<FacebookPhotoData> photos;
+					if (facebookEvent.getPhotos().size() > 0) {
+						photos = facebookEvent.getPhotos();
+					} else {
+						photos = Collections.singleton(facebookEvent.getAlbum().getCoverPhoto());
+					}
+					for (FacebookPhotoData photoData : photos) {
+						if (photoData.isValid()) {
+						    xml.openElement("photo");
+					        xml.appendTextNode("photoLink", photoData.getLink());
+					        xml.appendTextNode("photoSource", photoData.getSource() + "&size=thumb");
+					        xml.appendTextNode("photoCaption", photoData.getCaption());
+					        xml.closeElement();
+						} 
 					}
 					xml.closeElement();
 				}			    

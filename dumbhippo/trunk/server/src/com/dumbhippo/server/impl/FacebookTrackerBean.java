@@ -23,6 +23,7 @@ import com.dumbhippo.TypeUtils;
 import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.FacebookAccount;
+import com.dumbhippo.persistence.FacebookAlbumData;
 import com.dumbhippo.persistence.FacebookEvent;
 import com.dumbhippo.persistence.FacebookEventType;
 import com.dumbhippo.persistence.FacebookPhotoData;
@@ -134,7 +135,8 @@ public class FacebookTrackerBean implements FacebookTracker {
 		// we could do these requests in parallel, but be careful about updating the same facebookAccount
 		long time = ws.updateMessageCount(facebookAccount);
 		if (time != -1) {
-		    newFacebookEventSelf = true;
+    		newFacebookEventSelf = FacebookEventType.UNREAD_MESSAGES_UPDATE.getDisplayToSelf();
+    		newFacebookEventOthers = FacebookEventType.UNREAD_MESSAGES_UPDATE.getDisplayToOthers();
 		    updateTime = time;
 		}
 		if (facebookAccount.isSessionKeyValid()) {
@@ -142,15 +144,16 @@ public class FacebookTrackerBean implements FacebookTracker {
 		    if (newWallMessagesEvent != null) {
 		    	em.persist(newWallMessagesEvent);
 		    	facebookAccount.addFacebookEvent(newWallMessagesEvent);
-		    	newFacebookEventSelf = true;
-		    	newFacebookEventOthers = true;
+		    	newFacebookEventSelf = newWallMessagesEvent.getEventType().getDisplayToSelf();
+		    	newFacebookEventOthers = newWallMessagesEvent.getEventType().getDisplayToOthers();
 			    updateTime = newWallMessagesEvent.getEventTimestampAsLong();		    	
 		    }
 		    
 		    if (facebookAccount.isSessionKeyValid()) {
 		    	long pokeTime = ws.updatePokeCount(facebookAccount);
 		    	if (pokeTime != -1) {
-		    		newFacebookEventSelf = true;
+		    		newFacebookEventSelf = FacebookEventType.UNSEEN_POKES_UPDATE.getDisplayToSelf();
+		    		newFacebookEventOthers = FacebookEventType.UNSEEN_POKES_UPDATE.getDisplayToOthers();
 				    updateTime = pokeTime;
 		    	}
 		    }
@@ -165,7 +168,7 @@ public class FacebookTrackerBean implements FacebookTracker {
 		}
 	}
 	
-	public void updatePhotoData(long facebookAccountId) {
+	public void updateTaggedPhotos(long facebookAccountId) {
 		FacebookAccount facebookAccount = em.find(FacebookAccount.class, facebookAccountId);
 		if (facebookAccount == null)
 			throw new RuntimeException("Invalid FacebookAccount id " + facebookAccountId + " is passed in to updateMessageCount()");
@@ -228,25 +231,110 @@ public class FacebookTrackerBean implements FacebookTracker {
 		    }
 		    
 		    facebookAccount.addFacebookEvent(taggedPhotosEvent);
-	    	stacker.stackAccountUpdateSelf(facebookAccount.getExternalAccount().getAccount().getOwner().getGuid(), 
-                    ExternalAccountType.FACEBOOK, taggedPhotosEvent.getEventTimestampAsLong());			
-            stacker.stackAccountUpdate(facebookAccount.getExternalAccount().getAccount().getOwner().getGuid(), 
-                ExternalAccountType.FACEBOOK, taggedPhotosEvent.getEventTimestampAsLong());		
+		 
+		    stackEvent(taggedPhotosEvent.getEventType(), facebookAccount, taggedPhotosEvent.getEventTimestampAsLong());
 		}
+	}
+
+	public void updateAlbums(long facebookAccountId) {
+		FacebookAccount facebookAccount = em.find(FacebookAccount.class, facebookAccountId);
+		if (facebookAccount == null)
+			throw new RuntimeException("Invalid FacebookAccount id " + facebookAccountId + " is passed in to updateMessageCount()");
+		FacebookWebServices ws = new FacebookWebServices(REQUEST_TIMEOUT, config);
+		Set<FacebookAlbumData> modifiedAlbums = ws.getModifiedAlbums(facebookAccount);
+		
+		if (modifiedAlbums.isEmpty()) {
+			if (!facebookAccount.isSessionKeyValid()) {
+			    stacker.stackAccountUpdateSelf(facebookAccount.getExternalAccount().getAccount().getOwner().getGuid(), 
+					                           ExternalAccountType.FACEBOOK, (new Date()).getTime());			
+		    }
+			return;
+		}
+		
+		Set<FacebookAlbumData> oldAlbums = facebookAccount.getAlbums();
+		// modifiedAlbums are either albums that have been modified or completely new albums
+		Set<FacebookAlbumData> newAlbumsToAdd = new HashSet<FacebookAlbumData>(modifiedAlbums);
+		long albumsModifiedTimestamp = facebookAccount.getAlbumsModifiedTimestampAsLong();
+		long updateTime = (new Date()).getTime();
+		
+		for (FacebookAlbumData oldAlbum : oldAlbums) {
+			FacebookAlbumData foundAlbum = null;
+			for (FacebookAlbumData newAlbum : newAlbumsToAdd) {
+				if (newAlbum.getAlbumId().equals(oldAlbum.getAlbumId())) {
+					oldAlbum.updateCachedData(newAlbum);
+					// each time the album was modified we update the corresponding event timestamp,
+					// we also make sure that its type is set to MODIFIED_ALBUM_EVENT
+					oldAlbum.getFacebookEvent().setEventTimestampAsLong(updateTime);
+					oldAlbum.getFacebookEvent().setEventType(FacebookEventType.MODIFIED_ALBUM_EVENT);
+					if (albumsModifiedTimestamp < oldAlbum.getModifiedTimestampAsLong()) {
+						albumsModifiedTimestamp = oldAlbum.getModifiedTimestampAsLong();
+					}
+					foundAlbum = newAlbum;
+					break;
+				}
+			}
+			if (foundAlbum != null)
+			    newAlbumsToAdd.remove(foundAlbum);
+		}
+		
+		for (FacebookAlbumData newAlbumToAdd : newAlbumsToAdd) {
+		    em.persist(newAlbumToAdd.getCoverPhoto());
+		    em.persist(newAlbumToAdd);
+		    facebookAccount.addAlbum(newAlbumToAdd);
+		    if (facebookAccount.getAlbumsModifiedTimestampAsLong() > 0) {
+		    	FacebookEvent modifiedAlbumEvent = new FacebookEvent(facebookAccount, FacebookEventType.NEW_ALBUM_EVENT,
+		    			                                             1, updateTime);
+		    	modifiedAlbumEvent.setAlbum(newAlbumToAdd);
+		    	em.persist(modifiedAlbumEvent);
+		    	newAlbumToAdd.setFacebookEvent(modifiedAlbumEvent);
+		    	facebookAccount.addFacebookEvent(modifiedAlbumEvent);
+		    }
+			if (albumsModifiedTimestamp < newAlbumToAdd.getModifiedTimestampAsLong()) {
+				albumsModifiedTimestamp = newAlbumToAdd.getModifiedTimestampAsLong();
+			}		    
+		}
+		
+		if (facebookAccount.getAlbumsModifiedTimestampAsLong() > 0) {
+			// this assumes that MODIFIED_ALBUM_EVENT and NEW_ALBUM_EVENT have the same stacking rules,
+			// otherwise we'd need to check what event(s) happened
+			stackEvent(FacebookEventType.MODIFIED_ALBUM_EVENT, facebookAccount, updateTime);
+		}
+		
+		facebookAccount.setAlbumsModifiedTimestampAsLong(albumsModifiedTimestamp);		
+	}
+		
+	private void stackEvent(FacebookEventType eventType, FacebookAccount facebookAccount, long updateTime) {
+	    if (eventType.getDisplayToSelf()) {
+    	    stacker.stackAccountUpdateSelf(facebookAccount.getExternalAccount().getAccount().getOwner().getGuid(), 
+                                            ExternalAccountType.FACEBOOK, updateTime);	
+	    }	    
+	    if (eventType.getDisplayToOthers()) {
+            stacker.stackAccountUpdate(facebookAccount.getExternalAccount().getAccount().getOwner().getGuid(), 
+                                       ExternalAccountType.FACEBOOK, updateTime);	
+	    }		
 	}
 	
 	public List<FacebookEvent> getLatestEvents(Viewpoint viewpoint, FacebookAccount facebookAccount, int eventsCount) {
 		ArrayList<FacebookEvent> list = new ArrayList<FacebookEvent>();
-		list.addAll(facebookAccount.getFacebookEvents());
-		if (viewpoint.isOfUser(facebookAccount.getExternalAccount().getAccount().getOwner())) {
-			if (facebookAccount.getMessageCountTimestampAsLong() > 0) {
-	            list.add(new FacebookEvent(facebookAccount, FacebookEventType.UNREAD_MESSAGES_UPDATE, 
-	        		                       facebookAccount.getUnreadMessageCount(), facebookAccount.getMessageCountTimestampAsLong()));
+		
+		boolean viewpointIsOfOwner = viewpoint.isOfUser(facebookAccount.getExternalAccount().getAccount().getOwner());
+		
+		for (FacebookEvent event : facebookAccount.getFacebookEvents()) {
+			if (event.getEventType().shouldDisplay(viewpointIsOfOwner)) {
+                list.add(event);
 			}
-			if (facebookAccount.getPokeCountTimestampAsLong() > 0) {
-	            list.add(new FacebookEvent(facebookAccount, FacebookEventType.UNSEEN_POKES_UPDATE, 
-	        		                       facebookAccount.getUnseenPokeCount(), facebookAccount.getPokeCountTimestampAsLong()));
-			}
+		}
+		
+		if (FacebookEventType.UNREAD_MESSAGES_UPDATE.shouldDisplay(viewpointIsOfOwner) &&
+			facebookAccount.getMessageCountTimestampAsLong() > 0) {
+	        list.add(new FacebookEvent(facebookAccount, FacebookEventType.UNREAD_MESSAGES_UPDATE, 
+	      		                       facebookAccount.getUnreadMessageCount(), facebookAccount.getMessageCountTimestampAsLong()));
+		}
+		
+		if (FacebookEventType.UNSEEN_POKES_UPDATE.shouldDisplay(viewpointIsOfOwner) &&
+			facebookAccount.getPokeCountTimestampAsLong() > 0) {
+	        list.add(new FacebookEvent(facebookAccount, FacebookEventType.UNSEEN_POKES_UPDATE, 
+        		                       facebookAccount.getUnseenPokeCount(), facebookAccount.getPokeCountTimestampAsLong()));		
 		}
 		
 		// we want newer(greater) timestamps to be in the front of the list
@@ -336,11 +424,12 @@ public class FacebookTrackerBean implements FacebookTracker {
 						    threadPool.execute(new Runnable() {
 								public void run() {
 									final FacebookTracker facebookTracker = EJBUtil.defaultLookup(FacebookTracker.class);
-									// FIXME: we might end up calling web services twice with an expired session
-									// key, perhaps have the first function return a boolean on whether the session key
+									// FIXME: we might end up calling web services multiple times with an expired session
+									// key, perhaps have the functions should return a boolean on whether the session key
 									// is still fine or unite them in one function
 									facebookTracker.updateMessageCount(facebookAccount.getId());
-									facebookTracker.updatePhotoData(facebookAccount.getId());
+									facebookTracker.updateTaggedPhotos(facebookAccount.getId());
+									facebookTracker.updateAlbums(facebookAccount.getId());
 								}
 							});
 						}

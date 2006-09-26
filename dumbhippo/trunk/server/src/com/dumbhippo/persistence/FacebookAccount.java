@@ -31,6 +31,9 @@ public class FacebookAccount extends DBUnique {
 	// photos tagged with the user
 	private Set<FacebookPhotoData> taggedPhotos;
 	private boolean taggedPhotosPrimed;
+	private Set<FacebookAlbumData> albums;
+	// with this timestamp, we don't need to have an albumsPrimed flag
+	private long albumsModifiedTimestamp;
 	
 	protected FacebookAccount() {}
 	
@@ -48,6 +51,8 @@ public class FacebookAccount extends DBUnique {
 		this.facebookEvents = new HashSet<FacebookEvent>();
 		this.taggedPhotos = new HashSet<FacebookPhotoData>();	
 		this.taggedPhotosPrimed = false;
+		this.albums = new HashSet<FacebookAlbumData>();	
+		this.albumsModifiedTimestamp = -1;
 	}
 	
 	@Column(nullable=true)
@@ -180,10 +185,11 @@ public class FacebookAccount extends DBUnique {
 		this.pokeCountTimestamp = pokeCountTimestamp;
 	}
 	
-    // This is one to many because we don't know if facebook will return 
-	// the same photo data when requests are made for different facebook
-	// users who are in the same photo, so we just store all photos returned
-	// for each account.
+    // This is one to many because facebook returns slightly different
+	// photo data when requests are made for different facebook users 
+	// who are in the same photo (user id is different in both link and 
+	// souce for the photo), so it is just more convenient to store all 
+	// photos returned for each account separately.
 	@OneToMany(mappedBy="facebookAccount")
 	public Set<FacebookPhotoData> getTaggedPhotos() {
 		return taggedPhotos;
@@ -210,5 +216,42 @@ public class FacebookAccount extends DBUnique {
 
 	public void setTaggedPhotosPrimed(boolean taggedPhotosPrimed) {
 		this.taggedPhotosPrimed = taggedPhotosPrimed;
+	}
+	
+	@OneToMany(mappedBy="facebookAccount")
+	public Set<FacebookAlbumData> getAlbums() {
+		return albums;
+	}
+	
+	public void setAlbums(Set<FacebookAlbumData> albums) {
+		if (albums == null)
+			throw new IllegalArgumentException("null albums");
+		this.albums = albums;
+	}
+	
+	public void addAlbum(FacebookAlbumData album) {
+		albums.add(album);
+	}
+	
+	public void removeAlbum(FacebookAlbumData album) {
+		albums.remove(album);
+	}
+	
+	@Column(nullable=false)
+	public Date getAlbumsModifiedTimestamp() {
+		return new Date(albumsModifiedTimestamp);
+	}
+
+	@Transient
+	public long getAlbumsModifiedTimestampAsLong() {
+		return albumsModifiedTimestamp;
+	}
+	
+	public void setAlbumsModifiedTimestamp(Date albumsModifiedTimestamp) {
+		this.albumsModifiedTimestamp = albumsModifiedTimestamp.getTime();
+	}
+	
+	public void setAlbumsModifiedTimestampAsLong(long albumsModifiedTimestamp) {
+		this.albumsModifiedTimestamp = albumsModifiedTimestamp;
 	}
 }

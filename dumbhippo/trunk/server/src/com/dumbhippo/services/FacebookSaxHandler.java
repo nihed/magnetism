@@ -10,6 +10,7 @@ import org.xml.sax.SAXException;
 import com.dumbhippo.EnumSaxHandler;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.FacebookAccount;
+import com.dumbhippo.persistence.FacebookAlbumData;
 import com.dumbhippo.persistence.FacebookPhotoData;
 
 public class FacebookSaxHandler extends EnumSaxHandler<FacebookSaxHandler.Element>{
@@ -31,12 +32,21 @@ public class FacebookSaxHandler extends EnumSaxHandler<FacebookSaxHandler.Elemen
 		// facebook.pokes.getCount
 		unseen,
 		
-		// facebook.photos.getOfUser
+		// general for facebook.photos.getOfUser and facebook.photos.getAlbums
+		created,
+		aid,
+		
+		// facebook.photos.getOfUser and facebook.photos.getAlbums for the album cover photo
 		link,
 		src, 
 		caption,
-		created,
-		aid,
+		
+		// facebook.photos.getAlbums
+		cover_photo,
+		name, 
+		modified,
+		description,
+		location,
 		
 		// error message
 		fb_error,
@@ -80,6 +90,8 @@ public class FacebookSaxHandler extends EnumSaxHandler<FacebookSaxHandler.Elemen
 	private String errorMessage;
 	private List<FacebookPhotoData> taggedPhotos;
 	private boolean gettingTaggedPhotos;
+	private List<FacebookAlbumData> albums;
+	private boolean gettingAlbums;
 
 	FacebookSaxHandler() {
 		this(null);	
@@ -97,11 +109,20 @@ public class FacebookSaxHandler extends EnumSaxHandler<FacebookSaxHandler.Elemen
 		errorCode = -1;
 		taggedPhotos = new ArrayList<FacebookPhotoData>();
 		gettingTaggedPhotos = false;
+		albums = new ArrayList<FacebookAlbumData>();
+		gettingAlbums = false;
 	}
 	
 	private FacebookPhotoData currentFacebookPhotoData() {
 		if (taggedPhotos.size() > 0)
 			return taggedPhotos.get(taggedPhotos.size() - 1);
+		else
+			return null;
+	}
+
+	private FacebookAlbumData currentFacebookAlbumData() {
+		if (albums.size() > 0)
+			return albums.get(albums.size() - 1);
 		else
 			return null;
 	}
@@ -112,11 +133,18 @@ public class FacebookSaxHandler extends EnumSaxHandler<FacebookSaxHandler.Elemen
 			Attributes attrs = currentAttributes();
 			if (attrs.getValue("method").equals("facebook.photos.getOfUser")) {
 				gettingTaggedPhotos = true; 
+			} else if (attrs.getValue("method").equals("facebook.photos.getAlbums")) {
+				gettingAlbums = true;
 			}
 		} else if ((c == Element.result_elt) && gettingTaggedPhotos) {
 			FacebookPhotoData photo = new FacebookPhotoData();
 			photo.setFacebookAccount(facebookAccount);
 			taggedPhotos.add(photo);
+		} else if ((c == Element.result_elt) && gettingAlbums) {
+			FacebookAlbumData album = new FacebookAlbumData();
+			album.setFacebookAccount(facebookAccount);
+			album.getCoverPhoto().setFacebookAccount(facebookAccount);
+			albums.add(album);
 		}
 	}
 	
@@ -168,20 +196,66 @@ public class FacebookSaxHandler extends EnumSaxHandler<FacebookSaxHandler.Elemen
 			totalCount = parseFacebookCount(c, currentContent); 
 			logger.debug("Parsed out total count {}", totalCount);
 		} else if (c == Element.link) {
-			currentFacebookPhotoData().setLink(currentContent);
+			if (gettingTaggedPhotos) {
+			    currentFacebookPhotoData().setLink(currentContent);
+			} else if (gettingAlbums) {
+				currentFacebookAlbumData().getCoverPhoto().setLink(currentContent);
+			}
 			logger.debug("Parsed out photo link {}", currentContent);
 		} else if (c == Element.src) {
-			currentFacebookPhotoData().setSource(currentContent);	
+			if (gettingTaggedPhotos) {
+			    currentFacebookPhotoData().setSource(currentContent);
+			} else if (gettingAlbums) {
+				currentFacebookAlbumData().getCoverPhoto().setSource(currentContent);
+			}
 			logger.debug("Parsed out photo source {}", currentContent);
 		} else if (c == Element.caption) {
-			currentFacebookPhotoData().setCaption(currentContent);
+			if (gettingTaggedPhotos) {
+			    currentFacebookPhotoData().setCaption(currentContent);
+			} else if (gettingAlbums) {
+				currentFacebookAlbumData().getCoverPhoto().setCaption(currentContent);
+			}			    
 			logger.debug("Parsed out photo caption {}", currentContent);
 		} else if (c == Element.created) {
-			currentFacebookPhotoData().setCreatedTimestampAsLong(parseFacebookDate(c, currentContent));
-			logger.debug("Parsed out photo date {}", currentFacebookPhotoData().getCreatedTimestampAsLong());
+		    long createdTimestamp = parseFacebookDate(c, currentContent);	
+			if (gettingTaggedPhotos) {
+			    currentFacebookPhotoData().setCreatedTimestampAsLong(createdTimestamp);
+			    logger.debug("Parsed out tagged photo date {}", createdTimestamp);
+			} else if (gettingAlbums) {
+				if (parent() == Element.cover_photo) {
+					currentFacebookAlbumData().getCoverPhoto().setCreatedTimestampAsLong(createdTimestamp);
+					logger.debug("Parsed out cover photo date {}", createdTimestamp);
+				} else {
+					currentFacebookAlbumData().setCreatedTimestampAsLong(createdTimestamp);
+					logger.debug("Parsed out album creation date {}", createdTimestamp);
+				}					
+			}
+		} else if (c == Element.modified) { 
+			long modifiedTimestamp = parseFacebookDate(c, currentContent);
+			currentFacebookAlbumData().setModifiedTimestampAsLong(modifiedTimestamp);
+			logger.debug("Parsed out album modification date {}", modifiedTimestamp);
 		} else if (c == Element.aid) {
-			currentFacebookPhotoData().setAlbumId(currentContent);
-			logger.debug("Parsed out album id {}", currentContent);
+			if (gettingTaggedPhotos) {
+			    currentFacebookPhotoData().setAlbumId(currentContent);
+				logger.debug("Parsed out tagged photo album id {}", currentContent);
+			} else if (gettingAlbums) {
+				if (parent() == Element.cover_photo) {
+					currentFacebookAlbumData().getCoverPhoto().setAlbumId(currentContent);
+					logger.debug("Parsed out cover photo album id {}", currentContent);
+				} else {
+					currentFacebookAlbumData().setAlbumId(currentContent);
+					logger.debug("Parsed out album id {}", currentContent);
+				}
+			}
+		} else if (c == Element.name) {
+			currentFacebookAlbumData().setName(currentContent);
+			logger.debug("Parsed out album name {}", currentContent);	
+		} else if (c == Element.description) {
+			currentFacebookAlbumData().setDescription(currentContent);
+			logger.debug("Parsed out album description {}", currentContent);	
+		} else if (c == Element.location) {
+			currentFacebookAlbumData().setLocation(currentContent);
+			logger.debug("Parsed out album location {}", currentContent);	
 		} else if (c == Element.result) {
 			// we will parse our an error message before we will be closing
 			// the result element; we should not try to parse out regular contents
@@ -253,5 +327,9 @@ public class FacebookSaxHandler extends EnumSaxHandler<FacebookSaxHandler.Elemen
 	
 	public List<FacebookPhotoData> getTaggedPhotos() {
 		return taggedPhotos;
+	}
+	
+	public List<FacebookAlbumData> getAlbums() {
+		return albums;
 	}
 }

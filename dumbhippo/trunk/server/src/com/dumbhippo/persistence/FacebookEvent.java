@@ -9,6 +9,7 @@ import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
 import javax.persistence.Transient;
 
 @Entity
@@ -19,8 +20,9 @@ public class FacebookEvent extends DBUnique {
 	private FacebookAccount facebookAccount;
 	private int count;  
 	private long eventTimestamp;
+	private FacebookAlbumData album;
 	private Set<FacebookPhotoData> photos;
-
+	
 	protected FacebookEvent() {
 		photos = new HashSet<FacebookPhotoData>();
 	}
@@ -77,6 +79,17 @@ public class FacebookEvent extends DBUnique {
 	
 	public void setEventTimestampAsLong(long eventTimestamp) {
 		this.eventTimestamp = eventTimestamp;
+	}
+
+	// optional=true is the default value for OneToOne, 
+	// it means that the relationship can be null
+	@OneToOne(optional=true, mappedBy="facebookEvent")
+	public FacebookAlbumData getAlbum() {
+		return album;
+	}
+
+	public void setAlbum(FacebookAlbumData album) {
+		this.album = album;
 	}
 	
 	// this is one to many because we currently store multiple

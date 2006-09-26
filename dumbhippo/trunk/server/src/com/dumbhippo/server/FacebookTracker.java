@@ -19,7 +19,9 @@ public interface FacebookTracker {
 	
 	public void updateMessageCount(long facebookAccountId);
 	
-	public void updatePhotoData(long facebookAccountId);
+	public void updateTaggedPhotos(long facebookAccountId);
+	
+	public void updateAlbums(long facebookAccountId);
 	
 	public List<FacebookEvent> getLatestEvents(Viewpoint viewpoint, FacebookAccount facebookAccount, int eventsCount);
 	

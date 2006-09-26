@@ -1,8 +1,45 @@
 package com.dumbhippo.persistence;
 
 public enum FacebookEventType {
-    UNREAD_MESSAGES_UPDATE,
+    UNREAD_MESSAGES_UPDATE  {
+		@Override
+		public boolean getDisplayToOthers() {
+			return false;
+		}
+    },
     NEW_WALL_MESSAGES_EVENT,
-    UNSEEN_POKES_UPDATE,
-    NEW_TAGGED_PHOTOS_EVENT;
+    UNSEEN_POKES_UPDATE {
+		@Override
+		public boolean getDisplayToOthers() {
+			return false;
+		}
+    },
+    NEW_TAGGED_PHOTOS_EVENT,
+    NEW_ALBUM_EVENT {
+		@Override
+		public boolean getDisplayToSelf() {
+			return false;
+		}
+    },
+    MODIFIED_ALBUM_EVENT {
+		@Override
+		public boolean getDisplayToSelf() {
+			return false;
+		}
+    };
+    
+    public boolean getDisplayToSelf() {
+    	return true;
+    }
+    
+    public boolean getDisplayToOthers() {
+    	return true;
+    }
+    
+    public boolean shouldDisplay(boolean isSelf) {
+    	if ((isSelf && getDisplayToSelf()) || (!isSelf && getDisplayToOthers())) {
+    		return true;
+    	}   	
+    	return false;
+    }
 }

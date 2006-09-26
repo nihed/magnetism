@@ -63,8 +63,12 @@ public class FacebookPhotoData extends DBUnique {
 	
 	@Column(nullable=false)
 	public String getLink() {
-		return link;
+		// there is a bug in what Facebook returns, api.facebook.com
+		// does not have photo.php, while www.facebook.com takes us
+		// to the right photo
+		return link.replace("api.facebook.com", "www.facebook.com");
 	}
+	
 	public void setLink(String link) {
 		this.link = link;
 	}	
@@ -73,6 +77,7 @@ public class FacebookPhotoData extends DBUnique {
 	public String getSource() {
 		return source;
 	}
+	
 	public void setSource(String source) {
 		this.source = source;
 	}	
@@ -81,6 +86,7 @@ public class FacebookPhotoData extends DBUnique {
 	public String getCaption() {
 		return caption;
 	}
+	
 	public void setCaption(String caption) {
 		this.caption = caption;
 	}	
@@ -107,7 +113,16 @@ public class FacebookPhotoData extends DBUnique {
 	public String getAlbumId() {
 		return albumId;
 	}
+	
 	public void setAlbumId(String albumId) {
 		this.albumId = albumId;
 	}	
+	
+	@Transient
+	public boolean isValid() {
+		// for album cover photos, facebook returns some invalid link and source even if the
+		// photo is not present, this check seems to be a good indicator of whether the photo
+		// is valid
+		return (getCreatedTimestampAsLong() > 0);
+	}
 }
