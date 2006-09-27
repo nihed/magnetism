@@ -341,10 +341,10 @@ else
 fi
 
 if test "x$GECKO_INCLUDEDIR" != x ; then
-   if test -f "$GECKO_INCLUDEDIR/nsIURI.h" ; then
-	:
-   elif test -f "$GECKO_INCLUDEDIR/caps/nsIScriptSecurityManager.h" ; then
+   if test -f "$GECKO_INCLUDEDIR/caps/nsIScriptSecurityManager.h" ; then
 	have_full_gecko=true
+   elif test -f "$GECKO_INCLUDEDIR/nsIURI.h" ; then
+	:
    else
        AC_MSG_ERROR([Cannot find Gecko headers in $GECKO_INCLUDEDIR])
    fi
