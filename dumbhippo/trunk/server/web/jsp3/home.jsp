@@ -31,7 +31,15 @@
 			<c:when test="${person.contacts.size > 0}">
 				<c:forEach items="${person.contacts.list}" end="2" var="person">
 					<dht3:shinyBox color="grey">				
-						<dht3:personHeader who="${person}" isSelf="false"><a href="/">Remove from friends</a> | <a href="/">Invite to a group</a></dht3:personHeader>
+						<dht3:personHeader who="${person}" isSelf="false">
+					        <c:choose>
+			    		        <c:when test="${person.contact != null}">
+			    			        <dht:actionLink oneLine="true" href="javascript:dh.actions.removeContact('${person.viewPersonPageId}')" title="Remove this person from your friends list">Remove from friends</dht:actionLink>
+				    	        </c:when>
+						        <c:otherwise>
+									<dht:actionLink oneLine="true" href="javascript:dh.actions.addContact('${person.viewPersonPageId}')" title="Add this person to your friends list">Add to friends</dht:actionLink>
+								</c:otherwise>
+							</c:choose>	| <a href="/">Invite to a group</a></dht3:personHeader>
 					</dht3:shinyBox>
 				</c:forEach>
 				<c:if test="${person.contacts.size > 3}">

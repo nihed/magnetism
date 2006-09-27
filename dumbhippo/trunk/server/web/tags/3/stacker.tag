@@ -5,7 +5,7 @@
 
 <%@ attribute name="userId" required="true" type="java.lang.String" %>
 
-<div id="dhStacker-${userId}">
+<div id="dhStacker-${userId}" class="dh-stacker-container">
 	<script>
 		dojo.require('dh.stacker');
 		var dhInitStacker${userId} = function() {
