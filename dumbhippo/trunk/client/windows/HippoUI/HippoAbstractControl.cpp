@@ -338,6 +338,11 @@ HippoAbstractControl::processMessage(UINT   message,
         return true;
 
     switch (message) {
+        case WM_PAINT:
+            // subclasses should chain up to this, then paint
+            ensureRequestAndAllocation();
+            return false;
+
         case WM_GETMINMAXINFO:
             // Override the minimum width/height of the window if it's a toplevel
             if (parent_ == NULL) {

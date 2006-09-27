@@ -403,8 +403,6 @@ HippoWindowImpl::processMessage(UINT   message,
                     window_, region.left, region.top,
                     region.right - region.left, region.bottom - region.top);
 
-                ensureRequestAndAllocation();
-
                 PAINTSTRUCT paint;
                 HDC hdc = BeginPaint(window_, &paint);
 #if 0

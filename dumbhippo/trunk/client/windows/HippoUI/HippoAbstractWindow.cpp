@@ -662,9 +662,11 @@ debugPrintMessage(HippoAbstractWindow *abstractWindow,
     case WM_LBUTTONDOWN:
         g_debug("WM_LBUTTONDOWN");
         break;
+#if 0
     case WM_MOUSEMOVE:
         g_debug("WM_MOUSEMOVE");
         break;
+#endif
     }
 }
 
