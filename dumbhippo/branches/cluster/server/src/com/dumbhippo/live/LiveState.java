@@ -582,7 +582,7 @@ public class LiveState {
 				try {
 					Thread.sleep(nextTime - System.currentTimeMillis());
 					
-					Set<Guid> toUpdate = PresenceService.getInstance().getPresentUsers("/users", 1);
+					Set<Guid> toUpdate = PresenceService.getInstance().getLocalPresentUsers("/users", 1);
 
 					LiveClientDataUpdater updater = EJBUtil.defaultLookup(LiveClientDataUpdater.class);					
 					
