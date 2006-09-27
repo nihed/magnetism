@@ -505,7 +505,7 @@ HippoCanvas::processMessage(UINT   message,
     switch (message) {
         case WM_PAINT:
             onPaint(wParam, lParam);
-            return true;
+            return false;
         case WM_HSCROLL:
             if (hscrollable_) {
                 int newX = hscroll_->handleScrollMessage(message, wParam, lParam);

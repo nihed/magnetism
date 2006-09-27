@@ -180,9 +180,6 @@
 				RelativePath=".\HippoLogWindow.cpp">
 			</File>
 			<File
-				RelativePath=".\HippoMenu.cpp">
-			</File>
-			<File
 				RelativePath=".\HippoMusic.cpp">
 			</File>
 			<File
@@ -294,9 +291,6 @@
 			</File>
 			<File
 				RelativePath=".\HippoLogWindow.h">
-			</File>
-			<File
-				RelativePath=".\HippoMenu.h">
 			</File>
 			<File
 				RelativePath=".\HippoMusic.h">

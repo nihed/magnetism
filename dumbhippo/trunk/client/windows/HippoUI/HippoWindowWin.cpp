@@ -10,8 +10,8 @@ public:
     HippoWindowImpl() {
         setClassName(L"HippoWindow");
         setClassStyle(CS_HREDRAW | CS_VREDRAW);
-        setWindowStyle(WS_POPUP); // change to WS_OVERLAPPEDWINDOW if you want resize/maximize etc. controls
-        //setWindowStyle(WS_OVERLAPPEDWINDOW);
+        //setWindowStyle(WS_POPUP); // change to WS_OVERLAPPEDWINDOW if you want resize/maximize etc. controls
+        setWindowStyle(WS_OVERLAPPEDWINDOW);
         //setExtendedStyle(WS_EX_TOPMOST);
         setTitle(L"Mugshot");
         setResizable(HIPPO_ORIENTATION_VERTICAL, false);
@@ -414,7 +414,7 @@ HippoWindowImpl::processMessage(UINT   message,
 #endif
                 EndPaint(window_, &paint);
             }
-            return true;
+            return false;
     }
 
     return false;

@@ -87,7 +87,22 @@ HippoAbstractWindow::setClassStyle(UINT classStyle)
 void 
 HippoAbstractWindow::setWindowStyle(DWORD windowStyle)
 {
+#if 0
+    HippoUStr name;
+    if (className_.m_str == NULL)
+        name.setUTF16(L"<unknown>");
+    else
+        name.setUTF16(className_.m_str);
+    g_debug("Setting window style on %p %s: %x -> %x",
+        window_, name.c_str(),
+        windowStyle_, windowStyle);
+#endif
     windowStyle_ = windowStyle;
+#if 0
+    g_debug("New style WS_OVERLAPPEDWINDOW=%x WS_VISIBLE=%x WS_DISABLED=%x WS_CHILD=%x WS_POPUP=%x",
+        windowStyle_ & WS_OVERLAPPEDWINDOW, windowStyle_ & WS_VISIBLE,
+        windowStyle_ & WS_DISABLED, windowStyle_ & WS_CHILD, windowStyle_ & WS_POPUP);
+#endif
 }
 
 void 
@@ -123,10 +138,6 @@ HippoAbstractWindow::onClose(bool fromScript)
 {
 }
 
-// FIXME I think this may be wrong since these flags are multiple flags in one macro, and some of the component
-// flags may also be in WS_POPUP
-#define IS_NORMAL_TOPLEVEL(windowStyle) (((windowStyle) & (WS_OVERLAPPED | WS_OVERLAPPEDWINDOW | WS_TILED | WS_TILEDWINDOW)) != 0)
-
 void
 HippoAbstractWindow::convertClientRectToWindowRect(HippoRectangle *rect)
 {
@@ -137,9 +148,10 @@ HippoAbstractWindow::convertClientRectToWindowRect(HippoRectangle *rect)
     wrect.right = rect->x + rect->width;
     wrect.bottom = rect->y + rect->height;
 
-    if (IS_NORMAL_TOPLEVEL(windowStyle_)) {
-        // isn't this just when AdjustWindowRectEx would be useful? must be missing something
-        g_warning("AdjustWindowRectEx doesn't like WS_OVERLAPPED according to MSDN docs");
+    if (windowStyle_ & (WS_OVERLAPPED | WS_OVERLAPPEDWINDOW)) {
+        // isn't this just when AdjustWindowRectEx would be useful? must be missing something.
+        // The MSDN docs claim this won't work but it appears to work... so warning commented
+        //g_warning("AdjustWindowRectEx doesn't like WS_OVERLAPPED according to MSDN docs");
     }
 
     if (windowStyle_ & (WS_HSCROLL | WS_VSCROLL)) {
@@ -150,6 +162,10 @@ HippoAbstractWindow::convertClientRectToWindowRect(HippoRectangle *rect)
         false, extendedStyle_) == 0) {
         g_warning("Failed to convert client rect to window rect");
     }
+
+    g_debug("SIZING: adjusted client rect %d,%d %dx%d to window rect %d,%d %dx%d",
+        rect->x, rect->y, rect->width, rect->height,
+        wrect.left, wrect.top, wrect.right - wrect.left, wrect.bottom - wrect.top);
 
     rect->x = wrect.left;
     rect->y = wrect.top;
@@ -177,6 +193,11 @@ HippoAbstractWindow::queryCurrentClientRect(HippoRectangle *rect)
     RECT parentClientArea;
     RECT clientArea;
     RECT windowArea;
+#if 0
+    /* These functions are no good because GetClientRect
+     * returns the rect in client coords (i.e. the origin
+     * is always 0,0)
+     */
     if (!GetWindowRect(parent, &parentWindowArea))
         g_warning("Failed to get parent's window rect");
     if (!GetClientRect(parent, &parentClientArea))
@@ -185,14 +206,48 @@ HippoAbstractWindow::queryCurrentClientRect(HippoRectangle *rect)
         g_warning("Failed to get window rect");
     if (!GetClientRect(window_, &clientArea))
         g_warning("Failed to get client rect");
+#endif
 
-    // The window rects are always in screen coordinates, while the 
-    // client rects are always relative to the window rects.
+    WINDOWINFO parentInfo;
+    WINDOWINFO childInfo;
+
+    parentInfo.cbSize = sizeof(parentInfo);
+    childInfo.cbSize = sizeof(childInfo);
+
+    if (!GetWindowInfo(parent, &parentInfo))
+        g_warning("Failed to get parent window info");
+
+    if (!GetWindowInfo(window_, &childInfo))
+        g_warning("Failed to get child window info");
+
+    parentWindowArea = parentInfo.rcWindow;
+    parentClientArea = parentInfo.rcClient;
+    windowArea = childInfo.rcWindow;
+    clientArea = childInfo.rcClient;
+
+    g_debug("SIZING: queried current parent window %d,%d %dx%d client %d,%d %dx%d child window %d,%d %dx%d client %d,%d %dx%d",
+        parentWindowArea.left,
+        parentWindowArea.top,
+        parentWindowArea.right - parentWindowArea.left,
+        parentWindowArea.bottom - parentWindowArea.top,
+        parentClientArea.left,
+        parentClientArea.top,
+        parentClientArea.right - parentClientArea.left,
+        parentClientArea.bottom - parentClientArea.top,
+        windowArea.left,
+        windowArea.top,
+        windowArea.right - windowArea.left,
+        windowArea.bottom - windowArea.top,
+        clientArea.left,
+        clientArea.top,
+        clientArea.right - clientArea.left,
+        clientArea.bottom - clientArea.top);
+
     // We want to return a child client rect relative to the parent's 
-    // client rect.
+    // client rect. The WINDOWINFO rects are all in screen coordinates.
 
-    rect->x = windowArea.left + clientArea.left - (parentWindowArea.left + parentClientArea.left);
-    rect->y = windowArea.top + clientArea.top - (parentWindowArea.top + parentClientArea.top);
+    rect->x = clientArea.left - parentClientArea.left;
+    rect->y = clientArea.top - parentClientArea.top;
     rect->width = clientArea.right - clientArea.left;
     rect->height = clientArea.bottom - clientArea.top;
 }
@@ -200,7 +255,7 @@ HippoAbstractWindow::queryCurrentClientRect(HippoRectangle *rect)
 bool
 HippoAbstractWindow::createWindow(void)
 {
-    if (!defaultPositionSet_ && IS_NORMAL_TOPLEVEL(windowStyle_)) {
+    if (!defaultPositionSet_ && (windowStyle_ & WS_OVERLAPPEDWINDOW)) {
         RECT workArea;
         int centerX = 0;
         int centerY = 0;
@@ -235,6 +290,12 @@ HippoAbstractWindow::createWindow(void)
         rect.x, rect.y, rect.width, rect.height,
         x_, y_, width_, height_);
 
+#if 0
+    g_debug("Create window style WS_OVERLAPPEDWINDOW=%x WS_VISIBLE=%x WS_DISABLED=%x WS_CHILD=%x WS_POPUP=%x",
+        windowStyle_ & WS_OVERLAPPEDWINDOW, windowStyle_ & WS_VISIBLE,
+        windowStyle_ & WS_DISABLED, windowStyle_ & WS_CHILD, windowStyle_ & WS_POPUP);
+#endif
+
     window_ = CreateWindowEx(extendedStyle_, className_, title_, windowStyle_,
         rect.x, rect.y, rect.width, rect.height,
         (useParent_ && ui_) ? ui_->getWindow() : (createWithParent_ ? createWithParent_->window_ : NULL), 
@@ -245,16 +306,15 @@ HippoAbstractWindow::createWindow(void)
     }
 
     {
-        // right now this will happen with any WS_OVERLAPPEDWINDOW since 
-        // AdjustWindowRectEx doesn't work on those (or conceivably because
-        // of a bug in our code) ... if it's not our bug, the simplest
-        // solution is probably to just remove the warning here, though
-        // it's a bit gross
+        // Sanity check
         HippoRectangle actual;
+        HippoRectangle believed;
+        getClientArea(&believed);
         queryCurrentClientRect(&actual);
-        if (!hippo_rectangle_equal(&rect, &actual)) {
-            g_warning("window class %s not created with expected dimensions",
-                HippoUStr(getClassName()).c_str());
+        if (!hippo_rectangle_equal(&believed, &actual)) {
+            g_warning("window class %s not created with expected dimensions, actual %d,%d %dx%d",
+                HippoUStr(getClassName()).c_str(),
+                actual.x, actual.y, actual.width, actual.height);
             // Fix up and try to continue
             x_ = actual.x;
             y_ = actual.y;
@@ -569,6 +629,8 @@ HippoAbstractWindow::processMessage(UINT   message,
     default:
         return false;
     }
+
+    return false;
 }
 
 static void
@@ -628,7 +690,7 @@ HippoAbstractWindow::windowProc(HWND   window,
                 break;
             default:
                 abstractWindow->AddRef();
-                runDefault = abstractWindow->processMessage(message, wParam, lParam);
+                runDefault = ! abstractWindow->processMessage(message, wParam, lParam);
                 abstractWindow->Release();
                 break;
         }
