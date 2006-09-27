@@ -12,7 +12,8 @@ typedef enum
                             * the way you'd get FILL=false is to set the alignment
                             * on the child item
                             */
-    HIPPO_PACK_END = 2
+    HIPPO_PACK_END = 2,
+    HIPPO_PACK_FIXED = 4   /* Like position: absolute or GtkFixed */
 } HippoPackFlags;
 
 typedef void (* HippoCanvasForeachChildFunc) (HippoCanvasItem *child,
@@ -97,6 +98,10 @@ HippoCanvasItem* hippo_canvas_box_new    (void);
 void hippo_canvas_box_append     (HippoCanvasBox  *box,
                                   HippoCanvasItem *child,
                                   HippoPackFlags   flags);
+void hippo_canvas_box_move       (HippoCanvasBox  *box,
+                                  HippoCanvasItem *child,
+                                  int              x,
+                                  int              y);
 void hippo_canvas_box_remove     (HippoCanvasBox  *box,
                                   HippoCanvasItem *child);
 void hippo_canvas_box_remove_all (HippoCanvasBox  *box);

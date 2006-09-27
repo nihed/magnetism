@@ -1157,9 +1157,9 @@ hippo_canvas_open_test_window(void)
                         NULL);
 #endif
     {
-        GtkWidget *widget = gtk_label_new("FOOO!");
+        GtkWidget *widget = gtk_label_new("FOOO! GtkLabel");
         gtk_widget_show(widget);
-        text = g_object_new(HIPPO_TYPE_CANVAS_WIDGET,
+        shape1 = g_object_new(HIPPO_TYPE_CANVAS_WIDGET,
                             "widget", widget,
                             "background-color", 0x0000ffff,
                             "xalign", HIPPO_ALIGNMENT_CENTER,
@@ -1167,7 +1167,37 @@ hippo_canvas_open_test_window(void)
                             NULL);
     }
                         
-    hippo_canvas_box_append(HIPPO_CANVAS_BOX(root), text, HIPPO_PACK_EXPAND);
+    hippo_canvas_box_append(HIPPO_CANVAS_BOX(root), shape1, HIPPO_PACK_EXPAND);
+
+    text = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
+                        "text",
+                        "Text item packed end",
+                        "color", 0xffffffff,
+                        "background-color", 0x0000ffff,
+                        NULL);
+
+    hippo_canvas_box_append(HIPPO_CANVAS_BOX(root), text, HIPPO_PACK_END);
+
+    text = g_object_new(HIPPO_TYPE_CANVAS_LINK,
+                        "text",
+                        "Fixed position link item",
+                        "background-color", 0xffffffff,
+                        NULL);
+
+    hippo_canvas_box_append(HIPPO_CANVAS_BOX(root), text, HIPPO_PACK_FIXED);
+
+    hippo_canvas_box_move(HIPPO_CANVAS_BOX(root), text, 150, 150);
+
+    text = g_object_new(HIPPO_TYPE_CANVAS_LINK,
+                        "text",
+                        "Fixed link inside label item",
+                        "background-color", 0xffffffff,
+                        NULL);
+
+    hippo_canvas_box_append(HIPPO_CANVAS_BOX(shape1), text, HIPPO_PACK_FIXED);
+
+    hippo_canvas_box_move(HIPPO_CANVAS_BOX(shape1), text, 50, 50);
+
     
     hippo_canvas_set_root(HIPPO_CANVAS(canvas), root);
 

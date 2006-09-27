@@ -90,6 +90,7 @@ typedef struct {
     int              height_request_for_width;
     guint            expand : 1;
     guint            end : 1;
+    guint            fixed : 1;
     guint            hovering : 1;
 } HippoBoxChild;
 
@@ -747,12 +748,31 @@ hippo_canvas_box_paint_children(HippoCanvasBox *box,
 {
     GSList *link;
 
+    /* FIXME there will need to be some z-order control for fixed children,
+     * probably keeping them above all layout children and allowing
+     * ordering within the fixed
+     */
+    
     /* Now draw children */
     for (link = box->children; link != NULL; link = link->next) {
         HippoBoxChild *child = link->data;        
-                        
+
+        /* Fixed children have to be clipped to the box, since we
+         * don't include them in the box's size request there's no
+         * guarantee they are in the box
+         */
+        if (child->fixed) {
+            cairo_save(cr);
+            cairo_rectangle(cr, 0, 0, box->allocated_width, box->allocated_height);
+            cairo_clip(cr);
+        }
+        
         hippo_canvas_item_process_paint(HIPPO_CANVAS_ITEM(child->item), cr, damaged_box,
                                         child->x, child->y);
+
+        if (child->fixed) {
+            cairo_restore(cr);
+        }
     }
 }
 
@@ -904,7 +924,7 @@ count_expandable(HippoCanvasBox *box)
     count = 0;
     for (link = box->children; link != NULL; link = link->next) {
         HippoBoxChild *child = link->data;
-        if (child->expand)
+        if (child->expand && !child->fixed)
             ++count;
     }
     return count;
@@ -942,10 +962,13 @@ hippo_canvas_box_get_content_width_request(HippoCanvasBox *box)
     for (link = box->children; link != NULL; link = link->next) {
         HippoBoxChild *child = link->data;
 
-        n_children += 1;
-
         if (child->width_request < 0)
             child->width_request = hippo_canvas_item_get_width_request(child->item);
+        
+        if (child->fixed)
+            continue;
+        
+        n_children += 1;
         
         if (box->orientation == HIPPO_ORIENTATION_VERTICAL)
             total = MAX(total, child->width_request);
@@ -968,22 +991,45 @@ hippo_canvas_box_get_content_height_request(HippoCanvasBox *box,
     GSList *link;
     int n_children;
 
+    /* Do fixed children, just to have their request recorded;
+     * the box for_width is ignored here, fixed children just
+     * always get their width request
+     */
+    for (link = box->children; link != NULL; link = link->next) {
+        HippoBoxChild *child = link->data;
+
+        if (!child->fixed)
+            continue;
+        
+        if (child->height_request < 0 ||
+            child->height_request_for_width != child->width_request) {
+            child->height_request = hippo_canvas_item_get_height_request(child->item,
+                                                                         child->width_request);
+            child->height_request_for_width = child->width_request;
+        }
+    }
+
+    /* Now do the box-layout children */
+    
     n_children = 0;
     total = 0;
 
     if (box->orientation == HIPPO_ORIENTATION_VERTICAL) {
         for (link = box->children; link != NULL; link = link->next) {
             HippoBoxChild *child = link->data;
-            
-            n_children += 1;
 
+            if (child->fixed)
+                continue;
+
+            n_children += 1;
+            
             if (child->height_request < 0 ||
                 child->height_request_for_width != for_width) {
                 child->height_request = hippo_canvas_item_get_height_request(child->item,
                                                                              for_width);
                 child->height_request_for_width = for_width;
             }
-            
+                
             total += child->height_request;
         }
 
@@ -1012,6 +1058,9 @@ hippo_canvas_box_get_content_height_request(HippoCanvasBox *box,
         for (link = box->children; link != NULL; link = link->next) {
             HippoBoxChild *child = link->data;
             int req;
+            
+            if (child->fixed)
+                continue;
             
             n_children += 1;
 
@@ -1172,6 +1221,17 @@ hippo_canvas_box_allocate(HippoCanvasItem *item,
                 content_x, content_y, allocated_content_width, allocated_content_height);
     }
 #endif
+
+    /* Allocate fixed children whatever they requested */
+    for (link = box->children; link != NULL; link = link->next) {
+        HippoBoxChild *child = link->data;
+        if (!child->fixed)
+            continue;
+        hippo_canvas_item_allocate(child->item, child->width_request, child->height_request);
+    }
+
+
+    /* Now layout the box */
     
     if (box->orientation == HIPPO_ORIENTATION_VERTICAL) {
         int top_y;
@@ -1188,6 +1248,9 @@ hippo_canvas_box_allocate(HippoCanvasItem *item,
             HippoBoxChild *child = link->data;
             int req;
 
+            if (child->fixed)
+                continue;
+            
             req = child->height_request;
             if (child->expand) {
                 int extra = (vertical_expand_space / vertical_expand_count);
@@ -1221,6 +1284,9 @@ hippo_canvas_box_allocate(HippoCanvasItem *item,
             HippoBoxChild *child = link->data;
             int req;
 
+            if (child->fixed)
+                continue;
+            
             req = child->width_request;
             if (child->expand) {
                 int extra = (horizontal_expand_space / horizontal_expand_count);
@@ -1261,7 +1327,14 @@ find_child_at_point(HippoCanvasBox *box,
                     int             y)
 {
     GSList *link;
+    HippoBoxChild *topmost;
+
+    /* Box-layout children don't overlap each other, so we could just
+     * return the first match, but for fixed children we have to
+     * return the last match since the items are bottom-to-top in the list
+     */
     
+    topmost = NULL;
     for (link = box->children; link != NULL; link = link->next) {
         HippoBoxChild *child = link->data;
         int width, height;
@@ -1271,11 +1344,11 @@ find_child_at_point(HippoCanvasBox *box,
             x < (child->x + width) &&
             y < (child->y + height)) {
 
-            return child;
+            topmost = child;
         }
     }
 
-    return NULL;
+    return topmost;
 }
 
 static HippoBoxChild*
@@ -1543,7 +1616,7 @@ hippo_canvas_box_append(HippoCanvasBox  *box,
     g_return_if_fail(HIPPO_IS_CANVAS_BOX(box));
     g_return_if_fail(HIPPO_IS_CANVAS_ITEM(child));
     g_return_if_fail(find_child(box, child) == NULL);
-
+    
     g_object_ref(child);
     hippo_canvas_item_sink(child);
     connect_child(box, child);
@@ -1551,6 +1624,7 @@ hippo_canvas_box_append(HippoCanvasBox  *box,
     c->item = child;
     c->expand = (flags & HIPPO_PACK_EXPAND) != 0;
     c->end = (flags & HIPPO_PACK_END) != 0;
+    c->fixed = (flags & HIPPO_PACK_FIXED) != 0;
     c->width_request = -1;
     c->height_request = -1;
     c->height_request_for_width = -1;
@@ -1560,7 +1634,11 @@ hippo_canvas_box_append(HippoCanvasBox  *box,
         hippo_canvas_item_set_context(child, HIPPO_CANVAS_CONTEXT(box));
     else
         hippo_canvas_item_set_context(child, NULL);
-    
+
+    /* fixed items don't change the box's request, but they do
+     * need to be request/allocated themselves, so we need to
+     * do this even for fixed items
+     */
     hippo_canvas_item_emit_request_changed(HIPPO_CANVAS_ITEM(box));
 }
 
@@ -1599,6 +1677,43 @@ hippo_canvas_box_remove_all(HippoCanvasBox *box)
         HippoBoxChild *child = box->children->data;
         hippo_canvas_box_remove(box, child->item);
     }
+}
+
+void
+hippo_canvas_box_move(HippoCanvasBox  *box,
+                      HippoCanvasItem *child,
+                      int              x,
+                      int              y)
+{
+    HippoBoxChild *c;
+    int w, h;
+
+    g_return_if_fail(HIPPO_IS_CANVAS_BOX(box));
+    g_return_if_fail(HIPPO_IS_CANVAS_ITEM(child));
+
+    c = find_child(box, child);
+
+    if (c == NULL) {
+        g_warning("Trying to move a canvas item that isn't in the box");
+        return;
+    }
+    g_assert(c->item == child);
+
+
+    if (!c->fixed) {
+        g_warning("Trying to move a canvas box child that isn't fixed");
+        return;
+    }
+
+    /* We only repaint, don't queue a resize - fixed items don't affect the
+     * size request.
+     */
+    hippo_canvas_item_get_allocation(child, &w, &h);
+    
+    hippo_canvas_item_emit_paint_needed(HIPPO_CANVAS_ITEM(box), c->x, c->y, w, h);
+    c->x = x;
+    c->y = y;
+    hippo_canvas_item_emit_paint_needed(HIPPO_CANVAS_ITEM(box), c->x, c->y, w, h);
 }
 
 HippoCanvasContext*
