@@ -18,15 +18,20 @@
 <body class="dh-gray-background-page dh-home-page">
 	<div id="dhPage">
 		<dht3:header/>
+		<div class="dh-page-title-container">
+		<dht3:pageTitle><c:out value="${person.viewedPerson.name}"/>'s Overview</dht3:pageTitle>
+		<dht3:standardPageOptions selected="Overview"/>
+		</div>
 		<dht3:shinyBox color="grey">
-			<dht3:personHeader who="${person.viewedPerson}"><a href="/account">Edit my Mugshot account</a></dht3:personHeader>
+			<dht3:personHeader who="${person.viewedPerson}" isSelf="true"><a href="/account">Edit my Mugshot account</a></dht3:personHeader>
+			<dht3:stacker userId="${person.viewedUserId}"/>
 		</dht3:shinyBox>
 		
 		<c:choose>
 			<c:when test="${person.contacts.size > 0}">
 				<c:forEach items="${person.contacts.list}" end="2" var="person">
 					<dht3:shinyBox color="grey">				
-						<dht3:personHeader who="${person}"><a href="/">Remove from friends</a> | <a href="/">Invite to a group</a></dht3:personHeader>
+						<dht3:personHeader who="${person}" isSelf="false"><a href="/">Remove from friends</a> | <a href="/">Invite to a group</a></dht3:personHeader>
 					</dht3:shinyBox>
 				</c:forEach>
 				<c:if test="${person.contacts.size > 3}">
@@ -39,12 +44,12 @@
 					    <p>Email <a href="/invitation">invites</a> to some friends</p>
 				    </c:when>
 				    <c:otherwise>
-					    <p>A loner huh?</p>
+					    <p>No Mugshot friends?  Try using the search box to find people you may know by email address,
+					       or <a href="/groups">browse public groups</a>.</p>
 				    </c:otherwise>
 			    </c:choose>
 			</c:otherwise>
 		</c:choose>		
-		<dht:footer/>
 	</div>
 </body>
 </html>

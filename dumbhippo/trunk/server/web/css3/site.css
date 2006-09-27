@@ -74,6 +74,19 @@ img {
 	color:				white;
 }
 
+.dh-page-title-container {
+}
+
+.dh-page-title {
+	font-size:			18px;
+	font-weight:		bold;
+}
+
+.dh-page-options {
+	font-size:			12px;
+	font-weight:		bold;
+}
+
 #dhWebServices {
     font-size:			12px;
     font-weight:		500; /* 400 is same as normal, 700 is same as bold */
@@ -86,70 +99,6 @@ img {
 
 #dhWebServices a:hover {
     color:              blue; /* this looks better than text-decoration: underline; */
-}
-
-.dh-sidebar-box {
-	background-color:	#CFCFCF;
-	font-size:			12px;
-	-moz-border-radius:	10px;
-}
-
-.dh-sidebar-box .dh-title {
-	font-weight:		bold;
-	font-size:			14px;
-}
-
-.dh-sidebar-box .dh-sidebar-box-empty {
-	text-align:		center;
-	color:			#666666;
-}
-
-.dh-sidebar-box .dh-sidebar-box-empty a {
-	color:			#666666;
-	text-decoration:	underline;
-}
-
-.dh-sidebar-box .dh-new-invited-groups {
-	font-weight:		bold;
-}
-
-.dh-sidebar-box .dh-new-invited-groups:visited {
-	color:			blue;
-}
-
-.dh-sidebar-box .dh-sidebar-box-empty a:visited {
-	color:			#666666;
-}
-
-.dh-sidebar-box .dh-follower-actions {
-	font-size: 11px;
-}
-
-.dh-compact-item .dh-next-to-image .dh-name {
-	font-weight:		bold;
-	font-size:			12px;
-}
-
-/* the name in the profile is a little larger than elsewhere */
-.dh-profile-box .dh-compact-item .dh-next-to-image .dh-name {
-	font-size:			14px;
-}
-
-.dh-compact-item .dh-next-to-image .dh-presence {
-	font-size:			11px;
-}
-
-.dh-profile-box .dh-compact-item .dh-next-to-image .dh-action-link {
-	font-size:			12px;
-}
-
-.dh-compact-item .dh-next-to-image .dh-info {
-	font-size:			11px;
-}
-
-.dh-sidebar-box .dh-more, .dh-zone-box .dh-more {
-	font-size:			12px;
-	font-weight:		bold;
 }
 
 .dh-more-count a:link, .dh-more-count a:visited {
@@ -297,3 +246,39 @@ div.dh-async-action-link-complete {
 .dh-shiny-box-bottom-right {
 	background: url("/images3/shinybox_br.png") bottom right no-repeat;
 }
+
+.dh-shiny-box-row {
+	
+}
+
+.dh-shiny-box-row-grey {
+	background-color:		gray;
+}
+
+.dh-shiny-box-row-icon {
+}
+
+.dh-shiny-box-row-title {
+	font-size:				14px;
+	font-weight:			bold;
+}
+
+.dh-shiny-box-row-meta {
+	
+}
+
+.dh-shiny-box-row-description {
+
+}
+
+.dh-shiny-box-from {
+	font-size:				14px;
+	font-weight:			italic;
+	color:					gray;
+}
+
+.dh-shiny-box-from-person {
+	color:					black;
+	font-weight:			normal;
+}
+

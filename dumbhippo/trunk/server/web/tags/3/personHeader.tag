@@ -4,6 +4,7 @@
 <%@ taglib tagdir="/WEB-INF/tags/3" prefix="dht3" %>
 
 <%@ attribute name="who" required="true" type="com.dumbhippo.server.PersonView" %>
+<%@ attribute name="isSelf" required="true" type="java.lang.Boolean" %>
 
 <div class="dh-person-header">
 	<table cellpadding="0" cellspacing="0">
@@ -26,7 +27,15 @@
 								</c:otherwise>
 							</c:choose>
 						</span>			
-						<div class="dh-person-header-name"><c:out value="${who.name}"/>'s Mugshot</div>
+						<c:choose>
+							<c:when test="${isSelf}">
+							<span class="dh-person-header-name"><c:out value="${who.name}"/>'s Mugshot</span>
+							</c:when>
+							<c:otherwise>
+							<span class="dh-person-header-name"><a href="/person?who=${who.viewPersonPageId}"><c:out value="${who.name}"/></a>'s Mugshot</span>							
+							</c:otherwise>
+						</c:choose>
+							
 						<div class="dh-person-header-controls"><jsp:doBody/></div>
 						<div class="dh-person-header-stats">
 							<c:if test="${who.liveUser != null}">
@@ -39,9 +48,11 @@
 				</td>
 			</tr>
 			<tr>
+			<td colspan="2">
 			<div class="dh-person-header-bio">
 				${who.bioAsHtml}
 			</div>
+			</td>
 			</tr>
 		</tbody>
 	</table>
