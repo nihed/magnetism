@@ -1,3 +1,21 @@
 @CHARSET "UTF-8";
 @IMPORT url("site.css");
 @IMPORT url("home-positions.css");
+
+.dh-person-header-name {
+	font-size:		14px;
+	font-weight:	bold;
+}
+
+.dh-person-header-bio {
+	font-size:		11px;
+}
+
+.dh-person-header-controls {
+	font-size:		11px;
+}
+
+.dh-person-header-stats {
+	font-size:		11px;
+	font-color:		grey;
+}
