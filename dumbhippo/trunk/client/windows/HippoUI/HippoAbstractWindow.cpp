@@ -19,7 +19,8 @@ HippoAbstractWindow::HippoAbstractWindow()
     createWithParent_ = NULL;
     updateOnShow_ = false;
     classStyle_ = CS_HREDRAW | CS_VREDRAW;
-    windowStyle_ = WS_OVERLAPPEDWINDOW;
+    windowStyle_ = 0;
+    setWindowStyle(WS_OVERLAPPEDWINDOW); // setWindowStyle does some magic
     extendedStyle_ = 0;
     created_ = false;
     showing_ = false;
@@ -87,22 +88,8 @@ HippoAbstractWindow::setClassStyle(UINT classStyle)
 void 
 HippoAbstractWindow::setWindowStyle(DWORD windowStyle)
 {
-#if 0
-    HippoUStr name;
-    if (className_.m_str == NULL)
-        name.setUTF16(L"<unknown>");
-    else
-        name.setUTF16(className_.m_str);
-    g_debug("Setting window style on %p %s: %x -> %x",
-        window_, name.c_str(),
-        windowStyle_, windowStyle);
-#endif
-    windowStyle_ = windowStyle;
-#if 0
-    g_debug("New style WS_OVERLAPPEDWINDOW=%x WS_VISIBLE=%x WS_DISABLED=%x WS_CHILD=%x WS_POPUP=%x",
-        windowStyle_ & WS_OVERLAPPEDWINDOW, windowStyle_ & WS_VISIBLE,
-        windowStyle_ & WS_DISABLED, windowStyle_ & WS_CHILD, windowStyle_ & WS_POPUP);
-#endif
+    // essentially our whole setup assumes the clipchildren/clipsiblings so just add them here
+    windowStyle_ = windowStyle | WS_CLIPCHILDREN | WS_CLIPSIBLINGS;
 }
 
 void 

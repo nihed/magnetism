@@ -436,9 +436,12 @@ HippoCanvas::onPaint(WPARAM wParam, LPARAM lParam)
     RECT region;
     if (GetUpdateRect(window_, &region, true)) {
 
+        int regionWidth = region.right - region.left;
+        int regionHeight = region.bottom - region.top;
+
         g_debug("SIZING: %p paint region %d,%d %dx%d",
                 window_, region.left, region.top,
-                region.right - region.left, region.bottom - region.top);
+                regionWidth, regionHeight);
 
         // go ahead and request/resize if necessary, so we paint the right thing
         ensureRequestAndAllocation();
@@ -446,22 +449,29 @@ HippoCanvas::onPaint(WPARAM wParam, LPARAM lParam)
         PAINTSTRUCT paint;
         HDC hdc = BeginPaint(window_, &paint);
 
+        //g_debug("paint.fErase=%d", paint.fErase);
+
+        cairo_surface_t *surface = cairo_win32_surface_create(hdc);
+        cairo_surface_t *buffer = cairo_surface_create_similar(surface,
+            CAIRO_CONTENT_COLOR, regionWidth, regionHeight);
+        cairo_t *cr = cairo_create(buffer);
+        hippo_canvas_context_win_update_pango(context_, cr);
+
+        // make the buffer's coordinates look like the real coordinates
+        cairo_translate(cr, - region.left, - region.top);
+
+        // Paint a background rectangle to the buffer
+        cairo_rectangle(cr, region.left, region.top, regionWidth, regionHeight);
+        cairo_clip(cr);
+        
         // FIXME not the right background color (on linux it's the default gtk background)
         // should use system color, maybe GetThemeSysColorBrush is right. Note that 
         // this rectangle draws the little corner between the scrollbars in 
         // addition to the viewport background.
-        HBRUSH hbrush = CreateSolidBrush(RGB(255,255,255));
-        HGDIOBJ oldBrush;
+        hippo_cairo_set_source_rgba32(cr, 0xffffffff);
+        cairo_paint(cr);
 
-        oldBrush = SelectObject(hdc, hbrush);
-        FillRect(hdc, &region, hbrush);
-        SelectObject(hdc, oldBrush);
-        DeleteObject(hbrush);
-
-        cairo_surface_t *surface = cairo_win32_surface_create(hdc);
-        cairo_t *cr = cairo_create(surface);
-        hippo_canvas_context_win_update_pango(context_, cr);
-
+        // Draw canvas item to the buffer
         if (root_ != (HippoCanvasItem*) NULL) {
             RECT viewport;
             HippoRectangle viewport_hippo;
@@ -476,7 +486,7 @@ HippoCanvas::onPaint(WPARAM wParam, LPARAM lParam)
                 // we have to clip so we don't draw outside the viewport - the canvas
                 // doesn't have its own window
                 cairo_save(cr);
-                cairo_rectangle(cr, region_hippo.x, region_hippo.y, region_hippo.width, region_hippo.height);     
+                cairo_rectangle(cr, region_hippo.x, region_hippo.y, region_hippo.width, region_hippo.height);
                 cairo_clip(cr);
 
                 int x, y;
@@ -486,15 +496,26 @@ HippoCanvas::onPaint(WPARAM wParam, LPARAM lParam)
                 cairo_restore(cr);
             }
         }
-
+        
+        // pop the update region clip and the translation off the buffer
         cairo_destroy(cr);
+
+        // Copy the buffer to the window
+        cairo_t *window_cr = cairo_create(surface);
+        cairo_rectangle(window_cr, region.left, region.top, regionWidth, regionHeight);
+        cairo_clip(window_cr);
+        cairo_set_source_surface(window_cr, buffer, region.left, region.top);
+        cairo_paint(window_cr);
+        cairo_destroy(window_cr);
+
+        cairo_surface_destroy(buffer);
         cairo_surface_destroy(surface);
 
         EndPaint(window_, &paint);
     }
 }
 
-bool 
+bool
 HippoCanvas::processMessage(UINT   message,
                             WPARAM wParam,
                             LPARAM lParam)

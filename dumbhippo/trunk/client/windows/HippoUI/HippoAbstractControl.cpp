@@ -294,6 +294,11 @@ HippoAbstractControl::ensureRequestAndAllocation()
 void
 HippoAbstractControl::onMoveResizeMessage(const HippoRectangle *newClientArea)
 {
+    // FIXME this should just queue a sizeAllocate, so we get some compression
+    // of WM_SIZE handling - WM_PAINT gets compressed by Windows, but WM_SIZE apparently 
+    // does not. We may need to split queuing this from queuing a request changed (or
+    // at least it might be easier to do so).
+    // Anyway, for now it's not actively a big problem that we know of, so leaving it.
     sizeAllocate(newClientArea);
 }
 
