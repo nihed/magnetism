@@ -1,5 +1,6 @@
 package com.dumbhippo.jive;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -85,13 +86,27 @@ public class PresenceMonitor implements SessionManagerListener {
 			
 			final boolean wasAlreadyConnected = presenceService.getPresence("/users", userGuid) > 0;
 			
-			// We queue this stuff so we aren't invoking some database operation in jboss
-			// with the lock held and blocking all new clients in the meantime
+			// We are holding a lock on the userInfo object and possibly locks inside
+			// Wildfire, so we have to be careful not to do database operations synchronously, 
+			// since that could result in deadlocks. onResourceConnected() and onUserLogout() 
+			// can be safely reversed since we pass in the login/logout timestamps, so we can do
+			// them async without worrying about reordering.
+			//
+			// On the other hand, we must do PresenceService updates synchronously,
+			// but that isn't an issue since PresenceService only locks temporarily
+			// for data structure integrity and never blocks otherwise.
+			
+			final Date timestamp = new Date();
+			
 			if (oldCount > 0 && newCount == 0) {
 				presenceService.setLocalPresence("/users", userGuid, 0);
 				
-				MessengerGlue glue = EJBUtil.defaultLookup(MessengerGlue.class);
-				glue.onUserLogout(user);
+				executor.execute(new Runnable() {
+					public void run() {
+						MessengerGlue glue = EJBUtil.defaultLookup(MessengerGlue.class);
+						glue.onUserLogout(user, timestamp);
+					}
+				});
 			} else if (oldCount == 0 && newCount > 0) {
 				presenceService.setLocalPresence("/users", userGuid, 1);
 			}
@@ -103,7 +118,7 @@ public class PresenceMonitor implements SessionManagerListener {
 				executor.execute(new Runnable() {
 					public void run() {
 						MessengerGlue glue = EJBUtil.defaultLookup(MessengerGlue.class);
-						glue.onResourceConnected(user, wasAlreadyConnected);
+						glue.onResourceConnected(user, wasAlreadyConnected, timestamp);
 					}
 				});
 			}

@@ -275,7 +275,7 @@ public class MessengerGlueBean implements MessengerGlue {
 		account.setWasSentShareLinkTutorial(true);
 	}
 
-	public void onResourceConnected(String username, boolean wasAlreadyConnected) {
+	public void onResourceConnected(String username, boolean wasAlreadyConnected, Date timestamp) {
 		// account could be missing due to debug users or our own
 		// send-notifications
 		// user, i.e. any user on the jabber server that we don't know about
@@ -290,7 +290,7 @@ public class MessengerGlueBean implements MessengerGlue {
 		
 		LiveState.getInstance().resendAllNotifications(account.getOwner().getGuid());
 
-		account.setLastLoginDate(new Date());
+		account.setLastLoginDate(timestamp);
 		
 		// We can't reliably tell if the user is currently logged in by checking
 		// for loginDate > logoutDate, since that could happen if the server
@@ -309,7 +309,7 @@ public class MessengerGlueBean implements MessengerGlue {
 	}	
 	
 
-	public void onUserLogout(String username) {
+	public void onUserLogout(String username, Date timestamp) {
 		Account account;
 		try {
 			account = accountFromUsername(username);
@@ -319,7 +319,7 @@ public class MessengerGlueBean implements MessengerGlue {
 			return;
 		}
 		
-		account.setLastLogoutDate(new Date());
+		account.setLastLogoutDate(timestamp);
 	}
 	
 	public String getMySpaceName(String username) {
