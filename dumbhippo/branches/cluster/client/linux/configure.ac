@@ -322,7 +322,7 @@ fi
 
 if test "x$GECKO_INCLUDEDIR" = x ; then
     AC_MSG_CHECKING([for Gecko SDK in /opt/gecko-sdk])
-    if ! test -f "/opt/gecko-sdk/include/nsIURI.idl" ; then
+    if test -f "/opt/gecko-sdk/idl/nsIURI.idl" ; then
         GECKO_IDLDIR="/opt/gecko-sdk/idl"
         GECKO_INCLUDEDIR="/opt/gecko-sdk/include"
         XPIDL="/opt/gecko-sdk/bin/xpidl"
