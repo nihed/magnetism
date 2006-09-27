@@ -597,6 +597,12 @@ debugPrintMessage(HippoAbstractWindow *abstractWindow,
     case WM_MOVE:
         g_debug("SIZING: WM_MOVE on %p %s", window, name.c_str());
         break;
+    case WM_LBUTTONDOWN:
+        g_debug("WM_LBUTTONDOWN");
+        break;
+    case WM_MOUSEMOVE:
+        g_debug("WM_MOUSEMOVE");
+        break;
     }
 }
 

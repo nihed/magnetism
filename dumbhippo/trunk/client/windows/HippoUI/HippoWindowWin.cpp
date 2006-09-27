@@ -322,6 +322,9 @@ HippoWindowImpl::setVisible(bool visible)
 void
 HippoWindowImpl::getSize(int *width_p, int *height_p)
 {
+    // get a real size (forces realization)
+    ensureRequestAndAllocation();
+
     if (width_p)
         *width_p = getWidth();
     if (height_p)
@@ -353,7 +356,9 @@ HippoWindowImpl::beginResize(HippoSide side)
             g_warning("bad window side");
             return;
     }
-    
+
+    g_debug("Starting resize of window %p", window_);
+
     // this is slightly bogus, since there may not be a message for 
     // GetMessagePos() to get the coords from, but I think it will work
     // for when we use it. Otherwise we probably need to add HippoWindow coords
