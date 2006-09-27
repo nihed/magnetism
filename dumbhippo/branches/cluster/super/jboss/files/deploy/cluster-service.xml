@@ -37,7 +37,7 @@
          (even after disabling media sense) set the UDP protocol's loopback attribute to true
          -->
          <Config>
-            <UDP mcast_addr="${jboss.partition.udpGroup:228.1.2.3}" mcast_port="9008" bind_addr="${jboss.bind.address}"
+            <UDP mcast_addr="${jboss.partition.udpGroup:228.1.2.3}" mcast_port="@@clusterServiceMcastPort@@" bind_addr="${jboss.bind.address}"
                ip_ttl="8" ip_mcast="true"
                mcast_send_buf_size="800000" mcast_recv_buf_size="150000"
                ucast_send_buf_size="800000" ucast_recv_buf_size="150000"

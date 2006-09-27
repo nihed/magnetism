@@ -719,9 +719,7 @@ public class PresenceService extends ServiceMBeanSupport implements PresenceServ
 	 * @param presence minimum presence that a user needs to have to count as present on
 	 *    a server. This must be at least 1 to get a meaningful result: we don't track
 	 *    users that have a presence of 0 and are thus *not* present.
-	 * @return a list of servers that the specified user is currently on; the resulting
-	 *    Address objects in the list can be cast to IpAddress objects as long as the
-	 *    underlying group transport is IP multicast, as it is for Mugshot currently.
+	 * @return the set of users that are present at the location 
 	 */
 	public Set<Guid> getPresentUsers(String location, int presence) {
 		Set<Guid> result = new HashSet<Guid>();
@@ -739,6 +737,26 @@ public class PresenceService extends ServiceMBeanSupport implements PresenceServ
 		return result;
 	}
 	
+	/**
+	 * Gets a list of users that are currently present on for the specified location on
+	 * the local server.
+	 * 
+	 * @param location a string representing a logical location
+	 * @param presence minimum presence that a user needs to have to count as present on
+	 *    a server. This must be at least 1 to get a meaningful result: we don't track
+	 *    users that have a presence of 0 and are thus *not* present.
+	 * @return the set of users that are present at the location on the local server 
+	 */
+	public Set<Guid> getLocalPresentUsers(String location, int presence) {
+		Set<Guid> result = new HashSet<Guid>();
+		
+		LocationInfo locationInfo = peekLocalLocationInfo(location);
+		if (locationInfo != null)
+			locationInfo.addPresentUsers(result, presence);
+		
+		return result;
+	}
+
 	/**
 	 * Update the presence value of a user for this server. If there are any
 	 * listeners for the location, they will be notified asynchronously

@@ -156,7 +156,7 @@ public class LiveState {
 	 */
 	public Set<LiveUser> getLiveUserAvailableSnapshot() {
 		Set<LiveUser> result = new HashSet<LiveUser>();
-		for (Guid guid : PresenceService.getInstance().getPresentUsers("/users", 1))
+		for (Guid guid : PresenceService.getInstance().getLocalPresentUsers("/users", 1))
 			result.add(getLiveUser(guid));
 		
 		return result;
@@ -166,7 +166,7 @@ public class LiveState {
 	 * Returns the number of available users
 	 */
 	public int getLiveUserAvailableCount() {
-		return PresenceService.getInstance().getPresentUsers("/users", 1).size();
+		return PresenceService.getInstance().getLocalPresentUsers("/users", 1).size();
 	}
 
 	/**
