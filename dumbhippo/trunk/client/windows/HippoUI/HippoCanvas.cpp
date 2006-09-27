@@ -28,6 +28,8 @@ static GType                  hippo_canvas_context_win_get_type               (v
 static HippoCanvasContextWin* hippo_canvas_context_win_new                    (HippoCanvas *canvas);
 static void                   hippo_canvas_context_win_update_pango           (HippoCanvasContextWin *context_win,
                                                                                cairo_t               *cr);
+static void                   hippo_canvas_context_win_create_controls        (HippoCanvasContextWin *context_win);
+static void                   hippo_canvas_context_win_show_controls          (HippoCanvasContextWin *context_win);
 
 HippoCanvas::HippoCanvas()
     : canvasWidthReq_(0), canvasHeightReq_(0), canvasX_(0), canvasY_(0), hscrollNeeded_(false), vscrollNeeded_(false),
@@ -68,7 +70,7 @@ HippoCanvas::setRoot(HippoCanvasItem *item)
             hippo_canvas_item_set_context(item, HIPPO_CANVAS_CONTEXT(context_));
         }
     }
-    queueResize();
+    markRequestChanged();
 }
 
 void
@@ -87,36 +89,26 @@ HippoCanvas::setScrollable(HippoOrientation orientation,
         hscrollable_ = value;
     }
 
-    queueResize();
+    markRequestChanged();
 }
 
-bool
-HippoCanvas::create()
+void
+HippoCanvas::createChildren()
 {
-    bool result;
-    
-    result = HippoAbstractControl::create();
-    if (!result)
-        return false;
-    
     hscroll_->create();
     vscroll_->create();
 
+    // this should register any embedded controls, set their parents,
+    // which as a side effect should create them all
     if (root_ != (HippoCanvasItem*) NULL) {
         g_assert(HIPPO_IS_CANVAS_CONTEXT(context_));
         hippo_canvas_item_set_context(root_, HIPPO_CANVAS_CONTEXT(context_));
-        queueResize();
     }
-
-    return result;
 }
 
 void 
-HippoCanvas::show(bool activate)
+HippoCanvas::showChildren()
 {
-    if (!create()) // because scrollbars will need us created
-        return;
-
     // we don't call updateScrollbars here because 
     // it does a lot of extra work, in particular
     // recursively allocating all canvas items.
@@ -129,7 +121,7 @@ HippoCanvas::show(bool activate)
     if (vscrollNeeded_)
         vscroll_->show(false);
 
-    HippoAbstractControl::show(activate);
+    hippo_canvas_context_win_show_controls(context_);
 }
 
 int
@@ -174,22 +166,8 @@ HippoCanvas::getHeightRequestImpl(int forWidth)
     }
 }
 
-
 void
-HippoCanvas::onSizeChanged()
-{
-#if 0
-        g_debug("control size changed %d x %d scrollable %d canvas %d x %d", getWidth(), getHeight(), scrollable_,
-            canvasWidthReq_, canvasHeightReq_);
-#endif
-
-    // size and position the scrollbars, allocating the canvas item root
-    // if needed.
-    updateScrollbars();
-}
-
-void
-HippoCanvas::updateScrollbars()
+HippoCanvas::onSizeAllocated()
 {
     int w = getWidth();
     int h = getHeight();
@@ -240,16 +218,16 @@ HippoCanvas::updateScrollbars()
 
     if (vscrollNeeded_) {
         //g_debug("setting size of vscrollbar to %d,%d %dx%d", w - vWidth, 0, vWidth, vHeight);
-        vscroll_->moveResize(w - vWidth, 0, vWidth, vHeight);
         vscroll_->setBounds(0, canvasHeightAlloc, vHeight);
+        vscroll_->sizeAllocate(w - vWidth, 0, vWidth, vHeight);
         if (isShowing())
             vscroll_->show(false);
     }
 
     if (hscrollNeeded_) {
         //g_debug("setting size of hscrollbar %d,%d %dx%d", 0, h - hHeight, hWidth, hHeight);
-        hscroll_->moveResize(0, h - hHeight, hWidth, hHeight);
         hscroll_->setBounds(0, canvasWidthAlloc, hWidth);
+        hscroll_->sizeAllocate(0, h - hHeight, hWidth, hHeight);
         if (isShowing())
             hscroll_->show(false);
     }
@@ -451,6 +429,14 @@ HippoCanvas::onPaint(WPARAM wParam, LPARAM lParam)
 {
     RECT region;
     if (GetUpdateRect(window_, &region, true)) {
+
+        g_debug("SIZING: %p paint region %d,%d %dx%d",
+                window_, region.left, region.top,
+                region.right - region.left, region.bottom - region.top);
+
+        // go ahead and request/resize if necessary, so we paint the right thing
+        ensureRequestAndAllocation();
+
         PAINTSTRUCT paint;
         HDC hdc = BeginPaint(window_, &paint);
 
@@ -507,6 +493,9 @@ HippoCanvas::processMessage(UINT   message,
                             WPARAM wParam,
                             LPARAM lParam)
 {
+    if (HippoAbstractControl::processMessage(message, wParam, lParam))
+        return true;
+
     switch (message) {
         case WM_PAINT:
             onPaint(wParam, lParam);
@@ -553,7 +542,7 @@ HippoCanvas::processMessage(UINT   message,
             return true;
     }
 
-    return HippoAbstractControl::processMessage(message, wParam, lParam);
+    return false;
 }
 
 typedef struct
@@ -781,6 +770,7 @@ clear_control(RegisteredControlItem *citem)
     if (citem->control) {
         citem->control->hide();
         citem->control->setParent(NULL);
+        citem->control->setCanvasItem(NULL);
         citem->control->Release();
         citem->control = NULL;
     }
@@ -801,7 +791,7 @@ update_control(HippoCanvasContextWin   *canvas_win,
     if (new_control) {
         new_control->AddRef();
         new_control->setParent(canvas_win->canvas);
-        new_control->show(false);
+        new_control->setCanvasItem(G_OBJECT(citem->item));
     }
     
     clear_control(citem);
@@ -929,7 +919,7 @@ static void
 canvas_root_request_changed(HippoCanvasItem *root,
                             HippoCanvasContextWin *canvas_win)
 {
-    canvas_win->canvas->queueResize();
+    canvas_win->canvas->markRequestChanged();
 }
 
 static void
@@ -965,4 +955,39 @@ hippo_canvas_context_win_update_pango(HippoCanvasContextWin *context_win,
                                       cairo_t               *cr)
 {
     pango_cairo_update_context(cr, context_win->pango);
+}
+
+static void
+hippo_canvas_context_win_create_controls(HippoCanvasContextWin *context_win)
+{
+    RegisteredControlItem *citem;
+    GSList *link;
+    
+    citem = NULL;
+    for (link = context_win->control_items;
+         link != NULL;
+         link = link->next) {
+        citem = (RegisteredControlItem*) link->data;
+        if (citem->control) {
+            if (!citem->control->create())
+                g_warning("Failed to create canvas control");
+        }
+    }
+}
+
+static void
+hippo_canvas_context_win_show_controls(HippoCanvasContextWin *context_win)
+{
+    RegisteredControlItem *citem;
+    GSList *link;
+    
+    citem = NULL;
+    for (link = context_win->control_items;
+         link != NULL;
+         link = link->next) {
+        citem = (RegisteredControlItem*) link->data;
+        if (citem->control) {
+            citem->control->show(false);
+        }
+    }
 }

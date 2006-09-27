@@ -1137,6 +1137,16 @@ hippo_rectangle_intersect(const HippoRectangle *src1,
     }
 }
 
+gboolean
+hippo_rectangle_equal(const HippoRectangle *r1,
+                      const HippoRectangle *r2)
+{
+    return r1->x == r2->x && 
+        r1->y == r2->y &&
+        r1->width == r2->width &&
+        r1->height == r2->height;
+}
+
 static const char*
 hippo_uri_valid_tests[] = { 
     /* both chat kinds */

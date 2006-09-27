@@ -16,9 +16,6 @@ class HippoCanvas : public HippoAbstractControl {
 public:
     HippoCanvas(); 
 
-    virtual bool create();
-    virtual void show(bool activate);
-
     void setRoot(HippoCanvasItem *item);
     void setScrollable(HippoOrientation orientation,
                        bool value);
@@ -30,11 +27,14 @@ protected:
     virtual int getWidthRequestImpl();
     virtual int getHeightRequestImpl(int forWidth);
 
+    virtual void createChildren();
+    virtual void showChildren();
+
     virtual bool processMessage(UINT   message,
                                 WPARAM wParam,
                                 LPARAM lParam);
 
-    virtual void onSizeChanged();
+    virtual void onSizeAllocated();
 
 private:
     void updateScrollbars();

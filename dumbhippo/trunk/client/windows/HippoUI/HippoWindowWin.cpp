@@ -11,6 +11,7 @@ public:
         setClassName(L"HippoWindow");
         setClassStyle(CS_HREDRAW | CS_VREDRAW);
         setWindowStyle(WS_POPUP); // change to WS_OVERLAPPEDWINDOW if you want resize/maximize etc. controls
+        //setWindowStyle(WS_OVERLAPPEDWINDOW);
         //setExtendedStyle(WS_EX_TOPMOST);
         setTitle(L"Mugshot");
         setResizable(HIPPO_ORIENTATION_VERTICAL, false);
@@ -20,22 +21,21 @@ public:
         contentsControl_->setParent(this);
     }
 
-    virtual void show(bool activate);
-
     void setContents(HippoCanvasItem *item);
     void setVisible(bool visible);
-    void setPosition(int x, int y);
     void getSize(int *x_p, int *y_p);
     void beginResize(HippoSide side);
 
-    virtual bool create();
-    virtual void onSizeChanged();
-
 protected:
-
-    virtual void queueResize();
+    
+    virtual void onSizeAllocated();
+    virtual void onRequestChanged();
+    
     virtual int getWidthRequestImpl();
     virtual int getHeightRequestImpl(int forWidth);
+
+    virtual void createChildren();
+    virtual void showChildren();
 
     bool processMessage(UINT   message,
                         WPARAM wParam,
@@ -268,66 +268,41 @@ HippoWindowImpl::setContents(HippoCanvasItem *item)
     contentsControl_->setRoot(item);
 }
 
-bool
-HippoWindowImpl::create()
+void
+HippoWindowImpl::createChildren()
 {
-    bool result;
-
-    // we need to create the parent window first
-    result = HippoAbstractControl::create();
-
     contentsControl_->create();
-
-    return result;
 }
 
 void
-HippoWindowImpl::show(bool activate)
+HippoWindowImpl::showChildren()
 {
-    create();              // so we can do the resizing
     contentsControl_->show(false);
-    idleResize();          // so we have the right size prior to showing
-    HippoAbstractControl::show(activate);
 }
 
 void
-HippoWindowImpl::queueResize()
+HippoWindowImpl::onRequestChanged()
 {
-    resizeIdle_.add(slot(this, &HippoWindowImpl::idleResize), (G_PRIORITY_DEFAULT_IDLE + G_PRIORITY_LOW) / 2);
+    g_debug("SIZING: adding resize idle %p %s",
+        window_, HippoUStr(getClassName()).c_str());
+
+    // the resizeIdle_ only kicks in if there's no WM_PAINT pending - 
+    // otherwise WM_PAINT arrives before the idle fires, and it will 
+    // call ensureRequestAndAllocation() which makes the resize idle 
+    // a no-op when it later runs after all the painting is over.
+    //resizeIdle_.add(slot(this, &HippoWindowImpl::idleResize), (G_PRIORITY_DEFAULT_IDLE + G_PRIORITY_LOW) / 2);
 }
 
 bool
 HippoWindowImpl::idleResize()
 {
-    //g_debug("idleResize");
-    int w = getWidthRequest();
-    int h = getHeightRequest(w);
+    g_debug("SIZING: idleResize %p %s",
+        window_, HippoUStr(getClassName()).c_str());
 
-    int oldW = getWidth();
-    int oldH = getHeight();
+    // this may be a no-op but will check the flag for whether we 
+    // need to do anything
 
-    int newW, newH;
-
-    if (isHResizable()) {
-        newW = MAX(w, oldW);
-    } else {
-        newW = w;
-    }
-
-    if (isVResizable()) {
-        newH = MAX(h, oldH);
-    } else {
-        newH = h;
-    }
-
-    resize(newW, newH);
-
-    // kind of a lame hack - if we short-circuited the 
-    // size allocate, send it out anyway since a resize
-    // was queued
-    if (newW == oldW && newH == oldH) {
-        onSizeChanged();
-    }
+    ensureRequestAndAllocation();
 
     resizeIdle_.remove();
 
@@ -342,12 +317,6 @@ HippoWindowImpl::setVisible(bool visible)
     } else {
         hide();
     }
-}
-
-void
-HippoWindowImpl::setPosition(int x, int y)
-{
-    move(x, y);
 }
 
 void
@@ -406,20 +375,31 @@ HippoWindowImpl::getHeightRequestImpl(int forWidth)
 }
 
 void
-HippoWindowImpl::onSizeChanged()
+HippoWindowImpl::onSizeAllocated()
 {
-    contentsControl_->resize(getWidth(), getHeight());
+    contentsControl_->sizeAllocate(getWidth(), getHeight());
 }
 
-bool 
+bool
 HippoWindowImpl::processMessage(UINT   message,
                                 WPARAM wParam,
                                 LPARAM lParam)
 {
+    if (HippoAbstractControl::processMessage(message, wParam, lParam)) {
+        return true;
+    }
+
     switch (message) {
         case WM_PAINT:
             RECT region;
             if (GetUpdateRect(window_, &region, true)) {
+
+                g_debug("SIZING: %p paint region %d,%d %dx%d",
+                    window_, region.left, region.top,
+                    region.right - region.left, region.bottom - region.top);
+
+                ensureRequestAndAllocation();
+
                 PAINTSTRUCT paint;
                 HDC hdc = BeginPaint(window_, &paint);
 #if 0
@@ -432,5 +412,5 @@ HippoWindowImpl::processMessage(UINT   message,
             return true;
     }
 
-    return HippoAbstractControl::processMessage(message, wParam, lParam);
+    return false;
 }

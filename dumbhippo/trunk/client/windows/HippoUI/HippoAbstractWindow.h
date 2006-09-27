@@ -6,6 +6,7 @@
 
 #include <HippoMessageHook.h>
 #include <HippoUtil.h>
+#include <hippo/hippo-basics.h>
 
 class HippoUI;
 
@@ -62,20 +63,13 @@ public:
      */
     void setForegroundWindow();
 
-    /**
-     * Move and resize the window to the given size and position
-     * @param x X position. CW_DEAULT means center horizontally
-     * @param y Y position. CW_DEAULT means center vertically
-     * @param width the new width, including window decorations
-     * @param height the new height, including window decorations
-     */
-    void moveResize(int x, int y, int width, int height);
-
-    void move(int x, int y);
-
-    void resize(int width, int height);
-
     void invalidate(int x, int y, int width, int height);
+
+    void getClientArea(HippoRectangle *rect);
+
+    int getX();
+
+    int getY();
 
     int getWidth();
 
@@ -84,6 +78,12 @@ public:
     bool isCreated() { return created_; }
 
     bool isShowing() { return showing_; }
+
+    void setDefaultSize(int width, int height);
+    void setDefaultPosition(int x, int y);
+    void setPosition(int x, int y);
+
+    const HippoBSTR& getClassName() const { return className_; }
 
     ////////////////////////////////////////////////////////////
 
@@ -181,16 +181,20 @@ protected:
 
     virtual void onWindowDestroyed();
 
-    virtual void onSizeChanged();
+    // called for WM_SIZE / WM_MOVE, but *not* for move resizes in general
+    virtual void onMoveResizeMessage(const HippoRectangle *newClientArea);
+
+    DWORD getWindowStyle() const { return windowStyle_; }
+    DWORD getExtendedStyle() const { return extendedStyle_; }
 
     HippoUI* ui_;
     HWND window_;
-    DWORD windowStyle_;
-    DWORD extendedStyle_;
 
-    // private since we're refcounted; subclasses
+    // protected since we're refcounted; subclasses
     // ideally override destroy() instead
     virtual ~HippoAbstractWindow();
+
+    void moveResizeWindow(int x, int y, int width, int height);
 
 private:
     bool useParent_;
@@ -200,6 +204,8 @@ private:
     UINT classStyle_;
     HippoBSTR className_;
     HippoBSTR title_;
+    DWORD windowStyle_;
+    DWORD extendedStyle_;
 
     HINSTANCE instance_;
 
@@ -210,8 +216,7 @@ private:
     int width_;
     int height_;
 
-    unsigned int positionSet_ : 1;
-    unsigned int sizeSet_ : 1;
+    unsigned int defaultPositionSet_ : 1;
 
     unsigned int created_ : 1;
     unsigned int showing_ : 1;
@@ -220,7 +225,8 @@ private:
     bool createWindow(void);
     bool registerClass();
 
-    void syncSize();
+    void convertClientRectToWindowRect(HippoRectangle *rect);
+    void queryCurrentClientRect(HippoRectangle *rect);
 
     static LRESULT CALLBACK windowProc(HWND   window,
                                        UINT   message,

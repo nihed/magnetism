@@ -208,6 +208,8 @@ char*    hippo_format_time_ago             (GTime       now,
 gboolean hippo_rectangle_intersect         (const HippoRectangle *src1,
                                             const HippoRectangle *src2,
                                             HippoRectangle       *dest);
+gboolean hippo_rectangle_equal             (const HippoRectangle *r1,
+                                            const HippoRectangle *r2);
 
 G_END_DECLS
 

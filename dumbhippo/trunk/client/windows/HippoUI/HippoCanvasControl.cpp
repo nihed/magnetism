@@ -181,7 +181,7 @@ hippo_canvas_control_get_property(GObject         *object,
 
 static void
 hippo_canvas_control_set_context(HippoCanvasItem    *item,
-                                HippoCanvasContext *context)
+                                 HippoCanvasContext *context)
 {
     HippoCanvasBox *box = HIPPO_CANVAS_BOX(item);
 
@@ -228,7 +228,7 @@ hippo_canvas_control_allocate(HippoCanvasItem *item,
         hippo_canvas_context_translate_to_widget(box->context, item,
                                                  &control_x, &control_y);
 
-    control->control->moveResize(control_x + x, control_y + y, w, h);
+    control->control->sizeAllocate(control_x + x, control_y + y, w, h);
 }
 
 static void

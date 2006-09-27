@@ -165,6 +165,7 @@ hippo_canvas_box_init(HippoCanvasBox *box)
     box->box_width = -1;
     box->box_height = -1;
     box->background_color_rgba = DEFAULT_BACKGROUND;
+    box->request_changed_since_allocate = TRUE; /* be sure we do at least one allocation */
 }
 
 static void
@@ -1133,6 +1134,15 @@ hippo_canvas_box_allocate(HippoCanvasItem *item,
     box = HIPPO_CANVAS_BOX(item);
     klass = HIPPO_CANVAS_BOX_GET_CLASS(box);
     
+    /* If we haven't emitted request-changed then 
+     * we are allowed to short-circuit an
+     * unchanged allocation
+     */
+    if (!box->request_changed_since_allocate && 
+        (box->allocated_width == allocated_box_width && 
+         box->allocated_height == allocated_box_height))
+        return;
+
     box->allocated_width = allocated_box_width;
     box->allocated_height = allocated_box_height;
     box->request_changed_since_allocate = FALSE;

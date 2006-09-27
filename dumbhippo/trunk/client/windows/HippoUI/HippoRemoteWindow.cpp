@@ -35,7 +35,6 @@ void
 HippoRemoteWindow::navigate(WCHAR *url)
 {
     preNavigate(url);
-    ieWindow_->moveResize(CW_DEFAULT, CW_DEFAULT, 600, 600);
 }
 
 void
@@ -80,7 +79,8 @@ HippoRemoteWindow::showShare(WCHAR *urlToShare, WCHAR *titleOfShare, WCHAR *shar
             
     shareURL.Append(queryString);
     preNavigate(shareURL.m_str);
-    ieWindow_->moveResize(CW_DEFAULT, CW_DEFAULT, 550, 400);
+    if (!ieWindow_->isCreated())
+        ieWindow_->setDefaultSize(550, 400);
     ieWindow_->show();
 }
 
