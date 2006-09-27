@@ -62,7 +62,6 @@ struct _HippoPlatformImplClass {
 
 G_DEFINE_TYPE_WITH_CODE(HippoPlatformImpl, hippo_platform_impl, G_TYPE_OBJECT,
                         G_IMPLEMENT_INTERFACE(HIPPO_TYPE_PLATFORM, hippo_platform_impl_iface_init));
-                       
 
 static void
 hippo_platform_impl_iface_init(HippoPlatformClass *klass)

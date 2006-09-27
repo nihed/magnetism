@@ -8,9 +8,6 @@
 #include <HippoUtil.h>
 #include "HippoAbstractWindow.h"
 
-static const int DEFAULT_WIDTH = 600;
-static const int DEFAULT_HEIGHT = 600;
-
 HIPPO_DEFINE_REFCOUNTING(HippoAbstractWindow)
 
 HippoAbstractWindow::HippoAbstractWindow()
@@ -30,8 +27,8 @@ HippoAbstractWindow::HippoAbstractWindow()
 
     x_ = 0;
     y_ = 0;
-    width_ = DEFAULT_WIDTH;
-    height_ = DEFAULT_HEIGHT;
+    width_ = 0;
+    height_ = 0;
 
     defaultPositionSet_ = false;
 
@@ -213,6 +210,11 @@ HippoAbstractWindow::createWindow(void)
             centerY = (workArea.bottom + workArea.top - getHeight()) / 2;
         }
         
+        g_debug("SIZING: work area %d,%d %dx%d centering window at %d,%d",
+            workArea.left, workArea.top, workArea.right - workArea.left, 
+            workArea.bottom - workArea.top,
+            centerX, centerY);
+
         x_ = centerX;
         y_ = centerY;
     }
@@ -229,6 +231,9 @@ HippoAbstractWindow::createWindow(void)
      * sent right away but we ignore it since we haven't set ourselves
      * as window data.
      */
+    g_debug("SIZING: creating window at window rect %d,%d %dx%d client rect %d,%d %dx%d",
+        rect.x, rect.y, rect.width, rect.height,
+        x_, y_, width_, height_);
 
     window_ = CreateWindowEx(extendedStyle_, className_, title_, windowStyle_,
         rect.x, rect.y, rect.width, rect.height,
@@ -454,11 +459,12 @@ HippoAbstractWindow::setPosition(int x, int y)
 void
 HippoAbstractWindow::moveResizeWindow(int x, int y, int width, int height)
 {
+    x_ = x;
+    y_ = y;
+    width_ = width;
+    height_ = height;
+
     if (window_) {
-        x_ = x;
-        y_ = y;
-        width_ = width;
-        height_ = height;
         HippoRectangle rect;
         getClientArea(&rect);
         convertClientRectToWindowRect(&rect);
@@ -466,7 +472,8 @@ HippoAbstractWindow::moveResizeWindow(int x, int y, int width, int height)
             x, y, width, height, rect.x, rect.y, rect.width, rect.height);
         MoveWindow(window_, rect.x, rect.y, rect.width, rect.height, TRUE);
     } else {
-        g_warning("no-op moveResizeWindow on not-created window");
+        g_debug("SIZING: MoveWindow to %d,%d %dx%d prior to window create",
+            x, y, width, height);
     }
 }
 

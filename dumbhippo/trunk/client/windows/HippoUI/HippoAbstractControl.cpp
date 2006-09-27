@@ -75,6 +75,11 @@ HippoAbstractControl::create()
 {
     bool result;
 
+    if (isCreated())
+        return true;
+
+    ensureRequestAndAllocation(); // get our default size
+
     result = HippoAbstractWindow::create();
 
     createChildren();
@@ -234,7 +239,17 @@ HippoAbstractControl::ensureRequestAndAllocation()
     if (!requestChangedSinceAllocate_)
         return;
 
+    if (insideAllocation_) {
+        g_warning("control %s doing ensureRequestAndAllocation from inside allocation",
+                HippoUStr(getClassName()).c_str());
+    }
+
     if (parent_) {
+        if (insideAllocation_) {
+            g_warning("parent %s is inside allocation when child %s is doing ensureRequestAndAllocation",
+                    HippoUStr(parent_->getClassName()).c_str(), HippoUStr(getClassName()).c_str());
+        }
+
         if (!parent_->requestChangedSinceAllocate_) {
             g_warning("child %s request has been marked changed but parent %s request has not",
                 HippoUStr(getClassName()).c_str(), HippoUStr(parent_->getClassName()).c_str());

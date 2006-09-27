@@ -222,6 +222,9 @@ HippoCanvas::onSizeAllocated()
         vscroll_->sizeAllocate(w - vWidth, 0, vWidth, vHeight);
         if (isShowing())
             vscroll_->show(false);
+    } else {
+        // needs to get an allocation to maintain invariants
+        vscroll_->sizeAllocate(0, 0, 0, 0);
     }
 
     if (hscrollNeeded_) {
@@ -230,6 +233,9 @@ HippoCanvas::onSizeAllocated()
         hscroll_->sizeAllocate(0, h - hHeight, hWidth, hHeight);
         if (isShowing())
             hscroll_->show(false);
+    } else {
+        // needs to get an allocation to maintain invariants
+        hscroll_->sizeAllocate(0, 0, 0, 0);
     }
     
     if (root_ != (HippoCanvasItem*) NULL) {

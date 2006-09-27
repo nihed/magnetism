@@ -100,8 +100,8 @@ update_for_screen_info (StackManager    *manager,
     gboolean is_west;
     gboolean is_north;
 
-#if 0
-    g_debug("Monitor %d,%d %dx%d icon %d,%d %dx%d orientation %d",
+#if 1
+    g_debug("SIZING: work area %d,%d %dx%d icon %d,%d %dx%d orientation %d",
         monitor->x, monitor->y, monitor->width,  monitor->height,
         icon->x, icon->y, icon->width, icon->height, 
         icon_orientation);
