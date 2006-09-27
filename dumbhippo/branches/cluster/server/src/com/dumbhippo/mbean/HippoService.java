@@ -15,13 +15,9 @@ import org.slf4j.Logger;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.live.LiveState;
 import com.dumbhippo.persistence.SchemaUpdater;
-import com.dumbhippo.server.Configuration;
-import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.impl.AbstractCacheBean;
-import com.dumbhippo.server.impl.FeedUpdaterBean;
 import com.dumbhippo.server.impl.MusicSystemInternalBean;
 import com.dumbhippo.server.impl.TransactionRunnerBean;
-import com.dumbhippo.server.util.EJBUtil;
 
 // The point of this extremely simple MBean is to get notification
 // when our application is loaded and unloaded; in particular, we
@@ -31,15 +27,10 @@ import com.dumbhippo.server.util.EJBUtil;
 public class HippoService extends ServiceMBeanSupport implements HippoServiceMBean {
 	private static final Logger logger = GlobalSetup.getLogger(HippoService.class);
 	
-	private Configuration config;
-	
 	@Override
 	protected void startService() {
 		logger.info("Starting HippoService MBean");
-		config = EJBUtil.defaultLookup(Configuration.class);
 		SchemaUpdater.update();
-		if (!config.getProperty(HippoProperty.SLAVE_MODE).equals("yes"))
-			FeedUpdaterBean.startup();
 		
 		/* We need to register this context's class loader in order for the JBoss TreeCache
 		 * to be able to deserialize enumeration values r ecieved from other nodes.  
@@ -82,8 +73,6 @@ public class HippoService extends ServiceMBeanSupport implements HippoServiceMBe
 		LiveState.getInstance().shutdown();
 		AbstractCacheBean.shutdown();
 		MusicSystemInternalBean.shutdown();
-		if (!config.getProperty(HippoProperty.SLAVE_MODE).equals("yes"))		
-			FeedUpdaterBean.shutdown();
 		TransactionRunnerBean.shutdown();
    }
 }

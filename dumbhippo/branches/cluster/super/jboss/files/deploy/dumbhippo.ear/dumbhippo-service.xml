@@ -51,4 +51,21 @@
         <attribute name="TargetStartMethod">startSingleton</attribute>
         <attribute name="TargetStopMethod">stopSingleton</attribute>
     </mbean>
+
+    <!-- The cluster singleton service for updating feeds -->
+    <mbean code="com.dumbhippo.mbean.FeedUpdater" name="dumbhippo.com:service=FeedUpdater">
+    	<!-- Initialize this service after our session MBeans are initialized -->
+    	<depends>jboss.j2ee:service=EJB3,module=dumbhippo.ejb3</depends>
+    </mbean>
+
+    <mbean code="org.jboss.ha.singleton.HASingletonController" name="dumbhippo.com:service=FeedUpdater-HASingletonController">
+        <depends optional-attribute-name="ClusterPartition" proxy-type="attribute">
+            jboss:service=${jboss.partition.name:DefaultPartition}
+        </depends>
+        <depends optional-attribute-name="TargetName">
+            dumbhippo.com:service=FeedUpdater
+        </depends>
+        <attribute name="TargetStartMethod">startSingleton</attribute>
+        <attribute name="TargetStopMethod">stopSingleton</attribute>
+    </mbean>
 </server>

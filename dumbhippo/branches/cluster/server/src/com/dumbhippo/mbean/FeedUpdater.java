@@ -1,26 +1,23 @@
-package com.dumbhippo.server.impl;
+package com.dumbhippo.mbean;
 
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import javax.ejb.Stateless;
-
+import org.jboss.system.ServiceMBeanSupport;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.ThreadUtils;
 import com.dumbhippo.persistence.Feed;
 import com.dumbhippo.server.FeedSystem;
-import com.dumbhippo.server.FeedUpdater;
 import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.XmlMethodException;
 import com.dumbhippo.server.util.EJBUtil;
 
-@Stateless
-public class FeedUpdaterBean implements FeedUpdater {
+public class FeedUpdater extends ServiceMBeanSupport implements FeedUpdaterMBean {
 	@SuppressWarnings("unused")
-	private static final Logger logger = GlobalSetup.getLogger(FeedUpdaterBean.class);
+	private static final Logger logger = GlobalSetup.getLogger(FeedUpdater.class);
 	
 	// How old the feed data can be before we refetch
 	static final long FEED_UPDATE_TIME = 10 * 60 * 1000; // 10 minutes
@@ -30,27 +27,28 @@ public class FeedUpdaterBean implements FeedUpdater {
 	// an entire additional cycle
 	static final long UPDATE_THREAD_TIME = FEED_UPDATE_TIME / 2;
 	
-	public synchronized static void startup() {
-		logger.info("Starting FeedUpdater");
-		FeedUpdater.getInstance().start();
+	public void startSingleton() {
+		logger.info("Starting FeedUpdater singleton");
+		FeedUpdaterThread.getInstance().start();
 	}
 	
-	public synchronized static void shutdown() {
-		FeedUpdater.getInstance().shutdown();
+	public void stopSingleton() {
+		logger.info("Stopping FeedUpdater singleton");
+		FeedUpdaterThread.getInstance().shutdown();
 	}
 
-	private static class FeedUpdater extends Thread {
-		private static FeedUpdater instance;
+	private static class FeedUpdaterThread extends Thread {
+		private static FeedUpdaterThread instance;
 		private int generation;
 		
-		static synchronized FeedUpdater getInstance() {
+		static synchronized FeedUpdaterThread getInstance() {
 			if (instance == null)
-				instance = new FeedUpdater();
+				instance = new FeedUpdaterThread();
 			
 			return instance;
 		}
 		
-		public FeedUpdater() {
+		public FeedUpdaterThread() {
 			super("FeedUpdater");
 		}
 		
