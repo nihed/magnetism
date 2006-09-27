@@ -240,11 +240,21 @@ HippoAbstractWindow::createWindow(void)
     }
 
     {
+        // right now this will happen with any WS_OVERLAPPEDWINDOW since 
+        // AdjustWindowRectEx doesn't work on those (or conceivably because
+        // of a bug in our code) ... if it's not our bug, the simplest
+        // solution is probably to just remove the warning here, though
+        // it's a bit gross
         HippoRectangle actual;
         queryCurrentClientRect(&actual);
         if (!hippo_rectangle_equal(&rect, &actual)) {
             g_warning("window class %s not created with expected dimensions",
                 HippoUStr(getClassName()).c_str());
+            // Fix up and try to continue
+            x_ = actual.x;
+            y_ = actual.y;
+            width_ = actual.width;
+            height_ = actual.height;
         }
     }
 

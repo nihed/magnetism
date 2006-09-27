@@ -290,7 +290,7 @@ HippoWindowImpl::onRequestChanged()
     // otherwise WM_PAINT arrives before the idle fires, and it will 
     // call ensureRequestAndAllocation() which makes the resize idle 
     // a no-op when it later runs after all the painting is over.
-    //resizeIdle_.add(slot(this, &HippoWindowImpl::idleResize), (G_PRIORITY_DEFAULT_IDLE + G_PRIORITY_LOW) / 2);
+    resizeIdle_.add(slot(this, &HippoWindowImpl::idleResize), (G_PRIORITY_DEFAULT_IDLE + G_PRIORITY_LOW) / 2);
 }
 
 bool

@@ -96,8 +96,8 @@ HippoAbstractControl::show(bool activate)
         return;
     }
     ensureRequestAndAllocation();         // get our size right
-        HippoAbstractWindow::show(activate);  // actually show
     showChildren();                       // show our children
+    HippoAbstractWindow::show(activate);  // actually show
 }
 
 void
