@@ -5,6 +5,7 @@
 #include <hippo/hippo-canvas-image.h>
 #include <hippo/hippo-canvas-text.h>
 #include <hippo/hippo-canvas-link.h>
+#include <hippo/hippo-canvas-gradient.h>
 
 static void      hippo_canvas_base_init                (HippoCanvasBase       *base);
 static void      hippo_canvas_base_class_init          (HippoCanvasBaseClass  *klass);
@@ -55,27 +56,79 @@ hippo_canvas_base_init(HippoCanvasBase *base)
 {
     HippoCanvasItem *item;
     HippoCanvasBox *box;
-
-    HIPPO_CANVAS_BOX(base)->background_color_rgba = 0xa555bdff;
-    HIPPO_CANVAS_BOX(base)->padding_left = 4;
-    HIPPO_CANVAS_BOX(base)->padding_right = 4;
-    HIPPO_CANVAS_BOX(base)->padding_top = 4;
-    HIPPO_CANVAS_BOX(base)->padding_bottom = 4;
     
     /* Create top bar */
     
-    box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
+    box = g_object_new(HIPPO_TYPE_CANVAS_IMAGE,
                        "orientation", HIPPO_ORIENTATION_HORIZONTAL,
+                       "image-name", "bar_middle", /* tile this as background */
+                       NULL);
+    hippo_canvas_box_append(HIPPO_CANVAS_BOX(base),
+                            HIPPO_CANVAS_ITEM(box), 0);
+
+    item = g_object_new(HIPPO_TYPE_CANVAS_IMAGE,
+                        "image-name", "mugshotstacker",
+                        "xalign", HIPPO_ALIGNMENT_START,
+                        NULL);
+    hippo_canvas_box_append(box, item, 0);
+
+    item = g_object_new(HIPPO_TYPE_CANVAS_IMAGE,
+                        "image-name", "bar_x",
+                        "xalign", HIPPO_ALIGNMENT_END,
+                        NULL);
+    hippo_canvas_box_append(box, item, HIPPO_PACK_END);
+
+    item = g_object_new(HIPPO_TYPE_CANVAS_IMAGE,
+                        "image-name", "bar_pipe",
+                        "xalign", HIPPO_ALIGNMENT_END,
+                        NULL);
+    hippo_canvas_box_append(box, item, HIPPO_PACK_END);
+    
+    item = g_object_new(HIPPO_TYPE_CANVAS_IMAGE,
+                        "image-name", "hush",
+                        "xalign", HIPPO_ALIGNMENT_END,
+                        NULL);
+    hippo_canvas_box_append(box, item, HIPPO_PACK_END);
+
+    item = g_object_new(HIPPO_TYPE_CANVAS_IMAGE,
+                        "image-name", "bar_pipe",
+                        "xalign", HIPPO_ALIGNMENT_END,
+                        NULL);
+    hippo_canvas_box_append(box, item, HIPPO_PACK_END);
+    
+    item = g_object_new(HIPPO_TYPE_CANVAS_IMAGE,
+                        "image-name", "home",
+                        "xalign", HIPPO_ALIGNMENT_END,
+                        NULL);
+    hippo_canvas_box_append(box, item, HIPPO_PACK_END);
+
+    item = g_object_new(HIPPO_TYPE_CANVAS_IMAGE,
+                        "image-name", "bar_pipe",
+                        "xalign", HIPPO_ALIGNMENT_END,
+                        NULL);
+    hippo_canvas_box_append(box, item, HIPPO_PACK_END);
+
+    
+    /* Create "find" area */
+    box = g_object_new(HIPPO_TYPE_CANVAS_GRADIENT,
+                       "orientation", HIPPO_ORIENTATION_HORIZONTAL,
+                       "start-color", 0xb47accff,
+                       "end-color", 0xa35abfff,
                        NULL);
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(base),
                             HIPPO_CANVAS_ITEM(box), HIPPO_PACK_EXPAND);
 
-    item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
-                        "text", "MUGSHOT",
+    item = g_object_new(HIPPO_TYPE_CANVAS_IMAGE,
+                        "image-name", "find",
                         "xalign", HIPPO_ALIGNMENT_START,
-                        "color", 0xffffffff,
                         NULL);
     hippo_canvas_box_append(box, item, 0);
+
+    item = g_object_new(HIPPO_TYPE_CANVAS_IMAGE,
+                        "image-name", "search_x",
+                        "xalign", HIPPO_ALIGNMENT_START,
+                        NULL);
+    hippo_canvas_box_append(box, item, 0);    
 }
 
 static HippoCanvasItemClass *item_parent_class;

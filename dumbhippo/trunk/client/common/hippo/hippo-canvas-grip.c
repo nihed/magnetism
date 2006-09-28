@@ -3,7 +3,7 @@
 #include <string.h>
 #include <cairo.h>
 #include "hippo-canvas-grip.h"
-#include <hippo/hippo-canvas-box.h>
+#include <hippo/hippo-canvas-image.h>
 
 static void      hippo_canvas_grip_init                (HippoCanvasGrip       *grip);
 static void      hippo_canvas_grip_class_init          (HippoCanvasGripClass  *klass);
@@ -34,13 +34,13 @@ static int  hippo_canvas_grip_get_content_height_request (HippoCanvasBox *box,
 
 
 struct _HippoCanvasGrip {
-    HippoCanvasBox box;
+    HippoCanvasImage image;
     HippoSide side;
     guint prelighted : 1;
 };
 
 struct _HippoCanvasGripClass {
-    HippoCanvasBoxClass parent_class;
+    HippoCanvasImageClass parent_class;
 };
 
 enum {
@@ -55,13 +55,21 @@ enum {
     PROP_SIDE
 };
 
-G_DEFINE_TYPE_WITH_CODE(HippoCanvasGrip, hippo_canvas_grip, HIPPO_TYPE_CANVAS_BOX,
+G_DEFINE_TYPE_WITH_CODE(HippoCanvasGrip, hippo_canvas_grip, HIPPO_TYPE_CANVAS_IMAGE,
                         G_IMPLEMENT_INTERFACE(HIPPO_TYPE_CANVAS_ITEM, hippo_canvas_grip_iface_init));
 
 static void
 hippo_canvas_grip_init(HippoCanvasGrip *grip)
-{
+{    
     grip->side = HIPPO_SIDE_TOP;
+    g_object_set(G_OBJECT(grip),
+                 "image-name", "lid",
+                 "xalign", HIPPO_ALIGNMENT_CENTER,
+                 "yalign", HIPPO_ALIGNMENT_CENTER,
+                 "background-color", 0xecececff,
+                 "border-top", 1, /* matches the default side of TOP */
+                 "border-color", 0xbebebeff,
+                 NULL);
 }
 
 static HippoCanvasItemClass *item_parent_class;
@@ -133,6 +141,14 @@ hippo_canvas_grip_set_property(GObject         *object,
             HippoSide side = g_value_get_int(value);
             if (side != grip->side) {
                 grip->side = side;
+
+                g_object_set(G_OBJECT(grip),
+                             "border-left", side == HIPPO_SIDE_LEFT ? 1 : 0,
+                             "border-right", side == HIPPO_SIDE_RIGHT ? 1 : 0,
+                             "border-top", side == HIPPO_SIDE_TOP ? 1 : 0,
+                             "border-bottom", side == HIPPO_SIDE_BOTTOM ? 1 : 0,
+                             NULL);
+                
                 hippo_canvas_item_emit_request_changed(HIPPO_CANVAS_ITEM(grip));
             }
         }
@@ -188,6 +204,9 @@ hippo_canvas_grip_paint_below_children(HippoCanvasBox  *box,
                                        cairo_t         *cr,
                                        HippoRectangle  *damaged_box)
 {
+    HIPPO_CANVAS_BOX_CLASS(hippo_canvas_grip_parent_class)->paint_below_children(box, cr, damaged_box);
+    
+#if 0
     HippoCanvasGrip *grip = HIPPO_CANVAS_GRIP(box);
     int x, y, w, h;
 
@@ -208,6 +227,7 @@ hippo_canvas_grip_paint_below_children(HippoCanvasBox  *box,
                                                                      HIPPO_STOCK_COLOR_BG_NORMAL));
     
     cairo_paint(cr);
+#endif
 }
 
 static int

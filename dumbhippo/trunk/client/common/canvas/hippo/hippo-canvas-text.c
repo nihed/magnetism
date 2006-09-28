@@ -3,6 +3,8 @@
 #include "hippo-canvas-text.h"
 #include "hippo-canvas-box.h"
 #include <pango/pangocairo.h>
+#include <stdlib.h>
+#include <string.h>
 
 static void      hippo_canvas_text_init                (HippoCanvasText       *text);
 static void      hippo_canvas_text_class_init          (HippoCanvasTextClass  *klass);
@@ -180,6 +182,47 @@ hippo_canvas_text_new(void)
     return HIPPO_CANVAS_ITEM(text);
 }
 
+static int
+parse_int32(const char *s)
+{
+    char *end;
+    long v;
+    
+    end = NULL;
+    v = strtol(s, &end, 10);
+
+    if (end == NULL) {
+        g_warning("Failed to parse '%s' as 32-bit integer", s);
+        return 0;
+    }
+
+    return v;
+}
+
+/* Latest pango supports "NNpx" sizes, but FC5 Pango (1.12) does not */
+static int
+parse_absolute_size_hack(const char *s)
+{
+    const char *p;
+    const char *number;
+    
+    p = strstr(s, "px");
+    if (p == NULL)
+        return -1;
+
+    number = p;
+    --number;
+    while (number > s) {
+        if (!g_ascii_isdigit(*number)) {
+            ++number;
+            break;
+        }
+        --number;
+    }
+
+    return parse_int32(number);
+}
+
 static void
 hippo_canvas_text_set_property(GObject         *object,
                                guint            prop_id,
@@ -215,12 +258,30 @@ hippo_canvas_text_set_property(GObject         *object,
         {
             const char *s;
             PangoFontDescription *desc;
+            int absolute;
             s = g_value_get_string(value);
             if (s != NULL) {
-                desc = pango_font_description_from_string(s);
+                char *no_px = NULL;
+                absolute = parse_absolute_size_hack(s);
+                if (absolute >= 0) {
+                    // get the "px" out of the string
+                    GString *no_px_g = g_string_new(NULL);
+                    const char *p;
+                    p = strstr(s, "px");
+                    g_assert(p != NULL);
+                    g_string_append_len(no_px_g, s, p - s);
+                    g_string_append_len(no_px_g, p + 2, strlen(p + 2));
+                    no_px = g_string_free(no_px_g, FALSE);
+                }
+                desc = pango_font_description_from_string(no_px);
+                g_free(no_px);
                 if (desc == NULL) {
                     g_warning("Failed to parse font description string '%s'", s);
                 } else {
+                    if (absolute >= 0) {
+                        pango_font_description_set_absolute_size(desc, absolute * PANGO_SCALE);
+                    }
+                    
                     if ((pango_font_description_get_set_fields(desc) & PANGO_FONT_MASK_SIZE) != 0 &&
                         pango_font_description_get_size(desc) <= 0) {
                         g_warning("font size set to 0, not going to work well");

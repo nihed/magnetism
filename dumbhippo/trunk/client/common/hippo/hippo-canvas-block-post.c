@@ -36,6 +36,8 @@ static void hippo_canvas_block_post_set_block       (HippoCanvasBlock *canvas_bl
 
 static void hippo_canvas_block_post_title_activated (HippoCanvasBlock *canvas_block);
 
+static void hippo_canvas_block_post_clicked_count_changed (HippoCanvasBlock *canvas_block);
+
 /* Our own methods */
 static void hippo_canvas_block_post_set_post (HippoCanvasBlockPost *canvas_block_post,
                                               HippoPost            *post);
@@ -44,6 +46,7 @@ struct _HippoCanvasBlockPost {
     HippoCanvasBlock canvas_block;
     HippoPost *post;
     HippoCanvasItem *description_item;
+    HippoCanvasItem *clicked_count_item;
 };
 
 struct _HippoCanvasBlockPostClass {
@@ -71,19 +74,55 @@ static void
 hippo_canvas_block_post_init(HippoCanvasBlockPost *block_post)
 {
     HippoCanvasBlock *block = HIPPO_CANVAS_BLOCK(block_post);
-
+    HippoCanvasBox *box;
+    HippoCanvasItem *item;
+    HippoCanvasBox *details_box;
+    
     block->required_type = HIPPO_BLOCK_TYPE_POST;
 
-    hippo_canvas_block_set_heading(block, _("Web Swarm"));
+    hippo_canvas_block_set_heading(block, _("Web Swarm: "));
 
+    box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
+                       NULL);
+    
     block_post->description_item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
                                                 "size-mode", HIPPO_CANVAS_SIZE_WRAP_WORD,
                                                 "xalign", HIPPO_ALIGNMENT_START,
                                                 "yalign", HIPPO_ALIGNMENT_START,
-                                                "font-scale", PANGO_SCALE_SMALL,
+                                                "font", "11px",
                                                 "text", NULL,
+                                                "border-top", 4,
+                                                "border-bottom", 4,
                                                 NULL);
-    hippo_canvas_block_set_content(block, block_post->description_item);
+
+    hippo_canvas_box_append(box, block_post->description_item, 0);
+
+    details_box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
+                               "orientation", HIPPO_ORIENTATION_HORIZONTAL,
+                               NULL);
+    hippo_canvas_box_append(box, HIPPO_CANVAS_ITEM(details_box), 0);
+    
+    block_post->clicked_count_item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
+                                                  "font", "11px",
+                                                  "text", NULL,
+                                                  "color", 0x666666ff,
+                                                  NULL);
+    hippo_canvas_box_append(details_box, block_post->clicked_count_item, 0);
+    
+    item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
+                        "font", "11px",
+                        "text", " | ",
+                        "color", 0x666666ff,
+                        NULL);
+    hippo_canvas_box_append(details_box, item, 0);
+
+    item = g_object_new(HIPPO_TYPE_CANVAS_LINK,
+                        "font", "11px",
+                        "text", "Add to Faves",
+                        NULL);
+    hippo_canvas_box_append(details_box, item, 0);
+    
+    hippo_canvas_block_set_content(block, HIPPO_CANVAS_ITEM(box));
 }
 
 static HippoCanvasItemClass *item_parent_class;
@@ -110,6 +149,7 @@ hippo_canvas_block_post_class_init(HippoCanvasBlockPostClass *klass)
 
     canvas_block_class->set_block = hippo_canvas_block_post_set_block;
     canvas_block_class->title_activated = hippo_canvas_block_post_title_activated;
+    canvas_block_class->clicked_count_changed = hippo_canvas_block_post_clicked_count_changed;
 }
 
 static void
@@ -323,4 +363,18 @@ hippo_canvas_block_post_title_activated(HippoCanvasBlock *canvas_block)
         return;
     
     hippo_actions_visit_post(actions, post);
+}
+
+static void
+hippo_canvas_block_post_clicked_count_changed (HippoCanvasBlock *canvas_block)
+{
+    HippoCanvasBlockPost *canvas_block_post = HIPPO_CANVAS_BLOCK_POST(canvas_block);
+    char *s;
+    
+    s = g_strdup_printf(_("%d views"), hippo_block_get_clicked_count(canvas_block->block));
+    
+    g_object_set(G_OBJECT(canvas_block_post->clicked_count_item),
+                 "text", s,
+                 NULL);
+    g_free(s);
 }

@@ -49,6 +49,7 @@ EMBEDDED_IMAGES=				\
 	$(EMBEDDEDIMAGEDIR)/bar_pipe.png	\
 	$(EMBEDDEDIMAGEDIR)/bar_x2.png		\
 	$(EMBEDDEDIMAGEDIR)/bar_x.png		\
+	$(EMBEDDEDIMAGEDIR)/blue_x.png		\
 	$(EMBEDDEDIMAGEDIR)/find.png		\
 	$(EMBEDDEDIMAGEDIR)/home2.png		\
 	$(EMBEDDEDIMAGEDIR)/home.png		\
@@ -56,6 +57,7 @@ EMBEDDED_IMAGES=				\
 	$(EMBEDDEDIMAGEDIR)/hush.png		\
 	$(EMBEDDEDIMAGEDIR)/lid.png		\
 	$(EMBEDDEDIMAGEDIR)/mugshotstacker.png	\
+	$(EMBEDDEDIMAGEDIR)/nophoto.png		\
 	$(EMBEDDEDIMAGEDIR)/photo_icon.png	\
 	$(EMBEDDEDIMAGEDIR)/search_x.png	\
 	$(EMBEDDEDIMAGEDIR)/unhush2.png		\

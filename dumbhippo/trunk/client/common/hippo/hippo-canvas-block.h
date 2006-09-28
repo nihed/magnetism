@@ -29,7 +29,6 @@ struct _HippoCanvasBlock {
     HippoCanvasItem *age_item;
     HippoCanvasItem *heading_text_item;
     HippoCanvasItem *title_link_item;
-    HippoCanvasItem *clicked_count_item;
     HippoCanvasItem *content_container_item;
     HippoCanvasItem *headshot_item;
     HippoCanvasItem *name_item;
@@ -41,6 +40,8 @@ struct _HippoCanvasBlockClass {
     void (* set_block) (HippoCanvasBlock *canvas_block,
                         HippoBlock       *block);
     void (* title_activated) (HippoCanvasBlock *canvas_block);
+
+    void (* clicked_count_changed) (HippoCanvasBlock *canvas_block);
 };
 
 GType        	 hippo_canvas_block_get_type    (void) G_GNUC_CONST;

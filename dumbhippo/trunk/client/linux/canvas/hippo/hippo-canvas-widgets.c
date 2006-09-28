@@ -41,9 +41,14 @@ hippo_canvas_scrollbars_new(void)
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(widget),
                                    GTK_POLICY_AUTOMATIC,
                                    GTK_POLICY_AUTOMATIC);
+    gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(widget),
+                                        GTK_SHADOW_NONE);
     canvas = hippo_canvas_new();
     gtk_widget_show(canvas);
     gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(widget), canvas);
+
+    gtk_viewport_set_shadow_type(GTK_VIEWPORT(gtk_bin_get_child(GTK_BIN(widget))),
+                                 GTK_SHADOW_NONE);
     
     return g_object_new(HIPPO_TYPE_CANVAS_SCROLLBARS,
                         "widget", widget,

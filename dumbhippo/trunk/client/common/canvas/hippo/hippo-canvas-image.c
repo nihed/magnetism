@@ -312,6 +312,10 @@ hippo_canvas_image_paint_below_children(HippoCanvasBox  *box,
 
     cairo_rectangle(cr, x, y, w, h);
     cairo_clip(cr);
+
+    /* FIXME I think we tile then scale, but we should scale then tile.
+     * This results in drawing the wrong thing with ALIGNMENT_END at least.
+     */
     
     cairo_set_source_surface(cr, image->surface, x, y);
     /* tile */

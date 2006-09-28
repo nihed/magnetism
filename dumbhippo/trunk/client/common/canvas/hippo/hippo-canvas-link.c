@@ -31,7 +31,7 @@ enum {
 };
 #endif
 
-#define DEFAULT_FOREGROUND 0x0000ffff
+#define DEFAULT_FOREGROUND 0x0033ffff
 
 G_DEFINE_TYPE_WITH_CODE(HippoCanvasLink, hippo_canvas_link, HIPPO_TYPE_CANVAS_TEXT,
                         G_IMPLEMENT_INTERFACE(HIPPO_TYPE_CANVAS_ITEM, hippo_canvas_link_iface_init));

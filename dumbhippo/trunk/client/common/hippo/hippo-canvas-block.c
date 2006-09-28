@@ -69,77 +69,74 @@ hippo_canvas_block_init(HippoCanvasBlock *block)
     HippoCanvasBox *left_column;
     HippoCanvasBox *right_column;
 
-
-    HIPPO_CANVAS_BOX(block)->background_color_rgba = 0xffffffff;
-    
-    /* Create top bar */
-    
-    box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
-                       "orientation", HIPPO_ORIENTATION_HORIZONTAL,
-                       "background-color", 0xf76d18ff,
-                       "padding", 4,
-                       NULL);
-    hippo_canvas_box_append(HIPPO_CANVAS_BOX(block),
-                            HIPPO_CANVAS_ITEM(box), 0);
-
-    block->heading_text_item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
-                                            "text", NULL,
-                                            "color", 0xffffffff,
-                                            "xalign", HIPPO_ALIGNMENT_START,
-                                            NULL);
-    hippo_canvas_box_append(box, block->heading_text_item, 0);
-
-    item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
-                        "text", "[\\/]",
-                        "color", 0xffffffff,
-                        NULL);
-    hippo_canvas_box_append(box, item, HIPPO_PACK_END);
-    
-    item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
-                        "text", "[X]",
-                        "color", 0xffffffff,
-                        NULL);
-    hippo_canvas_box_append(box, item, HIPPO_PACK_END);
-
-    
-    /* Create left and right columns */
+    HIPPO_CANVAS_BOX(block)->border_left = 1;
+    HIPPO_CANVAS_BOX(block)->border_right = 1;
+    HIPPO_CANVAS_BOX(block)->border_top = 1;
+    HIPPO_CANVAS_BOX(block)->border_bottom = 1;
+    HIPPO_CANVAS_BOX(block)->border_color_rgba = 0xffffffff;
     
     box = g_object_new(HIPPO_TYPE_CANVAS_GRADIENT,
                        "orientation", HIPPO_ORIENTATION_HORIZONTAL,
-                       "start-color", 0xffc7adff,
-                       "end-color", 0xffc7ad00,
+                       "start-color", 0xf3f3f3ff,
+                       "end-color", 0xdededeff,
                        "padding", 4,
                        NULL);
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(block),
                             HIPPO_CANVAS_ITEM(box), HIPPO_PACK_EXPAND);
 
+    /* Create left column for title/description */
+    
     left_column = g_object_new(HIPPO_TYPE_CANVAS_BOX,
                                "orientation", HIPPO_ORIENTATION_VERTICAL,
                                "xalign", HIPPO_ALIGNMENT_FILL,
                                "yalign", HIPPO_ALIGNMENT_START,
                                NULL);
     hippo_canvas_box_append(box, HIPPO_CANVAS_ITEM(left_column), HIPPO_PACK_EXPAND);
+
+    /* Create photo */
+    block->headshot_item = g_object_new(HIPPO_TYPE_CANVAS_ENTITY_PHOTO,
+                                        "scale-width", 30,
+                                        "scale-height", 30,
+                                        "xalign", HIPPO_ALIGNMENT_END,
+                                        "yalign", HIPPO_ALIGNMENT_START,
+                                        NULL);
+    hippo_canvas_box_append(box, block->headshot_item, HIPPO_PACK_END);
+
+    /* create right column for from/stats */
     
     right_column = g_object_new(HIPPO_TYPE_CANVAS_BOX,
                                 "orientation", HIPPO_ORIENTATION_VERTICAL,
                                 "xalign", HIPPO_ALIGNMENT_FILL,                                
                                 "yalign", HIPPO_ALIGNMENT_START,
                                 "padding-left", 8,
-                               NULL);
+                                "padding-right", 6,
+                                NULL);
     hippo_canvas_box_append(box, HIPPO_CANVAS_ITEM(right_column), HIPPO_PACK_END);
 
-
     /* Fill in left column */
+
+    box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
+                       "orientation", HIPPO_ORIENTATION_HORIZONTAL,
+                       NULL);
+    hippo_canvas_box_append(left_column, HIPPO_CANVAS_ITEM(box), 0);
     
+    block->heading_text_item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
+                                            "text", NULL,
+                                            "color", 0x000000ff,
+                                            "font", "Bold 12px",
+                                            "xalign", HIPPO_ALIGNMENT_START,
+                                            "yalign", HIPPO_ALIGNMENT_START,
+                                            NULL);
+    hippo_canvas_box_append(box, block->heading_text_item, 0);
     
     block->title_link_item = g_object_new(HIPPO_TYPE_CANVAS_LINK,
                                           "size-mode", HIPPO_CANVAS_SIZE_ELLIPSIZE_END,
                                           "xalign", HIPPO_ALIGNMENT_START,
                                           "yalign", HIPPO_ALIGNMENT_START,
-                                          "font", "Bold",
+                                          "font", "Bold 12px",
                                           "text", NULL,
                                           NULL);
-    hippo_canvas_box_append(left_column, block->title_link_item, 0);
+    hippo_canvas_box_append(box, block->title_link_item, HIPPO_PACK_EXPAND);
 
     g_signal_connect(G_OBJECT(block->title_link_item), "activated",
                      G_CALLBACK(on_title_activated), block);
@@ -158,31 +155,22 @@ hippo_canvas_block_init(HippoCanvasBlock *block)
                        "xalign", HIPPO_ALIGNMENT_FILL,
                        "yalign", HIPPO_ALIGNMENT_START,
                        NULL);
-    hippo_canvas_box_append(right_column, HIPPO_CANVAS_ITEM(box), HIPPO_PACK_EXPAND);
-    
-    block->headshot_item = g_object_new(HIPPO_TYPE_CANVAS_ENTITY_PHOTO,
-                                        "scale-width", 15,
-                                        "scale-height", 15,
-                                        "yalign", HIPPO_ALIGNMENT_START,
-                                        "border", 1,
-                                        "border-color", 0xffffffff,
-                                        NULL);
-    hippo_canvas_box_append(box, block->headshot_item, HIPPO_PACK_END);
+    hippo_canvas_box_append(right_column, HIPPO_CANVAS_ITEM(box), HIPPO_PACK_EXPAND);    
     
     block->name_item = g_object_new(HIPPO_TYPE_CANVAS_ENTITY_NAME,
-                                    "font-scale", PANGO_SCALE_SMALL,
-                                    "font", "Italic",
+                                    "font", "Italic 12px",
                                     "xalign", HIPPO_ALIGNMENT_FILL,
                                     "yalign", HIPPO_ALIGNMENT_START,
                                     "border-right", 8,
+                                    "color", 0x666666ff,
                                     NULL);
     hippo_canvas_box_append(box, block->name_item, HIPPO_PACK_END | HIPPO_PACK_EXPAND);
 
     item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
-                        "font-scale", PANGO_SCALE_SMALL,
-                        "font", "Italic",
+                        "font", "Italic 12px",
                         "text", "from ",
                         "yalign", HIPPO_ALIGNMENT_START,
+                        "color", 0x666666ff,
                         NULL);
     hippo_canvas_box_append(box, item, HIPPO_PACK_END);
     
@@ -192,23 +180,23 @@ hippo_canvas_block_init(HippoCanvasBlock *block)
                        "yalign", HIPPO_ALIGNMENT_START,
                        NULL);
     hippo_canvas_box_append(right_column, HIPPO_CANVAS_ITEM(box), 0);
-
-
-    block->clicked_count_item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
-                                             "font-scale", PANGO_SCALE_SMALL,
-                                             "text", NULL,
-                                             NULL);
-    hippo_canvas_box_append(box, block->clicked_count_item, HIPPO_PACK_END);
-
+    
+    item = g_object_new(HIPPO_TYPE_CANVAS_LINK,
+                        "font", "11px",
+                        "text", "Hush",
+                        NULL);
+    hippo_canvas_box_append(box, item, HIPPO_PACK_END);
+    
     item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
-                        "font-scale", PANGO_SCALE_SMALL,
+                        "font", "11px",
                         "text", " | ",
+                        "color", 0x666666ff,
                         NULL);
     hippo_canvas_box_append(box, item, HIPPO_PACK_END);
 
-    
     block->age_item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
-                                   "font-scale", PANGO_SCALE_SMALL,
+                                   "font", "11px",
+                                   "color", 0x666666ff,
                                    NULL);
     hippo_canvas_box_append(box, block->age_item, HIPPO_PACK_END);
 }
@@ -384,14 +372,11 @@ on_block_clicked_count_changed(HippoBlock *block,
                                void       *data)
 {
     HippoCanvasBlock *canvas_block = HIPPO_CANVAS_BLOCK(data);
-    char *s;
+    HippoCanvasBlockClass *klass;
 
-    s = g_strdup_printf(_("%d views"), hippo_block_get_clicked_count(block));
-    
-    g_object_set(G_OBJECT(canvas_block->clicked_count_item),
-                 "text", s,
-                 NULL);
-    g_free(s);
+    klass = HIPPO_CANVAS_BLOCK_GET_CLASS(canvas_block);
+    if (*klass->clicked_count_changed)
+        (* klass->clicked_count_changed) (canvas_block);
 }
 
 static void

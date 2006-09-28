@@ -9,7 +9,7 @@
 #include "hippo-window.h"
 #include "hippo-actions.h"
 
-#define UI_WIDTH 400
+#define UI_WIDTH 500
 
 typedef struct {
     int              refcount;
@@ -459,6 +459,8 @@ manager_attach(StackManager    *manager,
     
     manager->stack_box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
                                       "orientation", HIPPO_ORIENTATION_VERTICAL,
+                                      "border", 1,
+                                      "border-color", 0x9c9c9cff,
                                       NULL);
     
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(manager->stack_box),
@@ -482,6 +484,8 @@ manager_attach(StackManager    *manager,
 
     manager->single_block_box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
                                              "orientation", HIPPO_ORIENTATION_VERTICAL,
+                                             "border", 1,
+                                             "border-color", 0x9c9c9cff,
                                              NULL);
 
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(manager->single_block_box),
