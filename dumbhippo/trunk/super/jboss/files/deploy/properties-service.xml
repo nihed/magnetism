@@ -43,6 +43,8 @@
 		dumbhippo.server.ebay.appid=@@ebayAppId@@
 		dumbhippo.server.ebay.certid=@@ebayCertId@@
 		dumbhippo.server.flickr.apiid=@@flickrApiId@@
+		dumbhippo.server.facebook.apikey=@@facebookApiKey@@		
+		dumbhippo.server.facebook.secret=@@facebookSecret@@	
 		dumbhippo.server.adminconsole.enable=@@adminConsole@@
 		dumbhippo.server.newfeatures = @@newFeatures@@
 		dumbhippo.server.stealthmode=@@stealthMode@@

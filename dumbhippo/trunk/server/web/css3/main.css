@@ -12,18 +12,30 @@
 .dh-logo-link {
 	text-decoration:	underline;
 }
+
 .dh-logo-link:visited {
 	color:			#ffffff;
 }
 
-.dh-shiny-box-top-img {
-  vertical-align: top;
-  width: 8px;
-  height: 8px;
+#dhMugshotIntro {
+    font-weight:  normal;
+    font-size:    12px;
 }
 
-.dh-shiny-box-bottom-img {
-  vertical-align: bottom;
-  width: 8px;
-  height: 8px;
+.dh-leading-text {
+    font-weight: bold;
+} 
+
+.dh-leading-text a {
+    text-decoration: underline;
+}
+
+.dh-leading-text a:visited {
+	color:     blue;
+}
+
+#dhMugshotIntroHeader {
+    color:        #9648BC;
+	font-weight:  bold;
+	font-size:	  18px;
 }

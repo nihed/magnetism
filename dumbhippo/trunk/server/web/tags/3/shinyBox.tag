@@ -10,13 +10,12 @@
 	<div class="dh-shiny-box-top dh-shiny-box-top-${color}">
 	<div class="dh-shiny-box-upper-left dh-shiny-box-upper-left-${color}">
 	<div class="dh-shiny-box-upper-right dh-shiny-box-upper-right-${color}">
-	&nbsp;
-	</div>
-	</div>
-	</div>
-	<div class="dh-shiny-box-content">
+		<div class="dh-shiny-box-content">
 		<jsp:doBody/>	
-	</div>		
+	    </div>	
+	</div>
+	</div>
+	</div>	
 	<div class="dh-shiny-box-bottom">
 	<div class="dh-shiny-box-bottom-left">
 	<div class="dh-shiny-box-bottom-right">

@@ -224,7 +224,7 @@ div.dh-async-action-link-complete {
 }
 
 .dh-shiny-box-top-grey {
-	background: url("/images3/shinybox_grey_top.png") top left repeat-x;
+	background: url("/images3/shinybox_grey_tmid.png") top left repeat-x;
 }
 
 .dh-shiny-box-upper-left-grey {
@@ -235,16 +235,28 @@ div.dh-async-action-link-complete {
 	background: url("/images3/shinybox_grey_tr.png") top right no-repeat;
 }
 
+.dh-shiny-box-top-purple {
+	background: url("/images3/shinybox_purple_tmid.png") top left repeat-x;
+}
+
+.dh-shiny-box-upper-left-purple {
+	background: url("/images3/shinybox_purple_tl.png") top left no-repeat;
+}
+
+.dh-shiny-box-upper-right-purple {
+	background: url("/images3/shinybox_purple_tr.png") top right no-repeat;
+}
+
 .dh-shiny-box-bottom {
-	background: url("/images3/shinybox_bottom.png") bottom left repeat-x;
+	background: url("/images3/shinybox_bmid.png") bottom left repeat-x;
 }
 
 .dh-shiny-box-bottom-left {
-	background: url("/images3/shinybox_bl.png") bottom left no-repeat;
+	background: url("/images3/shinybox_bl_2.png") bottom left no-repeat;
 }
 
 .dh-shiny-box-bottom-right {
-	background: url("/images3/shinybox_br.png") bottom right no-repeat;
+	background: url("/images3/shinybox_br_2.png") bottom right no-repeat;
 }
 
 .dh-shiny-box-row {
