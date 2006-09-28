@@ -41,6 +41,7 @@ images:
 	copy $(IMGDIR)\bar_pipe.png $(OUTDIR)\images
 	copy $(IMGDIR)\bar_x2.png $(OUTDIR)\images
 	copy $(IMGDIR)\bar_x.png $(OUTDIR)\images
+	copy $(IMGDIR)\blue_x.png $(OUTDIR)\images
 	copy $(IMGDIR)\find.png $(OUTDIR)\images
 	copy $(IMGDIR)\home2.png $(OUTDIR)\images
 	copy $(IMGDIR)\home.png $(OUTDIR)\images
@@ -48,6 +49,7 @@ images:
 	copy $(IMGDIR)\hush.png $(OUTDIR)\images
 	copy $(IMGDIR)\lid.png $(OUTDIR)\images
 	copy $(IMGDIR)\mugshotstacker.png $(OUTDIR)\images
+	copy $(IMGDIR)\nophoto.png $(OUTDIR)\images
 	copy $(IMGDIR)\photo_icon.png $(OUTDIR)\images
 	copy $(IMGDIR)\search_x.png $(OUTDIR)\images
 	copy $(IMGDIR)\unhush2.png $(OUTDIR)\images
