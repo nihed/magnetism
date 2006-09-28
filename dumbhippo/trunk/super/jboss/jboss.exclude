@@ -2,22 +2,29 @@
 # needed to slim 'all' down to 'default'
 /conf/axis-config.xml
 /conf/jacorb.properties
-/deploy-hasingleton
-/farm
+#/deploy-hasingleton
+deploy-hasingleton/jms/hsqldb-jdbc-state-service.xml
+deploy-hasingleton/jms/hsqldb-jdbc2-service.xml
+#/farm
 /lib/avalon-framework.jar
 /lib/axis.jar
 /lib/castor*.jar
-/lib/jgroups.jar
+#/lib/jgroups.jar
 /lib/jacorb.jar
 /lib/jaxr-client.jar
 /lib/jboss-iiop.jar
+# We supply our own more recent jar of this instead
 /lib/jboss-cache.jar
-/lib/jbossha.jar
-/lib/jbossmqha.jar
+# Same for these
+/lib/hibernate3.jar
+/lib/hibernate-annotations.jar
+#/lib/jbossha.jar
+#/lib/jbossmqha.jar
 /lib/xmlsec.jar
-/deploy/cluster-service.xml
-/deploy/deploy-hasingleton-service.xml
-/deploy/ejb3-entity-cache-service.xml
+#/deploy/cluster-service.xml
+#/deploy/deploy-hasingleton-service.xml
+#/deploy/ejb3-entity-cache-service.xml
+# We don't have any stateful session beans, so we don't need to cluster them
 /deploy/ejb3-clustered-sfsbcache-service.xml
 /deploy/iiop-service.xml
 /deploy/httpha-invoker.sar
@@ -25,13 +32,13 @@
 /deploy/jbossweb-tomcat55.sar/ROOT.war
 # this configures the default JMS provider for message-driven beans,
 # but it sets up an HA/cluster configuration so we have our own version
-/deploy/jms/hajndi-jms-ds.xml
+#/deploy/jms/hajndi-jms-ds.xml
 /deploy/deploy.last
 /deploy/snmp-adaptor.sar
 /deploy/juddi-service.sar
 /deploy/juddiws.war
+# This is for replication of HTTP sessions, which we don't need to do
 /deploy/tc5-cluster.sar
-/deploy/tc5-cluster-service.xml
 
 # this is an extra copy of commons-logging that throws
 # an exception since it can't find log4j.jar

@@ -41,22 +41,10 @@
     </provider>
   <database>
     <defaultProvider>
-@@if mysqlEnabled
-      <driver>com.mysql.jdbc.Driver</driver>
-      <serverURL>jdbc:mysql://localhost:@@mysqlPort@@/jive</serverURL>
-      <username>root</username>
-      <password>@@dbPassword@@</password>
-@@elif pgsqlEnabled
-      <driver>org.postgresql.Driver</driver>
-      <serverURL>jdbc:postgresql://localhost:@@pgsqlPort@@/dumbhippo</serverURL>
-      <username>dumbhippo</username>
-      <password>@@dbPassword@@</password>
-@@else
-@@    error "No Database"
-@@endif   
-      <minConnections>5</minConnections>
-      <maxConnections>15</maxConnections>
-      <connectionTimeout>1.0</connectionTimeout>
+      <driver>org.hsqldb.jdbcDriver</driver>
+      <serverURL>jdbc:hsqldb:file:@@targetdir@@/jive.db</serverURL>
+      <username>sa</username>
+      <password>@@dbpassword@@</password>
     </defaultProvider>
   </database>
   <setup>true</setup>

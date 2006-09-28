@@ -1,13 +1,10 @@
 #!/bin/sh
 
 targetdir=@@targetdir@@
-jbossdir=@@jbossdir@@
-jnpPort=@@jnpPort@@
-bindHost="@@bindHost@@"
 
-pidfile=$targetdir/run/jboss.pid
+pidfile=$targetdir/run/balancer.pid
 
-echo "Stopping JBoss..."
+echo "Stopping balancer..."
 
 if [ \! -f $pidfile ] ; then 
     echo "... not running"
@@ -16,7 +13,10 @@ fi
 
 pid=`cat $pidfile`
 
-$jbossdir/bin/shutdown.sh -s jnp://$bindHost:$jnpPort > /dev/null &
+if kill $pid ; then : ; else
+    echo "... not running"
+    exit 0
+fi
 
 timeout=30
 interval=1
@@ -32,4 +32,3 @@ done
 
 echo "...timed out"
 exit 1
-

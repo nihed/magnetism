@@ -16,15 +16,19 @@
 
     <!-- do not put trailing whitespace here, or we put you in the iron maiden -->
     <attribute name="Properties">
+	    java.awt.headless=true
+            dumbhippo.server.hajndiPort=@@hajndiPort@@
 	    dumbhippo.server.disable.authentication=@@disableAuthentication@@
 	    dumbhippo.server.email.disable=@@disableEmail@@
-		dumbhippo.server.xmpp.address=@@jiveHost@@
+            dumbhippo.server.bind.host=@@bindHost@@
 		dumbhippo.server.xmpp.port=@@jivePlainPort@@
 		dumbhippo.server.xmpp.adminuser=admin
 		dumbhippo.server.xmpp.password=@@jivePassword@@
+                dumbhippo.server.http.port=@@tomcatHttpPort@@
 		dumbhippo.server.baseurl=@@baseurl@@
 		dumbhippo.server.web.version=@@webVersion@@
 		dumbhippo.server.files.saveurl=file://@@filesavedir@@
+		dumbhippo.server.lucene.indexdir=@@luceneIndexDir@@
 		dumbhippo.server.aimbot.name=@@imbotScreenName@@
 		dumbhippo.server.aim.presence.key=@@aimPresenceKey@@
 		dumbhippo.server.downloadurl.windows=@@clientWindowsDownload@@
@@ -42,6 +46,7 @@
 		dumbhippo.server.adminconsole.enable=@@adminConsole@@
 		dumbhippo.server.newfeatures = @@newFeatures@@
 		dumbhippo.server.stealthmode=@@stealthMode@@
+		dumbhippo.server.slavemode=@@slaveMode@@
 		dumbhippo.server.userupdateinterval=@@userUpdateInterval@@
 		dumbhippo.server.summitgroupguid=@@summitGroupGuid@@
 		dumbhippo.server.newuserinvitationcount=@@newUserInvitationCount@@
