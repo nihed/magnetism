@@ -28,9 +28,11 @@
 #include "HippoPlatformImpl.h"
 #include "HippoUIUtil.h"
 #include "HippoComWrappers.h"
+#include "HippoImageFactory.h"
 #include <hippo/hippo-stack-manager.h>
 #include <hippo/hippo-canvas-box.h>
 #include <hippo/hippo-canvas-text.h>
+#include <hippo/hippo-canvas-image.h>
 #include <hippo/hippo-canvas-widgets.h>
 #include <hippo/hippo-window.h>
 
@@ -95,6 +97,7 @@ HippoUI::HippoUI(HippoInstanceType instanceType, bool replaceExisting, bool init
     notificationIcon_.setUI(this);
     upgrader_.setUI(this);
     music_.setUI(this);
+    hippo_image_factory_set_ui(this);
 
     hotnessBlinkCount_ = 0;
     idleHotnessBlinkId_ = 0;
@@ -574,6 +577,11 @@ HippoUI::create(HINSTANCE instance)
     hippo_canvas_scrollbars_set_root(HIPPO_CANVAS_SCROLLBARS(scrollbars), text);
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(box), scrollbars, HippoPackFlags(HIPPO_PACK_EXPAND));
 
+    HippoCanvasItem *image = (HippoCanvasItem*) g_object_new(HIPPO_TYPE_CANVAS_IMAGE,
+                                        "image-name", "mugshotstacker",
+                                        NULL);
+    hippo_canvas_box_append(HIPPO_CANVAS_BOX(box), image, HippoPackFlags(HIPPO_PACK_END));
+    
     hippo_window_set_contents(window, box);
     hippo_window_set_visible(window, TRUE);
 #endif
@@ -1626,8 +1634,8 @@ HippoUI::updateMenu()
     EnableMenuItem(popupMenu, IDM_MISSED, haveMissedBubbles_ ? MF_ENABLED : MF_GRAYED);
 }
 
-void
-HippoUI::getAppletPath(BSTR filename, BSTR *result)
+HippoBSTR
+HippoUI::getBasePath() throw (std::bad_alloc, HResultException)
 {
     // XXX can theoretically truncate if we have a \?\\foo\bar\...
     // path which isn't limited to the short Windows MAX_PATH
@@ -1645,8 +1653,26 @@ HippoUI::getAppletPath(BSTR filename, BSTR *result)
     if (i == 0)  // No \ in path?
         throw HResultException(E_FAIL);
 
-    HippoBSTR path((UINT)i, baseBuf);
+    return HippoBSTR((UINT)i, baseBuf);
+}
+
+void
+HippoUI::getAppletPath(BSTR filename, BSTR *result)
+{
+    HippoBSTR path(getBasePath());
+    
     path.Append(L"applets\\");
+
+    path.Append(filename);
+    *result = ::SysAllocString(path);
+}
+
+void
+HippoUI::getImagePath(BSTR filename, BSTR *result) throw (std::bad_alloc, HResultException)
+{
+    HippoBSTR path(getBasePath());
+    
+    path.Append(L"images\\");
 
     path.Append(filename);
     *result = ::SysAllocString(path);

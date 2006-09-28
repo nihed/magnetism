@@ -168,6 +168,9 @@
 				RelativePath=".\HippoIEWindow.cpp">
 			</File>
 			<File
+				RelativePath=".\HippoImageFactory.cpp">
+			</File>
+			<File
 				RelativePath=".\HippoITunesMonitor.cpp">
 			</File>
 			<File
@@ -279,6 +282,9 @@
 			</File>
 			<File
 				RelativePath=".\HippoIEWindow.h">
+			</File>
+			<File
+				RelativePath=".\HippoImageFactory.h">
 			</File>
 			<File
 				RelativePath=".\HippoITunesMonitor.h">

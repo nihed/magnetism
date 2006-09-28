@@ -116,6 +116,8 @@ public:
 
     void showAppletWindow(BSTR url, HippoPtr<IWebBrowser2> &webBrowser);
 
+    void getImagePath(BSTR filename, BSTR *result) throw (std::bad_alloc, HResultException);
+
     void registerMessageHook(HWND window, HippoMessageHook *hook);
     void unregisterMessageHook(HWND window);
     HWND getWindow() { return window_; }
@@ -131,6 +133,8 @@ private:
     private:
         HippoUI *ui_;
     };
+
+    HippoBSTR getBasePath() throw (std::bad_alloc, HResultException);
 
     bool registerActive();
     bool registerClass();

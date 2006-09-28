@@ -6,6 +6,7 @@
 #include <windowsx.h> // GET_X_LPARAM seems to be in here, though I'm not sure it's the right file to include
 #include "HippoCanvas.h"
 #include "HippoScrollbar.h"
+#include "HippoImageFactory.h"
 
 #include <cairo-win32.h>
 
@@ -747,9 +748,7 @@ hippo_canvas_context_win_load_image(HippoCanvasContext *context,
 
     g_return_val_if_fail(HIPPO_IS_CANVAS_CONTEXT(context), NULL);
 
-    // FIXME
-
-    return NULL;
+    return hippo_image_factory_get(image_name);
 }
 
 #if 0
