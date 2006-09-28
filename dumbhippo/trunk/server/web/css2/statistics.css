@@ -1,6 +1,15 @@
 @IMPORT url("statistics-positions.css");
 
- body { font-family: sans-serif; }
+body { font-family: sans-serif; }
+
+#dhHeaderTable {
+	table-layout: fixed;
+	width: 100%;
+}
+
+#dhRefreshCell {
+	text-align: right;
+}
 
 #dhHourSelector {
 	 text-align: right;
@@ -37,7 +46,22 @@
 	background: #eeeecc; 
 }
 
-.dh-coordinates {
+.dh-remove {
+	border: 1px solid black;
+	cursor: default;
+}
+
+.dh-remove-disabled {
+	border: 1px solid #666666;
+	color: #aaaaaa; 
+}
+
+.dh-remove-prelight {
+	background-color: #eeeecc; 
+}
+
+.dh-coordinates div {
 	background: #d5c5d5;
 	text-align: center;
 }
+

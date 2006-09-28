@@ -55,11 +55,13 @@ public class TransactionRunnerBean implements TransactionRunner {
 		logger.debug("TransactionRunner shut down");
 	}
 	
+	@TransactionAttribute(TransactionAttributeType.SUPPORTS)	
 	public <T> T runTaskInNewTransaction(Callable<T> callable) throws Exception {
 		TransactionRunner proxy = EJBUtil.contextLookup(ejbContext, TransactionRunner.class);
 		return proxy.internalRunTaskInNewTransaction(callable);
 	}
 	
+	@TransactionAttribute(TransactionAttributeType.SUPPORTS)	
 	public void runTaskInNewTransaction(Runnable runnable) {
 		TransactionRunner proxy = EJBUtil.contextLookup(ejbContext, TransactionRunner.class);
 		proxy.internalRunTaskInNewTransaction(runnable);

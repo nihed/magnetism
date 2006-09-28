@@ -7,7 +7,7 @@ import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 
-import com.dumbhippo.server.MessengerGlueRemote;
+import com.dumbhippo.server.MessengerGlue;
 import com.dumbhippo.server.util.EJBUtil;
 
 public class BlocksIQHandler extends AbstractIQHandler {
@@ -43,7 +43,7 @@ public class BlocksIQHandler extends AbstractIQHandler {
         	return reply;
         }
 		
-		MessengerGlueRemote glue = EJBUtil.defaultLookupRemote(MessengerGlueRemote.class);
+		MessengerGlue glue = EJBUtil.defaultLookup(MessengerGlue.class);
 		Element childElement = XmlParser.elementFromXml(glue.getBlocksXml(from.getNode(), lastTimestamp,
 				0 /* start */, 10 /* count */));		
 

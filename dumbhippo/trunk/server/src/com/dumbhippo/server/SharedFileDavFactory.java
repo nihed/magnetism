@@ -21,7 +21,6 @@ import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.SharedFile;
 import com.dumbhippo.persistence.User;
-import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.storage.StoredData;
 
 /**

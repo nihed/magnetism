@@ -61,8 +61,8 @@ dh.framer._addMessage = function(message, before) {
     dh.util.insertTextWithLinks(messageDiv, message.getMessage()) 
  	messageDiv.style.fontStyle = messageFontStyle
 	
-	var beforeMessageDiv = before ? this._messageDiv(message) : null;
-	var beforeNameDiv = before ? this._messageNameDiv(message) : null;
+	var beforeMessageDiv = before ? this._messageDiv(before) : null;
+	var beforeNameDiv = before ? this._messageNameDiv(before) : null;
 	
 	var namesArea = document.getElementById('dhPostChatNames')
 	namesArea.insertBefore(nameDiv, beforeNameDiv)

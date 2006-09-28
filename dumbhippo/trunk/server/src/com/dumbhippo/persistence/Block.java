@@ -28,7 +28,7 @@ import com.dumbhippo.identity20.Guid.ParseException;
  * @author Havoc Pennington
  */
 @Entity
-@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)
+@Cache(usage=CacheConcurrencyStrategy.TRANSACTIONAL)
 @Table(name="Block", 
 	   uniqueConstraints = {
 			@UniqueConstraint(columnNames={"blockType", "data1", "data2", "data3"})

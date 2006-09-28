@@ -15,7 +15,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 		   uniqueConstraints = 
 			      {@UniqueConstraint(columnNames={"group_id", "feed_id"})}
 		   )
-@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)	   
+@Cache(usage=CacheConcurrencyStrategy.TRANSACTIONAL)	   
 public class GroupFeed extends EmbeddedGuidPersistable {
 	private static final long serialVersionUID = 0L;
 	

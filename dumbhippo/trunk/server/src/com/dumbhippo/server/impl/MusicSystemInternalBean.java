@@ -23,6 +23,8 @@ import java.util.concurrent.FutureTask;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
@@ -35,6 +37,7 @@ import org.apache.lucene.queryParser.QueryParser;
 import org.apache.lucene.queryParser.QueryParser.Operator;
 import org.apache.lucene.search.Hits;
 import org.hibernate.lucene.DocumentBuilder;
+import org.jboss.annotation.IgnoreDependency;
 import org.slf4j.Logger;
 
 import com.dumbhippo.ExceptionUtils;
@@ -49,6 +52,7 @@ import com.dumbhippo.persistence.TrackFeedEntry;
 import com.dumbhippo.persistence.TrackHistory;
 import com.dumbhippo.persistence.TrackType;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.search.SearchSystem;
 import com.dumbhippo.server.AlbumView;
 import com.dumbhippo.server.AmazonAlbumCache;
 import com.dumbhippo.server.ArtistView;
@@ -110,6 +114,9 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	private Configuration config;
 	
 	@EJB
+	private SearchSystem searchSystem;
+	
+	@EJB
 	private AmazonAlbumCache amazonAlbumCache;
 	
 	@EJB
@@ -134,6 +141,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	private YahooArtistAlbumsCache yahooArtistAlbumsCache;
 	
 	@EJB
+	@IgnoreDependency
 	private Stacker stacker;
 	
 	private static ExecutorService threadPool;
@@ -167,9 +175,14 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	 * can't use this id, but can pass it to a new transaction for 
 	 * use.
 	 * 
+	 * Note that if the caller has previously looked up and modified
+	 * the same track (acquiring a write lock), this will deadlock, 
+	 * so use with great caution.
+	 * 
 	 * @param properties properties of the track
 	 * @return the track id
 	 */
+	@TransactionAttribute(TransactionAttributeType.SUPPORTS)	
 	private long getTrackIdIsolated(final Map<String, String> properties) {
 		Track detached;
 		try {
@@ -219,7 +232,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 					return res;	
 				}			
 			});
-			TrackIndexer.getInstance().indexAfterTransaction(track.getId());
+			searchSystem.indexTrack(track);
 			return track;
 		} catch (Exception e) {
 			ExceptionUtils.throwAsRuntimeException(e);
@@ -255,10 +268,12 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		stacker.stackMusicPerson(user.getGuid(), now.getTime());
 	}
 	
+	@TransactionAttribute(TransactionAttributeType.NEVER)	
 	public void setCurrentTrack(final User user, final Track track) {
 		addTrackHistory(user, track, new Date());
 	}
 	 
+	@TransactionAttribute(TransactionAttributeType.NEVER)	
 	public void setCurrentTrack(User user, Map<String,String> properties) {
 		// empty properties means "not listening to any track" - we always
 		// keep the latest track with content, we don't set CurrentTrack to null
@@ -285,6 +300,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		});
 	}
 	
+	@TransactionAttribute(TransactionAttributeType.NEVER)	
 	public void addHistoricalTrack(User user, Map<String,String> properties) {
 		// for now there's no difference here, but eventually we might have the 
 		// client supply some properties like the date of listening instead of 
@@ -1741,7 +1757,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	}
 
 	public TrackSearchResult searchTracks(Viewpoint viewpoint, String queryString) {
-		final String[] fields = { "Artist", "Album", "Name" };
+		final String[] fields = { "artist", "album", "name" };
 		QueryParser queryParser = new MultiFieldQueryParser(fields, TrackIndexer.getInstance().createAnalyzer());
 		queryParser.setDefaultOperator(Operator.AND);
 		org.apache.lucene.search.Query query;
@@ -1790,7 +1806,12 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		}
 	}
 
-	
+	// FIXMEFIXMEFIXME - this needs to be annotated to mandate no transaction,
+    // since it can deadlock if called for the same track twice in the same transaction
+	//
+	// Alternatively, and maybe better, unify the last segment of code with 
+	// setCurrentTrack and make adding tracks to the track database always async.
+	//
 	public void addFeedTrack(final User user, TrackFeedEntry entry, int entryPosition) {
 		final Map<String,String> properties = new HashMap<String,String>();
 		properties.put("type", ""+TrackType.NETWORK_STREAM);

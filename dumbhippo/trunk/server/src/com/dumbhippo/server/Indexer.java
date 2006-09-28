@@ -2,8 +2,8 @@ package com.dumbhippo.server;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+import java.util.Properties;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -14,6 +14,7 @@ import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Searcher;
 import org.hibernate.lucene.DocumentBuilder;
+import org.hibernate.lucene.store.FSDirectoryProvider;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
@@ -24,15 +25,36 @@ public abstract class Indexer<T> {
 	static private final Logger logger = GlobalSetup.getLogger(Indexer.class);
 	
 	public BlockingQueue<Object> pending;
-	
+	private DocumentBuilder<T> builder;
+
 	private IndexReader reader;
 	private IndexSearcher searcher;
 	private IndexerThread indexerThread;
 	
-	private static class ReindexMarker {}
+	private static class Reindex {
+		private Object id;
+		
+		public Reindex(Object id) {
+			this.id = id;
+		}
+		
+		public Object getId() {
+			return id;
+		}
+	}
+	private static class ReindexAllMarker {}
 	
-	public Indexer() {
+	protected Indexer(Class<T> clazz) {
 		pending = new LinkedBlockingQueue<Object>();
+		
+		Configuration config = EJBUtil.defaultLookup(Configuration.class);
+		String indexBase = config.getPropertyFatalIfUnset(HippoProperty.LUCENE_INDEXDIR);
+		Properties properties = new Properties();
+		properties.setProperty("indexBase", indexBase);
+		
+		FSDirectoryProvider directory = new FSDirectoryProvider();
+		directory.initialize(clazz, null, properties);		
+		builder = new DocumentBuilder<T>(clazz, createAnalyzer(), directory);
 	}
 	
 	private synchronized void ensureThread() {
@@ -53,38 +75,29 @@ public abstract class Indexer<T> {
 		}
 	}
 	
-	public void index(List<Object> ids) {
-		pending.addAll(ids);
-		ensureThread();
-	}
-
-	public void index(Object id) {
-		pending.add(id);
-		ensureThread();
-	}
-	
-	public void reindex() {
-		pending.add(new ReindexMarker());
+	public void index(Object id, boolean reindex) {
+		if (reindex)
+			pending.add(new Reindex(id));
+		else
+			pending.add(id);
 		ensureThread();
 	}
 	
-	public void indexAfterTransaction(final List<Object> ids) {
-		EJBUtil.defaultLookup(TransactionRunner.class).runTaskOnTransactionCommit(new Runnable() {
-			public void run() {
-				index(ids);
-			}
-		});
+	public void reindexAll() {
+		pending.add(new ReindexAllMarker());
+		ensureThread();
 	}
 	
-	public void indexAfterTransaction(Object id) {
-		indexAfterTransaction(Collections.singletonList(id));
+	public synchronized IndexReader getReader() throws IOException {
+		if (reader == null)
+			reader = IndexReader.open(getBuilder().getDirectoryProvider().getDirectory());
+		
+		return reader;
 	}
 	
 	public synchronized Searcher getSearcher() throws IOException {
-		if (searcher == null) {
-			reader = IndexReader.open(getBuilder().getFile());
-			searcher = new IndexSearcher(reader);
-		}
+		if (searcher == null)
+			searcher = new IndexSearcher(getReader());
 		
 		return searcher;
 	}
@@ -93,11 +106,16 @@ public abstract class Indexer<T> {
 		if (searcher != null) {
 			try {
 				searcher.close();
-				searcher = null;
-				reader.close();
-				reader = null;
 			} catch (IOException e) {
 			}
+			searcher = null;
+		}
+		if (reader != null) {
+			try {
+				reader.close();
+			} catch (IOException e) {
+			}
+			reader = null;
 		}
 	}
 	
@@ -105,9 +123,12 @@ public abstract class Indexer<T> {
 		return new StopAnalyzer();
 	}
 	
+	protected DocumentBuilder<T> getBuilder() {
+		return builder;
+	}
 	
 	protected abstract String getIndexName();
-	protected abstract DocumentBuilder<T> getBuilder();
+	protected abstract void doDelete(IndexReader reader, List<Object> ids) throws IOException;
 	protected abstract void doIndex(IndexWriter writer, List<Object> ids) throws IOException;
 	protected abstract void doIndexAll(IndexWriter writer) throws IOException;
 	
@@ -120,33 +141,43 @@ public abstract class Indexer<T> {
 		public void run() {
 			try {
 				while (true) {
-					List<Object> ids = new ArrayList<Object>();
+					List<Object> toDelete = new ArrayList<Object>();
+					List<Object> toIndex = new ArrayList<Object>();
 					boolean reindex = false;
 					
-					Object id = pending.take();
-					while (id != null) {
-						if (id instanceof ReindexMarker) {
+					Object item = pending.take();
+					while (item != null) {
+						if (item instanceof ReindexAllMarker) {
 							reindex = true;
-							ids.clear();
+							toDelete.clear(); 
+							toIndex.clear();
+						} else if (item instanceof Reindex) {
+							toDelete.add(((Reindex)item).getId());
+							toIndex.add(((Reindex)item).getId());
 						} else {
-							ids.add(id);
+							toIndex.add(item);
 						}
-						id = pending.poll();
+						item = pending.poll();
 					}
 					
 					try {
 						if (reindex)
 							logger.info("Reindexing {}", getIndexName());
+						
+						if (!reindex && !toDelete.isEmpty()) {
+							doDelete(getReader(), toDelete);
+							clearSearcher();
+						}
 
 						// It's not completely clear that passing 'create = true' here when
 						// reindexing is safe when there is an existing IndexReader open,
 						// but transient errors during reindexing aren't a big problem
-						IndexWriter writer = new IndexWriter(getBuilder().getFile(), getBuilder().getAnalyzer(), reindex);
+						IndexWriter writer = new IndexWriter(getBuilder().getDirectoryProvider().getDirectory(), getBuilder().getAnalyzer(), reindex);
 						
 						if (reindex) {
 							doIndexAll(writer);
 						} else {
-							doIndex(writer, ids);
+							doIndex(writer, toIndex);
 						}
 						writer.close();
 
@@ -158,6 +189,9 @@ public abstract class Indexer<T> {
 							logger.info("Finished reindexing {}", getIndexName());
 						
 					} catch (IOException e) {
+						logger.error("IOException while indexing " + getIndexName(), e);
+					} catch (RuntimeException e) {
+						logger.error("Unexpected exception while indexing " + getIndexName(), e);
 					}
 				}
 			} catch (InterruptedException e) {

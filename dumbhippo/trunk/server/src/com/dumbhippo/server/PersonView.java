@@ -54,6 +54,7 @@ public class PersonView extends EntityView {
 	private String bioAsHtmlCached;
 	private String musicBioAsHtmlCached;
 	private boolean viewOfSelf;
+	private boolean online;
 	private Set<ExternalAccount> externalAccounts;
 	
 	private void addExtras(EnumSet<PersonViewExtra> more) {
@@ -654,12 +655,11 @@ public class PersonView extends EntityView {
 	 * @return true if user is online, false otherwise
 	 */
 	public boolean isOnline() {
-		if (user == null)
-			return false;
-		
-		LiveState state = LiveState.getInstance();
-		LiveClientData clientData = state.peekLiveClientData(user.getGuid());
-		return clientData != null && clientData.isAvailable();
+		return online;
+	}
+	
+	public void setOnline(boolean online) {
+		this.online = online;
 	}
 
 	@Override

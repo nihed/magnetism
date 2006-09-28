@@ -14,7 +14,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 		   uniqueConstraints = 
 			      {@UniqueConstraint(columnNames={"file_id", "group_id"})}
 		   )
-@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)
+@Cache(usage=CacheConcurrencyStrategy.TRANSACTIONAL)
 public class SharedFileGroup extends DBUnique {
 
 	private static final long serialVersionUID = 1L;

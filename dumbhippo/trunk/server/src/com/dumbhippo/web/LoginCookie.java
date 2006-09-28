@@ -55,7 +55,7 @@ public class LoginCookie {
 		}
 	}
 
-	private Cookie computeCookie() {
+	public String getCookieValue() {
 		StringBuilder val;
 		val = new StringBuilder();
 		
@@ -86,6 +86,11 @@ public class LoginCookie {
 		val.append(COOKIE_PASSWORD_HEADER);
 		val.append(authKey);
 		
+		return new String(val);
+	}
+	
+	private Cookie computeCookie() {
+		
 		// Empty value, we set it later
 		Cookie cookie = new Cookie(COOKIE_NAME, "");
 		// We have some characters in our cookie like '=' that are
@@ -96,7 +101,7 @@ public class LoginCookie {
         // correctly even with the suspicious characters.
 		//
 		// cookie.setVersion(1);
-		cookie.setValue(val.toString());
+		cookie.setValue(getCookieValue());
 		cookie.setPath("/");
 		// 5 years
 		cookie.setMaxAge(5 * 365 * 24 * 60 * 60);

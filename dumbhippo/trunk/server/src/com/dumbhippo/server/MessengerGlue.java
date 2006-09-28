@@ -1,18 +1,19 @@
 package com.dumbhippo.server;
 
 import java.io.Serializable;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.ejb.Remote;
+import javax.ejb.Local;
 
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.live.Hotness;
 
-@Remote
-public interface MessengerGlueRemote {
+@Local
+public interface MessengerGlue {
 
 	/** 
 	 * Simple immutable data blob
@@ -169,70 +170,31 @@ public interface MessengerGlueRemote {
 	}
 	
 	/**
-	 * Called when Jabber server starts up. After calling this method you must
-	 * call serverPing periodically or it will be assumed that the server
-	 * has died and cached state for the server will be discarded. 
-	 * (Once a minute is the recommended ping period.)
-	 *  
-	 * @param timestamp when the server is starting, from System.currentTimeMillis()
-	 * @return a string that will be used to identify this server
-	 *        instance in subsequent communication. Each time the server is
-	 *        restarted, a new server identifier should be generated.
-	 *        If an attempt to use this ID throws NoSuchServerException, then
-	 *        the server must call serverStartup() again, then re-register
-	 *        all present users by calling onUserAvailable().
-	 */
-	public String serverStartup(long timestamp);
-
-	/**
-	 * Keep resources associated with a Jabber server from timing out.
+	 * Called whenever a new resource connects associated with a user. Note that
+	 * there is no ordering guarantee between this and onUserLogout if a user
+	 * connects momentarily, though the timestamps passed in will be reliably
+	 * ordered (or equal).
 	 * 
-	 * @param serverIdentifier identifying string for the server returned from serverStartup()
-	 */
-	public void serverPing(String serverIdentifier) throws NoSuchServerException;
-	
-	/**
-	 * Called each time a user opens their first session.
-	 * 
-	 * @param serverIdentifier identifying string for the server returned from serverStartup()
-	 * @param username the username that has a new session available
-	 */
-	public void onUserAvailable(String serverIdentifier, String username) throws NoSuchServerException;
-
-	/**
-	 * Called each time a user has zero sessions available.
-	 * 
-	 * @param serverIdentifier identifying string for the server returned from serverStartup()
-	 * @param username the username that became unavailable
-	 */
-	public void onUserUnavailable(String serverIdentifier, String username) throws NoSuchServerException;
-	
-	/**
-	 * Called when a user leaves the chatroom for a post.
-	 * 
-	 * @param serverIdentifier identifying string for the server returned from serverStartup()
-	 * @param username the username that has a new session available
-	 */
-	public void onRoomUserAvailable(String serverIdentifier, ChatRoomKind kind, String roomname, String username, boolean participant) throws NoSuchServerException;
-
-	/**
-	 * Called when a user joins the chatroom for a post.
-	 * 
-	 * @param serverIdentifier identifying string for the server returned from serverStartup()
-	 * @param username the username that became unavailable
-	 */
-	public void onRoomUserUnavailable(String serverIdentifier, ChatRoomKind kind, String roomname, String username) throws NoSuchServerException;
-
-
-	/**
-	 * Called whenever a new resource connects associated with a user.
-	 * 
-	 * @param serverIdentifier identifying string for the server returned from serverStartup()
 	 * @param user the username associated with resource
+	 * @param wasAlreadyConnected true if the user was connected to the cluster
+	 *   (this node or another) before this resource connected. Note that this
+	 *   value is only approximate: if two resources connect simultaneously, they
+	 *   both can end up with wasAlreadyConnected = false. 
+	 * @param timestamp a timestamp for the user connecting
 	 * @throws NoSuchServerException 
 	 */
-	public void onResourceConnected(String serverIdentifier, String user) throws NoSuchServerException;	
+	public void onResourceConnected(String user, boolean wasAlreadyConnected, Date timestamp);	
 	
+	/**
+	 * Called when the last resource for a user logged out; this information
+	 * is used for statistical purposes and also to (not perfectly reliably)
+	 * track what posts the user has seen. 
+	 * 
+	 * @param user the jabber username of the user
+	 * @param date a timestamp for the user disconnecting.
+	 */
+	public void onUserLogout(String user, Date timestamp);
+
 	/**
 	 * Returns the information associated with the potential user of a chat room.
 	 * 
@@ -256,7 +218,30 @@ public interface MessengerGlueRemote {
 	 */
 	public ChatRoomInfo getChatRoomInfo(String roomName);
 	
+	/**
+	 * Get messages that have been sent to the chatroom since the specified serial
+	 * 
+	 * @param roomName the GUID of the group or post the chat is about, in jabber node form.
+	 *        This must exist or an exception will be thrown
+	 * @param kind the kind of chatroom (group or post)
+	 * @param lastSeenSerial retrieve only messages with serials greater than this (use -1
+	 *        to get all messages)
+	 * @return a list of chat room messages.
+	 */
+	List<ChatRoomMessage> getChatRoomMessages(String roomName, ChatRoomKind kind, long lastSeenSerial);
+	
 	public boolean canJoinChat(String roomName, ChatRoomKind kind, String username);
+	
+	/**
+	 * Adds a new message to a chatroom.
+	 * 
+	 * @param roomName the GUID of the group or post the chat is about, in jabber node form
+	 * @param kind the kind of chatroom (group or post)
+	 * @param userName the GUID of the user posting the message, in jabber node form
+	 * @param text the text of the message
+	 * @param timestamp the timestamp for the message
+	 */
+	public void addChatRoomMessage(String roomName, ChatRoomKind kind, String userName, String text, Date timestamp);
 	
 	/**
 	 * Get current music info for a given user.
@@ -319,4 +304,8 @@ public interface MessengerGlueRemote {
 	public boolean isServerTooBusy();
 	
 	public String getBlocksXml(String username, long lastTimestamp, int start, int count);
+
+	public void handleMusicChanged(Guid userId, Map<String, String> properties);
+
+	public void handleMusicPriming(Guid userId, List<Map<String, String>> primingTracks);
 }

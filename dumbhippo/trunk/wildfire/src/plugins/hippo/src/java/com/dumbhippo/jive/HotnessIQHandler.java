@@ -10,7 +10,7 @@ import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 
 import com.dumbhippo.live.Hotness;
-import com.dumbhippo.server.MessengerGlueRemote;
+import com.dumbhippo.server.MessengerGlue;
 import com.dumbhippo.server.util.EJBUtil;
 
 public class HotnessIQHandler extends AbstractIQHandler {
@@ -31,7 +31,7 @@ public class HotnessIQHandler extends AbstractIQHandler {
 		JID from = packet.getFrom();
 		IQ reply = IQ.createResultIQ(packet);
 		
-		MessengerGlueRemote glue = EJBUtil.defaultLookupRemote(MessengerGlueRemote.class);
+		MessengerGlue glue = EJBUtil.defaultLookup(MessengerGlue.class);
 		Hotness hotness = glue.getUserHotness(from.getNode());
 		
 		Document document = DocumentFactory.getInstance().createDocument();

@@ -30,15 +30,12 @@ public class CookieAuthentication {
 	}
 	
 	/**
-	 * Look for login cookie and find corresponding account; throw exception if
-	 * login fails.
+	 * Finds an auth cookie for the current server. DOES NOT AUTHENTICATE IT.
 	 * 
-	 * @param request
-	 *            the http request
-	 * @throws BadTastingException
-	 * @throws NotLoggedInException
+	 * @param request the HTTP Request
+	 * @return a LoginCookie if an appropriate auth header was found, otherwise null
 	 */
-	public static Account authenticate(HttpServletRequest request) throws BadTastingException, NotLoggedInException {
+	public static LoginCookie findLoginCookie(HttpServletRequest request) {
 		LoginCookie loginCookie = null;
 		Cookie[] cookies = request.getCookies();
 		
@@ -51,19 +48,36 @@ public class CookieAuthentication {
 				if (c.getName().equals(LoginCookie.COOKIE_NAME)) {
 					// An old cookie might not have the host specified in it;
 					// treat that as matching any server host
-					LoginCookie possibleCookie = new LoginCookie(c);
-					String cookieHost = possibleCookie.getHost();
-					if (cookieHost == null || cookieHost.equals(host)) {
-						//logger.debug("Found login cookie");
-						loginCookie = possibleCookie;
-						if (cookieHost != null)
-							break;
+					try {
+						LoginCookie possibleCookie = new LoginCookie(c);
+						String cookieHost = possibleCookie.getHost();
+						if (cookieHost == null || cookieHost.equals(host)) {
+							//logger.debug("Found login cookie");
+							loginCookie = possibleCookie;
+							if (cookieHost != null)
+								break;
+						}
+					} catch (BadTastingException e) {
+						// Ignore this cookie value
 					}
 				}
 			}
 		}
-
-		return authenticate(loginCookie);
+		
+		return loginCookie;
+	}
+	
+	/**
+	 * Look for login cookie and find corresponding account; throw exception if
+	 * login fails.
+	 * 
+	 * @param request
+	 *            the http request
+	 * @throws BadTastingException
+	 * @throws NotLoggedInException
+	 */
+	public static Account authenticate(HttpServletRequest request) throws BadTastingException, NotLoggedInException {
+		return authenticate(findLoginCookie(request));
 	}
 
 	/**

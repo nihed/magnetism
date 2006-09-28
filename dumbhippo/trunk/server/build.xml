@@ -1,4 +1,7 @@
 <project name="dumbhippo-server" default="build" basedir=".">
+
+	<import file="../common.xml"/>
+
 	<property name="src" value="src" />
 	<property name="src.tests" value="tests" />
 	<property name="web" value="web" />
@@ -32,23 +35,11 @@
 		<!-- a little hard-coded, but ... -->
 		<pathelement location="/usr/share/java/junit.jar" />
 		<pathelement location="/usr/share/java/ant/ant-junit.jar" />
-		<pathelement location="${jboss.root}/client/jbossall-client.jar"/>
 		<pathelement location="${jboss.root}/client/javax.servlet.jar"/>		
 		<pathelement location="${jboss.root}/client/mail.jar"/>
 		<pathelement location="${jboss.root}/client/log4j.jar"/>
-		<pathelement location="${jboss.root}/lib/jboss-system.jar"/>
-		<fileset dir="${jboss.root}/server/default/deploy/ejb3.deployer">
-			<include name="*ejb3*.jar"/>
-			<include name="hibernate3.jar"/>
-			<include name="hibernate-annotations.jar"/>
-			<include name="hibernate-entitymanager.jar"/>			
-		</fileset>
-		<fileset dir="${jboss.root}/server/default/lib">
-			<include name="*ejb3*.jar"/>
-			<include name="hibernate3.jar"/>
-			<include name="hibernate-annotations.jar"/>
-		</fileset>
 		<pathelement location="${jboss.root}/server/default/lib/javax.servlet.jsp.jar"/>
+	 	<fileset refid="dumbhippo.global.jboss.jars"/>
 	</path>
 
 	<path id="tests.class.path">
@@ -109,7 +100,7 @@
 	<target name="dojobuild" if="dojocompress">
 		<!-- our dojo build.sh is hacked to do what we want,
 		 	which is create a compressed target/javascript/dojo/dojo.js -->
-        <exec dir="web/javascript/dojo/buildscripts" executable="/bin/sh">
+        <exec dir="web/javascript/dojo/buildscripts" executable="/bin/sh" failonerror="true">
         	<arg line="build.sh"/>
         </exec>
 		<!-- dojo creates this temporary junk, which we omit from the war
@@ -142,11 +133,13 @@
 			<fileset dir="${build}">
 				<include name="rome.properties" />
 				<include name="**/live/*.class" />
+				<include name="**/mbean/*.class" />
 				<include name="**/recommender/*.class" />
 				<include name="**/postinfo/*.class" />
 				<include name="**/services/*.class" />
 				<include name="**/dav/*.class" />
 				<include name="**/storage/*.class" />
+				<include name="**/search/*.class" />
 				<include name="**/server/**/*.class" />
 				<include name="**/server/**/*.properties" />
 				<include name="**/statistics/**/*.class" />
@@ -171,20 +164,6 @@
 		</jar>
 	</target>
 
-	<target name="sar" depends="compile">
-		<jar destfile="${buildjar.dir}/dumbhippo.sar">
-			<metainf dir="dd">
-				<include name="jboss-service.xml" />
-			</metainf>
-			<fileset dir="${build}">
-				<include name="**/mbean/**/*.class" />
-			</fileset>
-			<manifest>
-				<attribute name="Class-Path" value="${bundled-classpath}" />
-			</manifest>
-		</jar>
-	</target>
-	
 	<target name="exploded-war" depends="compile, dojobuild, nodojobuild">
 		<mkdir dir="${build.deploy.war}/WEB-INF"/>
 		<copy tofile="${build.deploy.war}/WEB-INF/web.xml" file="${web}/servlet-info.xml"/>
@@ -255,11 +234,10 @@
 		</exec>
 	</target>		
 	
-	<target name="exploded-ear-do-work" depends="ejb3jar,par,sar,basejar,exploded-war">
+	<target name="exploded-ear-do-work" depends="ejb3jar,par,basejar,exploded-war">
 		<copy file="${buildjar.dir}/dumbhippo-base.jar" todir="${build.deploy.ear}"/>
 		<copy file="${buildjar.dir}/dumbhippo.ejb3" todir="${build.deploy.ear}"/>
 		<copy file="${buildjar.dir}/dumbhippo.par" todir="${build.deploy.ear}"/>
-		<copy file="${buildjar.dir}/dumbhippo.sar" todir="${build.deploy.ear}"/>
 		<copy todir="${build.deploy.ear}">
 			<fileset dir="${lib}" includes="${bundled-classpath.external}"/>
 		</copy>
@@ -363,13 +341,13 @@
 	<target name="build" depends="test,build-notest" />
 
     <target name="reload" depends="build-notest">
-		<exec executable="../super/super">
+		<exec executable="../super/super" failonerror="true">
         	<arg line="reload jboss"/>
         </exec>
     </target>
 
     <target name="restart" depends="build">
-		<exec executable="../super/super">
+		<exec executable="../super/super" failonerror="true">
         	<arg line="restart jboss"/>
 		</exec>
     </target>

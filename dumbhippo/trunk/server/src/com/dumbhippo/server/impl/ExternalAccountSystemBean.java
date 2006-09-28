@@ -46,6 +46,7 @@ public class ExternalAccountSystemBean implements ExternalAccountSystem {
 	private MessageSender messageSender;
 	
 	@EJB
+	@IgnoreDependency
 	private Stacker stacker;
 	
 	@EJB

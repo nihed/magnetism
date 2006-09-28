@@ -16,8 +16,6 @@ import com.dumbhippo.identity20.Guid;
  * @author otaylor
  */
 public class LiveClientData extends LiveObject {
-	private int availableCount;
-
 	// Externally interesting variables - update .equals when adding one of these
 	
 	private Hotness hotness;
@@ -25,23 +23,10 @@ public class LiveClientData extends LiveObject {
 
 	LiveClientData(Guid userId) {
 		super(userId);
-		this.availableCount = 0;
 		this.hotness = Hotness.UNKNOWN;
 		this.activePosts = new ArrayList<Guid>();
 	}
 		
-	public void setAvailableCount(int availableCount) {
-		this.availableCount = availableCount;
-	}
-	
-	public int getAvailableCount() {
-		return availableCount;
-	}
-	
-	public boolean isAvailable() {
-		return availableCount > 0;
-	}
-	
 	public List<Guid> getActivePosts() {
 		return activePosts;
 	}

@@ -15,12 +15,52 @@ import org.xmpp.packet.Packet;
 import org.xmpp.packet.PacketError;
 
 import com.dumbhippo.identity20.Guid;
-import com.dumbhippo.jive.PresenceMonitor;
+import com.dumbhippo.live.ChatRoomEvent;
+import com.dumbhippo.live.GroupEvent;
+import com.dumbhippo.live.LiveEventListener;
+import com.dumbhippo.live.LiveState;
+import com.dumbhippo.live.UserChangedEvent;
 
 public class RoomHandler implements Component {
-	private PresenceMonitor presenceMonitor;
 	private JID address;
 	private Map<String, Room> rooms;
+	
+	private LiveEventListener<ChatRoomEvent> chatRoomEventListener = new LiveEventListener<ChatRoomEvent>() {
+		public void onEvent(ChatRoomEvent event) {
+			switch (event.getDetail()) {
+			case MESSAGES_CHANGED:
+				Room room = peekRoom(event.getChatRoomId());
+				if (room != null)
+					room.onMessagesChanged();
+				break;
+			default:
+				break;
+			}
+		}
+	};
+	
+	private LiveEventListener<GroupEvent> groupEventListener = new LiveEventListener<GroupEvent>() {
+		public void onEvent(GroupEvent event) {
+			switch (event.getDetail()) {
+			case MEMBERS_CHANGED:
+				Room room = peekRoom(event.getGroupId());
+				if (room != null)
+					room.onMembersChanged();
+				break;
+			default:
+				break;
+			}
+		}
+	};
+	
+	private LiveEventListener<UserChangedEvent> userDetailEventListener = new LiveEventListener<UserChangedEvent>() {
+		public void onEvent(UserChangedEvent event) {
+			String username = event.getUserId().toJabberId(null);
+			for (Room room : getRoomsForUser(username)) {
+				room.processUserChange(username, event.getDetail() == UserChangedEvent.Detail.MUSIC);
+			}
+		}
+	};	
 	
 	public String getDescription() {
 		return "Handler for DumbHippo chat rooms";
@@ -34,26 +74,27 @@ public class RoomHandler implements Component {
 	}
 	
 	public void start() {
-	}
-	
-	public void stop() {
+		LiveState.addEventListener(ChatRoomEvent.class, chatRoomEventListener);
+		LiveState.addEventListener(GroupEvent.class, groupEventListener);
+		LiveState.addEventListener(UserChangedEvent.class, userDetailEventListener);
 	}
 	
 	public void shutdown() {
+		LiveState.removeEventListener(ChatRoomEvent.class, chatRoomEventListener);
+		LiveState.removeEventListener(GroupEvent.class, groupEventListener);
+		LiveState.removeEventListener(UserChangedEvent.class, userDetailEventListener);
+		
+		for (Room room : rooms.values())
+			room.shutdown();
 	}
 	
 	private String getServiceDomain() {
 		return "rooms." + XMPPServer.getInstance().getServerInfo().getName();
 	}
 
-	public RoomHandler(PresenceMonitor presenceMonitor) {
-		this.presenceMonitor = presenceMonitor;
+	public RoomHandler() {
 		address = new JID(null, getServiceDomain(), null);
 		rooms = new HashMap<String, Room>();
-	}
-	
-	public PresenceMonitor getPresenceMonitor() {
-		return presenceMonitor;
 	}
 	
 	public JID getAddress() {
@@ -107,16 +148,12 @@ public class RoomHandler implements Component {
 		room.processPacket(packet);			
 	}
 	
-	public void roomChanged(Guid roomGuid) {
-		Room room = peekRoom(roomGuid.toJabberId(null));
-		if (room == null)
-			return;
-		else
-			room.reloadCaches();
-	}
-	
 	public Room peekRoom(String roomName) {
 		return getRoom(roomName, null, false);
+	}
+	
+	public Room peekRoom(Guid roomGuid) {
+		return peekRoom(roomGuid.toJabberId(null));
 	}
 	
 	private Room getRoom(String roomName, String userId) {
@@ -124,16 +161,19 @@ public class RoomHandler implements Component {
 	}
 	
 	private Room getRoom(String roomName, String userId, boolean create) {
-		Room room = rooms.get(roomName);
-		if (room == null && create) {
-			room = Room.loadFromServer(this, roomName);
-			if (room == null) {
-				Log.debug("  room doesn't seem to exist");
+		Room room;
+		synchronized (rooms) {
+			room = rooms.get(roomName);
+			if (room == null && create) {
+				room = Room.loadFromServer(roomName);
+				if (room == null) {
+					Log.debug("  room doesn't seem to exist");
+					return null;
+				}
+				rooms.put(roomName, room);			
+			} else if (room == null) {
 				return null;
 			}
-			rooms.put(roomName, room);			
-		} else if (room == null) {
-			return null;
 		}
 		if (userId == null)
 			return room;
@@ -152,12 +192,14 @@ public class RoomHandler implements Component {
 	 * @return a list of rooms the user is present in
 	 */
 	public List<Room> getRoomsForUser(String userId) {
-		List<Room> roomsForUser = new ArrayList<Room>();
-		for (Room room : rooms.values()) {
-			if (room.checkUserPresent(userId)) {
-				roomsForUser.add(room);
-			}			
+		synchronized (rooms) {
+			List<Room> roomsForUser = new ArrayList<Room>();
+			for (Room room : rooms.values()) {
+				if (room.checkUserPresent(userId)) {
+					roomsForUser.add(room);
+				}			
+			}
+			return roomsForUser;
 		}
-		return roomsForUser;
 	}
 }

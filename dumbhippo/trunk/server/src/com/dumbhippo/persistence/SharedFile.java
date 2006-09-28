@@ -20,7 +20,7 @@ import com.dumbhippo.StringUtils;
 import com.dumbhippo.XmlBuilder;
 
 @Entity
-@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)
+@Cache(usage=CacheConcurrencyStrategy.TRANSACTIONAL)
 public class SharedFile extends EmbeddedGuidPersistable {
 	
 	private User creator;
@@ -130,7 +130,7 @@ public class SharedFile extends EmbeddedGuidPersistable {
 	// or we queried by user/group to begin with, there may 
 	// be no point loading this
 	@OneToMany(mappedBy="file",fetch=FetchType.LAZY)
-	@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)
+	@Cache(usage=CacheConcurrencyStrategy.TRANSACTIONAL)
 	public Set<SharedFileGroup> getGroups() {
 		return groups;
 	}
@@ -144,7 +144,7 @@ public class SharedFile extends EmbeddedGuidPersistable {
 	// or we queried by user/group to begin with, there may 
 	// be no point loading this
 	@OneToMany(mappedBy="file",fetch=FetchType.LAZY)
-	@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)
+	@Cache(usage=CacheConcurrencyStrategy.TRANSACTIONAL)
 	public Set<SharedFileUser> getUsers() {
 		return users;
 	}

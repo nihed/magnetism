@@ -90,9 +90,9 @@ public class TrackSearchResult {
 		for (int i = start;  i < start + count && i < hits.length(); i++) {
 			try {
 				Document d = hits.doc(i);
-				String artist = d.get("Artist");
-				String album = d.get("Album");
-				String name = d.get("Name");
+				String artist = d.get("artist");
+				String album = d.get("album");
+				String name = d.get("name");
 
 				TrackView trackView = musicSystem.songSearch(viewpoint, artist, album, name);
 				results.add(trackView);

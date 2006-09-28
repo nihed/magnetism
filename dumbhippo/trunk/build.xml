@@ -1,21 +1,39 @@
 <project name="build-dumbhippo" default="dar" basedir=".">
 
+    <property file="${user.home}/.dumbhippo.properties"/>
+    <property name="deploy.hosts" value=""/>
+    
     <target name="compile">
     	<ant dir="taste" target="build"/>
         <ant dir="server" target="build"/>
     	<!-- jive has a weird ant file -->
-        <ant dir="wildfire/" antfile="build/build.xml" target="plugins"/>    	
+        <ant dir="wildfire/" antfile="build/build.xml" target="plugins">    	
+	</ant>
         <ant dir="imbot" target="all"/>
     	<ant dir="hungry" target="build"/>    	
+    	<ant dir="cluster" target="all"/>    	
     </target>
 
     <target name="dar" depends="compile">
-		<exec dir="${basedir}" executable="${basedir}/super/super">
+		<exec dir="${basedir}" executable="${basedir}/super/super" failonerror="true">
 			 <!-- this parameter doesn't matter; super barfs though if
 			      $HOME isn't set, which is true for the autobuilder. -->
 			<arg value="-Dhome=/enoent"/>
 			<arg value="deploy"/>
 			<arg value="all"/>
+		</exec>
+    </target>
+
+    <target name="deploy" depends="dar">
+		<exec dir="${basedir}" executable="${basedir}/tools/deploy.sh" failonerror="true">
+			<arg value="super/dumbhippo.dar"/>
+			<arg value="${deploy.hosts}"/>
+		</exec>
+    </target>
+
+    <target name="deploy-stop">
+		<exec dir="${basedir}" executable="${basedir}/tools/deploy-stop.sh" failonerror="true">
+			<arg value="${deploy.hosts}"/>
 		</exec>
     </target>
 
@@ -29,13 +47,13 @@
     <target name="cleandar" depends="clean,dar"/>
 
     <target name="reload" depends="compile">
-        <exec executable="super/super">
+        <exec executable="super/super" failonerror="true">
              <arg line="reload all"/>
         </exec>
     </target>
 
     <target name="restart" depends="compile">
-        <exec executable="super/super">
+        <exec executable="super/super" failonerror="true">
             <arg line="restart all"/>
         </exec>
     </target>

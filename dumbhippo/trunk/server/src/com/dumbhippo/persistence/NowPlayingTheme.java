@@ -19,7 +19,7 @@ import com.dumbhippo.server.Configuration;
  * @author Havoc Pennington
  */
 @Entity
-@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)
+@Cache(usage=CacheConcurrencyStrategy.TRANSACTIONAL)
 public class NowPlayingTheme extends EmbeddedGuidPersistable {
 
 	static final private String BLUE = "#0000FF";

@@ -10,9 +10,9 @@ import org.jivesoftware.wildfire.IQHandlerInfo;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.xmpp.packet.IQ;
 
-import com.dumbhippo.server.MessengerGlueRemote;
-import com.dumbhippo.server.MessengerGlueRemote.MySpaceBlogCommentInfo;
-import com.dumbhippo.server.MessengerGlueRemote.MySpaceContactInfo;
+import com.dumbhippo.server.MessengerGlue;
+import com.dumbhippo.server.MessengerGlue.MySpaceBlogCommentInfo;
+import com.dumbhippo.server.MessengerGlue.MySpaceContactInfo;
 import com.dumbhippo.server.util.EJBUtil;
 
 public class MySpaceIQHandler extends AbstractIQHandler {
@@ -59,14 +59,14 @@ public class MySpaceIQHandler extends AbstractIQHandler {
 	}
 
 	private void handleNotifyContactComment(Element iq, String username, IQ reply) {
-		MessengerGlueRemote glue = EJBUtil.defaultLookupRemote(MessengerGlueRemote.class);
+		MessengerGlue glue = EJBUtil.defaultLookup(MessengerGlue.class);
 		String mySpaceName = iq.attributeValue("name");
 		Log.debug("notifing of contact comment with id " + mySpaceName);
 		glue.notifyNewMySpaceContactComment(username, mySpaceName);
 	}
 
 	private void handleGetBlogComments(Element iq, String username, IQ reply) {
-		MessengerGlueRemote glue = EJBUtil.defaultLookupRemote(MessengerGlueRemote.class);
+		MessengerGlue glue = EJBUtil.defaultLookup(MessengerGlue.class);
 		Document document = DocumentFactory.getInstance().createDocument();
 		Element childElement = document.addElement("mySpaceInfo", "http://dumbhippo.com/protocol/myspace"); 
 		reply.setChildElement(childElement);		
@@ -83,7 +83,7 @@ public class MySpaceIQHandler extends AbstractIQHandler {
 	}
 	
 	private void handleGetContacts(Element iq, String username, IQ reply) {
-		MessengerGlueRemote glue = EJBUtil.defaultLookupRemote(MessengerGlueRemote.class);
+		MessengerGlue glue = EJBUtil.defaultLookup(MessengerGlue.class);
 		Document document = DocumentFactory.getInstance().createDocument();
 		Element childElement = document.addElement("mySpaceInfo", "http://dumbhippo.com/protocol/myspace"); 
 		reply.setChildElement(childElement);		
@@ -96,7 +96,7 @@ public class MySpaceIQHandler extends AbstractIQHandler {
 	}	
 
 	private void handleGetName(Element iq, String username, IQ reply) {
-		MessengerGlueRemote glue = EJBUtil.defaultLookupRemote(MessengerGlueRemote.class);
+		MessengerGlue glue = EJBUtil.defaultLookup(MessengerGlue.class);
 		
 		String name = glue.getMySpaceName(username);
 		
@@ -108,7 +108,7 @@ public class MySpaceIQHandler extends AbstractIQHandler {
 	}
 	
 	private void handleAddBlogComment(Element iq, String username, IQ reply) {
-		MessengerGlueRemote glue = EJBUtil.defaultLookupRemote(MessengerGlueRemote.class);
+		MessengerGlue glue = EJBUtil.defaultLookup(MessengerGlue.class);
 		Long commentId = null;
 		Long posterId = null;
 		for (Object argObj : iq.elements()) {

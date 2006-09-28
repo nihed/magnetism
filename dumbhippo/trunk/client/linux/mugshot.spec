@@ -1,5 +1,5 @@
 Name:           mugshot
-Version:        1.1.14
+Version:        1.1.16
 Release:        1%{?dist}
 Summary:        Companion software for mugshot.org
 
@@ -13,8 +13,12 @@ BuildRequires:  glib2-devel >= 2.6
 BuildRequires:  gtk2-devel >= 2.6
 BuildRequires:  loudmouth-devel >= 1.0.3-3
 BuildRequires:  dbus-devel >= 0.61
+# dbus-glib-devel is split out from dbus-devel as of Fedora Core 6
+# BuildRequires: dbus-glib-devel >= 0.61 
 BuildRequires:  curl-devel >= 7.15
 BuildRequires:  GConf2-devel >= 2.8
+BuildRequires:  libXScrnSaver-devel
+
 # This is just the gecko-sdk from mozilla.org dumped into /opt/gecko-sdk
 # See http://developer.mugshot.org/download/extra for the spec file
 # If you are porting this to a distribution with a firefox-devel package
@@ -59,7 +63,7 @@ rm -rf $RPM_BUILD_ROOT
 # is on installation or old version on uninstallation, we have
 # to do things in a somewhat non-intuitive way
 #
-# The order on upgrade is:
+# The order on upgrade of firefox is:
 #
 #  1. new package installed
 #  2. triggerin for new package - we add all symlinks
@@ -90,6 +94,12 @@ touch --no-create %{_datadir}/icons/hicolor
 if [ -x /usr/bin/gtk-update-icon-cache ]; then
   gtk-update-icon-cache -q %{_datadir}/icons/hicolor
 fi
+# This is needed not to reverse the effect of our preun, which
+# is guarded against upgrade, but because of our triggerun,
+# which is run on self-upgrade, though triggerpostun isn't
+if [ "$1" != 0 ] ; then
+  test -x %{_datadir}/mugshot/firefox-update.sh && %{_datadir}/mugshot/firefox-update.sh install
+fi
 
 %triggerin -- firefox
 %{_datadir}/mugshot/firefox-update.sh install
@@ -98,7 +108,11 @@ fi
 %{_datadir}/mugshot/firefox-update.sh remove
 
 %triggerpostun -- firefox
-%{_datadir}/mugshot/firefox-update.sh install
+# Guard against being run post-self-uninstall, even though that
+# doesn't happen currently (see comment for triggerun)
+if [ "$1" != 0 ] ; then
+  test -x %{_datadir}/mugshot/firefox-update.sh && %{_datadir}/mugshot/firefox-update.sh install
+fi
 
 %files
 %defattr(-,root,root,-)
@@ -119,7 +133,10 @@ fi
 %{_sysconfdir}/gconf/schemas/*.schemas
 
 %changelog
-* Sat Aug 19 2006 Owen Taylor <otaylor@redhat.com> - 1.1.11-1
+* Sat Sep 26 2006 Owen Taylor <otaylor@redhat.com> - 1.1.16-1
+- Fix triggers/scriptlets to work right on upgrades
+
+* Sat Aug 19 2006 Owen Taylor <otaylor@redhat.com> - 1.1.12-1
 - Add firefox extension
 
 * Wed Jul 19 2006 Colin Walters <walters@redhat.com> - 1.1.11-1

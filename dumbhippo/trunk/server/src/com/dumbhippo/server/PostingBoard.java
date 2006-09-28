@@ -182,9 +182,10 @@ public interface PostingBoard {
 	 * Get all messages that were posted in the chatroom about this post.
 	 * 
 	 * @param post the post the look up the messages for
+	 * @param lastSeenSerial return only messages with serials greater than this
 	 * @return the list of mesages, sorted by date (newest last)
 	 */
-	public List<PostMessage> getPostMessages(Post post);
+	public List<PostMessage> getPostMessages(Post post, long lastSeenSerial);
 	
 	public List<PostMessage> getNewestPostMessages(Post post, int maxResults);
 	
@@ -204,9 +205,8 @@ public interface PostingBoard {
 	 * @param fromUser the user who sent the message
 	 * @param text the text of the message
 	 * @param timestamp the time when the message was posted
-	 * @param serial counter (starts at zero) of messages for the post
 	 */
-	public void addPostMessage(Post post, User fromUser, String text, Date timestamp, int serial);
+	public void addPostMessage(Post post, User fromUser, String text, Date timestamp);
 	
 	/**
 	 * Search the database of posts using Lucene.
@@ -299,5 +299,13 @@ public interface PostingBoard {
 	
 	public boolean postIsGroupNotification(Post post);
 	
-	public void sendPostNotifications(Post post, PostType postType);	
+	public void sendPostNotifications(Post post, PostType postType);
+
+	/**
+	 * Sends messages that the user might have missed to them via XMPP.
+	 * 
+	 * @param user the user to send backlog to
+	 * @param lastLogoutDate date the user was last logged in, or %null
+	 */
+	public void sendBacklog(User user, Date lastLogoutDate);	
 }

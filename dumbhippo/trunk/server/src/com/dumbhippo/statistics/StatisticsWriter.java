@@ -34,6 +34,11 @@ public class StatisticsWriter extends StatisticsSet {
 	private boolean started = false;
 	private long position = 0;
 	
+	@Override
+	public boolean isCurrent() {
+		return true;
+	}
+	
 	/**
 	 * Start recording data. All data sources must already have been added with
 	 * addSource() before calling this method.
@@ -53,7 +58,7 @@ public class StatisticsWriter extends StatisticsSet {
 		
 		filename = header.makeFilename();
 		try {
-			output = new RandomAccessFile(filename, "rw");
+			output = new RandomAccessFile("statistics/" + filename, "rw");
 		} catch (IOException e) {
 			throw new RuntimeException("Can't open output file");
 		}

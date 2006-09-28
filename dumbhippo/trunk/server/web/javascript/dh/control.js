@@ -479,7 +479,7 @@ dh.control.createControl = function() {
 		var ieControl
 		try {
 			ieControl = new ActiveXObject("Hippo.Control");
-		} catch (e) { alert(e.message) }
+		} catch (e) {}
 		
 		if (ieControl)
 			dh.control.control = new dh.control.NativeControl(ieControl);

@@ -62,6 +62,7 @@ public class Account extends Resource {
 	
 	private long creationDate;
 	private long lastLoginDate;
+	private long lastLogoutDate;
 	private int invitations;
 	
 	private boolean wasSentShareLinkTutorial;
@@ -119,6 +120,7 @@ public class Account extends Resource {
 		externalAccounts = new HashSet<ExternalAccount>();
 		creationDate = -1;
 		lastLoginDate = -1;
+		lastLogoutDate = -1;
 		wasSentShareLinkTutorial = false;
 		hasDoneShareLinkTutorial = false;
 		disabled = false;
@@ -211,7 +213,7 @@ public class Account extends Resource {
 	 * @return the clients (programs/machines) used with this account
 	 */
 	@OneToMany(cascade = { CascadeType.ALL }, mappedBy="account")
-	@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)
+	@Cache(usage=CacheConcurrencyStrategy.TRANSACTIONAL)
 	protected Set<Client> getClients() {
 		return clients;
 	}
@@ -245,7 +247,7 @@ public class Account extends Resource {
 	}
 
 	@OneToMany(mappedBy="account")
-	@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)	
+	@Cache(usage=CacheConcurrencyStrategy.TRANSACTIONAL)	
 	public Set<Contact> getContacts() {
 		if (contacts == null)
 			throw new RuntimeException("no contacts set???");
@@ -313,6 +315,21 @@ public class Account extends Resource {
 			this.lastLoginDate = date.getTime();
 		else
 			this.lastLoginDate = -1;
+	}	
+
+	@Column(nullable=true)
+	public Date getLastLogoutDate() {
+		if (lastLogoutDate < 0) {
+			return null;
+		}
+		return new Date(lastLogoutDate);
+	}
+
+	public void setLastLogoutDate(Date date) {
+		if (date != null)
+			this.lastLogoutDate = date.getTime();
+		else
+			this.lastLogoutDate = -1;
 	}	
 
 	@Column(nullable = false)
@@ -556,7 +573,7 @@ public class Account extends Resource {
 		       joinColumns=@JoinColumn(name="Account_id", referencedColumnName="id"),                 
 		       inverseJoinColumns=@JoinColumn(name="favoritePosts_id", referencedColumnName="id"),
 		       uniqueConstraints=@UniqueConstraint(columnNames={"Account_id", "favoritePosts_id"}))	
-	@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)
+	@Cache(usage=CacheConcurrencyStrategy.TRANSACTIONAL)
 	public Set<Post> getFavoritePosts() {
 		if (favoritePosts == null)
 			throw new RuntimeException("no favorite posts?");
@@ -623,7 +640,7 @@ public class Account extends Resource {
 	// try LAZY fetch since for now we only need this on /account and /person
 	// maybe it will make sense
 	@OneToMany(mappedBy="account", fetch=FetchType.LAZY)
-	@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)
+	@Cache(usage=CacheConcurrencyStrategy.TRANSACTIONAL)
 	public Set<ExternalAccount> getExternalAccounts() {
 		if (externalAccounts == null)
 			throw new RuntimeException("no external accounts set???");

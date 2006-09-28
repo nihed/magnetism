@@ -14,7 +14,7 @@ import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 @Entity
-@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)
+@Cache(usage=CacheConcurrencyStrategy.TRANSACTIONAL)
 @Table(name="UserBlockData", 
 	   uniqueConstraints = {
 			@UniqueConstraint(columnNames={"user_id", "block_id"})

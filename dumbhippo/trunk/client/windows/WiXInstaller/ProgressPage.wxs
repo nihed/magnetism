@@ -3,9 +3,8 @@
     <Fragment>
         <UI>
 	    <Dialog Id="ProgressPage" Width="370" Height="200" Title="Installing Mugshot" Modeless="yes">
-	        <Control Id="bannerBitmap" Type="Bitmap" FixedSize="yes" X="0" Y="0" Width="370" Height="35" Text="fogJpg"/>
+	        <Control Id="bannerBitmap" Type="Bitmap" FixedSize="yes" X="0" Y="0" Width="370" Height="35" Text="bannerBmp"/>
 	        <Control Id="bannerText" Type="Text" X="5" Y="7" Width="360" Height="25" Transparent="yes">
-	            <Text>{\dialogTitleStyle}Welcome to Mugshot</Text>
 	        </Control>
 	        <Control Id="pageText" Type="Text" X="10" Y="45" Width="355" Height="15">
 	            <Text>Please wait while the Mugshot client is installed.</Text>

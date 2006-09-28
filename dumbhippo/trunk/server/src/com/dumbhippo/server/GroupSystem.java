@@ -134,9 +134,10 @@ public interface GroupSystem {
 	 * Get all messages that were posted in the chatroom about this group.
 	 * 
 	 * @param group the group the look up the messages for
+	 * @param lastSeenSerial return only messages with serials greater than this
 	 * @return the list of mesages, sorted by date (newest last)
 	 */
-	public List<GroupMessage> getGroupMessages(Group group);
+	public List<GroupMessage> getGroupMessages(Group group, long lastSeenSerial);
 	
 	/**
 	 * Get up to maxResults newest messages in the group chat, sorted descending (newest first)
@@ -154,9 +155,8 @@ public interface GroupSystem {
 	 * @param fromUser the user who sent the message
 	 * @param text the text of the message
 	 * @param timestamp the time when the message was posted
-	 * @param serial counter (starts at zero) of messages for the group
 	 */
-	public void addGroupMessage(Group group, User fromUser, String text, Date timestamp, int serial);
+	public void addGroupMessage(Group group, User fromUser, String text, Date timestamp);
 
 	/**
 	 * Checks whether the given viewpoint is allowed to change settings of a group

@@ -4,13 +4,62 @@
 	 left: 700px; 
 }
 
+.dh-block-table {
+	table-layout: fixed;
+	border-spacing: 0px;
+}
+
 .dh-graph {
 	position: relative;
 	width: 600px; 
 	height: 200px; 
 }
 
+.dh-column-select {
+	width: 298px;
+	border: 1px;
+}
+
+.dh-server-select {
+	position: relative;
+	width: 298px;
+	border: 1px;
+	text-align: right;
+}
+
+.dh-remove {
+	float: right;
+	width: 15px;
+	font-size: 14px;
+	text-align: center;
+	margin-left: 5px;
+}
+
+.dh-max-val {
+	width: 100px;
+	text-align: right;
+	vertical-align: top;
+}
+
+.dh-min-val {
+	text-align: right;
+	vertical-align: bottom;
+}
+
+.dh-start-time {
+}
+
+.dh-end-time {
+	text-align: right;
+}
+
 .dh-coordinates {
+	text-align: center;
+}
+
+.dh-coordinates div {
+	position:   relative;
+	left:		170px;
 	width:      260px;
 	height:     20px;
 	margin-top: 2px;

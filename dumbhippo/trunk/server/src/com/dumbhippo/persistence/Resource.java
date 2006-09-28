@@ -57,7 +57,7 @@ public abstract class Resource extends GuidPersistable {
 	// relationships are not cached by hibernate; then we wrap the field
 	// with a transient getter that returns the single value 
 	@OneToMany(fetch=FetchType.LAZY, mappedBy="resource")
-	@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)
+	@Cache(usage=CacheConcurrencyStrategy.TRANSACTIONAL)
 	protected Set<AccountClaim> getAccountClaims() {
 		return accountClaims;		
 	}

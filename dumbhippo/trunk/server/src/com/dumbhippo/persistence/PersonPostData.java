@@ -19,7 +19,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 		   uniqueConstraints = 
 		      {@UniqueConstraint(columnNames={"post_id", "person_id"})}
 	      )
-@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)	      
+@Cache(usage=CacheConcurrencyStrategy.TRANSACTIONAL)	      
 public class PersonPostData extends DBUnique {
 	private static final long serialVersionUID = 1L;
 	private Post post;

@@ -12,6 +12,7 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
@@ -66,6 +67,7 @@ import com.dumbhippo.postinfo.NodeName;
 import com.dumbhippo.postinfo.PostInfo;
 import com.dumbhippo.postinfo.PostInfoType;
 import com.dumbhippo.postinfo.ShareGroupPostInfo;
+import com.dumbhippo.search.SearchSystem;
 import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.AnonymousViewpoint;
 import com.dumbhippo.server.Character;
@@ -96,6 +98,7 @@ import com.dumbhippo.server.SystemViewpoint;
 import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.UserViewpoint;
 import com.dumbhippo.server.Viewpoint;
+import com.dumbhippo.server.XmppMessageSender;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.util.GuidNotFoundException;
 
@@ -132,7 +135,13 @@ public class PostingBoardBean implements PostingBoard {
 	private GroupSystem groupSystem;
 	
 	@EJB
+	private SearchSystem searchSystem;
+	
+	@EJB
 	private TransactionRunner runner;
+	
+	@EJB
+	private XmppMessageSender xmppMessageSender;
 	
 	@EJB
 	@IgnoreDependency
@@ -274,7 +283,7 @@ public class PostingBoardBean implements PostingBoard {
 						
 						LiveState liveState = LiveState.getInstance();			
 						for (Group g : post.getGroupRecipients()) {
-						    liveState.queueUpdate(new GroupEvent(g.getGuid(), post.getGuid(), GroupEvent.Type.POST_ADDED));
+						    liveState.queueUpdate(new GroupEvent(g.getGuid(), post.getGuid(), GroupEvent.Detail.POST_ADDED));
 						}
 						liveState.queueUpdate(new PostCreatedEvent(post.getGuid(), poster != null ? 
 								poster.getGuid() : null));				
@@ -453,7 +462,7 @@ public class PostingBoardBean implements PostingBoard {
 	private Post createAndIndexPost(Callable<Post> creator) {
 		try {
 			Post detached = runner.runTaskNotInNewTransaction(creator);
-			PostIndexer.getInstance().indexAfterTransaction(detached.getGuid());
+			searchSystem.indexPost(detached, false);
 			Post post = em.find(Post.class, detached.getId());
 			if (post == null)
 				logger.error("reattach after creating new post FAILED ...");
@@ -837,9 +846,15 @@ public class PostingBoardBean implements PostingBoard {
 		pageable.setResults(getPostsFor(viewpoint, poster, pageable.getStart(), pageable.getCount()));
 		pageable.setTotalCount(getPostsForCount(viewpoint, poster));
 	}
+	
+	private enum PostFilter {
+		NO_FEEDS,
+		ONLY_FEEDS,
+		ALL_POSTS
+	}
 
 	private Query buildReceivedPostsQuery(UserViewpoint viewpoint, User recipient,
-			String search, boolean isCount, boolean isFeeds) {
+			String search, boolean isCount, PostFilter filter, Date since) {
 		// There's an efficiency win here by specializing to the case where
 		// viewer == recipient ... we know that posts are always visible
 		// to the recipient; we don't bother implementing the other case for
@@ -855,17 +870,26 @@ public class PostingBoardBean implements PostingBoard {
 		else
 			queryText.append("post");
 		
-		if (isFeeds)
-			queryText.append(" FROM FeedPost post ");
-		else
+		switch (filter) {
+		case NO_FEEDS:
+		case ALL_POSTS:
 			queryText.append(" FROM Post post ");
+			break;
+		case ONLY_FEEDS:
+			queryText.append(" FROM FeedPost post ");
+			break;
+		}
 		
 		queryText.append("WHERE (post.poster IS NULL OR post.poster != :viewer) ");
 		
-		if (!isFeeds)
+		if (filter == PostFilter.NO_FEEDS)
 			queryText.append(" AND NOT EXISTS (SELECT fp.id FROM FeedPost fp WHERE post.id=fp.id) ");
 		
 		queryText.append("AND " + VIEWER_RECEIVED);
+		
+		if (since != null) {
+			queryText.append(" AND post.postDate > :since");
+		}
 		
 		appendPostLikeClause(queryText, search);
 
@@ -877,29 +901,33 @@ public class PostingBoardBean implements PostingBoard {
 		q = em.createQuery(queryText.toString());
 		
 		q.setParameter("viewer", recipient);
+		
+		if (since != null)
+			q.setParameter("since", since);
+		
 		return q;
 	}
 	
 	private int getReceivedPostsCount(UserViewpoint viewpoint, User recipient, String search) {
-		Query q = buildReceivedPostsQuery(viewpoint, recipient, search, true, false);
+		Query q = buildReceivedPostsQuery(viewpoint, recipient, search, true, PostFilter.NO_FEEDS, null);
 		Object result = q.getSingleResult();
 		return ((Number) result).intValue();
 	}
 	
 	private List<PostView> getReceivedPosts(UserViewpoint viewpoint, User recipient, String search, int start, int max) {
-		Query q  = buildReceivedPostsQuery(viewpoint, recipient, search, false, false);
+		Query q  = buildReceivedPostsQuery(viewpoint, recipient, search, false, PostFilter.NO_FEEDS, null);
 		return getPostViews(viewpoint, q, search, start, max);
 	}
 
 	private int getReceivedFeedPostsCount(UserViewpoint viewpoint, User recipient, String search) {
-		Query q = buildReceivedPostsQuery(viewpoint, recipient, search, true, true);
+		Query q = buildReceivedPostsQuery(viewpoint, recipient, search, true, PostFilter.ONLY_FEEDS, null);
 		Object result = q.getSingleResult();
 		//logger.debug("feed posts count {}", result);
 		return ((Number) result).intValue();
 	}
 	
 	private List<PostView> getReceivedFeedPosts(UserViewpoint viewpoint, User recipient, String search, int start, int max) {
-		Query q  = buildReceivedPostsQuery(viewpoint, recipient, search, false, true);
+		Query q  = buildReceivedPostsQuery(viewpoint, recipient, search, false,  PostFilter.ONLY_FEEDS, null);
 		return getPostViews(viewpoint, q, search, start, max);
 	}
 	
@@ -1196,9 +1224,17 @@ public class PostingBoardBean implements PostingBoard {
 		pageable.setTotalCount(getReceivedFeedPostsCount(viewpoint, recipient, null));		
 	}
 	
-	public List<PostMessage> getPostMessages(Post post) {
-		List<?> messages = em.createQuery("SELECT pm from PostMessage pm WHERE pm.post = :post ORDER BY pm.timestamp")
+	// We order and select on pm.id, though in rare cases the order by pm.id and by pm.timestamp
+	// might be different if two messages arrive almost at once. In this case, the timestamps will
+	// likely be within a second of each other and its much cheaper this way.
+	private static final String POST_MESSAGE_QUERY = "SELECT pm from PostMessage pm WHERE pm.post = :post";
+	private static final String POST_MESSAGE_SELECT = " AND pm.id >= :lastSeenSerial ";
+	private static final String POST_MESSAGE_ORDER = " ORDER BY pm.id";
+	
+	public List<PostMessage> getPostMessages(Post post, long lastSeenSerial) {
+		List<?> messages = em.createQuery(POST_MESSAGE_QUERY + POST_MESSAGE_SELECT + POST_MESSAGE_ORDER)
 		.setParameter("post", post)
+		.setParameter("lastSeenSerial", lastSeenSerial)
 		.getResultList();
 		
 		return TypeUtils.castList(PostMessage.class, messages);
@@ -1221,13 +1257,8 @@ public class PostingBoardBean implements PostingBoard {
 		return ((Number) result).intValue();
 	}
 	
-	public void addPostMessage(Post post, User fromUser, String text, Date timestamp, int serial) {
-		// we use serial = -1 in other places in the system to designate a message that contains
-		// the post description, but we never add this type of message to the database
-		if (serial < 0) 
-			throw new IllegalArgumentException("Negative serial");
-		
-		PostMessage postMessage = new PostMessage(post, fromUser, text, timestamp, serial);
+	public void addPostMessage(Post post, User fromUser, String text, Date timestamp) {
+		PostMessage postMessage = new PostMessage(post, fromUser, text, timestamp);
 		em.persist(postMessage);
 		
 		LiveState.getInstance().queueUpdate(new PostChatEvent(post.getGuid()));
@@ -1294,7 +1325,7 @@ public class PostingBoardBean implements PostingBoard {
 	}
 	
 	public PostSearchResult searchPosts(Viewpoint viewpoint, String queryString) {
-		final String[] fields = { "ExplicitTitle", "Text" };
+		final String[] fields = { "explicitTitle", "text" };
 		QueryParser queryParser = new MultiFieldQueryParser(fields, PostIndexer.getInstance().createAnalyzer());
 		queryParser.setDefaultOperator(Operator.AND);
 		org.apache.lucene.search.Query query;
@@ -1378,5 +1409,20 @@ public class PostingBoardBean implements PostingBoard {
 		}
 		
 		return false;
+	}
+	
+	static final int MAX_BACKLOG = 20;
+
+	public void sendBacklog(User user, Date lastLogoutDate) {
+		UserViewpoint viewpoint = new UserViewpoint(user);
+		
+		Query q = buildReceivedPostsQuery(viewpoint, user, null, false, PostFilter.ALL_POSTS, lastLogoutDate);
+		q.setMaxResults(MAX_BACKLOG);
+		List<Post> posts = TypeUtils.castList(Post.class, q.getResultList());
+		
+		// Send the messages in reverse order - oldest first
+		ListIterator<Post> i = posts.listIterator(posts.size());
+		while (i.hasPrevious())
+			xmppMessageSender.sendNewPostMessage(user, i.previous());
 	}
 }

@@ -39,7 +39,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 		   uniqueConstraints = 
 			      {@UniqueConstraint(columnNames={"account_id", "feed_id"})}
 		   )
-@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)	   
+@Cache(usage=CacheConcurrencyStrategy.TRANSACTIONAL)	   
 public class AccountFeed extends EmbeddedGuidPersistable {
 	private static final long serialVersionUID = 0L;
 	

@@ -3,7 +3,6 @@ dojo.provide("dh.statistics.chart");
 dh.statistics.chart.Chart = function(width, height, coordinatesDivId) {
 	this.width = width;
 	this.height = height;
-    this.coordinatesDiv = document.getElementById(coordinatesDivId);    
 	this.dataset = new dh.statistics.dataset.Dataset();
 	this.xscale = 1;
 	this.yscale = 1;
@@ -64,8 +63,8 @@ dojo.lang.extend(dh.statistics.chart.Chart,
                 }
             }
             
-            this.coordinatesDiv.replaceChild(document.createTextNode("T: " + dh.util.timeString(xValue) + " Y: " + yValue), this.coordinatesDiv.firstChild);           
             this._highlightPoint(xValue, yValue, inDataset);
+            this.onCoordinatesChanged(xValue, yValue);
         }
 	},
 
@@ -76,6 +75,9 @@ dojo.lang.extend(dh.statistics.chart.Chart,
 	setDataset: function(dataset) {
 		this.dataset = dataset;
 		this._draw();
+	},
+	
+	onCoordinatesChanged: function(t, y) {
 	},
 	
 	_draw: function(drawRegion) {
@@ -96,7 +98,7 @@ dojo.lang.extend(dh.statistics.chart.Chart,
             this.oldX = null;
             this.oldY = null;
             this.radius = null;
-            this.coordinatesDiv.replaceChild(document.createTextNode(""), this.coordinatesDiv.firstChild);       
+            this.onCoordinatesChanged(null, null);
             
 		    // xscale determines how wide we need a single unit on the canvas to be to fit the 
 		    // whole range between minT and maxT

@@ -104,7 +104,8 @@ static void     hippo_connection_start_retry_timeout  (HippoConnection *connecti
 static void     hippo_connection_stop_retry_timeout   (HippoConnection *connection);
 static void     hippo_connection_queue_request_blocks (HippoConnection *connection);
 static void     hippo_connection_unqueue_request_blocks (HippoConnection *connection);
-static void     hippo_connection_connect              (HippoConnection *connection);
+static void     hippo_connection_connect              (HippoConnection *connection,
+                                                       const char      *redirect_host);
 static void     hippo_connection_disconnect           (HippoConnection *connection);
 static void     hippo_connection_state_change         (HippoConnection *connection,
                                                        HippoState       state);
@@ -143,6 +144,10 @@ static LmHandlerResult handle_message     (LmMessageHandler *handler,
                                            LmConnection     *connection,
                                            LmMessage        *message,
                                            gpointer          data);
+static LmHandlerResult handle_stream_error (LmMessageHandler *handler,
+                                            LmConnection     *connection,
+                                            LmMessage        *message,
+                                            gpointer          data);
 static LmHandlerResult handle_presence    (LmMessageHandler *handler,
                                            LmConnection     *connection,
                                            LmMessage        *message,
@@ -173,6 +178,7 @@ struct _HippoConnection {
     /* queue of LmMessage */
     GQueue *pending_room_messages;
     HippoBrowserKind login_browser;
+    int message_port;
     char *username;
     char *password;
     char *download_url;
@@ -499,7 +505,7 @@ hippo_connection_signin(HippoConnection *connection)
         if (connection->state == HIPPO_STATE_AUTH_WAIT)
             hippo_connection_authenticate(connection);
         else
-            hippo_connection_connect(connection);
+            hippo_connection_connect(connection, NULL);
         return FALSE;
     } else {
         if (connection->state != HIPPO_STATE_SIGN_IN_WAIT &&
@@ -743,7 +749,7 @@ signin_timeout(gpointer data)
         if (connection->state == HIPPO_STATE_AUTH_WAIT)
             hippo_connection_authenticate(connection);
         else
-            hippo_connection_connect(connection);
+            hippo_connection_connect(connection, NULL);
 
         return FALSE;
     }
@@ -791,7 +797,7 @@ retry_timeout(gpointer data)
     g_debug("Retry timeout");
 
     hippo_connection_stop_retry_timeout(connection);
-    hippo_connection_connect(connection);
+    hippo_connection_connect(connection, NULL);
 
     return FALSE;
 }
@@ -818,23 +824,30 @@ hippo_connection_stop_retry_timeout(HippoConnection *connection)
 }
 
 static void
-hippo_connection_connect(HippoConnection *connection)
+hippo_connection_connect(HippoConnection *connection, const char *redirect_host)
 {
     char *message_host;
     int message_port;
     LmMessageHandler *handler;
     GError *error;
-    
-    hippo_platform_get_message_host_port(connection->platform, &message_host, &message_port);
 
     if (connection->lm_connection != NULL) {
         g_warning("hippo_connection_connect() called when already connected");
         return;
     }
+    
+    hippo_platform_get_message_host_port(connection->platform, &message_host, &message_port);
+
+    if (redirect_host) {
+        g_free(message_host);
+        message_host = g_strdup(redirect_host);
+    }
 
     g_debug("Connecting to %s port %d", message_host, message_port);
 
     connection->lm_connection = lm_connection_new(message_host);
+
+    g_free(message_host);
     
     hippo_override_loudmouth_log(); /* lm installed its log handler the first time we did connection_new */
 
@@ -842,14 +855,20 @@ hippo_connection_connect(HippoConnection *connection)
     lm_connection_set_keep_alive_rate(connection->lm_connection, KEEP_ALIVE_RATE);
 
     handler = lm_message_handler_new(handle_message, connection, NULL);
-    lm_connection_register_message_handler(connection->lm_connection, handler, 
-                                           LM_MESSAGE_TYPE_MESSAGE, 
+    lm_connection_register_message_handler(connection->lm_connection, handler,
+                                           LM_MESSAGE_TYPE_MESSAGE,
+                                           LM_HANDLER_PRIORITY_NORMAL);
+    lm_message_handler_unref(handler);
+    handler = lm_message_handler_new(handle_presence, connection, NULL);
+
+    lm_connection_register_message_handler(connection->lm_connection, handler,
+                                           LM_MESSAGE_TYPE_PRESENCE,
                                            LM_HANDLER_PRIORITY_NORMAL);
     lm_message_handler_unref(handler);
 
-    handler = lm_message_handler_new(handle_presence, connection, NULL);
+    handler = lm_message_handler_new(handle_stream_error, connection, NULL);
     lm_connection_register_message_handler(connection->lm_connection, handler, 
-                                           LM_MESSAGE_TYPE_PRESENCE, 
+                                           LM_MESSAGE_TYPE_STREAM_ERROR,
                                            LM_HANDLER_PRIORITY_NORMAL);
     lm_message_handler_unref(handler);
 
@@ -3563,6 +3582,34 @@ handle_group_membership_change(HippoConnection *connection,
                   group, user, membership_status);
     
     return TRUE;
+}
+
+static LmHandlerResult 
+handle_stream_error (LmMessageHandler *handler,
+                     LmConnection     *lconnection,
+                     LmMessage        *message,
+                     gpointer          data)
+{
+    HippoConnection *connection = HIPPO_CONNECTION(data);
+    LmMessageNode *child;
+
+    g_debug("handling stream error message");
+
+    child = find_child_node(message->node, NULL, "see-other-host");
+
+    if (child) {
+        char *redirect_host = g_strdup(child->value);
+        g_debug("Got see-other-host message, redirected to '%s'", redirect_host);
+        
+        hippo_connection_signout(connection);
+        hippo_connection_connect(connection, redirect_host);
+        g_free (redirect_host);
+        return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+    }
+
+    g_debug("handle_stream-error: message not handled by any of our handlers");
+
+    return LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
 }
 
 static LmHandlerResult 

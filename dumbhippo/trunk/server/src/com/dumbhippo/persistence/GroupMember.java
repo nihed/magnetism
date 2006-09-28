@@ -27,7 +27,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 	   uniqueConstraints = 
 		      {@UniqueConstraint(columnNames={"group_id", "member_id"})}
 	   )
-@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)	   
+@Cache(usage=CacheConcurrencyStrategy.TRANSACTIONAL)	   
 public class GroupMember extends DBUnique {
 	private static final long serialVersionUID = 1L;
 	
@@ -84,7 +84,7 @@ public class GroupMember extends DBUnique {
                uniqueConstraints={@UniqueConstraint(columnNames={"groupMember_id", "adder_id"})},
                joinColumns=@JoinColumn(name="groupMember_id", referencedColumnName="id"),               
                inverseJoinColumns=@JoinColumn(name="adder_id", referencedColumnName="id"))	
-    @Cache(usage=CacheConcurrencyStrategy.READ_WRITE)
+    @Cache(usage=CacheConcurrencyStrategy.TRANSACTIONAL)
 	public Set<User> getAdders() {
 		return adders;
 	}

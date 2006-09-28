@@ -20,7 +20,7 @@ import org.hibernate.lucene.Indexed;
 import org.hibernate.lucene.Unstored;
 
 @Entity
-@Indexed(index="index/group")
+@Indexed(index="group")
 @Table(name="HippoGroup") // "Group" is a sql command so default name breaks things
 public class Group extends GuidPersistable implements VersionedEntity {
 	private static final long serialVersionUID = 1L;
@@ -77,7 +77,7 @@ public class Group extends GuidPersistable implements VersionedEntity {
 	}
 
 	@OneToMany(mappedBy="group")
-	@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)
+	@Cache(usage=CacheConcurrencyStrategy.TRANSACTIONAL)
 	public Set<GroupMember> getMembers() {
 		return members;
 	}
@@ -150,7 +150,7 @@ public class Group extends GuidPersistable implements VersionedEntity {
 	}
 
 	@OneToMany(mappedBy="group")
-	@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)
+	@Cache(usage=CacheConcurrencyStrategy.TRANSACTIONAL)
 	public Set<GroupFeed> getFeeds() {
 		return feeds;
 	}

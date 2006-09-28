@@ -24,9 +24,9 @@ class LiveObjectCache<T extends LiveObject> {
 	private int maxAge;
 	LiveObjectFactory<T> factory;
 	
-	private static class CacheEntry<T extends LiveObject> {
+	private static class CacheEntry<U extends LiveObject> {
 		private Guid guid;
-		private T t;
+		private U u;
 		private boolean inUpdate;
 		int strongCount;
 		int cacheAge;
@@ -57,7 +57,7 @@ class LiveObjectCache<T extends LiveObject> {
 				logger.debug("CacheEntry {} finished updating", guid);
 		}
 		
-		public synchronized T get() {
+		public synchronized U get() {
 			waitForUpdate();
 			
 			if (!isValid()) {
@@ -69,10 +69,10 @@ class LiveObjectCache<T extends LiveObject> {
 				throw new RuntimeException(LiveState.objectCreationFailedText + " Guid: " + guid);	
 			}
 			
-			return t;
+			return u;
 		}
 		
-		public synchronized T getForUpdate() {
+		public synchronized U getForUpdate() {
 			waitForUpdate();
 
 			if (!isValid()) {
@@ -81,7 +81,7 @@ class LiveObjectCache<T extends LiveObject> {
 			}
 			
 			inUpdate = true;			
-			return t;
+			return u;
 		}
 
 		public synchronized void markInvalidEntryForUpdate() {
@@ -92,7 +92,7 @@ class LiveObjectCache<T extends LiveObject> {
 			inUpdate = true;
 		}
 		
-		public synchronized void update(T t) {
+		public synchronized void update(U t) {
 			if (!inUpdate) {
 				logger.warn("Attempt to update an entry not primed for update");
 				return;
@@ -112,13 +112,13 @@ class LiveObjectCache<T extends LiveObject> {
 			// this approach should also include changing the callers to not pass in the old
 			// value when an exception occurs, but to pass in null
 			if (t != null) {
-				this.t = t;
+				this.u = t;
 			}
 			notifyAll();
 		}
 
-		public synchronized T peek() {
-			return t;
+		public synchronized U peek() {
+			return u;
 		}
 		
 		public synchronized boolean isInUpdate() {
@@ -126,7 +126,7 @@ class LiveObjectCache<T extends LiveObject> {
 		}
 		
 		public synchronized boolean isValid() {
-			return (t != null) || inUpdate;
+			return (u != null) || inUpdate;
 		}
 
 	}

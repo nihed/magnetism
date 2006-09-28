@@ -4,6 +4,7 @@
 	<classpathentry kind="src" path="taste/src/main"/>
 	<classpathentry kind="src" path="imbot/src/java"/>
 	<classpathentry kind="src" path="hungry/src/test/java"/>
+	<classpathentry kind="src" path="cluster/balancer/src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER">
 		<accessrules>
 			<accessrule kind="accessible" pattern="**/awt/image/**"/>
@@ -32,8 +33,6 @@
 	<classpathentry kind="var" path="JBOSS_HOME/server/default/deploy/jboss-aop-jdk50.deployer/jboss-aop-jdk50.jar"/>
 	<classpathentry kind="var" path="JBOSS_HOME/server/default/deploy/jboss-aop-jdk50.deployer/jboss-aspect-library-jdk50.jar"/>
 	<classpathentry kind="var" path="JBOSS_HOME/client/activation.jar"/>
-	<classpathentry kind="var" path="JBOSS_HOME/server/default/lib/hibernate3.jar"/>
-	<classpathentry kind="var" path="JBOSS_HOME/server/default/lib/hibernate-annotations.jar"/>
 	<classpathentry kind="var" path="JBOSS_HOME/server/default/lib/ejb3-persistence.jar"/>
 	<classpathentry kind="var" path="JBOSS_HOME/server/default/lib/javax.servlet.jsp.jar"/>
 	<classpathentry kind="var" path="JBOSS_HOME/client/jbossall-client.jar"/>
@@ -70,7 +69,6 @@
 	<classpathentry kind="lib" path="wildfire/build/lib/merge/xpp3.jar"/>
 	<classpathentry kind="src" path="wildfire/src/plugins/hippo/src/java"/>
 	<classpathentry kind="lib" path="server/lib/slf4j-log4j12.jar"/>
-	<classpathentry kind="lib" path="server/lib/lucene-core-1.9.1.jar"/>
 	<classpathentry kind="lib" path="taste/taste.jar"/>
 	<classpathentry kind="lib" path="taste/lib/annotations.jar"/>
 	<classpathentry kind="src" path="server/tests"/>
@@ -84,7 +82,12 @@
 	<classpathentry kind="lib" path="server/lib/jdom-1.0.jar"/>
 	<classpathentry kind="var" path="JBOSS_HOME/client/javax.servlet.jar"/>
 	<classpathentry kind="var" path="JBOSS_HOME/server/default/deploy/ejb3.deployer/jboss-annotations-ejb3.jar"/>
+	<classpathentry kind="var" path="JBOSS_HOME/server/all/lib/jgroups.jar"/>
 	<classpathentry kind="lib" path="server/lib/commons-fileupload-1.1.1.jar"/>
 	<classpathentry kind="lib" path="server/lib/commons-io-1.2.jar"/>
+	<classpathentry kind="lib" path="server/lib/lucene-core-2.0.0.jar"/>
+	<classpathentry kind="lib" path="server/lib/hibernate3.jar"/>
+	<classpathentry kind="lib" path="server/lib/hibernate-annotations.jar"/>
+	<classpathentry kind="lib" path="server/lib/jboss-cache.jar"/>
 	<classpathentry kind="output" path="eclipse-build"/>
 </classpath>

@@ -73,6 +73,7 @@ import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.persistence.ValidationException;
 import com.dumbhippo.persistence.WantsIn;
 import com.dumbhippo.postinfo.PostInfo;
+import com.dumbhippo.search.SearchSystem;
 import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.Character;
 import com.dumbhippo.server.ClaimVerifier;
@@ -81,7 +82,6 @@ import com.dumbhippo.server.EntityView;
 import com.dumbhippo.server.ExternalAccountSystem;
 import com.dumbhippo.server.FacebookTracker;
 import com.dumbhippo.server.FeedSystem;
-import com.dumbhippo.server.GroupIndexer;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.HttpMethods;
@@ -96,7 +96,6 @@ import com.dumbhippo.server.PermissionDeniedException;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
 import com.dumbhippo.server.PersonViewer;
-import com.dumbhippo.server.PostIndexer;
 import com.dumbhippo.server.PostView;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.PromotionCode;
@@ -104,7 +103,6 @@ import com.dumbhippo.server.SharedFileSystem;
 import com.dumbhippo.server.SigninSystem;
 import com.dumbhippo.server.Stacker;
 import com.dumbhippo.server.SystemViewpoint;
-import com.dumbhippo.server.TrackIndexer;
 import com.dumbhippo.server.TrackView;
 import com.dumbhippo.server.UserViewpoint;
 import com.dumbhippo.server.Viewpoint;
@@ -144,6 +142,9 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	private AccountSystem accountSystem;
 
 	@EJB
+	private FeedSystem feedSystem;
+
+	@EJB
 	private GroupSystem groupSystem;
 
 	@EJB
@@ -168,13 +169,13 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	private Configuration config;
 	
 	@EJB
-	private FeedSystem feedSystem;
-	
-	@EJB
 	private ExternalAccountSystem externalAccountSystem;
 	
 	@EJB
 	private FacebookTracker facebookTracker;
+	
+	@EJB
+	private SearchSystem searchSystem;
 	
 	@EJB
 	private Stacker stacker;
@@ -183,7 +184,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	private SharedFileSystem sharedFileSystem;
 	
 	@PersistenceContext(unitName = "dumbhippo")
-	private EntityManager em;	
+	private EntityManager em;
 	
 	private void startReturnObjectsXml(HttpResponseData contentType,
 			XmlBuilder xml) {
@@ -534,6 +535,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 				throw new RuntimeException("Only active members can edit a group");
 						
 			group.setName(name);
+			searchSystem.indexGroup(group, true);
 		} catch (NotFoundException e) {
 			throw new RuntimeException(e);
 		}		
@@ -549,6 +551,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			description = description.trim();
 			
 			group.setDescription(description);
+			searchSystem.indexGroup(group, true);
 		} catch (NotFoundException e) {
 			throw new RuntimeException(e);
 		}		
@@ -1128,9 +1131,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			throw new RuntimeException("Only administrators can recreate the search indices");
 		}
 		
-		PostIndexer.getInstance().reindex();
-		TrackIndexer.getInstance().reindex();
-		GroupIndexer.getInstance().reindex();
+		searchSystem.reindexAll();
 	}
 	
 	public void doSetFavoritePost(UserViewpoint viewpoint, String postId, boolean favorite) {
@@ -1385,6 +1386,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		if (feedSource == null) {
 			throw new XmlMethodException(XmlMethodErrorCode.INVALID_URL, "Couldn't find a feed at " + url);
 		}
+		FeedSystem feedSystem = EJBUtil.defaultLookup(FeedSystem.class);			
 		LinkResource link = identitySpider.getLink(feedSource);
 		Feed feed = feedSystem.getFeed(link);
 		return feed;
@@ -1393,6 +1395,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	public void getFeedDump(OutputStream out, HttpResponseData contentType, UserViewpoint viewpoint, String url) throws HumanVisibleException, IOException {
 		try {
 			PrintStream printer = new PrintStream(out);
+			FeedSystem feedSystem = EJBUtil.defaultLookup(FeedSystem.class);				
 			
 			Feed feed = getFeedFromUserEnteredUrl(url);
 			feedSystem.updateFeed(feed);
@@ -1424,6 +1427,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	}
 
 	public void doFeedPreview(XmlBuilder xml, UserViewpoint viewpoint, String url) throws XmlMethodException {
+		FeedSystem feedSystem = EJBUtil.defaultLookup(FeedSystem.class);			
 		Feed feed = getFeedFromUserEnteredUrl(url);
 		feedSystem.updateFeed(feed);
 
@@ -1452,6 +1456,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	}
 	
 	public void doAddGroupFeed(XmlBuilder xml, UserViewpoint viewpoint, String groupId, String url) throws XmlMethodException {
+		FeedSystem feedSystem = EJBUtil.defaultLookup(FeedSystem.class);			
 		Group group = parseGroupId(viewpoint, groupId);
 		Feed feed = getFeedFromUserEnteredUrl(url);
 		
@@ -1459,6 +1464,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	}
 
 	public void doRemoveGroupFeed(XmlBuilder xml, UserViewpoint viewpoint, String groupId, String url) throws XmlMethodException {
+		FeedSystem feedSystem = EJBUtil.defaultLookup(FeedSystem.class);			
 		Group group = parseGroupId(viewpoint, groupId);
 		Feed feed = getFeedFromUserEnteredUrl(url);
 		
@@ -1708,11 +1714,18 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		if (filename == null) {
 		    sets = getStatisticsService().listSets();
 		} else {
-			sets = Collections.singletonList(getStatisticsService().getSet(filename));
+			try {
+				sets = Collections.singletonList(getStatisticsService().getSet(filename));
+			} catch (NotFoundException e) {
+				throw new XmlMethodException(XmlMethodErrorCode.NOT_FOUND, e.getMessage());
+			}
 		}
 		xml.openElement("statisticsSets");
-		for (StatisticsSet set : sets) {
+		for (StatisticsSet set : sets) {			
 			xml.openElement("statisticsSet");
+			// Doing these as child nodes is a little weird to me; it would 
+			// be easier on the javascript if they were attributes.
+			xml.appendTextNode("current", set.isCurrent() ? "true" : "false");
 			xml.appendTextNode("filename", set.getFilename());
 			xml.appendTextNode("hostname", set.getHostName());
 			xml.appendTextNode("startTime", Long.toString(set.getStartDate().getTime()));
@@ -1738,8 +1751,8 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 				 set = getStatisticsService().getSet(filename);
 			else
 				set = getStatisticsService().getCurrentSet();
-		} catch (NoSuchElementException e) {
-			throw new XmlMethodException(XmlMethodErrorCode.NOT_FOUND, "Statistics set '" + filename + "' not found");
+		} catch (NotFoundException e) {
+			throw new XmlMethodException(XmlMethodErrorCode.NOT_FOUND, e.getMessage());
 		}
 		
 		String[] columnNames = columns.split(",");
@@ -1978,7 +1991,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		xml.appendTextNode("message", m.getMessageText(), "fromId", m.getFromUser().getId(),
 				"fromNickname", m.getFromUser().getNickname(),
 				"timestamp", Long.toString(m.getTimestamp().getTime()),
-				"serial", Integer.toString(m.getMessageSerial()));		
+				"serial", Long.toString(m.getId()));		
 	}
 	
 	public void getGroupChatSummary(XmlBuilder xml, UserViewpoint viewpoint, String groupId) throws XmlMethodException {

@@ -14,55 +14,30 @@
 	<script type="text/javascript">
 		dojo.require("dh.statistics");
 		dojo.event.connect(dojo, "loaded", dj_global, "dhStatisticsInit");
+		dh.statistics.servers = [ <c:forEach items="${statistics.servers}" var="server">
+		    <dh:jsString value="${server}"/>,
+		</c:forEach> ];
+		dh.statistics.thisServer = <dh:jsString value="${statistics.thisServer}"/>;
 	</script>
 </head>
 <body>
-    <select id="dhFileSelect" onchange="dh.statistics.onSelectedFileChange();">
-        <%-- because the list is sorted, current set will be selected, since it will show up first in the list --%>
-        <c:forEach items="${statistics.fileOptions}" var="filename">
-	        <option><c:out value="${filename}"/></option>				    
-        </c:forEach>
-	</select>
-    <table>
-    <tr>     
-    <td colspan="3">
-        <select id="dhColumnSelect" onchange="dh.statistics.onSelectedColumnChange();">
-	    </select>
-    </td>
-    </tr>
-    <tr>
-    <td width="60px;" valign="top" align="right">
-        <div id="dhMaxVal"><span/></div>
-    </td> 
-    <td colspan="2" rowspan="2">
-	    <div id="dhGraph1" class="dh-graph">
-        </div>
-    </td> 
-    </tr>
-    <tr>
-    <td width="60px;" valign="bottom" align="right">     
-        <div id="dhMinVal"><span/></div>
-    </td>
-    </tr>
-    <tr>
-    <td>
-    </td>
-    <td>
-        <div id="dhStartTime"><span/></div>
-    </td>
-    <td align="right">
-        <div id="dhEndTime"><span/></div>
-    </td>
-    </tr>
-    <tr>
-    <td>
-    </td>
-    <td colspan="2" align="center">
-	    <div id="dhCoords1" class="dh-coordinates">
-	        <span/>
-        </div>
-    </td> 
-    </table>
-    <%-- <div id="dhHourSelector"></div> --%>
+	<table id="dhHeaderTable">
+	<tr>
+	<td id="dhFileSelectCell">
+	    <select id="dhFileSelect" onchange="dh.statistics.onSelectedFileChange();">
+    		<c:forEach items="${statistics.sets}" var="set">
+		        <option value="${set.filename}"><c:out value="${set.name}"/></option>				    
+        	</c:forEach>
+		</select>
+	</td>
+	<td id="dhRefreshCell">
+		<input type="button" value="Refresh" onclick="dh.statistics.refresh();"></input>
+	</td>
+	</td>
+	</table>
+	
+	<div id="dhBlocksDiv">
+	</div>
+	<input type="button" value="Add" onclick="dh.statistics.addBlock();"></input>
 </body>
 </html>

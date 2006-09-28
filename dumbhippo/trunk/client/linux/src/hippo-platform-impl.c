@@ -313,6 +313,11 @@ static char*
 hippo_platform_impl_get_message_server(HippoPlatform *platform)
 {
     HippoPlatformImpl *impl = HIPPO_PLATFORM_IMPL(platform);
+    const char *server;
+
+    server = g_getenv("HIPPO_MESSAGE_SERVER");
+    if (server)
+	return g_strdup(server);
 
     /* FIXME */
 
@@ -328,6 +333,11 @@ static char*
 hippo_platform_impl_get_web_server(HippoPlatform *platform)
 {
     HippoPlatformImpl *impl = HIPPO_PLATFORM_IMPL(platform);
+    const char *server;
+
+    server = g_getenv("HIPPO_WEB_SERVER");
+    if (server)
+	return g_strdup(server);
 
     /* FIXME */
 

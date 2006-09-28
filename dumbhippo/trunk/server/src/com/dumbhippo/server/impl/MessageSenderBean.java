@@ -29,12 +29,8 @@ import com.dumbhippo.live.Hotness;
 import com.dumbhippo.live.LiveClientData;
 import com.dumbhippo.live.LivePost;
 import com.dumbhippo.live.LiveState;
-import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.EmailResource;
-import com.dumbhippo.persistence.Group;
-import com.dumbhippo.persistence.GroupMember;
 import com.dumbhippo.persistence.InvitationToken;
-import com.dumbhippo.persistence.MembershipStatus;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.Resource;
@@ -42,8 +38,6 @@ import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.EntityView;
 import com.dumbhippo.server.ExternalAccountSystem;
-import com.dumbhippo.server.GroupSystem;
-import com.dumbhippo.server.GroupView;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.InvitationSystem;
@@ -109,10 +103,6 @@ public class MessageSenderBean implements MessageSender {
 	
 	@EJB
 	@IgnoreDependency
-	private GroupSystem groupSystem;
-	
-	@EJB
-	@IgnoreDependency
 	private ExternalAccountSystem externalAccounts;
 	
 	@javax.annotation.Resource
@@ -122,40 +112,6 @@ public class MessageSenderBean implements MessageSender {
 	
 	private XMPPSender xmppSender;
 	private EmailSender emailSender;
-	
-	private static class NewPostExtension implements PacketExtension {
-
-		private static final String ELEMENT_NAME = "newPost";
-
-		private static final String NAMESPACE = "http://dumbhippo.com/protocol/post";
-		
-		private PostView postView;
-		private Set<EntityView> referencedEntities;
-
-		public NewPostExtension(PostView pv, Set<EntityView> referenced) {
-			postView = pv;
-			referencedEntities = referenced;
-		}
-
-		public String toXML() {
-			XmlBuilder builder = new XmlBuilder();
-			builder.openElement(ELEMENT_NAME, "xmlns", NAMESPACE);
-			for (EntityView ev: referencedEntities) {
-				ev.writeToXmlBuilder(builder);
-			}
-			postView.writeToXmlBuilder(builder);
-			builder.closeElement();
-			return builder.toString();
-		}
-		
-		public String getElementName() {
-			return ELEMENT_NAME;
-		}
-
-		public String getNamespace() {
-			return NAMESPACE;
-		}
-	}
 	
 	private static class LivePostChangedExtension implements PacketExtension {
 
@@ -343,74 +299,7 @@ public class MessageSenderBean implements MessageSender {
 			return builder.toString();
 		}
 	}
-	
-	private static class GroupMembershipUpdateExtension implements PacketExtension {
 
-		private static final String ELEMENT_NAME = "membershipChange";
-
-		private static final String NAMESPACE = "http://dumbhippo.com/protocol/group";
-		
-		private PersonView personView;
-		private GroupView groupView;
-		private MembershipStatus status;
-
-		public GroupMembershipUpdateExtension(PersonView personView, 
-				                              GroupView groupView, 
-				                              MembershipStatus status) {
-			this.personView = personView;
-			this.groupView = groupView;
-			this.status = status;
-		}
-
-		public String toXML() {
-			XmlBuilder builder = new XmlBuilder();
-			builder.openElement(ELEMENT_NAME, "xmlns", NAMESPACE, 
-					            "membershipStatus", status.toString(),
-					            "groupId", groupView.getIdentifyingGuid().toString(), 
-					            "userId", personView.getIdentifyingGuid().toString());
-			personView.writeToXmlBuilder(builder);
-			groupView.writeToXmlBuilder(builder);
-			builder.closeElement();
-			return builder.toString();
-		}
-		
-		public String getElementName() {
-			return ELEMENT_NAME;
-		}
-
-		public String getNamespace() {
-			return NAMESPACE;
-		}
-	}
-
-	private static class BlocksChangedExtension implements PacketExtension {
-
-		private static final String ELEMENT_NAME = "blocksChanged";
-
-		private static final String NAMESPACE = CommonXmlWriter.NAMESPACE_BLOCKS;
-		
-		private long lastTimestamp;
-		
-		public BlocksChangedExtension(long lastTimestamp) {
-			this.lastTimestamp = lastTimestamp;
-		}
-
-		public String toXML() {
-			XmlBuilder builder = new XmlBuilder();
-			builder.openElement(ELEMENT_NAME, "xmlns", NAMESPACE, "lastTimestamp", Long.toString(lastTimestamp));
-			builder.closeElement();
-			return builder.toString();
-		}
-		
-		public String getElementName() {
-			return ELEMENT_NAME;
-		}
-
-		public String getNamespace() {
-			return NAMESPACE;
-		}
-	}
-	
 	private class XMPPSender {
 
 		private XMPPConnection connection;
@@ -421,7 +310,7 @@ public class MessageSenderBean implements MessageSender {
 			}
 			if (connection == null || !connection.isConnected()) {			
 				try {
-					String addr = config.getPropertyNoDefault(HippoProperty.XMPP_ADDRESS);
+					String addr = config.getPropertyNoDefault(HippoProperty.BIND_HOST);
 					String port = config.getPropertyNoDefault(HippoProperty.XMPP_PORT);
 					String user = config.getPropertyNoDefault(HippoProperty.XMPP_ADMINUSER);
 					String password = config.getPropertyNoDefault(HippoProperty.XMPP_PASSWORD);
@@ -452,42 +341,7 @@ public class MessageSenderBean implements MessageSender {
 			return createMessageFor(user.getGuid(), type);
 		}
 		
-		private Message createMessageFor(User user) {
-			return createMessageFor(user, Message.Type.NORMAL);
-		}
-
 		public synchronized void sendPostNotification(User recipient, Post post, List<User> viewers, PostType postType) {
-			XMPPConnection connection = getConnection();
-
-			if (connection == null || !connection.isConnected()) {
-				logger.warn("Connection to XMPP is not active, not sending notification for post {}", post.getId());
-				return;
-			}
-			
-			Message message = createMessageFor(recipient); 
-
-			String title = post.getTitle();
-			
-			String url = post.getUrl() != null ? post.getUrl().toExternalForm() : null;
-			
-			if (url == null) {
-				// this particular jabber message protocol has no point without an url
-				logger.debug("no url found on post, not sending xmpp");
-				return;
-			}
-			
-			Viewpoint viewpoint = new UserViewpoint(recipient);
-
-			PostView postView = postingBoard.getPostView(viewpoint, post);
-			Set<EntityView> referenced = postingBoard.getReferencedEntities(viewpoint, post);
-			
-			NewPostExtension extension = new NewPostExtension(postView, referenced);
-			message.addExtension(extension);
-
-			message.setBody(String.format("%s\n%s", title, url));
-
-			logger.debug("Sending jabber message to {}", message.getTo());
-			connection.sendPacket(message);
 		}
 		
 		public synchronized void sendLivePostChanged(User user, LivePost lpost, PostView post) {
@@ -586,32 +440,6 @@ public class MessageSenderBean implements MessageSender {
 			Message message = createMessageFor(user, Message.Type.HEADLINE);
 			message.addExtension(new PrefsChangedExtension(key, value));
 			logger.debug("Sending prefs changed message to {}", message.getTo());			
-			connection.sendPacket(message);
-		}
-		
-		public synchronized void sendGroupMembershipUpdate(User recipient, Group group, GroupMember groupMember) {
-			XMPPConnection connection = getConnection();
-			Message message = createMessageFor(recipient);	
-			PersonView updatedMember = personViewer.getPersonView(new UserViewpoint(recipient), 
-					                                                groupMember.getMember(),
-					                                                PersonViewExtra.PRIMARY_RESOURCE);
-
-			GroupView groupView = groupSystem.getGroupView(new UserViewpoint(recipient), group);
-			
-			message.addExtension(
-                new GroupMembershipUpdateExtension(updatedMember, groupView, groupMember.getStatus()));
-			logger.debug("Sending groupMembershipUpdate message to {}", message.getTo());			
-			connection.sendPacket(message);
-		}
-		
-		public synchronized void sendBlocksChanged(Guid userId, long lastTimestamp) {
-			/* Note that this is HEADLINE i.e. we don't backlog it; on login the client asks for new stuff,
-			 * and while logged in it sees any changes
-			 */
-			XMPPConnection connection = getConnection();
-			Message message = createMessageFor(userId, Message.Type.HEADLINE);
-			message.addExtension(new BlocksChangedExtension(lastTimestamp));
-			logger.debug("Sending blocks changed message to {}", message.getTo());			
 			connection.sendPacket(message);
 		}
 	}
@@ -833,8 +661,8 @@ public class MessageSenderBean implements MessageSender {
 	public void sendPostNotification(Resource recipient, Post post, PostType postType) {
 		User user = identitySpider.getUser(recipient);
 		if (user != null) {
-			Account account = user.getAccount();
-			xmppSender.sendPostNotification(account.getOwner(), post, null, postType);
+			// Nothing to do here; will be sent out from the XMPP server based on the 
+			// PostCreatedEvent notification
 		} else if (recipient instanceof EmailResource) {
 			emailSender.sendPostNotification((EmailResource)recipient, post, postType);
 		} else {
@@ -896,25 +724,5 @@ public class MessageSenderBean implements MessageSender {
 	
 	public void sendPrefChanged(User user, String key, String value) {
 		xmppSender.sendPrefChanged(user, key, value);
-	}
-
-	public void sendGroupMembershipUpdate(Group group, GroupMember groupMember) {
-		Set<User> recipients = groupSystem.getMembershipChangeRecipients(group);
-		for (User recipient : recipients) {
-			xmppSender.sendGroupMembershipUpdate(recipient, group, groupMember);			
-		}
-	}
-	
-	public void sendBlocksChanged(Guid userId, long lastTimestamp) {
-		// we don't want to be doing all the work for users who aren't online anyway,
-		// this should be the common case
-		LiveState state = LiveState.getInstance();
-		LiveClientData clientData = state.peekLiveClientData(userId);
-		if (clientData == null || !clientData.isAvailable()) {
-			logger.debug("user {} is offline, not notifying of blocks changed", userId);
-			return;
-		}
-
-		xmppSender.sendBlocksChanged(userId, lastTimestamp);
 	}
 }

@@ -6,7 +6,7 @@ AC_CONFIG_AUX_DIR(config)
 
 AC_CANONICAL_TARGET
 
-AM_INIT_AUTOMAKE(mugshot, 1.1.14)
+AM_INIT_AUTOMAKE(mugshot, 1.1.16)
 
 AM_CONFIG_HEADER(config/config.h)
 
@@ -322,7 +322,7 @@ fi
 
 if test "x$GECKO_INCLUDEDIR" = x ; then
     AC_MSG_CHECKING([for Gecko SDK in /opt/gecko-sdk])
-    if ! test -f "/opt/gecko-sdk/include/nsIURI.idl" ; then
+    if test -f "/opt/gecko-sdk/idl/nsIURI.idl" ; then
         GECKO_IDLDIR="/opt/gecko-sdk/idl"
         GECKO_INCLUDEDIR="/opt/gecko-sdk/include"
         XPIDL="/opt/gecko-sdk/bin/xpidl"
@@ -341,10 +341,10 @@ else
 fi
 
 if test "x$GECKO_INCLUDEDIR" != x ; then
-   if test -f "$GECKO_INCLUDEDIR/nsIURI.h" ; then
-	:
-   elif test -f "$GECKO_INCLUDEDIR/caps/nsIScriptSecurityManager.h" ; then
+   if test -f "$GECKO_INCLUDEDIR/caps/nsIScriptSecurityManager.h" ; then
 	have_full_gecko=true
+   elif test -f "$GECKO_INCLUDEDIR/nsIURI.h" ; then
+	:
    else
        AC_MSG_ERROR([Cannot find Gecko headers in $GECKO_INCLUDEDIR])
    fi
