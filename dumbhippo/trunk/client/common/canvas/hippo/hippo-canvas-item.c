@@ -1,7 +1,7 @@
 /* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
-#include "hippo-common-internal.h"
+#include "hippo-canvas-internal.h"
 #include "hippo-canvas-item.h"
-#include "hippo-common-marshal.h"
+#include "hippo-canvas-marshal.h"
 
 static void     hippo_canvas_item_base_init (void                  *klass);
 
@@ -48,7 +48,7 @@ hippo_canvas_item_base_init(void *klass)
                           G_SIGNAL_RUN_LAST,
                           G_STRUCT_OFFSET(HippoCanvasItemClass, paint),
                           NULL, NULL,
-                          hippo_common_marshal_VOID__POINTER_POINTER,
+                          hippo_canvas_marshal_VOID__POINTER_POINTER,
                           G_TYPE_NONE, 2, G_TYPE_POINTER, G_TYPE_POINTER);
         signals[REQUEST_CHANGED] =
             g_signal_new ("request-changed",
@@ -64,7 +64,7 @@ hippo_canvas_item_base_init(void *klass)
                           G_SIGNAL_RUN_LAST,
                           G_STRUCT_OFFSET(HippoCanvasItemClass, paint_needed),
                           NULL, NULL,
-                          hippo_common_marshal_VOID__INT_INT_INT_INT,
+                          hippo_canvas_marshal_VOID__INT_INT_INT_INT,
                           G_TYPE_NONE, 4, G_TYPE_INT, G_TYPE_INT, G_TYPE_INT, G_TYPE_INT);
         signals[BUTTON_PRESS_EVENT] =
             g_signal_new ("button-press-event",
@@ -72,7 +72,7 @@ hippo_canvas_item_base_init(void *klass)
                           G_SIGNAL_RUN_LAST,
                           G_STRUCT_OFFSET(HippoCanvasItemClass, button_press_event),
                           g_signal_accumulator_true_handled, NULL,
-                          hippo_common_marshal_BOOLEAN__POINTER,
+                          hippo_canvas_marshal_BOOLEAN__POINTER,
                       G_TYPE_BOOLEAN, 1, G_TYPE_POINTER);
         signals[BUTTON_RELEASE_EVENT] =
             g_signal_new ("button-release-event",
@@ -80,7 +80,7 @@ hippo_canvas_item_base_init(void *klass)
                           G_SIGNAL_RUN_LAST,
                           G_STRUCT_OFFSET(HippoCanvasItemClass, button_release_event),
                           g_signal_accumulator_true_handled, NULL,
-                          hippo_common_marshal_BOOLEAN__POINTER,
+                          hippo_canvas_marshal_BOOLEAN__POINTER,
                           G_TYPE_BOOLEAN, 1, G_TYPE_POINTER);
         signals[MOTION_NOTIFY_EVENT] =
             g_signal_new ("motion-notify-event",
@@ -88,7 +88,7 @@ hippo_canvas_item_base_init(void *klass)
                           G_SIGNAL_RUN_LAST,
                           G_STRUCT_OFFSET(HippoCanvasItemClass, motion_notify_event),
                           g_signal_accumulator_true_handled, NULL,
-                          hippo_common_marshal_BOOLEAN__POINTER,
+                          hippo_canvas_marshal_BOOLEAN__POINTER,
                           G_TYPE_BOOLEAN, 1, G_TYPE_POINTER);
         signals[ACTIVATED] =
             g_signal_new ("activated",

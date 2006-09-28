@@ -1,7 +1,7 @@
 /* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
-#include "hippo-common-internal.h"
+#include "hippo-canvas-internal.h"
 #include "hippo-canvas-context.h"
-#include "hippo-common-marshal.h"
+#include "hippo-canvas-marshal.h"
 #include "hippo-canvas-item.h"
 
 static void     hippo_canvas_context_base_init (void                  *klass);
@@ -98,39 +98,3 @@ hippo_canvas_context_translate_to_widget(HippoCanvasContext *context,
     
     HIPPO_CANVAS_CONTEXT_GET_CLASS(context)->translate_to_widget(context, item, x_p, y_p);
 }
-
-
-#define HIPPO_GET_RED(rgba)    (((rgba) >> 24)                / 255.0)
-#define HIPPO_GET_GREEN(rgba)  ((((rgba) & 0x00ff0000) >> 16) / 255.0)
-#define HIPPO_GET_BLUE(rgba)   ((((rgba) & 0x0000ff00) >> 8)  / 255.0)
-#define HIPPO_GET_ALPHA(rgba)  (((rgba)  & 0x000000ff)        / 255.0)
-
-void
-hippo_cairo_set_source_rgba32(cairo_t *cr,
-                              guint32  color)
-{
-    /* trying to avoid alpha 255 becoming a double alpha that isn't quite opaque ?
-     * not sure this is needed.
-     */
-    if ((color & 0xff) == 0xff) {
-        cairo_set_source_rgb(cr, HIPPO_GET_RED(color), HIPPO_GET_GREEN(color), HIPPO_GET_BLUE(color));
-    } else {
-        cairo_set_source_rgba(cr, HIPPO_GET_RED(color), HIPPO_GET_GREEN(color), HIPPO_GET_BLUE(color), HIPPO_GET_ALPHA(color));
-    }
-}
-
-void
-hippo_cairo_pattern_add_stop_rgba32(cairo_pattern_t *pattern,
-                                    double           offset,
-                                    guint32          color)
-{
-    if ((color & 0xff) == 0xff) {
-        cairo_pattern_add_color_stop_rgb(pattern, offset,
-                                         HIPPO_GET_RED(color), HIPPO_GET_GREEN(color), HIPPO_GET_BLUE(color));
-    } else {
-        cairo_pattern_add_color_stop_rgba(pattern, offset,
-                                          HIPPO_GET_RED(color), HIPPO_GET_GREEN(color), HIPPO_GET_BLUE(color), HIPPO_GET_ALPHA(color));
-    }
-}
-
-

@@ -14,7 +14,7 @@
  * items is not in a HippoCanvas widget.
  */
 
-#include <hippo/hippo-basics.h>
+#include <hippo/hippo-graphics.h>
 #include <pango/pango-layout.h>
 #include <cairo.h>
 
@@ -76,15 +76,6 @@ void hippo_canvas_context_translate_to_widget    (HippoCanvasContext *context,
                                                   HippoCanvasItem    *item,
                                                   int                *x_p,
                                                   int                *y_p);
-
-
-/* Random utility function that shouldn't really be in this file */
-void hippo_cairo_set_source_rgba32       (cairo_t         *cr,
-                                          guint32          color);
-void hippo_cairo_pattern_add_stop_rgba32 (cairo_pattern_t *pattern,
-                                          double           offset,
-                                          guint32          color);
-
 
 G_END_DECLS
 

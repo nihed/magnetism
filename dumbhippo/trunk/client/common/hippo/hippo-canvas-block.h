@@ -4,10 +4,9 @@
 
 /* A canvas item that displays a stacker block */
 
-#include "hippo-canvas-item.h"
-#include "hippo-canvas-box.h"
+#include <hippo/hippo-canvas-item.h>
+#include <hippo/hippo-canvas-box.h>
 #include "hippo-actions.h"
-#include <cairo.h>
 #include <hippo/hippo-block.h>
 
 G_BEGIN_DECLS

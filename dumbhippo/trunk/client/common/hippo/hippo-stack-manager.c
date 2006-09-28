@@ -5,7 +5,7 @@
 #include "hippo-canvas-stack.h"
 #include "hippo-canvas-block.h"
 #include "hippo-canvas-grip.h"
-#include "hippo-canvas-widgets.h"
+#include <hippo/hippo-canvas-widgets.h>
 #include "hippo-window.h"
 #include "hippo-actions.h"
 

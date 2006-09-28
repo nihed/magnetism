@@ -73,29 +73,8 @@ typedef enum
     HIPPO_URI_ACTION_JOIN_CHAT
 } HippoUriAction;
 
-typedef enum
-{
-    HIPPO_ORIENTATION_VERTICAL,
-    HIPPO_ORIENTATION_HORIZONTAL
-} HippoOrientation;
-
-typedef enum
-{
-    HIPPO_SIDE_TOP,
-    HIPPO_SIDE_BOTTOM,
-    HIPPO_SIDE_LEFT,
-    HIPPO_SIDE_RIGHT
-} HippoSide;
-
 #define HIPPO_URI_SCHEME     "mugshot"
 #define HIPPO_URI_SCHEME_LEN 7
-
-typedef struct {
-    int x;
-    int y;
-    int width;
-    int height;
-} HippoRectangle;
 
 typedef struct {
     HippoUriAction action;
@@ -134,9 +113,6 @@ typedef struct {
 #define HIPPO_JID_DOMAIN "dumbhippo.com"
 #define HIPPO_ROOMS_JID_DOMAIN "rooms." HIPPO_JID_DOMAIN
 #define HIPPO_ADMIN_JID "admin@" HIPPO_JID_DOMAIN
-
-#define HIPPO_ADD_WEAK(ptr)    g_object_add_weak_pointer(G_OBJECT(*(ptr)), (void**) (char*) (ptr))
-#define HIPPO_REMOVE_WEAK(ptr) do { if (*ptr) { g_object_remove_weak_pointer(G_OBJECT(*(ptr)), (void**) (char*) (ptr)); *ptr = NULL; } } while(0)
 
 
 typedef struct {
@@ -205,11 +181,8 @@ int      hippo_compare_versions            (const char *version_a,
 char*    hippo_format_time_ago             (GTime       now,
                                             GTime       then);
 
-gboolean hippo_rectangle_intersect         (const HippoRectangle *src1,
-                                            const HippoRectangle *src2,
-                                            HippoRectangle       *dest);
-gboolean hippo_rectangle_equal             (const HippoRectangle *r1,
-                                            const HippoRectangle *r2);
+#define HIPPO_ADD_WEAK(ptr)    g_object_add_weak_pointer(G_OBJECT(*(ptr)), (void**) (char*) (ptr))
+#define HIPPO_REMOVE_WEAK(ptr) do { if (*ptr) { g_object_remove_weak_pointer(G_OBJECT(*(ptr)), (void**) (char*) (ptr)); *ptr = NULL; } } while(0)
 
 G_END_DECLS
 

@@ -5,7 +5,7 @@
 #include "hippo-window-gtk.h"
 #include <gtk/gtkwindow.h>
 #include <gtk/gtkcontainer.h>
-#include "hippo-canvas.h"
+#include <hippo/hippo-canvas.h>
 
 static void      hippo_window_gtk_init                (HippoWindowGtk       *window_gtk);
 static void      hippo_window_gtk_class_init          (HippoWindowGtkClass  *klass);

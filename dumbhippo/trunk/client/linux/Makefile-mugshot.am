@@ -4,17 +4,18 @@ bin_PROGRAMS += mugshot mugshot-uri-handler
 mugshot_CPPFLAGS = 			\
 	$(AM_CPPFLAGS)			\
 	-I $(top_srcdir)		\
-	$(MUGSHOT_CFLAGS)
+	$(MUGSHOT_CFLAGS)		\
+	-I$(top_srcdir)/canvas
 
 mugshot_LDFLAGS=$(MUGSHOT_LIBS)
 mugshot_LDADD= libhippoipc.la libhippo.la libgtkcopy.la
 
 mugshot_SOURCES	=				\
-	src/hippo-canvas.c			\
-	src/hippo-canvas.h			\
-	src/hippo-canvas-widget.c		\
-	src/hippo-canvas-widget.h		\
-	src/hippo-canvas-widgets.c		\
+	canvas/hippo/hippo-canvas.c		\
+	canvas/hippo/hippo-canvas.h		\
+	canvas/hippo/hippo-canvas-widget.c	\
+	canvas/hippo/hippo-canvas-widget.h	\
+	canvas/hippo/hippo-canvas-widgets.c	\
 	src/hippo-chat-window.c		    	\
 	src/hippo-chat-window.h		    	\
 	src/hippo-cookies-linux.c		\

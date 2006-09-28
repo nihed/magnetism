@@ -3,8 +3,9 @@
 #include <hippo/hippo-entity.h>
 #include "hippo-actions.h"
 #include "hippo-canvas-entity-name.h"
-#include "hippo-canvas-box.h"
-#include "hippo-canvas-link.h"
+#include <hippo/hippo-canvas-box.h>
+#include <hippo/hippo-canvas-text.h>
+#include <hippo/hippo-canvas-link.h>
 
 static void      hippo_canvas_entity_name_init                (HippoCanvasEntityName       *text);
 static void      hippo_canvas_entity_name_class_init          (HippoCanvasEntityNameClass  *klass);

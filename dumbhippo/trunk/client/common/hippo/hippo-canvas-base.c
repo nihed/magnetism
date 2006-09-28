@@ -1,10 +1,10 @@
 /* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 #include "hippo-common-internal.h"
 #include "hippo-canvas-base.h"
-#include "hippo-canvas-box.h"
-#include "hippo-canvas-image.h"
-#include "hippo-canvas-text.h"
-#include "hippo-canvas-link.h"
+#include <hippo/hippo-canvas-box.h>
+#include <hippo/hippo-canvas-image.h>
+#include <hippo/hippo-canvas-text.h>
+#include <hippo/hippo-canvas-link.h>
 
 static void      hippo_canvas_base_init                (HippoCanvasBase       *base);
 static void      hippo_canvas_base_class_init          (HippoCanvasBaseClass  *klass);

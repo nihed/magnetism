@@ -1,5 +1,5 @@
 /* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
-#include "hippo-common-internal.h"
+#include "hippo-canvas-internal.h"
 #include "hippo-canvas-link.h"
 #include "hippo-canvas-text.h"
 #include "hippo-canvas-box.h"

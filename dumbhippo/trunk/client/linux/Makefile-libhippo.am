@@ -8,6 +8,8 @@ libhippo_la_CPPFLAGS =			\
 libhippo_la_LIBADD = 			\
 	$(LIBHIPPO_LIBS)
 
+CANVASSRCDIR=$(COMMONSRCDIR)/canvas
+
 # none of this actually matters since it's just a convenience library, keeping it 
 # for future reference
 # libhippo_la_LDFLAGS= -export-symbols-regex "^[^_].*" -version-info $(LT_CURRENT):$(LT_REVISION):$(LT_AGE) -no-undefined
@@ -24,6 +26,43 @@ $(COMMON_MARSHAL_BODY): $(COMMON_MARSHAL_LIST)
 	mkdir $(MARSHAL_DIR) || true
 	(echo "#include \"hippo-common-marshal.h\""; $(GLIB_GENMARSHAL) --prefix=hippo_common_marshal $(COMMON_MARSHAL_LIST) --body) > $(COMMON_MARSHAL_BODY)
 
+
+CANVAS_MARSHAL_LIST=$(CANVASSRCDIR)/hippo/hippo-canvas-marshal.list
+CANVAS_MARSHAL_HEADER=$(MARSHAL_DIR)/hippo-canvas-marshal.h
+CANVAS_MARSHAL_BODY=$(MARSHAL_DIR)/hippo-canvas-marshal.c
+
+$(CANVAS_MARSHAL_HEADER): $(CANVAS_MARSHAL_LIST)
+	mkdir $(MARSHAL_DIR) || true
+	$(GLIB_GENMARSHAL) --prefix=hippo_canvas_marshal $(CANVAS_MARSHAL_LIST) --header > $(CANVAS_MARSHAL_HEADER)
+
+$(CANVAS_MARSHAL_BODY): $(CANVAS_MARSHAL_LIST)
+	mkdir $(MARSHAL_DIR) || true
+	(echo "#include \"hippo-canvas-marshal.h\""; $(GLIB_GENMARSHAL) --prefix=hippo_canvas_marshal $(CANVAS_MARSHAL_LIST) --body) > $(CANVAS_MARSHAL_BODY)
+
+
+CANVAS_SOURCEFILES = 						\
+	$(CANVASSRCDIR)/hippo/hippo-canvas-box.c		\
+	$(CANVASSRCDIR)/hippo/hippo-canvas-box.h		\
+	$(CANVASSRCDIR)/hippo/hippo-canvas-context.c		\
+	$(CANVASSRCDIR)/hippo/hippo-canvas-context.h		\
+	$(CANVASSRCDIR)/hippo/hippo-canvas-gradient.c		\
+	$(CANVASSRCDIR)/hippo/hippo-canvas-gradient.h		\
+	$(CANVASSRCDIR)/hippo/hippo-canvas-image.c		\
+	$(CANVASSRCDIR)/hippo/hippo-canvas-image.h		\
+	$(CANVASSRCDIR)/hippo/hippo-canvas-item.c		\
+	$(CANVASSRCDIR)/hippo/hippo-canvas-item.h		\
+	$(CANVASSRCDIR)/hippo/hippo-canvas-link.c		\
+	$(CANVASSRCDIR)/hippo/hippo-canvas-link.h		\
+	$(CANVASSRCDIR)/hippo/hippo-canvas-text.c		\
+	$(CANVASSRCDIR)/hippo/hippo-canvas-text.h		\
+	$(CANVASSRCDIR)/hippo/hippo-canvas-widgets.h		\
+	$(CANVASSRCDIR)/hippo/hippo-graphics.c			\
+	$(CANVASSRCDIR)/hippo/hippo-grahics.h
+
+CANVAS_BUILT_SOURCEFILES =			\
+	$(CANVAS_MARSHAL_HEADER)		\
+	$(CANVAS_MARSHAL_BODY)
+
 LIBHIPPO_SOURCEFILES =						\
 	$(COMMONSRCDIR)/hippo/hippo-actions.c			\
 	$(COMMONSRCDIR)/hippo/hippo-actions.h			\
@@ -39,29 +78,14 @@ LIBHIPPO_SOURCEFILES =						\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-block.h		\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-block-post.c		\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-block-post.h		\
-	$(COMMONSRCDIR)/hippo/hippo-canvas-box.c		\
-	$(COMMONSRCDIR)/hippo/hippo-canvas-box.h		\
-	$(COMMONSRCDIR)/hippo/hippo-canvas-context.c		\
-	$(COMMONSRCDIR)/hippo/hippo-canvas-context.h		\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-entity-name.c	\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-entity-name.h	\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-entity-photo.c	\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-entity-photo.h	\
-	$(COMMONSRCDIR)/hippo/hippo-canvas-gradient.c		\
-	$(COMMONSRCDIR)/hippo/hippo-canvas-gradient.h		\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-grip.c		\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-grip.h		\
-	$(COMMONSRCDIR)/hippo/hippo-canvas-image.c		\
-	$(COMMONSRCDIR)/hippo/hippo-canvas-image.h		\
-	$(COMMONSRCDIR)/hippo/hippo-canvas-item.c		\
-	$(COMMONSRCDIR)/hippo/hippo-canvas-item.h		\
-	$(COMMONSRCDIR)/hippo/hippo-canvas-link.c		\
-	$(COMMONSRCDIR)/hippo/hippo-canvas-link.h		\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-stack.c		\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-stack.h		\
-	$(COMMONSRCDIR)/hippo/hippo-canvas-text.c		\
-	$(COMMONSRCDIR)/hippo/hippo-canvas-text.h		\
-	$(COMMONSRCDIR)/hippo/hippo-canvas-widgets.h		\
 	$(COMMONSRCDIR)/hippo/hippo-chat-room.c			\
 	$(COMMONSRCDIR)/hippo/hippo-chat-room.h			\
 	$(COMMONSRCDIR)/hippo/hippo-common.h			\
@@ -101,15 +125,19 @@ LIBHIPPO_BUILT_SOURCEFILES =			\
 	$(COMMON_MARSHAL_HEADER)		\
 	$(COMMON_MARSHAL_BODY)
 
-MAINTAINERCLEANFILES +=	$(LIBHIPPO_BUILT_SOURCEFILES)
-BUILT_SOURCES += $(LIBHIPPO_BUILT_SOURCEFILES)
+MAINTAINERCLEANFILES +=	$(LIBHIPPO_BUILT_SOURCEFILES) $(CANVAS_BUILT_SOURCEFILES)
+BUILT_SOURCES += $(LIBHIPPO_BUILT_SOURCEFILES) $(CANVAS_BUILT_SOURCEFILES)
 
 ## we need to nodist these because otherwise automake would copy 
 ## ../common to distdir/../common which puts common outside of distdir.
 ## so we handle the disting manually so the destination is always distdir/common-dist
-nodist_libhippo_la_SOURCES=$(LIBHIPPO_SOURCEFILES) $(LIBHIPPO_BUILT_SOURCEFILES)
+nodist_libhippo_la_SOURCES=$(LIBHIPPO_SOURCEFILES) $(LIBHIPPO_BUILT_SOURCEFILES) $(CANVAS_SOURCEFILES) $(CANVAS_BUILT_SOURCEFILES)
 libhippo-dist-hook:
 	-mkdir $(distdir)/common-dist
+	mkdir $(distdir)/common-dist/canvas
+	mkdir $(distdir)/common-dist/canvas/hippo
 	mkdir $(distdir)/common-dist/hippo
 	cp $(COMMONSRCDIR)/hippo/hippo-common-marshal.list $(distdir)/common-dist/hippo
 	cp $(LIBHIPPO_SOURCEFILES) $(distdir)/common-dist/hippo
+	cp $(CANVASSRCDIR)/hippo/hippo-canvas-marshal.list $(distdir)/common-dist/hippo
+	cp $(CANVAS_SOURCEFILES) $(distdir)/common-dist/canvas/hippo

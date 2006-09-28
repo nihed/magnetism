@@ -18,7 +18,7 @@
  */
 
 #include <hippo/hippo-data-cache.h>
-#include "hippo-canvas-item.h"
+#include <hippo/hippo-canvas-item.h>
 
 G_BEGIN_DECLS
 

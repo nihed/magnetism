@@ -4,8 +4,7 @@
 
 /* Canvas item for the purple "base" of the stacker */
 
-#include "hippo-canvas-item.h"
-#include <cairo.h>
+#include <hippo/hippo-canvas-item.h>
 
 G_BEGIN_DECLS
 

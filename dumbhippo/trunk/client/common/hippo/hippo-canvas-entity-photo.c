@@ -3,8 +3,8 @@
 #include <hippo/hippo-entity.h>
 #include "hippo-actions.h"
 #include "hippo-canvas-entity-photo.h"
-#include "hippo-canvas-box.h"
-#include "hippo-canvas-image.h"
+#include <hippo/hippo-canvas-box.h>
+#include <hippo/hippo-canvas-image.h>
 
 static void      hippo_canvas_entity_photo_init                (HippoCanvasEntityPhoto       *image);
 static void      hippo_canvas_entity_photo_class_init          (HippoCanvasEntityPhotoClass  *klass);

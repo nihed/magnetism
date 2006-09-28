@@ -3,7 +3,7 @@
 #include <string.h>
 #include <cairo.h>
 #include "hippo-canvas-grip.h"
-#include "hippo-canvas-box.h"
+#include <hippo/hippo-canvas-box.h>
 
 static void      hippo_canvas_grip_init                (HippoCanvasGrip       *grip);
 static void      hippo_canvas_grip_class_init          (HippoCanvasGripClass  *klass);

@@ -2,7 +2,8 @@
 #ifndef __HIPPO_CANVAS_ITEM_H__
 #define __HIPPO_CANVAS_ITEM_H__
 
-#include <hippo/hippo-basics.h>
+#include <cairo.h>
+#include <hippo/hippo-graphics.h>
 #include <hippo/hippo-canvas-context.h>
 
 G_BEGIN_DECLS

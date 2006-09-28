@@ -4,11 +4,11 @@
 #include "hippo-canvas-block-post.h"
 #include "hippo-canvas-entity-photo.h"
 #include "hippo-canvas-entity-name.h"
-#include "hippo-canvas-box.h"
-#include "hippo-canvas-image.h"
-#include "hippo-canvas-text.h"
-#include "hippo-canvas-gradient.h"
-#include "hippo-canvas-link.h"
+#include <hippo/hippo-canvas-box.h>
+#include <hippo/hippo-canvas-image.h>
+#include <hippo/hippo-canvas-text.h>
+#include <hippo/hippo-canvas-gradient.h>
+#include <hippo/hippo-canvas-link.h>
 #include "hippo-actions.h"
 
 static void      hippo_canvas_block_init                (HippoCanvasBlock       *block);

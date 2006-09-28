@@ -9,6 +9,12 @@
 
 G_BEGIN_DECLS
 
+/* this is a small hack; requiring a canvas subclass would be cleaner. But, not worth it
+ * unless the subclass would have a little more stuff than it would right now.
+ */
+typedef cairo_surface_t* (* HippoCanvasLoadImageHook) (HippoCanvasContext *context,
+                                                       const char         *image_name);
+
 typedef struct _HippoCanvas      HippoCanvas;
 typedef struct _HippoCanvasClass HippoCanvasClass;
 
@@ -24,6 +30,8 @@ GType        	 hippo_canvas_get_type               (void) G_GNUC_CONST;
 GtkWidget*   hippo_canvas_new      (void);
 void         hippo_canvas_set_root (HippoCanvas     *canvas,
                                     HippoCanvasItem *root);
+
+void         hippo_canvas_set_load_image_hook(HippoCanvasLoadImageHook hook);
 
 void hippo_canvas_open_test_window(void);
 

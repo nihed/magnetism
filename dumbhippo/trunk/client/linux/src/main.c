@@ -11,8 +11,9 @@
 #include "hippo-status-icon.h"
 #include "hippo-chat-window.h"
 #include "hippo-dbus-server.h"
+#include "hippo-embedded-image.h"
 #include "hippo-idle.h"
-#include "hippo-canvas.h"
+#include <hippo/hippo-canvas.h>
 
 static const char *hippo_version_file = NULL;
 
@@ -43,6 +44,113 @@ struct HippoApp {
 
 static void hippo_app_start_check_installed_timeout(HippoApp *app,
                                                     gboolean  fast);
+
+
+/* This is copied from gdk_cairo_set_source_pixbuf()
+ * in GDK
+ */
+static cairo_surface_t*
+cairo_surface_from_pixbuf(GdkPixbuf *pixbuf)
+{
+    int width = gdk_pixbuf_get_width (pixbuf);
+    int height = gdk_pixbuf_get_height (pixbuf);
+    guchar *gdk_pixels = gdk_pixbuf_get_pixels (pixbuf);
+    int gdk_rowstride = gdk_pixbuf_get_rowstride (pixbuf);
+    int n_channels = gdk_pixbuf_get_n_channels (pixbuf);
+    guchar *cairo_pixels;
+    cairo_format_t format;
+    cairo_surface_t *surface;
+    static const cairo_user_data_key_t key;
+    int j;
+    
+    if (n_channels == 3)
+        format = CAIRO_FORMAT_RGB24;
+    else
+        format = CAIRO_FORMAT_ARGB32;
+
+    cairo_pixels = g_malloc(4 * width * height);
+    surface = cairo_image_surface_create_for_data((unsigned char *)cairo_pixels,
+                                                  format,
+                                                  width, height, 4 * width);
+    cairo_surface_set_user_data(surface, &key,
+                                cairo_pixels, (cairo_destroy_func_t)g_free);
+
+    for (j = height; j; j--) {
+        guchar *p = gdk_pixels;
+        guchar *q = cairo_pixels;
+
+        if (n_channels == 3) {
+            guchar *end = p + 3 * width;
+	  
+            while (p < end) {
+#if G_BYTE_ORDER == G_LITTLE_ENDIAN
+                q[0] = p[2];
+                q[1] = p[1];
+                q[2] = p[0];
+#else	  
+                q[1] = p[0];
+                q[2] = p[1];
+                q[3] = p[2];
+#endif
+                p += 3;
+                q += 4;
+            }
+        } else {
+            guchar *end = p + 4 * width;
+            guint t1,t2,t3;
+	    
+#define MULT(d,c,a,t) G_STMT_START { t = c * a + 0x7f; d = ((t >> 8) + t) >> 8; } G_STMT_END
+
+            while (p < end) {
+#if G_BYTE_ORDER == G_LITTLE_ENDIAN
+                MULT(q[0], p[2], p[3], t1);
+                MULT(q[1], p[1], p[3], t2);
+                MULT(q[2], p[0], p[3], t3);
+                q[3] = p[3];
+#else	  
+                q[0] = p[3];
+                MULT(q[1], p[0], p[3], t1);
+                MULT(q[2], p[1], p[3], t2);
+                MULT(q[3], p[2], p[3], t3);
+#endif
+                
+                p += 4;
+                q += 4;
+            }            
+#undef MULT
+        }
+
+        gdk_pixels += gdk_rowstride;
+        cairo_pixels += 4 * width;
+    }
+    return surface;
+}
+
+static cairo_surface_t*
+canvas_load_image_hook(HippoCanvasContext *context,
+                       const char         *image_name)
+{
+    GdkPixbuf *pixbuf;
+    cairo_surface_t *surface;
+
+    pixbuf = hippo_embedded_image_get(image_name);
+    if (pixbuf == NULL) {
+        return NULL;
+    }
+
+    surface = g_object_get_data(G_OBJECT(pixbuf),
+                                "hippo-cairo-surface");
+    if (surface == NULL) {
+        surface = cairo_surface_from_pixbuf(pixbuf);
+        g_object_set_data_full(G_OBJECT(pixbuf),
+                               "hippo-cairo-surface",
+                               surface,
+                               (GDestroyNotify) cairo_surface_destroy);
+    }
+
+    cairo_surface_reference(surface);
+    return surface;
+}
 
 void
 hippo_app_quit(HippoApp *app)
@@ -841,6 +949,8 @@ main(int argc, char **argv)
         gtk_icon_theme_append_search_path(gtk_icon_theme_get_default(),
                                           ABSOLUTE_TOP_SRCDIR "/icons");
     }
+
+    hippo_canvas_set_load_image_hook(canvas_load_image_hook);
     
     platform = hippo_platform_impl_new(options.instance_type);
     server = hippo_platform_get_web_server(platform);

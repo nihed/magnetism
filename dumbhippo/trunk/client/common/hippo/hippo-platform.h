@@ -4,6 +4,7 @@
 
 #include <hippo/hippo-basics.h>
 #include <hippo/hippo-post.h>
+#include <hippo/hippo-graphics.h>
 
 G_BEGIN_DECLS
 

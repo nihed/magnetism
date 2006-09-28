@@ -1111,41 +1111,6 @@ hippo_format_time_ago(GTime now,
     return g_strdup_printf("%.0f years ago", hippo_rint(delta_years));
 }
 
-gboolean
-hippo_rectangle_intersect(const HippoRectangle *src1,
-                          const HippoRectangle *src2,
-                          HippoRectangle       *dest)
-{
-    int dest_x, dest_y;
-    int dest_w, dest_h;
-
-    dest_x = MAX (src1->x, src2->x);
-    dest_y = MAX (src1->y, src2->y);
-    dest_w = MIN (src1->x + src1->width, src2->x + src2->width) - dest_x;
-    dest_h = MIN (src1->y + src1->height, src2->y + src2->height) - dest_y;
-
-    if (dest_w > 0 && dest_h > 0) {
-        dest->x = dest_x;
-        dest->y = dest_y;
-        dest->width = dest_w;
-        dest->height = dest_h;
-        return TRUE;
-    } else {
-        dest->width = 0;
-        dest->height = 0;
-        return FALSE;
-    }
-}
-
-gboolean
-hippo_rectangle_equal(const HippoRectangle *r1,
-                      const HippoRectangle *r2)
-{
-    return r1->x == r2->x && 
-        r1->y == r2->y &&
-        r1->width == r2->width &&
-        r1->height == r2->height;
-}
 
 static const char*
 hippo_uri_valid_tests[] = { 

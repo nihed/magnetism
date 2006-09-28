@@ -4,8 +4,7 @@
 
 /* A canvas item that renders a resize grip */
 
-#include "hippo-canvas-item.h"
-#include <cairo.h>
+#include <hippo/hippo-canvas-item.h>
 
 G_BEGIN_DECLS
 

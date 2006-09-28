@@ -4,9 +4,8 @@
 
 /* canvas item for a stack of blocks */
 
-#include "hippo-canvas-item.h"
+#include <hippo/hippo-canvas-item.h>
 #include <hippo/hippo-block.h>
-#include <cairo.h>
 
 G_BEGIN_DECLS
 

@@ -2,7 +2,7 @@
 #include "hippo-common-internal.h"
 #include "hippo-canvas-stack.h"
 #include "hippo-canvas-block.h"
-#include "hippo-canvas-box.h"
+#include <hippo/hippo-canvas-box.h>
 #include "hippo-actions.h"
 
 static void      hippo_canvas_stack_init                (HippoCanvasStack       *stack);

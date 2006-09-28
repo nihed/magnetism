@@ -6,7 +6,8 @@
  * that can contain a canvas item.
  */
 
-#include "hippo-canvas-item.h"
+#include <hippo/hippo-canvas-item.h>
+#include <hippo/hippo-basics.h>
 
 G_BEGIN_DECLS
 
