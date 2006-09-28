@@ -11,10 +11,10 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import javax.ejb.EJB;
-import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
+import org.jboss.annotation.ejb.Service;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
@@ -34,6 +34,7 @@ import com.dumbhippo.server.ExternalAccountSystem;
 import com.dumbhippo.server.FacebookTracker;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.NotFoundException;
+import com.dumbhippo.server.SingletonServiceMBean;
 import com.dumbhippo.server.Stacker;
 import com.dumbhippo.server.UserViewpoint;
 import com.dumbhippo.server.Viewpoint;
@@ -41,8 +42,8 @@ import com.dumbhippo.server.Configuration.PropertyNotFoundException;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.services.FacebookWebServices;
 
-@Stateless
-public class FacebookTrackerBean implements FacebookTracker {
+@Service(objectName="dumbhippo.com:service=FacebookTracker")
+public class FacebookTrackerBean implements FacebookTracker, SingletonServiceMBean {
 	static private final Logger logger = GlobalSetup.getLogger(FacebookTrackerBean.class);
 	
 	// How old the facebook data can be before we refetch
@@ -67,6 +68,25 @@ public class FacebookTrackerBean implements FacebookTracker {
 	
 	@EJB
 	private Stacker stacker;
+	
+	// We have one FacebookTrackerBean per server instance, but only the
+	// cluster singleton actually does updates.
+
+	public void startSingleton() {
+		logger.info("Starting FacebookUpdater singleton");
+		FacebookUpdater.getInstance().start();
+	}
+
+	public void stopSingleton() {
+		logger.info("Stopping FacebookUpdater singleton");
+		FacebookUpdater.getInstance().shutdown();
+	}
+
+	public void start() throws Exception {
+	}
+
+	public void stop() throws Exception {
+	}
 	
 	public void updateOrCreateFacebookAccount(UserViewpoint viewpoint, String facebookAuthToken) {
 		ExternalAccount externalAccount = externalAccounts.getOrCreateExternalAccount(viewpoint, ExternalAccountType.FACEBOOK);
@@ -366,15 +386,6 @@ public class FacebookTrackerBean implements FacebookTracker {
 			logger.warn("Facebook API key is not set, we can't use Facebook web services.");
 		
 		return apiKey;
-	}
-	
-	public synchronized static void startup() {
-		logger.info("Starting FacebookUpdater");
-		FacebookUpdater.getInstance().start();
-	}
-	
-	public synchronized static void shutdown() {	
-		FacebookUpdater.getInstance().shutdown();
 	}
 	
 	private static class FacebookUpdater extends Thread {

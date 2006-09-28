@@ -68,4 +68,15 @@
         <attribute name="TargetStartMethod">startSingleton</attribute>
         <attribute name="TargetStopMethod">stopSingleton</attribute>
     </mbean>
+
+    <mbean code="org.jboss.ha.singleton.HASingletonController" name="dumbhippo.com:service=FacebookTracker-HASingletonController">
+        <depends optional-attribute-name="ClusterPartition" proxy-type="attribute">
+            jboss:service=${jboss.partition.name:DefaultPartition}
+        </depends>
+        <depends optional-attribute-name="TargetName">
+            dumbhippo.com:service=FacebookTracker
+        </depends>
+        <attribute name="TargetStartMethod">startSingleton</attribute>
+        <attribute name="TargetStopMethod">stopSingleton</attribute>
+    </mbean>
 </server>

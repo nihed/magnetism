@@ -16,7 +16,6 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.live.LiveState;
 import com.dumbhippo.persistence.SchemaUpdater;
 import com.dumbhippo.server.impl.AbstractCacheBean;
-import com.dumbhippo.server.impl.FacebookTrackerBean;
 import com.dumbhippo.server.impl.MusicSystemInternalBean;
 import com.dumbhippo.server.impl.TransactionRunnerBean;
 
@@ -32,7 +31,6 @@ public class HippoService extends ServiceMBeanSupport implements HippoServiceMBe
 	protected void startService() {
 		logger.info("Starting HippoService MBean");
 		SchemaUpdater.update();
- 		FacebookTrackerBean.startup();
 		
 		/* We need to register this context's class loader in order for the JBoss TreeCache
 		 * to be able to deserialize enumeration values r ecieved from other nodes.  
@@ -75,7 +73,6 @@ public class HippoService extends ServiceMBeanSupport implements HippoServiceMBe
 		LiveState.getInstance().shutdown();
 		AbstractCacheBean.shutdown();
 		MusicSystemInternalBean.shutdown();
- 		FacebookTrackerBean.shutdown();
 		TransactionRunnerBean.shutdown();
    }
 }
