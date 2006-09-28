@@ -3,6 +3,7 @@
  * Copyright Red Hat, Inc. 2006
  **/
 #include "stdafx-hippoui.h"
+#include <hippo/hippo-graphics.h>
 
 #include "HippoScrollbar.h"
 #include <glib.h>

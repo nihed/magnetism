@@ -19,7 +19,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories=".;../HippoUtil;../dependencies/glib/include/glib-2.0;../dependencies/cairo/include/cairo;../dependencies/pango/include/pango-1.0;../dependencies/glib/lib/glib-2.0/include;../loudmouth;../../common;../../common/loudmouth"
+				AdditionalIncludeDirectories=".;../HippoUtil;../dependencies/glib/include/glib-2.0;../dependencies/cairo/include/cairo;../dependencies/pango/include/pango-1.0;../dependencies/glib/lib/glib-2.0/include;../loudmouth;../../common;../../common/loudmouth;../../common/canvas"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;HIPPOCOMMON_EXPORTS"
 				MinimalRebuild="TRUE"
 				BasicRuntimeChecks="3"
@@ -110,9 +110,6 @@
 				RelativePath="..\..\common\hippo\hippo-actions.c">
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-actions.h">
-			</File>
-			<File
 				RelativePath="..\..\common\hippo\hippo-basics.c">
 			</File>
 			<File
@@ -125,85 +122,43 @@
 				RelativePath="..\..\common\hippo\hippo-canvas-base.c">
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-canvas-base.h">
-			</File>
-			<File
 				RelativePath="..\..\common\hippo\hippo-canvas-block-post.c">
-			</File>
-			<File
-				RelativePath="..\..\common\hippo\hippo-canvas-block-post.h">
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\hippo-canvas-block.c">
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-canvas-block.h">
+				RelativePath="..\..\common\canvas\hippo\hippo-canvas-box.c">
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-canvas-box.c">
-			</File>
-			<File
-				RelativePath="..\..\common\hippo\hippo-canvas-box.h">
-			</File>
-			<File
-				RelativePath="..\..\common\hippo\hippo-canvas-context.c">
-			</File>
-			<File
-				RelativePath="..\..\common\hippo\hippo-canvas-context.h">
+				RelativePath="..\..\common\canvas\hippo\hippo-canvas-context.c">
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\hippo-canvas-entity-name.c">
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-canvas-entity-name.h">
-			</File>
-			<File
 				RelativePath="..\..\common\hippo\hippo-canvas-entity-photo.c">
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-canvas-entity-photo.h">
-			</File>
-			<File
-				RelativePath="..\..\common\hippo\hippo-canvas-gradient.c">
-			</File>
-			<File
-				RelativePath="..\..\common\hippo\hippo-canvas-gradient.h">
+				RelativePath="..\..\common\canvas\hippo\hippo-canvas-gradient.c">
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\hippo-canvas-grip.c">
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-canvas-grip.h">
+				RelativePath="..\..\common\canvas\hippo\hippo-canvas-image.c">
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-canvas-image.c">
+				RelativePath="..\..\common\canvas\hippo\hippo-canvas-item.c">
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-canvas-image.h">
+				RelativePath="..\..\common\canvas\hippo\hippo-canvas-link.c">
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-canvas-item.c">
-			</File>
-			<File
-				RelativePath="..\..\common\hippo\hippo-canvas-item.h">
-			</File>
-			<File
-				RelativePath="..\..\common\hippo\hippo-canvas-link.c">
-			</File>
-			<File
-				RelativePath="..\..\common\hippo\hippo-canvas-link.h">
+				RelativePath=".\hippo-canvas-marshal.c">
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\hippo-canvas-stack.c">
-			</File>
-			<File
-				RelativePath="..\..\common\hippo\hippo-canvas-stack.h">
-			</File>
-			<File
-				RelativePath="..\..\common\hippo\hippo-canvas-text.c">
-			</File>
-			<File
-				RelativePath="..\..\common\hippo\hippo-canvas-text.h">
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\hippo-chat-room.c">
@@ -238,19 +193,16 @@
 				RelativePath="..\..\common\hippo\hippo-entity.c">
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-image-cache.c">
+				RelativePath="..\..\common\canvas\hippo\hippo-graphics.c">
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-image-cache.h">
+				RelativePath="..\..\common\hippo\hippo-image-cache.c">
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\hippo-myspace.c">
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\hippo-object-cache.c">
-			</File>
-			<File
-				RelativePath="..\..\common\hippo\hippo-object-cache.h">
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\hippo-person.c">
@@ -265,25 +217,19 @@
 				RelativePath="..\..\common\hippo\hippo-stack-manager.c">
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-stack-manager.h">
-			</File>
-			<File
 				RelativePath="..\..\common\hippo\hippo-surface.c">
 			</File>
 			<File
-				RelativePath="..\..\common\hippo\hippo-surface.h">
-			</File>
-			<File
 				RelativePath="..\..\common\hippo\hippo-window.c">
-			</File>
-			<File
-				RelativePath="..\..\common\hippo\hippo-window.h">
 			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}">
+			<File
+				RelativePath="..\..\common\hippo\hippo-actions.h">
+			</File>
 			<File
 				RelativePath="..\..\common\hippo\hippo-basics.h">
 			</File>
@@ -292,6 +238,60 @@
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\hippo-block.h">
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-canvas-base.h">
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-canvas-block-post.h">
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-canvas-block.h">
+			</File>
+			<File
+				RelativePath="..\..\common\canvas\hippo\hippo-canvas-box.h">
+			</File>
+			<File
+				RelativePath="..\..\common\canvas\hippo\hippo-canvas-context.h">
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-canvas-entity-name.h">
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-canvas-entity-photo.h">
+			</File>
+			<File
+				RelativePath="..\..\common\canvas\hippo\hippo-canvas-gradient.h">
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-canvas-grip.h">
+			</File>
+			<File
+				RelativePath="..\..\common\canvas\hippo\hippo-canvas-image.h">
+			</File>
+			<File
+				RelativePath="..\..\common\canvas\hippo\hippo-canvas-internal.h">
+			</File>
+			<File
+				RelativePath="..\..\common\canvas\hippo\hippo-canvas-item.h">
+			</File>
+			<File
+				RelativePath="..\..\common\canvas\hippo\hippo-canvas-link.h">
+			</File>
+			<File
+				RelativePath=".\hippo-canvas-marshal.h">
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-canvas-stack.h">
+			</File>
+			<File
+				RelativePath="..\..\common\canvas\hippo\hippo-canvas-text.c">
+			</File>
+			<File
+				RelativePath="..\..\common\canvas\hippo\hippo-canvas-text.h">
+			</File>
+			<File
+				RelativePath="..\..\common\canvas\hippo\hippo-canvas-widgets.h">
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\hippo-chat-room.h">
@@ -327,7 +327,16 @@
 				RelativePath="..\..\common\hippo\hippo-entity.h">
 			</File>
 			<File
+				RelativePath="..\..\common\canvas\hippo\hippo-graphics.h">
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-image-cache.h">
+			</File>
+			<File
 				RelativePath="..\..\common\hippo\hippo-myspace.h">
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-object-cache.h">
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\hippo-person.h">
@@ -338,15 +347,21 @@
 			<File
 				RelativePath="..\..\common\hippo\hippo-post.h">
 			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-stack-manager.h">
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-surface.h">
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-window.h">
+			</File>
 		</Filter>
 		<Filter
 			Name="Resource Files"
 			Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx"
 			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}">
 		</Filter>
-		<File
-			RelativePath=".\Makefile">
-		</File>
 	</Files>
 	<Globals>
 	</Globals>
