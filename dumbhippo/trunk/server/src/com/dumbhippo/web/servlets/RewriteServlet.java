@@ -558,7 +558,7 @@ public class RewriteServlet extends HttpServlet {
 		
 		jspPages = new HashMap<String, Integer>();
 		for (int i = 1; i <= webVersion; i++) {
-			String prefix = "/jsp" + (i == 1 ? "" : i) + "/";		
+			String prefix = "/jsp" + (i == 1 ? "" : Integer.toString(i)) + "/";		
 			for (Object o : context.getResourcePaths(prefix)) {
 				String path = (String)o;
 				if (path.endsWith(".jsp") && path.indexOf('/') != -1)
