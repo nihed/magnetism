@@ -1389,13 +1389,14 @@ forward_motion_event(HippoCanvasBox *box,
      * we record it
      */
     if (child) {
+        g_assert(box->hovering);
         child->hovering = TRUE;
     }
 
     if (was_hovering && child != was_hovering) {
         was_hovering->hovering = FALSE;
     }
-
+    
     /* need to generate an enter event if we aren't already processing one
      * and the child is about to get a motion event
      */
@@ -1487,6 +1488,33 @@ hippo_canvas_box_motion_notify_event (HippoCanvasItem *item,
 {
     HippoCanvasBox *box = HIPPO_CANVAS_BOX(item);
 
+    /* FIXME the warnings here need fixing; right now we aren't handling
+     * e.g. unmap I think, maybe some larger problems too
+     */
+    
+    if (event->u.motion.detail == HIPPO_MOTION_DETAIL_ENTER) {
+#if 0
+        if (box->hovering)
+            g_warning("Box got enter event but was already hovering=TRUE");
+#endif
+        
+        box->hovering = TRUE;
+    } else if (event->u.motion.detail == HIPPO_MOTION_DETAIL_LEAVE) {
+#if 0
+        if (!box->hovering)
+            g_warning("Box got leave event but was not hovering=TRUE");
+#endif
+        
+        box->hovering = FALSE;
+    } else if (event->u.motion.detail == HIPPO_MOTION_DETAIL_WITHIN) {
+#if 0
+        if (!box->hovering)
+            g_warning("Box got motion event but never got an enter event, hovering=FALSE");
+#endif
+        /* Fix it up, why not - we assert in forward_motion_event that it's right */
+        box->hovering = TRUE;
+    }
+    
     return forward_event(box, event);
 }
 

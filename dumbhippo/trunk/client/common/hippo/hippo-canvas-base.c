@@ -3,6 +3,7 @@
 #include "hippo-canvas-base.h"
 #include <hippo/hippo-canvas-box.h>
 #include <hippo/hippo-canvas-image.h>
+#include <hippo/hippo-canvas-image-button.h>
 #include <hippo/hippo-canvas-text.h>
 #include <hippo/hippo-canvas-link.h>
 #include <hippo/hippo-canvas-gradient.h>
@@ -72,8 +73,9 @@ hippo_canvas_base_init(HippoCanvasBase *base)
                         NULL);
     hippo_canvas_box_append(box, item, 0);
 
-    item = g_object_new(HIPPO_TYPE_CANVAS_IMAGE,
-                        "image-name", "bar_x",
+    item = g_object_new(HIPPO_TYPE_CANVAS_IMAGE_BUTTON,
+                        "normal-image-name", "bar_x",
+                        "prelight-image-name", "bar_x2",
                         "xalign", HIPPO_ALIGNMENT_END,
                         NULL);
     hippo_canvas_box_append(box, item, HIPPO_PACK_END);
@@ -84,8 +86,9 @@ hippo_canvas_base_init(HippoCanvasBase *base)
                         NULL);
     hippo_canvas_box_append(box, item, HIPPO_PACK_END);
     
-    item = g_object_new(HIPPO_TYPE_CANVAS_IMAGE,
-                        "image-name", "hush",
+    item = g_object_new(HIPPO_TYPE_CANVAS_IMAGE_BUTTON,
+                        "normal-image-name", "hush",
+                        "prelight-image-name", "hush2",
                         "xalign", HIPPO_ALIGNMENT_END,
                         NULL);
     hippo_canvas_box_append(box, item, HIPPO_PACK_END);
@@ -96,8 +99,9 @@ hippo_canvas_base_init(HippoCanvasBase *base)
                         NULL);
     hippo_canvas_box_append(box, item, HIPPO_PACK_END);
     
-    item = g_object_new(HIPPO_TYPE_CANVAS_IMAGE,
-                        "image-name", "home",
+    item = g_object_new(HIPPO_TYPE_CANVAS_IMAGE_BUTTON,
+                        "normal-image-name", "home",
+                        "prelight-image-name", "home2",
                         "xalign", HIPPO_ALIGNMENT_END,
                         NULL);
     hippo_canvas_box_append(box, item, HIPPO_PACK_END);

@@ -235,7 +235,6 @@ hippo_canvas_image_set_property(GObject         *object,
             }
         }
         break;
-        break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
         break;

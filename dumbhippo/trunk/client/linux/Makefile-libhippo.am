@@ -49,6 +49,8 @@ CANVAS_SOURCEFILES = 						\
 	$(CANVASSRCDIR)/hippo/hippo-canvas-gradient.h		\
 	$(CANVASSRCDIR)/hippo/hippo-canvas-image.c		\
 	$(CANVASSRCDIR)/hippo/hippo-canvas-image.h		\
+	$(CANVASSRCDIR)/hippo/hippo-canvas-image-button.c	\
+	$(CANVASSRCDIR)/hippo/hippo-canvas-image-button.h	\
 	$(CANVASSRCDIR)/hippo/hippo-canvas-item.c		\
 	$(CANVASSRCDIR)/hippo/hippo-canvas-item.h		\
 	$(CANVASSRCDIR)/hippo/hippo-canvas-link.c		\
