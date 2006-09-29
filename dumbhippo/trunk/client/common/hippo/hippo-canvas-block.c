@@ -375,7 +375,7 @@ on_block_clicked_count_changed(HippoBlock *block,
     HippoCanvasBlockClass *klass;
 
     klass = HIPPO_CANVAS_BLOCK_GET_CLASS(canvas_block);
-    if (*klass->clicked_count_changed)
+    if (klass->clicked_count_changed)
         (* klass->clicked_count_changed) (canvas_block);
 }
 

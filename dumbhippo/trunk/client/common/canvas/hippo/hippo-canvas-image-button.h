@@ -18,19 +18,7 @@ typedef struct _HippoCanvasImageButtonClass HippoCanvasImageButtonClass;
 #define HIPPO_IS_CANVAS_IMAGE_BUTTON_CLASS(klass)   (G_TYPE_CHECK_CLASS_TYPE ((klass), HIPPO_TYPE_CANVAS_IMAGE_BUTTON))
 #define HIPPO_CANVAS_IMAGE_BUTTON_GET_CLASS(obj)    (G_TYPE_INSTANCE_GET_CLASS ((obj), HIPPO_TYPE_CANVAS_IMAGE_BUTTON, HippoCanvasImageButtonClass))
 
-struct _HippoCanvasImageButton {
-    HippoCanvasImage image;
-    cairo_surface_t *normal_image;
-    char *normal_image_name;
-    cairo_surface_t *prelight_image;
-    char *prelight_image_name;
-};
-
-struct _HippoCanvasImageButtonClass {
-    HippoCanvasImageClass parent_class;
-};
-
-GType        	 hippo_canvas_image_button_get_type               (void) G_GNUC_CONST;
+GType            hippo_canvas_image_button_get_type               (void) G_GNUC_CONST;
 
 HippoCanvasItem* hippo_canvas_image_button_new    (void);
 

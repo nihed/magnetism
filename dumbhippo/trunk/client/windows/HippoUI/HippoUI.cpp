@@ -1659,23 +1659,27 @@ HippoUI::getBasePath() throw (std::bad_alloc, HResultException)
 void
 HippoUI::getAppletPath(BSTR filename, BSTR *result)
 {
+    assert(*result == NULL);
+
     HippoBSTR path(getBasePath());
     
     path.Append(L"applets\\");
 
     path.Append(filename);
-    *result = ::SysAllocString(path);
+    *result = ::SysAllocStringLen(path.m_str, path.Length());
 }
 
 void
 HippoUI::getImagePath(BSTR filename, BSTR *result) throw (std::bad_alloc, HResultException)
 {
+    assert(*result == NULL);
+
     HippoBSTR path(getBasePath());
     
     path.Append(L"images\\");
 
     path.Append(filename);
-    *result = ::SysAllocString(path);
+    *result = ::SysAllocStringLen(path.m_str, path.Length());
 }
 
 // Find the pathname for a local HTML file, based on the location of the .exe
@@ -2212,10 +2216,11 @@ WinMain(HINSTANCE hInstance,
     initControls.dwSize = sizeof(initControls);
     initControls.dwICC = ICC_STANDARD_CLASSES;
     if (!InitCommonControlsEx(&initControls)) {
-        // ALREADY_EXISTS seems to be harmless, though 
         // the error codes for this function are not documented
-        // anywhere I can find
-        if (GetLastError() != ERROR_ALREADY_EXISTS)
+        // anywhere I can find.
+        // 
+        HRESULT e = GetLastError();
+        if (!(e == ERROR_ALREADY_EXISTS || e == ERROR_INVALID_HANDLE))
             hippoDebugLastErr(L"Failed to initialize common controls");
     }
 

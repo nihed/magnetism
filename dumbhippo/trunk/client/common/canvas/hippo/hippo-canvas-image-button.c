@@ -36,6 +36,18 @@ enum {
     PROP_PRELIGHT_IMAGE_NAME
 };
 
+struct _HippoCanvasImageButton {
+    HippoCanvasImage image;
+    cairo_surface_t *normal_image;
+    char *normal_image_name;
+    cairo_surface_t *prelight_image;
+    char *prelight_image_name;
+};
+
+struct _HippoCanvasImageButtonClass {
+    HippoCanvasImageClass parent_class;
+};
+
 G_DEFINE_TYPE_WITH_CODE(HippoCanvasImageButton, hippo_canvas_image_button, HIPPO_TYPE_CANVAS_IMAGE,
                         G_IMPLEMENT_INTERFACE(HIPPO_TYPE_CANVAS_ITEM, hippo_canvas_image_button_iface_init));
 

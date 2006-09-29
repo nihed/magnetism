@@ -29,7 +29,7 @@ HippoImageFactory::HippoImageFactory()
 : ui_(0), cache_(0)
 {
     cache_ = g_hash_table_new_full(g_str_hash, g_str_equal,
-                        (GFreeFunc) g_free, (GFreeFunc) cairo_surface_destroy);
+                        (GDestroyNotify) g_free, (GDestroyNotify) cairo_surface_destroy);
 }
 
 HippoImageFactory::~HippoImageFactory()
@@ -43,23 +43,25 @@ HippoImageFactory::get(const char *name)
     g_return_val_if_fail(ui_ != NULL, NULL);
 
     cairo_surface_t *surface = (cairo_surface_t*) g_hash_table_lookup(cache_, name);
-    if (surface != NULL)
-        return surface;
+    if (surface == NULL) {
+        HippoBSTR bname = HippoBSTR::fromUTF8(name);
+        bname.Append(L".png");
+        HippoBSTR path;
+        ui_->getImagePath(bname, &path);
+        HippoUStr upath(path);
+        surface = cairo_image_surface_create_from_png(upath.c_str());
+        if (surface != NULL) {
+            // the surface may be an "error" surface, if so we still cache it
 
-    HippoBSTR bname = HippoBSTR::fromUTF8(name);
-    bname.Append(L".png");
-    HippoBSTR path;
-    ui_->getImagePath(bname, &path);
-    HippoUStr upath(path);
-    surface = cairo_image_surface_create_from_png(upath.c_str());
-    if (surface != NULL) {
-        // the surface may be an "error" surface, if so we still cache it
-        if (cairo_surface_status(surface) != CAIRO_STATUS_SUCCESS) {
-            g_warning("Failed to load png '%s' (name %s)", upath.c_str(), name);
+            // pass surface refcount to the cache
+            g_hash_table_replace(cache_, g_strdup(name), surface);
         }
-        // pass surface refcount to the cache
-        g_hash_table_replace(cache_, g_strdup(name), surface);
+        if (surface == NULL || cairo_surface_status(surface) != CAIRO_STATUS_SUCCESS) {
+            // g_warning("Failed to load png '%s' (name %s)", upath.c_str(), name);
+        }
     }
+    if (cairo_surface_status(surface) != CAIRO_STATUS_SUCCESS) // we cache but don't return these
+        return NULL;
     return surface;
 }
 

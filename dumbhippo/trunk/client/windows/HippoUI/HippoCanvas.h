@@ -7,6 +7,7 @@
 
 #include "HippoAbstractControl.h"
 #include "HippoUIUtil.h"
+#include "HippoGSignal.h"
 #include <hippo/hippo-canvas-item.h>
 
 typedef struct _HippoCanvasContextWin      HippoCanvasContextWin;
@@ -46,7 +47,11 @@ private:
     void onMouseUp(int button, WPARAM wParam, LPARAM lParam);
     void onMouseMove(WPARAM wParam, LPARAM lParam);
     void onMouseLeave(WPARAM wParam, LPARAM lParam);
+    void onRootRequestChanged();
+    void onRootPaintNeeded(const HippoRectangle *damage_box);
 
+    GConnection1<void,const HippoRectangle*> rootPaintNeeded_;
+    GConnection0<void> rootRequestChanged_;
     HippoGObjectPtr<HippoCanvasItem> root_;
     HippoGObjectPtr<HippoCanvasContextWin> context_;
     HippoPtr<HippoScrollbar> hscroll_;

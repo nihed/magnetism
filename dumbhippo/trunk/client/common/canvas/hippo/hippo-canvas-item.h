@@ -89,7 +89,8 @@ struct _HippoCanvasItemClass {
                                      HippoEvent      *event);
     void     (* activated)          (HippoCanvasItem *canvas_item);
     void     (* request_changed)    (HippoCanvasItem *canvas_item);
-    void     (* paint_needed)       (HippoCanvasItem *canvas_item);
+    void     (* paint_needed)       (HippoCanvasItem *canvas_item,
+                                     const HippoRectangle *damage_box);
     gboolean (* get_needs_resize)   (HippoCanvasItem *canvas_item);
 
     char*              (* get_tooltip) (HippoCanvasItem *canvas_item,

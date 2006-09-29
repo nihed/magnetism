@@ -322,12 +322,11 @@ hippo_canvas_size_request(GtkWidget         *widget,
     requisition->width = 0;
     requisition->height = 0;
 
-    if (canvas->root == NULL)
-        return;
-
-    hippo_canvas_item_get_request(canvas->root,
-                                  &requisition->width,
-                                  &requisition->height);
+    if (canvas->root != NULL) {
+        hippo_canvas_item_get_request(canvas->root,
+                                      &requisition->width,
+                                      &requisition->height);
+    }
 
     requisition->width += GTK_CONTAINER(widget)->border_width * 2;
     requisition->height += GTK_CONTAINER(widget)->border_width * 2;
@@ -342,7 +341,7 @@ hippo_canvas_size_allocate(GtkWidget         *widget,
     widget->allocation = *allocation;
     
     if (GTK_WIDGET_REALIZED(widget))
-	gdk_window_move_resize(widget->window,
+        gdk_window_move_resize(widget->window,
                                allocation->x, 
                                allocation->y,
                                allocation->width, 
@@ -769,12 +768,9 @@ canvas_root_request_changed(HippoCanvasItem *root,
 }
 
 static void
-canvas_root_paint_needed(HippoCanvasItem *root,
-                         int              x,
-                         int              y,
-                         int              width,
-                         int              height,
-                         HippoCanvas     *canvas)
+canvas_root_paint_needed(HippoCanvasItem      *root,
+                         const HippoRectangle *damage_box,
+                         HippoCanvas          *canvas)
 {
     GtkWidget *widget = GTK_WIDGET(canvas);
     int window_x, window_y;
@@ -782,9 +778,9 @@ canvas_root_paint_needed(HippoCanvasItem *root,
     get_root_item_window_coords(canvas, &window_x, &window_y);
     
     gtk_widget_queue_draw_area(widget,
-                               x + window_x,
-                               y + window_y,
-                               width, height);
+                               damage_box->x + window_x,
+                               damage_box->y + window_y,
+                               damage_box->width, damage_box->height);
 }
 
 void

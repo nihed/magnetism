@@ -64,8 +64,8 @@ hippo_canvas_item_base_init(void *klass)
                           G_SIGNAL_RUN_LAST,
                           G_STRUCT_OFFSET(HippoCanvasItemClass, paint_needed),
                           NULL, NULL,
-                          hippo_canvas_marshal_VOID__INT_INT_INT_INT,
-                          G_TYPE_NONE, 4, G_TYPE_INT, G_TYPE_INT, G_TYPE_INT, G_TYPE_INT);
+                          g_cclosure_marshal_VOID__POINTER,
+                          G_TYPE_NONE, 1, G_TYPE_POINTER);
         signals[BUTTON_PRESS_EVENT] =
             g_signal_new ("button-press-event",
                           HIPPO_TYPE_CANVAS_ITEM,
@@ -282,17 +282,24 @@ hippo_canvas_item_emit_paint_needed(HippoCanvasItem *canvas_item,
                                     int              width,
                                     int              height)
 {
+    HippoRectangle damage_box;
+
+    damage_box.x = x;
+    damage_box.y = y;
+    damage_box.width = width;
+    damage_box.height = height;
+
     if (width < 0 || height < 0) {
         int w, h;
         hippo_canvas_item_get_allocation(canvas_item, &w, &h);
         if (width < 0)
-            width = w;
+            damage_box.width = w;
         if (height < 0)
-            height = h;
+            damage_box.height = h;
     }
-    
+
     g_signal_emit(canvas_item, signals[PAINT_NEEDED], 0,
-                  x, y, width, height);
+                  &damage_box);
 }
 
 void

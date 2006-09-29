@@ -58,14 +58,37 @@ HippoCanvas::HippoCanvas()
     vscroll_->setParent(this);
 }
 
+
+void
+HippoCanvas::onRootRequestChanged()
+{
+    markRequestChanged();
+}
+
+void
+HippoCanvas::onRootPaintNeeded(const HippoRectangle *damage_box)
+{
+    int cx, cy;
+
+    getCanvasOrigin(&cx, &cy);
+    invalidate(cx + damage_box->x, cy + damage_box->y, damage_box->width, damage_box->height);
+}
+
 void
 HippoCanvas::setRoot(HippoCanvasItem *item)
 {
     if (root_ == item)
         return;
 
+    rootRequestChanged_.disconnect();
+    rootPaintNeeded_.disconnect();
+
     root_ = item;
     if (item) {
+        rootRequestChanged_.connect(G_OBJECT(item), "request-changed",
+            slot(this, &HippoCanvas::onRootRequestChanged));
+        rootPaintNeeded_.connect(G_OBJECT(item), "paint-needed",
+            slot(this, &HippoCanvas::onRootPaintNeeded));
         if (isCreated()) {
             g_assert(HIPPO_IS_CANVAS_CONTEXT(context_));
             hippo_canvas_item_set_context(item, HIPPO_CANVAS_CONTEXT(context_));
@@ -280,6 +303,8 @@ HippoCanvas::scrollTo(int newX, int newY)
     canvasX_ = newX;
     canvasY_ = newY;
 
+#define SMOOTH_SCROLL_TIME 5000
+
     RECT viewport;
     getViewport(&viewport);
     ScrollWindowEx(window_, 
@@ -288,7 +313,17 @@ HippoCanvas::scrollTo(int newX, int newY)
                    &viewport, // clip region (do not modify bits outside it)
                    NULL,      // return for invalid region
                    NULL,      // return for invalid rectangle
+                   // the HIWORD of the flags is the smooth scroll time
                    SW_INVALIDATE | SW_SCROLLCHILDREN | SW_ERASE);
+
+                   // SW_SMOOTHSCROLL does not appear to work; some people on 
+                   // the internet say it's because it only supports scrolling
+                   // the entire window. If so, we would need to create a viewport 
+                   // subwindow in order to use it. We probably want a viewport 
+                   // subwindow and not just a whole-canvas subwindow, since
+                   // 32-bit coords seem sketchy on Windows, e.g. not sure how
+                   // to get motion events outside of signed 16-bit.
+                   // SW_SMOOTHSCROLL | (SMOOTH_SCROLL_TIME << 16));
 }
 
 void
@@ -748,7 +783,10 @@ hippo_canvas_context_win_load_image(HippoCanvasContext *context,
 
     g_return_val_if_fail(HIPPO_IS_CANVAS_CONTEXT(context), NULL);
 
-    return hippo_image_factory_get(image_name);
+    cairo_surface_t *surface = hippo_image_factory_get(image_name);
+    if (surface)
+        cairo_surface_reference(surface);
+    return surface;
 }
 
 #if 0
@@ -939,27 +977,6 @@ hippo_canvas_context_win_translate_to_widget(HippoCanvasContext *context,
         *x_p += cx;
     if (y_p)
         *y_p += cy;
-}
-
-static void
-canvas_root_request_changed(HippoCanvasItem *root,
-                            HippoCanvasContextWin *canvas_win)
-{
-    canvas_win->canvas->markRequestChanged();
-}
-
-static void
-canvas_root_paint_needed(HippoCanvasItem *root,
-                         int                    x,
-                         int                    y,
-                         int                    width,
-                         int                    height,
-                         HippoCanvasContextWin *canvas_win)
-{
-    int cx, cy;
-
-    canvas_win->canvas->getCanvasOrigin(&cx, &cy);
-    canvas_win->canvas->invalidate(cx + x, cy + y, width, height);
 }
 
 static HippoCanvasContextWin*

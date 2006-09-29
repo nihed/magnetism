@@ -1494,27 +1494,33 @@ hippo_canvas_box_motion_notify_event (HippoCanvasItem *item,
     
     if (event->u.motion.detail == HIPPO_MOTION_DETAIL_ENTER) {
 #if 0
+        g_debug("motion notify ENTER %s %p box hovering was %d",
+            g_type_name_from_instance((GTypeInstance*)box), box, box->hovering);
         if (box->hovering)
             g_warning("Box got enter event but was already hovering=TRUE");
 #endif
-        
+
         box->hovering = TRUE;
     } else if (event->u.motion.detail == HIPPO_MOTION_DETAIL_LEAVE) {
 #if 0
+        g_debug("motion notify LEAVE %s %p box hovering was %d",
+            g_type_name_from_instance((GTypeInstance*)box), box, box->hovering);
         if (!box->hovering)
             g_warning("Box got leave event but was not hovering=TRUE");
 #endif
-        
+
         box->hovering = FALSE;
     } else if (event->u.motion.detail == HIPPO_MOTION_DETAIL_WITHIN) {
 #if 0
+        g_debug("motion notify WITHIN %s %p box hovering was %d",
+            g_type_name_from_instance((GTypeInstance*)box), box, box->hovering);
         if (!box->hovering)
             g_warning("Box got motion event but never got an enter event, hovering=FALSE");
 #endif
         /* Fix it up, why not - we assert in forward_motion_event that it's right */
         box->hovering = TRUE;
     }
-    
+
     return forward_event(box, event);
 }
 
@@ -1596,10 +1602,7 @@ child_request_changed(HippoCanvasItem *child,
 
 static void
 child_paint_needed(HippoCanvasItem *item,
-                   int              x,
-                   int              y,
-                   int              width,
-                   int              height,
+                   const HippoRectangle *damage_box,
                    HippoCanvasBox  *box)
 {
     HippoBoxChild *child;
@@ -1609,9 +1612,9 @@ child_paint_needed(HippoCanvasItem *item,
     child = find_child(box, item);
     
     hippo_canvas_item_emit_paint_needed(HIPPO_CANVAS_ITEM(box),
-                                        x + child->x,
-                                        y + child->y,
-                                        width, height);
+                                        damage_box->x + child->x,
+                                        damage_box->y + child->y,
+                                        damage_box->width, damage_box->height);
 }
 
 static void

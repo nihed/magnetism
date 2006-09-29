@@ -183,6 +183,7 @@ hippo_canvas_image_set_property(GObject         *object,
     case PROP_IMAGE:
         {
             cairo_surface_t *surface = g_value_get_pointer(value);
+
             if (surface != image->surface) {
 #if 0
                 /* The FC5 version of Cairo doesn't have this API */
@@ -203,7 +204,7 @@ hippo_canvas_image_set_property(GObject         *object,
     case PROP_IMAGE_NAME:
         {
             const char *name = g_value_get_string(value);
-            
+
             if (!(image->image_name == name ||
                   (image->image_name && name && strcmp(image->image_name,
                                                        name) == 0))) {
