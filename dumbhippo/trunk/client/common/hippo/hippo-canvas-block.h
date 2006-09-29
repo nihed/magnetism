@@ -35,6 +35,8 @@ struct _HippoCanvasBlock {
     HippoCanvasItem *headshot_item;
     HippoCanvasItem *name_item;
     unsigned int expanded : 1;
+    unsigned int maybe_expand_timeout_active : 1;
+    unsigned int maybe_expand_timeout_canceled : 1;
 };
 
 struct _HippoCanvasBlockClass {

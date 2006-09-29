@@ -438,7 +438,9 @@ manager_attach(StackManager    *manager,
                                HIPPO_ORIENTATION_VERTICAL,
                                TRUE);
     
-    manager->stack_base_item = hippo_canvas_base_new();
+    manager->stack_base_item = g_object_new(HIPPO_TYPE_CANVAS_BASE,
+                                            "actions", manager->actions,
+                                            NULL);
     
     manager->stack_item = g_object_new(HIPPO_TYPE_CANVAS_STACK,
                                        "box-width", UI_WIDTH,
@@ -479,7 +481,9 @@ manager_attach(StackManager    *manager,
 
     manager->single_block_window = hippo_platform_create_window(platform);
 
-    manager->single_block_base_item = hippo_canvas_base_new();
+    manager->single_block_base_item = g_object_new(HIPPO_TYPE_CANVAS_BASE,
+                                                   "actions", manager->actions,
+                                                   NULL);
     manager->single_block_item = NULL; /* filled in later */
 
     manager->single_block_box = g_object_new(HIPPO_TYPE_CANVAS_BOX,

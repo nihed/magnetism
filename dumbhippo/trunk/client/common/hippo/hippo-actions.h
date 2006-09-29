@@ -47,6 +47,14 @@ void          hippo_actions_load_entity_photo_async   (HippoActions    *actions,
 HippoEntity*  hippo_actions_lookup_entity             (HippoActions    *actions,
                                                        const char      *entity_guid);
 
+void          hippo_actions_close_stacker             (HippoActions    *actions);
+void          hippo_actions_hush_stacker              (HippoActions    *actions);
+void          hippo_actions_open_home_page            (HippoActions    *actions);
+void          hippo_actions_hush_block                (HippoActions    *actions,
+                                                       HippoBlock      *block);
+void          hippo_actions_add_to_faves              (HippoActions    *actions,
+                                                       HippoBlock      *block);
+
 G_END_DECLS
 
 #endif /* __HIPPO_ACTIONS_H__ */

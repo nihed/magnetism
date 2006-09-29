@@ -1,6 +1,7 @@
 /* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 #include "hippo-common-internal.h"
 #include "hippo-canvas-base.h"
+#include "hippo-actions.h"
 #include <hippo/hippo-canvas-box.h>
 #include <hippo/hippo-canvas-image.h>
 #include <hippo/hippo-canvas-image-button.h>
@@ -28,9 +29,17 @@ static void     hippo_canvas_base_paint              (HippoCanvasItem *item,
                                                       cairo_t         *cr,
                                                       HippoRectangle  *damaged_box);
 
+/* Callbacks */
+static void on_close_activated (HippoCanvasItem *button,
+                                HippoCanvasBase *base);
+static void on_hush_activated  (HippoCanvasItem  *button,
+                                HippoCanvasBase *base);
+static void on_home_activated  (HippoCanvasItem  *button,
+                                HippoCanvasBase *base);
+
 struct _HippoCanvasBase {
     HippoCanvasBox box;
-
+    HippoActions *actions;
 };
 
 struct _HippoCanvasBaseClass {
@@ -46,7 +55,8 @@ enum {
 /* static int signals[LAST_SIGNAL]; */
 
 enum {
-    PROP_0
+    PROP_0,
+    PROP_ACTIONS
 };
 
 G_DEFINE_TYPE_WITH_CODE(HippoCanvasBase, hippo_canvas_base, HIPPO_TYPE_CANVAS_BOX,
@@ -80,6 +90,8 @@ hippo_canvas_base_init(HippoCanvasBase *base)
                         NULL);
     hippo_canvas_box_append(box, item, HIPPO_PACK_END);
 
+    g_signal_connect(G_OBJECT(item), "activated", G_CALLBACK(on_close_activated), base);
+    
     item = g_object_new(HIPPO_TYPE_CANVAS_IMAGE,
                         "image-name", "bar_pipe",
                         "xalign", HIPPO_ALIGNMENT_END,
@@ -93,6 +105,8 @@ hippo_canvas_base_init(HippoCanvasBase *base)
                         NULL);
     hippo_canvas_box_append(box, item, HIPPO_PACK_END);
 
+    g_signal_connect(G_OBJECT(item), "activated", G_CALLBACK(on_hush_activated), base);
+    
     item = g_object_new(HIPPO_TYPE_CANVAS_IMAGE,
                         "image-name", "bar_pipe",
                         "xalign", HIPPO_ALIGNMENT_END,
@@ -106,13 +120,15 @@ hippo_canvas_base_init(HippoCanvasBase *base)
                         NULL);
     hippo_canvas_box_append(box, item, HIPPO_PACK_END);
 
+    g_signal_connect(G_OBJECT(item), "activated", G_CALLBACK(on_home_activated), base);
+    
     item = g_object_new(HIPPO_TYPE_CANVAS_IMAGE,
                         "image-name", "bar_pipe",
                         "xalign", HIPPO_ALIGNMENT_END,
                         NULL);
     hippo_canvas_box_append(box, item, HIPPO_PACK_END);
 
-    
+#if 0    
     /* Create "find" area */
     box = g_object_new(HIPPO_TYPE_CANVAS_GRADIENT,
                        "orientation", HIPPO_ORIENTATION_HORIZONTAL,
@@ -132,7 +148,8 @@ hippo_canvas_base_init(HippoCanvasBase *base)
                         "image-name", "search_x",
                         "xalign", HIPPO_ALIGNMENT_START,
                         NULL);
-    hippo_canvas_box_append(box, item, 0);    
+    hippo_canvas_box_append(box, item, 0);
+#endif
 }
 
 static HippoCanvasItemClass *item_parent_class;
@@ -154,14 +171,43 @@ hippo_canvas_base_class_init(HippoCanvasBaseClass *klass)
     object_class->get_property = hippo_canvas_base_get_property;
 
     object_class->finalize = hippo_canvas_base_finalize;
+
+    g_object_class_install_property(object_class,
+                                    PROP_ACTIONS,
+                                    g_param_spec_object("actions",
+                                                        _("Actions"),
+                                                        _("UI actions object"),
+                                                        HIPPO_TYPE_ACTIONS,
+                                                        G_PARAM_READABLE | G_PARAM_WRITABLE)); 
+}
+
+static void
+set_actions(HippoCanvasBase *base,
+            HippoActions     *actions)
+{
+    if (actions == base->actions)
+        return;
+    
+    if (base->actions) {
+        g_object_unref(base->actions);
+        base->actions = NULL;
+    }
+
+    if (actions) {
+        base->actions = actions;
+        g_object_ref(base->actions);
+    }
+    
+    g_object_notify(G_OBJECT(base), "actions");
 }
 
 static void
 hippo_canvas_base_finalize(GObject *object)
 {
-    /* HippoCanvasBase *base = HIPPO_CANVAS_BASE(object); */
+    HippoCanvasBase *base = HIPPO_CANVAS_BASE(object);
 
-
+    set_actions(base, NULL);
+    
     G_OBJECT_CLASS(hippo_canvas_base_parent_class)->finalize(object);
 }
 
@@ -185,7 +231,12 @@ hippo_canvas_base_set_property(GObject         *object,
     base = HIPPO_CANVAS_BASE(object);
 
     switch (prop_id) {
-
+    case PROP_ACTIONS:
+        {
+            HippoActions *new_actions = (HippoActions*) g_value_get_object(value);
+            set_actions(base, new_actions);
+        }
+        break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
         break;
@@ -203,6 +254,9 @@ hippo_canvas_base_get_property(GObject         *object,
     base = HIPPO_CANVAS_BASE (object);
 
     switch (prop_id) {
+    case PROP_ACTIONS:
+        g_value_set_object(value, (GObject*) base->actions);
+        break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
         break;
@@ -218,4 +272,28 @@ hippo_canvas_base_paint(HippoCanvasItem *item,
 
     /* Draw the background and any children */
     item_parent_class->paint(item, cr, damaged_box);
+}
+
+static void
+on_close_activated (HippoCanvasItem *button,
+                    HippoCanvasBase *base)
+{
+    if (base->actions)
+        hippo_actions_close_stacker(base->actions);
+}
+
+static void
+on_hush_activated(HippoCanvasItem  *button,
+                  HippoCanvasBase  *base)
+{
+    if (base->actions)
+        hippo_actions_hush_stacker(base->actions);
+}
+
+static void
+on_home_activated(HippoCanvasItem  *button,
+                  HippoCanvasBase  *base)
+{
+    if (base->actions)
+        hippo_actions_open_home_page(base->actions);
 }

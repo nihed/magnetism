@@ -43,6 +43,12 @@ static void hippo_canvas_block_unexpand_impl  (HippoCanvasBlock *canvas_block);
 static void hippo_canvas_block_set_expanded   (HippoCanvasBlock *canvas_block,
                                                gboolean          value);
 
+/* Callbacks */
+static void on_close_activated                (HippoCanvasItem  *button_or_link,
+                                               HippoCanvasBlock *canvas_block);
+static void on_hush_activated                 (HippoCanvasItem  *button_or_link,
+                                               HippoCanvasBlock *canvas_block);
+
 enum {
     NO_SIGNALS_YET,
     LAST_SIGNAL
@@ -168,12 +174,17 @@ hippo_canvas_block_init(HippoCanvasBlock *block)
                         "font", "11px",
                         NULL);
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(block->close_controls), item, 0);
+
+    g_signal_connect(G_OBJECT(item), "activated", G_CALLBACK(on_close_activated), block);
+    
     item = g_object_new(HIPPO_TYPE_CANVAS_IMAGE_BUTTON,
                         "normal-image-name", "blue_x",
                         "border-left", 4,
                         NULL);
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(block->close_controls), item, 0);
 
+    g_signal_connect(G_OBJECT(item), "activated", G_CALLBACK(on_close_activated), block);
+    
     box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
                        "orientation", HIPPO_ORIENTATION_HORIZONTAL,
                        "xalign", HIPPO_ALIGNMENT_FILL,
@@ -233,6 +244,8 @@ hippo_canvas_block_init(HippoCanvasBlock *block)
                         "text", "Hush",
                         NULL);
     hippo_canvas_box_append(box3, item, HIPPO_PACK_END);
+
+    g_signal_connect(G_OBJECT(item), "activated", G_CALLBACK(on_hush_activated), block);
     
     item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
                         "font", "11px",
@@ -417,16 +430,42 @@ hippo_canvas_block_get_property(GObject         *object,
     }
 }
 
+static gboolean
+expand_if_still_hovering_timeout(void *data)
+{
+    HippoCanvasBlock *canvas_block;
+    HippoCanvasBox *box;
+
+    canvas_block = HIPPO_CANVAS_BLOCK(data);
+    box = HIPPO_CANVAS_BOX(data);
+
+    if (box->hovering && !canvas_block->maybe_expand_timeout_canceled)
+        hippo_canvas_block_set_expanded(canvas_block, TRUE);
+
+    canvas_block->maybe_expand_timeout_active = FALSE;
+    g_object_unref(G_OBJECT(canvas_block));
+    
+    /* Remove self */
+    return FALSE;
+}
+
 static void
 hippo_canvas_block_hovering_changed(HippoCanvasBox *box,
                                     gboolean        hovering)
 {
     HippoCanvasBlock *canvas_block = HIPPO_CANVAS_BLOCK(box);
 
-    /* FIXME this should probably be after a short timeout */
-    hippo_canvas_block_set_expanded(canvas_block, hovering);
+    if (hovering && !canvas_block->maybe_expand_timeout_active) {
+        /* We have the timeout hold a ref, this lets us store
+         * the active/canceled 1-bit flags instead of a timeout id
+         * and avoid worrying about the timeout on finalize
+         */
+        g_object_ref(G_OBJECT(canvas_block));
+        canvas_block->maybe_expand_timeout_active = TRUE;
+        canvas_block->maybe_expand_timeout_canceled = FALSE;
+        g_timeout_add(500, expand_if_still_hovering_timeout, canvas_block);
+    }
 }
-
 
 static void
 on_block_clicked_count_changed(HippoBlock *block,
@@ -561,6 +600,23 @@ hippo_canvas_block_set_expanded(HippoCanvasBlock *canvas_block,
         HIPPO_CANVAS_BLOCK_GET_CLASS(canvas_block)->unexpand(canvas_block);
         canvas_block->expanded = FALSE;
     }
+}
+
+static void
+on_close_activated(HippoCanvasItem  *button_or_link,
+                   HippoCanvasBlock *canvas_block)
+{
+    canvas_block->maybe_expand_timeout_canceled = TRUE;
+    hippo_canvas_block_set_expanded(canvas_block, FALSE);
+}
+
+static void
+on_hush_activated(HippoCanvasItem  *button_or_link,
+                  HippoCanvasBlock *canvas_block)
+{
+    if (canvas_block->actions && canvas_block->block)
+        hippo_actions_hush_block(canvas_block->actions,
+                                 canvas_block->block);
 }
 
 void

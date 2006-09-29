@@ -45,6 +45,11 @@ static void hippo_canvas_block_post_unexpand (HippoCanvasBlock *canvas_block);
 static void hippo_canvas_block_post_set_post (HippoCanvasBlockPost *canvas_block_post,
                                               HippoPost            *post);
 
+/* Callbacks */
+static void on_faves_activated                 (HippoCanvasItem      *button_or_link,
+                                                HippoCanvasBlockPost *canvas_block_post);
+
+
 struct _HippoCanvasBlockPost {
     HippoCanvasBlock canvas_block;
     HippoPost *post;
@@ -130,6 +135,8 @@ hippo_canvas_block_post_init(HippoCanvasBlockPost *block_post)
                         "text", "Add to Faves",
                         NULL);
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(block_post->details_box), item, 0);
+
+    g_signal_connect(G_OBJECT(item), "activated", G_CALLBACK(on_faves_activated), block_post);
     
     hippo_canvas_block_set_content(block, HIPPO_CANVAS_ITEM(box));
 }
@@ -427,4 +434,16 @@ hippo_canvas_block_post_unexpand(HippoCanvasBlock *canvas_block)
     hippo_canvas_box_set_child_packing(block_post->description_item_parent,
                                        block_post->description_item,
                                        HIPPO_PACK_EXPAND);    
+}
+
+static void
+on_faves_activated(HippoCanvasItem      *button_or_link,
+                   HippoCanvasBlockPost *canvas_block_post)
+{
+    HippoCanvasBlock *canvas_block;
+
+    canvas_block = HIPPO_CANVAS_BLOCK(canvas_block_post);
+
+    if (canvas_block->actions && canvas_block->block)
+        hippo_actions_add_to_faves(canvas_block->actions, canvas_block->block);
 }

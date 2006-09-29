@@ -2,6 +2,7 @@
 #include "hippo-common-internal.h"
 #include "hippo-actions.h"
 #include "hippo-image-cache.h"
+#include "hippo-stack-manager.h"
 #include <string.h>
 
 
@@ -168,4 +169,34 @@ hippo_actions_lookup_entity(HippoActions    *actions,
     return hippo_data_cache_lookup_entity(actions->cache, entity_guid);
 }
 
+void
+hippo_actions_close_stacker(HippoActions    *actions)
+{
+    hippo_stack_manager_set_mode(actions->cache, HIPPO_STACK_MODE_HIDDEN);    
+}
 
+void
+hippo_actions_hush_stacker(HippoActions    *actions)
+{
+    /* FIXME */
+}
+
+void
+hippo_actions_open_home_page(HippoActions    *actions)
+{
+    hippo_connection_open_relative_url(get_connection(actions), "/");
+}
+
+void
+hippo_actions_hush_block(HippoActions    *actions,
+                         HippoBlock      *block)
+{
+    /* FIXME */
+}
+
+void
+hippo_actions_add_to_faves(HippoActions    *actions,
+                           HippoBlock      *block)
+{
+    /* FIXME */
+}
