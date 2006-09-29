@@ -45,8 +45,8 @@ import com.dumbhippo.persistence.PostVisibility;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.Sentiment;
 import com.dumbhippo.persistence.User;
-import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.server.AccountSystem;
+import com.dumbhippo.server.BlockView;
 import com.dumbhippo.server.ChatRoomInfo;
 import com.dumbhippo.server.ChatRoomKind;
 import com.dumbhippo.server.ChatRoomMessage;
@@ -732,7 +732,7 @@ public class MessengerGlueBean implements MessengerGlue {
 	public String getBlocksXml(String username, long lastTimestamp, int start, int count) {
 		User user = getUserFromUsername(username);
 		UserViewpoint viewpoint = new UserViewpoint(user);
-		List<UserBlockData> list = stacker.getStack(viewpoint, user, lastTimestamp, start, count);
+		List<BlockView> list = stacker.getStack(viewpoint, user, lastTimestamp, start, count);
 		XmlBuilder xml = new XmlBuilder();
 		CommonXmlWriter.writeBlocks(xml, viewpoint, user, list, CommonXmlWriter.NAMESPACE_BLOCKS);
 		return xml.toString();

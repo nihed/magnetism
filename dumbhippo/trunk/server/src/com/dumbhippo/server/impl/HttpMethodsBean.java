@@ -75,6 +75,7 @@ import com.dumbhippo.persistence.WantsIn;
 import com.dumbhippo.postinfo.PostInfo;
 import com.dumbhippo.search.SearchSystem;
 import com.dumbhippo.server.AccountSystem;
+import com.dumbhippo.server.BlockView;
 import com.dumbhippo.server.Character;
 import com.dumbhippo.server.ClaimVerifier;
 import com.dumbhippo.server.Configuration;
@@ -1844,7 +1845,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		}
 	}
 	
-	private void returnBlocks(XmlBuilder xml, UserViewpoint viewpoint, User user, List<UserBlockData> list) throws XmlMethodException {
+	private void returnBlocks(XmlBuilder xml, UserViewpoint viewpoint, User user, List<BlockView> list) throws XmlMethodException {
 		logger.debug("Returning {} blocks", list.size());
 		
 		CommonXmlWriter.writeBlocks(xml, viewpoint, user, list, null);
@@ -1876,12 +1877,12 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			user = parseUserId(userId);
 		}
 		
-		List<UserBlockData> list = stacker.getStack(viewpoint, user, lastTimestamp, start, count);
+		List<BlockView> list = stacker.getStack(viewpoint, user, lastTimestamp, start, count);
 		returnBlocks(xml, viewpoint, user, list);
 	}
 	
-	public void getBlock(XmlBuilder xml, UserViewpoint viewpoint, UserBlockData userBlockData) throws XmlMethodException {
-		returnBlocks(xml, viewpoint, viewpoint.getViewer(), Collections.singletonList(userBlockData));
+	public void getBlock(XmlBuilder xml, UserViewpoint viewpoint, UserBlockData ubd) throws XmlMethodException, NotFoundException {
+		returnBlocks(xml, viewpoint, viewpoint.getViewer(), Collections.singletonList(stacker.loadBlock(viewpoint, ubd)));
 	}
 	
 	public void getMusicPersonSummary(XmlBuilder xml, UserViewpoint viewpoint, String userId) throws XmlMethodException {
@@ -2019,14 +2020,14 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		}
  	}
  	
- 	public void doSetBlockHushed(XmlBuilder xml, UserViewpoint viewpoint, UserBlockData userBlockData, boolean hushed) throws XmlMethodException {
+ 	public void doSetBlockHushed(XmlBuilder xml, UserViewpoint viewpoint, UserBlockData userBlockData, boolean hushed) throws XmlMethodException, NotFoundException {
  		if (hushed != userBlockData.isIgnored()) {
 	 		userBlockData.setIgnored(hushed);
 	 		if (hushed)
 	 			userBlockData.setIgnoredTimestampAsLong(userBlockData.getBlock().getTimestampAsLong());
  		}
  		// send the new block data back, to avoid an extra round trip
- 		returnBlocks(xml, viewpoint, viewpoint.getViewer(), Collections.singletonList(userBlockData));
+ 		returnBlocks(xml, viewpoint, viewpoint.getViewer(), Collections.singletonList(stacker.loadBlock(viewpoint, userBlockData)));
  	}
  	
  	@TransactionAttribute(TransactionAttributeType.NEVER)

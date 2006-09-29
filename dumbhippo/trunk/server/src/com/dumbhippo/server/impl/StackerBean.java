@@ -38,7 +38,6 @@ import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.BlockType;
 import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.Group;
-import com.dumbhippo.persistence.GroupAccess;
 import com.dumbhippo.persistence.GroupMember;
 import com.dumbhippo.persistence.GroupMessage;
 import com.dumbhippo.persistence.Person;
@@ -48,18 +47,23 @@ import com.dumbhippo.persistence.PostMessage;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.UserBlockData;
+import com.dumbhippo.server.BlockView;
+import com.dumbhippo.server.GroupBlockView;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.IdentitySpider;
-import com.dumbhippo.server.XmppMessageSender;
+import com.dumbhippo.server.MusicPersonBlockView;
 import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.NotFoundException;
+import com.dumbhippo.server.PostBlockView;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.SimpleServiceMBean;
 import com.dumbhippo.server.Stacker;
 import com.dumbhippo.server.SystemViewpoint;
+import com.dumbhippo.server.TrackView;
 import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.UserViewpoint;
 import com.dumbhippo.server.Viewpoint;
+import com.dumbhippo.server.XmppMessageSender;
 import com.dumbhippo.server.util.EJBUtil;
 
 @Service
@@ -528,41 +532,45 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		click(BlockType.POST, post.getGuid(), null, -1, user, clickedTime);
 	}
 	
-	private boolean isBlockVisible(Viewpoint viewpoint, Block block) {
+	private BlockView getBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd) throws NotFoundException {
 		UserViewpoint userview = null;
 		if (viewpoint instanceof UserViewpoint)
 			userview = (UserViewpoint) viewpoint;
 		switch (block.getBlockType()) {
 		case POST: {
-			try {
-				return postingBoard.loadRawPost(SystemViewpoint.getInstance(), block.getData1AsGuid()) != null;
-			} catch (NotFoundException e) {
-				return false;
-			}
+			return new PostBlockView(block, ubd, postingBoard.loadPost(SystemViewpoint.getInstance(), block.getData1AsGuid()));
 		}
 		case GROUP_CHAT: 
 		case GROUP_MEMBER: {
-			try {
-				return groupSystem.lookupGroupById(viewpoint, block.getData1AsGuid()) != null;
-			} catch (NotFoundException e) {
-				return false;
-			}
+			return new GroupBlockView(block, ubd, groupSystem.loadGroup(viewpoint, block.getData1AsGuid()));
 		}
-		case MUSIC_PERSON:
-			return true;
+		case MUSIC_PERSON: {
+			List<TrackView> tracks = musicSystem.getLatestTrackViews(viewpoint, identitySpider.lookupUser(block.getData1AsGuid()), 1);
+			return new MusicPersonBlockView(block, ubd, tracks.get(0));
+		}
 		case EXTERNAL_ACCOUNT_UPDATE: {
 			User user = identitySpider.lookupUser(block.getData1AsGuid());
-			return userview != null && userview.getViewer() == user;
+			// TODO implement
+			if (userview != null && userview.getViewer() == user)
+				return null;
+			return null;
 		}
 		case EXTERNAL_ACCOUNT_UPDATE_SELF: {	
-			User user = identitySpider.lookupUser(block.getData1AsGuid());			
-			return userview != null && (identitySpider.isViewerSystemOrFriendOf(viewpoint, user));
+			User user = identitySpider.lookupUser(block.getData1AsGuid());
+			// TODO implement
+			if (userview != null && (identitySpider.isViewerSystemOrFriendOf(viewpoint, user)))
+				return null;
+			return null;
 		}
 		}
 		throw new RuntimeException("Unknown BlockType: " + block.getBlockType());
 	}
 	
-	public List<UserBlockData> getStack(Viewpoint viewpoint, User user, long lastTimestamp, int start, int count) {
+	public BlockView loadBlock(Viewpoint viewpoint, UserBlockData ubd) throws NotFoundException {
+		return getBlockView(viewpoint, ubd.getBlock(), ubd);
+	}	
+	
+	public List<BlockView> getStack(Viewpoint viewpoint, User user, long lastTimestamp, int start, int count) {
 		// keep things sane (e.g. if count provided by an http method API caller)
 		if (count > 50)
 			count = 50;
@@ -597,32 +605,33 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		// and still return nothing if we did the db query.
 		
 		List<UserBlockData> list = TypeUtils.castList(UserBlockData.class, q.getResultList());
+		List<BlockView> stack = new ArrayList<BlockView>();
 		
-		// access controls
-		Iterator<UserBlockData> i = list.iterator();
-		while (i.hasNext()) {
-			UserBlockData ubd = i.next();
-			if (!isBlockVisible(viewpoint, ubd.getBlock())) {
-				i.remove();
+		// Create BlockView objects for the blocks, implicitly performing access control
+		for (UserBlockData ubd : list) {
+			try {
+				stack.add(getBlockView(viewpoint, ubd.getBlock(), ubd));
+			} catch (NotFoundException e) {
+				// Do nothing, we can't see this block
 			}
 		}		
 		
-		if (list.isEmpty())
-			return list;
+		if (stack.isEmpty())
+			return stack;
 		
 		long newestTimestamp = -1;
 		int newestTimestampCount = 0;
 		
 		int countAtLastTimestamp = 0; 
-		for (UserBlockData ubd : list) {
-			long stamp = ubd.getBlock().getTimestampAsLong();
+		for (BlockView bv : stack) {
+			long stamp = bv.getBlock().getTimestampAsLong();
 			
 			if (stamp < lastTimestamp) {
 				// FIXME I think the problem here may be that the database only goes to seconds not milliseconds,
 				// at least when doing comparisons
 				boolean secondsMatch = ((cached / 1000) == (newestTimestamp / 1000));
 				logger.error("Query returned block at wrong timestamp lastTimestamp {} block {}: match at seconds resolution: " + secondsMatch,
-						lastTimestamp, ubd.getBlock());
+						lastTimestamp, bv.getBlock());
 			}
 			
 			if (stamp == lastTimestamp)
@@ -651,16 +660,16 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		
 		// remove any single blocks that have the requested stamp
 		if (countAtLastTimestamp == 1) {
-			i = list.iterator();
+			Iterator<BlockView> i = stack.iterator();
 			while (i.hasNext()) {
-				UserBlockData ubd = i.next();
-				if (ubd.getBlock().getTimestampAsLong() == lastTimestamp) {
+				BlockView bv = i.next();
+				if (bv.getBlock().getTimestampAsLong() == lastTimestamp) {
 					i.remove();
 					break;
 				}
 			}
 		}
-		return list;
+		return stack;
 	}
 	
 	public UserBlockData lookupUserBlockData(UserViewpoint viewpoint, Guid guid) throws NotFoundException {

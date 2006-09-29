@@ -6,11 +6,10 @@ import java.util.List;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
-import com.dumbhippo.persistence.UserBlockData;
+import com.dumbhippo.server.BlockView;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.Stacker;
 import com.dumbhippo.web.ListBean;
-import com.dumbhippo.web.WebBlock;
 import com.dumbhippo.web.WebEJBUtil;
 
 public class StackedPersonPage extends AbstractPersonPage {
@@ -22,17 +21,17 @@ public class StackedPersonPage extends AbstractPersonPage {
 	private List<StackedContact> stackedContacts;
 	
 	public static class StackedContact {
-		private List<WebBlock> stack;
+		private List<BlockView> stack;
 		private PersonView contact;
 		
-		public StackedContact(List<WebBlock> stack, PersonView contact) {
+		public StackedContact(List<BlockView> stack, PersonView contact) {
 			this.stack = stack;
 			this.contact = contact;
 		}
 		public PersonView getContact() {
 			return contact;
 		}
-		public List<WebBlock> getStack() {
+		public List<BlockView> getStack() {
 			return stack;
 		}
 	}
@@ -41,17 +40,9 @@ public class StackedPersonPage extends AbstractPersonPage {
 		stacker = WebEJBUtil.defaultLookup(Stacker.class);
 	}
 	
-	private List<WebBlock> convertBlocks(List<UserBlockData> userBlocks) {
-		List<WebBlock> blocks = new ArrayList<WebBlock>();				
-		for (UserBlockData ubd : userBlocks) {
-			blocks.add(new WebBlock(ubd.getBlock()));
-		}		
-		return blocks;
-	}
-	
-	public List<WebBlock> getStack() {
+	public List<BlockView> getStack() {
 		if (getViewedUser() != null) {
-			return convertBlocks(stacker.getStack(getSignin().getViewpoint(), getViewedUser(), 0, 0, 5));
+			return stacker.getStack(getSignin().getViewpoint(), getViewedUser(), 0, 0, 5);
 		}
 		return null;
 	}
@@ -60,7 +51,7 @@ public class StackedPersonPage extends AbstractPersonPage {
 		if (stackedContacts == null) {
 			stackedContacts = new ArrayList<StackedContact>();
 			for (PersonView pv : getContacts().getList()) {
-				stackedContacts.add(new StackedContact(convertBlocks(stacker.getStack(getSignin().getViewpoint(), pv.getUser(), 0, 0, 5)), pv));
+				stackedContacts.add(new StackedContact(stacker.getStack(getSignin().getViewpoint(), pv.getUser(), 0, 0, 5), pv));
 			}				
 		}
 		return new ListBean<StackedContact>(stackedContacts);

@@ -361,7 +361,7 @@ public interface HttpMethods {
 
  	@HttpContentTypes(HttpResponseData.XMLMETHOD)
  	@HttpParams( { "blockId" })
- 	public void getBlock(XmlBuilder xml, UserViewpoint viewpoint, UserBlockData block) throws XmlMethodException;
+ 	public void getBlock(XmlBuilder xml, UserViewpoint viewpoint, UserBlockData block) throws XmlMethodException, NotFoundException;
  	
  	@HttpContentTypes(HttpResponseData.XMLMETHOD)
  	@HttpParams( { "userId" })
@@ -381,7 +381,7 @@ public interface HttpMethods {
 	
 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
  	@HttpParams( { "blockId", "hushed" })
- 	public void doSetBlockHushed(XmlBuilder xml, UserViewpoint viewpoint, UserBlockData userBlockData, boolean hushed) throws XmlMethodException;
+ 	public void doSetBlockHushed(XmlBuilder xml, UserViewpoint viewpoint, UserBlockData userBlockData, boolean hushed) throws XmlMethodException, NotFoundException;
 	
 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
 	@HttpParams( { "fileId" })

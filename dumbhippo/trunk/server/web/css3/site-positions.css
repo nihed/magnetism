@@ -260,3 +260,13 @@ div.dh-notification {
 .dh-shiny-box-content {
 	padding:			10px 10px 0px 10px;
 }
+
+.dh-stacker-block {
+	position:			relative;
+}
+
+.dh-stacker-block-right {	
+	position:			absolute;
+	right:				0;
+	top:				0;
+}

@@ -42,7 +42,9 @@ public interface Stacker {
 	
 	public void clickedPost(Post post, User user, long clickedTime);
 	
-	public List<UserBlockData> getStack(Viewpoint viewpoint, User user, long lastTimestamp, int start, int count);
+	public BlockView loadBlock(Viewpoint viewpoint, UserBlockData ubd) throws NotFoundException;
+	
+	public List<BlockView> getStack(Viewpoint viewpoint, User user, long lastTimestamp, int start, int count);
 
 	public UserBlockData lookupUserBlockData(UserViewpoint viewpoint, Guid guid) throws NotFoundException;
 	

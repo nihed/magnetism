@@ -5,7 +5,7 @@ import java.util.List;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.User;
-import com.dumbhippo.persistence.UserBlockData;
+import com.dumbhippo.server.BlockView;
 import com.dumbhippo.server.UserViewpoint;
 
 /** 
@@ -17,21 +17,21 @@ import com.dumbhippo.server.UserViewpoint;
 class CommonXmlWriter {
 	static public final String NAMESPACE_BLOCKS = "http://dumbhippo.com/protocol/blocks";
 	
-	static public void writeBlocks(XmlBuilder xml, UserViewpoint viewpoint, User user, List<UserBlockData> list, String xmlns) {
+	static public void writeBlocks(XmlBuilder xml, UserViewpoint viewpoint, User user, List<BlockView> list, String xmlns) {
 		xml.openElement("blocks",
 				"xmlns", xmlns, // if null then the attribute is skipped
 				"count", Integer.toString(list.size()),
 				"userId", user.getId(), "serverTime", Long.toString(System.currentTimeMillis()));
-		for (UserBlockData ubd : list) {
-			Block block = ubd.getBlock();
+		for (BlockView bv : list) {
+			Block block = bv.getBlock();
 			xml.openElement("block", "id", block.getId(),
 					"type", block.getBlockType().name(),
 					"timestamp", Long.toString(block.getTimestampAsLong()),
 					"clickedCount", Integer.toString(block.getClickedCount()),
-					"ignored", Boolean.toString(ubd.isIgnored()),
-					"ignoredTimestamp", Long.toString(ubd.getIgnoredTimestampAsLong()),
-					"clicked", Boolean.toString(ubd.isClicked()),
-					"clickedTimestamp", Long.toString(ubd.getClickedTimestampAsLong()));
+					"ignored", Boolean.toString(bv.getUserBlockData().isIgnored()),
+					"ignoredTimestamp", Long.toString(bv.getUserBlockData().getIgnoredTimestampAsLong()),
+					"clicked", Boolean.toString(bv.getUserBlockData().isClicked()),
+					"clickedTimestamp", Long.toString(bv.getUserBlockData().getClickedTimestampAsLong()));
 			
 			switch (block.getBlockType()) {
 			case MUSIC_PERSON:
