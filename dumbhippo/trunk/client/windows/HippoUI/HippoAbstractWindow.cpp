@@ -150,9 +150,11 @@ HippoAbstractWindow::convertClientRectToWindowRect(HippoRectangle *rect)
         g_warning("Failed to convert client rect to window rect");
     }
 
+#if 0
     g_debug("SIZING: adjusted client rect %d,%d %dx%d to window rect %d,%d %dx%d",
         rect->x, rect->y, rect->width, rect->height,
         wrect.left, wrect.top, wrect.right - wrect.left, wrect.bottom - wrect.top);
+#endif
 
     rect->x = wrect.left;
     rect->y = wrect.top;
@@ -212,6 +214,7 @@ HippoAbstractWindow::queryCurrentClientRect(HippoRectangle *rect)
     windowArea = childInfo.rcWindow;
     clientArea = childInfo.rcClient;
 
+#if 0
     g_debug("SIZING: queried current parent window %d,%d %dx%d client %d,%d %dx%d child window %d,%d %dx%d client %d,%d %dx%d",
         parentWindowArea.left,
         parentWindowArea.top,
@@ -229,6 +232,7 @@ HippoAbstractWindow::queryCurrentClientRect(HippoRectangle *rect)
         clientArea.top,
         clientArea.right - clientArea.left,
         clientArea.bottom - clientArea.top);
+#endif
 
     // We want to return a child client rect relative to the parent's 
     // client rect. The WINDOWINFO rects are all in screen coordinates.
@@ -252,10 +256,12 @@ HippoAbstractWindow::createWindow(void)
             centerY = (workArea.bottom + workArea.top - getHeight()) / 2;
         }
         
+#if 0
         g_debug("SIZING: work area %d,%d %dx%d centering window at %d,%d",
             workArea.left, workArea.top, workArea.right - workArea.left, 
             workArea.bottom - workArea.top,
             centerX, centerY);
+#endif
 
         x_ = centerX;
         y_ = centerY;
@@ -273,9 +279,11 @@ HippoAbstractWindow::createWindow(void)
      * sent right away but we ignore it since we haven't set ourselves
      * as window data.
      */
+#if 0
     g_debug("SIZING: creating window at window rect %d,%d %dx%d client rect %d,%d %dx%d",
         rect.x, rect.y, rect.width, rect.height,
         x_, y_, width_, height_);
+#endif
 
 #if 0
     g_debug("Create window style WS_OVERLAPPEDWINDOW=%x WS_VISIBLE=%x WS_DISABLED=%x WS_CHILD=%x WS_POPUP=%x",
@@ -326,8 +334,10 @@ HippoAbstractWindow::create(void)
     if (created_)
         return true;
 
+#if 0
     g_debug("SIZING: create %p %s",
         window_, HippoUStr(getClassName()).c_str());
+#endif
 
     g_assert(window_ == NULL);
 
@@ -426,8 +436,10 @@ HippoAbstractWindow::show(BOOL activate)
     if (showing_)
         return;
 
+#if 0
     g_debug("SIZING: show %p %s",
         window_, HippoUStr(getClassName()).c_str());
+#endif
 
     if (!create())
         return;
@@ -442,9 +454,11 @@ HippoAbstractWindow::show(BOOL activate)
 
     showing_= true;
 
+#if 0
     g_debug("SIZING: visible=%d for %p %s",
         IsWindowVisible(window_),
         window_, HippoUStr(getClassName()).c_str());
+#endif
 }
 
 void
@@ -453,8 +467,10 @@ HippoAbstractWindow::hide(void)
     if (!showing_)
         return;
 
+#if 0
     g_debug("SIZING: hide %p %s",
         window_, HippoUStr(getClassName()).c_str());
+#endif
 
     if (animate_)
         AnimateWindow(window_, 400, AW_BLEND | AW_HIDE);
@@ -515,8 +531,10 @@ HippoAbstractWindow::moveResizeWindow(int x, int y, int width, int height)
         HippoRectangle rect;
         getClientArea(&rect);
         convertClientRectToWindowRect(&rect);
+#if 0
         g_debug("SIZING: MoveWindow to %d,%d %dx%d (window rect %d,%d %dx%d)",
             x, y, width, height, rect.x, rect.y, rect.width, rect.height);
+#endif
         MoveWindow(window_, rect.x, rect.y, rect.width, rect.height, TRUE);
     } else {
         g_debug("SIZING: MoveWindow to %d,%d %dx%d prior to window create",
@@ -544,9 +562,11 @@ HippoAbstractWindow::invalidate(int x, int y, int width, int height)
     area.right = area.left + width;
     area.bottom = area.top + height;
 
+#if 0
     g_debug("SIZING: invalidating %d,%d %dx%d on %p %s",
         x, y, width, height,
         window_, HippoUStr(getClassName()).c_str());
+#endif
 
     // false = don't clear the area
     InvalidateRect(window_, &area, false);
@@ -627,6 +647,7 @@ debugPrintMessage(HippoAbstractWindow *abstractWindow,
                   WPARAM wParam,
                   LPARAM lParam)
 {
+#if 0
     HippoUStr name;
     if (abstractWindow)
         name.setUTF16(abstractWindow->getClassName().m_str);
@@ -635,26 +656,25 @@ debugPrintMessage(HippoAbstractWindow *abstractWindow,
 
     switch (message) {
     case WM_SIZE:
-        g_debug("SIZING: WM_SIZE on %p %s", window, name.c_str());
+        //g_debug("SIZING: WM_SIZE on %p %s", window, name.c_str());
         break;
     case WM_PAINT:
-        g_debug("SIZING: WM_PAINT on %p %s", window, name.c_str());
+        //g_debug("SIZING: WM_PAINT on %p %s", window, name.c_str());
         break;
     case WM_ERASEBKGND:
-        g_debug("SIZING: WM_ERASEBKGND on %p %s", window, name.c_str());
+        //g_debug("SIZING: WM_ERASEBKGND on %p %s", window, name.c_str());
         break;
     case WM_MOVE:
-        g_debug("SIZING: WM_MOVE on %p %s", window, name.c_str());
+        //g_debug("SIZING: WM_MOVE on %p %s", window, name.c_str());
         break;
     case WM_LBUTTONDOWN:
-        g_debug("WM_LBUTTONDOWN");
+        //g_debug("WM_LBUTTONDOWN");
         break;
-#if 0
     case WM_MOUSEMOVE:
-        g_debug("WM_MOUSEMOVE");
+        //g_debug("WM_MOUSEMOVE");
         break;
-#endif
     }
+#endif
 }
 
 LRESULT CALLBACK 

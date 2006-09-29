@@ -475,9 +475,11 @@ HippoCanvas::onPaint(WPARAM wParam, LPARAM lParam)
         int regionWidth = region.right - region.left;
         int regionHeight = region.bottom - region.top;
 
+#if 0
         g_debug("SIZING: %p paint region %d,%d %dx%d",
                 window_, region.left, region.top,
                 regionWidth, regionHeight);
+#endif
 
         // go ahead and request/resize if necessary, so we paint the right thing
         ensureRequestAndAllocation();

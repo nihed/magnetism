@@ -283,8 +283,10 @@ HippoWindowImpl::showChildren()
 void
 HippoWindowImpl::onRequestChanged()
 {
+#if 0
     g_debug("SIZING: adding resize idle %p %s",
         window_, HippoUStr(getClassName()).c_str());
+#endif
 
     // the resizeIdle_ only kicks in if there's no WM_PAINT pending - 
     // otherwise WM_PAINT arrives before the idle fires, and it will 
@@ -296,8 +298,10 @@ HippoWindowImpl::onRequestChanged()
 bool
 HippoWindowImpl::idleResize()
 {
+#if 0
     g_debug("SIZING: idleResize %p %s",
         window_, HippoUStr(getClassName()).c_str());
+#endif
 
     // this may be a no-op but will check the flag for whether we 
     // need to do anything
@@ -399,9 +403,11 @@ HippoWindowImpl::processMessage(UINT   message,
             RECT region;
             if (GetUpdateRect(window_, &region, true)) {
 
+#if 0
                 g_debug("SIZING: %p paint region %d,%d %dx%d",
-                    window_, region.left, region.top,
+                    window_, region.left, region.top,     
                     region.right - region.left, region.bottom - region.top);
+#endif
 
                 PAINTSTRUCT paint;
                 HDC hdc = BeginPaint(window_, &paint);

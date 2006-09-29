@@ -114,11 +114,13 @@ HippoAbstractControl::showChildren()
 void
 HippoAbstractControl::sizeAllocate(const HippoRectangle *rect)
 {
+#if 0
     g_debug("SIZING: sizeAllocate %p %s to %d,%d %dx%d from %d,%d %dx%d requestChanged = %d",
         window_, HippoUStr(getClassName()).c_str(),
         rect->x, rect->y, rect->width, rect->height,
         getX(), getY(), getWidth(), getHeight(),
         requestChangedSinceAllocate_);
+#endif
 
     HippoRectangle old;
 
@@ -206,8 +208,10 @@ HippoAbstractControl::onSizeAllocated()
 void
 HippoAbstractControl::markRequestChanged()
 {
+#if 0
     g_debug("SIZING: markRequestChanged %p %s",
         window_, HippoUStr(getClassName()).c_str());
+#endif
 
     if (insideAllocation_) {
         g_warning("%s tried to change its size request inside size allocate",
@@ -239,8 +243,10 @@ HippoAbstractControl::onRequestChanged()
 void
 HippoAbstractControl::ensureRequestAndAllocation()
 {
+#if 0
     g_debug("SIZING: ensureRequestAndAllocation requestChanged = %d %p %s",
         requestChangedSinceAllocate_, window_, HippoUStr(getClassName()).c_str());
+#endif
 
     if (!requestChangedSinceAllocate_)
         return;
