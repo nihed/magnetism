@@ -686,14 +686,6 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		return lookupGroupById(viewpoint, guid);
 	}
 	
-	public Group lookupGroupByIdTrusted(Viewpoint viewpoint, Guid guid) {
-		try {
-			return lookupGroupById(viewpoint, guid);
-		} catch (NotFoundException e) {
-			throw new RuntimeException(e);
-		}
-	}
-	
 	public Group lookupGroupById(Viewpoint viewpoint, Guid guid) throws NotFoundException {
 		Group group = EJBUtil.lookupGuid(em, Group.class, guid);
 		

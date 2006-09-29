@@ -534,12 +534,19 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 			userview = (UserViewpoint) viewpoint;
 		switch (block.getBlockType()) {
 		case POST: {
-			return postingBoard.canViewPost(viewpoint, postingBoard.loadRawPostTrusted(SystemViewpoint.getInstance(), block.getData1AsGuid()));
+			try {
+				return postingBoard.loadRawPost(SystemViewpoint.getInstance(), block.getData1AsGuid()) != null;
+			} catch (NotFoundException e) {
+				return false;
+			}
 		}
 		case GROUP_CHAT: 
 		case GROUP_MEMBER: {
-			Group group = groupSystem.lookupGroupByIdTrusted(viewpoint, block.getData1AsGuid());
-			return group.getAccess() != GroupAccess.SECRET || (userview != null && groupSystem.isMember(group, userview.getViewer()));
+			try {
+				return groupSystem.lookupGroupById(viewpoint, block.getData1AsGuid()) != null;
+			} catch (NotFoundException e) {
+				return false;
+			}
 		}
 		case MUSIC_PERSON:
 			return true;

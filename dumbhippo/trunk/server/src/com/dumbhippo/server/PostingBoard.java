@@ -137,8 +137,6 @@ public interface PostingBoard {
 	
 	public void doNowPlayingTutorialPost(User recipient);
 	
-	public Post loadRawPostTrusted(Viewpoint viewpoint, Guid guid);
-	
 	public Post loadRawPost(Viewpoint viewpoint, Guid guid) throws NotFoundException;
 	
 	public PostView loadPost(Viewpoint viewpoint, Guid guid) throws NotFoundException;

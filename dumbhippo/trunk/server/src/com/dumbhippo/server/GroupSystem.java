@@ -113,7 +113,6 @@ public interface GroupSystem {
 	public Group lookupGroupById(Viewpoint viewpoint, String groupId) throws NotFoundException;
 	
 	public Group lookupGroupById(Viewpoint viewpoint, Guid guid) throws NotFoundException;
-	public Group lookupGroupByIdTrusted(Viewpoint viewpoint, Guid guid);	
 	
 	public GroupView loadGroup(Viewpoint viewpoint, Guid guid) throws NotFoundException;
 	

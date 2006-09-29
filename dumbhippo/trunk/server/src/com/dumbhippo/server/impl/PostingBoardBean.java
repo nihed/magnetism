@@ -1046,14 +1046,6 @@ public class PostingBoardBean implements PostingBoard {
 		pageable.setResults(views);
 	}
 	
-	public Post loadRawPostTrusted(Viewpoint viewpoint, Guid guid) {
-		try {
-			return loadRawPost(viewpoint, guid);
-		} catch (NotFoundException e) {
-			throw new RuntimeException(e);
-		}
-	}
-	
 	public Post loadRawPost(Viewpoint viewpoint, Guid guid) throws NotFoundException {
 		Post post = EJBUtil.lookupGuid(em, Post.class, guid);
 		if (canViewPost(viewpoint, post)) {
