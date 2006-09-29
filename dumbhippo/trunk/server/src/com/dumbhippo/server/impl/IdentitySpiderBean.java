@@ -116,7 +116,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	public User lookupUser(Guid guid) {
 		return em.find(User.class, guid.toString());
 	}
-
+	
 	public <T extends GuidPersistable> T lookupGuidString(Class<T> klass,
 			String id) throws ParseException, NotFoundException {
 		if (klass.equals(Post.class) || klass.equals(Group.class))

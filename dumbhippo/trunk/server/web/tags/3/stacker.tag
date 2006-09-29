@@ -3,16 +3,17 @@
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 <%@ taglib tagdir="/WEB-INF/tags/3" prefix="dht3" %>
 
-<%@ attribute name="userId" required="true" type="java.lang.String" %>
+<%@ attribute name="stack" required="true" type="java.util.List" %>
 
-<div id="dhStacker-${userId}" class="dh-stacker-container">
-	<script>
-		dojo.require('dh.stacker');
-		var dhInitStacker${userId} = function() {
-			var stacker = dh.stacker.getInstance();
-			stacker.setContainer(document.getElementById('dhStacker-${userId}'));
-			stacker.start();
-		}
-		dojo.event.connect(dojo, "loaded", dj_global, "dhInitStacker${userId}");		
-	</script>
+<div class="dh-stacker-container">
+	<c:forEach items="${stack}" end="5" var="block" varStatus="blockIdx">
+		<c:choose>
+			<c:when test="${status.count % 2 == 0}">
+				<dht3:block block="${block}" cssClass="dh-stacker-block-grey1"/>
+			</c:when>
+			<c:otherwise>
+				<dht3:block block="${block}" cssClass="dh-stacker-block-grey2"/>
+			</c:otherwise>
+		</c:choose>
+	</c:forEach>	
 </div>

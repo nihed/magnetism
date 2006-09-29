@@ -68,7 +68,7 @@ public interface PostingBoard {
 	 */
 	public void pageFavoritePosts(Viewpoint viewpoint, User user, Pageable<PostView> pageable);	
 	
-	public boolean canViewPost(UserViewpoint viewpoint, Post post);
+	public boolean canViewPost(Viewpoint viewpoint, Post post);	
 	
 	public int getPostsForCount(Viewpoint viewpoint, Person forPerson, String search);
 	
@@ -136,6 +136,8 @@ public interface PostingBoard {
 	public void doShareLinkTutorialPost(User recipient);
 	
 	public void doNowPlayingTutorialPost(User recipient);
+	
+	public Post loadRawPostTrusted(Viewpoint viewpoint, Guid guid);
 	
 	public Post loadRawPost(Viewpoint viewpoint, Guid guid) throws NotFoundException;
 	

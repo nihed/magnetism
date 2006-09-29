@@ -38,6 +38,7 @@ import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.BlockType;
 import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.Group;
+import com.dumbhippo.persistence.GroupAccess;
 import com.dumbhippo.persistence.GroupMember;
 import com.dumbhippo.persistence.GroupMessage;
 import com.dumbhippo.persistence.Person;
@@ -527,10 +528,34 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		click(BlockType.POST, post.getGuid(), null, -1, user, clickedTime);
 	}
 	
+	private boolean isBlockVisible(Viewpoint viewpoint, Block block) {
+		UserViewpoint userview = null;
+		if (viewpoint instanceof UserViewpoint)
+			userview = (UserViewpoint) viewpoint;
+		switch (block.getBlockType()) {
+		case POST: {
+			return postingBoard.canViewPost(viewpoint, postingBoard.loadRawPostTrusted(SystemViewpoint.getInstance(), block.getData1AsGuid()));
+		}
+		case GROUP_CHAT: 
+		case GROUP_MEMBER: {
+			Group group = groupSystem.lookupGroupByIdTrusted(viewpoint, block.getData1AsGuid());
+			return group.getAccess() != GroupAccess.SECRET || (userview != null && groupSystem.isMember(group, userview.getViewer()));
+		}
+		case MUSIC_PERSON:
+			return true;
+		case EXTERNAL_ACCOUNT_UPDATE: {
+			User user = identitySpider.lookupUser(block.getData1AsGuid());
+			return userview != null && userview.getViewer() == user;
+		}
+		case EXTERNAL_ACCOUNT_UPDATE_SELF: {	
+			User user = identitySpider.lookupUser(block.getData1AsGuid());			
+			return userview != null && (identitySpider.isViewerSystemOrFriendOf(viewpoint, user));
+		}
+		}
+		throw new RuntimeException("Unknown BlockType: " + block.getBlockType());
+	}
+	
 	public List<UserBlockData> getStack(Viewpoint viewpoint, User user, long lastTimestamp, int start, int count) {
-		if (!(viewpoint.isOfUser(user) || viewpoint instanceof SystemViewpoint))
-			throw new RuntimeException("Supporting non-self viewpoints is hard here since you need to check permissions on the posts, etc.");
-		
 		// keep things sane (e.g. if count provided by an http method API caller)
 		if (count > 50)
 			count = 50;
@@ -565,6 +590,16 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		// and still return nothing if we did the db query.
 		
 		List<UserBlockData> list = TypeUtils.castList(UserBlockData.class, q.getResultList());
+		
+		// access controls
+		Iterator<UserBlockData> i = list.iterator();
+		while (i.hasNext()) {
+			UserBlockData ubd = i.next();
+			if (!isBlockVisible(viewpoint, ubd.getBlock())) {
+				i.remove();
+			}
+		}		
+		
 		if (list.isEmpty())
 			return list;
 		
@@ -609,7 +644,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		
 		// remove any single blocks that have the requested stamp
 		if (countAtLastTimestamp == 1) {
-			Iterator<UserBlockData> i = list.iterator();
+			i = list.iterator();
 			while (i.hasNext()) {
 				UserBlockData ubd = i.next();
 				if (ubd.getBlock().getTimestampAsLong() == lastTimestamp) {
