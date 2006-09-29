@@ -89,6 +89,9 @@ struct _HippoCanvasBoxClass {
     int      (* get_content_width_request)    (HippoCanvasBox   *box);
     int      (* get_content_height_request)   (HippoCanvasBox   *box,
                                                int               for_width);
+
+    void     (* hovering_changed)             (HippoCanvasBox   *box,
+                                               gboolean          hovering);
 };
 
 

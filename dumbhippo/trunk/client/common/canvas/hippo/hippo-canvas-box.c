@@ -95,11 +95,11 @@ typedef struct {
 } HippoBoxChild;
 
 enum {
-    NO_SIGNALS_YET,
+    HOVERING_CHANGED,
     LAST_SIGNAL
 };
 
-/* static int signals[LAST_SIGNAL]; */
+static int signals[LAST_SIGNAL];
 
 enum {
     PROP_0,
@@ -184,6 +184,15 @@ hippo_canvas_box_class_init(HippoCanvasBoxClass *klass)
     klass->paint_children = hippo_canvas_box_paint_children;
     klass->get_content_width_request = hippo_canvas_box_get_content_width_request;
     klass->get_content_height_request = hippo_canvas_box_get_content_height_request;
+
+    signals[HOVERING_CHANGED] =
+        g_signal_new ("hovering-changed",
+                      G_TYPE_FROM_CLASS (object_class),
+                      G_SIGNAL_RUN_LAST,
+                      G_STRUCT_OFFSET(HippoCanvasBoxClass, hovering_changed),
+                      NULL, NULL,
+                      g_cclosure_marshal_VOID__BOOLEAN,
+                      G_TYPE_NONE, 1, G_TYPE_BOOLEAN);
     
     /* we're supposed to register the enum yada yada, but doesn't matter */
     g_object_class_install_property(object_class,
@@ -1487,7 +1496,11 @@ hippo_canvas_box_motion_notify_event (HippoCanvasItem *item,
                                       HippoEvent      *event)
 {
     HippoCanvasBox *box = HIPPO_CANVAS_BOX(item);
+    gboolean was_hovering;
+    gboolean handled;
 
+    was_hovering = box->hovering;
+    
     /* FIXME the warnings here need fixing; right now we aren't handling
      * e.g. unmap I think, maybe some larger problems too
      */
@@ -1521,7 +1534,13 @@ hippo_canvas_box_motion_notify_event (HippoCanvasItem *item,
         box->hovering = TRUE;
     }
 
-    return forward_event(box, event);
+    handled = forward_event(box, event);
+
+    if (was_hovering != box->hovering) {
+        g_signal_emit(G_OBJECT(box), signals[HOVERING_CHANGED], 0, box->hovering);
+    }
+
+    return handled;
 }
 
 static void

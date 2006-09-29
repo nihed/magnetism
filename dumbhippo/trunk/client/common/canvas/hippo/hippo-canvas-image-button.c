@@ -17,9 +17,9 @@ static void hippo_canvas_image_button_get_property (GObject      *object,
                                                     GValue       *value,
                                                     GParamSpec   *pspec);
 
-/* Canvas item methods */
-static gboolean hippo_canvas_image_button_motion_notify (HippoCanvasItem *canvas_item,
-                                                         HippoEvent      *event);
+/* Box methods */
+static void hippo_canvas_image_button_hovering_changed (HippoCanvasBox  *box,
+                                                        gboolean         hovering);
 
 enum {
     NO_SIGNALS_YET,
@@ -63,20 +63,20 @@ static void
 hippo_canvas_image_button_iface_init(HippoCanvasItemClass *item_class)
 {
     item_parent_class = g_type_interface_peek_parent(item_class);
-
-    item_class->motion_notify_event = hippo_canvas_image_button_motion_notify;
 }
 
 static void
 hippo_canvas_image_button_class_init(HippoCanvasImageButtonClass *klass)
 {
     GObjectClass *object_class = G_OBJECT_CLASS (klass);
-    /* HippoCanvasBoxClass *box_class = HIPPO_CANVAS_BOX_CLASS(klass); */
+    HippoCanvasBoxClass *box_class = HIPPO_CANVAS_BOX_CLASS(klass);
     
     object_class->set_property = hippo_canvas_image_button_set_property;
     object_class->get_property = hippo_canvas_image_button_get_property;
 
     object_class->finalize = hippo_canvas_image_button_finalize;
+
+    box_class->hovering_changed = hippo_canvas_image_button_hovering_changed;
     
     g_object_class_install_property(object_class,
                                     PROP_NORMAL_IMAGE,
@@ -270,23 +270,13 @@ hippo_canvas_image_button_get_property(GObject         *object,
     }
 }
 
-static gboolean
-hippo_canvas_image_button_motion_notify (HippoCanvasItem *canvas_item,
-                                         HippoEvent      *event)
+static void
+hippo_canvas_image_button_hovering_changed (HippoCanvasBox  *box,
+                                            gboolean         hovering)
 {
     HippoCanvasImageButton *button;
-    HippoCanvasBox *box;
-    gboolean was_hovering;
 
-    button = HIPPO_CANVAS_IMAGE_BUTTON(canvas_item);
-    box = HIPPO_CANVAS_BOX(canvas_item);
+    button = HIPPO_CANVAS_IMAGE_BUTTON(box);
     
-    was_hovering = box->hovering;
-    
-    item_parent_class->motion_notify_event(canvas_item, event);
-
-    if (was_hovering != box->hovering)
-        pick_image(button);
-
-    return FALSE;
+    pick_image(button);
 }
