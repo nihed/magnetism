@@ -183,6 +183,9 @@ PKG_CHECK_MODULES(LIBHIPPOCANVAS, gobject-2.0 >= $GLIB2_REQUIRED gtk+-2.0 >= $GT
 GLIB_GENMARSHAL=`$PKG_CONFIG --variable=glib_genmarshal glib-2.0`
 AC_SUBST(GLIB_GENMARSHAL)
 
+GLIB_MKENUMS=`$PKG_CONFIG --variable=glib_mkenums glib-2.0`
+AC_SUBST(GLIB_MKENUMS)
+
 ## Python bindings
 AM_PATH_PYTHON
 AM_CHECK_PYTHON_HEADERS(,[AC_MSG_ERROR(could not find Python headers)])

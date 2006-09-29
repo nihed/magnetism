@@ -6,13 +6,20 @@ headers
 #include "pygobject.h"
 #include "hippo/hippo-canvas-item.h"
 #include "hippo/hippo-canvas-box.h"
-#include "hippo/hippo-canvas.h"
+#include "hippo/hippo-canvas-image.h"
+#include "hippo/hippo-canvas-text.h"
+#include "hippo/hippo-canvas-link.h"
+
+#include "hippo-canvas/hippo-canvas-type-builtins.h"
 
 %%
 modulename hippocanvas
 %%
 import gobject.GObject as PyGObject_Type
 import gtk.Container as PyGtkContainer_Type
+%%
+ignore
+hippo_cairo_set_source_rgba32
 %%
 ignore-glob
   *_get_type

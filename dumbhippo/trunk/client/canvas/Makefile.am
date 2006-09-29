@@ -21,8 +21,9 @@ AM_CPPFLAGS=-DHIPPO_COMPILATION -DHIPPO_OS_LINUX -I$(top_builddir)/config -I$(CO
 # the "config" dir seems like a convenient place that's already 
 # in everyone's include path ... I dunno
 BUILT_SRC_DIR=$(top_builddir)/config/hippo-canvas
-# Generated marshallers go into this directory as well
+# Generated marshallers and enums go into this directory as well
 MARSHAL_DIR=$(BUILT_SRC_DIR)
+ENUMS_DIR=$(BUILT_SRC_DIR)
 
 EXTRA_DIST = LICENSE
 
@@ -65,6 +66,53 @@ $(CANVAS_MARSHAL_BODY): $(CANVAS_MARSHAL_LIST)
 	mkdir $(MARSHAL_DIR) || true
 	(echo "#include \"hippo-canvas-marshal.h\""; $(GLIB_GENMARSHAL) --prefix=hippo_canvas_marshal $(CANVAS_MARSHAL_LIST) --body) > $(CANVAS_MARSHAL_BODY)
 
+CANVAS_ENUMS_HEADER=$(ENUMS_DIR)/hippo-canvas-type-builtins.h
+CANVAS_ENUMS_BODY=$(ENUMS_DIR)/hippo-canvas-type-builtins.c
+CANVAS_ENUMS_HEADER_STAMP=$(ENUMS_DIR)/stamp-hippo-canvas-type-builtins.h
+CANVAS_ENUMS_BODY_STAMP=$(ENUMS_DIR)/stamp-hippo-canvas-type-builtins.c
+
+$(CANVAS_ENUMS_BODY): $(CANVAS_ENUMS_BODY_STAMP)
+	@true
+$(CANVAS_ENUMS_BODY_STAMP): $(COMMON_CANVAS_HEADERFILES)
+	(cd $(COMMONCANVASSRCDIR) && $(GLIB_MKENUMS) \
+		--fhead "#include \"hippo-canvas-type-builtins.h\"\n\n" \
+		--fprod "\n/* enumerations from \"@filename@\" */" \
+		--fprod "\n#include \"@filename@\"" \
+		--vhead "const G@Type@Value _@enum_name@_values[] = {" \
+		--vprod "  { @VALUENAME@, \"@VALUENAME@\", \"@valuenick@\" }," \
+		--vtail "  { 0, NULL, NULL }\n};\n\n" \
+		--vtail "GType\n@enum_name@_get_type (void)\n{\n" \
+		--vtail "  static GType type = 0;\n\n" \
+		--vtail "  if (G_UNLIKELY (type == 0))\n" \
+		--vtail "    type = g_@type@_register_static (\"@EnumName@\", _@enum_name@_values);\n\n" \
+		--vtail "  return type;\n}\n\n" \
+		$(^F:%=hippo/%)) > xgen-$(@F) \
+	&& ( cmp -s xgen-$(@F) $(CANVAS_ENUMS_BODY) || cp xgen-$(@F) $(CANVAS_ENUMS_BODY)) \
+	&& rm -f xgen-$(@F) \
+	&& echo timestamp > $(CANVAS_ENUMS_BODY_STAMP)
+
+$(CANVAS_ENUMS_HEADER): $(CANVAS_ENUMS_HEADER_STAMP)
+	@true
+$(CANVAS_ENUMS_HEADER_STAMP): $(COMMON_CANVAS_HEADERFILES)
+	(cd $(COMMONCANVASSRCDIR) && $(GLIB_MKENUMS) \
+		--fhead "#ifndef HIPPO_CANVAS_TYPE_BUILTINS_H\n" \
+		--fhead "#define HIPPO_CANVAS_TYPE_BUILTINS_H 1\n\n" \
+		--fhead "#include <glib-object.h>\n\n" \
+		--fhead "G_BEGIN_DECLS\n\n" \
+		--ftail "G_END_DECLS\n\n" \
+		--ftail "#endif /* HIPPO_CANVAS_TYPE_BUILTINS_H */\n" \
+		--fprod "\n/* --- @filename@ --- */" \
+		--eprod "#define HIPPO_TYPE_@ENUMSHORT@ @enum_name@_get_type()\n" \
+		--eprod "GType @enum_name@_get_type (void);\n" \
+		$(^F:%=hippo/%)) > xgen-$(@F) \
+	&& ( cmp -s xgen-$(@F) $(CANVAS_ENUMS_HEADER) || cp xgen-$(@F) $(CANVAS_ENUMS_HEADER)) \
+	&& rm -f xgen-$(@F) \
+	&& echo timestamp > $(CANVAS_ENUMS_HEADER_STAMP)
+
+STAMPS =				\
+	$(CANVAS_ENUMS_BODY_STAMP)	\
+	$(CANVAS_ENUMS_HEADER_STAMP)
+
 COMMON_CANVAS_HEADERFILES = 					\
 	$(COMMONCANVASSRCDIR)/hippo/hippo-canvas-box.h		\
 	$(COMMONCANVASSRCDIR)/hippo/hippo-canvas-context.h	\
@@ -101,9 +149,11 @@ LINUX_CANVAS_SOURCEFILES =					\
 
 CANVAS_BUILT_SOURCEFILES =			\
 	$(CANVAS_MARSHAL_HEADER)		\
-	$(CANVAS_MARSHAL_BODY)
+	$(CANVAS_MARSHAL_BODY)			\
+	$(CANVAS_ENUMS_HEADER)			\
+	$(CANVAS_ENUMS_BODY)
 
-MAINTAINERCLEANFILES +=	$(CANVAS_BUILT_SOURCEFILES)
+MAINTAINERCLEANFILES +=	$(CANVAS_BUILT_SOURCEFILES) $(STAMPS)
 BUILT_SOURCES += $(CANVAS_BUILT_SOURCEFILES)
 
 ## we need to nodist these because otherwise automake would copy 
