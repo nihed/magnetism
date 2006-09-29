@@ -7,6 +7,10 @@
 <%@ attribute name="isSelf" required="true" type="java.lang.Boolean" %>
 
 <div class="dh-person-header">
+    <table class="dh-person-info">
+    <tbody>
+    <tr valign="top">
+    <td>
 	<table cellpadding="0" cellspacing="0">
 		<tbody>
 			<tr valign="top">
@@ -55,5 +59,29 @@
 			</td>
 			</tr>
 		</tbody>
+	</table>
+	</td>
+	<td align="right">
+	<table cellpadding="0" cellspacing="0">
+		<tbody>
+			<tr valign="top">
+				<td>
+				    <div class="dh-favicons">
+				        <%-- TODO: need to include AIM and separate website from external accounts to show it --%>
+				        <%-- with a home icon. --%>
+				        <c:if test="${!empty who.email}">
+						    <dht3:whereAtIcon label="Send me email" linkText="${who.email.email}" linkTarget="${who.emailLink}" imgSrc="/images3/${buildStamp}/mail_icon.png"/>
+						</c:if>
+						<c:forEach var="account" items="${who.lovedAccounts.list}">
+						    <dht3:whereAtIcon label="${account.siteName}" linkText="${account.linkText}" linkTarget="${account.link}" imgSrc="${account.favicon}"/>
+						</c:forEach>							
+					</div>
+				</td>
+			</tr>
+		</tbody>
+	</table>						
+	</td>
+	</tr>
+	</tbody>
 	</table>
 </div>

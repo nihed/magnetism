@@ -1,10 +1,6 @@
 package com.dumbhippo.web.pages;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
-import java.util.Set;
 
 import org.slf4j.Logger;
 
@@ -12,9 +8,7 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.StringUtils;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.persistence.AimResource;
-import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.ExternalAccount;
-import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.Sentiment;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HippoProperty;
@@ -51,34 +45,8 @@ public class PersonPage extends AbstractPersonPage {
 	}
 	
 	private ListBean<ExternalAccount> getAccountsBySentiment(Sentiment sentiment) {
-		List<ExternalAccount> list = new ArrayList<ExternalAccount>();
 		PersonView pv = getViewedPerson();
-		Set<ExternalAccount> accounts = pv.getExternalAccounts();
-		for (ExternalAccount a : accounts) {
-			if (a.getSentiment() == sentiment) {
-				list.add(a);
-			}
-		}
-		Collections.sort(list, new Comparator<ExternalAccount>() {
-
-			public int compare(ExternalAccount first, ExternalAccount second) {
-				// Equality should be impossible, someone should not have two of the same account.
-				// But we'll put it here in case the java sort algorithm somehow needs it (tough to imagine)
-				if (first.getAccountType() == second.getAccountType())
-					return 0;
-				
-				// We want "my website" first, then everything alphabetized by the human-readable name.
-				
-				if (first.getAccountType() == ExternalAccountType.WEBSITE)
-					return -1;
-				if (second.getAccountType() == ExternalAccountType.WEBSITE)
-					return 1;
-				
-				return String.CASE_INSENSITIVE_ORDER.compare(first.getSiteName(), second.getSiteName());
-			}
-			
-		});
-		return new ListBean<ExternalAccount>(list);
+		return pv.getAccountsBySentiment(sentiment);
 	}
 	
 	public ListBean<ExternalAccount> getLovedAccounts() {
@@ -125,10 +93,7 @@ public class PersonPage extends AbstractPersonPage {
 	
 	public String getEmailLink() {
 		PersonView pv = getViewedPerson();
-		EmailResource email = pv.getEmail();
-		if (email == null)
-			return null;
-		return "mailto:" + StringUtils.urlEncodeEmail(email.getEmail());
+		return pv.getEmailLink();
 	}
 	
 	private String getFullProfileUrl() {

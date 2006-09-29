@@ -17,7 +17,12 @@ public enum ExternalAccountType {
 		@Override
 		public String getLink(String handle, String extra) {
 			// handle is myspace name, extra is friend id number
-			return "http://myspace.com/" + StringUtils.urlEncode(handle);
+			return getSiteLink() + "/" + StringUtils.urlEncode(handle);
+		}
+		
+		@Override
+		public String getSiteLink() {
+		    return "http://myspace.com";	
 		}
 		
 		@Override
@@ -59,6 +64,11 @@ public enum ExternalAccountType {
 		}
 		
 		@Override
+		public String getSiteLink() {
+		    return "http://www.flickr.com";	
+		}
+		
+		@Override
 		public String getLinkText(String handle, String extra) {
 			return "My Photos";
 		}
@@ -82,11 +92,13 @@ public enum ExternalAccountType {
 
 	},
 	LINKED_IN("LinkedIn")  {
-		private static final String PROFILE_BASE_URL = "http://www.linkedin.com/in/";
-		
 		@Override
 		public String getLink(String handle, String extra) {
-			return PROFILE_BASE_URL + StringUtils.urlEncode(handle);
+			return getSiteLink() + "/in/" + StringUtils.urlEncode(handle);
+		}
+		
+		public String getSiteLink() {
+			return "http://www.linkedin.com";
 		}
 		
 		@Override
@@ -139,8 +151,14 @@ public enum ExternalAccountType {
 	FACEBOOK("Facebook")  {
 		@Override
 		public String getLink(String handle, String extra) {
-			// the handle here is a numeric ID 
-			return "http://www.facebook.com/profile.php?id=" + StringUtils.urlEncode(handle);
+			// TODO: we are currently not getting ids used by facebook to identify profiles
+			// on the web, we need to form this link our API key and the user id we get through
+			// facebook web services
+			return getSiteLink(); // + "/profile.php?id=" + StringUtils.urlEncode(handle);
+		}
+		
+		public String getSiteLink() {
+		    return "http://www.facebook.com";	
 		}
 		
 		@Override
@@ -177,12 +195,17 @@ public enum ExternalAccountType {
 			http://www.youtube.com/rssls
 			feed://www.youtube.com/rss/user/$username/videos.rss
 		*/
-		private static final String PROFILE_BASE_URL = "http://www.youtube.com/user/";
 
 		@Override
 		public String getLink(String handle, String extra) {
-			return PROFILE_BASE_URL + StringUtils.urlEncode(handle);
+			return getSiteLink() + "/user/" + StringUtils.urlEncode(handle);
 		}
+		
+		@Override 
+		public String getSiteLink() {
+		    return "http://www.youtube.com/";
+		}
+		
 		@Override
 		public String getLinkText(String handle, String extra) {
 			return handle;
@@ -248,6 +271,11 @@ public enum ExternalAccountType {
 		}
 		
 		@Override
+		public String getSiteLink() {
+		    return "http://www.rhapsody.com";	
+		}
+		
+		@Override
 		public String getLinkText(String handle, String extra) {
 			return "Recent Tracks RSS";
 		}
@@ -281,6 +309,10 @@ public enum ExternalAccountType {
 	abstract public String getLink(String handle, String extra);
 	
 	abstract public String getLinkText(String handle, String extra);
+	
+	public String getSiteLink() {
+	    return "";	
+	}
 	
 	public String formatThumbnailCount(int count) {
 		if (count == 1)

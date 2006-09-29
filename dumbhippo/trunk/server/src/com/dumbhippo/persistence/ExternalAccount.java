@@ -161,6 +161,24 @@ public class ExternalAccount extends DBUnique {
 	}
 	
 	@Transient
+	public String getSiteLink() {
+	    if (!accountType.getSiteLink().equals("")) {
+	    	return accountType.getSiteLink();
+	    } else {
+	    	return getLink();
+	    }
+	}
+	
+	@Transient
+	public String getFavicon() {
+		// TODO: parse out href from link rel="shortcut icon" element on the site
+		// check that the returned image link exists, return some default image otherwise
+		// figure out if can get all favicons of the right size; favicon for blogger.com
+		// is currently bigger than others in IE ?!
+		return getSiteLink() + "/favicon.ico";
+	}
+	
+	@Transient
 	public String getLinkText() {
 		return accountType.getLinkText(handle, extra);
 	}

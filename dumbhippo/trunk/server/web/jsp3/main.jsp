@@ -40,7 +40,7 @@
 	 	        </tr> 
 	 	        <tr>
 	 	        <td colspan="2">
-	 	            <span class="dh-button"><img src="/images3/${buildStamp}/signup.gif"/></span>&nbsp; or &nbsp;<span class="dh-button"><img src="/images3/${buildStamp}/login.gif"/></span>
+	 	            <span class="dh-button"><a href="/signup"><img src="/images3/${buildStamp}/signup.gif"/></a></span>&nbsp; or &nbsp;<span class="dh-button"><a href="/who-are-you"><img src="/images3/${buildStamp}/login.gif"/></a></span>
 	 	        </td>
 		    </table>
 		</dht3:shinyBox>

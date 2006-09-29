@@ -3,3 +3,18 @@
 .dh-person-header-next-to-image {
 	margin-left:	10px;
 }
+
+.dh-person-header {
+    position:       relative;
+}
+
+.dh-person-header .dh-person-info {
+    position:       relative;
+    width:          100%;
+    margin-right:   -20px;
+}  
+
+.dh-favicons {
+    position:       relative;
+    right:          14px;
+}

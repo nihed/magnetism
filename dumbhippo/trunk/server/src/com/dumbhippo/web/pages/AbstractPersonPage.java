@@ -261,7 +261,8 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 				personViewer.getContacts(getSignin().getViewpoint(), getViewedUser(), 
 						                   false, PersonViewExtra.INVITED_STATUS, 
 						                   PersonViewExtra.PRIMARY_EMAIL, 
-						                   PersonViewExtra.PRIMARY_AIM);		
+						                   PersonViewExtra.PRIMARY_AIM,
+						                   PersonViewExtra.EXTERNAL_ACCOUNTS);		
 			contacts = new ListBean<PersonView>(PersonView.sortedList(getSignin().getViewpoint(), getViewedUser(), mingledContacts));
 			
 			totalContacts = mingledContacts.size();
