@@ -48,6 +48,7 @@ static void hippo_canvas_block_post_set_post (HippoCanvasBlockPost *canvas_block
 struct _HippoCanvasBlockPost {
     HippoCanvasBlock canvas_block;
     HippoPost *post;
+    HippoCanvasBox *description_item_parent;
     HippoCanvasItem *description_item;
     HippoCanvasItem *clicked_count_item;
     HippoCanvasBox *details_box_parent;
@@ -90,16 +91,16 @@ hippo_canvas_block_post_init(HippoCanvasBlockPost *block_post)
                        NULL);
     
     block_post->description_item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
-                                                "size-mode", HIPPO_CANVAS_SIZE_WRAP_WORD,
-                                                "xalign", HIPPO_ALIGNMENT_START,
+                                                "size-mode", HIPPO_CANVAS_SIZE_ELLIPSIZE_END,
+                                                "xalign", HIPPO_ALIGNMENT_FILL,
                                                 "yalign", HIPPO_ALIGNMENT_START,
                                                 "font", "11px",
                                                 "text", NULL,
                                                 "border-top", 4,
                                                 "border-bottom", 4,
                                                 NULL);
-
-    hippo_canvas_box_append(box, block_post->description_item, 0);
+    block_post->description_item_parent = box;
+    hippo_canvas_box_append(box, block_post->description_item, HIPPO_PACK_EXPAND);
 
     block_post->details_box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
                                            "orientation", HIPPO_ORIENTATION_HORIZONTAL,
@@ -399,6 +400,14 @@ hippo_canvas_block_post_expand(HippoCanvasBlock *canvas_block)
     hippo_canvas_box_set_child_visible(block_post->details_box_parent,
                                        block_post->details_box,
                                        TRUE);
+
+    g_object_set(G_OBJECT(block_post->description_item),
+                 "size-mode", HIPPO_CANVAS_SIZE_WRAP_WORD,
+                 "xalign", HIPPO_ALIGNMENT_START,
+                 NULL);
+    hippo_canvas_box_set_child_packing(block_post->description_item_parent,
+                                       block_post->description_item,
+                                       0);
 }
 
 static void
@@ -411,4 +420,11 @@ hippo_canvas_block_post_unexpand(HippoCanvasBlock *canvas_block)
     hippo_canvas_box_set_child_visible(block_post->details_box_parent,
                                        block_post->details_box,
                                        FALSE);
+    g_object_set(G_OBJECT(block_post->description_item),
+                 "size-mode", HIPPO_CANVAS_SIZE_ELLIPSIZE_END,
+                 "xalign", HIPPO_ALIGNMENT_FILL,
+                 NULL);
+    hippo_canvas_box_set_child_packing(block_post->description_item_parent,
+                                       block_post->description_item,
+                                       HIPPO_PACK_EXPAND);    
 }

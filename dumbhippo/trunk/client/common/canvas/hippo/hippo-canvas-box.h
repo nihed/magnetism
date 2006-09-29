@@ -117,6 +117,9 @@ void hippo_canvas_box_reverse     (HippoCanvasBox              *box);
 void hippo_canvas_box_set_child_visible (HippoCanvasBox              *box,
                                          HippoCanvasItem             *child,
                                          gboolean                     visible);
+void hippo_canvas_box_set_child_packing (HippoCanvasBox              *box,
+                                         HippoCanvasItem             *child,
+                                         HippoPackFlags               flags);
 
 /* Protected accessors for subclasses */
 HippoCanvasContext* hippo_canvas_box_get_context         (HippoCanvasBox *box);

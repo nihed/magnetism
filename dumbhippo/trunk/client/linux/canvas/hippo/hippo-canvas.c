@@ -426,6 +426,9 @@ handle_new_mouse_location(HippoCanvas      *canvas,
     int root_x, root_y;
     int w, h;
     gboolean was_hovering;
+
+    if (event_window != GTK_WIDGET(canvas)->window)
+        return;
     
     get_root_item_window_coords(canvas, &root_x_origin, &root_y_origin);
     
@@ -433,8 +436,13 @@ handle_new_mouse_location(HippoCanvas      *canvas,
 
     root_x = mouse_x - root_x_origin;
     root_y = mouse_y - root_y_origin;
-
+    
     hippo_canvas_item_get_allocation(canvas->root, &w, &h);
+
+#if 0
+    g_debug("%p mouse %d,%d root origin %d,%d root %d,%d root size %dx%d", canvas->root,
+            mouse_x, mouse_y, root_x_origin, root_y_origin, root_x, root_y, w, h);
+#endif
     
     was_hovering = canvas->root_hovering;
     if (root_x < 0 || root_y < 0 || root_x >= w || root_y >= h) {

@@ -471,6 +471,17 @@ create_layout(HippoCanvasText *text,
             } else {
                 pango_layout_set_ellipsize(layout, PANGO_ELLIPSIZE_END);
             }
+
+            /* For now if we say ellipsize end, we always just want one line.
+             * Two FIXME:
+             * - maybe this should be an orthogonal property
+             * - need to change the glyph for paragraph separator, or
+             *   just create the layout with only the text up to the first
+             *   newline.
+             */
+            if (text->size_mode == HIPPO_CANVAS_SIZE_ELLIPSIZE_END) {
+                pango_layout_set_single_paragraph_mode(layout, TRUE);
+            }
         }
     }
     

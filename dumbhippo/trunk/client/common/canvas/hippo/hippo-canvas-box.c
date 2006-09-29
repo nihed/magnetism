@@ -1681,6 +1681,30 @@ disconnect_child(HippoCanvasBox  *box,
                                          G_CALLBACK(child_paint_needed), box);    
 }
 
+static gboolean
+set_flags(HippoBoxChild *c,
+          HippoPackFlags flags)
+{
+    HippoPackFlags old;
+    
+    old = 0;
+    if (c->end)
+        old |= HIPPO_PACK_END;
+    if (c->expand)
+        old |= HIPPO_PACK_EXPAND;
+    if (c->fixed)
+        old |= HIPPO_PACK_FIXED;
+
+    if (old == flags)
+        return FALSE; /* no change */
+
+    c->expand = (flags & HIPPO_PACK_EXPAND) != 0;
+    c->end = (flags & HIPPO_PACK_END) != 0;
+    c->fixed = (flags & HIPPO_PACK_FIXED) != 0;
+
+    return TRUE;
+}
+
 void
 hippo_canvas_box_append(HippoCanvasBox  *box,
                         HippoCanvasItem *child,
@@ -1697,9 +1721,7 @@ hippo_canvas_box_append(HippoCanvasBox  *box,
     connect_child(box, child);
     c = g_new0(HippoBoxChild, 1);
     c->item = child;
-    c->expand = (flags & HIPPO_PACK_EXPAND) != 0;
-    c->end = (flags & HIPPO_PACK_END) != 0;
-    c->fixed = (flags & HIPPO_PACK_FIXED) != 0;
+    set_flags(c, flags);
     c->visible = TRUE;
     c->width_request = -1;
     c->height_request = -1;
@@ -1894,4 +1916,27 @@ hippo_canvas_box_set_child_visible (HippoCanvasBox              *box,
     c->visible = visible;
     
     hippo_canvas_item_emit_request_changed(HIPPO_CANVAS_ITEM(box));
+}
+
+void
+hippo_canvas_box_set_child_packing (HippoCanvasBox              *box,
+                                    HippoCanvasItem             *child,
+                                    HippoPackFlags               flags)
+{
+    HippoBoxChild *c;
+
+    g_return_if_fail(HIPPO_IS_CANVAS_BOX(box));
+    g_return_if_fail(HIPPO_IS_CANVAS_ITEM(child));
+
+    c = find_child(box, child);
+
+    if (c == NULL) {
+        g_warning("Trying to set flags on a canvas item that isn't in the box");
+        return;
+    }
+    g_assert(c->item == child);
+
+    if (set_flags(c, flags)) {
+        hippo_canvas_item_emit_request_changed(HIPPO_CANVAS_ITEM(box));
+    }
 }
