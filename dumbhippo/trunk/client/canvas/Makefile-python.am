@@ -1,0 +1,38 @@
+hippocanvas_la_CPPFLAGS =	\
+	$(AM_CPPFLAGS)		\
+	$(PYTHON_INCLUDES)	\
+	$(PYGTK_CFLAGS)		\
+	$(LIBHIPPOCANVAS_CFLAGS)
+
+PYTHONSRCDIR=$(top_srcdir)/python
+
+hippocanvasdir = $(pythondir)
+pkgpyexecdir = $(hippocanvasdir)
+
+pkgpyexec_LTLIBRARIES = hippocanvas.la
+
+hippocanvas_la_LDFLAGS = -module -avoid-version
+hippocanvas_la_LIBADD =					\
+	$(HIPPOCANVAS_LIBS)				\
+	$(top_builddir)/libhippocanvas-1.la
+
+hippocanvas_la_SOURCES = 			\
+	$(PYTHONSRCDIR)/hippocanvasmodule.c
+
+nodist_hippocanvas_la_SOURCES = \
+	hippocanvas.c
+
+PYTHONDEFS_FILES =				\
+	$(PYTHONSRCDIR)/hippocanvas.defs	\
+	$(PYTHONSRCDIR)/hippocanvas.override
+
+CLEANFILES = hippocanvas.c
+EXTRA_DIST += $(PYTHONDEFS_FILES)
+
+hippocanvas.c: $(PYTHONDEFS_FILES)
+	($(PYGTK_CODEGEN) \
+            --register $(PYGTK_DEFSDIR)/gtk-types.defs \
+	    --override $(PYTHONSRCDIR)/hippocanvas.override \
+	    --prefix hippocanvas $(PYTHONSRCDIR)/hippocanvas.defs) > gen-hippocanvas.c \
+	&& cp gen-hippocanvas.c $*.c \
+	&& rm -f gen-hippocanvas.c

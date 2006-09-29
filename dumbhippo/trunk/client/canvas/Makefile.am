@@ -16,7 +16,7 @@ endif
 # note that target-specific CPPFLAGS will REPLACE
 # not augment these default flags by default,
 # so we manually put AM_CPPFLAGS in the target flags
-AM_CPPFLAGS=-DHIPPO_COMPILATION -DHIPPO_OS_LINUX -I$(top_builddir)/config -I$(COMMONSRCDIR) -I$(COMMONSRCDIR)/canvas
+AM_CPPFLAGS=-DHIPPO_COMPILATION -DHIPPO_OS_LINUX -I$(top_builddir)/config -I$(COMMONSRCDIR)/canvas -I$(LINUXSRCDIR)/canvas
 
 # the "config" dir seems like a convenient place that's already 
 # in everyone's include path ... I dunno
@@ -40,14 +40,14 @@ DISTCLEANFILES =
 MAINTAINERCLEANFILES =
 BUILT_SOURCES =
 
-lib_LTLIBRARIES += libhippocanvas.la
+lib_LTLIBRARIES += libhippocanvas-1.la
 
-libhippocanvas_la_CPPFLAGS =		\
+libhippocanvas_1_la_CPPFLAGS =		\
 	$(AM_CPPFLAGS)			\
 	-I $(MARSHAL_DIR)		\
 	$(LIBHIPPOCANVAS_CFLAGS)
 
-libhippocanvas_la_LIBADD = 		\
+libhippocanvas_1_la_LIBADD = 		\
 	$(LIBHIPPOCANVAS_LIBS)
 
 COMMONCANVASSRCDIR=$(COMMONSRCDIR)/canvas
@@ -113,7 +113,7 @@ BUILT_SOURCES += $(CANVAS_BUILT_SOURCEFILES)
 libhippocanvasincludedir = $(includedir)/hippo-canvas-1.0/hippo-canvas
 nodist_libhippocanvasinclude_HEADERS=$(COMMON_CANVAS_HEADERFILES) $(LINUX_CANVAS_HEADERFILES)
 
-nodist_libhippocanvas_la_SOURCES=$(COMMON_CANVAS_SOURCEFILES) $(LINUX_CANVAS_SOURCEFILES) $(CANVAS_BUILT_SOURCEFILES)
+nodist_libhippocanvas_1_la_SOURCES=$(COMMON_CANVAS_SOURCEFILES) $(LINUX_CANVAS_SOURCEFILES) $(CANVAS_BUILT_SOURCEFILES)
 dist-hook:
 	-mkdir $(distdir)/common-dist
 	mkdir $(distdir)/common-dist/canvas
@@ -124,3 +124,5 @@ dist-hook:
 	cp $(COMMONCANVASSRCDIR)/hippo/hippo-canvas-marshal.list $(distdir)/common-dist/canvas/hippo
 	cp $(COMMON_CANVAS_SOURCEFILES) $(distdir)/common-dist/canvas/hippo
 	cp $(LINUX_CANVAS_SOURCEFILES) $(distdir)/linux-dist/canvas/hippo
+
+include Makefile-python.am
