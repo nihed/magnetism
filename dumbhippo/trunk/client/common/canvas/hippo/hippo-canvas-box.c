@@ -92,6 +92,7 @@ typedef struct {
     guint            end : 1;
     guint            fixed : 1;
     guint            hovering : 1;
+    guint            visible : 1;
 } HippoBoxChild;
 
 enum {
@@ -766,6 +767,9 @@ hippo_canvas_box_paint_children(HippoCanvasBox *box,
     for (link = box->children; link != NULL; link = link->next) {
         HippoBoxChild *child = link->data;        
 
+        if (!child->visible)
+            continue;
+        
         /* Fixed children have to be clipped to the box, since we
          * don't include them in the box's size request there's no
          * guarantee they are in the box
@@ -933,7 +937,7 @@ count_expandable(HippoCanvasBox *box)
     count = 0;
     for (link = box->children; link != NULL; link = link->next) {
         HippoBoxChild *child = link->data;
-        if (child->expand && !child->fixed)
+        if (child->visible && child->expand && !child->fixed)
             ++count;
     }
     return count;
@@ -971,10 +975,14 @@ hippo_canvas_box_get_content_width_request(HippoCanvasBox *box)
     for (link = box->children; link != NULL; link = link->next) {
         HippoBoxChild *child = link->data;
 
+        /* Note that we still request and allocate !visible children,
+         * but we allocate them 0x0
+         */
+        
         if (child->width_request < 0)
             child->width_request = hippo_canvas_item_get_width_request(child->item);
         
-        if (child->fixed)
+        if (child->fixed || !child->visible)
             continue;
         
         n_children += 1;
@@ -1002,12 +1010,15 @@ hippo_canvas_box_get_content_height_request(HippoCanvasBox *box,
 
     /* Do fixed children, just to have their request recorded;
      * the box for_width is ignored here, fixed children just
-     * always get their width request
+     * always get their width request.
+     *
+     * For !visible children we want to request them but will
+     * always allocate 0x0
      */
     for (link = box->children; link != NULL; link = link->next) {
         HippoBoxChild *child = link->data;
 
-        if (!child->fixed)
+        if (!(child->fixed || !child->visible))
             continue;
         
         if (child->height_request < 0 ||
@@ -1027,7 +1038,7 @@ hippo_canvas_box_get_content_height_request(HippoCanvasBox *box,
         for (link = box->children; link != NULL; link = link->next) {
             HippoBoxChild *child = link->data;
 
-            if (child->fixed)
+            if (child->fixed || !child->visible)
                 continue;
 
             n_children += 1;
@@ -1068,7 +1079,7 @@ hippo_canvas_box_get_content_height_request(HippoCanvasBox *box,
             HippoBoxChild *child = link->data;
             int req;
             
-            if (child->fixed)
+            if (child->fixed || !child->visible)
                 continue;
             
             n_children += 1;
@@ -1191,12 +1202,19 @@ hippo_canvas_box_allocate(HippoCanvasItem *item,
 
     box = HIPPO_CANVAS_BOX(item);
     klass = HIPPO_CANVAS_BOX_GET_CLASS(box);
+
+#if 0
+    g_debug(" allocating %s %p request_changed_since_allocate %d",
+            g_type_name_from_instance((GTypeInstance*) box),
+            box,
+            box->request_changed_since_allocate);
+#endif
     
     /* If we haven't emitted request-changed then 
      * we are allowed to short-circuit an
      * unchanged allocation
      */
-    if (!box->request_changed_since_allocate && 
+    if (!hippo_canvas_item_get_needs_resize(item) &&
         (box->allocated_width == allocated_box_width && 
          box->allocated_height == allocated_box_height))
         return;
@@ -1231,14 +1249,18 @@ hippo_canvas_box_allocate(HippoCanvasItem *item,
     }
 #endif
 
-    /* Allocate fixed children whatever they requested */
+    /* Allocate fixed children whatever they requested and invisible
+     * children 0x0
+     */
     for (link = box->children; link != NULL; link = link->next) {
         HippoBoxChild *child = link->data;
-        if (!child->fixed)
+        if (!child->visible)
+            hippo_canvas_item_allocate(child->item, 0, 0);
+        else if (child->fixed)
+            hippo_canvas_item_allocate(child->item, child->width_request, child->height_request);
+        else
             continue;
-        hippo_canvas_item_allocate(child->item, child->width_request, child->height_request);
     }
-
 
     /* Now layout the box */
     
@@ -1257,7 +1279,7 @@ hippo_canvas_box_allocate(HippoCanvasItem *item,
             HippoBoxChild *child = link->data;
             int req;
 
-            if (child->fixed)
+            if (child->fixed || !child->visible)
                 continue;
             
             req = child->height_request;
@@ -1293,7 +1315,7 @@ hippo_canvas_box_allocate(HippoCanvasItem *item,
             HippoBoxChild *child = link->data;
             int req;
 
-            if (child->fixed)
+            if (child->fixed || !child->visible)
                 continue;
             
             req = child->width_request;
@@ -1347,6 +1369,10 @@ find_child_at_point(HippoCanvasBox *box,
     for (link = box->children; link != NULL; link = link->next) {
         HippoBoxChild *child = link->data;
         int width, height;
+
+        if (!child->visible)
+            continue;
+        
         hippo_canvas_item_get_allocation(child->item, &width, &height);
 
         if (x >= child->x && y >= child->y &&
@@ -1376,7 +1402,10 @@ find_hovering_child(HippoCanvasBox *box)
 
 /* the odd thing here is that sometimes we have an enter/leave from the parent,
  * and sometimes we have just a motion from the parent, and in both cases
- * we may need to send an enter/leave to one of our children
+ * we may need to send an enter/leave to one of our children.
+ */
+/* FIXME we need to update the "hovering child" whenever we get a new allocation
+ * (which would happen e.g. when a child becomes visible/invisible also).
  */
 static gboolean
 forward_motion_event(HippoCanvasBox *box,
@@ -1385,6 +1414,10 @@ forward_motion_event(HippoCanvasBox *box,
     HippoBoxChild *child;
     HippoBoxChild *was_hovering;
     gboolean result;
+
+    result = FALSE; /* we only overwrite this when forwarding the current event,
+                     * not with synthesized enter/leaves
+                     */
     
     if (event->u.motion.detail == HIPPO_MOTION_DETAIL_ENTER ||
         event->u.motion.detail == HIPPO_MOTION_DETAIL_WITHIN)
@@ -1394,47 +1427,10 @@ forward_motion_event(HippoCanvasBox *box,
     
     was_hovering = find_hovering_child(box);
 
-    /* If our parent context/item gave us an enter or leave, be sure
-     * we record it
-     */
-    if (child) {
-        g_assert(box->hovering);
-        child->hovering = TRUE;
-    }
-
+    /* Do the leave event first to avoid having two current hovering children */
+    
     if (was_hovering && child != was_hovering) {
         was_hovering->hovering = FALSE;
-    }
-    
-    /* need to generate an enter event if we aren't already processing one
-     * and the child is about to get a motion event
-     */
-    if (child && child != was_hovering &&
-        event->u.motion.detail != HIPPO_MOTION_DETAIL_ENTER) {
-        hippo_canvas_item_emit_motion_notify_event(child->item,
-                                                   event->x - child->x,
-                                                   event->y - child->y,
-                                                   HIPPO_MOTION_DETAIL_ENTER);
-    }
-
-    result = FALSE; /* we only overwrite this when forwarding the current event,
-                     * not with synthesized enter/leaves
-                     */
-    
-    /* Remember child is always null for leave event.
-     */
-    if (child) {
-        g_assert(event->u.motion.detail != HIPPO_MOTION_DETAIL_LEAVE);
-        
-        /* forward an enter or motion within event */
-        result = hippo_canvas_item_process_event(child->item,
-                                                 event, child->x, child->y);
-    }
-
-    /* Now be sure the old hover child gets a leave event, if it is not the
-     * current hover child.
-     */
-    if (was_hovering && was_hovering != child) {
         if (event->u.motion.detail != HIPPO_MOTION_DETAIL_LEAVE)
             hippo_canvas_item_emit_motion_notify_event(was_hovering->item,
                                                        event->x - was_hovering->x,
@@ -1444,6 +1440,29 @@ forward_motion_event(HippoCanvasBox *box,
             result = hippo_canvas_item_process_event(was_hovering->item,
                                                      event, was_hovering->x, was_hovering->y);
     }
+
+    /* Now mark the current hovering child */
+    
+    if (child) {
+        g_assert(event->u.motion.detail != HIPPO_MOTION_DETAIL_LEAVE);
+        
+        if (child != was_hovering) {
+            g_assert(box->hovering);
+            child->hovering = TRUE;
+
+            if (event->u.motion.detail != HIPPO_MOTION_DETAIL_ENTER) {
+                hippo_canvas_item_emit_motion_notify_event(child->item,
+                                                           event->x - child->x,
+                                                           event->y - child->y,
+                                                           HIPPO_MOTION_DETAIL_ENTER);
+            }
+        }
+        
+        /* forward an enter or motion within event */
+        result = hippo_canvas_item_process_event(child->item,
+                                                 event, child->x, child->y);
+        
+    }    
 
     return result;
 }
@@ -1509,29 +1528,27 @@ hippo_canvas_box_motion_notify_event (HippoCanvasItem *item,
 #if 0
         g_debug("motion notify ENTER %s %p box hovering was %d",
             g_type_name_from_instance((GTypeInstance*)box), box, box->hovering);
+#endif
         if (box->hovering)
             g_warning("Box got enter event but was already hovering=TRUE");
-#endif
 
         box->hovering = TRUE;
     } else if (event->u.motion.detail == HIPPO_MOTION_DETAIL_LEAVE) {
 #if 0
         g_debug("motion notify LEAVE %s %p box hovering was %d",
             g_type_name_from_instance((GTypeInstance*)box), box, box->hovering);
+#endif
         if (!box->hovering)
             g_warning("Box got leave event but was not hovering=TRUE");
-#endif
 
         box->hovering = FALSE;
     } else if (event->u.motion.detail == HIPPO_MOTION_DETAIL_WITHIN) {
 #if 0
         g_debug("motion notify WITHIN %s %p box hovering was %d",
             g_type_name_from_instance((GTypeInstance*)box), box, box->hovering);
+#endif
         if (!box->hovering)
             g_warning("Box got motion event but never got an enter event, hovering=FALSE");
-#endif
-        /* Fix it up, why not - we assert in forward_motion_event that it's right */
-        box->hovering = TRUE;
     }
 
     handled = forward_event(box, event);
@@ -1610,6 +1627,14 @@ child_request_changed(HippoCanvasItem *child,
 
     box_child = find_child(box, child);
 
+#if 0
+    g_debug("child %s %p of %s %p request changed",
+            g_type_name_from_instance((GTypeInstance*) box_child->item),
+            box_child->item,
+            g_type_name_from_instance((GTypeInstance*) box),
+            box);
+#endif
+    
     /* invalidate cached request for this child */
     box_child->width_request = -1;
     box_child->height_request = -1;
@@ -1675,6 +1700,7 @@ hippo_canvas_box_append(HippoCanvasBox  *box,
     c->expand = (flags & HIPPO_PACK_EXPAND) != 0;
     c->end = (flags & HIPPO_PACK_END) != 0;
     c->fixed = (flags & HIPPO_PACK_FIXED) != 0;
+    c->visible = TRUE;
     c->width_request = -1;
     c->height_request = -1;
     c->height_request_for_width = -1;
@@ -1820,5 +1846,52 @@ hippo_canvas_box_reverse(HippoCanvasBox  *box)
         link = link->next;
     }
 
+    hippo_canvas_item_emit_request_changed(HIPPO_CANVAS_ITEM(box));
+}
+
+/* Making this a "child property" on the container instead of a flag on
+ * HippoCanvasItem is perhaps a little surprising, but
+ * is consistent with e.g. having the allocation origin in the container
+ * also. The general theme is that HippoCanvasItem has minimal knowledge
+ * of its context - doesn't know its origin coords, parent item,
+ * or whether it will be painted at all. Which makes it easier to
+ * implement canvas items and easier to use them in different/multiple
+ * contexts, but makes containers harder and more complex. Given the
+ * likelihood of implementing containers vs. items this makes sense to me.
+ *
+ * An implementation convenience of this approach is that the
+ * Windows and Linux canvas widgets need not handle the visibility
+ * of their root items.
+ *
+ * An annoying thing about it though is needing a pointer to both the
+ * box and the item in order to toggle visibility. A way to
+ * resolve that while keeping the current model might be to have a
+ * HippoCanvasContainer interface with a set_child_visible method,
+ * and add a parent container pointer to canvas items.
+ */
+void
+hippo_canvas_box_set_child_visible (HippoCanvasBox              *box,
+                                    HippoCanvasItem             *child,
+                                    gboolean                     visible)
+{
+    HippoBoxChild *c;
+
+    g_return_if_fail(HIPPO_IS_CANVAS_BOX(box));
+    g_return_if_fail(HIPPO_IS_CANVAS_ITEM(child));
+
+    c = find_child(box, child);
+
+    if (c == NULL) {
+        g_warning("Trying to set visibility on a canvas item that isn't in the box");
+        return;
+    }
+    g_assert(c->item == child);
+    
+    visible = visible != FALSE;
+    if (visible == c->visible)
+        return;
+    
+    c->visible = visible;
+    
     hippo_canvas_item_emit_request_changed(HIPPO_CANVAS_ITEM(box));
 }

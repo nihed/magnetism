@@ -62,7 +62,7 @@ struct _HippoCanvasBox {
     guint8 spacing;
 
     guint floating : 1;
-    guint request_changed_since_allocate : 1;
+    guint request_changed_since_allocate : 1;    
     guint orientation : 2; /* enum only has 2 values so it fits with extra */
     guint x_align : 3;     /* enum only has 4 values so it fits with extra */
     guint y_align : 3;     /* enum only has 4 values so it fits with extra */
@@ -99,20 +99,24 @@ GType        	 hippo_canvas_box_get_type               (void) G_GNUC_CONST;
 
 HippoCanvasItem* hippo_canvas_box_new    (void);
 
-void hippo_canvas_box_append     (HippoCanvasBox  *box,
-                                  HippoCanvasItem *child,
-                                  HippoPackFlags   flags);
-void hippo_canvas_box_move       (HippoCanvasBox  *box,
-                                  HippoCanvasItem *child,
-                                  int              x,
-                                  int              y);
-void hippo_canvas_box_remove     (HippoCanvasBox  *box,
-                                  HippoCanvasItem *child);
-void hippo_canvas_box_remove_all (HippoCanvasBox  *box);
-void hippo_canvas_box_foreach    (HippoCanvasBox  *box,
-                                  HippoCanvasForeachChildFunc func,
-                                  void            *data);
-void hippo_canvas_box_reverse    (HippoCanvasBox  *box);
+void hippo_canvas_box_append      (HippoCanvasBox              *box,
+                                   HippoCanvasItem             *child,
+                                   HippoPackFlags               flags);
+void hippo_canvas_box_move        (HippoCanvasBox              *box,
+                                   HippoCanvasItem             *child,
+                                   int                          x,
+                                   int                          y);
+void hippo_canvas_box_remove      (HippoCanvasBox              *box,
+                                   HippoCanvasItem             *child);
+void hippo_canvas_box_remove_all  (HippoCanvasBox              *box);
+void hippo_canvas_box_foreach     (HippoCanvasBox              *box,
+                                   HippoCanvasForeachChildFunc  func,
+                                   void                        *data);
+void hippo_canvas_box_reverse     (HippoCanvasBox              *box);
+
+void hippo_canvas_box_set_child_visible (HippoCanvasBox              *box,
+                                         HippoCanvasItem             *child,
+                                         gboolean                     visible);
 
 /* Protected accessors for subclasses */
 HippoCanvasContext* hippo_canvas_box_get_context         (HippoCanvasBox *box);

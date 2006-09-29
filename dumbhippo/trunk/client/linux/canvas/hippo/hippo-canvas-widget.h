@@ -34,7 +34,6 @@ GType        	 hippo_canvas_widget_get_type               (void) G_GNUC_CONST;
 
 HippoCanvasItem* hippo_canvas_widget_new    (void);
 
-
 G_END_DECLS
 
 #endif /* __HIPPO_CANVAS_WIDGET_H__ */

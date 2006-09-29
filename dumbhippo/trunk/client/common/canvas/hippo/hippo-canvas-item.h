@@ -67,7 +67,7 @@ struct _HippoCanvasItemClass {
 
     void     (* sink)               (HippoCanvasItem  *canvas_item);
     
-    void     (* set_context)        (HippoCanvasItem  *canvas_item,
+    void     (* set_context)        (HippoCanvasItem    *canvas_item,
                                      HippoCanvasContext *context);
     void     (* paint)              (HippoCanvasItem  *canvas_item,
                                      cairo_t          *cr,

@@ -9,6 +9,7 @@
 #include <hippo/hippo-canvas-text.h>
 #include <hippo/hippo-canvas-gradient.h>
 #include <hippo/hippo-canvas-link.h>
+#include <hippo/hippo-canvas-image-button.h>
 #include "hippo-actions.h"
 
 static void      hippo_canvas_block_init                (HippoCanvasBlock       *block);
@@ -27,11 +28,20 @@ static void hippo_canvas_block_get_property (GObject      *object,
                                              GParamSpec   *pspec);
 
 
+/* Box methods */
+static void hippo_canvas_block_hovering_changed (HippoCanvasBox *box,
+                                                 gboolean        hovering);
 
 /* our own methods */
 
 static void hippo_canvas_block_set_block_impl (HippoCanvasBlock *canvas_block,
                                                HippoBlock       *block);
+
+static void hippo_canvas_block_expand_impl    (HippoCanvasBlock *canvas_block);
+static void hippo_canvas_block_unexpand_impl  (HippoCanvasBlock *canvas_block);
+
+static void hippo_canvas_block_set_expanded   (HippoCanvasBlock *canvas_block,
+                                               gboolean          value);
 
 enum {
     NO_SIGNALS_YET,
@@ -148,8 +158,28 @@ hippo_canvas_block_init(HippoCanvasBlock *block)
 
     
     /* Fill in right column */
-
-
+    block->close_controls_parent = right_column;
+    block->close_controls = g_object_new(HIPPO_TYPE_CANVAS_BOX,
+                                         "orientation", HIPPO_ORIENTATION_HORIZONTAL,
+                                         "xalign", HIPPO_ALIGNMENT_END,
+                                         "yalign", HIPPO_ALIGNMENT_START,
+                                         NULL);
+    hippo_canvas_box_append(block->close_controls_parent, block->close_controls, 0);
+    /* we start out !expanded */
+    hippo_canvas_box_set_child_visible(block->close_controls_parent, block->close_controls,
+                                       FALSE);
+    
+    item = g_object_new(HIPPO_TYPE_CANVAS_LINK,
+                        "text", "CLOSE",
+                        "font", "11px",
+                        NULL);
+    hippo_canvas_box_append(HIPPO_CANVAS_BOX(block->close_controls), item, 0);
+    item = g_object_new(HIPPO_TYPE_CANVAS_IMAGE_BUTTON,
+                        "normal-image-name", "blue_x",
+                        "border-left", 4,
+                        NULL);
+    hippo_canvas_box_append(HIPPO_CANVAS_BOX(block->close_controls), item, 0);
+    
     box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
                        "orientation", HIPPO_ORIENTATION_HORIZONTAL,
                        "xalign", HIPPO_ALIGNMENT_FILL,
@@ -213,7 +243,7 @@ static void
 hippo_canvas_block_class_init(HippoCanvasBlockClass *klass)
 {
     GObjectClass *object_class = G_OBJECT_CLASS(klass);
-    /* HippoCanvasBoxClass *box_class = HIPPO_CANVAS_BOX_CLASS(klass); */
+    HippoCanvasBoxClass *box_class = HIPPO_CANVAS_BOX_CLASS(klass);
 
     object_class->set_property = hippo_canvas_block_set_property;
     object_class->get_property = hippo_canvas_block_get_property;
@@ -221,7 +251,11 @@ hippo_canvas_block_class_init(HippoCanvasBlockClass *klass)
     object_class->dispose = hippo_canvas_block_dispose;
     object_class->finalize = hippo_canvas_block_finalize;
 
+    box_class->hovering_changed = hippo_canvas_block_hovering_changed;
+    
     klass->set_block = hippo_canvas_block_set_block_impl;
+    klass->expand = hippo_canvas_block_expand_impl;
+    klass->unexpand = hippo_canvas_block_unexpand_impl;
     
     g_object_class_install_property(object_class,
                                     PROP_BLOCK,
@@ -367,6 +401,17 @@ hippo_canvas_block_get_property(GObject         *object,
 }
 
 static void
+hippo_canvas_block_hovering_changed(HippoCanvasBox *box,
+                                    gboolean        hovering)
+{
+    HippoCanvasBlock *canvas_block = HIPPO_CANVAS_BLOCK(box);
+
+    /* FIXME this should probably be after a short timeout */
+    hippo_canvas_block_set_expanded(canvas_block, hovering);
+}
+
+
+static void
 on_block_clicked_count_changed(HippoBlock *block,
                                GParamSpec *arg, /* null when we invoke callback manually */
                                void       *data)
@@ -466,6 +511,38 @@ hippo_canvas_block_set_block_impl(HippoCanvasBlock *canvas_block,
         
         g_object_notify(G_OBJECT(canvas_block), "block");
         hippo_canvas_item_emit_request_changed(HIPPO_CANVAS_ITEM(canvas_block));
+    }
+}
+
+static void
+hippo_canvas_block_expand_impl(HippoCanvasBlock *canvas_block)
+{
+    hippo_canvas_box_set_child_visible(canvas_block->close_controls_parent, canvas_block->close_controls,
+                                       TRUE);
+}
+
+static void
+hippo_canvas_block_unexpand_impl(HippoCanvasBlock *canvas_block)
+{
+    hippo_canvas_box_set_child_visible(canvas_block->close_controls_parent, canvas_block->close_controls,
+                                       FALSE);
+}
+
+static void
+hippo_canvas_block_set_expanded(HippoCanvasBlock *canvas_block,
+                                gboolean          value)
+{
+    value = value != FALSE;
+
+    if (value == canvas_block->expanded)
+        return;
+
+    if (value) {
+        canvas_block->expanded = TRUE;
+        HIPPO_CANVAS_BLOCK_GET_CLASS(canvas_block)->expand(canvas_block);
+    } else {
+        HIPPO_CANVAS_BLOCK_GET_CLASS(canvas_block)->unexpand(canvas_block);
+        canvas_block->expanded = FALSE;
     }
 }
 

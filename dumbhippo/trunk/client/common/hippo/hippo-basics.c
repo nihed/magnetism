@@ -324,6 +324,7 @@ typedef enum {
 #endif
 
 static gboolean hippo_print_debug_level = FALSE;
+static gboolean hippo_print_xmpp_noise = FALSE;
 
 static void
 log_handler(const char    *log_domain,
@@ -345,7 +346,7 @@ log_handler(const char    *log_domain,
             break;    
         case LM_LOG_LEVEL_VERBOSE:
         case LM_LOG_LEVEL_NET:
-           if (!hippo_print_debug_level)
+           if (!hippo_print_xmpp_noise)
                return;
             prefix = "LM: ";
             break;
@@ -423,6 +424,7 @@ hippo_parse_options(int          *argc_p,
     static gboolean quit_existing = FALSE;
     static gboolean initial_debug_share = FALSE;
     static gboolean verbose = FALSE;
+    static gboolean verbose_xmpp = FALSE;
     char *argv0;
     GError *error;
     GOptionContext *context;
@@ -440,6 +442,7 @@ hippo_parse_options(int          *argc_p,
         { "quit", '\0', 0, G_OPTION_ARG_NONE, (gpointer)&quit_existing, "Tell any existing instances to quit" },
         { "debug-share", 0, 0, G_OPTION_ARG_NONE, (gpointer)&initial_debug_share, "Show an initial dummy debug share" },
         { "verbose", 0, 0, G_OPTION_ARG_NONE, (gpointer)&verbose, "Print lots of debugging information" },
+        { "verbose-xmpp", 0, 0, G_OPTION_ARG_NONE, (gpointer)&verbose_xmpp, "Print lots of debugging information about raw XMPP traffic" },
         { NULL }
     };
 
@@ -484,9 +487,11 @@ hippo_parse_options(int          *argc_p,
     results->quit_existing = quit_existing;
     results->initial_debug_share = initial_debug_share;
     results->verbose = verbose;
+    results->verbose_xmpp = verbose_xmpp;
 
-    if (results->verbose) {
-        hippo_print_debug_level = TRUE;
+    hippo_print_debug_level = results->verbose;
+    hippo_print_xmpp_noise = results->verbose_xmpp;
+    if (hippo_print_debug_level || hippo_print_xmpp_noise) {
         hippo_override_loudmouth_log();
     }
 
@@ -509,6 +514,10 @@ hippo_parse_options(int          *argc_p,
     }
     if (results->verbose) {
         results->restart_argv[results->restart_argc] = g_strdup("--verbose");
+        results->restart_argc += 1;
+    }
+    if (results->verbose_xmpp) {
+        results->restart_argv[results->restart_argc] = g_strdup("--verbose-xmpp");
         results->restart_argc += 1;
     }
     

@@ -5,6 +5,7 @@
 #include <hippo/hippo-canvas-context.h>
 #include <gtk/gtkcontainer.h>
 #include "hippo-canvas-widget.h"
+#include <gtk/gtkprivate.h> /* for GTK_WIDGET_ALLOC_NEEDED */
 
 typedef struct
 {
@@ -72,6 +73,8 @@ static void             hippo_canvas_translate_to_widget    (HippoCanvasContext 
                                                              int                *x_p,
                                                              int                *y_p);
 
+static void             hippo_canvas_fixup_resize_state     (HippoCanvas        *canvas);
+
 struct _HippoCanvas {
     GtkContainer parent;
 
@@ -80,6 +83,9 @@ struct _HippoCanvas {
     HippoCanvasPointer pointer;
 
     GSList *widget_items;
+
+    unsigned int root_hovering : 1;
+    unsigned int fixing_up_resize_state : 1;
 };
 
 struct _HippoCanvasClass {
@@ -319,6 +325,10 @@ hippo_canvas_size_request(GtkWidget         *widget,
 {
     HippoCanvas *canvas = HIPPO_CANVAS(widget);
 
+    /* g_debug("gtk request on canvas root %p canvas %p", canvas->root, canvas); */
+
+    hippo_canvas_fixup_resize_state(canvas);
+    
     requisition->width = 0;
     requisition->height = 0;
 
@@ -338,6 +348,10 @@ hippo_canvas_size_allocate(GtkWidget         *widget,
 {
     HippoCanvas *canvas = HIPPO_CANVAS(widget);
 
+    /* g_debug("gtk allocate on canvas root %p canvas %p", canvas->root, canvas); */
+
+    hippo_canvas_fixup_resize_state(canvas);
+    
     widget->allocation = *allocation;
     
     if (GTK_WIDGET_REALIZED(widget))
@@ -403,23 +417,52 @@ hippo_canvas_button_release(GtkWidget         *widget,
 }
 
 static void
-handle_new_mouse_location(HippoCanvas *canvas,
-                          GdkWindow   *event_window,
-                          HippoMotionDetail detail)
+handle_new_mouse_location(HippoCanvas      *canvas,
+                          GdkWindow        *event_window,
+                          HippoMotionDetail detail) /* FIXME detail is totally ignored, remove ... */
 {
-    int x, y;
-    HippoCanvasPointer pointer;
-    int window_x, window_y;
-
-    get_root_item_window_coords(canvas, &window_x, &window_y);
+    int mouse_x, mouse_y;
+    int root_x_origin, root_y_origin;
+    int root_x, root_y;
+    int w, h;
+    gboolean was_hovering;
     
-    gdk_window_get_pointer(event_window, &x, &y, NULL);
-
-    pointer = hippo_canvas_item_get_pointer(canvas->root, x - window_x, y - window_y);
-    set_pointer(canvas, pointer);
+    get_root_item_window_coords(canvas, &root_x_origin, &root_y_origin);
     
-    hippo_canvas_item_emit_motion_notify_event(canvas->root,
-                                               x - window_x, y - window_y, detail);
+    gdk_window_get_pointer(event_window, &mouse_x, &mouse_y, NULL);
+
+    root_x = mouse_x - root_x_origin;
+    root_y = mouse_y - root_y_origin;
+
+    hippo_canvas_item_get_allocation(canvas->root, &w, &h);
+    
+    was_hovering = canvas->root_hovering;
+    if (root_x < 0 || root_y < 0 || root_x >= w || root_y >= h) {
+        canvas->root_hovering = FALSE;
+    } else {
+        canvas->root_hovering = TRUE;
+    }
+
+    /* g_debug("   was_hovering %d root_hovering %d", was_hovering, canvas->root_hovering); */
+    
+    if (was_hovering && !canvas->root_hovering) {
+        set_pointer(canvas, HIPPO_CANVAS_POINTER_UNSET);
+        hippo_canvas_item_emit_motion_notify_event(canvas->root, root_x, root_y,
+                                                   HIPPO_MOTION_DETAIL_LEAVE);
+    } else {
+        HippoCanvasPointer pointer;
+        
+        pointer = hippo_canvas_item_get_pointer(canvas->root, root_x, root_y);
+        set_pointer(canvas, pointer);
+    
+        if (canvas->root_hovering && !was_hovering) {
+            hippo_canvas_item_emit_motion_notify_event(canvas->root, root_x, root_y,
+                                                       HIPPO_MOTION_DETAIL_ENTER);
+        } else if (canvas->root_hovering) {
+            hippo_canvas_item_emit_motion_notify_event(canvas->root, root_x, root_y,
+                                                       HIPPO_MOTION_DETAIL_WITHIN);
+        }
+    }
 }
 
 static gboolean
@@ -427,6 +470,8 @@ hippo_canvas_enter_notify(GtkWidget         *widget,
                           GdkEventCrossing  *event)
 {
     HippoCanvas *canvas = HIPPO_CANVAS(widget);
+
+    /* g_debug("motion notify GDK ENTER on %p root %p root_hovering %d", widget, canvas->root, canvas->root_hovering); */
     
     if (canvas->root == NULL)
         return FALSE;
@@ -441,6 +486,8 @@ hippo_canvas_leave_notify(GtkWidget         *widget,
                           GdkEventCrossing  *event)
 {
     HippoCanvas *canvas = HIPPO_CANVAS(widget);
+
+    /* g_debug("motion notify GDK LEAVE on %p root %p root_hovering %d", widget, canvas->root, canvas->root_hovering); */
     
     if (canvas->root == NULL)
         return FALSE;
@@ -455,6 +502,8 @@ hippo_canvas_motion_notify(GtkWidget         *widget,
                            GdkEventMotion    *event)
 {
     HippoCanvas *canvas = HIPPO_CANVAS(widget);    
+
+    /* g_debug("motion notify GDK MOTION on %p root %p root_hovering %d", widget, canvas->root, canvas->root_hovering); */
     
     if (canvas->root == NULL)
         return FALSE;
@@ -674,7 +723,7 @@ add_widget_item(HippoCanvas     *canvas,
     RegisteredWidgetItem *witem = g_new0(RegisteredWidgetItem, 1);
 
     witem->item = item;
-    g_object_ref(witem->item);    
+    g_object_ref(witem->item);
     canvas->widget_items = g_slist_prepend(canvas->widget_items, witem);
 
     update_widget(canvas, witem);
@@ -764,7 +813,10 @@ static void
 canvas_root_request_changed(HippoCanvasItem *root,
                             HippoCanvas     *canvas)
 {
-    gtk_widget_queue_resize(GTK_WIDGET(canvas));
+    /* g_debug("queuing resize on canvas root %p canvas %p canvas container %p",
+       root, canvas, GTK_WIDGET(canvas)->parent); */
+    if (!canvas->fixing_up_resize_state)
+        gtk_widget_queue_resize(GTK_WIDGET(canvas));
 }
 
 static void
@@ -819,6 +871,45 @@ hippo_canvas_set_root(HippoCanvas     *canvas,
     }
 
     gtk_widget_queue_resize(GTK_WIDGET(canvas));
+}
+
+/*
+ * This is a bad hack because GTK does not have a "resize queued" signal
+ * like our request-changed; this means that if a widget inside a HippoCanvasWidget
+ * queues a resize, the HippoCanvasWidget does not emit request-changed.
+ *
+ * Because all canvas widget items are registered with the HippoCanvas widget
+ * they are inside, when we get the GTK size_request or size_allocate,
+ * we go through and emit the missing request-changed before we request/allocate
+ * the root canvas item.
+ */
+static void
+hippo_canvas_fixup_resize_state(HippoCanvas *canvas)
+{
+    RegisteredWidgetItem *witem;
+    GSList *link;
+
+    if (canvas->fixing_up_resize_state) {
+        g_warning("Recursion in %s", G_GNUC_PRETTY_FUNCTION);
+        return;
+    }
+    
+    canvas->fixing_up_resize_state = TRUE;
+    
+    witem = NULL;
+    for (link = canvas->widget_items;
+         link != NULL;
+         link = link->next) {
+        witem = link->data;
+
+        if (witem->widget &&
+            (GTK_WIDGET_REQUEST_NEEDED(witem->widget) ||
+             GTK_WIDGET_ALLOC_NEEDED(witem->widget))) {
+            hippo_canvas_item_emit_request_changed(witem->item);
+        }
+    }
+
+    canvas->fixing_up_resize_state = FALSE;
 }
 
 /* TEST CODE */
@@ -927,6 +1018,16 @@ create_row(BoxAttrs *boxes)
     return row;
 }
 
+static void
+change_text_on_hovering(HippoCanvasItem *item,
+                        gboolean hovering,
+                        void *data)
+{
+    g_object_set(G_OBJECT(item), "text",
+                 hovering ? "Hovering!" : "... not hovering ... looooooooooooooooooooooooooong",
+                 NULL);
+}
+
 void
 hippo_canvas_open_test_window(void)
 {
@@ -950,11 +1051,16 @@ hippo_canvas_open_test_window(void)
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled),
                                    GTK_POLICY_AUTOMATIC,
                                    GTK_POLICY_AUTOMATIC);
+    gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(scrolled),
+                                        GTK_SHADOW_NONE);
     gtk_container_add(GTK_CONTAINER(window), scrolled);
     gtk_widget_show(scrolled);
     
     gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scrolled),
                                           canvas);
+
+    gtk_viewport_set_shadow_type(GTK_VIEWPORT(gtk_bin_get_child(GTK_BIN(scrolled))),
+                                 GTK_SHADOW_NONE);
 
 #if 0
     root = g_object_new(HIPPO_TYPE_CANVAS_STACK,
@@ -1080,9 +1186,12 @@ hippo_canvas_open_test_window(void)
                         "color", 0xffffffff,
                         "background-color", 0x0000ffff,
                         NULL);
-
+    
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(root), text, HIPPO_PACK_END);
 
+    g_signal_connect(G_OBJECT(text), "hovering-changed",
+                     G_CALLBACK(change_text_on_hovering), NULL);
+    
     text = g_object_new(HIPPO_TYPE_CANVAS_LINK,
                         "text",
                         "Fixed position link item",
