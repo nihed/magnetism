@@ -767,12 +767,21 @@ hippo_canvas_context_win_create_layout(HippoCanvasContext *context)
 {
     HippoCanvasContextWin *canvas_win;
     PangoLayout *layout;
-    
+    PangoFontDescription *desc;
+
     g_return_val_if_fail(HIPPO_IS_CANVAS_CONTEXT(context), NULL);
 
     canvas_win = HIPPO_CANVAS_CONTEXT_WIN(context);
 
     layout = pango_layout_new(canvas_win->pango);
+
+    // FIXME this is a hack since otherwise the pango context
+    // seems to default to serif. Probably the real fix is to
+    // figure out how to get pango to find the config file.
+    desc = pango_font_description_new();
+    pango_font_description_set_family_static(desc, "sans");
+    pango_layout_set_font_description(layout, desc);
+    pango_font_description_free(desc);
 
     return layout;
 }
