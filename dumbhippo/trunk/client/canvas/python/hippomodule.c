@@ -5,21 +5,21 @@
 /* include this first, before NO_IMPORT_PYGOBJECT is defined */
 #include <pygobject.h>
 
-void pyhippocanvas_register_classes (PyObject *d);
+void pyhippo_register_classes (PyObject *d);
 
 DL_EXPORT(void)
-inithippocanvas(void)
+inithippo(void)
 {
     PyObject *m, *d;
 
     init_pygobject ();
 
-    m = Py_InitModule ("hippocanvas", NULL);
+    m = Py_InitModule ("hippo", NULL);
     d = PyModule_GetDict (m);
 
-    pyhippocanvas_register_classes (d);
+    pyhippo_register_classes (d);
 
     if (PyErr_Occurred ()) {
-        Py_FatalError ("can't initialise module hippocanvas");
+        Py_FatalError ("can't initialise module hippo");
     }
 }
