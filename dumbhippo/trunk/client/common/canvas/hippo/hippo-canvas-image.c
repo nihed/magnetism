@@ -290,18 +290,22 @@ hippo_canvas_image_paint_below_children(HippoCanvasBox  *box,
     HippoCanvasImage *image = HIPPO_CANVAS_IMAGE(box);
     int x, y, w, h;
     cairo_matrix_t matrix;
-    
+    int image_width, image_height;
+
     if (image->surface == NULL)
         return;
-    
+
+    image_width = cairo_image_surface_get_width(image->surface);
+    image_height = cairo_image_surface_get_height(image->surface);
+
     if (image->scale_width >= 0)
         w = image->scale_width;
     else
-        w = cairo_image_surface_get_width(image->surface);
+        w = image_width;
     if (image->scale_height >= 0)
         h = image->scale_height;
     else
-        h = cairo_image_surface_get_height(image->surface);
+        h = image_height;
 
     /* note that if an alignment is FILL the w/h will be increased
      * beyond the image's natural size, which will result in
@@ -313,16 +317,15 @@ hippo_canvas_image_paint_below_children(HippoCanvasBox  *box,
     cairo_rectangle(cr, x, y, w, h);
     cairo_clip(cr);
 
-    /* FIXME I think we tile then scale, but we should scale then tile.
-     * This results in drawing the wrong thing with ALIGNMENT_END at least.
+    /* We can't pass in translation offsets here because we need to 
+     * scale first.
      */
-    
-    cairo_set_source_surface(cr, image->surface, x, y);
-    /* tile */
-    cairo_pattern_set_extend(cairo_get_source(cr), CAIRO_EXTEND_REPEAT);
+    cairo_set_source_surface(cr, image->surface, 0, 0);
 
-    /* scale size of 0 is handled by simply not painting anything */
-    if (image->scale_width > 0 || image->scale_height > 0) {
+    /* scale size of 0 is handled by simply not painting anything, so > not >= */
+    if ((image->scale_width > 0 && image->scale_width != image_width) ||
+         (image->scale_height > 0 && image->scale_height != image_height)) {
+
         /* OK this is wonky; the pattern's matrix has to be the inverse
          * of the scale factor, because it's the ratio of our cairo_t's coords
          * to the pattern coords, not vice versa.
@@ -331,23 +334,32 @@ hippo_canvas_image_paint_below_children(HippoCanvasBox  *box,
         double yscale;
         
         if (image->scale_width > 0)
-            xscale = cairo_image_surface_get_width(image->surface) / (double) image->scale_width;
+            xscale = image_width / (double) image->scale_width;
         else
             xscale = 1.0;
         
         if (image->scale_height > 0)
-            yscale = cairo_image_surface_get_height(image->surface) / (double) image->scale_height;
+            yscale = image_height / (double) image->scale_height;
         else
             yscale = 1.0;
 
         cairo_matrix_init_scale(&matrix, xscale, yscale);
-        cairo_pattern_set_matrix(cairo_get_source(cr), &matrix);
+        cairo_matrix_translate(&matrix, - x, - y);
+    } else {
+        cairo_matrix_init_translate(&matrix, - x, - y);
     }
 
     /* g_debug("paint image %d,%d %dx%d scale %dx%d",
        x, y, w, h, image->scale_width, image->scale_height); */
     
     if (image->scale_width != 0 && image->scale_height != 0) {
+
+        /* tile */
+        cairo_pattern_set_extend(cairo_get_source(cr), CAIRO_EXTEND_REPEAT);
+
+        /* scale and translate */
+        cairo_pattern_set_matrix(cairo_get_source(cr), &matrix);
+
         cairo_paint(cr);
     }
 
