@@ -684,7 +684,7 @@ on_client_info_available(HippoConnection *connection,
             app->upgrade_dialog = 
                 gtk_message_dialog_new(NULL, 0, GTK_MESSAGE_INFO,
                     GTK_BUTTONS_NONE,
-                    _("Your Mugshot software is too old to work with this server."));
+                    _("Your Mugshot software is too old to work with the web site."));
             gtk_message_dialog_format_secondary_text(GTK_MESSAGE_DIALOG(app->upgrade_dialog),
                     _("You must upgrade to continue using Mugshot."));
             gtk_dialog_add_buttons(GTK_DIALOG(app->upgrade_dialog),
