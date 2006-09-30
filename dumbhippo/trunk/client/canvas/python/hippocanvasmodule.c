@@ -7,8 +7,6 @@
 
 void pyhippocanvas_register_classes (PyObject *d);
 
-extern PyMethodDef pyhippocanvas_functions[];
-
 DL_EXPORT(void)
 inithippocanvas(void)
 {
@@ -16,7 +14,7 @@ inithippocanvas(void)
 
     init_pygobject ();
 
-    m = Py_InitModule ("hippocanvas", pyhippocanvas_functions);
+    m = Py_InitModule ("hippocanvas", NULL);
     d = PyModule_GetDict (m);
 
     pyhippocanvas_register_classes (d);

@@ -9,6 +9,8 @@ headers
 #include "hippo/hippo-canvas-image.h"
 #include "hippo/hippo-canvas-text.h"
 #include "hippo/hippo-canvas-link.h"
+#include "hippo/hippo-canvas.h"
+#include "hippo/hippo-canvas-widget.h"
 
 #include "hippo-canvas/hippo-canvas-type-builtins.h"
 

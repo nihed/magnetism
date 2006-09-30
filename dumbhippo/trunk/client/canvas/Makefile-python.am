@@ -33,6 +33,6 @@ hippocanvas.c: $(PYTHONDEFS_FILES)
 	($(PYGTK_CODEGEN) \
             --register $(PYGTK_DEFSDIR)/gtk-types.defs \
 	    --override $(PYTHONSRCDIR)/hippocanvas.override \
-	    --prefix hippocanvas $(PYTHONSRCDIR)/hippocanvas.defs) > gen-hippocanvas.c \
+	    --prefix pyhippocanvas $(PYTHONSRCDIR)/hippocanvas.defs) > gen-hippocanvas.c \
 	&& cp gen-hippocanvas.c $*.c \
 	&& rm -f gen-hippocanvas.c
