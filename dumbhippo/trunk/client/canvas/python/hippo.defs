@@ -1,5 +1,14 @@
 ;; -*- scheme -*-
 ; object definitions ...
+
+(define-boxed Rectangle
+  (in-module "Hippo")
+  (c-name "HippoRectangle")
+  (gtype-id "HIPPO_TYPE_RECTANGLE")
+  (copy-func "hippo_rectangle_copy")
+  (release-func "hippo_rectangle_free")
+)
+
 (define-object Canvas
   (in-module "Hippo")
   (parent "GtkContainer")
@@ -318,7 +327,45 @@
   )
 )
 
+(define-method paint_below_children
+  (of-object "HippoCanvasBox")
+  (c-name "hippo_canvas_box_paint_below_children")
+  (return-type "none")
+  (parameters
+    '("cairo_t*" "cr")
+    '("HippoRectangle*" "damaged_box")
+  )
+)
 
+(define-method paint_above_children
+  (of-object "HippoCanvasBox")
+  (c-name "hippo_canvas_box_paint_above_children")
+  (return-type "none")
+  (parameters
+    '("cairo_t*" "cr")
+    '("HippoRectangle*" "damaged_box")
+  )
+)
+
+(define-virtual paint_below_children
+  (of-object "HippoCanvasBox")
+  (c-name "hippo_canvas_box_paint_below_children")
+  (return-type "none")
+  (parameters
+    '("cairo_t*" "cr")
+    '("HippoRectangle*" "damaged_box")
+  )
+)
+
+(define-virtual paint_above_children
+  (of-object "HippoCanvasBox")
+  (c-name "hippo_canvas_box_paint_above_children")
+  (return-type "none")
+  (parameters
+    '("cairo_t*" "cr")
+    '("HippoRectangle*" "damaged_box")
+  )
+)
 
 ;; From hippo-canvas-context.h
 
@@ -610,7 +657,20 @@
   )
 )
 
+(define-virtual get_width_request
+  (of-object "HippoCanvasItem")
+  (c-name "hippo_canvas_item_get_width_request")
+  (return-type "int")
+)
 
+(define-virtual get_height_request
+  (of-object "HippoCanvasItem")
+  (c-name "hippo_canvas_item_get_height_request")
+  (return-type "int")
+  (parameters
+    '("int" "for_width")
+  )
+)
 
 ;; From hippo-canvas-link.h
 
@@ -658,6 +718,23 @@
 
 ;; From hippo-graphics.h
 
+(define-function rectangle_get_type
+  (c-name "hippo_rectangle_get_type")
+  (return-type "GType")
+)
+
+(define-method copy
+  (of-object "HippoRectangle")
+  (c-name "hippo_rectangle_copy")
+  (return-type "HippoRectangle*")
+)
+
+(define-method free
+  (of-object "HippoRectangle")
+  (c-name "hippo_rectangle_free")
+  (return-type "none")
+)
+
 (define-method intersect
   (of-object "HippoRectangle")
   (c-name "hippo_rectangle_intersect")
@@ -695,5 +772,3 @@
     '("guint32" "color")
   )
 )
-
-

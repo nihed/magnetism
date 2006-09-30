@@ -192,7 +192,7 @@ AM_CHECK_PYTHON_HEADERS(,[AC_MSG_ERROR(could not find Python headers)])
 
 AC_PATH_PROG(PYGTK_CODEGEN, pygtk-codegen-2.0, no)
 
-PKG_CHECK_MODULES(PYGTK, pygtk-2.0)
+PKG_CHECK_MODULES(PYTHON_BINDINGS, pygtk-2.0 pycairo)
 
 PYGTK_DEFSDIR=`$PKG_CONFIG --variable=defsdir pygtk-2.0`
 AC_SUBST(PYGTK_DEFSDIR)

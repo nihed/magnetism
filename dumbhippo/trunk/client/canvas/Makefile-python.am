@@ -1,7 +1,8 @@
-hippo_la_CPPFLAGS =		\
-	$(AM_CPPFLAGS)		\
-	$(PYTHON_INCLUDES)	\
-	$(PYGTK_CFLAGS)		\
+hippo_la_CPPFLAGS =			\
+	$(AM_CPPFLAGS)			\
+	$(PYTHON_INCLUDES)		\
+	$(PYTHON_BINDINGS_CFLAGS)	\
+	$(PYCAIRO_CFLAGS)		\
 	$(LIBHIPPOCANVAS_CFLAGS)
 
 PYTHONSRCDIR=$(top_srcdir)/python
@@ -13,6 +14,7 @@ pkgpyexec_LTLIBRARIES=hippo.la
 
 hippo_la_LDFLAGS = -module -avoid-version
 hippo_la_LIBADD =					\
+	$(PYTHON_BINDINGS_LIBS)				\
 	$(LIBHIPPOCANVAS_LIBS)				\
 	$(top_builddir)/libhippocanvas-1.la
 
@@ -31,6 +33,7 @@ EXTRA_DIST += $(PYTHONDEFS_FILES)
 
 hippo.c: $(PYTHONDEFS_FILES)
 	($(PYGTK_CODEGEN) \
+	    --load-types $(PYTHONSRCDIR)/arg-types.py \
             --register $(PYGTK_DEFSDIR)/gtk-types.defs \
 	    --override $(PYTHONSRCDIR)/hippo.override \
 	    --prefix pyhippo $(PYTHONSRCDIR)/hippo.defs) > gen-hippo.c \

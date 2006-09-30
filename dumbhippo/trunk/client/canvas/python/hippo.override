@@ -14,6 +14,10 @@ headers
 
 #include "hippo-canvas/hippo-canvas-type-builtins.h"
 
+#include "pycairo.h"
+
+extern Pycairo_CAPI_t *Pycairo_CAPI;
+
 %%
 modulename hippocanvas
 %%
@@ -22,6 +26,7 @@ import gtk.Container as PyGtkContainer_Type
 %%
 ignore
 hippo_cairo_set_source_rgba32
+hippo_canvas_box_new
 %%
 ignore-glob
   *_get_type
