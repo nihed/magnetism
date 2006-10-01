@@ -9,6 +9,7 @@
 Pycairo_CAPI_t *Pycairo_CAPI;
 
 void pyhippo_register_classes (PyObject *d);
+void pyhippo_add_constants(PyObject *module, const gchar *strip_prefix);
 
 DL_EXPORT(void)
 inithippo(void)
@@ -19,10 +20,11 @@ inithippo(void)
 
     Pycairo_IMPORT;
 
-    m = Py_InitModule ("hippo", NULL);
-    d = PyModule_GetDict (m);
+    m = Py_InitModule("hippo", NULL);
+    d = PyModule_GetDict(m);
 
-    pyhippo_register_classes (d);
+    pyhippo_register_classes(d);
+    pyhippo_add_constants(m, "HIPPO_");
 
     if (PyErr_Occurred ()) {
         Py_FatalError ("can't initialise module hippo");

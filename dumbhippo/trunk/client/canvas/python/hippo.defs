@@ -657,6 +657,19 @@
   )
 )
 
+;; From hippo-canvas-link.h
+
+(define-function canvas_link_get_type
+  (c-name "hippo_canvas_link_get_type")
+  (return-type "GType")
+)
+
+(define-function canvas_link_new
+  (c-name "hippo_canvas_link_new")
+  (is-constructor-of "HippoCanvasLink")
+  (return-type "HippoCanvasItem*")
+)
+
 (define-virtual get_width_request
   (of-object "HippoCanvasItem")
   (c-name "hippo_canvas_item_get_width_request")
@@ -671,21 +684,6 @@
     '("int" "for_width")
   )
 )
-
-;; From hippo-canvas-link.h
-
-(define-function canvas_link_get_type
-  (c-name "hippo_canvas_link_get_type")
-  (return-type "GType")
-)
-
-(define-function canvas_link_new
-  (c-name "hippo_canvas_link_new")
-  (is-constructor-of "HippoCanvasLink")
-  (return-type "HippoCanvasItem*")
-)
-
-
 
 ;; From hippo-canvas-text.h
 
