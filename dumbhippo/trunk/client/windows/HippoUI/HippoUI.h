@@ -107,7 +107,7 @@ public:
 
     int getRecentMessageCount();
 
-    bool isGroupChatActive(HippoEntity *entity);
+    bool isGroupChatActive(HippoGroup *group);
     bool isShareActive(HippoPost *post);
 
     void getRemoteURL(BSTR appletName, BSTR *result) throw (std::bad_alloc, HResultException);

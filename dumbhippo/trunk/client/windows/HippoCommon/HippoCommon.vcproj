@@ -196,7 +196,13 @@
 				RelativePath="..\..\common\hippo\hippo-entity.c">
 			</File>
 			<File
+				RelativePath="..\..\common\hippo\hippo-feed.c">
+			</File>
+			<File
 				RelativePath="..\..\common\canvas\hippo\hippo-graphics.c">
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-group.c">
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\hippo-image-cache.c">
@@ -215,6 +221,9 @@
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\hippo-post.c">
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-resource.c">
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\hippo-stack-manager.c">
@@ -333,7 +342,13 @@
 				RelativePath="..\..\common\hippo\hippo-entity.h">
 			</File>
 			<File
+				RelativePath="..\..\common\hippo\hippo-feed.h">
+			</File>
+			<File
 				RelativePath="..\..\common\canvas\hippo\hippo-graphics.h">
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-group.h">
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\hippo-image-cache.h">
@@ -352,6 +367,9 @@
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\hippo-post.h">
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-resource.h">
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\hippo-stack-manager.h">

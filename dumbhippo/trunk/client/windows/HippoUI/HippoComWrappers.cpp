@@ -73,36 +73,49 @@ HippoEntityWrapper::get_SmallPhotoUrl(BSTR *smallPhotoUrl)
 STDMETHODIMP 
 HippoEntityWrapper::get_Ignored(BOOL *ignored)
 {
-    *ignored = hippo_entity_get_ignored(delegate_);
+    if (HIPPO_IS_GROUP(delegate_)) {
+        *ignored = hippo_group_get_ignored(HIPPO_GROUP(delegate_));    
+    } else {
+        *ignored = FALSE;
+    }
+    
     return S_OK;
 }
 
 STDMETHODIMP 
 HippoEntityWrapper::get_ChatIgnored(BOOL *ignored)
-{
-HippoChatRoom *room = hippo_entity_get_chat_room(delegate_);
-
-    if (room && !hippo_chat_room_get_loading(room)) {
-        *ignored = hippo_chat_room_get_ignored(room);
-    } else {
-        hippoDebugLogW(L"HippoEntityWrapper::get_ChatIgnored was called when the chat room "
+{   
+    if (HIPPO_IS_GROUP(delegate_)) {
+        HippoChatRoom *room;   
+        room = hippo_group_get_chat_room(HIPPO_GROUP(delegate_));
+    
+        if (room && !hippo_chat_room_get_loading(room)) {
+            *ignored = hippo_chat_room_get_ignored(room);
+        } else {    
+            hippoDebugLogW(L"HippoEntityWrapper::get_ChatIgnored was called when the chat room "
                        L"for the group was null or was still loading");
+            *ignored = FALSE;
+        }
+    } else {
         *ignored = FALSE;
     }
-
     return S_OK;
 }
 
 STDMETHODIMP 
 HippoEntityWrapper::get_ChattingUserCount(int *chattingUserCount)
 {
-    HippoChatRoom *room = hippo_entity_get_chat_room(delegate_);
+    if (HIPPO_IS_GROUP(delegate_)) {
+        HippoChatRoom *room = hippo_group_get_chat_room(HIPPO_GROUP(delegate_));
 
-    if (room && !hippo_chat_room_get_loading(room)) {
-        *chattingUserCount = hippo_chat_room_get_chatting_user_count(room);
+        if (room && !hippo_chat_room_get_loading(room)) {
+            *chattingUserCount = hippo_chat_room_get_chatting_user_count(room);
+        } else {
+            hippoDebugLogW(L"HippoEntityWrapper::get_ChattingUserCount was called when the chat room "
+                        L"for the group was null or was still loading");
+            *chattingUserCount = 0;
+        }
     } else {
-        hippoDebugLogW(L"HippoEntityWrapper::get_ChattingUserCount was called when the chat room "
-                       L"for the group was null or was still loading");
         *chattingUserCount = 0;
     }
 
@@ -137,21 +150,23 @@ HippoEntityWrapper::get_ChattingUsers(IHippoEntityCollection **users)
         currentChatParticipants_ = new HippoEntityCollection();
         currentChatParticipants_->Release(); // the smart pointer has got it
 
-        HippoChatRoom *room = hippo_entity_get_chat_room(delegate_);
-        if (room && !hippo_chat_room_get_loading(room)) {
-            GSList *members = hippo_chat_room_get_users(room);
-            for (GSList *link = members; link != NULL; link = link->next) {
-                HippoEntity *entity = HIPPO_ENTITY(link->data);
-                currentChatParticipants_->addMember(entity);
-                g_object_unref(entity);
-            }
-            g_slist_free(members);
+        if (HIPPO_IS_GROUP(delegate_)) {
+            HippoChatRoom *room = hippo_group_get_chat_room(HIPPO_GROUP(delegate_));
+            if (room && !hippo_chat_room_get_loading(room)) {
+                GSList *members = hippo_chat_room_get_users(room);
+                for (GSList *link = members; link != NULL; link = link->next) {
+                    HippoEntity *entity = HIPPO_ENTITY(link->data);
+                    currentChatParticipants_->addMember(entity);
+                    g_object_unref(entity);
+                }
+                g_slist_free(members);
 
-            // connect up to clear cache if chat room changes
-            userStateChanged_.connect(G_OBJECT(room), "user-state-changed", 
-                slot(this, &HippoEntityWrapper::onUserStateChanged));
-            cleared_.connect(G_OBJECT(room), "cleared",
-                slot(this, &HippoEntityWrapper::onCleared));
+                // connect up to clear cache if chat room changes
+                userStateChanged_.connect(G_OBJECT(room), "user-state-changed", 
+                    slot(this, &HippoEntityWrapper::onUserStateChanged));
+                cleared_.connect(G_OBJECT(room), "cleared",
+                    slot(this, &HippoEntityWrapper::onCleared));
+            }
         }
     }
 
@@ -165,12 +180,14 @@ STDMETHODIMP
 HippoEntityWrapper::get_LastChatMessage(BSTR *message)
 {
     *message = NULL;
-
-    HippoChatRoom *room = hippo_entity_get_chat_room(delegate_);
-    if (room) {
-        HippoChatMessage *m = hippo_chat_room_get_last_message(room);
-        if (m != NULL) {
-            utf8ToCom(hippo_chat_message_get_text(m), message);
+    
+    if (HIPPO_IS_GROUP(delegate_)) {
+        HippoChatRoom *room = hippo_group_get_chat_room(HIPPO_GROUP(delegate_));
+        if (room) {
+            HippoChatMessage *m = hippo_chat_room_get_last_message(room);
+            if (m != NULL) {
+                utf8ToCom(hippo_chat_message_get_text(m), message);
+            }
         }
     }
 
@@ -182,13 +199,15 @@ HippoEntityWrapper::get_LastChatSender(IHippoEntity **sender)
 {
     *sender = NULL;
 
-    HippoChatRoom *room = hippo_entity_get_chat_room(delegate_);
-    if (room) {
-        HippoChatMessage *m = hippo_chat_room_get_last_message(room);
-        if (m != NULL) {
-            HippoPerson *person = hippo_chat_message_get_person(m);
-            if (person != NULL)
-                entityToCom(HIPPO_ENTITY(person), sender);
+    if (HIPPO_IS_GROUP(delegate_)) {
+        HippoChatRoom *room = hippo_group_get_chat_room(HIPPO_GROUP(delegate_));
+        if (room) {
+            HippoChatMessage *m = hippo_chat_room_get_last_message(room);
+            if (m != NULL) {
+                HippoPerson *person = hippo_chat_message_get_person(m);
+                if (person != NULL)
+                    entityToCom(HIPPO_ENTITY(person), sender);
+            }
         }
     }
 

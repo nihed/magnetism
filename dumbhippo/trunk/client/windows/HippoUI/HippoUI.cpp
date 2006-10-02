@@ -487,7 +487,8 @@ HippoUI::ignoreEntity(BSTR entityId)
     HippoUStr entityIdU(entityId);
     HippoEntity *entity;
     entity = hippo_data_cache_lookup_entity(getDataCache(), entityIdU.c_str());
-    hippo_entity_set_ignored(entity, TRUE);
+    if (entity && HIPPO_IS_GROUP(entity))
+        hippo_group_set_ignored(HIPPO_GROUP(entity), TRUE);
 }
 
 void 
@@ -1249,14 +1250,9 @@ HippoUI::onAuthFailed()
 
 
 bool 
-HippoUI::isGroupChatActive(HippoEntity *entity)
+HippoUI::isGroupChatActive(HippoGroup *group)
 {
-    if (hippo_entity_get_entity_type(entity) != HIPPO_ENTITY_GROUP) {
-        g_warning("HippoUI::isGroupChatActive was called with an entity that is not a group");
-        return false;
-    }
-
-    HippoChatRoom *chatRoom = hippo_entity_get_chat_room(entity);
+    HippoChatRoom *chatRoom = hippo_group_get_chat_room(group);
         
     if (chatRoom != NULL &&
         hippo_chat_room_get_desired_state(chatRoom) != HIPPO_CHAT_STATE_NONMEMBER) {
