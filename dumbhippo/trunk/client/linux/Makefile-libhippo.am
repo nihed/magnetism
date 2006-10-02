@@ -127,7 +127,9 @@ LIBHIPPO_SOURCEFILES =						\
 	$(COMMONSRCDIR)/hippo/hippo-surface.c			\
 	$(COMMONSRCDIR)/hippo/hippo-surface.h			\
 	$(COMMONSRCDIR)/hippo/hippo-window.c			\
-	$(COMMONSRCDIR)/hippo/hippo-window.h
+	$(COMMONSRCDIR)/hippo/hippo-window.h			\
+	$(COMMONSRCDIR)/hippo/hippo-xml-utils.c			\
+	$(COMMONSRCDIR)/hippo/hippo-xml-utils.h
 
 LIBHIPPO_BUILT_SOURCEFILES =			\
 	$(COMMON_MARSHAL_HEADER)		\

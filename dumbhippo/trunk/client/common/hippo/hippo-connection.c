@@ -3,6 +3,7 @@
 #include "hippo-connection.h"
 #include "hippo-data-cache-internal.h"
 #include "hippo-common-marshal.h"
+#include "hippo-xml-utils.h"
 #include <loudmouth/loudmouth.h>
 #include <string.h>
 #include <stdlib.h>
@@ -1153,61 +1154,8 @@ hippo_connection_unqueue_request_blocks (HippoConnection *connection)
     }
 }
 
-/* requires string to have no trailing junk */
-static gint64
-parse_int64(const char *s)
-{
-    char *end;
-    guint64 v;
-    gboolean had_minus = FALSE;
-    
-    /* FC5's glib does not have g_ascii_strtoll, only strtoull, so
-     * we have a hoop or two to jump through
-     */
-    while (*s && g_ascii_isspace(*s))
-        ++s;
-    if (*s == '-') {
-        ++s;
-        had_minus = TRUE;
-    }
-
-    end = NULL;
-    v = g_ascii_strtoull(s, &end, 10);
-
-    if (end == NULL || *end != '\0') {
-        g_warning("Failed to parse '%s' as 64-bit integer", s);
-        return 0;
-    }
-
-    if (had_minus) {
-        /* this should probably check for overflow, but we basically trust the server. */
-        return - (gint64) v;
-    } else {
-        return (gint64) v;
-    }
-}
-
-/* requires string to have no trailing junk */
-static int
-parse_int32(const char *s)
-{
-    char *end;
-    long v;
-    
-    end = NULL;
-    v = strtol(s, &end, 10);
-
-    if (end == NULL || *end != '\0') {
-        g_warning("Failed to parse '%s' as 32-bit integer", s);
-        return 0;
-    }
-
-    return v;
-}
-
-
 static gboolean
-parse_bool(const char *str) 
+parse_bool(const char *str)
 {
     return strcmp(str, "true") == 0;
 }
@@ -1281,14 +1229,13 @@ on_client_info_reply(LmMessageHandler *handler,
     }
 
     child = message->node->children;
-    minimum = lm_message_node_get_attribute(child, "minimum");
-    current = lm_message_node_get_attribute(child, "current");
-    download = lm_message_node_get_attribute(child, "download");
 
-    if (!minimum || !current || !download) {
-        hippo_connection_connect_failure(connection, "Client info reply was missing attributes");
+    if (!hippo_xml_split(child, NULL,
+                         "minimum", HIPPO_SPLIT_STRING, &minimum,
+                         "current", HIPPO_SPLIT_STRING, &current,
+                         "download", HIPPO_SPLIT_STRING, &download,
+                         NULL))
         return LM_HANDLER_RESULT_REMOVE_MESSAGE;
-    }
 
     g_debug("Got clientInfo response: minimum=%s, current=%s, download=%s", minimum, current, download);
     
@@ -1517,27 +1464,18 @@ on_get_myspace_blog_comments_reply(LmMessageHandler *handler,
 
     comments = NULL;
     for (subchild = child->children; subchild; subchild = subchild->next) {
-        LmMessageNode *comment_node;
         int comment_id;
         int poster_id;
     
         if (strcmp (subchild->name, "comment") != 0)
             continue;
 
-        comment_node = lm_message_node_get_child (subchild, "commentId");
-        if (!(comment_node && comment_node->value)) {
+        if (!hippo_xml_split(subchild, NULL,
+                             "commentId", HIPPO_SPLIT_INT32 | HIPPO_SPLIT_ELEMENT, &comment_id,
+                             "posterId", HIPPO_SPLIT_INT32 | HIPPO_SPLIT_ELEMENT, &poster_id,
+                             NULL))
             return LM_HANDLER_RESULT_REMOVE_MESSAGE;
-        }
-        
-        comment_id = parse_int32(comment_node->value);
 
-        comment_node = lm_message_node_get_child (subchild, "posterId");
-        if (!(comment_node && comment_node->value)) {
-            return LM_HANDLER_RESULT_REMOVE_MESSAGE;
-        }        
-        
-        poster_id = strtol(comment_node->value, NULL, 10);
-        
         g_debug("Got myspace comment id %d poster %d\n", comment_id, poster_id);
         
         comments = g_slist_prepend(comments,
@@ -1601,13 +1539,13 @@ on_get_myspace_contacts_reply(LmMessageHandler *handler,
                 
         if (strcmp (subchild->name, "contact") != 0)
             continue;
-        name = lm_message_node_get_attribute(subchild, "name");
-        if (!name)
+
+        if (!hippo_xml_split(subchild, NULL,
+                             "name", HIPPO_SPLIT_STRING, &name,
+                             "friendID", HIPPO_SPLIT_STRING, &friend_id,
+                             NULL))
             continue;
-        friend_id = lm_message_node_get_attribute(subchild, "friendID");
-        if (!friend_id)
-            continue;
-            
+        
         contacts = g_slist_prepend(contacts,
                                    hippo_myspace_contact_new(name, friend_id));
                 
@@ -1795,12 +1733,6 @@ hippo_connection_parse_block(HippoConnection *connection,
     LmMessageNode *child;
     const char *guid;
     const char *type_str;
-    const char *timestamp_str;
-    const char *clicked_timestamp_str;
-    const char *ignored_timestamp_str;
-    const char *clicked_count_str;
-    const char *clicked_str;
-    const char *ignored_str;
     HippoBlockType type;
     gint64 timestamp;
     gint64 clicked_timestamp;
@@ -1813,24 +1745,18 @@ hippo_connection_parse_block(HippoConnection *connection,
     
     g_assert(connection->cache != NULL);
 
-    guid = lm_message_node_get_attribute(block_node, "id");
-    if (!guid)
+    if (!hippo_xml_split(block_node, NULL,
+                         "id", HIPPO_SPLIT_GUID, &guid,
+                         "type", HIPPO_SPLIT_STRING, &type_str,
+                         "timestamp", HIPPO_SPLIT_TIME_MS, &timestamp,
+                         "clickedTimestamp", HIPPO_SPLIT_TIME_MS, &clicked_timestamp,
+                         "ignoredTimestamp", HIPPO_SPLIT_TIME_MS, &ignored_timestamp,
+                         "clickedCount", HIPPO_SPLIT_INT32, &clicked_count,
+                         "clicked", HIPPO_SPLIT_BOOLEAN, &clicked, 
+                         "ignored", HIPPO_SPLIT_BOOLEAN, &ignored,
+                         NULL))
         return FALSE;
-
-    type_str = lm_message_node_get_attribute(block_node, "type");
-    if (!type_str)
-        return FALSE;
-    
-    timestamp_str = lm_message_node_get_attribute(block_node, "timestamp");
-    clicked_timestamp_str = lm_message_node_get_attribute(block_node, "clickedTimestamp");
-    ignored_timestamp_str = lm_message_node_get_attribute(block_node, "ignoredTimestamp");
-    clicked_count_str = lm_message_node_get_attribute(block_node, "clickedCount");
-    clicked_str = lm_message_node_get_attribute(block_node, "clicked");
-    ignored_str = lm_message_node_get_attribute(block_node, "ignored");
-    if (!timestamp_str || !clicked_timestamp_str || !ignored_timestamp_str ||
-        !clicked_count_str || !clicked_str || !ignored_str)
-        return FALSE;
-        
+                         
     type = block_type_from_string(type_str);
     if (type == HIPPO_BLOCK_TYPE_UNKNOWN)
         return FALSE;
@@ -1850,13 +1776,6 @@ hippo_connection_parse_block(HippoConnection *connection,
         }
         break;
     }
-    
-    timestamp = parse_int64(timestamp_str);
-    clicked_timestamp = parse_int64(clicked_timestamp_str);
-    ignored_timestamp = parse_int64(ignored_timestamp_str);
-    clicked_count = parse_int32(clicked_count_str);
-    clicked = parse_bool(clicked_str);
-    ignored = parse_bool(ignored_str);
     
     block = hippo_data_cache_lookup_block(connection->cache, guid);
     if (block == NULL) {
@@ -1923,16 +1842,15 @@ hippo_connection_parse_blocks(HippoConnection *connection,
                               LmMessageNode   *node)
 {
     LmMessageNode *subchild;
-    const char *server_timestamp_str;
     gint64 server_timestamp;
     GTimeVal now;
-    
-    server_timestamp_str = lm_message_node_get_attribute(node, "serverTime");
-    if (!server_timestamp_str)
+
+    if (!hippo_xml_split(node, NULL,
+                         "serverTime", HIPPO_SPLIT_TIME_MS, &server_timestamp,
+                         NULL))
         return FALSE;
 
     g_get_current_time(&now);
-    server_timestamp = parse_int64(server_timestamp_str);
     
     for (subchild = node->children; subchild; subchild = subchild->next) {
         if (is_block(subchild)) {
@@ -2266,70 +2184,42 @@ hippo_connection_parse_post(HippoConnection *connection,
                             gboolean         is_new,
                             HippoPost      **post_return)
 {
-    LmMessageNode *node;
+    LmMessageNode *recipients_node;
     HippoPost *post;
     const char *post_guid;
     const char *sender_guid;
     const char *url;
     const char *title;
-    const char *text;
-    const char *info;
-    gboolean to_world;
-    gboolean ignored;
+    const char *text = "";
+    const char *info =  NULL;
+    gboolean to_world = FALSE;
+    gboolean ignored = FALSE;
     GTime post_date;
+    int post_date_int;
     GSList *recipients = NULL;
     LmMessageNode *subchild;
     gboolean created_post;
     
     g_assert(connection->cache != NULL);
 
-    post_guid = lm_message_node_get_attribute (post_node, "id");
-    if (!post_guid)
+    if (!hippo_xml_split(post_node, NULL,
+                         "id", HIPPO_SPLIT_GUID, &post_guid,
+                         "poster", HIPPO_SPLIT_STRING | HIPPO_SPLIT_ELEMENT, &sender_guid,
+                         "href", HIPPO_SPLIT_URI | HIPPO_SPLIT_ELEMENT, &url,
+                         "title", HIPPO_SPLIT_STRING | HIPPO_SPLIT_ELEMENT, &title,
+                         "text", HIPPO_SPLIT_STRING | HIPPO_SPLIT_ELEMENT | HIPPO_SPLIT_OPTIONAL, &text,
+                         "postInfo", HIPPO_SPLIT_STRING | HIPPO_SPLIT_ELEMENT | HIPPO_SPLIT_OPTIONAL, &info,
+                         "toWorld", HIPPO_SPLIT_BOOLEAN | HIPPO_SPLIT_ELEMENT | HIPPO_SPLIT_OPTIONAL, &to_world,
+                         "postDate", HIPPO_SPLIT_INT32 | HIPPO_SPLIT_ELEMENT, &post_date_int,
+                         "recipients", HIPPO_SPLIT_NODE | HIPPO_SPLIT_ELEMENT, &recipients_node,
+                         "ignored", HIPPO_SPLIT_BOOLEAN | HIPPO_SPLIT_ELEMENT | HIPPO_SPLIT_OPTIONAL, &ignored,
+                         NULL))
         return FALSE;
 
-    node = lm_message_node_find_child (post_node, "poster");
-    if (!(node && node->value))
-        return FALSE;
-    sender_guid = node->value;
+    /* FIXME: this deviates from our practice elsewhere, where we use gint64 ms */
+    post_date = post_date_int;
 
-    node = lm_message_node_find_child (post_node, "href");
-    if (!(node && node->value))
-        return FALSE;
-    url = node->value;
-
-    node = lm_message_node_find_child (post_node, "title");
-    if (!(node && node->value))
-        return FALSE;
-    title = node->value;
-
-    node = lm_message_node_find_child (post_node, "text");
-    if (!(node && node->value))
-        text = "";
-    else
-        text = node->value;
-
-    node = lm_message_node_find_child (post_node, "postInfo");
-    if (node && node->value)
-        info = node->value;
-    else
-        info = NULL;
-
-    node = lm_message_node_find_child (post_node, "toWorld");
-    if (node && node->value)
-        to_world = parse_bool(node->value);
-    else
-        to_world = FALSE;
-
-    node = lm_message_node_find_child (post_node, "postDate");
-    if (!(node && node->value))
-        return FALSE;
-    post_date = strtol(node->value, NULL, 10);
-
-    node = lm_message_node_find_child (post_node, "recipients");
-    if (!node)
-        return FALSE;
-
-    for (subchild = node->children; subchild; subchild = subchild->next) {
+    for (subchild = recipients_node->children; subchild; subchild = subchild->next) {
         const char *entity_id;
         HippoEntity *entity;
         if (!get_entity_guid(subchild, &entity_id))
@@ -2346,12 +2236,6 @@ hippo_connection_parse_post(HippoConnection *connection,
         else
             g_warning("Post receipient '%s' was not in the cache prior to post message", entity_id);
     }
-
-    node = lm_message_node_find_child (post_node, "ignored");
-    if (node && node->value)
-        ignored = parse_bool(node->value);
-    else
-        ignored = FALSE;
 
     post = hippo_data_cache_lookup_post(connection->cache, post_guid);
     if (post == NULL) {
@@ -2968,22 +2852,25 @@ parse_chat_user_info(HippoConnection *connection,
 
     {
         HippoChatState status;
-        gboolean music_playing_bool;
-        const char *name = lm_message_node_get_attribute(info_node, "name");
-        const char *small_photo_url = lm_message_node_get_attribute(info_node, "smallPhotoUrl");
-        const char *role = lm_message_node_get_attribute(info_node, "role");
-        const char *old_role = lm_message_node_get_attribute(info_node, "oldRole");
-        const char *arrangement_name = lm_message_node_get_attribute(info_node, "arrangementName");
-        const char *artist = lm_message_node_get_attribute(info_node, "artist");
-        const char *music_playing = lm_message_node_get_attribute(info_node, "musicPlaying");
+        const char *name;
+        const char *small_photo_url = NULL;
+        const char *role = NULL;
+        const char *old_role = NULL;
+        const char *arrangement_name = NULL;
+        const char *artist = NULL;
+        gboolean music_playing = FALSE;
 
-        if (!name) {
-            g_warning("userInfo node without name");
+        if (!hippo_xml_split(info_node, NULL,
+                             "name", HIPPO_SPLIT_STRING, &name,
+                             "smallPhotoUrl", HIPPO_SPLIT_URI | HIPPO_SPLIT_OPTIONAL, &small_photo_url,
+                             "role", HIPPO_SPLIT_STRING | HIPPO_SPLIT_OPTIONAL, &role,
+                             "old_role", HIPPO_SPLIT_STRING | HIPPO_SPLIT_OPTIONAL, &old_role,
+                             "arrangementName", HIPPO_SPLIT_STRING | HIPPO_SPLIT_OPTIONAL, &arrangement_name,
+                             "artist", HIPPO_SPLIT_STRING | HIPPO_SPLIT_OPTIONAL, &artist,
+                             "musicPlaying", HIPPO_SPLIT_BOOLEAN | HIPPO_SPLIT_OPTIONAL, &music_playing,
+                             NULL))
             return FALSE;
-        }        
 
-        music_playing_bool = music_playing ? parse_bool(music_playing) : FALSE;
-        
         if (!role)
             status = HIPPO_CHAT_STATE_PARTICIPANT;
         else
@@ -2998,7 +2885,7 @@ parse_chat_user_info(HippoConnection *connection,
             hippo_entity_set_small_photo_url(HIPPO_ENTITY(person), small_photo_url);
         hippo_person_set_current_song(person, arrangement_name);
         hippo_person_set_current_artist(person, artist);
-        hippo_person_set_music_playing(person, music_playing_bool);  
+        hippo_person_set_music_playing(person, music_playing);  
     }
 
     return TRUE;
@@ -3021,26 +2908,25 @@ parse_chat_message_info(HippoConnection  *connection,
     }
 
     {
-        const char *name_str = lm_message_node_get_attribute(info_node, "name");
-        const char *small_photo_url_str = lm_message_node_get_attribute(info_node, "smallPhotoUrl");
-        const char *timestamp_str = lm_message_node_get_attribute(info_node, "timestamp");
-        const char *serial_str = lm_message_node_get_attribute(info_node, "serial");
+        const char *name_str;
+        const char *small_photo_url;
         gint64 timestamp_milliseconds;
         GTime timestamp;
         int serial;
 
-        if (!name_str || !timestamp_str || !serial_str || !small_photo_url_str) {
-            g_debug("messageInfo node without all fields");
+        if (!hippo_xml_split(info_node, NULL,
+                             "name", HIPPO_SPLIT_STRING, &name_str,
+                             "smallPhotoUrl", HIPPO_SPLIT_URI, &small_photo_url,
+                             "timestamp", HIPPO_SPLIT_TIME_MS, &timestamp_milliseconds,
+                             "serial", HIPPO_SPLIT_INT32, &serial,
+                             NULL))
             return NULL;
-        }
 
         *name_p = name_str;
-        *small_photo_url_p = small_photo_url_str;
+        *small_photo_url_p = small_photo_url;
 
-        timestamp_milliseconds = parse_int64(timestamp_str);
         timestamp = (GTime) (timestamp_milliseconds / 1000);
-        serial = parse_int32(serial_str);
-        
+
         return hippo_chat_message_new(sender, text, timestamp, serial);
     }
 }
@@ -3324,7 +3210,6 @@ handle_blocks_changed(HippoConnection *connection,
                       LmMessage       *message)
 {
     LmMessageNode *child;
-    const char *last_timestamp_str;
     gint64 last_timestamp;
     
     if (lm_message_get_sub_type(message) != LM_MESSAGE_SUB_TYPE_HEADLINE)
@@ -3334,13 +3219,10 @@ handle_blocks_changed(HippoConnection *connection,
     if (child == NULL)
         return FALSE;
 
-    last_timestamp_str = lm_message_node_get_attribute(child, "lastTimestamp");
-    if (!last_timestamp_str) {
-        g_warning("no lastTimestamp on blocksChanged");
+    if (!hippo_xml_split(child, NULL,
+                         "lastTimestamp", HIPPO_SPLIT_TIME_MS, &last_timestamp,
+                         NULL))
         return TRUE;
-    }
-
-    last_timestamp = parse_int64(last_timestamp_str);
     
     g_debug("handling blocksChanged message timestamp %" G_GINT64_FORMAT " our latest timestamp %" G_GINT64_FORMAT,
             last_timestamp, connection->last_blocks_timestamp);
@@ -3902,10 +3784,10 @@ hippo_connection_visit_entity(HippoConnection *connection,
 
     home_url = hippo_entity_get_home_url(entity);
     if (home_url) {
-    hippo_platform_open_url(connection->platform,
+        hippo_platform_open_url(connection->platform,
                                 connection->login_browser,
                                 home_url);
     } else {
-    g_warning("Don't know how to go to the home page for entity '%s'", hippo_entity_get_guid(entity));
+        g_warning("Don't know how to go to the home page for entity '%s'", hippo_entity_get_guid(entity));
     }
 }
