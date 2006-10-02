@@ -21,7 +21,7 @@ typedef struct _HippoBlockPostClass HippoBlockPostClass;
 #define HIPPO_IS_BLOCK_POST_CLASS(klass)   (G_TYPE_CHECK_CLASS_TYPE ((klass), HIPPO_TYPE_BLOCK_POST))
 #define HIPPO_BLOCK_POST_GET_CLASS(obj)    (G_TYPE_INSTANCE_GET_CLASS ((obj), HIPPO_TYPE_BLOCK_POST, HippoBlockPostClass))
 
-GType        	 hippo_block_post_get_type               (void) G_GNUC_CONST;
+GType            hippo_block_post_get_type               (void) G_GNUC_CONST;
 
 G_END_DECLS
 

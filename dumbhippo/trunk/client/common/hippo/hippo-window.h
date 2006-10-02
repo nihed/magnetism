@@ -40,7 +40,7 @@ struct _HippoWindowClass {
     
 };
 
-GType        	 hippo_window_get_type               (void) G_GNUC_CONST;
+GType            hippo_window_get_type               (void) G_GNUC_CONST;
 
 
 void hippo_window_set_contents      (HippoWindow      *window,

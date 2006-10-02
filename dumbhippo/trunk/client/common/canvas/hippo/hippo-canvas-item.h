@@ -99,7 +99,7 @@ struct _HippoCanvasItemIface {
                                         int              y);
 };
 
-GType        	 hippo_canvas_item_get_type               (void) G_GNUC_CONST;
+GType            hippo_canvas_item_get_type               (void) G_GNUC_CONST;
 
 void               hippo_canvas_item_sink               (HippoCanvasItem    *canvas_item);
 

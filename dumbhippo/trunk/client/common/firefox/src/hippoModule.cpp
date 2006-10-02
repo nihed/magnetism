@@ -30,13 +30,13 @@ registerGlobalConstructors(nsIComponentManager *aCompMgr,
 
     nsCOMPtr<nsICategoryManager> catman = do_GetService(NS_CATEGORYMANAGER_CONTRACTID, &rv);
     if (NS_FAILED(rv))
-	return rv;
+        return rv;
 
     nsCString previous;
     rv = catman->AddCategoryEntry(JAVASCRIPT_GLOBAL_CONSTRUCTOR_CATEGORY,
-				  "HippoControl",
-				  HIPPO_CONTROL_CONTRACTID,
-				  PR_TRUE, PR_TRUE, getter_Copies(previous));
+                                  "HippoControl",
+                                  HIPPO_CONTROL_CONTRACTID,
+                                  PR_TRUE, PR_TRUE, getter_Copies(previous));
     
     NS_ENSURE_SUCCESS(rv, rv);
 
@@ -45,17 +45,17 @@ registerGlobalConstructors(nsIComponentManager *aCompMgr,
 
 static const nsModuleComponentInfo components[] = {
     { 
-	"Mugshot Service",
-	HIPPO_CONTROL_CID,
-	HIPPO_CONTROL_CONTRACTID,
-	hippoControlConstructor,
-	registerGlobalConstructors,
-	NULL, // mFactoryDestrucrtor
-	NULL, // mGetInterfacesProcPtr
-	NS_CI_INTERFACE_GETTER_NAME(hippoControl),
-	NULL, // mGetLanguageHelperProc
-	&NS_CLASSINFO_NAME(hippoControl),
-	nsIClassInfo::DOM_OBJECT
+        "Mugshot Service",
+        HIPPO_CONTROL_CID,
+        HIPPO_CONTROL_CONTRACTID,
+        hippoControlConstructor,
+        registerGlobalConstructors,
+        NULL, // mFactoryDestrucrtor
+        NULL, // mGetInterfacesProcPtr
+        NS_CI_INTERFACE_GETTER_NAME(hippoControl),
+        NULL, // mGetLanguageHelperProc
+        &NS_CLASSINFO_NAME(hippoControl),
+        nsIClassInfo::DOM_OBJECT
     },
     {
         "Mugshot Extension",

@@ -26,7 +26,7 @@ typedef struct
 #define HIPPO_IS_DATA_CACHE_CLASS(klass)   (G_TYPE_CHECK_CLASS_TYPE ((klass), HIPPO_TYPE_DATA_CACHE))
 #define HIPPO_DATA_CACHE_GET_CLASS(obj)    (G_TYPE_INSTANCE_GET_CLASS ((obj), HIPPO_TYPE_DATA_CACHE, HippoDataCacheClass))
 
-GType        	 hippo_data_cache_get_type               (void) G_GNUC_CONST;
+GType            hippo_data_cache_get_type               (void) G_GNUC_CONST;
 
 HippoDataCache*  hippo_data_cache_new                    (HippoConnection *connection);
 

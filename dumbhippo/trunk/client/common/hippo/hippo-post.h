@@ -17,7 +17,7 @@ typedef struct _HippoPostClass HippoPostClass;
 #define HIPPO_IS_POST_CLASS(klass)   (G_TYPE_CHECK_CLASS_TYPE ((klass), HIPPO_TYPE_POST))
 #define HIPPO_POST_GET_CLASS(obj)    (G_TYPE_INSTANCE_GET_CLASS ((obj), HIPPO_TYPE_POST, HippoPostClass))
 
-GType        	 hippo_post_get_type                  (void) G_GNUC_CONST;
+GType            hippo_post_get_type                  (void) G_GNUC_CONST;
 HippoPost*       hippo_post_new                       (const char *guid);
 
 const char*      hippo_post_get_guid                  (HippoPost *post);

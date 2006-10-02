@@ -50,7 +50,7 @@ struct _HippoCanvasBlockClass {
     void (* unexpand)              (HippoCanvasBlock *canvas_block);
 };
 
-GType        	 hippo_canvas_block_get_type    (void) G_GNUC_CONST;
+GType            hippo_canvas_block_get_type    (void) G_GNUC_CONST;
 
 HippoCanvasItem* hippo_canvas_block_new         (HippoBlockType type,
                                                  HippoActions  *actions);

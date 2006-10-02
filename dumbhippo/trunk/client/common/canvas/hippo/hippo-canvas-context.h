@@ -57,7 +57,7 @@ struct _HippoCanvasContextIface {
                                                  int                *y_p);
 };
 
-GType        	 hippo_canvas_context_get_type               (void) G_GNUC_CONST;
+GType            hippo_canvas_context_get_type               (void) G_GNUC_CONST;
 
 PangoLayout*     hippo_canvas_context_create_layout          (HippoCanvasContext *context);
 

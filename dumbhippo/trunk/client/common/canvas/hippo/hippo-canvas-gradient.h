@@ -19,7 +19,7 @@ typedef struct _HippoCanvasGradientClass HippoCanvasGradientClass;
 #define HIPPO_IS_CANVAS_GRADIENT_CLASS(klass)   (G_TYPE_CHECK_CLASS_TYPE ((klass), HIPPO_TYPE_CANVAS_GRADIENT))
 #define HIPPO_CANVAS_GRADIENT_GET_CLASS(obj)    (G_TYPE_INSTANCE_GET_CLASS ((obj), HIPPO_TYPE_CANVAS_GRADIENT, HippoCanvasGradientClass))
 
-GType        	 hippo_canvas_gradient_get_type               (void) G_GNUC_CONST;
+GType            hippo_canvas_gradient_get_type               (void) G_GNUC_CONST;
 
 HippoCanvasItem* hippo_canvas_gradient_new    (void);
 

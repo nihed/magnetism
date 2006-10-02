@@ -19,7 +19,7 @@ typedef struct _HippoCanvasStackClass HippoCanvasStackClass;
 #define HIPPO_IS_CANVAS_STACK_CLASS(klass)   (G_TYPE_CHECK_CLASS_TYPE ((klass), HIPPO_TYPE_CANVAS_STACK))
 #define HIPPO_CANVAS_STACK_GET_CLASS(obj)    (G_TYPE_INSTANCE_GET_CLASS ((obj), HIPPO_TYPE_CANVAS_STACK, HippoCanvasStackClass))
 
-GType        	 hippo_canvas_stack_get_type               (void) G_GNUC_CONST;
+GType            hippo_canvas_stack_get_type               (void) G_GNUC_CONST;
 
 HippoCanvasItem* hippo_canvas_stack_new    (void);
 

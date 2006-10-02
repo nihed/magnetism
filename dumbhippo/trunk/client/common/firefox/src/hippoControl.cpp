@@ -35,7 +35,7 @@ hippoControl::~hippoControl()
     Stop();
     
     if (listener_)
-	listener_->Release();
+        listener_->Release();
 }
 
 NS_IMPL_ISUPPORTS1_CI(hippoControl, hippoIControl);
@@ -98,7 +98,7 @@ NS_IMETHODIMP hippoControl::SetListener(hippoIControlListener *listener)
 {
     listener->AddRef();
     if (listener_)
-	listener_->Release();
+        listener_->Release();
     listener_ = listener;
     
     return NS_OK;
@@ -184,7 +184,7 @@ NS_IMETHODIMP hippoControl::NotifyPageShared(const nsACString & postId, const ns
     nsCOMPtr<nsIObserverService> observerService;
     observerService = do_GetService("@mozilla.org/observer-service;1", &rv);
     if (NS_FAILED(rv))
- 	return rv;
+        return rv;
 
     nsCString notifyData(postId);
     notifyData.Append(",");
@@ -254,12 +254,12 @@ hippoControl::checkServerUrl(const nsACString &serverUrl, nsACString &hostPort)
     nsCOMPtr<nsIIOService> ioservice;
     ioservice = do_GetService(kIOServiceCID, &rv);
     if (NS_FAILED(rv))
- 	return rv;
+        return rv;
 
     nsCOMPtr<nsIURI> uri;
     ioservice->NewURI(serverUrl, NULL, NULL, getter_AddRefs(uri));
     if (NS_FAILED(rv))
- 	return rv;
+        return rv;
 
     nsCString scheme;
 
@@ -274,14 +274,14 @@ hippoControl::checkServerUrl(const nsACString &serverUrl, nsACString &hostPort)
     nsCOMPtr<nsIScriptSecurityManager> secMan;
     secMan = do_GetService(NS_SCRIPTSECURITYMANAGER_CONTRACTID, &rv);
     if (NS_FAILED(rv))
- 	return rv;
+        return rv;
 
     // Find out if we should bypass our checks 
     PRBool crossSiteMugshotEnabled;
     rv = secMan->IsCapabilityEnabled("UniversalMugshotControl",
                                      &crossSiteMugshotEnabled);
     if (NS_FAILED(rv))
- 	return rv;
+        return rv;
 
     if (!crossSiteMugshotEnabled) {
         rv = secMan->CheckSameOrigin(NULL, uri);

@@ -32,7 +32,7 @@ struct _HippoCanvasImageClass {
     HippoCanvasBoxClass parent_class;
 };
 
-GType        	 hippo_canvas_image_get_type               (void) G_GNUC_CONST;
+GType            hippo_canvas_image_get_type               (void) G_GNUC_CONST;
 
 HippoCanvasItem* hippo_canvas_image_new    (void);
 

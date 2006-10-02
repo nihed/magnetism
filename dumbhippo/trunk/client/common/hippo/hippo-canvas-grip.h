@@ -18,7 +18,7 @@ typedef struct _HippoCanvasGripClass HippoCanvasGripClass;
 #define HIPPO_IS_CANVAS_GRIP_CLASS(klass)   (G_TYPE_CHECK_CLASS_TYPE ((klass), HIPPO_TYPE_CANVAS_GRIP))
 #define HIPPO_CANVAS_GRIP_GET_CLASS(obj)    (G_TYPE_INSTANCE_GET_CLASS ((obj), HIPPO_TYPE_CANVAS_GRIP, HippoCanvasGripClass))
 
-GType        	 hippo_canvas_grip_get_type               (void) G_GNUC_CONST;
+GType            hippo_canvas_grip_get_type               (void) G_GNUC_CONST;
 
 HippoCanvasItem* hippo_canvas_grip_new    (void);
 

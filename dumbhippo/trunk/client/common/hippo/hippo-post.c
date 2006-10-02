@@ -63,12 +63,12 @@ hippo_post_class_init(HippoPostClass *klass)
           
     signals[CHANGED] =
         g_signal_new ("changed",
-            		  G_TYPE_FROM_CLASS (object_class),
-            		  G_SIGNAL_RUN_LAST,
-            		  0,
-            		  NULL, NULL,
-            		  g_cclosure_marshal_VOID__VOID,
-            		  G_TYPE_NONE, 0);
+                      G_TYPE_FROM_CLASS (object_class),
+                      G_SIGNAL_RUN_LAST,
+                      0,
+                      NULL, NULL,
+                      g_cclosure_marshal_VOID__VOID,
+                      G_TYPE_NONE, 0);
           
     object_class->finalize = hippo_post_finalize;
 }
@@ -234,7 +234,7 @@ gboolean
 hippo_post_get_ignored(HippoPost *post)
 {
     g_return_val_if_fail(HIPPO_IS_POST(post), FALSE);
-	return post->is_ignored;
+    return post->is_ignored;
 }
 
 gboolean
@@ -381,7 +381,7 @@ static void
 set_bool(HippoPost *post, gboolean *ip, gboolean value)
 {
     g_return_if_fail(HIPPO_IS_POST(post));
-	value = !!value;
+    value = !!value;
     if (*ip != value) {
         *ip = value;
         hippo_post_emit_changed(post);

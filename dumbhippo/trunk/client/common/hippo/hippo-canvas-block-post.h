@@ -19,7 +19,7 @@ typedef struct _HippoCanvasBlockPostClass HippoCanvasBlockPostClass;
 #define HIPPO_IS_CANVAS_BLOCK_POST_CLASS(klass)   (G_TYPE_CHECK_CLASS_TYPE ((klass), HIPPO_TYPE_CANVAS_BLOCK_POST))
 #define HIPPO_CANVAS_BLOCK_POST_GET_CLASS(obj)    (G_TYPE_INSTANCE_GET_CLASS ((obj), HIPPO_TYPE_CANVAS_BLOCK_POST, HippoCanvasBlockPostClass))
 
-GType        	 hippo_canvas_block_post_get_type    (void) G_GNUC_CONST;
+GType            hippo_canvas_block_post_get_type    (void) G_GNUC_CONST;
 
 HippoCanvasItem* hippo_canvas_block_post_new         (void);
 

@@ -95,7 +95,7 @@ struct _HippoCanvasBoxClass {
 };
 
 
-GType        	 hippo_canvas_box_get_type               (void) G_GNUC_CONST;
+GType            hippo_canvas_box_get_type               (void) G_GNUC_CONST;
 
 HippoCanvasItem* hippo_canvas_box_new    (void);
 

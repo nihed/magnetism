@@ -41,7 +41,7 @@ struct _HippoCanvasTextClass {
 
 };
 
-GType        	 hippo_canvas_text_get_type               (void) G_GNUC_CONST;
+GType            hippo_canvas_text_get_type               (void) G_GNUC_CONST;
 
 HippoCanvasItem* hippo_canvas_text_new    (void);
 

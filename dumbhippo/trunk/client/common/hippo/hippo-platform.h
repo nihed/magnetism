@@ -55,7 +55,7 @@ struct _HippoPlatformClass {
     void     (* set_signin)          (HippoPlatform *platform, gboolean    value);
 };
 
-GType        	 hippo_platform_get_type               (void) G_GNUC_CONST;
+GType            hippo_platform_get_type               (void) G_GNUC_CONST;
 
 HippoWindow*     hippo_platform_create_window          (HippoPlatform    *platform);
 void             hippo_platform_get_screen_info        (HippoPlatform    *platform,
@@ -66,7 +66,7 @@ gboolean         hippo_platform_read_login_cookie      (HippoPlatform    *platfo
                                                         HippoBrowserKind *origin_browser_p,
                                                         char            **username_p,
                                                         char            **password_p);
-void             hippo_platform_delete_login_cookie    (HippoPlatform *platform); 	                                    
+void             hippo_platform_delete_login_cookie    (HippoPlatform *platform);                                       
 const char*      hippo_platform_get_jabber_resource    (HippoPlatform *platform); 
 
 void             hippo_platform_open_url               (HippoPlatform   *platform,

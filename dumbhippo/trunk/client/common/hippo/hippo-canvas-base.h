@@ -18,7 +18,7 @@ typedef struct _HippoCanvasBaseClass HippoCanvasBaseClass;
 #define HIPPO_IS_CANVAS_BASE_CLASS(klass)   (G_TYPE_CHECK_CLASS_TYPE ((klass), HIPPO_TYPE_CANVAS_BASE))
 #define HIPPO_CANVAS_BASE_GET_CLASS(obj)    (G_TYPE_INSTANCE_GET_CLASS ((obj), HIPPO_TYPE_CANVAS_BASE, HippoCanvasBaseClass))
 
-GType        	 hippo_canvas_base_get_type               (void) G_GNUC_CONST;
+GType            hippo_canvas_base_get_type               (void) G_GNUC_CONST;
 
 HippoCanvasItem* hippo_canvas_base_new    (void);
 

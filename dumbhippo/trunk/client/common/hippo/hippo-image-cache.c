@@ -68,9 +68,9 @@ typedef struct {
 } GStringReader;
 
 static cairo_status_t
-gstring_read_func(void		*closure,
-                  unsigned char	*buffer,
-                  unsigned int	 buffer_length)
+gstring_read_func(void      *closure,
+                  unsigned char *buffer,
+                  unsigned int   buffer_length)
 {
     GStringReader *reader = closure;
     unsigned int remaining;

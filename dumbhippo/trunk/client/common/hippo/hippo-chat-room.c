@@ -40,9 +40,9 @@ struct _HippoChatRoom {
     int generation;
     int loading_generation;
     guint loading : 1;
-	/* date this chat room was last ignored; ignore for posts (including post-related chat rooms) */
-	/* is handled separately */
-	GTime date_last_ignored;
+    /* date this chat room was last ignored; ignore for posts (including post-related chat rooms) */
+    /* is handled separately */
+    GTime date_last_ignored;
 };
 
 struct _HippoChatRoomClass {
@@ -91,57 +91,57 @@ hippo_chat_room_class_init(HippoChatRoomClass *klass)
 
     signals[TITLE_CHANGED] =
         g_signal_new ("title-changed",
-            		  G_TYPE_FROM_CLASS (object_class),
-            		  G_SIGNAL_RUN_LAST,
-            		  0,
-            		  NULL, NULL,
-            		  g_cclosure_marshal_VOID__VOID,
-            		  G_TYPE_NONE, 0);
+                      G_TYPE_FROM_CLASS (object_class),
+                      G_SIGNAL_RUN_LAST,
+                      0,
+                      NULL, NULL,
+                      g_cclosure_marshal_VOID__VOID,
+                      G_TYPE_NONE, 0);
 
     signals[USER_STATE_CHANGED] =
         g_signal_new ("user-state-changed",
-            		  G_TYPE_FROM_CLASS (object_class),
-            		  G_SIGNAL_RUN_LAST,
-            		  0,
-            		  NULL, NULL,
-            		  g_cclosure_marshal_VOID__OBJECT,
-            		  G_TYPE_NONE, 1, G_TYPE_OBJECT);
+                      G_TYPE_FROM_CLASS (object_class),
+                      G_SIGNAL_RUN_LAST,
+                      0,
+                      NULL, NULL,
+                      g_cclosure_marshal_VOID__OBJECT,
+                      G_TYPE_NONE, 1, G_TYPE_OBJECT);
 
     signals[USER_JOINED] =
         g_signal_new ("user-joined",
-            		  G_TYPE_FROM_CLASS (object_class),
-            		  G_SIGNAL_RUN_LAST,
-            		  0,
-            		  NULL, NULL,
-            		  g_cclosure_marshal_VOID__OBJECT,
-            		  G_TYPE_NONE, 1, G_TYPE_OBJECT);
+                      G_TYPE_FROM_CLASS (object_class),
+                      G_SIGNAL_RUN_LAST,
+                      0,
+                      NULL, NULL,
+                      g_cclosure_marshal_VOID__OBJECT,
+                      G_TYPE_NONE, 1, G_TYPE_OBJECT);
 
     signals[MESSAGE_ADDED] =
         g_signal_new ("message-added",
-            		  G_TYPE_FROM_CLASS (object_class),
-            		  G_SIGNAL_RUN_LAST,
-            		  0,
-            		  NULL, NULL,
-            		  g_cclosure_marshal_VOID__POINTER,
-            		  G_TYPE_NONE, 1, G_TYPE_POINTER);
+                      G_TYPE_FROM_CLASS (object_class),
+                      G_SIGNAL_RUN_LAST,
+                      0,
+                      NULL, NULL,
+                      g_cclosure_marshal_VOID__POINTER,
+                      G_TYPE_NONE, 1, G_TYPE_POINTER);
 
     signals[LOADED] =
         g_signal_new ("loaded",
-            		  G_TYPE_FROM_CLASS (object_class),
-            		  G_SIGNAL_RUN_LAST,
-            		  0,
-            		  NULL, NULL,
-            		  g_cclosure_marshal_VOID__VOID,
-            		  G_TYPE_NONE, 0);
+                      G_TYPE_FROM_CLASS (object_class),
+                      G_SIGNAL_RUN_LAST,
+                      0,
+                      NULL, NULL,
+                      g_cclosure_marshal_VOID__VOID,
+                      G_TYPE_NONE, 0);
 
     signals[CLEARED] =
         g_signal_new ("cleared",
-            		  G_TYPE_FROM_CLASS (object_class),
-            		  G_SIGNAL_RUN_LAST,
-            		  0,
-            		  NULL, NULL,
-            		  g_cclosure_marshal_VOID__VOID,
-            		  G_TYPE_NONE, 0);
+                      G_TYPE_FROM_CLASS (object_class),
+                      G_SIGNAL_RUN_LAST,
+                      0,
+                      NULL, NULL,
+                      g_cclosure_marshal_VOID__VOID,
+                      G_TYPE_NONE, 0);
 
     object_class->finalize = hippo_chat_room_finalize;
 }
@@ -226,20 +226,20 @@ hippo_chat_room_get_ignored(HippoChatRoom  *room)
 {
     GTimeVal timeval;
 
-	g_return_val_if_fail(HIPPO_IS_CHAT_ROOM(room), FALSE);
+    g_return_val_if_fail(HIPPO_IS_CHAT_ROOM(room), FALSE);
 
-	// date_last_ignored being 0 means that the chat room was never ignored 
-	// or that the chat room was explicitly unignored; we want to check for 
-	// it explicitly here, rather than let this special meaning of 0 be lost
-	// in the check below
-	if (room->date_last_ignored == 0)
+    // date_last_ignored being 0 means that the chat room was never ignored 
+    // or that the chat room was explicitly unignored; we want to check for 
+    // it explicitly here, rather than let this special meaning of 0 be lost
+    // in the check below
+    if (room->date_last_ignored == 0)
         return FALSE;
 
     g_get_current_time(&timeval);
-	if (room->date_last_ignored + CHAT_ROOM_IGNORE_TIMEOUT < timeval.tv_sec)
-		return FALSE;
+    if (room->date_last_ignored + CHAT_ROOM_IGNORE_TIMEOUT < timeval.tv_sec)
+        return FALSE;
 
-	return TRUE;
+    return TRUE;
 }
 
 void
@@ -719,9 +719,9 @@ hippo_chat_message_get_serial(HippoChatMessage *message)
 
 void             
 hippo_chat_room_set_date_last_ignored(HippoChatRoom *room,
-							 	      GTime          date) 
+                                      GTime          date) 
 {
-	g_return_if_fail(HIPPO_IS_CHAT_ROOM(room));
+    g_return_if_fail(HIPPO_IS_CHAT_ROOM(room));
     if (room->date_last_ignored != date) {
         room->date_last_ignored = date;
     }
@@ -729,16 +729,16 @@ hippo_chat_room_set_date_last_ignored(HippoChatRoom *room,
 
 void             
 hippo_chat_room_set_ignored(HippoChatRoom    *room,
-						    gboolean          is_ignored)
+                            gboolean          is_ignored)
 {
     GTimeVal timeval;
 
-	g_return_if_fail(HIPPO_IS_CHAT_ROOM(room));
+    g_return_if_fail(HIPPO_IS_CHAT_ROOM(room));
     
-	if (is_ignored) {
+    if (is_ignored) {
         g_get_current_time(&timeval);
         room->date_last_ignored = timeval.tv_sec; 
-	} else {
+    } else {
         room->date_last_ignored = 0;
-	}
+    }
 }

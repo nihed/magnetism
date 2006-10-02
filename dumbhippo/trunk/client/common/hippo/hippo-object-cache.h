@@ -40,7 +40,7 @@ struct _HippoObjectCacheClass {
                         GError          **error);
 };
 
-GType        	 hippo_object_cache_get_type               (void) G_GNUC_CONST;
+GType            hippo_object_cache_get_type               (void) G_GNUC_CONST;
 
 HippoObjectCache* hippo_object_cache_new                    (HippoPlatform *platform);
 

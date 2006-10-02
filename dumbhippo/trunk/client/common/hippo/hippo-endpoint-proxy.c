@@ -49,37 +49,37 @@ hippo_endpoint_proxy_class_init(HippoEndpointProxyClass *klass)
     GObjectClass *object_class = G_OBJECT_CLASS (klass);
   
     signals[USER_JOIN] =
-	g_signal_new("user-join",
-		     G_TYPE_FROM_CLASS(object_class),
-		     G_SIGNAL_RUN_LAST,
-		     0,
-		     NULL, NULL,
-		     hippo_common_marshal_VOID__OBJECT_OBJECT_BOOLEAN,
-		     G_TYPE_NONE, 3, G_TYPE_OBJECT, G_TYPE_OBJECT, G_TYPE_BOOLEAN);
+    g_signal_new("user-join",
+             G_TYPE_FROM_CLASS(object_class),
+             G_SIGNAL_RUN_LAST,
+             0,
+             NULL, NULL,
+             hippo_common_marshal_VOID__OBJECT_OBJECT_BOOLEAN,
+             G_TYPE_NONE, 3, G_TYPE_OBJECT, G_TYPE_OBJECT, G_TYPE_BOOLEAN);
     signals[USER_LEAVE] = 
-	g_signal_new("user-leave",
-		     G_TYPE_FROM_CLASS(object_class),
-		     G_SIGNAL_RUN_LAST,
-		     0,
-		     NULL, NULL,
-		     hippo_common_marshal_VOID__OBJECT_OBJECT,
-		     G_TYPE_NONE, 2, G_TYPE_OBJECT, G_TYPE_OBJECT);
+    g_signal_new("user-leave",
+             G_TYPE_FROM_CLASS(object_class),
+             G_SIGNAL_RUN_LAST,
+             0,
+             NULL, NULL,
+             hippo_common_marshal_VOID__OBJECT_OBJECT,
+             G_TYPE_NONE, 2, G_TYPE_OBJECT, G_TYPE_OBJECT);
     signals[MESSAGE] = 
-	g_signal_new("message",
-		     G_TYPE_FROM_CLASS(object_class),
-		     G_SIGNAL_RUN_LAST,
-		     0,
-		     NULL, NULL,
-		     hippo_common_marshal_VOID__OBJECT_POINTER,
-		     G_TYPE_NONE, 2, G_TYPE_OBJECT, G_TYPE_POINTER);
+    g_signal_new("message",
+             G_TYPE_FROM_CLASS(object_class),
+             G_SIGNAL_RUN_LAST,
+             0,
+             NULL, NULL,
+             hippo_common_marshal_VOID__OBJECT_POINTER,
+             G_TYPE_NONE, 2, G_TYPE_OBJECT, G_TYPE_POINTER);
     signals[ENTITY_INFO] = 
-	g_signal_new("entity-info",
-		     G_TYPE_FROM_CLASS(object_class),
-		     G_SIGNAL_RUN_LAST,
-		     0,
-		     NULL, NULL,
-		     hippo_common_marshal_VOID__OBJECT,
-		     G_TYPE_NONE, 1, G_TYPE_OBJECT);
+    g_signal_new("entity-info",
+             G_TYPE_FROM_CLASS(object_class),
+             G_SIGNAL_RUN_LAST,
+             0,
+             NULL, NULL,
+             hippo_common_marshal_VOID__OBJECT,
+             G_TYPE_NONE, 1, G_TYPE_OBJECT);
 
     object_class->finalize = hippo_endpoint_proxy_finalize;
 }
@@ -208,23 +208,23 @@ hippo_endpoint_proxy_get_id (HippoEndpointProxy *proxy)
 
 static void
 on_room_user_state_changed(HippoChatRoom      *room,
-			   HippoPerson        *person,
-			   HippoEndpointProxy *proxy)
+               HippoPerson        *person,
+               HippoEndpointProxy *proxy)
 {
     HippoChatState new_state = hippo_chat_room_get_user_state(room, person);
 
     track_entity(proxy, HIPPO_ENTITY(person));
     
     if (new_state != HIPPO_CHAT_STATE_NONMEMBER) {
-	g_signal_emit(proxy, signals[USER_JOIN], 0, room, person, new_state == HIPPO_CHAT_STATE_PARTICIPANT);
+    g_signal_emit(proxy, signals[USER_JOIN], 0, room, person, new_state == HIPPO_CHAT_STATE_PARTICIPANT);
     } else {
-	g_signal_emit(proxy, signals[USER_LEAVE], 0, room, person);
+    g_signal_emit(proxy, signals[USER_LEAVE], 0, room, person);
     }
 }
 
 static void
 on_room_message_added(HippoChatRoom      *room,
-		      HippoChatMessage   *message,
+              HippoChatMessage   *message,
                       HippoEndpointProxy *proxy)
 {
     HippoPerson *person;
@@ -235,9 +235,9 @@ on_room_message_added(HippoChatRoom      *room,
 
 static void
 add_to_room_list(HippoEndpointProxy *proxy,
-		 GSList            **list,
-		 HippoChatState      state,
-		 HippoChatRoom      *room)
+         GSList            **list,
+         HippoChatState      state,
+         HippoChatRoom      *room)
 {
     gboolean already_there_once = g_slist_find(*list, room) != NULL;
     
@@ -245,9 +245,9 @@ add_to_room_list(HippoEndpointProxy *proxy,
     hippo_connection_join_chat_room(hippo_data_cache_get_connection(proxy->data_cache), room, state);
 
     g_signal_connect(room, "user-state-changed",
-		     G_CALLBACK(on_room_user_state_changed), proxy);
+             G_CALLBACK(on_room_user_state_changed), proxy);
     g_signal_connect(room, "message-added",
-		     G_CALLBACK(on_room_message_added), proxy);
+             G_CALLBACK(on_room_message_added), proxy);
 
     if (!already_there_once) {
         /* Emit the whole current state of the chat room */
@@ -278,16 +278,16 @@ add_to_room_list(HippoEndpointProxy *proxy,
 
 static void
 remove_from_room_list(HippoEndpointProxy *proxy,
-		      GSList            **list,
-		      HippoChatState      state,
+              GSList            **list,
+              HippoChatState      state,
                       HippoChatRoom      *room)
 {
     if (g_slist_find(*list, room)) {
-	*list = g_slist_remove(*list, room);
-	hippo_connection_leave_chat_room(hippo_data_cache_get_connection(proxy->data_cache), room, state);
+    *list = g_slist_remove(*list, room);
+    hippo_connection_leave_chat_room(hippo_data_cache_get_connection(proxy->data_cache), room, state);
 
-	g_signal_handlers_disconnect_by_func(room, (void *)on_room_user_state_changed, proxy);
-	g_signal_handlers_disconnect_by_func(room, (void *)on_room_message_added, proxy);
+    g_signal_handlers_disconnect_by_func(room, (void *)on_room_user_state_changed, proxy);
+    g_signal_handlers_disconnect_by_func(room, (void *)on_room_message_added, proxy);
     }
 }
 
@@ -300,12 +300,12 @@ hippo_endpoint_proxy_unregister (HippoEndpointProxy *proxy)
         return;
     
     while (proxy->visitor_rooms) {
-	remove_from_room_list(proxy, &proxy->visitor_rooms,
-			      HIPPO_CHAT_STATE_VISITOR, proxy->visitor_rooms->data);
+    remove_from_room_list(proxy, &proxy->visitor_rooms,
+                  HIPPO_CHAT_STATE_VISITOR, proxy->visitor_rooms->data);
     }
     while (proxy->participant_rooms) {
-	remove_from_room_list(proxy, &proxy->participant_rooms,
-			      HIPPO_CHAT_STATE_PARTICIPANT, proxy->participant_rooms->data);
+    remove_from_room_list(proxy, &proxy->participant_rooms,
+                  HIPPO_CHAT_STATE_PARTICIPANT, proxy->participant_rooms->data);
     }
     
     clear_entities(proxy);
@@ -319,8 +319,8 @@ hippo_endpoint_proxy_unregister (HippoEndpointProxy *proxy)
 
 void    
 hippo_endpoint_proxy_join_chat_room (HippoEndpointProxy *proxy,
-				     const char         *chat_id,
-				     HippoChatState      state)
+                     const char         *chat_id,
+                     HippoChatState      state)
 {
     HippoChatRoom *room;
     
@@ -332,15 +332,15 @@ hippo_endpoint_proxy_join_chat_room (HippoEndpointProxy *proxy,
     room = hippo_data_cache_ensure_chat_room(proxy->data_cache, chat_id, HIPPO_CHAT_KIND_UNKNOWN);
 
     if (state == HIPPO_CHAT_STATE_VISITOR) {
-	add_to_room_list(proxy, &proxy->visitor_rooms, HIPPO_CHAT_STATE_VISITOR, room);
+    add_to_room_list(proxy, &proxy->visitor_rooms, HIPPO_CHAT_STATE_VISITOR, room);
     } else if (state == HIPPO_CHAT_STATE_PARTICIPANT) {
-	add_to_room_list(proxy, &proxy->participant_rooms, HIPPO_CHAT_STATE_PARTICIPANT, room);
+    add_to_room_list(proxy, &proxy->participant_rooms, HIPPO_CHAT_STATE_PARTICIPANT, room);
     }
 }
 
 void
 hippo_endpoint_proxy_leave_chat_room (HippoEndpointProxy *proxy,
-				      const char         *chat_id)
+                      const char         *chat_id)
 {
     HippoChatRoom *room;
     
@@ -348,7 +348,7 @@ hippo_endpoint_proxy_leave_chat_room (HippoEndpointProxy *proxy,
 
     room = hippo_data_cache_lookup_chat_room(proxy->data_cache, chat_id, NULL);
     if (!room)
-	return;
+    return;
 
     remove_from_room_list(proxy, &proxy->visitor_rooms, HIPPO_CHAT_STATE_VISITOR, room);
     remove_from_room_list(proxy, &proxy->participant_rooms, HIPPO_CHAT_STATE_PARTICIPANT, room);

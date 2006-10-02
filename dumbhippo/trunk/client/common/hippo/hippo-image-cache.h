@@ -21,7 +21,7 @@ typedef struct _HippoImageCacheClass HippoImageCacheClass;
 #define HIPPO_IS_IMAGE_CACHE_CLASS(klass)   (G_TYPE_CHECK_CLASS_TYPE ((klass), HIPPO_TYPE_IMAGE_CACHE))
 #define HIPPO_IMAGE_CACHE_GET_CLASS(obj)    (G_TYPE_INSTANCE_GET_CLASS ((obj), HIPPO_TYPE_IMAGE_CACHE, HippoImageCacheClass))
 
-GType        	 hippo_image_cache_get_type               (void) G_GNUC_CONST;
+GType            hippo_image_cache_get_type               (void) G_GNUC_CONST;
 
 HippoImageCache* hippo_image_cache_new                    (HippoPlatform            *platform);
 

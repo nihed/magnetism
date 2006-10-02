@@ -32,7 +32,7 @@ typedef struct _HippoActionsClass HippoActionsClass;
 #define HIPPO_IS_ACTIONS_CLASS(klass)   (G_TYPE_CHECK_CLASS_TYPE ((klass), HIPPO_TYPE_ACTIONS))
 #define HIPPO_ACTIONS_GET_CLASS(obj)    (G_TYPE_INSTANCE_GET_CLASS ((obj), HIPPO_TYPE_ACTIONS, HippoActionsClass))
 
-GType        	 hippo_actions_get_type               (void) G_GNUC_CONST;
+GType            hippo_actions_get_type               (void) G_GNUC_CONST;
 
 HippoActions* hippo_actions_new                       (HippoDataCache  *cache);
 

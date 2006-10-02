@@ -2141,7 +2141,7 @@ make_absolute_url(HippoConnection *connection,
     char *url;
 
     if (relative[0] != '/')
-	return g_strdup(relative);
+    return g_strdup(relative);
     
     server = hippo_platform_get_web_server(connection->platform);
     url = g_strdup_printf("http://%s%s", server, relative);
@@ -2385,7 +2385,7 @@ hippo_connection_parse_post(HippoConnection *connection,
     
     g_object_unref(post);
     if (post_return)
-    	*post_return = post;
+        *post_return = post;
 
     return TRUE;
 }
@@ -3902,10 +3902,10 @@ hippo_connection_visit_entity(HippoConnection *connection,
 
     home_url = hippo_entity_get_home_url(entity);
     if (home_url) {
-	hippo_platform_open_url(connection->platform,
+    hippo_platform_open_url(connection->platform,
                                 connection->login_browser,
                                 home_url);
     } else {
-	g_warning("Don't know how to go to the home page for entity '%s'", hippo_entity_get_guid(entity));
+    g_warning("Don't know how to go to the home page for entity '%s'", hippo_entity_get_guid(entity));
     }
 }

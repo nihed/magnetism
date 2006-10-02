@@ -30,7 +30,7 @@ typedef struct {
 #define HIPPO_IS_CONNECTION_CLASS(klass)   (G_TYPE_CHECK_CLASS_TYPE ((klass), HIPPO_TYPE_CONNECTION))
 #define HIPPO_CONNECTION_GET_CLASS(obj)    (G_TYPE_INSTANCE_GET_CLASS ((obj), HIPPO_TYPE_CONNECTION, HippoConnectionClass))
 
-GType        	 hippo_connection_get_type                  (void) G_GNUC_CONST;
+GType            hippo_connection_get_type                  (void) G_GNUC_CONST;
 HippoConnection *hippo_connection_new                       (HippoPlatform    *platform);
 
 HippoPlatform*   hippo_connection_get_platform              (HippoConnection  *connection);

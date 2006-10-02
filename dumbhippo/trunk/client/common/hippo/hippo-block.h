@@ -44,7 +44,7 @@ struct _HippoBlockClass {
     GObjectClass parent;
 };
 
-GType        	 hippo_block_get_type                  (void) G_GNUC_CONST;
+GType            hippo_block_get_type                  (void) G_GNUC_CONST;
 HippoBlock*      hippo_block_new                       (const char    *guid,
                                                         HippoBlockType type);
 
