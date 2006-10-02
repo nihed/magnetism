@@ -241,7 +241,7 @@
   (return-type "none")
   (parameters
     '("HippoCanvasItem*" "child")
-    '("HippoPackFlags" "flags")
+    '("HippoPackFlags" "flags" (default "0"))
   )
 )
 
