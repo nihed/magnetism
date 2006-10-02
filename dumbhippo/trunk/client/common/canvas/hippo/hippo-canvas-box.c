@@ -6,8 +6,8 @@
 
 static void hippo_canvas_box_init               (HippoCanvasBox          *box);
 static void hippo_canvas_box_class_init         (HippoCanvasBoxClass     *klass);
-static void hippo_canvas_box_iface_init         (HippoCanvasItemClass    *klass);
-static void hippo_canvas_box_iface_init_context (HippoCanvasContextClass *klass);
+static void hippo_canvas_box_iface_init         (HippoCanvasItemIface    *klass);
+static void hippo_canvas_box_iface_init_context (HippoCanvasContextIface *klass);
 static void hippo_canvas_box_dispose            (GObject                 *object);
 static void hippo_canvas_box_finalize           (GObject                 *object);
 
@@ -129,7 +129,7 @@ G_DEFINE_TYPE_WITH_CODE(HippoCanvasBox, hippo_canvas_box, G_TYPE_OBJECT,
                         G_IMPLEMENT_INTERFACE(HIPPO_TYPE_CANVAS_CONTEXT, hippo_canvas_box_iface_init_context));
 
 static void
-hippo_canvas_box_iface_init(HippoCanvasItemClass *klass)
+hippo_canvas_box_iface_init(HippoCanvasItemIface *klass)
 {
     klass->sink = hippo_canvas_box_sink;
     klass->set_context = hippo_canvas_box_set_context;
@@ -147,7 +147,7 @@ hippo_canvas_box_iface_init(HippoCanvasItemClass *klass)
 }
 
 static void
-hippo_canvas_box_iface_init_context (HippoCanvasContextClass *klass)
+hippo_canvas_box_iface_init_context (HippoCanvasContextIface *klass)
 {
     klass->create_layout = hippo_canvas_box_create_layout;
     klass->load_image = hippo_canvas_box_load_image;

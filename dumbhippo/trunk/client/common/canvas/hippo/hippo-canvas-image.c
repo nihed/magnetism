@@ -6,7 +6,7 @@
 
 static void      hippo_canvas_image_init                (HippoCanvasImage       *image);
 static void      hippo_canvas_image_class_init          (HippoCanvasImageClass  *klass);
-static void      hippo_canvas_image_iface_init          (HippoCanvasItemClass   *item_class);
+static void      hippo_canvas_image_iface_init          (HippoCanvasItemIface   *item_class);
 static void      hippo_canvas_image_finalize            (GObject                *object);
 
 static void hippo_canvas_image_set_property (GObject      *object,
@@ -57,10 +57,10 @@ hippo_canvas_image_init(HippoCanvasImage *image)
     image->scale_height = -1;
 }
 
-static HippoCanvasItemClass *item_parent_class;
+static HippoCanvasItemIface *item_parent_class;
 
 static void
-hippo_canvas_image_iface_init(HippoCanvasItemClass *item_class)
+hippo_canvas_image_iface_init(HippoCanvasItemIface *item_class)
 {
     item_parent_class = g_type_interface_peek_parent(item_class);
 

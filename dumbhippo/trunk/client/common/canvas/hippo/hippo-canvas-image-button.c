@@ -5,7 +5,7 @@
 
 static void      hippo_canvas_image_button_init                (HippoCanvasImageButton       *image);
 static void      hippo_canvas_image_button_class_init          (HippoCanvasImageButtonClass  *klass);
-static void      hippo_canvas_image_button_iface_init          (HippoCanvasItemClass   *item_class);
+static void      hippo_canvas_image_button_iface_init          (HippoCanvasItemIface   *item_class);
 static void      hippo_canvas_image_button_finalize            (GObject                *object);
 
 static void hippo_canvas_image_button_set_property (GObject      *object,
@@ -57,10 +57,10 @@ hippo_canvas_image_button_init(HippoCanvasImageButton *button)
     HIPPO_CANVAS_BOX(button)->clickable = TRUE;
 }
 
-static HippoCanvasItemClass *item_parent_class;
+static HippoCanvasItemIface *item_parent_class;
 
 static void
-hippo_canvas_image_button_iface_init(HippoCanvasItemClass *item_class)
+hippo_canvas_image_button_iface_init(HippoCanvasItemIface *item_class)
 {
     item_parent_class = g_type_interface_peek_parent(item_class);
 }

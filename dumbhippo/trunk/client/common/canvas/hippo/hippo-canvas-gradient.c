@@ -7,7 +7,7 @@
 
 static void      hippo_canvas_gradient_init                (HippoCanvasGradient       *gradient);
 static void      hippo_canvas_gradient_class_init          (HippoCanvasGradientClass  *klass);
-static void      hippo_canvas_gradient_iface_init          (HippoCanvasItemClass   *item_class);
+static void      hippo_canvas_gradient_iface_init          (HippoCanvasItemIface   *item_class);
 static void      hippo_canvas_gradient_finalize            (GObject                *object);
 
 static void hippo_canvas_gradient_set_property (GObject      *object,
@@ -57,10 +57,10 @@ hippo_canvas_gradient_init(HippoCanvasGradient *gradient)
 
 }
 
-static HippoCanvasItemClass *item_parent_class;
+static HippoCanvasItemIface *item_parent_class;
 
 static void
-hippo_canvas_gradient_iface_init(HippoCanvasItemClass *item_class)
+hippo_canvas_gradient_iface_init(HippoCanvasItemIface *item_class)
 {
     item_parent_class = g_type_interface_peek_parent(item_class);
 }

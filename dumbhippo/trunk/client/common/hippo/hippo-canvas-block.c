@@ -14,7 +14,7 @@
 
 static void      hippo_canvas_block_init                (HippoCanvasBlock       *block);
 static void      hippo_canvas_block_class_init          (HippoCanvasBlockClass  *klass);
-static void      hippo_canvas_block_iface_init          (HippoCanvasItemClass   *item_class);
+static void      hippo_canvas_block_iface_init          (HippoCanvasItemIface   *item_class);
 static void      hippo_canvas_block_dispose             (GObject                *object);
 static void      hippo_canvas_block_finalize            (GObject                *object);
 
@@ -261,10 +261,10 @@ hippo_canvas_block_init(HippoCanvasBlock *block)
     hippo_canvas_box_append(box3, block->age_item, HIPPO_PACK_END);
 }
 
-static HippoCanvasItemClass *item_parent_class;
+static HippoCanvasItemIface *item_parent_class;
 
 static void
-hippo_canvas_block_iface_init(HippoCanvasItemClass *item_class)
+hippo_canvas_block_iface_init(HippoCanvasItemIface *item_class)
 {
     item_parent_class = g_type_interface_peek_parent(item_class);
 }

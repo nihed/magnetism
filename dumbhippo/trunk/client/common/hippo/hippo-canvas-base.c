@@ -11,7 +11,7 @@
 
 static void      hippo_canvas_base_init                (HippoCanvasBase       *base);
 static void      hippo_canvas_base_class_init          (HippoCanvasBaseClass  *klass);
-static void      hippo_canvas_base_iface_init          (HippoCanvasItemClass   *item_class);
+static void      hippo_canvas_base_iface_init          (HippoCanvasItemIface   *item_class);
 static void      hippo_canvas_base_finalize            (GObject                *object);
 
 static void hippo_canvas_base_set_property (GObject      *object,
@@ -152,10 +152,10 @@ hippo_canvas_base_init(HippoCanvasBase *base)
 #endif
 }
 
-static HippoCanvasItemClass *item_parent_class;
+static HippoCanvasItemIface *item_parent_class;
 
 static void
-hippo_canvas_base_iface_init(HippoCanvasItemClass *item_class)
+hippo_canvas_base_iface_init(HippoCanvasItemIface *item_class)
 {
     item_parent_class = g_type_interface_peek_parent(item_class);
 

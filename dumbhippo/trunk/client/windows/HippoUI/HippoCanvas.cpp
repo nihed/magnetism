@@ -620,7 +620,7 @@ static void hippo_canvas_context_win_init       (HippoCanvasContextWin          
 static void hippo_canvas_context_win_class_init (HippoCanvasContextWinClass        *klass);
 static void hippo_canvas_context_win_dispose    (GObject                 *object);
 static void hippo_canvas_context_win_finalize   (GObject                 *object);
-static void hippo_canvas_context_win_iface_init (HippoCanvasContextClass *klass);
+static void hippo_canvas_context_win_iface_init (HippoCanvasContextIface *klass);
 
 
 static void hippo_canvas_context_win_set_property (GObject      *object,
@@ -698,7 +698,7 @@ hippo_canvas_context_win_class_init(HippoCanvasContextWinClass *klass)
 }
 
 static void
-hippo_canvas_context_win_iface_init (HippoCanvasContextClass *klass)
+hippo_canvas_context_win_iface_init (HippoCanvasContextIface *klass)
 {
     klass->create_layout = hippo_canvas_context_win_create_layout;
     klass->load_image = hippo_canvas_context_win_load_image;

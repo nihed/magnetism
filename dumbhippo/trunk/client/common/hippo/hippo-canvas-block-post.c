@@ -11,7 +11,7 @@
 
 static void      hippo_canvas_block_post_init                (HippoCanvasBlockPost       *block);
 static void      hippo_canvas_block_post_class_init          (HippoCanvasBlockPostClass  *klass);
-static void      hippo_canvas_block_post_iface_init          (HippoCanvasItemClass   *item_class);
+static void      hippo_canvas_block_post_iface_init          (HippoCanvasItemIface   *item_class);
 static void      hippo_canvas_block_post_dispose             (GObject                *object);
 static void      hippo_canvas_block_post_finalize            (GObject                *object);
 
@@ -141,10 +141,10 @@ hippo_canvas_block_post_init(HippoCanvasBlockPost *block_post)
     hippo_canvas_block_set_content(block, HIPPO_CANVAS_ITEM(box));
 }
 
-static HippoCanvasItemClass *item_parent_class;
+static HippoCanvasItemIface *item_parent_class;
 
 static void
-hippo_canvas_block_post_iface_init(HippoCanvasItemClass *item_class)
+hippo_canvas_block_post_iface_init(HippoCanvasItemIface *item_class)
 {
     item_parent_class = g_type_interface_peek_parent(item_class);
 

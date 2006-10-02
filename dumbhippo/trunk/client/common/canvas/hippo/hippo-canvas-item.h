@@ -57,12 +57,10 @@ typedef enum {
 
 #define HIPPO_TYPE_CANVAS_ITEM              (hippo_canvas_item_get_type ())
 #define HIPPO_CANVAS_ITEM(object)           (G_TYPE_CHECK_INSTANCE_CAST ((object), HIPPO_TYPE_CANVAS_ITEM, HippoCanvasItem))
-#define HIPPO_CANVAS_ITEM_CLASS(klass)      (G_TYPE_CHECK_CLASS_CAST ((klass), HIPPO_TYPE_CANVAS_ITEM, HippoCanvasItemClass))
 #define HIPPO_IS_CANVAS_ITEM(object)        (G_TYPE_CHECK_INSTANCE_TYPE ((object), HIPPO_TYPE_CANVAS_ITEM))
-#define HIPPO_IS_CANVAS_ITEM_CLASS(klass)   (G_TYPE_CHECK_CLASS_TYPE ((klass), HIPPO_TYPE_CANVAS_ITEM))
-#define HIPPO_CANVAS_ITEM_GET_CLASS(obj)    (G_TYPE_INSTANCE_GET_INTERFACE ((obj), HIPPO_TYPE_CANVAS_ITEM, HippoCanvasItemClass))
+#define HIPPO_CANVAS_ITEM_GET_IFACE(obj)    (G_TYPE_INSTANCE_GET_INTERFACE ((obj), HIPPO_TYPE_CANVAS_ITEM, HippoCanvasItemIface))
 
-struct _HippoCanvasItemClass {
+struct _HippoCanvasItemIface {
     GTypeInterface base_iface;
 
     void     (* sink)               (HippoCanvasItem  *canvas_item);

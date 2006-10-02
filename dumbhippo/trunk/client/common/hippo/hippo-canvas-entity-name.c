@@ -9,7 +9,7 @@
 
 static void      hippo_canvas_entity_name_init                (HippoCanvasEntityName       *text);
 static void      hippo_canvas_entity_name_class_init          (HippoCanvasEntityNameClass  *klass);
-static void      hippo_canvas_entity_name_iface_init          (HippoCanvasItemClass   *item_class);
+static void      hippo_canvas_entity_name_iface_init          (HippoCanvasItemIface   *item_class);
 static void      hippo_canvas_entity_name_dispose             (GObject                *object);
 static void      hippo_canvas_entity_name_finalize            (GObject                *object);
 
@@ -74,10 +74,10 @@ hippo_canvas_entity_name_init(HippoCanvasEntityName *entity_name)
     hippo_canvas_entity_name_update_text(entity_name);
 }
 
-static HippoCanvasItemClass *item_parent_class;
+static HippoCanvasItemIface *item_parent_class;
 
 static void
-hippo_canvas_entity_name_iface_init(HippoCanvasItemClass *item_class)
+hippo_canvas_entity_name_iface_init(HippoCanvasItemIface *item_class)
 {
     item_parent_class = g_type_interface_peek_parent(item_class);
 

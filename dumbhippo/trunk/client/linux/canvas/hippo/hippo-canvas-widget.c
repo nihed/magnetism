@@ -7,7 +7,7 @@
 
 static void      hippo_canvas_widget_init                (HippoCanvasWidget       *widget);
 static void      hippo_canvas_widget_class_init          (HippoCanvasWidgetClass  *klass);
-static void      hippo_canvas_widget_iface_init          (HippoCanvasItemClass   *item_class);
+static void      hippo_canvas_widget_iface_init          (HippoCanvasItemIface   *item_class);
 static void      hippo_canvas_widget_dispose             (GObject                *object);
 static void      hippo_canvas_widget_finalize            (GObject                *object);
 
@@ -57,10 +57,10 @@ hippo_canvas_widget_init(HippoCanvasWidget *widget)
 
 }
 
-static HippoCanvasItemClass *item_parent_class;
+static HippoCanvasItemIface *item_parent_class;
 
 static void
-hippo_canvas_widget_iface_init(HippoCanvasItemClass *item_class)
+hippo_canvas_widget_iface_init(HippoCanvasItemIface *item_class)
 {
     item_parent_class = g_type_interface_peek_parent(item_class);
 

@@ -18,7 +18,7 @@ hippo_canvas_context_get_type(void)
     if (type == 0) {
         static const GTypeInfo info =
             {
-                sizeof(HippoCanvasContextClass),
+                sizeof(HippoCanvasContextIface),
                 hippo_canvas_context_base_init,
                 NULL /* base_finalize */
             };
@@ -46,7 +46,7 @@ hippo_canvas_context_create_layout(HippoCanvasContext *context)
 {
     g_return_val_if_fail(HIPPO_IS_CANVAS_CONTEXT(context), NULL);
 
-    return HIPPO_CANVAS_CONTEXT_GET_CLASS(context)->create_layout(context);
+    return HIPPO_CANVAS_CONTEXT_GET_IFACE(context)->create_layout(context);
 }
 
 cairo_surface_t*
@@ -55,7 +55,7 @@ hippo_canvas_context_load_image(HippoCanvasContext *context,
 {
     g_return_val_if_fail(HIPPO_IS_CANVAS_CONTEXT(context), NULL);
 
-    return HIPPO_CANVAS_CONTEXT_GET_CLASS(context)->load_image(context, image_name);
+    return HIPPO_CANVAS_CONTEXT_GET_IFACE(context)->load_image(context, image_name);
 }
 
 guint32
@@ -64,7 +64,7 @@ hippo_canvas_context_get_color(HippoCanvasContext *context,
 {
     g_return_val_if_fail(HIPPO_IS_CANVAS_CONTEXT(context), 0);
 
-    return HIPPO_CANVAS_CONTEXT_GET_CLASS(context)->get_color(context, color);
+    return HIPPO_CANVAS_CONTEXT_GET_IFACE(context)->get_color(context, color);
 }
 
 void
@@ -74,7 +74,7 @@ hippo_canvas_context_register_widget_item(HippoCanvasContext *context,
     g_return_if_fail(HIPPO_IS_CANVAS_CONTEXT(context));
     g_return_if_fail(HIPPO_IS_CANVAS_ITEM(item));
     
-    HIPPO_CANVAS_CONTEXT_GET_CLASS(context)->register_widget_item(context, item);
+    HIPPO_CANVAS_CONTEXT_GET_IFACE(context)->register_widget_item(context, item);
 }
 
 void
@@ -84,7 +84,7 @@ hippo_canvas_context_unregister_widget_item (HippoCanvasContext *context,
     g_return_if_fail(HIPPO_IS_CANVAS_CONTEXT(context));
     g_return_if_fail(HIPPO_IS_CANVAS_ITEM(item));
     
-    HIPPO_CANVAS_CONTEXT_GET_CLASS(context)->unregister_widget_item(context, item);
+    HIPPO_CANVAS_CONTEXT_GET_IFACE(context)->unregister_widget_item(context, item);
 }
     
 void
@@ -96,5 +96,5 @@ hippo_canvas_context_translate_to_widget(HippoCanvasContext *context,
     g_return_if_fail(HIPPO_IS_CANVAS_CONTEXT(context));
     g_return_if_fail(HIPPO_IS_CANVAS_ITEM(item));
     
-    HIPPO_CANVAS_CONTEXT_GET_CLASS(context)->translate_to_widget(context, item, x_p, y_p);
+    HIPPO_CANVAS_CONTEXT_GET_IFACE(context)->translate_to_widget(context, item, x_p, y_p);
 }

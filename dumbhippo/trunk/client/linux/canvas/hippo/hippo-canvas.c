@@ -17,7 +17,7 @@ static void hippo_canvas_init       (HippoCanvas             *canvas);
 static void hippo_canvas_class_init (HippoCanvasClass        *klass);
 static void hippo_canvas_dispose    (GObject                 *object);
 static void hippo_canvas_finalize   (GObject                 *object);
-static void hippo_canvas_iface_init (HippoCanvasContextClass *klass);
+static void hippo_canvas_iface_init (HippoCanvasContextIface *klass);
 
 
 static void hippo_canvas_set_property (GObject      *object,
@@ -150,7 +150,7 @@ hippo_canvas_class_init(HippoCanvasClass *klass)
 }
 
 static void
-hippo_canvas_iface_init (HippoCanvasContextClass *klass)
+hippo_canvas_iface_init (HippoCanvasContextIface *klass)
 {
     klass->create_layout = hippo_canvas_create_layout;
     klass->load_image = hippo_canvas_load_image;

@@ -21,7 +21,7 @@
 G_BEGIN_DECLS
 
 typedef struct _HippoCanvasItem      HippoCanvasItem;
-typedef struct _HippoCanvasItemClass HippoCanvasItemClass;
+typedef struct _HippoCanvasItemIface HippoCanvasItemIface;
 
 typedef enum {
     HIPPO_STOCK_COLOR_BG_NORMAL,
@@ -29,16 +29,14 @@ typedef enum {
 } HippoStockColor;
 
 typedef struct _HippoCanvasContext      HippoCanvasContext;
-typedef struct _HippoCanvasContextClass HippoCanvasContextClass;
+typedef struct _HippoCanvasContextIface HippoCanvasContextIface;
 
 #define HIPPO_TYPE_CANVAS_CONTEXT              (hippo_canvas_context_get_type ())
 #define HIPPO_CANVAS_CONTEXT(object)           (G_TYPE_CHECK_INSTANCE_CAST ((object), HIPPO_TYPE_CANVAS_CONTEXT, HippoCanvasContext))
-#define HIPPO_CANVAS_CONTEXT_CLASS(klass)      (G_TYPE_CHECK_CLASS_CAST ((klass), HIPPO_TYPE_CANVAS_CONTEXT, HippoCanvasContextClass))
 #define HIPPO_IS_CANVAS_CONTEXT(object)        (G_TYPE_CHECK_INSTANCE_TYPE ((object), HIPPO_TYPE_CANVAS_CONTEXT))
-#define HIPPO_IS_CANVAS_CONTEXT_CLASS(klass)   (G_TYPE_CHECK_CLASS_TYPE ((klass), HIPPO_TYPE_CANVAS_CONTEXT))
-#define HIPPO_CANVAS_CONTEXT_GET_CLASS(obj)    (G_TYPE_INSTANCE_GET_INTERFACE ((obj), HIPPO_TYPE_CANVAS_CONTEXT, HippoCanvasContextClass))
+#define HIPPO_CANVAS_CONTEXT_GET_IFACE(obj)    (G_TYPE_INSTANCE_GET_INTERFACE ((obj), HIPPO_TYPE_CANVAS_CONTEXT, HippoCanvasContextIface))
 
-struct _HippoCanvasContextClass {
+struct _HippoCanvasContextIface {
     GTypeInterface base_iface;
 
     PangoLayout*     (* create_layout)  (HippoCanvasContext  *context);

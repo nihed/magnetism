@@ -6,7 +6,7 @@
 
 static void      hippo_canvas_link_init                (HippoCanvasLink       *link);
 static void      hippo_canvas_link_class_init          (HippoCanvasLinkClass  *klass);
-static void      hippo_canvas_link_iface_init          (HippoCanvasItemClass   *item_class);
+static void      hippo_canvas_link_iface_init          (HippoCanvasItemIface   *item_class);
 static void      hippo_canvas_link_finalize            (GObject                *object);
 
 static void hippo_canvas_link_set_property (GObject      *object,
@@ -57,10 +57,10 @@ hippo_canvas_link_init(HippoCanvasLink *link)
     pango_attr_list_unref(attrs);
 }
 
-static HippoCanvasItemClass *item_parent_class;
+static HippoCanvasItemIface *item_parent_class;
 
 static void
-hippo_canvas_link_iface_init(HippoCanvasItemClass *item_class)
+hippo_canvas_link_iface_init(HippoCanvasItemIface *item_class)
 {
     item_parent_class = g_type_interface_peek_parent(item_class);
 }
