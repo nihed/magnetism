@@ -1188,6 +1188,7 @@ hippo_canvas_open_test_window(void)
                         
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(root), shape1, HIPPO_PACK_EXPAND);
 
+#if 0
     /* Item that changes on hover */
     
     text = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
@@ -1201,7 +1202,8 @@ hippo_canvas_open_test_window(void)
     
     g_signal_connect(G_OBJECT(text), "hovering-changed",
                      G_CALLBACK(change_text_on_hovering), NULL);
-
+#endif
+    
     /* Fixed items */
     
     text = g_object_new(HIPPO_TYPE_CANVAS_LINK,
@@ -1234,22 +1236,26 @@ hippo_canvas_open_test_window(void)
     text = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
                         "size-mode", HIPPO_CANVAS_SIZE_ELLIPSIZE_END,
                         "text", "This is relatively long ellipsizing text",
+                        "background-color", 0x333333ff,
                         NULL);
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(shape2), text, HIPPO_PACK_EXPAND);
     
     text = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
                         "size-mode", HIPPO_CANVAS_SIZE_ELLIPSIZE_END,
                         "text", "Shorter text",
+                        "background-color", 0x888888ff,
                         NULL);
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(shape2), text, HIPPO_PACK_EXPAND);
 
     text = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
                         "text", "No expand/ellipse",
+                        "background-color", 0xaaaaaaff,
                         NULL);
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(shape2), text, 0);
     
     text = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
                         "text", "No ellipse",
+                        "background-color", 0xeeeeeeff,
                         NULL);
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(shape2), text, HIPPO_PACK_EXPAND);
     

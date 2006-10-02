@@ -32,6 +32,7 @@ static void hippo_canvas_text_paint_below_children       (HippoCanvasBox *box,
                                                           cairo_t        *cr,
                                                           HippoRectangle *damaged_box);
 static int  hippo_canvas_text_get_content_width_request  (HippoCanvasBox *box);
+static int  hippo_canvas_text_get_content_natural_width  (HippoCanvasBox *box);
 static int  hippo_canvas_text_get_content_height_request (HippoCanvasBox *box,
                                                           int             for_width);
 
@@ -91,6 +92,7 @@ hippo_canvas_text_class_init(HippoCanvasTextClass *klass)
 
     box_class->paint_below_children = hippo_canvas_text_paint_below_children;
     box_class->get_content_width_request = hippo_canvas_text_get_content_width_request;
+    box_class->get_content_natural_width = hippo_canvas_text_get_content_natural_width;
     box_class->get_content_height_request = hippo_canvas_text_get_content_height_request;
     
     g_object_class_install_property(object_class,
@@ -562,6 +564,54 @@ hippo_canvas_text_get_content_width_request(HippoCanvasBox *box)
     }
 
     return MAX(children_width, layout_width);
+}
+
+static int
+hippo_canvas_text_get_content_natural_width (HippoCanvasBox *box)
+{
+    HippoCanvasText *text;
+    HippoCanvasBoxClass *box_class;
+    int children_width;
+    int layout_width;
+
+    text = HIPPO_CANVAS_TEXT(box);
+    box_class = HIPPO_CANVAS_BOX_CLASS(hippo_canvas_text_parent_class);
+    
+    children_width = box_class->get_content_natural_width(box);
+
+    if (text->size_mode == HIPPO_CANVAS_SIZE_FULL_WIDTH && children_width < 0) {
+        /* natural width is same as request */
+        layout_width = -1;
+    } else {
+        /* request will have been 0, compute the real natural width here. */
+        /* FIXME if the children_width isn't -1 we recompute here what we've
+         * already computed in get_width_request
+         */
+        if (box->context != NULL) {
+            PangoLayout *layout = create_layout(text, -1);
+            pango_layout_get_size(layout, &layout_width, NULL);
+            layout_width /= PANGO_SCALE;
+        } else {
+            layout_width = 0;
+        }
+    }
+
+    if (children_width < 0 && layout_width < 0) {
+        return -1;
+    } else {
+        g_assert(layout_width >= 0);
+        if (children_width < 0) {
+            /* FIXME We have to re-request the children which is
+             * potentially expensive, maybe should rethink
+             * something. Text items rarely have children anyway
+             * though so it doesn't make any difference right now.
+             */
+            children_width = box_class->get_content_width_request(box);
+        }
+        
+        g_assert(children_width >= 0 && layout_width >= 0);
+        return MAX(children_width, layout_width);
+    }
 }
 
 static int
