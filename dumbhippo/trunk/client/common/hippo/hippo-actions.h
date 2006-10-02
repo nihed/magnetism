@@ -34,26 +34,28 @@ typedef struct _HippoActionsClass HippoActionsClass;
 
 GType            hippo_actions_get_type               (void) G_GNUC_CONST;
 
-HippoActions* hippo_actions_new                       (HippoDataCache  *cache);
+HippoActions* hippo_actions_new                     (HippoDataCache  *cache);
+void          hippo_actions_visit_post              (HippoActions    *actions,
+                                                     HippoPost       *post);
+void          hippo_actions_visit_entity            (HippoActions    *actions,
+                                                     HippoEntity     *entity);
+void          hippo_actions_load_entity_photo_async (HippoActions    *actions,
+                                                     HippoEntity     *entity,
+                                                     HippoCanvasItem *image_item);
+HippoEntity*  hippo_actions_lookup_entity           (HippoActions    *actions,
+                                                     const char      *entity_guid);
+void          hippo_actions_close_stacker           (HippoActions    *actions);
+void          hippo_actions_hush_stacker            (HippoActions    *actions);
+void          hippo_actions_open_home_page          (HippoActions    *actions);
+void          hippo_actions_hush_block              (HippoActions    *actions,
+                                                     HippoBlock      *block);
+void          hippo_actions_add_to_faves            (HippoActions    *actions,
+                                                     HippoBlock      *block);
+void          hippo_actions_join_chat_id            (HippoActions    *actions,
+                                                     const char      *chat_id);
+void          hippo_actions_join_chat_room          (HippoActions    *actions,
+                                                     HippoChatRoom   *room);
 
-void          hippo_actions_visit_post                (HippoActions    *actions,
-                                                       HippoPost       *post);
-void          hippo_actions_visit_entity              (HippoActions    *actions,
-                                                       HippoEntity     *entity);
-void          hippo_actions_load_entity_photo_async   (HippoActions    *actions,
-                                                       HippoEntity     *entity,
-                                                       HippoCanvasItem *image_item);
-
-HippoEntity*  hippo_actions_lookup_entity             (HippoActions    *actions,
-                                                       const char      *entity_guid);
-
-void          hippo_actions_close_stacker             (HippoActions    *actions);
-void          hippo_actions_hush_stacker              (HippoActions    *actions);
-void          hippo_actions_open_home_page            (HippoActions    *actions);
-void          hippo_actions_hush_block                (HippoActions    *actions,
-                                                       HippoBlock      *block);
-void          hippo_actions_add_to_faves              (HippoActions    *actions,
-                                                       HippoBlock      *block);
 
 G_END_DECLS
 

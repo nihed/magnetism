@@ -463,7 +463,7 @@ hippo_canvas_block_hovering_changed(HippoCanvasBox *box,
         g_object_ref(G_OBJECT(canvas_block));
         canvas_block->maybe_expand_timeout_active = TRUE;
         canvas_block->maybe_expand_timeout_canceled = FALSE;
-        g_timeout_add(500, expand_if_still_hovering_timeout, canvas_block);
+        g_timeout_add(750, expand_if_still_hovering_timeout, canvas_block);
     }
 }
 

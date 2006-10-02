@@ -1,0 +1,27 @@
+List of possible future enhancements / likely directions, we are doing these "as needed"
+
+- HippoCanvasContainer
+ 
+  add HippoCanvasContainer interface, add set_parent/get_parent on canvas item that 
+  gets/sets a container, move get_position and set_child_visible from box to container
+
+- Set font and text fg color on entire boxes w/ children
+
+  add some way to "cascade" properties; most simply, just having each parent create layouts
+  for its children that have the font of the parent would be very helpful and avoid
+  a bunch of "font" properties we have right now; but cascading certain other props
+  could also be right. Text foreground color for example. Maybe text properties
+  and only text properties are the ones that make sense here. In that case 
+  the whole feature can be done via the existing create_layout function.
+
+- Avoid having to always align images
+
+  image item should maybe default to center alignment instead of fill like most items do
+
+- Allow composite items to be activated/prelighted
+
+  e.g. in one place in mugshot we have a CLOSE link and then an X icon next to it; should be able 
+  to make the box containing those two a composite button, where the whole thing prelights 
+  as a whole, and you can connect to "activated" on the whole thing.
+
+

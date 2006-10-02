@@ -200,3 +200,17 @@ hippo_actions_add_to_faves(HippoActions    *actions,
 {
     /* FIXME */
 }
+
+void
+hippo_actions_join_chat_id(HippoActions    *actions,
+                           const char      *chat_id)
+{
+    /* FIXME */
+}
+
+void
+hippo_actions_join_chat_room(HippoActions    *actions,
+                             HippoChatRoom   *room)
+{
+    /* FIXME */
+}

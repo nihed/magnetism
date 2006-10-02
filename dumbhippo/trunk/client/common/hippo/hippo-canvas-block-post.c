@@ -8,6 +8,7 @@
 #include <hippo/hippo-canvas-text.h>
 #include <hippo/hippo-canvas-gradient.h>
 #include <hippo/hippo-canvas-link.h>
+#include <hippo/hippo-canvas-chat-preview.h>
 
 static void      hippo_canvas_block_post_init                (HippoCanvasBlockPost       *block);
 static void      hippo_canvas_block_post_class_init          (HippoCanvasBlockPostClass  *klass);
@@ -58,6 +59,8 @@ struct _HippoCanvasBlockPost {
     HippoCanvasItem *clicked_count_item;
     HippoCanvasBox *details_box_parent;
     HippoCanvasItem *details_box;
+    HippoCanvasBox *chat_preview_parent;
+    HippoCanvasItem *chat_preview;
 };
 
 struct _HippoCanvasBlockPostClass {
@@ -137,6 +140,16 @@ hippo_canvas_block_post_init(HippoCanvasBlockPost *block_post)
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(block_post->details_box), item, 0);
 
     g_signal_connect(G_OBJECT(item), "activated", G_CALLBACK(on_faves_activated), block_post);
+
+
+    block_post->chat_preview_parent = box;
+    block_post->chat_preview = g_object_new(HIPPO_TYPE_CANVAS_CHAT_PREVIEW,
+                                            NULL);
+    hippo_canvas_box_append(block_post->chat_preview_parent,
+                            block_post->chat_preview, 0);
+    hippo_canvas_box_set_child_visible(block_post->chat_preview_parent,
+                                       block_post->chat_preview,
+                                       FALSE); /* not expanded at first */
     
     hippo_canvas_block_set_content(block, HIPPO_CANVAS_ITEM(box));
 }
@@ -305,6 +318,9 @@ update_post(HippoCanvasBlockPost *canvas_block_post)
         g_object_set(G_OBJECT(canvas_block_post->description_item),
                      "text", NULL,
                      NULL);
+        g_object_set(G_OBJECT(canvas_block_post->chat_preview),
+                     "chat-room", NULL,
+                     NULL);
     } else {
         hippo_canvas_block_set_title(HIPPO_CANVAS_BLOCK(canvas_block_post),
                                      hippo_post_get_title(post));
@@ -312,6 +328,9 @@ update_post(HippoCanvasBlockPost *canvas_block_post)
                                       hippo_post_get_sender(post));
         g_object_set(G_OBJECT(canvas_block_post->description_item),
                      "text", hippo_post_get_description(post),
+                     NULL);
+        g_object_set(G_OBJECT(canvas_block_post->chat_preview),
+                     "chat-room", hippo_post_get_chat_room(post),
                      NULL);
     }
 }
@@ -357,7 +376,7 @@ hippo_canvas_block_post_set_post (HippoCanvasBlockPost *canvas_block_post,
                          canvas_block_post);
         canvas_block_post->post = post;
     }
-
+    
     update_post(canvas_block_post);
 }
 
@@ -408,6 +427,10 @@ hippo_canvas_block_post_expand(HippoCanvasBlock *canvas_block)
                                        block_post->details_box,
                                        TRUE);
 
+    hippo_canvas_box_set_child_visible(block_post->chat_preview_parent,
+                                       block_post->chat_preview,
+                                       TRUE);
+    
     g_object_set(G_OBJECT(block_post->description_item),
                  "size-mode", HIPPO_CANVAS_SIZE_WRAP_WORD,
                  "xalign", HIPPO_ALIGNMENT_START,
@@ -427,6 +450,10 @@ hippo_canvas_block_post_unexpand(HippoCanvasBlock *canvas_block)
     hippo_canvas_box_set_child_visible(block_post->details_box_parent,
                                        block_post->details_box,
                                        FALSE);
+    hippo_canvas_box_set_child_visible(block_post->chat_preview_parent,
+                                       block_post->chat_preview,
+                                       FALSE);
+    
     g_object_set(G_OBJECT(block_post->description_item),
                  "size-mode", HIPPO_CANVAS_SIZE_ELLIPSIZE_END,
                  "xalign", HIPPO_ALIGNMENT_FILL,

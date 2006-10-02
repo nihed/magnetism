@@ -105,7 +105,7 @@ hippo_chat_room_class_init(HippoChatRoomClass *klass)
                       0,
                       NULL, NULL,
                       g_cclosure_marshal_VOID__OBJECT,
-                      G_TYPE_NONE, 1, G_TYPE_OBJECT);
+                      G_TYPE_NONE, 1, HIPPO_TYPE_PERSON);
 
     signals[USER_JOINED] =
         g_signal_new ("user-joined",
@@ -114,7 +114,7 @@ hippo_chat_room_class_init(HippoChatRoomClass *klass)
                       0,
                       NULL, NULL,
                       g_cclosure_marshal_VOID__OBJECT,
-                      G_TYPE_NONE, 1, G_TYPE_OBJECT);
+                      G_TYPE_NONE, 1, HIPPO_TYPE_PERSON);
 
     signals[MESSAGE_ADDED] =
         g_signal_new ("message-added",

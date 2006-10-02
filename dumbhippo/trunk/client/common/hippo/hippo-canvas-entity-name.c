@@ -42,8 +42,6 @@ struct _HippoCanvasEntityName {
 
 struct _HippoCanvasEntityNameClass {
     HippoCanvasLinkClass parent_class;
-
-    void (* activated) (HippoCanvasLink *link);
 };
 
 #if 0
