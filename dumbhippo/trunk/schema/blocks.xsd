@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schema 
+	xmlns="http://www.w3.org/2001/XMLSchema" 
+	targetNamespace="http://dumbhippo.com/protocol/blocks" 
+	xmlns:dhb="http://dumbhippo.com/protocol/blocks"
+	xmlns:dh="http://dumbhippo.com/schema/common">
+	
+	<import namespace="http://dumbhippo.com/schema/common" schemaLocation="common.xsd"/>
+	
+	<simpleType name="BlockType">
+		<restriction base="NMTOKEN">
+			<enumeration value="POST"/>
+			<enumeration value="MUSIC_PERSON"/>
+			<enumeration value="GROUP_CHAT"/>
+			<enumeration value="GROUP_MEMBER"/>
+		</restriction>
+	</simpleType>
+
+	<complexType name="SimpleBlock">
+		<attribute name="guid" type="dh:Guid" use="required"/>
+		<attribute name="type" type="dhb:BlockType" use="required"/>
+		<attribute name="stackTimestamp" type="long" use="required"/>
+	</complexType>
+	
+   <complexType name="Block">
+		<complexContent>
+			<extension base="dhb:SimpleBlock">
+				<choice>
+					<element name="post" type="dhb:PostBlock"/>
+					<element name="musicPerson" type="dhb:MusicPersonBlock"/>
+					<element name="groupChat" type="dhb:GroupChatBlock"/>
+					<element name="groupMember" type="dhb:GroupMemberBlock"/>
+				</choice>
+			</extension>
+		</complexContent>
+   </complexType>
+	
+	<complexType name="PostBlock">
+		<attribute name="postId" type="dh:Guid" use="required"/>
+	</complexType>
+
+	<complexType name="GroupMemberBlock">
+		<attribute name="groupId" type="dh:Guid" use="required"/>
+		<attribute name="memberId" type="dh:Guid" use="required"/>
+		<attribute name="status" use="required">
+			<simpleType>
+				<restriction base="string">
+					<enumeration value="nonmember"/>
+					<enumeration value="removed"/>
+					<enumeration value="invited-to-follow"/>
+					<enumeration value="invited"/>
+					<enumeration value="follower"/>
+					<enumeration value="member"/>
+				</restriction>
+			</simpleType>
+		</attribute>
+	</complexType>
+	
+	<complexType name="GroupChatBlock">
+		<attribute name="groupId" type="dh:Guid" use="required"/>
+	</complexType>
+	
+	<complexType  name="MusicPersonBlock">
+		<attribute name="userId" type="dh:Guid" use="required"/>
+	</complexType>
+	
+	<!-- <message><blocksChanged/></message> -->
+
+	<complexType name="BlocksChanged">
+		<sequence>
+			<element name="block" type="dhb:SimpleBlock" minOccurs="0" maxOccurs="unbounded"/>
+		</sequence>
+	</complexType>
+	
+	<!--  The next two represent the get and reply of the "blocks" IQ -->
+
+	<complexType name="BlocksIQRequest">
+		<attribute name="ids" type="dh:GuidList"/>
+		<attribute name="maxBlocks" type="int" default="10"/>
+		<attribute name="changedSince" type="long"/>
+		<attribute name="stackedSince" type="long"/>
+	</complexType>
+	
+    <complexType name="BlocksIQResponse">
+		<choice minOccurs="0" maxOccurs="unbounded">
+			<element name="user" minOccurs="0" maxOccurs="unbounded" type="dh:User"/>
+			<element name="resource" minOccurs="0" maxOccurs="unbounded" type="dh:Resource"/>
+			<element name="feed" minOccurs="0" maxOccurs="unbounded" type="dh:Feed"/>
+			<element name="group" minOccurs="0" maxOccurs="unbounded" type="dh:Group"/>
+			<element name="post" minOccurs="0" maxOccurs="unbounded" type="dh:Post"/>
+			<element name="block" minOccurs="0" maxOccurs="unbounded" type="dhb:Block"/>
+		</choice>
+    </complexType>
+</schema>

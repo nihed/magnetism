@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schema xmlns="http://www.w3.org/2001/XMLSchema" 
+	targetNamespace="http://dumbhippo.com/schema/common" 
+    xmlns:dh="http://dumbhippo.com/schema/common">
+
+    <simpleType name="Guid">
+		<restriction base="string">
+			<pattern value="[A-Z0-9]{14}"/>
+		</restriction>
+	</simpleType>	
+	
+	<simpleType name="GuidList">
+		<list itemType="dh:Guid"/>
+	</simpleType>
+	
+	<simpleType name="SongDownloadSource">
+		<restriction base="NMTOKEN">
+			<enumeration value="ITUNES"/>
+			<enumeration value="RHAPSODY"/>
+			<enumeration value="YAHOO"/>
+		</restriction>
+	</simpleType>
+		
+	<complexType name="Track">
+		<sequence>
+			<element name="artist" type="string"/>
+			<element name="album" type="string"/>
+			<element name="name" type="string"/>
+			<element name="download" minOccurs="0" maxOccurs="unbounded">
+				<complexType>
+					<attribute name="source" type="dh:SongDownloadSource"/>
+					<attribute name="url" type="anyURI"/>
+				</complexType>
+			</element>
+		</sequence>
+	</complexType>
+	
+	<attributeGroup name="entityAttributes">
+		<attribute name="guid" type="dh:Guid" use="required"/>
+		<attribute name="name" type="string" use="required"/>
+		<attribute name="photoUrl" type="anyURI"/>
+		<attribute name="homeUrl" type="anyURI"/>
+	</attributeGroup>
+	
+	<complexType name="Resource">
+		<attributeGroup ref="dh:entityAttributes"/>
+	</complexType>
+        
+	<complexType name="User">
+		<sequence>
+			<element name="nowPlayingTrack" type="dh:Track" minOccurs="0" maxOccurs="1"/>
+		</sequence>
+		<attributeGroup ref="dh:entityAttributes"/>
+	</complexType>
+	
+	<complexType name="Feed">
+		<attributeGroup ref="dh:entityAttributes"/>
+	</complexType>
+	
+	<complexType name="Group">
+		<sequence>
+			<element name="recentMessages" minOccurs="0" maxOccurs="unbounded">
+				<complexType>
+					<sequence>
+						<element name="message" type="dh:ChatMessage" minOccurs="0" maxOccurs="unbounded"/>
+					</sequence>
+				</complexType>
+			</element>
+		</sequence>
+		<attributeGroup ref="dh:entityAttributes"/>
+	</complexType>
+        
+	<complexType name="ChatMessage">
+		<sequence>
+			<element name="text" type="string"/>
+		</sequence>
+		<attribute name="serial" type="long"/>
+		<attribute name="timestamp" type="long"/>
+		<attribute name="sender" type="dh:Guid"/>
+	</complexType>
+
+	<complexType name="Post">
+	    <annotation>
+    		<documentation>
+    			Represents information about a post. Note that for optional sub-elements, being empty is 
+    			different from being not present. Empty indicates an empty value. Not present indicates 
+    			an unknown value.
+   			</documentation>
+	    </annotation>
+		<sequence>
+			<element name="title" type="string"/>
+			<element name="description" type="string"/>
+			<element name="recipients" minOccurs="0">
+				<complexType>
+					<sequence>
+						<element name="recipient" type="dh:ChatMessage" minOccurs="0" maxOccurs="unbounded"/>
+					</sequence>
+				</complexType>
+			</element>
+			<element name="recentMessages" minOccurs="0">
+				<complexType>
+					<sequence>
+						<element name="message" type="dh:ChatMessage" minOccurs="0" maxOccurs="unbounded"/>
+					</sequence>
+				</complexType>
+			</element>
+		</sequence>
+		<attribute name="guid" type="dh:Guid" use="required"/>
+		<attribute name="poster" type="dh:Guid" use="required"/>
+		<attribute name="href" type="anyURI" use="required"/>
+		<attribute name="postDate" type="long" use="required"/>
+		<attribute name="totalViewers" type="int"/>
+	</complexType>
+</schema>
