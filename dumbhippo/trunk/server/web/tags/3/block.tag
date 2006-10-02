@@ -25,6 +25,6 @@
 		</span>
 	</span>
 	<div class="dh-stacker-block-right">
-		69 minutes ago
+		${block.timeAgo}
 	</div>
 </div>

@@ -1,5 +1,6 @@
 package com.dumbhippo.server;
 
+import com.dumbhippo.DateUtils;
 import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.UserBlockData;
 
@@ -19,6 +20,10 @@ public abstract class BlockView {
 	public UserBlockData getUserBlockData() {
 		return userBlockData;
 	}	
+	
+	public String getTimeAgo() {
+		return DateUtils.formatTimeAgo(block.getTimestamp());
+	}
 	
 	public abstract String getWebTitleType();
 	
