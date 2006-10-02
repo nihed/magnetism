@@ -128,6 +128,21 @@ hippo_canvas_item_get_width_request(HippoCanvasItem *canvas_item)
     return HIPPO_CANVAS_ITEM_GET_IFACE(canvas_item)->get_width_request(canvas_item);
 }
 
+/* returns -1 to just use the width request. The natural width should
+ * be thought of as the width at which alignment
+ * (HIPPO_ALIGNMENT_START etc.)  makes no difference but at which
+ * nothing will be chopped off or wrapped.  There is no real guarantee
+ * a container won't give an item more than the natural, this is just
+ * a hint for containers that can do something useful with it, or
+ * something.
+ */
+int
+hippo_canvas_item_get_natural_width(HippoCanvasItem *canvas_item)
+{
+    g_return_val_if_fail(HIPPO_IS_CANVAS_ITEM(canvas_item), -1);
+    return HIPPO_CANVAS_ITEM_GET_IFACE(canvas_item)->get_natural_width(canvas_item);
+}
+
 int
 hippo_canvas_item_get_height_request(HippoCanvasItem *canvas_item,
                                      int              for_width)

@@ -87,6 +87,7 @@ struct _HippoCanvasBoxClass {
                                                HippoRectangle   *damaged_box);
     
     int      (* get_content_width_request)    (HippoCanvasBox   *box);
+    int      (* get_content_natural_width)    (HippoCanvasBox   *box);
     int      (* get_content_height_request)   (HippoCanvasBox   *box,
                                                int               for_width);
 

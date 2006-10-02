@@ -71,6 +71,7 @@ struct _HippoCanvasItemIface {
                                      cairo_t          *cr,
                                      HippoRectangle   *damaged_box);
     int      (* get_width_request)  (HippoCanvasItem *canvas_item);
+    int      (* get_natural_width)  (HippoCanvasItem *canvas_item);
     int      (* get_height_request) (HippoCanvasItem *canvas_item,
                                      int              for_width);
     void     (* allocate)           (HippoCanvasItem *canvas_item,
@@ -106,6 +107,7 @@ void               hippo_canvas_item_sink               (HippoCanvasItem    *can
 void               hippo_canvas_item_set_context        (HippoCanvasItem    *canvas_item,
                                                          HippoCanvasContext *context);
 int                hippo_canvas_item_get_width_request  (HippoCanvasItem    *canvas_item);
+int                hippo_canvas_item_get_natural_width  (HippoCanvasItem    *canvas_item);
 int                hippo_canvas_item_get_height_request (HippoCanvasItem    *canvas_item,
                                                          int                 for_width);
 void               hippo_canvas_item_allocate           (HippoCanvasItem    *canvas_item,

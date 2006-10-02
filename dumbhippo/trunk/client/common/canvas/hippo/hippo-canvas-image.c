@@ -289,7 +289,6 @@ hippo_canvas_image_paint_below_children(HippoCanvasBox  *box,
 {
     HippoCanvasImage *image = HIPPO_CANVAS_IMAGE(box);
     int x, y, w, h;
-    cairo_matrix_t matrix;
     int image_width, image_height;
     double xscale;
     double yscale;

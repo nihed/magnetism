@@ -46,6 +46,7 @@ static void               hippo_canvas_box_paint               (HippoCanvasItem 
                                                                 cairo_t            *cr,
                                                                 HippoRectangle     *damaged_box);
 static int                hippo_canvas_box_get_width_request   (HippoCanvasItem    *item);
+static int                hippo_canvas_box_get_natural_width   (HippoCanvasItem    *item);
 static int                hippo_canvas_box_get_height_request  (HippoCanvasItem    *item,
                                                                 int                 for_width);
 static void               hippo_canvas_box_allocate            (HippoCanvasItem    *item,
@@ -75,6 +76,7 @@ static void hippo_canvas_box_paint_children             (HippoCanvasBox *box,
                                                          cairo_t        *cr,
                                                          HippoRectangle *damaged_box);
 static int  hippo_canvas_box_get_content_width_request  (HippoCanvasBox *box);
+static int  hippo_canvas_box_get_content_natural_width  (HippoCanvasBox *box);
 static int  hippo_canvas_box_get_content_height_request (HippoCanvasBox *box,
                                                          int             for_width);
 
@@ -135,6 +137,7 @@ hippo_canvas_box_iface_init(HippoCanvasItemIface *klass)
     klass->set_context = hippo_canvas_box_set_context;
     klass->paint = hippo_canvas_box_paint;
     klass->get_width_request = hippo_canvas_box_get_width_request;
+    klass->get_natural_width = hippo_canvas_box_get_natural_width;
     klass->get_height_request = hippo_canvas_box_get_height_request;
     klass->allocate = hippo_canvas_box_allocate;
     klass->get_allocation = hippo_canvas_box_get_allocation;
@@ -184,6 +187,7 @@ hippo_canvas_box_class_init(HippoCanvasBoxClass *klass)
     klass->paint_background = hippo_canvas_box_paint_background;
     klass->paint_children = hippo_canvas_box_paint_children;
     klass->get_content_width_request = hippo_canvas_box_get_content_width_request;
+    klass->get_content_natural_width = hippo_canvas_box_get_content_natural_width;
     klass->get_content_height_request = hippo_canvas_box_get_content_height_request;
 
     signals[HOVERING_CHANGED] =
@@ -964,6 +968,13 @@ count_height_expandable_children(HippoCanvasBox *box)
 }
 
 static int
+hippo_canvas_box_get_content_natural_width(HippoCanvasBox *box)
+{
+    /* This means "just use the width request" */
+    return -1;
+}
+
+static int
 hippo_canvas_box_get_content_width_request(HippoCanvasBox *box)
 {
     int total;
@@ -1107,6 +1118,32 @@ hippo_canvas_box_get_content_height_request(HippoCanvasBox *box,
     }
     
     return total;
+}
+
+static int
+hippo_canvas_box_get_natural_width(HippoCanvasItem *item)
+{
+    int content_width;
+    HippoCanvasBox *box;
+    HippoCanvasBoxClass *klass;
+
+    box = HIPPO_CANVAS_BOX(item);
+    klass = HIPPO_CANVAS_BOX_GET_CLASS(box);
+
+    /* do this even if box_width is set to maintain invariants */
+    content_width = (* klass->get_content_natural_width)(box);
+    
+    if (box->box_width >= 0) {
+        return box->box_width;
+    } else {
+        /* return -1 to just use the request */
+        if (content_width >= 0)
+            return content_width
+                + box->padding_left + box->padding_right
+                + box->border_left + box->border_right;
+        else
+            return -1;
+    }
 }
 
 static int

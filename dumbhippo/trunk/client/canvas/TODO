@@ -24,4 +24,7 @@ List of possible future enhancements / likely directions, we are doing these "as
   to make the box containing those two a composite button, where the whole thing prelights 
   as a whole, and you can connect to "activated" on the whole thing.
 
+- Naming of get_width_request / get_height_request
 
+  With get_natural_width there, naming these get_min_width/get_min_height makes some 
+  amount of sense. request is sort of gtk jargon.

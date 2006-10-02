@@ -1188,6 +1188,8 @@ hippo_canvas_open_test_window(void)
                         
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(root), shape1, HIPPO_PACK_EXPAND);
 
+    /* Item that changes on hover */
+    
     text = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
                         "text",
                         "Text item packed end",
@@ -1196,9 +1198,11 @@ hippo_canvas_open_test_window(void)
                         NULL);
     
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(root), text, HIPPO_PACK_END);
-
+    
     g_signal_connect(G_OBJECT(text), "hovering-changed",
                      G_CALLBACK(change_text_on_hovering), NULL);
+
+    /* Fixed items */
     
     text = g_object_new(HIPPO_TYPE_CANVAS_LINK,
                         "text",
@@ -1220,6 +1224,34 @@ hippo_canvas_open_test_window(void)
 
     hippo_canvas_box_move(HIPPO_CANVAS_BOX(shape1), text, 50, 50);
 
+    /* For get_natural_width testing */
+    
+    shape2 = g_object_new(HIPPO_TYPE_CANVAS_BOX,
+                          "orientation", HIPPO_ORIENTATION_HORIZONTAL,
+                          NULL);
+    hippo_canvas_box_append(HIPPO_CANVAS_BOX(root), shape2, HIPPO_PACK_END);
+
+    text = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
+                        "size-mode", HIPPO_CANVAS_SIZE_ELLIPSIZE_END,
+                        "text", "This is relatively long ellipsizing text",
+                        NULL);
+    hippo_canvas_box_append(HIPPO_CANVAS_BOX(shape2), text, HIPPO_PACK_EXPAND);
+    
+    text = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
+                        "size-mode", HIPPO_CANVAS_SIZE_ELLIPSIZE_END,
+                        "text", "Shorter text",
+                        NULL);
+    hippo_canvas_box_append(HIPPO_CANVAS_BOX(shape2), text, HIPPO_PACK_EXPAND);
+
+    text = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
+                        "text", "No expand/ellipse",
+                        NULL);
+    hippo_canvas_box_append(HIPPO_CANVAS_BOX(shape2), text, 0);
+    
+    text = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
+                        "text", "No ellipse",
+                        NULL);
+    hippo_canvas_box_append(HIPPO_CANVAS_BOX(shape2), text, HIPPO_PACK_EXPAND);
     
     hippo_canvas_set_root(HIPPO_CANVAS(canvas), root);
 
