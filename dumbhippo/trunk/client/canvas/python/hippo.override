@@ -32,3 +32,56 @@ ignore-glob
   *_get_type
   _*
 %%
+override hippo_canvas_context_translate_to_widget kwargs
+static PyObject *
+_wrap_hippo_canvas_context_translate_to_widget(PyGObject *self, PyObject *args, PyObject *kwargs)
+{
+    static char *kwlist[] = { "item", NULL };
+    PyGObject *item;
+    int x_p = 0, y_p = 0;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,"O!:HippoCanvasContext.translate_to_widget", kwlist, &PyHippoCanvasItem_Type, &item))
+        return NULL;
+
+    hippo_canvas_context_translate_to_widget(HIPPO_CANVAS_CONTEXT(self->obj), HIPPO_CANVAS_ITEM(item->obj), &x_p, &y_p);
+
+    return Py_BuildValue("(ii)", x_p, y_p);
+}
+%%
+override hippo_canvas_item_get_allocation noargs
+static PyObject *
+_wrap_hippo_canvas_item_get_allocation(PyGObject *self)
+{
+    int x_p = 0;
+    int y_p = 0;
+
+    hippo_canvas_item_get_allocation(HIPPO_CANVAS_ITEM(self->obj), &x_p, &y_p);
+
+    return Py_BuildValue("(ii)", x_p, y_p);
+}
+%%
+override-slot HippoEvent.tp_getattr
+static PyObject *
+_wrap_hippo_event_tp_getattr(PyObject *self, char *attr)
+{
+    HippoEvent *event = pyg_boxed_get(self, HippoEvent);
+
+    switch(event->type) {
+    case HIPPO_EVENT_MOTION_NOTIFY:
+        if (!strcmp(attr, "__members__"))
+            return Py_BuildValue("[sss]", "x", "y", "detail");
+        if (!strcmp(attr, "x"))
+            return PyInt_FromLong(event->x);
+        if (!strcmp(attr, "y"))
+            return PyInt_FromLong(event->y);
+        if (!strcmp(attr, "detail"))
+            return pyg_enum_from_gtype(HIPPO_TYPE_MOTION_DETAIL, event->u.motion.detail);
+        break;
+
+    default:
+        break;
+    }
+
+    return NULL;
+}
+%%

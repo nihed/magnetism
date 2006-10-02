@@ -1,6 +1,14 @@
 ;; -*- scheme -*-
 ; object definitions ...
 
+(define-boxed Event
+  (in-module "Hippo")
+  (c-name "HippoEvent")
+  (gtype-id "HIPPO_TYPE_EVENT")
+  (copy-func "hippo_event_copy")
+  (release-func "hippo_event_free")
+)
+
 (define-boxed Rectangle
   (in-module "Hippo")
   (c-name "HippoRectangle")
@@ -20,11 +28,12 @@
   (in-module "Hippo")
   (parent "GObject")
   (implements "HippoCanvasItem")
+  (implements "HippoCanvasContext")
   (c-name "HippoCanvasBox")
   (gtype-id "HIPPO_TYPE_CANVAS_BOX")
 )
 
-(define-object CanvasContext
+(define-interface CanvasContext
   (in-module "Hippo")
   (c-name "HippoCanvasContext")
   (gtype-id "HIPPO_TYPE_CANVAS_CONTEXT")
@@ -426,8 +435,6 @@
     '("int*" "y_p")
   )
 )
-
-
 
 ;; From hippo-canvas-gradient.h
 

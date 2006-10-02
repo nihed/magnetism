@@ -26,7 +26,8 @@ nodist_hippo_la_SOURCES = \
 
 PYTHONDEFS_FILES =				\
 	$(PYTHONSRCDIR)/hippo.defs		\
-	$(PYTHONSRCDIR)/hippo.override
+	$(PYTHONSRCDIR)/hippo.override		\
+	$(PYTHONSRCDIR)/arg-types.py
 
 CLEANFILES = hippo.c
 EXTRA_DIST += $(PYTHONDEFS_FILES)
