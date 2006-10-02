@@ -104,6 +104,10 @@ LIBHIPPO_SOURCEFILES =						\
 	$(COMMONSRCDIR)/hippo/hippo-entity-protected.h		\
 	$(COMMONSRCDIR)/hippo/hippo-endpoint-proxy.c		\
 	$(COMMONSRCDIR)/hippo/hippo-endpoint-proxy.h		\
+	$(COMMONSRCDIR)/hippo/hippo-feed.c			\
+	$(COMMONSRCDIR)/hippo/hippo-feed.h			\
+	$(COMMONSRCDIR)/hippo/hippo-group.c			\
+	$(COMMONSRCDIR)/hippo/hippo-group.h			\
 	$(COMMONSRCDIR)/hippo/hippo-image-cache.c		\
 	$(COMMONSRCDIR)/hippo/hippo-image-cache.h		\
 	$(COMMONSRCDIR)/hippo/hippo-object-cache.c		\
@@ -116,6 +120,8 @@ LIBHIPPO_SOURCEFILES =						\
 	$(COMMONSRCDIR)/hippo/hippo-platform.h			\
 	$(COMMONSRCDIR)/hippo/hippo-post.c			\
 	$(COMMONSRCDIR)/hippo/hippo-post.h			\
+	$(COMMONSRCDIR)/hippo/hippo-resource.c			\
+	$(COMMONSRCDIR)/hippo/hippo-resource.h			\
 	$(COMMONSRCDIR)/hippo/hippo-stack-manager.c		\
 	$(COMMONSRCDIR)/hippo/hippo-stack-manager.h		\
 	$(COMMONSRCDIR)/hippo/hippo-surface.c			\

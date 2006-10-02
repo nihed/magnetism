@@ -7,6 +7,7 @@
 #include <errno.h>
 #include "main.h"
 #include <hippo/hippo-stack-manager.h>
+#include <hippo/hippo-group.h>
 #include "hippo-platform-impl.h"
 #include "hippo-status-icon.h"
 #include "hippo-chat-window.h"
@@ -281,7 +282,12 @@ hippo_app_ignore_entity_id(HippoApp    *app,
         g_warning("Don't know about entity '%s' can't ignore", guid);
         return;
     }
-    hippo_entity_set_ignored(entity, TRUE);
+    if (!HIPPO_IS_GROUP(entity)) {
+        g_warning("Can't ignore entity %s, it's not a group", guid);
+        return;
+    }
+        
+    hippo_group_set_ignored(HIPPO_GROUP(entity), TRUE);
 }
 
 void
@@ -295,7 +301,11 @@ hippo_app_ignore_entity_chat_id(HippoApp    *app,
         g_warning("Don't know about entity '%s' can't ignore chat", guid);
         return;
     }
-    room = hippo_entity_get_chat_room(entity);
+    if (!HIPPO_IS_GROUP(entity)) {
+        g_warning("Can't ignore entity %s's chat room, entity isn't a group", guid);
+        return;
+    }
+    room = hippo_group_get_chat_room(HIPPO_GROUP(entity));
     hippo_chat_room_set_ignored(room, TRUE);
 }
 

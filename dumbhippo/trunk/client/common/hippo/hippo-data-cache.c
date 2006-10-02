@@ -1,6 +1,7 @@
 /* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 #include "hippo-data-cache-internal.h"
 #include "hippo-connection.h"
+#include "hippo-group.h"
 #include "hippo-block-post.h"
 #include <string.h>
 
@@ -488,7 +489,7 @@ hippo_data_cache_add_entity(HippoDataCache *cache,
     g_debug("Entity %s of type %d added, emitting entity-added", 
             hippo_entity_get_guid(entity), hippo_entity_get_entity_type(entity));
     
-    if (hippo_entity_get_entity_type(entity) == HIPPO_ENTITY_GROUP) {
+    if (HIPPO_IS_GROUP(entity)) {
         // we do not want to create a chat room for every group that the client learns about,
         // but we should look up if we already have the chat room, and then associate it with
         // the group, because we should only set the chat room to be fully loaded once it has 
@@ -496,7 +497,7 @@ hippo_data_cache_add_entity(HippoDataCache *cache,
         chat = hippo_data_cache_lookup_chat_room(cache, hippo_entity_get_guid(entity), NULL);
         
         if (chat) {
-            hippo_entity_set_chat_room(entity, chat);
+            hippo_group_set_chat_room(HIPPO_GROUP(entity), chat);
         }
     }
 
@@ -903,7 +904,7 @@ hippo_data_cache_ensure_chat_room(HippoDataCache  *cache,
         if (kind == HIPPO_CHAT_KIND_GROUP || kind == HIPPO_CHAT_KIND_UNKNOWN) {
             group = hippo_data_cache_lookup_entity(cache, chat_id);
             
-            if (group != NULL && hippo_entity_get_entity_type(group) != HIPPO_ENTITY_GROUP)
+            if (group != NULL && !HIPPO_IS_GROUP(group))
                 group = NULL;
             
             if (group != NULL && kind == HIPPO_CHAT_KIND_UNKNOWN) {
@@ -917,7 +918,7 @@ hippo_data_cache_ensure_chat_room(HippoDataCache  *cache,
             hippo_post_set_chat_room(post, room);
 
         if (group) {
-            hippo_entity_set_chat_room(group, room);
+            hippo_group_set_chat_room(HIPPO_GROUP(group), room);
         }
 
         g_signal_connect(room, "loaded",
