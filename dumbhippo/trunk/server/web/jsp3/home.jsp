@@ -12,7 +12,7 @@
 	<dht:faviconIncludes/>
 </head>
 
-<dht:requirePersonBean asOthersWouldSee="false" needExternalAccounts="true"/>
+<dht3:requirePersonBean/>
 <jsp:setProperty name="person" property="viewedUserId" value="${signin.user.id}"/>
 
 <body class="dh-gray-background-page dh-home-page">
@@ -24,22 +24,24 @@
 		</div>
 		<dht3:shinyBox color="grey">
 			<dht3:personHeader who="${person.viewedPerson}" isSelf="true"><a href="/account">Edit my Mugshot account</a></dht3:personHeader>
-			<%-- TODO: add back when using the new version of stacker <dht3:stacker userId="${person.viewedUserId}"/> --%>
+			<dht3:stacker stack="${person.stack}"/>
 		</dht3:shinyBox>
 		
 		<c:choose>
 			<c:when test="${person.contacts.size > 0}">
-				<c:forEach items="${person.contacts.list}" end="2" var="person">
+				<c:forEach items="${person.contactStacks.list}" end="2" var="personStack">
 					<dht3:shinyBox color="grey">				
-						<dht3:personHeader who="${person}" isSelf="false">
+						<dht3:personHeader who="${personStack.contact}" isSelf="false">
 					        <c:choose>
-			    		        <c:when test="${person.contact != null}">
-			    			        <dht:actionLink oneLine="true" href="javascript:dh.actions.removeContact('${person.viewPersonPageId}')" title="Remove this person from your friends list">Remove from friends</dht:actionLink>
+			    		        <c:when test="${personStack.contact.contact != null}">
+			    			        <dht:actionLink oneLine="true" href="javascript:dh.actions.removeContact('${personStack.contact.viewPersonPageId}')" title="Remove this person from your friends list">Remove from friends</dht:actionLink>
 				    	        </c:when>
 						        <c:otherwise>
-									<dht:actionLink oneLine="true" href="javascript:dh.actions.addContact('${person.viewPersonPageId}')" title="Add this person to your friends list">Add to friends</dht:actionLink>
+									<dht:actionLink oneLine="true" href="javascript:dh.actions.addContact('${personStack.contact.viewPersonPageId}')" title="Add this person to your friends list">Add to friends</dht:actionLink>
 								</c:otherwise>
-							</c:choose>	| <a href="/">Invite to a group</a></dht3:personHeader>
+							</c:choose>	| <a href="/">Invite to a group</a>
+						</dht3:personHeader>
+						<dht3:stacker stack="${personStack.stack}"/>							
 					</dht3:shinyBox>
 				</c:forEach>
 				<c:if test="${person.contacts.size > 3}">
