@@ -678,11 +678,21 @@ G_DEFINE_TYPE_WITH_CODE(HippoCanvasContextWin, hippo_canvas_context_win, G_TYPE_
 static void
 hippo_canvas_context_win_init(HippoCanvasContextWin *canvas_win)
 {
+    PangoFontDescription *desc;
+
     canvas_win->pointer = HIPPO_CANVAS_POINTER_UNSET;
     /* canvas_win->pango = pango_win32_get_context(); */
     PangoCairoFontMap *font_map = (PangoCairoFontMap*) pango_cairo_font_map_get_default();
     canvas_win->pango = pango_cairo_font_map_create_context(font_map);
     g_object_unref((void*) font_map);
+
+    desc = pango_font_description_new();
+    // Note that this matches the web font in our site.css 
+    // We only set Arial instead of Arial, sans-serif because
+    // pango cairo doesn't like a font list here.
+    pango_font_description_set_family_static(desc, "Arial");
+    pango_context_set_font_description(canvas_win->pango, desc);
+    pango_font_description_free(desc);
 }
 
 static void
@@ -767,21 +777,12 @@ hippo_canvas_context_win_create_layout(HippoCanvasContext *context)
 {
     HippoCanvasContextWin *canvas_win;
     PangoLayout *layout;
-    PangoFontDescription *desc;
 
     g_return_val_if_fail(HIPPO_IS_CANVAS_CONTEXT(context), NULL);
 
     canvas_win = HIPPO_CANVAS_CONTEXT_WIN(context);
 
     layout = pango_layout_new(canvas_win->pango);
-
-    // FIXME this is a hack since otherwise the pango context
-    // seems to default to serif. Probably the real fix is to
-    // figure out how to get pango to find the config file.
-    desc = pango_font_description_new();
-    pango_font_description_set_family_static(desc, "sans");
-    pango_layout_set_font_description(layout, desc);
-    pango_font_description_free(desc);
 
     return layout;
 }
