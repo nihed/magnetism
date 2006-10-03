@@ -6,6 +6,7 @@
 #include <string.h>
 #include "hippo-basics.h"
 #include "hippo-data-cache.h"
+#include "hippo-group.h"
 #include "hippo-xml-utils.h"
 
 GQuark
@@ -198,6 +199,7 @@ hippo_xml_split_process_value(HippoDataCache  *cache,
         *(const char **)info->location = value;
         break;
     case HIPPO_SPLIT_ENTITY:
+    case HIPPO_SPLIT_GROUP:
     case HIPPO_SPLIT_PERSON:
         if (!cache)
             g_error("HIPPO_SPLIT_ENTITY used without passing in a HippoDataCache");
@@ -221,6 +223,13 @@ hippo_xml_split_process_value(HippoDataCache  *cache,
             if (!HIPPO_IS_PERSON(entity)) {
                 g_set_error(error, HIPPO_XML_ERROR, HIPPO_XML_ERROR_INVALID_CONTENT,
                             "Value '%s' for attribute '%s' of node <%s/> doesn't point to a user",
+                            value, info->attribute_name, node_name);
+                return FALSE;
+            }
+        } else if ((info->flags & HIPPO_SPLIT_TYPE_MASK) == HIPPO_SPLIT_GROUP) {
+            if (!HIPPO_IS_GROUP(entity)) {
+                g_set_error(error, HIPPO_XML_ERROR, HIPPO_XML_ERROR_INVALID_CONTENT,
+                            "Value '%s' for attribute '%s' of node <%s/> doesn't point to a group",
                             value, info->attribute_name, node_name);
                 return FALSE;
             }

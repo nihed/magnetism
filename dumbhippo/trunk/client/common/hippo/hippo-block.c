@@ -1,6 +1,7 @@
 /* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 #include "hippo-common-internal.h"
 #include "hippo-block.h"
+#include "hippo-block-group-chat.h"
 #include "hippo-block-post.h"
 #include "hippo-xml-utils.h"
 #include <string.h>
@@ -342,6 +343,9 @@ hippo_block_new(const char    *guid,
     switch (type) {
     case HIPPO_BLOCK_TYPE_UNKNOWN:
         object_type = HIPPO_TYPE_BLOCK;
+        break;
+    case HIPPO_BLOCK_TYPE_GROUP_CHAT:
+        object_type = HIPPO_TYPE_BLOCK_GROUP_CHAT;
         break;
     case HIPPO_BLOCK_TYPE_POST:
         object_type = HIPPO_TYPE_BLOCK_POST;

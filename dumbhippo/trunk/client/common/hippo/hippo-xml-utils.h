@@ -27,7 +27,8 @@ typedef enum {                                              /* Destination type 
     HIPPO_SPLIT_URI      = 8,  /* Any URI                   const char *            */
     HIPPO_SPLIT_ENTITY   = 9,  /* DumbHippo entity          HippoEntity *           */
     HIPPO_SPLIT_PERSON   = 10, /* DumbHippo user            HippoPerson *           */
-    HIPPO_SPLIT_POST     = 11, /* Post                      HippoPost *             */
+    HIPPO_SPLIT_GROUP    = 11, /* DumbHippo group           HippoGroup *            */
+    HIPPO_SPLIT_POST     = 12, /* Post                      HippoPost *             */
 
     HIPPO_SPLIT_TYPE_MASK = 0x001f,
     
