@@ -949,16 +949,6 @@ count_expandable(GSList *children)
 }
 
 static int
-count_width_expandable_children(HippoCanvasBox *box)
-{
-    if (box->orientation == HIPPO_ORIENTATION_VERTICAL) {
-        return 0;
-    } else {
-        return count_expandable(box->children);
-    }
-}
-
-static int
 count_height_expandable_children(HippoCanvasBox *box)
 {
     if (box->orientation == HIPPO_ORIENTATION_HORIZONTAL) {
@@ -989,8 +979,10 @@ hippo_canvas_box_get_content_width_request(HippoCanvasBox *box)
             child->natural_width = hippo_canvas_item_get_natural_width(child->item);
             if (child->natural_width < 0)
                 child->natural_width = child->width_request;
+            if (child->natural_width < child->width_request)
+                g_warning("some child says its natural width is below its min width");
         }
-        
+
         if (child->fixed || !child->visible)
             continue;
         
@@ -1060,58 +1052,161 @@ hippo_canvas_box_get_content_natural_width(HippoCanvasBox *box)
         return total;
 }
 
+/*
+ If we have an allocation larger than our request (min width), we 
+ distribute the space among children as follows:
+ 1) for each child below natural width, bring it up to its natural width
+    a) count children with a request still below their natural width
+    b) find the child with the smallest needed expansion to reach natural width
+       and record this needed expansion
+    c) distribute among below-natural-width children the minimum of
+       (all space remaining to distribute) and
+       (smallest needed expansion times number of children to expand)
+    d) goto a) if children below natural width remain
+ 2) if extra space still remains, divide it equally among each child with expand=true
+ In other words, children will always grow to their natural width whether they are expand=true
+ or not. Below-natural-size children always grow before expand=true children.
+
+ Various optimizations are obviously possible here (keep track of flags for whether
+ we have any expandable / any natural!=minimum, for example)
+*/
+/* return TRUE if it needs to run again */
+static gboolean
+adjust_widths_up_to_natural_size(GSList *children,
+                                 int    *remaining_extra_space_p,
+                                 int    *adjusts)
+{
+    int i;
+    GSList *link;
+    int smallest_increase;
+    int n_needing_increase;
+    int space_to_distribute;
+
+    g_assert(*remaining_extra_space_p >= 0);
+
+    if (*remaining_extra_space_p == 0)
+        return FALSE;
+
+    smallest_increase = G_MAXINT;
+    n_needing_increase = 0;
+    i = 0;
+    for (link = children; link != NULL; link = link->next) {
+        HippoBoxChild *child = link->data;
+
+        if (!child->fixed && child->visible) {
+            int needed_increase;
+            needed_increase = child->natural_width - child->width_request; /* guaranteed to be >= 0 */
+            needed_increase -= adjusts[i]; /* see how much we've already increased */
+            if (needed_increase > 0) {
+                n_needing_increase += 1;
+                smallest_increase = MIN(smallest_increase, needed_increase);
+            }
+        }
+
+        ++i;
+    }
+
+    if (n_needing_increase == 0)
+        return FALSE;
+
+    g_assert(smallest_increase < G_MAXINT);
+
+    space_to_distribute = MIN(*remaining_extra_space_p, smallest_increase * n_needing_increase);
+    *remaining_extra_space_p -= space_to_distribute;
+
+    i = 0;
+    for (link = children; link != NULL; link = link->next) {
+        HippoBoxChild *child = link->data;
+
+        if (!child->fixed && child->visible) {
+            int needed_increase;
+            needed_increase = child->natural_width - child->width_request; /* guaranteed to be >= 0 */
+            needed_increase -= adjusts[i]; /* see how much we've already increased */
+            if (needed_increase > 0) {
+                int extra;
+                extra = (space_to_distribute / n_needing_increase);
+                n_needing_increase -= 1;
+                space_to_distribute -= extra;
+                adjusts[i] += extra;
+            }
+        }
+
+        ++i;
+    }
+
+    g_assert(n_needing_increase == 0);
+    g_assert(space_to_distribute == 0);
+
+    return TRUE;
+}
+
+static void
+adjust_widths_for_expandable(GSList *children,
+                             int    *remaining_extra_space_p,
+                             int    *adjusts)
+{
+    int i;
+    GSList *link;
+    int horizontal_expand_space;
+    int horizontal_expand_count;
+
+    horizontal_expand_space = *remaining_extra_space_p;
+    horizontal_expand_count = count_expandable(children);
+
+    if (horizontal_expand_count == 0)
+        return;
+
+    i = 0;
+    for (link = children; link != NULL; link = link->next) {
+        HippoBoxChild *child = link->data;
+
+        if (child->expand) {
+            int extra;
+            extra = (horizontal_expand_space / horizontal_expand_count);
+            horizontal_expand_count -= 1;
+            horizontal_expand_space -= extra;
+            adjusts[i] += extra;
+        }
+        ++i;
+    }
+
+    /* if we had anything to expand, then we will have used up all space */
+    g_assert(horizontal_expand_space == 0);
+    g_assert(horizontal_expand_count == 0);
+
+    *remaining_extra_space_p = 0;
+}
+
 static void
 compute_width_adjusts(GSList  *children,
                       int      children_length,
                       int      alloc_request_delta,
                       int    **adjusts_p)
 {
-    int i;
     int *adjusts;
-    int horizontal_expand_space;
-    int horizontal_expand_count;
-    GSList *link;
+    int remaining_extra_space;
 
     if (children == NULL) {
         *adjusts_p = NULL;
         return;
     }
 
-    // Make no adjustments if we got too little or just right space.
-    // (FIXME handle too little space better)
+    adjusts = g_new0(int, children_length);
+    *adjusts_p = adjusts;
+
+    /* Make no adjustments if we got too little or just right space.
+     * (FIXME handle too little space better)
+     */
     if (alloc_request_delta <= 0) {
-        *adjusts_p = g_new0(int, children_length);
         return;
     }
 
-    // Calculate positive adjustments
+    remaining_extra_space = alloc_request_delta;
+    while (adjust_widths_up_to_natural_size(children, &remaining_extra_space, adjusts))
+        ;
+    adjust_widths_for_expandable(children, &remaining_extra_space, adjusts);
 
-    horizontal_expand_space = alloc_request_delta;
-
-    adjusts = g_new(int, children_length);
-
-    horizontal_expand_count = count_expandable(children);
-    i = 0;
-    for (link = children; link != NULL; link = link->next) {
-        HippoBoxChild *child = link->data;
-
-        g_assert(i < children_length);
-
-        if (child->fixed || !child->visible || !child->expand) {
-            adjusts[i] = 0;
-        } else if (child->expand) {
-            int extra;
-            extra = (horizontal_expand_space / horizontal_expand_count);
-            horizontal_expand_count -= 1;
-            horizontal_expand_space -= extra;
-            adjusts[i] = extra;
-        }
-        ++i;
-    }
-
-    g_assert(horizontal_expand_count == 0);
-
-    *adjusts_p = adjusts;
+    // remaining_extra_space need not be 0, if we had no expandable children
 }
 
 static int
