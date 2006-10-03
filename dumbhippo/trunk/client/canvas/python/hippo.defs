@@ -356,6 +356,23 @@
   )
 )
 
+(define-method get_position
+  (of-object "HippoCanvasBox")
+  (c-name "hippo_canvas_box_get_position")
+  (return-type "none")
+  (parameters
+    '("HippoCanvasItem*" "child")
+    '("int*" "x")
+    '("int*" "y")
+  )
+)
+
+(define-method get_children
+  (of-object "HippoCanvasBox")
+  (c-name "hippo_canvas_box_get_children")
+  (return-type "GList*")
+)
+
 ;; From hippo-canvas-context.h
 
 (define-function canvas_context_get_type
@@ -669,6 +686,16 @@
   (return-type "int")
   (parameters
     '("int" "for_width")
+  )
+)
+
+(define-virtual allocate
+  (of-object "HippoCanvasItem")
+  (c-name "hippo_canvas_item_allocate")
+  (return-type "none")
+  (parameters
+    '("int" "width")
+    '("int" "height")
   )
 )
 

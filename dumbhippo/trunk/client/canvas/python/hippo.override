@@ -61,6 +61,34 @@ _wrap_hippo_canvas_item_get_allocation(PyGObject *self)
     return Py_BuildValue("(ii)", x_p, y_p);
 }
 %%
+override hippo_canvas_box_get_children noargs
+static PyObject *
+_wrap_hippo_canvas_box_get_children(PyGObject *self)
+{   
+    GList *list, *tmp;
+    PyObject *py_list;
+
+    list = hippo_canvas_box_get_children(HIPPO_CANVAS_BOX(self->obj));
+
+    if ((py_list = PyList_New(0)) == NULL) {
+        g_list_free(list);
+        return NULL;
+    }
+    for (tmp = list; tmp != NULL; tmp = tmp->next) {
+        PyObject *child_obj = pygobject_new(G_OBJECT(tmp->data));
+
+        if (child_obj == NULL) {
+            g_list_free(list);
+            Py_DECREF(py_list);
+            return NULL;
+        }
+        PyList_Append(py_list, child_obj);
+        Py_DECREF(child_obj);
+    }
+    g_list_free(list);
+    return py_list;
+}
+%%
 override-slot HippoEvent.tp_getattr
 static PyObject *
 _wrap_hippo_event_tp_getattr(PyObject *self, char *attr)
