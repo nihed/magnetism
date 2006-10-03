@@ -320,9 +320,19 @@ div.dh-async-action-link-complete {
 	font-size:			14px;
 }
 
+.dh-stacker-block-title-title {
+	text-decoration:	underline;
+}
+
 .dh-stacker-block-right {
 	font-size:			11px;
 	color:				#666666;
+}
+
+.dh-stacker-block-close {
+	display:			none;
+	font-size:			10px;
+	text-decoration:	underline;
 }
 
 .dh-stacker-block-description {

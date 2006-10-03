@@ -1782,8 +1782,8 @@ dh.stacker.simulateNewStackTime = function(stacker) {
 	}
 }
 
-dh.stacker.currentBlockHovered = null;
 dh.stacker.currentHoverTimeout = null;
+dh.stacker.lastClosedBlockTime = null;
 
 dh.stacker.resetHover = function () {
 	if (dh.stacker.currentHoverTimeout) {
@@ -1792,24 +1792,31 @@ dh.stacker.resetHover = function () {
 	}
 }
 
-dh.stacker.blockHoverStart = function(block) {
+dh.stacker.blockHoverStart = function(id) {
 	dh.stacker.resetHover();
-	dh.stacker.currentBlockHovered = block;
+	var currentTime = new Date()
+	var timeout = 500;
+	// If they just recently closed a block, extend the time for opening a new one a bit to
+	// make reopening the closed one accidentally less likely
+	if (dh.stacker.lastClosedBlockTime && dh.stacker.lastClosedBlockTime.getTime() - currentTime.getTime() < 1000)
+		timeout = 1200;
 	dh.stacker.currentHoverTimeout = setTimeout(function () {
-		var i;
-		var currentBlock = dh.stacker.currentBlockHovered;
-		for (i = 0; i < currentBlock.childNodes.length; ++i) {
-			var node = currentBlock.childNodes.item(i);		
-			if (node.nodeType != dojo.dom.ELEMENT_NODE)
-				continue;
-			if (node.className == "dh-stacker-block-content") {
-				node.style.display = "block";
-				break;
-			}
-		}
-	}, 500);
+		var content = document.getElementById("dhStackerBlockContent-" + id)
+		content.style.display = "block";
+		var closeButton = document.getElementById("dhStackerBlockClose-" + id)
+		closeButton.style.display = "block";
+	}, timeout);
 }
 
 dh.stacker.blockHoverStop = function() {
 	dh.stacker.resetHover();
+}
+
+dh.stacker.blockClose = function(id) {
+	dh.stacker.resetHover();
+	var content = document.getElementById("dhStackerBlockContent-" + id)
+	content.style.display = "none";	
+	var closeButton = document.getElementById("dhStackerBlockClose-" + id)
+	closeButton.style.display = "none";	
+	dh.stacker.lastClosedBlockTime = new Date()
 }

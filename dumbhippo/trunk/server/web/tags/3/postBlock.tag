@@ -6,7 +6,10 @@
 <%@ attribute name="block" required="true" type="com.dumbhippo.server.views.PostBlockView" %>
 
 <div class="dh-stacker-block-content-post">
-	<div class="dh-stacker-block-content-controls">
+	<table cellspacing="0" cellpadding="0" width="100%">
+	<tr>
+	<td>&nbsp;</td>
+	<td align="right" class="dh-stacker-block-content-controls">
 	<c:choose>
 		<c:when test="${block.postView.livePost.totalViewerCount == 1}">1 view</c:when>
 		<c:otherwise>${block.postView.livePost.totalViewerCount} views</c:otherwise>
@@ -28,6 +31,9 @@
 	  	</jsp:element>
 	</c:if>	
 	</div>
+	</td>
+	</tr>
+	</table>
 	<div class="dh-stacker-block-content-main">	
 	<span class="dh-stacker-block-content-post-chatting"><c:out value="${block.postView.livePost.chattingUserCount}"/></span> people chatting <dht:actionLinkChat prefix=" | " oneLine="true" chatId="${block.postView.post.id}" kind="post"/>
 	</div>

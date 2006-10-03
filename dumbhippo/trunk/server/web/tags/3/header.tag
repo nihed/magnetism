@@ -11,6 +11,7 @@
 	<td><img id="dhPageHeaderLeft" src="/images3/${buildStamp}/header_left.png" /></td>
 	<td id="dhPageHeaderInner" align="right" height="56px">
 		<table cellspacing="0" cellpadding="0" height="56px">
+		<tr height="15px"><td>&nbsp</td></tr>
 		<tr valign="top" align="right"><td>
 		<div id="dhSearchBox">
 			<form action="/search" method="get" name="dhSearchForm" id="dhSearchForm">
@@ -36,7 +37,7 @@
 		</div>
 		</td>
 		</tr>
-		<tr> </tr>
+		<tr><td></td></tr>
 		<tr valign="bottom" align="right">
 		<td>
 		<div id="dhHeaderControls">
@@ -57,7 +58,6 @@
 		</td>
 		</tr>
 		</table>
-	</div>
 	</td>
 	<td><img id="dhPageHeaderRight" src="/images3/${buildStamp}/header_right.png"/></td>
 	</tr>

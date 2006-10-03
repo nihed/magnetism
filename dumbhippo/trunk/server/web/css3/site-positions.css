@@ -1,7 +1,7 @@
 @CHARSET "UTF-8";
 
 body {
-	margin-top:		0px;
+	margin:			0px 10px 10px 10px;
 	padding-top:	0px;
 }
 
@@ -275,17 +275,14 @@ div.dh-notification {
 }
 
 .dh-stacker-block-header {
-	position:			relative;
 }
 
 .dh-stacker-block-description {
 	margin-left:		30px;
 }
 
-.dh-stacker-block-right {	
-	position:			absolute;
-	right:				5px;
-	top:				10px;
+.dh-stacker-block-right {
+	margin-right:		5px;
 }
 
 .dh-stacker-block-hr {
@@ -297,7 +294,6 @@ div.dh-notification {
 }
 
 .dh-stacker-block-content {
-	position:			relative;
 	margin-left:		30px;
 }
 
@@ -306,8 +302,5 @@ div.dh-notification {
 }
 
 .dh-stacker-block-content-controls {
-	position:			absolute;
-	top:				0;
-	right:				0;
+	margin-right:		5px;
 }
-
