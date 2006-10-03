@@ -54,7 +54,6 @@ static void on_faves_activated                 (HippoCanvasItem      *button_or_
 struct _HippoCanvasBlockPost {
     HippoCanvasBlock canvas_block;
     HippoPost *post;
-    HippoCanvasBox *description_item_parent;
     HippoCanvasItem *description_item;
     HippoCanvasItem *clicked_count_item;
     HippoCanvasBox *details_box_parent;
@@ -107,8 +106,7 @@ hippo_canvas_block_post_init(HippoCanvasBlockPost *block_post)
                                                 "border-top", 4,
                                                 "border-bottom", 4,
                                                 NULL);
-    block_post->description_item_parent = box;
-    hippo_canvas_box_append(box, block_post->description_item, HIPPO_PACK_EXPAND);
+    hippo_canvas_box_append(box, block_post->description_item, 0);
 
     block_post->details_box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
                                            "orientation", HIPPO_ORIENTATION_HORIZONTAL,
@@ -435,9 +433,6 @@ hippo_canvas_block_post_expand(HippoCanvasBlock *canvas_block)
                  "size-mode", HIPPO_CANVAS_SIZE_WRAP_WORD,
                  "xalign", HIPPO_ALIGNMENT_START,
                  NULL);
-    hippo_canvas_box_set_child_packing(block_post->description_item_parent,
-                                       block_post->description_item,
-                                       0);
 }
 
 static void
@@ -458,9 +453,6 @@ hippo_canvas_block_post_unexpand(HippoCanvasBlock *canvas_block)
                  "size-mode", HIPPO_CANVAS_SIZE_ELLIPSIZE_END,
                  "xalign", HIPPO_ALIGNMENT_FILL,
                  NULL);
-    hippo_canvas_box_set_child_packing(block_post->description_item_parent,
-                                       block_post->description_item,
-                                       HIPPO_PACK_EXPAND);    
 }
 
 static void

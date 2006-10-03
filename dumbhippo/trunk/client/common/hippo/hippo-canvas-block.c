@@ -144,7 +144,7 @@ hippo_canvas_block_init(HippoCanvasBlock *block)
                                           "font", "Bold 12px",
                                           "text", NULL,
                                           NULL);
-    hippo_canvas_box_append(box, block->title_link_item, HIPPO_PACK_EXPAND);
+    hippo_canvas_box_append(box, block->title_link_item, 0);
 
     g_signal_connect(G_OBJECT(block->title_link_item), "activated",
                      G_CALLBACK(on_title_activated), block);
@@ -222,7 +222,7 @@ hippo_canvas_block_init(HippoCanvasBlock *block)
                                     "border-right", 8,
                                     "color", 0x666666ff,
                                     NULL);
-    hippo_canvas_box_append(box3, block->name_item, HIPPO_PACK_END | HIPPO_PACK_EXPAND);
+    hippo_canvas_box_append(box3, block->name_item, HIPPO_PACK_END);
 
     item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
                         "font", "Italic 12px",

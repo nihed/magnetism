@@ -55,6 +55,8 @@ CANVAS_SOURCEFILES = 						\
 	$(CANVASSRCDIR)/hippo/hippo-canvas-item.h		\
 	$(CANVASSRCDIR)/hippo/hippo-canvas-link.c		\
 	$(CANVASSRCDIR)/hippo/hippo-canvas-link.h		\
+	$(CANVASSRCDIR)/hippo/hippo-canvas-test.c		\
+	$(CANVASSRCDIR)/hippo/hippo-canvas-test.h		\
 	$(CANVASSRCDIR)/hippo/hippo-canvas-text.c		\
 	$(CANVASSRCDIR)/hippo/hippo-canvas-text.h		\
 	$(CANVASSRCDIR)/hippo/hippo-canvas-widgets.h		\

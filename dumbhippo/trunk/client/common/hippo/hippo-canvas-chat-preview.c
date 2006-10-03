@@ -151,10 +151,10 @@ hippo_canvas_chat_preview_init(HippoCanvasChatPreview *chat_preview)
                                         "size-mode", HIPPO_CANVAS_SIZE_ELLIPSIZE_END,
                                         "xalign", HIPPO_ALIGNMENT_START,
                                         NULL);
-        hippo_canvas_box_append(box, mp->message_text, HIPPO_PACK_EXPAND);
+        hippo_canvas_box_append(box, mp->message_text, 0);
         
         item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
-                            "text", "-", /* FIXME figure out mdash */
+                            "text", " - ", /* FIXME figure out mdash */
                             "font", "11px",
                             NULL);
         hippo_canvas_box_append(box, item, 0);
@@ -162,7 +162,7 @@ hippo_canvas_chat_preview_init(HippoCanvasChatPreview *chat_preview)
         mp->entity_name = g_object_new(HIPPO_TYPE_CANVAS_ENTITY_NAME,
                                        "font", "11px",
                                        NULL);
-        hippo_canvas_box_append(box, mp->entity_name, HIPPO_PACK_EXPAND);
+        hippo_canvas_box_append(box, mp->entity_name, 0);
     }
 
     update_chatting_count(chat_preview);
