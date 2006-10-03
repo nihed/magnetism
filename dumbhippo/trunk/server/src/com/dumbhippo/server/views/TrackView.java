@@ -232,6 +232,8 @@ public class TrackView {
 	
 	public void writeToXmlBuilder(XmlBuilder builder, String elementName) {
 		builder.openElement(elementName,
+							"lastListenTime", Long.toString(getLastListenTime()),
+							"duration", Long.toString(getDurationSeconds() * 1000),
 							"nowPlaying", Boolean.toString(isNowPlaying()));
 		builder.appendTextNode("artist", getArtist());
 		builder.appendTextNode("album", getAlbum());
