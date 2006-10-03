@@ -1781,3 +1781,35 @@ dh.stacker.simulateNewStackTime = function(stacker) {
 			block.getClickedCount());
 	}
 }
+
+dh.stacker.currentBlockHovered = null;
+dh.stacker.currentHoverTimeout = null;
+
+dh.stacker.resetHover = function () {
+	if (dh.stacker.currentHoverTimeout) {
+		clearTimeout(dh.stacker.currentHoverTimeout);
+		dh.stacker.currentHoverTimeout = null;
+	}
+}
+
+dh.stacker.blockHoverStart = function(block) {
+	dh.stacker.resetHover();
+	dh.stacker.currentBlockHovered = block;
+	dh.stacker.currentHoverTimeout = setTimeout(function () {
+		var i;
+		var currentBlock = dh.stacker.currentBlockHovered;
+		for (i = 0; i < currentBlock.childNodes.length; ++i) {
+			var node = currentBlock.childNodes.item(i);		
+			if (node.nodeType != dojo.dom.ELEMENT_NODE)
+				continue;
+			if (node.className == "dh-stacker-block-content") {
+				node.style.display = "block";
+				break;
+			}
+		}
+	}, 500);
+}
+
+dh.stacker.blockHoverStop = function() {
+	dh.stacker.resetHover();
+}

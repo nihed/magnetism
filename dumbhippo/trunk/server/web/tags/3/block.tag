@@ -6,8 +6,8 @@
 <%@ attribute name="block" required="true" type="com.dumbhippo.server.BlockView" %>
 <%@ attribute name="cssClass" required="true" type="java.lang.String" %>
 
-<div class="dh-stacker-block ${cssClass}">
-	<img src="/images3/${buildStamp}/${block.iconName}"/>
+<div class="dh-stacker-block ${cssClass}" onmouseover="dh.stacker.blockHoverStart(this);" onmouseout="dh.stacker.blockHoverStop(this);">
+	<img class="dh-stacker-block-icon" src="/images3/${buildStamp}/${block.iconName}"/>
 	<span class="dh-stacker-block-title">
 		<span class="dh-stacker-block-title-type"><c:out value="${block.webTitleType}"/>:</span>
 		<span class="dh-stacker-block-title-title">
@@ -26,5 +26,18 @@
 	</span>
 	<div class="dh-stacker-block-right">
 		${block.timeAgo}
+	</div>
+	<div class="dh-stacker-block-description">
+		${block.descriptionHtml}
+	</div>
+	<div class="dh-stacker-block-content">
+		<c:choose>
+			<c:when test="${dh:enumIs(block.blockType, 'POST')}">
+				<dht3:postBlock block="${block}"/>
+			</c:when>
+			<c:otherwise>
+				Oops!  Site error: unknown block type.
+			</c:otherwise>
+		</c:choose>
 	</div>
 </div>

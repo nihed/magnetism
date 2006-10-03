@@ -315,3 +315,22 @@ div.dh-async-action-link-complete {
 .dh-stacker-block-grey2 {
 	background-color:	#F3F3F3;
 }
+
+.dh-stacker-block-right {
+	font-size:			11px;
+	color:				#666666;
+}
+
+.dh-stacker-block-description {
+	font-size:			12px;
+}
+
+.dh-stacker-block-content-controls {
+	font-size:			11px;
+	color:				#666666;
+}
+
+.dh-stacker-block-content {
+	font-size:			12px;
+	display:			none;
+}

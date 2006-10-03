@@ -31,4 +31,9 @@ public class PostBlockView extends BlockView {
 	public PostView getPostView() {
 		return this.postView;
 	}
+	
+	@Override
+	public String getDescriptionHtml() {
+		return postView.getTextAsHtml();
+	}
 }

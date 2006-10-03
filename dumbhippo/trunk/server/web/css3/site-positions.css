@@ -261,6 +261,10 @@ div.dh-notification {
 	padding:			10px 10px 0px 10px;
 }
 
+.dh-stacker-block-icon {
+	margin-left:		5px;
+}
+
 .dh-stacker-block {
 	position:			relative;
 }
@@ -268,5 +272,15 @@ div.dh-notification {
 .dh-stacker-block-right {	
 	position:			absolute;
 	right:				0;
+	top:				10px;
+}
+
+.dh-stacker-block-content {
+	position:			relative;
+}
+
+.dh-stacker-block-content-controls {
+	position:			absolute;
 	top:				0;
+	right:				0;
 }

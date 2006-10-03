@@ -297,4 +297,9 @@
            <rtexprvalue>true</rtexprvalue>
         </attribute>
     </tag>    
+    <function>
+    	<name>enumIs</name>
+    	<function-class>com.dumbhippo.web.tags.FuncUtils</function-class>
+    	<function-signature>boolean enumIs( java.lang.Enum, java.lang.String )</function-signature>
+    </function>
 </taglib>

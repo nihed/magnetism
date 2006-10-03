@@ -9,8 +9,10 @@
 	<title>Mugshot Home</title>
 	<link rel="stylesheet" type="text/css" href="/css3/${buildStamp}/home.css"/>
 	<dht:scriptIncludes/>
+	<script src="/javascript/${buildStamp}/dh/stacker.js" type="text/javascript"></script>	
 	<dht:faviconIncludes/>
 </head>
+
 
 <dht3:requirePersonBean/>
 <jsp:setProperty name="person" property="viewedUserId" value="${signin.user.id}"/>

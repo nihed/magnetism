@@ -8,7 +8,7 @@
 <div class="dh-stacker-container">
 	<c:forEach items="${stack}" end="5" var="block" varStatus="blockIdx">
 		<c:choose>
-			<c:when test="${status.count % 2 == 0}">
+			<c:when test="${blockIdx.count % 2 == 0}">
 				<dht3:block block="${block}" cssClass="dh-stacker-block-grey1"/>
 			</c:when>
 			<c:otherwise>
