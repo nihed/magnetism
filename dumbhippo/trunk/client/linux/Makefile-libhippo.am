@@ -78,6 +78,8 @@ LIBHIPPO_SOURCEFILES =						\
 	$(COMMONSRCDIR)/hippo/hippo-block.h			\
 	$(COMMONSRCDIR)/hippo/hippo-block-group-chat.c		\
 	$(COMMONSRCDIR)/hippo/hippo-block-group-chat.h		\
+	$(COMMONSRCDIR)/hippo/hippo-block-group-member.c	\
+	$(COMMONSRCDIR)/hippo/hippo-block-group-member.h	\
 	$(COMMONSRCDIR)/hippo/hippo-block-post.c		\
 	$(COMMONSRCDIR)/hippo/hippo-block-post.h		\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-base.c		\

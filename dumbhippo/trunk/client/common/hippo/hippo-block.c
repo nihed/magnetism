@@ -2,6 +2,7 @@
 #include "hippo-common-internal.h"
 #include "hippo-block.h"
 #include "hippo-block-group-chat.h"
+#include "hippo-block-group-member.h"
 #include "hippo-block-post.h"
 #include "hippo-xml-utils.h"
 #include <string.h>
@@ -346,6 +347,9 @@ hippo_block_new(const char    *guid,
         break;
     case HIPPO_BLOCK_TYPE_GROUP_CHAT:
         object_type = HIPPO_TYPE_BLOCK_GROUP_CHAT;
+        break;
+    case HIPPO_BLOCK_TYPE_GROUP_MEMBER:
+        object_type = HIPPO_TYPE_BLOCK_GROUP_MEMBER;
         break;
     case HIPPO_BLOCK_TYPE_POST:
         object_type = HIPPO_TYPE_BLOCK_POST;

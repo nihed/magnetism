@@ -190,6 +190,8 @@ hippo_block_post_update_from_xml (HippoBlock           *block,
     LmMessageNode *subchild;
     GSList *recent_messages = NULL;
 
+    HIPPO_BLOCK_CLASS(hippo_block_post_parent_class)->update_from_xml(block, cache, node, server_timestamp);
+
     if (!hippo_xml_split(cache, node, NULL,
                          "post", HIPPO_SPLIT_NODE, &post_node,
                          NULL))
