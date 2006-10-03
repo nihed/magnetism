@@ -104,6 +104,9 @@ void     hippo_connection_request_hotness           (HippoConnection *connection
 void     hippo_connection_request_blocks            (HippoConnection *connection,
                                                      gint64           last_timestamp);
 
+void     hippo_connection_update_last_blocks_timestamp (HippoConnection *connection,
+                                                        gint64           timestamp);
+
 void hippo_connection_request_myspace_name          (HippoConnection *connection);
 void hippo_connection_request_myspace_blog_comments (HippoConnection *connection);
 void hippo_connection_request_myspace_contacts      (HippoConnection *connection);

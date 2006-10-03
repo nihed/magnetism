@@ -720,7 +720,7 @@ public class PersonView extends EntityView {
 	 * a user, and otherwise appends a <resource> node
 	 */	
 	@Override
-	public void writeToXmlBuilder(XmlBuilder builder) {
+	public void writeToXmlBuilderOld(XmlBuilder builder) {
 		if (user != null) {
 			builder.appendTextNode("user", "", "id", user.getId(), 
 				               	   "name", getName(),
@@ -731,6 +731,20 @@ public class PersonView extends EntityView {
 		}		
 	}
 	
+	public void writeToXmlBuilder(XmlBuilder builder) {
+		if (user != null) {
+			builder.appendEmptyNode("user", 
+								    "id", user.getId(), 
+				               	    "name", getName(),
+				               	    "homeUrl", getHomeUrl(), 
+				               	    "photoUrl", getSmallPhotoUrl());
+		} else {
+			builder.appendEmptyNode("resource", 
+					                "id", getIdentifyingGuid().toString(), 
+					                "name", getName());
+		}		
+	}
+
 	/**
 	 * This method gives an XML fragment sufficient for identifying the 
 	 * person or resource being viewed.

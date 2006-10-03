@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "hippo-basics.h"
+#include "hippo-data-cache.h"
 #include "hippo-xml-utils.h"
 
 GQuark
@@ -138,11 +139,15 @@ typedef struct {
 } HippoSplitInfo;
 
 static gboolean
-hippo_xml_split_process_value(const char      *node_name,
+hippo_xml_split_process_value(HippoDataCache  *cache,
+                              const char      *node_name,
                               HippoSplitInfo  *info,
                               const char      *value,
                               GError         **error)
 {
+    HippoEntity *entity;
+    HippoPost *post;
+    
     switch (info->flags & HIPPO_SPLIT_TYPE_MASK) {
     case HIPPO_SPLIT_NODE:
         g_assert_not_reached();
@@ -192,6 +197,58 @@ hippo_xml_split_process_value(const char      *node_name,
         }
         *(const char **)info->location = value;
         break;
+    case HIPPO_SPLIT_ENTITY:
+    case HIPPO_SPLIT_PERSON:
+        if (!cache)
+            g_error("HIPPO_SPLIT_ENTITY used without passing in a HippoDataCache");
+        
+        if (!hippo_verify_guid(value)) {
+            g_set_error(error, HIPPO_XML_ERROR, HIPPO_XML_ERROR_INVALID_CONTENT,
+                        "Value '%s' for attribute '%s' of node <%s/> is not a GUID",
+                        value, info->attribute_name, node_name);
+            return FALSE;
+        }
+
+        entity = hippo_data_cache_lookup_entity(cache, value);
+        if (!entity) {
+            g_set_error(error, HIPPO_XML_ERROR, HIPPO_XML_ERROR_INVALID_CONTENT,
+                        "Value '%s' for attribute '%s' of node <%s/> is not a entity we know about",
+                        value, info->attribute_name, node_name);
+            return FALSE;
+        }
+
+        if ((info->flags & HIPPO_SPLIT_TYPE_MASK) == HIPPO_SPLIT_PERSON) {
+            if (!HIPPO_IS_PERSON(entity)) {
+                g_set_error(error, HIPPO_XML_ERROR, HIPPO_XML_ERROR_INVALID_CONTENT,
+                            "Value '%s' for attribute '%s' of node <%s/> doesn't point to a user",
+                            value, info->attribute_name, node_name);
+                return FALSE;
+            }
+        }
+        
+        *(HippoEntity **)info->location = entity;
+        break;
+    case HIPPO_SPLIT_POST:
+        if (!cache)
+            g_error("HIPPO_SPLIT_POST used without passing in a HippoDataCache");
+        
+        if (!hippo_verify_guid(value)) {
+            g_set_error(error, HIPPO_XML_ERROR, HIPPO_XML_ERROR_INVALID_CONTENT,
+                        "Value '%s' for attribute '%s' of node <%s/> is not a GUID",
+                        value, info->attribute_name, node_name);
+            return FALSE;
+        }
+
+        post = hippo_data_cache_lookup_post(cache, value);
+        if (!post) {
+            g_set_error(error, HIPPO_XML_ERROR, HIPPO_XML_ERROR_INVALID_CONTENT,
+                        "Value '%s' for attribute '%s' of node <%s/> is not a post we know about",
+                        value, info->attribute_name, node_name);
+            return FALSE;
+        }
+
+        *(HippoPost **)info->location = post;
+        break;
     case HIPPO_SPLIT_URI:
         if (!validate_uri(value)) {
             g_set_error(error, HIPPO_XML_ERROR, HIPPO_XML_ERROR_INVALID_CONTENT,
@@ -200,6 +257,8 @@ hippo_xml_split_process_value(const char      *node_name,
             return FALSE;
         }
         *(const char **)info->location = value;
+        break;
+    case HIPPO_SPLIT_SET:
         break;
     default:
         g_error("Unknown split type %d\n", info->flags & HIPPO_SPLIT_TYPE_MASK);
@@ -213,7 +272,9 @@ hippo_xml_split_process_value(const char      *node_name,
 #define MAX_INFO 16
 
 gboolean
-hippo_xml_split(LmMessageNode *node, GError **error, ...)
+hippo_xml_split(HippoDataCache *cache,
+                LmMessageNode  *node,
+                GError        **error, ...)
 {
     va_list vap;
     int count;
@@ -241,6 +302,10 @@ hippo_xml_split(LmMessageNode *node, GError **error, ...)
         /* HIPPO_SPLIT_NODE means XML content, so must be a child element, not an attribute */
         if ((info->flags & HIPPO_SPLIT_TYPE_MASK) == HIPPO_SPLIT_NODE)
             info->flags |= HIPPO_SPLIT_ELEMENT;
+        
+        /* HIPPO_SPLIT_SET is pointless without HIPPO_SPLIT_OPTIONAL */
+        if ((info->flags & HIPPO_SPLIT_TYPE_MASK) == HIPPO_SPLIT_SET)
+            info->flags |= HIPPO_SPLIT_OPTIONAL;
 
         if (info->flags & HIPPO_SPLIT_ELEMENT)
             need_element_scan = TRUE;
@@ -268,7 +333,7 @@ hippo_xml_split(LmMessageNode *node, GError **error, ...)
             if (!value)
                 continue;
 
-            if (!hippo_xml_split_process_value(node->name, info, value, &internal_error))
+            if (!hippo_xml_split_process_value(cache, node->name, info, value, &internal_error))
                 goto out;
         }
     }
@@ -297,7 +362,7 @@ hippo_xml_split(LmMessageNode *node, GError **error, ...)
                             goto out;
                         }
                                         
-                        if (!hippo_xml_split_process_value(node->name, info, child->value, &internal_error))
+                        if (!hippo_xml_split_process_value(cache, node->name, info, child->value, &internal_error))
                             goto out;
                     }
                 }

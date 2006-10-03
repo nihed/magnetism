@@ -1,5 +1,6 @@
 /* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 #include "hippo-post.h"
+#include "hippo-xml-utils.h"
 #include <string.h>
 
 /* === HippoPost implementation === */
@@ -36,6 +37,10 @@ struct _HippoPost {
     int chatting_user_count;
     int total_viewers;
     GSList *viewers;
+
+    /* GObject-like freeze count for coelescing notifications */
+    int notify_freeze_count;
+    gboolean need_notify;
 };
 
 struct _HippoPostClass {
@@ -95,10 +100,29 @@ hippo_post_finalize(GObject *object)
     G_OBJECT_CLASS(hippo_post_parent_class)->finalize(object); 
 }
 
-static void 
-hippo_post_emit_changed(HippoPost *post)
+static void
+hippo_post_freeze_notify(HippoPost *post)
 {
-    g_signal_emit(post, signals[CHANGED], 0);
+    post->notify_freeze_count++;
+}
+
+static void
+hippo_post_thaw_notify(HippoPost *post)
+{
+    post->notify_freeze_count--;
+    if (post->notify_freeze_count == 0 && post->need_notify) {
+        post->need_notify = FALSE;
+        g_signal_emit(post, signals[CHANGED], 0);
+    }
+}
+
+static void 
+hippo_post_notify(HippoPost *post)
+{
+    if (post->notify_freeze_count == 0)
+        g_signal_emit(post, signals[CHANGED], 0);
+    else
+        post->need_notify = TRUE;
 }
 
 /* === HippoPost exported API === */
@@ -111,6 +135,78 @@ hippo_post_new(const char *guid)
     post->guid = g_strdup(guid);
     
     return post;
+}
+
+gboolean
+hippo_post_update_from_xml(HippoPost      *post,
+                           HippoDataCache *cache,
+                           LmMessageNode  *node)
+{
+    const char *id, *href, *title, *description;
+    HippoEntity *poster;
+    gint64 post_date;
+    gboolean total_viewers_set;
+    int total_viewers;
+    LmMessageNode *recipients_node = NULL;
+    GSList *recipients = NULL;
+
+    if (!hippo_xml_split(cache, node, NULL,
+                         "id", HIPPO_SPLIT_GUID, &id,
+                         "href", HIPPO_SPLIT_URI, &href,
+                         "poster", HIPPO_SPLIT_ENTITY, &poster,
+                         "postDate", HIPPO_SPLIT_TIME_MS, &post_date,
+                         "title", HIPPO_SPLIT_STRING | HIPPO_SPLIT_ELEMENT, &title,
+                         "description", HIPPO_SPLIT_STRING | HIPPO_SPLIT_ELEMENT, &description,
+                         "recipients", HIPPO_SPLIT_NODE | HIPPO_SPLIT_OPTIONAL, &recipients_node,
+                         "totalViewers", HIPPO_SPLIT_INT32 | HIPPO_SPLIT_OPTIONAL, &total_viewers,
+                         "totalViewers", HIPPO_SPLIT_SET, &total_viewers_set,
+                         NULL))
+        return FALSE;
+
+    if (recipients_node) {
+        LmMessageNode *subchild;
+        
+        for (subchild = recipients_node->children; subchild; subchild = subchild->next) {
+            HippoEntity *recipient;
+            
+            if (strcmp(subchild->name, "recipient") != 0)
+                continue;
+
+            if (!hippo_xml_split(cache, subchild, NULL,
+                                 "recipientId", HIPPO_SPLIT_ENTITY, &recipient,
+                                 NULL))
+                continue;
+
+            recipients = g_slist_prepend(recipients, recipient);
+        }
+
+        recipients = g_slist_reverse(recipients);
+    }
+
+    if (strcmp(id, post->guid) != 0) {
+        g_warning("ID on <post/> element doesn't match ID for post");
+        return FALSE;
+    }
+
+    hippo_post_freeze_notify(post);
+
+    hippo_post_set_url(post, href);
+    hippo_post_set_sender(post, hippo_entity_get_guid(HIPPO_ENTITY(poster)));
+    hippo_post_set_date(post, post_date / 1000); /* Convert ms to seconds */
+    hippo_post_set_title(post, title);
+    hippo_post_set_description(post, description);
+    
+    if (recipients_node)
+        hippo_post_set_recipients(post, recipients);
+
+    if (total_viewers_set)
+        hippo_post_set_total_viewers(post, total_viewers);
+
+    hippo_post_thaw_notify(post);
+
+    g_slist_free(recipients);
+
+    return TRUE;
 }
 
 const char*
@@ -255,7 +351,7 @@ set_str(HippoPost *post, char **s_p, const char *val)
     g_free(*s_p);
     *s_p = g_strdup(val);
     
-    hippo_post_emit_changed(post);
+    hippo_post_notify(post);
 }
                    
 void
@@ -329,7 +425,7 @@ set_entity_list(HippoPost *post, GSList **list_p, GSList *value)
     g_slist_foreach(*list_p, (GFunc) g_object_unref, NULL);
     g_slist_free(*list_p);
     *list_p = copy;
-    hippo_post_emit_changed(post);
+    hippo_post_notify(post);
 }
 
 void
@@ -363,7 +459,7 @@ hippo_post_set_date(HippoPost  *post,
     g_return_if_fail(HIPPO_IS_POST(post));
     if (post->date != value) {
         post->date = value;
-        hippo_post_emit_changed(post);
+        hippo_post_notify(post);
     }
 }
 
@@ -373,7 +469,7 @@ set_int(HippoPost *post, int *ip, int value)
     g_return_if_fail(HIPPO_IS_POST(post));
     if (*ip != value) {
         *ip = value;
-        hippo_post_emit_changed(post);
+        hippo_post_notify(post);
     }
 }
 
@@ -384,7 +480,7 @@ set_bool(HippoPost *post, gboolean *ip, gboolean value)
     value = !!value;
     if (*ip != value) {
         *ip = value;
-        hippo_post_emit_changed(post);
+        hippo_post_notify(post);
     }
 }
                     
@@ -436,7 +532,7 @@ hippo_post_set_have_viewed(HippoPost  *post,
     value = value != FALSE;
     if (post->have_viewed != value) {
         post->have_viewed = value;
-        hippo_post_emit_changed(post);
+        hippo_post_notify(post);
     }
 }
 
@@ -448,7 +544,7 @@ hippo_post_set_ignored (HippoPost  *post,
     value = value != FALSE;
     if (post->is_ignored != value) {
         post->is_ignored = value;
-        hippo_post_emit_changed(post);
+        hippo_post_notify(post);
     }
 }
 
@@ -460,7 +556,7 @@ hippo_post_set_new(HippoPost  *post,
     value = value != FALSE;
     if (post->is_new != value) {
         post->is_new = value;
-        hippo_post_emit_changed(post);
+        hippo_post_notify(post);
     }
 }
 
@@ -490,5 +586,5 @@ hippo_post_set_chat_room(HippoPost     *post,
     if (post->chat_room)
         hippo_chat_room_set_title(post->chat_room, post->title);
     
-    hippo_post_emit_changed(post);
+    hippo_post_notify(post);
 }

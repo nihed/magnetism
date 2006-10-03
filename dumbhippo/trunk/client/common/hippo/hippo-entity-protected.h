@@ -14,13 +14,21 @@ struct _HippoEntity {
     char *home_url;
     char *small_photo_url;
     int version;
+    int notify_freeze_count;
+    gboolean need_notify;
 };
 
 struct _HippoEntityClass {
     GObjectClass parent;
+
+    gboolean (*update_from_xml) (HippoEntity    *entity,
+                                 HippoDataCache *cache,
+                                 LmMessageNode  *node);
 };
 
-void hippo_entity_emit_changed   (HippoEntity *entity);
+void hippo_entity_freeze_notify (HippoEntity *entity);
+void hippo_entity_thaw_notify   (HippoEntity *entity);
+void hippo_entity_notify        (HippoEntity *entity);
 
 void hippo_entity_set_string     (HippoEntity *entity,
                                   char       **s_p,

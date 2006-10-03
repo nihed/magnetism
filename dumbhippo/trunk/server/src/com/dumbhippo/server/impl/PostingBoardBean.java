@@ -553,7 +553,7 @@ public class PostingBoardBean implements PostingBoard {
 
 	static private final String ORDER_RECENT = " ORDER BY post.postDate DESC ";
 
-	private void addGroupRecipients(Viewpoint viewpoint, Post post, List<Object> recipients) {
+	private void addGroupRecipients(Viewpoint viewpoint, Post post, List<EntityView> recipients) {
 		
 		if (viewpoint instanceof SystemViewpoint) {
 			for (Group g : post.getGroupRecipients()) {
@@ -640,7 +640,7 @@ public class PostingBoardBean implements PostingBoard {
 	// when loading the post... conceivably we should redo the API to eliminate 
 	// that danger
 	public PostView getPostView(Viewpoint viewpoint, Post post) {
-		List<Object> recipients = new ArrayList<Object>();
+		List<EntityView> recipients = new ArrayList<EntityView>();
 		
 		addGroupRecipients(viewpoint, post, recipients);
 		

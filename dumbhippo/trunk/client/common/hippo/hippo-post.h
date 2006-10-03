@@ -4,6 +4,7 @@
 
 #include <hippo/hippo-basics.h>
 #include <hippo/hippo-chat-room.h>
+#include <loudmouth/loudmouth.h>
 
 G_BEGIN_DECLS
 
@@ -19,6 +20,10 @@ typedef struct _HippoPostClass HippoPostClass;
 
 GType            hippo_post_get_type                  (void) G_GNUC_CONST;
 HippoPost*       hippo_post_new                       (const char *guid);
+
+gboolean         hippo_post_update_from_xml           (HippoPost      *post,
+                                                       HippoDataCache *cache,
+                                                       LmMessageNode  *node);
 
 const char*      hippo_post_get_guid                  (HippoPost *post);
 const char*      hippo_post_get_sender                (HippoPost *post);

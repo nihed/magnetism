@@ -2,6 +2,7 @@
 #ifndef __HIPPO_DATA_CACHE_H__
 #define __HIPPO_DATA_CACHE_H__
 
+#include <loudmouth/loudmouth.h>
 #include <hippo/hippo-connection.h>
 #include <hippo/hippo-person.h>
 #include <hippo/hippo-post.h>
@@ -52,6 +53,10 @@ void             hippo_data_cache_add_block              (HippoDataCache *cache,
 HippoEntity*     hippo_data_cache_ensure_bare_entity     (HippoDataCache *cache,
                                                           HippoEntityType type,
                                                           const char     *guid);
+
+gboolean         hippo_data_cache_update_from_xml        (HippoDataCache *cache,
+                                                          LmMessageNode  *node,
+                                                          guint64         server_time);
                                                           
 /* must free list and unref each post in it */
 GSList*          hippo_data_cache_get_recent_posts       (HippoDataCache  *cache);

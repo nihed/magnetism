@@ -127,9 +127,9 @@ public class MessageSenderBean implements MessageSender {
 			XmlBuilder builder = new XmlBuilder();
 			builder.openElement(ELEMENT_NAME, "xmlns", NAMESPACE);
 			for (EntityView ev : viewerEntities) {
-				ev.writeToXmlBuilder(builder);
+				ev.writeToXmlBuilderOld(builder);
 			}
-			post.writeToXmlBuilder(builder);
+			post.writeToXmlBuilderOld(builder);
 			builder.append(lpost.toXml());
 			builder.closeElement();
 			return builder.toString();
@@ -256,9 +256,9 @@ public class MessageSenderBean implements MessageSender {
 			builder.openElement(ELEMENT_NAME, "xmlns", NAMESPACE);
 			for (int i = 0; i < livePosts.size(); i++) {
 				for (EntityView ev: referencedEntities) {
-					ev.writeToXmlBuilder(builder);
+					ev.writeToXmlBuilderOld(builder);
 				}				
-				postViews.get(i).writeToXmlBuilder(builder);
+				postViews.get(i).writeToXmlBuilderOld(builder);
 				builder.append(livePosts.get(i).toXml());
 			}
 			builder.closeElement();

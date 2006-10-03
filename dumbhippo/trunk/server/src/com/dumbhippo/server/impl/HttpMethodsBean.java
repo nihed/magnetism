@@ -2010,9 +2010,9 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
  		Post post = parsePostId(viewpoint, postId);
  		
  		PostView pv = postingBoard.getPostView(viewpoint, post);
- 		pv.writeToXmlBuilder(xml);
+ 		pv.writeToXmlBuilderOld(xml);
  		EntityView poster = pv.getPoster();
- 		poster.writeToXmlBuilder(xml);
+ 		poster.writeToXmlBuilderOld(xml);
  		
 		List<PostMessage> messages = postingBoard.getNewestPostMessages(post, 5);
 		for (PostMessage pm : messages) {

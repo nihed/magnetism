@@ -2,6 +2,7 @@
 #include "hippo-chat-room.h"
 #include "hippo-group.h"
 #include "hippo-entity-protected.h"
+#include "hippo-xml-utils.h"
 #include <string.h>
 
 /* === CONSTANTS === */
@@ -44,7 +45,7 @@ hippo_group_init(HippoGroup *group)
 static void
 hippo_group_class_init(HippoGroupClass *klass)
 {
-    GObjectClass *object_class = G_OBJECT_CLASS (klass);  
+    GObjectClass *object_class = G_OBJECT_CLASS (klass);
           
     object_class->finalize = hippo_group_finalize;
 }
@@ -122,7 +123,7 @@ hippo_group_set_chat_room(HippoGroup    *group,
     if (group->room)
         hippo_chat_room_set_title(group->room, hippo_entity_get_name(HIPPO_ENTITY(group)));
     
-    hippo_entity_emit_changed(HIPPO_ENTITY(group));
+    hippo_entity_notify(HIPPO_ENTITY(group));
 }
 
 void             
@@ -133,7 +134,7 @@ hippo_group_set_date_last_ignored(HippoGroup   *group,
     
     if (group->date_last_ignored != date) {
         group->date_last_ignored = date;
-        hippo_entity_emit_changed(HIPPO_ENTITY(group));
+        hippo_entity_notify(HIPPO_ENTITY(group));
     }
 }
 
@@ -152,4 +153,3 @@ hippo_group_set_ignored(HippoGroup    *group,
         group->date_last_ignored = 0;
     }
 }
-                               

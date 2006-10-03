@@ -208,9 +208,9 @@ public class MessageSender implements XmppMessageSenderProvider {
 		XmlBuilder builder = new XmlBuilder();
 		builder.openElement(NEW_POST_ELEMENT_NAME, "xmlns", NEW_POST_NAMESPACE);
 		for (EntityView ev: referencedEntities) {
-			ev.writeToXmlBuilder(builder);
+			ev.writeToXmlBuilderOld(builder);
 		}
-		postView.writeToXmlBuilder(builder);
+		postView.writeToXmlBuilderOld(builder);
 		builder.closeElement();
 		
         Document extensionDocument;
@@ -262,8 +262,8 @@ public class MessageSender implements XmppMessageSenderProvider {
 				            "membershipStatus", member.getStatus().toString(),
 				            "groupId", groupView.getIdentifyingGuid().toString(), 
 				            "userId", memberView.getIdentifyingGuid().toString());
-		memberView.writeToXmlBuilder(builder);
-		groupView.writeToXmlBuilder(builder);
+		memberView.writeToXmlBuilderOld(builder);
+		groupView.writeToXmlBuilderOld(builder);
 		builder.closeElement();
 		
         message.getElement().add(elementFromXml(builder.toString()));

@@ -45,12 +45,12 @@
 		<attribute name="status" use="required">
 			<simpleType>
 				<restriction base="string">
-					<enumeration value="nonmember"/>
-					<enumeration value="removed"/>
-					<enumeration value="invited-to-follow"/>
-					<enumeration value="invited"/>
-					<enumeration value="follower"/>
-					<enumeration value="member"/>
+					<enumeration value="NONMEMBER"/>
+					<enumeration value="REMOVED"/>
+					<enumeration value="INVITED_TO_FOLLOW"/>
+					<enumeration value="INVITED"/>
+					<enumeration value="FOLLOWER"/>
+					<enumeration value="MEMBER"/>
 				</restriction>
 			</simpleType>
 		</attribute>

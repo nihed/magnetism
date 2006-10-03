@@ -1,5 +1,8 @@
 package com.dumbhippo.server;
 
+import java.util.Collections;
+import java.util.List;
+
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.VersionedEntity;
@@ -7,7 +10,7 @@ import com.dumbhippo.persistence.VersionedEntity;
 /* Abstract superclass of PersonView, GroupView which holds
  * utility methods useful to both.
  */
-public abstract class EntityView {
+public abstract class EntityView implements ObjectView {
 	
 	protected abstract VersionedEntity getVersionedEntity();
 	
@@ -19,18 +22,22 @@ public abstract class EntityView {
 	
 	public abstract Guid getIdentifyingGuid();
 	
-	public abstract void writeToXmlBuilder(XmlBuilder builder);
+	public abstract void writeToXmlBuilderOld(XmlBuilder builder);
 	
 	public abstract String toIdentifyingXml();
 	
 	// final since changing this would break the guarantee that it 
-	// returns the same thing as writeToXmlBuilder 
-	final public String toXml() {
+	// returns the same thing as writeToXmlBuilderOld 
+	final public String toXmlOld() {
 		XmlBuilder xml = new XmlBuilder();
-		writeToXmlBuilder(xml);
+		writeToXmlBuilderOld(xml);
 		return xml.toString();
 	}
 	
+	public List<Object> getReferencedObjects() {
+		return Collections.emptyList();
+	}
+
 	@Override
 	public boolean equals(Object o) {
 		if (!(o instanceof EntityView))

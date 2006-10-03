@@ -100,7 +100,10 @@ HippoChatMessage* hippo_chat_message_new           (HippoPerson      *person,
                                                     const char       *text,
                                                     GTime             timestamp,
                                                     int               serial);
-void              hippo_chat_message_free          (HippoChatMessage *message);
+HippoChatMessage *hippo_chat_message_new_from_xml  (HippoDataCache   *cache,
+                                                    LmMessageNode    *node);
+
+    void              hippo_chat_message_free          (HippoChatMessage *message);
 HippoChatMessage* hippo_chat_message_copy          (HippoChatMessage *message);
 HippoPerson*      hippo_chat_message_get_person    (HippoChatMessage *message);
 const char*       hippo_chat_message_get_text      (HippoChatMessage *message);

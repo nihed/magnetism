@@ -2,6 +2,7 @@
 #include "hippo-common-internal.h"
 #include "hippo-block.h"
 #include "hippo-block-post.h"
+#include "hippo-xml-utils.h"
 #include <string.h>
 
 static void     hippo_block_finalize             (GObject *object);
@@ -15,6 +16,10 @@ static void hippo_block_get_property (GObject      *object,
                                       GValue       *value,
                                       GParamSpec   *pspec);
 
+static gboolean hippo_block_real_update_from_xml (HippoBlock     *block,
+                                                  HippoDataCache *cache,
+                                                  LmMessageNode  *node,
+                                                  guint64         server_time);
 
 G_DEFINE_TYPE(HippoBlock, hippo_block, G_TYPE_OBJECT);
 
@@ -49,12 +54,14 @@ hippo_block_init(HippoBlock *block)
 static void
 hippo_block_class_init(HippoBlockClass *klass)
 {
-    GObjectClass *object_class = G_OBJECT_CLASS (klass);  
+    GObjectClass *object_class = G_OBJECT_CLASS (klass);
           
     object_class->finalize = hippo_block_finalize;
 
     object_class->set_property = hippo_block_set_property;
     object_class->get_property = hippo_block_get_property;
+
+    klass->update_from_xml = hippo_block_real_update_from_xml;
 
     g_object_class_install_property(object_class,
                                     PROP_GUID,
@@ -260,6 +267,65 @@ hippo_block_get_property(GObject         *object,
     }
 }
 
+static gboolean
+hippo_block_real_update_from_xml (HippoBlock     *block,
+                                  HippoDataCache *cache,
+                                  LmMessageNode  *node,
+                                  guint64         server_time)
+{
+    const char *guid;
+    const char *type_str;
+    HippoBlockType type;
+    gint64 timestamp;
+    gint64 clicked_timestamp;
+    gint64 ignored_timestamp;
+    int clicked_count;
+    gboolean clicked;
+    gboolean ignored;
+    GTimeVal now;
+    
+    g_assert(cache != NULL);
+
+    if (!hippo_xml_split(cache, node, NULL,
+                         "id", HIPPO_SPLIT_GUID, &guid,
+                         "type", HIPPO_SPLIT_STRING, &type_str,
+                         "timestamp", HIPPO_SPLIT_TIME_MS, &timestamp,
+                         "clickedTimestamp", HIPPO_SPLIT_TIME_MS, &clicked_timestamp,
+                         "ignoredTimestamp", HIPPO_SPLIT_TIME_MS, &ignored_timestamp,
+                         "clickedCount", HIPPO_SPLIT_INT32, &clicked_count,
+                         "clicked", HIPPO_SPLIT_BOOLEAN, &clicked, 
+                         "ignored", HIPPO_SPLIT_BOOLEAN, &ignored,
+                         NULL))
+        return FALSE;
+
+    if (strcmp(block->guid, guid) != 0) {
+        g_warning("Update to <block/> node doesn't match original ID");
+        return FALSE;
+    }
+                         
+    type = hippo_block_type_from_string(type_str);
+    if (type != block->type) {
+        g_warning("Update to <block/> node doesn't match original type");
+        return FALSE;
+    }
+
+    g_get_current_time(&now);
+    hippo_block_set_update_time(block, now.tv_sec);
+    
+    hippo_block_set_server_timestamp(block, server_time);
+    hippo_block_set_timestamp(block, timestamp);
+    hippo_block_set_clicked_timestamp(block, clicked_timestamp);
+    hippo_block_set_ignored_timestamp(block, ignored_timestamp);
+    hippo_block_set_clicked_count(block, clicked_count);
+    hippo_block_set_clicked(block, clicked);
+    hippo_block_set_ignored(block, ignored);
+
+    g_debug("Parsed block %s type %s - %s timestamp = %" G_GINT64_FORMAT,
+            guid, g_type_name_from_instance((GTypeInstance*) block), type_str,
+            timestamp);
+    
+    return TRUE;
+}
 
 /* === HippoBlock exported API === */
 
@@ -289,6 +355,24 @@ hippo_block_new(const char    *guid,
     block->guid = g_strdup(guid);
     
     return block;
+}
+
+gboolean
+hippo_block_update_from_xml(HippoBlock     *block,
+                            HippoDataCache *cache,
+                            LmMessageNode  *node,
+                            guint64         server_time)
+{
+    gboolean success;
+    
+    g_object_freeze_notify(G_OBJECT(block));
+
+    success = HIPPO_BLOCK_GET_CLASS(block)->update_from_xml(block, cache, node, server_time);
+
+    g_object_thaw_notify(G_OBJECT(block));
+
+    return success;
+    
 }
 
 const char*
@@ -477,4 +561,22 @@ hippo_block_set_ignored(HippoBlock *block,
         block->ignored = value;
         g_object_notify(G_OBJECT(block), "ignored");
     }
+}
+
+HippoBlockType
+hippo_block_type_from_string(const char *s)
+{
+    static const struct { const char *name; HippoBlockType type; } types[] = {
+        { "POST", HIPPO_BLOCK_TYPE_POST },
+        { "GROUP_MEMBER", HIPPO_BLOCK_TYPE_GROUP_MEMBER },
+        { "GROUP_CHAT", HIPPO_BLOCK_TYPE_GROUP_CHAT },
+        { "MUSIC_PERSON", HIPPO_BLOCK_TYPE_MUSIC_PERSON },
+        { "EXTERNAL_ACCOUNT_UPDATE", HIPPO_BLOCK_TYPE_EXTERNAL_ACCOUNT_UPDATE }
+    };
+    unsigned int i;
+    for (i = 0; i < G_N_ELEMENTS(types); ++i) {
+        if (strcmp(s, types[i].name) == 0)
+            return types[i].type;
+    }
+    return HIPPO_BLOCK_TYPE_UNKNOWN;
 }

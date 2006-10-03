@@ -5,11 +5,16 @@
 #include "hippo-person.h"
 #include "hippo-resource.h"
 #include "hippo-chat-room.h"
+#include "hippo-xml-utils.h"
 #include <string.h>
 
 /* === HippoEntity implementation === */
 
 static void     hippo_entity_finalize             (GObject *object);
+
+static gboolean hippo_entity_real_update_from_xml(HippoEntity    *entity,
+                                                  HippoDataCache *cache,
+                                                  LmMessageNode  *node);
 
 G_DEFINE_ABSTRACT_TYPE(HippoEntity, hippo_entity, G_TYPE_OBJECT);
 
@@ -43,6 +48,7 @@ hippo_entity_class_init(HippoEntityClass *klass)
                       G_TYPE_NONE, 0);
 
     object_class->finalize = hippo_entity_finalize;
+    klass->update_from_xml = hippo_entity_real_update_from_xml;
 }
 
 static void
@@ -57,14 +63,62 @@ hippo_entity_finalize(GObject *object)
     G_OBJECT_CLASS(hippo_entity_parent_class)->finalize(object); 
 }
 
+static gboolean
+hippo_entity_real_update_from_xml(HippoEntity    *entity,
+                                  HippoDataCache *cache,
+                                  LmMessageNode  *node)
+{
+    const char *id, *name, *photoUrl, *homeUrl;
+
+    if (!hippo_xml_split(cache, node, NULL,
+                         "id", HIPPO_SPLIT_GUID, &id,
+                         "name", HIPPO_SPLIT_STRING, &name,
+                         "photoUrl", HIPPO_SPLIT_URI | HIPPO_SPLIT_OPTIONAL, &photoUrl,
+                         "homeUrl", HIPPO_SPLIT_URI | HIPPO_SPLIT_OPTIONAL, &homeUrl,
+                         NULL))
+        return FALSE;
+    
+    if (!strcmp(id, entity->guid) == 0) {
+        g_warning("ID on node for update doesn't match entity's ID");
+        return FALSE;
+    }
+
+    hippo_entity_set_name(entity, name);
+
+    if (photoUrl)
+        hippo_entity_set_small_photo_url(entity, photoUrl);
+
+    if (homeUrl)
+        hippo_entity_set_home_url(entity, homeUrl);
+
+    return TRUE;
+}
+
 /* === HippoEntity "protected" API === */
 
 void
-hippo_entity_emit_changed(HippoEntity *entity)
+hippo_entity_freeze_notify(HippoEntity *entity)
 {
-    g_return_if_fail(HIPPO_IS_ENTITY(entity));
-    
-    g_signal_emit(entity, signals[CHANGED], 0);
+    entity->notify_freeze_count++;
+}
+
+void
+hippo_entity_thaw_notify(HippoEntity *entity)
+{
+    entity->notify_freeze_count--;
+    if (entity->notify_freeze_count == 0 && entity->need_notify) {
+        entity->need_notify = FALSE;
+        g_signal_emit(entity, signals[CHANGED], 0);
+    }
+}
+
+void 
+hippo_entity_notify(HippoEntity *entity)
+{
+    if (entity->notify_freeze_count == 0)
+        g_signal_emit(entity, signals[CHANGED], 0);
+    else
+        entity->need_notify = TRUE;
 }
 
 void
@@ -79,7 +133,7 @@ hippo_entity_set_string(HippoEntity *entity,
         
     g_free(*s_p);
     *s_p = g_strdup(val);
-    hippo_entity_emit_changed(entity);
+    hippo_entity_notify(entity);
 }
 
 /* === HippoEntity exported API === */
@@ -111,6 +165,23 @@ hippo_entity_new(HippoEntityType  type,
     entity->guid = g_strdup(guid);
     
     return entity;
+}
+
+gboolean
+hippo_entity_update_from_xml(HippoEntity    *entity,
+                             HippoDataCache *cache,
+                             LmMessageNode  *node)
+{
+    gboolean success;
+    
+    hippo_entity_freeze_notify(entity);
+
+    success = HIPPO_ENTITY_GET_CLASS(entity)->update_from_xml(entity, cache, node);
+
+    hippo_entity_thaw_notify(entity);
+
+    return success;
+    
 }
 
 const char*

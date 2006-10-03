@@ -6,62 +6,52 @@ import java.util.List;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.ChatMessage;
-import com.dumbhippo.persistence.PostMessage;
+import com.dumbhippo.persistence.GroupMessage;
 import com.dumbhippo.persistence.UserBlockData;
 
-public class PostBlockView extends BlockView {
-	static final public int RECENT_MESSAGE_COUNT = 3;
+public class GroupChatBlockView extends BlockView {
+	public static final int RECENT_MESSAGE_COUNT = 3;
 	
-	private PostView postView;
-	private List<PostMessage> recentMessages;
+	private GroupView group;
+	private List<GroupMessage> recentMessages;
 	
-	public PostBlockView(Block block, UserBlockData ubd, PostView post, List<PostMessage> recentMessages) {
+	public GroupChatBlockView(Block block, UserBlockData ubd, GroupView group, List<GroupMessage> recentMessages) {
 		super(block, ubd);
-		this.postView = post;
+		this.group = group;
 		this.recentMessages = recentMessages;
 	}
 
 	public String getWebTitleType() {
-		return "Web Swarm";
+		return "Mugshot";
 	}
 	
 	public String getWebTitle() {
-		return postView.getTitleAsHtml();
-	}
-	
-	@Override
-	public String getWebTitleLink() {
-		return postView.getUrl();
+		return "Membership change";
 	}
 	
 	public String getIconName() {
-		return "webswarm_icon.png";
+		return "mugshot_icon.png";
 	}
 	
-	public PostView getPostView() {
-		return this.postView;
+	public GroupView getGroupView() {
+		return this.group;
 	}
-	
-	public List<PostMessage> getRecentMessages(PostView postView) {
+
+	public List<GroupMessage> getRecentMessages(PostView postView) {
 		return recentMessages;
 	}
 	
 	@Override
-	public String getDescriptionHtml() {
-		return postView.getTextAsHtml();
-	}
-
-	@Override
 	protected void writeDetailsToXmlBuilder(XmlBuilder builder) {
-		builder.openElement("post",
-							"postId", postView.getIdentifyingGuid().toString());
+		builder.openElement("group",
+							"groupId", group.getIdentifyingGuid().toString());
 		
 		builder.openElement("recentMessages");
 		for (ChatMessage message : recentMessages) {
 			builder.openElement("message",
-								"serial", Long.toString(message.getId()),
-								"timestamp",Long.toString(message.getTimestamp().getTime()),
-								"sender", message.getFromUser().getId());
+		            			"serial", Long.toString(message.getId()),
+					            "timestamp",Long.toString(message.getTimestamp().getTime()),
+					            "sender", message.getFromUser().getId());
 			builder.appendTextNode("text", message.getMessageText());
 			builder.closeElement();
 		}
@@ -72,7 +62,7 @@ public class PostBlockView extends BlockView {
 
 	public List<Object> getReferencedObjects() {
 		List<Object> result = new ArrayList<Object>();
-		result.add(postView);
+		result.add(group);
 		for (ChatMessage message : recentMessages) {
 			result.add(message.getFromUser());
 		}

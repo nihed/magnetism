@@ -255,19 +255,19 @@ hippo_canvas_block_post_paint(HippoCanvasItem *item,
 }
 
 static void
-on_cached_post_changed(HippoBlock *block,
-                       GParamSpec *arg, /* null when first calling this */
-                       void       *data)
+on_block_post_post_changed(HippoBlock *block,
+                           GParamSpec *arg, /* null when first calling this */
+                           void       *data)
 {
     HippoCanvasBlockPost *canvas_block_post = HIPPO_CANVAS_BLOCK_POST(data);
     HippoPost *post;
 
     post = NULL;
     g_object_get(G_OBJECT(block),
-                 "cached-post", &post,
+                 "post", &post,
                  NULL);
 
-    g_debug("canvas block post notified of new cached-post %s",
+    g_debug("canvas block post notified of new post %s",
             post ? hippo_post_get_guid(post) : "null");
     
     hippo_canvas_block_post_set_post(canvas_block_post, post);
@@ -284,7 +284,7 @@ hippo_canvas_block_post_set_block(HippoCanvasBlock *canvas_block,
     
     if (canvas_block->block != NULL) {
         g_signal_handlers_disconnect_by_func(G_OBJECT(canvas_block->block),
-                                             G_CALLBACK(on_cached_post_changed),
+                                             G_CALLBACK(on_block_post_post_changed),
                                              canvas_block);
     }
     
@@ -293,11 +293,11 @@ hippo_canvas_block_post_set_block(HippoCanvasBlock *canvas_block,
 
     if (canvas_block->block != NULL) {
         g_signal_connect(G_OBJECT(canvas_block->block),
-                         "notify::cached-post",
-                         G_CALLBACK(on_cached_post_changed),
+                         "notify::post",
+                         G_CALLBACK(on_block_post_post_changed),
                          canvas_block);
         
-        on_cached_post_changed(canvas_block->block, NULL, canvas_block);
+        on_block_post_post_changed(canvas_block->block, NULL, canvas_block);
     }
 }
 
@@ -391,7 +391,7 @@ hippo_canvas_block_post_title_activated(HippoCanvasBlock *canvas_block)
 
     post = NULL;
     g_object_get(G_OBJECT(canvas_block->block),
-                 "cached-post", &post,
+                 "post", &post,
                  NULL);
 
     if (post == NULL)

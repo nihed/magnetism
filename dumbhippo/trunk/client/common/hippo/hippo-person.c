@@ -112,7 +112,7 @@ hippo_person_set_music_playing(HippoPerson *person,
     is_playing = is_playing != FALSE;
     if (person->music_playing != is_playing) {
         person->music_playing = is_playing;
-        hippo_entity_emit_changed(HIPPO_ENTITY(person));
+        hippo_entity_notify(HIPPO_ENTITY(person));
     }
 }
                                

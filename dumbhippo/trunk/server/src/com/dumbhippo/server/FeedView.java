@@ -47,7 +47,7 @@ public class FeedView extends EntityView {
 	}
 
 	@Override
-	public void writeToXmlBuilder(XmlBuilder builder) {
+	public void writeToXmlBuilderOld(XmlBuilder builder) {
 		builder.appendTextNode("feed", "", 
 				               "id", feed.getId(), 
 							   "name", feed.getFeed().getTitle(),
@@ -55,11 +55,19 @@ public class FeedView extends EntityView {
 							   "smallPhotoUrl", getSmallPhotoUrl());		
 	}
 
+	public void writeToXmlBuilder(XmlBuilder builder) {
+		builder.appendTextNode("feed", "", 
+				               "id", feed.getId(), 
+							   "name", feed.getFeed().getTitle(),
+							   "homeUrl", feed.getFeed().getLink().getUrl(),
+							   "photoUrl", getSmallPhotoUrl());		
+	}
+	
 	@Override
 	public String toIdentifyingXml() {
 		XmlBuilder builder = new XmlBuilder();
-		builder.appendTextNode("feed", "", 
-				               "id", feed.getId()); 
+		builder.appendEmptyNode("feed", 
+				                "id", feed.getId()); 
 		return builder.toString();		
 	}
 

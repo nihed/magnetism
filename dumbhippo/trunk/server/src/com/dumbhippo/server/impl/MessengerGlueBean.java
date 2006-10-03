@@ -20,6 +20,7 @@ import org.jboss.annotation.IgnoreDependency;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.TypeUtils;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
@@ -63,6 +64,9 @@ import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.MusicSystemInternal;
 import com.dumbhippo.server.MySpaceTracker;
 import com.dumbhippo.server.NotFoundException;
+import com.dumbhippo.server.ViewStream;
+import com.dumbhippo.server.ViewStreamBuilder;
+import com.dumbhippo.server.ObjectView;
 import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewExtra;
 import com.dumbhippo.server.PersonViewer;
@@ -107,6 +111,9 @@ public class MessengerGlueBean implements MessengerGlue {
 	
 	@EJB
 	private GroupSystem groupSystem;
+	
+	@EJB
+	private ViewStreamBuilder viewStreamBuilder;
 	
 	@EJB
 	private ServerStatus serverStatus;
@@ -695,11 +702,11 @@ public class MessengerGlueBean implements MessengerGlue {
 		}
 		
 		for (EntityView ev : viewerEntities) {
-			builder.append(ev.toXml());
+			builder.append(ev.toXmlOld());
 		}
 		
 		for (PostView postView : views) {
-			builder.append(postView.toXml());
+			builder.append(postView.toXmlOld());
 			LivePost lpost = liveState.getLivePost(postView.getPost().getGuid()); 
 			builder.append(lpost.toXml());
 		}
@@ -718,7 +725,7 @@ public class MessengerGlueBean implements MessengerGlue {
 		User user = getUserFromGuid(userId);
 		UserViewpoint viewpoint = new UserViewpoint(user);		
 		GroupView groupView = groupSystem.loadGroup(viewpoint, groupId);
-		return groupView.toXml();
+		return groupView.toXmlOld();
 	}
 
 	public void addGroupMember(Guid userId, Guid groupId, Guid inviteeId) throws NotFoundException {
@@ -733,8 +740,19 @@ public class MessengerGlueBean implements MessengerGlue {
 		User user = getUserFromUsername(username);
 		UserViewpoint viewpoint = new UserViewpoint(user);
 		List<BlockView> list = stacker.getStack(viewpoint, user, lastTimestamp, start, count);
+		List<ObjectView> objectList = TypeUtils.castList(ObjectView.class, list);
+		
 		XmlBuilder xml = new XmlBuilder();
-		CommonXmlWriter.writeBlocks(xml, viewpoint, user, list, CommonXmlWriter.NAMESPACE_BLOCKS);
+		
+		xml.openElement("blocks",
+					    "xmlns", CommonXmlWriter.NAMESPACE_BLOCKS,
+				        "serverTime", Long.toString(System.currentTimeMillis()));
+		
+		ViewStream stream = viewStreamBuilder.buildStream(viewpoint, objectList);
+		stream.writeToXmlBuilder(xml);
+		
+		xml.closeElement();
+		
 		return xml.toString();
 	}
 	

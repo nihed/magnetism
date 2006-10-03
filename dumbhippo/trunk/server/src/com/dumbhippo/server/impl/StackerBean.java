@@ -48,13 +48,19 @@ import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.server.BlockView;
-import com.dumbhippo.server.GroupBlockView;
+import com.dumbhippo.server.GroupChatBlockView;
+import com.dumbhippo.server.GroupMemberBlockView;
 import com.dumbhippo.server.GroupSystem;
+import com.dumbhippo.server.GroupView;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.MusicPersonBlockView;
 import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.NotFoundException;
+import com.dumbhippo.server.PersonView;
+import com.dumbhippo.server.PersonViewExtra;
+import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.PostBlockView;
+import com.dumbhippo.server.PostView;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.SimpleServiceMBean;
 import com.dumbhippo.server.Stacker;
@@ -89,6 +95,9 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	@EJB
 	private MusicSystem musicSystem;
 	
+	@EJB
+	private PersonViewer personViewer;
+
 	@EJB
 	private PostingBoard postingBoard;
 	
@@ -538,15 +547,28 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 			userview = (UserViewpoint) viewpoint;
 		switch (block.getBlockType()) {
 		case POST: {
-			return new PostBlockView(block, ubd, postingBoard.loadPost(SystemViewpoint.getInstance(), block.getData1AsGuid()));
+			PostView postView = postingBoard.loadPost(SystemViewpoint.getInstance(), block.getData1AsGuid());
+			List<PostMessage> recentMessages = postingBoard.getNewestPostMessages(postView.getPost(), PostBlockView.RECENT_MESSAGE_COUNT);
+			return new PostBlockView(block, ubd, postView, recentMessages);
 		}
-		case GROUP_CHAT: 
+		case GROUP_CHAT: {
+			GroupView groupView = groupSystem.loadGroup(viewpoint, block.getData1AsGuid());
+			List<GroupMessage> recentMessages = groupSystem.getNewestGroupMessages(groupView.getGroup(), GroupChatBlockView.RECENT_MESSAGE_COUNT);
+			return new GroupChatBlockView(block, ubd, groupView, recentMessages);
+		}
 		case GROUP_MEMBER: {
-			return new GroupBlockView(block, ubd, groupSystem.loadGroup(viewpoint, block.getData1AsGuid()));
+			GroupView groupView = groupSystem.loadGroup(viewpoint, block.getData1AsGuid());
+			User user = identitySpider.lookupUser(block.getData2AsGuid());
+			PersonView memberView = personViewer.getPersonView(viewpoint, user, PersonViewExtra.PRIMARY_RESOURCE);
+			GroupMember member =  groupSystem.getGroupMember(viewpoint, groupView.getGroup(), user);
+			
+			return new GroupMemberBlockView(block, ubd, groupView, memberView, member.getStatus());
 		}
 		case MUSIC_PERSON: {
-			List<TrackView> tracks = musicSystem.getLatestTrackViews(viewpoint, identitySpider.lookupUser(block.getData1AsGuid()), 1);
-			return new MusicPersonBlockView(block, ubd, tracks.get(0));
+			User user = identitySpider.lookupUser(block.getData1AsGuid());
+			PersonView userView = personViewer.getPersonView(viewpoint, user, PersonViewExtra.PRIMARY_RESOURCE);
+			List<TrackView> tracks = musicSystem.getLatestTrackViews(viewpoint, user, 1);
+			return new MusicPersonBlockView(block, ubd, userView, tracks.get(0));
 		}
 		case EXTERNAL_ACCOUNT_UPDATE: {
 			User user = identitySpider.lookupUser(block.getData1AsGuid());

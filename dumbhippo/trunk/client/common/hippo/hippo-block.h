@@ -2,6 +2,7 @@
 #ifndef __HIPPO_BLOCK_H__
 #define __HIPPO_BLOCK_H__
 
+#include <loudmouth/loudmouth.h>
 #include <hippo/hippo-basics.h>
 
 G_BEGIN_DECLS
@@ -42,11 +43,21 @@ struct _HippoBlock {
 
 struct _HippoBlockClass {
     GObjectClass parent;
+
+    gboolean (*update_from_xml) (HippoBlock     *block,
+                                 HippoDataCache *cache,
+                                 LmMessageNode  *node,
+                                 guint64         server_time);
 };
 
 GType            hippo_block_get_type                  (void) G_GNUC_CONST;
 HippoBlock*      hippo_block_new                       (const char    *guid,
                                                         HippoBlockType type);
+
+gboolean         hippo_block_update_from_xml           (HippoBlock     *block,
+                                                        HippoDataCache *cache,
+                                                        LmMessageNode  *node,
+                                                        guint64         server_time);
 
 const char*      hippo_block_get_guid                  (HippoBlock *block);
 HippoBlockType   hippo_block_get_block_type            (HippoBlock *block);
@@ -76,6 +87,8 @@ void     hippo_block_set_clicked           (HippoBlock *block,
 gboolean hippo_block_get_ignored           (HippoBlock *block);
 void     hippo_block_set_ignored           (HippoBlock *block,
                                             gboolean    value);
+
+HippoBlockType hippo_block_type_from_string(const char  *s);
 
 G_END_DECLS
 

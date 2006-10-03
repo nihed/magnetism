@@ -1,6 +1,7 @@
 package com.dumbhippo.server;
 
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -13,6 +14,7 @@ import org.slf4j.Logger;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.StringUtils;
 import com.dumbhippo.XmlBuilder;
+import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.live.LivePost;
 import com.dumbhippo.live.LiveState;
 import com.dumbhippo.persistence.PersonPostData;
@@ -36,7 +38,7 @@ import com.dumbhippo.server.formatters.ShareGroupFormatter;
  * constructor accesses lazily loaded fields of the Post; all of its
  * properties and methods are safe to access at any point.
  */
-public class PostView {
+public class PostView implements ObjectView {
 	@SuppressWarnings("unused")
 	private static final Logger logger = GlobalSetup.getLogger(PostView.class);
 	
@@ -45,7 +47,7 @@ public class PostView {
 	private String url;
 	private boolean viewerHasViewed;
 	private EntityView posterView;
-	private List<Object> recipients;
+	private List<EntityView> recipients;
 	private String search;
 	private PostFormatter formatter;
 	private Resource mailRecipient;
@@ -82,7 +84,7 @@ public class PostView {
 	 * @param recipientList the list of (visible) recipients of the post
 	 * @param viewpoint who is looking at the post
 	 */
-	public PostView(EJBContext ejbContext, Post p, EntityView poster, PersonPostData ppd, List<Object>recipientList, Viewpoint viewpoint) {
+	public PostView(EJBContext ejbContext, Post p, EntityView poster, PersonPostData ppd, List<EntityView>recipientList, Viewpoint viewpoint) {
 		this(p, Context.WEB_BUBBLE);
 		posterView = poster;
 		viewerHasViewed = (ppd != null && ppd.getClickedDate() != null);
@@ -169,7 +171,7 @@ public class PostView {
 		return posterView;
 	}
 	
-	public List<Object> getRecipients() {
+	public List<EntityView> getRecipients() {
 		return recipients;
 	}
 	
@@ -238,7 +240,7 @@ public class PostView {
 	}
 
 	// CAUTION - used in both HttpMethods AND XMPP, migrate both xmpp client and javascript if you modify this
-	public void writeToXmlBuilder(XmlBuilder builder) {
+	public void writeToXmlBuilderOld(XmlBuilder builder) {
 		builder.openElement("post", "id", post.getId());
 		builder.appendTextNode("poster", posterView.getIdentifyingGuid().toString());
 		builder.appendTextNode("href", post.getUrl().toString());
@@ -265,12 +267,48 @@ public class PostView {
 		builder.closeElement();
 	}
 	
-	public String toXml() {
+	public String toXmlOld() {
 		XmlBuilder builder = new XmlBuilder();
-		writeToXmlBuilder(builder);
+		writeToXmlBuilderOld(builder);
 		return builder.toString();
 	}
+
+	public Guid getIdentifyingGuid() {
+		return post.getGuid();
+	}
 	
+	public List<Object> getReferencedObjects() {
+		List<Object> result = new ArrayList<Object>();
+		
+		result.add(posterView);
+		for (EntityView entityView : recipients)
+			result.add(entityView);
+		
+		return result;
+	}
+	
+	public void writeToXmlBuilder(XmlBuilder builder) {
+		builder.openElement("post", 
+						    "id", post.getId(),
+						    "poster", posterView.getIdentifyingGuid().toString(),
+						    "href", post.getUrl().toString(),
+							"postDate", Long.toString(post.getPostDate().getTime()),
+							"toWorld", Boolean.toString(isToWorld()),
+							"favorite", Boolean.toString(favorite));
+							
+		builder.appendTextNode("title", post.getTitle());
+		builder.appendTextNode("description", post.getText());
+		
+		builder.openElement("recipients");
+		for (EntityView entityView : recipients) {
+			builder.appendEmptyNode("recipient",
+					                "recipientId", entityView.getIdentifyingGuid().toString()); 
+		}
+		builder.closeElement();
+		
+		builder.closeElement();
+	}
+
 	public LivePost getLivePost() {
 		if (livePost == null) {
 			LiveState liveState = LiveState.getInstance();

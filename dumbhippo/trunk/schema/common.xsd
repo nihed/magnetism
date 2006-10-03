@@ -74,9 +74,9 @@
 		<sequence>
 			<element name="text" type="string"/>
 		</sequence>
-		<attribute name="serial" type="long"/>
-		<attribute name="timestamp" type="long"/>
-		<attribute name="sender" type="dh:Guid"/>
+		<attribute name="serial" type="long" use="required"/>
+		<attribute name="timestamp" type="long" use="required"/>
+		<attribute name="sender" type="dh:Guid" use="required"/>
 	</complexType>
 
 	<complexType name="Post">
@@ -93,7 +93,11 @@
 			<element name="recipients" minOccurs="0">
 				<complexType>
 					<sequence>
-						<element name="recipient" type="dh:ChatMessage" minOccurs="0" maxOccurs="unbounded"/>
+						<element name="recipient" minOccurs="0" maxOccurs="unbounded">
+							<complexType>
+								<attribute name="recipientId" type="dh:Guid"/>
+							</complexType>
+						</element>
 					</sequence>
 				</complexType>
 			</element>
@@ -105,7 +109,7 @@
 				</complexType>
 			</element>
 		</sequence>
-		<attribute name="guid" type="dh:Guid" use="required"/>
+		<attribute name="id" type="dh:Guid" use="required"/>
 		<attribute name="poster" type="dh:Guid" use="required"/>
 		<attribute name="href" type="anyURI" use="required"/>
 		<attribute name="postDate" type="long" use="required"/>

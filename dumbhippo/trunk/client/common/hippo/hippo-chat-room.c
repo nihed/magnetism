@@ -2,6 +2,7 @@
 #include <hippo/hippo-common-internal.h>
 #include "hippo-chat-room.h"
 #include "hippo-connection.h"
+#include "hippo-xml-utils.h"
 #include <string.h>
 
 
@@ -658,6 +659,26 @@ hippo_chat_message_new(HippoPerson *person,
     message->serial = serial;
 
     return message;
+}
+
+HippoChatMessage *
+hippo_chat_message_new_from_xml(HippoDataCache *cache,
+                                LmMessageNode  *node)
+{
+    gint64 serial;
+    gint64 timestamp;
+    HippoPerson *sender;
+    const char *text;
+    
+    if (!hippo_xml_split(cache, node, NULL,
+                         "serial", HIPPO_SPLIT_INT64, &serial,
+                         "timestamp", HIPPO_SPLIT_TIME_MS, &timestamp,
+                         "sender", HIPPO_SPLIT_PERSON, &sender,
+                         "text", HIPPO_SPLIT_STRING | HIPPO_SPLIT_ELEMENT, &text,
+                         NULL))
+        return NULL;
+
+    return hippo_chat_message_new(sender, text, timestamp, serial);
 }
 
 void
