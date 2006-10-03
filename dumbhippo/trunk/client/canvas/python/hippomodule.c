@@ -8,8 +8,16 @@
 #include <pycairo.h>
 Pycairo_CAPI_t *Pycairo_CAPI;
 
+#include <hippo/hippo-canvas-box.h>
+
 void pyhippo_register_classes (PyObject *d);
 void pyhippo_add_constants(PyObject *module, const gchar *strip_prefix);
+
+static void
+sink_hippocanvasbox(GObject *object)
+{
+    HIPPO_CANVAS_BOX(object)->floating = FALSE;
+}
 
 DL_EXPORT(void)
 inithippo(void)
@@ -22,6 +30,8 @@ inithippo(void)
 
     m = Py_InitModule("hippo", NULL);
     d = PyModule_GetDict(m);
+
+    pygobject_register_sinkfunc(HIPPO_TYPE_CANVAS_BOX, sink_hippocanvasbox);
 
     pyhippo_register_classes(d);
     pyhippo_add_constants(m, "HIPPO_");

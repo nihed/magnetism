@@ -141,6 +141,8 @@ COMMON_CANVAS_SOURCEFILES = 					\
 	$(COMMONCANVASSRCDIR)/hippo/hippo-canvas-item.c		\
 	$(COMMONCANVASSRCDIR)/hippo/hippo-canvas-link.c		\
 	$(COMMONCANVASSRCDIR)/hippo/hippo-canvas-text.c		\
+	$(COMMONCANVASSRCDIR)/hippo/hippo-canvas-test.c		\
+	$(COMMONCANVASSRCDIR)/hippo/hippo-canvas-test.h		\
 	$(COMMONCANVASSRCDIR)/hippo/hippo-event.c		\
 	$(COMMONCANVASSRCDIR)/hippo/hippo-graphics.c
 
