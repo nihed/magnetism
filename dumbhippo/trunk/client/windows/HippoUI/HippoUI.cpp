@@ -35,6 +35,7 @@
 #include <hippo/hippo-canvas-image.h>
 #include <hippo/hippo-canvas-widgets.h>
 #include <hippo/hippo-window.h>
+#include <hippo/hippo-canvas-test.h>
 
 #include <glib.h>
 
@@ -566,24 +567,10 @@ HippoUI::create(HINSTANCE instance)
 
 #if 0
     HippoWindow *window = hippo_platform_create_window(platform_);
-    HippoCanvasItem *box = hippo_canvas_box_new();
-    HippoCanvasItem *text = hippo_canvas_text_new();
-    g_object_set(G_OBJECT(text), "text", "Hello, World", NULL);
-    hippo_canvas_box_append(HIPPO_CANVAS_BOX(box), text, HippoPackFlags(0));
-
-    HippoCanvasItem *scrollbars = hippo_canvas_scrollbars_new();
-    text = hippo_canvas_text_new();
-    g_object_set(G_OBJECT(text), "text", "Inside Scrollbars This Text is Longer\nBlah blah blah! This goes on longer\nmore text",
-        "background-color", 0x999900ff, "border", 10, "border-color", 0x444444ff, NULL);
-    hippo_canvas_scrollbars_set_root(HIPPO_CANVAS_SCROLLBARS(scrollbars), text);
-    hippo_canvas_box_append(HIPPO_CANVAS_BOX(box), scrollbars, HippoPackFlags(HIPPO_PACK_EXPAND));
-
-    HippoCanvasItem *image = (HippoCanvasItem*) g_object_new(HIPPO_TYPE_CANVAS_IMAGE,
-                                        "image-name", "mugshotstacker",
-                                        NULL);
-    hippo_canvas_box_append(HIPPO_CANVAS_BOX(box), image, HippoPackFlags(HIPPO_PACK_END));
-    
-    hippo_window_set_contents(window, box);
+    hippo_window_set_resizable(window, HIPPO_ORIENTATION_HORIZONTAL, TRUE);
+    hippo_window_set_resizable(window, HIPPO_ORIENTATION_VERTICAL, TRUE);
+    HippoCanvasItem *root = hippo_canvas_test_get_root();
+    hippo_window_set_contents(window, root);
     hippo_window_set_visible(window, TRUE);
 #endif
 

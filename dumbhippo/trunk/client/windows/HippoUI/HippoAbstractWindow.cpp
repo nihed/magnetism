@@ -125,41 +125,52 @@ HippoAbstractWindow::onClose(bool fromScript)
 {
 }
 
-void
-HippoAbstractWindow::convertClientRectToWindowRect(HippoRectangle *rect)
+/* wrapper that takes a HippoRectangle */
+static void
+hippoAdjustWindowRectEx(HippoRectangle *rect,
+                        DWORD dwStyle,
+                        BOOL bMenu,
+                        DWORD dwExStyle)
 {
     RECT wrect;
+
+#if 0
+    if (dwStyle & (WS_OVERLAPPED | WS_OVERLAPPEDWINDOW | WS_TILED | WS_TILEDWINDOW)) {
+        // MSDN docs on AdjustWindowRectEx say WS_OVERLAPPED isn't allowed but they don't 
+        // say why or what to do instead or what happens if you use it. It seems to work,
+        // more or less.
+    }
+#endif
+
+    if (dwStyle & (WS_HSCROLL | WS_VSCROLL)) {
+        g_warning("AdjustWindowRectEx does not handle WS_HSCROLL/VSCROLL, have to get the system metric for scrollbar size and add it in");
+    }
 
     wrect.left = rect->x;
     wrect.top = rect->y;
     wrect.right = rect->x + rect->width;
     wrect.bottom = rect->y + rect->height;
 
-    if (windowStyle_ & (WS_OVERLAPPED | WS_OVERLAPPEDWINDOW)) {
-        // isn't this just when AdjustWindowRectEx would be useful? must be missing something.
-        // The MSDN docs claim this won't work but it appears to work... so warning commented
-        //g_warning("AdjustWindowRectEx doesn't like WS_OVERLAPPED according to MSDN docs");
-    }
-
-    if (windowStyle_ & (WS_HSCROLL | WS_VSCROLL)) {
-        g_warning("convertClientRectToWindowRect() does not handle WS_HSCROLL/VSCROLL");
-    }
-
-    if (AdjustWindowRectEx(&wrect, windowStyle_,
-        false, extendedStyle_) == 0) {
+    if (AdjustWindowRectEx(&wrect, dwStyle, bMenu, dwExStyle) == 0) {
         g_warning("Failed to convert client rect to window rect");
     }
+
+    hippo_rectangle_from_rect(rect, &wrect);
+}
+
+void
+HippoAbstractWindow::convertClientRectToWindowRect(HippoRectangle *rect)
+{
+    HippoRectangle adjusted = *rect;
+    hippoAdjustWindowRectEx(&adjusted, windowStyle_, false, extendedStyle_);
 
 #if 0
     g_debug("SIZING: adjusted client rect %d,%d %dx%d to window rect %d,%d %dx%d",
         rect->x, rect->y, rect->width, rect->height,
-        wrect.left, wrect.top, wrect.right - wrect.left, wrect.bottom - wrect.top);
+        adjusted.x, adjusted.y, adjusted.width, adjusted.height);
 #endif
 
-    rect->x = wrect.left;
-    rect->y = wrect.top;
-    rect->width = wrect.right - wrect.left;
-    rect->height = wrect.bottom - wrect.top;
+    *rect = adjusted;
 }
 
 // ask Windows for current window geometry, returning client rect in parent window 
@@ -656,22 +667,67 @@ debugPrintMessage(HippoAbstractWindow *abstractWindow,
 
     switch (message) {
     case WM_SIZE:
-        //g_debug("SIZING: WM_SIZE on %p %s", window, name.c_str());
+        g_debug("SIZING: WM_SIZE on %p %s", window, name.c_str());
         break;
     case WM_PAINT:
-        //g_debug("SIZING: WM_PAINT on %p %s", window, name.c_str());
+        g_debug("SIZING: WM_PAINT on %p %s", window, name.c_str());
         break;
     case WM_ERASEBKGND:
-        //g_debug("SIZING: WM_ERASEBKGND on %p %s", window, name.c_str());
+        g_debug("SIZING: WM_ERASEBKGND on %p %s", window, name.c_str());
         break;
     case WM_MOVE:
-        //g_debug("SIZING: WM_MOVE on %p %s", window, name.c_str());
+        g_debug("SIZING: WM_MOVE on %p %s", window, name.c_str());
+        break;
+    case WM_GETMINMAXINFO:
+        {
+            MINMAXINFO *mmi = (MINMAXINFO*) lParam;
+            g_debug("SIZING: MINMAXINFO defaults maximized %d,%d %dx%d, min track size %dx%d",
+                mmi->ptMaxPosition.x, mmi->ptMaxPosition.y,
+                mmi->ptMaxSize.x, mmi->ptMaxSize.y, 
+                mmi->ptMinTrackSize.x, mmi->ptMinTrackSize.y);
+        }
+        break;
+    case WM_CREATE:
+        g_debug("WM_CREATE");
+        break;
+    case WM_NCCREATE:
+        g_debug("WM_NCCREATE");
+        break;
+    case WM_NCCALCSIZE:
+        g_debug("WM_NCCALCSIZE");
+        break;
+    case WM_NCDESTROY:
+        g_debug("WM_NCDESTROY");
+        break;
+    case WM_DESTROY:
+        g_debug("WM_DESTROY");
         break;
     case WM_LBUTTONDOWN:
-        //g_debug("WM_LBUTTONDOWN");
+        g_debug("WM_LBUTTONDOWN");
         break;
     case WM_MOUSEMOVE:
         //g_debug("WM_MOUSEMOVE");
+        break;
+    case WM_NCMOUSEMOVE:
+        //g_debug("WM_NCMOUSEMOVE");
+        break;
+    case WM_NCHITTEST:
+        g_debug("WM_NCHITTEST");
+        break;
+    case WM_SETCURSOR:
+        g_debug("WM_SETCURSOR");
+        break;
+    case WM_MOUSELEAVE:
+        g_debug("WM_MOUSELEAVE");
+        break;
+    case WM_NCMOUSELEAVE:
+        g_debug("WM_NCMOUSELEAVE");
+        break;
+    case WM_PARENTNOTIFY:
+        g_debug("WM_PARENTNOTIFY");
+        break;
+    default:
+        g_debug("unknown window message 0x%X (look in winuser.h - go to definition of any WM_* in visual studio)", message);
         break;
     }
 #endif
@@ -701,6 +757,24 @@ HippoAbstractWindow::windowProc(HWND   window,
                 abstractWindow->AddRef();
                 runDefault = ! abstractWindow->processMessage(message, wParam, lParam);
                 abstractWindow->Release();
+                break;
+        }
+    } else {
+        // If there's no abstractWindow but we were called, this must be one 
+        // of our window classes (not a system class) and we should be inside
+        // CreateWindowEx.
+        switch (message) {
+            case WM_GETMINMAXINFO:
+                {
+                    runDefault = false;
+                    // If we don't do this, Windows will impose a min size
+                    // on windows with decorations
+                    // (quite possibly we should accept that min size, but 
+                    // for debugging purposes it's confusing)
+                    MINMAXINFO *mmi = (MINMAXINFO*) lParam;
+                    mmi->ptMinTrackSize.x = 0;
+                    mmi->ptMinTrackSize.y = 0;
+                }
                 break;
         }
     }

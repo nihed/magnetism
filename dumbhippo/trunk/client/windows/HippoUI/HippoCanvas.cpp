@@ -691,7 +691,8 @@ hippo_canvas_context_win_init(HippoCanvasContextWin *canvas_win)
     // We only set Arial instead of Arial, sans-serif because
     // pango cairo doesn't like a font list here.
     pango_font_description_set_family_static(desc, "Arial");
-    pango_context_set_font_description(canvas_win->pango, desc);
+    // FIXME on my laptop (Visual Studio 2005) this crashes Pango with a g_error()
+    //pango_context_set_font_description(canvas_win->pango, desc);
     pango_font_description_free(desc);
 }
 
