@@ -643,7 +643,8 @@ hippo_canvas_box_translate_to_widget(HippoCanvasContext *context,
     if (y_p)
         *y_p += child->y;
     
-    hippo_canvas_context_translate_to_widget(box->context, item, x_p, y_p);
+    hippo_canvas_context_translate_to_widget(box->context,
+                                             HIPPO_CANVAS_ITEM(box), x_p, y_p);
 }
 
 static void
@@ -2049,6 +2050,50 @@ hippo_canvas_box_move(HippoCanvasBox  *box,
     c->x = x;
     c->y = y;
     hippo_canvas_item_emit_paint_needed(HIPPO_CANVAS_ITEM(box), c->x, c->y, w, h);
+}
+
+void
+hippo_canvas_box_get_position(HippoCanvasBox  *box,
+                              HippoCanvasItem *child,
+                              int             *x,
+                              int             *y)
+{
+    HippoBoxChild *c;
+
+    g_return_if_fail(HIPPO_IS_CANVAS_BOX(box));
+    g_return_if_fail(HIPPO_IS_CANVAS_ITEM(child));
+
+    c = find_child(box, child);
+
+    if (c == NULL) {
+        g_warning("Trying to get the position of a canvas item that isn't in the box");
+        return;
+    }
+    g_assert(c->item == child);
+
+    *x = c->x;
+    *y = c->y;
+}
+
+static void
+children_list_callback(HippoCanvasItem *item,
+                       void            *data)
+{
+    GList **children = (GList**)data;
+
+    *children = g_list_prepend (*children, item);
+}
+
+GList*
+hippo_canvas_box_get_children(HippoCanvasBox *box)
+{
+    GList *children = NULL;
+
+    g_return_val_if_fail(HIPPO_IS_CANVAS_BOX(box), NULL);
+
+    hippo_canvas_box_foreach(box, children_list_callback, &children);
+
+    return children;
 }
 
 HippoCanvasContext*

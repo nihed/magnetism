@@ -96,31 +96,36 @@ struct _HippoCanvasBoxClass {
 };
 
 
-GType            hippo_canvas_box_get_type               (void) G_GNUC_CONST;
+GType            hippo_canvas_box_get_type          (void) G_GNUC_CONST;
 
-HippoCanvasItem* hippo_canvas_box_new    (void);
+HippoCanvasItem* hippo_canvas_box_new               (void);
 
-void hippo_canvas_box_append      (HippoCanvasBox              *box,
-                                   HippoCanvasItem             *child,
-                                   HippoPackFlags               flags);
-void hippo_canvas_box_move        (HippoCanvasBox              *box,
-                                   HippoCanvasItem             *child,
-                                   int                          x,
-                                   int                          y);
-void hippo_canvas_box_remove      (HippoCanvasBox              *box,
-                                   HippoCanvasItem             *child);
-void hippo_canvas_box_remove_all  (HippoCanvasBox              *box);
-void hippo_canvas_box_foreach     (HippoCanvasBox              *box,
-                                   HippoCanvasForeachChildFunc  func,
-                                   void                        *data);
-void hippo_canvas_box_reverse     (HippoCanvasBox              *box);
+void             hippo_canvas_box_append            (HippoCanvasBox              *box,
+                                                     HippoCanvasItem             *child,
+                                                     HippoPackFlags               flags);
+void             hippo_canvas_box_move              (HippoCanvasBox              *box,
+                                                     HippoCanvasItem             *child,
+                                                     int                          x,
+                                                     int                          y);
+void             hippo_canvas_box_get_position      (HippoCanvasBox              *box,
+                                                     HippoCanvasItem             *child,
+                                                     int                         *x,
+                                                     int                         *y);
+void             hippo_canvas_box_remove            (HippoCanvasBox              *box,
+                                                     HippoCanvasItem             *child);
+void             hippo_canvas_box_remove_all        (HippoCanvasBox              *box);
+GList*           hippo_canvas_box_get_children      (HippoCanvasBox              *box);
+void             hippo_canvas_box_foreach           (HippoCanvasBox              *box,
+                                                     HippoCanvasForeachChildFunc  func,
+                                                     void                        *data);
+void             hippo_canvas_box_reverse           (HippoCanvasBox              *box);
 
-void hippo_canvas_box_set_child_visible (HippoCanvasBox              *box,
-                                         HippoCanvasItem             *child,
-                                         gboolean                     visible);
-void hippo_canvas_box_set_child_packing (HippoCanvasBox              *box,
-                                         HippoCanvasItem             *child,
-                                         HippoPackFlags               flags);
+void             hippo_canvas_box_set_child_visible (HippoCanvasBox              *box,
+                                                     HippoCanvasItem             *child,
+                                                     gboolean                     visible);
+void             hippo_canvas_box_set_child_packing (HippoCanvasBox              *box,
+                                                     HippoCanvasItem             *child,
+                                                     HippoPackFlags               flags);
 
 /* Protected accessors for subclasses */
 HippoCanvasContext* hippo_canvas_box_get_context         (HippoCanvasBox *box);
