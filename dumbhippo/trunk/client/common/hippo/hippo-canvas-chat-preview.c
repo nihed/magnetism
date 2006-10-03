@@ -52,7 +52,9 @@ struct _HippoCanvasChatPreview {
     int chatting_count;
     GSList *recent_messages;
 
+    HippoCanvasBox *count_parent;
     HippoCanvasItem *count_item;
+    HippoCanvasItem *count_separator_item;
     HippoMessagePreview message_previews[MAX_PREVIEWED];
 };
 
@@ -111,14 +113,15 @@ hippo_canvas_chat_preview_init(HippoCanvasChatPreview *chat_preview)
                                             "font", "11px",
                                             "color", 0x666666ff,
                                             NULL);
+    chat_preview->count_parent = box;
     hippo_canvas_box_append(box, chat_preview->count_item, 0);
 
-    item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
-                        "text", " | ",
-                        "font", "11px",
-                        "color", 0x666666ff,
-                        NULL);
-    hippo_canvas_box_append(box, item, 0);
+    chat_preview->count_separator_item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
+                                                      "text", " | ",
+                                                      "font", "11px",
+                                                      "color", 0x666666ff,
+                                                      NULL);
+    hippo_canvas_box_append(box, chat_preview->count_separator_item, 0);
 
     item = g_object_new(HIPPO_TYPE_CANVAS_LINK,
                         "text", "Chat",
@@ -340,18 +343,32 @@ hippo_canvas_chat_preview_get_property(GObject         *object,
 static void
 update_chatting_count(HippoCanvasChatPreview *chat_preview)
 {
-    char *s;
+    /* We only know the chatting count if the chat room is joined for some reason */
+    HippoChatRoom *room;
 
-    if (chat_preview->chatting_count == 0)
-        s = g_strdup("Nobody chatting");
-    else
-        s = g_strdup_printf("%d people chatting", chat_preview->chatting_count);
+    room = chat_preview->room;
+    
+    if (room != NULL) {
+        char *s;
+        
+        if (chat_preview->chatting_count == 0)
+            s = g_strdup("Nobody chatting");
+        else
+            s = g_strdup_printf("%d people chatting", chat_preview->chatting_count);
+        
+        g_object_set(G_OBJECT(chat_preview->count_item),
+                     "text", s,
+                     NULL);
 
-    g_object_set(G_OBJECT(chat_preview->count_item),
-                 "text", s,
-                 NULL);
+        g_free(s);
+    }
 
-    g_free(s);
+    hippo_canvas_box_set_child_visible(chat_preview->count_parent,
+                                       chat_preview->count_item,
+                                       room != NULL);
+    hippo_canvas_box_set_child_visible(chat_preview->count_parent,
+                                       chat_preview->count_separator_item,
+                                       room != NULL);
 }
 
 static void

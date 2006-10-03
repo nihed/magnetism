@@ -156,7 +156,19 @@ hippo_block_post_set_property(GObject         *object,
                               const GValue    *value,
                               GParamSpec      *pspec)
 {
-    G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
+    HippoBlockPost *block_post = HIPPO_BLOCK_POST(object);
+
+    switch (prop_id) {
+    case PROP_POST:
+        set_post(block_post, (HippoPost*) g_value_get_object(value));
+        break;
+    case PROP_RECENT_MESSAGES:
+        set_recent_messages(block_post, g_value_get_pointer(value));
+        break;
+    default:
+        G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
+        break;
+    }
 }
 
 static void
@@ -171,6 +183,9 @@ hippo_block_post_get_property(GObject         *object,
     case PROP_POST:
         g_value_set_object(value, G_OBJECT(block_post->post));
         break;
+    case PROP_RECENT_MESSAGES:
+        g_value_set_pointer(value, block_post->recent_messages);
+        break;        
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
         break;

@@ -397,20 +397,10 @@ void
 hippo_data_cache_add_post(HippoDataCache *cache,
                           HippoPost      *post)
 {
-    HippoChatRoom *room;
-    
     g_return_if_fail(hippo_data_cache_lookup_post(cache, hippo_post_get_guid(post)) == NULL);
 
     g_object_ref(post);
     g_hash_table_replace(cache->posts, g_strdup(hippo_post_get_guid(post)), post);
- 
-    // we always want to create a chat room for a post
-    room = hippo_data_cache_ensure_chat_room(cache, hippo_post_get_guid(post),
-                                             HIPPO_CHAT_KIND_POST);
-    if (hippo_post_get_chat_room(post) == NULL) {
-        hippo_post_set_chat_room(post, room);
-    }
-    g_assert(hippo_post_get_chat_room(post) == room);
     
     g_debug("Post %s added, emitting post-added", hippo_post_get_guid(post));
 

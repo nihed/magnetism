@@ -305,7 +305,7 @@ static void
 update_post(HippoCanvasBlockPost *canvas_block_post)
 {
     HippoPost *post;
-
+    
     post = canvas_block_post->post;
 
     if (post == NULL) {
@@ -320,6 +320,9 @@ update_post(HippoCanvasBlockPost *canvas_block_post)
                      "chat-room", NULL,
                      NULL);
     } else {
+        HippoChatRoom *room;
+        HippoBlock *block;
+        
         hippo_canvas_block_set_title(HIPPO_CANVAS_BLOCK(canvas_block_post),
                                      hippo_post_get_title(post));
         hippo_canvas_block_set_sender(HIPPO_CANVAS_BLOCK(canvas_block_post),
@@ -327,9 +330,30 @@ update_post(HippoCanvasBlockPost *canvas_block_post)
         g_object_set(G_OBJECT(canvas_block_post->description_item),
                      "text", hippo_post_get_description(post),
                      NULL);
+
+        /* For the chat preview, prefer to use the chat room if
+         * we have one, otherwise use the static recent messages
+         * summary.
+         */
+        
+        room = hippo_post_get_chat_room(post);
         g_object_set(G_OBJECT(canvas_block_post->chat_preview),
-                     "chat-room", hippo_post_get_chat_room(post),
+                     "chat-room", room,
                      NULL);
+
+        if (room == NULL) {
+            /* We need to use recent messages summary from the block instead */
+            GSList *messages;
+            block = HIPPO_CANVAS_BLOCK(canvas_block_post)->block;
+            messages = NULL;
+            g_object_get(G_OBJECT(block), "recent-messages", &messages, NULL);
+            while (messages) {
+                g_object_set(G_OBJECT(canvas_block_post->chat_preview),
+                             "recent-message", messages->data,
+                             NULL);
+                messages = messages->next;
+            }
+        }
     }
 }
 
