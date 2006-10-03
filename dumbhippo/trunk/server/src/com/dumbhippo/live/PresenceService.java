@@ -224,14 +224,7 @@ public class PresenceService extends ServiceMBeanSupport implements PresenceServ
 		}
 
 		public synchronized void removeListener(PresenceListener listener) {
-			// We can't use listeners.remove(listener) here since we want pointer equality
-			// not .equals()
-			for (Iterator<PresenceListener> i = listeners.iterator(); i.hasNext();) {
-				if (i.next() == listener) {
-					i.remove();
-					return;
-				}
-			}
+			listeners.removeListener(listener);
 		}
 		
 		private void ensureNotifyUsers() {
@@ -955,6 +948,7 @@ public class PresenceService extends ServiceMBeanSupport implements PresenceServ
 			setName("PresenceService.ReceiveThread");
 		}
 		
+		@Override
 		public void run() {
 			while (true) {
 				try {
