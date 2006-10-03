@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.dumbhippo.StringUtils;
+import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.persistence.SongDownloadSource;
 import com.dumbhippo.persistence.Track;
 
@@ -227,5 +228,24 @@ public class TrackView {
 		long songEnd = getLastListenTime() + (getDurationSeconds() * 1000);
 		boolean nowPlaying = songEnd + (30*1000) > now;
 		return nowPlaying;
+	}
+	
+	public void writeToXmlBuilder(XmlBuilder builder, String elementName) {
+		builder.openElement(elementName,
+							"nowPlaying", Boolean.toString(isNowPlaying()));
+		builder.appendTextNode("artist", getArtist());
+		builder.appendTextNode("album", getAlbum());
+		builder.appendTextNode("name", getName());
+		
+		if (downloads != null) {
+			for (SongDownloadSource source: downloads.keySet()) {
+				String url = downloads.get(source);
+				builder.appendEmptyNode("download", 
+										"source", source.name(),
+										"url", url);
+			}
+		}
+
+		builder.closeElement();
 	}
 }

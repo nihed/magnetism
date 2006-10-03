@@ -60,6 +60,7 @@ public class PersonView extends EntityView {
 	private boolean viewOfSelf;
 	private boolean online;
 	private Set<ExternalAccount> externalAccounts;
+	private TrackView currentTrack;
 	
 	private void addExtras(EnumSet<PersonViewExtra> more) {
 		if (extras == null)
@@ -371,6 +372,14 @@ public class PersonView extends EntityView {
 	@Override
 	public String toString() {
 		return "{PersonView " + contact + " " + user + " invited = " + invited + " extras = " + extras + " resources = " + resources + "}";
+	}
+	
+	public void setCurrentTrack(TrackView currentTrack) {
+		this.currentTrack = currentTrack;
+	}
+	
+	public TrackView getCurrentTrack() {
+		return currentTrack;
 	}
 	
 	/**
@@ -733,16 +742,21 @@ public class PersonView extends EntityView {
 	
 	public void writeToXmlBuilder(XmlBuilder builder) {
 		if (user != null) {
-			builder.appendEmptyNode("user", 
-								    "id", user.getId(), 
-				               	    "name", getName(),
-				               	    "homeUrl", getHomeUrl(), 
-				               	    "photoUrl", getSmallPhotoUrl());
+			builder.openElement("user", 
+								"id", user.getId(), 
+				               	"name", getName(),
+				               	"homeUrl", getHomeUrl(), 
+				               	"photoUrl", getSmallPhotoUrl());
 		} else {
-			builder.appendEmptyNode("resource", 
-					                "id", getIdentifyingGuid().toString(), 
-					                "name", getName());
-		}		
+			builder.openElement("resource", 
+					            "id", getIdentifyingGuid().toString(), 
+					            "name", getName());
+		}
+		
+		if (currentTrack != null)
+			currentTrack.writeToXmlBuilder(builder, "currentTrack");
+		
+		builder.closeElement();
 	}
 
 	/**

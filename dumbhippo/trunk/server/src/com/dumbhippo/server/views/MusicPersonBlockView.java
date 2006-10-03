@@ -9,12 +9,10 @@ import com.dumbhippo.persistence.UserBlockData;
 
 public class MusicPersonBlockView extends BlockView {
 	private PersonView userView;
-	private TrackView track;
 	
-	public MusicPersonBlockView(Block block, UserBlockData ubd, PersonView userView, TrackView track) {
+	public MusicPersonBlockView(Block block, UserBlockData ubd, PersonView userView) {
 		super(block, ubd);
 		this.userView = userView;
-		this.track = track;
 	}
 
 	public String getWebTitleType() {
@@ -22,7 +20,7 @@ public class MusicPersonBlockView extends BlockView {
 	}
 	
 	public String getWebTitle() {
-		return track.getName();
+		return getTrackView().getName();
 	}
 	
 	public String getIconName() {
@@ -34,7 +32,7 @@ public class MusicPersonBlockView extends BlockView {
 	}
 	
 	public TrackView getTrackView() {
-		return this.track;
+		return userView.getCurrentTrack();
 	}
 
 	@Override
