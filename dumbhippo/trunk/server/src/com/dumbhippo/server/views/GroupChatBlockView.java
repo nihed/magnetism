@@ -43,7 +43,7 @@ public class GroupChatBlockView extends BlockView {
 	
 	@Override
 	protected void writeDetailsToXmlBuilder(XmlBuilder builder) {
-		builder.openElement("group",
+		builder.openElement("groupChat",
 							"groupId", group.getIdentifyingGuid().toString());
 		
 		builder.openElement("recentMessages");
