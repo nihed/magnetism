@@ -131,6 +131,9 @@
 				RelativePath="..\..\common\canvas\hippo\hippo-canvas-box.c">
 			</File>
 			<File
+				RelativePath="..\..\common\hippo\hippo-canvas-chat-preview.c">
+			</File>
+			<File
 				RelativePath="..\..\common\canvas\hippo\hippo-canvas-context.c">
 			</File>
 			<File
@@ -164,6 +167,9 @@
 				RelativePath="..\..\common\hippo\hippo-canvas-stack.c">
 			</File>
 			<File
+				RelativePath="..\..\common\canvas\hippo\hippo-canvas-test.c">
+			</File>
+			<File
 				RelativePath="..\..\common\hippo\hippo-chat-room.c">
 			</File>
 			<File
@@ -194,6 +200,9 @@
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\hippo-entity.c">
+			</File>
+			<File
+				RelativePath="..\..\common\canvas\hippo\hippo-event.c">
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\hippo-feed.c">
@@ -234,6 +243,9 @@
 			<File
 				RelativePath="..\..\common\hippo\hippo-window.c">
 			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-xml-utils.c">
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -262,6 +274,9 @@
 			</File>
 			<File
 				RelativePath="..\..\common\canvas\hippo\hippo-canvas-box.h">
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-canvas-chat-preview.h">
 			</File>
 			<File
 				RelativePath="..\..\common\canvas\hippo\hippo-canvas-context.h">
@@ -298,6 +313,9 @@
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\hippo-canvas-stack.h">
+			</File>
+			<File
+				RelativePath="..\..\common\canvas\hippo\hippo-canvas-test.h">
 			</File>
 			<File
 				RelativePath="..\..\common\canvas\hippo\hippo-canvas-text.c">
@@ -342,6 +360,9 @@
 				RelativePath="..\..\common\hippo\hippo-entity.h">
 			</File>
 			<File
+				RelativePath="..\..\common\canvas\hippo\hippo-event.h">
+			</File>
+			<File
 				RelativePath="..\..\common\hippo\hippo-feed.h">
 			</File>
 			<File
@@ -379,6 +400,9 @@
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\hippo-window.h">
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-xml-utils.h">
 			</File>
 		</Filter>
 		<Filter
