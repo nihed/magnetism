@@ -728,7 +728,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 	// We order and select on pm.id, though in rare cases the order by pm.id and by pm.timestamp
 	// might be different if two messages arrive almost at once. In this case, the timestamps will
 	// likely be within a second of each other and its much cheaper this way.
-	private static final String GROUP_MESSAGE_QUERY = "SELECT pm from GroupMessage pm WHERE pm.group = :group AND pm.id > :lastSeenSerial ";
+	private static final String GROUP_MESSAGE_QUERY = "SELECT pm from GroupMessage pm WHERE pm.group = :group ";
 	private static final String GROUP_MESSAGE_SELECT = " AND pm.id >= :lastSeenSerial ";
 	private static final String GROUP_MESSAGE_ORDER = " ORDER BY pm.id";
 	
