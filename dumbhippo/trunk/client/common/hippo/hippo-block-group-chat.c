@@ -123,9 +123,11 @@ set_recent_messages(HippoBlockGroupChat *block_group_chat,
     
     g_slist_foreach(block_group_chat->recent_messages, (GFunc)hippo_chat_message_free, NULL);
     g_slist_free(block_group_chat->recent_messages);
+    block_group_chat->recent_messages = NULL;
 
     for (l = recent_messages; l; l = l->next) {
-        block_group_chat->recent_messages = g_slist_prepend(block_group_chat->recent_messages, hippo_chat_message_copy(l->data));
+        block_group_chat->recent_messages = g_slist_prepend(block_group_chat->recent_messages,
+                                                            hippo_chat_message_copy(l->data));
     }
 
     block_group_chat->recent_messages = g_slist_reverse(block_group_chat->recent_messages);
@@ -170,6 +172,9 @@ hippo_block_group_chat_get_property(GObject         *object,
     switch (prop_id) {
     case PROP_GROUP:
         g_value_set_object(value, G_OBJECT(block_group_chat->group));
+        break;
+    case PROP_RECENT_MESSAGES:
+        g_value_set_pointer(value, block_group_chat->recent_messages);
         break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);

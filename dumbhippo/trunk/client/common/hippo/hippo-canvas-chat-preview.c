@@ -542,6 +542,11 @@ insert_message_if_needed(HippoCanvasChatPreview *chat_preview,
             break;
         }
 
+        if (hippo_chat_message_get_serial(old) == hippo_chat_message_get_serial(message)) {
+            /* Never put in a duplicate */
+            return FALSE;
+        }
+        
         ++newer_count;
 
         /* If the list already has MAX_PREVIEWED items, and we were not newer than

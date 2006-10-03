@@ -14,6 +14,13 @@ List of possible future enhancements / likely directions, we are doing these "as
   and only text properties are the ones that make sense here. In that case 
   the whole feature can be done via the existing create_layout function.
 
+- Set class-default font and colors
+
+  if you allow setting a box to "gray 11px" for example, then the CanvasLink items in there 
+  will override the gray with blue, since links default to blue. So each item should 
+  first use its own props, then its container's props, then its class props, then its
+  parent class props.
+
 - Avoid having to always align images
 
   image item should maybe default to center alignment instead of fill like most items do
