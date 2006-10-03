@@ -104,6 +104,9 @@ void     hippo_connection_request_hotness           (HippoConnection *connection
 void     hippo_connection_request_blocks            (HippoConnection *connection,
                                                      gint64           last_timestamp);
 
+/* Gets the number of milliseconds to add to the local time to get the server time */
+gint64   hippo_connection_get_server_time_offset    (HippoConnection *connection);
+
 void     hippo_connection_update_last_blocks_timestamp (HippoConnection *connection,
                                                         gint64           timestamp);
 

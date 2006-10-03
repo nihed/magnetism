@@ -32,7 +32,6 @@ struct _HippoBlock {
     char   *guid;
     HippoBlockType type;
     GTime  update_time;
-    gint64 server_timestamp;
     gint64 timestamp;
     gint64 clicked_timestamp;
     gint64 ignored_timestamp;
@@ -46,8 +45,8 @@ struct _HippoBlockClass {
 
     gboolean (*update_from_xml) (HippoBlock     *block,
                                  HippoDataCache *cache,
-                                 LmMessageNode  *node,
-                                 guint64         server_time);
+                                 LmMessageNode  *node);
+
 };
 
 GType            hippo_block_get_type                  (void) G_GNUC_CONST;
@@ -56,8 +55,7 @@ HippoBlock*      hippo_block_new                       (const char    *guid,
 
 gboolean         hippo_block_update_from_xml           (HippoBlock     *block,
                                                         HippoDataCache *cache,
-                                                        LmMessageNode  *node,
-                                                        guint64         server_time);
+                                                        LmMessageNode  *node);
 
 const char*      hippo_block_get_guid                  (HippoBlock *block);
 HippoBlockType   hippo_block_get_block_type            (HippoBlock *block);
@@ -65,9 +63,6 @@ HippoBlockType   hippo_block_get_block_type            (HippoBlock *block);
 GTime    hippo_block_get_update_time       (HippoBlock *block);
 void     hippo_block_set_update_time       (HippoBlock *block,
                                             GTime       t);
-gint64   hippo_block_get_server_timestamp  (HippoBlock *block);
-void     hippo_block_set_server_timestamp  (HippoBlock *block,
-                                            gint64      value);
 gint64   hippo_block_get_timestamp         (HippoBlock *block);
 void     hippo_block_set_timestamp         (HippoBlock *block,
                                             gint64      value);

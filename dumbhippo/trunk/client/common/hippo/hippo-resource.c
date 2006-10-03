@@ -17,12 +17,14 @@ struct _HippoResourceClass {
 
 G_DEFINE_TYPE(HippoResource, hippo_resource, HIPPO_TYPE_ENTITY);
 
+#if 0
 enum {
     NONE_YET,
     LAST_SIGNAL
 };
 
 static int signals[LAST_SIGNAL];
+#endif
 
 static void
 hippo_resource_init(HippoResource *resource)
@@ -40,8 +42,6 @@ hippo_resource_class_init(HippoResourceClass *klass)
 static void
 hippo_resource_finalize(GObject *object)
 {
-    HippoResource *resource = HIPPO_RESOURCE(object);
-
     G_OBJECT_CLASS(hippo_resource_parent_class)->finalize(object); 
 }
 

@@ -473,8 +473,7 @@ hippo_data_cache_add_block(HippoDataCache *cache,
 static gboolean
 update_block_from_xml(HippoDataCache *cache,
                       const char     *id,
-                      LmMessageNode  *node,
-                      guint64         server_time)
+                      LmMessageNode  *node)
 {
     const char *type_str;
     HippoBlockType type;
@@ -504,7 +503,7 @@ update_block_from_xml(HippoDataCache *cache,
         existing = FALSE;
     }
 
-    success = hippo_block_update_from_xml(block, cache, node, server_time);
+    success = hippo_block_update_from_xml(block, cache, node);
 
     if (success) {
         hippo_connection_update_last_blocks_timestamp(cache->connection,
@@ -582,8 +581,7 @@ update_post_from_xml(HippoDataCache *cache,
 
 gboolean
 hippo_data_cache_update_from_xml (HippoDataCache *cache,
-                                  LmMessageNode  *node,
-                                  guint64         server_time)
+                                  LmMessageNode  *node)
 {
     const char *name = node->name;
     const char *id;
@@ -594,7 +592,7 @@ hippo_data_cache_update_from_xml (HippoDataCache *cache,
         return FALSE;
 
     if (strcmp(name, "block") == 0) {
-        return update_block_from_xml(cache, id, node, server_time);
+        return update_block_from_xml(cache, id, node);
     } else if (strcmp(name, "feed") == 0) {
         return update_entity_from_xml(cache, id, node, HIPPO_ENTITY_FEED);
     } else if (strcmp(name, "group") == 0) {

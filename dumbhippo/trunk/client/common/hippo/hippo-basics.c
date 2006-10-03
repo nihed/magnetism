@@ -1120,7 +1120,15 @@ hippo_format_time_ago(GTime now,
     return g_strdup_printf("%.0f years ago", hippo_rint(delta_years));
 }
 
+gint64
+hippo_current_time_ms(void)
+{
+    GTimeVal now;
 
+    g_get_current_time(&now);
+    return (gint64)now.tv_sec * 1000 + now.tv_usec / 1000;
+}
+ 
 static const char*
 hippo_uri_valid_tests[] = { 
     /* both chat kinds */

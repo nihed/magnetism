@@ -185,6 +185,7 @@ struct _HippoConnection {
     char *download_url;
     int request_blocks_id;
     gint64 last_blocks_timestamp;
+    gint64 server_time_offset;
     unsigned int too_old : 1;
     unsigned int upgrade_available : 1;
 };
@@ -1706,6 +1707,19 @@ hippo_connection_request_hotness(HippoConnection *connection)
 }
 
 
+gint64
+hippo_connection_get_server_time_offset(HippoConnection *connection)
+{
+    return connection->server_time_offset;
+}
+
+static void
+hippo_connection_update_server_time_offset(HippoConnection *connection,
+                                           gint64           server_time)
+{
+    connection->server_time_offset = server_time - hippo_current_time_ms();
+}
+ 
 static gboolean
 hippo_connection_parse_blocks(HippoConnection *connection,
                               LmMessageNode   *node)
@@ -1718,8 +1732,10 @@ hippo_connection_parse_blocks(HippoConnection *connection,
                          NULL))
         return FALSE;
 
+    hippo_connection_update_server_time_offset(connection, server_timestamp);
+    
     for (subchild = node->children; subchild; subchild = subchild->next)
-        hippo_data_cache_update_from_xml(connection->cache, subchild, server_timestamp);
+        hippo_data_cache_update_from_xml(connection->cache, subchild);
     
     return TRUE;
 }

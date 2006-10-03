@@ -29,12 +29,14 @@ struct _HippoGroupClass {
 
 G_DEFINE_TYPE(HippoGroup, hippo_group, HIPPO_TYPE_ENTITY);
 
+#if 0
 enum {
     NONE_YET,
     LAST_SIGNAL
 };
 
 static int signals[LAST_SIGNAL];
+#endif
 
 static void
 hippo_group_init(HippoGroup *group)
@@ -53,8 +55,6 @@ hippo_group_class_init(HippoGroupClass *klass)
 static void
 hippo_group_finalize(GObject *object)
 {
-    HippoGroup *group = HIPPO_GROUP(object);
-
     G_OBJECT_CLASS(hippo_group_parent_class)->finalize(object); 
 }
 

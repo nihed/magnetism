@@ -497,33 +497,16 @@ on_block_timestamp_changed(HippoBlock *block,
                            void       *data)
 {
     HippoCanvasBlock *canvas_block = HIPPO_CANVAS_BLOCK(data);
-    GTimeVal tv;
-    GTime update_time;
-    GTime server_time;
-    GTime offset_time;
-    GTime now;
-    GTime then;
+    gint64 server_time_now;
     char *when;
 
     if (block == NULL) /* should be impossible */
         return;
     
-    g_get_current_time(&tv);
+    server_time_now = hippo_current_time_ms() + hippo_actions_get_server_time_offset(canvas_block->actions);
 
-    update_time = hippo_block_get_update_time(block);
-    server_time = (int) (hippo_block_get_server_timestamp(block) / 1000);
-    offset_time = server_time - update_time;
-    now = tv.tv_sec + offset_time;
-    then = ((int) (hippo_block_get_timestamp(block) / 1000)) + offset_time;
-    
-    when = hippo_format_time_ago(now, then);
+    when = hippo_format_time_ago(server_time_now / 1000, hippo_block_get_timestamp(block) / 1000);
 
-#if 0
-    g_debug("Formatted offset %d now %d then %d delta %d seconds %d hours to '%s'",
-            offset_time, now, then, now - then, (now - then) / (60*60),
-            when);
-#endif
-    
     g_object_set(G_OBJECT(canvas_block->age_item),
                  "text", when,
                  NULL);

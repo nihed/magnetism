@@ -14,8 +14,7 @@ static void      hippo_block_group_chat_finalize            (GObject            
 
 static gboolean  hippo_block_group_chat_update_from_xml     (HippoBlock           *block,
                                                              HippoDataCache       *cache,
-                                                             LmMessageNode        *node,
-                                                             guint64               server_timestamp);
+                                                             LmMessageNode        *node);
 
 static void hippo_block_group_chat_set_property (GObject      *object,
                                            guint         prop_id,
@@ -185,8 +184,7 @@ hippo_block_group_chat_get_property(GObject         *object,
 static gboolean
 hippo_block_group_chat_update_from_xml (HippoBlock           *block,
                                         HippoDataCache       *cache,
-                                        LmMessageNode        *node,
-                                        guint64               server_timestamp)
+                                        LmMessageNode        *node)
 {
     HippoBlockGroupChat *block_group_chat = HIPPO_BLOCK_GROUP_CHAT(block);
     LmMessageNode *group_node;
@@ -195,7 +193,8 @@ hippo_block_group_chat_update_from_xml (HippoBlock           *block,
     LmMessageNode *subchild;
     GSList *recent_messages = NULL;
 
-    HIPPO_BLOCK_CLASS(hippo_block_group_chat_parent_class)->update_from_xml(block, cache, node, server_timestamp);
+    if (!HIPPO_BLOCK_CLASS(hippo_block_group_chat_parent_class)->update_from_xml(block, cache, node))
+        return FALSE;
 
     if (!hippo_xml_split(cache, node, NULL,
                          "groupChat", HIPPO_SPLIT_NODE, &group_node,

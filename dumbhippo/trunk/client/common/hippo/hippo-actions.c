@@ -169,6 +169,12 @@ hippo_actions_lookup_entity(HippoActions    *actions,
     return hippo_data_cache_lookup_entity(actions->cache, entity_guid);
 }
 
+gint64
+hippo_actions_get_server_time_offset (HippoActions *actions)
+{
+    return hippo_connection_get_server_time_offset(get_connection(actions));
+}
+
 void
 hippo_actions_close_stacker(HippoActions    *actions)
 {

@@ -55,8 +55,7 @@ HippoEntity*     hippo_data_cache_ensure_bare_entity     (HippoDataCache *cache,
                                                           const char     *guid);
 
 gboolean         hippo_data_cache_update_from_xml        (HippoDataCache *cache,
-                                                          LmMessageNode  *node,
-                                                          guint64         server_time);
+                                                          LmMessageNode  *node);
                                                           
 /* must free list and unref each post in it */
 GSList*          hippo_data_cache_get_recent_posts       (HippoDataCache  *cache);

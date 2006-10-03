@@ -17,12 +17,14 @@ struct _HippoFeedClass {
 
 G_DEFINE_TYPE(HippoFeed, hippo_feed, HIPPO_TYPE_ENTITY);
 
+#if 0
 enum {
     NONE_YET,
     LAST_SIGNAL
 };
 
 static int signals[LAST_SIGNAL];
+#endif
 
 static void
 hippo_feed_init(HippoFeed *feed)
@@ -40,8 +42,6 @@ hippo_feed_class_init(HippoFeedClass *klass)
 static void
 hippo_feed_finalize(GObject *object)
 {
-    HippoFeed *feed = HIPPO_FEED(object);
-
     G_OBJECT_CLASS(hippo_feed_parent_class)->finalize(object); 
 }
 

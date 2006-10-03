@@ -80,6 +80,8 @@ LIBHIPPO_SOURCEFILES =						\
 	$(COMMONSRCDIR)/hippo/hippo-block-group-chat.h		\
 	$(COMMONSRCDIR)/hippo/hippo-block-group-member.c	\
 	$(COMMONSRCDIR)/hippo/hippo-block-group-member.h	\
+	$(COMMONSRCDIR)/hippo/hippo-block-music-person.c	\
+	$(COMMONSRCDIR)/hippo/hippo-block-music-person.h	\
 	$(COMMONSRCDIR)/hippo/hippo-block-post.c		\
 	$(COMMONSRCDIR)/hippo/hippo-block-post.h		\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-base.c		\
@@ -142,6 +144,8 @@ LIBHIPPO_SOURCEFILES =						\
 	$(COMMONSRCDIR)/hippo/hippo-stack-manager.h		\
 	$(COMMONSRCDIR)/hippo/hippo-surface.c			\
 	$(COMMONSRCDIR)/hippo/hippo-surface.h			\
+	$(COMMONSRCDIR)/hippo/hippo-track.c			\
+	$(COMMONSRCDIR)/hippo/hippo-track.h			\
 	$(COMMONSRCDIR)/hippo/hippo-window.c			\
 	$(COMMONSRCDIR)/hippo/hippo-window.h			\
 	$(COMMONSRCDIR)/hippo/hippo-xml-utils.c			\

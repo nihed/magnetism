@@ -188,6 +188,7 @@ const char*   hippo_chat_kind_as_string    (HippoChatKind kind);
 int      hippo_compare_versions            (const char *version_a,
                                             const char *version_b);
 
+gint64   hippo_current_time_ms             (void);
 char*    hippo_format_time_ago             (GTime       now,
                                             GTime       then);
 

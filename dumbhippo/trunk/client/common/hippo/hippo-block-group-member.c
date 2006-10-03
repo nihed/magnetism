@@ -14,8 +14,7 @@ static void      hippo_block_group_member_finalize            (GObject          
 
 static gboolean  hippo_block_group_member_update_from_xml     (HippoBlock           *block,
                                                                HippoDataCache       *cache,
-                                                               LmMessageNode        *node,
-                                                               guint64               server_timestamp);
+                                                               LmMessageNode        *node);
 
 static void hippo_block_group_member_set_property (GObject      *object,
                                                    guint         prop_id,
@@ -227,8 +226,7 @@ membership_status_from_string(const char            *s,
 static gboolean
 hippo_block_group_member_update_from_xml (HippoBlock           *block,
                                           HippoDataCache       *cache,
-                                          LmMessageNode        *node,
-                                          guint64               server_timestamp)
+                                          LmMessageNode        *node)
 {
     HippoBlockGroupMember *block_group_member = HIPPO_BLOCK_GROUP_MEMBER(block);
     LmMessageNode *group_node;
@@ -237,7 +235,8 @@ hippo_block_group_member_update_from_xml (HippoBlock           *block,
     const char *status_str;
     HippoMembershipStatus status;
 
-    HIPPO_BLOCK_CLASS(hippo_block_group_member_parent_class)->update_from_xml(block, cache, node, server_timestamp);
+    if (!HIPPO_BLOCK_CLASS(hippo_block_group_member_parent_class)->update_from_xml(block, cache, node))
+        return FALSE;
 
     if (!hippo_xml_split(cache, node, NULL,
                          "groupMember", HIPPO_SPLIT_NODE, &group_node,

@@ -20,8 +20,7 @@ static void hippo_block_get_property (GObject      *object,
 
 static gboolean hippo_block_real_update_from_xml (HippoBlock     *block,
                                                   HippoDataCache *cache,
-                                                  LmMessageNode  *node,
-                                                  guint64         server_time);
+                                                  LmMessageNode  *node);
 
 G_DEFINE_TYPE(HippoBlock, hippo_block, G_TYPE_OBJECT);
 
@@ -38,8 +37,6 @@ enum {
     PROP_GUID,
     PROP_BLOCK_TYPE,
     PROP_SORT_TIMESTAMP,
-    PROP_UPDATE_TIME,
-    PROP_SERVER_TIMESTAMP,
     PROP_TIMESTAMP,
     PROP_CLICKED_TIMESTAMP,
     PROP_IGNORED_TIMESTAMP,
@@ -92,26 +89,10 @@ hippo_block_class_init(HippoBlockClass *klass)
                                                        G_PARAM_READABLE));
 
     g_object_class_install_property(object_class,
-                                    PROP_UPDATE_TIME,
-                                    g_param_spec_int("update-time",
-                                                     _("Update time"),
-                                                     _("Client-side current time when we parsed the server time"),
-                                                     -1, G_MAXINT,
-                                                     0,
-                                                     G_PARAM_READABLE | G_PARAM_WRITABLE));    
-    g_object_class_install_property(object_class,
                                     PROP_TIMESTAMP,
                                     g_param_spec_int64("timestamp",
                                                        _("Timestamp"),
                                                        _("When the block last changed"),
-                                                       -1, G_MAXINT64,
-                                                       0,
-                                                       G_PARAM_READABLE | G_PARAM_WRITABLE));
-    g_object_class_install_property(object_class,
-                                    PROP_SERVER_TIMESTAMP,
-                                    g_param_spec_int64("server-timestamp",
-                                                       _("Server timestamp"),
-                                                       _("Server time when it sent us the last update"),
                                                        -1, G_MAXINT64,
                                                        0,
                                                        G_PARAM_READABLE | G_PARAM_WRITABLE));
@@ -177,14 +158,6 @@ hippo_block_set_property(GObject         *object,
     block = HIPPO_BLOCK(object);
 
     switch (prop_id) {
-    case PROP_UPDATE_TIME:
-        hippo_block_set_update_time(block,
-                                    g_value_get_int(value));
-        break;
-    case PROP_SERVER_TIMESTAMP:
-        hippo_block_set_server_timestamp(block,
-                                         g_value_get_int64(value));
-        break;
     case PROP_TIMESTAMP:
         hippo_block_set_timestamp(block,
                                   g_value_get_int64(value));
@@ -235,15 +208,9 @@ hippo_block_get_property(GObject         *object,
     case PROP_BLOCK_TYPE:
         g_value_set_int(value, block->type);
         break;
-    case PROP_UPDATE_TIME:
-        g_value_set_int(value, block->update_time);
-        break;
     case PROP_SORT_TIMESTAMP:
         g_value_set_int64(value,
                           hippo_block_get_sort_timestamp(block));
-        break;
-    case PROP_SERVER_TIMESTAMP:
-        g_value_set_int64(value, block->server_timestamp);
         break;
     case PROP_TIMESTAMP:
         g_value_set_int64(value, block->timestamp);
@@ -272,8 +239,7 @@ hippo_block_get_property(GObject         *object,
 static gboolean
 hippo_block_real_update_from_xml (HippoBlock     *block,
                                   HippoDataCache *cache,
-                                  LmMessageNode  *node,
-                                  guint64         server_time)
+                                  LmMessageNode  *node)
 {
     const char *guid;
     const char *type_str;
@@ -284,7 +250,6 @@ hippo_block_real_update_from_xml (HippoBlock     *block,
     int clicked_count;
     gboolean clicked;
     gboolean ignored;
-    GTimeVal now;
     
     g_assert(cache != NULL);
 
@@ -311,10 +276,6 @@ hippo_block_real_update_from_xml (HippoBlock     *block,
         return FALSE;
     }
 
-    g_get_current_time(&now);
-    hippo_block_set_update_time(block, now.tv_sec);
-    
-    hippo_block_set_server_timestamp(block, server_time);
     hippo_block_set_timestamp(block, timestamp);
     hippo_block_set_clicked_timestamp(block, clicked_timestamp);
     hippo_block_set_ignored_timestamp(block, ignored_timestamp);
@@ -368,14 +329,13 @@ hippo_block_new(const char    *guid,
 gboolean
 hippo_block_update_from_xml(HippoBlock     *block,
                             HippoDataCache *cache,
-                            LmMessageNode  *node,
-                            guint64         server_time)
+                            LmMessageNode  *node)
 {
     gboolean success;
     
     g_object_freeze_notify(G_OBJECT(block));
 
-    success = HIPPO_BLOCK_GET_CLASS(block)->update_from_xml(block, cache, node, server_time);
+    success = HIPPO_BLOCK_GET_CLASS(block)->update_from_xml(block, cache, node);
 
     g_object_thaw_notify(G_OBJECT(block));
 
@@ -395,46 +355,6 @@ hippo_block_get_block_type(HippoBlock *block)
 {
     g_return_val_if_fail(HIPPO_IS_BLOCK(block), HIPPO_BLOCK_TYPE_UNKNOWN);
     return block->type;
-}
-
-GTime
-hippo_block_get_update_time(HippoBlock *block)
-{
-    g_return_val_if_fail(HIPPO_IS_BLOCK(block), -1);
-
-    return block->update_time;
-}
-
-void
-hippo_block_set_update_time(HippoBlock *block,
-                            GTime       value)
-{
-    g_return_if_fail(HIPPO_IS_BLOCK(block));
-
-    if (value != block->update_time) {
-        block->update_time = value;
-        g_object_notify(G_OBJECT(block), "update-time");
-    }
-}
-
-gint64
-hippo_block_get_server_timestamp(HippoBlock *block)
-{
-    g_return_val_if_fail(HIPPO_IS_BLOCK(block), -1);
-
-    return block->server_timestamp;
-}
-
-void
-hippo_block_set_server_timestamp (HippoBlock *block,
-                                  gint64      value)
-{
-    g_return_if_fail(HIPPO_IS_BLOCK(block));
-
-    if (value != block->server_timestamp) {
-        block->server_timestamp = value;
-        g_object_notify(G_OBJECT(block), "server-timestamp");
-    }
 }
 
 gint64
