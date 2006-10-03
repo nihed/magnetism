@@ -3,6 +3,8 @@
 #include "hippo-canvas-block.h"
 #include "hippo-canvas-block-post.h"
 #include "hippo-canvas-block-group-chat.h"
+#include "hippo-canvas-block-group-member.h"
+#include "hippo-canvas-block-music-person.h"
 #include "hippo-canvas-entity-photo.h"
 #include "hippo-canvas-entity-name.h"
 #include <hippo/hippo-canvas-box.h>
@@ -372,7 +374,12 @@ hippo_canvas_block_new(HippoBlockType type,
     case HIPPO_BLOCK_TYPE_GROUP_CHAT:
         object_type = HIPPO_TYPE_CANVAS_BLOCK_GROUP_CHAT;
         break;
-        /* FIXME add the other types */
+    case HIPPO_BLOCK_TYPE_MUSIC_PERSON:
+        object_type = HIPPO_TYPE_CANVAS_BLOCK_MUSIC_PERSON;
+        break;
+    case HIPPO_BLOCK_TYPE_GROUP_MEMBER:
+        object_type = HIPPO_TYPE_CANVAS_BLOCK_GROUP_MEMBER;
+        break;
     }
 
     block = g_object_new(object_type,
