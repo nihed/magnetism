@@ -1,6 +1,20 @@
 /* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 #include "hippo-graphics.h"
 
+GType
+hippo_rectangle_get_type (void)
+{
+    static GType type = 0;
+
+    if (G_UNLIKELY(type == 0)) {
+        type = g_boxed_type_register_static("HippoRectangle",
+                                            (GBoxedCopyFunc)hippo_rectangle_copy,
+                                            (GBoxedFreeFunc)hippo_rectangle_free);
+    }
+
+    return type;
+}
+
 gboolean
 hippo_rectangle_intersect(const HippoRectangle *src1,
                           const HippoRectangle *src2,
@@ -35,6 +49,22 @@ hippo_rectangle_equal(const HippoRectangle *r1,
         r1->y == r2->y &&
         r1->width == r2->width &&
         r1->height == r2->height;
+}
+
+HippoRectangle *
+hippo_rectangle_copy(HippoRectangle *r)
+{
+    g_return_val_if_fail(r != NULL, NULL);
+
+    return (HippoRectangle *)g_memdup(r, sizeof(HippoRectangle));
+}
+
+void
+hippo_rectangle_free(HippoRectangle *r)
+{
+    g_return_if_fail(r != NULL);
+
+    g_free(r);
 }
 
 #define HIPPO_GET_RED(rgba)    (((rgba) >> 24)                / 255.0)

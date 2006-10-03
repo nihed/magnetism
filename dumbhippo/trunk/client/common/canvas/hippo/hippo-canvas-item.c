@@ -48,8 +48,8 @@ hippo_canvas_item_base_init(void *klass)
                           G_SIGNAL_RUN_LAST,
                           G_STRUCT_OFFSET(HippoCanvasItemIface, paint),
                           NULL, NULL,
-                          hippo_canvas_marshal_VOID__POINTER_POINTER,
-                          G_TYPE_NONE, 2, G_TYPE_POINTER, G_TYPE_POINTER);
+                          hippo_canvas_marshal_VOID__POINTER_BOXED,
+                          G_TYPE_NONE, 2, G_TYPE_POINTER, HIPPO_TYPE_RECTANGLE);
         signals[REQUEST_CHANGED] =
             g_signal_new ("request-changed",
                           HIPPO_TYPE_CANVAS_ITEM,
@@ -64,32 +64,32 @@ hippo_canvas_item_base_init(void *klass)
                           G_SIGNAL_RUN_LAST,
                           G_STRUCT_OFFSET(HippoCanvasItemIface, paint_needed),
                           NULL, NULL,
-                          g_cclosure_marshal_VOID__POINTER,
-                          G_TYPE_NONE, 1, G_TYPE_POINTER);
+                          g_cclosure_marshal_VOID__BOXED,
+                          G_TYPE_NONE, 1, HIPPO_TYPE_RECTANGLE);
         signals[BUTTON_PRESS_EVENT] =
             g_signal_new ("button-press-event",
                           HIPPO_TYPE_CANVAS_ITEM,
                           G_SIGNAL_RUN_LAST,
                           G_STRUCT_OFFSET(HippoCanvasItemIface, button_press_event),
                           g_signal_accumulator_true_handled, NULL,
-                          hippo_canvas_marshal_BOOLEAN__POINTER,
-                      G_TYPE_BOOLEAN, 1, G_TYPE_POINTER);
+                          hippo_canvas_marshal_BOOLEAN__BOXED,
+                      G_TYPE_BOOLEAN, 1, HIPPO_TYPE_EVENT);
         signals[BUTTON_RELEASE_EVENT] =
             g_signal_new ("button-release-event",
                           HIPPO_TYPE_CANVAS_ITEM,
                           G_SIGNAL_RUN_LAST,
                           G_STRUCT_OFFSET(HippoCanvasItemIface, button_release_event),
                           g_signal_accumulator_true_handled, NULL,
-                          hippo_canvas_marshal_BOOLEAN__POINTER,
-                          G_TYPE_BOOLEAN, 1, G_TYPE_POINTER);
+                          hippo_canvas_marshal_BOOLEAN__BOXED,
+                          G_TYPE_BOOLEAN, 1, HIPPO_TYPE_EVENT);
         signals[MOTION_NOTIFY_EVENT] =
             g_signal_new ("motion-notify-event",
                           HIPPO_TYPE_CANVAS_ITEM,
                           G_SIGNAL_RUN_LAST,
                           G_STRUCT_OFFSET(HippoCanvasItemIface, motion_notify_event),
                           g_signal_accumulator_true_handled, NULL,
-                          hippo_canvas_marshal_BOOLEAN__POINTER,
-                          G_TYPE_BOOLEAN, 1, G_TYPE_POINTER);
+                          hippo_canvas_marshal_BOOLEAN__BOXED,
+                          G_TYPE_BOOLEAN, 1, HIPPO_TYPE_EVENT);
         signals[ACTIVATED] =
             g_signal_new ("activated",
                           HIPPO_TYPE_CANVAS_ITEM,

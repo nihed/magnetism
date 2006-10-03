@@ -336,26 +336,6 @@
   )
 )
 
-(define-method paint_below_children
-  (of-object "HippoCanvasBox")
-  (c-name "hippo_canvas_box_paint_below_children")
-  (return-type "none")
-  (parameters
-    '("cairo_t*" "cr")
-    '("HippoRectangle*" "damaged_box")
-  )
-)
-
-(define-method paint_above_children
-  (of-object "HippoCanvasBox")
-  (c-name "hippo_canvas_box_paint_above_children")
-  (return-type "none")
-  (parameters
-    '("cairo_t*" "cr")
-    '("HippoRectangle*" "damaged_box")
-  )
-)
-
 (define-virtual paint_below_children
   (of-object "HippoCanvasBox")
   (c-name "hippo_canvas_box_paint_below_children")

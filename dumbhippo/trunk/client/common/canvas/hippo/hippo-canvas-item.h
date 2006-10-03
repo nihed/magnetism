@@ -3,6 +3,7 @@
 #define __HIPPO_CANVAS_ITEM_H__
 
 #include <cairo.h>
+#include <hippo/hippo-event.h>
 #include <hippo/hippo-graphics.h>
 #include <hippo/hippo-canvas-context.h>
 
@@ -13,39 +14,6 @@ typedef enum {
     HIPPO_CANVAS_POINTER_DEFAULT,
     HIPPO_CANVAS_POINTER_HAND
 } HippoCanvasPointer;
-
-typedef enum {
-    HIPPO_EVENT_BUTTON_PRESS,
-    HIPPO_EVENT_BUTTON_RELEASE,
-    HIPPO_EVENT_MOTION_NOTIFY
-} HippoEventType;
-
-typedef enum {
-    HIPPO_MOTION_DETAIL_ENTER,
-    HIPPO_MOTION_DETAIL_LEAVE,
-    HIPPO_MOTION_DETAIL_WITHIN
-} HippoMotionDetail;
-
-typedef struct _HippoEvent HippoEvent;
-
-struct _HippoEvent {
-    HippoEventType type;
-    int x;
-    int y;
-    union {
-        struct {
-            HippoMotionDetail detail;
-        } motion;
-        struct {
-            int button;
-
-            /* we pass these through for gtk_window_begin_resize_drag() */
-            int x11_x_root;
-            int x11_y_root;
-            guint32 x11_time;
-        } button;
-    } u;
-};
 
 /* How an item deals with extra allocation in a single (x or y) dimension */
 typedef enum {

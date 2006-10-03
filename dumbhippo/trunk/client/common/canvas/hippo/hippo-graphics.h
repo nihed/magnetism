@@ -7,6 +7,8 @@
 
 G_BEGIN_DECLS
 
+#define HIPPO_TYPE_RECTANGLE (hippo_rectangle_get_type())
+
 typedef enum
 {
     HIPPO_ORIENTATION_VERTICAL,
@@ -28,11 +30,14 @@ typedef struct {
     int height;
 } HippoRectangle;
 
-gboolean hippo_rectangle_intersect         (const HippoRectangle *src1,
+GType           hippo_rectangle_get_type   (void); G_GNUC_CONST
+gboolean        hippo_rectangle_intersect  (const HippoRectangle *src1,
                                             const HippoRectangle *src2,
                                             HippoRectangle       *dest);
-gboolean hippo_rectangle_equal             (const HippoRectangle *r1,
+gboolean        hippo_rectangle_equal      (const HippoRectangle *r1,
                                             const HippoRectangle *r2);
+HippoRectangle *hippo_rectangle_copy       (HippoRectangle *r);
+void            hippo_rectangle_free       (HippoRectangle *r);
 
 void hippo_cairo_set_source_rgba32       (cairo_t         *cr,
                                           guint32          color);

@@ -58,6 +58,8 @@ CANVAS_SOURCEFILES = 						\
 	$(CANVASSRCDIR)/hippo/hippo-canvas-text.c		\
 	$(CANVASSRCDIR)/hippo/hippo-canvas-text.h		\
 	$(CANVASSRCDIR)/hippo/hippo-canvas-widgets.h		\
+	$(CANVASSRCDIR)/hippo/hippo-event.c			\
+	$(CANVASSRCDIR)/hippo/hippo-event.h			\
 	$(CANVASSRCDIR)/hippo/hippo-graphics.c			\
 	$(CANVASSRCDIR)/hippo/hippo-grahics.h
 
