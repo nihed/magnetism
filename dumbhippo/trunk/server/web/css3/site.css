@@ -286,7 +286,7 @@ div.dh-async-action-link-complete {
 .dh-shiny-box-from {
 	font-size:				14px;
 	font-weight:			italic;
-	color:					gray;
+	color:					#666666;	
 }
 
 .dh-shiny-box-from-person {
@@ -305,7 +305,6 @@ div.dh-async-action-link-complete {
 }
 
 .dh-stacker-block {
-	margin:				4px 0px;
 }
 
 .dh-stacker-block-grey1 {
@@ -314,6 +313,11 @@ div.dh-async-action-link-complete {
 
 .dh-stacker-block-grey2 {
 	background-color:	#F3F3F3;
+}
+
+.dh-stacker-block-title {
+	font-weight:		bold;
+	font-size:			14px;
 }
 
 .dh-stacker-block-right {
@@ -333,4 +337,7 @@ div.dh-async-action-link-complete {
 .dh-stacker-block-content {
 	font-size:			12px;
 	display:			none;
+}
+
+.dh-stacker-block-content-main-top {
 }

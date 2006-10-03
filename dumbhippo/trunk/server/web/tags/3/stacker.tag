@@ -15,5 +15,6 @@
 				<dht3:block block="${block}" cssClass="dh-stacker-block-grey2"/>
 			</c:otherwise>
 		</c:choose>
+		<div class="dh-stacker-block-bottom-padding">&nbsp;</div>
 	</c:forEach>	
 </div>

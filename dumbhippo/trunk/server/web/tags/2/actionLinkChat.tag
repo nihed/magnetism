@@ -5,6 +5,7 @@
 <%@ attribute name="chatId" required="true" type="java.lang.String" %>
 <%-- must be "group" "post" "unknown" --%>
 <%@ attribute name="kind" required="true" type="java.lang.String" %>
+<%@ attribute name="prefix" required="false" type="java.lang.String" %>
 <%@ attribute name="oneLine" required="false" type="java.lang.Boolean" %>
 
 <c:choose>
@@ -36,6 +37,7 @@
 			<c:set scope="page" var="joinChatTitle" value="Chat about this"/>
 		</c:otherwise>
 	</c:choose>
+	<c:out value="${prefix}"/>
 	<dht:actionLink oneLine="${oneLine}" href="${joinChatUri}"
 		title="${joinChatTitle}">Join Chat</dht:actionLink>
 </c:if>

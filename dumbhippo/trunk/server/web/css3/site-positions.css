@@ -257,26 +257,52 @@ div.dh-notification {
 	margin-bottom:		10px;
 }
 
-.dh-shiny-box-content {
-	padding:			10px 10px 0px 10px;
+.dh-shiny-box-content-border {
+	margin:				0px 10px;
+}
+
+.dh-stacker-block-bottom-padding {
+	height:				4px;
 }
 
 .dh-stacker-block-icon {
-	margin-left:		5px;
+	margin:				5px;
 }
 
-.dh-stacker-block {
+.dh-stacker-block p	{
+	margin:				0px;
+	padding:			0px;
+}
+
+.dh-stacker-block-header {
 	position:			relative;
+}
+
+.dh-stacker-block-description {
+	margin-left:		30px;
 }
 
 .dh-stacker-block-right {	
 	position:			absolute;
-	right:				0;
+	right:				5px;
 	top:				10px;
+}
+
+.dh-stacker-block-hr {
+	border:				none;
+	height:				1px;
+	color:				#666666;
+	margin-left:		5px;
+	margin-right:		5px;
 }
 
 .dh-stacker-block-content {
 	position:			relative;
+	margin-left:		30px;
+}
+
+.dh-stacker-block-content-padding {
+	height:				8px;
 }
 
 .dh-stacker-block-content-controls {
@@ -284,3 +310,4 @@ div.dh-notification {
 	top:				0;
 	right:				0;
 }
+

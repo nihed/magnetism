@@ -25,6 +25,6 @@
 	</c:choose>
 	</div>
 	<div class="dh-stacker-block-content-main">	
-	<span class="dh-stacker-block-content-post-chatting"><c:out value="${block.postView.livePost.chattingUserCount}"/></span> people chatting | <dht:actionLinkChat oneLine="true" chatId="${block.postView.post.id}" kind="post"/>
+	<span class="dh-stacker-block-content-post-chatting"><c:out value="${block.postView.livePost.chattingUserCount}"/></span> people chatting <dht:actionLinkChat prefix=" | " oneLine="true" chatId="${block.postView.post.id}" kind="post"/>
 	</div>
 </div>
