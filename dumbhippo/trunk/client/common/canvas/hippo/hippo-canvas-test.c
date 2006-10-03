@@ -293,20 +293,20 @@ hippo_canvas_test_get_root(void)
 
     text = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
                         "size-mode", HIPPO_CANVAS_SIZE_ELLIPSIZE_END,
-                        "text", "This is relatively long ellipsizing text",
-                        "background-color", 0x333333ff,
+                        "text", "With expand/With ellipse (and longer)",
+                        "background-color", 0x555555ff,
                         NULL);
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(shape2), text, HIPPO_PACK_EXPAND);
     
     text = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
                         "size-mode", HIPPO_CANVAS_SIZE_ELLIPSIZE_END,
-                        "text", "Shorter text",
+                        "text", "No expand/With ellipse",
                         "background-color", 0x888888ff,
                         NULL);
-    hippo_canvas_box_append(HIPPO_CANVAS_BOX(shape2), text, HIPPO_PACK_EXPAND);
+    hippo_canvas_box_append(HIPPO_CANVAS_BOX(shape2), text, 0);
 
     text = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
-                        "text", "No expand/ellipse",
+                        "text", "No expand/No ellipse",
                         "background-color", 0xaaaaaaff,
                         NULL);
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(shape2), text, 0);
@@ -316,6 +316,19 @@ hippo_canvas_test_get_root(void)
                         "background-color", 0xeeeeeeff,
                         NULL);
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(shape2), text, HIPPO_PACK_EXPAND);
+
+    /* A box with nothing expandable in it */
+
+    shape2 = g_object_new(HIPPO_TYPE_CANVAS_BOX,
+                          "orientation", HIPPO_ORIENTATION_HORIZONTAL,
+                          NULL);
+    hippo_canvas_box_append(HIPPO_CANVAS_BOX(root), shape2, HIPPO_PACK_END);
+
+    text = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
+                        "text", "No expand/ellipse",
+                        "background-color", 0xaaaaaaff,
+                        NULL);
+    hippo_canvas_box_append(HIPPO_CANVAS_BOX(shape2), text, 0);
 
     return root;
 }
