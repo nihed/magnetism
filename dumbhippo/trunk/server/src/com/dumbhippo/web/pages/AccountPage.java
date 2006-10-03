@@ -9,6 +9,7 @@ import com.dumbhippo.persistence.Sentiment;
 import com.dumbhippo.server.ClaimVerifier;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.ExternalAccountSystem;
+import com.dumbhippo.server.FacebookSystem;
 import com.dumbhippo.server.FacebookTracker;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.NotFoundException;
@@ -39,6 +40,7 @@ public class AccountPage {
 	private ClaimVerifier claimVerifier;
 	private ExternalAccountSystem externalAccounts;
 	private FacebookTracker facebookTracker;
+	private FacebookSystem facebookSystem;
 	private String facebookAuthToken;
 	
 	public AccountPage() {
@@ -47,6 +49,7 @@ public class AccountPage {
 		claimVerifier = WebEJBUtil.defaultLookup(ClaimVerifier.class);
 		externalAccounts = WebEJBUtil.defaultLookup(ExternalAccountSystem.class);
 		facebookTracker = WebEJBUtil.defaultLookup(FacebookTracker.class);
+		facebookSystem =  WebEJBUtil.defaultLookup(FacebookSystem.class);
 		facebookAuthToken = null;
 	}
 	
@@ -212,6 +215,6 @@ public class AccountPage {
     }
     
     public String getFacebookApiKey() {
-        return facebookTracker.getApiKey();
+        return facebookSystem.getApiKey();
     }
 }

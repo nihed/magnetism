@@ -79,7 +79,7 @@ import com.dumbhippo.server.Character;
 import com.dumbhippo.server.ClaimVerifier;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.ExternalAccountSystem;
-import com.dumbhippo.server.FacebookTracker;
+import com.dumbhippo.server.FacebookSystem;
 import com.dumbhippo.server.FeedSystem;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.HippoProperty;
@@ -173,7 +173,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	private ExternalAccountSystem externalAccountSystem;
 	
 	@EJB
-	private FacebookTracker facebookTracker;
+	private FacebookSystem facebookSystem;
 	
 	@EJB
 	private SearchSystem searchSystem;
@@ -1915,18 +1915,18 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			xml.appendTextNode("updateText", lastEntry.getDescription());
 			xml.closeElement();
 		} else if (accountTypeOrdinal == ExternalAccountType.FACEBOOK.ordinal()) {			
-			FacebookAccount facebookAccount = facebookTracker.lookupFacebookAccount(viewpoint, user);
+			FacebookAccount facebookAccount = facebookSystem.lookupFacebookAccount(viewpoint, user);
 			xml.appendTextNode("accountType", "Facebook");
 			int eventsToRequestCount = 3;
 			if (!facebookAccount.isSessionKeyValid() && viewpoint.isOfUser(facebookAccount.getExternalAccount().getAccount().getOwner())) {
 				xml.openElement("updateItem");
 			    xml.appendTextNode("updateTitle", "Please re-login to Facebook to continue getting Facebook updates");
-			    xml.appendTextNode("updateLink", "http://api.facebook.com/login.php?api_key=" + facebookTracker.getApiKey() +"&next=/account");
+			    xml.appendTextNode("updateLink", "http://api.facebook.com/login.php?api_key=" + facebookSystem.getApiKey() +"&next=/account");
 			    xml.appendTextNode("updateText", "");	
 			    xml.closeElement();
 			    eventsToRequestCount = 2;
 			}
-			List<FacebookEvent> facebookEvents = facebookTracker.getLatestEvents(viewpoint, facebookAccount, eventsToRequestCount);
+			List<FacebookEvent> facebookEvents = facebookSystem.getLatestEvents(viewpoint, facebookAccount, eventsToRequestCount);
 			for (FacebookEvent facebookEvent : facebookEvents) {
 				xml.openElement("updateItem");
 				String pageName = "profile";
@@ -1960,7 +1960,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 				} else {
 					throw new RuntimeException("Unexpected event type in HttpMethodsBean::getExternalAccountSummary(): " + facebookEvent.getEventType());
 				}
-			    xml.appendTextNode("updateLink", "http://www.facebook.com/" + pageName + ".php?uid=" + facebookAccount.getFacebookUserId() + "&api_key=" + facebookTracker.getApiKey());
+			    xml.appendTextNode("updateLink", "http://www.facebook.com/" + pageName + ".php?uid=" + facebookAccount.getFacebookUserId() + "&api_key=" + facebookSystem.getApiKey());
 			    xml.appendTextNode("updateText", updateText);
 			    xml.appendTextNode("updateTimestamp", Long.toString(facebookEvent.getEventTimestampAsLong()));
 			    if ((facebookEvent.getPhotos().size() > 0) || (facebookEvent.getAlbum() != null)) {

@@ -36,7 +36,11 @@ import com.dumbhippo.live.LiveState;
 import com.dumbhippo.persistence.AccountClaim;
 import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.BlockType;
+import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.ExternalAccountType;
+import com.dumbhippo.persistence.FacebookAccount;
+import com.dumbhippo.persistence.FacebookEvent;
+import com.dumbhippo.persistence.FeedEntry;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupMember;
 import com.dumbhippo.persistence.GroupMessage;
@@ -47,6 +51,9 @@ import com.dumbhippo.persistence.PostMessage;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.UserBlockData;
+import com.dumbhippo.server.ExternalAccountSystem;
+import com.dumbhippo.server.FacebookSystem;
+import com.dumbhippo.server.FeedSystem;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.MusicSystem;
@@ -59,6 +66,8 @@ import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.XmppMessageSender;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.views.BlockView;
+import com.dumbhippo.server.views.BlogBlockView;
+import com.dumbhippo.server.views.FacebookBlockView;
 import com.dumbhippo.server.views.GroupChatBlockView;
 import com.dumbhippo.server.views.GroupMemberBlockView;
 import com.dumbhippo.server.views.GroupView;
@@ -103,6 +112,15 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	
 	@EJB
 	private XmppMessageSender xmppMessageSystem;
+	
+	@EJB
+	private ExternalAccountSystem externalAccountSystem;
+	
+	@EJB
+	private FeedSystem feedSystem;
+	
+	@EJB
+	private FacebookSystem facebookSystem;
 	
 	private Map<Guid,CacheEntry> userCacheEntries = new HashMap<Guid,CacheEntry>();
 	
@@ -541,6 +559,33 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		click(BlockType.POST, post.getGuid(), null, -1, user, clickedTime);
 	}
 	
+	private BlockView getExternalAccountBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd) throws NotFoundException {
+		if ((block.getBlockType() != BlockType.EXTERNAL_ACCOUNT_UPDATE) && 
+			(block.getBlockType() != BlockType.EXTERNAL_ACCOUNT_UPDATE_SELF)) {
+			throw new RuntimeException("Unexpected block type in getExternalAccountBlockView: " + block.getBlockType());			
+		}
+		
+		User user = identitySpider.lookupUser(block.getData1AsGuid());
+		long accountType = block.getData3();
+		// TODO: check what extras we need to request here
+		PersonView userView = personViewer.getPersonView(viewpoint, user, PersonViewExtra.ALL_RESOURCES);			
+		if (accountType == ExternalAccountType.BLOG.ordinal()) {
+	        ExternalAccount blogAccount = externalAccountSystem.lookupExternalAccount(viewpoint, user, ExternalAccountType.BLOG);  
+			FeedEntry lastEntry = feedSystem.getLastEntry(blogAccount.getFeed());
+			return new BlogBlockView(block, ubd, userView, lastEntry);
+		} else if (accountType == ExternalAccountType.FACEBOOK.ordinal()) {	
+			FacebookAccount facebookAccount = facebookSystem.lookupFacebookAccount(viewpoint, user);
+			int eventsToRequestCount = 3;
+			if (!facebookAccount.isSessionKeyValid() && viewpoint.isOfUser(facebookAccount.getExternalAccount().getAccount().getOwner())) {
+			    eventsToRequestCount = 2;
+			}
+			List<FacebookEvent> facebookEvents = facebookSystem.getLatestEvents(viewpoint, facebookAccount, eventsToRequestCount);
+			return new FacebookBlockView(block, ubd, userView, facebookEvents);
+		} else {
+			throw new NotFoundException("Unexpected external account type: " + accountType);
+		}
+	}
+	
 	private BlockView getBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd) throws NotFoundException {
 		UserViewpoint userview = null;
 		if (viewpoint instanceof UserViewpoint)
@@ -568,22 +613,21 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 			User user = identitySpider.lookupUser(block.getData1AsGuid());
 			PersonView userView = personViewer.getPersonView(viewpoint, user, PersonViewExtra.PRIMARY_RESOURCE);
 			List<TrackView> tracks = musicSystem.getLatestTrackViews(viewpoint, user, 1);
+			if (tracks.isEmpty()) 
+				throw new NotFoundException("The user did not have any track views even though we tried to stack a music update");
+			
 			userView.setCurrentTrack(tracks.get(0));
 			return new MusicPersonBlockView(block, ubd, userView);
 		}
 		case EXTERNAL_ACCOUNT_UPDATE: {
-			User user = identitySpider.lookupUser(block.getData1AsGuid());
-			// TODO implement
-			if (userview != null && userview.getViewer() == user)
-				return null;
-			return null;
+            return getExternalAccountBlockView(viewpoint, block, ubd);      
 		}
 		case EXTERNAL_ACCOUNT_UPDATE_SELF: {	
 			User user = identitySpider.lookupUser(block.getData1AsGuid());
-			// TODO implement
-			if (userview != null && (identitySpider.isViewerSystemOrFriendOf(viewpoint, user)))
-				return null;
-			return null;
+			if (userview == null || userview.getViewer() != user) {
+				throw new NotFoundException("Trying to view an external account update for self from a different viewpoint: " + userview);
+			}
+            return getExternalAccountBlockView(viewpoint, block, ubd);			
 		}
 		}
 		throw new RuntimeException("Unknown BlockType: " + block.getBlockType());
@@ -600,6 +644,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		if (count < 1)
 			throw new IllegalArgumentException("count must be >0 not " + count);
 		
+		logger.debug("user is {}", user);
 		long cached = getLastTimestamp(user.getGuid());
 		if (cached >= 0 && cached <= lastTimestamp)
 			return Collections.emptyList(); // nothing new

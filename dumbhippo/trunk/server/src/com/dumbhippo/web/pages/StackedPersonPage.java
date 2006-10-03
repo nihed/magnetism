@@ -51,7 +51,10 @@ public class StackedPersonPage extends AbstractPersonPage {
 		if (stackedContacts == null) {
 			stackedContacts = new ArrayList<StackedContact>();
 			for (PersonView pv : getContacts().getList()) {
-				stackedContacts.add(new StackedContact(stacker.getStack(getSignin().getViewpoint(), pv.getUser(), 0, 0, 5), pv));
+				// TODO: need a different way to display non-user contacts, i.e. people you have invited or shared with
+				if (pv.getUser() != null) {
+				    stackedContacts.add(new StackedContact(stacker.getStack(getSignin().getViewpoint(), pv.getUser(), 0, 0, 5), pv));
+				}
 			}				
 		}
 		return new ListBean<StackedContact>(stackedContacts);

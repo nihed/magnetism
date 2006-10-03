@@ -16,7 +16,7 @@ public class MusicPersonBlockView extends BlockView {
 	}
 
 	public String getWebTitleType() {
-		return "Web Swarm";
+		return "Music Radar";
 	}
 	
 	public String getWebTitle() {
@@ -24,7 +24,7 @@ public class MusicPersonBlockView extends BlockView {
 	}
 	
 	public String getIconName() {
-		return "webswarm_icon.png";
+		return "musicradar_icon.png";
 	}
 	
 	public PersonView getUserView() {

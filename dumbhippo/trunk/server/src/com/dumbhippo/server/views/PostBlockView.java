@@ -21,6 +21,11 @@ public class PostBlockView extends BlockView {
 		this.recentMessages = recentMessages;
 	}
 
+	@Override
+	public String getBlockId() {
+		return postView.getPost().getId();
+	}
+	
 	public String getWebTitleType() {
 		return "Web Swarm";
 	}

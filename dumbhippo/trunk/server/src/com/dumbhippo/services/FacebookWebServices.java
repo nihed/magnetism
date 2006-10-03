@@ -96,7 +96,7 @@ public class FacebookWebServices extends AbstractXmlRequest<FacebookSaxHandler> 
 			// have new messages
 			// so we would not detect that the person has new messages if, for example, between 
 			// our requests they read 2 of their new messages, deleted them, and received 2 other 
-			// new message 
+			// new messages 
 			facebookAccount.setTotalMessageCount(newTotal);		
 			if ((newUnread != oldUnread) || ((newTotal > oldTotal) && (newUnread > 0)))  {
 				long time = (new Date()).getTime();

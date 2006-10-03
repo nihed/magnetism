@@ -6,7 +6,7 @@
 <%@ attribute name="block" required="true" type="com.dumbhippo.server.views.BlockView" %>
 <%@ attribute name="cssClass" required="true" type="java.lang.String" %>
 
-<c:set var="blockId" value="${block.postView.post.id}" scope="page"/>
+<c:set var="blockId" value="${block.blockId}" scope="page"/>
 
 <div class="dh-stacker-block ${cssClass}" id="dhStackerBlock-${blockId}" onmouseover="dh.stacker.blockHoverStart('${blockId}');" onmouseout="dh.stacker.blockHoverStop('${blockId}');">
 	<table class="dh-stacker-block-header" cellspacing="0" cellpadding="0" width="100%">
@@ -44,13 +44,9 @@
 	</div>
 	<div class="dh-stacker-block-content" id="dhStackerBlockContent-${blockId}">	
 		<div class="dh-stacker-block-content-padding">&nbsp;</div>	
-		<c:choose>
-			<c:when test="${dh:enumIs(block.blockType, 'POST')}">
-				<dht3:postBlock block="${block}"/>
-			</c:when>
-			<c:otherwise>
-			</c:otherwise>
-		</c:choose>
+	    <c:if test="${dh:enumIs(block.blockType, 'POST')}">
+			<dht3:postBlock block="${block}"/>
+		</c:if>
 		<div class="dh-stacker-block-content-padding">&nbsp;</div>		
 	</div>
 </div>
