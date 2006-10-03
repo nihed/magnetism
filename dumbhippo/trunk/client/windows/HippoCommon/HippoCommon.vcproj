@@ -19,7 +19,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories=".;../HippoUtil;../dependencies/glib/include/glib-2.0;../dependencies/cairo/include/cairo;../dependencies/pango/include/pango-1.0;../dependencies/glib/lib/glib-2.0/include;../loudmouth;../../common;../../common/loudmouth;../../common/canvas"
+				AdditionalIncludeDirectories=".;../HippoUtil;../dependencies/glib/include/glib-2.0;../dependencies/cairo/include/cairo;../dependencies/pango/include/pango-1.0;../dependencies/glib/lib/glib-2.0/include;../../common;../../common/loudmouth;../../common/canvas"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;HIPPOCOMMON_EXPORTS"
 				MinimalRebuild="TRUE"
 				BasicRuntimeChecks="3"
@@ -111,6 +111,12 @@
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\hippo-basics.c">
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-block-group-chat.c">
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-block-group-member.c">
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\hippo-block-post.c">
@@ -256,6 +262,12 @@
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\hippo-basics.h">
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-block-group-chat.h">
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-block-group-member.h">
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\hippo-block-post.h">
