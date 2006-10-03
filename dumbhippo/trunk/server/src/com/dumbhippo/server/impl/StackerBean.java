@@ -1103,7 +1103,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		for (GroupMember member : group.getMembers()) {
 			AccountClaim a = member.getMember().getAccountClaim();
 			if (a != null) {
-				getOrCreateBlock(BlockType.GROUP_CHAT, member.getGroup().getGuid(), a.getOwner().getGuid());
+				getOrCreateBlock(BlockType.GROUP_MEMBER, member.getGroup().getGuid(), a.getOwner().getGuid());
 				// we set a timestamp of 0, since we have no way of knowing the right
 				// timestamp, and we don't want to make a big pile of group member blocks 
 				// at the top of the stack whenever we run a migration
