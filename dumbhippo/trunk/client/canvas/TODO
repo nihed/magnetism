@@ -28,3 +28,11 @@ List of possible future enhancements / likely directions, we are doing these "as
 
   With get_natural_width there, naming these get_min_width/get_min_height makes some 
   amount of sense. request is sort of gtk jargon.
+
+  Or really, merging into something like:
+    get_width_request(item, &minimum, &natural);
+    get_height_request(item, for_width, &minimum, &natural);
+  The merging makes it easier to implement in items, since the min/natural code is often
+  related or the same. Note also the addition of natural height, something 
+  we don't have right now.
+  
