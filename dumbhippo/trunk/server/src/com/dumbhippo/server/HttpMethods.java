@@ -13,6 +13,7 @@ import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.UserBlockData;
+import com.dumbhippo.server.views.UserViewpoint;
 
 /**
  * - Methods must be named getFoo or doFoo

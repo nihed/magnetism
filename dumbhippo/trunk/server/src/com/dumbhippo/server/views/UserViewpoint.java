@@ -1,4 +1,4 @@
-package com.dumbhippo.server;
+package com.dumbhippo.server.views;
 
 import java.util.HashMap;
 import java.util.Map;

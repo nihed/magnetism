@@ -15,9 +15,9 @@ import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.Configuration;
-import com.dumbhippo.server.FeedView;
-import com.dumbhippo.server.GroupView;
-import com.dumbhippo.server.PersonView;
+import com.dumbhippo.server.views.FeedView;
+import com.dumbhippo.server.views.GroupView;
+import com.dumbhippo.server.views.PersonView;
 
 public class EntityTag extends SimpleTagSupport {
 	static private final Logger logger = GlobalSetup.getLogger(EntityTag.class);

@@ -3,7 +3,7 @@
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 
 <%@ attribute name="group" required="false" type="com.dumbhippo.web.pages.GroupPage" %>
-<%@ attribute name="who" required="true" type="com.dumbhippo.server.PersonView" %>
+<%@ attribute name="who" required="true" type="com.dumbhippo.server.views.PersonView" %>
 
 <c:choose>
 	<c:when test="${(empty group) || group.canModify}">

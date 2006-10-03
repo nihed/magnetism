@@ -3,7 +3,7 @@
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 <script type="text/javascript">dojo.require("dh.artist");</script>
 
-<%@ attribute name="album" required="true" type="com.dumbhippo.server.AlbumView"%>
+<%@ attribute name="album" required="true" type="com.dumbhippo.server.views.AlbumView"%>
 <%@ attribute name="order" required="true" type="java.lang.String"%>
 
 <c:url value="/artist" var="albumlink">

@@ -29,8 +29,8 @@ import com.dumbhippo.server.HumanVisibleException;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PermissionDeniedException;
 import com.dumbhippo.server.SharedFileSystem;
-import com.dumbhippo.server.UserViewpoint;
-import com.dumbhippo.server.Viewpoint;
+import com.dumbhippo.server.views.UserViewpoint;
+import com.dumbhippo.server.views.Viewpoint;
 import com.dumbhippo.storage.StoredData;
 import com.dumbhippo.web.WebEJBUtil;
 

@@ -7,9 +7,9 @@ import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.AccountSystem;
-import com.dumbhippo.server.AnonymousViewpoint;
 import com.dumbhippo.server.NotFoundException;
-import com.dumbhippo.server.Viewpoint;
+import com.dumbhippo.server.views.AnonymousViewpoint;
+import com.dumbhippo.server.views.Viewpoint;
 
 public class DisabledSigninBean extends SigninBean {
 	@SuppressWarnings("unused")

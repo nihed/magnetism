@@ -8,6 +8,13 @@ import javax.ejb.Local;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.TrackFeedEntry;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.server.views.AlbumView;
+import com.dumbhippo.server.views.ArtistView;
+import com.dumbhippo.server.views.ExpandedArtistView;
+import com.dumbhippo.server.views.PersonMusicView;
+import com.dumbhippo.server.views.TrackView;
+import com.dumbhippo.server.views.UserViewpoint;
+import com.dumbhippo.server.views.Viewpoint;
 
 @Local
 public interface MusicSystem {

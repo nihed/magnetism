@@ -1,4 +1,4 @@
-package com.dumbhippo.server;
+package com.dumbhippo.server.views;
 
 /**
  * What should be loaded into a PersonView

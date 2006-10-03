@@ -40,18 +40,18 @@ import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.InvitationSystem;
 import com.dumbhippo.server.InvitationSystemRemote;
-import com.dumbhippo.server.InvitationView;
 import com.dumbhippo.server.Mailer;
 import com.dumbhippo.server.NoMailSystem;
 import com.dumbhippo.server.NotFoundException;
-import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.PromotionCode;
-import com.dumbhippo.server.SystemViewpoint;
 import com.dumbhippo.server.TransactionRunner;
-import com.dumbhippo.server.UserViewpoint;
 import com.dumbhippo.server.WantsInSystem;
 import com.dumbhippo.server.Configuration.PropertyNotFoundException;
+import com.dumbhippo.server.views.InvitationView;
+import com.dumbhippo.server.views.PersonView;
+import com.dumbhippo.server.views.SystemViewpoint;
+import com.dumbhippo.server.views.UserViewpoint;
 
 @Stateless
 public class InvitationSystemBean implements InvitationSystem, InvitationSystemRemote {

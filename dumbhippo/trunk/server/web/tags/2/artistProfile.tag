@@ -1,5 +1,5 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
-<%@ attribute name="artist" required="true" type="com.dumbhippo.server.ExpandedArtistView"%>
+<%@ attribute name="artist" required="true" type="com.dumbhippo.server.views.ExpandedArtistView"%>
 
 <div class="dh-artist-profile">
     <div class="dh-artist-image">

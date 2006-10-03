@@ -9,18 +9,18 @@ import javax.ejb.Stateless;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.TrackFeedEntry;
 import com.dumbhippo.persistence.User;
-import com.dumbhippo.server.AlbumView;
-import com.dumbhippo.server.ArtistView;
-import com.dumbhippo.server.ExpandedArtistView;
 import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.MusicSystemInternal;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Pageable;
-import com.dumbhippo.server.PersonMusicView;
 import com.dumbhippo.server.TrackSearchResult;
-import com.dumbhippo.server.TrackView;
-import com.dumbhippo.server.UserViewpoint;
-import com.dumbhippo.server.Viewpoint;
+import com.dumbhippo.server.views.AlbumView;
+import com.dumbhippo.server.views.ArtistView;
+import com.dumbhippo.server.views.ExpandedArtistView;
+import com.dumbhippo.server.views.PersonMusicView;
+import com.dumbhippo.server.views.TrackView;
+import com.dumbhippo.server.views.UserViewpoint;
+import com.dumbhippo.server.views.Viewpoint;
 
 /**
  * Originally there was one stateless bean implementing MusicSystem and MusicSystemInternal;

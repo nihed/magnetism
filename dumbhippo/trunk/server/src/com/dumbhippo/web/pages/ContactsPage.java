@@ -2,8 +2,8 @@ package com.dumbhippo.web.pages;
 
 import java.util.Set;
 
-import com.dumbhippo.server.PersonView;
-import com.dumbhippo.server.PersonViewExtra;
+import com.dumbhippo.server.views.PersonView;
+import com.dumbhippo.server.views.PersonViewExtra;
 import com.dumbhippo.web.ListBean;
 
 /**

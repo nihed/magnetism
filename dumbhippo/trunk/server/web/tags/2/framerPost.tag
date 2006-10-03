@@ -3,7 +3,7 @@
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 <script type="text/javascript">dojo.require("dh.artist");</script>
 
-<%@ attribute name="post" required="true" type="com.dumbhippo.server.PostView"%>
+<%@ attribute name="post" required="true" type="com.dumbhippo.server.views.PostView"%>
 
 <div class="dh-framer-share">
 	<div class="dh-framer-from-container">

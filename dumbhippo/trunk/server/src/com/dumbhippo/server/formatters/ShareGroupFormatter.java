@@ -16,10 +16,10 @@ import com.dumbhippo.postinfo.PostInfo;
 import com.dumbhippo.postinfo.ShareGroupPostInfo;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.NotFoundException;
-import com.dumbhippo.server.PostView;
-import com.dumbhippo.server.UserViewpoint;
-import com.dumbhippo.server.Viewpoint;
 import com.dumbhippo.server.util.EJBUtil;
+import com.dumbhippo.server.views.PostView;
+import com.dumbhippo.server.views.UserViewpoint;
+import com.dumbhippo.server.views.Viewpoint;
 
 public class ShareGroupFormatter extends DefaultFormatter {
 

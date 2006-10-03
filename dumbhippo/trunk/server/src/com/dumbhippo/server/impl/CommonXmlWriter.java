@@ -5,8 +5,8 @@ import java.util.List;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.User;
-import com.dumbhippo.server.BlockView;
-import com.dumbhippo.server.UserViewpoint;
+import com.dumbhippo.server.views.BlockView;
+import com.dumbhippo.server.views.UserViewpoint;
 
 /** 
  * XML-writing methods shared (or potentially shared) between HttpMethodsBean ajax calls

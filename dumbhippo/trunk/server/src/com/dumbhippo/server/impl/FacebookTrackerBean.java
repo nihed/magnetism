@@ -36,10 +36,10 @@ import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.SingletonServiceMBean;
 import com.dumbhippo.server.Stacker;
-import com.dumbhippo.server.UserViewpoint;
-import com.dumbhippo.server.Viewpoint;
 import com.dumbhippo.server.Configuration.PropertyNotFoundException;
 import com.dumbhippo.server.util.EJBUtil;
+import com.dumbhippo.server.views.UserViewpoint;
+import com.dumbhippo.server.views.Viewpoint;
 import com.dumbhippo.services.FacebookWebServices;
 
 @Service(objectName="dumbhippo.com:service=FacebookTracker")

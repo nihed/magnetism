@@ -4,11 +4,11 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.Rating;
-import com.dumbhippo.server.PersonView;
-import com.dumbhippo.server.PersonViewExtra;
 import com.dumbhippo.server.PersonViewer;
-import com.dumbhippo.server.PostView;
 import com.dumbhippo.server.RecommenderSystem;
+import com.dumbhippo.server.views.PersonView;
+import com.dumbhippo.server.views.PersonViewExtra;
+import com.dumbhippo.server.views.PostView;
 import com.dumbhippo.web.ListBean;
 import com.dumbhippo.web.Signin;
 import com.dumbhippo.web.SigninBean;

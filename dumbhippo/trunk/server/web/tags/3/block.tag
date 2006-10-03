@@ -3,7 +3,7 @@
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 <%@ taglib tagdir="/WEB-INF/tags/3" prefix="dht3" %>
 
-<%@ attribute name="block" required="true" type="com.dumbhippo.server.BlockView" %>
+<%@ attribute name="block" required="true" type="com.dumbhippo.server.views.BlockView" %>
 <%@ attribute name="cssClass" required="true" type="java.lang.String" %>
 
 <div class="dh-stacker-block ${cssClass}" onmouseover="dh.stacker.blockHoverStart(this);" onmouseout="dh.stacker.blockHoverStop(this);">

@@ -1,7 +1,9 @@
-package com.dumbhippo.server;
+package com.dumbhippo.server.views;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import com.dumbhippo.server.Pageable;
 
 public class ExpandedArtistView extends ArtistView {
 	

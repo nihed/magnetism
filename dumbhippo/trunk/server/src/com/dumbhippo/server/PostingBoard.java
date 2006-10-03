@@ -23,6 +23,10 @@ import com.dumbhippo.persistence.PostMessage;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.postinfo.PostInfo;
+import com.dumbhippo.server.views.EntityView;
+import com.dumbhippo.server.views.PostView;
+import com.dumbhippo.server.views.UserViewpoint;
+import com.dumbhippo.server.views.Viewpoint;
 
 @Local
 public interface PostingBoard {

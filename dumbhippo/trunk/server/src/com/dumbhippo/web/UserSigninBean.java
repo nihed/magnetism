@@ -9,7 +9,7 @@ import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.Enabled;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.NotFoundException;
-import com.dumbhippo.server.UserViewpoint;
+import com.dumbhippo.server.views.UserViewpoint;
 
 public class UserSigninBean extends SigninBean {
 	@SuppressWarnings("unused")

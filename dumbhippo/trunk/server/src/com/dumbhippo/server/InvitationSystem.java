@@ -11,6 +11,8 @@ import com.dumbhippo.persistence.InvitationToken;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.ValidationException;
+import com.dumbhippo.server.views.InvitationView;
+import com.dumbhippo.server.views.UserViewpoint;
 
 @Local
 public interface InvitationSystem {

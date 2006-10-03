@@ -1,4 +1,4 @@
-package com.dumbhippo.server;
+package com.dumbhippo.server.views;
 
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.identity20.Guid;

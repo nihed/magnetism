@@ -19,7 +19,7 @@ import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.PostingBoard;
-import com.dumbhippo.server.SystemViewpoint;
+import com.dumbhippo.server.views.SystemViewpoint;
 
 // Implementation of LiveUserUpdater
 @Stateless

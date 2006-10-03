@@ -10,6 +10,8 @@ import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.SharedFile;
 import com.dumbhippo.persistence.StorageState;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.server.views.UserViewpoint;
+import com.dumbhippo.server.views.Viewpoint;
 import com.dumbhippo.storage.StorageException;
 import com.dumbhippo.storage.StoredData;
 

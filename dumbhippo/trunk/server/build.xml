@@ -143,6 +143,7 @@
 				<include name="**/server/**/*.class" />
 				<include name="**/server/**/*.properties" />
 				<include name="**/statistics/**/*.class" />
+				<include name="**/views/**/*.class" />
 			</fileset>
 			<manifest>
 				<attribute name="Class-Path" value="${bundled-classpath}" />
@@ -332,6 +333,7 @@
 				<!-- server+util but not server/impl -->
 				<include name="**/server/*.class" />
 				<include name="**/server/util/*.class" />
+				<include name="**/server/views/*.class" />
 			</fileset>
 		</jar>
 	</target>

@@ -12,6 +12,11 @@ import org.hibernate.lucene.DocumentBuilder;
 
 import com.dumbhippo.persistence.Track;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.server.views.AlbumView;
+import com.dumbhippo.server.views.ArtistView;
+import com.dumbhippo.server.views.ExpandedArtistView;
+import com.dumbhippo.server.views.TrackView;
+import com.dumbhippo.server.views.Viewpoint;
 import com.dumbhippo.services.AmazonAlbumData;
 import com.dumbhippo.services.YahooAlbumData;
 import com.dumbhippo.services.YahooSongData;

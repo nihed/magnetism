@@ -4,6 +4,10 @@ import java.util.List;
 
 import javax.ejb.Local;
 
+import com.dumbhippo.server.views.ObjectView;
+import com.dumbhippo.server.views.ViewStream;
+import com.dumbhippo.server.views.Viewpoint;
+
 @Local
 public interface ViewStreamBuilder {
 	/**

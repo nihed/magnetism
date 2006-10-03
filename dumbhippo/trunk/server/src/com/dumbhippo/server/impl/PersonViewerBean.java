@@ -30,12 +30,12 @@ import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.ExternalAccountSystem;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.InvitationSystem;
-import com.dumbhippo.server.PersonView;
-import com.dumbhippo.server.PersonViewExtra;
 import com.dumbhippo.server.PersonViewer;
-import com.dumbhippo.server.SystemViewpoint;
-import com.dumbhippo.server.UserViewpoint;
-import com.dumbhippo.server.Viewpoint;
+import com.dumbhippo.server.views.PersonView;
+import com.dumbhippo.server.views.PersonViewExtra;
+import com.dumbhippo.server.views.SystemViewpoint;
+import com.dumbhippo.server.views.UserViewpoint;
+import com.dumbhippo.server.views.Viewpoint;
 
 /*
  * An implementation of the Identity Spider.  It sucks your blood.

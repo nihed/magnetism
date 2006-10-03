@@ -29,11 +29,11 @@ import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.HumanVisibleException;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.Mailer;
-import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.TransactionRunner;
-import com.dumbhippo.server.UserViewpoint;
-import com.dumbhippo.server.Viewpoint;
+import com.dumbhippo.server.views.PersonView;
+import com.dumbhippo.server.views.UserViewpoint;
+import com.dumbhippo.server.views.Viewpoint;
 
 @Stateless
 public class ClaimVerifierBean implements ClaimVerifier {

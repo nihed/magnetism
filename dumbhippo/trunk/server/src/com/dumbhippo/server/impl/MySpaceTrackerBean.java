@@ -26,9 +26,9 @@ import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.MessageSender;
 import com.dumbhippo.server.MySpaceTracker;
 import com.dumbhippo.server.NotFoundException;
-import com.dumbhippo.server.SystemViewpoint;
-import com.dumbhippo.server.UserViewpoint;
 import com.dumbhippo.server.util.EJBUtil;
+import com.dumbhippo.server.views.SystemViewpoint;
+import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.services.MySpaceScraper;
 
 @Stateless

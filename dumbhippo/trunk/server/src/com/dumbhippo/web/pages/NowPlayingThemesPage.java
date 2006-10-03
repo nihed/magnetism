@@ -5,7 +5,7 @@ import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.Character;
 import com.dumbhippo.server.NowPlayingThemeSystem;
 import com.dumbhippo.server.Pageable;
-import com.dumbhippo.server.Viewpoint;
+import com.dumbhippo.server.views.Viewpoint;
 import com.dumbhippo.web.PagePositions;
 import com.dumbhippo.web.PagePositionsBean;
 import com.dumbhippo.web.WebEJBUtil;

@@ -7,8 +7,8 @@ import javax.servlet.jsp.JspException;
 import javax.servlet.jsp.tagext.SimpleTagSupport;
 
 import com.dumbhippo.persistence.Group;
-import com.dumbhippo.server.GroupView;
-import com.dumbhippo.server.PersonView;
+import com.dumbhippo.server.views.GroupView;
+import com.dumbhippo.server.views.PersonView;
 
 /**
  * This is a very simple custom tag; it takes an argument that

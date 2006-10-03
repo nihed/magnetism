@@ -1,5 +1,5 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
-<%@ attribute name="track" required="true" type="com.dumbhippo.server.TrackView"%>
+<%@ attribute name="track" required="true" type="com.dumbhippo.server.views.TrackView"%>
 <%@ attribute name="linkifySong" required="false" type="java.lang.Boolean"%>
 <%@ attribute name="playItLink" required="false" type="java.lang.Boolean"%>
 <%@ attribute name="displayTrackNumber" required="false" type="java.lang.Boolean"%>

@@ -3,6 +3,8 @@ package com.dumbhippo.server;
 import javax.ejb.Local;
 import javax.mail.internet.MimeMessage;
 
+import com.dumbhippo.server.views.UserViewpoint;
+
 @Local
 public interface Mailer {
 

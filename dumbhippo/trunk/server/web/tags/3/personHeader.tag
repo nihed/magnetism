@@ -3,7 +3,7 @@
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 <%@ taglib tagdir="/WEB-INF/tags/3" prefix="dht3" %>
 
-<%@ attribute name="who" required="true" type="com.dumbhippo.server.PersonView" %>
+<%@ attribute name="who" required="true" type="com.dumbhippo.server.views.PersonView" %>
 <%@ attribute name="isSelf" required="true" type="java.lang.Boolean" %>
 
 <div class="dh-person-header">

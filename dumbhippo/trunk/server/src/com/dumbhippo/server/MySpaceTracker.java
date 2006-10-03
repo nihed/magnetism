@@ -6,6 +6,7 @@ import javax.ejb.Local;
 
 import com.dumbhippo.persistence.MySpaceBlogComment;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.server.views.UserViewpoint;
 
 @Local
 public interface MySpaceTracker {

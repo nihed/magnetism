@@ -20,7 +20,7 @@ import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HumanVisibleException;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.NowPlayingThemeSystem;
-import com.dumbhippo.server.UserViewpoint;
+import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.web.WebEJBUtil;
 
 public class NowPlayingThemePhotoServlet extends AbstractPhotoServlet {

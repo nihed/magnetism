@@ -14,9 +14,9 @@ import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.MessageSender;
-import com.dumbhippo.server.PostView;
 import com.dumbhippo.server.PostingBoard;
-import com.dumbhippo.server.UserViewpoint;
+import com.dumbhippo.server.views.PostView;
+import com.dumbhippo.server.views.UserViewpoint;
 
 // Implementation of LiveClientDataUpdater
 @Stateless

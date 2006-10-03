@@ -2,7 +2,7 @@
 <%@ taglib uri="/jsp/dumbhippo.tld" prefix="dh" %>
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 
-<%@ attribute name="group" required="true" type="com.dumbhippo.server.GroupView" %>
+<%@ attribute name="group" required="true" type="com.dumbhippo.server.views.GroupView" %>
 <%@ attribute name="controls" required="false" type="java.lang.Boolean"%>
 
 <div class="dh-compact-item">

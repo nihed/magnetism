@@ -31,7 +31,7 @@ import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.TokenExpiredException;
 import com.dumbhippo.server.TokenSystem;
 import com.dumbhippo.server.TokenUnknownException;
-import com.dumbhippo.server.UserViewpoint;
+import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.web.SigninBean;
 import com.dumbhippo.web.WebEJBUtil;
 

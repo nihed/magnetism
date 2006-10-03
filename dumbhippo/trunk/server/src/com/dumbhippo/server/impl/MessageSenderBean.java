@@ -36,7 +36,6 @@ import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.Configuration;
-import com.dumbhippo.server.EntityView;
 import com.dumbhippo.server.ExternalAccountSystem;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.IdentitySpider;
@@ -45,16 +44,17 @@ import com.dumbhippo.server.Mailer;
 import com.dumbhippo.server.MessageSender;
 import com.dumbhippo.server.NoMailSystem;
 import com.dumbhippo.server.NotFoundException;
-import com.dumbhippo.server.PersonView;
-import com.dumbhippo.server.PersonViewExtra;
 import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.PostType;
-import com.dumbhippo.server.PostView;
 import com.dumbhippo.server.PostingBoard;
-import com.dumbhippo.server.SystemViewpoint;
-import com.dumbhippo.server.UserViewpoint;
-import com.dumbhippo.server.Viewpoint;
 import com.dumbhippo.server.Configuration.PropertyNotFoundException;
+import com.dumbhippo.server.views.EntityView;
+import com.dumbhippo.server.views.PersonView;
+import com.dumbhippo.server.views.PersonViewExtra;
+import com.dumbhippo.server.views.PostView;
+import com.dumbhippo.server.views.SystemViewpoint;
+import com.dumbhippo.server.views.UserViewpoint;
+import com.dumbhippo.server.views.Viewpoint;
 
 /**
  * Send out messages when events happen (for now, when a link is shared).

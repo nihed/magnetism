@@ -1,4 +1,4 @@
-package com.dumbhippo.server;
+package com.dumbhippo.server.views;
 
 import com.dumbhippo.DateUtils;
 import com.dumbhippo.XmlBuilder;

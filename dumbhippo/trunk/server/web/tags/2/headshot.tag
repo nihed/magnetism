@@ -1,7 +1,7 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="/jsp/dumbhippo.tld" prefix="dh" %>
 
-<%@ attribute name="person" required="true" type="com.dumbhippo.server.EntityView"%>
+<%@ attribute name="person" required="true" type="com.dumbhippo.server.views.EntityView"%>
 <%@ attribute name="size" required="false" type="java.lang.Integer" %>
 <%@ attribute name="invited" required="false" type="java.lang.Boolean" %>
 <%@ attribute name="customLink" required="false" type="java.lang.String" %>

@@ -8,6 +8,7 @@ import com.dumbhippo.live.LivePost;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.server.views.UserViewpoint;
 
 @Local
 public interface MessageSender {

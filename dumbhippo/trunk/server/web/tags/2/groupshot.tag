@@ -1,7 +1,7 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="/jsp/dumbhippo.tld" prefix="dh" %>
 
-<%@ attribute name="group" required="true" type="com.dumbhippo.server.GroupView"%>
+<%@ attribute name="group" required="true" type="com.dumbhippo.server.views.GroupView"%>
 <%@ attribute name="size" required="false" type="java.lang.String" %>
 <%@ attribute name="customLink" required="false" type="java.lang.String" %>
 

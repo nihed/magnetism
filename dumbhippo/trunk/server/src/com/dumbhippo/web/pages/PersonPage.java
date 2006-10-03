@@ -12,8 +12,8 @@ import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.Sentiment;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HippoProperty;
-import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.Configuration.PropertyNotFoundException;
+import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.web.ListBean;
 import com.dumbhippo.web.WebEJBUtil;
 

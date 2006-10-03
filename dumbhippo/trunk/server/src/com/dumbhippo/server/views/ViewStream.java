@@ -1,4 +1,4 @@
-package com.dumbhippo.server;
+package com.dumbhippo.server.views;
 
 import java.util.ArrayList;
 import java.util.HashSet;

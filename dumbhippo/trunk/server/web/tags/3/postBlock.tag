@@ -3,7 +3,7 @@
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 <%@ taglib tagdir="/WEB-INF/tags/3" prefix="dht3" %>
 
-<%@ attribute name="block" required="true" type="com.dumbhippo.server.PostBlockView" %>
+<%@ attribute name="block" required="true" type="com.dumbhippo.server.views.PostBlockView" %>
 
 <div class="dh-stacker-block-content-post">
 	<div class="dh-stacker-block-content-controls">

@@ -1,7 +1,7 @@
 package com.dumbhippo.web.pages;
 
-import com.dumbhippo.server.AnonymousViewpoint;
-import com.dumbhippo.server.Viewpoint;
+import com.dumbhippo.server.views.AnonymousViewpoint;
+import com.dumbhippo.server.views.Viewpoint;
 import com.dumbhippo.web.Signin;
 import com.dumbhippo.web.SigninBean;
 

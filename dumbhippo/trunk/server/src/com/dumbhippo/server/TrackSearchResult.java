@@ -10,6 +10,8 @@ import org.apache.lucene.search.Hits;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.server.views.TrackView;
+import com.dumbhippo.server.views.Viewpoint;
 
 /**
  * Represents the result of searching over Track using lucene.

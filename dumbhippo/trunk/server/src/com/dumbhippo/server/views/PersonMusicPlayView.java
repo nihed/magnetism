@@ -1,7 +1,8 @@
-package com.dumbhippo.server;
+package com.dumbhippo.server.views;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+
 
 public class PersonMusicPlayView {
 	

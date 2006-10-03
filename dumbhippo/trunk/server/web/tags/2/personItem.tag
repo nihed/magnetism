@@ -2,7 +2,7 @@
 <%@ taglib uri="/jsp/dumbhippo.tld" prefix="dh" %>
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 
-<%@ attribute name="who" required="true" type="com.dumbhippo.server.PersonView" %>
+<%@ attribute name="who" required="true" type="com.dumbhippo.server.views.PersonView" %>
 <%@ attribute name="invited" required="false" type="java.lang.Boolean" %>
 <%@ attribute name="suppressDefaultBody" required="false" type="java.lang.Boolean" %>
 

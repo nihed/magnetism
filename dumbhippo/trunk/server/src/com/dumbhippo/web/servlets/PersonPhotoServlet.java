@@ -15,7 +15,7 @@ import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HumanVisibleException;
 import com.dumbhippo.server.IdentitySpider;
-import com.dumbhippo.server.UserViewpoint;
+import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.web.WebEJBUtil;
 
 public class PersonPhotoServlet extends AbstractPhotoServlet {

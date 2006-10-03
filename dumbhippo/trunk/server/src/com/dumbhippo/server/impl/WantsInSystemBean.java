@@ -21,7 +21,7 @@ import com.dumbhippo.persistence.ValidationException;
 import com.dumbhippo.persistence.WantsIn;
 import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.WantsInSystem;
-import com.dumbhippo.server.WantsInView;
+import com.dumbhippo.server.views.WantsInView;
 
 @Stateless
 public class WantsInSystemBean implements WantsInSystem {

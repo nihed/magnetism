@@ -25,18 +25,18 @@ import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.GroupMember;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.User;
-import com.dumbhippo.server.EntityView;
 import com.dumbhippo.server.GroupSystem;
-import com.dumbhippo.server.GroupView;
-import com.dumbhippo.server.PersonView;
-import com.dumbhippo.server.PersonViewExtra;
 import com.dumbhippo.server.PersonViewer;
-import com.dumbhippo.server.PostView;
 import com.dumbhippo.server.PostingBoard;
-import com.dumbhippo.server.UserViewpoint;
-import com.dumbhippo.server.Viewpoint;
 import com.dumbhippo.server.XmppMessageSenderProvider;
 import com.dumbhippo.server.util.EJBUtil;
+import com.dumbhippo.server.views.EntityView;
+import com.dumbhippo.server.views.GroupView;
+import com.dumbhippo.server.views.PersonView;
+import com.dumbhippo.server.views.PersonViewExtra;
+import com.dumbhippo.server.views.PostView;
+import com.dumbhippo.server.views.UserViewpoint;
+import com.dumbhippo.server.views.Viewpoint;
 
 /**
  * This class implements sending messages to a particular user or list of users;

@@ -12,7 +12,7 @@ import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.InvitationSystem;
 import com.dumbhippo.server.NowPlayingThemeSystem;
 import com.dumbhippo.server.PromotionCode;
-import com.dumbhippo.server.TrackView;
+import com.dumbhippo.server.views.TrackView;
 import com.dumbhippo.web.ListBean;
 import com.dumbhippo.web.WebEJBUtil;
 

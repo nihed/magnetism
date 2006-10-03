@@ -1,5 +1,5 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
-<%@ attribute name="artist" required="true" type="com.dumbhippo.server.ArtistView"%>
+<%@ attribute name="artist" required="true" type="com.dumbhippo.server.views.ArtistView"%>
 <%@ attribute name="linkifyArtist" required="false" type="java.lang.Boolean"%>
 
 <c:if test="${empty linkifyArtist}">

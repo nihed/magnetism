@@ -9,14 +9,14 @@ import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.Character;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.GroupSystem;
-import com.dumbhippo.server.GroupView;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.HumanVisibleException;
 import com.dumbhippo.server.IdentitySpider;
-import com.dumbhippo.server.PersonView;
-import com.dumbhippo.server.UserViewpoint;
 import com.dumbhippo.server.WantsInSystem;
-import com.dumbhippo.server.WantsInView;
+import com.dumbhippo.server.views.GroupView;
+import com.dumbhippo.server.views.PersonView;
+import com.dumbhippo.server.views.UserViewpoint;
+import com.dumbhippo.server.views.WantsInView;
 import com.dumbhippo.web.ListBean;
 import com.dumbhippo.web.WebEJBUtil;
 

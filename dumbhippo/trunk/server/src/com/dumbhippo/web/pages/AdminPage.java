@@ -16,8 +16,8 @@ import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.HumanVisibleException;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.InvitationSystem;
-import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewer;
+import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.web.WebEJBUtil;
 
 public class AdminPage extends AbstractSigninRequiredPage {

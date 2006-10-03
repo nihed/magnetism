@@ -48,18 +48,18 @@ import com.dumbhippo.server.GroupIndexer;
 import com.dumbhippo.server.GroupSearchResult;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.GroupSystemRemote;
-import com.dumbhippo.server.GroupView;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Pageable;
-import com.dumbhippo.server.PersonView;
-import com.dumbhippo.server.PersonViewExtra;
 import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.Stacker;
-import com.dumbhippo.server.SystemViewpoint;
-import com.dumbhippo.server.UserViewpoint;
-import com.dumbhippo.server.Viewpoint;
 import com.dumbhippo.server.util.EJBUtil;
+import com.dumbhippo.server.views.GroupView;
+import com.dumbhippo.server.views.PersonView;
+import com.dumbhippo.server.views.PersonViewExtra;
+import com.dumbhippo.server.views.SystemViewpoint;
+import com.dumbhippo.server.views.UserViewpoint;
+import com.dumbhippo.server.views.Viewpoint;
 
 @Stateless
 public class GroupSystemBean implements GroupSystem, GroupSystemRemote {

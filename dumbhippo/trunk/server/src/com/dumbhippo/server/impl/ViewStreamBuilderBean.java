@@ -15,15 +15,15 @@ import com.dumbhippo.persistence.GuidPersistable;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.Resource;
-import com.dumbhippo.server.FeedView;
 import com.dumbhippo.server.GroupSystem;
-import com.dumbhippo.server.ViewStream;
 import com.dumbhippo.server.ViewStreamBuilder;
-import com.dumbhippo.server.ObjectView;
-import com.dumbhippo.server.PersonViewExtra;
 import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.PostingBoard;
-import com.dumbhippo.server.Viewpoint;
+import com.dumbhippo.server.views.FeedView;
+import com.dumbhippo.server.views.ObjectView;
+import com.dumbhippo.server.views.PersonViewExtra;
+import com.dumbhippo.server.views.ViewStream;
+import com.dumbhippo.server.views.Viewpoint;
 
 @Stateless
 public class ViewStreamBuilderBean implements ViewStreamBuilder {

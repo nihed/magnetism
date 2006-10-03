@@ -18,8 +18,8 @@ import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PostingBoard;
-import com.dumbhippo.server.SystemViewpoint;
 import com.dumbhippo.server.util.EJBUtil;
+import com.dumbhippo.server.views.SystemViewpoint;
 
 /** 
  * This class handles sending out various notifications for the old

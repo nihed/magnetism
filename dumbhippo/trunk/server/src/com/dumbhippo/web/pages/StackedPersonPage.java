@@ -6,8 +6,8 @@ import java.util.List;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
-import com.dumbhippo.server.BlockView;
-import com.dumbhippo.server.PersonView;
+import com.dumbhippo.server.views.BlockView;
+import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.Stacker;
 import com.dumbhippo.web.ListBean;
 import com.dumbhippo.web.WebEJBUtil;
