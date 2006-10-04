@@ -61,6 +61,22 @@ _wrap_hippo_canvas_item_get_allocation(PyGObject *self)
     return Py_BuildValue("(ii)", x_p, y_p);
 }
 %%
+override hippo_canvas_box_get_position kwargs
+static PyObject *
+_wrap_hippo_canvas_box_get_position(PyGObject *self, PyObject *args, PyObject *kwargs)
+{
+    static char *kwlist[] = { "child", NULL };
+    PyGObject *child;
+    int x_p = 0, y_p = 0;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs,"O!:HippoCanvasBox.get_position", kwlist, &PyHippoCanvasItem_Type, &child))
+        return NULL;
+
+    hippo_canvas_context_translate_to_widget(HIPPO_CANVAS_CONTEXT(self->obj), HIPPO_CANVAS_ITEM(child->obj), &x_p, &y_p);
+
+    return Py_BuildValue("(ii)", x_p, y_p);
+}
+%%
 override hippo_canvas_box_get_children noargs
 static PyObject *
 _wrap_hippo_canvas_box_get_children(PyGObject *self)
