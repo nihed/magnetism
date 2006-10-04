@@ -351,3 +351,15 @@ div.dh-async-action-link-complete {
 
 .dh-stacker-block-content-main-top {
 }
+
+.dh-stacker-block-chat {
+	font-size:			12px;
+}
+
+.dh-stacker-block-chat-message {
+}
+
+.dh-stacker-block-chat-sender {
+	font-style:			italic;
+	text-decoration:	underline;
+}

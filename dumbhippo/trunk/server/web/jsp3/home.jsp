@@ -7,7 +7,7 @@
 
 <head>
 	<title>Mugshot Home</title>
-	<link rel="stylesheet" type="text/css" href="/css3/${buildStamp}/home.css"/>
+	<dht3:stylesheet name="home" iefixes="true"/>
 	<dht:scriptIncludes/>
 	<script src="/javascript/${buildStamp}/dh/stacker.js" type="text/javascript"></script>	
 	<dht:faviconIncludes/>

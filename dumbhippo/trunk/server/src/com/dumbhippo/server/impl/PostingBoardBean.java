@@ -92,6 +92,7 @@ import com.dumbhippo.server.XmppMessageSender;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.util.GuidNotFoundException;
 import com.dumbhippo.server.views.AnonymousViewpoint;
+import com.dumbhippo.server.views.ChatMessageView;
 import com.dumbhippo.server.views.EntityView;
 import com.dumbhippo.server.views.FeedView;
 import com.dumbhippo.server.views.GroupView;
@@ -1256,6 +1257,15 @@ public class PostingBoardBean implements PostingBoard {
 		.getSingleResult();		
 		return ((Number) result).intValue();
 	}
+	
+
+	public List<ChatMessageView> viewPostMessages(List<PostMessage> messages, Viewpoint viewpoint) {
+		List<ChatMessageView> viewedMsgs = new ArrayList<ChatMessageView>();
+		for (PostMessage m : messages) {
+			viewedMsgs.add(new ChatMessageView(m, personViewer.getPersonView(viewpoint, m.getFromUser())));
+		}
+		return viewedMsgs;
+	}	
 	
 	public void addPostMessage(Post post, User fromUser, String text, Date timestamp) {
 		PostMessage postMessage = new PostMessage(post, fromUser, text, timestamp);

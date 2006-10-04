@@ -61,6 +61,7 @@ form {
 }
 
 #dhSearchBox {
+	padding-top:	5px;
 }
 
 #dhSearchForm {
@@ -302,5 +303,5 @@ div.dh-notification {
 }
 
 .dh-stacker-block-content-controls {
-	margin-right:		5px;
+	padding-right:		5px;
 }

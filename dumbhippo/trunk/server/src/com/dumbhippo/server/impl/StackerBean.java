@@ -67,6 +67,7 @@ import com.dumbhippo.server.XmppMessageSender;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.views.BlockView;
 import com.dumbhippo.server.views.BlogBlockView;
+import com.dumbhippo.server.views.ChatMessageView;
 import com.dumbhippo.server.views.FacebookBlockView;
 import com.dumbhippo.server.views.GroupChatBlockView;
 import com.dumbhippo.server.views.GroupMemberBlockView;
@@ -593,12 +594,16 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		switch (block.getBlockType()) {
 		case POST: {
 			PostView postView = postingBoard.loadPost(SystemViewpoint.getInstance(), block.getData1AsGuid());
-			List<PostMessage> recentMessages = postingBoard.getNewestPostMessages(postView.getPost(), PostBlockView.RECENT_MESSAGE_COUNT);
+			List<ChatMessageView> recentMessages = postingBoard.viewPostMessages(
+					postingBoard.getNewestPostMessages(postView.getPost(), PostBlockView.RECENT_MESSAGE_COUNT),
+					viewpoint);
 			return new PostBlockView(block, ubd, postView, recentMessages);
 		}
 		case GROUP_CHAT: {
 			GroupView groupView = groupSystem.loadGroup(viewpoint, block.getData1AsGuid());
-			List<GroupMessage> recentMessages = groupSystem.getNewestGroupMessages(groupView.getGroup(), GroupChatBlockView.RECENT_MESSAGE_COUNT);
+			List<ChatMessageView> recentMessages = groupSystem.viewGroupMessages(
+					groupSystem.getNewestGroupMessages(groupView.getGroup(), GroupChatBlockView.RECENT_MESSAGE_COUNT),
+					viewpoint);
 			return new GroupChatBlockView(block, ubd, groupView, recentMessages);
 		}
 		case GROUP_MEMBER: {

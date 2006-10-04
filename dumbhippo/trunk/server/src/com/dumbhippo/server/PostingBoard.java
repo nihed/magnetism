@@ -23,6 +23,7 @@ import com.dumbhippo.persistence.PostMessage;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.postinfo.PostInfo;
+import com.dumbhippo.server.views.ChatMessageView;
 import com.dumbhippo.server.views.EntityView;
 import com.dumbhippo.server.views.PostView;
 import com.dumbhippo.server.views.UserViewpoint;
@@ -192,6 +193,8 @@ public interface PostingBoard {
 	public List<PostMessage> getPostMessages(Post post, long lastSeenSerial);
 	
 	public List<PostMessage> getNewestPostMessages(Post post, int maxResults);
+	
+	public List<ChatMessageView> viewPostMessages(List<PostMessage> messages, Viewpoint viewpoint);
 	
 	/**
 	 * Count of recent messages that were posted in the chatroom about this post.

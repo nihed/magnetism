@@ -54,6 +54,7 @@ import com.dumbhippo.server.Pageable;
 import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.Stacker;
 import com.dumbhippo.server.util.EJBUtil;
+import com.dumbhippo.server.views.ChatMessageView;
 import com.dumbhippo.server.views.GroupView;
 import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.PersonViewExtra;
@@ -749,6 +750,14 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		
 		return TypeUtils.castList(GroupMessage.class, messages);		
 	}
+
+	public List<ChatMessageView> viewGroupMessages(List<GroupMessage> messages, Viewpoint viewpoint) {
+		List<ChatMessageView> viewedMsgs = new ArrayList<ChatMessageView>();
+		for (GroupMessage m : messages) {
+			viewedMsgs.add(new ChatMessageView(m, personViewer.getPersonView(viewpoint, m.getFromUser())));
+		}
+		return viewedMsgs;
+	}	
 	
 	public void addGroupMessage(Group group, User fromUser, String text, Date timestamp) {
 		GroupMessage groupMessage = new GroupMessage(group, fromUser, text, timestamp);

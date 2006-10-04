@@ -5,17 +5,15 @@ import java.util.List;
 
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.persistence.Block;
-import com.dumbhippo.persistence.ChatMessage;
-import com.dumbhippo.persistence.PostMessage;
 import com.dumbhippo.persistence.UserBlockData;
 
 public class PostBlockView extends BlockView {
 	static final public int RECENT_MESSAGE_COUNT = 3;
 	
 	private PostView postView;
-	private List<PostMessage> recentMessages;
+	private List<ChatMessageView> recentMessages;
 	
-	public PostBlockView(Block block, UserBlockData ubd, PostView post, List<PostMessage> recentMessages) {
+	public PostBlockView(Block block, UserBlockData ubd, PostView post, List<ChatMessageView> recentMessages) {
 		super(block, ubd);
 		this.postView = post;
 		this.recentMessages = recentMessages;
@@ -47,7 +45,7 @@ public class PostBlockView extends BlockView {
 		return this.postView;
 	}
 	
-	public List<PostMessage> getRecentMessages(PostView postView) {
+	public List<ChatMessageView> getRecentMessages() {
 		return recentMessages;
 	}
 	
@@ -62,13 +60,8 @@ public class PostBlockView extends BlockView {
 							"postId", postView.getIdentifyingGuid().toString());
 		
 		builder.openElement("recentMessages");
-		for (ChatMessage message : recentMessages) {
-			builder.openElement("message",
-								"serial", Long.toString(message.getId()),
-								"timestamp",Long.toString(message.getTimestamp().getTime()),
-								"sender", message.getFromUser().getId());
-			builder.appendTextNode("text", message.getMessageText());
-			builder.closeElement();
+		for (ChatMessageView message : getRecentMessages()) {
+			message.writeToXmlBuilder(builder);
 		}
 		builder.closeElement();
 		
@@ -78,8 +71,8 @@ public class PostBlockView extends BlockView {
 	public List<Object> getReferencedObjects() {
 		List<Object> result = new ArrayList<Object>();
 		result.add(postView);
-		for (ChatMessage message : recentMessages) {
-			result.add(message.getFromUser());
+		for (ChatMessageView message : getRecentMessages()) {
+			result.add(message.getSenderView());
 		}
 		return result;
 	}

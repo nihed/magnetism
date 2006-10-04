@@ -19,12 +19,17 @@ import com.dumbhippo.persistence.MembershipStatus;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.server.views.ChatMessageView;
 import com.dumbhippo.server.views.GroupView;
 import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.PersonViewExtra;
 import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.server.views.Viewpoint;
 
+/**
+ * @author walters
+ *
+ */
 @Local
 public interface GroupSystem {
 	/**
@@ -164,6 +169,15 @@ public interface GroupSystem {
 	public void addGroupMessage(Group group, User fromUser, String text, Date timestamp);
 
 	/**
+	 * Return a view of chat messages based on a viewpoint.
+	 * 
+	 * @param messages group chat messages
+	 * @param viewpoint 
+	 * @return view of chat messages
+	 */
+	public List<ChatMessageView> viewGroupMessages(List<GroupMessage> messages, Viewpoint viewpoint);	
+	
+	/**
 	 * Checks whether the given viewpoint is allowed to change settings of a group
 	 * such as the group's name and description.
 	 * @param viewpoint viewpoint of a user who wants to edit the group
@@ -220,5 +234,4 @@ public interface GroupSystem {
 	 *        are available. 
 	 */
 	public List<GroupView> getGroupSearchGroups(Viewpoint viewpoint, GroupSearchResult searchResult, int start, int count);
-
 }

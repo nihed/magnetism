@@ -5,17 +5,15 @@ import java.util.List;
 
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.persistence.Block;
-import com.dumbhippo.persistence.ChatMessage;
-import com.dumbhippo.persistence.GroupMessage;
 import com.dumbhippo.persistence.UserBlockData;
 
 public class GroupChatBlockView extends BlockView {
 	public static final int RECENT_MESSAGE_COUNT = 3;
 	
 	private GroupView group;
-	private List<GroupMessage> recentMessages;
+	private List<ChatMessageView> recentMessages;
 	
-	public GroupChatBlockView(Block block, UserBlockData ubd, GroupView group, List<GroupMessage> recentMessages) {
+	public GroupChatBlockView(Block block, UserBlockData ubd, GroupView group, List<ChatMessageView> recentMessages) {
 		super(block, ubd);
 		this.group = group;
 		this.recentMessages = recentMessages;
@@ -37,7 +35,7 @@ public class GroupChatBlockView extends BlockView {
 		return this.group;
 	}
 
-	public List<GroupMessage> getRecentMessages(PostView postView) {
+	public List<ChatMessageView> getRecentMessages() {
 		return recentMessages;
 	}
 	
@@ -47,13 +45,8 @@ public class GroupChatBlockView extends BlockView {
 							"groupId", group.getIdentifyingGuid().toString());
 		
 		builder.openElement("recentMessages");
-		for (ChatMessage message : recentMessages) {
-			builder.openElement("message",
-		            			"serial", Long.toString(message.getId()),
-					            "timestamp",Long.toString(message.getTimestamp().getTime()),
-					            "sender", message.getFromUser().getId());
-			builder.appendTextNode("text", message.getMessageText());
-			builder.closeElement();
+		for (ChatMessageView message : getRecentMessages()) {
+			message.writeToXmlBuilder(builder);
 		}
 		builder.closeElement();
 		
@@ -63,8 +56,8 @@ public class GroupChatBlockView extends BlockView {
 	public List<Object> getReferencedObjects() {
 		List<Object> result = new ArrayList<Object>();
 		result.add(group);
-		for (ChatMessage message : recentMessages) {
-			result.add(message.getFromUser());
+		for (ChatMessageView message : getRecentMessages()) {
+			result.add(message.getSenderView());
 		}
 		return result;
 	}
