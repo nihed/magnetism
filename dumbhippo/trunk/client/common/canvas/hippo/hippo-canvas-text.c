@@ -1,4 +1,5 @@
 /* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
+#include "hippo-canvas-type-builtins.h"
 #include "hippo-canvas-internal.h"
 #include "hippo-canvas-text.h"
 #include "hippo-canvas-box.h"
@@ -144,13 +145,12 @@ hippo_canvas_text_class_init(HippoCanvasTextClass *klass)
 
     g_object_class_install_property(object_class,
                                     PROP_SIZE_MODE,
-                                    g_param_spec_int("size-mode",
-                                                     _("Size mode"),
-                                                     _("Mode for size request and allocation"),
-                                                     0,
-                                                     10,
-                                                     HIPPO_CANVAS_SIZE_FULL_WIDTH,
-                                                     G_PARAM_READABLE | G_PARAM_WRITABLE));    
+                                    g_param_spec_enum("size-mode",
+                                                      _("Size mode"),
+                                                      _("Mode for size request and allocation"),
+                                                      HIPPO_TYPE_CANVAS_SIZE_MODE,
+                                                      HIPPO_CANVAS_SIZE_FULL_WIDTH,
+                                                      G_PARAM_READABLE | G_PARAM_WRITABLE));    
 }
 
 static void
@@ -319,7 +319,7 @@ hippo_canvas_text_set_property(GObject         *object,
         hippo_canvas_item_emit_request_changed(HIPPO_CANVAS_ITEM(text));
         break;
     case PROP_SIZE_MODE:
-        text->size_mode = g_value_get_int(value);
+        text->size_mode = g_value_get_enum(value);
         hippo_canvas_item_emit_request_changed(HIPPO_CANVAS_ITEM(text));
         break;
     default:
@@ -365,7 +365,7 @@ hippo_canvas_text_get_property(GObject         *object,
         g_value_set_double(value, text->font_scale);
         break;
     case PROP_SIZE_MODE:
-        g_value_set_int(value, text->size_mode);
+        g_value_set_enum(value, text->size_mode);
         break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);

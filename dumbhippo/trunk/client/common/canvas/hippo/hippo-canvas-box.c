@@ -1,4 +1,5 @@
 /* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
+#include "hippo-canvas-type-builtins.h"
 #include "hippo-canvas-internal.h"
 #include "hippo-canvas-box.h"
 
@@ -203,13 +204,12 @@ hippo_canvas_box_class_init(HippoCanvasBoxClass *klass)
     /* we're supposed to register the enum yada yada, but doesn't matter */
     g_object_class_install_property(object_class,
                                     PROP_ORIENTATION,
-                                    g_param_spec_int("orientation",
-                                                     _("Orientation"),
-                                                     _("Direction of the box"),
-                                                     0,
-                                                     G_MAXINT,
-                                                     0,
-                                                     G_PARAM_READABLE | G_PARAM_WRITABLE));    
+                                    g_param_spec_enum("orientation",
+                                                      _("Orientation"),
+                                                      _("Direction of the box"),
+                                                      HIPPO_TYPE_ORIENTATION,
+                                                      HIPPO_ORIENTATION_VERTICAL,
+                                                      G_PARAM_READABLE | G_PARAM_WRITABLE));    
     g_object_class_install_property(object_class,
                                     PROP_PADDING_TOP,
                                     g_param_spec_int("padding-top",
@@ -322,22 +322,20 @@ hippo_canvas_box_class_init(HippoCanvasBoxClass *klass)
     
     g_object_class_install_property(object_class,
                                     PROP_XALIGN,
-                                    g_param_spec_int("xalign",
-                                                     _("X Alignment"),
-                                                     _("What to do with extra horizontal space"),
-                                                     0,
-                                                     G_MAXINT,
-                                                     0,
-                                                     G_PARAM_READABLE | G_PARAM_WRITABLE));
+                                    g_param_spec_enum("xalign",
+                                                      _("X Alignment"),
+                                                      _("What to do with extra horizontal space"),
+                                                      HIPPO_TYPE_ITEM_ALIGNMENT,
+                                                      HIPPO_ALIGNMENT_FILL,
+                                                      G_PARAM_READABLE | G_PARAM_WRITABLE));
     g_object_class_install_property(object_class,
                                     PROP_YALIGN,
-                                    g_param_spec_int("yalign",
-                                                     _("Y Alignment"),
-                                                     _("What to do with extra vertical space"),
-                                                     0,
-                                                     G_MAXINT,
-                                                     0,
-                                                     G_PARAM_READABLE | G_PARAM_WRITABLE));
+                                    g_param_spec_enum("yalign",
+                                                      _("Y Alignment"),
+                                                      _("What to do with extra vertical space"),
+                                                      HIPPO_TYPE_ITEM_ALIGNMENT,
+                                                      HIPPO_ALIGNMENT_FILL,
+                                                      G_PARAM_READABLE | G_PARAM_WRITABLE));
     
     g_object_class_install_property(object_class,
                                     PROP_BACKGROUND_COLOR,
@@ -414,7 +412,7 @@ hippo_canvas_box_set_property(GObject         *object,
     need_resize = TRUE; /* for most of them it's true */
     switch (prop_id) {
     case PROP_ORIENTATION:
-        box->orientation = g_value_get_int(value);
+        box->orientation = g_value_get_enum(value);
         break;
     case PROP_PADDING_TOP:
         box->padding_top = g_value_get_int(value);
@@ -461,10 +459,10 @@ hippo_canvas_box_set_property(GObject         *object,
         box->box_height = g_value_get_int(value);
         break;
     case PROP_XALIGN:
-        box->x_align = g_value_get_int(value);
+        box->x_align = g_value_get_enum(value);
         break;
     case PROP_YALIGN:
-        box->y_align = g_value_get_int(value);
+        box->y_align = g_value_get_enum(value);
         break;
     case PROP_BACKGROUND_COLOR:
         box->background_color_rgba = g_value_get_uint(value);
@@ -500,7 +498,7 @@ hippo_canvas_box_get_property(GObject         *object,
 
     switch (prop_id) {
     case PROP_ORIENTATION:
-        g_value_set_int(value, box->orientation);
+        g_value_set_enum(value, box->orientation);
         break;
     case PROP_PADDING_TOP:
         g_value_set_int(value, box->padding_top);
@@ -533,10 +531,10 @@ hippo_canvas_box_get_property(GObject         *object,
         g_value_set_int(value, box->box_height);
         break;
     case PROP_XALIGN:
-        g_value_set_int(value, box->x_align);
+        g_value_set_enum(value, box->x_align);
         break;
     case PROP_YALIGN:
-        g_value_set_int(value, box->y_align);
+        g_value_set_enum(value, box->y_align);
         break;
     case PROP_BACKGROUND_COLOR:
         g_value_set_uint(value, box->background_color_rgba);

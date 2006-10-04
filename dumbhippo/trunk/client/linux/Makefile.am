@@ -17,6 +17,7 @@ AM_CPPFLAGS=-DHIPPO_COMPILATION -DHIPPO_OS_LINUX -DVERSION_FILE=\"$(pkgdatadir)/
 BUILT_SRC_DIR=$(top_builddir)/config/hippo
 # Generated marshallers go into this directory as well
 MARSHAL_DIR=$(BUILT_SRC_DIR)
+ENUMS_DIR=$(BUILT_SRC_DIR)
 
 ## we install a file containing our version, so the running app 
 ## can check its version vs. the installed app
