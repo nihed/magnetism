@@ -5,6 +5,7 @@ import java.util.List;
 
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.persistence.Block;
+import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.FeedEntry;
 import com.dumbhippo.persistence.UserBlockData;
 
@@ -27,8 +28,7 @@ public class BlogBlockView extends BlockView {
 	}
 	
 	public String getIconName() {
-		// TODO: change to be a favicon of a particular blog or a generic blog icon
-		return "mugshot_icon.png";
+		return ExternalAccountType.BLOG.getIconName();
 	}
 	
 	public PersonView getUserView() {

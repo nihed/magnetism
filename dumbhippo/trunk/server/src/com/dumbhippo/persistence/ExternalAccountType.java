@@ -136,6 +136,11 @@ public enum ExternalAccountType {
 		}
 		
 		@Override
+		public String getIconName() {
+		    return "homepage_icon.png";	
+		}
+		
+		@Override
 		public String canonicalizeHandle(String handle) throws ValidationException {
 			handle = super.canonicalizeHandle(handle);
 			if (handle != null) {
@@ -251,6 +256,11 @@ public enum ExternalAccountType {
 		}
 		
 		@Override
+		public String getIconName() {
+		    return "blog_icon.png";	
+		}
+		
+		@Override
 		public String canonicalizeHandle(String handle) throws ValidationException {
 			handle = super.canonicalizeHandle(handle);
 			if (handle != null) {
@@ -304,6 +314,10 @@ public enum ExternalAccountType {
 	 */
 	public String getSiteName() {
 		return siteName;
+	}
+	
+	public String getIconName() {
+		return "favicon_" + siteName.toLowerCase() + ".png";
 	}
 	
 	abstract public String getLink(String handle, String extra);

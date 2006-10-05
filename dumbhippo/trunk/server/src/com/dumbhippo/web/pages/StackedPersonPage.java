@@ -51,7 +51,8 @@ public class StackedPersonPage extends AbstractPersonPage {
 		if (stackedContacts == null) {
 			stackedContacts = new ArrayList<StackedContact>();
 			for (PersonView pv : getContacts().getList()) {
-				// TODO: need a different way to display non-user contacts, i.e. people you have invited or shared with
+				// we do not have stacks for non-user contacts, i.e. people you have invited or shared with,
+				// these people can be viewed on one's friends page
 				if (pv.getUser() != null) {
 				    stackedContacts.add(new StackedContact(stacker.getStack(getSignin().getViewpoint(), pv.getUser(), 0, 0, 5), pv));
 				}

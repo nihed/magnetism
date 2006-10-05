@@ -5,6 +5,7 @@ import java.util.List;
 
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.persistence.Block;
+import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.FacebookEvent;
 import com.dumbhippo.persistence.UserBlockData;
 
@@ -27,8 +28,7 @@ public class FacebookBlockView extends BlockView {
 	}
 	
 	public String getIconName() {
-		// TODO: change to use the facebook favicon
-		return "mugshot_icon.png";
+		return ExternalAccountType.FACEBOOK.getIconName();
 	}
 	
 	public PersonView getUserView() {

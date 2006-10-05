@@ -67,13 +67,12 @@
 			<tr valign="top">
 				<td>
 				    <div class="dh-favicons">
-				        <%-- TODO: need to include AIM and separate website from external accounts to show it --%>
-				        <%-- with a home icon. --%>
+				        <%-- TODO: need to include AIM --%>
 				        <c:if test="${!empty who.email}">
 						    <dht3:whereAtIcon label="Send me email" linkText="${who.email.email}" linkTarget="${who.emailLink}" imgSrc="/images3/${buildStamp}/mail_icon.png"/>
 						</c:if>
 						<c:forEach var="account" items="${who.lovedAccounts.list}">
-						    <dht3:whereAtIcon label="${account.siteName}" linkText="${account.linkText}" linkTarget="${account.link}" imgSrc="${account.favicon}"/>
+						    <dht3:whereAtIcon label="${account.siteName}" linkText="${account.linkText}" linkTarget="${account.link}" imgSrc="/images3/${buildStamp}/${account.iconName}"/>
 						</c:forEach>							
 					</div>
 				</td>
