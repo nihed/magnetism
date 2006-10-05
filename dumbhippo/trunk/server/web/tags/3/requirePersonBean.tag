@@ -3,6 +3,7 @@
 <%@ taglib tagdir="/WEB-INF/tags/3" prefix="dht3" %>
 
 <%@ attribute name="who" required="false" type="java.lang.String" %>
+<%@ attribute name="mugshot" required="false" type="java.lang.Boolean" %>
 
 <c:if test="${empty person}">
 	<dh:bean id="person" class="com.dumbhippo.web.pages.StackedPersonPage" scope="request"/>

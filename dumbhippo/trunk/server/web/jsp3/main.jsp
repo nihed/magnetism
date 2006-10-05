@@ -6,14 +6,17 @@
 <%@ taglib tagdir="/WEB-INF/tags/3" prefix="dht3" %>
 
 <head>
-	<title>Mugshot Home</title>
-	<link rel="stylesheet" type="text/css" href="/css3/${buildStamp}/main.css"/>
+	<title>Mugshot</title>
+	<dht3:stylesheet name="site"/>	
+	<dht3:stylesheet name="main"/>
+	<dht3:stylesheet name="person" iefixes="true"/>
 	<dht:scriptIncludes/>
 	<dht:faviconIncludes/>
 </head>
-<body class="dh-gray-background-page dh-home-page">
-	<div id="dhPage">
-		<dht3:header/>
+
+<dh:bean id="person" class="com.dumbhippo.web.pages.StackedMugshotPersonPage" scope="request"/>
+
+<dht3:page>
 		<dht3:shinyBox color="purple">
 		    <table id="dhMugshotIntro">
 		        <tr id="dhMugshotIntroHeader">
@@ -44,7 +47,6 @@
 	 	        </td>
 		    </table>
 		</dht3:shinyBox>
-		<dht:footer/>
-	</div>
-</body>
-</html>
+		<dht3:pageSubHeader title="Featured Members and Groups"></dht3:pageSubHeader>
+		<dht3:personStack contact="${person.viewedPerson}" stack="${person.stack}"/>
+</dht3:page>

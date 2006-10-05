@@ -16,9 +16,9 @@ public class StackedPersonPage extends AbstractPersonPage {
 	@SuppressWarnings("unused")
 	static private final Logger logger = GlobalSetup.getLogger(StackedPersonPage.class);
 	
-	private Stacker stacker;
+	protected Stacker stacker;
 	
-	private List<StackedContact> stackedContacts;
+	protected List<StackedContact> stackedContacts;
 	
 	public static class StackedContact {
 		private List<BlockView> stack;
@@ -42,7 +42,7 @@ public class StackedPersonPage extends AbstractPersonPage {
 	
 	public List<BlockView> getStack() {
 		if (getViewedUser() != null) {
-			return stacker.getStack(getSignin().getViewpoint(), getViewedUser(), 0, 0, 5);
+			return stacker.getStack(getSignin().getViewpoint(), getViewedUser(), 0, 0, 20);
 		}
 		return null;
 	}

@@ -10,6 +10,7 @@
 
 <head>
 	<title><c:out value="${person.viewedPerson.name}"/>'s ${pageName} - Mugshot</title>
+	<dht3:stylesheet name="site"/>	
 	<dht3:stylesheet name="person" iefixes="true"/>
 	<dht:scriptIncludes/>
 	<script src="/javascript/${buildStamp}/dh/stacker.js" type="text/javascript"></script>	

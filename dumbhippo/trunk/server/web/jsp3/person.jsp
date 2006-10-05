@@ -28,3 +28,4 @@
 		</c:otherwise>
 	</c:choose>
 </dht3:personPage>
+</html>
