@@ -11,6 +11,6 @@
 	<c:set var="imgTitle" value="${label}: ${linkText}"/>
 </c:if>
 
-<a class="dh-where-at-link" href="${linkTarget}">
+<a href="${linkTarget}">
     <img src="${imgSrc}" title="${imgTitle}"/>
 </a>

@@ -363,3 +363,38 @@ div.dh-async-action-link-complete {
 	font-style:			italic;
 	text-decoration:	underline;
 }
+
+.dh-where-at-label {
+	font-weight: 		bold;
+	color:				black;
+	font-size:			12px;
+}
+
+.dh-where-at-link {
+	color:				blue;
+	font-size:			12px;
+}
+
+.dh-thumbnail-box-border, .dh-rss-box-border {
+	background-color:	#cccccc;
+	color:				inherit;
+}
+
+.dh-thumbnail-box, .dh-rss-box {
+	font-size:			12px;
+	color:				#000000;
+	background-color:	#f3f3f3;
+}
+
+.dh-thumbnail-status, .dh-rss-status {
+	color:				#666666;
+	background-color:	inherit;
+}
+
+.dh-thumbnail-title {
+	font-size:			10px;
+}
+
+.dh-thumbnail-title a {
+	text-decoration:		underline;
+}

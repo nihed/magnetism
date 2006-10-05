@@ -65,7 +65,7 @@
 	<table cellpadding="0" cellspacing="0">
 		<tbody>
 			<tr valign="top">
-				<td>
+				<td align="right">
 				    <div class="dh-favicons">
 				        <%-- TODO: need to include AIM --%>
 				        <c:if test="${!empty who.email}">
@@ -77,6 +77,16 @@
 					</div>
 				</td>
 			</tr>
+			<tr>
+			    <td align="right">
+			    	<%-- Accounts with thumbnail boxes --%>
+			 		<c:forEach var="account" items="${who.lovedAccounts.list}">
+						<c:if test="${account.hasThumbnails}">
+							<dht:whereAtThumbnailBox account="${account}" />
+						</c:if>
+					</c:forEach>
+				</td>
+			</tr>		
 		</tbody>
 	</table>						
 	</td>
