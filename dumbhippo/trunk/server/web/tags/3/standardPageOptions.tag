@@ -3,10 +3,14 @@
 
 <%@ attribute name="selected" required="true" type="java.lang.String" %>
 
-<dht3:pageOptions>
-	<dht3:pageOptionLink name="Overview" selected="${selected}" link="/"/> |
-	<dht3:pageOptionLink name="History" selected="${selected}" link="/"/> | 
-	<dht3:pageOptionLink name="Friends" selected="${selected}" link="/friends"/> | 	
-	<dht3:pageOptionLink name="Groups" selected="${selected}" link="/groups"/> | 	
-	<dht3:pageOptionLink name="Faves" selected="${selected}" link="/faves"/>
-</dht3:pageOptions>
+<c:if test="${!empty param['who']}">
+	<c:set var="whoParam" value="?who=${param['who']}" scope="page"/>
+</c:if>
+
+<div>
+	<dht3:pageOptionLink name="Overview" selected="${selected}" link="/person${whoParam}"/> |
+	<dht3:pageOptionLink name="History" selected="${selected}" link="/history${whoParam}"/> | 
+	<dht3:pageOptionLink name="Friends" selected="${selected}" link="/friends${whoParam}"/> | 	
+	<dht3:pageOptionLink name="Groups" selected="${selected}" link="/groups${whoParam}"/> | 	
+	<dht3:pageOptionLink name="Faves" selected="${selected}" link="/faves${whoParam}"/>
+</div>

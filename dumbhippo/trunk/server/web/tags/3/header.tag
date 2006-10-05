@@ -22,7 +22,7 @@
 					<jsp:attribute name="name">q</jsp:attribute>
 					<jsp:attribute name="value">${searchText}</jsp:attribute>
 				</jsp:element>
-				</td><td valign="top"><img src="/images3/${buildStamp}/find.gif" onclick="document.forms['dhSearchForm'].submit()"/></td>
+				</td><td valign="top"><img class="dhSearchBoxFind" src="/images3/${buildStamp}/find.gif" onclick="document.forms['dhSearchForm'].submit()"/></td>
 				</tr>
 				</table>
 			</form>

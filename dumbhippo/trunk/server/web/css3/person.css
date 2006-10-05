@@ -1,6 +1,5 @@
 @CHARSET "UTF-8";
-@IMPORT url("site.css");
-@IMPORT url("home-positions.css");
+@IMPORT url("person-positions.css");
 
 .dh-person-header-name {
 	font-size:		14px;

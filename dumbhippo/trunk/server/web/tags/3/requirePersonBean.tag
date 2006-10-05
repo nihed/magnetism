@@ -8,7 +8,15 @@
 	<dh:bean id="person" class="com.dumbhippo.web.pages.StackedPersonPage" scope="request"/>
 	<jsp:setProperty name="person" property="needExternalAccounts" value="true"/>	
 	<%-- this setter is not idempotent so don't call it if someone's going to call it again later --%>
-	<c:if test="${!empty who}">
-		<jsp:setProperty name="person" property="viewedUserId" value="${who}"/>
-	</c:if>
+	<c:choose>
+		<c:when test="${!empty param['who']}">
+			<jsp:setProperty name="person" property="viewedUserId" param="who"/>
+		</c:when>
+		<c:when test="${!empty who}">
+			<jsp:setProperty name="person" property="viewedUserId" value="${who}"/>
+		</c:when>
+		<c:otherwise>
+			<jsp:setProperty name="person" property="viewedUserId" value="${signin.userId}"/>
+		</c:otherwise>
+	</c:choose>	
 </c:if>

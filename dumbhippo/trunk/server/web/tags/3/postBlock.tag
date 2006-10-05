@@ -6,7 +6,7 @@
 <%@ attribute name="block" required="true" type="com.dumbhippo.server.views.PostBlockView" %>
 
 <div class="dh-stacker-block-content-post">
-	<table cellspacing="0" cellpadding="0" width="100%">
+	<table cellspacing="0" cellpadding="0" width="100%" class="dh-stacker-block-content-container">
 	<tr>
 	<td>&nbsp;</td>
 	<td align="right" class="dh-stacker-block-content-controls">
