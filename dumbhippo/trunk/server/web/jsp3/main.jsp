@@ -7,7 +7,7 @@
 
 <head>
 	<title>Mugshot</title>
-	<dht3:stylesheet name="site"/>	
+	<dht3:stylesheet name="site" iefixes="true"/>	
 	<dht3:stylesheet name="main"/>
 	<dht3:stylesheet name="person" iefixes="true"/>
 	<dht:scriptIncludes/>
