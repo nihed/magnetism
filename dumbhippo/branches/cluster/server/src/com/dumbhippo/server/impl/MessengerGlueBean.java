@@ -275,10 +275,36 @@ public class MessengerGlueBean implements MessengerGlue {
 		account.setWasSentShareLinkTutorial(true);
 	}
 
-	public void onResourceConnected(String username, boolean wasAlreadyConnected, Date timestamp) {
+	public void updateLoginDate(String username, Date timestamp) {
 		// account could be missing due to debug users or our own
-		// send-notifications
-		// user, i.e. any user on the jabber server that we don't know about
+		// send-notifications user. In fact any user on the jabber server 
+		// that we don't know about
+		Account account;
+		try {
+			account = accountFromUsername(username);
+		} catch (JabberUserNotFoundException e) {
+			if (!username.equals("admin"))
+				logger.warn("username logged in that we don't know: {}", username);
+			return;
+		}
+		
+		account.setLastLoginDate(timestamp);
+	}	
+
+	public void updateLogoutDate(String username, Date timestamp) {
+		Account account;
+		try {
+			account = accountFromUsername(username);
+		} catch (JabberUserNotFoundException e) {
+			if (!username.equals("admin"))
+				logger.warn("username logged out that we don't know: {}", username);
+			return;
+		}
+		
+		account.setLastLogoutDate(timestamp);
+	}
+	
+	public void sendConnectedResourceNotifications(String username, boolean wasAlreadyConnected) {
 		Account account;
 		try {
 			account = accountFromUsername(username);
@@ -290,8 +316,6 @@ public class MessengerGlueBean implements MessengerGlue {
 		
 		LiveState.getInstance().resendAllNotifications(account.getOwner().getGuid());
 
-		account.setLastLoginDate(timestamp);
-		
 		// We can't reliably tell if the user is currently logged in by checking
 		// for loginDate > logoutDate, since that could happen if the server
 		// crashed while the user was logged in as well, so instead we check
@@ -307,20 +331,6 @@ public class MessengerGlueBean implements MessengerGlue {
 			doShareLinkTutorial(account);
 		}
 	}	
-	
-
-	public void onUserLogout(String username, Date timestamp) {
-		Account account;
-		try {
-			account = accountFromUsername(username);
-		} catch (JabberUserNotFoundException e) {
-			if (!username.equals("admin"))
-				logger.warn("username logged out that we don't know: {}", username);
-			return;
-		}
-		
-		account.setLastLogoutDate(timestamp);
-	}
 	
 	public String getMySpaceName(String username) {
 		User user = userFromTrustedUsername(username);

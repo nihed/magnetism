@@ -88,7 +88,7 @@ public class PresenceMonitor implements SessionManagerListener {
 			
 			// We are holding a lock on the userInfo object and possibly locks inside
 			// Wildfire, so we have to be careful not to do database operations synchronously, 
-			// since that could result in deadlocks. onResourceConnected() and onUserLogout() 
+			// since that could result in deadlocks. updateLoginDate() and updateLogoutDate() 
 			// can be safely reversed since we pass in the login/logout timestamps, so we can do
 			// them async without worrying about reordering.
 			//
@@ -104,7 +104,7 @@ public class PresenceMonitor implements SessionManagerListener {
 				executor.execute(new Runnable() {
 					public void run() {
 						MessengerGlue glue = EJBUtil.defaultLookup(MessengerGlue.class);
-						glue.onUserLogout(user, timestamp);
+						glue.updateLogoutDate(user, timestamp);
 					}
 				});
 			} else if (oldCount == 0 && newCount > 0) {
@@ -118,7 +118,8 @@ public class PresenceMonitor implements SessionManagerListener {
 				executor.execute(new Runnable() {
 					public void run() {
 						MessengerGlue glue = EJBUtil.defaultLookup(MessengerGlue.class);
-						glue.onResourceConnected(user, wasAlreadyConnected, timestamp);
+						glue.updateLoginDate(user, timestamp);
+						glue.sendConnectedResourceNotifications(user, wasAlreadyConnected);
 					}
 				});
 			}

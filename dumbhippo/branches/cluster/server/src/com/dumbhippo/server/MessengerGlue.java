@@ -170,20 +170,30 @@ public interface MessengerGlue {
 	}
 	
 	/**
-	 * Called whenever a new resource connects associated with a user. Note that
-	 * there is no ordering guarantee between this and onUserLogout if a user
-	 * connects momentarily, though the timestamps passed in will be reliably
-	 * ordered (or equal).
+	 * Called whenever a new resource connects associated with a user. Sends
+	 * that user any messages that the might have missed or other notifications
+	 * that are needed on connection. This is separate from updateLoginDate
+	 * because we want to separate out a potentionally expensive read-only transaction
+	 * from a short write transaction.  
 	 * 
 	 * @param user the username associated with resource
 	 * @param wasAlreadyConnected true if the user was connected to the cluster
 	 *   (this node or another) before this resource connected. Note that this
 	 *   value is only approximate: if two resources connect simultaneously, they
 	 *   both can end up with wasAlreadyConnected = false. 
-	 * @param timestamp a timestamp for the user connecting
-	 * @throws NoSuchServerException 
 	 */
-	public void onResourceConnected(String user, boolean wasAlreadyConnected, Date timestamp);	
+	public void sendConnectedResourceNotifications(String user, boolean wasAlreadyConnected);	
+	
+	/**
+	 * Called whenever a new resource connects associated with a user. Note that
+	 * there is no ordering guarantee between this and updateLogoutDate if a user
+	 * connects momentarily, though the timestamps passed in will be reliably
+	 * ordered (or equal).
+	 * 
+	 * @param user the username associated with resource
+	 * @param timestamp a timestamp for the user connecting
+	 */
+	public void updateLoginDate(String user, Date timestamp);	
 	
 	/**
 	 * Called when the last resource for a user logged out; this information
@@ -193,7 +203,7 @@ public interface MessengerGlue {
 	 * @param user the jabber username of the user
 	 * @param date a timestamp for the user disconnecting.
 	 */
-	public void onUserLogout(String user, Date timestamp);
+	public void updateLogoutDate(String user, Date timestamp);
 
 	/**
 	 * Returns the information associated with the potential user of a chat room.
