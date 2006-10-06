@@ -48,10 +48,16 @@
 				<a href="http://blog.mugshot.org/">Blog</a> | 
 				<a href="/friends">People</a> | 
 				<a href="/groups">Groups</a> | 
-				<a href="http://blog.mugshot.org/?page_id=245a">Help</a>
-				<c:if test="${signin.valid}">
-					| <dht:actionLinkLogout/>
-				</c:if>			
+				<a href="http://blog.mugshot.org/?page_id=245a">Help</a> | 
+				<c:choose>
+					<c:when test="${signin.valid}">
+						<dht:actionLinkLogout/>
+					</c:when>
+					<c:otherwise>
+				       <a href="/signup">Sign up</a> | 
+				       <a href="/who-are-you">Log in</a>						
+					</c:otherwise>
+				</c:choose>			
 			</div>	
 		</div>  
 		</td>
