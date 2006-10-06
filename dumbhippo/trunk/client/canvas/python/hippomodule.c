@@ -13,6 +13,8 @@ Pycairo_CAPI_t *Pycairo_CAPI;
 void pyhippo_register_classes (PyObject *d);
 void pyhippo_add_constants(PyObject *module, const gchar *strip_prefix);
 
+extern PyMethodDef pyhippo_functions[];
+
 static void
 sink_hippocanvasbox(GObject *object)
 {
@@ -28,7 +30,7 @@ inithippo(void)
 
     Pycairo_IMPORT;
 
-    m = Py_InitModule("hippo", NULL);
+    m = Py_InitModule("hippo", pyhippo_functions);
     d = PyModule_GetDict(m);
 
     pygobject_register_sinkfunc(HIPPO_TYPE_CANVAS_BOX, sink_hippocanvasbox);

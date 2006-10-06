@@ -784,3 +784,11 @@
     '("guint32" "color")
   )
 )
+
+(define-function cairo_surface_from_gdk_pixbuf
+  (c-name "hippo_cairo_surface_from_gdk_pixbuf")
+  (return-type "cairo_surface_t*")
+  (parameters
+    '("GdkPixbuf*" "pixbuf")
+  )
+)
