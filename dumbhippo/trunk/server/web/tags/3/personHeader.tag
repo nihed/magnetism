@@ -67,10 +67,16 @@
 			<tr valign="top">
 				<td align="right">
 				    <div class="dh-favicons">
-				        <%-- TODO: need to include AIM --%>
 				        <c:if test="${!empty who.email}">
 						    <dht3:whereAtIcon label="Send me email" linkText="${who.email.email}" linkTarget="${who.emailLink}" imgSrc="/images3/${buildStamp}/mail_icon.png"/>
 						</c:if>
+						<c:if test="${!empty who.aim}">
+						    <c:set var="aimIcon" value="/images3/${buildStamp}/aim_icon.png"/>
+						    <c:if test="${!empty who.aimPresenceImageLink}">
+						        <c:set var="aimIcon" value="${who.aimPresenceImageLink}"/>
+						    </c:if>    
+                            <dht3:whereAtIcon label="AIM" linkText="${who.aim.screenName}" linkTarget="${who.aimLink}" imgSrc="${aimIcon}"/>
+						</c:if>						
 						<c:forEach var="account" items="${who.lovedAccounts.list}">
 						    <dht3:whereAtIcon label="${account.siteName}" linkText="${account.linkText}" linkTarget="${account.link}" imgSrc="/images3/${buildStamp}/${account.iconName}"/>
 						</c:forEach>							

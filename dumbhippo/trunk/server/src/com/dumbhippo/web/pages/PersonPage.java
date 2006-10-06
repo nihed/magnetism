@@ -5,14 +5,10 @@ import java.util.List;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
-import com.dumbhippo.StringUtils;
 import com.dumbhippo.XmlBuilder;
-import com.dumbhippo.persistence.AimResource;
 import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.Sentiment;
 import com.dumbhippo.server.Configuration;
-import com.dumbhippo.server.HippoProperty;
-import com.dumbhippo.server.Configuration.PropertyNotFoundException;
 import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.web.ListBean;
 import com.dumbhippo.web.WebEJBUtil;
@@ -65,30 +61,12 @@ public class PersonPage extends AbstractPersonPage {
 
 	public String getAimPresenceImageLink() {
 		PersonView pv = getViewedPerson();
-		AimResource aim = pv.getAim();
-		if (aim == null)
-			return null;
-		String aimName = aim.getScreenName();
-		
-		String presenceKey;
-		try {
-			 presenceKey = config.getPropertyNoDefault(HippoProperty.AIM_PRESENCE_KEY);
-		} catch (PropertyNotFoundException pnfe) {
-			return null;
-		}
-		if (presenceKey.length() == 0)
-			return null;
-
-		return "http://api.oscar.aol.com/SOA/key=" + presenceKey + "/presence/" + aimName;
+		return pv.getAimPresenceImageLink();
 	}
 	
 	public String getAimLink() {
 		PersonView pv = getViewedPerson();
-		AimResource aim = pv.getAim();
-		if (aim == null)
-			return null;
-		String aimName = aim.getScreenName();
-		return "aim:GoIM?screenname=" + StringUtils.urlEncode(aimName);
+		return pv.getAimLink();
 	}
 	
 	public String getEmailLink() {

@@ -27,10 +27,13 @@ import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.ExternalAccountSystem;
+import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.InvitationSystem;
 import com.dumbhippo.server.PersonViewer;
+import com.dumbhippo.server.Configuration.PropertyNotFoundException;
 import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.PersonViewExtra;
 import com.dumbhippo.server.views.SystemViewpoint;
@@ -58,6 +61,9 @@ public class PersonViewerBean implements PersonViewer {
 	@EJB
 	@IgnoreDependency
 	private InvitationSystem invitationSystem;
+	
+	@EJB
+	private Configuration config;
 	
 	private Set<Resource> getResourcesForPerson(Person person) {
 		Set<Resource> resources = new HashSet<Resource>();
@@ -110,6 +116,15 @@ public class PersonViewerBean implements PersonViewer {
             logger.warn("No fallback identifying guid for {}", pv);				
     }
 	
+    private String getAimPresenceKey() {
+		try {
+		    return config.getPropertyNoDefault(HippoProperty.AIM_PRESENCE_KEY);				 
+		} catch (PropertyNotFoundException pnfe) {
+			logger.warn("Could not find HippoProperty.AIM_PRESENCE_KEY");
+		}   
+		return null;
+    }
+    
 	private void addPersonViewExtras(Viewpoint viewpoint, PersonView pv, Resource fromResource, PersonViewExtra... extras) {		
 		// given the viewpoint, set whether the view is of self
 		if (viewpoint.isOfUser(pv.getUser())) {
@@ -197,7 +212,7 @@ public class PersonViewerBean implements PersonViewer {
 					}
 				}
 			} else if (e == PersonViewExtra.ALL_RESOURCES) {
-				pv.addAllResources(resources);
+				pv.addAllResources(resources);			 
 			} else if (e == PersonViewExtra.ALL_EMAILS) {
 				pv.addAllEmails(new TypeFilteredCollection<Resource,EmailResource>(resources, EmailResource.class));
 			} else if (e == PersonViewExtra.ALL_AIMS) {
@@ -240,6 +255,10 @@ public class PersonViewerBean implements PersonViewer {
 					pv.addPrimaryAim(aim); // can be null
 				}
 			}
+		}
+		
+		if (pv.hasExtra(PersonViewExtra.PRIMARY_AIM)) {
+			pv.setAimPresenceKey(getAimPresenceKey());
 		}
 	}
 	

@@ -61,6 +61,7 @@ public class PersonView extends EntityView {
 	private boolean online;
 	private Set<ExternalAccount> externalAccounts;
 	private TrackView currentTrack;
+	private String aimPresenceKey;
 	
 	private void addExtras(EnumSet<PersonViewExtra> more) {
 		if (extras == null)
@@ -69,7 +70,7 @@ public class PersonView extends EntityView {
 			this.extras.addAll(more);
 	}
 	
-	private boolean getExtra(PersonViewExtra extra) {
+	public boolean hasExtra(PersonViewExtra extra) {
 		if (extras == null)
 			return false;
 		return extras.contains(extra);
@@ -187,7 +188,7 @@ public class PersonView extends EntityView {
 	}
 	
 	public boolean isInvited() {
-		if (!getExtra(PersonViewExtra.INVITED_STATUS))
+		if (!hasExtra(PersonViewExtra.INVITED_STATUS))
 			throw new IllegalStateException("asked for " + PersonViewExtra.INVITED_STATUS + " but this PersonView wasn't created with that");
 		return invited;
 	}
@@ -212,7 +213,7 @@ public class PersonView extends EntityView {
 		// PrimaryResource will not be included or will be null if the viewer should
 		// not see it
 		if (name == null || name.length() == 0) {
-			if (!getExtra(PersonViewExtra.PRIMARY_RESOURCE) || (getPrimaryResource() == null)) {
+			if (!hasExtra(PersonViewExtra.PRIMARY_RESOURCE) || (getPrimaryResource() == null)) {
 				// try fallback name then
 				if (fallbackName != null) {
 					name = fallbackName;
@@ -272,7 +273,7 @@ public class PersonView extends EntityView {
 	}
 	
 	private <T extends Resource> T getOne(PersonViewExtra extra, Class<T> resourceClass) {
-		if (!getExtra(extra))
+		if (!hasExtra(extra))
 			throw new IllegalStateException("asked for " + extra + " but this PersonView wasn't created with that, only with " + extras + " for " + this.hashCode());
 
 		for (Resource r : getResources()) {
@@ -284,16 +285,16 @@ public class PersonView extends EntityView {
 	}
 	
 	private <T extends Resource> Collection<T> getMany(PersonViewExtra extra, Class<T> resourceClass) {
-		if (!getExtra(extra))
+		if (!hasExtra(extra))
 			throw new IllegalStateException("asked for " + extra + " but this PersonView wasn't created with that, only with " + extras + " for " + this.hashCode());
 
 		return new TypeFilteredCollection<Resource,T>(getResources(), resourceClass);
 	}
 	
 	public Resource getPrimaryResource() {
-		if (getExtra(PersonViewExtra.PRIMARY_EMAIL))
+		if (hasExtra(PersonViewExtra.PRIMARY_EMAIL))
 			return getEmail();
-		else if (getExtra(PersonViewExtra.PRIMARY_AIM))
+		else if (hasExtra(PersonViewExtra.PRIMARY_AIM))
 			return getAim();
 		else
 			return getOne(PersonViewExtra.PRIMARY_RESOURCE, Resource.class);
@@ -314,6 +315,27 @@ public class PersonView extends EntityView {
 		return getOne(PersonViewExtra.PRIMARY_AIM, AimResource.class);
 	}
 	
+	public void setAimPresenceKey(String aimPresenceKey) {
+		this.aimPresenceKey = aimPresenceKey;
+	}
+	
+	public String getAimPresenceImageLink() {
+		AimResource aim = getAim();
+		if (aim == null || aimPresenceKey == null ||( aimPresenceKey.length() == 0))
+			return null;
+		String aimName = aim.getScreenName();
+
+		return "http://api.oscar.aol.com/SOA/key=" + aimPresenceKey + "/presence/" + aimName;
+	}
+	
+	public String getAimLink() {
+		AimResource aim = getAim();
+		if (aim == null)
+			return null;
+		String aimName = aim.getScreenName();
+		return "aim:GoIM?screenname=" + StringUtils.urlEncode(aimName);
+	}
+	
 	public Collection<EmailResource> getAllEmails() {
 		return getMany(PersonViewExtra.ALL_EMAILS, EmailResource.class);
 	}
@@ -327,7 +349,7 @@ public class PersonView extends EntityView {
 	}
 	
 	public Set<ExternalAccount> getExternalAccounts() {
-		if (!getExtra(PersonViewExtra.EXTERNAL_ACCOUNTS))
+		if (!hasExtra(PersonViewExtra.EXTERNAL_ACCOUNTS))
 			throw new IllegalStateException("asked for " + PersonViewExtra.EXTERNAL_ACCOUNTS + " but this PersonView wasn't created with that, only with " + extras + " for " + this.hashCode());
 		return externalAccounts;
 	}
@@ -403,7 +425,7 @@ public class PersonView extends EntityView {
 		for (PersonView pv : views) {
 			if (pv.getUser() != null) {
   		        listOfUsers.add(pv);
-			} else if (!pv.getExtra(PersonViewExtra.INVITED_STATUS)) {
+			} else if (!pv.hasExtra(PersonViewExtra.INVITED_STATUS)) {
 				listOfPeopleWithNoInvitedStatus.add(pv);				
 			} else if (pv.isInvited()) {
 			    listOfPeopleWithInvites.add(pv);
@@ -786,7 +808,7 @@ public class PersonView extends EntityView {
 	public Guid getIdentifyingGuid() {
 		if (user != null) {
 			return user.getGuid();
-		} else if (getExtra(PersonViewExtra.PRIMARY_RESOURCE) && getPrimaryResource() != null) {
+		} else if (hasExtra(PersonViewExtra.PRIMARY_RESOURCE) && getPrimaryResource() != null) {
 			return getPrimaryResource().getGuid();
 		} else if (fallbackIdentifyingGuid != null){
 			return fallbackIdentifyingGuid;
