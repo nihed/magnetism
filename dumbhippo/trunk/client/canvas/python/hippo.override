@@ -63,6 +63,18 @@ _wrap_hippo_canvas_item_get_allocation(PyGObject *self)
     return Py_BuildValue("(ii)", x_p, y_p);
 }
 %%
+override hippo_canvas_item_get_request noargs
+static PyObject *
+_wrap_hippo_canvas_item_get_request(PyGObject *self)
+{
+    int x_p = 0;
+    int y_p = 0;
+
+    hippo_canvas_item_get_request(HIPPO_CANVAS_ITEM(self->obj), &x_p, &y_p);
+
+    return Py_BuildValue("(ii)", x_p, y_p);
+}
+%%
 override hippo_canvas_box_get_position kwargs
 static PyObject *
 _wrap_hippo_canvas_box_get_position(PyGObject *self, PyObject *args, PyObject *kwargs)
