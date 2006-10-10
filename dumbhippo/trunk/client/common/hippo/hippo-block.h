@@ -83,6 +83,9 @@ gboolean hippo_block_get_ignored           (HippoBlock *block);
 void     hippo_block_set_ignored           (HippoBlock *block,
                                             gboolean    value);
 
+int      hippo_block_compare_newest_first  (gconstpointer block_a,
+                                            gconstpointer block_b);
+
 HippoBlockType hippo_block_type_from_string(const char  *s);
 
 G_END_DECLS

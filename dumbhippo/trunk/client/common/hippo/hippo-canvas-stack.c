@@ -221,6 +221,20 @@ find_block_item(HippoCanvasStack *canvas_stack,
     return fid.found;
 }
 
+static int
+canvas_block_compare(HippoCanvasItem *a,
+                     HippoCanvasItem *b,
+                     void            *data)
+{
+    HippoBlock *block_a;
+    HippoBlock *block_b;
+
+    g_object_get(G_OBJECT(a), "block", &block_a, NULL);
+    g_object_get(G_OBJECT(b), "block", &block_b, NULL);
+
+    return hippo_block_compare_newest_first(block_a, block_b);
+}
+
 void
 hippo_canvas_stack_add_block(HippoCanvasStack *canvas_stack,
                              HippoBlock       *block)
@@ -239,8 +253,9 @@ hippo_canvas_stack_add_block(HippoCanvasStack *canvas_stack,
     }
 
     g_object_set(G_OBJECT(item), "block", block, "actions", canvas_stack->actions, NULL);
-    hippo_canvas_box_append(HIPPO_CANVAS_BOX(canvas_stack), item, 0);
-
+    hippo_canvas_box_insert_sorted(HIPPO_CANVAS_BOX(canvas_stack), item, 0,
+                                   canvas_block_compare, NULL);
+    
     g_object_unref(item);
 }
 

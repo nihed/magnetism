@@ -24,6 +24,9 @@ typedef enum {
     HIPPO_CASCADE_MODE_INHERIT
 } HippoCascadeMode;
 
+typedef int  (* HippoCanvasCompareChildFunc) (HippoCanvasItem *child_a,
+                                              HippoCanvasItem *child_b,
+                                              void            *data);
 typedef void (* HippoCanvasForeachChildFunc) (HippoCanvasItem *child,
                                               void            *data);  
 
@@ -132,6 +135,14 @@ void             hippo_canvas_box_foreach           (HippoCanvasBox             
                                                      HippoCanvasForeachChildFunc  func,
                                                      void                        *data);
 void             hippo_canvas_box_reverse           (HippoCanvasBox              *box);
+void             hippo_canvas_box_sort              (HippoCanvasBox              *box,
+                                                     HippoCanvasCompareChildFunc  compare_func,
+                                                     void                        *data); 
+void             hippo_canvas_box_insert_sorted     (HippoCanvasBox              *box,
+                                                     HippoCanvasItem             *child,
+                                                     HippoPackFlags               flags,
+                                                     HippoCanvasCompareChildFunc  compare_func,
+                                                     void                        *data);
 
 void             hippo_canvas_box_set_child_visible (HippoCanvasBox              *box,
                                                      HippoCanvasItem             *child,

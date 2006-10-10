@@ -2165,10 +2165,43 @@ set_flags(HippoBoxChild *c,
     return TRUE;
 }
 
+
+typedef struct {
+    HippoCanvasCompareChildFunc func;
+    void *data;
+} ChildSortData;
+
+static int
+child_compare_func(const void *a,
+                   const void *b,
+                   void       *data)
+{
+    ChildSortData *csd = data;
+    HippoBoxChild *child_a = (HippoBoxChild*) a;
+    HippoBoxChild *child_b = (HippoBoxChild*) b;
+    
+    return (* csd->func) (child_a->item, child_b->item, csd->data);
+}
+
 void
-hippo_canvas_box_append(HippoCanvasBox  *box,
-                        HippoCanvasItem *child,
-                        HippoPackFlags   flags)
+hippo_canvas_box_sort(HippoCanvasBox              *box,
+                      HippoCanvasCompareChildFunc  compare_func,
+                      void                        *data)
+{
+    ChildSortData csd;
+    csd.func = compare_func;
+    csd.data = data;
+    box->children = g_slist_sort_with_data(box->children, child_compare_func,
+                                           &csd);
+    hippo_canvas_item_emit_request_changed(HIPPO_CANVAS_ITEM(box));
+}
+
+void
+hippo_canvas_box_insert_sorted(HippoCanvasBox              *box,
+                               HippoCanvasItem             *child,
+                               HippoPackFlags               flags,
+                               HippoCanvasCompareChildFunc  compare_func,
+                               void                        *data)
 {
     HippoBoxChild *c;
 
@@ -2186,7 +2219,18 @@ hippo_canvas_box_append(HippoCanvasBox  *box,
     c->width_request = -1;
     c->height_request = -1;
     c->height_request_for_width = -1;
-    box->children = g_slist_append(box->children, c);
+
+    if (compare_func == NULL) {
+        box->children = g_slist_append(box->children, c);
+    } else {
+        ChildSortData csd;
+        csd.func = compare_func;
+        csd.data = data;
+        box->children = g_slist_insert_sorted_with_data(box->children,
+                                                        c,
+                                                        child_compare_func,
+                                                        &csd);
+    }
 
     if (box->context != NULL)
         hippo_canvas_item_set_context(child, HIPPO_CANVAS_CONTEXT(box));
@@ -2198,6 +2242,17 @@ hippo_canvas_box_append(HippoCanvasBox  *box,
      * do this even for fixed items
      */
     hippo_canvas_item_emit_request_changed(HIPPO_CANVAS_ITEM(box));
+}
+
+void
+hippo_canvas_box_append(HippoCanvasBox  *box,
+                        HippoCanvasItem *child,
+                        HippoPackFlags   flags)
+{
+    g_return_if_fail(HIPPO_IS_CANVAS_BOX(box));
+    g_return_if_fail(HIPPO_IS_CANVAS_ITEM(child));
+    
+    hippo_canvas_box_insert_sorted(box, child, flags, NULL, NULL);
 }
 
 void

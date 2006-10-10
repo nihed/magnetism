@@ -183,23 +183,6 @@ manager_set_mode(StackManager     *manager,
     }
 }
 
-static int
-block_sort_newest_first_func(gconstpointer a,
-                             gconstpointer b)
-{
-    HippoBlock *block_a = (HippoBlock*) a;
-    HippoBlock *block_b = (HippoBlock*) b;
-    gint64 stamp_a = hippo_block_get_sort_timestamp(block_a);
-    gint64 stamp_b = hippo_block_get_sort_timestamp(block_b);
-
-    if (stamp_a < stamp_b)
-        return 1;
-    else if (stamp_a > stamp_b)
-        return -1;
-    else
-        return 0;
-}
-
 static void
 update_current_block(StackManager *manager)
 {
@@ -254,7 +237,7 @@ resort_block(StackManager *manager,
     
     manager->blocks = g_slist_insert_sorted(manager->blocks,
                                             block,
-                                            block_sort_newest_first_func);
+                                            hippo_block_compare_newest_first);
 
     hippo_canvas_stack_add_block(HIPPO_CANVAS_STACK(manager->stack_item),
                                  block);
