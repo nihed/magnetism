@@ -3,6 +3,7 @@ package com.dumbhippo.server.views;
 import java.util.Collections;
 import java.util.List;
 
+import com.dumbhippo.URLUtils;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.UserBlockData;
@@ -23,6 +24,13 @@ public class MusicPersonBlockView extends BlockView {
 		return getTrackView().getName();
 	}
 	
+	@Override
+	public String getWebTitleLink() {
+		return URLUtils.buildUrl("/artist", "track", getTrackView().getName(),
+								"album", getTrackView().getAlbum(),
+								"artist", getTrackView().getArtist());
+	}
+
 	public String getIconName() {
 		return "musicradar_icon.png";
 	}

@@ -2,6 +2,13 @@
 	margin-top:		3px;
 }
 
-table.dh-stacker-block-header {
-	margin-right:	20px;
+.dh-stacker-block-right {
+}
+
+.dh-stacker-block-header {
+	width:				98%;
+}
+
+.dh-stacker-block-content-container {
+	width:				98%;
 }

@@ -6,9 +6,9 @@
 <%@ attribute name="block" required="true" type="com.dumbhippo.server.views.PostBlockView" %>
 
 <div class="dh-stacker-block-content-post">
-	<table cellspacing="0" cellpadding="0" width="100%" class="dh-stacker-block-content-container">
+	<table cellspacing="0" cellpadding="0" class="dh-stacker-block-content-container">
 	<tr>
-	<td>&nbsp;</td>
+	<td align="left">&nbsp;</td>
 	<td align="right" class="dh-stacker-block-content-controls">
 	<c:choose>
 		<c:when test="${block.postView.livePost.totalViewerCount == 1}">1 view</c:when>

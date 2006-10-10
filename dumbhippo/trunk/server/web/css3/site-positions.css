@@ -1,8 +1,8 @@
 @CHARSET "UTF-8";
 
 body {
-	margin:			0px 10px 10px 10px;
-	padding-top:	0px;
+	margin:			0px;
+	padding: 		0px;
 }
 
 /* browsers have default margins on forms it seems */
@@ -262,6 +262,10 @@ div.dh-notification {
 	margin:				0px 10px;
 }
 
+.dh-stacker-block {
+	position:			relative;
+}
+
 .dh-stacker-block-bottom-padding {
 	height:				4px;
 }
@@ -276,13 +280,14 @@ div.dh-notification {
 }
 
 .dh-stacker-block-header {
+	width:				100%;
 }
 
 .dh-stacker-block-description {
-	margin-left:		30px;
+	margin-left:		20px;
 }
 
-.dh-stacker-block-right {
+.dh-stacker-block-time {
 	margin-right:		5px;
 }
 
@@ -295,7 +300,11 @@ div.dh-notification {
 }
 
 .dh-stacker-block-content {
-	margin-left:		30px;
+	margin-left:		20px;
+}
+
+.dh-stacker-block-content-container {
+	width:				100%;
 }
 
 .dh-stacker-block-content-padding {

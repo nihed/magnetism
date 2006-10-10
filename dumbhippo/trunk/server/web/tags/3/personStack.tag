@@ -19,5 +19,5 @@
 		</c:choose>	| <a href="/">Invite to a group</a>
 		</c:if>
 	</dht3:personHeader>
-	<dht3:stacker stack="${stack}"/>
+	<dht3:stacker person="${contact}" stack="${stack}"/>
 </dht3:shinyBox>

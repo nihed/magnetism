@@ -324,7 +324,7 @@ div.dh-async-action-link-complete {
 	text-decoration:	underline;
 }
 
-.dh-stacker-block-right {
+.dh-stacker-block-time {
 	font-size:			11px;
 	color:				#666666;
 }
@@ -361,6 +361,11 @@ div.dh-async-action-link-complete {
 
 .dh-stacker-block-chat-sender {
 	font-style:			italic;
+	text-decoration:	underline;
+}
+
+.dh-stacker-more {
+	font-size:			11px;
 	text-decoration:	underline;
 }
 

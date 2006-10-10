@@ -4,14 +4,10 @@
 	margin-left:	10px;
 }
 
-.dh-person-header {
-    position:       relative;
+div.dh-person-header {
+    padding-top:	8px;
 }
 
 .dh-person-header .dh-person-info {
-    position:       relative;
     width:          100%;
-    margin-top:		8px;
-    /* FIXME - needs to be moved into -iefixes */
-    margin-right:   -20px;
 }

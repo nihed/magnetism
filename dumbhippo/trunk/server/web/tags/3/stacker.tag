@@ -3,6 +3,7 @@
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 <%@ taglib tagdir="/WEB-INF/tags/3" prefix="dht3" %>
 
+<%@ attribute name="person" required="true" type="com.dumbhippo.server.views.PersonView" %>
 <%@ attribute name="stack" required="true" type="java.util.List" %>
 <%@ attribute name="stackSize" required="false" type="java.lang.Integer" %>
 
@@ -21,5 +22,6 @@
 			</c:otherwise>
 		</c:choose>
 		<div class="dh-stacker-block-bottom-padding">&nbsp;</div>
-	</c:forEach>	
+	</c:forEach>
+	<div class="dh-stacker-more"><a href="history?who=${person.viewPersonPageId}">More</a></div>
 </div>

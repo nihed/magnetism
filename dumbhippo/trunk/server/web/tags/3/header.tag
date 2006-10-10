@@ -8,7 +8,7 @@
 <div id="dhPageHeader">
 	<table cellspacing="0" cellpadding="0">
 	<tr valign="top">
-	<td><img id="dhPageHeaderLeft" src="/images3/${buildStamp}/header_left.png" /></td>
+	<td><dh:png id="dhPageHeaderLeft" src="/images3/${buildStamp}/header_left.png" style="width: 248px; height: 64px"/></td>
 	<td id="dhPageHeaderInner" align="right" height="56px">
 		<table cellspacing="0" cellpadding="0" height="56px">
 		<tr valign="top" align="right"><td>
@@ -64,7 +64,7 @@
 		</tr>
 		</table>
 	</td>
-	<td><img id="dhPageHeaderRight" src="/images3/${buildStamp}/header_right.png"/></td>
+	<td><dh:png id="dhPageHeaderRight" src="/images3/${buildStamp}/header_right.png" style="width: 8px; height: 64px;"/></td>
 	</tr>
 	</table>
 </div>

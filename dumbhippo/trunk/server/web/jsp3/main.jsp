@@ -12,6 +12,7 @@
 	<dht3:stylesheet name="person" iefixes="true"/>
 	<dht:scriptIncludes/>
 	<dht:faviconIncludes/>
+	<script src="/javascript/${buildStamp}/dh/stacker.js" type="text/javascript"></script>	
 </head>
 
 <dh:bean id="person" class="com.dumbhippo.web.pages.StackedMugshotPersonPage" scope="request"/>
