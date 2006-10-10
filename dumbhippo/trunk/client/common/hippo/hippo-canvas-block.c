@@ -491,7 +491,10 @@ expand_if_still_hovering_timeout(void *data)
     canvas_block = HIPPO_CANVAS_BLOCK(data);
     box = HIPPO_CANVAS_BOX(data);
 
-    if (box->hovering && !canvas_block->maybe_expand_timeout_canceled)
+    /* don't expand hushed blocks on hover */
+    if (box->hovering &&
+        !canvas_block->maybe_expand_timeout_canceled &&
+        !canvas_block->hushed)
         hippo_canvas_block_set_expanded(canvas_block, TRUE);
 
     canvas_block->maybe_expand_timeout_active = FALSE;
@@ -558,11 +561,15 @@ on_block_ignored_changed(HippoBlock *block,
     if (block == NULL) /* should be impossible */
         return;
 
-
     hushed = FALSE;
     g_object_get(G_OBJECT(block), "ignored", &hushed, NULL);
 
-    hippo_canvas_block_set_hushed(canvas_block, hushed);
+    if (hushed != canvas_block->hushed) {
+        hippo_canvas_block_set_hushed(canvas_block, hushed);
+        
+        /* automatically collapse when you hush and expand on unhush */
+        hippo_canvas_block_set_expanded(canvas_block, !hushed);
+    }
 }
 
 static void
