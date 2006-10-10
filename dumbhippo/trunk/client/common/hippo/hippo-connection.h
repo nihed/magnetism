@@ -104,6 +104,10 @@ void     hippo_connection_request_hotness           (HippoConnection *connection
 void     hippo_connection_request_blocks            (HippoConnection *connection,
                                                      gint64           last_timestamp);
 
+void     hippo_connection_set_block_hushed          (HippoConnection *connection,
+                                                     const char      *block_id,
+                                                     gboolean         hushed);
+
 /* Gets the number of milliseconds to add to the local time to get the server time */
 gint64   hippo_connection_get_server_time_offset    (HippoConnection *connection);
 

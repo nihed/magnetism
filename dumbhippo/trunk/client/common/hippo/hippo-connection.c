@@ -1757,12 +1757,8 @@ on_request_blocks_reply(LmMessageHandler *handler,
         return LM_HANDLER_RESULT_REMOVE_MESSAGE;
     }
 
-    if (child == NULL) {
-        g_warning("blocks reply has no blocks");
-    } else {
-        if (!hippo_connection_parse_blocks(connection, child))
-            g_warning("Failed to parse <blocks>");
-    }
+    if (!hippo_connection_parse_blocks(connection, child))
+        g_warning("Failed to parse <blocks>");
     
     return LM_HANDLER_RESULT_REMOVE_MESSAGE;
 }
@@ -1792,6 +1788,55 @@ hippo_connection_request_blocks(HippoConnection *connection,
     lm_message_unref(message);
 
     g_debug("Sent request for blocks lastTimestamp %" G_GINT64_FORMAT, last_timestamp);
+}
+
+static LmHandlerResult
+on_block_hushed_reply(LmMessageHandler *handler,
+                      LmConnection     *lconnection,
+                      LmMessage        *message,
+                      gpointer          data)
+{
+    HippoConnection *connection = HIPPO_CONNECTION(data);
+    LmMessageNode *child;
+
+    child = message->node->children;
+
+    g_debug("got reply for <blockHushed/>");
+
+    if (!message_is_iq_with_namespace(message, "http://dumbhippo.com/protocol/blocks", "blockHushed")) {
+        g_warning("Got unexpected reply for <blockHushed/>");
+        return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+    }
+
+    if (!hippo_connection_parse_blocks(connection, child))
+        g_warning("Failed to parse <blockHushed/>");
+    
+    return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+}
+
+void
+hippo_connection_set_block_hushed(HippoConnection *connection,
+                                  const char      *block_id,
+                                  gboolean         hushed)
+{
+    LmMessage *message;
+    LmMessageNode *node;
+    LmMessageNode *child;
+    
+    message = lm_message_new_with_sub_type(HIPPO_ADMIN_JID, LM_MESSAGE_TYPE_IQ,
+                                           LM_MESSAGE_SUB_TYPE_SET);
+    node = lm_message_get_node(message);
+    
+    child = lm_message_node_add_child (node, "blockHushed", NULL);
+    lm_message_node_set_attribute(child, "xmlns", "http://dumbhippo.com/protocol/blocks");
+    lm_message_node_set_attribute(child, "blockId", block_id);
+    lm_message_node_set_attribute(child, "hushed", hushed ? "true" : "false");
+
+    hippo_connection_send_message_with_reply(connection, message, on_block_hushed_reply, SEND_MODE_AFTER_AUTH);
+
+    lm_message_unref(message);
+
+    g_debug("Sent request for prefs");
 }
 
 void

@@ -236,16 +236,14 @@ void
 hippo_actions_hush_block(HippoActions    *actions,
                          HippoBlock      *block)
 {
-    /* FIXME */
-    g_object_set(G_OBJECT(block), "ignored", TRUE, NULL);
+    hippo_connection_set_block_hushed(get_connection(actions), hippo_block_get_guid(block), TRUE);
 }
 
 void
 hippo_actions_unhush_block(HippoActions    *actions,
                            HippoBlock      *block)
 {
-    /* FIXME */
-    g_object_set(G_OBJECT(block), "ignored", FALSE, NULL);
+    hippo_connection_set_block_hushed(get_connection(actions), hippo_block_get_guid(block), FALSE);
 }
 
 void
