@@ -5,8 +5,7 @@
 
 <%@ attribute name="block" required="true" type="com.dumbhippo.server.views.BlockView" %>
 <%@ attribute name="cssClass" required="true" type="java.lang.String" %>
-
-<c:set var="blockId" value="${block.blockId}" scope="page"/>
+<%@ attribute name="blockId" required="true" type="java.lang.String" %>
 
 <div class="dh-stacker-block ${cssClass}" id="dhStackerBlock-${blockId}" onmouseover="dh.stacker.blockHoverStart('${blockId}');" onmouseout="dh.stacker.blockHoverStop('${blockId}');">
 	<table class="dh-stacker-block-header" cellspacing="0" cellpadding="0">

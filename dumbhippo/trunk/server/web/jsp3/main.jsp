@@ -49,5 +49,5 @@
 		    </table>
 		</dht3:shinyBox>
 		<dht3:pageSubHeader title="Featured Members and Groups"></dht3:pageSubHeader>
-		<dht3:personStack contact="${person.viewedPerson}" stack="${person.stack}"/>
+		<dht3:personStack contact="${person.viewedPerson}" stack="${person.stack}" stackOrder="1"/>
 </dht3:page>

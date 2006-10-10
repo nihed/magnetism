@@ -5,6 +5,7 @@
 
 <%@ attribute name="contact" required="true" type="com.dumbhippo.server.views.PersonView" %>
 <%@ attribute name="stack" required="true" type="java.util.List" %>
+<%@ attribute name="stackOrder" required="true" type="java.lang.Integer" %>
 
 <dht3:shinyBox color="grey">				
 	<dht3:personHeader who="${contact}" isSelf="false">
@@ -19,5 +20,5 @@
 		</c:choose>	| <a href="/">Invite to a group</a>
 		</c:if>
 	</dht3:personHeader>
-	<dht3:stacker person="${contact}" stack="${stack}"/>
+	<dht3:stacker person="${contact}" stack="${stack}" stackOrder="${stackOrder}"/>
 </dht3:shinyBox>

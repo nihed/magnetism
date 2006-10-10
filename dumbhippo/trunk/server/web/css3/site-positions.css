@@ -406,3 +406,7 @@ div.dh-notification {
 	overflow:			hidden;
 	text-align:			center;
 }
+
+.dh-more {
+    margin-bottom:      5px;
+}

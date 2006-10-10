@@ -101,6 +101,11 @@ img {
     color:              blue; /* this looks better than text-decoration: underline; */
 }
 
+.dh-more {
+    font-size:       12px;
+    font-weight:     bold;  
+}
+
 .dh-more-count a:link, .dh-more-count a:visited {
     color:              black;  
 }

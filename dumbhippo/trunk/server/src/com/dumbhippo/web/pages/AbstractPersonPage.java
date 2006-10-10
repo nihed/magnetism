@@ -61,6 +61,8 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 	private boolean lookedUpCurrentTrack;
 	private TrackView currentTrack;
 	
+	protected Set<PersonView> unsortedContacts; 
+	
 	protected ListBean<PersonView> contacts;
 	private Pageable<PersonView> pageableContacts; 
 	protected int totalContacts;
@@ -250,22 +252,28 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 		return groupInvitationReceived.compareTo(lastSeenInvitation) > 0;
 	}
 	
+	public Set<PersonView> getUnsortedContacts() {
+	    if (unsortedContacts == null) {
+	    	unsortedContacts = 
+				personViewer.getContacts(getSignin().getViewpoint(), getViewedUser(), 
+		                   false, PersonViewExtra.INVITED_STATUS, 
+		                   PersonViewExtra.PRIMARY_EMAIL, 
+		                   PersonViewExtra.PRIMARY_AIM,
+		                   PersonViewExtra.EXTERNAL_ACCOUNTS);	
+	    }
+	    
+	    return unsortedContacts;
+	}
+	
 	/**
 	 * Get a set of contacts of the viewed user that we want to display on the person page.
 	 * 
 	 * @return a list of PersonViews of a subset of contacts
 	 */
 	public ListBean<PersonView> getContacts() {
-		if (contacts == null) {
-			Set<PersonView> mingledContacts = 
-				personViewer.getContacts(getSignin().getViewpoint(), getViewedUser(), 
-						                   false, PersonViewExtra.INVITED_STATUS, 
-						                   PersonViewExtra.PRIMARY_EMAIL, 
-						                   PersonViewExtra.PRIMARY_AIM,
-						                   PersonViewExtra.EXTERNAL_ACCOUNTS);		
-			contacts = new ListBean<PersonView>(PersonView.sortedList(getSignin().getViewpoint(), getViewedUser(), mingledContacts));
-			
-			totalContacts = mingledContacts.size();
+		if (contacts == null) {	
+			contacts = new ListBean<PersonView>(PersonView.sortedList(getSignin().getViewpoint(), getViewedUser(), getUnsortedContacts()));
+			totalContacts = getUnsortedContacts().size();
 		}
 		return contacts;
 	}

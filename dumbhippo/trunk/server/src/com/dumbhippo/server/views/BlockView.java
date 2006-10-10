@@ -34,11 +34,6 @@ public abstract class BlockView implements ObjectView {
 	
 	public String getDescriptionHtml() { return ""; };
 	
-	public String getBlockId() {
-		// TODO: decide what would be a suitable id or make this method abstract
-	    return "";	
-	}
-	
 	public abstract String getWebTitleType();
 	
 	public abstract String getWebTitle();

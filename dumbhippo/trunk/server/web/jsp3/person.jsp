@@ -6,14 +6,13 @@
 <%@ taglib tagdir="/WEB-INF/tags/3" prefix="dht3" %>
 
 <dht3:personPage pageName="Overview" stackSize="5">
-	<c:choose>
+	<c:choose> 
 		<c:when test="${person.contacts.size > 0}">
-			<c:forEach items="${person.contactStacks.list}" end="2" var="personStack">
-				<dht3:personStack contact="${personStack.contact}" stack="${personStack.stack}"/>
+			<c:forEach items="${person.pageableContactStacks.results}" var="personStack" varStatus="stackIdx">
+			    <%-- stack with stackOrder 1 is the stack for the person --%>
+			    <dht3:personStack contact="${personStack.contact}" stack="${personStack.stack}" stackOrder="${stackIdx.count + 2}"/>
 			</c:forEach>
-			<c:if test="${person.contacts.size > 3}">
-		       <dht:moreLink moreName="More (${person.contacts.size})" more="${url}"/>
-			</c:if>  
+  		    <dht:expandablePager pageable="${person.pageableContactStacks}" anchor="dhStackedContacts"/>
 		</c:when>
 		<c:otherwise>
 		    <c:choose>

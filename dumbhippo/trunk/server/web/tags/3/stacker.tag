@@ -6,6 +6,7 @@
 <%@ attribute name="person" required="true" type="com.dumbhippo.server.views.PersonView" %>
 <%@ attribute name="stack" required="true" type="java.util.List" %>
 <%@ attribute name="stackSize" required="false" type="java.lang.Integer" %>
+<%@ attribute name="stackOrder" required="true" type="java.lang.Integer" %>
 
 <c:if test="${stackSize == 0}">
 	<c:set var="stackSize" value="5"/>
@@ -15,10 +16,10 @@
 	<c:forEach items="${stack}" end="${stackSize}" var="block" varStatus="blockIdx">
 		<c:choose>
 			<c:when test="${blockIdx.count % 2 == 0}">
-				<dht3:block block="${block}" cssClass="dh-stacker-block-grey1"/>
+				<dht3:block block="${block}" cssClass="dh-stacker-block-grey1" blockId="${stackOrder}_${blockIdx.count + 1}"/>
 			</c:when>
 			<c:otherwise>
-				<dht3:block block="${block}" cssClass="dh-stacker-block-grey2"/>
+				<dht3:block block="${block}" cssClass="dh-stacker-block-grey2" blockId="${stackOrder}_${blockIdx.count + 1}"/>
 			</c:otherwise>
 		</c:choose>
 		<c:if test="${!blockIdx.last}">

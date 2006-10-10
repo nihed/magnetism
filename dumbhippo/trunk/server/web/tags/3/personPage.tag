@@ -24,7 +24,7 @@
 	
 	<dht3:shinyBox color="grey">
 		<dht3:personHeader who="${person.viewedPerson}" isSelf="true"><a href="/account">Edit my Mugshot account</a></dht3:personHeader>
-		<dht3:stacker person="${person.viewedPerson}" stack="${person.stack}" stackSize="${stackSize}"/>
+		<dht3:stacker person="${person.viewedPerson}" stack="${person.stack}" stackSize="${stackSize}" stackOrder="1"/>
 	</dht3:shinyBox>
 	
 	<jsp:doBody/>
