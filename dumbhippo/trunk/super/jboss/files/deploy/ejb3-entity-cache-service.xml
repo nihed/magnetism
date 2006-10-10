@@ -99,7 +99,8 @@
         <attribute name="wakeUpIntervalSeconds">5</attribute>
         <!--  Cache wide default -->
         <region name="/_default_">
-         <attribute name="maxNodes">5000</attribute>
+         <!-- HIPPO: No maximum for now; it's not clear what a sensible maximum would be -->
+         <attribute name="maxNodes">0</attribute>
          <attribute name="timeToLiveSeconds">1000</attribute>
        </region>
       </config>
