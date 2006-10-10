@@ -65,7 +65,8 @@ hippo_canvas_block_group_member_init(HippoCanvasBlockGroupMember *block_group_me
     HippoCanvasBox *box;
 
     block->required_type = HIPPO_BLOCK_TYPE_GROUP_MEMBER;
-
+    block->expandable = FALSE; /* currently we have nothing to show on expand */
+    
     hippo_canvas_block_set_heading(block, _("Group: "));
 
     box = g_object_new(HIPPO_TYPE_CANVAS_BOX,

@@ -39,11 +39,13 @@ struct _HippoCanvasBlock {
     unsigned int expanded : 1;
     unsigned int maybe_expand_timeout_active : 1;
     unsigned int maybe_expand_timeout_canceled : 1;
+    /* probably a class prop not an instance prop, but it's a free bit anyway */
+    unsigned int expandable : 1;
 };
 
 struct _HippoCanvasBlockClass {
     HippoCanvasBoxClass parent_class;
-
+    
     void (* set_block)             (HippoCanvasBlock *canvas_block,
                                     HippoBlock       *block);
     void (* title_activated)       (HippoCanvasBlock *canvas_block);

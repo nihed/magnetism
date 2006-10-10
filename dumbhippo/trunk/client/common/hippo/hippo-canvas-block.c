@@ -90,6 +90,8 @@ hippo_canvas_block_init(HippoCanvasBlock *block)
     HippoCanvasBox *left_column;
     HippoCanvasBox *right_column;
 
+    block->expandable = TRUE;
+    
     HIPPO_CANVAS_BOX(block)->border_left = 1;
     HIPPO_CANVAS_BOX(block)->border_right = 1;
     HIPPO_CANVAS_BOX(block)->border_top = 1;
@@ -611,9 +613,11 @@ hippo_canvas_block_set_expanded(HippoCanvasBlock *canvas_block,
 
     if (value) {
         canvas_block->expanded = TRUE;
-        HIPPO_CANVAS_BLOCK_GET_CLASS(canvas_block)->expand(canvas_block);
+        if (canvas_block->expandable)
+            HIPPO_CANVAS_BLOCK_GET_CLASS(canvas_block)->expand(canvas_block);
     } else {
-        HIPPO_CANVAS_BLOCK_GET_CLASS(canvas_block)->unexpand(canvas_block);
+        if (canvas_block->expandable)
+            HIPPO_CANVAS_BLOCK_GET_CLASS(canvas_block)->unexpand(canvas_block);
         canvas_block->expanded = FALSE;
     }
 }

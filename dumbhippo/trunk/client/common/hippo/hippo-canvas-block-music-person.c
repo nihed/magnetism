@@ -70,7 +70,8 @@ hippo_canvas_block_music_person_init(HippoCanvasBlockMusicPerson *block_music_pe
     HippoCanvasBox *box;
 
     block->required_type = HIPPO_BLOCK_TYPE_MUSIC_PERSON;
-
+    block->expandable = FALSE; /* currently we have nothing to show on expand */
+    
     hippo_canvas_block_set_heading(block, _("Music Radar: "));
 
     box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
