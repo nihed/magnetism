@@ -28,6 +28,9 @@ GType            hippo_canvas_chat_preview_get_type    (void) G_GNUC_CONST;
 
 HippoCanvasItem* hippo_canvas_chat_preview_new         (void);
 
+void             hippo_canvas_chat_preview_set_hushed  (HippoCanvasChatPreview *chat_preview,
+                                                        gboolean                value);
+
 G_END_DECLS
 
 #endif /* __HIPPO_CANVAS_CHAT_PREVIEW_H__ */

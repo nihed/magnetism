@@ -41,6 +41,8 @@ static void hippo_canvas_block_post_clicked_count_changed (HippoCanvasBlock *can
 
 static void hippo_canvas_block_post_expand   (HippoCanvasBlock *canvas_block);
 static void hippo_canvas_block_post_unexpand (HippoCanvasBlock *canvas_block);
+static void hippo_canvas_block_post_hush     (HippoCanvasBlock *canvas_block);
+static void hippo_canvas_block_post_unhush   (HippoCanvasBlock *canvas_block);
 
 /* Our own methods */
 static void hippo_canvas_block_post_set_post (HippoCanvasBlockPost *canvas_block_post,
@@ -60,6 +62,7 @@ struct _HippoCanvasBlockPost {
     HippoCanvasItem *details_box;
     HippoCanvasBox *chat_preview_parent;
     HippoCanvasItem *chat_preview;
+    HippoCanvasItem *faves_link;
 };
 
 struct _HippoCanvasBlockPostClass {
@@ -131,6 +134,7 @@ hippo_canvas_block_post_init(HippoCanvasBlockPost *block_post)
                         "text", "Add to Faves",
                         "color-cascade", HIPPO_CASCADE_MODE_NONE,
                         NULL);
+    block_post->faves_link = item;
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(block_post->details_box), item, 0);
 
     g_signal_connect(G_OBJECT(item), "activated", G_CALLBACK(on_faves_activated), block_post);
@@ -175,6 +179,8 @@ hippo_canvas_block_post_class_init(HippoCanvasBlockPostClass *klass)
     canvas_block_class->clicked_count_changed = hippo_canvas_block_post_clicked_count_changed;
     canvas_block_class->expand = hippo_canvas_block_post_expand;
     canvas_block_class->unexpand = hippo_canvas_block_post_unexpand;
+    canvas_block_class->hush = hippo_canvas_block_post_hush;
+    canvas_block_class->unhush = hippo_canvas_block_post_unhush;
 }
 
 static void
@@ -473,6 +479,36 @@ hippo_canvas_block_post_unexpand(HippoCanvasBlock *canvas_block)
                  "size-mode", HIPPO_CANVAS_SIZE_ELLIPSIZE_END,
                  "xalign", HIPPO_ALIGNMENT_FILL,
                  NULL);
+}
+
+static void
+hippo_canvas_block_post_hush(HippoCanvasBlock *canvas_block)
+{
+    HippoCanvasBlockPost *block_post = HIPPO_CANVAS_BLOCK_POST(canvas_block);
+    
+    HIPPO_CANVAS_BLOCK_CLASS(hippo_canvas_block_post_parent_class)->hush(canvas_block);
+    
+    g_object_set(G_OBJECT(block_post->faves_link),
+                 "color-cascade", HIPPO_CASCADE_MODE_INHERIT,
+                 NULL);
+
+    hippo_canvas_chat_preview_set_hushed(HIPPO_CANVAS_CHAT_PREVIEW(block_post->chat_preview),
+                                         TRUE);
+}
+
+static void
+hippo_canvas_block_post_unhush(HippoCanvasBlock *canvas_block)
+{
+    HippoCanvasBlockPost *block_post = HIPPO_CANVAS_BLOCK_POST(canvas_block);
+    
+    HIPPO_CANVAS_BLOCK_CLASS(hippo_canvas_block_post_parent_class)->unhush(canvas_block);
+    
+    g_object_set(G_OBJECT(block_post->faves_link),
+                 "color-cascade", HIPPO_CASCADE_MODE_NONE,
+                 NULL);
+
+    hippo_canvas_chat_preview_set_hushed(HIPPO_CANVAS_CHAT_PREVIEW(block_post->chat_preview),
+                                         FALSE);
 }
 
 static void

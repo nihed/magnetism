@@ -53,10 +53,13 @@ struct _HippoCanvasChatPreview {
     int chatting_count;
     GSList *recent_messages;
 
+    HippoCanvasItem *chat_link;
     HippoCanvasBox *count_parent;
     HippoCanvasItem *count_item;
     HippoCanvasItem *count_separator_item;
     HippoMessagePreview message_previews[MAX_PREVIEWED];
+
+    unsigned int hushed : 1;
 };
 
 struct _HippoCanvasChatPreviewClass {
@@ -125,6 +128,7 @@ hippo_canvas_chat_preview_init(HippoCanvasChatPreview *chat_preview)
                         "text", "Chat",
                         "color-cascade", HIPPO_CASCADE_MODE_NONE,
                         NULL);
+    chat_preview->chat_link = item;
     hippo_canvas_box_append(box, item, 0);
 
     g_signal_connect(G_OBJECT(item), "activated",
@@ -586,4 +590,26 @@ hippo_canvas_chat_preview_add_recent_message (HippoCanvasChatPreview *chat_previ
     }
 
     update_recent_messages(chat_preview);
+}
+
+void
+hippo_canvas_chat_preview_set_hushed(HippoCanvasChatPreview *chat_preview,
+                                     gboolean                value)
+{
+    value = value != FALSE;
+    
+    if (chat_preview->hushed == value)
+        return;
+
+    chat_preview->hushed = value;
+
+    if (value) {
+        g_object_set(G_OBJECT(chat_preview->chat_link),
+                     "color-cascade", HIPPO_CASCADE_MODE_INHERIT,
+                     NULL);
+    } else {
+        g_object_set(G_OBJECT(chat_preview->chat_link),
+                     "color-cascade", HIPPO_CASCADE_MODE_NONE,
+                     NULL);
+    }
 }

@@ -42,8 +42,12 @@ static void hippo_canvas_block_set_block_impl (HippoCanvasBlock *canvas_block,
 
 static void hippo_canvas_block_expand_impl    (HippoCanvasBlock *canvas_block);
 static void hippo_canvas_block_unexpand_impl  (HippoCanvasBlock *canvas_block);
+static void hippo_canvas_block_hush_impl      (HippoCanvasBlock *canvas_block);
+static void hippo_canvas_block_unhush_impl    (HippoCanvasBlock *canvas_block);
 
 static void hippo_canvas_block_set_expanded   (HippoCanvasBlock *canvas_block,
+                                               gboolean          value);
+static void hippo_canvas_block_set_hushed     (HippoCanvasBlock *canvas_block,
                                                gboolean          value);
 
 /* Callbacks */
@@ -244,6 +248,7 @@ hippo_canvas_block_init(HippoCanvasBlock *block)
                         "text", "Hush",
                         "color-cascade", HIPPO_CASCADE_MODE_NONE,
                         NULL);
+    block->toggle_hush_link = item;
     hippo_canvas_box_append(box3, item, HIPPO_PACK_END);
 
     g_signal_connect(G_OBJECT(item), "activated", G_CALLBACK(on_hush_activated), block);
@@ -283,6 +288,8 @@ hippo_canvas_block_class_init(HippoCanvasBlockClass *klass)
     klass->set_block = hippo_canvas_block_set_block_impl;
     klass->expand = hippo_canvas_block_expand_impl;
     klass->unexpand = hippo_canvas_block_unexpand_impl;
+    klass->hush = hippo_canvas_block_hush_impl;
+    klass->unhush = hippo_canvas_block_unhush_impl;
     
     g_object_class_install_property(object_class,
                                     PROP_BLOCK,
@@ -541,6 +548,24 @@ on_block_timestamp_changed(HippoBlock *block,
 }
 
 static void
+on_block_ignored_changed(HippoBlock *block,
+                         GParamSpec *arg, /* null when we invoke callback manually */
+                         void       *data)
+{
+    HippoCanvasBlock *canvas_block = HIPPO_CANVAS_BLOCK(data);
+    gboolean hushed;
+    
+    if (block == NULL) /* should be impossible */
+        return;
+
+
+    hushed = FALSE;
+    g_object_get(G_OBJECT(block), "ignored", &hushed, NULL);
+
+    hippo_canvas_block_set_hushed(canvas_block, hushed);
+}
+
+static void
 hippo_canvas_block_set_block_impl(HippoCanvasBlock *canvas_block,
                                   HippoBlock       *new_block)
 {
@@ -565,7 +590,10 @@ hippo_canvas_block_set_block_impl(HippoCanvasBlock *canvas_block,
                              canvas_block);
             g_signal_connect(G_OBJECT(new_block), "notify::clicked-count",
                              G_CALLBACK(on_block_clicked_count_changed),
-                             canvas_block);            
+                             canvas_block);
+            g_signal_connect(G_OBJECT(new_block), "notify::ignored",
+                             G_CALLBACK(on_block_ignored_changed),
+                             canvas_block);
         }
         if (canvas_block->block) {
             g_signal_handlers_disconnect_by_func(G_OBJECT(canvas_block->block),
@@ -574,6 +602,9 @@ hippo_canvas_block_set_block_impl(HippoCanvasBlock *canvas_block,
             g_signal_handlers_disconnect_by_func(G_OBJECT(canvas_block->block),
                                                  G_CALLBACK(on_block_clicked_count_changed),
                                                  canvas_block);
+            g_signal_handlers_disconnect_by_func(G_OBJECT(canvas_block->block),
+                                                 G_CALLBACK(on_block_ignored_changed),
+                                                 canvas_block);
             g_object_unref(canvas_block->block);
         }
         canvas_block->block = new_block;
@@ -581,6 +612,7 @@ hippo_canvas_block_set_block_impl(HippoCanvasBlock *canvas_block,
         if (new_block) {
             on_block_timestamp_changed(new_block, NULL, canvas_block);
             on_block_clicked_count_changed(new_block, NULL, canvas_block);
+            on_block_ignored_changed(new_block, NULL, canvas_block);
         }
         
         g_object_notify(G_OBJECT(canvas_block), "block");
@@ -600,6 +632,46 @@ hippo_canvas_block_unexpand_impl(HippoCanvasBlock *canvas_block)
 {
     hippo_canvas_box_set_child_visible(canvas_block->close_controls_parent, canvas_block->close_controls,
                                        FALSE);
+}
+
+static void
+hippo_canvas_block_hush_impl(HippoCanvasBlock *canvas_block)
+{
+    g_object_set(G_OBJECT(canvas_block),
+                 "color", HIPPO_CANVAS_BLOCK_GRAY_TEXT_COLOR,
+                 NULL);
+    g_object_set(G_OBJECT(canvas_block->toggle_hush_link),
+                 "text", "Unhush",
+                 NULL);
+}
+
+static void
+hippo_canvas_block_unhush_impl(HippoCanvasBlock *canvas_block)
+{
+    g_object_set(G_OBJECT(canvas_block),
+                 "color-set", FALSE,
+                 NULL);
+    g_object_set(G_OBJECT(canvas_block->toggle_hush_link),
+                 "text", "Hush",
+                 NULL);
+}
+
+static void
+hippo_canvas_block_set_hushed(HippoCanvasBlock *canvas_block,
+                              gboolean          value)
+{
+    value = value != FALSE;
+
+    if (value == canvas_block->hushed)
+        return;
+
+    if (value) {
+        canvas_block->hushed = TRUE;
+        HIPPO_CANVAS_BLOCK_GET_CLASS(canvas_block)->hush(canvas_block);
+    } else {
+        HIPPO_CANVAS_BLOCK_GET_CLASS(canvas_block)->unhush(canvas_block);
+        canvas_block->hushed = FALSE;
+    }
 }
 
 static void
@@ -634,9 +706,14 @@ static void
 on_hush_activated(HippoCanvasItem  *button_or_link,
                   HippoCanvasBlock *canvas_block)
 {
-    if (canvas_block->actions && canvas_block->block)
-        hippo_actions_hush_block(canvas_block->actions,
-                                 canvas_block->block);
+    if (canvas_block->actions && canvas_block->block) {
+        if (canvas_block->hushed)
+            hippo_actions_unhush_block(canvas_block->actions,
+                                       canvas_block->block);
+        else
+            hippo_actions_hush_block(canvas_block->actions,
+                                     canvas_block->block);
+    }
 }
 
 void

@@ -36,11 +36,13 @@ struct _HippoCanvasBlock {
     HippoCanvasItem *content_container_item;
     HippoCanvasItem *headshot_item;
     HippoCanvasItem *name_item;
-    unsigned int expanded : 1;
+    HippoCanvasItem *toggle_hush_link;
     unsigned int maybe_expand_timeout_active : 1;
     unsigned int maybe_expand_timeout_canceled : 1;
     /* probably a class prop not an instance prop, but it's a free bit anyway */
+    unsigned int expanded : 1;
     unsigned int expandable : 1;
+    unsigned int hushed : 1;
 };
 
 struct _HippoCanvasBlockClass {
@@ -52,6 +54,8 @@ struct _HippoCanvasBlockClass {
     void (* clicked_count_changed) (HippoCanvasBlock *canvas_block);
     void (* expand)                (HippoCanvasBlock *canvas_block);
     void (* unexpand)              (HippoCanvasBlock *canvas_block);
+    void (* hush)                  (HippoCanvasBlock *canvas_block);
+    void (* unhush)                (HippoCanvasBlock *canvas_block);
 };
 
 GType            hippo_canvas_block_get_type    (void) G_GNUC_CONST;

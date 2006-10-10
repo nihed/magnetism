@@ -134,6 +134,7 @@ enum {
     PROP_SPACING,
     PROP_COLOR,
     PROP_COLOR_CASCADE,
+    PROP_COLOR_SET,
     PROP_FONT,
     PROP_FONT_DESC,
     PROP_FONT_CASCADE
@@ -403,6 +404,13 @@ hippo_canvas_box_class_init(HippoCanvasBoxClass *klass)
                                                       HIPPO_CASCADE_MODE_INHERIT,
                                                       G_PARAM_READABLE | G_PARAM_WRITABLE));
     g_object_class_install_property(object_class,
+                                    PROP_COLOR_SET,
+                                    g_param_spec_boolean("color-set",
+                                                         _("Foreground Color Set"),
+                                                         _("Whether a foreground color was set"),
+                                                         FALSE,
+                                                         G_PARAM_READABLE | G_PARAM_WRITABLE));    
+    g_object_class_install_property(object_class,
                                     PROP_FONT,
                                     g_param_spec_string("font",
                                                         _("Font"),
@@ -554,6 +562,14 @@ hippo_canvas_box_set_property(GObject         *object,
         hippo_canvas_context_emit_style_changed(HIPPO_CANVAS_CONTEXT(box),
                                                 FALSE);
         break;
+    case PROP_COLOR_SET:
+        if (g_value_get_boolean(value) || box->style != NULL) {
+            ensure_style(box);
+            g_object_set_property(G_OBJECT(box->style), "color-set", value);
+            hippo_canvas_context_emit_style_changed(HIPPO_CANVAS_CONTEXT(box),
+                                                    FALSE);
+        }
+        break;
     case PROP_COLOR_CASCADE:
         {
             HippoCascadeMode new_mode = g_value_get_enum(value);
@@ -667,6 +683,13 @@ hippo_canvas_box_get_property(GObject         *object,
         break;
     case PROP_COLOR_CASCADE:
         g_value_set_enum(value, box->color_cascade);
+        break;
+    case PROP_COLOR_SET:
+        if (box->style) {
+            g_object_get_property(G_OBJECT(box->style), "color-set", value);
+        } else {
+            g_value_set_boolean(value, FALSE);
+        }
         break;
     case PROP_FONT:
         if (box->style) {

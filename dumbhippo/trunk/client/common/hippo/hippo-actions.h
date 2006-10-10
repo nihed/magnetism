@@ -50,6 +50,8 @@ void          hippo_actions_hush_stacker            (HippoActions    *actions);
 void          hippo_actions_open_home_page          (HippoActions    *actions);
 void          hippo_actions_hush_block              (HippoActions    *actions,
                                                      HippoBlock      *block);
+void          hippo_actions_unhush_block            (HippoActions    *actions,
+                                                     HippoBlock      *block);
 void          hippo_actions_add_to_faves            (HippoActions    *actions,
                                                      HippoBlock      *block);
 void          hippo_actions_join_chat_id            (HippoActions    *actions,

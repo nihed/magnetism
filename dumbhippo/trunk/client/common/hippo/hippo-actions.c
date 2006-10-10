@@ -237,6 +237,15 @@ hippo_actions_hush_block(HippoActions    *actions,
                          HippoBlock      *block)
 {
     /* FIXME */
+    g_object_set(G_OBJECT(block), "ignored", TRUE, NULL);
+}
+
+void
+hippo_actions_unhush_block(HippoActions    *actions,
+                           HippoBlock      *block)
+{
+    /* FIXME */
+    g_object_set(G_OBJECT(block), "ignored", FALSE, NULL);
 }
 
 void
