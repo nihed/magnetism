@@ -110,7 +110,6 @@ hippo_canvas_chat_preview_init(HippoCanvasChatPreview *chat_preview)
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(chat_preview), HIPPO_CANVAS_ITEM(box), 0);
     
     chat_preview->count_item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
-                                            "font", "11px",
                                             "color", 0x666666ff,
                                             NULL);
     chat_preview->count_parent = box;
@@ -118,14 +117,12 @@ hippo_canvas_chat_preview_init(HippoCanvasChatPreview *chat_preview)
 
     chat_preview->count_separator_item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
                                                       "text", " | ",
-                                                      "font", "11px",
                                                       "color", 0x666666ff,
                                                       NULL);
     hippo_canvas_box_append(box, chat_preview->count_separator_item, 0);
 
     item = g_object_new(HIPPO_TYPE_CANVAS_LINK,
                         "text", "Chat",
-                        "font", "11px",                        
                         NULL);
     hippo_canvas_box_append(box, item, 0);
 
@@ -150,7 +147,6 @@ hippo_canvas_chat_preview_init(HippoCanvasChatPreview *chat_preview)
         hippo_canvas_box_append(box, item, 0);
 
         mp->message_text = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
-                                        "font", "11px",
                                         "size-mode", HIPPO_CANVAS_SIZE_ELLIPSIZE_END,
                                         "xalign", HIPPO_ALIGNMENT_START,
                                         NULL);
@@ -158,12 +154,10 @@ hippo_canvas_chat_preview_init(HippoCanvasChatPreview *chat_preview)
         
         item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
                             "text", " - ", /* FIXME figure out mdash */
-                            "font", "11px",
                             NULL);
         hippo_canvas_box_append(box, item, 0);
         
         mp->entity_name = g_object_new(HIPPO_TYPE_CANVAS_ENTITY_NAME,
-                                       "font", "11px",
                                        NULL);
         hippo_canvas_box_append(box, mp->entity_name, 0);
     }

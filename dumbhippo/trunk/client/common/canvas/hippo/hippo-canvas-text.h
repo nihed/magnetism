@@ -28,10 +28,8 @@ typedef struct _HippoCanvasTextClass HippoCanvasTextClass;
 
 struct _HippoCanvasText {
     HippoCanvasBox box;
-    guint32 color_rgba;
     char *text;
     PangoAttrList *attributes;
-    PangoFontDescription *font_desc;
     double font_scale;
     guint size_mode : 3;
 };

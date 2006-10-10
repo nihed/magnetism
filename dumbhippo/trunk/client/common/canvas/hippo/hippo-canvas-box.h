@@ -6,6 +6,9 @@
 
 G_BEGIN_DECLS
 
+typedef struct _HippoCanvasStyle      HippoCanvasStyle;
+typedef struct _HippoCanvasStyleClass HippoCanvasStyleClass;
+
 typedef enum
 {
     HIPPO_PACK_EXPAND = 1, /* This is equivalent to both EXPAND and FILL for GtkBox,
@@ -32,6 +35,7 @@ typedef struct _HippoCanvasBoxClass HippoCanvasBoxClass;
 struct _HippoCanvasBox {
     GObject parent;
     HippoCanvasContext *context;
+    HippoCanvasStyle *style; /* may be NULL if no relevant props set */
     GSList *children;
     int allocated_width;
     int allocated_height;
@@ -73,6 +77,8 @@ struct _HippoCanvasBox {
 struct _HippoCanvasBoxClass {
     GObjectClass parent_class;
 
+    guint32  default_color;
+    
     void     (* paint_background)             (HippoCanvasBox   *box,
                                                cairo_t          *cr,
                                                HippoRectangle   *damaged_box);

@@ -47,10 +47,7 @@ enum {
 enum {
     PROP_0,
     PROP_TEXT,
-    PROP_COLOR,
     PROP_ATTRIBUTES,
-    PROP_FONT,
-    PROP_FONT_DESC,
     PROP_FONT_SCALE,
     PROP_SIZE_MODE
 };
@@ -63,7 +60,6 @@ G_DEFINE_TYPE_WITH_CODE(HippoCanvasText, hippo_canvas_text, HIPPO_TYPE_CANVAS_BO
 static void
 hippo_canvas_text_init(HippoCanvasText *text)
 {
-    text->color_rgba = DEFAULT_FOREGROUND;
     text->font_scale = 1.0;
     text->size_mode = HIPPO_CANVAS_SIZE_FULL_WIDTH;
 }
@@ -103,35 +99,13 @@ hippo_canvas_text_class_init(HippoCanvasTextClass *klass)
                                                         _("Text to display"),
                                                         NULL,
                                                         G_PARAM_READABLE | G_PARAM_WRITABLE));
-    g_object_class_install_property(object_class,
-                                    PROP_COLOR,
-                                    g_param_spec_uint("color",
-                                                      _("Foreground Color"),
-                                                      _("32-bit RGBA foreground color"),
-                                                      0,
-                                                      G_MAXUINT,
-                                                      DEFAULT_FOREGROUND,
-                                                      G_PARAM_READABLE | G_PARAM_WRITABLE));
+
     g_object_class_install_property(object_class,
                                     PROP_ATTRIBUTES,
                                     g_param_spec_boxed ("attributes",
                                                         _("Attributes"),
                                                         _("A list of style attributes to apply to the text"),
                                                         PANGO_TYPE_ATTR_LIST,
-                                                        G_PARAM_READABLE | G_PARAM_WRITABLE));
-    g_object_class_install_property(object_class,
-                                    PROP_FONT,
-                                    g_param_spec_string("font",
-                                                        _("Font"),
-                                                        _("Font description as a string"),
-                                                        NULL,
-                                                        G_PARAM_READABLE | G_PARAM_WRITABLE));
-    g_object_class_install_property(object_class,
-                                    PROP_FONT_DESC,
-                                    g_param_spec_boxed ("font-desc",
-                                                        _("Font Description"),
-                                                        _("Font description as a PangoFontDescription object"),
-                                                        PANGO_TYPE_FONT_DESCRIPTION,
                                                         G_PARAM_READABLE | G_PARAM_WRITABLE));
     g_object_class_install_property(object_class,
                                     PROP_FONT_SCALE,
@@ -165,11 +139,6 @@ hippo_canvas_text_finalize(GObject *object)
         pango_attr_list_unref(text->attributes);
         text->attributes = NULL;
     }
-
-    if (text->font_desc) {
-        pango_font_description_free(text->font_desc);
-        text->font_desc = NULL;
-    }
     
     G_OBJECT_CLASS(hippo_canvas_text_parent_class)->finalize(object);
 }
@@ -184,46 +153,6 @@ hippo_canvas_text_new(void)
     return HIPPO_CANVAS_ITEM(text);
 }
 
-static int
-parse_int32(const char *s)
-{
-    char *end;
-    long v;
-    
-    end = NULL;
-    v = strtol(s, &end, 10);
-
-    if (end == NULL) {
-        g_warning("Failed to parse '%s' as 32-bit integer", s);
-        return 0;
-    }
-
-    return v;
-}
-
-/* Latest pango supports "NNpx" sizes, but FC5 Pango (1.12) does not */
-static int
-parse_absolute_size_hack(const char *s)
-{
-    const char *p;
-    const char *number;
-    
-    p = strstr(s, "px");
-    if (p == NULL)
-        return -1;
-
-    number = p;
-    --number;
-    while (number > s) {
-        if (!g_ascii_isdigit(*number)) {
-            ++number;
-            break;
-        }
-        --number;
-    }
-
-    return parse_int32(number);
-}
 
 static void
 hippo_canvas_text_set_property(GObject         *object,
@@ -248,10 +177,6 @@ hippo_canvas_text_set_property(GObject         *object,
             }
         }
         break;
-    case PROP_COLOR:
-        text->color_rgba = g_value_get_uint(value);
-        hippo_canvas_item_emit_paint_needed(HIPPO_CANVAS_ITEM(text), 0, 0, -1, -1);
-        break;
     case PROP_ATTRIBUTES:
         {
             PangoAttrList *attrs = g_value_get_boxed(value);
@@ -261,64 +186,6 @@ hippo_canvas_text_set_property(GObject         *object,
                 pango_attr_list_unref(text->attributes);            
             text->attributes = attrs;
             hippo_canvas_item_emit_request_changed(HIPPO_CANVAS_ITEM(text));
-        }
-        break;
-    case PROP_FONT:
-        {
-            const char *s;
-            PangoFontDescription *desc;
-            int absolute;
-            s = g_value_get_string(value);
-            if (s != NULL) {
-                char *no_px = NULL;
-                absolute = parse_absolute_size_hack(s);
-                if (absolute >= 0) {
-                    // get the "px" out of the string
-                    GString *no_px_g = g_string_new(NULL);
-                    const char *p;
-                    p = strstr(s, "px");
-                    g_assert(p != NULL);
-                    g_string_append_len(no_px_g, s, p - s);
-                    g_string_append_len(no_px_g, p + 2, strlen(p + 2));
-                    no_px = g_string_free(no_px_g, FALSE);
-                }
-                desc = pango_font_description_from_string(no_px);
-                g_free(no_px);
-                if (desc == NULL) {
-                    g_warning("Failed to parse font description string '%s'", s);
-                } else {
-                    if (absolute >= 0) {
-                        pango_font_description_set_absolute_size(desc, absolute * PANGO_SCALE);
-                    }
-                    
-                    if ((pango_font_description_get_set_fields(desc) & PANGO_FONT_MASK_SIZE) != 0 &&
-                        pango_font_description_get_size(desc) <= 0) {
-                        g_warning("font size set to 0, not going to work well");
-                    }
-                }
-            } else {
-                desc = NULL;
-            }
-            /* this handles whether to queue repaint/resize */
-            g_object_set(object, "font-desc", desc, NULL);
-            if (desc)
-                pango_font_description_free(desc);
-        }
-        break;
-    case PROP_FONT_DESC:
-        {
-            PangoFontDescription *desc = g_value_get_boxed(value);
-
-            if (!(desc == NULL && text->font_desc == NULL)) {
-                if (text->font_desc) {
-                    pango_font_description_free(text->font_desc);
-                    text->font_desc = NULL;
-                }
-                if (desc != NULL) {
-                    text->font_desc = pango_font_description_copy(desc);
-                }
-                hippo_canvas_item_emit_request_changed(HIPPO_CANVAS_ITEM(text));
-            }
         }
         break;
     case PROP_FONT_SCALE:
@@ -349,24 +216,8 @@ hippo_canvas_text_get_property(GObject         *object,
     case PROP_TEXT:
         g_value_set_string(value, text->text);
         break;
-    case PROP_COLOR:
-        g_value_set_uint(value, text->color_rgba);
-        break;
     case PROP_ATTRIBUTES:
         g_value_set_boxed(value, text->attributes);
-        break;        
-    case PROP_FONT:
-        {
-            char *s;
-            if (text->font_desc)
-                s = pango_font_description_to_string(text->font_desc);
-            else
-                s = NULL;
-            g_value_take_string(value, s);
-        }
-        break;
-    case PROP_FONT_DESC:
-        g_value_set_boxed(value, text->font_desc);
         break;
     case PROP_FONT_SCALE:
         g_value_set_double(value, text->font_scale);
@@ -405,17 +256,21 @@ create_layout(HippoCanvasText *text,
 {
     HippoCanvasContext *context;
     PangoLayout *layout;
-    
-    context = hippo_canvas_box_get_context(HIPPO_CANVAS_BOX(text));
+
+    /* Note that our context is *ourselves* not box->context i.e. we want
+     * our own style, etc. to affect what we render. Our context methods
+     * will chain up as needed.
+     */
+    context = HIPPO_CANVAS_CONTEXT(text);
 
     g_return_val_if_fail(context != NULL, NULL);
     
     layout = hippo_canvas_context_create_layout(context);
-    
-    if (text->font_desc) {
+
+    {
         const PangoFontDescription *old;
         PangoFontDescription *composite;
-
+        
         composite = pango_font_description_new();
         
         old = pango_layout_get_font_description(layout);
@@ -427,11 +282,12 @@ create_layout(HippoCanvasText *text,
         
         if (old != NULL)
             pango_font_description_merge(composite, old, TRUE);
-        if (text->font_desc != NULL)
-            pango_font_description_merge(composite, text->font_desc, TRUE);
+
+        hippo_canvas_context_affect_font_desc(context,
+                                              composite);
         
         pango_layout_set_font_description(layout, composite);
-        
+    
         pango_font_description_free(composite);
     }
     
@@ -503,8 +359,16 @@ hippo_canvas_text_paint_below_children(HippoCanvasBox  *box,
                                        HippoRectangle  *damaged_box)
 {
     HippoCanvasText *text = HIPPO_CANVAS_TEXT(box);
+    guint32 color_rgba;
+    HippoCanvasContext *context;
+
+    /* note, we want to use _ourselves_ as context so we get our own style */
+    context = HIPPO_CANVAS_CONTEXT(box);
+
+    color_rgba = HIPPO_CANVAS_BOX_GET_CLASS(box)->default_color;
+    hippo_canvas_context_affect_color(context, &color_rgba);
     
-    if ((text->color_rgba & 0xff) != 0 && text->text != NULL) {
+    if ((color_rgba & 0xff) != 0 && text->text != NULL) {
         PangoLayout *layout;
         int layout_width, layout_height;
         int x, y, w, h;
@@ -541,7 +405,7 @@ hippo_canvas_text_paint_below_children(HippoCanvasBox  *box,
         cairo_clip(cr);
 
         cairo_move_to (cr, x, y);
-        hippo_cairo_set_source_rgba32(cr, text->color_rgba);
+        hippo_cairo_set_source_rgba32(cr, color_rgba);
         pango_cairo_show_layout(cr, layout);
         cairo_restore(cr);
         

@@ -7,9 +7,10 @@
 static void     hippo_canvas_context_base_init (void                  *klass);
 
 enum {
+    STYLE_CHANGED,
     LAST_SIGNAL
 };
-/* static int signals[LAST_SIGNAL]; */
+static int signals[LAST_SIGNAL];
 
 GType
 hippo_canvas_context_get_type(void)
@@ -37,6 +38,15 @@ hippo_canvas_context_base_init(void *klass)
     if (!initialized) {
         /* create signals in here */
 
+        signals[STYLE_CHANGED] =
+            g_signal_new ("style-changed",
+                          HIPPO_TYPE_CANVAS_CONTEXT,
+                          G_SIGNAL_RUN_LAST,
+                          G_STRUCT_OFFSET(HippoCanvasContextIface, style_changed),
+                          NULL, NULL,
+                          g_cclosure_marshal_VOID__BOOLEAN,
+                          G_TYPE_NONE, 1, G_TYPE_BOOLEAN);
+        
         initialized = TRUE;
     }
 }
@@ -97,4 +107,40 @@ hippo_canvas_context_translate_to_widget(HippoCanvasContext *context,
     g_return_if_fail(HIPPO_IS_CANVAS_ITEM(item));
     
     HIPPO_CANVAS_CONTEXT_GET_IFACE(context)->translate_to_widget(context, item, x_p, y_p);
+}
+
+void
+hippo_canvas_context_affect_color(HippoCanvasContext     *context,
+                                  guint32                *color_rgba_p)
+{
+    HippoCanvasContextIface *iface;
+    
+    g_return_if_fail(HIPPO_IS_CANVAS_CONTEXT(context));
+
+    iface = HIPPO_CANVAS_CONTEXT_GET_IFACE(context);
+
+    if (iface->affect_color)
+        (* iface->affect_color) (context, color_rgba_p);
+}
+
+void
+hippo_canvas_context_affect_font_desc(HippoCanvasContext     *context,
+                                      PangoFontDescription   *font_desc)
+{
+    HippoCanvasContextIface *iface;
+    
+    g_return_if_fail(HIPPO_IS_CANVAS_CONTEXT(context));
+    
+    iface = HIPPO_CANVAS_CONTEXT_GET_IFACE(context);
+    
+    if (iface->affect_font_desc)
+        (* iface->affect_font_desc) (context, font_desc);
+}
+
+void
+hippo_canvas_context_emit_style_changed(HippoCanvasContext *context,
+                                        gboolean            resize_needed)
+{
+    g_signal_emit(context, signals[STYLE_CHANGED], 0,
+                  resize_needed);
 }

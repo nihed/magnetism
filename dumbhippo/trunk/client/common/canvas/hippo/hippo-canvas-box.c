@@ -2,8 +2,7 @@
 #include "hippo-canvas-type-builtins.h"
 #include "hippo-canvas-internal.h"
 #include "hippo-canvas-box.h"
-
-#define DEFAULT_BACKGROUND 0xffffff00
+#include "hippo-canvas-style.h"
 
 static void hippo_canvas_box_init               (HippoCanvasBox          *box);
 static void hippo_canvas_box_class_init         (HippoCanvasBoxClass     *klass);
@@ -24,19 +23,26 @@ static void hippo_canvas_box_get_property (GObject      *object,
 
 
 /* Canvas context methods */
-static PangoLayout*     hippo_canvas_box_create_layout          (HippoCanvasContext *context);
-static cairo_surface_t* hippo_canvas_box_load_image             (HippoCanvasContext *context,
-                                                                 const char         *image_name);
-static guint32          hippo_canvas_box_get_color              (HippoCanvasContext *context,
-                                                                 HippoStockColor     color);
-static void             hippo_canvas_box_register_widget_item   (HippoCanvasContext *context,
-                                                                 HippoCanvasItem    *item);
-static void             hippo_canvas_box_unregister_widget_item (HippoCanvasContext *context,
-                                                                 HippoCanvasItem    *item);
-static void             hippo_canvas_box_translate_to_widget    (HippoCanvasContext *context,
-                                                                 HippoCanvasItem    *item,
-                                                                 int                *x_p,
-                                                                 int                *y_p);
+static PangoLayout*     hippo_canvas_box_create_layout          (HippoCanvasContext   *context);
+static cairo_surface_t* hippo_canvas_box_load_image             (HippoCanvasContext   *context,
+                                                                 const char           *image_name);
+static guint32          hippo_canvas_box_get_color              (HippoCanvasContext   *context,
+                                                                 HippoStockColor       color);
+static void             hippo_canvas_box_register_widget_item   (HippoCanvasContext   *context,
+                                                                 HippoCanvasItem      *item);
+static void             hippo_canvas_box_unregister_widget_item (HippoCanvasContext   *context,
+                                                                 HippoCanvasItem      *item);
+static void             hippo_canvas_box_translate_to_widget    (HippoCanvasContext   *context,
+                                                                 HippoCanvasItem      *item,
+                                                                 int                  *x_p,
+                                                                 int                  *y_p);
+static void             hippo_canvas_box_affect_color           (HippoCanvasContext   *context,
+                                                                 guint32              *color_rgba_p);
+static void             hippo_canvas_box_affect_font_desc       (HippoCanvasContext   *context,
+                                                                 PangoFontDescription *font_desc);
+static void             hippo_canvas_box_style_changed          (HippoCanvasContext   *context,
+                                                                 gboolean              resize_needed);
+
 
 
 /* Canvas item methods */
@@ -125,7 +131,10 @@ enum {
     PROP_YALIGN,
     PROP_BACKGROUND_COLOR,
     PROP_BORDER_COLOR,
-    PROP_SPACING
+    PROP_SPACING,
+    PROP_COLOR,
+    PROP_FONT,
+    PROP_FONT_DESC
 };
 
 G_DEFINE_TYPE_WITH_CODE(HippoCanvasBox, hippo_canvas_box, G_TYPE_OBJECT,
@@ -160,6 +169,9 @@ hippo_canvas_box_iface_init_context (HippoCanvasContextIface *klass)
     klass->register_widget_item = hippo_canvas_box_register_widget_item;
     klass->unregister_widget_item = hippo_canvas_box_unregister_widget_item;
     klass->translate_to_widget = hippo_canvas_box_translate_to_widget;
+    klass->affect_color = hippo_canvas_box_affect_color;
+    klass->affect_font_desc = hippo_canvas_box_affect_font_desc;
+    klass->style_changed = hippo_canvas_box_style_changed;
 }
 
 static void
@@ -171,7 +183,7 @@ hippo_canvas_box_init(HippoCanvasBox *box)
     box->y_align = HIPPO_ALIGNMENT_FILL;
     box->box_width = -1;
     box->box_height = -1;
-    box->background_color_rgba = DEFAULT_BACKGROUND;
+    box->background_color_rgba = HIPPO_CANVAS_DEFAULT_BACKGROUND_COLOR;
     box->request_changed_since_allocate = TRUE; /* be sure we do at least one allocation */
 }
 
@@ -186,6 +198,8 @@ hippo_canvas_box_class_init(HippoCanvasBoxClass *klass)
     object_class->dispose = hippo_canvas_box_dispose;
     object_class->finalize = hippo_canvas_box_finalize;
 
+    klass->default_color = HIPPO_CANVAS_DEFAULT_COLOR;
+    
     klass->paint_background = hippo_canvas_box_paint_background;
     klass->paint_children = hippo_canvas_box_paint_children;
     klass->get_content_width_request = hippo_canvas_box_get_content_width_request;
@@ -344,7 +358,7 @@ hippo_canvas_box_class_init(HippoCanvasBoxClass *klass)
                                                       _("32-bit RGBA background color"),
                                                       0,
                                                       G_MAXUINT,
-                                                      DEFAULT_BACKGROUND,
+                                                      HIPPO_CANVAS_DEFAULT_BACKGROUND_COLOR,
                                                       G_PARAM_READABLE | G_PARAM_WRITABLE));
 
     g_object_class_install_property(object_class,
@@ -354,7 +368,7 @@ hippo_canvas_box_class_init(HippoCanvasBoxClass *klass)
                                                       _("32-bit RGBA border color"),
                                                       0,
                                                       G_MAXUINT,
-                                                      DEFAULT_BACKGROUND,
+                                                      HIPPO_CANVAS_DEFAULT_BACKGROUND_COLOR,
                                                       G_PARAM_READABLE | G_PARAM_WRITABLE));
     
     g_object_class_install_property(object_class,
@@ -365,7 +379,30 @@ hippo_canvas_box_class_init(HippoCanvasBoxClass *klass)
                                                      0,
                                                      255,
                                                      0,
-                                                     G_PARAM_READABLE | G_PARAM_WRITABLE));    
+                                                     G_PARAM_READABLE | G_PARAM_WRITABLE));
+    g_object_class_install_property(object_class,
+                                    PROP_COLOR,
+                                    g_param_spec_uint("color",
+                                                      _("Foreground Color"),
+                                                      _("32-bit RGBA foreground text color"),
+                                                      0,
+                                                      G_MAXUINT,
+                                                      HIPPO_CANVAS_DEFAULT_COLOR,
+                                                      G_PARAM_READABLE | G_PARAM_WRITABLE));
+    g_object_class_install_property(object_class,
+                                    PROP_FONT,
+                                    g_param_spec_string("font",
+                                                        _("Font"),
+                                                        _("Font description as a string"),
+                                                        NULL,
+                                                        G_PARAM_READABLE | G_PARAM_WRITABLE));
+    g_object_class_install_property(object_class,
+                                    PROP_FONT_DESC,
+                                    g_param_spec_boxed("font-desc",
+                                                       _("Font Description"),
+                                                       _("Font description as a PangoFontDescription object"),
+                                                       PANGO_TYPE_FONT_DESCRIPTION,
+                                                       G_PARAM_READABLE | G_PARAM_WRITABLE));
 }
 
 static void
@@ -375,6 +412,11 @@ hippo_canvas_box_dispose(GObject *object)
 
     hippo_canvas_box_remove_all(box);
 
+    if (box->style) {
+        g_object_unref(box->style);
+        box->style = NULL;
+    }
+    
     G_OBJECT_CLASS(hippo_canvas_box_parent_class)->dispose(object);
 }
 
@@ -396,6 +438,14 @@ hippo_canvas_box_new(void)
 
 
     return HIPPO_CANVAS_ITEM(box);
+}
+
+static void
+ensure_style(HippoCanvasBox *box)
+{
+    if (box->style == NULL) {
+        box->style = g_object_new(HIPPO_TYPE_CANVAS_STYLE, NULL);
+    }
 }
 
 static void
@@ -477,6 +527,28 @@ hippo_canvas_box_set_property(GObject         *object,
     case PROP_SPACING:
         box->spacing = g_value_get_int(value);
         break;
+    case PROP_COLOR:
+        ensure_style(box);
+        g_object_set_property(G_OBJECT(box->style), "color", value);
+        hippo_canvas_context_emit_style_changed(HIPPO_CANVAS_CONTEXT(box),
+                                                FALSE);
+        break;
+    case PROP_FONT:
+        if (!(g_value_get_string(value) == NULL && box->style == NULL)) {
+            ensure_style(box);
+            g_object_set_property(G_OBJECT(box->style), "font", value);
+            hippo_canvas_context_emit_style_changed(HIPPO_CANVAS_CONTEXT(box),
+                                                    TRUE);
+        }
+        break;
+    case PROP_FONT_DESC:
+        if (!(g_value_get_boxed(value) == NULL && box->style == NULL)) {
+            ensure_style(box);
+            g_object_set_property(G_OBJECT(box->style), "font-desc", value);
+            hippo_canvas_context_emit_style_changed(HIPPO_CANVAS_CONTEXT(box),
+                                                    TRUE);
+        }
+        break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
         break;
@@ -545,6 +617,27 @@ hippo_canvas_box_get_property(GObject         *object,
     case PROP_SPACING:
         g_value_set_int(value, box->spacing);
         break;
+    case PROP_COLOR:
+        if (box->style) {
+            g_object_get_property(G_OBJECT(box->style), "color", value);
+        } else {
+            g_value_set_uint(value, HIPPO_CANVAS_DEFAULT_BACKGROUND_COLOR);
+        }
+        break;
+    case PROP_FONT:
+        if (box->style) {
+            g_object_get_property(G_OBJECT(box->style), "font", value);
+        } else {
+            g_value_set_string(value, NULL);
+        }
+        break;
+    case PROP_FONT_DESC:
+        if (box->style) {
+            g_object_get_property(G_OBJECT(box->style), "font-desc", value);
+        } else {
+            g_value_set_boxed(value, NULL);
+        }
+        break;        
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
         break;
@@ -569,11 +662,14 @@ static PangoLayout*
 hippo_canvas_box_create_layout(HippoCanvasContext *context)
 {
     HippoCanvasBox *box = HIPPO_CANVAS_BOX(context);
-
+    PangoLayout *layout;
+    
     g_assert(box->context != NULL);
     
-    /* just chain to our parent context */
-    return hippo_canvas_context_create_layout(box->context);
+    /* Chain to our parent context */
+    layout = hippo_canvas_context_create_layout(box->context);
+
+    return layout;
 }
 
 static cairo_surface_t*
@@ -646,6 +742,44 @@ hippo_canvas_box_translate_to_widget(HippoCanvasContext *context,
 }
 
 static void
+hippo_canvas_box_affect_color(HippoCanvasContext *context,
+                              guint32            *color_rgba_p)
+{
+    HippoCanvasBox *box = HIPPO_CANVAS_BOX(context);
+
+    if (box->context)
+        hippo_canvas_context_affect_color(box->context, color_rgba_p);
+    
+    if (box->style)
+        hippo_canvas_style_affect_color(box->style, color_rgba_p);
+}
+
+static void
+hippo_canvas_box_affect_font_desc(HippoCanvasContext   *context,
+                                  PangoFontDescription *font_desc)
+{
+    HippoCanvasBox *box = HIPPO_CANVAS_BOX(context);
+
+    if (box->context)
+        hippo_canvas_context_affect_font_desc(box->context, font_desc);
+    
+    if (box->style)
+        hippo_canvas_style_affect_font_desc(box->style, font_desc);
+}
+
+static void
+hippo_canvas_box_style_changed(HippoCanvasContext   *context,
+                               gboolean              resize_needed)
+{
+    HippoCanvasBox *box = HIPPO_CANVAS_BOX(context);
+
+    if (resize_needed)
+        hippo_canvas_item_emit_request_changed(HIPPO_CANVAS_ITEM(box));
+    else
+        hippo_canvas_item_emit_paint_needed(HIPPO_CANVAS_ITEM(box), 0, 0, -1, -1);
+}
+
+static void
 hippo_canvas_box_sink(HippoCanvasItem    *item)
 {
     HippoCanvasBox *box = HIPPO_CANVAS_BOX(item);
@@ -654,6 +788,18 @@ hippo_canvas_box_sink(HippoCanvasItem    *item)
         box->floating = FALSE;
         g_object_unref(box);
     }
+}
+
+static void
+on_context_style_changed(HippoCanvasContext *context,
+                         gboolean            resize_needed,
+                         HippoCanvasBox     *box)
+{    
+    /* If our context's style changed, then our own style also
+     * changed since we chain up to the outer context.
+     */
+    hippo_canvas_context_emit_style_changed(HIPPO_CANVAS_CONTEXT(box),
+                                            resize_needed);
 }
 
 static void
@@ -682,16 +828,24 @@ hippo_canvas_box_set_context(HippoCanvasItem    *item,
     else
         child_context = NULL;
 
-    if (child_context)
+    if (child_context) {
         box->context = context; /* set to non-NULL before sending to children */
+        g_signal_connect(G_OBJECT(box->context), "style-changed",
+                         G_CALLBACK(on_context_style_changed),
+                         box);
+    }
     
     for (link = box->children; link != NULL; link = link->next) {
         HippoBoxChild *child = link->data;
         hippo_canvas_item_set_context(child->item, child_context);
     }
 
-    if (child_context == NULL)
+    if (child_context == NULL) {
+        g_signal_handlers_disconnect_by_func(G_OBJECT(box->context),
+                                             G_CALLBACK(on_context_style_changed),
+                                             box);
         box->context = context; /* set box context to NULL after removing it from children */
+    }
 }
 
 void

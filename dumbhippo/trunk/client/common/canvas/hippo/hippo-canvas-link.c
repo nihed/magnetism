@@ -31,21 +31,17 @@ enum {
 };
 #endif
 
-#define DEFAULT_FOREGROUND 0x0033ffff
-
 G_DEFINE_TYPE_WITH_CODE(HippoCanvasLink, hippo_canvas_link, HIPPO_TYPE_CANVAS_TEXT,
                         G_IMPLEMENT_INTERFACE(HIPPO_TYPE_CANVAS_ITEM, hippo_canvas_link_iface_init));
 
 static void
 hippo_canvas_link_init(HippoCanvasLink *link)
 {
-    HippoCanvasText *text = HIPPO_CANVAS_TEXT(link);
+    /* HippoCanvasText *text = HIPPO_CANVAS_TEXT(link); */
     PangoAttrList *attrs;
     PangoAttribute *a;
     
     HIPPO_CANVAS_BOX(link)->clickable = TRUE;
-    
-    text->color_rgba = DEFAULT_FOREGROUND;
 
     attrs = pango_attr_list_new();
 
@@ -68,8 +64,11 @@ hippo_canvas_link_iface_init(HippoCanvasItemIface *item_class)
 static void
 hippo_canvas_link_class_init(HippoCanvasLinkClass *klass)
 {
-    GObjectClass *object_class = G_OBJECT_CLASS (klass);
+    GObjectClass *object_class = G_OBJECT_CLASS(klass);
+    HippoCanvasBoxClass *box_class = HIPPO_CANVAS_BOX_CLASS(klass);
 
+    box_class->default_color = 0x0033ffff;
+    
     object_class->set_property = hippo_canvas_link_set_property;
     object_class->get_property = hippo_canvas_link_get_property;
 

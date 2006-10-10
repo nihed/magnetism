@@ -101,7 +101,6 @@ hippo_canvas_block_post_init(HippoCanvasBlockPost *block_post)
                                                 "size-mode", HIPPO_CANVAS_SIZE_ELLIPSIZE_END,
                                                 "xalign", HIPPO_ALIGNMENT_FILL,
                                                 "yalign", HIPPO_ALIGNMENT_START,
-                                                "font", "11px",
                                                 "text", NULL,
                                                 "border-top", 4,
                                                 "border-bottom", 4,
@@ -118,21 +117,18 @@ hippo_canvas_block_post_init(HippoCanvasBlockPost *block_post)
                                        FALSE); /* not expanded at first */
     
     block_post->clicked_count_item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
-                                                  "font", "11px",
                                                   "text", NULL,
                                                   "color", 0x666666ff,
                                                   NULL);
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(block_post->details_box), block_post->clicked_count_item, 0);
     
     item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
-                        "font", "11px",
                         "text", " | ",
                         "color", 0x666666ff,
                         NULL);
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(block_post->details_box), item, 0);
 
     item = g_object_new(HIPPO_TYPE_CANVAS_LINK,
-                        "font", "11px",
                         "text", "Add to Faves",
                         NULL);
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(block_post->details_box), item, 0);

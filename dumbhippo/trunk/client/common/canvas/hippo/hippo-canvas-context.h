@@ -55,6 +55,20 @@ struct _HippoCanvasContextIface {
                                                  HippoCanvasItem    *item,
                                                  int                *x_p,
                                                  int                *y_p);
+
+    /* Style methods (should probably be on a separate interface eventually) */
+    void             (* affect_color)           (HippoCanvasContext   *context,
+                                                 guint32              *color_rgba_p);
+    void             (* affect_font_desc)       (HippoCanvasContext   *context,
+                                                 PangoFontDescription *font_desc);
+    
+    /* Signals */
+
+    /* Inherited style properties (see affect_* methods) have changed.
+     * resize_needed means the change needs a resize not just repaint.
+     */
+    void             (* style_changed)    (HippoCanvasContext *context,
+                                           gboolean            resize_needed);
 };
 
 GType            hippo_canvas_context_get_type               (void) G_GNUC_CONST;
@@ -74,6 +88,13 @@ void hippo_canvas_context_translate_to_widget    (HippoCanvasContext *context,
                                                   HippoCanvasItem    *item,
                                                   int                *x_p,
                                                   int                *y_p);
+
+void hippo_canvas_context_affect_color       (HippoCanvasContext   *context,
+                                              guint32              *color_rgba_p);
+void hippo_canvas_context_affect_font_desc   (HippoCanvasContext   *context,
+                                              PangoFontDescription *font_desc);
+void hippo_canvas_context_emit_style_changed (HippoCanvasContext   *context,
+                                              gboolean              resize_needed);
 
 G_END_DECLS
 

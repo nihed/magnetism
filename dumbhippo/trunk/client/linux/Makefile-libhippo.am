@@ -111,6 +111,8 @@ CANVAS_SOURCEFILES = 						\
 	$(CANVASSRCDIR)/hippo/hippo-canvas-image-button.c	\
 	$(CANVASSRCDIR)/hippo/hippo-canvas-item.c		\
 	$(CANVASSRCDIR)/hippo/hippo-canvas-link.c		\
+	$(CANVASSRCDIR)/hippo/hippo-canvas-style.c		\
+	$(CANVASSRCDIR)/hippo/hippo-canvas-style.h		\
 	$(CANVASSRCDIR)/hippo/hippo-canvas-test.c		\
 	$(CANVASSRCDIR)/hippo/hippo-canvas-text.c		\
 	$(CANVASSRCDIR)/hippo/hippo-event.c			\

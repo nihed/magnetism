@@ -101,6 +101,7 @@ hippo_canvas_block_init(HippoCanvasBlock *block)
                        "start-color", 0xf3f3f3ff,
                        "end-color", 0xdededeff,
                        "padding", 4,
+                       "font", "11px",
                        NULL);
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(block),
                             HIPPO_CANVAS_ITEM(box), HIPPO_PACK_EXPAND);
@@ -128,13 +129,12 @@ hippo_canvas_block_init(HippoCanvasBlock *block)
 
     box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
                        "orientation", HIPPO_ORIENTATION_HORIZONTAL,
+                       "font", "Bold 12px",
                        NULL);
     hippo_canvas_box_append(left_column, HIPPO_CANVAS_ITEM(box), 0);
     
     block->heading_text_item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
                                             "text", NULL,
-                                            "color", 0x000000ff,
-                                            "font", "Bold 12px",
                                             "xalign", HIPPO_ALIGNMENT_START,
                                             "yalign", HIPPO_ALIGNMENT_START,
                                             NULL);
@@ -144,7 +144,6 @@ hippo_canvas_block_init(HippoCanvasBlock *block)
                                           "size-mode", HIPPO_CANVAS_SIZE_ELLIPSIZE_END,
                                           "xalign", HIPPO_ALIGNMENT_START,
                                           "yalign", HIPPO_ALIGNMENT_START,
-                                          "font", "Bold 12px",
                                           "text", NULL,
                                           NULL);
     hippo_canvas_box_append(box, block->title_link_item, 0);
@@ -174,7 +173,6 @@ hippo_canvas_block_init(HippoCanvasBlock *block)
     
     item = g_object_new(HIPPO_TYPE_CANVAS_LINK,
                         "text", "CLOSE",
-                        "font", "11px",
                         NULL);
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(block->close_controls), item, 0);
 
@@ -212,6 +210,8 @@ hippo_canvas_block_init(HippoCanvasBlock *block)
     hippo_canvas_box_append(box, HIPPO_CANVAS_ITEM(box2), HIPPO_PACK_EXPAND);
     
     box3 = g_object_new(HIPPO_TYPE_CANVAS_BOX,
+                        "font", "Italic 12px",
+                        "color", 0x666666ff,
                        "orientation", HIPPO_ORIENTATION_HORIZONTAL,
                        "xalign", HIPPO_ALIGNMENT_FILL,
                        "yalign", HIPPO_ALIGNMENT_START,
@@ -219,19 +219,15 @@ hippo_canvas_block_init(HippoCanvasBlock *block)
     hippo_canvas_box_append(box2, HIPPO_CANVAS_ITEM(box3), HIPPO_PACK_EXPAND);
     
     block->name_item = g_object_new(HIPPO_TYPE_CANVAS_ENTITY_NAME,
-                                    "font", "Italic 12px",
                                     "xalign", HIPPO_ALIGNMENT_FILL,
                                     "yalign", HIPPO_ALIGNMENT_START,
                                     "border-right", 8,
-                                    "color", 0x666666ff,
                                     NULL);
     hippo_canvas_box_append(box3, block->name_item, HIPPO_PACK_END);
 
     item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
-                        "font", "Italic 12px",
                         "text", "from ",
                         "yalign", HIPPO_ALIGNMENT_START,
-                        "color", 0x666666ff,
                         NULL);
     hippo_canvas_box_append(box3, item, HIPPO_PACK_END);
     
@@ -243,7 +239,6 @@ hippo_canvas_block_init(HippoCanvasBlock *block)
     hippo_canvas_box_append(box2, HIPPO_CANVAS_ITEM(box3), 0);
     
     item = g_object_new(HIPPO_TYPE_CANVAS_LINK,
-                        "font", "11px",
                         "text", "Hush",
                         NULL);
     hippo_canvas_box_append(box3, item, HIPPO_PACK_END);
@@ -251,14 +246,12 @@ hippo_canvas_block_init(HippoCanvasBlock *block)
     g_signal_connect(G_OBJECT(item), "activated", G_CALLBACK(on_hush_activated), block);
     
     item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
-                        "font", "11px",
                         "text", " | ",
                         "color", 0x666666ff,
                         NULL);
     hippo_canvas_box_append(box3, item, HIPPO_PACK_END);
 
     block->age_item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
-                                   "font", "11px",
                                    "color", 0x666666ff,
                                    NULL);
     hippo_canvas_box_append(box3, block->age_item, HIPPO_PACK_END);
