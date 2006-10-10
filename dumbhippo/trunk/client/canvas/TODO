@@ -41,13 +41,3 @@ List of possible future enhancements / likely directions, we are doing these "as
   parent class props.
 
   There's a little hack around this right now with HippoCanvasBoxClass::default_color
-
-- Allow style props to be set to "default"
-
-  Right now the color is set or unset. It should instead be default, set, or unset.
-    set = use own value
-    default = use class default value
-    unset =  use context's value, then class default value
-
-  This would make inheritance of text fg color much more useful ; right now 
-  link items mess it up since there's no way to force them back to the link color.

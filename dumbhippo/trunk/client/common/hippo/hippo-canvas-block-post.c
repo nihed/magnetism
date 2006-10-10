@@ -109,6 +109,7 @@ hippo_canvas_block_post_init(HippoCanvasBlockPost *block_post)
 
     block_post->details_box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
                                            "orientation", HIPPO_ORIENTATION_HORIZONTAL,
+                                           "color", HIPPO_CANVAS_BLOCK_GRAY_TEXT_COLOR,
                                            NULL);
     hippo_canvas_box_append(box, block_post->details_box, 0);
     block_post->details_box_parent = box;
@@ -118,18 +119,17 @@ hippo_canvas_block_post_init(HippoCanvasBlockPost *block_post)
     
     block_post->clicked_count_item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
                                                   "text", NULL,
-                                                  "color", 0x666666ff,
                                                   NULL);
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(block_post->details_box), block_post->clicked_count_item, 0);
     
     item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
                         "text", " | ",
-                        "color", 0x666666ff,
                         NULL);
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(block_post->details_box), item, 0);
 
     item = g_object_new(HIPPO_TYPE_CANVAS_LINK,
                         "text", "Add to Faves",
+                        "color-cascade", HIPPO_CASCADE_MODE_NONE,
                         NULL);
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(block_post->details_box), item, 0);
 

@@ -19,6 +19,11 @@ typedef enum
     HIPPO_PACK_FIXED = 4   /* Like position: absolute or GtkFixed */
 } HippoPackFlags;
 
+typedef enum {
+    HIPPO_CASCADE_MODE_NONE,
+    HIPPO_CASCADE_MODE_INHERIT
+} HippoCascadeMode;
+
 typedef void (* HippoCanvasForeachChildFunc) (HippoCanvasItem *child,
                                               void            *data);  
 
@@ -72,6 +77,8 @@ struct _HippoCanvasBox {
     guint y_align : 3;     /* enum only has 4 values so it fits with extra */
     guint clickable : 1;   /* show a hand pointer and emit activated signal */
     guint hovering : 1;    /* the box or some child contains the pointer (have gotten enter without leave) */
+    guint color_cascade : 2; /* enum has only 2 values */
+    guint font_cascade : 2;  /* enum has only 2 values */
 };
 
 struct _HippoCanvasBoxClass {

@@ -11,6 +11,8 @@
 
 G_BEGIN_DECLS
 
+#define HIPPO_CANVAS_BLOCK_GRAY_TEXT_COLOR 0x666666ff
+
 typedef struct _HippoCanvasBlock      HippoCanvasBlock;
 typedef struct _HippoCanvasBlockClass HippoCanvasBlockClass;
 

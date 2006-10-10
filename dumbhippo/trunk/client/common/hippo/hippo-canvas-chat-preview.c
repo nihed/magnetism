@@ -3,6 +3,7 @@
 #include <hippo/hippo-chat-room.h>
 #include "hippo-actions.h"
 #include "hippo-canvas-chat-preview.h"
+#include "hippo-canvas-block.h"
 #include <hippo/hippo-canvas-box.h>
 #include <hippo/hippo-canvas-image.h>
 #include <hippo/hippo-canvas-link.h>
@@ -105,24 +106,24 @@ hippo_canvas_chat_preview_init(HippoCanvasChatPreview *chat_preview)
     
     box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
                        "orientation", HIPPO_ORIENTATION_HORIZONTAL,
+                       "color", HIPPO_CANVAS_BLOCK_GRAY_TEXT_COLOR,
                        NULL);
 
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(chat_preview), HIPPO_CANVAS_ITEM(box), 0);
     
     chat_preview->count_item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
-                                            "color", 0x666666ff,
                                             NULL);
     chat_preview->count_parent = box;
     hippo_canvas_box_append(box, chat_preview->count_item, 0);
 
     chat_preview->count_separator_item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
                                                       "text", " | ",
-                                                      "color", 0x666666ff,
                                                       NULL);
     hippo_canvas_box_append(box, chat_preview->count_separator_item, 0);
 
     item = g_object_new(HIPPO_TYPE_CANVAS_LINK,
                         "text", "Chat",
+                        "color-cascade", HIPPO_CASCADE_MODE_NONE,
                         NULL);
     hippo_canvas_box_append(box, item, 0);
 

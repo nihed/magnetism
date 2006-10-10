@@ -133,8 +133,10 @@ enum {
     PROP_BORDER_COLOR,
     PROP_SPACING,
     PROP_COLOR,
+    PROP_COLOR_CASCADE,
     PROP_FONT,
-    PROP_FONT_DESC
+    PROP_FONT_DESC,
+    PROP_FONT_CASCADE
 };
 
 G_DEFINE_TYPE_WITH_CODE(HippoCanvasBox, hippo_canvas_box, G_TYPE_OBJECT,
@@ -185,6 +187,9 @@ hippo_canvas_box_init(HippoCanvasBox *box)
     box->box_height = -1;
     box->background_color_rgba = HIPPO_CANVAS_DEFAULT_BACKGROUND_COLOR;
     box->request_changed_since_allocate = TRUE; /* be sure we do at least one allocation */
+
+    box->color_cascade = HIPPO_CASCADE_MODE_INHERIT;
+    box->font_cascade = HIPPO_CASCADE_MODE_INHERIT;
 }
 
 static void
@@ -390,6 +395,14 @@ hippo_canvas_box_class_init(HippoCanvasBoxClass *klass)
                                                       HIPPO_CANVAS_DEFAULT_COLOR,
                                                       G_PARAM_READABLE | G_PARAM_WRITABLE));
     g_object_class_install_property(object_class,
+                                    PROP_COLOR_CASCADE,
+                                    g_param_spec_enum("color-cascade",
+                                                      _("Foreground Color Cascade"),
+                                                      _("Whether to use parent's color if ours is unset"),
+                                                      HIPPO_TYPE_CASCADE_MODE,
+                                                      HIPPO_CASCADE_MODE_INHERIT,
+                                                      G_PARAM_READABLE | G_PARAM_WRITABLE));
+    g_object_class_install_property(object_class,
                                     PROP_FONT,
                                     g_param_spec_string("font",
                                                         _("Font"),
@@ -403,6 +416,14 @@ hippo_canvas_box_class_init(HippoCanvasBoxClass *klass)
                                                        _("Font description as a PangoFontDescription object"),
                                                        PANGO_TYPE_FONT_DESCRIPTION,
                                                        G_PARAM_READABLE | G_PARAM_WRITABLE));
+    g_object_class_install_property(object_class,
+                                    PROP_FONT_CASCADE,
+                                    g_param_spec_enum("font-cascade",
+                                                      _("Font Cascade"),
+                                                      _("Whether to use parent's font if ours is unset"),
+                                                      HIPPO_TYPE_CASCADE_MODE,
+                                                      HIPPO_CASCADE_MODE_INHERIT,
+                                                      G_PARAM_READABLE | G_PARAM_WRITABLE));    
 }
 
 static void
@@ -533,6 +554,16 @@ hippo_canvas_box_set_property(GObject         *object,
         hippo_canvas_context_emit_style_changed(HIPPO_CANVAS_CONTEXT(box),
                                                 FALSE);
         break;
+    case PROP_COLOR_CASCADE:
+        {
+            HippoCascadeMode new_mode = g_value_get_enum(value);
+            if (new_mode != box->color_cascade) {
+                box->color_cascade = new_mode;
+                hippo_canvas_context_emit_style_changed(HIPPO_CANVAS_CONTEXT(box),
+                                                        FALSE);
+            }
+        }
+        break;
     case PROP_FONT:
         if (!(g_value_get_string(value) == NULL && box->style == NULL)) {
             ensure_style(box);
@@ -549,6 +580,16 @@ hippo_canvas_box_set_property(GObject         *object,
                                                     TRUE);
         }
         break;
+    case PROP_FONT_CASCADE:
+        {
+            HippoCascadeMode new_mode = g_value_get_enum(value);
+            if (new_mode != box->font_cascade) {
+                box->font_cascade = new_mode;
+                hippo_canvas_context_emit_style_changed(HIPPO_CANVAS_CONTEXT(box),
+                                                        TRUE);
+            }
+        }
+        break;        
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
         break;
@@ -624,6 +665,9 @@ hippo_canvas_box_get_property(GObject         *object,
             g_value_set_uint(value, HIPPO_CANVAS_DEFAULT_BACKGROUND_COLOR);
         }
         break;
+    case PROP_COLOR_CASCADE:
+        g_value_set_enum(value, box->color_cascade);
+        break;
     case PROP_FONT:
         if (box->style) {
             g_object_get_property(G_OBJECT(box->style), "font", value);
@@ -637,7 +681,10 @@ hippo_canvas_box_get_property(GObject         *object,
         } else {
             g_value_set_boxed(value, NULL);
         }
-        break;        
+        break;
+    case PROP_FONT_CASCADE:
+        g_value_set_enum(value, box->font_cascade);
+        break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
         break;
@@ -746,8 +793,8 @@ hippo_canvas_box_affect_color(HippoCanvasContext *context,
                               guint32            *color_rgba_p)
 {
     HippoCanvasBox *box = HIPPO_CANVAS_BOX(context);
-
-    if (box->context)
+    
+    if (box->context && box->color_cascade == HIPPO_CASCADE_MODE_INHERIT)
         hippo_canvas_context_affect_color(box->context, color_rgba_p);
     
     if (box->style)
@@ -760,7 +807,7 @@ hippo_canvas_box_affect_font_desc(HippoCanvasContext   *context,
 {
     HippoCanvasBox *box = HIPPO_CANVAS_BOX(context);
 
-    if (box->context)
+    if (box->context && box->font_cascade == HIPPO_CASCADE_MODE_INHERIT)
         hippo_canvas_context_affect_font_desc(box->context, font_desc);
     
     if (box->style)
