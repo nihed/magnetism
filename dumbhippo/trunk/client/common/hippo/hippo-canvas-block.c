@@ -308,6 +308,38 @@ hippo_canvas_block_class_init(HippoCanvasBlockClass *klass)
 }
 
 static void
+update_time(HippoCanvasBlock *canvas_block)
+{
+    gint64 server_time_now;
+    char *when;
+
+    if (canvas_block->block == NULL)
+        return;
+
+    /* Since we do this every minute it's important to keep it relatively cheap,
+     * in particular we rely on setting the text on the canvas item to short-circuit
+     * and not create X server traffic if there's no change
+     */
+    
+    server_time_now = hippo_current_time_ms() + hippo_actions_get_server_time_offset(canvas_block->actions);
+    
+    when = hippo_format_time_ago(server_time_now / 1000, hippo_block_get_timestamp(canvas_block->block) / 1000);
+    
+    g_object_set(G_OBJECT(canvas_block->age_item),
+                 "text", when,
+                 NULL);
+    
+    g_free(when);
+}
+
+static void
+on_minute_ticked(HippoActions     *actions,
+                 HippoCanvasBlock *canvas_block)
+{
+    update_time(canvas_block);
+}
+
+static void
 set_actions(HippoCanvasBlock *block,
             HippoActions     *actions)
 {
@@ -315,6 +347,10 @@ set_actions(HippoCanvasBlock *block,
         return;
     
     if (block->actions) {
+        g_signal_handlers_disconnect_by_func(G_OBJECT(block->actions),
+                                             G_CALLBACK(on_minute_ticked),
+                                             block);
+        
         g_object_unref(block->actions);
         block->actions = NULL;
     }
@@ -322,6 +358,10 @@ set_actions(HippoCanvasBlock *block,
     if (actions) {
         block->actions = actions;
         g_object_ref(block->actions);
+        g_signal_connect(G_OBJECT(block->actions),
+                         "minute-ticked",
+                         G_CALLBACK(on_minute_ticked),
+                         block);
     }
 
     g_object_set(G_OBJECT(block->headshot_item),
@@ -497,22 +537,12 @@ on_block_timestamp_changed(HippoBlock *block,
                            void       *data)
 {
     HippoCanvasBlock *canvas_block = HIPPO_CANVAS_BLOCK(data);
-    gint64 server_time_now;
-    char *when;
 
     if (block == NULL) /* should be impossible */
         return;
+
+    update_time(canvas_block);
     
-    server_time_now = hippo_current_time_ms() + hippo_actions_get_server_time_offset(canvas_block->actions);
-
-    when = hippo_format_time_ago(server_time_now / 1000, hippo_block_get_timestamp(block) / 1000);
-
-    g_object_set(G_OBJECT(canvas_block->age_item),
-                 "text", when,
-                 NULL);
-
-    g_free(when);
-
     /* FIXME update all the other info */
 }
 

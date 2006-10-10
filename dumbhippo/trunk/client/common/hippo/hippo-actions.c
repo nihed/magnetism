@@ -21,6 +21,8 @@ struct _HippoActions {
      * cache behavior.
      */
     HippoImageCache *entity_photo_cache;
+
+    guint minute_timeout_id;
 };
 
 struct _HippoActionsClass {
@@ -30,9 +32,32 @@ struct _HippoActionsClass {
 
 G_DEFINE_TYPE(HippoActions, hippo_actions, G_TYPE_OBJECT);
 
+enum {
+    MINUTE_TICKED,
+    LAST_SIGNAL
+};
+
+static int signals[LAST_SIGNAL];
+
+static gboolean
+minute_tick_timeout(void *data)
+{
+    HippoActions *actions;
+
+    actions = HIPPO_ACTIONS(data);
+
+    g_signal_emit(G_OBJECT(actions), signals[MINUTE_TICKED], 0);
+
+    return TRUE;
+}
+
 static void
 hippo_actions_init(HippoActions  *actions)
 {
+    /* This is so every canvas item displaying a time doesn't have to
+     * install its own timeout
+     */
+    actions->minute_timeout_id = g_timeout_add(60 * 1000, minute_tick_timeout, actions);
 }
 
 static void
@@ -42,6 +67,15 @@ hippo_actions_class_init(HippoActionsClass  *klass)
 
     object_class->dispose = hippo_actions_dispose;
     object_class->finalize = hippo_actions_finalize;
+
+    signals[MINUTE_TICKED] =
+        g_signal_new ("minute-ticked",
+                      G_TYPE_FROM_CLASS (object_class),
+                      G_SIGNAL_RUN_LAST,
+                      0,
+                      NULL, NULL,
+                      g_cclosure_marshal_VOID__VOID,
+                      G_TYPE_NONE, 0);
 }
 
 static void
@@ -49,6 +83,11 @@ hippo_actions_dispose(GObject *object)
 {
     HippoActions *actions = HIPPO_ACTIONS(object);
 
+    if (actions->minute_timeout_id) {
+        g_source_remove(actions->minute_timeout_id);
+        actions->minute_timeout_id = 0;
+    }
+    
     if (actions->cache) {
         g_object_unref(actions->cache);
         actions->cache = NULL;

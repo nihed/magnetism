@@ -237,9 +237,16 @@ hippo_canvas_text_set_property(GObject         *object,
 
     switch (prop_id) {
     case PROP_TEXT:
-        g_free(text->text);
-        text->text = g_value_dup_string(value);
-        hippo_canvas_item_emit_request_changed(HIPPO_CANVAS_ITEM(text));
+        {
+            const char *new_text;
+            new_text = g_value_get_string(value);
+            if (!(new_text == text->text ||
+                  (new_text && text->text && strcmp(new_text, text->text) == 0))) {
+                g_free(text->text);
+                text->text = g_strdup(new_text);
+                hippo_canvas_item_emit_request_changed(HIPPO_CANVAS_ITEM(text));
+            }
+        }
         break;
     case PROP_COLOR:
         text->color_rgba = g_value_get_uint(value);
