@@ -22,7 +22,7 @@
 			    </c:when>
 			    <c:otherwise>
 				    <p>No Mugshot friends?  Try using the search box to find people you may know by email address,
-				       or <a href="/groups">browse public groups</a>.</p>
+				       or <a href="/public-groups">browse public groups</a>.</p>
 			    </c:otherwise>
 		    </c:choose>
 		</c:otherwise>
