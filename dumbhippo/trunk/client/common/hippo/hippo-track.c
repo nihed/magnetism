@@ -250,6 +250,46 @@ hippo_track_new_from_xml(HippoDataCache *cache,
     return track;
 }
 
+/* This can die when the old xmpp protocol stuff using it dies */
+HippoTrack*
+hippo_track_new_deprecated (const char *artist,
+                            const char *name,
+                            gboolean    now_playing)
+{
+    HippoTrack *track;
+    
+    track = g_object_new(HIPPO_TYPE_TRACK, NULL);
+
+    track->artist = g_strdup(artist);
+    track->album = NULL;
+    track->name = g_strdup(name);
+    track->last_listen_time = 0;
+    track->duration = 0;
+    track->downloads = NULL;
+    track->now_playing = now_playing;
+
+    return track;
+}
+
+const char*
+hippo_track_get_artist (HippoTrack *track)
+{
+    return track->artist;
+}
+
+const char*
+hippo_track_get_name (HippoTrack *track)
+{
+    return track->name;
+}
+
+gboolean
+hippo_track_get_now_playing (HippoTrack *track)
+{
+    return track->now_playing;
+}
+
+
 /* === HippoSongDownload === */
 
 static gboolean

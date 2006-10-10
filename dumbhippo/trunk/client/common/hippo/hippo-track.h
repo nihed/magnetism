@@ -19,8 +19,16 @@ typedef struct _HippoTrackClass HippoTrackClass;
 
 GType hippo_track_get_type(void) G_GNUC_CONST;
 
-HippoTrack* hippo_track_new_from_xml(HippoDataCache *cache,
-                                     LmMessageNode  *node);
+HippoTrack* hippo_track_new_from_xml   (HippoDataCache *cache,
+                                        LmMessageNode  *node);
+HippoTrack* hippo_track_new_deprecated (const char *artist,
+                                        const char *name,
+                                        gboolean    now_playing);
+
+const char* hippo_track_get_artist      (HippoTrack *track);
+const char* hippo_track_get_name        (HippoTrack *track);
+gboolean    hippo_track_get_now_playing (HippoTrack *track);
+
 
 typedef struct _HippoSongDownload HippoSongDownload;
 

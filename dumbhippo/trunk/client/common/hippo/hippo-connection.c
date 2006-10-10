@@ -2737,6 +2737,7 @@ parse_chat_user_info(HippoConnection *connection,
     }
 
     {
+        HippoTrack *track;
         HippoChatState status;
         const char *name;
         const char *small_photo_url = NULL;
@@ -2769,9 +2770,10 @@ parse_chat_user_info(HippoConnection *connection,
         /* FIXME this is a temporary hack to deal with stale photos in chat */
         if (hippo_entity_get_small_photo_url(HIPPO_ENTITY(person)) == NULL)
             hippo_entity_set_small_photo_url(HIPPO_ENTITY(person), small_photo_url);
-        hippo_person_set_current_song(person, arrangement_name);
-        hippo_person_set_current_artist(person, artist);
-        hippo_person_set_music_playing(person, music_playing);  
+
+        track = hippo_track_new_deprecated(artist, arrangement_name, music_playing);
+        g_object_set(G_OBJECT(person), "current-track", track, NULL);
+        g_object_unref(track);
     }
 
     return TRUE;

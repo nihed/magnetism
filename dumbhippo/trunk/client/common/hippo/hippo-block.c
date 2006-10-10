@@ -4,6 +4,7 @@
 #include "hippo-block-group-chat.h"
 #include "hippo-block-group-member.h"
 #include "hippo-block-post.h"
+#include "hippo-block-music-person.h"
 #include "hippo-xml-utils.h"
 #include <string.h>
 
@@ -314,6 +315,9 @@ hippo_block_new(const char    *guid,
         break;
     case HIPPO_BLOCK_TYPE_POST:
         object_type = HIPPO_TYPE_BLOCK_POST;
+        break;
+    case HIPPO_BLOCK_TYPE_MUSIC_PERSON:
+        object_type = HIPPO_TYPE_BLOCK_MUSIC_PERSON;
         break;
         /* don't add default case, it hides warnings */
     }
