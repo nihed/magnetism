@@ -212,7 +212,7 @@ hippo_track_new_from_xml(HippoDataCache *cache,
         if (strcmp(child->name, "download") != 0)
             continue;
 
-        download = hippo_song_download_new_from_xml(cache, node);
+        download = hippo_song_download_new_from_xml(cache, child);
         if (!download)
             continue;
 
