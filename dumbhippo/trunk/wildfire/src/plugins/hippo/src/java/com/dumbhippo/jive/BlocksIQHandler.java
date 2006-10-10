@@ -122,7 +122,7 @@ public class BlocksIQHandler extends AnnotatedIQHandler {
 			throw new RuntimeException("Can't load block view for the user's own block", e);
 		}
         
-		String xml = getBlocksXml(viewpoint, "blockParameter", Collections.singletonList(blockView));
+		String xml = getBlocksXml(viewpoint, "blockHushed", Collections.singletonList(blockView));
 		reply.setChildElement(XmlParser.elementFromXml(xml));
 	}
 }
