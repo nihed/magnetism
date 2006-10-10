@@ -28,8 +28,8 @@
 	 	        <td>
 	 	            <span class="dh-leading-text">A place to see what you and your friends are up to online.</span>
 	 	            Keeping track of everybody's MySpace, Digg, Flickr, LiveJournal, and other sites is a lot of work.
-	 	            Mugshot lets you see friends' updates at a glance. Instantly share interesting things at you social
-	 	            network sites or with Mugshot's own Web Swarm tool. Receive feeds from groups that share your 
+	 	            Mugshot lets you see friends' updates at a glance. Instantly share interesting things at your social
+	 	            networking sites or with Mugshot's own Web Swarm tool. Receive feeds from groups that share your 
 	 	            specific interests. Sign up for a free Mugshot account to make the Web fun again, and less like 
 	 	            work!	 	        
 	 	        </td>
