@@ -2,13 +2,15 @@
 	margin-top:		3px;
 }
 
+#dhPage {
+	width:			expression(document.body.clientWidth-20);
+}
+
 .dh-stacker-block-right {
 }
 
 .dh-stacker-block-header {
-	width:				98%;
 }
 
 .dh-stacker-block-content-container {
-	width:				98%;
 }

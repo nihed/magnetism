@@ -5,13 +5,13 @@
 
 <%@ attribute name="color" required="true" type="java.lang.String" %>
 
-<div class="dh-shiny-box dh-shiny-box-${color}">
-<div class="dh-shiny-box-inner dh-shiny-box-inner-${color}">
-	<div class="dh-shiny-box-top dh-shiny-box-top-${color}">
-	<div class="dh-shiny-box-upper-left dh-shiny-box-upper-left-${color}">
-	<div class="dh-shiny-box-upper-right dh-shiny-box-upper-right-${color}">
-		<div class="dh-shiny-box-content-border">
-		<div class="dh-shiny-box-content">
+<div class="dh-shiny-box dh-shiny-box-box dh-shiny-box-${color}">
+<div class="dh-shiny-box-box dh-shiny-box-inner dh-shiny-box-inner-${color}">
+	<div class="dh-shiny-box-box dh-shiny-box-top dh-shiny-box-top-${color}">
+	<div class="dh-shiny-box-box dh-shiny-box-upper-left dh-shiny-box-upper-left-${color}">
+	<div class="dh-shiny-box-box dh-shiny-box-upper-right dh-shiny-box-upper-right-${color}">
+		<div class="dh-shiny-box-box dh-shiny-box-content-border">
+		<div class="dh-shiny-box-box dh-shiny-box-content">
 		<jsp:doBody/>	
 	    </div>	
 	   	</div>

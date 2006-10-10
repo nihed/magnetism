@@ -295,8 +295,6 @@ div.dh-async-action-link-complete {
 }
 
 .dh-stacker-container {
-	position:			relative;
-	display:            block;
 	clear:              both;
 	background-color:	white;
 	overflow:			hidden;

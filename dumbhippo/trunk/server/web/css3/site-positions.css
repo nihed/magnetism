@@ -17,7 +17,9 @@ form {
 }
 
 #dhPage {
-	position:		relative;	
+	position:		absolute;
+	left:			10px;
+	right:			10px;
 	margin-top:		0px;
 }
 
@@ -258,8 +260,19 @@ div.dh-notification {
 	margin-bottom:		10px;
 }
 
+.dh-shiny-box-box {
+	overflow:			hidden;
+	width:				100%;
+}
+
+
 .dh-shiny-box-content-border {
 	margin:				0px 10px;
+}
+
+.dh-stacker-container {
+	width:				100%;
+	display:            block;
 }
 
 .dh-stacker-block {
