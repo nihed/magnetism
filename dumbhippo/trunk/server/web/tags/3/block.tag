@@ -37,6 +37,13 @@
 		<span class="dh-stacker-block-time">
 			${block.timeAgo}
 		</span>
+		<div class="dh-stacker-block-controls" id="dhStackerBlockControls-${blockId}">
+	    <c:choose>
+	    	<c:when test="${dh:enumIs(block.blockType, 'POST')}">
+				<dht3:postBlockControls block="${block}"/>
+			</c:when>		
+		</c:choose>
+		</div>
 	</div>
 	</td>
 	</tr>
@@ -44,8 +51,10 @@
 	<div class="dh-stacker-block-description">
 		${block.descriptionHtml}
 	</div>
-	<div class="dh-stacker-block-content" id="dhStackerBlockContent-${blockId}">	
-		<!--  <div class="dh-stacker-block-content-padding">&nbsp;</div> -->
+	<table class="dh-stacker-block-content" id="dhStackerBlockContent-${blockId}">
+		<tr>
+		<td class="dh-stacker-block-content-left">&nbsp;</td>
+		<td width="100%">
 	    <c:choose>
 	    	<c:when test="${dh:enumIs(block.blockType, 'POST')}">
 				<dht3:postBlock block="${block}"/>
@@ -54,6 +63,8 @@
 				<dht3:musicPersonBlock block="${block}"/>
 			</c:when>
 		</c:choose>
-		<div class="dh-stacker-block-content-padding">&nbsp;</div>		
-	</div>
+		</td>
+		</tr>
+		<tr><td><div class="dh-stacker-block-content-padding">&nbsp;</div></td></tr>
+	</table>
 </div>

@@ -261,13 +261,15 @@ div.dh-notification {
 }
 
 .dh-shiny-box-box {
-	overflow:			hidden;
 	width:				100%;
 }
 
+.dh-shiny-box-content-side-spacer {
+	width:				10px;
+}
 
 .dh-shiny-box-content-border {
-	margin:				0px 10px;
+	margin:				0px 0px;
 }
 
 .dh-stacker-container {
@@ -276,7 +278,6 @@ div.dh-notification {
 }
 
 .dh-stacker-block {
-	position:			relative;
 }
 
 .dh-stacker-block-bottom-padding {
@@ -312,8 +313,12 @@ div.dh-notification {
 	margin-right:		5px;
 }
 
+.dh-stacker-block-content-left {
+	width:				20px;
+}
+
 .dh-stacker-block-content {
-	margin-left:		20px;
+	width:				100%;
 }
 
 .dh-stacker-block-content-container {
@@ -324,8 +329,13 @@ div.dh-notification {
 	height:				8px;
 }
 
-.dh-stacker-block-content-controls {
+.dh-stacker-block-controls {
+	display:			none;
 	padding-right:		5px;
+}
+
+.dh-stacker-block-content-post {
+	width:				100%;
 }
 
 .dh-thumbnail-box-border, .dh-rss-box-border {

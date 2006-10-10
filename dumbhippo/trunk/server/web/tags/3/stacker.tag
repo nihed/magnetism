@@ -21,7 +21,9 @@
 				<dht3:block block="${block}" cssClass="dh-stacker-block-grey2"/>
 			</c:otherwise>
 		</c:choose>
-		<div class="dh-stacker-block-bottom-padding">&nbsp;</div>
+		<c:if test="${!blockIdx.last}">
+			<div class="dh-stacker-block-bottom-padding">&nbsp;</div>
+		</c:if>
 	</c:forEach>
 	<div class="dh-stacker-more"><a href="history?who=${person.viewPersonPageId}">More</a></div>
 </div>

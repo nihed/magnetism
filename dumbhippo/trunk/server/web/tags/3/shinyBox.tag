@@ -12,7 +12,13 @@
 	<div class="dh-shiny-box-box dh-shiny-box-upper-right dh-shiny-box-upper-right-${color}">
 		<div class="dh-shiny-box-box dh-shiny-box-content-border">
 		<div class="dh-shiny-box-box dh-shiny-box-content">
-		<jsp:doBody/>	
+		<table class="dh-shiny-box-box" cellspacing="0" cellpadding="0">
+		<tr>
+		<td class="dh-shiny-box-content-side-spacer">&nbsp;</td>
+		<td><jsp:doBody/></td>
+		<td class="dh-shiny-box-content-side-spacer">&nbsp;</td>
+		</tr>
+		</table>		
 	    </div>	
 	   	</div>
 	</div>

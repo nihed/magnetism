@@ -1803,6 +1803,8 @@ dh.stacker.blockHoverStart = function(id) {
 	dh.stacker.currentHoverTimeout = setTimeout(function () {
 		var content = document.getElementById("dhStackerBlockContent-" + id)
 		content.style.display = "block";
+		var controls = document.getElementById("dhStackerBlockControls-" + id)
+		controls.style.display = "block";		
 		var closeButton = document.getElementById("dhStackerBlockClose-" + id)
 		closeButton.style.display = "block";
 	}, timeout);
@@ -1816,6 +1818,8 @@ dh.stacker.blockClose = function(id) {
 	dh.stacker.resetHover();
 	var content = document.getElementById("dhStackerBlockContent-" + id)
 	content.style.display = "none";	
+	var controls = document.getElementById("dhStackerBlockControls-" + id)
+	controls.style.display = "none";		
 	var closeButton = document.getElementById("dhStackerBlockClose-" + id)
 	closeButton.style.display = "none";	
 	dh.stacker.lastClosedBlockTime = new Date()
