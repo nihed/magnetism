@@ -1,60 +1,128 @@
 package com.dumbhippo.jive;
 
+import java.util.Collections;
+import java.util.List;
+
+import javax.ejb.EJB;
+
 import org.dom4j.Element;
 import org.jivesoftware.util.Log;
-import org.jivesoftware.wildfire.IQHandlerInfo;
-import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.xmpp.packet.IQ;
-import org.xmpp.packet.JID;
 
-import com.dumbhippo.server.MessengerGlue;
-import com.dumbhippo.server.util.EJBUtil;
+import com.dumbhippo.TypeUtils;
+import com.dumbhippo.XmlBuilder;
+import com.dumbhippo.identity20.Guid;
+import com.dumbhippo.identity20.Guid.ParseException;
+import com.dumbhippo.jive.annotations.IQHandler;
+import com.dumbhippo.jive.annotations.IQMethod;
+import com.dumbhippo.persistence.UserBlockData;
+import com.dumbhippo.server.NotFoundException;
+import com.dumbhippo.server.Stacker;
+import com.dumbhippo.server.ViewStreamBuilder;
+import com.dumbhippo.server.views.BlockView;
+import com.dumbhippo.server.views.ObjectView;
+import com.dumbhippo.server.views.UserViewpoint;
+import com.dumbhippo.server.views.ViewStream;
 
-public class BlocksIQHandler extends AbstractIQHandler {
-
-	private IQHandlerInfo info;
+@IQHandler(namespace=BlocksIQHandler.BLOCKS_NAMESPACE)
+public class BlocksIQHandler extends AnnotatedIQHandler {
+	static final String BLOCKS_NAMESPACE = "http://dumbhippo.com/protocol/blocks"; 
 	
+	@EJB
+	private Stacker stacker;
+	
+	@EJB
+	private ViewStreamBuilder viewStreamBuilder;
+
 	public BlocksIQHandler() {
 		super("Hippo blocks IQ Handler");
 		Log.debug("creating BlocksIQHandler");
-		info = new IQHandlerInfo("blocks", "http://dumbhippo.com/protocol/blocks");
 	}
 	
-	@Override
-	public IQ handleIQ(IQ packet) throws UnauthorizedException {
-		Log.debug("handling IQ packet " + packet);
-		IQ reply = IQ.createResultIQ(packet);
-		// Element iq = packet.getChildElement();
-		JID from = packet.getFrom();
+	private String getBlocksXml(UserViewpoint viewpoint, String elementName, List<BlockView> views) {
+		List<ObjectView> objectList = TypeUtils.castList(ObjectView.class, views);
 		
-		Element iq = packet.getChildElement();
+		XmlBuilder xml = new XmlBuilder();
 		
-        String lastTimestampStr = iq.attributeValue("lastTimestamp");
-        if (lastTimestampStr == null) {
-        	makeError(reply, "blocks IQ missing lastTimestamp attribute");
-        	return reply;
-        }
+		xml.openElement(elementName,
+					    "xmlns", BLOCKS_NAMESPACE,
+				        "serverTime", Long.toString(System.currentTimeMillis()));
+		
+		ViewStream stream = viewStreamBuilder.buildStream(viewpoint, objectList);
+		stream.writeToXmlBuilder(xml);
+		
+		xml.closeElement();
+		
+		return xml.toString();
+	}
+
+	private boolean parseBoolean(String value) throws IQException {
+        if (value.equals("true"))
+        	return true;
+        else if (value.equals("false"))
+        	return false;
+        else
+        	throw IQException.createBadRequest("Unrecognized boolean value '" + value + "'");
+	}
+	
+	@IQMethod(name="blocks", type=IQ.Type.get)
+	public void getBlocks(UserViewpoint viewpoint, IQ request, IQ reply) throws IQException {
+		Element child = request.getChildElement();
+		
+        String lastTimestampStr = child.attributeValue("lastTimestamp");
+        if (lastTimestampStr == null)
+        	throw IQException.createBadRequest("get/blocks IQ missing lastTimestamp attribute");
         
         long lastTimestamp;
         try {
         	lastTimestamp = Long.parseLong(lastTimestampStr);
         } catch (NumberFormatException e) {
-        	makeError(reply, "blocks IQ lastTimestamp attribute not valid");
-        	return reply;
+        	throw IQException.createBadRequest("get/blocks IQ lastTimestamp attribute not valid");
         }
-		
-		MessengerGlue glue = EJBUtil.defaultLookup(MessengerGlue.class);
-		Element childElement = XmlParser.elementFromXml(glue.getBlocksXml(from.getNode(), lastTimestamp,
-				0 /* start */, 10 /* count */));		
-
-		reply.setChildElement(childElement);
-		
-		return reply;
+        
+		List<BlockView> views = stacker.getStack(viewpoint, viewpoint.getViewer(), lastTimestamp, 0 /* start */, 10 /* count */);
+		String xml = getBlocksXml(viewpoint, "blocks", views);
+        
+		reply.setChildElement(XmlParser.elementFromXml(xml));
 	}
 
-	@Override
-	public IQHandlerInfo getInfo() {
-		return info;
+	@IQMethod(name="blockHushed", type=IQ.Type.set)
+	public void setBlockHushed(UserViewpoint viewpoint, IQ request, IQ reply) throws IQException {
+		Element child = request.getChildElement();
+		
+        String blockId = child.attributeValue("blockId");
+        if (blockId == null)
+        	throw IQException.createBadRequest("missing blockId attribute");
+        Guid blockGuid;
+        try {
+        	blockGuid = new Guid(blockId);
+        } catch (ParseException e) {
+        	throw IQException.createBadRequest("invalid blockId attribute");
+        }
+        
+        UserBlockData userBlockData;
+        try {
+			userBlockData = stacker.lookupUserBlockData(viewpoint, blockGuid);
+		} catch (NotFoundException e) {
+        	throw IQException.createBadRequest("blockId attribute doesn't refer to a recognized block for this user");
+		}
+        
+        String value = child.attributeValue("hushed");
+        if (value == null)
+        	throw IQException.createBadRequest("missing hushed attribute");
+        
+        boolean hushed = parseBoolean(value);
+        
+        stacker.setBlockHushed(userBlockData, hushed);
+        
+        BlockView blockView;
+		try {
+			blockView = stacker.loadBlock(viewpoint, userBlockData);
+		} catch (NotFoundException e) {
+			throw new RuntimeException("Can't load block view for the user's own block", e);
+		}
+        
+		String xml = getBlocksXml(viewpoint, "blockParameter", Collections.singletonList(blockView));
+		reply.setChildElement(XmlParser.elementFromXml(xml));
 	}
-
 }

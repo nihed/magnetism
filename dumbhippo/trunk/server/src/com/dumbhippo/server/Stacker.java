@@ -51,6 +51,8 @@ public interface Stacker {
 
 	public UserBlockData lookupUserBlockData(UserViewpoint viewpoint, Guid guid) throws NotFoundException;
 	
+	public void setBlockHushed(UserBlockData userBlockData, boolean hushed);
+	
 	public void migrateEverything();
 	public void migrateGroups();
 	public void migratePost(String postId);

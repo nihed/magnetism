@@ -16,11 +16,9 @@ import javax.ejb.TransactionAttributeType;
 import javax.interceptor.AroundInvoke;
 import javax.interceptor.InvocationContext;
 
-import org.jboss.annotation.IgnoreDependency;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
-import com.dumbhippo.TypeUtils;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
@@ -61,24 +59,19 @@ import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.MusicSystemInternal;
 import com.dumbhippo.server.MySpaceTracker;
 import com.dumbhippo.server.NotFoundException;
-import com.dumbhippo.server.ViewStreamBuilder;
 import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.PromotionCode;
 import com.dumbhippo.server.ServerStatus;
-import com.dumbhippo.server.Stacker;
 import com.dumbhippo.server.TransactionRunner;
-import com.dumbhippo.server.views.BlockView;
 import com.dumbhippo.server.views.EntityView;
 import com.dumbhippo.server.views.GroupView;
-import com.dumbhippo.server.views.ObjectView;
 import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.PersonViewExtra;
 import com.dumbhippo.server.views.PostView;
 import com.dumbhippo.server.views.SystemViewpoint;
 import com.dumbhippo.server.views.TrackView;
 import com.dumbhippo.server.views.UserViewpoint;
-import com.dumbhippo.server.views.ViewStream;
 
 @Stateless
 public class MessengerGlueBean implements MessengerGlue {
@@ -113,9 +106,6 @@ public class MessengerGlueBean implements MessengerGlue {
 	private GroupSystem groupSystem;
 	
 	@EJB
-	private ViewStreamBuilder viewStreamBuilder;
-	
-	@EJB
 	private ServerStatus serverStatus;
 	
 	@EJB
@@ -123,10 +113,6 @@ public class MessengerGlueBean implements MessengerGlue {
 	
 	@EJB
 	private ExternalAccountSystem externalAccounts;
-	
-	@EJB
-	@IgnoreDependency
-	private Stacker stacker;
 	
 	static final private long EXECUTION_WARN_MILLISECONDS = 5000;
 	
@@ -746,26 +732,6 @@ public class MessengerGlueBean implements MessengerGlue {
 		groupSystem.addMember(user, groupView.getGroup(), invitee);
 	}
 
-	public String getBlocksXml(String username, long lastTimestamp, int start, int count) {
-		User user = getUserFromUsername(username);
-		UserViewpoint viewpoint = new UserViewpoint(user);
-		List<BlockView> list = stacker.getStack(viewpoint, user, lastTimestamp, start, count);
-		List<ObjectView> objectList = TypeUtils.castList(ObjectView.class, list);
-		
-		XmlBuilder xml = new XmlBuilder();
-		
-		xml.openElement("blocks",
-					    "xmlns", CommonXmlWriter.NAMESPACE_BLOCKS,
-				        "serverTime", Long.toString(System.currentTimeMillis()));
-		
-		ViewStream stream = viewStreamBuilder.buildStream(viewpoint, objectList);
-		stream.writeToXmlBuilder(xml);
-		
-		xml.closeElement();
-		
-		return xml.toString();
-	}
-	
 	public boolean isServerTooBusy() {
 		if (activeRequestCount >= MAX_ACTIVE_REQUESTS || serverStatus.throttleXmppConnections()) {
 			incrementTooBusyCount();

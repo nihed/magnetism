@@ -2021,11 +2021,8 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
  	}
  	
  	public void doSetBlockHushed(XmlBuilder xml, UserViewpoint viewpoint, UserBlockData userBlockData, boolean hushed) throws XmlMethodException, NotFoundException {
- 		if (hushed != userBlockData.isIgnored()) {
-	 		userBlockData.setIgnored(hushed);
-	 		if (hushed)
-	 			userBlockData.setIgnoredTimestampAsLong(userBlockData.getBlock().getTimestampAsLong());
- 		}
+ 		stacker.setBlockHushed(userBlockData, hushed);
+
  		// send the new block data back, to avoid an extra round trip
  		returnBlocks(xml, viewpoint, viewpoint.getViewer(), Collections.singletonList(stacker.loadBlock(viewpoint, userBlockData)));
  	}

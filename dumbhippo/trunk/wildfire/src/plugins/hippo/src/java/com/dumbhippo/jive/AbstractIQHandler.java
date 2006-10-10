@@ -7,7 +7,7 @@ import org.jivesoftware.wildfire.handler.IQHandler;
 
 public abstract class AbstractIQHandler extends IQHandler {
 
-	public AbstractIQHandler(String moduleName) {
+	protected AbstractIQHandler(String moduleName) {
 		super(moduleName);
 	}
 

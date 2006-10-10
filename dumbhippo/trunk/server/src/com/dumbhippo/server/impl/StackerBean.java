@@ -758,6 +758,14 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		}
 	}
 	
+	public void setBlockHushed(UserBlockData userBlockData, boolean hushed) {
+ 		if (hushed != userBlockData.isIgnored()) {
+	 		userBlockData.setIgnored(hushed);
+	 		if (hushed)
+	 			userBlockData.setIgnoredTimestampAsLong(userBlockData.getBlock().getTimestampAsLong());
+ 		}
+	}
+
 	static private class CacheEntry {
 		public long lastTimestamp;
 		public int count;
@@ -1162,5 +1170,4 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 			}
 		}
 	}
-
 }
