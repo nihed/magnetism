@@ -34,6 +34,8 @@ struct _HippoWindowClass {
     void (* set_resizable)     (HippoWindow     *window,
                                 HippoOrientation orientation,
                                 gboolean         visible);
+    void (* begin_move_drag)   (HippoWindow      *window,
+                                HippoEvent       *event);
     void (* begin_resize_drag) (HippoWindow      *window,
                                 HippoSide         side,
                                 HippoEvent       *event);
@@ -56,6 +58,8 @@ void hippo_window_get_size          (HippoWindow      *window,
 void hippo_window_set_resizable     (HippoWindow      *window,
                                      HippoOrientation  orientation,
                                      gboolean          value);
+void hippo_window_begin_move_drag   (HippoWindow      *window,
+                                     HippoEvent       *event);
 void hippo_window_begin_resize_drag (HippoWindow      *window,
                                      HippoSide         side,
                                      HippoEvent       *event);

@@ -37,6 +37,8 @@ static void hippo_window_gtk_get_size          (HippoWindow      *window,
 static void hippo_window_gtk_set_resizable     (HippoWindow      *window,
                                                 HippoOrientation  orientation,
                                                 gboolean          value);
+static void hippo_window_gtk_begin_move_drag   (HippoWindow      *window,
+                                                HippoEvent       *event);
 static void hippo_window_gtk_begin_resize_drag (HippoWindow      *window,
                                                 HippoSide         side,
                                                 HippoEvent       *event);
@@ -77,6 +79,7 @@ hippo_window_gtk_iface_init(HippoWindowClass *window_class)
     window_class->set_position = hippo_window_gtk_set_position;
     window_class->get_size = hippo_window_gtk_get_size;
     window_class->set_resizable = hippo_window_gtk_set_resizable;
+    window_class->begin_move_drag = hippo_window_gtk_begin_move_drag;
     window_class->begin_resize_drag = hippo_window_gtk_begin_resize_drag;
 }
 
@@ -274,6 +277,18 @@ hippo_window_gtk_set_resizable(HippoWindow      *window,
     }
 }
 
+static void
+hippo_window_gtk_begin_move_drag(HippoWindow *window,
+                                 HippoEvent  *event)
+{
+    HippoWindowGtk *window_gtk = HIPPO_WINDOW_GTK(window);    
+    
+    gtk_window_begin_move_drag(GTK_WINDOW(window_gtk),
+                               event->u.button.button,
+                               event->u.button.x11_x_root,
+                               event->u.button.x11_y_root,
+                               event->u.button.x11_time);
+}
 static void
 hippo_window_gtk_begin_resize_drag(HippoWindow *window,
                                    HippoSide    side,

@@ -1,3 +1,4 @@
+/* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 #include "stdafx-hippoui.h"
 #include "HippoWindowWin.h"
 #include "HippoAbstractControl.h"
@@ -24,6 +25,7 @@ public:
     void setContents(HippoCanvasItem *item);
     void setVisible(bool visible);
     void getSize(int *x_p, int *y_p);
+    void beginMove();
     void beginResize(HippoSide side);
 
 protected:
@@ -119,6 +121,7 @@ hippo_window_win_iface_init(HippoWindowClass *window_class)
     window_class->set_position = hippo_window_win_set_position;
     window_class->get_size = hippo_window_win_get_size;
     window_class->set_resizable = hippo_window_win_set_resizable;
+    window_class->begin_move_drag = hippo_window_win_begin_move_drag;
     window_class->begin_resize_drag = hippo_window_win_begin_resize_drag;
 }
 
@@ -243,6 +246,17 @@ hippo_window_win_set_resizable(HippoWindow      *window,
 }
 
 static void
+hippo_window_win_begin_move_drag(HippoWindow      *window,
+                                 HippoEvent       *event)
+{
+    HippoWindowWin *window_win = HIPPO_WINDOW_WIN(window);
+    
+    // the coordinates in the HippoEvent are on any random canvas item,
+    // so not useful.
+    window_win->impl->beginMove();
+}
+
+static void
 hippo_window_win_begin_resize_drag(HippoWindow      *window,
                                    HippoSide         side,
                                    HippoEvent       *event)
@@ -333,6 +347,12 @@ HippoWindowImpl::getSize(int *width_p, int *height_p)
         *width_p = getWidth();
     if (height_p)
         *height_p = getHeight();
+}
+
+void
+HippoWindowImpl::beginMove()
+{
+    DefWindowProc(window_, WM_NCCLBUTTONDOWN, HTCAPTION, GetMessagePos());
 }
 
 void

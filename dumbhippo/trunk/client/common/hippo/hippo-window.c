@@ -90,6 +90,15 @@ hippo_window_set_resizable(HippoWindow      *window,
 }
 
 void
+hippo_window_begin_move_drag (HippoWindow      *window,
+                              HippoEvent       *event)
+{
+    g_return_if_fail(HIPPO_IS_WINDOW(window));
+
+    HIPPO_WINDOW_GET_CLASS(window)->begin_move_drag(window, event);
+}
+
+void
 hippo_window_begin_resize_drag (HippoWindow      *window,
                                 HippoSide         side,
                                 HippoEvent       *event)
@@ -98,4 +107,3 @@ hippo_window_begin_resize_drag (HippoWindow      *window,
 
     HIPPO_WINDOW_GET_CLASS(window)->begin_resize_drag(window, side, event);
 }
-

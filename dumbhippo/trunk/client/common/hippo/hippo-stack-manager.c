@@ -363,6 +363,18 @@ manager_new(void)
 }
 
 static gboolean
+on_browser_title_bar_button_press(HippoCanvasItem *item,
+                                  HippoEvent      *event,
+                                  void            *data)
+{
+    StackManager *manager = data;
+
+    hippo_window_begin_move_drag(manager->browser_window, event);
+
+    return TRUE;
+}
+
+static gboolean
 on_browser_resize_grip_button_press(HippoCanvasItem *item,
                                     HippoEvent      *event,
                                     void            *data)
@@ -419,7 +431,11 @@ manager_attach(StackManager    *manager,
                                               "actions", manager->actions,
                                               "notification-mode", FALSE,
                                               NULL);
-    
+    g_signal_connect(manager->browser_base_item,
+                     "title-bar-button-press-event",
+                     G_CALLBACK(on_browser_title_bar_button_press),
+                     manager);
+                     
     manager->browser_item = g_object_new(HIPPO_TYPE_CANVAS_STACK,
                                          "box-width", UI_WIDTH,
                                          "actions", manager->actions,

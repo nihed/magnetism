@@ -1,5 +1,6 @@
 /* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 #include "hippo-common-internal.h"
+#include "hippo-common-marshal.h"
 #include "hippo-canvas-base.h"
 #include "hippo-actions.h"
 #include <hippo/hippo-canvas-box.h>
@@ -32,6 +33,9 @@ static void     hippo_canvas_base_paint              (HippoCanvasItem *item,
                                                       HippoRectangle  *damaged_box);
 
 /* Callbacks */
+static gboolean on_title_bar_button_press_event(HippoCanvasItem *title_bar,
+                                                HippoEvent      *event,
+                                                HippoCanvasBase *base);
 static void on_close_activated (HippoCanvasItem *button,
                                 HippoCanvasBase *base);
 static void on_expand_activated  (HippoCanvasItem  *button,
@@ -53,11 +57,11 @@ struct _HippoCanvasBaseClass {
 };
 
 enum {
-    NO_SIGNALS_YET,
+    TITLE_BAR_BUTTON_PRESS_EVENT,
     LAST_SIGNAL
 };
 
-/* static int signals[LAST_SIGNAL]; */
+static int signals[LAST_SIGNAL];
 
 enum {
     PROP_0,
@@ -94,6 +98,15 @@ hippo_canvas_base_class_init(HippoCanvasBaseClass *klass)
 
     object_class->finalize = hippo_canvas_base_finalize;
 
+    signals[TITLE_BAR_BUTTON_PRESS_EVENT] =
+        g_signal_new ("title-bar-button-press-event",
+                      HIPPO_TYPE_CANVAS_ITEM,
+                      G_SIGNAL_RUN_LAST,
+                      0,
+                      g_signal_accumulator_true_handled, NULL,
+                      hippo_common_marshal_BOOLEAN__BOXED,
+                      G_TYPE_BOOLEAN, 1, HIPPO_TYPE_EVENT);
+    
     g_object_class_install_property(object_class,
                                     PROP_ACTIONS,
                                     g_param_spec_object("actions",
@@ -234,6 +247,8 @@ hippo_canvas_base_constructor (GType                  type,
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(base),
                             HIPPO_CANVAS_ITEM(box), 0);
 
+    g_signal_connect_after(G_OBJECT(box), "button-press-event", G_CALLBACK(on_title_bar_button_press_event), base);
+
     if (base->notification_mode) {
         item = g_object_new(HIPPO_TYPE_CANVAS_IMAGE_BUTTON,
                             "normal-image-name", "arrow",
@@ -325,6 +340,21 @@ hippo_canvas_base_paint(HippoCanvasItem *item,
 
     /* Draw the background and any children */
     item_parent_class->paint(item, cr, damaged_box);
+}
+
+static gboolean
+on_title_bar_button_press_event(HippoCanvasItem *title_bar,
+                                HippoEvent      *event,
+                                HippoCanvasBase *base)
+{
+    gboolean handled = FALSE;
+
+    /* The item-relative coordinates here are with respect to the child, which is bogus, but
+     * we don't need the item-realitve event coordinates for now, so we won't bother translating,
+     */
+    g_signal_emit(base, signals[TITLE_BAR_BUTTON_PRESS_EVENT], 0, event, &handled);
+
+    return handled;
 }
 
 static void
