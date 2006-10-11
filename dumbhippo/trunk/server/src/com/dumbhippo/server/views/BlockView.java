@@ -36,7 +36,7 @@ public abstract class BlockView implements ObjectView {
 	
 	public abstract String getWebTitleType();
 	
-	public abstract String getWebTitle();
+	public String getWebTitle() { return ""; };
 	
 	public String getWebTitleLink() { return null; }
 	

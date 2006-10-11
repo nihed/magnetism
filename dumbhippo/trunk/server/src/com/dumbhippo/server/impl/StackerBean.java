@@ -617,11 +617,11 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		case MUSIC_PERSON: {
 			User user = identitySpider.lookupUser(block.getData1AsGuid());
 			PersonView userView = personViewer.getPersonView(viewpoint, user, PersonViewExtra.PRIMARY_RESOURCE);
-			List<TrackView> tracks = musicSystem.getLatestTrackViews(viewpoint, user, 1);
+			List<TrackView> tracks = musicSystem.getLatestTrackViews(viewpoint, user, 5);
 			if (tracks.isEmpty()) 
 				throw new NotFoundException("The user did not have any track views even though we tried to stack a music update");
 			
-			userView.setCurrentTrack(tracks.get(0));
+			userView.setTrackHistory(tracks);
 			return new MusicPersonBlockView(block, ubd, userView);
 		}
 		case EXTERNAL_ACCOUNT_UPDATE: {

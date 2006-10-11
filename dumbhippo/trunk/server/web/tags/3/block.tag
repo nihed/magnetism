@@ -14,6 +14,9 @@
 		<span class="dh-stacker-block-title-type"><c:out value="${block.webTitleType}"/>:</span>
 		<span class="dh-stacker-block-title-title">
 			<c:choose>
+		    	<c:when test="${dh:enumIs(block.blockType, 'MUSIC_PERSON')}">
+					<dht3:musicPersonTitle block="${block}"/>
+				</c:when>					
 				<c:when test="${!empty block.webTitleLink}">
 					<jsp:element name="a">
 						<jsp:attribute name="href"><c:out value="${block.webTitleLink}"/></jsp:attribute>

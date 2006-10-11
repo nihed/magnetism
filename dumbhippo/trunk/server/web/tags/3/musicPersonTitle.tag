@@ -5,9 +5,8 @@
 
 <%@ attribute name="block" required="true" type="com.dumbhippo.server.views.MusicPersonBlockView" %>
 
-<div class="dh-stacker-block-content-music-person">
-	More: 
-	<c:forEach items="${block.trackViews}" begin="2" end="5" var="track" varStatus="trackIdx">
+<span class="dh-stacker-block-title-music-person">
+	<c:forEach items="${block.trackViews}" end="2" var="track" varStatus="trackIdx">
 		<dht3:track track="${track}"/><c:if test="${!trackIdx.last}">, </c:if>
 	</c:forEach>
-</div>
+</span>

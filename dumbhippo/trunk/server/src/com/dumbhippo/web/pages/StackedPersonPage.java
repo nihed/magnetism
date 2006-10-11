@@ -56,6 +56,10 @@ public class StackedPersonPage extends AbstractPersonPage {
 		return null;
 	}
 	
+	public List<BlockView> getFaveStack() {
+		return null;
+	}
+	
 	public ListBean<StackedContact> getContactStacks() {
 		if (stackedContacts == null) {
 			stackedContacts = new ArrayList<StackedContact>();

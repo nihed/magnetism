@@ -60,7 +60,7 @@ public class PersonView extends EntityView {
 	private boolean viewOfSelf;
 	private boolean online;
 	private Set<ExternalAccount> externalAccounts;
-	private TrackView currentTrack;
+	private List<TrackView> trackHistory;
 	private String aimPresenceKey;
 	
 	private void addExtras(EnumSet<PersonViewExtra> more) {
@@ -397,11 +397,22 @@ public class PersonView extends EntityView {
 	}
 	
 	public void setCurrentTrack(TrackView currentTrack) {
-		this.currentTrack = currentTrack;
+		this.trackHistory = new ArrayList<TrackView>();
+		this.trackHistory.add(currentTrack);
 	}
 	
 	public TrackView getCurrentTrack() {
-		return currentTrack;
+		if (trackHistory != null)
+			return trackHistory.get(0);
+		return null;
+	}
+	
+	public void setTrackHistory(List<TrackView> history) {
+		this.trackHistory = history;
+	}
+	
+	public List<TrackView> getTrackHistory() {
+		return this.trackHistory;
 	}
 	
 	/**
@@ -775,8 +786,8 @@ public class PersonView extends EntityView {
 					            "name", getName());
 		}
 		
-		if (currentTrack != null)
-			currentTrack.writeToXmlBuilder(builder, "currentTrack");
+		if (getCurrentTrack() != null)
+			getCurrentTrack().writeToXmlBuilder(builder, "currentTrack");
 		
 		builder.closeElement();
 	}
