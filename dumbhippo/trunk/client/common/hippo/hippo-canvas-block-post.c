@@ -24,7 +24,9 @@ static void hippo_canvas_block_post_get_property (GObject      *object,
                                                   guint         prop_id,
                                                   GValue       *value,
                                                   GParamSpec   *pspec);
-
+static GObject* hippo_canvas_block_post_constructor (GType                  type,
+                                                     guint                  n_construct_properties,
+                                                     GObjectConstructParam *construct_params);
 
 /* Canvas item methods */
 static void     hippo_canvas_block_post_paint              (HippoCanvasItem *item,
@@ -90,11 +92,108 @@ static void
 hippo_canvas_block_post_init(HippoCanvasBlockPost *block_post)
 {
     HippoCanvasBlock *block = HIPPO_CANVAS_BLOCK(block_post);
+    
+    block->required_type = HIPPO_BLOCK_TYPE_POST;
+}
+
+static HippoCanvasItemIface *item_parent_class;
+
+static void
+hippo_canvas_block_post_iface_init(HippoCanvasItemIface *item_class)
+{
+    item_parent_class = g_type_interface_peek_parent(item_class);
+
+    item_class->paint = hippo_canvas_block_post_paint;
+}
+
+static void
+hippo_canvas_block_post_class_init(HippoCanvasBlockPostClass *klass)
+{
+    GObjectClass *object_class = G_OBJECT_CLASS (klass);
+    HippoCanvasBlockClass *canvas_block_class = HIPPO_CANVAS_BLOCK_CLASS(klass);
+    
+    object_class->set_property = hippo_canvas_block_post_set_property;
+    object_class->get_property = hippo_canvas_block_post_get_property;
+    object_class->constructor = hippo_canvas_block_post_constructor;
+    
+    object_class->dispose = hippo_canvas_block_post_dispose;
+    object_class->finalize = hippo_canvas_block_post_finalize;
+
+    canvas_block_class->set_block = hippo_canvas_block_post_set_block;
+    canvas_block_class->title_activated = hippo_canvas_block_post_title_activated;
+    canvas_block_class->clicked_count_changed = hippo_canvas_block_post_clicked_count_changed;
+    canvas_block_class->expand = hippo_canvas_block_post_expand;
+    canvas_block_class->unexpand = hippo_canvas_block_post_unexpand;
+    canvas_block_class->hush = hippo_canvas_block_post_hush;
+    canvas_block_class->unhush = hippo_canvas_block_post_unhush;
+}
+
+static void
+hippo_canvas_block_post_dispose(GObject *object)
+{
+    HippoCanvasBlockPost *block_post = HIPPO_CANVAS_BLOCK_POST(object);
+
+    hippo_canvas_block_post_set_post(block_post, NULL);
+
+    G_OBJECT_CLASS(hippo_canvas_block_post_parent_class)->dispose(object);
+}
+
+static void
+hippo_canvas_block_post_finalize(GObject *object)
+{
+    /* HippoCanvasBlockPost *block = HIPPO_CANVAS_BLOCK_POST(object); */
+
+    G_OBJECT_CLASS(hippo_canvas_block_post_parent_class)->finalize(object);
+}
+
+static void
+hippo_canvas_block_post_set_property(GObject         *object,
+                                     guint            prop_id,
+                                     const GValue    *value,
+                                     GParamSpec      *pspec)
+{
+    HippoCanvasBlockPost *block_post;
+
+    block_post = HIPPO_CANVAS_BLOCK_POST(object);
+
+    switch (prop_id) {
+    default:
+        G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
+        break;
+    }
+}
+
+static void
+hippo_canvas_block_post_get_property(GObject         *object,
+                                     guint            prop_id,
+                                     GValue          *value,
+                                     GParamSpec      *pspec)
+{
+    HippoCanvasBlockPost *block_post;
+
+    block_post = HIPPO_CANVAS_BLOCK_POST (object);
+
+    switch (prop_id) {
+    default:
+        G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
+        break;
+    }
+}
+
+static GObject*
+hippo_canvas_block_post_constructor (GType                  type,
+                                     guint                  n_construct_properties,
+                                     GObjectConstructParam *construct_properties)
+{
+    GObject *object = G_OBJECT_CLASS(hippo_canvas_block_post_parent_class)->constructor(type,
+                                                                                        n_construct_properties,
+                                                                                        construct_properties);
+    
+    HippoCanvasBlock *block = HIPPO_CANVAS_BLOCK(object);
+    HippoCanvasBlockPost *block_post = HIPPO_CANVAS_BLOCK_POST(object);
     HippoCanvasBox *box;
     HippoCanvasItem *item;
     
-    block->required_type = HIPPO_BLOCK_TYPE_POST;
-
     hippo_canvas_block_set_heading(block, _("Web Swarm: "));
 
     box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
@@ -142,6 +241,7 @@ hippo_canvas_block_post_init(HippoCanvasBlockPost *block_post)
 
     block_post->chat_preview_parent = box;
     block_post->chat_preview = g_object_new(HIPPO_TYPE_CANVAS_CHAT_PREVIEW,
+                                            "actions", hippo_canvas_block_get_actions(block),
                                             NULL);
     hippo_canvas_box_append(block_post->chat_preview_parent,
                             block_post->chat_preview, 0);
@@ -150,99 +250,8 @@ hippo_canvas_block_post_init(HippoCanvasBlockPost *block_post)
                                        FALSE); /* not expanded at first */
     
     hippo_canvas_block_set_content(block, HIPPO_CANVAS_ITEM(box));
-}
-
-static HippoCanvasItemIface *item_parent_class;
-
-static void
-hippo_canvas_block_post_iface_init(HippoCanvasItemIface *item_class)
-{
-    item_parent_class = g_type_interface_peek_parent(item_class);
-
-    item_class->paint = hippo_canvas_block_post_paint;
-}
-
-static void
-hippo_canvas_block_post_class_init(HippoCanvasBlockPostClass *klass)
-{
-    GObjectClass *object_class = G_OBJECT_CLASS (klass);
-    HippoCanvasBlockClass *canvas_block_class = HIPPO_CANVAS_BLOCK_CLASS(klass);
-    
-    object_class->set_property = hippo_canvas_block_post_set_property;
-    object_class->get_property = hippo_canvas_block_post_get_property;
-
-    object_class->dispose = hippo_canvas_block_post_dispose;
-    object_class->finalize = hippo_canvas_block_post_finalize;
-
-    canvas_block_class->set_block = hippo_canvas_block_post_set_block;
-    canvas_block_class->title_activated = hippo_canvas_block_post_title_activated;
-    canvas_block_class->clicked_count_changed = hippo_canvas_block_post_clicked_count_changed;
-    canvas_block_class->expand = hippo_canvas_block_post_expand;
-    canvas_block_class->unexpand = hippo_canvas_block_post_unexpand;
-    canvas_block_class->hush = hippo_canvas_block_post_hush;
-    canvas_block_class->unhush = hippo_canvas_block_post_unhush;
-}
-
-static void
-hippo_canvas_block_post_dispose(GObject *object)
-{
-    HippoCanvasBlockPost *block_post = HIPPO_CANVAS_BLOCK_POST(object);
-
-    hippo_canvas_block_post_set_post(block_post, NULL);
-
-    G_OBJECT_CLASS(hippo_canvas_block_post_parent_class)->dispose(object);
-}
-
-static void
-hippo_canvas_block_post_finalize(GObject *object)
-{
-    /* HippoCanvasBlockPost *block = HIPPO_CANVAS_BLOCK_POST(object); */
-
-    G_OBJECT_CLASS(hippo_canvas_block_post_parent_class)->finalize(object);
-}
-
-HippoCanvasItem*
-hippo_canvas_block_post_new(void)
-{
-    HippoCanvasBlockPost *block_post;
-
-    block_post = g_object_new(HIPPO_TYPE_CANVAS_BLOCK_POST, NULL);
-
-    return HIPPO_CANVAS_ITEM(block_post);
-}
-
-static void
-hippo_canvas_block_post_set_property(GObject         *object,
-                                     guint            prop_id,
-                                     const GValue    *value,
-                                     GParamSpec      *pspec)
-{
-    HippoCanvasBlockPost *block_post;
-
-    block_post = HIPPO_CANVAS_BLOCK_POST(object);
-
-    switch (prop_id) {
-    default:
-        G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
-        break;
-    }
-}
-
-static void
-hippo_canvas_block_post_get_property(GObject         *object,
-                                     guint            prop_id,
-                                     GValue          *value,
-                                     GParamSpec      *pspec)
-{
-    HippoCanvasBlockPost *block_post;
-
-    block_post = HIPPO_CANVAS_BLOCK_POST (object);
-
-    switch (prop_id) {
-    default:
-        G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
-        break;
-    }
+        
+    return object;
 }
 
 static void
@@ -319,6 +328,7 @@ update_post(HippoCanvasBlockPost *canvas_block_post)
                      "text", NULL,
                      NULL);
         g_object_set(G_OBJECT(canvas_block_post->chat_preview),
+                     "chat-id", NULL,
                      "chat-room", NULL,
                      NULL);
     } else {
@@ -340,6 +350,7 @@ update_post(HippoCanvasBlockPost *canvas_block_post)
         
         room = hippo_post_get_chat_room(post);
         g_object_set(G_OBJECT(canvas_block_post->chat_preview),
+                     "chat-id", hippo_post_get_guid(post),
                      "chat-room", room,
                      NULL);
 

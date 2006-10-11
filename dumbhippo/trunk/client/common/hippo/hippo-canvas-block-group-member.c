@@ -22,6 +22,9 @@ static void hippo_canvas_block_group_member_get_property (GObject      *object,
                                                           guint         prop_id,
                                                           GValue       *value,
                                                           GParamSpec   *pspec);
+static GObject* hippo_canvas_block_group_member_constructor (GType                  type,
+                                                             guint                  n_construct_properties,
+                                                             GObjectConstructParam *construct_properties);
 
 /* Canvas block methods */
 static void hippo_canvas_block_group_member_set_block       (HippoCanvasBlock *canvas_block,
@@ -62,17 +65,9 @@ static void
 hippo_canvas_block_group_member_init(HippoCanvasBlockGroupMember *block_group_member)
 {
     HippoCanvasBlock *block = HIPPO_CANVAS_BLOCK(block_group_member);
-    HippoCanvasBox *box;
 
     block->required_type = HIPPO_BLOCK_TYPE_GROUP_MEMBER;
     block->expandable = FALSE; /* currently we have nothing to show on expand */
-    
-    hippo_canvas_block_set_heading(block, _("Group: "));
-
-    box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
-                       NULL);
-
-    hippo_canvas_block_set_content(block, HIPPO_CANVAS_ITEM(box));
 }
 
 static HippoCanvasItemIface *item_parent_class;
@@ -91,6 +86,7 @@ hippo_canvas_block_group_member_class_init(HippoCanvasBlockGroupMemberClass *kla
 
     object_class->set_property = hippo_canvas_block_group_member_set_property;
     object_class->get_property = hippo_canvas_block_group_member_get_property;
+    object_class->constructor = hippo_canvas_block_group_member_constructor;
 
     object_class->dispose = hippo_canvas_block_group_member_dispose;
     object_class->finalize = hippo_canvas_block_group_member_finalize;
@@ -114,16 +110,6 @@ hippo_canvas_block_group_member_finalize(GObject *object)
     /* HippoCanvasBlockGroupMember *block = HIPPO_CANVAS_BLOCK_GROUP_MEMBER(object); */
 
     G_OBJECT_CLASS(hippo_canvas_block_group_member_parent_class)->finalize(object);
-}
-
-HippoCanvasItem*
-hippo_canvas_block_group_member_new(void)
-{
-    HippoCanvasBlockGroupMember *block_group_member;
-
-    block_group_member = g_object_new(HIPPO_TYPE_CANVAS_BLOCK_GROUP_MEMBER, NULL);
-
-    return HIPPO_CANVAS_ITEM(block_group_member);
 }
 
 static void
@@ -158,6 +144,27 @@ hippo_canvas_block_group_member_get_property(GObject         *object,
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
         break;
     }
+}
+
+static GObject*
+hippo_canvas_block_group_member_constructor (GType                  type,
+                                             guint                  n_construct_properties,
+                                             GObjectConstructParam *construct_properties)
+{
+    GObject *object = G_OBJECT_CLASS(hippo_canvas_block_group_member_parent_class)->constructor(type,
+                                                                                                n_construct_properties,
+                                                                                                construct_properties);
+    HippoCanvasBlock *block = HIPPO_CANVAS_BLOCK(object);
+    HippoCanvasBox *box;
+
+    hippo_canvas_block_set_heading(block, _("Group: "));
+
+    box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
+                       NULL);
+
+    hippo_canvas_block_set_content(block, HIPPO_CANVAS_ITEM(box));
+
+    return object;
 }
 
 static void

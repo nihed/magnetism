@@ -108,7 +108,7 @@ hippo_canvas_entity_photo_class_init(HippoCanvasEntityPhotoClass *klass)
                                                         _("Actions"),
                                                         _("UI actions object"),
                                                         HIPPO_TYPE_ACTIONS,
-                                                        G_PARAM_READABLE | G_PARAM_WRITABLE)); 
+                                                        G_PARAM_READABLE | G_PARAM_WRITABLE | G_PARAM_CONSTRUCT_ONLY)); 
 }
 
 static void
@@ -128,16 +128,6 @@ hippo_canvas_entity_photo_finalize(GObject *object)
     /* HippoCanvasEntityPhoto *image = HIPPO_CANVAS_ENTITY_PHOTO(object); */
 
     G_OBJECT_CLASS(hippo_canvas_entity_photo_parent_class)->finalize(object);
-}
-
-HippoCanvasItem*
-hippo_canvas_entity_photo_new(void)
-{
-    HippoCanvasEntityPhoto *entity_photo;
-
-    entity_photo = g_object_new(HIPPO_TYPE_CANVAS_ENTITY_PHOTO, NULL);
-
-    return HIPPO_CANVAS_ITEM(entity_photo);
 }
 
 static void

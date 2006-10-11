@@ -79,16 +79,7 @@ hippo_canvas_stack_class_init(HippoCanvasStackClass *klass)
                                                         _("Actions"),
                                                         _("UI actions object"),
                                                         HIPPO_TYPE_ACTIONS,
-                                                        G_PARAM_READABLE | G_PARAM_WRITABLE)); 
-}
-
-static void
-foreach_set_actions(HippoCanvasItem *child,
-                    void            *data)
-{
-    HippoActions *actions = HIPPO_ACTIONS(data);
-
-    g_object_set(G_OBJECT(child), "actions", actions, NULL);
+                                                        G_PARAM_READABLE | G_PARAM_WRITABLE | G_PARAM_CONSTRUCT_ONLY)); 
 }
 
 static void
@@ -108,9 +99,6 @@ set_actions(HippoCanvasStack *stack,
         g_object_ref(stack->actions);
     }
 
-    hippo_canvas_box_foreach(HIPPO_CANVAS_BOX(stack), foreach_set_actions,
-                             stack->actions);
-    
     g_object_notify(G_OBJECT(stack), "actions");
 }
 
@@ -252,7 +240,7 @@ hippo_canvas_stack_add_block(HippoCanvasStack *canvas_stack,
         g_object_ref(item);
     }
 
-    g_object_set(G_OBJECT(item), "block", block, "actions", canvas_stack->actions, NULL);
+    g_object_set(G_OBJECT(item), "block", block, NULL);
     hippo_canvas_box_insert_sorted(HIPPO_CANVAS_BOX(canvas_stack), item, 0,
                                    canvas_block_compare, NULL);
     
@@ -270,7 +258,6 @@ hippo_canvas_stack_remove_block(HippoCanvasStack *canvas_stack,
     if (item != NULL) {
         g_object_set(G_OBJECT(item),
                      "block", NULL,
-                     "actions", NULL,
                      NULL);
         hippo_canvas_box_remove(HIPPO_CANVAS_BOX(canvas_stack), item);
     }

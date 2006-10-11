@@ -257,12 +257,5 @@ void
 hippo_actions_join_chat_id(HippoActions    *actions,
                            const char      *chat_id)
 {
-    /* FIXME */
-}
-
-void
-hippo_actions_join_chat_room(HippoActions    *actions,
-                             HippoChatRoom   *room)
-{
-    /* FIXME */
+    hippo_platform_show_chat_window(get_platform(actions), chat_id);
 }

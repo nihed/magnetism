@@ -21,8 +21,6 @@ typedef struct _HippoCanvasBlockGroupChatClass HippoCanvasBlockGroupChatClass;
 
 GType            hippo_canvas_block_group_chat_get_type    (void) G_GNUC_CONST;
 
-HippoCanvasItem* hippo_canvas_block_group_chat_new         (void);
-
 G_END_DECLS
 
 #endif /* __HIPPO_CANVAS_BLOCK_GROUP_CHAT_H__ */

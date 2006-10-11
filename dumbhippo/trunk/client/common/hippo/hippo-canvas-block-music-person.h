@@ -21,8 +21,6 @@ typedef struct _HippoCanvasBlockMusicPersonClass HippoCanvasBlockMusicPersonClas
 
 GType            hippo_canvas_block_music_person_get_type    (void) G_GNUC_CONST;
 
-HippoCanvasItem* hippo_canvas_block_music_person_new         (void);
-
 G_END_DECLS
 
 #endif /* __HIPPO_CANVAS_BLOCK_MUSIC_PERSON_H__ */

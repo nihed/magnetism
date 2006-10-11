@@ -1,4 +1,5 @@
 /* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
+#include <string.h>
 #include "hippo-common-internal.h"
 #include <hippo/hippo-chat-room.h>
 #include "hippo-actions.h"
@@ -26,10 +27,15 @@ static void hippo_canvas_chat_preview_get_property (GObject      *object,
                                                     guint         prop_id,
                                                     GValue       *value,
                                                     GParamSpec   *pspec);
+static GObject* hippo_canvas_chat_preview_constructor (GType                  type,
+                                                       guint                  n_construct_properties,
+                                                       GObjectConstructParam *construct_properties);
 
 /* Our own methods */
 static void hippo_canvas_chat_preview_set_room           (HippoCanvasChatPreview *chat_preview,
                                                           HippoChatRoom          *room);
+static void hippo_canvas_chat_preview_set_chat_id        (HippoCanvasChatPreview *chat_preview,
+                                                          const char             *id);
 static void hippo_canvas_chat_preview_set_actions        (HippoCanvasChatPreview *chat_preview,
                                                           HippoActions           *actions);
 static void hippo_canvas_chat_preview_set_chatting_count (HippoCanvasChatPreview *chat_preview,
@@ -50,6 +56,7 @@ struct _HippoCanvasChatPreview {
     HippoCanvasBox canvas_box;
     HippoActions *actions;
     HippoChatRoom  *room;
+    char *chat_id;
     int chatting_count;
     GSList *recent_messages;
 
@@ -78,6 +85,7 @@ static int signals[LAST_SIGNAL];
 enum {
     PROP_0,
     PROP_CHAT_ROOM,
+    PROP_CHAT_ID,
     PROP_ACTIONS,
     PROP_RECENT_MESSAGE,
     PROP_CHATTING_COUNT
@@ -91,18 +99,203 @@ static void
 on_chat_activated(HippoCanvasItem        *chat_link,
                   HippoCanvasChatPreview *chat_preview)
 {
-    if (chat_preview->actions) {
-        if (chat_preview->room)
-            hippo_actions_join_chat_room(chat_preview->actions,
-                                         chat_preview->room);
-        else
-            /* FIXME - we'll have to provide a chat id or something */;
-    }
+    if (chat_preview->chat_id)
+        hippo_actions_join_chat_id(chat_preview->actions,
+                                   chat_preview->chat_id);
 }
 
 static void
 hippo_canvas_chat_preview_init(HippoCanvasChatPreview *chat_preview)
 {
+}
+
+static HippoCanvasItemIface *item_parent_class;
+
+static void
+hippo_canvas_chat_preview_iface_init(HippoCanvasItemIface *item_class)
+{
+    item_parent_class = g_type_interface_peek_parent(item_class);
+
+    
+}
+
+static void
+hippo_canvas_chat_preview_class_init(HippoCanvasChatPreviewClass *klass)
+{
+    GObjectClass *object_class = G_OBJECT_CLASS (klass);
+    /* HippoCanvasBoxClass *canvas_box_class = HIPPO_CANVAS_BOX_CLASS(klass); */
+
+    object_class->set_property = hippo_canvas_chat_preview_set_property;
+    object_class->get_property = hippo_canvas_chat_preview_get_property;
+    object_class->constructor = hippo_canvas_chat_preview_constructor;
+
+    object_class->dispose = hippo_canvas_chat_preview_dispose;
+    object_class->finalize = hippo_canvas_chat_preview_finalize;
+
+    g_object_class_install_property(object_class,
+                                    PROP_CHAT_ROOM,
+                                    g_param_spec_object("chat-room",
+                                                        _("Chat Room"),
+                                                        _("Chat room to preview"),
+                                                        HIPPO_TYPE_CHAT_ROOM,
+                                                        G_PARAM_READABLE | G_PARAM_WRITABLE));
+    
+    g_object_class_install_property(object_class,
+                                    PROP_CHAT_ID,
+                                    g_param_spec_string("chat-id",
+                                                        _("Chat Room"),
+                                                        _("ID of chat room (for handling link clicking)"),
+                                                        NULL,
+                                                        G_PARAM_READABLE | G_PARAM_WRITABLE));
+    
+    g_object_class_install_property(object_class,
+                                    PROP_ACTIONS,
+                                    g_param_spec_object("actions",
+                                                        _("Actions"),
+                                                        _("UI actions object"),
+                                                        HIPPO_TYPE_ACTIONS,
+                                                        G_PARAM_READABLE | G_PARAM_WRITABLE));
+
+    g_object_class_install_property(object_class,
+                                    PROP_CHATTING_COUNT,
+                                    g_param_spec_int("chatting-count",
+                                                     _("Chatting count"),
+                                                     _("Number of users currently chatting"),
+                                                     0, G_MAXINT,
+                                                     0,
+                                                     G_PARAM_READABLE | G_PARAM_WRITABLE));
+    
+    g_object_class_install_property(object_class,
+                                    PROP_RECENT_MESSAGE,
+                                    g_param_spec_pointer("recent-message",
+                                                         _("Recent Message"),
+                                                         _("A recent message to consider displaying"),
+                                                         G_PARAM_WRITABLE));
+    
+}
+
+static void
+free_recent_message(void *data, void *ignored)
+{
+    HippoChatMessage *message = data;
+    hippo_chat_message_free(message);
+}
+
+static void
+clear_recent_messages(HippoCanvasChatPreview *chat_preview)
+{
+    g_slist_foreach(chat_preview->recent_messages,
+                    free_recent_message, NULL);
+    g_slist_free(chat_preview->recent_messages);
+    chat_preview->recent_messages = NULL;
+}
+
+static void
+hippo_canvas_chat_preview_dispose(GObject *object)
+{
+    HippoCanvasChatPreview *chat_preview = HIPPO_CANVAS_CHAT_PREVIEW(object);
+
+    hippo_canvas_chat_preview_set_room(chat_preview, NULL);
+    hippo_canvas_chat_preview_set_chat_id(chat_preview, NULL);
+    hippo_canvas_chat_preview_set_actions(chat_preview, NULL);
+    clear_recent_messages(chat_preview);
+    
+    G_OBJECT_CLASS(hippo_canvas_chat_preview_parent_class)->dispose(object);
+}
+
+static void
+hippo_canvas_chat_preview_finalize(GObject *object)
+{
+    /* HippoCanvasChatPreview *box = HIPPO_CANVAS_CHAT_PREVIEW(object); */
+
+    G_OBJECT_CLASS(hippo_canvas_chat_preview_parent_class)->finalize(object);
+}
+
+static void
+hippo_canvas_chat_preview_set_property(GObject         *object,
+                                       guint            prop_id,
+                                       const GValue    *value,
+                                       GParamSpec      *pspec)
+{
+    HippoCanvasChatPreview *chat_preview;
+
+    chat_preview = HIPPO_CANVAS_CHAT_PREVIEW(object);
+
+    switch (prop_id) {
+    case PROP_CHAT_ROOM:
+        {
+            HippoChatRoom *new_room = (HippoChatRoom*) g_value_get_object(value);
+            hippo_canvas_chat_preview_set_room(chat_preview, new_room);
+        }
+        break;
+    case PROP_CHAT_ID:
+        {
+            const char *new_id = g_value_get_string(value);
+            hippo_canvas_chat_preview_set_chat_id(chat_preview, new_id);
+        }
+        break;
+    case PROP_ACTIONS:
+        {
+            HippoActions *new_actions = (HippoActions*) g_value_get_object(value);
+            hippo_canvas_chat_preview_set_actions(chat_preview, new_actions);
+        }
+        break;
+    case PROP_RECENT_MESSAGE:
+        {
+            HippoChatMessage *message = (HippoChatMessage*) g_value_get_pointer(value);
+            hippo_canvas_chat_preview_add_recent_message(chat_preview, message);
+        }
+        break;
+    case PROP_CHATTING_COUNT:
+        hippo_canvas_chat_preview_set_chatting_count(chat_preview,
+                                                     g_value_get_int(value));
+        break;
+    default:
+        G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
+        break;
+    }
+}
+
+static void
+hippo_canvas_chat_preview_get_property(GObject         *object,
+                                       guint            prop_id,
+                                       GValue          *value,
+                                       GParamSpec      *pspec)
+{
+    HippoCanvasChatPreview *chat_preview;
+
+    chat_preview = HIPPO_CANVAS_CHAT_PREVIEW (object);
+
+    switch (prop_id) {
+    case PROP_CHAT_ROOM:
+        g_value_set_object(value, (GObject*) chat_preview->room);
+        break;
+    case PROP_CHAT_ID:
+        g_value_set_string(value, chat_preview->chat_id);
+        break;
+    case PROP_ACTIONS:
+        g_value_set_object(value, (GObject*) chat_preview->actions);
+        break;
+    case PROP_CHATTING_COUNT:
+        g_value_set_int(value, chat_preview->chatting_count);
+        break;
+    case PROP_RECENT_MESSAGE: /* it's not readable */
+    default:
+        G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
+        break;
+    }
+}
+
+static GObject*
+hippo_canvas_chat_preview_constructor (GType                  type,
+                                       guint                  n_construct_properties,
+                                       GObjectConstructParam *construct_properties)
+{
+    GObject *object = G_OBJECT_CLASS(hippo_canvas_chat_preview_parent_class)->constructor(type,
+                                                                                          n_construct_properties,
+                                                                                          construct_properties);
+    
+    HippoCanvasChatPreview *chat_preview = HIPPO_CANVAS_CHAT_PREVIEW(object);
     HippoCanvasBox *box;
     HippoCanvasItem *item;
     int i;
@@ -163,180 +356,15 @@ hippo_canvas_chat_preview_init(HippoCanvasChatPreview *chat_preview)
         hippo_canvas_box_append(box, item, 0);
         
         mp->entity_name = g_object_new(HIPPO_TYPE_CANVAS_ENTITY_NAME,
+                                       "actions", chat_preview->actions,
                                        NULL);
         hippo_canvas_box_append(box, mp->entity_name, 0);
     }
 
     update_chatting_count(chat_preview);
     update_recent_messages(chat_preview);
-}
 
-static HippoCanvasItemIface *item_parent_class;
-
-static void
-hippo_canvas_chat_preview_iface_init(HippoCanvasItemIface *item_class)
-{
-    item_parent_class = g_type_interface_peek_parent(item_class);
-
-    
-}
-
-static void
-hippo_canvas_chat_preview_class_init(HippoCanvasChatPreviewClass *klass)
-{
-    GObjectClass *object_class = G_OBJECT_CLASS (klass);
-    /* HippoCanvasBoxClass *canvas_box_class = HIPPO_CANVAS_BOX_CLASS(klass); */
-
-    object_class->set_property = hippo_canvas_chat_preview_set_property;
-    object_class->get_property = hippo_canvas_chat_preview_get_property;
-
-    object_class->dispose = hippo_canvas_chat_preview_dispose;
-    object_class->finalize = hippo_canvas_chat_preview_finalize;
-
-    g_object_class_install_property(object_class,
-                                    PROP_CHAT_ROOM,
-                                    g_param_spec_object("chat-room",
-                                                        _("Chat Room"),
-                                                        _("Chat room to preview"),
-                                                        HIPPO_TYPE_CHAT_ROOM,
-                                                        G_PARAM_READABLE | G_PARAM_WRITABLE));
-    
-    g_object_class_install_property(object_class,
-                                    PROP_ACTIONS,
-                                    g_param_spec_object("actions",
-                                                        _("Actions"),
-                                                        _("UI actions object"),
-                                                        HIPPO_TYPE_ACTIONS,
-                                                        G_PARAM_READABLE | G_PARAM_WRITABLE));
-
-    g_object_class_install_property(object_class,
-                                    PROP_CHATTING_COUNT,
-                                    g_param_spec_int("chatting-count",
-                                                     _("Chatting count"),
-                                                     _("Number of users currently chatting"),
-                                                     0, G_MAXINT,
-                                                     0,
-                                                     G_PARAM_READABLE | G_PARAM_WRITABLE));
-    
-    g_object_class_install_property(object_class,
-                                    PROP_RECENT_MESSAGE,
-                                    g_param_spec_pointer("recent-message",
-                                                         _("Recent Message"),
-                                                         _("A recent message to consider displaying"),
-                                                         G_PARAM_WRITABLE));
-    
-}
-
-static void
-free_recent_message(void *data, void *ignored)
-{
-    HippoChatMessage *message = data;
-    hippo_chat_message_free(message);
-}
-
-static void
-clear_recent_messages(HippoCanvasChatPreview *chat_preview)
-{
-    g_slist_foreach(chat_preview->recent_messages,
-                    free_recent_message, NULL);
-    g_slist_free(chat_preview->recent_messages);
-    chat_preview->recent_messages = NULL;
-}
-
-static void
-hippo_canvas_chat_preview_dispose(GObject *object)
-{
-    HippoCanvasChatPreview *chat_preview = HIPPO_CANVAS_CHAT_PREVIEW(object);
-
-    hippo_canvas_chat_preview_set_room(chat_preview, NULL);
-    hippo_canvas_chat_preview_set_actions(chat_preview, NULL);
-    clear_recent_messages(chat_preview);
-    
-    G_OBJECT_CLASS(hippo_canvas_chat_preview_parent_class)->dispose(object);
-}
-
-static void
-hippo_canvas_chat_preview_finalize(GObject *object)
-{
-    /* HippoCanvasChatPreview *box = HIPPO_CANVAS_CHAT_PREVIEW(object); */
-
-    G_OBJECT_CLASS(hippo_canvas_chat_preview_parent_class)->finalize(object);
-}
-
-HippoCanvasItem*
-hippo_canvas_chat_preview_new(void)
-{
-    HippoCanvasChatPreview *chat_preview;
-
-    chat_preview = g_object_new(HIPPO_TYPE_CANVAS_CHAT_PREVIEW, NULL);
-
-    return HIPPO_CANVAS_ITEM(chat_preview);
-}
-
-static void
-hippo_canvas_chat_preview_set_property(GObject         *object,
-                                       guint            prop_id,
-                                       const GValue    *value,
-                                       GParamSpec      *pspec)
-{
-    HippoCanvasChatPreview *chat_preview;
-
-    chat_preview = HIPPO_CANVAS_CHAT_PREVIEW(object);
-
-    switch (prop_id) {
-    case PROP_CHAT_ROOM:
-        {
-            HippoChatRoom *new_room = (HippoChatRoom*) g_value_get_object(value);
-            hippo_canvas_chat_preview_set_room(chat_preview, new_room);
-        }
-        break;
-    case PROP_ACTIONS:
-        {
-            HippoActions *new_actions = (HippoActions*) g_value_get_object(value);
-            hippo_canvas_chat_preview_set_actions(chat_preview, new_actions);
-        }
-        break;
-    case PROP_RECENT_MESSAGE:
-        {
-            HippoChatMessage *message = (HippoChatMessage*) g_value_get_pointer(value);
-            hippo_canvas_chat_preview_add_recent_message(chat_preview, message);
-        }
-        break;
-    case PROP_CHATTING_COUNT:
-        hippo_canvas_chat_preview_set_chatting_count(chat_preview,
-                                                     g_value_get_int(value));
-        break;
-    default:
-        G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
-        break;
-    }
-}
-
-static void
-hippo_canvas_chat_preview_get_property(GObject         *object,
-                                       guint            prop_id,
-                                       GValue          *value,
-                                       GParamSpec      *pspec)
-    {
-    HippoCanvasChatPreview *chat_preview;
-
-    chat_preview = HIPPO_CANVAS_CHAT_PREVIEW (object);
-
-    switch (prop_id) {
-    case PROP_CHAT_ROOM:
-        g_value_set_object(value, (GObject*) chat_preview->room);
-        break;
-    case PROP_ACTIONS:
-        g_value_set_object(value, (GObject*) chat_preview->actions);
-        break;
-    case PROP_CHATTING_COUNT:
-        g_value_set_int(value, chat_preview->chatting_count);
-        break;
-    case PROP_RECENT_MESSAGE: /* it's not readable */
-    default:
-        G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
-        break;
-    }
+    return object;
 }
 
 static void
@@ -425,7 +453,7 @@ hippo_canvas_chat_preview_set_room(HippoCanvasChatPreview *chat_preview,
 {
     if (room == chat_preview->room)
         return;
-    
+
     if (chat_preview->room) {
         g_signal_handlers_disconnect_by_func(G_OBJECT(chat_preview->room),
                                              G_CALLBACK(on_room_user_state_changed),
@@ -436,11 +464,16 @@ hippo_canvas_chat_preview_set_room(HippoCanvasChatPreview *chat_preview,
         
         g_object_unref(chat_preview->room);
         chat_preview->room = NULL;
+        
+        g_free(chat_preview->chat_id);
+        chat_preview->chat_id = NULL;
     }
     
     if (room) {
         GSList *messages;
         int count;
+
+        chat_preview->chat_id = g_strdup(hippo_chat_room_get_id(room));
         
         g_object_ref(room);
         chat_preview->room = room;
@@ -472,14 +505,32 @@ hippo_canvas_chat_preview_set_room(HippoCanvasChatPreview *chat_preview,
     }
     
     g_object_notify(G_OBJECT(chat_preview), "chat-room");
+    g_object_notify(G_OBJECT(chat_preview), "chat-id");
 }
 
+static void
+hippo_canvas_chat_preview_set_chat_id(HippoCanvasChatPreview *chat_preview,
+                                      const char             *id)
+{
+    if (id == chat_preview->chat_id ||
+        (id && chat_preview->chat_id && strcmp(id, chat_preview->chat_id) == 0))
+        return;
+
+    hippo_canvas_chat_preview_set_room(chat_preview, NULL);
+    if (chat_preview->chat_id) {
+        g_free(chat_preview->chat_id);
+        chat_preview->chat_id = NULL;
+    }
+
+    chat_preview->chat_id = g_strdup(id);
+
+    g_object_notify(G_OBJECT(chat_preview), "chat-id");
+}
+                                                              
 static void
 hippo_canvas_chat_preview_set_actions(HippoCanvasChatPreview  *chat_preview,
                                       HippoActions            *actions)
 {
-    int i;
-    
     if (actions == chat_preview->actions)
         return;
 
@@ -493,11 +544,6 @@ hippo_canvas_chat_preview_set_actions(HippoCanvasChatPreview  *chat_preview,
         chat_preview->actions = actions;
     }
 
-    for (i = 0; i < MAX_PREVIEWED; ++i) {
-        HippoMessagePreview *mp = &chat_preview->message_previews[i];
-        g_object_set(G_OBJECT(mp->entity_name), "actions", chat_preview->actions, NULL);
-    }
-        
     g_object_notify(G_OBJECT(chat_preview), "actions");
 }
 

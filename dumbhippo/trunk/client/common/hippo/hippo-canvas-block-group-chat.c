@@ -24,6 +24,10 @@ static void hippo_canvas_block_group_chat_get_property (GObject      *object,
                                                         guint         prop_id,
                                                         GValue       *value,
                                                         GParamSpec   *pspec);
+static GObject* hippo_canvas_block_group_chat_constructor (GType                  type,
+                                                           guint                  n_construct_properties,
+                                                           GObjectConstructParam *construct_params);
+
 
 /* Canvas block methods */
 static void hippo_canvas_block_group_chat_set_block       (HippoCanvasBlock *canvas_block,
@@ -66,25 +70,8 @@ static void
 hippo_canvas_block_group_chat_init(HippoCanvasBlockGroupChat *block_group_chat)
 {
     HippoCanvasBlock *block = HIPPO_CANVAS_BLOCK(block_group_chat);
-    HippoCanvasBox *box;
 
     block->required_type = HIPPO_BLOCK_TYPE_GROUP_CHAT;
-
-    hippo_canvas_block_set_heading(block, _("Group Chat: "));
-
-    box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
-                       NULL);
-
-    block_group_chat->chat_preview_parent = box;
-    block_group_chat->chat_preview = g_object_new(HIPPO_TYPE_CANVAS_CHAT_PREVIEW,
-                                                  NULL);
-    hippo_canvas_box_append(block_group_chat->chat_preview_parent,
-                            block_group_chat->chat_preview, 0);
-    hippo_canvas_box_set_child_visible(block_group_chat->chat_preview_parent,
-                                       block_group_chat->chat_preview,
-                                       FALSE); /* not expanded at first */
-
-    hippo_canvas_block_set_content(block, HIPPO_CANVAS_ITEM(box));
 }
 
 static HippoCanvasItemIface *item_parent_class;
@@ -103,6 +90,7 @@ hippo_canvas_block_group_chat_class_init(HippoCanvasBlockGroupChatClass *klass)
 
     object_class->set_property = hippo_canvas_block_group_chat_set_property;
     object_class->get_property = hippo_canvas_block_group_chat_get_property;
+    object_class->constructor = hippo_canvas_block_group_chat_constructor;
 
     object_class->dispose = hippo_canvas_block_group_chat_dispose;
     object_class->finalize = hippo_canvas_block_group_chat_finalize;
@@ -126,16 +114,6 @@ hippo_canvas_block_group_chat_finalize(GObject *object)
     /* HippoCanvasBlockGroupChat *block = HIPPO_CANVAS_BLOCK_GROUP_CHAT(object); */
 
     G_OBJECT_CLASS(hippo_canvas_block_group_chat_parent_class)->finalize(object);
-}
-
-HippoCanvasItem*
-hippo_canvas_block_group_chat_new(void)
-{
-    HippoCanvasBlockGroupChat *block_group_chat;
-
-    block_group_chat = g_object_new(HIPPO_TYPE_CANVAS_BLOCK_GROUP_CHAT, NULL);
-
-    return HIPPO_CANVAS_ITEM(block_group_chat);
 }
 
 static void
@@ -172,6 +150,39 @@ hippo_canvas_block_group_chat_get_property(GObject         *object,
     }
 }
 
+static GObject*
+hippo_canvas_block_group_chat_constructor (GType                  type,
+                                           guint                  n_construct_properties,
+                                           GObjectConstructParam *construct_properties)
+{
+    GObject *object = G_OBJECT_CLASS(hippo_canvas_block_group_chat_parent_class)->constructor(type,
+                                                                                              n_construct_properties,
+                                                                                              construct_properties);
+    
+    HippoCanvasBlock *block = HIPPO_CANVAS_BLOCK(object);
+    HippoCanvasBlockGroupChat *block_group_chat = HIPPO_CANVAS_BLOCK_GROUP_CHAT(object);
+    HippoCanvasBox *box;
+        
+    hippo_canvas_block_set_heading(block, _("Group Chat: "));
+
+    box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
+                       NULL);
+
+    block_group_chat->chat_preview_parent = box;
+    block_group_chat->chat_preview = g_object_new(HIPPO_TYPE_CANVAS_CHAT_PREVIEW,
+                                                  "actions", hippo_canvas_block_get_actions(block),
+                                                  NULL);
+    hippo_canvas_box_append(block_group_chat->chat_preview_parent,
+                            block_group_chat->chat_preview, 0);
+    hippo_canvas_box_set_child_visible(block_group_chat->chat_preview_parent,
+                                       block_group_chat->chat_preview,
+                                       FALSE); /* not expanded at first */
+
+    hippo_canvas_block_set_content(block, HIPPO_CANVAS_ITEM(box));
+    
+    return object;
+}
+
 static void
 update_chat_messages(HippoCanvasBlockGroupChat *canvas_group_chat)
 {
@@ -189,6 +200,7 @@ update_chat_messages(HippoCanvasBlockGroupChat *canvas_group_chat)
     if (group == NULL) {  /* should only happen transiently if at all */
         /* unset all the chat preview */
         g_object_set(G_OBJECT(canvas_group_chat->chat_preview),
+                     "chat-id", NULL,
                      "chat-room", NULL,
                      NULL);
         return;
@@ -207,6 +219,7 @@ update_chat_messages(HippoCanvasBlockGroupChat *canvas_group_chat)
 
     room = hippo_group_get_chat_room(group);
     g_object_set(G_OBJECT(canvas_group_chat->chat_preview),
+                 "chat-id", hippo_entity_get_guid(HIPPO_ENTITY(room)),
                  "chat-room", room,
                  NULL);
     
@@ -214,10 +227,6 @@ update_chat_messages(HippoCanvasBlockGroupChat *canvas_group_chat)
         /* We need to use recent messages summary from the block instead */
         GSList *messages;
 
-        g_object_set(G_OBJECT(canvas_group_chat->chat_preview),
-                     "chat-room", NULL,
-                     NULL);
-        
         g_object_get(G_OBJECT(block), "recent-messages", &messages, NULL);
         while (messages) {
             g_object_set(G_OBJECT(canvas_group_chat->chat_preview),

@@ -21,8 +21,6 @@ typedef struct _HippoCanvasBlockPostClass HippoCanvasBlockPostClass;
 
 GType            hippo_canvas_block_post_get_type    (void) G_GNUC_CONST;
 
-HippoCanvasItem* hippo_canvas_block_post_new         (void);
-
 G_END_DECLS
 
 #endif /* __HIPPO_CANVAS_BLOCK_POST_H__ */

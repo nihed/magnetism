@@ -44,6 +44,9 @@ struct _HippoPlatformClass {
                                        const char      *url,
                                        HippoHttpFunc    func,
                                        void            *data);
+
+    void      (* show_chat_window)   (HippoPlatform    *platform,
+                                      const char       *chat_id);
     
     /* Preferences */
     char*     (* get_message_server)  (HippoPlatform *platform);
@@ -72,6 +75,9 @@ const char*      hippo_platform_get_jabber_resource    (HippoPlatform *platform)
 void             hippo_platform_open_url               (HippoPlatform   *platform,
                                                         HippoBrowserKind browser,
                                                         const char      *url);
+
+void             hippo_platform_show_chat_window       (HippoPlatform   *platform,
+                                                        const char      *chat_id);
 
 void             hippo_platform_http_request           (HippoPlatform   *platform,
                                                         const char      *url,

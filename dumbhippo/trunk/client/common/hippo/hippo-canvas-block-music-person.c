@@ -22,6 +22,9 @@ static void hippo_canvas_block_music_person_get_property (GObject      *object,
                                                           guint         prop_id,
                                                           GValue       *value,
                                                           GParamSpec   *pspec);
+static GObject* hippo_canvas_block_music_person_constructor (GType                  type,
+                                                             guint                  n_construct_properties,
+                                                             GObjectConstructParam *construct_params);
 
 /* Canvas block methods */
 static void hippo_canvas_block_music_person_set_block       (HippoCanvasBlock *canvas_block,
@@ -67,17 +70,9 @@ static void
 hippo_canvas_block_music_person_init(HippoCanvasBlockMusicPerson *block_music_person)
 {
     HippoCanvasBlock *block = HIPPO_CANVAS_BLOCK(block_music_person);
-    HippoCanvasBox *box;
 
     block->required_type = HIPPO_BLOCK_TYPE_MUSIC_PERSON;
     block->expandable = FALSE; /* currently we have nothing to show on expand */
-    
-    hippo_canvas_block_set_heading(block, _("Music Radar: "));
-
-    box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
-                       NULL);
-
-    hippo_canvas_block_set_content(block, HIPPO_CANVAS_ITEM(box));
 }
 
 static HippoCanvasItemIface *item_parent_class;
@@ -96,6 +91,7 @@ hippo_canvas_block_music_person_class_init(HippoCanvasBlockMusicPersonClass *kla
 
     object_class->set_property = hippo_canvas_block_music_person_set_property;
     object_class->get_property = hippo_canvas_block_music_person_get_property;
+    object_class->constructor = hippo_canvas_block_music_person_constructor;
 
     object_class->dispose = hippo_canvas_block_music_person_dispose;
     object_class->finalize = hippo_canvas_block_music_person_finalize;
@@ -124,16 +120,6 @@ hippo_canvas_block_music_person_finalize(GObject *object)
     /* HippoCanvasBlockMusicPerson *block = HIPPO_CANVAS_BLOCK_MUSIC_PERSON(object); */
 
     G_OBJECT_CLASS(hippo_canvas_block_music_person_parent_class)->finalize(object);
-}
-
-HippoCanvasItem*
-hippo_canvas_block_music_person_new(void)
-{
-    HippoCanvasBlockMusicPerson *block_music_person;
-
-    block_music_person = g_object_new(HIPPO_TYPE_CANVAS_BLOCK_MUSIC_PERSON, NULL);
-
-    return HIPPO_CANVAS_ITEM(block_music_person);
 }
 
 static void
@@ -168,6 +154,27 @@ hippo_canvas_block_music_person_get_property(GObject         *object,
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
         break;
     }
+}
+
+static GObject*
+hippo_canvas_block_music_person_constructor (GType                  type,
+                                             guint                  n_construct_properties,
+                                             GObjectConstructParam *construct_properties)
+{
+    GObject *object = G_OBJECT_CLASS(hippo_canvas_block_music_person_parent_class)->constructor(type,
+                                                                                                n_construct_properties,
+                                                                                                construct_properties);
+    HippoCanvasBlock *block = HIPPO_CANVAS_BLOCK(object);
+    HippoCanvasBox *box;
+
+    hippo_canvas_block_set_heading(block, _("Music Radar: "));
+
+    box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
+                       NULL);
+
+    hippo_canvas_block_set_content(block, HIPPO_CANVAS_ITEM(box));
+
+    return object;
 }
 
 static void

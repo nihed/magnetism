@@ -21,8 +21,6 @@ typedef struct _HippoCanvasBlockGroupMemberClass HippoCanvasBlockGroupMemberClas
 
 GType            hippo_canvas_block_group_member_get_type    (void) G_GNUC_CONST;
 
-HippoCanvasItem* hippo_canvas_block_group_member_new         (void);
-
 G_END_DECLS
 
 #endif /* __HIPPO_CANVAS_BLOCK_GROUP_MEMBER_H__ */

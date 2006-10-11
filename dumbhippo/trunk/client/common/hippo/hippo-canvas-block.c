@@ -29,6 +29,9 @@ static void hippo_canvas_block_get_property (GObject      *object,
                                              guint         prop_id,
                                              GValue       *value,
                                              GParamSpec   *pspec);
+static GObject* hippo_canvas_block_constructor (GType                  type,
+                                                guint                  n_construct_properties,
+                                                GObjectConstructParam *construct_properties);
 
 
 /* Box methods */
@@ -87,13 +90,6 @@ on_title_activated(HippoCanvasLink *title_item,
 static void
 hippo_canvas_block_init(HippoCanvasBlock *block)
 {
-    HippoCanvasItem *item;
-    HippoCanvasBox *box;
-    HippoCanvasBox *box2;
-    HippoCanvasBox *box3;
-    HippoCanvasBox *left_column;
-    HippoCanvasBox *right_column;
-
     block->expandable = TRUE;
     
     HIPPO_CANVAS_BOX(block)->border_left = 1;
@@ -101,7 +97,239 @@ hippo_canvas_block_init(HippoCanvasBlock *block)
     HIPPO_CANVAS_BOX(block)->border_top = 1;
     HIPPO_CANVAS_BOX(block)->border_bottom = 1;
     HIPPO_CANVAS_BOX(block)->border_color_rgba = 0xffffffff;
+}
+
+static HippoCanvasItemIface *item_parent_class;
+
+static void
+hippo_canvas_block_iface_init(HippoCanvasItemIface *item_class)
+{
+    item_parent_class = g_type_interface_peek_parent(item_class);
+}
+
+static void
+hippo_canvas_block_class_init(HippoCanvasBlockClass *klass)
+{
+    GObjectClass *object_class = G_OBJECT_CLASS(klass);
+    HippoCanvasBoxClass *box_class = HIPPO_CANVAS_BOX_CLASS(klass);
+
+    object_class->set_property = hippo_canvas_block_set_property;
+    object_class->get_property = hippo_canvas_block_get_property;
+    object_class->constructor = hippo_canvas_block_constructor;
+
+    object_class->dispose = hippo_canvas_block_dispose;
+    object_class->finalize = hippo_canvas_block_finalize;
+
+    box_class->hovering_changed = hippo_canvas_block_hovering_changed;
     
+    klass->set_block = hippo_canvas_block_set_block_impl;
+    klass->expand = hippo_canvas_block_expand_impl;
+    klass->unexpand = hippo_canvas_block_unexpand_impl;
+    klass->hush = hippo_canvas_block_hush_impl;
+    klass->unhush = hippo_canvas_block_unhush_impl;
+    
+    g_object_class_install_property(object_class,
+                                    PROP_BLOCK,
+                                    g_param_spec_object("block",
+                                                        _("Block"),
+                                                        _("Block to display"),
+                                                        HIPPO_TYPE_BLOCK,
+                                                        G_PARAM_READABLE | G_PARAM_WRITABLE));
+
+    g_object_class_install_property(object_class,
+                                    PROP_ACTIONS,
+                                    g_param_spec_object("actions",
+                                                        _("Actions"),
+                                                        _("UI actions object"),
+                                                        HIPPO_TYPE_ACTIONS,
+                                                        G_PARAM_READABLE | G_PARAM_WRITABLE | G_PARAM_CONSTRUCT_ONLY)); 
+}
+
+static void
+update_time(HippoCanvasBlock *canvas_block)
+{
+    gint64 server_time_now;
+    char *when;
+
+    if (canvas_block->block == NULL)
+        return;
+
+    /* Since we do this every minute it's important to keep it relatively cheap,
+     * in particular we rely on setting the text on the canvas item to short-circuit
+     * and not create X server traffic if there's no change
+     */
+    
+    server_time_now = hippo_current_time_ms() + hippo_actions_get_server_time_offset(canvas_block->actions);
+    
+    when = hippo_format_time_ago(server_time_now / 1000, hippo_block_get_timestamp(canvas_block->block) / 1000);
+    
+    g_object_set(G_OBJECT(canvas_block->age_item),
+                 "text", when,
+                 NULL);
+    
+    g_free(when);
+}
+
+static void
+on_minute_ticked(HippoActions     *actions,
+                 HippoCanvasBlock *canvas_block)
+{
+    update_time(canvas_block);
+}
+
+static void
+set_actions(HippoCanvasBlock *block,
+            HippoActions     *actions)
+{
+    if (actions == block->actions)
+        return;
+    
+    if (block->actions) {
+        g_signal_handlers_disconnect_by_func(G_OBJECT(block->actions),
+                                             G_CALLBACK(on_minute_ticked),
+                                             block);
+        
+        g_object_unref(block->actions);
+        block->actions = NULL;
+    }
+
+    if (actions) {
+        block->actions = actions;
+        g_object_ref(block->actions);
+        g_signal_connect(G_OBJECT(block->actions),
+                         "minute-ticked",
+                         G_CALLBACK(on_minute_ticked),
+                         block);
+    }
+
+    g_object_notify(G_OBJECT(block), "actions");
+}
+
+static void
+hippo_canvas_block_dispose(GObject *object)
+{
+    HippoCanvasBlock *block = HIPPO_CANVAS_BLOCK(object);
+
+    hippo_canvas_block_set_block(block, NULL);
+
+    set_actions(block, NULL);
+    
+    block->age_item = NULL;
+
+    G_OBJECT_CLASS(hippo_canvas_block_parent_class)->dispose(object);
+}
+
+static void
+hippo_canvas_block_finalize(GObject *object)
+{
+    /* HippoCanvasBlock *block = HIPPO_CANVAS_BLOCK(object); */
+
+    G_OBJECT_CLASS(hippo_canvas_block_parent_class)->finalize(object);
+}
+
+HippoCanvasItem*
+hippo_canvas_block_new(HippoBlockType type,
+                       HippoActions  *actions)
+{
+    HippoCanvasBlock *block;
+    GType object_type;
+
+    object_type = HIPPO_TYPE_CANVAS_BLOCK;
+    switch (type) {
+    case HIPPO_BLOCK_TYPE_UNKNOWN:
+        object_type = HIPPO_TYPE_CANVAS_BLOCK;
+        break;
+    case HIPPO_BLOCK_TYPE_POST:
+        object_type = HIPPO_TYPE_CANVAS_BLOCK_POST;
+        break;
+    case HIPPO_BLOCK_TYPE_GROUP_CHAT:
+        object_type = HIPPO_TYPE_CANVAS_BLOCK_GROUP_CHAT;
+        break;
+    case HIPPO_BLOCK_TYPE_MUSIC_PERSON:
+        object_type = HIPPO_TYPE_CANVAS_BLOCK_MUSIC_PERSON;
+        break;
+    case HIPPO_BLOCK_TYPE_GROUP_MEMBER:
+        object_type = HIPPO_TYPE_CANVAS_BLOCK_GROUP_MEMBER;
+        break;
+    }
+
+    block = g_object_new(object_type,
+                         "actions", actions,
+                         NULL);
+
+    return HIPPO_CANVAS_ITEM(block);
+}
+
+static void
+hippo_canvas_block_set_property(GObject         *object,
+                                guint            prop_id,
+                                const GValue    *value,
+                                GParamSpec      *pspec)
+{
+    HippoCanvasBlock *block;
+
+    block = HIPPO_CANVAS_BLOCK(object);
+
+    switch (prop_id) {
+    case PROP_BLOCK:
+        {
+            HippoBlock *new_block = (HippoBlock*) g_value_get_object(value);
+            hippo_canvas_block_set_block(block, new_block);
+        }
+        break;
+    case PROP_ACTIONS:
+        {
+            HippoActions *new_actions = (HippoActions*) g_value_get_object(value);
+            set_actions(block, new_actions);
+        }
+        break;
+    default:
+        G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
+        break;
+    }
+}
+
+static void
+hippo_canvas_block_get_property(GObject         *object,
+                                guint            prop_id,
+                                GValue          *value,
+                                GParamSpec      *pspec)
+{
+    HippoCanvasBlock *block;
+
+    block = HIPPO_CANVAS_BLOCK (object);
+
+    switch (prop_id) {
+    case PROP_BLOCK:
+        g_value_set_object(value, (GObject*) block->block);
+        break;
+    case PROP_ACTIONS:
+        g_value_set_object(value, (GObject*) block->actions);
+        break;
+    default:
+        G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
+        break;
+    }
+}
+
+static GObject*
+hippo_canvas_block_constructor (GType                  type,
+                                guint                  n_construct_properties,
+                                GObjectConstructParam *construct_properties)
+{
+    GObject *object = G_OBJECT_CLASS(hippo_canvas_block_parent_class)->constructor(type,
+                                                                                   n_construct_properties,
+                                                                                   construct_properties);
+
+    HippoCanvasBlock *block = HIPPO_CANVAS_BLOCK(object);
+    
+    HippoCanvasItem *item;
+    HippoCanvasBox *box;
+    HippoCanvasBox *box2;
+    HippoCanvasBox *box3;
+    HippoCanvasBox *left_column;
+    HippoCanvasBox *right_column;
+
     box = g_object_new(HIPPO_TYPE_CANVAS_GRADIENT,
                        "orientation", HIPPO_ORIENTATION_HORIZONTAL,
                        "start-color", 0xf3f3f3ff,
@@ -201,6 +429,7 @@ hippo_canvas_block_init(HippoCanvasBlock *block)
     
     /* Create photo */
     block->headshot_item = g_object_new(HIPPO_TYPE_CANVAS_ENTITY_PHOTO,
+                                        "actions", block->actions,
                                         "scale-width", 30,
                                         "scale-height", 30,
                                         "xalign", HIPPO_ALIGNMENT_END,
@@ -225,6 +454,7 @@ hippo_canvas_block_init(HippoCanvasBlock *block)
     hippo_canvas_box_append(box2, HIPPO_CANVAS_ITEM(box3), HIPPO_PACK_EXPAND);
     
     block->name_item = g_object_new(HIPPO_TYPE_CANVAS_ENTITY_NAME,
+                                    "actions", block->actions,
                                     "xalign", HIPPO_ALIGNMENT_FILL,
                                     "yalign", HIPPO_ALIGNMENT_START,
                                     "border-right", 8,
@@ -261,225 +491,8 @@ hippo_canvas_block_init(HippoCanvasBlock *block)
     block->age_item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
                                    NULL);
     hippo_canvas_box_append(box3, block->age_item, HIPPO_PACK_END);
-}
 
-static HippoCanvasItemIface *item_parent_class;
-
-static void
-hippo_canvas_block_iface_init(HippoCanvasItemIface *item_class)
-{
-    item_parent_class = g_type_interface_peek_parent(item_class);
-}
-
-static void
-hippo_canvas_block_class_init(HippoCanvasBlockClass *klass)
-{
-    GObjectClass *object_class = G_OBJECT_CLASS(klass);
-    HippoCanvasBoxClass *box_class = HIPPO_CANVAS_BOX_CLASS(klass);
-
-    object_class->set_property = hippo_canvas_block_set_property;
-    object_class->get_property = hippo_canvas_block_get_property;
-
-    object_class->dispose = hippo_canvas_block_dispose;
-    object_class->finalize = hippo_canvas_block_finalize;
-
-    box_class->hovering_changed = hippo_canvas_block_hovering_changed;
-    
-    klass->set_block = hippo_canvas_block_set_block_impl;
-    klass->expand = hippo_canvas_block_expand_impl;
-    klass->unexpand = hippo_canvas_block_unexpand_impl;
-    klass->hush = hippo_canvas_block_hush_impl;
-    klass->unhush = hippo_canvas_block_unhush_impl;
-    
-    g_object_class_install_property(object_class,
-                                    PROP_BLOCK,
-                                    g_param_spec_object("block",
-                                                        _("Block"),
-                                                        _("Block to display"),
-                                                        HIPPO_TYPE_BLOCK,
-                                                        G_PARAM_READABLE | G_PARAM_WRITABLE));
-
-    g_object_class_install_property(object_class,
-                                    PROP_ACTIONS,
-                                    g_param_spec_object("actions",
-                                                        _("Actions"),
-                                                        _("UI actions object"),
-                                                        HIPPO_TYPE_ACTIONS,
-                                                        G_PARAM_READABLE | G_PARAM_WRITABLE)); 
-}
-
-static void
-update_time(HippoCanvasBlock *canvas_block)
-{
-    gint64 server_time_now;
-    char *when;
-
-    if (canvas_block->block == NULL)
-        return;
-
-    /* Since we do this every minute it's important to keep it relatively cheap,
-     * in particular we rely on setting the text on the canvas item to short-circuit
-     * and not create X server traffic if there's no change
-     */
-    
-    server_time_now = hippo_current_time_ms() + hippo_actions_get_server_time_offset(canvas_block->actions);
-    
-    when = hippo_format_time_ago(server_time_now / 1000, hippo_block_get_timestamp(canvas_block->block) / 1000);
-    
-    g_object_set(G_OBJECT(canvas_block->age_item),
-                 "text", when,
-                 NULL);
-    
-    g_free(when);
-}
-
-static void
-on_minute_ticked(HippoActions     *actions,
-                 HippoCanvasBlock *canvas_block)
-{
-    update_time(canvas_block);
-}
-
-static void
-set_actions(HippoCanvasBlock *block,
-            HippoActions     *actions)
-{
-    if (actions == block->actions)
-        return;
-    
-    if (block->actions) {
-        g_signal_handlers_disconnect_by_func(G_OBJECT(block->actions),
-                                             G_CALLBACK(on_minute_ticked),
-                                             block);
-        
-        g_object_unref(block->actions);
-        block->actions = NULL;
-    }
-
-    if (actions) {
-        block->actions = actions;
-        g_object_ref(block->actions);
-        g_signal_connect(G_OBJECT(block->actions),
-                         "minute-ticked",
-                         G_CALLBACK(on_minute_ticked),
-                         block);
-    }
-
-    g_object_set(G_OBJECT(block->headshot_item),
-                 "actions", actions,
-                 NULL);
-    g_object_set(G_OBJECT(block->name_item),
-                 "actions", actions,
-                 NULL);
-    
-    g_object_notify(G_OBJECT(block), "actions");
-}
-
-static void
-hippo_canvas_block_dispose(GObject *object)
-{
-    HippoCanvasBlock *block = HIPPO_CANVAS_BLOCK(object);
-
-    hippo_canvas_block_set_block(block, NULL);
-
-    set_actions(block, NULL);
-    
-    block->age_item = NULL;
-    
-    G_OBJECT_CLASS(hippo_canvas_block_parent_class)->dispose(object);
-}
-
-static void
-hippo_canvas_block_finalize(GObject *object)
-{
-    /* HippoCanvasBlock *block = HIPPO_CANVAS_BLOCK(object); */
-
-    G_OBJECT_CLASS(hippo_canvas_block_parent_class)->finalize(object);
-}
-
-HippoCanvasItem*
-hippo_canvas_block_new(HippoBlockType type,
-                       HippoActions  *actions)
-{
-    HippoCanvasBlock *block;
-    GType object_type;
-
-    object_type = HIPPO_TYPE_CANVAS_BLOCK;
-    switch (type) {
-    case HIPPO_BLOCK_TYPE_UNKNOWN:
-        object_type = HIPPO_TYPE_CANVAS_BLOCK;
-        break;
-    case HIPPO_BLOCK_TYPE_POST:
-        object_type = HIPPO_TYPE_CANVAS_BLOCK_POST;
-        break;
-    case HIPPO_BLOCK_TYPE_GROUP_CHAT:
-        object_type = HIPPO_TYPE_CANVAS_BLOCK_GROUP_CHAT;
-        break;
-    case HIPPO_BLOCK_TYPE_MUSIC_PERSON:
-        object_type = HIPPO_TYPE_CANVAS_BLOCK_MUSIC_PERSON;
-        break;
-    case HIPPO_BLOCK_TYPE_GROUP_MEMBER:
-        object_type = HIPPO_TYPE_CANVAS_BLOCK_GROUP_MEMBER;
-        break;
-    }
-
-    block = g_object_new(object_type,
-                         "actions", actions,
-                         NULL);
-
-    return HIPPO_CANVAS_ITEM(block);
-}
-
-static void
-hippo_canvas_block_set_property(GObject         *object,
-                                guint            prop_id,
-                                const GValue    *value,
-                                GParamSpec      *pspec)
-{
-    HippoCanvasBlock *block;
-
-    block = HIPPO_CANVAS_BLOCK(object);
-
-    switch (prop_id) {
-    case PROP_BLOCK:
-        {
-            HippoBlock *new_block = (HippoBlock*) g_value_get_object(value);
-            hippo_canvas_block_set_block(block, new_block);
-        }
-        break;
-    case PROP_ACTIONS:
-        {
-            HippoActions *new_actions = (HippoActions*) g_value_get_object(value);
-            set_actions(block, new_actions);
-        }
-        break;
-    default:
-        G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
-        break;
-    }
-}
-
-static void
-hippo_canvas_block_get_property(GObject         *object,
-                                guint            prop_id,
-                                GValue          *value,
-                                GParamSpec      *pspec)
-{
-    HippoCanvasBlock *block;
-
-    block = HIPPO_CANVAS_BLOCK (object);
-
-    switch (prop_id) {
-    case PROP_BLOCK:
-        g_value_set_object(value, (GObject*) block->block);
-        break;
-    case PROP_ACTIONS:
-        g_value_set_object(value, (GObject*) block->actions);
-        break;
-    default:
-        G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
-        break;
-    }
+    return object;
 }
 
 static gboolean

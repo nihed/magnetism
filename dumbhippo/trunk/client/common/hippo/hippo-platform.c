@@ -109,6 +109,16 @@ hippo_platform_http_request(HippoPlatform   *platform,
                                                      data);
 }
 
+void
+hippo_platform_show_chat_window(HippoPlatform   *platform,
+                                const char      *chat_id)
+{
+    g_return_if_fail(HIPPO_IS_PLATFORM(platform));
+
+    HIPPO_PLATFORM_GET_CLASS(platform)->show_chat_window(platform,
+                                                         chat_id);
+}
+
 char*
 hippo_platform_get_message_server(HippoPlatform *platform)
 {

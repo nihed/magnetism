@@ -26,8 +26,6 @@ typedef struct _HippoCanvasChatPreviewClass HippoCanvasChatPreviewClass;
 
 GType            hippo_canvas_chat_preview_get_type    (void) G_GNUC_CONST;
 
-HippoCanvasItem* hippo_canvas_chat_preview_new         (void);
-
 void             hippo_canvas_chat_preview_set_hushed  (HippoCanvasChatPreview *chat_preview,
                                                         gboolean                value);
 

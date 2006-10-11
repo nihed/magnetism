@@ -21,8 +21,6 @@ typedef struct _HippoCanvasEntityPhotoClass HippoCanvasEntityPhotoClass;
 
 GType            hippo_canvas_entity_photo_get_type    (void) G_GNUC_CONST;
 
-HippoCanvasItem* hippo_canvas_entity_photo_new         (void);
-
 G_END_DECLS
 
 #endif /* __HIPPO_CANVAS_ENTITY_PHOTO_H__ */

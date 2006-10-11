@@ -56,9 +56,6 @@ void          hippo_actions_add_to_faves            (HippoActions    *actions,
                                                      HippoBlock      *block);
 void          hippo_actions_join_chat_id            (HippoActions    *actions,
                                                      const char      *chat_id);
-void          hippo_actions_join_chat_room          (HippoActions    *actions,
-                                                     HippoChatRoom   *room);
-
 
 G_END_DECLS
 
