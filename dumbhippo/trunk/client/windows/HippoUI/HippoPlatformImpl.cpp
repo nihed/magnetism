@@ -44,6 +44,8 @@ static void         hippo_platform_impl_http_request        (HippoPlatform     *
                                                              const char        *url,
                                                              HippoHttpFunc      func,
                                                              void              *data);
+static void         hippo_platform_impl_show_chat_window    (HippoPlatform   *platform,
+                                                             const char      *chat_id);
 
 
 struct _HippoPlatformImpl {
@@ -73,6 +75,7 @@ hippo_platform_impl_iface_init(HippoPlatformClass *klass)
     klass->get_jabber_resource = hippo_platform_impl_get_jabber_resource;
     klass->open_url = hippo_platform_impl_open_url;
     klass->http_request = hippo_platform_impl_http_request;
+    klass->show_chat_window = hippo_platform_impl_show_chat_window;
     klass->get_message_server = hippo_platform_impl_get_message_server;
     klass->get_web_server = hippo_platform_impl_get_web_server;
     klass->get_signin = hippo_platform_impl_get_signin;
@@ -581,4 +584,17 @@ hippo_platform_impl_http_request(HippoPlatform     *platform,
     // here.
     HippoBSTR urlW = HippoBSTR::fromUTF8(url);
     impl->http->doGet(urlW, true /* use cache */, new HttpHandler(func, data));
+}
+
+static void
+hippo_platform_impl_show_chat_window(HippoPlatform   *platform,
+                                     const char      *chat_id)
+{
+    HippoPlatformImpl *impl = HIPPO_PLATFORM_IMPL(platform);
+    if (!impl->ui) {
+        g_warning("trying to hippo_platform_show_chat_window before ui set on platform object");
+        return;
+    }
+
+    impl->ui->ShowChatWindow(HippoBSTR::fromUTF8(chat_id));
 }

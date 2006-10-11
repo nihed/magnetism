@@ -32,6 +32,8 @@ static void         hippo_platform_impl_http_request        (HippoPlatform     *
                                                              const char        *url,
                                                              HippoHttpFunc      func,
                                                              void              *data);
+static void         hippo_platform_impl_show_chat_window    (HippoPlatform     *platform,
+                                                             const char        *chat_id);
 static char*        hippo_platform_impl_get_message_server  (HippoPlatform     *platform);
 static char*        hippo_platform_impl_get_web_server      (HippoPlatform     *platform);
 static gboolean     hippo_platform_impl_get_signin          (HippoPlatform     *platform);
@@ -69,6 +71,7 @@ hippo_platform_impl_iface_init(HippoPlatformClass *klass)
     klass->get_jabber_resource = hippo_platform_impl_get_jabber_resource;
     klass->open_url = hippo_platform_impl_open_url;
     klass->http_request = hippo_platform_impl_http_request;
+    klass->show_chat_window = hippo_platform_impl_show_chat_window;
     
     klass->get_message_server = hippo_platform_impl_get_message_server;
     klass->get_web_server = hippo_platform_impl_get_web_server;
@@ -298,6 +301,12 @@ hippo_platform_impl_http_request(HippoPlatform   *platform,
     hippo_http_get(url, func, data);
 }
 
+static void
+hippo_platform_impl_show_chat_window (HippoPlatform     *platform,
+                                      const char        *chat_id)
+{
+    hippo_app_join_chat(hippo_get_app(), chat_id);
+}
 
 static const char *
 get_debug_server(void)
