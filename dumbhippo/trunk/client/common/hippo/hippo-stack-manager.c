@@ -230,9 +230,6 @@ resort_block(StackManager *manager,
     
     if (link != NULL) {
         manager->blocks = g_slist_remove(manager->blocks, block);
-
-        hippo_canvas_stack_remove_block(HIPPO_CANVAS_STACK(manager->stack_item),
-                                        block);
     }
     
     manager->blocks = g_slist_insert_sorted(manager->blocks,
