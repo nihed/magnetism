@@ -417,6 +417,7 @@ manager_attach(StackManager    *manager,
     
     manager->browser_base_item = g_object_new(HIPPO_TYPE_CANVAS_BASE,
                                               "actions", manager->actions,
+                                              "notification-mode", FALSE,
                                               NULL);
     
     manager->browser_item = g_object_new(HIPPO_TYPE_CANVAS_STACK,
@@ -460,6 +461,7 @@ manager_attach(StackManager    *manager,
 
     manager->notification_base_item = g_object_new(HIPPO_TYPE_CANVAS_BASE,
                                                    "actions", manager->actions,
+                                                   "notification-mode", TRUE,
                                                    NULL);
     manager->notification_item = g_object_new(HIPPO_TYPE_CANVAS_STACK,
                                               "box-width", UI_WIDTH,

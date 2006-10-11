@@ -22,7 +22,9 @@ static void hippo_canvas_base_get_property (GObject      *object,
                                             guint         prop_id,
                                             GValue       *value,
                                             GParamSpec   *pspec);
-
+static GObject* hippo_canvas_base_constructor (GType                  type,
+                                               guint                  n_construct_properties,
+                                               GObjectConstructParam *construct_properties);
 
 /* Canvas item methods */
 static void     hippo_canvas_base_paint              (HippoCanvasItem *item,
@@ -32,6 +34,8 @@ static void     hippo_canvas_base_paint              (HippoCanvasItem *item,
 /* Callbacks */
 static void on_close_activated (HippoCanvasItem *button,
                                 HippoCanvasBase *base);
+static void on_expand_activated  (HippoCanvasItem  *button,
+                                  HippoCanvasBase *base);
 static void on_hush_activated  (HippoCanvasItem  *button,
                                 HippoCanvasBase *base);
 static void on_home_activated  (HippoCanvasItem  *button,
@@ -39,6 +43,7 @@ static void on_home_activated  (HippoCanvasItem  *button,
 
 struct _HippoCanvasBase {
     HippoCanvasBox box;
+    gboolean notification_mode;
     HippoActions *actions;
 };
 
@@ -56,7 +61,8 @@ enum {
 
 enum {
     PROP_0,
-    PROP_ACTIONS
+    PROP_ACTIONS,
+    PROP_NOTIFICATION_MODE
 };
 
 G_DEFINE_TYPE_WITH_CODE(HippoCanvasBase, hippo_canvas_base, HIPPO_TYPE_CANVAS_BOX,
@@ -65,91 +71,6 @@ G_DEFINE_TYPE_WITH_CODE(HippoCanvasBase, hippo_canvas_base, HIPPO_TYPE_CANVAS_BO
 static void
 hippo_canvas_base_init(HippoCanvasBase *base)
 {
-    HippoCanvasItem *item;
-    HippoCanvasBox *box;
-    
-    /* Create top bar */
-    
-    box = g_object_new(HIPPO_TYPE_CANVAS_IMAGE,
-                       "orientation", HIPPO_ORIENTATION_HORIZONTAL,
-                       "image-name", "bar_middle", /* tile this as background */
-                       NULL);
-    hippo_canvas_box_append(HIPPO_CANVAS_BOX(base),
-                            HIPPO_CANVAS_ITEM(box), 0);
-
-    item = g_object_new(HIPPO_TYPE_CANVAS_IMAGE,
-                        "image-name", "mugshotstacker",
-                        "xalign", HIPPO_ALIGNMENT_START,
-                        NULL);
-    hippo_canvas_box_append(box, item, 0);
-
-    item = g_object_new(HIPPO_TYPE_CANVAS_IMAGE_BUTTON,
-                        "normal-image-name", "bar_x",
-                        "prelight-image-name", "bar_x2",
-                        "xalign", HIPPO_ALIGNMENT_END,
-                        NULL);
-    hippo_canvas_box_append(box, item, HIPPO_PACK_END);
-
-    g_signal_connect(G_OBJECT(item), "activated", G_CALLBACK(on_close_activated), base);
-    
-    item = g_object_new(HIPPO_TYPE_CANVAS_IMAGE,
-                        "image-name", "bar_pipe",
-                        "xalign", HIPPO_ALIGNMENT_END,
-                        NULL);
-    hippo_canvas_box_append(box, item, HIPPO_PACK_END);
-    
-    item = g_object_new(HIPPO_TYPE_CANVAS_IMAGE_BUTTON,
-                        "normal-image-name", "hush",
-                        "prelight-image-name", "hush2",
-                        "xalign", HIPPO_ALIGNMENT_END,
-                        NULL);
-    hippo_canvas_box_append(box, item, HIPPO_PACK_END);
-
-    g_signal_connect(G_OBJECT(item), "activated", G_CALLBACK(on_hush_activated), base);
-    
-    item = g_object_new(HIPPO_TYPE_CANVAS_IMAGE,
-                        "image-name", "bar_pipe",
-                        "xalign", HIPPO_ALIGNMENT_END,
-                        NULL);
-    hippo_canvas_box_append(box, item, HIPPO_PACK_END);
-    
-    item = g_object_new(HIPPO_TYPE_CANVAS_IMAGE_BUTTON,
-                        "normal-image-name", "home",
-                        "prelight-image-name", "home2",
-                        "xalign", HIPPO_ALIGNMENT_END,
-                        NULL);
-    hippo_canvas_box_append(box, item, HIPPO_PACK_END);
-
-    g_signal_connect(G_OBJECT(item), "activated", G_CALLBACK(on_home_activated), base);
-    
-    item = g_object_new(HIPPO_TYPE_CANVAS_IMAGE,
-                        "image-name", "bar_pipe",
-                        "xalign", HIPPO_ALIGNMENT_END,
-                        NULL);
-    hippo_canvas_box_append(box, item, HIPPO_PACK_END);
-
-#if 0    
-    /* Create "find" area */
-    box = g_object_new(HIPPO_TYPE_CANVAS_GRADIENT,
-                       "orientation", HIPPO_ORIENTATION_HORIZONTAL,
-                       "start-color", 0xb47accff,
-                       "end-color", 0xa35abfff,
-                       NULL);
-    hippo_canvas_box_append(HIPPO_CANVAS_BOX(base),
-                            HIPPO_CANVAS_ITEM(box), HIPPO_PACK_EXPAND);
-
-    item = g_object_new(HIPPO_TYPE_CANVAS_IMAGE,
-                        "image-name", "find",
-                        "xalign", HIPPO_ALIGNMENT_START,
-                        NULL);
-    hippo_canvas_box_append(box, item, 0);
-
-    item = g_object_new(HIPPO_TYPE_CANVAS_IMAGE,
-                        "image-name", "search_x",
-                        "xalign", HIPPO_ALIGNMENT_START,
-                        NULL);
-    hippo_canvas_box_append(box, item, 0);
-#endif
 }
 
 static HippoCanvasItemIface *item_parent_class;
@@ -169,6 +90,7 @@ hippo_canvas_base_class_init(HippoCanvasBaseClass *klass)
 
     object_class->set_property = hippo_canvas_base_set_property;
     object_class->get_property = hippo_canvas_base_get_property;
+    object_class->constructor = hippo_canvas_base_constructor;
 
     object_class->finalize = hippo_canvas_base_finalize;
 
@@ -178,7 +100,14 @@ hippo_canvas_base_class_init(HippoCanvasBaseClass *klass)
                                                         _("Actions"),
                                                         _("UI actions object"),
                                                         HIPPO_TYPE_ACTIONS,
-                                                        G_PARAM_READABLE | G_PARAM_WRITABLE)); 
+                                                        G_PARAM_READABLE | G_PARAM_WRITABLE | G_PARAM_CONSTRUCT_ONLY)); 
+    g_object_class_install_property(object_class,
+                                    PROP_NOTIFICATION_MODE,
+                                    g_param_spec_boolean("notification-mode",
+                                                         _("Notification Node"),
+                                                         _("True if this the base item for the notification window"),
+                                                         FALSE,
+                                                         G_PARAM_READABLE | G_PARAM_WRITABLE | G_PARAM_CONSTRUCT_ONLY));
 }
 
 static void
@@ -237,6 +166,13 @@ hippo_canvas_base_set_property(GObject         *object,
             set_actions(base, new_actions);
         }
         break;
+    case PROP_NOTIFICATION_MODE:
+        {
+            gboolean notification_mode = g_value_get_boolean(value);
+            /* The property is construct-only, so we don't need to adapt the layout */
+            base->notification_mode = notification_mode;
+        }
+        break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
         break;
@@ -257,10 +193,127 @@ hippo_canvas_base_get_property(GObject         *object,
     case PROP_ACTIONS:
         g_value_set_object(value, (GObject*) base->actions);
         break;
+    case PROP_NOTIFICATION_MODE:
+        g_value_set_boolean(value, base->notification_mode);
+        break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
         break;
     }
+}
+
+static void
+add_pipe_bar(HippoCanvasBox *box,
+             HippoPackFlags  flags)
+{
+    HippoCanvasItem *item = g_object_new(HIPPO_TYPE_CANVAS_IMAGE,
+                                         "image-name", "bar_pipe",
+                                         "xalign", HIPPO_ALIGNMENT_END,
+                                         NULL);
+    hippo_canvas_box_append(box, item, flags);
+}
+
+static GObject*
+hippo_canvas_base_constructor (GType                  type,
+                               guint                  n_construct_properties,
+                               GObjectConstructParam *construct_properties)
+{
+    GObject *object = G_OBJECT_CLASS(hippo_canvas_base_parent_class)->constructor(type,
+                                                                                  n_construct_properties,
+                                                                                  construct_properties);
+    HippoCanvasBase *base = HIPPO_CANVAS_BASE(object);
+    HippoCanvasItem *item;
+    HippoCanvasBox *box;
+    
+    /* Create top bar */
+    
+    box = g_object_new(HIPPO_TYPE_CANVAS_IMAGE,
+                       "orientation", HIPPO_ORIENTATION_HORIZONTAL,
+                       "image-name", "bar_middle", /* tile this as background */
+                       NULL);
+    hippo_canvas_box_append(HIPPO_CANVAS_BOX(base),
+                            HIPPO_CANVAS_ITEM(box), 0);
+
+    if (base->notification_mode) {
+        item = g_object_new(HIPPO_TYPE_CANVAS_IMAGE_BUTTON,
+                            "normal-image-name", "arrow",
+                            "prelight-image-name", "arrow2",
+                            "xalign", HIPPO_ALIGNMENT_START,
+                            NULL);
+        hippo_canvas_box_append(box, item, 0);
+    
+        g_signal_connect(G_OBJECT(item), "activated", G_CALLBACK(on_expand_activated), base);
+
+        add_pipe_bar(box, 0);
+    }
+    
+    item = g_object_new(HIPPO_TYPE_CANVAS_IMAGE,
+                        "image-name", "mugshotstacker",
+                        "xalign", HIPPO_ALIGNMENT_START,
+                        NULL);
+    hippo_canvas_box_append(box, item, 0);
+
+    item = g_object_new(HIPPO_TYPE_CANVAS_IMAGE_BUTTON,
+                        "normal-image-name", "bar_x",
+                        "prelight-image-name", "bar_x2",
+                        "xalign", HIPPO_ALIGNMENT_END,
+                        NULL);
+    hippo_canvas_box_append(box, item, HIPPO_PACK_END);
+
+    g_signal_connect(G_OBJECT(item), "activated", G_CALLBACK(on_close_activated), base);
+
+    add_pipe_bar(box, HIPPO_PACK_END);
+
+    if (base->notification_mode) {
+        item = g_object_new(HIPPO_TYPE_CANVAS_IMAGE_BUTTON,
+                            "normal-image-name", "hush",
+                            "prelight-image-name", "hush2",
+                            "xalign", HIPPO_ALIGNMENT_END,
+                            NULL);
+        hippo_canvas_box_append(box, item, HIPPO_PACK_END);
+    
+        g_signal_connect(G_OBJECT(item), "activated", G_CALLBACK(on_hush_activated), base);
+
+        add_pipe_bar(box, HIPPO_PACK_END);
+    }
+    
+    if (!base->notification_mode) {
+        item = g_object_new(HIPPO_TYPE_CANVAS_IMAGE_BUTTON,
+                            "normal-image-name", "home",
+                            "prelight-image-name", "home2",
+                            "xalign", HIPPO_ALIGNMENT_END,
+                            NULL);
+        hippo_canvas_box_append(box, item, HIPPO_PACK_END);
+        
+        g_signal_connect(G_OBJECT(item), "activated", G_CALLBACK(on_home_activated), base);
+        
+        add_pipe_bar(box, HIPPO_PACK_END);
+    }
+        
+#if 0    
+    /* Create "find" area */
+    box = g_object_new(HIPPO_TYPE_CANVAS_GRADIENT,
+                       "orientation", HIPPO_ORIENTATION_HORIZONTAL,
+                       "start-color", 0xb47accff,
+                       "end-color", 0xa35abfff,
+                       NULL);
+    hippo_canvas_box_append(HIPPO_CANVAS_BOX(base),
+                            HIPPO_CANVAS_ITEM(box), HIPPO_PACK_EXPAND);
+
+    item = g_object_new(HIPPO_TYPE_CANVAS_IMAGE,
+                        "image-name", "find",
+                        "xalign", HIPPO_ALIGNMENT_START,
+                        NULL);
+    hippo_canvas_box_append(box, item, 0);
+
+    item = g_object_new(HIPPO_TYPE_CANVAS_IMAGE,
+                        "image-name", "search_x",
+                        "xalign", HIPPO_ALIGNMENT_START,
+                        NULL);
+    hippo_canvas_box_append(box, item, 0);
+#endif
+
+    return object;
 }
 
 static void
@@ -278,8 +331,20 @@ static void
 on_close_activated (HippoCanvasItem *button,
                     HippoCanvasBase *base)
 {
+    if (base->actions) {
+        if (base->notification_mode)
+            hippo_actions_close_notification(base->actions);
+        else
+            hippo_actions_close_browser(base->actions);
+    }
+}
+
+static void
+on_expand_activated(HippoCanvasItem  *button,
+                  HippoCanvasBase  *base)
+{
     if (base->actions)
-        hippo_actions_close_browser(base->actions);
+        hippo_actions_expand_notification(base->actions);
 }
 
 static void
@@ -287,7 +352,7 @@ on_hush_activated(HippoCanvasItem  *button,
                   HippoCanvasBase  *base)
 {
     if (base->actions)
-        hippo_actions_hush_stacker(base->actions);
+        hippo_actions_hush_notification(base->actions);
 }
 
 static void

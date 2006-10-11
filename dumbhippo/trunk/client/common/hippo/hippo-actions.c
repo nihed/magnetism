@@ -227,9 +227,16 @@ hippo_actions_close_notification(HippoActions    *actions)
 }
 
 void
-hippo_actions_hush_stacker(HippoActions    *actions)
+hippo_actions_hush_notification(HippoActions    *actions)
 {
     hippo_stack_manager_hush(actions->cache);
+}
+
+void
+hippo_actions_expand_notification(HippoActions *actions)
+{
+    hippo_stack_manager_close_notification(actions->cache);
+    hippo_stack_manager_toggle_browser(actions->cache);
 }
 
 void
