@@ -475,6 +475,9 @@ manager_attach(StackManager    *manager,
 
     manager->notification_window = hippo_platform_create_window(platform);
 
+    /* Omit the window from the task-list and (for platforms where there is one) the pager */
+    g_object_set(manager->notification_window, "app-window", FALSE, NULL);
+
     manager->notification_base_item = g_object_new(HIPPO_TYPE_CANVAS_BASE,
                                                    "actions", manager->actions,
                                                    "notification-mode", TRUE,

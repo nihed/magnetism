@@ -12,6 +12,7 @@ public:
         setClassName(L"HippoWindow");
         setClassStyle(CS_HREDRAW | CS_VREDRAW);
         setWindowStyle(WS_POPUP); // change to WS_OVERLAPPEDWINDOW if you want resize/maximize etc. controls
+        setAppWindow(true);
         //setWindowStyle(WS_OVERLAPPEDWINDOW);
         //setExtendedStyle(WS_EX_TOPMOST);
         setTitle(L"Mugshot");
@@ -24,7 +25,9 @@ public:
 
     void setContents(HippoCanvasItem *item);
     void setVisible(bool visible);
+    void setAppWindow(bool appWindow);
     void getSize(int *x_p, int *y_p);
+    void getAppWindow() { return appWindow_; }
     void beginMove();
     void beginResize(HippoSide side);
 
@@ -47,6 +50,7 @@ protected:
 
 private:
     GIdle resizeIdle_;
+    bool appWindow_;
 
     bool idleResize();
 
@@ -107,7 +111,8 @@ enum {
 /* static int signals[LAST_SIGNAL]; */
 
 enum {
-    PROP_0
+    PROP_0,
+    PROP_APP_WINDOW
 };
 
 G_DEFINE_TYPE_WITH_CODE(HippoWindowWin, hippo_window_win, G_TYPE_OBJECT,
@@ -132,6 +137,8 @@ hippo_window_win_class_init(HippoWindowWinClass *klass)
 
     object_class->set_property = hippo_window_win_set_property;
     object_class->get_property = hippo_window_win_get_property;
+
+    g_object_class_override_property(object_class, PROP_APP_WINDOW, "app-window");
 
     object_class->finalize = hippo_window_win_finalize;
 }
@@ -175,7 +182,9 @@ hippo_window_win_set_property(GObject         *object,
     win = HIPPO_WINDOW_WIN(object);
 
     switch (prop_id) {
-
+    case PROP_APP_WINDOW:
+        win->impl->setAppWindow(g_value_get_boolean(value));
+        break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
         break;
@@ -193,7 +202,9 @@ hippo_window_win_get_property(GObject         *object,
     win = HIPPO_WINDOW_WIN (object);
 
     switch (prop_id) {
-
+    case PROP_APP_WINDOW:
+        g_value_set_boolean(value, win->impl->getAppWindow() ? TRUE : FALSE);
+        break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
         break;
@@ -335,6 +346,14 @@ HippoWindowImpl::setVisible(bool visible)
     } else {
         hide();
     }
+}
+
+void
+HippoWindowImpl::setAppWindow(bool appWindow)
+{
+    appWindow_ = appWindow;
+
+    setExtendedStyle(appWindow ? WS_EX_APPWINDOW : 0);
 }
 
 void

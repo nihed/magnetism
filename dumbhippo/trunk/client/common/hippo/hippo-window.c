@@ -36,6 +36,13 @@ hippo_window_base_init(void *klass)
     if (!initialized) {
         /* create signals in here */
 
+        g_object_interface_install_property(klass,
+                                            g_param_spec_boolean("app-window",
+                                                                 _("App Window"),
+                                                                 _("Whether the window should appear in the tasklist"),
+                                                                 TRUE,
+                                                                 G_PARAM_READABLE | G_PARAM_WRITABLE));
+
         initialized = TRUE;
     }
 }

@@ -50,6 +50,7 @@ struct _HippoWindowGtk {
     HippoCanvasItem *contents;
     guint hresizable : 1;
     guint vresizable : 1;
+    guint app_window : 1;
 };
 
 struct _HippoWindowGtkClass {
@@ -65,7 +66,8 @@ enum {
 /* static int signals[LAST_SIGNAL]; */
 
 enum {
-    PROP_0
+    PROP_0,
+    PROP_APP_WINDOW
 };
 
 G_DEFINE_TYPE_WITH_CODE(HippoWindowGtk, hippo_window_gtk, GTK_TYPE_WINDOW,
@@ -93,11 +95,14 @@ hippo_window_gtk_class_init(HippoWindowGtkClass *klass)
 
     object_class->dispose = hippo_window_gtk_dispose;
     object_class->finalize = hippo_window_gtk_finalize;
+    
+    g_object_class_override_property(object_class, PROP_APP_WINDOW, "app-window");
 }
 
 static void
 hippo_window_gtk_init(HippoWindowGtk *window_gtk)
 {
+    window_gtk->app_window = TRUE;
     window_gtk->canvas = hippo_canvas_new();
 
     gtk_container_add(GTK_CONTAINER(window_gtk), window_gtk->canvas);
@@ -111,8 +116,6 @@ hippo_window_gtk_init(HippoWindowGtk *window_gtk)
     gtk_window_set_resizable(GTK_WINDOW(window_gtk), FALSE);
     gtk_window_set_decorated(GTK_WINDOW(window_gtk), FALSE);
     gtk_window_stick(GTK_WINDOW(window_gtk));
-    gtk_window_set_skip_taskbar_hint(GTK_WINDOW(window_gtk), TRUE);
-    gtk_window_set_skip_pager_hint(GTK_WINDOW(window_gtk), TRUE);
 
     window_gtk->hresizable = FALSE;
     window_gtk->vresizable = FALSE;
@@ -148,6 +151,15 @@ hippo_window_gtk_new(void)
 }
 
 static void
+set_app_window(HippoWindowGtk *window_gtk,
+               gboolean        app_window)
+{
+    window_gtk->app_window = app_window != FALSE;
+    gtk_window_set_skip_taskbar_hint(GTK_WINDOW(window_gtk), !app_window);
+    gtk_window_set_skip_pager_hint(GTK_WINDOW(window_gtk), !app_window);
+}
+
+static void
 hippo_window_gtk_set_property(GObject         *object,
                               guint            prop_id,
                               const GValue    *value,
@@ -158,7 +170,10 @@ hippo_window_gtk_set_property(GObject         *object,
     gtk = HIPPO_WINDOW_GTK(object);
 
     switch (prop_id) {
-
+    case PROP_APP_WINDOW:
+        set_app_window(gtk, g_value_get_boolean(value));
+        break;
+        
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
         break;
@@ -176,7 +191,10 @@ hippo_window_gtk_get_property(GObject         *object,
     gtk = HIPPO_WINDOW_GTK (object);
 
     switch (prop_id) {
-
+    case PROP_APP_WINDOW:
+        g_value_set_boolean(value, gtk->app_window);
+        break;
+        
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
         break;
