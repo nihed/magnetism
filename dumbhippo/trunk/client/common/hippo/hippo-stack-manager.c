@@ -11,25 +11,33 @@
 
 #define UI_WIDTH 500
 
+/* Length of time notifications are hushed after the user clicks "Hush" for the notification window */
+// #define HUSH_TIME (3600 * 1000)  /* One hour */
+#define HUSH_TIME (60 * 1000);
+
 typedef struct {
     int              refcount;
     HippoDataCache  *cache;
     HippoActions    *actions;
     HippoConnection *connection;
     GSList          *blocks;
-    HippoStackMode   mode;
 
-    HippoWindow     *stack_window;
-    HippoCanvasItem *stack_box;
-    HippoCanvasItem *stack_base_item;
-    HippoCanvasItem *stack_scroll_item;
-    HippoCanvasItem *stack_item;
-    HippoCanvasItem *stack_resize_grip;
+    gboolean         browser_open;
+    HippoWindow     *browser_window;
+    HippoCanvasItem *browser_box;
+    HippoCanvasItem *browser_base_item;
+    HippoCanvasItem *browser_scroll_item;
+    HippoCanvasItem *browser_item;
+    HippoCanvasItem *browser_resize_grip;
+
+    /* Only blocks stacked after this time are visible in the browser window */
+    gint64           hush_timestamp;
     
-    HippoWindow     *single_block_window;
-    HippoCanvasItem *single_block_box;
-    HippoCanvasItem *single_block_base_item;
-    HippoCanvasItem *single_block_item;
+    gboolean         notification_open;
+    HippoWindow     *notification_window;
+    HippoCanvasItem *notification_box;
+    HippoCanvasItem *notification_base_item;
+    HippoCanvasItem *notification_item;
 
     guint            base_on_bottom : 1;
     
@@ -127,15 +135,15 @@ update_for_screen_info (StackManager    *manager,
 
     if ((manager->base_on_bottom && is_north) ||
         (!manager->base_on_bottom && !is_north)) {
-        hippo_canvas_box_reverse(HIPPO_CANVAS_BOX(manager->stack_box));
-        hippo_canvas_box_reverse(HIPPO_CANVAS_BOX(manager->single_block_box));
+        hippo_canvas_box_reverse(HIPPO_CANVAS_BOX(manager->browser_box));
+        hippo_canvas_box_reverse(HIPPO_CANVAS_BOX(manager->notification_box));
         manager->base_on_bottom = !manager->base_on_bottom;
     }
     
-    position_alongside(manager->single_block_window, 3, icon,
+    position_alongside(manager->notification_window, 3, icon,
                        icon_orientation,
                        is_west, is_north, &base);
-    position_alongside(manager->stack_window, 3, icon,
+    position_alongside(manager->browser_window, 3, icon,
                        icon_orientation,
                        is_west, is_north, &base);
 }
@@ -156,68 +164,54 @@ update_window_positions(StackManager    *manager)
    update_for_screen_info(manager, &monitor, &icon, icon_orientation);
 }
 
-static void
-manager_set_mode(StackManager     *manager,
-                 HippoStackMode    mode)
+static gint64
+manager_get_newest_timestamp(StackManager *manager)
 {
-    if (mode == manager->mode)
-        return;
-
-    manager->mode = mode;
-    
-    switch (mode) {
-    case HIPPO_STACK_MODE_HIDDEN:
-        hippo_window_set_visible(manager->single_block_window, FALSE);
-        hippo_window_set_visible(manager->stack_window, FALSE);
-        break;
-    case HIPPO_STACK_MODE_SINGLE_BLOCK:
-        update_window_positions(manager);
-        hippo_window_set_visible(manager->single_block_window, TRUE);
-        hippo_window_set_visible(manager->stack_window, FALSE);
-        break;
-    case HIPPO_STACK_MODE_STACK:
-        update_window_positions(manager);
-        hippo_window_set_visible(manager->single_block_window, FALSE);
-        hippo_window_set_visible(manager->stack_window, TRUE);
-        break;
+    if (manager->blocks) {
+        HippoBlock *block = manager->blocks->data;
+        return hippo_block_get_sort_timestamp(block);
+    } else {
+        return 0;
     }
 }
 
 static void
-update_current_block(StackManager *manager)
+manager_set_hush_timestamp(StackManager *manager,
+                           gint64        hush_timestamp)
 {
-    HippoBlock *new_block = manager->blocks ? manager->blocks->data : NULL;
-    
-    if (manager->single_block_item) {
-        HippoBlock *old_block;
-        old_block = NULL;
-        g_object_get(G_OBJECT(manager->single_block_item),
-                     "block", &old_block,
-                     NULL);
-        if (old_block == new_block)
-            return;
+    manager->hush_timestamp = hush_timestamp;
+    hippo_canvas_stack_set_min_timestamp(HIPPO_CANVAS_STACK(manager->notification_item),
+                                         hush_timestamp);
+}
 
-        hippo_canvas_box_remove(HIPPO_CANVAS_BOX(manager->single_block_box),
-                                manager->single_block_item);
-        manager->single_block_item = NULL;
-    }
-    
-    if (new_block)
-        manager->single_block_item = hippo_canvas_block_new(hippo_block_get_block_type(new_block),
-                                                            manager->actions);
-    else
-        manager->single_block_item = hippo_canvas_block_new(HIPPO_BLOCK_TYPE_UNKNOWN,
-                                                            manager->actions);
+static void
+manager_set_notification_visible(StackManager *manager,
+                                 gboolean      visible)
+{
+    if (!visible == !manager->notification_open)
+        return;
 
-    hippo_canvas_block_set_block(HIPPO_CANVAS_BLOCK(manager->single_block_item),
-                                 new_block);
+    manager->notification_open = visible;
     
-    g_object_set(manager->single_block_item, "box-width", UI_WIDTH, NULL);
+    if (visible)
+        update_window_positions(manager);
 
-    hippo_canvas_box_append(HIPPO_CANVAS_BOX(manager->single_block_box),
-                            manager->single_block_item,
-                            manager->base_on_bottom ?
-                            0 : HIPPO_PACK_END);
+    hippo_window_set_visible(manager->notification_window, visible);
+}
+
+static void
+manager_set_browser_visible(StackManager *manager,
+                            gboolean      visible)
+{
+    if (!visible == !manager->browser_open)
+        return;
+    
+    manager->browser_open = visible;
+    
+    if (visible)
+        update_window_positions(manager);
+
+    hippo_window_set_visible(manager->browser_window, visible);
 }
 
 static void
@@ -236,10 +230,13 @@ resort_block(StackManager *manager,
                                             block,
                                             hippo_block_compare_newest_first);
 
-    hippo_canvas_stack_add_block(HIPPO_CANVAS_STACK(manager->stack_item),
+    hippo_canvas_stack_add_block(HIPPO_CANVAS_STACK(manager->browser_item),
                                  block);
-    
-    update_current_block(manager);
+    hippo_canvas_stack_add_block(HIPPO_CANVAS_STACK(manager->notification_item),
+                                 block);
+
+    if (!manager->browser_open && !hippo_canvas_box_is_empty(HIPPO_CANVAS_BOX(manager->notification_item)))
+        manager_set_notification_visible(manager, TRUE);
 }
 
 static void
@@ -286,7 +283,8 @@ remove_block(HippoBlock   *block,
         g_object_unref(block);
     }
 
-    update_current_block(manager);
+    hippo_canvas_stack_remove_block(HIPPO_CANVAS_STACK(manager->browser_item), block);
+    hippo_canvas_stack_remove_block(HIPPO_CANVAS_STACK(manager->notification_item), block);
 }
 
 static void
@@ -314,17 +312,17 @@ manager_disconnect(StackManager *manager)
             remove_block(manager->blocks->data, manager);
         }
 
-        g_object_unref(manager->single_block_window);
-        manager->single_block_window = NULL;
-        manager->single_block_base_item = NULL;
-        manager->single_block_item = NULL;
+        g_object_unref(manager->notification_window);
+        manager->notification_window = NULL;
+        manager->notification_base_item = NULL;
+        manager->notification_item = NULL;
         
-        g_object_unref(manager->stack_window);
-        manager->stack_window = NULL;
-        manager->stack_base_item = NULL;
-        manager->stack_scroll_item = NULL;
-        manager->stack_item = NULL;
-        manager->stack_resize_grip = NULL;
+        g_object_unref(manager->browser_window);
+        manager->browser_window = NULL;
+        manager->browser_base_item = NULL;
+        manager->browser_scroll_item = NULL;
+        manager->browser_item = NULL;
+        manager->browser_resize_grip = NULL;
 
         g_object_unref(manager->actions);
         manager->actions = NULL;
@@ -360,19 +358,18 @@ manager_new(void)
 
     manager = g_new0(StackManager, 1);
     manager->refcount = 1;
-    manager->mode = HIPPO_STACK_MODE_HIDDEN;
     
     return manager;
 }
 
 static gboolean
-on_stack_resize_grip_button_press(HippoCanvasItem *item,
-                                  HippoEvent      *event,
-                                  void            *data)
+on_browser_resize_grip_button_press(HippoCanvasItem *item,
+                                    HippoEvent      *event,
+                                    void            *data)
 {
     StackManager *manager = data;
 
-    hippo_window_begin_resize_drag(manager->stack_window,
+    hippo_window_begin_resize_drag(manager->browser_window,
                                    manager->base_on_bottom ?
                                    HIPPO_SIDE_TOP : HIPPO_SIDE_BOTTOM,
                                    event);
@@ -412,70 +409,75 @@ manager_attach(StackManager    *manager,
     g_object_set_data_full(G_OBJECT(cache), "stack-manager",
                            manager, (GFreeFunc) manager_unref);
 
-    manager->stack_window = hippo_platform_create_window(platform);
+    manager->browser_window = hippo_platform_create_window(platform);
 
-    hippo_window_set_resizable(manager->stack_window,
+    hippo_window_set_resizable(manager->browser_window,
                                HIPPO_ORIENTATION_VERTICAL,
                                TRUE);
     
-    manager->stack_base_item = g_object_new(HIPPO_TYPE_CANVAS_BASE,
-                                            "actions", manager->actions,
-                                            NULL);
+    manager->browser_base_item = g_object_new(HIPPO_TYPE_CANVAS_BASE,
+                                              "actions", manager->actions,
+                                              NULL);
     
-    manager->stack_item = g_object_new(HIPPO_TYPE_CANVAS_STACK,
-                                       "box-width", UI_WIDTH,
-                                       "actions", manager->actions,
-                                       NULL);
-    manager->stack_scroll_item = hippo_canvas_scrollbars_new();
-    hippo_canvas_scrollbars_set_enabled(HIPPO_CANVAS_SCROLLBARS(manager->stack_scroll_item),
+    manager->browser_item = g_object_new(HIPPO_TYPE_CANVAS_STACK,
+                                         "box-width", UI_WIDTH,
+                                         "actions", manager->actions,
+                                         NULL);
+    manager->browser_scroll_item = hippo_canvas_scrollbars_new();
+    hippo_canvas_scrollbars_set_enabled(HIPPO_CANVAS_SCROLLBARS(manager->browser_scroll_item),
                                         HIPPO_ORIENTATION_HORIZONTAL,
                                         FALSE);
     
-    manager->stack_resize_grip = g_object_new(HIPPO_TYPE_CANVAS_GRIP,
+    manager->browser_resize_grip = g_object_new(HIPPO_TYPE_CANVAS_GRIP,
                                               NULL);
 
-    g_signal_connect(G_OBJECT(manager->stack_resize_grip),
+    g_signal_connect(G_OBJECT(manager->browser_resize_grip),
                      "button-press-event",
-                     G_CALLBACK(on_stack_resize_grip_button_press),
+                     G_CALLBACK(on_browser_resize_grip_button_press),
                      manager);
     
-    manager->stack_box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
-                                      "orientation", HIPPO_ORIENTATION_VERTICAL,
-                                      "border", 1,
-                                      "border-color", 0x9c9c9cff,
-                                      NULL);
+    manager->browser_box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
+                                        "orientation", HIPPO_ORIENTATION_VERTICAL,
+                                        "border", 1,
+                                        "border-color", 0x9c9c9cff,
+                                        NULL);
     
-    hippo_canvas_box_append(HIPPO_CANVAS_BOX(manager->stack_box),
-                            manager->stack_base_item,
+    hippo_canvas_box_append(HIPPO_CANVAS_BOX(manager->browser_box),
+                            manager->browser_base_item,
                             0);
-    hippo_canvas_scrollbars_set_root(HIPPO_CANVAS_SCROLLBARS(manager->stack_scroll_item),
-                                     manager->stack_item);
-    hippo_canvas_box_append(HIPPO_CANVAS_BOX(manager->stack_box),
-                            manager->stack_scroll_item,
+    hippo_canvas_scrollbars_set_root(HIPPO_CANVAS_SCROLLBARS(manager->browser_scroll_item),
+                                     manager->browser_item);
+    hippo_canvas_box_append(HIPPO_CANVAS_BOX(manager->browser_box),
+                            manager->browser_scroll_item,
                             HIPPO_PACK_EXPAND);
-    hippo_canvas_box_append(HIPPO_CANVAS_BOX(manager->stack_box),
-                            manager->stack_resize_grip,
+    hippo_canvas_box_append(HIPPO_CANVAS_BOX(manager->browser_box),
+                            manager->browser_resize_grip,
                             0);
     
-    hippo_window_set_contents(manager->stack_window, manager->stack_box);
+    hippo_window_set_contents(manager->browser_window, manager->browser_box);
 
-    manager->single_block_window = hippo_platform_create_window(platform);
+    manager->notification_window = hippo_platform_create_window(platform);
 
-    manager->single_block_base_item = g_object_new(HIPPO_TYPE_CANVAS_BASE,
+    manager->notification_base_item = g_object_new(HIPPO_TYPE_CANVAS_BASE,
                                                    "actions", manager->actions,
                                                    NULL);
-    manager->single_block_item = NULL; /* filled in later */
+    manager->notification_item = g_object_new(HIPPO_TYPE_CANVAS_STACK,
+                                              "box-width", UI_WIDTH,
+                                              "actions", manager->actions,
+                                              NULL);
 
-    manager->single_block_box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
+    manager->notification_box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
                                              "orientation", HIPPO_ORIENTATION_VERTICAL,
                                              "border", 1,
                                              "border-color", 0x9c9c9cff,
                                              NULL);
 
-    hippo_canvas_box_append(HIPPO_CANVAS_BOX(manager->single_block_box),
-                            manager->single_block_base_item, 0);
+    hippo_canvas_box_append(HIPPO_CANVAS_BOX(manager->notification_box),
+                            manager->notification_base_item, 0);
+    hippo_canvas_box_append(HIPPO_CANVAS_BOX(manager->notification_box),
+                            manager->notification_item, 0);
 
-    hippo_window_set_contents(manager->single_block_window, manager->single_block_box);
+    hippo_window_set_contents(manager->notification_window, manager->notification_box);
     
     g_signal_connect(manager->cache, "block-added",
                      G_CALLBACK(on_block_added), manager);
@@ -525,30 +527,6 @@ hippo_stack_manager_set_idle (HippoDataCache  *cache,
     manager->idle = idle != FALSE;
 }
 
-void
-hippo_stack_manager_set_mode (HippoDataCache  *cache,
-                              HippoStackMode   mode)
-{
-    StackManager *manager;
-
-    manager = g_object_get_data(G_OBJECT(cache), "stack-manager");
-
-    manager_set_mode(manager, mode);
-}
-
-void
-hippo_stack_manager_toggle_stack(HippoDataCache  *cache)
-{
-    StackManager *manager;
-
-    manager = g_object_get_data(G_OBJECT(cache), "stack-manager");
-
-    if (manager->mode == HIPPO_STACK_MODE_STACK) {
-        manager_set_mode(manager, HIPPO_STACK_MODE_HIDDEN);
-    } else {
-        manager_set_mode(manager, HIPPO_STACK_MODE_STACK);
-    }
-}
 
 void
 hippo_stack_manager_set_screen_info(HippoDataCache  *cache,
@@ -561,4 +539,44 @@ hippo_stack_manager_set_screen_info(HippoDataCache  *cache,
     manager = g_object_get_data(G_OBJECT(cache), "stack-manager");
     
     update_for_screen_info(manager, monitor, icon, icon_orientation);
+}
+
+void
+hippo_stack_manager_hush(HippoDataCache  *cache)
+{
+    StackManager *manager = g_object_get_data(G_OBJECT(cache), "stack-manager");
+
+    HippoConnection *connection = hippo_data_cache_get_connection(cache);
+    gint64 hush_timestamp = hippo_current_time_ms() + hippo_connection_get_server_time_offset(connection) + HUSH_TIME;
+
+    manager_set_hush_timestamp(manager, hush_timestamp);
+    manager_set_notification_visible(manager, FALSE);
+}
+
+void
+hippo_stack_manager_close_notification(HippoDataCache  *cache)
+{
+    StackManager *manager = g_object_get_data(G_OBJECT(cache), "stack-manager");
+
+    manager_set_hush_timestamp(manager, manager_get_newest_timestamp(manager));
+    manager_set_notification_visible(manager, FALSE);
+}
+
+void
+hippo_stack_manager_close_browser(HippoDataCache  *cache)
+{
+    StackManager *manager = g_object_get_data(G_OBJECT(cache), "stack-manager");
+
+    manager_set_browser_visible(manager, FALSE);
+}
+
+void
+hippo_stack_manager_toggle_browser(HippoDataCache  *cache)
+{
+    StackManager *manager = g_object_get_data(G_OBJECT(cache), "stack-manager");
+
+    /* FIXME: Handle the case where the browser is visible but obscured or on
+     * a different desktop
+     */
+    manager_set_browser_visible(manager, !manager->browser_open);
 }

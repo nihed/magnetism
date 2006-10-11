@@ -24,6 +24,7 @@ struct _HippoCanvasStack {
     HippoCanvasBox box;
 
     HippoActions *actions;
+    gint64 min_timestamp;
 };
 
 struct _HippoCanvasStackClass {
@@ -228,6 +229,11 @@ hippo_canvas_stack_add_block(HippoCanvasStack *canvas_stack,
                              HippoBlock       *block)
 {
     HippoCanvasItem *item;
+    gint64 sort_timestamp;
+
+    sort_timestamp = hippo_block_get_sort_timestamp(block);
+    if (sort_timestamp < canvas_stack->min_timestamp)
+        return;
 
     item = find_block_item(canvas_stack, block);
 
@@ -261,4 +267,33 @@ hippo_canvas_stack_remove_block(HippoCanvasStack *canvas_stack,
                      NULL);
         hippo_canvas_box_remove(HIPPO_CANVAS_BOX(canvas_stack), item);
     }
+}
+
+static void
+foreach_update_min_timestamp(HippoCanvasItem *child,
+                             void            *data)
+{
+    HippoCanvasStack *stack = data;
+    HippoBlock *child_block = NULL;
+    gint64 sort_timestamp;
+
+    g_object_get(G_OBJECT(child), "block", &child_block, NULL);
+
+    sort_timestamp = hippo_block_get_sort_timestamp(child_block);
+    if (sort_timestamp < stack->min_timestamp)
+        hippo_canvas_box_remove(HIPPO_CANVAS_BOX(stack), child);
+}
+
+void
+hippo_canvas_stack_set_min_timestamp(HippoCanvasStack *canvas_stack,
+                                     gint64            min_timestamp)
+{
+    if (canvas_stack->min_timestamp == min_timestamp)
+        return;
+
+    canvas_stack->min_timestamp = min_timestamp;
+
+    hippo_canvas_box_foreach(HIPPO_CANVAS_BOX(canvas_stack),
+                             foreach_update_min_timestamp,
+                             canvas_stack);
 }

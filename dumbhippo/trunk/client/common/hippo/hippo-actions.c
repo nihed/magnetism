@@ -215,15 +215,21 @@ hippo_actions_get_server_time_offset (HippoActions *actions)
 }
 
 void
-hippo_actions_close_stacker(HippoActions    *actions)
+hippo_actions_close_browser(HippoActions    *actions)
 {
-    hippo_stack_manager_set_mode(actions->cache, HIPPO_STACK_MODE_HIDDEN);    
+    hippo_stack_manager_close_browser(actions->cache);
+}
+
+void
+hippo_actions_close_notification(HippoActions    *actions)
+{
+    hippo_stack_manager_close_notification(actions->cache);
 }
 
 void
 hippo_actions_hush_stacker(HippoActions    *actions)
 {
-    /* FIXME */
+    hippo_stack_manager_hush(actions->cache);
 }
 
 void

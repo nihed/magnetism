@@ -131,6 +131,7 @@ void             hippo_canvas_box_remove            (HippoCanvasBox             
                                                      HippoCanvasItem             *child);
 void             hippo_canvas_box_remove_all        (HippoCanvasBox              *box);
 GList*           hippo_canvas_box_get_children      (HippoCanvasBox              *box);
+gboolean         hippo_canvas_box_is_empty          (HippoCanvasBox              *box);
 void             hippo_canvas_box_foreach           (HippoCanvasBox              *box,
                                                      HippoCanvasForeachChildFunc  func,
                                                      void                        *data);

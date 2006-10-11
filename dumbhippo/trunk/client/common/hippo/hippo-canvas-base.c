@@ -279,7 +279,7 @@ on_close_activated (HippoCanvasItem *button,
                     HippoCanvasBase *base)
 {
     if (base->actions)
-        hippo_actions_close_stacker(base->actions);
+        hippo_actions_close_browser(base->actions);
 }
 
 static void

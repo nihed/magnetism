@@ -2373,6 +2373,14 @@ hippo_canvas_box_get_children(HippoCanvasBox *box)
     return children;
 }
 
+gboolean
+hippo_canvas_box_is_empty(HippoCanvasBox *box)
+{
+    g_return_val_if_fail(HIPPO_IS_CANVAS_BOX(box), FALSE);
+
+    return box->children == NULL;
+}
+
 HippoCanvasContext*
 hippo_canvas_box_get_context(HippoCanvasBox *box)
 {

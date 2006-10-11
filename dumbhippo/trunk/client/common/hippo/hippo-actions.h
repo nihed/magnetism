@@ -45,7 +45,8 @@ void          hippo_actions_load_entity_photo_async (HippoActions    *actions,
 HippoEntity*  hippo_actions_lookup_entity           (HippoActions    *actions,
                                                      const char      *entity_guid);
 gint64        hippo_actions_get_server_time_offset  (HippoActions    *actions);
-void          hippo_actions_close_stacker           (HippoActions    *actions);
+void          hippo_actions_close_browser           (HippoActions    *actions);
+void          hippo_actions_close_notification      (HippoActions    *actions);
 void          hippo_actions_hush_stacker            (HippoActions    *actions);
 void          hippo_actions_open_home_page          (HippoActions    *actions);
 void          hippo_actions_hush_block              (HippoActions    *actions,
