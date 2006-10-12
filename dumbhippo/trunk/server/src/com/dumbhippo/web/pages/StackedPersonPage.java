@@ -48,6 +48,13 @@ public class StackedPersonPage extends AbstractPersonPage {
 	public StackedPersonPage() {
 		stacker = WebEJBUtil.defaultLookup(Stacker.class);
 	}
+
+	public List<BlockView> getParticipantOnlyStack() {
+		if (getViewedUser() != null) {
+			return stacker.getStack(getSignin().getViewpoint(), getViewedUser(), 0, 0, 20, true);
+		}
+		return null;
+	}
 	
 	public List<BlockView> getStack() {
 		if (getViewedUser() != null) {

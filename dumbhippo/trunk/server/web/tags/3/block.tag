@@ -12,7 +12,7 @@
 	<tr><td align="left" width="20px"><img class="dh-stacker-block-icon" src="/images3/${buildStamp}/${block.iconName}"/></td>
 	<td align="left"><span class="dh-stacker-block-title">	
 		<span class="dh-stacker-block-title-type">
-		    <c:if test="{!empty block.personSource}">
+		    <c:if test="${!empty block.personSource}">
 		        <a href="/person?who=${block.personSource.viewPersonPageId}"><c:out value="${block.personSource.name}"/></a>'s
 		    </c:if>    
 		    <c:out value="${block.webTitleType}"/>:

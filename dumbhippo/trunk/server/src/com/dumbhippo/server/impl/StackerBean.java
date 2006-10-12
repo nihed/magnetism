@@ -231,7 +231,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	}
 	
 	
-	private void updateUserBlockDatas(Block block, Set<User> desiredUsers) {
+	private void updateUserBlockDatas(Block block, Set<User> desiredUsers, Guid participantId) {
 		Set<Guid> affectedGuids = new HashSet<Guid>();
 		
 		// be sure we have the right UserBlockData. This would be a lot saner to do
@@ -258,8 +258,10 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 			if (old != null) {
 				existing.remove(u);
 				old.setDeleted(false);
+				if (u.getGuid().equals(participantId))
+					old.setParticipatedTimestamp(block.getTimestamp());
 			} else {
-				UserBlockData data = new UserBlockData(u, block);
+				UserBlockData data = new UserBlockData(u, block, u.getGuid().equals(participantId));
 				em.persist(data);
 			}
 		}
@@ -267,6 +269,11 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		for (User u : existing.keySet()) {
 			UserBlockData old = existing.get(u);
 			old.setDeleted(true);
+			if (u.getGuid().equals(participantId)) {
+				logger.warn("The user {} who was no longer in a set of users who care was a participant for block {}",
+						    u, block);
+				old.setParticipatedTimestamp(block.getTimestamp());
+			}
 		}
 		
 		BlockEvent event = new BlockEvent(block.getGuid(), block.getTimestampAsLong(), affectedGuids);
@@ -364,7 +371,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		
 	}
 	
-	private void updateUserBlockDatas(Block block) {
+	private void updateUserBlockDatas(Block block, Guid participantId) {
 		Set<User> desiredUsers = null;
 		switch (block.getBlockType()) {
 		case POST:
@@ -390,7 +397,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		if (desiredUsers == null)
 			throw new IllegalStateException("Trying to update user block data for unhandled block type " + block.getBlockType());
 		
-		updateUserBlockDatas(block, desiredUsers);
+		updateUserBlockDatas(block, desiredUsers, participantId);
 	}
 	
 	private void stack(Block block, long activity) {
@@ -399,11 +406,11 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 
 		if (block.getTimestampAsLong() < activity) {
 			block.setTimestampAsLong(activity);
-			updateUserBlockDatas(block);
+			updateUserBlockDatas(block, null);
 		}
 	}
 	
-	private void stack(final BlockType type, final Guid data1, final Guid data2, final long data3, final long activity) {
+	private void stack(final BlockType type, final Guid data1, final Guid data2, final long data3, final long activity, final Guid participantId) {
 		if (disabled)
 			return;
 		
@@ -425,15 +432,15 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 				runner.runTaskRetryingOnConstraintViolation(new Runnable() {
 					public void run() {
 						Block attached = em.find(Block.class, block.getId());
-						updateUserBlockDatas(attached);
+						updateUserBlockDatas(attached, participantId);
 					}
 				});
 			}
 		});
 	}
 
-	private void stack(final BlockType type, final Guid data1, final Guid data2, final long activity) {
-        stack(type, data1, data2, -1, activity);
+	private void stack(final BlockType type, final Guid data1, final Guid data2, final long activity, final Guid participantId) {
+        stack(type, data1, data2, -1, activity, participantId);
 	}
 	
 	private void click(BlockType type, Guid data1, Guid data2, long data3, User user, long clickTime) {
@@ -499,12 +506,12 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	// don't create or suspend transaction; we will manage our own for now (FIXME) 
 	@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 	public void stackMusicPerson(final Guid userId, final long activity) {
-		stack(BlockType.MUSIC_PERSON, userId, null, activity);
+		stack(BlockType.MUSIC_PERSON, userId, null, activity, userId);
 	}
 	// don't create or suspend transaction; we will manage our own for now (FIXME) 
 	@TransactionAttribute(TransactionAttributeType.SUPPORTS)
-	public void stackGroupChat(final Guid groupId, final long activity) {
-		stack(BlockType.GROUP_CHAT, groupId, null, activity);
+	public void stackGroupChat(final Guid groupId, final long activity, final Guid participantId) {
+		stack(BlockType.GROUP_CHAT, groupId, null, activity, participantId);
 	}
 
 	// FIXME this is not right; it requires various rationalization with respect to PersonPostData, XMPP, and 
@@ -513,8 +520,8 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	
 	// don't create or suspend transaction; we will manage our own for now (FIXME)	 
 	@TransactionAttribute(TransactionAttributeType.SUPPORTS)
-	public void stackPost(final Guid postId, final long activity) {
-		stack(BlockType.POST, postId, null, activity);
+	public void stackPost(final Guid postId, final long activity, final Guid participantId) {
+		stack(BlockType.POST, postId, null, activity, participantId);
 	}
 	
 	// don't create or suspend transaction; we will manage our own for now (FIXME)
@@ -532,7 +539,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		case REMOVED:
 			AccountClaim a = member.getMember().getAccountClaim();
 			if (a != null) {
-				stack(BlockType.GROUP_MEMBER, member.getGroup().getGuid(), a.getOwner().getGuid(), activity);
+				stack(BlockType.GROUP_MEMBER, member.getGroup().getGuid(), a.getOwner().getGuid(), activity, a.getOwner().getGuid());
 			}
 			break;
 		case INVITED:
@@ -547,13 +554,18 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	// don't create or suspend transaction; we will manage our own for now (FIXME)
 	@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 	public void stackAccountUpdate(Guid userId, ExternalAccountType type, long activity) {
-		stack(BlockType.EXTERNAL_ACCOUNT_UPDATE, userId, null, type.ordinal(), activity);
+		stack(BlockType.EXTERNAL_ACCOUNT_UPDATE, userId, null, type.ordinal(), activity, userId);
+		// we always re-stack the external account update for self when we stack the external account update
+		// for others, because right now the external account update for self always includes whatever we 
+		// show to others; this allows us to filter out one or the other block type depending on 
+		// who is looking at the person's stacker
+		stack(BlockType.EXTERNAL_ACCOUNT_UPDATE_SELF, userId, null, type.ordinal(), activity, userId);
 	}
 
 	// don't create or suspend transaction; we will manage our own for now (FIXME)
 	@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 	public void stackAccountUpdateSelf(Guid userId, ExternalAccountType type, long activity) {
-		stack(BlockType.EXTERNAL_ACCOUNT_UPDATE_SELF, userId, null, type.ordinal(), activity);
+		stack(BlockType.EXTERNAL_ACCOUNT_UPDATE_SELF, userId, null, type.ordinal(), activity, userId);
 	}
 	
 	public void clickedPost(Post post, User user, long clickedTime) {
@@ -645,6 +657,10 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	}	
 	
 	public List<BlockView> getStack(Viewpoint viewpoint, User user, long lastTimestamp, int start, int count) {
+	    return getStack(viewpoint, user, lastTimestamp, start, count, false);
+    }
+
+	public List<BlockView> getStack(Viewpoint viewpoint, User user, long lastTimestamp, int start, int count, boolean participantOnly) {
 		// keep things sane (e.g. if count provided by an http method API caller)
 		if (count > 50)
 			count = 50;
@@ -664,12 +680,28 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		// return blocks in block order, and also pass to the client the ignoredDate.
 		// Then, require the client to sort it out. This may well be right anyway.
 		
-		Query q = em.createQuery("SELECT ubd FROM UserBlockData ubd, Block block WHERE " + 
-				" ubd.user = :user AND ubd.deleted = 0 AND ubd.block = block AND block.timestamp >= :timestamp ORDER BY block.timestamp DESC");
+		String participatedClause = "";
+		String orderBy = "block.timestamp";
+		if (participantOnly) {
+			participatedClause = " AND ubd.participatedTimestamp != NULL ";
+			orderBy = "ubd.participatedTimestamp";
+		}
+			
+		Query q = em.createQuery("SELECT ubd FROM UserBlockData ubd, Block block " + 
+				                 " WHERE ubd.user = :user AND ubd.deleted = 0 AND ubd.block = block " 
+				                 + participatedClause +
+				                 " AND block.timestamp >= :timestamp " +
+				                 " AND (block.data1 != :userGuid OR block.blockType != :type)  " +
+				                 " ORDER BY " + orderBy + " DESC");
 		q.setFirstResult(start);
 		q.setMaxResults(count);
 		q.setParameter("user", user);
 		q.setParameter("timestamp", new Date(lastTimestamp));
+		q.setParameter("userGuid", user.getGuid().toString());
+		if (viewpoint.isOfUser(user)) 
+			q.setParameter("type", BlockType.EXTERNAL_ACCOUNT_UPDATE);
+		else
+			q.setParameter("type", BlockType.EXTERNAL_ACCOUNT_UPDATE_SELF);
 		
 		// If there is 1 block at the lastTimestamp, then the caller for sure already has that
 		// block. If there are >1 blocks, then the caller might have only some of them.
@@ -1085,7 +1117,14 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 			UserBlockData ubd = byUser.get(user);
 			if (ubd == null) {
 				// create a deleted UserBlockData to store the info from the ppd
-				ubd = new UserBlockData(user, block);
+				// TODO: this will set the participation timestamps for the posters
+				// if we migrate the block again, but to make a complete migration, 
+				// we also need to add the code that goes over chat messages for 
+				// the post and updates participation timestamps for the chatters
+				long participatedTimestamp = -1;
+				if (user.equals(post.getPoster()))
+					participatedTimestamp = post.getPostDate().getTime();
+				ubd = new UserBlockData(user, block, participatedTimestamp);
 				ubd.setDeleted(true);
 				em.persist(ubd);
 			}
@@ -1153,9 +1192,12 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		getOrCreateBlock(BlockType.GROUP_CHAT, group.getGuid(), null);
 		List<GroupMessage> messages = groupSystem.getNewestGroupMessages(group, 1);
 		if (messages.isEmpty())
-			stackGroupChat(group.getGuid(), 0);
-		else
-			stackGroupChat(group.getGuid(), messages.get(0).getTimestamp().getTime());
+			stackGroupChat(group.getGuid(), 0, null);
+		else {
+			// TODO: what we really want to do here is go over all messages and re-stack them, so that
+			// all the users who participated in the chat get their participation timestamp set
+			stackGroupChat(group.getGuid(), messages.get(0).getTimestamp().getTime(), messages.get(0).getFromUser().getGuid());
+		}
 	}
 	
 	public void migrateGroupMembers(String groupId) {

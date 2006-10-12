@@ -153,7 +153,8 @@ public class FacebookTrackerBean implements FacebookTracker, SingletonServiceMBe
 		    	}
 		    }
 		}
-		if (newFacebookEventSelf || !facebookAccount.isSessionKeyValid()) {
+		// we will stack an external account update for self if we are stacking it for others
+		if ((newFacebookEventSelf && !newFacebookEventOthers) || !facebookAccount.isSessionKeyValid()) {
 			stacker.stackAccountUpdateSelf(facebookAccount.getExternalAccount().getAccount().getOwner().getGuid(), 
 					                       ExternalAccountType.FACEBOOK, updateTime);			
 		}
@@ -299,7 +300,8 @@ public class FacebookTrackerBean implements FacebookTracker, SingletonServiceMBe
 	}
 		
 	private void stackEvent(FacebookEventType eventType, FacebookAccount facebookAccount, long updateTime) {
-	    if (eventType.getDisplayToSelf()) {
+        // we will stack an external account update for self if we are stacking it for others
+	    if (eventType.getDisplayToSelf() && !eventType.getDisplayToOthers()) {
     	    stacker.stackAccountUpdateSelf(facebookAccount.getExternalAccount().getAccount().getOwner().getGuid(), 
                                             ExternalAccountType.FACEBOOK, updateTime);	
 	    }	    

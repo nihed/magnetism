@@ -37,8 +37,8 @@ public interface Stacker {
 	// These methods are used when activity should cause the timestamp of a block to change. 
 	// They are per block type. 
 	public void stackMusicPerson(Guid userId, long activity);
-	public void stackGroupChat(Guid groupId, long activity);
-	public void stackPost(Guid postId, long activity);
+	public void stackGroupChat(Guid groupId, long activity, Guid participantId);
+	public void stackPost(Guid postId, long activity, Guid participantId);
 	public void stackGroupMember(GroupMember member, long activity);
 	public void stackAccountUpdate(Guid userId, ExternalAccountType type, long activity);
 	public void stackAccountUpdateSelf(Guid userId, ExternalAccountType type, long activity);
@@ -47,7 +47,10 @@ public interface Stacker {
 	
 	public BlockView loadBlock(Viewpoint viewpoint, UserBlockData ubd) throws NotFoundException;
 	
+	// Returns a complete stack for the user.
 	public List<BlockView> getStack(Viewpoint viewpoint, User user, long lastTimestamp, int start, int count);
+	// Returns parts of the stack in which the user was an active participant if participantOnly is set to true.
+	public List<BlockView> getStack(Viewpoint viewpoint, User user, long lastTimestamp, int start, int count, boolean participantOnly);
 
 	public UserBlockData lookupUserBlockData(UserViewpoint viewpoint, Guid guid) throws NotFoundException;
 	

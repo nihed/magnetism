@@ -28,18 +28,25 @@ public class UserBlockData extends DBUnique {
 	private boolean ignored;
 	private long ignoredTimestamp;
 	private boolean deleted;
+	private long participatedTimestamp;
 	
 	public UserBlockData() {
 		this.clickedTimestamp = -1;
 		this.ignoredTimestamp = -1;
+		this.participatedTimestamp = -1;
 		this.ignored = false;
 		this.deleted = false;
 	}
 	
-	public UserBlockData(User user, Block block) {
+	public UserBlockData(User user, Block block, boolean isParticipant) {
+		this(user, block, isParticipant ? block.getTimestamp().getTime() : -1);
+	}
+
+	public UserBlockData(User user, Block block, long participatedTimestamp) {
 		this();
 		this.block = block;
-		this.user = user;
+		this.user = user; 
+	    setParticipatedTimestampAsLong(participatedTimestamp);
 	}
 	
 	@JoinColumn(nullable=false)
@@ -120,6 +127,29 @@ public class UserBlockData extends DBUnique {
 	public void setDeleted(boolean deleted) {
 		this.deleted = deleted;
 	}	
+	
+	@Column(nullable=true)
+	public Date getParticipatedTimestamp() {
+		return participatedTimestamp >= 0 ? new Date(participatedTimestamp) : null;
+	}
+
+	@Transient
+	public long getParticipatedTimestampAsLong() {
+		return participatedTimestamp;
+	}
+	
+	public void setParticipatedTimestamp(Date participatedTimestamp) {
+		this.participatedTimestamp = participatedTimestamp != null ? participatedTimestamp.getTime() : -1;
+	}
+	
+	public void setParticipatedTimestampAsLong(long participatedTimestamp) {
+		this.participatedTimestamp = participatedTimestamp;
+	}
+	
+	@Transient
+	public boolean getParticipated() {
+		return this.participatedTimestamp >= 0;
+	}
 	
 	@Override
 	public String toString() {

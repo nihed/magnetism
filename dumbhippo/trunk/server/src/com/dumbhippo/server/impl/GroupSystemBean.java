@@ -765,7 +765,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 
 		// this assumes Group has been committed in a previous transaction, which should 
 		// be safe since nobody can chat about a group until it's created
-		stacker.stackGroupChat(group.getGuid(), timestamp.getTime());
+		stacker.stackGroupChat(group.getGuid(), timestamp.getTime(), fromUser.getGuid());
 	}
 
 	public boolean canEditGroup(UserViewpoint viewpoint, Group group) {

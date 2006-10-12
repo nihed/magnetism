@@ -15,18 +15,8 @@ public enum FacebookEventType {
 		}
     },
     NEW_TAGGED_PHOTOS_EVENT,
-    NEW_ALBUM_EVENT {
-		@Override
-		public boolean getDisplayToSelf() {
-			return false;
-		}
-    },
-    MODIFIED_ALBUM_EVENT {
-		@Override
-		public boolean getDisplayToSelf() {
-			return false;
-		}
-    };
+    NEW_ALBUM_EVENT,
+    MODIFIED_ALBUM_EVENT;
     
     public boolean getDisplayToSelf() {
     	return true;
