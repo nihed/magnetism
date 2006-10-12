@@ -44,7 +44,7 @@
 				<c:if test="${signin.valid && !disableHomeLink}">
 				    <a href="/">Home</a> | 
 				</c:if>
-				<a href="/features">Features</a> | 
+				<a href="http://blog.mugshot.org/?page_id=213">Features</a> | 
 				<a href="http://blog.mugshot.org/">Blog</a> | 
 				<a href="/friends">People</a> | 
 				<a href="/groups">Groups</a> | 

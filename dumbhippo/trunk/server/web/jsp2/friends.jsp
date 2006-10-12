@@ -29,10 +29,7 @@
 
 <head>
 	<title><c:out value="${person.viewedPerson.name}"/>'s Friends</title>
-	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/site.css"/>
-	<c:if test="${webVersion == 3}">
-		<link rel="stylesheet" type="text/css" href="/css3/${buildStamp}/header.css"/>		
-	</c:if>
+	<dht:siteStyle/>
 	<dht:faviconIncludes/>
 	<dht:scriptIncludes/>
 </head>
