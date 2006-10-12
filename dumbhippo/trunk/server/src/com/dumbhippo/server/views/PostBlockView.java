@@ -29,7 +29,7 @@ public class PostBlockView extends BlockView {
 	
 	@Override
 	public String getWebTitleLink() {
-		return postView.getUrl();
+		return "/visit?post=" + postView.getIdentifyingGuid();
 	}
 	
 	public String getIconName() {
