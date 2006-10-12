@@ -117,10 +117,6 @@ hippo_window_gtk_init(HippoWindowGtk *window_gtk)
 
     gtk_widget_show(window_gtk->canvas);
 
-    /* not sure there's a sane type hint for our window. it's sort of a dock, but
-     * metacity forces !resizeable on docks, so that doesn't work. bad metacity.
-     */
-    /* gtk_window_set_type_hint(GTK_WINDOW(window_gtk), GDK_WINDOW_TYPE_HINT_DOCK); */
     gtk_window_set_resizable(GTK_WINDOW(window_gtk), FALSE);
     gtk_window_set_decorated(GTK_WINDOW(window_gtk), FALSE);
     gtk_window_stick(GTK_WINDOW(window_gtk));
@@ -162,9 +158,19 @@ static void
 set_app_window(HippoWindowGtk *window_gtk,
                gboolean        app_window)
 {
+    GtkWindow *window = GTK_WINDOW(window_gtk);
+    
     window_gtk->app_window = app_window != FALSE;
-    gtk_window_set_skip_taskbar_hint(GTK_WINDOW(window_gtk), !app_window);
-    gtk_window_set_skip_pager_hint(GTK_WINDOW(window_gtk), !app_window);
+    gtk_window_set_skip_taskbar_hint(window, !app_window);
+    gtk_window_set_skip_pager_hint(window, !app_window);
+    if (app_window) {
+        gtk_window_set_type_hint(window, GDK_WINDOW_TYPE_HINT_NORMAL);
+        gtk_window_set_accept_focus(window, TRUE);
+    } else {
+        /* NOTIFICATION is the right type hint, but that's new in GTK+-2.10 */
+        gtk_window_set_type_hint(window, GDK_WINDOW_TYPE_HINT_DOCK);
+        gtk_window_set_accept_focus(window, FALSE);
+    }
 }
 
 static void

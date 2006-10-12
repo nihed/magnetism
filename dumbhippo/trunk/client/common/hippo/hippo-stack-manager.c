@@ -14,6 +14,10 @@
 /* Length of time notifications are hushed after the user clicks "Hush" for the notification window */
 #define HUSH_TIME (3600 * 1000)  /* One hour */
 
+/* When the user is active (not idle), and the user isn't hovering over the notification window,
+ * it closes after this much time */
+#define NOTIFICATION_TIMEOUT_TIME (15 * 1000)  /* 15 seconds */
+
 /* Border around the entire window */
 #define WINDOW_BORDER 1
 
@@ -24,7 +28,6 @@ typedef struct {
     HippoConnection *connection;
     GSList          *blocks;
 
-    gboolean         browser_open;
     HippoWindow     *browser_window;
     HippoCanvasItem *browser_box;
     HippoCanvasItem *browser_base_item;
@@ -38,18 +41,26 @@ typedef struct {
     /* Only blocks stacked after this time are visible in the notification window */
     gint64           hush_timestamp;
     
-    gboolean         notification_open;
     HippoWindow     *notification_window;
     HippoCanvasItem *notification_box;
     HippoCanvasItem *notification_base_item;
     HippoCanvasItem *notification_item;
 
+    guint            notification_timeout; 
+
+    guint            browser_open : 1;
+    guint            notification_open : 1;
+
+    guint            notification_hovering : 1;
+    
     guint            base_on_bottom : 1;
     guint            user_resized_browser : 1;
     guint            user_moved_browser : 1;
     
     guint            idle : 1;
 } StackManager;
+
+static void manager_close_notification(StackManager *manager);
 
 static void
 position_alongside(HippoWindow     *window,
@@ -204,6 +215,34 @@ resize_browser_to_natural_size(StackManager *manager)
     hippo_window_set_size(manager->browser_window, natural_width, natural_height);
 }
 
+static gboolean
+on_notification_timeout(gpointer data)
+{
+    StackManager *manager = data;
+
+    manager->notification_timeout = 0;
+    manager_close_notification(manager);
+
+    return FALSE;
+}
+
+static void
+start_notification_timeout(StackManager *manager)
+{
+    if (!manager->notification_timeout)
+        manager->notification_timeout = g_timeout_add(NOTIFICATION_TIMEOUT_TIME,
+                                                      on_notification_timeout, manager);
+}
+
+static void
+stop_notification_timeout(StackManager *manager)
+{
+    if (manager->notification_timeout) {
+        g_source_remove(manager->notification_timeout);
+        manager->notification_timeout = 0;
+    }
+}
+
 static gint64
 manager_get_newest_timestamp(StackManager *manager)
 {
@@ -233,10 +272,34 @@ manager_set_notification_visible(StackManager *manager,
 
     manager->notification_open = visible;
     
-    if (visible)
+    if (visible) {
         update_window_positions(manager, FALSE, TRUE);
+        if (!manager->idle)
+            start_notification_timeout(manager);
+    } else {
+        manager->notification_hovering = FALSE;
+        stop_notification_timeout(manager);
+    }
 
     hippo_window_set_visible(manager->notification_window, visible);
+
+}
+
+static void
+manager_hush(StackManager *manager)
+{
+    HippoConnection *connection = hippo_data_cache_get_connection(manager->cache);
+    gint64 hush_timestamp = hippo_current_time_ms() + hippo_connection_get_server_time_offset(connection) + HUSH_TIME;
+
+    manager_set_hush_timestamp(manager, hush_timestamp);
+    manager_set_notification_visible(manager, FALSE);
+}
+
+static void
+manager_close_notification(StackManager *manager)
+{
+    manager_set_hush_timestamp(manager, manager_get_newest_timestamp(manager));
+    manager_set_notification_visible(manager, FALSE);
 }
 
 static void
@@ -358,6 +421,8 @@ static void
 manager_disconnect(StackManager *manager)
 {
     if (manager->cache) {
+        stop_notification_timeout(manager);
+        
         g_signal_handlers_disconnect_by_func(manager->cache,
                                              G_CALLBACK(on_block_added),
                                              manager);
@@ -445,6 +510,29 @@ on_browser_resize_grip_button_press(HippoCanvasItem *item,
     manager->user_resized_browser = TRUE;
 
     return TRUE;
+}
+
+static gboolean
+on_notification_motion_notify(HippoCanvasItem *item,
+                              HippoEvent      *event,
+                              void            *data)
+{
+    StackManager *manager = data;
+
+    if (!manager->notification_open)
+        return FALSE;
+    
+    if (event->u.motion.detail == HIPPO_MOTION_DETAIL_ENTER) {
+        manager->notification_hovering = TRUE;
+        stop_notification_timeout(manager);
+    } else if (event->u.motion.detail == HIPPO_MOTION_DETAIL_LEAVE) {
+        manager->notification_hovering = FALSE;
+        if (manager->notification_open && !manager->idle)
+            start_notification_timeout(manager);
+    }
+
+    /* Don't eat the event, just observe it */
+    return FALSE;
 }
 
 static void
@@ -554,6 +642,9 @@ manager_attach(StackManager    *manager,
                                              "border-color", 0x9c9c9cff,
                                              NULL);
 
+    g_signal_connect(manager->notification_box, "motion-notify-event",
+                     G_CALLBACK(on_notification_motion_notify), manager);
+
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(manager->notification_box),
                             manager->notification_base_item, 0);
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(manager->notification_box),
@@ -607,6 +698,11 @@ hippo_stack_manager_set_idle (HippoDataCache  *cache,
     manager = g_object_get_data(G_OBJECT(cache), "stack-manager");
 
     manager->idle = idle != FALSE;
+    
+    if (idle)
+        stop_notification_timeout(manager);
+    else if (manager->notification_open && !manager->notification_hovering)
+        start_notification_timeout(manager);
 }
 
 
@@ -629,11 +725,7 @@ hippo_stack_manager_hush(HippoDataCache  *cache)
 {
     StackManager *manager = g_object_get_data(G_OBJECT(cache), "stack-manager");
 
-    HippoConnection *connection = hippo_data_cache_get_connection(cache);
-    gint64 hush_timestamp = hippo_current_time_ms() + hippo_connection_get_server_time_offset(connection) + HUSH_TIME;
-
-    manager_set_hush_timestamp(manager, hush_timestamp);
-    manager_set_notification_visible(manager, FALSE);
+    manager_hush(manager);
 }
 
 void
@@ -641,8 +733,7 @@ hippo_stack_manager_close_notification(HippoDataCache  *cache)
 {
     StackManager *manager = g_object_get_data(G_OBJECT(cache), "stack-manager");
 
-    manager_set_hush_timestamp(manager, manager_get_newest_timestamp(manager));
-    manager_set_notification_visible(manager, FALSE);
+    manager_close_notification(manager);
 }
 
 void
