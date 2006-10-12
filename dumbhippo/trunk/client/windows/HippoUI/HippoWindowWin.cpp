@@ -1,4 +1,4 @@
-/* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
+/* -*- mode: C++; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 #include "stdafx-hippoui.h"
 #include "HippoWindowWin.h"
 #include "HippoAbstractControl.h"

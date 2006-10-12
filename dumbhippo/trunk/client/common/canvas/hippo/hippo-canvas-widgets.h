@@ -60,9 +60,16 @@ HIPPO_DECLARE_WIDGET_ITEM(entry, Entry)
 
 void hippo_canvas_scrollbars_set_root    (HippoCanvasScrollbars *scrollbars,
                                           HippoCanvasItem       *item);
-void hippo_canvas_scrollbars_set_enabled (HippoCanvasScrollbars *scrollbars,
-                                          HippoOrientation       orientation,
-                                          gboolean               value);
+
+typedef enum {
+    HIPPO_SCROLLBAR_NEVER,
+    HIPPO_SCROLLBAR_AUTOMATIC,
+    HIPPO_SCROLLBAR_ALWAYS
+} HippoScrollbarPolicy;
+
+void hippo_canvas_scrollbars_set_policy (HippoCanvasScrollbars *scrollbars,
+                                         HippoOrientation       orientation,
+                                         HippoScrollbarPolicy   policy);
 
 
 G_END_DECLS

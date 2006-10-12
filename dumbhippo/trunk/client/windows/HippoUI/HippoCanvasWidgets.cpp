@@ -1,3 +1,4 @@
+/* -*- mode: C++; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 /* HippoCanvasWidgets.cpp: Windows implementation of hippo/hippo-canvas-widgets.h
  *
  * Copyright Red Hat, Inc. 2006
@@ -34,8 +35,8 @@ hippo_canvas_scrollbars_new(void)
     HippoCanvasItem *item;
 
     canvas = new HippoCanvas();
-    canvas->setScrollable(HIPPO_ORIENTATION_VERTICAL, true);
-    canvas->setScrollable(HIPPO_ORIENTATION_HORIZONTAL, true);
+    canvas->setScrollbarPolicy(HIPPO_ORIENTATION_VERTICAL, HIPPO_SCROLLLBAR_AUTOMATIC);
+    canvas->setScrollable(HIPPO_ORIENTATION_HORIZONTAL, HIPPO_SCROLLLBAR_AUTOMATIC);
 
     item = HIPPO_CANVAS_ITEM(g_object_new(HIPPO_TYPE_CANVAS_SCROLLBARS,
                             "control", canvas,
@@ -61,21 +62,20 @@ hippo_canvas_scrollbars_set_root(HippoCanvasScrollbars *scrollbars,
 }
 
 void
-hippo_canvas_scrollbars_set_enabled (HippoCanvasScrollbars *scrollbars,
-                                     HippoOrientation       orientation,
-                                     gboolean               value)
+hippo_canvas_scrollbars_set_policy (HippoCanvasScrollbars *scrollbars,
+                                    HippoOrientation       orientation,
+                                    HippoScrollbarPolicy   policy)
 {
     HippoCanvas *control;
 
     g_return_if_fail(HIPPO_IS_CANVAS_SCROLLBARS(scrollbars));
-
-    g_return_if_fail(HIPPO_IS_CANVAS_SCROLLBARS(scrollbars));
     
     control = NULL;
-    g_object_get(G_OBJECT(scrollbars), "control", &control,
+    g_object_get(G_OBJECT(scrollbars),
+                 "control", &control,
                  NULL);
     g_assert(control != NULL);
-    control->setScrollable(orientation, value != FALSE);
+    control->setScrollbarPolicy(orientation, policy);
 }
 
 HippoCanvasItem*

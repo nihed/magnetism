@@ -441,9 +441,12 @@ manager_attach(StackManager    *manager,
                                          "actions", manager->actions,
                                          NULL);
     manager->browser_scroll_item = hippo_canvas_scrollbars_new();
-    hippo_canvas_scrollbars_set_enabled(HIPPO_CANVAS_SCROLLBARS(manager->browser_scroll_item),
-                                        HIPPO_ORIENTATION_HORIZONTAL,
-                                        FALSE);
+    hippo_canvas_scrollbars_set_policy(HIPPO_CANVAS_SCROLLBARS(manager->browser_scroll_item),
+                                       HIPPO_ORIENTATION_HORIZONTAL,
+                                       HIPPO_SCROLLBAR_NEVER);
+    hippo_canvas_scrollbars_set_policy(HIPPO_CANVAS_SCROLLBARS(manager->browser_scroll_item),
+                                       HIPPO_ORIENTATION_VERTICAL,
+                                       HIPPO_SCROLLBAR_ALWAYS);
     
     manager->browser_resize_grip = g_object_new(HIPPO_TYPE_CANVAS_GRIP,
                                               NULL);

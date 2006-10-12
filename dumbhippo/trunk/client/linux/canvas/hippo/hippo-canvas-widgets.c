@@ -76,11 +76,13 @@ hippo_canvas_scrollbars_set_root(HippoCanvasScrollbars *scrollbars,
 }
 
 void
-hippo_canvas_scrollbars_set_enabled (HippoCanvasScrollbars *scrollbars,
-                                     HippoOrientation       orientation,
-                                     gboolean               value)
+hippo_canvas_scrollbars_set_policy (HippoCanvasScrollbars *scrollbars,
+                                    HippoOrientation       orientation,
+                                    HippoScrollbarPolicy   policy)
 {
     GtkWidget *sw;
+    GtkPolicyType gtk_policy;
+    const char *property;
 
     g_return_if_fail(HIPPO_IS_CANVAS_SCROLLBARS(scrollbars));
     
@@ -88,10 +90,24 @@ hippo_canvas_scrollbars_set_enabled (HippoCanvasScrollbars *scrollbars,
     g_object_get(G_OBJECT(scrollbars), "widget", &sw, NULL);
     g_return_if_fail(GTK_IS_SCROLLED_WINDOW(sw));
 
+    switch (policy) {
+    default:
+        g_critical("Bad value for HippoScrollbarPolicy");
+    case HIPPO_SCROLLBAR_NEVER:
+        gtk_policy = GTK_POLICY_NEVER;
+        break;
+    case HIPPO_SCROLLBAR_AUTOMATIC:
+        gtk_policy = GTK_POLICY_AUTOMATIC;
+        break;
+    case HIPPO_SCROLLBAR_ALWAYS:
+        gtk_policy = GTK_POLICY_ALWAYS;
+        break;
+    }
+
+    property = orientation == HIPPO_ORIENTATION_VERTICAL ? "vscrollbar-policy" : "hscrollbar-policy";
+
     g_object_set(G_OBJECT(sw),
-                 orientation == HIPPO_ORIENTATION_VERTICAL ?
-                 "vscrollbar-policy" : "hscrollbar-policy",
-                 value ? GTK_POLICY_AUTOMATIC : GTK_POLICY_NEVER,
+                 property, gtk_policy,
                  NULL);
 }
 
