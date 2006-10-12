@@ -42,6 +42,18 @@ hippo_window_base_init(void *klass)
                                                                  _("Whether the window should appear in the tasklist"),
                                                                  TRUE,
                                                                  G_PARAM_READABLE | G_PARAM_WRITABLE));
+        g_object_interface_install_property(klass,
+                                            g_param_spec_boolean("active",
+                                                                 _("Active"),
+                                                                 _("Whether the window is the currently active window"),
+                                                                 FALSE,
+                                                                 G_PARAM_READABLE));
+        g_object_interface_install_property(klass,
+                                            g_param_spec_boolean("onscreen",
+                                                                 _("Onscreen"),
+                                                                 _("Whether any portion of the window is visible to the user"),
+                                                                 FALSE,
+                                                                 G_PARAM_READABLE));
 
         initialized = TRUE;
     }
@@ -133,4 +145,12 @@ hippo_window_begin_resize_drag (HippoWindow      *window,
     g_return_if_fail(HIPPO_IS_WINDOW(window));
 
     HIPPO_WINDOW_GET_CLASS(window)->begin_resize_drag(window, side, event);
+}
+
+void
+hippo_window_present (HippoWindow *window)
+{
+    g_return_if_fail(HIPPO_IS_WINDOW(window));
+
+    HIPPO_WINDOW_GET_CLASS(window)->present(window);
 }

@@ -45,7 +45,7 @@ struct _HippoWindowClass {
     void (* begin_resize_drag) (HippoWindow      *window,
                                 HippoSide         side,
                                 HippoEvent       *event);
-    
+    void (* present)           (HippoWindow      *window);
 };
 
 GType            hippo_window_get_type               (void) G_GNUC_CONST;
@@ -75,6 +75,7 @@ void hippo_window_begin_move_drag   (HippoWindow      *window,
 void hippo_window_begin_resize_drag (HippoWindow      *window,
                                      HippoSide         side,
                                      HippoEvent       *event);
+void hippo_window_present           (HippoWindow      *window);
 
 G_END_DECLS
 

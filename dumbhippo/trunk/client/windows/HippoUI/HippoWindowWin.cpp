@@ -29,8 +29,11 @@ public:
     void getPosition(int *x_p, int *y_p);
     void getSize(int *width_p, int *height_p);
     void getAppWindow() { return appWindow_; }
+    void getActive();
+    void getOnscreen();
     void beginMove();
     void beginResize(HippoSide side);
+    void present();
 
 protected:
     
@@ -97,6 +100,7 @@ static void     hippo_window_win_set_resizable      (HippoWindow     *window,
 static void     hippo_window_win_begin_resize_drag  (HippoWindow     *window,
                                                      HippoSide        side,
                                                      HippoEvent      *event);
+static void     hippo_window_win_present            (HippoWindow     *window);
 
 /* internal stuff */
 
@@ -119,7 +123,9 @@ enum {
 
 enum {
     PROP_0,
-    PROP_APP_WINDOW
+    PROP_APP_WINDOW,
+    PROP_ACTIVE,
+    PROP_ONSCREEN
 };
 
 G_DEFINE_TYPE_WITH_CODE(HippoWindowWin, hippo_window_win, G_TYPE_OBJECT,
@@ -137,6 +143,7 @@ hippo_window_win_iface_init(HippoWindowClass *window_class)
     window_class->set_resizable = hippo_window_win_set_resizable;
     window_class->begin_move_drag = hippo_window_win_begin_move_drag;
     window_class->begin_resize_drag = hippo_window_win_begin_resize_drag;
+    window_class->present = hippo_window_win_present;
 }
 
 static void
@@ -148,6 +155,16 @@ hippo_window_win_class_init(HippoWindowWinClass *klass)
     object_class->get_property = hippo_window_win_get_property;
 
     g_object_class_override_property(object_class, PROP_APP_WINDOW, "app-window");
+
+    // Note that we only provide getters for these, and notification when
+    // they change. We're not currently using notification in the mugshot client.
+    //
+    // Notification for "active" should be straightforward by watching the right
+    // messages. It's less clear how to do notification for "onscreen" - you might
+    // have to poll for it periodically, which would be expensive.
+        
+    g_object_class_override_property(object_class, PROP_ACTIVE, "active");
+    g_object_class_override_property(object_class, PROP_ONSCREEN, "onscreen");
 
     object_class->finalize = hippo_window_win_finalize;
 }
@@ -213,6 +230,12 @@ hippo_window_win_get_property(GObject         *object,
     switch (prop_id) {
     case PROP_APP_WINDOW:
         g_value_set_boolean(value, win->impl->getAppWindow() ? TRUE : FALSE);
+        break;
+    case PROP_ACTIVE:
+        g_value_set_boolean(value, win->impl->getActive() ? TRUE : FALSE);
+        break;
+    case PROP_OSNCREEN:
+        g_value_set_boolean(value, win->impl->getOnscreen() ? TRUE : FALSE);
         break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
@@ -304,6 +327,14 @@ hippo_window_win_begin_resize_drag(HippoWindow      *window,
     // the coordinates in the HippoEvent are on any random canvas item,
     // so not useful.
     window_win->impl->beginResize(side);
+}
+
+static void
+hippo_window_win_present(HippoWindow *window)
+{
+    HippoWindowWin *window_win = HIPPO_WINDOW_WIN(window);
+
+    window_win->impl->present();
 }
 
 void
@@ -411,6 +442,59 @@ HippoWindowImpl::getSize(int *width_p, int *height_p)
 }
 
 void
+HippoWindowImpl::getActive()
+{
+    if (!isCreated())
+        return FALSE;
+    
+    WINDOWINFO windowInfo;
+    
+    memset((void *)&windowInfo, 0, sizeof(WINDOWINFO));
+    WINDOWINFO.cbSize = sizeof(WINDOWINFO);
+
+    if (!GetWindowInfo(window, &windowInfo))
+        return FALSE;
+
+    return windowInfo.dwWindowStatus == WS_ACTIVECAPTION;
+}
+
+void
+HippoWindowImpl::getOnscreen()
+{
+    if (!isCreated())
+        return FALSE;
+    
+    // We consider a window to be partially visible (and hence "onscreen") if
+    // any of its four corners are visible
+
+    RECT rect;
+
+    if (GetWindowRect(window_, &rect))
+        return FALSE;
+
+    POINT point;
+
+    point.x = rect.left;
+    point.y = rect.top;
+    if (WindowFromPoint(&point) == window_)
+        return TRUE;
+
+    point.x = rect.right - 1;
+    if (WindowFromPoint(&point) == window_)
+        return TRUE;
+    
+    point.y = rect.bottom - 1;
+    if (WindowFromPoint(&point) == window_)
+        return TRUE;
+    
+    point.x = rect.left;
+    if (WindowFromPoint(&point) == window_)
+        return TRUE;
+
+    return FALSE;
+}
+
+void
 HippoWindowImpl::beginMove()
 {
     DefWindowProc(window_, WM_NCCLBUTTONDOWN, HTCAPTION, GetMessagePos());
@@ -450,6 +534,12 @@ HippoWindowImpl::beginResize(HippoSide side)
     // to HippoEvent. It seems a bit like these coords aren't used anyway - 
     // I had them totally wrong at one point and things still worked.
     DefWindowProc(window_, WM_NCLBUTTONDOWN, wParam, GetMessagePos());
+}
+
+void
+HippoWindowImpl::present()
+{
+    ShowWindow(window_, SW_RESTORE);
 }
 
 int

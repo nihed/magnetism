@@ -22,6 +22,15 @@ static void hippo_window_gtk_get_property (GObject      *object,
                                            GValue       *value,
                                            GParamSpec   *pspec);
 
+/* Widget methods */
+static gboolean hippo_window_gtk_focus_in_event          (GtkWidget           *widget,
+                                                          GdkEventFocus       *event);
+static gboolean hippo_window_gtk_focus_out_event         (GtkWidget           *widget,
+                                                          GdkEventFocus       *event);
+static gboolean hippo_window_gtk_unmap_event             (GtkWidget           *widget,
+                                                          GdkEventAny         *event);
+static gboolean hippo_window_gtk_visibility_notify_event (GtkWidget           *widget,
+                                                          GdkEventVisibility  *event);
 
 /* Window methods */
 static void hippo_window_gtk_set_contents      (HippoWindow      *window,
@@ -48,7 +57,7 @@ static void hippo_window_gtk_begin_move_drag   (HippoWindow      *window,
 static void hippo_window_gtk_begin_resize_drag (HippoWindow      *window,
                                                 HippoSide         side,
                                                 HippoEvent       *event);
-
+static void hippo_window_gtk_present           (HippoWindow      *window);
 
 struct _HippoWindowGtk {
     GtkWindow window;
@@ -57,6 +66,8 @@ struct _HippoWindowGtk {
     guint hresizable : 1;
     guint vresizable : 1;
     guint app_window : 1;
+    guint active : 1;
+    guint onscreen : 1;
 };
 
 struct _HippoWindowGtkClass {
@@ -73,7 +84,9 @@ enum {
 
 enum {
     PROP_0,
-    PROP_APP_WINDOW
+    PROP_APP_WINDOW,
+    PROP_ACTIVE,
+    PROP_ONSCREEN
 };
 
 G_DEFINE_TYPE_WITH_CODE(HippoWindowGtk, hippo_window_gtk, GTK_TYPE_WINDOW,
@@ -91,12 +104,14 @@ hippo_window_gtk_iface_init(HippoWindowClass *window_class)
     window_class->set_resizable = hippo_window_gtk_set_resizable;
     window_class->begin_move_drag = hippo_window_gtk_begin_move_drag;
     window_class->begin_resize_drag = hippo_window_gtk_begin_resize_drag;
+    window_class->present = hippo_window_gtk_present;
 }
 
 static void
 hippo_window_gtk_class_init(HippoWindowGtkClass *klass)
 {
     GObjectClass *object_class = G_OBJECT_CLASS (klass);
+    GtkWidgetClass *widget_class = GTK_WIDGET_CLASS (klass);
 
     object_class->set_property = hippo_window_gtk_set_property;
     object_class->get_property = hippo_window_gtk_get_property;
@@ -104,7 +119,14 @@ hippo_window_gtk_class_init(HippoWindowGtkClass *klass)
     object_class->dispose = hippo_window_gtk_dispose;
     object_class->finalize = hippo_window_gtk_finalize;
     
+    widget_class->focus_in_event = hippo_window_gtk_focus_in_event;
+    widget_class->focus_out_event = hippo_window_gtk_focus_out_event;
+    widget_class->unmap_event = hippo_window_gtk_unmap_event;
+    widget_class->visibility_notify_event = hippo_window_gtk_visibility_notify_event;
+        
     g_object_class_override_property(object_class, PROP_APP_WINDOW, "app-window");
+    g_object_class_override_property(object_class, PROP_ACTIVE, "active");
+    g_object_class_override_property(object_class, PROP_ONSCREEN, "onscreen");
 }
 
 static void
@@ -123,6 +145,8 @@ hippo_window_gtk_init(HippoWindowGtk *window_gtk)
 
     window_gtk->hresizable = FALSE;
     window_gtk->vresizable = FALSE;
+
+    gtk_widget_set_events(GTK_WIDGET(window_gtk), GDK_VISIBILITY_NOTIFY_MASK);
 }
 
 static void
@@ -208,11 +232,89 @@ hippo_window_gtk_get_property(GObject         *object,
     case PROP_APP_WINDOW:
         g_value_set_boolean(value, gtk->app_window);
         break;
+    case PROP_ACTIVE:
+        g_value_set_boolean(value, gtk->active);
+        break;
+    case PROP_ONSCREEN:
+        g_value_set_boolean(value, gtk->onscreen);
+        break;
         
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
         break;
     }
+}
+
+static void
+set_active(HippoWindowGtk *window_gtk,
+           gboolean        active)
+{
+    active = active != FALSE;
+
+    if (active != window_gtk->active) {
+        window_gtk->active = active;
+        g_object_notify(G_OBJECT(window_gtk), "active");
+    }
+}
+
+static void
+set_onscreen(HippoWindowGtk *window_gtk,
+             gboolean        onscreen)
+{
+    onscreen = onscreen != FALSE;
+
+    if (onscreen != window_gtk->onscreen) {
+        window_gtk->onscreen = onscreen;
+        g_object_notify(G_OBJECT(window_gtk), "onscreen");
+    }
+}
+
+static gboolean
+hippo_window_gtk_focus_in_event(GtkWidget           *widget,
+                                GdkEventFocus       *event)
+{
+    HippoWindowGtk *gtk = HIPPO_WINDOW_GTK(widget);
+    
+    gboolean result = GTK_WIDGET_CLASS(hippo_window_gtk_parent_class)->focus_in_event(widget, event);
+
+    set_active(gtk, TRUE);
+
+    return result;
+}
+
+static gboolean
+hippo_window_gtk_focus_out_event(GtkWidget           *widget,
+                                 GdkEventFocus       *event)
+{
+    HippoWindowGtk *gtk = HIPPO_WINDOW_GTK(widget);
+
+    gboolean result = GTK_WIDGET_CLASS(hippo_window_gtk_parent_class)->focus_out_event(widget, event);
+
+    set_active(gtk, FALSE);
+
+    return result;
+}
+
+static gboolean
+hippo_window_gtk_unmap_event(GtkWidget   *widget,
+                             GdkEventAny *event)
+{
+    HippoWindowGtk *gtk = HIPPO_WINDOW_GTK(widget);
+
+    set_onscreen(gtk, FALSE);
+
+    return FALSE;
+}
+
+static gboolean
+hippo_window_gtk_visibility_notify_event(GtkWidget           *widget,
+                                         GdkEventVisibility  *event)
+{
+    HippoWindowGtk *gtk = HIPPO_WINDOW_GTK(widget);
+
+    set_onscreen(gtk, event->state != GDK_VISIBILITY_FULLY_OBSCURED);
+
+    return FALSE;
 }
 
 static void
@@ -374,3 +476,12 @@ hippo_window_gtk_begin_resize_drag(HippoWindow *window,
                                  event->u.button.x11_y_root,
                                  event->u.button.x11_time);
 }
+
+static void
+hippo_window_gtk_present(HippoWindow *window)
+{
+    HippoWindowGtk *window_gtk = HIPPO_WINDOW_GTK(window);
+
+    gtk_window_present(GTK_WINDOW(window_gtk));
+}
+

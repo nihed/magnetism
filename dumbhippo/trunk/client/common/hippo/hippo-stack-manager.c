@@ -16,7 +16,7 @@
 
 /* When the user is active (not idle), and the user isn't hovering over the notification window,
  * it closes after this much time */
-#define NOTIFICATION_TIMEOUT_TIME (15 * 1000)  /* 15 seconds */
+#define NOTIFICATION_TIMEOUT_TIME (10 * 1000)  /* 10 seconds */
 
 /* Border around the entire window */
 #define WINDOW_BORDER 1
@@ -216,6 +216,36 @@ resize_browser_to_natural_size(StackManager *manager)
 }
 
 static gboolean
+browser_is_active(StackManager *manager)
+{
+    gboolean active;
+    
+    if (!manager->browser_open)
+        return FALSE;
+
+    g_object_get(manager->browser_window,
+                 "active", &active,
+                 NULL);
+
+    return active;
+}
+
+static gboolean
+browser_is_onscreen(StackManager *manager)
+{
+    gboolean onscreen;
+    
+    if (!manager->browser_open)
+        return FALSE;
+
+    g_object_get(manager->browser_window,
+                 "onscreen", &onscreen,
+                 NULL);
+
+    return onscreen;
+}
+
+static gboolean
 on_notification_timeout(gpointer data)
 {
     StackManager *manager = data;
@@ -335,6 +365,22 @@ manager_set_browser_visible(StackManager *manager,
 }
 
 static void
+manager_toggle_browser(StackManager *manager)
+{
+    if (manager->browser_open) {
+        if (browser_is_active(manager))
+            manager_set_browser_visible(manager, FALSE);
+        else {
+            hippo_window_present(manager->browser_window);
+            manager_set_notification_visible(manager, FALSE);
+        }
+    } else {
+        manager_set_browser_visible(manager, TRUE);
+        manager_set_notification_visible(manager, FALSE);
+    }
+}
+
+static void
 resort_block(StackManager *manager,
              HippoBlock   *block)
 {
@@ -355,7 +401,8 @@ resort_block(StackManager *manager,
     hippo_canvas_stack_add_block(HIPPO_CANVAS_STACK(manager->notification_item),
                                  block);
 
-    if (!manager->browser_open && !hippo_canvas_box_is_empty(HIPPO_CANVAS_BOX(manager->notification_item)))
+    if (!browser_is_onscreen(manager) &&
+        !hippo_canvas_box_is_empty(HIPPO_CANVAS_BOX(manager->notification_item)))
         manager_set_notification_visible(manager, TRUE);
 }
 
@@ -749,8 +796,5 @@ hippo_stack_manager_toggle_browser(HippoDataCache  *cache)
 {
     StackManager *manager = g_object_get_data(G_OBJECT(cache), "stack-manager");
 
-    /* FIXME: Handle the case where the browser is visible but obscured or on
-     * a different desktop
-     */
-    manager_set_browser_visible(manager, !manager->browser_open);
+    manager_toggle_browser(manager);
 }
