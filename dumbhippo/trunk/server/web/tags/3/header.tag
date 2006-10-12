@@ -5,7 +5,7 @@
 
 <%@ attribute name="searchText" required="false" type="java.lang.String" %>
 
-<div id="dhPageHeader">
+<div id="dhPageHeader3">
 	<table cellspacing="0" cellpadding="0">
 	<tr valign="top">
 	<td><dh:png id="dhPageHeaderLeft" src="/images3/${buildStamp}/header_left.png" style="width: 248px; height: 64px"/></td>
@@ -39,8 +39,8 @@
 		<tr><td></td></tr>
 		<tr valign="bottom" align="right">
 		<td>
-		<div id="dhHeaderControls">
-			<div id="dhHeaderOptions">
+		<div id="dhHeaderControls3">
+			<div id="dhHeaderOptions3">
 				<c:if test="${signin.valid && !disableHomeLink}">
 				    <a href="/">Home</a> | 
 				</c:if>

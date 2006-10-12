@@ -1,5 +1,6 @@
 @CHARSET "UTF-8";
 @IMPORT url("site-positions.css");
+@IMPORT url("header.css");
 
 body {
 	font-family: 		Arial, sans;
@@ -30,48 +31,6 @@ img {
 	width:				75px;
 	height:				75px;	
 	background-color:	#CCCCCC;
-}
-
-#dhPageHeader {
-}
-
-#dhPageHeaderInner {
-	background: url("/images3/header_middle.png") top left repeat-x;
-}
-
-#dhPageHeaderLeft {
-}
-
-#dhPageHeaderRight {
-
-}
-
-#dhSearchBox {
-	font-size:			14px;
-	color:				white;
-	font-weight:		bold;
-}
-
-#dhSearchBoxEntry { 
-	border:				0px;
-	padding:			0px;
-	font-weight:		bold;
-	color:				black;
-}
-
-#dhSearchBox .dh-text-input-showing-default { 
-	font-weight:		normal;
-	color:				#aaaaaa;
-}
-
-#dhHeaderOptions, #dhHeaderLinks {
-	font-size:			12px;
-	font-weight:		bold;
-	color:				white;
-}
-
-#dhHeaderOptions a:link, #dhHeaderOptions a:visited, #dhHeaderLinks a:link, #dhHeaderLinks a:visited {
-	color:				white;
 }
 
 .dh-page-title-container {

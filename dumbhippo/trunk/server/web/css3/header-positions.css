@@ -1,0 +1,57 @@
+@CHARSET "UTF-8";
+
+#dhPageHeader3 {
+	position:		relative;
+	left:			0px;
+	top:			0px;
+	/* the image itself has about 7px of blank space already in it, so this gives total 12px */
+	margin-bottom:	5px;
+	overflow:		hidden;
+	width:			100%;
+}
+
+#dhPageHeaderInner {
+	width:			100%;
+}
+
+#dhPageHeaderLeft {
+}
+
+#dhPageHeaderRight {
+}
+
+#dhHeaderControls3 {
+}
+
+#dhHeaderControls3 #dhHeaderOptions3 {
+	margin-bottom:	4px;
+	text-align:		right;
+}
+
+#dhHeaderOptions3 .dh-action-link {
+	display:		inline;
+}
+
+#dhSearchBox {
+	padding-top:	5px;
+}
+
+#dhSearchForm {
+	height:			16px;
+	padding:		0px;
+	margin:			0px;
+}
+
+#dhSearchBoxEntry {
+	border:			0;
+	margin-right:	2px;
+	width:			220px;
+	height:			16px;
+	padding:		0px;
+}
+
+#dhHeaderLogo {
+	position:		relative;
+	left:			0px;
+	top:			0px;
+}

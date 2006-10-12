@@ -1,11 +1,18 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="/jsp/dumbhippo.tld" prefix="dh" %>
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
+<%@ taglib tagdir="/WEB-INF/tags/3" prefix="dht3" %>
 
 <%@ attribute name="kind" required="false" type="java.lang.String" %>
 <%@ attribute name="disableHomeLink" required="false" type="java.lang.Boolean" %>
 <%@ attribute name="disableSignupLink" required="false" type="java.lang.Boolean" %>
 <%@ attribute name="searchText" required="false" type="java.lang.String" %>
+
+<c:choose>
+<c:when test="${webVersion == 3}">
+	<dht3:header/>
+</c:when>
+<c:otherwise>
 
 <c:if test="${empty kind}">
 	<c:choose>
@@ -100,3 +107,5 @@
 		</div>
     </c:if>    		
 </div>
+</c:otherwise>
+</c:choose> <!-- webVersion test -->

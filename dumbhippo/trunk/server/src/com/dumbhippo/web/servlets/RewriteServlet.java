@@ -84,6 +84,7 @@ public class RewriteServlet extends HttpServlet {
 	private long buildstampFileLastModified;
 	private Lock buildstampLock;
 	private Condition buildstampCondition;
+	private int webVersion;
 	
 	private boolean hasSignin(HttpServletRequest request) {
 		return SigninBean.getForRequest(request).isValid();
@@ -177,6 +178,7 @@ public class RewriteServlet extends HttpServlet {
 			// Deleting the user from SigninBean means that next time it
 			// is accessed, we'll get a copy attached to this hibernate Session
 			SigninBean.getForRequest(request).resetSessionObjects();
+			request.setAttribute("webVersion", webVersion);
 			
 			context.getRequestDispatcher(newPath).forward(request, response);
 			WebStatistics.getInstance().incrementJspPagesServed();
@@ -546,7 +548,7 @@ public class RewriteServlet extends HttpServlet {
         Configuration configuration = WebEJBUtil.defaultLookup(Configuration.class);
         
 		String stealthModeString = configuration.getProperty(HippoProperty.STEALTH_MODE);
-		int webVersion = Integer.parseInt(configuration.getPropertyFatalIfUnset(HippoProperty.WEB_VERSION));
+		webVersion = Integer.parseInt(configuration.getPropertyFatalIfUnset(HippoProperty.WEB_VERSION));
 		
 		stealthMode = Boolean.parseBoolean(stealthModeString);
 		
