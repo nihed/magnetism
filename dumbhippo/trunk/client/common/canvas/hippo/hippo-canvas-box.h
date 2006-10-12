@@ -45,6 +45,9 @@ struct _HippoCanvasBox {
     HippoCanvasContext *context;
     HippoCanvasStyle *style; /* may be NULL if no relevant props set */
     GSList *children;
+
+    char *tooltip;
+    
     int allocated_width;
     int allocated_height;
 

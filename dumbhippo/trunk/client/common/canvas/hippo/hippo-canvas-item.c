@@ -206,11 +206,12 @@ hippo_canvas_item_get_needs_resize(HippoCanvasItem *canvas_item)
 char*
 hippo_canvas_item_get_tooltip(HippoCanvasItem *canvas_item,
                               int              x,
-                              int              y)
+                              int              y,
+                              HippoRectangle  *for_area)
 {
     g_return_val_if_fail(HIPPO_IS_CANVAS_ITEM(canvas_item), NULL);
 
-    return HIPPO_CANVAS_ITEM_GET_IFACE(canvas_item)->get_tooltip(canvas_item, x, y);
+    return HIPPO_CANVAS_ITEM_GET_IFACE(canvas_item)->get_tooltip(canvas_item, x, y, for_area);
 }
 
 HippoCanvasPointer

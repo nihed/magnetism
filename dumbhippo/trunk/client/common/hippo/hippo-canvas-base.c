@@ -254,6 +254,7 @@ hippo_canvas_base_constructor (GType                  type,
                             "normal-image-name", "arrow",
                             "prelight-image-name", "arrow2",
                             "xalign", HIPPO_ALIGNMENT_START,
+                            "tooltip", "Hide this stuff",
                             NULL);
         hippo_canvas_box_append(box, item, 0);
     
@@ -272,6 +273,7 @@ hippo_canvas_base_constructor (GType                  type,
                         "normal-image-name", "bar_x",
                         "prelight-image-name", "bar_x2",
                         "xalign", HIPPO_ALIGNMENT_END,
+                        "tooltip", "Close",
                         NULL);
     hippo_canvas_box_append(box, item, HIPPO_PACK_END);
 
@@ -284,6 +286,7 @@ hippo_canvas_base_constructor (GType                  type,
                             "normal-image-name", "hush",
                             "prelight-image-name", "hush2",
                             "xalign", HIPPO_ALIGNMENT_END,
+                            "tooltip", "Don't bug me for a while",
                             NULL);
         hippo_canvas_box_append(box, item, HIPPO_PACK_END);
     
@@ -297,6 +300,7 @@ hippo_canvas_base_constructor (GType                  type,
                             "normal-image-name", "home",
                             "prelight-image-name", "home2",
                             "xalign", HIPPO_ALIGNMENT_END,
+                            "tooltip", "Open Mugshot home page",
                             NULL);
         hippo_canvas_box_append(box, item, HIPPO_PACK_END);
         

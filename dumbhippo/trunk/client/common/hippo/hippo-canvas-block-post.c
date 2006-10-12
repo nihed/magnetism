@@ -232,6 +232,7 @@ hippo_canvas_block_post_constructor (GType                  type,
     item = g_object_new(HIPPO_TYPE_CANVAS_LINK,
                         "text", "Add to Faves",
                         "color-cascade", HIPPO_CASCADE_MODE_NONE,
+                        "tooltip", "Save this item in your favorites list",
                         NULL);
     block_post->faves_link = item;
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(block_post->details_box), item, 0);

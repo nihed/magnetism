@@ -62,7 +62,8 @@ struct _HippoCanvasItemIface {
 
     char*              (* get_tooltip) (HippoCanvasItem *canvas_item,
                                         int              x,
-                                        int              y);
+                                        int              y,
+                                        HippoRectangle  *for_area);
     HippoCanvasPointer (* get_pointer) (HippoCanvasItem *canvas_item,
                                         int              x,
                                         int              y);
@@ -87,7 +88,8 @@ void               hippo_canvas_item_get_allocation     (HippoCanvasItem    *can
 gboolean           hippo_canvas_item_get_needs_resize   (HippoCanvasItem    *canvas_item);
 char*              hippo_canvas_item_get_tooltip        (HippoCanvasItem    *canvas_item,
                                                          int                 x,
-                                                         int                 y);
+                                                         int                 y,
+                                                         HippoRectangle     *for_area);
 HippoCanvasPointer hippo_canvas_item_get_pointer        (HippoCanvasItem    *canvas_item,
                                                          int                 x,
                                                          int                 y);

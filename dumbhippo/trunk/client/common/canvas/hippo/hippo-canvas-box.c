@@ -70,7 +70,8 @@ static void               hippo_canvas_box_request_changed     (HippoCanvasItem 
 static gboolean           hippo_canvas_box_get_needs_resize    (HippoCanvasItem    *canvas_item);
 static char*              hippo_canvas_box_get_tooltip         (HippoCanvasItem    *item,
                                                                 int                 x,
-                                                                int                 y);
+                                                                int                 y,
+                                                                HippoRectangle     *for_area);
 static HippoCanvasPointer hippo_canvas_box_get_pointer         (HippoCanvasItem    *item,
                                                                 int                 x,
                                                                 int                 y);
@@ -137,7 +138,8 @@ enum {
     PROP_COLOR_SET,
     PROP_FONT,
     PROP_FONT_DESC,
-    PROP_FONT_CASCADE
+    PROP_FONT_CASCADE,
+    PROP_TOOLTIP
 };
 
 G_DEFINE_TYPE_WITH_CODE(HippoCanvasBox, hippo_canvas_box, G_TYPE_OBJECT,
@@ -431,7 +433,14 @@ hippo_canvas_box_class_init(HippoCanvasBoxClass *klass)
                                                       _("Whether to use parent's font if ours is unset"),
                                                       HIPPO_TYPE_CASCADE_MODE,
                                                       HIPPO_CASCADE_MODE_INHERIT,
-                                                      G_PARAM_READABLE | G_PARAM_WRITABLE));    
+                                                      G_PARAM_READABLE | G_PARAM_WRITABLE));
+    g_object_class_install_property(object_class,
+                                    PROP_TOOLTIP,
+                                    g_param_spec_string("tooltip",
+                                                        _("Tooltip"),
+                                                        _("Tooltip to display on mouse hover"),
+                                                        NULL,
+                                                        G_PARAM_READABLE | G_PARAM_WRITABLE));
 }
 
 static void
@@ -457,6 +466,8 @@ hippo_canvas_box_finalize(GObject *object)
     g_assert(!box->floating);        /* if there's still a floating ref how did we get finalized? */
     g_assert(box->children == NULL); /* should have vanished in dispose */
 
+    g_free(box->tooltip);
+    
     G_OBJECT_CLASS(hippo_canvas_box_parent_class)->finalize(object);
 }
 
@@ -605,7 +616,16 @@ hippo_canvas_box_set_property(GObject         *object,
                                                         TRUE);
             }
         }
-        break;        
+        break;
+    case PROP_TOOLTIP:
+        {
+            const char *new_tip = g_value_get_string(value);
+            if (new_tip != box->tooltip) {
+                g_free(box->tooltip);
+                box->tooltip = g_strdup(new_tip);
+            }
+        }
+        break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
         break;
@@ -707,6 +727,9 @@ hippo_canvas_box_get_property(GObject         *object,
         break;
     case PROP_FONT_CASCADE:
         g_value_set_enum(value, box->font_cascade);
+        break;
+    case PROP_TOOLTIP:
+        g_value_set_string(value, box->tooltip);
         break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
@@ -2039,19 +2062,32 @@ hippo_canvas_box_get_needs_resize(HippoCanvasItem *item)
 static char*
 hippo_canvas_box_get_tooltip(HippoCanvasItem    *item,
                              int                 x,
-                             int                 y)
+                             int                 y,
+                             HippoRectangle     *for_area)
 {
     HippoCanvasBox *box = HIPPO_CANVAS_BOX(item);    
     HippoBoxChild *child;
-
+    
     child = find_child_at_point(box, x, y);
 
-    if (child != NULL)
-        return hippo_canvas_item_get_tooltip(child->item,
-                                             x - child->x,
-                                             y - child->y);
-    else
-        return NULL;
+    if (child != NULL) {
+        char *tip;
+
+        tip = hippo_canvas_item_get_tooltip(child->item,
+                                            x - child->x,
+                                            y - child->y,
+                                            for_area);
+        for_area->x += child->x;
+        for_area->y += child->y;
+
+        return tip;
+    } else {
+        for_area->x = 0;
+        for_area->y = 0;
+        for_area->width = box->allocated_width;
+        for_area->height = box->allocated_height;
+        return g_strdup(box->tooltip);
+    }
 }
 
 static HippoCanvasPointer

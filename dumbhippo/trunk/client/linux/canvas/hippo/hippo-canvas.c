@@ -6,6 +6,8 @@
 #include <gtk/gtkcontainer.h>
 #include "hippo-canvas-widget.h"
 #include <gtk/gtkprivate.h> /* for GTK_WIDGET_ALLOC_NEEDED */
+#include <gtk/gtkwindow.h>
+#include <gtk/gtklabel.h>
 
 typedef struct
 {
@@ -75,6 +77,14 @@ static void             hippo_canvas_translate_to_widget    (HippoCanvasContext 
 
 static void             hippo_canvas_fixup_resize_state     (HippoCanvas        *canvas);
 
+static void       tooltip_window_show (GtkWidget  *tip,
+                                       GtkWidget  *for_widget,
+                                       int         root_x,
+                                       int         root_y,
+                                       const char *text);
+static GtkWidget* tooltip_window_new  (void);
+
+
 struct _HippoCanvas {
     GtkContainer parent;
 
@@ -82,6 +92,12 @@ struct _HippoCanvas {
 
     HippoCanvasPointer pointer;
 
+    GtkWidget *tooltip_window;
+
+    guint tooltip_timeout_id;
+    int last_window_x;
+    int last_window_y;
+    
     GSList *widget_items;
 
     unsigned int root_hovering : 1;
@@ -117,6 +133,8 @@ hippo_canvas_init(HippoCanvas *canvas)
                           GDK_ENTER_NOTIFY_MASK | GDK_LEAVE_NOTIFY_MASK | GDK_BUTTON_PRESS);
 
     canvas->pointer = HIPPO_CANVAS_POINTER_UNSET;
+    canvas->last_window_x = -1;
+    canvas->last_window_y = -1;
 }
 
 static void
@@ -161,6 +179,15 @@ hippo_canvas_iface_init (HippoCanvasContextIface *klass)
 }
 
 static void
+cancel_tooltip(HippoCanvas *canvas)
+{
+    if (canvas->tooltip_timeout_id) {
+        g_source_remove(canvas->tooltip_timeout_id);
+        canvas->tooltip_timeout_id = 0;
+    }
+}
+
+static void
 hippo_canvas_dispose(GObject *object)
 {
     HippoCanvas *canvas = HIPPO_CANVAS(object);
@@ -168,6 +195,8 @@ hippo_canvas_dispose(GObject *object)
     hippo_canvas_set_root(canvas, NULL);
 
     g_assert(canvas->widget_items == NULL);
+
+    cancel_tooltip(canvas);
     
     G_OBJECT_CLASS(hippo_canvas_parent_class)->dispose(object);
 }
@@ -286,7 +315,7 @@ get_root_item_window_coords(HippoCanvas *canvas,
         if (y_p)
             *y_p += widget->allocation.y;
     }
-}                     
+}
 
 static gboolean
 hippo_canvas_expose_event(GtkWidget         *widget,
@@ -416,6 +445,52 @@ hippo_canvas_button_release(GtkWidget         *widget,
                                                        event->time);
 }
 
+static gboolean
+tooltip_timeout(void *data)
+{
+    HippoCanvas *canvas = HIPPO_CANVAS(data);
+    char *tip;
+    HippoRectangle for_area;
+    
+    tip = NULL;
+    if (canvas->root != NULL) {
+        int window_x, window_y;
+        get_root_item_window_coords(canvas, &window_x, &window_y);
+        tip = hippo_canvas_item_get_tooltip(canvas->root,
+                                            canvas->last_window_x - window_x,
+                                            canvas->last_window_y - window_y,
+                                            &for_area);
+        for_area.x += window_x;
+        for_area.y += window_y;
+    }
+
+    if (tip != NULL) {
+        int screen_x, screen_y;
+        
+        if (canvas->tooltip_window == NULL) {
+            canvas->tooltip_window = tooltip_window_new();
+        }
+
+        gdk_window_get_origin(GTK_WIDGET(canvas)->window, &screen_x, &screen_y);
+
+        for_area.x += screen_x;
+        for_area.y += screen_y;
+        
+        tooltip_window_show(canvas->tooltip_window,
+                            GTK_WIDGET(canvas),
+                            for_area.x,
+                            for_area.y + for_area.height,
+                            tip);
+
+        g_free(tip);
+    }
+    
+    canvas->tooltip_timeout_id = 0;
+    return FALSE;
+}
+
+#define TIP_DELAY (1000*1.5)
+
 static void
 handle_new_mouse_location(HippoCanvas      *canvas,
                           GdkWindow        *event_window,
@@ -430,10 +505,17 @@ handle_new_mouse_location(HippoCanvas      *canvas,
     if (event_window != GTK_WIDGET(canvas)->window)
         return;
     
-    get_root_item_window_coords(canvas, &root_x_origin, &root_y_origin);
-    
     gdk_window_get_pointer(event_window, &mouse_x, &mouse_y, NULL);
 
+    if (mouse_x != canvas->last_window_x || mouse_y != canvas->last_window_y) {
+        
+        cancel_tooltip(canvas);       
+        canvas->tooltip_timeout_id = g_timeout_add(TIP_DELAY, tooltip_timeout, canvas);
+        canvas->last_window_x = mouse_x;
+        canvas->last_window_y = mouse_y;
+    }
+
+    get_root_item_window_coords(canvas, &root_x_origin, &root_y_origin);
     root_x = mouse_x - root_x_origin;
     root_y = mouse_y - root_y_origin;
     
@@ -918,6 +1000,99 @@ hippo_canvas_fixup_resize_state(HippoCanvas *canvas)
     }
 
     canvas->fixing_up_resize_state = FALSE;
+}
+
+static gint
+tooltip_expose_handler(GtkWidget *tip, GdkEventExpose *event, void *data)
+{
+    gtk_paint_flat_box(tip->style, tip->window,
+                       GTK_STATE_NORMAL, GTK_SHADOW_OUT, 
+                       &event->area, tip, "tooltip",
+                       0, 0, -1, -1);
+    
+    return FALSE;
+}
+
+static gint
+tooltip_motion_handler(GtkWidget *tip, GdkEventMotion *event, void *data)
+{
+    gdk_pointer_ungrab(event->time);
+    gtk_widget_hide(tip);
+    return FALSE;
+}
+
+static void
+tooltip_window_show(GtkWidget  *tip,
+                    GtkWidget  *for_widget,
+                    int         root_x,
+                    int         root_y,
+                    const char *text)
+{
+    GdkScreen *gdk_screen;
+    GdkRectangle monitor;
+    gint mon_num;
+    int w, h;
+    GtkWidget *label;
+    GdkGrabStatus status;
+    int screen_right_edge;
+    int screen_bottom_edge;
+    
+    gdk_screen = gtk_widget_get_screen(for_widget);
+    
+    gtk_window_set_screen(GTK_WINDOW(tip), gdk_screen);
+    mon_num = gdk_screen_get_monitor_at_point(gdk_screen, root_x, root_y);
+    gdk_screen_get_monitor_geometry(gdk_screen, mon_num, &monitor);
+    screen_right_edge = monitor.x + monitor.width;
+    screen_bottom_edge = monitor.y + monitor.height;
+
+    label = GTK_BIN(tip)->child;
+    
+    gtk_label_set(GTK_LABEL(label), text);
+    
+    gtk_window_get_size(GTK_WINDOW(tip), &w, &h);
+    if((root_x + w) > screen_right_edge)
+        root_x -= (root_x + w) - screen_right_edge;
+    
+    gtk_window_move(GTK_WINDOW(tip), root_x, root_y);
+
+    gtk_widget_show(tip);
+    
+    status = gdk_pointer_grab(tip->window,
+                              FALSE,
+                              GDK_POINTER_MOTION_MASK,
+                              NULL, NULL,
+                              0);
+
+    if (status != GDK_GRAB_SUCCESS && status != GDK_GRAB_ALREADY_GRABBED)
+        gtk_widget_hide(tip);
+}
+
+static GtkWidget*
+tooltip_window_new(void)
+{
+    GtkWidget *tip;
+    GtkWidget *label;
+    
+    tip = gtk_window_new(GTK_WINDOW_POPUP);
+    
+    gtk_widget_set_app_paintable(tip, TRUE);
+    gtk_window_set_policy(GTK_WINDOW(tip), FALSE, FALSE, TRUE);
+    gtk_widget_set_name(tip, "gtk-tooltips");
+    gtk_container_set_border_width(GTK_CONTAINER(tip), 4);
+    
+    g_signal_connect(tip, "expose-event",
+                     G_CALLBACK(tooltip_expose_handler), NULL);
+    g_signal_connect(tip, "motion-notify-event",
+                     G_CALLBACK(tooltip_motion_handler), NULL);
+    
+    label = gtk_label_new(NULL);
+    gtk_label_set_line_wrap(GTK_LABEL(label), TRUE);
+    gtk_misc_set_alignment(GTK_MISC(label), 0.5, 0.5);
+    gtk_widget_show(label);
+    
+    gtk_container_add(GTK_CONTAINER(tip), label);
+    
+    return tip;
 }
 
 /* TEST CODE */

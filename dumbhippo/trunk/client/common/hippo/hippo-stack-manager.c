@@ -30,7 +30,7 @@ typedef struct {
     HippoCanvasItem *browser_item;
     HippoCanvasItem *browser_resize_grip;
 
-    /* Only blocks stacked after this time are visible in the browser window */
+    /* Only blocks stacked after this time are visible in the notification window */
     gint64           hush_timestamp;
     
     gboolean         notification_open;

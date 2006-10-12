@@ -320,6 +320,7 @@ hippo_canvas_chat_preview_constructor (GType                  type,
     item = g_object_new(HIPPO_TYPE_CANVAS_LINK,
                         "text", "Chat",
                         "color-cascade", HIPPO_CASCADE_MODE_NONE,
+                        "tooltip", "Join chat room for this",
                         NULL);
     chat_preview->chat_link = item;
     hippo_canvas_box_append(box, item, 0);

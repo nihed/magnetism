@@ -407,6 +407,7 @@ hippo_canvas_block_constructor (GType                  type,
     
     item = g_object_new(HIPPO_TYPE_CANVAS_LINK,
                         "text", "CLOSE",
+                        "tooltip", "Shrink this item",
                         NULL);
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(block->close_controls), item, 0);
 
@@ -415,6 +416,7 @@ hippo_canvas_block_constructor (GType                  type,
     item = g_object_new(HIPPO_TYPE_CANVAS_IMAGE_BUTTON,
                         "normal-image-name", "blue_x",
                         "border-left", 4,
+                        "tooltip", "Shrink this item",
                         NULL);
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(block->close_controls), item, 0);
 
@@ -439,8 +441,8 @@ hippo_canvas_block_constructor (GType                  type,
     hippo_canvas_box_append(box, block->headshot_item, HIPPO_PACK_END);
 
     box2 = g_object_new(HIPPO_TYPE_CANVAS_BOX,
-                       "xalign", HIPPO_ALIGNMENT_FILL,
-                       "yalign", HIPPO_ALIGNMENT_START,
+                        "xalign", HIPPO_ALIGNMENT_FILL,
+                        "yalign", HIPPO_ALIGNMENT_START,
                         "color", HIPPO_CANVAS_BLOCK_GRAY_TEXT_COLOR,
                        NULL);
     hippo_canvas_box_append(box, HIPPO_CANVAS_ITEM(box2), HIPPO_PACK_EXPAND);
@@ -477,6 +479,7 @@ hippo_canvas_block_constructor (GType                  type,
     item = g_object_new(HIPPO_TYPE_CANVAS_LINK,
                         "text", "Hush",
                         "color-cascade", HIPPO_CASCADE_MODE_NONE,
+                        "tooltip", "Stop showing me this item",
                         NULL);
     block->toggle_hush_link = item;
     hippo_canvas_box_append(box3, item, HIPPO_PACK_END);
@@ -662,6 +665,7 @@ hippo_canvas_block_hush_impl(HippoCanvasBlock *canvas_block)
                  NULL);
     g_object_set(G_OBJECT(canvas_block->toggle_hush_link),
                  "text", "Unhush",
+                 "tooltip", "Show me changes to this item",
                  NULL);
 }
 
@@ -673,6 +677,7 @@ hippo_canvas_block_unhush_impl(HippoCanvasBlock *canvas_block)
                  NULL);
     g_object_set(G_OBJECT(canvas_block->toggle_hush_link),
                  "text", "Hush",
+                 "tooltip", "Stop showing me this item",
                  NULL);
 }
 
