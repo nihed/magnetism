@@ -26,7 +26,8 @@ public:
     void setContents(HippoCanvasItem *item);
     void setVisible(bool visible);
     void setAppWindow(bool appWindow);
-    void getSize(int *x_p, int *y_p);
+    void getPosition(int *x_p, int *y_p);
+    void getSize(int *width_p, int *height_p);
     void getAppWindow() { return appWindow_; }
     void beginMove();
     void beginResize(HippoSide side);
@@ -81,6 +82,12 @@ static void     hippo_window_win_set_visible        (HippoWindow     *window,
 static void     hippo_window_win_set_position       (HippoWindow     *window,
                                                      int              x,
                                                      int              y);
+static void     hippo_window_win_set_size           (HippoWindow     *window,
+                                                     int              width,
+                                                     int              height);
+static void     hippo_window_win_get_position       (HippoWindow     *window,
+                                                     int             *x,
+                                                     int             *y);
 static void     hippo_window_win_get_size           (HippoWindow     *window,
                                                      int             *width_p,
                                                      int             *height_p);
@@ -124,6 +131,8 @@ hippo_window_win_iface_init(HippoWindowClass *window_class)
     window_class->set_contents = hippo_window_win_set_contents;
     window_class->set_visible = hippo_window_win_set_visible;
     window_class->set_position = hippo_window_win_set_position;
+    window_class->set_size = hippo_window_win_set_size;
+    window_class->get_position = hippo_window_win_get_position;
     window_class->get_size = hippo_window_win_get_size;
     window_class->set_resizable = hippo_window_win_set_resizable;
     window_class->begin_move_drag = hippo_window_win_begin_move_drag;
@@ -235,6 +244,24 @@ hippo_window_win_set_position(HippoWindow     *window,
 {
     HippoWindowWin *window_win = HIPPO_WINDOW_WIN(window);
     window_win->impl->setPosition(x, y);
+}
+
+static void
+hippo_window_win_set_size(HippoWindow     *window,
+                          int              width,
+                          int              height)
+{
+    HippoWindowWin *window_win = HIPPO_WINDOW_WIN(window);
+    window_win->impl->setSize(width, height);
+}
+
+static void
+hippo_window_win_get_position(HippoWindow     *window,
+                              int             *x_p,
+                              int             *y_p)
+{
+    HippoWindowWin *window_win = HIPPO_WINDOW_WIN(window);
+    window_win->impl->getPosition(x_p, y_p);
 }
 
 static void
@@ -354,6 +381,21 @@ HippoWindowImpl::setAppWindow(bool appWindow)
     appWindow_ = appWindow;
 
     setExtendedStyle(appWindow ? WS_EX_APPWINDOW : 0);
+}
+
+void
+HippoWindowImpl::getPosition(int *x_p, int *y_p)
+{
+    // force realization
+    ensureRequestAndAllocation();
+
+    RECT rect;
+    GetWindowRect(window_, &rect);
+
+    if (x_p)
+        *x_p = rect.x;
+    if (y_p)
+        *y_p = rect.y;
 }
 
 void

@@ -77,6 +77,26 @@ hippo_window_set_position(HippoWindow     *window,
 }
 
 void
+hippo_window_set_size(HippoWindow     *window,
+                      int              width,
+                      int              height)
+{
+    g_return_if_fail(HIPPO_IS_WINDOW(window));
+
+    HIPPO_WINDOW_GET_CLASS(window)->set_size(window, width, height);
+}
+
+void
+hippo_window_get_position(HippoWindow     *window,
+                          int             *x_p,
+                          int             *y_p)
+{
+    g_return_if_fail(HIPPO_IS_WINDOW(window));
+
+    HIPPO_WINDOW_GET_CLASS(window)->get_position(window, x_p, y_p);
+}
+
+void
 hippo_window_get_size(HippoWindow     *window,
                       int             *width_p,
                       int             *height_p)

@@ -1,3 +1,4 @@
+/* -*- mode: C++; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 /* HippoAbstractWindow.cpp: Base class for toplevel windows that embed a web browser control
  *
  * Copyright Red Hat, Inc. 2005
@@ -527,6 +528,23 @@ HippoAbstractWindow::setPosition(int x, int y)
         moveResizeWindow(x, y, getWidth(), getHeight());
     } else {
         setDefaultPosition(x, y);
+    }
+}
+
+void
+HippoAbstractWindow::setSize(int width, int height)
+{
+    if (created_) {
+        // We rely on the same code path as a user resize in this case
+        
+        SetWindowPos(window_,
+                     HWND_TOP, // insertAfter: ignored
+                     0, 0, // x, y: ignored
+                     width, height,
+                     SWP_NOACTIVATE, SWP_NOMOVE, SWP_NOOWNERZORDER);
+    } else {
+        width_ = width;
+        height_ = height;
     }
 }
 

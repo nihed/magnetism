@@ -12,8 +12,10 @@
 #define UI_WIDTH 500
 
 /* Length of time notifications are hushed after the user clicks "Hush" for the notification window */
-// #define HUSH_TIME (3600 * 1000)  /* One hour */
-#define HUSH_TIME (60 * 1000);
+#define HUSH_TIME (3600 * 1000)  /* One hour */
+
+/* Border around the entire window */
+#define WINDOW_BORDER 1
 
 typedef struct {
     int              refcount;
@@ -30,6 +32,9 @@ typedef struct {
     HippoCanvasItem *browser_item;
     HippoCanvasItem *browser_resize_grip;
 
+    int              saved_browser_x;
+    int              saved_browser_y;
+
     /* Only blocks stacked after this time are visible in the notification window */
     gint64           hush_timestamp;
     
@@ -40,10 +45,11 @@ typedef struct {
     HippoCanvasItem *notification_item;
 
     guint            base_on_bottom : 1;
+    guint            user_resized_browser : 1;
+    guint            user_moved_browser : 1;
     
     guint            idle : 1;
 } StackManager;
-
 
 static void
 position_alongside(HippoWindow     *window,
@@ -102,7 +108,9 @@ static void
 update_for_screen_info (StackManager    *manager,
                         HippoRectangle  *monitor,
                         HippoRectangle  *icon,
-                        HippoOrientation icon_orientation)
+                        HippoOrientation icon_orientation,
+                        gboolean         position_browser,
+                        gboolean         position_notification)
 {
     HippoRectangle base;
     gboolean is_west;
@@ -135,33 +143,65 @@ update_for_screen_info (StackManager    *manager,
 
     if ((manager->base_on_bottom && is_north) ||
         (!manager->base_on_bottom && !is_north)) {
-        hippo_canvas_box_reverse(HIPPO_CANVAS_BOX(manager->browser_box));
         hippo_canvas_box_reverse(HIPPO_CANVAS_BOX(manager->notification_box));
         manager->base_on_bottom = !manager->base_on_bottom;
     }
+
+    if (position_browser)
+        position_alongside(manager->browser_window, 3, icon,
+                           icon_orientation,
+                           is_west, is_north, &base);
     
-    position_alongside(manager->notification_window, 3, icon,
-                       icon_orientation,
-                       is_west, is_north, &base);
-    position_alongside(manager->browser_window, 3, icon,
-                       icon_orientation,
-                       is_west, is_north, &base);
+    if (position_notification)
+        position_alongside(manager->notification_window, 3, icon,
+                           icon_orientation,
+                           is_west, is_north, &base);
 }
 
 static void
-update_window_positions(StackManager    *manager)
+update_window_positions(StackManager *manager,
+                        gboolean      position_browser,
+                        gboolean      position_notification)
 {
-   HippoRectangle monitor;
-   HippoRectangle icon;
-   HippoOrientation icon_orientation;
-   HippoPlatform *platform;
+    HippoPlatform *platform;
+    HippoRectangle monitor;
+    HippoRectangle icon;
+    HippoOrientation icon_orientation;
+    
+    platform = hippo_connection_get_platform(manager->connection);
+    hippo_platform_get_screen_info(platform, &monitor, &icon, &icon_orientation);
+    
+    update_for_screen_info(manager, &monitor, &icon, icon_orientation, position_browser, position_notification);
+}
 
-   platform = hippo_connection_get_platform(manager->connection);
-   
-   hippo_platform_get_screen_info(platform,
-                                  &monitor, &icon, &icon_orientation);
+static void
+resize_browser_to_natural_size(StackManager *manager)
+{
+    HippoPlatform *platform;
+    HippoRectangle monitor;
+    int natural_width;
+    int natural_height;
+    
+    platform = hippo_connection_get_platform(manager->connection);
+    hippo_platform_get_screen_info(platform, &monitor, NULL, NULL);
+    
+    natural_width = hippo_canvas_item_get_width_request(manager->browser_box);
 
-   update_for_screen_info(manager, &monitor, &icon, icon_orientation);
+    natural_height = 2 * WINDOW_BORDER;
+    
+    natural_height += hippo_canvas_item_get_height_request(manager->browser_base_item, natural_width);
+
+    /* The width we'll give to browser_item is actually less than this by the width of the scrollbar,
+     * but our stack items have a height independent of width when collapsed in any case
+     */
+    natural_height += hippo_canvas_item_get_height_request(manager->browser_item, natural_width);
+
+    natural_height += hippo_canvas_item_get_height_request(manager->browser_resize_grip, natural_width);
+
+    if (natural_height > monitor.height * 0.75)
+        natural_height = monitor.height * 0.75;
+    
+    hippo_window_set_size(manager->browser_window, natural_width, natural_height);
 }
 
 static gint64
@@ -194,7 +234,7 @@ manager_set_notification_visible(StackManager *manager,
     manager->notification_open = visible;
     
     if (visible)
-        update_window_positions(manager);
+        update_window_positions(manager, FALSE, TRUE);
 
     hippo_window_set_visible(manager->notification_window, visible);
 }
@@ -208,8 +248,25 @@ manager_set_browser_visible(StackManager *manager,
     
     manager->browser_open = visible;
     
-    if (visible)
-        update_window_positions(manager);
+    if (visible) {
+        if (!manager->user_resized_browser)
+            resize_browser_to_natural_size(manager);
+        if (manager->user_moved_browser)
+            hippo_window_set_position(manager->browser_window,
+                                      manager->saved_browser_x, manager->saved_browser_y);
+        else
+            update_window_positions(manager, TRUE, FALSE);
+    } else {
+        /* For GTK+, if you position a window once, then every time you show it again,
+         * GTK+ will want to pop it back to the original position. To workaround this
+         * misfeature of GTK+, whenever we hide our browser window, we remember where
+         * it was, and set that position back before showing it again. In theory, this
+         * could be useful in the future if we were saving the window position as a
+         * user preference.
+         */
+        hippo_window_get_position(manager->browser_window,
+                                  &manager->saved_browser_x, &manager->saved_browser_y);
+    }
 
     hippo_window_set_visible(manager->browser_window, visible);
 }
@@ -370,6 +427,7 @@ on_browser_title_bar_button_press(HippoCanvasItem *item,
     StackManager *manager = data;
 
     hippo_window_begin_move_drag(manager->browser_window, event);
+    manager->user_moved_browser = TRUE;
 
     return TRUE;
 }
@@ -382,9 +440,9 @@ on_browser_resize_grip_button_press(HippoCanvasItem *item,
     StackManager *manager = data;
 
     hippo_window_begin_resize_drag(manager->browser_window,
-                                   manager->base_on_bottom ?
-                                   HIPPO_SIDE_TOP : HIPPO_SIDE_BOTTOM,
+                                   HIPPO_SIDE_BOTTOM,
                                    event);
+    manager->user_resized_browser = TRUE;
 
     return TRUE;
 }
@@ -458,7 +516,7 @@ manager_attach(StackManager    *manager,
     
     manager->browser_box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
                                         "orientation", HIPPO_ORIENTATION_VERTICAL,
-                                        "border", 1,
+                                        "border", WINDOW_BORDER,
                                         "border-color", 0x9c9c9cff,
                                         NULL);
     
@@ -561,8 +619,9 @@ hippo_stack_manager_set_screen_info(HippoDataCache  *cache,
     StackManager *manager;
 
     manager = g_object_get_data(G_OBJECT(cache), "stack-manager");
-    
-    update_for_screen_info(manager, monitor, icon, icon_orientation);
+
+    if (manager->notification_open)
+        update_for_screen_info(manager, monitor, icon, icon_orientation, FALSE, TRUE);
 }
 
 void

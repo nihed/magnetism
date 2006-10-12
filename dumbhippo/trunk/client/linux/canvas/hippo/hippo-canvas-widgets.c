@@ -31,6 +31,29 @@ hippo_canvas_button_new(void)
                         NULL);
 }
 
+/* Hack to work-around GtkViewport bug http://bugzilla.gnome.org/show_bug.cgi?id=361781
+ *
+ * That bug wasn't actually causing the problem the scrollbar misbehavior that I thought it
+ * was, so this workaround is very low priortiy ... but it does save us from an extra stray
+ * 2 pixels to the right of the list of items.
+ */
+static void
+suppress_shadow_width(GtkWidget *widget)
+{
+    static gboolean parsed_rc = FALSE;
+    if (!parsed_rc) {
+        gtk_rc_parse_string("style \"hippo-no-shadow-style\" {\n"
+                            "  xthickness = 0\n"
+                            "  ythickness = 0\n"
+                            "}\n"
+                            "widget \"*.hippo-no-shadow-widget\" style : highest \"hippo-no-shadow-style\"\n");
+        parsed_rc = TRUE;
+    }
+    
+    gtk_widget_set_name(widget, "hippo-no-shadow-widget");
+}
+
+
 HippoCanvasItem*
 hippo_canvas_scrollbars_new(void)
 {
@@ -49,7 +72,8 @@ hippo_canvas_scrollbars_new(void)
 
     gtk_viewport_set_shadow_type(GTK_VIEWPORT(gtk_bin_get_child(GTK_BIN(widget))),
                                  GTK_SHADOW_NONE);
-    
+    suppress_shadow_width(gtk_bin_get_child(GTK_BIN(widget)));
+
     return g_object_new(HIPPO_TYPE_CANVAS_SCROLLBARS,
                         "widget", widget,
                         NULL);

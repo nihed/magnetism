@@ -31,6 +31,12 @@ static void hippo_window_gtk_set_visible       (HippoWindow      *window,
 static void hippo_window_gtk_set_position      (HippoWindow      *window,
                                                 int               x,
                                                 int               y);
+static void hippo_window_gtk_set_size          (HippoWindow      *window,
+                                                int               width,
+                                                int               height);
+static void hippo_window_gtk_get_position      (HippoWindow      *window,
+                                                int              *x_p,
+                                                int              *y_p);
 static void hippo_window_gtk_get_size          (HippoWindow      *window,
                                                 int              *width_p,
                                                 int              *height_p);
@@ -79,6 +85,8 @@ hippo_window_gtk_iface_init(HippoWindowClass *window_class)
     window_class->set_contents = hippo_window_gtk_set_contents;
     window_class->set_visible = hippo_window_gtk_set_visible;
     window_class->set_position = hippo_window_gtk_set_position;
+    window_class->set_size = hippo_window_gtk_set_size;
+    window_class->get_position = hippo_window_gtk_get_position;
     window_class->get_size = hippo_window_gtk_get_size;
     window_class->set_resizable = hippo_window_gtk_set_resizable;
     window_class->begin_move_drag = hippo_window_gtk_begin_move_drag;
@@ -244,6 +252,26 @@ hippo_window_gtk_set_position(HippoWindow     *window,
     HippoWindowGtk *window_gtk = HIPPO_WINDOW_GTK(window);
 
     gtk_window_move(GTK_WINDOW(window_gtk), x, y);
+}
+
+static void
+hippo_window_gtk_set_size(HippoWindow     *window,
+                          int              width,
+                          int              height)
+{
+    HippoWindowGtk *window_gtk = HIPPO_WINDOW_GTK(window);
+
+    gtk_window_resize(GTK_WINDOW(window_gtk), width, height);
+}
+
+static void
+hippo_window_gtk_get_position(HippoWindow     *window,
+                              int             *x_p,
+                              int             *y_p)
+{
+    HippoWindowGtk *window_gtk = HIPPO_WINDOW_GTK(window);
+
+    gtk_window_get_position(GTK_WINDOW(window_gtk), x_p, y_p);
 }
 
 static void

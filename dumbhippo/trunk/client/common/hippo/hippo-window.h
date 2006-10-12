@@ -28,6 +28,12 @@ struct _HippoWindowClass {
     void (* set_position)      (HippoWindow     *window,
                                 int              x,
                                 int              y);
+    void (* set_size)          (HippoWindow     *window,
+                                int              width,
+                                int              height);
+    void (* get_position)      (HippoWindow     *window,
+                                int             *x_p,
+                                int             *y_p);
     void (* get_size)          (HippoWindow     *window,
                                 int             *width_p,
                                 int             *height_p);
@@ -52,6 +58,12 @@ void hippo_window_set_visible       (HippoWindow      *window,
 void hippo_window_set_position      (HippoWindow      *window,
                                      int               x,
                                      int               y);
+void hippo_window_set_size          (HippoWindow      *window,
+                                     int               width,
+                                     int               height);
+void hippo_window_get_position      (HippoWindow      *window,
+                                     int              *x_p,
+                                     int              *y_p);
 void hippo_window_get_size          (HippoWindow      *window,
                                      int              *width_p,
                                      int              *height_p);
