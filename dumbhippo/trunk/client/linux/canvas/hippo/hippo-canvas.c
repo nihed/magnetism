@@ -449,6 +449,12 @@ static gboolean
 tooltip_timeout(void *data)
 {
     HippoCanvas *canvas = HIPPO_CANVAS(data);
+
+    /* FIXME: Tooltips are currently broken since it establishes a grab pointer grab
+     * when the tip is up, so you can't click until you move your mouse again. The
+     * grab also causes elements to unprelight because they get a leave-notify.
+     */
+#if 0
     char *tip;
     HippoRectangle for_area;
     
@@ -475,7 +481,7 @@ tooltip_timeout(void *data)
 
         for_area.x += screen_x;
         for_area.y += screen_y;
-        
+
         tooltip_window_show(canvas->tooltip_window,
                             GTK_WIDGET(canvas),
                             for_area.x,
@@ -484,6 +490,7 @@ tooltip_timeout(void *data)
 
         g_free(tip);
     }
+#endif    
     
     canvas->tooltip_timeout_id = 0;
     return FALSE;
@@ -494,7 +501,7 @@ tooltip_timeout(void *data)
 static void
 handle_new_mouse_location(HippoCanvas      *canvas,
                           GdkWindow        *event_window,
-                          HippoMotionDetail detail) /* FIXME detail is totally ignored, remove ... */
+                          HippoMotionDetail detail)
 {
     int mouse_x, mouse_y;
     int root_x_origin, root_y_origin;
@@ -525,13 +532,13 @@ handle_new_mouse_location(HippoCanvas      *canvas,
     g_debug("%p mouse %d,%d root origin %d,%d root %d,%d root size %dx%d", canvas->root,
             mouse_x, mouse_y, root_x_origin, root_y_origin, root_x, root_y, w, h);
 #endif
-    
+
     was_hovering = canvas->root_hovering;
-    if (root_x < 0 || root_y < 0 || root_x >= w || root_y >= h) {
+
+    if (detail == HIPPO_MOTION_DETAIL_LEAVE)
         canvas->root_hovering = FALSE;
-    } else {
+    else
         canvas->root_hovering = TRUE;
-    }
 
     /* g_debug("   was_hovering %d root_hovering %d", was_hovering, canvas->root_hovering); */
     
@@ -560,13 +567,19 @@ hippo_canvas_enter_notify(GtkWidget         *widget,
                           GdkEventCrossing  *event)
 {
     HippoCanvas *canvas = HIPPO_CANVAS(widget);
+    HippoMotionDetail detail;
 
     /* g_debug("motion notify GDK ENTER on %p root %p root_hovering %d", widget, canvas->root, canvas->root_hovering); */
     
     if (canvas->root == NULL)
         return FALSE;
 
-    handle_new_mouse_location(canvas, event->window, HIPPO_MOTION_DETAIL_ENTER);
+    if (event->detail == GDK_NOTIFY_INFERIOR || event->window != widget->window)
+        detail = HIPPO_MOTION_DETAIL_WITHIN;
+    else
+        detail = HIPPO_MOTION_DETAIL_ENTER;
+        
+    handle_new_mouse_location(canvas, event->window, detail);
     
     return FALSE;
 }
@@ -576,13 +589,19 @@ hippo_canvas_leave_notify(GtkWidget         *widget,
                           GdkEventCrossing  *event)
 {
     HippoCanvas *canvas = HIPPO_CANVAS(widget);
+    HippoMotionDetail detail;
 
     /* g_debug("motion notify GDK LEAVE on %p root %p root_hovering %d", widget, canvas->root, canvas->root_hovering); */
     
     if (canvas->root == NULL)
         return FALSE;
-    
-    handle_new_mouse_location(canvas, event->window, HIPPO_MOTION_DETAIL_LEAVE);
+
+    if (event->detail == GDK_NOTIFY_INFERIOR || event->window != widget->window)
+        detail = HIPPO_MOTION_DETAIL_WITHIN;
+    else
+        detail = HIPPO_MOTION_DETAIL_LEAVE;
+        
+    handle_new_mouse_location(canvas, event->window, detail);
     
     return FALSE;
 }
