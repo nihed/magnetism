@@ -11,3 +11,7 @@ div.dh-person-header {
 .dh-person-header .dh-person-info {
     width:          100%;
 }
+
+.dh-person-stacker-header {
+    padding:         8px;
+}

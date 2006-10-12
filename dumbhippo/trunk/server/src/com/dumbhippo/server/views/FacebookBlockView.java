@@ -40,6 +40,11 @@ public class FacebookBlockView extends BlockView {
 	}
 	
 	@Override
+	public PersonView getPersonSource() {
+	    return userView;	
+	}
+	
+	@Override
 	protected void writeDetailsToXmlBuilder(XmlBuilder builder) {
 		builder.appendEmptyNode("updateItem",
 				                "updateTitle", "new updates",

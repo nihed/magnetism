@@ -8,6 +8,7 @@ import com.dumbhippo.persistence.BlockType;
 import com.dumbhippo.persistence.UserBlockData;
 
 public abstract class BlockView implements ObjectView {
+	
 	private Block block;
 	private UserBlockData userBlockData;
 
@@ -44,6 +45,11 @@ public abstract class BlockView implements ObjectView {
 	
 	public Guid getIdentifyingGuid() {
 		return block.getGuid();
+	}
+	
+	// web swarms or group chats do not have a person source, while music and external account updates do
+	public PersonView getPersonSource() {
+		return null;
 	}
 	
 	public void writeToXmlBuilder(XmlBuilder builder) {

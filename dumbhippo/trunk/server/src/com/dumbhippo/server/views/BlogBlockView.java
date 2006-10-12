@@ -10,6 +10,7 @@ import com.dumbhippo.persistence.FeedEntry;
 import com.dumbhippo.persistence.UserBlockData;
 
 public class BlogBlockView extends BlockView {
+	
 	private PersonView userView;
 	private FeedEntry entry;
 	
@@ -37,6 +38,11 @@ public class BlogBlockView extends BlockView {
 	
 	public FeedEntry getEntry() {
 	    return entry;	
+	}
+	
+	@Override
+	public PersonView getPersonSource() {
+	    return userView;	
 	}
 	
 	@Override

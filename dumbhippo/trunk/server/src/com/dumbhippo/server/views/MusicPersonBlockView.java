@@ -8,6 +8,7 @@ import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.UserBlockData;
 
 public class MusicPersonBlockView extends BlockView {
+	
 	private PersonView userView;
 	
 	public MusicPersonBlockView(Block block, UserBlockData ubd, PersonView userView) {
@@ -31,6 +32,11 @@ public class MusicPersonBlockView extends BlockView {
 		return userView.getTrackHistory(); 
 	}
 
+	@Override
+	public PersonView getPersonSource() {
+	    return userView;	
+	}
+	
 	@Override
 	protected void writeDetailsToXmlBuilder(XmlBuilder builder) {
 		builder.appendEmptyNode("musicPerson",
