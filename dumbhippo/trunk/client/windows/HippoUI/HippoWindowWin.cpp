@@ -57,6 +57,7 @@ private:
     bool appWindow_;
 
     bool idleResize();
+    bool windowVisibleAtPoint(POINT point);
 
     HippoGObjectPtr<HippoCanvasItem> contents_;
     HippoPtr<HippoCanvas> contentsControl_;
@@ -461,6 +462,19 @@ HippoWindowImpl::getActive()
 }
 
 bool
+HippoWindowImpl::windowVisibleAtPoint(POINT point)
+{
+    HWND atPoint = WindowFromPoint(point);
+    if (!atPoint)
+        return FALSE;
+
+    // The root here isn't the X root window (the entire screen), but the toplevel window
+    HWND root = GetAncestor(atPoint, GA_ROOT);
+
+    return root == window_;
+}
+
+bool
 HippoWindowImpl::getOnscreen()
 {
     if (!isCreated())
@@ -471,27 +485,27 @@ HippoWindowImpl::getOnscreen()
 
     RECT rect;
 
-    if (GetWindowRect(window_, &rect))
+    if (!GetWindowRect(window_, &rect))
         return FALSE;
 
     POINT point;
 
     point.x = rect.left;
     point.y = rect.top;
-    if (WindowFromPoint(point) == window_)
-        return TRUE;
+    if (windowVisibleAtPoint(point))
+        return true;
 
     point.x = rect.right - 1;
-    if (WindowFromPoint(point) == window_)
-        return TRUE;
+    if (windowVisibleAtPoint(point))
+        return true;
     
     point.y = rect.bottom - 1;
-    if (WindowFromPoint(point) == window_)
-        return TRUE;
-    
+    if (windowVisibleAtPoint(point))
+        return true;
+     
     point.x = rect.left;
-    if (WindowFromPoint(point) == window_)
-        return TRUE;
+    if (windowVisibleAtPoint(point))
+        return true;
 
     return FALSE;
 }
