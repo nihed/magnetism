@@ -552,6 +552,7 @@
   (parameters
     '("int" "x")
     '("int" "y")
+    '("HippoRectangle*" "for_area")
   )
 )
 

@@ -30,6 +30,7 @@ ignore
 hippo_cairo_set_source_rgba32
 hippo_canvas_box_new
 hippo_canvas_text_new
+hippo_canvas_link_new
 %%
 ignore-glob
   *_get_type
