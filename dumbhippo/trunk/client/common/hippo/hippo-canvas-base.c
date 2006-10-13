@@ -254,7 +254,7 @@ hippo_canvas_base_constructor (GType                  type,
                             "normal-image-name", "arrow",
                             "prelight-image-name", "arrow2",
                             "xalign", HIPPO_ALIGNMENT_START,
-                            "tooltip", "Hide this stuff",
+                            "tooltip", "Browse all items",
                             NULL);
         hippo_canvas_box_append(box, item, 0);
     

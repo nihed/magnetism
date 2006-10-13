@@ -48,16 +48,20 @@ static gboolean  hippo_canvas_leave_notify        (GtkWidget         *widget,
 static gboolean  hippo_canvas_motion_notify       (GtkWidget         *widget,
             	       	                           GdkEventMotion    *event);
 
-static void  hippo_canvas_realize    (GtkWidget    *widget);
-static void  hippo_canvas_add        (GtkContainer *container,
-                                      GtkWidget    *widget);
-static void  hippo_canvas_remove     (GtkContainer *container,
-                                      GtkWidget    *widget);
-static void  hippo_canvas_forall     (GtkContainer *container,
-                                      gboolean      include_internals,
-                                      GtkCallback   callback,
-                                      gpointer      callback_data);
-static GType hippo_canvas_child_type (GtkContainer *container);
+static void  hippo_canvas_realize           (GtkWidget    *widget);
+static void  hippo_canvas_unmap             (GtkWidget    *widget);
+static void  hippo_canvas_hierarchy_changed (GtkWidget    *widget,
+                                             GtkWidget    *old_toplevel);
+static void  hippo_canvas_add               (GtkContainer *container,
+                                             GtkWidget    *widget);
+static void  hippo_canvas_remove            (GtkContainer *container,
+                                             GtkWidget    *widget);
+static void  hippo_canvas_forall            (GtkContainer *container,
+                                             gboolean      include_internals,
+                                             GtkCallback   callback,
+                                             gpointer      callback_data);
+static GType hippo_canvas_child_type        (GtkContainer *container);
+
 
 
 
@@ -160,7 +164,9 @@ hippo_canvas_class_init(HippoCanvasClass *klass)
     widget_class->leave_notify_event = hippo_canvas_leave_notify;
 
     widget_class->realize = hippo_canvas_realize;
-
+    widget_class->unmap = hippo_canvas_unmap;
+    widget_class->hierarchy_changed = hippo_canvas_hierarchy_changed;
+    
     container_class->add = hippo_canvas_add;
     container_class->remove = hippo_canvas_remove;
     container_class->forall = hippo_canvas_forall;
@@ -184,6 +190,8 @@ cancel_tooltip(HippoCanvas *canvas)
     if (canvas->tooltip_timeout_id) {
         g_source_remove(canvas->tooltip_timeout_id);
         canvas->tooltip_timeout_id = 0;
+        if (canvas->tooltip_window)
+            gtk_widget_hide(canvas->tooltip_window);
     }
 }
 
@@ -197,6 +205,10 @@ hippo_canvas_dispose(GObject *object)
     g_assert(canvas->widget_items == NULL);
 
     cancel_tooltip(canvas);
+    if (canvas->tooltip_window) {
+        gtk_object_destroy(GTK_OBJECT(canvas->tooltip_window));
+        canvas->tooltip_window = NULL;
+    }
     
     G_OBJECT_CLASS(hippo_canvas_parent_class)->dispose(object);
 }
@@ -449,17 +461,17 @@ static gboolean
 tooltip_timeout(void *data)
 {
     HippoCanvas *canvas = HIPPO_CANVAS(data);
-
-    /* FIXME: Tooltips are currently broken since it establishes a grab pointer grab
-     * when the tip is up, so you can't click until you move your mouse again. The
-     * grab also causes elements to unprelight because they get a leave-notify.
-     */
-#if 0
     char *tip;
     HippoRectangle for_area;
-    
+    GtkWidget *toplevel;
+
+    toplevel = gtk_widget_get_ancestor(GTK_WIDGET(canvas),
+                                       GTK_TYPE_WINDOW);
+
     tip = NULL;
-    if (canvas->root != NULL) {
+    if (canvas->root != NULL &&
+        toplevel && GTK_WIDGET_VISIBLE(toplevel) &&
+        GTK_WIDGET_VISIBLE(canvas)) {
         int window_x, window_y;
         get_root_item_window_coords(canvas, &window_x, &window_y);
         tip = hippo_canvas_item_get_tooltip(canvas->root,
@@ -490,7 +502,6 @@ tooltip_timeout(void *data)
 
         g_free(tip);
     }
-#endif    
     
     canvas->tooltip_timeout_id = 0;
     return FALSE;
@@ -649,6 +660,28 @@ hippo_canvas_realize(GtkWidget    *widget)
       
   widget->style = gtk_style_attach (widget->style, widget->window);
   gtk_style_set_background (widget->style, widget->window, GTK_STATE_NORMAL);
+}
+
+static void
+hippo_canvas_unmap(GtkWidget    *widget)
+{
+    HippoCanvas *canvas = HIPPO_CANVAS(widget);
+
+    cancel_tooltip(canvas);
+
+    GTK_WIDGET_CLASS(hippo_canvas_parent_class)->unmap(widget);
+}
+
+static void
+hippo_canvas_hierarchy_changed (GtkWidget    *widget,
+                                GtkWidget    *old_toplevel)
+{
+    HippoCanvas *canvas = HIPPO_CANVAS(widget);
+
+    cancel_tooltip(canvas);
+
+    if (GTK_WIDGET_CLASS(hippo_canvas_parent_class)->hierarchy_changed)
+        GTK_WIDGET_CLASS(hippo_canvas_parent_class)->hierarchy_changed(widget, old_toplevel);
 }
 
 static void
@@ -1035,7 +1068,6 @@ tooltip_expose_handler(GtkWidget *tip, GdkEventExpose *event, void *data)
 static gint
 tooltip_motion_handler(GtkWidget *tip, GdkEventMotion *event, void *data)
 {
-    gdk_pointer_ungrab(event->time);
     gtk_widget_hide(tip);
     return FALSE;
 }
@@ -1075,15 +1107,6 @@ tooltip_window_show(GtkWidget  *tip,
     gtk_window_move(GTK_WINDOW(tip), root_x, root_y);
 
     gtk_widget_show(tip);
-    
-    status = gdk_pointer_grab(tip->window,
-                              FALSE,
-                              GDK_POINTER_MOTION_MASK,
-                              NULL, NULL,
-                              0);
-
-    if (status != GDK_GRAB_SUCCESS && status != GDK_GRAB_ALREADY_GRABBED)
-        gtk_widget_hide(tip);
 }
 
 static GtkWidget*
