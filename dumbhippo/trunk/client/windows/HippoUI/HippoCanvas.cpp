@@ -210,9 +210,11 @@ HippoCanvas::getWidthRequestImpl()
     switch (vscrollbarPolicy_) {
     case HIPPO_SCROLLBAR_NEVER:
         canvasWidthReq_ = baseWidth;
+        break;
     case HIPPO_SCROLLBAR_AUTOMATIC:
     case HIPPO_SCROLLBAR_ALWAYS:
         canvasWidthReq_ = baseWidth + vscroll_->getWidthRequest();
+        break;
     }
 
     return canvasWidthReq_;
@@ -377,7 +379,7 @@ HippoCanvas::tryAllocate(bool hscrollbar, bool vscrollbar)
         childWidthAlloc = w - vWidth;
 
     int childHeightAlloc;
-    if (hscrollbar)
+    if (vscrollbar)
         childHeightAlloc = MAX(childHeightRequest, h - hHeight);
     else
         childHeightAlloc = h - hHeight;
