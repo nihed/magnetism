@@ -263,7 +263,7 @@ on_current_track_changed(HippoPerson *person,
                                          "text", " | ",
                                          NULL);
                 hippo_canvas_box_append(block_music_person->downloads_box,
-                                        link, 0);
+                                        separator, 0);
             }
         }
         

@@ -199,17 +199,22 @@ do_read_login_cookie(const char       *web_host,
     makeAuthUrl(web_host, &authUrl);
 
 retry:
+    *cookieBuffer = 0;
     if (!InternetGetCookieEx(authUrl, 
                              L"auth",
                              cookieBuffer, &cookieSize,
                              0,
                              NULL))
     {
-        if (GetLastError() == ERROR_INSUFFICIENT_BUFFER) {
+        HRESULT error = GetLastError();
+        if (error == ERROR_INSUFFICIENT_BUFFER) {
             cookieBuffer = allocBuffer = new WCHAR[cookieSize];
             if (!cookieBuffer)
                 goto out;
             goto retry;
+        } else {
+            hippoDebugLogW(L"Failed to get auth cookie %d", (int) error);
+            cookieSize = 0;
         }
     }
 
@@ -233,10 +238,13 @@ retry:
         p += 5; // Skip 'auth='
 
         HippoUStr cookieValue(p, (int) (nextCookie - p));
-        
-        if (hippo_parse_login_cookie(cookieValue.c_str(),
-                                     web_host, username_p, password_p))
+    
+        if (hippo_parse_login_cookie(cookieValue.c_str(), web_host, username_p, password_p)) {
+            //hippoDebugLogU("using cookie '%s'", cookieValue.c_str());
             break;
+        }
+
+        //hippoDebugLogU("skipping cookie '%s'", cookieValue.c_str());
     }
 
 out:

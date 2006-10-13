@@ -298,9 +298,13 @@ HippoAbstractWindow::createWindow(void)
 #endif
 
 #if 0
-    g_debug("Create window style WS_OVERLAPPEDWINDOW=%x WS_VISIBLE=%x WS_DISABLED=%x WS_CHILD=%x WS_POPUP=%x",
+    g_debug("Create window style %x WS_OVERLAPPEDWINDOW=%x WS_VISIBLE=%x WS_DISABLED=%x WS_CHILD=%x WS_POPUP=%x WS_CAPTION=%x WS_SYSMENU=%x WS_MINIMIZEBOX=%x",
+        windowStyle_,
         windowStyle_ & WS_OVERLAPPEDWINDOW, windowStyle_ & WS_VISIBLE,
-        windowStyle_ & WS_DISABLED, windowStyle_ & WS_CHILD, windowStyle_ & WS_POPUP);
+        windowStyle_ & WS_DISABLED, windowStyle_ & WS_CHILD, windowStyle_ & WS_POPUP,
+        windowStyle_ & WS_CAPTION,
+        windowStyle_ & WS_SYSMENU,
+        windowStyle_ & WS_MINIMIZEBOX);
 #endif
 
     window_ = CreateWindowEx(extendedStyle_, className_, title_, windowStyle_,
@@ -319,9 +323,10 @@ HippoAbstractWindow::createWindow(void)
         getClientArea(&believed);
         queryCurrentClientRect(&actual);
         if (!hippo_rectangle_equal(&believed, &actual)) {
-            g_warning("window class %s not created with expected dimensions, actual %d,%d %dx%d",
+            g_warning("window class %s not created with expected dimensions, actual %d,%d %dx%d believed %d,%d %dx%d",
                 HippoUStr(getClassName()).c_str(),
-                actual.x, actual.y, actual.width, actual.height);
+                actual.x, actual.y, actual.width, actual.height,
+                believed.x, believed.y, believed.width, believed.height);
             // Fix up and try to continue
             x_ = actual.x;
             y_ = actual.y;
