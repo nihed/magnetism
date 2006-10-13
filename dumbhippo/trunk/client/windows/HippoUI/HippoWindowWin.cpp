@@ -449,16 +449,31 @@ HippoWindowImpl::getActive()
 {
     if (!isCreated())
         return FALSE;
-    
-    WINDOWINFO windowInfo;
-    
-    memset((void *)&windowInfo, 0, sizeof(WINDOWINFO));
-    windowInfo.cbSize = sizeof(WINDOWINFO);
 
-    if (!GetWindowInfo(window_, &windowInfo))
-        return FALSE;
+    // The active window isn't actually what we are interested in here, since what we
+    // want to know for the Mugshot browser window is whether when the user clicks on
+    // the mugshot icon we should raise the window or instead hide it. And when the
+    // usre clicks on the mugshot icon, the panel is the active window. So, what
+    // we check here is if our window is the top window that isn't WS_EX_TOPMOST.
 
-    return windowInfo.dwWindowStatus == WS_ACTIVECAPTION;
+    HWND top = GetTopWindow(NULL);
+    while (top) {
+        if (top == window_)
+            return TRUE;
+
+        WINDOWINFO windowInfo;
+        memset(&windowInfo, 0, sizeof(windowInfo));
+        windowInfo.cbSize = sizeof(windowInfo);
+        if (!GetWindowInfo(top, &windowInfo))
+            return FALSE;
+
+        if ((windowInfo.dwExStyle & WS_EX_TOPMOST) == 0)
+            return FALSE;
+
+        top = GetNextWindow(top, GW_HWNDNEXT);
+    }
+
+    return FALSE;
 }
 
 bool
@@ -556,6 +571,9 @@ void
 HippoWindowImpl::present()
 {
     ShowWindow(window_, SW_RESTORE);
+    // Apparently ShowWindow only activates a window when it is not shown. If it is
+    // already showing, you need to activate it explicitly
+    SetForegroundWindow(window_);
 }
 
 int
