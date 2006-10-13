@@ -80,7 +80,7 @@ hippo_block_group_member_class_init(HippoBlockGroupMemberClass *klass)
                                                         HIPPO_TYPE_GROUP,
                                                         G_PARAM_READABLE));
     g_object_class_install_property(object_class,
-                                    PROP_GROUP,
+                                    PROP_MEMBER,
                                     g_param_spec_object("member",
                                                         _("Member"),
                                                         _("Group member this group is about"),
@@ -185,10 +185,10 @@ hippo_block_group_member_get_property(GObject         *object,
 
     switch (prop_id) {
     case PROP_GROUP:
-        g_value_set_object(value, G_OBJECT(block_group_member->group));
+        g_value_set_object(value, (GObject*) block_group_member->group);
         break;
     case PROP_MEMBER:
-        g_value_set_object(value, G_OBJECT(block_group_member->member));
+        g_value_set_object(value, (GObject*) block_group_member->member);
         break;
     case PROP_STATUS:
         g_value_set_int(value, block_group_member->status);

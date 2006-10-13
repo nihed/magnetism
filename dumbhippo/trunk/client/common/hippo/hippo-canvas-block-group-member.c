@@ -5,6 +5,7 @@
 #include "hippo-canvas-block-group-member.h"
 #include <hippo/hippo-canvas-box.h>
 #include <hippo/hippo-canvas-image.h>
+#include <hippo/hippo-canvas-image-button.h>
 #include <hippo/hippo-canvas-text.h>
 #include <hippo/hippo-canvas-link.h>
 
@@ -34,10 +35,16 @@ static void hippo_canvas_block_group_member_title_activated (HippoCanvasBlock *c
 
 static void hippo_canvas_block_group_member_expand   (HippoCanvasBlock *canvas_block);
 static void hippo_canvas_block_group_member_unexpand (HippoCanvasBlock *canvas_block);
+static void hippo_canvas_block_group_member_hush     (HippoCanvasBlock *canvas_block);
+static void hippo_canvas_block_group_member_unhush   (HippoCanvasBlock *canvas_block);
 
 
 struct _HippoCanvasBlockGroupMember {
     HippoCanvasBlock canvas_block;
+
+    HippoCanvasBox  *invite_parent;
+    HippoCanvasItem *invite_image;
+    HippoCanvasItem *invite_link;
 };
 
 struct _HippoCanvasBlockGroupMemberClass {
@@ -95,6 +102,8 @@ hippo_canvas_block_group_member_class_init(HippoCanvasBlockGroupMemberClass *kla
     canvas_block_class->title_activated = hippo_canvas_block_group_member_title_activated;
     canvas_block_class->expand = hippo_canvas_block_group_member_expand;
     canvas_block_class->unexpand = hippo_canvas_block_group_member_unexpand;
+    canvas_block_class->hush = hippo_canvas_block_group_member_hush;
+    canvas_block_class->unhush = hippo_canvas_block_group_member_unhush;
 }
 
 static void
@@ -146,24 +155,75 @@ hippo_canvas_block_group_member_get_property(GObject         *object,
     }
 }
 
+static void
+on_invite_activated(HippoCanvasItem  *button_or_link,
+                    HippoCanvasBlock *canvas_block)
+{
+    HippoActions *actions;
+    HippoPerson *member;
+    HippoGroup *group;
+
+    actions = hippo_canvas_block_get_actions(canvas_block);
+    
+    g_object_get(G_OBJECT(canvas_block->block),
+                 "member", &member,
+                 "group", &group,
+                 NULL);
+
+    if (member && group && actions) {
+        hippo_actions_invite_to_group(actions, group, member);
+    }
+}
+
 static GObject*
 hippo_canvas_block_group_member_constructor (GType                  type,
                                              guint                  n_construct_properties,
                                              GObjectConstructParam *construct_properties)
 {
-    GObject *object = G_OBJECT_CLASS(hippo_canvas_block_group_member_parent_class)->constructor(type,
-                                                                                                n_construct_properties,
-                                                                                                construct_properties);
-    HippoCanvasBlock *block = HIPPO_CANVAS_BLOCK(object);
+    GObject *object;
+    HippoCanvasBlock *block;
+    HippoCanvasBlockGroupMember *canvas_group_member;
     HippoCanvasBox *box;
 
-    hippo_canvas_block_set_heading(block, _("Group: "));
+    object = G_OBJECT_CLASS(hippo_canvas_block_group_member_parent_class)->constructor(type,
+                                                                                       n_construct_properties,
+                                                                                       construct_properties);
+    
+    block = HIPPO_CANVAS_BLOCK(object);
+    canvas_group_member = HIPPO_CANVAS_BLOCK_GROUP_MEMBER(object);
+    
+    hippo_canvas_block_set_heading(block, _("Group update: "));
 
     box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
                        NULL);
 
     hippo_canvas_block_set_content(block, HIPPO_CANVAS_ITEM(box));
 
+    canvas_group_member->invite_parent = g_object_new(HIPPO_TYPE_CANVAS_BOX,
+                                                      "orientation", HIPPO_ORIENTATION_HORIZONTAL,
+                                                      "spacing", 4,
+                                                      NULL);
+    hippo_canvas_box_append(box, HIPPO_CANVAS_ITEM(canvas_group_member->invite_parent), 0);
+    
+    canvas_group_member->invite_image = g_object_new(HIPPO_TYPE_CANVAS_IMAGE_BUTTON,
+                                                     "image-name", "add_icon",
+                                                     "xalign", HIPPO_ALIGNMENT_CENTER,
+                                                     "yalign", HIPPO_ALIGNMENT_CENTER,
+                                                     NULL);
+    hippo_canvas_box_append(canvas_group_member->invite_parent, canvas_group_member->invite_image, 0);
+
+    g_signal_connect(G_OBJECT(canvas_group_member->invite_image),
+                     "activated", G_CALLBACK(on_invite_activated), block);
+    
+    canvas_group_member->invite_link = g_object_new(HIPPO_TYPE_CANVAS_LINK,
+                                                    "text", "Invite to group",
+                                                    "color-cascade", HIPPO_CASCADE_MODE_NONE,
+                                                    NULL);
+    hippo_canvas_box_append(canvas_group_member->invite_parent, canvas_group_member->invite_link, 0);
+
+    g_signal_connect(G_OBJECT(canvas_group_member->invite_link),
+                     "activated", G_CALLBACK(on_invite_activated), block);
+    
     return object;
 }
 
@@ -191,11 +251,73 @@ on_group_changed(HippoBlock *block,
 }
 
 static void
+update_member_and_status(HippoCanvasBlockGroupMember *canvas_group_member,
+                         HippoBlock                  *block)
+{
+    HippoPerson *member;
+    HippoMembershipStatus status;
+    char *title;
+    gboolean show_invite_link;
+    
+    member = NULL;
+    status = HIPPO_MEMBERSHIP_STATUS_NONMEMBER;
+    g_object_get(G_OBJECT(block),
+                 "member", &member,
+                 "status", &status,
+                 NULL);
+
+    title = NULL;
+    show_invite_link = FALSE;
+    
+    if (member != NULL) {
+        const char *name;
+        
+        name = hippo_entity_get_name(HIPPO_ENTITY(member));
+        
+        switch (status) {
+        case HIPPO_MEMBERSHIP_STATUS_NONMEMBER:
+            /* this really shouldn't happen unless the block just isn't initialized yet */
+            break;
+        case HIPPO_MEMBERSHIP_STATUS_INVITED_TO_FOLLOW:
+            title = g_strdup_printf("%s is invited to be a follower", name);
+            break;
+        case HIPPO_MEMBERSHIP_STATUS_FOLLOWER:
+            title = g_strdup_printf("%s is a new follower", name);
+            show_invite_link = TRUE;
+            break;
+        case HIPPO_MEMBERSHIP_STATUS_REMOVED:
+            title = g_strdup_printf("%s left the group", name);
+            break;
+        case HIPPO_MEMBERSHIP_STATUS_INVITED:
+            title = g_strdup_printf("%s invited to the group", name);
+            break;
+        case HIPPO_MEMBERSHIP_STATUS_ACTIVE:
+            title = g_strdup_printf("%s is a new member", name);
+            break;
+        }
+    }
+
+    hippo_canvas_block_set_title(HIPPO_CANVAS_BLOCK(canvas_group_member), title);
+
+    hippo_canvas_box_set_child_visible(canvas_group_member->invite_parent,
+                                       canvas_group_member->invite_image,
+                                       show_invite_link);
+    hippo_canvas_box_set_child_visible(canvas_group_member->invite_parent,
+                                       canvas_group_member->invite_link,
+                                       show_invite_link);
+}
+
+static void
 on_member_changed(HippoBlock *block,
                   GParamSpec *arg, /* null when first calling this */
                   HippoCanvasBlock *canvas_block)
 {
-    /* FIXME */
+    HippoCanvasBlockGroupMember *canvas_group_member;
+
+    canvas_group_member = HIPPO_CANVAS_BLOCK_GROUP_MEMBER(canvas_block);
+    g_assert(block == canvas_block->block);
+
+    update_member_and_status(canvas_group_member, block);
 }
 
 static void
@@ -203,7 +325,13 @@ on_status_changed(HippoBlock *block,
                   GParamSpec *arg, /* null when first calling this */
                   HippoCanvasBlock *canvas_block)
 {
-    /* FIXME */
+
+    HippoCanvasBlockGroupMember *canvas_group_member;
+
+    canvas_group_member = HIPPO_CANVAS_BLOCK_GROUP_MEMBER(canvas_block);
+    g_assert(block == canvas_block->block);
+
+    update_member_and_status(canvas_group_member, block);
 }
 
 static void
@@ -245,8 +373,8 @@ hippo_canvas_block_group_member_set_block(HippoCanvasBlock *canvas_block,
                          canvas_block);        
 
         on_group_changed(canvas_block->block, NULL, canvas_block);
-        on_member_changed(canvas_block->block, NULL, canvas_block);
-        on_status_changed(canvas_block->block, NULL, canvas_block);
+        update_member_and_status(HIPPO_CANVAS_BLOCK_GROUP_MEMBER(canvas_block),
+                                 canvas_block->block);
     }
 }
 
@@ -286,4 +414,28 @@ hippo_canvas_block_group_member_unexpand(HippoCanvasBlock *canvas_block)
     /* HippoCanvasBlockGroupMember *block_group_member = HIPPO_CANVAS_BLOCK_GROUP_MEMBER(canvas_block); */
 
     HIPPO_CANVAS_BLOCK_CLASS(hippo_canvas_block_group_member_parent_class)->unexpand(canvas_block);
+}
+
+static void
+hippo_canvas_block_group_member_hush(HippoCanvasBlock *canvas_block)
+{
+    HippoCanvasBlockGroupMember *block_group = HIPPO_CANVAS_BLOCK_GROUP_MEMBER(canvas_block);
+    
+    HIPPO_CANVAS_BLOCK_CLASS(hippo_canvas_block_group_member_parent_class)->hush(canvas_block);
+
+    g_object_set(G_OBJECT(block_group->invite_link),
+                 "color-cascade", HIPPO_CASCADE_MODE_INHERIT,
+                 NULL);
+}
+
+static void
+hippo_canvas_block_group_member_unhush(HippoCanvasBlock *canvas_block)
+{
+    HippoCanvasBlockGroupMember *block_group = HIPPO_CANVAS_BLOCK_GROUP_MEMBER(canvas_block);
+    
+    HIPPO_CANVAS_BLOCK_CLASS(hippo_canvas_block_group_member_parent_class)->unhush(canvas_block);
+
+    g_object_set(G_OBJECT(block_group->invite_link),
+                 "color-cascade", HIPPO_CASCADE_MODE_NONE,
+                 NULL);
 }

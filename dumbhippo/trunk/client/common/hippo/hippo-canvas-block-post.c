@@ -223,7 +223,8 @@ hippo_canvas_block_post_constructor (GType                  type,
                                                   "text", NULL,
                                                   NULL);
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(block_post->details_box), block_post->clicked_count_item, 0);
-    
+
+#if 0
     item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
                         "text", " | ",
                         NULL);
@@ -238,7 +239,7 @@ hippo_canvas_block_post_constructor (GType                  type,
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(block_post->details_box), item, 0);
 
     g_signal_connect(G_OBJECT(item), "activated", G_CALLBACK(on_faves_activated), block_post);
-
+#endif
 
     block_post->chat_preview_parent = box;
     block_post->chat_preview = g_object_new(HIPPO_TYPE_CANVAS_CHAT_PREVIEW,
@@ -499,11 +500,13 @@ hippo_canvas_block_post_hush(HippoCanvasBlock *canvas_block)
     HippoCanvasBlockPost *block_post = HIPPO_CANVAS_BLOCK_POST(canvas_block);
     
     HIPPO_CANVAS_BLOCK_CLASS(hippo_canvas_block_post_parent_class)->hush(canvas_block);
-    
+
+#if 0
     g_object_set(G_OBJECT(block_post->faves_link),
                  "color-cascade", HIPPO_CASCADE_MODE_INHERIT,
                  NULL);
-
+#endif
+    
     hippo_canvas_chat_preview_set_hushed(HIPPO_CANVAS_CHAT_PREVIEW(block_post->chat_preview),
                                          TRUE);
 }
@@ -514,11 +517,13 @@ hippo_canvas_block_post_unhush(HippoCanvasBlock *canvas_block)
     HippoCanvasBlockPost *block_post = HIPPO_CANVAS_BLOCK_POST(canvas_block);
     
     HIPPO_CANVAS_BLOCK_CLASS(hippo_canvas_block_post_parent_class)->unhush(canvas_block);
-    
+
+#if 0
     g_object_set(G_OBJECT(block_post->faves_link),
                  "color-cascade", HIPPO_CASCADE_MODE_NONE,
                  NULL);
-
+#endif
+    
     hippo_canvas_chat_preview_set_hushed(HIPPO_CANVAS_CHAT_PREVIEW(block_post->chat_preview),
                                          FALSE);
 }

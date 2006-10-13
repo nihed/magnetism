@@ -45,6 +45,7 @@ mugshot_SOURCES	=				\
 
 EMBEDDEDIMAGEDIR=$(COMMONSRCDIR)/images
 EMBEDDED_IMAGES=				\
+	$(EMBEDDEDIMAGEDIR)/add_icon.png	\
 	$(EMBEDDEDIMAGEDIR)/arrow.png		\
 	$(EMBEDDEDIMAGEDIR)/arrow2.png		\
 	$(EMBEDDEDIMAGEDIR)/bar_middle.png	\

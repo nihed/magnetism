@@ -272,3 +272,14 @@ hippo_actions_join_chat_id(HippoActions    *actions,
 {
     hippo_platform_show_chat_window(get_platform(actions), chat_id);
 }
+
+void
+hippo_actions_invite_to_group(HippoActions    *actions,
+                              HippoGroup      *group,
+                              HippoPerson     *person)
+{
+    hippo_connection_do_invite_to_group(get_connection(actions),
+                                        hippo_entity_get_guid(HIPPO_ENTITY(group)),
+                                        hippo_entity_get_guid(HIPPO_ENTITY(person)));
+}
+

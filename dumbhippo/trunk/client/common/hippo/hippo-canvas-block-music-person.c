@@ -286,6 +286,10 @@ hippo_canvas_block_music_person_title_activated(HippoCanvasBlock *canvas_block)
 
     actions = hippo_canvas_block_get_actions(canvas_block);
 
+    /* FIXME what is this about; clicking the song in the title should
+     * go to the song - add hippo_track_get_url or something
+     */
+    
     person = NULL;
     g_object_get(G_OBJECT(canvas_block->block),
                  "user", &person,

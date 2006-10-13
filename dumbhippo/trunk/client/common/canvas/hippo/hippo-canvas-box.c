@@ -104,6 +104,7 @@ typedef struct {
     guint            fixed : 1;
     guint            hovering : 1;
     guint            visible : 1;
+    guint            requesting : 1; /* used to detect bugs */
 } HippoBoxChild;
 
 enum {
@@ -1221,12 +1222,28 @@ hippo_canvas_box_get_content_width_request(HippoCanvasBox *box)
          */
         
         if (child->width_request < 0) {
+            if (child->requesting)
+                g_warning("Somehow recursively requesting child %p", child->item);
+            
+            child->requesting = TRUE;
+            
             child->width_request = hippo_canvas_item_get_width_request(child->item);
+
+            if (child->width_request < 0)
+                g_warning("child %p %s returned width request of %d which is <0",
+                          child->item,
+                          g_type_name_from_instance((GTypeInstance*) child->item),
+                          child->width_request);
+            
             child->natural_width = hippo_canvas_item_get_natural_width(child->item);
+
             if (child->natural_width < 0)
                 child->natural_width = child->width_request;
+
             if (child->natural_width < child->width_request)
                 g_warning("some child says its natural width is below its min width");
+
+            child->requesting = FALSE;
         }
 
         if (child->fixed || !child->visible)
@@ -1241,7 +1258,7 @@ hippo_canvas_box_get_content_width_request(HippoCanvasBox *box)
         }
     }
 
-    if (box->orientation == HIPPO_ORIENTATION_HORIZONTAL)
+    if (box->orientation == HIPPO_ORIENTATION_HORIZONTAL && n_children > 1)
         total += box->spacing * (n_children - 1);
     
     return total;
@@ -1267,7 +1284,7 @@ hippo_canvas_box_get_content_natural_width(HippoCanvasBox *box)
         
         if (child->width_request < 0) {
             /* we call get_natural_width in get_width_request */
-            g_warning("natural width requested without width request first");
+            g_warning("natural width requested without width request first, or child queued resize during width request");
             return -1;
         }
 
@@ -1285,7 +1302,7 @@ hippo_canvas_box_get_content_natural_width(HippoCanvasBox *box)
             total += child->natural_width;
     }
 
-    if (box->orientation == HIPPO_ORIENTATION_HORIZONTAL)
+    if (box->orientation == HIPPO_ORIENTATION_HORIZONTAL && n_children > 1)
         total += box->spacing * (n_children - 1);
         
     /* We want to keep the -1 instead of returning the request if
@@ -1509,7 +1526,8 @@ hippo_canvas_box_get_content_height_request(HippoCanvasBox *box,
             total += child->height_request;
         }
 
-        total += box->spacing * (n_children - 1);
+        if (n_children > 1)
+            total += box->spacing * (n_children - 1);
     } else {
         HippoCanvasBoxClass *klass;
         int requested_content_width;
@@ -2130,6 +2148,12 @@ child_request_changed(HippoCanvasItem *child,
             g_type_name_from_instance((GTypeInstance*) box),
             box);
 #endif
+
+    if (box_child->requesting) {
+        g_warning("Child item %p of type %s changed its size request inside a size request operation",
+                  box_child->item,
+                  g_type_name_from_instance((GTypeInstance*) box_child->item));
+    }
     
     /* invalidate cached request for this child */
     box_child->width_request = -1;    
