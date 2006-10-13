@@ -1,0 +1,50 @@
+@CHARSET "UTF-8";
+
+.dh-download-header {
+	margin-bottom:			5px;
+}
+
+.dh-download-subtitle {
+	margin-bottom			5px;
+}
+
+.dh-download-buttons {
+	margin-bottom:			10px;
+}
+
+.dh-download-buttons img {
+	margin-right:			10px;
+}
+
+.dh-download-subheader {
+	margin-bottom:			5px;
+}
+
+.dh-download-section {
+	padding:				5px;
+	margin-bottom:			5px;
+	width:					100%;
+}
+
+td.dh-download-section-icon-area {
+	text-align:				center;
+	width:					75px;
+}
+
+.dh-download-section-icon-area img {
+	padding:				5px;
+}
+
+td.dh-download-section-details-area {
+}
+
+.dh-download-section-list {
+	padding-top:		0px;
+	padding-bottom:		0px;
+	margin-top:			0px;
+	margin-bottom:		0px;
+}
+
+.dh-download-faq {
+	margin-bottom:			10px;
+}

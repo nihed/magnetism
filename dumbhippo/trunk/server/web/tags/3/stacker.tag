@@ -16,10 +16,10 @@
 	<c:forEach items="${stack}" end="${stackSize}" var="block" varStatus="blockIdx">
 		<c:choose>
 			<c:when test="${blockIdx.count % 2 == 0}">
-				<dht3:block block="${block}" cssClass="dh-stacker-block-grey1" blockId="${stackOrder}_${blockIdx.count + 1}"/>
+				<dht3:block block="${block}" cssClass="dh-box-grey1" blockId="${stackOrder}_${blockIdx.count + 1}"/>
 			</c:when>
 			<c:otherwise>
-				<dht3:block block="${block}" cssClass="dh-stacker-block-grey2" blockId="${stackOrder}_${blockIdx.count + 1}"/>
+				<dht3:block block="${block}" cssClass="dh-box-grey2" blockId="${stackOrder}_${blockIdx.count + 1}"/>
 			</c:otherwise>
 		</c:choose>
 		<c:if test="${!blockIdx.last}">

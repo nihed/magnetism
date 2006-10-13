@@ -33,6 +33,10 @@ img {
 	background-color:	#CCCCCC;
 }
 
+.dh-underlined-link {
+	text-decoration:	underline;
+}
+
 .dh-page-title-container {
 }
 
@@ -269,11 +273,11 @@ div.dh-async-action-link-complete {
 .dh-stacker-block {
 }
 
-.dh-stacker-block-grey1 {
+.dh-box-grey1 {
 	background-color:	#EDEDED;
 }
 
-.dh-stacker-block-grey2 {
+.dh-box-grey2 {
 	background-color:	#F3F3F3;
 }
 

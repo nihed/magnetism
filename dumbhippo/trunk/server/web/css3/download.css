@@ -1,0 +1,51 @@
+@CHARSET "UTF-8";
+@IMPORT url("download-positions.css");
+
+.dh-download-header {
+	color:				#9648BC;
+	font-weight:  		bold;
+	font-size:	  		18px;
+}
+
+.dh-download-subtitle {
+	font-size:			16px;
+}
+
+.dh-download-subheader {
+	font-size:			18px;
+	font-weight:		bold;
+}
+
+.dh-download-section {
+	font-size:			12px;
+}
+
+.dh-download-section-header {
+	font-size:			14px;
+	font-weight:		bold;
+}
+
+.dh-download-product {
+	color:				#9648BC;
+}
+
+.dh-download-section-subheader {
+	font-weight:		bold;
+}
+
+.dh-download-section-list {
+	list-style-type:	disc;
+}
+
+.dh-download-faqs-header {
+	font-size:			18px;
+	font-weight:		bold;
+}
+
+.dh-download-faq {
+	font-size:			12px;
+}
+
+.dh-download-faq-q {
+	font-weight:		bold;
+}
