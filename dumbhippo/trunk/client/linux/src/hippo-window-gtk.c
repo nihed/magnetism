@@ -37,6 +37,8 @@ static void hippo_window_gtk_set_contents      (HippoWindow      *window,
                                                 HippoCanvasItem  *item);
 static void hippo_window_gtk_set_visible       (HippoWindow      *window,
                                                 gboolean          visible);
+static void hippo_window_gtk_hide_to_icon      (HippoWindow      *window,
+                                                HippoRectangle   *icon_rectangle);
 static void hippo_window_gtk_set_position      (HippoWindow      *window,
                                                 int               x,
                                                 int               y);
@@ -97,6 +99,7 @@ hippo_window_gtk_iface_init(HippoWindowClass *window_class)
 {
     window_class->set_contents = hippo_window_gtk_set_contents;
     window_class->set_visible = hippo_window_gtk_set_visible;
+    window_class->hide_to_icon = hippo_window_gtk_hide_to_icon;
     window_class->set_position = hippo_window_gtk_set_position;
     window_class->set_size = hippo_window_gtk_set_size;
     window_class->get_position = hippo_window_gtk_get_position;
@@ -351,6 +354,28 @@ hippo_window_gtk_set_visible(HippoWindow     *window,
         gtk_widget_hide(GTK_WIDGET(window_gtk));
 }
 
+static void 
+hippo_window_gtk_hide_to_icon(HippoWindow    *window,
+                              HippoRectangle *icon_rect)
+{
+    HippoWindowGtk *window_gtk = HIPPO_WINDOW_GTK(window);
+    
+    /* What this is supposed to do (and does on Windows) is hides
+     * the window and shows the window-minimization animation going
+     * to icon_rect.
+     * 
+     * On Linux the only way to get the real minimization animation is
+     * to really minimize. Which would have a fun interaction with the
+     * tasklist. (We could set our icon location in the window
+     * property for the place to minimize to, but the tasklist would
+     * sometimes overwrite it)
+     *
+     * So, maybe it's just best to omit ourselves from the task list
+     * and draw a minimization animation from scratch. The code from
+     * metacity could be stolen.
+     */
+    gtk_widget_hide(GTK_WIDGET(window_gtk));
+}
 
 static void
 hippo_window_gtk_set_position(HippoWindow     *window,
