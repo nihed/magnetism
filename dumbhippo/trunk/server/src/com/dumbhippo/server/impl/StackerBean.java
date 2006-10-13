@@ -231,6 +231,19 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		return TypeUtils.castList(UserBlockData.class, q.getResultList());
 	}
 	
+	private UserBlockData queryUserBlockData(Block block, User user) throws NoResultException {
+		Query q = em.createQuery("SELECT ubd FROM UserBlockData ubd" +
+				                 " WHERE ubd.block = :block AND ubd.user = :user");
+		q.setParameter("block", block);
+		q.setParameter("user", user);
+		try {
+		    return (UserBlockData)q.getSingleResult();
+		} catch (NonUniqueResultException e) {
+			throw new RuntimeException("NonUniqueResultException when getting a UserBlockData", e);
+		} catch (IllegalStateException e) {
+			throw new RuntimeException("IllegalStateException when getting a UserBlockData", e);
+		}
+	}
 	
 	private void updateUserBlockDatas(Block block, Set<User> desiredUsers, Guid participantId) {
 		int addCount;
@@ -298,6 +311,8 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		return getUsersWhoCare(block, true);
 	}
 	
+	// getUsersWhoCare should pretty much always include self, because we use
+	// the blocks stacked for self when displaying them to others on the web stacker
 	private Set<User> getUsersWhoCare(Block block, boolean includeSelf) {
 		User user;
 		try {
@@ -365,11 +380,11 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	private Set<User> getDesiredUsersForExternalAccountUpdate(Block block) {
 		if (block.getBlockType() != BlockType.EXTERNAL_ACCOUNT_UPDATE)
 			throw new IllegalArgumentException("wrong type block");
-		
-		if (block.getData3() == ExternalAccountType.FACEBOOK.ordinal()) {
-			return getUsersWhoCare(block, false);
-		}
 	
+		// we always want to include self in external account updates, because
+		// this is how we will get the UserBlockData for the update with the right
+		// participation timestamp, which we will display on the person's own stacker
+		// when viewed by others
 		return getUsersWhoCare(block);
 	}
 
@@ -916,6 +931,19 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		}
 	}
 
+	static private class PostParticipationMigrationTask implements Runnable {
+		private String postId;
+		
+		PostParticipationMigrationTask(String postId) {
+			this.postId = postId;
+		}
+		
+		public void run() {
+			Stacker stacker = EJBUtil.defaultLookup(Stacker.class);
+			stacker.migratePostParticipation(postId);
+		}
+	}
+	
 	static private class UserMigrationTask implements Runnable {
 		private String userId;
 		
@@ -929,11 +957,24 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		}
 	}
 
+	static private class BlockParticipationMigrationTask implements Runnable {
+		private String blockId;
+		
+		BlockParticipationMigrationTask(String blockId) {
+			this.blockId = blockId;
+		}
+		
+		public void run() {
+			Stacker stacker = EJBUtil.defaultLookup(Stacker.class);
+			stacker.migrateBlockParticipation(blockId);
+		}
+	}
+	
 	static private class GroupMigrationTask implements Runnable {
 		private String groupId;
 		
-		GroupMigrationTask(String postId) {
-			this.groupId = postId;
+		GroupMigrationTask(String groupId) {
+			this.groupId = groupId;
 		}
 		
 		public void run() {
@@ -943,6 +984,19 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		}
 	}
 
+	static private class GroupParticipationMigrationTask implements Runnable {
+		private String groupId;
+		
+		GroupParticipationMigrationTask(String groupId) {
+			this.groupId = groupId;
+		}
+		
+		public void run() {
+			Stacker stacker = EJBUtil.defaultLookup(Stacker.class);
+			stacker.migrateGroupChatParticipation(groupId);
+		}
+	}
+	
 	static private class Migration implements Runnable {
 		@SuppressWarnings("unused")
 		static private final Logger logger = GlobalSetup.getLogger(Migration.class);		
@@ -1068,8 +1122,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		t.start();		
 	}
 	
-	public void migrateEverything() {
-		
+	public void migrateEverything() {	
 		if (disabled)
 			throw new RuntimeException("stacking disabled, can't migrate anything");
 		
@@ -1087,7 +1140,40 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		for (String id : TypeUtils.castList(String.class, q.getResultList()))
 			tasks.add(new GroupMigrationTask(id));
 		
+		tasks.addAll(generateParticipationMigrationTasks());
+		
 		runMigration(tasks);
+	}
+	
+	public void migrateParticipation() {
+		if (disabled)
+			throw new RuntimeException("stacking disabled, can't migrate anything");
+		
+		runMigration(generateParticipationMigrationTasks());		
+	}
+	
+	private List<Runnable> generateParticipationMigrationTasks() {
+		List<Runnable> tasks = new ArrayList<Runnable>();
+		
+		Query q = em.createQuery("SELECT post.id FROM Post post");
+		for (String id : TypeUtils.castList(String.class, q.getResultList()))
+			tasks.add(new PostParticipationMigrationTask(id));
+
+		q = em.createQuery("SELECT block.id FROM Block block" +
+				           " WHERE block.blockType = :typeMusicPerson" +
+				           " OR block.blockType = :typeExtAccount" +
+				           " OR block.blockType = :typeExtAccountSelf");
+		q.setParameter("typeMusicPerson", BlockType.MUSIC_PERSON);
+		q.setParameter("typeExtAccount", BlockType.EXTERNAL_ACCOUNT_UPDATE);
+		q.setParameter("typeExtAccountSelf", BlockType.EXTERNAL_ACCOUNT_UPDATE_SELF);
+		for (String id : TypeUtils.castList(String.class, q.getResultList()))
+			tasks.add(new BlockParticipationMigrationTask(id));
+
+		q = em.createQuery("SELECT group.id FROM Group group");
+		for (String id : TypeUtils.castList(String.class, q.getResultList()))
+			tasks.add(new GroupParticipationMigrationTask(id));
+		
+		return tasks;
 	}
 	
 	public void migrateGroups() {
@@ -1097,12 +1183,15 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		List<Runnable> tasks = new ArrayList<Runnable>();
 
 		Query q = em.createQuery("SELECT group.id FROM Group group");
-		for (String id : TypeUtils.castList(String.class, q.getResultList()))
+		for (String id : TypeUtils.castList(String.class, q.getResultList())) {
 			tasks.add(new GroupMigrationTask(id));
+			tasks.add(new GroupParticipationMigrationTask(id));	
+		}
 
 		runMigration(tasks);
 	}
 	
+	// migratePostParticipation should also be called to do a complete migration of post participation
 	public void migratePost(String postId) {
 		logger.debug("    migrating post {}", postId);
 		Post post = em.find(Post.class, postId);
@@ -1133,10 +1222,6 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 			UserBlockData ubd = byUser.get(user);
 			if (ubd == null) {
 				// create a deleted UserBlockData to store the info from the ppd
-				// TODO: this will set the participation timestamps for the posters
-				// if we migrate the block again, but to make a complete migration, 
-				// we also need to add the code that goes over chat messages for 
-				// the post and updates participation timestamps for the chatters
 				long participatedTimestamp = -1;
 				if (user.equals(post.getPoster()))
 					participatedTimestamp = post.getPostDate().getTime();
@@ -1191,7 +1276,49 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		// cached user timestamps after this transaction commits. It would also 
 		// create any  UserBlockData objects that didn't exist at that point, but 
 		// they should have all been created above by migrating PersonPostData
-		stack(block, activity);
+		stack(block, activity);		
+	}
+	
+	public void migratePostParticipation(String postId) {
+		// set the participatedTimestamp for the corresponding userBlockData to be the time
+		// the post was sent or the chat message on the post was sent 
+		logger.debug("    migrating post participation {}", postId);
+		Post post = em.find(Post.class, postId);
+		Block block;
+		try {
+		    block = queryBlock(BlockType.POST, post.getGuid(), null, -1);		
+		} catch (NotFoundException e) {
+			logger.warn("Block corresponding to post {} was not found, won't migrate post participation", post);
+			return;
+		}
+		// try and catch blocks are per UserBlockData query, because we can still update the other
+		// UserBlackData(s) if one is not found
+	    try {
+	    	// feeds have null for the poster
+	    	if (post.getPoster() != null) {
+	            UserBlockData posterBlockData = queryUserBlockData(block, post.getPoster());
+	            posterBlockData.setParticipatedTimestamp(post.getPostDate());
+	    	}
+	    } catch (NoResultException e) {
+		    logger.warn("UserBlockData for block {} and poster user {} was not found", block, post.getPoster());
+	    }
+	    // we want the ordering to be ascending by the timestamp to set the participation
+	    // timestamps in the right order, which is what getPostMessages should return
+		List<PostMessage> messages = postingBoard.getPostMessages(post, 0);
+		for (PostMessage message: messages) {
+			try {
+		        UserBlockData fromUserBlockData = queryUserBlockData(block, message.getFromUser());
+		        fromUserBlockData.setParticipatedTimestamp(message.getTimestamp());
+			} catch (NoResultException e) {
+				logger.warn("UserBlockData for post block {} and from user {} was not found", block, message.getFromUser());
+				// the user must have left some group the post was sent to, so was no longer on the expanded 
+				// recepients list when the post was migrated, we can still have the participated timestamp 
+				// set on a deleted UserBlockData in case the user re-joins the group
+				UserBlockData ubd = new UserBlockData(message.getFromUser(), block, message.getTimestamp().getTime());
+				ubd.setDeleted(true);
+				em.persist(ubd);
+			}
+		}
 	}
 	
 	public void migrateUser(String userId) {
@@ -1202,6 +1329,29 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		stackMusicPerson(user.getGuid(), lastPlayTime);
 	}
 	
+	public void migrateBlockParticipation(String blockId) {
+		// the blocks that we get here should have the user set as data1 who played the
+		// music or whose external account it is, so just set the participation timestamp to
+		// the value of the block's activity timestamp
+		logger.debug("    migrating music or external account block participation {}", blockId);
+		Block block = em.find(Block.class, blockId);
+		User user = em.find(User.class, block.getData1AsGuid().toString());
+		try {
+	        UserBlockData userBlockData = queryUserBlockData(block, user);
+	        userBlockData.setParticipatedTimestamp(block.getTimestamp());
+		} catch (NoResultException e) {	
+			logger.warn("UserBlockData for block {} and user {} was not found when igrating block participation",
+					    block, user);
+			// this might happen because we didn't include the user in all external account updates,
+			// so it's time to create the UserBlockData (this might actually only happen if you had
+			// facebook external accounts, because not including the user was only implemented them, 
+			// but not music or blog updates)
+			UserBlockData ubd = new UserBlockData(user, block, block.getTimestamp().getTime());
+			em.persist(ubd);						
+		}
+	}
+	
+	// migrateGroupChatParticipation should also be called to do a complete migration of group chat participation
 	public void migrateGroupChat(String groupId) {
 		logger.debug("    migrating group chat for {}", groupId);
 		Group group = em.find(Group.class, groupId);
@@ -1210,10 +1360,38 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		if (messages.isEmpty())
 			stackGroupChat(group.getGuid(), 0, null);
 		else {
-			// TODO: what we really want to do here is go over all messages and re-stack them, so that
-			// all the users who participated in the chat get their participation timestamp set
 			stackGroupChat(group.getGuid(), messages.get(0).getTimestamp().getTime(), messages.get(0).getFromUser().getGuid());
 		}
+	}
+	
+	public void migrateGroupChatParticipation(String groupId) {
+		// set the participatedTimestamp for the corresponding userBlockData to be the time when 
+		// the group chat message was sent 
+		logger.debug("    migrating group chat participation for {}", groupId);
+		Group group = em.find(Group.class, groupId);		
+		Block block;
+		try {
+		    block = queryBlock(BlockType.GROUP_CHAT, group.getGuid(), null, -1);		
+		} catch (NotFoundException e) {
+			logger.warn("Block corresponding to group {} was not found, won't migrate group participation", group);
+			return;
+		}
+		// try and catch blocks are per UserBlockData query, because we can still update the other
+		// UserBlackData(s) if one is not found
+		List<GroupMessage> messages = groupSystem.getGroupMessages(group, 0);
+		for (GroupMessage message: messages) {
+			try {
+		        UserBlockData fromUserBlockData = queryUserBlockData(block, message.getFromUser());
+		        fromUserBlockData.setParticipatedTimestamp(message.getTimestamp());
+			} catch (NoResultException e) {
+				logger.warn("UserBlockData for group chat block {} and from user {} was not found", block, message.getFromUser());
+				// the user must have left the group, we can still have the participated timestamp set on a 
+				// deleted UserBlockData in case the user re-joins the group
+				UserBlockData ubd = new UserBlockData(message.getFromUser(), block, message.getTimestamp().getTime());
+				ubd.setDeleted(true);
+				em.persist(ubd);
+			}
+		}		
 	}
 	
 	public void migrateGroupMembers(String groupId) {

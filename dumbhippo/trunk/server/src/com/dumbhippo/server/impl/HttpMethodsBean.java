@@ -1326,7 +1326,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			
 			// Some default bindings
 			bsh.eval("identitySpider = server.getEJB(\"IdentitySpider\");");
-			bsh.eval("systemView = com.dumbhippo.server.SystemViewpoint.getInstance();");			
+			bsh.eval("systemView = com.dumbhippo.server.views.SystemViewpoint.getInstance();");			
 		} catch (EvalError e) {
 			throw new RuntimeException(e);
 		}

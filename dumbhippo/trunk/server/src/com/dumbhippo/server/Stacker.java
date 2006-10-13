@@ -57,9 +57,13 @@ public interface Stacker {
 	public void setBlockHushed(UserBlockData userBlockData, boolean hushed);
 	
 	public void migrateEverything();
+	public void migrateParticipation();
 	public void migrateGroups();
 	public void migratePost(String postId);
+	public void migratePostParticipation(String postId);
 	public void migrateUser(String userId);
+	public void migrateBlockParticipation(String blockId);
 	public void migrateGroupChat(String groupId);
+	public void migrateGroupChatParticipation(String groupId);
 	public void migrateGroupMembers(String groupId);
 }
