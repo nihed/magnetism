@@ -1,8 +1,11 @@
 noinst_LTLIBRARIES += libhippo.la
 
+GENERATEDSRCDIR=$(COMMONSRCDIR)/hippo/generated
+
 libhippo_la_CPPFLAGS =			\
 	$(AM_CPPFLAGS)			\
 	-I $(MARSHAL_DIR)		\
+	-I $(GENERATEDSRCDIR)		\
 	$(LIBHIPPO_CFLAGS)
 
 libhippo_la_LIBADD = 			\
@@ -39,8 +42,14 @@ $(CANVAS_MARSHAL_BODY): $(CANVAS_MARSHAL_LIST)
 	mkdir $(MARSHAL_DIR) || true
 	(echo "#include \"hippo-canvas-marshal.h\""; $(GLIB_GENMARSHAL) --prefix=hippo_canvas_marshal $(CANVAS_MARSHAL_LIST) --body) > $(CANVAS_MARSHAL_BODY)
 
-CANVAS_ENUMS_HEADER=$(ENUMS_DIR)/hippo-canvas-type-builtins.h
-CANVAS_ENUMS_BODY=$(ENUMS_DIR)/hippo-canvas-type-builtins.c
+#
+# We build the enumeration headers into a sourcedir because glib-mkenums is
+# written in Perl, so it's easiest to check it into CVS for Windows. We 
+# build it into the common srcdir rather than the canvas srcdir so we
+# don't force that ugliness on the standalone canvas build.
+#
+CANVAS_ENUMS_HEADER=$(GENERATEDSRCDIR)/hippo-canvas-type-builtins.h
+CANVAS_ENUMS_BODY=$(GENERATEDSRCDIR)/hippo-canvas-type-builtins.c
 CANVAS_ENUMS_HEADER_STAMP=$(ENUMS_DIR)/stamp-hippo-canvas-type-builtins.h
 CANVAS_ENUMS_BODY_STAMP=$(ENUMS_DIR)/stamp-hippo-canvas-type-builtins.c
 
@@ -87,7 +96,6 @@ CANVAS_ENUMS_STAMPS =			\
 	$(CANVAS_ENUMS_HEADER_STAMP)
 
 CANVAS_HEADERFILES = 						\
-	$(CANVAS_MARSHAL_HEADER)				\
 	$(CANVASSRCDIR)/hippo/hippo-canvas-box.h		\
 	$(CANVASSRCDIR)/hippo/hippo-canvas-context.h		\
 	$(CANVASSRCDIR)/hippo/hippo-canvas-gradient.h		\
@@ -102,6 +110,7 @@ CANVAS_HEADERFILES = 						\
 	$(CANVASSRCDIR)/hippo/hippo-graphics.h
 
 CANVAS_SOURCEFILES = 						\
+	$(CANVAS_MARSHAL_HEADER)				\
 	$(CANVAS_HEADERFILES)					\
 	$(CANVAS_MARSHAL_BODY)					\
 	$(CANVASSRCDIR)/hippo/hippo-canvas-box.c		\
