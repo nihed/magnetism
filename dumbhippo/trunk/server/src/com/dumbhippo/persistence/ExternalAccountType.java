@@ -97,6 +97,7 @@ public enum ExternalAccountType {
 			return getSiteLink() + "/in/" + StringUtils.urlEncode(handle);
 		}
 		
+		@Override
 		public String getSiteLink() {
 			return "http://www.linkedin.com";
 		}
@@ -162,6 +163,7 @@ public enum ExternalAccountType {
 			return getSiteLink(); // + "/profile.php?id=" + StringUtils.urlEncode(handle);
 		}
 		
+		@Override
 		public String getSiteLink() {
 		    return "http://www.facebook.com";	
 		}

@@ -19,14 +19,17 @@ public class GroupChatBlockView extends BlockView {
 		this.recentMessages = recentMessages;
 	}
 
+	@Override
 	public String getWebTitleType() {
 		return "Mugshot";
 	}
 	
+	@Override
 	public String getWebTitle() {
 		return "Membership change";
 	}
 	
+	@Override
 	public String getIconName() {
 		return "mugshot_icon.png";
 	}

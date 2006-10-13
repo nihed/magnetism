@@ -211,10 +211,11 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	private Block getUpdatingTimestamp(BlockType type, Guid data1, Guid data2, long data3, long activity) {
 		Block block;
 		try {
-			logger.debug("will query for a block with data1: {}, data2: {}, data3: {}", new Object[]{data1, data2, data3});
+			logger.debug("will query for a block with type {}/{} data1: {}, data2: {}, data3: {}", new Object[]{type, type.ordinal(), data1, data2, data3});
 			block = queryBlock(type, data1, data2, data3);
-			logger.debug("found block");
+			logger.debug("found block {}", block);
 		} catch (NotFoundException e) {
+			logger.debug("no block found");
 			return null;
 		}
 		if (block.getTimestampAsLong() < activity) // never "roll back"
@@ -232,6 +233,9 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	
 	
 	private void updateUserBlockDatas(Block block, Set<User> desiredUsers, Guid participantId) {
+		int addCount;
+		int removeCount;
+		
 		Set<Guid> affectedGuids = new HashSet<Guid>();
 		
 		// be sure we have the right UserBlockData. This would be a lot saner to do
@@ -251,23 +255,31 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 			existing.put(ubd.getUser(), ubd);
 		}
 		
+		addCount = 0;
+		removeCount = 0;
+		
 		for (User u : desiredUsers) {
 			affectedGuids.add(u.getGuid());
 			
 			UserBlockData old = existing.get(u);
 			if (old != null) {
 				existing.remove(u);
+				if (old.isDeleted())
+					addCount += 1;
 				old.setDeleted(false);
 				if (u.getGuid().equals(participantId))
 					old.setParticipatedTimestamp(block.getTimestamp());
 			} else {
 				UserBlockData data = new UserBlockData(u, block, u.getGuid().equals(participantId));
 				em.persist(data);
+				addCount += 1;
 			}
 		}
 		// the rest of "existing" is users who no longer are in the desired set
 		for (User u : existing.keySet()) {
 			UserBlockData old = existing.get(u);
+			if (!old.isDeleted())
+				removeCount += 1;
 			old.setDeleted(true);
 			if (u.getGuid().equals(participantId)) {
 				logger.warn("The user {} who was no longer in a set of users who care was a participant for block {}",
@@ -275,6 +287,8 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 				old.setParticipatedTimestamp(block.getTimestamp());
 			}
 		}
+		
+		logger.debug("block {}, {} affected users notified, {} added {} removed", new Object[] { block, affectedGuids.size(), addCount, removeCount } );
 		
 		BlockEvent event = new BlockEvent(block.getGuid(), block.getTimestampAsLong(), affectedGuids);
 		LiveState.getInstance().queueUpdate(event);
@@ -495,7 +509,9 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		// for the Account and create a block for that GroupMember. 
 		AccountClaim a = member.getMember().getAccountClaim();
 		if (a != null) {
-			createBlock(BlockType.GROUP_CHAT, member.getGroup().getGuid(), a.getOwner().getGuid());
+			// This is getOrCreate because a GroupMember can be deleted and then we'll 
+			// get onGroupMemberCreated again later for the same group/person if they rejoin
+			getOrCreateBlock(BlockType.GROUP_MEMBER, member.getGroup().getGuid(), a.getOwner().getGuid());
 		}
 	}
 	
@@ -537,12 +553,12 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		case ACTIVE:
 		case FOLLOWER:
 		case REMOVED:
+		case INVITED:			
 			AccountClaim a = member.getMember().getAccountClaim();
 			if (a != null) {
 				stack(BlockType.GROUP_MEMBER, member.getGroup().getGuid(), a.getOwner().getGuid(), activity, a.getOwner().getGuid());
 			}
 			break;
-		case INVITED:
 		case INVITED_TO_FOLLOW:
 		case NONMEMBER:
 			// moves to these states don't create a new timestamp

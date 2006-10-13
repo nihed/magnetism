@@ -19,14 +19,17 @@ public class FacebookBlockView extends BlockView {
 		this.facebookEvents = facebookEvents;
 	}
 
+	@Override
 	public String getWebTitleType() {
 		return "Facebook";
 	}
 
+	@Override	
 	public String getWebTitle() {
 		return "new updates";
 	}
 	
+	@Override
 	public String getIconName() {
 		return ExternalAccountType.FACEBOOK.getIconName();
 	}

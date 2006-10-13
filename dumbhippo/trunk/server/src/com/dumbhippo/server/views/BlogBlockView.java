@@ -20,14 +20,17 @@ public class BlogBlockView extends BlockView {
 		this.entry = entry;
 	}
 
+	@Override
 	public String getWebTitleType() {
 		return "Blog";
 	}
 
+	@Override	
 	public String getWebTitle() {
 		return entry.getTitle();
 	}
 	
+	@Override	
 	public String getIconName() {
 		return ExternalAccountType.BLOG.getIconName();
 	}

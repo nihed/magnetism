@@ -19,10 +19,12 @@ public class PostBlockView extends BlockView {
 		this.recentMessages = recentMessages;
 	}
 	
+	@Override
 	public String getWebTitleType() {
 		return "Web Swarm";
 	}
 	
+	@Override
 	public String getWebTitle() {
 		return postView.getTitleAsHtml();
 	}
@@ -32,6 +34,7 @@ public class PostBlockView extends BlockView {
 		return "/visit?post=" + postView.getIdentifyingGuid();
 	}
 	
+	@Override
 	public String getIconName() {
 		return "webswarm_icon.png";
 	}

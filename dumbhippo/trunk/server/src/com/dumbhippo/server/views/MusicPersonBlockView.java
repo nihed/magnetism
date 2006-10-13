@@ -16,10 +16,12 @@ public class MusicPersonBlockView extends BlockView {
 		this.userView = userView;
 	}
 
+	@Override
 	public String getWebTitleType() {
 		return "Music Radar";
 	}
 
+	@Override
 	public String getIconName() {
 		return "musicradar_icon.png";
 	}

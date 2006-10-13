@@ -30,7 +30,6 @@ import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.jive.XmlParser;
-import com.dumbhippo.jms.JmsProducer;
 import com.dumbhippo.live.PresenceListener;
 import com.dumbhippo.live.PresenceService;
 import com.dumbhippo.server.ChatRoomInfo;
@@ -260,7 +259,6 @@ public class Room implements PresenceListener {
 	
 	private BlockingQueue<DeliveryPacket> sendQueue;
 	private Thread sendThread;
-	private JmsProducer queue;
 	
 	private Room(ChatRoomInfo info) {
 		userInfoCache = new HashMap<String, UserInfo>();
@@ -300,7 +298,6 @@ public class Room implements PresenceListener {
 	public void shutdown() {
 		PresenceService.getInstance().removeListener(getPresenceLocation(), this);
 		
-		queue.close();
 		sendThread.interrupt();
 		try {
 			// We take some precautions here because it's conceivable that the sender thread

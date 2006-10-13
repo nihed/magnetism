@@ -20,14 +20,17 @@ public class GroupMemberBlockView extends BlockView {
 		this.status = status;
 	}
 
+	@Override
 	public String getWebTitleType() {
 		return "Mugshot";
 	}
 	
+	@Override
 	public String getWebTitle() {
 		return "Membership change";
 	}
 	
+	@Override
 	public String getIconName() {
 		return "mugshot_icon.png";
 	}
