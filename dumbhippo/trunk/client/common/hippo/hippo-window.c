@@ -6,9 +6,10 @@
 static void     hippo_window_base_init (void                  *klass);
 
 enum {
+    MINIMIZE,
     LAST_SIGNAL
 };
-/* static int signals[LAST_SIGNAL]; */
+static int signals[LAST_SIGNAL];
 
 GType
 hippo_window_get_type(void)
@@ -34,7 +35,14 @@ hippo_window_base_init(void *klass)
     static gboolean initialized = FALSE;
 
     if (!initialized) {
-        /* create signals in here */
+        signals[MINIMIZE] =
+            g_signal_new ("minimize",
+                          HIPPO_TYPE_WINDOW,
+                          G_SIGNAL_RUN_LAST,
+                          0,
+                          NULL, NULL,
+                          g_cclosure_marshal_VOID__VOID,
+                          G_TYPE_NONE, 0);
 
         g_object_interface_install_property(klass,
                                             g_param_spec_boolean("app-window",
@@ -76,6 +84,15 @@ hippo_window_set_visible(HippoWindow     *window,
     g_return_if_fail(HIPPO_IS_WINDOW(window));
 
     HIPPO_WINDOW_GET_CLASS(window)->set_visible(window, visible);
+}
+
+void
+hippo_window_hide_to_icon(HippoWindow     *window,
+                          HippoRectangle  *icon_rect)
+{
+    g_return_if_fail(HIPPO_IS_WINDOW(window));
+
+    HIPPO_WINDOW_GET_CLASS(window)->hide_to_icon(window, icon_rect);
 }
 
 void

@@ -3,15 +3,16 @@
 #include "HippoWindowWin.h"
 #include "HippoAbstractControl.h"
 #include "HippoUIUtil.h"
+#include "HippoUI.h"
 #include "HippoCanvas.h"
 #include "HippoGSignal.h"
 
 class HippoWindowImpl : public HippoAbstractControl {
 public:
-    HippoWindowImpl() {
+    HippoWindowImpl(HippoWindowWin *wrapper) {
+        wrapper_ = wrapper;
         setClassName(L"HippoWindow");
         setClassStyle(CS_HREDRAW | CS_VREDRAW);
-        setWindowStyle(WS_POPUP); // change to WS_OVERLAPPEDWINDOW if you want resize/maximize etc. controls
         setAppWindow(true);
         //setWindowStyle(WS_OVERLAPPEDWINDOW);
         //setExtendedStyle(WS_EX_TOPMOST);
@@ -25,6 +26,7 @@ public:
 
     void setContents(HippoCanvasItem *item);
     void setVisible(bool visible);
+    void hideToIcon(HippoRectangle *iconRect);
     void setAppWindow(bool appWindow);
     void getPosition(int *x_p, int *y_p);
     void getSize(int *width_p, int *height_p);
@@ -53,6 +55,7 @@ protected:
     virtual void destroy();
 
 private:
+    HippoWindowWin *wrapper_;
     GIdle resizeIdle_;
     bool appWindow_;
 
@@ -83,6 +86,8 @@ static void     hippo_window_win_set_contents       (HippoWindow     *window,
                                                      HippoCanvasItem *item);
 static void     hippo_window_win_set_visible        (HippoWindow     *window,
                                                      gboolean         visible);
+static void     hippo_window_win_hide_to_icon       (HippoWindow     *window,
+                                                     HippoRectangle  *icon_rect);
 static void     hippo_window_win_set_position       (HippoWindow     *window,
                                                      int              x,
                                                      int              y);
@@ -139,6 +144,7 @@ hippo_window_win_iface_init(HippoWindowClass *window_class)
 {
     window_class->set_contents = hippo_window_win_set_contents;
     window_class->set_visible = hippo_window_win_set_visible;
+    window_class->hide_to_icon = hippo_window_win_hide_to_icon;
     window_class->set_position = hippo_window_win_set_position;
     window_class->set_size = hippo_window_win_set_size;
     window_class->get_position = hippo_window_win_get_position;
@@ -175,7 +181,7 @@ hippo_window_win_class_init(HippoWindowWinClass *klass)
 static void
 hippo_window_win_init(HippoWindowWin *window_win)
 {
-    window_win->impl = new HippoWindowImpl();
+    window_win->impl = new HippoWindowImpl(window_win);
 }
 
 static void
@@ -262,6 +268,13 @@ hippo_window_win_set_visible(HippoWindow     *window,
     window_win->impl->setVisible(visible != FALSE);
 }
 
+static void
+hippo_window_win_hide_to_icon(HippoWindow     *window,
+                              HippoRectangle  *icon_rect)
+{
+    HippoWindowWin *window_win = HIPPO_WINDOW_WIN(window);
+    window_win->impl->hideToIcon(icon_rect);
+}
 
 static void
 hippo_window_win_set_position(HippoWindow     *window,
@@ -410,10 +423,29 @@ HippoWindowImpl::setVisible(bool visible)
 }
 
 void
+HippoWindowImpl::hideToIcon(HippoRectangle *iconRect)
+{
+    RECT fromRect;
+    RECT toRect;
+
+    GetWindowRect(window_, &fromRect);
+
+    hide();
+    
+    toRect.left = iconRect->x;
+    toRect.right = iconRect->x + iconRect->width;
+    toRect.top = iconRect->y;
+    toRect.bottom = iconRect->y + iconRect->height;
+
+    DrawAnimatedRects(window_, IDANI_CAPTION, &fromRect, &toRect);
+}
+
+void
 HippoWindowImpl::setAppWindow(bool appWindow)
 {
     appWindow_ = appWindow;
 
+    setWindowStyle(appWindow ? WS_POPUP | WS_MINIMIZEBOX :  WS_POPUP);
     setExtendedStyle(appWindow ? WS_EX_APPWINDOW : WS_EX_TOPMOST | WS_EX_NOACTIVATE);
 }
 
@@ -573,6 +605,8 @@ HippoWindowImpl::present()
     ShowWindow(window_, SW_RESTORE);
     // Apparently ShowWindow only activates a window when it is not shown. If it is
     // already showing, you need to activate it explicitly
+    //
+    // FIXME: The window still doesn't always end up as the active window
     SetForegroundWindow(window_);
 }
 
@@ -622,6 +656,12 @@ HippoWindowImpl::processMessage(UINT   message,
                 TextOut(hdc, 0, 0, L"Hello, Windows!", 15);
 #endif
                 EndPaint(window_, &paint);
+            }
+            return false;
+        case WM_SYSCOMMAND:
+            if (wParam == SC_MINIMIZE) {
+                g_signal_emit_by_name(wrapper_, "minimize");
+                return true;
             }
             return false;
     }

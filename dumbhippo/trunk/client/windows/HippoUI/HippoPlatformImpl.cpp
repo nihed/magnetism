@@ -423,6 +423,71 @@ hippo_platform_impl_create_window(HippoPlatform     *platform)
     return hippo_window_win_new(HIPPO_PLATFORM_IMPL(platform)->ui);
 }
 
+struct TrayIconInfo {
+    HippoOrientation orientation;
+    RECT rect;
+};
+
+BOOL CALLBACK
+enum_tray_icon_child(HWND child, LPARAM lParam)
+{
+    TrayIconInfo *info = (TrayIconInfo *)lParam;
+
+    WCHAR className[256];
+    GetClassName(child, className, 256);
+    if (wcscmp(className, L"TrayNotifyWnd") == 0) {
+        // Aha, found the notification tray, this is a better guess than
+        // the whole taskbar. We stop here; the codeproject code goes further
+        // and cuts out the clock (as below), but I think it actually looks 
+        // a bit better this way ... going to the whole notification area
+        // makes it clear to the user that it's just an approximation
+        GetWindowRect(child, &info->rect);
+        return FALSE;
+    }
+#if 0    
+    else if (wcscmp(className, L"TrayClockWClass") == 0) {
+        // The clock sits either to the right of the taskbar (horizontal orientation)
+        // or above it (vertical orientation)
+        RECT clockRect;
+        GetWindowRect(child, &clockRect);
+        if (info->orientation == HIPPO_ORIENTATION_HORIZONTAL)
+            info->rect.right = clockRect.left;
+        else
+            info->rect.top = clockRect.bottom;
+
+        return FALSE;
+    }
+#endif
+
+    return TRUE; // Keep going
+}
+
+// The basic technique here comes from http://www.codeproject.com/shell/trayposition.asp
+static gboolean
+find_icon_tray_rect(HippoRectangle  *tray_icon_rect_p,
+                    HippoOrientation orientation)
+{
+    HWND trayWindow = FindWindow(L"Shell_TrayWnd", NULL);
+    TrayIconInfo info;
+
+    info.orientation = orientation;
+
+    if (!trayWindow)
+        return FALSE;
+
+    // This gets the entire taskbar size, we use this as a fallback, if our
+    // child window search fails
+    GetWindowRect(trayWindow, &info.rect);
+
+    // We refine the taskbar 
+    EnumChildWindows(trayWindow, enum_tray_icon_child, (LPARAM)&info);
+
+    tray_icon_rect_p->x = info.rect.left;
+    tray_icon_rect_p->width = info.rect.right - info.rect.left;
+    tray_icon_rect_p->y = info.rect.top;
+    tray_icon_rect_p->height = info.rect.bottom - info.rect.top;
+}
+
 static void
 hippo_platform_impl_get_screen_info(HippoPlatform     *platform,
                                     HippoRectangle    *monitor_rect_p,
@@ -446,43 +511,36 @@ hippo_platform_impl_get_screen_info(HippoPlatform     *platform,
         g_warning("Failed to get task bar extents");
         return;
     }
-    if (tray_icon_orientation_p) {
-        switch (abd.uEdge) {
-            case ABE_BOTTOM:
-            case ABE_TOP:
-                *tray_icon_orientation_p = HIPPO_ORIENTATION_HORIZONTAL;
-                break;
-            case ABE_LEFT:
-            case ABE_RIGHT:
-                *tray_icon_orientation_p = HIPPO_ORIENTATION_VERTICAL;
-                break;
-            default:
-                g_warning("unknown tray icon orientation");
-                break;
-        }
+
+    HippoOrientation orientation;
+    switch (abd.uEdge) {
+        case ABE_BOTTOM:
+        case ABE_TOP:
+            orientation = HIPPO_ORIENTATION_HORIZONTAL;
+            break;
+        case ABE_LEFT:
+        case ABE_RIGHT:
+            orientation = HIPPO_ORIENTATION_VERTICAL;
+            break;
+        default:
+            g_warning("unknown tray icon orientation");
+            break;
     }
 
-    // we have the rect of the entire taskbar; not sure if 
-    // there's a way to get the position of the actual icon.
-    // we kind of just make up something for now.
-    taskbarRect = abd.rc;
+    if (tray_icon_orientation_p)
+        *tray_icon_orientation_p = orientation;
+
+    // Getting the icon location is very hard; getting the rectangle for the
+    // whole icon tray a bit easier, so we return that
     if (tray_icon_rect_p) {
-        if (abd.uEdge == ABE_LEFT || abd.uEdge == ABE_RIGHT) {
-            tray_icon_rect_p->height = 24;
+        if (!find_icon_tray_rect(tray_icon_rect_p, orientation)) {
+            // If this starts happening  regularly, we can refine
+            // this code to make a better guess at that point.
+
+            tray_icon_rect_p->x = taskbarRect.left;
             tray_icon_rect_p->width = taskbarRect.right - taskbarRect.left;
             tray_icon_rect_p->y = taskbarRect.top;
-            if (abd.uEdge == ABE_LEFT)
-                tray_icon_rect_p->x = taskbarRect.left;
-            else
-                tray_icon_rect_p->x = taskbarRect.right - tray_icon_rect_p->width;
-        } else {
             tray_icon_rect_p->height = taskbarRect.bottom - taskbarRect.top;
-            tray_icon_rect_p->width = 24;
-            tray_icon_rect_p->x = taskbarRect.right - tray_icon_rect_p->width;
-            if (abd.uEdge == ABE_TOP)
-                tray_icon_rect_p->y = taskbarRect.top;
-            else
-                tray_icon_rect_p->y = taskbarRect.bottom - tray_icon_rect_p->height;
         }
     }
 

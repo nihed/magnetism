@@ -25,6 +25,8 @@ struct _HippoWindowClass {
                                 HippoCanvasItem *item);
     void (* set_visible)       (HippoWindow     *window,
                                 gboolean         visible);
+    void (* hide_to_icon)      (HippoWindow     *window,
+                                HippoRectangle  *icon_rect);
     void (* set_position)      (HippoWindow     *window,
                                 int              x,
                                 int              y);
@@ -55,6 +57,8 @@ void hippo_window_set_contents      (HippoWindow      *window,
                                      HippoCanvasItem  *item);
 void hippo_window_set_visible       (HippoWindow      *window,
                                      gboolean          visible);
+void hippo_window_hide_to_icon      (HippoWindow      *window,
+                                     HippoRectangle   *icon_rect);
 void hippo_window_set_position      (HippoWindow      *window,
                                      int               x,
                                      int               y);

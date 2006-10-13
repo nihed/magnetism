@@ -210,7 +210,7 @@ resize_browser_to_natural_size(StackManager *manager)
     natural_height += hippo_canvas_item_get_height_request(manager->browser_resize_grip, natural_width);
 
     if (natural_height > monitor.height * 0.75)
-        natural_height = monitor.height * 0.75;
+        natural_height = (int)monitor.height * 0.75;
     
     hippo_window_set_size(manager->browser_window, natural_width, natural_height);
 }
@@ -250,6 +250,8 @@ on_notification_timeout(gpointer data)
 {
     StackManager *manager = data;
 
+    g_debug("Running notification window timeout\n");
+
     manager->notification_timeout = 0;
     manager_close_notification(manager);
 
@@ -259,15 +261,18 @@ on_notification_timeout(gpointer data)
 static void
 start_notification_timeout(StackManager *manager)
 {
-    if (!manager->notification_timeout)
+    if (!manager->notification_timeout) {
+        g_debug("Starting notification window timeout\n");
         manager->notification_timeout = g_timeout_add(NOTIFICATION_TIMEOUT_TIME,
                                                       on_notification_timeout, manager);
+    }
 }
 
 static void
 stop_notification_timeout(StackManager *manager)
 {
     if (manager->notification_timeout) {
+        g_debug("Stopping notification window timeout\n");
         g_source_remove(manager->notification_timeout);
         manager->notification_timeout = 0;
     }
@@ -349,7 +354,12 @@ manager_set_browser_visible(StackManager *manager,
                                       manager->saved_browser_x, manager->saved_browser_y);
         else
             update_window_positions(manager, TRUE, FALSE);
+
+        hippo_window_set_visible(manager->browser_window, TRUE);
     } else {
+        HippoPlatform *platform;
+        HippoRectangle icon;
+
         /* For GTK+, if you position a window once, then every time you show it again,
          * GTK+ will want to pop it back to the original position. To workaround this
          * misfeature of GTK+, whenever we hide our browser window, we remember where
@@ -359,9 +369,16 @@ manager_set_browser_visible(StackManager *manager,
          */
         hippo_window_get_position(manager->browser_window,
                                   &manager->saved_browser_x, &manager->saved_browser_y);
-    }
 
-    hippo_window_set_visible(manager->browser_window, visible);
+        /* Closing the browser is always triggered by user action at this point, and we
+         * don't distinguish close and minimize, so we show the minimize animation if
+         * possible.
+         */
+        platform = hippo_connection_get_platform(manager->connection);
+        hippo_platform_get_screen_info(platform, NULL, &icon, NULL);
+
+        hippo_window_hide_to_icon(manager->browser_window, &icon);
+    }
 }
 
 static void
@@ -531,6 +548,15 @@ manager_new(void)
     return manager;
 }
 
+static void
+on_browser_minimize(HippoWindow *window,
+                    void        *data)
+{
+    StackManager *manager = data;
+
+    manager_set_browser_visible(manager, FALSE);
+}
+
 static gboolean
 on_browser_title_bar_button_press(HippoCanvasItem *item,
                                   HippoEvent      *event,
@@ -615,6 +641,9 @@ manager_attach(StackManager    *manager,
                            manager, (GFreeFunc) manager_unref);
 
     manager->browser_window = hippo_platform_create_window(platform);
+
+    g_signal_connect(manager->browser_window, "minimize",
+                     G_CALLBACK(on_browser_minimize), manager);
 
     hippo_window_set_resizable(manager->browser_window,
                                HIPPO_ORIENTATION_VERTICAL,
