@@ -360,3 +360,18 @@ hippo_song_download_free(HippoSongDownload *download)
     g_free(download->url);
     g_free(download);
 }
+
+const char*
+hippo_song_download_source_get_name(HippoSongDownloadSource source)
+{
+    switch (source) {
+    case HIPPO_SONG_DOWNLOAD_ITUNES:
+        return "iTunes";
+    case HIPPO_SONG_DOWNLOAD_YAHOO:
+        return "Yahoo!";
+    case HIPPO_SONG_DOWNLOAD_RHAPSODY:
+        return "Rhapsody";
+    }
+
+    return "???";
+}

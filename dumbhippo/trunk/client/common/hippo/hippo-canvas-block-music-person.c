@@ -43,6 +43,7 @@ static void set_person (HippoCanvasBlockMusicPerson *block_music_person,
 struct _HippoCanvasBlockMusicPerson {
     HippoCanvasBlock canvas_block;
     HippoPerson *person;
+    HippoCanvasBox *downloads_box;
 };
 
 struct _HippoCanvasBlockMusicPersonClass {
@@ -161,20 +162,44 @@ hippo_canvas_block_music_person_constructor (GType                  type,
                                              guint                  n_construct_properties,
                                              GObjectConstructParam *construct_properties)
 {
-    GObject *object = G_OBJECT_CLASS(hippo_canvas_block_music_person_parent_class)->constructor(type,
-                                                                                                n_construct_properties,
-                                                                                                construct_properties);
-    HippoCanvasBlock *block = HIPPO_CANVAS_BLOCK(object);
+    GObject *object;
+    HippoCanvasBlock *block;
+    HippoCanvasBlockMusicPerson *block_music;
     HippoCanvasBox *box;
 
+    object = G_OBJECT_CLASS(hippo_canvas_block_music_person_parent_class)->constructor(type,
+                                                                                       n_construct_properties,
+                                                                                       construct_properties);
+    block = HIPPO_CANVAS_BLOCK(object);
+    block_music = HIPPO_CANVAS_BLOCK_MUSIC_PERSON(object);
+    
     hippo_canvas_block_set_heading(block, _("Music Radar: "));
 
     box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
+                       "orientation", HIPPO_ORIENTATION_HORIZONTAL,
+                       "spacing", 4,
                        NULL);
 
     hippo_canvas_block_set_content(block, HIPPO_CANVAS_ITEM(box));
 
+    block_music->downloads_box = box;
+
     return object;
+}
+
+static void
+on_play_link_activated(HippoCanvasItem *link,
+                       HippoCanvasBlockMusicPerson *block_music_person)
+{
+    HippoActions *actions;
+    const char *url;
+
+    url = g_object_get_data(G_OBJECT(link), "url");
+    actions = hippo_canvas_block_get_actions(HIPPO_CANVAS_BLOCK(block_music_person));
+
+    if (url && actions) {
+        hippo_actions_open_absolute_url(actions, url);
+    }
 }
 
 static void
@@ -188,17 +213,63 @@ on_current_track_changed(HippoPerson *person,
     g_object_get(G_OBJECT(person), "current-track", &track, NULL);
 
     if (track) {
-        const char *artist = NULL;
-        const char *name = NULL;
+        char *artist = NULL;
+        char *name = NULL;
+        GSList *downloads = NULL;
         char *title;
         
-        g_object_get(G_OBJECT(track), "artist", &artist, "name", &name,
+        g_object_get(G_OBJECT(track),
+                     "artist", &artist,
+                     "name", &name,
+                     "downloads", &downloads,
                      NULL);
 
         title = g_strdup_printf("%s (%s)", name, artist);
         hippo_canvas_block_set_title(HIPPO_CANVAS_BLOCK(block_music_person),
                                      title);
+
+        hippo_canvas_box_remove_all(block_music_person->downloads_box);
+        
+        while (downloads) {
+            HippoCanvasItem *link;
+            char *link_name;
+            HippoCanvasItem *separator;
+            HippoSongDownload *d = downloads->data;
+            downloads = downloads->next;
+
+            link_name = g_strdup_printf("Play at %s",
+                                        hippo_song_download_source_get_name(hippo_song_download_get_source(d)));
+            
+            link = g_object_new(HIPPO_TYPE_CANVAS_LINK,
+                                "text", link_name,
+                                "size-mode", HIPPO_CANVAS_SIZE_ELLIPSIZE_END,
+                                NULL);
+
+            g_free(link_name);
+
+            g_object_set_data_full(G_OBJECT(link),
+                                   "url", g_strdup(hippo_song_download_get_url(d)),
+                                   g_free);
+            
+            g_signal_connect(G_OBJECT(link), "activated",
+                             G_CALLBACK(on_play_link_activated),
+                             block_music_person);
+
+            hippo_canvas_box_append(block_music_person->downloads_box,
+                                    link, 0);
+
+            if (downloads) {
+                separator = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
+                                         "text", " | ",
+                                         NULL);
+                hippo_canvas_box_append(block_music_person->downloads_box,
+                                        link, 0);
+            }
+        }
+        
         g_free(title);
+        g_free(artist);
+        g_free(name);
     } else {
         hippo_canvas_block_set_title(HIPPO_CANVAS_BLOCK(block_music_person),
                                      "");

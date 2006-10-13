@@ -40,6 +40,7 @@ typedef enum {
 
 HippoSongDownloadSource hippo_song_download_get_source(HippoSongDownload *download);
 const char* hippo_song_download_get_url(HippoSongDownload *download);
+const char* hippo_song_download_source_get_name(HippoSongDownloadSource source);
 
 G_END_DECLS
 

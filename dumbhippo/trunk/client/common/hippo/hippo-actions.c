@@ -246,6 +246,15 @@ hippo_actions_open_home_page(HippoActions    *actions)
 }
 
 void
+hippo_actions_open_absolute_url(HippoActions    *actions,
+                                const char      *url)
+{
+    hippo_platform_open_url(get_platform(actions),
+                            HIPPO_BROWSER_UNKNOWN,
+                            url);
+}
+
+void
 hippo_actions_hush_block(HippoActions    *actions,
                          HippoBlock      *block)
 {
