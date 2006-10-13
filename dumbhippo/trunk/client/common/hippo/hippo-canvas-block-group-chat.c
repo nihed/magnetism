@@ -163,7 +163,7 @@ hippo_canvas_block_group_chat_constructor (GType                  type,
     HippoCanvasBlockGroupChat *block_group_chat = HIPPO_CANVAS_BLOCK_GROUP_CHAT(object);
     HippoCanvasBox *box;
         
-    hippo_canvas_block_set_heading(block, _("Group Chat: "));
+    hippo_canvas_block_set_heading(block, _("Group chat: "));
 
     box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
                        NULL);
