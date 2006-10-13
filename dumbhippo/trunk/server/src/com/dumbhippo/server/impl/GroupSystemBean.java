@@ -169,7 +169,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 			}
 			logger.debug("Adding new account member to group {} for account {}", group, account);
 			accountMember = new GroupMember(group, account, status);
-			if (!adders.isEmpty())
+			if (adders != null && !adders.isEmpty())
 				accountMember.setAdders(adders);
 			em.persist(accountMember);
 			group.getMembers().add(accountMember);
