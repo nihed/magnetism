@@ -35,8 +35,8 @@ hippo_canvas_scrollbars_new(void)
     HippoCanvasItem *item;
 
     canvas = new HippoCanvas();
-    canvas->setScrollbarPolicy(HIPPO_ORIENTATION_VERTICAL, HIPPO_SCROLLLBAR_AUTOMATIC);
-    canvas->setScrollable(HIPPO_ORIENTATION_HORIZONTAL, HIPPO_SCROLLLBAR_AUTOMATIC);
+    canvas->setScrollbarPolicy(HIPPO_ORIENTATION_VERTICAL, HIPPO_SCROLLBAR_AUTOMATIC);
+    canvas->setScrollbarPolicy(HIPPO_ORIENTATION_HORIZONTAL, HIPPO_SCROLLBAR_AUTOMATIC);
 
     item = HIPPO_CANVAS_ITEM(g_object_new(HIPPO_TYPE_CANVAS_SCROLLBARS,
                             "control", canvas,

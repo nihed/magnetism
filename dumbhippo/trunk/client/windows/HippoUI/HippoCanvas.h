@@ -10,6 +10,7 @@
 #include "HippoUIUtil.h"
 #include "HippoGSignal.h"
 #include <hippo/hippo-canvas-item.h>
+#include <hippo/hippo-canvas-widgets.h>
 
 typedef struct _HippoCanvasContextWin      HippoCanvasContextWin;
 class HippoScrollbar;

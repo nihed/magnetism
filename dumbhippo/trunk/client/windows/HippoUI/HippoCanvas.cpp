@@ -107,12 +107,12 @@ HippoCanvas::setScrollbarPolicy(HippoOrientation     orientation,
         if (policy == vscrollbarPolicy_)
             return;
 
-        vscrollbarPolicy_ = value;
+        vscrollbarPolicy_ = policy;
     } else {
-        if (value == hscrollbarPolicy_)
+        if (policy == hscrollbarPolicy_)
             return;
 
-        hscrollbarPolicy_ = value;
+        hscrollbarPolicy_ = policy;
     }
 
     markRequestChanged();
@@ -152,7 +152,7 @@ HippoCanvas::showChildren()
 
 int
 HippoCanvas::computeChildWidthRequest()
-
+{
     if (root_ != (HippoCanvasItem*) NULL) {
         return hippo_canvas_item_get_width_request(root_);
     } else {
@@ -162,7 +162,7 @@ HippoCanvas::computeChildWidthRequest()
 
 int
 HippoCanvas::computeChildHeightRequest(int forWidth)
-
+{
     if (root_ != (HippoCanvasItem*) NULL) {
         return hippo_canvas_item_get_height_request(root_, forWidth);
     } else {
@@ -181,7 +181,7 @@ HippoCanvas::clearCachedChildHeights()
 int
 HippoCanvas::getWidthRequestImpl()
 {
-    childWidthReq_ = getChildWidthRequest();
+    childWidthReq_ = computeChildWidthRequest();
     clearCachedChildHeights();
     
     int baseWidth;
@@ -218,7 +218,7 @@ HippoCanvas::getWidthRequestImpl()
     return canvasWidthReq_;
 }
 
-// Computes the child's height requisition for the current value of 'forWidth_' and the
+// Computes the child's height requisition for the current value of 'currentWidth_' and the
 // given scrolllbar combination, if the combination is impossible, we return G_MAXINT, but
 // we really are never supposed to hit that code path.
 int
@@ -227,16 +227,18 @@ HippoCanvas::getChildHeightRequest(bool hscrollbar, bool vscrollbar)
     if (childHeightReq_[hscrollbar][vscrollbar] != -1)
         return childHeightReq_[hscrollbar][vscrollbar];
 
+    int newValue;
+
     if (hscrollbar) {
         if (vscrollbar) {
-            newValue = computeChildHeightRequest(MAX(childWidthReq_), forWidth_ - vscroll_->getWidthRequest());
+            newValue = computeChildHeightRequest(MAX(childWidthReq_, currentWidth_ - vscroll_->getWidthRequest()));
         } else {
-            newValue = computeChildHeightRequest(MAX(childWidthReq_), forWidth_);
+            newValue = computeChildHeightRequest(MAX(childWidthReq_, currentWidth_));
         }
     } else {
-        int availableWidth = forWidth_;
+        int availableWidth = currentWidth_;
         if (vscrollbar)
-            availableWidth -= vscroll->getWidthRequest();
+            availableWidth -= vscroll_->getWidthRequest();
         
         if (availableWidth >= childWidthReq_)
             newValue = computeChildHeightRequest(availableWidth);
@@ -249,14 +251,12 @@ HippoCanvas::getChildHeightRequest(bool hscrollbar, bool vscrollbar)
     return newValue;
 }
 
-// Computes our height requisition for the current value of 'forWidth_' and the
+// Computes our height requisition for the current value of 'currentWidth_' and the
 // given scrolllbar combination. If the combination is impossible, we return
 // G_MAXINT
 int
 HippoCanvas::getCanvasHeightRequest(bool hscrollbar, bool vscrollbar)
 {
-    int canvasHeightRequest;
-    
     if (hscrollbar) {
         if (vscrollbar) {
             return vscroll_->getHeightRequest(vscroll_->getWidthRequest()) + hscroll_->getHeightRequest(100);
@@ -264,11 +264,11 @@ HippoCanvas::getCanvasHeightRequest(bool hscrollbar, bool vscrollbar)
             return getChildHeightRequest(hscrollbar, vscrollbar) + hscroll_->getHeightRequest(100);
         }
     } else {
-        int availableWidth = forWidth_;
+        int availableWidth = currentWidth_;
         if (vscrollbar)
-            availableWidth -= vscroll->getWidthRequest();
+            availableWidth -= vscroll_->getWidthRequest();
 
-        if (availableWidth < childWidthRequest)
+        if (availableWidth < childWidthReq_)
             return G_MAXINT;
 
         if (vscrollbar)
@@ -281,13 +281,12 @@ HippoCanvas::getCanvasHeightRequest(bool hscrollbar, bool vscrollbar)
 int
 HippoCanvas::getHeightRequestImpl(int forWidth)
 {
-    if (forWidth != forWidth_) {
+    if (forWidth != currentWidth_) {
         clearCachedChildHeights();
-        forWidth_ = forWidth;
+        currentWidth_ = forWidth;
     }
     
     int minHeightRequest = G_MAXINT;
-    int childWidthRequest = getChildWidthRequest();
 
     // If the width passed in is smaller than the minimum possible width, pretend
     // we got that width
@@ -336,7 +335,7 @@ HippoCanvas::tryAllocate(bool hscrollbar, bool vscrollbar)
 
     // If we get called with something other than the 'forWidth' passed to getHeightRequestImpl()
     // we need to redo that
-    if (w != forWidth_)
+    if (w != currentWidth_)
         getHeightRequestImpl(w);
 
     // If we get called with something smaller than our minimum size, just allocate as if we
@@ -480,10 +479,10 @@ HippoCanvas::getViewport(RECT *rect_p)
 void
 HippoCanvas::scrollTo(int newX, int newY)
 {
-    g_return_if_fail(hscrollable_ || vscrollable_);
+    g_return_if_fail(hscrollbarPolicy_ != HIPPO_SCROLLBAR_NEVER || vscrollbarPolicy_ != HIPPO_SCROLLBAR_NEVER);
 
-    int dx = hscrollable_ ? canvasX_ - newX : 0;
-    int dy = vscrollable_ ? canvasY_ - newY : 0;
+    int dx = hscrollNeeded_ ? canvasX_ - newX : 0;
+    int dy = vscrollNeeded_ ? canvasY_ - newY : 0;
 
     if (dx == 0 && dy == 0)
         return;
@@ -754,13 +753,13 @@ HippoCanvas::processMessage(UINT   message,
             onPaint(wParam, lParam);
             return false;
         case WM_HSCROLL:
-            if (hscrollable_) {
+            if (hscrollNeeded_) {
                 int newX = hscroll_->handleScrollMessage(message, wParam, lParam);
                 scrollTo(newX, canvasY_);
             }
             return true;
         case WM_VSCROLL:
-            if (vscrollable_) {
+            if (vscrollNeeded_) {
                 int newY = vscroll_->handleScrollMessage(message, wParam, lParam);
                 scrollTo(canvasX_, newY);
             }

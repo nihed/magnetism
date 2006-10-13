@@ -541,7 +541,7 @@ HippoAbstractWindow::setSize(int width, int height)
                      HWND_TOP, // insertAfter: ignored
                      0, 0, // x, y: ignored
                      width, height,
-                     SWP_NOACTIVATE, SWP_NOMOVE, SWP_NOOWNERZORDER);
+                     SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOOWNERZORDER);
     } else {
         width_ = width;
         height_ = height;

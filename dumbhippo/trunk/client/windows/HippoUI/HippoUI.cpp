@@ -964,7 +964,7 @@ HippoUI::showMenu(UINT buttonFlag)
 
         PostMessage(window_, WM_NULL, 0, 0);
     } else {
-        hippo_stack_manager_toggle_stack(dataCache_);
+        hippo_stack_manager_toggle_browser(dataCache_);
     }
 }
 

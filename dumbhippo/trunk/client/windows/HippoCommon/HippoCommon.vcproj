@@ -19,7 +19,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories=".;../HippoUtil;../dependencies/glib/include/glib-2.0;../dependencies/cairo/include/cairo;../dependencies/pango/include/pango-1.0;../dependencies/glib/lib/glib-2.0/include;../../common;../../common/loudmouth;../../common/canvas"
+				AdditionalIncludeDirectories=".;../HippoUtil;../dependencies/glib/include/glib-2.0;../dependencies/cairo/include/cairo;../dependencies/pango/include/pango-1.0;../dependencies/glib/lib/glib-2.0/include;../../common;../../common/loudmouth;../../common/canvas;../../common/hippo/generated"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;HIPPOCOMMON_EXPORTS"
 				MinimalRebuild="TRUE"
 				BasicRuntimeChecks="3"
@@ -119,6 +119,9 @@
 				RelativePath="..\..\common\hippo\hippo-block-group-member.c">
 			</File>
 			<File
+				RelativePath="..\..\common\hippo\hippo-block-music-person.c">
+			</File>
+			<File
 				RelativePath="..\..\common\hippo\hippo-block-post.c">
 			</File>
 			<File
@@ -126,6 +129,15 @@
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\hippo-canvas-base.c">
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-canvas-block-group-chat.c">
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-canvas-block-group-member.c">
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-canvas-block-music-person.c">
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\hippo-canvas-block-post.c">
@@ -173,7 +185,13 @@
 				RelativePath="..\..\common\hippo\hippo-canvas-stack.c">
 			</File>
 			<File
+				RelativePath="..\..\common\canvas\hippo\hippo-canvas-style.c">
+			</File>
+			<File
 				RelativePath="..\..\common\canvas\hippo\hippo-canvas-test.c">
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\generated\hippo-canvas-type-builtins.c">
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\hippo-chat-room.c">
@@ -247,6 +265,9 @@
 				RelativePath="..\..\common\hippo\hippo-surface.c">
 			</File>
 			<File
+				RelativePath="..\..\common\hippo\hippo-track.c">
+			</File>
+			<File
 				RelativePath="..\..\common\hippo\hippo-window.c">
 			</File>
 			<File
@@ -268,6 +289,9 @@
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\hippo-block-group-member.h">
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-block-music-person.h">
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\hippo-block-post.h">
@@ -327,6 +351,9 @@
 				RelativePath="..\..\common\hippo\hippo-canvas-stack.h">
 			</File>
 			<File
+				RelativePath="..\..\common\canvas\hippo\hippo-canvas-style.h">
+			</File>
+			<File
 				RelativePath="..\..\common\canvas\hippo\hippo-canvas-test.h">
 			</File>
 			<File
@@ -334,6 +361,9 @@
 			</File>
 			<File
 				RelativePath="..\..\common\canvas\hippo\hippo-canvas-text.h">
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\generated\hippo-canvas-type-builtins.h">
 			</File>
 			<File
 				RelativePath="..\..\common\canvas\hippo\hippo-canvas-widgets.h">

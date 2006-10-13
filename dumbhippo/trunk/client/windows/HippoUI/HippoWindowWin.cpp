@@ -28,9 +28,9 @@ public:
     void setAppWindow(bool appWindow);
     void getPosition(int *x_p, int *y_p);
     void getSize(int *width_p, int *height_p);
-    void getAppWindow() { return appWindow_; }
-    void getActive();
-    void getOnscreen();
+    bool getAppWindow() { return appWindow_; }
+    bool getActive();
+    bool getOnscreen();
     void beginMove();
     void beginResize(HippoSide side);
     void present();
@@ -97,6 +97,8 @@ static void     hippo_window_win_get_size           (HippoWindow     *window,
 static void     hippo_window_win_set_resizable      (HippoWindow     *window,
                                                      HippoOrientation orientation,
                                                      gboolean         value);
+static void     hippo_window_win_begin_move_drag    (HippoWindow     *window,
+                                                     HippoEvent      *event);
 static void     hippo_window_win_begin_resize_drag  (HippoWindow     *window,
                                                      HippoSide        side,
                                                      HippoEvent      *event);
@@ -209,7 +211,7 @@ hippo_window_win_set_property(GObject         *object,
 
     switch (prop_id) {
     case PROP_APP_WINDOW:
-        win->impl->setAppWindow(g_value_get_boolean(value));
+        win->impl->setAppWindow(g_value_get_boolean(value) != FALSE);
         break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
@@ -234,7 +236,7 @@ hippo_window_win_get_property(GObject         *object,
     case PROP_ACTIVE:
         g_value_set_boolean(value, win->impl->getActive() ? TRUE : FALSE);
         break;
-    case PROP_OSNCREEN:
+    case PROP_ONSCREEN:
         g_value_set_boolean(value, win->impl->getOnscreen() ? TRUE : FALSE);
         break;
     default:
@@ -424,9 +426,9 @@ HippoWindowImpl::getPosition(int *x_p, int *y_p)
     GetWindowRect(window_, &rect);
 
     if (x_p)
-        *x_p = rect.x;
+        *x_p = rect.left;
     if (y_p)
-        *y_p = rect.y;
+        *y_p = rect.top;
 }
 
 void
@@ -441,7 +443,7 @@ HippoWindowImpl::getSize(int *width_p, int *height_p)
         *height_p = getHeight();
 }
 
-void
+bool
 HippoWindowImpl::getActive()
 {
     if (!isCreated())
@@ -450,15 +452,15 @@ HippoWindowImpl::getActive()
     WINDOWINFO windowInfo;
     
     memset((void *)&windowInfo, 0, sizeof(WINDOWINFO));
-    WINDOWINFO.cbSize = sizeof(WINDOWINFO);
+    windowInfo.cbSize = sizeof(WINDOWINFO);
 
-    if (!GetWindowInfo(window, &windowInfo))
+    if (!GetWindowInfo(window_, &windowInfo))
         return FALSE;
 
     return windowInfo.dwWindowStatus == WS_ACTIVECAPTION;
 }
 
-void
+bool
 HippoWindowImpl::getOnscreen()
 {
     if (!isCreated())
@@ -476,19 +478,19 @@ HippoWindowImpl::getOnscreen()
 
     point.x = rect.left;
     point.y = rect.top;
-    if (WindowFromPoint(&point) == window_)
+    if (WindowFromPoint(point) == window_)
         return TRUE;
 
     point.x = rect.right - 1;
-    if (WindowFromPoint(&point) == window_)
+    if (WindowFromPoint(point) == window_)
         return TRUE;
     
     point.y = rect.bottom - 1;
-    if (WindowFromPoint(&point) == window_)
+    if (WindowFromPoint(point) == window_)
         return TRUE;
     
     point.x = rect.left;
-    if (WindowFromPoint(&point) == window_)
+    if (WindowFromPoint(point) == window_)
         return TRUE;
 
     return FALSE;
@@ -497,7 +499,7 @@ HippoWindowImpl::getOnscreen()
 void
 HippoWindowImpl::beginMove()
 {
-    DefWindowProc(window_, WM_NCCLBUTTONDOWN, HTCAPTION, GetMessagePos());
+    DefWindowProc(window_, WM_NCLBUTTONDOWN, HTCAPTION, GetMessagePos());
 }
 
 void

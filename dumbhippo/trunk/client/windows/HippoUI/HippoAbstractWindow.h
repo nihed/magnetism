@@ -83,6 +83,7 @@ public:
     void setDefaultSize(int width, int height);
     void setDefaultPosition(int x, int y);
     void setPosition(int x, int y);
+    void setSize(int width, int height);
 
     const HippoBSTR& getClassName() const { return className_; }
 

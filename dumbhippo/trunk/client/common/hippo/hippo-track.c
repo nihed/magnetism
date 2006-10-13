@@ -239,7 +239,7 @@ hippo_track_new_from_xml(HippoDataCache *cache,
         if (server_end_time <= server_time_now)
             now_playing = FALSE;
         else {
-            track->track_end_timeout = g_timeout_add(server_end_time - server_time_now,
+            track->track_end_timeout = g_timeout_add((guint)server_end_time - server_time_now,
                                                      track_ended,
                                                      track);
         }
