@@ -402,7 +402,7 @@ void
 HippoWindowImpl::setVisible(bool visible)
 {
     if (visible) {
-        show(false);
+        show(true);
     } else {
         hide();
     }
@@ -413,7 +413,7 @@ HippoWindowImpl::setAppWindow(bool appWindow)
 {
     appWindow_ = appWindow;
 
-    setExtendedStyle(appWindow ? WS_EX_APPWINDOW : 0);
+    setExtendedStyle(appWindow ? WS_EX_APPWINDOW : WS_EX_TOPMOST | WS_EX_NOACTIVATE);
 }
 
 void
