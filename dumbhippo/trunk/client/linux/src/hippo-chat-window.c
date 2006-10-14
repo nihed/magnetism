@@ -578,6 +578,13 @@ on_message_added(HippoChatRoom         *room,
     } else {
         g_object_set(G_OBJECT(tag), "justification", GTK_JUSTIFY_RIGHT, NULL);
         pd->where = PICTURE_ON_RIGHT;
+
+        /* Apparently this is how you say "flash taskbar icon" with
+         * current metacity/etc., though it does not seem very sane
+         * to me.
+         */
+        if (GTK_WIDGET_REALIZED(window))
+            gdk_window_raise(GTK_WIDGET(window)->window);
     }
 
     gtk_text_buffer_insert_with_tags(buffer, &iter, text, len, tag, NULL);
