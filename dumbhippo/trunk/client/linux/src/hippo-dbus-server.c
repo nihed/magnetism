@@ -22,6 +22,12 @@
 #define BANSHEE_MUGSHOT_IFACE  "org.gnome.Banshee.Mugshot"
 #define BANSHEE_STATE_CHANGED  "StateChangedEvent"
 
+/* muine messages */
+#define MUINE_BUS_NAME      "org.gnome.Muine"
+#define MUINE_PLAYER_IFACE  "org.gnome.Muine.Player"
+/* #define MUINE_STATE_CHANGED "StateChanged" */
+#define MUINE_SONG_CHANGED  "SongChanged"
+
 typedef struct _HippoDBusListener HippoDBusListener;
 
 static void      hippo_dbus_init                (HippoDBus       *dbus);
@@ -193,7 +199,30 @@ hippo_dbus_try_to_acquire(const char  *server,
         return NULL;
     }
 
-    dbus_bus_add_match(connection,"type='signal',interface='" BANSHEE_MUGSHOT_IFACE "',member='" BANSHEE_STATE_CHANGED "'",&derror);
+    dbus_bus_add_match(connection,
+                       "type='signal',sender='"
+                       MUINE_BUS_NAME
+                       "',interface='"
+                       MUINE_PLAYER_IFACE
+                       "',member='"
+                       MUINE_SONG_CHANGED
+                       "'",
+                       &derror);
+
+    if (dbus_error_is_set(&derror)) {
+        g_free(bus_name);
+        propagate_dbus_error(error, &derror);
+        /* FIXME leak bus connection since unref isn't allowed */
+        return NULL;
+    }
+    
+    dbus_bus_add_match(connection,"type='signal',interface='"
+                       BANSHEE_MUGSHOT_IFACE
+                       "',member='"
+                       BANSHEE_STATE_CHANGED
+                       "'",
+                       &derror);
+
     if (dbus_error_is_set(&derror)) {
         g_free(bus_name);
         propagate_dbus_error(error, &derror);
@@ -330,6 +359,7 @@ watch_for_disconnect(HippoDBus  *dbus,
     dbus_bus_add_match(dbus->connection,
                        rule,
                        &derror);
+
     if (dbus_error_is_set(&derror)) {
         g_warning("Failed to add watch rule: %s: %s: %s",
                   rule,
@@ -1012,6 +1042,75 @@ handle_banshee_state_changed( HippoDBus   *dbus,
     }
 }
 static void
+handle_muine_song_changed(HippoDBus   *dbus,
+                          DBusMessage *message)
+{
+#define MAX_PROPS 10
+    HippoSong song;
+    char *string, *value;
+    char **keys, **values;
+    char **fields;
+    int i, j;
+
+    i = 0;
+
+    if (!dbus_message_get_args(message, NULL,
+                               DBUS_TYPE_STRING, &string,
+                               DBUS_TYPE_INVALID)) {
+        g_warning("Muine SongChanged signal had unexpected arguments");
+
+        return;
+    }
+
+    keys = g_new0(char*, MAX_PROPS + 1);
+    values = g_new0(char*, MAX_PROPS + 1);
+    
+    fields = g_strsplit(string, "\n", 0);
+
+    for (j = 0; fields[j] != NULL; j++) {
+        value = strchr(fields[j], ':');
+        if (value != NULL && value[1] != '\0' && value[2] != '\0') {
+            value += 2;
+            if (g_strncasecmp(fields[j], "artist", 6) == 0) {
+                g_debug(fields[j]);
+                keys[i] = g_strdup("artist");
+                values[i] = g_strdup(value);
+                ++i;
+            } else if (g_strncasecmp(fields[j], "title", 5) == 0) {
+                g_debug(fields[j]);
+                keys[i] = g_strdup("name");
+                values[i] = g_strdup(value);
+                ++i;
+            } else if (g_strncasecmp(fields[j], "album", 5) == 0) {
+                g_debug(fields[j]);
+                keys[i] = g_strdup("album");
+                values[i] = g_strdup(value);
+                ++i;
+            } else if (g_strncasecmp(fields[j], "duration", 8) == 0) {
+                g_debug(fields[j]);
+                keys[i] = g_strdup("duration");
+                values[i] = g_strdup(value);
+                ++i;
+            } else if (g_strncasecmp(fields[j], "track_number", 12) == 0) {
+                g_debug(fields[j]);
+                keys[i] = g_strdup("track-number");
+                values[i] = g_strdup(value);
+                ++i;
+            }
+        }
+    }
+    g_assert(i < MAX_PROPS);
+    g_strfreev(fields);
+
+    song.keys = keys;
+    song.values = values;
+    g_signal_emit(G_OBJECT(dbus), signals[SONG_CHANGED], 0, &song);
+
+    g_strfreev(keys);
+    g_strfreev(values);
+}
+
+static void
 handle_rb_playing_uri_changed(HippoDBus   *dbus,
                               DBusMessage *message)
 {
@@ -1160,6 +1259,8 @@ handle_message(DBusConnection     *connection,
             handle_rb_playing_uri_changed(dbus, message);
         } else if (dbus_message_is_signal(message, BANSHEE_MUGSHOT_IFACE, BANSHEE_STATE_CHANGED)) {
             handle_banshee_state_changed(dbus, message);
+        } else if (dbus_message_is_signal(message, MUINE_PLAYER_IFACE, MUINE_SONG_CHANGED)) {
+            handle_muine_song_changed(dbus, message);
         }
     } else if (dbus_message_get_type(message) == DBUS_MESSAGE_TYPE_ERROR) {
         hippo_dbus_debug_log_error("main connection handler", message);
