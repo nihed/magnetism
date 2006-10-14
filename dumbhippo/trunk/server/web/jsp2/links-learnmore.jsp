@@ -7,6 +7,7 @@
 <head>
         <title>About Web Swarm</title>
         <link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/links-learnmore.css"/>
+        <dht:siteStyle headerOnly="true"/>        
 	<dht:faviconIncludes/>
         <dht:scriptIncludes/>
 </head>

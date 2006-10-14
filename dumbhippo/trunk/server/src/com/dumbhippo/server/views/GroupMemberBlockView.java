@@ -22,12 +22,7 @@ public class GroupMemberBlockView extends BlockView {
 
 	@Override
 	public String getWebTitleType() {
-		return "Mugshot";
-	}
-	
-	@Override
-	public String getWebTitle() {
-		return "Membership change";
+		return "Group update";
 	}
 	
 	@Override
@@ -57,5 +52,9 @@ public class GroupMemberBlockView extends BlockView {
 		result.add(member);
 
 		return result;
+	}
+
+	public MembershipStatus getStatus() {
+		return status;
 	}
 }

@@ -13,7 +13,7 @@
 		<img src="/images3/${buildStamp}/comment_iconchat_icon.png"/>
 		<span class="dh-stacker-block-chat">
 			<span class="dh-stacker-block-chat-message"><c:out value="${msg.msg.messageText}"/></span> -
-			<span class="dh-stacker-block-chat-sender"><a href="/person?who=${msg.senderView.viewPersonPageId}"><c:out value="${msg.senderView.name}"/></a></span>
+			<span class="dh-stacker-block-chat-sender"><dht3:personLink who="${msg.senderView}"/></span>
 		</span>
 		</div>
 	</c:forEach>

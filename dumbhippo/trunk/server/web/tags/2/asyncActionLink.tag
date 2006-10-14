@@ -7,24 +7,29 @@
 <%@ attribute name="ctrlId" required="true" type="java.lang.String" %>
 <%@ attribute name="text" required="true" type="java.lang.String" %>
 <%@ attribute name="completedText" required="true" type="java.lang.String" %>
+<%@ attribute name="tagName" required="false" type="java.lang.String" %>
 
 <c:if test="${empty groupId}">
 	<c:set var="groupId" value="${ctrlId}"/>
 </c:if>
 
-<div class="dh-async-action-control">
-	<div>
+<c:if test="${empty tagName}">
+	<c:set var="tagName" value="div"/>
+</c:if>
+
+<${tagName} class="dh-async-action-control">
+	<${tagName}>
 		<script type="text/javascript">
 			dhAction${ctrlId} = function () {
 				dh.asyncActionLink.exec('${groupId}', '${ctrlId}', function () { ${exec} })
 			}
 		</script>
 		<a id="dhActionExecLink-${ctrlId}" href="javascript:dhAction${ctrlId}()">${text}</a>
-	</div>
-	<div id="dhActionWorking-${ctrlId}" class="dh-async-action-link-working" style="display: none;">
+	</${tagName}>
+	<${tagName} id="dhActionWorking-${ctrlId}" class="dh-async-action-link-working" style="display: none;">
 		Working...
-	</div>
-	<div id="dhActionComplete-${ctrlId}" class="dh-async-action-link-complete" style="display: none;">
+	</${tagName}>
+	<${tagName} id="dhActionComplete-${ctrlId}" class="dh-async-action-link-complete" style="display: none;">
 		${completedText}
-	</div>
-</div>
+	</${tagName}>
+</${tagName}>

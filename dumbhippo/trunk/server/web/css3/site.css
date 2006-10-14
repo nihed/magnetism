@@ -126,14 +126,6 @@ img {
 	font-size: 12px;
 }
 
-#dhContentColumn .dh-form-table {
-	font-size:			12px;
-}
-
-#dhContentColumn .dh-form-table textarea {
-	font-size:			12px;
-}
-
 div.dh-notification {
 	background-color:	#ffffcc;
 	font-weight:		bold;
@@ -287,7 +279,6 @@ div.dh-async-action-link-complete {
 }
 
 .dh-stacker-block-title-title {
-	text-decoration:	underline;
 }
 
 .dh-stacker-block-time {
@@ -327,12 +318,14 @@ div.dh-async-action-link-complete {
 
 .dh-stacker-block-chat-sender {
 	font-style:			italic;
-	text-decoration:	underline;
 }
 
 .dh-stacker-more {
 	font-size:			11px;
 	text-decoration:	underline;
+}
+
+.dh-stacker-block-title-group-member-name {
 }
 
 .dh-where-at-label {

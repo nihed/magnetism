@@ -7,7 +7,21 @@
 <%@ attribute name="cssClass" required="true" type="java.lang.String" %>
 <%@ attribute name="blockId" required="true" type="java.lang.String" %>
 
-<div class="dh-stacker-block ${cssClass}" id="dhStackerBlock-${blockId}" onmouseover="dh.stacker.blockHoverStart('${blockId}');" onmouseout="dh.stacker.blockHoverStop('${blockId}');">
+<c:choose>
+	<c:when test="${dh:enumIs(block.blockType, 'POST')}">
+		<c:set var="expandable" value="true" scope="page"/>
+	</c:when>
+	<c:otherwise>
+		<c:set var="expandable" value="false" scope="page"/>
+	</c:otherwise>
+</c:choose>
+			
+<jsp:element name="div">
+	<jsp:attribute name="class">dh-stacker-block ${cssClass}</jsp:attribute>
+	<jsp:attribute name="id">dhStackerBlock-${blockId}</jsp:attribute>
+	<jsp:attribute name="onmouseover"><c:if test="${expandable == 'true'}">dh.stacker.blockHoverStart('${blockId}');</c:if></jsp:attribute>
+	<jsp:attribute name="onmouseout"><c:if test="${expandable == 'true'}">dh.stacker.blockHoverStop('${blockId}');</c:if></jsp:attribute>
+	<jsp:body>
 	<table class="dh-stacker-block-header" cellspacing="0" cellpadding="0">
 	<tr><td align="left" width="20px"><img class="dh-stacker-block-icon" src="/images3/${buildStamp}/${block.iconName}"/></td>
 	<td align="left"><span class="dh-stacker-block-title">	
@@ -22,8 +36,12 @@
 		    	<c:when test="${dh:enumIs(block.blockType, 'MUSIC_PERSON')}">
 					<dht3:musicPersonTitle block="${block}"/>
 				</c:when>					
+		    	<c:when test="${dh:enumIs(block.blockType, 'GROUP_MEMBER')}">
+		    		<dht3:groupMemberTitle block="${block}"/>
+		    	</c:when>
 				<c:when test="${!empty block.webTitleLink}">
 					<jsp:element name="a">
+						<jsp:attribute name="class">dh-underlined-link</jsp:attribute>
 						<jsp:attribute name="href"><c:out value="${block.webTitleLink}"/></jsp:attribute>
 						<jsp:body><c:out value="${block.webTitle}"/></jsp:body>
 					</jsp:element>
@@ -56,7 +74,14 @@
 	</tr>
 	</table>	
 	<div class="dh-stacker-block-description">
-		${block.descriptionHtml}
+	    <c:choose>
+	    	<c:when test="${dh:enumIs(block.blockType, 'GROUP_MEMBER')}">
+				<dht3:groupMemberBlockDescription block="${block}"/>
+			</c:when>	
+			<c:otherwise>
+				${block.descriptionHtml}
+			</c:otherwise>
+		</c:choose>
 	</div>
 	<table class="dh-stacker-block-content" id="dhStackerBlockContent-${blockId}">
 		<tr>
@@ -74,4 +99,5 @@
 		</tr>
 		<tr><td><div class="dh-stacker-block-content-padding">&nbsp;</div></td></tr>
 	</table>
-</div>
+	</jsp:body>
+</jsp:element>
