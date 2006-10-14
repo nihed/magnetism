@@ -753,7 +753,8 @@ HippoCanvas::processMessage(UINT   message,
     switch (message) {
         case WM_PAINT:
             onPaint(wParam, lParam);
-            return false;
+            // do NOT call DefWindowProc, it clears the update region
+            return true;
         case WM_HSCROLL:
             if (hscrollNeeded_) {
                 int newX = hscroll_->handleScrollMessage(message, wParam, lParam);
