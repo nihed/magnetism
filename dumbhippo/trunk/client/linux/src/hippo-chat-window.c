@@ -13,6 +13,7 @@
 #include <gtk/gtkvbox.h>
 #include <gtk/gtkhbox.h>
 #include <gtk/gtkscrolledwindow.h>
+#include <gtk/gtkhpaned.h>
 #include <string.h>
 
 static void      hippo_chat_window_init                (HippoChatWindow       *window);
@@ -109,7 +110,7 @@ hippo_chat_window_new(HippoDataCache *cache,
     HippoChatWindow *window;
     GtkWidget *vbox;
     GtkWidget *vbox2;    
-    GtkWidget *hbox;
+    GtkWidget *hpane;
     GtkWidget *hbox2;
     GtkWidget *sw;
     GtkCellRenderer *renderer;
@@ -134,8 +135,8 @@ hippo_chat_window_new(HippoDataCache *cache,
     
     gtk_box_pack_start(GTK_BOX(vbox), window->title_label, FALSE, FALSE, 0);
     
-    hbox = gtk_hbox_new(FALSE, SPACING);
-    gtk_box_pack_end(GTK_BOX(vbox), hbox, TRUE, TRUE, 0);
+    hpane = gtk_hpaned_new();
+    gtk_box_pack_end(GTK_BOX(vbox), hpane, TRUE, TRUE, 0);
     
     window->member_view = gtk_tree_view_new_with_model(window->member_model);
     gtk_widget_set_size_request(window->member_view, MEMBER_VIEW_WIDTH, -1);
@@ -146,10 +147,10 @@ hippo_chat_window_new(HippoDataCache *cache,
                                    GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
     gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(sw), GTK_SHADOW_IN);
     gtk_container_add(GTK_CONTAINER(sw), window->member_view);
-    gtk_box_pack_start(GTK_BOX(hbox), sw, FALSE, FALSE, 0);
+    gtk_paned_pack1(GTK_PANED(hpane), sw, FALSE, TRUE);
     
     vbox2 = gtk_vbox_new(FALSE, SPACING);
-    gtk_box_pack_end(GTK_BOX(hbox), vbox2, TRUE, TRUE, 0);
+    gtk_paned_pack2(GTK_PANED(hpane), vbox2, TRUE, TRUE);
 
     window->chat_log_view = gtk_text_view_new();
     gtk_text_view_set_editable(GTK_TEXT_VIEW(window->chat_log_view), FALSE);
