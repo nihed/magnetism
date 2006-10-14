@@ -766,13 +766,13 @@ HippoAbstractWindow::windowProc(HWND   window,
 
     debugPrintMessage(abstractWindow, window, message, wParam, lParam);
 
-    // Our only content is the IE browser or canvas, which erase/repaint on their 
-    // own, so we return 1 to keep windows from erasing and causing flicker
     bool runDefault = true;
     LRESULT result = 0;
     if (abstractWindow) {
         switch (message) {
             case WM_ERASEBKGND:
+                // Our only content is the IE browser or canvas, which erase/repaint on their 
+                // own, so we return 1 to keep windows from erasing and causing flicker
                 result = 1;
                 runDefault = false;
                 break;
