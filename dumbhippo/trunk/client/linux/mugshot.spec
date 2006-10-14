@@ -1,5 +1,5 @@
 Name:           mugshot
-Version:        1.1.16
+Version:        1.1.17
 Release:        1%{?dist}
 Summary:        Companion software for mugshot.org
 
@@ -23,7 +23,8 @@ BuildRequires:  libXScrnSaver-devel
 # See http://developer.mugshot.org/download/extra for the spec file
 # If you are porting this to a distribution with a firefox-devel package
 # you can just depend on that and change the configure line appropriately
-BuildRequires:  gecko-sdk >= 1.8.0.4
+# (commented out to allow using tarball gecko-sdk instead of rpm)
+#BuildRequires:  gecko-sdk >= 1.8.0.4
 
 # 1.0.3-3 has a backport from 1.0.4 to fix various segfaults
 Requires:       loudmouth >= 1.0.3-3
@@ -31,7 +32,8 @@ Requires:       loudmouth >= 1.0.3-3
 %description
 Mugshot works with the server at mugshot.org to extend 
 the panel, web browser, music player and other parts of the desktop with 
-a "live social experience." It's fun and easy.
+a "live social experience" and interoperation with online services you and 
+your friends use. It's fun and easy.
 
 
 %prep
@@ -133,6 +135,9 @@ fi
 %{_sysconfdir}/gconf/schemas/*.schemas
 
 %changelog
+* Sat Oct 14 2006 Havoc Pennington <hp@redhat.com> - 1.1.17-1
+- 1.1.17
+
 * Sat Sep 26 2006 Owen Taylor <otaylor@redhat.com> - 1.1.16-1
 - Fix triggers/scriptlets to work right on upgrades
 

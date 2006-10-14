@@ -47,55 +47,73 @@ $(CANVAS_MARSHAL_BODY): $(CANVAS_MARSHAL_LIST)
 # written in Perl, so it's easiest to check it into CVS for Windows. We 
 # build it into the common srcdir rather than the canvas srcdir so we
 # don't force that ugliness on the standalone canvas build.
-#
+# 
+# FIXME these should probably get installed (in the standalone canvas case) 
+# which means they should be in a directory named hippo/
 CANVAS_ENUMS_HEADER=$(GENERATEDSRCDIR)/hippo-canvas-type-builtins.h
 CANVAS_ENUMS_BODY=$(GENERATEDSRCDIR)/hippo-canvas-type-builtins.c
 CANVAS_ENUMS_HEADER_STAMP=$(ENUMS_DIR)/stamp-hippo-canvas-type-builtins.h
 CANVAS_ENUMS_BODY_STAMP=$(ENUMS_DIR)/stamp-hippo-canvas-type-builtins.c
 
+# distcheck won't allow writing to srcdir so we have a little hack 
+# for that
+#
+if COMMON_OUTSIDE_TREE
+NO_REBUILD_ENUMS=false
+else
+NO_REBUILD_ENUMS=true
+endif
+
 $(CANVAS_ENUMS_BODY): $(CANVAS_ENUMS_BODY_STAMP)
 	@true
-$(CANVAS_ENUMS_BODY_STAMP): $(CANVAS_HEADERFILES)
-	(cd $(CANVASSRCDIR) && $(GLIB_MKENUMS) \
-		--fhead "#include \"hippo-canvas-type-builtins.h\"\n\n" \
-		--fprod "\n/* enumerations from \"@filename@\" */" \
-		--fprod "\n#include \"@filename@\"" \
-		--vhead "const G@Type@Value _@enum_name@_values[] = {" \
-		--vprod "  { @VALUENAME@, \"@VALUENAME@\", \"@valuenick@\" }," \
-		--vtail "  { 0, NULL, NULL }\n};\n\n" \
-		--vtail "GType\n@enum_name@_get_type (void)\n{\n" \
-		--vtail "  static GType type = 0;\n\n" \
-		--vtail "  if (G_UNLIKELY (type == 0))\n" \
-		--vtail "    type = g_@type@_register_static (\"@EnumName@\", _@enum_name@_values);\n\n" \
-		--vtail "  return type;\n}\n\n" \
-		$(^F:%=hippo/%)) > xgen-$(@F) \
-	&& ( cmp -s xgen-$(@F) $(CANVAS_ENUMS_BODY) || cp xgen-$(@F) $(CANVAS_ENUMS_BODY)) \
-	&& rm -f xgen-$(@F) \
+$(CANVAS_ENUMS_BODY_STAMP): $(CANVAS_PUBLIC_HEADERFILES)
+	( $(NO_REBUILD_ENUMS) || \
+		((cd $(CANVASSRCDIR) && $(GLIB_MKENUMS) \
+			--fhead "#include \"hippo-canvas-type-builtins.h\"\n\n" \
+			--fprod "\n/* enumerations from \"@filename@\" */" \
+			--fprod "\n#include \"@filename@\"" \
+			--vhead "const G@Type@Value _@enum_name@_values[] = {" \
+			--vprod "  { @VALUENAME@, \"@VALUENAME@\", \"@valuenick@\" }," \
+			--vtail "  { 0, NULL, NULL }\n};\n\n" \
+			--vtail "GType\n@enum_name@_get_type (void)\n{\n" \
+			--vtail "  static GType type = 0;\n\n" \
+			--vtail "  if (G_UNLIKELY (type == 0))\n" \
+			--vtail "    type = g_@type@_register_static (\"@EnumName@\", _@enum_name@_values);\n\n" \
+			--vtail "  return type;\n}\n\n" \
+			$(^F:%=hippo/%) ) > xgen-$(@F)  \
+		&& ( cmp -s xgen-$(@F) $(CANVAS_ENUMS_BODY) || cp xgen-$(@F) $(CANVAS_ENUMS_BODY) ) \
+		&& rm -f xgen-$(@F) )) \
 	&& echo timestamp > $(CANVAS_ENUMS_BODY_STAMP)
 
 $(CANVAS_ENUMS_HEADER): $(CANVAS_ENUMS_HEADER_STAMP)
 	@true
-$(CANVAS_ENUMS_HEADER_STAMP): $(CANVAS_HEADERFILES)
-	(cd $(CANVASSRCDIR) && $(GLIB_MKENUMS) \
-		--fhead "#ifndef HIPPO_CANVAS_TYPE_BUILTINS_H\n" \
-		--fhead "#define HIPPO_CANVAS_TYPE_BUILTINS_H 1\n\n" \
-		--fhead "#include <glib-object.h>\n\n" \
-		--fhead "G_BEGIN_DECLS\n\n" \
-		--ftail "G_END_DECLS\n\n" \
-		--ftail "#endif /* HIPPO_CANVAS_TYPE_BUILTINS_H */\n" \
-		--fprod "\n/* --- @filename@ --- */" \
-		--eprod "#define HIPPO_TYPE_@ENUMSHORT@ @enum_name@_get_type()\n" \
-		--eprod "GType @enum_name@_get_type (void);\n" \
-		$(^F:%=hippo/%)) > xgen-$(@F) \
-	&& ( cmp -s xgen-$(@F) $(CANVAS_ENUMS_HEADER) || cp xgen-$(@F) $(CANVAS_ENUMS_HEADER)) \
-	&& rm -f xgen-$(@F) \
+$(CANVAS_ENUMS_HEADER_STAMP): $(CANVAS_PUBLIC_HEADERFILES)
+	( $(NO_REBUILD_ENUMS) ||  \
+		((cd $(CANVASSRCDIR) && $(GLIB_MKENUMS) \
+			--fhead "#ifndef HIPcPO_CANVAS_TYPE_BUILTINS_H\n" \
+			--fhead "#define HIPPO_CANVAS_TYPE_BUILTINS_H 1\n\n" \
+			--fhead "#include <glib-object.h>\n\n" \
+			--fhead "G_BEGIN_DECLS\n\n" \
+			--ftail "G_END_DECLS\n\n" \
+			--ftail "#endif /* HIPPO_CANVAS_TYPE_BUILTINS_H */\n" \
+			--fprod "\n/* --- @filename@ --- */" \
+			--eprod "#define HIPPO_TYPE_@ENUMSHORT@ @enum_name@_get_type()\n" \
+			--eprod "GType @enum_name@_get_type (void);\n" \
+			$(^F:%=hippo/%) ) > xgen-$(@F) \
+		&& ( cmp -s xgen-$(@F) $(CANVAS_ENUMS_HEADER) || cp xgen-$(@F) $(CANVAS_ENUMS_HEADER)) \
+		&& rm -f xgen-$(@F) )) \
 	&& echo timestamp > $(CANVAS_ENUMS_HEADER_STAMP)
 
 CANVAS_ENUMS_STAMPS =			\
 	$(CANVAS_ENUMS_BODY_STAMP)	\
 	$(CANVAS_ENUMS_HEADER_STAMP)
 
-CANVAS_HEADERFILES = 						\
+# all files to be disted from generated srcdir
+GENERATEDSRCDIR_FILES = 			\
+	$(CANVAS_ENUMS_HEADER)                  \
+	$(CANVAS_ENUMS_BODY)
+
+CANVAS_PUBLIC_HEADERFILES = 						\
 	$(CANVASSRCDIR)/hippo/hippo-canvas-box.h		\
 	$(CANVASSRCDIR)/hippo/hippo-canvas-context.h		\
 	$(CANVASSRCDIR)/hippo/hippo-canvas-gradient.h		\
@@ -109,15 +127,15 @@ CANVAS_HEADERFILES = 						\
 	$(CANVASSRCDIR)/hippo/hippo-event.h			\
 	$(CANVASSRCDIR)/hippo/hippo-graphics.h
 
-CANVAS_SOURCEFILES = 						\
-	$(CANVAS_MARSHAL_HEADER)				\
-	$(CANVAS_HEADERFILES)					\
-	$(CANVAS_MARSHAL_BODY)					\
+# these are all the files in CANVASSRCDIR/hippo to be copied over in dist-hook
+CANVAS_SRCDIR_FILES = 					\
+	$(CANVAS_PUBLIC_HEADERFILES)				\
 	$(CANVASSRCDIR)/hippo/hippo-canvas-box.c		\
 	$(CANVASSRCDIR)/hippo/hippo-canvas-context.c		\
 	$(CANVASSRCDIR)/hippo/hippo-canvas-gradient.c		\
 	$(CANVASSRCDIR)/hippo/hippo-canvas-image.c		\
 	$(CANVASSRCDIR)/hippo/hippo-canvas-image-button.c	\
+	$(CANVASSRCDIR)/hippo/hippo-canvas-internal.h		\
 	$(CANVASSRCDIR)/hippo/hippo-canvas-item.c		\
 	$(CANVASSRCDIR)/hippo/hippo-canvas-link.c		\
 	$(CANVASSRCDIR)/hippo/hippo-canvas-style.c		\
@@ -225,13 +243,15 @@ BUILT_SOURCES += $(LIBHIPPO_BUILT_SOURCEFILES) $(CANVAS_BUILT_SOURCEFILES)
 ## we need to nodist these because otherwise automake would copy 
 ## ../common to distdir/../common which puts common outside of distdir.
 ## so we handle the disting manually so the destination is always distdir/common-dist
-nodist_libhippo_la_SOURCES=$(LIBHIPPO_SOURCEFILES) $(LIBHIPPO_BUILT_SOURCEFILES) $(CANVAS_SOURCEFILES) $(CANVAS_BUILT_SOURCEFILES)
+nodist_libhippo_la_SOURCES=$(LIBHIPPO_SOURCEFILES) $(LIBHIPPO_BUILT_SOURCEFILES) $(CANVAS_SRCDIR_FILES) $(CANVAS_BUILT_SOURCEFILES)
 libhippo-dist-hook:
 	-mkdir $(distdir)/common-dist
 	mkdir $(distdir)/common-dist/canvas
 	mkdir $(distdir)/common-dist/canvas/hippo
 	mkdir $(distdir)/common-dist/hippo
+	mkdir $(distdir)/common-dist/hippo/generated
 	cp $(COMMONSRCDIR)/hippo/hippo-common-marshal.list $(distdir)/common-dist/hippo
 	cp $(LIBHIPPO_SOURCEFILES) $(distdir)/common-dist/hippo
-	cp $(CANVASSRCDIR)/hippo/hippo-canvas-marshal.list $(distdir)/common-dist/hippo
-	cp $(CANVAS_SOURCEFILES) $(distdir)/common-dist/canvas/hippo
+	cp $(CANVASSRCDIR)/hippo/hippo-canvas-marshal.list $(distdir)/common-dist/canvas/hippo
+	cp $(CANVAS_SRCDIR_FILES) $(distdir)/common-dist/canvas/hippo
+	cp $(GENERATEDSRCDIR_FILES) $(distdir)/common-dist/hippo/generated
