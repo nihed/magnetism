@@ -484,6 +484,21 @@ hippo_window_gtk_check_resize (GtkContainer *container)
      * window is exactly sized to its requisition. (not resizable) In other
      * cases, we have no access to the new size that GTK+ will use, so we
      * can't do the necessary arithmetic.
+     *
+     * There is also a remaining race condition here: we first set our new
+     * geometry hints, then do the resize. If the window manager processes the
+     * new hints and uses them to constrain the window to the new size before
+     * it handles the ConfigureRequest, then we'll still get a move/resize
+     * rather than a MoveResize. This is very hard to work around within the
+     * limits of the existing GtkWindow since "non-resizable" is how we indicate
+     * to GTK+ that we want the size to match the requisition. The easiest
+     * way to get around this would likely be to override all the GtkWindow 
+     * complex resizing mechanics with something much simpler for the 
+     * non-app-window case.
+     *
+     * Luckily it also usually doesn't occur with metacity because metacity
+     * queues up the hint change and handles it asynchronously. I've only
+     * seen it running --sync. But other window managers might be less smart.
      */
     if (window_gtk->resize_gravity != HIPPO_GRAVITY_NORTH_WEST && window_gtk->positioned) {
         GtkRequisition new_requisition;
