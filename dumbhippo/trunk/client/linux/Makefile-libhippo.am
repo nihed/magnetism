@@ -90,7 +90,7 @@ $(CANVAS_ENUMS_HEADER): $(CANVAS_ENUMS_HEADER_STAMP)
 $(CANVAS_ENUMS_HEADER_STAMP): $(CANVAS_PUBLIC_HEADERFILES)
 	( $(NO_REBUILD_ENUMS) ||  \
 		((cd $(CANVASSRCDIR) && $(GLIB_MKENUMS) \
-			--fhead "#ifndef HIPcPO_CANVAS_TYPE_BUILTINS_H\n" \
+			--fhead "#ifndef HIPPO_CANVAS_TYPE_BUILTINS_H\n" \
 			--fhead "#define HIPPO_CANVAS_TYPE_BUILTINS_H 1\n\n" \
 			--fhead "#include <glib-object.h>\n\n" \
 			--fhead "G_BEGIN_DECLS\n\n" \

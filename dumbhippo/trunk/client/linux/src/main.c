@@ -15,6 +15,8 @@
 #include "hippo-embedded-image.h"
 #include "hippo-idle.h"
 #include <hippo/hippo-canvas.h>
+#include <gdk/gdkx.h>
+#include <X11/Xatom.h>
 
 static const char *hippo_version_file = NULL;
 
@@ -422,6 +424,79 @@ hippo_app_load_photo(HippoApp                *app,
     }
 }
 
+static void
+screen_get_work_area(GdkScreen      *screen,
+                     HippoRectangle *work_area)
+{
+    /* Making two round trips to the X server everytime the code calls get_screen_info()
+     * has a certain potential for performance problems. We might want to consider
+     * caching the results for a small amount of time.
+     */
+    GdkDisplay *display = gdk_screen_get_display(screen);
+    GdkWindow *root = gdk_screen_get_root_window(screen);
+    Atom current_desktop_atom = gdk_x11_get_xatom_by_name_for_display(display, "_NET_CURRENT_DESKTOP");
+    Atom workarea_atom = gdk_x11_get_xatom_by_name_for_display(display, "_NET_WORKAREA");
+    int format;
+    Atom type;
+    unsigned long n_items;
+    unsigned long bytes_after;
+    unsigned char *data;
+    guint current_desktop;
+    guint n_desktops;
+    
+    if (XGetWindowProperty(GDK_WINDOW_XDISPLAY(root), GDK_WINDOW_XWINDOW(root),
+                           current_desktop_atom, 
+                           0, G_MAXLONG, False, XA_CARDINAL,
+                           &type, &format, &n_items, &bytes_after, &data) != Success) {
+        g_warning("Failed to get _NET_CURRENT_DESKTOP property");
+        goto fail;
+    }
+        
+    if (format != 32 || type != XA_CARDINAL || n_items != 1) {
+        g_warning("Bad _NET_CURRENT_DESKTOP property");
+        XFree(data);
+        goto fail;
+    }
+
+    current_desktop = ((unsigned long *)data)[0];
+    XFree(data);
+    
+
+    if (XGetWindowProperty(GDK_WINDOW_XDISPLAY(root), GDK_WINDOW_XWINDOW(root),
+                           workarea_atom, 
+                           0, G_MAXLONG, False, XA_CARDINAL,
+                           &type, &format, &n_items, &bytes_after, &data) != Success) {
+        g_warning("Failed to get _NET_WORKAREA property");
+        goto fail;
+    }
+        
+    if (format != 32 ||  type != XA_CARDINAL || n_items < 4 || (n_items % 4) != 0) {
+        g_warning("Bad _NET_WORKAREA property");
+        XFree(data);
+        goto fail;
+    }
+
+    n_desktops = n_items / 4;
+    if (current_desktop > n_desktops) {
+        g_warning("Current desktop out of range");
+        current_desktop = 0;
+    }
+
+    work_area->x = ((unsigned long *)data)[current_desktop * 4];
+    work_area->y = ((unsigned long *)data)[current_desktop * 4 + 1];
+    work_area->width = ((unsigned long *)data)[current_desktop * 4 + 2];
+    work_area->height = ((unsigned long *)data)[current_desktop * 4 + 3];
+    
+    XFree(data);
+    return;
+
+ fail:
+    work_area->x = 0;
+    work_area->y = 0;
+    work_area->width = gdk_screen_get_width(screen);
+    work_area->height = gdk_screen_get_height(screen);
+}
+
 void
 hippo_app_get_screen_info(HippoApp         *app,
                           HippoRectangle   *monitor_rect_p,
@@ -435,20 +510,25 @@ hippo_app_get_screen_info(HippoApp         *app,
     int monitor_num;
     
     orientation = hippo_gtk_status_icon_get_orientation(GTK_STATUS_ICON(app->icon));
-    hippo_gtk_status_icon_get_screen_geometry(GTK_STATUS_ICON(app->icon), &screen,
-        &x, &y, &width, &height);
-
-    monitor_num = gdk_screen_get_monitor_at_point(screen, x, y);
-    if (monitor_num < 0)
-        monitor_num = 0;
-
-    gdk_screen_get_monitor_geometry(screen, monitor_num, &monitor);
+    hippo_gtk_status_icon_get_screen_geometry(GTK_STATUS_ICON(app->icon),
+                                              &screen, &x, &y, &width, &height);
 
     if (monitor_rect_p) {
+        HippoRectangle work_area;
+
+        monitor_num = gdk_screen_get_monitor_at_point(screen, x + width / 2, y + height / 2);
+        if (monitor_num < 0)
+            monitor_num = 0;
+        
+        gdk_screen_get_monitor_geometry(screen, monitor_num, &monitor);
+        
         monitor_rect_p->x = monitor.x;
         monitor_rect_p->y = monitor.y;
         monitor_rect_p->width = monitor.width;
         monitor_rect_p->height = monitor.height;
+        
+        screen_get_work_area(screen, &work_area);
+        hippo_rectangle_intersect(monitor_rect_p, &work_area, monitor_rect_p);
     }
 
     if (tray_icon_rect_p) {

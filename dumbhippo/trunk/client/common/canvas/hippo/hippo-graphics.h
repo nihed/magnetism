@@ -30,7 +30,7 @@ typedef struct {
     int height;
 } HippoRectangle;
 
-GType           hippo_rectangle_get_type   (void); G_GNUC_CONST
+GType           hippo_rectangle_get_type   (void) G_GNUC_CONST;
 gboolean        hippo_rectangle_intersect  (const HippoRectangle *src1,
                                             const HippoRectangle *src2,
                                             HippoRectangle       *dest);

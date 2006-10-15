@@ -140,14 +140,22 @@ update_for_screen_info (StackManager    *manager,
     /* We pretend the icon is always in the corner */
     if (is_west) {
         icon->x = monitor->x;
+        if (icon_orientation == HIPPO_ORIENTATION_VERTICAL)
+            icon->x -= icon->width;
     } else {
         icon->x = monitor->x + monitor->width - icon->width;
+        if (icon_orientation == HIPPO_ORIENTATION_VERTICAL)
+            icon->x += icon->width;
     }
     
     if (is_north) {
         icon->y = monitor->y;
+        if (icon_orientation == HIPPO_ORIENTATION_HORIZONTAL)
+            icon->y -= icon->height;
     } else {
-        icon->y = monitor->y + monitor->height;
+        icon->y = monitor->y + monitor->height - icon->height;
+        if (icon_orientation == HIPPO_ORIENTATION_HORIZONTAL)
+            icon->y += icon->height;
     }
 
     /* g_debug("base_on_bottom %d is_north %d", manager->base_on_bottom, is_north); */

@@ -61,10 +61,15 @@ struct _HippoPlatformClass {
 GType            hippo_platform_get_type               (void) G_GNUC_CONST;
 
 HippoWindow*     hippo_platform_create_window          (HippoPlatform    *platform);
+
+/* monitor_rect is the portion of the "work area" (the area for client
+ *    windows) on the same monitor as the tray icon
+ */
 void             hippo_platform_get_screen_info        (HippoPlatform    *platform,
                                                         HippoRectangle   *monitor_rect_p,
                                                         HippoRectangle   *tray_icon_rect_p,
                                                         HippoOrientation *tray_icon_orientation_p);
+
 gboolean         hippo_platform_read_login_cookie      (HippoPlatform    *platform,
                                                         HippoBrowserKind *origin_browser_p,
                                                         char            **username_p,
