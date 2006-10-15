@@ -472,7 +472,7 @@ enum_tray_icon_child(HWND child, LPARAM lParam)
 
 // The basic technique here comes from http://www.codeproject.com/shell/trayposition.asp
 static gboolean
-find_icon_tray_rect(HippoRectangle  *tray_icon_rect_p,
+find_icon_tray_rect(RECT            *iconTrayRect,
                     HippoOrientation orientation)
 {
     HWND trayWindow = FindWindow(L"Shell_TrayWnd", NULL);
@@ -490,10 +490,7 @@ find_icon_tray_rect(HippoRectangle  *tray_icon_rect_p,
     // We refine the taskbar 
     EnumChildWindows(trayWindow, enum_tray_icon_child, (LPARAM)&info);
 
-    tray_icon_rect_p->x = info.rect.left;
-    tray_icon_rect_p->width = info.rect.right - info.rect.left;
-    tray_icon_rect_p->y = info.rect.top;
-    tray_icon_rect_p->height = info.rect.bottom - info.rect.top;
+    *iconTrayRect = info.rect;
     
     return TRUE;
 }
@@ -504,16 +501,6 @@ hippo_platform_impl_get_screen_info(HippoPlatform     *platform,
                                     HippoRectangle    *tray_icon_rect_p,
                                     HippoOrientation  *tray_icon_orientation_p)
 {
-    /*
-    Incidentally, if we ever want the whole screen and not work area I couldn't
-    find out how forever but stumbled on this which might be right:
-    GetSystemMetrics(SM_CXSCREEN); 
-    GetSystemMetrics(SM_CYSCREEN); 
-    */
-
-    RECT desktopRect;
-    HRESULT hr = SystemParametersInfo(SPI_GETWORKAREA, NULL, &desktopRect, 0);
-
     APPBARDATA abd;
     abd.cbSize = sizeof(abd);
     if (!SHAppBarMessage(ABM_GETTASKBARPOS, &abd)) {
@@ -539,25 +526,33 @@ hippo_platform_impl_get_screen_info(HippoPlatform     *platform,
     if (tray_icon_orientation_p)
         *tray_icon_orientation_p = orientation;
 
-    // Getting the icon location is very hard; getting the rectangle for the
-    // whole icon tray a bit easier, so we return that
-    if (tray_icon_rect_p) {
-        if (!find_icon_tray_rect(tray_icon_rect_p, orientation)) {
-            // If this starts happening  regularly, we can refine
-            // this code to make a better guess at that point.
+    RECT iconTrayRect;
 
-            tray_icon_rect_p->x = abd.rc.left;
-            tray_icon_rect_p->width = abd.rc.right - abd.rc.left;
-            tray_icon_rect_p->y = abd.rc.top;
-            tray_icon_rect_p->height = abd.rc.bottom - abd.rc.top;
-        }
+    if (!find_icon_tray_rect(&iconTrayRect, orientation)) {
+        // If this starts happening  regularly, we can refine
+        // this code to make a better guess at that point.
+        iconTrayRect = abd.rc;
+    }
+
+    if (tray_icon_rect_p) {
+        tray_icon_rect_p->x = iconTrayRect.left;
+        tray_icon_rect_p->width = iconTrayRect.right - iconTrayRect.left;
+        tray_icon_rect_p->y = iconTrayRect.top;
+        tray_icon_rect_p->height = iconTrayRect.bottom - iconTrayRect.top;
     }
 
     if (monitor_rect_p) {
-        monitor_rect_p->x = desktopRect.left;
-        monitor_rect_p->y = desktopRect.top;
-        monitor_rect_p->width = desktopRect.right - desktopRect.left;
-        monitor_rect_p->height = desktopRect.bottom - desktopRect.top;
+        HMONITOR monitor = MonitorFromRect(&iconTrayRect, MONITOR_DEFAULTTONEAREST);
+        MONITORINFO monitorInfo;
+        monitorInfo.cbSize = sizeof(monitorInfo);
+        if (GetMonitorInfo(monitor, &monitorInfo)) {
+            monitor_rect_p->x = monitorInfo.rcWork.left;
+            monitor_rect_p->y = monitorInfo.rcWork.top;
+            monitor_rect_p->width = monitorInfo.rcWork.right - monitorInfo.rcWork.left;
+            monitor_rect_p->height = monitorInfo.rcWork.bottom - monitorInfo.rcWork.top;
+        } else {
+            g_warning("GetMonitorInfo failed"); // Shouldn't happen, don't both with a fallback
+        }
     }
 }
 
