@@ -37,6 +37,9 @@ static gboolean hippo_window_gtk_unmap_event             (GtkWidget           *w
 static gboolean hippo_window_gtk_visibility_notify_event (GtkWidget           *widget,
                                                           GdkEventVisibility  *event);
 
+/* Container methods */
+static void hippo_window_gtk_check_resize (GtkContainer *container);
+
 /* Window methods */
 static void hippo_window_gtk_set_contents      (HippoWindow      *window,
                                                 HippoCanvasItem  *item);
@@ -71,6 +74,10 @@ struct _HippoWindowGtk {
     GtkWidget *canvas;
     HippoCanvasItem *contents;
     HippoGravity resize_gravity;
+    GtkRequisition last_position_requisition;
+    guint positioned : 1; /* Set if hippo_window_position was even called */
+    guint expose_during_configure : 1; /* Set if we get an expose while waiting for
+                                        * for a window manager response. */
     guint hresizable : 1;
     guint vresizable : 1;
     guint app_window : 1;
@@ -122,6 +129,7 @@ hippo_window_gtk_class_init(HippoWindowGtkClass *klass)
 {
     GObjectClass *object_class = G_OBJECT_CLASS (klass);
     GtkWidgetClass *widget_class = GTK_WIDGET_CLASS (klass);
+    GtkContainerClass *container_class = GTK_CONTAINER_CLASS (klass);
 
     object_class->set_property = hippo_window_gtk_set_property;
     object_class->get_property = hippo_window_gtk_get_property;
@@ -135,6 +143,8 @@ hippo_window_gtk_class_init(HippoWindowGtkClass *klass)
     widget_class->focus_out_event = hippo_window_gtk_focus_out_event;
     widget_class->unmap_event = hippo_window_gtk_unmap_event;
     widget_class->visibility_notify_event = hippo_window_gtk_visibility_notify_event;
+
+    container_class->check_resize = hippo_window_gtk_check_resize;
         
     g_object_class_override_property(object_class, PROP_APP_WINDOW, "app-window");
     g_object_class_override_property(object_class, PROP_RESIZE_GRAVITY, "resize-gravity");
@@ -230,8 +240,16 @@ static void
 set_resize_gravity(HippoWindowGtk *window_gtk,
                    HippoGravity    resize_gravity)
 {
+    window_gtk->resize_gravity = resize_gravity;
+
+#if 0
+    /* We don't set the GdkGravity because we don't need it (our window
+     * isn't decorated) and if GTK+ is made to automatically do the
+     * sort of thing we do in hippo_window_gtk_check-resize(), the window
+     * would get moved twice.
+     */
     GdkGravity gdk_gravity = GDK_GRAVITY_NORTH_WEST;
-    
+
     switch (resize_gravity) {
     case HIPPO_GRAVITY_NORTH_WEST:
         gdk_gravity = GDK_GRAVITY_NORTH_WEST;
@@ -248,6 +266,7 @@ set_resize_gravity(HippoWindowGtk *window_gtk,
     }
 
     gtk_window_set_gravity(GTK_WINDOW(window_gtk), gdk_gravity);
+#endif
 }
 
 static void
@@ -441,6 +460,76 @@ hippo_window_gtk_visibility_notify_event(GtkWidget           *widget,
     return FALSE;
 }
 
+static void 
+hippo_window_gtk_check_resize (GtkContainer *container)
+{
+    HippoWindowGtk *window_gtk = HIPPO_WINDOW_GTK(container);
+
+    /**
+     * Is gtk_window_gravity_sufficient() to make our resize gravity work?
+     *
+     * The ICCCM is unclear on what a ConfigureRequest that doesn't specify
+     * a new position means when gravity is set. (ICCCM section 4.1.5:
+     * "Client configure requests are interpreted by the window manager in 
+     * the same manner as the initial window geometry mapped from the Withdrawn
+     * state, as described in section 4.1.2.3.")  But in any case, we can't
+     * count on the window manager to turn a a Resize() on our part into
+     * a MoveResize(), because any handling by the window manager only happens
+     * after our window is managed, which which happens at a point we don't
+     * control. So on spontaneous size changes, we need to do the right
+     * MoveRequest. (Actually, it's  probably a GTK+ bug that it doesn't take
+     * care of this for us: filed as http://bugzilla.gnome.org/show_bug.cgi?id=362383)
+     *
+     * Note that a limitation of this code is that it only works when the
+     * window is exactly sized to its requisition. (not resizable) In other
+     * cases, we have no access to the new size that GTK+ will use, so we
+     * can't do the necessary arithmetic.
+     */
+    if (window_gtk->resize_gravity != HIPPO_GRAVITY_NORTH_WEST && window_gtk->positioned) {
+        GtkRequisition new_requisition;
+        int x, y;
+        int new_x, new_y;
+
+        gtk_window_get_position(GTK_WINDOW(window_gtk), &x, &y);
+        new_x = x;
+        new_y = y;
+
+        gtk_widget_size_request(GTK_WIDGET(window_gtk), &new_requisition);
+
+        switch (window_gtk->resize_gravity) {
+        case HIPPO_GRAVITY_NORTH_WEST:
+            /* Not hit */
+            break;
+        case HIPPO_GRAVITY_NORTH_EAST:
+            new_x -= new_requisition.width - window_gtk->last_position_requisition.width;
+            break;
+        case HIPPO_GRAVITY_SOUTH_EAST:
+            new_x -= new_requisition.width - window_gtk->last_position_requisition.width;
+            new_y -= new_requisition.height - window_gtk->last_position_requisition.height;
+            break;
+        case HIPPO_GRAVITY_SOUTH_WEST:
+            new_y -= new_requisition.height - window_gtk->last_position_requisition.height;
+            break;
+        }
+
+        if (x != new_x || y != new_y) {
+            /* Horrible hack - we don't want want gtk_window_move() to gdk_window_move(),
+             * which it would normally when we are mapped, we instead want to coalesce
+             * the move with the resize we know we are about to do into a single
+             * gkd_window_move_resize() so the gravity setting works right.
+             */
+            GTK_WIDGET_UNSET_FLAGS(window_gtk, GTK_MAPPED);
+            GTK_WINDOW(window_gtk)->need_default_position = TRUE;
+            gtk_window_move(GTK_WINDOW(window_gtk), new_x, new_y);
+            GTK_WIDGET_SET_FLAGS(window_gtk, GTK_MAPPED);
+        }
+        
+        window_gtk->last_position_requisition = new_requisition;
+    }
+    
+    GTK_CONTAINER_CLASS(hippo_window_gtk_parent_class)->check_resize(container);
+}
+
 static void
 hippo_window_gtk_set_contents(HippoWindow     *window,
                               HippoCanvasItem *item)
@@ -504,6 +593,9 @@ hippo_window_gtk_set_position(HippoWindow     *window,
                               int              y)
 {
     HippoWindowGtk *window_gtk = HIPPO_WINDOW_GTK(window);
+
+    gtk_widget_size_request(GTK_WIDGET(window_gtk), &window_gtk->last_position_requisition);
+    window_gtk->positioned = TRUE;
 
     gtk_window_move(GTK_WINDOW(window_gtk), x, y);
 }
