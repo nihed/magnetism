@@ -157,7 +157,6 @@ LINUX_CANVAS_SOURCEFILES =					\
 	$(LINUXCANVASSRCDIR)/hippo/hippo-canvas-helper.h	\
 	$(LINUXCANVASSRCDIR)/hippo/hippo-canvas-window-child.c	\
 	$(LINUXCANVASSRCDIR)/hippo/hippo-canvas-window-child.h	\
-	$(LINUXCANVASSRCDIR)/hippo/hippo-canvas.c		\
 	$(LINUXCANVASSRCDIR)/hippo/hippo-canvas-widget.c	\
 	$(LINUXCANVASSRCDIR)/hippo/hippo-canvas-widgets.c
 
