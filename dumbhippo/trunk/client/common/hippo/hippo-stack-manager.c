@@ -124,7 +124,6 @@ update_for_screen_info (StackManager    *manager,
                         gboolean         position_notification)
 {
     HippoRectangle base;
-    HippoGravity;
     gboolean is_west;
     gboolean is_north;
 

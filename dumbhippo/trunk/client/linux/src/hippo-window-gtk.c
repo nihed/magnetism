@@ -5,7 +5,9 @@
 #include "hippo-window-gtk.h"
 #include <gtk/gtkwindow.h>
 #include <gtk/gtkcontainer.h>
-#include <hippo/hippo-canvas.h>
+#include <hippo/hippo-canvas-window.h>
+
+#include <gdk/gdkx.h>
 
 static void      hippo_window_gtk_init                (HippoWindowGtk       *window_gtk);
 static void      hippo_window_gtk_class_init          (HippoWindowGtkClass  *klass);
@@ -23,6 +25,9 @@ static void hippo_window_gtk_get_property (GObject      *object,
                                            GParamSpec   *pspec);
 
 /* Widget methods */
+static void     hippo_window_gtk_realize                 (GtkWidget           *widget);
+static gboolean hippo_window_gtk_expose_event            (GtkWidget           *widget,
+                                                          GdkEventExpose      *event);
 static gboolean hippo_window_gtk_focus_in_event          (GtkWidget           *widget,
                                                           GdkEventFocus       *event);
 static gboolean hippo_window_gtk_focus_out_event         (GtkWidget           *widget,
@@ -93,7 +98,7 @@ enum {
     PROP_ONSCREEN
 };
 
-G_DEFINE_TYPE_WITH_CODE(HippoWindowGtk, hippo_window_gtk, GTK_TYPE_WINDOW,
+G_DEFINE_TYPE_WITH_CODE(HippoWindowGtk, hippo_window_gtk, HIPPO_TYPE_CANVAS_WINDOW,
                         G_IMPLEMENT_INTERFACE(HIPPO_TYPE_WINDOW, hippo_window_gtk_iface_init));
 
 static void
@@ -124,6 +129,8 @@ hippo_window_gtk_class_init(HippoWindowGtkClass *klass)
     object_class->dispose = hippo_window_gtk_dispose;
     object_class->finalize = hippo_window_gtk_finalize;
     
+    widget_class->realize = hippo_window_gtk_realize;
+    widget_class->expose_event = hippo_window_gtk_expose_event;
     widget_class->focus_in_event = hippo_window_gtk_focus_in_event;
     widget_class->focus_out_event = hippo_window_gtk_focus_out_event;
     widget_class->unmap_event = hippo_window_gtk_unmap_event;
@@ -139,11 +146,6 @@ static void
 hippo_window_gtk_init(HippoWindowGtk *window_gtk)
 {
     window_gtk->app_window = TRUE;
-    window_gtk->canvas = hippo_canvas_new();
-
-    gtk_container_add(GTK_CONTAINER(window_gtk), window_gtk->canvas);
-
-    gtk_widget_show(window_gtk->canvas);
 
     gtk_window_set_resizable(GTK_WINDOW(window_gtk), FALSE);
     gtk_window_set_decorated(GTK_WINDOW(window_gtk), FALSE);
@@ -153,7 +155,10 @@ hippo_window_gtk_init(HippoWindowGtk *window_gtk)
     window_gtk->vresizable = FALSE;
     window_gtk->resize_gravity = HIPPO_GRAVITY_NORTH_WEST;
 
-    gtk_widget_set_events(GTK_WIDGET(window_gtk), GDK_VISIBILITY_NOTIFY_MASK);
+    gtk_widget_add_events(GTK_WIDGET(window_gtk), GDK_VISIBILITY_NOTIFY_MASK);
+
+    /* See note about double buffering in hippo_window_gtk_expose_event */
+    gtk_widget_set_double_buffered(GTK_WIDGET(window_gtk), FALSE);
 }
 
 static void
@@ -190,8 +195,15 @@ set_app_window(HippoWindowGtk *window_gtk,
                gboolean        app_window)
 {
     GtkWindow *window = GTK_WINDOW(window_gtk);
+    GtkWidget *widget = GTK_WIDGET(window_gtk);
+
+    app_window = app_window != FALSE;
+
+    if (window_gtk->app_window == app_window)
+        return;
     
-    window_gtk->app_window = app_window != FALSE;
+    window_gtk->app_window = app_window;
+
     gtk_window_set_skip_taskbar_hint(window, !app_window);
     gtk_window_set_skip_pager_hint(window, !app_window);
     if (app_window) {
@@ -201,6 +213,16 @@ set_app_window(HippoWindowGtk *window_gtk,
         /* NOTIFICATION is the right type hint, but that's new in GTK+-2.10 */
         gtk_window_set_type_hint(window, GDK_WINDOW_TYPE_HINT_DOCK);
         gtk_window_set_accept_focus(window, FALSE);
+    }
+   
+    /* See note about "background none" in hippo_window_gtk_realize() */
+    if (GTK_WIDGET_REALIZED(widget)) {
+        if (app_window) {
+            /* This should cause the right pixel to be set, replacing background-none */
+            gtk_style_set_background (widget->style, widget->window, widget->state);
+        } else {
+            gdk_window_set_back_pixmap(widget->window, NULL, FALSE);
+        }
     }
 }
 
@@ -305,6 +327,72 @@ set_onscreen(HippoWindowGtk *window_gtk,
     }
 }
 
+static void
+set_static_bit_gravity(GtkWidget *widget)
+{
+  XSetWindowAttributes xattributes;
+  guint xattributes_mask = 0;
+  
+  xattributes.bit_gravity = StaticGravity;
+  xattributes_mask |= CWBitGravity;
+  XChangeWindowAttributes (GDK_WINDOW_XDISPLAY(widget->window),
+			   GDK_WINDOW_XID(widget->window),
+			   CWBitGravity,  &xattributes);
+}
+
+static void
+hippo_window_gtk_realize(GtkWidget *widget)
+{
+    HippoWindowGtk *window_gtk = HIPPO_WINDOW_GTK(widget);
+    
+    GTK_WIDGET_CLASS(hippo_window_gtk_parent_class)->realize(widget);
+
+    /* Static bit gravity means that when we are simultaneously moved
+     * and resized, the windowing system should just leave our image
+     * bits where they were before. This prevents bouncing of elements
+     * that are glued to a right/bottom edge that doesn't move -
+     * otherwise the windowing system would move the bits, then we'd
+     * redraw them back where they were before.
+     */
+    set_static_bit_gravity(widget);
+
+    /* When we are a notification window (not an "app window") then
+     * we'll never get exposed by someone dragging another window
+     * on top, so it will work well to use a background of "none";
+     * this considerably improves the appearance when we are
+     * spontaneously resizing, since you don't get a blank area first.
+     */
+    if (!window_gtk->app_window)
+        gdk_window_set_back_pixmap(widget->window, NULL, FALSE);
+}
+
+static gboolean 
+hippo_window_gtk_expose_event(GtkWidget           *widget,
+                              GdkEventExpose      *event)
+{
+    /* We don't want to redraw between requesting a new position/size
+     * from the window manager and getting allocated that size because
+     * we won't yet have made all the reallocations for the new size,
+     * but may already have the new coordinates after the resize. We
+     * count here on a) the resize not being denied by the window manager
+     * b) on the complete redraw we currently do at each new size.
+     */
+    if (GTK_WINDOW(widget)->configure_request_count > 0)
+        return FALSE;
+
+    /* Ignoring the expose event while we are waiting for the window manager
+     * to resize us would cause problems if we were normally double-buffered
+     * because when we ignored the expose event, a blank double-buffer would
+     * get drawn. So what we do is turn off double-buffering at the widget
+     * level and do it ourselves here.
+     */
+    gdk_window_begin_paint_region(widget->window, event->region);
+    GTK_WIDGET_CLASS(hippo_window_gtk_parent_class)->expose_event(widget, event);
+    gdk_window_end_paint(widget->window);
+
+    return FALSE;
+}
+
 static gboolean
 hippo_window_gtk_focus_in_event(GtkWidget           *widget,
                                 GdkEventFocus       *event)
@@ -372,7 +460,7 @@ hippo_window_gtk_set_contents(HippoWindow     *window,
         window_gtk->contents = item;
     }
 
-    hippo_canvas_set_root(HIPPO_CANVAS(window_gtk->canvas), window_gtk->contents);
+    hippo_canvas_window_set_root(HIPPO_CANVAS_WINDOW(window_gtk), window_gtk->contents);
 }
 
 static void

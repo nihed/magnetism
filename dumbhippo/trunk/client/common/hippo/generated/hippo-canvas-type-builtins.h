@@ -1,7 +1,7 @@
 
 /* Generated data (by glib-mkenums) */
 
-#ifndef HIPPO_CANVAS_TYPE_BUILTINS_H
+#ifndef HIPcPO_CANVAS_TYPE_BUILTINS_H
 #define HIPPO_CANVAS_TYPE_BUILTINS_H 1
 
 #include <glib-object.h>

@@ -129,6 +129,7 @@ COMMON_CANVAS_HEADERFILES = 					\
 
 LINUX_CANVAS_HEADERFILES =					\
 	$(LINUXCANVASSRCDIR)/hippo/hippo-canvas.h		\
+	$(LINUXCANVASSRCDIR)/hippo/hippo-canvas-window.h	\
 	$(LINUXCANVASSRCDIR)/hippo/hippo-canvas-widget.h
 
 COMMON_CANVAS_SOURCEFILES = 					\
@@ -150,6 +151,12 @@ COMMON_CANVAS_SOURCEFILES = 					\
 
 LINUX_CANVAS_SOURCEFILES =					\
 	$(LINUX_CANVAS_HEADERFILES)				\
+	$(LINUXCANVASSRCDIR)/hippo/hippo-canvas.c		\
+	$(LINUXCANVASSRCDIR)/hippo/hippo-canvas-window.c	\
+	$(LINUXCANVASSRCDIR)/hippo/hippo-canvas-helper.c	\
+	$(LINUXCANVASSRCDIR)/hippo/hippo-canvas-helper.h	\
+	$(LINUXCANVASSRCDIR)/hippo/hippo-canvas-window-child.c	\
+	$(LINUXCANVASSRCDIR)/hippo/hippo-canvas-window-child.h	\
 	$(LINUXCANVASSRCDIR)/hippo/hippo-canvas.c		\
 	$(LINUXCANVASSRCDIR)/hippo/hippo-canvas-widget.c	\
 	$(LINUXCANVASSRCDIR)/hippo/hippo-canvas-widgets.c
