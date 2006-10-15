@@ -65,6 +65,7 @@ struct _HippoWindowGtk {
     GtkWindow window;
     GtkWidget *canvas;
     HippoCanvasItem *contents;
+    HippoGravity resize_gravity;
     guint hresizable : 1;
     guint vresizable : 1;
     guint app_window : 1;
@@ -87,6 +88,7 @@ enum {
 enum {
     PROP_0,
     PROP_APP_WINDOW,
+    PROP_RESIZE_GRAVITY,
     PROP_ACTIVE,
     PROP_ONSCREEN
 };
@@ -128,6 +130,7 @@ hippo_window_gtk_class_init(HippoWindowGtkClass *klass)
     widget_class->visibility_notify_event = hippo_window_gtk_visibility_notify_event;
         
     g_object_class_override_property(object_class, PROP_APP_WINDOW, "app-window");
+    g_object_class_override_property(object_class, PROP_RESIZE_GRAVITY, "resize-gravity");
     g_object_class_override_property(object_class, PROP_ACTIVE, "active");
     g_object_class_override_property(object_class, PROP_ONSCREEN, "onscreen");
 }
@@ -148,6 +151,7 @@ hippo_window_gtk_init(HippoWindowGtk *window_gtk)
 
     window_gtk->hresizable = FALSE;
     window_gtk->vresizable = FALSE;
+    window_gtk->resize_gravity = HIPPO_GRAVITY_NORTH_WEST;
 
     gtk_widget_set_events(GTK_WIDGET(window_gtk), GDK_VISIBILITY_NOTIFY_MASK);
 }
@@ -201,6 +205,30 @@ set_app_window(HippoWindowGtk *window_gtk,
 }
 
 static void
+set_resize_gravity(HippoWindowGtk *window_gtk,
+                   HippoGravity    resize_gravity)
+{
+    GdkGravity gdk_gravity = GDK_GRAVITY_NORTH_WEST;
+    
+    switch (resize_gravity) {
+    case HIPPO_GRAVITY_NORTH_WEST:
+        gdk_gravity = GDK_GRAVITY_NORTH_WEST;
+        break;
+    case HIPPO_GRAVITY_NORTH_EAST:
+        gdk_gravity = GDK_GRAVITY_NORTH_EAST;
+        break;
+    case HIPPO_GRAVITY_SOUTH_EAST:
+        gdk_gravity = GDK_GRAVITY_SOUTH_EAST;
+        break;
+    case HIPPO_GRAVITY_SOUTH_WEST:
+        gdk_gravity = GDK_GRAVITY_SOUTH_WEST;
+        break;
+    }
+
+    gtk_window_set_gravity(GTK_WINDOW(window_gtk), gdk_gravity);
+}
+
+static void
 hippo_window_gtk_set_property(GObject         *object,
                               guint            prop_id,
                               const GValue    *value,
@@ -214,7 +242,9 @@ hippo_window_gtk_set_property(GObject         *object,
     case PROP_APP_WINDOW:
         set_app_window(gtk, g_value_get_boolean(value));
         break;
-        
+    case PROP_RESIZE_GRAVITY:
+        set_resize_gravity(gtk, g_value_get_int(value));
+        break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
         break;
@@ -234,6 +264,9 @@ hippo_window_gtk_get_property(GObject         *object,
     switch (prop_id) {
     case PROP_APP_WINDOW:
         g_value_set_boolean(value, gtk->app_window);
+        break;
+    case PROP_RESIZE_GRAVITY:
+        g_value_set_int(value, gtk->resize_gravity);
         break;
     case PROP_ACTIVE:
         g_value_set_boolean(value, gtk->active);
