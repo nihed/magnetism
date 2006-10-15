@@ -14,8 +14,7 @@ public:
         setClassName(L"HippoWindow");
         setClassStyle(CS_HREDRAW | CS_VREDRAW);
         setAppWindow(true);
-        //setWindowStyle(WS_OVERLAPPEDWINDOW);
-        //setExtendedStyle(WS_EX_TOPMOST);
+        setResizeGravity(HIPPO_GRAVITY_NORTH_WEST);
         setTitle(L"Mugshot");
         setResizable(HIPPO_ORIENTATION_VERTICAL, false);
         setResizable(HIPPO_ORIENTATION_HORIZONTAL, false);
@@ -28,14 +27,18 @@ public:
     void setVisible(bool visible);
     void hideToIcon(HippoRectangle *iconRect);
     void setAppWindow(bool appWindow);
+    bool getAppWindow() { return appWindow_; }
     void getPosition(int *x_p, int *y_p);
     void getSize(int *width_p, int *height_p);
-    bool getAppWindow() { return appWindow_; }
+    void setResizeGravity(HippoGravity gravity);
+    HippoGravity getResizeGravity() { return resizeGravity_; }
     bool getActive();
     bool getOnscreen();
     void beginMove();
     void beginResize(HippoSide side);
     void present();
+
+    virtual void sizeAllocate(int width, int height);
 
 protected:
     
@@ -58,6 +61,7 @@ private:
     HippoWindowWin *wrapper_;
     GIdle resizeIdle_;
     bool appWindow_;
+    HippoGravity resizeGravity_;
 
     bool idleResize();
     bool windowVisibleAtPoint(POINT point);
@@ -132,6 +136,7 @@ enum {
 enum {
     PROP_0,
     PROP_APP_WINDOW,
+    PROP_RESIZE_GRAVITY,
     PROP_ACTIVE,
     PROP_ONSCREEN
 };
@@ -164,8 +169,9 @@ hippo_window_win_class_init(HippoWindowWinClass *klass)
     object_class->get_property = hippo_window_win_get_property;
 
     g_object_class_override_property(object_class, PROP_APP_WINDOW, "app-window");
+    g_object_class_override_property(object_class, PROP_RESIZE_GRAVITY, "resize-gravity");
 
-    // Note that we only provide getters for these, and notification when
+    // Note that we only provide getters for these, and not notification when
     // they change. We're not currently using notification in the mugshot client.
     //
     // Notification for "active" should be straightforward by watching the right
@@ -220,6 +226,9 @@ hippo_window_win_set_property(GObject         *object,
     case PROP_APP_WINDOW:
         win->impl->setAppWindow(g_value_get_boolean(value) != FALSE);
         break;
+    case PROP_RESIZE_GRAVITY:
+        win->impl->setResizeGravity((HippoGravity)g_value_get_int(value));
+        break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
         break;
@@ -239,6 +248,9 @@ hippo_window_win_get_property(GObject         *object,
     switch (prop_id) {
     case PROP_APP_WINDOW:
         g_value_set_boolean(value, win->impl->getAppWindow() ? TRUE : FALSE);
+        break;
+    case PROP_RESIZE_GRAVITY:
+        g_value_set_int(value, (int)win->impl->getResizeGravity());
         break;
     case PROP_ACTIVE:
         g_value_set_boolean(value, win->impl->getActive() ? TRUE : FALSE);
@@ -476,6 +488,12 @@ HippoWindowImpl::getSize(int *width_p, int *height_p)
         *height_p = getHeight();
 }
 
+void
+HippoWindowImpl::setResizeGravity(HippoGravity resizeGravity)
+{
+    resizeGravity_ = resizeGravity;
+}
+
 bool
 HippoWindowImpl::getActive()
 {
@@ -608,6 +626,32 @@ HippoWindowImpl::present()
     //
     // FIXME: The window still doesn't always end up as the active window
     SetForegroundWindow(window_);
+}
+
+void 
+HippoWindowImpl::sizeAllocate(int width, int height)
+{
+    int x = getX();
+    int y = getY();
+    int oldWidth = getWidth();
+    int oldHeight = getHeight();
+
+    switch (resizeGravity_) {
+    case HIPPO_GRAVITY_NORTH_WEST:
+        break;
+    case HIPPO_GRAVITY_NORTH_EAST:
+        x -= width - oldWidth;
+        break;
+    case HIPPO_GRAVITY_SOUTH_EAST:
+        x -= width - oldWidth;
+        y -= height - oldHeight;
+        break;
+    case HIPPO_GRAVITY_SOUTH_WEST:
+        y -= height - oldHeight;
+        break;
+    }
+
+    HippoAbstractControl::sizeAllocate(x, y, width, height);
 }
 
 int

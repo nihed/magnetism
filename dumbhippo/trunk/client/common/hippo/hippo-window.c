@@ -50,6 +50,15 @@ hippo_window_base_init(void *klass)
                                                                  _("Whether the window should appear in the tasklist"),
                                                                  TRUE,
                                                                  G_PARAM_READABLE | G_PARAM_WRITABLE));
+        /* The name here is intentionally distinct from the GdkWindow "gravity" property */
+        g_object_interface_install_property(klass,
+                                            g_param_spec_int("resize-gravity", /* g_param_spec_enum( .. */
+                                                             _("Resize Gravity"),
+                                                             _("Which corner stays fixed when the window resizes"),
+                                                             HIPPO_GRAVITY_NORTH_WEST, HIPPO_GRAVITY_SOUTH_WEST,
+                                                             HIPPO_GRAVITY_NORTH_WEST,
+                                                             G_PARAM_READABLE | G_PARAM_WRITABLE));
+        /* GdkWindow has is-active */
         g_object_interface_install_property(klass,
                                             g_param_spec_boolean("active",
                                                                  _("Active"),

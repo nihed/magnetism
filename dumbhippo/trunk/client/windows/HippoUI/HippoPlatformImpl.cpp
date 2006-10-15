@@ -494,6 +494,8 @@ find_icon_tray_rect(HippoRectangle  *tray_icon_rect_p,
     tray_icon_rect_p->width = info.rect.right - info.rect.left;
     tray_icon_rect_p->y = info.rect.top;
     tray_icon_rect_p->height = info.rect.bottom - info.rect.top;
+    
+    return TRUE;
 }
 
 static void
@@ -512,7 +514,6 @@ hippo_platform_impl_get_screen_info(HippoPlatform     *platform,
     RECT desktopRect;
     HRESULT hr = SystemParametersInfo(SPI_GETWORKAREA, NULL, &desktopRect, 0);
 
-    RECT taskbarRect;
     APPBARDATA abd;
     abd.cbSize = sizeof(abd);
     if (!SHAppBarMessage(ABM_GETTASKBARPOS, &abd)) {
@@ -545,10 +546,10 @@ hippo_platform_impl_get_screen_info(HippoPlatform     *platform,
             // If this starts happening  regularly, we can refine
             // this code to make a better guess at that point.
 
-            tray_icon_rect_p->x = taskbarRect.left;
-            tray_icon_rect_p->width = taskbarRect.right - taskbarRect.left;
-            tray_icon_rect_p->y = taskbarRect.top;
-            tray_icon_rect_p->height = taskbarRect.bottom - taskbarRect.top;
+            tray_icon_rect_p->x = abd.rc.left;
+            tray_icon_rect_p->width = abd.rc.right - abd.rc.left;
+            tray_icon_rect_p->y = abd.rc.top;
+            tray_icon_rect_p->height = abd.rc.bottom - abd.rc.top;
         }
     }
 

@@ -40,7 +40,9 @@ public:
     // only parent widgets should call these, and only in onSizeAllocated() implementations.
     void sizeAllocate(const HippoRectangle *rect);
     void sizeAllocate(int x, int y, int width, int height);
-    void sizeAllocate(int width, int height);
+    // virtual so subclasses can chose a different policy for picking X/Y when spontaneously
+    // resizing. The implementation should chose a new X/Y then call the 4 argument form
+    virtual void sizeAllocate(int width, int height);
 
     // kind of a bad hack to get request-changed emitted on the wrapping canvas item
     void setCanvasItem(GObject *item);

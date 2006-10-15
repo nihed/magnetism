@@ -124,6 +124,7 @@ update_for_screen_info (StackManager    *manager,
                         gboolean         position_notification)
 {
     HippoRectangle base;
+    HippoGravity;
     gboolean is_west;
     gboolean is_north;
 
@@ -147,7 +148,7 @@ update_for_screen_info (StackManager    *manager,
     if (is_north) {
         icon->y = monitor->y;
     } else {
-        icon->y = monitor->y + monitor->height - icon->height;
+        icon->y = monitor->y + monitor->height;
     }
 
     /* g_debug("base_on_bottom %d is_north %d", manager->base_on_bottom, is_north); */
@@ -157,6 +158,11 @@ update_for_screen_info (StackManager    *manager,
         hippo_canvas_box_reverse(HIPPO_CANVAS_BOX(manager->notification_box));
         manager->base_on_bottom = !manager->base_on_bottom;
     }
+
+    /* We only resize vertically, so we don't need to worry about EAST/WEST */
+    g_object_set(manager->notification_window, 
+                 "resize-gravity", is_north ? HIPPO_GRAVITY_NORTH_WEST : HIPPO_GRAVITY_SOUTH_WEST, 
+                 NULL);
 
     if (position_browser)
         position_alongside(manager->browser_window, 3, icon,
