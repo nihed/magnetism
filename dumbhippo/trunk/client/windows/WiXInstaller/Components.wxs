@@ -8,12 +8,19 @@
 	    <Directory Id="ProgramFilesFolder">
 		<Directory Id="INSTALLLOCATION" Name="Mugshot">
 		    <Component Id="dependencies" Guid="EA96152A-8812-4193-90D8-2F1B3F520E36">
+		        <File Id="copyingLibs" Name="LGPL.txt"     LongName="COPYING-LIBS.txt"     src="COPYING-LIBS.txt"      DiskId="1" Vital="yes"/>
 		        <File Id="charsetDll"  Name="charset.dll"                                  src="charset.dll"           DiskId="1" Vital="yes"/>
 		        <File Id="iconvDll"    Name="iconv.dll"                                    src="iconv.dll"             DiskId="1" Vital="yes"/>
 		        <File Id="intlDll"     Name="intl.dll"                                     src="intl.dll"              DiskId="1" Vital="yes"/>
 		        <File Id="glibDll"     Name="libglib-.dll" LongName="libglib-2.0-0.dll"    src="libglib-2.0-0.dll"     DiskId="1" Vital="yes"/>
 		        <File Id="gobjectDll"  Name="libgobje.dll" LongName="libgobject-2.0-0.dll" src="libgobject-2.0-0.dll"  DiskId="1" Vital="yes"/>
 		        <File Id="gthreadDll"  Name="libgthre.dll" LongName="libgthread-2.0-0.dll" src="libgthread-2.0-0.dll"  DiskId="1" Vital="yes"/>
+		        <File Id="cairoDll"    Name="libcairo.dll" LongName="libcairo-2.dll"       src="libcairo-2.dll"        DiskId="1" Vital="yes"/>
+		        <File Id="pngDll"      Name="libpng1.dll"                                  src="libpng13.dll"          DiskId="1" Vital="yes"/>
+		        <File Id="zlibDll"     Name="zlib1.dll"                                    src="zlib1.dll"             DiskId="1" Vital="yes"/>
+		        <File Id="pangoDll"       Name="libpango.dll" LongName="libpango-1.0-0.dll"      src="libpango-1.0-0.dll"      DiskId="1" Vital="yes"/>
+		        <File Id="pangoCairoDll"  Name="libpango.dll" LongName="libpangocairo-1.0-0.dll" src="libpangocairo-1.0-0.dll" DiskId="1" Vital="yes"/>
+		        <File Id="pangoWin32Dll"  Name="libpango.dll" LongName="libpangowin32-1.0-0.dll" src="libpangowin32-1.0-0.dll" DiskId="1" Vital="yes"/>
 		    </Component>
 
 		    <Component Id="hippoUtil" Guid="F2112E27-3930-4398-9680-C40A63CF64FA">
@@ -128,6 +135,30 @@
 	        	        <File Id="wbubcnrTrPng"      Name="wbubcnr_.png" LongName="wbubcnr_tr.png"      src="applets\wbubcnr_tr.png"     DiskId="1" Vital="yes"/>
 		            </Component>
 		    </Directory>
+		    <Directory Id="dhImagesDir" Name="Images">
+        		<Component Id="images" Guid="681D6075-3B98-428C-8B73-68D9F15133AD">
+	        	    <File Id="arrowPng"          Name="arrow.png"    LongName="arrow.png"          src="images\arrow.png"          DiskId="1" Vital="yes"/>
+	        	    <File Id="arrow2Png"         Name="arrow2.png"   LongName="arrow2.png"         src="images\arrow2.png"         DiskId="1" Vital="yes"/>
+	        	    <File Id="barMiddlePng"      Name="bar_midd.png" LongName="bar_middle.png"     src="images\bar_middle.png"     DiskId="1" Vital="yes"/>
+	                    <File Id="barPipePng"        Name="bar_pipe.png" LongName="bar_pipe.png"       src="images\bar_pipe.png"       DiskId="1" Vital="yes"/>
+	                    <File Id="barXPng"           Name="bar_x.png"    LongName="bar_x.png"          src="images\bar_x.png"          DiskId="1" Vital="yes"/>
+	                    <File Id="barX2Png"          Name="bar_x2.png"   LongName="bar_x2.png"         src="images\bar_x2.png"         DiskId="1" Vital="yes"/>
+	                    <File Id="blueXPng"          Name="blue_x.png"   LongName="blue_x.png"         src="images\blue_x.png"         DiskId="1" Vital="yes"/>
+	                    <File Id="chatPng"           Name="chat.png"     LongName="chat.png"           src="images\chat.png"           DiskId="1" Vital="yes"/>
+	                    <File Id="findPng"           Name="find.png"     LongName="find.png"           src="images\find.png"           DiskId="1" Vital="yes"/>
+	                    <File Id="homePng"           Name="home.png"     LongName="home.png"           src="images\home.png"           DiskId="1" Vital="yes"/>
+	                    <File Id="home2Png"          Name="home2.png"    LongName="home2.png"          src="images\home2.png"          DiskId="1" Vital="yes"/>
+	                    <File Id="hushPng"           Name="hush.png"     LongName="hush.png"           src="images\hush.png"           DiskId="1" Vital="yes"/>
+	                    <File Id="hush2Png"          Name="hush2.png"    LongName="hush2.png"          src="images\hush2.png"          DiskId="1" Vital="yes"/>
+	                    <File Id="lidPng"            Name="lid.png"      LongName="lid.png"            src="images\lid.png"            DiskId="1" Vital="yes"/>
+	                    <File Id="mugshotstackerPng" Name="mugshots.png" LongName="mugshotstacker.png" src="images\mugshotstacker.png" DiskId="1" Vital="yes"/>
+	                    <File Id="nophotoPng"        Name="nophoto.png"  LongName="nophoto.png"        src="images\nophoto.png"        DiskId="1" Vital="yes"/>
+	                    <File Id="photoIconPng"      Name="photo_ic.png" LongName="photo_icon.png"     src="images\photo_icon.png"     DiskId="1" Vital="yes"/>
+	                    <File Id="searchXPng"        Name="search_x.png" LongName="search_x.png"       src="images\search_x.png"       DiskId="1" Vital="yes"/>
+	                    <File Id="unhushPng"         Name="unhush.png"   LongName="unhush.png"         src="images\unhush.png"         DiskId="1" Vital="yes"/>
+	                    <File Id="unhush2Png"        Name="unhush2.png"  LongName="unhush2.png"        src="images\unhush2.png"        DiskId="1" Vital="yes"/>
+                        </Component>
+                     </Directory>	                    
 	        </Directory>
 	    </Directory>
 	    

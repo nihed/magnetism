@@ -1,5 +1,6 @@
 all:
 	-mkdir $(OUTDIR)
+	copy COPYING.txt $(OUTDIR)\COPYING-LIBS.txt
 	copy charset.dll $(OUTDIR)
 	copy iconv.dll $(OUTDIR)
 	copy intl.dll $(OUTDIR)
@@ -15,6 +16,7 @@ all:
 	copy zlib1.dll $(OUTDIR)
 
 clean:
+	del $(OUTDIR)\COPYING-LIBS.txt
 	del $(OUTDIR)\charset.dll
 	del $(OUTDIR)\iconv.dll
 	del $(OUTDIR)\intl.dll

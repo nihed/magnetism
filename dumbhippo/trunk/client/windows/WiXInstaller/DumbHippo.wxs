@@ -1,10 +1,10 @@
 <?xml version="1.0"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2003/01/wi">
-    <Product Id="6AEE8B54-D621-4229-9BB2-3E36DCA46603"
+    <Product Id="B7659659-2B8C-4001-ABAC-251949DBCED3"
             UpgradeCode="9A9721CB-6D56-478C-9AEE-2AAC1D75BA2F"
             Name="Mugshot" 
             Language="1033"
-            Version="1.1.67"
+            Version="1.1.68"
             Manufacturer="Red Hat">
         <Package Id="????????-????-????-????-????????????"
                 Description="Mugshot client software" 
@@ -21,8 +21,8 @@
         <Property Id="ARPPRODUCTICON" Value="hippoIcon"/>
         
         <Upgrade Id="9A9721CB-6D56-478C-9AEE-2AAC1D75BA2F">
-            <UpgradeVersion Minimum="0" Maximum="1.1.67" Property="DHPREVIOUSVERSIONS"/>
-            <UpgradeVersion Minimum="1.1.67" IncludeMinimum="yes" Property="DHNEWERVERSIONS"/>
+            <UpgradeVersion Minimum="0" Maximum="1.1.68" Property="DHPREVIOUSVERSIONS"/>
+            <UpgradeVersion Minimum="1.1.68" IncludeMinimum="yes" Property="DHNEWERVERSIONS"/>
         </Upgrade>
 
         <!-- Separate "cabinets" would be used if you broke the installer across floppies ... -->
@@ -39,6 +39,7 @@
         <ComponentRef Id="hippoUtil" />
         <ComponentRef Id="loudmouth" />
         <ComponentRef Id="applets" />
+        <ComponentRef Id="images" />
     </Feature>
     
     <CustomAction Id="DhQuitApp" FileKey="mugshotExe" Return="ignore" ExeCommand="--quit"/> 
