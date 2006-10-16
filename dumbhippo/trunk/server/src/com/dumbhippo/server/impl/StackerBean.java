@@ -636,9 +636,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 			userview = (UserViewpoint) viewpoint;
 		switch (block.getBlockType()) {
 		case POST: {
-			// TODO: shouldn't we use a user viewpoint here, because not all posts will be visible from
-			// a particular viewpoint?!
-			PostView postView = postingBoard.loadPost(SystemViewpoint.getInstance(), block.getData1AsGuid());
+			PostView postView = postingBoard.loadPost(viewpoint, block.getData1AsGuid());
 			List<ChatMessageView> recentMessages = postingBoard.viewPostMessages(
 					postingBoard.getNewestPostMessages(postView.getPost(), PostBlockView.RECENT_MESSAGE_COUNT),
 					viewpoint);
