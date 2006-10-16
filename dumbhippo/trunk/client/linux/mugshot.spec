@@ -1,5 +1,5 @@
 Name:           mugshot
-Version:        1.1.17
+Version:        1.1.18
 Release:        1%{?dist}
 Summary:        Companion software for mugshot.org
 
@@ -135,6 +135,9 @@ fi
 %{_sysconfdir}/gconf/schemas/*.schemas
 
 %changelog
+* Mon Oct 16 2006 Havoc Pennington <hp@redhat.com> - 1.1.18-1
+- 1.1.18
+
 * Sat Oct 14 2006 Havoc Pennington <hp@redhat.com> - 1.1.17-1
 - 1.1.17
 
