@@ -210,7 +210,7 @@ public enum ExternalAccountType {
 		
 		@Override 
 		public String getSiteLink() {
-		    return "http://www.youtube.com/";
+		    return "http://www.youtube.com";
 		}
 		
 		@Override
