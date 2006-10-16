@@ -106,12 +106,12 @@
 			<c:choose>
 				<c:when test="${browser.windows}">
 					<div>Look in your Windows system tray for the Mugshot icon - it will look something like this:</div>
-					<dh:png src="/images3/${buildStamp}/windows_tooltray.png" style="width: 182px; height: 48px; padding: 5px 0px;"/>
+					<div><dh:png src="/images3/${buildStamp}/windows_tooltray.png" style="width: 182px; height: 48px; padding: 5px 0px;"/></div>
 					Mugshot icon in tool tray
 				</c:when>
 				<c:when test="${browser.linux}">
 					<div>Look in your panel for the Mugshot icon - it will look something like this:</div>				
-					<dh:png src="/images3/${buildStamp}/linux_tooltray.png" style="width: 156px; height: 44px; padding: 5px 0px;"/>
+					<div><dh:png src="/images3/${buildStamp}/linux_tooltray.png" style="width: 156px; height: 44px; padding: 5px 0px;"/></div>
 					Mugshot icon in tool tray							
 				</c:when>
 				<c:otherwise>
