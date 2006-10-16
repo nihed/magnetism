@@ -8,7 +8,7 @@
 <div id="dhPageHeader3">
 	<table cellspacing="0" cellpadding="0">
 	<tr valign="top">
-	<td><dh:png id="dhPageHeaderLeft" src="/images3/${buildStamp}/header_left.png" style="width: 248px; height: 64px"/></td>
+	<td><a href="/"><dh:png id="dhPageHeaderLeft" src="/images3/${buildStamp}/header_left.png" style="width: 248px; height: 64px"/></a></td>
 	<td id="dhPageHeaderInner" align="right" height="56px">
 		<table cellspacing="0" cellpadding="0" height="56px">
 		<tr valign="top" align="right"><td>
