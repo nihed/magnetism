@@ -22,22 +22,16 @@
 	<c:choose>
 		<c:when test="${browser.linuxRequested}">
 			<%-- LINUX RELEASE NOTES GO HERE --%>
-			<p>Version 1.1.16</p>
+			<p>Version 1.1.18</p>
 			<ul>
-				<li>Live chat previews in Mugshot bar.</li>			
-				<li>Better tracking of who's at a page.</li>			
-				<li>Firefox toolbar button to share links.</li>
-				<li>Support for load-balancing between servers.</li>			
+				<li>New "stacker" user interface.</li>			
 			</ul>
 		</c:when>
 		<c:otherwise>
 			<%-- WINDOWS RELEASE NOTES GO HERE --%>
-			<p>Version 1.1.66</p>
+			<p>Version 1.1.68</p>
 			<ul>
-				<li>Support for new server version.</li>
-				<li>Mugshot bar works better on on network reconnection.</li>
-				<li>Memory leak fixes.</li>
-				<li>Support for load-balancing between servers.</li>			
+				<li>New "stacker" user interface.</li>
 			</ul>
 		</c:otherwise>
 	</c:choose>
