@@ -10,10 +10,8 @@
 
 #dhMugshotIntro {
     position:        relative;
-    top:             -6px;
-    left:            -6px;
-    margin-right:    -16px;  
-    margin-bottom:   -12px;
+    margin-top:      3px;  
+    margin-bottom:   -3px;
 }
 
 #dhMugshotIntro td {

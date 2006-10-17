@@ -5,8 +5,8 @@
 
 <%@ attribute name="person" required="true" type="com.dumbhippo.server.views.PersonView" %>
 <%@ attribute name="stackOrder" required="true" type="java.lang.Integer" %>
-<%@ attribute name="stackType" required="false" type="java.lang.String" %>
-<%@ attribute name="pageable" required="false" type="com.dumbhippo.server.Pageable" %>
+<%@ attribute name="stackType" required="true" type="java.lang.String" %>
+<%@ attribute name="pageable" required="true" type="com.dumbhippo.server.Pageable" %>
 
 <c:set var="previousBlockType" value="" scope="page"/>
 
@@ -25,7 +25,5 @@
 			<div class="dh-stacker-block-bottom-padding">&nbsp;</div>
 		</c:if>
 	</c:forEach>
-	<c:if test="${!empty pageable}">
-		<dht:expandablePager pageable="${pageable}" anchor="${stackType}"/>
-	</c:if>
+	<dht:expandablePager pageable="${pageable}" anchor="${stackType}"/>
 </div>
