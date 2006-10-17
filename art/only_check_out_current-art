@@ -1,0 +1,6 @@
+You shouldn't check out the art directory or put any new files
+here. Instead, check out just 'current-art' from subversion.
+
+(current-art is the directory normally called 'trunk' in most
+subversion setups.)
+
