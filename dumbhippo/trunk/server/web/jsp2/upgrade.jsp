@@ -29,7 +29,7 @@
 		</c:when>
 		<c:otherwise>
 			<%-- WINDOWS RELEASE NOTES GO HERE --%>
-			<p>Version 1.1.69</p>
+			<p>Version 1.1.70</p>
 			<ul>
 				<li>New "stacker" user interface.</li>
 			</ul>
