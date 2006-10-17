@@ -277,12 +277,13 @@ HippoIEImpl::embedBrowser()
     RECT rect;
     GetClientRect(window_,&rect);
     OleCreate(CLSID_WebBrowser,IID_IOleObject,OLERENDER_DRAW,0,this,this,(void**)&ie_);
-    ie_->SetHostNames(L"Web Host",L"Web View");
-    OleSetContainedObject(ie_,TRUE);
-    ie_->DoVerb(OLEIVERB_SHOW,NULL,this,-1,window_,&rect);
 
     HippoQIPtr<IWebBrowser2> browser(ie_);
     browser_ = browser;
+
+    ie_->SetHostNames(L"Web Host",L"Web View");
+    OleSetContainedObject(ie_,TRUE);
+    ie_->DoVerb(OLEIVERB_SHOW,NULL,this,-1,window_,&rect);
 
     HippoBSTR targetUrl;
     if (!haveTransform_)

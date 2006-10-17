@@ -201,7 +201,7 @@ hippo_canvas_block_post_constructor (GType                  type,
     
     block_post->description_item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
                                                 "size-mode", HIPPO_CANVAS_SIZE_ELLIPSIZE_END,
-                                                "xalign", HIPPO_ALIGNMENT_FILL,
+                                                "xalign", HIPPO_ALIGNMENT_START,
                                                 "yalign", HIPPO_ALIGNMENT_START,
                                                 "text", NULL,
                                                 "border-top", 4,

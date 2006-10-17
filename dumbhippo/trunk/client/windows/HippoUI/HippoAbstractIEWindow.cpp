@@ -115,6 +115,9 @@ HippoAbstractIEWindow::embedIE(void)
 bool
 HippoAbstractIEWindow::create(void)
 {
+    if (isCreated())
+        return true;
+
     // chain up 
     if (!HippoAbstractWindow::create())
         return false;

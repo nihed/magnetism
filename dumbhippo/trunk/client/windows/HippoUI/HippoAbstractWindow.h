@@ -45,7 +45,7 @@ public:
     /**
      * Destroy the window and shutdown any stuff in it.
      */
-    void destroy();
+    virtual void destroy();
 
     /**
      * Make the window visible onscreen.

@@ -113,8 +113,6 @@ private:
     HippoAbstractWindowIECallback *ieCallback_;
 
     bool embedIE(void);
-    bool createWindow(void);
-    bool registerClass();
 
     // private so they aren't used
     HippoAbstractIEWindow(const HippoAbstractIEWindow &other);

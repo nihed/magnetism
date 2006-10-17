@@ -13,10 +13,11 @@
 		        <File Id="iconvDll"    Name="iconv.dll"                                    src="iconv.dll"             DiskId="1" Vital="yes"/>
 		        <File Id="intlDll"     Name="intl.dll"                                     src="intl.dll"              DiskId="1" Vital="yes"/>
 		        <File Id="glibDll"     Name="libglib-.dll" LongName="libglib-2.0-0.dll"    src="libglib-2.0-0.dll"     DiskId="1" Vital="yes"/>
+		        <File Id="gmoduleDll"  Name="libgmodu.dll" LongName="libgmodule-2.0-0.dll" src="libgmodule-2.0-0.dll"  DiskId="1" Vital="yes"/>
 		        <File Id="gobjectDll"  Name="libgobje.dll" LongName="libgobject-2.0-0.dll" src="libgobject-2.0-0.dll"  DiskId="1" Vital="yes"/>
 		        <File Id="gthreadDll"  Name="libgthre.dll" LongName="libgthread-2.0-0.dll" src="libgthread-2.0-0.dll"  DiskId="1" Vital="yes"/>
 		        <File Id="cairoDll"    Name="libcairo.dll" LongName="libcairo-2.dll"       src="libcairo-2.dll"        DiskId="1" Vital="yes"/>
-		        <File Id="pngDll"      Name="libpng1.dll"                                  src="libpng13.dll"          DiskId="1" Vital="yes"/>
+		        <File Id="pngDll"      Name="libpng13.dll"                                 src="libpng13.dll"          DiskId="1" Vital="yes"/>
 		        <File Id="zlibDll"     Name="zlib1.dll"                                    src="zlib1.dll"             DiskId="1" Vital="yes"/>
 		        <File Id="pangoDll"       Name="libpango.dll" LongName="libpango-1.0-0.dll"      src="libpango-1.0-0.dll"      DiskId="1" Vital="yes"/>
 		        <File Id="pangoCairoDll"  Name="libpango.dll" LongName="libpangocairo-1.0-0.dll" src="libpangocairo-1.0-0.dll" DiskId="1" Vital="yes"/>
