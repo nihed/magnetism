@@ -224,7 +224,10 @@ on_current_track_changed(HippoPerson *person,
                      "downloads", &downloads,
                      NULL);
 
-        title = g_strdup_printf("%s (%s)", name, artist);
+        if (artist)
+            title = g_strdup_printf("%s (%s)", name, artist);
+        else
+            title = g_strdup(name);
         hippo_canvas_block_set_title(HIPPO_CANVAS_BLOCK(block_music_person),
                                      title);
 
