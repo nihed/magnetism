@@ -102,6 +102,28 @@ public class RewriteServlet extends HttpServlet {
 			return null;
 		}
 	}
+    
+    private static final String DEFAULT_IMAGE_SIZE = "60";
+    
+    private boolean needsImageSize(String relativePath) {
+		return relativePath.startsWith("/images2/user_pix1/") ||
+			   relativePath.startsWith("/images2/group_pix1/");
+    }
+    
+    private String checkImageSize(HttpServletRequest request, String relativePath) {
+    	if (!needsImageSize(relativePath))
+    		return null;
+
+		String size = DEFAULT_IMAGE_SIZE;
+    	String sizeParameter = request.getParameter("size");
+    	if (sizeParameter != null && AbstractSmallImageServlet.isValidSize(sizeParameter))
+        	size = sizeParameter;
+    	
+    	int lastSlash = relativePath.lastIndexOf("/");
+    	String newPath = relativePath.substring(0, lastSlash + 1) + size + relativePath.substring(lastSlash);
+    	
+    	return newPath;
+    }
      
     private synchronized String getNextPsa() {
     	if (nextPsa >= psaLinks.size())
@@ -246,7 +268,7 @@ public class RewriteServlet extends HttpServlet {
 			return;
 		}
 		
-		String newPath = null;
+		Boolean modifiedPath = false;
 		
 		String path = request.getServletPath();
 		
@@ -298,10 +320,17 @@ public class RewriteServlet extends HttpServlet {
 				path.matches("/images\\d*/.*") ||
 				path.startsWith("/flash/")) {
 			
-			newPath = checkBuildStamp(path);
-			if (newPath != null) {
+			String pathWithoutStamp = checkBuildStamp(path);
+			if (pathWithoutStamp != null) {
 				AbstractServlet.setInfiniteExpires(response);
-				path = newPath;
+				path = pathWithoutStamp;
+				modifiedPath = true;
+			}
+			
+			String pathWithImageSize = checkImageSize(request, path);
+			if (pathWithImageSize != null) {
+				path = pathWithImageSize;
+				modifiedPath = true;
 			}
 			
 			if (path.equals("/javascript/config.js")) {
@@ -311,8 +340,8 @@ public class RewriteServlet extends HttpServlet {
 				context.getRequestDispatcher(getVersionedJspPath("configjs")).forward(request, response);
 			} else if (path.equals("/javascript/whereimat.js")) {
 				handleVersionedJsp(request, response, "whereimatjs");
-			} else if (newPath != null) {
-				RewrittenRequest rewrittenRequest = new RewrittenRequest(request, newPath);
+			} else if (modifiedPath) {
+				RewrittenRequest rewrittenRequest = new RewrittenRequest(request, path);
 				context.getNamedDispatcher("default").forward(rewrittenRequest, response);
 			} else {
 				context.getNamedDispatcher("default").forward(request, response);
@@ -412,6 +441,7 @@ public class RewriteServlet extends HttpServlet {
 		if (jspPages.containsKey(afterSlash)) {
 			handleVersionedJsp(request, response, afterSlash);
 		} else if (htmlPages.contains(afterSlash)) {
+			String newPath;
 			// We could eliminate the use of RewrittenRequest entirely by
 			// adding a mapping for *.html to servlet-info.xml
 			if (afterSlash.equals("robots.txt"))

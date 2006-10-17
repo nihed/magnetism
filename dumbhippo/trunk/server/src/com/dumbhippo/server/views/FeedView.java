@@ -37,8 +37,8 @@ public class FeedView extends EntityView {
 	}
 	
 	@Override
-	public String getSmallPhotoUrl() {
-		return feed.getGroup().getPhotoUrl60();
+	public String getPhotoUrl() {
+		return feed.getGroup().getPhotoUrl();
 	}
 
 	@Override
@@ -52,7 +52,7 @@ public class FeedView extends EntityView {
 				               "id", feed.getId(), 
 							   "name", feed.getFeed().getTitle(),
 							   "homeUrl", feed.getFeed().getLink().getUrl(),
-							   "smallPhotoUrl", getSmallPhotoUrl());		
+							   "smallPhotoUrl", getPhotoUrl());		
 	}
 
 	public void writeToXmlBuilder(XmlBuilder builder) {
@@ -60,7 +60,7 @@ public class FeedView extends EntityView {
 				               "id", feed.getId(), 
 							   "name", feed.getFeed().getTitle(),
 							   "homeUrl", feed.getFeed().getLink().getUrl(),
-							   "photoUrl", getSmallPhotoUrl());		
+							   "photoUrl", getPhotoUrl());		
 	}
 	
 	@Override

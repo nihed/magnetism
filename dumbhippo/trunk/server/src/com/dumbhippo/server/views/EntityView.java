@@ -18,7 +18,26 @@ public abstract class EntityView implements ObjectView {
 	
 	public abstract String getHomeUrl();
 	
-	public abstract String getSmallPhotoUrl();
+	public abstract String getPhotoUrl();
+	
+	public static String sizePhoto(String baseUrl, int size) {
+		if (baseUrl.lastIndexOf("?") >= 0)
+			return baseUrl + "&size=" + size;
+		else
+			return baseUrl + "?size=" + size;
+	}
+	
+	public String getPhotoUrl(int size) {
+		return sizePhoto(getPhotoUrl(), size);
+	}
+
+	public String getPhotoUrl30() {
+		return getPhotoUrl(30);
+	}
+
+	public String getPhotoUrl60() {
+		return getPhotoUrl(60);
+	}
 	
 	public abstract Guid getIdentifyingGuid();
 	

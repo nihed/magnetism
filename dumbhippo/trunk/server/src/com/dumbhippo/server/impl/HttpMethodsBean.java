@@ -256,7 +256,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 						primaryEmail != null ? primaryEmail.getEmail() : null,
 						"aim", primaryAim != null ? primaryAim.getScreenName()
 								: null, "emails", emailsStr, "aims", aimsStr,
-						"photoUrl", p.getSmallPhotoUrl());
+						"photoUrl", p.getPhotoUrl());
 			}
 		}
 	}
@@ -294,7 +294,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 
 				xml.appendTextNode("group", null, "id", g.getId(), 
 						"display", g.getName(), 
-						"photoUrl", g.getPhotoUrl60(),
+						"photoUrl", g.getPhotoUrl(),
 						"sampleMembers", sampleMembers.toString(),
 						"count", Integer.toString(members.size()));
 			}
@@ -1195,7 +1195,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			throw new RuntimeException("invalid photo size");
 		}
 		
-		String url = user.getPhotoUrl(sizeValue);
+		String url = EntityView.sizePhoto(user.getPhotoUrl(), sizeValue);
 		
 		out.write(StringUtils.getBytes(url));
 		out.flush();
@@ -1223,7 +1223,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			throw new RuntimeException("invalid photo size");
 		}
 		
-		String url = group.getPhotoUrl(sizeValue);
+		String url = EntityView.sizePhoto(group.getPhotoUrl(), sizeValue);
 		
 		out.write(StringUtils.getBytes(url));
 		out.flush();

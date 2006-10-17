@@ -46,7 +46,7 @@
             <tr>
             	<c:choose>
             		<c:when test="${welcome.inviter != null}">
-		                <td class="dh-download-information-image"><img src="${welcome.inviter.smallPhotoUrl}"/></td>               
+		                <td class="dh-download-information-image"><img src="${welcome.inviter.photoUrl60}"/></td>               
         		        <td align="left">    	    	            	
 	    	            	<div class="dh-download-information dh-download-welcome-information">
 	    	            	    <strong><c:out value="${welcome.inviter.name}"/> has invited you to become a Mugshot member.</strong> Sign

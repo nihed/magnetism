@@ -402,7 +402,7 @@ public class MessengerGlueBean implements MessengerGlue {
 	
 	private ChatRoomUser newChatRoomUser(User user) {
 		return new ChatRoomUser(user.getGuid().toJabberId(null),
-				                user.getNickname(), user.getPhotoUrl60());
+				                user.getNickname(), user.getPhotoUrl());
 	}
 	
 	private Set<ChatRoomUser> getChatRoomRecipients(Group group) {

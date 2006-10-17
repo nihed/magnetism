@@ -135,20 +135,14 @@ public class Group extends GuidPersistable implements VersionedEntity {
 	}
 	
 	@Transient
-	public String getPhotoUrl(int size) {
-		if (stockPhoto != null && size == 60) {
+	public String getPhotoUrl() {
+		if (stockPhoto != null) {
 			return "/images2" + stockPhoto;
 		} else {
-			return "/files/groupshots/" + size + "/" + getId() + "?v=" + version;
+			return "/files/groupshots/" + getId() + "?v=" + version;
 		}
 	}
 	
-	// usable from jstl expression language since it has no args
-	@Transient
-	public String getPhotoUrl60() {
-		return getPhotoUrl(60);
-	}
-
 	@OneToMany(mappedBy="group")
 	@Cache(usage=CacheConcurrencyStrategy.TRANSACTIONAL)
 	public Set<GroupFeed> getFeeds() {

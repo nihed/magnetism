@@ -21,16 +21,27 @@ import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HumanVisibleException;
 
 public abstract class AbstractPhotoServlet extends AbstractSmallImageServlet {
-	private static final int[] PHOTO_DIMENSIONS = { Configuration.SHOT_LARGE_SIZE, Configuration.SHOT_MEDIUM_SIZE, Configuration.SHOT_SMALL_SIZE };
+	private static final int DEFAULT_SIZE = Configuration.SHOT_MEDIUM_SIZE;
+	private static final int[] PHOTO_DIMENSIONS = { Configuration.SHOT_LARGE_SIZE, Configuration.SHOT_MEDIUM_SIZE, Configuration.SHOT_SMALL_SIZE, Configuration.SHOT_TINY_SIZE };
 	protected static final int LARGEST_PHOTO_DIMENSION = Configuration.SHOT_LARGE_SIZE;
 	
 	@SuppressWarnings("unused")
 	private static final Logger logger = GlobalSetup.getLogger(AbstractPhotoServlet.class);
-
+	
 	@Override
 	protected String getDefaultFilename() {
 		return "default";
-	}	
+	}
+	
+	@Override
+	protected boolean needsSize() {
+		return true;
+	}
+
+	@Override
+	protected String getDefaultSize() {
+		return Integer.toString(DEFAULT_SIZE);
+	}
 	
 	private BufferedImage scaleTo(BufferedImage image, int xSize, int ySize) {
 		/* To avoid questions of aspect ratio on the client side, we always 

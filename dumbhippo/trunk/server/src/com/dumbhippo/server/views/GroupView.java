@@ -105,7 +105,7 @@ import com.dumbhippo.persistence.VersionedEntity;
 	@Override
 	public void writeToXmlBuilderOld(XmlBuilder builder) {
 		builder.appendTextNode("group", "", "id", group.getId(), "name", group.getName(),
-							   "homeUrl", getHomeUrl(), "smallPhotoUrl", getSmallPhotoUrl());		
+							   "homeUrl", getHomeUrl(), "smallPhotoUrl", getPhotoUrl());		
 	}
 	
 	public void writeToXmlBuilder(XmlBuilder builder) {
@@ -113,7 +113,7 @@ import com.dumbhippo.persistence.VersionedEntity;
 							   "id", group.getId(), 
 							   "name", group.getName(),
 							   "homeUrl", getHomeUrl(), 
-							   "photoUrl", getSmallPhotoUrl());		
+							   "photoUrl", getPhotoUrl());		
 	}
 
 	@Override
@@ -139,8 +139,8 @@ import com.dumbhippo.persistence.VersionedEntity;
 	}
 	
 	@Override
-	public String getSmallPhotoUrl() {
-		return group.getPhotoUrl60();
+	public String getPhotoUrl() {
+		return group.getPhotoUrl();
 	}
 	
 	public LiveGroup getLiveGroup() {

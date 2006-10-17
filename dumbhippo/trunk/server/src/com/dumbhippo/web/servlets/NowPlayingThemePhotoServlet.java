@@ -32,7 +32,12 @@ public class NowPlayingThemePhotoServlet extends AbstractPhotoServlet {
 	public void init() {
 		super.init();
 		nowPlayingSystem = WebEJBUtil.defaultLookup(NowPlayingThemeSystem.class);
-	}	
+	}
+	
+	@Override
+	public String getDefaultSize() {
+		return Configuration.NOW_PLAYING_THEME_WIDTH + "x" + Configuration.NOW_PLAYING_THEME_HEIGHT;
+	}
 		
 	@Override
 	protected void doUpload(HttpServletRequest request, HttpServletResponse response, User user,

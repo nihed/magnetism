@@ -12,6 +12,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import javax.imageio.ImageIO;
 import javax.servlet.ServletException;
@@ -52,6 +53,9 @@ public abstract class AbstractSmallImageServlet extends AbstractServlet {
 	protected abstract String getRelativePath();
 	
 	protected abstract String getDefaultFilename();
+	
+	protected abstract boolean needsSize();
+	protected abstract String getDefaultSize();
 	
 	@Override
 	public void init() {
@@ -203,18 +207,48 @@ public abstract class AbstractSmallImageServlet extends AbstractServlet {
 		}
 	}
 
+	// Note that strict validation here is essential, since otherwise the user 
+	// could ask for, say headshots/SOME_HIDDEN_FILE?size=../../..
+	static final Pattern SIZE_PATTERN = Pattern.compile("[0-9]+(x[0-9]+)?"); 
+	
+	public static boolean isValidSize(String sizeString) {
+		return SIZE_PATTERN.matcher(sizeString).matches();
+	}
+	
+	private boolean	hasEmbeddedSize(String noPrefix) {
+		int nextSlash = noPrefix.indexOf("/");
+		if (nextSlash <= 0)
+			return false;
+		
+		return isValidSize(noPrefix.substring(0, nextSlash));
+	}
+	
 	@Override
 	protected String wrappedDoGet(HttpServletRequest request, HttpServletResponse response) throws HttpException,
 			IOException {
 		
-		/* This is a little confusing. The web request is for something like 
-		 *  /files/headshots/48/userid
+		/* The request comes in one of several forms 
+		 * 
+		 *  /files/headshots/userid            default to size=60
+		 *  /files/headshots/userid&size=48
+		 *  /files/headshots/48/userid         old form of the above
+		 *
 		 * The filename on the server is saveDir/files/headshots/48/userid
 		 * The default file is saveDir/files/headshots/48/default for example
 		 */
 		
 		String defaultFilename = getDefaultFilename();
 		String noPrefix = request.getPathInfo().substring(1); // Skip the leading slash
+		
+		// See if we need to insert a size into the request
+		if (needsSize() && !hasEmbeddedSize(noPrefix)) {
+			String size = getDefaultSize();
+			String sizeParameter = request.getParameter("size");
+			if (isValidSize(sizeParameter))
+				size = sizeParameter;
+			
+			noPrefix = size + "/" + noPrefix;
+		}
 		
 		File toServe = new File(saveDir, noPrefix);
 		if (!toServe.exists()) {

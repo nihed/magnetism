@@ -767,7 +767,7 @@ public class PersonView extends EntityView {
 			builder.appendTextNode("user", "", "id", user.getId(), 
 				               	   "name", getName(),
 				               	   "homeUrl", getHomeUrl(), 
-				               	   "smallPhotoUrl", getSmallPhotoUrl());
+				               	   "smallPhotoUrl", getPhotoUrl());
 		} else {
 			builder.appendTextNode("resource", "", "id", getIdentifyingGuid().toString(), "name", getName());
 		}		
@@ -779,7 +779,7 @@ public class PersonView extends EntityView {
 								"id", user.getId(), 
 				               	"name", getName(),
 				               	"homeUrl", getHomeUrl(), 
-				               	"photoUrl", getSmallPhotoUrl());
+				               	"photoUrl", getPhotoUrl());
 		} else {
 			builder.openElement("resource", 
 					            "id", getIdentifyingGuid().toString(), 
@@ -848,9 +848,9 @@ public class PersonView extends EntityView {
 	}
 	
 	@Override
-	public String getSmallPhotoUrl() {
+	public String getPhotoUrl() {
 		if (user != null)
-			return user.getPhotoUrl60();
+			return user.getPhotoUrl();
 		else
 			return "/images2/invited60x60.gif";
 	}

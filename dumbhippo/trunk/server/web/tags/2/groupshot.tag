@@ -5,15 +5,12 @@
 <%@ attribute name="size" required="false" type="java.lang.String" %>
 <%@ attribute name="customLink" required="false" type="java.lang.String" %>
 
-<c:if test="${empty size}">
-	<c:set var="size" value="60"/>
-</c:if>
 <c:choose>
-	<c:when test="${size == 60}">
-		<c:set var="photoUrl" value="${group.group.photoUrl60}" scope="page"/>
+	<c:when test="${size == 30}">
+		<c:set var="photoUrl" value="${group.photoUrl30}" scope="page"/>
 	</c:when>
 	<c:otherwise>
-		<c:set var="photoUrl" value="/files/groupshots/${size}/${group.group.id}?v=${group.group.version}" scope="page"/>
+		<c:set var="photoUrl" value="${group.photoUrl60}" scope="page"/>
 	</c:otherwise>
 </c:choose>
 <c:choose>
