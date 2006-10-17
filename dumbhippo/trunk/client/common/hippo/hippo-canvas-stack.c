@@ -159,6 +159,7 @@ remove_extra_children(HippoCanvasStack *canvas_stack)
             g_assert(children != NULL);
             hippo_canvas_box_remove(HIPPO_CANVAS_BOX(canvas_stack), children->data);
             children = g_list_remove(children, children->data);
+            --count;
         }
         g_list_free(children);
     }
