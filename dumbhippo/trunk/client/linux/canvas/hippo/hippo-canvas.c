@@ -317,7 +317,8 @@ hippo_canvas_hierarchy_changed (GtkWidget    *widget,
 {
     HippoCanvas *canvas = HIPPO_CANVAS(widget);
 
-    hippo_canvas_helper_hierarchy_changed(canvas->helper, old_toplevel);
+    if (canvas->helper) /* hierarchy changed can happen during dispose */
+        hippo_canvas_helper_hierarchy_changed(canvas->helper, old_toplevel);
 
     if (GTK_WIDGET_CLASS(hippo_canvas_parent_class)->hierarchy_changed)
         GTK_WIDGET_CLASS(hippo_canvas_parent_class)->hierarchy_changed(widget, old_toplevel);

@@ -2430,6 +2430,9 @@ hippo_canvas_box_get_children(HippoCanvasBox *box)
 
     hippo_canvas_box_foreach(box, children_list_callback, &children);
 
+    /* return children in their original order */
+    children = g_list_reverse(children);
+    
     return children;
 }
 

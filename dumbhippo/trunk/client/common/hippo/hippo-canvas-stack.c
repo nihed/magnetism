@@ -25,6 +25,7 @@ struct _HippoCanvasStack {
 
     HippoActions *actions;
     gint64 min_timestamp;
+    int max_blocks;
 };
 
 struct _HippoCanvasStackClass {
@@ -41,7 +42,8 @@ enum {
 
 enum {
     PROP_0,
-    PROP_ACTIONS
+    PROP_ACTIONS,
+    PROP_MAX_BLOCKS
 };
 
 G_DEFINE_TYPE_WITH_CODE(HippoCanvasStack, hippo_canvas_stack, HIPPO_TYPE_CANVAS_BOX,
@@ -51,6 +53,7 @@ static void
 hippo_canvas_stack_init(HippoCanvasStack *stack)
 {
 
+    stack->max_blocks = G_MAXINT;
 }
 
 static HippoCanvasItemIface *item_parent_class;
@@ -80,7 +83,17 @@ hippo_canvas_stack_class_init(HippoCanvasStackClass *klass)
                                                         _("Actions"),
                                                         _("UI actions object"),
                                                         HIPPO_TYPE_ACTIONS,
-                                                        G_PARAM_READABLE | G_PARAM_WRITABLE | G_PARAM_CONSTRUCT_ONLY)); 
+                                                        G_PARAM_READABLE | G_PARAM_WRITABLE | G_PARAM_CONSTRUCT_ONLY));
+
+    g_object_class_install_property(object_class,
+                                    PROP_MAX_BLOCKS,
+                                    g_param_spec_int("max-blocks",
+                                                     _("Max blocks"),
+                                                     _("Maximum number of blocks to show, -1 for unset"),
+                                                     0, G_MAXINT,
+                                                     G_MAXINT,
+                                                     G_PARAM_READABLE | G_PARAM_WRITABLE));
+
 }
 
 static void
@@ -133,6 +146,25 @@ hippo_canvas_stack_new(void)
 }
 
 static void
+remove_extra_children(HippoCanvasStack *canvas_stack)
+{
+    if (canvas_stack->max_blocks < G_MAXINT) {
+        GList *children;
+        int count;
+        children = hippo_canvas_box_get_children(HIPPO_CANVAS_BOX(canvas_stack));
+        count = g_list_length(children);
+        if (count > canvas_stack->max_blocks)
+            children = g_list_reverse(children);
+        while (count > canvas_stack->max_blocks) {
+            g_assert(children != NULL);
+            hippo_canvas_box_remove(HIPPO_CANVAS_BOX(canvas_stack), children->data);
+            children = g_list_remove(children, children->data);
+        }
+        g_list_free(children);
+    }
+}
+
+static void
 hippo_canvas_stack_set_property(GObject         *object,
                                 guint            prop_id,
                                 const GValue    *value,
@@ -146,6 +178,15 @@ hippo_canvas_stack_set_property(GObject         *object,
     case PROP_ACTIONS:
         set_actions(stack,
                     (HippoActions*) g_value_get_object(value));
+        break;
+    case PROP_MAX_BLOCKS:
+        {
+            int new_max = g_value_get_int(value);
+            if (new_max != stack->max_blocks) {
+                stack->max_blocks = new_max;
+                remove_extra_children(stack);
+            }
+        }
         break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
@@ -166,6 +207,9 @@ hippo_canvas_stack_get_property(GObject         *object,
     switch (prop_id) {
     case PROP_ACTIONS:
         g_value_set_object(value, (GObject*) stack->actions);
+        break;
+    case PROP_MAX_BLOCKS:
+        g_value_set_int(value, stack->max_blocks);
         break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
@@ -249,6 +293,8 @@ hippo_canvas_stack_add_block(HippoCanvasStack *canvas_stack,
     g_object_set(G_OBJECT(item), "block", block, NULL);
     hippo_canvas_box_insert_sorted(HIPPO_CANVAS_BOX(canvas_stack), item, 0,
                                    canvas_block_compare, NULL);
+
+    remove_extra_children(canvas_stack);
     
     g_object_unref(item);
 }

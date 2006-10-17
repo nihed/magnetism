@@ -723,6 +723,7 @@ manager_attach(StackManager    *manager,
     manager->notification_item = g_object_new(HIPPO_TYPE_CANVAS_STACK,
                                               "box-width", UI_WIDTH,
                                               "actions", manager->actions,
+                                              "max-blocks", 3,
                                               NULL);
 
     manager->notification_box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
