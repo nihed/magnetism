@@ -219,7 +219,7 @@ update_chat_messages(HippoCanvasBlockGroupChat *canvas_group_chat)
 
     room = hippo_group_get_chat_room(group);
     g_object_set(G_OBJECT(canvas_group_chat->chat_preview),
-                 "chat-id", hippo_entity_get_guid(HIPPO_ENTITY(room)),
+                 "chat-id", hippo_entity_get_guid(HIPPO_ENTITY(group)),
                  "chat-room", room,
                  NULL);
     
