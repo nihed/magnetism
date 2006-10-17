@@ -216,8 +216,6 @@ dh.sharelink.updateActionLinks = function() {
 		if (dh.share.selectedRecipients[i].isPerson()) {
 			personCount += 1;
 			person = dh.share.selectedRecipients[i];
-		} else if (dh.share.selectedRecipients[i].isTheWorld()) {
-			// Do nothing
 		} else {
 			groupCount += 1;
 			group = dh.share.selectedRecipients[i];
@@ -260,7 +258,7 @@ dh.sharelink.doSubmit = function() {
 	var descriptionHtml = dh.share.descriptionRichText.value;
 	
 	var commaRecipients = dh.util.join(dh.share.getRecipients(), ",", "id");
-	var isPublic = dh.share.isToTheWorld();
+	var isPublic = false;
 	
 	var postInfoXml = null;
 	if (dh.sharelink.postInfo)

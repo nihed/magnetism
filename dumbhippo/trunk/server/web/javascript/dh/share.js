@@ -16,11 +16,8 @@ dojo.require("dh.suggestutils");
 // whether allKnownIds has successfully been filled in
 dh.share.haveLoadedContacts = false;
 
-dh.share.theWorld = new dh.model.TheWorld();
-
 // hash of all persons/groups we should autocomplete on, keyed by guid
 dh.share.allKnownIds = { };
-dh.share.allKnownIds[dh.share.theWorld.id] = dh.share.theWorld;
 
 // currently selected recipients, may be group or person objects
 dh.share.selectedRecipients = [];
@@ -250,12 +247,8 @@ dh.share.doAddRecipient = function(selectedId, noFlash) {
 		var td = document.createElement("td");
 		tr1.appendChild(td);
 		
-		var imgSrc;
-		if (obj.isTheWorld()) {
-			imgSrc = dhImageRoot2 + "worldShare60.png";			
-		} else {
-			imgSrc = obj.photoUrl
-		}
+		var imgSrc = obj.photoUrl
+	
 		td.setAttribute("valign", "top")
 		td.setAttribute("align", "left")
 		
@@ -300,8 +293,6 @@ dh.share.doAddRecipient = function(selectedId, noFlash) {
 		div.className = "dh-share-recipient-note"
 		if (obj.isGroup()) {
 			div.appendChild(document.createTextNode(obj.sampleMembers));
-		} else if (obj.isTheWorld()) {
-			div.appendChild(document.createTextNode("public share"))	
 		} else {
 			if (!obj.hasAccount)
 				div.appendChild(document.createTextNode("via email"));
@@ -378,17 +369,11 @@ dh.share.findExactMatch = function(str) {
 	return null
 }
 
-dh.share.isToTheWorld = function() {
-	return dh.model.findGuid(dh.share.selectedRecipients, dh.share.theWorld.id) != null;
-}
-
 dh.share.getRecipients = function() {
 	var recipients = []
 	for (var i = 0; i < dh.share.selectedRecipients.length; i++) {
 		var recip = dh.share.selectedRecipients[i]
-		if (!recip.isTheWorld()) {
-			recipients.push(recip)
-		}
+		recipients.push(recip)
 	}
 	return recipients;
 }
@@ -449,6 +434,4 @@ dh.share.init = function() {
 
 	// rich text areas can't exist when display:none, so we have to create it after showing
 	dh.share.descriptionRichText = document.getElementById("dhShareDescriptionTextArea");
-
-	dh.share.doAddRecipient(dh.share.theWorld.id, true)
 }
