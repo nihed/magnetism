@@ -529,7 +529,7 @@ on_endpoint_entity_info(HippoEndpointProxy *proxy,
     guint64 endpoint = hippo_endpoint_proxy_get_id(proxy);
     const char *user_id = hippo_entity_get_guid(entity);
     const char *name = hippo_entity_get_name(entity);
-    const char *small_photo_url = hippo_entity_get_small_photo_url(entity);
+    const char *photo_url = hippo_entity_get_photo_url(entity);
 
     if (HIPPO_IS_PERSON(entity)) {
         HippoPerson *person = HIPPO_PERSON(entity);
@@ -553,7 +553,7 @@ on_endpoint_entity_info(HippoEndpointProxy *proxy,
                                  DBUS_TYPE_UINT64, &endpoint,
                                  DBUS_TYPE_STRING, &user_id,
                                  DBUS_TYPE_STRING, &name,
-                                 DBUS_TYPE_STRING, &small_photo_url,
+                                 DBUS_TYPE_STRING, &photo_url,
                                  DBUS_TYPE_STRING, &current_song,
                                  DBUS_TYPE_STRING, &current_artist,
                                  DBUS_TYPE_BOOLEAN, &music_playing,

@@ -2032,7 +2032,7 @@ hippo_connection_parse_entity(HippoConnection *connection,
     const char *guid;
     const char *name;
     const char *home_url;
-    const char *small_photo_url;
+    const char *photo_url;
  
     HippoEntityType type;
     if (strcmp(node->name, "resource") == 0)
@@ -2067,13 +2067,13 @@ hippo_connection_parse_entity(HippoConnection *connection,
     home_url = lm_message_node_get_attribute(node, "homeUrl");
 
     if (type != HIPPO_ENTITY_RESOURCE) {
-        small_photo_url = lm_message_node_get_attribute(node, "smallPhotoUrl");
-        if (!small_photo_url) {
+        photo_url = lm_message_node_get_attribute(node, "smallPhotoUrl");
+        if (!photo_url) {
             g_warning("entity node lacks photo url");
             return FALSE;
         }
     } else {
-        small_photo_url = NULL;
+        photo_url = NULL;
     }
 
     entity = hippo_data_cache_lookup_entity(connection->cache, guid);
@@ -2093,7 +2093,7 @@ hippo_connection_parse_entity(HippoConnection *connection,
     } else {
         set_fallback_home_url(connection, entity);
     }
-    hippo_entity_set_small_photo_url(entity, small_photo_url);
+    hippo_entity_set_photo_url(entity, photo_url);
  
     if (created_entity) {
         hippo_data_cache_add_entity(connection->cache, entity);
@@ -2785,7 +2785,7 @@ parse_chat_user_info(HippoConnection *connection,
         HippoTrack *track;
         HippoChatState status;
         const char *name;
-        const char *small_photo_url = NULL;
+        const char *photo_url = NULL;
         const char *role = NULL;
         const char *old_role = NULL;
         const char *arrangement_name = NULL;
@@ -2794,7 +2794,7 @@ parse_chat_user_info(HippoConnection *connection,
 
         if (!hippo_xml_split(connection->cache, info_node, NULL,
                              "name", HIPPO_SPLIT_STRING, &name,
-                             "smallPhotoUrl", HIPPO_SPLIT_URI | HIPPO_SPLIT_OPTIONAL, &small_photo_url,
+                             "smallPhotoUrl", HIPPO_SPLIT_URI | HIPPO_SPLIT_OPTIONAL, &photo_url,
                              "role", HIPPO_SPLIT_STRING | HIPPO_SPLIT_OPTIONAL, &role,
                              "old_role", HIPPO_SPLIT_STRING | HIPPO_SPLIT_OPTIONAL, &old_role,
                              "arrangementName", HIPPO_SPLIT_STRING | HIPPO_SPLIT_OPTIONAL, &arrangement_name,
@@ -2813,8 +2813,8 @@ parse_chat_user_info(HippoConnection *connection,
     
         hippo_entity_set_name(HIPPO_ENTITY(person), name);
         /* FIXME this is a temporary hack to deal with stale photos in chat */
-        if (hippo_entity_get_small_photo_url(HIPPO_ENTITY(person)) == NULL)
-            hippo_entity_set_small_photo_url(HIPPO_ENTITY(person), small_photo_url);
+        if (hippo_entity_get_photo_url(HIPPO_ENTITY(person)) == NULL)
+            hippo_entity_set_photo_url(HIPPO_ENTITY(person), photo_url);
 
         track = hippo_track_new_deprecated(artist, arrangement_name, music_playing);
         g_object_set(G_OBJECT(person), "current-track", track, NULL);
@@ -2830,7 +2830,7 @@ parse_chat_message_info(HippoConnection  *connection,
                         HippoPerson      *sender,
                         const char       *text,
                         const char      **name_p,
-                        const char      **small_photo_url_p)
+                        const char      **photo_url_p)
 {
     LmMessageNode *info_node;
     
@@ -2842,21 +2842,21 @@ parse_chat_message_info(HippoConnection  *connection,
 
     {
         const char *name_str;
-        const char *small_photo_url;
+        const char *photo_url;
         gint64 timestamp_milliseconds;
         GTime timestamp;
         int serial;
 
         if (!hippo_xml_split(connection->cache, info_node, NULL,
                              "name", HIPPO_SPLIT_STRING, &name_str,
-                             "smallPhotoUrl", HIPPO_SPLIT_URI, &small_photo_url,
+                             "smallPhotoUrl", HIPPO_SPLIT_URI, &photo_url,
                              "timestamp", HIPPO_SPLIT_TIME_MS, &timestamp_milliseconds,
                              "serial", HIPPO_SPLIT_INT32, &serial,
                              NULL))
             return NULL;
 
         *name_p = name_str;
-        *small_photo_url_p = small_photo_url;
+        *photo_url_p = photo_url;
 
         timestamp = (GTime) (timestamp_milliseconds / 1000);
 
@@ -2899,8 +2899,8 @@ process_room_chat_message(HippoConnection *connection,
     /* update new info about the user */
     hippo_entity_set_name(sender, name);
     /* FIXME hack since chat has stale info for now */
-    if (hippo_entity_get_small_photo_url(sender) == NULL)
-        hippo_entity_set_small_photo_url(sender, photo_url);
+    if (hippo_entity_get_photo_url(sender) == NULL)
+        hippo_entity_set_photo_url(sender, photo_url);
 
     /* We can usually skip this in the case where the message was pending - but
      * it's tricky to get it exactly right. See comments in handleRoomPresence().

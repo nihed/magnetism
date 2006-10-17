@@ -12,7 +12,7 @@ struct _HippoEntity {
     char *guid;
     char *name;
     char *home_url;
-    char *small_photo_url;
+    char *photo_url;
     int version;
     int notify_freeze_count;
     gboolean need_notify;

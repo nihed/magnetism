@@ -175,7 +175,7 @@ hippo_actions_load_entity_photo_async(HippoActions    *actions,
     const char *url;
     char *absolute;        
     
-    url = hippo_entity_get_small_photo_url(entity);
+    url = hippo_entity_get_photo_url(entity);
     
     g_debug("Loading photo for entity '%s' url '%s' to a canvas item",
             hippo_entity_get_guid(entity),

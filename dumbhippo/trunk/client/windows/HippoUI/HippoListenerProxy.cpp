@@ -222,7 +222,7 @@ HippoListenerProxyImpl::onEntityInfo(HippoEntity *entity, HippoEndpointProxy *en
     HippoPerson *person = HIPPO_IS_PERSON(entity) ? HIPPO_PERSON(entity) : NULL;
     HippoBSTR entityId = HippoBSTR::fromUTF8(hippo_entity_get_guid(entity), -1);
     HippoBSTR name = HippoBSTR::fromUTF8(hippo_entity_get_name(entity), -1);
-    HippoBSTR smallPhotoUrl = HippoBSTR::fromUTF8(hippo_entity_get_small_photo_url(entity), -1);
+    HippoBSTR smallPhotoUrl = HippoBSTR::fromUTF8(hippo_entity_get_photo_url(entity), -1);
     HippoBSTR currentSong;
     HippoBSTR currentArtist;
     BOOL musicPlaying = FALSE;

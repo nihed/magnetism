@@ -407,7 +407,7 @@ hippo_app_load_photo(HippoApp                *app,
 {
     const char *url;
     
-    url = hippo_entity_get_small_photo_url(entity);
+    url = hippo_entity_get_photo_url(entity);
     
     g_debug("Loading photo for entity '%s' url '%s'",
         hippo_entity_get_guid(entity),

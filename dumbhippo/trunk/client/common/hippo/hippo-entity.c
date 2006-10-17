@@ -58,7 +58,7 @@ hippo_entity_finalize(GObject *object)
 
     g_free(entity->guid);
     g_free(entity->name);
-    g_free(entity->small_photo_url);
+    g_free(entity->photo_url);
 
     G_OBJECT_CLASS(hippo_entity_parent_class)->finalize(object); 
 }
@@ -86,7 +86,7 @@ hippo_entity_real_update_from_xml(HippoEntity    *entity,
     hippo_entity_set_name(entity, name);
 
     if (photoUrl)
-        hippo_entity_set_small_photo_url(entity, photoUrl);
+        hippo_entity_set_photo_url(entity, photoUrl);
 
     if (homeUrl)
         hippo_entity_set_home_url(entity, homeUrl);
@@ -213,10 +213,10 @@ hippo_entity_get_home_url(HippoEntity    *entity)
 }
 
 const char*
-hippo_entity_get_small_photo_url(HippoEntity    *entity)
+hippo_entity_get_photo_url(HippoEntity    *entity)
 {
     g_return_val_if_fail(HIPPO_IS_ENTITY(entity), NULL);
-    return entity->small_photo_url;
+    return entity->photo_url;
 }
 
 void
@@ -236,10 +236,10 @@ hippo_entity_set_home_url(HippoEntity    *entity,
 }
 
 void
-hippo_entity_set_small_photo_url(HippoEntity    *entity,
+hippo_entity_set_photo_url(HippoEntity    *entity,
                                  const char     *url)
 {
     g_return_if_fail(HIPPO_IS_ENTITY(entity));
     /* g_debug("Setting photo for '%s' to '%s'", entity->guid, url ? url : "null"); */
-    hippo_entity_set_string(entity, &entity->small_photo_url, url);
+    hippo_entity_set_string(entity, &entity->photo_url, url);
 }

@@ -1128,7 +1128,7 @@ add_debug_person(HippoDataCache *cache, const char *guid, const char *name)
 {
     HippoEntity *entity = hippo_entity_new(HIPPO_ENTITY_PERSON, guid);
     hippo_entity_set_name(entity, name);
-    hippo_entity_set_small_photo_url(entity, "/files/headshots/60/default");
+    hippo_entity_set_photo_url(entity, "/files/headshots/60/default");
 
     hippo_data_cache_add_entity(cache, entity);
 

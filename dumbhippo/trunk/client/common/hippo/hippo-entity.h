@@ -36,13 +36,13 @@ const char*      hippo_entity_get_guid            (HippoEntity    *entity);
 HippoEntityType  hippo_entity_get_entity_type     (HippoEntity    *entity);
 const char*      hippo_entity_get_name            (HippoEntity    *entity);
 const char*      hippo_entity_get_home_url        (HippoEntity    *entity);
-const char*      hippo_entity_get_small_photo_url (HippoEntity    *entity);
+const char*      hippo_entity_get_photo_url       (HippoEntity    *entity);
 
 void             hippo_entity_set_name            (HippoEntity    *entity,
                                                    const char     *name);
 void             hippo_entity_set_home_url        (HippoEntity    *entity,
                                                    const char     *link);
-void             hippo_entity_set_small_photo_url (HippoEntity    *entity,
+void             hippo_entity_set_photo_url       (HippoEntity    *entity,
                                                    const char     *url);
 G_END_DECLS
 

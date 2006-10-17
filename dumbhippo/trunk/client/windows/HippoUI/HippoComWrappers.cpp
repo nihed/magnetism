@@ -65,7 +65,7 @@ HippoEntityWrapper::get_Name(BSTR *name)
 STDMETHODIMP
 HippoEntityWrapper::get_SmallPhotoUrl(BSTR *smallPhotoUrl)
 {
-    utf8ToCom(hippo_entity_get_small_photo_url(delegate_), smallPhotoUrl);
+    utf8ToCom(hippo_entity_get_photo_url(delegate_), smallPhotoUrl);
 
     return S_OK;
 }
@@ -698,7 +698,7 @@ HippoChatRoomWrapper::notifyUserJoin(HippoPerson *user)
 
     HippoBSTR name = HippoBSTR::fromUTF8(hippo_entity_get_name(HIPPO_ENTITY(user)), -1);
     HippoBSTR guid = HippoBSTR::fromUTF8(hippo_entity_get_guid(HIPPO_ENTITY(user)), -1);
-    HippoBSTR photoUrl = HippoBSTR::fromUTF8(hippo_entity_get_small_photo_url(HIPPO_ENTITY(user)), -1);
+    HippoBSTR photoUrl = HippoBSTR::fromUTF8(hippo_entity_get_photo_url(HIPPO_ENTITY(user)), -1);
 
     CONNECTDATA data;
     ULONG fetched;
@@ -848,7 +848,7 @@ HippoChatRoomWrapper::notifyMessage(HippoChatMessage *message)
 
     HippoBSTR name = HippoBSTR::fromUTF8(hippo_entity_get_name(HIPPO_ENTITY(user)), -1);
     HippoBSTR guid = HippoBSTR::fromUTF8(hippo_entity_get_guid(HIPPO_ENTITY(user)), -1);
-    HippoBSTR photoUrl = HippoBSTR::fromUTF8(hippo_entity_get_small_photo_url(HIPPO_ENTITY(user)), -1);
+    HippoBSTR photoUrl = HippoBSTR::fromUTF8(hippo_entity_get_photo_url(HIPPO_ENTITY(user)), -1);
     HippoBSTR text = HippoBSTR::fromUTF8(hippo_chat_message_get_text(message), -1);
 
     CONNECTDATA data;
