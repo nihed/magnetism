@@ -4,10 +4,11 @@
 <%@ taglib tagdir="/WEB-INF/tags/3" prefix="dht3" %>
 
 <%@ attribute name="block" required="true" type="com.dumbhippo.server.views.PostBlockView" %>
-<%@ attribute name="cssClass" required="true" type="java.lang.String" %>
+<%@ attribute name="offset" required="true" type="java.lang.Boolean" %>
 <%@ attribute name="blockId" required="true" type="java.lang.String" %>
+<%@ attribute name="showFrom" required="false" type="java.lang.Boolean" %>
 
-<dht3:blockContainer cssClass="${cssClass}" blockId="${blockId}" expandable="true">
+<dht3:blockContainer cssClass="${offset ? 'dh-box-grey2' : 'dh-box-grey1'}" blockId="${blockId}" expandable="true">
 	<dht3:blockHeader icon="/images3/${buildStamp}/webswarm_icon.png" blockId="${blockId}">
 		<dht3:blockHeaderLeft>
 			<span class="dh-stacker-block-title-type">Web Swarm</span>:
@@ -19,27 +20,31 @@
 				</jsp:element>		
 			</span>
 		</dht3:blockHeaderLeft>
-		<dht3:blockHeaderRight blockId="${blockId}">
+		<dht3:blockHeaderRight blockId="${blockId}" icon="${fromIcon}">
 			<c:choose>
 				<c:when test="${block.postView.livePost.totalViewerCount == 1}">1 view</c:when>
 				<c:otherwise>${block.postView.livePost.totalViewerCount} views</c:otherwise>
 			</c:choose>
-			<c:if test="${signin.valid}">
-				<c:choose>
-					<c:when test="${block.postView.favorite}">
-						<c:if test="${favesMode != 'add-only'}">
-						 | <a href="javascript:dh.actions.setPostFavorite('${block.postView.post.id}', false);">Remove as Fave</a>
-						</c:if>
-					</c:when>
-					<c:otherwise>
-						| <a href="javascript:dh.actions.setPostFavorite('${block.postView.post.id}', true);">Add to Faves</a>
-					</c:otherwise>
-				</c:choose>
-			  | <jsp:element name="a">
-			  	  <jsp:attribute name="href">javascript:dh.util.openShareLinkWindow(<dh:jsString value="${block.postView.post.url}"/>, <dh:jsString value="${block.postView.post.title}"/>);</jsp:attribute>
-			  	  <jsp:body>Web Swarm this</jsp:body>
-			  	</jsp:element>
-			</c:if>				
+			| <dht3:blockTimeAgo block="${block}"/>
+			<dht3:blockHeaderControls blockId="${blockId}">
+				<c:if test="${signin.valid}">
+					<a href="javascript:dh.actions.postHistory('${block.postView.post.id}')">History</a>
+					<c:choose>
+						<c:when test="${block.postView.favorite}">
+							<c:if test="${favesMode != 'add-only'}">
+							 | <a href="javascript:dh.actions.setPostFavorite('${block.postView.post.id}', false);">Remove from Faves</a>
+							</c:if>
+						</c:when>
+						<c:otherwise>
+							| <a href="javascript:dh.actions.setPostFavorite('${block.postView.post.id}', true);">Add to Faves</a>
+						</c:otherwise>
+					</c:choose>
+				  | <jsp:element name="a">
+				  	  <jsp:attribute name="href">javascript:dh.util.openShareLinkWindow(<dh:jsString value="${block.postView.post.url}"/>, <dh:jsString value="${block.postView.post.title}"/>);</jsp:attribute>
+				  	  <jsp:body>Share this</jsp:body>
+				  	</jsp:element>
+				</c:if>
+			</dht3:blockHeaderControls>	
 		</dht3:blockHeaderRight>
 	</dht3:blockHeader>
 	<dht3:blockDescription>

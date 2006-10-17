@@ -241,7 +241,8 @@ div.dh-notification {
 	margin-left:		20px;
 }
 
-.dh-stacker-block-time {
+.dh-stacker-block-right {
+	text-align:			right;
 	margin-right:		5px;
 }
 

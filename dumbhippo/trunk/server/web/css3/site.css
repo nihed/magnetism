@@ -273,6 +273,14 @@ div.dh-async-action-link-complete {
 	background-color:	#F3F3F3;
 }
 
+.dh-box-orange1 {
+	background-color:	#FFE9DB;
+}
+
+.dh-box-orange2 {
+	background-color:	#FFF1E8;
+}
+
 .dh-stacker-block-title {
 	font-weight:		bold;
 	font-size:			14px;
@@ -281,9 +289,14 @@ div.dh-async-action-link-complete {
 .dh-stacker-block-title-title {
 }
 
-.dh-stacker-block-time {
+.dh-stacker-block-right {
 	font-size:			11px;
 	color:				#666666;
+}
+
+.dh-stacker-block-from {
+	font-size:			14px;
+	color:				black;
 }
 
 .dh-stacker-block-close {

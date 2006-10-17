@@ -4,17 +4,17 @@
 <%@ taglib tagdir="/WEB-INF/tags/3" prefix="dht3" %>
 
 <%@ attribute name="block" required="true" type="com.dumbhippo.server.views.BlockView" %>
-<%@ attribute name="cssClass" required="true" type="java.lang.String" %>
+<%@ attribute name="offset" required="true" type="java.lang.Boolean" %>
 <%@ attribute name="blockId" required="true" type="java.lang.String" %>
 
 <c:choose>
 	<c:when test="${dh:enumIs(block.blockType, 'POST')}">
-		<dht3:postBlock block="${block}" blockId="${blockId}" cssClass="${cssClass}"/>
+		<dht3:postBlock block="${block}" blockId="${blockId}" offset="${offset}"/>
 	</c:when>
    	<c:when test="${dh:enumIs(block.blockType, 'MUSIC_PERSON')}">	
-   		<dht3:musicPersonBlock block="${block}" blockId="${blockId}" cssClass="${cssClass}"/>
+   		<dht3:musicPersonBlock block="${block}" blockId="${blockId}" offset="${offset}"/>
    	</c:when>
    	<c:when test="${dh:enumIs(block.blockType, 'GROUP_MEMBER')}">
-   		<dht3:groupMemberBlock block="${block}" blockId="${blockId}" cssClass="${cssClass}"/>
+   		<dht3:groupMemberBlock block="${block}" blockId="${blockId}" offset="${offset}"/>
    	</c:when>
 </c:choose>
