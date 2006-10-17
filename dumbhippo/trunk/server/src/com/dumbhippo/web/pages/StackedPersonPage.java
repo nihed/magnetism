@@ -22,12 +22,17 @@ public class StackedPersonPage extends AbstractPersonPage {
 	
 	// We override the default values for initial and subsequent results per page from Pageable
 	static private final int CONTACT_STACKS_PER_PAGE = 4;
+	static private final int INITIAL_BLOCKS_PER_PAGE = 5;
+	static private final int BLOCKS_PER_PAGE = 20;
 	
 	protected Stacker stacker;
 	
 	protected List<StackedContact> stackedContacts;
 	
 	private Pageable<StackedContact> pageableStackedContacts; 
+
+	private Pageable<BlockView> pageableMugshot;
+	private Pageable<BlockView> pageableStack;
 	
 	public static class StackedContact {
 		private List<BlockView> stack;
@@ -49,11 +54,23 @@ public class StackedPersonPage extends AbstractPersonPage {
 		stacker = WebEJBUtil.defaultLookup(Stacker.class);
 	}
 
-	public List<BlockView> getParticipantOnlyStack() {
+	public List<BlockView> getMusghot() {
 		if (getViewedUser() != null) {
 			return stacker.getStack(getSignin().getViewpoint(), getViewedUser(), 0, 0, 20, true);
 		}
 		return null;
+	}
+
+	public Pageable<BlockView> getPageableMugshot() {
+		if (pageableMugshot == null) {
+			pageableMugshot = 
+				pagePositions.createPageable("mugshot", INITIAL_BLOCKS_PER_PAGE); 
+			pageableMugshot.setSubsequentPerPage(BLOCKS_PER_PAGE);
+			pageableMugshot.setFlexibleResultCount(true);
+			stacker.pageStack(getSignin().getViewpoint(), getViewedUser(), pageableMugshot, true);
+		}
+
+		return pageableMugshot;
 	}
 	
 	public List<BlockView> getStack() {
@@ -61,6 +78,21 @@ public class StackedPersonPage extends AbstractPersonPage {
 			return stacker.getStack(getSignin().getViewpoint(), getViewedUser(), 0, 0, 20);
 		}
 		return null;
+	}
+	
+	public Pageable<BlockView> getPageableStack() {
+		if (pageableStack == null) {
+            if (getPageableMugshot().getPosition() == 0) {
+			    pageableStack = pagePositions.createPageable("stacker", BLOCKS_PER_PAGE); 
+            } else {
+            	pageableStack = pagePositions.createBoundedPageable("stacker", INITIAL_BLOCKS_PER_PAGE, INITIAL_BLOCKS_PER_PAGE);
+            }
+			pageableStack.setSubsequentPerPage(BLOCKS_PER_PAGE);
+			pageableStack.setFlexibleResultCount(true);
+			stacker.pageStack(getSignin().getViewpoint(), getViewedUser(), pageableStack, false);
+		}
+
+		return pageableStack;
 	}
 	
 	public List<BlockView> getFaveStack() {

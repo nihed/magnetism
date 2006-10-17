@@ -47,6 +47,7 @@ public interface Stacker {
 	
 	public BlockView loadBlock(Viewpoint viewpoint, UserBlockData ubd) throws NotFoundException;
 	
+	public void pageStack(Viewpoint viewpoint, User user, Pageable<BlockView> pageable, boolean participantOnly);	
 	// Returns a complete stack for the user.
 	public List<BlockView> getStack(Viewpoint viewpoint, User user, long lastTimestamp, int start, int count);
 	// Returns parts of the stack in which the user was an active participant if participantOnly is set to true.

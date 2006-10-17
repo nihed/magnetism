@@ -3,7 +3,13 @@ package com.dumbhippo.server;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.slf4j.Logger;
+
+import com.dumbhippo.GlobalSetup;
+
 public class Pageable<T> {
+	@SuppressWarnings("unused")
+	static private final Logger logger = GlobalSetup.getLogger(Pageable.class);
 	static final int DEFAULT_INITIAL_PER_PAGE = 3;
 	static final int DEFAULT_SUBSEQUENT_PER_PAGE = 6;
 	
@@ -14,11 +20,13 @@ public class Pageable<T> {
 	private int initialPerPage;
 	private int subsequentPerPage;
 	private int bound;
+	private boolean flexibleResultCount;
 	
 	public Pageable(String name) {
 		this.name = name;
 		this.totalCount = -1;
 		this.bound = -1;
+		this.flexibleResultCount = false;
 		initialPerPage = DEFAULT_INITIAL_PER_PAGE;
 		subsequentPerPage = DEFAULT_SUBSEQUENT_PER_PAGE;
 	}
@@ -58,6 +66,9 @@ public class Pageable<T> {
 	
 	public void setTotalCount(int totalCount) {
 		this.totalCount = totalCount;
+		// if the total page count is actually less than the "requested" position,
+		// this will readjust the position
+	    position = Math.min(position, getPageCount() - 1);
 	}
 
 	public void setResults(List<T> results) {
@@ -79,6 +90,14 @@ public class Pageable<T> {
 	public void setBound(int bound) {
 		this.bound = bound;
 	}
+
+	public boolean isFlexibleResultCount() {
+		return flexibleResultCount;
+	}
+	
+	public void setFlexibleResultCount(boolean flexibleResultCount) {
+		this.flexibleResultCount = flexibleResultCount;
+	}
 	
 	public int getStart() {
 		return position == 0 ? 0 : initialPerPage + (position - 1) * subsequentPerPage;
@@ -93,10 +112,11 @@ public class Pageable<T> {
 		if (bound >= 0 && itemCount > bound)
 			itemCount = bound;
 		
-		if (itemCount < initialPerPage)
+		if (itemCount < initialPerPage) {
 			return 1;
-		else
+		} else {
 			return 1 + (itemCount - initialPerPage + subsequentPerPage - 1) / subsequentPerPage;
+		}
 	}
 	
 	public int getCurrentItemCount() {

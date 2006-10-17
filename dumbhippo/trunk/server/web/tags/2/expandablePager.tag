@@ -10,7 +10,7 @@
 	<c:choose>
 		<c:when test="${pageable.position == 0}">
 			<a href="#" onclick='return dh.actions.switchPage("${pageable.name}","${anchor}",1)'>More</a>
-			<c:if test="${pageable.bound < 0}">
+			<c:if test="${pageable.bound < 0 && !pageable.flexibleResultCount}">
 				 <span class="dh-more-count"> 
 				     <a href="#" onclick='return dh.actions.switchPage("${pageable.name}","${anchor}",1)'>
 				         (<c:out value="${pageable.totalCount}"/>)

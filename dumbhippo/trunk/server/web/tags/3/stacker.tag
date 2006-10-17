@@ -4,18 +4,14 @@
 <%@ taglib tagdir="/WEB-INF/tags/3" prefix="dht3" %>
 
 <%@ attribute name="person" required="true" type="com.dumbhippo.server.views.PersonView" %>
-<%@ attribute name="stack" required="true" type="java.util.List" %>
-<%@ attribute name="stackSize" required="false" type="java.lang.Integer" %>
 <%@ attribute name="stackOrder" required="true" type="java.lang.Integer" %>
-
-<c:if test="${stackSize == 0}">
-	<c:set var="stackSize" value="5"/>
-</c:if>
+<%@ attribute name="stackType" required="false" type="java.lang.String" %>
+<%@ attribute name="pageable" required="false" type="com.dumbhippo.server.Pageable" %>
 
 <c:set var="previousBlockType" value="" scope="page"/>
 
 <div class="dh-stacker-container">
-	<c:forEach items="${stack}" end="${stackSize}" var="block" varStatus="blockIdx">
+	<c:forEach items="${pageable.results}" var="block" varStatus="blockIdx">
 		<c:choose>
 			<c:when test="${blockIdx.count % 2 == 0}">
 				<dht3:block block="${block}" offset="${previousBlockType == block.blockType}" blockId="${stackOrder}_${blockIdx.count + 1}"/>
@@ -29,5 +25,7 @@
 			<div class="dh-stacker-block-bottom-padding">&nbsp;</div>
 		</c:if>
 	</c:forEach>
-	<div class="dh-stacker-more"><a href="history?who=${person.viewPersonPageId}">More</a></div>
+	<c:if test="${!empty pageable}">
+		<dht:expandablePager pageable="${pageable}" anchor="${stackType}"/>
+	</c:if>
 </div>

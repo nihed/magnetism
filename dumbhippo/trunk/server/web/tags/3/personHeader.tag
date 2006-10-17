@@ -5,6 +5,11 @@
 
 <%@ attribute name="who" required="true" type="com.dumbhippo.server.views.PersonView" %>
 <%@ attribute name="isSelf" required="true" type="java.lang.Boolean" %>
+<%@ attribute name="shortVersion" required="false" type="java.lang.Boolean" %>
+
+<c:if test="${empty shortVersion}">
+	<c:set var="shortVersion" value="false"/>
+</c:if>
 
 <div class="dh-person-header">
     <table class="dh-person-info">
@@ -52,17 +57,19 @@
 				</td>
 			</tr>
 			<tr>
-			<td colspan="2">
-			<div class="dh-person-header-bio">
-				${who.bioAsHtml}
-			</div>
-			</td>
-			</tr>
+			    <td colspan="2">
+			        <c:if test="${!shortVersion}">
+			            <div class="dh-person-header-bio">
+				            ${who.bioAsHtml}
+			            </div>
+			        </c:if>
+                </td>
+            </tr>             
 		</tbody>
 	</table>
 	</td>
 	<td align="right">
-	<table cellpadding="0" cellspacing="0" class="dh-person-accounts">
+	<table cellpadding="0" cellspacing="0">
 		<tbody>
 			<tr valign="top">
 				<td align="right">
@@ -83,16 +90,29 @@
 					</div>
 				</td>
 			</tr>
-			<tr>
-			    <td align="right">
-			    	<%-- Accounts with thumbnail boxes --%>
-			 		<c:forEach var="account" items="${who.lovedAccounts.list}">
-						<c:if test="${account.hasThumbnails}">
-							<dht:whereAtThumbnailBox account="${account}" />
-						</c:if>
-					</c:forEach>
-				</td>
-			</tr>		
+			<c:choose>
+                <c:when test="${!shortVersion}">
+			        <tr>
+			            <td align="right">
+			                <%-- Accounts with thumbnail boxes --%>
+			 		        <c:forEach var="account" items="${who.lovedAccounts.list}">
+						        <c:if test="${account.hasThumbnails}">
+					                <dht:whereAtThumbnailBox account="${account}" />
+						        </c:if>
+					        </c:forEach>
+				        </td>     
+			        </tr>
+			    </c:when>  
+			    <c:otherwise>
+			        <tr valign="bottom">
+			            <td align="right">
+			            	<div class="dh-back">
+				                <a href="/person?who=${who.viewPersonPageId}">Back to <c:out value="${who.name}"/>'s Overview</a>
+                            </div>
+                        </td>
+                    </tr>
+                </c:otherwise>    
+            </c:choose>              			    		
 		</tbody>
 	</table>						
 	</td>

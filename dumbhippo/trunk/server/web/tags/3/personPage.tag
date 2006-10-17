@@ -4,7 +4,6 @@
 <%@ taglib tagdir="/WEB-INF/tags/3" prefix="dht3" %>
 
 <%@ attribute name="pageName" required="true" type="java.lang.String" %>
-<%@ attribute name="stackSize" required="false" type="java.lang.Integer" %>
 
 <dht3:requirePersonBean/>
 
@@ -23,8 +22,10 @@
 	</dht3:pageSubHeader>
 	
 	<dht3:shinyBox color="grey">
-		<dht3:personHeader who="${person.viewedPerson}" isSelf="true"><a href="/account">Edit my Mugshot account</a></dht3:personHeader>
-		<dht3:stacker person="${person.viewedPerson}" stack="${person.participantOnlyStack}" stackSize="${stackSize}" stackOrder="1"/>
+		<dht3:personHeader who="${person.viewedPerson}" isSelf="true" shortVersion="${person.pageableStack.position > 0}"><a href="/account">Edit my Mugshot account</a></dht3:personHeader>
+		<c:if test="${person.pageableStack.position == 0}">
+		    <dht3:stacker person="${person.viewedPerson}" stackOrder="1" stackType="dhMugshot" pageable="${person.pageableMugshot}"/>
+		</c:if>    
 	</dht3:shinyBox>
 	
 	<jsp:doBody/>

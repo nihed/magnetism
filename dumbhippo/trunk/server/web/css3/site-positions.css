@@ -348,6 +348,11 @@ div.dh-notification {
 	text-align:			center;
 }
 
-.dh-more {
+.dh-more, .dh-back {
+    margin-top:         5px;
     margin-bottom:      5px;
+}
+
+.dh-person-info .dh-back {
+    margin-top:         30px;
 }

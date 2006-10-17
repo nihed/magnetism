@@ -58,6 +58,7 @@ import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.NotFoundException;
+import com.dumbhippo.server.Pageable;
 import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.SimpleServiceMBean;
@@ -684,6 +685,92 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	public BlockView loadBlock(Viewpoint viewpoint, UserBlockData ubd) throws NotFoundException {
 		return getBlockView(viewpoint, ubd.getBlock(), ubd);
 	}	
+	
+	private List<UserBlockData> getBlocks(Viewpoint viewpoint, User user, boolean participantOnly, int start, int count) {
+		String participatedClause = "";
+		String orderBy = "block.timestamp";
+		if (participantOnly) {
+			participatedClause = " AND ubd.participatedTimestamp != NULL ";
+			orderBy = "ubd.participatedTimestamp";
+		}
+				
+		Query q = em.createQuery("SELECT ubd FROM UserBlockData ubd, Block block " + 
+				                 " WHERE ubd.user = :user AND ubd.deleted = 0 AND ubd.block = block " 
+				                 + participatedClause +
+				                 " AND (block.data1 != :userGuid OR block.blockType != :type)  " +
+				                 " ORDER BY " + orderBy + " DESC");
+		q.setFirstResult(start);
+		q.setMaxResults(count);
+		q.setParameter("user", user);
+		q.setParameter("userGuid", user.getGuid().toString());
+		if (viewpoint.isOfUser(user)) 
+			q.setParameter("type", BlockType.EXTERNAL_ACCOUNT_UPDATE);
+		else
+			q.setParameter("type", BlockType.EXTERNAL_ACCOUNT_UPDATE_SELF);
+		
+		return TypeUtils.castList(UserBlockData.class, q.getResultList());
+	}
+	
+	public void pageStack(Viewpoint viewpoint, User user, Pageable<BlockView> pageable, boolean participantOnly) {
+		
+		logger.debug("getting stack for user {}", user);
+
+		// + 1 is for finding out if there are items for the next page
+		int targetedNumberOfItems = pageable.getStart() + pageable.getCount() + 1;
+		int firstItemToReturn = pageable.getStart();
+		
+       	int expectedHitFactor = 4;
+		if (viewpoint.isOfUser(user))
+			expectedHitFactor = 2;
+		
+		List<BlockView> stack = new ArrayList<BlockView>();
+		int start = 0;
+		
+		while (stack.size() < targetedNumberOfItems) {
+			int count = (targetedNumberOfItems - stack.size()) * expectedHitFactor;
+			List<UserBlockData> blocks = getBlocks(viewpoint, user, participantOnly, start, count);
+			if (blocks.isEmpty())
+				break;
+			
+			int resultItemCount = 0;
+			// Create BlockView objects for the blocks, performing access control checks
+			for (UserBlockData ubd : blocks) {
+				try {
+					// TODO: remove this, it is temporary, current web version only supports 
+					// POST, MUSIC_PERSON and GROUP_MEMBER block types
+					if ((ubd.getBlock().getBlockType() != BlockType.POST) &&
+						(ubd.getBlock().getBlockType() != BlockType.MUSIC_PERSON) &&
+						(ubd.getBlock().getBlockType() != BlockType.GROUP_MEMBER))
+						continue;
+					
+					stack.add(getBlockView(viewpoint, ubd.getBlock(), ubd));
+					resultItemCount++;
+					if (stack.size() >= targetedNumberOfItems)
+						break;
+				} catch (NotFoundException e) {
+					// Do nothing, we can't see this block
+				}
+			}		
+		    
+		    // nothing else there
+		    if (blocks.size() < count)
+		    	break;
+	
+		    start = start + count;
+		    expectedHitFactor = blocks.size() / resultItemCount + 1;
+		}
+		if (stack.size() < targetedNumberOfItems) {
+			// this will readjust the position, so pageable.getStart() will be readjusted too
+			pageable.setTotalCount(stack.size());
+			pageable.setResults(stack.subList(pageable.getStart(), stack.size()));			
+		} else {
+			// we are not including the last item in the stack list in the results, it's
+			// just an indicator that there are more items
+			pageable.setResults(stack.subList(firstItemToReturn, stack.size() - 1));
+            pageable.setTotalCount((pageable.getInitialPerPage() + pageable.getSubsequentPerPage() * 9) 
+						           * ((pageable.getPosition() + 1) / 10 + 1));
+		}
+	}
 	
 	public List<BlockView> getStack(Viewpoint viewpoint, User user, long lastTimestamp, int start, int count) {
 	    return getStack(viewpoint, user, lastTimestamp, start, count, false);
