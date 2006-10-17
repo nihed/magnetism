@@ -42,6 +42,7 @@ void          hippo_actions_visit_entity            (HippoActions    *actions,
                                                      HippoEntity     *entity);
 void          hippo_actions_load_entity_photo_async (HippoActions    *actions,
                                                      HippoEntity     *entity,
+                                                     int              size,
                                                      HippoCanvasItem *image_item);
 HippoEntity*  hippo_actions_lookup_entity           (HippoActions    *actions,
                                                      const char      *entity_guid);

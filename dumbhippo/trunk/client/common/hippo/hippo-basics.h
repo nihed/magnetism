@@ -192,6 +192,9 @@ gint64   hippo_current_time_ms             (void);
 char*    hippo_format_time_ago             (GTime       now,
                                             GTime       then);
 
+char*    hippo_size_photo_url              (const char *base_url,
+                                            int         size);
+
 #define HIPPO_ADD_WEAK(ptr)    g_object_add_weak_pointer(G_OBJECT(*(ptr)), (void**) (char*) (ptr))
 #define HIPPO_REMOVE_WEAK(ptr) do { if (*ptr) { g_object_remove_weak_pointer(G_OBJECT(*(ptr)), (void**) (char*) (ptr)); *ptr = NULL; } } while(0)
 

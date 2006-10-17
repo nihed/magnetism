@@ -170,9 +170,11 @@ image_set_on_canvas_item_func(HippoSurface *surface,
 void
 hippo_actions_load_entity_photo_async(HippoActions    *actions,
                                       HippoEntity     *entity,
+                                      int              size,
                                       HippoCanvasItem *image_item)
 {
     const char *url;
+    char *sized;
     char *absolute;        
     
     url = hippo_entity_get_photo_url(entity);
@@ -186,19 +188,21 @@ hippo_actions_load_entity_photo_async(HippoActions    *actions,
         return;
     }
 
+    sized = hippo_size_photo_url(url, size);
+
     if (actions->entity_photo_cache == NULL) {
         actions->entity_photo_cache = hippo_image_cache_new(get_platform(actions));
     }
     
     absolute = hippo_connection_make_absolute_url(get_connection(actions),
-                                                  url);
-
+                                                  sized);
     g_object_ref(image_item); /* held by the loader func */
     hippo_image_cache_load(actions->entity_photo_cache, absolute,
                            image_set_on_canvas_item_func,
                            image_item);
     
     g_free(absolute);
+    g_free(sized);
 }
 
 HippoEntity*

@@ -1120,6 +1120,17 @@ hippo_format_time_ago(GTime now,
     return g_strdup_printf("%.0f years ago", hippo_rint(delta_years));
 }
 
+
+char*
+hippo_size_photo_url(const char *base_url,
+                     int         size)
+{
+    if (strchr(base_url, '?') != 0)
+        return g_strdup_printf("%s&size=%d", base_url, size);
+    else
+        return g_strdup_printf("%s?size=%d", base_url, size);
+}
+
 gint64
 hippo_current_time_ms(void)
 {
