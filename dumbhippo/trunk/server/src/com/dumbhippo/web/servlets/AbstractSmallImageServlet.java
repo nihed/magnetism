@@ -244,7 +244,7 @@ public abstract class AbstractSmallImageServlet extends AbstractServlet {
 		if (needsSize() && !hasEmbeddedSize(noPrefix)) {
 			String size = getDefaultSize();
 			String sizeParameter = request.getParameter("size");
-			if (isValidSize(sizeParameter))
+			if (sizeParameter != null && isValidSize(sizeParameter))
 				size = sizeParameter;
 			
 			noPrefix = size + "/" + noPrefix;
