@@ -505,6 +505,13 @@ HippoAbstractWindow::setForegroundWindow()
 }
 
 void
+HippoAbstractWindow::setFocus()
+{
+    if (window_)
+        SetFocus(window_);
+}
+
+void
 HippoAbstractWindow::setDefaultSize(int width, int height)
 {
     g_return_if_fail(!created_);

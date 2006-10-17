@@ -64,6 +64,9 @@ public:
      */
     void setForegroundWindow();
 
+    /* call SetFocus(), normally managed by the parent of the window */
+    void setFocus();
+
     void invalidate(int x, int y, int width, int height);
 
     void getClientArea(HippoRectangle *rect);

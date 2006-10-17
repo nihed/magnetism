@@ -89,6 +89,58 @@ HippoScrollbar::handleScrollMessage(UINT   message,
                                     WPARAM wParam,
                                     LPARAM lParam)
 {
+    switch (message) {
+        case WM_MOUSEWHEEL:
+            return handleWheelMessage(message, wParam, lParam);
+        case WM_HSCROLL:
+        case WM_VSCROLL:
+            return handleDragMessage(message, wParam, lParam);
+        default:
+            return 0;
+    }
+}
+
+int
+HippoScrollbar::handleWheelMessage(UINT   message,
+                                   WPARAM wParam,
+                                   LPARAM lParam)
+{
+    g_return_val_if_fail(message == WM_MOUSEWHEEL, 0);
+
+    /* delta/WHEEL_DELTA is the number of "clicks" of scrolling.
+     * it's negative to scroll down.
+     */
+    int delta = GET_WHEEL_DELTA_WPARAM(wParam);
+    int increment;
+    if (delta < 0) {
+        increment = SB_LINEDOWN;
+        delta = - delta; // fix it to always be positive
+    } else {
+        increment = SB_LINEUP;
+    }
+
+    SCROLLINFO si;
+    si.cbSize = sizeof(si);
+    si.fMask = SIF_POS;
+    GetScrollInfo(window_, SB_CTL, &si);
+
+    int currentPos = si.nPos;
+    int newPos = getScrollIncrement(increment, delta / (double) WHEEL_DELTA, currentPos);
+
+    if (newPos != currentPos) {
+        si.fMask = SIF_POS;
+        si.nPos = newPos;
+        SetScrollInfo(window_, SB_CTL, &si, true);
+    }
+
+    return newPos;
+}
+
+int
+HippoScrollbar::handleDragMessage(UINT   message,
+                                  WPARAM wParam,
+                                  LPARAM lParam)
+{
     g_return_val_if_fail((message == WM_HSCROLL && orientation_ == HIPPO_ORIENTATION_HORIZONTAL) ||
                          (message == WM_VSCROLL && orientation_ == HIPPO_ORIENTATION_VERTICAL), 0);
 
@@ -109,40 +161,72 @@ HippoScrollbar::handleScrollMessage(UINT   message,
     int newPos = currentPos;
 
     switch (LOWORD(wParam)) {
-    case SB_PAGEUP:
-        newPos -= MAX((int) (pageSize_ * 0.9), 1);
-        break;
     case SB_PAGEDOWN:
-        newPos += MAX((int) (pageSize_ * 0.9), 1);
-        break;
     case SB_LINEUP:
-        newPos -= MAX((int) (pageSize_ * 0.1), 1);
-        break;
     case SB_LINEDOWN:
-        newPos += MAX((int) (pageSize_ * 0.1), 1);
+    case SB_PAGEUP:
+        newPos = getScrollIncrement(LOWORD(wParam), 1.0, currentPos);
         break;
     case SB_THUMBPOSITION:
         // this is an update when we set the scroll position ourselves
         break;
     case SB_THUMBTRACK:
         newPos = currentTrackPos;
+        clampPosition(&newPos);
         break;
     default:
         break;
     }
-    
+
+    if (newPos != currentPos) {
+        si.fMask = SIF_POS;
+        si.nPos = newPos;
+        SetScrollInfo(window_, SB_CTL, &si, true);
+    }
+
+    return newPos;
+}
+
+void
+HippoScrollbar::clampPosition(int *posPtr)
+{
+    int newPos = *posPtr;
+
     if (newPos > (maxPos_ - pageSize_ - 1))
         newPos = maxPos_ - pageSize_ - 1;
 
     if (newPos < 0) 
         newPos = 0;
 
-    if (newPos == currentPos)
-        return currentPos;
+    *posPtr = newPos;
+}
 
-    si.fMask = SIF_POS;
-    si.nPos = newPos;
-    SetScrollInfo(window_, SB_CTL, &si, true);
+int
+HippoScrollbar::getScrollIncrement(int increment, double count, int currentPos)
+{
+    int newPos = currentPos;
+
+    switch (increment) {
+    case SB_PAGEUP:
+        newPos -= MAX((int) (pageSize_ * 0.9 * count), 1);
+        break;
+    case SB_PAGEDOWN:
+        newPos += MAX((int) (pageSize_ * 0.9 * count), 1);
+        break;
+    case SB_LINEUP:
+        newPos -= MAX((int) (pageSize_ * 0.1 * count), 1);
+        break;
+    case SB_LINEDOWN:
+        newPos += MAX((int) (pageSize_ * 0.1 * count), 1);
+        break;
+    case SB_THUMBPOSITION:
+    case SB_THUMBTRACK:
+    default:
+        g_warning("invalid scroll increment type");
+        break;
+    }
+
+    clampPosition(&newPos);
 
     return newPos;
 }

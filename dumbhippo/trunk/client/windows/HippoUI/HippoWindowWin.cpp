@@ -682,26 +682,11 @@ HippoWindowImpl::processMessage(UINT   message,
     }
 
     switch (message) {
-        case WM_PAINT:
-            RECT region;
-            if (GetUpdateRect(window_, &region, true)) {
-
-#if 0
-                g_debug("SIZING: %p paint region %d,%d %dx%d",
-                    window_, region.left, region.top,     
-                    region.right - region.left, region.bottom - region.top);
-#endif
-
-                PAINTSTRUCT paint;
-                HDC hdc = BeginPaint(window_, &paint);
-#if 0
-                FillRect(hdc, &region, (HBRUSH) (COLOR_WINDOW+1));
-
-                TextOut(hdc, 0, 0, L"Hello, Windows!", 15);
-#endif
-                EndPaint(window_, &paint);
-            }
-            return false;
+        case WM_SETFOCUS:
+            // forward focus on to our child window.
+            // DefWindowProc for WM_ACTIVATE should call SetFocus on us.
+            contentsControl_->setFocus();
+            return true;
         case WM_SYSCOMMAND:
             if (wParam == SC_MINIMIZE) {
                 g_signal_emit_by_name(wrapper_, "minimize");

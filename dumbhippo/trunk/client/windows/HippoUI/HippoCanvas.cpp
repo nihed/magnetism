@@ -32,6 +32,7 @@ static void                   hippo_canvas_context_win_update_pango           (H
                                                                                cairo_t               *cr);
 static void                   hippo_canvas_context_win_create_controls        (HippoCanvasContextWin *context_win);
 static void                   hippo_canvas_context_win_show_controls          (HippoCanvasContextWin *context_win);
+static void                   hippo_canvas_context_win_focus_controls         (HippoCanvasContextWin *context_win);
 
 HippoCanvas::HippoCanvas()
     : canvasWidthReq_(0), canvasHeightReq_(0), canvasX_(0), canvasY_(0), hscrollNeeded_(false), vscrollNeeded_(false),
@@ -762,6 +763,7 @@ HippoCanvas::processMessage(UINT   message,
             }
             return true;
         case WM_VSCROLL:
+        case WM_MOUSEWHEEL: // running DefWindowProc for this one forwards it to parent window
             if (vscrollNeeded_) {
                 int newY = vscroll_->handleScrollMessage(message, wParam, lParam);
                 scrollTo(canvasX_, newY);
@@ -794,6 +796,10 @@ HippoCanvas::processMessage(UINT   message,
             return true;
         case WM_MOUSELEAVE:
             onMouseLeave(wParam, lParam);
+            return true;
+        case WM_SETFOCUS:
+            // forward focus on to some control inside the canvas, if any
+            hippo_canvas_context_win_focus_controls(context_);
             return true;
     }
 
@@ -1236,4 +1242,21 @@ hippo_canvas_context_win_show_controls(HippoCanvasContextWin *context_win)
             citem->control->show(false);
         }
     }
+}
+
+static void
+hippo_canvas_context_win_focus_controls(HippoCanvasContextWin *context_win)
+{
+    /* the canvas was focused, so focus the right child control, currently 
+     * "the first one" though this isn't long-term reasonable
+     */
+    RegisteredControlItem *citem;
+
+    if (context_win->control_items == NULL)
+        return;
+
+    citem = (RegisteredControlItem*) context_win->control_items->data;
+
+    if (citem->control)
+        citem->control->setFocus();
 }

@@ -42,4 +42,14 @@ private:
     int heightReq_;
 
     void syncBounds();
+
+    int getScrollIncrement(int increment, double count, int currentPos);
+    void clampPosition(int *posPtr);
+
+    int handleDragMessage  (UINT   message,
+                            WPARAM wParam,
+                            LPARAM lParam);
+    int handleWheelMessage (UINT   message,
+                            WPARAM wParam,
+                            LPARAM lParam);
 };
