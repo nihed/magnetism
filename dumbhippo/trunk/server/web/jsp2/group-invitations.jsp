@@ -16,7 +16,7 @@
 
 <head>
 	<title>Your Group Invitations</title>
-	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/site.css"/>
+	<dht:siteStyle/>	
 	<dht:faviconIncludes/>
 	<dht:scriptIncludes/>
 	<script type="text/javascript" src="/javascript/${buildStamp}/dh/groups.js"></script>	

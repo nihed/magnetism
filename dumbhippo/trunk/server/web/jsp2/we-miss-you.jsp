@@ -13,7 +13,7 @@
 			<title>Account Enabled</title>
 		</c:otherwise>
 	</c:choose>
-	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/site.css">
+	<dht:siteStyle/>	
 	<dht:faviconIncludes/>
 	<dht:scriptIncludes/>
 </head>
