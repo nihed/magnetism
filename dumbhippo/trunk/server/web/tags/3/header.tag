@@ -3,6 +3,8 @@
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 <%@ taglib tagdir="/WEB-INF/tags/3" prefix="dht3" %>
 
+<%@ attribute name="disableHomeLink" required="false" type="java.lang.Boolean" %>
+<%@ attribute name="disableSignupLink" required="false" type="java.lang.Boolean" %>
 <%@ attribute name="searchText" required="false" type="java.lang.String" %>
 
 <div id="dhPageHeader3">
@@ -22,17 +24,22 @@
 					<jsp:attribute name="name">q</jsp:attribute>
 					<jsp:attribute name="value">${searchText}</jsp:attribute>
 				</jsp:element>
-				</td><td valign="top"><img id="dhSearchBoxFind" src="/images3/${buildStamp}/find.gif" onclick="document.forms['dhSearchForm'].submit()"/></td>
+				</td><td valign="top"><img id="dhSearchBoxFind" src="/images3/${buildStamp}/find.gif" onclick="dhSearchSubmit()"/></td>
 				</tr>
 				</table>
 			</form>
 			<script type="text/javascript">
-				dhGlobalSearchEntryInit = function () {
+				var dhSearchBoxEntry = null;
+				dhSearchInit = function () {
 					var searchBox = document.getElementById('dhSearchBoxEntry');
-					var entry = new dh.textinput.Entry(searchBox, "Search for topics, people, music", "");
+					dhSearchBoxEntry = new dh.textinput.Entry(searchBox, "Search for topics, people, music", <dh:jsString value="${searchText}"/>);
 				}
-				dhGlobalSearchEntryInit()
-			</script>			
+				dhSearchSubmit = function() {
+					dhSearchBoxEntry.prepareToSubmit();
+					document.forms['dhSearchForm'].submit();
+				}
+				dhSearchInit();
+			</script>
 		</div>
 		</td>
 		</tr>
@@ -54,10 +61,12 @@
 						<dht:actionLinkLogout/>
 					</c:when>
 					<c:otherwise>
-				       <a href="/signup">Sign up</a> | 
-				       <a href="/who-are-you">Log in</a>						
+					    <c:if test="${!disableSignupLink}">				
+					        <a href="/signup">Sign up</a> | 
+					    </c:if>    
+					    <a href="/who-are-you">Log in</a>
 					</c:otherwise>
-				</c:choose>			
+				</c:choose>
 			</div>	
 		</div>  
 		</td>

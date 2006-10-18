@@ -5,9 +5,9 @@
 
 <link rel="stylesheet" href="/css3/${buildStamp}/${name}.css" type="text/css" />
 
-<!--[if lt IE 8]>
 <c:if test="${iefixes}">
+<!--[if lt IE 8]>
 <link rel="stylesheet" href="/css3/${buildStamp}/${name}-iefixes.css" type="text/css" />
-</c:if>
 <![endif]-->
+</c:if>
 

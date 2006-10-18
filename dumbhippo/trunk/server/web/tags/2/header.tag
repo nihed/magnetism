@@ -10,7 +10,7 @@
 
 <c:choose>
 <c:when test="${webVersion == 3}">
-	<dht3:header/>
+	<dht3:header disableHomeLink="${disableHomeLink}" disableSignupLink="${disableSignupLink}" searchText="${searchText}"/>
 </c:when>
 <c:otherwise>
 

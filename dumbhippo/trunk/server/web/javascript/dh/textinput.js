@@ -71,6 +71,11 @@ dh.textinput.Entry = function(entryNode, defaultText, currentValue)
 			this.onValueChanged(v);
 		}
 	}
+
+	// be sure we only have real data in the entry so we can submit a form
+	this.prepareToSubmit = function() {
+		this.elem.value = this.getValue();
+	}
 	
 	this.hideDefaultText = function() {
 		if (this.showingDefaultText) {

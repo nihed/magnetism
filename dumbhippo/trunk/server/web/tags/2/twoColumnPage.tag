@@ -28,7 +28,7 @@
 			<center><div id="dhPageHeader"><dht:logo/></div></center>
 		</c:when>
 		<c:otherwise>
-			<dht:header disableHomeLink="${disableHomeLink}" disableSignupLink="${disableSignupLink}"/>
+			<dht:header disableHomeLink="${disableHomeLink}" disableSignupLink="${disableSignupLink}" searchText="${searchText}"/>
 		</c:otherwise>
 	</c:choose>
 	<c:if test="${!empty topMessageHtml}">
