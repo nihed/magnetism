@@ -107,7 +107,7 @@
 			<br/>
 			<div><div class="dh-download-section-subheader">The Mugshot download lets you...</div>
 				<ul class="dh-download-section-list">
-					<li>Have the functionality of your Mugshot page on a conveinent desktop application</li>
+					<li>Have the functionality of your Mugshot page on a convenient desktop application</li>
 					<li>Get notified when you and your friends have updates at MySpace, Facebook, and other social network sites</li>
 					<li>Decide when you want to be notified of new activity</li>
 					<li>Scan recent online activity from your friends without visiting lots of web sites</li>
