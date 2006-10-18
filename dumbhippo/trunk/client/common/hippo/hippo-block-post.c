@@ -122,7 +122,8 @@ set_recent_messages(HippoBlockPost  *block_post,
     
     g_slist_foreach(block_post->recent_messages, (GFunc)hippo_chat_message_free, NULL);
     g_slist_free(block_post->recent_messages);
-
+    block_post->recent_messages = NULL;
+    
     for (l = recent_messages; l; l = l->next) {
         block_post->recent_messages = g_slist_prepend(block_post->recent_messages, hippo_chat_message_copy(l->data));
     }
