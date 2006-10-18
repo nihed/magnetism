@@ -1,8 +1,18 @@
 @CHARSET "UTF-8";
 
 body {
-	margin:			0px;
+	margin-top:		0px;
+	margin-bottom:	0px;
+	margin-left:	10px;	
+	margin-right:	10px;
 	padding: 		0px;
+	/* this only works in firefox, but keeps things from looking
+	 * ugly if you size the browser too small (you get scrollbars 
+	 * instead of hosed layout). The exact value is just from 
+	 * experimentation with a particular font size, so isn't too
+	 * scientific.
+	 */
+	min-width:		630px;
 }
 
 /* browsers have default margins on forms it seems */
@@ -17,10 +27,9 @@ form {
 }
 
 #dhPage {
-	position:		absolute;
-	left:			10px;
-	right:			10px;
+	position:		relative;
 	margin-top:		0px;
+	width:			100%;
 }
 
 /* specific only to input entries and not textarea's which have specified rows  */
@@ -198,6 +207,10 @@ div.dh-notification {
 }
 
 .dh-shiny-box-box {
+	width:				100%;
+}
+
+.dh-shiny-box-bottom {
 	width:				100%;
 }
 

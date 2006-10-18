@@ -2,10 +2,6 @@
 	margin-top:		3px;
 }
 
-#dhPage {
-	width:			expression(document.body.clientWidth-20);
-}
-
 .dh-stacker-block-right {
 }
 
