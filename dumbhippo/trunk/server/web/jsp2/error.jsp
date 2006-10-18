@@ -18,6 +18,7 @@
 
 <head>
 	<title>Oops!</title>
+	<dht:siteStyle/>
 	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/error.css"/>
 	<dht:faviconIncludes/>
 	<dht:scriptIncludes/>

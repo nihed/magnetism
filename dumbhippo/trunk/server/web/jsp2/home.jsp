@@ -11,6 +11,7 @@
 
 <head>
 	<title>Mugshot Home</title>
+	<dht:siteStyle/>	
 	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/home.css"/>
 	<dht:faviconIncludes/>
 	<dht:scriptIncludes/>

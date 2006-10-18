@@ -14,6 +14,7 @@
 
 <head>
 	<title>Edit <c:out value="${group.name}"/></title> <%-- see also groupaccount.js --%>
+	<dht:siteStyle/>	
 	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/group-account.css"/>
 	<dht:faviconIncludes/>
 	<dht:scriptIncludes/>

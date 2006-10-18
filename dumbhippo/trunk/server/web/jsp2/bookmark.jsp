@@ -28,6 +28,7 @@
 
 <head>
 	<title>Mugshot Bookmark</title>
+	<dht:siteStyle/>
 	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/bookmark.css"/>
 	<dht:faviconIncludes/>
 	<dht:scriptIncludes/>

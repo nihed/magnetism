@@ -8,6 +8,7 @@
 
 <head>
 	<title>Invite Yourself for a Mugshot</title>
+	<dht:siteStyle/>
     <link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/landing.css"/>	
 	<dht:faviconIncludes/>
 	<dht:scriptIncludes/>

@@ -18,6 +18,7 @@
 
 <head>
 	<title><c:out value="${person.viewedPerson.name}"/>'s Mugshot</title>
+	<dht:siteStyle/>	
 	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/person.css"/>
 	<dht:faviconIncludes/>
 	<dht:scriptIncludes/>

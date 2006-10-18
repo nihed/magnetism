@@ -13,8 +13,9 @@
 
 <head>
         <title>Create a Music Radar Theme</title>
+		<dht:siteStyle/>        
         <link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/radar.css"/>
-	<dht:faviconIncludes/>
+		<dht:faviconIncludes/>
         <dht:scriptIncludes/>
         <script type="text/javascript">
 	        dojo.require("dh.nowplaying");

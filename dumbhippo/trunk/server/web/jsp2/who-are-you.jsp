@@ -8,6 +8,7 @@
 
 <head>
 	<title>Log In</title>
+	<dht:siteStyle/>
 	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/who-are-you.css">
 	<dht:faviconIncludes/>
 	<dht:scriptIncludes/>

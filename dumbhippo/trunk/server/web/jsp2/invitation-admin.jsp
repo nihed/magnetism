@@ -13,6 +13,7 @@
 
 <head>
 	<title>Invitation Admin</title>
+	<dht:siteStyle/>	
     <dht:faviconIncludes/>
 	<dht:scriptIncludes/>
 	<script type="text/javascript">

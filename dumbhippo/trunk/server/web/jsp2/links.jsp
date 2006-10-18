@@ -6,6 +6,7 @@
 
 <head>
 	<title>Mugshot Web Swarm</title>
+	<dht:siteStyle/>	
 	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/links.css">
 	<dht:faviconIncludes/>
 	<dht:scriptIncludes/>

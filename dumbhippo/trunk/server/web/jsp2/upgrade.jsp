@@ -10,6 +10,7 @@
 
 <head>
 	<title>Upgrade</title>
+	<dht:siteStyle/>
 	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/upgrade.css"/>
 	<dht:faviconIncludes/>
 	<dht:scriptIncludes/>

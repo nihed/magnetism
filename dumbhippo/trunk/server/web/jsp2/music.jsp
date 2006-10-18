@@ -11,6 +11,7 @@
 
 <head>
 	<title>Mugshot Music Radar</title>
+	<dht:siteStyle/>	
 	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/music.css">
 	<dht:faviconIncludes/>
 	<dht:scriptIncludes/>

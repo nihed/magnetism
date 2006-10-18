@@ -11,6 +11,7 @@
 
 <head>
 	<title>Your Invitations</title>
+	<dht:siteStyle/>	
 	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/invitation.css"/>
 	<dht:faviconIncludes/>
 	<dht:scriptIncludes/>
