@@ -268,6 +268,7 @@ hippo_xml_split_process_value(HippoDataCache  *cache,
         *(const char **)info->location = value;
         break;
     case HIPPO_SPLIT_SET:
+        *(gboolean *)info->location = TRUE;
         break;
     default:
         g_error("Unknown split type %d\n", info->flags & HIPPO_SPLIT_TYPE_MASK);
@@ -384,13 +385,17 @@ hippo_xml_split(HippoDataCache *cache,
      */
     for (i = 0; i < count; i++) {
         HippoSplitInfo *info = &infos[i];
-        if (!info->found && !(info->flags & HIPPO_SPLIT_OPTIONAL)) {
-            g_set_error(&internal_error, HIPPO_XML_ERROR, HIPPO_XML_ERROR_NOT_FOUND,
-                        "%s '%s' not found for node <%s/>",
-                        ((info->flags & HIPPO_SPLIT_ELEMENT) != 0) ? "Child element" : "Attribute",
-                        info->attribute_name,
-                        node->name);
-            goto out;
+        if (!info->found) {
+            if (!(info->flags & HIPPO_SPLIT_OPTIONAL)) {
+                g_set_error(&internal_error, HIPPO_XML_ERROR, HIPPO_XML_ERROR_NOT_FOUND,
+                            "%s '%s' not found for node <%s/>",
+                            ((info->flags & HIPPO_SPLIT_ELEMENT) != 0) ? "Child element" : "Attribute",
+                            info->attribute_name,
+                            node->name);
+                goto out;
+            } else if ((info->flags & HIPPO_SPLIT_TYPE_MASK) == HIPPO_SPLIT_SET) {
+                *(gboolean *)info->location = FALSE;
+            }
         }
     }
 
