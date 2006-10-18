@@ -200,11 +200,11 @@ public class SchemaUpdater {
 		String name = tableAnnotation.appliesTo();
 		TableMetadata tableMeta = meta.getTableMetadata(name , "dumbhippo", null);
 		if (tableMeta == null) {
-			logger.warn("Couldn't find metadata for table {}", name);
-		}
-		
-		for (Index indexAnnotation : tableAnnotation.indexes()) {
-			updateIndex(tableMeta, indexAnnotation);
+			logger.warn("Couldn't find metadata for table {}, it probably doesn't exist yet", name);
+		} else {
+			for (Index indexAnnotation : tableAnnotation.indexes()) {
+				updateIndex(tableMeta, indexAnnotation);
+			}
 		}
 	}
 	

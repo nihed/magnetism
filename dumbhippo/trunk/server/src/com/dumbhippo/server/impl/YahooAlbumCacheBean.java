@@ -136,11 +136,11 @@ public class YahooAlbumCacheBean extends AbstractCacheBean<String,YahooAlbumData
 						// data is allowed to be null which saves the negative result row
 						// in the db
 						r = new CachedYahooAlbumData();
-						r.updateData(data);
+						r.updateData(albumId, data);
 						em.persist(r);
 					} else {
 						if (data != null) // don't ever save a negative result once we have data at some point
-							r.updateData(data);
+							r.updateData(albumId, data);
 					}
 					r.setLastUpdated(new Date());
 					

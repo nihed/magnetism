@@ -196,7 +196,7 @@ public class YahooArtistAlbumsCacheBean extends AbstractCacheBean<String,List<Ya
 							
 							CachedYahooArtistAlbumData d = createCachedAlbum(artistId);
 							d.setLastUpdated(now);
-							d.updateData(s);
+							d.updateData(artistId, s);
 							em.persist(d);
 						}
 					}

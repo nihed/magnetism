@@ -15,7 +15,9 @@ public enum JmsConnectionType {
 	 * until the current transaction commits succesfully. 
 	 */
 	TRANSACTED_IN_SERVER {
+		@Override
 		public boolean isTransacted() { return true; }
+		@Override
 		public boolean isInServer() { return true; }
 	},
 	/**
@@ -23,14 +25,18 @@ public enum JmsConnectionType {
 	 * handling. Messages are sent out immediately. 
 	 */
 	NONTRANSACTED_IN_SERVER {
+		@Override
 		public boolean isTransacted() { return false; }
+		@Override
 		public boolean isInServer() { return true; }
 	},
 	/**
 	 * A connection made from a client, without transaction
 	 */
 	NONTRANSACTED_IN_CLIENT {
+		@Override
 		public boolean isTransacted() { return false; }
+		@Override
 		public boolean isInServer() { return false; }
 	};
 	

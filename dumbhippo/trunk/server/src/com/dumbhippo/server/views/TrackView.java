@@ -36,6 +36,10 @@ public class TrackView {
 	private boolean showExpanded;
 	private List<PersonMusicPlayView> personMusicPlayViews;
 	
+	private void fillDefaults() {
+		if (name == null)
+			name = "Unknown Title";
+	}
 	
 	public TrackView() {
 		this.album = new AlbumView();
@@ -54,6 +58,7 @@ public class TrackView {
 		this.totalPlays = -1;
 		this.numberOfFriendsWhoPlayedTrack = -1;
 		this.showExpanded = false;
+		fillDefaults();
 	}
 
 	public TrackView(String name, String album, String artist, int duration, int trackNumber) {
@@ -65,6 +70,7 @@ public class TrackView {
 		this.totalPlays = -1;
 		this.numberOfFriendsWhoPlayedTrack = -1;
 		this.showExpanded = false;
+		fillDefaults();
 	}
 	
 	public AlbumView getAlbumView() {

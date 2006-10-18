@@ -19,6 +19,11 @@ public class AlbumView {
 	
 	private List<TrackView> tracks;
 
+	private void fillDefaults() {
+		if (title == null)
+			title = "Unknown Album";
+	}
+	
 	public AlbumView() {
 		this.releaseYear = -1;
 		this.smallImageWidth = -1;
@@ -34,6 +39,7 @@ public class AlbumView {
 		this.artistView = new ArtistView(artist);
 		this.title = album;
 		tracks = new ArrayList<TrackView>();
+		fillDefaults();
 	}
 	
 	public int getSmallImageHeight() {
