@@ -132,7 +132,7 @@ HippoWindowState
 hippo_platform_get_chat_window_state (HippoPlatform    *platform,
                                       const char       *chat_id)
 {
-    g_return_if_fail(HIPPO_IS_PLATFORM(platform));
+    g_return_val_if_fail(HIPPO_IS_PLATFORM(platform), HIPPO_WINDOW_STATE_CLOSED);
 
     return HIPPO_PLATFORM_GET_CLASS(platform)->get_chat_window_state(platform, chat_id);
 }

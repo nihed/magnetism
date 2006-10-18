@@ -711,6 +711,15 @@ HippoUI::ShowChatWindow(BSTR chatId)
 
     return S_OK;
 }
+    
+HippoWindowState
+HippoUI::getChatWindowState(BSTR chatId)
+{
+    if (!chatManager_)
+        return HIPPO_WINDOW_STATE_CLOSED;
+
+    return chatManager_->getChatWindowState(chatId);
+}
 
 HRESULT
 HippoUI::GetChatRoom(BSTR chatId, IHippoChatRoom **result)

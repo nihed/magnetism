@@ -51,6 +51,7 @@ public:
     HippoChatManagerImpl(IHippoUI *ui);
     virtual ~HippoChatManagerImpl();
     virtual void showChatWindow(BSTR chatId);
+    virtual HippoWindowState getChatWindowState(BSTR chatId);
     virtual void registerMessageHook(HWND window, HippoMessageHook *hook);
     virtual void unregisterMessageHook(HWND window);
     virtual HippoPtr<IHippoUI> getThreadUI();
@@ -61,6 +62,7 @@ public:
     virtual void shutdown();
 
     void doShowChatWindow(BSTR chatId);
+    HippoWindowState doGetChatWindowState(BSTR chatId);
     void onChatWindowClosed(HippoChatWindow *chatWindow);
 
 private:
@@ -115,6 +117,12 @@ void
 HippoChatManagerImpl::showChatWindow(BSTR chatId)
 {
     executor_->doAsync(new HippoShowChatWindowTask(this, chatId));
+}
+
+HippoWindowState
+HippoChatManagerImpl::getChatWindowState(BSTR chatId)
+{
+    return executor_->callSyncR(this, HippoChatManagerImpl::doGetChatWindowState, chatId);
 }
 
 void 
@@ -176,6 +184,21 @@ HippoChatManagerImpl::doShowChatWindow(BSTR chatId)
 
     window->create();
     window->setForegroundWindow();
+}
+
+HippoWindowState 
+HippoChatManagerImpl::doGetChatWindowState(BSTR chatId)
+{
+    for (std::vector<HippoChatWindow *>::iterator i = chatWindows_.begin();
+         i != chatWindows_.end();
+         i++)
+    {
+        if (wcscmp((*i)->getChatId(), chatId) == 0) {
+            return (*i)->getWindowState();
+        }
+    }
+
+    return HIPPO_WINDOW_STATE_CLOSED;
 }
 
 void 

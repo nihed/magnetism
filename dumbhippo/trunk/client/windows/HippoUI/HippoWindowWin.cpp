@@ -64,7 +64,6 @@ private:
     HippoGravity resizeGravity_;
 
     bool idleResize();
-    bool windowVisibleAtPoint(POINT point);
 
     HippoGObjectPtr<HippoCanvasItem> contents_;
     HippoPtr<HippoCanvas> contentsControl_;
@@ -500,43 +499,7 @@ HippoWindowImpl::getActive()
     if (!isCreated())
         return FALSE;
 
-    // The active window isn't actually what we are interested in here, since what we
-    // want to know for the Mugshot browser window is whether when the user clicks on
-    // the mugshot icon we should raise the window or instead hide it. And when the
-    // usre clicks on the mugshot icon, the panel is the active window. So, what
-    // we check here is if our window is the top window that isn't WS_EX_TOPMOST.
-
-    HWND top = GetTopWindow(NULL);
-    while (top) {
-        if (top == window_)
-            return TRUE;
-
-        WINDOWINFO windowInfo;
-        memset(&windowInfo, 0, sizeof(windowInfo));
-        windowInfo.cbSize = sizeof(windowInfo);
-        if (!GetWindowInfo(top, &windowInfo))
-            return FALSE;
-
-        if ((windowInfo.dwExStyle & WS_EX_TOPMOST) == 0)
-            return FALSE;
-
-        top = GetNextWindow(top, GW_HWNDNEXT);
-    }
-
-    return FALSE;
-}
-
-bool
-HippoWindowImpl::windowVisibleAtPoint(POINT point)
-{
-    HWND atPoint = WindowFromPoint(point);
-    if (!atPoint)
-        return FALSE;
-
-    // The root here isn't the X root window (the entire screen), but the toplevel window
-    HWND root = GetAncestor(atPoint, GA_ROOT);
-
-    return root == window_;
+    return hippoWindowIsActive(window_);
 }
 
 bool
@@ -544,35 +507,8 @@ HippoWindowImpl::getOnscreen()
 {
     if (!isCreated())
         return FALSE;
-    
-    // We consider a window to be partially visible (and hence "onscreen") if
-    // any of its four corners are visible
 
-    RECT rect;
-
-    if (!GetWindowRect(window_, &rect))
-        return FALSE;
-
-    POINT point;
-
-    point.x = rect.left;
-    point.y = rect.top;
-    if (windowVisibleAtPoint(point))
-        return true;
-
-    point.x = rect.right - 1;
-    if (windowVisibleAtPoint(point))
-        return true;
-    
-    point.y = rect.bottom - 1;
-    if (windowVisibleAtPoint(point))
-        return true;
-     
-    point.x = rect.left;
-    if (windowVisibleAtPoint(point))
-        return true;
-
-    return FALSE;
+    return hippoWindowIsOnscreen(window_);
 }
 
 void

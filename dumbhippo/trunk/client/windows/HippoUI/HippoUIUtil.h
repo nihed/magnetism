@@ -115,4 +115,7 @@ private:
     }
 };
 
+bool hippoWindowIsOnscreen(HWND window);
+bool hippoWindowIsActive(HWND window);
+
 void hippo_rectangle_from_rect(HippoRectangle *hippo_rect, RECT *windows_rect);

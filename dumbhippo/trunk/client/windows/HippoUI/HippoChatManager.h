@@ -7,6 +7,7 @@
 #include <HippoMessageHook.h>
 #include <HippoThreadExecutor.h>
 #include <HippoUtil.h>
+#include <hippo/hippo-basics.h>
 
 class HippoChatWindow;
 
@@ -17,6 +18,7 @@ public:
 
     virtual ~HippoChatManager() {}
     virtual void showChatWindow(BSTR chatId) = 0;
+    virtual HippoWindowState getChatWindowState(BSTR chatId) = 0;
     virtual void onChatWindowClosed(HippoChatWindow *chatWindow) = 0;
     virtual void registerMessageHook(HWND window, HippoMessageHook *hook) = 0;
     virtual void unregisterMessageHook(HWND window) = 0;

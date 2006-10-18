@@ -8,6 +8,7 @@
 #include "HippoDispatchableObject.h"
 #include "HippoIE.h"
 #include "HippoChatManager.h"
+#include "HippoUIUtil.h"
 #include "resource.h"
 
 static const int BASE_WIDTH = 600;
@@ -30,6 +31,7 @@ public:
 
     void setChatId(BSTR chatId);
     BSTR getChatId();
+    HippoWindowState getWindowState();
 
     bool create();
     void setForegroundWindow();
@@ -182,6 +184,19 @@ BSTR
 HippoChatWindowImpl::getChatId()
 {
     return chatId_.m_str;
+}
+
+HippoWindowState 
+HippoChatWindowImpl::getWindowState()
+{
+    if (!window_)
+        return HIPPO_WINDOW_STATE_CLOSED;
+    else if (!hippoWindowIsOnscreen(window_))
+        return HIPPO_WINDOW_STATE_HIDDEN;
+    else if (!hippoWindowIsActive(window_))
+        return HIPPO_WINDOW_STATE_ONSCREEN;
+    else
+        return HIPPO_WINDOW_STATE_ACTIVE;
 }
 
 // IHippoChatWindow
@@ -380,6 +395,10 @@ HippoChatWindowImpl::setForegroundWindow()
 STDMETHODIMP
 HippoChatWindowImpl::DemandAttention()
 {
+#if 0
+    // We disable attention demanding for now, since we show the
+    // notification window when the chat window isn't visible
+
     FLASHWINFO flashInfo;
     flashInfo.cbSize = sizeof(flashInfo);
     flashInfo.hwnd = window_;
@@ -387,6 +406,7 @@ HippoChatWindowImpl::DemandAttention()
     flashInfo.dwFlags = FLASHW_TIMERNOFG | FLASHW_TRAY;
     flashInfo.uCount = 5;
     FlashWindowEx(&flashInfo);
+#endif
     return S_OK;
 }
 

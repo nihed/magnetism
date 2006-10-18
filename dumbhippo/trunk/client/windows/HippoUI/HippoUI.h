@@ -97,6 +97,8 @@ public:
     void ignoreChat(BSTR chatId);
     void groupInvite(BSTR groupId, BSTR userId);
 
+    HippoWindowState getChatWindowState(BSTR chatId);
+
     void debugLogW(const WCHAR *format, ...); // UTF-16
     void debugLogU(const char *format, ...);  // UTF-8
     void logErrorU(const char *format, ...); // UTF-8

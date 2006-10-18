@@ -45,8 +45,12 @@ static void         hippo_platform_impl_http_request        (HippoPlatform     *
                                                              const char        *url,
                                                              HippoHttpFunc      func,
                                                              void              *data);
-static void         hippo_platform_impl_show_chat_window    (HippoPlatform     *platform,
-                                                             const char        *chat_id);
+
+static void             hippo_platform_impl_show_chat_window    (HippoPlatform  *platform,
+                                                                 const char     *chat_id);
+static HippoWindowState hippo_platform_impl_get_chat_window_state(HippoPlatform *platform,
+                                                                  const char    *chat_id);
+
 static gboolean     hippo_platform_impl_can_play_song_download (HippoPlatform     *platform,
                                                                 HippoSongDownload *song_download);
 
@@ -79,6 +83,7 @@ hippo_platform_impl_iface_init(HippoPlatformClass *klass)
     klass->open_url = hippo_platform_impl_open_url;
     klass->http_request = hippo_platform_impl_http_request;
     klass->show_chat_window = hippo_platform_impl_show_chat_window;
+    klass->get_chat_window_state = hippo_platform_impl_get_chat_window_state;
     klass->can_play_song_download = hippo_platform_impl_can_play_song_download;
     klass->get_message_server = hippo_platform_impl_get_message_server;
     klass->get_web_server = hippo_platform_impl_get_web_server;
@@ -664,6 +669,20 @@ hippo_platform_impl_show_chat_window(HippoPlatform   *platform,
 
     impl->ui->ShowChatWindow(HippoBSTR::fromUTF8(chat_id));
 }
+
+static HippoWindowState 
+hippo_platform_impl_get_chat_window_state(HippoPlatform *platform,
+                                          const char    *chat_id)
+{
+    HippoPlatformImpl *impl = HIPPO_PLATFORM_IMPL(platform);
+    if (!impl->ui) {
+        g_warning("trying to hippo_platform_get_chat_window_state before ui set on platform object");
+        return HIPPO_WINDOW_STATE_CLOSED;
+    }
+
+    return impl->ui->getChatWindowState(HippoBSTR::fromUTF8(chat_id));
+}
+
 
 static gboolean
 hippo_platform_impl_can_play_song_download(HippoPlatform     *platform,
