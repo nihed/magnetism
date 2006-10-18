@@ -22,8 +22,8 @@
 						<img src="/images2/${buildStamp}/add.png"/>	
 						<dht:asyncActionLink 
 							tagName="span"
-							exec="dh.actions.addMember('${group.viewedGroupId}', '${who.user.id}', function () { dh.asyncActionLink.complete('addMember${group.viewedGroupId}${who.user.id}') })"
-							ctrlId="addMember${group.viewedGroupId}${who.user.id}"
+							exec="dh.actions.addMember('${block.groupView.group.id}', '${block.memberView.user.id}', function () { dh.asyncActionLink.complete('addMember${block.groupView.group.id}${block.memberView.user.id}') })"
+							ctrlId="addMember${group.groupView.group.id}${block.memberView.user.id}"
 							text="Invite to group"
 							completedText="Invited to group"/>	
 					</c:when>
