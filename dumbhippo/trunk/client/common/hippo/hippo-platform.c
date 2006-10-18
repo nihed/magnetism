@@ -128,6 +128,15 @@ hippo_platform_show_chat_window(HippoPlatform   *platform,
                                                          chat_id);
 }
 
+HippoWindowState 
+hippo_platform_get_chat_window_state (HippoPlatform    *platform,
+                                      const char       *chat_id)
+{
+    g_return_if_fail(HIPPO_IS_PLATFORM(platform));
+
+    return HIPPO_PLATFORM_GET_CLASS(platform)->get_chat_window_state(platform, chat_id);
+}
+
 char*
 hippo_platform_get_message_server(HippoPlatform *platform)
 {

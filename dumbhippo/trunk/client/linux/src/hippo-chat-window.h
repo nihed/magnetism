@@ -23,6 +23,7 @@ HippoChatWindow* hippo_chat_window_new                    (HippoDataCache *cache
                                                            HippoChatRoom  *room);
 
 HippoChatRoom*   hippo_chat_window_get_room               (HippoChatWindow *window);
+HippoWindowState hippo_chat_window_get_state              (HippoChatWindow *window);
 
 G_END_DECLS
 

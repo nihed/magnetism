@@ -32,8 +32,12 @@ static void         hippo_platform_impl_http_request        (HippoPlatform     *
                                                              const char        *url,
                                                              HippoHttpFunc      func,
                                                              void              *data);
-static void         hippo_platform_impl_show_chat_window    (HippoPlatform     *platform,
-                                                             const char        *chat_id);
+
+static void             hippo_platform_impl_show_chat_window      (HippoPlatform *platform,
+                                                                   const char    *chat_id);
+static HippoWindowState hippo_platform_impl_get_chat_window_state (HippoPlatform *platform,
+                                                                   const char    *chat_id);
+
 static gboolean     hippo_platform_impl_can_play_song_download (HippoPlatform     *platform,
                                                                 HippoSongDownload *song_download);
 static char*        hippo_platform_impl_get_message_server  (HippoPlatform     *platform);
@@ -75,6 +79,7 @@ hippo_platform_impl_iface_init(HippoPlatformClass *klass)
     klass->open_url = hippo_platform_impl_open_url;
     klass->http_request = hippo_platform_impl_http_request;
     klass->show_chat_window = hippo_platform_impl_show_chat_window;
+    klass->get_chat_window_state = hippo_platform_impl_get_chat_window_state;
     klass->can_play_song_download = hippo_platform_impl_can_play_song_download;
     
     klass->get_message_server = hippo_platform_impl_get_message_server;
@@ -312,7 +317,12 @@ hippo_platform_impl_show_chat_window (HippoPlatform     *platform,
     hippo_app_join_chat(hippo_get_app(), chat_id);
 }
 
-
+HippoWindowState 
+hippo_platform_impl_get_chat_window_state (HippoPlatform    *platform,
+                                           const char       *chat_id)
+{
+    return hippo_app_get_chat_state(hippo_get_app(), chat_id);
+}
 
 static gboolean
 hippo_platform_impl_can_play_song_download(HippoPlatform     *platform,

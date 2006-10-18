@@ -380,6 +380,17 @@ hippo_app_join_chat(HippoApp   *app,
     gtk_window_present(GTK_WINDOW(window));   
 }
 
+HippoWindowState
+hippo_app_get_chat_state (HippoApp   *app,
+                          const char *chat_id)
+{
+    HippoChatWindow *window = g_hash_table_lookup(app->chat_windows, chat_id);
+    if (window == NULL)
+        return HIPPO_WINDOW_STATE_CLOSED;
+
+    return hippo_chat_window_get_state(window);
+}
+
 gboolean
 hippo_app_post_is_active(HippoApp   *app,
                          const char *post_id)

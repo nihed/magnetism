@@ -1,4 +1,6 @@
 /* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
+#include "hippo-block-post.h"
+#include "hippo-block-group-chat.h"
 #include "hippo-common-internal.h"
 #include "hippo-stack-manager.h"
 #include "hippo-canvas-base.h"
@@ -330,7 +332,6 @@ manager_set_notification_visible(StackManager *manager,
     }
 
     hippo_window_set_visible(manager->notification_window, visible);
-
 }
 
 static void
@@ -410,6 +411,87 @@ manager_toggle_browser(StackManager *manager)
     }
 }
 
+static gboolean
+chat_is_visible(StackManager *manager,
+                const char   *chat_id)
+{
+    HippoPlatform *platform = hippo_connection_get_platform(manager->connection);
+    
+    switch (hippo_platform_get_chat_window_state(platform, chat_id)) {
+    case HIPPO_WINDOW_STATE_CLOSED:
+        return FALSE;
+    case HIPPO_WINDOW_STATE_HIDDEN:
+        return FALSE;
+    case HIPPO_WINDOW_STATE_ONSCREEN:
+        return TRUE;
+    case HIPPO_WINDOW_STATE_ACTIVE:
+        return TRUE;
+    }
+
+    return TRUE;
+}
+
+typedef struct {
+    StackManager *manager;
+    gboolean is_needed;
+} NotificationNeededInfo;
+
+static void
+notification_is_needed_callback(HippoCanvasItem *item,
+                                void            *data)
+{
+    NotificationNeededInfo *info = data;
+    gboolean notify_for_block = TRUE;
+
+    HippoBlock *block;
+
+    g_object_get(G_OBJECT(item), "block", &block, NULL);
+
+    g_debug("Checking if notification is needed for block %s\n", hippo_block_get_guid(block));
+    
+    if (HIPPO_IS_BLOCK_POST(block)) {
+        HippoPost *post;
+        
+        g_object_get(G_OBJECT(block), "post", &post, NULL);
+        if (post) {
+            if (chat_is_visible(info->manager, hippo_post_get_guid(post)))
+                notify_for_block = FALSE;
+            g_object_unref(post);
+        }
+    } else if (HIPPO_IS_BLOCK_GROUP_CHAT(block)) {
+        HippoGroup *group;
+        
+        g_object_get(G_OBJECT(block), "group", &group, NULL);
+        if (group) {
+            if (chat_is_visible(info->manager, hippo_entity_get_guid(HIPPO_ENTITY(group))))
+                notify_for_block = FALSE;
+            g_object_unref(group);
+        }
+    }
+
+    g_object_unref(block);
+
+    if (notify_for_block)
+        info->is_needed = TRUE;
+}
+
+static gboolean
+notification_is_needed(StackManager *manager)
+{
+    NotificationNeededInfo info;
+    
+    info.manager = manager;
+    info.is_needed = FALSE;
+    
+    g_debug("Checking if notification is needed\n");
+    
+    hippo_canvas_box_foreach(HIPPO_CANVAS_BOX(manager->notification_item), 
+                             notification_is_needed_callback,
+                             &info);
+
+    return info.is_needed;
+}
+
 static void
 resort_block(StackManager *manager,
              HippoBlock   *block)
@@ -431,8 +513,7 @@ resort_block(StackManager *manager,
     hippo_canvas_stack_add_block(HIPPO_CANVAS_STACK(manager->notification_item),
                                  block);
 
-    if (!browser_is_onscreen(manager) &&
-        !hippo_canvas_box_is_empty(HIPPO_CANVAS_BOX(manager->notification_item)))
+    if (!browser_is_onscreen(manager) && notification_is_needed(manager))
         manager_set_notification_visible(manager, TRUE);
 }
 

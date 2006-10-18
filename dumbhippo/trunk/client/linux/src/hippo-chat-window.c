@@ -22,6 +22,11 @@ static void      hippo_chat_window_class_init          (HippoChatWindowClass  *k
 static void      hippo_chat_window_finalize            (GObject               *object);
 static void      hippo_chat_window_destroy             (GtkObject             *object);
 
+static gboolean hippo_chat_window_unmap_event             (GtkWidget           *widget,
+                                                          GdkEventAny         *event);
+static gboolean hippo_chat_window_visibility_notify_event (GtkWidget           *widget,
+                                                           GdkEventVisibility  *event);
+
 static void      hippo_chat_window_connect_user        (HippoChatWindow *window,
                                                         HippoPerson     *person);
 static void      hippo_chat_window_disconnect_user     (HippoChatWindow *window,
@@ -69,6 +74,8 @@ struct _HippoChatWindow {
     GHashTable *message_tags;
     
     GHashTable *connected_users;
+
+    guint onscreen : 1;
 };
 
 struct _HippoChatWindowClass {
@@ -82,6 +89,8 @@ static void
 hippo_chat_window_init(HippoChatWindow  *window)
 {
     window->member_model = GTK_TREE_MODEL(gtk_list_store_new(MEMBER_NUM_COLUMNS, HIPPO_TYPE_PERSON, GDK_TYPE_PIXBUF));
+    
+    gtk_widget_add_events(GTK_WIDGET(window), GDK_VISIBILITY_NOTIFY_MASK);
 }
 
 static void
@@ -89,9 +98,13 @@ hippo_chat_window_class_init(HippoChatWindowClass  *klass)
 {
     GObjectClass *object_class = G_OBJECT_CLASS(klass);
     GtkObjectClass *gtk_object_class = GTK_OBJECT_CLASS(klass);
+    GtkWidgetClass *widget_class = GTK_WIDGET_CLASS(klass);
 
     object_class->finalize = hippo_chat_window_finalize;
     gtk_object_class->destroy = hippo_chat_window_destroy;
+
+    widget_class->unmap_event = hippo_chat_window_unmap_event;
+    widget_class->visibility_notify_event = hippo_chat_window_visibility_notify_event;
 }
 
 static HippoConnection*
@@ -297,6 +310,28 @@ hippo_chat_window_finalize(GObject *object)
     g_object_unref(window->cache);
     
     G_OBJECT_CLASS(hippo_chat_window_parent_class)->finalize(object);
+}
+
+static gboolean
+hippo_chat_window_unmap_event(GtkWidget   *widget,
+                              GdkEventAny *event)
+{
+    HippoChatWindow *chat_window = HIPPO_CHAT_WINDOW(widget);
+
+    chat_window->onscreen = FALSE;
+
+    return FALSE;
+}
+
+static gboolean
+hippo_chat_window_visibility_notify_event(GtkWidget           *widget,
+                                          GdkEventVisibility  *event)
+{
+    HippoChatWindow *chat_window = HIPPO_CHAT_WINDOW(widget);
+
+    chat_window->onscreen = event->state != GDK_VISIBILITY_FULLY_OBSCURED;
+
+    return FALSE;
 }
 
 HippoChatRoom*
@@ -579,12 +614,19 @@ on_message_added(HippoChatRoom         *room,
         g_object_set(G_OBJECT(tag), "justification", GTK_JUSTIFY_RIGHT, NULL);
         pd->where = PICTURE_ON_RIGHT;
 
+#if 0
+        /* We no longer flash ourselves in the task bar for incoming messages
+         * since we show the notification popup if the chat window isn't
+         * visible
+         */
+        
         /* Apparently this is how you say "flash taskbar icon" with
          * current metacity/etc., though it does not seem very sane
          * to me.
          */
         if (GTK_WIDGET_REALIZED(window))
             gdk_window_raise(GTK_WIDGET(window)->window);
+#endif
     }
 
     gtk_text_buffer_insert_with_tags(buffer, &iter, text, len, tag, NULL);
@@ -846,4 +888,19 @@ on_send_entry_changed(GtkWidget             *entry,
     
     text = gtk_entry_get_text(GTK_ENTRY(window->send_entry));
     gtk_widget_set_sensitive(window->send_button, !is_all_whitespace(text));
+}
+
+HippoWindowState 
+hippo_chat_window_get_state(HippoChatWindow *window)
+{
+    if (!GTK_WIDGET_VISIBLE(window))
+        return HIPPO_WINDOW_STATE_CLOSED;
+    else if (!window->onscreen)
+        return HIPPO_WINDOW_STATE_HIDDEN;
+    else {
+        gboolean is_active;
+        g_object_get(GTK_WINDOW(window), "is-active", &is_active, NULL);
+
+        return is_active ? HIPPO_WINDOW_STATE_ACTIVE : HIPPO_WINDOW_STATE_ONSCREEN;
+    }
 }

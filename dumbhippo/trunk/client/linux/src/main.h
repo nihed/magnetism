@@ -52,9 +52,13 @@ void       hippo_app_visit_entity_id(HippoApp    *app,
                                      const char  *guid);
 void       hippo_app_invite_to_group(HippoApp   *app,
                                      const char *group_id,
-                                     const char *user_id);                                     
-void       hippo_app_join_chat      (HippoApp   *app,
-                                     const char *chat_id);
+                                     const char *user_id);
+
+void              hippo_app_join_chat     (HippoApp   *app,
+                                           const char *chat_id);
+HippoWindowState hippo_app_get_chat_state (HippoApp   *app,
+                                           const char *chat_id);
+
 gboolean   hippo_app_post_is_active (HippoApp   *app,
                                      const char *post_id);                                     
 gboolean   hippo_app_chat_is_active (HippoApp   *app,
