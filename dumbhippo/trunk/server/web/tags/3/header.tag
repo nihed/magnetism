@@ -28,7 +28,7 @@
 			</form>
 			<script type="text/javascript">
 				dhGlobalSearchEntryInit = function () {
-					var searchBox = document.getElementById('dhGlobalSearchEntry');
+					var searchBox = document.getElementById('dhSearchBoxEntry');
 					var entry = new dh.textinput.Entry(searchBox, "Search for topics, people, music", "");
 				}
 				dhGlobalSearchEntryInit()
