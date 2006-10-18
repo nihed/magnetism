@@ -23,17 +23,7 @@ public class GroupMemberBlockView extends BlockView {
 	public GroupMemberBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd) {
 		super(viewpoint, block, ubd);
 	}
-	
-	@Override
-	public String getWebTitleType() {
-		return "Group update";
-	}
-	
-	@Override
-	public String getIconName() {
-		return "mugshot_icon.png";
-	}
-	
+
 	public GroupView getGroupView() {
 		return this.group;
 	}

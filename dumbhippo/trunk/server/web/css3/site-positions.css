@@ -247,7 +247,12 @@ div.dh-notification {
 }
 
 .dh-stacker-block-header {
+	height:				40px;
 	width:				100%;
+}
+
+.dh-stacker-block-header-description {
+	overflow:			hidden;
 }
 
 .dh-stacker-block-description {
@@ -256,6 +261,10 @@ div.dh-notification {
 
 .dh-stacker-block-right {
 	text-align:			right;
+	margin-right:		5px;
+}
+
+.dh-stacker-block-right-from-image {
 	margin-right:		5px;
 }
 

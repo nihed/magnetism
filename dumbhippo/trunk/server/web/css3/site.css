@@ -286,6 +286,11 @@ div.dh-async-action-link-complete {
 	font-size:			14px;
 }
 
+.dh-stacker-block-header-description {
+	font-weight:		normal;
+	font-size:			12px;
+}
+
 .dh-stacker-block-title-title {
 }
 
@@ -303,6 +308,11 @@ div.dh-async-action-link-complete {
 	display:			none;
 	font-size:			10px;
 	text-decoration:	underline;
+}
+
+.dh-stacker-block-right-from-name {
+	font-size:			14px;
+	font-style:			italic;
 }
 
 .dh-stacker-block-description {

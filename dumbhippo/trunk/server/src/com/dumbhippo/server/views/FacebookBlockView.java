@@ -5,7 +5,6 @@ import java.util.List;
 
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.persistence.Block;
-import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.FacebookEvent;
 import com.dumbhippo.persistence.UserBlockData;
 
@@ -22,21 +21,6 @@ public class FacebookBlockView extends BlockView {
 
 	public FacebookBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd) {
 		super(viewpoint, block, ubd);
-	}
-	
-	@Override
-	public String getWebTitleType() {
-		return "Facebook";
-	}
-
-	@Override	
-	public String getWebTitle() {
-		return "new updates";
-	}
-	
-	@Override
-	public String getIconName() {
-		return ExternalAccountType.FACEBOOK.getIconName();
 	}
 	
 	public PersonView getUserView() {

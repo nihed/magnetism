@@ -9,6 +9,8 @@
 	<tr>
     	<td class="dh-stacker-block-content-left">&nbsp;</td>
         <td width="100%">
+        	<!-- We move the description here when the block is opened -->
+        	<div id="dhStackerBlockContentDescription-${blockId}">&nbsp;</div>
 			<div class="dh-stacker-block-content-main">        
 				<jsp:doBody/>
 			</div>

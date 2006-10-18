@@ -24,7 +24,7 @@
 	<dht3:shinyBox color="grey">
 		<dht3:personHeader who="${person.viewedPerson}" isSelf="true" shortVersion="${person.pageableStack.position > 0}"><a href="/account">Edit my Mugshot account</a></dht3:personHeader>
 		<c:if test="${person.pageableStack.position == 0}">
-		    <dht3:stacker person="${person.viewedPerson}" stackOrder="1" stackType="dhMugshot" pageable="${person.pageableMugshot}"/>
+		    <dht3:stacker person="${person.viewedPerson}" stackOrder="1" stackType="dhMugshot" pageable="${person.pageableMugshot}" showFrom="false"/>
 		</c:if>    
 	</dht3:shinyBox>
 	

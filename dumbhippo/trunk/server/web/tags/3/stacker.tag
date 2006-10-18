@@ -7,6 +7,7 @@
 <%@ attribute name="stackOrder" required="true" type="java.lang.Integer" %>
 <%@ attribute name="stackType" required="true" type="java.lang.String" %>
 <%@ attribute name="pageable" required="true" type="com.dumbhippo.server.Pageable" %>
+<%@ attribute name="showFrom" required="true" type="java.lang.Boolean" %>
 
 <c:set var="previousBlockType" value="" scope="page"/>
 
@@ -14,10 +15,10 @@
 	<c:forEach items="${pageable.results}" var="block" varStatus="blockIdx">
 		<c:choose>
 			<c:when test="${blockIdx.count % 2 == 0}">
-				<dht3:block block="${block}" offset="${previousBlockType == block.blockType}" blockId="${stackOrder}_${blockIdx.count + 1}"/>
+				<dht3:block block="${block}" offset="${previousBlockType == block.blockType}" blockId="${stackOrder}_${blockIdx.count + 1}" showFrom="${showFrom}"/>
 			</c:when>
 			<c:otherwise>
-				<dht3:block block="${block}" offset="${previousBlockType == block.blockType}" blockId="${stackOrder}_${blockIdx.count + 1}"/>
+				<dht3:block block="${block}" offset="${previousBlockType == block.blockType}" blockId="${stackOrder}_${blockIdx.count + 1}" showFrom="${showFrom}"/>
 			</c:otherwise>
 		</c:choose>
 		<c:set var="previousBlockType" value="" scope="page"/>		

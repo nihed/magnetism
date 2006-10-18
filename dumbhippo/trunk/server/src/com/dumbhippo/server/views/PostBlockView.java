@@ -23,27 +23,7 @@ public class PostBlockView extends BlockView {
 	public PostBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd) {
 		super(viewpoint, block, ubd);
 	}
-	
-	@Override
-	public String getWebTitleType() {
-		return "Web Swarm";
-	}
-	
-	@Override
-	public String getWebTitle() {
-		return postView.getTitleAsHtml();
-	}
-	
-	@Override
-	public String getWebTitleLink() {
-		return "/visit?post=" + postView.getIdentifyingGuid();
-	}
-	
-	@Override
-	public String getIconName() {
-		return "webswarm_icon.png";
-	}
-	
+
 	public PostView getPostView() {
 		return this.postView;
 	}
@@ -60,11 +40,6 @@ public class PostBlockView extends BlockView {
 		this.recentMessages = recentMessages;
 	}
 	
-	@Override
-	public String getDescriptionHtml() {
-		return postView.getTextAsHtml();
-	}
-
 	@Override
 	protected void writeDetailsToXmlBuilder(XmlBuilder builder) {
 		builder.openElement("post",

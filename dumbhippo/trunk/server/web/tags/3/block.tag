@@ -6,15 +6,16 @@
 <%@ attribute name="block" required="true" type="com.dumbhippo.server.views.BlockView" %>
 <%@ attribute name="offset" required="true" type="java.lang.Boolean" %>
 <%@ attribute name="blockId" required="true" type="java.lang.String" %>
+<%@ attribute name="showFrom" required="false" type="java.lang.Boolean" %>
 
 <c:choose>
 	<c:when test="${dh:enumIs(block.blockType, 'POST')}">
-		<dht3:postBlock block="${block}" blockId="${blockId}" offset="${offset}"/>
+		<dht3:postBlock block="${block}" blockId="${blockId}" offset="${offset}" showFrom="${showFrom}"/>
 	</c:when>
    	<c:when test="${dh:enumIs(block.blockType, 'MUSIC_PERSON')}">	
-   		<dht3:musicPersonBlock block="${block}" blockId="${blockId}" offset="${offset}"/>
+   		<dht3:musicPersonBlock block="${block}" blockId="${blockId}" offset="${offset}" showFrom="${showFrom}"/>
    	</c:when>
    	<c:when test="${dh:enumIs(block.blockType, 'GROUP_MEMBER')}">
-   		<dht3:groupMemberBlock block="${block}" blockId="${blockId}" offset="${offset}"/>
+   		<dht3:groupMemberBlock block="${block}" blockId="${blockId}" offset="${offset}" showFrom="${showFrom}"/>
    	</c:when>
 </c:choose>

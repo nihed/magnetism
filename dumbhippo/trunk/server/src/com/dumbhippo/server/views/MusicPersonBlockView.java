@@ -21,16 +21,6 @@ public class MusicPersonBlockView extends BlockView {
 		super(viewpoint, block, ubd);
 	}
 	
-	@Override
-	public String getWebTitleType() {
-		return "Music Radar";
-	}
-
-	@Override
-	public String getIconName() {
-		return "musicradar_icon.png";
-	}
-	
 	public PersonView getUserView() {
 		return userView;
 	}

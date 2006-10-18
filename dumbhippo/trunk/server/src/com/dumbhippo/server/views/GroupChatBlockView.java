@@ -18,24 +18,9 @@ public class GroupChatBlockView extends BlockView {
 		this.group = group;
 		this.recentMessages = recentMessages;
 	}
-
+	
 	public GroupChatBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd) {
 		super(viewpoint, block, ubd);
-	}
-	
-	@Override
-	public String getWebTitleType() {
-		return "Mugshot";
-	}
-	
-	@Override
-	public String getWebTitle() {
-		return "Membership change";
-	}
-	
-	@Override
-	public String getIconName() {
-		return "mugshot_icon.png";
 	}
 	
 	public GroupView getGroupView() {

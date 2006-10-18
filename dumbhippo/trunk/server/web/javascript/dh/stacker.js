@@ -1807,6 +1807,13 @@ dh.stacker.blockHoverStart = function(id) {
 		controls.style.display = "block";		
 		var closeButton = document.getElementById("dhStackerBlockClose-" + id)
 		closeButton.style.display = "block";
+		/*
+		var description = document.getElementById("dhStackerBlockHeaderDescription-" + id)
+		description.parentNode.removeChild(description)
+		var contentDescriptionContainer = document.getElementById("dhStackerBlockContentDescriptionContainer-" + id)
+		while (contentDescription.firstChild) { contentDescription.removeChild(contentDescription.firstChild) }
+		contentDescription.appendChild(description)
+		*/
 	}, timeout);
 }
 
@@ -1822,5 +1829,11 @@ dh.stacker.blockClose = function(id) {
 	controls.style.display = "none";		
 	var closeButton = document.getElementById("dhStackerBlockClose-" + id)
 	closeButton.style.display = "none";	
+	/*
+	var description = document.getElementById("dhStackerBlockHeaderDescription-" + id)
+	description.parentNode.removeChild(description)	
+	var headerDescriptionContainer = document.getElementById("dhStackerBlockHeaderDescriptionContainer-" + id)	
+	headerDescriptionContainer.appendChild(description)
+	*/
 	dh.stacker.lastClosedBlockTime = new Date()
 }

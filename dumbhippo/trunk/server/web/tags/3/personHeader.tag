@@ -26,16 +26,7 @@
 				</td>
 				<td>
 					<div class="dh-person-header-next-to-image">
-						<span class="dh-presence">
-							<c:choose>
-								<c:when test="${who.online}">
-									<dh:png src="/images3/${buildStamp}/online_icon.png" style="width: 12px; height: 12px;"/>
-								</c:when>
-								<c:otherwise>
-									<dh:png src="/images3/${buildStamp}/offline_icon.png" style="width: 12px; height: 12px;"/>
-								</c:otherwise>
-							</c:choose>
-						</span>			
+						<dht3:presenceIcon who="${who}"/>		
 						<c:choose>
 							<c:when test="${isSelf}">
 							<span class="dh-person-header-name"><c:out value="${who.name}"/>'s Mugshot</span>

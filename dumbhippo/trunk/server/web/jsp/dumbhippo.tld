@@ -302,4 +302,9 @@
     	<function-class>com.dumbhippo.web.tags.FuncUtils</function-class>
     	<function-signature>boolean enumIs( java.lang.Enum, java.lang.String )</function-signature>
     </function>
+    <function>
+    	<name>myInstanceOf</name>
+    	<function-class>com.dumbhippo.web.tags.FuncUtils</function-class>
+    	<function-signature>boolean myInstanceOf( java.lang.Object, java.lang.String )</function-signature>
+    </function>    
 </taglib>

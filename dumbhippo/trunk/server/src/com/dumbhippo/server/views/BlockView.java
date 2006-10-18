@@ -49,16 +49,6 @@ public abstract class BlockView implements ObjectView {
 		return DateUtils.formatTimeAgo(block.getTimestamp());
 	}
 	
-	public String getDescriptionHtml() { return ""; };
-	
-	public abstract String getWebTitleType();
-	
-	public String getWebTitle() { return ""; };
-	
-	public String getWebTitleLink() { return null; }
-	
-	public abstract String getIconName();
-	
 	public Guid getIdentifyingGuid() {
 		return block.getGuid();
 	}

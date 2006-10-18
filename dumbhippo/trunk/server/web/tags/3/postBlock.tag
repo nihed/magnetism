@@ -15,12 +15,13 @@
 			<span class="dh-stacker-block-title-title">
 				<jsp:element name="a">
 					<jsp:attribute name="class">dh-underlined-link</jsp:attribute>
-					<jsp:attribute name="href"><c:out value="${block.webTitleLink}"/></jsp:attribute>
-					<jsp:body><c:out value="${block.webTitle}"/></jsp:body>
+					<jsp:attribute name="href">/visit?post=${block.postView.identifyingGuid}</jsp:attribute>
+					<jsp:body><c:out value="${block.postView.title}"/></jsp:body>
 				</jsp:element>		
 			</span>
+			<dht3:blockHeaderDescription blockId="${blockId}">${block.postView.textAsHtml}</dht3:blockHeaderDescription>
 		</dht3:blockHeaderLeft>
-		<dht3:blockHeaderRight blockId="${blockId}" icon="${fromIcon}">
+		<dht3:blockHeaderRight blockId="${blockId}" from="${block.postView.poster}" showFrom="${showFrom}">
 			<c:choose>
 				<c:when test="${block.postView.livePost.totalViewerCount == 1}">1 view</c:when>
 				<c:otherwise>${block.postView.livePost.totalViewerCount} views</c:otherwise>
@@ -47,9 +48,6 @@
 			</dht3:blockHeaderControls>	
 		</dht3:blockHeaderRight>
 	</dht3:blockHeader>
-	<dht3:blockDescription>
-		${block.postView.textAsHtml}
-	</dht3:blockDescription>
 	<dht3:blockContent blockId="${blockId}">
 		<span class="dh-stacker-block-content-post-chatting"><c:out value="${block.postView.livePost.chattingUserCount}"/></span> people chatting <dht:actionLinkChat prefix=" | " oneLine="true" chatId="${block.postView.post.id}" kind="post"/>
 		<c:forEach items="${block.recentMessages}" end="3" var="msg" varStatus="msgIdx">
@@ -57,7 +55,7 @@
 			<img src="/images3/${buildStamp}/comment_iconchat_icon.png"/>
 			<span class="dh-stacker-block-chat">
 				<span class="dh-stacker-block-chat-message"><c:out value="${msg.msg.messageText}"/></span> -
-				<span class="dh-stacker-block-chat-sender"><dht3:personLink who="${msg.senderView}"/></span>
+				<span class="dh-stacker-block-chat-sender"><dht3:entityLink who="${msg.senderView}"/></span>
 			</span>
 			</div>
 		</c:forEach>
