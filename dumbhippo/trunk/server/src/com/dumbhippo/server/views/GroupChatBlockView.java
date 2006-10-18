@@ -13,12 +13,16 @@ public class GroupChatBlockView extends BlockView {
 	private GroupView group;
 	private List<ChatMessageView> recentMessages;
 	
-	public GroupChatBlockView(Block block, UserBlockData ubd, GroupView group, List<ChatMessageView> recentMessages) {
-		super(block, ubd);
+	public GroupChatBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd, GroupView group, List<ChatMessageView> recentMessages) {
+		super(viewpoint, block, ubd);
 		this.group = group;
 		this.recentMessages = recentMessages;
 	}
 
+	public GroupChatBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd) {
+		super(viewpoint, block, ubd);
+	}
+	
 	@Override
 	public String getWebTitleType() {
 		return "Mugshot";
@@ -38,8 +42,16 @@ public class GroupChatBlockView extends BlockView {
 		return this.group;
 	}
 
+	public void setGroupView(GroupView group) {
+		this.group = group;
+	}
+	
 	public List<ChatMessageView> getRecentMessages() {
 		return recentMessages;
+	}
+	
+	public void setRecentMessages(List<ChatMessageView> recentMessages) {
+		this.recentMessages = recentMessages;
 	}
 	
 	@Override

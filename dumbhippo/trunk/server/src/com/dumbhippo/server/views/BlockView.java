@@ -11,10 +11,14 @@ public abstract class BlockView implements ObjectView {
 	
 	private Block block;
 	private UserBlockData userBlockData;
+	private Viewpoint viewpoint;
+	private boolean populated;
 
-	public BlockView(Block block, UserBlockData ubd) {
+	public BlockView(Viewpoint viewpoint, Block block, UserBlockData ubd) {
+		this.viewpoint = viewpoint;
 		this.block = block;
 		this.userBlockData = ubd;
+		this.populated = false;
 	}
 
 	public Block getBlock() {
@@ -28,6 +32,18 @@ public abstract class BlockView implements ObjectView {
 	public UserBlockData getUserBlockData() {
 		return userBlockData;
 	}	
+	
+	public Viewpoint getViewpoint() {
+		return viewpoint;
+	}
+	
+	public boolean isPopulated() {
+		return populated;
+	}
+	
+	public void setPopulated(boolean populated) {
+		this.populated = populated;
+	}
 	
 	public String getTimeAgo() {
 		return DateUtils.formatTimeAgo(block.getTimestamp());

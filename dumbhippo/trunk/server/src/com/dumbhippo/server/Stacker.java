@@ -29,9 +29,9 @@ public interface Stacker {
 	// is created. They are per entity type, not per-block type, though the two currently
 	// correspond 1:1.
 	public void onUserCreated(Guid userId);
-	public void onGroupCreated(Guid groupId);
-	public void onPostCreated(Guid postId);
-	public void onGroupMemberCreated(GroupMember member);
+	public void onGroupCreated(Guid groupId, boolean publicGroup);
+	public void onPostCreated(Guid postId, boolean publicPost);
+	public void onGroupMemberCreated(GroupMember member, boolean publicGroup);
 	public void onExternalAccountCreated(Guid userId, ExternalAccountType type);
 	
 	// These methods are used when activity should cause the timestamp of a block to change. 

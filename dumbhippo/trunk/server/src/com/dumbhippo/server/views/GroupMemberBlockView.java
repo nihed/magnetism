@@ -13,13 +13,17 @@ public class GroupMemberBlockView extends BlockView {
 	private PersonView member;
 	private MembershipStatus status;
 	
-	public GroupMemberBlockView(Block block, UserBlockData ubd, GroupView group, PersonView member, MembershipStatus status) {
-		super(block, ubd);
+	public GroupMemberBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd, GroupView group, PersonView member, MembershipStatus status) {
+		super(viewpoint, block, ubd);
 		this.group = group;
 		this.member = member;
 		this.status = status;
 	}
 
+	public GroupMemberBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd) {
+		super(viewpoint, block, ubd);
+	}
+	
 	@Override
 	public String getWebTitleType() {
 		return "Group update";
@@ -33,9 +37,17 @@ public class GroupMemberBlockView extends BlockView {
 	public GroupView getGroupView() {
 		return this.group;
 	}
+	
+	public void setGroupView(GroupView group) {
+		this.group = group;
+	}
 
 	public PersonView getMemberView() {
 		return this.member;
+	}
+	
+	public void setMemberView(PersonView member) {
+		this.member = member;
 	}
 
 	@Override
@@ -56,5 +68,9 @@ public class GroupMemberBlockView extends BlockView {
 
 	public MembershipStatus getStatus() {
 		return status;
+	}
+	
+	public void setStatus(MembershipStatus status) {
+		this.status = status;
 	}
 }

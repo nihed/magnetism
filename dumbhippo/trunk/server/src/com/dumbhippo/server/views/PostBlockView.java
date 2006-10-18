@@ -13,10 +13,15 @@ public class PostBlockView extends BlockView {
 	private PostView postView;
 	private List<ChatMessageView> recentMessages;
 	
-	public PostBlockView(Block block, UserBlockData ubd, PostView post, List<ChatMessageView> recentMessages) {
-		super(block, ubd);
+	public PostBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd, PostView post, List<ChatMessageView> recentMessages) {
+		super(viewpoint, block, ubd);
 		this.postView = post;
 		this.recentMessages = recentMessages;
+		setPopulated(true);
+	}
+	
+	public PostBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd) {
+		super(viewpoint, block, ubd);
 	}
 	
 	@Override
@@ -43,8 +48,16 @@ public class PostBlockView extends BlockView {
 		return this.postView;
 	}
 	
+	public void setPostView(PostView postView) {
+		this.postView = postView;
+	}
+	
 	public List<ChatMessageView> getRecentMessages() {
 		return recentMessages;
+	}
+	
+	public void setRecentMessages(List<ChatMessageView> recentMessages) {
+		this.recentMessages = recentMessages;
 	}
 	
 	@Override

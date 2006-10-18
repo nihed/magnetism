@@ -100,7 +100,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		// Fix up the inverse side of the mapping
 		g.getMembers().add(groupMember);
 		
-		stacker.onGroupMemberCreated(groupMember);
+		stacker.onGroupMemberCreated(groupMember, g.isPublic());
 		
 		searchSystem.indexGroup(g, false);
 		
@@ -173,7 +173,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 				accountMember.setAdders(adders);
 			em.persist(accountMember);
 			group.getMembers().add(accountMember);
-			stacker.onGroupMemberCreated(accountMember);
+			stacker.onGroupMemberCreated(accountMember, group.isPublic());
 		}
 		
 		return accountMember;
@@ -329,7 +329,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 			group.getMembers().add(groupMember);
 			em.persist(group);
 			
-			stacker.onGroupMemberCreated(groupMember);
+			stacker.onGroupMemberCreated(groupMember, group.isPublic());
 		}
 		
 		stacker.stackGroupMember(groupMember, System.currentTimeMillis());

@@ -14,12 +14,17 @@ public class BlogBlockView extends BlockView {
 	private PersonView userView;
 	private FeedEntry entry;
 	
-	public BlogBlockView(Block block, UserBlockData ubd, PersonView userView, FeedEntry entry) {
-		super(block, ubd);
+	public BlogBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd, PersonView userView, FeedEntry entry) {
+		super(viewpoint, block, ubd);
 		this.userView = userView;
 		this.entry = entry;
+		setPopulated(true);
 	}
 
+	public BlogBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd) {
+		super(viewpoint, block, ubd);
+	}
+	
 	@Override
 	public String getWebTitleType() {
 		return "Blog";
@@ -39,8 +44,16 @@ public class BlogBlockView extends BlockView {
 		return userView;
 	}
 	
+	public void setUserView(PersonView userView) {
+		this.userView = userView;
+	}
+	
 	public FeedEntry getEntry() {
 	    return entry;	
+	}
+	
+	public void setEntry(FeedEntry entry) {
+		this.entry = entry;
 	}
 	
 	@Override

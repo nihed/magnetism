@@ -54,11 +54,13 @@ public class Block extends EmbeddedGuidPersistable {
 	private Guid data2;
 	private long data3;
 	private int clickedCount;
+	private boolean publicBlock;
 	
 	// for hibernate
 	public Block() {
 		this.timestamp = 0;
 		this.data3 = -1;
+		this.publicBlock = false;
 	}
 	
 	public Block(BlockType type, Guid data1, Guid data2, long data3) {
@@ -68,9 +70,18 @@ public class Block extends EmbeddedGuidPersistable {
 		this.data2 = data2;
 		this.data3 = data3;
 	}
+
+	public Block(BlockType type, Guid data1, Guid data2, long data3, boolean publicBlock) {
+		this(type, data1, data2, data3);
+        this.publicBlock = publicBlock;
+	}
 	
 	public Block(BlockType type, Guid data1, Guid data2) {
 		this(type, data1, data2, -1);
+	}
+
+	public Block(BlockType type, Guid data1, Guid data2, boolean publicBlock) {
+		this(type, data1, data2, -1, publicBlock);
 	}
 	
 	@Column(nullable=false)
@@ -172,6 +183,15 @@ public class Block extends EmbeddedGuidPersistable {
 	
 	public void setClickedCount(int clickedCount) {
 		this.clickedCount = clickedCount;
+	}
+	
+	@Column(nullable=false)
+	public boolean isPublicBlock() {
+		return publicBlock;
+	}	
+
+	public void setPublicBlock(boolean publicBlock) {
+		this.publicBlock = publicBlock;
 	}
 	
 	@Override

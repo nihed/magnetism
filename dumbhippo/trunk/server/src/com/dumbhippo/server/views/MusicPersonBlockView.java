@@ -11,11 +11,16 @@ public class MusicPersonBlockView extends BlockView {
 	
 	private PersonView userView;
 	
-	public MusicPersonBlockView(Block block, UserBlockData ubd, PersonView userView) {
-		super(block, ubd);
+	public MusicPersonBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd, PersonView userView) {
+		super(viewpoint, block, ubd);
 		this.userView = userView;
+		setPopulated(true);
 	}
 
+	public MusicPersonBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd) {
+		super(viewpoint, block, ubd);
+	}
+	
 	@Override
 	public String getWebTitleType() {
 		return "Music Radar";
@@ -28,6 +33,10 @@ public class MusicPersonBlockView extends BlockView {
 	
 	public PersonView getUserView() {
 		return userView;
+	}
+	
+	public void setUserView(PersonView userView) {
+		this.userView = userView;
 	}
 	
 	public List<TrackView> getTrackViews() {

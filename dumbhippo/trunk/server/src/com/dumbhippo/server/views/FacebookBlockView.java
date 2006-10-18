@@ -13,12 +13,17 @@ public class FacebookBlockView extends BlockView {
 	private PersonView userView;
 	private List<FacebookEvent> facebookEvents;
 	
-	public FacebookBlockView(Block block, UserBlockData ubd, PersonView userView, List<FacebookEvent> facebookEvents) {
-		super(block, ubd);
+	public FacebookBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd, PersonView userView, List<FacebookEvent> facebookEvents) {
+		super(viewpoint, block, ubd);
 		this.userView = userView;
 		this.facebookEvents = facebookEvents;
+		setPopulated(true);
 	}
 
+	public FacebookBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd) {
+		super(viewpoint, block, ubd);
+	}
+	
 	@Override
 	public String getWebTitleType() {
 		return "Facebook";
@@ -38,8 +43,16 @@ public class FacebookBlockView extends BlockView {
 		return userView;
 	}
 	
+	public void setUserView(PersonView userView) {
+		this.userView = userView;
+	}
+	
 	public List<FacebookEvent> getFacebookEvents() {
 	    return facebookEvents;	
+	}
+	
+	public void setFacebookEvents(List<FacebookEvent> facebookEvents) {
+		this.facebookEvents = facebookEvents;
 	}
 	
 	@Override

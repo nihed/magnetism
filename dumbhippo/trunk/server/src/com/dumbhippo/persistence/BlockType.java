@@ -10,7 +10,21 @@ public enum BlockType {
 	POST,
 	GROUP_MEMBER,
 	GROUP_CHAT,
-	MUSIC_PERSON,
-	EXTERNAL_ACCOUNT_UPDATE,
+	MUSIC_PERSON {
+	    @Override
+	    public boolean isPublic() {
+	    	return true;
+	    }
+	},
+	EXTERNAL_ACCOUNT_UPDATE {
+	    @Override
+	    public boolean isPublic() {
+	    	return true;
+	    }
+	},
 	EXTERNAL_ACCOUNT_UPDATE_SELF;
+	
+    public boolean isPublic() {
+    	return false;
+    }
 }

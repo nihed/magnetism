@@ -352,6 +352,11 @@ public class Post extends GuidPersistable {
 		this.personPostData = datas;
 	}
 	
+	@Transient 
+	public boolean isPublic() {
+	    return (visibility == PostVisibility.ANONYMOUSLY_PUBLIC || visibility == PostVisibility.ATTRIBUTED_PUBLIC);	
+	}
+	
 	@Transient
 	public URL getUrl() {
 		if (!cachedUrlUpdated) {

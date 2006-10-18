@@ -186,27 +186,45 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		}
 	}
 	
-	private Block createBlock(BlockType type, Guid data1, Guid data2, long data3) {
-		Block block = new Block(type, data1, data2, data3);
+	private Block createBlock(BlockType type, Guid data1, Guid data2, long data3, boolean publicBlock) {
+		Block block = new Block(type, data1, data2, data3, publicBlock);
 		em.persist(block);
 		
 		return block;
 	}
 	
-	private Block createBlock(BlockType type, Guid data1, Guid data2) {
-		return createBlock(type, data1, data2, -1);
+	@SuppressWarnings("unused")
+	private Block createBlock(BlockType type, Guid data1, Guid data2, long data3) {
+	    return createBlock(type, data1, data2, data3, type.isPublic());
 	}
 	
-	private Block getOrCreateBlock(BlockType type, Guid data1, Guid data2, long data3) {
+	private Block createBlock(BlockType type, Guid data1, Guid data2, boolean publicBlock) {
+		return createBlock(type, data1, data2, -1, publicBlock);
+	}
+	
+	private Block createBlock(BlockType type, Guid data1, Guid data2) {
+		return createBlock(type, data1, data2, -1, type.isPublic());
+	}
+	
+	private Block getOrCreateBlock(BlockType type, Guid data1, Guid data2, long data3, boolean publicBlock) {
 		try {
 			return queryBlock(type, data1, data2, data3);
 		} catch (NotFoundException e) {
-			return createBlock(type, data1, data2, data3);
+			return createBlock(type, data1, data2, data3, publicBlock);
 		}
 	}
 	
+	@SuppressWarnings("unused")
+	private Block getOrCreateBlock(BlockType type, Guid data1, Guid data2, long data3) {
+		return getOrCreateBlock(type, data1, data2, data3, type.isPublic());
+	}
+	
+	private Block getOrCreateBlock(BlockType type, Guid data1, Guid data2, boolean publicBlock) {
+		return getOrCreateBlock(type, data1, data2, -1, publicBlock);
+	}
+
 	private Block getOrCreateBlock(BlockType type, Guid data1, Guid data2) {
-		return getOrCreateBlock(type, data1, data2, -1);
+		return getOrCreateBlock(type, data1, data2, -1, type.isPublic());
 	}
 	
 	private Block getUpdatingTimestamp(BlockType type, Guid data1, Guid data2, long data3, long activity) {
@@ -510,15 +528,15 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	}
 	
 	public void onExternalAccountCreated(Guid userId, ExternalAccountType type) {
-		createBlock(BlockType.EXTERNAL_ACCOUNT_UPDATE, userId, null, type.ordinal());
-		createBlock(BlockType.EXTERNAL_ACCOUNT_UPDATE_SELF, userId, null, type.ordinal());
+		createBlock(BlockType.EXTERNAL_ACCOUNT_UPDATE, userId, null, type.ordinal(), true);
+		createBlock(BlockType.EXTERNAL_ACCOUNT_UPDATE_SELF, userId, null, type.ordinal(), false);
 	}
 	
-	public void onGroupCreated(Guid groupId) {
-		createBlock(BlockType.GROUP_CHAT, groupId, null);
+	public void onGroupCreated(Guid groupId, boolean publicGroup) {
+		createBlock(BlockType.GROUP_CHAT, groupId, null, publicGroup);
 	}
 	
-	public void onGroupMemberCreated(GroupMember member) {
+	public void onGroupMemberCreated(GroupMember member, boolean publicGroup) {
 		// Blocks only exist for group members which correspond to accounts in the
 		// system. If the group member is (say) an email resource, and later joins
 		// the system, when they join, we'll delete this GroupMember, add a new one 
@@ -527,12 +545,12 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		if (a != null) {
 			// This is getOrCreate because a GroupMember can be deleted and then we'll 
 			// get onGroupMemberCreated again later for the same group/person if they rejoin
-			getOrCreateBlock(BlockType.GROUP_MEMBER, member.getGroup().getGuid(), a.getOwner().getGuid());
+			getOrCreateBlock(BlockType.GROUP_MEMBER, member.getGroup().getGuid(), a.getOwner().getGuid(), publicGroup);
 		}
 	}
 	
-	public void onPostCreated(Guid postId) {
-		createBlock(BlockType.POST, postId, null);
+	public void onPostCreated(Guid postId, boolean publicPost) {
+		createBlock(BlockType.POST, postId, null, publicPost);
 	}
 	
 	// don't create or suspend transaction; we will manage our own for now (FIXME) 
@@ -604,85 +622,150 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		click(BlockType.POST, post.getGuid(), null, -1, user, clickedTime);
 	}
 	
-	private BlockView getExternalAccountBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd) throws NotFoundException {
+	private BlockView prepareExternalAccountBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd) throws NotFoundException {
 		if ((block.getBlockType() != BlockType.EXTERNAL_ACCOUNT_UPDATE) && 
-			(block.getBlockType() != BlockType.EXTERNAL_ACCOUNT_UPDATE_SELF)) {
-			throw new RuntimeException("Unexpected block type in getExternalAccountBlockView: " + block.getBlockType());			
+				(block.getBlockType() != BlockType.EXTERNAL_ACCOUNT_UPDATE_SELF)) {
+				throw new RuntimeException("Unexpected block type in prepareExternalAccountBlockView: " + block.getBlockType());			
+		}
+
+		long accountType = block.getData3();
+		if (accountType == ExternalAccountType.BLOG.ordinal()) {			
+			return new BlogBlockView(viewpoint, block, ubd);
+		} else if (accountType == ExternalAccountType.FACEBOOK.ordinal()) {
+			return new FacebookBlockView(viewpoint, block, ubd);
+		} else {
+			throw new NotFoundException("Unexpected external account type: " + accountType);
+		}		
+		
+	}
+	
+	private BlockView prepareBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd) throws NotFoundException {
+		UserViewpoint userview = null;
+		if (viewpoint instanceof UserViewpoint)
+			userview = (UserViewpoint) viewpoint;
+		
+		BlockView blockView = null;
+		switch (block.getBlockType()) {
+			case POST: {
+			    blockView = new PostBlockView(viewpoint, block, ubd);
+			    break;
+			}
+			case GROUP_CHAT: {
+				blockView = new GroupChatBlockView(viewpoint, block, ubd);
+			    break;
+			}
+			case GROUP_MEMBER: {
+				blockView = new GroupMemberBlockView(viewpoint, block, ubd);
+			    break;
+			}
+			case MUSIC_PERSON: {
+				blockView = new MusicPersonBlockView(viewpoint, block, ubd);
+			    break;
+			}
+			case EXTERNAL_ACCOUNT_UPDATE: {
+	            blockView = prepareExternalAccountBlockView(viewpoint, block, ubd);   
+			    break;
+			}
+			case EXTERNAL_ACCOUNT_UPDATE_SELF: {	
+				User user = identitySpider.lookupUser(block.getData1AsGuid());
+				if (userview == null || userview.getViewer() != user) {
+					throw new NotFoundException("Trying to view an external account update for self from a different viewpoint: " + userview);
+				}
+				blockView = prepareExternalAccountBlockView(viewpoint, block, ubd);  	
+			    break;
+			}
+			default : {
+				throw new RuntimeException("Unexpected block type in prepareBlockView: " + block.getBlockType());
+			}
 		}
 		
-		User user = identitySpider.lookupUser(block.getData1AsGuid());
-		long accountType = block.getData3();
-		// TODO: check what extras we need to request here
-		PersonView userView = personViewer.getPersonView(viewpoint, user, PersonViewExtra.ALL_RESOURCES);			
-		if (accountType == ExternalAccountType.BLOG.ordinal()) {
-	        ExternalAccount blogAccount = externalAccountSystem.lookupExternalAccount(viewpoint, user, ExternalAccountType.BLOG);  
-			FeedEntry lastEntry = feedSystem.getLastEntry(blogAccount.getFeed());
-			return new BlogBlockView(block, ubd, userView, lastEntry);
-		} else if (accountType == ExternalAccountType.FACEBOOK.ordinal()) {	
+	    if (!block.isPublicBlock())
+	    	populateBlockView(blockView);
+	    
+	    return blockView;
+	}
+	
+	private void populateBlockView(BlockView blockView) throws NotFoundException {
+		Viewpoint viewpoint = blockView.getViewpoint();
+		Block block = blockView.getBlock();
+
+		if (blockView instanceof PostBlockView) {
+			PostBlockView postBlockView = (PostBlockView)blockView;
+		    PostView postView = postingBoard.loadPost(viewpoint, block.getData1AsGuid());
+		    List<ChatMessageView> recentMessages = postingBoard.viewPostMessages(
+		        postingBoard.getNewestPostMessages(postView.getPost(), PostBlockView.RECENT_MESSAGE_COUNT),
+				viewpoint);
+		    postBlockView.setPostView(postView);
+		    postBlockView.setRecentMessages(recentMessages);
+		    postBlockView.setPopulated(true);
+		} else if (blockView instanceof GroupChatBlockView) {
+			GroupChatBlockView groupChatBlockView = (GroupChatBlockView)blockView;
+			GroupView groupView = groupSystem.loadGroup(viewpoint, block.getData1AsGuid());
+			List<ChatMessageView> recentMessages = groupSystem.viewGroupMessages(
+					groupSystem.getNewestGroupMessages(groupView.getGroup(), GroupChatBlockView.RECENT_MESSAGE_COUNT),
+					viewpoint);
+			groupChatBlockView.setGroupView(groupView);
+			groupChatBlockView.setRecentMessages(recentMessages);
+			groupChatBlockView.setPopulated(true);
+		} else if (blockView instanceof GroupMemberBlockView) {
+			GroupMemberBlockView groupMemberBlockView = (GroupMemberBlockView)blockView;
+			GroupView groupView = groupSystem.loadGroup(viewpoint, block.getData1AsGuid());
+			User user = identitySpider.lookupUser(block.getData2AsGuid());
+			PersonView memberView = personViewer.getPersonView(viewpoint, user, PersonViewExtra.PRIMARY_RESOURCE);
+			GroupMember member =  groupSystem.getGroupMember(viewpoint, groupView.getGroup(), user);
+			groupMemberBlockView.setGroupView(groupView);
+			groupMemberBlockView.setMemberView(memberView);
+			groupMemberBlockView.setStatus(member.getStatus());
+			groupMemberBlockView.setPopulated(true);
+		} else if (blockView instanceof MusicPersonBlockView) {
+			MusicPersonBlockView musicPersonBlockView = (MusicPersonBlockView)blockView;
+			User user = identitySpider.lookupUser(block.getData1AsGuid());
+			PersonView userView = personViewer.getPersonView(viewpoint, user, PersonViewExtra.PRIMARY_RESOURCE);
+			List<TrackView> tracks = musicSystem.getLatestTrackViews(viewpoint, user, 5);
+			if (tracks.isEmpty()) 
+				throw new NotFoundException("The user did not have any track views even though we tried to stack a music update");			
+			
+			userView.setTrackHistory(tracks);
+			
+			musicPersonBlockView.setUserView(userView);
+			musicPersonBlockView.setPopulated(true);
+		} else if (blockView instanceof BlogBlockView) {
+		    BlogBlockView blogBlockView = (BlogBlockView)blockView;
+			User user = identitySpider.lookupUser(block.getData1AsGuid());
+			// TODO: check what extras we need to request here
+			PersonView userView = personViewer.getPersonView(viewpoint, user, PersonViewExtra.ALL_RESOURCES);
+			ExternalAccount blogAccount = externalAccountSystem.lookupExternalAccount(viewpoint, user, ExternalAccountType.BLOG);  
+		    FeedEntry lastEntry = feedSystem.getLastEntry(blogAccount.getFeed());
+		    blogBlockView.setUserView(userView);
+			blogBlockView.setEntry(lastEntry);
+			blogBlockView.setPopulated(true);
+		} else if (blockView instanceof FacebookBlockView) {
+			FacebookBlockView facebookBlockView = (FacebookBlockView)blockView;
+			User user = identitySpider.lookupUser(block.getData1AsGuid());
+			// TODO: check what extras we need to request here
+			PersonView userView = personViewer.getPersonView(viewpoint, user, PersonViewExtra.ALL_RESOURCES);
 			FacebookAccount facebookAccount = facebookSystem.lookupFacebookAccount(viewpoint, user);
 			int eventsToRequestCount = 3;
 			if (!facebookAccount.isSessionKeyValid() && viewpoint.isOfUser(facebookAccount.getExternalAccount().getAccount().getOwner())) {
 			    eventsToRequestCount = 2;
 			}
 			List<FacebookEvent> facebookEvents = facebookSystem.getLatestEvents(viewpoint, facebookAccount, eventsToRequestCount);
-			return new FacebookBlockView(block, ubd, userView, facebookEvents);
+			facebookBlockView.setUserView(userView);
+			facebookBlockView.setFacebookEvents(facebookEvents);
+			facebookBlockView.setPopulated(true);
 		} else {
-			throw new NotFoundException("Unexpected external account type: " + accountType);
+			throw new RuntimeException("Unknown type of block view in populateBlockView(): " + blockView.getClass().getName());
 		}
 	}
 	
-	private BlockView getBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd) throws NotFoundException {
-		UserViewpoint userview = null;
-		if (viewpoint instanceof UserViewpoint)
-			userview = (UserViewpoint) viewpoint;
-		switch (block.getBlockType()) {
-		case POST: {
-			PostView postView = postingBoard.loadPost(viewpoint, block.getData1AsGuid());
-			List<ChatMessageView> recentMessages = postingBoard.viewPostMessages(
-					postingBoard.getNewestPostMessages(postView.getPost(), PostBlockView.RECENT_MESSAGE_COUNT),
-					viewpoint);
-			return new PostBlockView(block, ubd, postView, recentMessages);
-		}
-		case GROUP_CHAT: {
-			GroupView groupView = groupSystem.loadGroup(viewpoint, block.getData1AsGuid());
-			List<ChatMessageView> recentMessages = groupSystem.viewGroupMessages(
-					groupSystem.getNewestGroupMessages(groupView.getGroup(), GroupChatBlockView.RECENT_MESSAGE_COUNT),
-					viewpoint);
-			return new GroupChatBlockView(block, ubd, groupView, recentMessages);
-		}
-		case GROUP_MEMBER: {
-			GroupView groupView = groupSystem.loadGroup(viewpoint, block.getData1AsGuid());
-			User user = identitySpider.lookupUser(block.getData2AsGuid());
-			PersonView memberView = personViewer.getPersonView(viewpoint, user, PersonViewExtra.PRIMARY_RESOURCE);
-			GroupMember member =  groupSystem.getGroupMember(viewpoint, groupView.getGroup(), user);
-			
-			return new GroupMemberBlockView(block, ubd, groupView, memberView, member.getStatus());
-		}
-		case MUSIC_PERSON: {
-			User user = identitySpider.lookupUser(block.getData1AsGuid());
-			PersonView userView = personViewer.getPersonView(viewpoint, user, PersonViewExtra.PRIMARY_RESOURCE);
-			List<TrackView> tracks = musicSystem.getLatestTrackViews(viewpoint, user, 5);
-			if (tracks.isEmpty()) 
-				throw new NotFoundException("The user did not have any track views even though we tried to stack a music update");
-			
-			userView.setTrackHistory(tracks);
-			return new MusicPersonBlockView(block, ubd, userView);
-		}
-		case EXTERNAL_ACCOUNT_UPDATE: {
-            return getExternalAccountBlockView(viewpoint, block, ubd);      
-		}
-		case EXTERNAL_ACCOUNT_UPDATE_SELF: {	
-			User user = identitySpider.lookupUser(block.getData1AsGuid());
-			if (userview == null || userview.getViewer() != user) {
-				throw new NotFoundException("Trying to view an external account update for self from a different viewpoint: " + userview);
-			}
-            return getExternalAccountBlockView(viewpoint, block, ubd);			
-		}
-		}
-		throw new RuntimeException("Unknown BlockType: " + block.getBlockType());
+	public BlockView getBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd) throws NotFoundException {
+	    BlockView blockView = prepareBlockView(viewpoint, block, ubd);
+	    if (!blockView.isPopulated())
+	    	populateBlockView(blockView);
+	    return blockView;
 	}
 	
-	public BlockView loadBlock(Viewpoint viewpoint, UserBlockData ubd) throws NotFoundException {
+	public BlockView loadBlock(Viewpoint viewpoint, UserBlockData ubd) throws NotFoundException {	
 		return getBlockView(viewpoint, ubd.getBlock(), ubd);
 	}	
 	
@@ -743,7 +826,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 						(ubd.getBlock().getBlockType() != BlockType.GROUP_MEMBER))
 						continue;
 					
-					stack.add(getBlockView(viewpoint, ubd.getBlock(), ubd));
+					stack.add(prepareBlockView(viewpoint, ubd.getBlock(), ubd));
 					resultItemCount++;
 					if (stack.size() >= targetedNumberOfItems)
 						break;
@@ -759,17 +842,35 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		    start = start + count;
 		    expectedHitFactor = blocks.size() / resultItemCount + 1;
 		}
+		
+		List<BlockView> blockViewsToReturn;
 		if (stack.size() < targetedNumberOfItems) {
 			// this will readjust the position, so pageable.getStart() will be readjusted too
 			pageable.setTotalCount(stack.size());
-			pageable.setResults(stack.subList(pageable.getStart(), stack.size()));			
+			blockViewsToReturn = stack.subList(pageable.getStart(), stack.size());	
 		} else {
 			// we are not including the last item in the stack list in the results, it's
 			// just an indicator that there are more items
-			pageable.setResults(stack.subList(firstItemToReturn, stack.size() - 1));
+			blockViewsToReturn = stack.subList(firstItemToReturn, stack.size() - 1);
             pageable.setTotalCount((pageable.getInitialPerPage() + pageable.getSubsequentPerPage() * 9) 
 						           * ((pageable.getPosition() + 1) / 10 + 1));
 		}
+		
+		// normally, we should not have any block views to remove, but it's better to remove a 
+		// block view that was not populated than to let a null pointer exception happen down the line
+		Set<BlockView> blockViewsToRemove = new HashSet<BlockView>();
+		for (BlockView blockView : blockViewsToReturn) {
+			try {
+			    if (!blockView.isPopulated()) 
+				    populateBlockView(blockView);
+			} catch (NotFoundException e) {
+				blockViewsToRemove.add(blockView);
+				logger.error("Could not populate a block view for a public block {}", blockView.getBlock(), e);				
+			}
+		}
+		blockViewsToReturn.removeAll(blockViewsToRemove);
+		
+		pageable.setResults(blockViewsToReturn);
 	}
 	
 	public List<BlockView> getStack(Viewpoint viewpoint, User user, long lastTimestamp, int start, int count) {
@@ -1280,7 +1381,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	public void migratePost(String postId) {
 		logger.debug("    migrating post {}", postId);
 		Post post = em.find(Post.class, postId);
-		Block block = getOrCreateBlock(BlockType.POST, post.getGuid(), null);
+		Block block = getOrCreateBlock(BlockType.POST, post.getGuid(), null, post.isPublic());
 		long activity = post.getPostDate().getTime();
 
 		// we want to move PersonPostData info into UserBlockData
@@ -1440,7 +1541,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	public void migrateGroupChat(String groupId) {
 		logger.debug("    migrating group chat for {}", groupId);
 		Group group = em.find(Group.class, groupId);
-		getOrCreateBlock(BlockType.GROUP_CHAT, group.getGuid(), null);
+		getOrCreateBlock(BlockType.GROUP_CHAT, group.getGuid(), null, group.isPublic());
 		List<GroupMessage> messages = groupSystem.getNewestGroupMessages(group, 1);
 		if (messages.isEmpty())
 			stackGroupChat(group.getGuid(), 0, null);
@@ -1485,7 +1586,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		for (GroupMember member : group.getMembers()) {
 			AccountClaim a = member.getMember().getAccountClaim();
 			if (a != null) {
-				getOrCreateBlock(BlockType.GROUP_MEMBER, member.getGroup().getGuid(), a.getOwner().getGuid());
+				getOrCreateBlock(BlockType.GROUP_MEMBER, member.getGroup().getGuid(), a.getOwner().getGuid(), group.isPublic());
 				// we set a timestamp of 0, since we have no way of knowing the right
 				// timestamp, and we don't want to make a big pile of group member blocks 
 				// at the top of the stack whenever we run a migration

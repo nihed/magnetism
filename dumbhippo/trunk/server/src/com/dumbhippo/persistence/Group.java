@@ -135,6 +135,11 @@ public class Group extends GuidPersistable implements VersionedEntity {
 	}
 	
 	@Transient
+	public boolean isPublic() {
+	    return (access == GroupAccess.PUBLIC || access == GroupAccess.PUBLIC_INVITE);	
+	}
+	
+	@Transient
 	public String getPhotoUrl() {
 		if (stockPhoto != null) {
 			return "/images2" + stockPhoto;
