@@ -22,7 +22,7 @@ dh.download.doDownload = function(url) {
 
 	if (dh.download.needTermsOfUse && !document.getElementById("dhAcceptTerms").checked) {
 		document.getElementById("dhAcceptTermsBox").className = "dh-accept-terms-box-warning"
-		return
+		return;
 	}
 
     // they can start downloading while the terms of use are being accepted

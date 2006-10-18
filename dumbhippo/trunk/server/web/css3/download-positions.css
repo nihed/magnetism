@@ -26,6 +26,11 @@
 	width:					100%;
 }
 
+.dh-download-terms {
+	margin:					5px;
+	margin-left:			0px;
+}
+
 td.dh-download-section-icon-area {
 	text-align:				center;
 	width:					75px;

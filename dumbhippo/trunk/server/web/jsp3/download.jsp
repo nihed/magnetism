@@ -28,15 +28,37 @@
 	<dht3:stylesheet name="download"/>
 	<dht:scriptIncludes/>
 	<dht:faviconIncludes/>
+	<script type="text/javascript">
+		dojo.require("dh.download");
+		dh.download.needTermsOfUse = ${signin.needsTermsOfUse}
+		dojo.event.connect(dojo, "loaded", function () { dh.download.init() })
+	</script>	
 </head>
 
 <dht3:page>
 	<dht3:shinyBox color="grey">
 		<div class="dh-download-header-area">
-			<div class="dh-download-header">Get the Mugshot Client</div>
-			<div class="dh-download-subtitle">Take advantage of all of our fun features with the Mugshot Client.  It's easy and free!</div>
-			<div class="dh-download-buttons"><a href="${welcome.downloadUrl}"><img src="/images3/${buildStamp}/download_now_button.gif"/></a><a href="create-account"><img src="/images3/${buildStamp}/no_thanks_button.gif"/></a></div>
-			<div class="dh-download-subheader">Here's what you can do with the Mugshot Client...</div>
+			<div class="dh-download-header">Get Mugshot</div>
+			<div class="dh-download-subtitle">Take advantage of all of our fun features with the Mugshot download.  It's easy and free!</div>
+			<div class="dh-download-terms">
+				<c:choose>
+					<c:when test="${signin.needsTermsOfUse}">
+			        	<div id="dhAcceptTermsBox">        
+					        <input type="checkbox" id="dhAcceptTerms" onclick="dh.download.updateDownload();">
+						                I accept the Mugshot <a href="javascript:window.open('/terms', 'dhTermsOfUse', 'menubar=no,scrollbars=yes,width=600,height=600');void(0);">terms and conditions</a>. (Required to continue.)
+					        </input>
+						</div>
+		            </c:when>    
+		            <c:otherwise>
+		            </c:otherwise>
+		        </c:choose>
+			</div>
+			<div class="dh-download-buttons">
+				<%-- the class changes to dh-download-product-disabled in the javascript when one is not active --%>
+				<a id="dhDownloadProduct" class="dh-download-product" href="javascript:dh.download.doDownload('${welcome.downloadUrl}')"><img src="/images3/${buildStamp}/download_now_button.gif"/></a>
+				<a id="dhSkipDownload" class="dh-download-product" href="javascript:dh.download.doDownload()"><img src="/images3/${buildStamp}/no_thanks_button.gif"/></a>
+			</div>
+			<div class="dh-download-subheader">Here's what you can do with the Mugshot download...</div>
 		</div>
 		<table class="dh-box-grey1 dh-download-section" cellspacing="0" cellpadding="0">
 			<tr>
@@ -44,10 +66,10 @@
 			<td class="dh-download-section-details-area"><div class="dh-download-section-header">Use <a class="dh-download-product" href="/links-learnmore">Web Swarm</a> to share and chat about cool links with friends.</div>
 			<div class="dh-download-section-description">
 			Stay up to date on web trends, and save your favorite sites.  You and friends can share what you think is interesting online.  See
-			how much interest sites are getting in real time.  Nothing to clog up your email inbox, and no worries about IM client
-			compatibility.</div>
+			how much interest sites are getting in real time.  Nothing to clog up your email inbox, and no worries about who's using what kind of IM.
+			</div>
 			<br/>
-			<div><div class="dh-download-section-subheader">The Mugshot client lets you...</div>
+			<div><div class="dh-download-section-subheader">The Mugshot download lets you...</div>
 				<ul class="dh-download-section-list">
 					<li>Share web pages with lists of friends instantly</li>
 					<li>Get notifications when friends share new content or when RSS feeds are updated</li>
@@ -66,7 +88,7 @@
 			Show off your iTunes, Rhapsody, or Yahoo! Music Player playlist.  See what your friends are listening to and explore new music.
 			When someone clicks on your Music Radar, they'll be taken to your Mugshot page to see more about you and your tastes.</div>
 			<br/>
-			<div><div class="dh-download-section-subheader">The Mugshot client lets you...</div>
+			<div><div class="dh-download-section-subheader">The Mugshot download lets you...</div>
 				<ul class="dh-download-section-list">
 					<li>Create and customize your own Music Radar to display on MySpace, LiveJournal, or other blog site</li>
 					<li>Display your music playlists as you're listening</li>
@@ -83,7 +105,7 @@
 			It's like a mini version of your Mugshot page, showing instant updates from Web Swarm, Music Radar, Mugshot Groups, and your
 			other sites like MySpace and Facebook.</div>
 			<br/>
-			<div><div class="dh-download-section-subheader">The Mugshot client lets you...</div>
+			<div><div class="dh-download-section-subheader">The Mugshot download lets you...</div>
 				<ul class="dh-download-section-list">
 					<li>Have the functionality of your Mugshot page on a conveinent desktop application</li>
 					<li>Get notified when you and your friends have updates at MySpace, Facebook, and other social network sites</li>
@@ -94,14 +116,14 @@
 			</td>
 			</tr>
 		</table>
-		<div class="dh-download-faqs-header">Mugshot Client FAQs</div>
+		<div class="dh-download-faqs-header">Mugshot Download FAQs</div>
 		<div class="dh-download-faq">
 			<div class="dh-download-faq-q">Why do I need to download anything to use Mugshot?</div>
-			<div class="dh-download-faq-a">The Mugshot Client isn't required, but is recommended.  Your Mugshot page will work without it, but with it you'll have a
+			<div class="dh-download-faq-a">The Mugshot download isn't required, but is recommended.  Your Mugshot page will work without it, but with it you'll have a
 			more robust experience.</div>
 		</div>
 		<div class="dh-download-faq">
-			<div class="dh-download-faq-q">How do I know the Mugshot Client is running?</div>
+			<div class="dh-download-faq-q">How do I know Mugshot is running on my PC?</div>
 			<div class="dh-download-faq-a">
 			<c:choose>
 				<c:when test="${browser.windows}">
@@ -122,10 +144,10 @@
 		</div>
 		<div class="dh-download-faq">
 			<div class="dh-download-faq-q">Do I need a Mugshot account to use it?</div>
-			<div class="dh-download-faq-a">Without an account, the Mugshot Client doesn't do anything useful except sit in your system tray and look pretty.  <a href="/signup">Sign up!</a></div>
+			<div class="dh-download-faq-a">Without an account, the Mugshot download doesn't do anything useful except sit in your system tray and look pretty.  <a href="/signup">Sign up!</a></div>
 		</div>
 		<div class="dh-download-faq">
-			<div class="dh-download-faq-q">Is there a Mugshot Client for Mac?</div>
+			<div class="dh-download-faq-q">Is there a Mugshot download for Mac?</div>
 			<div class="dh-download-faq-a">Not right now, but it's on our "to do" list.  If you're a developer, you can <a href="http://developer.mugshot.org/">help develop</a> it!</div>
 		</div>						
 	</dht3:shinyBox>
