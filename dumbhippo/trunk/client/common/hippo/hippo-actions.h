@@ -14,7 +14,11 @@
  *
  * If this starts replicating most of DataCache we should probably pack it in and
  * just pass around the data cache.
- * 
+ *
+ *
+ * FIXME: We are definitely replicating a good chunk of HippoPlatform here.
+ *   We should add get_platform() and dump join_chat_id(), open_absolute_url(),
+ *   can_play_song_download(). -owt
  */
 
 #include <hippo/hippo-data-cache.h>
@@ -65,7 +69,9 @@ void          hippo_actions_join_chat_id            (HippoActions    *actions,
 void          hippo_actions_invite_to_group         (HippoActions    *actions,
                                                      HippoGroup      *group,
                                                      HippoPerson     *person);
-                                                     
+
+gboolean      hippo_actions_can_play_song_download  (HippoActions      *actions,
+                                                     HippoSongDownload *song_download);
 
 G_END_DECLS
 

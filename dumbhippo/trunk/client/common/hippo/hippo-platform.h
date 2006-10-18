@@ -48,6 +48,9 @@ struct _HippoPlatformClass {
     void      (* show_chat_window)   (HippoPlatform    *platform,
                                       const char       *chat_id);
     
+    gboolean  (* can_play_song_download) (HippoPlatform     *platform,
+                                          HippoSongDownload *song_download);
+    
     /* Preferences */
     char*     (* get_message_server)  (HippoPlatform *platform);
     char*     (* get_web_server)      (HippoPlatform *platform);
@@ -89,6 +92,9 @@ void             hippo_platform_http_request           (HippoPlatform   *platfor
                                                         HippoHttpFunc    func,
                                                         void            *data);
 
+gboolean         hippo_platform_can_play_song_download (HippoPlatform     *platform,
+                                                        HippoSongDownload *song_download);
+
 /* Preferences */
 char*            hippo_platform_get_message_server     (HippoPlatform *platform); 
 char*            hippo_platform_get_web_server         (HippoPlatform *platform); 
@@ -108,6 +114,7 @@ void             hippo_platform_get_message_host_port  (HippoPlatform  *platform
 void             hippo_platform_get_web_host_port      (HippoPlatform  *platform,
                                                         char          **host_p,
                                                         int            *port_p);
+
 
 G_END_DECLS
 

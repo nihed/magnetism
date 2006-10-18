@@ -207,6 +207,8 @@ on_current_track_changed(HippoPerson *person,
                          GParamSpec *arg, /* null when first calling this */
                          HippoCanvasBlockMusicPerson *block_music_person)
 {
+    HippoCanvasBlock *canvas_block = HIPPO_CANVAS_BLOCK(block_music_person);
+    HippoActions *actions = hippo_canvas_block_get_actions(canvas_block);
     HippoTrack *track;
     
     track = NULL;
@@ -228,8 +230,7 @@ on_current_track_changed(HippoPerson *person,
             title = g_strdup_printf("%s (%s)", name, artist);
         else
             title = g_strdup(name);
-        hippo_canvas_block_set_title(HIPPO_CANVAS_BLOCK(block_music_person),
-                                     title);
+        hippo_canvas_block_set_title(canvas_block, title);
 
         hippo_canvas_box_remove_all(block_music_person->downloads_box);
         
@@ -239,6 +240,9 @@ on_current_track_changed(HippoPerson *person,
             HippoCanvasItem *separator;
             HippoSongDownload *d = downloads->data;
             downloads = downloads->next;
+
+            if (!hippo_actions_can_play_song_download(actions, d))
+                continue;
 
             link_name = g_strdup_printf("Play at %s",
                                         hippo_song_download_source_get_name(hippo_song_download_get_source(d)));
@@ -274,8 +278,7 @@ on_current_track_changed(HippoPerson *person,
         g_free(artist);
         g_free(name);
     } else {
-        hippo_canvas_block_set_title(HIPPO_CANVAS_BLOCK(block_music_person),
-                                     "");
+        hippo_canvas_block_set_title(canvas_block, "");
     }
 }
 

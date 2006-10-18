@@ -109,6 +109,15 @@ hippo_platform_http_request(HippoPlatform   *platform,
                                                      data);
 }
 
+gboolean
+hippo_platform_can_play_song_download(HippoPlatform     *platform,
+                                      HippoSongDownload *song_download)
+{
+    g_return_val_if_fail(HIPPO_IS_PLATFORM(platform), FALSE);
+
+    return HIPPO_PLATFORM_GET_CLASS(platform)->can_play_song_download(platform, song_download);
+}
+
 void
 hippo_platform_show_chat_window(HippoPlatform   *platform,
                                 const char      *chat_id)

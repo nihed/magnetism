@@ -34,6 +34,8 @@ static void         hippo_platform_impl_http_request        (HippoPlatform     *
                                                              void              *data);
 static void         hippo_platform_impl_show_chat_window    (HippoPlatform     *platform,
                                                              const char        *chat_id);
+static gboolean     hippo_platform_impl_can_play_song_download (HippoPlatform     *platform,
+                                                                HippoSongDownload *song_download);
 static char*        hippo_platform_impl_get_message_server  (HippoPlatform     *platform);
 static char*        hippo_platform_impl_get_web_server      (HippoPlatform     *platform);
 static gboolean     hippo_platform_impl_get_signin          (HippoPlatform     *platform);
@@ -43,6 +45,7 @@ static void         hippo_platform_impl_set_web_server      (HippoPlatform     *
                                                              const char        *value);
 static void         hippo_platform_impl_set_signin          (HippoPlatform     *platform,
                                                              gboolean           value);
+
 
 
 
@@ -72,6 +75,7 @@ hippo_platform_impl_iface_init(HippoPlatformClass *klass)
     klass->open_url = hippo_platform_impl_open_url;
     klass->http_request = hippo_platform_impl_http_request;
     klass->show_chat_window = hippo_platform_impl_show_chat_window;
+    klass->can_play_song_download = hippo_platform_impl_can_play_song_download;
     
     klass->get_message_server = hippo_platform_impl_get_message_server;
     klass->get_web_server = hippo_platform_impl_get_web_server;
@@ -306,6 +310,24 @@ hippo_platform_impl_show_chat_window (HippoPlatform     *platform,
                                       const char        *chat_id)
 {
     hippo_app_join_chat(hippo_get_app(), chat_id);
+}
+
+
+
+static gboolean
+hippo_platform_impl_can_play_song_download(HippoPlatform     *platform,
+                                           HippoSongDownload *song_download)
+{
+    switch (hippo_song_download_get_source(song_download)) {
+    case HIPPO_SONG_DOWNLOAD_ITUNES:
+	return FALSE;
+    case HIPPO_SONG_DOWNLOAD_YAHOO:
+	return FALSE;
+    case HIPPO_SONG_DOWNLOAD_RHAPSODY:
+	return TRUE;
+    }
+
+    return TRUE;
 }
 
 static const char *

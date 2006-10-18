@@ -296,3 +296,10 @@ hippo_actions_invite_to_group(HippoActions    *actions,
                                         hippo_entity_get_guid(HIPPO_ENTITY(person)));
 }
 
+gboolean
+hippo_actions_can_play_song_download(HippoActions      *actions,
+                                     HippoSongDownload *song_download)
+{
+    return hippo_platform_can_play_song_download(get_platform(actions), song_download);
+}
+

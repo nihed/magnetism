@@ -1,3 +1,4 @@
+/* -*- mode: C++; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 #include "stdafx-hippoui.h"
 
 #include "HippoPlatformImpl.h"
@@ -44,8 +45,10 @@ static void         hippo_platform_impl_http_request        (HippoPlatform     *
                                                              const char        *url,
                                                              HippoHttpFunc      func,
                                                              void              *data);
-static void         hippo_platform_impl_show_chat_window    (HippoPlatform   *platform,
-                                                             const char      *chat_id);
+static void         hippo_platform_impl_show_chat_window    (HippoPlatform     *platform,
+                                                             const char        *chat_id);
+static gboolean     hippo_platform_impl_can_play_song_download (HippoPlatform     *platform,
+                                                                HippoSongDownload *song_download);
 
 
 struct _HippoPlatformImpl {
@@ -76,6 +79,7 @@ hippo_platform_impl_iface_init(HippoPlatformClass *klass)
     klass->open_url = hippo_platform_impl_open_url;
     klass->http_request = hippo_platform_impl_http_request;
     klass->show_chat_window = hippo_platform_impl_show_chat_window;
+    klass->can_play_song_download = hippo_platform_impl_can_play_song_download;
     klass->get_message_server = hippo_platform_impl_get_message_server;
     klass->get_web_server = hippo_platform_impl_get_web_server;
     klass->get_signin = hippo_platform_impl_get_signin;
@@ -659,4 +663,20 @@ hippo_platform_impl_show_chat_window(HippoPlatform   *platform,
     }
 
     impl->ui->ShowChatWindow(HippoBSTR::fromUTF8(chat_id));
+}
+
+static gboolean
+hippo_platform_impl_can_play_song_download(HippoPlatform     *platform,
+                                           HippoSongDownload *song_download)
+{
+    switch (hippo_song_download_get_source(song_download)) {
+    case HIPPO_SONG_DOWNLOAD_ITUNES:
+        return TRUE;
+    case HIPPO_SONG_DOWNLOAD_YAHOO:
+        return TRUE;
+    case HIPPO_SONG_DOWNLOAD_RHAPSODY:
+        return TRUE;
+    }
+
+    return TRUE;
 }
