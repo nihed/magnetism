@@ -533,10 +533,13 @@ hippo_window_gtk_check_resize (GtkContainer *container)
              * the move with the resize we know we are about to do into a single
              * gkd_window_move_resize() so the gravity setting works right.
              */
-            GTK_WIDGET_UNSET_FLAGS(window_gtk, GTK_MAPPED);
+            gboolean was_mapped = GTK_WIDGET_MAPPED(window_gtk);
+            if (was_mapped)
+                GTK_WIDGET_UNSET_FLAGS(window_gtk, GTK_MAPPED);
             GTK_WINDOW(window_gtk)->need_default_position = TRUE;
             gtk_window_move(GTK_WINDOW(window_gtk), new_x, new_y);
-            GTK_WIDGET_SET_FLAGS(window_gtk, GTK_MAPPED);
+            if (was_mapped)
+                GTK_WIDGET_SET_FLAGS(window_gtk, GTK_MAPPED);
         }
         
         window_gtk->last_position_requisition = new_requisition;
