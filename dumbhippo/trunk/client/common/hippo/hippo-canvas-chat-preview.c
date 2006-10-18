@@ -4,6 +4,7 @@
 #include <hippo/hippo-chat-room.h>
 #include "hippo-actions.h"
 #include "hippo-canvas-chat-preview.h"
+#include "hippo-canvas-message-preview.h"
 #include "hippo-canvas-block.h"
 #include <hippo/hippo-canvas-box.h>
 #include <hippo/hippo-canvas-image.h>
@@ -64,7 +65,7 @@ struct _HippoCanvasChatPreview {
     HippoCanvasBox *count_parent;
     HippoCanvasItem *count_item;
     HippoCanvasItem *count_separator_item;
-    HippoMessagePreview message_previews[MAX_PREVIEWED];
+    HippoCanvasItem *message_previews[MAX_PREVIEWED];
 
     unsigned int hushed : 1;
 };
@@ -154,7 +155,7 @@ hippo_canvas_chat_preview_class_init(HippoCanvasChatPreviewClass *klass)
                                                         _("Actions"),
                                                         _("UI actions object"),
                                                         HIPPO_TYPE_ACTIONS,
-                                                        G_PARAM_READABLE | G_PARAM_WRITABLE));
+                                                        G_PARAM_READABLE | G_PARAM_WRITABLE | G_PARAM_CONSTRUCT_ONLY));
 
     g_object_class_install_property(object_class,
                                     PROP_CHATTING_COUNT,
@@ -329,37 +330,13 @@ hippo_canvas_chat_preview_constructor (GType                  type,
                      G_CALLBACK(on_chat_activated), chat_preview);
 
     for (i = 0; i < MAX_PREVIEWED; ++i) {
-        HippoMessagePreview *mp = &chat_preview->message_previews[i];
-        mp->item= g_object_new(HIPPO_TYPE_CANVAS_BOX,
-                               "orientation", HIPPO_ORIENTATION_HORIZONTAL,
-                               NULL);
-        hippo_canvas_box_append(HIPPO_CANVAS_BOX(chat_preview), mp->item, 0);
-
-        box = HIPPO_CANVAS_BOX(mp->item);
+        chat_preview->message_previews[i] = g_object_new(HIPPO_TYPE_CANVAS_MESSAGE_PREVIEW,
+                                                         "actions", chat_preview->actions,
+                                                         NULL);
         
-        item = g_object_new(HIPPO_TYPE_CANVAS_IMAGE,
-                            "image-name", "chat",
-                            "xalign", HIPPO_ALIGNMENT_START,
-                            "yalign", HIPPO_ALIGNMENT_CENTER,
-                            "border-right", 4,
-                            NULL);
-        hippo_canvas_box_append(box, item, 0);
-
-        mp->message_text = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
-                                        "size-mode", HIPPO_CANVAS_SIZE_ELLIPSIZE_END,
-                                        "xalign", HIPPO_ALIGNMENT_START,
-                                        NULL);
-        hippo_canvas_box_append(box, mp->message_text, 0);
-        
-        item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
-                            "text", " - ", /* FIXME figure out mdash */
-                            NULL);
-        hippo_canvas_box_append(box, item, 0);
-        
-        mp->entity_name = g_object_new(HIPPO_TYPE_CANVAS_ENTITY_NAME,
-                                       "actions", chat_preview->actions,
-                                       NULL);
-        hippo_canvas_box_append(box, mp->entity_name, 0);
+        hippo_canvas_box_append(HIPPO_CANVAS_BOX(chat_preview),
+                                chat_preview->message_previews[i],
+                                0);
     }
 
     update_chatting_count(chat_preview);
@@ -407,24 +384,17 @@ update_recent_messages(HippoCanvasChatPreview *chat_preview)
     
     link = chat_preview->recent_messages;
     for (i = 0; i < MAX_PREVIEWED; ++i) {
-        HippoMessagePreview *mp = &chat_preview->message_previews[i];
+        HippoCanvasItem *message_preview = chat_preview->message_previews[i];
         HippoChatMessage *message = link ? link->data : NULL;
         if (link)
             link = link->next;
 
-        /* In some sense there's no point setting this stuff if we hide the
-         * message item, but we should really drop references to objects
-         * we aren't using so we always set to NULL if appropriate.
-         */
-        g_object_set(G_OBJECT(mp->message_text),
-                     "text", message ? hippo_chat_message_get_text(message) : NULL,
+        g_object_set(G_OBJECT(message_preview),
+                     "message", message,
                      NULL);
-        g_object_set(G_OBJECT(mp->entity_name),
-                     "entity", message ? hippo_chat_message_get_person(message) : NULL,
-                     NULL);
-
+        
         hippo_canvas_box_set_child_visible(HIPPO_CANVAS_BOX(chat_preview),
-                                           mp->item, message != NULL);
+                                           message_preview, message != NULL);
     }
 }
 

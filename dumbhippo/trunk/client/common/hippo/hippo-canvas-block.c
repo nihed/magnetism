@@ -712,9 +712,9 @@ hippo_canvas_block_set_expanded(HippoCanvasBlock *canvas_block,
         if (canvas_block->expandable)
             HIPPO_CANVAS_BLOCK_GET_CLASS(canvas_block)->expand(canvas_block);
     } else {
+        canvas_block->expanded = FALSE;
         if (canvas_block->expandable)
             HIPPO_CANVAS_BLOCK_GET_CLASS(canvas_block)->unexpand(canvas_block);
-        canvas_block->expanded = FALSE;
     }
 }
 
