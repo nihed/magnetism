@@ -8,8 +8,7 @@
 </c:if>
 
 <div>
-	<dht3:pageOptionLink name="Overview" selected="${selected}" link="/person${whoParam}"/> |
-	<dht3:pageOptionLink name="History" selected="${selected}" link="/history${whoParam}"/> | 
+	<dht3:pageOptionLink name="Home" selected="${selected}" link="/person${whoParam}"/> |
 	<dht3:pageOptionLink name="Friends" selected="${selected}" link="/friends${whoParam}"/> | 	
 	<dht3:pageOptionLink name="Groups" selected="${selected}" link="/groups${whoParam}"/>
 </div>

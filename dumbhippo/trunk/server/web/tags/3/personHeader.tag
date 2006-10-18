@@ -107,7 +107,7 @@
 			        <tr valign="bottom">
 			            <td align="right">
 			            	<div class="dh-back">
-				                <a href="/person?who=${who.viewPersonPageId}">Back to <c:out value="${who.name}"/>'s Overview</a>
+				                <a href="/person?who=${who.viewPersonPageId}">Back to <c:out value="${who.name}"/>'s Home</a>
                             </div>
                         </td>
                     </tr>
