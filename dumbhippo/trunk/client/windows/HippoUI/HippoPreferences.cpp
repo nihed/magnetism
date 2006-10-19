@@ -140,17 +140,3 @@ HippoPreferences::getInstanceClassId(HippoInstanceType instanceType)
             return &CLSID_HippoUI_Debug;
     }
 }
-
-const WCHAR *
-HippoPreferences::getInstanceDescription() 
-{
-    switch (instanceType_) {
-        case HIPPO_INSTANCE_NORMAL:
-        default:
-            return L"Mugshot";
-        case HIPPO_INSTANCE_DOGFOOD:
-            return L"Mugshot - I prefer dog food!";
-        case HIPPO_INSTANCE_DEBUG:
-            return L"Mugshot - Eat pesky bugs!";
-    }
-}

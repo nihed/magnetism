@@ -364,10 +364,7 @@ HippoUI::setIcons(void)
     trayIcon_ = (HICON)LoadImage(instance_, icon,
                                  IMAGE_ICON, 16, 16, LR_DEFAULTCOLOR);
 
-    const WCHAR *currentDesc = getPreferences()->getInstanceDescription();
-    tooltip_ = currentDesc;
-    if (!hippo_connection_get_connected(getConnection()))
-        tooltip_.Append(L" (disconnected)");
+    tooltip_ = HippoBSTR::fromUTF8(hippo_connection_get_tooltip(getConnection()));
 }
 
 void

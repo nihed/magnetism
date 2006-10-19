@@ -23,7 +23,6 @@ public:
 
     const WCHAR *getInstanceSubkey();
     const CLSID *getInstanceClassId();
-    const WCHAR *getInstanceDescription();
 
     static const CLSID *getInstanceClassId(HippoInstanceType instanceType);
 
