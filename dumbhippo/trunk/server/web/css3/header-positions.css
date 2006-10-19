@@ -10,8 +10,16 @@
 	width:			100%;
 }
 
+#dhPageHeaderWelcome {
+	margin-right:	8px;
+}
+
+#dhPageHeaderLeftControlsArea {
+	margin-left:	5px;
+	margin-bottom:	18px;
+}
+
 #dhPageHeaderInner {
-	width:			100%;
 }
 
 #dhPageHeaderLeft {

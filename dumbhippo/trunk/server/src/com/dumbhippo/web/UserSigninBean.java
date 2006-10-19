@@ -9,6 +9,9 @@ import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.Enabled;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.NotFoundException;
+import com.dumbhippo.server.PersonViewer;
+import com.dumbhippo.server.views.PersonView;
+import com.dumbhippo.server.views.SystemViewpoint;
 import com.dumbhippo.server.views.UserViewpoint;
 
 public class UserSigninBean extends SigninBean {
@@ -18,6 +21,9 @@ public class UserSigninBean extends SigninBean {
 	private Boolean musicSharingEnabled; // lazily initialized
 	private Boolean defaultSharePublic; // lazily initialized
 
+	private IdentitySpider spider;
+	private PersonViewer viewer;
+	private PersonView userFromSystemView;
 	private Guid userGuid;
 	private User user; // lazily initialized
 	
@@ -32,18 +38,35 @@ public class UserSigninBean extends SigninBean {
 		this.user = account.getOwner();
 		this.userGuid = user.getGuid();
 	}
+	
+	private IdentitySpider getSpider() {
+		if (spider == null)
+			spider = WebEJBUtil.defaultLookup(IdentitySpider.class);
+		return spider;
+	}
+	
+	private PersonViewer getViewer() {
+		if (viewer == null)
+			viewer = WebEJBUtil.defaultLookup(PersonViewer.class);
+		return viewer;
+	}
 		
 	public User getUser() {
 		if (user == null) {
-			IdentitySpider spider = WebEJBUtil.defaultLookup(IdentitySpider.class);
 			try {
-				user = spider.lookupGuid(User.class, userGuid);
+				user = getSpider().lookupGuid(User.class, userGuid);
 			} catch (NotFoundException e) {
 				throw new RuntimeException("Could not lazily create User object");
 			}
 		}
 
 		return user;
+	}
+	
+	public PersonView getViewedUserFromSystem() {
+		if (userFromSystemView == null)
+			userFromSystemView = getViewer().getPersonView(SystemViewpoint.getInstance(), getUser());
+		return userFromSystemView;
 	}
 	
 	public String getUserId() {

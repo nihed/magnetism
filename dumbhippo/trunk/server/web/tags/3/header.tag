@@ -8,9 +8,21 @@
 <%@ attribute name="searchText" required="false" type="java.lang.String" %>
 
 <div id="dhPageHeader3">
-	<table cellspacing="0" cellpadding="0">
+	<table cellspacing="0" cellpadding="0" width="100%">
 	<tr valign="top">
-	<td><a href="/"><dh:png id="dhPageHeaderLeft" src="/images3/${buildStamp}/header_left.png" style="width: 248px; height: 64px"/></a></td>
+	<td width="248px"><a href="/"><dh:png id="dhPageHeaderLeft" src="/images3/${buildStamp}/header_left.png" style="width: 248px; height: 64px"/></a></td>
+	<td id="dhPageHeaderLeftControls" align="left" valign="bottom" height="56px">
+		<div id="dhPageHeaderLeftControlsArea">
+		<c:choose>
+			<c:when test="${signin.valid}">
+				<span id="dhPageHeaderWelcome">Hello, <c:out value="${signin.viewedUserFromSystem.name}"/>!</span> <span id="dhPageHeaderWelcomeOptions" class="dh-underlined-link"><dht:actionLinkLogout oneLine="true"/></span>
+			</c:when>
+			<c:otherwise>	
+			    <span id="dhPageHeaderWelcomeOptions"><a class="dh-underlined-link" href="/who-are-you">Log in</a><c:if test="${!disableSignupLink}"> | <a class="dh-underlined-link" href="/signup">Sign up</a></c:if></span>
+			</c:otherwise>
+		</c:choose>
+		</div>
+	</td>
 	<td id="dhPageHeaderInner" align="right" height="56px">
 		<table cellspacing="0" cellpadding="0" height="56px">
 		<tr valign="top" align="right"><td>
@@ -48,25 +60,18 @@
 		<td>
 		<div id="dhHeaderControls3">
 			<div id="dhHeaderOptions3">
-				<c:if test="${signin.valid && !disableHomeLink}">
-				    <a href="/">Home</a> | 
-				</c:if>
-				<a href="http://blog.mugshot.org/?page_id=213">Features</a> | 
-				<a href="http://blog.mugshot.org/">Blog</a> | 
-				<a href="/friends">People</a> | 
-				<a href="/groups">Groups</a> | 
-				<a href="http://blog.mugshot.org/?page_id=245a">Help</a> | 
 				<c:choose>
 					<c:when test="${signin.valid}">
-						<dht:actionLinkLogout/>
+					    <a class="dh-underlined-link" href="/">My Home</a> | 
+					    <a class="dh-underlined-link" href="/account">My Account</a> |
 					</c:when>
 					<c:otherwise>
-					    <c:if test="${!disableSignupLink}">				
-					        <a href="/signup">Sign up</a> | 
-					    </c:if>    
-					    <a href="/who-are-you">Log in</a>
+						<a class="dh-underlined-link" href="/">Home</a> |
 					</c:otherwise>
 				</c:choose>
+				<a class="dh-underlined-link" href="/friends">People</a> | 
+				<a class="dh-underlined-link" href="/groups">Groups</a> | 
+				<a class="dh-underlined-link" href="http://blog.mugshot.org/?page_id=245a">Help</a>
 			</div>	
 		</div>  
 		</td>
