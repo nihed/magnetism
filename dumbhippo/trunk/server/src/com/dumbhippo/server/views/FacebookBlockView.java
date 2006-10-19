@@ -5,10 +5,11 @@ import java.util.List;
 
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.persistence.Block;
+import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.FacebookEvent;
 import com.dumbhippo.persistence.UserBlockData;
 
-public class FacebookBlockView extends BlockView {
+public class FacebookBlockView extends ExternalAccountBlockView {
 	private PersonView userView;
 	private List<FacebookEvent> facebookEvents;
 	
@@ -54,5 +55,10 @@ public class FacebookBlockView extends BlockView {
 	
 	public List<Object> getReferencedObjects() {
 		return Collections.singletonList((Object)userView);
+	}
+
+	@Override
+	public ExternalAccountType getAccountType() {
+		return ExternalAccountType.FACEBOOK;
 	}
 }

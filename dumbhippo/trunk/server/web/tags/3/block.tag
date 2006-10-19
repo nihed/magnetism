@@ -18,4 +18,14 @@
    	<c:when test="${dh:enumIs(block.blockType, 'GROUP_MEMBER')}">
    		<dht3:groupMemberBlock block="${block}" blockId="${blockId}" offset="${offset}" showFrom="${showFrom}"/>
    	</c:when>
+   	<c:when test="${dh:enumIs(block.blockType, 'EXTERNAL_ACCOUNT')}">
+   		<c:choose>
+   			<c:when test="${dh:enumIs(block.accountType, 'Blog')}">
+		   		<dht3:blogBlock block="${block}" blockId="${blockId}" offset="${offset}" showFrom="${showFrom}"/>
+		   	</c:when>
+   			<c:when test="${dh:enumIs(block.accountType, 'Facebook')}">
+		   		<dht3:facebookBlock block="${block}" blockId="${blockId}" offset="${offset}" showFrom="${showFrom}"/>
+		   	</c:when>
+		</c:choose>
+   	</c:when>   	
 </c:choose>

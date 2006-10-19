@@ -982,13 +982,6 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 			// Create BlockView objects for the blocks, performing access control checks
 			for (UserBlockData ubd : blocks) {
 				try {
-					// TODO: remove this, it is temporary, current web version only supports 
-					// POST, MUSIC_PERSON and GROUP_MEMBER block types
-					if ((ubd.getBlock().getBlockType() != BlockType.POST) &&
-						(ubd.getBlock().getBlockType() != BlockType.MUSIC_PERSON) &&
-						(ubd.getBlock().getBlockType() != BlockType.GROUP_MEMBER))
-						continue;
-					
 					stack.add(prepareBlockView(viewpoint, ubd.getBlock(), ubd));
 					resultItemCount++;
 					if (stack.size() >= targetedNumberOfItems)

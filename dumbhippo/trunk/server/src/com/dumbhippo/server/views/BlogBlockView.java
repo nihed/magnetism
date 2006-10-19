@@ -5,10 +5,11 @@ import java.util.List;
 
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.persistence.Block;
+import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.FeedEntry;
 import com.dumbhippo.persistence.UserBlockData;
 
-public class BlogBlockView extends BlockView {
+public class BlogBlockView extends ExternalAccountBlockView {
 	
 	private PersonView userView;
 	private FeedEntry entry;
@@ -55,5 +56,10 @@ public class BlogBlockView extends BlockView {
 	
 	public List<Object> getReferencedObjects() {
 		return Collections.singletonList((Object)userView);
+	}
+
+	@Override
+	public ExternalAccountType getAccountType() {
+		return ExternalAccountType.BLOG;
 	}
 }
