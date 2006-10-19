@@ -382,6 +382,12 @@
 				RelativePath=".\Mugshot.ico">
 			</File>
 			<File
+				RelativePath=".\notification.ico">
+			</File>
+			<File
+				RelativePath=".\notification_disconnected.ico">
+			</File>
+			<File
 				RelativePath=".\swarm1.ico">
 			</File>
 			<File

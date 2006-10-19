@@ -374,7 +374,7 @@ HippoChatWindowImpl::registerClass()
     wcex.lpszMenuName   = NULL;
     wcex.lpszClassName  = CLASS_NAME;
 
-    WCHAR *icon = MAKEINTRESOURCE(IDI_LINKSWARM);
+    WCHAR *icon = MAKEINTRESOURCE(IDI_MUGSHOT);
     wcex.hIcon = (HICON)LoadImage(instance_, icon, IMAGE_ICON, 32, 32, LR_DEFAULTCOLOR | LR_SHARED);
     wcex.hIconSm = (HICON)LoadImage(instance_, icon, IMAGE_ICON, 16, 16, LR_DEFAULTCOLOR | LR_SHARED);
 

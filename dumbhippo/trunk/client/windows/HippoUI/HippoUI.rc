@@ -30,6 +30,7 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
+IDI_MUGSHOT             ICON                    "Mugshot.ico"
 IDI_SWARM1              ICON                    "swarm1.ico"
 IDI_DUMBHIPPO_1         ICON                    "Logo1.ico"
 IDI_DUMBHIPPO_2         ICON                    "Logo2.ico"
@@ -44,7 +45,8 @@ IDI_SWARM4              ICON                    "swarm4.ico"
 IDI_SWARM5              ICON                    "swarm5.ico"
 IDI_SWARM5B             ICON                    "swarm5b.ico"
 IDI_LINKSWARM           ICON                    "linkswarm.ico"
-IDI_MUGSHOT             ICON                    "Mugshot.ico"
+IDI_NOTIFICATION        ICON                    "notification.ico"
+IDI_NOTIFICATION_DISCONNECTED ICON                    "notification_disconnected.ico"
 
 /////////////////////////////////////////////////////////////////////////////
 //

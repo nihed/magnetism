@@ -342,7 +342,7 @@ HippoUI::setIcons(void)
 
     // Load the standard icons if not loaded before
     if (smallIcon_ == NULL) {
-        icon = MAKEINTRESOURCE(IDI_LINKSWARM);
+        icon = MAKEINTRESOURCE(IDI_MUGSHOT);
         smallIcon_ = (HICON)LoadImage(instance_, icon,
                                       IMAGE_ICON, 16, 16, LR_DEFAULTCOLOR);
         bigIcon_ = (HICON)LoadImage(instance_, icon,
@@ -351,31 +351,12 @@ HippoUI::setIcons(void)
 
     // And always load the notification icon
     if (!hippo_connection_get_connected(getConnection())) {
-        icon = MAKEINTRESOURCE(IDI_SWARM1);
+        icon = MAKEINTRESOURCE(IDI_NOTIFICATION_DISCONNECTED);
     } else if (hotnessBlinkCount_ % 2 == 1) {
+        // Currently unused
         icon = MAKEINTRESOURCE(IDI_DUMBHIPPO_BLANK); // need blank/outlined icon?
     } else {
-        switch (hippo_data_cache_get_hotness(getDataCache())) {
-        case HIPPO_HOTNESS_COLD:
-            icon = MAKEINTRESOURCE(IDI_SWARM1);
-            break;
-        case HIPPO_HOTNESS_COOL:
-            icon = MAKEINTRESOURCE(IDI_SWARM2);
-            break;
-        case HIPPO_HOTNESS_WARM:
-            icon = MAKEINTRESOURCE(IDI_SWARM3);
-            break;
-        case HIPPO_HOTNESS_GETTING_HOT:
-            icon = MAKEINTRESOURCE(IDI_SWARM4);
-            break;
-        case HIPPO_HOTNESS_HOT:
-            icon = MAKEINTRESOURCE(IDI_SWARM5);
-            break;
-        default:
-        case HIPPO_HOTNESS_UNKNOWN:
-            icon = MAKEINTRESOURCE(IDI_SWARM1); // need different icon for this?
-            break;
-        }
+        icon = MAKEINTRESOURCE(IDI_NOTIFICATION);
     }
     if (trayIcon_ != NULL)
         DestroyIcon(trayIcon_);
