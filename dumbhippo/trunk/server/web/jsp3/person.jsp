@@ -10,10 +10,10 @@
 	    <div class="dh-person-stacker-header">
 		    <span class="dh-person-header-name"><c:out value="${person.viewedPerson.name}"/>'s Stacker</span>
 		</div>    
-		<dht3:stacker person="${person.viewedPerson}" stackOrder="2" stackType="dhStacker" pageable="${person.pageableStack}" showFrom="true"/>
+		<dht3:stacker stackOrder="2" stackType="dhStacker" pageable="${person.pageableStack}" showFrom="true"/>
 		<c:if test="${person.pageableMugshot.position != 0}">
 		    <div class="dh-back">
-		        <a href="/person?who=${person.viewedPerson.viewPersonPageId}">Back to <c:out value="${person.viewedPerson.name}"/>'s Overview</a>
+		        <a href="/person?who=${person.viewedPerson.viewPersonPageId}">Back to <c:out value="${person.viewedPerson.name}"/>'s Home</a>
 		    </div>
 		</c:if>    		    
 	</dht3:shinyBox>

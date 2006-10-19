@@ -5,8 +5,9 @@
 
 <%@ attribute name="contact" required="true" type="com.dumbhippo.server.views.PersonView" %>
 <%@ attribute name="stackOrder" required="true" type="java.lang.Integer" %>
-<%@ attribute name="stackType" required="true" type="java.lang.String" %>
-<%@ attribute name="pageable" required="true" type="com.dumbhippo.server.Pageable" %>
+<%@ attribute name="stackType" required="false" type="java.lang.String" %>
+<%@ attribute name="pageable" required="false" type="com.dumbhippo.server.Pageable" %>
+<%@ attribute name="blocks" required="false" type="java.util.List" %>
 <%@ attribute name="showFrom" required="true" type="java.lang.Boolean" %>
 
 <dht3:shinyBox color="grey">				
@@ -22,5 +23,5 @@
 		</c:choose>	| <a href="/">Invite to a group</a>
 		</c:if>
 	</dht3:personHeader>
-	<dht3:stacker person="${contact}" stackOrder="${stackOrder}" stackType="${stackType}" pageable="${pageable}" showFrom="${showFrom}"/>
+	<dht3:stacker stackOrder="${stackOrder}" stackType="${stackType}" pageable="${pageable}" blocks="${blocks}" showFrom="${showFrom}"/>
 </dht3:shinyBox>

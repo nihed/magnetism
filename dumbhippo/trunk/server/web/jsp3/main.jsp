@@ -9,45 +9,27 @@
 	<title>Mugshot</title>
 	<dht3:stylesheet name="site" iefixes="true"/>	
 	<dht3:stylesheet name="main"/>
-	<dht3:stylesheet name="person" iefixes="true"/>
 	<dht:scriptIncludes/>
 	<dht:faviconIncludes/>
 	<script src="/javascript/${buildStamp}/dh/stacker.js" type="text/javascript"></script>	
 </head>
 
-<dh:bean id="person" class="com.dumbhippo.web.pages.StackedMugshotPersonPage" scope="request"/>
+<dh:bean id="main" class="com.dumbhippo.web.pages.MainPage" scope="request"/>
 
 <dht3:page>
 		<dht3:shinyBox color="purple">
-		    <table id="dhMugshotIntro">
-		        <tr id="dhMugshotIntroHeader">
-		        <td width="50%">What the Heck is Mugshot?</td>
-		        <td width="50%">Mugshot Features</td>  
-		        </tr> 
-		        <tr valign="top">
-	 	        <td>
-	 	            <span class="dh-leading-text">A place to see what you and your friends are up to online.</span>
-	 	            Keeping track of everybody's MySpace, Digg, Flickr, LiveJournal, and other sites is a lot of work.
-	 	            Mugshot lets you see friends' updates at a glance. Instantly share interesting things at your social
-	 	            networking sites or with Mugshot's own Web Swarm tool. Receive feeds from groups that share your 
-	 	            specific interests. Sign up for a free Mugshot account to make the Web fun again, and less like 
-	 	            work!	 	        
-	 	        </td>
-	 	        <td>
-	 	            <div><span class="dh-leading-text"><a href="http://blog.mugshot.org">The Stacker</a></span> is a desktop tool for instant updates from friends' sites.</div>
-	 	            <div><span class="dh-leading-text"><a href="/links-learnmore">Web Swarm</a></span> lets you share and comment on cool sites.</div>
-	 	            <div><span class="dh-leading-text"><a href="/radar-learnmore">Music Radar</a></span> shows what songs you and friends are listening to.</div>
-	 	            <div><span class="dh-leading-text"><a href="/public-groups">Groups</a></span> can be created and joined for whatever you are interested in.</div>
-	 	            <div><span class="dh-leading-text"><a href="http://blog.mugshot.org">Flickr and YouTube feeds</a></span> can be displayed on your Mugshot.</div>
-	 	            <div><span class="dh-leading-text"><a href="http://blog.mugshot.org">Account icons</a></span> let friends know where you can be found online.</div>
-	 	        </td>
-	 	        </tr> 
-	 	        <tr>
-	 	        <td colspan="2">
-	 	            <span class="dh-button"><a href="/signup"><img src="/images3/${buildStamp}/signup.gif"/></a></span>&nbsp; or &nbsp;<span class="dh-button"><a href="/who-are-you"><img src="/images3/${buildStamp}/login.gif"/></a></span>
-	 	        </td>
-		    </table>
+		    <div id="dhMugshotIntro">
+		        <div class="dh-intro-message">Put you mugshot on the web.</div>
+		        <div class="dh-intro-explanation">Everything you and your friends do on the web, in real time.</div>
+		        <div class="dh-intro-options">
+                    <span class="dh-button"><a href="/signup"><img src="/images3/${buildStamp}/signup.gif"/></a></span>
+                    &nbsp; or &nbsp;
+                    <span class="dh-button"><a href="/who-are-you"><img src="/images3/${buildStamp}/login.gif"/></a></span>
+               </div> 
+           </div>        
 		</dht3:shinyBox>
-		<dht3:pageSubHeader title="Featured Members and Groups"></dht3:pageSubHeader>
-		<dht3:personStack contact="${person.viewedPerson}" stackOrder="1" stackType="dhStacker" pageable="${person.pageableMugshot}" showFrom="true"/>
+        <div class="dh-header">Featured Mugshots</div>
+        <c:forEach items="${main.recentActivity}" var="personMugshot" varStatus="status">
+            <dht3:personStack contact="${personMugshot.personView}" stackOrder="${status.count}" blocks="${personMugshot.blocks}" showFrom="true"/>
+        </c:forEach>
 </dht3:page>

@@ -11,6 +11,7 @@ import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.server.views.BlockView;
+import com.dumbhippo.server.views.PersonMugshotView;
 import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.server.views.Viewpoint;
 
@@ -48,6 +49,8 @@ public interface Stacker {
 	public BlockView loadBlock(Viewpoint viewpoint, UserBlockData ubd) throws NotFoundException;
 	
 	public void pageStack(Viewpoint viewpoint, User user, Pageable<BlockView> pageable, boolean participantOnly);	
+	// get a list of most recently active users with their most recent activity from the anonymous viewpoint
+	public List<PersonMugshotView> getRecentActivity(int count, int blocksPerPerson);
 	// Returns a complete stack for the user.
 	public List<BlockView> getStack(Viewpoint viewpoint, User user, long lastTimestamp, int start, int count);
 	// Returns parts of the stack in which the user was an active participant if participantOnly is set to true.

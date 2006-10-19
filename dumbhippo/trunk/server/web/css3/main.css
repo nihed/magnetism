@@ -2,40 +2,14 @@
 @IMPORT url("person.css");
 @IMPORT url("main-positions.css");
 
-.dh-logo-link, #dhMainLogoLinks {
-	color:			#ffffff;
-	background-color:	transparent;
-	font-weight:		bold;
-	font-size:		16px;
-}
-
-.dh-logo-link {
-	text-decoration:	underline;
-}
-
-.dh-logo-link:visited {
-	color:			#ffffff;
-}
-
-#dhMugshotIntro {
-    font-weight:  normal;
-    font-size:    12px;
-}
-
-.dh-leading-text {
-    font-weight: bold;
-} 
-
-.dh-leading-text a {
-    text-decoration: underline;
-}
-
-.dh-leading-text a:visited {
-	color:     blue;
-}
-
-#dhMugshotIntroHeader {
+.dh-intro-message {
     color:        #9648BC;
 	font-weight:  bold;
-	font-size:	  18px;
+	font-size:	  20px;
+}
+
+.dh-intro-explanation, .dh-intro-options, .dh-header {
+	color:			#9648CD;
+	font-weight:	bold;
+	font-size:		16px;
 }

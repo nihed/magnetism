@@ -6,9 +6,14 @@
 <%@ attribute name="who" required="true" type="com.dumbhippo.server.views.PersonView" %>
 <%@ attribute name="isSelf" required="true" type="java.lang.Boolean" %>
 <%@ attribute name="shortVersion" required="false" type="java.lang.Boolean" %>
+<%@ attribute name="embedVersion" required="false" type="java.lang.Boolean" %>
 
 <c:if test="${empty shortVersion}">
 	<c:set var="shortVersion" value="false"/>
+</c:if>
+
+<c:if test="${empty embedVersion}">
+	<c:set var="embedVersion" value="false"/>
 </c:if>
 
 <div class="dh-person-header">
@@ -65,10 +70,10 @@
 			<tr valign="top">
 				<td align="right">
 				    <div class="dh-favicons">
-				        <c:if test="${!empty who.email}">
+				        <c:if test="${who.hasEmail && !empty who.email}">
 						    <dht3:whereAtIcon label="Send me email" linkText="${who.email.email}" linkTarget="${who.emailLink}" imgSrc="/images3/${buildStamp}/mail_icon.png"/>
 						</c:if>
-						<c:if test="${!empty who.aim}">
+						<c:if test="${who.hasAim && !empty who.aim}">
 						    <c:set var="aimIcon" value="/images3/${buildStamp}/aim_icon.png"/>
 						    <c:if test="${!empty who.aimPresenceImageLink}">
 						        <c:set var="aimIcon" value="${who.aimPresenceImageLink}"/>

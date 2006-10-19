@@ -304,6 +304,14 @@ public class PersonView extends EntityView {
 		return getOne(PersonViewExtra.PRIMARY_EMAIL, EmailResource.class);
 	}
 	
+	public boolean getHasEmail() {
+	    return hasExtra(PersonViewExtra.PRIMARY_EMAIL);
+	}
+	
+	public boolean getHasAim() {
+		return hasExtra(PersonViewExtra.PRIMARY_AIM);
+	}
+	
 	public String getEmailLink() {
 		EmailResource email = getEmail();
 		if (email == null)

@@ -67,6 +67,7 @@ import com.dumbhippo.server.Stacker;
 import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.XmppMessageSender;
 import com.dumbhippo.server.util.EJBUtil;
+import com.dumbhippo.server.views.AnonymousViewpoint;
 import com.dumbhippo.server.views.BlockView;
 import com.dumbhippo.server.views.BlogBlockView;
 import com.dumbhippo.server.views.ChatMessageView;
@@ -75,6 +76,7 @@ import com.dumbhippo.server.views.GroupChatBlockView;
 import com.dumbhippo.server.views.GroupMemberBlockView;
 import com.dumbhippo.server.views.GroupView;
 import com.dumbhippo.server.views.MusicPersonBlockView;
+import com.dumbhippo.server.views.PersonMugshotView;
 import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.PersonViewExtra;
 import com.dumbhippo.server.views.PostBlockView;
@@ -1027,6 +1029,78 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		blockViewsToReturn.removeAll(blockViewsToRemove);
 		
 		pageable.setResults(blockViewsToReturn);
+	}
+
+	private List<User> getRecentActivityUsers(int start, int count) {
+		// we expect the anonymous viewpoint here, so we only get public blocks
+		Query q = em.createQuery("SELECT ubd.user FROM UserBlockData ubd, Block block " + 
+                " WHERE ubd.deleted = 0 AND ubd.block = block " +
+                " AND ubd.participatedTimestamp != NULL " +
+                " AND block.publicBlock = true " +
+                " ORDER BY ubd.participatedTimestamp DESC");
+		q.setFirstResult(start);
+		q.setMaxResults(count);
+		
+		return TypeUtils.castList(User.class, q.getResultList());
+	}
+	
+	public List<PersonMugshotView> getRecentActivity(int count, int blocksPerPerson) {
+		List<PersonMugshotView> mugshots = new ArrayList<PersonMugshotView>();
+		
+		// select distinct most recently active users		
+       	int expectedHitFactor = 2;
+		
+		List<User> distinctUsers = new ArrayList<User>();
+		int start = 0;
+		
+		while (distinctUsers.size() < count) {
+			int countToProcess = (count - distinctUsers.size()) * expectedHitFactor;
+			List<User> users = getRecentActivityUsers(start, countToProcess);
+			if (users.isEmpty())
+				break;
+			
+			int resultItemCount = 0;
+
+			for (User user : users) {
+				if (distinctUsers.contains(user))
+					continue;
+				distinctUsers.add(user);
+				resultItemCount++;
+				if (distinctUsers.size() >= count)
+					break;
+			}		
+		    
+		    // nothing else there
+		    if (users.size() < countToProcess)
+		    	break;
+	
+		    start = start + countToProcess;
+		    expectedHitFactor = users.size() / resultItemCount + 1;
+		}
+
+		for (User user : distinctUsers) {
+			Query qu = em.createQuery("Select ubd FROM UserBlockData ubd, Block block " + 
+                " WHERE ubd.user = :user AND ubd.deleted = 0 AND ubd.block = block " +
+                " AND ubd.participatedTimestamp != NULL " +
+                " AND block.publicBlock = true " +
+                " ORDER BY ubd.participatedTimestamp DESC");
+			qu.setParameter("user", user);
+		    qu.setMaxResults(blocksPerPerson);
+         	List<BlockView> blocks = new ArrayList<BlockView>();
+         	for (UserBlockData ubd : TypeUtils.castList(UserBlockData.class, qu.getResultList())) {
+	         	try {
+	         	    BlockView blockView = getBlockView(AnonymousViewpoint.getInstance(), ubd.getBlock(), ubd);
+	         	    blocks.add(blockView);
+	         	} catch (NotFoundException e) {
+	         		// this is used on the main page, let's not risk it throwing an exception here
+	         		logger.error("NotFoundException when getting what must be a public block", e);
+	         	}
+         	}
+         	PersonView personView = personViewer.getPersonView(AnonymousViewpoint.getInstance(), user, PersonViewExtra.EXTERNAL_ACCOUNTS);
+            mugshots.add(new PersonMugshotView(personView, blocks));      	
+		}
+		
+		return mugshots;		
 	}
 	
 	public List<BlockView> getStack(Viewpoint viewpoint, User user, long lastTimestamp, int start, int count) {
