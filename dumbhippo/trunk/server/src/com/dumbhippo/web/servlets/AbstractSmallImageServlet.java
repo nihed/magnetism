@@ -260,8 +260,6 @@ public abstract class AbstractSmallImageServlet extends AbstractServlet {
 			String sizeParameter = request.getParameter("size");
 			if (sizeParameter != null && isValidSize(sizeParameter))
 				size = sizeParameter;
-			if (embeddedSize != null)
-				size = "" + embeddedSize;
 			
 			noPrefix = size + "/" + noPrefix;
 		}

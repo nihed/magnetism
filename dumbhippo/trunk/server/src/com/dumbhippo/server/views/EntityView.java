@@ -23,7 +23,7 @@ public abstract class EntityView implements ObjectView {
 	public static String sizePhoto(String baseUrl, int size) {
 		int lastSlash = baseUrl.lastIndexOf('/');
 		StringBuilder newUrl = new StringBuilder(baseUrl.substring(0, lastSlash+1));
-		newUrl.append(""+size);
+		newUrl.append(Integer.toString(size));
 		newUrl.append(baseUrl.substring(lastSlash));
 		return newUrl.toString();
 	}
