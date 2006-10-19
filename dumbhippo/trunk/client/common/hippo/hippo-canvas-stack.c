@@ -237,6 +237,9 @@ foreach_find_item(HippoCanvasItem *child,
     if (child_block == fid->block) {
         fid->found = child;
     }
+
+    if (child_block)
+        g_object_unref(child_block);
 }
 
 static HippoCanvasItem*
@@ -262,11 +265,19 @@ canvas_block_compare(HippoCanvasItem *a,
 {
     HippoBlock *block_a;
     HippoBlock *block_b;
+    int result;
 
     g_object_get(G_OBJECT(a), "block", &block_a, NULL);
     g_object_get(G_OBJECT(b), "block", &block_b, NULL);
 
-    return hippo_block_compare_newest_first(block_a, block_b);
+    result = hippo_block_compare_newest_first(block_a, block_b);
+
+    if (block_a)
+        g_object_unref(block_a);
+    if (block_b)
+        g_object_unref(block_b);
+
+    return result;
 }
 
 void
@@ -329,6 +340,8 @@ foreach_update_min_timestamp(HippoCanvasItem *child,
     sort_timestamp = hippo_block_get_sort_timestamp(child_block);
     if (sort_timestamp < stack->min_timestamp)
         hippo_canvas_box_remove(HIPPO_CANVAS_BOX(stack), child);
+
+    g_object_unref(child_block);
 }
 
 void

@@ -97,6 +97,8 @@ hippo_canvas_scrollbars_set_root(HippoCanvasScrollbars *scrollbars,
     canvas = HIPPO_CANVAS(gtk_bin_get_child(GTK_BIN(viewport)));
     
     hippo_canvas_set_root(canvas, item);
+
+    g_object_unref(sw);
 }
 
 void
@@ -133,6 +135,8 @@ hippo_canvas_scrollbars_set_policy (HippoCanvasScrollbars *scrollbars,
     g_object_set(G_OBJECT(sw),
                  property, gtk_policy,
                  NULL);
+
+    g_object_unref(sw);
 }
 
 HippoCanvasItem*

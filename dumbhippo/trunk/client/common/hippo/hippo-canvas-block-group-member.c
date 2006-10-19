@@ -173,6 +173,10 @@ on_invite_activated(HippoCanvasItem  *button_or_link,
     if (member && group && actions) {
         hippo_actions_invite_to_group(actions, group, member);
     }
+    if (member)
+        g_object_unref(member);
+    if (group)
+        g_object_unref(group);
 }
 
 static GObject*
@@ -247,6 +251,7 @@ on_group_changed(HippoBlock *block,
     } else {
         hippo_canvas_block_set_sender(HIPPO_CANVAS_BLOCK(canvas_group_member),
                                       hippo_entity_get_guid(HIPPO_ENTITY(group)));
+        g_object_unref(group);
     }
 }
 
@@ -305,6 +310,9 @@ update_member_and_status(HippoCanvasBlockGroupMember *canvas_group_member,
     hippo_canvas_box_set_child_visible(canvas_group_member->invite_parent,
                                        canvas_group_member->invite_link,
                                        show_invite_link);
+
+    if (member)
+        g_object_unref(member);
 }
 
 static void
@@ -398,6 +406,8 @@ hippo_canvas_block_group_member_title_activated(HippoCanvasBlock *canvas_block)
         return;
 
     hippo_actions_visit_entity(actions, HIPPO_ENTITY(group));
+
+    g_object_unref(group);
 }
 
 static void

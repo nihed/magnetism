@@ -295,6 +295,9 @@ on_block_post_post_changed(HippoBlock *block,
             post ? hippo_post_get_guid(post) : "null");
     
     hippo_canvas_block_post_set_post(canvas_block_post, post);
+
+    if (post)
+        g_object_unref(post);
 }
 
 static void
@@ -463,6 +466,8 @@ hippo_canvas_block_post_title_activated(HippoCanvasBlock *canvas_block)
         return;
     
     hippo_actions_visit_post(actions, post);
+
+    g_object_unref(post);
 }
 
 static void

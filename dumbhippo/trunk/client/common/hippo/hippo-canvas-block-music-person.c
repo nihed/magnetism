@@ -277,6 +277,8 @@ on_current_track_changed(HippoPerson *person,
         g_free(title);
         g_free(artist);
         g_free(name);
+
+        g_object_unref(track);
     } else {
         hippo_canvas_block_set_title(canvas_block, "");
     }
@@ -320,6 +322,8 @@ on_user_changed(HippoBlock *block,
     person = NULL;
     g_object_get(G_OBJECT(block), "user", &person, NULL);
     set_person(block_music_person, person);
+    if (person)
+        g_object_unref(person);
 }
 
 static void
@@ -376,6 +380,8 @@ hippo_canvas_block_music_person_title_activated(HippoCanvasBlock *canvas_block)
         return;
     
     hippo_actions_visit_entity(actions, HIPPO_ENTITY(person));
+
+    g_object_unref(person);
 }
 
 static void

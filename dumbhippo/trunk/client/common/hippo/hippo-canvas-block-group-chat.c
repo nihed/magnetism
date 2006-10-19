@@ -267,6 +267,8 @@ update_chat_messages(HippoCanvasBlockGroupChat *canvas_group_chat)
     canvas_group_chat->have_messages = last_message != NULL;
 
     hippo_canvas_block_group_update_visibility(canvas_group_chat);
+
+    g_object_unref(group);
 }
 
 static void
@@ -291,6 +293,8 @@ on_group_changed(HippoBlock *block,
                                      
         hippo_canvas_block_set_sender(HIPPO_CANVAS_BLOCK(canvas_group_chat),
                                       hippo_entity_get_guid(HIPPO_ENTITY(group)));
+
+        g_object_unref(group);
     }
 }
 
@@ -358,6 +362,8 @@ hippo_canvas_block_group_chat_title_activated(HippoCanvasBlock *canvas_block)
         return;
 
     hippo_actions_join_chat_id(actions, hippo_entity_get_guid(HIPPO_ENTITY(group)));
+
+    g_object_unref(group);
 }
 
 static void

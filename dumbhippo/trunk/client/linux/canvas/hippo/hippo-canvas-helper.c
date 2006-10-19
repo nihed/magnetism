@@ -707,8 +707,11 @@ update_widget(HippoCanvasHelper    *helper,
     new_widget = NULL;
     g_object_get(G_OBJECT(witem->item), "widget", &new_widget, NULL);
 
-    if (new_widget == witem->widget)
+    if (new_widget == witem->widget) {
+        if (new_widget)
+            g_object_unref(new_widget);
         return;
+    }
     
     if (new_widget) {
         /* note that this ref/sinks the widget */
@@ -721,6 +724,9 @@ update_widget(HippoCanvasHelper    *helper,
     }
     
     witem->widget = new_widget;
+
+    if (new_widget)
+        g_object_unref(new_widget);
 }
 
 static void
