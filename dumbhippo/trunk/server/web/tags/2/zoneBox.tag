@@ -42,7 +42,7 @@
 				<c:when test="${!empty back}">
 					<dht:zoneBoxLinkHeader value="Go back" link="javascript:history.go(-1)"/>
 				</c:when>
-				<c:when test="${disableJumpTo}">
+				<c:when test="true"> <%-- zone box jump to stuff is disabled for now --%>
 					<%-- nothing --%>
 				</c:when>
 				<c:otherwise>
