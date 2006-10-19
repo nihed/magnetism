@@ -37,6 +37,7 @@ all: *.xml *.css *.png *.js *.gif images
 IMGDIR=..\..\common\images
 images:
 	-mkdir $(OUTDIR)\images
+	copy $(IMGDIR)\add_icon.png $(OUTDIR)\images
 	copy $(IMGDIR)\arrow.png $(OUTDIR)\images
 	copy $(IMGDIR)\arrow2.png $(OUTDIR)\images
 	copy $(IMGDIR)\bar_middle.png $(OUTDIR)\images
