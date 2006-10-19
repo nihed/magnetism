@@ -23,14 +23,14 @@
 	<c:choose>
 		<c:when test="${browser.linuxRequested}">
 			<%-- LINUX RELEASE NOTES GO HERE --%>
-			<p>Version 1.1.18</p>
+			<p>Version 1.1.19</p>
 			<ul>
 				<li>New "stacker" user interface.</li>			
 			</ul>
 		</c:when>
 		<c:otherwise>
 			<%-- WINDOWS RELEASE NOTES GO HERE --%>
-			<p>Version 1.1.70</p>
+			<p>Version 1.1.71</p>
 			<ul>
 				<li>New "stacker" user interface.</li>
 			</ul>
