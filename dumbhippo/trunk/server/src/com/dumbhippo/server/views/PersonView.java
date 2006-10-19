@@ -15,7 +15,6 @@ import org.slf4j.Logger;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.StringUtils;
 import com.dumbhippo.TypeFilteredCollection;
-import com.dumbhippo.URLUtils;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.live.LiveClientData;
@@ -846,10 +845,6 @@ public class PersonView extends EntityView {
 			return "/person?who=" + user.getId();
 		else
 			return null;
-	}
-	
-	public String getPhotoUrl30() {
-		return URLUtils.addQueryParameter(getPhotoUrl(), "size", "30");
 	}
 	
 	@Override

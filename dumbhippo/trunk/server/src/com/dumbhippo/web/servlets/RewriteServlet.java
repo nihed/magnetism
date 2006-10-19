@@ -118,6 +118,8 @@ public class RewriteServlet extends HttpServlet {
     	String sizeParameter = request.getParameter("size");
     	if (sizeParameter != null && AbstractSmallImageServlet.isValidSize(sizeParameter))
         	size = sizeParameter;
+    	if (AbstractSmallImageServlet.getEmbeddedSize(relativePath) != null)
+    		return relativePath;
     	
     	int lastSlash = relativePath.lastIndexOf("/");
     	String newPath = relativePath.substring(0, lastSlash + 1) + size + relativePath.substring(lastSlash);
