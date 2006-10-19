@@ -6,6 +6,7 @@ import javax.ejb.Local;
 
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.ExternalAccountType;
+import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupMember;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.User;
@@ -56,12 +57,15 @@ public interface Stacker {
 	// Returns parts of the stack in which the user was an active participant if participantOnly is set to true.
 	public List<BlockView> getStack(Viewpoint viewpoint, User user, long lastTimestamp, int start, int count, boolean participantOnly);
 
+	public void pageStack(Viewpoint viewpoint, Group group, Pageable<BlockView> pageable);	
+
 	public UserBlockData lookupUserBlockData(UserViewpoint viewpoint, Guid guid) throws NotFoundException;
 	
 	public void setBlockHushed(UserBlockData userBlockData, boolean hushed);
 	
 	public void migrateEverything();
 	public void migrateParticipation();
+	public void migrateGroupBlockData();
 	public void migrateGroups();
 	public void migratePost(String postId);
 	public void migratePostParticipation(String postId);
@@ -70,4 +74,5 @@ public interface Stacker {
 	public void migrateGroupChat(String groupId);
 	public void migrateGroupChatParticipation(String groupId);
 	public void migrateGroupMembers(String groupId);
+	public void migrateGroupBlockData(String blockId);
 }

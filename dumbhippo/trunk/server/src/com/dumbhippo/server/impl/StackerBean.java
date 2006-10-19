@@ -26,6 +26,7 @@ import org.jboss.annotation.ejb.Service;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.Pair;
 import com.dumbhippo.ThreadUtils;
 import com.dumbhippo.TypeUtils;
 import com.dumbhippo.XmlBuilder;
@@ -959,32 +960,33 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		return TypeUtils.castList(UserBlockData.class, q.getResultList());
 	}
 	
-	public void pageStack(Viewpoint viewpoint, User user, Pageable<BlockView> pageable, boolean participantOnly) {
-		
-		logger.debug("getting stack for user {}", user);
+	private interface BlockSource {
+		List<Pair<Block, UserBlockData>> get(int start, int count);
+	}
 
+	public void pageStack(Viewpoint viewpoint, BlockSource source, Pageable<BlockView> pageable, int expectedHitFactor) {
+		
 		// + 1 is for finding out if there are items for the next page
 		int targetedNumberOfItems = pageable.getStart() + pageable.getCount() + 1;
 		int firstItemToReturn = pageable.getStart();
-		
-       	int expectedHitFactor = 4;
-		if (viewpoint.isOfUser(user))
-			expectedHitFactor = 2;
 		
 		List<BlockView> stack = new ArrayList<BlockView>();
 		int start = 0;
 		
 		while (stack.size() < targetedNumberOfItems) {
 			int count = (targetedNumberOfItems - stack.size()) * expectedHitFactor;
-			List<UserBlockData> blocks = getBlocks(viewpoint, user, participantOnly, start, count);
+			List<Pair<Block, UserBlockData>> blocks = source.get(start, count);
 			if (blocks.isEmpty())
 				break;
 			
 			int resultItemCount = 0;
 			// Create BlockView objects for the blocks, performing access control checks
-			for (UserBlockData ubd : blocks) {
+			for (Pair<Block, UserBlockData> pair : blocks) {
+				Block block = pair.getFirst();
+				UserBlockData ubd = pair.getSecond();
+				
 				try {
-					stack.add(prepareBlockView(viewpoint, ubd.getBlock(), ubd));
+					stack.add(prepareBlockView(viewpoint, block, ubd));
 					resultItemCount++;
 					if (stack.size() >= targetedNumberOfItems)
 						break;
@@ -1042,6 +1044,25 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		q.setMaxResults(count);
 		
 		return TypeUtils.castList(User.class, q.getResultList());
+	}
+	
+	public void pageStack(final Viewpoint viewpoint, final User user, Pageable<BlockView> pageable, final boolean participantOnly) {
+		
+		logger.debug("getting stack for user {}", user);
+
+       	int expectedHitFactor = 4;
+		if (viewpoint.isOfUser(user))
+			expectedHitFactor = 2;
+		
+		pageStack(viewpoint, new BlockSource() {
+			public List<Pair<Block, UserBlockData>> get(int start, int count) {
+				List<Pair<Block, UserBlockData>> results = new ArrayList<Pair<Block, UserBlockData>>();
+				for (UserBlockData ubd : getBlocks(viewpoint, user, participantOnly, start, count)) {
+					results.add(new Pair<Block, UserBlockData>(ubd.getBlock(), ubd));
+				}
+				return results;
+			}
+		}, pageable, expectedHitFactor);
 	}
 	
 	public List<PersonMugshotView> getRecentActivity(int count, int blocksPerPerson) {
@@ -1106,7 +1127,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	public List<BlockView> getStack(Viewpoint viewpoint, User user, long lastTimestamp, int start, int count) {
 	    return getStack(viewpoint, user, lastTimestamp, start, count, false);
     }
-
+	
 	public List<BlockView> getStack(Viewpoint viewpoint, User user, long lastTimestamp, int start, int count, boolean participantOnly) {
 		// keep things sane (e.g. if count provided by an http method API caller)
 		if (count > 50)
@@ -1224,6 +1245,36 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 			}
 		}
 		return stack;
+	}
+	
+	private List<GroupBlockData> getBlocks(Viewpoint viewpoint, Group group, int start, int count) {
+		Query q = em.createQuery("SELECT gbd FROM GroupBlockData gbd, Block block " + 
+				                 " WHERE gbd.group = :group AND gbd.deleted = 0 AND gbd.block = block " + 
+				                 " ORDER BY block.timestamp DESC");
+		q.setFirstResult(start);
+		q.setMaxResults(count);
+		q.setParameter("group", group);
+		
+		return TypeUtils.castList(GroupBlockData.class, q.getResultList());
+	}
+	
+	public void pageStack(final Viewpoint viewpoint, final Group group, Pageable<BlockView> pageable) {
+		
+		logger.debug("getting stack for group {}", group);
+
+		// There may be a few exceptions, but generally if you can see a group page at all
+		// you should be able to see all the blocks for the group
+       	int expectedHitFactor = 2;
+       	
+		pageStack(viewpoint, new BlockSource() {
+			public List<Pair<Block, UserBlockData>> get(int start, int count) {
+				List<Pair<Block, UserBlockData>> results = new ArrayList<Pair<Block, UserBlockData>>();
+				for (GroupBlockData gbd : getBlocks(viewpoint, group, start, count)) {
+					results.add(new Pair<Block, UserBlockData>(gbd.getBlock(), null));
+				}
+				return results;
+			}
+		}, pageable, expectedHitFactor);
 	}
 	
 	public UserBlockData lookupUserBlockData(UserViewpoint viewpoint, Guid guid) throws NotFoundException {
@@ -1413,6 +1464,19 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		}
 	}
 	
+	static private class GroupBlockDataMigrationTask implements Runnable {
+		private String blockId;
+		
+		GroupBlockDataMigrationTask(String blockId) {
+			this.blockId = blockId;
+		}
+		
+		public void run() {
+			Stacker stacker = EJBUtil.defaultLookup(Stacker.class);
+			stacker.migrateGroupBlockData(blockId);
+		}
+	}
+	
 	static private class Migration implements Runnable {
 		@SuppressWarnings("unused")
 		static private final Logger logger = GlobalSetup.getLogger(Migration.class);		
@@ -1568,6 +1632,18 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		runMigration(generateParticipationMigrationTasks());		
 	}
 	
+	public void migrateGroupBlockData() {
+		Query q = em.createQuery("SELECT block.id FROM Block block");
+		List<String> blocks = TypeUtils.castList(String.class, q.getResultList());
+	
+		List<Runnable> tasks = new ArrayList<Runnable>();
+		for (String id : blocks) {
+			tasks.add(new GroupBlockDataMigrationTask(id));
+		}
+		
+		runMigration(tasks);
+	}
+		
 	private List<Runnable> generateParticipationMigrationTasks() {
 		List<Runnable> tasks = new ArrayList<Runnable>();
 		
@@ -1823,5 +1899,12 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 				stackGroupMember(member, 0);
 			}
 		}
+	}
+	
+	public void migrateGroupBlockData(String blockId) {
+		logger.debug("    migrating group block data for {}", blockId);
+		
+		Block block = em.find(Block.class, blockId);
+		updateGroupBlockDatas(block);
 	}
 }
