@@ -154,12 +154,21 @@ HippoGObjectRefcounter::unref(GObject *object)
 }
 
 void
-hippo_rectangle_from_rect(HippoRectangle *hippo_rect, RECT *windows_rect)
+hippo_rectangle_from_rect(HippoRectangle *hippo_rect, const RECT *windows_rect)
 {
     hippo_rect->x = windows_rect->left;
     hippo_rect->y = windows_rect->top;
     hippo_rect->width = windows_rect->right - windows_rect->left;
     hippo_rect->height = windows_rect->bottom - windows_rect->top;
+}
+
+void
+hippo_rectangle_to_rect(const HippoRectangle *hippo_rect, RECT *windows_rect)
+{
+    windows_rect->left = hippo_rect->x;
+    windows_rect->top = hippo_rect->y;
+    windows_rect->right = hippo_rect->x + hippo_rect->width;
+    windows_rect->bottom = hippo_rect->y + hippo_rect->height;
 }
 
 static bool

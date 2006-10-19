@@ -33,6 +33,7 @@ HippoAbstractWindow::HippoAbstractWindow()
     height_ = 0;
 
     defaultPositionSet_ = false;
+    selfSizing_ = false;
 
     instance_ = GetModuleHandle(NULL);
     window_ = NULL;
@@ -47,6 +48,9 @@ HippoAbstractWindow::~HippoAbstractWindow(void)
 void 
 HippoAbstractWindow::setUI(HippoUI *ui)
 {
+    if (created_)
+        return;
+
     ui_ = ui;
     if (ui_)
         initializeUI();
@@ -280,22 +284,29 @@ HippoAbstractWindow::createWindow(void)
     }
 
     HippoRectangle rect;
-    getClientArea(&rect);
-    convertClientRectToWindowRect(&rect);
+    if (selfSizing_) {
+        rect.x = CW_USEDEFAULT;
+        rect.y = CW_USEDEFAULT;
+        rect.width = CW_USEDEFAULT;
+        rect.height = CW_USEDEFAULT;
+    } else {
+        getClientArea(&rect);
+        convertClientRectToWindowRect(&rect);
 
-    /* from this point on, x/y/width/height are defined to match the 
-     * actual x/y/width/height we've set on window_.
-     */
-    
-    /* Note that WM_SIZE is 
-     * sent right away but we ignore it since we haven't set ourselves
-     * as window data.
-     */
+        /* from this point on, x/y/width/height are defined to match the 
+        * actual x/y/width/height we've set on window_, unless we're self sizing
+        */
+        
+        /* Note that WM_SIZE is 
+        * sent right away but we ignore it since we haven't set ourselves
+        * as window data.
+        */
 #if 0
-    g_debug("SIZING: creating window at window rect %d,%d %dx%d client rect %d,%d %dx%d",
-        rect.x, rect.y, rect.width, rect.height,
-        x_, y_, width_, height_);
+        g_debug("SIZING: creating window at window rect %d,%d %dx%d client rect %d,%d %dx%d",
+            rect.x, rect.y, rect.width, rect.height,
+            x_, y_, width_, height_);
 #endif
+    }
 
 #if 0
     g_debug("Create window style %x WS_OVERLAPPEDWINDOW=%x WS_VISIBLE=%x WS_DISABLED=%x WS_CHILD=%x WS_POPUP=%x WS_CAPTION=%x WS_SYSMENU=%x WS_MINIMIZEBOX=%x",
@@ -316,8 +327,19 @@ HippoAbstractWindow::createWindow(void)
         return false;
     }
 
-    {
-        // Sanity check
+    if (selfSizing_) {
+        // Get the default sizes Windows picked,
+        // though this is somewhat pointless since right
+        // now selfSizing_ is used for common controls
+        // and we don't get WM_SIZE/WM_MOVE on those 
+        // so won't be keeping this up to date anyhow
+        queryCurrentClientRect(&rect);
+        x_ = rect.x;
+        y_ = rect.y;
+        width_ = rect.width;
+        height_ = rect.height;
+    } else {
+        // Sanity check we set what we wanted
         HippoRectangle actual;
         HippoRectangle believed;
         getClientArea(&believed);
@@ -338,6 +360,7 @@ HippoAbstractWindow::createWindow(void)
     //EnableScrollBar(window_, SB_BOTH, ESB_DISABLE_BOTH);
 
     hippoSetWindowData<HippoAbstractWindow>(window_, this);
+    g_assert(ui_ != NULL);
     ui_->registerMessageHook(window_, this);
 
     initializeWindow();
@@ -357,6 +380,7 @@ HippoAbstractWindow::create(void)
 #endif
 
     g_assert(window_ == NULL);
+    g_assert(ui_ != NULL);
 
     if (!registerClass()) {
         hippoDebugLogW(L"Failed to register window class");
@@ -573,7 +597,8 @@ HippoAbstractWindow::moveResizeWindow(int x, int y, int width, int height)
         getClientArea(&rect);
         convertClientRectToWindowRect(&rect);
 #if 0
-        g_debug("SIZING: MoveWindow to %d,%d %dx%d (window rect %d,%d %dx%d)",
+        g_debug("SIZING: MoveWindow on %s to %d,%d %dx%d (window rect %d,%d %dx%d)",
+            HippoUStr(getClassName()).c_str(),
             x, y, width, height, rect.x, rect.y, rect.width, rect.height);
 #endif
         MoveWindow(window_, rect.x, rect.y, rect.width, rect.height, TRUE);
@@ -672,6 +697,21 @@ HippoAbstractWindow::processMessage(UINT   message,
             HippoRectangle newRect;
             queryCurrentClientRect(&newRect);
             onMoveResizeMessage(&newRect);
+            // below disabled since it doesn't matter for HippoAbstractControl
+            // and it might break something.
+#if 0
+            // onMoveResizeMessage may have already done this, but if 
+            // not we clean it up. This might be a tad dangerous
+            // if onMoveResizeMessage recursively moves/sizes
+            // but it does not right now afaik
+            x_ = newRect.x;
+            y_ = newRect.y;
+            width_ = newRect.width;
+            height_ = newRect.height;
+            g_debug("SIZING: %s saved new size %d,%d %dx%d",
+                HippoUStr(getClassName()).c_str(),
+                x_, y_, width_, height_);
+#endif
         }
         return false; // for e.g. standard Windows controls we want to run DefWindowProc() ?
     default:
@@ -756,6 +796,34 @@ debugPrintMessage(HippoAbstractWindow *abstractWindow,
     case WM_PARENTNOTIFY:
         g_debug("WM_PARENTNOTIFY");
         break;
+    case WM_NOTIFY:
+        g_debug("WM_NOTIFY");
+        switch (((NMHDR*) lParam)->code) {
+            case TTN_GETDISPINFO:
+                g_debug("  TTN_GETDISPINFO");
+                break;
+        }
+        break;
+    case WM_MOUSEHOVER:
+        g_debug("WM_MOUSEHOVER");
+        break;
+    case WM_SETFOCUS:
+        g_debug("WM_SETFOCUS");
+        break;
+    case WM_KILLFOCUS:
+        g_debug("WM_KILLFOCUS");
+        break;
+    case WM_NCPAINT:
+        //g_debug("WM_NCPAINT");
+        break;
+    case WM_COMMNOTIFY:
+        break;
+    case WM_SYNCPAINT:
+        break;
+    case WM_WINDOWPOSCHANGING:
+        break;
+    case WM_WINDOWPOSCHANGED:
+        break;
     default:
         g_debug("unknown window message 0x%X (look in winuser.h - go to definition of any WM_* in visual studio)", message);
         break;
@@ -782,6 +850,11 @@ HippoAbstractWindow::windowProc(HWND   window,
                 // own, so we return 1 to keep windows from erasing and causing flicker
                 result = 1;
                 runDefault = false;
+                break;
+            case WM_NOTIFY:
+                abstractWindow->AddRef();
+                runDefault = abstractWindow->onNotify((NMHDR*) lParam);
+                abstractWindow->Release();
                 break;
             default:
                 abstractWindow->AddRef();

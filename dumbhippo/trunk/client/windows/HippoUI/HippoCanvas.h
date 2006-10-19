@@ -14,6 +14,7 @@
 
 typedef struct _HippoCanvasContextWin      HippoCanvasContextWin;
 class HippoScrollbar;
+class HippoToolTip;
 
 class HippoCanvas : public HippoAbstractControl {
 public:
@@ -39,6 +40,8 @@ protected:
 
     virtual void onSizeAllocated();
 
+    virtual void initializeUI();
+
 private:
     void updateScrollbars();
     void scrollTo(int newX, int newY);
@@ -51,6 +54,8 @@ private:
     void onMouseLeave(WPARAM wParam, LPARAM lParam);
     void onRootRequestChanged();
     void onRootPaintNeeded(const HippoRectangle *damage_box);
+    void onHover(WPARAM wParam, LPARAM lParam);
+    void startTrackingHover();
 
     // Helper routines for size allocation
     int computeChildWidthRequest();
@@ -66,6 +71,7 @@ private:
     HippoGObjectPtr<HippoCanvasContextWin> context_;
     HippoPtr<HippoScrollbar> hscroll_;
     HippoPtr<HippoScrollbar> vscroll_;
+    HippoPtr<HippoToolTip> tooltip_;
 
     // We keep state across the process of getWidthRequest() =>
     // => getHeightRequest() => onSizeAllocate() to avoid asking our child
@@ -95,4 +101,7 @@ private:
     unsigned int containsMouse_ : 1;
     HippoScrollbarPolicy hscrollbarPolicy_;
     HippoScrollbarPolicy vscrollbarPolicy_;
+
+    int lastMoveX_;
+    int lastMoveY_;
 };

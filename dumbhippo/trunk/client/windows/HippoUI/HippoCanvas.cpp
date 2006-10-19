@@ -7,6 +7,7 @@
 #include <windowsx.h> // GET_X_LPARAM seems to be in here, though I'm not sure it's the right file to include
 #include "HippoCanvas.h"
 #include "HippoScrollbar.h"
+#include "HippoToolTip.h"
 #include "HippoImageFactory.h"
 
 #include <cairo-win32.h>
@@ -37,7 +38,7 @@ static void                   hippo_canvas_context_win_focus_controls         (H
 HippoCanvas::HippoCanvas()
     : canvasWidthReq_(0), canvasHeightReq_(0), canvasX_(0), canvasY_(0), hscrollNeeded_(false), vscrollNeeded_(false),
       hscrollbarPolicy_(HIPPO_SCROLLBAR_NEVER), vscrollbarPolicy_(HIPPO_SCROLLBAR_NEVER),
-      containsMouse_(false), pointer_(HIPPO_CANVAS_POINTER_UNSET)
+      containsMouse_(false), pointer_(HIPPO_CANVAS_POINTER_UNSET), lastMoveX_(-1), lastMoveY_(-1)
 {
     HippoCanvasContextWin *context;
 
@@ -59,6 +60,9 @@ HippoCanvas::HippoCanvas()
     
     hscroll_->setParent(this);
     vscroll_->setParent(this);
+
+    tooltip_ = new HippoToolTip();
+    tooltip_->Release();
 }
 
 
@@ -125,12 +129,24 @@ HippoCanvas::createChildren()
     hscroll_->create();
     vscroll_->create();
 
+    tooltip_->setForWindow(window_);
+    tooltip_->create();
+
     // this should register any embedded controls, set their parents,
     // which as a side effect should create them all
     if (root_ != (HippoCanvasItem*) NULL) {
         g_assert(HIPPO_IS_CANVAS_CONTEXT(context_));
         hippo_canvas_item_set_context(root_, HIPPO_CANVAS_CONTEXT(context_));
     }
+}
+
+void
+HippoCanvas::initializeUI()
+{
+    HippoAbstractControl::initializeUI();
+
+    // since we aren't the tooltips parent this won't happen automatically
+    tooltip_->setUI(ui_);
 }
 
 void 
@@ -534,11 +550,17 @@ HippoCanvas::updatePointer(int rootItemX, int rootItemY)
     g_assert((containsMouse_ && newPointer != HIPPO_CANVAS_POINTER_UNSET) ||
              (!containsMouse_ && newPointer == HIPPO_CANVAS_POINTER_UNSET));
 
+    if (newPointer == HIPPO_CANVAS_POINTER_UNSET) {
+        // unlike X, Windows has no way to say "unset" (I don't think?)
+        // so go ahead and treat it as DEFAULT and avoid setting the pointer again
+        newPointer = HIPPO_CANVAS_POINTER_DEFAULT;
+    }
     if (newPointer != pointer_) {
         HCURSOR hcursor = NULL;
         switch (newPointer) {
             case HIPPO_CANVAS_POINTER_UNSET:
-                hcursor = LoadCursor(NULL, IDC_ARROW);
+                // hcursor = LoadCursor(NULL, IDC_ARROW);
+                g_assert_not_reached();
                 break;
             case HIPPO_CANVAS_POINTER_DEFAULT:
                 hcursor = LoadCursor(NULL, IDC_ARROW);
@@ -599,11 +621,68 @@ HippoCanvas::onMouseUp(int button, WPARAM wParam, LPARAM lParam)
 }
 
 void
-HippoCanvas::onMouseMove(WPARAM wParam, LPARAM lParam)
+HippoCanvas::onHover(WPARAM wParam, LPARAM lParam)
 {
+    if (root_ == (HippoCanvasItem*) NULL)
+        return;
+
     int x, y;
     if (!getMouseCoords(lParam, &x, &y))
         return;
+
+    HippoRectangle forArea;
+    char *tip = hippo_canvas_item_get_tooltip(root_,
+                                              x, y,
+                                              &forArea);
+    if (tip) {
+        tooltip_->activate(&forArea, tip);
+
+        g_free(tip);
+    } else {
+        //g_debug("Deactivating tooltip on hover");
+        tooltip_->deactivate();
+    }
+}
+
+void
+HippoCanvas::startTrackingHover()
+{
+    // request a WM_MOUSEHOVER message; also resets the 
+    // hover timer if we've already asked for this message.
+    TRACKMOUSEEVENT tme;
+    tme.cbSize = sizeof(tme);
+    tme.dwFlags = TME_HOVER;
+    tme.hwndTrack = window_;
+    // The default Windows tooltip delay is defined to be the 
+    // double click time. We don't currently support 
+    // it, but if we had a shorter delay when moving 
+    // along a toolbar, that is defined as 1/5 double click 
+    // time, and tooltips pop down by default after 10x double
+    // click time. See docs for TTM_SETDELAYTIME for this.
+    tme.dwHoverTime = GetDoubleClickTime();
+    if (TrackMouseEvent(&tme) == 0) {
+        g_warning("Failed to request mouse hover events");
+    }
+}
+
+void
+HippoCanvas::onMouseMove(WPARAM wParam, LPARAM lParam)
+{
+    int x, y;
+
+    if (!getMouseCoords(lParam, &x, &y))
+        return;
+
+    if (x == lastMoveX_ && y == lastMoveY_) {
+        // we didn't really move. I don't know why Windows does this, 
+        // but it jacks up our tooltip handling.
+        return;
+    }
+    lastMoveX_ = x;
+    lastMoveY_ = y;
+
+    //g_debug("Deactivating tooltip on move");
+    tooltip_->deactivate();
 
     bool entered;
 
@@ -626,6 +705,8 @@ HippoCanvas::onMouseMove(WPARAM wParam, LPARAM lParam)
     g_assert(containsMouse_);
 
     if (root_ != (HippoCanvasItem*) NULL) {
+        startTrackingHover();
+
         if (entered) {
             hippo_canvas_item_emit_motion_notify_event(root_,
                 x, y, HIPPO_MOTION_DETAIL_ENTER);
@@ -642,6 +723,9 @@ HippoCanvas::onMouseLeave(WPARAM wParam, LPARAM lParam)
 {
     if (!containsMouse_)
         return;
+
+    //g_debug("Deactivating tooltip on leave");
+    tooltip_->deactivate();
 
     containsMouse_ = false;
 
@@ -743,6 +827,24 @@ HippoCanvas::onPaint(WPARAM wParam, LPARAM lParam)
     }
 }
 
+#if 0
+bool
+HippoCanvas::onNotify(NMHDR *nmhdr)
+{
+    switch (nmhdr->code) {
+        case TTN_GETDISPINFO:
+            // We don't need this right now because we just have the HippoToolTip
+            // set the text
+            hippoDebugLogW(L"TTN_GETDISPINFO received to get tooltip text");
+            NMTTDISPINFO *info = (NMTTDISPINFO*) nmhdr;
+            info->lpszText = ; // FIXME 
+            break;
+    }
+
+    return false;
+}
+#endif
+
 bool
 HippoCanvas::processMessage(UINT   message,
                             WPARAM wParam,
@@ -796,6 +898,9 @@ HippoCanvas::processMessage(UINT   message,
             return true;
         case WM_MOUSELEAVE:
             onMouseLeave(wParam, lParam);
+            return true;
+        case WM_MOUSEHOVER:
+            onHover(wParam, lParam);
             return true;
         case WM_SETFOCUS:
             // forward focus on to some control inside the canvas, if any

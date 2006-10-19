@@ -201,6 +201,12 @@ protected:
 
     void moveResizeWindow(int x, int y, int width, int height);
 
+    void markShowing(bool showing) { showing_ = showing; }
+
+    virtual bool onNotify(NMHDR *nmhdr) { return false; }
+
+    void setSelfSizing(bool selfSizing) { selfSizing_ = selfSizing; }
+
 private:
     bool useParent_;
     HippoAbstractWindow *createWithParent_;
@@ -222,6 +228,8 @@ private:
     int height_;
 
     unsigned int defaultPositionSet_ : 1;
+    // for tooltip windows, we need to just not mess up the size Windows picks
+    unsigned int selfSizing_ : 1;
 
     unsigned int created_ : 1;
     unsigned int showing_ : 1;

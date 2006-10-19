@@ -78,6 +78,10 @@ HippoAbstractControl::create()
     if (isCreated())
         return true;
 
+    if (ui_ == NULL && parent_) {
+        setUI(parent_->ui_);
+    }
+
     ensureRequestAndAllocation(); // get our default size
 
     result = HippoAbstractWindow::create();

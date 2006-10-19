@@ -204,6 +204,9 @@
 				RelativePath=".\HippoToolbarEdit.cpp">
 			</File>
 			<File
+				RelativePath=".\HippoToolTip.cpp">
+			</File>
+			<File
 				RelativePath=".\HippoUI.cpp">
 			</File>
 			<File
@@ -318,6 +321,9 @@
 			</File>
 			<File
 				RelativePath=".\HippoToolbarEdit.h">
+			</File>
+			<File
+				RelativePath=".\HippoToolTip.h">
 			</File>
 			<File
 				RelativePath=".\HippoUI.h">
