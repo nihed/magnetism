@@ -42,6 +42,7 @@ import com.dumbhippo.persistence.FacebookAccount;
 import com.dumbhippo.persistence.FacebookEvent;
 import com.dumbhippo.persistence.FeedEntry;
 import com.dumbhippo.persistence.Group;
+import com.dumbhippo.persistence.GroupBlockData;
 import com.dumbhippo.persistence.GroupMember;
 import com.dumbhippo.persistence.GroupMessage;
 import com.dumbhippo.persistence.Person;
@@ -448,6 +449,166 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		updateUserBlockDatas(block, desiredUsers, participantId);
 	}
 	
+	// note this query includes ubd.deleted=1
+	private List<GroupBlockData> queryGroupBlockDatas(Block block) {
+		Query q = em.createQuery("SELECT gbd FROM GroupBlockData gbd WHERE gbd.block = :block");
+		q.setParameter("block", block);
+		return TypeUtils.castList(GroupBlockData.class, q.getResultList());
+	}
+	
+	private void updateGroupBlockDatas(Block block, Set<Group> desiredGroups) {
+		int addCount;
+		int removeCount;
+		
+		Set<Guid> affectedGuids = new HashSet<Guid>();
+		
+		// be sure we have the right GroupBlockData. This would be a lot saner to do
+		// at the point where it changes... e.g. when people add/remove friends, 
+		// or join/leave groups, instead of the expensive query and fixup here.
+		// But it would not retroactively fix the existing db or let us change our
+		// rules for who gets what...
+		
+		List<GroupBlockData> groupDatas = queryGroupBlockDatas(block);
+		
+		Map<Group,GroupBlockData> existing = new HashMap<Group,GroupBlockData>();
+		for (GroupBlockData gbd : groupDatas) {
+			existing.put(gbd.getGroup(), gbd);
+		}
+		
+		addCount = 0;
+		removeCount = 0;
+		
+		for (Group g : desiredGroups) {
+			affectedGuids.add(g.getGuid());
+			
+			GroupBlockData old = existing.get(g);
+			if (old != null) {
+				existing.remove(g);
+				if (old.isDeleted())
+					addCount += 1;
+				old.setDeleted(false);
+			} else {
+				GroupBlockData data = new GroupBlockData(g, block);
+				em.persist(data);
+				addCount += 1;
+			}
+		}
+		// the rest of "existing" is users who no longer are in the desired set
+		for (Group g : existing.keySet()) {
+			GroupBlockData old = existing.get(g);
+			if (!old.isDeleted())
+				removeCount += 1;
+			old.setDeleted(true);
+		}
+		
+		logger.debug("block {}, {} total groups {} added {} removed {}", new Object[] { block, affectedGuids.size(), addCount, removeCount } );
+	}
+
+	private Set<Group> getGroupsWhoCare(Block block, boolean privateOnly) {
+		User user;
+		try {
+			user = EJBUtil.lookupGuid(em, User.class, block.getData1AsGuid());
+		} catch (NotFoundException e) {
+			throw new RuntimeException(e);
+		}
+		
+		if (privateOnly)
+			return groupSystem.findRawPrivateGroups(SystemViewpoint.getInstance(), user);
+		else
+			return groupSystem.findRawGroups(SystemViewpoint.getInstance(), user);
+	}
+	
+	private Set<Group> getDesiredGroupsForMusicPerson(Block block) {
+		if (block.getBlockType() != BlockType.MUSIC_PERSON)
+			throw new IllegalArgumentException("wrong type block");
+        
+		// For music updates, we show in both public and private groups
+		// where that user is a member - will this cause too much noise
+		// in big public groups?
+		return getGroupsWhoCare(block, false);
+	}
+	
+	private Set<Group> getDesiredGroupsForGroupChat(Block block) {
+		if (block.getBlockType() != BlockType.GROUP_CHAT)
+			throw new IllegalArgumentException("wrong type block");
+		Group group;
+		try {
+			group = EJBUtil.lookupGuid(em, Group.class, block.getData1AsGuid());
+		} catch (NotFoundException e) {
+			throw new RuntimeException(e);
+		}
+		return Collections.singleton(group);
+	}
+
+	private Set<Group> getDesiredGroupsForPost(Block block) {
+		if (block.getBlockType() != BlockType.POST)
+			throw new IllegalArgumentException("wrong type block");
+
+		Post post;
+		try {
+			post = EJBUtil.lookupGuid(em, Post.class, block.getData1AsGuid());
+		} catch (NotFoundException e) {
+			throw new RuntimeException(e);
+		}
+		
+		return post.getGroupRecipients();
+	}
+
+	private Set<Group> getDesiredGroupsForGroupMember(Block block) {
+		if (block.getBlockType() != BlockType.GROUP_MEMBER)
+			throw new IllegalArgumentException("wrong type block");
+		
+		Group group = em.find(Group.class, block.getData1AsGuid().toString());
+		
+		return Collections.singleton(group);
+	}
+	
+	private Set<Group> getDesiredGroupsForExternalAccountUpdate(Block block) {
+		if (block.getBlockType() != BlockType.EXTERNAL_ACCOUNT_UPDATE)
+			throw new IllegalArgumentException("wrong type block");
+	
+		// As a heuristic, we only show external account updates in private
+		// groups, because they likely will be small groups of friends or
+		// family, who might actually care about your latest Flickr photos.
+		return getGroupsWhoCare(block, true);
+	}
+
+	private Set<Group> getDesiredGroupsForExternalAccountUpdateSelf(Block block) {
+		if (block.getBlockType() != BlockType.EXTERNAL_ACCOUNT_UPDATE_SELF)
+			throw new IllegalArgumentException("wrong type block");
+
+		return Collections.emptySet();
+	}
+	
+	private void updateGroupBlockDatas(Block block) {
+		Set<Group> desiredGroups = null;
+		switch (block.getBlockType()) {
+		case POST:
+			desiredGroups = getDesiredGroupsForPost(block);
+			break;
+		case GROUP_CHAT:
+			desiredGroups = getDesiredGroupsForGroupChat(block);
+			break;
+		case MUSIC_PERSON:
+			desiredGroups = getDesiredGroupsForMusicPerson(block);
+			break;
+		case GROUP_MEMBER:
+			desiredGroups = getDesiredGroupsForGroupMember(block);
+			break;
+		case EXTERNAL_ACCOUNT_UPDATE:
+			desiredGroups = getDesiredGroupsForExternalAccountUpdate(block);
+			break;
+		case EXTERNAL_ACCOUNT_UPDATE_SELF:
+			desiredGroups = getDesiredGroupsForExternalAccountUpdateSelf(block);
+			// don't add a default, we want a warning if any cases are missing
+		}
+		
+		if (desiredGroups == null)
+			throw new IllegalStateException("Trying to update user block data for unhandled block type " + block.getBlockType());
+		
+		updateGroupBlockDatas(block, desiredGroups);
+	}
+	
 	private void stack(Block block, long activity) {
 		if (disabled)
 			return;
@@ -455,6 +616,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		if (block.getTimestampAsLong() < activity) {
 			block.setTimestampAsLong(activity);
 			updateUserBlockDatas(block, null);
+			updateGroupBlockDatas(block);
 		}
 	}
 	
@@ -471,16 +633,17 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 			return;
 		}
 
-		// Now we need to create demand-create user block data objects and update the
-		// cached user timestamps. updateUserBlockDatas(block) always safe to call
-		// at any point without worrying about ordering. We queue it asynchronously
-		// after commit, so we can do retries when demand-creating UserBlockData.
+		// Now we need to create demand-create user/group block data objects and update the
+		// cached user timestamps. update{User,Group{BlockDatas(block) are always safe to call
+		// at any point without worrying about ordering. We queue the update asynchronously
+		// after commit, so we can do retries when demand-creating {User,Group}BlockData.
 		runner.runTaskOnTransactionCommit(new Runnable() {
 			public void run() {
 				runner.runTaskRetryingOnConstraintViolation(new Runnable() {
 					public void run() {
 						Block attached = em.find(Block.class, block.getId());
 						updateUserBlockDatas(attached, participantId);
+						updateGroupBlockDatas(attached);
 					}
 				});
 			}

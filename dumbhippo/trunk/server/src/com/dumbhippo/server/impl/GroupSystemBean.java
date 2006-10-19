@@ -531,19 +531,20 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		"SELECT gm.group FROM GroupMember gm, AccountClaim ac, Group g " +
 		"WHERE ac.resource = gm.member AND ac.owner = :member AND g = gm.group ";
 
-	public Set<Group> findRawGroups(Viewpoint viewpoint, User member, MembershipStatus status) {
+	private Set<Group> findRawGroups(Viewpoint viewpoint, User member, MembershipStatus status, boolean privateOnly) {
 		Query q;
 		
 		String statusClause = getStatusClause(status);
+		String privacyClause = privateOnly ? "" : " AND g.access = " + GroupAccess.SECRET.ordinal();
 		
 		if (viewpoint.isOfUser(member) || viewpoint instanceof SystemViewpoint) {
 			// Special case this for effiency
-			q = em.createQuery(FIND_RAW_GROUPS_QUERY + statusClause); 
+			q = em.createQuery(FIND_RAW_GROUPS_QUERY + statusClause + privacyClause); 
 		} else if (viewpoint instanceof UserViewpoint) {
-			q = em.createQuery(FIND_RAW_GROUPS_QUERY + " AND " + CAN_SEE + statusClause);
+			q = em.createQuery(FIND_RAW_GROUPS_QUERY + " AND " + CAN_SEE + statusClause + privacyClause);
 			q.setParameter("viewer", ((UserViewpoint)viewpoint).getViewer());			
 		} else {
-			q = em.createQuery(FIND_RAW_GROUPS_QUERY + " AND " + CAN_SEE_ANONYMOUS + statusClause);
+			q = em.createQuery(FIND_RAW_GROUPS_QUERY + " AND " + CAN_SEE_ANONYMOUS + statusClause + privacyClause);
 		}
 		q.setParameter("member", member);
 		Set<Group> ret = new HashSet<Group>();
@@ -552,11 +553,17 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		}
 		return ret;
 	}
+	public Set<Group> findRawGroups(Viewpoint viewpoint, User member, MembershipStatus status) {
+		return findRawGroups(viewpoint, member, status, false);
+	}
 	
 	public Set<Group> findRawGroups(Viewpoint viewpoint, User member) {
-		return findRawGroups(viewpoint, member, null);
+		return findRawGroups(viewpoint, member, null, false);
 	}
 
+	public Set<Group> findRawPrivateGroups(Viewpoint viewpoint, User member) {
+		return findRawGroups(viewpoint, member, null, true);
+	}
  
 	public void fixupGroupMemberships(User user) {
 		Set<Group> groups = findRawGroups(SystemViewpoint.getInstance(), user);
