@@ -137,6 +137,13 @@ hippo_platform_get_chat_window_state (HippoPlatform    *platform,
     return HIPPO_PLATFORM_GET_CLASS(platform)->get_chat_window_state(platform, chat_id);
 }
 
+HippoInstanceType 
+hippo_platform_get_instance_type (HippoPlatform *platform)
+{
+    g_return_val_if_fail(HIPPO_IS_PLATFORM(platform), HIPPO_INSTANCE_NORMAL);
+    return HIPPO_PLATFORM_GET_CLASS(platform)->get_instance_type(platform);
+}
+
 char*
 hippo_platform_get_message_server(HippoPlatform *platform)
 {

@@ -24,6 +24,8 @@ static gboolean  hippo_platform_impl_read_login_cookie   (HippoPlatform         
 static void      hippo_platform_impl_delete_login_cookie (HippoPlatform           *platform);                                                          
 static const char* hippo_platform_impl_get_jabber_resource (HippoPlatform           *platform);
 
+static HippoInstanceType hippo_platform_impl_get_instance_type (HippoPlatform *platform);
+
 static char*     hippo_platform_impl_get_message_server  (HippoPlatform           *platform); 
 static char*     hippo_platform_impl_get_web_server      (HippoPlatform           *platform); 
 static gboolean  hippo_platform_impl_get_signin          (HippoPlatform           *platform);
@@ -85,6 +87,7 @@ hippo_platform_impl_iface_init(HippoPlatformClass *klass)
     klass->show_chat_window = hippo_platform_impl_show_chat_window;
     klass->get_chat_window_state = hippo_platform_impl_get_chat_window_state;
     klass->can_play_song_download = hippo_platform_impl_can_play_song_download;
+    klass->get_instance_type = hippo_platform_impl_get_instance_type;
     klass->get_message_server = hippo_platform_impl_get_message_server;
     klass->get_web_server = hippo_platform_impl_get_web_server;
     klass->get_signin = hippo_platform_impl_get_signin;
@@ -373,6 +376,14 @@ hippo_platform_impl_get_jabber_resource(HippoPlatform *platform)
         g_debug("jabber resource: '%s'", impl->jabber_resource);
     }
     return impl->jabber_resource;
+}
+
+static HippoInstanceType
+hippo_platform_impl_get_instance_type(HippoPlatform *platform)
+{
+    HippoPlatformImpl *impl = HIPPO_PLATFORM_IMPL(platform);
+
+    return impl->instance;
 }
 
 static char*

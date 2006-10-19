@@ -40,6 +40,7 @@ static HippoWindowState hippo_platform_impl_get_chat_window_state (HippoPlatform
 
 static gboolean     hippo_platform_impl_can_play_song_download (HippoPlatform     *platform,
                                                                 HippoSongDownload *song_download);
+static HippoInstanceType hippo_platform_impl_get_instance_type (HippoPlatform  *platform);
 static char*        hippo_platform_impl_get_message_server  (HippoPlatform     *platform);
 static char*        hippo_platform_impl_get_web_server      (HippoPlatform     *platform);
 static gboolean     hippo_platform_impl_get_signin          (HippoPlatform     *platform);
@@ -82,6 +83,7 @@ hippo_platform_impl_iface_init(HippoPlatformClass *klass)
     klass->get_chat_window_state = hippo_platform_impl_get_chat_window_state;
     klass->can_play_song_download = hippo_platform_impl_can_play_song_download;
     
+    klass->get_instance_type = hippo_platform_impl_get_instance_type;
     klass->get_message_server = hippo_platform_impl_get_message_server;
     klass->get_web_server = hippo_platform_impl_get_web_server;
     klass->get_signin = hippo_platform_impl_get_signin;
@@ -338,6 +340,14 @@ hippo_platform_impl_can_play_song_download(HippoPlatform     *platform,
     }
 
     return TRUE;
+}
+
+static HippoInstanceType
+hippo_platform_impl_get_instance_type(HippoPlatform  *platform)
+{
+    HippoPlatformImpl *impl = HIPPO_PLATFORM_IMPL(platform);
+
+    return impl->instance;
 }
 
 static const char *

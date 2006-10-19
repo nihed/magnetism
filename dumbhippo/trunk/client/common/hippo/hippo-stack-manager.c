@@ -919,6 +919,10 @@ void
 hippo_stack_manager_toggle_browser(HippoDataCache  *cache)
 {
     StackManager *manager = g_object_get_data(G_OBJECT(cache), "stack-manager");
+    HippoConnection *connection = hippo_data_cache_get_connection(manager->cache);
+
+    if (!hippo_connection_get_connected(connection))
+        return;
 
     manager_toggle_browser(manager);
 }

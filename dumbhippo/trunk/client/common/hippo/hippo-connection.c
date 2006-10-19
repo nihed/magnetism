@@ -183,6 +183,7 @@ struct _HippoConnection {
     char *username;
     char *password;
     char *download_url;
+    char *tooltip;
     int request_blocks_id;
     gint64 last_blocks_timestamp;
     gint64 server_time_offset;
@@ -353,6 +354,7 @@ hippo_connection_finalize(GObject *object)
 
     g_free(connection->username);
     g_free(connection->password);
+    g_free(connection->tooltip);
 
     g_object_unref(connection->platform);
     connection->platform = NULL;
@@ -928,6 +930,11 @@ hippo_connection_state_change(HippoConnection *connection,
 
     connection->state = state;
     
+    if (connection->tooltip) {
+        g_free(connection->tooltip);
+        connection->tooltip = NULL;
+    }
+
     connected = hippo_connection_get_connected(connection);
 
     hippo_connection_flush_outgoing(connection);
@@ -3603,40 +3610,64 @@ const char*
 hippo_connection_get_tooltip(HippoConnection *connection)
 {
     HippoState state;
+    HippoInstanceType instance;
+    const char *name;
     const char *tip;
     
     g_return_val_if_fail(HIPPO_IS_CONNECTION(connection), NULL);
+
+    if (connection->tooltip)
+        return connection->tooltip;
     
     state = hippo_connection_get_state(connection);
+    instance = hippo_platform_get_instance_type(connection->platform);
+
+    name = NULL;
+    switch (instance) {
+    case HIPPO_INSTANCE_NORMAL:
+        name = _("Mugshot");
+        break;
+    case HIPPO_INSTANCE_DOGFOOD:
+        name = _("Mugshot - I prefer dog food!");
+        break;
+    case HIPPO_INSTANCE_DEBUG:
+        name = _("Mugshot - Eat pesky bugs!");
+        break;
+    }
+
+    if (name == NULL)
+        name = _("Mugshot");
     
     tip = NULL;
     switch (state) {
     case HIPPO_STATE_SIGNED_OUT:
     case HIPPO_STATE_RETRYING:    
-        tip = _("Mugshot (disconnected)");
+        tip = _("%s (disconnected)");
         break;
     case HIPPO_STATE_SIGN_IN_WAIT:
-        tip = _("Mugshot (please log in to mugshot.org)");
+        tip = _("%s (please log in to mugshot.org)");
         break;
     case HIPPO_STATE_CONNECTING:
     case HIPPO_STATE_AUTHENTICATING:
-        tip = _("Mugshot (connecting)");
+        tip = _("%s (connecting)");
         break;    
     case HIPPO_STATE_AWAITING_CLIENT_INFO:
-        tip = _("Mugshot (checking for updates)");
+        tip = _("%s (checking for updates)");
         break;    
     case HIPPO_STATE_AUTH_WAIT:
-        tip = _("Mugshot (login failed, try logging in to mugshot.org?)");
+        tip = _("%s (login failed, try logging in to mugshot.org?)");
         break;
     case HIPPO_STATE_AUTHENTICATED:
-        tip = _("Mugshot");
+        tip = _("%s");
         break;
     }
 
     if (tip == NULL)
-        tip = _("Mugshot");
+        tip = _("%s");
+    
+    connection->tooltip = g_strdup_printf(tip, name);
 
-    return tip;
+    return connection->tooltip;
 }
 
 const char*

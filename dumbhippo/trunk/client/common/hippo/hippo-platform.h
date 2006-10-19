@@ -61,6 +61,8 @@ struct _HippoPlatformClass {
     void     (* set_message_server)  (HippoPlatform *platform, const char *value);
     void     (* set_web_server)      (HippoPlatform *platform, const char *value);
     void     (* set_signin)          (HippoPlatform *platform, gboolean    value);
+
+    HippoInstanceType (* get_instance_type) (HippoPlatform *platform);
 };
 
 GType            hippo_platform_get_type               (void) G_GNUC_CONST;
@@ -100,6 +102,8 @@ gboolean         hippo_platform_can_play_song_download (HippoPlatform     *platf
                                                         HippoSongDownload *song_download);
 
 /* Preferences */
+HippoInstanceType hippo_platform_get_instance_type (HippoPlatform *platform);
+
 char*            hippo_platform_get_message_server     (HippoPlatform *platform); 
 char*            hippo_platform_get_web_server         (HippoPlatform *platform); 
 gboolean         hippo_platform_get_signin             (HippoPlatform *platform); 
@@ -111,6 +115,7 @@ void             hippo_platform_set_web_server         (HippoPlatform  *platform
 void             hippo_platform_set_signin             (HippoPlatform  *platform,
                                                         gboolean        value);
                                                        
+
 /* Convenience wrappers on get_server stuff that parse the host/port */
 void             hippo_platform_get_message_host_port  (HippoPlatform  *platform,
                                                         char          **host_p,
