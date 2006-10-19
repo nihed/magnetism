@@ -9,18 +9,10 @@
 
 <c:choose>
 	<c:when test="${dh:myInstanceOf(who, 'com.dumbhippo.server.views.PersonView')}">
-		<a class="dh-person-link dh-underlined-link" href="/person?who=${who.viewPersonPageId}"><c:choose>
-				<c:when test="${imageOnly}"><img src="${who.photoUrl30}"/></c:when>
-				<c:otherwise><c:out value="${who.name}"/><c:if test="${onlineIcon}"> <dht3:presenceIcon who="${who}"/></c:if></c:otherwise>
-			</c:choose>
-		</a>
+		<a class="dh-person-link dh-underlined-link" href="/person?who=${who.viewPersonPageId}"><c:choose><c:when test="${imageOnly}"><img src="${who.photoUrl30}"/></c:when><c:otherwise><c:out value="${who.name}"/><c:if test="${onlineIcon}"> <dht3:presenceIcon who="${who}"/></c:if></c:otherwise></c:choose></a>
 	</c:when>
 	<c:when test="${dh:myInstanceOf(who, 'com.dumbhippo.server.views.GroupView')}">
-		<a class="dh-group-link dh-underlined-link" href="${who.homeUrl}"><c:choose>
-				<c:when test="${imageOnly}"><img src="${who.photoUrl30}"/></c:when>
-				<c:otherwise><c:out value="${who.name}"/></c:otherwise>
-			</c:choose>		
-		</a>
+		<a class="dh-group-link dh-underlined-link" href="${who.homeUrl}"><c:choose><c:when test="${imageOnly}"><img src="${who.photoUrl30}"/></c:when><c:otherwise><c:out value="${who.name}"/></c:otherwise></c:choose></a>
 	</c:when>	
 	<c:otherwise>
 	</c:otherwise>
