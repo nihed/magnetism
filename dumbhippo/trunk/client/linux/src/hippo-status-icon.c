@@ -10,15 +10,6 @@ typedef struct {
     const char *icon_name;
 } HotnessIcon;
 
-static const HotnessIcon icon_names[] = {
-   { HIPPO_HOTNESS_COLD, "mugshot_swarm_1" },
-   { HIPPO_HOTNESS_COOL, "mugshot_swarm_2" },
-   { HIPPO_HOTNESS_WARM, "mugshot_swarm_3" },
-   { HIPPO_HOTNESS_GETTING_HOT, "mugshot_swarm_4" },
-   { HIPPO_HOTNESS_HOT, "mugshot_swarm_5" },
-   { HIPPO_HOTNESS_UNKNOWN, "mugshot_swarm_1" }
-};
-
 static void      hippo_status_icon_init                (HippoStatusIcon       *icon);
 static void      hippo_status_icon_class_init          (HippoStatusIconClass  *klass);
 
@@ -28,9 +19,6 @@ static void      hippo_status_icon_activate            (GtkStatusIcon           
 static void      hippo_status_icon_popup_menu          (GtkStatusIcon           *gtk_icon,
                                                         guint                    button,
                                                         guint32                  activate_time);
-static void      on_hotness_changed                    (HippoDataCache          *cache,
-                                                        HippoHotness             old,
-                                                        HippoStatusIcon         *icon);
 static void      on_state_changed                      (HippoConnection         *connection,
                                                         HippoStatusIcon         *icon);
 
@@ -64,36 +52,35 @@ hippo_status_icon_class_init(HippoStatusIconClass  *klass)
     
     gtk_icon_class->activate = hippo_status_icon_activate;
     gtk_icon_class->popup_menu = hippo_status_icon_popup_menu;
-    
-    {
-        unsigned int i;
-        for (i = 0; i < G_N_ELEMENTS(icon_names); ++i) {
-            if (icon_names[i].hotness != i) {
-                g_warning("Icons for HippoHotness out of sync with hotness enum");
-                g_assert_not_reached();
-            }
-        }
-    }
+}
+
+static const char *
+get_icon_name(HippoConnection *connection)
+{
+    if (hippo_connection_get_connected(connection))
+        return "mugshot_notification";
+    else
+        return "mugshot_notification_disabled";
 }
 
 HippoStatusIcon*
 hippo_status_icon_new(HippoDataCache *cache)
 {
+    HippoConnection *connection = hippo_data_cache_get_connection(cache);
     HippoStatusIcon *icon;
     
     icon = g_object_new(HIPPO_TYPE_STATUS_ICON,
-                     "icon-name", icon_names[HIPPO_HOTNESS_UNKNOWN].icon_name,
-                     NULL);
+                        "icon-name", get_icon_name(connection),
+                        NULL);
     
     icon->cache = cache;
     g_object_ref(icon->cache);
 
-    g_signal_connect(icon->cache, "hotness-changed", G_CALLBACK(on_hotness_changed), icon);
-    g_signal_connect(hippo_data_cache_get_connection(icon->cache), "state-changed",
+    g_signal_connect(connection, "state-changed",
                      G_CALLBACK(on_state_changed), icon);
 
-    /* initialize tooltip */
-    on_state_changed(hippo_data_cache_get_connection(icon->cache), icon);
+    gtk_status_icon_set_tooltip(GTK_STATUS_ICON(icon),
+                                hippo_connection_get_tooltip(connection));
 
     return HIPPO_STATUS_ICON(icon);
 }
@@ -112,7 +99,6 @@ hippo_status_icon_finalize(GObject *object)
 {
     HippoStatusIcon *icon = HIPPO_STATUS_ICON(object);
 
-    g_signal_handlers_disconnect_by_func(icon->cache, G_CALLBACK(on_hotness_changed), icon);
     g_signal_handlers_disconnect_by_func(hippo_data_cache_get_connection(icon->cache),
                                          G_CALLBACK(on_state_changed), icon);
 
@@ -210,22 +196,13 @@ hippo_status_icon_popup_menu(GtkStatusIcon *gtk_icon,
 }                             
 
 static void
-on_hotness_changed(HippoDataCache  *cache,
-                   HippoHotness     old,
-                   HippoStatusIcon *icon)
-{
-    int new_hotness = hippo_data_cache_get_hotness(cache);
-    
-    g_return_if_fail(new_hotness >= 0);
-    g_return_if_fail(new_hotness < (int) G_N_ELEMENTS(icon_names));
-    
-    g_object_set(G_OBJECT(icon), "icon-name", icon_names[new_hotness].icon_name, NULL);
-}
-
-static void
 on_state_changed(HippoConnection         *connection,
                  HippoStatusIcon         *icon)
 {
+    g_object_set(G_OBJECT(icon), 
+                 "icon-name", get_icon_name(connection), 
+                 NULL);
+    
     gtk_status_icon_set_tooltip(GTK_STATUS_ICON(icon),
                                 hippo_connection_get_tooltip(connection));
 }
