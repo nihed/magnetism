@@ -166,6 +166,7 @@ public class PersonViewerBean implements PersonViewer {
 		// can only get user resources if we are a contact of the user
 		if (pv.getUser() != null && identitySpider.isViewerSystemOrFriendOf(viewpoint, pv.getUser())) {
 			userResources = getResourcesForPerson(pv.getUser());
+			pv.setViewerIsContact(true);
 		}
 		
 		// If it's not our own contact, contactResources should be null here

@@ -62,6 +62,7 @@ public class PersonView extends EntityView {
 	private Set<ExternalAccount> externalAccounts;
 	private List<TrackView> trackHistory;
 	private String aimPresenceKey;
+	private boolean viewerIsContact;
 	
 	private void addExtras(EnumSet<PersonViewExtra> more) {
 		if (extras == null)
@@ -928,5 +929,13 @@ public class PersonView extends EntityView {
 	
 	public void setViewOfSelf(boolean viewOfSelf) {
 		this.viewOfSelf = viewOfSelf;
+	}
+
+	public void setViewerIsContact(boolean isContact) {
+		viewerIsContact = isContact;
+	}
+	
+	public boolean getViewerIsContact() {
+		return viewerIsContact;
 	}
 }

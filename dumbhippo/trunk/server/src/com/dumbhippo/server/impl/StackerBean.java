@@ -844,7 +844,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 			}
 			case EXTERNAL_ACCOUNT_UPDATE_SELF: {	
 				User user = identitySpider.lookupUser(block.getData1AsGuid());
-				if (userview == null || userview.getViewer() != user) {
+				if (userview == null || !userview.getViewer().equals(user)) {
 					throw new NotFoundException("Trying to view an external account update for self from a different viewpoint: " + userview);
 				}
 				blockView = prepareExternalAccountBlockView(viewpoint, block, ubd);  	

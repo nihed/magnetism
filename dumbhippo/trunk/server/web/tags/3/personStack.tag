@@ -10,17 +10,27 @@
 <%@ attribute name="blocks" required="false" type="java.util.List" %>
 <%@ attribute name="showFrom" required="true" type="java.lang.Boolean" %>
 
+<c:set var="isSelf" scope="page" value="${signin.valid ? contact.user == signin.user : false}"/>
+
 <dht3:shinyBox color="grey">				
-	<dht3:personHeader who="${contact}" isSelf="false">
+	<dht3:personHeader who="${contact}" isSelf="${isSelf}" shortVersion="${pageable.position > 0}">
 		<c:if test="${signin.valid}">
         <c:choose>
-  		    <c:when test="${contact.contact != null}">
-  			    <dht:actionLink oneLine="true" href="javascript:dh.actions.removeContact('${contact.viewPersonPageId}')" title="Remove this person from your friends list">Remove from friends</dht:actionLink>
-   	        </c:when>
-	        <c:otherwise>
-				<dht:actionLink oneLine="true" href="javascript:dh.actions.addContact('${contact.viewPersonPageId}')" title="Add this person to your friends list">Add to friends</dht:actionLink>
+        	<c:when test="${isSelf}">
+				<a href="/account">Edit my Mugshot account</a>        		
+        	</c:when>
+        	<c:otherwise>
+	        	<c:choose>
+  			    <c:when test="${contact.viewerIsContact != null}">
+  				    <dht:actionLink oneLine="true" href="javascript:dh.actions.removeContact('${contact.viewPersonPageId}')" title="Remove this person from your friends list">Remove from friends</dht:actionLink>
+	   	        </c:when>
+	        	<c:otherwise>
+					<dht:actionLink oneLine="true" href="javascript:dh.actions.addContact('${contact.viewPersonPageId}')" title="Add this person to your friends list">Add to friends</dht:actionLink>
+				</c:otherwise>
+				</c:choose>
+				| <a href="/">Invite to a group</a>
 			</c:otherwise>
-		</c:choose>	| <a href="/">Invite to a group</a>
+		</c:choose>
 		</c:if>
 	</dht3:personHeader>
 	<dht3:stacker stackOrder="${stackOrder}" stackType="${stackType}" pageable="${pageable}" blocks="${blocks}" showFrom="${showFrom}"/>
