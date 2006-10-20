@@ -99,17 +99,12 @@ public class User extends Person implements VersionedEntity {
 	}
 	
 	@Transient
-	public String getPhotoUrl(int size) {
+	public String getPhotoUrl() {
 		if (stockPhoto != null) {
 			return "/images2" + stockPhoto;
 		} else {
-			return "/files/headshots/" + getId() + "?v=" + version + "&size=" + size;
+			return "/files/headshots/" + getId() + "?v=" + version;
 		}
-	}
-	
-	@Transient
-	public String getPhotoUrl() {
-		return getPhotoUrl(60);
 	}
 	
 	@Override

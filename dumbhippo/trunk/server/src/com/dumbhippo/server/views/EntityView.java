@@ -18,10 +18,18 @@ public abstract class EntityView implements ObjectView {
 	
 	public abstract String getHomeUrl();
 	
-	public abstract String getPhotoUrl(int size);
-		
-	public String getPhotoUrl() {
-		return getPhotoUrl60();
+	public abstract String getPhotoUrl();
+	
+	public static String sizePhoto(String baseUrl, int size) {
+		int lastSlash = baseUrl.lastIndexOf('/');
+		StringBuilder newUrl = new StringBuilder(baseUrl.substring(0, lastSlash+1));
+		newUrl.append(Integer.toString(size));
+		newUrl.append(baseUrl.substring(lastSlash));
+		return newUrl.toString();
+	}
+	
+	public String getPhotoUrl(int size) {
+		return sizePhoto(getPhotoUrl(), size);
 	}
 
 	public String getPhotoUrl30() {

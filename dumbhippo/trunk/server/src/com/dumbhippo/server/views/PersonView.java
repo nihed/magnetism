@@ -856,9 +856,9 @@ public class PersonView extends EntityView {
 	}
 	
 	@Override
-	public String getPhotoUrl(int size) {
+	public String getPhotoUrl() {
 		if (user != null)
-			return user.getPhotoUrl(size);
+			return user.getPhotoUrl();
 		else
 			return "/images2/invited60x60.gif";
 	}
