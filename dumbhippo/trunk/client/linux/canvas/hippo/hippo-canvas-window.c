@@ -160,7 +160,10 @@ hippo_canvas_window_button_press(GtkWidget         *widget,
 {
     HippoCanvasWindow *canvas_window = HIPPO_CANVAS_WINDOW(widget);
 
-    return hippo_canvas_helper_button_press(canvas_window->helper, event);
+    if (event->window == widget->window)
+        return hippo_canvas_helper_button_press(canvas_window->helper, event);
+    else
+        return FALSE;
 }
 
 static gboolean
@@ -169,7 +172,10 @@ hippo_canvas_window_button_release(GtkWidget         *widget,
 {
     HippoCanvasWindow *canvas_window = HIPPO_CANVAS_WINDOW(widget);
 
-    return hippo_canvas_helper_button_release(canvas_window->helper, event);
+    if (event->window == widget->window)
+        return hippo_canvas_helper_button_release(canvas_window->helper, event);
+    else
+        return FALSE;
 }
 
 static gboolean
@@ -178,7 +184,10 @@ hippo_canvas_window_enter_notify(GtkWidget         *widget,
 {
     HippoCanvasWindow *canvas_window = HIPPO_CANVAS_WINDOW(widget);
 
-    return hippo_canvas_helper_enter_notify(canvas_window->helper, event);
+    if (event->window == widget->window)
+        return hippo_canvas_helper_enter_notify(canvas_window->helper, event);
+    else
+        return FALSE;
 }
 
 static gboolean
@@ -187,7 +196,10 @@ hippo_canvas_window_leave_notify(GtkWidget         *widget,
 {
     HippoCanvasWindow *canvas_window = HIPPO_CANVAS_WINDOW(widget);
 
-    return hippo_canvas_helper_leave_notify(canvas_window->helper, event);
+    if (event->window == widget->window)
+        return hippo_canvas_helper_leave_notify(canvas_window->helper, event);
+    else
+        return FALSE;
 }
 
 static gboolean
@@ -196,7 +208,10 @@ hippo_canvas_window_motion_notify(GtkWidget         *widget,
 {
     HippoCanvasWindow *canvas_window = HIPPO_CANVAS_WINDOW(widget);
 
-    return hippo_canvas_helper_motion_notify(canvas_window->helper, event);
+    if (event->window == widget->window)
+        return hippo_canvas_helper_motion_notify(canvas_window->helper, event);
+    else
+        return FALSE;
 }
 
 void

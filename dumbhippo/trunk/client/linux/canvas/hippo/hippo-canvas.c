@@ -190,7 +190,8 @@ hippo_canvas_expose_event(GtkWidget         *widget,
 {
     HippoCanvas *canvas = HIPPO_CANVAS(widget);
 
-    hippo_canvas_helper_expose_event(canvas->helper, event);
+    if (event->window == widget->window)
+        hippo_canvas_helper_expose_event(canvas->helper, event);
 
     return GTK_WIDGET_CLASS(hippo_canvas_parent_class)->expose_event(widget, event);
 }
@@ -230,7 +231,10 @@ hippo_canvas_button_press(GtkWidget         *widget,
 {
     HippoCanvas *canvas = HIPPO_CANVAS(widget);
 
-    return hippo_canvas_helper_button_press(canvas->helper, event);
+    if (event->window == widget->window)
+        return hippo_canvas_helper_button_press(canvas->helper, event);
+    else
+        return FALSE;
 }
 
 static gboolean
@@ -239,7 +243,10 @@ hippo_canvas_button_release(GtkWidget         *widget,
 {
     HippoCanvas *canvas = HIPPO_CANVAS(widget);
 
-    return hippo_canvas_helper_button_release(canvas->helper, event);
+    if (event->window == widget->window)
+        return hippo_canvas_helper_button_release(canvas->helper, event);
+    else
+        return FALSE;
 }
 
 static gboolean
@@ -248,7 +255,10 @@ hippo_canvas_enter_notify(GtkWidget         *widget,
 {
     HippoCanvas *canvas = HIPPO_CANVAS(widget);
 
-    return hippo_canvas_helper_enter_notify(canvas->helper, event);
+    if (event->window == widget->window)
+        return hippo_canvas_helper_enter_notify(canvas->helper, event);
+    else
+        return FALSE;
 }
 
 static gboolean
@@ -257,7 +267,10 @@ hippo_canvas_leave_notify(GtkWidget         *widget,
 {
     HippoCanvas *canvas = HIPPO_CANVAS(widget);
 
-    return hippo_canvas_helper_leave_notify(canvas->helper, event);
+    if (event->window == widget->window)
+        return hippo_canvas_helper_leave_notify(canvas->helper, event);
+    else
+        return FALSE;
 }
 
 static gboolean
@@ -266,7 +279,10 @@ hippo_canvas_motion_notify(GtkWidget         *widget,
 {
     HippoCanvas *canvas = HIPPO_CANVAS(widget);
 
-    return hippo_canvas_helper_motion_notify(canvas->helper, event);
+    if (event->window == widget->window)
+        return hippo_canvas_helper_motion_notify(canvas->helper, event);
+    else
+        return FALSE;
 }
 
 static void

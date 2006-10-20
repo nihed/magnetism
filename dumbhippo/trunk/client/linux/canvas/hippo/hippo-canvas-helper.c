@@ -352,12 +352,14 @@ hippo_canvas_helper_button_press(HippoCanvasHelper *helper,
     g_debug("canvas button press at %d,%d allocation %d,%d", (int) event->x, (int) event->y,
             widget->allocation.x, widget->allocation.y);
     */
-    
-    return hippo_canvas_item_emit_button_press_event(helper->root,
-                                                     event->x - window_x, event->y - window_y,
-                                                     event->button,
-                                                     event->x_root, event->y_root,
-                                                     event->time);
+
+    hippo_canvas_item_emit_button_press_event(helper->root,
+                                              event->x - window_x, event->y - window_y,
+                                              event->button,
+                                              event->x_root, event->y_root,
+                                              event->time);
+
+    return TRUE;
 }
 
 gboolean
@@ -376,11 +378,13 @@ hippo_canvas_helper_button_release(HippoCanvasHelper *helper,
             widget->allocation.x, widget->allocation.y);
     */
     
-    return hippo_canvas_item_emit_button_release_event(helper->root,
-                                                       event->x - window_x, event->y - window_y,
-                                                       event->button,
-                                                       event->x_root, event->y_root,
-                                                       event->time);
+    hippo_canvas_item_emit_button_release_event(helper->root,
+                                                event->x - window_x, event->y - window_y,
+                                                event->button,
+                                                event->x_root, event->y_root,
+                                                event->time);
+
+    return TRUE;
 }
 
 static gboolean
