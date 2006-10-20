@@ -861,7 +861,7 @@ public class PersonView extends EntityView {
 		if (user != null)
 			return user.getPhotoUrl();
 		else
-			return "/images2/invited60x60.gif";
+			return "/images2/user_pix1/invited.png";
 	}
 	
 	/**
