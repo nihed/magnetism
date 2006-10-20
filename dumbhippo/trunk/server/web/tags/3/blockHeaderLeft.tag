@@ -4,8 +4,8 @@
 <%@ taglib tagdir="/WEB-INF/tags/3" prefix="dht3" %>
 
 <td align="left">
-<span class="dh-stacker-block-title">	
+<div class="dh-stacker-block-title">	
 <jsp:doBody/>
-</span>
+</div>
 </td>
 <td>&nbsp;</td>

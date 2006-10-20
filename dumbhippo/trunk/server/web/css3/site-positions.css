@@ -302,6 +302,10 @@ div.dh-notification {
 	width:				100%;
 }
 
+.dh-stacker-block-title-facebook-events {
+	margin-left:		5px;
+}
+
 .dh-thumbnail-box-border, .dh-rss-box-border {
 	position:			relative;
 	width:				478px;

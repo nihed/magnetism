@@ -78,7 +78,7 @@
 		</tr>
 		</table>
 	</td>
-	<td><dh:png id="dhPageHeaderRight" src="/images3/${buildStamp}/header_right.png" style="width: 8px; height: 64px;"/></td>
+	<td align="right" width="8px"><dh:png id="dhPageHeaderRight" src="/images3/${buildStamp}/header_right.png" style="width: 8px; height: 64px;"/></td>
 	</tr>
 	</table>
 </div>

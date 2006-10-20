@@ -3,7 +3,7 @@
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 <%@ taglib tagdir="/WEB-INF/tags/3" prefix="dht3" %>
 
-<%@ attribute name="block" required="true" type="com.dumbhippo.server.views.BlogBlockView" %>
+<%@ attribute name="block" required="true" type="com.dumbhippo.server.views.FacebookBlockView" %>
 <%@ attribute name="offset" required="true" type="java.lang.Boolean" %>
 <%@ attribute name="blockId" required="true" type="java.lang.String" %>
 <%@ attribute name="showFrom" required="false" type="java.lang.Boolean" %>
@@ -13,7 +13,7 @@
 		<dht3:blockHeaderLeft>
 			<table cellspacing="0" cellpadding="0">
 			<tr>
-			<td><span class="dh-stacker-block-title-type">Facebook</span>:</td>
+			<td class="dh-stacker-block-title"><span class="dh-stacker-block-title-type">Facebook</span>:</td>
 			<td>
 			<div class="dh-stacker-block-title-facebook-events">
 				<c:forEach items="${block.facebookEvents}" var="event" varStatus="eventIdx" end="3">
@@ -25,7 +25,7 @@
 							<div><a class="dh-underlined-link" href="http://www.facebook.com">You were poked</a></div>
 						</c:when>
 						<c:when test="${dh:enumIs(event.eventType, 'UNREAD_MESSAGES_UPDATE')}">
-							<div><a class="dh-underlined-link" href="http://www.facebook.com">New message</a></div>
+							<div><a class="dh-underlined-link" href="http://www.facebook.com"><c:out value="${event.count}"/> unread messages</a></div>
 						</c:when>						
 					</c:choose>
 				</c:forEach>
