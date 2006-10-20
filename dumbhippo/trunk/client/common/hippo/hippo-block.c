@@ -519,8 +519,7 @@ hippo_block_type_from_string(const char *s)
         { "POST", HIPPO_BLOCK_TYPE_POST },
         { "GROUP_MEMBER", HIPPO_BLOCK_TYPE_GROUP_MEMBER },
         { "GROUP_CHAT", HIPPO_BLOCK_TYPE_GROUP_CHAT },
-        { "MUSIC_PERSON", HIPPO_BLOCK_TYPE_MUSIC_PERSON },
-        { "EXTERNAL_ACCOUNT_UPDATE", HIPPO_BLOCK_TYPE_EXTERNAL_ACCOUNT_UPDATE }
+        { "MUSIC_PERSON", HIPPO_BLOCK_TYPE_MUSIC_PERSON }
     };
     unsigned int i;
     for (i = 0; i < G_N_ELEMENTS(types); ++i) {
