@@ -49,9 +49,19 @@ public interface Stacker {
 	
 	public BlockView loadBlock(Viewpoint viewpoint, UserBlockData ubd) throws NotFoundException;
 	
-	public void pageStack(Viewpoint viewpoint, User user, Pageable<BlockView> pageable, boolean participantOnly);	
-	// get a list of most recently active users with their most recent activity from the anonymous viewpoint
-	public List<PersonMugshotView> getRecentActivity(int count, int blocksPerPerson);
+	public void pageStack(Viewpoint viewpoint, User user, Pageable<BlockView> pageable, boolean participantOnly);
+
+	/**
+	 * Fetch the recently active users on the system, along with a snapshot of their activity.
+	 *  
+	 * @param userCount number of active users to return (could return less if the
+	 *     system has very few users)
+	 * @param blocksPerUser number of blocks to return for each user
+	 * @return a list of PersonMugshotView objects that combine a PersonView and a list
+	 *   of BlockViews
+	 */
+	public List<PersonMugshotView> getRecentUserActivity(int count, int blocksPerUser);
+
 	// Returns a complete stack for the user.
 	public List<BlockView> getStack(Viewpoint viewpoint, User user, long lastTimestamp, int start, int count);
 	// Returns parts of the stack in which the user was an active participant if participantOnly is set to true.

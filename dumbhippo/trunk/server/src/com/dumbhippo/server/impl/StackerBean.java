@@ -1095,7 +1095,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		}, pageable, expectedHitFactor);
 	}
 	
-	public List<PersonMugshotView> getRecentActivity(int count, int blocksPerPerson) {
+	public List<PersonMugshotView> getRecentUserActivity(int userCount, int blockPerUser) {
 		List<PersonMugshotView> mugshots = new ArrayList<PersonMugshotView>();
 		
 		// select distinct most recently active users		
@@ -1104,8 +1104,8 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		List<User> distinctUsers = new ArrayList<User>();
 		int start = 0;
 		
-		while (distinctUsers.size() < count) {
-			int countToProcess = (count - distinctUsers.size()) * expectedHitFactor;
+		while (distinctUsers.size() < userCount) {
+			int countToProcess = (userCount - distinctUsers.size()) * expectedHitFactor;
 			List<User> users = getRecentActivityUsers(start, countToProcess);
 			if (users.isEmpty())
 				break;
@@ -1117,7 +1117,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 					continue;
 				distinctUsers.add(user);
 				resultItemCount++;
-				if (distinctUsers.size() >= count)
+				if (distinctUsers.size() >= userCount)
 					break;
 			}		
 		    
@@ -1136,7 +1136,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
                 " AND block.publicBlock = true " +
                 " ORDER BY ubd.participatedTimestamp DESC");
 			qu.setParameter("user", user);
-		    qu.setMaxResults(blocksPerPerson);
+		    qu.setMaxResults(blockPerUser);
          	List<BlockView> blocks = new ArrayList<BlockView>();
          	for (UserBlockData ubd : TypeUtils.castList(UserBlockData.class, qu.getResultList())) {
 	         	try {
