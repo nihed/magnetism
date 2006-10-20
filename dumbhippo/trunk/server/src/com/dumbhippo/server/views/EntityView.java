@@ -21,22 +21,21 @@ public abstract class EntityView implements ObjectView {
 	public abstract String getPhotoUrl();
 	
 	public static String sizePhoto(String baseUrl, int size) {
-		int lastSlash = baseUrl.lastIndexOf('/');
-		StringBuilder newUrl = new StringBuilder(baseUrl.substring(0, lastSlash+1));
-		newUrl.append(Integer.toString(size));
-		newUrl.append(baseUrl.substring(lastSlash));
-		return newUrl.toString();
+		if (baseUrl.lastIndexOf("?") >= 0)
+			return baseUrl + "&size=" + size;
+		else
+			return baseUrl + "?size=" + size;
 	}
 	
 	public String getPhotoUrl(int size) {
 		return sizePhoto(getPhotoUrl(), size);
 	}
 
-	public String getPhotoUrl30() {
+	public final String getPhotoUrl30() {
 		return getPhotoUrl(30);
 	}
 
-	public String getPhotoUrl60() {
+	public final String getPhotoUrl60() {
 		return getPhotoUrl(60);
 	}
 	
