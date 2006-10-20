@@ -24,7 +24,7 @@ public class MainPage extends AbstractSigninOptionalPage {
 		public List<PersonMugshotView> getRecentActivity() {
 			if (recentActivity == null) {
 				// we want 4 users with 1 activity block for each one of them
-				recentActivity = stacker.getRecentUserActivity(getViewpoint(), 0, 4, 1);
+				recentActivity = stacker.getRecentUserActivity(getViewpoint(), 0, 4, 1, false);
 			}
 			return recentActivity;
 		}

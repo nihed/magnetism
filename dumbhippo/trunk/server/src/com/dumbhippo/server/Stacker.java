@@ -62,10 +62,11 @@ public interface Stacker {
 	 * @param startUser starting point in search (skip this number of active user)
 	 * @param userCount maximum number of active users to return
 	 * @param blocksPerUser number of blocks to return for each item in the result list
+	 * @param includeGroupUpdates whether group updates should be included
 	 * @return a list of PersonMugshotView objects that combine a PersonView and a list
 	 *     of BlockViews
 	 */
-	public List<PersonMugshotView> getRecentUserActivity(Viewpoint viewpoint, int startUser, int userCount, int blocksPerUser);
+	public List<PersonMugshotView> getRecentUserActivity(Viewpoint viewpoint, int startUser, int userCount, int blocksPerUser, boolean includeGroupUpdates);
 	
 	/**
 	 * Fetch recently active users on the system, along with a snapshot of their activity,
