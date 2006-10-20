@@ -534,6 +534,10 @@ on_block_added(HippoDataCache *cache,
 {
     StackManager *manager = data;
 
+    /* We won't know how to display this anyway */
+    if (hippo_block_get_block_type(block) == HIPPO_BLOCK_TYPE_UNKNOWN)
+        return;
+    
     if (g_slist_find(manager->blocks, block) != NULL)
         return;
 
