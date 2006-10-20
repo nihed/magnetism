@@ -6,6 +6,11 @@
 <%@ attribute name="invited" required="false" type="java.lang.Boolean" %>
 <%@ attribute name="customLink" required="false" type="java.lang.String" %>
 
+<%-- this is required or the dh:png won't have a size set --%>
+<c:if test="${empty size}">
+	<c:set var="size" value="60" scope="page"/>
+</c:if>
+
 <c:choose>
 	<c:when test="${size == 30}">
 		<c:set var="photoUrl" value="${person.photoUrl30}" scope="page"/>
