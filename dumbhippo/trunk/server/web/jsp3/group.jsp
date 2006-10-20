@@ -40,7 +40,7 @@
 				 | <a href="/group-invitation?group=${group.viewedGroupId}" title="Invite other people to this group">Invite People</a>
 			</c:if>
 		</dht3:groupHeader>
-	    <dht3:stacker stackOrder="1" stackType="dhMugshot" pageable="${group.pageableStack}" showFrom="false"/>
+	    <dht3:stacker stackOrder="1" stackType="dhMugshot" pageable="${group.pageableStack}" showFrom="true"/>
 	</dht3:shinyBox>
 </dht3:page>
 </html>
