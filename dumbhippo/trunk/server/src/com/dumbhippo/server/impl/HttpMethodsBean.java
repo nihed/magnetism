@@ -1195,7 +1195,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			throw new RuntimeException("invalid photo size");
 		}
 		
-		String url = EntityView.sizePhoto(user.getPhotoUrl(), sizeValue);
+		String url = user.getPhotoUrl(sizeValue);
 		
 		out.write(StringUtils.getBytes(url));
 		out.flush();
@@ -1223,7 +1223,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			throw new RuntimeException("invalid photo size");
 		}
 		
-		String url = EntityView.sizePhoto(group.getPhotoUrl(), sizeValue);
+		String url = group.getPhotoUrl(sizeValue);
 		
 		out.write(StringUtils.getBytes(url));
 		out.flush();

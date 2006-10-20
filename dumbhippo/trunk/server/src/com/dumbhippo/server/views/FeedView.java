@@ -37,8 +37,8 @@ public class FeedView extends EntityView {
 	}
 	
 	@Override
-	public String getPhotoUrl() {
-		return feed.getGroup().getPhotoUrl();
+	public String getPhotoUrl(int size) {
+		return feed.getGroup().getPhotoUrl(size);
 	}
 
 	@Override

@@ -15,7 +15,6 @@ import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.Configuration;
-import com.dumbhippo.server.views.EntityView;
 import com.dumbhippo.server.views.FeedView;
 import com.dumbhippo.server.views.GroupView;
 import com.dumbhippo.server.views.PersonView;
@@ -58,7 +57,7 @@ public class EntityTag extends SimpleTagSupport {
 					link = "/music?who=" + id;
 				else
 					link = "/person?who=" + id;
-				photoUrl = view.getPhotoUrl();
+				photoUrl = view.getPhotoUrl(Configuration.SHOT_SMALL_SIZE);
 				defaultCssClass = "dh-person";
 			} else {
 				defaultCssClass = "dh-listed-person";
@@ -79,7 +78,7 @@ public class EntityTag extends SimpleTagSupport {
 				body = group.getName() + " (invited by " + inviter.getName() + ")";
 			else
 				body = group.getName();
-			photoUrl = groupView.getPhotoUrl();
+			photoUrl = groupView.getPhotoUrl(Configuration.SHOT_SMALL_SIZE);
 			defaultCssClass = "dh-group";
 		} else if (o instanceof Group) {
 			Group group = (Group)o;
@@ -91,7 +90,7 @@ public class EntityTag extends SimpleTagSupport {
 			else
 				link = "/group?who=" + group.getId();
 			body = group.getName();
-			photoUrl = view.getPhotoUrl();
+			photoUrl = view.getPhotoUrl(Configuration.SHOT_SMALL_SIZE);
 			defaultCssClass = "dh-group";
 		} else if (o instanceof FeedView) {
 			FeedView feedView = (FeedView)o;
@@ -99,7 +98,7 @@ public class EntityTag extends SimpleTagSupport {
 				return null;
 			link = feedView.getHomeUrl();
 			body = feedView.getName();
-			photoUrl = feedView.getPhotoUrl();
+			photoUrl = feedView.getPhotoUrl(Configuration.SHOT_SMALL_SIZE);
 			defaultCssClass = "dh-feed";
 		} else {
 			if (o == null)
@@ -148,15 +147,13 @@ public class EntityTag extends SimpleTagSupport {
 		
 		int openElements = 0;	
 		if (photo && photoUrl != null) {
-			String sizedPhotoUrl = EntityView.sizePhoto(photoUrl, Configuration.SHOT_SMALL_SIZE);
-			
 			if (link != null) {
 				xml.openElement("a", "href", link, "target", "_top", "class", cssClass, "title", bodyOriginal);
 				openElements++;
 			}
 			
 			String style = "width: " + Configuration.SHOT_SMALL_SIZE + "; height: " + Configuration.SHOT_SMALL_SIZE + ";"; 
-			PngTag.pngHtml(context, xml, sizedPhotoUrl, buildStamp, "dh-headshot", style);
+			PngTag.pngHtml(context, xml, photoUrl, buildStamp, "dh-headshot", style);
 			xml.append("<br/>");
 			xml.appendEscaped(body);
 		}

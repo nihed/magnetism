@@ -139,8 +139,8 @@ import com.dumbhippo.persistence.VersionedEntity;
 	}
 	
 	@Override
-	public String getPhotoUrl() {
-		return group.getPhotoUrl();
+	public String getPhotoUrl(int size) {
+		return group.getPhotoUrl(size);
 	}
 	
 	public LiveGroup getLiveGroup() {

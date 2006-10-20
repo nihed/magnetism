@@ -140,12 +140,17 @@ public class Group extends GuidPersistable implements VersionedEntity {
 	}
 	
 	@Transient
-	public String getPhotoUrl() {
+	public String getPhotoUrl(int size) {
 		if (stockPhoto != null) {
 			return "/images2" + stockPhoto;
 		} else {
-			return "/files/groupshots/" + getId() + "?v=" + version;
+			return "/files/groupshots/" + getId() + "?v=" + version + "&size=" + size;
 		}
+	}
+	
+	@Transient
+	public String getPhotoUrl() {
+		return getPhotoUrl(60);
 	}
 	
 	@OneToMany(mappedBy="group")

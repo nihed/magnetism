@@ -276,6 +276,7 @@ public abstract class AbstractSmallImageServlet extends AbstractServlet {
 		}
 
 		if (toServe == null) {
+			logger.debug("No file {} in {}", noPrefix, saveDir);
 			throw new HttpException(HttpResponseCode.NOT_FOUND, "No such image");
 		}
 		
