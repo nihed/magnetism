@@ -805,6 +805,15 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		
 	}
 	
+	// Preparing a block view creates a skeletal BlockView that has the Block and the 
+	// UserBlockData and nothing more. The idea is that when paging a stack of blocks,
+	// we want to scan through the pages before the one we are viewing as fast as
+	// possible, and then only fill in the full details for the items we are actually
+	// viewing.
+	//
+	// What we do check at this point is access control: this method throws NotFoundException 
+	//  if the user can't see the contents of the Block.
+	//
 	private BlockView prepareBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd) throws NotFoundException {
 		UserViewpoint userview = null;
 		if (viewpoint instanceof UserViewpoint)
@@ -844,13 +853,34 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 				throw new RuntimeException("Unexpected block type in prepareBlockView: " + block.getBlockType());
 			}
 		}
-		
+
+		// If a block isn't flagged as always public, then we need to do access control
+		// here. We do that by trying to populate the block, and we see if that throws
+		// an exception.
+		//
+		// FIXME: populating a block view is pontentially much more expensive than
+		//  what we need to check visibilitt. For example, when we populate a PostBlockView,
+		/// we do a database query to get chat messages for that post. I think we need to go 
+		//  to a system where have:
+		//
+		//  - Skeletal block views with no entities other than the Block / UserBlockData
+		//  - Views with some information filled in (e.g., the Post for a PostBlostView)
+		//  - Fully populated blocks
+		//
+		// So, this call here should be 'checkVisibility(blockView) throws NotFoundException
+		// (or something more appropriate for the exception) that may *as a side effect*
+		// fill in some fields of the block view, but isn't guaranteed to fully populate
+		// the block.
+		//
 	    if (!block.isPublicBlock())
 	    	populateBlockView(blockView);
 	    
 	    return blockView;
 	}
 	
+	// Populating the block view fills in all the details that were skipped at
+	//   the prepare stage and makes it ready for viewing by the user.
+	//
 	private void populateBlockView(BlockView blockView) throws NotFoundException {
 		Viewpoint viewpoint = blockView.getViewpoint();
 		Block block = blockView.getBlock();
