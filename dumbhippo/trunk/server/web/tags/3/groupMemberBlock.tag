@@ -1,4 +1,5 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 <%@ taglib uri="/jsp/dumbhippo.tld" prefix="dh" %>
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 <%@ taglib tagdir="/WEB-INF/tags/3" prefix="dht3" %>
@@ -28,7 +29,12 @@
 							completedText="Invited to group"/>	
 					</c:when>
 					<c:otherwise>
-						Invited by <dht3:entityLink who="${block.memberView}"/>.
+						<c:if test="${fn:length(block.adders) > 0}">
+							Invited by 
+							<c:forEach items="${block.adders}" var="adder" varStatus="adderIdx">
+								 <dht3:entityLink who="${adder}"/><c:if test="${!adderIdx.last}">,</c:if>
+							</c:forEach>
+						</c:if>
 					</c:otherwise>
 				</c:choose>	
 			</dht3:blockHeaderDescription>				

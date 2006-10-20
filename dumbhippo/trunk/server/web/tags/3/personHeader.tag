@@ -51,9 +51,9 @@
 						<div class="dh-person-header-controls"><jsp:doBody/></div>
 						<c:if test="${!embedVersion && who.liveUser != null}">
 						    <div class="dh-person-header-stats">
-								<span class="dh-info">${who.liveUser.contactResourcesSize} friends</span> | 							
-								<span class="dh-info">${who.liveUser.groupCount} groups</span> | 
-								<span class="dh-info">${who.liveUser.sentPostsCount} posts</span> 
+								<span class="dh-info"><dht3:plural n="${who.liveUser.contactResourcesSize}" s="friend"/></span> | 							
+								<span class="dh-info"><dht3:plural n="${who.liveUser.groupCount}" s="group"/></span> | 
+								<span class="dh-info"><dht3:plural n="${who.liveUser.sentPostsCount}" s="post"/></span> 
 						    </div>
 						</c:if>
 						<c:if test="${embedVersion}">

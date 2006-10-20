@@ -400,4 +400,12 @@ public class PersonViewerBean implements PersonViewer {
 		
 		return result;
 	}
+	
+	public Set<PersonView> viewUsers(Viewpoint viewpoint, Set<User> users) {
+		Set<PersonView> viewedUsers = new HashSet<PersonView>();
+		for (User user : users) {
+			viewedUsers.add(getPersonView(viewpoint, user));
+		}
+		return viewedUsers;
+	}
 }

@@ -19,13 +19,13 @@
 				<c:forEach items="${block.facebookEvents}" var="event" varStatus="eventIdx" end="3">
 					<c:choose>
 						<c:when test="${dh:enumIs(event.eventType, 'NEW_TAGGED_PHOTOS_EVENT')}">
-							<div><a class="dh-underlined-link" href="http://www.facebook.com">New photo tagged with you</a></div>
+							<div><a class="dh-underlined-link" href="http://www.facebook.com"><dht3:plural n="${event.count}" s="unseen picture"/></a></div>
 						</c:when>
 						<c:when test="${dh:enumIs(event.eventType, 'UNSEEK_POKE_EVENT')}">
-							<div><a class="dh-underlined-link" href="http://www.facebook.com">You were poked</a></div>
+							<div><a class="dh-underlined-link" href="http://www.facebook.com"><dht3:plural n="${event.count}" s="unseen poke"/></a></div>
 						</c:when>
 						<c:when test="${dh:enumIs(event.eventType, 'UNREAD_MESSAGES_UPDATE')}">
-							<div><a class="dh-underlined-link" href="http://www.facebook.com"><c:out value="${event.count}"/> unread messages</a></div>
+							<div><a class="dh-underlined-link" href="http://www.facebook.com"><dht3:plural n="${event.count}" s="unread message"/></a></div>
 						</c:when>						
 					</c:choose>
 				</c:forEach>

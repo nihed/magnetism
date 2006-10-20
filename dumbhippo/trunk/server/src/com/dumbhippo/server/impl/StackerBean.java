@@ -913,6 +913,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 			groupMemberBlockView.setGroupView(groupView);
 			groupMemberBlockView.setMemberView(memberView);
 			groupMemberBlockView.setStatus(member.getStatus());
+			groupMemberBlockView.setAdders(personViewer.viewUsers(viewpoint, member.getAdders()));
 			groupMemberBlockView.setPopulated(true);
 		} else if (blockView instanceof MusicPersonBlockView) {
 			MusicPersonBlockView musicPersonBlockView = (MusicPersonBlockView)blockView;

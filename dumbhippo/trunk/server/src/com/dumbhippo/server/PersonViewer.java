@@ -91,4 +91,13 @@ public interface PersonViewer {
 	 *   objects from the omniscient System viewpoint.
 	 */  
 	 public Set<PersonView> getAllUsers(UserViewpoint viewpoint);
+	 
+	 /**
+	  * View a set of users by applying getPersonView to each one.
+	  * 
+	  * @param viewpoint the viewpoint
+	  * @param users a set of users to view
+	  * @return a set of PersonView objects for each user
+	  */
+	 public Set<PersonView> viewUsers(Viewpoint viewpoint, Set<User> users);	 
 }

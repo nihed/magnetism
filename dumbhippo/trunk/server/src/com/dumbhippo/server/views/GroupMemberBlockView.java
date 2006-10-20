@@ -2,6 +2,7 @@ package com.dumbhippo.server.views;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.persistence.Block;
@@ -12,6 +13,7 @@ public class GroupMemberBlockView extends BlockView {
 	private GroupView group;
 	private PersonView member;
 	private MembershipStatus status;
+	private Set<PersonView> adders;
 	
 	public GroupMemberBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd, GroupView group, PersonView member, MembershipStatus status) {
 		super(viewpoint, block, ubd);
@@ -62,5 +64,13 @@ public class GroupMemberBlockView extends BlockView {
 	
 	public void setStatus(MembershipStatus status) {
 		this.status = status;
+	}
+
+	public void setAdders(Set<PersonView> adders) {
+		this.adders = adders;
+	}
+	
+	public Set<PersonView> getAdders() {
+		return adders;
 	}
 }
