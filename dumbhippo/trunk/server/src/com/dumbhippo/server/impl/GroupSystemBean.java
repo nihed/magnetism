@@ -663,9 +663,12 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 			groups.add(new GroupView((Group) o, null, null));
 		}
 		pageable.setResults(groups);
-		
-		q = em.createQuery(COUNT_PUBLIC_GROUPS_QUERY + CAN_SEE_ANONYMOUS);
-		pageable.setTotalCount(((Number) q.getSingleResult()).intValue());
+		pageable.setTotalCount(getPublicGroupCount());
+	}
+	
+	public int getPublicGroupCount() {
+		Query q = em.createQuery(COUNT_PUBLIC_GROUPS_QUERY + CAN_SEE_ANONYMOUS);
+		return ((Number) q.getSingleResult()).intValue();
 	}
 	
 	public void incrementGroupVersion(final Group group) {

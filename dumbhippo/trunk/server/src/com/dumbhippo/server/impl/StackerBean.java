@@ -68,13 +68,13 @@ import com.dumbhippo.server.Stacker;
 import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.XmppMessageSender;
 import com.dumbhippo.server.util.EJBUtil;
-import com.dumbhippo.server.views.AnonymousViewpoint;
 import com.dumbhippo.server.views.BlockView;
 import com.dumbhippo.server.views.BlogBlockView;
 import com.dumbhippo.server.views.ChatMessageView;
 import com.dumbhippo.server.views.FacebookBlockView;
 import com.dumbhippo.server.views.GroupChatBlockView;
 import com.dumbhippo.server.views.GroupMemberBlockView;
+import com.dumbhippo.server.views.GroupMugshotView;
 import com.dumbhippo.server.views.GroupView;
 import com.dumbhippo.server.views.MusicPersonBlockView;
 import com.dumbhippo.server.views.PersonMugshotView;
@@ -1063,19 +1063,6 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		pageable.setResults(blockViewsToReturn);
 	}
 
-	private List<User> getRecentActivityUsers(int start, int count) {
-		// we expect the anonymous viewpoint here, so we only get public blocks
-		Query q = em.createQuery("SELECT ubd.user FROM UserBlockData ubd, Block block " + 
-                " WHERE ubd.deleted = 0 AND ubd.block = block " +
-                " AND ubd.participatedTimestamp != NULL " +
-                " AND block.publicBlock = true " +
-                " ORDER BY ubd.participatedTimestamp DESC");
-		q.setFirstResult(start);
-		q.setMaxResults(count);
-		
-		return TypeUtils.castList(User.class, q.getResultList());
-	}
-	
 	public void pageStack(final Viewpoint viewpoint, final User user, Pageable<BlockView> pageable, final boolean participantOnly) {
 		
 		logger.debug("getting stack for user {}", user);
@@ -1095,40 +1082,75 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		}, pageable, expectedHitFactor);
 	}
 	
-	public List<PersonMugshotView> getRecentUserActivity(int userCount, int blockPerUser) {
+	private interface ItemSource<T> {
+		List<T> get(int start, int count);
+	}
+	
+	private <T> List<T> getDistinctItems(ItemSource<T> source, int start, int count, int expectedHitFactor) {
+		Set<T> distinctItems = new HashSet<T>();
+		List<T> returnItems = new ArrayList<T>();
+		int max = start + count;
+
+		int chunkStart = 0;
+		while (distinctItems.size() < max) {
+			int chunkCount = (max - distinctItems.size()) * expectedHitFactor;
+			List<T> items = source.get(chunkStart, chunkCount);
+			if (items.isEmpty())
+				break;
+			
+			int resultItemCount = 0;
+
+			for (T t : items) {
+				logger.debug("Considering {}", t);
+				if (distinctItems.contains(t)) {
+					logger.debug("   Skipped, already have it");
+					continue;
+				}
+				distinctItems.add(t);
+				if (distinctItems.size() > start)
+					returnItems.add(t);
+				resultItemCount++;
+				if (returnItems.size() >= count)
+					break;
+			}		
+		    
+		    // nothing else there
+		    if (items.size() < chunkCount)
+		    	break;
+	
+		    chunkStart = chunkStart + chunkCount;
+		    if (resultItemCount > 0)
+		    	expectedHitFactor = items.size() / resultItemCount + 1;
+		}
+
+		return returnItems;
+	}
+	
+	private List<User> getRecentActivityUsers(int start, int count) {
+		// we expect the anonymous viewpoint here, so we only get public blocks
+		Query q = em.createQuery("SELECT ubd.user FROM UserBlockData ubd, Block block " + 
+                " WHERE ubd.deleted = 0 AND ubd.block = block " +
+                " AND ubd.participatedTimestamp != NULL " +
+                " AND block.publicBlock = true " +
+                " ORDER BY ubd.participatedTimestamp DESC");
+		q.setFirstResult(start);
+		q.setMaxResults(count);
+		
+		return TypeUtils.castList(User.class, q.getResultList());
+	}
+	
+	public List<PersonMugshotView> getRecentUserActivity(Viewpoint viewpoint, int startUser, int userCount, int blockPerUser) {
 		List<PersonMugshotView> mugshots = new ArrayList<PersonMugshotView>();
 		
 		// select distinct most recently active users		
        	int expectedHitFactor = 2;
 		
-		List<User> distinctUsers = new ArrayList<User>();
-		int start = 0;
+		List<User> distinctUsers = getDistinctItems(new ItemSource<User>() {
+			public List<User> get(int start, int count) {
+				return getRecentActivityUsers(start, count);
+			}
+		}, startUser, userCount, expectedHitFactor);
 		
-		while (distinctUsers.size() < userCount) {
-			int countToProcess = (userCount - distinctUsers.size()) * expectedHitFactor;
-			List<User> users = getRecentActivityUsers(start, countToProcess);
-			if (users.isEmpty())
-				break;
-			
-			int resultItemCount = 0;
-
-			for (User user : users) {
-				if (distinctUsers.contains(user))
-					continue;
-				distinctUsers.add(user);
-				resultItemCount++;
-				if (distinctUsers.size() >= userCount)
-					break;
-			}		
-		    
-		    // nothing else there
-		    if (users.size() < countToProcess)
-		    	break;
-	
-		    start = start + countToProcess;
-		    expectedHitFactor = users.size() / resultItemCount + 1;
-		}
-
 		for (User user : distinctUsers) {
 			Query qu = em.createQuery("Select ubd FROM UserBlockData ubd, Block block " + 
                 " WHERE ubd.user = :user AND ubd.deleted = 0 AND ubd.block = block " +
@@ -1140,20 +1162,27 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
          	List<BlockView> blocks = new ArrayList<BlockView>();
          	for (UserBlockData ubd : TypeUtils.castList(UserBlockData.class, qu.getResultList())) {
 	         	try {
-	         	    BlockView blockView = getBlockView(AnonymousViewpoint.getInstance(), ubd.getBlock(), ubd);
+	         	    BlockView blockView = getBlockView(viewpoint, ubd.getBlock(), ubd);
 	         	    blocks.add(blockView);
 	         	} catch (NotFoundException e) {
 	         		// this is used on the main page, let's not risk it throwing an exception here
 	         		logger.error("NotFoundException when getting what must be a public block", e);
 	         	}
          	}
-         	PersonView personView = personViewer.getPersonView(AnonymousViewpoint.getInstance(), user, PersonViewExtra.EXTERNAL_ACCOUNTS);
+         	PersonView personView = personViewer.getPersonView(viewpoint, user, PersonViewExtra.EXTERNAL_ACCOUNTS);
             mugshots.add(new PersonMugshotView(personView, blocks));      	
 		}
 		
 		return mugshots;		
 	}
 	
+	public void pageRecentUserActivity(Viewpoint viewpoint, Pageable<PersonMugshotView> pageable, int blocksPerGroup) {
+		pageable.setResults(getRecentUserActivity(viewpoint, pageable.getStart(), pageable.getCount(), blocksPerGroup));
+		
+		// Doing an exact count is expensive, our assumption is "lots and lots"
+		pageable.setTotalCount(pageable.getBound());		
+	}
+
 	public List<BlockView> getStack(Viewpoint viewpoint, User user, long lastTimestamp, int start, int count) {
 	    return getStack(viewpoint, user, lastTimestamp, start, count, false);
     }
@@ -1306,7 +1335,68 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 			}
 		}, pageable, expectedHitFactor);
 	}
+
+	// When showing recently active groups, we want to exclude activity for
+	// users in the group, because we don't want a user playing music to
+	// make an old inactive group that they happen to be a member of seem active
+	static final String INTERESTING_PUBLIC_GROUP_BLOCK_CLAUSE =  
+        " AND block.publicBlock = true " +
+        " AND block.blockType != " + BlockType.EXTERNAL_ACCOUNT_UPDATE.ordinal() + 
+        " AND block.blockType != " + BlockType.MUSIC_PERSON.ordinal(); 
 	
+	private List<Group> getRecentActivityGroups(int start, int count) {
+		// we expect the anonymous viewpoint here, so we only get public blocks
+		Query q = em.createQuery("SELECT gbd.group FROM GroupBlockData gbd, Block block " + 
+                " WHERE gbd.deleted = 0 AND gbd.block = block " +
+                INTERESTING_PUBLIC_GROUP_BLOCK_CLAUSE +
+                " ORDER BY block.timestamp DESC");
+		q.setFirstResult(start);
+		q.setMaxResults(count);
+		
+		return TypeUtils.castList(Group.class, q.getResultList());
+	}
+	
+	public List<GroupMugshotView> getRecentGroupActivity(Viewpoint viewpoint, int startGroup, int groupCount, int blockPerGroup) {
+		List<GroupMugshotView> mugshots = new ArrayList<GroupMugshotView>();
+		
+		// select distinct most recently active users		
+       	int expectedHitFactor = 2;
+		
+		List<Group> distinctGroups = getDistinctItems(new ItemSource<Group>() {
+			public List<Group> get(int start, int count) {
+				return getRecentActivityGroups(start, count);
+			}
+		}, startGroup, groupCount, expectedHitFactor);
+		
+		for (Group group : distinctGroups) {
+			Query q = em.createQuery("Select gbd FROM GroupBlockData gbd, Block block " + 
+                " WHERE gbd.group = :group AND gbd.deleted = 0 AND gbd.block = block " +
+                INTERESTING_PUBLIC_GROUP_BLOCK_CLAUSE +
+                " ORDER BY block.timestamp DESC");
+			q.setParameter("group", group);
+		    q.setMaxResults(blockPerGroup);
+         	List<BlockView> blocks = new ArrayList<BlockView>();
+         	for (GroupBlockData gbd : TypeUtils.castList(GroupBlockData.class, q.getResultList())) {
+	         	try {
+	         	    BlockView blockView = getBlockView(viewpoint, gbd.getBlock(), null);
+	         	    blocks.add(blockView);
+	         	} catch (NotFoundException e) {
+	         		// this is used on the main page, let's not risk it throwing an exception here
+	         		logger.error("NotFoundException when getting what must be a public block", e);
+	         	}
+         	}
+         	GroupView groupView = groupSystem.getGroupView(viewpoint, group);
+            mugshots.add(new GroupMugshotView(groupView, blocks));      	
+		}
+		
+		return mugshots;		
+	}
+	
+	public void pageRecentGroupActivity(Viewpoint viewpoint, Pageable<GroupMugshotView> pageable, int blocksPerGroup) {
+		pageable.setResults(getRecentGroupActivity(viewpoint,pageable.getStart(), pageable.getCount(), blocksPerGroup));
+		pageable.setTotalCount(groupSystem.getPublicGroupCount());
+	}
+
 	public UserBlockData lookupUserBlockData(UserViewpoint viewpoint, Guid guid) throws NotFoundException {
 		Query q = em.createQuery("SELECT ubd FROM UserBlockData ubd, Block block WHERE ubd.block = block AND block.id = :blockId AND ubd.user = :user");
 		q.setParameter("blockId", guid.toString());

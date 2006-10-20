@@ -122,6 +122,8 @@ public interface GroupSystem {
 	
 	public void pagePublicGroups(Pageable<GroupView> pageable);
 		
+	public int getPublicGroupCount();
+		
 	public Group lookupGroupById(Viewpoint viewpoint, String groupId) throws NotFoundException;
 	
 	public Group lookupGroupById(Viewpoint viewpoint, Guid guid) throws NotFoundException;

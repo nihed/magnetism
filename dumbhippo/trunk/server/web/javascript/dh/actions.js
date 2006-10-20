@@ -238,9 +238,9 @@ dh.actions.switchPage = function (name, anchor, newPage) {
 	
 	var newQuery = dh.util.encodeQueryString(params)
 	var newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname +
-	            newQuery + "#"
-	if (anchor != null)
-		newUrl += anchor
+	            newQuery
+	if (anchor != null && anchor != "")
+		newUrl += "#" + anchor
 	window.location.replace(newUrl)
 	
 	return false
