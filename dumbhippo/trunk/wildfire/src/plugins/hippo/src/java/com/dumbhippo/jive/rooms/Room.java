@@ -247,7 +247,8 @@ public class Room implements PresenceListener {
 
 	private String title;
 	private ChatRoomKind kind;
-	private String roomName;	
+	private String roomName;
+	private Guid roomGuid;
 	
 	private Set<String> recipientsCache;
 	private Map<String, UserInfo> userInfoCache;
@@ -268,6 +269,7 @@ public class Room implements PresenceListener {
 		messages = new ArrayList<MessageInfo>();
 		
 		roomName = info.getChatId();
+		roomGuid = Guid.parseTrustedJabberId(roomName);
 		kind = info.getKind();
 		title = info.getTitle();
 		
@@ -830,7 +832,7 @@ public class Room implements PresenceListener {
 	}
 	
 	private String getPresenceLocation() {
-		return "/rooms/" + roomName;
+		return "/rooms/" + roomGuid;
 	}
 
 	private void setLocalPresence(UserInfo userInfo) {

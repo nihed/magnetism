@@ -303,6 +303,10 @@ div.dh-async-action-link-complete {
 	font-size:			12px;
 }
 
+.dh-stacker-block-title .dh-action-link {
+	text-decoration:	underline;
+}
+
 .dh-stacker-block-title-title {
 }
 

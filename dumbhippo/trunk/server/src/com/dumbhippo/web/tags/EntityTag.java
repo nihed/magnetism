@@ -83,7 +83,6 @@ public class EntityTag extends SimpleTagSupport {
 			defaultCssClass = "dh-group";
 		} else if (o instanceof Group) {
 			Group group = (Group)o;
-			GroupView view = new GroupView(group, null, null);
 			if (skipId != null && skipId.equals(group.getId()))
 				return null;
 			if (music)
@@ -91,7 +90,7 @@ public class EntityTag extends SimpleTagSupport {
 			else
 				link = "/group?who=" + group.getId();
 			body = group.getName();
-			photoUrl = view.getPhotoUrl();
+			photoUrl = group.getPhotoUrl();
 			defaultCssClass = "dh-group";
 		} else if (o instanceof FeedView) {
 			FeedView feedView = (FeedView)o;

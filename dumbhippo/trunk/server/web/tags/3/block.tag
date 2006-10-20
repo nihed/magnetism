@@ -15,6 +15,9 @@
    	<c:when test="${dh:enumIs(block.blockType, 'MUSIC_PERSON')}">	
    		<dht3:musicPersonBlock block="${block}" blockId="${blockId}" offset="${offset}" showFrom="${showFrom}"/>
    	</c:when>
+   	<c:when test="${dh:enumIs(block.blockType, 'GROUP_CHAT')}">
+   		<dht3:groupChatBlock block="${block}" blockId="${blockId}" offset="${offset}" showFrom="${showFrom}"/>
+   	</c:when>
    	<c:when test="${dh:enumIs(block.blockType, 'GROUP_MEMBER')}">
    		<dht3:groupMemberBlock block="${block}" blockId="${blockId}" offset="${offset}" showFrom="${showFrom}"/>
    	</c:when>

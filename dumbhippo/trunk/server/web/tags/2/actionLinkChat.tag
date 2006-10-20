@@ -7,6 +7,11 @@
 <%@ attribute name="kind" required="true" type="java.lang.String" %>
 <%@ attribute name="prefix" required="false" type="java.lang.String" %>
 <%@ attribute name="oneLine" required="false" type="java.lang.Boolean" %>
+<%@ attribute name="linkText" required="false" type="java.lang.String" %>
+
+<c:if test="${empty linkText}">
+	<c:set scope="page" var="linkText" value="Join Chat"/>
+</c:if>
 
 <c:choose>
    <%-- The browser.ie check is necessary because the dynamic hiding of
@@ -39,5 +44,5 @@
 	</c:choose>
 	<c:out value="${prefix}"/>
 	<dht:actionLink oneLine="${oneLine}" href="${joinChatUri}"
-		title="${joinChatTitle}">Join Chat</dht:actionLink>
+		title="${joinChatTitle}"><c:out value="${linkText}"/></dht:actionLink>
 </c:if>

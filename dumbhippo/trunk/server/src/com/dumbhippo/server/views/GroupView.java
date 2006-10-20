@@ -11,6 +11,7 @@ import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.live.LiveGroup;
 import com.dumbhippo.live.LiveState;
+import com.dumbhippo.live.PresenceService;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupMember;
 import com.dumbhippo.persistence.MembershipStatus;
@@ -28,6 +29,7 @@ import com.dumbhippo.persistence.VersionedEntity;
 	 Group group;
 	 GroupMember groupMember;
 	 Set<PersonView> inviters;
+	 int chattingUserCount;
 	 
 	 public GroupView(Group group, GroupMember groupMember, Set<PersonView> inviters) {
 		 this.group = group;
@@ -149,5 +151,9 @@ import com.dumbhippo.persistence.VersionedEntity;
 
 	public GroupMember getGroupMember() {
 		return groupMember;
+	}
+	
+	public int getChattingUserCount() {
+		return PresenceService.getInstance().getPresentUsers("/rooms/" + group.getId(), 2).size();
 	}
 }
