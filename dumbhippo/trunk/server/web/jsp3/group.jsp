@@ -25,7 +25,7 @@
 	<dht3:pageSubHeader title="${group.private ? 'Private Group' : 'Public Group'}" privatePage="${group.private}">
 		<dht3:standardGroupOptions groupId="${group.viewedGroupId}" selected="Home"/>
 	</dht3:pageSubHeader>
-	<dht3:shinyBox color="grey">
+	<dht3:shinyBox color="orange">
 		<dht3:groupHeader who="${group.viewedGroup}" shortVersion="${group.pageableStack.position > 0}">
 			<c:choose>
 				<%-- Be careful if changing this not to show both join and leave at the same time --%>

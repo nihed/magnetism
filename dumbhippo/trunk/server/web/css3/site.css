@@ -207,6 +207,18 @@ div.dh-async-action-link-complete {
 	background: url("/images3/shinybox_purple_tr.png") top right no-repeat;
 }
 
+.dh-shiny-box-top-orange {
+	background: url("/images3/shinybox_orange_tmid.png") top left repeat-x;
+}
+
+.dh-shiny-box-upper-left-orange {
+	background: url("/images3/shinybox_orange_tl.png") top left no-repeat;
+}
+
+.dh-shiny-box-upper-right-orange {
+	background: url("/images3/shinybox_orange_tr.png") top right no-repeat;
+}
+
 .dh-shiny-box-bottom {
 	background: url("/images3/shinybox_bmid.png") bottom left repeat-x;
 }
