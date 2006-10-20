@@ -217,7 +217,7 @@
       </init-param>
       <init-param>
           <param-name>requiresSigninStealth</param-name>
-          <param-value>about,active-groups,artist,bookmark,faq,framer,getradar,group,groups,history,landing,links,links-learnmore,main,members,music,person,privacy,radar-html,radar-learnmore,radar-themes,search,terms,tv,visit,web-services</param-value>
+          <param-value>about,active-groups,active-people,artist,bookmark,faq,framer,getradar,group,groups,history,landing,links,links-learnmore,main,members,music,person,privacy,radar-html,radar-learnmore,radar-themes,search,terms,tv,visit,web-services</param-value>
       </init-param>
       <init-param>
           <param-name>requiresSignin</param-name>

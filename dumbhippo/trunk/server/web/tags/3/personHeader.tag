@@ -4,9 +4,9 @@
 <%@ taglib tagdir="/WEB-INF/tags/3" prefix="dht3" %>
 
 <%@ attribute name="who" required="true" type="com.dumbhippo.server.views.PersonView" %>
-<%@ attribute name="isSelf" required="true" type="java.lang.Boolean" %>
 <%@ attribute name="shortVersion" required="false" type="java.lang.Boolean" %>
 <%@ attribute name="embedVersion" required="false" type="java.lang.Boolean" %>
+<%@ attribute name="linkifyName" required="false" type="java.lang.Boolean" %>
 
 <c:if test="${empty shortVersion}">
 	<c:set var="shortVersion" value="false"/>
@@ -14,6 +14,10 @@
 
 <c:if test="${empty embedVersion}">
 	<c:set var="embedVersion" value="false"/>
+</c:if>
+
+<c:if test="${empty linkifyName}">
+	<c:set var="linkifyName" value="true"/>
 </c:if>
 
 <div class="dh-person-header">
@@ -33,11 +37,14 @@
 					<div class="dh-person-header-next-to-image">
 						<dht3:presenceIcon who="${who}"/>		
 						<c:choose>
-							<c:when test="${isSelf}">
-							<span class="dh-person-header-name"><c:out value="${who.name}"/>'s Mugshot</span>
+							<c:when test="${!linkifyName}">
+								<span class="dh-person-header-name"><c:out value="${who.name}"/>'s Mugshot</span>
+							</c:when>
+							<c:when test="${who.viewOfSelf}">
+								<span class="dh-person-header-name"><a href="/"><c:out value="${who.name}"/></a>'s Mugshot</span>
 							</c:when>
 							<c:otherwise>
-							<span class="dh-person-header-name"><a href="/person?who=${who.viewPersonPageId}"><c:out value="${who.name}"/></a>'s Mugshot</span>							
+								<span class="dh-person-header-name"><a href="${who.homeUrl}"><c:out value="${who.name}"/></a>'s Mugshot</span>
 							</c:otherwise>
 						</c:choose>
 							

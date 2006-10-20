@@ -10,13 +10,11 @@
 <%@ attribute name="blocks" required="false" type="java.util.List" %>
 <%@ attribute name="showFrom" required="true" type="java.lang.Boolean" %>
 
-<c:set var="isSelf" scope="page" value="${signin.valid ? contact.user == signin.user : false}"/>
-
 <dht3:shinyBox color="grey">				
-	<dht3:personHeader who="${contact}" isSelf="${isSelf}" shortVersion="${pageable.position > 0}">
+	<dht3:personHeader who="${contact}" linkifyName="false" shortVersion="${pageable.position > 0}">
 		<c:if test="${signin.valid}">
         <c:choose>
-        	<c:when test="${isSelf}">
+        	<c:when test="${contact.viewOfSelf}">
 				<a href="/account">Edit my Mugshot account</a>        		
         	</c:when>
         	<c:otherwise>
