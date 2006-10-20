@@ -1102,11 +1102,8 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 			int resultItemCount = 0;
 
 			for (T t : items) {
-				logger.debug("Considering {}", t);
-				if (distinctItems.contains(t)) {
-					logger.debug("   Skipped, already have it");
+				if (distinctItems.contains(t))
 					continue;
-				}
 				distinctItems.add(t);
 				if (distinctItems.size() > start)
 					returnItems.add(t);
