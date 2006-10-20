@@ -43,6 +43,7 @@ import com.dumbhippo.persistence.FacebookAccount;
 import com.dumbhippo.persistence.FacebookEvent;
 import com.dumbhippo.persistence.FeedEntry;
 import com.dumbhippo.persistence.Group;
+import com.dumbhippo.persistence.GroupAccess;
 import com.dumbhippo.persistence.GroupBlockData;
 import com.dumbhippo.persistence.GroupMember;
 import com.dumbhippo.persistence.GroupMessage;
@@ -1345,9 +1346,15 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
         " AND block.blockType != " + BlockType.MUSIC_PERSON.ordinal(); 
 	
 	private List<Group> getRecentActivityGroups(int start, int count) {
-		// we expect the anonymous viewpoint here, so we only get public blocks
+		// We get only public blocks, since we are displaying a system-global list
+		// of groups. Note that we *also* have to make sure that the groups we 
+		// retrieve are public because there are some cases where a public block
+		// can be in the GroupBlockData for a private group; an example is
+		// a post shared with both a public group and a private group.
+		// 
 		Query q = em.createQuery("SELECT gbd.group FROM GroupBlockData gbd, Block block " + 
                 " WHERE gbd.deleted = 0 AND gbd.block = block " +
+                " AND gbd.group.access >= " + GroupAccess.PUBLIC_INVITE.ordinal() +
                 INTERESTING_PUBLIC_GROUP_BLOCK_CLAUSE +
                 " ORDER BY block.timestamp DESC");
 		q.setFirstResult(start);
