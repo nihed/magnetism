@@ -204,10 +204,21 @@ div.dh-notification {
 
 .dh-shiny-box {
 	margin-bottom:		10px;
+	display:            block;
 }
 
-.dh-shiny-box-box {
-	width:				100%;
+.dh-shiny-box .dh-shiny-box-box {
+    width:              100%;
+}
+
+.dh-shiny-box-left {
+    float:              left;
+    clear:              left;
+}
+
+.dh-shiny-box-right {
+    float:              right;
+    clear:              right;
 }
 
 .dh-shiny-box-bottom {
@@ -382,4 +393,8 @@ div.dh-notification {
 
 .dh-person-info .dh-back {
     margin-top:         30px;
+}
+
+.dh-person-header-next-to-image .dh-favicons {
+    margin-top:     5px;
 }

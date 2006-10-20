@@ -4,8 +4,18 @@
 <%@ taglib tagdir="/WEB-INF/tags/3" prefix="dht3" %>
 
 <%@ attribute name="color" required="true" type="java.lang.String" %>
+<%@ attribute name="width" required="false" type="java.lang.String" %>
+<%@ attribute name="floatSide" required="false" type="java.lang.String" %>
 
-<div class="dh-shiny-box dh-shiny-box-box dh-shiny-box-${color}">
+<c:if test="${empty width}">
+	<c:set var="width" value="100%"/>
+</c:if>
+
+<c:if test="${empty floatSide}">
+	<c:set var="floatSide" value="left"/>
+</c:if>
+
+<div class="dh-shiny-box dh-shiny-box-box dh-shiny-box-${floatSide}" style="width: ${width}">
 <div class="dh-shiny-box-box dh-shiny-box-inner dh-shiny-box-inner-${color}">
 	<div class="dh-shiny-box-box dh-shiny-box-top dh-shiny-box-top-${color}">
 	<div class="dh-shiny-box-box dh-shiny-box-upper-left dh-shiny-box-upper-left-${color}">

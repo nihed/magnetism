@@ -49,19 +49,22 @@
 						</c:choose>
 							
 						<div class="dh-person-header-controls"><jsp:doBody/></div>
-						<div class="dh-person-header-stats">
-							<c:if test="${who.liveUser != null}">
+						<c:if test="${!embedVersion && who.liveUser != null}">
+						    <div class="dh-person-header-stats">
 								<span class="dh-info">${who.liveUser.contactResourcesSize} friends</span> | 							
 								<span class="dh-info">${who.liveUser.groupCount} groups</span> | 
 								<span class="dh-info">${who.liveUser.sentPostsCount} posts</span> 
-							</c:if>
-						</div>
+						    </div>
+						</c:if>
+						<c:if test="${embedVersion}">
+						    <dht3:whereAtIcons who="${who}"/>
+						</c:if>    
 					</div>
 				</td>
 			</tr>
 			<tr>
 			    <td colspan="2">
-			        <c:if test="${!shortVersion}">
+			        <c:if test="${!shortVersion && !embedVersion}">
 			            <div class="dh-person-header-bio">
 				            ${who.bioAsHtml}
 			            </div>
@@ -71,54 +74,42 @@
 		</tbody>
 	</table>
 	</td>
-	<td align="right">
-	<table cellpadding="0" cellspacing="0">
-		<tbody>
-			<tr valign="top">
-				<td align="right">
-				    <div class="dh-favicons">
-				        <c:if test="${who.hasEmail && !empty who.email}">
-						    <dht3:whereAtIcon label="Send me email" linkText="${who.email.email}" linkTarget="${who.emailLink}" imgSrc="/images3/${buildStamp}/mail_icon.png"/>
-						</c:if>
-						<c:if test="${who.hasAim && !empty who.aim}">
-						    <c:set var="aimIcon" value="/images3/${buildStamp}/aim_icon.png"/>
-						    <c:if test="${!empty who.aimPresenceImageLink}">
-						        <c:set var="aimIcon" value="${who.aimPresenceImageLink}"/>
-						    </c:if>    
-                            <dht3:whereAtIcon label="AIM" linkText="${who.aim.screenName}" linkTarget="${who.aimLink}" imgSrc="${aimIcon}"/>
-						</c:if>						
-						<c:forEach var="account" items="${who.lovedAccounts.list}">
-						    <dht3:whereAtIcon label="${account.siteName}" linkText="${account.linkText}" linkTarget="${account.link}" imgSrc="/images3/${buildStamp}/${account.iconName}"/>
-						</c:forEach>							
-					</div>
-				</td>
-			</tr>
-			<c:choose>
-                <c:when test="${!shortVersion}">
-			        <tr>
-			            <td align="right">
-			                <%-- Accounts with thumbnail boxes --%>
-			 		        <c:forEach var="account" items="${who.lovedAccounts.list}">
-						        <c:if test="${account.hasThumbnails}">
-					                <dht:whereAtThumbnailBox account="${account}" />
-						        </c:if>
-					        </c:forEach>
-				        </td>     
-			        </tr>
-			    </c:when>  
-			    <c:otherwise>
-			        <tr valign="bottom">
-			            <td align="right">
-			            	<div class="dh-back">
-				                <a href="/person?who=${who.viewPersonPageId}">Back to <c:out value="${who.name}"/>'s Home</a>
-                            </div>
-                        </td>
-                    </tr>
-                </c:otherwise>    
-            </c:choose>              			    		
-		</tbody>
-	</table>						
-	</td>
+	<c:if test="${!embedVersion}">          
+	    <td align="right">             
+	        <table cellpadding="0" cellspacing="0">
+	 	    <tbody>
+			    <tr valign="top">
+				    <td align="right">
+				        <dht3:whereAtIcons who="${who}"/>
+				    </td>
+			    </tr>
+			    <c:choose>
+                    <c:when test="${!shortVersion}">
+			            <tr>
+			                <td align="right">
+			                    <%-- Accounts with thumbnail boxes --%>
+			 		            <c:forEach var="account" items="${who.lovedAccounts.list}">
+						           <c:if test="${account.hasThumbnails}">
+					                    <dht:whereAtThumbnailBox account="${account}" />
+						           </c:if>
+					            </c:forEach>
+				            </td>     
+			            </tr>
+			        </c:when>  
+			        <c:otherwise>
+			            <tr valign="bottom">
+			                <td align="right">
+			            	    <div class="dh-back">
+				                    <a href="/person?who=${who.viewPersonPageId}">Back to <c:out value="${who.name}"/>'s Home</a>
+                                </div>
+                            </td>
+                        </tr>
+                    </c:otherwise>    
+                </c:choose>              			    		
+		    </tbody>
+	        </table>							            
+	    </td>
+	</c:if>    
 	</tr>
 	</tbody>
 	</table>
