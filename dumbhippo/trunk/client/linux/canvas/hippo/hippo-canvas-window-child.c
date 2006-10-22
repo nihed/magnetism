@@ -187,7 +187,9 @@ hippo_canvas_window_child_hierarchy_changed (GtkWidget    *widget,
 {
     HippoCanvasWindowChild *window_child = HIPPO_CANVAS_WINDOW_CHILD(widget);
 
-    hippo_canvas_helper_hierarchy_changed(window_child->helper, old_toplevel);
+
+    if (window_child->helper) /* hierarchy changed can happen during dispose */
+        hippo_canvas_helper_hierarchy_changed(window_child->helper, old_toplevel);
 
     if (GTK_WIDGET_CLASS(hippo_canvas_window_child_parent_class)->hierarchy_changed)
         GTK_WIDGET_CLASS(hippo_canvas_window_child_parent_class)->hierarchy_changed(widget, old_toplevel);
@@ -219,7 +221,8 @@ hippo_canvas_window_child_forall(GtkContainer *container,
 {
     HippoCanvasWindowChild *window_child = HIPPO_CANVAS_WINDOW_CHILD(container);
 
-    hippo_canvas_helper_forall(window_child->helper, include_internals, callback, callback_data);
+    if (window_child->helper) /* can happen during dispose */
+        hippo_canvas_helper_forall(window_child->helper, include_internals, callback, callback_data);
 }
 
 static GType

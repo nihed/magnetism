@@ -133,6 +133,13 @@ hippo_platform_impl_create_window(HippoPlatform *platform)
 
     window = HIPPO_WINDOW(hippo_window_gtk_new());
 
+    g_object_ref(window);
+
+    /* FIXME for the platform-independent code to actually get rid of the
+     * window, it needs to destroy() not unref, but HippoWindow has
+     * no method for that
+     */
+    
     return window;
 }
 

@@ -366,7 +366,8 @@ hippo_canvas_forall(GtkContainer *container,
 {
     HippoCanvas *canvas = HIPPO_CANVAS(container);
 
-    hippo_canvas_helper_forall(canvas->helper, include_internals, callback, callback_data);
+    if (canvas->helper) /* can happen during dispose */
+        hippo_canvas_helper_forall(canvas->helper, include_internals, callback, callback_data);
 }
 
 static GType
