@@ -1,5 +1,5 @@
 Name:           mugshot
-Version:        1.1.19
+Version:        1.1.20
 Release:        1%{?dist}
 Summary:        Companion software for mugshot.org
 
@@ -145,9 +145,9 @@ fi
 %{_sysconfdir}/gconf/schemas/*.schemas
 
 %changelog
-* Mon Oct 22 2006 Owen Taylor <otaylor@@redhat.com> - 1.1.19-1
+* Mon Oct 22 2006 Owen Taylor <otaylor@@redhat.com> - 1.1.20-1
 - Make work with fc6
-- 1.1.19
+- 1.1.20
 
 * Mon Oct 16 2006 Havoc Pennington <hp@redhat.com> - 1.1.18-1
 - 1.1.18
