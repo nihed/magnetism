@@ -1404,7 +1404,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	}
 	
 	public void pageRecentGroupActivity(Viewpoint viewpoint, Pageable<GroupMugshotView> pageable, int blocksPerGroup) {
-		pageable.setResults(getRecentGroupActivity(viewpoint,pageable.getStart(), pageable.getCount(), blocksPerGroup));
+		pageable.setResults(getRecentGroupActivity(viewpoint, pageable.getStart(), pageable.getCount(), blocksPerGroup));
 		pageable.setTotalCount(groupSystem.getPublicGroupCount());
 	}
 

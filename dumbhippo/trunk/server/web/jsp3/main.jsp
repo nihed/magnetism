@@ -29,16 +29,10 @@
            </div>        
 		</dht3:shinyBox>
         <div class="dh-header">Featured Mugshots</div>
-        <c:forEach items="${main.recentActivity}" var="personMugshot" varStatus="status">
-           <c:choose>
-                <%-- count starts with 1 so we want the odd boxes to float left --%>
-			    <c:when test="${status.count % 2 == 0}">
-			        <c:set var="floatSide" value="right" scope="page"/>
-			   </c:when>
-			   <c:otherwise>
-			        <c:set var="floatSide" value="left" scope="page"/>
-			   </c:otherwise>
-		    </c:choose>
-            <dht3:personStack contact="${personMugshot.personView}" stackOrder="${status.count}" blocks="${personMugshot.blocks}" showFrom="true" embedVersion="true" width="49%" floatSide="${floatSide}"/>
+        <c:forEach items="${main.recentUserActivity.list}" var="personMugshot" varStatus="status">
+            <dht3:personStack contact="${personMugshot.personView}" stackOrder="${status.count}" blocks="${personMugshot.blocks}" showFrom="true" embedVersion="true" width="49%" floatSide="left"/>
+        </c:forEach>
+        <c:forEach items="${main.recentGroupActivity.list}" var="groupMugshot" varStatus="status">
+		    <dht3:groupStack who="${groupMugshot.groupView}" stackOrder="${status.count + main.recentUserActivity.size}" blocks="${groupMugshot.blocks}" showFrom="true" width="49%" floatSide="right"/>
         </c:forEach>
 </dht3:page>

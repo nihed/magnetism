@@ -25,22 +25,19 @@
 	<dht3:pageSubHeader title="${group.private ? 'Private Group' : 'Public Group'}" privatePage="${group.private}">
 		<dht3:standardGroupOptions groupId="${group.viewedGroupId}" selected="Home"/>
 	</dht3:pageSubHeader>
-	<dht3:shinyBox color="orange">
-		<dht3:groupHeader who="${group.viewedGroup}" shortVersion="${group.pageableStack.position > 0}">
-			<c:choose>
-				<%-- Be careful if changing this not to show both join and leave at the same time --%>
-				<c:when test="${!empty group.joinAction}">
-					 <a href="javascript:dh.actions.joinGroup('${group.viewedGroupId}')" title="${group.joinTooltip}"><c:out value="${group.joinAction}"/></a>
-				</c:when>							
-				<c:when test="${!empty group.leaveAction}">
-					 <a href="javascript:dh.actions.leaveGroup('${group.viewedGroupId}')" title="${group.leaveTooltip}"><c:out value="${group.leaveAction}"/></a>
-				</c:when>
-			</c:choose>
-			<c:if test="${group.canShare}">
-				 | <a href="/group-invitation?group=${group.viewedGroupId}" title="Invite other people to this group">Invite People</a>
-			</c:if>
-		</dht3:groupHeader>
-	    <dht3:stacker stackOrder="1" stackType="dhMugshot" pageable="${group.pageableStack}" showFrom="true"/>
-	</dht3:shinyBox>
+    <dht3:groupStack who="${group.viewedGroup}" stackOrder="1" stackType="dhStacker" pageable="${group.pageableStack}" showFrom="true" >
+		<c:choose>
+			<%-- Be careful if changing this not to show both join and leave at the same time --%>
+			<c:when test="${!empty group.joinAction}">
+				<a href="javascript:dh.actions.joinGroup('${group.viewedGroupId}')" title="${group.joinTooltip}"><c:out value="${group.joinAction}"/></a>
+			</c:when>							
+			<c:when test="${!empty group.leaveAction}">
+				<a href="javascript:dh.actions.leaveGroup('${group.viewedGroupId}')" title="${group.leaveTooltip}"><c:out value="${group.leaveAction}"/></a>
+			</c:when>
+		</c:choose>
+		<c:if test="${group.canShare}">
+			| <a href="/group-invitation?group=${group.viewedGroupId}" title="Invite other people to this group">Invite People</a>
+	    </c:if>
+	</dht3:groupStack>
 </dht3:page>
 </html>

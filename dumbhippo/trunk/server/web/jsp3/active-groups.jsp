@@ -21,12 +21,7 @@
 	</dht3:pageSubHeader>
 	
 	<c:forEach items="${activeGroups.activeGroups.results}" var="group" varStatus="stackStatus">
-		<dht3:shinyBox color="orange">
-			<dht3:groupHeader who="${group.groupView}">
-				<%-- FIXME: show group actions here ... need to move stuff from StackedGroupPage to GroupView --%>
-			</dht3:groupHeader>
-		    <dht3:stacker stackOrder="${stackStatus.count + 1}" stackType="dhMugshot" blocks="${group.blocks}" showFrom="false"/>
-		</dht3:shinyBox>
+	    <dht3:groupStack who="${group.groupView}" stackOrder="${status.count}" blocks="${group.blocks}" showFrom="false"/>
 	</c:forEach>
     <dht:expandablePager pageable="${activeGroups.activeGroups}"/>
 </dht3:page>

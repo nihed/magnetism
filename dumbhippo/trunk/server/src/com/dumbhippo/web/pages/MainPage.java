@@ -1,12 +1,12 @@
 package com.dumbhippo.web.pages;
 
-import java.util.List;
-
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.server.Stacker;
+import com.dumbhippo.server.views.GroupMugshotView;
 import com.dumbhippo.server.views.PersonMugshotView;
+import com.dumbhippo.web.ListBean;
 import com.dumbhippo.web.WebEJBUtil;
 
 public class MainPage extends AbstractSigninOptionalPage {
@@ -15,17 +15,26 @@ public class MainPage extends AbstractSigninOptionalPage {
 		
 		protected Stacker stacker;
 		
-		private List<PersonMugshotView> recentActivity;
+		private ListBean<PersonMugshotView> recentUserActivity;
+		private ListBean<GroupMugshotView> recentGroupActivity;
 		
 		public MainPage() {
 			stacker = WebEJBUtil.defaultLookup(Stacker.class);
 		}
 		
-		public List<PersonMugshotView> getRecentActivity() {
-			if (recentActivity == null) {
-				// we want 4 users with 1 activity block for each one of them
-				recentActivity = stacker.getRecentUserActivity(getViewpoint(), 0, 4, 1, false);
+		public ListBean<PersonMugshotView> getRecentUserActivity() {
+			if (recentUserActivity == null) {
+				// we want 2 users with 1 activity block for each one of them
+				recentUserActivity = new ListBean<PersonMugshotView>(stacker.getRecentUserActivity(getViewpoint(), 0, 2, 1, false));
 			}
-			return recentActivity;
+			return recentUserActivity;
 		}
+		
+		public ListBean<GroupMugshotView> getRecentGroupActivity() {
+			if (recentGroupActivity == null) {
+				// we want 2 groups with 1 activity block for each one of them
+				recentGroupActivity = new ListBean<GroupMugshotView>(stacker.getRecentGroupActivity(getViewpoint(), 0, 2, 1));
+			}
+			return recentGroupActivity;			
+		}		
 }

@@ -20,9 +20,9 @@
 <dht3:shinyBox color="grey" width="${width}" floatSide="${floatSide}">				
 	<dht3:personHeader who="${contact}" linkifyName="false" embedVersion="${embedVersion}" shortVersion="${pageable.position > 0}">
 	<c:choose>
-		<c:when test="${contact.viewOfSelf}">
+		<c:when test="${signin.valid}">
             <c:choose>
-        	    <c:when test="${isSelf}">
+        	    <c:when test="${contact.viewOfSelf}">
 				    <a href="/account">Edit my Mugshot account</a>        		
         	    </c:when>
         	    <c:otherwise>
