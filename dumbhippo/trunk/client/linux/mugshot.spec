@@ -19,12 +19,13 @@ BuildRequires:  curl-devel >= 7.15
 BuildRequires:  GConf2-devel >= 2.8
 BuildRequires:  libXScrnSaver-devel
 
+# Needed for fc6 and greater
+# BuildRequires: firefox-devel >= 1.5.04
+
 # This is just the gecko-sdk from mozilla.org dumped into /opt/gecko-sdk
-# See http://developer.mugshot.org/download/extra for the spec file
-# If you are porting this to a distribution with a firefox-devel package
-# you can just depend on that and change the configure line appropriately
-# (commented out to allow using tarball gecko-sdk instead of rpm)
-#BuildRequires:  gecko-sdk >= 1.8.0.4
+# See http://developer.mugshot.org/download/extra for the spec file; not
+# needed when we have firefox-devel
+# BuildRequires:  gecko-sdk >= 1.8.0.4
 
 # 1.0.3-3 has a backport from 1.0.4 to fix various segfaults
 Requires:       loudmouth >= 1.0.3-3
@@ -41,7 +42,7 @@ your friends use. It's fun and easy.
 
 
 %build
-%configure --with-gecko-sdk=/opt/gecko-sdk
+%configure
 make %{?_smp_mflags}
 
 
@@ -72,10 +73,20 @@ rm -rf $RPM_BUILD_ROOT
 #  3. triggerun for old package - we remove all symlinks
 #  4. old package uninstalled
 #  5. triggerpostun for old package - we add all symlinks
+#
+# Triggers are also run on self-upgrade, in that case we do:
+#
+#  1. new package installed
+#  2. triggerin for new package - we add all symlinks
+#  3. triggerun for old package - we remove all symlinks
+#  4. old package uninstalled
+#  5. postun for old package - we add all symlinks
+#  6. triggerpostun for old package - NOT RUN (contrary to RPM docs)
 
 %post
 export GCONF_CONFIG_SOURCE=`gconftool-2 --get-default-source`
 SCHEMAS="mugshot-uri-handler.schemas"
+
 for S in $SCHEMAS; do
   gconftool-2 --makefile-install-rule %{_sysconfdir}/gconf/schemas/$S > /dev/null
 done
@@ -111,7 +122,7 @@ fi
 
 %triggerpostun -- firefox
 # Guard against being run post-self-uninstall, even though that
-# doesn't happen currently (see comment for triggerun)
+# doesn't happen currently (see comment above)
 if [ "$1" != 0 ] ; then
   test -x %{_datadir}/mugshot/firefox-update.sh && %{_datadir}/mugshot/firefox-update.sh install
 fi
@@ -123,7 +134,6 @@ fi
 %{_bindir}/mugshot
 %{_bindir}/mugshot-uri-handler
 %{_datadir}/icons/hicolor/16x16/apps/*.png
-%{_datadir}/icons/hicolor/16x16/apps/*.gif
 %{_datadir}/icons/hicolor/22x22/apps/*.png
 %{_datadir}/icons/hicolor/24x24/apps/*.gif
 %{_datadir}/icons/hicolor/32x32/apps/*.gif
@@ -135,6 +145,10 @@ fi
 %{_sysconfdir}/gconf/schemas/*.schemas
 
 %changelog
+* Mon Oct 22 2006 Owen Taylor <otaylor@@redhat.com> - 1.1.19-1
+- Make work with fc6
+- 1.1.19
+
 * Mon Oct 16 2006 Havoc Pennington <hp@redhat.com> - 1.1.18-1
 - 1.1.18
 

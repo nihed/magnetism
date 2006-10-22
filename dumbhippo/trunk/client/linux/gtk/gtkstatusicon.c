@@ -116,7 +116,7 @@ static void     gtk_status_icon_reset_image_data (GtkStatusIcon  *status_icon);
 
 static guint status_icon_signals [LAST_SIGNAL] = { 0 };
 
-G_DEFINE_TYPE (GtkStatusIcon, gtk_status_icon, G_TYPE_OBJECT);
+G_DEFINE_TYPE (GtkStatusIcon, gtk_status_icon, G_TYPE_OBJECT)
 
 static void
 gtk_status_icon_class_init (GtkStatusIconClass *class)
@@ -233,7 +233,7 @@ gtk_status_icon_class_init (GtkStatusIconClass *class)
    * Since: 2.10
    */
   status_icon_signals [POPUP_MENU_SIGNAL] =
-    g_signal_new (I_("popup-menu"),
+    g_signal_new (I_("popup_menu"),
 		  G_TYPE_FROM_CLASS (gobject_class),
 		  G_SIGNAL_RUN_FIRST | G_SIGNAL_ACTION,
 		  G_STRUCT_OFFSET (GtkStatusIconClass, popup_menu),
@@ -259,7 +259,7 @@ gtk_status_icon_class_init (GtkStatusIconClass *class)
    * Since: 2.10
    */
   status_icon_signals [SIZE_CHANGED_SIGNAL] =
-    g_signal_new (I_("size-changed"),
+    g_signal_new (I_("size_changed"),
 		  G_TYPE_FROM_CLASS (gobject_class),
 		  G_SIGNAL_RUN_LAST,
 		  G_STRUCT_OFFSET (GtkStatusIconClass, size_changed),
@@ -968,9 +968,6 @@ gtk_status_icon_reset_image_data (GtkStatusIcon *status_icon)
 {
   GtkStatusIconPrivate *priv = status_icon->priv;
 
-  priv->storage_type = GTK_IMAGE_EMPTY;
-  g_object_notify (G_OBJECT (status_icon), "storage-type");
-
   switch (priv->storage_type)
   {
     case GTK_IMAGE_PIXBUF:
@@ -1000,6 +997,9 @@ gtk_status_icon_reset_image_data (GtkStatusIcon *status_icon)
       g_assert_not_reached ();
       break;
   }
+
+  priv->storage_type = GTK_IMAGE_EMPTY;
+  g_object_notify (G_OBJECT (status_icon), "storage-type");
 }
 
 static void
@@ -1031,7 +1031,7 @@ gtk_status_icon_set_image (GtkStatusIcon *status_icon,
       g_object_notify (G_OBJECT (status_icon), "icon-name");
       break;
     default:
-      g_warning ("Image type %d not handled by GtkStatusIcon", storage_type);
+      g_warning ("Image type %u not handled by GtkStatusIcon", storage_type);
     }
 
   g_object_thaw_notify (G_OBJECT (status_icon));
@@ -1618,43 +1618,69 @@ gtk_status_icon_position_menu (GtkMenu  *menu,
 #endif /* GDK_WINDOWING_X11 */
 }
 
-GtkOrientation
-hippo_gtk_status_icon_get_orientation (GtkStatusIcon *status_icon)
+/**
+ * gtk_status_icon_get_geometry:
+ * @status_icon: a #GtkStatusIcon
+ * @screen: return location for the screen, or %NULL if the
+ *          information is not needed 
+ * @area: return location for the area occupied by the status 
+ *        icon, or %NULL
+ * @orientation: return location for the orientation of the panel 
+ *    in which the status icon is embedded, or %NULL. A panel 
+ *    at the top or bottom of the screen is horizontal, a panel 
+ *    at the left or right is vertical.
+ *
+ * Obtains information about the location of the status icon
+ * on screen. This information can be used to e.g. position 
+ * popups like notification bubbles. 
+ *
+ * See gtk_status_icon_position_menu() for a more convenient 
+ * alternative for positioning menus.
+ *
+ * Note that some platforms do not allow GTK+ to provide 
+ * this information, and even on platforms that do allow it,
+ * the information is not reliable unless the status icon
+ * is embedded in a notification area, see
+ * gtk_status_icon_is_embedded().
+ *
+ * Return value: %TRUE if the location information has 
+ *               been filled in
+ *
+ * Since: 2.10
+ */
+gboolean  
+gtk_status_icon_get_geometry (GtkStatusIcon    *status_icon,
+			      GdkScreen       **screen,
+			      GdkRectangle     *area,
+			      GtkOrientation   *orientation)
 {
-  GtkStatusIconPrivate *priv;
-  GtkTrayIcon *tray_icon;
-
-  g_return_val_if_fail (GTK_IS_STATUS_ICON (status_icon), GTK_ORIENTATION_HORIZONTAL);
-
-  priv = status_icon->priv;
-  tray_icon = GTK_TRAY_ICON (priv->tray_icon);
-
-  return _gtk_tray_icon_get_orientation (tray_icon);
-}
-
-void
-hippo_gtk_status_icon_get_screen_geometry (GtkStatusIcon *status_icon,
-                                           GdkScreen    **screen_p,
-                                           int           *x_p,
-                                           int           *y_p,
-                                           int           *width_p,
-                                           int           *height_p)
-{
-  GtkStatusIconPrivate *priv;
+#ifdef GDK_WINDOWING_X11   
   GtkWidget *widget;
+  GtkStatusIconPrivate *priv;
+  gint x, y;
 
-  g_return_if_fail (GTK_IS_STATUS_ICON (status_icon));
+  g_return_val_if_fail (GTK_IS_STATUS_ICON (status_icon), FALSE);
 
   priv = status_icon->priv;
   widget = priv->tray_icon;
 
-  if (screen_p)
-    *screen_p = gtk_widget_get_screen(widget);
+  if (screen)
+    *screen = gtk_widget_get_screen (widget);
 
-  /* we get position via round trip and size locally, which 
-   * is kinda bogus I guess
-   */
-  gdk_window_get_origin (widget->window, x_p, y_p);
-  gdk_drawable_get_size (widget->window, width_p, height_p);
+  if (area)
+    {
+      gdk_window_get_origin (widget->window, &x, &y);
+      area->x = x;
+      area->y = y;
+      area->width = widget->allocation.width;
+      area->height = widget->allocation.height;
+    }
+
+  if (orientation)
+    *orientation = _gtk_tray_icon_get_orientation (GTK_TRAY_ICON (widget));
+
+  return TRUE;
+#else
+  return FALSE;
+#endif /* GDK_WINDOWING_X11 */
 }
-

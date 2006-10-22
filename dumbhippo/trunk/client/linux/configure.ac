@@ -323,6 +323,26 @@ if test "x$with_xpidl" != x -a "x$with_xpidl" != xyes -a "x$with_xpidl" != xno ;
     XPIDL="$with_xpidl"
 fi
 
+# if the firefox-devel RPM is installed, set paths from that
+if test \( x"$GECKO_IDLDIR" = x -o "x$GECKO_INCLUDEDIR" = x -o "x$XPIDL" = x \) -a -x /bin/rpm ; then
+   AC_MSG_CHECKING([for Gecko SDK via the firefox-devel package])
+   FIREFOX_VERSION="`/bin/rpm -q --qf %{version} firefox-devel`"
+   if  test $? = 0 ; then
+       AC_MSG_RESULT([yes])
+       if test x"$GECKO_IDLDIR" = x ; then
+           GECKO_IDLDIR=/usr/share/idl/firefox-$FIREFOX_VERSION
+       fi
+       if test x"$GECKO_INCLUDEDIR" = x ; then
+           GECKO_INCLUDEDIR=/usr/include/firefox-$FIREFOX_VERSION
+       fi
+       if test x"$XPIDL" = x ; then
+           XPIDL=/usr/lib/firefox-$FIREFOX_VERSION/xpidl
+       fi
+   else
+       AC_MSG_RESULT([no])
+   fi
+fi
+
 if test "x$GECKO_INCLUDEDIR" = x ; then
     AC_MSG_CHECKING([for Gecko SDK in /opt/gecko-sdk])
     if test -f "/opt/gecko-sdk/idl/nsIURI.idl" ; then
@@ -417,14 +437,5 @@ if "$warn_about_curl_version" ; then
         ***** we've tested with versions $CURL_REQUIRED and above.
         ***** If you have an older version, the build might fail or 
         ***** there may be bugs at runtime, or, it might work - we don't know!
-    "
-fi
-
-if "$have_gtk210" ; then
-    echo "
-        ***** GTK+ 2.9 or above may conflict with cut-and-pasted GTK+ 2.9
-        ***** code in the gtk/ subdirectory. 
-        ***** We tried to avoid the problem but haven't tested it yet.
-        ***** Try it and let us know.
     "
 fi

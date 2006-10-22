@@ -515,19 +515,22 @@ hippo_app_get_screen_info(HippoApp         *app,
                           HippoOrientation *tray_icon_orientation_p)
 {
     GtkOrientation orientation;
-    int x, y, width, height;
     GdkScreen *screen;
+    GdkRectangle icon_rect;
     GdkRectangle monitor;
     int monitor_num;
     
-    orientation = hippo_gtk_status_icon_get_orientation(GTK_STATUS_ICON(app->icon));
-    hippo_gtk_status_icon_get_screen_geometry(GTK_STATUS_ICON(app->icon),
-                                              &screen, &x, &y, &width, &height);
+    gtk_status_icon_get_geometry(GTK_STATUS_ICON(app->icon),
+                                 &screen, 
+                                 &icon_rect, 
+                                 &orientation);
 
     if (monitor_rect_p) {
         HippoRectangle work_area;
 
-        monitor_num = gdk_screen_get_monitor_at_point(screen, x + width / 2, y + height / 2);
+        monitor_num = gdk_screen_get_monitor_at_point(screen,
+                                                      icon_rect.x + icon_rect.width / 2,
+                                                      icon_rect.y + icon_rect.height / 2);
         if (monitor_num < 0)
             monitor_num = 0;
         
@@ -543,10 +546,10 @@ hippo_app_get_screen_info(HippoApp         *app,
     }
 
     if (tray_icon_rect_p) {
-        tray_icon_rect_p->x = x;
-        tray_icon_rect_p->y = y;
-        tray_icon_rect_p->width = width;
-        tray_icon_rect_p->height = height;
+        tray_icon_rect_p->x = icon_rect.x;
+        tray_icon_rect_p->y = icon_rect.y;
+        tray_icon_rect_p->width = icon_rect.width;
+        tray_icon_rect_p->height = icon_rect.height;
     }
 
     if (tray_icon_orientation_p) {

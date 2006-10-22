@@ -64,12 +64,14 @@ static void     gtk_tray_icon_realize   (GtkWidget   *widget);
 static void     gtk_tray_icon_unrealize (GtkWidget   *widget);
 static gboolean gtk_tray_icon_delete    (GtkWidget   *widget,
 					 GdkEventAny *event);
+static gboolean gtk_tray_icon_expose    (GtkWidget      *widget, 
+					 GdkEventExpose *event);
 
 static void gtk_tray_icon_update_manager_window    (GtkTrayIcon *icon,
 						    gboolean     dock_if_realized);
 static void gtk_tray_icon_manager_window_destroyed (GtkTrayIcon *icon);
 
-G_DEFINE_TYPE (GtkTrayIcon, gtk_tray_icon, GTK_TYPE_PLUG);
+G_DEFINE_TYPE (GtkTrayIcon, gtk_tray_icon, GTK_TYPE_PLUG)
 
 static void
 gtk_tray_icon_class_init (GtkTrayIconClass *class)
@@ -82,6 +84,7 @@ gtk_tray_icon_class_init (GtkTrayIconClass *class)
   widget_class->realize   = gtk_tray_icon_realize;
   widget_class->unrealize = gtk_tray_icon_unrealize;
   widget_class->delete_event = gtk_tray_icon_delete;
+  widget_class->expose_event = gtk_tray_icon_expose;
 
   g_object_class_install_property (gobject_class,
 				   PROP_ORIENTATION,
@@ -103,7 +106,9 @@ gtk_tray_icon_init (GtkTrayIcon *icon)
   
   icon->priv->stamp = 1;
   icon->priv->orientation = GTK_ORIENTATION_HORIZONTAL;
-  
+
+  gtk_widget_set_app_paintable (GTK_WIDGET (icon), TRUE);
+  gtk_widget_set_double_buffered (GTK_WIDGET (icon), FALSE);
   gtk_widget_add_events (GTK_WIDGET (icon), GDK_PROPERTY_CHANGE_MASK);
 }
 
@@ -124,6 +129,19 @@ gtk_tray_icon_get_property (GObject    *object,
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
     }
+}
+
+static gboolean
+gtk_tray_icon_expose (GtkWidget      *widget, 
+		      GdkEventExpose *event)
+{
+  gdk_window_clear_area (widget->window, event->area.x, event->area.y,
+			 event->area.width, event->area.height);
+
+  if (GTK_WIDGET_CLASS (gtk_tray_icon_parent_class)->expose_event)  
+    return GTK_WIDGET_CLASS (gtk_tray_icon_parent_class)->expose_event (widget, event);
+
+  return FALSE;
 }
 
 static void
@@ -416,7 +434,7 @@ _gtk_tray_icon_send_message (GtkTrayIcon *icon,
   
   /* Get ready to send the message */
   gtk_tray_icon_send_manager_message (icon, SYSTEM_TRAY_BEGIN_MESSAGE,
-				      icon->priv->manager_window,
+				      (Window)gtk_plug_get_id (GTK_PLUG (icon)),
 				      timeout, len, stamp);
 
   /* Now to send the actual message */
@@ -429,7 +447,7 @@ _gtk_tray_icon_send_message (GtkTrayIcon *icon,
       xdisplay = GDK_DISPLAY_XDISPLAY (gtk_widget_get_display (GTK_WIDGET (icon)));
       
       ev.type = ClientMessage;
-      ev.window = icon->priv->manager_window;
+      ev.window = (Window)gtk_plug_get_id (GTK_PLUG (icon));
       ev.format = 8;
       ev.message_type = XInternAtom (xdisplay,
 				     "_NET_SYSTEM_TRAY_MESSAGE_DATA", False);
@@ -464,7 +482,7 @@ _gtk_tray_icon_cancel_message (GtkTrayIcon *icon,
   g_return_if_fail (id > 0);
   
   gtk_tray_icon_send_manager_message (icon, SYSTEM_TRAY_CANCEL_MESSAGE,
-				      icon->priv->manager_window,
+				      (Window)gtk_plug_get_id (GTK_PLUG (icon)),
 				      id, 0, 0);
 }
 
