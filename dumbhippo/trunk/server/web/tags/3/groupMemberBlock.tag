@@ -24,7 +24,7 @@
 						<dht:asyncActionLink 
 							tagName="span"
 							exec="dh.actions.addMember('${block.groupView.group.id}', '${block.memberView.user.id}', function () { dh.asyncActionLink.complete('addMember${block.groupView.group.id}${block.memberView.user.id}') })"
-							ctrlId="addMember${group.groupView.group.id}${block.memberView.user.id}"
+							ctrlId="addMember${block.groupView.group.id}${block.memberView.user.id}"
 							text="Invite to group"
 							completedText="Invited to group"/>	
 					</c:when>
