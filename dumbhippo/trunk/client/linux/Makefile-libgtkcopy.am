@@ -1,8 +1,10 @@
+if !HAVE_GTK210
 MARSHAL_LIST=
 noinst_LTLIBRARIES += libgtkcopy.la
 
 libgtkcopy_la_CPPFLAGS =		\
 	$(AM_CPPFLAGS)			\
+	-I$(top_srcdir)/gtkcopy		\
 	$(LIBGTKCOPY_CFLAGS)
 
 libgtkcopy_la_LIBADD = 			\
@@ -13,19 +15,19 @@ LIBGTKCOPY_BUILT_SOURCEFILES=			\
 	$(GTK_MARSHAL_BODY)
 
 libgtkcopy_la_SOURCES=				\
-	gtk/hippo-gtk-renamings.h		\
-	gtk/gtksimulated.h			\
-	gtk/gtkstatusicon.c			\
-	gtk/gtkstatusicon.h			\
-	gtk/gtktrayicon.h			\
-	gtk/gtktrayicon-x11.c
+	gtkcopy/gtk/hippo-gtk-renamings.h	\
+	gtkcopy/gtk/gtksimulated.h		\
+	gtkcopy/gtk/gtkstatusicon.c		\
+	gtkcopy/gtk/gtkstatusicon.h		\
+	gtkcopy/gtk/gtktrayicon.h		\
+	gtkcopy/gtk/gtktrayicon-x11.c
 
 nodist_libgtkcopy_la_SOURCES = $(LIBGTKCOPY_BUILT_SOURCEFILES)
 
 MAINTAINERCLEANFILES +=	$(LIBGTKCOPY_BUILT_SOURCEFILES)
 BUILT_SOURCES += $(LIBGTKCOPY_BUILT_SOURCEFILES)
 
-GTK_MARSHAL_LIST=$(top_srcdir)/gtk/hippo-gtk-marshal.list
+GTK_MARSHAL_LIST=$(top_srcdir)/gtkcopy/gtk/hippo-gtk-marshal.list
 GTK_MARSHAL_HEADER=$(MARSHAL_DIR)/hippo-gtk-marshal.h
 GTK_MARSHAL_BODY=$(MARSHAL_DIR)/hippo-gtk-marshal.c
 
@@ -38,3 +40,4 @@ $(GTK_MARSHAL_BODY): $(GTK_MARSHAL_LIST)
 	(echo "#include \"hippo-gtk-marshal.h\""; $(GLIB_GENMARSHAL) --prefix=hippo_gtk_marshal $(GTK_MARSHAL_LIST) --body) > $(GTK_MARSHAL_BODY)
 
 EXTRA_DIST += $(GTK_MARSHAL_LIST)
+endif

@@ -269,6 +269,7 @@ GLIB_MKENUMS=`$PKG_CONFIG --variable=glib_mkenums glib-2.0`
 AC_SUBST(GLIB_MKENUMS)
 
 PKG_CHECK_EXISTS(gtk+-2.0 < 2.9.0, have_gtk210=false, have_gtk210=true)
+AM_CONDITIONAL(HAVE_GTK210, $have_gtk210)
 
 ## used for .desktop file in theory, disabled until we have actual translations
 ## IT_PROG_INTLTOOL([0.34.90])

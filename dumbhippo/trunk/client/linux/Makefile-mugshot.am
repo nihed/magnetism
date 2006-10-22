@@ -1,6 +1,5 @@
 bin_PROGRAMS += mugshot mugshot-uri-handler
 
-# -Itop_srcdir gets our cut-and-pasted gtk
 mugshot_CPPFLAGS = 			\
 	$(AM_CPPFLAGS)			\
 	-I $(top_srcdir)		\
@@ -8,7 +7,12 @@ mugshot_CPPFLAGS = 			\
 	-I$(top_srcdir)/canvas
 
 mugshot_LDFLAGS=$(MUGSHOT_LIBS)
-mugshot_LDADD= libhippoipc.la libhippo.la libgtkcopy.la
+mugshot_LDADD= libhippoipc.la libhippo.la
+
+if !HAVE_GTK210
+mugshot_CPPFLAGS += -I$(top_srcdir)/gtkcopy
+mugshot_LDFLAGS += libgtkcopy.la
+endif
 
 mugshot_SOURCES	=				\
 	canvas/hippo/hippo-canvas.c		\
