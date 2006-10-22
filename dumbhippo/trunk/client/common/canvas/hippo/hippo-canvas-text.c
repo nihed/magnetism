@@ -429,6 +429,7 @@ hippo_canvas_text_get_content_width_request(HippoCanvasBox *box)
             PangoLayout *layout = create_layout(text, -1);
             pango_layout_get_size(layout, &layout_width, NULL);
             layout_width /= PANGO_SCALE;
+            g_object_unref(layout);
         } else {
             layout_width = 0;
         }
@@ -462,6 +463,7 @@ hippo_canvas_text_get_content_natural_width (HippoCanvasBox *box)
             PangoLayout *layout = create_layout(text, -1);
             pango_layout_get_size(layout, &layout_width, NULL);
             layout_width /= PANGO_SCALE;
+            g_object_unref(layout);
         } else {
             layout_width = 0;
         }
@@ -502,6 +504,7 @@ hippo_canvas_text_get_content_height_request(HippoCanvasBox  *box,
             layout = create_layout(text, for_width);
             pango_layout_get_size(layout, NULL, &layout_height);
             layout_height /= PANGO_SCALE;
+            g_object_unref(layout);
         } else {
             layout_height = 0;
         }
