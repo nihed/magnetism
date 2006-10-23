@@ -208,7 +208,9 @@
 						<input type="radio" id="dhMusicOff" name="dhMusicEmbedEnabled" checked="true" onclick="dh.actions.setMusicSharingEnabled(false);">	<label for="dhMusicOff">Off</label>
 					</c:otherwise>
 					</c:choose>
-					<div>Music Radar shows on your Mugshot what music you're listening to.  <a style="text-decoration: underline" href="radar-learnmore">Learn more</a></div>
+					<div><a href="radar-learnmore">Music Radar</a> shows on your Mugshot what music you're listening to.
+					<a href="/radar-themes">Edit Your Theme</a> - <a href="/getradar">Get Music Radar HTML</a>
+					</div>
 					</dht:formTableRow>
 				</dht:formTable>
 			<dht:zoneBoxSeparator/>
