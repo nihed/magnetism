@@ -50,6 +50,15 @@ img {
 	font-weight:		bold;
 }
 
+.dh-page-options-tip-area {
+	font-size:			12px;
+	font-weight:		normal;
+}
+
+.dh-page-options-tip-link {
+	text-decoration:	underline;
+}
+
 .dh-page-footer-text {
 	font-size:			12px;
 	color:				#666666;

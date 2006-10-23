@@ -3,6 +3,7 @@ package com.dumbhippo.web.pages;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Random;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -69,6 +70,8 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 
 	protected ListBean<PersonView> followers;
 	private Pageable<PersonView> pageableFollowers;
+	
+	private int randomTipIndex = -1;
 	
 	protected AbstractPersonPage() {	
 		groupSystem = WebEJBUtil.defaultLookup(GroupSystem.class);
@@ -252,6 +255,15 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 		return groupInvitationReceived.compareTo(lastSeenInvitation) > 0;
 	}
 	
+	public boolean getNeedsClient() {
+		if (!isSelf())
+			return false;
+		Account acct = getViewedUser().getAccount();
+		Date lastLogin = acct.getLastLoginDate();
+		// Display notification if they haven't signed on in 5 days
+		return lastLogin == null || new Date().getTime() - lastLogin.getTime() > 1000*60*60*24*5;
+	}
+	
 	public Set<PersonView> getUnsortedContacts() {
 	    if (unsortedContacts == null) {
 	    	unsortedContacts = 
@@ -350,5 +362,11 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 	
 	public void setNeedExternalAccounts(boolean needExternalAccounts) {
 		this.needExternalAccounts = needExternalAccounts;
+	}
+	
+	public int getRandomTipIndex() {
+		if (randomTipIndex < 0)
+			randomTipIndex = new Random().nextInt(3);
+		return randomTipIndex;
 	}
 }

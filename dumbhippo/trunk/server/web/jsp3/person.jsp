@@ -18,8 +18,12 @@
 	<dht:faviconIncludes/>
 </head>
 
+
 <dht3:page disableHomeLink="${person.self}">
 	<dht3:pageSubHeader title="${person.viewedPerson.name}'s ${pageName}">
+		<c:if test="${person.self}">
+			<dht3:randomTip tipIndex="${person.randomTipIndex}"/>
+		</c:if>
 		<dht3:standardPageOptions selected="${pageName}"/>
 	</dht3:pageSubHeader>
 	
