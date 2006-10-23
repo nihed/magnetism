@@ -12,4 +12,5 @@
 		<dht3:header disableHomeLink="${disableHomeLink}" disableSignupLink="${disableSignupLink}" searchText="${searchText}"/>
 		<jsp:doBody/>
 	</div>
+	<dht:footer/>
 </body>

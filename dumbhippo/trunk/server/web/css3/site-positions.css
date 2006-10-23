@@ -53,6 +53,11 @@ input.dh-text-input {
 	text-align:		right;
 }
 
+#dhPageFooter {
+	clear:			both;
+	margin-top:		10px;
+}
+
 #dhWebServices {
 	text-align:		center;
 }

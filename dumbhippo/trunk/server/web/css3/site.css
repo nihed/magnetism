@@ -50,6 +50,11 @@ img {
 	font-weight:		bold;
 }
 
+.dh-page-footer-text {
+	font-size:			12px;
+	color:				#666666;
+}
+
 #dhWebServices {
     font-size:			12px;
     font-weight:		500; /* 400 is same as normal, 700 is same as bold */

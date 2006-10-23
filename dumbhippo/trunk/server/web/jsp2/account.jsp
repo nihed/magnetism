@@ -194,6 +194,24 @@
 				</dht:formTableRow>
 			</dht:formTable>
 			<dht:zoneBoxSeparator/>
+			<dht:zoneBoxTitle>FEATURE CONTROLS</dht:zoneBoxTitle>
+			<dht:zoneBoxSubtitle>Enable or disable Mugshot features.</dht:zoneBoxSubtitle>
+				<dht:formTable>
+					<dht:formTableRow label="Music Radar">
+					<c:choose>
+					<c:when test="${signin.musicSharingEnabled}">
+						<input type="radio" id="dhMusicOn" name="dhMusicEmbedEnabled" checked="true" onclick="dh.actions.setMusicSharingEnabled(true);"> <label for="dhMusicOn">On</label>
+						<input type="radio" id="dhMusicOff" name="dhMusicEmbedEnabled" onclick="dh.actions.setMusicSharingEnabled(false);">	<label for="dhMusicOff">Off</label>			
+					</c:when>
+					<c:otherwise>
+						<input type="radio" id="dhMusicOn" name="dhMusicEmbedEnabled" onclick="dh.actions.setMusicSharingEnabled(true);"> <label for="dhMusicOn">On</label>
+						<input type="radio" id="dhMusicOff" name="dhMusicEmbedEnabled" checked="true" onclick="dh.actions.setMusicSharingEnabled(false);">	<label for="dhMusicOff">Off</label>
+					</c:otherwise>
+					</c:choose>
+					<div>Music Radar shows on your Mugshot what music you're listening to.  <a style="text-decoration: underline" href="radar-learnmore">Learn more</a></div>
+					</dht:formTableRow>
+				</dht:formTable>
+			<dht:zoneBoxSeparator/>
 			<dht:zoneBoxTitle>SECURITY INFO</dht:zoneBoxTitle>
 			<dht:zoneBoxSubtitle>Nobody sees this stuff but you.</dht:zoneBoxSubtitle>
 				<dht:formTable>

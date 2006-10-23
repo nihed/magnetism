@@ -93,6 +93,6 @@ public class RedHatSomethingTag extends SimpleTagSupport {
 		if (stealthMode)
 			writer.print("Today's Word Is: " + pickSomething() + "");
 		else
-			writer.print("&copy; 2006 Red Hat, Inc. <a href=\"http://redhat.com\">A Red Hat " + pickSomething() + "</a>");
+			writer.print("<a href=\"http://redhat.com\">A Red Hat " + pickSomething() + "</a>");
 	}
 }
