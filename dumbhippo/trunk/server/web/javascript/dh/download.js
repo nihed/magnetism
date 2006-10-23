@@ -8,9 +8,13 @@ dh.download.updateDownload = function() {
 	var acceptedTerms = document.getElementById("dhAcceptTerms").checked
 
 	var className = acceptedTerms ? "dh-download-product" : "dh-download-product dh-download-product-disabled"
-	document.getElementById("dhDownloadProduct").className = className
+	var downloadNode = document.getElementById("dhDownloadProduct");
+	
+	if (downloadNode) // it's null when we don't have a download to offer
+		downloadNode.className = className;
 	
 	var skipNode = document.getElementById('dhSkipDownload');
+	
 	if (acceptedTerms)
 		dojo.html.removeClass(skipNode, "dh-download-product-disabled");
 	else

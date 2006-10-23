@@ -40,11 +40,27 @@ public class DownloadPage extends AbstractSigninOptionalPage {
 		invitationSystem = WebEJBUtil.defaultLookup(InvitationSystem.class);		
 	}
 	
+	public boolean getHaveDownload() {
+		return getDownloadUrl() != null;
+	}
+	
 	public String getDownloadUrl() {
-		if (browser.isLinuxRequested()) {
-			return getDownloadUrlLinux();
-		} else {
+		if (browser.isFedora5Requested()) {
+			return getDownloadUrlFedora5();
+		} else if (browser.isWindowsRequested()) {
 			return getDownloadUrlWindows();
+		} else {
+			return null;
+		}
+	}
+	
+	public String getDownloadFor() {
+		if (browser.isFedora5Requested()) {
+			return "Fedora Core 5";
+		} else if (browser.isWindowsRequested()) {
+			return "Windows";
+		} else {
+			return null;
 		}
 	}
 	
@@ -52,8 +68,14 @@ public class DownloadPage extends AbstractSigninOptionalPage {
 		return configuration.getPropertyFatalIfUnset(HippoProperty.DOWNLOADURL_WINDOWS);
 	}
 	
-	public String getDownloadUrlLinux() {
+	public String getDownloadUrlFedora5() {
 		return configuration.getPropertyFatalIfUnset(HippoProperty.DOWNLOADURL_LINUX);
+	}
+	
+	// deprecated
+	public String getDownloadUrlLinux() {
+		logger.warn("Some page is still referring to downloadUrlLinux instead of distribution-specific urls");
+		return getDownloadUrlFedora5();
 	}
 	
 	public String getDownloadUrlLinuxTar() {

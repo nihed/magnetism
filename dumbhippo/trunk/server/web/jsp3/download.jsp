@@ -39,7 +39,9 @@
 	<dht3:shinyBox color="grey">
 		<div class="dh-download-header-area">
 			<div class="dh-download-header">Get Mugshot</div>
-			<div class="dh-download-subtitle">Take advantage of all of our fun features with the Mugshot download.  It's easy and free!</div>
+			<c:if test="${welcome.haveDownload}">
+				<div class="dh-download-subtitle">Take advantage of all of our fun features with the Mugshot download.  It's easy and free!</div>
+			</c:if>
 			<div class="dh-download-terms">
 				<c:choose>
 					<c:when test="${signin.needsTermsOfUse}">
@@ -53,11 +55,55 @@
 		            </c:otherwise>
 		        </c:choose>
 			</div>
-			<div class="dh-download-buttons">
-				<%-- the class changes to dh-download-product-disabled in the javascript when one is not active --%>
-				<a id="dhDownloadProduct" class="dh-download-product" href="javascript:dh.download.doDownload('${welcome.downloadUrl}')"><img src="/images3/${buildStamp}/download_now_button.gif"/></a>
-				<a id="dhSkipDownload" class="dh-download-product" href="javascript:dh.download.doDownload()"><img src="/images3/${buildStamp}/no_thanks_button.gif"/></a>
-			</div>
+			<c:choose>
+				<c:when test="${welcome.haveDownload}">
+					<div class="dh-download-buttons">
+						<%-- the class changes to dh-download-product-disabled in the javascript when one is not active --%>
+						<a id="dhDownloadProduct" class="dh-download-product" href="javascript:dh.download.doDownload('${welcome.downloadUrl}')"><img src="/images3/${buildStamp}/download_now_button.gif"/></a>
+						<a id="dhSkipDownload" class="dh-download-product" href="javascript:dh.download.doDownload()"><img src="/images3/${buildStamp}/no_thanks_button.gif"/></a>
+						<c:if test="${browser.linuxRequested}">
+							<i>  (This download is for <c:out value="${welcome.downloadFor}"/>.)</i>
+						</c:if>
+					</div>					
+					<div class="dh-download-yadayada">
+						<c:choose>
+							<c:when test="${browser.linuxRequested}">
+								Or, get Mugshot for <a href="/download?platform=windows${urlParams}">Windows</a> instead.
+							</c:when>
+							<c:otherwise>
+								Or, get Mugshot for <a href="/download?distribution=fedora5${urlParams}">Fedora Core 5</a> instead.
+							</c:otherwise>
+						</c:choose>
+					</div>
+				</c:when>
+				<c:otherwise>
+					<div class="dh-download-yadayada">
+						We don't have Mugshot for your computer yet. (You can 
+						download for <a href="/download?platform=windows${urlParams}">Windows</a> or 
+						<a href="/download?distribution=fedora5${urlParams}">Fedora Core 5</a>.)
+						<c:if test="${browser.macRequested}">We're still working on Mac OS X support.</c:if>
+						You can use Mugshot without the download, however.
+					</div>
+					<div class="dh-download-yadayada">
+						<a id="dhSkipDownload" class="dh-download-product" href="javascript:dh.download.doDownload()">Continue without downloading.</a>
+					</div>
+					<c:if test="${browser.linuxRequested}">
+						<div class="dh-download-yadayada">						
+							Contributed third-party builds <a href="http://developer.mugshot.org/wiki/Downloads">can be found on the Mugshot Wiki</a>.
+							<c:if test="${signin.needsTermsOfUse}">Please also click "Continue without downloading"
+							above to accept the terms of use, or Mugshot won't work.</c:if>
+						</div>
+					</c:if>
+				</c:otherwise>
+			</c:choose>
+			<c:choose>
+				<c:when test="${browser.linuxRequested}">
+					<div class="dh-download-yadayada">
+						<i>Source code is available in <a href="${welcome.downloadUrlLinuxTar}">tar.gz</a> and
+						<a href="${welcome.downloadUrlLinuxSrpm}">SRPM</a> formats.</i>
+					</div>
+				</c:when>
+			</c:choose>			
 			<div class="dh-download-subheader">Here's what you can do with the Mugshot download...</div>
 		</div>
 		<table class="dh-box-grey1 dh-download-section" cellspacing="0" cellpadding="0">
