@@ -41,10 +41,18 @@
 								<span class="dh-person-header-name"><c:out value="${who.name}"/>'s Mugshot</span>
 							</c:when>
 							<c:when test="${who.viewOfSelf}">
-								<span class="dh-person-header-name"><a href="/"><c:out value="${who.name}"/></a>'s Mugshot</span>
+								<span class="dh-person-header-name"><a href="/"><c:out value="${who.name}"/></a>'s Mugshot</span>							
 							</c:when>
 							<c:otherwise>
 								<span class="dh-person-header-name"><a href="${who.homeUrl}"><c:out value="${who.name}"/></a>'s Mugshot</span>
+							</c:otherwise>
+						</c:choose>
+						<c:choose>
+							<c:when test="${who.viewOfSelf}">
+								<span class="dh-person-header-description">What I'm doing online</span>							
+							</c:when>
+							<c:otherwise>
+								<span class="dh-person-header-description">What <c:out value="${who.name}"/> is doing online</span>							
 							</c:otherwise>
 						</c:choose>
 							

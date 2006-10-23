@@ -8,6 +8,10 @@ div.dh-person-header {
     padding-top:	8px;
 }
 
+.dh-person-header-description {
+	margin-left:	5px;
+}
+
 .dh-person-header .dh-person-info {
     width:          100%;
 }

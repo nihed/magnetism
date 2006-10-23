@@ -6,6 +6,12 @@
 	font-weight:	bold;
 }
 
+.dh-person-header-description {
+	font-size:		12px;
+	font-weight:	normal;
+	color:			#AE77CB;
+}
+
 .dh-person-header-bio {
 	font-size:		11px;
 }
