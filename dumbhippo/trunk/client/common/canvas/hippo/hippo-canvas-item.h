@@ -58,7 +58,7 @@ struct _HippoCanvasItemIface {
     void     (* request_changed)    (HippoCanvasItem *canvas_item);
     void     (* paint_needed)       (HippoCanvasItem *canvas_item,
                                      const HippoRectangle *damage_box);
-    gboolean (* get_needs_resize)   (HippoCanvasItem *canvas_item);
+    gboolean (* get_needs_request)  (HippoCanvasItem *canvas_item);
 
     char*              (* get_tooltip) (HippoCanvasItem *canvas_item,
                                         int              x,
@@ -85,7 +85,7 @@ void               hippo_canvas_item_allocate           (HippoCanvasItem    *can
 void               hippo_canvas_item_get_allocation     (HippoCanvasItem    *canvas_item,
                                                          int                *width_p,
                                                          int                *height_p);
-gboolean           hippo_canvas_item_get_needs_resize   (HippoCanvasItem    *canvas_item);
+gboolean           hippo_canvas_item_get_needs_request  (HippoCanvasItem    *canvas_item);
 char*              hippo_canvas_item_get_tooltip        (HippoCanvasItem    *canvas_item,
                                                          int                 x,
                                                          int                 y,

@@ -347,7 +347,8 @@ manager_hush(StackManager *manager)
 static void
 manager_close_notification(StackManager *manager)
 {
-    manager_set_hush_timestamp(manager, manager_get_newest_timestamp(manager));
+    /* + 1 so that we include only blocks *newer* than the current newest block */
+    manager_set_hush_timestamp(manager, manager_get_newest_timestamp(manager) + 1);
     manager_set_notification_visible(manager, FALSE);
 }
 

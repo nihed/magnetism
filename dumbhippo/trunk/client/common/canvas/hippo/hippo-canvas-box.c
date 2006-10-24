@@ -67,7 +67,7 @@ static gboolean           hippo_canvas_box_button_press_event  (HippoCanvasItem 
 static gboolean           hippo_canvas_box_motion_notify_event (HippoCanvasItem    *item,
                                                                 HippoEvent         *event);
 static void               hippo_canvas_box_request_changed     (HippoCanvasItem    *item);
-static gboolean           hippo_canvas_box_get_needs_resize    (HippoCanvasItem    *canvas_item);
+static gboolean           hippo_canvas_box_get_needs_request   (HippoCanvasItem    *canvas_item);
 static char*              hippo_canvas_box_get_tooltip         (HippoCanvasItem    *item,
                                                                 int                 x,
                                                                 int                 y,
@@ -161,7 +161,7 @@ hippo_canvas_box_iface_init(HippoCanvasItemIface *klass)
     klass->button_press_event = hippo_canvas_box_button_press_event;
     klass->motion_notify_event = hippo_canvas_box_motion_notify_event;
     klass->request_changed = hippo_canvas_box_request_changed;
-    klass->get_needs_resize = hippo_canvas_box_get_needs_resize;
+    klass->get_needs_request = hippo_canvas_box_get_needs_request;
     klass->get_tooltip = hippo_canvas_box_get_tooltip;
     klass->get_pointer = hippo_canvas_box_get_pointer;
 }
@@ -190,7 +190,8 @@ hippo_canvas_box_init(HippoCanvasBox *box)
     box->box_width = -1;
     box->box_height = -1;
     box->background_color_rgba = HIPPO_CANVAS_DEFAULT_BACKGROUND_COLOR;
-    box->request_changed_since_allocate = TRUE; /* be sure we do at least one allocation */
+    box->needs_width_request = TRUE; /* be sure we do at least one allocation */
+    box->needs_height_request = TRUE;
 
     box->color_cascade = HIPPO_CASCADE_MODE_INHERIT;
     box->font_cascade = HIPPO_CASCADE_MODE_INHERIT;
@@ -1617,6 +1618,8 @@ hippo_canvas_box_get_width_request(HippoCanvasItem *item)
     box = HIPPO_CANVAS_BOX(item);
     klass = HIPPO_CANVAS_BOX_GET_CLASS(box);
 
+    box->needs_width_request = FALSE;
+
     /* We need to call this even if just returning the box-width prop,
      * so that children can rely on getting the full request, allocate
      * cycle in order every time, and so we compute the cached requests.
@@ -1643,6 +1646,8 @@ hippo_canvas_box_get_height_request(HippoCanvasItem *item,
 
     box = HIPPO_CANVAS_BOX(item);
     klass = HIPPO_CANVAS_BOX_GET_CLASS(box);
+
+    box->needs_height_request = FALSE;
 
     content_for_width = for_width
         - box->padding_left - box->padding_right
@@ -1701,24 +1706,24 @@ hippo_canvas_box_allocate(HippoCanvasItem *item,
     klass = HIPPO_CANVAS_BOX_GET_CLASS(box);
 
 #if 0
-    g_debug(" allocating %s %p request_changed_since_allocate %d",
+    g_debug(" allocating %s %p needs_allocate %d",
             g_type_name_from_instance((GTypeInstance*) box),
             box,
-            box->request_changed_since_allocate);
+            box->needs_allocate);
 #endif
     
     /* If we haven't emitted request-changed then 
      * we are allowed to short-circuit an
      * unchanged allocation
      */
-    if (!hippo_canvas_item_get_needs_resize(item) &&
+    if (!box->needs_allocate &&
         (box->allocated_width == allocated_box_width && 
          box->allocated_height == allocated_box_height))
         return;
 
     box->allocated_width = allocated_box_width;
     box->allocated_height = allocated_box_height;
-    box->request_changed_since_allocate = FALSE;
+    box->needs_allocate = FALSE;
 
     vertical_expand_count = count_height_expandable_children(box);
 
@@ -2066,15 +2071,17 @@ hippo_canvas_box_request_changed(HippoCanvasItem *item)
 {
     HippoCanvasBox *box = HIPPO_CANVAS_BOX(item);
 
-    box->request_changed_since_allocate = TRUE;
+    box->needs_width_request = TRUE;
+    box->needs_height_request = TRUE;
+    box->needs_allocate = TRUE;
 }
 
 static gboolean
-hippo_canvas_box_get_needs_resize(HippoCanvasItem *item)
+hippo_canvas_box_get_needs_request(HippoCanvasItem *item)
 {
     HippoCanvasBox *box = HIPPO_CANVAS_BOX(item);
 
-    return box->request_changed_since_allocate;
+    return box->needs_width_request || box->needs_height_request;
 }
 
 static char*

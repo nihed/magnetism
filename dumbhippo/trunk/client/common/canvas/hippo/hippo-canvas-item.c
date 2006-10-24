@@ -165,7 +165,7 @@ hippo_canvas_item_allocate(HippoCanvasItem *canvas_item,
      * requests from its allocate. But it's supposed to be true for
      * canvas items.
      */
-    if (hippo_canvas_item_get_needs_resize(canvas_item))
+    if (hippo_canvas_item_get_needs_request(canvas_item))
         g_warning("Item %s %p still needs resize after being allocated",
                   g_type_name_from_instance((GTypeInstance*) canvas_item),
                   canvas_item);
@@ -196,11 +196,11 @@ hippo_canvas_item_get_request (HippoCanvasItem *canvas_item,
 }
 
 gboolean
-hippo_canvas_item_get_needs_resize(HippoCanvasItem *canvas_item)
+hippo_canvas_item_get_needs_request(HippoCanvasItem *canvas_item)
 {
     g_return_val_if_fail(HIPPO_IS_CANVAS_ITEM(canvas_item), FALSE);
 
-    return HIPPO_CANVAS_ITEM_GET_IFACE(canvas_item)->get_needs_resize(canvas_item);
+    return HIPPO_CANVAS_ITEM_GET_IFACE(canvas_item)->get_needs_request(canvas_item);
 }
 
 char*
@@ -330,7 +330,7 @@ hippo_canvas_item_emit_paint_needed(HippoCanvasItem *canvas_item,
 void
 hippo_canvas_item_emit_request_changed(HippoCanvasItem *canvas_item)
 {
-    if (!hippo_canvas_item_get_needs_resize(canvas_item)) {
+    if (!hippo_canvas_item_get_needs_request(canvas_item)) {
 #if 0
         g_debug("Item %s %p now needs resize, emitting request-changed",
                 g_type_name_from_instance((GTypeInstance*) canvas_item),
@@ -339,7 +339,7 @@ hippo_canvas_item_emit_request_changed(HippoCanvasItem *canvas_item)
         
         g_signal_emit(canvas_item, signals[REQUEST_CHANGED], 0);
         
-        if (!hippo_canvas_item_get_needs_resize(canvas_item))
+        if (!hippo_canvas_item_get_needs_request(canvas_item))
             g_warning("Item %s %p does not need resize after emitting request-changed",
                       g_type_name_from_instance((GTypeInstance*) canvas_item),
                       canvas_item);
