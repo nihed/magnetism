@@ -17,6 +17,8 @@ static void      hippo_platform_impl_iface_init          (HippoPlatformClass    
 
 static void      hippo_platform_impl_finalize            (GObject                 *object);
 
+static void      hippo_platform_impl_get_platform_info   (HippoPlatform           *platform,
+                                                          HippoPlatformInfo       *info);
 static gboolean  hippo_platform_impl_read_login_cookie   (HippoPlatform           *platform,
                                                           HippoBrowserKind        *origin_browser_p,
                                                           char                   **username_p,
@@ -77,6 +79,7 @@ G_DEFINE_TYPE_WITH_CODE(HippoPlatformImpl, hippo_platform_impl, G_TYPE_OBJECT,
 static void
 hippo_platform_impl_iface_init(HippoPlatformClass *klass)
 {
+    klass->get_platform_info = hippo_platform_impl_get_platform_info;
     klass->create_window = hippo_platform_impl_create_window;
     klass->get_screen_info = hippo_platform_impl_get_screen_info;
     klass->read_login_cookie = hippo_platform_impl_read_login_cookie;
@@ -350,6 +353,15 @@ hippo_platform_impl_windows_migrate_cookie(const char *from_web_host,
 
     g_free(username);
     g_free(password);
+}
+
+static void
+hippo_platform_impl_get_platform_info(HippoPlatform           *platform,
+                                      HippoPlatformInfo       *info)
+{
+    info->name = "windows";
+    // we could stick the windows flavor ("xp", "nt") in here eventually if we needed it
+    info->distribution = NULL;
 }
 
 static const char*

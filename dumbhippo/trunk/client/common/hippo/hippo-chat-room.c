@@ -678,7 +678,7 @@ hippo_chat_message_new_from_xml(HippoDataCache *cache,
                          NULL))
         return NULL;
 
-    return hippo_chat_message_new(sender, text, timestamp, serial);
+    return hippo_chat_message_new(sender, text, timestamp / 1000, serial);
 }
 
 void
