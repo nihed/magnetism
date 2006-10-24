@@ -11,11 +11,16 @@
 	<c:set var="width" value="100%"/>
 </c:if>
 
-<c:if test="${empty floatSide}">
-	<c:set var="floatSide" value="left"/>
-</c:if>
+<c:choose>
+    <c:when test="${empty floatSide}">
+	    <c:set var="floatClass" value=""/>
+    </c:when>
+    <c:otherwise>
+        <c:set var="floatClass" value="dh-shiny-box-${floatSide}"/>
+    </c:otherwise>    
+</c:choose>
 
-<div class="dh-shiny-box dh-shiny-box-box dh-shiny-box-${floatSide}" style="width: ${width}">
+<div class="dh-shiny-box dh-shiny-box-box ${floatClass}" style="width: ${width}">
 <div class="dh-shiny-box-box dh-shiny-box-inner dh-shiny-box-inner-${color}">
 	<div class="dh-shiny-box-box dh-shiny-box-top dh-shiny-box-top-${color}">
 	<div class="dh-shiny-box-box dh-shiny-box-upper-left dh-shiny-box-upper-left-${color}">

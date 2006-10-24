@@ -1,5 +1,9 @@
 @CHARSET "UTF-8";
 
+.dh-shiny-box {
+	margin-bottom:		5px;
+}
+
 #dhMugshotIntro {
     position:        relative;
     margin-top:      10px;  
@@ -8,7 +12,7 @@
     margin-right:    15px;
 }
 
-#dhMugshotIntro *, .dh-header {
+#dhMugshotIntro * {
     margin-top:     10px;
 }
 
@@ -22,5 +26,20 @@
 }
 
 .dh-header {
+    display:        block;
     margin-bottom:  5px;
+    margin-top:     5px;
+}
+
+.dh-main-people {
+    width:              49%;
+    float:              left;
+    clear:              left;
+}
+
+.dh-main-groups {
+    width:              49%;
+    float:              right;
+    clear:              right;
+    text-align:         left;
 }
