@@ -30,8 +30,7 @@
                 <dht:selfInvite promotion="${landing.openSignupPromotion}" invitesAvailable="${landing.selfInvitations}"/>
 		    </c:when>
 		    <c:otherwise>
-	            <p><strong>Mugshot is currently operating as a limited user trial.
-	                  <br/>Enter your email address, and when we are ready to open our doors we'll send you an invitation link!
+	            <p><strong>Enter your email address to request an invitation to Mugshot!
 	            </strong></p>
                 <dht:wantsIn buttonText="Sign Me Up!"/>
             </c:otherwise>
