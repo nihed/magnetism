@@ -17,6 +17,10 @@
 	<c:set var="shortVersion" value="false"/>
 </c:if> 
 
+<c:if test="${empty embedVersion}">
+	<c:set var="embedVersion" value="false"/>
+</c:if> 
+
 <dht3:shinyBox color="grey" width="${width}" floatSide="${floatSide}">				
 	<dht3:personHeader who="${contact}" linkifyName="false" embedVersion="${embedVersion}" shortVersion="${pageable.position > 0}">
 	<c:choose>
@@ -43,5 +47,5 @@
 		</c:otherwise>
 	</c:choose>    		    
 	</dht3:personHeader>
-	<dht3:stacker stackOrder="${stackOrder}" stackType="${stackType}" pageable="${pageable}" blocks="${blocks}" showFrom="${showFrom}"/>
+	<dht3:stacker stackOrder="${stackOrder}" stackType="${stackType}" pageable="${pageable}" blocks="${blocks}" showFrom="${showFrom}" oneLine="${embedVersion}"/>
 </dht3:shinyBox>

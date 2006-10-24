@@ -11,7 +11,11 @@
 	<dht3:stylesheet name="main"/>
 	<dht:scriptIncludes/>
 	<dht:faviconIncludes/>
-	<script src="/javascript/${buildStamp}/dh/stacker.js" type="text/javascript"></script>	
+	<script type="text/javascript" src="/javascript/${buildStamp}/dh/main.js"></script>
+	<script type="text/javascript">
+		dojo.require("dh.main")
+		dojo.event.connect(dojo, "loaded", dj_global, "dhMainInit");
+	</script>
 </head>
 
 <dh:bean id="main" class="com.dumbhippo.web.pages.MainPage" scope="request"/>
@@ -30,9 +34,9 @@
 		</dht3:shinyBox>
         <div class="dh-header">Featured Mugshots</div>
         <c:forEach items="${main.recentUserActivity.list}" var="personMugshot" varStatus="status">
-            <dht3:personStack contact="${personMugshot.personView}" stackOrder="${status.count}" blocks="${personMugshot.blocks}" showFrom="true" embedVersion="true" width="49%" floatSide="left"/>
+            <dht3:personStack contact="${personMugshot.personView}" stackOrder="${status.count}" blocks="${personMugshot.blocks}" showFrom="false" embedVersion="true" width="49%" floatSide="left"/>
         </c:forEach>
         <c:forEach items="${main.recentGroupActivity.list}" var="groupMugshot" varStatus="status">
-		    <dht3:groupStack who="${groupMugshot.groupView}" stackOrder="${status.count + main.recentUserActivity.size}" blocks="${groupMugshot.blocks}" showFrom="true" width="49%" floatSide="right"/>
+		    <dht3:groupStack who="${groupMugshot.groupView}" stackOrder="${status.count + main.recentUserActivity.size}" blocks="${groupMugshot.blocks}" showFrom="false" embedVersion="true" width="49%" floatSide="right"/>
         </c:forEach>
 </dht3:page>

@@ -9,6 +9,11 @@
 <%@ attribute name="pageable" required="false" type="com.dumbhippo.server.Pageable" %>
 <%@ attribute name="blocks" required="false" type="java.util.List" %>
 <%@ attribute name="showFrom" required="true" type="java.lang.Boolean" %>
+<%@ attribute name="oneLine" required="false" type="java.lang.Boolean" %>
+
+<c:if test="${empty oneLine}">
+	<c:set var="oneLine" value="false"/>
+</c:if> 
 
 <c:set var="previousBlockType" value="" scope="page"/>
 
@@ -20,10 +25,10 @@
 	<c:forEach items="${blocks}" var="block" varStatus="blockIdx">
 		<c:choose>
 			<c:when test="${blockIdx.count % 2 == 0}">
-				<dht3:block block="${block}" offset="${previousBlockType == block.blockType}" blockId="${stackOrder}_${blockIdx.count + 1}" showFrom="${showFrom}"/>
+				<dht3:block block="${block}" offset="${previousBlockType == block.blockType}" blockId="${stackOrder}_${blockIdx.count + 1}" showFrom="${showFrom}" oneLine="${oneLine}"/>
 			</c:when>
 			<c:otherwise>
-				<dht3:block block="${block}" offset="${previousBlockType == block.blockType}" blockId="${stackOrder}_${blockIdx.count + 1}" showFrom="${showFrom}"/>
+				<dht3:block block="${block}" offset="${previousBlockType == block.blockType}" blockId="${stackOrder}_${blockIdx.count + 1}" showFrom="${showFrom}" oneLine="${oneLine}"/>
 			</c:otherwise>
 		</c:choose>
 		<c:set var="previousBlockType" value="" scope="page"/>		

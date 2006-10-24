@@ -182,8 +182,9 @@ dh.util.goToNextPage = function(def, flashMessage) {
 // loosely based on dojo.html.renderedTextContent
 dh.util.getTextFromHtmlNode = function(node) {
 	var result = "";
-	if (node == null) { return result; }
-	
+	if (node == null) 
+	    return result;
+
 	switch (node.nodeType) {
 		case dojo.dom.ELEMENT_NODE: // ELEMENT_NODE
 			if (node.nodeName.toLowerCase() == "br") {
@@ -217,6 +218,59 @@ dh.util.getTextFromRichText = function(richtext) {
 	// finished and doesn't work well enough for our purposes here
 	// yet (probably overkill too since we offer no styled text toolbar)
 	return dh.util.getTextFromHtmlNode(richtext.editNode);
+}
+
+dh.util.truncateTextInHtmlNode = function(node, length) {
+	if (node == null)
+	    return length;
+	    
+	switch (node.nodeType) {
+		case dojo.dom.ELEMENT_NODE: // ELEMENT_NODE
+			if (node.nodeName.toLowerCase() == "br") {
+		        // TODO: not sure if can remove <br> on the fly here, 
+		        // but that would be a good thing to do
+		        // this is a corner case, we want some other node to 
+		        // take care of inserting "..."
+		        if (length > 1)
+				    length--;				    
+			} else {
+				//dojo.debug("element = " + node.nodeName);
+			}
+			break;
+		case 5: // ENTITY_REFERENCE_NODE
+		    if (length <= 0) {
+		        node.nodeValue = "";
+		    } else if (length <= node.nodeValue.length) {
+		        var newText = node.nodeValue.substring(0, length) + "...";
+		        node.nodeValue = newText; 
+		        length = 0;     
+		    } else {
+		        length = length - node.nodeValue.length;
+		    }
+			break;
+		case 2: // ATTRIBUTE_NODE
+			break;
+		case 3: // TEXT_NODE
+		case 4: // CDATA_SECTION_NODE
+		    if (length <= 0) {
+		        node.nodeValue = "";
+		    } else if (length <= node.nodeValue.length) {
+		        var newText = node.nodeValue.substring(0, length) + "...";
+		        node.nodeValue = newText; 
+		        length = 0;     
+		    } else {
+		        length = length - node.nodeValue.length;
+		    }
+		    break;
+		default:
+			break;
+	}
+	
+	for (var i = 0; i < node.childNodes.length; i++) {       
+	   length = dh.util.truncateTextInHtmlNode(node.childNodes[i], length);
+	}
+
+	return length;
 }
 
 dh.util.toggleCheckBox = function(boxNameOrNode) {
@@ -611,7 +665,6 @@ dh.util.timeString = function(timestamp) {
            + date.getFullYear() + " " + dh.util.zeroPad(date.getHours(), 2) + ":" 
            + dh.util.zeroPad(date.getMinutes(), 2) + ":" + dh.util.zeroPad(date.getSeconds(), 2);
 }
-    
 
 dh.util.zeroPad = function(number, len) {
     var str = number + "";

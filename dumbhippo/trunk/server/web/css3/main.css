@@ -17,3 +17,7 @@
 .dh-header {
     font-size:      18px;
 }
+
+.dh-stacker-block-icon, .dh-stacker-block-title, .dh-stacker-block-right {
+    display:        none;
+}

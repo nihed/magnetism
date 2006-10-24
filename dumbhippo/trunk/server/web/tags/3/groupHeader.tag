@@ -4,10 +4,10 @@
 <%@ taglib tagdir="/WEB-INF/tags/3" prefix="dht3" %>
 
 <%@ attribute name="who" required="true" type="com.dumbhippo.server.views.GroupView" %>
-<%@ attribute name="shortVersion" required="false" type="java.lang.Boolean" %>
+<%@ attribute name="embedVersion" required="false" type="java.lang.Boolean" %>
 
-<c:if test="${empty shortVersion}">
-	<c:set var="shortVersion" value="false"/>
+<c:if test="${empty embedVersion}">
+	<c:set var="embedVersion" value="false"/>
 </c:if>
 
 <div class="dh-person-header">
@@ -40,7 +40,7 @@
 			</tr>
 			<tr>
 			    <td colspan="2">
-			        <c:if test="${!shortVersion}">
+			        <c:if test="${!embedVersion}">
 			            <div class="dh-person-header-bio">
 				            <c:out value="${who.group.description}"/>
 			            </div>

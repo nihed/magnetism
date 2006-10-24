@@ -418,5 +418,9 @@ div.dh-async-action-link-complete {
 }
 
 .dh-thumbnail-title a {
-	text-decoration:		underline;
+	text-decoration:    underline;
+}
+
+.dh-stacker-block-one-line .dh-stacker-block-title-type, .dh-stacker-block-one-line .dh-stacker-block-header-description {
+    display:            none;
 }

@@ -9,11 +9,16 @@
 <%@ attribute name="pageable" required="false" type="com.dumbhippo.server.Pageable" %>
 <%@ attribute name="blocks" required="false" type="java.util.List" %>
 <%@ attribute name="showFrom" required="true" type="java.lang.Boolean" %>
+<%@ attribute name="embedVersion" required="false" type="java.lang.Boolean" %>
 <%@ attribute name="width" required="false" type="java.lang.String" %>
 <%@ attribute name="floatSide" required="false" type="java.lang.String" %>
 
+<c:if test="${empty embedVersion}">
+	<c:set var="embedVersion" value="false"/>
+</c:if> 
+
 <dht3:shinyBox color="orange" width="${width}" floatSide="${floatSide}">
-    <dht3:groupHeader who="${who}">
+    <dht3:groupHeader who="${who}" embedVersion="${embedVersion}">
         <c:choose>
             <c:when test="${signin.valid}">
 	            <%-- FIXME: show group actions here ... need to move stuff from StackedGroupPage to GroupView --%>
@@ -24,5 +29,5 @@
 		    </c:otherwise>
 		</c:choose>        
 	</dht3:groupHeader>
-    <dht3:stacker stackOrder="${stackOrder}" stackType="${stackType}" pageable="${pageable}" blocks="${blocks}" showFrom="${showFrom}"/>    
+    <dht3:stacker stackOrder="${stackOrder}" stackType="${stackType}" pageable="${pageable}" blocks="${blocks}" showFrom="${showFrom}" oneLine="${embedVersion}"/>    
 </dht3:shinyBox>		

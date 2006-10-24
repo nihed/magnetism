@@ -7,11 +7,14 @@
 <%@ attribute name="offset" required="true" type="java.lang.Boolean" %>
 <%@ attribute name="blockId" required="true" type="java.lang.String" %>
 <%@ attribute name="showFrom" required="false" type="java.lang.Boolean" %>
+<%@ attribute name="oneLine" required="true" type="java.lang.Boolean" %>
 
 <dht3:blockContainer cssClass="${offset ? 'dh-box-grey2' : 'dh-box-grey1'}" blockId="${blockId}">
 	<dht3:blockHeader icon="/images3/${buildStamp}/musicradar_icon.png" blockId="${blockId}">
 		<dht3:blockHeaderLeft>
-			<span class="dh-stacker-block-title-type">Music Radar</span>:		
+		    <c:if test="${!oneLine}"> 
+			    <span class="dh-stacker-block-title-type">Music Radar:</span>	
+			</c:if>    	   
 			<span class="dh-stacker-block-title-music-person">
 				<c:forEach items="${block.trackViews}" end="2" var="track" varStatus="trackIdx">
 					<dht3:track track="${track}"/><c:if test="${!trackIdx.last}">, </c:if>
