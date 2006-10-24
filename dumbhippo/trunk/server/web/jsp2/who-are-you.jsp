@@ -16,7 +16,7 @@
 		dojo.require("dh.login");
 	</script>
 </head>
-<dht:systemPage disableJumpTo="true" topImage="/images2/${buildStamp}/header_login310.gif" bottomImage="/images2/${buildStamp}/bottom_gray310.gif">
+<dht:systemPage disableFooter="true" disableJumpTo="true" topImage="/images2/${buildStamp}/header_login310.gif" bottomImage="/images2/${buildStamp}/bottom_gray310.gif">
 	<form id="dhLoginForm" name="dhLoginForm" action="/signinpost" method="post">
 		<c:if test='${!empty param["next"]}'>
 			<input type="hidden" value='${param["next"]}' name="next"/>

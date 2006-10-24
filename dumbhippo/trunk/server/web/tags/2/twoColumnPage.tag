@@ -9,6 +9,7 @@
 <%@ attribute name="searchText" required="false" type="java.lang.String" %>
 <%@ attribute name="logoOnly" required="false" type="java.lang.Boolean" %>
 <%@ attribute name="topMessageHtml" required="false" type="java.lang.String" %>
+<%@ attribute name="disableFooter" required="false" type="java.lang.Boolean" %>
 
 <c:choose>
 	<c:when test="${alwaysShowSidebar}">
@@ -52,6 +53,12 @@
 		<div id="dhPageContent">
 			<jsp:doBody/>
 		</div>
-		<dht:footer/>
+		<c:choose>
+			<c:when test="${disableFooter}">
+			</c:when>
+			<c:otherwise>
+				<dht:footer/>
+			</c:otherwise>
+	    </c:choose>
 	</div>
 </body>
