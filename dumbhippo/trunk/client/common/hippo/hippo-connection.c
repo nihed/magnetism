@@ -1843,7 +1843,7 @@ hippo_connection_set_block_hushed(HippoConnection *connection,
 
     lm_message_unref(message);
 
-    g_debug("Sent request for prefs");
+    g_debug("Sent blockHushed=%d", hushed);
 }
 
 void
