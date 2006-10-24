@@ -64,13 +64,15 @@
 					<c:when test="${signin.valid}">
 					    <a class="dh-underlined-link" href="/">My Home</a> | 
 					    <a class="dh-underlined-link" href="/account">My Account</a> |
+						<a class="dh-underlined-link" href="/friends">People</a> | 
+						<a class="dh-underlined-link" href="/groups">Groups</a> | 
 					</c:when>
 					<c:otherwise>
 						<a class="dh-underlined-link" href="/">Home</a> |
+						<a class="dh-underlined-link" href="/active-people">Active People</a> | 
+						<a class="dh-underlined-link" href="/active-groups">Active Groups</a> | 
 					</c:otherwise>
 				</c:choose>
-				<a class="dh-underlined-link" href="/friends">People</a> | 
-				<a class="dh-underlined-link" href="/groups">Groups</a> | 
 				<a class="dh-underlined-link" href="http://blog.mugshot.org/?page_id=245a">Help</a>
 			</div>	
 		</div>  
