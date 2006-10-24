@@ -3,6 +3,7 @@ package com.dumbhippo.web.pages;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.StringUtils;
 import com.dumbhippo.server.Stacker;
 import com.dumbhippo.server.views.GroupMugshotView;
 import com.dumbhippo.server.views.PersonMugshotView;
@@ -12,6 +13,14 @@ import com.dumbhippo.web.WebEJBUtil;
 public class MainPage extends AbstractSigninOptionalPage {
 		@SuppressWarnings("unused")
 		static private final Logger logger = GlobalSetup.getLogger(MusicGlobalPage.class);
+		
+		private static final String[] MUGSHOTS = {
+			"arthur.png",
+			"lucie.png",
+			"moose.png",
+			"oliver.png",
+			"roni.png"
+		};
 		
 		protected Stacker stacker;
 		
@@ -37,4 +46,9 @@ public class MainPage extends AbstractSigninOptionalPage {
 			}
 			return recentGroupActivity;			
 		}		
+		
+		public String getSampleMugshot() {
+			return StringUtils.getRandomString(MUGSHOTS);		
+		}
+		
 }

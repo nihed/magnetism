@@ -5,6 +5,7 @@ import java.io.IOException;
 import javax.servlet.jsp.JspWriter;
 import javax.servlet.jsp.tagext.SimpleTagSupport;
 
+import com.dumbhippo.StringUtils;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.web.WebEJBUtil;
@@ -73,9 +74,7 @@ public class RedHatSomethingTag extends SimpleTagSupport {
 	private static boolean loadedStealthMode = false;
 	
 	private String pickSomething() {
-		// use seconds not milliseconds, milliseconds might always be multiples of 10 or something 
-		int i = (int) ((System.currentTimeMillis() / 1000) % SOMETHINGS.length);
-		return SOMETHINGS[i];
+		return StringUtils.getRandomString(SOMETHINGS);		
 	}
 	
 	@Override

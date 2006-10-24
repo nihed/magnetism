@@ -125,4 +125,16 @@ public class StringUtils {
 		
 		return truncatedString;
 	}
+	
+	/**
+	 * Picks a random String from an array of Strings.
+	 * 
+	 * @param strings an array of Strings
+	 * @return a random String from the array
+	 */
+	public static String getRandomString(String[] strings) {
+		// use seconds not milliseconds, milliseconds might always be multiples of 10 or something 
+		int i = (int) ((System.currentTimeMillis() / 1000) % strings.length);
+		return strings[i];			
+	}
 }

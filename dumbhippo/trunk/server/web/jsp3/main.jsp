@@ -33,7 +33,7 @@
                 </div>
             </div>
             <div id="dhMugshotExample">
-                <dh:png src="/images3/${buildStamp}/lucie.png" style="width: 409; height: 221; border: none;"/>
+                <dh:png src="/images3/${buildStamp}/${main.sampleMugshot}" style="width: 409; height: 221; border: none;"/>
             </div>     
             </div>        
 		</dht3:shinyBox>
