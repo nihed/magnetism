@@ -268,9 +268,12 @@ public class AnnotatedIQHandler extends org.jivesoftware.wildfire.handler.IQHand
 				runIQ(methodInfo, request, reply);
 
 		} catch (IQException e) {
+			// Create a new reply to avoid anything already written to the reply
+			reply = IQ.createResultIQ(request);
 			reply.setError(new PacketError(e.getCondition(), e.getType(), e.getMessage()));
 		} catch (RuntimeException e) {
 			Log.error("Internal server error handling IQ", e);
+			reply = IQ.createResultIQ(request);
 			reply.setError(new PacketError(PacketError.Condition.internal_server_error,
 					       				   PacketError.Type.wait,
 					       				   "Internal server error"));
