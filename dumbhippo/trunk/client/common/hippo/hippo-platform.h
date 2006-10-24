@@ -78,6 +78,9 @@ struct _HippoPlatformClass {
 
 GType            hippo_platform_get_type               (void) G_GNUC_CONST;
 
+void             hippo_platform_get_platform_info      (HippoPlatform     *platform,
+                                                        HippoPlatformInfo *info);
+
 HippoWindow*     hippo_platform_create_window          (HippoPlatform    *platform);
 
 /* monitor_rect is the portion of the "work area" (the area for client
