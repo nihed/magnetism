@@ -48,7 +48,7 @@
 					<div>Drag the link below onto the Bookmarks toolbar.  Then to share and chat about
 						a site with friends, click 'Mugshot Web Swarm' on your Bookmarks toolbar.</div>
 					<div id="dhBookmarkHowto">
-					<table cellspacing="0" cellpadding="0">
+					<table style="background-color:#ffffff;color:inherit;" cellspacing="10px" cellpadding="0">
 					<tr>
 					<td width="10px;"><div></div></td>
 					<td align="left" valign="bottom"><img src="/images2/${buildStamp}/dragthis.gif"/></td>
@@ -79,6 +79,6 @@
 			</p>		
 			</div>
 		</dht3:webSwarmLearnMore>
-		<div>Learn more about: <a class="dh-underlined-link" href="links-learnmore">Web Swarm</a> | <a class="dh-underlined-link" href="stacker-learnmore">Mugshot Stacker</a></div>
+		<div>Learn more about: <a class="dh-underlined-link" href="radar-learnmore">Music Radar</a> | <a class="dh-underlined-link" href="stacker-learnmore">Mugshot Stacker</a></div>
 	</dht3:shinyBox>
 </dht3:page>
