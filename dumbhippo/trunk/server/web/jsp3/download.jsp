@@ -66,14 +66,17 @@
 						</c:if>
 					</div>					
 					<div class="dh-download-yadayada">
-						<c:choose>
-							<c:when test="${browser.linuxRequested}">
-								Or, get Mugshot for <a href="/download?platform=windows${urlParams}">Windows</a> instead.
-							</c:when>
-							<c:otherwise>
-								Or, get Mugshot for <a href="/download?distribution=fedora5${urlParams}">Fedora Core 5</a> instead.
-							</c:otherwise>
-						</c:choose>
+						Or, get Mugshot for another platform instead:
+							<c:if test="${!browser.fedora5Requested}">
+								<a href="/download?distribution=fedora5${urlParams}">Fedora Core 5</a>
+							</c:if>
+							<c:if test="${!browser.fedora6Requested}">
+								<c:if test="${!browser.fedora5Requested}">| </c:if>
+								<a href="/download?distribution=fedora6${urlParams}">Fedora Core 6</a>
+							</c:if>
+							<c:if test="${!browser.windowsRequested}">
+								| <a href="/download?platform=windows${urlParams}">Windows</a>
+							</c:if>
 					</div>
 				</c:when>
 				<c:otherwise>
@@ -100,7 +103,7 @@
 				<c:when test="${browser.linuxRequested}">
 					<div class="dh-download-yadayada">
 						<i>Source code is available in <a href="${welcome.downloadUrlLinuxTar}">tar.gz</a> and
-						<a href="${welcome.downloadUrlLinuxSrpm}">SRPM</a> formats.</i>
+						<a href="${welcome.downloadUrlSrpm}">SRPM</a> formats.</i>
 					</div>
 				</c:when>
 			</c:choose>			

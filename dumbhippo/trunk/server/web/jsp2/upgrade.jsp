@@ -44,9 +44,9 @@
 		<center>
 			<c:choose>
 				<c:when test="${browser.linuxRequested}">
-					<a href="${download.downloadUrlFedora5}">Fedora Core 5 RPM</a>
+					<a href="${download.downloadUrl}"><c:out value="${download.downloadFor}"/> RPM</a>
 					<br/>
-					Source code: <a href="${download.downloadUrlLinuxTar}">tar.gz</a> | <a href="${download.downloadUrlLinuxSrpm}">SRPM</a>
+					Source code: <a href="${download.downloadUrlLinuxTar}">tar.gz</a> | <a href="${download.downloadUrlSrpm}">SRPM</a>
 					<br/>
 					<a href="http://developer.mugshot.org/wiki/Downloads">Packages for other distributions</a>
 				</c:when>

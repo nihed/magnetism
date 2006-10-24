@@ -47,8 +47,21 @@ public class DownloadPage extends AbstractSigninOptionalPage {
 	public String getDownloadUrl() {
 		if (browser.isFedora5Requested()) {
 			return getDownloadUrlFedora5();
+		} else if (browser.isFedora6Requested()) {
+			return getDownloadUrlFedora6();
 		} else if (browser.isWindowsRequested()) {
 			return getDownloadUrlWindows();
+		} else {
+			return null;
+		}
+	}
+	
+	// if linuxRequested && haveDownload then this should always return non-null
+	public String getDownloadUrlSrpm() {
+		if (browser.isFedora5Requested())
+			return getDownloadUrlFedora5Srpm();
+		else if (browser.isFedora6Requested()) {
+			return getDownloadUrlFedora6Srpm();
 		} else {
 			return null;
 		}
@@ -57,6 +70,8 @@ public class DownloadPage extends AbstractSigninOptionalPage {
 	public String getDownloadFor() {
 		if (browser.isFedora5Requested()) {
 			return "Fedora Core 5";
+		} else if (browser.isFedora6Requested()) {
+			return "Fedora Core 6";
 		} else if (browser.isWindowsRequested()) {
 			return "Windows";
 		} else {
@@ -69,7 +84,23 @@ public class DownloadPage extends AbstractSigninOptionalPage {
 	}
 	
 	public String getDownloadUrlFedora5() {
-		return configuration.getPropertyFatalIfUnset(HippoProperty.DOWNLOADURL_LINUX);
+		return configuration.getPropertyFatalIfUnset(HippoProperty.DOWNLOADURL_FEDORA5);
+	}
+	
+	public String getDownloadUrlFedora6() {
+		return configuration.getPropertyFatalIfUnset(HippoProperty.DOWNLOADURL_FEDORA6);
+	}
+	
+	public String getDownloadUrlFedora5Srpm() {
+		return configuration.getPropertyFatalIfUnset(HippoProperty.DOWNLOADURL_FEDORA5_SRPM);
+	}
+	
+	public String getDownloadUrlFedora6Srpm() {
+		return configuration.getPropertyFatalIfUnset(HippoProperty.DOWNLOADURL_FEDORA6_SRPM);
+	}
+	
+	public String getDownloadUrlLinuxTar() {
+		return configuration.getPropertyFatalIfUnset(HippoProperty.DOWNLOADURL_LINUX_TAR);
 	}
 	
 	// deprecated
@@ -78,12 +109,10 @@ public class DownloadPage extends AbstractSigninOptionalPage {
 		return getDownloadUrlFedora5();
 	}
 	
-	public String getDownloadUrlLinuxTar() {
-		return configuration.getPropertyFatalIfUnset(HippoProperty.DOWNLOADURL_LINUX_TAR);
-	}
-
+	// deprecated
 	public String getDownloadUrlLinuxSrpm() {
-		return configuration.getPropertyFatalIfUnset(HippoProperty.DOWNLOADURL_LINUX_SRPM);
+		logger.warn("Some page is still referring to downloadUrlLinuxSrpm instead of distribution-specific urls");
+		return getDownloadUrlFedora5Srpm();
 	}
 	
 	public InvitationToken getInvitation() {

@@ -33,9 +33,11 @@
 		dumbhippo.server.aim.presence.key=@@aimPresenceKey@@
 		dumbhippo.server.downloadurl.windows=@@clientWindowsDownload@@
 		dumbhippo.server.downloadurl.windows.source=@@clientWindowsDownloadSource@@
-		dumbhippo.server.downloadurl.linux=@@clientLinuxDownload@@
+		dumbhippo.server.downloadurl.fedora5=@@clientFedora5Download@@
+		dumbhippo.server.downloadurl.fedora5.srpm=@@clientFedora5DownloadSRPM@@
+		dumbhippo.server.downloadurl.fedora6=@@clientFedora6Download@@
+		dumbhippo.server.downloadurl.fedora6.srpm=@@clientFedora6DownloadSRPM@@				
 		dumbhippo.server.downloadurl.linux.tar=@@clientLinuxDownloadTar@@
-		dumbhippo.server.downloadurl.linux.srpm=@@clientLinuxDownloadSRPM@@
 		dumbhippo.server.amazon.accesskeyid=@@amazonAccessKeyId@@
 		dumbhippo.server.amazon.associatetag=@@amazonAssociateTag@@
 		dumbhippo.server.yahoo.appid=@@yahooAppId@@
