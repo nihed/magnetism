@@ -931,6 +931,19 @@ public class HttpMethodsServlet2 extends AbstractServlet {
 			out.write(bytes);
 		}
 
+		// The point of the allowDisabledUser annotations is to allow methods that
+		// take a user from the disabled state to the enabled state; once we are
+		// enabled, we need to persistant cookies, so we check that here. This
+		// is a little hacky, but simpler than creating custom servlets.
+		//
+		// Note that this won't work well with methods that have write
+		// output, since output may have already been written, and it
+		// will be too late to set cookies. So we disallow that when first 
+		// scanning the method.
+		if (m.isAllowsDisabledAccount()) {
+			SigninBean.updateAuthentication(request, response);
+		}
+		
 		out.flush();
 		out.close();
 		logger.debug("Reply for {} sent", m.getName());
@@ -1023,19 +1036,6 @@ public class HttpMethodsServlet2 extends AbstractServlet {
 			////// Note that we always throw or return on exception... so this code 
 			////// runs only on method success
 			WebStatistics.getInstance().incrementHttpMethodsServed();
-			
-			// The point of the allowDisabledUser annotations is to allow methods that
-			// take a user from the disabled state to the enabled state; once we are
-			// enabled, we need to persistant cookies, so we check that here. This
-			// is a little hacky, but simpler than creating custom servlets.
-			//
-			// Note that this won't work well with methods that have write
-			// output, since the output buffer may already have been flushed, and it
-			// will be too late to set cookies. So we disallow that when first 
-			// scanning the method.
-			if (method.isAllowsDisabledAccount()) {
-				SigninBean.updateAuthentication(request, response);
-			}
 			
 			if (method.isInvalidatesSession()) {
 				HttpSession sess = request.getSession(false);

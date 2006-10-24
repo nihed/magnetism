@@ -66,7 +66,6 @@ public interface HttpMethods {
 
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "name" })
-	@HttpOptions(invalidatesSession = true)
 	public void doRenamePerson(UserViewpoint viewpoint, String name);
 	
 	@HttpContentTypes(HttpResponseData.NONE)
