@@ -32,9 +32,9 @@
 			<td valign="top" class="dh-download-section-icon-area"><img src="/images3/${buildStamp}/mugshot70x64.png"/></td>
 			<td class="dh-download-section-details-area"><div class="dh-download-section-header">Set up your own <span class="dh-download-product">Mugshot</span>.</div>
 			<div class="dh-download-section-description">
-				It's an easy way for you and friends to keep track of other online.  Show a list of sites you belong to, like MySpace, Digg, and LiveJournal.  Display
-				streams from your Flickr and YouTube accounts.  Share what you're browsing and listening to, using Web Swarm and Music Radar.  Your Mugshot page also
-				includes friends' recent web activity.  Keep you with everything on one convenient page!
+				It's an easy way for you and friends to keep track of one other online.  Show a list of sites you belong to, like MySpace, <!--Digg,--> and LiveJournal.  Display
+				photo streams from your Flickr account.  Share what you're browsing and listening to, using Web Swarm and Music Radar.  Your Mugshot page also
+				includes friends' recent web activity.  Keep up with everything on one convenient page!
 				<div><a class="dh-underlined-link" href="/active-people">See some members' Mugshots</a></div>
 			</div>
 			</td>
@@ -76,7 +76,7 @@
 			<td valign="top" class="dh-download-section-icon-area"><img src="/images3/${buildStamp}/underthehood54x62.png"/></td>
 			<td class="dh-download-section-details-area"><div class="dh-download-section-header">Get under the hood.</div>
 			<div class="dh-download-section-description">
-				<div>Mugshot is all open source.  Here's text explaining how you can get involved in tweaking and contributing to Mugshot!</div>
+				<div>Mugshot is all open source, so you can chip in on the design and development if that's your style.</div>
 				<div><a class="dh-underlined-link" href="http://developer.mugshot.org">Learn more</a></div>
 			</div>
 			</td>

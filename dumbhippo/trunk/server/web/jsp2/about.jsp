@@ -14,7 +14,7 @@
 
     <p>Mugshot makes it easy to show off what you're doing online and keep track of what your
     friends are up to. Learn more about what you can do with Mugshot at the 
-    <a href="/features">Mugshot Features page</a>.
+    <a href="/features">features page</a>.
 
 	<p>Mugshot is designed and developed in the context of an open source
 	community project. For information on how you can contribute, visit

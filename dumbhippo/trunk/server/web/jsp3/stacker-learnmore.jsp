@@ -29,8 +29,8 @@
 				<dht3:toolTrayPointer/>
 				</p>
 				<p>
-				Mugshot Stacker displays new activity from your friends and groups as it occurs.  Get updates from your MySpace, LiveJournal,
-				Facebook, and other sites by adding them to your <a href="/account">Account</a>.
+				Mugshot Stacker displays new activity from your friends and groups as it occurs.  Get updates from <!-- your MySpace, LiveJournal,
+				Facebook, and other sites--> the sites you use by adding them to your <a href="/account">Account</a>.
 				</p>
 				<p>
 					<img src="/images3/${buildStamp}/stacker_browsewin_01.jpg"/>
