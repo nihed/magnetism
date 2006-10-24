@@ -1807,7 +1807,8 @@ dh.stacker.blockHoverStart = function(id) {
 		var content = document.getElementById("dhStackerBlockContent-" + id)
 		content.style.display = "block";
 		var controls = document.getElementById("dhStackerBlockControls-" + id)
-		controls.style.display = "block";		
+		if (controls)
+			controls.style.display = "block";		
 		var closeButton = document.getElementById("dhStackerBlockClose-" + id)
 		closeButton.style.display = "block";
 		/*
@@ -1829,7 +1830,8 @@ dh.stacker.blockClose = function(id) {
 	var content = document.getElementById("dhStackerBlockContent-" + id)
 	content.style.display = "none";	
 	var controls = document.getElementById("dhStackerBlockControls-" + id)
-	controls.style.display = "none";		
+	if (controls)
+		controls.style.display = "none";		
 	var closeButton = document.getElementById("dhStackerBlockClose-" + id)
 	closeButton.style.display = "none";	
 	/*
