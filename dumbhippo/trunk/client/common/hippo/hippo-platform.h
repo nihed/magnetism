@@ -8,6 +8,14 @@
 
 G_BEGIN_DECLS
 
+typedef struct {
+    const char *name;         /* "windows" or "linux" */
+    const char *distribution; /* "fedora5", "fedora6", or NULL for unknown
+                               * could also be "xp" or something maybe on Windows
+                               * but is NULL right now
+                               */
+} HippoPlatformInfo;
+
 typedef struct _HippoPlatform      HippoPlatform;
 typedef struct _HippoPlatformClass HippoPlatformClass;
 
@@ -20,6 +28,9 @@ typedef struct _HippoPlatformClass HippoPlatformClass;
 
 struct _HippoPlatformClass {
     GTypeInterface base_iface;
+
+    void (* get_platform_info) (HippoPlatform     *platform,
+                                HippoPlatformInfo *info);
     
     HippoWindow* (* create_window)    (HippoPlatform  *platform);
 

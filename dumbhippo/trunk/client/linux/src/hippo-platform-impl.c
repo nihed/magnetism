@@ -6,6 +6,7 @@
 #include "hippo-status-icon.h"
 #include "hippo-http.h"
 #include "main.h"
+#include <string.h>
 
 static void      hippo_platform_impl_init                (HippoPlatformImpl       *impl);
 static void      hippo_platform_impl_class_init          (HippoPlatformImplClass  *klass);
@@ -14,6 +15,8 @@ static void      hippo_platform_impl_iface_init          (HippoPlatformClass    
 static void      hippo_platform_impl_finalize            (GObject                 *object);
 
 
+static void         hippo_platform_impl_get_platform_info   (HippoPlatform     *platform,
+                                                             HippoPlatformInfo *info);
 static HippoWindow* hippo_platform_impl_create_window       (HippoPlatform     *platform);
 static void         hippo_platform_impl_get_screen_info     (HippoPlatform     *platform,
                                                              HippoRectangle    *monitor_rect_p,
@@ -72,6 +75,7 @@ G_DEFINE_TYPE_WITH_CODE(HippoPlatformImpl, hippo_platform_impl, G_TYPE_OBJECT,
 static void
 hippo_platform_impl_iface_init(HippoPlatformClass *klass)
 {
+    klass->get_platform_info = hippo_platform_impl_get_platform_info;
     klass->create_window = hippo_platform_impl_create_window;
     klass->get_screen_info = hippo_platform_impl_get_screen_info;
     klass->read_login_cookie = hippo_platform_impl_read_login_cookie;
@@ -124,6 +128,39 @@ hippo_platform_impl_finalize(GObject *object)
     g_free(impl->jabber_resource);
     
     G_OBJECT_CLASS(hippo_platform_impl_parent_class)->finalize(object);
+}
+
+static const char*
+get_distribution(void)
+{
+    static const char* distribution = NULL;
+
+    if (distribution == NULL) {
+        char *contents = NULL;
+        gsize len = 0;
+        GError *error = NULL;
+        if (!g_file_get_contents("/etc/fedora-release", &contents, &len, &error)) {
+            g_debug("Failed to get /etc/fedora-release contents: %s", error->message);
+            g_error_free(error);
+        } else {
+            if (strstr(contents, " 5 ") != NULL)
+                distribution = "fedora5";
+            else if (strstr(contents, " 6 ") != NULL)
+                distribution = "fedora6";
+
+            g_free(contents);
+        }
+    }
+
+    return distribution;
+}
+
+static void
+hippo_platform_impl_get_platform_info(HippoPlatform     *platform,
+                                      HippoPlatformInfo *info)
+{
+    info->name = "linux";
+    info->distribution = get_distribution();
 }
 
 static HippoWindow*

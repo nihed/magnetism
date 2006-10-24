@@ -34,6 +34,15 @@ hippo_platform_base_init(void *klass)
     }
 }
 
+void
+hippo_platform_get_platform_info (HippoPlatform     *platform,
+                                  HippoPlatformInfo *info)
+{
+    g_return_if_fail(HIPPO_IS_PLATFORM(platform));
+    
+    HIPPO_PLATFORM_GET_CLASS(platform)->get_platform_info(platform, info);
+}
+
 HippoWindow*
 hippo_platform_create_window(HippoPlatform    *platform)
 {

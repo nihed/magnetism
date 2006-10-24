@@ -13,8 +13,13 @@
       <linux>
         <minimum>@@clientLinuxMinimum@@</minimum>
         <current>@@clientLinuxCurrent@@</current>
-        <download>@@clientLinuxDownload@@</download>
-      </linux>      
+      </linux>
+      <fedora5>
+         <download>@@clientFedora5Download@@</download>
+      </fedora5>
+      <fedora6>
+         <download>@@clientFedora6Download@@</download>
+      </fedora6>
     </client>
   </dumbhippo>
   <adminConsole> 

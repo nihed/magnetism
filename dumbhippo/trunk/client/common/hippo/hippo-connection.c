@@ -1293,7 +1293,8 @@ hippo_connection_request_client_info(HippoConnection *connection)
     LmMessage *message;
     LmMessageNode *node;
     LmMessageNode *child;
-                
+    HippoPlatformInfo info;
+    
     message = lm_message_new_with_sub_type(HIPPO_ADMIN_JID, LM_MESSAGE_TYPE_IQ,
                                            LM_MESSAGE_SUB_TYPE_GET);
     node = lm_message_get_node(message);
@@ -1301,15 +1302,14 @@ hippo_connection_request_client_info(HippoConnection *connection)
     child = lm_message_node_add_child (node, "clientInfo", NULL);
 
     lm_message_node_set_attribute(child, "xmlns", "http://dumbhippo.com/protocol/clientinfo");
-#ifdef G_OS_WIN32
-#define PLATFORM "windows"
-#endif
-#ifdef G_OS_UNIX
-#define PLATFORM "linux"
-#endif
 
-    lm_message_node_set_attribute(child, "platform", PLATFORM);
-
+    hippo_platform_get_platform_info(connection->platform,
+                                     &info);
+    
+    lm_message_node_set_attribute(child, "platform", info.name);
+    if (info.distribution)
+        lm_message_node_set_attribute(child, "distribution", info.distribution);
+    
     hippo_connection_send_message_with_reply(connection, message, on_client_info_reply, SEND_MODE_IMMEDIATELY);
 
     lm_message_unref(message);
