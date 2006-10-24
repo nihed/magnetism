@@ -5,17 +5,13 @@
 .dh-intro-message {
     color:        #9648BC;
 	font-weight:  bold;
-	font-size:	  20px;
+	font-size:	  30px;
 }
 
 .dh-intro-explanation, .dh-intro-options, .dh-header {
 	color:			#9648CD;
 	font-weight:	bold;
-	font-size:		16px;
-}
-
-.dh-header {
-    font-size:      18px;
+	font-size:		18px;
 }
 
 .dh-stacker-block-icon, .dh-stacker-block-title, .dh-stacker-block-right {

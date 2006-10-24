@@ -22,15 +22,20 @@
 
 <dht3:page>
 		<dht3:shinyBox color="purple">
-		    <div id="dhMugshotIntro">
-		        <div class="dh-intro-message">Put you mugshot on the web.</div>
+		    <div id="dhMugshotWelcome">
+		    <div id="dhMugshotIntro"> 
+		        <div class="dh-intro-message">Put your Mugshot on the Web.</div>
 		        <div class="dh-intro-explanation">Everything you and your friends do on the web, in real time.</div>
 		        <div class="dh-intro-options">
-                    <span class="dh-button"><a href="/signup"><img src="/images3/${buildStamp}/signup.gif"/></a></span>
+                    <span class="dh-button"><a href="/features"><img src="/images3/${buildStamp}/learnmore.gif"/></a></span>
                     &nbsp; or &nbsp;
                     <span class="dh-button"><a href="/who-are-you"><img src="/images3/${buildStamp}/login.gif"/></a></span>
-               </div> 
-           </div>        
+                </div>
+            </div>
+            <div id="dhMugshotExample">
+                <dh:png src="/images3/${buildStamp}/lucie.png" style="width: 409; height: 221; border: none;"/>
+            </div>     
+            </div>        
 		</dht3:shinyBox>
 		<div class="dh-main-people">
             <div class="dh-header">Active People</div>
