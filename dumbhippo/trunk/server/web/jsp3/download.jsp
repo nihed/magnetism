@@ -106,43 +106,12 @@
 			</c:choose>			
 			<div class="dh-download-subheader">Here's what you can do with the Mugshot download...</div>
 		</div>
-		<table class="dh-box-grey1 dh-download-section" cellspacing="0" cellpadding="0">
-			<tr>
-			<td valign="top" class="dh-download-section-icon-area"><img src="/images3/${buildStamp}/webswarm63x50.png"/></td>
-			<td class="dh-download-section-details-area"><div class="dh-download-section-header">Use <a class="dh-download-product" href="/links-learnmore">Web Swarm</a> to share and chat about cool links with friends.</div>
-			<div class="dh-download-section-description">
-			Stay up to date on web trends, and save your favorite sites.  You and friends can share what you think is interesting online.  See
-			how much interest sites are getting in real time.  Nothing to clog up your email inbox, and no worries about who's using what kind of IM.
-			</div>
-			<br/>
-			<div><div class="dh-download-section-subheader">The Mugshot download lets you...</div>
-				<ul class="dh-download-section-list">
-					<li>Share web pages with lists of friends instantly</li>
-					<li>Get notifications when friends share new content or when RSS feeds are updated</li>
-					<li>See who is checking out the pages you share, and chat with them</li>
-					<li>Join Groups that suit your interests, and get notified about new activity</li>
-				</ul>
-				<a class="dh-download-learnmore dh-underlined-link" href="/links-learnmore">Learn more</a>				
-			</td>
-			</tr>
-		</table>
-		<table class="dh-box-grey1 dh-download-section" cellspacing="0" cellpadding="0">
-			<tr>
-			<td valign="top" class="dh-download-section-icon-area"><img src="/images3/${buildStamp}/musicradar46x60.png"/></td>
-			<td class="dh-download-section-details-area"><div class="dh-download-section-header">Display <a class="dh-download-product" href="/music-learnmore">Music Radar</a> on your MySpace, LiveJournal, or blog page.</div>
-			<div class="dh-download-section-description">
-			Show off your iTunes, Rhapsody, or Yahoo! Music Player playlist.  See what your friends are listening to and explore new music.
-			When someone clicks on your Music Radar, they'll be taken to your Mugshot page to see more about you and your tastes.</div>
-			<br/>
-			<div><div class="dh-download-section-subheader">The Mugshot download lets you...</div>
-				<ul class="dh-download-section-list">
-					<li>Create and customize your own Music Radar to display on MySpace, LiveJournal, or other blog site</li>
-					<li>Display your music playlists as you're listening</li>
-				</ul>
-				<a class="dh-download-learnmore dh-underlined-link" href="/music-learnmore">Learn more</a>				
-			</td>
-			</tr>
-		</table>
+		<dht3:webSwarmLearnMore>
+			<a class="dh-download-learnmore dh-underlined-link" href="/links-learnmore">Learn more</a>		
+		</dht3:webSwarmLearnMore>
+		<dht3:radarLearnMore>
+			<a class="dh-download-learnmore dh-underlined-link" href="/radar-learnmore">Learn more</a>	
+		</dht3:radarLearnMore>
 		<dht3:stackerLearnMore>
 			<a class="dh-download-learnmore dh-underlined-link" href="/stacker-learnmore">Learn more</a>
 		</dht3:stackerLearnMore>

@@ -194,10 +194,10 @@
 				</dht:formTableRow>
 			</dht:formTable>
 			<dht:zoneBoxSeparator/>
-			<dht:zoneBoxTitle>FEATURE CONTROLS</dht:zoneBoxTitle>
-			<dht:zoneBoxSubtitle>Enable or disable Mugshot features.</dht:zoneBoxSubtitle>
+			<dht:zoneBoxTitle>MUSIC RADAR</dht:zoneBoxTitle>
+			<dht:zoneBoxSubtitle>Control the Mugshot Music Radar feature.</dht:zoneBoxSubtitle>
 				<dht:formTable>
-					<dht:formTableRow label="Music Radar">
+					<dht:formTableRow label="Music Sharing">
 					<c:choose>
 					<c:when test="${signin.musicSharingEnabled}">
 						<input type="radio" id="dhMusicOn" name="dhMusicEmbedEnabled" checked="true" onclick="dh.actions.setMusicSharingEnabled(true);"> <label for="dhMusicOn">On</label>
