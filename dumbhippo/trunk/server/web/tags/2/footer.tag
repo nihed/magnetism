@@ -1,6 +1,6 @@
 <%@ taglib uri="/jsp/dumbhippo.tld" prefix="dh" %>
 <div id="dhPageFooter">
-	<table cellspacing="0" cellpadding="0">
+	<table cellspacing="0" cellpadding="0" width="100%">
 	<tr id="dhPageFooterTopRow" class="dh-page-footer-text">
 	<td align="left" ><dh:aRedHatSomething/></td>
 	<td rowspan="2" width="20px">&nbsp;</td>
