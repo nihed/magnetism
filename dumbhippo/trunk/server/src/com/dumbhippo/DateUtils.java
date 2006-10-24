@@ -4,6 +4,12 @@ import java.util.Date;
 
 public class DateUtils {
 	public static String formatTimeAgo(Date timestamp) {
+		// We might want to suppress more of the surrounding text at times
+		// for unknown timestamps (0/-1) but displaying nothing is better
+		// than displaying "36 years ago" or "at an unknown time"
+		if (timestamp.getTime() <= 0)
+			return "";
+		
 		Date now = new Date();
 
 		long deltaSeconds = (now.getTime() - timestamp.getTime()) / 1000;

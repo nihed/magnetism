@@ -30,6 +30,8 @@ struct _HippoCanvasBlock {
     HippoActions *actions;
     HippoCanvasBox  *close_controls_parent;
     HippoCanvasItem *close_controls;    
+    HippoCanvasBox *age_parent;
+    HippoCanvasItem *age_separator_item;
     HippoCanvasItem *age_item;
     HippoCanvasItem *heading_text_item;
     HippoCanvasItem *title_link_item;

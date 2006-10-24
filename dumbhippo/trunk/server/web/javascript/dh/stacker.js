@@ -74,6 +74,9 @@ dh.stacker.kindHeadings[dh.stacker.Kind.GROUP_MEMBER] = "Group Members";
 dh.stacker.kindHeadings[dh.stacker.Kind.EXTERNAL_ACCOUNT_UPDATE] = "Friend Update";
 
 dh.stacker.formatTimeAgo = function(timestamp) {
+	if (timestamp <= 0)
+		return "";
+
 	var now = dh.stacker.getInstance().getServerTime();
 	var then = timestamp;
 	

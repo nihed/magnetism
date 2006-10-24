@@ -1,4 +1,6 @@
 /* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
+#include <string.h>
+
 #include "hippo-common-internal.h"
 #include "hippo-canvas-block.h"
 #include "hippo-canvas-block-post.h"
@@ -162,7 +164,11 @@ update_time(HippoCanvasBlock *canvas_block)
     server_time_now = hippo_current_time_ms() + hippo_actions_get_server_time_offset(canvas_block->actions);
     
     when = hippo_format_time_ago(server_time_now / 1000, hippo_block_get_timestamp(canvas_block->block) / 1000);
-    
+
+    hippo_canvas_box_set_child_visible(canvas_block->age_parent,
+                                       canvas_block->age_separator_item,
+                                       strcmp(when, "") != 0);
+
     g_object_set(G_OBJECT(canvas_block->age_item),
                  "text", when,
                  NULL);
@@ -445,13 +451,14 @@ hippo_canvas_block_constructor (GType                  type,
                         "color", HIPPO_CANVAS_BLOCK_GRAY_TEXT_COLOR,
                        NULL);
     hippo_canvas_box_append(box, HIPPO_CANVAS_ITEM(box2), HIPPO_PACK_EXPAND);
-    
+
     box3 = g_object_new(HIPPO_TYPE_CANVAS_BOX,
                         "font", "Italic 12px",
                         "orientation", HIPPO_ORIENTATION_HORIZONTAL,
                         "xalign", HIPPO_ALIGNMENT_FILL,
                         "yalign", HIPPO_ALIGNMENT_START,
                         NULL);
+    
     hippo_canvas_box_append(box2, HIPPO_CANVAS_ITEM(box3), HIPPO_PACK_EXPAND);
     
     block->name_item = g_object_new(HIPPO_TYPE_CANVAS_ENTITY_NAME,
@@ -473,6 +480,8 @@ hippo_canvas_block_constructor (GType                  type,
                        "xalign", HIPPO_ALIGNMENT_END,
                        "yalign", HIPPO_ALIGNMENT_START,                        
                        NULL);
+    block->age_parent = box3;
+    
     hippo_canvas_box_append(box2, HIPPO_CANVAS_ITEM(box3), 0);
     
     item = g_object_new(HIPPO_TYPE_CANVAS_LINK,
@@ -485,10 +494,10 @@ hippo_canvas_block_constructor (GType                  type,
 
     g_signal_connect(G_OBJECT(item), "activated", G_CALLBACK(on_hush_activated), block);
     
-    item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
-                        "text", " | ",
-                        NULL);
-    hippo_canvas_box_append(box3, item, HIPPO_PACK_END);
+    block->age_separator_item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
+                                             "text", " | ",
+                                             NULL);
+    hippo_canvas_box_append(box3, block->age_separator_item, HIPPO_PACK_END);
     
     block->age_item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
                                    NULL);

@@ -1071,6 +1071,9 @@ hippo_format_time_ago(GTime now,
     double delta_hours;
     double delta_weeks;
     double delta_years;
+
+    if (then <= 0)
+        return g_strdup("");
     
     if (delta < 0)
         return g_strdup("the future");
