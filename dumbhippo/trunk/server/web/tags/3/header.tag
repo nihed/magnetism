@@ -73,6 +73,7 @@
 						<a class="dh-underlined-link" href="/active-groups">Active Groups</a> | 
 					</c:otherwise>
 				</c:choose>
+				<a class="dh-underlined-link" href="/features">Features</a> |				
 				<a class="dh-underlined-link" href="http://blog.mugshot.org/?page_id=245a">Help</a>
 			</div>	
 		</div>  
