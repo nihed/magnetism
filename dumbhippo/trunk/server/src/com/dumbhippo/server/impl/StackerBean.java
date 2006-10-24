@@ -754,13 +754,13 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		case ACTIVE:
 		case FOLLOWER:
 		case REMOVED:
-		case INVITED:			
+		case INVITED:
+		case INVITED_TO_FOLLOW:			
 			AccountClaim a = member.getMember().getAccountClaim();
 			if (a != null) {
 				stack(BlockType.GROUP_MEMBER, member.getGroup().getGuid(), a.getOwner().getGuid(), activity, a.getOwner().getGuid());
 			}
 			break;
-		case INVITED_TO_FOLLOW:
 		case NONMEMBER:
 			// moves to these states don't create a new timestamp
 			break;

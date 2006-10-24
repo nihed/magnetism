@@ -294,7 +294,7 @@ update_member_and_status(HippoCanvasBlockGroupMember *canvas_group_member,
             title = g_strdup_printf("%s left the group", name);
             break;
         case HIPPO_MEMBERSHIP_STATUS_INVITED:
-            title = g_strdup_printf("%s invited to the group", name);
+            title = g_strdup_printf("%s is invited to the group", name);
             break;
         case HIPPO_MEMBERSHIP_STATUS_ACTIVE:
             title = g_strdup_printf("%s is a new member", name);
