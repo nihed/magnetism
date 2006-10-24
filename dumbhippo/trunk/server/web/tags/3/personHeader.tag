@@ -47,15 +47,16 @@
 								<span class="dh-person-header-name"><a href="${who.homeUrl}"><c:out value="${who.name}"/></a>'s Mugshot</span>
 							</c:otherwise>
 						</c:choose>
-						<c:choose>
-							<c:when test="${who.viewOfSelf}">
-								<span class="dh-person-header-description">What I'm doing online</span>							
-							</c:when>
-							<c:otherwise>
-								<span class="dh-person-header-description">What <c:out value="${who.name}"/> is doing online</span>							
-							</c:otherwise>
-						</c:choose>
-							
+						<c:if test="${!embedVersion}">
+						    <c:choose>
+							    <c:when test="${who.viewOfSelf}">
+								    <span class="dh-person-header-description">What I'm doing online</span>							
+							    </c:when>
+							    <c:otherwise>
+								    <span class="dh-person-header-description">What <c:out value="${who.name}"/> is doing online</span>							
+							    </c:otherwise>
+						    </c:choose>
+						</c:if>	
 						<div class="dh-person-header-controls"><jsp:doBody/></div>
 						<c:if test="${!embedVersion && who.liveUser != null}">
 						    <div class="dh-person-header-stats">

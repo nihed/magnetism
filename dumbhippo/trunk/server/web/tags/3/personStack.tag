@@ -22,7 +22,7 @@
 </c:if> 
 
 <dht3:shinyBox color="grey" width="${width}" floatSide="${floatSide}">				
-	<dht3:personHeader who="${contact}" linkifyName="false" embedVersion="${embedVersion}" shortVersion="${pageable.position > 0}">
+	<dht3:personHeader who="${contact}" linkifyName="${embedVersion}" embedVersion="${embedVersion}" shortVersion="${pageable.position > 0}">
 	<c:choose>
 		<c:when test="${signin.valid}">
             <c:choose>
