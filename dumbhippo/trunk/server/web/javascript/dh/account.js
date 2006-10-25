@@ -255,8 +255,8 @@ dhAccountInit = function() {
 		"Your bio has been saved.");
 	}
 	
-	dh.account.musicbioEntryNode = document.getElementById('dhMusicBioEntry');
-	dh.account.musicbioEntry = new dh.textinput.Entry(dh.account.musicbioEntryNode, "If you listen to Coldplay, I want to meet you.", dh.formtable.currentValues['dhMusicBioEntry']);
+//	dh.account.musicbioEntryNode = document.getElementById('dhMusicBioEntry');
+//	dh.account.musicbioEntry = new dh.textinput.Entry(dh.account.musicbioEntryNode, "If you listen to Coldplay, I want to meet you.", dh.formtable.currentValues['dhMusicBioEntry']);
  
  	dh.formtable.undoValues['dhMusicBioEntry'] = dh.account.musicbioEntry.getValue();
 	dh.account.musicbioEntry.onValueChanged = function(value) {
