@@ -20,6 +20,9 @@ import com.dumbhippo.services.YahooAlbumData;
 		})
 public class CachedYahooArtistAlbumData extends AbstractYahooAlbumData {
 
+	// Observationally,  the maximum length we've seen for Yahoo ID's is 35
+	private static final int MAX_YAHOO_ID_LENGTH = 64;
+	
 	private static final long serialVersionUID = 1L;
 
 	
@@ -34,7 +37,7 @@ public class CachedYahooArtistAlbumData extends AbstractYahooAlbumData {
 	// However the global unique constraint on albumId,artistId covers it 
 	// anyhow.
 	// This is nullable for when we're storing a negative result.
-	@Column(nullable=true, unique=false)
+	@Column(nullable=true, unique=false, length=MAX_YAHOO_ID_LENGTH)
 	public String getAlbumId() {
 		return internalGetAlbumId();
 	}
@@ -44,7 +47,7 @@ public class CachedYahooArtistAlbumData extends AbstractYahooAlbumData {
 	}
 	
 	// this isn't unique on its own, since we're storing a list of albums for an artist
-	@Column(nullable=false, unique=false)
+	@Column(nullable=false, unique=false, length=MAX_YAHOO_ID_LENGTH)
 	public String getArtistId() {
 		return internalGetArtistId();
 	}
