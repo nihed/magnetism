@@ -59,5 +59,6 @@
 		        No invitations to extend to friends
 		    </c:otherwise>  	
 		</c:choose>    	    
+		<dht:actionLink href="/active-people" title="Browse recently active people">Browse active people</dht:actionLink>
 	</dht:sidebarBox>
 </c:if>
