@@ -420,3 +420,15 @@ div.dh-notification {
 .dh-person-header-next-to-image .dh-favicons {
     margin-top:     5px;
 }
+
+.dh-download-header-area {
+    margin-top:     5px;
+}
+
+.dh-download-buttons {
+	margin-bottom:			10px;
+}
+
+.dh-download-buttons img, .dh-download-buttons-or {
+	margin-right:			10px;
+}

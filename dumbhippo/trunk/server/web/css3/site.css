@@ -435,3 +435,8 @@ div.dh-async-action-link-complete {
 .dh-stacker-block-one-line .dh-stacker-block-title-type, .dh-stacker-block-one-line .dh-stacker-block-header-description {
     display:            none;
 }
+
+.dh-download-buttons-or {
+	font-size:          14px;
+	font-weight:        bold;
+}

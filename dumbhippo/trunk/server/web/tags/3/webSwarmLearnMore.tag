@@ -3,9 +3,15 @@
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 <%@ taglib tagdir="/WEB-INF/tags/3" prefix="dht3" %>
 
-<table class="dh-box-grey1 dh-download-section" cellspacing="0" cellpadding="0">
+<%@ attribute name="backgroundColor" required="false" type="java.lang.String" %>
+
+<c:if test="${empty backgroundColor}">
+	<c:set var="backgroundColor" value="grey1"/>
+</c:if> 
+
+<table class="dh-box-${backgroundColor} dh-download-section" cellspacing="0" cellpadding="0">
 	<tr>
-	<td valign="top" class="dh-download-section-icon-area"><img src="/images3/${buildStamp}/webswarm63x50.png"/></td>
+	<td valign="top" class="dh-download-section-icon-area"><dh:png src="/images3/${buildStamp}/webswarm63x50.png" style="width: 63; height: 50;"/></td>
 	<td class="dh-download-section-details-area"><div class="dh-download-section-header">Use <a class="dh-download-product" href="/links-learnmore">Web Swarm</a> to share and chat about cool links with friends.</div>
 	<div class="dh-download-section-description">
 	Stay up to date on web trends, and save your favorite sites.  You and friends can share what you think is interesting online.  See
