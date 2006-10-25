@@ -110,7 +110,7 @@ hippo_pixbuf_cache_load(HippoPixbufCache          *cache,
                         HippoPixbufCacheLoadFunc   func,
                         void                      *data)
 {
-    g_debug("pixbuf load '%s'", url);
+    /* g_debug("pixbuf load '%s'", url); */
     hippo_object_cache_load(HIPPO_OBJECT_CACHE(cache),
                             url,
                             (HippoObjectCacheLoadFunc) func,

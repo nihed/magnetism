@@ -398,8 +398,9 @@ strong_ref_on_load(GObject   *cached_obj,
     HippoObjectCachePrivate *priv;
     CacheEntry *entry = data;
 
-    g_debug("strong_ref_on_load cache=%p obj=%p in_strong_cache=%d",
-            entry->cache, entry->cached_obj, entry->in_strong_cache);
+    
+    /* g_debug("strong_ref_on_load cache=%p obj=%p in_strong_cache=%d",
+       entry->cache, entry->cached_obj, entry->in_strong_cache); */
     
     if (entry->cache == NULL) {
         /* cache got nuked with http request pending */
@@ -473,7 +474,7 @@ hippo_object_cache_load(HippoObjectCache           *cache,
     }
     g_assert(entry != NULL);
 
-    hippo_object_cache_debug_dump(cache);
+    /* hippo_object_cache_debug_dump(cache); */
     
     /* don't check entry->in_strong_cache here, so each load attempt
      * has its own chance to end up in the strong cache
