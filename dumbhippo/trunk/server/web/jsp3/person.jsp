@@ -32,6 +32,14 @@
 	<dht3:shinyBox color="grey">
 	    <div class="dh-person-stacker-header">
 		    <span class="dh-person-header-name"><c:out value="${person.viewedPerson.name}"/>'s Stacker</span>
+			    <c:choose>
+				    <c:when test="${person.viewedPerson.viewOfSelf}">
+					    <span class="dh-person-header-description">What I'm watching on the web</span>							
+				    </c:when>
+				    <c:otherwise>
+					    <span class="dh-person-header-description">What <c:out value="${person.viewedPerson.name}"/> is watching on the web</span>							
+				    </c:otherwise>
+			    </c:choose>
 		</div>    
 		<dht3:stacker stackOrder="2" stackType="dhStacker" pageable="${person.pageableStack}" showFrom="true"/>
 		<c:if test="${person.pageableMugshot.position != 0}">

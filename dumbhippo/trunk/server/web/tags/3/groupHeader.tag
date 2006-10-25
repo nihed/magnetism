@@ -26,7 +26,9 @@
 				<td>
 					<div class="dh-person-header-next-to-image">
 						<span class="dh-person-header-name"><a href="${who.homeUrl}"><c:out value="${who.name}"/></a></span>
-							
+						<c:if test="${!embedVersion}">
+							<span class="dh-person-header-description">What the <c:out value="${who.name}"/> group members are doing on the web</span>
+						</c:if>								
 						<div class="dh-person-header-controls"><jsp:doBody/></div>
 						<div class="dh-person-header-stats">
 							<c:if test="${who.liveGroup != null}">
