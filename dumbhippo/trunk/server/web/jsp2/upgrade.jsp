@@ -26,6 +26,8 @@
 			<p>Version 1.1.22</p>
 			<ul>
 				<li>New "stacker" user interface.</li>			
+				<li>Improved "stacker" notifications.</li>
+				<li>Firefox browser integration for chat and presence.</li>			
 			</ul>
 		</c:when>
 		<c:otherwise>
@@ -33,6 +35,7 @@
 			<p>Version 1.1.73</p>
 			<ul>
 				<li>New "stacker" user interface.</li>
+				<li>Improved "stacker" notifications.</li>
 			</ul>
 		</c:otherwise>
 	</c:choose>
