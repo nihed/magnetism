@@ -142,7 +142,7 @@ hippo_image_cache_load(HippoImageCache          *cache,
                        HippoImageCacheLoadFunc   func,
                        void                     *data)
 {
-    /* g_debug("image cache load '%s'", url); */
+    g_debug("image cache load '%s'", url);
     hippo_object_cache_load(HIPPO_OBJECT_CACHE(cache),
                             url,
                             (HippoObjectCacheLoadFunc) func,

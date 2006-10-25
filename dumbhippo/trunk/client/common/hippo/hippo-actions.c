@@ -156,6 +156,8 @@ image_set_on_canvas_item_func(HippoSurface *surface,
 {
     HippoCanvasItem *item = HIPPO_CANVAS_ITEM(data);
 
+    g_debug("Setting image on canvas item, surface=%p", surface);
+    
     if (surface != NULL) {
         g_object_set(G_OBJECT(item),
                      "image",
@@ -193,6 +195,8 @@ hippo_actions_load_entity_photo_async(HippoActions    *actions,
     if (actions->entity_photo_cache == NULL) {
         actions->entity_photo_cache = hippo_image_cache_new(get_platform(actions));
     }
+
+    hippo_object_cache_debug_dump(HIPPO_OBJECT_CACHE(actions->entity_photo_cache));
     
     absolute = hippo_connection_make_absolute_url(get_connection(actions),
                                                   sized);

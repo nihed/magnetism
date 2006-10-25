@@ -398,6 +398,9 @@ strong_ref_on_load(GObject   *cached_obj,
     HippoObjectCachePrivate *priv;
     CacheEntry *entry = data;
 
+    g_debug("strong_ref_on_load cache=%p obj=%p in_strong_cache=%d",
+            entry->cache, entry->cached_obj, entry->in_strong_cache);
+    
     if (entry->cache == NULL) {
         /* cache got nuked with http request pending */
         cache_entry_unref(entry);
@@ -446,6 +449,9 @@ strong_ref_on_load(GObject   *cached_obj,
             old_strong->in_strong_cache = FALSE;
             g_object_unref(old_strong->cached_obj); /* old_strong->cached_obj may be set to NULL here */
         }
+
+        if (entry->cache)
+            hippo_object_cache_debug_dump(entry->cache);
     }
 
     cache_entry_unref(entry);
@@ -467,6 +473,8 @@ hippo_object_cache_load(HippoObjectCache           *cache,
     }
     g_assert(entry != NULL);
 
+    hippo_object_cache_debug_dump(cache);
+    
     /* don't check entry->in_strong_cache here, so each load attempt
      * has its own chance to end up in the strong cache
      */
@@ -480,4 +488,27 @@ hippo_object_cache_load(HippoObjectCache           *cache,
         cache_entry_load(entry, strong_ref_on_load, entry);
     }
     cache_entry_load(entry, func, data);
+}
+
+static void
+dump_foreach(void *key, void *value, void *data)
+{
+    CacheEntry *entry = value;
+
+    g_debug("%s '%s' obj=%p %s",
+            entry->in_strong_cache ? "STRONG" : "WEAK  ",
+            entry->url,
+            entry->cached_obj,
+            entry->cached_obj ?
+            g_type_name_from_instance((GTypeInstance*) entry->cached_obj) : "");
+}
+
+void
+hippo_object_cache_debug_dump (HippoObjectCache *cache)
+{
+    HippoObjectCachePrivate *priv = HIPPO_OBJECT_CACHE_GET_PRIVATE(cache);
+    
+    g_hash_table_foreach(priv->weak_cache,
+                         dump_foreach,
+                         NULL);
 }

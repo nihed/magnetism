@@ -50,6 +50,8 @@ void             hippo_object_cache_load                   (HippoObjectCache    
                                                             HippoObjectCacheLoadFunc   func,
                                                             void                      *data);
 
+void hippo_object_cache_debug_dump (HippoObjectCache *cache);
+
 G_END_DECLS
 
 #endif /* __HIPPO_OBJECT_CACHE_H__ */
