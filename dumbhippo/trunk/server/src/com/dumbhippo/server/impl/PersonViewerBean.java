@@ -228,6 +228,17 @@ public class PersonViewerBean implements PersonViewer {
 				}
 				if (pv.getExternalAccounts() == null)
 					throw new IllegalStateException("Somehow set null external accounts on PersonView");
+			} else if (e == PersonViewExtra.CONTACT_STATUS) {
+				boolean isContact = false;
+				
+				if (pv.getContact() != null && 
+					viewpoint.isOfUser(pv.getContact().getAccount().getOwner())) {
+					isContact = true;
+				} else if (viewpoint instanceof UserViewpoint && pv.getUser() != null) {
+					isContact = identitySpider.isContact(viewpoint, ((UserViewpoint)viewpoint).getViewer(), pv.getUser()); 
+				}
+				
+				pv.setIsContactOfViewer(isContact);				
 			} else {
 				EmailResource email = null;
 				AimResource aim = null;

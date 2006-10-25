@@ -1174,7 +1174,9 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	         		logger.error("NotFoundException when getting what must be a public block", e);
 	         	}
          	}
-         	PersonView personView = personViewer.getPersonView(viewpoint, user, PersonViewExtra.EXTERNAL_ACCOUNTS);
+         	PersonView personView = personViewer.getPersonView(viewpoint, user, 
+         													   PersonViewExtra.EXTERNAL_ACCOUNTS,
+         													   PersonViewExtra.CONTACT_STATUS);
             mugshots.add(new PersonMugshotView(personView, blocks));      	
 		}
 		

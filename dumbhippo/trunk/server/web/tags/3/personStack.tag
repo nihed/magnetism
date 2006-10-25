@@ -3,7 +3,7 @@
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 <%@ taglib tagdir="/WEB-INF/tags/3" prefix="dht3" %>
 
-<%@ attribute name="contact" required="true" type="com.dumbhippo.server.views.PersonView" %>
+<%@ attribute name="person" required="true" type="com.dumbhippo.server.views.PersonView" %>
 <%@ attribute name="stackOrder" required="true" type="java.lang.Integer" %>
 <%@ attribute name="stackType" required="false" type="java.lang.String" %>
 <%@ attribute name="pageable" required="false" type="com.dumbhippo.server.Pageable" %>
@@ -22,20 +22,20 @@
 </c:if> 
 
 <dht3:shinyBox color="grey" width="${width}" floatSide="${floatSide}">				
-	<dht3:personHeader who="${contact}" linkifyName="${embedVersion}" embedVersion="${embedVersion}" shortVersion="${pageable.position > 0}">
+	<dht3:personHeader who="${person}" linkifyName="${embedVersion}" embedVersion="${embedVersion}" shortVersion="${pageable.position > 0}">
 	<c:choose>
 		<c:when test="${signin.valid}">
             <c:choose>
-        	    <c:when test="${contact.viewOfSelf}">
+        	    <c:when test="${person.viewOfSelf}">
 				    <a href="/account">Edit my Mugshot account</a>        		
         	    </c:when>
         	    <c:otherwise>
 	        	    <c:choose>
-  			            <c:when test="${contact.viewerIsContact != null}">
-  				            <dht:actionLink oneLine="true" href="javascript:dh.actions.removeContact('${contact.viewPersonPageId}')" title="Remove this person from your friends list">Remove from friends</dht:actionLink>
+  			            <c:when test="${person.contactOfViewer}">
+  				            <dht:actionLink oneLine="true" href="javascript:dh.actions.removeContact('${person.viewPersonPageId}')" title="Remove this person from your friends list">Remove from friends</dht:actionLink>
 	   	                </c:when>
 	        	        <c:otherwise>
-					        <dht:actionLink oneLine="true" href="javascript:dh.actions.addContact('${contact.viewPersonPageId}')" title="Add this person to your friends list">Add to friends</dht:actionLink>
+					        <dht:actionLink oneLine="true" href="javascript:dh.actions.addContact('${person.viewPersonPageId}')" title="Add this person to your friends list">Add to friends</dht:actionLink>
 				        </c:otherwise>
 				    </c:choose>
 				    | <a href="/">Invite to a group</a>
@@ -43,7 +43,7 @@
 		    </c:choose>
 		</c:when>
 		<c:otherwise>
-		    <a href="/person?who=${contact.viewPersonPageId}">Mugshot page</a>
+		    <a href="${person.homeUrl}">Mugshot page</a>
 		</c:otherwise>
 	</c:choose>    		    
 	</dht3:personHeader>

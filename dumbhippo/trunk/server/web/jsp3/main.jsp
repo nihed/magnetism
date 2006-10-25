@@ -40,7 +40,7 @@
 		<div class="dh-main-people">
             <div class="dh-header">Active People</div>
             <c:forEach items="${main.recentUserActivity.list}" var="personMugshot" varStatus="status">
-                <dht3:personStack contact="${personMugshot.personView}" stackOrder="${status.count}" blocks="${personMugshot.blocks}" showFrom="false" embedVersion="true"/>
+                <dht3:personStack person="${personMugshot.personView}" stackOrder="${status.count}" blocks="${personMugshot.blocks}" showFrom="false" embedVersion="true"/>
             </c:forEach>
         </div>
         <div class="dh-main-groups">            

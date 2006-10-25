@@ -141,10 +141,14 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 	public PersonView getViewedPerson() {
 		if (viewedPerson == null) {
 			if (getNeedExternalAccounts())
-				viewedPerson = personViewer.getPersonView(getSignin().getViewpoint(), getViewedUser(), PersonViewExtra.ALL_RESOURCES,
+				viewedPerson = personViewer.getPersonView(getSignin().getViewpoint(), getViewedUser(), 
+						PersonViewExtra.ALL_RESOURCES,
+						PersonViewExtra.CONTACT_STATUS,
 						PersonViewExtra.EXTERNAL_ACCOUNTS);
 			else
-				viewedPerson = personViewer.getPersonView(getSignin().getViewpoint(), getViewedUser(), PersonViewExtra.ALL_RESOURCES);
+				viewedPerson = personViewer.getPersonView(getSignin().getViewpoint(), getViewedUser(), 
+						PersonViewExtra.ALL_RESOURCES, 
+						PersonViewExtra.CONTACT_STATUS);
 		}
 		
 		return viewedPerson;

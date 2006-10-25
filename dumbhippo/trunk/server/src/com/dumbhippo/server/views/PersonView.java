@@ -59,6 +59,7 @@ public class PersonView extends EntityView {
 	private String musicBioAsHtmlCached;
 	private boolean viewOfSelf;
 	private boolean online;
+	private boolean isContactOfViewer;
 	private Set<ExternalAccount> externalAccounts;
 	private List<TrackView> trackHistory;
 	private String aimPresenceKey;
@@ -937,5 +938,16 @@ public class PersonView extends EntityView {
 	
 	public boolean getViewerIsContact() {
 		return viewerIsContact;
+	}
+
+	public void setIsContactOfViewer(boolean isContact) {
+		this.isContactOfViewer = isContact;
+		addExtras(EnumSet.of(PersonViewExtra.CONTACT_STATUS));
+	}
+	
+	public boolean isContactOfViewer() {
+		if (!hasExtra(PersonViewExtra.CONTACT_STATUS))
+			logger.warn("isContactofViewer called on a PersonView without the CONTACT_STATUS extra");
+		return isContactOfViewer;
 	}
 }
