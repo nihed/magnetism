@@ -34,7 +34,8 @@
 			'dhMusicBioEntry' : <dh:jsString value="${signin.user.account.musicBio}"/>,
 			'dhRhapsodyListeningHistoryEntry' : <dh:jsString value="${account.rhapsodyListeningHistoryFeedUrl}"/>,
 			'dhWebsiteEntry' : <dh:jsString value="${account.websiteUrl}"/>,
-			'dhBlogEntry' : <dh:jsString value="${account.blogUrl}"/>
+			'dhBlogEntry' : <dh:jsString value="${account.blogUrl}"/>,
+			'dhDeliciousEntry' : <dh:jsString value="${account.deliciousName}"/>
 		};
 		dh.account.userId = <dh:jsString value="${signin.user.id}"/>
 		dh.account.reloadPhoto = function() {
@@ -47,7 +48,9 @@
 		dh.account.initialFlickrEmail = <dh:jsString value="${account.flickrEmail}"/>;
 		dh.account.initialFlickrHateQuip = <dh:jsString value="${account.flickrHateQuip}"/>;
 		dh.account.initialLinkedInName = <dh:jsString value="${account.linkedInName}"/>;
-		dh.account.initialLinkedInHateQuip = <dh:jsString value="${account.linkedInHateQuip}"/>;	
+		dh.account.initialLinkedInHateQuip = <dh:jsString value="${account.linkedInHateQuip}"/>;
+		dh.account.initialDeliciousName = <dh:jsString value="${account.deliciousName}"/>;
+		dh.account.initialDeliciousHateQuip = <dh:jsString value="${account.deliciousHateQuip}"/>;
 	</script>
 </head>
 <dht:twoColumnPage neverShowSidebar="true">
@@ -59,7 +62,7 @@
 				<dht:zoneBoxSubtitle>This information will be visible on your <a href="/person?who=${signin.user.id}">profile page</a>.</dht:zoneBoxSubtitle>
 				<dht:formTable>
 				<dht:formTableRowStatus controlId='dhUsernameEntry'></dht:formTableRowStatus>
-				<dht:formTableRow label="User name">
+				<dht:formTableRow label="My Name">
 					<dht:textInput id="dhUsernameEntry" extraClass="dh-username-input"/>
 				</dht:formTableRow>
 				<dht:formTableRowStatus controlId='dhBioEntry'></dht:formTableRowStatus>
@@ -73,17 +76,14 @@
 						<dht:textInput id="dhBioEntry" multiline="true"/>
 					</div>
 				</dht:formTableRow>
+				<!-- music bio currently disabled
 				<dht:formTableRowStatus controlId='dhMusicBioEntry'></dht:formTableRowStatus>
 				<dht:formTableRow label="Your music bio">
-				    <%--
-					<div>
-						<input type="button" value="Generate a random music bio!" onclick="dh.account.generateRandomBio();"/>
-					</div>
-					--%>
 					<div>
 						<dht:textInput id="dhMusicBioEntry" multiline="true"/>
 					</div>
 				</dht:formTableRow>
+				-->
 				<dht:formTableRowStatus controlId='dhPictureEntry'></dht:formTableRowStatus>
 				<dht:formTableRow label="Picture">
 					<div id="dhHeadshotImageContainer" class="dh-image">
@@ -117,6 +117,9 @@
 				</dht:formTableRow>
 				<dht:formTableRow label="YouTube name">
 					<dht:loveHateEntry baseId="dhYouTube" mode="${account.youTubeSentiment}"/>
+				</dht:formTableRow>
+				<dht:formTableRow label="del.icio.us name">
+					<dht:loveHateEntry baseId="dhDelicious" mode="${account.deliciousSentiment}"/>
 				</dht:formTableRow>
 				<dht:formTableRowStatus controlId='dhRhapsodyListeningHistoryEntry'></dht:formTableRowStatus>
 				<dht:formTableRow label="Rhapsody feed">
