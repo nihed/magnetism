@@ -302,9 +302,14 @@ int cache_select_url(request_rec *r, char *url)
  * Hardcode the handling of the user agent key to match what we do on
  * the Mugshot site. The main conditionalization we do in our returned
  * responses is that for IE5.5 and IE6 we use hacks to alpha-blend
- * PNGS. But we group browsers into three camps:
+ * PNGS. But to be a bit more flexible group browsers into three camps:
  *
- * 
+ *  Other browser (CSS standard hopefully)
+ *  MSIE 5.5/6
+ *  MSIE 7
+ *
+ *  MSIE older than 5.5 is hopeless, so we might as well throw it into
+ *  the "other" bucket.
  */
 const char *get_user_agent_key( request_rec *r )
 {
