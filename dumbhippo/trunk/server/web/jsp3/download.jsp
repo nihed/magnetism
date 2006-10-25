@@ -47,7 +47,7 @@
 					<c:when test="${signin.needsTermsOfUse}">
 			        	<div id="dhAcceptTermsBox">        
 					        <input type="checkbox" id="dhAcceptTerms" onclick="dh.download.updateDownload();">
-						                I accept the Mugshot <a href="javascript:window.open('/terms', 'dhTermsOfUse', 'menubar=no,scrollbars=yes,width=600,height=600');void(0);">terms and conditions</a>. (Required to continue.)
+						                <label for="dhAcceptTerms">I accept the Mugshot</label> <a href="javascript:window.open('/terms', 'dhTermsOfUse', 'menubar=no,scrollbars=yes,width=600,height=600');void(0);">terms and conditions</a>. (Required to continue.)
 					        </input>
 						</div>
 		            </c:when>    
