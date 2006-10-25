@@ -1032,7 +1032,8 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		    	break;
 	
 		    start = start + count;
-		    expectedHitFactor = blocks.size() / resultItemCount + 1;
+		    if (resultItemCount > 0)
+		    	expectedHitFactor = blocks.size() / resultItemCount + 1;
 		}
 		
 		List<BlockView> blockViewsToReturn;
