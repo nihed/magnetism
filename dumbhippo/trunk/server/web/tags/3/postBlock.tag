@@ -40,18 +40,7 @@
 			<dht3:blockTimeAgo block="${block}"/>
 			<dht3:blockHeaderControls blockId="${blockId}">
 				<c:if test="${signin.valid}">
-					<a href="javascript:dh.actions.postHistory('${block.postView.post.id}')">History</a>
-					<c:choose>
-						<c:when test="${block.postView.favorite}">
-							<c:if test="${favesMode != 'add-only'}">
-							 | <a href="javascript:dh.actions.setPostFavorite('${block.postView.post.id}', false);">Remove from Faves</a>
-							</c:if>
-						</c:when>
-						<c:otherwise>
-							| <a href="javascript:dh.actions.setPostFavorite('${block.postView.post.id}', true);">Add to Faves</a>
-						</c:otherwise>
-					</c:choose>
-				  | <jsp:element name="a">
+					<jsp:element name="a">
 				  	  <jsp:attribute name="href">javascript:dh.util.openShareLinkWindow(<dh:jsString value="${block.postView.post.url}"/>, <dh:jsString value="${block.postView.post.title}"/>);</jsp:attribute>
 				  	  <jsp:body>Share this</jsp:body>
 				  	</jsp:element>

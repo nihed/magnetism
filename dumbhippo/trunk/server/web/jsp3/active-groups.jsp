@@ -21,7 +21,7 @@
 	</dht3:pageSubHeader>
 	
 	<c:forEach items="${activeGroups.activeGroups.results}" var="group" varStatus="stackStatus">
-	    <dht3:groupStack who="${group.groupView}" stackOrder="${status.count}" blocks="${group.blocks}" showFrom="false"/>
+	    <dht3:groupStack who="${group.groupView}" stackOrder="${status.count}" blocks="${group.blocks}" showFrom="true"/>
 	</c:forEach>
     <dht:expandablePager pageable="${activeGroups.activeGroups}"/>
 </dht3:page>

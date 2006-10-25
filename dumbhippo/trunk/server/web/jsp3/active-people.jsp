@@ -25,7 +25,7 @@
 			<dht3:personHeader who="${person.personView}">
 				<%-- FIXME: Do we want to show add/remove as friend here? --%>
 			</dht3:personHeader>
-		    <dht3:stacker stackOrder="${stackStatus.count + 1}" stackType="dhMugshot" blocks="${person.blocks}" showFrom="false"/>
+		    <dht3:stacker stackOrder="${stackStatus.count + 1}" stackType="dhMugshot" blocks="${person.blocks}" showFrom="true"/>
 		</dht3:shinyBox>
 	</c:forEach>
     <dht:expandablePager pageable="${activePeople.activePeople}"/>
