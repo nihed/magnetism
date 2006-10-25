@@ -48,21 +48,27 @@
 <h3>1. What is Mugshot?</h3>
 
 <p>
-Mugshot is an open project to create a live social experience around
-entertainment.
+Mugshot is an open project to create live social experiences around entertainment.
 </p>
 
 <a name="2">
 <h3>2. What does it do?</h3>
    
 <p>
-Mugshot currently offers two activities:
+Mugshot offers several activities:
 </p>
 
 <ul>
+<li>Mugshot Page - Pull together activity from all your online accounts at one place on the web.</li>
 <li>Web Swarm - Share web links with individuals or groups in real time, and get live feedback when people visit those links</li>
 <li>Music Radar - Show off the music you listen to using services like iTunes, Rhapsody, Yahoo! Music, and others on your web site, blog or MySpace page</li>
+<li>Stacker - Keep track of what your friends are doing online, on the web or live on your desktop.</li>
+<li>Groups - Create public or private groups around shared interests.</li>
 </ul>
+
+<p>
+For more details, visit the Mugshot <a href="/features">features page</a>.
+</p>
 
 <p>
 Mugshot works with mainstream applications like iTunes, Rhapsody, Yahoo! Music Engine,
@@ -116,23 +122,11 @@ centered on people and their activities, not documents and files.
    
 <ul>
 <li>The Mugshot open source project site, including source code for the client and server, project information, blog, and more, at <a href="http://developer.mugshot.org">http://developer.mugshot.org</a></li>
-<li>A small scale, limited access user trial of the Mugshot service at <a href="http://mugshot.org">http://mugshot.org</a> </li>
+<li>An instance of the Mugshot service hosted at <a href="http://mugshot.org">http://mugshot.org</a> </li>
 </ul>
-
-<p>
-This is an early release, intended to open up the design and development
-process to the open source community at an early stage.
-</p>
-
 
 <a name="7">
 <h3>7. What's next?</h3>
-   
-<p>
-We are currently in the research and design phase for a set of
-features that center around creating a live social experience around
-TV and video. 
-</p>
 
 <p>
 As an open source project, Mugshot is open to participation from the 
@@ -140,13 +134,12 @@ community.  More information on design and development for future
 capabilities is available at: <a href="http://developer.mugshot.org">http://developer.mugshot.org</a>
 </p>
 
-
 <a name="8">
 <h3>8. How do I get involved?</h3>
    
 <ul>
 <li>Visit the developer site for information on how to participate in the open source design and development project: <a href="http://developer.mugshot.org">http://developer.mugshot.org</a></li>
-<li>Sign up at <a href="http://mugshot.org">http://mugshot.org</a> to be notified when public accounts are available </li>
+<li>Sign up at <a href="http://mugshot.org">http://mugshot.org</a> to be request an account </li>
 </ul>
 
 <a name="9">
@@ -252,7 +245,7 @@ Hat Enterprise Linux or Fedora Core distributions.
     
 <p>
 The Mugshot client software is currently available for Windows XP and
-Linux. The Mugshot web service also offers limited support for Apple
+Linux. The Mugshot web site also offers limited support for Apple
 OS X and other platforms.
 </p>
 
