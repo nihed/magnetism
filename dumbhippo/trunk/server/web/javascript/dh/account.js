@@ -258,12 +258,12 @@ dhAccountInit = function() {
 //	dh.account.musicbioEntryNode = document.getElementById('dhMusicBioEntry');
 //	dh.account.musicbioEntry = new dh.textinput.Entry(dh.account.musicbioEntryNode, "If you listen to Coldplay, I want to meet you.", dh.formtable.currentValues['dhMusicBioEntry']);
  
- 	dh.formtable.undoValues['dhMusicBioEntry'] = dh.account.musicbioEntry.getValue();
-	dh.account.musicbioEntry.onValueChanged = function(value) {
-		dh.formtable.onValueChanged(dh.account.musicbioEntry, 'setmusicbio', 'musicbio', value,
-		"Saving new music bio...",
-		"Your music bio has been saved.");
-	}
+// 	dh.formtable.undoValues['dhMusicBioEntry'] = dh.account.musicbioEntry.getValue();
+//	dh.account.musicbioEntry.onValueChanged = function(value) {
+//		dh.formtable.onValueChanged(dh.account.musicbioEntry, 'setmusicbio', 'musicbio', value,
+//		"Saving new music bio...",
+//		"Your music bio has been saved.");
+//	}
 
 	dh.account.rhapsodyListeningHistoryEntryNode = document.getElementById('dhRhapsodyListeningHistoryEntry');
 	dh.account.rhapsodyListeningHistoryEntry = new dh.textinput.Entry(dh.account.rhapsodyListeningHistoryEntryNode, "Rhapsody recent plays RSS URL", dh.formtable.currentValues['dhRhapsodyListeningHistoryEntry']);
