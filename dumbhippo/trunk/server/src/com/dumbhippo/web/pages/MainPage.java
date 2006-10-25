@@ -15,11 +15,11 @@ public class MainPage extends AbstractSigninOptionalPage {
 		static private final Logger logger = GlobalSetup.getLogger(MusicGlobalPage.class);
 		
 		private static final String[] MUGSHOTS = {
-			"arthur.png",
-			"lucie.png",
-			"moose.png",
-			"oliver.png",
-			"roni.png"
+			"arthur",
+			"lucie",
+			"moose",
+			"oliver",
+			"roni"
 		};
 		
 		protected Stacker stacker;

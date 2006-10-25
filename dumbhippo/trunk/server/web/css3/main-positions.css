@@ -20,11 +20,11 @@
 
 #dhMugshotExample {
     position:        relative;
-    width:           409px;    
+    width:           406px;    
     display:         block;
-    float:           right;
-    margin-top:      10px; 
-    bottom:          -18px; 
+    float:           left;
+    margin-bottom:   10px; 
+    bottom:          -19px; 
 }
 
 #dhMugshotIntro * {
