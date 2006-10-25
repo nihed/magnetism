@@ -104,7 +104,12 @@ public final class FeedScraper {
 						} else if (type.equals("application/atom+xml") && atomUrl == null) {
 							atomUrl = new URL(href);
 							if (!atomUrl.getProtocol().equals("http"))
-								atomUrl = null;							
+								atomUrl = null;					
+						} else if (type.equals("text/xml") && rssUrl == null) {
+							// uhh... assume it's rss I guess
+							rssUrl = new URL(href);
+							if (!rssUrl.getProtocol().equals("http"))
+								rssUrl = null;
 						}
 					} catch (MalformedURLException e) {
 						
