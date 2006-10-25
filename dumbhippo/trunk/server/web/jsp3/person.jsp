@@ -7,7 +7,7 @@
 
 <dht3:requirePersonBean/>
 
-<c:set var="pageName" value="Overview" scope="page"/>
+<c:set var="pageName" value="Home" scope="page"/>
 
 <head>
 	<title><c:out value="${person.viewedPerson.name}"/>'s ${pageName} - Mugshot</title>

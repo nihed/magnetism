@@ -30,11 +30,14 @@
 		    <dht3:blockHeaderDescription blockId="${blockId}">${block.postView.textAsHtml}</dht3:blockHeaderDescription>   
 		</dht3:blockHeaderLeft>
 		<dht3:blockHeaderRight blockId="${blockId}" from="${block.postView.poster}" showFrom="${showFrom}">
-			<c:choose>
-				<c:when test="${block.postView.livePost.totalViewerCount == 1}">1 view</c:when>
-				<c:otherwise>${block.postView.livePost.totalViewerCount} views</c:otherwise>
-			</c:choose>
-			| <dht3:blockTimeAgo block="${block}"/>
+		    <c:if test="${!oneLine}"> 
+			    <c:choose>
+				    <c:when test="${block.postView.livePost.totalViewerCount == 1}">1 view</c:when>
+				    <c:otherwise>${block.postView.livePost.totalViewerCount} views</c:otherwise>
+			    </c:choose>
+			    | 
+			</c:if>
+			<dht3:blockTimeAgo block="${block}"/>
 			<dht3:blockHeaderControls blockId="${blockId}">
 				<c:if test="${signin.valid}">
 					<a href="javascript:dh.actions.postHistory('${block.postView.post.id}')">History</a>

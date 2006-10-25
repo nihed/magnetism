@@ -44,6 +44,7 @@ input.dh-text-input {
 	width:			100%;
 	position:		relative;
 	margin-bottom:	8px;
+	margin-top:	    8px;
 }
 
 .dh-page-options {
@@ -51,6 +52,18 @@ input.dh-text-input {
 	right:			0;
 	top:			0;
 	text-align:		right;
+}
+
+.dh-page-options-tip-area {
+    position:      relative;
+    top:           -13px;
+}
+
+.dh-page-options-options-area {
+    position:      absolute;
+    top:           5px;
+	right:         0px;
+	width:         200px;   
 }
 
 #dhPageFooter {

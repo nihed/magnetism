@@ -7,7 +7,7 @@
 	<c:set var="whoParam" value="?who=${param['who']}" scope="page"/>
 </c:if>
 
-<div>
+<div class="dh-page-options-options-area">
 	<dht3:pageOptionLink name="Home" selected="${selected}" link="/person${whoParam}"/> |
 	<dht3:pageOptionLink name="Friends" selected="${selected}" link="/friends${whoParam}"/> | 	
 	<dht3:pageOptionLink name="Groups" selected="${selected}" link="/groups${whoParam}"/>
