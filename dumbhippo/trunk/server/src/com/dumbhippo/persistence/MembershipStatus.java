@@ -54,4 +54,12 @@ public enum MembershipStatus {
 	public boolean getCanSeeSecretMembers() {
 		return canSeeSecretMembers;
 	}
+	
+	/**
+	 * Can a member of this status change the group photo, etc.
+	 * @return true if the group member can change stuff
+	 */
+	public boolean getCanModify() {
+		return ordinal() >= ACTIVE.ordinal();
+	}
 }

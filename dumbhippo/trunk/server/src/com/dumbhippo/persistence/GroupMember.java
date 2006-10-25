@@ -121,7 +121,7 @@ public class GroupMember extends DBUnique {
 	 */
 	@Transient
 	public boolean canModify() {
-		return getStatus().ordinal() >= MembershipStatus.ACTIVE.ordinal();
+		return getStatus().getCanModify();
 	}
 	
 	/**

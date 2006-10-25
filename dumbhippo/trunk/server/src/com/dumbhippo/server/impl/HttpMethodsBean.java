@@ -1460,7 +1460,10 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		FeedSystem feedSystem = EJBUtil.defaultLookup(FeedSystem.class);			
 		Group group = parseGroupId(viewpoint, groupId);
 		Feed feed = getFeedFromUserEnteredUrl(url);
-		
+
+		if (!groupSystem.canEditGroup(viewpoint, group))
+			throw new XmlMethodException(XmlMethodErrorCode.FORBIDDEN, "Only active members can add feeds to a group");
+							
 		feedSystem.addGroupFeed(group, feed);
 	}
 
@@ -1469,6 +1472,9 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		Group group = parseGroupId(viewpoint, groupId);
 		Feed feed = getFeedFromUserEnteredUrl(url);
 		
+		if (!groupSystem.canEditGroup(viewpoint, group))
+			throw new XmlMethodException(XmlMethodErrorCode.FORBIDDEN, "Only active members can remove feeds from a group");
+							
 		feedSystem.removeGroupFeed(group, feed);		
 	}
 	

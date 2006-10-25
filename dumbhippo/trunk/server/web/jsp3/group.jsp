@@ -23,7 +23,7 @@
 
 <dht3:page>
 	<dht3:pageSubHeader title="${group.private ? 'Private Group' : 'Public Group'}" privatePage="${group.private}">
-		<dht3:standardGroupOptions groupId="${group.viewedGroupId}" selected="Home"/>
+		<dht3:standardGroupOptions group="${group.viewedGroup}" selected="Home"/>
 	</dht3:pageSubHeader>
     <dht3:groupStack who="${group.viewedGroup}" stackOrder="1" stackType="dhStacker" pageable="${group.pageableStack}" showFrom="true" >
 		<c:choose>

@@ -12,6 +12,10 @@
 	<dht:errorPage>Group not found</dht:errorPage>
 </c:if>
 
+<c:if test="${!group.viewedGroup.status.canModify}">
+	<dht:errorPage>Only members can edit a group</dht:errorPage>
+</c:if>
+
 <head>
 	<title>Edit <c:out value="${group.name}"/></title> <%-- see also groupaccount.js --%>
 	<dht:siteStyle/>	
