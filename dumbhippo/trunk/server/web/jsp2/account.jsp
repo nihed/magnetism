@@ -34,8 +34,7 @@
 			'dhMusicBioEntry' : <dh:jsString value="${signin.user.account.musicBio}"/>,
 			'dhRhapsodyListeningHistoryEntry' : <dh:jsString value="${account.rhapsodyListeningHistoryFeedUrl}"/>,
 			'dhWebsiteEntry' : <dh:jsString value="${account.websiteUrl}"/>,
-			'dhBlogEntry' : <dh:jsString value="${account.blogUrl}"/>,
-			'dhDeliciousEntry' : <dh:jsString value="${account.deliciousName}"/>
+			'dhBlogEntry' : <dh:jsString value="${account.blogUrl}"/>
 		};
 		dh.account.userId = <dh:jsString value="${signin.user.id}"/>
 		dh.account.reloadPhoto = function() {
@@ -48,9 +47,7 @@
 		dh.account.initialFlickrEmail = <dh:jsString value="${account.flickrEmail}"/>;
 		dh.account.initialFlickrHateQuip = <dh:jsString value="${account.flickrHateQuip}"/>;
 		dh.account.initialLinkedInName = <dh:jsString value="${account.linkedInName}"/>;
-		dh.account.initialLinkedInHateQuip = <dh:jsString value="${account.linkedInHateQuip}"/>;
-		dh.account.initialDeliciousName = <dh:jsString value="${account.deliciousName}"/>;
-		dh.account.initialDeliciousHateQuip = <dh:jsString value="${account.deliciousHateQuip}"/>;
+		dh.account.initialLinkedInHateQuip = <dh:jsString value="${account.linkedInHateQuip}"/>;	
 	</script>
 </head>
 <dht:twoColumnPage neverShowSidebar="true">
@@ -62,7 +59,7 @@
 				<dht:zoneBoxSubtitle>This information will be visible on your <a href="/person?who=${signin.user.id}">profile page</a>.</dht:zoneBoxSubtitle>
 				<dht:formTable>
 				<dht:formTableRowStatus controlId='dhUsernameEntry'></dht:formTableRowStatus>
-				<dht:formTableRow label="My Name">
+				<dht:formTableRow label="My name">
 					<dht:textInput id="dhUsernameEntry" extraClass="dh-username-input"/>
 				</dht:formTableRow>
 				<dht:formTableRowStatus controlId='dhBioEntry'></dht:formTableRowStatus>
@@ -117,9 +114,6 @@
 				</dht:formTableRow>
 				<dht:formTableRow label="YouTube name">
 					<dht:loveHateEntry baseId="dhYouTube" mode="${account.youTubeSentiment}"/>
-				</dht:formTableRow>
-				<dht:formTableRow label="del.icio.us name">
-					<dht:loveHateEntry baseId="dhDelicious" mode="${account.deliciousSentiment}"/>
 				</dht:formTableRow>
 				<dht:formTableRowStatus controlId='dhRhapsodyListeningHistoryEntry'></dht:formTableRowStatus>
 				<dht:formTableRow label="Rhapsody feed">
