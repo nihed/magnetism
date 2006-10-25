@@ -197,6 +197,13 @@ hippo_canvas_image_set_property(GObject         *object,
                 if (image->surface)
                     cairo_surface_destroy(image->surface);
                 image->surface = surface;
+
+                if (image->image_name) {
+                    g_free(image->image_name);
+                    image->image_name = NULL;
+                    g_object_notify(G_OBJECT(image), "image-name");
+                }
+
                 hippo_canvas_item_emit_request_changed(HIPPO_CANVAS_ITEM(image));
             }
         }
@@ -276,10 +283,13 @@ hippo_canvas_image_set_context(HippoCanvasItem    *item,
                                HippoCanvasContext *context)
 {
     HippoCanvasImage *image = HIPPO_CANVAS_IMAGE(item);
-    
+    HippoCanvasBox *box = HIPPO_CANVAS_BOX(item);
+    HippoCanvasContext *old = box->context;
+
     item_parent_class->set_context(item, context);
 
-    set_surface_from_name(image);
+    if (old != box->context && image->image_name != NULL)
+        set_surface_from_name(image);
 }
 
 static void
