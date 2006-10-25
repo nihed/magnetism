@@ -535,7 +535,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		Query q;
 		
 		String statusClause = getStatusClause(status);
-		String privacyClause = privateOnly ? "" : " AND g.access = " + GroupAccess.SECRET.ordinal();
+		String privacyClause = privateOnly ? " AND g.access = " + GroupAccess.SECRET.ordinal() : "";
 		
 		if (viewpoint.isOfUser(member) || viewpoint instanceof SystemViewpoint) {
 			// Special case this for effiency
