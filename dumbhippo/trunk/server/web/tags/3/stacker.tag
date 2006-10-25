@@ -15,23 +15,13 @@
 	<c:set var="oneLine" value="false"/>
 </c:if> 
 
-<c:set var="previousBlockType" value="" scope="page"/>
-
 <c:if test="${!empty pageable}">
 	<c:set var="blocks" value="${pageable.results}" scope="page"/>
 </c:if>
 
 <div class="dh-stacker-container">
 	<c:forEach items="${blocks}" var="block" varStatus="blockIdx">
-		<c:choose>
-			<c:when test="${blockIdx.count % 2 == 0}">
-				<dht3:block block="${block}" offset="${previousBlockType == block.blockType}" blockId="${stackOrder}_${blockIdx.count + 1}" showFrom="${showFrom}" oneLine="${oneLine}"/>
-			</c:when>
-			<c:otherwise>
-				<dht3:block block="${block}" offset="${previousBlockType == block.blockType}" blockId="${stackOrder}_${blockIdx.count + 1}" showFrom="${showFrom}" oneLine="${oneLine}"/>
-			</c:otherwise>
-		</c:choose>
-		<c:set var="previousBlockType" value="" scope="page"/>		
+		<dht3:block block="${block}" offset="${blockIdx.count % 2 == 0}" blockId="${stackOrder}_${blockIdx.count + 1}" showFrom="${showFrom}" oneLine="${oneLine}"/>	
 		<c:if test="${!blockIdx.last}">
 			<div class="dh-stacker-block-bottom-padding">&nbsp;</div>
 		</c:if>
