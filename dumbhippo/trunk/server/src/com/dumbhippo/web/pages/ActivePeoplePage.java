@@ -15,7 +15,8 @@ public class ActivePeoplePage extends AbstractSigninOptionalPage {
 	static private final Logger logger = GlobalSetup.getLogger(MusicGlobalPage.class);
 	
 	static final int USERS_PER_PAGE = 5;
-	static final int BLOCKS_PER_GROUP = 5;
+	static final int BLOCKS_PER_USER = 5;
+	static final int TOTAL_USERS = 50;
 	
 	protected Stacker stacker;
 	
@@ -30,11 +31,12 @@ public class ActivePeoplePage extends AbstractSigninOptionalPage {
 	
 	public Pageable<PersonMugshotView> getActivePeople() {
 		if (activePeople == null) {
-			activePeople = pagePositions.createPageable("groups");
+			activePeople = pagePositions.createBoundedPageable("people");
 			activePeople.setInitialPerPage(USERS_PER_PAGE);
 			activePeople.setSubsequentPerPage(USERS_PER_PAGE);
+			activePeople.setBound(TOTAL_USERS);
 			
-			stacker.pageRecentUserActivity(getViewpoint(), activePeople, BLOCKS_PER_GROUP);
+			stacker.pageRecentUserActivity(getViewpoint(), activePeople, BLOCKS_PER_USER);
 		}
 		return activePeople;
 	}
