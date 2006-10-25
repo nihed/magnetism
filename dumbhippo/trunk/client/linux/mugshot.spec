@@ -1,5 +1,5 @@
 Name:           mugshot
-Version:        1.1.21
+Version:        1.1.22
 Release:        1%{?dist}
 Summary:        Companion software for mugshot.org
 
@@ -145,6 +145,9 @@ fi
 %{_sysconfdir}/gconf/schemas/*.schemas
 
 %changelog
+* Wed Oct 25 2006 Owen Taylor <otaylor@fresnel.dumbhippo.com> - 1.1.22-1
+- 1.1.22
+
 * Wed Oct 25 2006 Owen Taylor <otaylor@fresnel.dumbhippo.com> - 1.1.21-1
 - 1.1.21
 
