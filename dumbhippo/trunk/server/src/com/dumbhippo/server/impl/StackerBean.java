@@ -949,7 +949,10 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 			try {
 				member = groupSystem.getGroupMember(viewpoint, groupView.getGroup(), user);
 			} catch (NotFoundException e) {
-				// This is not an error; no group member need exist if we aren't in the group
+				// This could mean the group isn't visible normally, but since we already 
+				// did loadGroup above, it should not. Instead, it probably means someone
+				// was a follower and we stacked a block, then they removed themselves
+				// so now they have no GroupMember.
 				member = null;
 			}
 			groupMemberBlockView.setGroupView(groupView);
