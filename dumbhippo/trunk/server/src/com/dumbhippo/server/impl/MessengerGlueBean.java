@@ -23,8 +23,6 @@ import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.live.ChatRoomEvent;
-import com.dumbhippo.live.Hotness;
-import com.dumbhippo.live.LiveClientData;
 import com.dumbhippo.live.LivePost;
 import com.dumbhippo.live.LiveState;
 import com.dumbhippo.live.UserChangedEvent;
@@ -306,8 +304,6 @@ public class MessengerGlueBean implements MessengerGlue {
 				logger.warn("username signed on that we don't know: {}", username);
 			return;
 		}
-		
-		LiveState.getInstance().resendAllNotifications(account.getOwner().getGuid());
 
 		// We can't reliably tell if the user is currently logged in by checking
 		// for loginDate > logoutDate, since that could happen if the server
@@ -643,13 +639,6 @@ public class MessengerGlueBean implements MessengerGlue {
 		return accountSystem.getPrefs(account);
 	}
 
-	public Hotness getUserHotness(String username) {
-		User user = userFromTrustedUsername(username);
-		LiveState state = LiveState.getInstance();
-		LiveClientData data = state.getLiveClientData(user.getGuid());
-		return data.getHotness();
-	}
-	
 	static final String RECENT_POSTS_ELEMENT_NAME = "recentPosts";
 	static final String RECENT_POSTS_NAMESPACE = "http://dumbhippo.com/protocol/post";
 	

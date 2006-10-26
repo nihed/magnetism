@@ -34,7 +34,6 @@ public class AdminPage extends AbstractSigninRequiredPage {
 	private PersonViewer personViewer;
 	
 	private Set<PersonView> cachedLiveUsers;
-	private Set<PersonView> cachedLiveClientData;
 	private Set<LivePost> livePosts;
  	private List<PersonView> users;
 	
@@ -86,16 +85,6 @@ public class AdminPage extends AbstractSigninRequiredPage {
 	
 	public int getCachedLiveUsersCount() {
 		return getCachedLiveUsers().size();
-	}
-	
-	public Set<PersonView> getCachedLiveClientData() {
-		if (cachedLiveClientData == null)
-			cachedLiveClientData = liveObjectSetToPersonView(liveState.getLiveClientDataCacheSnapshot());
-		return cachedLiveClientData;
-	}
-	
-	public int getCachedLiveClientDataCount() {
-		return getCachedLiveClientData().size();
 	}
 	
 	public int getAvailableLiveUsersCount() {

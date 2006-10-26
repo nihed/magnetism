@@ -1,6 +1,5 @@
 package com.dumbhippo.server.impl;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -25,8 +24,6 @@ import com.dumbhippo.StringUtils;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.RandomToken;
-import com.dumbhippo.live.Hotness;
-import com.dumbhippo.live.LiveClientData;
 import com.dumbhippo.live.LivePost;
 import com.dumbhippo.live.LiveState;
 import com.dumbhippo.persistence.EmailResource;
@@ -200,71 +197,6 @@ public class MessageSenderBean implements MessageSender {
 			return builder.toString();
 		}
 	}
-	
-	private static class HotnessChangedExtension implements PacketExtension {
-		private static final String ELEMENT_NAME = "hotness";
-
-		private static final String NAMESPACE = "http://dumbhippo.com/protocol/hotness";
-		
-		private Hotness hotness;
-		
-		public HotnessChangedExtension(Hotness hotness) {
-			this.hotness = hotness;
-		}
-
-		public String getElementName() {
-			return ELEMENT_NAME;
-		}
-
-		public String getNamespace() {
-			return NAMESPACE;
-		}
-
-		public String toXML() {
-			XmlBuilder builder = new XmlBuilder();
-			builder.openElement(ELEMENT_NAME, "xmlns", NAMESPACE, "value", hotness.name());
-			builder.closeElement();
-			return builder.toString();
-		}
-	}
-	
-	private static class ActivePostsChangedExtension implements PacketExtension {
-		private static final String ELEMENT_NAME = "activePostsChanged";
-
-		private static final String NAMESPACE = "http://dumbhippo.com/protocol/post";
-		
-		List<PostView> postViews;
-		List<LivePost> livePosts;
-		Set<EntityView> referencedEntities;
-		
-		public ActivePostsChangedExtension(List<PostView> postViews, List<LivePost> posts, Set<EntityView> referencedEntities) {
-			this.postViews = postViews;
-			this.livePosts = posts;
-			this.referencedEntities = referencedEntities;
-		}
-
-		public String getElementName() {
-			return ELEMENT_NAME;
-		}
-
-		public String getNamespace() {
-			return NAMESPACE;
-		}
-
-		public String toXML() {
-			XmlBuilder builder = new XmlBuilder();
-			builder.openElement(ELEMENT_NAME, "xmlns", NAMESPACE);
-			for (int i = 0; i < livePosts.size(); i++) {
-				for (EntityView ev: referencedEntities) {
-					ev.writeToXmlBuilderOld(builder);
-				}				
-				postViews.get(i).writeToXmlBuilderOld(builder);
-				builder.append(livePosts.get(i).toXml());
-			}
-			builder.closeElement();
-			return builder.toString();
-		}
-	}
 
 	private static class PrefsChangedExtension implements PacketExtension {
 		private static final String ELEMENT_NAME = "prefs";
@@ -386,53 +318,6 @@ public class MessageSenderBean implements MessageSender {
 			message.addExtension(new MySpaceContactCommentExtension());
 			logger.debug("Sending mySpaceContactComment message to {}", message.getTo());			
 			connection.sendPacket(message);
-		}
-
-		public synchronized void sendHotnessChanged(LiveClientData clientData) {
-			XMPPConnection connection = getConnection();
-			User dbUser = identitySpider.lookupUser(clientData.getGuid());			
-			Message message = createMessageFor(dbUser, Message.Type.HEADLINE);
-			message.addExtension(new HotnessChangedExtension(clientData.getHotness()));
-			logger.debug("Sending hotnessChanged message to {}", message.getTo());			
-			connection.sendPacket(message);
-		}
-
-		public synchronized void sendActivePostsChanged(LiveClientData clientData) {
-			XMPPConnection connection = getConnection();
-			User dbUser = identitySpider.lookupUser(clientData.getGuid());
-			Viewpoint viewpoint = new UserViewpoint(dbUser);
-			Message message = createMessageFor(dbUser, Message.Type.HEADLINE);
-			List<LivePost> lposts = new ArrayList<LivePost>();
-			List<PostView> posts = new ArrayList<PostView>();
-			Set<EntityView> referencedEntities = new HashSet<EntityView>();			
-			for (Guid id : clientData.getActivePosts()) {
-				LivePost lpost = LiveState.getInstance().getLivePost(id);
-				PostView pv;
-				try {
-					pv = postingBoard.loadPost(viewpoint, id);
-				} catch (NotFoundException e) {
-					throw new RuntimeException(e);
-				}
-				lposts.add(lpost);
-				posts.add(pv);
-				referencedEntities.addAll(postingBoard.getReferencedEntities(viewpoint, pv.getPost()));
-
-				// getReferencedEntities() returns personRecipients but not expandedRecipients 
-				// so we also need to add any viewers
-				for (Guid guid : lpost.getViewers()) {
-					Person viewer;
-					try {
-						viewer = identitySpider.lookupGuid(Person.class, guid);
-					} catch (NotFoundException e) {
-						throw new RuntimeException(e);
-					}
-					referencedEntities.add(personViewer.getPersonView(viewpoint, viewer));
-				}
-			}
-
-			message.addExtension(new ActivePostsChangedExtension(posts, lposts, referencedEntities));
-			logger.info("Sending activePostsChanged message to {}; {} active posts" + message.getTo(), + posts.size());			
-			connection.sendPacket(message);						
 		}
 		
 		public synchronized void sendPrefChanged(User user, String key, String value) {
@@ -712,14 +597,6 @@ public class MessageSenderBean implements MessageSender {
 
 	public void sendMySpaceContactCommentNotification(User user) {
 		xmppSender.sendMySpaceContactCommentNotification(user);
-	}
-
-	public void sendHotnessChanged(LiveClientData clientData) {
-		xmppSender.sendHotnessChanged(clientData);
-	}
-
-	public void sendActivePostsChanged(LiveClientData clientData) {
-		xmppSender.sendActivePostsChanged(clientData);
 	}
 	
 	public void sendPrefChanged(User user, String key, String value) {

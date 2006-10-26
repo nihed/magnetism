@@ -7,12 +7,8 @@ import org.jivesoftware.util.Log;
 import org.jivesoftware.wildfire.IQHandlerInfo;
 import org.jivesoftware.wildfire.auth.UnauthorizedException;
 import org.xmpp.packet.IQ;
-import org.xmpp.packet.JID;
 
-import com.dumbhippo.live.Hotness;
-import com.dumbhippo.server.MessengerGlue;
-import com.dumbhippo.server.util.EJBUtil;
-
+// TODO - delete this once we don't care about older clients at all
 public class HotnessIQHandler extends AbstractIQHandler {
 
 	private IQHandlerInfo info;
@@ -28,15 +24,10 @@ public class HotnessIQHandler extends AbstractIQHandler {
 	public IQ handleIQ(IQ packet) throws UnauthorizedException {
 		
 		Log.debug("handling IQ packet " + packet);
-		JID from = packet.getFrom();
 		IQ reply = IQ.createResultIQ(packet);
-		
-		MessengerGlue glue = EJBUtil.defaultLookup(MessengerGlue.class);
-		Hotness hotness = glue.getUserHotness(from.getNode());
-		
 		Document document = DocumentFactory.getInstance().createDocument();
 		Element childElement = document.addElement("hotness", "http://dumbhippo.com/protocol/hotness");
-		childElement.addAttribute("value", hotness.name());
+		childElement.addAttribute("value", "UNKNOWN");
 		reply.setChildElement(childElement);
 		
 		return reply;

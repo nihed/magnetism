@@ -22,8 +22,6 @@ import com.dumbhippo.jms.JmsConnectionType;
 import com.dumbhippo.jms.JmsProducer;
 import com.dumbhippo.persistence.Account;
 import com.dumbhippo.server.AccountSystem;
-import com.dumbhippo.server.Configuration;
-import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.util.EJBUtil;
 
@@ -170,76 +168,6 @@ public class LiveState {
 	}
 
 	/**
-	 * Locate or create a LiveClientData cache object for a particular user.
-	 * See getLiveClientData()
-	 * 
-	 * @param userId the user ID for which we should get a cache object
-	 * @return the LiveClientData cache object.
-	 */
-	public LiveClientData getLiveClientData(Guid userId) {
-		return clientDataCache.get(userId);
-	}
-	
-	/**
-	 * Locate a LiveClientData cache object for a particular user. Does
-	 * not force creation if the object doesn't already exist, does not
-	 * reset the cache age to zero, and doesn't wait for object update.
-	 * (In the last case, it simply returns stale data.)  
-	 * 
-	 * @param userId the user ID for which we should get a cache object
-	 * @return the LiveClientData cache object, or null if the user is
-	 *   no client data has currently been computed 
-	 */
-	public LiveClientData peekLiveClientData(Guid userId) {
-		return clientDataCache.peek(userId);
-	}
-	
-	/**
-	 * Get or create a LiveClientData cache object for a particular user in 
-	 * preparation for updating it with new values. See
-	 * getLiveUserForUpdate()
-	 * 
-	 * @param userId the post ID for which we should get a cache object
-	 * @return a copy of the existing or newly created object
-	 */
-	LiveClientData getLiveClientDataForUpdate(Guid userId) {
-		return (LiveClientData)clientDataCache.getForUpdate(userId).clone();
-	}
-	
-	/**
-	 * Get a LiveClientData cache object for a particular user in preparation
-	 * for updating it with new values. See peekLiveUserForUpdate().  
-	 * 
-	 * @param user the user ID for which we should get a cache object
-	 * @return a copy of the existing LiveClientData cache object if one is currently loaded,
-	 *    otherwise null.
-	 */
-	public LiveClientData peekLiveClientDataForUpdate(Guid userId) {
-		LiveClientData current = clientDataCache.peekForUpdate(userId);
-		if (current != null)
-			return (LiveClientData)current.clone();
-		else
-			return null;
-	}	
-	
-	/**
-	 * Insert an updated LiveClientData object into the cache. See updateLiveUser()
-	 * 
-	 * @param group new LiveClientData object to insert
-	 */
-	public void updateLiveClientData(LiveClientData newClientData) {
-		clientDataCache.update(newClientData);
-	}	
-	
-	/**
-	 * Returns a snapshot of the current set of LiveClientData objects in
-	 * the memory cache.
-	 */
-	public Set<LiveClientData> getLiveClientDataCacheSnapshot() {
-		return clientDataCache.getAllObjects(false);
-	}
-
-	/**
 	 * Locate or create a LivePost cache object for a particular user.
 	 * See getLiveUser().
 	 * 
@@ -356,15 +284,6 @@ public class LiveState {
 			// Shouldn't happen, just ignore
 		}
 		
-		liveUserUpdater.interrupt();
-		
-		try {
-			liveUserUpdater.join();
-			logger.info("Successfully stopped LiveState user updater thread");
-		} catch (InterruptedException e) {
-			
-		}
-		
 		updateQueue.close();
 	}
 	
@@ -372,15 +291,11 @@ public class LiveState {
 
 	private LiveObjectCache<LiveUser> userCache;
 	
-	private LiveObjectCache<LiveClientData> clientDataCache;
-	
 	private LiveObjectCache<LivePost> postCache;
 	
 	private LiveObjectCache<LiveGroup> groupCache;
 
 	private Cleaner cleaner;
-	
-	private LiveUserPeriodicUpdater liveUserUpdater;
 	
 	private JmsProducer updateQueue;
 	
@@ -393,17 +308,6 @@ public class LiveState {
 						userUpdater.initialize(liveUser);
 
 						return liveUser;
-					}
-				},
-				MAX_USER_CACHE_AGE);
-		clientDataCache = new LiveObjectCache<LiveClientData>(
-				new LiveObjectFactory<LiveClientData>() {
-					public LiveClientData create(Guid guid) {
-						LiveClientData clientData = new LiveClientData(guid);			
-						LiveClientDataUpdater dataUpdater = EJBUtil.defaultLookup(LiveClientDataUpdater.class);
-						dataUpdater.initialize(clientData);
-
-						return clientData;
 					}
 				},
 				MAX_USER_CACHE_AGE);
@@ -434,10 +338,6 @@ public class LiveState {
 		
 		cleaner = new Cleaner();
 		cleaner.start();
-		
-		liveUserUpdater = new LiveUserPeriodicUpdater();
-		liveUserUpdater.setName("LiveUserUpdater");		
-		liveUserUpdater.start();
 	}
 		
 	// Internal function to record a user joining the chat room for a post;
@@ -478,12 +378,6 @@ public class LiveState {
 		
 		logger.debug("Post {} now has {} viewing users and " + lpost.getChattingUserCount() + " chatting users", 
 				postId, lpost.getViewingUserCount());  
-	}
-
-	public void resendAllNotifications(Guid guid) {
-		LiveClientDataUpdater updater = EJBUtil.defaultLookup(LiveClientDataUpdater.class);
-		LiveClientData clientData = getLiveClientData(guid);
-		updater.sendAllNotifications(clientData);
 	}	
 
 	private static Map<Class<?>, ListenerList<?>> listenerLists = new HashMap<Class<?>, ListenerList<?>>();
@@ -528,7 +422,6 @@ public class LiveState {
 	private void clean() throws InterruptedException {
 		// Bump the age of all objects, removing ones that pass the maximum age
 		userCache.age();
-		clientDataCache.age();
 		postCache.age();
 		groupCache.age();
 	}
@@ -551,52 +444,6 @@ public class LiveState {
 					
 				} catch (InterruptedException e) {
 					break;
-				}
-			}
-		}
-	}
-	
-	public void setUserUpdateInterval(int interval) {
-		liveUserUpdater.setUserUpdateInterval(interval);
-	}
-	
-	// Periodically decays the hotness of every active user
-	private class LiveUserPeriodicUpdater extends Thread {
-		int userUpdateInterval;
-		
-		public LiveUserPeriodicUpdater() {
-			Configuration configuration = EJBUtil.defaultLookup(Configuration.class);
-			String intervalString = configuration.getProperty(HippoProperty.USER_UPDATE_INTERVAL);
-			userUpdateInterval = Integer.parseInt(intervalString);
-		}
-		
-		public synchronized void setUserUpdateInterval(int interval) {
-			userUpdateInterval = interval;
-		}
-		
-		@Override
-		public void run() {
-			long nextTime = System.currentTimeMillis() + userUpdateInterval * 1000;
-			
-			while (true) {
-				try {
-					Thread.sleep(nextTime - System.currentTimeMillis());
-					
-					Set<Guid> toUpdate = PresenceService.getInstance().getLocalPresentUsers("/users", 1);
-
-					LiveClientDataUpdater updater = EJBUtil.defaultLookup(LiveClientDataUpdater.class);					
-					
-					for (Guid guid : toUpdate) {
-						updater.periodicUpdate(guid);
-					}		
-				} catch (InterruptedException e) {
-					break; // exit the loop
-				} catch (Throwable t) {
-					logger.warn("Unexpected exception in LiveUserPeriodicUpdater", t);
-				} finally {
-					// this is in finally so a recurring exception doesn't busy loop so badly
-					long currentTime = System.currentTimeMillis();
-					nextTime = Math.max(currentTime, nextTime + userUpdateInterval * 1000);
 				}
 			}
 		}

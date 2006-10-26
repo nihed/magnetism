@@ -3,7 +3,6 @@ package com.dumbhippo.server;
 import javax.ejb.Local;
 
 import com.dumbhippo.identity20.Guid;
-import com.dumbhippo.live.LiveClientData;
 import com.dumbhippo.live.LivePost;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.Resource;
@@ -22,9 +21,5 @@ public interface MessageSender {
 	
 	public void sendMySpaceContactCommentNotification(User user);
 
-	public void sendHotnessChanged(LiveClientData clientData);
-
-	public void sendActivePostsChanged(LiveClientData clientData);
-	
 	public void sendPrefChanged(User user, String key, String value);
 }

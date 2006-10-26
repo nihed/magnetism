@@ -10,7 +10,6 @@ import javax.ejb.Local;
 
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
-import com.dumbhippo.live.Hotness;
 
 @Local
 public interface MessengerGlue {
@@ -268,8 +267,6 @@ public interface MessengerGlue {
 	 * @return the blob o' prefs 
 	 */
 	public Map<String,String> getPrefs(String username);
-	
-	public Hotness getUserHotness(String username);
 	
 	/**
 	 * Retrieves information about post or posts in XML form suitable for passing
