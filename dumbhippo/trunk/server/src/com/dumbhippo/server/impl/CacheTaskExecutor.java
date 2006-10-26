@@ -7,7 +7,9 @@ import java.util.concurrent.Future;
 import org.jgroups.ChannelException;
 import org.jgroups.blocks.LockNotGrantedException;
 import org.jgroups.blocks.LockNotReleasedException;
+import org.slf4j.Logger;
 
+import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.UniqueTaskExecutor;
 import com.dumbhippo.mbean.LockService;
 
@@ -20,7 +22,20 @@ import com.dumbhippo.mbean.LockService;
  * @author otaylor
  */
 public class CacheTaskExecutor<KeyType, ResultType> extends UniqueTaskExecutor<KeyType, ResultType> {
-	static final int TIMEOUT = 60 * 1000; // 1 minute
+	@SuppressWarnings("unused")
+	static private final Logger logger = GlobalSetup.getLogger(CacheTaskExecutor.class);
+
+	// This is the timeout before we give up trying to give a lock, but this
+	// timeout is only about waiting for the other nodes to respond. If
+	// the lock is held elsewhere, the other nodes respond instantly and 
+	// we fail.
+	static final int COMMUNICATION_TIMEOUT = 60 * 1000; // 1 minute
+	
+	// Time before we retry getting a lock
+	static final int RETRY_TIME = 1000; // 1 second
+	
+	// Maximum number of retries
+	static final int MAX_RETRIES = 60;
 	
 	public CacheTaskExecutor(String name) {
 		super(name);
@@ -55,6 +70,11 @@ public class CacheTaskExecutor<KeyType, ResultType> extends UniqueTaskExecutor<K
 			LockName otherName = (LockName)other;
 			return otherName.executorName.equals(executorName) && otherName.key.equals(key);
 		}
+		
+		@Override
+		public String toString() {
+			return "{LockName " + executorName + "/" + key + "}";
+		}
 	}
 	
 	private class CallableWrapper<T> implements Callable<T> {
@@ -69,17 +89,29 @@ public class CacheTaskExecutor<KeyType, ResultType> extends UniqueTaskExecutor<K
 		public T call() throws Exception {
 			LockService lockService = LockService.getInstance();
 			LockName lockName = new LockName(getName(), key);
+			int retries = 0;
 
-			try {
-				lockService.lock(lockName, TIMEOUT);
-			} catch (LockNotGrantedException e) {
-				// This probably means a timeout. All the other failures should only occur
-				// if communication between the cluster is disrupted or something else
-				// is seriously wrong
-				throw new RuntimeException("Could not establish lock for " + lockName, e);
-			} catch (ChannelException e) {
-				throw new RuntimeException("Communication failure establishing lock for " + lockName, e);
-			}
+			do {
+				try {
+					lockService.lock(lockName, COMMUNICATION_TIMEOUT);
+					break;
+				} catch (LockNotGrantedException e) {
+					// Some other thread has a lock, try again
+				} catch (ChannelException e) {
+					throw new RuntimeException("Communication failure establishing lock for " + lockName, e);
+				}
+				
+				retries++;				
+				if (retries > MAX_RETRIES)
+					throw new RuntimeException("Gave up on getting lock for " + lockName + " after " + MAX_RETRIES + " retries");
+				
+				try {
+					Thread.sleep(RETRY_TIME);
+				} catch (InterruptedException e) {
+					throw new RuntimeException("Interrupted while waiting for lock");
+				}
+				
+			} while (true);
 			
 			try {
 				return inner.call();

@@ -101,9 +101,11 @@ public class LockService extends ServiceMBeanSupport implements LockServiceMBean
 	 * the owner is the node address.
 	 * 
 	 * @param obj The object to lock (must be serializable)
-	 * @param timeout timeout before giving up on trying to get the lock 
-	 * @throws LockNotGrantedException if the lock wasn't granted (because of a timeout,
-	 *    perhaps)
+	 * @param timeout timeout before giving up on trying to get the lock *because of
+	 *   communication difficulties*. If we can't get the lock because someone else
+	 *   has it, we lock will be refused immediately 
+	 * @throws LockNotGrantedException if the lock wasn't granted (because someone
+	 *    else already has it, most likely)
 	 * @throws ChannelException if getting the lock failed because of a communication
 	 *    problem between this node and other nodes. 
 	 */
@@ -115,7 +117,6 @@ public class LockService extends ServiceMBeanSupport implements LockServiceMBean
 	 * Releases a lock established with lock()
 	 * 
 	 * @param obj The object to lock (must be serializable)
-	 * @param timeout timeout before giving up on trying to get the lock 
 	 * @throws LockNotReleasedException if the lock wasn't (not clear why this
 	 *   would happen)
 	 * @throws ChannelException if releasing the lock failed because of a communication
