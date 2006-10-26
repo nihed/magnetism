@@ -105,6 +105,8 @@ public class CacheTaskExecutor<KeyType, ResultType> extends UniqueTaskExecutor<K
 				if (retries > MAX_RETRIES)
 					throw new RuntimeException("Gave up on getting lock for " + lockName + " after " + MAX_RETRIES + " retries");
 				
+				logger.debug("Can't get lock for {}, waiting {}ms", lockName, RETRY_TIME);
+				
 				try {
 					Thread.sleep(RETRY_TIME);
 				} catch (InterruptedException e) {
