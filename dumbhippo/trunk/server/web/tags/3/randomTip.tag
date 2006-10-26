@@ -11,7 +11,7 @@
 			<a class="dh-page-options-tip-link" href="/invitation">Invite your friends to Mugshot!</a>
 		</c:when>
 		<c:when test="${tipIndex == 1}">
-			<a class="dh-page-options-tip-link" href="/download">Download the Mugshot Client</a>
+			<a class="dh-page-options-tip-link" href="/download">Get the Mugshot download</a>
 		</c:when>
 		<c:when test="${tipIndex == 2 && browser.gecko}">
 			<a class="dh-page-options-tip-link" href="/bookmark">Add Web Swarm link to Firefox</a>
