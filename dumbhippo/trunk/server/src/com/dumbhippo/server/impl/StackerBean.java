@@ -47,6 +47,7 @@ import com.dumbhippo.persistence.GroupAccess;
 import com.dumbhippo.persistence.GroupBlockData;
 import com.dumbhippo.persistence.GroupMember;
 import com.dumbhippo.persistence.GroupMessage;
+import com.dumbhippo.persistence.MembershipStatus;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.PersonPostData;
 import com.dumbhippo.persistence.Post;
@@ -789,6 +790,23 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		click(BlockType.POST, post.getGuid(), null, -1, user, clickedTime);
 	}
 	
+	// usually for access controls we just use NotFoundException, but in this case 
+	// populateBlockContents isn't just a "lookup function" and doesn't naturally 
+	// have anything to "not find" - also it calls lots of 
+	// other things that throw NotFoundException, some of which should not be 
+	// passed out as they don't indicate that we can't see the block
+	class BlockContentsNotVisibleException extends Exception {
+		private static final long serialVersionUID = 1L;
+
+		public BlockContentsNotVisibleException(String message, Throwable cause) {
+			super(message, cause);
+		}
+		
+		public BlockContentsNotVisibleException(String message) {
+			super(message);
+		}
+	}
+	
 	private BlockView prepareExternalAccountBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd) throws NotFoundException {
 		if ((block.getBlockType() != BlockType.EXTERNAL_ACCOUNT_UPDATE) && 
 				(block.getBlockType() != BlockType.EXTERNAL_ACCOUNT_UPDATE_SELF)) {
@@ -860,7 +878,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		// an exception.
 		//
 		// FIXME: populating a block view is pontentially much more expensive than
-		//  what we need to check visibilitt. For example, when we populate a PostBlockView,
+		//  what we need to check visibility. For example, when we populate a PostBlockView,
 		/// we do a database query to get chat messages for that post. I think we need to go 
 		//  to a system where have:
 		//
@@ -868,27 +886,35 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		//  - Views with some information filled in (e.g., the Post for a PostBlostView)
 		//  - Fully populated blocks
 		//
-		// So, this call here should be 'checkVisibility(blockView) throws NotFoundException
-		// (or something more appropriate for the exception) that may *as a side effect*
-		// fill in some fields of the block view, but isn't guaranteed to fully populate
+		// So, this call here should be 'checkVisibility(blockView) throws BlockContentsNotVisibleException
+		// that may *as a side effect* fill in some fields of the block view, but isn't guaranteed to fully populate
 		// the block.
 		//
-	    if (!block.isPublicBlock())
-	    	populateBlockView(blockView);
+	    if (!block.isPublicBlock()) {
+			try {
+				populateBlockView(blockView);
+			} catch (BlockContentsNotVisibleException e) {
+				throw new NotFoundException("Contents of the block are not visible", e);
+			}
+	    }
 	    
 	    return blockView;
-	}
+	} 
 	
 	// Populating the block view fills in all the details that were skipped at
 	//   the prepare stage and makes it ready for viewing by the user.
-	//
-	private void populateBlockView(BlockView blockView) throws NotFoundException {
+	private void populateBlockView(BlockView blockView) throws BlockContentsNotVisibleException {
 		Viewpoint viewpoint = blockView.getViewpoint();
 		Block block = blockView.getBlock();
 
 		if (blockView instanceof PostBlockView) {
 			PostBlockView postBlockView = (PostBlockView)blockView;
-		    PostView postView = postingBoard.loadPost(viewpoint, block.getData1AsGuid());
+		    PostView postView;
+			try {
+				postView = postingBoard.loadPost(viewpoint, block.getData1AsGuid());
+			} catch (NotFoundException e) {
+				throw new BlockContentsNotVisibleException("Post for the block wasn't visible", e);
+			}
 		    List<ChatMessageView> recentMessages = postingBoard.viewPostMessages(
 		        postingBoard.getNewestPostMessages(postView.getPost(), PostBlockView.RECENT_MESSAGE_COUNT),
 				viewpoint);
@@ -897,7 +923,12 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		    postBlockView.setPopulated(true);
 		} else if (blockView instanceof GroupChatBlockView) {
 			GroupChatBlockView groupChatBlockView = (GroupChatBlockView)blockView;
-			GroupView groupView = groupSystem.loadGroup(viewpoint, block.getData1AsGuid());
+			GroupView groupView;
+			try {
+				groupView = groupSystem.loadGroup(viewpoint, block.getData1AsGuid());
+			} catch (NotFoundException e) {
+				throw new BlockContentsNotVisibleException("Group for the block is not visible", e);
+			}
 			List<ChatMessageView> recentMessages = groupSystem.viewGroupMessages(
 					groupSystem.getNewestGroupMessages(groupView.getGroup(), GroupChatBlockView.RECENT_MESSAGE_COUNT),
 					viewpoint);
@@ -906,22 +937,35 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 			groupChatBlockView.setPopulated(true);
 		} else if (blockView instanceof GroupMemberBlockView) {
 			GroupMemberBlockView groupMemberBlockView = (GroupMemberBlockView)blockView;
-			GroupView groupView = groupSystem.loadGroup(viewpoint, block.getData1AsGuid());
+			GroupView groupView;
+			try {
+				groupView = groupSystem.loadGroup(viewpoint, block.getData1AsGuid());
+			} catch (NotFoundException e) {
+				throw new BlockContentsNotVisibleException("Group for the block is not visible", e);
+			}
 			User user = identitySpider.lookupUser(block.getData2AsGuid());
 			PersonView memberView = personViewer.getPersonView(viewpoint, user, PersonViewExtra.PRIMARY_RESOURCE);
-			GroupMember member =  groupSystem.getGroupMember(viewpoint, groupView.getGroup(), user);
+			GroupMember member;
+			try {
+				member = groupSystem.getGroupMember(viewpoint, groupView.getGroup(), user);
+			} catch (NotFoundException e) {
+				// This is not an error; no group member need exist if we aren't in the group
+				member = null;
+			}
 			groupMemberBlockView.setGroupView(groupView);
 			groupMemberBlockView.setMemberView(memberView);
-			groupMemberBlockView.setStatus(member.getStatus());
-			groupMemberBlockView.setAdders(personViewer.viewUsers(viewpoint, member.getAdders()));
+			groupMemberBlockView.setStatus(member != null ? member.getStatus() : MembershipStatus.NONMEMBER);
+			if (member != null)
+				groupMemberBlockView.setAdders(personViewer.viewUsers(viewpoint, member.getAdders()));
 			groupMemberBlockView.setPopulated(true);
 		} else if (blockView instanceof MusicPersonBlockView) {
 			MusicPersonBlockView musicPersonBlockView = (MusicPersonBlockView)blockView;
 			User user = identitySpider.lookupUser(block.getData1AsGuid());
 			PersonView userView = personViewer.getPersonView(viewpoint, user, PersonViewExtra.PRIMARY_RESOURCE);
 			List<TrackView> tracks = musicSystem.getLatestTrackViews(viewpoint, user, 5);
-			if (tracks.isEmpty()) 
-				throw new NotFoundException("The user did not have any track views even though we tried to stack a music update");			
+			if (tracks.isEmpty()) {
+				throw new BlockContentsNotVisibleException("No tracks for this person are visible");
+			}			
 			
 			userView.setTrackHistory(tracks);
 			
@@ -932,7 +976,12 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 			User user = identitySpider.lookupUser(block.getData1AsGuid());
 			// TODO: check what extras we need to request here
 			PersonView userView = personViewer.getPersonView(viewpoint, user, PersonViewExtra.ALL_RESOURCES);
-			ExternalAccount blogAccount = externalAccountSystem.lookupExternalAccount(viewpoint, user, ExternalAccountType.BLOG);  
+			ExternalAccount blogAccount;
+			try {
+				blogAccount = externalAccountSystem.lookupExternalAccount(viewpoint, user, ExternalAccountType.BLOG);
+			} catch (NotFoundException e) {
+				throw new BlockContentsNotVisibleException("external blog account for block not visible", e);
+			}  
 		    FeedEntry lastEntry = feedSystem.getLastEntry(blogAccount.getFeed());
 		    blogBlockView.setUserView(userView);
 			blogBlockView.setEntry(lastEntry);
@@ -942,7 +991,12 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 			User user = identitySpider.lookupUser(block.getData1AsGuid());
 			// TODO: check what extras we need to request here
 			PersonView userView = personViewer.getPersonView(viewpoint, user, PersonViewExtra.ALL_RESOURCES);
-			FacebookAccount facebookAccount = facebookSystem.lookupFacebookAccount(viewpoint, user);
+			FacebookAccount facebookAccount;
+			try {
+				facebookAccount = facebookSystem.lookupFacebookAccount(viewpoint, user);
+			} catch (NotFoundException e) {
+				throw new BlockContentsNotVisibleException("external facebook account for block not visible", e);
+			}
 			int eventsToRequestCount = 3;
 			if (!facebookAccount.isSessionKeyValid() && viewpoint.isOfUser(facebookAccount.getExternalAccount().getAccount().getOwner())) {
 			    eventsToRequestCount = 2;
@@ -958,8 +1012,13 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	
 	public BlockView getBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd) throws NotFoundException {
 	    BlockView blockView = prepareBlockView(viewpoint, block, ubd);
-	    if (!blockView.isPopulated())
-	    	populateBlockView(blockView);
+	    if (!blockView.isPopulated()) {
+			try {
+				populateBlockView(blockView);
+			} catch (BlockContentsNotVisibleException e) {
+				throw new NotFoundException("Can't see this block", e);
+			}
+	    }
 	    return blockView;
 	}
 	
@@ -1053,13 +1112,14 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		// block view that was not populated than to let a null pointer exception happen down the line
 		Set<BlockView> blockViewsToRemove = new HashSet<BlockView>();
 		for (BlockView blockView : blockViewsToReturn) {
-			try {
-			    if (!blockView.isPopulated()) 
-				    populateBlockView(blockView);
-			} catch (NotFoundException e) {
-				blockViewsToRemove.add(blockView);
-				logger.error("Could not populate a block view for a public block {}", blockView.getBlock(), e);				
-			}
+		    if (!blockView.isPopulated()) {
+				try {
+					populateBlockView(blockView);
+				} catch (BlockContentsNotVisibleException e) {
+					blockViewsToRemove.add(blockView);
+					logger.error("Could not populate a block view for a public block {}", blockView.getBlock(), e);				
+				}
+		    }
 		}
 		blockViewsToReturn.removeAll(blockViewsToRemove);
 		

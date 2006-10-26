@@ -268,8 +268,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 						public LinkResource call() throws Exception {
 							Query q;
 
-							q = em
-									.createQuery("from LinkResource l where l.url = :url");
+							q = em.createQuery("from LinkResource l where l.url = :url");
 							q.setParameter("url", url.toExternalForm());
 
 							LinkResource res;
