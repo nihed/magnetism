@@ -5,6 +5,7 @@ import java.util.List;
 import javax.ejb.Local;
 
 import com.dumbhippo.identity20.Guid;
+import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupMember;
@@ -36,6 +37,10 @@ public interface Stacker {
 	public void onPostCreated(Guid postId, boolean publicPost);
 	public void onGroupMemberCreated(GroupMember member, boolean publicGroup);
 	public void onExternalAccountCreated(Guid userId, ExternalAccountType type);
+	
+	// Other events that affect blocks
+	public void onAccountDisabledToggled(Account account);
+	public void onMusicSharingToggled(Account account);
 	
 	// These methods are used when activity should cause the timestamp of a block to change. 
 	// They are per block type. 

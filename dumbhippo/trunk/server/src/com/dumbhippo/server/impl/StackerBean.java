@@ -34,6 +34,7 @@ import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.live.BlockEvent;
 import com.dumbhippo.live.LiveEventListener;
 import com.dumbhippo.live.LiveState;
+import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.AccountClaim;
 import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.BlockType;
@@ -55,6 +56,7 @@ import com.dumbhippo.persistence.PostMessage;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.UserBlockData;
+import com.dumbhippo.server.Enabled;
 import com.dumbhippo.server.ExternalAccountSystem;
 import com.dumbhippo.server.FacebookSystem;
 import com.dumbhippo.server.FeedSystem;
@@ -201,36 +203,36 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	
 	@SuppressWarnings("unused")
 	private Block createBlock(BlockType type, Guid data1, Guid data2, long data3) {
-	    return createBlock(type, data1, data2, data3, type.isPublic());
+	    return createBlock(type, data1, data2, data3, type.isAlwaysPublic());
 	}
 	
-	private Block createBlock(BlockType type, Guid data1, Guid data2, boolean publicBlock) {
-		return createBlock(type, data1, data2, -1, publicBlock);
+	private Block createBlock(BlockType type, Guid data1, Guid data2, boolean publicBlockIfCreated) {
+		return createBlock(type, data1, data2, -1, publicBlockIfCreated);
 	}
 	
 	private Block createBlock(BlockType type, Guid data1, Guid data2) {
-		return createBlock(type, data1, data2, -1, type.isPublic());
+		return createBlock(type, data1, data2, -1, type.isAlwaysPublic());
 	}
 	
-	private Block getOrCreateBlock(BlockType type, Guid data1, Guid data2, long data3, boolean publicBlock) {
+	private Block getOrCreateBlock(BlockType type, Guid data1, Guid data2, long data3, boolean publicBlockIfCreated) {
 		try {
 			return queryBlock(type, data1, data2, data3);
 		} catch (NotFoundException e) {
-			return createBlock(type, data1, data2, data3, publicBlock);
+			return createBlock(type, data1, data2, data3, publicBlockIfCreated);
 		}
 	}
 	
 	@SuppressWarnings("unused")
 	private Block getOrCreateBlock(BlockType type, Guid data1, Guid data2, long data3) {
-		return getOrCreateBlock(type, data1, data2, data3, type.isPublic());
+		return getOrCreateBlock(type, data1, data2, data3, type.isAlwaysPublic());
 	}
 	
-	private Block getOrCreateBlock(BlockType type, Guid data1, Guid data2, boolean publicBlock) {
-		return getOrCreateBlock(type, data1, data2, -1, publicBlock);
+	private Block getOrCreateBlock(BlockType type, Guid data1, Guid data2, boolean publicBlockIfCreated) {
+		return getOrCreateBlock(type, data1, data2, -1, publicBlockIfCreated);
 	}
 
 	private Block getOrCreateBlock(BlockType type, Guid data1, Guid data2) {
-		return getOrCreateBlock(type, data1, data2, -1, type.isPublic());
+		return getOrCreateBlock(type, data1, data2, -1, type.isAlwaysPublic());
 	}
 	
 	private Block getUpdatingTimestamp(BlockType type, Guid data1, Guid data2, long data3, long activity) {
@@ -692,7 +694,9 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	}
 	
 	public void onUserCreated(Guid userId) {
-		createBlock(BlockType.MUSIC_PERSON, userId, null);
+		User user = identitySpider.lookupUser(userId);
+		Block block = createBlock(BlockType.MUSIC_PERSON, userId, null);
+		updateMusicPersonPublicity(block, user);
 	}
 	
 	public void onExternalAccountCreated(Guid userId, ExternalAccountType type) {
@@ -719,6 +723,30 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	
 	public void onPostCreated(Guid postId, boolean publicPost) {
 		createBlock(BlockType.POST, postId, null, publicPost);
+	}
+	
+	private void updateMusicPersonPublicity(Block block, User user) {
+		if (!user.getGuid().equals(block.getData1AsGuid()))
+			throw new IllegalArgumentException("setMusicPersonPublicity takes the guid from the block");
+		block.setPublicBlock(identitySpider.getMusicSharingEnabled(user, Enabled.AND_ACCOUNT_IS_ACTIVE));
+	}
+	
+	private void updateMusicPersonPublicity(Account account) {
+		Block block;
+		try {
+			block = queryBlock(BlockType.MUSIC_PERSON, account.getOwner().getGuid(), null, -1);
+		} catch (NotFoundException e) {
+			return;
+		}
+		updateMusicPersonPublicity(block, account.getOwner());
+	}
+	
+	public void onAccountDisabledToggled(Account account) {
+		updateMusicPersonPublicity(account);
+	}
+	
+	public void onMusicSharingToggled(Account account) {
+		updateMusicPersonPublicity(account);
 	}
 	
 	// don't create or suspend transaction; we will manage our own for now (FIXME) 
@@ -968,7 +996,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 			List<TrackView> tracks = musicSystem.getLatestTrackViews(viewpoint, user, 5);
 			if (tracks.isEmpty()) {
 				throw new BlockContentsNotVisibleException("No tracks for this person are visible");
-			}			
+			}
 			
 			userView.setTrackHistory(tracks);
 			

@@ -88,6 +88,9 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 	@EJB 
 	private WantsInSystem wantsInSystem;
 	
+	@EJB
+	private IdentitySpider identitySpider;
+	
 	public InvitationToken lookupInvitationFor(User inviter, Resource invitee) {
 		InvitationToken invite;
 		try {
@@ -564,8 +567,9 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		EmailResource invitationResource = (EmailResource) invite.getInvitee();
 		
 		Account acct = accounts.createAccountFromResource(invitationResource);
-		if (disable)
-			acct.setDisabled(true);
+		if (disable) {
+			identitySpider.setAccountDisabled(acct.getOwner(), true);
+		}
 
 		Client client = null;
 		if (firstClientName != null) {

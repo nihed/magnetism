@@ -55,6 +55,7 @@ import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.IdentitySpiderRemote;
 import com.dumbhippo.server.NotFoundException;
+import com.dumbhippo.server.Stacker;
 import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.views.SystemViewpoint;
@@ -91,6 +92,10 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	@EJB
 	private Configuration config;
 
+	@EJB
+	@IgnoreDependency
+	private Stacker stacker;
+	
 	public User lookupUserByEmail(Viewpoint viewpoint, String email) {
 		EmailResource res = lookupEmail(email);
 		if (res == null)
@@ -670,9 +675,12 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 
 	public void setAccountDisabled(User user, boolean disabled) {
 		Account account = getAttachedAccount(user);
-		account.setDisabled(disabled);
-		logger.debug("Disabled flag toggled to {} on account {}", disabled,
-				account);
+		if (account.isDisabled() != disabled) {
+			account.setDisabled(disabled);
+			logger.debug("Disabled flag toggled to {} on account {}", disabled,
+					account);
+			stacker.onAccountDisabledToggled(account);
+		}
 	}
 
 	static final String GET_ADMIN_QUERY = "SELECT adm FROM Administrator adm WHERE adm.account = :acct";
@@ -725,6 +733,8 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		Account account = getAttachedAccount(user);
 		if (account.isMusicSharingEnabled() == null || account.isMusicSharingEnabled() != enabled) {
 			account.setMusicSharingEnabled(enabled);
+			// we could do this in response to the event below, but doing it in a transaction seems safer
+			stacker.onMusicSharingToggled(account);
 			LiveState.getInstance().queueUpdate(new UserPrefChangedEvent(user.getGuid(), "musicSharingEnabled", Boolean.toString(enabled)));
 		}
 	}
