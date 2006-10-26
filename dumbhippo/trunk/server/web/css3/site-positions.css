@@ -335,6 +335,11 @@ div.dh-notification {
 	width:				100%;
 }
 
+.dh-stacker-block-sent-to {
+	text-align:			right;
+	margin-right:		40px;
+}
+
 .dh-stacker-block-title-facebook-events {
 	margin-left:		5px;
 }

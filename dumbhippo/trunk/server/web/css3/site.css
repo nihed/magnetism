@@ -335,7 +335,7 @@ div.dh-async-action-link-complete {
 .dh-stacker-block-title-title {
 }
 
-.dh-stacker-block-right {
+.dh-stacker-block-right, .dh-stacker-block-controls, .dh-stacker-block-sent-to {
 	font-size:			11px;
 	color:				#666666;
 }
@@ -358,11 +358,6 @@ div.dh-async-action-link-complete {
 
 .dh-stacker-block-description {
 	font-size:			12px;
-}
-
-.dh-stacker-block-controls {
-	font-size:			11px;
-	color:				#666666;
 }
 
 .dh-stacker-block-content {
