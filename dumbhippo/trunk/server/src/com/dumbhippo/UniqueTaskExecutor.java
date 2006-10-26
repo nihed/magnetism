@@ -17,7 +17,7 @@ import org.slf4j.Logger;
  * loader, obviously it does not work across app server instances).
  * 
  */
-public final class UniqueTaskExecutor<KeyType,ResultType> {
+public class UniqueTaskExecutor<KeyType,ResultType> {
 	@SuppressWarnings("unused")
 	static private final Logger logger = GlobalSetup.getLogger(UniqueTaskExecutor.class);		
 	
@@ -87,5 +87,9 @@ public final class UniqueTaskExecutor<KeyType,ResultType> {
 		protected void done() {
 			removeTask(key);
 		}
+	}
+
+	public String getName() {
+		return name;
 	}
 }

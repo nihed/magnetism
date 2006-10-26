@@ -59,6 +59,11 @@ public class YahooAlbumCacheBean extends AbstractCacheBean<String,YahooAlbumData
 
 			YahooAlbumCache cache = EJBUtil.defaultLookup(YahooAlbumCache.class);	
 						
+			// Check again in case another node stored the data first
+			YahooAlbumData alreadyStored = cache.checkCache(albumId);
+			if (alreadyStored != null)
+				return alreadyStored;
+			
 			YahooAlbumData data = cache.fetchFromNet(albumId);
 
 			return cache.saveInCache(albumId, data);

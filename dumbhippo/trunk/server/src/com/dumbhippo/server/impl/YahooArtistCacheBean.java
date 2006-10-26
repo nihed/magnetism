@@ -64,6 +64,11 @@ public class YahooArtistCacheBean extends AbstractCacheBean<String,YahooArtistDa
 
 			YahooArtistCache cache = EJBUtil.defaultLookup(YahooArtistCache.class);	
 						
+			// Check again in case another node stored the data first
+			YahooArtistData alreadyStored = cache.checkCache(artistId);
+			if (alreadyStored != null)
+				return alreadyStored;
+			
 			YahooArtistData data = cache.fetchFromNet(artistId);
 
 			return cache.saveInCache(artistId, data);

@@ -62,10 +62,15 @@ public class AmazonAlbumCacheBean extends AbstractCacheBean<String,AmazonAlbumDa
 		}
 		
 		public AmazonAlbumData call() {
-			logger.debug("Entering AmazonAlbumSearchTask thread for album {} by artist {}", album, artist);				
-
+			logger.debug("Entering AmazonAlbumSearchTask thread for album {} by artist {}", album, artist);
+			
 			AmazonAlbumCache cache = EJBUtil.defaultLookup(AmazonAlbumCache.class);	
 						
+			// Check again in case another node stored the data first
+			AmazonAlbumData alreadyStored = cache.checkCache(album, artist);
+			if (alreadyStored != null)
+				return alreadyStored;
+
 			AmazonAlbumData data = cache.fetchFromNet(album, artist);
 
 			return cache.saveInCache(album, artist, data);

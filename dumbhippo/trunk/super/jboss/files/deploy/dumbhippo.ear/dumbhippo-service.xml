@@ -31,6 +31,28 @@
             </config>
     </attribute>
   </mbean>
+   <mbean code="com.dumbhippo.mbean.LockService" name="dumbhippo.com:service=Lock">
+        <attribute name="ClusterName">${jboss.partition.name:DefaultPartition}-LockService</attribute>
+        <attribute name="ClusterConfig">
+            <config>
+				<UDP mcast_addr="${jboss.partition.udpGroup:228.1.2.3}" mcast_port="@@lockServiceMcastPort@@" 
+				   bind_addr="${jboss.bind.address}" ip_ttl="@@multicastTTL@@" ip_mcast="true"
+				   mcast_send_buf_size="150000" mcast_recv_buf_size="80000" ucast_send_buf_size="150000"
+				   ucast_recv_buf_size="80000" loopback="false" />
+				<PING timeout="2000" num_initial_members="3" up_thread="false" down_thread="false" />
+				<MERGE2 min_interval="10000" max_interval="20000" />
+				<FD shun="true" up_thread="true" down_thread="true" />
+				<VERIFY_SUSPECT timeout="1500" up_thread="false" down_thread="false" />
+				<pbcast.NAKACK gc_lag="50" max_xmit_size="8192" retransmit_timeout="600,1200,2400,4800" up_thread="false"
+				   down_thread="false" />
+				<UNICAST timeout="600,1200,2400" window_size="100" min_threshold="10" down_thread="false" />
+				<pbcast.STABLE desired_avg_gossip="20000" up_thread="false" down_thread="false" />
+				<FRAG frag_size="8192" down_thread="false" up_thread="false" />
+				<pbcast.GMS join_timeout="5000" join_retry_timeout="2000" shun="true" print_local_addr="true" />
+				<pbcast.STATE_TRANSFER up_thread="false" down_thread="false" />
+            </config>
+    </attribute>
+  </mbean>
 
     <!-- The cluster singleton service for adding and reindexing objects in our lucene index -->
     <mbean code="com.dumbhippo.search.IndexerService" name="dumbhippo.com:service=Indexer">
