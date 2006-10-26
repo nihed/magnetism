@@ -19,13 +19,16 @@ public class FeedUpdater extends ServiceMBeanSupport implements FeedUpdaterMBean
 	@SuppressWarnings("unused")
 	private static final Logger logger = GlobalSetup.getLogger(FeedUpdater.class);
 	
-	// How old the feed data can be before we refetch
-	static final long FEED_UPDATE_TIME = 10 * 60 * 1000; // 10 minutes
+	// How old the feed data can be before we refetch in milliseconds
+	public static final long FEED_UPDATE_TIME = 1000 * 60 * 10; // 10 minutes
+	
+	// How long to wait if we failed to update last time in milliseconds
+	public static final long BAD_FEED_UPDATE_TIME = 1000 * 60 * 60 * 7; // 7 hours
 	
 	// Interval at which we check all threads for needing update. This is shorter 
 	// than FEED_UPDATE_TIME so that we don't just miss an update and wait 
 	// an entire additional cycle
-	static final long UPDATE_THREAD_TIME = FEED_UPDATE_TIME / 2;
+	public static final long UPDATE_THREAD_TIME = FEED_UPDATE_TIME / 2;
 	
 	public void startSingleton() {
 		logger.info("Starting FeedUpdater singleton");
@@ -105,7 +108,9 @@ public class FeedUpdater extends ServiceMBeanSupport implements FeedUpdaterMBean
                                                     });
                                             }
 										} catch (XmlMethodException e) {
-											logger.info("Couldn't update feed {}: {}", feed, e.getCodeString() + ": " + e.getMessage());
+											// this should have been logged already deeper in the system where more detail was known,
+											// do a debug log here in case it somehow was not.
+											logger.debug("Couldn't update feed {}: {}", feed, e.getCodeString() + ": " + e.getMessage());
 											feedSystem.markFeedFailedLastUpdate(feed);											
 										}
 									}

@@ -31,6 +31,7 @@ import org.slf4j.Logger;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.ThreadUtils;
 import com.dumbhippo.TypeUtils;
+import com.dumbhippo.mbean.FeedUpdater;
 import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.Feed;
@@ -65,15 +66,7 @@ import com.sun.syndication.io.FeedException;
 @Stateless
 public class FeedSystemBean implements FeedSystem {
 	@SuppressWarnings("unused")
-	private static final Logger logger = GlobalSetup.getLogger(FeedSystemBean.class);
-	
-	// How old the feed data can be before we refetch
-	static final long FEED_UPDATE_TIME = 10 * 60 * 1000; // 10 minutes
-	
-	// Interval at which we check all threads for needing update. This is shorter 
-	// than FEED_UPDATE_TIME so that we don't just miss an update and wait 
-	// an entire additional cycle
-	static final long UPDATE_THREAD_TIME = FEED_UPDATE_TIME / 2;
+	private static final Logger logger = GlobalSetup.getLogger(FeedSystemBean.class);	
 	
 	@PersistenceContext(unitName = "dumbhippo")
 	private EntityManager em;
@@ -144,10 +137,16 @@ public class FeedSystemBean implements FeedSystem {
 		try {
 			return feedFetcher.retrieveFeed(url);
 		} catch (IOException e) {
+			// log this here since we lose the details in the potentially-user-visible XmlMethodException
+			logger.warn("Network exception retrieving feed was {}: '{}' on url " + url, e.getClass().getName(), e.getMessage());
 			throw new XmlMethodException(XmlMethodErrorCode.NETWORK_ERROR, "Network error fetching feed " + url);
 		} catch (FetcherException e) {
+			// log this here since we lose the details in the potentially-user-visible XmlMethodException
+			logger.warn("Fetcher exception retrieving feed was {}: '{}' on url " + url, e.getClass().getName(), e.getMessage());
 			throw new XmlMethodException(XmlMethodErrorCode.NETWORK_ERROR, "Error requesting feed from server " + url);
 		} catch (FeedException e) {
+			// log this here since we lose the details in the potentially-user-visible XmlMethodException
+			logger.warn("Feed exception retrieving feed was {}: '{}' on url " + url, e.getClass().getName(), e.getMessage());
 			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, "Error parsing feed " + url);
 		}
 	}
@@ -286,13 +285,23 @@ public class FeedSystemBean implements FeedSystem {
 	
 	private void setLinkFromSyndFeed(Feed feed, SyndFeed syndFeed) throws XmlMethodException {
 		String link = syndFeed.getLink();
-		URL linkUrl;
-		try {
-			linkUrl = new URL(link);
-		} catch (MalformedURLException e) {
-			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, "Feed contains invalid link '" + link + "'");
+		if (link == null) {
+			if (feed.getLink() != null) {
+				// theory is that on an incremental update maybe this happens, we'll see
+				logger.debug("Feed already has a link, new SyndFeed does not, sticking to the old one. {}", feed);
+				return;
+			} else {
+				throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, "Feed contains no link element or we failed to parse one at least");
+			}
+		} else {
+			URL linkUrl;
+			try {
+				linkUrl = new URL(link);
+			} catch (MalformedURLException e) {
+				throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, "Feed contains invalid link '" + link + "' " + e.getMessage());
+			}
+			feed.setLink(identitySpider.getLink(linkUrl));
 		}
-		feed.setLink(identitySpider.getLink(linkUrl));
 	}
 	
 	private void initializeFeedFromSyndFeed(Feed feed, SyndFeed syndFeed) throws XmlMethodException {
@@ -469,8 +478,10 @@ public class FeedSystemBean implements FeedSystem {
 	}
 
 	@TransactionAttribute(TransactionAttributeType.SUPPORTS)
-	public boolean updateFeedNeedsFetch(Feed feed) {	
-		if (System.currentTimeMillis() - feed.getLastFetched().getTime() < FEED_UPDATE_TIME) {
+	public boolean updateFeedNeedsFetch(Feed feed) {
+		long updateTime = feed.getLastFetchSucceeded() ? FeedUpdater.FEED_UPDATE_TIME : FeedUpdater.BAD_FEED_UPDATE_TIME;
+		
+		if ((System.currentTimeMillis() - feed.getLastFetched().getTime()) < updateTime) {
 			//logger.debug("  Feed {} is already up-to-date", feed);
 			return false; // Up-to-date, nothing to do
 		} else {
@@ -495,8 +506,7 @@ public class FeedSystemBean implements FeedSystem {
 			logger.debug("  HTTP request completed for feed {}", feed.getSource());
 			return new UpdateFeedContext(feed.getId(), syndFeed);		
 		} catch (XmlMethodException e) {
-			logger.warn("Couldn't update feed", e);
-			
+			logger.warn("Couldn't update feed {}: " + e.getCodeString() + ": {}", feed.getSource(), e.getMessage());
 			throw e;
 		}
 	}
@@ -506,7 +516,12 @@ public class FeedSystemBean implements FeedSystem {
 		SyndFeed syndFeed = context.getSyndFeed();
 		Feed feed = em.find(Feed.class, context.getFeedId());
 		logger.debug("  Saving feed update results in db for {}", feed.getSource());
-		updateFeedFromSyndFeed(feed, syndFeed);
+		try {
+			updateFeedFromSyndFeed(feed, syndFeed);
+		} catch (XmlMethodException e) {
+			logger.warn("Couldn't store feed {}: " + e.getCodeString() + ": {}", feed.getSource(), e.getMessage());
+			throw e;
+		}
 	}
 	
 	public void markFeedFailedLastUpdate(Feed feed) {
@@ -531,7 +546,6 @@ public class FeedSystemBean implements FeedSystem {
 			if (o != null)
 				updateFeedStoreFeed(o);
 		} catch (XmlMethodException e) {
-			logger.warn("Couldn't update feed", e);
 			markFeedFailedLastUpdate(feed);
 		}
 	}
