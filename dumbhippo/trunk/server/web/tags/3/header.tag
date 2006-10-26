@@ -15,7 +15,8 @@
 		<div id="dhPageHeaderLeftControlsArea">
 		<c:choose>
 			<c:when test="${signin.valid}">
-				<span id="dhPageHeaderWelcome">Hello, <c:out value="${signin.viewedUserFromSystem.name}"/>!</span> <span id="dhPageHeaderWelcomeOptions" class="dh-underlined-link"><dht:actionLinkLogout oneLine="true"/></span>
+				<span id="dhPageHeaderWelcome">Hello, <c:out value="${signin.viewedUserFromSystem.name}"/>!</span> 
+				<div id="dhPageHeaderWelcomeOptions" class="dh-underlined-link"><dht:actionLinkLogout oneLine="true"/></div>
 			</c:when>
 			<c:otherwise>	
 			    <span id="dhPageHeaderWelcomeOptions"><a class="dh-underlined-link" href="/who-are-you">Log in</a><c:if test="${!disableSignupLink}"> | <a class="dh-underlined-link" href="/signup">Sign up</a></c:if></span>
@@ -60,19 +61,12 @@
 		<td>
 		<div id="dhHeaderControls3">
 			<div id="dhHeaderOptions3">
-				<c:choose>
-					<c:when test="${signin.valid}">
-					    <a class="dh-underlined-link" href="/">My Home</a> | 
-					    <a class="dh-underlined-link" href="/account">My Account</a> |
-						<a class="dh-underlined-link" href="/friends">People</a> | 
-						<a class="dh-underlined-link" href="/groups">Groups</a> | 
-					</c:when>
-					<c:otherwise>
-						<a class="dh-underlined-link" href="/">Home</a> |
-						<a class="dh-underlined-link" href="/active-people">Active People</a> | 
-						<a class="dh-underlined-link" href="/active-groups">Active Groups</a> | 
-					</c:otherwise>
-				</c:choose>
+			    <c:if test="${signin.valid}">
+					<a class="dh-underlined-link" href="/">My Home</a> | 
+				    <a class="dh-underlined-link" href="/account">My Account</a> |
+			    </c:if>
+				<a class="dh-underlined-link" href="/active-people">Active People</a> | 
+				<a class="dh-underlined-link" href="/active-groups">Active Groups</a> | 
 				<a class="dh-underlined-link" href="/features">Features</a> |				
 				<a class="dh-underlined-link" href="http://blog.mugshot.org/?page_id=245a">Help</a>
 			</div>	

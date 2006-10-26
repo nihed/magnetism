@@ -56,14 +56,19 @@ input.dh-text-input {
 
 .dh-page-options-tip-area {
     position:      relative;
+    display:       block;
+    float:         right;
+    clear:         both;
     top:           -13px;
 }
 
 .dh-page-options-options-area {
-    position:      absolute;
-    top:           5px;
-	right:         0px;
-	width:         200px;   
+    position:      relative;
+    display:       block;
+    float:         right;
+    clear:         right;
+    top:           -10px;
+	right:         0px; 
 }
 
 #dhPageFooter {

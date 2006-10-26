@@ -21,12 +21,9 @@
 
 <dht3:page disableHomeLink="${person.self}">
 	<dht3:pageSubHeader title="${person.viewedPerson.name}'s ${pageName}">
-		<c:if test="${person.self}">
-			<dht3:randomTip tipIndex="${person.randomTipIndex}"/>
-		</c:if>
+		<dht3:randomTip tipIndex="${person.randomTipIndex}" isSelf="${person.self}"/>
 		<dht3:standardPageOptions selected="${pageName}"/>
 	</dht3:pageSubHeader>
-	
 	<dht3:personStack person="${person.viewedPerson}" stackOrder="1" pageable="${person.pageableMugshot}" shortVersion="${person.pageableStack.position > 0}" showFrom="true" />
 	
 	<dht3:shinyBox color="grey">

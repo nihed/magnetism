@@ -50,6 +50,10 @@ img {
 	font-weight:		bold;
 }
 
+.dh-page-option-disabled {
+    color:              #555555;
+}
+
 .dh-page-options-tip-area {
 	font-size:			12px;
 	font-weight:		normal;
