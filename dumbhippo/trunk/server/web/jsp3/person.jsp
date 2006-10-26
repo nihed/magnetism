@@ -27,7 +27,7 @@
 		<dht3:standardPageOptions selected="${pageName}"/>
 	</dht3:pageSubHeader>
 	
-	<dht3:personStack person="${person.viewedPerson}" stackOrder="1" pageable="${person.pageableMugshot}" showFrom="true" />
+	<dht3:personStack person="${person.viewedPerson}" stackOrder="1" pageable="${person.pageableMugshot}" shortVersion="${person.pageableStack.position > 0}" showFrom="true" />
 	
 	<dht3:shinyBox color="grey">
 	    <div class="dh-person-stacker-header">

@@ -9,6 +9,7 @@
 <%@ attribute name="pageable" required="false" type="com.dumbhippo.server.Pageable" %>
 <%@ attribute name="blocks" required="false" type="java.util.List" %>
 <%@ attribute name="showFrom" required="true" type="java.lang.Boolean" %>
+<%@ attribute name="shortVersion" required="false" type="java.lang.Boolean" %>
 <%@ attribute name="embedVersion" required="false" type="java.lang.Boolean" %>
 <%@ attribute name="width" required="false" type="java.lang.String" %>
 <%@ attribute name="floatSide" required="false" type="java.lang.String" %>
@@ -22,7 +23,7 @@
 </c:if> 
 
 <dht3:shinyBox color="grey" width="${width}" floatSide="${floatSide}">				
-	<dht3:personHeader who="${person}" linkifyName="${embedVersion}" embedVersion="${embedVersion}" shortVersion="${pageable.position > 0}">
+	<dht3:personHeader who="${person}" linkifyName="${embedVersion}" embedVersion="${embedVersion}" shortVersion="${shortVersion}">
 	<c:choose>
 		<c:when test="${signin.valid}">
             <c:choose>
@@ -47,5 +48,7 @@
 		</c:otherwise>
 	</c:choose>    		    
 	</dht3:personHeader>
-	<dht3:stacker stackOrder="${stackOrder}" stackType="${stackType}" pageable="${pageable}" blocks="${blocks}" showFrom="${showFrom}" oneLine="${embedVersion}"/>
+	<c:if test="${!shortVersion}">
+	    <dht3:stacker stackOrder="${stackOrder}" stackType="${stackType}" pageable="${pageable}" blocks="${blocks}" showFrom="${showFrom}" oneLine="${embedVersion}"/>
+    </c:if>
 </dht3:shinyBox>
