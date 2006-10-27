@@ -250,6 +250,22 @@ hippo_canvas_text_set_context(HippoCanvasItem    *item,
         hippo_canvas_item_emit_request_changed(HIPPO_CANVAS_ITEM(item));
 }
 
+static char*
+remove_newlines(const char *text)
+{
+    char *s;
+    char *p;
+
+    s = g_strdup(text);
+
+    for (p = s; *p != '\0'; ++p) {
+        if (*p == '\n')
+            *p = ' ';
+    }
+
+    return s;
+}
+
 static PangoLayout*
 create_layout(HippoCanvasText *text,
               int              allocation_width)
@@ -338,14 +354,19 @@ create_layout(HippoCanvasText *text,
             }
 
             /* For now if we say ellipsize end, we always just want one line.
-             * Two FIXME:
-             * - maybe this should be an orthogonal property
-             * - need to change the glyph for paragraph separator, or
-             *   just create the layout with only the text up to the first
-             *   newline.
+             * Maybe this should be an orthogonal property?
              */
             if (text->size_mode == HIPPO_CANVAS_SIZE_ELLIPSIZE_END) {
                 pango_layout_set_single_paragraph_mode(layout, TRUE);
+
+                /* Pango's line separator character in this case is ugly, so we
+                 * fix it. Not a very efficient approach, but oh well.
+                 */
+                if (text->text != NULL) {
+                    char *new_text = remove_newlines(text->text);
+                    pango_layout_set_text(layout, new_text, -1);
+                    g_free(new_text);
+                }
             }
         }
     }
