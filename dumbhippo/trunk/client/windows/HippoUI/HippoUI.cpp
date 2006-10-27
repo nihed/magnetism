@@ -2177,21 +2177,32 @@ WinMain(HINSTANCE hInstance,
         return 0;
     }
 
+    int ccMajor = 0, ccMinor = 0;
+    if (hippoGetDllVersion(L"comctl32.dll", &ccMajor, &ccMinor))
+        hippoDebugLogW(L"Common controls dll %d.%d", ccMajor, ccMinor);
+    else
+        hippoDebugLogW(L"Failed to get common controls version");
+
+    if (ccMajor < 6) {
+        hippoDebugDialog(L"Mugshot requires Windows XP.\n(Common controls version %d.%d is too old.)", ccMajor, ccMinor);
+        return 1;
+    }
+
     // Initialize OLE and COM; We need to use this rather than CoInitialize
     // in order to get cut-and-paste and drag-and-drop to work
     OleInitialize(NULL);
 
-    // Initialize common control window classes; needed to use e.g. SCROLLBAR
+    // Initialize common control window classes; needed to use e.g. 
+    // scrollbar and tooltips
     INITCOMMONCONTROLSEX initControls;
     initControls.dwSize = sizeof(initControls);
-    initControls.dwICC = ICC_STANDARD_CLASSES;
+    initControls.dwICC = ICC_STANDARD_CLASSES | ICC_TAB_CLASSES;
     if (!InitCommonControlsEx(&initControls)) {
         // the error codes for this function are not documented
         // anywhere I can find.
-        // 
         HRESULT e = GetLastError();
-        if (!(e == ERROR_ALREADY_EXISTS || e == ERROR_INVALID_HANDLE))
-            hippoDebugLastErr(L"Failed to initialize common controls");
+        hippoDebugLogW(L"InitCommonControlsEx error %d", (int) e);
+        hippoDebugLastErr(L"Failed to initialize common controls");
     }
 
     if (!initializeWinSock())
