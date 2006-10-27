@@ -1148,7 +1148,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 					populateBlockView(blockView);
 				} catch (BlockContentsNotVisibleException e) {
 					blockViewsToRemove.add(blockView);
-					logger.error("Could not populate a block view for a public block {}", blockView.getBlock(), e);				
+					logger.error("Could not populate a block view for a public block " + blockView.getBlock(), e);				
 				}
 		    }
 		}
