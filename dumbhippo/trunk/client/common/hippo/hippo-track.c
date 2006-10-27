@@ -328,7 +328,7 @@ hippo_song_download_new_from_xml(HippoDataCache *cache,
     
     if (!hippo_xml_split(cache, node, NULL,
                          "source", HIPPO_SPLIT_STRING, &source_str,
-                         "url", HIPPO_SPLIT_URI, &url,
+                         "url", HIPPO_SPLIT_URI_ABSOLUTE, &url,
                          NULL))
         return NULL;
 

@@ -148,7 +148,7 @@ hippo_canvas_item_get_height_request(HippoCanvasItem *canvas_item,
                                      int              for_width)
 {
     g_return_val_if_fail(HIPPO_IS_CANVAS_ITEM(canvas_item), 0);
-
+    
     return HIPPO_CANVAS_ITEM_GET_IFACE(canvas_item)->get_height_request(canvas_item, for_width);
 }
 
@@ -160,15 +160,6 @@ hippo_canvas_item_allocate(HippoCanvasItem *canvas_item,
     g_return_if_fail(HIPPO_IS_CANVAS_ITEM(canvas_item));
 
     HIPPO_CANVAS_ITEM_GET_IFACE(canvas_item)->allocate(canvas_item, width, height);
-
-    /* GTK doesn't let us assume this, e.g. GtkScrolledWindow will queue
-     * requests from its allocate. But it's supposed to be true for
-     * canvas items.
-     */
-    if (hippo_canvas_item_get_needs_request(canvas_item))
-        g_warning("Item %s %p still needs resize after being allocated",
-                  g_type_name_from_instance((GTypeInstance*) canvas_item),
-                  canvas_item);
 }
 
 void

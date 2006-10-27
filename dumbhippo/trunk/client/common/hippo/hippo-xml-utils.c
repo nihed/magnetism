@@ -123,14 +123,39 @@ parse_boolean(const char *s,
 }
 
 static gboolean
-validate_uri(const char *s)
+validate_absolute_uri(const char *s)
 {
-    /* FIXME: do something here; we trust the server, so this is mostly a
-     * question of robustness.
+    /* We trust the server, so this is mostly a question of
+     * robustness.
      */
-
+    if (*s == '/') {
+        g_warning("URI '%s' is supposed to be absolute", s);
+    }
+    
     return TRUE;
 }
+
+static gboolean
+validate_relative_uri(const char *s)
+{
+    /* We trust the server, so this is mostly a question of
+     * robustness.
+     */
+    if (*s != '/') {
+        g_warning("URI '%s' is supposed to be relative", s);
+    }
+    
+    return TRUE;
+}
+
+static gboolean
+validate_either_uri(const char *s)
+{
+    /* FIXME do something ? */
+    
+    return TRUE;
+}
+
 
 typedef struct {
     const char *attribute_name;
@@ -258,15 +283,33 @@ hippo_xml_split_process_value(HippoDataCache  *cache,
 
         *(HippoPost **)info->location = post;
         break;
-    case HIPPO_SPLIT_URI:
-        if (!validate_uri(value)) {
+    case HIPPO_SPLIT_URI_ABSOLUTE:
+        if (!validate_absolute_uri(value)) {
             g_set_error(error, HIPPO_XML_ERROR, HIPPO_XML_ERROR_INVALID_CONTENT,
-                        "Value '%s' for attribute '%s' of node <%s/> is not an URI",
+                        "Value '%s' for attribute '%s' of node <%s/> is not an absolute URI",
                         value, info->attribute_name, node_name);
             return FALSE;
         }
         *(const char **)info->location = value;
         break;
+    case HIPPO_SPLIT_URI_RELATIVE:
+        if (!validate_relative_uri(value)) {
+            g_set_error(error, HIPPO_XML_ERROR, HIPPO_XML_ERROR_INVALID_CONTENT,
+                        "Value '%s' for attribute '%s' of node <%s/> is not a relative URI",
+                        value, info->attribute_name, node_name);
+            return FALSE;
+        }
+        *(const char **)info->location = value;
+        break;
+    case HIPPO_SPLIT_URI_EITHER:
+        if (!validate_either_uri(value)) {
+            g_set_error(error, HIPPO_XML_ERROR, HIPPO_XML_ERROR_INVALID_CONTENT,
+                        "Value '%s' for attribute '%s' of node <%s/> is not a URI",
+                        value, info->attribute_name, node_name);
+            return FALSE;
+        }
+        *(const char **)info->location = value;
+        break;        
     case HIPPO_SPLIT_SET:
         *(gboolean *)info->location = TRUE;
         break;

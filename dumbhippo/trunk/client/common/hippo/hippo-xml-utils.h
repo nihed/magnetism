@@ -16,19 +16,21 @@ typedef enum
 } HippoXmlError;
 
 typedef enum {                                              /* Destination type */
-    HIPPO_SPLIT_SET      = 0,  /* Value present at all      gboolean                */
-    HIPPO_SPLIT_NODE     = 1,  /* Structured XML content:   LmMessageNode *         */
-    HIPPO_SPLIT_STRING   = 2,  /* Uninterpreted string:     const char *            */
-    HIPPO_SPLIT_INT32    = 3,  /* Integer:                  int                     */
-    HIPPO_SPLIT_INT64    = 4,  /* 64-bit integer:           int64                   */
-    HIPPO_SPLIT_BOOLEAN  = 5,  /* true|false                gboolean                */
-    HIPPO_SPLIT_TIME_MS  = 6,  /* milliseconds since epoch  int64                   */
-    HIPPO_SPLIT_GUID     = 7,  /* DumbHippo GUID            const char *            */
-    HIPPO_SPLIT_URI      = 8,  /* Any URI                   const char *            */
-    HIPPO_SPLIT_ENTITY   = 9,  /* DumbHippo entity          HippoEntity *           */
-    HIPPO_SPLIT_PERSON   = 10, /* DumbHippo user            HippoPerson *           */
-    HIPPO_SPLIT_GROUP    = 11, /* DumbHippo group           HippoGroup *            */
-    HIPPO_SPLIT_POST     = 12, /* Post                      HippoPost *             */
+    HIPPO_SPLIT_SET          = 0,  /* Value present at all      gboolean                */
+    HIPPO_SPLIT_NODE         = 1,  /* Structured XML content:   LmMessageNode *         */
+    HIPPO_SPLIT_STRING       = 2,  /* Uninterpreted string:     const char *            */
+    HIPPO_SPLIT_INT32        = 3,  /* Integer:                  int                     */
+    HIPPO_SPLIT_INT64        = 4,  /* 64-bit integer:           int64                   */
+    HIPPO_SPLIT_BOOLEAN      = 5,  /* true|false                gboolean                */
+    HIPPO_SPLIT_TIME_MS      = 6,  /* milliseconds since epoch  int64                   */
+    HIPPO_SPLIT_GUID         = 7,  /* DumbHippo GUID            const char *            */
+    HIPPO_SPLIT_URI_RELATIVE = 8,  /* URI relative to server    const char *            */
+    HIPPO_SPLIT_URI_ABSOLUTE = 9,  /* Any full URI              const char *            */
+    HIPPO_SPLIT_URI_EITHER   = 10, /* Relative or absolute      const char *            */
+    HIPPO_SPLIT_ENTITY       = 11, /* DumbHippo entity          HippoEntity *           */
+    HIPPO_SPLIT_PERSON       = 12, /* DumbHippo user            HippoPerson *           */
+    HIPPO_SPLIT_GROUP        = 13, /* DumbHippo group           HippoGroup *            */
+    HIPPO_SPLIT_POST         = 14, /* Post                      HippoPost *             */
 
     HIPPO_SPLIT_TYPE_MASK = 0x001f,
     

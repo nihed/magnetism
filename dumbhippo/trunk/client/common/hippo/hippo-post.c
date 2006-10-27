@@ -152,7 +152,7 @@ hippo_post_update_from_xml(HippoPost      *post,
 
     if (!hippo_xml_split(cache, node, NULL,
                          "id", HIPPO_SPLIT_GUID, &id,
-                         "href", HIPPO_SPLIT_URI, &href,
+                         "href", HIPPO_SPLIT_URI_ABSOLUTE, &href,
                          "poster", HIPPO_SPLIT_ENTITY, &poster,
                          "postDate", HIPPO_SPLIT_TIME_MS, &post_date,
                          "title", HIPPO_SPLIT_STRING | HIPPO_SPLIT_ELEMENT, &title,

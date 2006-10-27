@@ -230,7 +230,8 @@ on_current_track_changed(HippoPerson *person,
             title = g_strdup_printf("%s (%s)", name, artist);
         else
             title = g_strdup(name);
-        hippo_canvas_block_set_title(canvas_block, title);
+        hippo_canvas_block_set_title(canvas_block, title,
+                                     "Click to go to this person's Mugshot page");
 
         hippo_canvas_box_remove_all(block_music_person->downloads_box);
         
@@ -280,7 +281,7 @@ on_current_track_changed(HippoPerson *person,
 
         g_object_unref(track);
     } else {
-        hippo_canvas_block_set_title(canvas_block, "");
+        hippo_canvas_block_set_title(canvas_block, NULL, NULL);
     }
 }
 

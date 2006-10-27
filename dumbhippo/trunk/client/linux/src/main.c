@@ -243,7 +243,7 @@ hippo_app_open_url(HippoApp   *app,
 void
 hippo_app_show_home(HippoApp *app)
 {
-    hippo_connection_open_relative_url(app->connection, "/");
+    hippo_connection_open_maybe_relative_url(app->connection, "/");
 }
 
 void
@@ -310,7 +310,6 @@ hippo_app_ignore_entity_chat_id(HippoApp    *app,
     room = hippo_group_get_chat_room(HIPPO_GROUP(entity));
     hippo_chat_room_set_ignored(room, TRUE);
 }
-
 
 void
 hippo_app_visit_entity(HippoApp    *app,

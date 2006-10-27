@@ -131,17 +131,16 @@ const char*      hippo_state_debug_string(HippoState state);
 
 
 /* Convenience wrappers around open_url that create part of the url for you */
-char* hippo_connection_make_absolute_url (HippoConnection *connection,
-                                          const char      *relative_url);
-void  hippo_connection_open_relative_url (HippoConnection *connection,
-                                          const char      *relative_url);
-void  hippo_connection_visit_post        (HippoConnection *connection,
-                                          HippoPost       *post);
-void  hippo_connection_visit_post_id     (HippoConnection *connection,
-                                          const char      *guid);
-void  hippo_connection_visit_entity      (HippoConnection *connection,
-                                          HippoEntity     *entity);
-
+char* hippo_connection_make_absolute_url       (HippoConnection *connection,
+                                                const char      *relative_url);
+void  hippo_connection_open_maybe_relative_url (HippoConnection *connection,
+                                                const char      *relative_url);
+void  hippo_connection_visit_post              (HippoConnection *connection,
+                                                HippoPost       *post);
+void  hippo_connection_visit_post_id           (HippoConnection *connection,
+                                                const char      *guid);
+void  hippo_connection_visit_entity            (HippoConnection *connection,
+                                                HippoEntity     *entity);
 
 
 G_END_DECLS

@@ -73,8 +73,9 @@ hippo_entity_real_update_from_xml(HippoEntity    *entity,
     if (!hippo_xml_split(cache, node, NULL,
                          "id", HIPPO_SPLIT_GUID, &id,
                          "name", HIPPO_SPLIT_STRING, &name,
-                         "photoUrl", HIPPO_SPLIT_URI | HIPPO_SPLIT_OPTIONAL, &photoUrl,
-                         "homeUrl", HIPPO_SPLIT_URI | HIPPO_SPLIT_OPTIONAL, &homeUrl,
+                         "photoUrl", HIPPO_SPLIT_URI_RELATIVE | HIPPO_SPLIT_OPTIONAL, &photoUrl,
+                         /* Home url isn't relative if this is a feed, for example */
+                         "homeUrl", HIPPO_SPLIT_URI_EITHER | HIPPO_SPLIT_OPTIONAL, &homeUrl,
                          NULL))
         return FALSE;
     
@@ -232,6 +233,7 @@ hippo_entity_set_home_url(HippoEntity    *entity,
                           const char     *url)
 {
     g_return_if_fail(HIPPO_IS_ENTITY(entity));
+    
     hippo_entity_set_string(entity, &entity->home_url, url);
 }
 

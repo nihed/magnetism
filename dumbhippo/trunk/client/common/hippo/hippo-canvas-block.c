@@ -774,11 +774,13 @@ hippo_canvas_block_set_heading (HippoCanvasBlock *canvas_block,
 
 void
 hippo_canvas_block_set_title(HippoCanvasBlock *canvas_block,
-                             const char       *text)
+                             const char       *text,
+                             const char       *tooltip)
 {
     /* keep in mind that title may be NULL */
     g_object_set(G_OBJECT(canvas_block->title_link_item),
                  "text", text,
+                 "tooltip", tooltip,
                  NULL);
 }
 

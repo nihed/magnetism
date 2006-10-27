@@ -1989,23 +1989,6 @@ is_entity(LmMessageNode *node)
     return FALSE;
 }
 
-static char*
-make_absolute_url(HippoConnection *connection,
-                  const char      *relative)
-{
-    char *server;
-    char *url;
-
-    if (relative[0] != '/')
-    return g_strdup(relative);
-    
-    server = hippo_platform_get_web_server(connection->platform);
-    url = g_strdup_printf("http://%s%s", server, relative);
-    g_free(server);
-    
-    return url;
-}
-
 /* Derive a fallback home location if the server didn't send one
  */
 static void
@@ -2014,9 +1997,8 @@ set_fallback_home_url(HippoConnection *connection,
 {
     HippoEntityType type = hippo_entity_get_entity_type(entity);
     const char *id = hippo_entity_get_guid(entity);
-
-    char *url;
     char *relative;
+
     if (type == HIPPO_ENTITY_PERSON)
         relative = g_strdup_printf("/person?who=%s", id);
     else if (type == HIPPO_ENTITY_GROUP)
@@ -2024,10 +2006,10 @@ set_fallback_home_url(HippoConnection *connection,
     else {
         return;
     }        
-    url = make_absolute_url(connection, relative);
-    hippo_entity_set_home_url(entity, url);
+
+    hippo_entity_set_home_url(entity, relative);
+
     g_free(relative);
-    g_free(url);
 }
 
 static gboolean
@@ -2093,10 +2075,9 @@ hippo_connection_parse_entity(HippoConnection *connection,
     }
 
     hippo_entity_set_name(entity, name);
+    
     if (home_url) {
-        char *absolute = make_absolute_url(connection, home_url);
-        hippo_entity_set_home_url(entity, absolute);
-        g_free(absolute);
+        hippo_entity_set_home_url(entity, home_url);
     } else {
         set_fallback_home_url(connection, entity);
     }
@@ -2143,7 +2124,7 @@ hippo_connection_parse_post(HippoConnection *connection,
     if (!hippo_xml_split(connection->cache, post_node, NULL,
                          "id", HIPPO_SPLIT_GUID, &post_guid,
                          "poster", HIPPO_SPLIT_GUID | HIPPO_SPLIT_ELEMENT, &sender_guid,
-                         "href", HIPPO_SPLIT_URI | HIPPO_SPLIT_ELEMENT, &url,
+                         "href", HIPPO_SPLIT_URI_ABSOLUTE | HIPPO_SPLIT_ELEMENT, &url,
                          "title", HIPPO_SPLIT_STRING | HIPPO_SPLIT_ELEMENT, &title,
                          "text", HIPPO_SPLIT_STRING | HIPPO_SPLIT_ELEMENT | HIPPO_SPLIT_OPTIONAL, &text,
                          "postInfo", HIPPO_SPLIT_STRING | HIPPO_SPLIT_ELEMENT | HIPPO_SPLIT_OPTIONAL, &info,
@@ -2801,7 +2782,7 @@ parse_chat_user_info(HippoConnection *connection,
 
         if (!hippo_xml_split(connection->cache, info_node, NULL,
                              "name", HIPPO_SPLIT_STRING, &name,
-                             "smallPhotoUrl", HIPPO_SPLIT_URI | HIPPO_SPLIT_OPTIONAL, &photo_url,
+                             "smallPhotoUrl", HIPPO_SPLIT_URI_RELATIVE | HIPPO_SPLIT_OPTIONAL, &photo_url,
                              "role", HIPPO_SPLIT_STRING | HIPPO_SPLIT_OPTIONAL, &role,
                              "old_role", HIPPO_SPLIT_STRING | HIPPO_SPLIT_OPTIONAL, &old_role,
                              "arrangementName", HIPPO_SPLIT_STRING | HIPPO_SPLIT_OPTIONAL, &arrangement_name,
@@ -2856,7 +2837,7 @@ parse_chat_message_info(HippoConnection  *connection,
 
         if (!hippo_xml_split(connection->cache, info_node, NULL,
                              "name", HIPPO_SPLIT_STRING, &name_str,
-                             "smallPhotoUrl", HIPPO_SPLIT_URI, &photo_url,
+                             "smallPhotoUrl", HIPPO_SPLIT_URI_RELATIVE, &photo_url,
                              "timestamp", HIPPO_SPLIT_TIME_MS, &timestamp_milliseconds,
                              "serial", HIPPO_SPLIT_INT32, &serial,
                              NULL))
@@ -3697,20 +3678,28 @@ hippo_state_debug_string(HippoState state)
 
 char*
 hippo_connection_make_absolute_url(HippoConnection *connection,
-                                   const char      *relative)
+                                   const char      *maybe_relative)
 {
-    char *server;
-    char *url;
-    g_return_val_if_fail(*relative == '/', NULL);
-    server = hippo_platform_get_web_server(connection->platform);
-    url = g_strdup_printf("http://%s%s", server, relative);
-    g_free(server);
-    return url;
+    if (*maybe_relative == '/') {
+        char *server;
+        char *url;
+        
+        server = hippo_platform_get_web_server(connection->platform);
+        url = g_strdup_printf("http://%s%s", server, maybe_relative);
+        g_free(server);
+
+        return url;
+    } else if (g_str_has_prefix(maybe_relative, "http:")) {
+        return g_strdup(maybe_relative);
+    } else {
+        g_warning("weird url '%s', not sure what to do with it", maybe_relative);
+        return g_strdup(maybe_relative);
+    }
 }
 
 void
-hippo_connection_open_relative_url(HippoConnection *connection,
-                                   const char      *relative_url)
+hippo_connection_open_maybe_relative_url(HippoConnection *connection,
+                                         const char      *relative_url)
 {
     char *url;
     url = hippo_connection_make_absolute_url(connection,
@@ -3735,7 +3724,7 @@ hippo_connection_visit_post_id(HippoConnection *connection,
 {
     char *relative;
     relative = g_strdup_printf("/visit?post=%s", guid);
-    hippo_connection_open_relative_url(connection, relative);
+    hippo_connection_open_maybe_relative_url(connection, relative);
     g_free(relative);
 }
 
@@ -3748,9 +3737,9 @@ hippo_connection_visit_entity(HippoConnection *connection,
 
     home_url = hippo_entity_get_home_url(entity);
     if (home_url) {
-        hippo_connection_open_relative_url(connection,
-                                           home_url);
+        hippo_connection_open_maybe_relative_url(connection, home_url);
     } else {
-        g_warning("Don't know how to go to the home page for entity '%s'", hippo_entity_get_guid(entity));
+        g_warning("Don't know how to go to the home page for entity '%s'",
+                  hippo_entity_get_guid(entity));
     }
 }

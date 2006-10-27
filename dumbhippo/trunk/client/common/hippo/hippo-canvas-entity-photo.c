@@ -215,9 +215,13 @@ hippo_canvas_entity_photo_update_image(HippoCanvasEntityPhoto *entity_photo)
                                               entity_photo->entity,
                                               entity_photo->photo_size,
                                               HIPPO_CANVAS_ITEM(entity_photo));
+        g_object_set(G_OBJECT(entity_photo),
+                     "tooltip", hippo_entity_get_name(entity_photo->entity),
+                     NULL);
     } else {
         g_object_set(G_OBJECT(entity_photo),
                      "image-name", "nophoto",
+                     "tooltip", NULL,
                      NULL);
     }
 }

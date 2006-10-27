@@ -228,7 +228,8 @@ update_chat_messages(HippoCanvasBlockGroupChat *canvas_group_chat)
      * "N messages" but we don't have that info yet
      */
     hippo_canvas_block_set_title(HIPPO_CANVAS_BLOCK(canvas_group_chat),
-                                 "New chat activity");
+                                 "New chat activity",
+                                 "Click to join group chat");
     
     /* For the chat preview, prefer to use the chat room if
      * we have one, otherwise use the static recent messages

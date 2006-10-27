@@ -188,10 +188,12 @@ hippo_canvas_entity_name_update_text(HippoCanvasEntityName *entity_name)
     if (entity_name->entity) {
         g_object_set(G_OBJECT(entity_name),
                      "text", hippo_entity_get_name(entity_name->entity),
+                     "tooltip", hippo_entity_get_home_url(entity_name->entity),
                      NULL);
     } else {
         g_object_set(G_OBJECT(entity_name),
                      "text", NULL,
+                     "tooltip", NULL,
                      NULL);
     }
 }

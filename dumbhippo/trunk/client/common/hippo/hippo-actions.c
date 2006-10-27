@@ -250,7 +250,7 @@ hippo_actions_expand_notification(HippoActions *actions)
 void
 hippo_actions_open_home_page(HippoActions    *actions)
 {
-    hippo_connection_open_relative_url(get_connection(actions), "/");
+    hippo_connection_open_maybe_relative_url(get_connection(actions), "/");
 }
 
 void
