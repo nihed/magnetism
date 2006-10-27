@@ -61,10 +61,15 @@
 		<td>
 		<div id="dhHeaderControls3">
 			<div id="dhHeaderOptions3">
-			    <c:if test="${signin.valid}">
-					<a class="dh-underlined-link" href="/">My Home</a> | 
-				    <a class="dh-underlined-link" href="/account">My Account</a> |
-			    </c:if>
+				<c:choose>
+					<c:when test="${signin.valid}">
+					    <a class="dh-underlined-link" href="/">My Home</a> | 
+				        <a class="dh-underlined-link" href="/account">My Account</a> |
+					</c:when>
+					<c:otherwise>
+						<a class="dh-underlined-link" href="/">Home</a> | 
+					</c:otherwise>
+				</c:choose>		
 				<a class="dh-underlined-link" href="/active-people">Active People</a> | 
 				<a class="dh-underlined-link" href="/active-groups">Active Groups</a> | 
 				<a class="dh-underlined-link" href="/features">Features</a> |				
