@@ -250,3 +250,50 @@ hippoWindowIsActive(HWND window)
 
     return FALSE;
 }
+
+bool
+hippoGetDllVersion(WCHAR *dllName, int *majorP, int *minorP)
+{
+    HINSTANCE instance;
+    bool success;
+
+    success = false;
+
+    *majorP = 0;
+    *minorP = 0;
+
+    instance = LoadLibrary(dllName);
+
+    if (!instance) {
+        return success;
+    }
+
+    DLLGETVERSIONPROC dllGetVersionFunc;
+    dllGetVersionFunc = (DLLGETVERSIONPROC) GetProcAddress(instance, "DllGetVersion");
+
+    // Not all DLLs export DllGetVersion.
+
+    if (!dllGetVersionFunc) {
+        goto out;
+    }
+
+    DLLVERSIONINFO info;
+    HRESULT hr;
+    
+    ZeroMemory(&info, sizeof(info));
+    info.cbSize = sizeof(info);
+
+    hr = dllGetVersionFunc(&info);
+
+    if(SUCCEEDED(hr)) {
+        *majorP = info.dwMajorVersion;
+        *minorP = info.dwMinorVersion;
+        success = true;
+    }
+
+out:
+
+    FreeLibrary(instance);
+
+    return success;
+}
