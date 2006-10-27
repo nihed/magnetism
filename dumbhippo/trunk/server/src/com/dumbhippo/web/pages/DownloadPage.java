@@ -73,7 +73,7 @@ public class DownloadPage extends AbstractSigninOptionalPage {
 		} else if (browser.isFedora6Requested()) {
 			return "Fedora Core 6";
 		} else if (browser.isWindowsRequested()) {
-			return "Windows";
+			return "Windows XP";
 		} else {
 			return null;
 		}

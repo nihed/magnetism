@@ -61,10 +61,8 @@
 						<%-- the class changes to dh-download-product-disabled in the javascript when one is not active --%>
 						<a id="dhDownloadProduct" class="dh-download-product" href="javascript:dh.download.doDownload('${welcome.downloadUrl}')"><img src="/images3/${buildStamp}/download_now_button.gif"/></a>
 						<a id="dhSkipDownload" class="dh-download-product" href="javascript:dh.download.doDownload()"><img src="/images3/${buildStamp}/no_thanks_button.gif"/></a>
-						<c:if test="${browser.linuxRequested}">
-							<i>  (This download is for <c:out value="${welcome.downloadFor}"/>.)</i>
-						</c:if>
-					</div>					
+						<i>  (This download is for <c:out value="${welcome.downloadFor}"/>.)</i>
+					</div>
 					<div class="dh-download-yadayada">
 						Or, get Mugshot for another platform instead:
 							<c:if test="${!browser.fedora5Requested}">
@@ -75,14 +73,14 @@
 								<a href="/download?distribution=fedora6${urlParams}">Fedora Core 6</a>
 							</c:if>
 							<c:if test="${!browser.windowsRequested}">
-								| <a href="/download?platform=windows${urlParams}">Windows</a>
+								| <a href="/download?platform=windows${urlParams}">Windows XP</a>
 							</c:if>
 					</div>
 				</c:when>
 				<c:otherwise>
 					<div class="dh-download-yadayada">
 						We don't have Mugshot for your computer yet. (You can 
-						download for <a href="/download?platform=windows${urlParams}">Windows</a> or 
+						download for <a href="/download?platform=windows${urlParams}">Windows XP</a> or 
 						<a href="/download?distribution=fedora5${urlParams}">Fedora Core 5</a>.)
 						<c:if test="${browser.macRequested}">We're still working on Mac OS X support.</c:if>
 						You can use Mugshot without the download, however.
