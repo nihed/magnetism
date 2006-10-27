@@ -502,8 +502,10 @@ dh.control.createControl = function() {
 if (dojo.render.html.ie) {
 	dh.control.oldOnUnload = window.onunload
 	window.onunload = function() {
-		dh.control.control._native = null;
-		dh.control.control = null;
+		if (dh.control.control) {
+			dh.control.control._native = null;
+			dh.control.control = null;
+		}
 		if (dh.control.oldOnUnload) {
 			dh.control.oldOnUnload()
 		}
