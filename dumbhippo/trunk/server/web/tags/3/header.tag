@@ -16,7 +16,7 @@
 		<c:choose>
 			<c:when test="${signin.valid}">
 				<span id="dhPageHeaderWelcome">Hello, <c:out value="${signin.viewedUserFromSystem.name}"/>!</span> 
-				<div id="dhPageHeaderWelcomeOptions" class="dh-underlined-link"><dht:actionLinkLogout oneLine="true"/></div>
+				<div id="dhPageHeaderWelcomeOptions"><dht:actionLinkLogout oneLine="true" underline="true"/></div>
 			</c:when>
 			<c:otherwise>	
 			    <span id="dhPageHeaderWelcomeOptions"><a class="dh-underlined-link" href="/who-are-you">Log in</a><c:if test="${!disableSignupLink}"> | <a class="dh-underlined-link" href="/signup">Sign up</a></c:if></span>
