@@ -185,15 +185,18 @@ public class FeedSystemBean implements FeedSystem {
 		else
 			return HtmlTextExtractor.extractText(content.getValue());
 	}
-	
-	private FeedEntry createEntryFromSyndEntry(Feed feed, SyndFeed syndFeed, SyndEntry syndEntry) throws MalformedURLException {
-		
+
+	private URL entryURLFromSyndEntry(SyndEntry syndEntry) throws MalformedURLException {
 		String entryLink = syndEntry.getLink();
 		if (entryLink == null)
-			throw new MalformedURLException("No link in feed entry from " + feed);
+			throw new MalformedURLException("No link in synd entry");
 		entryLink = entryLink.trim();
 		
-		URL entryUrl = new URL(entryLink);
+		return new URL(entryLink);
+	}
+	
+	private FeedEntry createEntryFromSyndEntry(Feed feed, SyndFeed syndFeed, SyndEntry syndEntry) throws MalformedURLException {
+		URL entryUrl = entryURLFromSyndEntry(syndEntry);
 		
 		FeedEntry entry = null;
 		
@@ -511,6 +514,24 @@ public class FeedSystemBean implements FeedSystem {
 		}
 	}
 
+	// see docs in the interface for what's going on here.
+	// This is purely to avoid logfile clutter; it isn't needed
+	// for correctness.
+	public void updateFeedInternLinks(Object contextObject) {
+		UpdateFeedContext context = (UpdateFeedContext) contextObject;
+		SyndFeed syndFeed = context.getSyndFeed();
+		for (Object o : syndFeed.getEntries()) {
+			SyndEntry syndEntry = (SyndEntry)o;
+			URL entryUrl;
+			try {
+				entryUrl = entryURLFromSyndEntry(syndEntry);
+				identitySpider.getLink(entryUrl);
+			} catch (MalformedURLException e) {
+				// just ignore, it will break later on
+			}
+		}
+	}
+	
 	public void updateFeedStoreFeed(Object contextObject) throws XmlMethodException {
 		UpdateFeedContext context = (UpdateFeedContext) contextObject;
 		SyndFeed syndFeed = context.getSyndFeed();

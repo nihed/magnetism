@@ -3,6 +3,7 @@ dojo.provide("dh.actions");
 dojo.require("dh.server");
 dojo.require("dh.util");
 dojo.require("dh.asyncActionLink")
+dojo.require("dh.control");
 
 dh.actions.addContact = function(contactId, cb, errcb) {
    	dh.server.doPOST("addcontactperson",
@@ -255,4 +256,18 @@ dh.actions.validateWantsIn = function(emailInputId) {
 		return false;
 	}
 	return true;
+}
+
+// This is a wrapper around dh.control.control.showChatWindow(chatId)
+// that lazily tries loading the control
+dh.actions.joinChatUsingControl = function(chatId) {
+	dh.control.createControl();
+
+	if (dh.control.control.haveLiveChat()) {
+		dh.control.control.showChatWindow(chatId);
+	} else {
+		window.open("/download",
+		'_NEW',
+		'height=400,width=550,top='+((screen.availHeight-400)/2)+',left='+((screen.availWidth-550)/2));		
+	}
 }

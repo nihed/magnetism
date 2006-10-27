@@ -133,6 +133,8 @@ dh.framer._updateUser = function(user) {
 }
 
 dh.framer.init = function() {
+	dh.control.createControl();
+
 	this._chatRoom = dh.control.control.getOrCreateChatRoom(this.chatId)
 
 	this._messageList = new dh.chat.MessageList(

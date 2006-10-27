@@ -12,10 +12,15 @@
 <%@ attribute name="embedVersion" required="false" type="java.lang.Boolean" %>
 <%@ attribute name="width" required="false" type="java.lang.String" %>
 <%@ attribute name="floatSide" required="false" type="java.lang.String" %>
+<%@ attribute name="showHomeUrl" required="false" type="java.lang.Boolean" %>
 
 <c:if test="${empty embedVersion}">
 	<c:set var="embedVersion" value="false"/>
 </c:if> 
+
+<c:if test="${empty showHomeUrl}">
+	<c:set var="showHomeUrl" value="true"/>
+</c:if>
 
 <dht3:shinyBox color="orange" width="${width}" floatSide="${floatSide}">
     <dht3:groupHeader who="${who}" embedVersion="${embedVersion}">
@@ -25,7 +30,9 @@
 	            <jsp:doBody/>
             </c:when>
             <c:otherwise>
-		        <a href="${who.homeUrl}">Group page</a>
+            	<c:if test="${showHomeUrl}">
+			        <a href="${who.homeUrl}">Group page</a>
+			    </c:if>
 		    </c:otherwise>
 		</c:choose>        
 	</dht3:groupHeader>

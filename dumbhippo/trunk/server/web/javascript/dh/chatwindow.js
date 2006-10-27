@@ -1,5 +1,6 @@
 dojo.provide("dh.chatwindow")
 
+dojo.require("dh.control")
 dojo.require("dh.chat")
 dojo.require("dh.util")
 dojo.require("dojo.event")
@@ -520,6 +521,8 @@ dh.chatwindow._createLists = function() {
 }
 
 dh.chatwindow.init = function() {
+	dh.control.createControl();
+
 	this._chatRoom = dh.control.control.getOrCreateChatRoom(this.chatId)
 	dh.chatwindow._createLists()
 

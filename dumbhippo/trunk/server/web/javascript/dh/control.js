@@ -462,9 +462,12 @@ defineClass(dh.control.NativeControlListener, null, {
 });
 
 //// build our appropriate control object
+dh.control.control = null; // init variable to null on load
 
 dh.control.createControl = function() {
-	dh.control.control = null;
+	// note that we may be called multiple times, all after
+	// the first should no-op
+
 	if (!dh.control.control) {
 		var firefoxControl
 		try { 
@@ -489,8 +492,6 @@ dh.control.createControl = function() {
 		dh.control.control = new dh.control.WebOnlyControl();
 	}
 }
-
-dh.control.createControl()
 
 //
 // We want to make sure that our control isn't leaked even if the

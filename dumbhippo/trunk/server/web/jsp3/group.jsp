@@ -25,7 +25,7 @@
 	<dht3:pageSubHeader title="${group.private ? 'Private Group' : 'Public Group'}" privatePage="${group.private}">
 		<dht3:standardGroupOptions group="${group.viewedGroup}" selected="Home"/>
 	</dht3:pageSubHeader>
-    <dht3:groupStack who="${group.viewedGroup}" stackOrder="1" stackType="dhStacker" pageable="${group.pageableStack}" showFrom="true" >
+    <dht3:groupStack who="${group.viewedGroup}" stackOrder="1" stackType="dhStacker" pageable="${group.pageableStack}" showFrom="true" showHomeUrl="false">
 		<c:choose>
 			<%-- Be careful if changing this not to show both join and leave at the same time --%>
 			<c:when test="${!empty group.joinAction}">
@@ -38,6 +38,9 @@
 		<c:if test="${group.canShare}">
 			| <a href="/group-invitation?group=${group.viewedGroupId}" title="Invite other people to this group">Invite People</a>
 	    </c:if>
+		<c:if test="${group.member}">
+			<dht:actionLinkChat chatId="${group.viewedGroupId}" kind="group" prefix="| " oneLine="true"/>
+		</c:if>
 	</dht3:groupStack>
 </dht3:page>
 </html>
