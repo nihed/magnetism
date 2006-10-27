@@ -259,7 +259,7 @@ remove_newlines(const char *text)
     s = g_strdup(text);
 
     for (p = s; *p != '\0'; ++p) {
-        if (*p == '\n')
+        if (*p == '\n' || *p == '\r')
             *p = ' ';
     }
 
@@ -364,7 +364,12 @@ create_layout(HippoCanvasText *text,
                  */
                 if (text->text != NULL) {
                     char *new_text = remove_newlines(text->text);
-                    pango_layout_set_text(layout, new_text, -1);
+                    /* avoid making the layout recompute everything
+                     * if we didn't have newlines anyhow
+                     */
+                    if (strcmp(text->text, new_text) != 0) {
+                        pango_layout_set_text(layout, new_text, -1);
+                    }
                     g_free(new_text);
                 }
             }
