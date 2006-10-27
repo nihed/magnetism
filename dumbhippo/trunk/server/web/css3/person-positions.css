@@ -1,21 +1,5 @@
 @CHARSET "UTF-8";
 
-.dh-person-header-next-to-image {
-	margin-left:	10px;
-}
-
-div.dh-person-header {
-    padding-top:	8px;
-}
-
-.dh-person-header-description {
-	margin-left:	5px;
-}
-
-.dh-person-header .dh-person-info {
-    width:          100%;
-}
-
 .dh-person-stacker-header {
     padding:         8px;
 }

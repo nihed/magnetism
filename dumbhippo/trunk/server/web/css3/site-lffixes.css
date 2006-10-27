@@ -1,0 +1,7 @@
+@CHARSET "UTF-8";
+
+/* for some reason this div comes out bloated on linux firefox (both 1.x and 2.0) */
+/* this makes it more compact */
+.dh-person-header-next-to-image, .dh-person-header-next-to-image * {
+    margin-top:     -5px;
+}
