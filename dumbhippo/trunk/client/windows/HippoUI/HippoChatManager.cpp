@@ -122,7 +122,7 @@ HippoChatManagerImpl::showChatWindow(BSTR chatId)
 HippoWindowState
 HippoChatManagerImpl::getChatWindowState(BSTR chatId)
 {
-    return executor_->callSyncR(this, HippoChatManagerImpl::doGetChatWindowState, chatId);
+    return executor_->callSyncR(this, &HippoChatManagerImpl::doGetChatWindowState, chatId);
 }
 
 void 
