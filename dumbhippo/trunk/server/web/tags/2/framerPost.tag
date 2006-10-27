@@ -12,7 +12,7 @@
 				<dht:headshot person="${post.poster}" size="60"/>
 			</div>
 			<div>
-				<a class="dh-framer-from" href="${post.poster.homeUrl}"><c:out value="${post.poster.name}"/></a>
+				<a class="dh-framer-from" href="${post.poster.homeUrl}" target="_top"><c:out value="${post.poster.name}"/></a>
 			</div>
 		</div>
 	</div>
