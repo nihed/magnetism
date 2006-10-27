@@ -33,6 +33,10 @@ struct _HippoCanvasBlock {
     HippoCanvasBox *age_parent;
     HippoCanvasItem *age_separator_item;
     HippoCanvasItem *age_item;
+    HippoCanvasBox  *sent_to_parent;
+    HippoCanvasBox  *sent_to_box;
+    HippoCanvasBox  *sent_to_text_item;
+    HippoCanvasItem *sent_to_item;
     HippoCanvasItem *heading_text_item;
     HippoCanvasItem *title_link_item;
     HippoCanvasItem *content_container_item;
@@ -45,6 +49,7 @@ struct _HippoCanvasBlock {
     unsigned int expanded : 1;
     unsigned int expandable : 1;
     unsigned int hushed : 1;
+    unsigned int sent_to_set : 1;
 };
 
 struct _HippoCanvasBlockClass {
@@ -79,6 +84,8 @@ void hippo_canvas_block_set_content (HippoCanvasBlock *canvas_block,
                                      HippoCanvasItem  *content_item);
 /* probably has to get factored out into subclass */
 void hippo_canvas_block_set_sender  (HippoCanvasBlock *canvas_block,
+                                     const char       *entity_guid);
+void hippo_canvas_block_set_sent_to (HippoCanvasBlock *canvas_block,
                                      const char       *entity_guid);
 
 HippoActions* hippo_canvas_block_get_actions  (HippoCanvasBlock *canvas_block);

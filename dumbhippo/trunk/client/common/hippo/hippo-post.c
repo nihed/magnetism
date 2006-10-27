@@ -251,6 +251,19 @@ hippo_post_get_recipients(HippoPost *post)
     return post->recipients;
 }
 
+HippoEntity *    
+hippo_post_get_primary_recipient (HippoPost *post)
+{
+    /* TODO - make this smarter.  The server could figure out
+     * which recipient was the most interesting to this user; 
+     * i.e. if they received it via membership to a group, display
+     * that group */
+    if (post->recipients) {
+        return post->recipients->data;
+    }
+    return NULL;
+}
+
 GSList*
 hippo_post_get_viewers(HippoPost *post)
 {

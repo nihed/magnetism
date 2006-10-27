@@ -503,6 +503,32 @@ hippo_canvas_block_constructor (GType                  type,
                                    NULL);
     hippo_canvas_box_append(box3, block->age_item, HIPPO_PACK_END);
 
+    block->sent_to_box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
+                       "orientation", HIPPO_ORIENTATION_HORIZONTAL,
+                       "xalign", HIPPO_ALIGNMENT_FILL,
+                       "yalign", HIPPO_ALIGNMENT_START,                        
+                       NULL);
+
+    block->sent_to_item = g_object_new(HIPPO_TYPE_CANVAS_ENTITY_NAME,
+                                       "actions", block->actions,
+                                       "xalign", HIPPO_ALIGNMENT_FILL,
+                                       "yalign", HIPPO_ALIGNMENT_START,
+                                       "border-right", 8,
+                                       NULL);
+    hippo_canvas_box_append(block->sent_to_box, block->sent_to_item, HIPPO_PACK_END);
+    block->sent_to_text_item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
+                                         "text", " Sent to ",
+                                         NULL);
+    hippo_canvas_box_append(block->sent_to_box, block->sent_to_text_item, HIPPO_PACK_END);
+    /* we start out !expanded */
+    hippo_canvas_box_set_child_visible(block->sent_to_box, block->sent_to_text_item,
+                                       FALSE);
+    hippo_canvas_box_set_child_visible(block->sent_to_box, block->sent_to_item,
+                                       FALSE);
+
+    block->sent_to_parent = box2;
+    hippo_canvas_box_append(block->sent_to_parent, HIPPO_CANVAS_ITEM(block->sent_to_box), 0);
+
     return object;
 }
 
@@ -652,17 +678,28 @@ hippo_canvas_block_set_block_impl(HippoCanvasBlock *canvas_block,
 }
 
 static void
-hippo_canvas_block_expand_impl(HippoCanvasBlock *canvas_block)
+hippo_canvas_block_set_expansion(HippoCanvasBlock *canvas_block, gboolean expand)
 {
     hippo_canvas_box_set_child_visible(canvas_block->close_controls_parent, canvas_block->close_controls,
-                                       TRUE);
+                                       expand);
+    if (canvas_block->sent_to_set) {
+        hippo_canvas_box_set_child_visible(canvas_block->sent_to_box, canvas_block->sent_to_text_item,
+                                           expand);
+        hippo_canvas_box_set_child_visible(canvas_block->sent_to_box, canvas_block->sent_to_item,
+                                           expand);
+    }
+}
+
+static void
+hippo_canvas_block_expand_impl(HippoCanvasBlock *canvas_block)
+{
+    hippo_canvas_block_set_expansion(canvas_block, TRUE);
 }
 
 static void
 hippo_canvas_block_unexpand_impl(HippoCanvasBlock *canvas_block)
 {
-    hippo_canvas_box_set_child_visible(canvas_block->close_controls_parent, canvas_block->close_controls,
-                                       FALSE);
+    hippo_canvas_block_set_expansion(canvas_block, FALSE);
 }
 
 static void
@@ -833,6 +870,37 @@ hippo_canvas_block_set_sender(HippoCanvasBlock *canvas_block,
         g_object_set(G_OBJECT(canvas_block->name_item),
                      "entity", NULL,
                      NULL);
+    }
+}
+
+void
+hippo_canvas_block_set_sent_to(HippoCanvasBlock *canvas_block,
+                               const char       *entity_guid)
+{    
+    if (entity_guid) {
+        HippoEntity *entity;
+
+        if (canvas_block->actions == NULL) {
+            g_warning("setting block sender before setting actions");
+            return;
+        }
+        
+        entity = hippo_actions_lookup_entity(canvas_block->actions,
+                                             entity_guid);
+        if (entity == NULL) {
+            g_warning("needed entity is unknown %s", entity_guid);
+            return;
+        }
+        
+        g_object_set(G_OBJECT(canvas_block->sent_to_item),
+                     "entity", entity,
+                     NULL);
+        canvas_block->sent_to_set = TRUE;
+    } else {        
+        g_object_set(G_OBJECT(canvas_block->sent_to_item),
+                     "entity", NULL,
+                     NULL);
+        canvas_block->sent_to_set = FALSE;
     }
 }
 

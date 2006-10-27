@@ -32,6 +32,7 @@ const char*      hippo_post_get_title                 (HippoPost *post);
 const char*      hippo_post_get_description           (HippoPost *post);
 /* list of HippoEntity, list is not copied and entities not ref'd */
 GSList*          hippo_post_get_recipients            (HippoPost *post);
+HippoEntity *    hippo_post_get_primary_recipient     (HippoPost *post);
 GSList*          hippo_post_get_viewers               (HippoPost *post);
 const char*      hippo_post_get_info                  (HippoPost *post);
 GTime            hippo_post_get_date                  (HippoPost *post);
