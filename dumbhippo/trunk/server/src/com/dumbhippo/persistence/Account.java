@@ -27,6 +27,7 @@ import org.slf4j.Logger;
 import com.dumbhippo.Digest;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.StringUtils;
+import com.dumbhippo.server.util.EJBUtil;
 
 
 /**
@@ -152,6 +153,13 @@ public class Account extends Resource {
 		// able to toString() a detached account
 		
 		return builder.toString();
+	}
+	
+	/**
+	 * Bug work around, see docs for EJBUtil.forceInitialization()
+	 */
+	public void prepareToAuthorizeClient() {
+		EJBUtil.forceInitialization(clients);
 	}
 	
 	/** 

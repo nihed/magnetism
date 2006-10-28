@@ -1,6 +1,7 @@
 package com.dumbhippo.server.util;
 
 import java.sql.SQLException;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
@@ -15,6 +16,7 @@ import javax.persistence.EntityManager;
 
 import org.hibernate.JDBCException;
 import org.hibernate.NonUniqueObjectException;
+import org.hibernate.collection.PersistentCollection;
 import org.hibernate.exception.ConstraintViolationException;
 import org.slf4j.Logger;
 
@@ -303,5 +305,23 @@ public class EJBUtil {
 		Guid guid = new Guid(id); //throw Parse here instead of GuidNotFound if invalid
 		
 		return lookupGuid(em, klass, guid);
+	}
+	
+	/**
+	 * This function provides a workaround for
+	 *  
+	 *  http://opensource.atlassian.com/projects/hibernate/browse/HHH-2192
+	 * 
+	 * You should call it if you are updating a persistent collection without
+	 * reading it first. Really, there is no advantage to this function of
+	 * just calling collection.size(), but doing it this way marks the
+	 * usage as a workaround, which is useful for future maintentance.
+	 *  
+	 * @param collection
+	 */
+	public static void forceInitialization(Collection collection) {
+		if (collection instanceof PersistentCollection) {
+			((PersistentCollection)collection).forceInitialization();
+		}
 	}
 }
