@@ -52,11 +52,11 @@
 	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/wildfire/jasper-runtime.jar"/>
 	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/wildfire/junit.jar"/>
 	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/wildfire/xmltask.jar"/>
-	<classpathentry kind="lib" path="wildfire/build/lib/dist/activation.jar"/>
-	<classpathentry kind="lib" path="wildfire/build/lib/dist/hsqldb.jar"/>
-	<classpathentry kind="lib" path="wildfire/build/lib/dist/jtds.jar"/>
-	<classpathentry kind="lib" path="wildfire/build/lib/dist/mysql.jar"/>
-	<classpathentry kind="lib" path="wildfire/build/lib/dist/postgres.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/wildfire/dist/activation.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/wildfire/dist/hsqldb.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/wildfire/dist/jtds.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/wildfire/dist/mysql.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/wildfire/dist/postgres.jar"/>
 	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/wildfire/merge/dom4j.jar"/>
 	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/wildfire/merge/jaxen.jar"/>
 	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/wildfire/merge/jdic.jar"/>

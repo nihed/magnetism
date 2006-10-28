@@ -74,7 +74,7 @@
     <property name="lib.build.dir" value="${dumbhippo.global.trunkdir}/lib/wildfire"/>
     <property name="lib.build.installer.dir" value="${basedir}/build/installer"/>
     <property name="lib.merge.dir" value="${lib.build.dir}/merge"/>
-    <property name="lib.dist.dir" value="${basedir}/build/lib/dist"/>
+    <property name="lib.dist.dir" value="${lib.build.dir}/dist"/>
     <property name="lib.web.dir" value="${web.dir}/WEB-INF/lib"/>
     <property name="i18n.basename" value="wildfire_i18n"/>
     <property name="i18n.default.locale" value="en"/>
