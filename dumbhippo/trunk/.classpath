@@ -69,7 +69,6 @@
 	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/wildfire/merge/xpp3.jar"/>
 	<classpathentry kind="src" path="wildfire/src/plugins/hippo/src/java"/>
 	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/server/slf4j-log4j12.jar"/>
-	<classpathentry kind="lib" path="taste/taste.jar"/>
 	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/taste/annotations.jar"/>
 	<classpathentry kind="src" path="server/tests"/>
 	<classpathentry kind="var" path="JBOSS_HOME/server/default/lib/hibernate-entitymanager.jar"/>
