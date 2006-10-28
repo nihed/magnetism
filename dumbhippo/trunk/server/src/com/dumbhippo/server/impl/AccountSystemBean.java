@@ -10,16 +10,10 @@ import java.util.concurrent.Callable;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
-import javax.naming.InitialContext;
-import javax.naming.NamingException;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
-import javax.transaction.RollbackException;
-import javax.transaction.Synchronization;
-import javax.transaction.SystemException;
-import javax.transaction.TransactionManager;
 
 import org.jboss.annotation.IgnoreDependency;
 import org.slf4j.Logger;
