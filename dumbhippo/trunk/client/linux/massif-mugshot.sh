@@ -3,7 +3,7 @@
 /bin/rm -f massif.*.ps massif.*.txt
 
 G_SLICE=always-malloc G_DEBUG=gc-friendly \
-   valgrind --tool=massif --depth=5 \
+   valgrind --tool=massif --depth=5 --num-callers=10 \
    --alloc-fn=g_malloc --alloc-fn=g_malloc0 --alloc-fn=posix_memalign \
    --alloc-fn=g_slice_alloc --alloc-fn=g_mem_chunk_alloc --alloc-fn=g_try_malloc \
    --alloc-fn=dbus_malloc --alloc-fn=dbus_malloc0 --alloc-fn=g_realloc \
