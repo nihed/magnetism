@@ -40,6 +40,7 @@
 		<pathelement location="${jboss.root}/client/log4j.jar"/>
 		<pathelement location="${jboss.root}/server/default/lib/javax.servlet.jsp.jar"/>
 	 	<fileset refid="dumbhippo.global.jboss.jars"/>
+                <pathelement location="${dumbhippo.global.trunkdir}/taste/taste.jar"/>
 	</path>
 
 	<path id="tests.class.path">
@@ -60,7 +61,6 @@
 		<mkdir dir="${build.deploy}" />
 		<mkdir dir="${build.deploy.ear}" />
 		<mkdir dir="${build.deploy.war}" />
-		<copy file="${basedir}/../taste/taste.jar" todir="${build.lib}"/>
 	</target>
 		
 	<target name="compile" depends="init">
@@ -243,7 +243,7 @@
 			<fileset dir="${lib}" includes="${bundled-classpath.external}"/>
 		</copy>
 		<copy todir="${build.deploy.ear}">
-			<fileset dir="${build.lib}" includes="taste.jar"/>
+			<fileset dir="${dumbhippo.global.trunkdir}/taste" includes="taste.jar"/>
 		</copy>
 		<mkdir dir="${build.deploy.ear}/META-INF"/>
 		<copy file="dd/jboss-app.xml" todir="${build.deploy.ear}/META-INF"/>
