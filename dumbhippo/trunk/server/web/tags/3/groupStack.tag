@@ -26,8 +26,22 @@
     <dht3:groupHeader who="${who}" embedVersion="${embedVersion}">
         <c:choose>
             <c:when test="${signin.valid}">
-	            <%-- FIXME: show group actions here ... need to move stuff from StackedGroupPage to GroupView --%>
-	            <jsp:doBody/>
+	            <c:choose>
+	        	    <c:when test="${who.active}">
+						 <dht:actionLink href="javascript:dh.actions.leaveGroup('${who.identifyingGuid}')" title="Stop receiving stack activity from this group">Leave Group</dht:actionLink>
+					</c:when>
+					<c:when test="${who.invited}">
+						 <dht:actionLink href="javascript:dh.actions.joinGroup('${who.identifyingGuid}')" title="You were invited to join this group">Join group (invited)</dht:actionLink>					
+					</c:when>
+					<c:when test="${dh:enumIs(who.status, 'REMOVED')}">
+						 <dht:actionLink href="javascript:dh.actions.joinGroup('${who.identifyingGuid}')" title="Rejoin this group">Join group</dht:actionLink>
+					</c:when>	
+					<c:when test="${dh:enumIs(who.status, 'NONMEMBER') && who.canJoin}">
+						<dht:actionLink href="javascript:dh.actions.joinGroup('${who.identifyingGuid}')" title="Follow stack activity in this group">Follow group</dht:actionLink>
+					</c:when>				
+	        	    <c:otherwise>
+				    </c:otherwise>
+			    </c:choose>				
             </c:when>
             <c:otherwise>
             	<c:if test="${showHomeUrl}">

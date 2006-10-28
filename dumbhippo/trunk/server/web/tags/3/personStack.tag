@@ -39,7 +39,8 @@
 					        <dht:actionLink oneLine="true" href="javascript:dh.actions.addContact('${person.viewPersonPageId}')" title="Add this person to your friends list">Add to friends</dht:actionLink>
 				        </c:otherwise>
 				    </c:choose>
-				    | <a href="/">Invite to a group</a>
+				    <%-- Not implemented yet %>
+				    <%--| <a href="/invitation?who=${group.viewedGroupId}">Invite to a group</a> --%>
 			    </c:otherwise>
 		    </c:choose>
 		</c:when>

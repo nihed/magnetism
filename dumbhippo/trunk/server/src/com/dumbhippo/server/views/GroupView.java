@@ -13,6 +13,7 @@ import com.dumbhippo.live.LiveGroup;
 import com.dumbhippo.live.LiveState;
 import com.dumbhippo.live.PresenceService;
 import com.dumbhippo.persistence.Group;
+import com.dumbhippo.persistence.GroupAccess;
 import com.dumbhippo.persistence.GroupMember;
 import com.dumbhippo.persistence.MembershipStatus;
 import com.dumbhippo.persistence.VersionedEntity;
@@ -59,6 +60,12 @@ import com.dumbhippo.persistence.VersionedEntity;
 	 public boolean isInvitedToFollow() {
 		 return getStatus() == MembershipStatus.INVITED_TO_FOLLOW;
 	 }
+	 
+	 public boolean getCanJoin() {
+			return !getGroupMember().isParticipant() && 
+		       (group.getAccess() == GroupAccess.PUBLIC_INVITE ||
+		        getGroupMember().getStatus() == MembershipStatus.REMOVED);
+	}
 	 
 	 // TODO: avoid using this, and try using getInviters
 	 public PersonView getInviter() {
