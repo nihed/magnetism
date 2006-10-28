@@ -142,7 +142,7 @@
     </path>
 
 	<path id="hippoclient.dependencies">
-		<fileset dir="${lib.dist.dir}" includes="jbossall-client.jar jboss-system.jar *hibernate*.jar *ejb3*.jar *jdk50*.jar dumbhippo-client.jar" />
+		<fileset dir="${jar.dest.dir}" includes="jbossall-client.jar jboss-system.jar *hibernate*.jar *ejb3*.jar *jdk50*.jar dumbhippo-client.jar" />
 	</path>
 	
     <path id="compile.dependencies">
@@ -241,9 +241,8 @@
     	
     	<!-- copy in hippo deps; lib.dist.dir is jars to bundle, lib.merge.dir jars to unpack and merge their classes -->
 	<echo message="Copying dependency jars"/>
-    	<copy todir="${lib.dist.dir}" flatten="true">
+    	<copy todir="${jar.dest.dir}" flatten="true">
     		<fileset dir="${hippo.server.path}/target/classes" includes="dumbhippo-client.jar"/>
-    		<fileset dir="${hippo.server.path}/lib" includes="commons-logging*.jar"/>
 		<fileset refid="dumbhippo.global.jboss.jars"/>
     	</copy>
     </target>
