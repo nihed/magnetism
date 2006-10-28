@@ -1,4 +1,9 @@
-<project>
+<project name="common">
+    <!-- ant magically defines ant.file.PROJECTNAME as the path to the project file -->
+    <dirname property="dumbhippo.global.trunkdir" file="${ant.file.common}" />
+
+    <property name="dumbhippo.global.lib" value="${dumbhippo.global.trunkdir}/lib" />
+
     <property name="dumbhippo.global.jboss.root" value="/opt/jboss" />
     <fileset id="dumbhippo.global.jboss.jars" dir="${dumbhippo.global.jboss.root}/">
         <include name="lib/jboss-system.jar"/>

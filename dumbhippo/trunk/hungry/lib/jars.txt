@@ -1,8 +1,0 @@
-Jars used from HttpUnit 1.6 distribution:
-
-(runtime)
-servlet 2.3
-xerces  2.5
-jtidy   04aug2000r7
-rhino   1.5R4.1
-NekoHTML 0.9.1

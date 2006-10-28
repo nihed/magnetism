@@ -12,7 +12,7 @@
 	<property name="build.deploy" value="${target}/deploy" />
 	<property name="build.deploy.ear" value="${build.deploy}/dumbhippo.ear" />
 	<property name="build.deploy.war" value="${build.deploy.ear}/dumbhippo.war" />
-	<property name="lib" value="lib" />
+	<property name="lib" value="${dumbhippo.global.lib}/server" />
 	<property name="reports.tests" value="reports" />
 	<property name="jboss.root" value="/opt/jboss" />
 	<property name="buildjar.dir" location="${target}/classes" />
