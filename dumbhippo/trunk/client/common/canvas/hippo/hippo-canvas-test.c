@@ -332,7 +332,9 @@ hippo_canvas_test_get_root(void)
 
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(root), text, HIPPO_PACK_FIXED);
 
-    hippo_canvas_box_move(HIPPO_CANVAS_BOX(root), text, 150, 150);
+    hippo_canvas_box_move(HIPPO_CANVAS_BOX(root), text,
+                          HIPPO_GRAVITY_NORTH_WEST,
+                          150, 150);
 
     /* For get_natural_width testing */
 

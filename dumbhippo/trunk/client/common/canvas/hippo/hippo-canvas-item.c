@@ -13,6 +13,7 @@ enum {
     BUTTON_RELEASE_EVENT,
     MOTION_NOTIFY_EVENT,
     ACTIVATED,
+    TOOLTIP_CHANGED,
     LAST_SIGNAL
 };
 static int signals[LAST_SIGNAL];
@@ -98,6 +99,15 @@ hippo_canvas_item_base_init(void *klass)
                           NULL, NULL,
                           g_cclosure_marshal_VOID__VOID,
                           G_TYPE_NONE, 0);        
+        signals[TOOLTIP_CHANGED] =
+            g_signal_new ("tooltip-changed",
+                          HIPPO_TYPE_CANVAS_ITEM,
+                          G_SIGNAL_RUN_LAST,
+                          G_STRUCT_OFFSET(HippoCanvasItemIface, tooltip_changed),
+                          NULL, NULL,
+                          g_cclosure_marshal_VOID__VOID,
+                          G_TYPE_NONE, 0);        
+
         
         initialized = TRUE;
     }
@@ -289,6 +299,12 @@ void
 hippo_canvas_item_emit_activated(HippoCanvasItem *canvas_item)
 {
     g_signal_emit(canvas_item, signals[ACTIVATED], 0);
+}
+
+void
+hippo_canvas_item_emit_tooltip_changed(HippoCanvasItem *canvas_item)
+{
+    g_signal_emit(canvas_item, signals[TOOLTIP_CHANGED], 0);
 }
 
 void

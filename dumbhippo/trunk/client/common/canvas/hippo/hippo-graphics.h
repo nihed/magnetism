@@ -23,6 +23,13 @@ typedef enum
     HIPPO_SIDE_RIGHT
 } HippoSide;
 
+typedef enum{
+    HIPPO_GRAVITY_NORTH_WEST,
+    HIPPO_GRAVITY_NORTH_EAST,
+    HIPPO_GRAVITY_SOUTH_EAST,
+    HIPPO_GRAVITY_SOUTH_WEST
+} HippoGravity;
+
 typedef struct {
     int x;
     int y;

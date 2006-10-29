@@ -53,6 +53,7 @@ mugshot_SOURCES	=				\
 	src/main.c				\
 	src/main.h
 
+## Also edit Windows Applets/Makefile if changing this
 EMBEDDEDIMAGEDIR=$(COMMONSRCDIR)/images
 EMBEDDED_IMAGES=				\
 	$(EMBEDDEDIMAGEDIR)/add_icon.png	\
@@ -64,6 +65,8 @@ EMBEDDED_IMAGES=				\
 	$(EMBEDDEDIMAGEDIR)/bar_x.png		\
 	$(EMBEDDEDIMAGEDIR)/blue_x.png		\
 	$(EMBEDDEDIMAGEDIR)/chat.png		\
+	$(EMBEDDEDIMAGEDIR)/closetip.png	\
+	$(EMBEDDEDIMAGEDIR)/expandtip.png	\
 	$(EMBEDDEDIMAGEDIR)/find.png		\
 	$(EMBEDDEDIMAGEDIR)/home2.png		\
 	$(EMBEDDEDIMAGEDIR)/home.png		\

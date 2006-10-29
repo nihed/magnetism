@@ -326,7 +326,7 @@ hippo_platform_impl_open_url(HippoPlatform     *platform,
         command = g_strdup_printf("firefox %s", quoted);    
         break;
     }
-  
+
     error = NULL;
     if (!g_spawn_command_line_async(command, &error)) {
         GtkWidget *dialog;

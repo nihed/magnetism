@@ -28,6 +28,9 @@ struct _HippoCanvasBlock {
     HippoBlockType required_type;
     HippoBlock *block;
     HippoActions *actions;
+    HippoCanvasItem *background_gradient;
+    HippoCanvasItem *expand_pointer;
+    HippoCanvasItem *unexpand_pointer;
     HippoCanvasBox  *close_controls_parent;
     HippoCanvasItem *close_controls;    
     HippoCanvasBox *age_parent;
@@ -35,7 +38,7 @@ struct _HippoCanvasBlock {
     HippoCanvasItem *age_item;
     HippoCanvasBox  *sent_to_parent;
     HippoCanvasBox  *sent_to_box;
-    HippoCanvasBox  *sent_to_text_item;
+    HippoCanvasItem *sent_to_text_item;
     HippoCanvasItem *sent_to_item;
     HippoCanvasItem *heading_text_item;
     HippoCanvasItem *title_link_item;
@@ -43,13 +46,12 @@ struct _HippoCanvasBlock {
     HippoCanvasItem *headshot_item;
     HippoCanvasItem *name_item;
     HippoCanvasItem *toggle_hush_link;
-    unsigned int maybe_expand_timeout_active : 1;
-    unsigned int maybe_expand_timeout_canceled : 1;
     /* probably a class prop not an instance prop, but it's a free bit anyway */
-    unsigned int expanded : 1;
     unsigned int expandable : 1;
+    unsigned int expanded : 1;
     unsigned int hushed : 1;
     unsigned int sent_to_set : 1;
+    unsigned int child_changed_pointer : 1;
 };
 
 struct _HippoCanvasBlockClass {

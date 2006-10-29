@@ -35,10 +35,14 @@ static GObject* hippo_canvas_block_constructor (GType                  type,
                                                 guint                  n_construct_properties,
                                                 GObjectConstructParam *construct_properties);
 
-
-/* Box methods */
-static void hippo_canvas_block_hovering_changed (HippoCanvasBox *box,
-                                                 gboolean        hovering);
+/* Canvas item methods */
+static HippoCanvasPointer hippo_canvas_block_get_pointer         (HippoCanvasItem    *item,
+                                                                  int                 x,
+                                                                  int                 y);
+static gboolean           hippo_canvas_block_motion_notify_event (HippoCanvasItem    *item,
+                                                                  HippoEvent         *event);
+static gboolean           hippo_canvas_block_button_press_event  (HippoCanvasItem    *item,
+                                                                  HippoEvent         *event);
 
 /* our own methods */
 
@@ -107,13 +111,17 @@ static void
 hippo_canvas_block_iface_init(HippoCanvasItemIface *item_class)
 {
     item_parent_class = g_type_interface_peek_parent(item_class);
+
+    item_class->get_pointer = hippo_canvas_block_get_pointer;
+    item_class->motion_notify_event = hippo_canvas_block_motion_notify_event;
+    item_class->button_press_event = hippo_canvas_block_button_press_event;
 }
 
 static void
 hippo_canvas_block_class_init(HippoCanvasBlockClass *klass)
 {
     GObjectClass *object_class = G_OBJECT_CLASS(klass);
-    HippoCanvasBoxClass *box_class = HIPPO_CANVAS_BOX_CLASS(klass);
+    /* HippoCanvasBoxClass *box_class = HIPPO_CANVAS_BOX_CLASS(klass); */
 
     object_class->set_property = hippo_canvas_block_set_property;
     object_class->get_property = hippo_canvas_block_get_property;
@@ -121,8 +129,6 @@ hippo_canvas_block_class_init(HippoCanvasBlockClass *klass)
 
     object_class->dispose = hippo_canvas_block_dispose;
     object_class->finalize = hippo_canvas_block_finalize;
-
-    box_class->hovering_changed = hippo_canvas_block_hovering_changed;
     
     klass->set_block = hippo_canvas_block_set_block_impl;
     klass->expand = hippo_canvas_block_expand_impl;
@@ -318,6 +324,11 @@ hippo_canvas_block_get_property(GObject         *object,
     }
 }
 
+#define NORMAL_GRADIENT_START 0xf3f3f3ff
+#define NORMAL_GRADIENT_END   0xdededeff
+#define PRELIGHT_GRADIENT_START 0xffffe7ff
+#define PRELIGHT_GRADIENT_END 0xffffebff
+
 static GObject*
 hippo_canvas_block_constructor (GType                  type,
                                 guint                  n_construct_properties,
@@ -336,16 +347,33 @@ hippo_canvas_block_constructor (GType                  type,
     HippoCanvasBox *left_column;
     HippoCanvasBox *right_column;
 
-    box = g_object_new(HIPPO_TYPE_CANVAS_GRADIENT,
-                       "orientation", HIPPO_ORIENTATION_HORIZONTAL,
-                       "start-color", 0xf3f3f3ff,
-                       "end-color", 0xdededeff,
-                       "padding", 4,
-                       "font", "11px",
-                       NULL);
+    block->background_gradient =
+        g_object_new(HIPPO_TYPE_CANVAS_GRADIENT,
+                     "orientation", HIPPO_ORIENTATION_HORIZONTAL,
+                     "start-color", NORMAL_GRADIENT_START,
+                     "end-color", NORMAL_GRADIENT_END,
+                     "padding", 4,
+                     "font", "11px",
+                     NULL);
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(block),
-                            HIPPO_CANVAS_ITEM(box), HIPPO_PACK_EXPAND);
+                            block->background_gradient,
+                            HIPPO_PACK_EXPAND);
+    box = HIPPO_CANVAS_BOX(block->background_gradient);
+    
+    block->expand_pointer =
+        g_object_new(HIPPO_TYPE_CANVAS_IMAGE,
+                     "image-name", "expandtip",
+                     NULL);
+    hippo_canvas_box_append(box, block->expand_pointer, HIPPO_PACK_FIXED);
+    hippo_canvas_box_set_child_visible(box, block->expand_pointer, FALSE);
 
+    block->unexpand_pointer =
+        g_object_new(HIPPO_TYPE_CANVAS_IMAGE,
+                     "image-name", "closetip",
+                     NULL);
+    hippo_canvas_box_append(box, block->unexpand_pointer, HIPPO_PACK_FIXED);
+    hippo_canvas_box_set_child_visible(box, block->unexpand_pointer, FALSE);
+    
     /* Create left column for title/description */
     
     left_column = g_object_new(HIPPO_TYPE_CANVAS_BOX,
@@ -413,7 +441,7 @@ hippo_canvas_block_constructor (GType                  type,
     
     item = g_object_new(HIPPO_TYPE_CANVAS_LINK,
                         "text", "CLOSE",
-                        "tooltip", "Shrink this item",
+                        "tooltip", "Show less detail",
                         NULL);
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(block->close_controls), item, 0);
 
@@ -422,7 +450,7 @@ hippo_canvas_block_constructor (GType                  type,
     item = g_object_new(HIPPO_TYPE_CANVAS_IMAGE_BUTTON,
                         "normal-image-name", "blue_x",
                         "border-left", 4,
-                        "tooltip", "Shrink this item",
+                        "tooltip", "Show less detail",
                         NULL);
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(block->close_controls), item, 0);
 
@@ -504,22 +532,25 @@ hippo_canvas_block_constructor (GType                  type,
     hippo_canvas_box_append(box3, block->age_item, HIPPO_PACK_END);
 
     block->sent_to_box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
-                       "orientation", HIPPO_ORIENTATION_HORIZONTAL,
-                       "xalign", HIPPO_ALIGNMENT_FILL,
-                       "yalign", HIPPO_ALIGNMENT_START,                        
-                       NULL);
+                                      "orientation", HIPPO_ORIENTATION_HORIZONTAL,
+                                      "xalign", HIPPO_ALIGNMENT_FILL,
+                                      "yalign", HIPPO_ALIGNMENT_START,                        
+                                      NULL);
 
     block->sent_to_item = g_object_new(HIPPO_TYPE_CANVAS_ENTITY_NAME,
                                        "actions", block->actions,
-                                       "xalign", HIPPO_ALIGNMENT_FILL,
+                                       "xalign", HIPPO_ALIGNMENT_END,
                                        "yalign", HIPPO_ALIGNMENT_START,
                                        "border-right", 8,
                                        NULL);
     hippo_canvas_box_append(block->sent_to_box, block->sent_to_item, HIPPO_PACK_END);
     block->sent_to_text_item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
-                                         "text", " Sent to ",
-                                         NULL);
+                                            "xalign", HIPPO_ALIGNMENT_END,
+                                            "yalign", HIPPO_ALIGNMENT_START,
+                                            "text", " Sent to ",
+                                            NULL);
     hippo_canvas_box_append(block->sent_to_box, block->sent_to_text_item, HIPPO_PACK_END);
+    
     /* we start out !expanded */
     hippo_canvas_box_set_child_visible(block->sent_to_box, block->sent_to_text_item,
                                        FALSE);
@@ -532,44 +563,139 @@ hippo_canvas_block_constructor (GType                  type,
     return object;
 }
 
-static gboolean
-expand_if_still_hovering_timeout(void *data)
+static HippoCanvasPointer
+hippo_canvas_block_get_pointer (HippoCanvasItem    *item,
+                                int                 x,
+                                int                 y)
 {
+    HippoCanvasPointer pointer;
     HippoCanvasBlock *canvas_block;
-    HippoCanvasBox *box;
 
-    canvas_block = HIPPO_CANVAS_BLOCK(data);
-    box = HIPPO_CANVAS_BOX(data);
+    canvas_block = HIPPO_CANVAS_BLOCK(item);
 
-    /* don't expand hushed blocks on hover */
-    if (box->hovering &&
-        !canvas_block->maybe_expand_timeout_canceled &&
-        !canvas_block->hushed)
-        hippo_canvas_block_set_expanded(canvas_block, TRUE);
+    /* See if a child sets it */
+    pointer = (* item_parent_class->get_pointer)(item, x, y);
 
-    canvas_block->maybe_expand_timeout_active = FALSE;
-    g_object_unref(G_OBJECT(canvas_block));
+    /* This is something of a hack, the idea is to see whether the
+     * child would do something on click; if so, then we won't offer
+     * block expansion on click. HippoCanvasItem should probably
+     * offer some more reasonable API for this.
+     */
     
-    /* Remove self */
-    return FALSE;
+    if (pointer == HIPPO_CANVAS_POINTER_UNSET)
+        canvas_block->child_changed_pointer = FALSE;
+    else
+        canvas_block->child_changed_pointer = TRUE;
+
+    return pointer;
 }
 
 static void
-hippo_canvas_block_hovering_changed(HippoCanvasBox *box,
-                                    gboolean        hovering)
+update_expand_pointer(HippoCanvasBlock *canvas_block,
+                      gboolean          new_position,
+                      int               event_x,
+                      int               event_y)
 {
-    HippoCanvasBlock *canvas_block = HIPPO_CANVAS_BLOCK(box);
+    HippoCanvasBox *box;
+    gboolean expandable;
+    gboolean closeable;
+    
+    box = HIPPO_CANVAS_BOX(canvas_block);
 
-    if (hovering && !canvas_block->maybe_expand_timeout_active) {
-        /* We have the timeout hold a ref, this lets us store
-         * the active/canceled 1-bit flags instead of a timeout id
-         * and avoid worrying about the timeout on finalize
-         */
-        g_object_ref(G_OBJECT(canvas_block));
-        canvas_block->maybe_expand_timeout_active = TRUE;
-        canvas_block->maybe_expand_timeout_canceled = FALSE;
-        g_timeout_add(750, expand_if_still_hovering_timeout, canvas_block);
+    expandable = FALSE;
+    closeable = FALSE;
+
+    if (!canvas_block->hushed &&
+        canvas_block->expandable &&
+        box->hovering &&
+        !canvas_block->child_changed_pointer) {
+        
+        expandable = !canvas_block->expanded;
+        closeable = canvas_block->expanded;
     }
+    
+    if (expandable || closeable) {
+        int parent_x, parent_y;
+        int x, y;
+            
+        g_object_set(G_OBJECT(canvas_block->background_gradient),
+                     "start-color", PRELIGHT_GRADIENT_START,
+                     "end-color", PRELIGHT_GRADIENT_END,
+                     "tooltip",
+                     expandable ? "Click to show more" : "Click to show less",
+                     NULL);
+
+        if (new_position) {
+            hippo_canvas_box_get_position(box, canvas_block->background_gradient,
+                                          &parent_x, &parent_y);
+            x = parent_x + event_x - 2;
+            y = parent_y + event_y - 2;
+            
+            hippo_canvas_box_move(HIPPO_CANVAS_BOX(canvas_block->background_gradient),
+                                  canvas_block->expand_pointer,
+                                  HIPPO_GRAVITY_SOUTH_EAST,
+                                  x, y);
+            hippo_canvas_box_move(HIPPO_CANVAS_BOX(canvas_block->background_gradient),
+                                  canvas_block->unexpand_pointer,
+                                  HIPPO_GRAVITY_SOUTH_EAST,
+                                  x, y);
+        }
+    } else {
+        g_object_set(G_OBJECT(canvas_block->background_gradient),
+                     "start-color", NORMAL_GRADIENT_START,
+                     "end-color", NORMAL_GRADIENT_END,
+                     "tooltip", NULL,
+                     NULL);
+    }
+    
+    hippo_canvas_box_set_child_visible(HIPPO_CANVAS_BOX(canvas_block->background_gradient),
+                                       canvas_block->expand_pointer, expandable);
+    hippo_canvas_box_set_child_visible(HIPPO_CANVAS_BOX(canvas_block->background_gradient),
+                                       canvas_block->unexpand_pointer, closeable);
+}
+
+static gboolean
+hippo_canvas_block_motion_notify_event (HippoCanvasItem    *item,
+                                        HippoEvent         *event)
+{
+    int result;
+    
+    /* Chain up, among other things sets
+     * canvas_block->child_changed_pointer and box->hovering to the
+     * right values
+     */
+    result = (*item_parent_class->motion_notify_event)(item, event);
+
+    update_expand_pointer(HIPPO_CANVAS_BLOCK(item), TRUE, event->x, event->y);
+    
+    return result;
+}
+
+static gboolean
+hippo_canvas_block_button_press_event(HippoCanvasItem    *item,
+                                      HippoEvent         *event)
+{
+    gboolean result;
+    HippoCanvasBlock *canvas_block;
+
+    canvas_block = HIPPO_CANVAS_BLOCK(item);
+
+    /* See if a child wants it */
+    result = (*item_parent_class->button_press_event) (item, event);
+    if (result)
+        return TRUE;
+
+    /* Can't expand hushed blocks */
+    if (canvas_block->hushed)
+        return FALSE;
+    
+    /* Otherwise, toggle expansion */
+    if (event->u.button.button == 1) {
+        hippo_canvas_block_set_expanded(canvas_block, !canvas_block->expanded);
+        return TRUE;
+    }
+
+    return FALSE;
 }
 
 static void
@@ -683,11 +809,15 @@ hippo_canvas_block_set_expansion(HippoCanvasBlock *canvas_block, gboolean expand
     hippo_canvas_box_set_child_visible(canvas_block->close_controls_parent, canvas_block->close_controls,
                                        expand);
     if (canvas_block->sent_to_set) {
-        hippo_canvas_box_set_child_visible(canvas_block->sent_to_box, canvas_block->sent_to_text_item,
+        hippo_canvas_box_set_child_visible(canvas_block->sent_to_box,
+                                           canvas_block->sent_to_text_item,
                                            expand);
-        hippo_canvas_box_set_child_visible(canvas_block->sent_to_box, canvas_block->sent_to_item,
+        hippo_canvas_box_set_child_visible(canvas_block->sent_to_box,
+                                           canvas_block->sent_to_item,
                                            expand);
     }
+
+    update_expand_pointer(canvas_block, FALSE, 0, 0);
 }
 
 static void
@@ -768,7 +898,6 @@ static void
 on_close_activated(HippoCanvasItem  *button_or_link,
                    HippoCanvasBlock *canvas_block)
 {
-    canvas_block->maybe_expand_timeout_canceled = TRUE;
     hippo_canvas_block_set_expanded(canvas_block, FALSE);
 }
 

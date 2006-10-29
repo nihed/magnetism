@@ -623,8 +623,18 @@ hippo_canvas_box_set_property(GObject         *object,
         {
             const char *new_tip = g_value_get_string(value);
             if (new_tip != box->tooltip) {
-                g_free(box->tooltip);
-                box->tooltip = g_strdup(new_tip);
+                gboolean changed = TRUE;
+                
+                if (new_tip && box->tooltip &&
+                    strcmp(new_tip, box->tooltip) == 0) {
+                    changed = FALSE;
+                }
+
+                if (changed) {
+                    g_free(box->tooltip);
+                    box->tooltip = g_strdup(new_tip);
+                    hippo_canvas_item_emit_tooltip_changed(HIPPO_CANVAS_ITEM(box));
+                }
             }
         }
         break;
@@ -1206,6 +1216,35 @@ count_height_expandable_children(HippoCanvasBox *box)
     }
 }
 
+static void
+width_request_child(HippoBoxChild *child)
+{
+    if (child->width_request < 0) {
+        if (child->requesting)
+            g_warning("Somehow recursively requesting child %p", child->item);
+        
+        child->requesting = TRUE;
+        
+        child->width_request = hippo_canvas_item_get_width_request(child->item);
+        
+        if (child->width_request < 0)
+            g_warning("child %p %s returned width request of %d which is <0",
+                      child->item,
+                      g_type_name_from_instance((GTypeInstance*) child->item),
+                      child->width_request);
+        
+        child->natural_width = hippo_canvas_item_get_natural_width(child->item);
+        
+        if (child->natural_width < 0)
+            child->natural_width = child->width_request;
+        
+        if (child->natural_width < child->width_request)
+            g_warning("some child says its natural width is below its min width");
+        
+        child->requesting = FALSE;
+    }
+}
+
 static int
 hippo_canvas_box_get_content_width_request(HippoCanvasBox *box)
 {
@@ -1221,32 +1260,8 @@ hippo_canvas_box_get_content_width_request(HippoCanvasBox *box)
         /* Note that we still request and allocate !visible children,
          * but we allocate them 0x0
          */
-        
-        if (child->width_request < 0) {
-            if (child->requesting)
-                g_warning("Somehow recursively requesting child %p", child->item);
-            
-            child->requesting = TRUE;
-            
-            child->width_request = hippo_canvas_item_get_width_request(child->item);
-
-            if (child->width_request < 0)
-                g_warning("child %p %s returned width request of %d which is <0",
-                          child->item,
-                          g_type_name_from_instance((GTypeInstance*) child->item),
-                          child->width_request);
-            
-            child->natural_width = hippo_canvas_item_get_natural_width(child->item);
-
-            if (child->natural_width < 0)
-                child->natural_width = child->width_request;
-
-            if (child->natural_width < child->width_request)
-                g_warning("some child says its natural width is below its min width");
-
-            child->requesting = FALSE;
-        }
-
+        width_request_child(child);
+ 
         if (child->fixed || !child->visible)
             continue;
         
@@ -1473,6 +1488,18 @@ compute_width_adjusts(GSList  *children,
     // remaining_extra_space need not be 0, if we had no expandable children
 }
 
+static void
+height_request_child(HippoBoxChild *child,
+                     int            for_width)
+{
+    if (child->height_request < 0 ||
+        child->height_request_for_width != for_width) {
+        child->height_request = hippo_canvas_item_get_height_request(child->item,
+                                                                     for_width);
+        child->height_request_for_width = for_width;
+    }
+}
+
 static int
 hippo_canvas_box_get_content_height_request(HippoCanvasBox *box,
                                             int             for_width)
@@ -1492,13 +1519,11 @@ hippo_canvas_box_get_content_height_request(HippoCanvasBox *box,
 
         if (!(child->fixed || !child->visible))
             continue;
+
+        if (child->width_request < 0)
+            g_warning("Height requesting child without width requesting first");
         
-        if (child->height_request < 0 ||
-            child->height_request_for_width != child->width_request) {
-            child->height_request = hippo_canvas_item_get_height_request(child->item,
-                                                                         child->width_request);
-            child->height_request_for_width = child->width_request;
-        }
+        height_request_child(child, child->width_request);
     }
 
     /* Now do the box-layout children */
@@ -1517,13 +1542,8 @@ hippo_canvas_box_get_content_height_request(HippoCanvasBox *box,
 
             n_children += 1;
             
-            if (child->height_request < 0 ||
-                child->height_request_for_width != for_width) {
-                child->height_request = hippo_canvas_item_get_height_request(child->item,
-                                                                             for_width);
-                child->height_request_for_width = for_width;
-            }
-                
+            height_request_child(child, for_width);
+            
             total += child->height_request;
         }
 
@@ -1564,12 +1584,7 @@ hippo_canvas_box_get_content_height_request(HippoCanvasBox *box,
 
             req = child->width_request + width_adjusts[i];
 
-            if (child->height_request < 0 ||
-                child->height_request_for_width != req) {            
-                child->height_request = hippo_canvas_item_get_height_request(child->item,
-                                                                             req);
-                child->height_request_for_width = req;
-            }
+            height_request_child(child, req);
 
             total = MAX(total, child->height_request);
 
@@ -2102,17 +2117,22 @@ hippo_canvas_box_get_tooltip(HippoCanvasItem    *item,
                                             x - child->x,
                                             y - child->y,
                                             for_area);
-        for_area->x += child->x;
-        for_area->y += child->y;
-
-        return tip;
-    } else {
-        for_area->x = 0;
-        for_area->y = 0;
-        for_area->width = box->allocated_width;
-        for_area->height = box->allocated_height;
-        return g_strdup(box->tooltip);
+        if (tip != NULL) {
+            for_area->x += child->x;
+            for_area->y += child->y;
+            
+            return tip;
+        }
     }
+
+    /* If no child at the point, or child did not set the tip, then
+     * use our own tip if any
+     */
+    for_area->x = 0;
+    for_area->y = 0;
+    for_area->width = box->allocated_width;
+    for_area->height = box->allocated_height;
+    return g_strdup(box->tooltip);
 }
 
 static HippoCanvasPointer
@@ -2181,11 +2201,19 @@ child_paint_needed(HippoCanvasItem *item,
     /* translate to our own coordinates then emit the signal again */
     
     child = find_child(box, item);
-    
-    hippo_canvas_item_emit_paint_needed(HIPPO_CANVAS_ITEM(box),
-                                        damage_box->x + child->x,
-                                        damage_box->y + child->y,
-                                        damage_box->width, damage_box->height);
+
+    if (child->visible)
+        hippo_canvas_item_emit_paint_needed(HIPPO_CANVAS_ITEM(box),
+                                            damage_box->x + child->x,
+                                            damage_box->y + child->y,
+                                            damage_box->width, damage_box->height);
+}
+
+static void
+child_tooltip_changed(HippoCanvasItem *item,
+                      HippoCanvasBox  *box)
+{
+    hippo_canvas_item_emit_tooltip_changed(HIPPO_CANVAS_ITEM(box));
 }
 
 static void
@@ -2196,6 +2224,8 @@ connect_child(HippoCanvasBox  *box,
                      G_CALLBACK(child_request_changed), box);
     g_signal_connect(G_OBJECT(child), "paint-needed",
                      G_CALLBACK(child_paint_needed), box);
+    g_signal_connect(G_OBJECT(child), "tooltip-changed",
+                     G_CALLBACK(child_tooltip_changed), box);
 }
 
 static void
@@ -2205,7 +2235,9 @@ disconnect_child(HippoCanvasBox  *box,
     g_signal_handlers_disconnect_by_func(G_OBJECT(child),
                                          G_CALLBACK(child_request_changed), box);
     g_signal_handlers_disconnect_by_func(G_OBJECT(child),
-                                         G_CALLBACK(child_paint_needed), box);    
+                                         G_CALLBACK(child_paint_needed), box);
+    g_signal_handlers_disconnect_by_func(G_OBJECT(child),
+                                         G_CALLBACK(child_tooltip_changed), box);
 }
 
 static gboolean
@@ -2362,6 +2394,7 @@ hippo_canvas_box_remove_all(HippoCanvasBox *box)
 void
 hippo_canvas_box_move(HippoCanvasBox  *box,
                       HippoCanvasItem *child,
+                      HippoGravity     gravity,
                       int              x,
                       int              y)
 {
@@ -2385,15 +2418,51 @@ hippo_canvas_box_move(HippoCanvasBox  *box,
         return;
     }
 
-    /* We only repaint, don't queue a resize - fixed items don't affect the
-     * size request.
-     */
-    hippo_canvas_item_get_allocation(child, &w, &h);
-    
-    hippo_canvas_item_emit_paint_needed(HIPPO_CANVAS_ITEM(box), c->x, c->y, w, h);
-    c->x = x;
-    c->y = y;
-    hippo_canvas_item_emit_paint_needed(HIPPO_CANVAS_ITEM(box), c->x, c->y, w, h);
+    if (gravity != HIPPO_GRAVITY_NORTH_WEST) {
+        /* Ensure the child has been requested */
+        width_request_child(c);
+        height_request_child(c, c->width_request);
+
+        switch (gravity) {
+        case HIPPO_GRAVITY_NORTH_WEST:
+            break;
+        case HIPPO_GRAVITY_NORTH_EAST:
+            x = x - c->width_request;
+            break;
+        case HIPPO_GRAVITY_SOUTH_WEST:
+            y = y - c->height_request;
+            break;
+        case HIPPO_GRAVITY_SOUTH_EAST:
+            x = x - c->width_request;
+            y = y - c->height_request;
+            break;
+        }
+    }
+
+    if (c->x != x || c->y != y) {
+        /* We only repaint, don't queue a resize - fixed items don't affect the
+         * size request.
+         */
+        hippo_canvas_item_get_allocation(child, &w, &h);
+        
+        if (c->visible)
+            hippo_canvas_item_emit_paint_needed(HIPPO_CANVAS_ITEM(box), c->x, c->y, w, h);
+        
+        c->x = x;
+        c->y = y;
+        
+        if (c->visible)
+            hippo_canvas_item_emit_paint_needed(HIPPO_CANVAS_ITEM(box), c->x, c->y, w, h);
+    }
+}
+
+void
+hippo_canvas_box_set_position(HippoCanvasBox  *box,
+                              HippoCanvasItem *child,
+                              int              x,
+                              int              y)
+{
+    hippo_canvas_box_move(box, child, HIPPO_GRAVITY_NORTH_WEST, x, y);
 }
 
 void

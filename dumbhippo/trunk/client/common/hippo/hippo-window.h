@@ -18,13 +18,6 @@ G_BEGIN_DECLS
 #define HIPPO_IS_WINDOW_CLASS(klass)   (G_TYPE_CHECK_CLASS_TYPE ((klass), HIPPO_TYPE_WINDOW))
 #define HIPPO_WINDOW_GET_CLASS(obj)    (G_TYPE_INSTANCE_GET_INTERFACE ((obj), HIPPO_TYPE_WINDOW, HippoWindowClass))
 
-typedef enum{
-    HIPPO_GRAVITY_NORTH_WEST,
-    HIPPO_GRAVITY_NORTH_EAST,
-    HIPPO_GRAVITY_SOUTH_EAST,
-    HIPPO_GRAVITY_SOUTH_WEST
-} HippoGravity;
-
 struct _HippoWindowClass {
     GTypeInterface base_iface;
     

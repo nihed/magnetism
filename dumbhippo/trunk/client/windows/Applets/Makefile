@@ -34,6 +34,8 @@ all: *.xml *.css *.png *.js *.gif images
     copy notification.xml $(OUTDIR)\applets
     copy wbubcnr_*.png $(OUTDIR)\applets
 
+
+## Also edit Linux Makefile.am if changing this
 IMGDIR=..\..\common\images
 images:
 	-mkdir $(OUTDIR)\images
@@ -46,6 +48,8 @@ images:
 	copy $(IMGDIR)\bar_x.png $(OUTDIR)\images
 	copy $(IMGDIR)\blue_x.png $(OUTDIR)\images
 	copy $(IMGDIR)\chat.png $(OUTDIR)\images
+	copy $(IMGDIR)\closetip.png $(OUTDIR)\images
+	copy $(IMGDIR)\expandtip.png $(OUTDIR)\images
 	copy $(IMGDIR)\find.png $(OUTDIR)\images
 	copy $(IMGDIR)\home2.png $(OUTDIR)\images
 	copy $(IMGDIR)\home.png $(OUTDIR)\images

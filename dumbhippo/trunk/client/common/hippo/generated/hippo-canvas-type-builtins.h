@@ -44,6 +44,8 @@ GType hippo_motion_detail_get_type (void);
 GType hippo_orientation_get_type (void);
 #define HIPPO_TYPE_SIDE hippo_side_get_type()
 GType hippo_side_get_type (void);
+#define HIPPO_TYPE_GRAVITY hippo_gravity_get_type()
+GType hippo_gravity_get_type (void);
 G_END_DECLS
 
 #endif /* HIPPO_CANVAS_TYPE_BUILTINS_H */

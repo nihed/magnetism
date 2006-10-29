@@ -16,7 +16,7 @@ typedef enum
                             * on the child item
                             */
     HIPPO_PACK_END = 2,
-    HIPPO_PACK_FIXED = 4   /* Like position: absolute or GtkFixed */
+    HIPPO_PACK_FIXED = 4  /* Like position: absolute or GtkFixed */
 } HippoPackFlags;
 
 typedef enum {
@@ -125,6 +125,11 @@ void             hippo_canvas_box_append            (HippoCanvasBox             
                                                      HippoCanvasItem             *child,
                                                      HippoPackFlags               flags);
 void             hippo_canvas_box_move              (HippoCanvasBox              *box,
+                                                     HippoCanvasItem             *child,
+                                                     HippoGravity                 gravity,
+                                                     int                          x,
+                                                     int                          y);
+void             hippo_canvas_box_set_position      (HippoCanvasBox              *box,
                                                      HippoCanvasItem             *child,
                                                      int                          x,
                                                      int                          y);

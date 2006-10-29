@@ -221,6 +221,25 @@ hippo_side_get_type (void)
   return type;
 }
 
+const GEnumValue _hippo_gravity_values[] = {
+  { HIPPO_GRAVITY_NORTH_WEST, "HIPPO_GRAVITY_NORTH_WEST", "north-west" },
+  { HIPPO_GRAVITY_NORTH_EAST, "HIPPO_GRAVITY_NORTH_EAST", "north-east" },
+  { HIPPO_GRAVITY_SOUTH_EAST, "HIPPO_GRAVITY_SOUTH_EAST", "south-east" },
+  { HIPPO_GRAVITY_SOUTH_WEST, "HIPPO_GRAVITY_SOUTH_WEST", "south-west" },
+  { 0, NULL, NULL }
+};
+
+GType
+hippo_gravity_get_type (void)
+{
+  static GType type = 0;
+
+  if (G_UNLIKELY (type == 0))
+    type = g_enum_register_static ("HippoGravity", _hippo_gravity_values);
+
+  return type;
+}
+
 
 /* Generated data ends here */
 

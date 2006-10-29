@@ -41,3 +41,13 @@ List of possible future enhancements / likely directions, we are doing these "as
   parent class props.
 
   There's a little hack around this right now with HippoCanvasBoxClass::default_color
+
+- The return value of button press event really needs to be known by the parent 
+  in advance.
+
+  If the parent is going to handle the click if the child doesn't, then it needs 
+  to be able to display prelights and change the mouse cursor and so forth.
+  
+  One approach might be to generalize get_pointer to return some kind of 
+  "what-this-item-handles-info" (and enforce it by not delivering events
+  the item doesn't say it will handle)

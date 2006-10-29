@@ -64,6 +64,7 @@ struct _HippoCanvasItemIface {
                                         int              x,
                                         int              y,
                                         HippoRectangle  *for_area);
+    void     (* tooltip_changed)       (HippoCanvasItem *canvas_item);
     HippoCanvasPointer (* get_pointer) (HippoCanvasItem *canvas_item,
                                         int              x,
                                         int              y);
@@ -122,6 +123,7 @@ void     hippo_canvas_item_emit_paint_needed       (HippoCanvasItem *canvas_item
                                                     int              y,
                                                     int              width,
                                                     int              height);
+void     hippo_canvas_item_emit_tooltip_changed    (HippoCanvasItem *canvas_item);
 void     hippo_canvas_item_emit_request_changed    (HippoCanvasItem *canvas_item);
 gboolean hippo_canvas_item_process_event           (HippoCanvasItem *canvas_item,
                                                     HippoEvent      *event,
