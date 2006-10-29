@@ -15,6 +15,11 @@ List of possible future enhancements / likely directions, we are doing these "as
   to make the box containing those two a composite button, where the whole thing prelights 
   as a whole, and you can connect to "activated" on the whole thing.
 
+  One way to do this would be to make HippoCanvasBox::clickable into a settable 
+  property; and if a box is clickable, do not forward click events to
+  its children, instead just activate the parent. This doesn't address 
+  prelighting the composite as a whole though.
+
 - Naming of get_width_request / get_height_request
 
   With get_natural_width there, naming these get_min_width/get_min_height makes some 
@@ -42,8 +47,8 @@ List of possible future enhancements / likely directions, we are doing these "as
 
   There's a little hack around this right now with HippoCanvasBoxClass::default_color
 
-- The return value of button press event really needs to be known by the parent 
-  in advance.
+- The return value of button press event needs to be known by the
+  parent in advance.
 
   If the parent is going to handle the click if the child doesn't, then it needs 
   to be able to display prelights and change the mouse cursor and so forth.
@@ -51,3 +56,31 @@ List of possible future enhancements / likely directions, we are doing these "as
   One approach might be to generalize get_pointer to return some kind of 
   "what-this-item-handles-info" (and enforce it by not delivering events
   the item doesn't say it will handle)
+
+  Or get_pointer and get_tooltip could be merged into a sort of "hover state"
+  indicating info about the hover point.
+
+  The "handles click" flag is probably per-mouse-button.
+
+- To handle tooltips correctly, a widget or CanvasBox displaying a canvas item
+  really needs a unique ID for a each different logical zone that's returned.
+  Both the tooltip text and the for_area can change while the pointer is
+  still inside the same logical element of the display.
+
+  This could be done by having in a "hover state" the desired mouse pointer,
+  tooltip text, tooltip area, and an "owner" made up of a pointer (usually 
+  a canvas item pointer) and an integer id.
+
+- Summarizing the last two ideas, an ugly version might be:
+
+  struct {
+    HippoCanvasPointer pointer;
+    char *tooltip;
+    HippoRectangle area;
+    void *owner_id_pointer_part;
+    int owner_id_int_part;
+  } ButtonOneHandlerInfo;
+
+  /* returns true if it handles */
+  gboolean (* get_button_one_handling) (HippoCanvasItem *item,
+                                        ButtonOneHandlingInfo *info_p);
