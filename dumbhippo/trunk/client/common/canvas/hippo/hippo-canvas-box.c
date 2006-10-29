@@ -1,4 +1,5 @@
 /* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
+#include <string.h>
 #include "hippo-canvas-type-builtins.h"
 #include "hippo-canvas-internal.h"
 #include "hippo-canvas-box.h"
@@ -2322,13 +2323,16 @@ hippo_canvas_box_insert_sorted(HippoCanvasBox              *box,
     if (compare_func == NULL) {
         box->children = g_slist_append(box->children, c);
     } else {
+        GSList *l;
         ChildSortData csd;
         csd.func = compare_func;
         csd.data = data;
-        box->children = g_slist_insert_sorted_with_data(box->children,
-                                                        c,
-                                                        child_compare_func,
-                                                        &csd);
+        
+        /* Could use g_slist_insert_sorted_with_data() for glib >= 2.10 */
+        l = box->children;
+        while (l && child_compare_func(c, l->data, &csd) > 0)
+            l = l->next;
+        box->children = g_slist_insert_before(box->children, l, c);
     }
 
     if (box->context != NULL)
