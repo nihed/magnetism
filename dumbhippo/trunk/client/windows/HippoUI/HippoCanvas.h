@@ -54,8 +54,10 @@ private:
     void onMouseLeave(WPARAM wParam, LPARAM lParam);
     void onRootRequestChanged();
     void onRootPaintNeeded(const HippoRectangle *damage_box);
+    void onRootTooltipChanged();
     void onHover(WPARAM wParam, LPARAM lParam);
     void startTrackingHover();
+    void updateTooltip(bool showIfNotAlready, int x, int y);
 
     // Helper routines for size allocation
     int computeChildWidthRequest();
@@ -67,6 +69,7 @@ private:
 
     GConnection1<void,const HippoRectangle*> rootPaintNeeded_;
     GConnection0<void> rootRequestChanged_;
+    GConnection0<void> rootTooltipChanged_;
     HippoGObjectPtr<HippoCanvasItem> root_;
     HippoGObjectPtr<HippoCanvasContextWin> context_;
     HippoPtr<HippoScrollbar> hscroll_;

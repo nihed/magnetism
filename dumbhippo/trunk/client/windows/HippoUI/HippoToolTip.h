@@ -7,7 +7,7 @@
 
 #include "HippoAbstractWindow.h"
 #include "HippoUIUtil.h"
-#include <hippo/hippo-basics.h>
+#include <hippo/hippo-graphics.h>
 #include <commctrl.h>
 
 class HippoToolTip : public HippoAbstractWindow {
@@ -18,8 +18,13 @@ public:
 
     void setForWindow(HWND forWindow);
 
-    void activate(const HippoRectangle *forArea,
-                  const char           *text);
+    bool areaEqual(const HippoRectangle *forArea) {
+        return hippo_rectangle_equal(forArea, &forArea_) != FALSE;
+    }
+
+    void update(const HippoRectangle *forArea,
+                const char           *text);
+    void activate();
     void deactivate();
 
     virtual void show(bool activate);

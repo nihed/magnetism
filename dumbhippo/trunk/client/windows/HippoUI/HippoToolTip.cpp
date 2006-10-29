@@ -71,7 +71,7 @@ HippoToolTip::getTrackingToolInfo(TOOLINFO *ti)
 {
     g_assert(window_ != NULL);
 
-    memset(ti, 0, sizeof(TOOLINFO));
+    ZeroMemory(ti, sizeof(TOOLINFO));
 
     ti->cbSize = sizeof(TOOLINFO);
     ti->uFlags = TTF_TRACK | TTF_ABSOLUTE;
@@ -94,13 +94,17 @@ HippoToolTip::getTrackingToolInfo(TOOLINFO *ti)
 }
 
 void
-HippoToolTip::activate(const HippoRectangle *for_area,
-                       const char           *text)
+HippoToolTip::update(const HippoRectangle *for_area,
+                     const char           *text)
 {
     TOOLINFO ti;
 
-    hippoDebugLogU("Activating tooltip '%s' for area %d,%d %dx%d window %p",
-        text, for_area->x, for_area->y, for_area->width, for_area->height, forWindow_);
+    // hippoDebugLogU("Updating tooltip '%s' for area %d,%d %dx%d window %p",
+    //    text, for_area->x, for_area->y, for_area->width, for_area->height, forWindow_);
+
+    if (hippo_rectangle_equal(&forArea_, for_area) &&
+        text_ == HippoBSTR::fromUTF8(text))
+        return;
 
     forArea_ = *for_area;
     text_.setUTF8(text);
@@ -141,11 +145,20 @@ HippoToolTip::activate(const HippoRectangle *for_area,
     MapWindowPoints(forWindow_, NULL, &where, 1);
     SendMessage(window_, TTM_TRACKPOSITION, 0, MAKELONG(where.x, where.y));
 
+    return;
+}
+
+void
+HippoToolTip::activate()
+{
     // raise (even above "on top" windows)
     SetWindowPos(window_,
                  HWND_TOPMOST,
                  0, 0, 0, 0,
                  SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+
+    TOOLINFO ti;
+    getTrackingToolInfo(&ti); // init the hwnd and uId fields
 
     if (!SendMessage(window_, TTM_TRACKACTIVATE, (WPARAM)TRUE, (LPARAM)&ti)) {
         hippoDebugLogW(L"Failed to send TTM_TRACKACTIVATE to activate");
@@ -163,7 +176,7 @@ HippoToolTip::deactivate()
     if (!isShowing())
         return;
 
-    hippoDebugLogW(L"Deactivating tooltip");
+    // hippoDebugLogW(L"Deactivating tooltip");
 
     getTrackingToolInfo(&ti);
 

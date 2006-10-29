@@ -404,56 +404,70 @@ class HippoUStr
 public:
 
     HippoUStr() {
-        str = NULL;
+        str_ = NULL;
     }
 
     HippoUStr(const HippoBSTR &bstr) {
         if (bstr.m_str)       
-            str = hippo_utf16_to_utf8(bstr.m_str, SysStringLen(bstr.m_str));
+            str_ = hippo_utf16_to_utf8(bstr.m_str, SysStringLen(bstr.m_str));
         else
-            str = NULL;
+            str_ = NULL;
     }
 
     HippoUStr(WCHAR *wstr)
-        : str(NULL) {
+        : str_(NULL) {
         setUTF16(wstr, -1);
     }
 
     HippoUStr(WCHAR *wstr, int len) 
-        : str(NULL) {
+        : str_(NULL) {
         setUTF16(wstr, len);
     }
 
     ~HippoUStr() {
-        if (str != NULL)
-            hippo_utf8_free(str);
+        if (str_ != NULL)
+            hippo_utf8_free(str_);
     }
 
     const char *c_str() const {
-        return str;
+        return str_;
     }
 
     void setUTF16(WCHAR *wstr, int len=-1) {
-        if (str != NULL)
-            hippo_utf8_free(str);
+        if (str_ != NULL)
+            hippo_utf8_free(str_);
         if (wstr)
-            str = hippo_utf16_to_utf8(wstr, len);
+            str_ = hippo_utf16_to_utf8(wstr, len);
         else
-            str = NULL;
+            str_ = NULL;
     }
 
     HippoBSTR toBSTR() const {
-        if (str == NULL)
+        if (str_ == NULL)
             return HippoBSTR();
         else
-            return HippoBSTR::fromUTF8(str, -1);
+            return HippoBSTR::fromUTF8(str_, -1);
+    }
+
+    bool operator==(const HippoUStr& other) const {
+        return *this == other.str_;
+    }
+
+    bool operator==(const char *s) const {
+        if (s == str_)
+            return true;
+        if ((str_ != 0) != (s != 0))
+            return false;
+        if (str_ == 0)
+            return true;
+        return strcmp(str_, s) == 0;
     }
 
 private:
     HippoUStr(const HippoUStr &other) {}
     HippoUStr operator=(const HippoUStr &other) {}
 
-    char *str;
+    char *str_;
 };
 
 inline bool

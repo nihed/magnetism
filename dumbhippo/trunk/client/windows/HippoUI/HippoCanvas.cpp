@@ -73,6 +73,12 @@ HippoCanvas::onRootRequestChanged()
 }
 
 void
+HippoCanvas::onRootTooltipChanged()
+{
+    updateTooltip(false, lastMoveX_, lastMoveY_);
+}
+
+void
 HippoCanvas::onRootPaintNeeded(const HippoRectangle *damage_box)
 {
     int cx, cy;
@@ -96,6 +102,8 @@ HippoCanvas::setRoot(HippoCanvasItem *item)
             slot(this, &HippoCanvas::onRootRequestChanged));
         rootPaintNeeded_.connect(G_OBJECT(item), "paint-needed",
             slot(this, &HippoCanvas::onRootPaintNeeded));
+        rootTooltipChanged_.connect(G_OBJECT(item), "tooltip-changed",
+            slot(this, &HippoCanvas::onRootTooltipChanged));
         if (isCreated()) {
             g_assert(HIPPO_IS_CANVAS_CONTEXT(context_));
             hippo_canvas_item_set_context(item, HIPPO_CANVAS_CONTEXT(context_));
@@ -442,6 +450,8 @@ HippoCanvas::tryAllocate(bool hscrollbar, bool vscrollbar)
         hippo_canvas_item_allocate(root_, childWidthAlloc, childHeightAlloc);
     }
 
+    updateTooltip(false, lastMoveX_, lastMoveY_);
+
     return true;
 }
 
@@ -621,6 +631,27 @@ HippoCanvas::onMouseUp(int button, WPARAM wParam, LPARAM lParam)
 }
 
 void
+HippoCanvas::updateTooltip(bool showIfNotAlready, int x, int y)
+{
+    HippoRectangle forArea;
+
+    char *tip = hippo_canvas_item_get_tooltip(root_,
+                                              x, y,
+                                              &forArea);
+    if (tip) {
+        tooltip_->update(&forArea, tip);
+
+        g_free(tip);
+        
+        if (showIfNotAlready)
+            tooltip_->activate();
+    } else {
+        // g_debug("Deactivating tooltip on update");
+        tooltip_->deactivate();
+    }
+}
+
+void
 HippoCanvas::onHover(WPARAM wParam, LPARAM lParam)
 {
     if (root_ == (HippoCanvasItem*) NULL)
@@ -630,23 +661,15 @@ HippoCanvas::onHover(WPARAM wParam, LPARAM lParam)
     if (!getMouseCoords(lParam, &x, &y))
         return;
 
-    HippoRectangle forArea;
-    char *tip = hippo_canvas_item_get_tooltip(root_,
-                                              x, y,
-                                              &forArea);
-    if (tip) {
-        tooltip_->activate(&forArea, tip);
-
-        g_free(tip);
-    } else {
-        //g_debug("Deactivating tooltip on hover");
-        tooltip_->deactivate();
-    }
+    updateTooltip(true, x, y);
 }
 
 void
 HippoCanvas::startTrackingHover()
 {
+    if (tooltip_->isShowing())
+        return;
+
     // request a WM_MOUSEHOVER message; also resets the 
     // hover timer if we've already asked for this message.
     TRACKMOUSEEVENT tme;
@@ -674,14 +697,25 @@ HippoCanvas::onMouseMove(WPARAM wParam, LPARAM lParam)
         return;
 
     if (x == lastMoveX_ && y == lastMoveY_) {
-        // we didn't really move. I don't know why Windows does this, 
-        // but it jacks up our tooltip handling.
+        // we didn't really move. I don't know why Windows does this.
         return;
     }
     lastMoveX_ = x;
     lastMoveY_ = y;
 
-    //g_debug("Deactivating tooltip on move");
+    // FIXME what we really want here is that if the mouse is still 
+    // on the same logical UI component (which may or may not be
+    // a separate canvas item), we update the tooltip, otherwise
+    // we hide the tooltip. A case where this happens is that with
+    // non-NW-gravity windows, we get a motion event on size allocate,
+    // and that should not usually clear the tooltip as long as the 
+    // pointer stays inside the same item. But also, just the user
+    // moving within one item really shouldn't clear the tip.
+    // We could just check whether the results of get_tooltip have
+    // changed (for_area and the tip text), but that isn't good enough
+    // since both can change when we're still inside the same item.
+
+    //updateTooltip(false, x, y);
     tooltip_->deactivate();
 
     bool entered;
@@ -724,7 +758,7 @@ HippoCanvas::onMouseLeave(WPARAM wParam, LPARAM lParam)
     if (!containsMouse_)
         return;
 
-    //g_debug("Deactivating tooltip on leave");
+    // g_debug("Deactivating tooltip on leave");
     tooltip_->deactivate();
 
     containsMouse_ = false;

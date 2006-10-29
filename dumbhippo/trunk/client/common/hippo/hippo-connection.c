@@ -189,6 +189,7 @@ struct _HippoConnection {
     gint64 server_time_offset;
     unsigned int too_old : 1;
     unsigned int upgrade_available : 1;
+    unsigned int last_auth_failed : 1;
 };
 
 struct _HippoConnectionClass {
@@ -737,6 +738,7 @@ hippo_connection_auth_failure(HippoConnection *connection,
     hippo_connection_forget_auth(connection);
     hippo_connection_start_signin_timeout(connection);
     hippo_connection_state_change(connection, HIPPO_STATE_AUTH_WAIT);
+    connection->last_auth_failed = TRUE;
     g_signal_emit(connection, signals[AUTH_FAILED], 0);
 }
 
@@ -3581,6 +3583,7 @@ handle_authenticate(LmConnection *lconnection,
 
     hippo_connection_request_client_info(connection);
     
+    connection->last_auth_failed = FALSE;
     g_signal_emit(connection, signals[AUTH_SUCCEEDED], 0);
 }
 
@@ -3622,21 +3625,29 @@ hippo_connection_get_tooltip(HippoConnection *connection)
     tip = NULL;
     switch (state) {
     case HIPPO_STATE_SIGNED_OUT:
-    case HIPPO_STATE_RETRYING:    
-        tip = _("%s (disconnected)");
+    case HIPPO_STATE_RETRYING:
+        if (connection->last_auth_failed) {
+            /* This is because it's possible to transition from AUTH_WAIT or SIGN_IN_WAIT to 
+             * SIGNED_OUT or RETRYING, which loses the information that we failed to log in,
+             * we had someone asking about how to fix the "disconnected" on the list.
+             */
+            tip = _("%s (disconnected - please log in to mugshot.org)");
+        } else {
+            tip = _("%s (disconnected - will try reconnecting in a few)");
+        }
         break;
     case HIPPO_STATE_SIGN_IN_WAIT:
         tip = _("%s (please log in to mugshot.org)");
         break;
     case HIPPO_STATE_CONNECTING:
     case HIPPO_STATE_AUTHENTICATING:
-        tip = _("%s (connecting)");
+        tip = _("%s (connecting - please wait)");
         break;    
     case HIPPO_STATE_AWAITING_CLIENT_INFO:
         tip = _("%s (checking for updates)");
         break;    
     case HIPPO_STATE_AUTH_WAIT:
-        tip = _("%s (login failed, try logging in to mugshot.org?)");
+        tip = _("%s (login failed - please log in to mugshot.org)");
         break;
     case HIPPO_STATE_AUTHENTICATED:
         tip = _("%s");
