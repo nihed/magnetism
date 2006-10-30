@@ -12,6 +12,7 @@ import javax.persistence.UniqueConstraint;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.hibernate.annotations.Index;
 
 @Entity
 @Cache(usage=CacheConcurrencyStrategy.TRANSACTIONAL)
@@ -19,6 +20,9 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 	   uniqueConstraints = {
 			@UniqueConstraint(columnNames={"user_id", "block_id"})
 		})
+@org.hibernate.annotations.Table(appliesTo = "UserBlockData", indexes={ 
+		@Index(name="participatedTimestamp_index", columnNames = { "participatedTimestamp" } ) 
+})		
 public class UserBlockData extends DBUnique {
 	private static final long serialVersionUID = 1L;
 	
