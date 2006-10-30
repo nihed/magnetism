@@ -32,7 +32,10 @@
                                  READ_UNCOMMITTED
                                  NONE
     -->
-    <attribute name="IsolationLevel">REPEATABLE_READ</attribute>
+    <!-- HIPPO: Hibernate never reads rows twice in the same transaction, so the
+         default REPEATABLE_READ is pointless; READ_COMMITTED avoids concurrency
+         problems from holding read locks over long read-only transactions -->
+    <attribute name="IsolationLevel">READ_COMMITTED</attribute>
 
     <!--     Valid modes are LOCAL
                              REPL_ASYNC
