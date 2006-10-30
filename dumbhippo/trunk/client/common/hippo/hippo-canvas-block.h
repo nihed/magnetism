@@ -88,7 +88,7 @@ void hippo_canvas_block_set_content (HippoCanvasBlock *canvas_block,
 void hippo_canvas_block_set_sender  (HippoCanvasBlock *canvas_block,
                                      const char       *entity_guid);
 void hippo_canvas_block_set_sent_to (HippoCanvasBlock *canvas_block,
-                                     const char       *entity_guid);
+                                     GSList           *entities);
 
 HippoActions* hippo_canvas_block_get_actions  (HippoCanvasBlock *canvas_block);
 

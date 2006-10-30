@@ -537,26 +537,6 @@ hippo_canvas_block_constructor (GType                  type,
                                       "yalign", HIPPO_ALIGNMENT_START,                        
                                       NULL);
 
-    block->sent_to_item = g_object_new(HIPPO_TYPE_CANVAS_ENTITY_NAME,
-                                       "actions", block->actions,
-                                       "xalign", HIPPO_ALIGNMENT_END,
-                                       "yalign", HIPPO_ALIGNMENT_START,
-                                       "border-right", 8,
-                                       NULL);
-    hippo_canvas_box_append(block->sent_to_box, block->sent_to_item, HIPPO_PACK_END);
-    block->sent_to_text_item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
-                                            "xalign", HIPPO_ALIGNMENT_END,
-                                            "yalign", HIPPO_ALIGNMENT_START,
-                                            "text", " Sent to ",
-                                            NULL);
-    hippo_canvas_box_append(block->sent_to_box, block->sent_to_text_item, HIPPO_PACK_END);
-    
-    /* we start out !expanded */
-    hippo_canvas_box_set_child_visible(block->sent_to_box, block->sent_to_text_item,
-                                       FALSE);
-    hippo_canvas_box_set_child_visible(block->sent_to_box, block->sent_to_item,
-                                       FALSE);
-
     block->sent_to_parent = box2;
     hippo_canvas_box_append(block->sent_to_parent, HIPPO_CANVAS_ITEM(block->sent_to_box), 0);
 
@@ -809,12 +789,12 @@ hippo_canvas_block_set_expansion(HippoCanvasBlock *canvas_block, gboolean expand
     hippo_canvas_box_set_child_visible(canvas_block->close_controls_parent, canvas_block->close_controls,
                                        expand);
     if (canvas_block->sent_to_set) {
-        hippo_canvas_box_set_child_visible(canvas_block->sent_to_box,
-                                           canvas_block->sent_to_text_item,
-                                           expand);
-        hippo_canvas_box_set_child_visible(canvas_block->sent_to_box,
-                                           canvas_block->sent_to_item,
-                                           expand);
+        GList *children = hippo_canvas_box_get_children(canvas_block->sent_to_box);
+        for (; children ; children = g_list_next(children)) {
+            hippo_canvas_box_set_child_visible(canvas_block->sent_to_box,
+                                               children->data,
+                                               expand);
+        }
     }
 
     update_expand_pointer(canvas_block, FALSE, 0, 0);
@@ -1004,31 +984,50 @@ hippo_canvas_block_set_sender(HippoCanvasBlock *canvas_block,
 
 void
 hippo_canvas_block_set_sent_to(HippoCanvasBlock *canvas_block,
-                               const char       *entity_guid)
+                               GSList           *entities)
 {    
-    if (entity_guid) {
-        HippoEntity *entity;
+    GSList *entity;
+    HippoCanvasItem *sent_to_label;
+    gboolean first = TRUE;
 
-        if (canvas_block->actions == NULL) {
-            g_warning("setting block sender before setting actions");
-            return;
-        }
-        
-        entity = hippo_actions_lookup_entity(canvas_block->actions,
-                                             entity_guid);
-        if (entity == NULL) {
-            g_warning("needed entity is unknown %s", entity_guid);
-            return;
-        }
-        
-        g_object_set(G_OBJECT(canvas_block->sent_to_item),
-                     "entity", entity,
+    hippo_canvas_box_remove_all(canvas_block->sent_to_box);
+
+    sent_to_label = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
+                                 "xalign", HIPPO_ALIGNMENT_END,
+                                 "yalign", HIPPO_ALIGNMENT_START,
+                                 "text", " Sent to ",
+                                 NULL);
+
+    for (entity = entities; entity; entity = g_slist_next(entity)) {
+        HippoCanvasItem *name = g_object_new(HIPPO_TYPE_CANVAS_ENTITY_NAME,
+                                            "actions", canvas_block->actions,
+                                            "xalign", HIPPO_ALIGNMENT_END,
+                                            "yalign", HIPPO_ALIGNMENT_START,
+                                            NULL);
+        g_object_set(G_OBJECT(name),
+                     "entity", entity->data,
                      NULL);
+        if (!first) {
+            HippoCanvasItem *comma = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
+                                                  "xalign", HIPPO_ALIGNMENT_END,
+                                                  "yalign", HIPPO_ALIGNMENT_START,
+                                                  "text", ", ",
+                                                  NULL);
+            hippo_canvas_box_append(canvas_block->sent_to_box, comma, HIPPO_PACK_END);
+            hippo_canvas_box_set_child_visible(canvas_block->sent_to_box, comma,
+                                               FALSE);
+        }
+        first = FALSE;
+        hippo_canvas_box_append(canvas_block->sent_to_box, name, HIPPO_PACK_END);
+        hippo_canvas_box_set_child_visible(canvas_block->sent_to_box, name,
+                                           FALSE);
+    }
+
+    if (entities != NULL) {
+        hippo_canvas_box_append(canvas_block->sent_to_box, sent_to_label, HIPPO_PACK_END);
+        hippo_canvas_box_set_child_visible(canvas_block->sent_to_box, sent_to_label, FALSE);
         canvas_block->sent_to_set = TRUE;
-    } else {        
-        g_object_set(G_OBJECT(canvas_block->sent_to_item),
-                     "entity", NULL,
-                     NULL);
+    } else {
         canvas_block->sent_to_set = FALSE;
     }
 }
