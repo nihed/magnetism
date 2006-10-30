@@ -353,6 +353,8 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		}
 
 		// Now create the new db claim
+		
+		res.prepareToSetAccountClaim();
 
 		AccountClaim ac = new AccountClaim(claimedOwner, res);
 		em.persist(ac);

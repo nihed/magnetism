@@ -15,6 +15,7 @@ import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.dumbhippo.identity20.Guid;
+import com.dumbhippo.server.util.EJBUtil;
 
 /**
  * A Resource is some object that has an associated GUID
@@ -75,9 +76,24 @@ public abstract class Resource extends GuidPersistable {
 		return claims.iterator().next();
 	}
 	
+	/**
+	 * Bug work around, see docs for EJBUtil.forceInitialization()
+	 */
+	public void prepareToSetAccountClaim() {
+		EJBUtil.forceInitialization(this.accountClaims);
+	}
+	
 	@Transient
 	public void setAccountClaim(AccountClaim accountClaim) {
-		this.accountClaims = Collections.singleton(accountClaim);
+		if (accountClaims != null)
+			accountClaims.clear();
+		
+		if (accountClaim != null) {
+			if (accountClaims != null)
+				accountClaims.add(accountClaim);
+			else
+				accountClaims = Collections.singleton(accountClaim);
+		}
 	}
 	
 	@Override

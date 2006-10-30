@@ -655,9 +655,11 @@ public class FeedSystemBean implements FeedSystem {
 				return;
 			}
 		}
+		EJBUtil.forceInitialization(feed.getGroups());
 		GroupFeed groupFeed = new GroupFeed(group, feed);
 		em.persist(groupFeed);
 		group.getFeeds().add(groupFeed);
+		feed.getGroups().add(groupFeed);
 	}
 	
 	public void removeGroupFeed(Group group, Feed feed) {

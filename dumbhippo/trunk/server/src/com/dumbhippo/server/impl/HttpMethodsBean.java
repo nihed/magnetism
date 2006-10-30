@@ -1509,6 +1509,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		Feed feed = scrapeFeedFromUrl(url);
 		
 		logger.debug("found feed: {}", feed);
+		EJBUtil.forceInitialization(feed.getAccounts());
 		ExternalAccount external = externalAccountSystem.getOrCreateExternalAccount(viewpoint, ExternalAccountType.RHAPSODY);
 		
 		try {
@@ -1519,6 +1520,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 
 		external.setSentiment(Sentiment.LOVE);
 		external.setFeed(feed);
+		feed.getAccounts().add(external);
 	}
 	
 	private ExternalAccountType parseExternalAccountType(String type) throws XmlMethodException {
@@ -1693,6 +1695,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		throwIfUrlNotHttp(url);
 		
 		Feed feed = scrapeFeedFromUrl(url);
+		EJBUtil.forceInitialization(feed.getAccounts());
 		
 		ExternalAccount external = externalAccountSystem.getOrCreateExternalAccount(viewpoint, ExternalAccountType.BLOG);
 		
@@ -1704,6 +1707,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 
 		external.setSentiment(Sentiment.LOVE);
 		external.setFeed(feed);
+		feed.getAccounts().add(external);
 	}
 	
 	private StatisticsService getStatisticsService() throws XmlMethodException {
