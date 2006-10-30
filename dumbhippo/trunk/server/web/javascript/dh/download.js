@@ -1,6 +1,5 @@
 dojo.provide("dh.download")
 
-dojo.require("dojo.render")
 dojo.require("dojo.html")
 dojo.require("dh.server")
 
