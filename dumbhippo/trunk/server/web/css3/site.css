@@ -306,6 +306,10 @@ div.dh-async-action-link-complete {
 .dh-stacker-block {
 }
 
+.dh-stacker-block-expandable {
+	cursor:				pointer;
+}
+
 .dh-box-grey1 {
 	background-color:	#EDEDED;
 }

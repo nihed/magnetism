@@ -52,7 +52,7 @@
 		<dht3:blockSentTo>
 			Sent to: 
 			<c:forEach end="9" items="${block.postView.recipients}" var="ent" varStatus="entIdx">
-				<dht3:entityLink who="${ent}"/><c:if test="${!entIdx.last}">, </c:if>
+				<dht3:entityLink who="${ent}" suppressClick="true"/><c:if test="${!entIdx.last}">, </c:if>
 			</c:forEach>
 		</dht3:blockSentTo>	
 		<dht3:chatPreview block="${block}" chatId="${block.postView.post.id}" chatKind="group" chattingCount="${block.postView.livePost.chattingUserCount}"/>

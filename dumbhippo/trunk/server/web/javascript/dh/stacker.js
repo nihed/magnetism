@@ -1785,48 +1785,21 @@ dh.stacker.simulateNewStackTime = function(stacker) {
 	}
 }
 
-dh.stacker.currentHoverTimeout = null;
-dh.stacker.lastClosedBlockTime = null;
-
-dh.stacker.resetHover = function () {
-	if (dh.stacker.currentHoverTimeout) {
-		clearTimeout(dh.stacker.currentHoverTimeout);
-		dh.stacker.currentHoverTimeout = null;
-	}
-}
-
-dh.stacker.blockHoverStart = function(id) {
-	dh.stacker.resetHover();
-	var currentTime = new Date()
-	var timeout = 500;
-	// If they just recently closed a block, extend the time for opening a new one a bit to
-	// make reopening the closed one accidentally less likely
-	if (dh.stacker.lastClosedBlockTime && dh.stacker.lastClosedBlockTime.getTime() - currentTime.getTime() < 1000)
-		timeout = 1200;
-	dh.stacker.currentHoverTimeout = setTimeout(function () {
-		var content = document.getElementById("dhStackerBlockContent-" + id)
-		content.style.display = "block";
-		var controls = document.getElementById("dhStackerBlockControls-" + id)
-		if (controls)
-			controls.style.display = "block";		
-		var closeButton = document.getElementById("dhStackerBlockClose-" + id)
-		closeButton.style.display = "block";
-		/*
-		var description = document.getElementById("dhStackerBlockHeaderDescription-" + id)
-		description.parentNode.removeChild(description)
-		var contentDescriptionContainer = document.getElementById("dhStackerBlockContentDescriptionContainer-" + id)
-		while (contentDescription.firstChild) { contentDescription.removeChild(contentDescription.firstChild) }
-		contentDescription.appendChild(description)
-		*/
-	}, timeout);
-}
-
-dh.stacker.blockHoverStop = function() {
-	dh.stacker.resetHover();
+dh.stacker.onBlockClick = function(id) {
+	var block = document.getElementById("dhStackerBlock-" + id)
+	block.style.cursor = "default"
+	var content = document.getElementById("dhStackerBlockContent-" + id)
+	content.style.display = "block";
+	var controls = document.getElementById("dhStackerBlockControls-" + id)
+	if (controls)
+		controls.style.display = "block";		
+	var closeButton = document.getElementById("dhStackerBlockClose-" + id)
+	closeButton.style.display = "block";
 }
 
 dh.stacker.blockClose = function(id) {
-	dh.stacker.resetHover();
+	var block = document.getElementById("dhStackerBlock-" + id)	
+	block.style.cursor = "pointer"	
 	var content = document.getElementById("dhStackerBlockContent-" + id)
 	content.style.display = "none";	
 	var controls = document.getElementById("dhStackerBlockControls-" + id)
@@ -1834,11 +1807,4 @@ dh.stacker.blockClose = function(id) {
 		controls.style.display = "none";		
 	var closeButton = document.getElementById("dhStackerBlockClose-" + id)
 	closeButton.style.display = "none";	
-	/*
-	var description = document.getElementById("dhStackerBlockHeaderDescription-" + id)
-	description.parentNode.removeChild(description)	
-	var headerDescriptionContainer = document.getElementById("dhStackerBlockHeaderDescriptionContainer-" + id)	
-	headerDescriptionContainer.appendChild(description)
-	*/
-	dh.stacker.lastClosedBlockTime = new Date()
 }
