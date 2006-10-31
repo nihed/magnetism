@@ -14,9 +14,10 @@
 	<dht:siteStyle/>	
 	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/invitation.css"/>
 	<dht:faviconIncludes/>
-	<dht:scriptIncludes/>
+	<dht:scriptIncludes>
+		<dht:script src="dh/invitation.js"/>
+	</dht:scriptIncludes>
 	<script type="text/javascript">
-		dojo.require("dh.invitation")
 		dh.invitation.initialValues = {
 			'dhAddressEntry' : '',
 			'dhSubjectEntry' : 'Invitation from ${signin.user.nickname} to join Mugshot',

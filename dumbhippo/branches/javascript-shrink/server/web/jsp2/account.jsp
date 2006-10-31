@@ -24,10 +24,10 @@
 	<dht:siteStyle/>
 	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/account.css">
 	<dht:faviconIncludes/>
-	<dht:scriptIncludes/>
+	<dht:scriptIncludes>
+		<dht:script src="dh/account.js"/>
+	</dht:scriptIncludes>
 	<script type="text/javascript">
-		dojo.require("dh.account");
-		dojo.require("dh.password");
 		dh.formtable.currentValues = {
 			'dhUsernameEntry' : <dh:jsString value="${signin.user.nickname}"/>,
 			'dhBioEntry' : <dh:jsString value="${signin.user.account.bio}"/>,

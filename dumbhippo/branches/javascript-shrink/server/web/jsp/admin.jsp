@@ -13,10 +13,9 @@
 <head>
 	<title>Admin Console</title>
 	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/admin.css"/>	
-	<dht:scriptIncludes/>
-	<script type="text/javascript">
-        dojo.require("dh.admin");
-	</script>
+	<dht:scriptIncludes>
+		<dht:script src="dh/admin.js"/>
+	</dht:scriptIncludes>
 </head>
 <dht:body>
 

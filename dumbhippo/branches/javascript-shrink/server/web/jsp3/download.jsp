@@ -26,10 +26,11 @@
 	<title>Mugshot Download</title>
 	<dht3:stylesheet name="site" iefixes="true"/>	
 	<dht3:stylesheet name="download"/>
-	<dht:scriptIncludes/>
+	<dht:scriptIncludes>
+		<dht:script src="dh/download.js"/>
+	</dht:scriptIncludes>
 	<dht:faviconIncludes/>
 	<script type="text/javascript">
-		dojo.require("dh.download");
 		dh.download.needTermsOfUse = ${signin.needsTermsOfUse}
 		dojo.event.connect(dojo, "loaded", function () { dh.download.init() })
 	</script>	

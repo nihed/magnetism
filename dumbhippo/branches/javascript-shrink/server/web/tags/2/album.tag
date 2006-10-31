@@ -1,7 +1,7 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="/jsp/dumbhippo.tld" prefix="dh" %>
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
-<script type="text/javascript">dojo.require("dh.artist");</script>
+<dht:script src="dh/artist.js"/>
 
 <%@ attribute name="album" required="true" type="com.dumbhippo.server.views.AlbumView"%>
 <%@ attribute name="order" required="true" type="java.lang.String"%>

@@ -21,9 +21,10 @@
 	<dht:siteStyle/>	
 	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/group-account.css"/>
 	<dht:faviconIncludes/>
-	<dht:scriptIncludes/>
+	<dht:scriptIncludes>
+		<dht:script src="dh/groupaccount.js"/>
+	</dht:scriptIncludes>
 	<script type="text/javascript">
-		dojo.require("dh.groupaccount")
 		dh.formtable.currentValues = {
 			'dhGroupNameEntry' : <dh:jsString value="${group.name}"/>,
 			'dhAboutGroupEntry' : <dh:jsString value="${!empty group.viewedGroup.group.description ? group.viewedGroup.group.description : ''}"/>

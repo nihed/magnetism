@@ -1,14 +1,23 @@
-// common.js runs after we load dojo.js
-// all real code should be in dojo modules really.
+// common.js - included after dojo bootstrap and before all our other javascript
+dojo.provide('common');
+dojo.provide('dh'); // so the "dh" hash exists
 
-//dj_debug("common.js start");
+// dojo hackarounds - it never does an explicit "dojo.provide" on these
+// things so they don't exist when we need them to without these hacks
+dojo.provide('dojo.graphics')
+dojo.provide('dojo.io')
+dojo.provide('dojo.uri')
 
-// set location of "dh" relative to location of "dojo.js"
-dojo.hostenv.setModulePrefix("dh", "../dh");
+// This is to catch bugs
+dojo.requires = function(module) {
+	throw new Error("dojo.requires should not still exist at runtime, jscompress should have replaced it");
+}
+dojo.provide = function(module) {
+	throw new Error("dojo.provide should not still exist at runtime, jscompress should have replaced it");
+}
 
 // these two functions are here instead of a module since they are 
 // debug-oriented and useful to have "fewer dependencies" for
-
 function dhAddScriptToHead(url) {
 	var script = document.createElement('script');
 	script.type = 'text/javascript';
@@ -24,6 +33,3 @@ function dhAllPropsAsString(obj) {
 	s = s + "}";
 	return s;
 }
-
-//dj_debug(dhAllPropsAsString(dojo));
-//dj_debug("common.js end");

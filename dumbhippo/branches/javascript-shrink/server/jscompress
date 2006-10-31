@@ -14,8 +14,12 @@ import errno
 original_files = {}
 
 ## Modules that should be bundled, with all deps inlined, into a
-## single file
-bundle_modules = [ 'dh.actions' ]
+## single file. Right now the implementation is dumb and the bundles
+## can't overlap.
+## A future elaboration might be that if stuff in this list shares
+## dependencies, the first bundle in the list will inline the dep, and
+## the second bundle will have to load the first bundle
+bundle_modules = [ 'dh.site' ]
 
 ## Map from module names to OriginalFile objects
 providers = {}
@@ -25,6 +29,9 @@ root_modules = {}
 
 ## Destination files, hash from full path to DestFile objects
 dest_files = {}
+
+## Map from module names to DestFile objects
+dest_providers = {}
 
 ## Don't copy any full path ending in these
 skip_suffixes = [ "/hostenv_svg.js", "/hostenv_rhino.js",
@@ -61,6 +68,17 @@ all_whitespace_re = re.compile('^\s+$')
 ## the below just does not remove comments that have quotes in them
 slashslash_comment_re = re.compile('//[^"\']*$')
 
+def tuple_second_value_compare(a, b):
+    return cmp(a[1], b[1])
+
+def dict_keys_sorted_by_values(dict):
+    items = dict.items()
+    items.sort(tuple_second_value_compare)
+    result = []
+    for i in items:
+        result.append(i[0])
+    return result
+
 def write_line(out, indent, text):
     while indent > 0:
         if indent >= 4:
@@ -82,16 +100,56 @@ def write_line(out, indent, text):
 def module_identifier(module):
     return module.replace("*", "_star")
 
+def file_providing(module):
+    if module.endswith("._star"):
+        module = module.replace(".star", ".*")
+    if dest_providers.has_key(module):
+        return dest_providers[module].get_relative_path()
+    else:
+        ## print "module '%s' not known to be in any file" % module
+        return "unknown-file"
+
+## check that we have parsed the given module
+def write_required_check(out, indent, module, already):
+    elems = module.split(".")
+    sofar = ""
+    for e in elems:
+        if sofar == "":
+            if not already.has_key(e):
+                write_line(out, indent,
+                           "if (typeof %s == 'undefined')" % e)
+                write_line(out, indent + 4,
+                           "throw new Error('%s required at this point, but %s not loaded');" % \
+                           (e, file_providing(e)))
+                already[e] = 1
+            sofar = e
+        else:
+            next = sofar + "." + e
+            if not already.has_key(next):
+                write_line(out, indent,
+                           "if (typeof %s['%s'] == 'undefined')" % (sofar, e))
+                write_line(out, indent + 4,
+                           "throw new Error('%s required at this point, but %s not loaded');" % \
+                           (next, file_providing(next)))
+                already[next] = 1
+            sofar = next
+
 ## checks before we create the module, like "dh.actions={}"
 def write_pre_provide_checks(out, indent, module):
     elems = module.split(".")
     sofar = ""
     for e in elems:
         if sofar == "":
-            write_line(out, indent,
-                       "if (typeof %s == 'undefined')" % e)
-            write_line(out, indent + 4,
-                       "throw new Error('%s is not parsed yet');" % e)
+            if e != module:
+                write_line(out, indent,
+                           "if (typeof %s == 'undefined')" % e)
+                write_line(out, indent + 4,
+                           "throw new Error('%s in %s is not parsed yet before providing %s');" % (e, file_providing(e), module))
+            else:
+                write_line(out, indent,
+                           "if (typeof %s !== 'undefined')" % e)
+                write_line(out, indent + 4,
+                           "throw new Error('%s already exists when providing %s');" % (e, module))
             sofar = e
         else:
             next = sofar + "." + e
@@ -99,17 +157,17 @@ def write_pre_provide_checks(out, indent, module):
                 write_line(out, indent,
                            "if (typeof %s['%s'] !== 'undefined')" % (sofar, e))
                 write_line(out, indent + 4,
-                           "throw new Error('%s already parsed');" % next)
+                           "throw new Error('%s already parsed when providing %s');" % (next, module))
             else:
                 write_line(out, indent,
                            "if (typeof %s['%s'] == 'undefined')" % (sofar, e))
                 write_line(out, indent + 4,
-                           "throw new Error('%s not yet parsed');" % next)
+                           "throw new Error('%s not yet parsed when providing %s');" % (next,  module))
             sofar = next
 
 def write_check_has_type(out, indent, obj, name, js_type_name):
     write_line(out, indent,
-               "if (typeof %s['%s'] != '%s')" % (obj, name, js_type_name))
+               "if ((typeof %s['%s']).toLowerCase() != '%s')" % (obj, name, js_type_name))
     write_line(out, indent + 4,
                "throw new Error('%s in %s should have type %s not ' + (typeof %s['%s']));" % \
                (name, obj, js_type_name, obj, name))
@@ -140,9 +198,9 @@ def write_post_init_checks(out, indent, module):
 
             sofar = next
 
-    write_check_has_type(out, indent, module, "_initialized", 'Boolean')
-    write_check_has_type(out, indent, module, "_parsed", 'Boolean')
-    write_check_has_type(out, indent, module, "_init", 'Function')
+    write_check_has_type(out, indent, module, "_initialized", 'boolean')
+    write_check_has_type(out, indent, module, "_parsed", 'boolean')
+    write_check_has_type(out, indent, module, "_init", 'function')
 
 class OriginalFile:
     def __init__(self, fullpath, lines):
@@ -171,6 +229,11 @@ class OriginalFile:
         self._find_provides_requires()
         self._bundlers = [] # modules that want to bundle us inline
         self._bundles_its_requires = 0
+
+        self._ordered_provides = None
+        self._ordered_requires = None
+
+        self._dest_file = None
 
     def __repr__(self):
         return "'%s' provides %s" % (self.get_path(), self.get_all_provides())
@@ -243,6 +306,24 @@ class OriginalFile:
 
             i = i + 1
 
+    def set_dest_file(self, dest):
+        if self._dest_file:
+            print "destination file set twice on same file"
+            sys.exit(1)
+        self._dest_file = dest
+
+    def get_dest_file(self):
+        if not self._dest_file:
+            for b in self._bundlers:
+                d = b.get_dest_file()
+                if d:
+                    self._dest_file = d
+                    break
+        if not self._dest_file:
+            print "%s has no destination file and none of its bundlers do either" % (self)
+            sys.exit(1)
+        return self._dest_file
+
     def get_path(self):
         return self._path
 
@@ -253,18 +334,34 @@ class OriginalFile:
         return self._provides.has_key(module)
 
     def get_all_provides(self):
-        return self._provides.keys()
+        ## we want to sort this by the original
+        ## ordering in the file - the values of the
+        ## hash are the line numbers
+        if not self._ordered_provides:
+            self._ordered_provides = dict_keys_sorted_by_values(self._provides)
+        return self._ordered_provides
 
-    def get_requires(self, module):
+    def get_requires(self, module):        
         return self._requires.has_key(module)
 
     def get_all_requires(self):
-        return self._requires.keys()
+        ## we want to sort this by the original
+        ## ordering in the file - the values of the
+        ## hash are the line numbers
+        if not self._ordered_requires:
+            self._ordered_requires = dict_keys_sorted_by_values(self._requires)
+        return self._ordered_requires
 
     def remove_requires(self, module):
         if self._requires.has_key(module):
             del self._requires[module]
-
+            if self._ordered_requires:
+                ## drop this list instead of modifying it, since
+                ## someone is probably iterating over get_all_requires;
+                ## they'll keep a ref to the original and we'll make
+                ## a new one on demand
+                self._ordered_requires = None
+            
     def get_bundlers(self):
         return self._bundlers
 
@@ -346,6 +443,12 @@ class OriginalFile:
                 if not already.has_key(orig):
                     orig.write(out, already, indent)
 
+        ## Assert that our direct dependencies have been loaded
+        requires_asserted = {}
+        for r in self.get_all_requires():
+            r = module_identifier(r)
+            write_required_check(out, indent, r, requires_asserted)
+            
         provides = self.get_all_provides()
         if len(provides) == 0:
             self.write_all_lines(out, indent)
@@ -362,8 +465,6 @@ class OriginalFile:
                 write_line(out, indent, "%s = {};" % p)
                 write_line(out, indent, "%s._parsed = true;" % p)
                 write_line(out, indent, "%s._initialized = false;" % p)
-                if p != master_module:
-                    write_line(out, indent, "%s._init = %s._init;" % (p, master_module))
 
             write_line(out, indent, "%s._init = function() {" % (master_module))
             write_line(out, indent + 4, "if (%s._initialized)" % master_module)
@@ -384,18 +485,43 @@ class OriginalFile:
 
             write_line(out, indent, "}")
 
+            ## Aliases for master_module._init() for each other provide
+            for p in self.get_all_provides():
+                p = module_identifier(p)
+                if p != master_module:
+                    write_line(out, indent, "%s._init = %s._init;" % (p, master_module))
+
             write_line(out, indent, "// end of module '%s'" % master_module);
 
+            ## Eventually we should require explicitly calling the
+            ## init() on each module prior to use. But for now,
+            ## at the end of each file we init the file
+            ## (note that we don't do this for bundled modules)
+            if not self.get_bundled():
+                write_line(out, indent, "%s._init(); // hack for now " % master_module)
+
 class DestFile:
-    def __init__(self, fullpath, orig):
+    def __init__(self, relpath, fullpath, orig):
+        self._relpath = relpath
         self._path = fullpath
         self._orig = orig
+        self._depfiles = None
+        self._orig.set_dest_file(self)
+
+    def __repr__(self):
+        return "'%s'" % (self.get_relative_path())
+
+    def __str__(self):
+        return self.__repr__()
 
     def get_path(self):
         return self._path
 
     def get_orig(self):
         return self._orig
+
+    def get_relative_path(self):
+        return self._relpath
 
     def write(self):
         try:
@@ -406,8 +532,52 @@ class DestFile:
         self._orig.write(out, {}, 0)
         out.close()
 
+    ## this gets a one-level list of the dependent files, not
+    ## a recursive one
+    def get_required_files(self):
+        if not self._depfiles:
+            self._depfiles = {}
+            for r in self._orig.get_all_requires():
+                if not dest_providers.has_key(r):
+                    print "%s is not provided by any destination file" % (r)
+                    sys.exit(1)
+                required_dest = dest_providers[r]
+                self._depfiles[required_dest] = 1
+
+        return self._depfiles.keys()
+
+    def _add_orig_to_provider_map(self, provider_map, orig, already):
+        if already.has_key(orig):
+            return
+        else:
+            already[orig] = 1
+
+        for p in orig.get_all_provides():
+            if provider_map.has_key(p):
+                if provider_map[p] != self:
+                    print "dest files %s and %s both provide %s" % \
+                          (self.get_relative_path(), provider_map[p].get_relative_path(), \
+                           p)
+                    sys.exit(1)
+            else:
+                provider_map[p] = self
+        
+        inline_all = orig.get_bundles_its_requires() or orig.get_bundled()
+
+        if inline_all:
+            for r in orig.get_all_requires():
+                orig_r = providers[r]
+                self._add_orig_to_provider_map(provider_map, orig_r, already)
+        
+    def add_self_to_provider_map(self, provider_map):
+        if self._orig.get_bundled():
+            print "dest file should not be based on a bundled file"
+            sys.exit(1)
+        already = {}
+        self._add_orig_to_provider_map(provider_map, self._orig, already)
+
 def usage():
-    print >>sys.stderr,  "Usage: jscompress srcdir1 [srcdir2 ...] destdir"
+    print >>sys.stderr,  "Usage: jscompress srcdir_or_file1 [srcdir_or_file2 ...] destdir"
 
 def main():
     try:
@@ -430,14 +600,20 @@ def main():
 
     ## slurp all source files into OriginalFile objects
     for srcdir in srcdirs:
-        for root, dirs, files in os.walk(srcdir, topdown=False):
-            for name in files:
-                fullpath = os.path.join(root, name)
-                if fullpath[-3:] == ".js" and not skip_src_path(fullpath):
-                    lines = open(fullpath).readlines()
-                    orig = OriginalFile(fullpath, lines)
+        paths = []
+        if srcdir.endswith(".js") and not skip_src_path(srcdir):
+            paths.append(srcdir)
+        else:
+            for root, dirs, files in os.walk(srcdir, topdown=False):
+                for name in files:
+                    fullpath = os.path.join(root, name)
+                    if fullpath.endswith(".js") and not skip_src_path(fullpath):
+                        paths.append(fullpath)
 
-                    original_files[fullpath] = orig
+        for fullpath in paths:
+            lines = open(fullpath).readlines()
+            orig = OriginalFile(fullpath, lines)
+            original_files[fullpath] = orig
 
     ## Create map of module providers
     for orig in original_files.values():
@@ -477,10 +653,13 @@ def main():
         orig = providers[b]
         orig.mark_bundles_its_requires()
 
-    ## Check for anything that gets bundled twice
+    ## Check for anything that gets bundled twice or both bundles and is bundled
     for (module_name, orig) in providers.items():
         if orig.get_multiply_bundled():
             print "%s bundled into multiple modules %s" % (orig.get_provides(), orig.get_bundlers())
+            sys.exit(1)
+        if orig.get_bundles_its_requires() and orig.get_bundled():
+            print "%s is both a bundl-er and a bundl-ee" % (orig)
             sys.exit(1)
 
         #if orig.get_bundled():
@@ -490,16 +669,30 @@ def main():
     bundled_count = 0
     for orig in original_files.values():
         if not orig.get_bundled():
-            destpath = os.path.join(destdir, orig.get_dest_filename())
-            dest_files[destpath] = DestFile(destpath, orig)
+            relpath = orig.get_dest_filename()
+            destpath = os.path.join(destdir, relpath)
+            d = DestFile(relpath, destpath, orig)
+            dest_files[destpath] = d
+            ## fill in dest_providers
+            d.add_self_to_provider_map(dest_providers)
         else:
             bundled_count = bundled_count + 1
 
+    for p in dest_providers.keys():
+        if not providers.has_key(p):
+            print "Module %s in dest file %s is not provided by any original file" % (p, dest_providers[p])
+            sys.exit(1)
+
+    for p in providers.keys():
+        if not dest_providers.has_key(p):
+            print "Module %s in source file %s is not provided by any dest file, is bundled into %s has dest file %s" % (p, providers[p], providers[p].get_bundlers(), providers[p].get_dest_file())
+            sys.exit(1)
+            
     print "%d files to be inlined" % bundled_count
 
     ## And write them
     for dest in dest_files.values():
-        print "writing %s" % (dest.get_path())
+        print "writing %s requiring %s" % (dest.get_path(), dest.get_required_files())
         dest.write()
 
 main()

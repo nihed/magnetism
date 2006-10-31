@@ -10,8 +10,6 @@
 	<dht:faviconIncludes/>
 	<dht:scriptIncludes/>
 	<script type="text/javascript">
-		dojo.require("dh.util");
-	
 		dh.util.goToNextPage("<c:out value="${next}"/>", "<c:out value="${flashMessage}"/>");
 	</script>
 </head>

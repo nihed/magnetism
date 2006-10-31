@@ -11,10 +11,9 @@
        	<dht:siteStyle/>
 		<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/radar.css"/>        
 		<dht:faviconIncludes/>
-        <dht:scriptIncludes/>
-        <script type="text/javascript">
-	        dojo.require("dh.nowplaying");
-		</script>
+        <dht:scriptIncludes>
+        	<dht:script src="dh/nowplaying.js"/>
+        </dht:scriptIncludes>
 </head>
 <dht:twoColumnPage neverShowSidebar="true">
 	<dht:contentColumn>

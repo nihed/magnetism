@@ -8,10 +8,10 @@
 	<title>Create Group</title>
 	<dht:siteStyle/>	
 	<dht:faviconIncludes/>
-	<dht:scriptIncludes/>
-	<script type="text/javascript" src="/javascript/${buildStamp}/dh/groupaccount.js"></script>
+	<dht:scriptIncludes>
+		<dht:script src="dh/groupaccount.js"/>
+	</dht:scriptIncludes>
 	<script type="text/javascript">
-		dojo.require("dh.groupaccount")
 		dojo.event.connect(dojo, "loaded", dj_global, "dhCreateGroupInit");
 	</script>
 </head>

@@ -24,10 +24,11 @@
 	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/invitation.css"/>
 	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/group.css"/>
 	<dht:faviconIncludes/>
-	<dht:scriptIncludes/>
+	<dht:scriptIncludes>
+		<dht:script src="dh.groupinvitation"/>
+	</dht:scriptIncludes>
 	<dht:embedObject/>
 	<script type="text/javascript">
-		dojo.require("dh.groupinvitation")
 		dh.groupinvitation.groupId = <dh:jsString value="${group.viewedGroupId}"/>
 		dh.groupinvitation.initialValues = {
 			'dhAddressEntry' : '',

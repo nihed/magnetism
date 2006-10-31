@@ -20,9 +20,6 @@
 	<dht:faviconIncludes/>
 	<dht:scriptIncludes/>
 	<dht:embedObject/>
-    <script type="text/javascript">
-        dojo.require("dh.util");
-    </script>
 </head>
 <dht:twoColumnPage alwaysShowSidebar="true">
 	<dht:sidebarGroup/>

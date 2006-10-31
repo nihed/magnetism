@@ -20,11 +20,12 @@
 
 <head>
 	<title><c:out value="${chatwindow.title}"/></title>
-   <link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/chatwindow.css"/>
-	<dht:scriptIncludes/>
-   <script type="text/javascript">
-   	dojo.require("dh.chatwindow");
-   	dh.chatwindow.setSelfId("${chatwindow.signin.userId}")
+    <link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/chatwindow.css"/>
+	<dht:scriptIncludes>
+		<dht:script src="dh/chatwindow.js"/>
+	</dht:scriptIncludes>
+    <script type="text/javascript">
+     	dh.chatwindow.setSelfId("${chatwindow.signin.userId}")
 	</script>
 	<script defer type="text/javascript">
 		dh.chatwindow.initDisabled()
