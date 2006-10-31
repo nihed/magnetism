@@ -18,6 +18,8 @@ import com.dumbhippo.services.AmazonAlbumData;
 public class CachedAmazonAlbumData extends DBUnique {
 
 	private static final long serialVersionUID = 1L;
+
+	public static final int DATA_COLUMN_LENGTH = 100;
 	
 	private long lastUpdated;
 
@@ -71,7 +73,7 @@ public class CachedAmazonAlbumData extends DBUnique {
 	// if you use the hibernate default of 255 chars you get well over
 	// 1000 bytes
 	
-	@Column(nullable=false,length=100)
+	@Column(nullable=false,length=DATA_COLUMN_LENGTH)
 	public String getAlbum() {
 		return album;
 	}
@@ -79,7 +81,7 @@ public class CachedAmazonAlbumData extends DBUnique {
 		this.album = album;
 	}
 	// see comment on getAlbum() about the length
-	@Column(nullable=false,length=100)
+	@Column(nullable=false,length=DATA_COLUMN_LENGTH)
 	public String getArtist() {
 		return artist;
 	}

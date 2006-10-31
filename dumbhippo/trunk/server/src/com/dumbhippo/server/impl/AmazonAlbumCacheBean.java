@@ -99,8 +99,8 @@ public class AmazonAlbumCacheBean extends AbstractCacheBean<String,AmazonAlbumDa
 		Query q;
 		
 		q = em.createQuery("FROM CachedAmazonAlbumData album WHERE album.artist = :artist AND album.album = :album");
-		q.setParameter("artist", artist);
-		q.setParameter("album", album);
+		q.setParameter("artist", artist.substring(0, Math.min(CachedAmazonAlbumData.DATA_COLUMN_LENGTH, artist.length())));
+		q.setParameter("album", album.substring(0, Math.min(CachedAmazonAlbumData.DATA_COLUMN_LENGTH, album.length())));
 		
 		try {
 			return (CachedAmazonAlbumData) q.getSingleResult();
