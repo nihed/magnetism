@@ -10,7 +10,7 @@
 <div id="dhPageHeader3">
 	<table cellspacing="0" cellpadding="0" width="100%">
 	<tr valign="top">
-	<td width="248px"><a href="/"><dh:png id="dhPageHeaderLeft" src="/images3/${buildStamp}/header_left.png" style="width: 248px; height: 64px"/></a></td>
+	<td width="248px"><a href="/" id="dhPageHeaderLeftLink"><dh:png id="dhPageHeaderLeft" src="/images3/${buildStamp}/header_left.png" style="width: 248px; height: 64px"/></a></td>
 	<td id="dhPageHeaderLeftControls" align="left" valign="bottom" height="56px">
 		<div id="dhPageHeaderLeftControlsArea">
 		<c:choose>
@@ -84,3 +84,16 @@
 	</tr>
 	</table>
 </div>
+<!-- Semi-cracktastic thing to show our javascript debug log -->
+<script type="text/javascript">
+	var link = document.getElementById("dhPageHeaderLeftLink");
+	link.onclick = function (e) {
+		if (!e) e = window.event;
+		if (e.ctrlKey && e.altKey) {
+			dh.logger.show();
+			return false;
+		}
+		return true;
+	}
+	dh.log("header", "Registered header event handler")
+</script>

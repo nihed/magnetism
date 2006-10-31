@@ -1,5 +1,87 @@
 dojo.provide("dh.util");
+dojo.provide("dh.logger");
 dojo.require("dojo.html");
+
+dh.logger.LogEntry = function(category, text, level) {
+	this.category = category;
+	this.text = text;
+	this.date = new Date();
+	this.level = level ? level : "info";	
+}
+
+dh.logger.logWindow = null;
+dh.logger.maxLogEntries = 40;
+dh.logger.logEntries = [];
+
+dh.logger.isActive = function() {
+	return dh.logger.logWindow && !dh.logger.logWindow.closed;
+}
+
+dh.logger.show = function() {
+	if (!dh.logger.isActive()) {
+		dh.logger.logWindow = window.open();
+		
+		var doc = dh.logger.logWindow.document;
+		var log = doc.createElement("table");
+		var tbody = doc.createElement("tbody");
+		log.appendChild(tbody);
+		tbody.id = "dhErrorLog";
+		doc.body.appendChild(tbody);
+		var i;
+		for (i = 0; i < dh.logger.logEntries.length; i++) {
+			dh.logger.append(dh.logger.logEntries[i]);
+		}
+		dh.logger.logEntries = []
+	}
+}
+
+dh.logger.append = function(entry) {
+	var doc = dh.logger.logWindow.document;
+	var logTable = doc.getElementById("dhErrorLog");
+	var tr = doc.createElement("tr");
+	logTable.appendChild(tr);
+	var td = doc.createElement("td");
+	tr.appendChild(td);
+	td.style.fontSize = "smaller";
+	td.appendChild(doc.createTextNode(entry.date));
+	var td = doc.createElement("td");
+	tr.appendChild(td);
+	td.style.fontWeight = "bold";
+	td.appendChild(doc.createTextNode(entry.category));
+	var td = doc.createElement("td");
+	tr.appendChild(td);
+	var span = doc.createElement("span");
+	if (entry.level == "error") {
+		span.style.color = "red";
+	}
+	span.style.marginLeft = "10px;"
+	span.appendChild(doc.createTextNode(entry.text));
+	td.appendChild(span);
+}
+
+dh.logger.log = function(category, text, level) {
+	if (!text) {
+		text = category;
+		category = "unknown";
+	}
+	var entry = new dh.logger.LogEntry(category, text, level);
+	if (dh.logger.isActive()) {
+		dh.logger.append(entry);
+	} else {
+		dh.logger.logEntries.push(entry);
+		if (dh.logger.logEntries.length >= dh.logger.maxLogEntries) {
+			dh.logger.logEntries.shift();
+		}
+	}
+}
+
+dh.logger.logError = function(category, text) {
+	dh.logger.log(category, text, "error");
+}
+
+// Convenience aliases
+dh.log = dh.logger.log;
+dh.logError = dh.logger.logError;
 
 dh.util.getParamsFromLocation = function() {
 	var query = window.location.search.substring(1);
