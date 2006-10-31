@@ -326,6 +326,10 @@ div.dh-async-action-link-complete {
 	background-color:	#FFF0E7;
 }
 
+.dh-box-prelighted {
+	background-color:	#FFFFE3;
+}
+
 .dh-stacker-block-title {
 	font-weight:		bold;
 	font-size:			14px;

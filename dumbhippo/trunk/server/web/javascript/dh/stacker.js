@@ -1785,9 +1785,26 @@ dh.stacker.simulateNewStackTime = function(stacker) {
 	}
 }
 
+dh.stacker.onBlockMouseOver = function(id) {
+	var block = document.getElementById("dhStackerBlock-" + id)
+	if (!block.dhExpanded)
+		dh.util.prependClass(block, "dh-box-prelighted")
+}
+
+dh.stacker.removePrelight = function(node) {
+	dh.util.removeClass(node, "dh-box-prelighted")
+}
+
+dh.stacker.onBlockMouseOut = function(id) {
+	var block = document.getElementById("dhStackerBlock-" + id)
+	dh.stacker.removePrelight(block)
+}
+
 dh.stacker.onBlockClick = function(id) {
 	var block = document.getElementById("dhStackerBlock-" + id)
+	block.dhExpanded = true;
 	block.style.cursor = "default"
+	dh.stacker.removePrelight(block)
 	var content = document.getElementById("dhStackerBlockContent-" + id)
 	content.style.display = "block";
 	var controls = document.getElementById("dhStackerBlockControls-" + id)
@@ -1798,7 +1815,8 @@ dh.stacker.onBlockClick = function(id) {
 }
 
 dh.stacker.blockClose = function(id) {
-	var block = document.getElementById("dhStackerBlock-" + id)	
+	var block = document.getElementById("dhStackerBlock-" + id)
+	block.dhExpanded = false;
 	block.style.cursor = "pointer"	
 	var content = document.getElementById("dhStackerBlockContent-" + id)
 	content.style.display = "none";	

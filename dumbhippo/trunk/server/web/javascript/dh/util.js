@@ -400,6 +400,18 @@ dh.util.useFrameSet = function(window, event, obj, postID) {
 	obj.href="/visit?post=" + postID;
 }
 
+dh.util.hasClass = function(node, className) {
+	return dojo.html.hasClass(node, className)
+}
+
+dh.util.prependClass = function(node, className) {
+	dojo.html.prependClass(node, className)
+}
+
+dh.util.removeClass = function(node, className) {
+	dojo.html.removeClass(node, className)
+}
+
 dh.util.getTextWidth = function(text, fontFamily, fontSize, fontStyle, fontVariant, fontWeight) {
      // Only elements that are rendered have the offsetWidth property set. 
      // So we add the text to the page, measure it, and then remove it.
