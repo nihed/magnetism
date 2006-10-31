@@ -68,7 +68,10 @@ hippo_entity_real_update_from_xml(HippoEntity    *entity,
                                   HippoDataCache *cache,
                                   LmMessageNode  *node)
 {
-    const char *id, *name, *photoUrl, *homeUrl;
+    const char *id;
+    const char *name; 
+    const char *photoUrl = NULL;
+    const char *homeUrl = NULL;
 
     if (!hippo_xml_split(cache, node, NULL,
                          "id", HIPPO_SPLIT_GUID, &id,
