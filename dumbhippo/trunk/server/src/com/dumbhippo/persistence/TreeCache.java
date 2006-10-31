@@ -1,6 +1,8 @@
 /*
  * This is a cut-and-paste of the TreeCache glue object from Hibernate
- * with a workaround for the JBossCache bug JBCACHE-785.
+ * with a workaround for the JBossCache bug JBCACHE-785 and a change
+ * to use a more "bushy" structure for the cache
+ * (see /http://bugzilla.dumbhippo.com/show_bug.cgi?id=895)
  */
 
 //$Id: TreeCache.java 9965 2006-05-30 18:00:28Z steve.ebersole@jboss.com $
