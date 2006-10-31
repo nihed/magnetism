@@ -11,7 +11,7 @@
 	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/statistics.css">
 	<dht:faviconIncludes/>
 	<dht:scriptIncludes>
-		<dht:script src="dh/statistics.js"/>
+		<dh:script src="dh/statistics.js"/>
 	</dht:scriptIncludes>
 	<script type="text/javascript">
 		dojo.event.connect(dojo, "loaded", dj_global, "dhStatisticsInit");

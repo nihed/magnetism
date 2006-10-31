@@ -27,7 +27,7 @@
 	<dht3:stylesheet name="site" iefixes="true"/>	
 	<dht3:stylesheet name="download"/>
 	<dht:scriptIncludes>
-		<dht:script src="dh/download.js"/>
+		<dh:script src="dh/download.js"/>
 	</dht:scriptIncludes>
 	<dht:faviconIncludes/>
 	<script type="text/javascript">

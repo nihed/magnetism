@@ -296,6 +296,32 @@
            <required>false</required>
            <rtexprvalue>true</rtexprvalue>
         </attribute>
+    </tag>
+    <tag>
+        <name>script</name>
+        <tagclass>com.dumbhippo.web.tags.Script</tagclass>
+        <bodycontent>empty</bodycontent>
+        <info>Script files or modules to include, with their dependencies</info>
+	    <attribute>
+           <name>src</name>
+           <required>false</required>
+           <rtexprvalue>true</rtexprvalue>
+        </attribute>
+	    <attribute>
+           <name>srcs</name>
+           <required>false</required>
+           <rtexprvalue>true</rtexprvalue>
+        </attribute>
+	    <attribute>
+           <name>module</name>
+           <required>false</required>
+           <rtexprvalue>true</rtexprvalue>
+        </attribute>
+	    <attribute>
+           <name>modules</name>
+           <required>false</required>
+           <rtexprvalue>true</rtexprvalue>
+        </attribute>                        
     </tag>    
     <function>
     	<name>enumIs</name>

@@ -39,7 +39,7 @@
 	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/framer-iefixes.css">
 	<![endif]-->
 	<dht:scriptIncludes>
-		<dht:script src="dh/framer.js"/>
+		<dh:script src="dh/framer.js"/>
 	</dht:scriptIncludes>
     <script type="text/javascript">
     	dh.framer.setSelfId("${framer.signin.userId}")

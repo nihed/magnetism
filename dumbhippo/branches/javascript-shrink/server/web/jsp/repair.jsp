@@ -14,7 +14,7 @@
 	<title>Repair Mugshot</title>
 	<dht:stylesheets href="welcome.css" iehref="bubbles-iefixes.css"/>
 	<dht:scriptIncludes>
-		<dht:script src="dh/welcome.js"/>
+		<dh:script src="dh/welcome.js"/>
 	</dht:scriptIncludes>
 </head>
 <dht:body>

@@ -16,7 +16,7 @@
 	<dht:siteStyle/>	
     <dht:faviconIncludes/>
 	<dht:scriptIncludes>
-		<dht:script src="dh/invitationadmin.js"/>
+		<dh:script src="dh/invitationadmin.js"/>
 	</dht:scriptIncludes>
 </head>
 <dht:body>

@@ -12,7 +12,7 @@
 	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/who-are-you.css">
 	<dht:faviconIncludes/>
 	<dht:scriptIncludes>
-		<dht:script src="dh/login.js"/>
+		<dh:script src="dh/login.js"/>
 	</dht:scriptIncludes>
 </head>
 <dht:systemPage disableFooter="true" disableJumpTo="true" topImage="/images2/${buildStamp}/header_login310.gif" bottomImage="/images2/${buildStamp}/bottom_gray310.gif">

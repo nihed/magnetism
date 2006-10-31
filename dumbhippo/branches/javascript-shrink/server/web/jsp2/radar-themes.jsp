@@ -12,7 +12,7 @@
 		<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/radar.css"/>        
 		<dht:faviconIncludes/>
         <dht:scriptIncludes>
-        	<dht:script src="dh/nowplaying.js"/>
+        	<dh:script src="dh/nowplaying.js"/>
         </dht:scriptIncludes>
 </head>
 <dht:twoColumnPage neverShowSidebar="true">

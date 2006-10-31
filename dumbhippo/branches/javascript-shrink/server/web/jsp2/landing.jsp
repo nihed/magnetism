@@ -12,7 +12,7 @@
 	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/landing.css"/>	
 	<dht:faviconIncludes/>
 	<dht:scriptIncludes>
-		<dht:script src="dh/download.js">
+		<dh:script src="dh/download.js">
 	</dht:scriptIncludes>
 </head>
 <dht:body>

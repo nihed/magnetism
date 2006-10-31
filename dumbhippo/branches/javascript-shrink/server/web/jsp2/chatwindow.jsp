@@ -22,7 +22,7 @@
 	<title><c:out value="${chatwindow.title}"/></title>
     <link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/chatwindow.css"/>
 	<dht:scriptIncludes>
-		<dht:script src="dh/chatwindow.js"/>
+		<dh:script src="dh/chatwindow.js"/>
 	</dht:scriptIncludes>
     <script type="text/javascript">
    	    dh.chatwindow.setSelfId("${chatwindow.signin.userId}")

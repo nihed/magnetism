@@ -194,6 +194,8 @@
 			<!-- javascript files are built into target by the jscompress script -->
 			<fileset dir="${build.javascript}" includes="**/*.js, *.js"/>
 			<fileset dir="${build.javascript}" includes="*.js"/>
+			<!-- *.txt is the dependencies info outputted by jscompress -->
+			<fileset dir="${build.javascript}" includes="*.txt"/>
 			<fileset dir="${web}/javascript/dojo" includes="dojo.js"/>
 		</copy>
 		

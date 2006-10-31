@@ -8,7 +8,7 @@ import javax.servlet.jsp.JspWriter;
 import javax.servlet.jsp.tagext.SimpleTagSupport;
 
 public class FaviconTag extends SimpleTagSupport {
-	String link;
+	private String link;
 	
 	@Override
 	public void doTag() throws IOException {

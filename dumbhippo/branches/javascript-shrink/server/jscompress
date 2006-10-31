@@ -545,7 +545,7 @@ class DestFile:
                 self._depfiles[required_dest] = 1
 
         return self._depfiles.keys()
-
+        
     def _add_orig_to_provider_map(self, provider_map, orig, already):
         if already.has_key(orig):
             return
@@ -690,9 +690,24 @@ def main():
             
     print "%d files to be inlined" % bundled_count
 
+    deps_out = open(os.path.join(destdir, "file-dependencies.txt"), "w")
+    provides_out = open(os.path.join(destdir, "module-file-map.txt"), "w")
+
     ## And write them
     for dest in dest_files.values():
-        print "writing %s requiring %s" % (dest.get_path(), dest.get_required_files())
+        print "writing %s" % (dest.get_path())
         dest.write()
+        deps = dest.get_required_files()
+        deps_out.write("%s : " % dest.get_relative_path())
+        for dep in deps:
+            deps_out.write("%s " % dep.get_relative_path())
+        deps_out.write("\n")
+
+    deps_out.close()
+
+    for (module, dest) in dest_providers.items():
+        provides_out.write("%s : %s\n" % (module, dest.get_relative_path()))
+
+    provides_out.close()
 
 main()

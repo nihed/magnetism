@@ -15,7 +15,7 @@
 	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/invitation.css"/>
 	<dht:faviconIncludes/>
 	<dht:scriptIncludes>
-		<dht:script src="dh/invitation.js"/>
+		<dh:script src="dh/invitation.js"/>
 	</dht:scriptIncludes>
 	<script type="text/javascript">
 		dh.invitation.initialValues = {
