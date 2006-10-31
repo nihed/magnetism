@@ -309,6 +309,8 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 				old.setDeleted(false);
 				if (u.getGuid().equals(participantId))
 					old.setParticipatedTimestamp(block.getTimestamp());
+				if (!old.isIgnored())
+					old.setStackTimestamp(block.getTimestamp());
 			} else {
 				UserBlockData data = new UserBlockData(u, block, u.getGuid().equals(participantId));
 				em.persist(data);
@@ -685,7 +687,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		
 		// we automatically unignore anything you click on
 		if (ubd.isIgnored())
-			ubd.setIgnored(false);
+			setBlockHushed(ubd, false);
 		
 		logger.debug("due to click, restacking block {} with new time {}", ubd.getBlock(), clickTime);
 		// now update the timestamp in the block (if it's newer)
@@ -1307,7 +1309,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		// Then, require the client to sort it out. This may well be right anyway.
 		
 		String participatedClause = "";
-		String orderBy = "block.timestamp";
+		String orderBy = "ubd.stackTimestamp";
 		if (participantOnly) {
 			participatedClause = " AND ubd.participatedTimestamp != NULL ";
 			orderBy = "ubd.participatedTimestamp";
@@ -1520,6 +1522,8 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	 		userBlockData.setIgnored(hushed);
 	 		if (hushed)
 	 			userBlockData.setIgnoredTimestampAsLong(userBlockData.getBlock().getTimestampAsLong());
+	 		else
+	 			userBlockData.setStackTimestampAsLong(userBlockData.getBlock().getTimestampAsLong());
  		}
 	}
 

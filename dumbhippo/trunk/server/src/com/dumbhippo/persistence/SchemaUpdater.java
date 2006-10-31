@@ -168,7 +168,7 @@ public class SchemaUpdater {
 			// number of bytes indexed must be less than 1000 for MySQL, and
 			// with UTF-8 encoding, varchar(255) is treated as 763 bytes. Plus
 			// it's just silly to index that much in most cases.
-			if (columnMeta.getTypeCode() == Types.VARCHAR)
+			if (columnMeta.getTypeCode() == Types.VARCHAR && columnMeta.getColumnSize() > 20)
 				columnString.append("(20)");
 		}
 		

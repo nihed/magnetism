@@ -21,7 +21,9 @@ import org.hibernate.annotations.Index;
 			@UniqueConstraint(columnNames={"user_id", "block_id"})
 		})
 @org.hibernate.annotations.Table(appliesTo = "UserBlockData", indexes={ 
-		@Index(name="participatedTimestamp_index", columnNames = { "participatedTimestamp" } ) 
+		@Index(name="participatedTimestamp_index", columnNames = { "participatedTimestamp" } ),
+		@Index(name="userStack_index", columnNames = { "user_id", "stackTimestamp" } ), 
+		@Index(name="userParticipated_index", columnNames = { "user_id", "participatedTimestamp" } ) 
 })		
 public class UserBlockData extends DBUnique {
 	private static final long serialVersionUID = 1L;
@@ -33,6 +35,7 @@ public class UserBlockData extends DBUnique {
 	private long ignoredTimestamp;
 	private boolean deleted;
 	private long participatedTimestamp;
+	private long stackTimestamp;
 	
 	public UserBlockData() {
 		this.clickedTimestamp = -1;
@@ -50,6 +53,7 @@ public class UserBlockData extends DBUnique {
 		this();
 		this.block = block;
 		this.user = user; 
+		this.stackTimestamp = block.getTimestampAsLong();
 	    setParticipatedTimestampAsLong(participatedTimestamp);
 	}
 	
@@ -153,6 +157,24 @@ public class UserBlockData extends DBUnique {
 	@Transient
 	public boolean getParticipated() {
 		return this.participatedTimestamp >= 0;
+	}
+	
+	@Column(nullable=false)
+	public Date getStackTimestamp() {
+		return new Date(stackTimestamp);
+	}
+
+	@Transient
+	public long getStackTimestampAsLong() {
+		return stackTimestamp;
+	}
+	
+	public void setStackTimestamp(Date stackTimestamp) {
+		this.stackTimestamp = stackTimestamp.getTime();
+	}
+	
+	public void setStackTimestampAsLong(long stackTimestamp) {
+		this.stackTimestamp = stackTimestamp;
 	}
 	
 	@Override
