@@ -1,0 +1,76 @@
+@CHARSET "UTF-8";
+
+/* This file contains styles specific to the "sign in" page 
+ */
+
+@import "sitewide.css";
+
+#dhMain {
+	position:			relative;
+	background-color: 	#626262;
+	text-align:			center;
+}
+
+#dhCenteredRectangle {
+	position:			relative;
+	width:				442px;
+	/* this centers us in firefox, the text-align: center on 
+	   our parent centers us in IE */
+	margin-left:		auto;
+	margin-right:		auto;
+}
+
+#dhGrayBorder {
+	position:				relative;
+	border-style:			solid;
+	border-color:			#bababa;
+	border-top-width: 		10px;
+	border-bottom-width:	10px;
+	border-left-width: 		7px;
+	border-right-width: 	7px;
+}
+
+#dhWhiteBorder {
+	position:				relative;
+	border:					3px solid white;
+}
+
+#dhContentArea {
+	position:			relative;
+	text-align:			left;
+}
+
+#dhContentArea .dhText {
+	margin-left:		7px;
+	border:				1px solid #bababa;
+	width:				180px;
+}
+
+#dhGreenBackground table {
+	font-weight: 	bold;
+	color:			#00622a;
+	font-size:		smaller;
+}
+
+#dhGreenBackground {
+	position:			relative;
+	background-color:	#99cc00;
+	padding:			12px;
+}
+
+#dhLogoPicture {
+	position:			relative;
+	width:				422px;
+	height:				158px;
+	overflow:			hidden; /* gets rid of a weird gray border I don't understand in IE */
+}
+
+#dhMessageArea {
+	position:			relative;
+	background-color:	#50a100;
+	color:				black;
+	text-align:			left;
+	font-size:			smaller;
+	font-weight:		bold;
+	padding:			12px;
+}

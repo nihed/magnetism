@@ -1,0 +1,169 @@
+<?xml version="1.0"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2003/01/wi">
+    <!-- The granularity at which we break things into components doesn't really matter
+         too much since we have only one feature; for simplicity, we simply mirror
+         the division of the client source into projects -->
+    <Fragment Id="dhComponents">
+	<Directory Id="TARGETDIR" Name="SourceDir">
+	    <Directory Id="ProgramFilesFolder">
+		<Directory Id="INSTALLLOCATION" Name="Mugshot">
+		    <Component Id="dependencies" Guid="EA96152A-8812-4193-90D8-2F1B3F520E36">
+		        <File Id="copyingLibs" Name="LGPL.txt"     LongName="COPYING-LIBS.txt"     src="COPYING-LIBS.txt"      DiskId="1" Vital="yes"/>
+		        <File Id="charsetDll"  Name="charset.dll"                                  src="charset.dll"           DiskId="1" Vital="yes"/>
+		        <File Id="iconvDll"    Name="iconv.dll"                                    src="iconv.dll"             DiskId="1" Vital="yes"/>
+		        <File Id="intlDll"     Name="intl.dll"                                     src="intl.dll"              DiskId="1" Vital="yes"/>
+		        <File Id="glibDll"     Name="libglib-.dll" LongName="libglib-2.0-0.dll"    src="libglib-2.0-0.dll"     DiskId="1" Vital="yes"/>
+		        <File Id="gmoduleDll"  Name="libgmodu.dll" LongName="libgmodule-2.0-0.dll" src="libgmodule-2.0-0.dll"  DiskId="1" Vital="yes"/>
+		        <File Id="gobjectDll"  Name="libgobje.dll" LongName="libgobject-2.0-0.dll" src="libgobject-2.0-0.dll"  DiskId="1" Vital="yes"/>
+		        <File Id="gthreadDll"  Name="libgthre.dll" LongName="libgthread-2.0-0.dll" src="libgthread-2.0-0.dll"  DiskId="1" Vital="yes"/>
+		        <File Id="cairoDll"    Name="libcairo.dll" LongName="libcairo-2.dll"       src="libcairo-2.dll"        DiskId="1" Vital="yes"/>
+		        <File Id="pngDll"      Name="libpng13.dll"                                 src="libpng13.dll"          DiskId="1" Vital="yes"/>
+		        <File Id="zlibDll"     Name="zlib1.dll"                                    src="zlib1.dll"             DiskId="1" Vital="yes"/>
+		        <File Id="pangoDll"       Name="libpango.dll" LongName="libpango-1.0-0.dll"      src="libpango-1.0-0.dll"      DiskId="1" Vital="yes"/>
+		        <File Id="pangoCairoDll"  Name="libpango.dll" LongName="libpangocairo-1.0-0.dll" src="libpangocairo-1.0-0.dll" DiskId="1" Vital="yes"/>
+		        <File Id="pangoWin32Dll"  Name="libpango.dll" LongName="libpangowin32-1.0-0.dll" src="libpangowin32-1.0-0.dll" DiskId="1" Vital="yes"/>
+		    </Component>
+
+		    <Component Id="hippoUtil" Guid="F2112E27-3930-4398-9680-C40A63CF64FA">
+		        <File Id="hippoUtilDll" Name="HippoUti.dll" LongName="HippoUtil.dll" src="HippoUtil.dll"  DiskId="1" Vital="yes"/>
+		        <!-- It seems to work fine to omit the version here; it's probably only necessary if 
+		             you have multiple type libraries for the same CLSID in the same DLL -->
+		        <TypeLib Id="BC81C530-2099-4121-9B66-969D89B22E3C" Language="0"/>
+		    </Component>
+		    
+		    <Component Id="loudmouth" Guid="AEA836DA-D4AF-4396-9D93-2F54193F590C">
+		        <File Id="loudmouthDll" Name="loudmou.dll" LongName="loudmouth-1.dll" src="loudmouth-1.dll"  DiskId="1" Vital="yes"/>
+		    </Component>
+		    
+		    <Component Id="hippoExplorer" Guid="D933FFD1-6ACC-4CF9-87A4-5EAECF43CD01">
+		        <File Id="hippoExplorerDll" Name="HippoExp.dll" LongName="HippoExplorer.dll" src="HippoExplorer.dll"  DiskId="1" Vital="yes"/>
+		        <TypeLib Id="39794B35-15C8-43b8-A1D7-AEB345E8355C" Language="0"/>
+		        <Class Id="509D3C6C-7BD2-49F7-B0F9-6C32AC4A8836" Server="hippoExplorerDll" Description="Mugshot Tracker" Context="InprocServer32" ThreadingModel="apartment"/>
+		        <Class Id="5A96BF90-0D8A-4200-A23B-1C8DABC0CC04" Server="hippoExplorerDll" Description="Mugshot Embeddable Control" Context="InprocServer32" ThreadingModel="apartment"/>
+		        <Class Id="1C3A1AED-4166-4A4C-96CE-5C3D47D20CCA" Server="hippoExplorerDll" Description="Mugshot Web Page Control" Context="InprocServer32" ThreadingModel="apartment" Version="0.1">
+		            <ProgId Id="Hippo.Control"/>
+		        </Class>
+		        <Class Id="8DCDF228-AFDD-41F4-A6FB-D4B1B63CC91F" Server="hippoExplorerDll" Description="Mugshot Toolbar Action" Context="InprocServer32" ThreadingModel="apartment"/>
+		        <Class Id="2D40665F-8139-4CB5-BA39-A6E25A147F5D" Server="hippoExplorerDll" Description="Mugshot Chat Control" Context="InprocServer32" ThreadingModel="apartment"/>
+		        <Class Id="174D2323-9AF2-4257-B8BD-849865E4F1AE" Server="hippoExplorerDll" Description="&amp;Mugshot Bar" Context="InprocServer32" ThreadingModel="apartment"/>
+                        <Registry Root="HKCR" Key="CLSID\{174D2323-9AF2-4257-B8BD-849865E4F1AE}\Implemented Categories\{00021494-0000-0000-C000-000000000046}"/>
+                        <!-- Remove registry entries to force rescan of explorer bars; the first of these is documented in 
+                             explorer bar creation docs, but I think it is obsolete. The second is found in KB q247705 and
+                             seems more relevant. We can only do it for the current users, but the rescan seems to happen
+                             eventually anyways, so hopefully if multiple users are using DumbHippo on a system things
+                             won't go too wrong. -->              
+                        <Registry Action="removeKeyOnInstall" Root="HKCR" Key="Component Categories\{00021494-0000-0000-C000-000000000046}\Enum"/>
+                        <Registry Action="removeKeyOnInstall" Root="HKCU" Key="Software\Microsoft\Windows\CurrentVersion\Explorer\Discardable\PostSetup\Component Categories\{00021494-0000-0000-C000-000000000046}\Enum"/>
+                        <Registry Root="HKMU" Key="SOFTWARE\Microsoft\Internet Explorer\Extensions\{7197AC86-5F8A-43BE-806C-C03BB363C85E}">
+                            <Registry Name="Default Visible" Value="Yes" Type="string" />
+                            <Registry Name="ButtonText" Value="Share Link" Type="string" />
+                            <Registry Name="MenuText" Value="Share Link..." Type="string" />
+                            <Registry Name="MenuStatusBar" Value="Share the current web page via Mugshot" Type="string" />
+                            <Registry Name="Icon" Value="[!hippoExplorerDll],132" Type="string" /> <!-- 132 == IDI_LINKSWARM -->
+                            <Registry Name="HotIcon" Value="[!hippoExplorerDll],132" Type="string" />
+                            <Registry Name="CLSID" Value="{1FBA04EE-3024-11d2-8F1F-0000F87ABD16}" Type="string" />
+                            <Registry Name="ClsidExtension" Value="{8DCDF228-AFDD-41F4-A6FB-D4B1B63CC91F}" Type="string" />
+                        </Registry>
+                        <Registry Root="HKMU" Key="SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Browser Helper Objects\{509D3C6C-7BD2-49F7-B0F9-6C32AC4A8836}" Value="Mugshot Tracker" Type="string" />
+		    </Component>
+		    
+		    <Component Id="hippoShellExt" Guid="4A7068C1-20B6-423A-B51A-5195E69FEED2">
+		        <File Id="hippoShellExtDll" Name="HippoShe.dll" LongName="HippoShellExt.dll" src="HippoShellExt.dll"  DiskId="1" Vital="yes"/>
+		        <Class Id="BD176713-C30F-4C24-97D8-134DEADC97E8" Server="hippoShellExtDll" Description="Mugshot Shell Extension" Context="InprocServer32" ThreadingModel="apartment"/>
+		        <!-- when we want to use HippoShellExt again, delete this line and uncomment the one below -->
+                <Registry Action="remove" Root="HKCR" Key="*\shellex\ContextMenuHandlers\Mugshot Shell Extension"/>		        
+                <!--
+		        <Registry Root="HKCR" Key="*\shellex\ContextMenuHandlers\Mugshot Shell Extension" Value="{BD176713-C30F-4C24-97D8-134DEADC97E8}" Type="string" />
+		        -->
+		    </Component>
+		    
+		    <Component Id="hippoUI" Guid="10D21177-EC47-4FA7-BEE5-06F6DEBECFE5">
+		        <File Id="mugshotExe" Name="Mugshot.exe" src="Mugshot.exe" DiskId="1" Vital="yes">
+		            <Shortcut Id="mugshotShortcut" Directory="ProgramMenuFolder" Name="Mugshot"/>
+		        </File>
+		    </Component>
+		    
+		    <Directory Id="dhAppletsDir" Name="Applets">
+        		    <Component Id="applets" Guid="207BF071-197E-471E-8AAF-6DB6C03B78EC">
+						<File Id="addPng"            Name="add.png"      LongName="add.png"             src="applets\add.png"            DiskId="1" Vital="yes"/>
+	        	        <File Id="blueleftarrowGif"  Name="blueleft.gif" LongName="blueleftarrow.gif"   src="applets\blueleftarrow.gif"  DiskId="1" Vital="yes"/>
+	        	        <File Id="bluerightarrowGif" Name="bluerigh.gif" LongName="bluerightarrow.gif"  src="applets\bluerightarrow.gif" DiskId="1" Vital="yes"/>
+	        	        <File Id="bubbleCss"         Name="bubble.css"   LongName="bubble.css"          src="applets\bubble.css"         DiskId="1" Vital="yes"/>
+	        	        <File Id="bubbleJs"          Name="bubble.js"    LongName="bubble.js"           src="applets\bubble.js"          DiskId="1" Vital="yes"/>
+	        	        <File Id="bubbleListCss"     Name="bubbleLi.css" LongName="bubbleList.css"      src="applets\bubbleList.css"     DiskId="1" Vital="yes"/>
+	        	        <File Id="bubbleListJs"      Name="bubbleLi.js"  LongName="bubbleList.js"       src="applets\bubbleList.js"      DiskId="1" Vital="yes"/>
+	        	        <File Id="bubbleListXml"     Name="bubbleLi.xml" LongName="bubbleList.xml"      src="applets\bubbleList.xml"     DiskId="1" Vital="yes"/>
+	        	        <File Id="bubclosePng"       Name="bubclose.gif" LongName="bubclose.png"        src="applets\bubclose.png"       DiskId="1" Vital="yes"/>
+						<File Id="bubclosepPng"      Name="bubclp.gif"   LongName="bubclose_purple.png" src="applets\bubclose_purple.png" DiskId="1" Vital="yes"/>						
+	        	        <File Id="bubedgeBPng"       Name="bubedge_.png" LongName="bubedge_b.png"       src="applets\bubedge_b.png"      DiskId="1" Vital="yes"/>
+	        	        <File Id="bubedgeLPng"       Name="bubedge_.png" LongName="bubedge_l.png"       src="applets\bubedge_l.png"      DiskId="1" Vital="yes"/>
+	        	        <File Id="bubedgeRPng"       Name="bubedge_.png" LongName="bubedge_r.png"       src="applets\bubedge_r.png"      DiskId="1" Vital="yes"/>
+	        	        <File Id="bubedgeTPng"       Name="bubedge_.png" LongName="bubedge_t.png"       src="applets\bubedge_t.png"      DiskId="1" Vital="yes"/>
+						<File Id="bubgroupupdateGif" Name="bubgroup.gif" LongName="bubgroupupdate.gif"  src="applets\bubgroupupdate.gif" DiskId="1" Vital="yes"/>
+	        	        <File Id="bublinkswarmGif"   Name="bublinks.gif" LongName="bublinkswarm.gif"    src="applets\bublinkswarm.gif"   DiskId="1" Vital="yes"/>
+	        	        <File Id="chaticonGif"       Name="chaticon.gif" LongName="chaticon.gif"        src="applets\chaticon.gif"       DiskId="1" Vital="yes"/>
+	        	        <File Id="clientstyleXml"    Name="clientst.xml" LongName="clientstyle.xml"     src="applets\clientstyle.xml"    DiskId="1" Vital="yes"/>
+	        	        <File Id="dhCss"             Name="dh.css"                                      src="applets\dh.css"             DiskId="1" Vital="yes"/>
+	        	        <File Id="dhJs"              Name="dh.js"                                       src="applets\dh.js"              DiskId="1" Vital="yes"/>
+	        	        <File Id="flickrJs"          Name="flickr.js"                                   src="applets\flickr.js"          DiskId="1" Vital="yes"/>
+	        	        <File Id="grayleftarrowGif"  Name="grayleft.gif" LongName="grayleftarrow.gif"   src="applets\grayleftarrow.gif"  DiskId="1" Vital="yes"/>
+	        	        <File Id="grayrightarrowGif" Name="grayrigh.gif" LongName="grayrightarrow.gif"  src="applets\grayrightarrow.gif" DiskId="1" Vital="yes"/>
+	        	        <File Id="groupChatPng"      Name="groupCha.png" LongName="groupChat.png"       src="applets\groupChat.png"      DiskId="1" Vital="yes"/>
+	        	        <File Id="ignoreiconPng"     Name="ignoreic.png" LongName="ignoreicon.png"      src="applets\ignoreicon.png"     DiskId="1" Vital="yes"/>
+	        	        <File Id="linkswarm.gif"     Name="linkswar.gif" LongName="linkswarm.gif"       src="applets\linkswarm.gif"      DiskId="1" Vital="yes"/>
+	        	        <File Id="lsBubshadowPng"    Name="ls_bubsh.png" LongName="ls_bubshadow.png"    src="applets\ls_bubshadow.png"   DiskId="1" Vital="yes"/>
+	        	        <File Id="lsorangeBlPng"     Name="lsorange.png" LongName="lsorange_bl.png"     src="applets\lsorange_bl.png"    DiskId="1" Vital="yes"/>
+	        	        <File Id="lsorangeBrPng"     Name="lsorange.png" LongName="lsorange_br.png"     src="applets\lsorange_br.png"    DiskId="1" Vital="yes"/>
+	        	        <File Id="lsorangeTlPng"     Name="lsorange.png" LongName="lsorange_tl.png"     src="applets\lsorange_tl.png"    DiskId="1" Vital="yes"/>
+	        	        <File Id="lsorangeTrPng"     Name="lsorange.png" LongName="lsorange_tr.png"     src="applets\lsorange_tr.png"    DiskId="1" Vital="yes"/>
+						<File Id="lspurpleBlPng"     Name="lspurple.png" LongName="lspurple_bl.png"     src="applets\lspurple_bl.png"    DiskId="1" Vital="yes"/>
+						<File Id="lspurpleBrPng"     Name="lspurple.png" LongName="lspurple_br.png"     src="applets\lspurple_br.png"    DiskId="1" Vital="yes"/>
+						<File Id="lspurpleTlPng"     Name="lspurple.png" LongName="lspurple_tl.png"     src="applets\lspurple_tl.png"    DiskId="1" Vital="yes"/>
+						<File Id="lspurpleTrPng"     Name="lspurple.png" LongName="lspurple_tr.png"     src="applets\lspurple_tr.png"    DiskId="1" Vital="yes"/>						
+	        	        <File Id="lswhiteBlPng"      Name="lswhite_.png" LongName="lswhite_bl.png"      src="applets\lswhite_bl.png"     DiskId="1" Vital="yes"/>
+	        	        <File Id="lswhiteBrPng"      Name="lswhite_.png" LongName="lswhite_br.png"      src="applets\lswhite_br.png"     DiskId="1" Vital="yes"/>
+	        	        <File Id="lswhiteTlPng"      Name="lswhite_.png" LongName="lswhite_tl.png"      src="applets\lswhite_tl.png"     DiskId="1" Vital="yes"/>
+	        	        <File Id="lswhiteTrPng"      Name="lswhite_.png" LongName="lswhite_tr.png"      src="applets\lswhite_tr.png"     DiskId="1" Vital="yes"/>
+	        	        <File Id="menuCss"           Name="menu.css"     LongName="menu.css"            src="applets\menu.css"           DiskId="1" Vital="yes"/>
+	        	        <File Id="menuJs"            Name="menu.js"      LongName="menu.js"             src="applets\menu.js"            DiskId="1" Vital="yes"/>
+	        	        <File Id="menuXml"           Name="menu.xml"     LongName="menu.xml"            src="applets\menu.xml"           DiskId="1" Vital="yes"/>
+	        	        <File Id="notificationCss"   Name="notifica.css" LongName="notification.css"    src="applets\notification.css"   DiskId="1" Vital="yes"/>
+	        	        <File Id="notificationJs"    Name="notifica.js"  LongName="notification.js"     src="applets\notification.js"    DiskId="1" Vital="yes"/>
+	        	        <File Id="notificationXml"   Name="notifica.xml" LongName="notification.xml"    src="applets\notification.xml"   DiskId="1" Vital="yes"/>
+	        	        <File Id="wbubcnrBlPng"      Name="wbubcnr_.png" LongName="wbubcnr_bl.png"      src="applets\wbubcnr_bl.png"     DiskId="1" Vital="yes"/>
+	        	        <File Id="wbubcnrBrPng"      Name="wbubcnr_.png" LongName="wbubcnr_br.png"      src="applets\wbubcnr_br.png"     DiskId="1" Vital="yes"/>
+	        	        <File Id="wbubcnrTlPng"      Name="wbubcnr_.png" LongName="wbubcnr_tl.png"      src="applets\wbubcnr_tl.png"     DiskId="1" Vital="yes"/>
+	        	        <File Id="wbubcnrTrPng"      Name="wbubcnr_.png" LongName="wbubcnr_tr.png"      src="applets\wbubcnr_tr.png"     DiskId="1" Vital="yes"/>
+		            </Component>
+		    </Directory>
+		    <Directory Id="dhImagesDir" Name="Images">
+        		<Component Id="images" Guid="681D6075-3B98-428C-8B73-68D9F15133AD">
+	        	    <File Id="arrowPng"          Name="arrow.png"    LongName="arrow.png"          src="images\arrow.png"          DiskId="1" Vital="yes"/>
+	        	    <File Id="arrow2Png"         Name="arrow2.png"   LongName="arrow2.png"         src="images\arrow2.png"         DiskId="1" Vital="yes"/>
+	        	    <File Id="barMiddlePng"      Name="bar_midd.png" LongName="bar_middle.png"     src="images\bar_middle.png"     DiskId="1" Vital="yes"/>
+	                    <File Id="barPipePng"        Name="bar_pipe.png" LongName="bar_pipe.png"       src="images\bar_pipe.png"       DiskId="1" Vital="yes"/>
+	                    <File Id="barXPng"           Name="bar_x.png"    LongName="bar_x.png"          src="images\bar_x.png"          DiskId="1" Vital="yes"/>
+	                    <File Id="barX2Png"          Name="bar_x2.png"   LongName="bar_x2.png"         src="images\bar_x2.png"         DiskId="1" Vital="yes"/>
+	                    <File Id="blueXPng"          Name="blue_x.png"   LongName="blue_x.png"         src="images\blue_x.png"         DiskId="1" Vital="yes"/>
+	                    <File Id="chatPng"           Name="chat.png"     LongName="chat.png"           src="images\chat.png"           DiskId="1" Vital="yes"/>
+	                    <File Id="findPng"           Name="find.png"     LongName="find.png"           src="images\find.png"           DiskId="1" Vital="yes"/>
+	                    <File Id="homePng"           Name="home.png"     LongName="home.png"           src="images\home.png"           DiskId="1" Vital="yes"/>
+	                    <File Id="home2Png"          Name="home2.png"    LongName="home2.png"          src="images\home2.png"          DiskId="1" Vital="yes"/>
+	                    <File Id="hushPng"           Name="hush.png"     LongName="hush.png"           src="images\hush.png"           DiskId="1" Vital="yes"/>
+	                    <File Id="hush2Png"          Name="hush2.png"    LongName="hush2.png"          src="images\hush2.png"          DiskId="1" Vital="yes"/>
+	                    <File Id="lidPng"            Name="lid.png"      LongName="lid.png"            src="images\lid.png"            DiskId="1" Vital="yes"/>
+	                    <File Id="mugshotstackerPng" Name="mugshots.png" LongName="mugshotstacker.png" src="images\mugshotstacker.png" DiskId="1" Vital="yes"/>
+	                    <File Id="nophotoPng"        Name="nophoto.png"  LongName="nophoto.png"        src="images\nophoto.png"        DiskId="1" Vital="yes"/>
+	                    <File Id="photoIconPng"      Name="photo_ic.png" LongName="photo_icon.png"     src="images\photo_icon.png"     DiskId="1" Vital="yes"/>
+	                    <File Id="searchXPng"        Name="search_x.png" LongName="search_x.png"       src="images\search_x.png"       DiskId="1" Vital="yes"/>
+	                    <File Id="unhushPng"         Name="unhush.png"   LongName="unhush.png"         src="images\unhush.png"         DiskId="1" Vital="yes"/>
+	                    <File Id="unhush2Png"        Name="unhush2.png"  LongName="unhush2.png"        src="images\unhush2.png"        DiskId="1" Vital="yes"/>
+                        </Component>
+                     </Directory>	                    
+	        </Directory>
+	    </Directory>
+	    
+	    <Directory Id="ProgramMenuFolder"/>
+	</Directory>
+    </Fragment>
+</Wix>

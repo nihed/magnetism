@@ -1,0 +1,464 @@
+@CHARSET "UTF-8";
+
+body {
+	margin-top:		0px;
+	margin-bottom:	0px;
+	margin-left:	10px;	
+	margin-right:	10px;
+	padding: 		0px;
+	/* this only works in firefox, but keeps things from looking
+	 * ugly if you size the browser too small (you get scrollbars 
+	 * instead of hosed layout). The exact value is just from 
+	 * experimentation with a particular font size, so isn't too
+	 * scientific.
+	 */
+	min-width:		630px;
+}
+
+/* browsers have default margins on forms it seems */
+form {
+	margin:			0px;	
+}
+
+/* post descriptions have <p> tags, avoid extra space from them */
+.dh-blurb p {
+	margin-top:		1px;
+	margin-bottom:	1px;
+}
+
+#dhPage {
+	position:		relative;
+	margin-top:		0px;
+	width:			100%;
+}
+
+/* specific only to input entries and not textarea's which have specified rows  */
+input.dh-text-input {
+	height:			23px;
+}
+
+.dh-page-title {
+}
+
+.dh-page-title-container {
+	width:			100%;
+	position:		relative;
+	margin-bottom:	8px;
+	margin-top:	    8px;
+}
+
+.dh-page-options {
+	position:		absolute;
+	right:			0;
+	top:			0;
+	text-align:		right;
+}
+
+.dh-page-options-tip-area {
+    position:      relative;
+    display:       block;
+    float:         right;
+    clear:         both;
+    top:           -13px;
+}
+
+.dh-page-options-options-area {
+    position:      relative;
+    display:       block;
+    float:         right;
+    clear:         right;
+    top:           -10px;
+	right:         0px; 
+}
+
+#dhPageFooter {
+	clear:			both;
+	margin-top:		10px;
+}
+
+#dhWebServices {
+	text-align:		center;
+}
+
+.dh-amazon-attribution, .dh-yahoo-attribution {
+    margin:         15px; /* Yahoo! request */
+}
+
+.dh-compact-item {
+	margin-top:			10px;	
+}
+
+.dh-compact-item .dh-image {
+	width:				60px;
+	height:				60px;
+	background-color:	white; /* debug */
+	
+	/* without this IE will grow the box a bit apparently */
+	overflow:			hidden;
+}
+
+.dh-compact-item .dh-next-to-image {
+	width:				110px;
+	margin-left:		10px;
+	overflow:			hidden;
+}
+
+.dh-compact-item .dh-next-to-image .dh-name {
+	/* on the page this is 10px, not sure where the extra px come from */
+	margin-bottom:		3px;
+}
+
+.dh-compact-item .dh-next-to-image .dh-action-link, .dh-compact-item .dh-next-to-image .dh-presence {
+	margin-top:			2px;
+}
+
+#dhPageFooter {
+	clear:			both;
+	margin-top:		10px;
+	text-align:		right;
+}
+
+.dh-nowplaying {
+	width:				440px;
+	height:				120px;
+}
+
+.dh-grow-div-around-floats {
+	clear:			both;
+}
+
+.dh-song-with-art {
+	position: 			relative;
+}
+
+.dh-song-image {
+	float:				left;
+	width:				75px;
+	text-align:			center;
+}
+
+.dh-song-with-art .dh-song-info {
+	float:				left;
+	margin-left:		8px;
+	width:				147px;
+}
+
+.dh-one-line-song div {
+	display:			inline;
+}
+
+.dh-one-line-song {
+	width:				100%;
+}
+
+.dh-invisible {
+    display:    none;
+}
+
+.dh-option-list-option {
+	margin-left: 5px;
+	margin-right: 5px;
+}
+
+/* Position this so the stock photo popup is relative to it */
+#dhChooseStockLinkContainer {
+	position:		relative;
+}
+
+div.dh-notification {
+	padding:		4px;
+	width:			468px;
+}
+
+.dh-popup {
+	position:		absolute;
+}
+
+/* For the nested div onion creating the borders of the popup,
+ * position: relative would make more sense but seems to 
+ * confuse firefox into drawing the background color of the outermost
+ * div over the top and bottom of the chooser.
+ * Using float: left fixes firefox, but creates the "double margin" 
+ * bug in IE, which is fixed with display:inline
+ * (inline is invalid on floats, but gets ignored except
+ * to mysteriously fix the IE double margin bug)
+ */
+
+.dh-popup .dh-border {
+	/* hacks! see comment above */
+	float:				left;
+	display:			inline;
+	/* end hacks */
+	margin-left:		0px;
+	margin-top:			0px;
+	/* background of parent is drop shadow */
+	margin-bottom:		1px;
+}
+
+.dh-popup .dh-content-padding {
+	/* hacks! see comment above */
+	float:				left;
+	display:			inline;
+	/* end hacks */
+	/* background of parent is the black border */
+	margin-top:			1px;
+	margin-bottom:		1px;
+	margin-left:		1px;
+}
+
+.dh-popup .dh-content {
+	/* hacks! see comment above */
+	float:				left;
+	display:			inline;
+	/* end hacks */	
+	margin-top:			10px;
+	margin-left:		10px;
+	/* IE seems to ignore margin-bottom, I don't know why,
+	 * since we don't set any heights padding works too
+	 */
+	padding-bottom:		10px;
+	/* if we have a fixed width, don't exceed it */
+	overflow:			hidden;
+}
+
+.dh-popup .dh-content .dh-title {
+	position:			relative;
+}
+
+.dh-page-shinybox-title-large, .dh-page-shinybox-subtitle-bold  {
+	margin-bottom:		5px;
+}
+
+.dh-shiny-box {
+	margin-bottom:		10px;
+	display:            block;
+}
+
+.dh-shiny-box .dh-shiny-box-box {
+    width:              100%;
+}
+
+.dh-shiny-box-left {
+    float:              left;
+    clear:              left;
+}
+
+.dh-shiny-box-right {
+    float:              right;
+    clear:              right;    
+}
+
+.dh-shiny-box-bottom {
+	width:				100%;
+}
+
+.dh-shiny-box-content-side-spacer {
+	width:				10px;
+}
+
+.dh-shiny-box-content-border {
+	margin:				0px 0px;
+}
+
+.dh-stacker-container {
+	width:				100%;
+	display:            block;
+}
+
+.dh-stacker-block {
+}
+
+.dh-stacker-block-title {
+}
+
+.dh-stacker-block-bottom-padding {
+	font-size:			4px;
+	height:				4px;
+}
+
+.dh-stacker-block-icon {
+	margin:				5px;
+}
+
+.dh-stacker-block p	{
+	margin:				0px;
+	padding:			0px;
+}
+
+.dh-stacker-block-header {
+	height:				40px;
+	width:				100%;
+}
+
+.dh-stacker-block-header-description {
+	overflow:			hidden;
+}
+
+.dh-stacker-block-description {
+	margin-left:		20px;
+}
+
+.dh-stacker-block-right {
+	text-align:			right;
+	margin-right:		5px;
+}
+
+.dh-stacker-block-right-from-image {
+	margin-right:		5px;
+}
+
+.dh-stacker-block-hr {
+	border:				none;
+	height:				1px;
+	color:				#666666;
+	margin-left:		5px;
+	margin-right:		5px;
+}
+
+.dh-stacker-block-content-left {
+	width:				20px;
+}
+
+.dh-stacker-block-content {
+	width:				100%;
+}
+
+.dh-stacker-block-content-container {
+	width:				100%;
+}
+
+.dh-stacker-block-content-padding {
+	height:				8px;
+}
+
+.dh-stacker-block-controls {
+	display:			none;
+	padding-right:		5px;
+}
+
+.dh-stacker-block-content-main {
+	width:				100%;
+}
+
+.dh-stacker-block-sent-to {
+	text-align:			right;
+	margin-right:		40px;
+}
+
+.dh-stacker-block-title-facebook-events {
+	margin-left:		5px;
+}
+
+.dh-thumbnail-box-border, .dh-rss-box-border {
+	position:			relative;
+	width:				478px;
+	margin-top:			10px;
+	margin-bottom:		10px;
+	/* FIXME this should be margin on the inner box, not padding here, or the width will be broken */
+	padding:			1px;
+}
+
+.dh-thumbnail-box, .dh-rss-box {
+	position:				relative;
+	padding:				0px;
+	margin:					0px;
+}
+
+.dh-thumbnail-meta, .dh-rss-meta {
+	position:				relative;
+	height:					26px;
+	/* FIXME this should be margin on an inner box, not padding here, or the width will be broken */
+	padding-top:				6px;
+}
+
+.dh-thumbnail-service, .dh-rss-service {
+	position:				absolute;
+	left:                   10px;
+}
+
+.dh-thumbnail-status, .dh-rss-status {
+	position:			absolute;
+	right:				10px;
+}
+
+.dh-thumbnail-photos-border {
+	position:				relative;
+	/* 478px is the whole photos box width, minus 2px more for the border */
+	width:					476px;
+	overflow:				hidden;
+}
+
+.dh-thumbnail-photos {
+	margin:					10px;
+	margin-top:				0px;
+	/* 
+	 * The thumbs are each 75px + 20px right margin = 95px * 5 = 475px
+	 * So we need to be at least that wide. It's OK to be larger than the
+	 * page width by up to the size of the right margin, since it will just
+	 * get chopped.
+	 */
+	width:					496px;
+}
+
+.dh-thumbnail-photo {
+	float:				left;
+	margin-right:		20px;
+	width:				75px;
+	padding:			0px;
+}
+
+.dh-thumbnail-photo img {
+	border:				none;
+	margin:				0px;
+}
+
+.dh-thumbnail-title {
+	width:				75px;
+	overflow:			hidden;
+	text-align:			center;
+}
+
+.dh-more, .dh-back {
+    margin-top:         5px;
+    margin-bottom:      5px;
+}
+
+.dh-person-info .dh-back {
+    margin-top:         30px;
+}
+
+.dh-person-header-next-to-image {
+	margin-left:	10px;
+}
+
+div.dh-person-header {
+    padding-top:	8px;
+}
+
+.dh-person-header-description {
+	margin-left:	5px;
+}
+
+.dh-person-header .dh-person-info {
+    width:          100%;
+}
+
+.dh-person-header-next-to-image .dh-favicons {
+    padding-top:     5px;
+}
+
+.dh-person-header-stats {
+    padding-top:     1px;
+}
+
+.dh-download-header-area {
+    margin-top:     5px;
+}
+
+.dh-download-buttons {
+	margin-bottom:			10px;
+}
+
+.dh-download-buttons img, .dh-download-buttons-or {
+	margin-right:			10px;
+}

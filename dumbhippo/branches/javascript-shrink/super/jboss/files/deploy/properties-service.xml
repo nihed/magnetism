@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE server>
+<!-- $Id: properties-service.xml,v 1.5 2003/08/27 04:34:12 patriot1burke Exp $ -->
+<!-- Modified for use with dumbhippo, since I can't figure out a simpler way
+     to do external configuration -->
+
+<server>
+
+  <mbean code="org.jboss.varia.property.PropertyEditorManagerService"
+         name="jboss:type=Service,name=PropertyEditorManager">
+
+  </mbean>
+
+  <mbean code="org.jboss.varia.property.SystemPropertiesService"
+         name="jboss:type=Service,name=SystemProperties">
+
+    <!-- do not put trailing whitespace here, or we put you in the iron maiden -->
+    <attribute name="Properties">
+	    java.awt.headless=true
+            dumbhippo.server.hajndiPort=@@hajndiPort@@
+	    dumbhippo.server.disable.authentication=@@disableAuthentication@@
+	    dumbhippo.server.email.disable=@@disableEmail@@
+            dumbhippo.server.bind.host=@@bindHost@@
+		dumbhippo.server.xmpp.port=@@jivePlainPort@@
+		dumbhippo.server.xmpp.adminuser=admin
+		dumbhippo.server.xmpp.password=@@jivePassword@@
+                dumbhippo.server.http.port=@@tomcatHttpPort@@
+		dumbhippo.server.baseurl=@@baseurl@@
+		dumbhippo.server.web.version=@@webVersion@@
+		dumbhippo.server.files.saveurl=file://@@filesavedir@@
+		dumbhippo.server.lucene.indexdir=@@luceneIndexDir@@
+		dumbhippo.server.aimbot.name=@@imbotScreenName@@
+		dumbhippo.server.aim.presence.key=@@aimPresenceKey@@
+		dumbhippo.server.downloadurl.windows=@@clientWindowsDownload@@
+		dumbhippo.server.downloadurl.windows.source=@@clientWindowsDownloadSource@@
+		dumbhippo.server.downloadurl.fedora5=@@clientFedora5Download@@
+		dumbhippo.server.downloadurl.fedora5.srpm=@@clientFedora5DownloadSRPM@@
+		dumbhippo.server.downloadurl.fedora6=@@clientFedora6Download@@
+		dumbhippo.server.downloadurl.fedora6.srpm=@@clientFedora6DownloadSRPM@@				
+		dumbhippo.server.downloadurl.linux.tar=@@clientLinuxDownloadTar@@
+		dumbhippo.server.amazon.accesskeyid=@@amazonAccessKeyId@@
+		dumbhippo.server.amazon.associatetag=@@amazonAssociateTag@@
+		dumbhippo.server.yahoo.appid=@@yahooAppId@@
+		dumbhippo.server.ebay.devid=@@ebayDevId@@
+		dumbhippo.server.ebay.appid=@@ebayAppId@@
+		dumbhippo.server.ebay.certid=@@ebayCertId@@
+		dumbhippo.server.flickr.apiid=@@flickrApiId@@
+		dumbhippo.server.facebook.apikey=@@facebookApiKey@@		
+		dumbhippo.server.facebook.secret=@@facebookSecret@@	
+		dumbhippo.server.adminconsole.enable=@@adminConsole@@
+		dumbhippo.server.newfeatures = @@newFeatures@@
+		dumbhippo.server.stealthmode=@@stealthMode@@
+		dumbhippo.server.slavemode=@@slaveMode@@
+		dumbhippo.server.userupdateinterval=@@userUpdateInterval@@
+		dumbhippo.server.summitgroupguid=@@summitGroupGuid@@
+		dumbhippo.server.newuserinvitationcount=@@newUserInvitationCount@@
+		dumbhippo.server.specialnewuserinvitationcount=@@specialNewUserInvitationCount@@		
+    </attribute>
+  </mbean>
+  
+</server>

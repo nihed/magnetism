@@ -1,0 +1,13 @@
+In order to create the Firefox component, we needed to use a small
+number of private Firefox interfaces (basically, 
+nsIScriptSecurityManager::CheckSameOrigin). 
+
+To enable people to build the Firefox component with the packaged 
+public SDK, instead of requiring them to build the Firefox sources
+from scratch, we've included a small number of header files here. 
+
+The headers here are extracted from a build of Firefox-1.5.0.4; the
+source IDL files are included for completeness, but aren't used.
+
+Owen Taylor <otaylor@redhat.com>
+18 July 2006

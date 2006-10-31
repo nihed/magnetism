@@ -1,0 +1,137 @@
+Component Object Model Requirements
+===================================
+
+:Author: Alex Russell
+:Version: 0.1
+:Copyright: Alex Russell, 2004
+:Date: 2004/11/12
+
+.. contents::
+
+Purpose
+-------
+
+This document outlines the rationale and usage scenarios for the Dojo component
+model and several of the sub elements of the system which are apropos for
+widget development.
+
+Requirements
+------------
+
+Markup
+******
+
+It is a requirement of Dojo that application authors SHOULD be able to declare
+the location and properties of a widget with XML (or XML-derived) markup. Many
+rendering contexts do not support true XML (with namespaces) and for these
+contexts, a transformation from an XML syntax should be available. Also, for
+those rendering contexts which already provide a markup language (particularly
+HTML), Dojo markup MAY be implemented as attribute extensions in order to
+facilitate accessability requirements and downward compatibility with less
+featureful or script-disabled user agents.
+
+Preliminary syntax for Dojo interface construction markup is defined in other
+documents.
+
+The Parser
+##########
+
+The client-side parser component of Dojo MUST:
+
+- provide a single, uniform data structure from all of the various supported
+  markup encodings
+- instantiate and provide properties (data and configuration directives) to
+  components and widgets
+- a second pass of the parser MUST provide deeper linking structures such as
+  property sets shared among items, and event handling linkage
+
+A separate requirements document MUST lay out in further detail all of the
+requirements of the Parser.
+
+Property Sets
+#############
+
+The parser will parse and emit several specialized sets of basic constructs
+which the second pass of the parser will take advantage of. One of the building
+blocks is the "property set". Property sets are collections of name/value pairs
+which can be "mixed in" to any object. Property sets SHOULD be named (via an
+attribute), potentially be given types, and stored as JavaScript objects in a
+particular name-indexed namespace.
+
+Property sets have particular relevance to the component model since there
+SHOULD be a mechanism for defining sets of default component sets to be applied
+across all components of a particular type. Particular components should,
+likewise, be able to be assigned property sets which are named for any
+particular instance. The values of property sets assigned directly to a
+component SHOULD over-ride those assigned to the class of components.
+
+Data and Event Binding
+######################
+
+FIXME: TODOC
+
+Programatic Construction
+************************
+
+XML or markup-based declaration MUST build upon a programmatic constructor
+syntax for widgets. Since it is expected that advanced usrers of widgets will
+use the programmatic interface when the greatest amount of control is required,
+the programmatic constructor interfaces SHOULD be uniform, simple to use, and
+well documented.
+
+Steps of Construction
+#####################
+
+The process that occurs when building a new widget programmaticaly is outlined
+here. It is this process that DojoML declarations of widgets "wrap".
+
+1.) constructor called. The constructor accepts a single configuration object
+    as its only paramater. The attributes and their values from this
+    configuration object are "mixed in" to the resulting widget, and form the
+    base configuration for the new widget object.
+2.) Once inside the constructor, the options set MUST be tested against any
+    referenced property sets which are named, provided for the object class, or 
+
+Configuration
+#############
+
+Initial widget configuration is specified via the single configuration object
+passed to widget constructor methods. This configuration object MUST be in the
+same object format outlined in the `parser requirements document`_. This means
+that all named attributes which have value for configuration of the widget MUST
+have values which are arrays, even if only a single value is supported for the
+property within the widget. Names of configuration properties MUST match the
+attribute names to which they will be assigned in the resulting widget
+(although the widget itself may implement a "mapping" logic in order to support
+backward or downward compatibilty for certain rendering contexts).
+
+Templates
+#########
+
+Rendering Contexts
+##################
+
+Widgets
+*******
+
+Widget Types
+############
+
+Specialization and Customization
+################################
+
+Registration
+############
+
+Lifecycle
+#########
+
+Widget Tree
+###########
+
+Collections and Lookup
+######################
+
+.. _`parser requirements document`: parser.rest
+
+.. vim:ts=4:et:tw=0:shiftwidth=4:

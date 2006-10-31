@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<application xmlns="http://java.sun.com/xml/ns/j2ee" version="1.4"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+    xsi:schemaLocation="http://java.sun.com /xml/ns/j2ee 
+                        http://java.sun.com/xml/ns/j2ee/application_1_4.xsd">
+    <display-name>DumbHippo</display-name>
+    <description>DumbHippo Server</description>
+    <module>
+    	<java>taste.jar</java>
+    </module>
+    <module>
+    	<java>smack-svn-local-build-2005-09-30.jar</java>
+    </module>
+    <module>
+    	<java>smackx-svn-local-build-2005-09-30.jar</java>
+    </module>
+    <module>
+    	<java>commons-io-1.2.jar</java>
+    </module>    
+    <module>
+    	<java>commons-fileupload-1.1.1.jar</java>
+    </module>    
+    <module>
+    	<java>slf4j-log4j12.jar</java>
+    </module>
+    <module>
+    	<java>jdom-1.0.jar</java>
+    </module>
+    <module>
+    	<java>rome-0.8.jar</java>
+    </module>
+    <module>
+    	<java>rome-fetcher-0.7.jar</java>
+    </module>
+    <module>
+    	<java>tagsoup-1.0.jar</java>
+    </module>
+    <module>
+        <java>dumbhippo-base.jar</java>
+    </module>
+    <module>
+        <ejb>dumbhippo.par</ejb>
+    </module>    
+    <module>
+        <ejb>dumbhippo.ejb3</ejb>
+    </module>
+    <!--  war can be separate, see jboss-web.xml, comment the below out if so -->
+    <!-- empty context-root means to deploy at / -->
+    <module>
+        <web>
+            <web-uri>dumbhippo.war</web-uri>
+			<context-root></context-root>
+        </web>
+    </module>
+</application>

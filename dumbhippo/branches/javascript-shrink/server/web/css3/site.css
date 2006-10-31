@@ -1,0 +1,446 @@
+@CHARSET "UTF-8";
+@IMPORT url("site-positions.css");
+@IMPORT url("header.css");
+
+body {
+	font-family: 		Arial, sans;
+}
+
+body.dh-gray-background-page {
+	background-color:	#efefef; /* this might kick in if a browser doesn't do background-image */
+	background-image: 	url("/images2/graybgpattern.gif");
+	background-repeat:  repeat;
+}
+
+a {
+	text-decoration: 	none;
+}
+
+img {
+	border-style:		none;	
+}
+
+/* This class violates the naming conventions for backward compatibility, since
+   it's referenced from javascript which may apply to old pages.
+ */
+.dhInvisible {
+	display:			none;
+}
+
+.dh-album-art {
+	width:				75px;
+	height:				75px;	
+	background-color:	#CCCCCC;
+}
+
+.dh-underlined-link {
+	text-decoration:	underline;
+}
+
+.dh-page-title-container {
+}
+
+.dh-page-title {
+	font-size:			18px;
+	font-weight:		bold;
+}
+
+.dh-page-options {
+	font-size:			12px;
+	font-weight:		bold;
+}
+
+.dh-page-option-disabled {
+    color:              #555555;
+}
+
+.dh-page-options-tip-area {
+	font-size:			12px;
+	font-weight:		normal;
+}
+
+.dh-page-options-tip-link {
+	text-decoration:	underline;
+}
+
+.dh-page-footer-text {
+	font-size:			12px;
+	color:				#666666;
+}
+
+#dhWebServices {
+    font-size:			12px;
+    font-weight:		500; /* 400 is same as normal, 700 is same as bold */
+    color:              black;
+}
+
+#dhWebServices a:link, #dhWebServices a:visited {
+    color:              black;  
+}
+
+#dhWebServices a:hover {
+    color:              blue; /* this looks better than text-decoration: underline; */
+}
+
+.dh-more, .dh-back {
+    font-size:       12px;
+    font-weight:     bold;  
+}
+
+.dh-more-count a:link, .dh-more-count a:visited {
+    color:              black;  
+}
+
+.dh-song-info {
+	font-size:			11px;
+	overflow:			hidden;
+	color:				#666666;
+}
+
+.dh-song-name {
+	font-size:			14px;
+	font-weight:		bold;
+}
+
+.dh-text-input {
+    font-family:		sans-serif;
+	font-size:		13px;
+	border:				1px solid #CCCCCC;
+	background-color:	#FFFFFF;
+	color:				#000000;
+	/* this would look much nicer with internal padding of a few px,
+	 * which works in firefox but is kind of f'd up in IE
+	 */
+}
+
+.dh-text-input-showing-default {
+	color:				#aaaaaa;
+}
+
+.dh-special-subtitle {
+	color: rgb(145,50,92);
+	font-size: 16px;
+	font-weight: bold;
+}
+
+.dh-disclaimer {
+	font-size: 10px;
+}
+
+.dh-disclaimer-own-section {
+	font-size:  16px;
+	text-align: left;
+}
+
+.dh-promo-description {
+	font-size:		14px;
+}
+
+#dhBeaconSample {
+	border: 1px solid black;	
+}
+
+.dh-option-list {
+	font-size: 12px;
+}
+
+div.dh-notification {
+	background-color:	#ffffcc;
+	font-weight:		bold;
+	-moz-border-radius:	5px;	
+}
+
+div.dh-save-status {
+	color:				#cc0033;
+}
+
+/* the Undo link in the save status thing */
+.dh-save-status a, .dh-save-status a:visited {
+	font-weight:		normal;
+	color:				#cc0033;
+	margin-left:		5px;
+	text-decoration:	underline;
+}
+
+div.dh-async-action-link-working {
+	font-weight:		bold;
+}
+
+div.dh-async-action-link-complete {
+	font-weight:		bold;
+}
+
+.dh-popup {
+	/* drop shadow color */
+	background-color:	#b3b3b3;
+}
+
+.dh-popup .dh-border {
+	background-color:	black;
+}
+
+.dh-popup .dh-content-padding {
+	background-color:	white;
+}
+
+.dh-popup .dh-title {
+	font-size:			16px;
+	font-weight:		bold;
+	text-align:			left;
+}
+
+.dh-popup .dh-controls {
+	font-size:			12px;
+}
+
+.dh-page-shinybox-title-large {
+	font-size:			18px;
+	font-weight:		bold;
+	color:				#9648BC;
+}
+
+.dh-page-shinybox-subtitle-bold {
+	font-size:			16px;
+	font-weight:		bold;
+}
+
+.dh-shiny-box {
+	background: #FFFFFF url("/images3/shinybox_left.png") top left repeat-y;
+}
+
+.dh-shiny-box-inner {
+	background: url("/images3/shinybox_right.png") top right repeat-y;
+}
+
+.dh-shiny-box-top-grey {
+	background: url("/images3/shinybox_grey_tmid.png") top left repeat-x;
+}
+
+.dh-shiny-box-upper-left-grey {
+	background: url("/images3/shinybox_grey_tl.png") top left no-repeat;
+}
+
+.dh-shiny-box-upper-right-grey {
+	background: url("/images3/shinybox_grey_tr.png") top right no-repeat;
+}
+
+.dh-shiny-box-top-purple {
+	background: url("/images3/shinybox_purple_tmid.png") top left repeat-x;
+}
+
+.dh-shiny-box-upper-left-purple {
+	background: url("/images3/shinybox_purple_tl.png") top left no-repeat;
+}
+
+.dh-shiny-box-upper-right-purple {
+	background: url("/images3/shinybox_purple_tr.png") top right no-repeat;
+}
+
+.dh-shiny-box-top-orange {
+	background: url("/images3/shinybox_orange_tmid.png") top left repeat-x;
+}
+
+.dh-shiny-box-upper-left-orange {
+	background: url("/images3/shinybox_orange_tl.png") top left no-repeat;
+}
+
+.dh-shiny-box-upper-right-orange {
+	background: url("/images3/shinybox_orange_tr.png") top right no-repeat;
+}
+
+.dh-shiny-box-bottom {
+	background: url("/images3/shinybox_bmid.png") bottom left repeat-x;
+}
+
+.dh-shiny-box-bottom-left {
+	background: url("/images3/shinybox_bl_2.png") bottom left no-repeat;
+}
+
+.dh-shiny-box-bottom-right {
+	background: url("/images3/shinybox_br_2.png") bottom right no-repeat;
+}
+
+.dh-shiny-box-row {
+	
+}
+
+.dh-shiny-box-row-grey {
+	background-color:		gray;
+}
+
+.dh-shiny-box-row-icon {
+}
+
+.dh-shiny-box-row-title {
+	font-size:				14px;
+	font-weight:			bold;
+}
+
+.dh-shiny-box-row-meta {
+	
+}
+
+.dh-shiny-box-row-description {
+
+}
+
+.dh-shiny-box-from {
+	font-size:				14px;
+	font-style:				italic;
+	color:					#666666;	
+}
+
+.dh-shiny-box-from-person {
+	color:					black;
+	font-weight:			normal;
+}
+
+.dh-stacker-container {
+	clear:              both;
+	background-color:	white;
+	overflow:			hidden;
+	margin:				0px;
+	padding:			0px;
+}
+
+.dh-stacker-block {
+}
+
+.dh-stacker-block-expandable {
+	cursor:				pointer;
+}
+
+.dh-box-grey1 {
+	background-color:	#EDEDED;
+}
+
+.dh-box-grey2 {
+	background-color:	#F3F3F3;
+}
+
+.dh-box-orange1 {
+	background-color:	#FFE9DB;
+}
+
+.dh-box-orange2 {
+	background-color:	#FFF0E7;
+}
+
+.dh-stacker-block-title {
+	font-weight:		bold;
+	font-size:			14px;
+}
+
+.dh-stacker-block-header-description {
+	font-weight:		normal;
+	font-size:			12px;
+}
+
+.dh-stacker-block-title .dh-action-link {
+	text-decoration:	underline;
+}
+
+.dh-stacker-block-title-title {
+}
+
+.dh-stacker-block-right, .dh-stacker-block-controls, .dh-stacker-block-sent-to {
+	font-size:			11px;
+	color:				#666666;
+}
+
+.dh-stacker-block-from {
+	font-size:			14px;
+	color:				black;
+}
+
+.dh-stacker-block-close {
+	display:			none;
+	font-size:			10px;
+	text-decoration:	underline;
+}
+
+.dh-stacker-block-right-from-name {
+	font-size:			14px;
+	font-style:			italic;
+}
+
+.dh-stacker-block-description {
+	font-size:			12px;
+}
+
+.dh-stacker-block-content {
+	font-size:			12px;
+	display:			none;
+}
+
+.dh-stacker-block-content-main-top {
+}
+
+.dh-stacker-block-chat {
+	font-size:			12px;
+}
+
+.dh-stacker-block-chat-message {
+}
+
+.dh-stacker-block-chat-sender {
+	font-style:			italic;
+}
+
+.dh-stacker-more {
+	font-size:			11px;
+	text-decoration:	underline;
+}
+
+.dh-stacker-block-title-group-member-name {
+}
+
+.dh-stacker-block-title-facebook-events {
+	font-size:			14px;
+	font-weight:		bold;
+}
+
+.dh-where-at-label {
+	font-weight: 		bold;
+	color:				black;
+	font-size:			12px;
+}
+
+.dh-where-at-link {
+	color:				blue;
+	font-size:			12px;
+}
+
+.dh-thumbnail-box-border, .dh-rss-box-border {
+	background-color:	#cccccc;
+	color:				inherit;
+}
+
+.dh-thumbnail-box, .dh-rss-box {
+	font-size:			12px;
+	color:				#000000;
+	background-color:	#f3f3f3;
+}
+
+.dh-thumbnail-status, .dh-rss-status {
+	color:				#666666;
+	background-color:	inherit;
+}
+
+.dh-thumbnail-title {
+	font-size:			10px;
+}
+
+.dh-thumbnail-title a {
+	text-decoration:    underline;
+}
+
+.dh-stacker-block-one-line .dh-stacker-block-title-type, .dh-stacker-block-one-line .dh-stacker-block-header-description {
+    display:            none;
+}
+
+.dh-download-buttons-or {
+	font-size:          14px;
+	font-weight:        bold;
+}
+

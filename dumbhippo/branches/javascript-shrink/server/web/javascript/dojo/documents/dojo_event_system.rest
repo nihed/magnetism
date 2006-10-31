@@ -1,0 +1,452 @@
+.. title:: The Dojo Event System
+
+.. raw:: html
+   :file: website/rest_template/header.html
+
+Intro
+-----
+
+Unlike the DOM events that web programmers normally associate with the word
+"event", Dojo takes a broad view of events. The tools in `dojo.event.*` allow
+developers to treat any function call (DOM event or otherwise) as an event that
+can be listened to. Using Dojo, code can register to "hear" about any action
+through a uniform API.
+
+In this article we'll show you:
+
+- how to use these tools
+- what makes them completely different from other JavaScript event systems you
+  may have used
+- why you'll never start writing JavaScript without `dojo.event.connect()`
+  again.
+
+Examples
+--------
+
+The current trend toward unobtrusive JavaScript requires that the setting of
+event handlers on DOM Nodes happen without explicit `on*` attributes in markup.
+`dojo.event.connect()` can help::
+
+    var handlerNode = document.getElementById("handler");
+
+    function handleOnClick(evt){
+        // ...
+    }
+
+    dojo.event.connect(handlerNode, "onclick", "handleOnClick");
+
+Normally IE fails to pass the DOM Event object as the first argument to our
+handler function. Instead, IE forces us to grab the event object from
+`window.event`. `connect()` transparently fixes this by ensuring that the event
+object is passed to our handler as an argument and that it has the standard
+methods for canceling event bubbling and default behavior. When you use
+`connect()`, you can stop writing branching statements in handler functions and
+focus on handling your event.
+
+But what if we don't want to set up a named function for the event handler? No
+problem::
+
+    var handlerNode = document.getElementById("handler");
+
+    dojo.event.connect(handlerNode, "onclick", function(evt){
+        // ...
+    });
+
+So far, though, we're  not doing anything that can't be done by setting the
+`onclick` property of the DOM Node. But what about attaching a method of an
+object to a DOM Node's event handler? Normally, you'd have to do something
+like::
+
+    var handlerNode = document.getElementById("handler");
+
+    handlerNode.onclick = function(evt){
+        object.handler(evt);
+    };
+
+Dojo simplifies it to::
+
+    var handlerNode = document.getElementById("handler");
+
+    dojo.event.connect(handlerNode, "onclick", object, "handler");
+
+This `connect()` call ensures that when `handlerNode.onclick()` is called,
+`object.handler()` will be called with the same arguments. Language limitations
+of JavaScript make it impossible to pass in the object and function name
+together, however separating them into an object reference and function name isn't
+difficult.
+
+Connect also transparently handles multiple listeners. They are called in the
+order they are registered. This would kick off two separate actions from a
+single onclick event::
+
+    var handlerNode = document.getElementById("handler");
+
+    dojo.event.connect(handlerNode, "onclick", object, "handler");
+    dojo.event.connect(handlerNode, "onclick", object, "handler2");
+
+We didn't have to change the API we were using, rewire anything for multiple
+events, etc. It all just works. Now every time you click the node, and
+`object.handler()` gets called and then `object.handler2()` gets called.
+
+We've also inadvertently demonstrated that `connect()` takes variable forms of
+arguments. So far, it's correctly handled:
+
+- object, name, name
+- object, name, function pointer
+- object, name, object, name
+
+This is par for the course when using `connect()`. Since it is used in so many
+places, for so many things, and in so many ways, `connect()` does a lot of
+checking and normalization of it's arguments.
+
+So we've seen that `connect()` can handle DOM events, but what about that more
+expansive view of events that was mentioned earlier? To demonstrate, lets
+define a simple object with a couple of methods::
+
+    var exampleObj = {
+        counter: 0,
+        foo: function(){ 
+            alert("foo");
+            counter++;
+        },
+        bar: function(){
+            alert("bar");
+            counter++;
+        }
+    };
+
+So lets say that I want `exampleObj.bar()` to get called whenever
+`exampleObj.foo()` is called. We can set this up the same way that we do with
+DOM events::
+
+    dojo.event.connect(exampleObj, "foo", exampleObj, "bar");
+
+Now calling `foo()` will also call `bar()`, thereby incrementing the counter
+twice and alerting "foo" and then "bar". Any caller that was counting on
+getting the return value from `foo()` won't be disappointed. The source method
+should behave just as it always has. On the other hand, since there's no
+explicit caller for `bar()`, it's return value will be lost since there's no
+obvious place to put it.
+
+Disconnection and Multi-Connection
+----------------------------------
+Connecting is one thing, but what about when you want to stop listening?
+`dojo.event.disconnect()` will stop the listening arrangement between
+functions, but must be pass *exactly the same* arguments as were passed to
+connect in order to ensure successful disconnection.
+
+If there's anything that can trip up new users of `dojo.event.connect()`, it's
+inadvertently connecting multiple times. Very often, a piece of code will get
+called multiple times, and it will contain a `dojo.event.connect()` call. The
+developer is then surprised when their listener function is called multiple
+times for every time the source function fires. What to do?
+
+Connecting Once and Using Keywords
+----------------------------------
+One option is to move your `connect()` call to a location that will get invoked
+only once, but sometimes that's just not feasible. An optional argument to
+`connect()` ensures that the same arguments to connect passed multiple times
+will result in only one connection between functions. Unfortunately, it's the
+8th parameter. Ugh. The last thing we want to do is remember 8 different
+parameters. The best answer in this scenario is to use the keyword-argument
+version of connect, aptly named `kwConnect()`. To use it, we have to give the
+parameters we've been using so far names. Here's our object connection example
+using `kwConnect()` and the `once` parameter::
+
+    dojo.event.kwConnect({
+        srcObj:     exampleObj, 
+        srcFunc:    "foo", 
+        targetObj:  exampleObj, 
+        targetFunc: "bar",
+        once:       true
+    });
+
+As I'm sure you've already guessed, there's an analogous `kwDisconnect` method.
+Just pass it what you pass `kwConnect`, naturally.
+
+Delaying Execution
+------------------
+There's one more modifier up the sleeve of `connect()`/`kwConnect()`; delayed
+calling. The `delay` property in `kwConnect` (the 9th positional parameter for
+`connect`) is a delay in milliseconds for those platforms that support it (all
+browsers do).
+
+The last problem worth mentioning is circular connections. Circular connections
+can occur when (perhaps even indirectly) a listener also calls the function
+it's listening to. The good news is that in a JavaScript interpreter, this
+will pretty quickly yield an exception of some sort. "Too much recursion" is a
+tip off that you've hit this problem. Debugging circular connections can be
+opaque, but tools like `Venkman`_ help.
+
+Advanced Usage: Seeking Advice
+------------------------------
+
+`connect()` is clearly powerful, but we've only scratched the surface.  In
+addition to being able to call any function or method after any other function
+or method call, `connect()` can be used to call listeners *before* the source
+function is called. In `Aspect Oriented Programming`_ terminology, this is called
+"before advice" while the previous examples have all be "after advice". The
+terminology is confusing, but for a lack of anything less mind-bending or
+better accepted, we adopt it for the advanced cases that `connect()` supports.
+
+Here's how we'd ensure that "bar" gets alerted *before* "foo" when
+`exampleObj.foo()` is called::
+
+    dojo.event.connect("before", exampleObj, "foo", exampleObj, "bar");
+
+As you can see, we just perpended our previous call to `connect()` with the word
+"before". In the other cases, the word "after" was the implied first argument,
+which we could have added if we wanted, but typing more isn't something any of
+us want, and most of the time "after" is what you want anyway.
+
+The same connection using `kwConnect()` looks like::
+
+    dojo.event.kwConnect({
+        type:       "before", 
+        srcObj:     exampleObj, 
+        srcFunc:    "foo", 
+        targetObj:  exampleObj,
+        targetFunc: "bar"
+    });
+
+Before and after advice give us tools to handle a huge range of problems, but
+what about when the listener and the source functions don't have the same call
+signatures? Or what about when you want to change the behavior of a function
+from someone else's code but don't want to change their code? If we take the
+view that any function call in our environment is an event, then shouldn't we
+also have an "event object" for each of them? When using
+`dojo.event.connect()`, this is exactly what happens under the covers, and we
+can get access to it via "around advice". Long story short, around advice
+allows you to wrap any function and manipulate both it's inputs and outputs.
+This'll let us change both the calling signatures of functions and change
+arguments for listeners (among other things).
+
+Unlike the other advice types, around advice requires a little bit more
+cooperation from the author of the around advice function, but since you'll
+probably only be using it in situations where you know that you want to
+explicitly change a behavior, this is isn't really a problem. This example take
+a function `foo()` which takes 2 arguments and provides a default value for the
+second argument if one isn't passed::
+
+    function foo(arg1, arg2){
+        // ...
+    }
+
+    function aroundFoo(invocation){
+        if(invocation.args.length < 2){
+            // note that it's a real array, not a pseudo-arr
+            invocation.args.push("default for arg2");
+        }
+
+        var result = invocation.proceed();
+        // we could change the result here
+        return result;
+    }
+
+    dojo.event.connect("around", "foo", "aroundFoo");
+
+The `aroundFoo()` function must take only a single argument. This argument is
+the method-invocation object. This object has some useful properties (like
+`args`) and one method, `proceed()`. `proceed()` calls the wrapped function
+with the arguments packed in the `args` array and returns the result. At this
+point, you can further manipulate the result before returning it. If you don't
+return the result of `proceed()`, it will appear to the caller as though the
+wrapped function didn't return a value. At any point you could call another
+function to do things like log timing information.
+
+Once this connection is made, every time `foo()` is called `aroundFoo()` will
+check it's argument and insert a default value for `arg2`. Around advice is
+kind of like goto in C and C++: if you don't know better you can make huge
+messes, but when you really need it, you *really* need it.
+
+Despite the power of around advice, it's not very often that globally changing
+a function signature or return value is the best plan. More often, you'll just
+want to smooth over the differences in calling signatures between two functions
+that are being connected. As you might have come to expect by now, Dojo
+provides a solution for this type of impedance matching problem too.
+
+The solution is *before-around* and *after-around* advice. These advice types
+apply a supplied around advice function to the listener in a connection. They
+only apply the around advice when the listener function is being called from
+the connected-to source. Put another way, it's connection-specific argument and
+return value manipulation.
+
+To access before-around and after-around advice, just pass in another
+object/name pair to a normal "before" or "after" connection, like this::
+
+    var obj1 = {
+        twoArgFunc: function(arg1, arg2){
+            // function expects two arguments
+        }
+    };
+
+    var obj2 = {
+        oneArgFunc: function(arg1){
+            // this function expects a two-element array 
+            // as its only parameter
+        }
+    };
+
+    // we'd probably connect the functions somewhere else. Perhaps in a
+    // different file entirely.
+
+    function aroundFunc(invocation){
+        var tmpArgs = [ 
+                        invocation.args[0], 
+                        invocation.args[1]
+                      ];
+        invocation.args = tmpArgs;
+        return invocation.proceed();
+    }
+    
+    // after-around advice
+    dojo.event.connect( obj1, "twoArgFunc", 
+                        obj2, "oneArgFunc",
+                        "aroundFunc");
+
+Each function now gets what it expects, and the code calling
+`obj1.twoArgFunc()` never need be the wiser that any of this is happening.
+
+Using Topics For Truly Anonymous Communication
+----------------------------------------------
+
+The `connect()` function does a *lot* of work for you, but there are still some
+cases where hacking together a solution for communicating between modules and
+object is difficult. These include cases where your code might not be able to
+"see" both objects or might need to to create components asynchronously and
+therefore might not know when it's "safe" to try to `connect()` methods
+together.
+
+Topics to the rescue!
+
+We can do truly anonymous communication between components if they agree ahead
+of time on a unique name for the event that they are going to send and/or
+listen for. The `dojo.event.topic` object builds on `dojo.event.connect()` to
+make this happen. Here's one of our early `connect()` examples modified to use
+topics::
+
+    var exampleObj = {
+        counter: 0,
+        foo: function(){ 
+            alert("foo");
+            counter++;
+        },
+        bar: function(){
+            alert("bar");
+            counter++;
+        }
+    };
+
+    // previously we used this connect syntax
+    //
+    //  dojo.event.connect(exampleObj, "foo", exampleObj, "bar");
+    //
+    // which we now replace with:
+    
+    // set up our publisher
+    dojo.event.topic.registerPublisher("/example", exampleObj, "foo");
+
+    // and at some point later, register our listener
+    dojo.event.topic.subscribe("/example", exampleObj, "bar");
+
+Note that our publisher and subscriber are now joined by the topic `/example`
+and not any code that can "see" both of them. Our example is obviously
+contrived, but it's possible to see how publish and subscribe over topics can
+make your code even less tightly tied, freeing you to structure it as you like,
+without having to build registry objects for callback functions when doing
+asynchronous programming.
+
+How It Works
+------------
+
+Fair warning: if you don't want to know how sausage is made, skip this section.
+
+JavaScript is a dynamic language. This means that many things that would
+normally be forbidden by a complier are fair game at runtime in JavaScript. In
+fact, nearly everything in JavaScript is mutable during script execution. This
+means that function objects (yes, functions are also objects in JS) can be
+moved from one name to another. Combined with the power of closures, JavaScript
+provides everything needed for transparent wrapping of functions, which is
+exactly what `dojo.event.connect()` does under the covers. This means that when
+you connect functions together both the listener and the source function are
+*moved to new names* on the provided namespace object and wrapper functions
+are added in their place to manage the connections that result.
+
+If we didn't have to deal with objects and were only dealing with global
+functions, didn't need multiple connection types, didn't support
+multiple-connections, didn't want around advice, had a fully-ECMA-compliant
+interpreter, and didn't support the "once" and "delay" modifiers, we could
+write a naive (but pretty useless) version of `connect()` like this::
+
+    var global = this;
+
+    function naiveConnect(funcName1, funcName2){
+        global["__prefix"+funcName1] = funcName1;
+        global[funcName1] = function(){
+            global["__prefix"+funcName1].apply(global, arguments);
+            global[funcName2].apply(global, arguments);
+        }
+    }
+
+Obviously this is amazingly brittle and we'd never consider using it, but as
+you can see, it's possible to move functions "out of the way" and still call
+them. Further, the values of `funcName1` and `funcName2` are still available to
+the function defined by `naiveConnect` long after `naiveConnect` has returned.
+This is an example of "closures", and the basis for many powerful techniques
+used in advanced JavaScript programming.
+
+A Note on Lineage
+-----------------
+
+Like much of the rest of Dojo, the event system is the work of many people over
+time. The contributions both in code and concept have been incredibly valuable.
+
+The event system was developed after an extensive review of the available
+code-bases and approaches. `f(m)`_'s system, while equally flexible, was more
+cumbersome to use in the common case. `netWindows`_ system, while directly
+analogous to after advice, wouldn't have been easy to retrofit for the other
+event types. However, we borrowed its easy-to-use API. `Burst`'s advice system
+eventually became the root of the Dojo event system after it became clear that
+initial work on a new system was turning into an almost-verbatim re-write of
+what was already available there. Subsequent modifications have been made for
+ease of use, `before-advice` and `after-advice` event types, and delayed
+events.
+
+Event normalization for browser was inspired from much good and similar work in
+`f(m)`_.
+
+Topic-based events build on the basic capabilities provided by `connect()`. It
+was was donated to Dojo by the WebWork team after discussions about how it
+might be accomplished and how a similar system based on `netWindows`_ sigslot
+systems was developed for the `repubsub` client.
+
+About The Author
+----------------
+
+Alex Russell is the project lead for Dojo and  can be reached at
+<alex@dojotoolkit.org>. His blog is at: http://alex.dojotoolkit.org
+
+.. _`Aspect Oriented Programming`: http://www-128.ibm.com/developerworks/rational/library/2782.html
+.. _`f(m)`: http://fm.dept-z.com/
+.. _`Burst`: http://burstproject.org/
+.. _`netWindows`: http://netWindows.org/
+.. _`The Dojo Wiki`: http://dojo.jot.com/
+.. _`Venkman`: http://www.hacksrus.com/~ginda/venkman/
+
+.. raw:: html
+   :file: website/rest_template/sidebar.html
+
+The Dojo Event System
+=====================
+
+:Author: Alex Russell
+:Version: 0.3
+:Copyright: Dojo Foundation, 2005
+:Date: 2005/08/18
+
+.. contents::
+	
+.. raw:: html
+   :file: website/rest_template/footer.html
+
+.. vim:ts=4:et:tw=0:shiftwidth=4:

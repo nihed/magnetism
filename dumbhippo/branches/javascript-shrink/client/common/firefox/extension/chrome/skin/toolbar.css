@@ -1,0 +1,7 @@
+#mugshot-button {
+  list-style-image: url("chrome://mugshot/skin/linkswarm24x24.png");
+}
+
+toolbar[iconsize="small"] #mugshot-button {
+  list-style-image: url("chrome://mugshot/skin/linkswarm16x16.png");
+}
