@@ -169,7 +169,7 @@ public class YahooArtistCacheBean extends AbstractCacheBean<String,YahooArtistDa
 		Query q;
 		
 		q = em.createQuery("FROM CachedYahooArtistIdByName byName WHERE byName.name = :name");
-		q.setParameter("name", artist);
+		q.setParameter("name", artist.substring(0, Math.min(CachedYahooArtistIdByName.DATA_COLUMN_LENGTH, artist.length())));
 		
 		return TypeUtils.castList(CachedYahooArtistIdByName.class, q.getResultList());
 	}
