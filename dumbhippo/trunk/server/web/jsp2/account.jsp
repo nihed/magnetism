@@ -98,7 +98,9 @@
 							</form>
 						</div>
 						<div id="dhChooseStockLinkContainer">
-							or <a href="javascript:dh.photochooser.show(document.getElementById('dhChooseStockLinkContainer'), dh.account.reloadPhoto);" title="Choose from a library of pictures">choose stock picture</a>
+						</div>
+						<div>
+						or <a href="javascript:dh.photochooser.show(document.getElementById('dhChooseStockLinkContainer'), dh.account.reloadPhoto);" title="Choose from a library of pictures">choose stock picture</a>						
 						</div>
 					</div>
 					<div class="dh-grow-div-around-floats"><div></div></div>
