@@ -22,8 +22,6 @@ dh.logger.show = function() {
 		dh.logger.logWindow = window.open();
 		
 		var doc = dh.logger.logWindow.document;
-		doc.write("<html><head><title>Debug Log</title</head><body>&nbsp;</body></html>");
-		doc.close();
 		
 		var log = doc.createElement("table");
 		var tbody = doc.createElement("tbody");

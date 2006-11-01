@@ -1791,7 +1791,6 @@ dh.stacker.removePrelight = function(node) {
 
 dh.stacker.blockOpen = function(block) {
 	block.dhExpanded = true;
-	dh.stacker.removePrelight(block);
 	var content = document.getElementById("dhStackerBlockContent-" + block.dhBlockId);
 	content.style.display = "block";
 	var controls = document.getElementById("dhStackerBlockControls-" + block.dhBlockId);
@@ -1812,7 +1811,7 @@ dh.stacker.onBlockMouseOver = function(e) {
 	if (!e) e = window.event;
 	var block = this;
 	dh.log("stacker-cursor", "block " + block.dhBlockId + " mouseover");
-	if (!block.dhExpanded)
+	if (!dh.util.hasClass(block, "dh-box-prelighted"))
 		dh.util.prependClass(block, "dh-box-prelighted");
 	var expandImg = document.getElementById("dhStackerBlockExpandTip");
 	expandImg.style.display = "block";		
