@@ -16,13 +16,13 @@
 	<tr>
 	<td><div class="dh-stacker-block-right">
 		<c:if test="${showFrom}">
-			<div class="dh-stacker-block-right-from-name"><dht3:entityLink who="${from}" onlineIcon="true" suppressClick="true"/></div>
+			<div class="dh-stacker-block-right-from-name"><dht3:entityLink who="${from}" onlineIcon="true"/></div>
 		</c:if>
 		<jsp:doBody/>
 	</div></td>
 	<td valign="top">
 		<c:if test="${showFrom}">
-			<span class="dh-stacker-block-right-from-image"><dht3:entityLink who="${from}" imageOnly="true" suppressClick="true"/></span>
+			<span class="dh-stacker-block-right-from-image"><dht3:entityLink who="${from}" imageOnly="true"/></span>
 		</c:if>
 	</td>
 	</tr>
