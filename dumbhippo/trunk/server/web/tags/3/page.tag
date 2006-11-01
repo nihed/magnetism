@@ -8,6 +8,7 @@
 <%@ attribute name="searchText" required="false" type="java.lang.String" %>
 
 <body class="dh-gray-background-page">
+	<dht3:blockGlobal/> <%-- Not needed on all pages, but harmless if it's not --%>
 	<div id="dhPage">
 		<dht3:header disableHomeLink="${disableHomeLink}" disableSignupLink="${disableSignupLink}" searchText="${searchText}"/>
 		<jsp:doBody/>

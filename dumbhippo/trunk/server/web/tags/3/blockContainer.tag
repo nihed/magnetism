@@ -10,10 +10,19 @@
 <jsp:element name="div">
 	<jsp:attribute name="class">dh-stacker-block <c:if test="${expandable}">dh-stacker-block-expandable </c:if>${cssClass}</jsp:attribute>
 	<jsp:attribute name="id">dhStackerBlock-${blockId}</jsp:attribute>
-	<jsp:attribute name="onclick"><c:if test="${expandable}">dh.stacker.onBlockClick('${blockId}');</c:if></jsp:attribute>	
-	<jsp:attribute name="onmouseover"><c:if test="${expandable}">dh.stacker.onBlockMouseOver('${blockId}');</c:if></jsp:attribute>		
-	<jsp:attribute name="onmouseout"><c:if test="${expandable}">dh.stacker.onBlockMouseOut('${blockId}');</c:if></jsp:attribute>		
 	<jsp:body>
 		<jsp:doBody/>
 	</jsp:body>
 </jsp:element>
+<c:if test="${expandable}">
+<script type="text/javascript">
+	var block = document.getElementById("dhStackerBlock-${blockId}");
+	block.dhBlockId = "${blockId}";
+	block.onclick = dh.stacker.onBlockClick;
+	block.onmousemove = dh.stacker.onBlockMouseMove;	
+	block.onmouseover = dh.stacker.onBlockMouseOver;
+	block.onmouseout = dh.stacker.onBlockMouseOut;	
+	dh.stacker.hookLinkChildren(block, block);
+</script>
+</c:if>
+

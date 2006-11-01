@@ -1785,44 +1785,132 @@ dh.stacker.simulateNewStackTime = function(stacker) {
 	}
 }
 
-dh.stacker.onBlockMouseOver = function(id) {
-	var block = document.getElementById("dhStackerBlock-" + id)
-	if (!block.dhExpanded)
-		dh.util.prependClass(block, "dh-box-prelighted")
-}
-
 dh.stacker.removePrelight = function(node) {
 	dh.util.removeClass(node, "dh-box-prelighted")
 }
 
-dh.stacker.onBlockMouseOut = function(id) {
-	var block = document.getElementById("dhStackerBlock-" + id)
-	dh.stacker.removePrelight(block)
-}
-
-dh.stacker.onBlockClick = function(id) {
-	var block = document.getElementById("dhStackerBlock-" + id)
+dh.stacker.blockOpen = function(block) {
 	block.dhExpanded = true;
-	block.style.cursor = "default"
-	dh.stacker.removePrelight(block)
-	var content = document.getElementById("dhStackerBlockContent-" + id)
+	dh.stacker.removePrelight(block);
+	var content = document.getElementById("dhStackerBlockContent-" + block.dhBlockId);
 	content.style.display = "block";
-	var controls = document.getElementById("dhStackerBlockControls-" + id)
+	var controls = document.getElementById("dhStackerBlockControls-" + block.dhBlockId);
 	if (controls)
 		controls.style.display = "block";		
-	var closeButton = document.getElementById("dhStackerBlockClose-" + id)
+	var closeButton = document.getElementById("dhStackerBlockClose-" + block.dhBlockId);
 	closeButton.style.display = "block";
 }
 
-dh.stacker.blockClose = function(id) {
-	var block = document.getElementById("dhStackerBlock-" + id)
-	block.dhExpanded = false;
-	block.style.cursor = "pointer"	
-	var content = document.getElementById("dhStackerBlockContent-" + id)
+dh.stacker.blockClose = function(block) {
+	block.dhExpanded = false;;
+	var content = document.getElementById("dhStackerBlockContent-" + block.dhBlockId)
 	content.style.display = "none";	
-	var controls = document.getElementById("dhStackerBlockControls-" + id)
+	var controls = document.getElementById("dhStackerBlockControls-" + block.dhBlockId)
 	if (controls)
 		controls.style.display = "none";		
-	var closeButton = document.getElementById("dhStackerBlockClose-" + id)
+	var closeButton = document.getElementById("dhStackerBlockClose-" + block.dhBlockId)
 	closeButton.style.display = "none";	
+}
+
+dh.stacker.onBlockMouseOver = function(e) {
+	if (!e) e = window.event;
+	var block = this;
+	dh.log("stacker-cursor", "block " + block.dhBlockId + " mouseover");
+	if (!block.dhExpanded)
+		dh.util.prependClass(block, "dh-box-prelighted");
+	var expandImg = document.getElementById("dhStackerBlockExpandTip");
+	expandImg.style.display = "block";		
+	dh.stacker.updatePointer(block);	
+}
+
+dh.stacker.hideBlockPointer = function(block) {
+	var expandImg = document.getElementById("dhStackerBlockExpandTip");
+	var closeImg = document.getElementById("dhStackerBlockCloseTip");	
+	expandImg.style.display = "none";
+	closeImg.style.display = "none";
+}
+
+dh.stacker.onBlockMouseOut = function(e) {
+	if (!e) e = window.event;
+	var block = this;
+	dh.log("stacker-cursor", "block " + block.dhBlockId + " mouseout");	
+	dh.stacker.removePrelight(block);
+	dh.stacker.updatePointer(block);	
+	dh.stacker.hideBlockPointer(block);
+}
+
+dh.stacker.repositionPointer = function (block, e) 
+{
+	var expandImg = document.getElementById("dhStackerBlockExpandTip");
+	var closeImg = document.getElementById("dhStackerBlockCloseTip");	
+	var img = block.dhExpanded ? closeImg : expandImg;
+	var xOffset = window.pageXOffset ? window.pageXOffset : document.body.scrollLeft;
+	var yOffset = window.pageYOffset ? window.pageYOffset : document.body.scrollTop;
+	img.style.top = (yOffset + e.clientY - 9) + "px"
+	img.style.left = (xOffset + e.clientX - 9) + "px";
+	dh.log("stacker-cursor", "block: " + block.dhBlockId + " position: left: " + img.style.left + " top: " + img.style.top)
+}
+
+dh.stacker.onBlockMouseMove = function(e) {
+	if (!e) e = window.event;
+	var block = this;
+	dh.stacker.repositionPointer(block, e);
+}
+
+dh.stacker.updatePointer = function(block) {
+	var expandImg = document.getElementById("dhStackerBlockExpandTip");
+	var closeImg = document.getElementById("dhStackerBlockCloseTip");	
+	var img;
+	var prevImg;
+	if (block.dhExpanded) {
+		img = closeImg;
+		prevImg = expandImg;
+	} else {
+		img = expandImg;
+		prevImg = closeImg;
+	}		
+	img.style.display = "block";
+	prevImg.style.display = "none";		
+}
+
+dh.stacker.onBlockClick = function(e) {
+	if (!e) e = window.event;
+	var block = this;
+	dh.log("stacker", "block " + block.dhBlockId + " click")	
+	if (block.dhExpanded) {
+		dh.stacker.blockClose(block)
+	} else {
+		dh.stacker.blockOpen(block)
+	}
+	dh.stacker.updatePointer(block);
+	dh.stacker.repositionPointer(block, e);
+}
+
+dh.stacker.hookLinkChildren = function(block, startNode) {
+	var i;
+	if (startNode.nodeType != 1)
+		return;
+	for (i = 0; i < startNode.childNodes.length; i++) {
+		var node = startNode.childNodes[i];
+		if (node.nodeType != 1)
+			continue;		
+		if (node.nodeName.toLowerCase() == "a") {
+			node.onmouseover = function (e) {
+				if (!e) e = window.event;
+				dh.log("stacker-cursor", "block: " + block.dhBlockId + " link mouseover")				
+				dh.stacker.hideBlockPointer(block);
+				dh.util.cancelEvent(e);
+			};
+			node.onmouseout = function (e) {
+				if (!e) e = window.event;
+				var relTarget = e.relatedTarget || e.fromElement;
+				dh.log("stacker-cursor", "block: " + block.dhBlockId + " link mouseout")					
+				if (!dh.util.isDescendant(block, relTarget))
+					dh.stacker.hideBlockPointer(block);				
+				dh.util.cancelEvent(e);			
+			};			
+		} else {
+			dh.stacker.hookLinkChildren(block, node);
+		}
+	}
 }
