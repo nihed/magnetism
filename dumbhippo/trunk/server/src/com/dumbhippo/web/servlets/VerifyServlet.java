@@ -19,6 +19,7 @@ import com.dumbhippo.persistence.ResourceClaimToken;
 import com.dumbhippo.persistence.ToggleNoMailToken;
 import com.dumbhippo.persistence.Token;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.server.Character;
 import com.dumbhippo.server.ClaimVerifier;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HippoProperty;
@@ -193,9 +194,17 @@ public class VerifyServlet extends AbstractServlet {
 		} catch (TokenExpiredException e) {
 			logger.debug("token expired: {}", e.getMessage());
 			if (e.getTokenClass() == InvitationToken.class)
-				throw new HumanVisibleException("Your invitation has expired! Ask the person who sent you this to invite you again.");
+				if (!e.isViewed()) {
+					InvitationSystem invitationSystem = WebEJBUtil.defaultLookup(InvitationSystem.class);
+					if (invitationSystem.getSelfInvitationCount() > 0)
+				        throw new HumanVisibleException("Your invitation has expired.").setHtmlSuggestion("<a href=\"/signup\">Get a new invitation here!</a>");
+					else 
+						throw new HumanVisibleException("Your invitation has expired.").setHtmlSuggestion("<a href=\"/signup\">Request a new invitation here</a> or ask the person who sent you this to invite you again.");
+				} else {
+					throw new HumanVisibleException("The invitation link you followed to log in has expired.").setHtmlSuggestion("<a href=\"/who-are-you\">Use the same e-mail address here to get a new login link.</a>");
+				}
 			else if (e.getTokenClass() == LoginToken.class)
-				throw new HumanVisibleException("The login link you followed has expired. You'll need to send a new one.").setHtmlSuggestion("<a href=\"/who-are-you\">Go here to get a new login link.</a>");
+				throw new HumanVisibleException("The login link you followed has expired. You'll need to send yourself a new one.").setHtmlSuggestion("<a href=\"/who-are-you\">Go here to get a new login link.</a>");
 			else if (e.getTokenClass() == ResourceClaimToken.class)
 				throw new HumanVisibleException("This verification link has expired. You'll need to add this address again.").setHtmlSuggestion("<a href=\"/account\">Go here to add an address.</a>");
 			else if (e.getTokenClass() == ToggleNoMailToken.class)

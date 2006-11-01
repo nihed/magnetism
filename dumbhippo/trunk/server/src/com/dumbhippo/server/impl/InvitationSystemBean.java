@@ -727,6 +727,10 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		return ((Number) q.getSingleResult()).intValue();
 	}
 	
+	public int getSelfInvitationCount() {
+		return getInvitations(accounts.getCharacter(Character.MUGSHOT));
+	}
+	
 	private void sendEmailNotification(UserViewpoint viewpoint, InvitationToken invite, String subject, String message) {
 		User inviter = viewpoint.getViewer();
 		EmailResource invitee = (EmailResource) invite.getInvitee();
