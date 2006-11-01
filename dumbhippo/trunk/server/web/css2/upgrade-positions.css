@@ -3,3 +3,9 @@
 #dhUpgradeLogo {
 	margin: 10px;
 }
+
+.dh-upgrade-message {
+	width: 			310px;
+	padding:        5px;
+    margin-bottom:  5px;
+}

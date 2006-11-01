@@ -23,19 +23,28 @@
 	<c:choose>
 		<c:when test="${browser.linuxRequested}">
 			<%-- LINUX RELEASE NOTES GO HERE --%>
-			<p>Version 1.1.22</p>
+			<p>Version 1.1.23</p>
 			<ul>
-				<li>New "stacker" user interface.</li>			
-				<li>Improved "stacker" notifications.</li>
-				<li>Firefox browser integration for chat and presence.</li>			
+				<li>A better way to expand and collapse blocks.</li>			
+				<li>Bug fixes.</li>
 			</ul>
+			<div class="dh-upgrade-message">
+			    Note: the last version of Mugshot didn't shut down properly
+			    on some systems, so after upgrade, you may end up with two
+			    mugshot icons in your notification area. If you see this, 
+			    please open a terminal and  enter the following command:
+			    <div class="dh-command">
+				   killall mugshot ; sleep 1 ; mugshot &
+				</div>
+				Or, simply log out and log back in.
+			</div>
 		</c:when>
 		<c:otherwise>
 			<%-- WINDOWS RELEASE NOTES GO HERE --%>
-			<p>Version 1.1.73</p>
+			<p>Version 1.1.74</p>
 			<ul>
-				<li>New "stacker" user interface.</li>
-				<li>Improved "stacker" notifications.</li>
+				<li>A better way to expand and collapse blocks.</li>			
+				<li>Bug fixes.</li>
 			</ul>
 		</c:otherwise>
 	</c:choose>
