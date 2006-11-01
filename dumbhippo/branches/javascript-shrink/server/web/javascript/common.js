@@ -1,10 +1,18 @@
-// common.js - included after dojo bootstrap and before all our other javascript
+// common.js - adds requires on the dojo bootstrap files
+// our dh:script tag forces it to load on all pages that use any javascript
 dojo.provide('common');
 dojo.provide('dh'); // so the "dh" hash exists
 
+// these modules are invented in the jscompress script.
+// bootstrap1 has to be included already, making it work 
+// like a module was too annoying because it defines global
+// variables
+dojo.require('dojo.hostenv_browser');
+dojo.require('dojo.bootstrap2');
+
 // This is to catch bugs
-dojo.requires = function(module) {
-	throw new Error("dojo.requires should not still exist at runtime, jscompress should have replaced it");
+dojo.require = function(module) {
+	throw new Error("dojo.require should not still exist at runtime, jscompress should have replaced it");
 }
 dojo.provide = function(module) {
 	throw new Error("dojo.provide should not still exist at runtime, jscompress should have replaced it");

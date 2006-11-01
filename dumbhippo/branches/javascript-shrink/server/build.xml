@@ -196,7 +196,6 @@
 			<fileset dir="${build.javascript}" includes="*.js"/>
 			<!-- *.txt is the dependencies info outputted by jscompress -->
 			<fileset dir="${build.javascript}" includes="*.txt"/>
-			<fileset dir="${web}/javascript/dojo" includes="dojo.js"/>
 		</copy>
 		
 		<copy todir="${build.deploy.war}">	

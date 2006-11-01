@@ -21,7 +21,7 @@ original_files = {}
 ## list.
 ## Look at the generated target/javascript/file-dependencies.txt for modules
 ## that drag in a long list of separate files. That file reflects bundling.
-bundle_modules = [ 'dh.site', 'dh.model', 'dh.accountpage', 'dh.share', 'dh.sharelink', 'dh.statistics'  ]
+bundle_modules = [ 'common', 'dh.site', 'dh.model', 'dh.accountpage', 'dh.share', 'dh.sharelink', 'dh.statistics'  ]
 
 ## Map from module names to OriginalFile objects
 providers = {}
@@ -49,10 +49,14 @@ allowed_missing_modules = [ "dojo.widget.HtmlButton",
                             "dojo.webui.DragAndDrop",
                             "dojo.render" ]
 
-## If an original file ends with one of these suffixes, then add the given provides to it
+## If an original file ends with one of these suffixes, then add the given provides to it.
+## some of these are essentially dojo bugfixes.
+## hostenv_ and bootstrap2 are here so common.js can require them.
 dojo_add_provides = [ ('/dojo/src/uri/Uri.js', [ 'dojo.uri' ]),
                       ('/dojo/src/graphics/color.js', ['dojo.graphics']),
-                      ('/dojo/src/io.js', ['dojo.io'])
+                      ('/dojo/src/io.js', ['dojo.io']),
+                      ('/dojo/src/hostenv_browser.js', ['dojo.hostenv_browser']),
+                      ('/dojo/src/bootstrap2.js', ['dojo.bootstrap2'])
                       ]
 
 ## These modules, when loaded, replace the object created by dojo.provide() with their own
@@ -66,7 +70,7 @@ def skip_src_path(fullpath):
             return 1
     return 0
 
-module_arg = ' *["\']([a-zA-Z0-9.*]+)["\'] *'
+module_arg = ' *["\']([a-zA-Z0-9_.*]+)["\'] *'
 one_module_args = '\(' + module_arg + '\)'
 module_arg_re = re.compile(module_arg)
 provides_re = re.compile(' *dojo\.provide *' + one_module_args)

@@ -43,15 +43,19 @@ public final class JavascriptResolver {
 		private String globalRequires;
 		private String firstPartOfTag;
 		private String lastPartOfTag; 
-		
+
+		// FIXME config.js could just be inlined here instead of in its own file, no?
+		// Note: if you change the format remember to change the args to it when it's used...
+		static private final String globalRequiresFormat = 
+			"<script type=\"text/javascript\" src=\"%s/%s/config.js\"></script>\n" +
+			"<script type=\"text/javascript\" src=\"%s/%s/dojo/bootstrap1.js\"></script>\n";
+			
 		private Page() {
 			this.filesUsed = new HashSet<String>();
 			
-			// FIXME we should change to just outputting the _content_ of config.js here inline,
-			// and dojo.js should be replaced with just loading the hostenv/bootstrap files directly
-			this.globalRequires =
-				"<script type=\"text/javascript\" src=\"" + scriptRoot + "/" + buildStamp + "/config.js\"></script>\n" +
-				"<script type=\"text/javascript\" src=\"" + scriptRoot + "/" + buildStamp + "/dojo.js\"></script>\n";
+			this.globalRequires = String.format(globalRequiresFormat,
+					scriptRoot, buildStamp,
+					scriptRoot, buildStamp);
 			
 			this.firstPartOfTag = 
 				"<script type=\"text/javascript\" src=\"" + scriptRoot + "/" + buildStamp + "/";
