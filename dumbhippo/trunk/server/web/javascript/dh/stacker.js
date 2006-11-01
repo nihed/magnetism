@@ -1899,8 +1899,8 @@ dh.stacker.hookLinkChildren = function(block, startNode) {
 			};
 			node.onmouseout = function (e) {
 				if (!e) e = window.event;
-				var relTarget = e.relatedTarget || e.fromElement;
-				dh.log("stacker-cursor", "block: " + block.dhBlockId + " link mouseout")					
+				var relTarget = e.relatedTarget || e.toElement;				
+				dh.log("stacker-cursor", "block: " + block.dhBlockId + " link mouseout to " + relTarget)					
 				if (!dh.util.isDescendant(block, relTarget))
 					dh.stacker.hideBlockPointer(block);				
 				dh.util.cancelEvent(e);			

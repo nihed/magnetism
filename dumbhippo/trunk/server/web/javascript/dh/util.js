@@ -167,7 +167,7 @@ dh.util.isShowing = function(node) {
 	return !dojo.html.hasClass(node, "dhInvisible");
 }
 
-dh.util.isDescedant = function (possibleParent, child) {
+dh.util.isDescendant = function (possibleParent, child) {
 	while (child && child != possibleParent) {
 		child = child.parentNode;
 	}
@@ -693,15 +693,18 @@ dh.util.getEventNode = function(ev)
 // cancel an event
 dh.util.cancelEvent = function(ev)
 {
-	if (ev) {
+	if (!ev)
+		ev = window.event;
+		
+	if (ev.preventDefault)
 		ev.preventDefault();
+	else
+		ev.returnValue = false;
+		
+	if (ev.stopPropagation)
 		ev.stopPropagation();
-	}
-	
-	if (window.event) {
-		window.event.returnValue = false;
-		window.event.cancelBubble = true;
-	}
+	else
+		ev.cancelBubble = true;		
 };
 
 // Define common keycodes
