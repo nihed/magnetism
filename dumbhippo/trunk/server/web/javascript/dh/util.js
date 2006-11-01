@@ -26,7 +26,19 @@ dh.logger.show = function() {
 		var tbody = doc.createElement("tbody");
 		log.appendChild(tbody);
 		tbody.id = "dhErrorLog";
-		doc.body.appendChild(tbody);
+
+		var controlsDiv = doc.createElement("div")
+
+		var clearButton = doc.createElement("input")
+		clearButton.type = "button";
+		clearButton.value = "Clear"
+		clearButton.onclick = function (e) {
+			tbody.innerHTML = "";
+		}		
+		controlsDiv.appendChild(clearButton)
+
+		doc.body.appendChild(controlsDiv)
+		doc.body.appendChild(tbody);		
 		var i;
 		for (i = 0; i < dh.logger.logEntries.length; i++) {
 			dh.logger.append(dh.logger.logEntries[i]);
@@ -148,6 +160,13 @@ dh.util.toggleShowing = function(node) {
 
 dh.util.isShowing = function(node) {
 	return !dojo.html.hasClass(node, "dhInvisible");
+}
+
+dh.util.isDescedant = function (possibleParent, child) {
+	while (child && child != possibleParent) {
+		child = child.parentNode;
+	}
+	return child == possibleParent;
 }
 
 dh.util.closeWindow = function() {
