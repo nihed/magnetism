@@ -6,7 +6,7 @@
 #include <hippo/hippo-canvas-box.h>
 #include <hippo/hippo-canvas-image.h>
 #include <hippo/hippo-canvas-text.h>
-#include <hippo/hippo-canvas-link.h>
+#include "hippo-canvas-url-link.h"
 
 static void      hippo_canvas_block_music_person_init                (HippoCanvasBlockMusicPerson       *block);
 static void      hippo_canvas_block_music_person_class_init          (HippoCanvasBlockMusicPersonClass  *klass);
@@ -188,21 +188,6 @@ hippo_canvas_block_music_person_constructor (GType                  type,
 }
 
 static void
-on_play_link_activated(HippoCanvasItem *link,
-                       HippoCanvasBlockMusicPerson *block_music_person)
-{
-    HippoActions *actions;
-    const char *url;
-
-    url = g_object_get_data(G_OBJECT(link), "url");
-    actions = hippo_canvas_block_get_actions(HIPPO_CANVAS_BLOCK(block_music_person));
-
-    if (url && actions) {
-        hippo_actions_open_absolute_url(actions, url);
-    }
-}
-
-static void
 on_current_track_changed(HippoPerson *person,
                          GParamSpec *arg, /* null when first calling this */
                          HippoCanvasBlockMusicPerson *block_music_person)
@@ -248,20 +233,14 @@ on_current_track_changed(HippoPerson *person,
             link_name = g_strdup_printf("Play at %s",
                                         hippo_song_download_source_get_name(hippo_song_download_get_source(d)));
             
-            link = g_object_new(HIPPO_TYPE_CANVAS_LINK,
+            link = g_object_new(HIPPO_TYPE_CANVAS_URL_LINK,
+                                "actions", actions,
                                 "text", link_name,
                                 "size-mode", HIPPO_CANVAS_SIZE_ELLIPSIZE_END,
+                                "url", hippo_song_download_get_url(d),
                                 NULL);
 
             g_free(link_name);
-
-            g_object_set_data_full(G_OBJECT(link),
-                                   "url", g_strdup(hippo_song_download_get_url(d)),
-                                   g_free);
-            
-            g_signal_connect(G_OBJECT(link), "activated",
-                             G_CALLBACK(on_play_link_activated),
-                             block_music_person);
 
             hippo_canvas_box_append(block_music_person->downloads_box,
                                     link, 0);

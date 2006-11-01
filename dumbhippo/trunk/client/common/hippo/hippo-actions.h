@@ -56,7 +56,7 @@ void          hippo_actions_close_notification      (HippoActions    *actions);
 void          hippo_actions_hush_notification       (HippoActions    *actions);
 void          hippo_actions_expand_notification     (HippoActions    *actions);
 void          hippo_actions_open_home_page          (HippoActions    *actions);
-void          hippo_actions_open_absolute_url       (HippoActions    *actions,
+void          hippo_actions_open_url                (HippoActions    *actions,
                                                      const char      *url);
 void          hippo_actions_hush_block              (HippoActions    *actions,
                                                      HippoBlock      *block);

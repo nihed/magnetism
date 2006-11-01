@@ -190,6 +190,8 @@ LIBHIPPO_SOURCEFILES =						\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-message-preview.h	\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-stack.c		\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-stack.h		\
+	$(COMMONSRCDIR)/hippo/hippo-canvas-url-link.c		\
+	$(COMMONSRCDIR)/hippo/hippo-canvas-url-link.h		\
 	$(COMMONSRCDIR)/hippo/hippo-chat-room.c			\
 	$(COMMONSRCDIR)/hippo/hippo-chat-room.h			\
 	$(COMMONSRCDIR)/hippo/hippo-common.h			\

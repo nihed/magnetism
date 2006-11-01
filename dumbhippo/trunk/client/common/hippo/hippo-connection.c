@@ -2045,14 +2045,15 @@ hippo_connection_parse_entity(HippoConnection *connection,
         return FALSE;
     }
 
-    if (type != HIPPO_ENTITY_RESOURCE) {
-        name = lm_message_node_get_attribute(node, "name");
-        if (!name) {
-            g_warning("entity node lacks name");
-            return FALSE;
-        }
-    } else {
-        name = NULL;
+    /* Resources generally shouldn't have a NULL name either, but
+     * I'll leave the check for now, since the entire function is
+     * obsolescent code; hippo_data_cache_update_from_xml() has
+     * the more modern logic.
+     */
+    name = lm_message_node_get_attribute(node, "name");
+    if (!name && type != HIPPO_ENTITY_RESOURCE) {
+        g_warning("entity node lacks name");
+        return FALSE;
     }
 
     home_url = lm_message_node_get_attribute(node, "homeUrl");

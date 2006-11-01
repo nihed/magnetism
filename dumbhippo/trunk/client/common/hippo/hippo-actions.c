@@ -254,12 +254,10 @@ hippo_actions_open_home_page(HippoActions    *actions)
 }
 
 void
-hippo_actions_open_absolute_url(HippoActions    *actions,
+hippo_actions_open_url(HippoActions    *actions,
                                 const char      *url)
 {
-    hippo_platform_open_url(get_platform(actions),
-                            HIPPO_BROWSER_UNKNOWN,
-                            url);
+    hippo_connection_open_maybe_relative_url(get_connection(actions), url);
 }
 
 void

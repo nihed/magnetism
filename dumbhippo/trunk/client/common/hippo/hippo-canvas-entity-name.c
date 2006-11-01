@@ -3,9 +3,10 @@
 #include <hippo/hippo-entity.h>
 #include "hippo-actions.h"
 #include "hippo-canvas-entity-name.h"
+#include "hippo-feed.h"
 #include <hippo/hippo-canvas-box.h>
 #include <hippo/hippo-canvas-text.h>
-#include <hippo/hippo-canvas-link.h>
+#include "hippo-canvas-url-link.h"
 
 static void      hippo_canvas_entity_name_init                (HippoCanvasEntityName       *text);
 static void      hippo_canvas_entity_name_class_init          (HippoCanvasEntityNameClass  *klass);
@@ -23,25 +24,19 @@ static void hippo_canvas_entity_name_get_property (GObject      *object,
                                                    GParamSpec   *pspec);
 
 
-/* Canvas item methods */
-static void hippo_canvas_entity_name_activated   (HippoCanvasItem       *item);
-
 /* Our own methods */
 static void hippo_canvas_entity_name_set_entity  (HippoCanvasEntityName *canvas_entity_name,
                                                   HippoEntity           *entity);
-static void hippo_canvas_entity_name_set_actions (HippoCanvasEntityName *canvas_entity_name,
-                                                  HippoActions          *actions);
 static void hippo_canvas_entity_name_update_text (HippoCanvasEntityName *entity_name);
 
 
 struct _HippoCanvasEntityName {
-    HippoCanvasLink canvas_link;
-    HippoActions *actions;
+    HippoCanvasUrlLink parent;
     HippoEntity  *entity;
 };
 
 struct _HippoCanvasEntityNameClass {
-    HippoCanvasLinkClass parent_class;
+    HippoCanvasUrlLinkClass parent_class;
 };
 
 #if 0
@@ -55,12 +50,11 @@ static int signals[LAST_SIGNAL];
 
 enum {
     PROP_0,
-    PROP_ENTITY,
-    PROP_ACTIONS
+    PROP_ENTITY
 };
 
 
-G_DEFINE_TYPE_WITH_CODE(HippoCanvasEntityName, hippo_canvas_entity_name, HIPPO_TYPE_CANVAS_LINK,
+G_DEFINE_TYPE_WITH_CODE(HippoCanvasEntityName, hippo_canvas_entity_name, HIPPO_TYPE_CANVAS_URL_LINK,
                         G_IMPLEMENT_INTERFACE(HIPPO_TYPE_CANVAS_ITEM, hippo_canvas_entity_name_iface_init));
 
 static void
@@ -78,8 +72,6 @@ static void
 hippo_canvas_entity_name_iface_init(HippoCanvasItemIface *item_class)
 {
     item_parent_class = g_type_interface_peek_parent(item_class);
-
-    item_class->activated = hippo_canvas_entity_name_activated;
 }
 
 static void
@@ -101,14 +93,6 @@ hippo_canvas_entity_name_class_init(HippoCanvasEntityNameClass *klass)
                                                         _("Entity to display"),
                                                         HIPPO_TYPE_ENTITY,
                                                         G_PARAM_READABLE | G_PARAM_WRITABLE));
-
-    g_object_class_install_property(object_class,
-                                    PROP_ACTIONS,
-                                    g_param_spec_object("actions",
-                                                        _("Actions"),
-                                                        _("UI actions object"),
-                                                        HIPPO_TYPE_ACTIONS,
-                                                        G_PARAM_READABLE | G_PARAM_WRITABLE | G_PARAM_CONSTRUCT_ONLY)); 
 }
 
 static void
@@ -117,7 +101,6 @@ hippo_canvas_entity_name_dispose(GObject *object)
     HippoCanvasEntityName *entity_name = HIPPO_CANVAS_ENTITY_NAME(object);
 
     hippo_canvas_entity_name_set_entity(entity_name, NULL);
-    hippo_canvas_entity_name_set_actions(entity_name, NULL);
 
     G_OBJECT_CLASS(hippo_canvas_entity_name_parent_class)->dispose(object);
 }
@@ -147,12 +130,6 @@ hippo_canvas_entity_name_set_property(GObject         *object,
             hippo_canvas_entity_name_set_entity(entity_name, new_entity);
         }
         break;
-    case PROP_ACTIONS:
-        {
-            HippoActions *new_actions = (HippoActions*) g_value_get_object(value);
-            hippo_canvas_entity_name_set_actions(entity_name, new_actions);
-        }
-        break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
         break;
@@ -173,9 +150,6 @@ hippo_canvas_entity_name_get_property(GObject         *object,
     case PROP_ENTITY:
         g_value_set_object(value, (GObject*) entity_name->entity);
         break;
-    case PROP_ACTIONS:
-        g_value_set_object(value, (GObject*) entity_name->actions);
-        break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
         break;
@@ -186,14 +160,27 @@ static void
 hippo_canvas_entity_name_update_text(HippoCanvasEntityName *entity_name)
 {
     if (entity_name->entity) {
+        char *tooltip = NULL;
+
+        if (hippo_entity_get_home_url(entity_name->entity) != NULL) {
+            /* We let feeds get their default tooltip, which is the URL */
+            if (!HIPPO_IS_FEED(entity_name->entity))
+                tooltip = g_strdup_printf(_("%s's Mugshot"), hippo_entity_get_name(entity_name->entity));
+        }
+
+        g_debug("============ %s %s %s\n", hippo_entity_get_name(entity_name->entity), tooltip, hippo_entity_get_home_url(entity_name->entity));
         g_object_set(G_OBJECT(entity_name),
                      "text", hippo_entity_get_name(entity_name->entity),
-                     "tooltip", hippo_entity_get_home_url(entity_name->entity),
+                     "tooltip", tooltip,
+                     "url", hippo_entity_get_home_url(entity_name->entity),
                      NULL);
+        
+        g_free(tooltip);
     } else {
         g_object_set(G_OBJECT(entity_name),
                      "text", NULL,
                      "tooltip", NULL,
+                     "url", NULL,
                      NULL);
     }
 }
@@ -235,35 +222,4 @@ hippo_canvas_entity_name_set_entity(HippoCanvasEntityName *entity_name,
     hippo_canvas_entity_name_update_text(entity_name);
     
     g_object_notify(G_OBJECT(entity_name), "entity");
-}
-
-static void
-hippo_canvas_entity_name_set_actions(HippoCanvasEntityName *entity_name,
-                                     HippoActions            *actions)
-{
-    if (actions == entity_name->actions)
-        return;
-
-    if (entity_name->actions) {
-        g_object_unref(entity_name->actions);
-        entity_name->actions = NULL;
-    }
-    
-    if (actions) {
-        g_object_ref(actions);
-        entity_name->actions = actions;
-    }
-
-    g_object_notify(G_OBJECT(entity_name), "actions");
-}
-
-static void
-hippo_canvas_entity_name_activated(HippoCanvasItem *item)
-{
-    HippoCanvasEntityName *entity_name = HIPPO_CANVAS_ENTITY_NAME(item);
-
-    if (entity_name->actions && entity_name->entity) {
-        hippo_actions_visit_entity(entity_name->actions,
-                                   entity_name->entity);
-    }
 }
