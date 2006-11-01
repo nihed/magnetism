@@ -26,9 +26,7 @@
 	<title>Mugshot Download</title>
 	<dht3:stylesheet name="site" iefixes="true"/>	
 	<dht3:stylesheet name="download"/>
-	<dht:scriptIncludes>
 		<dh:script module="dh.download"/>
-	</dht:scriptIncludes>
 	<dht:faviconIncludes/>
 	<script type="text/javascript">
 		dh.download.needTermsOfUse = ${signin.needsTermsOfUse}

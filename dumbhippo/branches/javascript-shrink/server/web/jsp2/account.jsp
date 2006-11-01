@@ -24,9 +24,7 @@
 	<dht:siteStyle/>
 	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/account.css">
 	<dht:faviconIncludes/>
-	<dht:scriptIncludes>
 		<dh:script module="dh.account"/>
-	</dht:scriptIncludes>
 	<script type="text/javascript">
 		dh.formtable.currentValues = {
 			'dhUsernameEntry' : <dh:jsString value="${signin.user.nickname}"/>,

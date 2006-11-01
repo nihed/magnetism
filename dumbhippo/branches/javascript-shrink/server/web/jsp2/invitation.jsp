@@ -14,9 +14,7 @@
 	<dht:siteStyle/>	
 	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/invitation.css"/>
 	<dht:faviconIncludes/>
-	<dht:scriptIncludes>
 		<dh:script module="dh.invitation"/>
-	</dht:scriptIncludes>
 	<script type="text/javascript">
 		dh.invitation.initialValues = {
 			'dhAddressEntry' : '',

@@ -17,7 +17,6 @@
 	<title><c:out value="${files.viewedPerson.name}"/>'s Files</title>
 	<dht:siteStyle/>	
 	<dht:faviconIncludes/>
-	<dht:scriptIncludes/>
 	<dh:script modules="dh.fileinput,dh.files"/>
 	<script type="text/javascript">
 		var dhFilesInit = function() {

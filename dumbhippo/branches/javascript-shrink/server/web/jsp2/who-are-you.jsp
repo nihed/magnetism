@@ -11,9 +11,7 @@
 	<dht:siteStyle/>
 	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/who-are-you.css">
 	<dht:faviconIncludes/>
-	<dht:scriptIncludes>
 		<dh:script module="dh.login"/>
-	</dht:scriptIncludes>
 </head>
 <dht:systemPage disableFooter="true" disableJumpTo="true" topImage="/images2/${buildStamp}/header_login310.gif" bottomImage="/images2/${buildStamp}/bottom_gray310.gif">
 	<form id="dhLoginForm" name="dhLoginForm" action="/signinpost" method="post">

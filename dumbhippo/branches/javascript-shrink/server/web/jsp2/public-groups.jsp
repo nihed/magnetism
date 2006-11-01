@@ -13,7 +13,6 @@
 	<title><c:out value="${pagetitle}"/></title>
 	<dht:siteStyle/>
 	<dht:faviconIncludes/>
-	<dht:scriptIncludes/>
 	<dh:script module="dh.groups"/>
 </head>
 <dht:twoColumnPage>

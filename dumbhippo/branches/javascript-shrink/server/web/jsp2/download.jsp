@@ -26,9 +26,7 @@
 	<dht:siteStyle/>	
 	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/download.css"/>
 	<dht:faviconIncludes/>
-	<dht:scriptIncludes>
 		<dh:script module="dh.download"/>
-	</dht:scriptIncludes>
 	<script type="text/javascript">
 		dh.download.needTermsOfUse = ${signin.needsTermsOfUse}
 		dojo.event.connect(dojo, "loaded", function () { dh.download.init() })

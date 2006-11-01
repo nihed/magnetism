@@ -11,9 +11,7 @@
        	<dht:siteStyle/>
 		<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/radar.css"/>        
 		<dht:faviconIncludes/>
-        <dht:scriptIncludes>
         	<dh:script module="dh.nowplaying"/>
-        </dht:scriptIncludes>
 </head>
 <dht:twoColumnPage neverShowSidebar="true">
 	<dht:contentColumn>

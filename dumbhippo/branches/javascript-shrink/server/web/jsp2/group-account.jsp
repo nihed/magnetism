@@ -21,9 +21,7 @@
 	<dht:siteStyle/>	
 	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/group-account.css"/>
 	<dht:faviconIncludes/>
-	<dht:scriptIncludes>
 		<dh:script module="dh.groupaccount"/>
-	</dht:scriptIncludes>
 	<script type="text/javascript">
 		dh.formtable.currentValues = {
 			'dhGroupNameEntry' : <dh:jsString value="${group.name}"/>,

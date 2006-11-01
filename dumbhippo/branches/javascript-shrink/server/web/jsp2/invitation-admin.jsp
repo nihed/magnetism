@@ -15,9 +15,7 @@
 	<title>Invitation Admin</title>
 	<dht:siteStyle/>	
     <dht:faviconIncludes/>
-	<dht:scriptIncludes>
 		<dh:script module="dh.invitationadmin"/>
-	</dht:scriptIncludes>
 </head>
 <dht:body>
     Number of people who want in and were not yet invited: 

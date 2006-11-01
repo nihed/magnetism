@@ -24,9 +24,7 @@
 	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/invitation.css"/>
 	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/group.css"/>
 	<dht:faviconIncludes/>
-	<dht:scriptIncludes>
 		<dh:script module="dh.groupinvitation"/>
-	</dht:scriptIncludes>
 	<dht:embedObject/>
 	<script type="text/javascript">
 		dh.groupinvitation.groupId = <dh:jsString value="${group.viewedGroupId}"/>

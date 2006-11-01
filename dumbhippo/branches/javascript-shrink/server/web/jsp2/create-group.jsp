@@ -8,9 +8,7 @@
 	<title>Create Group</title>
 	<dht:siteStyle/>	
 	<dht:faviconIncludes/>
-	<dht:scriptIncludes>
 		<dh:script module="dh.groupaccount"/>
-	</dht:scriptIncludes>
 	<script type="text/javascript">
 		dojo.event.connect(dojo, "loaded", dj_global, "dhCreateGroupInit");
 	</script>

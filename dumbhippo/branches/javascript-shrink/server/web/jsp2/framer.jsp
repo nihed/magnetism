@@ -38,9 +38,7 @@
 	<!--[if IE]>
 	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/framer-iefixes.css">
 	<![endif]-->
-	<dht:scriptIncludes>
 		<dh:script module="dh.framer"/>
-	</dht:scriptIncludes>
     <script type="text/javascript">
     	dh.framer.setSelfId("${framer.signin.userId}")
     	dh.framer.chatId = "${framer.post.post.id}"

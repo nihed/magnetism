@@ -11,9 +11,7 @@
 	<dht:siteStyle/>
     <link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/landing.css"/>	
 	<dht:faviconIncludes/>
-	<dht:scriptIncludes>
 		<dh:script module="dh.download"/>
-	</dht:scriptIncludes>
 </head>
 <%-- TODO: could get a more appropriate header, but Sign Up works too. --%>
 <dht:systemPage disableJumpTo="true" disableSignupLink="true" topImage="/images2/${buildStamp}/header_signup500.gif" fullHeader="true">
