@@ -45,8 +45,18 @@ allowed_missing_modules = [ "dojo.widget.HtmlButton",
                             "dojo.widget.HtmlResizeableTextarea",
                             "dojo.webui.widgets.parse",
                             "dojo.webui.DragAndDrop",
-                            "dojo.render",
-                            "dojo.io" ]
+                            "dojo.render" ]
+
+## If an original file ends with one of these suffixes, then add the given provides to it
+dojo_add_provides = [ ('/dojo/src/uri/Uri.js', [ 'dojo.uri' ]),
+                      ('/dojo/src/graphics/color.js', ['dojo.graphics']),
+                      ('/dojo/src/io.js', ['dojo.io'])
+                      ]
+
+## These modules, when loaded, replace the object created by dojo.provide() with their own
+## module object. We have to work around this by saving/restoring the object fields
+## we care about.
+dojo_replaces_module_object = [ "dojo.uri", "dojo.uri.Uri", "dojo.event", "dojo.event.topic", "dojo.event.browser" ]
 
 def skip_src_path(fullpath):
     for s in skip_suffixes:
@@ -79,6 +89,12 @@ def dict_keys_sorted_by_values(dict):
         result.append(i[0])
     return result
 
+def module_identifier(module):
+    return module.replace("*", "_star")
+
+def module_as_variable_name(module):
+    return "_" + module_identifier(module).replace(".", "_")
+
 def write_line(out, indent, text):
     while indent > 0:
         if indent >= 4:
@@ -97,9 +113,6 @@ def write_line(out, indent, text):
 
     out.write("\n")
 
-def module_identifier(module):
-    return module.replace("*", "_star")
-
 def file_providing(module):
     if module.endswith("._star"):
         module = module.replace(".star", ".*")
@@ -111,6 +124,8 @@ def file_providing(module):
 
 ## check that we have parsed the given module
 def write_required_check(out, indent, module, already):
+    module = module_identifier(module)
+    write_line(out, indent, "// check that we already have %s" % module)
     elems = module.split(".")
     sofar = ""
     for e in elems:
@@ -136,6 +151,8 @@ def write_required_check(out, indent, module, already):
 
 ## checks before we create the module, like "dh.actions={}"
 def write_pre_provide_checks(out, indent, module):
+    module = module_identifier(module)
+    write_line(out, indent, "// check that we didn't already create %s" % module)
     elems = module.split(".")
     sofar = ""
     for e in elems:
@@ -178,11 +195,14 @@ def write_check_has(out, indent, obj, name):
     write_line(out, indent + 4,
                "throw new Error('%s somehow vanished from %s');" % (name, obj))
 
-## checks at the end of the module init routine.
+## checks at the end of the module load routine.
 ## dojo sometimes does dojo.provide("dojo.foo") which does a "dojo.foo = {}",
 ## and then in the body of the module assigns something else to dojo.foo.
-## These post-init checks barf on that...
-def write_post_init_checks(out, indent, module):
+## These post-load checks barf on that...
+def write_post_load_checks(out, indent, module):
+    module = module_identifier(module)
+    
+    write_line(out, indent, "// check that we created %s ok" % module) 
     elems = module.split(".")
     sofar = ""
     for e in elems:
@@ -190,7 +210,7 @@ def write_post_init_checks(out, indent, module):
             write_line(out, indent,
                        "if (typeof %s == 'undefined')" % e)
             write_line(out, indent + 4,
-                       "throw new Error('%s somehow vanished during init of %s');" % (e, module))
+                       "throw new Error('%s somehow vanished during load of %s');" % (e, module))
             sofar = e
         else:
             next = sofar + "." + e
@@ -198,9 +218,66 @@ def write_post_init_checks(out, indent, module):
 
             sofar = next
 
-    write_check_has_type(out, indent, module, "_initialized", 'boolean')
+    write_check_has_type(out, indent, module, "_loaded", 'boolean')
     write_check_has_type(out, indent, module, "_parsed", 'boolean')
-    write_check_has_type(out, indent, module, "_init", 'function')
+    write_check_has_type(out, indent, module, "_load", 'function')
+
+## Output only for stuff where dojo is going to replace our
+## module object
+def global_load_symbol(module):
+    return module_as_variable_name(module) + "_load_backup"
+
+## get module foo.bar if passed module foo
+child_modules = {}
+def get_immediate_child_modules(module):
+
+    ## foo.*.bar is impossible
+    if module.endswith(".*"):
+        return []
+    
+    if child_modules.has_key(module):
+        return child_modules[module]
+
+    children = []
+    for p in providers.keys():
+        if p.startswith(module) and p != module:
+            if p.replace(module, "").count(".") == 1:
+                children.append(p)
+    child_modules[module] = children
+
+    return children
+
+## Write stuff at start of _load() to fix the problem if dojo
+## assigned something undesirable to the module
+def pre_fixup_when_dojo_replaces_module_object(out, indent, module):
+    for c in get_immediate_child_modules(module):
+        write_line(out, indent, "var %s_saved = %s;" % (module_as_variable_name(c), module_identifier(c)))
+        # this is because dojo.uri.Uri creates both uri and uri.Uri, and we need to avoid fixing Uri
+        # by assigning back the original empty hash version of Uri
+        write_line(out, indent, "delete %s; // so we can tell if it was overwritten or just lost" % module_identifier(c))
+                   
+## Write stuff at end of _load() to fix the problem if dojo assigned
+## something undesirable to module
+def post_fixup_when_dojo_replaces_module_object(out, indent, module):
+    if module not in dojo_replaces_module_object:
+        print "Should not have been called"
+        sys.exit(1)
+
+    ## Confirm we were replaced
+    write_line(out, indent, "// check that dojo indeed mangled %s" % module)
+    write_check_has_type(out, indent, module, "_loaded", "undefined")
+    write_check_has_type(out, indent, module, "_parsed", "undefined")
+    write_check_has_type(out, indent, module, "_load", "undefined")
+
+    ## add our stuff back to the new object
+    write_line(out, indent, "// fix %s again after dojo's handiwork" % module)
+    write_line(out, indent, "%s._loaded = true;" % module);
+    write_line(out, indent, "%s._parsed = true;" % module);
+    write_line(out, indent, "%s._load = %s;" % (module, global_load_symbol(module)))
+
+    for c in get_immediate_child_modules(module):
+        write_line(out, indent, "if ((typeof %s) == 'undefined')" % module_identifier(c))
+        write_line(out, indent + 4, "%s = %s_saved;" % (module_identifier(c), module_as_variable_name(c)))
 
 class OriginalFile:
     def __init__(self, fullpath, lines):
@@ -266,6 +343,18 @@ class OriginalFile:
         ## the __package__ files are special, do some extra detection
         if self._path.endswith("/__package__.js"):
             self._find_provides_requires_package()
+
+        ## and some special hacks
+        for fixup in dojo_add_provides:
+            if self._path.endswith(fixup[0]):
+                for p in fixup[1]:
+                    if self._provides.has_key(p):
+                        print "fixup %s already done?" % fixup
+                        sys.exit(1)
+                    ## make up a line number before any others,
+                    ## since usually we're adding a.b when the file
+                    ## also provides a.b.c
+                    self._provides[p] = -1
 
     def _find_provides_requires_package(self):
         in_conditional_load = 0
@@ -446,7 +535,6 @@ class OriginalFile:
         ## Assert that our direct dependencies have been loaded
         requires_asserted = {}
         for r in self.get_all_requires():
-            r = module_identifier(r)
             write_required_check(out, indent, r, requires_asserted)
             
         provides = self.get_all_provides()
@@ -455,50 +543,63 @@ class OriginalFile:
         else:
             ## if an OrigFile provides multiple modules,
             ## we use an arbitrary "master module" to name
-            ## an init function that inits all of them at once
+            ## a load function that loads all of them at once
             master_module = module_identifier(provides[0])
             for p in self.get_all_provides():
-                p = module_identifier(p)
-
                 write_pre_provide_checks(out, indent, p)
 
+                p = module_identifier(p)
                 write_line(out, indent, "%s = {};" % p)
                 write_line(out, indent, "%s._parsed = true;" % p)
-                write_line(out, indent, "%s._initialized = false;" % p)
+                write_line(out, indent, "%s._loaded = false;" % p)
 
-            write_line(out, indent, "%s._init = function() {" % (master_module))
-            write_line(out, indent + 4, "if (%s._initialized)" % master_module)
+            write_line(out, indent, "%s._load = function() {" % (master_module))
+            write_line(out, indent + 4, "if (%s._loaded)" % master_module)
             write_line(out, indent + 8, "return;")
             for p in self.get_all_provides():
-                p = module_identifier(p)
-                write_line(out, indent + 4, "%s._initialized = true;" % p)
+                p = module_identifier(p)                
+                write_line(out, indent + 4, "%s._loaded = true;" % p)
 
             for r in self.get_all_requires():
                 r = module_identifier(r)
-                write_line(out, indent + 4, "%s._init();" % r)
+                write_line(out, indent + 4, "%s._load();" % r)
+
+            for p in self.get_all_provides():
+                if p in dojo_replaces_module_object:
+                    pre_fixup_when_dojo_replaces_module_object(out, indent + 4, p)
 
             self.write_all_lines(out, indent + 4);
 
             for p in self.get_all_provides():
-                p = module_identifier(p)
-                write_post_init_checks(out, indent + 4, p)
+                ## fixup dojo interference
+                if p in dojo_replaces_module_object:
+                    post_fixup_when_dojo_replaces_module_object(out, indent + 4, p)
+
+                ## check sanity
+                write_post_load_checks(out, indent + 4, p)
 
             write_line(out, indent, "}")
 
-            ## Aliases for master_module._init() for each other provide
+            ## Aliases for master_module._load() for each other provide,
+            ## and aliases for _load() when we need to save it against
+            ## dojo interference
             for p in self.get_all_provides():
                 p = module_identifier(p)
                 if p != master_module:
-                    write_line(out, indent, "%s._init = %s._init;" % (p, master_module))
+                    write_line(out, indent, "%s._load = %s._load;" % (p, master_module))
+
+                if p in dojo_replaces_module_object:
+                    write_line(out, indent, "// save by another name so we can restore it post-dojo-mangle")
+                    write_line(out, indent, "%s = %s._load;" % (global_load_symbol(p), master_module))
 
             write_line(out, indent, "// end of module '%s'" % master_module);
 
             ## Eventually we should require explicitly calling the
-            ## init() on each module prior to use. But for now,
+            ## load() on each module prior to use. But for now,
             ## at the end of each file we init the file
             ## (note that we don't do this for bundled modules)
             if not self.get_bundled():
-                write_line(out, indent, "%s._init(); // hack for now " % master_module)
+                write_line(out, indent, "%s._load(); // hack for now " % master_module)
 
 class DestFile:
     def __init__(self, relpath, fullpath, orig):

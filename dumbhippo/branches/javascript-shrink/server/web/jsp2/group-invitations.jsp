@@ -19,7 +19,7 @@
 	<dht:siteStyle/>	
 	<dht:faviconIncludes/>
 	<dht:scriptIncludes/>
-	<script type="text/javascript" src="/javascript/${buildStamp}/dh/groups.js"></script>	
+	<dh:script src="dh/groups.js"/>
 </head>
 <dht:twoColumnPage>
 	<dht:sidebarPerson who="${person.viewedUserId}"/>

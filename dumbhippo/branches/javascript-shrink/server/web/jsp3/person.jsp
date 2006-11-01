@@ -14,7 +14,7 @@
 	<dht3:stylesheet name="site" iefixes="true"/>	
 	<dht3:stylesheet name="person"/>
 	<dht:scriptIncludes/>
-	<script src="/javascript/${buildStamp}/dh/stacker.js" type="text/javascript"></script>	
+	<dh:script src="dh/stacker.js"/>
 	<dht:faviconIncludes/>
 </head>
 

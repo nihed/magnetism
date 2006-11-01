@@ -17,12 +17,12 @@ public class ScriptTag extends SimpleTagSupport {
 	private List<String> modules;
 	private List<String> files;
 	
-	private static final String PAGE_KEY = "scriptTagContext";
+	private static final String REQUEST_KEY = "scriptTagContext";
 	private static final Pattern commaSplitPattern = 
 		Pattern.compile("\\s*,\\s*");
 	
 	private Page getJavascriptPage() {
-		Page p = (Page) getJspContext().getAttribute(PAGE_KEY, PageContext.PAGE_SCOPE);
+		Page p = (Page) getJspContext().getAttribute(REQUEST_KEY, PageContext.REQUEST_SCOPE);
 		
 		if (p == null) {
 			JavascriptResolver jsResolver =
@@ -32,7 +32,7 @@ public class ScriptTag extends SimpleTagSupport {
 				throw new RuntimeException("jsResolver not found in servlet context");
 			p = jsResolver.newPage();
 			// save for next script tag
-			getJspContext().setAttribute(PAGE_KEY, p);
+			getJspContext().setAttribute(REQUEST_KEY, p, PageContext.REQUEST_SCOPE);
 		}
 		
 		return p;

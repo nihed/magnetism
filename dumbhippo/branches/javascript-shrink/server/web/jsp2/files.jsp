@@ -18,8 +18,7 @@
 	<dht:siteStyle/>	
 	<dht:faviconIncludes/>
 	<dht:scriptIncludes/>
-	<script type="text/javascript" src="/javascript/${buildStamp}/dh/fileinput.js"></script>
-	<script type="text/javascript" src="/javascript/${buildStamp}/dh/files.js"></script>
+	<dh:script srcs="dh/fileinput.js,dh/files.js"/>
 	<script type="text/javascript">
 		var dhFilesInit = function() {
 			new dh.fileinput.Entry(document.getElementById('dhFileUploadEntry'));

@@ -299,7 +299,7 @@
     </tag>
     <tag>
         <name>script</name>
-        <tagclass>com.dumbhippo.web.tags.Script</tagclass>
+        <tagclass>com.dumbhippo.web.tags.ScriptTag</tagclass>
         <bodycontent>empty</bodycontent>
         <info>Script files or modules to include, with their dependencies</info>
 	    <attribute>

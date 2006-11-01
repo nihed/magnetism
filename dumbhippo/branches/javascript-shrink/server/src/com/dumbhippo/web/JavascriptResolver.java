@@ -40,11 +40,19 @@ public final class JavascriptResolver {
 	// JavascriptResolver being immutable, so there's no need to lock it
 	public class Page {
 		private Set<String> filesUsed;
+		private String globalRequires;
 		private String firstPartOfTag;
-		private String lastPartOfTag;
+		private String lastPartOfTag; 
 		
 		private Page() {
 			this.filesUsed = new HashSet<String>();
+			
+			// FIXME we should change to just outputting the _content_ of config.js here inline,
+			// and dojo.js should be replaced with just loading the hostenv/bootstrap files directly
+			this.globalRequires =
+				"<script type=\"text/javascript\" src=\"" + scriptRoot + "/" + buildStamp + "/config.js\"></script>\n" +
+				"<script type=\"text/javascript\" src=\"" + scriptRoot + "/" + buildStamp + "/dojo.js\"></script>\n";
+			
 			this.firstPartOfTag = 
 				"<script type=\"text/javascript\" src=\"" + scriptRoot + "/" + buildStamp + "/";
 			this.lastPartOfTag = 
@@ -65,6 +73,10 @@ public final class JavascriptResolver {
 			if (filesUsed.contains(filename)) {
 				return;
 			}
+			
+			// The first time we include anything, include the global requirements
+			if (filesUsed.isEmpty())
+				htmlWriter.write(globalRequires);
 			
 			filesUsed.add(filename);
 			

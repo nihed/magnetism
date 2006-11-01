@@ -1,8 +1,7 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
-<%@ taglib tagdir="/WEB-INF/tags" prefix="dht" %>
-<%@ attribute name="extra" required="false" type="java.lang.String"%>
-<dht:script src="config.js"/>
-<dht:script src="dojo.js"/>
-<dht:script src="dh/site.js"/>
+<%@ taglib uri="/jsp/dumbhippo.tld" prefix="dh" %>
+<%-- this tag is deprecated. Just include what you need with dh:script and the dependencies are implied,
+     including site.js if appropriate. --%>
+<dh:script src="dh/site.js"/>
 <%-- any other manual scripts follow --%>
 <jsp:doBody/>
