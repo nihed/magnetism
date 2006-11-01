@@ -14,6 +14,10 @@
 	font-size:		18px;
 }
 
+.dh-header a:link, .dh-header a:hover, .dh-header a:visited {
+    color:          #9648CD;  
+}
+
 .dh-stacker-block-icon, .dh-stacker-block-title, .dh-stacker-block-right {
     display:        none;
 }
