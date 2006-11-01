@@ -209,6 +209,8 @@ hippo_app_show_about(HippoApp *app)
             "website", "http://mugshot.org",
             "logo-icon-name", "mugshot",
             NULL);
+        g_signal_connect(app->about_dialog, "response",
+            G_CALLBACK(gtk_widget_destroy), NULL);
         g_signal_connect(app->about_dialog, "destroy",
             G_CALLBACK(gtk_widget_destroyed), &app->about_dialog);
     }
