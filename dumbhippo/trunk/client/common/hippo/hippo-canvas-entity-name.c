@@ -168,7 +168,6 @@ hippo_canvas_entity_name_update_text(HippoCanvasEntityName *entity_name)
                 tooltip = g_strdup_printf(_("%s's Mugshot"), hippo_entity_get_name(entity_name->entity));
         }
 
-        g_debug("============ %s %s %s\n", hippo_entity_get_name(entity_name->entity), tooltip, hippo_entity_get_home_url(entity_name->entity));
         g_object_set(G_OBJECT(entity_name),
                      "text", hippo_entity_get_name(entity_name->entity),
                      "tooltip", tooltip,
