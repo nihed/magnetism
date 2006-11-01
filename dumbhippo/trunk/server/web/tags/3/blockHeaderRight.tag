@@ -9,9 +9,6 @@
 
 <td align="right" valign="middle" id="dhStackerBlockRightContainer-${blockId}">
 <div>
-	<div class="dh-stacker-block-close" id="dhStackerBlockClose-${blockId}">
-		<a href="javascript:dh.stacker.blockClose('${blockId}')">CLOSE</a> <a href="javascript:dh.stacker.blockClose('${blockId}')"><img src="/images3/${buildStamp}/close.png"/></a>
-	</div>
 	<table cellspacing="0" cellpadding="0">
 	<tr>
 	<td><div class="dh-stacker-block-right">

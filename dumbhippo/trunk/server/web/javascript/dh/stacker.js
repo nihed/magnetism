@@ -1796,9 +1796,7 @@ dh.stacker.blockOpen = function(block) {
 	content.style.display = "block";
 	var controls = document.getElementById("dhStackerBlockControls-" + block.dhBlockId);
 	if (controls)
-		controls.style.display = "block";		
-	var closeButton = document.getElementById("dhStackerBlockClose-" + block.dhBlockId);
-	closeButton.style.display = "block";
+		controls.style.display = "block";
 }
 
 dh.stacker.blockClose = function(block) {
@@ -1807,9 +1805,7 @@ dh.stacker.blockClose = function(block) {
 	content.style.display = "none";	
 	var controls = document.getElementById("dhStackerBlockControls-" + block.dhBlockId)
 	if (controls)
-		controls.style.display = "none";		
-	var closeButton = document.getElementById("dhStackerBlockClose-" + block.dhBlockId)
-	closeButton.style.display = "none";	
+		controls.style.display = "none";
 }
 
 dh.stacker.onBlockMouseOver = function(e) {
@@ -1846,8 +1842,8 @@ dh.stacker.repositionPointer = function (block, e)
 	var img = block.dhExpanded ? closeImg : expandImg;
 	var xOffset = window.pageXOffset ? window.pageXOffset : document.body.scrollLeft;
 	var yOffset = window.pageYOffset ? window.pageYOffset : document.body.scrollTop;
-	img.style.top = (yOffset + e.clientY - 9) + "px"
-	img.style.left = (xOffset + e.clientX - 9) + "px";
+	img.style.top = (yOffset + e.clientY - 11) + "px"
+	img.style.left = (xOffset + e.clientX - 11) + "px";
 	dh.log("stacker-cursor", "block: " + block.dhBlockId + " position: left: " + img.style.left + " top: " + img.style.top)
 }
 

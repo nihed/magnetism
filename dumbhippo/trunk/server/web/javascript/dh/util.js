@@ -22,6 +22,9 @@ dh.logger.show = function() {
 		dh.logger.logWindow = window.open();
 		
 		var doc = dh.logger.logWindow.document;
+		doc.write("<html><head><title>Debug Log</title</head><body>&nbsp;</body></html>");
+		doc.close();
+		
 		var log = doc.createElement("table");
 		var tbody = doc.createElement("tbody");
 		log.appendChild(tbody);
@@ -38,7 +41,7 @@ dh.logger.show = function() {
 		controlsDiv.appendChild(clearButton)
 
 		doc.body.appendChild(controlsDiv)
-		doc.body.appendChild(tbody);		
+		doc.body.appendChild(log);		
 		var i;
 		for (i = 0; i < dh.logger.logEntries.length; i++) {
 			dh.logger.append(dh.logger.logEntries[i]);
@@ -50,8 +53,8 @@ dh.logger.show = function() {
 dh.logger.append = function(entry) {
 	var doc = dh.logger.logWindow.document;
 	var logTable = doc.getElementById("dhErrorLog");
+	
 	var tr = doc.createElement("tr");
-	logTable.appendChild(tr);
 	var td = doc.createElement("td");
 	tr.appendChild(td);
 	td.style.fontSize = "smaller";
@@ -69,6 +72,8 @@ dh.logger.append = function(entry) {
 	span.style.marginLeft = "10px;"
 	span.appendChild(doc.createTextNode(entry.text));
 	td.appendChild(span);
+	
+	logTable.appendChild(tr);	
 }
 
 dh.logger.log = function(category, text, level) {
