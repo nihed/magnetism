@@ -1247,7 +1247,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			throw new RuntimeException("no such person", e);
 		}
 		
-		user.getAccount().setAdminDisabled(disabled);
+		identitySpider.setAccountAdminDisabled(user, disabled);
 	}
 	
 	public void doSetNewFeatures(UserViewpoint viewpoint, boolean newFeaturesFlag) {

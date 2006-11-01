@@ -747,6 +747,10 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		updateMusicPersonPublicity(account);
 	}
 	
+	public void onAccountAdminDisabledToggled(Account account) {
+		updateMusicPersonPublicity(account);
+	}
+	
 	public void onMusicSharingToggled(Account account) {
 		updateMusicPersonPublicity(account);
 	}

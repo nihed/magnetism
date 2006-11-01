@@ -685,6 +685,20 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		}
 	}
 
+	public boolean getAccountAdminDisabled(User user) {
+		return user.getAccount().isAdminDisabled();
+	}
+	
+	public void setAccountAdminDisabled(User user, boolean disabled) {
+		Account account = getAttachedAccount(user);
+		if (account.isAdminDisabled() != disabled) {
+			account.setAdminDisabled(disabled);
+			logger.debug("adminDisabled flag toggled to {} on account {}", disabled,
+					account);
+			stacker.onAccountAdminDisabledToggled(account);
+		}
+	}
+	
 	static final String GET_ADMIN_QUERY = "SELECT adm FROM Administrator adm WHERE adm.account = :acct";
 
 	public boolean isAdministrator(User user) {
