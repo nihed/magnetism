@@ -200,6 +200,9 @@
 				RelativePath="..\..\common\hippo\generated\hippo-canvas-type-builtins.c">
 			</File>
 			<File
+				RelativePath="..\..\common\hippo\hippo-canvas-url-link.c">
+			</File>
+			<File
 				RelativePath="..\..\common\hippo\hippo-chat-room.c">
 			</File>
 			<File
@@ -370,6 +373,9 @@
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\generated\hippo-canvas-type-builtins.h">
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-canvas-url-link.h">
 			</File>
 			<File
 				RelativePath="..\..\common\canvas\hippo\hippo-canvas-widgets.h">
