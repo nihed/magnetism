@@ -327,7 +327,7 @@ hippo_canvas_block_get_property(GObject         *object,
 #define NORMAL_GRADIENT_START 0xf3f3f3ff
 #define NORMAL_GRADIENT_END   0xdededeff
 #define PRELIGHT_GRADIENT_START 0xffffe7ff
-#define PRELIGHT_GRADIENT_END 0xffffebff
+#define PRELIGHT_GRADIENT_END 0xffffbbff
 
 static GObject*
 hippo_canvas_block_constructor (GType                  type,
@@ -593,33 +593,33 @@ update_expand_pointer(HippoCanvasBlock *canvas_block,
         expandable = !canvas_block->expanded;
         closeable = canvas_block->expanded;
     }
-    
-    if (expandable || closeable) {
+
+    if (new_position && (expandable || closeable)) {
         int parent_x, parent_y;
         int x, y;
-            
+        
+        hippo_canvas_box_get_position(box, canvas_block->background_gradient,
+                                      &parent_x, &parent_y);
+        x = parent_x + event_x - 2;
+        y = parent_y + event_y - 2;
+        
+        hippo_canvas_box_move(HIPPO_CANVAS_BOX(canvas_block->background_gradient),
+                              canvas_block->expand_pointer,
+                              HIPPO_GRAVITY_SOUTH_EAST,
+                              x, y);
+        hippo_canvas_box_move(HIPPO_CANVAS_BOX(canvas_block->background_gradient),
+                              canvas_block->unexpand_pointer,
+                              HIPPO_GRAVITY_SOUTH_EAST,
+                              x, y);
+    }
+    
+    if (box->hovering && !canvas_block->hushed && canvas_block->expandable) {
         g_object_set(G_OBJECT(canvas_block->background_gradient),
                      "start-color", PRELIGHT_GRADIENT_START,
                      "end-color", PRELIGHT_GRADIENT_END,
                      "tooltip",
                      expandable ? "Click to show more" : "Click to show less",
                      NULL);
-
-        if (new_position) {
-            hippo_canvas_box_get_position(box, canvas_block->background_gradient,
-                                          &parent_x, &parent_y);
-            x = parent_x + event_x - 2;
-            y = parent_y + event_y - 2;
-            
-            hippo_canvas_box_move(HIPPO_CANVAS_BOX(canvas_block->background_gradient),
-                                  canvas_block->expand_pointer,
-                                  HIPPO_GRAVITY_SOUTH_EAST,
-                                  x, y);
-            hippo_canvas_box_move(HIPPO_CANVAS_BOX(canvas_block->background_gradient),
-                                  canvas_block->unexpand_pointer,
-                                  HIPPO_GRAVITY_SOUTH_EAST,
-                                  x, y);
-        }
     } else {
         g_object_set(G_OBJECT(canvas_block->background_gradient),
                      "start-color", NORMAL_GRADIENT_START,
