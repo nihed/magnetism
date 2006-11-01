@@ -14,12 +14,14 @@ import errno
 original_files = {}
 
 ## Modules that should be bundled, with all deps inlined, into a
-## single file. Right now the implementation is dumb and the bundles
-## can't overlap.
-## A future elaboration might be that if stuff in this list shares
-## dependencies, the first bundle in the list will inline the dep, and
-## the second bundle will have to load the first bundle
-bundle_modules = [ 'dh.site' ]
+## single file.
+## If stuff in this list shares dependencies, the first bundle in the
+## list will inline the dep, and the second bundle will have to load
+## the first bundle. So the less-widely-used modules should be later in the
+## list.
+## Look at the generated target/javascript/file-dependencies.txt for modules
+## that drag in a long list of separate files. That file reflects bundling.
+bundle_modules = [ 'dh.site', 'dh.model', 'dh.accountpage', 'dh.share', 'dh.sharelink', 'dh.statistics'  ]
 
 ## Map from module names to OriginalFile objects
 providers = {}
@@ -304,7 +306,7 @@ class OriginalFile:
         self._provides = None
         self._requires = None
         self._find_provides_requires()
-        self._bundlers = [] # modules that want to bundle us inline
+        self._bundler = None # module that wants to bundle us inline
         self._bundles_its_requires = 0
 
         self._ordered_provides = None
@@ -403,13 +405,13 @@ class OriginalFile:
 
     def get_dest_file(self):
         if not self._dest_file:
-            for b in self._bundlers:
-                d = b.get_dest_file()
+            if self._bundler:
+                d = self._bundler.get_dest_file()
                 if d:
                     self._dest_file = d
-                    break
+
         if not self._dest_file:
-            print "%s has no destination file and none of its bundlers do either" % (self)
+            print "%s has no destination file and its bundler doesn't either" % (self)
             sys.exit(1)
         return self._dest_file
 
@@ -451,34 +453,51 @@ class OriginalFile:
                 ## a new one on demand
                 self._ordered_requires = None
             
-    def get_bundlers(self):
-        return self._bundlers
-
-    def get_multiply_bundled(self):
-        return len(self._bundlers) > 1
+    def get_bundler(self):
+        if self._bundler:
+            return self._bundler
+        else:
+            return self
 
     def get_bundled(self):
-        return len(self._bundlers) > 0
+        return self._bundler != None
+
+    def get_may_contain_bundled_files(self):
+        return self.get_bundled() or self.get_bundles_its_requires()
 
     def _add_bundler(self, bundler):
         if self == bundler:
             print "Circular bundling of %s, file %s" % (self.get_provides(), self.get_path())
             sys.exit(1)
-        if bundler not in self._bundlers:
-            self._bundlers.append(bundler)
-            self._mark_requires_bundled(bundler)
+        if bundler == self._bundler:
+            return
+        if self._bundler:
+            print "Multiple bundling of %s by %s and %s" % (self, self._bundler, bundler)
+            sys.exit(1)
 
-    def _mark_requires_bundled(self, bundler):
+        self._bundler = bundler
+        self._mark_requires_bundled_by(bundler)
+
+    def _mark_requires_bundled_by(self, bundler):
         for m in self._requires:
             orig = providers[m]
-            orig._add_bundler(bundler)
+            if orig.get_bundles_its_requires():
+                print "%s already bundles its requirements, so not bundling into %s" % (orig, bundler)
+            elif orig.get_bundled():
+                if orig.get_bundler() != bundler:
+                    ## print "%s already bundled into %s, so not bundling into %s" % (orig, orig._bundler, bundler)
+                    pass
+                else:
+                    pass ## this happens when a bundle requires A and B that each require C
+            else:
+                orig._add_bundler(bundler)
 
     def get_bundles_its_requires(self):
         return self._bundles_its_requires
 
     def mark_bundles_its_requires(self):
         self._bundles_its_requires = 1
-        self._mark_requires_bundled(self)
+        self._mark_requires_bundled_by(self)
 
     def _module_to_filename(self, module_name):
         return module_name.replace(".", "/") + ".js"
@@ -524,12 +543,10 @@ class OriginalFile:
             return
         already[self] = 1
 
-        inline_all = self.get_bundles_its_requires() or self.get_bundled()
-
-        if inline_all:
+        if self.get_may_contain_bundled_files():
             for r in self.get_all_requires():
                 orig = providers[r]
-                if not already.has_key(orig):
+                if not already.has_key(orig) and orig.get_bundler() == self.get_bundler():
                     orig.write(out, already, indent)
 
         ## Assert that our direct dependencies have been loaded
@@ -663,12 +680,11 @@ class DestFile:
             else:
                 provider_map[p] = self
         
-        inline_all = orig.get_bundles_its_requires() or orig.get_bundled()
-
-        if inline_all:
+        if orig.get_may_contain_bundled_files():
             for r in orig.get_all_requires():
                 orig_r = providers[r]
-                self._add_orig_to_provider_map(provider_map, orig_r, already)
+                if orig_r.get_bundler() == orig.get_bundler():
+                    self._add_orig_to_provider_map(provider_map, orig_r, already)
         
     def add_self_to_provider_map(self, provider_map):
         if self._orig.get_bundled():
@@ -756,15 +772,12 @@ def main():
 
     ## Check for anything that gets bundled twice or both bundles and is bundled
     for (module_name, orig) in providers.items():
-        if orig.get_multiply_bundled():
-            print "%s bundled into multiple modules %s" % (orig.get_provides(), orig.get_bundlers())
-            sys.exit(1)
         if orig.get_bundles_its_requires() and orig.get_bundled():
             print "%s is both a bundl-er and a bundl-ee" % (orig)
             sys.exit(1)
 
         #if orig.get_bundled():
-        #    print "%s provided by %s bundled into %s" % (module_name, orig.get_path(), orig.get_bundlers())
+        #    print "%s provided by %s bundled into %s" % (module_name, orig.get_path(), orig.get_bundler())
 
     ## Now compute the destination files
     bundled_count = 0
@@ -786,10 +799,10 @@ def main():
 
     for p in providers.keys():
         if not dest_providers.has_key(p):
-            print "Module %s in source file %s is not provided by any dest file, is bundled into %s has dest file %s" % (p, providers[p], providers[p].get_bundlers(), providers[p].get_dest_file())
+            print "Module %s in source file %s is not provided by any dest file, is bundled into %s has dest file %s" % (p, providers[p], providers[p].get_bundler(), providers[p].get_dest_file())
             sys.exit(1)
             
-    print "%d files to be inlined" % bundled_count
+    print "%d files to be bundled inline" % bundled_count
 
     deps_out = open(os.path.join(destdir, "file-dependencies.txt"), "w")
     provides_out = open(os.path.join(destdir, "module-file-map.txt"), "w")

@@ -74,11 +74,15 @@ public final class JavascriptResolver {
 				return;
 			}
 			
-			// The first time we include anything, include the global requirements
-			if (filesUsed.isEmpty())
-				htmlWriter.write(globalRequires);
-			
+			boolean first = filesUsed.isEmpty();
+
 			filesUsed.add(filename);
+			
+			// The first time we include anything, include the global requirements
+			if (first) {
+				htmlWriter.write(globalRequires);
+				includeModule("common", htmlWriter);
+			}
 			
 			List<String> dependencies = fileDependencies.get(filename);
 			if (dependencies == null) {
