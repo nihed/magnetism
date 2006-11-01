@@ -327,8 +327,17 @@ fi
 # if the firefox-devel RPM is installed, set paths from that
 if test \( x"$GECKO_IDLDIR" = x -o "x$GECKO_INCLUDEDIR" = x -o "x$XPIDL" = x \) -a -x /bin/rpm ; then
    AC_MSG_CHECKING([for Gecko SDK via the firefox-devel package])
-   FIREFOX_VERSION="`/bin/rpm -q --qf %{version} firefox-devel`"
+   FIREFOX_VERSION="`/bin/rpm -q --qf '%{version} ' firefox-devel`"
    if  test $? = 0 ; then
+       # In multi-arch situations, there might be multiple versions of firefox-devel
+       # installed; we assume it doesn't matter which one we find; ideally we'd
+       # like to find the one that matches the architecture we are building for
+       # but that's hard to do, and what we use shouldn't be dependent on
+       # architecture or exact version. The only problem would be if the two versions 
+       # are for wildly different versions of firefox.
+       #
+       FIREFOX_VERSION=`(set $FIREFOX_VERSION && echo $1)`
+
        AC_MSG_RESULT([yes])
        if test x"$GECKO_IDLDIR" = x ; then
            GECKO_IDLDIR=/usr/share/idl/firefox-$FIREFOX_VERSION
@@ -337,7 +346,13 @@ if test \( x"$GECKO_IDLDIR" = x -o "x$GECKO_INCLUDEDIR" = x -o "x$XPIDL" = x \) 
            GECKO_INCLUDEDIR=/usr/include/firefox-$FIREFOX_VERSION
        fi
        if test x"$XPIDL" = x ; then
-           XPIDL=/usr/lib/firefox-$FIREFOX_VERSION/xpidl
+           if test -x /usr/lib/firefox-$FIREFOX_VERSION/xpidl ; then
+               XPIDL=/usr/lib/firefox-$FIREFOX_VERSION/xpidl
+	   elif test -x /usr/lib64/firefox-$FIREFOX_VERSION/xpidl ; then
+               XPIDL=/usr/lib64/firefox-$FIREFOX_VERSION/xpidl
+	   else
+	       AC_MSG_WARN([Found firefox-devel RPM, but couldn't find xpidl binary])
+           fi
        fi
    else
        AC_MSG_RESULT([no])
