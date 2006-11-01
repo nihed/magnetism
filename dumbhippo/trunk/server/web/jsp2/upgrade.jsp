@@ -41,7 +41,7 @@
 		</c:when>
 		<c:otherwise>
 			<%-- WINDOWS RELEASE NOTES GO HERE --%>
-			<p>Version 1.1.74</p>
+			<p>Version 1.1.75</p>
 			<ul>
 				<li>A better way to expand and collapse blocks.</li>			
 				<li>Bug fixes.</li>
