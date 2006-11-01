@@ -41,7 +41,7 @@
 	<dht:siteStyle/>
 	<dht:faviconIncludes/>
 	<dht:scriptIncludes/>
-	<dh:script src="dh/groups.js"/>	
+	<dh:script module="dh.groups"/>	
 </head>
 <dht:twoColumnPage>
     <c:if test="${!empty who}">

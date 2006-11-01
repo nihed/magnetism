@@ -25,7 +25,7 @@
 	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/group.css"/>
 	<dht:faviconIncludes/>
 	<dht:scriptIncludes>
-		<dh:script src="dh/groupinvitation.js"/>
+		<dh:script module="dh.groupinvitation"/>
 	</dht:scriptIncludes>
 	<dht:embedObject/>
 	<script type="text/javascript">

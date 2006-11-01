@@ -13,9 +13,7 @@
 <head>
 	<title>Admin Console</title>
 	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/admin.css"/>	
-	<dht:scriptIncludes>
-		<dh:script src="dh/admin.js"/>
-	</dht:scriptIncludes>
+	<dh:script module="dh.admin"/>
 </head>
 <dht:body>
 

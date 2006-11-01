@@ -11,7 +11,7 @@
 	<dht3:stylesheet name="main"/>
 	<dht:scriptIncludes/>
 	<dht:faviconIncludes/>
-	<dh:script src="dh/main.js"/>
+	<dh:script module="dh.main"/>
 	<script type="text/javascript">
 		dojo.event.connect(dojo, "loaded", dj_global, "dhMainInit");
 	</script>

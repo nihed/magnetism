@@ -12,7 +12,7 @@
     <link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/landing.css"/>	
 	<dht:faviconIncludes/>
 	<dht:scriptIncludes>
-		<dh:script src="dh/download.js"/>
+		<dh:script module="dh.download"/>
 	</dht:scriptIncludes>
 </head>
 <%-- TODO: could get a more appropriate header, but Sign Up works too. --%>

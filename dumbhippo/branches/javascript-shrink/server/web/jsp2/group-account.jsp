@@ -22,7 +22,7 @@
 	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/group-account.css"/>
 	<dht:faviconIncludes/>
 	<dht:scriptIncludes>
-		<dh:script src="dh/groupaccount.js"/>
+		<dh:script module="dh.groupaccount"/>
 	</dht:scriptIncludes>
 	<script type="text/javascript">
 		dh.formtable.currentValues = {

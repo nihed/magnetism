@@ -9,7 +9,7 @@
 	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/site.css"/>
 	<dht:faviconIncludes/>
 	<dht:scriptIncludes>
-		<dh:script src="dh/stacker.js"/>
+		<dh:script module="dh.stacker"/>
 	</dht:scriptIncludes>
 	<style type="text/css">
 		body {

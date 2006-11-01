@@ -14,9 +14,7 @@
 <head>
         <title>Now Playing Theme '<c:out value="${nowplaying.theme.name}"/></title>
         <dht:stylesheets />
-		<dht:scriptIncludes>
-			<dh:script src="dh/nowplaying.js"/>
-		</dht:scriptIncludes>
+		<dh:script module="dh.nowplaying"/>
 </head>
 <dht:bodyWithAds>
 	<dht:mainArea>

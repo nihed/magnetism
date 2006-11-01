@@ -1,7 +1,7 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="/jsp/dumbhippo.tld" prefix="dh" %>
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
-<dht:script src="dh/artist.js"/>
+<dht:script module="dh.artist"/>
 
 <%@ attribute name="post" required="true" type="com.dumbhippo.server.views.PostView"%>
 

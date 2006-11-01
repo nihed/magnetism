@@ -25,7 +25,7 @@
 	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/account.css">
 	<dht:faviconIncludes/>
 	<dht:scriptIncludes>
-		<dh:script src="dh/account.js"/>
+		<dh:script module="dh.account"/>
 	</dht:scriptIncludes>
 	<script type="text/javascript">
 		dh.formtable.currentValues = {

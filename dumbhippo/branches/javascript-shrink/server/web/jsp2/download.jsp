@@ -27,7 +27,7 @@
 	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/download.css"/>
 	<dht:faviconIncludes/>
 	<dht:scriptIncludes>
-		<dh:script src="dh/download.js"/>
+		<dh:script module="dh.download"/>
 	</dht:scriptIncludes>
 	<script type="text/javascript">
 		dh.download.needTermsOfUse = ${signin.needsTermsOfUse}
