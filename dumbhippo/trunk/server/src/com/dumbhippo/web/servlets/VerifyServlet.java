@@ -19,7 +19,6 @@ import com.dumbhippo.persistence.ResourceClaimToken;
 import com.dumbhippo.persistence.ToggleNoMailToken;
 import com.dumbhippo.persistence.Token;
 import com.dumbhippo.persistence.User;
-import com.dumbhippo.server.Character;
 import com.dumbhippo.server.ClaimVerifier;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HippoProperty;

@@ -3,7 +3,6 @@ package com.dumbhippo.web.pages;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
-import com.dumbhippo.server.Character;
 import com.dumbhippo.server.InvitationSystem;
 import com.dumbhippo.server.PromotionCode;
 import com.dumbhippo.web.WebEJBUtil;
