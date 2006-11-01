@@ -9,7 +9,7 @@
 
 <c:choose>
 	<c:when test="${dh:myInstanceOf(who, 'com.dumbhippo.server.views.PersonView')}">
-		<a class="dh-underlined-link" href="/person?who=${who.viewPersonPageId}"><c:choose><c:when test="${imageOnly}"><dh:png src="${who.photoUrl30}" style="width: 30px; height: 30px"/></c:when><c:otherwise><c:out value="${who.name}"/><c:if test="${onlineIcon}"> <dht3:presenceIcon who="${who}"/></c:if></c:otherwise></c:choose></a>
+	    <c:if test="${!empty who.homeUrl}"><a class="dh-underlined-link" href="${who.homeUrl}"></c:if><c:choose><c:when test="${imageOnly}"><dh:png src="${who.photoUrl30}" style="width: 30px; height: 30px"/></c:when><c:otherwise><c:out value="${who.name}"/><c:if test="${onlineIcon}"> <dht3:presenceIcon who="${who}"/></c:if></c:otherwise></c:choose><c:if test="${!empty who.homeUrl}"></a></c:if>    
 	</c:when>
 	<c:when test="${dh:myInstanceOf(who, 'com.dumbhippo.server.views.GroupView') || dh:myInstanceOf(who, 'com.dumbhippo.server.views.FeedView')}">
 		<a class="dh-underlined-link" href="${who.homeUrl}"><c:choose><c:when test="${imageOnly}"><dh:png src="${who.photoUrl30}" style="width: 30px; height: 30px"/></c:when><c:otherwise><c:out value="${who.name}"/></c:otherwise></c:choose></a>
