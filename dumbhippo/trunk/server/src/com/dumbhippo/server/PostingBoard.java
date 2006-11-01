@@ -315,4 +315,13 @@ public interface PostingBoard {
 	 * @param lastLogoutDate date the user was last logged in, or %null
 	 */
 	public void sendBacklog(User user, Date lastLogoutDate);	
+	
+	/**
+	 * Sets the disabled status on the post. Can be used from the admin console
+	 * to disable posts.
+	 * 
+	 * @param post
+	 * @param disabled
+	 */
+	public void setPostDisabled(Post post, boolean disabled);
 }

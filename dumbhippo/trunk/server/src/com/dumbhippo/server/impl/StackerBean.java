@@ -755,6 +755,16 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		updateMusicPersonPublicity(account);
 	}
 	
+	public void onPostDisabledToggled(Post post) {
+		Block block;
+		try {
+			block = queryBlock(BlockType.POST, post.getGuid(), null, -1);
+		} catch (NotFoundException e) {
+			return;
+		}
+		block.setPublicBlock(post.isPublic() && !post.isDisabled());
+	}
+	
 	// don't create or suspend transaction; we will manage our own for now (FIXME) 
 	@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 	public void stackMusicPerson(final Guid userId, final long activity) {

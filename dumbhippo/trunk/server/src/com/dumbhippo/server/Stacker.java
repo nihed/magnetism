@@ -42,6 +42,7 @@ public interface Stacker {
 	public void onAccountDisabledToggled(Account account);
 	public void onAccountAdminDisabledToggled(Account account);
 	public void onMusicSharingToggled(Account account);
+	public void onPostDisabledToggled(Post post);
 	
 	// These methods are used when activity should cause the timestamp of a block to change. 
 	// They are per block type. 

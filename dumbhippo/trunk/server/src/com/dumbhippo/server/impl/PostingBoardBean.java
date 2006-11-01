@@ -764,7 +764,7 @@ public class PostingBoardBean implements PostingBoard {
 	 * @return true if post is visible, false otherwise
 	 */
 	public boolean canViewPost(UserViewpoint viewpoint, Post post) {
-		if (post.getDisabled()) {
+		if (post.isDisabled()) {
 			return false;
 		}
 		
@@ -1435,5 +1435,13 @@ public class PostingBoardBean implements PostingBoard {
 		ListIterator<Post> i = posts.listIterator(posts.size());
 		while (i.hasPrevious())
 			xmppMessageSender.sendNewPostMessage(user, i.previous());
+	}
+	
+	public void setPostDisabled(Post post, boolean disabled) {
+		if (post.isDisabled() != disabled) {
+			post.setDisabled(disabled);
+			logger.debug("Disabled flag toggled to {} on post {}", disabled, post);
+			stacker.onPostDisabledToggled(post);
+		}   
 	}
 }

@@ -118,10 +118,12 @@ public class Post extends GuidPersistable {
 	}
 	
 	@Column(nullable=false)
-	public boolean getDisabled() {
+	public boolean isDisabled() {
 		return disabled;
 	}
 
+	// do not use this directly from the admin console, use setPostDisabled()
+	// in the PostingBoardBean
 	public void setDisabled(boolean disabled) {
 		this.disabled = disabled;
 	}	
