@@ -1,7 +1,7 @@
 dojo.provide("dojo.widget.Button");
 dojo.require("dojo.widget.Widget");
 
-dojo.requireIf("html", "dojo.widget.html.Button");
+dojo.require("dojo.widget.html.Button"); // hacked so jscompress can parse it
 
 dojo.widget.tags.addParseTreeHandler("dojo:button");
 

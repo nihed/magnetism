@@ -9,8 +9,7 @@
 <head>
 	<title>Sharing a Link</title>
 	<dht:stylesheets href="sharelink.css" iehref="sharelink-iefixes.css" />
-	<dh:script module="dh.share"/>
-	<dh:script module="dh.sharelink"/>
+	<dh:script modules="dh.share,dh.sharelink"/>
 </head>
 <body scroll="no">
 <dht:shareOuterContainer>

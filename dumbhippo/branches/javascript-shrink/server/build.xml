@@ -150,7 +150,7 @@
 	</target>
 
 	<target name="javascript-compress" depends="init">
-		<exec executable="${basedir}/jscompress">
+		<exec executable="${basedir}/jscompress" failonerror="true">
 			<arg line="${web}/javascript/dh ${web}/javascript/common.js ${web}/javascript/dojo/src ${build.javascript}"/>
 		</exec>
 	</target>
@@ -225,7 +225,7 @@
 		</copy>
 		
 		<!-- create build stamp for web -->
-		<exec executable="/bin/date" output="${build.deploy.war}/com/dumbhippo/web/servlets/buildstamp.properties">
+		<exec executable="/bin/date" output="${build.deploy.war}/com/dumbhippo/web/servlets/buildstamp.properties" failonerror="true">
 			<arg line="+dumbhippo.server.buildstamp=%s"/>
 		</exec>
 	</target>		
@@ -279,10 +279,10 @@
 		</touch>
 		<!-- the touch task touches everything in a dir if you touch the dir, which is not desired,
 		 	 so bail out and use exec -->
-		<exec executable="touch">
+		<exec executable="touch" failonerror="true">
 			<arg value="${build.deploy.ear}/META-INF"/>
 		</exec>
-		<exec executable="touch">
+		<exec executable="touch" failonerror="true">
 			<arg value="${build.deploy.ear}"/>
 		</exec>		
 	</target>

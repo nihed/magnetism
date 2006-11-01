@@ -21,7 +21,7 @@ original_files = {}
 ## list.
 ## Look at the generated target/javascript/file-dependencies.txt for modules
 ## that drag in a long list of separate files. That file reflects bundling.
-bundle_modules = [ 'common', 'dh.site', 'dh.model', 'dh.accountpage', 'dh.share', 'dh.sharelink', 'dh.statistics'  ]
+bundle_modules = [ 'common', 'dh.site', 'dh.model', 'dh.accountpage', 'dh.share', 'dh.sharelink', 'dh.statistics.*'  ]
 
 ## Map from module names to OriginalFile objects
 providers = {}
@@ -61,8 +61,42 @@ dojo_add_provides = [ ('/dojo/src/uri/Uri.js', [ 'dojo.uri' ]),
 
 ## These modules, when loaded, replace the object created by dojo.provide() with their own
 ## module object. We have to work around this by saving/restoring the object fields
-## we care about.
-dojo_replaces_module_object = [ "dojo.uri", "dojo.uri.Uri", "dojo.event", "dojo.event.topic", "dojo.event.browser" ]
+## we care about. Our module system doesn't really work the same way as dojo's ; dojo's
+## setup is required if you want modules and objects to be able to have the same name
+## since then modules need to be constructors and not hashes
+dojo_replaces_module_object = [ "dojo.uri", "dojo.uri.Uri", "dojo.event",
+                                "dojo.animation", "dojo.animation.Animation", "dojo.animation.Timer", "dojo.collections.ArrayList",
+                                "dojo.collections.BinaryTree", "dojo.collections.ByteArray", "dojo.collections.Dictionary",
+                                "dojo.collections.Graph", "dojo.collections.List", "dojo.collections.Queue",
+                                "dojo.collections.Set", "dojo.collections.SkipList", "dojo.collections.SortedList",
+                                "dojo.collections.Stack",
+                                "dojo.crypto.MD5", "dojo.dnd.HtmlDragManager", "dojo.dnd.Sortable", "dojo.event.browser",
+                                "dojo.event.topic", "dojo.graphics.htmlEffects", "dojo.logging.Logger", "dojo.math.curves",
+                                "dojo.math.points", "dojo.string.Builder", "dojo.text.Builder", "dojo.undo.Manager",
+                                "dojo.webui.DomWidget", "dojo.webui.HtmlWidget", "dojo.webui.SvgWidget", "dojo.webui.Widget",
+                                "dojo.widget.Button", "dojo.widget.ComboBox", "dojo.widget.ContextMenu",
+                                "dojo.widget.DatePicker",
+                                "dojo.widget.DomWidget", "dojo.widget.HtmlCheckbox", "dojo.widget.HtmlColorPalette",
+                                "dojo.widget.HtmlComboBox",
+                                "dojo.widget.HtmlContextMenu", "dojo.widget.HtmlDatePicker", "dojo.widget.HtmlFisheyeList",
+                                "dojo.widget.HtmlFloatingPane",
+                                "dojo.widget.HtmlInlineEditBox", "dojo.widget.HtmlLayoutPane", "dojo.widget.HtmlResizableTextarea",
+                                "dojo.widget.HtmlRichText",
+                                "dojo.widget.HtmlSlideShow", 
+                                "dojo.widget.HtmlSplitPane", "dojo.widget.HtmlTabs", "dojo.widget.HtmlTimePicker",
+                                "dojo.widget.HtmlWidget",
+                                "dojo.widget.html.Button",
+                                "dojo.widget.MenuItem", "dojo.widget.Menu", "dojo.widget.Parse", "dojo.widget.PopUpButton",
+                                "dojo.widget.SvgButton", "dojo.widget.SvgWidget", "dojo.widget.TimePicker", "dojo.widget.Widget",
+                                "dojo.widget.tags",
+                                "dojo.xml.domUtil",
+                                "dojo.xml.htmlUtil",
+                                "dojo.xml.Parse",
+                                "dojo.xml.svgUtil" ]
+
+dojo_replaces_module_object_hash = {}
+for d in dojo_replaces_module_object:
+    dojo_replaces_module_object_hash[d] = 1
 
 def skip_src_path(fullpath):
     for s in skip_suffixes:
@@ -265,7 +299,7 @@ def pre_fixup_when_dojo_replaces_module_object(out, indent, module):
 ## Write stuff at end of _load() to fix the problem if dojo assigned
 ## something undesirable to module
 def post_fixup_when_dojo_replaces_module_object(out, indent, module):
-    if module not in dojo_replaces_module_object:
+    if not  dojo_replaces_module_object_hash.has_key(module):
         print "Should not have been called"
         sys.exit(1)
 
@@ -276,7 +310,7 @@ def post_fixup_when_dojo_replaces_module_object(out, indent, module):
     write_check_has_type(out, indent, module, "_load", "undefined")
 
     ## add our stuff back to the new object
-    write_line(out, indent, "// fix %s again after dojo's handiwork" % module)
+    write_line(out, indent, "// fix %s again after dojo's change" % module)
     write_line(out, indent, "%s._loaded = true;" % module);
     write_line(out, indent, "%s._parsed = true;" % module);
     write_line(out, indent, "%s._load = %s;" % (module, global_load_symbol(module)))
@@ -361,6 +395,27 @@ class OriginalFile:
                     ## since usually we're adding a.b when the file
                     ## also provides a.b.c
                     self._provides[p] = -1
+
+        ## now require all parent modules of our provides, many
+        ## modules in dojo don't seem to do this explicitly.
+        ## if we provide both a.b and a.b.c then this may
+        ## try to require something we provide ourselves, so we check
+        ## for and avoid that situation.
+        for p in self._provides.keys():
+            elems = p.split(".")
+            sofar = ""
+            for e in elems:
+                if sofar == "":
+                     ## don't require the root modules; nothing
+                     ## even provides 'dojo' and it's hard to fix
+                    sofar = e
+                else:
+                    sofar = sofar + "." + e
+                    if sofar != p and not \
+                           self._requires.has_key(sofar) and not \
+                           self._provides.has_key(sofar):
+                        ## -1 is a line number before any real ones
+                        self._requires[sofar] = -1
 
     def _find_provides_requires_package(self):
         in_conditional_load = 0
@@ -471,7 +526,7 @@ class OriginalFile:
 
     def _add_bundler(self, bundler):
         if self == bundler:
-            print "Circular bundling of %s, file %s" % (self.get_provides(), self.get_path())
+            print "Circular bundling of %s" % (self)
             sys.exit(1)
         if bundler == self._bundler:
             return
@@ -480,13 +535,17 @@ class OriginalFile:
             sys.exit(1)
 
         self._bundler = bundler
+        ##print "Marking requires of %s as bundled by %s" % (self, bundler)
         self._mark_requires_bundled_by(bundler)
 
     def _mark_requires_bundled_by(self, bundler):
         for m in self._requires:
             orig = providers[m]
             if orig.get_bundles_its_requires():
-                print "%s already bundles its requirements, so not bundling into %s" % (orig, bundler)
+                print "%s providing %s already bundles its requirements, so not bundling into %s" % (orig.get_path(), m, bundler.get_path())
+                if orig == bundler:
+                    print "file %s somehow requires itself" % bundler
+                    sys.exit(1)
             elif orig.get_bundled():
                 if orig.get_bundler() != bundler:
                     ## print "%s already bundled into %s, so not bundling into %s" % (orig, orig._bundler, bundler)
@@ -586,14 +645,14 @@ class OriginalFile:
                 write_line(out, indent + 4, "%s._load();" % r)
 
             for p in self.get_all_provides():
-                if p in dojo_replaces_module_object:
+                if dojo_replaces_module_object_hash.has_key(p):
                     pre_fixup_when_dojo_replaces_module_object(out, indent + 4, p)
 
             self.write_all_lines(out, indent + 4);
 
             for p in self.get_all_provides():
                 ## fixup dojo interference
-                if p in dojo_replaces_module_object:
+                if dojo_replaces_module_object_hash.has_key(p):
                     post_fixup_when_dojo_replaces_module_object(out, indent + 4, p)
 
                 ## check sanity
@@ -609,7 +668,7 @@ class OriginalFile:
                 if p != master_module:
                     write_line(out, indent, "%s._load = %s._load;" % (p, master_module))
 
-                if p in dojo_replaces_module_object:
+                if dojo_replaces_module_object_hash.has_key(p):
                     write_line(out, indent, "// save by another name so we can restore it post-dojo-mangle")
                     write_line(out, indent, "%s = %s._load;" % (global_load_symbol(p), master_module))
 
