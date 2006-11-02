@@ -14,4 +14,5 @@
 		<jsp:doBody/>
 	</div>
 	<dht:footer/>
+	<dht3:analytics/>
 </body>

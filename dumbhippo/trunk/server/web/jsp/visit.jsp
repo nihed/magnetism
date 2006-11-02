@@ -3,6 +3,7 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="dumbhippo.tld" prefix="dh" %>
 <%@ taglib tagdir="/WEB-INF/tags" prefix="dht" %>
+<%@ taglib tagdir="/WEB-INF/tags/3" prefix="dht3" %>
 
 <dh:bean id="framer" class="com.dumbhippo.web.pages.FramerPage" scope="request"/>
 <jsp:setProperty name="framer" property="postId" param="post"/>
@@ -52,5 +53,6 @@
     <dht:stylesheets />
 </head>
 <body onload="dhInit()">
+<dht3:analytics/>
 </body>
 </html>

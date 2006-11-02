@@ -36,7 +36,7 @@
 		dumbhippo.server.downloadurl.fedora5=@@clientFedora5Download@@
 		dumbhippo.server.downloadurl.fedora5.srpm=@@clientFedora5DownloadSRPM@@
 		dumbhippo.server.downloadurl.fedora6=@@clientFedora6Download@@
-		dumbhippo.server.downloadurl.fedora6.srpm=@@clientFedora6DownloadSRPM@@				
+		dumbhippo.server.downloadurl.fedora6.srpm=@@clientFedora6DownloadSRPM@@
 		dumbhippo.server.downloadurl.linux.tar=@@clientLinuxDownloadTar@@
 		dumbhippo.server.amazon.accesskeyid=@@amazonAccessKeyId@@
 		dumbhippo.server.amazon.associatetag=@@amazonAssociateTag@@
@@ -45,8 +45,9 @@
 		dumbhippo.server.ebay.appid=@@ebayAppId@@
 		dumbhippo.server.ebay.certid=@@ebayCertId@@
 		dumbhippo.server.flickr.apiid=@@flickrApiId@@
-		dumbhippo.server.facebook.apikey=@@facebookApiKey@@		
-		dumbhippo.server.facebook.secret=@@facebookSecret@@	
+		dumbhippo.server.facebook.apikey=@@facebookApiKey@@
+		dumbhippo.server.facebook.secret=@@facebookSecret@@
+        dumbhippo.server.googleanalytics.key=@@googleAnalyticsKey@@
 		dumbhippo.server.adminconsole.enable=@@adminConsole@@
 		dumbhippo.server.newfeatures = @@newFeatures@@
 		dumbhippo.server.stealthmode=@@stealthMode@@
@@ -54,7 +55,7 @@
 		dumbhippo.server.userupdateinterval=@@userUpdateInterval@@
 		dumbhippo.server.summitgroupguid=@@summitGroupGuid@@
 		dumbhippo.server.newuserinvitationcount=@@newUserInvitationCount@@
-		dumbhippo.server.specialnewuserinvitationcount=@@specialNewUserInvitationCount@@		
+		dumbhippo.server.specialnewuserinvitationcount=@@specialNewUserInvitationCount@@
     </attribute>
   </mbean>
   

@@ -39,7 +39,8 @@ public enum HippoProperty {
 	FLICKR_API_ID("dumbhippo.server.flickr.apiid", null),
 	FACEBOOK_API_KEY("dumbhippo.server.facebook.apikey", null),
 	FACEBOOK_SECRET("dumbhippo.server.facebook.secret", null),	
-	BIND_HOST("dumbhippo.server.bind.host", null);
+	BIND_HOST("dumbhippo.server.bind.host", null), 
+	GOOGLE_ANALYTICS_KEY("dumbhippo.server.googleanalytics.key", "");
 	
 	private String key;
 	private String def;

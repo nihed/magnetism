@@ -73,6 +73,7 @@ public class RewriteServlet extends HttpServlet {
 	private Map<String, Integer> jspPages;
 	private Set<String> htmlPages;
 	private String buildStamp;
+	private String googleAnalyticsKey;
 	
 	private List<String> psaLinks; // used to choose a random one
 	private int nextPsa;
@@ -691,6 +692,7 @@ public class RewriteServlet extends HttpServlet {
         // Store the server's base URL for reference from JSP pages
         String baseUrl = configuration.getPropertyFatalIfUnset(HippoProperty.BASEURL);
         getServletContext().setAttribute("baseUrl", baseUrl);
+        getServletContext().setAttribute("googleAnalyticsKey", configuration.getPropertyFatalIfUnset(HippoProperty.GOOGLE_ANALYTICS_KEY));        
 	}
 	
 	@Override
