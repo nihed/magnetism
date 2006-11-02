@@ -9,12 +9,8 @@
 <c:set var="dhNameEntryCount" value="${dhNameEntryCount + 1}" scope="request"/>
 <c:set var="N" value="${dhNameEntryCount}" scope="page"/>
 
-<script type="text/javascript">
-	// we aren't using this anymore I'm pretty sure, so the "d" 
-	// are deleted to get it out of search results for _ojo.require
-    //ojo.require("dojo.widget.HtmlInlineEditBox");
-    //ojo.require("dojo.event.*");
-    
+<dh:script modules="dh.actions,dojo.event.*,dojo.widget.HtmlInlineEditBox"/>
+<script type="text/javascript">    
 	function dhNameEntryInit${N}() {
 		var entry = dojo.widget.manager.getWidgetById("dhNameEntry${N}");
 		entry.dhOnSaveHandler = dh.actions.renamePersonHandler;

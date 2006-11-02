@@ -30,10 +30,12 @@
 				<div class="dh-notification">
 					<c:choose>
 						<c:when test="${group.member}">
+							<dh:script module="dh.actions"/>
 							<div>You were invited to this group, but may <a href="javascript:dh.actions.leaveGroup('${group.viewedGroupId}')">Leave</a>
 								at any time.</div>
 						</c:when>
 						<c:when test="${group.follower}">
+							<dh:script module="dh.actions"/>
 							<div>You were invited to follow this group, but may <a href="javascript:dh.actions.leaveGroup('${group.viewedGroupId}')">stop following it</a>
 								at any time.</div>
 						</c:when>

@@ -24,6 +24,7 @@
 				<c:choose>
 					<c:when test="${dh:enumIs(block.status, 'FOLLOWER')}">
 						<img src="/images2/${buildStamp}/add.png"/>	
+						<dh:script module="dh.actions"/>
 						<dht:asyncActionLink 
 							tagName="span"
 							exec="dh.actions.addMember('${block.groupView.group.id}', '${block.memberView.user.id}', function () { dh.asyncActionLink.complete('addMember${block.groupView.group.id}${block.memberView.user.id}') })"

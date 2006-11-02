@@ -197,10 +197,12 @@
 					<dht:formTableRow label="Music Sharing">
 					<c:choose>
 					<c:when test="${signin.musicSharingEnabled}">
+						<dh:script module="dh.actions"/>
 						<input type="radio" id="dhMusicOn" name="dhMusicEmbedEnabled" checked="true" onclick="dh.actions.setMusicSharingEnabled(true);"> <label for="dhMusicOn">On</label>
 						<input type="radio" id="dhMusicOff" name="dhMusicEmbedEnabled" onclick="dh.actions.setMusicSharingEnabled(false);">	<label for="dhMusicOff">Off</label>			
 					</c:when>
 					<c:otherwise>
+						<dh:script module="dh.actions"/>
 						<input type="radio" id="dhMusicOn" name="dhMusicEmbedEnabled" onclick="dh.actions.setMusicSharingEnabled(true);"> <label for="dhMusicOn">On</label>
 						<input type="radio" id="dhMusicOff" name="dhMusicEmbedEnabled" checked="true" onclick="dh.actions.setMusicSharingEnabled(false);">	<label for="dhMusicOff">Off</label>
 					</c:otherwise>
@@ -235,6 +237,7 @@
                             <div id="dhTermsOfUseNote">If you no longer agree with <a href="javascript:window.open('/terms', 'dhTermsOfUs', 'menubar=no,scrollbars=yes,width=600,height=600');void(0);">Terms of Use</a> and <a href="javascript:window.open('/privacy', 'dhPrivacy', 'menubar=no,scrollbars=yes,width=600,height=600');void(0);">Privacy Policy</a>, disable your account here.</div>
                         </c:if>    
 						<div>
+							<dh:script module="dh.actions"/>						
 							<input type="button" value="Disable account" onclick="javascript:dh.actions.disableAccount();"/>
 						</div>
 						<div>
@@ -263,6 +266,7 @@
 						</p>
 						</div>
 						<div>
+							<dh:script module="dh.actions"/>
 							<input type="button" value="Enable account" onclick="javascript:dh.actions.enableAccount();"/>
 						</div>
 					</dht:formTableRow>						

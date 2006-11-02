@@ -82,6 +82,9 @@ public class PngTag extends SimpleTagSupport implements DynamicAttributes {
 		BrowserBean browser = BrowserBean.getForRequest(request);
 		
 		if (browser.getIeAlphaImage()) {
+			// for fillAlphaPng
+			ScriptTag.includeModule("dh.actions", context, xml);
+			
 			xml.append("<span ");
 			if (klass != null) {
 				xml.append("class=\"");

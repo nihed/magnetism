@@ -70,6 +70,7 @@
 											${post.livePost.totalViewerCount} views
 										</c:otherwise>
 									</c:choose>
+									<dh:script module="dh.actions"/>
 									<c:choose>
 										<c:when test="${favesMode == 'none' || !signin.valid}">
 											

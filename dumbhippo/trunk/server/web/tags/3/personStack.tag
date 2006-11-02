@@ -33,9 +33,11 @@
         	    <c:otherwise>
 	        	    <c:choose>
   			            <c:when test="${person.contactOfViewer}">
+  			            	<dh:script module="dh.actions"/>
   				            <dht:actionLink oneLine="true" href="javascript:dh.actions.removeContact('${person.viewPersonPageId}')" title="Remove this person from your friends list">Remove from friends</dht:actionLink>
 	   	                </c:when>
 	        	        <c:otherwise>
+	        	        	<dh:script module="dh.actions"/>
 					        <dht:actionLink oneLine="true" href="javascript:dh.actions.addContact('${person.viewPersonPageId}')" title="Add this person to your friends list">Add to friends</dht:actionLink>
 				        </c:otherwise>
 				    </c:choose>

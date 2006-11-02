@@ -17,6 +17,7 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.StreamUtils;
+import com.dumbhippo.XmlBuilder;
 
 public final class JavascriptResolver {
 	
@@ -44,9 +45,10 @@ public final class JavascriptResolver {
 		private String globalRequires;
 		private String firstPartOfTag;
 		private String lastPartOfTag; 
-
+		
 		// FIXME config.js could just be inlined here instead of in its own file, no?
 		// Note: if you change the format remember to change the args to it when it's used...
+		// also keep the XmlBuilder version in sync
 		static private final String globalRequiresFormat = 
 			"<script type=\"text/javascript\" src=\"%s/%s/config.js\"></script>\n" +
 			"<script type=\"text/javascript\" src=\"%s/%s/dojo/bootstrap1.js\"></script>\n";
@@ -68,22 +70,94 @@ public final class JavascriptResolver {
 				"\"></script>\n";
 		}
 		
-		public void includeModule(String module, Writer htmlWriter) throws IOException {
-			String file = moduleMap.get(module);
-			if (file == null) {
-				logger.error("Attempt to include unknown javascript module '{}'", module);
-				throw new IOException("Unknown javascript module " + module);
+		private String moduleIdentifier(String module) {
+			return module.replace("\\*", "_star");
+		}
+
+		private abstract class OutputAdapter {
+			abstract void writeModuleLoad(String module) throws IOException;
+			abstract void writeSrcFilename(String filename) throws IOException;
+			abstract void writeGlobalRequires() throws IOException;
+		}
+		
+		private class OutputAdapterWriter extends OutputAdapter {
+			private Writer htmlWriter;
+			OutputAdapterWriter(Writer htmlWriter) {
+				this.htmlWriter = htmlWriter;
 			}
 			
-			includeFile(file, htmlWriter);
-			
-			if (!modulesLoaded.contains(module)) {
-				modulesLoaded.add(module);
-				htmlWriter.write(String.format(loadModuleFormat, module.replace("*", "_star")));
+			@Override
+			void writeModuleLoad(String module) throws IOException {
+				htmlWriter.write(String.format(loadModuleFormat, moduleIdentifier(module)));
+			}
+			@Override
+			void writeSrcFilename(String filename) throws IOException {
+				htmlWriter.write(firstPartOfTag);
+				htmlWriter.write(filename);
+				htmlWriter.write(lastPartOfTag);				
+			}
+			@Override
+			void writeGlobalRequires() throws IOException {
+				htmlWriter.write(globalRequires);
 			}
 		}
 		
-		public void includeFile(String filename, Writer htmlWriter) throws IOException {			
+		private class OutputAdapterXml extends OutputAdapter {
+			private XmlBuilder xml;
+			OutputAdapterXml(XmlBuilder xml) {
+				this.xml = xml;
+			}
+			
+			private void appendFileNode(String filename) {
+				// we put in some spaces as content to avoid xml-style tag closing (be sure we get </script>)
+				xml.appendTextNode("script", "  ",
+						"type", "text/javascript",
+						"src", scriptRoot + "/" + buildStamp + "/" + filename);				
+			}
+			
+			@Override
+			void writeModuleLoad(String module) throws IOException {
+				xml.appendTextNode("script", moduleIdentifier(module) + "._load();", "type", "text/javascript");
+			}
+			@Override
+			void writeSrcFilename(String filename) throws IOException {
+				appendFileNode(filename);
+			}
+			@Override
+			void writeGlobalRequires() throws IOException {
+				appendFileNode("config.js");
+				appendFileNode("dojo/bootstrap1.js");
+			}
+		}
+		
+		private void includeModule(String module, OutputAdapter out) throws IOException {
+			String file = moduleMap.get(module);
+			if (file == null) {
+				logger.error("Attempt to include unknown javascript module '{}'", module);
+				throw new RuntimeException("Unknown javascript module " + module);
+			}
+			
+			includeFile(file, out);
+			
+			if (!modulesLoaded.contains(module)) {
+				modulesLoaded.add(module); 
+				out.writeModuleLoad(module);
+			}
+		}
+		
+		public void includeModule(String module, Writer htmlWriter) throws IOException {
+			includeModule(module, new OutputAdapterWriter(htmlWriter));
+		}
+		
+		public void includeModule(String module, XmlBuilder xml) {
+			try {
+				includeModule(module, new OutputAdapterXml(xml));
+			} catch (IOException e) {
+				throw new RuntimeException("writing to xml builder should not create IOException", e);
+			}
+		}
+		
+		private void includeFile(String filename, OutputAdapter out) throws IOException {
 			if (filesUsed.contains(filename)) {
 				return;
 			}
@@ -94,24 +168,34 @@ public final class JavascriptResolver {
 			
 			// The first time we include anything, include the global requirements
 			if (first) {
-				htmlWriter.write(globalRequires);
-				includeModule("common", htmlWriter);
+				out.writeGlobalRequires();
+				includeModule("common", out);
 			}
 			
 			List<String> dependencies = fileDependencies.get(filename);
 			if (dependencies == null) {
 				logger.error("Attempt to include unknown javascript file '{}' in {}",
 						filename, scriptRoot);
-				throw new IOException("Unknown javascript file " + filename);
+				throw new RuntimeException("Unknown javascript file " + filename);
 			}
 			
 			for (String dep : dependencies) {
-				includeFile(dep, htmlWriter);
+				includeFile(dep, out);
 			}
 			
-			htmlWriter.write(firstPartOfTag);
-			htmlWriter.write(filename);
-			htmlWriter.write(lastPartOfTag);
+			out.writeSrcFilename(filename);
+		}
+		
+		public void includeFile(String filename, Writer htmlWriter) throws IOException {			
+			includeFile(filename, new OutputAdapterWriter(htmlWriter));
+		}
+		
+		public void includeFile(String filename, XmlBuilder xml) {			
+			try {
+				includeFile(filename, new OutputAdapterXml(xml));
+			} catch (IOException e) {
+				throw new RuntimeException("writing to xml builder should not create IOException", e);
+			}
 		}
 	}
 	

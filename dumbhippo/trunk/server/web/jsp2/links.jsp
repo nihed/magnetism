@@ -20,9 +20,11 @@
 				<c:choose>
 					<%-- this is duplicated so we can set the checked attribute --%>
 					<c:when test="${links.notifyPublicShares}">
+						<dh:script module="dh.actions"/>
 						<input id="notifyPublicShares" type="checkbox" checked="true" onclick="dh.actions.setNotifyPublicShares(false);">
 					</c:when>
 					<c:otherwise>
+						<dh:script module="dh.actions"/>
 						<input id="notifyPublicShares" type="checkbox" onclick="dh.actions.setNotifyPublicShares(true);">
 					</c:otherwise>
 				</c:choose>

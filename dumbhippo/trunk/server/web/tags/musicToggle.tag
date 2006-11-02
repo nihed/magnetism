@@ -14,4 +14,5 @@
         <c:set var="dhMusicIcon" value="audio-volume-high.png"/>
 </c:if>
 
+<dh:script module="dh.actions"/>
 <a class="dh-music-sharing-toggle ${dhMusicClass}" href="javascript:dh.actions.setMusicSharingEnabled(${!musicOn});"><dh:png klass="dh-music-icon" src="/images/${buildStamp}/${dhMusicIcon}" style="width: 24; height: 24;"/>${dhMusicText}</a>

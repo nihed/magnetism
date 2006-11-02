@@ -17,7 +17,7 @@
 <c:url value="/upload${location}" var="posturl"/>
 <form id="dhPhotoUploadForm${N}" enctype="multipart/form-data" action="${posturl}" method="post">
 	<img id="dhPhotoUploadProgress${N}" class="dhInvisible" width="192" height="192"/>
-
+	<dh:script module="dh.actions"/>
 	<c:if test="${!empty linkText}">
 		<a id="dhChangePhotoLink${N}" class="dh-upload-photo" 
 			href="javascript:void(0);" 

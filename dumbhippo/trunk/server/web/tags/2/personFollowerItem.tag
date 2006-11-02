@@ -11,6 +11,7 @@
 			<div class="dh-follower-actions">
 		        <c:choose>
 		            <c:when test="${empty group}">
+		            	<dh:script module="dh.actions"/>
 				        <dht:asyncActionLink 
 					        exec="dh.actions.addContact('${who.user.id}', function () { dh.asyncActionLink.complete('addContact${who.user.id}') })"
 					        ctrlId="addContact${who.user.id}"
@@ -18,6 +19,7 @@
 					        completedText="Added"/>			            
 					</c:when>
 					<c:otherwise>
+						<dh:script module="dh.actions"/>
 				        <dht:asyncActionLink 
 					        exec="dh.actions.addMember('${group.viewedGroupId}', '${who.user.id}', function () { dh.asyncActionLink.complete('addMember${group.viewedGroupId}${who.user.id}') })"
 					        ctrlId="addMember${group.viewedGroupId}${who.user.id}"

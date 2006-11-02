@@ -25,10 +25,12 @@
 					<c:choose>
 					<%-- this is duplicated so we can set the checked attribute...sigh --%>
 					<c:when test="${signin.musicSharingEnabled}">
+						<dh:script module="dh.actions"/>
 						<input type="radio" id="dhMusicOn" name="dhMusicEmbedEnabled" checked="true" onclick="dh.actions.setMusicSharingEnabled(true);"> <label for="dhMusicOn">On</label>
 						<input type="radio" id="dhMusicOff" name="dhMusicEmbedEnabled" onclick="dh.actions.setMusicSharingEnabled(false);">	<label for="dhMusicOff">Off</label>			
 					</c:when>
 					<c:otherwise>
+						<dh:script module="dh.actions"/>
 						<input type="radio" id="dhMusicOn" name="dhMusicEmbedEnabled" onclick="dh.actions.setMusicSharingEnabled(true);"> <label for="dhMusicOn">On</label>
 						<input type="radio" id="dhMusicOff" name="dhMusicEmbedEnabled" checked="true" onclick="dh.actions.setMusicSharingEnabled(false);">	<label for="dhMusicOff">Off</label>
 					</c:otherwise>

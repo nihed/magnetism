@@ -54,6 +54,7 @@
 		<dht:zoneBoxSubtitle>Having trouble getting Music Radar to display songs?</dht:zoneBoxSubtitle>
 		<ul>
 		<c:if test="${!signin.musicSharingEnabled}">
+			<dh:script module="dh.actions"/>
 			<li><a href="javascript:dh.actions.setMusicSharingEnabled(true);">Turn music sharing on</a></li>
 		</c:if>
 		<li>Make sure that iTunes or Yahoo! Music Engine is on, and that a song is playing.</li>

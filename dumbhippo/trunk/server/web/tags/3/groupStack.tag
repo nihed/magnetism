@@ -28,15 +28,19 @@
             <c:when test="${signin.valid}">
 	            <c:choose>
 	        	    <c:when test="${who.active}">
+	        	    	<dh:script module="dh.actions"/>
 						 <dht:actionLink href="javascript:dh.actions.leaveGroup('${who.identifyingGuid}')" title="Stop receiving stack activity from this group">Leave Group</dht:actionLink>
 					</c:when>
 					<c:when test="${who.invited}">
+						<dh:script module="dh.actions"/>
 						 <dht:actionLink href="javascript:dh.actions.joinGroup('${who.identifyingGuid}')" title="You were invited to join this group">Join group (invited)</dht:actionLink>					
 					</c:when>
 					<c:when test="${dh:enumIs(who.status, 'REMOVED')}">
+						<dh:script module="dh.actions"/>
 						 <dht:actionLink href="javascript:dh.actions.joinGroup('${who.identifyingGuid}')" title="Rejoin this group">Join group</dht:actionLink>
 					</c:when>	
 					<c:when test="${dh:enumIs(who.status, 'NONMEMBER') && who.canJoin}">
+						<dh:script module="dh.actions"/>
 						<dht:actionLink href="javascript:dh.actions.joinGroup('${who.identifyingGuid}')" title="Follow stack activity in this group">Follow group</dht:actionLink>
 					</c:when>				
 	        	    <c:otherwise>

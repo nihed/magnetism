@@ -678,8 +678,8 @@ class OriginalFile:
             ## load() on each module prior to use. But for now,
             ## at the end of each file we init the file
             ## (note that we don't do this for bundled modules)
-            if not self.get_bundled():
-                write_line(out, indent, "%s._load(); // hack for now " % master_module)
+            #if not self.get_bundled():
+            #    write_line(out, indent, "%s._load(); // hack for now " % master_module)
 
 class DestFile:
     def __init__(self, relpath, fullpath, orig):

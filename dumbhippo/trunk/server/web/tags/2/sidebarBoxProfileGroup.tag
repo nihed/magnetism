@@ -35,9 +35,11 @@
 							<c:choose>
 								<%-- Be careful if changing this not to show both join and leave at the same time --%>
 								<c:when test="${!empty group.joinAction}">
+ 									 <dh:script module="dh.actions"/>
 									 <dht:actionLink href="javascript:dh.actions.joinGroup('${group.viewedGroupId}')" title="${group.joinTooltip}"><c:out value="${group.joinAction}"/></dht:actionLink>
 								</c:when>							
 								<c:when test="${!empty group.leaveAction}">
+								 	 <dh:script module="dh.actions"/> 
 									 <dht:actionLink href="javascript:dh.actions.leaveGroup('${group.viewedGroupId}')" title="${group.leaveTooltip}"><c:out value="${group.leaveAction}"/></dht:actionLink>
 								</c:when>
 							</c:choose>

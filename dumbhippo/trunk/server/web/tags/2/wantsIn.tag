@@ -7,6 +7,7 @@
 	<c:set var="buttonText" value="Want In?"/>
 </c:if>
 
+<dh:script module="dh.actions"/>
 <form method="post" action="/wantsin" onsubmit="return dh.actions.validateWantsIn('dhWantsInEmailEntry');">
     <input type="text" id="dhWantsInEmailEntry" name="address"/>
     <input type="submit" value="${buttonText}"/>

@@ -20,6 +20,7 @@
         or something probably, but only IE is known to work anyhow --%>
 
 	<c:when test="${signin.valid && browser.ie}">
+		<dh:script module="dh.actions"/>
 		<c:set scope="page" var="joinChatUri" value="javascript:dh.actions.joinChatUsingControl('${chatId}')"/>
 	</c:when>
 	<c:when test="${signin.valid && browser.linux && browser.gecko}">
