@@ -3,7 +3,6 @@ package com.dumbhippo.server.impl;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -54,6 +53,7 @@ import com.dumbhippo.persistence.PersonPostData;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.PostMessage;
 import com.dumbhippo.persistence.Resource;
+import com.dumbhippo.persistence.StackInclusion;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.server.Enabled;
@@ -142,26 +142,35 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		LiveState.removeEventListener(BlockEvent.class, this);
 	}
 	
-	private Block queryBlock(BlockType type, Guid data1, Guid data2, long data3) throws NotFoundException {
+	private Block queryBlock(BlockType type, Guid data1, Guid data2, long data3, StackInclusion inclusion) throws NotFoundException {
 		Query q;
 		if (data1 != null && data2 != null) {
 			q = em.createQuery("SELECT block FROM Block block WHERE block.blockType=:type " +
-					           "AND block.data1=:data1 AND block.data2=:data2 AND block.data3=:data3");
+					           "AND block.data1=:data1 AND block.data2=:data2 AND block.data3=:data3 " + 
+					           "AND block.inclusion = :inclusion");
 			q.setParameter("data1", data1.toString());
 			q.setParameter("data2", data2.toString());			
 		} else if (data1 != null) {
 			q = em.createQuery("SELECT block FROM Block block WHERE block.blockType=:type " +
-					           "AND block.data1=:data1 AND block.data2='' AND block.data3=:data3");
+					           "AND block.data1=:data1 AND block.data2='' AND block.data3=:data3 " + 
+							   "AND block.inclusion = :inclusion");
 			q.setParameter("data1", data1.toString());
 		} else if (data2 != null) {
 			q = em.createQuery("SELECT block FROM Block block WHERE block.blockType=:type " +
-					           "AND block.data2=:data2 AND block.data1='' AND block.data3=:data3");
+					           "AND block.data2=:data2 AND block.data1='' AND block.data3=:data3 " +
+							   "AND block.inclusion = :inclusion");
 			q.setParameter("data2", data2.toString());	
 		} else {
 			throw new IllegalArgumentException("must provide either data1 or data2 in query for block type " + type);
 		}
 		q.setParameter("data3", data3);
 		q.setParameter("type", type);
+		if (inclusion == null) {
+			inclusion = type.getDefaultStackInclusion();
+			if (inclusion == null)
+				throw new IllegalArgumentException("Must specify inclusion to query for block type " + type);
+		}
+		q.setParameter("inclusion", inclusion);
 		try {
 			return (Block) q.getSingleResult();
 		} catch (NoResultException e) {
@@ -169,17 +178,24 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		}
 	}
 
-	private UserBlockData queryUserBlockData(User user, BlockType type, Guid data1, Guid data2, long data3) throws NotFoundException {
+	private Block queryBlock(BlockType type, Guid data1, Guid data2, long data3) throws NotFoundException {
+		return queryBlock(type, data1, data2, data3, null);
+	}
+	
+	private UserBlockData queryUserBlockData(User user, BlockType type, Guid data1, Guid data2, long data3, StackInclusion inclusion) throws NotFoundException {
 		Query q;
 		if (data1 != null && data2 != null) {
-			q = em.createQuery("SELECT ubd FROM UserBlockData ubd, Block block WHERE ubd.block = block AND ubd.user = :user AND block.blockType=:type AND block.data1=:data1 AND block.data2=:data2 AND block.data3=:data3");
+			q = em.createQuery("SELECT ubd FROM UserBlockData ubd, Block block WHERE ubd.block = block AND ubd.user = :user AND block.blockType=:type AND block.data1=:data1 AND block.data2=:data2 AND block.data3=:data3 " +
+					"AND block.inclusion = :inclusion");
 			q.setParameter("data1", data1.toString());
 			q.setParameter("data2", data2.toString());
 		} else if (data1 != null) {
-			q = em.createQuery("SELECT ubd FROM UserBlockData ubd, Block block WHERE ubd.block = block AND ubd.user = :user AND block.blockType=:type AND block.data1=:data1 AND block.data2='' AND block.data3=:data3");
+			q = em.createQuery("SELECT ubd FROM UserBlockData ubd, Block block WHERE ubd.block = block AND ubd.user = :user AND block.blockType=:type AND block.data1=:data1 AND block.data2='' AND block.data3=:data3 " +
+					"AND block.inclusion = :inclusion");
 			q.setParameter("data1", data1.toString());
 		} else if (data2 != null) {
-			q = em.createQuery("SELECT ubd FROM UserBlockData ubd, Block block WHERE ubd.block = block AND ubd.user = :user AND block.blockType=:type AND block.data2=:data2 AND block.data1='' AND block.data3=:data3");
+			q = em.createQuery("SELECT ubd FROM UserBlockData ubd, Block block WHERE ubd.block = block AND ubd.user = :user AND block.blockType=:type AND block.data2=:data2 AND block.data1='' AND block.data3=:data3 " +
+					"AND block.inclusion = :inclusion");
 			q.setParameter("data2", data2);
 		} else {
 			throw new IllegalArgumentException("must provide either data1 or data2 in query for block type " + type);
@@ -187,6 +203,12 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		q.setParameter("data3", data3);
 		q.setParameter("user", user);
 		q.setParameter("type", type);
+		if (inclusion == null) {
+			inclusion = type.getDefaultStackInclusion();
+			if (inclusion == null)
+				throw new IllegalArgumentException("Must specify inclusion to query for block type " + type);
+		}
+		q.setParameter("inclusion", inclusion);
 		try {
 			return (UserBlockData) q.getSingleResult();
 		} catch (NoResultException e) {
@@ -194,52 +216,60 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		}
 	}
 	
-	private Block createBlock(BlockType type, Guid data1, Guid data2, long data3, boolean publicBlock) {
-		Block block = new Block(type, data1, data2, data3, publicBlock);
+	private Block createBlock(BlockType type, Guid data1, Guid data2, long data3, StackInclusion inclusion) {
+		Block block = new Block(type, data1, data2, data3, inclusion);
 		em.persist(block);
 		
 		return block;
 	}
 	
-	@SuppressWarnings("unused")
 	private Block createBlock(BlockType type, Guid data1, Guid data2, long data3) {
-	    return createBlock(type, data1, data2, data3, type.isAlwaysPublic());
-	}
-	
-	private Block createBlock(BlockType type, Guid data1, Guid data2, boolean publicBlockIfCreated) {
-		return createBlock(type, data1, data2, -1, publicBlockIfCreated);
+	    return createBlock(type, data1, data2, data3, null);
 	}
 	
 	private Block createBlock(BlockType type, Guid data1, Guid data2) {
-		return createBlock(type, data1, data2, -1, type.isAlwaysPublic());
+		return createBlock(type, data1, data2, -1);
 	}
 	
-	private Block getOrCreateBlock(BlockType type, Guid data1, Guid data2, long data3, boolean publicBlockIfCreated) {
+	private Block createBlock(BlockType type, Guid data1) {
+		return createBlock(type, data1, null, -1);
+	}
+	
+	private Block getOrCreateBlock(BlockType type, Guid data1, Guid data2, long data3,
+			StackInclusion inclusion, boolean changeDefaultPublicity, boolean publicBlockIfCreated) {
 		try {
-			return queryBlock(type, data1, data2, data3);
+			return queryBlock(type, data1, data2, data3, inclusion);
 		} catch (NotFoundException e) {
-			return createBlock(type, data1, data2, data3, publicBlockIfCreated);
+			Block block = createBlock(type, data1, data2, data3, inclusion);
+			if (changeDefaultPublicity)
+				block.setPublicBlock(publicBlockIfCreated);
+			return block;
 		}
 	}
 	
-	@SuppressWarnings("unused")
-	private Block getOrCreateBlock(BlockType type, Guid data1, Guid data2, long data3) {
-		return getOrCreateBlock(type, data1, data2, data3, type.isAlwaysPublic());
+	private Block getOrCreateBlock(BlockType type, Guid data1, Guid data2, long data3,
+			StackInclusion inclusion, boolean publicBlockIfCreated) {
+		return getOrCreateBlock(type, data1, data2, data3, inclusion, true, publicBlockIfCreated);
 	}
+	
+	private Block getOrCreateBlock(BlockType type, Guid data1, Guid data2, long data3,
+			StackInclusion inclusion) {
+		return getOrCreateBlock(type, data1, data2, data3, inclusion, false, false);
+	}		
 	
 	private Block getOrCreateBlock(BlockType type, Guid data1, Guid data2, boolean publicBlockIfCreated) {
-		return getOrCreateBlock(type, data1, data2, -1, publicBlockIfCreated);
-	}
+		return getOrCreateBlock(type, data1, data2, -1, null, true);
+	}	
 
 	private Block getOrCreateBlock(BlockType type, Guid data1, Guid data2) {
-		return getOrCreateBlock(type, data1, data2, -1, type.isAlwaysPublic());
+		return getOrCreateBlock(type, data1, data2, -1, null);
 	}
 	
-	private Block getUpdatingTimestamp(BlockType type, Guid data1, Guid data2, long data3, long activity) {
+	private Block getUpdatingTimestamp(BlockType type, Guid data1, Guid data2, long data3, StackInclusion inclusion, long activity) {
 		Block block;
 		try {
-			logger.debug("will query for a block with type {}/{} data1: {}, data2: {}, data3: {}", new Object[]{type, type.ordinal(), data1, data2, data3});
-			block = queryBlock(type, data1, data2, data3);
+			logger.debug("will query for a block with type {}/{} data1: {}, data2: {}, data3: {} inclusion: {}", new Object[]{type, type.ordinal(), data1, data2, data3, inclusion});
+			block = queryBlock(type, data1, data2, data3, inclusion);
 			logger.debug("found block {}", block);
 		} catch (NotFoundException e) {
 			logger.debug("no block found");
@@ -629,13 +659,14 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		}
 	}
 	
-	private void stack(final BlockType type, final Guid data1, final Guid data2, final long data3, final long activity, final Guid participantId) {
+	private void stack(final BlockType type, final Guid data1, final Guid data2, final long data3,
+			final StackInclusion inclusion, final long activity, final Guid participantId) {
 		if (disabled)
 			return;
 		
 		// Updating the block timestamp is something we want to do as part of the enclosing transaction;
 		// if the enclosing transaction is rolled back, the timestamp needs to be rolled back
-		final Block block = getUpdatingTimestamp(type, data1, data2, data3, activity);
+		final Block block = getUpdatingTimestamp(type, data1, data2, data3, inclusion, activity);
 		if (block == null) {
 			logger.warn("No block exists when stacking type={}, data1={}, data2={}, data3{}, migration needed or bug",
 					    new Object[] { type, data1, data2, data3 });
@@ -658,18 +689,22 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 			}
 		});
 	}
-
-	private void stack(final BlockType type, final Guid data1, final Guid data2, final long activity, final Guid participantId) {
-        stack(type, data1, data2, -1, activity, participantId);
+	
+	private void stack(BlockType type, Guid data1, Guid data2, long activity, Guid participantId) {
+        stack(type, data1, data2, -1, null, activity, participantId);
 	}
 	
-	private void click(BlockType type, Guid data1, Guid data2, long data3, User user, long clickTime) {
+	private void stack(BlockType type, Guid data1, Guid data2, long data3, long activity, Guid participantId) {
+        stack(type, data1, data2, data3, null, activity, participantId);
+	}
+	
+	private void click(BlockType type, Guid data1, Guid data2, long data3, StackInclusion inclusion, User user, long clickTime) {
 		if (disabled)
 			return;
 		
 		UserBlockData ubd;
 		try {
-			ubd = queryUserBlockData(user, type, data1, data2, data3);
+			ubd = queryUserBlockData(user, type, data1, data2, data3, inclusion);
 		} catch (NotFoundException e) {
 			// for now assume this means we don't want to record clicks for the given
 			// object, otherwise the ubd should already be created
@@ -695,6 +730,10 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		stack(ubd.getBlock(), clickTime);
 	}
 	
+	private void click(BlockType type, Guid data1, Guid data2, long data3, User user, long clickTime) {
+		click(type, data1, data2, data3, null, user, clickTime);
+	}
+	
 	public void onUserCreated(Guid userId) {
 		User user = identitySpider.lookupUser(userId);
 		Block block = createBlock(BlockType.MUSIC_PERSON, userId, null);
@@ -702,12 +741,13 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	}
 	
 	public void onExternalAccountCreated(Guid userId, ExternalAccountType type) {
-		createBlock(BlockType.EXTERNAL_ACCOUNT_UPDATE, userId, null, type.ordinal(), true);
-		createBlock(BlockType.EXTERNAL_ACCOUNT_UPDATE_SELF, userId, null, type.ordinal(), false);
+		createBlock(BlockType.EXTERNAL_ACCOUNT_UPDATE, userId, null, type.ordinal());
+		createBlock(BlockType.EXTERNAL_ACCOUNT_UPDATE_SELF, userId, null, type.ordinal());
 	}
 	
 	public void onGroupCreated(Guid groupId, boolean publicGroup) {
-		createBlock(BlockType.GROUP_CHAT, groupId, null, publicGroup);
+		Block block = createBlock(BlockType.GROUP_CHAT, groupId, null);
+		block.setPublicBlock(publicGroup);
 	}
 	
 	public void onGroupMemberCreated(GroupMember member, boolean publicGroup) {
@@ -724,9 +764,10 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	}
 	
 	public void onPostCreated(Guid postId, boolean publicPost) {
-		createBlock(BlockType.POST, postId, null, publicPost);
+		Block block = createBlock(BlockType.POST, postId);
+		block.setPublicBlock(publicPost);
 	}
-	
+
 	private void updateMusicPersonPublicity(Block block, User user) {
 		if (!user.getGuid().equals(block.getData1AsGuid()))
 			throw new IllegalArgumentException("setMusicPersonPublicity takes the guid from the block");
@@ -1073,29 +1114,142 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		return getBlockView(viewpoint, ubd.getBlock(), ubd);
 	}	
 	
-	private List<UserBlockData> getBlocks(Viewpoint viewpoint, User user, boolean participantOnly, int start, int count) {
-		String participatedClause = "";
-		String orderBy = "block.timestamp";
-		if (participantOnly) {
-			participatedClause = " AND ubd.participatedTimestamp != NULL ";
-			orderBy = "ubd.participatedTimestamp";
+	/**
+	 * 
+	 * @param viewpoint
+	 * @param user
+	 * @param lastTimestamp -1 to ignore this param, otherwise the timestamp to get changes since
+	 * @param start
+	 * @param count
+	 * @param participantOnly if true, only include blocks where someone participated, and sort by participation time 
+	 * @return
+	 */
+	private List<UserBlockData> getBlocks(Viewpoint viewpoint, User user, long lastTimestamp, int start, int count, boolean participantOnly) {
+		long cached = -1;
+		if (lastTimestamp >= 0 && !participantOnly) {
+			cached = getLastTimestamp(user.getGuid());
+			if (cached >= 0 && cached <= lastTimestamp)
+				return Collections.emptyList(); // nothing new
+			
+			logger.debug("getStack cache miss lastTimestamp {} cached {}", lastTimestamp, cached);
 		}
-				
-		Query q = em.createQuery("SELECT ubd FROM UserBlockData ubd, Block block " + 
-				                 " WHERE ubd.user = :user AND ubd.deleted = 0 AND ubd.block = block " 
-				                 + participatedClause +
-				                 " AND (block.data1 != :userGuid OR block.blockType != :type)  " +
-				                 " ORDER BY " + orderBy + " DESC");
+		
+		StringBuilder sb = new StringBuilder();
+		
+		sb.append("SELECT ubd FROM UserBlockData ubd, Block block " + 
+                	 " WHERE ubd.user = :user AND ubd.deleted = 0 AND ubd.block = block ");
+		
+		if (participantOnly)
+			sb.append(" AND ubd.participatedTimestamp != NULL ");		
+
+		/* Timestamp clause */
+		
+		// if lastTimestamp == 0 then all blocks are included so just skip the test in the sql
+		if (lastTimestamp > 0)
+			sb.append(" AND block.timestamp >= :timestamp ");
+		
+		/* Inclusion clause */
+		sb.append(" AND (block.inclusion = ");
+		sb.append(StackInclusion.IN_ALL_STACKS.ordinal());
+		
+		sb.append(" OR (block.data1 = :viewedGuid AND block.inclusion = ");
+		if (viewpoint.isOfUser(user))
+			sb.append(StackInclusion.ONLY_WHEN_VIEWING_SELF.ordinal());
+		else
+			sb.append(StackInclusion.ONLY_WHEN_VIEWED_BY_OTHERS.ordinal());
+		sb.append("))");
+		
+		/* Ordering clause */
+		
+		// FIXME this is not exactly the sort order if the user is paging; we want to use ubd.ignoredDate in the sort if the 
+		// user has ignored a block, instead of block.timestamp. However, EJBQL doesn't know how to do that.
+		// maybe a native sql query or some other solution is required. For now what we'll do is 
+		// return blocks in block order, and also pass to the client the ignoredDate.
+		// Then, require the client to sort it out. This may well be right anyway.
+		
+		sb.append(" ORDER BY ");
+		if (participantOnly)
+			sb.append("ubd.participatedTimestamp");
+		else
+			sb.append("ubd.stackTimestamp");
+		sb.append(" DESC");
+		
+		Query q = em.createQuery(sb.toString()); 
+
 		q.setFirstResult(start);
 		q.setMaxResults(count);
+		if (lastTimestamp > 0)
+			q.setParameter("timestamp", lastTimestamp);
 		q.setParameter("user", user);
-		q.setParameter("userGuid", user.getGuid().toString());
-		if (viewpoint.isOfUser(user)) 
-			q.setParameter("type", BlockType.EXTERNAL_ACCOUNT_UPDATE);
-		else
-			q.setParameter("type", BlockType.EXTERNAL_ACCOUNT_UPDATE_SELF);
+		q.setParameter("viewedGuid", user.getGuid().toString());
 		
-		return TypeUtils.castList(UserBlockData.class, q.getResultList());
+		List<UserBlockData> list = TypeUtils.castList(UserBlockData.class, q.getResultList());		
+
+		long newestTimestamp = -1;
+		int newestTimestampCount = 0;
+		
+		int countAtLastTimestamp = 0; 
+		for (UserBlockData ubd : list) {
+			long stamp = ubd.getBlock().getTimestampAsLong();
+			
+			if (stamp < lastTimestamp) {
+				// FIXME this is happening with secondsMatch = false, needs debugging
+				boolean secondsMatch = ((cached / 1000) == (newestTimestamp / 1000));
+				logger.error("Query returned block at wrong timestamp lastTimestamp {} block {}: match at seconds resolution: " + secondsMatch,
+						lastTimestamp, ubd.getBlock());
+			}
+			
+			if (stamp == lastTimestamp)
+				countAtLastTimestamp += 1;
+			
+			if (stamp > newestTimestamp) {
+				newestTimestamp = stamp;
+				newestTimestampCount = 1;
+			} else if (stamp == newestTimestamp) {
+				newestTimestampCount += 1;
+			}
+		}
+		if (newestTimestamp < 0)
+			throw new RuntimeException("had a block with negative timestamp? " + list);
+		
+		if (cached >= 0 && cached < newestTimestamp) {
+			//	FIXME I think the problem here may be that the database only goes to seconds not milliseconds,
+			// at least when doing comparisons
+			boolean secondsMatch = ((cached / 1000) == (newestTimestamp / 1000));
+			logger.error("Cached timestamp {} was somehow older than actual newest timestamp {}, match at seconds resolution: " + secondsMatch,
+					cached, newestTimestamp);
+		}
+
+		if (lastTimestamp >= 0) {
+			
+			// If there is 1 block at the lastTimestamp, then the caller for sure already has that
+			// block. If there are >1 blocks, then the caller might have only some of them.
+			// If there's only 1 block then we need not return it, if there are >1 we return 
+			// them all.
+			// The reason we bother with this is that when we have a cached timestamp we return 
+			// nothing if there's nothing newer than lastTimestamp, so we want to be consistent
+			// and still return nothing if we did the db query.
+			
+			
+			// remove any single blocks that have the requested stamp
+			if (countAtLastTimestamp == 1) {
+				Iterator<UserBlockData> i = list.iterator();
+				while (i.hasNext()) {
+					UserBlockData ubd = i.next();
+					if (ubd.getBlock().getTimestampAsLong() == lastTimestamp) {
+						i.remove();
+						break;
+					}
+				}
+			}
+		}
+		
+		// we only know the timestamp is globally newest if start is 0 and we didn't filter out participantOnly
+		if (start == 0 && !participantOnly) {
+			saveLastTimestamp(user.getGuid(), newestTimestamp, newestTimestampCount);
+		}
+		
+		return list;
 	}
 	
 	private interface BlockSource {
@@ -1184,7 +1338,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		pageStack(viewpoint, new BlockSource() {
 			public List<Pair<Block, UserBlockData>> get(int start, int count) {
 				List<Pair<Block, UserBlockData>> results = new ArrayList<Pair<Block, UserBlockData>>();
-				for (UserBlockData ubd : getBlocks(viewpoint, user, participantOnly, start, count)) {
+				for (UserBlockData ubd : getBlocks(viewpoint, user, -1, start, count, participantOnly)) {
 					results.add(new Pair<Block, UserBlockData>(ubd.getBlock(), ubd));
 				}
 				return results;
@@ -1302,122 +1456,20 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	    return getStack(viewpoint, user, lastTimestamp, start, count, false);
     }
 	
-	public List<BlockView> getStack(Viewpoint viewpoint, User user, long lastTimestamp, int start, int count, boolean participantOnly) {
-		// keep things sane (e.g. if count provided by an http method API caller)
-		if (count > 50)
-			count = 50;
-		if (count < 1)
-			throw new IllegalArgumentException("count must be >0 not " + count);
+	public List<BlockView> getStack(Viewpoint viewpoint, User user, long lastTimestamp, int start, int count, boolean participantOnly) {		
 		
-		logger.debug("user is {}", user);
-		long cached = getLastTimestamp(user.getGuid());
-		if (cached >= 0 && cached <= lastTimestamp)
-			return Collections.emptyList(); // nothing new
-		
-		logger.debug("getBlocks cache miss lastTimestamp {} cached {}", lastTimestamp, cached);
-		
-		// FIXME this is not exactly the sort order if the user is paging; we want to use ubd.ignoredDate in the sort if the 
-		// user has ignored a block, instead of block.timestamp. However, EJBQL doesn't know how to do that.
-		// maybe a native sql query or some other solution is required. For now what we'll do is 
-		// return blocks in block order, and also pass to the client the ignoredDate.
-		// Then, require the client to sort it out. This may well be right anyway.
-		
-		String participatedClause = "";
-		String orderBy = "ubd.stackTimestamp";
-		if (participantOnly) {
-			participatedClause = " AND ubd.participatedTimestamp != NULL ";
-			orderBy = "ubd.participatedTimestamp";
-		}
-			
-		Query q = em.createQuery("SELECT ubd FROM UserBlockData ubd, Block block " + 
-				                 " WHERE ubd.user = :user AND ubd.deleted = 0 AND ubd.block = block " 
-				                 + participatedClause +
-				                 " AND block.timestamp >= :timestamp " +
-				                 " AND (block.data1 != :userGuid OR block.blockType != :type)  " +
-				                 " ORDER BY " + orderBy + " DESC");
-		q.setFirstResult(start);
-		q.setMaxResults(count);
-		q.setParameter("user", user);
-		q.setParameter("timestamp", new Date(lastTimestamp));
-		q.setParameter("userGuid", user.getGuid().toString());
-		if (viewpoint.isOfUser(user)) 
-			q.setParameter("type", BlockType.EXTERNAL_ACCOUNT_UPDATE);
-		else
-			q.setParameter("type", BlockType.EXTERNAL_ACCOUNT_UPDATE_SELF);
-		
-		// If there is 1 block at the lastTimestamp, then the caller for sure already has that
-		// block. If there are >1 blocks, then the caller might have only some of them.
-		// If there's only 1 block then we need not return it, if there are >1 we return 
-		// them all.
-		// The reason we bother with this is that when we have a cached timestamp we return 
-		// nothing if there's nothing newer than lastTimestamp, so we want to be consistent
-		// and still return nothing if we did the db query.
-		
-		List<UserBlockData> list = TypeUtils.castList(UserBlockData.class, q.getResultList());
 		List<BlockView> stack = new ArrayList<BlockView>();
+		List<UserBlockData> blocks = getBlocks(viewpoint, user, lastTimestamp, start, count, participantOnly);
 		
 		// Create BlockView objects for the blocks, implicitly performing access control
-		for (UserBlockData ubd : list) {
+		for (UserBlockData ubd : blocks) {
 			try {
 				stack.add(getBlockView(viewpoint, ubd.getBlock(), ubd));
 			} catch (NotFoundException e) {
 				// Do nothing, we can't see this block
 			}
 		}		
-		
-		if (stack.isEmpty())
-			return stack;
-		
-		long newestTimestamp = -1;
-		int newestTimestampCount = 0;
-		
-		int countAtLastTimestamp = 0; 
-		for (BlockView bv : stack) {
-			long stamp = bv.getBlock().getTimestampAsLong();
-			
-			if (stamp < lastTimestamp) {
-				// FIXME I think the problem here may be that the database only goes to seconds not milliseconds,
-				// at least when doing comparisons
-				boolean secondsMatch = ((cached / 1000) == (newestTimestamp / 1000));
-				logger.error("Query returned block at wrong timestamp lastTimestamp {} block {}: match at seconds resolution: " + secondsMatch,
-						lastTimestamp, bv.getBlock());
-			}
-			
-			if (stamp == lastTimestamp)
-				countAtLastTimestamp += 1;
-			
-			if (stamp > newestTimestamp) {
-				newestTimestamp = stamp;
-				newestTimestampCount = 1;
-			} else if (stamp == newestTimestamp) {
-				newestTimestampCount += 1;
-			}
-		}
-		if (newestTimestamp < 0)
-			throw new RuntimeException("had a block with negative timestamp? " + list);
-		if (cached >= 0 && cached < newestTimestamp) {
-			//	FIXME I think the problem here may be that the database only goes to seconds not milliseconds,
-			// at least when doing comparisons
-			boolean secondsMatch = ((cached / 1000) == (newestTimestamp / 1000));
-			logger.error("Cached timestamp {} was somehow older than actual newest timestamp {}, match at seconds resolution: " + secondsMatch,
-					cached, newestTimestamp);
-		}
-		
-		// we only know the timestamp is globally newest if start is 0
-		if (start == 0)
-			saveLastTimestamp(user.getGuid(), newestTimestamp, newestTimestampCount);
-		
-		// remove any single blocks that have the requested stamp
-		if (countAtLastTimestamp == 1) {
-			Iterator<BlockView> i = stack.iterator();
-			while (i.hasNext()) {
-				BlockView bv = i.next();
-				if (bv.getBlock().getTimestampAsLong() == lastTimestamp) {
-					i.remove();
-					break;
-				}
-			}
-		}
+
 		return stack;
 	}
 	

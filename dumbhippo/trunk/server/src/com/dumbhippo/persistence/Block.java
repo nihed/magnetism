@@ -31,21 +31,8 @@ import com.dumbhippo.identity20.Guid.ParseException;
 @Cache(usage=CacheConcurrencyStrategy.TRANSACTIONAL)
 @Table(name="Block", 
 	   uniqueConstraints = {
-			@UniqueConstraint(columnNames={"blockType", "data1", "data2", "data3"})
+			@UniqueConstraint(columnNames={"blockType", "data1", "data2", "data3", "inclusion"})
 		})
-/*
- This doesn't work because hibernate sets the index length for data1 to 20 but the column 
- only has length 14, which makes mysql barf.
- 
- @org.hibernate.annotations.Table(name="Block",
-		// this indexing could be overzealous
-		indexes = {
-			@Index(name="timestamp_index", columnNames = { "timestamp" }),
-			@Index(name="data1_index", columnNames = { "data1" }),
-			@Index(name="data2_index", columnNames = { "data2" }),
-			@Index(name="data3_index", columnNames = { "data3" })
-		})
-		*/
 public class Block extends EmbeddedGuidPersistable {
 
 	private BlockType blockType;
@@ -55,33 +42,47 @@ public class Block extends EmbeddedGuidPersistable {
 	private long data3;
 	private int clickedCount;
 	private boolean publicBlock;
+	private StackInclusion inclusion;
 	
 	// for hibernate
 	public Block() {
 		this.timestamp = 0;
 		this.data3 = -1;
-		this.publicBlock = false;
+		this.inclusion = StackInclusion.IN_ALL_STACKS;
 	}
-	
-	public Block(BlockType type, Guid data1, Guid data2, long data3) {
+
+	// For all these constructors, constructor args include
+	// those fields we are unique on (the fields
+	// that determine the identity of the block).
+	// Other fields should be set with setters, or may 
+	// be implied by the block type.
+		
+	public Block(BlockType type, Guid data1, Guid data2, long data3, StackInclusion stackInclusion) {
 		this();
 		this.blockType = type;
+		this.publicBlock = type.isAlwaysPublic();
+		if (stackInclusion != null)
+			this.inclusion = stackInclusion;
+		else {
+			this.inclusion = type.getDefaultStackInclusion();
+			if (this.inclusion == null)
+				throw new IllegalArgumentException("inclusion must be specified creating blocks of type " + type);
+		}
 		this.data1 = data1;
 		this.data2 = data2;
 		this.data3 = data3;
 	}
-
-	public Block(BlockType type, Guid data1, Guid data2, long data3, boolean publicBlock) {
-		this(type, data1, data2, data3);
-        this.publicBlock = publicBlock;
+	
+	public Block(BlockType type, Guid data1, Guid data2, long data3) {
+		this(type, data1, data2, data3, null);
 	}
+
+	public Block(BlockType type, Guid data1, Guid data2, StackInclusion stackInclusion) {
+		this(type, data1, data2, -1, stackInclusion);
+	}	
 	
 	public Block(BlockType type, Guid data1, Guid data2) {
 		this(type, data1, data2, -1);
-	}
-
-	public Block(BlockType type, Guid data1, Guid data2, boolean publicBlock) {
-		this(type, data1, data2, -1, publicBlock);
 	}
 	
 	@Column(nullable=false)
@@ -192,6 +193,15 @@ public class Block extends EmbeddedGuidPersistable {
 
 	public void setPublicBlock(boolean publicBlock) {
 		this.publicBlock = publicBlock;
+	}
+	
+	@Column(nullable=false)
+	public StackInclusion getInclusion() {
+		return inclusion;
+	}
+	
+	public void setInclusion(StackInclusion stackInclusion) {
+		this.inclusion = stackInclusion;
 	}
 	
 	@Override
