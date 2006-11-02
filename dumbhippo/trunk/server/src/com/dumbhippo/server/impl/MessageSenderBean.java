@@ -235,8 +235,21 @@ public class MessageSenderBean implements MessageSender {
 	private class XMPPSender {
 
 		private XMPPConnection connection;
-				
-		private synchronized XMPPConnection getConnection() {
+		
+		class NotConnectedException extends Exception {
+
+			private static final long serialVersionUID = 1L;
+
+			NotConnectedException(String message) {
+				super(message);
+			}
+			
+			NotConnectedException(String message, Throwable cause) {
+				super(message, cause);
+			}
+		}
+		
+		private synchronized XMPPConnection getConnection() throws NotConnectedException {
 			if (connection != null && !connection.isConnected()) {
 				logger.info("Disconnected from XMPP server");
 			}
@@ -253,13 +266,17 @@ public class MessageSenderBean implements MessageSender {
 					connection.login(user, password, StringUtils.hexEncode(token.getBytes()));
 					logger.info("Successfully reconnected to XMPP server");
 				} catch (XMPPException e) {
-					logger.error("Failed to log in to XMPP server", e);
 					connection = null;
-				} catch (PropertyNotFoundException e) {
-					logger.error("configuration is f'd up, can't connect to XMPP", e);
+					throw new NotConnectedException("Failed to log in to XMPP server: " + e.getMessage(), e);
+				} catch (PropertyNotFoundException e) { 
+					logger.error("configuration is f'd up, can't connect to XMPP"); 
 					connection = null;
+					throw new NotConnectedException("Configuration properties missing so can't connect to XMPP", e);
 				}
 			}
+			
+			if (connection == null)
+				throw new RuntimeException("connection == null and we didn't throw a NotConnectedException");
 
 			return connection;
 		}
@@ -277,7 +294,13 @@ public class MessageSenderBean implements MessageSender {
 		}
 		
 		public synchronized void sendLivePostChanged(User user, LivePost lpost, PostView post) {
-			XMPPConnection connection = getConnection();
+			XMPPConnection connection;
+			try {
+				connection = getConnection();
+			} catch (NotConnectedException e) {
+				logger.warn("Not sending live post changed because not connected to xmpp: {}", e.getMessage());
+				return;
+			}
 			Message message = createMessageFor(user, Message.Type.HEADLINE);
 			Set<EntityView> viewerEntities = new HashSet<EntityView>();
 			Viewpoint viewpoint = new UserViewpoint(user);
@@ -299,7 +322,13 @@ public class MessageSenderBean implements MessageSender {
 		}
 
 		public void sendMySpaceNameChangedNotification(User user) {
-			XMPPConnection connection = getConnection();
+			XMPPConnection connection;
+			try {
+				connection = getConnection();
+			} catch (NotConnectedException e) {
+				logger.warn("Not sending myspace name changed because not connected to xmpp: " + e.getMessage());
+				return;
+			}
 			Message message = createMessageFor(user, Message.Type.HEADLINE);
 			String newMySpaceName;
 			try {
@@ -313,7 +342,13 @@ public class MessageSenderBean implements MessageSender {
 		}
 
 		public synchronized void sendMySpaceContactCommentNotification(User user) {
-			XMPPConnection connection = getConnection();
+			XMPPConnection connection;
+			try {
+				connection = getConnection();
+			} catch (NotConnectedException e) {
+				logger.warn("Not sending myspace comment notification because not connected to xmpp: " + e.getMessage());
+				return;
+			}
 			Message message = createMessageFor(user, Message.Type.HEADLINE);
 			message.addExtension(new MySpaceContactCommentExtension());
 			logger.debug("Sending mySpaceContactComment message to {}", message.getTo());			
@@ -321,7 +356,13 @@ public class MessageSenderBean implements MessageSender {
 		}
 		
 		public synchronized void sendPrefChanged(User user, String key, String value) {
-			XMPPConnection connection = getConnection();
+			XMPPConnection connection; 
+			try {
+				connection = getConnection();
+			} catch (NotConnectedException e) {
+				logger.warn("Not sending pref changed notification because not connected to xmpp: " + e.getMessage());
+				return;
+			}
 			Message message = createMessageFor(user, Message.Type.HEADLINE);
 			message.addExtension(new PrefsChangedExtension(key, value));
 			logger.debug("Sending prefs changed message to {}", message.getTo());			
