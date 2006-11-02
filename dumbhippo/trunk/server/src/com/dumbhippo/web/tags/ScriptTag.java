@@ -15,7 +15,6 @@ import com.dumbhippo.web.JavascriptResolver.Page;
 public class ScriptTag extends SimpleTagSupport {
 	
 	private List<String> modules;
-	private List<String> files;
 	
 	private static final String REQUEST_KEY = "scriptTagContext";
 	private static final Pattern commaSplitPattern = 
@@ -49,10 +48,6 @@ public class ScriptTag extends SimpleTagSupport {
 			for (String m : modules)
 				p.includeModule(m, writer);
 		}
-		if (files != null) {
-			for (String f : files)
-				p.includeFile(f, writer);
-		}
 	}
 	
 	// we keep modules in the order they were added, but modules vs. files
@@ -64,15 +59,6 @@ public class ScriptTag extends SimpleTagSupport {
 		modules.add(module);
 	}
 
-	// we keep files in the order they were added, but modules vs. files
-	// we don't bother to order
-	private void addFile(String filename) {
-		if (files == null)
-			files = new ArrayList<String>();
-		// no need to check for dups here, JavascriptResolver.Page does it		
-		files.add(filename);
-	}	
-	
 	public void setModule(String module) {
 		addModule(module);
 	}
@@ -81,17 +67,6 @@ public class ScriptTag extends SimpleTagSupport {
 		String[] splitModules = commaSplitPattern.split(modules);
 		for (String s : splitModules) {
 			addModule(s);
-		}
-	}	
-	
-	public void setSrc(String filename) {
-		addFile(filename);
-	}
-	
-	public void setSrcs(String filenames) {
-		String[] splitFiles = commaSplitPattern.split(filenames);
-		for (String s : splitFiles) {
-			addFile(s);
 		}
 	}
 }

@@ -301,17 +301,7 @@
         <name>script</name>
         <tagclass>com.dumbhippo.web.tags.ScriptTag</tagclass>
         <bodycontent>empty</bodycontent>
-        <info>Script files or modules to include, with their dependencies</info>
-	    <attribute>
-           <name>src</name>
-           <required>false</required>
-           <rtexprvalue>true</rtexprvalue>
-        </attribute>
-	    <attribute>
-           <name>srcs</name>
-           <required>false</required>
-           <rtexprvalue>true</rtexprvalue>
-        </attribute>
+        <info>Script modules to include (automatically pulling in their dependencies)</info>
 	    <attribute>
            <name>module</name>
            <required>false</required>

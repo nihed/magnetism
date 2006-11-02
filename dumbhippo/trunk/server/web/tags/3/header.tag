@@ -41,6 +41,7 @@
 				</tr>
 				</table>
 			</form>
+			<dh:script module="dh.textinput"/>
 			<script type="text/javascript">
 				var dhSearchBoxEntry = null;
 				dhSearchInit = function () {
@@ -85,6 +86,7 @@
 	</table>
 </div>
 <!-- Semi-cracktastic thing to show our javascript debug log -->
+<dh:script module="dh.logger"/>
 <script type="text/javascript">
 	var link = document.getElementById("dhPageHeaderLeftLink");
 	link.onclick = function (e) {

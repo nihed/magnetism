@@ -40,6 +40,7 @@ public final class JavascriptResolver {
 	// JavascriptResolver being immutable, so there's no need to lock it
 	public class Page {
 		private Set<String> filesUsed;
+		private Set<String> modulesLoaded;
 		private String globalRequires;
 		private String firstPartOfTag;
 		private String lastPartOfTag; 
@@ -49,9 +50,13 @@ public final class JavascriptResolver {
 		static private final String globalRequiresFormat = 
 			"<script type=\"text/javascript\" src=\"%s/%s/config.js\"></script>\n" +
 			"<script type=\"text/javascript\" src=\"%s/%s/dojo/bootstrap1.js\"></script>\n";
-			
+		
+		static private final String loadModuleFormat = 
+			"<script type=\"text/javascript\">%s._load();</script>\n";
+		
 		private Page() {
 			this.filesUsed = new HashSet<String>();
+			this.modulesLoaded = new HashSet<String>();
 			
 			this.globalRequires = String.format(globalRequiresFormat,
 					scriptRoot, buildStamp,
@@ -71,6 +76,11 @@ public final class JavascriptResolver {
 			}
 			
 			includeFile(file, htmlWriter);
+			
+			if (!modulesLoaded.contains(module)) {
+				modulesLoaded.add(module);
+				htmlWriter.write(String.format(loadModuleFormat, module.replace("*", "_star")));
+			}
 		}
 		
 		public void includeFile(String filename, Writer htmlWriter) throws IOException {			
