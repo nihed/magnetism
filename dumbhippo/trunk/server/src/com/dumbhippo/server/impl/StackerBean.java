@@ -36,6 +36,7 @@ import com.dumbhippo.live.LiveState;
 import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.AccountClaim;
 import com.dumbhippo.persistence.Block;
+import com.dumbhippo.persistence.BlockKey;
 import com.dumbhippo.persistence.BlockType;
 import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.ExternalAccountType;
@@ -143,7 +144,11 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		LiveState.removeEventListener(BlockEvent.class, this);
 	}
 	
-	private Block queryBlock(BlockType type, Guid data1, Guid data2, long data3, StackInclusion inclusion) throws NotFoundException {
+	private Block queryBlock(BlockKey key) throws NotFoundException {
+		Guid data1 = key.getData1();
+		Guid data2 = key.getData2();
+		long data3 = key.getData3();
+		StackInclusion inclusion = key.getInclusion();
 		Query q;
 		if (data1 != null && data2 != null) {
 			q = em.createQuery("SELECT block FROM Block block WHERE block.blockType=:type " +
@@ -162,28 +167,26 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 							   "AND block.inclusion = :inclusion");
 			q.setParameter("data2", data2.toString());	
 		} else {
-			throw new IllegalArgumentException("must provide either data1 or data2 in query for block type " + type);
+			throw new IllegalArgumentException("must provide either data1 or data2 in query for block type " + key.getBlockType());
 		}
 		q.setParameter("data3", data3);
-		q.setParameter("type", type);
-		if (inclusion == null) {
-			inclusion = type.getDefaultStackInclusion();
-			if (inclusion == null)
-				throw new IllegalArgumentException("Must specify inclusion to query for block type " + type);
-		}
+		q.setParameter("type", key.getBlockType());
+		if (inclusion == null)
+			throw new IllegalArgumentException("BlockKey should not have null inclusion" + key);
 		q.setParameter("inclusion", inclusion);
 		try {
 			return (Block) q.getSingleResult();
 		} catch (NoResultException e) {
-			throw new NotFoundException("no block with type " + type + " data1 " + data1 + " data2 " + data2 + " data3 " + data3, e);
+			throw new NotFoundException("no block with key " + key, e);
 		}
 	}
-
-	private Block queryBlock(BlockType type, Guid data1, Guid data2, long data3) throws NotFoundException {
-		return queryBlock(type, data1, data2, data3, null);
-	}
 	
-	private UserBlockData queryUserBlockData(User user, BlockType type, Guid data1, Guid data2, long data3, StackInclusion inclusion) throws NotFoundException {
+	private UserBlockData queryUserBlockData(User user, BlockKey key) throws NotFoundException {
+		Guid data1 = key.getData1();
+		Guid data2 = key.getData2();
+		long data3 = key.getData3();
+		StackInclusion inclusion = key.getInclusion();
+
 		Query q;
 		if (data1 != null && data2 != null) {
 			q = em.createQuery("SELECT ubd FROM UserBlockData ubd, Block block WHERE ubd.block = block AND ubd.user = :user AND block.blockType=:type AND block.data1=:data1 AND block.data2=:data2 AND block.data3=:data3 " +
@@ -199,78 +202,52 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 					"AND block.inclusion = :inclusion");
 			q.setParameter("data2", data2);
 		} else {
-			throw new IllegalArgumentException("must provide either data1 or data2 in query for block type " + type);
+			throw new IllegalArgumentException("must provide either data1 or data2 in query for block  " + key);
 		}
 		q.setParameter("data3", data3);
 		q.setParameter("user", user);
-		q.setParameter("type", type);
-		if (inclusion == null) {
-			inclusion = type.getDefaultStackInclusion();
-			if (inclusion == null)
-				throw new IllegalArgumentException("Must specify inclusion to query for block type " + type);
-		}
+		q.setParameter("type", key.getBlockType());
+		if (inclusion == null)
+			throw new IllegalArgumentException("missing inclusion in key " + key);
 		q.setParameter("inclusion", inclusion);
 		try {
 			return (UserBlockData) q.getSingleResult();
 		} catch (NoResultException e) {
-			throw new NotFoundException("no UserBlockData with type " + type + " data1 " + data1 + " data2 " + data2 + " user " + user, e);
+			throw new NotFoundException("no UserBlockData with block key " + key, e);
 		}
 	}
 	
-	private Block createBlock(BlockType type, Guid data1, Guid data2, long data3, StackInclusion inclusion) {
-		Block block = new Block(type, data1, data2, data3, inclusion);
+	private Block createBlock(BlockKey key) {
+		Block block = new Block(key);
 		em.persist(block);
-		
 		return block;
 	}
 	
-	private Block createBlock(BlockType type, Guid data1, Guid data2, long data3) {
-	    return createBlock(type, data1, data2, data3, null);
-	}
-	
-	private Block createBlock(BlockType type, Guid data1, Guid data2) {
-		return createBlock(type, data1, data2, -1);
-	}
-	
-	private Block createBlock(BlockType type, Guid data1) {
-		return createBlock(type, data1, null, -1);
-	}
-	
-	private Block getOrCreateBlock(BlockType type, Guid data1, Guid data2, long data3,
-			StackInclusion inclusion, boolean changeDefaultPublicity, boolean publicBlockIfCreated) {
+	/** don't call this awkward method directly, call one of the two other overloads */
+	private Block getOrCreateBlock(BlockKey key, boolean changeDefaultPublicity, boolean publicBlockIfCreated) {
 		try {
-			return queryBlock(type, data1, data2, data3, inclusion);
+			return queryBlock(key);
 		} catch (NotFoundException e) {
-			Block block = createBlock(type, data1, data2, data3, inclusion);
+			Block block = createBlock(key);
 			if (changeDefaultPublicity)
 				block.setPublicBlock(publicBlockIfCreated);
 			return block;
 		}
 	}
 	
-	private Block getOrCreateBlock(BlockType type, Guid data1, Guid data2, long data3,
-			StackInclusion inclusion, boolean publicBlockIfCreated) {
-		return getOrCreateBlock(type, data1, data2, data3, inclusion, true, publicBlockIfCreated);
+	private Block getOrCreateBlock(BlockKey key, boolean publicBlockIfCreated) {
+		return getOrCreateBlock(key, true, publicBlockIfCreated);
 	}
 	
-	private Block getOrCreateBlock(BlockType type, Guid data1, Guid data2, long data3,
-			StackInclusion inclusion) {
-		return getOrCreateBlock(type, data1, data2, data3, inclusion, false, false);
-	}		
-	
-	private Block getOrCreateBlock(BlockType type, Guid data1, Guid data2, boolean publicBlockIfCreated) {
-		return getOrCreateBlock(type, data1, data2, -1, null, true);
-	}	
-
-	private Block getOrCreateBlock(BlockType type, Guid data1, Guid data2) {
-		return getOrCreateBlock(type, data1, data2, -1, null);
+	private Block getOrCreateBlock(BlockKey key) {
+		return getOrCreateBlock(key, false, false);
 	}
 	
-	private Block getUpdatingTimestamp(BlockType type, Guid data1, Guid data2, long data3, StackInclusion inclusion, long activity) {
+	private Block getUpdatingTimestamp(BlockKey key, long activity) {
 		Block block;
 		try {
-			logger.debug("will query for a block with type {}/{} data1: {}, data2: {}, data3: {} inclusion: {}", new Object[]{type, type.ordinal(), data1, data2, data3, inclusion});
-			block = queryBlock(type, data1, data2, data3, inclusion);
+			logger.debug("will query for a block with key {}", key);
+			block = queryBlock(key);
 			logger.debug("found block {}", block);
 		} catch (NotFoundException e) {
 			logger.debug("no block found");
@@ -656,17 +633,16 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		}
 	}
 	
-	private void stack(final BlockType type, final Guid data1, final Guid data2, final long data3,
-			final StackInclusion inclusion, final long activity, final Guid participantId, final boolean isGroupParticipation) {
+	private void stack(final BlockKey key, final long activity, final Guid participantId, final boolean isGroupParticipation) {
 		if (disabled)
 			return;
 		
 		// Updating the block timestamp is something we want to do as part of the enclosing transaction;
 		// if the enclosing transaction is rolled back, the timestamp needs to be rolled back
-		final Block block = getUpdatingTimestamp(type, data1, data2, data3, inclusion, activity);
+		final Block block = getUpdatingTimestamp(key, activity);
 		if (block == null) {
-			logger.warn("No block exists when stacking type={}, data1={}, data2={}, data3{}, migration needed or bug",
-					    new Object[] { type, data1, data2, data3 });
+			logger.warn("No block exists when stacking {} migration needed or bug",
+					    key);
 			return;
 		}
 
@@ -687,25 +663,17 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		});
 	}
 	
-	private void stack(BlockType type, Guid data1, Guid data2, long activity, Guid participantId, boolean isGroupParticipation) {
-        stack(type, data1, data2, -1, null, activity, participantId, isGroupParticipation);
-	}
-	
-	private void stack(BlockType type, Guid data1, Guid data2, long data3, long activity, Guid participantId, boolean isGroupParticipation) {
-        stack(type, data1, data2, data3, null, activity, participantId, isGroupParticipation);
-	}
-	
-	private void click(BlockType type, Guid data1, Guid data2, long data3, StackInclusion inclusion, User user, long clickTime) {
+	private void click(BlockKey key, User user, long clickTime) {
 		if (disabled)
 			return;
 		
 		UserBlockData ubd;
 		try {
-			ubd = queryUserBlockData(user, type, data1, data2, data3, inclusion);
+			ubd = queryUserBlockData(user, key);
 		} catch (NotFoundException e) {
 			// for now assume this means we don't want to record clicks for the given
 			// object, otherwise the ubd should already be created
-			logger.debug("No UserBlockData for user {} block type {} data1 " + data1, user, type);
+			logger.debug("No UserBlockData for user {} block key {}", user, key);
 			return;
 		}
 		
@@ -727,23 +695,19 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		stack(ubd.getBlock(), clickTime, false);
 	}
 	
-	private void click(BlockType type, Guid data1, Guid data2, long data3, User user, long clickTime) {
-		click(type, data1, data2, data3, null, user, clickTime);
-	}
-	
 	public void onUserCreated(Guid userId) {
 		User user = identitySpider.lookupUser(userId);
-		Block block = createBlock(BlockType.MUSIC_PERSON, userId, null);
+		Block block = createBlock(getMusicPersonKey(userId));
 		updateMusicPersonPublicity(block, user);
 	}
 	
 	public void onExternalAccountCreated(Guid userId, ExternalAccountType type) {
-		createBlock(BlockType.EXTERNAL_ACCOUNT_UPDATE, userId, null, type.ordinal());
-		createBlock(BlockType.EXTERNAL_ACCOUNT_UPDATE_SELF, userId, null, type.ordinal());
+		createBlock(getExternalAccountUpdateKey(userId, type));
+		createBlock(getExternalAccountUpdateSelfKey(userId, type));
 	}
 	
 	public void onGroupCreated(Guid groupId, boolean publicGroup) {
-		Block block = createBlock(BlockType.GROUP_CHAT, groupId, null);
+		Block block = createBlock(getGroupChatKey(groupId));
 		block.setPublicBlock(publicGroup);
 	}
 	
@@ -756,12 +720,12 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		if (a != null) {
 			// This is getOrCreate because a GroupMember can be deleted and then we'll 
 			// get onGroupMemberCreated again later for the same group/person if they rejoin
-			getOrCreateBlock(BlockType.GROUP_MEMBER, member.getGroup().getGuid(), a.getOwner().getGuid(), publicGroup);
+			getOrCreateBlock(getGroupMemberKey(member.getGroup().getGuid(), a.getOwner().getGuid()), publicGroup);
 		}
 	}
 	
 	public void onPostCreated(Guid postId, boolean publicPost) {
-		Block block = createBlock(BlockType.POST, postId);
+		Block block = createBlock(getPostKey(postId));
 		block.setPublicBlock(publicPost);
 	}
 
@@ -774,7 +738,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	private void updateMusicPersonPublicity(Account account) {
 		Block block;
 		try {
-			block = queryBlock(BlockType.MUSIC_PERSON, account.getOwner().getGuid(), null, -1);
+			block = queryBlock(getMusicPersonKey(account.getOwner().getGuid()));
 		} catch (NotFoundException e) {
 			return;
 		}
@@ -796,22 +760,46 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	public void onPostDisabledToggled(Post post) {
 		Block block;
 		try {
-			block = queryBlock(BlockType.POST, post.getGuid(), null, -1);
+			block = queryBlock(getPostKey(post.getGuid()));
 		} catch (NotFoundException e) {
 			return;
 		}
 		block.setPublicBlock(post.isPublic() && !post.isDisabled());
 	}
 	
+	private BlockKey getMusicPersonKey(Guid userId) {
+		return new BlockKey(BlockType.MUSIC_PERSON, userId);
+	}
+	
+	private BlockKey getGroupChatKey(Guid groupId) {
+		return new BlockKey(BlockType.GROUP_CHAT, groupId);
+	}
+	
+	private BlockKey getPostKey(Guid postId) {
+		return new BlockKey(BlockType.POST, postId);
+	}
+	
+	private BlockKey getGroupMemberKey(Guid groupId, Guid userId) {
+		return new BlockKey(BlockType.GROUP_MEMBER, groupId, userId);
+	}
+	
+	private BlockKey getExternalAccountUpdateKey(Guid userId, ExternalAccountType accountType) {
+		return new BlockKey(BlockType.EXTERNAL_ACCOUNT_UPDATE, userId, null, accountType.ordinal());
+	}
+	
+	private BlockKey getExternalAccountUpdateSelfKey(Guid userId, ExternalAccountType accountType) {
+		return new BlockKey(BlockType.EXTERNAL_ACCOUNT_UPDATE_SELF, userId, null, accountType.ordinal());
+	}
+	
 	// don't create or suspend transaction; we will manage our own for now (FIXME) 
 	@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 	public void stackMusicPerson(final Guid userId, final long activity) {
-		stack(BlockType.MUSIC_PERSON, userId, null, activity, userId, false);
+		stack(getMusicPersonKey(userId), activity, userId, false);
 	}
 	// don't create or suspend transaction; we will manage our own for now (FIXME) 
 	@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 	public void stackGroupChat(final Guid groupId, final long activity, final Guid participantId) {
-		stack(BlockType.GROUP_CHAT, groupId, null, activity, participantId, true);
+		stack(getGroupChatKey(groupId), activity, participantId, true);
 	}
 
 	// FIXME this is not right; it requires various rationalization with respect to PersonPostData, XMPP, and 
@@ -821,7 +809,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	// don't create or suspend transaction; we will manage our own for now (FIXME)	 
 	@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 	public void stackPost(final Guid postId, final long activity, final Guid participantId, boolean isGroupParticipation) {
-		stack(BlockType.POST, postId, null, activity, participantId, isGroupParticipation);
+		stack(getPostKey(postId), activity, participantId, isGroupParticipation);
 	}
 	
 	// don't create or suspend transaction; we will manage our own for now (FIXME)
@@ -841,7 +829,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		case INVITED_TO_FOLLOW:			
 			AccountClaim a = member.getMember().getAccountClaim();
 			if (a != null) {
-				stack(BlockType.GROUP_MEMBER, member.getGroup().getGuid(), a.getOwner().getGuid(), activity, a.getOwner().getGuid(), true);
+				stack(getGroupMemberKey(member.getGroup().getGuid(), a.getOwner().getGuid()), activity, a.getOwner().getGuid(), true);
 			}
 			break;
 		case NONMEMBER:
@@ -854,22 +842,23 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	// don't create or suspend transaction; we will manage our own for now (FIXME)
 	@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 	public void stackAccountUpdate(Guid userId, ExternalAccountType type, long activity) {
-		stack(BlockType.EXTERNAL_ACCOUNT_UPDATE, userId, null, type.ordinal(), activity, userId, false);
+		stack(getExternalAccountUpdateKey(userId, type), activity, userId, false);
+
 		// we always re-stack the external account update for self when we stack the external account update
 		// for others, because right now the external account update for self always includes whatever we 
 		// show to others; this allows us to filter out one or the other block type depending on 
 		// who is looking at the person's stacker
-		stack(BlockType.EXTERNAL_ACCOUNT_UPDATE_SELF, userId, null, type.ordinal(), activity, userId, false);
+		stack(getExternalAccountUpdateSelfKey(userId, type), activity, userId, false);
 	}
 
 	// don't create or suspend transaction; we will manage our own for now (FIXME)
 	@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 	public void stackAccountUpdateSelf(Guid userId, ExternalAccountType type, long activity) {
-		stack(BlockType.EXTERNAL_ACCOUNT_UPDATE_SELF, userId, null, type.ordinal(), activity, userId, false);
+		stack(getExternalAccountUpdateSelfKey(userId, type), activity, userId, false);
 	}
 	
 	public void clickedPost(Post post, User user, long clickedTime) {
-		click(BlockType.POST, post.getGuid(), null, -1, user, clickedTime);
+		click(getPostKey(post.getGuid()), user, clickedTime);
 	}
 	
 	// usually for access controls we just use NotFoundException, but in this case 
@@ -1182,6 +1171,9 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		
 		List<UserBlockData> list = TypeUtils.castList(UserBlockData.class, q.getResultList());		
 
+		if (list.isEmpty()) // code later on will die if the list is empty since newestTimestamp isn't initialized
+			return list; 
+		
 		long newestTimestamp = -1;
 		int newestTimestampCount = 0;
 		
@@ -1978,7 +1970,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	public void migratePost(String postId) {
 		logger.debug("    migrating post {}", postId);
 		Post post = em.find(Post.class, postId);
-		Block block = getOrCreateBlock(BlockType.POST, post.getGuid(), null, post.isPublic());
+		Block block = getOrCreateBlock(getPostKey(post.getGuid()), post.isPublic());
 		long activity = post.getPostDate().getTime();
 
 		// we want to move PersonPostData info into UserBlockData
@@ -2069,7 +2061,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		Post post = em.find(Post.class, postId);
 		Block block;
 		try {
-		    block = queryBlock(BlockType.POST, post.getGuid(), null, -1);		
+		    block = queryBlock(getPostKey(post.getGuid()));		
 		} catch (NotFoundException e) {
 			logger.warn("Block corresponding to post {} was not found, won't migrate post participation", post);
 			return;
@@ -2107,7 +2099,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	public void migrateUser(String userId) {
 		logger.debug("    migrating user {}", userId);
 		User user = em.find(User.class, userId);
-		getOrCreateBlock(BlockType.MUSIC_PERSON, user.getGuid(), null);
+		getOrCreateBlock(getMusicPersonKey(user.getGuid()));
 		long lastPlayTime = musicSystem.getLatestPlayTime(SystemViewpoint.getInstance(), user);
 		stackMusicPerson(user.getGuid(), lastPlayTime);
 	}
@@ -2138,7 +2130,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	public void migrateGroupChat(String groupId) {
 		logger.debug("    migrating group chat for {}", groupId);
 		Group group = em.find(Group.class, groupId);
-		getOrCreateBlock(BlockType.GROUP_CHAT, group.getGuid(), null, group.isPublic());
+		getOrCreateBlock(getGroupChatKey(group.getGuid()), group.isPublic());
 		List<GroupMessage> messages = groupSystem.getNewestGroupMessages(group, 1);
 		if (messages.isEmpty())
 			stackGroupChat(group.getGuid(), 0, null);
@@ -2154,7 +2146,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		Group group = em.find(Group.class, groupId);		
 		Block block;
 		try {
-		    block = queryBlock(BlockType.GROUP_CHAT, group.getGuid(), null, -1);		
+		    block = queryBlock(getGroupChatKey(group.getGuid()));		
 		} catch (NotFoundException e) {
 			logger.warn("Block corresponding to group {} was not found, won't migrate group participation", group);
 			return;
@@ -2183,7 +2175,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		for (GroupMember member : group.getMembers()) {
 			AccountClaim a = member.getMember().getAccountClaim();
 			if (a != null) {
-				getOrCreateBlock(BlockType.GROUP_MEMBER, member.getGroup().getGuid(), a.getOwner().getGuid(), group.isPublic());
+				getOrCreateBlock(getGroupMemberKey(member.getGroup().getGuid(), a.getOwner().getGuid()), group.isPublic());
 				// we set a timestamp of 0, since we have no way of knowing the right
 				// timestamp, and we don't want to make a big pile of group member blocks 
 				// at the top of the stack whenever we run a migration

@@ -73,7 +73,6 @@ public class RewriteServlet extends HttpServlet {
 	private Map<String, Integer> jspPages;
 	private Set<String> htmlPages;
 	private String buildStamp;
-	private String googleAnalyticsKey;
 	
 	private List<String> psaLinks; // used to choose a random one
 	private int nextPsa;

@@ -51,38 +51,14 @@ public class Block extends EmbeddedGuidPersistable {
 		this.inclusion = StackInclusion.IN_ALL_STACKS;
 	}
 
-	// For all these constructors, constructor args include
-	// those fields we are unique on (the fields
-	// that determine the identity of the block).
-	// Other fields should be set with setters, or may 
-	// be implied by the block type.
-		
-	public Block(BlockType type, Guid data1, Guid data2, long data3, StackInclusion stackInclusion) {
+	public Block(BlockKey key) {
 		this();
-		this.blockType = type;
-		this.publicBlock = type.isAlwaysPublic();
-		if (stackInclusion != null)
-			this.inclusion = stackInclusion;
-		else {
-			this.inclusion = type.getDefaultStackInclusion();
-			if (this.inclusion == null)
-				throw new IllegalArgumentException("inclusion must be specified creating blocks of type " + type);
-		}
-		this.data1 = data1;
-		this.data2 = data2;
-		this.data3 = data3;
-	}
-	
-	public Block(BlockType type, Guid data1, Guid data2, long data3) {
-		this(type, data1, data2, data3, null);
-	}
-
-	public Block(BlockType type, Guid data1, Guid data2, StackInclusion stackInclusion) {
-		this(type, data1, data2, -1, stackInclusion);
-	}	
-	
-	public Block(BlockType type, Guid data1, Guid data2) {
-		this(type, data1, data2, -1);
+		this.blockType = key.getBlockType();
+		this.publicBlock = this.blockType.isAlwaysPublic();
+		this.data1 = key.getData1();
+		this.data2 = key.getData2();
+		this.data3 = key.getData3();
+		this.inclusion = key.getInclusion();
 	}
 	
 	@Column(nullable=false)
