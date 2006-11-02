@@ -42,6 +42,7 @@ import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.FacebookAccount;
 import com.dumbhippo.persistence.FacebookEvent;
 import com.dumbhippo.persistence.FeedEntry;
+import com.dumbhippo.persistence.FeedPost;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupAccess;
 import com.dumbhippo.persistence.GroupBlockData;
@@ -495,7 +496,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		return TypeUtils.castList(GroupBlockData.class, q.getResultList());
 	}
 	
-	private void updateGroupBlockDatas(Block block, Set<Group> desiredGroups) {
+	private void updateGroupBlockDatas(Block block, Set<Group> desiredGroups, boolean isGroupParticipation) {
 		int addCount;
 		int removeCount;
 		
@@ -526,8 +527,13 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 				if (old.isDeleted())
 					addCount += 1;
 				old.setDeleted(false);
+				old.setStackTimestamp(block.getTimestamp());
+				if (isGroupParticipation)
+					old.setParticipatedTimestamp(block.getTimestamp());
 			} else {
 				GroupBlockData data = new GroupBlockData(g, block);
+				if (isGroupParticipation)
+					data.setParticipatedTimestamp(block.getTimestamp());
 				em.persist(data);
 				addCount += 1;
 			}
@@ -543,7 +549,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		logger.debug("block {}, {} total groups {} added {} removed {}", new Object[] { block, affectedGuids.size(), addCount, removeCount } );
 	}
 
-	private Set<Group> getGroupsWhoCare(Block block, boolean privateOnly) {
+	private Set<Group> getGroupsWhoCare(Block block) {
 		User user;
 		try {
 			user = EJBUtil.lookupGuid(em, User.class, block.getData1AsGuid());
@@ -551,20 +557,14 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 			throw new RuntimeException(e);
 		}
 		
-		if (privateOnly)
-			return groupSystem.findRawPrivateGroups(SystemViewpoint.getInstance(), user);
-		else
-			return groupSystem.findRawGroups(SystemViewpoint.getInstance(), user);
+		return groupSystem.findRawGroups(SystemViewpoint.getInstance(), user);
 	}
 	
 	private Set<Group> getDesiredGroupsForMusicPerson(Block block) {
 		if (block.getBlockType() != BlockType.MUSIC_PERSON)
 			throw new IllegalArgumentException("wrong type block");
         
-		// For music updates, we show in both public and private groups
-		// where that user is a member - will this cause too much noise
-		// in big public groups?
-		return getGroupsWhoCare(block, false);
+		return getGroupsWhoCare(block);
 	}
 	
 	private Set<Group> getDesiredGroupsForGroupChat(Block block) {
@@ -606,10 +606,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		if (block.getBlockType() != BlockType.EXTERNAL_ACCOUNT_UPDATE)
 			throw new IllegalArgumentException("wrong type block");
 	
-		// As a heuristic, we only show external account updates in private
-		// groups, because they likely will be small groups of friends or
-		// family, who might actually care about your latest Flickr photos.
-		return getGroupsWhoCare(block, true);
+		return getGroupsWhoCare(block);
 	}
 
 	private Set<Group> getDesiredGroupsForExternalAccountUpdateSelf(Block block) {
@@ -619,7 +616,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		return Collections.emptySet();
 	}
 	
-	private void updateGroupBlockDatas(Block block) {
+	private void updateGroupBlockDatas(Block block, boolean isGroupParticipation) {
 		Set<Group> desiredGroups = null;
 		switch (block.getBlockType()) {
 		case POST:
@@ -645,22 +642,22 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		if (desiredGroups == null)
 			throw new IllegalStateException("Trying to update user block data for unhandled block type " + block.getBlockType());
 		
-		updateGroupBlockDatas(block, desiredGroups);
+		updateGroupBlockDatas(block, desiredGroups, isGroupParticipation);
 	}
 	
-	private void stack(Block block, long activity) {
+	private void stack(Block block, long activity, boolean isGroupParticipation) {
 		if (disabled)
 			return;
 
 		if (block.getTimestampAsLong() < activity) {
 			block.setTimestampAsLong(activity);
 			updateUserBlockDatas(block, null);
-			updateGroupBlockDatas(block);
+			updateGroupBlockDatas(block, isGroupParticipation);
 		}
 	}
 	
 	private void stack(final BlockType type, final Guid data1, final Guid data2, final long data3,
-			final StackInclusion inclusion, final long activity, final Guid participantId) {
+			final StackInclusion inclusion, final long activity, final Guid participantId, final boolean isGroupParticipation) {
 		if (disabled)
 			return;
 		
@@ -683,19 +680,19 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 					public void run() {
 						Block attached = em.find(Block.class, block.getId());
 						updateUserBlockDatas(attached, participantId);
-						updateGroupBlockDatas(attached);
+						updateGroupBlockDatas(attached, isGroupParticipation);
 					}
 				});
 			}
 		});
 	}
 	
-	private void stack(BlockType type, Guid data1, Guid data2, long activity, Guid participantId) {
-        stack(type, data1, data2, -1, null, activity, participantId);
+	private void stack(BlockType type, Guid data1, Guid data2, long activity, Guid participantId, boolean isGroupParticipation) {
+        stack(type, data1, data2, -1, null, activity, participantId, isGroupParticipation);
 	}
 	
-	private void stack(BlockType type, Guid data1, Guid data2, long data3, long activity, Guid participantId) {
-        stack(type, data1, data2, data3, null, activity, participantId);
+	private void stack(BlockType type, Guid data1, Guid data2, long data3, long activity, Guid participantId, boolean isGroupParticipation) {
+        stack(type, data1, data2, data3, null, activity, participantId, isGroupParticipation);
 	}
 	
 	private void click(BlockType type, Guid data1, Guid data2, long data3, StackInclusion inclusion, User user, long clickTime) {
@@ -727,7 +724,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		logger.debug("due to click, restacking block {} with new time {}", ubd.getBlock(), clickTime);
 		// now update the timestamp in the block (if it's newer)
 		// and update user caches for all users
-		stack(ubd.getBlock(), clickTime);
+		stack(ubd.getBlock(), clickTime, false);
 	}
 	
 	private void click(BlockType type, Guid data1, Guid data2, long data3, User user, long clickTime) {
@@ -809,12 +806,12 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	// don't create or suspend transaction; we will manage our own for now (FIXME) 
 	@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 	public void stackMusicPerson(final Guid userId, final long activity) {
-		stack(BlockType.MUSIC_PERSON, userId, null, activity, userId);
+		stack(BlockType.MUSIC_PERSON, userId, null, activity, userId, false);
 	}
 	// don't create or suspend transaction; we will manage our own for now (FIXME) 
 	@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 	public void stackGroupChat(final Guid groupId, final long activity, final Guid participantId) {
-		stack(BlockType.GROUP_CHAT, groupId, null, activity, participantId);
+		stack(BlockType.GROUP_CHAT, groupId, null, activity, participantId, true);
 	}
 
 	// FIXME this is not right; it requires various rationalization with respect to PersonPostData, XMPP, and 
@@ -823,8 +820,8 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	
 	// don't create or suspend transaction; we will manage our own for now (FIXME)	 
 	@TransactionAttribute(TransactionAttributeType.SUPPORTS)
-	public void stackPost(final Guid postId, final long activity, final Guid participantId) {
-		stack(BlockType.POST, postId, null, activity, participantId);
+	public void stackPost(final Guid postId, final long activity, final Guid participantId, boolean isGroupParticipation) {
+		stack(BlockType.POST, postId, null, activity, participantId, isGroupParticipation);
 	}
 	
 	// don't create or suspend transaction; we will manage our own for now (FIXME)
@@ -844,7 +841,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		case INVITED_TO_FOLLOW:			
 			AccountClaim a = member.getMember().getAccountClaim();
 			if (a != null) {
-				stack(BlockType.GROUP_MEMBER, member.getGroup().getGuid(), a.getOwner().getGuid(), activity, a.getOwner().getGuid());
+				stack(BlockType.GROUP_MEMBER, member.getGroup().getGuid(), a.getOwner().getGuid(), activity, a.getOwner().getGuid(), true);
 			}
 			break;
 		case NONMEMBER:
@@ -857,18 +854,18 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	// don't create or suspend transaction; we will manage our own for now (FIXME)
 	@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 	public void stackAccountUpdate(Guid userId, ExternalAccountType type, long activity) {
-		stack(BlockType.EXTERNAL_ACCOUNT_UPDATE, userId, null, type.ordinal(), activity, userId);
+		stack(BlockType.EXTERNAL_ACCOUNT_UPDATE, userId, null, type.ordinal(), activity, userId, false);
 		// we always re-stack the external account update for self when we stack the external account update
 		// for others, because right now the external account update for self always includes whatever we 
 		// show to others; this allows us to filter out one or the other block type depending on 
 		// who is looking at the person's stacker
-		stack(BlockType.EXTERNAL_ACCOUNT_UPDATE_SELF, userId, null, type.ordinal(), activity, userId);
+		stack(BlockType.EXTERNAL_ACCOUNT_UPDATE_SELF, userId, null, type.ordinal(), activity, userId, false);
 	}
 
 	// don't create or suspend transaction; we will manage our own for now (FIXME)
 	@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 	public void stackAccountUpdateSelf(Guid userId, ExternalAccountType type, long activity) {
-		stack(BlockType.EXTERNAL_ACCOUNT_UPDATE_SELF, userId, null, type.ordinal(), activity, userId);
+		stack(BlockType.EXTERNAL_ACCOUNT_UPDATE_SELF, userId, null, type.ordinal(), activity, userId, false);
 	}
 	
 	public void clickedPost(Post post, User user, long clickedTime) {
@@ -1140,13 +1137,13 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
                 	 " WHERE ubd.user = :user AND ubd.deleted = 0 AND ubd.block = block ");
 		
 		if (participantOnly)
-			sb.append(" AND ubd.participatedTimestamp != NULL ");		
+			sb.append(" AND ubd.participatedTimestamp IS NOT NULL ");		
 
 		/* Timestamp clause */
 		
 		// if lastTimestamp == 0 then all blocks are included so just skip the test in the sql
 		if (lastTimestamp > 0)
-			sb.append(" AND block.timestamp >= :timestamp ");
+			sb.append(" AND ubd.stackTimestamp >= :timestamp ");
 		
 		/* Inclusion clause */
 		sb.append(" AND (block.inclusion = ");
@@ -1391,7 +1388,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		// we expect the anonymous viewpoint here, so we only get public blocks
 		Query q = em.createQuery("SELECT ubd.user FROM UserBlockData ubd, Block block " + 
                 " WHERE ubd.deleted = 0 AND ubd.block = block " +
-                " AND ubd.participatedTimestamp != NULL " +
+                " AND ubd.participatedTimestamp IS NOT NULL " +
                 " AND block.publicBlock = true " + groupUpdatesFilter +
                 " ORDER BY ubd.participatedTimestamp DESC");
 		q.setFirstResult(start);
@@ -1421,7 +1418,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		for (User user : distinctUsers) {
 			Query qu = em.createQuery("Select ubd FROM UserBlockData ubd, Block block " + 
                 " WHERE ubd.user = :user AND ubd.deleted = 0 AND ubd.block = block " +
-                " AND ubd.participatedTimestamp != NULL " +
+                " AND ubd.participatedTimestamp IS NOT NULL " +
                 " AND block.publicBlock = true " + groupUpdatesFilter +
                 " ORDER BY ubd.participatedTimestamp DESC");
 			qu.setParameter("user", user);
@@ -1474,9 +1471,9 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	}
 	
 	private List<GroupBlockData> getBlocks(Viewpoint viewpoint, Group group, int start, int count) {
-		Query q = em.createQuery("SELECT gbd FROM GroupBlockData gbd, Block block " + 
+		Query q = em.createQuery("SELECT gbd FROM GroupBlockData gbd " + 
 				                 " WHERE gbd.group = :group AND gbd.deleted = 0 AND gbd.block = block " + 
-				                 " ORDER BY block.timestamp DESC");
+				                 " ORDER BY gbd.stackTimestamp DESC");
 		q.setFirstResult(start);
 		q.setMaxResults(count);
 		q.setParameter("group", group);
@@ -1508,8 +1505,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	// make an old inactive group that they happen to be a member of seem active
 	static final String INTERESTING_PUBLIC_GROUP_BLOCK_CLAUSE =  
         " AND block.publicBlock = true " +
-        " AND block.blockType != " + BlockType.EXTERNAL_ACCOUNT_UPDATE.ordinal() + 
-        " AND block.blockType != " + BlockType.MUSIC_PERSON.ordinal(); 
+        " AND gbd.participatedTimestamp IS NOT NULL ";
 	
 	private List<Group> getRecentActivityGroups(int start, int count) {
 		// We get only public blocks, since we are displaying a system-global list
@@ -1522,7 +1518,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
                 " WHERE gbd.deleted = 0 AND gbd.block = block " +
                 " AND gbd.group.access >= " + GroupAccess.PUBLIC_INVITE.ordinal() +
                 INTERESTING_PUBLIC_GROUP_BLOCK_CLAUSE +
-                " ORDER BY block.timestamp DESC");
+                " ORDER BY gbd.participatedTimestamp DESC");
 		q.setFirstResult(start);
 		q.setMaxResults(count);
 		
@@ -1545,7 +1541,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 			Query q = em.createQuery("Select gbd FROM GroupBlockData gbd, Block block " + 
                 " WHERE gbd.group = :group AND gbd.deleted = 0 AND gbd.block = block " +
                 INTERESTING_PUBLIC_GROUP_BLOCK_CLAUSE +
-                " ORDER BY block.timestamp DESC");
+                " ORDER BY gbd.participatedTimestamp DESC");
 			q.setParameter("group", group);
 		    q.setMaxResults(blockPerGroup);
          	List<BlockView> blocks = new ArrayList<BlockView>();
@@ -2063,7 +2059,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		// cached user timestamps after this transaction commits. It would also 
 		// create any  UserBlockData objects that didn't exist at that point, but 
 		// they should have all been created above by migrating PersonPostData
-		stack(block, activity);		
+		stack(block, activity, !(post instanceof FeedPost) || messages.size() > 0);		
 	}
 	
 	public void migratePostParticipation(String postId) {
@@ -2200,6 +2196,36 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		logger.debug("    migrating group block data for {}", blockId);
 		
 		Block block = em.find(Block.class, blockId);
-		updateGroupBlockDatas(block);
+        boolean isGroupParticipation;
+
+		switch (block.getBlockType()) {
+		case POST:
+			// The participation timestamp here will not be set quite right; we
+			// ignore chatting which is participation even on a FeedPost, and
+			// we use the block timestamp rather than the post timestamp, but
+			// we can fix up more accurately with SQL once the GroupBlockData
+			// objects are created.
+			//
+			Post post = em.find(Post.class, block.getData1AsGuid().toString());
+			if (post == null) {
+				logger.warn("Can't find post when migrating block {}", block.getId());
+				return;
+			}
+			isGroupParticipation = !(post instanceof FeedPost);
+			break;
+		case GROUP_MEMBER:
+		case GROUP_CHAT:
+			isGroupParticipation = true;
+			break;
+		case MUSIC_PERSON:
+		case EXTERNAL_ACCOUNT_UPDATE:
+		case EXTERNAL_ACCOUNT_UPDATE_SELF:
+			isGroupParticipation = false;
+			break;
+		default:
+			throw new RuntimeException("Unknown block type");
+		}
+
+		updateGroupBlockDatas(block, isGroupParticipation);
 	}
 }

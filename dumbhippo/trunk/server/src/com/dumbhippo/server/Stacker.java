@@ -48,7 +48,7 @@ public interface Stacker {
 	// They are per block type. 
 	public void stackMusicPerson(Guid userId, long activity);
 	public void stackGroupChat(Guid groupId, long activity, Guid participantId);
-	public void stackPost(Guid postId, long activity, Guid participantId);
+	public void stackPost(Guid postId, long activity, Guid participantId, boolean isGroupParticipation);
 	public void stackGroupMember(GroupMember member, long activity);
 	public void stackAccountUpdate(Guid userId, ExternalAccountType type, long activity);
 	public void stackAccountUpdateSelf(Guid userId, ExternalAccountType type, long activity);

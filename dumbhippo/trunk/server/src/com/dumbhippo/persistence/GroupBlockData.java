@@ -1,14 +1,18 @@
 package com.dumbhippo.persistence;
 
+import java.util.Date;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.hibernate.annotations.Index;
 
 @Entity
 @Cache(usage=CacheConcurrencyStrategy.TRANSACTIONAL)
@@ -16,12 +20,19 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 	   uniqueConstraints = {
 			@UniqueConstraint(columnNames={"group_id", "block_id"})
 		})
+@org.hibernate.annotations.Table(appliesTo = "GroupBlockData", indexes={ 
+		@Index(name="participatedTimestamp_index", columnNames = { "participatedTimestamp" } ),
+		@Index(name="groupStack_index", columnNames = { "group_id", "stackTimestamp" } ), 
+		@Index(name="groupParticipated_index", columnNames = { "group_id", "participatedTimestamp" } ) 
+})		
 public class GroupBlockData extends DBUnique {
 	private static final long serialVersionUID = 1L;
 	
 	private Group group;
 	private Block block;
 	private boolean deleted;
+	private long participatedTimestamp;
+	private long stackTimestamp;
 	
 	public GroupBlockData() {
 		this.deleted = false;
@@ -31,6 +42,8 @@ public class GroupBlockData extends DBUnique {
 		this();
 		this.block = block;
 		this.group = group; 
+		this.participatedTimestamp = -1;
+		this.stackTimestamp = block.getTimestampAsLong();
 	}
 	
 	@JoinColumn(nullable=false)
@@ -61,6 +74,47 @@ public class GroupBlockData extends DBUnique {
 	public void setDeleted(boolean deleted) {
 		this.deleted = deleted;
 	}	
+	
+	@Column(nullable=true)
+	public Date getParticipatedTimestamp() {
+		return participatedTimestamp >= 0 ? new Date(participatedTimestamp) : null;
+	}
+
+	@Transient
+	public long getParticipatedTimestampAsLong() {
+		return participatedTimestamp;
+	}
+	
+	public void setParticipatedTimestamp(Date participatedTimestamp) {
+		this.participatedTimestamp = participatedTimestamp != null ? participatedTimestamp.getTime() : -1;
+	}
+	
+	public void setParticipatedTimestampAsLong(long participatedTimestamp) {
+		this.participatedTimestamp = participatedTimestamp;
+	}
+	
+	@Transient
+	public boolean getParticipated() {
+		return this.participatedTimestamp >= 0;
+	}
+	
+	@Column(nullable=false)
+	public Date getStackTimestamp() {
+		return new Date(stackTimestamp);
+	}
+
+	@Transient
+	public long getStackTimestampAsLong() {
+		return stackTimestamp;
+	}
+	
+	public void setStackTimestamp(Date stackTimestamp) {
+		this.stackTimestamp = stackTimestamp.getTime();
+	}
+	
+	public void setStackTimestampAsLong(long stackTimestamp) {
+		this.stackTimestamp = stackTimestamp;
+	}
 	
 	@Override
 	public String toString() {
