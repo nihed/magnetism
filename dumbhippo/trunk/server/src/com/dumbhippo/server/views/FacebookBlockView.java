@@ -9,7 +9,7 @@ import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.FacebookEvent;
 import com.dumbhippo.persistence.UserBlockData;
 
-public class FacebookBlockView extends ExternalAccountBlockView {
+public class FacebookBlockView extends BlockView implements ExternalAccountBlockView {
 	private PersonView userView;
 	private List<FacebookEvent> facebookEvents;
 	
@@ -57,8 +57,12 @@ public class FacebookBlockView extends ExternalAccountBlockView {
 		return Collections.singletonList((Object)userView);
 	}
 
-	@Override
 	public ExternalAccountType getAccountType() {
 		return ExternalAccountType.FACEBOOK;
+	}
+
+	@Override
+	public String getIcon() {
+		return "/images3/" + ExternalAccountType.FACEBOOK.getIconName();
 	}
 }

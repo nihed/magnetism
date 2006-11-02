@@ -8,6 +8,8 @@ import java.io.OutputStream;
 
 public class StreamUtils {
 
+	public static final int ONE_KILOBYTE = 1024;
+	public static final int ONE_KILOCHAR = 1024;
 	public static final int ONE_MEGABYTE = 1024 * 1024;
 	public static final int ONE_MEGACHAR = 1024 * 1024;
 	

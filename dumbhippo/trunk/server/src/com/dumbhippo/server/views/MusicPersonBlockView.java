@@ -47,4 +47,9 @@ public class MusicPersonBlockView extends BlockView {
 	public List<Object> getReferencedObjects() {
 		return Collections.singletonList((Object)userView);
 	}
+	
+	@Override
+	public String getIcon() {
+		return "/images3/musicradar_icon.png";
+	}
 }

@@ -31,6 +31,7 @@ import org.slf4j.Logger;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.ThreadUtils;
 import com.dumbhippo.TypeUtils;
+import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.mbean.FeedUpdater;
 import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.ExternalAccountType;
@@ -44,6 +45,7 @@ import com.dumbhippo.persistence.TrackFeedEntry;
 import com.dumbhippo.server.FeedSystem;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.MusicSystem;
+import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.Stacker;
 import com.dumbhippo.server.TransactionRunner;
@@ -716,19 +718,45 @@ public class FeedSystemBean implements FeedSystem {
 			cache.put(url.toExternalForm(), info);
 		}
 	}
-
+	
+	public String getUrlToScrapeFaviconFrom(String untrustedFeedSourceId) throws NotFoundException {
+		LinkResource link;
+		try {
+			link = identitySpider.lookupGuidString(LinkResource.class, untrustedFeedSourceId);
+		} catch (ParseException e) {
+			throw new NotFoundException("invalid guid", e);
+		}
+		
+		Feed feed = lookupExistingFeed(link);
+		if (feed == null)
+			throw new NotFoundException("No known feed with the source link id '" + untrustedFeedSourceId + "'");
+		
+		return getUrlToScrapeFaviconFrom(feed);
+	}
+	
+	public String getUrlToScrapeFaviconFrom(Feed feed) throws NotFoundException {
+		if (feed.getLink() == null)
+			throw new NotFoundException("No web site associated with feed " + feed);
+		else
+			return feed.getLink().getUrl();		
+	}
+	
+	// FIXME is this used?
 	public void create() throws Exception {
 		logger.info("Creating FeedSystemBean");
 	}
 
+	// FIXME is this used?
 	public void destroy() {
 		logger.info("Destroying FeedSystemBean");
 	}
 
+	// FIXME is this used?
 	public void start() throws Exception {
 		logger.info("Starting FeedSystemBean");
 	}
 
+	// FIXME is this used?
 	public void stop() {
 		logger.info("Stopping FeedSystemBean");
 	}

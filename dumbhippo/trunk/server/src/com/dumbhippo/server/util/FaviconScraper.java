@@ -35,6 +35,7 @@ public final class FaviconScraper {
 	
 	private URL faviconUrl;
 	private String mimeType;
+	private byte[] iconData;
 	
 	static private final String mimeTypes[] = {
 		"image/x-icon",
@@ -169,23 +170,20 @@ public final class FaviconScraper {
 		}
 	}
 	
-	public boolean tryRootDirectory(URL url) {
-		URL faviconInRoot;
+	public boolean downloadIcon(URL url, boolean withData) {
 		try {
-			faviconInRoot = new URL(url, "/favicon.ico");
-		} catch (MalformedURLException e) {
-			logger.warn("Could not construct root/favicon.ico from URL: " + url);
-			return false;
-		}
-		URLConnection connection;
-		try {
-			connection = faviconInRoot.openConnection();
+			URLConnection connection = url.openConnection();
 
 			connection.setConnectTimeout(TIMEOUT);
 			connection.setReadTimeout(TIMEOUT);
 			
 			HttpURLConnection httpConnection = (HttpURLConnection) connection;
-			httpConnection.setRequestMethod("HEAD");
+			
+			byte[] data = null;
+			if (withData)
+				data = StreamUtils.readStreamBytes(connection.getInputStream(), StreamUtils.ONE_KILOBYTE * 64);
+			else
+				httpConnection.setRequestMethod("HEAD");				
 			
 			String contentType = connection.getContentType();
 			
@@ -198,19 +196,31 @@ public final class FaviconScraper {
 				contentType = "image/ico";
 			}
 			
-			setFaviconUrl(faviconInRoot);
+			setFaviconUrl(url);
 			setMimeType(contentType);
+			if (withData)
+				setIconData(data);
 			return true;
 		} catch (IOException e) {
-			logger.debug("io exception fetching favicon at {}: {} ", faviconInRoot, e.getMessage());
+			logger.debug("io exception fetching favicon at {}: {} ", url, e.getMessage());
 			return false;
 		}
 	}
 	
-	public boolean analzyeURL(URL url) {	
-		URLConnection connection;
+	public boolean tryRootDirectory(URL url, boolean withData) {
+		URL faviconInRoot;
 		try {
-			connection = url.openConnection();
+			faviconInRoot = new URL(url.getProtocol(), url.getHost(), url.getPort(), "/favicon.ico");
+		} catch (MalformedURLException e) {
+			logger.warn("Could not construct root/favicon.ico from URL: " + url);
+			return false;
+		}
+		return downloadIcon(faviconInRoot, withData);
+	}
+	
+	private boolean scrapeURL(URL url) {
+		try {
+			URLConnection connection = url.openConnection();
 
 			connection.setConnectTimeout(TIMEOUT);
 			connection.setReadTimeout(TIMEOUT);
@@ -220,12 +230,26 @@ public final class FaviconScraper {
 				return true;
 			} 
 		} catch (IOException e) {
+			logger.debug("Scraping favicon {} failed: {}", url, e.getMessage());
 			return false;
 		}
-		
-		return tryRootDirectory(url);
+		return false;
+	}
+	
+	public boolean analzyeURL(URL url) {	
+		if (scrapeURL(url))
+			return true;
+		else
+			return tryRootDirectory(url, false);
 	}
 
+	public boolean fetchURL(URL url) {
+		if (scrapeURL(url))
+			return downloadIcon(getFaviconUrl(), true);
+		else
+			return tryRootDirectory(url, true);
+	}	
+	
 	public URL getFaviconUrl() {
 		return faviconUrl;
 	}
@@ -234,12 +258,20 @@ public final class FaviconScraper {
 		return mimeType;
 	}
 	
+	public byte[] getIconData() {
+		return iconData;
+	}
+	
 	private void setFaviconUrl(URL faviconUrl) {
 		this.faviconUrl = faviconUrl;
 	}
 	
 	private void setMimeType(String mimeType) {
 		this.mimeType = mimeType;
+	}
+	
+	private void setIconData(byte[] iconData) {
+		this.iconData = iconData;
 	}
 	
 	/* For testing */
@@ -251,6 +283,15 @@ public final class FaviconScraper {
 				System.out.println("Trying external account " + e + " url: " + u);
 				scraper.analzyeURL(new URL(u));
 				System.out.println("Got favicon: " + scraper.getFaviconUrl() + " mime type " + scraper.getMimeType());
+			}
+		}
+		for (ExternalAccountType e : ExternalAccountType.values()) {
+			FaviconScraper scraper = new FaviconScraper();
+			String u = e.getSiteLink();
+			if (u.length() > 0) {
+				System.out.println("Trying external account " + e + " url: " + u);
+				scraper.fetchURL(new URL(u));
+				System.out.println("Got favicon: " + scraper.getFaviconUrl() + " mime type " + scraper.getMimeType() + " kbytes of data " + scraper.getIconData().length/1024.0);
 			}
 		}
 		System.out.println("done");

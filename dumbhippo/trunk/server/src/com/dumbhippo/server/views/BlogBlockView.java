@@ -9,7 +9,7 @@ import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.FeedEntry;
 import com.dumbhippo.persistence.UserBlockData;
 
-public class BlogBlockView extends ExternalAccountBlockView {
+public class BlogBlockView extends BlockView implements ExternalAccountBlockView {
 	
 	private PersonView userView;
 	private FeedEntry entry;
@@ -58,8 +58,13 @@ public class BlogBlockView extends ExternalAccountBlockView {
 		return Collections.singletonList((Object)userView);
 	}
 
-	@Override
 	public ExternalAccountType getAccountType() {
 		return ExternalAccountType.BLOG;
+	}
+
+	@Override
+	public String getIcon() {
+		return "/images3/blog_icon.png";
+		//return entry.getFeed().getFavicon();
 	}
 }

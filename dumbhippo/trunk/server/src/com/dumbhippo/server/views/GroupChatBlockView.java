@@ -61,4 +61,10 @@ public class GroupChatBlockView extends BlockView {
 		}
 		return result;
 	}
+
+	@Override
+	public String getIcon() {
+		// Mugshot stock favicon
+		return "/images3/mugshot_icon.png";
+	}
 }

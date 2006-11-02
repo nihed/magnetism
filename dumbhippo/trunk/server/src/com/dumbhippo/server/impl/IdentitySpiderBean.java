@@ -125,16 +125,14 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	public <T extends GuidPersistable> T lookupGuidString(Class<T> klass,
 			String id) throws ParseException, NotFoundException {
 		if (klass.equals(Post.class) || klass.equals(Group.class))
-			logger
-					.error("Probable bug: looking up Post/Group should use GroupSystem/PostingBoard to get access controls");
+			logger.error("Probable bug: looking up Post/Group should use GroupSystem/PostingBoard to get access controls");
 		return EJBUtil.lookupGuidString(em, klass, id);
 	}
 
 	public <T extends GuidPersistable> T lookupGuid(Class<T> klass, Guid id)
 			throws NotFoundException {
 		if (klass.equals(Post.class) || klass.equals(Group.class))
-			logger
-					.error("Probable bug: looking up Post/Group should use GroupSystem/PostingBoard to get access controls");
+			logger.error("Probable bug: looking up Post/Group should use GroupSystem/PostingBoard to get access controls");
 		return EJBUtil.lookupGuid(em, klass, id);
 	}
 
@@ -234,7 +232,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		Query q;
 		String className = klass.getName();
 
-		q = em.createQuery("from " + className + " a where a." + identifier
+		q = em.createQuery("SELECT a FROM " + className + " a WHERE a." + identifier
 				+ " = :name");
 		q.setParameter("name", name);
 
@@ -265,6 +263,10 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		return lookupResourceByName(EmailResource.class, "email", email);
 	}
 
+	public LinkResource lookupLink(final URL url) {
+		return lookupResourceByName(LinkResource.class, "url", url.toExternalForm());
+	}
+	
 	public LinkResource getLink(final URL url) {
 		try {
 			return runner
@@ -273,7 +275,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 						public LinkResource call() throws Exception {
 							Query q;
 
-							q = em.createQuery("from LinkResource l where l.url = :url");
+							q = em.createQuery("SELECT l FROM LinkResource l WHERE l.url = :url");
 							q.setParameter("url", url.toExternalForm());
 
 							LinkResource res;
@@ -294,7 +296,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 			return null; // not reached
 		}
 	}
-
+	
 	private User getUserForContact(Contact contact) {
 		for (ContactClaim cc : contact.getResources()) {
 			Resource resource = cc.getResource();

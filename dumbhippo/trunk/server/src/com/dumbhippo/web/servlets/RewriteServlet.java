@@ -86,6 +86,8 @@ public class RewriteServlet extends HttpServlet {
 	private Condition buildstampCondition;
 	private int webVersion;
 	
+	private FaviconHandler faviconHandler;
+	
 	private boolean hasSignin(HttpServletRequest request) {
 		return SigninBean.getForRequest(request).isValid();
 	}
@@ -318,7 +320,8 @@ public class RewriteServlet extends HttpServlet {
 		} else if (path.startsWith("/javascript/") ||
 				path.matches("/css\\d*/.*") ||
 				path.matches("/images\\d*/.*") ||
-				path.startsWith("/flash/")) {
+				path.startsWith("/flash/") || 
+				path.startsWith("/favicons/")) {
 			
 			String pathWithoutStamp = checkBuildStamp(path);
 			if (pathWithoutStamp != null) {
@@ -340,6 +343,8 @@ public class RewriteServlet extends HttpServlet {
 				context.getRequestDispatcher(getVersionedJspPath("configjs")).forward(request, response);
 			} else if (path.equals("/javascript/whereimat.js")) {
 				handleVersionedJsp(request, response, "whereimatjs");
+			} else if (path.startsWith("/favicons/")) {
+				faviconHandler.service(context, request, response, path, modifiedPath);
 			} else if (modifiedPath) {
 				RewrittenRequest rewrittenRequest = new RewrittenRequest(request, path);
 				context.getNamedDispatcher("default").forward(rewrittenRequest, response);
@@ -650,6 +655,8 @@ public class RewriteServlet extends HttpServlet {
 		}
 		logger.debug("Added {} PSAs: {}", psaLinks.size(), psaLinks);		
         
+		faviconHandler = new FaviconHandler();
+		
 		initBuildStampScan();
 		try {
 			loadBuildStamp();

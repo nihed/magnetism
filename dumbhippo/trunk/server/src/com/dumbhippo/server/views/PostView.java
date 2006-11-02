@@ -17,6 +17,7 @@ import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.live.LivePost;
 import com.dumbhippo.live.LiveState;
+import com.dumbhippo.persistence.FeedPost;
 import com.dumbhippo.persistence.PersonPostData;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.Resource;
@@ -56,6 +57,7 @@ public class PostView implements ObjectView {
 	private boolean favorite;
 	private boolean ignored;
 	private boolean toWorld;
+	private String feedFavicon;
 	
 	public enum Context {
 		MAIL_NOTIFICATION,
@@ -92,6 +94,10 @@ public class PostView implements ObjectView {
 		this.viewpoint = viewpoint;
 		this.toWorld = p.isToWorld();
 	
+		if (p instanceof FeedPost) {
+			feedFavicon = ((FeedPost)p).getFeed().getFeed().getFavicon();
+		}
+		
 		if (viewpoint instanceof UserViewpoint) {
 			User viewer = ((UserViewpoint) viewpoint).getViewer();
 			this.favorite = viewer.getAccount().getFavoritePosts().contains(post);
@@ -179,6 +185,10 @@ public class PostView implements ObjectView {
 		return post;
 	}
 
+	public String getFeedFavicon() {
+		return feedFavicon;
+	}
+	
 	public boolean isViewerHasViewed() {
 		return viewerHasViewed;
 	}

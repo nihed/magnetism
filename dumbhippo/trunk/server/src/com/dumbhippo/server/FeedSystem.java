@@ -77,5 +77,9 @@ public interface FeedSystem {
 	 *  @param entryId the ID of the entry that changed (a ID rather than
 	 *     a FeedEntry is used here because this is called asynchronously) 
 	 */
-	void handleNewEntryNotification(long entryId);	
+	void handleNewEntryNotification(long entryId);
+	
+	String getUrlToScrapeFaviconFrom(String untrustedFeedSourceUrl) throws NotFoundException;
+	
+	String getUrlToScrapeFaviconFrom(Feed feed) throws NotFoundException;
 }

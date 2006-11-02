@@ -74,6 +74,10 @@ public class UniqueTaskExecutor<KeyType,ResultType> {
 		return task;
 	}
 	
+	public synchronized Future<ResultType> peek(KeyType key) {
+		return inProgress.get(key);
+	}
+	
 	// note this is an inner class and has to be threadsafe in accessing the outer
 	private class UniqueFutureTask extends FutureTask<ResultType> {
 		private KeyType key;

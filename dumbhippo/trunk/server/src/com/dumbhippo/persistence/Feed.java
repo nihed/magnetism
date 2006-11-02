@@ -10,6 +10,7 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
+import javax.persistence.Transient;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -129,5 +130,11 @@ public class Feed extends DBUnique {
 
 	public void setLink(LinkResource link) {
 		this.link = link;
+	}
+
+	@Transient
+	public String getFavicon() {
+		// FIXME need build stamp on this (well, dh:png usually fixes it)
+		return "/favicons/feed/" + getSource().getId();
 	}
 }

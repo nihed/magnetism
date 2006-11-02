@@ -10,7 +10,7 @@
 <%@ attribute name="oneLine" required="true" type="java.lang.Boolean" %>
 
 <dht3:blockContainer cssClass="${offset ? 'dh-box-grey2' : 'dh-box-grey1'}" blockId="${blockId}">
-	<dht3:blockHeader icon="/images3/${buildStamp}/musicradar_icon.png" blockId="${blockId}">
+	<dht3:blockHeader block="${block}" blockId="${blockId}">
 		<dht3:blockHeaderLeft>
 		    <c:if test="${!oneLine}"> 
 			    <span class="dh-stacker-block-title-type">Music Radar:</span>	

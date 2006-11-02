@@ -88,6 +88,16 @@ public interface IdentitySpider {
 	 */
 	public LinkResource getLink(URL url);
 	
+	/** 
+	 * Gets a Resource object for the given URL, not creating it
+	 * if it doesn't already exist. The result is attached
+	 * assuming you have a transaction open.
+	 * 
+	 * @param url the url
+	 * @return a resource for the url or null if it didn't exist in the db
+	 */
+	public LinkResource lookupLink(URL url);	
+	
 	/**
 	 * Finds the unique person which owns an email address
 	 * according to our system. i.e. this person has proved

@@ -10,7 +10,7 @@
 <%@ attribute name="showFrom" required="false" type="java.lang.Boolean" %>
 
 <dht3:blockContainer cssClass="${offset ? 'dh-box-orange2' : 'dh-box-orange1'}" blockId="${blockId}">
-	<dht3:blockHeader icon="/images3/${buildStamp}/mugshot_icon.png" blockId="${blockId}">
+	<dht3:blockHeader block="${block}" blockId="${blockId}">
 		<dht3:blockHeaderLeft>
 			<span class="dh-stacker-block-title-group-member-name"><dht3:entityLink who="${block.memberView}"/></span>
 			<c:choose>

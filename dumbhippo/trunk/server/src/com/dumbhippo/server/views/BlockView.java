@@ -37,6 +37,8 @@ public abstract class BlockView implements ObjectView {
 		return viewpoint;
 	}
 	
+	public abstract String getIcon();
+	
 	public boolean isPopulated() {
 		return populated;
 	}
@@ -67,7 +69,8 @@ public abstract class BlockView implements ObjectView {
 							"ignored", Boolean.toString(userBlockData.isIgnored()),
 							"ignoredTimestamp", Long.toString(userBlockData.getIgnoredTimestampAsLong()),
 							"clicked", Boolean.toString(userBlockData.isClicked()),
-							"clickedTimestamp", Long.toString(userBlockData.getClickedTimestampAsLong()));
+							"clickedTimestamp", Long.toString(userBlockData.getClickedTimestampAsLong()),
+							"icon", getIcon());
 		
 		writeDetailsToXmlBuilder(builder);
 		

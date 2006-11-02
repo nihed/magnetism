@@ -18,6 +18,7 @@ import com.dumbhippo.persistence.SchemaUpdater;
 import com.dumbhippo.server.impl.AbstractCacheBean;
 import com.dumbhippo.server.impl.MusicSystemInternalBean;
 import com.dumbhippo.server.impl.TransactionRunnerBean;
+import com.dumbhippo.server.util.FaviconCache;
 
 // The point of this extremely simple MBean is to get notification
 // when our application is loaded and unloaded; in particular, we
@@ -74,5 +75,6 @@ public class HippoService extends ServiceMBeanSupport implements HippoServiceMBe
 		AbstractCacheBean.shutdown();
 		MusicSystemInternalBean.shutdown();
 		TransactionRunnerBean.shutdown();
+		FaviconCache.shutdown();
    }
 }

@@ -17,6 +17,7 @@ public class PostBlockView extends BlockView {
 		super(viewpoint, block, ubd);
 		this.postView = post;
 		this.recentMessages = recentMessages;
+		
 		setPopulated(true);
 	}
 	
@@ -61,5 +62,14 @@ public class PostBlockView extends BlockView {
 			result.add(message.getSenderView());
 		}
 		return result;
+	}
+	
+	@Override
+	public String getIcon() {
+		String feedIcon = postView.getFeedFavicon();
+		if (feedIcon != null)
+			return feedIcon;
+		else
+			return "/images3/webswarm_icon.png";
 	}
 }

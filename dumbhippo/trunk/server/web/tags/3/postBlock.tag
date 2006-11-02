@@ -10,7 +10,7 @@
 <%@ attribute name="oneLine" required="true" type="java.lang.Boolean" %>
 
 <dht3:blockContainer cssClass="${offset ? 'dh-box-grey2' : 'dh-box-grey1'}" blockId="${blockId}" expandable="${!oneLine}">
-	<dht3:blockHeader icon="/images3/${buildStamp}/webswarm_icon.png" blockId="${blockId}">
+	<dht3:blockHeader block="${block}" blockId="${blockId}">
 		<dht3:blockHeaderLeft>
 		    <%-- TODO: it is nicer to do this with display "none" in css, but for some reason could not detect --%> 
 		    <%-- node.style.display == "none" in getTextFromHtmlNode() and truncateTextInHtmlNode() util.js, so --%>

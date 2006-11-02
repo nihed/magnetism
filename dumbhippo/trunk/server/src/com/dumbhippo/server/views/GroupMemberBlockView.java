@@ -73,4 +73,10 @@ public class GroupMemberBlockView extends BlockView {
 	public Set<PersonView> getAdders() {
 		return adders;
 	}
+	
+	@Override
+	public String getIcon() {
+		// Mugshot stock favicon
+		return "/images3/mugshot_icon.png";
+	}	
 }
