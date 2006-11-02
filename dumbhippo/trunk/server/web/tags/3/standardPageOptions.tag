@@ -5,12 +5,17 @@
 
 <dht3:requirePersonBean/>
 
-<c:if test="${!empty param['who']}">
+<c:if test="${!empty param['who'] && !person.self}">
 	<c:set var="whoParam" value="?who=${param['who']}" scope="page"/>
 </c:if>
 
+<c:set var="whoName" value="${person.viewedPerson.name}'s" scope="page"/>
+<c:if test="${person.self}">
+    <c:set var="whoName" value="my" scope="page"/>
+</c:if>
+
 <div class="dh-page-options-options-area">
-    View ${person.viewedPerson.name}'s: 
+    View ${whoName}: 
 	<dht3:pageOptionLink name="Home" selected="${selected}" link="/person${whoParam}"/> |
 	<dht3:pageOptionLink name="Friends" selected="${selected}" link="/friends${whoParam}" disabled="${!person.viewedPerson.viewerIsContact}"/> | 	       
 	<dht3:pageOptionLink name="Groups" selected="${selected}" link="/groups${whoParam}"/>
