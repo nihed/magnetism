@@ -9,6 +9,7 @@
 	<property name="build" value="${target}/classes" />
 	<property name="build.tests" value="${target}/test-classes" />
 	<property name="build.lib" value="${target}/lib" />
+	<property name="build.javascript" value="${target}/javascript" />
 	<property name="build.deploy" value="${target}/deploy" />
 	<property name="build.deploy.ear" value="${build.deploy}/dumbhippo.ear" />
 	<property name="build.deploy.war" value="${build.deploy.ear}/dumbhippo.war" />
@@ -58,6 +59,7 @@
 		<mkdir dir="${reports.tests}" />
 		<mkdir dir="${build.tests}" />		
 		<mkdir dir="${build.lib}" />
+		<mkdir dir="${build.javascript}" />
 		<mkdir dir="${build.deploy}" />
 		<mkdir dir="${build.deploy.ear}" />
 		<mkdir dir="${build.deploy.war}" />
@@ -95,24 +97,6 @@
 			</batchtest>
 			<classpath refid="tests.class.path"/>
 		</junit>
-	</target>
-
-	<target name="dojobuild" if="dojocompress">
-		<!-- our dojo build.sh is hacked to do what we want,
-		 	which is create a compressed target/javascript/dojo/dojo.js -->
-        <exec dir="web/javascript/dojo/buildscripts" executable="/bin/sh" failonerror="true">
-        	<arg line="build.sh"/>
-        </exec>
-		<!-- dojo creates this temporary junk, which we omit from the war
-			(if we left it in the war it would be a security blanket vs.
-			accidentally leaving stuff out of the compression profile... but
-			not doing that for now) -->
-		<delete dir="${target}/javascript/dojo/src"/>
-		<property name="dojo.js.webroot" value="${target}"/>
-	</target>
-	
-	<target name="nodojobuild" unless="dojocompress">
-		<property name="dojo.js.webroot" value="${web}"/>
 	</target>
 	
 	<target name="basejar" depends="compile">
@@ -165,7 +149,13 @@
 		</jar>
 	</target>
 
-	<target name="exploded-war" depends="compile, dojobuild, nodojobuild">
+	<target name="javascript-compress" depends="init">
+		<exec executable="${basedir}/jscompress" failonerror="true">
+			<arg line="${web}/javascript/dh ${web}/javascript/common.js ${web}/javascript/dojo/src ${build.javascript}"/>
+		</exec>
+	</target>
+	
+	<target name="exploded-war" depends="compile, javascript-compress">
 		<mkdir dir="${build.deploy.war}/WEB-INF"/>
 		<copy tofile="${build.deploy.war}/WEB-INF/web.xml" file="${web}/servlet-info.xml"/>
 		<copy todir="${build.deploy.war}/WEB-INF" file="dd/jboss-web.xml"/>
@@ -185,28 +175,33 @@
 		<manifest file="${build.deploy.war}/META-INF/MANIFEST.MF">
 			<attribute name="Class-Path" value="${bundled-classpath}" />
 		</manifest>
-		
-		<copy todir="${build.deploy.war}">
+
+		<copy todir="${build.deploy.war}/javascript/dojo">
 			<!-- "**" in here is pretty risky since there's a bunch of random junk in
 				javascript/dojo that we don't want, like documentation .html and test .js -->
 			
-			<!-- our javascript code -->
-			<fileset dir="${web}" includes="javascript/*.js"/>
-			<fileset dir="${web}" includes="javascript/dh/*.js"/>
-			<fileset dir="${web}" includes="javascript/dh/statistics/*.js"/>
+			<fileset dir="${web}/javascript/dojo/src" includes="*.css"/>
+			<fileset dir="${web}/javascript/dojo/src" includes="**/*.css"/>
+
+			<fileset dir="${web}/javascript/dojo/src" includes="*.html"/>
+			<fileset dir="${web}/javascript/dojo/src" includes="**/*.html"/>
+			<fileset dir="${web}/javascript/dojo/src" includes="**/*.png"/>			
+			
+			<!-- the javascript itself is copied to target by the jscompress script, so not listed here --> 
+		</copy>
 		
-			<!-- dojo.js is either in target/javascript (if compressed) 
-				or web/javascript (if not) -->
-			<fileset dir="${dojo.js.webroot}" includes="javascript/dojo/*.js"/>
-			<fileset dir="${dojo.js.webroot}" includes="javascript/dojo/src/*.js"/>
-			<fileset dir="${dojo.js.webroot}" includes="javascript/dojo/src/**/*.js"/>		
+		<copy todir="${build.deploy.war}/javascript">
+			<!-- javascript files are built into target by the jscompress script -->
+			<fileset dir="${build.javascript}" includes="**/*.js, *.js"/>
+			<fileset dir="${build.javascript}" includes="*.js"/>
+			<!-- *.txt is the dependencies info outputted by jscompress -->
+			<fileset dir="${build.javascript}" includes="*.txt"/>
+		</copy>
 		
-			<fileset dir="${web}" includes="javascript/dojo/src/*.css"/>
-			<fileset dir="${web}" includes="javascript/dojo/src/**/*.css"/>
+		<copy todir="${build.deploy.war}">	
+			<!-- stuff under dojo/ is copied here, stuff under dojo/src in a separate
+			 	copy element above to avoid the "src" in dojo/src/foo -->
 			<fileset dir="${web}" includes="javascript/dojo/iframe_history.html"/>
-			<fileset dir="${web}" includes="javascript/dojo/src/*.html"/>
-			<fileset dir="${web}" includes="javascript/dojo/src/**/*.html"/>
-			<fileset dir="${web}" includes="javascript/dojo/src/**/*.png"/>
 			
 			<!-- our static pages, css, etc. -->
 			<fileset dir="${web}" includes="html/*.html" />
@@ -230,7 +225,7 @@
 		</copy>
 		
 		<!-- create build stamp for web -->
-		<exec executable="/bin/date" output="${build.deploy.war}/com/dumbhippo/web/servlets/buildstamp.properties">
+		<exec executable="/bin/date" output="${build.deploy.war}/com/dumbhippo/web/servlets/buildstamp.properties" failonerror="true">
 			<arg line="+dumbhippo.server.buildstamp=%s"/>
 		</exec>
 	</target>		
@@ -284,10 +279,10 @@
 		</touch>
 		<!-- the touch task touches everything in a dir if you touch the dir, which is not desired,
 		 	 so bail out and use exec -->
-		<exec executable="touch">
+		<exec executable="touch" failonerror="true">
 			<arg value="${build.deploy.ear}/META-INF"/>
 		</exec>
-		<exec executable="touch">
+		<exec executable="touch" failonerror="true">
 			<arg value="${build.deploy.ear}"/>
 		</exec>		
 	</target>

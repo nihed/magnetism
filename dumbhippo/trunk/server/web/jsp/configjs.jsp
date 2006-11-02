@@ -35,6 +35,6 @@ var djConfig = {
 	preventBackButtonFix: true,
 //  this loads browser_debug.js which makes module loading a no-op?
 //	debugAtAllCosts: true,
-	baseScriptUri: dhScriptRoot + "dojo/",
+	baseScriptUri: dhScriptRoot,
 	bindEncoding: "UTF-8" // For post submission. Default is mangled ASCII
 };

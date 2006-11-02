@@ -17,9 +17,7 @@
 	<title><c:out value="${files.viewedPerson.name}"/>'s Files</title>
 	<dht:siteStyle/>	
 	<dht:faviconIncludes/>
-	<dht:scriptIncludes/>
-	<script type="text/javascript" src="/javascript/${buildStamp}/dh/fileinput.js"></script>
-	<script type="text/javascript" src="/javascript/${buildStamp}/dh/files.js"></script>
+	<dh:script modules="dh.fileinput,dh.files"/>
 	<script type="text/javascript">
 		var dhFilesInit = function() {
 			new dh.fileinput.Entry(document.getElementById('dhFileUploadEntry'));

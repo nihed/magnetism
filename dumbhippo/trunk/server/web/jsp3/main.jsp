@@ -9,11 +9,9 @@
 	<title>Mugshot</title>
 	<dht3:stylesheet name="site" iefixes="true" lffixes="true"/>	
 	<dht3:stylesheet name="main"/>
-	<dht:scriptIncludes/>
 	<dht:faviconIncludes/>
-	<script type="text/javascript" src="/javascript/${buildStamp}/dh/main.js"></script>
+	<dh:script module="dh.main"/>
 	<script type="text/javascript">
-		dojo.require("dh.main")
 		dojo.event.connect(dojo, "loaded", dj_global, "dhMainInit");
 	</script>
 </head>

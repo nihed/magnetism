@@ -15,10 +15,7 @@
 	<title>Invitation Admin</title>
 	<dht:siteStyle/>	
     <dht:faviconIncludes/>
-	<dht:scriptIncludes/>
-	<script type="text/javascript">
-        dojo.require("dh.invitationadmin");
-	</script>
+		<dh:script module="dh.invitationadmin"/>
 </head>
 <dht:body>
     Number of people who want in and were not yet invited: 

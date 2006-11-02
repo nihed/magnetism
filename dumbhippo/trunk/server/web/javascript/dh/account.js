@@ -4,6 +4,7 @@ dojo.require("dh.textinput");
 dojo.require("dh.fileinput");
 dojo.require("dh.photochooser");
 dojo.require("dh.lovehate");
+dojo.require('dh.password');
 
 dh.account.generatingRandomBio = false;
 dh.account.generateRandomBio = function() {

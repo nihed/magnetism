@@ -18,8 +18,7 @@
 	<title>Your Group Invitations</title>
 	<dht:siteStyle/>	
 	<dht:faviconIncludes/>
-	<dht:scriptIncludes/>
-	<script type="text/javascript" src="/javascript/${buildStamp}/dh/groups.js"></script>	
+	<dh:script module="dh.groups"/>
 </head>
 <dht:twoColumnPage>
 	<dht:sidebarPerson who="${person.viewedUserId}"/>

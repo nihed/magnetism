@@ -14,9 +14,8 @@
 <head>
 	<title>Share <c:out value="${viewgroup.name}"/></title>
 	<dht:stylesheets href="sharelink.css" iehref="sharelink-iefixes.css" />
-	<dht:scriptIncludes/>
+		<dh:script module="dh.sharegroup"/>
 	<script type="text/javascript">
-		dojo.require("dh.sharegroup");
 		dhShareGroupId = "${viewgroup.viewedGroupId}";
 		dhShareGroupName = "${viewgroup.name}";
 		dhShareGroupInvitationCount = "${viewgroup.invitations}";

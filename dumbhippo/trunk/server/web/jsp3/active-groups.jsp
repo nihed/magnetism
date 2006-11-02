@@ -11,8 +11,7 @@
 	<title><c:out value="Active Groups - Mugshot"/></title>
 	<dht3:stylesheet name="site" iefixes="true"/>	
 	<dht3:stylesheet name="person"/>
-	<dht:scriptIncludes/>
-	<script src="/javascript/${buildStamp}/dh/stacker.js" type="text/javascript"></script>	
+	<dh:script module="dh.stacker"/>
 	<dht:faviconIncludes/>
 </head>
 

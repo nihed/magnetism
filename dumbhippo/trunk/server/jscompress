@@ -14,8 +14,14 @@ import errno
 original_files = {}
 
 ## Modules that should be bundled, with all deps inlined, into a
-## single file
-bundle_modules = [ 'dh.actions' ]
+## single file.
+## If stuff in this list shares dependencies, the first bundle in the
+## list will inline the dep, and the second bundle will have to load
+## the first bundle. So the less-widely-used modules should be later in the
+## list.
+## Look at the generated target/javascript/file-dependencies.txt for modules
+## that drag in a long list of separate files. That file reflects bundling.
+bundle_modules = [ 'common', 'dh.site', 'dh.model', 'dh.accountpage', 'dh.share', 'dh.sharelink', 'dh.statistics.*'  ]
 
 ## Map from module names to OriginalFile objects
 providers = {}
@@ -25,6 +31,9 @@ root_modules = {}
 
 ## Destination files, hash from full path to DestFile objects
 dest_files = {}
+
+## Map from module names to DestFile objects
+dest_providers = {}
 
 ## Don't copy any full path ending in these
 skip_suffixes = [ "/hostenv_svg.js", "/hostenv_rhino.js",
@@ -38,8 +47,56 @@ allowed_missing_modules = [ "dojo.widget.HtmlButton",
                             "dojo.widget.HtmlResizeableTextarea",
                             "dojo.webui.widgets.parse",
                             "dojo.webui.DragAndDrop",
-                            "dojo.render",
-                            "dojo.io" ]
+                            "dojo.render" ]
+
+## If an original file ends with one of these suffixes, then add the given provides to it.
+## some of these are essentially dojo bugfixes.
+## hostenv_ and bootstrap2 are here so common.js can require them.
+dojo_add_provides = [ ('/dojo/src/uri/Uri.js', [ 'dojo.uri' ]),
+                      ('/dojo/src/graphics/color.js', ['dojo.graphics']),
+                      ('/dojo/src/io.js', ['dojo.io']),
+                      ('/dojo/src/hostenv_browser.js', ['dojo.hostenv_browser']),
+                      ('/dojo/src/bootstrap2.js', ['dojo.bootstrap2'])
+                      ]
+
+## These modules, when loaded, replace the object created by dojo.provide() with their own
+## module object. We have to work around this by saving/restoring the object fields
+## we care about. Our module system doesn't really work the same way as dojo's ; dojo's
+## setup is required if you want modules and objects to be able to have the same name
+## since then modules need to be constructors and not hashes
+dojo_replaces_module_object = [ "dojo.uri", "dojo.uri.Uri", "dojo.event",
+                                "dojo.animation", "dojo.animation.Animation", "dojo.animation.Timer", "dojo.collections.ArrayList",
+                                "dojo.collections.BinaryTree", "dojo.collections.ByteArray", "dojo.collections.Dictionary",
+                                "dojo.collections.Graph", "dojo.collections.List", "dojo.collections.Queue",
+                                "dojo.collections.Set", "dojo.collections.SkipList", "dojo.collections.SortedList",
+                                "dojo.collections.Stack",
+                                "dojo.crypto.MD5", "dojo.dnd.HtmlDragManager", "dojo.dnd.Sortable", "dojo.event.browser",
+                                "dojo.event.topic", "dojo.graphics.htmlEffects", "dojo.logging.Logger", "dojo.math.curves",
+                                "dojo.math.points", "dojo.string.Builder", "dojo.text.Builder", "dojo.undo.Manager",
+                                "dojo.webui.DomWidget", "dojo.webui.HtmlWidget", "dojo.webui.SvgWidget", "dojo.webui.Widget",
+                                "dojo.widget.Button", "dojo.widget.ComboBox", "dojo.widget.ContextMenu",
+                                "dojo.widget.DatePicker",
+                                "dojo.widget.DomWidget", "dojo.widget.HtmlCheckbox", "dojo.widget.HtmlColorPalette",
+                                "dojo.widget.HtmlComboBox",
+                                "dojo.widget.HtmlContextMenu", "dojo.widget.HtmlDatePicker", "dojo.widget.HtmlFisheyeList",
+                                "dojo.widget.HtmlFloatingPane",
+                                "dojo.widget.HtmlInlineEditBox", "dojo.widget.HtmlLayoutPane", "dojo.widget.HtmlResizableTextarea",
+                                "dojo.widget.HtmlRichText",
+                                "dojo.widget.HtmlSlideShow", 
+                                "dojo.widget.HtmlSplitPane", "dojo.widget.HtmlTabs", "dojo.widget.HtmlTimePicker",
+                                "dojo.widget.HtmlWidget",
+                                "dojo.widget.html.Button",
+                                "dojo.widget.MenuItem", "dojo.widget.Menu", "dojo.widget.Parse", "dojo.widget.PopUpButton",
+                                "dojo.widget.SvgButton", "dojo.widget.SvgWidget", "dojo.widget.TimePicker", "dojo.widget.Widget",
+                                "dojo.widget.tags",
+                                "dojo.xml.domUtil",
+                                "dojo.xml.htmlUtil",
+                                "dojo.xml.Parse",
+                                "dojo.xml.svgUtil" ]
+
+dojo_replaces_module_object_hash = {}
+for d in dojo_replaces_module_object:
+    dojo_replaces_module_object_hash[d] = 1
 
 def skip_src_path(fullpath):
     for s in skip_suffixes:
@@ -47,7 +104,7 @@ def skip_src_path(fullpath):
             return 1
     return 0
 
-module_arg = ' *["\']([a-zA-Z0-9.*]+)["\'] *'
+module_arg = ' *["\']([a-zA-Z0-9_.*]+)["\'] *'
 one_module_args = '\(' + module_arg + '\)'
 module_arg_re = re.compile(module_arg)
 provides_re = re.compile(' *dojo\.provide *' + one_module_args)
@@ -60,6 +117,23 @@ all_whitespace_re = re.compile('^\s+$')
 ## string literals like "http://foo" make this a bit tricky,
 ## the below just does not remove comments that have quotes in them
 slashslash_comment_re = re.compile('//[^"\']*$')
+
+def tuple_second_value_compare(a, b):
+    return cmp(a[1], b[1])
+
+def dict_keys_sorted_by_values(dict):
+    items = dict.items()
+    items.sort(tuple_second_value_compare)
+    result = []
+    for i in items:
+        result.append(i[0])
+    return result
+
+def module_identifier(module):
+    return module.replace("*", "_star")
+
+def module_as_variable_name(module):
+    return "_" + module_identifier(module).replace(".", "_")
 
 def write_line(out, indent, text):
     while indent > 0:
@@ -79,19 +153,60 @@ def write_line(out, indent, text):
 
     out.write("\n")
 
-def module_identifier(module):
-    return module.replace("*", "_star")
+def file_providing(module):
+    if module.endswith("._star"):
+        module = module.replace(".star", ".*")
+    if dest_providers.has_key(module):
+        return dest_providers[module].get_relative_path()
+    else:
+        ## print "module '%s' not known to be in any file" % module
+        return "unknown-file"
 
-## checks before we create the module, like "dh.actions={}"
-def write_pre_provide_checks(out, indent, module):
+## check that we have parsed the given module
+def write_required_check(out, indent, module, already):
+    module = module_identifier(module)
+    write_line(out, indent, "// check that we already have %s" % module)
     elems = module.split(".")
     sofar = ""
     for e in elems:
         if sofar == "":
-            write_line(out, indent,
-                       "if (typeof %s == 'undefined')" % e)
-            write_line(out, indent + 4,
-                       "throw new Error('%s is not parsed yet');" % e)
+            if not already.has_key(e):
+                write_line(out, indent,
+                           "if (typeof %s == 'undefined')" % e)
+                write_line(out, indent + 4,
+                           "throw new Error('%s required at this point, but %s not loaded');" % \
+                           (e, file_providing(e)))
+                already[e] = 1
+            sofar = e
+        else:
+            next = sofar + "." + e
+            if not already.has_key(next):
+                write_line(out, indent,
+                           "if (typeof %s['%s'] == 'undefined')" % (sofar, e))
+                write_line(out, indent + 4,
+                           "throw new Error('%s required at this point, but %s not loaded');" % \
+                           (next, file_providing(next)))
+                already[next] = 1
+            sofar = next
+
+## checks before we create the module, like "dh.actions={}"
+def write_pre_provide_checks(out, indent, module):
+    module = module_identifier(module)
+    write_line(out, indent, "// check that we didn't already create %s" % module)
+    elems = module.split(".")
+    sofar = ""
+    for e in elems:
+        if sofar == "":
+            if e != module:
+                write_line(out, indent,
+                           "if (typeof %s == 'undefined')" % e)
+                write_line(out, indent + 4,
+                           "throw new Error('%s in %s is not parsed yet before providing %s');" % (e, file_providing(e), module))
+            else:
+                write_line(out, indent,
+                           "if (typeof %s !== 'undefined')" % e)
+                write_line(out, indent + 4,
+                           "throw new Error('%s already exists when providing %s');" % (e, module))
             sofar = e
         else:
             next = sofar + "." + e
@@ -99,17 +214,17 @@ def write_pre_provide_checks(out, indent, module):
                 write_line(out, indent,
                            "if (typeof %s['%s'] !== 'undefined')" % (sofar, e))
                 write_line(out, indent + 4,
-                           "throw new Error('%s already parsed');" % next)
+                           "throw new Error('%s already parsed when providing %s');" % (next, module))
             else:
                 write_line(out, indent,
                            "if (typeof %s['%s'] == 'undefined')" % (sofar, e))
                 write_line(out, indent + 4,
-                           "throw new Error('%s not yet parsed');" % next)
+                           "throw new Error('%s not yet parsed when providing %s');" % (next,  module))
             sofar = next
 
 def write_check_has_type(out, indent, obj, name, js_type_name):
     write_line(out, indent,
-               "if (typeof %s['%s'] != '%s')" % (obj, name, js_type_name))
+               "if ((typeof %s['%s']).toLowerCase() != '%s')" % (obj, name, js_type_name))
     write_line(out, indent + 4,
                "throw new Error('%s in %s should have type %s not ' + (typeof %s['%s']));" % \
                (name, obj, js_type_name, obj, name))
@@ -120,11 +235,14 @@ def write_check_has(out, indent, obj, name):
     write_line(out, indent + 4,
                "throw new Error('%s somehow vanished from %s');" % (name, obj))
 
-## checks at the end of the module init routine.
+## checks at the end of the module load routine.
 ## dojo sometimes does dojo.provide("dojo.foo") which does a "dojo.foo = {}",
 ## and then in the body of the module assigns something else to dojo.foo.
-## These post-init checks barf on that...
-def write_post_init_checks(out, indent, module):
+## These post-load checks barf on that...
+def write_post_load_checks(out, indent, module):
+    module = module_identifier(module)
+    
+    write_line(out, indent, "// check that we created %s ok" % module) 
     elems = module.split(".")
     sofar = ""
     for e in elems:
@@ -132,7 +250,7 @@ def write_post_init_checks(out, indent, module):
             write_line(out, indent,
                        "if (typeof %s == 'undefined')" % e)
             write_line(out, indent + 4,
-                       "throw new Error('%s somehow vanished during init of %s');" % (e, module))
+                       "throw new Error('%s somehow vanished during load of %s');" % (e, module))
             sofar = e
         else:
             next = sofar + "." + e
@@ -140,9 +258,66 @@ def write_post_init_checks(out, indent, module):
 
             sofar = next
 
-    write_check_has_type(out, indent, module, "_initialized", 'Boolean')
-    write_check_has_type(out, indent, module, "_parsed", 'Boolean')
-    write_check_has_type(out, indent, module, "_init", 'Function')
+    write_check_has_type(out, indent, module, "_loaded", 'boolean')
+    write_check_has_type(out, indent, module, "_parsed", 'boolean')
+    write_check_has_type(out, indent, module, "_load", 'function')
+
+## Output only for stuff where dojo is going to replace our
+## module object
+def global_load_symbol(module):
+    return module_as_variable_name(module) + "_load_backup"
+
+## get module foo.bar if passed module foo
+child_modules = {}
+def get_immediate_child_modules(module):
+
+    ## foo.*.bar is impossible
+    if module.endswith(".*"):
+        return []
+    
+    if child_modules.has_key(module):
+        return child_modules[module]
+
+    children = []
+    for p in providers.keys():
+        if p.startswith(module) and p != module:
+            if p.replace(module, "").count(".") == 1:
+                children.append(p)
+    child_modules[module] = children
+
+    return children
+
+## Write stuff at start of _load() to fix the problem if dojo
+## assigned something undesirable to the module
+def pre_fixup_when_dojo_replaces_module_object(out, indent, module):
+    for c in get_immediate_child_modules(module):
+        write_line(out, indent, "var %s_saved = %s;" % (module_as_variable_name(c), module_identifier(c)))
+        # this is because dojo.uri.Uri creates both uri and uri.Uri, and we need to avoid fixing Uri
+        # by assigning back the original empty hash version of Uri
+        write_line(out, indent, "delete %s; // so we can tell if it was overwritten or just lost" % module_identifier(c))
+                   
+## Write stuff at end of _load() to fix the problem if dojo assigned
+## something undesirable to module
+def post_fixup_when_dojo_replaces_module_object(out, indent, module):
+    if not  dojo_replaces_module_object_hash.has_key(module):
+        print "Should not have been called"
+        sys.exit(1)
+
+    ## Confirm we were replaced
+    write_line(out, indent, "// check that dojo indeed mangled %s" % module)
+    write_check_has_type(out, indent, module, "_loaded", "undefined")
+    write_check_has_type(out, indent, module, "_parsed", "undefined")
+    write_check_has_type(out, indent, module, "_load", "undefined")
+
+    ## add our stuff back to the new object
+    write_line(out, indent, "// fix %s again after dojo's change" % module)
+    write_line(out, indent, "%s._loaded = true;" % module);
+    write_line(out, indent, "%s._parsed = true;" % module);
+    write_line(out, indent, "%s._load = %s;" % (module, global_load_symbol(module)))
+
+    for c in get_immediate_child_modules(module):
+        write_line(out, indent, "if ((typeof %s) == 'undefined')" % module_identifier(c))
+        write_line(out, indent + 4, "%s = %s_saved;" % (module_identifier(c), module_as_variable_name(c)))
 
 class OriginalFile:
     def __init__(self, fullpath, lines):
@@ -169,8 +344,13 @@ class OriginalFile:
         self._provides = None
         self._requires = None
         self._find_provides_requires()
-        self._bundlers = [] # modules that want to bundle us inline
+        self._bundler = None # module that wants to bundle us inline
         self._bundles_its_requires = 0
+
+        self._ordered_provides = None
+        self._ordered_requires = None
+
+        self._dest_file = None
 
     def __repr__(self):
         return "'%s' provides %s" % (self.get_path(), self.get_all_provides())
@@ -203,6 +383,39 @@ class OriginalFile:
         ## the __package__ files are special, do some extra detection
         if self._path.endswith("/__package__.js"):
             self._find_provides_requires_package()
+
+        ## and some special hacks
+        for fixup in dojo_add_provides:
+            if self._path.endswith(fixup[0]):
+                for p in fixup[1]:
+                    if self._provides.has_key(p):
+                        print "fixup %s already done?" % fixup
+                        sys.exit(1)
+                    ## make up a line number before any others,
+                    ## since usually we're adding a.b when the file
+                    ## also provides a.b.c
+                    self._provides[p] = -1
+
+        ## now require all parent modules of our provides, many
+        ## modules in dojo don't seem to do this explicitly.
+        ## if we provide both a.b and a.b.c then this may
+        ## try to require something we provide ourselves, so we check
+        ## for and avoid that situation.
+        for p in self._provides.keys():
+            elems = p.split(".")
+            sofar = ""
+            for e in elems:
+                if sofar == "":
+                     ## don't require the root modules; nothing
+                     ## even provides 'dojo' and it's hard to fix
+                    sofar = e
+                else:
+                    sofar = sofar + "." + e
+                    if sofar != p and not \
+                           self._requires.has_key(sofar) and not \
+                           self._provides.has_key(sofar):
+                        ## -1 is a line number before any real ones
+                        self._requires[sofar] = -1
 
     def _find_provides_requires_package(self):
         in_conditional_load = 0
@@ -243,6 +456,24 @@ class OriginalFile:
 
             i = i + 1
 
+    def set_dest_file(self, dest):
+        if self._dest_file:
+            print "destination file set twice on same file"
+            sys.exit(1)
+        self._dest_file = dest
+
+    def get_dest_file(self):
+        if not self._dest_file:
+            if self._bundler:
+                d = self._bundler.get_dest_file()
+                if d:
+                    self._dest_file = d
+
+        if not self._dest_file:
+            print "%s has no destination file and its bundler doesn't either" % (self)
+            sys.exit(1)
+        return self._dest_file
+
     def get_path(self):
         return self._path
 
@@ -253,46 +484,83 @@ class OriginalFile:
         return self._provides.has_key(module)
 
     def get_all_provides(self):
-        return self._provides.keys()
+        ## we want to sort this by the original
+        ## ordering in the file - the values of the
+        ## hash are the line numbers
+        if not self._ordered_provides:
+            self._ordered_provides = dict_keys_sorted_by_values(self._provides)
+        return self._ordered_provides
 
-    def get_requires(self, module):
+    def get_requires(self, module):        
         return self._requires.has_key(module)
 
     def get_all_requires(self):
-        return self._requires.keys()
+        ## we want to sort this by the original
+        ## ordering in the file - the values of the
+        ## hash are the line numbers
+        if not self._ordered_requires:
+            self._ordered_requires = dict_keys_sorted_by_values(self._requires)
+        return self._ordered_requires
 
     def remove_requires(self, module):
         if self._requires.has_key(module):
             del self._requires[module]
-
-    def get_bundlers(self):
-        return self._bundlers
-
-    def get_multiply_bundled(self):
-        return len(self._bundlers) > 1
+            if self._ordered_requires:
+                ## drop this list instead of modifying it, since
+                ## someone is probably iterating over get_all_requires;
+                ## they'll keep a ref to the original and we'll make
+                ## a new one on demand
+                self._ordered_requires = None
+            
+    def get_bundler(self):
+        if self._bundler:
+            return self._bundler
+        else:
+            return self
 
     def get_bundled(self):
-        return len(self._bundlers) > 0
+        return self._bundler != None
+
+    def get_may_contain_bundled_files(self):
+        return self.get_bundled() or self.get_bundles_its_requires()
 
     def _add_bundler(self, bundler):
         if self == bundler:
-            print "Circular bundling of %s, file %s" % (self.get_provides(), self.get_path())
+            print "Circular bundling of %s" % (self)
             sys.exit(1)
-        if bundler not in self._bundlers:
-            self._bundlers.append(bundler)
-            self._mark_requires_bundled(bundler)
+        if bundler == self._bundler:
+            return
+        if self._bundler:
+            print "Multiple bundling of %s by %s and %s" % (self, self._bundler, bundler)
+            sys.exit(1)
 
-    def _mark_requires_bundled(self, bundler):
+        self._bundler = bundler
+        ##print "Marking requires of %s as bundled by %s" % (self, bundler)
+        self._mark_requires_bundled_by(bundler)
+
+    def _mark_requires_bundled_by(self, bundler):
         for m in self._requires:
             orig = providers[m]
-            orig._add_bundler(bundler)
+            if orig.get_bundles_its_requires():
+                print "%s providing %s already bundles its requirements, so not bundling into %s" % (orig.get_path(), m, bundler.get_path())
+                if orig == bundler:
+                    print "file %s somehow requires itself" % bundler
+                    sys.exit(1)
+            elif orig.get_bundled():
+                if orig.get_bundler() != bundler:
+                    ## print "%s already bundled into %s, so not bundling into %s" % (orig, orig._bundler, bundler)
+                    pass
+                else:
+                    pass ## this happens when a bundle requires A and B that each require C
+            else:
+                orig._add_bundler(bundler)
 
     def get_bundles_its_requires(self):
         return self._bundles_its_requires
 
     def mark_bundles_its_requires(self):
         self._bundles_its_requires = 1
-        self._mark_requires_bundled(self)
+        self._mark_requires_bundled_by(self)
 
     def _module_to_filename(self, module_name):
         return module_name.replace(".", "/") + ".js"
@@ -338,64 +606,103 @@ class OriginalFile:
             return
         already[self] = 1
 
-        inline_all = self.get_bundles_its_requires() or self.get_bundled()
-
-        if inline_all:
+        if self.get_may_contain_bundled_files():
             for r in self.get_all_requires():
                 orig = providers[r]
-                if not already.has_key(orig):
+                if not already.has_key(orig) and orig.get_bundler() == self.get_bundler():
                     orig.write(out, already, indent)
 
+        ## Assert that our direct dependencies have been loaded
+        requires_asserted = {}
+        for r in self.get_all_requires():
+            write_required_check(out, indent, r, requires_asserted)
+            
         provides = self.get_all_provides()
         if len(provides) == 0:
             self.write_all_lines(out, indent)
         else:
             ## if an OrigFile provides multiple modules,
             ## we use an arbitrary "master module" to name
-            ## an init function that inits all of them at once
+            ## a load function that loads all of them at once
             master_module = module_identifier(provides[0])
             for p in self.get_all_provides():
-                p = module_identifier(p)
-
                 write_pre_provide_checks(out, indent, p)
 
+                p = module_identifier(p)
                 write_line(out, indent, "%s = {};" % p)
                 write_line(out, indent, "%s._parsed = true;" % p)
-                write_line(out, indent, "%s._initialized = false;" % p)
-                if p != master_module:
-                    write_line(out, indent, "%s._init = %s._init;" % (p, master_module))
+                write_line(out, indent, "%s._loaded = false;" % p)
 
-            write_line(out, indent, "%s._init = function() {" % (master_module))
-            write_line(out, indent + 4, "if (%s._initialized)" % master_module)
+            write_line(out, indent, "%s._load = function() {" % (master_module))
+            write_line(out, indent + 4, "if (%s._loaded)" % master_module)
             write_line(out, indent + 8, "return;")
             for p in self.get_all_provides():
-                p = module_identifier(p)
-                write_line(out, indent + 4, "%s._initialized = true;" % p)
+                p = module_identifier(p)                
+                write_line(out, indent + 4, "%s._loaded = true;" % p)
 
             for r in self.get_all_requires():
                 r = module_identifier(r)
-                write_line(out, indent + 4, "%s._init();" % r)
+                write_line(out, indent + 4, "%s._load();" % r)
+
+            for p in self.get_all_provides():
+                if dojo_replaces_module_object_hash.has_key(p):
+                    pre_fixup_when_dojo_replaces_module_object(out, indent + 4, p)
 
             self.write_all_lines(out, indent + 4);
 
             for p in self.get_all_provides():
-                p = module_identifier(p)
-                write_post_init_checks(out, indent + 4, p)
+                ## fixup dojo interference
+                if dojo_replaces_module_object_hash.has_key(p):
+                    post_fixup_when_dojo_replaces_module_object(out, indent + 4, p)
+
+                ## check sanity
+                write_post_load_checks(out, indent + 4, p)
 
             write_line(out, indent, "}")
 
+            ## Aliases for master_module._load() for each other provide,
+            ## and aliases for _load() when we need to save it against
+            ## dojo interference
+            for p in self.get_all_provides():
+                p = module_identifier(p)
+                if p != master_module:
+                    write_line(out, indent, "%s._load = %s._load;" % (p, master_module))
+
+                if dojo_replaces_module_object_hash.has_key(p):
+                    write_line(out, indent, "// save by another name so we can restore it post-dojo-mangle")
+                    write_line(out, indent, "%s = %s._load;" % (global_load_symbol(p), master_module))
+
             write_line(out, indent, "// end of module '%s'" % master_module);
 
+            ## Eventually we should require explicitly calling the
+            ## load() on each module prior to use. But for now,
+            ## at the end of each file we init the file
+            ## (note that we don't do this for bundled modules)
+            if not self.get_bundled():
+                write_line(out, indent, "%s._load(); // hack for now " % master_module)
+
 class DestFile:
-    def __init__(self, fullpath, orig):
+    def __init__(self, relpath, fullpath, orig):
+        self._relpath = relpath
         self._path = fullpath
         self._orig = orig
+        self._depfiles = None
+        self._orig.set_dest_file(self)
+
+    def __repr__(self):
+        return "'%s'" % (self.get_relative_path())
+
+    def __str__(self):
+        return self.__repr__()
 
     def get_path(self):
         return self._path
 
     def get_orig(self):
         return self._orig
+
+    def get_relative_path(self):
+        return self._relpath
 
     def write(self):
         try:
@@ -406,8 +713,51 @@ class DestFile:
         self._orig.write(out, {}, 0)
         out.close()
 
+    ## this gets a one-level list of the dependent files, not
+    ## a recursive one
+    def get_required_files(self):
+        if not self._depfiles:
+            self._depfiles = {}
+            for r in self._orig.get_all_requires():
+                if not dest_providers.has_key(r):
+                    print "%s is not provided by any destination file" % (r)
+                    sys.exit(1)
+                required_dest = dest_providers[r]
+                self._depfiles[required_dest] = 1
+
+        return self._depfiles.keys()
+        
+    def _add_orig_to_provider_map(self, provider_map, orig, already):
+        if already.has_key(orig):
+            return
+        else:
+            already[orig] = 1
+
+        for p in orig.get_all_provides():
+            if provider_map.has_key(p):
+                if provider_map[p] != self:
+                    print "dest files %s and %s both provide %s" % \
+                          (self.get_relative_path(), provider_map[p].get_relative_path(), \
+                           p)
+                    sys.exit(1)
+            else:
+                provider_map[p] = self
+        
+        if orig.get_may_contain_bundled_files():
+            for r in orig.get_all_requires():
+                orig_r = providers[r]
+                if orig_r.get_bundler() == orig.get_bundler():
+                    self._add_orig_to_provider_map(provider_map, orig_r, already)
+        
+    def add_self_to_provider_map(self, provider_map):
+        if self._orig.get_bundled():
+            print "dest file should not be based on a bundled file"
+            sys.exit(1)
+        already = {}
+        self._add_orig_to_provider_map(provider_map, self._orig, already)
+
 def usage():
-    print >>sys.stderr,  "Usage: jscompress srcdir1 [srcdir2 ...] destdir"
+    print >>sys.stderr,  "Usage: jscompress srcdir_or_file1 [srcdir_or_file2 ...] destdir"
 
 def main():
     try:
@@ -430,14 +780,20 @@ def main():
 
     ## slurp all source files into OriginalFile objects
     for srcdir in srcdirs:
-        for root, dirs, files in os.walk(srcdir, topdown=False):
-            for name in files:
-                fullpath = os.path.join(root, name)
-                if fullpath[-3:] == ".js" and not skip_src_path(fullpath):
-                    lines = open(fullpath).readlines()
-                    orig = OriginalFile(fullpath, lines)
+        paths = []
+        if srcdir.endswith(".js") and not skip_src_path(srcdir):
+            paths.append(srcdir)
+        else:
+            for root, dirs, files in os.walk(srcdir, topdown=False):
+                for name in files:
+                    fullpath = os.path.join(root, name)
+                    if fullpath.endswith(".js") and not skip_src_path(fullpath):
+                        paths.append(fullpath)
 
-                    original_files[fullpath] = orig
+        for fullpath in paths:
+            lines = open(fullpath).readlines()
+            orig = OriginalFile(fullpath, lines)
+            original_files[fullpath] = orig
 
     ## Create map of module providers
     for orig in original_files.values():
@@ -477,29 +833,58 @@ def main():
         orig = providers[b]
         orig.mark_bundles_its_requires()
 
-    ## Check for anything that gets bundled twice
+    ## Check for anything that gets bundled twice or both bundles and is bundled
     for (module_name, orig) in providers.items():
-        if orig.get_multiply_bundled():
-            print "%s bundled into multiple modules %s" % (orig.get_provides(), orig.get_bundlers())
+        if orig.get_bundles_its_requires() and orig.get_bundled():
+            print "%s is both a bundl-er and a bundl-ee" % (orig)
             sys.exit(1)
 
         #if orig.get_bundled():
-        #    print "%s provided by %s bundled into %s" % (module_name, orig.get_path(), orig.get_bundlers())
+        #    print "%s provided by %s bundled into %s" % (module_name, orig.get_path(), orig.get_bundler())
 
     ## Now compute the destination files
     bundled_count = 0
     for orig in original_files.values():
         if not orig.get_bundled():
-            destpath = os.path.join(destdir, orig.get_dest_filename())
-            dest_files[destpath] = DestFile(destpath, orig)
+            relpath = orig.get_dest_filename()
+            destpath = os.path.join(destdir, relpath)
+            d = DestFile(relpath, destpath, orig)
+            dest_files[destpath] = d
+            ## fill in dest_providers
+            d.add_self_to_provider_map(dest_providers)
         else:
             bundled_count = bundled_count + 1
 
-    print "%d files to be inlined" % bundled_count
+    for p in dest_providers.keys():
+        if not providers.has_key(p):
+            print "Module %s in dest file %s is not provided by any original file" % (p, dest_providers[p])
+            sys.exit(1)
+
+    for p in providers.keys():
+        if not dest_providers.has_key(p):
+            print "Module %s in source file %s is not provided by any dest file, is bundled into %s has dest file %s" % (p, providers[p], providers[p].get_bundler(), providers[p].get_dest_file())
+            sys.exit(1)
+            
+    print "%d files to be bundled inline" % bundled_count
+
+    deps_out = open(os.path.join(destdir, "file-dependencies.txt"), "w")
+    provides_out = open(os.path.join(destdir, "module-file-map.txt"), "w")
 
     ## And write them
     for dest in dest_files.values():
         print "writing %s" % (dest.get_path())
         dest.write()
+        deps = dest.get_required_files()
+        deps_out.write("%s : " % dest.get_relative_path())
+        for dep in deps:
+            deps_out.write("%s " % dep.get_relative_path())
+        deps_out.write("\n")
+
+    deps_out.close()
+
+    for (module, dest) in dest_providers.items():
+        provides_out.write("%s : %s\n" % (module, dest.get_relative_path()))
+
+    provides_out.close()
 
 main()

@@ -33,7 +33,7 @@
 	}
 
 	for(var x in tmps){
-		var spath = root+"src/"+tmps[x];
+		var spath = root+"dojo/"+tmps[x];
 		if(isRhino){
 			load(spath);
 		} else {

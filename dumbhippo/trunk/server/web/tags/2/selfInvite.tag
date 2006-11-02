@@ -14,11 +14,7 @@
 <c:set var="N" value="${dhSelfInviteCount}" scope="page"/>
 
 <div>
-	<script type="text/javascript">
-		dojo.require('dh.util');
-		dojo.require('dh.server');
-		dojo.require('dh.textinput');
-		
+	<script type="text/javascript">		
 		selfInviteAddress${N} = null;
 		
 		var dhSelfInviteInit${N} = function() {

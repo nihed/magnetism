@@ -8,8 +8,7 @@
 	<title>Mugshot Stacker</title>
 	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/site.css"/>
 	<dht:faviconIncludes/>
-	<dht:scriptIncludes/>
-	<script src="/javascript/${buildStamp}/dh/stacker.js" type="text/javascript"></script>
+		<dh:script module="dh.stacker"/>
 	<style type="text/css">
 		body {
 			/* firefox sets a default body margin of 8px */
@@ -170,7 +169,6 @@
 
 	</style>
 	<script>
-		dojo.require('dh.stacker');
 		var dhStackerInit = function() {
 			var stacker = dh.stacker.getInstance();
 			stacker.setContainer(document.getElementById('dhStackerBackground'));

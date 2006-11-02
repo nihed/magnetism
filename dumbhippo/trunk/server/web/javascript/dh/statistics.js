@@ -1,4 +1,4 @@
-dojo.provide("dh.statistics");
+dojo.provide("dh.statistics.*");
 
 dojo.require("dh.statistics.block");
 dojo.require("dh.statistics.fetcher");

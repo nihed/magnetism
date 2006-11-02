@@ -13,11 +13,7 @@
 <head>
 	<title>Repair Mugshot</title>
 	<dht:stylesheets href="welcome.css" iehref="bubbles-iefixes.css"/>
-	<dht:scriptIncludes/>
-	<script type="text/javascript">
-		dojo.require("dh.util");
-		dojo.require("dh.welcome");
-	</script>
+	<dh:script module="dh.welcome"/>
 </head>
 <dht:body>
 	<c:url value="person?who=${welcome.signin.userId}" var="publicurl"/>

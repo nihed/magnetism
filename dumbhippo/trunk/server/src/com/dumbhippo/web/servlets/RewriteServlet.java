@@ -44,6 +44,7 @@ import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.ServerStatus;
 import com.dumbhippo.web.DisabledSigninBean;
+import com.dumbhippo.web.JavascriptResolver;
 import com.dumbhippo.web.RewrittenRequest;
 import com.dumbhippo.web.SigninBean;
 import com.dumbhippo.web.WebEJBUtil;
@@ -75,6 +76,8 @@ public class RewriteServlet extends HttpServlet {
 	
 	private List<String> psaLinks; // used to choose a random one
 	private int nextPsa;
+	
+	private JavascriptResolver jsResolver;
 	
 	private ServletContext context;
 	private ServerStatus serverStatus;
@@ -568,6 +571,26 @@ public class RewriteServlet extends HttpServlet {
 	        // but not sure how to avoid that. Should not matter on the production server since 
 	        // we won't change the build stamp there.
 	        getServletContext().setAttribute("buildStamp", buildStamp);
+	        
+	        // Now also load the Javascript dependency information, since .js files
+	        // might have changed. This makes the whole loadBuildStamp() name on this
+	        // method a bit of a misnomer, I guess.
+	       
+			String jsFileDepsPath = context.getRealPath("/javascript/file-dependencies.txt");
+			if (jsFileDepsPath == null)
+				throw new IOException("/javascript/file-dependencies.txt not found");
+			String jsModuleMapPath = context.getRealPath("/javascript/module-file-map.txt");
+			if (jsModuleMapPath == null)
+				throw new IOException("/javascript/module-file-map.txt not found");
+			
+			jsResolver = JavascriptResolver.newInstance("/javascript", buildStamp,
+						new File(jsFileDepsPath), new File(jsModuleMapPath));
+	        
+			getServletContext().setAttribute("jsResolver", jsResolver);
+			
+			logger.debug("Loaded new Javascript dependency information from {} and {}",
+					jsFileDepsPath, jsModuleMapPath);
+			
 		} finally {
 			buildstampLock.unlock();
 		}
@@ -591,7 +614,7 @@ public class RewriteServlet extends HttpServlet {
 		
 		requiresSignin = getStringSet(config, "requiresSignin");
 		requiresSigninStealth = getStringSet(config, "requiresSigninStealth");
-		noSignin = getStringSet(config, "noSignin");
+		noSignin = getStringSet(config, "noSignin");		
 		
 		jspPages = new HashMap<String, Integer>();
 		for (int i = 1; i <= webVersion; i++) {
