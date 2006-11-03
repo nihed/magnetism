@@ -13,6 +13,8 @@
 <%@ attribute name="width" required="false" type="java.lang.String" %>
 <%@ attribute name="floatSide" required="false" type="java.lang.String" %>
 <%@ attribute name="showHomeUrl" required="false" type="java.lang.Boolean" %>
+<%@ attribute name="shortVersion" required="false" type="java.lang.Boolean" %>
+
 
 <c:if test="${empty embedVersion}">
 	<c:set var="embedVersion" value="false"/>
@@ -23,7 +25,7 @@
 </c:if>
 
 <dht3:shinyBox color="orange" width="${width}" floatSide="${floatSide}">
-    <dht3:groupHeader who="${who}" embedVersion="${embedVersion}">
+    <dht3:groupHeader who="${who}" embedVersion="${embedVersion}" anchor="${stackType}">
         <c:choose>
             <c:when test="${signin.valid}">
 	            <c:choose>
@@ -54,5 +56,14 @@
 		    </c:otherwise>
 		</c:choose>        
 	</dht3:groupHeader>
-    <dht3:stacker stackOrder="${stackOrder}" stackType="${stackType}" pageable="${pageable}" blocks="${blocks}" showFrom="${showFrom}" oneLine="${embedVersion}"/>    
+	<c:choose>
+		<c:when test="${!shortVersion}">
+		    <dht3:stacker stackOrder="${stackOrder}" stackType="${stackType}" pageable="${pageable}" blocks="${blocks}" showFrom="${showFrom}" oneLine="${embedVersion}"/>
+    	</c:when> 
+    	<c:otherwise>
+		    <div class="dh-back">
+	    	    <a href="/group?who=${group.viewedGroupId}">Back to <c:out value="${group.viewedGroup.name}"/>'s Home</a>
+		    </div>
+    	</c:otherwise>
+	</c:choose>
 </dht3:shinyBox>		

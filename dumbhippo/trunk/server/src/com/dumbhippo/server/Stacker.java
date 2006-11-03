@@ -94,7 +94,7 @@ public interface Stacker {
 	// Returns parts of the stack in which the user was an active participant if participantOnly is set to true.
 	public List<BlockView> getStack(Viewpoint viewpoint, User user, long lastTimestamp, int start, int count, boolean participantOnly);
 
-	public void pageStack(Viewpoint viewpoint, Group group, Pageable<BlockView> pageable);	
+	public void pageStack(Viewpoint viewpoint, Group group, Pageable<BlockView> pageable, boolean byParticipation);	
 
 	/**
 	 * Fetch recently active groups on the system, along with a snapshot of their activity.

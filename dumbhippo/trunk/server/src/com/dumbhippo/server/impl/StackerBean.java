@@ -1462,10 +1462,16 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		return stack;
 	}
 	
-	private List<GroupBlockData> getBlocks(Viewpoint viewpoint, Group group, int start, int count) {
+	private List<GroupBlockData> getBlocks(Viewpoint viewpoint, Group group, int start, int count, boolean byParticipation) {
+		String orderBy;
+		if (byParticipation)
+			orderBy = " AND gbd.participatedTimestamp IS NOT NULL ORDER BY gbd.participatedTimestamp DESC";
+		else
+			orderBy = " ORDER BY gbd.stackTimestamp DESC";
+		
 		Query q = em.createQuery("SELECT gbd FROM GroupBlockData gbd " + 
 				                 " WHERE gbd.group = :group AND gbd.deleted = 0 AND gbd.block = block " + 
-				                 " ORDER BY gbd.stackTimestamp DESC");
+				                 orderBy);
 		q.setFirstResult(start);
 		q.setMaxResults(count);
 		q.setParameter("group", group);
@@ -1473,7 +1479,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		return TypeUtils.castList(GroupBlockData.class, q.getResultList());
 	}
 	
-	public void pageStack(final Viewpoint viewpoint, final Group group, Pageable<BlockView> pageable) {
+	public void pageStack(final Viewpoint viewpoint, final Group group, Pageable<BlockView> pageable, final boolean byParticipation) {
 		
 		logger.debug("getting stack for group {}", group);
 
@@ -1484,7 +1490,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		pageStack(viewpoint, new BlockSource() {
 			public List<Pair<Block, UserBlockData>> get(int start, int count) {
 				List<Pair<Block, UserBlockData>> results = new ArrayList<Pair<Block, UserBlockData>>();
-				for (GroupBlockData gbd : getBlocks(viewpoint, group, start, count)) {
+				for (GroupBlockData gbd : getBlocks(viewpoint, group, start, count, byParticipation)) {
 					results.add(new Pair<Block, UserBlockData>(gbd.getBlock(), null));
 				}
 				return results;

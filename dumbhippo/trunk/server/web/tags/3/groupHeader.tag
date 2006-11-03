@@ -5,6 +5,7 @@
 
 <%@ attribute name="who" required="true" type="com.dumbhippo.server.views.GroupView" %>
 <%@ attribute name="embedVersion" required="false" type="java.lang.Boolean" %>
+<%@ attribute name="anchor" required="false" type="java.lang.String" %>
 
 <c:if test="${empty embedVersion}">
 	<c:set var="embedVersion" value="false"/>
@@ -25,9 +26,18 @@
 				</td>
 				<td>
 					<div class="dh-person-header-next-to-image">
-						<span class="dh-person-header-name"><a href="${who.homeUrl}"><c:out value="${who.name}"/></a></span>
+						<span class="dh-person-header-name">
+							<c:choose>
+								<c:when test="${!empty anchor}">
+									<a href="${who.homeUrl}" name="${anchor}"><c:out value="${who.name}"/></a>
+								</c:when>
+								<c:otherwise>
+									<a href="${who.homeUrl}"><c:out value="${who.name}"/></a>
+								</c:otherwise>
+							</c:choose>
+						</span>
 						<c:if test="${!embedVersion}">
-							<span class="dh-person-header-description">What the <c:out value="${who.name}"/> group members are doing on the web</span>
+							<span class="dh-person-header-description">Group activity</span>
 						</c:if>								
 						<div class="dh-person-header-controls"><jsp:doBody/></div>
 						<div class="dh-person-header-stats">

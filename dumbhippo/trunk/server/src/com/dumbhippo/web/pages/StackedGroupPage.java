@@ -25,7 +25,8 @@ import com.dumbhippo.web.WebEJBUtil;
 public class StackedGroupPage extends AbstractSigninOptionalPage {
 	protected static final Logger logger = GlobalSetup.getLogger(StackedGroupPage.class);
 	
-	static private final int BLOCKS_PER_PAGE = 20;
+	static private final int INITIAL_BLOCKS_PER_PAGE = 5;
+	static private final int SUBSEQUENT_BLOCKS_PER_PAGE = 20;
 	
 	private GroupSystem groupSystem;
 	private Stacker stacker;
@@ -36,6 +37,7 @@ public class StackedGroupPage extends AbstractSigninOptionalPage {
 	private GroupView viewedGroup;
 	private String viewedGroupId;
 	private GroupMember groupMember;
+	private Pageable<BlockView> pageableMugshot;
 	private Pageable<BlockView> pageableStack;
 		
 	public StackedGroupPage() {		
@@ -216,12 +218,23 @@ public class StackedGroupPage extends AbstractSigninOptionalPage {
 		return getGroupMember().getStatus() == MembershipStatus.INVITED;
 	}
 
+	public Pageable<BlockView> getPageableMugshot() {
+		if (pageableMugshot == null) {
+		    pageableMugshot = pagePositions.createPageable("mugshot", INITIAL_BLOCKS_PER_PAGE); 
+			pageableMugshot.setSubsequentPerPage(SUBSEQUENT_BLOCKS_PER_PAGE);
+			pageableMugshot.setFlexibleResultCount(true);
+			stacker.pageStack(getSignin().getViewpoint(), getViewedGroup().getGroup(), pageableMugshot, true);
+		}
+
+		return pageableMugshot;
+	}
+
 	public Pageable<BlockView> getPageableStack() {
 		if (pageableStack == null) {
-		    pageableStack = pagePositions.createPageable("stacker", BLOCKS_PER_PAGE); 
-			pageableStack.setSubsequentPerPage(BLOCKS_PER_PAGE);
+		    pageableStack = pagePositions.createPageable("stacker", INITIAL_BLOCKS_PER_PAGE); 
+			pageableStack.setSubsequentPerPage(SUBSEQUENT_BLOCKS_PER_PAGE);
 			pageableStack.setFlexibleResultCount(true);
-			stacker.pageStack(getSignin().getViewpoint(), getViewedGroup().getGroup(), pageableStack);
+			stacker.pageStack(getSignin().getViewpoint(), getViewedGroup().getGroup(), pageableStack, false);
 		}
 
 		return pageableStack;
