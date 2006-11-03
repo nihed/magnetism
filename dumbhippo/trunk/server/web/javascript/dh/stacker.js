@@ -1792,19 +1792,33 @@ dh.stacker.removePrelight = function(node) {
 dh.stacker.blockOpen = function(block) {
 	block.dhExpanded = true;
 	var content = document.getElementById("dhStackerBlockContent-" + block.dhBlockId);
-	content.style.display = "block";
+	if (content)
+		content.style.display = "block";
 	var controls = document.getElementById("dhStackerBlockControls-" + block.dhBlockId);
 	if (controls)
 		controls.style.display = "block";
+	var fullDesc = document.getElementById("dhStackerBlockDescription-" + block.dhBlockId);
+	var shortDesc = document.getElementById("dhStackerBlockHeaderDescription-" + block.dhBlockId);
+	if (shortDesc) {
+		fullDesc.style.display = "block";
+		shortDesc.style.display = "none";
+	}
 }
 
 dh.stacker.blockClose = function(block) {
 	block.dhExpanded = false;;
 	var content = document.getElementById("dhStackerBlockContent-" + block.dhBlockId)
-	content.style.display = "none";	
+	if (content)
+		content.style.display = "none";	
 	var controls = document.getElementById("dhStackerBlockControls-" + block.dhBlockId)
 	if (controls)
 		controls.style.display = "none";
+	var fullDesc = document.getElementById("dhStackerBlockDescription-" + block.dhBlockId);
+	var shortDesc = document.getElementById("dhStackerBlockHeaderDescription-" + block.dhBlockId);
+	if (shortDesc) {
+		fullDesc.style.display = "none";
+		shortDesc.style.display = "block";
+	}
 }
 
 dh.stacker.onBlockMouseOver = function(e) {
@@ -1908,4 +1922,16 @@ dh.stacker.hookLinkChildren = function(block, startNode) {
 			dh.stacker.hookLinkChildren(block, node);
 		}
 	}
+}
+
+dh.stacker.insertBlockHeaderDescription = function(blockId) {
+	var fullDesc = document.getElementById("dhStackerBlockDescription-" + blockId);
+	var shortDesc = document.getElementById("dhStackerBlockHeaderDescription-" + blockId);
+	
+	var text = dh.util.getTextFromHtmlNode(fullDesc);
+	shortText = text.substring(0, 70);
+	shortDesc.appendChild(document.createTextNode(shortText));
+	if (text.length > shortText.length)
+		shortDesc.appendChild(document.createTextNode("..."));
+	fullDesc.style.display = "none";
 }

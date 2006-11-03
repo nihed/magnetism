@@ -7,8 +7,8 @@
 <%@ attribute name="from" required="false" type="com.dumbhippo.server.views.EntityView" %>
 <%@ attribute name="showFrom" required="false" type="java.lang.Boolean" %>
 
-<td align="right" valign="middle" id="dhStackerBlockRightContainer-${blockId}">
-<div>
+<td valign="top" align="right" id="dhStackerBlockRightContainer-${blockId}" class="dh-stacker-block-right-container">
+<div class="dh-stacker-block-right-container-inner">
 	<table cellspacing="0" cellpadding="0">
 	<tr>
 	<td><div class="dh-stacker-block-right">
@@ -25,3 +25,4 @@
 	</tr>
 	</table>
 </div>
+</td>

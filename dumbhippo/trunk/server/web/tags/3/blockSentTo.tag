@@ -3,6 +3,12 @@
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 <%@ taglib tagdir="/WEB-INF/tags/3" prefix="dht3" %>
 
-<div class="dh-stacker-block-sent-to">
-	<jsp:doBody/>
+<%@ attribute name="blockId" required="true" type="java.lang.String" %>
+<%@ attribute name="who" required="true" type="java.util.List" %>
+
+<div class="dh-stacker-block-sent-to" id="dhStackerBlockRightSentTo-${blockId}">
+	Sent to: 
+	<c:forEach end="9" items="${who}" var="ent" varStatus="entIdx">
+		<dht3:entityLink who="${ent}"/><c:if test="${!entIdx.last}">, </c:if>
+	</c:forEach>
 </div>

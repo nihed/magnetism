@@ -266,6 +266,8 @@ div.dh-notification {
 }
 
 .dh-stacker-block {
+	width:				100%;
+	table-layout:		fixed;
 }
 
 .dh-stacker-block-mouse-tip {
@@ -274,7 +276,9 @@ div.dh-notification {
 	z-index:			2;
 }
 
-.dh-stacker-block-title {
+.dh-stacker-block-left {
+	margin-top:			5px;
+	margin-left:		5px;
 }
 
 .dh-stacker-block-bottom-padding {
@@ -309,6 +313,14 @@ div.dh-notification {
 	margin-right:		5px;
 }
 
+.dh-stacker-block-right-container {
+	width:				25%;
+}
+
+.dh-stacker-block-right-container-inner {
+	margin-top:			5px;
+}
+
 .dh-stacker-block-right-from-image {
 	margin-right:		5px;
 }
@@ -326,6 +338,7 @@ div.dh-notification {
 }
 
 .dh-stacker-block-content {
+	margin-top:			10px;
 	width:				100%;
 }
 
@@ -348,7 +361,6 @@ div.dh-notification {
 
 .dh-stacker-block-sent-to {
 	text-align:			right;
-	margin-right:		40px;
 }
 
 .dh-stacker-block-title-facebook-events {

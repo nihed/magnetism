@@ -101,7 +101,7 @@ public class PngTag extends SimpleTagSupport implements DynamicAttributes {
 			}
 			appendExtraAttributes(xml, extraAttributes);
 			xml.append("><img src=\"");
-			xml.append(addBuildStamp(src, buildStamp));
+			xml.appendEscaped(addBuildStamp(src, buildStamp));
 			xml.append("\" style=\"visibility:hidden\" onload=\"dh.actions.fillAlphaPng(this)\"/></span>");
 		} else {
 			xml.append("<img ");
@@ -111,7 +111,7 @@ public class PngTag extends SimpleTagSupport implements DynamicAttributes {
 				xml.append("\" ");
 			}
 			xml.append("src=\"");
-			xml.append(addBuildStamp(src, buildStamp));
+			xml.appendEscaped(addBuildStamp(src, buildStamp));
 			xml.append("\" ");
 			if (style != null) {
 				xml.append("style=\"");

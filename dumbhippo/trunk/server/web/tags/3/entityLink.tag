@@ -8,12 +8,15 @@
 <%@ attribute name="imageOnly" required="false" type="java.lang.Boolean" %>
 
 <c:choose>
-	<c:when test="${dh:myInstanceOf(who, 'com.dumbhippo.server.views.PersonView')}">
-	    <c:if test="${!empty who.homeUrl}"><a class="dh-underlined-link" href="${who.homeUrl}"></c:if><c:choose><c:when test="${imageOnly}"><dh:png src="${who.photoUrl30}" style="width: 30px; height: 30px"/></c:when><c:otherwise><c:out value="${who.name}"/><c:if test="${onlineIcon}"> <dht3:presenceIcon who="${who}"/></c:if></c:otherwise></c:choose><c:if test="${!empty who.homeUrl}"></a></c:if>    
+	<c:when test="${!empty who.homeUrl}">
+	   	<jsp:element name="a">
+	 		<jsp:attribute name="class">dh-underlined-link</jsp:attribute>
+	 		<jsp:attribute name="href"><c:out value="${who.homeUrl}"></c:out></jsp:attribute>
+	 		<jsp:body><dht3:entityLinkContent who="${who}" imageOnly="${imageOnly}"/></jsp:body>
+	   	</jsp:element>
 	</c:when>
-	<c:when test="${dh:myInstanceOf(who, 'com.dumbhippo.server.views.GroupView') || dh:myInstanceOf(who, 'com.dumbhippo.server.views.FeedView')}">
-		<a class="dh-underlined-link" href="${who.homeUrl}"><c:choose><c:when test="${imageOnly}"><dh:png src="${who.photoUrl30}" style="width: 30px; height: 30px"/></c:when><c:otherwise><c:out value="${who.name}"/></c:otherwise></c:choose></a>
-	</c:when>	
 	<c:otherwise>
+		<dht3:entityLinkContent who="${who}" imageOnly="${imageOnly}"/>
 	</c:otherwise>
 </c:choose>
+<c:if test="${dh:myInstanceOf(who, 'com.dumbhippo.server.views.PersonView') && onlineIcon}"> <dht3:presenceIcon who="${who}"/></c:if>

@@ -3,8 +3,8 @@
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 <%@ taglib tagdir="/WEB-INF/tags/3" prefix="dht3" %>
 
-<td align="left">
-<div class="dh-stacker-block-title">	
+<td align="left" valign="top" width="75%">
+<div class="dh-stacker-block-left">	
 <jsp:doBody/>
 </div>
 </td>
