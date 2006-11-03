@@ -758,7 +758,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	}
 
 	public boolean getMusicSharingPrimed(User user) {
-		Account account = user.getAccount();
+		Account account = getAttachedAccount(user);
 		return account.isMusicSharingPrimed();
 	}
 

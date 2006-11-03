@@ -47,6 +47,8 @@ public interface MusicSystemInternal extends MusicSystem {
 	 */
 	public void addHistoricalTrack(User user, Map<String,String> properties);
 		
+	public int countTrackHistory(Viewpoint viewpoint, User user);
+	
 	public TrackView getTrackView(Track track, long lastListen);
 
 	public Future<TrackView> getTrackViewAsync(long trackId, long lastListen);	

@@ -21,6 +21,8 @@ public interface MusicSystem {
 	
 	public TrackView getCurrentTrackView(Viewpoint viewpoint, User user) throws NotFoundException;
 	
+	public int countTrackHistory(Viewpoint viewpoint, User user);
+	
 	/**
 	 * Retrieve the set of tracks that were played globally on the system most recently
 	 * 

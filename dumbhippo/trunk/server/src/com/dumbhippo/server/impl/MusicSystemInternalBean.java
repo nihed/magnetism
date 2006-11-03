@@ -360,7 +360,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		return results;
 	}
 	
-	private int countTrackHistory(Viewpoint viewpoint, User user) {
+	public int countTrackHistory(Viewpoint viewpoint, User user) {
 		if (!identitySpider.getMusicSharingEnabled(user, Enabled.AND_ACCOUNT_IS_ACTIVE)) {
 			return 0;
 		}

@@ -3,6 +3,7 @@ package com.dumbhippo.server.impl;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -243,7 +244,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		return getOrCreateBlock(key, false, false);
 	}
 	
-	private Block getUpdatingTimestamp(BlockKey key, long activity) {
+	private Block getUpdatingDetails(BlockKey key, long activity, PublicityUpdate publicityUpdate) {
 		Block block;
 		try {
 			logger.debug("will query for a block with key {}", key);
@@ -255,6 +256,10 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		}
 		if (block.getTimestampAsLong() < activity) // never "roll back"
 			block.setTimestampAsLong(activity);
+	
+		if (publicityUpdate != null) {
+		    publicityUpdate.update(block);	
+		}
 		
 		return block;
 	}
@@ -632,14 +637,22 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 			updateGroupBlockDatas(block, isGroupParticipation);
 		}
 	}
+
+	private interface PublicityUpdate {
+		void update(Block block);
+	}
 	
 	private void stack(final BlockKey key, final long activity, final Guid participantId, final boolean isGroupParticipation) {
+        stack(key, activity, null, participantId, isGroupParticipation);
+	}
+	
+	private void stack(final BlockKey key, final long activity, PublicityUpdate publicityUpdate, final Guid participantId, final boolean isGroupParticipation) {
 		if (disabled)
 			return;
 		
 		// Updating the block timestamp is something we want to do as part of the enclosing transaction;
 		// if the enclosing transaction is rolled back, the timestamp needs to be rolled back
-		final Block block = getUpdatingTimestamp(key, activity);
+		final Block block = getUpdatingDetails(key, activity, publicityUpdate);
 		if (block == null) {
 			logger.warn("No block exists when stacking {} migration needed or bug",
 					    key);
@@ -696,9 +709,9 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	}
 	
 	public void onUserCreated(Guid userId) {
-		User user = identitySpider.lookupUser(userId);
-		Block block = createBlock(getMusicPersonKey(userId));
-		updateMusicPersonPublicity(block, user);
+        // we use the default publicity (private) on music blocks before  
+		// the user plays the first track, i.e. the music block is stacked
+		createBlock(getMusicPersonKey(userId));
 	}
 	
 	public void onExternalAccountCreated(Guid userId, ExternalAccountType type) {
@@ -729,32 +742,44 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		block.setPublicBlock(publicPost);
 	}
 
-	private void updateMusicPersonPublicity(Block block, User user) {
+	private void updateMusicPersonPublicity(Block block, User user, boolean onMusicPersonStacking) {
 		if (!user.getGuid().equals(block.getData1AsGuid()))
 			throw new IllegalArgumentException("setMusicPersonPublicity takes the guid from the block");
-		block.setPublicBlock(identitySpider.getMusicSharingEnabled(user, Enabled.AND_ACCOUNT_IS_ACTIVE));
+	    boolean publicBlock;
+		if (onMusicPersonStacking) {
+			publicBlock = identitySpider.getMusicSharingEnabled(user, Enabled.AND_ACCOUNT_IS_ACTIVE);
+		} else {
+			// if we are not updating publicity because a MUSIC_PERSON block was stacked, 
+			// we need to check if the person has played any tracks before possibly setting the 
+			// publicBlock flag to true
+			// countTrackHistory includes the check for getMusicSharingEnabled
+		    publicBlock = (musicSystem.countTrackHistory(SystemViewpoint.getInstance(), user) > 0);	
+	    }
+
+		if (block.isPublicBlock() != publicBlock )
+		    block.setPublicBlock(publicBlock);
 	}
 	
-	private void updateMusicPersonPublicity(Account account) {
+	private void updateMusicPersonPublicity(Account account, boolean onMusicPersonStacking) {
 		Block block;
 		try {
 			block = queryBlock(getMusicPersonKey(account.getOwner().getGuid()));
 		} catch (NotFoundException e) {
 			return;
 		}
-		updateMusicPersonPublicity(block, account.getOwner());
+		updateMusicPersonPublicity(block, account.getOwner(), onMusicPersonStacking);
 	}
 	
 	public void onAccountDisabledToggled(Account account) {
-		updateMusicPersonPublicity(account);
+		updateMusicPersonPublicity(account, false);
 	}
 	
 	public void onAccountAdminDisabledToggled(Account account) {
-		updateMusicPersonPublicity(account);
+		updateMusicPersonPublicity(account, false);
 	}
 	
 	public void onMusicSharingToggled(Account account) {
-		updateMusicPersonPublicity(account);
+		updateMusicPersonPublicity(account, false);
 	}
 	
 	public void onPostDisabledToggled(Post post) {
@@ -794,8 +819,17 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	// don't create or suspend transaction; we will manage our own for now (FIXME) 
 	@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 	public void stackMusicPerson(final Guid userId, final long activity) {
-		stack(getMusicPersonKey(userId), activity, userId, false);
+		// we need to set the publicBlock flag correctly the first time the person music block
+		// is stacked, but we do not want to have a special flag for this transition, so
+		// we double-check the block publicity anytime a music block that is not public is stacked
+		stack(getMusicPersonKey(userId), activity, new PublicityUpdate() {
+			      public void update(Block block) {
+			 	    if (!block.isPublicBlock())
+					    updateMusicPersonPublicity(block, em.find(User.class, userId.toString()), true);
+			      }	
+	          }, userId, false);
 	}
+	
 	// don't create or suspend transaction; we will manage our own for now (FIXME) 
 	@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 	public void stackGroupChat(final Guid groupId, final long activity, final Guid participantId) {
@@ -1165,7 +1199,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		q.setFirstResult(start);
 		q.setMaxResults(count);
 		if (lastTimestamp > 0)
-			q.setParameter("timestamp", lastTimestamp);
+			q.setParameter("timestamp", new Date(lastTimestamp));
 		q.setParameter("user", user);
 		q.setParameter("viewedGuid", user.getGuid().toString());
 		
