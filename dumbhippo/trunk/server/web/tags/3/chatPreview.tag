@@ -8,7 +8,12 @@
 <%@ attribute name="chatKind" required="true" type="java.lang.String" %>
 <%@ attribute name="chattingCount" required="true" type="java.lang.Integer" %>
 
-<span class="dh-stacker-block-content-post-chatting"><c:out value="${chattingCount}"/></span> people chatting <dht:actionLinkChat prefix=" | " oneLine="true" chatId="${chatId}" kind="${chatKind}"/>
+<c:choose>
+	<c:when test="${chattingCount > 0}">
+		<span class="dh-stacker-block-content-post-chatting"><c:out value="${chattingCount}"/></span> people chatting <dht:actionLinkChat prefix=" | " oneLine="true" chatId="${chatId}" kind="${chatKind}"/>
+	</c:when>
+	<c:otherwise><dht:actionLinkChat oneLine="true" chatId="${chatId}" kind="${chatKind}"/></c:otherwise>
+</c:choose>
 <c:forEach items="${block.recentMessages}" end="3" var="msg" varStatus="msgIdx">
 	<div class="dh-stacker-block-chat-container">
 	<img src="/images3/${buildStamp}/comment_iconchat_icon.png"/>

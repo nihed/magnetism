@@ -11,14 +11,16 @@
 
 <dht3:blockContainer cssClass="${offset ? 'dh-box-grey2' : 'dh-box-grey1'}" block="${block}" blockId="${blockId}">
 	<dht3:blockLeft>
-	    <c:if test="${!oneLine}"> 
-		    <span class="dh-stacker-block-title-type">Music Radar:</span>	
-		</c:if>    	   
-		<span class="dh-stacker-block-title-music-person">
-			<c:forEach items="${block.trackViews}" end="2" var="track" varStatus="trackIdx">
-				<dht3:track track="${track}"/><c:if test="${!trackIdx.last}">, </c:if>
-			</c:forEach>
-		</span>
+		<dht3:blockTitle>
+		    <c:if test="${!oneLine}"> 
+			    <span class="dh-stacker-block-title-type">Music Radar:</span>	
+			</c:if>    	   
+			<span class="dh-stacker-block-title-music-person">
+				<c:forEach items="${block.trackViews}" end="2" var="track" varStatus="trackIdx">
+					<dht3:track track="${track}"/><c:if test="${!trackIdx.last}">, </c:if>
+				</c:forEach>
+			</span>
+		</dht3:blockTitle>
 		<dht3:blockDescription blockId="${blockId}">
 		</dht3:blockDescription>			
 		<dht3:blockContent blockId="${blockId}">

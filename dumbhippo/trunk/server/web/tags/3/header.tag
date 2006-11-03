@@ -11,7 +11,7 @@
 	<table cellspacing="0" cellpadding="0" width="100%">
 	<tr valign="top">
 	<td width="248px"><a href="/" id="dhPageHeaderLeftLink"><dh:png id="dhPageHeaderLeft" src="/images3/${buildStamp}/header_left.png" style="width: 248px; height: 64px"/></a></td>
-	<td id="dhPageHeaderLeftControls" align="left" valign="bottom" height="56px">
+	<td id="dhPageHeaderLeftControls" align="left" valign="bottom">
 		<div id="dhPageHeaderLeftControlsArea">
 		<c:choose>
 			<c:when test="${signin.valid}">

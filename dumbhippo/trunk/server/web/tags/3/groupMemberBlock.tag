@@ -11,14 +11,16 @@
 
 <dht3:blockContainer cssClass="${offset ? 'dh-box-orange2' : 'dh-box-orange1'}" block="${block}" blockId="${blockId}">
 	<dht3:blockLeft>
-		<span class="dh-stacker-block-title-group-member-name"><dht3:entityLink who="${block.memberView}"/></span>
-		<c:choose>
-			<c:when test="${dh:enumIs(block.status, 'FOLLOWER')}"> is a new follower.</c:when>
-			<c:when test="${dh:enumIs(block.status, 'ACTIVE')}"> is a new member.</c:when>
-			<c:when test="${dh:enumIs(block.status, 'REMOVED')}"> left the group.</c:when>
-			<c:when test="${dh:enumIs(block.status, 'INVITED')}"> is invited to the group.</c:when>
-			<c:when test="${dh:enumIs(block.status, 'INVITED_TO_FOLLOW')}"> is invited to be a follower.</c:when>
-		</c:choose>		
+		<dht3:blockTitle>
+			<span class="dh-stacker-block-title-group-member-name"><dht3:entityLink who="${block.memberView}"/></span>
+			<c:choose>
+				<c:when test="${dh:enumIs(block.status, 'FOLLOWER')}"> is a new follower.</c:when>
+				<c:when test="${dh:enumIs(block.status, 'ACTIVE')}"> is a new member.</c:when>
+				<c:when test="${dh:enumIs(block.status, 'REMOVED')}"> left the group.</c:when>
+				<c:when test="${dh:enumIs(block.status, 'INVITED')}"> is invited to the group.</c:when>
+				<c:when test="${dh:enumIs(block.status, 'INVITED_TO_FOLLOW')}"> is invited to be a follower.</c:when>
+			</c:choose>
+		</dht3:blockTitle>
 		<dht3:blockDescription blockId="${blockId}" truncate="false">
 			<c:choose>
 				<c:when test="${dh:enumIs(block.status, 'FOLLOWER')}">
