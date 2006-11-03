@@ -81,4 +81,9 @@ public abstract class BlockView implements ObjectView {
 	}
 	
 	protected abstract void writeDetailsToXmlBuilder(XmlBuilder builder);
+	
+	@Override
+	public String toString() {
+		return "{view of " + block + "}";
+	}
 }

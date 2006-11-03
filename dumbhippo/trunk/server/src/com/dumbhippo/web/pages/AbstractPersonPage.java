@@ -46,8 +46,7 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 	
 	private GroupSystem groupSystem;
 	private MusicSystem musicSystem;
-	private PersonView viewedPerson;
-	private AccountSystem accountSystem; 	
+	private PersonView viewedPerson; 	
 	
 	private ListBean<GroupView> groups;
 	private Pageable<GroupView> pageablePublicGroups;
@@ -76,7 +75,6 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 	protected AbstractPersonPage() {	
 		groupSystem = WebEJBUtil.defaultLookup(GroupSystem.class);
 		musicSystem = WebEJBUtil.defaultLookup(MusicSystem.class);
-		accountSystem = WebEJBUtil.defaultLookup(AccountSystem.class);
 		lookedUpCurrentTrack = false;
 	}
 	

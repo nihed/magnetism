@@ -3,20 +3,16 @@ package com.dumbhippo.web.pages;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
-import com.dumbhippo.server.InvitationSystem;
 import com.dumbhippo.server.PromotionCode;
-import com.dumbhippo.web.WebEJBUtil;
 
 public class LandingPage extends AbstractPersonPage {
 	@SuppressWarnings("unused")
 	static private final Logger logger = GlobalSetup.getLogger(LandingPage.class);
 
-	private InvitationSystem invitationSystem;
 	private int selfInvitations;
 	
 	public LandingPage() {
 		selfInvitations = -1;
-		invitationSystem = WebEJBUtil.defaultLookup(InvitationSystem.class);
 	}
 	
 	public int getSelfInvitations() {

@@ -1,12 +1,12 @@
 package com.dumbhippo.server.blocks;
 
 import java.util.List;
+import java.util.Set;
 
-import javax.ejb.EJB;
 import javax.ejb.Stateless;
 
 import com.dumbhippo.persistence.Block;
-import com.dumbhippo.server.GroupSystem;
+import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.views.ChatMessageView;
 import com.dumbhippo.server.views.GroupView;
@@ -15,9 +15,6 @@ import com.dumbhippo.server.views.Viewpoint;
 @Stateless
 public class GroupChatBlockHandlerBean extends AbstractBlockHandlerBean<GroupChatBlockView> implements
 		GroupChatBlockHandler {
-
-	@EJB
-	private GroupSystem groupSystem;
 	
 	public GroupChatBlockHandlerBean() {
 		super(GroupChatBlockView.class);
@@ -40,5 +37,9 @@ public class GroupChatBlockHandlerBean extends AbstractBlockHandlerBean<GroupCha
 		blockView.setGroupView(groupView);
 		blockView.setRecentMessages(recentMessages);
 		blockView.setPopulated(true);
+	}
+	
+	public Set<User> getInterestedUsers(Block block) {
+		return getUsersWhoCareAboutData1Group(block);
 	}
 }

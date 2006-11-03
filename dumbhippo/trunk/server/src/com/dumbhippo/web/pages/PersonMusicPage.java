@@ -9,7 +9,6 @@ import com.dumbhippo.server.Character;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.Enabled;
 import com.dumbhippo.server.HippoProperty;
-import com.dumbhippo.server.InvitationSystem;
 import com.dumbhippo.server.NowPlayingThemeSystem;
 import com.dumbhippo.server.PromotionCode;
 import com.dumbhippo.server.views.TrackView;
@@ -23,7 +22,6 @@ public class PersonMusicPage extends AbstractPersonPage {
 	static private final int LIST_SIZE = 5;
 	
 	private Configuration configuration;
-	private InvitationSystem invitationSystem;
 	private NowPlayingThemeSystem nowPlayingSystem;
 	private ListBean<TrackView> latestTracks;
 	private ListBean<TrackView> frequentTracks;
@@ -35,7 +33,6 @@ public class PersonMusicPage extends AbstractPersonPage {
 	public PersonMusicPage() {
 		selfInvitations = -1;
 		configuration = WebEJBUtil.defaultLookup(Configuration.class);
-		invitationSystem = WebEJBUtil.defaultLookup(InvitationSystem.class);
 		nowPlayingSystem = WebEJBUtil.defaultLookup(NowPlayingThemeSystem.class);
 	}
 

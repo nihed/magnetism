@@ -51,7 +51,6 @@ import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.PersonPostData;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.PostMessage;
-import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.StackInclusion;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.UserBlockData;
@@ -122,6 +121,10 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	
 	private Map<BlockType,BlockHandler> handlers;
 	
+	private BlockHandler getHandler(Block block) {
+		return getHandler(block.getBlockType());
+	}
+	
 	private BlockHandler getHandler(BlockType type) {
 		
 		if (handlers != null) {
@@ -158,7 +161,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		}
 		
 		if (handlerClass == null)
-			throw new RuntimeException("No block handler for block type " + type);
+			throw new RuntimeException("No block handler known for block type " + type);
 		
 		if (handlers == null)
 			handlers = new EnumMap<BlockType,BlockHandler>(BlockType.class);
@@ -380,140 +383,10 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		BlockEvent event = new BlockEvent(block.getGuid(), block.getTimestampAsLong(), affectedGuids);
 		LiveState.getInstance().queueUpdate(event);
 	}
-
-	private Set<User> getUsersWhoCare(Block block) {
-		return getUsersWhoCare(block, true);
-	}
-	
-	// getUsersWhoCare should pretty much always include self, because we use
-	// the blocks stacked for self when displaying them to others on the web stacker
-	private Set<User> getUsersWhoCare(Block block, boolean includeSelf) {
-		User user;
-		try {
-			user = EJBUtil.lookupGuid(em, User.class, block.getData1AsGuid());
-		} catch (NotFoundException e) {
-			throw new RuntimeException(e);
-		}
-		Set<User> peopleWhoCare = identitySpider.getUsersWhoHaveUserAsContact(SystemViewpoint.getInstance(), user);
-        if (includeSelf) 
-		    peopleWhoCare.add(user);  
-		
-		return peopleWhoCare;	
-	}
-	
-	private Set<User> getDesiredUsersForMusicPerson(Block block) {
-		if (block.getBlockType() != BlockType.MUSIC_PERSON)
-			throw new IllegalArgumentException("wrong type block");
-        
-		return getUsersWhoCare(block);
-	}
-	
-	private Set<User> getDesiredUsersForGroupChat(Block block) {
-		if (block.getBlockType() != BlockType.GROUP_CHAT)
-			throw new IllegalArgumentException("wrong type block");
-		Group group;
-		try {
-			group = EJBUtil.lookupGuid(em, Group.class, block.getData1AsGuid());
-		} catch (NotFoundException e) {
-			throw new RuntimeException(e);
-		}
-		Set<User> groupMembers = groupSystem.getUserMembers(SystemViewpoint.getInstance(), group);
-		return groupMembers;
-	}
-
-	private Set<User> getDesiredUsersForPost(Block block) {
-		if (block.getBlockType() != BlockType.POST)
-			throw new IllegalArgumentException("wrong type block");
-
-		Post post;
-		try {
-			post = EJBUtil.lookupGuid(em, Post.class, block.getData1AsGuid());
-		} catch (NotFoundException e) {
-			throw new RuntimeException(e);
-		}
-		Set<User> postRecipients = new HashSet<User>();
-		Set<Resource> resources = post.getExpandedRecipients();
-		for (Resource r : resources) {
-			AccountClaim a = r.getAccountClaim();
-			if (a != null)
-				postRecipients.add(a.getOwner());
-		}
-		return postRecipients;
-	}
-
-	private Set<User> getDesiredUsersForGroupMember(Block block) {
-		if (block.getBlockType() != BlockType.GROUP_MEMBER)
-			throw new IllegalArgumentException("wrong type block");
-		
-		Group group = em.find(Group.class, block.getData1AsGuid().toString());
-		
-		Set<User> recipients = groupSystem.getMembershipChangeRecipients(group);
-		return recipients;
-	}
-	
-	private Set<User> getFriendsOrSelfFromData1(Block block) {
-		if (block.getInclusion() == StackInclusion.IN_ALL_STACKS)
-			throw new IllegalArgumentException("wrong stack inclusion " + block);
-		
-		if (block.getInclusion() == StackInclusion.ONLY_WHEN_VIEWED_BY_OTHERS) {
-			// we always want to include self in external account updates, because
-			// this is how we will get the UserBlockData for the update with the right
-			// participation timestamp, which we will display on the person's own stacker
-			// when viewed by others
-			return getUsersWhoCare(block);			
-		} else {
-	        try {
-				return Collections.singleton(EJBUtil.lookupGuid(em, User.class, block.getData1AsGuid()));
-			} catch (NotFoundException e) {
-				throw new RuntimeException(e);
-			}			
-		}
-	}
-	
-	private Set<User> getDesiredUsersForFacebookPerson(Block block) {
-		if (block.getBlockType() != BlockType.FACEBOOK_PERSON)
-			throw new IllegalArgumentException("wrong type block");
-	
-		return getFriendsOrSelfFromData1(block);
-	}
-
-	private Set<User> getDesiredUsersForBlogPerson(Block block) {
-		if (block.getBlockType() != BlockType.BLOG_PERSON)
-			throw new IllegalArgumentException("wrong type block");
-	
-		return getFriendsOrSelfFromData1(block);
-	}	
 	
 	private void updateUserBlockDatas(Block block, Guid participantId) {
-		Set<User> desiredUsers = null;
-		switch (block.getBlockType()) {
-		case POST:
-			desiredUsers = getDesiredUsersForPost(block);
-			break;
-		case GROUP_CHAT:
-			desiredUsers = getDesiredUsersForGroupChat(block);
-			break;
-		case MUSIC_PERSON:
-			desiredUsers = getDesiredUsersForMusicPerson(block);
-			break;
-		case GROUP_MEMBER:
-			desiredUsers = getDesiredUsersForGroupMember(block);
-			break;
-		case FACEBOOK_PERSON:
-			desiredUsers = getDesiredUsersForFacebookPerson(block);
-			break;
-		case BLOG_PERSON:
-			desiredUsers = getDesiredUsersForBlogPerson(block);
-			break;
-		case OBSOLETE_EXTERNAL_ACCOUNT_UPDATE:
-		case OBSOLETE_EXTERNAL_ACCOUNT_UPDATE_SELF:
-			throw new RuntimeException("Obsolete block type " + block);
-			
-			// don't add a default, we want a warning if any cases are missing
-		}
-		
-		if (desiredUsers == null)
-			throw new IllegalStateException("Trying to update user block data for unhandled block type " + block.getBlockType());
+		BlockHandler handler = getHandler(block);
+		Set<User> desiredUsers = handler.getInterestedUsers(block);
 		
 		updateUserBlockDatas(block, desiredUsers, participantId);
 	}
@@ -1657,7 +1530,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	}
 	
 	static private class Migration implements Runnable {
-		@SuppressWarnings("unused")
+		@SuppressWarnings({"unused","hiding"})
 		static private final Logger logger = GlobalSetup.getLogger(Migration.class);		
 		
 		private ExecutorService pool;

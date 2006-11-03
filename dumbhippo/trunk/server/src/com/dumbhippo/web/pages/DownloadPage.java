@@ -8,7 +8,6 @@ import com.dumbhippo.persistence.InvitationToken;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HippoProperty;
-import com.dumbhippo.server.InvitationSystem;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.UserViewpoint;
@@ -29,15 +28,12 @@ public class DownloadPage extends AbstractSigninOptionalPage {
 	
 	@Browser
 	private BrowserBean browser;
-
-	private InvitationSystem invitationSystem;
 	
 	private InvitationToken invitation;
 	private PersonView inviter;
 
 	public DownloadPage() {
-		configuration = WebEJBUtil.defaultLookup(Configuration.class);
-		invitationSystem = WebEJBUtil.defaultLookup(InvitationSystem.class);		
+		configuration = WebEJBUtil.defaultLookup(Configuration.class);		
 	}
 	
 	public boolean getHaveDownload() {

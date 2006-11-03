@@ -5,14 +5,9 @@ import org.slf4j.Logger;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.server.Pageable;
 import com.dumbhippo.server.views.TrackView;
-import com.dumbhippo.web.PagePositions;
-import com.dumbhippo.web.PagePositionsBean;
 
 public class MusicPersonPage extends AbstractPersonPage {
 	static private final Logger logger = GlobalSetup.getLogger(MusicPersonPage.class);
-	
-	@PagePositions
-	PagePositionsBean pagePositions;
 	
 	private Pageable<TrackView> recentTracks;
 	private Pageable<TrackView> mostPlayedTracks;

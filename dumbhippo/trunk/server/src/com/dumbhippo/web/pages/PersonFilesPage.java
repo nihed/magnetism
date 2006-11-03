@@ -8,8 +8,6 @@ import com.dumbhippo.server.Pageable;
 import com.dumbhippo.server.SharedFileSystem;
 import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.server.views.Viewpoint;
-import com.dumbhippo.web.PagePositions;
-import com.dumbhippo.web.PagePositionsBean;
 import com.dumbhippo.web.WebEJBUtil;
 
 public class PersonFilesPage extends AbstractPersonPage {
@@ -17,9 +15,6 @@ public class PersonFilesPage extends AbstractPersonPage {
 	static private final Logger logger = GlobalSetup.getLogger(PersonFilesPage.class);
 
 	private static final int INITIAL_PER_PAGE = 10;
-	
-	@PagePositions
-	private PagePositionsBean pagePositions;
 	
 	private SharedFileSystem sharedFileSystem;
 	

@@ -31,7 +31,7 @@ public class ThreadUtils {
 	// future, be sure you use ExecutorService.execute(), not submit().
 	
 	static private class EmergencyExceptionHandler implements UncaughtExceptionHandler {
-		@SuppressWarnings("unused")
+		@SuppressWarnings({"unused","hiding"})
 		static private final Logger logger = GlobalSetup.getLogger(EmergencyExceptionHandler.class);
 
 		public void uncaughtException(Thread thread, Throwable throwable) {

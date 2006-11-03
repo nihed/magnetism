@@ -1,13 +1,15 @@
 package com.dumbhippo.server.blocks;
 
+import java.util.Set;
+
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 
 import com.dumbhippo.persistence.Block;
+import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupMember;
 import com.dumbhippo.persistence.MembershipStatus;
 import com.dumbhippo.persistence.User;
-import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.views.GroupView;
@@ -18,9 +20,6 @@ import com.dumbhippo.server.views.Viewpoint;
 @Stateless
 public class GroupMemberBlockHandlerBean extends AbstractBlockHandlerBean<GroupMemberBlockView> implements
 		GroupMemberBlockHandler {
-
-	@EJB
-	private GroupSystem groupSystem;
 	
 	@EJB
 	private PersonViewer personViewer;
@@ -58,5 +57,13 @@ public class GroupMemberBlockHandlerBean extends AbstractBlockHandlerBean<GroupM
 		if (member != null)
 			blockView.setAdders(personViewer.viewUsers(viewpoint, member.getAdders()));
 		blockView.setPopulated(true);
+	}
+	
+	public Set<User> getInterestedUsers(Block block) {
+		Group group = em.find(Group.class, block.getData1AsGuid().toString());
+		
+		Set<User> recipients = groupSystem.getMembershipChangeRecipients(group);
+		
+		return recipients;
 	}
 }

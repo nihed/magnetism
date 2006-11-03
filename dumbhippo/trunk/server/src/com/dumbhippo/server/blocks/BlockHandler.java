@@ -1,6 +1,9 @@
 package com.dumbhippo.server.blocks;
 
+import java.util.Set;
+
 import com.dumbhippo.persistence.Block;
+import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.server.views.Viewpoint;
 
@@ -33,4 +36,14 @@ public interface BlockHandler {
 	 * @param blockView a block view
 	 */
 	public void populateBlockView(BlockView blockView);
+	
+	/** 
+	 * Get the set of users who should have a UserBlockData for this block, i.e. 
+	 * users whose stack the block will show up in. This set will be used to 
+	 * add or remove UserBlockData as needed. 
+	 * 
+	 * @param the block
+	 * @returns set of users who care about this block
+	 */
+	public Set<User> getInterestedUsers(Block block);
 }

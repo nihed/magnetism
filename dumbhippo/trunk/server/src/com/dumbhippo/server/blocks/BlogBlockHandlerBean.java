@@ -1,5 +1,7 @@
 package com.dumbhippo.server.blocks;
 
+import java.util.Set;
+
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 
@@ -51,5 +53,9 @@ public class BlogBlockHandlerBean extends AbstractBlockHandlerBean<BlogBlockView
 	    blockView.setUserView(userView);
 		blockView.setEntry(lastEntry);
 		blockView.setPopulated(true);
+	}
+
+	public Set<User> getInterestedUsers(Block block) {
+		return getUsersWhoCareAboutData1User(block);
 	}
 }

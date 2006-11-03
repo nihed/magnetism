@@ -2,26 +2,41 @@ package com.dumbhippo.server.blocks;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.util.Collections;
+import java.util.Set;
 
 import javax.ejb.EJB;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.Block;
+import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.StackInclusion;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.UserBlockData;
+import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.IdentitySpider;
+import com.dumbhippo.server.NotFoundException;
+import com.dumbhippo.server.util.EJBUtil;
+import com.dumbhippo.server.views.SystemViewpoint;
 import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.server.views.Viewpoint;
 
 public abstract class AbstractBlockHandlerBean<BlockViewSubType extends BlockView> implements BlockHandler {
 
 	static private final Logger logger = GlobalSetup.getLogger(AbstractBlockHandlerBean.class);
+
+	@PersistenceContext(unitName = "dumbhippo")
+	protected EntityManager em;
 	
 	@EJB
 	protected IdentitySpider identitySpider;
+	
+	@EJB
+	protected GroupSystem groupSystem;
 	
 	private Class<BlockViewSubType> viewClass;
 	private Constructor<BlockViewSubType> viewClassConstructor;
@@ -128,5 +143,57 @@ public abstract class AbstractBlockHandlerBean<BlockViewSubType extends BlockVie
 					blockView);
 			throw new RuntimeException("prepareBlockView missed a visibility check", e);
 		}
+	}
+	
+	/**
+	 * Utility helper for implementing getInterestedUsers() that gets everyone with 
+	 * the user id in data1 listed in their contacts.
+	 * 
+	 * @param block
+	 * @return
+	 */
+	protected final Set<User> getUsersWhoCareAboutData1User(Block block) {
+		User user;
+		try {
+			user = EJBUtil.lookupGuid(em, User.class, block.getData1AsGuid());
+		} catch (NotFoundException e) {
+			throw new RuntimeException("invalid user in data1 of " + block, e);
+		}
+		
+		Set<User> peopleWhoCare = null;
+		
+		switch (block.getInclusion()) {
+		case IN_ALL_STACKS:
+		case ONLY_WHEN_VIEWED_BY_OTHERS:
+			peopleWhoCare = identitySpider.getUsersWhoHaveUserAsContact(SystemViewpoint.getInstance(), user);
+		
+			// we also show each block to its "owner"
+			peopleWhoCare.add(user);
+			break;
+		case ONLY_WHEN_VIEWING_SELF:
+			peopleWhoCare = Collections.singleton(user);
+			break;
+			// no default, it hides bugs
+		}
+		
+		return peopleWhoCare;
+	}
+
+	/**
+	 * Utility helper for implementing getInterestedUsers() that gets everyone in 
+	 * the group identified by the group id in data1.
+	 * 
+	 * @param block
+	 * @return
+	 */
+	protected final Set<User> getUsersWhoCareAboutData1Group(Block block) {
+		Group group;
+		try {
+			group = EJBUtil.lookupGuid(em, Group.class, block.getData1AsGuid());
+		} catch (NotFoundException e) {
+			throw new RuntimeException("invalid group in data1 of " + block, e);
+		}
+		Set<User> groupMembers = groupSystem.getUserMembers(SystemViewpoint.getInstance(), group);
+		return groupMembers;
 	}
 }

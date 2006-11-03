@@ -1,6 +1,7 @@
 package com.dumbhippo.server.blocks;
 
 import java.util.List;
+import java.util.Set;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -53,4 +54,8 @@ public class FacebookBlockHandlerBean extends AbstractBlockHandlerBean<FacebookB
 		blockView.setFacebookEvents(facebookEvents);
 		blockView.setPopulated(true);
 	}
+	
+	public Set<User> getInterestedUsers(Block block) {
+		return getUsersWhoCareAboutData1User(block);
+	}	
 }

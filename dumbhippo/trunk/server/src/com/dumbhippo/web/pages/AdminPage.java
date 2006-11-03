@@ -14,9 +14,6 @@ import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.HumanVisibleException;
-import com.dumbhippo.server.IdentitySpider;
-import com.dumbhippo.server.InvitationSystem;
-import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.web.WebEJBUtil;
 
@@ -26,12 +23,7 @@ public class AdminPage extends AbstractSigninRequiredPage {
 
 	private Configuration config;
 	
-	private LiveState liveState;
-	
-	private InvitationSystem invitationSystem;
-
-	private IdentitySpider identitySpider;
-	private PersonViewer personViewer;
+	private LiveState liveState;	
 	
 	private Set<PersonView> cachedLiveUsers;
 	private Set<LivePost> livePosts;
@@ -45,9 +37,6 @@ public class AdminPage extends AbstractSigninRequiredPage {
 		super();
 		liveState = LiveState.getInstance();		
 		config = WebEJBUtil.defaultLookup(Configuration.class);
-		invitationSystem = WebEJBUtil.defaultLookup(InvitationSystem.class);
-		identitySpider = WebEJBUtil.defaultLookup(IdentitySpider.class);
-		personViewer = WebEJBUtil.defaultLookup(PersonViewer.class);
 		String isAdminEnabled = config.getProperty(HippoProperty.ENABLE_ADMIN_CONSOLE);
 		logger.debug("admin console enabled: {}", isAdminEnabled);
 		if (!isAdminEnabled.equals("true"))

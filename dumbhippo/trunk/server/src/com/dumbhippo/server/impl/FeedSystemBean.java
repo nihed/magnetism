@@ -680,9 +680,10 @@ public class FeedSystemBean implements FeedSystem {
 	private static class FeedCache implements FeedFetcherCache, Serializable {
 		private static final long serialVersionUID = 1L;
 
-		@SuppressWarnings("unused")
+		@SuppressWarnings({"unused","hiding"})
 		private static final Logger logger = GlobalSetup.getLogger(FeedCache.class);		
 		
+		@SuppressWarnings("hiding")
 		private Map<String,SyndFeedInfo> cache;
 		
 		FeedCache() {
