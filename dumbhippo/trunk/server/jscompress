@@ -9,6 +9,22 @@ import sys
 import os
 import md5
 import errno
+import stat
+
+def get_mtime(filename):
+    try:
+        s = os.stat(filename)
+        return s.st_mtime
+    except OSError, e:
+        if e.errno == errno.ENOENT:
+            return 0
+        else:
+            raise
+
+script_mtime = get_mtime(sys.argv[0])
+if script_mtime == 0:
+    print "Could not stat %s" % sys.argv[0]
+    sys.exit(1)
 
 ## Original .js files, hash from full path to OriginalFile objects
 original_files = {}
@@ -321,6 +337,11 @@ def post_fixup_when_dojo_replaces_module_object(out, indent, module):
 
 class OriginalFile:
     def __init__(self, fullpath, lines):
+        self._mtime = get_mtime(fullpath)
+        if self._mtime == 0:
+            print "could not stat %s" % fullpath
+            sys.exit(1)
+        
         self._path = fullpath
         self._lines = lines
 
@@ -456,6 +477,9 @@ class OriginalFile:
 
             i = i + 1
 
+    def get_mtime(self):
+        return self._mtime
+
     def set_dest_file(self, dest):
         if self._dest_file:
             print "destination file set twice on same file"
@@ -542,7 +566,7 @@ class OriginalFile:
         for m in self._requires:
             orig = providers[m]
             if orig.get_bundles_its_requires():
-                print "%s providing %s already bundles its requirements, so not bundling into %s" % (orig.get_path(), m, bundler.get_path())
+                #print "%s providing %s already bundles its requirements, so not bundling into %s" % (orig.get_path(), m, bundler.get_path())
                 if orig == bundler:
                     print "file %s somehow requires itself" % bundler
                     sys.exit(1)
@@ -683,6 +707,7 @@ class OriginalFile:
 
 class DestFile:
     def __init__(self, relpath, fullpath, orig):
+        self._mtime = get_mtime(fullpath)
         self._relpath = relpath
         self._path = fullpath
         self._orig = orig
@@ -694,6 +719,10 @@ class DestFile:
 
     def __str__(self):
         return self.__repr__()
+
+    ## mtime is 0 if the dest file didn't exist
+    def get_mtime(self):
+        return self._mtime
 
     def get_path(self):
         return self._path
@@ -842,9 +871,19 @@ def main():
         #if orig.get_bundled():
         #    print "%s provided by %s bundled into %s" % (module_name, orig.get_path(), orig.get_bundler())
 
+    ## for now, just "all or nothing" rebuilding the js, though we could do better since we
+    ## do know the dependency info
+    ## the script itself counts as an original file to decide whether we need to regenerate output.
+    newest_original_mtime = script_mtime
+    oldest_dest_mtime = sys.maxint
+
     ## Now compute the destination files
     bundled_count = 0
     for orig in original_files.values():
+
+        if orig.get_mtime() > newest_original_mtime:
+            newest_original_mtime = orig.get_mtime()
+        
         if not orig.get_bundled():
             relpath = orig.get_dest_filename()
             destpath = os.path.join(destdir, relpath)
@@ -852,6 +891,12 @@ def main():
             dest_files[destpath] = d
             ## fill in dest_providers
             d.add_self_to_provider_map(dest_providers)
+
+            ## if a dest file doesn't exist its mtime is 0,
+            ## which will always be older than the original
+            ## files
+            if d.get_mtime() < oldest_dest_mtime:
+                oldest_dest_mtime = d.get_mtime()
         else:
             bundled_count = bundled_count + 1
 
@@ -864,6 +909,12 @@ def main():
         if not dest_providers.has_key(p):
             print "Module %s in source file %s is not provided by any dest file, is bundled into %s has dest file %s" % (p, providers[p], providers[p].get_bundler(), providers[p].get_dest_file())
             sys.exit(1)
+
+    if newest_original_mtime < oldest_dest_mtime:
+        print "All javascript files are up-to-date, jscompress has nothing to do"
+        sys.exit(0)
+    else:
+        print "Some javascript files out-of-date"
             
     print "%d files to be bundled inline" % bundled_count
 
