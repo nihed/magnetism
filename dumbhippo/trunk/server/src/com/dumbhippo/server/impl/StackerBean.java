@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -39,18 +40,13 @@ import com.dumbhippo.persistence.AccountClaim;
 import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.BlockKey;
 import com.dumbhippo.persistence.BlockType;
-import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.ExternalAccountType;
-import com.dumbhippo.persistence.FacebookAccount;
-import com.dumbhippo.persistence.FacebookEvent;
-import com.dumbhippo.persistence.FeedEntry;
 import com.dumbhippo.persistence.FeedPost;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupAccess;
 import com.dumbhippo.persistence.GroupBlockData;
 import com.dumbhippo.persistence.GroupMember;
 import com.dumbhippo.persistence.GroupMessage;
-import com.dumbhippo.persistence.MembershipStatus;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.PersonPostData;
 import com.dumbhippo.persistence.Post;
@@ -60,9 +56,6 @@ import com.dumbhippo.persistence.StackInclusion;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.server.Enabled;
-import com.dumbhippo.server.ExternalAccountSystem;
-import com.dumbhippo.server.FacebookSystem;
-import com.dumbhippo.server.FeedSystem;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.MusicSystem;
@@ -74,23 +67,22 @@ import com.dumbhippo.server.SimpleServiceMBean;
 import com.dumbhippo.server.Stacker;
 import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.XmppMessageSender;
+import com.dumbhippo.server.blocks.BlockHandler;
+import com.dumbhippo.server.blocks.BlockNotVisibleException;
 import com.dumbhippo.server.blocks.BlockView;
-import com.dumbhippo.server.blocks.BlogBlockView;
-import com.dumbhippo.server.blocks.FacebookBlockView;
-import com.dumbhippo.server.blocks.GroupChatBlockView;
-import com.dumbhippo.server.blocks.GroupMemberBlockView;
-import com.dumbhippo.server.blocks.MusicPersonBlockView;
-import com.dumbhippo.server.blocks.PostBlockView;
+import com.dumbhippo.server.blocks.BlogBlockHandler;
+import com.dumbhippo.server.blocks.FacebookBlockHandler;
+import com.dumbhippo.server.blocks.GroupChatBlockHandler;
+import com.dumbhippo.server.blocks.GroupMemberBlockHandler;
+import com.dumbhippo.server.blocks.MusicPersonBlockHandler;
+import com.dumbhippo.server.blocks.PostBlockHandler;
 import com.dumbhippo.server.util.EJBUtil;
-import com.dumbhippo.server.views.ChatMessageView;
 import com.dumbhippo.server.views.GroupMugshotView;
 import com.dumbhippo.server.views.GroupView;
 import com.dumbhippo.server.views.PersonMugshotView;
 import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.PersonViewExtra;
-import com.dumbhippo.server.views.PostView;
 import com.dumbhippo.server.views.SystemViewpoint;
-import com.dumbhippo.server.views.TrackView;
 import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.server.views.Viewpoint;
 
@@ -124,18 +116,58 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	private PostingBoard postingBoard;
 	
 	@EJB
-	private XmppMessageSender xmppMessageSystem;
+	private XmppMessageSender xmppMessageSystem;	
 	
-	@EJB
-	private ExternalAccountSystem externalAccountSystem;
+	private Map<Guid,CacheEntry> userCacheEntries = new HashMap<Guid,CacheEntry>();		
 	
-	@EJB
-	private FeedSystem feedSystem;
+	private Map<BlockType,BlockHandler> handlers;
 	
-	@EJB
-	private FacebookSystem facebookSystem;
-	
-	private Map<Guid,CacheEntry> userCacheEntries = new HashMap<Guid,CacheEntry>();
+	private BlockHandler getHandler(BlockType type) {
+		
+		if (handlers != null) {
+			BlockHandler handler = handlers.get(type);
+			if (handler != null)
+				return handler;
+		}
+		
+		Class<? extends BlockHandler> handlerClass = null;
+		
+		switch (type) {
+		case BLOG_PERSON:
+			handlerClass = BlogBlockHandler.class;
+			break;
+		case FACEBOOK_PERSON:
+			handlerClass = FacebookBlockHandler.class;
+			break;
+		case GROUP_CHAT:
+			handlerClass = GroupChatBlockHandler.class;
+			break;			
+		case GROUP_MEMBER:
+			handlerClass = GroupMemberBlockHandler.class;
+			break;			
+		case MUSIC_PERSON:
+			handlerClass = MusicPersonBlockHandler.class;
+			break;			
+		case POST:
+			handlerClass = PostBlockHandler.class;
+			break;
+		case OBSOLETE_EXTERNAL_ACCOUNT_UPDATE:
+		case OBSOLETE_EXTERNAL_ACCOUNT_UPDATE_SELF:
+			break;
+			// don't add a default, it hides compiler warnings
+		}
+		
+		if (handlerClass == null)
+			throw new RuntimeException("No block handler for block type " + type);
+		
+		if (handlers == null)
+			handlers = new EnumMap<BlockType,BlockHandler>(BlockType.class);
+		
+		BlockHandler handler = EJBUtil.defaultLookup(handlerClass);
+		handlers.put(type, handler);
+		
+		return handler;
+	}
 	
 	public void start() throws Exception {
 		LiveState.addEventListener(BlockEvent.class, this);
@@ -931,24 +963,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	
 	public void clickedPost(Post post, User user, long clickedTime) {
 		click(getPostKey(post.getGuid()), user, clickedTime);
-	}
-	
-	// usually for access controls we just use NotFoundException, but in this case 
-	// populateBlockContents isn't just a "lookup function" and doesn't naturally 
-	// have anything to "not find" - also it calls lots of 
-	// other things that throw NotFoundException, some of which should not be 
-	// passed out as they don't indicate that we can't see the block
-	class BlockContentsNotVisibleException extends Exception {
-		private static final long serialVersionUID = 1L;
-
-		public BlockContentsNotVisibleException(String message, Throwable cause) {
-			super(message, cause);
-		}
-		
-		public BlockContentsNotVisibleException(String message) {
-			super(message);
-		}
-	}
+	}	
 		
 	// Preparing a block view creates a skeletal BlockView that has the Block and the 
 	// UserBlockData and nothing more. The idea is that when paging a stack of blocks,
@@ -959,201 +974,26 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	// What we do check at this point is access control: this method throws NotFoundException 
 	//  if the user can't see the contents of the Block.
 	//
-	private BlockView prepareBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd) throws NotFoundException {
-		UserViewpoint userview = null;
-		if (viewpoint instanceof UserViewpoint)
-			userview = (UserViewpoint) viewpoint;
-
-		if (block.getInclusion() == StackInclusion.ONLY_WHEN_VIEWING_SELF) {
-			User user = identitySpider.lookupUser(block.getData1AsGuid());
-			if (userview == null || !userview.getViewer().equals(user)) {
-				throw new NotFoundException("Trying to view an ONLY_WHEN_VIEWING_SELF block from a different viewpoint: " + userview + " block=" + block);
-			}
-		}
-		
-		BlockView blockView = null;
-		switch (block.getBlockType()) {
-			case POST: {
-			    blockView = new PostBlockView(viewpoint, block, ubd);
-			    break;
-			}
-			case GROUP_CHAT: {
-				blockView = new GroupChatBlockView(viewpoint, block, ubd);
-			    break;
-			}
-			case GROUP_MEMBER: {
-				blockView = new GroupMemberBlockView(viewpoint, block, ubd);
-			    break;
-			}
-			case MUSIC_PERSON: {
-				blockView = new MusicPersonBlockView(viewpoint, block, ubd);
-			    break;
-			}
-			case FACEBOOK_PERSON: {
-				blockView = new FacebookBlockView(viewpoint, block, ubd);
-				break;
-			}
-			case BLOG_PERSON: {
-				blockView = new BlogBlockView(viewpoint, block, ubd);
-				break;
-			}
-			case OBSOLETE_EXTERNAL_ACCOUNT_UPDATE:
-			case OBSOLETE_EXTERNAL_ACCOUNT_UPDATE_SELF: {	
-				throw new RuntimeException("trying to get block view for obsolete block type " + block);
-			}
-			// don't add a default, it hides compiler warnings
-		}
-
-		// If a block isn't flagged as always public, then we need to do access control
-		// here. We do that by trying to populate the block, and we see if that throws
-		// an exception.
-		//
-		// FIXME: populating a block view is pontentially much more expensive than
-		//  what we need to check visibility. For example, when we populate a PostBlockView,
-		/// we do a database query to get chat messages for that post. I think we need to go 
-		//  to a system where have:
-		//
-		//  - Skeletal block views with no entities other than the Block / UserBlockData
-		//  - Views with some information filled in (e.g., the Post for a PostBlostView)
-		//  - Fully populated blocks
-		//
-		// So, this call here should be 'checkVisibility(blockView) throws BlockContentsNotVisibleException
-		// that may *as a side effect* fill in some fields of the block view, but isn't guaranteed to fully populate
-		// the block.
-		//
-	    if (!block.isPublicBlock()) {
-			try {
-				populateBlockView(blockView);
-			} catch (BlockContentsNotVisibleException e) {
-				throw new NotFoundException("Contents of the block are not visible", e);
-			}
-	    }
-	    
-	    return blockView;
+	private BlockView prepareBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd) throws BlockNotVisibleException {
+		BlockHandler handler = getHandler(block.getBlockType());
+		return handler.getUnpopulatedBlockView(viewpoint, block, ubd);
 	} 
 	
 	// Populating the block view fills in all the details that were skipped at
 	//   the prepare stage and makes it ready for viewing by the user.
-	private void populateBlockView(BlockView blockView) throws BlockContentsNotVisibleException {
-		Viewpoint viewpoint = blockView.getViewpoint();
-		Block block = blockView.getBlock();
-
-		if (blockView instanceof PostBlockView) {
-			PostBlockView postBlockView = (PostBlockView)blockView;
-		    PostView postView;
-			try {
-				postView = postingBoard.loadPost(viewpoint, block.getData1AsGuid());
-			} catch (NotFoundException e) {
-				throw new BlockContentsNotVisibleException("Post for the block wasn't visible", e);
-			}
-		    List<ChatMessageView> recentMessages = postingBoard.viewPostMessages(
-		        postingBoard.getNewestPostMessages(postView.getPost(), PostBlockView.RECENT_MESSAGE_COUNT),
-				viewpoint);
-		    postBlockView.setPostView(postView);
-		    postBlockView.setRecentMessages(recentMessages);
-		    postBlockView.setPopulated(true);
-		} else if (blockView instanceof GroupChatBlockView) {
-			GroupChatBlockView groupChatBlockView = (GroupChatBlockView)blockView;
-			GroupView groupView;
-			try {
-				groupView = groupSystem.loadGroup(viewpoint, block.getData1AsGuid());
-			} catch (NotFoundException e) {
-				throw new BlockContentsNotVisibleException("Group for the block is not visible", e);
-			}
-			List<ChatMessageView> recentMessages = groupSystem.viewGroupMessages(
-					groupSystem.getNewestGroupMessages(groupView.getGroup(), GroupChatBlockView.RECENT_MESSAGE_COUNT),
-					viewpoint);
-			groupChatBlockView.setGroupView(groupView);
-			groupChatBlockView.setRecentMessages(recentMessages);
-			groupChatBlockView.setPopulated(true);
-		} else if (blockView instanceof GroupMemberBlockView) {
-			GroupMemberBlockView groupMemberBlockView = (GroupMemberBlockView)blockView;
-			GroupView groupView;
-			try {
-				groupView = groupSystem.loadGroup(viewpoint, block.getData1AsGuid());
-			} catch (NotFoundException e) {
-				throw new BlockContentsNotVisibleException("Group for the block is not visible", e);
-			}
-			User user = identitySpider.lookupUser(block.getData2AsGuid());
-			PersonView memberView = personViewer.getPersonView(viewpoint, user, PersonViewExtra.PRIMARY_RESOURCE);
-			GroupMember member;
-			try {
-				member = groupSystem.getGroupMember(viewpoint, groupView.getGroup(), user);
-			} catch (NotFoundException e) {
-				// This could mean the group isn't visible normally, but since we already 
-				// did loadGroup above, it should not. Instead, it probably means someone
-				// was a follower and we stacked a block, then they removed themselves
-				// so now they have no GroupMember.
-				member = null;
-			}
-			groupMemberBlockView.setGroupView(groupView);
-			groupMemberBlockView.setMemberView(memberView);
-			groupMemberBlockView.setStatus(member != null ? member.getStatus() : MembershipStatus.NONMEMBER);
-			if (member != null)
-				groupMemberBlockView.setAdders(personViewer.viewUsers(viewpoint, member.getAdders()));
-			groupMemberBlockView.setPopulated(true);
-		} else if (blockView instanceof MusicPersonBlockView) {
-			MusicPersonBlockView musicPersonBlockView = (MusicPersonBlockView)blockView;
-			User user = identitySpider.lookupUser(block.getData1AsGuid());
-			PersonView userView = personViewer.getPersonView(viewpoint, user, PersonViewExtra.PRIMARY_RESOURCE);
-			List<TrackView> tracks = musicSystem.getLatestTrackViews(viewpoint, user, 5);
-			if (tracks.isEmpty()) {
-				throw new BlockContentsNotVisibleException("No tracks for this person are visible");
-			}
-			
-			userView.setTrackHistory(tracks);
-			
-			musicPersonBlockView.setUserView(userView);
-			musicPersonBlockView.setPopulated(true);
-		} else if (blockView instanceof BlogBlockView) {
-		    BlogBlockView blogBlockView = (BlogBlockView)blockView;
-			User user = identitySpider.lookupUser(block.getData1AsGuid());
-			// TODO: check what extras we need to request here
-			PersonView userView = personViewer.getPersonView(viewpoint, user, PersonViewExtra.ALL_RESOURCES);
-			ExternalAccount blogAccount;
-			try {
-				blogAccount = externalAccountSystem.lookupExternalAccount(viewpoint, user, ExternalAccountType.BLOG);
-			} catch (NotFoundException e) {
-				throw new BlockContentsNotVisibleException("external blog account for block not visible", e);
-			}  
-		    FeedEntry lastEntry = feedSystem.getLastEntry(blogAccount.getFeed());
-		    blogBlockView.setUserView(userView);
-			blogBlockView.setEntry(lastEntry);
-			blogBlockView.setPopulated(true);
-		} else if (blockView instanceof FacebookBlockView) {
-			FacebookBlockView facebookBlockView = (FacebookBlockView)blockView;
-			User user = identitySpider.lookupUser(block.getData1AsGuid());
-			// TODO: check what extras we need to request here
-			PersonView userView = personViewer.getPersonView(viewpoint, user, PersonViewExtra.ALL_RESOURCES);
-			FacebookAccount facebookAccount;
-			try {
-				facebookAccount = facebookSystem.lookupFacebookAccount(viewpoint, user);
-			} catch (NotFoundException e) {
-				throw new BlockContentsNotVisibleException("external facebook account for block not visible", e);
-			}
-			int eventsToRequestCount = 3;
-			if (!facebookAccount.isSessionKeyValid() && viewpoint.isOfUser(facebookAccount.getExternalAccount().getAccount().getOwner())) {
-			    eventsToRequestCount = 2;
-			}
-			List<FacebookEvent> facebookEvents = facebookSystem.getLatestEvents(viewpoint, facebookAccount, eventsToRequestCount);
-			facebookBlockView.setUserView(userView);
-			facebookBlockView.setFacebookEvents(facebookEvents);
-			facebookBlockView.setPopulated(true);
-		} else {
-			throw new RuntimeException("Unknown type of block view in populateBlockView(): " + blockView.getClass().getName());
-		}
+	private void populateBlockView(BlockView blockView) {
+		BlockHandler handler = getHandler(blockView.getBlockType());
+		handler.populateBlockView(blockView);
 	}
 	
 	public BlockView getBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd) throws NotFoundException {
-	    BlockView blockView = prepareBlockView(viewpoint, block, ubd);
-	    if (!blockView.isPopulated()) {
-			try {
-				populateBlockView(blockView);
-			} catch (BlockContentsNotVisibleException e) {
-				throw new NotFoundException("Can't see this block", e);
-			}
-	    }
-	    return blockView;
+		try {
+			BlockView blockView = prepareBlockView(viewpoint, block, ubd);
+			populateBlockView(blockView);
+			return blockView;
+		} catch (BlockNotVisibleException e) {
+			throw new NotFoundException("Can't see this block", e);
+		}
 	}
 	
 	public BlockView loadBlock(Viewpoint viewpoint, UserBlockData ubd) throws NotFoundException {	
@@ -1331,7 +1171,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 					resultItemCount++;
 					if (stack.size() >= targetedNumberOfItems)
 						break;
-				} catch (NotFoundException e) {
+				} catch (BlockNotVisibleException e) {
 					// Do nothing, we can't see this block
 				}
 			}		
@@ -1357,21 +1197,11 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
             pageable.setTotalCount((pageable.getInitialPerPage() + pageable.getSubsequentPerPage() * 9) 
 						           * ((pageable.getPosition() + 1) / 10 + 1));
 		}
-		
-		// normally, we should not have any block views to remove, but it's better to remove a 
-		// block view that was not populated than to let a null pointer exception happen down the line
-		Set<BlockView> blockViewsToRemove = new HashSet<BlockView>();
+
+		// now populate all the block views
 		for (BlockView blockView : blockViewsToReturn) {
-		    if (!blockView.isPopulated()) {
-				try {
-					populateBlockView(blockView);
-				} catch (BlockContentsNotVisibleException e) {
-					blockViewsToRemove.add(blockView);
-					logger.error("Could not populate a block view for a public block " + blockView.getBlock(), e);				
-				}
-		    }
+			populateBlockView(blockView);
 		}
-		blockViewsToReturn.removeAll(blockViewsToRemove);
 		
 		pageable.setResults(blockViewsToReturn);
 	}
