@@ -1,4 +1,4 @@
-package com.dumbhippo.server.views;
+package com.dumbhippo.blocks;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -6,31 +6,32 @@ import java.util.List;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.UserBlockData;
+import com.dumbhippo.server.views.ChatMessageView;
+import com.dumbhippo.server.views.GroupView;
+import com.dumbhippo.server.views.Viewpoint;
 
-public class PostBlockView extends BlockView {
-	static final public int RECENT_MESSAGE_COUNT = 3;
+public class GroupChatBlockView extends BlockView {
+	public static final int RECENT_MESSAGE_COUNT = 3;
 	
-	private PostView postView;
+	private GroupView group;
 	private List<ChatMessageView> recentMessages;
 	
-	public PostBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd, PostView post, List<ChatMessageView> recentMessages) {
+	public GroupChatBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd, GroupView group, List<ChatMessageView> recentMessages) {
 		super(viewpoint, block, ubd);
-		this.postView = post;
+		this.group = group;
 		this.recentMessages = recentMessages;
-		
-		setPopulated(true);
 	}
 	
-	public PostBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd) {
+	public GroupChatBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd) {
 		super(viewpoint, block, ubd);
+	}
+	
+	public GroupView getGroupView() {
+		return this.group;
 	}
 
-	public PostView getPostView() {
-		return this.postView;
-	}
-	
-	public void setPostView(PostView postView) {
-		this.postView = postView;
+	public void setGroupView(GroupView group) {
+		this.group = group;
 	}
 	
 	public List<ChatMessageView> getRecentMessages() {
@@ -43,8 +44,8 @@ public class PostBlockView extends BlockView {
 	
 	@Override
 	protected void writeDetailsToXmlBuilder(XmlBuilder builder) {
-		builder.openElement("post",
-							"postId", postView.getIdentifyingGuid().toString());
+		builder.openElement("groupChat",
+							"groupId", group.getIdentifyingGuid().toString());
 		
 		builder.openElement("recentMessages");
 		for (ChatMessageView message : getRecentMessages()) {
@@ -57,19 +58,16 @@ public class PostBlockView extends BlockView {
 
 	public List<Object> getReferencedObjects() {
 		List<Object> result = new ArrayList<Object>();
-		result.add(postView);
+		result.add(group);
 		for (ChatMessageView message : getRecentMessages()) {
 			result.add(message.getSenderView());
 		}
 		return result;
 	}
-	
+
 	@Override
 	public String getIcon() {
-		String feedIcon = postView.getFeedFavicon();
-		if (feedIcon != null)
-			return feedIcon;
-		else
-			return "/images3/webswarm_icon.png";
+		// Mugshot stock favicon
+		return "/images3/mugshot_icon.png";
 	}
 }

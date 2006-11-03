@@ -30,6 +30,13 @@ import com.dumbhippo.Pair;
 import com.dumbhippo.ThreadUtils;
 import com.dumbhippo.TypeUtils;
 import com.dumbhippo.XmlBuilder;
+import com.dumbhippo.blocks.BlockView;
+import com.dumbhippo.blocks.BlogBlockView;
+import com.dumbhippo.blocks.FacebookBlockView;
+import com.dumbhippo.blocks.GroupChatBlockView;
+import com.dumbhippo.blocks.GroupMemberBlockView;
+import com.dumbhippo.blocks.MusicPersonBlockView;
+import com.dumbhippo.blocks.PostBlockView;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.live.BlockEvent;
 import com.dumbhippo.live.LiveEventListener;
@@ -75,19 +82,12 @@ import com.dumbhippo.server.Stacker;
 import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.XmppMessageSender;
 import com.dumbhippo.server.util.EJBUtil;
-import com.dumbhippo.server.views.BlockView;
-import com.dumbhippo.server.views.BlogBlockView;
 import com.dumbhippo.server.views.ChatMessageView;
-import com.dumbhippo.server.views.FacebookBlockView;
-import com.dumbhippo.server.views.GroupChatBlockView;
-import com.dumbhippo.server.views.GroupMemberBlockView;
 import com.dumbhippo.server.views.GroupMugshotView;
 import com.dumbhippo.server.views.GroupView;
-import com.dumbhippo.server.views.MusicPersonBlockView;
 import com.dumbhippo.server.views.PersonMugshotView;
 import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.PersonViewExtra;
-import com.dumbhippo.server.views.PostBlockView;
 import com.dumbhippo.server.views.PostView;
 import com.dumbhippo.server.views.SystemViewpoint;
 import com.dumbhippo.server.views.TrackView;
@@ -866,7 +866,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 			      public void update(Block block) {
 			 	    if (!block.isPublicBlock())
 					    updateMusicPersonPublicity(block, em.find(User.class, userId.toString()), true);
-			      }	
+			      }
 	          }, userId, false);
 	}
 	

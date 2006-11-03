@@ -1,4 +1,4 @@
-package com.dumbhippo.server.views;
+package com.dumbhippo.blocks;
 
 import java.util.Collections;
 import java.util.List;
@@ -6,6 +6,9 @@ import java.util.List;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.UserBlockData;
+import com.dumbhippo.server.views.PersonView;
+import com.dumbhippo.server.views.TrackView;
+import com.dumbhippo.server.views.Viewpoint;
 
 public class MusicPersonBlockView extends BlockView {
 	

@@ -1,4 +1,4 @@
-package com.dumbhippo.server.views;
+package com.dumbhippo.blocks;
 
 import com.dumbhippo.persistence.ExternalAccountType;
 

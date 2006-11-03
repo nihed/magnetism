@@ -1,4 +1,4 @@
-package com.dumbhippo.server.views;
+package com.dumbhippo.blocks;
 
 import com.dumbhippo.DateUtils;
 import com.dumbhippo.XmlBuilder;
@@ -6,6 +6,9 @@ import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.BlockType;
 import com.dumbhippo.persistence.UserBlockData;
+import com.dumbhippo.server.views.ObjectView;
+import com.dumbhippo.server.views.PersonView;
+import com.dumbhippo.server.views.Viewpoint;
 
 public abstract class BlockView implements ObjectView {
 	

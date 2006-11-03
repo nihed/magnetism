@@ -3,8 +3,8 @@ package com.dumbhippo.server.impl;
 import java.util.List;
 
 import com.dumbhippo.XmlBuilder;
+import com.dumbhippo.blocks.BlockView;
 import com.dumbhippo.persistence.User;
-import com.dumbhippo.server.views.BlockView;
 import com.dumbhippo.server.views.UserViewpoint;
 
 /** 

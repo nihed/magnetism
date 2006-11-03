@@ -2,6 +2,8 @@ package com.dumbhippo.server.views;
 
 import java.util.List;
 
+import com.dumbhippo.blocks.BlockView;
+
 public class GroupMugshotView {
 
 	private GroupView groupView;

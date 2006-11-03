@@ -3,7 +3,7 @@
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 <%@ taglib tagdir="/WEB-INF/tags/3" prefix="dht3" %>
 
-<%@ attribute name="block" required="true" type="com.dumbhippo.server.views.BlockView" %>
+<%@ attribute name="block" required="true" type="com.dumbhippo.blocks.BlockView" %>
 <%@ attribute name="blockId" required="true" type="java.lang.String" %>
 
 <table class="dh-stacker-block-header" cellspacing="0" cellpadding="0">

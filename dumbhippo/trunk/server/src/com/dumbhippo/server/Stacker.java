@@ -4,6 +4,7 @@ import java.util.List;
 
 import javax.ejb.Local;
 
+import com.dumbhippo.blocks.BlockView;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.ExternalAccountType;
@@ -12,7 +13,6 @@ import com.dumbhippo.persistence.GroupMember;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.UserBlockData;
-import com.dumbhippo.server.views.BlockView;
 import com.dumbhippo.server.views.GroupMugshotView;
 import com.dumbhippo.server.views.PersonMugshotView;
 import com.dumbhippo.server.views.UserViewpoint;
