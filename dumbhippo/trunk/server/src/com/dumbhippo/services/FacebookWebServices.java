@@ -46,12 +46,18 @@ public class FacebookWebServices extends AbstractXmlRequest<FacebookSaxHandler> 
 	
 	public void updateSession(FacebookAccount facebookAccount, String facebookAuthToken) {
 		List<String> params = new ArrayList<String>();
-		params.add("method=facebook.auth.getSession");
+		String methodName = "facebook.auth.getSession";
+        params.add("method=" + methodName);
 		params.add("auth_token=" + facebookAuthToken);
 		
 		String wsUrl = generateFacebookRequest(params);
 			
 		FacebookSaxHandler handler = parseUrl(new FacebookSaxHandler(), wsUrl);
+		
+		if (handleErrorCode(facebookAccount, handler, methodName)) {
+			return;
+		}
+		
 		facebookAccount.setSessionKey(handler.getSessionKey());
 		facebookAccount.setFacebookUserId(handler.getFacebookUserId());
 		if (handler.getSessionKey() != null)
@@ -302,6 +308,9 @@ public class FacebookWebServices extends AbstractXmlRequest<FacebookSaxHandler> 
 	}
 	
 	private boolean handleErrorCode(FacebookAccount facebookAccount, FacebookSaxHandler handler, String requestName) {
+        if (handler == null)
+        	return true;
+        
 		if (handler.getErrorCode() > 0) {
 		    if (handler.getErrorCode() == FacebookSaxHandler.FacebookErrorCode.API_EC_PARAM_SESSION_KEY.getCode()) {
 			    // setSessionKeyValid to false if we received the response that the session key is no longer valid
@@ -311,7 +320,8 @@ public class FacebookWebServices extends AbstractXmlRequest<FacebookSaxHandler> 
 					         new String[]{requestName, handler.getErrorMessage(), Integer.toString(handler.getErrorCode())});
 		    }
 			return true;
-		}		
+		}
+		
 		return false;
 	}
  }
