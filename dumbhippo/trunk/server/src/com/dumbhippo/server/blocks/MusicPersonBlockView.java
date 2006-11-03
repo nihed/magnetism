@@ -1,4 +1,4 @@
-package com.dumbhippo.blocks;
+package com.dumbhippo.server.blocks;
 
 import java.util.Collections;
 import java.util.List;

@@ -1,4 +1,4 @@
-package com.dumbhippo.blocks;
+package com.dumbhippo.server.blocks;
 
 import java.util.Collections;
 import java.util.List;
@@ -6,23 +6,24 @@ import java.util.List;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.ExternalAccountType;
-import com.dumbhippo.persistence.FacebookEvent;
+import com.dumbhippo.persistence.FeedEntry;
 import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.Viewpoint;
 
-public class FacebookBlockView extends BlockView implements ExternalAccountBlockView {
-	private PersonView userView;
-	private List<FacebookEvent> facebookEvents;
+public class BlogBlockView extends BlockView implements ExternalAccountBlockView {
 	
-	public FacebookBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd, PersonView userView, List<FacebookEvent> facebookEvents) {
+	private PersonView userView;
+	private FeedEntry entry;
+	
+	public BlogBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd, PersonView userView, FeedEntry entry) {
 		super(viewpoint, block, ubd);
 		this.userView = userView;
-		this.facebookEvents = facebookEvents;
+		this.entry = entry;
 		setPopulated(true);
 	}
 
-	public FacebookBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd) {
+	public BlogBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd) {
 		super(viewpoint, block, ubd);
 	}
 	
@@ -34,12 +35,12 @@ public class FacebookBlockView extends BlockView implements ExternalAccountBlock
 		this.userView = userView;
 	}
 	
-	public List<FacebookEvent> getFacebookEvents() {
-	    return facebookEvents;	
+	public FeedEntry getEntry() {
+	    return entry;	
 	}
 	
-	public void setFacebookEvents(List<FacebookEvent> facebookEvents) {
-		this.facebookEvents = facebookEvents;
+	public void setEntry(FeedEntry entry) {
+		this.entry = entry;
 	}
 	
 	@Override
@@ -50,9 +51,9 @@ public class FacebookBlockView extends BlockView implements ExternalAccountBlock
 	@Override
 	protected void writeDetailsToXmlBuilder(XmlBuilder builder) {
 		builder.appendEmptyNode("updateItem",
-				                "updateTitle", "new updates",
-				                "updateLink", "http:://www.facebook.com",
-				                "updateText", "");
+				                "updateTitle", entry.getTitle(),
+				                "updateLink", entry.getLink().getUrl(),
+				                "updateText", entry.getDescription());
 	}
 	
 	public List<Object> getReferencedObjects() {
@@ -60,11 +61,12 @@ public class FacebookBlockView extends BlockView implements ExternalAccountBlock
 	}
 
 	public ExternalAccountType getAccountType() {
-		return ExternalAccountType.FACEBOOK;
+		return ExternalAccountType.BLOG;
 	}
 
 	@Override
 	public String getIcon() {
-		return "/images3/" + ExternalAccountType.FACEBOOK.getIconName();
+		return "/images3/blog_icon.png";
+		//return entry.getFeed().getFavicon();
 	}
 }

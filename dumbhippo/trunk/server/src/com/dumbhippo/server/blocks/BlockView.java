@@ -1,4 +1,4 @@
-package com.dumbhippo.blocks;
+package com.dumbhippo.server.blocks;
 
 import com.dumbhippo.DateUtils;
 import com.dumbhippo.XmlBuilder;

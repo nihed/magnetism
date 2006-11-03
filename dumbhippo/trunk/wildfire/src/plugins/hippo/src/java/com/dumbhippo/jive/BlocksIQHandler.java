@@ -19,7 +19,7 @@ import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Stacker;
 import com.dumbhippo.server.ViewStreamBuilder;
-import com.dumbhippo.server.views.BlockView;
+import com.dumbhippo.server.blocks.BlockView;
 import com.dumbhippo.server.views.ObjectView;
 import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.server.views.ViewStream;
