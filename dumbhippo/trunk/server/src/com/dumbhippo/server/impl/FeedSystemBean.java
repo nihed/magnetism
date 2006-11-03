@@ -280,12 +280,11 @@ public class FeedSystemBean implements FeedSystem {
 			} else if (external.getAccountType() == ExternalAccountType.BLOG) {
 				// entry.getDate().getTime() creates a timestamp that is too old, at least with blogspot
 				// so it is unreliable, because we update blocks based on timestamps
-				stacker.stackAccountUpdate(external.getAccount().getOwner().getGuid(), ExternalAccountType.BLOG, (new Date()).getTime());
+				stacker.stackBlogPerson(external.getAccount().getOwner(), false, (new Date()).getTime());
 			} else {
-				logger.warn("unexpected account type");
+				logger.warn("unexpected account type in processFeedExternalAccounts");
 			}
-		}		
-		
+		}
 	}
 	
 	private void setLinkFromSyndFeed(Feed feed, SyndFeed syndFeed) throws XmlMethodException {

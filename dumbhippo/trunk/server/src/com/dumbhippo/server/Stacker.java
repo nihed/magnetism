@@ -50,8 +50,8 @@ public interface Stacker {
 	public void stackGroupChat(Guid groupId, long activity, Guid participantId);
 	public void stackPost(Guid postId, long activity, Guid participantId, boolean isGroupParticipation);
 	public void stackGroupMember(GroupMember member, long activity);
-	public void stackAccountUpdate(Guid userId, ExternalAccountType type, long activity);
-	public void stackAccountUpdateSelf(Guid userId, ExternalAccountType type, long activity);
+	public void stackFacebookPerson(User user, boolean onlySelf, long activity);
+	public void stackBlogPerson(User user, boolean onlySelf, long activity);
 	
 	public void clickedPost(Post post, User user, long clickedTime);
 	

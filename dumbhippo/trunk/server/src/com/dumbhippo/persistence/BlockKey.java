@@ -49,6 +49,10 @@ public class BlockKey {
 		this(type, data1, null, -1, null);
 	}	
 	
+	public BlockKey(BlockType type, Guid data1, StackInclusion inclusion) {
+		this(type, data1, null, -1, inclusion);
+	}
+
 	public BlockType getBlockType() {
 		return blockType;
 	}

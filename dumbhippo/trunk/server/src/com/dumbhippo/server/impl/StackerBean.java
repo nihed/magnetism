@@ -419,28 +419,38 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		return recipients;
 	}
 	
-	private Set<User> getDesiredUsersForExternalAccountUpdate(Block block) {
-		if (block.getBlockType() != BlockType.EXTERNAL_ACCOUNT_UPDATE)
+	private Set<User> getFriendsOrSelfFromData1(Block block) {
+		if (block.getInclusion() == StackInclusion.IN_ALL_STACKS)
+			throw new IllegalArgumentException("wrong stack inclusion " + block);
+		
+		if (block.getInclusion() == StackInclusion.ONLY_WHEN_VIEWED_BY_OTHERS) {
+			// we always want to include self in external account updates, because
+			// this is how we will get the UserBlockData for the update with the right
+			// participation timestamp, which we will display on the person's own stacker
+			// when viewed by others
+			return getUsersWhoCare(block);			
+		} else {
+	        try {
+				return Collections.singleton(EJBUtil.lookupGuid(em, User.class, block.getData1AsGuid()));
+			} catch (NotFoundException e) {
+				throw new RuntimeException(e);
+			}			
+		}
+	}
+	
+	private Set<User> getDesiredUsersForFacebookPerson(Block block) {
+		if (block.getBlockType() != BlockType.FACEBOOK_PERSON)
 			throw new IllegalArgumentException("wrong type block");
 	
-		// we always want to include self in external account updates, because
-		// this is how we will get the UserBlockData for the update with the right
-		// participation timestamp, which we will display on the person's own stacker
-		// when viewed by others
-		return getUsersWhoCare(block);
+		return getFriendsOrSelfFromData1(block);
 	}
 
-	private Set<User> getDesiredUsersForExternalAccountUpdateSelf(Block block) {
-		if (block.getBlockType() != BlockType.EXTERNAL_ACCOUNT_UPDATE_SELF)
+	private Set<User> getDesiredUsersForBlogPerson(Block block) {
+		if (block.getBlockType() != BlockType.BLOG_PERSON)
 			throw new IllegalArgumentException("wrong type block");
-
-        try {
-			return Collections.singleton(EJBUtil.lookupGuid(em, User.class, block.getData1AsGuid()));
-		} catch (NotFoundException e) {
-			throw new RuntimeException(e);
-		}
-		
-	}
+	
+		return getFriendsOrSelfFromData1(block);
+	}	
 	
 	private void updateUserBlockDatas(Block block, Guid participantId) {
 		Set<User> desiredUsers = null;
@@ -457,11 +467,16 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		case GROUP_MEMBER:
 			desiredUsers = getDesiredUsersForGroupMember(block);
 			break;
-		case EXTERNAL_ACCOUNT_UPDATE:
-			desiredUsers = getDesiredUsersForExternalAccountUpdate(block);
+		case FACEBOOK_PERSON:
+			desiredUsers = getDesiredUsersForFacebookPerson(block);
 			break;
-		case EXTERNAL_ACCOUNT_UPDATE_SELF:
-			desiredUsers = getDesiredUsersForExternalAccountUpdateSelf(block);
+		case BLOG_PERSON:
+			desiredUsers = getDesiredUsersForBlogPerson(block);
+			break;
+		case OBSOLETE_EXTERNAL_ACCOUNT_UPDATE:
+		case OBSOLETE_EXTERNAL_ACCOUNT_UPDATE_SELF:
+			throw new RuntimeException("Obsolete block type " + block);
+			
 			// don't add a default, we want a warning if any cases are missing
 		}
 		
@@ -584,18 +599,28 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		return Collections.singleton(group);
 	}
 	
-	private Set<Group> getDesiredGroupsForExternalAccountUpdate(Block block) {
-		if (block.getBlockType() != BlockType.EXTERNAL_ACCOUNT_UPDATE)
+	private Set<Group> getDesiredGroupsDependingOnInclusion(Block block) {
+		if (block.getInclusion() == StackInclusion.IN_ALL_STACKS)
+			throw new IllegalArgumentException("Wrong inclusion for this method " + block);
+		
+		if (block.getInclusion() == StackInclusion.ONLY_WHEN_VIEWED_BY_OTHERS)
+			return getGroupsWhoCare(block);
+		else
+			return Collections.emptySet();
+	}
+	
+	private Set<Group> getDesiredGroupsForFacebookPerson(Block block) {
+		if (block.getBlockType() != BlockType.FACEBOOK_PERSON)
 			throw new IllegalArgumentException("wrong type block");
 	
-		return getGroupsWhoCare(block);
+		return getDesiredGroupsDependingOnInclusion(block);
 	}
 
-	private Set<Group> getDesiredGroupsForExternalAccountUpdateSelf(Block block) {
-		if (block.getBlockType() != BlockType.EXTERNAL_ACCOUNT_UPDATE_SELF)
+	private Set<Group> getDesiredGroupsForBlogPerson(Block block) {
+		if (block.getBlockType() != BlockType.BLOG_PERSON)
 			throw new IllegalArgumentException("wrong type block");
 
-		return Collections.emptySet();
+		return getDesiredGroupsDependingOnInclusion(block);
 	}
 	
 	private void updateGroupBlockDatas(Block block, boolean isGroupParticipation) {
@@ -613,11 +638,16 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		case GROUP_MEMBER:
 			desiredGroups = getDesiredGroupsForGroupMember(block);
 			break;
-		case EXTERNAL_ACCOUNT_UPDATE:
-			desiredGroups = getDesiredGroupsForExternalAccountUpdate(block);
+		case FACEBOOK_PERSON:
+			desiredGroups = getDesiredGroupsForFacebookPerson(block);
 			break;
-		case EXTERNAL_ACCOUNT_UPDATE_SELF:
-			desiredGroups = getDesiredGroupsForExternalAccountUpdateSelf(block);
+		case BLOG_PERSON:
+			desiredGroups = getDesiredGroupsForBlogPerson(block);
+			break;
+		case OBSOLETE_EXTERNAL_ACCOUNT_UPDATE:
+		case OBSOLETE_EXTERNAL_ACCOUNT_UPDATE_SELF:
+			throw new RuntimeException("Obsolete block type updating group block datas " + block);
+			
 			// don't add a default, we want a warning if any cases are missing
 		}
 		
@@ -715,8 +745,18 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	}
 	
 	public void onExternalAccountCreated(Guid userId, ExternalAccountType type) {
-		createBlock(getExternalAccountUpdateKey(userId, type));
-		createBlock(getExternalAccountUpdateSelfKey(userId, type));
+		switch (type) {
+		case FACEBOOK:
+			createBlock(getFacebookPersonKey(userId, StackInclusion.ONLY_WHEN_VIEWED_BY_OTHERS));
+			createBlock(getFacebookPersonKey(userId, StackInclusion.ONLY_WHEN_VIEWING_SELF));
+			break;
+		case BLOG:
+			createBlock(getBlogPersonKey(userId, StackInclusion.ONLY_WHEN_VIEWED_BY_OTHERS));
+			createBlock(getBlogPersonKey(userId, StackInclusion.ONLY_WHEN_VIEWING_SELF));			
+			break;
+		default:
+			break;
+		}
 	}
 	
 	public void onGroupCreated(Guid groupId, boolean publicGroup) {
@@ -808,12 +848,12 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		return new BlockKey(BlockType.GROUP_MEMBER, groupId, userId);
 	}
 	
-	private BlockKey getExternalAccountUpdateKey(Guid userId, ExternalAccountType accountType) {
-		return new BlockKey(BlockType.EXTERNAL_ACCOUNT_UPDATE, userId, null, accountType.ordinal());
+	private BlockKey getFacebookPersonKey(Guid userId, StackInclusion inclusion) {
+		return new BlockKey(BlockType.FACEBOOK_PERSON, userId, inclusion);
 	}
 	
-	private BlockKey getExternalAccountUpdateSelfKey(Guid userId, ExternalAccountType accountType) {
-		return new BlockKey(BlockType.EXTERNAL_ACCOUNT_UPDATE_SELF, userId, null, accountType.ordinal());
+	private BlockKey getBlogPersonKey(Guid userId, StackInclusion inclusion) {
+		return new BlockKey(BlockType.BLOG_PERSON, userId, inclusion);
 	}
 	
 	// don't create or suspend transaction; we will manage our own for now (FIXME) 
@@ -872,23 +912,21 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 			// don't add a default case, we want a warning if any are missing
 		}
 	}
-	
+
 	// don't create or suspend transaction; we will manage our own for now (FIXME)
 	@TransactionAttribute(TransactionAttributeType.SUPPORTS)
-	public void stackAccountUpdate(Guid userId, ExternalAccountType type, long activity) {
-		stack(getExternalAccountUpdateKey(userId, type), activity, userId, false);
-
-		// we always re-stack the external account update for self when we stack the external account update
-		// for others, because right now the external account update for self always includes whatever we 
-		// show to others; this allows us to filter out one or the other block type depending on 
-		// who is looking at the person's stacker
-		stack(getExternalAccountUpdateSelfKey(userId, type), activity, userId, false);
+	public void stackFacebookPerson(User user, boolean onlySelf, long activity) {
+		stack(getFacebookPersonKey(user.getGuid(), StackInclusion.ONLY_WHEN_VIEWING_SELF), activity, user.getGuid(), false);
+		if (!onlySelf)
+			stack(getFacebookPersonKey(user.getGuid(), StackInclusion.ONLY_WHEN_VIEWED_BY_OTHERS), activity, user.getGuid(), false);
 	}
 
 	// don't create or suspend transaction; we will manage our own for now (FIXME)
-	@TransactionAttribute(TransactionAttributeType.SUPPORTS)
-	public void stackAccountUpdateSelf(Guid userId, ExternalAccountType type, long activity) {
-		stack(getExternalAccountUpdateSelfKey(userId, type), activity, userId, false);
+	@TransactionAttribute(TransactionAttributeType.SUPPORTS)	
+	public void stackBlogPerson(User user, boolean onlySelf, long activity) {
+		stack(getBlogPersonKey(user.getGuid(), StackInclusion.ONLY_WHEN_VIEWING_SELF), activity, user.getGuid(), false);
+		if (!onlySelf)
+			stack(getBlogPersonKey(user.getGuid(), StackInclusion.ONLY_WHEN_VIEWED_BY_OTHERS), activity, user.getGuid(), false);		
 	}
 	
 	public void clickedPost(Post post, User user, long clickedTime) {
@@ -911,24 +949,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 			super(message);
 		}
 	}
-	
-	private BlockView prepareExternalAccountBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd) throws NotFoundException {
-		if ((block.getBlockType() != BlockType.EXTERNAL_ACCOUNT_UPDATE) && 
-				(block.getBlockType() != BlockType.EXTERNAL_ACCOUNT_UPDATE_SELF)) {
-				throw new RuntimeException("Unexpected block type in prepareExternalAccountBlockView: " + block.getBlockType());			
-		}
-
-		long accountType = block.getData3();
-		if (accountType == ExternalAccountType.BLOG.ordinal()) {			
-			return new BlogBlockView(viewpoint, block, ubd);
-		} else if (accountType == ExternalAccountType.FACEBOOK.ordinal()) {
-			return new FacebookBlockView(viewpoint, block, ubd);
-		} else {
-			throw new NotFoundException("Unexpected external account type: " + accountType);
-		}		
 		
-	}
-	
 	// Preparing a block view creates a skeletal BlockView that has the Block and the 
 	// UserBlockData and nothing more. The idea is that when paging a stack of blocks,
 	// we want to scan through the pages before the one we are viewing as fast as
@@ -942,6 +963,13 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		UserViewpoint userview = null;
 		if (viewpoint instanceof UserViewpoint)
 			userview = (UserViewpoint) viewpoint;
+
+		if (block.getInclusion() == StackInclusion.ONLY_WHEN_VIEWING_SELF) {
+			User user = identitySpider.lookupUser(block.getData1AsGuid());
+			if (userview == null || !userview.getViewer().equals(user)) {
+				throw new NotFoundException("Trying to view an ONLY_WHEN_VIEWING_SELF block from a different viewpoint: " + userview + " block=" + block);
+			}
+		}
 		
 		BlockView blockView = null;
 		switch (block.getBlockType()) {
@@ -961,21 +989,19 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 				blockView = new MusicPersonBlockView(viewpoint, block, ubd);
 			    break;
 			}
-			case EXTERNAL_ACCOUNT_UPDATE: {
-	            blockView = prepareExternalAccountBlockView(viewpoint, block, ubd);   
-			    break;
+			case FACEBOOK_PERSON: {
+				blockView = new FacebookBlockView(viewpoint, block, ubd);
+				break;
 			}
-			case EXTERNAL_ACCOUNT_UPDATE_SELF: {	
-				User user = identitySpider.lookupUser(block.getData1AsGuid());
-				if (userview == null || !userview.getViewer().equals(user)) {
-					throw new NotFoundException("Trying to view an external account update for self from a different viewpoint: " + userview);
-				}
-				blockView = prepareExternalAccountBlockView(viewpoint, block, ubd);  	
-			    break;
+			case BLOG_PERSON: {
+				blockView = new BlogBlockView(viewpoint, block, ubd);
+				break;
 			}
-			default : {
-				throw new RuntimeException("Unexpected block type in prepareBlockView: " + block.getBlockType());
+			case OBSOLETE_EXTERNAL_ACCOUNT_UPDATE:
+			case OBSOLETE_EXTERNAL_ACCOUNT_UPDATE_SELF: {	
+				throw new RuntimeException("trying to get block view for obsolete block type " + block);
 			}
+			// don't add a default, it hides compiler warnings
 		}
 
 		// If a block isn't flagged as always public, then we need to do access control
@@ -1975,12 +2001,9 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 			tasks.add(new PostParticipationMigrationTask(id));
 
 		q = em.createQuery("SELECT block.id FROM Block block" +
-				           " WHERE block.blockType = :typeMusicPerson" +
-				           " OR block.blockType = :typeExtAccount" +
-				           " OR block.blockType = :typeExtAccountSelf");
-		q.setParameter("typeMusicPerson", BlockType.MUSIC_PERSON);
-		q.setParameter("typeExtAccount", BlockType.EXTERNAL_ACCOUNT_UPDATE);
-		q.setParameter("typeExtAccountSelf", BlockType.EXTERNAL_ACCOUNT_UPDATE_SELF);
+				           " WHERE block.blockType = " + BlockType.MUSIC_PERSON.ordinal() +
+				           " OR block.blockType = " + BlockType.FACEBOOK_PERSON.ordinal() +
+				           " OR block.blockType = " + BlockType.BLOG_PERSON.ordinal());
 		for (String id : TypeUtils.castList(String.class, q.getResultList()))
 			tasks.add(new BlockParticipationMigrationTask(id));
 
@@ -2230,6 +2253,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		Block block = em.find(Block.class, blockId);
         boolean isGroupParticipation;
 
+        isGroupParticipation = false;
 		switch (block.getBlockType()) {
 		case POST:
 			// The participation timestamp here will not be set quite right; we
@@ -2250,12 +2274,14 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 			isGroupParticipation = true;
 			break;
 		case MUSIC_PERSON:
-		case EXTERNAL_ACCOUNT_UPDATE:
-		case EXTERNAL_ACCOUNT_UPDATE_SELF:
+		case FACEBOOK_PERSON:
+		case BLOG_PERSON:
 			isGroupParticipation = false;
 			break;
-		default:
-			throw new RuntimeException("Unknown block type");
+		case OBSOLETE_EXTERNAL_ACCOUNT_UPDATE:
+		case OBSOLETE_EXTERNAL_ACCOUNT_UPDATE_SELF:
+			throw new RuntimeException("obsolete block type used " + block);
+			// don't add a default, it hides compiler warnings
 		}
 
 		updateGroupBlockDatas(block, isGroupParticipation);

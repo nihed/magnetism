@@ -109,8 +109,8 @@ public class FacebookTrackerBean implements FacebookTracker, SingletonServiceMBe
 		}
 		// we want to stack an update regardless of whether they have new messages, so that they know
 		// they logged in successfully; 
-		stacker.stackAccountUpdateSelf(facebookAccount.getExternalAccount().getAccount().getOwner().getGuid(), 
-                ExternalAccountType.FACEBOOK, updateTime);
+		stacker.stackFacebookPerson(facebookAccount.getExternalAccount().getAccount().getOwner(), 
+                true, updateTime);
 	}
 	
 	public List<FacebookAccount> getAccountsWithValidSession() {
@@ -155,12 +155,12 @@ public class FacebookTrackerBean implements FacebookTracker, SingletonServiceMBe
 		}
 		// we will stack an external account update for self if we are stacking it for others
 		if ((newFacebookEventSelf && !newFacebookEventOthers) || !facebookAccount.isSessionKeyValid()) {
-			stacker.stackAccountUpdateSelf(facebookAccount.getExternalAccount().getAccount().getOwner().getGuid(), 
-					                       ExternalAccountType.FACEBOOK, updateTime);			
+			stacker.stackFacebookPerson(facebookAccount.getExternalAccount().getAccount().getOwner(), 
+					                       true, updateTime);			
 		}
 		if (newFacebookEventOthers) {
-			stacker.stackAccountUpdate(facebookAccount.getExternalAccount().getAccount().getOwner().getGuid(), 
-                                       ExternalAccountType.FACEBOOK, updateTime);				
+			stacker.stackFacebookPerson(facebookAccount.getExternalAccount().getAccount().getOwner(), 
+                                       	false, updateTime);
 		}
 	}
 	
@@ -173,8 +173,8 @@ public class FacebookTrackerBean implements FacebookTracker, SingletonServiceMBe
 		
 		if (newPhotos == null) {
 			if (!facebookAccount.isSessionKeyValid()) {
-			    stacker.stackAccountUpdateSelf(facebookAccount.getExternalAccount().getAccount().getOwner().getGuid(), 
-					                           ExternalAccountType.FACEBOOK, (new Date()).getTime());			
+			    stacker.stackFacebookPerson(facebookAccount.getExternalAccount().getAccount().getOwner(), 
+					                        true, (new Date()).getTime());			
 		    }
 			return;
 		}
@@ -241,8 +241,8 @@ public class FacebookTrackerBean implements FacebookTracker, SingletonServiceMBe
 		
 		if (modifiedAlbums.isEmpty()) {
 			if (!facebookAccount.isSessionKeyValid()) {
-			    stacker.stackAccountUpdateSelf(facebookAccount.getExternalAccount().getAccount().getOwner().getGuid(), 
-					                           ExternalAccountType.FACEBOOK, (new Date()).getTime());			
+			    stacker.stackFacebookPerson(facebookAccount.getExternalAccount().getAccount().getOwner(), 
+					                        true, (new Date()).getTime());			
 		    }
 			return;
 		}
@@ -302,13 +302,13 @@ public class FacebookTrackerBean implements FacebookTracker, SingletonServiceMBe
 	private void stackEvent(FacebookEventType eventType, FacebookAccount facebookAccount, long updateTime) {
         // we will stack an external account update for self if we are stacking it for others
 	    if (eventType.getDisplayToSelf() && !eventType.getDisplayToOthers()) {
-    	    stacker.stackAccountUpdateSelf(facebookAccount.getExternalAccount().getAccount().getOwner().getGuid(), 
-                                            ExternalAccountType.FACEBOOK, updateTime);	
+    	    stacker.stackFacebookPerson(facebookAccount.getExternalAccount().getAccount().getOwner(), 
+                                        true, updateTime);	
 	    }	    
 	    if (eventType.getDisplayToOthers()) {
-            stacker.stackAccountUpdate(facebookAccount.getExternalAccount().getAccount().getOwner().getGuid(), 
-                                       ExternalAccountType.FACEBOOK, updateTime);	
-	    }		
+            stacker.stackFacebookPerson(facebookAccount.getExternalAccount().getAccount().getOwner(), 
+                                        false, updateTime);	
+	    }
 	}
 	
 	private static class FacebookUpdater extends Thread {
