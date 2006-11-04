@@ -7,6 +7,7 @@ import javax.ejb.EJB;
 import javax.ejb.Stateless;
 
 import com.dumbhippo.persistence.Block;
+import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.PersonViewer;
@@ -49,5 +50,9 @@ public class MusicPersonBlockHandlerBean extends AbstractBlockHandlerBean<MusicP
 	
 	public Set<User> getInterestedUsers(Block block) {
 		return getUsersWhoCareAboutData1User(block);
+	}
+
+	public Set<Group> getInterestedGroups(Block block) {
+		return getGroupsData1UserIsIn(block);
 	}
 }

@@ -149,6 +149,8 @@ public abstract class AbstractBlockHandlerBean<BlockViewSubType extends BlockVie
 	 * Utility helper for implementing getInterestedUsers() that gets everyone with 
 	 * the user id in data1 listed in their contacts.
 	 * 
+	 * Returns only the person themselves in the set if block.getInclusion() == ONLY_WHEN_VIEWING_SELF.
+	 * 
 	 * @param block
 	 * @return
 	 */
@@ -176,7 +178,7 @@ public abstract class AbstractBlockHandlerBean<BlockViewSubType extends BlockVie
 			// no default, it hides bugs
 		}
 		
-		return peopleWhoCare;
+		throw new RuntimeException("invalid inclusion " + block);
 	}
 
 	/**
@@ -195,5 +197,52 @@ public abstract class AbstractBlockHandlerBean<BlockViewSubType extends BlockVie
 		}
 		Set<User> groupMembers = groupSystem.getUserMembers(SystemViewpoint.getInstance(), group);
 		return groupMembers;
+	}
+	
+	/**
+	 * Utility helper for implementing getInterestedGroups() that returns 
+	 * a single-member set with the group stored in data1.
+	 * 
+	 * @param block
+	 * @return
+	 */
+	protected Set<Group> getData1GroupAsSet(Block block) {
+		Group group;
+		try {
+			group = EJBUtil.lookupGuid(em, Group.class, block.getData1AsGuid());
+		} catch (NotFoundException e) {
+			throw new RuntimeException(e);
+		}
+		return Collections.singleton(group);
+	}
+	
+	/** 
+	 * Utility helper for implementing getInterestedGroups() that returns
+	 * the set of groups the user id stored in data1 is a member of.
+	 * 
+	 * Returns an empty set of groups if the block's inclusion is 
+	 * ONLY_WHEN_VIEWING_SELF.
+	 * 
+	 * @param block
+	 * @return
+	 */
+	protected Set<Group> getGroupsData1UserIsIn(Block block) {
+		User user;
+		try {
+			user = EJBUtil.lookupGuid(em, User.class, block.getData1AsGuid());
+		} catch (NotFoundException e) {
+			throw new RuntimeException(e);
+		}
+		
+		switch (block.getInclusion()) {
+		case IN_ALL_STACKS:
+		case ONLY_WHEN_VIEWED_BY_OTHERS:
+			return groupSystem.findRawGroups(SystemViewpoint.getInstance(), user);
+		case ONLY_WHEN_VIEWING_SELF:
+			return Collections.emptySet();
+		// no default, hides bugs
+		}
+		
+		throw new RuntimeException("invalid inclusion " + block);
 	}
 }

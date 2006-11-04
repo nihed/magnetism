@@ -140,7 +140,9 @@ public final class JavascriptResolver {
 			includeFile(file, out);
 			
 			if (!modulesLoaded.contains(module)) {
-				modulesLoaded.add(module); 
+				modulesLoaded.add(module);
+				
+				//logger.debug("Loading javascript module {}", module);
 				out.writeModuleLoad(module);
 			}
 		}
@@ -169,7 +171,17 @@ public final class JavascriptResolver {
 			// The first time we include anything, include the global requirements
 			if (first) {
 				out.writeGlobalRequires();
-				includeModule("common", out);
+				
+				// We have to do this instead of just includeModule
+				// because we could be inside includeFile(commonFile),
+				// and if we are the recursive call to includeModule
+				// will write out common._load() before we write out
+				// the file includes below. We then do includeModule
+				// again at the end after the file includes.
+				String commonFile = moduleMap.get("common");
+				if (commonFile == null)
+					throw new RuntimeException("no file known for module 'common'");
+				includeFile(commonFile, out);
 			}
 			
 			List<String> dependencies = fileDependencies.get(filename);
@@ -183,7 +195,11 @@ public final class JavascriptResolver {
 				includeFile(dep, out);
 			}
 			
+			//logger.debug("Including javascript file {}", filename);
 			out.writeSrcFilename(filename);
+			
+			if (first)
+				includeModule("common", out);
 		}
 		
 		public void includeFile(String filename, Writer htmlWriter) throws IOException {			

@@ -3,6 +3,7 @@ package com.dumbhippo.server.blocks;
 import java.util.Set;
 
 import com.dumbhippo.persistence.Block;
+import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.server.views.Viewpoint;
@@ -46,4 +47,14 @@ public interface BlockHandler {
 	 * @returns set of users who care about this block
 	 */
 	public Set<User> getInterestedUsers(Block block);
+	
+	/**
+	 * Get the set of groups who should have a GroupBlockData for this block,
+	 * i.e. groups whose stack the block will show up in. This set will be used
+	 * to add or remove GroupBlockData as needed.
+	 * 
+	 * @param block the block
+	 * @return set of groups who care about the block
+	 */
+	public Set<Group> getInterestedGroups(Block block);
 }

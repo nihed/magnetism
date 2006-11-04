@@ -9,6 +9,7 @@ import javax.ejb.Stateless;
 import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.FacebookAccount;
 import com.dumbhippo.persistence.FacebookEvent;
+import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.FacebookSystem;
 import com.dumbhippo.server.NotFoundException;
@@ -58,4 +59,8 @@ public class FacebookBlockHandlerBean extends AbstractBlockHandlerBean<FacebookB
 	public Set<User> getInterestedUsers(Block block) {
 		return getUsersWhoCareAboutData1User(block);
 	}	
+	
+	public Set<Group> getInterestedGroups(Block block) {
+		return getGroupsData1UserIsIn(block);
+	}
 }

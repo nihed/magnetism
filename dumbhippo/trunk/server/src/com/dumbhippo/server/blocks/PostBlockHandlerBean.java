@@ -9,6 +9,7 @@ import javax.ejb.Stateless;
 
 import com.dumbhippo.persistence.AccountClaim;
 import com.dumbhippo.persistence.Block;
+import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
@@ -49,13 +50,16 @@ public class PostBlockHandlerBean extends AbstractBlockHandlerBean<PostBlockView
 	    blockView.setPopulated(true);
 	}
 
-	public Set<User> getInterestedUsers(Block block) {
-		Post post;
+	private Post loadPost(Block block) {
 		try {
-			post = EJBUtil.lookupGuid(em, Post.class, block.getData1AsGuid());
+			return EJBUtil.lookupGuid(em, Post.class, block.getData1AsGuid());
 		} catch (NotFoundException e) {
 			throw new RuntimeException("Invalid post id in data1 " + block, e);
 		}
+	}
+	
+	public Set<User> getInterestedUsers(Block block) {
+		Post post = loadPost(block);
 		Set<User> postRecipients = new HashSet<User>();
 		Set<Resource> resources = post.getExpandedRecipients();
 		for (Resource r : resources) {
@@ -64,5 +68,10 @@ public class PostBlockHandlerBean extends AbstractBlockHandlerBean<PostBlockView
 				postRecipients.add(a.getOwner());
 		}
 		return postRecipients;
+	}
+
+	public Set<Group> getInterestedGroups(Block block) {
+		Post post = loadPost(block);
+		return post.getGroupRecipients();
 	}
 }

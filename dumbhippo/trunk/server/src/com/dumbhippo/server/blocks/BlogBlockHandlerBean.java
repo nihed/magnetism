@@ -9,6 +9,7 @@ import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.FeedEntry;
+import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.ExternalAccountSystem;
 import com.dumbhippo.server.FeedSystem;
@@ -58,4 +59,8 @@ public class BlogBlockHandlerBean extends AbstractBlockHandlerBean<BlogBlockView
 	public Set<User> getInterestedUsers(Block block) {
 		return getUsersWhoCareAboutData1User(block);
 	}
+	
+	public Set<Group> getInterestedGroups(Block block) {
+		return getGroupsData1UserIsIn(block);
+	}	
 }

@@ -6,6 +6,7 @@ import java.util.Set;
 import javax.ejb.Stateless;
 
 import com.dumbhippo.persistence.Block;
+import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.views.ChatMessageView;
@@ -41,5 +42,9 @@ public class GroupChatBlockHandlerBean extends AbstractBlockHandlerBean<GroupCha
 	
 	public Set<User> getInterestedUsers(Block block) {
 		return getUsersWhoCareAboutData1Group(block);
+	}
+
+	public Set<Group> getInterestedGroups(Block block) {
+		return getData1GroupAsSet(block);
 	}
 }

@@ -125,6 +125,10 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		return getHandler(block.getBlockType());
 	}
 	
+	private BlockHandler getHandler(BlockView blockView) {
+		return getHandler(blockView.getBlockType());
+	}
+	
 	private BlockHandler getHandler(BlockType type) {
 		
 		if (handlers != null) {
@@ -385,8 +389,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	}
 	
 	private void updateUserBlockDatas(Block block, Guid participantId) {
-		BlockHandler handler = getHandler(block);
-		Set<User> desiredUsers = handler.getInterestedUsers(block);
+		Set<User> desiredUsers = getHandler(block).getInterestedUsers(block);
 		
 		updateUserBlockDatas(block, desiredUsers, participantId);
 	}
@@ -449,115 +452,10 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		}
 		
 		logger.debug("block {}, {} total groups {} added {} removed {}", new Object[] { block, affectedGuids.size(), addCount, removeCount } );
-	}
+	}		
 
-	private Set<Group> getGroupsWhoCare(Block block) {
-		User user;
-		try {
-			user = EJBUtil.lookupGuid(em, User.class, block.getData1AsGuid());
-		} catch (NotFoundException e) {
-			throw new RuntimeException(e);
-		}
-		
-		return groupSystem.findRawGroups(SystemViewpoint.getInstance(), user);
-	}
-	
-	private Set<Group> getDesiredGroupsForMusicPerson(Block block) {
-		if (block.getBlockType() != BlockType.MUSIC_PERSON)
-			throw new IllegalArgumentException("wrong type block");
-        
-		return getGroupsWhoCare(block);
-	}
-	
-	private Set<Group> getDesiredGroupsForGroupChat(Block block) {
-		if (block.getBlockType() != BlockType.GROUP_CHAT)
-			throw new IllegalArgumentException("wrong type block");
-		Group group;
-		try {
-			group = EJBUtil.lookupGuid(em, Group.class, block.getData1AsGuid());
-		} catch (NotFoundException e) {
-			throw new RuntimeException(e);
-		}
-		return Collections.singleton(group);
-	}
-
-	private Set<Group> getDesiredGroupsForPost(Block block) {
-		if (block.getBlockType() != BlockType.POST)
-			throw new IllegalArgumentException("wrong type block");
-
-		Post post;
-		try {
-			post = EJBUtil.lookupGuid(em, Post.class, block.getData1AsGuid());
-		} catch (NotFoundException e) {
-			throw new RuntimeException(e);
-		}
-		
-		return post.getGroupRecipients();
-	}
-
-	private Set<Group> getDesiredGroupsForGroupMember(Block block) {
-		if (block.getBlockType() != BlockType.GROUP_MEMBER)
-			throw new IllegalArgumentException("wrong type block");
-		
-		Group group = em.find(Group.class, block.getData1AsGuid().toString());
-		
-		return Collections.singleton(group);
-	}
-	
-	private Set<Group> getDesiredGroupsDependingOnInclusion(Block block) {
-		if (block.getInclusion() == StackInclusion.IN_ALL_STACKS)
-			throw new IllegalArgumentException("Wrong inclusion for this method " + block);
-		
-		if (block.getInclusion() == StackInclusion.ONLY_WHEN_VIEWED_BY_OTHERS)
-			return getGroupsWhoCare(block);
-		else
-			return Collections.emptySet();
-	}
-	
-	private Set<Group> getDesiredGroupsForFacebookPerson(Block block) {
-		if (block.getBlockType() != BlockType.FACEBOOK_PERSON)
-			throw new IllegalArgumentException("wrong type block");
-	
-		return getDesiredGroupsDependingOnInclusion(block);
-	}
-
-	private Set<Group> getDesiredGroupsForBlogPerson(Block block) {
-		if (block.getBlockType() != BlockType.BLOG_PERSON)
-			throw new IllegalArgumentException("wrong type block");
-
-		return getDesiredGroupsDependingOnInclusion(block);
-	}
-	
 	private void updateGroupBlockDatas(Block block, boolean isGroupParticipation) {
-		Set<Group> desiredGroups = null;
-		switch (block.getBlockType()) {
-		case POST:
-			desiredGroups = getDesiredGroupsForPost(block);
-			break;
-		case GROUP_CHAT:
-			desiredGroups = getDesiredGroupsForGroupChat(block);
-			break;
-		case MUSIC_PERSON:
-			desiredGroups = getDesiredGroupsForMusicPerson(block);
-			break;
-		case GROUP_MEMBER:
-			desiredGroups = getDesiredGroupsForGroupMember(block);
-			break;
-		case FACEBOOK_PERSON:
-			desiredGroups = getDesiredGroupsForFacebookPerson(block);
-			break;
-		case BLOG_PERSON:
-			desiredGroups = getDesiredGroupsForBlogPerson(block);
-			break;
-		case OBSOLETE_EXTERNAL_ACCOUNT_UPDATE:
-		case OBSOLETE_EXTERNAL_ACCOUNT_UPDATE_SELF:
-			throw new RuntimeException("Obsolete block type updating group block datas " + block);
-			
-			// don't add a default, we want a warning if any cases are missing
-		}
-		
-		if (desiredGroups == null)
-			throw new IllegalStateException("Trying to update user block data for unhandled block type " + block.getBlockType());
+		Set<Group> desiredGroups = getHandler(block).getInterestedGroups(block);
 		
 		updateGroupBlockDatas(block, desiredGroups, isGroupParticipation);
 	}
@@ -848,15 +746,13 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	//  if the user can't see the contents of the Block.
 	//
 	private BlockView prepareBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd) throws BlockNotVisibleException {
-		BlockHandler handler = getHandler(block.getBlockType());
-		return handler.getUnpopulatedBlockView(viewpoint, block, ubd);
+		return getHandler(block).getUnpopulatedBlockView(viewpoint, block, ubd);
 	} 
 	
 	// Populating the block view fills in all the details that were skipped at
 	//   the prepare stage and makes it ready for viewing by the user.
 	private void populateBlockView(BlockView blockView) {
-		BlockHandler handler = getHandler(blockView.getBlockType());
-		handler.populateBlockView(blockView);
+		getHandler(blockView).populateBlockView(blockView);
 	}
 	
 	public BlockView getBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd) throws NotFoundException {

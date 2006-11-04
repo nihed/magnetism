@@ -66,4 +66,8 @@ public class GroupMemberBlockHandlerBean extends AbstractBlockHandlerBean<GroupM
 		
 		return recipients;
 	}
+	
+	public Set<Group> getInterestedGroups(Block block) {
+		return getData1GroupAsSet(block);
+	}
 }

@@ -18,12 +18,14 @@ public class ScriptTag extends SimpleTagSupport {
 	
 	private List<String> modules;
 	
-	private static final String REQUEST_KEY = "scriptTagContext";
+	private static final String CONTEXT_KEY = "scriptTagContext";
 	private static final Pattern commaSplitPattern = 
 		Pattern.compile("\\s*,\\s*");
 	
 	private static Page getJavascriptPage(JspContext context) {
-		Page p = (Page) context.getAttribute(REQUEST_KEY, PageContext.REQUEST_SCOPE);
+		// FIXME REQUEST_SCOPE screws up if we use jsp forwarding, but
+		// PAGE_SCOPE is really tag scope not page scope so doesn't work at all
+		Page p = (Page) context.getAttribute(CONTEXT_KEY, PageContext.REQUEST_SCOPE);
 		
 		if (p == null) {
 			JavascriptResolver jsResolver =
@@ -33,7 +35,7 @@ public class ScriptTag extends SimpleTagSupport {
 				throw new RuntimeException("jsResolver not found in servlet context");
 			p = jsResolver.newPage();
 			// save for next script tag
-			context.setAttribute(REQUEST_KEY, p, PageContext.REQUEST_SCOPE);
+			context.setAttribute(CONTEXT_KEY, p, PageContext.REQUEST_SCOPE);
 		}
 		
 		return p;		
