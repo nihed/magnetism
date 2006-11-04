@@ -24,6 +24,7 @@ import com.dumbhippo.server.ExternalAccountSystem;
 import com.dumbhippo.server.MessageSender;
 import com.dumbhippo.server.MySpaceTracker;
 import com.dumbhippo.server.NotFoundException;
+import com.dumbhippo.server.Notifier;
 import com.dumbhippo.server.Stacker;
 import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.server.views.Viewpoint;
@@ -46,8 +47,7 @@ public class ExternalAccountSystemBean implements ExternalAccountSystem {
 	private MessageSender messageSender;
 	
 	@EJB
-	@IgnoreDependency
-	private Stacker stacker;
+	private Notifier notifier;
 	
 	@EJB
 	private Configuration config;
@@ -67,7 +67,7 @@ public class ExternalAccountSystemBean implements ExternalAccountSystem {
 			em.persist(external);
 			a.getExternalAccounts().add(external);
 			
-			stacker.onExternalAccountCreated(a.getOwner().getGuid(), type);
+			notifier.onExternalAccountCreated(a.getOwner(), external);
 		}
 		return external;
 	}

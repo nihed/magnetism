@@ -33,6 +33,7 @@ import com.dumbhippo.server.Character;
 import com.dumbhippo.server.Enabled;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.NotFoundException;
+import com.dumbhippo.server.Notifier;
 import com.dumbhippo.server.Stacker;
 import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.UnauthorizedException;
@@ -55,6 +56,9 @@ public class AccountSystemBean implements AccountSystem {
 	@IgnoreDependency
 	private Stacker stacker;
 
+	@EJB
+	private Notifier notifier;
+	
 	public Account createAccountFromResource(Resource res) {
 		User user = new User();
 		user.setNickname(res.getDerivedNickname());
@@ -67,7 +71,7 @@ public class AccountSystemBean implements AccountSystem {
 		spider.addVerifiedOwnershipClaim(user, account);		
 		spider.addVerifiedOwnershipClaim(user, res);
 		
-		stacker.onUserCreated(user.getGuid());
+		notifier.onUserCreated(user);
 		
 		return account;
 	}

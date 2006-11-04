@@ -40,7 +40,7 @@ import com.dumbhippo.persistence.AccountClaim;
 import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.BlockKey;
 import com.dumbhippo.persistence.BlockType;
-import com.dumbhippo.persistence.ExternalAccountType;
+import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.FeedPost;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupAccess;
@@ -541,33 +541,33 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		stack(ubd.getBlock(), clickTime, false);
 	}
 	
-	public void onUserCreated(Guid userId) {
+	public void onUserCreated(User user) {
         // we use the default publicity (private) on music blocks before  
 		// the user plays the first track, i.e. the music block is stacked
-		createBlock(getMusicPersonKey(userId));
+		createBlock(getMusicPersonKey(user.getGuid()));
 	}
 	
-	public void onExternalAccountCreated(Guid userId, ExternalAccountType type) {
-		switch (type) {
+	public void onExternalAccountCreated(User user, ExternalAccount external) {
+		switch (external.getAccountType()) {
 		case FACEBOOK:
-			createBlock(getFacebookPersonKey(userId, StackInclusion.ONLY_WHEN_VIEWED_BY_OTHERS));
-			createBlock(getFacebookPersonKey(userId, StackInclusion.ONLY_WHEN_VIEWING_SELF));
+			createBlock(getFacebookPersonKey(user.getGuid(), StackInclusion.ONLY_WHEN_VIEWED_BY_OTHERS));
+			createBlock(getFacebookPersonKey(user.getGuid(), StackInclusion.ONLY_WHEN_VIEWING_SELF));
 			break;
 		case BLOG:
-			createBlock(getBlogPersonKey(userId, StackInclusion.ONLY_WHEN_VIEWED_BY_OTHERS));
-			createBlock(getBlogPersonKey(userId, StackInclusion.ONLY_WHEN_VIEWING_SELF));			
+			createBlock(getBlogPersonKey(user.getGuid(), StackInclusion.ONLY_WHEN_VIEWED_BY_OTHERS));
+			createBlock(getBlogPersonKey(user.getGuid(), StackInclusion.ONLY_WHEN_VIEWING_SELF));			
 			break;
 		default:
 			break;
 		}
 	}
 	
-	public void onGroupCreated(Guid groupId, boolean publicGroup) {
-		Block block = createBlock(getGroupChatKey(groupId));
-		block.setPublicBlock(publicGroup);
+	public void onGroupCreated(Group group) {
+		Block block = createBlock(getGroupChatKey(group.getGuid()));
+		block.setPublicBlock(group.isPublic());
 	}
 	
-	public void onGroupMemberCreated(GroupMember member, boolean publicGroup) {
+	public void onGroupMemberCreated(GroupMember member) {
 		// Blocks only exist for group members which correspond to accounts in the
 		// system. If the group member is (say) an email resource, and later joins
 		// the system, when they join, we'll delete this GroupMember, add a new one 
@@ -576,13 +576,14 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		if (a != null) {
 			// This is getOrCreate because a GroupMember can be deleted and then we'll 
 			// get onGroupMemberCreated again later for the same group/person if they rejoin
-			getOrCreateBlock(getGroupMemberKey(member.getGroup().getGuid(), a.getOwner().getGuid()), publicGroup);
+			getOrCreateBlock(getGroupMemberKey(member.getGroup().getGuid(), a.getOwner().getGuid()),
+					member.getGroup().isPublic());
 		}
 	}
 	
-	public void onPostCreated(Guid postId, boolean publicPost) {
-		Block block = createBlock(getPostKey(postId));
-		block.setPublicBlock(publicPost);
+	public void onPostCreated(Post post) {
+		Block block = createBlock(getPostKey(post.getGuid()));
+		block.setPublicBlock(post.isPublic());
 	}
 
 	private void updateMusicPersonPublicity(Block block, User user, boolean onMusicPersonStacking) {

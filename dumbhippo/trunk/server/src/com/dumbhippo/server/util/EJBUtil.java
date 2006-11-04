@@ -2,14 +2,18 @@ package com.dumbhippo.server.util;
 
 import java.sql.SQLException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
 
 import javax.ejb.EJBContext;
 import javax.ejb.Local;
+import javax.ejb.Remote;
 import javax.naming.Context;
 import javax.naming.InitialContext;
+import javax.naming.NameClassPair;
+import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
 import javax.persistence.EntityExistsException;
 import javax.persistence.EntityManager;
@@ -29,13 +33,15 @@ import com.dumbhippo.persistence.GuidPersistable;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Configuration.PropertyNotFoundException;
+import com.dumbhippo.server.impl.NotifierBean;
 
 public class EJBUtil {
 	
 	@SuppressWarnings("unused")
 	static private final Logger logger = GlobalSetup.getLogger(EJBUtil.class);	
 	
-	private static final String classPrefix = "dumbhippo/";
+	private static final String rootName = "dumbhippo";
+	private static final String classPrefix = rootName + "/";
 	
 	private static final int MAX_SEARCH_TERMS = 3;
 	// we avoid using \ because by the 
@@ -141,7 +147,7 @@ public class EJBUtil {
 	public static <T> T defaultLookupChecked(Class<T> clazz) throws NamingException {
 
 		if (clazz == null)
-			throw new IllegalArgumentException("Class passed to nameLookup() is nNull");
+			throw new IllegalArgumentException("Class passed to nameLookup() is null");
 		
 		String name = clazz.getSimpleName();		
 		if (!clazz.isInterface())
@@ -205,6 +211,124 @@ public class EJBUtil {
 		String suffix = clazz.isAnnotationPresent(Local.class) ? "local" : "remote";	
 		name = name + "Bean";
 		return clazz.cast(ejbContext.lookup(classPrefix + name + "/" + suffix));
+	} 
+	
+	@SuppressWarnings("unused")
+	private static void dumpContext(String name) {
+		try {
+			logger.debug("Dumping items in {}", name);
+			Context namingContext = new InitialContext();
+			NamingEnumeration ne = namingContext.list(name);
+			while (ne.hasMore()) {
+				Object o = ne.next();
+				logger.debug(" listed object {} {}", o.getClass().getName(), o);
+				try {
+					if (o instanceof NameClassPair) {
+						NameClassPair ncp = (NameClassPair) o;
+						
+						String n1 = null, n2 = null, n3 = null;
+						boolean relative = false;
+						try {
+							n1 = ncp.getName();
+						} catch (UnsupportedOperationException e) {
+							
+						}
+						try {
+							n2 = ncp.getNameInNamespace();
+						} catch (UnsupportedOperationException e) {
+							
+						}
+						try {
+							n3 = ncp.getClassName();
+						} catch (UnsupportedOperationException e) {
+							
+						}
+						try {
+							relative = ncp.isRelative();
+						} catch (UnsupportedOperationException e) {
+							
+						}
+						
+						logger.debug(" name={} nameInNamespace={} className={} relative={} ",
+								new Object[] { n1, n2, n3, relative });
+					}
+				} catch (RuntimeException e) {
+					logger.debug(" (failed to print NameClassPair): {}", e.getMessage());
+				}
+			}
+			logger.debug("Done");
+		} catch (NamingException e) {
+			logger.debug("Failed to dump {}: {}", name, e.getMessage());
+		}
+	}
+	
+
+	static private final String[] beanIfacePackages = {
+		"com.dumbhippo.server",
+		"com.dumbhippo.server.blocks",
+		"com.dumbhippo.live",
+		"com.dumbhippo.search"
+	};	
+	
+	// this is a huge hack
+	static public Class<?> loadLocalBeanInterface(ClassLoader loader, String name) {
+		Class<?> klass = null;
+
+		if (!name.startsWith(classPrefix)) {
+			logger.warn("Name {} does not start with {} as expected",
+					name, classPrefix);
+			return null;
+		}
+		if (!name.endsWith("Bean/local")) {
+			logger.warn("Name {} does not end with Bean/local as expected",
+					name);
+			return null;
+		}
+		
+		String ifaceWithoutPackage = name.substring(classPrefix.length(),
+				name.length() - "Bean/local".length());
+		
+		for (String pkg : beanIfacePackages) {
+			try {
+				String fullName = pkg + "." + ifaceWithoutPackage;
+				//logger.debug(" trying to load {}", fullName);
+				klass = loader.loadClass(fullName);
+				break;
+			} catch (ClassNotFoundException e) {
+			}
+		}
+		
+		if (klass == null) {
+			logger.warn("Bean {} interface {} not found in any package or not loadable", name, ifaceWithoutPackage);
+			return null;
+		} else {
+			if (!klass.isAnnotationPresent(Local.class)) {
+				if (!klass.isAnnotationPresent(Remote.class))
+					logger.warn("Interface {} does not have @Local or @Remote annotation", klass.getName());
+				return null;
+			}
+			return klass;
+		}
+	}
+	
+	public static Collection<String> listLocalBeanNames() throws NamingException {
+		/*dumpContext("");
+		dumpContext(rootName);
+		dumpContext(classPrefix + "IdentitySpiderBean");
+		dumpContext(classPrefix + "IdentitySpiderBean/local");
+		dumpContext(classPrefix + "BlogBlockHandlerBean");
+		dumpContext(classPrefix + "BlogBlockHandlerBean/local");*/		
+		//logger.debug("Listing known bean classes");
+		Set<String> beanClasses = new HashSet<String>();
+		Context namingContext = new InitialContext();
+		NamingEnumeration ne = namingContext.list(rootName);
+		while (ne.hasMore()) {
+			NameClassPair ncp = (NameClassPair) ne.next();
+			//logger.debug(" bean '{}'", ncp.getName());
+			beanClasses.add(classPrefix + ncp.getName() + "/local");
+		}
+		//logger.debug("Done listing");
+		return beanClasses;
 	}
 	
 	public static Set<Class<?>> getConstraintViolationExceptions() {

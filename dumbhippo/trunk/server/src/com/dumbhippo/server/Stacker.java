@@ -6,6 +6,7 @@ import javax.ejb.Local;
 
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.Account;
+import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupMember;
@@ -13,6 +14,12 @@ import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.server.blocks.BlockView;
+import com.dumbhippo.server.listeners.AccountStatusListener;
+import com.dumbhippo.server.listeners.ExternalAccountsListener;
+import com.dumbhippo.server.listeners.GroupCreationListener;
+import com.dumbhippo.server.listeners.GroupMembershipListener;
+import com.dumbhippo.server.listeners.PostListener;
+import com.dumbhippo.server.listeners.UserCreationListener;
 import com.dumbhippo.server.views.GroupMugshotView;
 import com.dumbhippo.server.views.PersonMugshotView;
 import com.dumbhippo.server.views.UserViewpoint;
@@ -24,26 +31,25 @@ import com.dumbhippo.server.views.Viewpoint;
  * @author Havoc Pennington
  */
 @Local
-public interface Stacker {
-	// FIXME: All of the on<Entity>Created stack<BlockType> methods below could be usefully
-	// changed to take attached objects rather than object identifiers. They are meant
-	// to be called within the transaction where the object is created or modified.
+public interface Stacker
+	extends AccountStatusListener, UserCreationListener, GroupCreationListener,
+	PostListener, ExternalAccountsListener, GroupMembershipListener {
 	
-	// These methods are used for creating blocks corresponding to an entity when the entity
-	// is created. They are per entity type, not per-block type, though the two currently
-	// correspond 1:1.
-	public void onUserCreated(Guid userId);
-	public void onGroupCreated(Guid groupId, boolean publicGroup);
-	public void onPostCreated(Guid postId, boolean publicPost);
-	public void onGroupMemberCreated(GroupMember member, boolean publicGroup);
-	public void onExternalAccountCreated(Guid userId, ExternalAccountType type);
-	
-	// Other events that affect blocks
+	// Listener methods. FIXME these should all be moved to their respective 
+	// block handler beans.
+	public void onUserCreated(User user);
+	public void onGroupCreated(Group group);
+	public void onPostCreated(Post post);
+	public void onPostDisabledToggled(Post post);
+	public void onGroupMemberCreated(GroupMember member);
+	public void onExternalAccountCreated(User user, ExternalAccount external);
 	public void onAccountDisabledToggled(Account account);
 	public void onAccountAdminDisabledToggled(Account account);
 	public void onMusicSharingToggled(Account account);
-	public void onPostDisabledToggled(Post post);
-	
+
+	// FIXME: All of the stack<BlockType> methods below could be usefully
+	// changed to take attached objects rather than object identifiers. They are meant
+	// to be called within the transaction where the object is created or modified.
 	// These methods are used when activity should cause the timestamp of a block to change. 
 	// They are per block type. 
 	public void stackMusicPerson(Guid userId, long activity);

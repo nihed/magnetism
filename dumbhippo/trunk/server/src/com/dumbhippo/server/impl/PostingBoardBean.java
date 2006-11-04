@@ -78,6 +78,7 @@ import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.InvitationSystem;
 import com.dumbhippo.server.MessageSender;
 import com.dumbhippo.server.NotFoundException;
+import com.dumbhippo.server.Notifier;
 import com.dumbhippo.server.Pageable;
 import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.PostIndexer;
@@ -151,6 +152,9 @@ public class PostingBoardBean implements PostingBoard {
 	@EJB
 	@IgnoreDependency
 	private Stacker stacker;
+	
+	@EJB
+	private Notifier notifier;
 	
 	@javax.annotation.Resource
 	private EJBContext ejbContext;
@@ -485,7 +489,7 @@ public class PostingBoardBean implements PostingBoard {
 					Post post = new Post(poster, visibility, toWorld, title, text, personRecipients, groupRecipients, expandedRecipients, resources);
 					post.setPostInfo(postInfo);
 					em.persist(post);
-					stacker.onPostCreated(post.getGuid(), post.isPublic());
+					notifier.onPostCreated(post);
 					logger.debug("saved new Post {}", post);
 					return post;
 				}
@@ -497,7 +501,7 @@ public class PostingBoardBean implements PostingBoard {
 			public Post call() {
 				FeedPost post = new FeedPost(feed, entry, expandVisibilityForGroup(PostVisibility.RECIPIENTS_ONLY, feed.getGroup()));
 				em.persist(post);
-				stacker.onPostCreated(post.getGuid(), post.isPublic());
+				notifier.onPostCreated(post);
 
 				logger.debug("saved new FeedPost {}", post);
 				return post;
@@ -1442,7 +1446,7 @@ public class PostingBoardBean implements PostingBoard {
 		if (post.isDisabled() != disabled) {
 			post.setDisabled(disabled);
 			logger.debug("Disabled flag toggled to {} on post {}", disabled, post);
-			stacker.onPostDisabledToggled(post);
+			notifier.onPostDisabledToggled(post);
 		}   
 	}
 }

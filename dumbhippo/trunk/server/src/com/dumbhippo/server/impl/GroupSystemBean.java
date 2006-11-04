@@ -50,6 +50,7 @@ import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.GroupSystemRemote;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.NotFoundException;
+import com.dumbhippo.server.Notifier;
 import com.dumbhippo.server.Pageable;
 import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.Stacker;
@@ -81,6 +82,9 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 	private SearchSystem searchSystem;
 	
 	@EJB
+	private Notifier notifier;
+	
+	@EJB
 	@IgnoreDependency
 	private Stacker stacker;
 	
@@ -100,7 +104,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		// Fix up the inverse side of the mapping
 		g.getMembers().add(groupMember);
 		
-		stacker.onGroupMemberCreated(groupMember, g.isPublic());
+		notifier.onGroupMemberCreated(groupMember);
 		
 		searchSystem.indexGroup(g, false);
 		
@@ -173,7 +177,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 				accountMember.setAdders(adders);
 			em.persist(accountMember);
 			group.getMembers().add(accountMember);
-			stacker.onGroupMemberCreated(accountMember, group.isPublic());
+			notifier.onGroupMemberCreated(accountMember);
 		}
 		
 		return accountMember;
@@ -329,7 +333,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 			group.getMembers().add(groupMember);
 			em.persist(group);
 			
-			stacker.onGroupMemberCreated(groupMember, group.isPublic());
+			notifier.onGroupMemberCreated(groupMember);
 		}
 		
 		stacker.stackGroupMember(groupMember, System.currentTimeMillis());
