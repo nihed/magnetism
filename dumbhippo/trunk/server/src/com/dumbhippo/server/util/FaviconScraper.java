@@ -207,7 +207,7 @@ public final class FaviconScraper {
 		}
 	}
 	
-	public boolean tryRootDirectory(URL url, boolean withData) {
+	private boolean tryRootDirectory(URL url, boolean withData) {
 		URL faviconInRoot;
 		try {
 			faviconInRoot = new URL(url.getProtocol(), url.getHost(), url.getPort(), "/favicon.ico");
@@ -236,14 +236,16 @@ public final class FaviconScraper {
 		return false;
 	}
 	
-	public boolean analzyeURL(URL url) {	
+	public boolean analyzeURL(URL url) {	
 		if (scrapeURL(url))
 			return true;
 		else
 			return tryRootDirectory(url, false);
 	}
 
-	public boolean fetchURL(URL url) {
+	// this is private because using it is probably always broken; 
+	// it means you can't cache the image data per-site, only per-page
+	private boolean fetchURL(URL url) {
 		if (scrapeURL(url))
 			return downloadIcon(getFaviconUrl(), true);
 		else
@@ -281,7 +283,7 @@ public final class FaviconScraper {
 			String u = e.getSiteLink();
 			if (u.length() > 0) {
 				System.out.println("Trying external account " + e + " url: " + u);
-				scraper.analzyeURL(new URL(u));
+				scraper.analyzeURL(new URL(u));
 				System.out.println("Got favicon: " + scraper.getFaviconUrl() + " mime type " + scraper.getMimeType());
 			}
 		}
