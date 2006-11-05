@@ -15,7 +15,6 @@ import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
-import org.jboss.annotation.IgnoreDependency;
 import org.slf4j.Logger;
 
 import com.dumbhippo.ExceptionUtils;
@@ -34,7 +33,6 @@ import com.dumbhippo.server.Enabled;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Notifier;
-import com.dumbhippo.server.Stacker;
 import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.UnauthorizedException;
 import com.dumbhippo.server.util.EJBUtil;
@@ -52,10 +50,6 @@ public class AccountSystemBean implements AccountSystem {
 	@EJB
 	private TransactionRunner runner;
 	
-	@EJB
-	@IgnoreDependency
-	private Stacker stacker;
-
 	@EJB
 	private Notifier notifier;
 	

@@ -75,4 +75,9 @@ public class BlogBlockHandlerBean extends AbstractBlockHandlerBean<BlogBlockView
 	public Set<Group> getInterestedGroups(Block block) {
 		return getGroupsData1UserIsIn(block);
 	}
+	
+	public void onExternalAccountCreated(User user, ExternalAccount external) {
+		stacker.createBlock(getKey(user, StackInclusion.ONLY_WHEN_VIEWED_BY_OTHERS));
+		stacker.createBlock(getKey(user, StackInclusion.ONLY_WHEN_VIEWING_SELF));
+	}
 }

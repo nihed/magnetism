@@ -2,7 +2,6 @@ package com.dumbhippo.server.util;
 
 import java.sql.SQLException;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
@@ -33,7 +32,6 @@ import com.dumbhippo.persistence.GuidPersistable;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Configuration.PropertyNotFoundException;
-import com.dumbhippo.server.impl.NotifierBean;
 
 public class EJBUtil {
 	

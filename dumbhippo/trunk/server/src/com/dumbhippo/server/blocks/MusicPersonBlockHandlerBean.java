@@ -6,13 +6,19 @@ import java.util.Set;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 
+import org.slf4j.Logger;
+
+import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.identity20.Guid;
+import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.BlockKey;
 import com.dumbhippo.persistence.BlockType;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.server.Enabled;
 import com.dumbhippo.server.MusicSystem;
+import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.PersonViewExtra;
@@ -23,6 +29,8 @@ import com.dumbhippo.server.views.Viewpoint;
 public class MusicPersonBlockHandlerBean extends AbstractBlockHandlerBean<MusicPersonBlockView> implements
 		MusicPersonBlockHandler {
 
+	static private final Logger logger = GlobalSetup.getLogger(MusicPersonBlockHandlerBean.class);	
+	
 	@EJB
 	private MusicSystem musicSystem;
 	
@@ -71,5 +79,31 @@ public class MusicPersonBlockHandlerBean extends AbstractBlockHandlerBean<MusicP
 		// we leave the default publicBlock=false until a track 
 		// gets played
 		stacker.createBlock(getKey(user));
+	}
+	
+	// FIXME some cut-and-paste from StackerBean here for now
+	private void updatePublicFlag(Account account) {
+		User user = account.getOwner();
+		Block block;
+		try {
+			block = stacker.queryBlock(getKey(user));
+		} catch (NotFoundException e) {
+			logger.warn("Account has no music person block, need migration? {}", account);
+			return;
+		}
+		boolean publicBlock = identitySpider.getMusicSharingEnabled(user, Enabled.AND_ACCOUNT_IS_ACTIVE);
+		block.setPublicBlock(publicBlock);
+	}
+	
+	public void onAccountDisabledToggled(Account account) {
+		updatePublicFlag(account);
+	}
+	
+	public void onAccountAdminDisabledToggled(Account account) {
+		updatePublicFlag(account);
+	}
+	
+	public void onMusicSharingToggled(Account account) {
+		updatePublicFlag(account);
 	}
 }

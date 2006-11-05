@@ -5,23 +5,14 @@ import java.util.List;
 import javax.ejb.Local;
 
 import com.dumbhippo.identity20.Guid;
-import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.BlockKey;
-import com.dumbhippo.persistence.ExternalAccount;
-import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupMember;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.server.blocks.BlockView;
-import com.dumbhippo.server.listeners.AccountStatusListener;
-import com.dumbhippo.server.listeners.ExternalAccountsListener;
-import com.dumbhippo.server.listeners.GroupCreationListener;
-import com.dumbhippo.server.listeners.GroupMembershipListener;
-import com.dumbhippo.server.listeners.PostListener;
-import com.dumbhippo.server.listeners.UserCreationListener;
 import com.dumbhippo.server.views.GroupMugshotView;
 import com.dumbhippo.server.views.PersonMugshotView;
 import com.dumbhippo.server.views.UserViewpoint;
@@ -33,23 +24,11 @@ import com.dumbhippo.server.views.Viewpoint;
  * @author Havoc Pennington
  */
 @Local
-public interface Stacker
-	extends AccountStatusListener,
-	PostListener, ExternalAccountsListener, GroupMembershipListener {
-	
-	// Listener methods. FIXME these should all be moved to their respective 
-	// block handler beans.
-	public void onPostCreated(Post post);
-	public void onPostDisabledToggled(Post post);
-	public void onGroupMemberCreated(GroupMember member);
-	public void onExternalAccountCreated(User user, ExternalAccount external);
-	public void onAccountDisabledToggled(Account account);
-	public void onAccountAdminDisabledToggled(Account account);
-	public void onMusicSharingToggled(Account account);
+public interface Stacker {
 
-	// FIXME createBlock should probably move to AbstractBlockHandlerBean once 
-	// the stacker itself never calls it, if that happens
+	public Block getOrCreateBlock(BlockKey key);
 	public Block createBlock(BlockKey key);
+	public Block queryBlock(BlockKey key) throws NotFoundException;
 	public void stack(BlockKey key, long activity, Guid participantId, boolean isGroupParticipation);
 	public void stack(BlockKey key, long activity);
 	

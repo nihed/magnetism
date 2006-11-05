@@ -35,12 +35,10 @@ import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.live.BlockEvent;
 import com.dumbhippo.live.LiveEventListener;
 import com.dumbhippo.live.LiveState;
-import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.AccountClaim;
 import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.BlockKey;
 import com.dumbhippo.persistence.BlockType;
-import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.FeedPost;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupAccess;
@@ -192,7 +190,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		LiveState.removeEventListener(BlockEvent.class, this);
 	}
 	
-	private Block queryBlock(BlockKey key) throws NotFoundException {
+	public Block queryBlock(BlockKey key) throws NotFoundException {
 		Guid data1 = key.getData1();
 		Guid data2 = key.getData2();
 		long data3 = key.getData3();
@@ -287,7 +285,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		return getOrCreateBlock(key, true, publicBlockIfCreated);
 	}
 	
-	private Block getOrCreateBlock(BlockKey key) {
+	public Block getOrCreateBlock(BlockKey key) {
 		return getOrCreateBlock(key, false, false);
 	}
 	
@@ -552,41 +550,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		// and update user caches for all users
 		stack(ubd.getBlock(), clickTime, false);
 	}
-	
-	public void onExternalAccountCreated(User user, ExternalAccount external) {
-		switch (external.getAccountType()) {
-		case FACEBOOK:
-			createBlock(getFacebookPersonKey(user.getGuid(), StackInclusion.ONLY_WHEN_VIEWED_BY_OTHERS));
-			createBlock(getFacebookPersonKey(user.getGuid(), StackInclusion.ONLY_WHEN_VIEWING_SELF));
-			break;
-		case BLOG:
-			createBlock(getBlogPersonKey(user.getGuid(), StackInclusion.ONLY_WHEN_VIEWED_BY_OTHERS));
-			createBlock(getBlogPersonKey(user.getGuid(), StackInclusion.ONLY_WHEN_VIEWING_SELF));			
-			break;
-		default:
-			break;
-		}
-	}
-	
-	public void onGroupMemberCreated(GroupMember member) {
-		// Blocks only exist for group members which correspond to accounts in the
-		// system. If the group member is (say) an email resource, and later joins
-		// the system, when they join, we'll delete this GroupMember, add a new one 
-		// for the Account and create a block for that GroupMember. 
-		AccountClaim a = member.getMember().getAccountClaim();
-		if (a != null) {
-			// This is getOrCreate because a GroupMember can be deleted and then we'll 
-			// get onGroupMemberCreated again later for the same group/person if they rejoin
-			getOrCreateBlock(getGroupMemberKey(member.getGroup().getGuid(), a.getOwner().getGuid()),
-					member.getGroup().isPublic());
-		}
-	}
-	
-	public void onPostCreated(Post post) {
-		Block block = createBlock(getPostKey(post.getGuid()));
-		block.setPublicBlock(post.isPublic());
-	}
-
+		
 	private void updateMusicPersonPublicity(Block block, User user, boolean onMusicPersonStacking) {
 		if (!user.getGuid().equals(block.getData1AsGuid()))
 			throw new IllegalArgumentException("setMusicPersonPublicity takes the guid from the block");
@@ -594,6 +558,9 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		if (onMusicPersonStacking) {
 			publicBlock = identitySpider.getMusicSharingEnabled(user, Enabled.AND_ACCOUNT_IS_ACTIVE);
 		} else {
+			// FIXME Shouldn't this check from Anonymous not System viewpoint?
+			// (also, it could be done cheaper than countTrackHistory perhaps)
+			
 			// if we are not updating publicity because a MUSIC_PERSON block was stacked, 
 			// we need to check if the person has played any tracks before possibly setting the 
 			// publicBlock flag to true
@@ -604,39 +571,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		if (block.isPublicBlock() != publicBlock )
 		    block.setPublicBlock(publicBlock);
 	}
-	
-	private void updateMusicPersonPublicity(Account account, boolean onMusicPersonStacking) {
-		Block block;
-		try {
-			block = queryBlock(getMusicPersonKey(account.getOwner().getGuid()));
-		} catch (NotFoundException e) {
-			return;
-		}
-		updateMusicPersonPublicity(block, account.getOwner(), onMusicPersonStacking);
-	}
-	
-	public void onAccountDisabledToggled(Account account) {
-		updateMusicPersonPublicity(account, false);
-	}
-	
-	public void onAccountAdminDisabledToggled(Account account) {
-		updateMusicPersonPublicity(account, false);
-	}
-	
-	public void onMusicSharingToggled(Account account) {
-		updateMusicPersonPublicity(account, false);
-	}
-	
-	public void onPostDisabledToggled(Post post) {
-		Block block;
-		try {
-			block = queryBlock(getPostKey(post.getGuid()));
-		} catch (NotFoundException e) {
-			return;
-		}
-		block.setPublicBlock(post.isPublic() && !post.isDisabled());
-	}
-	
+		
 	// FIXME this function should die since block-type-specific code should not 
 	// be in this file
 	private BlockKey getMusicPersonKey(Guid userId) {

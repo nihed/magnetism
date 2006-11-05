@@ -56,7 +56,6 @@ import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.IdentitySpiderRemote;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Notifier;
-import com.dumbhippo.server.Stacker;
 import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.views.SystemViewpoint;
@@ -92,10 +91,6 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 
 	@EJB
 	private Configuration config;
-
-	@EJB
-	@IgnoreDependency
-	private Stacker stacker;
 	
 	@EJB
 	private Notifier notifier;

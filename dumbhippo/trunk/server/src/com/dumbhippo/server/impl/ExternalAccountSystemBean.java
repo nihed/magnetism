@@ -25,7 +25,6 @@ import com.dumbhippo.server.MessageSender;
 import com.dumbhippo.server.MySpaceTracker;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Notifier;
-import com.dumbhippo.server.Stacker;
 import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.server.views.Viewpoint;
 import com.dumbhippo.services.FlickrPhotoSize;

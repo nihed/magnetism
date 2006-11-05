@@ -10,6 +10,7 @@ import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.BlockKey;
 import com.dumbhippo.persistence.BlockType;
+import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.FacebookAccount;
 import com.dumbhippo.persistence.FacebookEvent;
 import com.dumbhippo.persistence.Group;
@@ -74,5 +75,10 @@ public class FacebookBlockHandlerBean extends AbstractBlockHandlerBean<FacebookB
 	
 	public Set<Group> getInterestedGroups(Block block) {
 		return getGroupsData1UserIsIn(block);
+	}
+	
+	public void onExternalAccountCreated(User user, ExternalAccount external) {
+		stacker.createBlock(getKey(user, StackInclusion.ONLY_WHEN_VIEWED_BY_OTHERS));
+		stacker.createBlock(getKey(user, StackInclusion.ONLY_WHEN_VIEWING_SELF));
 	}
 }

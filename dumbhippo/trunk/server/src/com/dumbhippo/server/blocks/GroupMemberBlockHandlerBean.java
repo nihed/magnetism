@@ -13,7 +13,6 @@ import com.dumbhippo.persistence.BlockType;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupMember;
 import com.dumbhippo.persistence.MembershipStatus;
-import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PersonViewer;
@@ -83,13 +82,19 @@ public class GroupMemberBlockHandlerBean extends AbstractBlockHandlerBean<GroupM
 	public Set<Group> getInterestedGroups(Block block) {
 		return getData1GroupAsSet(block);
 	}
-
-	public BlockKey getKey(GroupMember member) {
+	
+	public void onGroupMemberCreated(GroupMember member) {
+		// Blocks only exist for group members which correspond to accounts in the
+		// system. If the group member is (say) an email resource, and later joins
+		// the system, when they join, we'll delete this GroupMember, add a new one 
+		// for the Account and create a block for that GroupMember. 
 		AccountClaim a = member.getMember().getAccountClaim();
 		if (a != null) {
-			return getKey(member.getGroup(), a.getOwner());
-		} else {
-			throw new RuntimeException("GroupMember is not an account member so can't be used for a GROUP_MEMBER block: " + member);
+			// This is getOrCreate because a GroupMember can be deleted and then we'll 
+			// get onGroupMemberCreated again later for the same group/person if they rejoin
+			Block block = stacker.getOrCreateBlock(getKey(member.getGroup(), a.getOwner()));
+			block.setPublicBlock(member.getGroup().isPublic());
 		}
 	}
+
 }

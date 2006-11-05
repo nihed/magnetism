@@ -5,12 +5,12 @@ import javax.ejb.Local;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.BlockKey;
 import com.dumbhippo.persistence.Group;
-import com.dumbhippo.persistence.GroupMember;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.server.listeners.GroupMembershipListener;
 
 @Local
-public interface GroupMemberBlockHandler extends BlockHandler {
-	public BlockKey getKey(GroupMember member);
+public interface GroupMemberBlockHandler
+	extends BlockHandler, GroupMembershipListener {
 	public BlockKey getKey(Group group, User user);
 	public BlockKey getKey(Guid groupId, Guid userId);
 }

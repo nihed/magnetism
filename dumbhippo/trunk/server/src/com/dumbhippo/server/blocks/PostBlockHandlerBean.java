@@ -7,6 +7,9 @@ import java.util.Set;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 
+import org.slf4j.Logger;
+
+import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.AccountClaim;
 import com.dumbhippo.persistence.Block;
@@ -27,6 +30,8 @@ import com.dumbhippo.server.views.Viewpoint;
 public class PostBlockHandlerBean extends AbstractBlockHandlerBean<PostBlockView> implements
 		PostBlockHandler {
 
+	static private final Logger logger = GlobalSetup.getLogger(PostBlockHandlerBean.class);
+	
 	@EJB
 	private PostingBoard postingBoard;
 	
@@ -84,5 +89,21 @@ public class PostBlockHandlerBean extends AbstractBlockHandlerBean<PostBlockView
 	public Set<Group> getInterestedGroups(Block block) {
 		Post post = loadPost(block);
 		return post.getGroupRecipients();
+	}
+	
+	public void onPostCreated(Post post) {
+		Block block = stacker.createBlock(getKey(post));
+		block.setPublicBlock(post.isPublic() && !post.isDisabled());
+	}
+
+	public void onPostDisabledToggled(Post post) {
+		Block block;
+		try {
+			block = stacker.queryBlock(getKey(post));
+		} catch (NotFoundException e) {
+			logger.warn("No block found for post {} - migration needed?", post);
+			return;
+		}
+		block.setPublicBlock(post.isPublic() && !post.isDisabled());
 	}
 }
