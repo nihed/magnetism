@@ -9,6 +9,7 @@ import javax.ejb.EJB;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
+import org.jboss.annotation.IgnoreDependency;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
@@ -20,6 +21,7 @@ import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.NotFoundException;
+import com.dumbhippo.server.Stacker;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.views.SystemViewpoint;
 import com.dumbhippo.server.views.UserViewpoint;
@@ -37,6 +39,10 @@ public abstract class AbstractBlockHandlerBean<BlockViewSubType extends BlockVie
 	
 	@EJB
 	protected GroupSystem groupSystem;
+	
+	@EJB
+	@IgnoreDependency
+	protected Stacker stacker;
 	
 	private Class<BlockViewSubType> viewClass;
 	private Constructor<BlockViewSubType> viewClassConstructor;

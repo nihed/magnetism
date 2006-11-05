@@ -176,6 +176,14 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		return handler;
 	}
 	
+	// All uses of this method indicate something that needs refactoring to be in 
+	// the block handler beans instead of this file
+	private <SpecificBlockHandler> SpecificBlockHandler
+		getHandler(Class<SpecificBlockHandler> klass, BlockType type) {
+		BlockHandler handler = getHandler(type);
+		return klass.cast(handler);
+	}
+	
 	public void start() throws Exception {
 		LiveState.addEventListener(BlockEvent.class, this);
 	}
@@ -257,7 +265,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		}
 	}
 	
-	private Block createBlock(BlockKey key) {
+	public Block createBlock(BlockKey key) {
 		Block block = new Block(key);
 		em.persist(block);
 		return block;
@@ -475,8 +483,12 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		void update(Block block);
 	}
 	
-	private void stack(final BlockKey key, final long activity, final Guid participantId, final boolean isGroupParticipation) {
+	public void stack(BlockKey key, long activity, Guid participantId, boolean isGroupParticipation) {
         stack(key, activity, null, participantId, isGroupParticipation);
+	}
+	
+	public void stack(BlockKey key, long activity) {
+		stack(key, activity, null, false);
 	}
 	
 	private void stack(final BlockKey key, final long activity, PublicityUpdate publicityUpdate, final Guid participantId, final boolean isGroupParticipation) {
@@ -541,12 +553,6 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		stack(ubd.getBlock(), clickTime, false);
 	}
 	
-	public void onUserCreated(User user) {
-        // we use the default publicity (private) on music blocks before  
-		// the user plays the first track, i.e. the music block is stacked
-		createBlock(getMusicPersonKey(user.getGuid()));
-	}
-	
 	public void onExternalAccountCreated(User user, ExternalAccount external) {
 		switch (external.getAccountType()) {
 		case FACEBOOK:
@@ -560,11 +566,6 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		default:
 			break;
 		}
-	}
-	
-	public void onGroupCreated(Group group) {
-		Block block = createBlock(getGroupChatKey(group.getGuid()));
-		block.setPublicBlock(group.isPublic());
 	}
 	
 	public void onGroupMemberCreated(GroupMember member) {
@@ -636,28 +637,40 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		block.setPublicBlock(post.isPublic() && !post.isDisabled());
 	}
 	
+	// FIXME this function should die since block-type-specific code should not 
+	// be in this file
 	private BlockKey getMusicPersonKey(Guid userId) {
-		return new BlockKey(BlockType.MUSIC_PERSON, userId);
+		return getHandler(MusicPersonBlockHandler.class, BlockType.MUSIC_PERSON).getKey(userId);
 	}
 	
+	// FIXME this function should die since block-type-specific code should not 
+	// be in this file
 	private BlockKey getGroupChatKey(Guid groupId) {
-		return new BlockKey(BlockType.GROUP_CHAT, groupId);
+		return getHandler(GroupChatBlockHandler.class, BlockType.GROUP_CHAT).getKey(groupId);
 	}
 	
+	// FIXME this function should die since block-type-specific code should not 
+	// be in this file
 	private BlockKey getPostKey(Guid postId) {
-		return new BlockKey(BlockType.POST, postId);
+		return getHandler(PostBlockHandler.class, BlockType.POST).getKey(postId);
 	}
 	
+	// FIXME this function should die since block-type-specific code should not 
+	// be in this file
 	private BlockKey getGroupMemberKey(Guid groupId, Guid userId) {
-		return new BlockKey(BlockType.GROUP_MEMBER, groupId, userId);
+		return getHandler(GroupMemberBlockHandler.class, BlockType.GROUP_MEMBER).getKey(groupId, userId);
 	}
 	
+	// FIXME this function should die since block-type-specific code should not 
+	// be in this file
 	private BlockKey getFacebookPersonKey(Guid userId, StackInclusion inclusion) {
-		return new BlockKey(BlockType.FACEBOOK_PERSON, userId, inclusion);
+		return getHandler(FacebookBlockHandler.class, BlockType.FACEBOOK_PERSON).getKey(userId, inclusion);
 	}
 	
+	// FIXME this function should die since block-type-specific code should not 
+	// be in this file
 	private BlockKey getBlogPersonKey(Guid userId, StackInclusion inclusion) {
-		return new BlockKey(BlockType.BLOG_PERSON, userId, inclusion);
+		return getHandler(BlogBlockHandler.class, BlockType.BLOG_PERSON).getKey(userId, inclusion);
 	}
 	
 	// don't create or suspend transaction; we will manage our own for now (FIXME) 

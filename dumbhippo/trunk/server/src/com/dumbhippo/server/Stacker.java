@@ -6,6 +6,8 @@ import javax.ejb.Local;
 
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.Account;
+import com.dumbhippo.persistence.Block;
+import com.dumbhippo.persistence.BlockKey;
 import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.Group;
@@ -32,13 +34,11 @@ import com.dumbhippo.server.views.Viewpoint;
  */
 @Local
 public interface Stacker
-	extends AccountStatusListener, UserCreationListener, GroupCreationListener,
+	extends AccountStatusListener,
 	PostListener, ExternalAccountsListener, GroupMembershipListener {
 	
 	// Listener methods. FIXME these should all be moved to their respective 
 	// block handler beans.
-	public void onUserCreated(User user);
-	public void onGroupCreated(Group group);
 	public void onPostCreated(Post post);
 	public void onPostDisabledToggled(Post post);
 	public void onGroupMemberCreated(GroupMember member);
@@ -47,6 +47,12 @@ public interface Stacker
 	public void onAccountAdminDisabledToggled(Account account);
 	public void onMusicSharingToggled(Account account);
 
+	// FIXME createBlock should probably move to AbstractBlockHandlerBean once 
+	// the stacker itself never calls it, if that happens
+	public Block createBlock(BlockKey key);
+	public void stack(BlockKey key, long activity, Guid participantId, boolean isGroupParticipation);
+	public void stack(BlockKey key, long activity);
+	
 	// FIXME: All of the stack<BlockType> methods below could be usefully
 	// changed to take attached objects rather than object identifiers. They are meant
 	// to be called within the transaction where the object is created or modified.

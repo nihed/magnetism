@@ -6,7 +6,10 @@ import java.util.Set;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 
+import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.Block;
+import com.dumbhippo.persistence.BlockKey;
+import com.dumbhippo.persistence.BlockType;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.MusicSystem;
@@ -30,6 +33,14 @@ public class MusicPersonBlockHandlerBean extends AbstractBlockHandlerBean<MusicP
 		super(MusicPersonBlockView.class);
 	}
 
+	public BlockKey getKey(User user) {
+		return getKey(user.getGuid());
+	}
+
+	public BlockKey getKey(Guid userId) {
+		return new BlockKey(BlockType.MUSIC_PERSON, userId);
+	}	
+	
 	@Override
 	protected void populateBlockViewImpl(MusicPersonBlockView blockView) throws BlockNotVisibleException {
 		Viewpoint viewpoint = blockView.getViewpoint();
@@ -54,5 +65,11 @@ public class MusicPersonBlockHandlerBean extends AbstractBlockHandlerBean<MusicP
 
 	public Set<Group> getInterestedGroups(Block block) {
 		return getGroupsData1UserIsIn(block);
+	}
+
+	public void onUserCreated(User user) {
+		// we leave the default publicBlock=false until a track 
+		// gets played
+		stacker.createBlock(getKey(user));
 	}
 }

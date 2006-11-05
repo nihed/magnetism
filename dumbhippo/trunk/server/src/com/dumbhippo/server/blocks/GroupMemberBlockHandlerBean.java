@@ -5,10 +5,15 @@ import java.util.Set;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 
+import com.dumbhippo.identity20.Guid;
+import com.dumbhippo.persistence.AccountClaim;
 import com.dumbhippo.persistence.Block;
+import com.dumbhippo.persistence.BlockKey;
+import com.dumbhippo.persistence.BlockType;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupMember;
 import com.dumbhippo.persistence.MembershipStatus;
+import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PersonViewer;
@@ -28,6 +33,14 @@ public class GroupMemberBlockHandlerBean extends AbstractBlockHandlerBean<GroupM
 		super(GroupMemberBlockView.class);
 	}
 
+	public BlockKey getKey(Group group, User user) {
+		return getKey(group.getGuid(), user.getGuid());
+	}
+	
+	public BlockKey getKey(Guid groupId, Guid userId) {
+		return new BlockKey(BlockType.GROUP_MEMBER, groupId, userId);
+	}	
+	
 	@Override
 	protected void populateBlockViewImpl(GroupMemberBlockView blockView) throws BlockNotVisibleException {
 		Viewpoint viewpoint = blockView.getViewpoint();
@@ -69,5 +82,14 @@ public class GroupMemberBlockHandlerBean extends AbstractBlockHandlerBean<GroupM
 	
 	public Set<Group> getInterestedGroups(Block block) {
 		return getData1GroupAsSet(block);
+	}
+
+	public BlockKey getKey(GroupMember member) {
+		AccountClaim a = member.getMember().getAccountClaim();
+		if (a != null) {
+			return getKey(member.getGroup(), a.getOwner());
+		} else {
+			throw new RuntimeException("GroupMember is not an account member so can't be used for a GROUP_MEMBER block: " + member);
+		}
 	}
 }

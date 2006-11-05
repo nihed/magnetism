@@ -5,7 +5,10 @@ import java.util.Set;
 
 import javax.ejb.Stateless;
 
+import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.Block;
+import com.dumbhippo.persistence.BlockKey;
+import com.dumbhippo.persistence.BlockType;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.NotFoundException;
@@ -21,6 +24,14 @@ public class GroupChatBlockHandlerBean extends AbstractBlockHandlerBean<GroupCha
 		super(GroupChatBlockView.class);
 	}
 
+	public BlockKey getKey(Group group) {
+		return getKey(group.getGuid());
+	}
+
+	public BlockKey getKey(Guid groupId) {
+		return new BlockKey(BlockType.GROUP_CHAT, groupId);
+	}	
+	
 	@Override
 	protected void populateBlockViewImpl(GroupChatBlockView blockView) throws BlockNotVisibleException {
 		Viewpoint viewpoint = blockView.getViewpoint();
@@ -46,5 +57,10 @@ public class GroupChatBlockHandlerBean extends AbstractBlockHandlerBean<GroupCha
 
 	public Set<Group> getInterestedGroups(Block block) {
 		return getData1GroupAsSet(block);
+	}
+
+	public void onGroupCreated(Group group) {
+		Block block = stacker.createBlock(getKey(group));
+		block.setPublicBlock(group.isPublic());
 	}
 }

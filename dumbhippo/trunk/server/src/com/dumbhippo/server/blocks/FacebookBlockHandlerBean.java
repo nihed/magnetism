@@ -6,10 +6,14 @@ import java.util.Set;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 
+import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.Block;
+import com.dumbhippo.persistence.BlockKey;
+import com.dumbhippo.persistence.BlockType;
 import com.dumbhippo.persistence.FacebookAccount;
 import com.dumbhippo.persistence.FacebookEvent;
 import com.dumbhippo.persistence.Group;
+import com.dumbhippo.persistence.StackInclusion;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.FacebookSystem;
 import com.dumbhippo.server.NotFoundException;
@@ -32,6 +36,14 @@ public class FacebookBlockHandlerBean extends AbstractBlockHandlerBean<FacebookB
 		super(FacebookBlockView.class);
 	}
 
+	public BlockKey getKey(User user, StackInclusion inclusion) {
+		return getKey(user.getGuid(), inclusion);
+	}
+
+	public BlockKey getKey(Guid userId, StackInclusion inclusion) {
+		return new BlockKey(BlockType.FACEBOOK_PERSON, userId, inclusion);
+	}	
+	
 	@Override
 	protected void populateBlockViewImpl(FacebookBlockView blockView) throws BlockNotVisibleException {
 		Viewpoint viewpoint = blockView.getViewpoint();

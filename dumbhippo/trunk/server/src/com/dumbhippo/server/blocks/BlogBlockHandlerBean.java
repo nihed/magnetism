@@ -5,11 +5,15 @@ import java.util.Set;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 
+import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.Block;
+import com.dumbhippo.persistence.BlockKey;
+import com.dumbhippo.persistence.BlockType;
 import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.FeedEntry;
 import com.dumbhippo.persistence.Group;
+import com.dumbhippo.persistence.StackInclusion;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.ExternalAccountSystem;
 import com.dumbhippo.server.FeedSystem;
@@ -35,7 +39,15 @@ public class BlogBlockHandlerBean extends AbstractBlockHandlerBean<BlogBlockView
 	public BlogBlockHandlerBean() {
 		super(BlogBlockView.class);
 	}
+	
+	public BlockKey getKey(User user, StackInclusion inclusion) {
+		return getKey(user.getGuid(), inclusion);
+	}
 
+	public BlockKey getKey(Guid userId, StackInclusion inclusion) {
+		return new BlockKey(BlockType.BLOG_PERSON, userId, inclusion);
+	}	
+	
 	@Override
 	protected void populateBlockViewImpl(BlogBlockView blockView) throws BlockNotVisibleException {
 		Viewpoint viewpoint = blockView.getViewpoint();
@@ -62,5 +74,5 @@ public class BlogBlockHandlerBean extends AbstractBlockHandlerBean<BlogBlockView
 	
 	public Set<Group> getInterestedGroups(Block block) {
 		return getGroupsData1UserIsIn(block);
-	}	
+	}
 }

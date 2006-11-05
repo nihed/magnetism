@@ -11,6 +11,8 @@ import java.util.Set;
 
 import javax.annotation.PostConstruct;
 import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
@@ -34,7 +36,17 @@ import com.dumbhippo.server.listeners.PostListener;
 import com.dumbhippo.server.listeners.UserCreationListener;
 import com.dumbhippo.server.util.EJBUtil;
 
+/**
+ * See the docs for the Notifier interface.
+ * 
+ * The entire bean has TransactionAttributeType.SUPPORTS
+ * because there's no reason for NotifierBean to modify the 
+ * transaction state; the notifying code or notified code might
+ * care, but they can set their own transaction attributes.
+ * 
+ */
 @Stateless
+@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 public class NotifierBean implements Notifier {
 
 	@SuppressWarnings("unused")

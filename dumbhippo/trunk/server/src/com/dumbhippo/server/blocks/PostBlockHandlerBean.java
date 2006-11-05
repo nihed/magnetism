@@ -7,8 +7,11 @@ import java.util.Set;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 
+import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.AccountClaim;
 import com.dumbhippo.persistence.Block;
+import com.dumbhippo.persistence.BlockKey;
+import com.dumbhippo.persistence.BlockType;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.Resource;
@@ -31,6 +34,14 @@ public class PostBlockHandlerBean extends AbstractBlockHandlerBean<PostBlockView
 		super(PostBlockView.class);
 	}
 
+	public BlockKey getKey(Post post) {
+		return getKey(post.getGuid());
+	}
+
+	public BlockKey getKey(Guid postId) {
+		return new BlockKey(BlockType.POST, postId);
+	}	
+	
 	@Override
 	protected void populateBlockViewImpl(PostBlockView blockView) throws BlockNotVisibleException {
 		Viewpoint viewpoint = blockView.getViewpoint();
