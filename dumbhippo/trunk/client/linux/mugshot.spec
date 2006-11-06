@@ -6,7 +6,7 @@ Summary:        Companion software for mugshot.org
 Group:          Applications/Internet
 License:        GPL
 URL:            http://mugshot.org/
-Source0:        http://download.mugshot.org/client/sources/linux/mugshot-%{version}.tar.gz
+Source0:        http://developer.mugshot.org/download/sources/linux/mugshot-%{version}.tar.gz
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 BuildRequires:  glib2-devel >= 2.6
@@ -29,6 +29,12 @@ BuildRequires:  libXScrnSaver-devel
 
 # 1.0.3-3 has a backport from 1.0.4 to fix various segfaults
 Requires:       loudmouth >= 1.0.3-3
+
+Requires(pre): GConf2
+Requires(preun): GConf2
+Requires(post): GConf2
+Requires(post): gtk2
+
 
 %description
 Mugshot works with the server at mugshot.org to extend 
@@ -83,12 +89,29 @@ rm -rf $RPM_BUILD_ROOT
 #  5. postun for old package - we add all symlinks
 #  6. triggerpostun for old package - NOT RUN (contrary to RPM docs)
 
+%pre
+# On upgrade, remove old schemas before installing the new ones
+# Note that the SCHEMAS value should be the name of any schema
+# files installed by *previous* versions of this package
+if [ $1 -gt 1 ] ; then
+    export GCONF_CONFIG_SOURCE=`gconftool-2 --get-default-source`
+    SCHEMAS="mugshot-uri-handler.schemas"
+
+    for S in $SCHEMAS; do
+        gconftool-2 --makefile-install-rule %{_sysconfdir}/gconf/schemas/$S > /dev/null || :
+    done
+
+    # Necessary for FC5/FC6 only because of 
+    #  https://bugzilla.redhat.com/bugzilla/show_bug.cgi?id=214214
+    killall -q -HUP gconfd-2 || :
+fi
+
 %post
 export GCONF_CONFIG_SOURCE=`gconftool-2 --get-default-source`
 SCHEMAS="mugshot-uri-handler.schemas"
 
 for S in $SCHEMAS; do
-  gconftool-2 --makefile-install-rule %{_sysconfdir}/gconf/schemas/$S > /dev/null
+    gconftool-2 --makefile-install-rule %{_sysconfdir}/gconf/schemas/$S > /dev/null || :
 done
 
 touch --no-create %{_datadir}/icons/hicolor
@@ -97,9 +120,21 @@ if [ -x /usr/bin/gtk-update-icon-cache ]; then
 fi
 %{_datadir}/mugshot/firefox-update.sh install
 
+killall -q -HUP gconfd-2 || :
+
 %preun
+# On removal (but not upgrade), remove our schemas
 if [ $1 = 0 ] ; then
     %{_datadir}/mugshot/firefox-update.sh remove
+
+    export GCONF_CONFIG_SOURCE=`gconftool-2 --get-default-source`
+    SCHEMAS="mugshot-uri-handler.schemas"
+
+    for S in $SCHEMAS; do
+        gconftool-2 --makefile-uninstall-rule %{_sysconfdir}/gconf/schemas/$S > /dev/null || :
+    done
+
+    killall -q -HUP gconfd-2 || :
 fi
 
 %postun
@@ -129,7 +164,7 @@ fi
 
 %files
 %defattr(-,root,root,-)
-%doc
+%doc LICENSE
 
 %{_bindir}/mugshot
 %{_bindir}/mugshot-uri-handler
@@ -145,13 +180,13 @@ fi
 %{_sysconfdir}/gconf/schemas/*.schemas
 
 %changelog
-* Wed Nov  1 2006 Owen Taylor <otaylor@fresnel.dumbhippo.com> - 1.1.23-1
+* Wed Nov  1 2006 Owen Taylor <otaylor@redhat.com> - 1.1.23-1
 - 1.1.23
 
-* Wed Oct 25 2006 Owen Taylor <otaylor@fresnel.dumbhippo.com> - 1.1.22-1
+* Wed Oct 25 2006 Owen Taylor <otaylor@redhat.com> - 1.1.22-1
 - 1.1.22
 
-* Wed Oct 25 2006 Owen Taylor <otaylor@fresnel.dumbhippo.com> - 1.1.21-1
+* Wed Oct 25 2006 Owen Taylor <otaylor@redhat.com> - 1.1.21-1
 - 1.1.21
 
 * Mon Oct 22 2006 Owen Taylor <otaylor@@redhat.com> - 1.1.20-1
