@@ -196,7 +196,7 @@ hippo_canvas_block_group_member_constructor (GType                  type,
     block = HIPPO_CANVAS_BLOCK(object);
     canvas_group_member = HIPPO_CANVAS_BLOCK_GROUP_MEMBER(object);
     
-    hippo_canvas_block_set_heading(block, _("Group update: "));
+    hippo_canvas_block_set_heading(block, _("Group Update"));
 
     box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
                        NULL);

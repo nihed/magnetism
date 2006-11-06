@@ -197,9 +197,12 @@ hippo_canvas_block_post_constructor (GType                  type,
     HippoCanvasBlock *block = HIPPO_CANVAS_BLOCK(object);
     HippoCanvasBlockPost *block_post = HIPPO_CANVAS_BLOCK_POST(object);
     HippoCanvasBox *box;
-    
-    hippo_canvas_block_set_heading(block, _("Web Swarm: "));
 
+    /* Skip this for now; with feed posts it's just confusing, we need to be able to give
+     * the feed name for those and say "Web Swarm" only for manual shares
+     */
+    /* hippo_canvas_block_set_heading(block, _("Web Swarm")); */
+    
     box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
                        NULL);
     

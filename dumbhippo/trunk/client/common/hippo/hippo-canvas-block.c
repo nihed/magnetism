@@ -409,13 +409,15 @@ hippo_canvas_block_constructor (GType                  type,
                                             "border-right", 6,
                                             NULL);
     hippo_canvas_box_append(box, block->heading_icon_item, 0);
-    
+
+#if 0
     block->heading_text_item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
                                             "text", NULL,
                                             "xalign", HIPPO_ALIGNMENT_START,
                                             "yalign", HIPPO_ALIGNMENT_START,
                                             NULL);
     hippo_canvas_box_append(box, block->heading_text_item, 0);
+#endif
     
     block->title_link_item = g_object_new(HIPPO_TYPE_CANVAS_LINK,
                                           "size-mode", HIPPO_CANVAS_SIZE_ELLIPSIZE_END,
@@ -952,9 +954,15 @@ void
 hippo_canvas_block_set_heading (HippoCanvasBlock *canvas_block,
                                 const char       *heading)
 {
+#if 0
     g_object_set(G_OBJECT(canvas_block->heading_text_item),
                  "text", heading,
                  NULL);
+#else
+    g_object_set(G_OBJECT(canvas_block->heading_icon_item),
+                 "tooltip", heading,
+                 NULL);
+#endif
 }
 
 void

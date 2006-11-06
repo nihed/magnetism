@@ -41,7 +41,6 @@ struct _HippoCanvasBlock {
     HippoCanvasItem *sent_to_text_item;
     HippoCanvasItem *sent_to_item;
     HippoCanvasItem *heading_icon_item;
-    HippoCanvasItem *heading_text_item;
     HippoCanvasItem *title_link_item;
     HippoCanvasItem *content_container_item;
     HippoCanvasItem *headshot_item;

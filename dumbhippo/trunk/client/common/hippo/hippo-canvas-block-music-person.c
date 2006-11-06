@@ -173,7 +173,7 @@ hippo_canvas_block_music_person_constructor (GType                  type,
     block = HIPPO_CANVAS_BLOCK(object);
     block_music = HIPPO_CANVAS_BLOCK_MUSIC_PERSON(object);
     
-    hippo_canvas_block_set_heading(block, _("Music Radar: "));
+    hippo_canvas_block_set_heading(block, _("Music Radar"));
 
     box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
                        "orientation", HIPPO_ORIENTATION_HORIZONTAL,
