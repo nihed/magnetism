@@ -18,7 +18,7 @@
 	<property name="jboss.root" value="/opt/jboss" />
 	<property name="buildjar.dir" location="${target}/classes" />
 	<!-- *** stuff in bundled-classpath.external has to be added to application.xml also *** -->
-	<property name="bundled-classpath.external" value="smack-svn-local-build-2005-09-30.jar smackx-svn-local-build-2005-09-30.jar commons-fileupload-1.1.1.jar commons-io-1.2.jar slf4j-*.jar rome-*.jar jdom-1.0.jar taste.jar tagsoup-1.0.jar"/>
+	<property name="bundled-classpath.external" value="smack-svn-local-build-2005-09-30.jar smackx-svn-local-build-2005-09-30.jar commons-fileupload-1.1.1.jar commons-io-1.2.jar slf4j-*.jar rome-*.jar jdom-1.0.jar taste.jar tagsoup-1.0.jar ICOReader-1.04.jar"/>
 	<property name="bundled-classpath" value="dumbhippo-base.jar"/>	
 	<property name="bundled-deps.web" value="standard.jar" />
 	<property name="bundled-deps.client" value="" />

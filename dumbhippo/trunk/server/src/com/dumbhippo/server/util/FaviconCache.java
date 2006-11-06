@@ -208,7 +208,7 @@ public final class FaviconCache {
 	public Icon loadIconForPage(String pageUrl) {
 		Icon icon = checkPageCache(pageUrl);
 		if (icon != null) {
-			logger.debug(" loading cached favicon for {}: {}", pageUrl, icon);
+			logger.debug(" using cached favicon for {}: {}", pageUrl, icon);
 			return icon;
 		}
 		
@@ -221,7 +221,7 @@ public final class FaviconCache {
 	public Icon peekIconForPage(String pageUrl) {
 		Icon icon = checkPageCache(pageUrl);
 		if (icon != null) {
-			logger.debug(" peeking cached favicon for {}: {}", pageUrl, icon);
+			logger.debug(" using cached favicon for {}: {}", pageUrl, icon);
 			return icon;
 		}
 		

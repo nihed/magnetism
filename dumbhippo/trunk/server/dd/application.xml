@@ -36,6 +36,9 @@
     	<java>tagsoup-1.0.jar</java>
     </module>
     <module>
+    	<java>ICOReader-1.04.jar</java>
+    </module>
+    <module>
         <java>dumbhippo-base.jar</java>
     </module>
     <module>

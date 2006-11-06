@@ -1,12 +1,18 @@
 package com.dumbhippo.server.util;
 
+import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
+
+import javax.imageio.ImageIO;
+import javax.imageio.ImageReader;
+import javax.imageio.stream.MemoryCacheImageInputStream;
 
 import org.ccil.cowan.tagsoup.Parser;
 import org.slf4j.Logger;
@@ -37,6 +43,15 @@ public final class FaviconScraper {
 	private String mimeType;
 	private byte[] iconData;
 	
+	// different names for .ico format
+	static private final String icoMimeTypes[] = {
+		"image/x-icon",
+		"image/ico",
+		"image/vnd.microsoft.icon"		
+	};
+	
+	// should be a superset of the above. This is 
+	// our whitelist of all known image formats we'll accept.
 	static private final String mimeTypes[] = {
 		"image/x-icon",
 		"image/ico",
@@ -47,6 +62,14 @@ public final class FaviconScraper {
 	
 	static private boolean knownIconType(String type) {
 		for (String m : mimeTypes) {
+			if (m.equals(type))
+				return true;
+		}
+		return false;
+	}
+	
+	static private boolean knownIcoMimeName(String type) {
+		for (String m : icoMimeTypes) {
 			if (m.equals(type))
 				return true;
 		}
@@ -170,6 +193,55 @@ public final class FaviconScraper {
 		}
 	}
 	
+	/**
+	 * When using the IE DirectX filter as our dh:png does, .ico files
+	 * won't show up. So we try to convert to PNG if possible. We pretty
+	 * much rely on this working.
+	 * @return true on success
+	 */
+	private boolean tryConvertToPng() {
+		try {
+			InputStream in = new ByteArrayInputStream(getIconData());
+			//logger.debug("formats: {}", Arrays.toString(ImageIO.getReaderFormatNames()));
+			
+			// the ImageIO.read() convenience function barfs on the .ico format, 
+			// my two theories are that a) it gets confused by multiple images
+			// in the stream or b) it tries to use the WBMP loader instead of 
+			// our ICOReader jar. b) is my favorite.
+			// The below code would fix both of those theories, since we 
+			// get the ico loader by hand and then iterate over each image
+			// in the stream.
+			
+			ImageReader reader = ImageIO.getImageReadersByFormatName("ico").next();
+			reader.setInput(new MemoryCacheImageInputStream(in));
+			for (int i = 0; true; ++i) {
+				BufferedImage image;
+				try {
+					image = reader.read(i);
+				} catch (IndexOutOfBoundsException e) {
+					logger.debug("  no more frames in .ico");
+					break;
+				}
+				
+				if (image.getWidth() == 16 && image.getHeight() == 16) {
+					ByteArrayOutputStream out = new ByteArrayOutputStream();
+					ImageIO.write(image, "png", out);
+					setIconData(out.toByteArray());
+					setMimeType("image/png");
+					return true;
+				} else {
+					logger.debug("  ignoring {}x{} image in .ico data",
+							image.getWidth(), image.getHeight());
+				}
+			}
+			logger.debug(" ico data contained no 16x16 image");
+			return false;
+		} catch (IOException e) {
+			logger.warn(" failed to convert icon to PNG data: {}", e.getMessage());
+			return false;
+		}
+	}
+	
 	public boolean downloadIcon(URL url, boolean withData) {
 		try {
 			URLConnection connection = url.openConnection();
@@ -198,8 +270,14 @@ public final class FaviconScraper {
 			
 			setFaviconUrl(url);
 			setMimeType(contentType);
-			if (withData)
+			if (withData) {
 				setIconData(data);
+				if (knownIcoMimeName(contentType)) {
+					if (tryConvertToPng()) {
+						logger.debug("  successfully converted favicon to PNG format");
+					}
+				}
+			}
 			return true;
 		} catch (IOException e) {
 			logger.debug("io exception fetching favicon at {}: {} ", url, e.getMessage());
