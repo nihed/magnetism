@@ -116,4 +116,8 @@ public class PostBlockHandlerBean extends AbstractBlockHandlerBean<PostBlockView
 		stacker.stack(getKey(message.getPost()), message.getTimestamp().getTime(),
 				message.getFromUser(), true);
 	}
+
+	public void onPostClicked(Post post, User user, long clickedTime) {
+		stacker.blockClicked(getKey(post), user, clickedTime);
+	}
 }

@@ -482,7 +482,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		return stack(key, activity, null, false);
 	}
 	
-	private void click(BlockKey key, User user, long clickTime) {		
+	public void blockClicked(BlockKey key, User user, long clickedTime) {
 		UserBlockData ubd;
 		try {
 			ubd = queryUserBlockData(user, key);
@@ -498,17 +498,19 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		if (!ubd.isClicked())
 			ubd.getBlock().setClickedCount(ubd.getBlock().getClickedCount() + 1);
 		
-		if (ubd.getClickedTimestampAsLong() < clickTime)
-			ubd.setClickedTimestampAsLong(clickTime);
+		if (ubd.getClickedTimestampAsLong() < clickedTime)
+			ubd.setClickedTimestampAsLong(clickedTime);
 		
 		// we automatically unignore anything you click on
 		if (ubd.isIgnored())
 			setBlockHushed(ubd, false);
 		
-		logger.debug("due to click, restacking block {} with new time {}", ubd.getBlock(), clickTime);
+		logger.debug("due to click, restacking block {} with new time {}",
+				ubd.getBlock(), clickedTime);
+		
 		// now update the timestamp in the block (if it's newer)
 		// and update user caches for all users
-		stack(ubd.getBlock(), clickTime);
+		stack(ubd.getBlock(), clickedTime);
 	}
 
 	// FIXME this function should die since block-type-specific code should not 
@@ -589,10 +591,6 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		if (!onlySelf)
 			stack(getBlogPersonKey(user.getGuid(), StackInclusion.ONLY_WHEN_VIEWED_BY_OTHERS), activity, user, false);		
 	}
-	
-	public void clickedPost(Post post, User user, long clickedTime) {
-		click(getPostKey(post.getGuid()), user, clickedTime);
-	}	
 		
 	// Preparing a block view creates a skeletal BlockView that has the Block and the 
 	// UserBlockData and nothing more. The idea is that when paging a stack of blocks,

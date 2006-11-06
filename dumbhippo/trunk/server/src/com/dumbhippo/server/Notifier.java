@@ -9,6 +9,7 @@ import com.dumbhippo.server.listeners.GroupCreationListener;
 import com.dumbhippo.server.listeners.GroupMembershipListener;
 import com.dumbhippo.server.listeners.MusicListener;
 import com.dumbhippo.server.listeners.PostChatListener;
+import com.dumbhippo.server.listeners.PostClickedListener;
 import com.dumbhippo.server.listeners.PostListener;
 import com.dumbhippo.server.listeners.UserCreationListener;
 
@@ -39,7 +40,7 @@ import com.dumbhippo.server.listeners.UserCreationListener;
 public interface Notifier 
 	extends AccountStatusListener, UserCreationListener, GroupCreationListener,
 	PostListener, ExternalAccountsListener, GroupMembershipListener,
-	MusicListener, GroupChatListener, PostChatListener {
+	MusicListener, GroupChatListener, PostChatListener, PostClickedListener {
 	// Nothing in Notifier itself; Notifier just "aggregates"
 	// the listener interfaces. If you do add something here
 	// then remember that NotifierBean has a non-default transaction 

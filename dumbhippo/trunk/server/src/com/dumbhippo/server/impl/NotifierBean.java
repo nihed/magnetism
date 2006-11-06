@@ -39,6 +39,7 @@ import com.dumbhippo.server.listeners.GroupCreationListener;
 import com.dumbhippo.server.listeners.GroupMembershipListener;
 import com.dumbhippo.server.listeners.MusicListener;
 import com.dumbhippo.server.listeners.PostChatListener;
+import com.dumbhippo.server.listeners.PostClickedListener;
 import com.dumbhippo.server.listeners.PostListener;
 import com.dumbhippo.server.listeners.UserCreationListener;
 import com.dumbhippo.server.util.EJBUtil;
@@ -245,6 +246,12 @@ public class NotifierBean implements Notifier {
 	public void onPostMessageCreated(PostMessage message) {
 		for (PostChatListener l : getListeners(PostChatListener.class)) {
 			l.onPostMessageCreated(message);
+		}
+	}
+
+	public void onPostClicked(Post post, User user, long clickedTime) {
+		for (PostClickedListener l : getListeners(PostClickedListener.class)) {
+			l.onPostClicked(post, user, clickedTime);
 		}
 	}
 }

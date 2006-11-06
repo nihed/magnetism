@@ -87,7 +87,6 @@ import com.dumbhippo.server.PostSearchResult;
 import com.dumbhippo.server.PostType;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.RecommenderSystem;
-import com.dumbhippo.server.Stacker;
 import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.XmppMessageSender;
 import com.dumbhippo.server.util.EJBUtil;
@@ -148,10 +147,6 @@ public class PostingBoardBean implements PostingBoard {
 	@EJB
 	@IgnoreDependency
 	private RecommenderSystem recommenderSystem;
-	
-	@EJB
-	@IgnoreDependency
-	private Stacker stacker;
 	
 	@EJB
 	private Notifier notifier;
@@ -1141,7 +1136,7 @@ public class PostingBoardBean implements PostingBoard {
 		setPostIgnored(user, post, false); // Since they viewed it, they implicitly un-ignore it
 		
 		// pass the clicked info over to our new way of recording it also...
-		stacker.clickedPost(post, user, ppd.getClickedDateAsLong());
+		notifier.onPostClicked(post, user, ppd.getClickedDateAsLong());
 		
 		if (!previouslyViewed) {
 			LiveState.getInstance().queueUpdate(new PostViewedEvent(postGuid, user.getGuid(), ppd.getClickedDate()));

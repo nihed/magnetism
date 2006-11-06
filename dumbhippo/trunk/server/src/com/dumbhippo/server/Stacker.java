@@ -9,7 +9,6 @@ import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.BlockKey;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupMember;
-import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.server.blocks.BlockView;
@@ -35,6 +34,8 @@ public interface Stacker {
 	public void stack(Block block, long activity, User participant, boolean isGroupParticipation);
 	public void stack(Block block, long activity);
 	
+	public void blockClicked(BlockKey key, User user, long clickedTime);
+	
 	// FIXME: All of the stack<BlockType> methods below could be usefully
 	// changed to take attached objects rather than object identifiers. They are meant
 	// to be called within the transaction where the object is created or modified.
@@ -43,8 +44,6 @@ public interface Stacker {
 	public void stackGroupMember(GroupMember member, long activity);
 	public void stackFacebookPerson(User user, boolean onlySelf, long activity);
 	public void stackBlogPerson(User user, boolean onlySelf, long activity);
-	
-	public void clickedPost(Post post, User user, long clickedTime);
 	
 	public BlockView loadBlock(Viewpoint viewpoint, UserBlockData ubd) throws NotFoundException;
 	
