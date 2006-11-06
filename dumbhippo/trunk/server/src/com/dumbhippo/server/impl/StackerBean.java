@@ -15,8 +15,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import javax.ejb.EJB;
-import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.NonUniqueResultException;
@@ -536,35 +534,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	private BlockKey getGroupMemberKey(Guid groupId, Guid userId) {
 		return getHandler(GroupMemberBlockHandler.class, BlockType.GROUP_MEMBER).getKey(groupId, userId);
 	}
-	
-	// FIXME this function should die since block-type-specific code should not 
-	// be in this file
-	private BlockKey getFacebookPersonKey(Guid userId, StackInclusion inclusion) {
-		return getHandler(FacebookBlockHandler.class, BlockType.FACEBOOK_PERSON).getKey(userId, inclusion);
-	}
-	
-	// FIXME this function should die since block-type-specific code should not 
-	// be in this file
-	private BlockKey getBlogPersonKey(Guid userId, StackInclusion inclusion) {
-		return getHandler(BlogBlockHandler.class, BlockType.BLOG_PERSON).getKey(userId, inclusion);
-	}
 
-	// don't create or suspend transaction; we will manage our own for now (FIXME)
-	@TransactionAttribute(TransactionAttributeType.SUPPORTS)
-	public void stackFacebookPerson(User user, boolean onlySelf, long activity) {
-		stack(getFacebookPersonKey(user.getGuid(), StackInclusion.ONLY_WHEN_VIEWING_SELF), activity, user, false);
-		if (!onlySelf)
-			stack(getFacebookPersonKey(user.getGuid(), StackInclusion.ONLY_WHEN_VIEWED_BY_OTHERS), activity, user, false);
-	}
-
-	// don't create or suspend transaction; we will manage our own for now (FIXME)
-	@TransactionAttribute(TransactionAttributeType.SUPPORTS)	
-	public void stackBlogPerson(User user, boolean onlySelf, long activity) {
-		stack(getBlogPersonKey(user.getGuid(), StackInclusion.ONLY_WHEN_VIEWING_SELF), activity, user, false);
-		if (!onlySelf)
-			stack(getBlogPersonKey(user.getGuid(), StackInclusion.ONLY_WHEN_VIEWED_BY_OTHERS), activity, user, false);		
-	}
-		
 	// Preparing a block view creates a skeletal BlockView that has the Block and the 
 	// UserBlockData and nothing more. The idea is that when paging a stack of blocks,
 	// we want to scan through the pages before the one we are viewing as fast as
