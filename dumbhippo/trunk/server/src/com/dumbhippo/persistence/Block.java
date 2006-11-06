@@ -182,6 +182,7 @@ public class Block extends EmbeddedGuidPersistable {
 	
 	@Override
 	public String toString() {
-		return "{Block type=" + getBlockType() + " timestamp=" + getTimestampAsLong() + " data1=" + getData1() + " data2=" + getData2() + "}";
+		return "{Block type=" + getBlockType() + " timestamp=" + getTimestampAsLong() + " data1=" + getData1() + " data2=" + getData2() 
+		       + " data3=" + getData3() + " publicBlock=" + isPublicBlock() + " inclusion=" + getInclusion() + "}";
 	}
 }

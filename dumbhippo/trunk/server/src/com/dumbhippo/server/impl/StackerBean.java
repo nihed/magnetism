@@ -453,7 +453,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 				runner.runTaskRetryingOnConstraintViolation(new Runnable() {
 					public void run() {
 						Block attached = em.find(Block.class, block.getId());
-						updateUserBlockDatas(attached, participant.getGuid());
+						updateUserBlockDatas(attached, (participant != null ? participant.getGuid() : null));
 						updateGroupBlockDatas(attached, isGroupParticipation);
 					}
 				});

@@ -84,12 +84,12 @@ public class FacebookBlockHandlerBean extends AbstractBlockHandlerBean<FacebookB
 	}
 
 	private void stackSelfOnly(User user, long activity) {
-		stacker.stack(getKey(user, StackInclusion.ONLY_WHEN_VIEWING_SELF), activity);
+		stacker.stack(getKey(user, StackInclusion.ONLY_WHEN_VIEWING_SELF), activity, user, false);
 	}
 	
 	private void stackSelfAndOthers(User user, long activity) {
 		stackSelfOnly(user, activity);
-		stacker.stack(getKey(user, StackInclusion.ONLY_WHEN_VIEWED_BY_OTHERS), activity);
+		stacker.stack(getKey(user, StackInclusion.ONLY_WHEN_VIEWED_BY_OTHERS), activity, user, false);
 	}
 	
 	public void onFacebookSignedIn(User user, FacebookAccount facebookAccount, long activity) {

@@ -177,10 +177,10 @@ public abstract class AbstractBlockHandlerBean<BlockViewSubType extends BlockVie
 		
 			// we also show each block to its "owner"
 			peopleWhoCare.add(user);
-			break;
+			return peopleWhoCare;
 		case ONLY_WHEN_VIEWING_SELF:
 			peopleWhoCare = Collections.singleton(user);
-			break;
+			return peopleWhoCare;
 			// no default, it hides bugs
 		}
 		

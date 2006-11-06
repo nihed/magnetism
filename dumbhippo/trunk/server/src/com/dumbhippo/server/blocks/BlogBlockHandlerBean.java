@@ -87,7 +87,7 @@ public class BlogBlockHandlerBean extends AbstractBlockHandlerBean<BlogBlockView
 		// entry.getDate().getTime() creates a timestamp that is too old, at least with blogspot
 		// so it is unreliable, because we update blocks based on timestamps
 		long now = System.currentTimeMillis();
-		stacker.stack(getKey(user, StackInclusion.ONLY_WHEN_VIEWED_BY_OTHERS), now);
-		stacker.stack(getKey(user, StackInclusion.ONLY_WHEN_VIEWING_SELF), now);
+		stacker.stack(getKey(user, StackInclusion.ONLY_WHEN_VIEWED_BY_OTHERS), now, user, false);
+		stacker.stack(getKey(user, StackInclusion.ONLY_WHEN_VIEWING_SELF), now, user, false);
 	}
 }
