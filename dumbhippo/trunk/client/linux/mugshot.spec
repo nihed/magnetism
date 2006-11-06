@@ -98,7 +98,7 @@ if [ $1 -gt 1 ] ; then
     SCHEMAS="mugshot-uri-handler.schemas"
 
     for S in $SCHEMAS; do
-        gconftool-2 --makefile-install-rule %{_sysconfdir}/gconf/schemas/$S > /dev/null || :
+        gconftool-2 --makefile-uninstall-rule %{_sysconfdir}/gconf/schemas/$S > /dev/null || :
     done
 
     # Necessary for FC5/FC6 only because of 
