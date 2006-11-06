@@ -21,7 +21,7 @@ public abstract class AbstractCacheBean<KeyType,ResultType> {
 	// how long to wait on the search API call
 	static protected final int REQUEST_TIMEOUT = 1000 * 12;
 	// 2 days, shared by yahoo-related subclasses
-	static protected final int YAHOO_EXPIRATION_TIMEOUT = 0; // 1000 * 60 * 60 * 24 * 2;
+	static protected final int YAHOO_EXPIRATION_TIMEOUT = 1000 * 60 * 60 * 24 * 2;
 	// hour timeout to retry on failure
 	static protected final int FAILED_QUERY_TIMEOUT = 1000 * 60 * 60;
 
