@@ -219,12 +219,18 @@ public class NotifierBean implements Notifier {
 		}
 	}
 
-	public void onGroupMemberCreated(GroupMember member) {
+	public void onGroupMemberCreated(GroupMember member, long when) {
 		for (GroupMembershipListener l : getListeners(GroupMembershipListener.class)) {
-			l.onGroupMemberCreated(member);
+			l.onGroupMemberCreated(member, when);
 		}
 	}
 
+	public void onGroupMemberStatusChanged(GroupMember member, long when) {
+		for (GroupMembershipListener l : getListeners(GroupMembershipListener.class)) {
+			l.onGroupMemberStatusChanged(member, when);
+		}
+	}
+	
 	public void onExternalAccountCreated(User user, ExternalAccount external) {
 		for (ExternalAccountsListener l : getListeners(ExternalAccountsListener.class)) {
 			l.onExternalAccountCreated(user, external);

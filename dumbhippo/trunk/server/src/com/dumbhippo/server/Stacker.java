@@ -8,7 +8,6 @@ import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.BlockKey;
 import com.dumbhippo.persistence.Group;
-import com.dumbhippo.persistence.GroupMember;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.server.blocks.BlockView;
@@ -41,7 +40,6 @@ public interface Stacker {
 	// to be called within the transaction where the object is created or modified.
 	// These methods are used when activity should cause the timestamp of a block to change. 
 	// They are per block type. 
-	public void stackGroupMember(GroupMember member, long activity);
 	public void stackFacebookPerson(User user, boolean onlySelf, long activity);
 	public void stackBlogPerson(User user, boolean onlySelf, long activity);
 	

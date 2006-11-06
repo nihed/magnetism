@@ -36,7 +36,12 @@ public class GroupMemberBlockHandlerBean extends AbstractBlockHandlerBean<GroupM
 		return getKey(group.getGuid(), user.getGuid());
 	}
 	
-	public BlockKey getKey(Guid groupId, Guid userId) {
+	public BlockKey getKey(Guid groupId, Guid userId) {		
+		// Note that GroupMember objects can be deleted (and recreated).
+		// They can also be associated with invited addresses and not accounts.
+		// The identity of the Block is thus tied to the groupId,userId pair
+		// rather than the GroupMember.
+
 		return new BlockKey(BlockType.GROUP_MEMBER, groupId, userId);
 	}	
 	
@@ -83,7 +88,7 @@ public class GroupMemberBlockHandlerBean extends AbstractBlockHandlerBean<GroupM
 		return getData1GroupAsSet(block);
 	}
 	
-	public void onGroupMemberCreated(GroupMember member) {
+	public void onGroupMemberCreated(GroupMember member, long when) {
 		// Blocks only exist for group members which correspond to accounts in the
 		// system. If the group member is (say) an email resource, and later joins
 		// the system, when they join, we'll delete this GroupMember, add a new one 
@@ -94,7 +99,28 @@ public class GroupMemberBlockHandlerBean extends AbstractBlockHandlerBean<GroupM
 			// get onGroupMemberCreated again later for the same group/person if they rejoin
 			Block block = stacker.getOrCreateBlock(getKey(member.getGroup(), a.getOwner()));
 			block.setPublicBlock(member.getGroup().isPublic());
-		}
+			stacker.stack(block, when, a.getOwner(), true);
+		}		
 	}
 
+	public void onGroupMemberStatusChanged(GroupMember member, long when) {
+		AccountClaim a = member.getMember().getAccountClaim();
+		if (a == null)
+			return; // ignore "resource" members
+		
+		switch (member.getStatus()) {
+		case ACTIVE:
+		case FOLLOWER:
+		case REMOVED:
+		case INVITED:
+		case INVITED_TO_FOLLOW:			
+			stacker.stack(getKey(member.getGroup(), a.getOwner()),
+					when, a.getOwner(), true);
+			break;
+		case NONMEMBER:
+			// moves to these states don't create a new timestamp
+			break;
+			// don't add a default case, we want a warning if any are missing
+		}
+	}
 }

@@ -548,33 +548,6 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	private BlockKey getBlogPersonKey(Guid userId, StackInclusion inclusion) {
 		return getHandler(BlogBlockHandler.class, BlockType.BLOG_PERSON).getKey(userId, inclusion);
 	}
-	
-	// don't create or suspend transaction; we will manage our own for now (FIXME)
-	@TransactionAttribute(TransactionAttributeType.SUPPORTS)
-	public void stackGroupMember(GroupMember member, long activity) {
-		
-		// Note that GroupMember objects can be deleted (and recreated).
-		// They can also be associated with invited addresses and not accounts.
-		// The identity of the Block is thus tied to the groupId,userId pair
-		// rather than the GroupMember.
-		
-		switch (member.getStatus()) {
-		case ACTIVE:
-		case FOLLOWER:
-		case REMOVED:
-		case INVITED:
-		case INVITED_TO_FOLLOW:			
-			AccountClaim a = member.getMember().getAccountClaim();
-			if (a != null) {
-				stack(getGroupMemberKey(member.getGroup().getGuid(), a.getOwner().getGuid()), activity, a.getOwner(), true);
-			}
-			break;
-		case NONMEMBER:
-			// moves to these states don't create a new timestamp
-			break;
-			// don't add a default case, we want a warning if any are missing
-		}
-	}
 
 	// don't create or suspend transaction; we will manage our own for now (FIXME)
 	@TransactionAttribute(TransactionAttributeType.SUPPORTS)
@@ -1685,11 +1658,12 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		for (GroupMember member : group.getMembers()) {
 			AccountClaim a = member.getMember().getAccountClaim();
 			if (a != null) {
-				getOrCreateBlock(getGroupMemberKey(member.getGroup().getGuid(), a.getOwner().getGuid()), group.isPublic());
+				BlockKey key = getGroupMemberKey(member.getGroup().getGuid(), a.getOwner().getGuid());
+				Block block = getOrCreateBlock(key, group.isPublic());
 				// we set a timestamp of 0, since we have no way of knowing the right
 				// timestamp, and we don't want to make a big pile of group member blocks 
 				// at the top of the stack whenever we run a migration
-				stackGroupMember(member, 0);
+				stack(block, 0, a.getOwner(), true);
 			}
 		}
 	}

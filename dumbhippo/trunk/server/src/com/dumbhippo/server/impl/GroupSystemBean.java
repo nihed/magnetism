@@ -21,7 +21,6 @@ import org.apache.lucene.queryParser.QueryParser;
 import org.apache.lucene.queryParser.QueryParser.Operator;
 import org.apache.lucene.search.Hits;
 import org.hibernate.lucene.DocumentBuilder;
-import org.jboss.annotation.IgnoreDependency;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
@@ -53,7 +52,6 @@ import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Notifier;
 import com.dumbhippo.server.Pageable;
 import com.dumbhippo.server.PersonViewer;
-import com.dumbhippo.server.Stacker;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.views.ChatMessageView;
 import com.dumbhippo.server.views.GroupView;
@@ -84,10 +82,6 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 	@EJB
 	private Notifier notifier;
 	
-	@EJB
-	@IgnoreDependency
-	private Stacker stacker;
-	
 	public Group createGroup(User creator, String name, GroupAccess access, String description) {
 		if (creator == null)
 			throw new IllegalArgumentException("null group creator");
@@ -104,7 +98,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		// Fix up the inverse side of the mapping
 		g.getMembers().add(groupMember);
 		
-		notifier.onGroupMemberCreated(groupMember);
+		notifier.onGroupMemberCreated(groupMember, System.currentTimeMillis());
 		
 		searchSystem.indexGroup(g, false);
 		
@@ -177,7 +171,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 				accountMember.setAdders(adders);
 			em.persist(accountMember);
 			group.getMembers().add(accountMember);
-			notifier.onGroupMemberCreated(accountMember);
+			notifier.onGroupMemberCreated(accountMember, System.currentTimeMillis());
 		}
 		
 		return accountMember;
@@ -271,6 +265,8 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		
 		boolean adderCanAdd = canAddMembers(adder, group);
 		
+		long now = System.currentTimeMillis();
+		
 		MembershipStatus newStatus;
 		if (selfAdd)
 			newStatus = adderCanAdd ? MembershipStatus.ACTIVE : MembershipStatus.FOLLOWER;
@@ -333,10 +329,10 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 			group.getMembers().add(groupMember);
 			em.persist(group);
 			
-			notifier.onGroupMemberCreated(groupMember);
+			notifier.onGroupMemberCreated(groupMember, now);
 		}
 		
-		stacker.stackGroupMember(groupMember, System.currentTimeMillis());
+		notifier.onGroupMemberStatusChanged(groupMember, now);
 		
         LiveState.getInstance().queueUpdate(new GroupEvent(group.getGuid(), groupMember.getMember().getGuid(),
         		GroupEvent.Detail.MEMBERS_CHANGED));
@@ -366,7 +362,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 			if (groupMember.getStatus().ordinal() > MembershipStatus.REMOVED.ordinal()) {
 				groupMember.setStatus(MembershipStatus.REMOVED);
 				
-				stacker.stackGroupMember(groupMember, System.currentTimeMillis());
+				notifier.onGroupMemberStatusChanged(groupMember, System.currentTimeMillis());
 		        LiveState.getInstance().queueUpdate(new GroupEvent(group.getGuid(),
 		        		groupMember.getMember().getGuid(), GroupEvent.Detail.MEMBERS_CHANGED));
 			} else if (groupMember.getStatus().ordinal() < MembershipStatus.REMOVED.ordinal()) {
