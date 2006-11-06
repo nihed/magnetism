@@ -49,10 +49,15 @@ public class FacebookBlockView extends BlockView implements ExternalAccountBlock
 	
 	@Override
 	protected void writeDetailsToXmlBuilder(XmlBuilder builder) {
-		builder.appendEmptyNode("updateItem",
-				                "updateTitle", "new updates",
-				                "updateLink", "http:://www.facebook.com",
-				                "updateText", "");
+		builder.openElement("facebookPerson");
+		
+		for (FacebookEvent event : getFacebookEvents()) {
+			builder.appendEmptyNode("event", "type", event.getEventType().name(),
+					"count", Integer.toString(event.getCount()),
+					"timestamp",  Long.toString(event.getEventTimestampAsLong()));					
+		}
+		
+		builder.closeElement();
 	}
 	
 	public List<Object> getReferencedObjects() {

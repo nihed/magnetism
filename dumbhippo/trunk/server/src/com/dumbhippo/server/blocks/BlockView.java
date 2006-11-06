@@ -5,6 +5,7 @@ import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.BlockType;
+import com.dumbhippo.persistence.FeedEntry;
 import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.server.views.ObjectView;
 import com.dumbhippo.server.views.PersonView;
@@ -81,6 +82,13 @@ public abstract class BlockView implements ObjectView {
 	}
 	
 	protected abstract void writeDetailsToXmlBuilder(XmlBuilder builder);
+	
+	// a child multiple block types might have
+	protected void writeFeedEntryToXmlBuilder(XmlBuilder builder, FeedEntry entry) {
+		builder.appendTextNode("feedEntry", entry.getDescription(),
+				"title", entry.getTitle(),
+				"href", entry.getLink().getUrl());
+	}
 	
 	@Override
 	public String toString() {

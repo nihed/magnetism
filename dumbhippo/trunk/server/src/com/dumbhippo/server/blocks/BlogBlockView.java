@@ -50,10 +50,9 @@ public class BlogBlockView extends BlockView implements ExternalAccountBlockView
 	
 	@Override
 	protected void writeDetailsToXmlBuilder(XmlBuilder builder) {
-		builder.appendEmptyNode("updateItem",
-				                "updateTitle", entry.getTitle(),
-				                "updateLink", entry.getLink().getUrl(),
-				                "updateText", entry.getDescription());
+		builder.openElement("blogPerson");
+		writeFeedEntryToXmlBuilder(builder, entry);
+		builder.closeElement();
 	}
 	
 	public List<Object> getReferencedObjects() {
