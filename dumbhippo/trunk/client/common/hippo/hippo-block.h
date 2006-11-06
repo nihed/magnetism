@@ -37,6 +37,7 @@ struct _HippoBlock {
     gint64 clicked_timestamp;
     gint64 ignored_timestamp;
     int clicked_count;
+    char *icon_url;
     guint clicked : 1;
     guint ignored : 1;
 };
@@ -83,6 +84,10 @@ void     hippo_block_set_clicked           (HippoBlock *block,
 gboolean hippo_block_get_ignored           (HippoBlock *block);
 void     hippo_block_set_ignored           (HippoBlock *block,
                                             gboolean    value);
+
+const char* hippo_block_get_icon_url       (HippoBlock *block); 
+void        hippo_block_set_icon_url       (HippoBlock *block,
+                                            const char *icon_url);
 
 int      hippo_block_compare_newest_first  (gconstpointer block_a,
                                             gconstpointer block_b);

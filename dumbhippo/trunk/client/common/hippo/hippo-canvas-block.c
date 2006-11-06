@@ -400,6 +400,15 @@ hippo_canvas_block_constructor (GType                  type,
                        "font", "Bold 12px",
                        NULL);
     hippo_canvas_box_append(left_column, HIPPO_CANVAS_ITEM(box), 0);
+
+    block->heading_icon_item = g_object_new(HIPPO_TYPE_CANVAS_IMAGE,
+                                            "xalign", HIPPO_ALIGNMENT_CENTER,
+                                            "yalign", HIPPO_ALIGNMENT_CENTER,
+                                            "scale-width", 16, /* favicon size */
+                                            "scale-height", 16,
+                                            "border-right", 6,
+                                            NULL);
+    hippo_canvas_box_append(box, block->heading_icon_item, 0);
     
     block->heading_text_item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
                                             "text", NULL,
@@ -729,6 +738,29 @@ on_block_ignored_changed(HippoBlock *block,
 }
 
 static void
+on_block_icon_url_changed(HippoBlock *block,
+                          GParamSpec *arg, /* null when we invoke callback manually */
+                          void       *data)
+{
+    HippoCanvasBlock *canvas_block = HIPPO_CANVAS_BLOCK(data);
+    const char *icon_url;
+
+    icon_url = hippo_block_get_icon_url(block);
+    
+    if (icon_url == NULL) {
+        g_object_set(G_OBJECT(canvas_block->heading_icon_item),
+                     "image", NULL,
+                     NULL);
+    } else {
+        if (canvas_block->actions) {
+            hippo_actions_load_favicon_async(canvas_block->actions,
+                                             icon_url,
+                                             canvas_block->heading_icon_item);
+        }
+    }
+}
+
+static void
 hippo_canvas_block_set_block_impl(HippoCanvasBlock *canvas_block,
                                   HippoBlock       *new_block)
 {
@@ -757,6 +789,9 @@ hippo_canvas_block_set_block_impl(HippoCanvasBlock *canvas_block,
             g_signal_connect(G_OBJECT(new_block), "notify::ignored",
                              G_CALLBACK(on_block_ignored_changed),
                              canvas_block);
+            g_signal_connect(G_OBJECT(new_block), "notify::icon-url",
+                             G_CALLBACK(on_block_icon_url_changed),
+                             canvas_block);
         }
         if (canvas_block->block) {
             g_signal_handlers_disconnect_by_func(G_OBJECT(canvas_block->block),
@@ -768,6 +803,9 @@ hippo_canvas_block_set_block_impl(HippoCanvasBlock *canvas_block,
             g_signal_handlers_disconnect_by_func(G_OBJECT(canvas_block->block),
                                                  G_CALLBACK(on_block_ignored_changed),
                                                  canvas_block);
+            g_signal_handlers_disconnect_by_func(G_OBJECT(canvas_block->block),
+                                                 G_CALLBACK(on_block_icon_url_changed),
+                                                 canvas_block);
             g_object_unref(canvas_block->block);
         }
         canvas_block->block = new_block;
@@ -776,6 +814,7 @@ hippo_canvas_block_set_block_impl(HippoCanvasBlock *canvas_block,
             on_block_timestamp_changed(new_block, NULL, canvas_block);
             on_block_clicked_count_changed(new_block, NULL, canvas_block);
             on_block_ignored_changed(new_block, NULL, canvas_block);
+            on_block_icon_url_changed(new_block, NULL, canvas_block);
         }
         
         g_object_notify(G_OBJECT(canvas_block), "block");

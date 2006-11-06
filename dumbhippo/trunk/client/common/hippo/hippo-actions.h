@@ -48,6 +48,9 @@ void          hippo_actions_load_entity_photo_async (HippoActions    *actions,
                                                      HippoEntity     *entity,
                                                      int              size,
                                                      HippoCanvasItem *image_item);
+void          hippo_actions_load_favicon_async      (HippoActions    *actions,
+                                                     const char      *image_url,
+                                                     HippoCanvasItem *image_item);
 HippoEntity*  hippo_actions_lookup_entity           (HippoActions    *actions,
                                                      const char      *entity_guid);
 gint64        hippo_actions_get_server_time_offset  (HippoActions    *actions);

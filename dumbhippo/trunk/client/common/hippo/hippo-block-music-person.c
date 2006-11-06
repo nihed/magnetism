@@ -70,7 +70,7 @@ hippo_block_music_person_class_init(HippoBlockMusicPersonClass *klass)
 static void
 hippo_block_music_person_dispose(GObject *object)
 {
-    HippoBlockMusicPerson *block_music_person = HIPPO_BLOCK_MUSIC_PERSON(object);
+    /* HippoBlockMusicPerson *block_music_person = HIPPO_BLOCK_MUSIC_PERSON(object); */
 
     G_OBJECT_CLASS(hippo_block_music_person_parent_class)->dispose(object); 
 }
@@ -87,7 +87,7 @@ hippo_block_music_person_set_property(GObject         *object,
                                       const GValue    *value,
                                       GParamSpec      *pspec)
 {
-    HippoBlockMusicPerson *block_music_person = HIPPO_BLOCK_MUSIC_PERSON(object);
+    /* HippoBlockMusicPerson *block_music_person = HIPPO_BLOCK_MUSIC_PERSON(object); */
 
     switch (prop_id) {
     default:
@@ -102,7 +102,7 @@ hippo_block_music_person_get_property(GObject         *object,
                                       GValue          *value,
                                       GParamSpec      *pspec)
 {
-    HippoBlockMusicPerson *block_music_person = HIPPO_BLOCK_MUSIC_PERSON(object);
+    /* HippoBlockMusicPerson *block_music_person = HIPPO_BLOCK_MUSIC_PERSON(object); */
 
     switch (prop_id) {
     default:
@@ -116,7 +116,7 @@ hippo_block_music_person_update_from_xml (HippoBlock           *block,
                                           HippoDataCache       *cache,
                                           LmMessageNode        *node)
 {
-    HippoBlockMusicPerson *block_music_person = HIPPO_BLOCK_MUSIC_PERSON(block);
+    /* HippoBlockMusicPerson *block_music_person = HIPPO_BLOCK_MUSIC_PERSON(block); */
     LmMessageNode *music_node;
     HippoPerson *user;
 

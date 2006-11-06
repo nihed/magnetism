@@ -2112,7 +2112,7 @@ hippo_connection_parse_post(HippoConnection *connection,
     const char *sender_guid;
     const char *url;
     const char *title;
-    const char *text = "";
+    const char *text = NULL;
     const char *info =  NULL;
     gboolean to_world = FALSE;
     gboolean ignored = FALSE;
@@ -2138,6 +2138,9 @@ hippo_connection_parse_post(HippoConnection *connection,
                          NULL))
         return FALSE;
 
+    if (text == NULL)
+        text = "";
+    
     /* FIXME: this deviates from our practice elsewhere, where we use gint64 ms */
     post_date = post_date_int;
 

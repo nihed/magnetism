@@ -21,7 +21,8 @@ struct _HippoActions {
      * cache behavior.
      */
     HippoImageCache *entity_photo_cache;
-
+    HippoImageCache *favicon_cache;
+    
     guint minute_timeout_id;
 };
 
@@ -167,6 +168,29 @@ image_set_on_canvas_item_func(HippoSurface *surface,
 
     /* this function held a ref */
     g_object_unref(item);
+}
+
+void
+hippo_actions_load_favicon_async(HippoActions    *actions,
+                                 const char      *image_url,
+                                 HippoCanvasItem *image_item)
+{
+    char *absolute;
+    
+    if (actions->favicon_cache == NULL) {
+        actions->favicon_cache = hippo_image_cache_new(get_platform(actions));
+    }
+
+    /* hippo_object_cache_debug_dump(HIPPO_OBJECT_CACHE(actions->favicon_cache)); */
+    
+    absolute = hippo_connection_make_absolute_url(get_connection(actions),
+                                                  image_url);
+    g_object_ref(image_item); /* held by the loader func */
+    hippo_image_cache_load(actions->favicon_cache, absolute,
+                           image_set_on_canvas_item_func,
+                           image_item);
+    
+    g_free(absolute);
 }
 
 void

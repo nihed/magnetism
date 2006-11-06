@@ -164,6 +164,18 @@ typedef struct {
     gboolean found;
 } HippoSplitInfo;
 
+
+/* This keeps people from setting a default value until after the xml split, but it
+ * also catches an easy/common bug
+ */
+#define CHECK_NULL_IF_OPTIONAL(info, type) do {                         \
+    if (info->flags & HIPPO_SPLIT_OPTIONAL) {                           \
+        if (*((type *) (info->location)) != NULL)                       \
+            g_warning("HIPPO_SPLIT_OPTIONAL given but type %s for attr '%s' not initialized to NULL", \
+                      #type, info->attribute_name);                     \
+    }                                                                   \
+} while(0)
+
 static gboolean
 hippo_xml_split_process_value(HippoDataCache  *cache,
                               const char      *node_name,
@@ -179,6 +191,7 @@ hippo_xml_split_process_value(HippoDataCache  *cache,
         g_assert_not_reached();
         break;
     case HIPPO_SPLIT_STRING:
+        CHECK_NULL_IF_OPTIONAL(info, char*);
         *(const char **)info->location = value;
         break;
     case HIPPO_SPLIT_INT32:
@@ -215,6 +228,8 @@ hippo_xml_split_process_value(HippoDataCache  *cache,
         }
         break;
     case HIPPO_SPLIT_GUID:
+        CHECK_NULL_IF_OPTIONAL(info, char*);
+
         if (!hippo_verify_guid(value)) {
             g_set_error(error, HIPPO_XML_ERROR, HIPPO_XML_ERROR_INVALID_CONTENT,
                         "Value '%s' for attribute '%s' of node <%s/> is not a GUID",
@@ -228,6 +243,8 @@ hippo_xml_split_process_value(HippoDataCache  *cache,
     case HIPPO_SPLIT_PERSON:
         if (!cache)
             g_error("HIPPO_SPLIT_ENTITY used without passing in a HippoDataCache");
+
+        CHECK_NULL_IF_OPTIONAL(info, HippoEntity*);
         
         if (!hippo_verify_guid(value)) {
             g_set_error(error, HIPPO_XML_ERROR, HIPPO_XML_ERROR_INVALID_CONTENT,
@@ -263,6 +280,8 @@ hippo_xml_split_process_value(HippoDataCache  *cache,
         *(HippoEntity **)info->location = entity;
         break;
     case HIPPO_SPLIT_POST:
+        CHECK_NULL_IF_OPTIONAL(info, HippoPost*);
+        
         if (!cache)
             g_error("HIPPO_SPLIT_POST used without passing in a HippoDataCache");
         
@@ -284,6 +303,8 @@ hippo_xml_split_process_value(HippoDataCache  *cache,
         *(HippoPost **)info->location = post;
         break;
     case HIPPO_SPLIT_URI_ABSOLUTE:
+        CHECK_NULL_IF_OPTIONAL(info, char*);
+        
         if (!validate_absolute_uri(value)) {
             g_set_error(error, HIPPO_XML_ERROR, HIPPO_XML_ERROR_INVALID_CONTENT,
                         "Value '%s' for attribute '%s' of node <%s/> is not an absolute URI",
@@ -293,6 +314,8 @@ hippo_xml_split_process_value(HippoDataCache  *cache,
         *(const char **)info->location = value;
         break;
     case HIPPO_SPLIT_URI_RELATIVE:
+        CHECK_NULL_IF_OPTIONAL(info, char*);
+        
         if (!validate_relative_uri(value)) {
             g_set_error(error, HIPPO_XML_ERROR, HIPPO_XML_ERROR_INVALID_CONTENT,
                         "Value '%s' for attribute '%s' of node <%s/> is not a relative URI",
@@ -302,6 +325,8 @@ hippo_xml_split_process_value(HippoDataCache  *cache,
         *(const char **)info->location = value;
         break;
     case HIPPO_SPLIT_URI_EITHER:
+        CHECK_NULL_IF_OPTIONAL(info, char*);
+        
         if (!validate_either_uri(value)) {
             g_set_error(error, HIPPO_XML_ERROR, HIPPO_XML_ERROR_INVALID_CONTENT,
                         "Value '%s' for attribute '%s' of node <%s/> is not a URI",
@@ -428,7 +453,7 @@ hippo_xml_split(HippoDataCache *cache,
      */
     for (i = 0; i < count; i++) {
         HippoSplitInfo *info = &infos[i];
-        if (!info->found) {
+        if (!info->found) {            
             if (!(info->flags & HIPPO_SPLIT_OPTIONAL)) {
                 g_set_error(&internal_error, HIPPO_XML_ERROR, HIPPO_XML_ERROR_NOT_FOUND,
                             "%s '%s' not found for node <%s/>",

@@ -45,6 +45,7 @@ enum {
     PROP_IGNORED_TIMESTAMP,
     PROP_CLICKED_COUNT,
     PROP_CLICKED,
+    PROP_ICON_URL,
     PROP_IGNORED
 };
 
@@ -137,7 +138,16 @@ hippo_block_class_init(HippoBlockClass *klass)
                                                          _("Ignored"),
                                                          _("Whether we ignored the block"),
                                                          FALSE,
-                                                         G_PARAM_READABLE | G_PARAM_WRITABLE)); 
+                                                         G_PARAM_READABLE | G_PARAM_WRITABLE));
+
+    g_object_class_install_property(object_class,
+                                    PROP_ICON_URL,
+                                    g_param_spec_string("icon-url",
+                                                        _("Icon URL"),
+                                                        _("URL for block 'favicon'"),
+                                                        NULL,
+                                                        G_PARAM_READABLE));
+    
 }
 
 static void
@@ -188,6 +198,7 @@ hippo_block_set_property(GObject         *object,
     case PROP_GUID:                  /* read-only */
     case PROP_BLOCK_TYPE:            /* read-only */
     case PROP_SORT_TIMESTAMP:        /* read-only */
+    case PROP_ICON_URL:              /* read-only */
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
         break;
@@ -232,7 +243,10 @@ hippo_block_get_property(GObject         *object,
         break;
     case PROP_IGNORED:
         g_value_set_boolean(value, block->ignored);
-        break;        
+        break;
+    case PROP_ICON_URL:
+        g_value_set_string(value, block->icon_url);
+        break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
         break;
@@ -253,9 +267,11 @@ hippo_block_real_update_from_xml (HippoBlock     *block,
     int clicked_count;
     gboolean clicked;
     gboolean ignored;
+    const char *icon_url;
     
     g_assert(cache != NULL);
 
+    icon_url = NULL;
     if (!hippo_xml_split(cache, node, NULL,
                          "id", HIPPO_SPLIT_GUID, &guid,
                          "type", HIPPO_SPLIT_STRING, &type_str,
@@ -265,6 +281,7 @@ hippo_block_real_update_from_xml (HippoBlock     *block,
                          "clickedCount", HIPPO_SPLIT_INT32, &clicked_count,
                          "clicked", HIPPO_SPLIT_BOOLEAN, &clicked, 
                          "ignored", HIPPO_SPLIT_BOOLEAN, &ignored,
+                         "icon", HIPPO_SPLIT_STRING | HIPPO_SPLIT_OPTIONAL, &icon_url,
                          NULL))
         return FALSE;
 
@@ -285,7 +302,8 @@ hippo_block_real_update_from_xml (HippoBlock     *block,
     hippo_block_set_clicked_count(block, clicked_count);
     hippo_block_set_clicked(block, clicked);
     hippo_block_set_ignored(block, ignored);
-
+    hippo_block_set_icon_url(block, icon_url);
+    
     g_debug("Parsed block %s type %s - %s timestamp = %" G_GINT64_FORMAT,
             guid, g_type_name_from_instance((GTypeInstance*) block), type_str,
             timestamp);
@@ -519,6 +537,32 @@ hippo_block_set_ignored(HippoBlock *block,
         g_object_notify(G_OBJECT(block), "ignored");
     }
 }
+
+const char*
+hippo_block_get_icon_url(HippoBlock *block)
+{
+    g_return_val_if_fail(HIPPO_IS_BLOCK(block), NULL);
+
+    return block->icon_url;
+}
+
+void
+hippo_block_set_icon_url(HippoBlock *block,
+                         const char *icon_url)
+{
+    g_return_if_fail(HIPPO_IS_BLOCK(block));
+
+    if (icon_url == block->icon_url) /* catches both null, or self-assignment */
+        return;
+
+    if (icon_url && block->icon_url && strcmp(icon_url, block->icon_url) == 0)
+        return;
+
+    g_free(block->icon_url);
+    block->icon_url = g_strdup(icon_url);
+    g_object_notify(G_OBJECT(block), "icon-url");
+}
+
 
 HippoBlockType
 hippo_block_type_from_string(const char *s)
