@@ -38,8 +38,8 @@ public class EJBUtil {
 	@SuppressWarnings("unused")
 	static private final Logger logger = GlobalSetup.getLogger(EJBUtil.class);	
 	
-	private static final String rootName = "dumbhippo";
-	private static final String classPrefix = rootName + "/";
+	private static final String ROOT_NAME = "dumbhippo";
+	private static final String CLASS_PREFIX = ROOT_NAME + "/";
 	
 	private static final int MAX_SEARCH_TERMS = 3;
 	// we avoid using \ because by the 
@@ -175,7 +175,7 @@ public class EJBUtil {
 	}
 	
 	public static Object uncheckedDynamicLookupLocal(String name, boolean ha) throws NamingException {	
-		return uncheckedDynamicLookup(classPrefix + name + "Bean/local", ha);
+		return uncheckedDynamicLookup(CLASS_PREFIX + name + "Bean/local", ha);
 	}	
 	
 	public static Object uncheckedDynamicLookupRemote(String name) throws NamingException {
@@ -186,7 +186,7 @@ public class EJBUtil {
 		if (name.endsWith("Remote"))
 			name = name.substring(0, name.lastIndexOf("Remote"));
 		name = name + "Bean";
-		return uncheckedDynamicLookup(classPrefix + name + "/remote", ha);
+		return uncheckedDynamicLookup(CLASS_PREFIX + name + "/remote", ha);
 	}		
 	
 	public static Object uncheckedDynamicLookup(String name) throws NamingException {
@@ -208,7 +208,7 @@ public class EJBUtil {
 			throw new IllegalArgumentException("Class passed to contextLookup() has to be an interface, not " + name);
 		String suffix = clazz.isAnnotationPresent(Local.class) ? "local" : "remote";	
 		name = name + "Bean";
-		return clazz.cast(ejbContext.lookup(classPrefix + name + "/" + suffix));
+		return clazz.cast(ejbContext.lookup(CLASS_PREFIX + name + "/" + suffix));
 	} 
 	
 	@SuppressWarnings("unused")
@@ -272,9 +272,9 @@ public class EJBUtil {
 	static public Class<?> loadLocalBeanInterface(ClassLoader loader, String name) {
 		Class<?> klass = null;
 
-		if (!name.startsWith(classPrefix)) {
+		if (!name.startsWith(CLASS_PREFIX)) {
 			logger.warn("Name {} does not start with {} as expected",
-					name, classPrefix);
+					name, CLASS_PREFIX);
 			return null;
 		}
 		if (!name.endsWith("Bean/local")) {
@@ -283,7 +283,7 @@ public class EJBUtil {
 			return null;
 		}
 		
-		String ifaceWithoutPackage = name.substring(classPrefix.length(),
+		String ifaceWithoutPackage = name.substring(CLASS_PREFIX.length(),
 				name.length() - "Bean/local".length());
 		
 		for (String pkg : beanIfacePackages) {
@@ -319,11 +319,11 @@ public class EJBUtil {
 		//logger.debug("Listing known bean classes");
 		Set<String> beanClasses = new HashSet<String>();
 		Context namingContext = new InitialContext();
-		NamingEnumeration ne = namingContext.list(rootName);
+		NamingEnumeration ne = namingContext.list(ROOT_NAME);
 		while (ne.hasMore()) {
 			NameClassPair ncp = (NameClassPair) ne.next();
 			//logger.debug(" bean '{}'", ncp.getName());
-			beanClasses.add(classPrefix + ncp.getName() + "/local");
+			beanClasses.add(CLASS_PREFIX + ncp.getName() + "/local");
 		}
 		//logger.debug("Done listing");
 		return beanClasses;
