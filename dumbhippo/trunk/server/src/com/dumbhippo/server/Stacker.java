@@ -29,16 +29,17 @@ public interface Stacker {
 	public Block getOrCreateBlock(BlockKey key);
 	public Block createBlock(BlockKey key);
 	public Block queryBlock(BlockKey key) throws NotFoundException;
-	public Block stack(BlockKey key, long activity, Guid participantId, boolean isGroupParticipation);
+
+	public Block stack(BlockKey key, long activity, User participant, boolean isGroupParticipation);
 	public Block stack(BlockKey key, long activity);
+	public void stack(Block block, long activity, User participant, boolean isGroupParticipation);
+	public void stack(Block block, long activity);
 	
 	// FIXME: All of the stack<BlockType> methods below could be usefully
 	// changed to take attached objects rather than object identifiers. They are meant
 	// to be called within the transaction where the object is created or modified.
 	// These methods are used when activity should cause the timestamp of a block to change. 
 	// They are per block type. 
-	public void stackGroupChat(Guid groupId, long activity, Guid participantId);
-	public void stackPost(Guid postId, long activity, Guid participantId, boolean isGroupParticipation);
 	public void stackGroupMember(GroupMember member, long activity);
 	public void stackFacebookPerson(User user, boolean onlySelf, long activity);
 	public void stackBlogPerson(User user, boolean onlySelf, long activity);

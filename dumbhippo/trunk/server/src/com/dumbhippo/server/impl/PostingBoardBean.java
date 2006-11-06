@@ -279,12 +279,7 @@ public class PostingBoardBean implements PostingBoard {
 						} catch (NotFoundException e) {
 							throw new RuntimeException(e);
 						}
-						
-						Stacker stacker = EJBUtil.defaultLookup(Stacker.class);
-						stacker.stackPost(currentPost.getGuid(), currentPost.getPostDate().getTime(), 
-								          poster != null ? poster.getGuid() : null, 
-								          !(post instanceof FeedPost));
-						
+												
 						// Sends out XMPP notification
 						board.sendPostNotifications(currentPost, postType);
 						
@@ -1277,8 +1272,8 @@ public class PostingBoardBean implements PostingBoard {
 		PostMessage postMessage = new PostMessage(post, fromUser, text, timestamp);
 		em.persist(postMessage);
 		
+		notifier.onPostMessageCreated(postMessage);
 		LiveState.getInstance().queueUpdate(new PostChatEvent(post.getGuid()));
-		stacker.stackPost(post.getGuid(), timestamp.getTime(), fromUser.getGuid(), true);
 	}
 
 	public Set<EntityView> getReferencedEntities(Viewpoint viewpoint, Post post) {

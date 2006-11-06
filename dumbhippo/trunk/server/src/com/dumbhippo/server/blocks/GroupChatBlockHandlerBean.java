@@ -10,6 +10,7 @@ import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.BlockKey;
 import com.dumbhippo.persistence.BlockType;
 import com.dumbhippo.persistence.Group;
+import com.dumbhippo.persistence.GroupMessage;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.views.ChatMessageView;
@@ -62,5 +63,10 @@ public class GroupChatBlockHandlerBean extends AbstractBlockHandlerBean<GroupCha
 	public void onGroupCreated(Group group) {
 		Block block = stacker.createBlock(getKey(group));
 		block.setPublicBlock(group.isPublic());
+	}
+
+	public void onGroupMessageCreated(GroupMessage message) {
+		stacker.stack(getKey(message.getGroup()), message.getTimestamp().getTime(),
+				message.getFromUser(), true);		
 	}
 }

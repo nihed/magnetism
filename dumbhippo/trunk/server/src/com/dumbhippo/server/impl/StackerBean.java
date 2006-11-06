@@ -439,7 +439,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		updateGroupBlockDatas(block, desiredGroups, isGroupParticipation);
 	}
 	
-	private void stack(final Block block, final long activity, final Guid participantId, final boolean isGroupParticipation) {
+	public void stack(final Block block, final long activity, final User participant, final boolean isGroupParticipation) {
 
 		// never "roll back" to an earlier timestamp
 		if (block.getTimestampAsLong() < activity) { 
@@ -455,7 +455,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 				runner.runTaskRetryingOnConstraintViolation(new Runnable() {
 					public void run() {
 						Block attached = em.find(Block.class, block.getId());
-						updateUserBlockDatas(attached, participantId);
+						updateUserBlockDatas(attached, participant.getGuid());
 						updateGroupBlockDatas(attached, isGroupParticipation);
 					}
 				});
@@ -463,18 +463,18 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		});
 	}
 	
-	private void stack(Block block, long activity) {
+	public void stack(Block block, long activity) {
 		stack(block, activity, null, false);
 	}
 	
-	public Block stack(BlockKey key, long activity, Guid participantId, boolean isGroupParticipation) {
+	public Block stack(BlockKey key, long activity, User participant, boolean isGroupParticipation) {
 		Block block;
 		try {
 			block = queryBlock(key);
 		} catch (NotFoundException e) {
 			throw new RuntimeException("stack() called on block that doesn't exist; probably means a migration is needed. key=" + key, e);
 		}
-        stack(block, activity, participantId, isGroupParticipation);
+        stack(block, activity, participant, isGroupParticipation);
         return block;
 	}
 	
@@ -547,22 +547,6 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		return getHandler(BlogBlockHandler.class, BlockType.BLOG_PERSON).getKey(userId, inclusion);
 	}
 	
-	// don't create or suspend transaction; we will manage our own for now (FIXME) 
-	@TransactionAttribute(TransactionAttributeType.SUPPORTS)
-	public void stackGroupChat(final Guid groupId, final long activity, final Guid participantId) {
-		stack(getGroupChatKey(groupId), activity, participantId, true);
-	}
-
-	// FIXME this is not right; it requires various rationalization with respect to PersonPostData, XMPP, and 
-	// so forth, e.g. to work with world posts and be sure we never delete any ignored flags, clicked dates, etc.
-	// but it's OK for messing around.
-	
-	// don't create or suspend transaction; we will manage our own for now (FIXME)	 
-	@TransactionAttribute(TransactionAttributeType.SUPPORTS)
-	public void stackPost(final Guid postId, final long activity, final Guid participantId, boolean isGroupParticipation) {
-		stack(getPostKey(postId), activity, participantId, isGroupParticipation);
-	}
-	
 	// don't create or suspend transaction; we will manage our own for now (FIXME)
 	@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 	public void stackGroupMember(GroupMember member, long activity) {
@@ -580,7 +564,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		case INVITED_TO_FOLLOW:			
 			AccountClaim a = member.getMember().getAccountClaim();
 			if (a != null) {
-				stack(getGroupMemberKey(member.getGroup().getGuid(), a.getOwner().getGuid()), activity, a.getOwner().getGuid(), true);
+				stack(getGroupMemberKey(member.getGroup().getGuid(), a.getOwner().getGuid()), activity, a.getOwner(), true);
 			}
 			break;
 		case NONMEMBER:
@@ -593,17 +577,17 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	// don't create or suspend transaction; we will manage our own for now (FIXME)
 	@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 	public void stackFacebookPerson(User user, boolean onlySelf, long activity) {
-		stack(getFacebookPersonKey(user.getGuid(), StackInclusion.ONLY_WHEN_VIEWING_SELF), activity, user.getGuid(), false);
+		stack(getFacebookPersonKey(user.getGuid(), StackInclusion.ONLY_WHEN_VIEWING_SELF), activity, user, false);
 		if (!onlySelf)
-			stack(getFacebookPersonKey(user.getGuid(), StackInclusion.ONLY_WHEN_VIEWED_BY_OTHERS), activity, user.getGuid(), false);
+			stack(getFacebookPersonKey(user.getGuid(), StackInclusion.ONLY_WHEN_VIEWED_BY_OTHERS), activity, user, false);
 	}
 
 	// don't create or suspend transaction; we will manage our own for now (FIXME)
 	@TransactionAttribute(TransactionAttributeType.SUPPORTS)	
 	public void stackBlogPerson(User user, boolean onlySelf, long activity) {
-		stack(getBlogPersonKey(user.getGuid(), StackInclusion.ONLY_WHEN_VIEWING_SELF), activity, user.getGuid(), false);
+		stack(getBlogPersonKey(user.getGuid(), StackInclusion.ONLY_WHEN_VIEWING_SELF), activity, user, false);
 		if (!onlySelf)
-			stack(getBlogPersonKey(user.getGuid(), StackInclusion.ONLY_WHEN_VIEWED_BY_OTHERS), activity, user.getGuid(), false);		
+			stack(getBlogPersonKey(user.getGuid(), StackInclusion.ONLY_WHEN_VIEWED_BY_OTHERS), activity, user, false);		
 	}
 	
 	public void clickedPost(Post post, User user, long clickedTime) {
@@ -1662,10 +1646,8 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		Group group = em.find(Group.class, groupId);
 		getOrCreateBlock(getGroupChatKey(group.getGuid()), group.isPublic());
 		List<GroupMessage> messages = groupSystem.getNewestGroupMessages(group, 1);
-		if (messages.isEmpty())
-			stackGroupChat(group.getGuid(), 0, null);
-		else {
-			stackGroupChat(group.getGuid(), messages.get(0).getTimestamp().getTime(), messages.get(0).getFromUser().getGuid());
+		if (!messages.isEmpty()) {
+			stack(getGroupChatKey(group.getGuid()), messages.get(0).getTimestamp().getTime());
 		}
 	}
 	

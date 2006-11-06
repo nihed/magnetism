@@ -15,8 +15,10 @@ import com.dumbhippo.persistence.AccountClaim;
 import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.BlockKey;
 import com.dumbhippo.persistence.BlockType;
+import com.dumbhippo.persistence.FeedPost;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.Post;
+import com.dumbhippo.persistence.PostMessage;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.NotFoundException;
@@ -94,6 +96,9 @@ public class PostBlockHandlerBean extends AbstractBlockHandlerBean<PostBlockView
 	public void onPostCreated(Post post) {
 		Block block = stacker.createBlock(getKey(post));
 		block.setPublicBlock(post.isPublic() && !post.isDisabled());
+		User poster = post.getPoster();
+		stacker.stack(block, post.getPostDate().getTime(),
+					poster, !(post instanceof FeedPost));
 	}
 
 	public void onPostDisabledToggled(Post post) {
@@ -105,5 +110,10 @@ public class PostBlockHandlerBean extends AbstractBlockHandlerBean<PostBlockView
 			return;
 		}
 		block.setPublicBlock(post.isPublic() && !post.isDisabled());
+	}
+
+	public void onPostMessageCreated(PostMessage message) {
+		stacker.stack(getKey(message.getPost()), message.getTimestamp().getTime(),
+				message.getFromUser(), true);
 	}
 }
