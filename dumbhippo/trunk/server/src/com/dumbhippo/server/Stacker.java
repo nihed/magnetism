@@ -35,13 +35,6 @@ public interface Stacker {
 	
 	public void blockClicked(BlockKey key, User user, long clickedTime);
 	
-	// FIXME: All of the stack<BlockType> methods below could be usefully
-	// changed to take attached objects rather than object identifiers. They are meant
-	// to be called within the transaction where the object is created or modified.
-	// These methods are used when activity should cause the timestamp of a block to change. 
-	// They are per block type. 
-	public void stackFacebookPerson(User user, boolean onlySelf, long activity);
-	
 	public BlockView loadBlock(Viewpoint viewpoint, UserBlockData ubd) throws NotFoundException;
 	
 	public void pageStack(Viewpoint viewpoint, User user, Pageable<BlockView> pageable, boolean participantOnly);

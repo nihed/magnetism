@@ -491,7 +491,9 @@ public class FeedSystemBean implements FeedSystem {
 	// we just kind of leave the parent transaction as-is, which seems most 
 	// appropriate; we should not be using it.
 	// Ultimately NEVER (prohibit a live transaction) would be most correct
-	// here, but is some extra work since we can be called from HttpMethodsBean
+	// here, but is some extra work since we can be called from HttpMethodsBean.
+	// FIXME this is easy to repair now that HttpMethodsBean has a "no transaction"
+	// annotation
 	@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 	public Object updateFeedFetchFeed(Feed feed) throws XmlMethodException {
 		// The feed here need not be attached, and in fact we should not 

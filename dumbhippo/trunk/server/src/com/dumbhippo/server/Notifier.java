@@ -5,6 +5,7 @@ import javax.ejb.Local;
 import com.dumbhippo.server.listeners.AccountStatusListener;
 import com.dumbhippo.server.listeners.ExternalAccountFeedListener;
 import com.dumbhippo.server.listeners.ExternalAccountsListener;
+import com.dumbhippo.server.listeners.FacebookListener;
 import com.dumbhippo.server.listeners.GroupChatListener;
 import com.dumbhippo.server.listeners.GroupCreationListener;
 import com.dumbhippo.server.listeners.GroupMembershipListener;
@@ -42,7 +43,7 @@ public interface Notifier
 	extends AccountStatusListener, UserCreationListener, GroupCreationListener,
 	PostListener, ExternalAccountsListener, GroupMembershipListener,
 	MusicListener, GroupChatListener, PostChatListener, PostClickedListener,
-	ExternalAccountFeedListener {
+	ExternalAccountFeedListener, FacebookListener {
 	// Nothing in Notifier itself; Notifier just "aggregates"
 	// the listener interfaces. If you do add something here
 	// then remember that NotifierBean has a non-default transaction 

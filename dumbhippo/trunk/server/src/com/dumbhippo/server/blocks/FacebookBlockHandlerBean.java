@@ -13,6 +13,7 @@ import com.dumbhippo.persistence.BlockType;
 import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.FacebookAccount;
 import com.dumbhippo.persistence.FacebookEvent;
+import com.dumbhippo.persistence.FacebookEventType;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.StackInclusion;
 import com.dumbhippo.persistence.User;
@@ -80,5 +81,31 @@ public class FacebookBlockHandlerBean extends AbstractBlockHandlerBean<FacebookB
 	public void onExternalAccountCreated(User user, ExternalAccount external) {
 		stacker.createBlock(getKey(user, StackInclusion.ONLY_WHEN_VIEWED_BY_OTHERS));
 		stacker.createBlock(getKey(user, StackInclusion.ONLY_WHEN_VIEWING_SELF));
+	}
+
+	private void stackSelfOnly(User user, long activity) {
+		stacker.stack(getKey(user, StackInclusion.ONLY_WHEN_VIEWING_SELF), activity);
+	}
+	
+	private void stackSelfAndOthers(User user, long activity) {
+		stackSelfOnly(user, activity);
+		stacker.stack(getKey(user, StackInclusion.ONLY_WHEN_VIEWED_BY_OTHERS), activity);
+	}
+	
+	public void onFacebookSignedIn(User user, FacebookAccount facebookAccount, long activity) {
+		// we want to stack an update regardless of whether they have new messages, so that they know
+		// they logged in successfully		
+		stackSelfOnly(user, activity);
+	}
+
+	public void onFacebookSignedOut(User user, FacebookAccount facebookAccount) {
+		stackSelfOnly(user, System.currentTimeMillis());
+	}
+
+	public void onFacebookEvent(User user, FacebookEventType eventType, FacebookAccount facebookAccount, long updateTime) {
+		if (eventType.getDisplayToOthers())
+			stackSelfAndOthers(user, updateTime);
+		else
+			stackSelfOnly(user, updateTime);
 	}
 }

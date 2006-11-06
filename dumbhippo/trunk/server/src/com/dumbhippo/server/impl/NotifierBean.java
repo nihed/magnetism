@@ -24,6 +24,8 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.TypeUtils;
 import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.ExternalAccount;
+import com.dumbhippo.persistence.FacebookAccount;
+import com.dumbhippo.persistence.FacebookEventType;
 import com.dumbhippo.persistence.FeedEntry;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupMember;
@@ -36,6 +38,7 @@ import com.dumbhippo.server.Notifier;
 import com.dumbhippo.server.listeners.AccountStatusListener;
 import com.dumbhippo.server.listeners.ExternalAccountFeedListener;
 import com.dumbhippo.server.listeners.ExternalAccountsListener;
+import com.dumbhippo.server.listeners.FacebookListener;
 import com.dumbhippo.server.listeners.GroupChatListener;
 import com.dumbhippo.server.listeners.GroupCreationListener;
 import com.dumbhippo.server.listeners.GroupMembershipListener;
@@ -266,6 +269,24 @@ public class NotifierBean implements Notifier {
 	public void onExternalAccountFeedEntry(User user, ExternalAccount external, FeedEntry entry, int entryPosition) {
 		for (ExternalAccountFeedListener l : getListeners(ExternalAccountFeedListener.class)) {
 			l.onExternalAccountFeedEntry(user, external, entry, entryPosition);
+		}
+	}
+
+	public void onFacebookSignedIn(User user, FacebookAccount facebookAccount, long activity) {
+		for (FacebookListener l : getListeners(FacebookListener.class)) {
+			l.onFacebookSignedIn(user, facebookAccount, activity);
+		}
+	}
+
+	public void onFacebookSignedOut(User user, FacebookAccount facebookAccount) {
+		for (FacebookListener l : getListeners(FacebookListener.class)) {
+			l.onFacebookSignedOut(user, facebookAccount);
+		}
+	}
+
+	public void onFacebookEvent(User user, FacebookEventType eventType, FacebookAccount facebookAccount, long updateTime) {
+		for (FacebookListener l : getListeners(FacebookListener.class)) {
+			l.onFacebookEvent(user, eventType, facebookAccount, updateTime);
 		}
 	}
 }

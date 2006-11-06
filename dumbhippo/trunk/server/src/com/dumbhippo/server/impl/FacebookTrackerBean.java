@@ -2,9 +2,9 @@ package com.dumbhippo.server.impl;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.HashSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -26,11 +26,12 @@ import com.dumbhippo.persistence.FacebookEvent;
 import com.dumbhippo.persistence.FacebookEventType;
 import com.dumbhippo.persistence.FacebookPhotoData;
 import com.dumbhippo.persistence.Sentiment;
+import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.ExternalAccountSystem;
 import com.dumbhippo.server.FacebookTracker;
+import com.dumbhippo.server.Notifier;
 import com.dumbhippo.server.SingletonServiceMBean;
-import com.dumbhippo.server.Stacker;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.services.FacebookWebServices;
@@ -60,7 +61,7 @@ public class FacebookTrackerBean implements FacebookTracker, SingletonServiceMBe
 	private Configuration config;
 	
 	@EJB
-	private Stacker stacker;
+	private Notifier notifier;
 	
 	// We have one FacebookTrackerBean per server instance, but only the
 	// cluster singleton actually does updates.
@@ -107,10 +108,8 @@ public class FacebookTrackerBean implements FacebookTracker, SingletonServiceMBe
 			// we also want to make sure the message count timestamp is refreshed
 			facebookAccount.setMessageCountTimestampAsLong(updateTime);
 		}
-		// we want to stack an update regardless of whether they have new messages, so that they know
-		// they logged in successfully; 
-		stacker.stackFacebookPerson(facebookAccount.getExternalAccount().getAccount().getOwner(), 
-                true, updateTime);
+		notifier.onFacebookSignedIn(facebookAccount.getExternalAccount().getAccount().getOwner(),
+				facebookAccount, updateTime);
 	}
 	
 	public List<FacebookAccount> getAccountsWithValidSession() {
@@ -119,62 +118,58 @@ public class FacebookTrackerBean implements FacebookTracker, SingletonServiceMBe
 		return TypeUtils.castList(FacebookAccount.class, list);
 	}
 	
+	// FIXME this is calling web services with a transaction open, which holds 
+	// a db connection open so other threads can't use it, and could also 
+	// time out the transaction
 	public void updateMessageCount(long facebookAccountId) {
 		FacebookAccount facebookAccount = em.find(FacebookAccount.class, facebookAccountId);
 		if (facebookAccount == null)
 			throw new RuntimeException("Invalid FacebookAccount id " + facebookAccountId + " is passed in to updateMessageCount()");
+		User user = facebookAccount.getExternalAccount().getAccount().getOwner();
+		
 		FacebookWebServices ws = new FacebookWebServices(REQUEST_TIMEOUT, config);
-		boolean newFacebookEventSelf = false;
-		boolean newFacebookEventOthers = false;
-		long updateTime = (new Date()).getTime();
+
 		// we could do these requests in parallel, but be careful about updating the same facebookAccount
 		long time = ws.updateMessageCount(facebookAccount);
 		if (time != -1) {
-    		newFacebookEventSelf = FacebookEventType.UNREAD_MESSAGES_UPDATE.getDisplayToSelf();
-    		newFacebookEventOthers = FacebookEventType.UNREAD_MESSAGES_UPDATE.getDisplayToOthers();
-		    updateTime = time;
+			notifier.onFacebookEvent(user, FacebookEventType.UNREAD_MESSAGES_UPDATE, 
+					facebookAccount, time);
 		}
 		if (facebookAccount.isSessionKeyValid()) {
 		    FacebookEvent newWallMessagesEvent = ws.updateWallMessageCount(facebookAccount);
 		    if (newWallMessagesEvent != null) {
 		    	em.persist(newWallMessagesEvent);
 		    	facebookAccount.addFacebookEvent(newWallMessagesEvent);
-		    	newFacebookEventSelf = newWallMessagesEvent.getEventType().getDisplayToSelf();
-		    	newFacebookEventOthers = newWallMessagesEvent.getEventType().getDisplayToOthers();
-			    updateTime = newWallMessagesEvent.getEventTimestampAsLong();		    	
+		    	notifier.onFacebookEvent(user, newWallMessagesEvent.getEventType(),
+		    			facebookAccount, newWallMessagesEvent.getEventTimestampAsLong());		    	
 		    }
 		    
 		    if (facebookAccount.isSessionKeyValid()) {
 		    	long pokeTime = ws.updatePokeCount(facebookAccount);
 		    	if (pokeTime != -1) {
-		    		newFacebookEventSelf = FacebookEventType.UNSEEN_POKES_UPDATE.getDisplayToSelf();
-		    		newFacebookEventOthers = FacebookEventType.UNSEEN_POKES_UPDATE.getDisplayToOthers();
-				    updateTime = pokeTime;
+		    		notifier.onFacebookEvent(user, FacebookEventType.UNSEEN_POKES_UPDATE,
+		    				facebookAccount, pokeTime);
 		    	}
 		    }
-		}
-		// we will stack an external account update for self if we are stacking it for others
-		if ((newFacebookEventSelf && !newFacebookEventOthers) || !facebookAccount.isSessionKeyValid()) {
-			stacker.stackFacebookPerson(facebookAccount.getExternalAccount().getAccount().getOwner(), 
-					                       true, updateTime);			
-		}
-		if (newFacebookEventOthers) {
-			stacker.stackFacebookPerson(facebookAccount.getExternalAccount().getAccount().getOwner(), 
-                                       	false, updateTime);
+		} else {
+			notifier.onFacebookSignedOut(user, facebookAccount);
 		}
 	}
 	
+	// FIXME this is calling web services with a transaction open, which holds 
+	// a db connection open so other threads can't use it, and could also 
+	// time out the transaction
 	public void updateTaggedPhotos(long facebookAccountId) {
 		FacebookAccount facebookAccount = em.find(FacebookAccount.class, facebookAccountId);
 		if (facebookAccount == null)
 			throw new RuntimeException("Invalid FacebookAccount id " + facebookAccountId + " is passed in to updateMessageCount()");
+		User user = facebookAccount.getExternalAccount().getAccount().getOwner();
 		FacebookWebServices ws = new FacebookWebServices(REQUEST_TIMEOUT, config);
 		List<FacebookPhotoData> newPhotos = ws.updateTaggedPhotos(facebookAccount);
 		
 		if (newPhotos == null) {
 			if (!facebookAccount.isSessionKeyValid()) {
-			    stacker.stackFacebookPerson(facebookAccount.getExternalAccount().getAccount().getOwner(), 
-					                        true, (new Date()).getTime());			
+				notifier.onFacebookSignedOut(user, facebookAccount);
 		    }
 			return;
 		}
@@ -228,21 +223,24 @@ public class FacebookTrackerBean implements FacebookTracker, SingletonServiceMBe
 		    
 		    facebookAccount.addFacebookEvent(taggedPhotosEvent);
 		 
-		    stackEvent(taggedPhotosEvent.getEventType(), facebookAccount, taggedPhotosEvent.getEventTimestampAsLong());
+		    notifier.onFacebookEvent(user, taggedPhotosEvent.getEventType(), facebookAccount, taggedPhotosEvent.getEventTimestampAsLong());
 		}
 	}
 
+	// FIXME this is calling web services with a transaction open, which holds 
+	// a db connection open so other threads can't use it, and could also 
+	// time out the transaction
 	public void updateAlbums(long facebookAccountId) {
 		FacebookAccount facebookAccount = em.find(FacebookAccount.class, facebookAccountId);
 		if (facebookAccount == null)
 			throw new RuntimeException("Invalid FacebookAccount id " + facebookAccountId + " is passed in to updateMessageCount()");
+		User user = facebookAccount.getExternalAccount().getAccount().getOwner();
 		FacebookWebServices ws = new FacebookWebServices(REQUEST_TIMEOUT, config);
 		Set<FacebookAlbumData> modifiedAlbums = ws.getModifiedAlbums(facebookAccount);
 		
 		if (modifiedAlbums.isEmpty()) {
 			if (!facebookAccount.isSessionKeyValid()) {
-			    stacker.stackFacebookPerson(facebookAccount.getExternalAccount().getAccount().getOwner(), 
-					                        true, (new Date()).getTime());			
+				notifier.onFacebookSignedOut(user, facebookAccount);
 		    }
 			return;
 		}
@@ -292,23 +290,13 @@ public class FacebookTrackerBean implements FacebookTracker, SingletonServiceMBe
 		
 		if (facebookAccount.getAlbumsModifiedTimestampAsLong() > 0) {
 			// this assumes that MODIFIED_ALBUM_EVENT and NEW_ALBUM_EVENT have the same stacking rules,
-			// otherwise we'd need to check what event(s) happened
-			stackEvent(FacebookEventType.MODIFIED_ALBUM_EVENT, facebookAccount, updateTime);
+			// otherwise we'd need to check what event(s) happened. Also this assumes that 
+			// the only listener to this event notification is the stacker block handler and 
+			// so we only need to send one event instead of each event.
+			notifier.onFacebookEvent(user, FacebookEventType.MODIFIED_ALBUM_EVENT, facebookAccount, updateTime);
 		}
 		
 		facebookAccount.setAlbumsModifiedTimestampAsLong(albumsModifiedTimestamp);		
-	}
-		
-	private void stackEvent(FacebookEventType eventType, FacebookAccount facebookAccount, long updateTime) {
-        // we will stack an external account update for self if we are stacking it for others
-	    if (eventType.getDisplayToSelf() && !eventType.getDisplayToOthers()) {
-    	    stacker.stackFacebookPerson(facebookAccount.getExternalAccount().getAccount().getOwner(), 
-                                        true, updateTime);	
-	    }	    
-	    if (eventType.getDisplayToOthers()) {
-            stacker.stackFacebookPerson(facebookAccount.getExternalAccount().getAccount().getOwner(), 
-                                        false, updateTime);	
-	    }
 	}
 	
 	private static class FacebookUpdater extends Thread {
