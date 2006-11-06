@@ -22,10 +22,7 @@
 			</span>
 		</dht3:blockTitle>
 		<dht3:blockDescription blockId="${blockId}">
-		</dht3:blockDescription>			
-		<dht3:blockContent blockId="${blockId}">
-			<dht3:chatPreview block="${block}" chatId="${block.groupView.group.id}" chatKind="group" chattingCount="${block.groupView.chattingUserCount}"/>
-		</dht3:blockContent>		
+		</dht3:blockDescription>		
 	</dht3:blockLeft>
 	<dht3:blockRight blockId="${blockId}" from="${block.personSource}" showFrom="${showFrom}">
 		<dht3:blockTimeAgo block="${block}"/>
