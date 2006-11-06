@@ -6,7 +6,6 @@ import java.util.List;
 import javax.ejb.Local;
 
 import com.dumbhippo.persistence.Group;
-import com.dumbhippo.persistence.TrackFeedEntry;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.views.AlbumView;
 import com.dumbhippo.server.views.ArtistView;
@@ -203,8 +202,6 @@ public interface MusicSystem {
 	 *        are available. 
 	 */
 	public List<TrackView> getTrackSearchTracks(Viewpoint viewpoint, TrackSearchResult searchResult, int start, int count);
-	
-	public void addFeedTrack(User user, TrackFeedEntry entry, int entryPosition);
 	
 	// somewhat oddly, returns 0 if none
 	public long getLatestPlayTime(Viewpoint viewpoint, User user);

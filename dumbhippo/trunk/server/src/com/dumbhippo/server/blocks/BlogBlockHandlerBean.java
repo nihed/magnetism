@@ -80,4 +80,14 @@ public class BlogBlockHandlerBean extends AbstractBlockHandlerBean<BlogBlockView
 		stacker.createBlock(getKey(user, StackInclusion.ONLY_WHEN_VIEWED_BY_OTHERS));
 		stacker.createBlock(getKey(user, StackInclusion.ONLY_WHEN_VIEWING_SELF));
 	}
+
+	public void onExternalAccountFeedEntry(User user, ExternalAccount external, FeedEntry entry, int entryPosition) {
+		if (external.getAccountType() != ExternalAccountType.BLOG)
+			return;
+		// entry.getDate().getTime() creates a timestamp that is too old, at least with blogspot
+		// so it is unreliable, because we update blocks based on timestamps
+		long now = System.currentTimeMillis();
+		stacker.stack(getKey(user, StackInclusion.ONLY_WHEN_VIEWED_BY_OTHERS), now);
+		stacker.stack(getKey(user, StackInclusion.ONLY_WHEN_VIEWING_SELF), now);
+	}
 }

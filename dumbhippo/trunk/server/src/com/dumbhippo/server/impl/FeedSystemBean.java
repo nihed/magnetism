@@ -25,7 +25,6 @@ import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 
-import org.jboss.annotation.IgnoreDependency;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
@@ -34,7 +33,6 @@ import com.dumbhippo.TypeUtils;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.mbean.FeedUpdater;
 import com.dumbhippo.persistence.ExternalAccount;
-import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.Feed;
 import com.dumbhippo.persistence.FeedEntry;
 import com.dumbhippo.persistence.Group;
@@ -42,12 +40,12 @@ import com.dumbhippo.persistence.GroupFeed;
 import com.dumbhippo.persistence.LinkResource;
 import com.dumbhippo.persistence.Sentiment;
 import com.dumbhippo.persistence.TrackFeedEntry;
+import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.FeedSystem;
 import com.dumbhippo.server.IdentitySpider;
-import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.NotFoundException;
+import com.dumbhippo.server.Notifier;
 import com.dumbhippo.server.PostingBoard;
-import com.dumbhippo.server.Stacker;
 import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.XmlMethodErrorCode;
 import com.dumbhippo.server.XmlMethodException;
@@ -83,11 +81,7 @@ public class FeedSystemBean implements FeedSystem {
 	private PostingBoard postingBoard;
 
 	@EJB
-	private MusicSystem musicSystem;
-	
-	@EJB
-	@IgnoreDependency
-	private Stacker stacker;
+	private Notifier notifier;
 	
 	private static FeedFetcherCache cache = null;
 	private static ExecutorService notificationService;
@@ -273,17 +267,17 @@ public class FeedSystemBean implements FeedSystem {
 		}		
 		
 		for (ExternalAccount external : entry.getFeed().getAccounts()) {
-			// logger.debug("Processing feed event {} for account {}", entry.getTitle(), external);
-			if (external.getAccountType() == ExternalAccountType.RHAPSODY) {
-				assert (entry instanceof TrackFeedEntry);
-				musicSystem.addFeedTrack(external.getAccount().getOwner(), (TrackFeedEntry)entry, entryPosition);
-			} else if (external.getAccountType() == ExternalAccountType.BLOG) {
-				// entry.getDate().getTime() creates a timestamp that is too old, at least with blogspot
-				// so it is unreliable, because we update blocks based on timestamps
-				stacker.stackBlogPerson(external.getAccount().getOwner(), false, (new Date()).getTime());
-			} else {
-				logger.warn("unexpected account type in processFeedExternalAccounts");
-			}
+			
+			User owner = external.getAccount().getOwner();
+			
+			// FIXME this is kind of expensive, since we instantiate and invoke a callback 
+			// on all session beans that care about any kind of external account feed 
+			// entry, even though most of them only care about one kind.
+			// The fix in the current framework would be to have 
+			// separate Listener interfaces for each external account type; 
+			// which might be the right fix, but would introduce a big switch() right 
+			// here. Anyway, probably not a problem for now.
+			notifier.onExternalAccountFeedEntry(owner, external, entry, entryPosition);
 		}
 	}
 	

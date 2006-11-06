@@ -43,6 +43,9 @@ import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.ThreadUtils;
 import com.dumbhippo.TypeUtils;
+import com.dumbhippo.persistence.ExternalAccount;
+import com.dumbhippo.persistence.ExternalAccountType;
+import com.dumbhippo.persistence.FeedEntry;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.MembershipStatus;
 import com.dumbhippo.persistence.SongDownloadSource;
@@ -1820,7 +1823,17 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	// Alternatively, and maybe better, unify the last segment of code with 
 	// setCurrentTrack and make adding tracks to the track database always async.
 	//
-	public void addFeedTrack(final User user, TrackFeedEntry entry, int entryPosition) {
+	public void onExternalAccountFeedEntry(final User user, ExternalAccount external, FeedEntry feedEntry, int entryPosition) {
+		if (external.getAccountType() != ExternalAccountType.RHAPSODY)
+			return;
+
+		if (!(feedEntry instanceof TrackFeedEntry)) {
+			logger.warn("Rhapsody account {} has non-TrackFeedEntry {}", external, feedEntry);
+			return;
+		}
+		
+		TrackFeedEntry entry = (TrackFeedEntry) feedEntry;
+		
 		final Map<String,String> properties = new HashMap<String,String>();
 		properties.put("type", ""+TrackType.NETWORK_STREAM);
 		

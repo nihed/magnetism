@@ -41,7 +41,6 @@ public interface Stacker {
 	// These methods are used when activity should cause the timestamp of a block to change. 
 	// They are per block type. 
 	public void stackFacebookPerson(User user, boolean onlySelf, long activity);
-	public void stackBlogPerson(User user, boolean onlySelf, long activity);
 	
 	public BlockView loadBlock(Viewpoint viewpoint, UserBlockData ubd) throws NotFoundException;
 	

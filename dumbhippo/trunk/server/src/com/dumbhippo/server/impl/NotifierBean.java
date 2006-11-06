@@ -24,6 +24,7 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.TypeUtils;
 import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.ExternalAccount;
+import com.dumbhippo.persistence.FeedEntry;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupMember;
 import com.dumbhippo.persistence.GroupMessage;
@@ -33,6 +34,7 @@ import com.dumbhippo.persistence.Track;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.Notifier;
 import com.dumbhippo.server.listeners.AccountStatusListener;
+import com.dumbhippo.server.listeners.ExternalAccountFeedListener;
 import com.dumbhippo.server.listeners.ExternalAccountsListener;
 import com.dumbhippo.server.listeners.GroupChatListener;
 import com.dumbhippo.server.listeners.GroupCreationListener;
@@ -258,6 +260,12 @@ public class NotifierBean implements Notifier {
 	public void onPostClicked(Post post, User user, long clickedTime) {
 		for (PostClickedListener l : getListeners(PostClickedListener.class)) {
 			l.onPostClicked(post, user, clickedTime);
+		}
+	}
+
+	public void onExternalAccountFeedEntry(User user, ExternalAccount external, FeedEntry entry, int entryPosition) {
+		for (ExternalAccountFeedListener l : getListeners(ExternalAccountFeedListener.class)) {
+			l.onExternalAccountFeedEntry(user, external, entry, entryPosition);
 		}
 	}
 }

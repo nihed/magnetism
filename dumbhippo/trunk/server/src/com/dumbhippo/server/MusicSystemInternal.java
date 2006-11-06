@@ -12,6 +12,7 @@ import org.hibernate.lucene.DocumentBuilder;
 
 import com.dumbhippo.persistence.Track;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.server.listeners.ExternalAccountFeedListener;
 import com.dumbhippo.server.views.AlbumView;
 import com.dumbhippo.server.views.ArtistView;
 import com.dumbhippo.server.views.ExpandedArtistView;
@@ -31,7 +32,8 @@ import com.dumbhippo.services.YahooSongData;
  */
 @BanFromWebTier
 @Local
-public interface MusicSystemInternal extends MusicSystem {
+public interface MusicSystemInternal
+	extends MusicSystem, ExternalAccountFeedListener {
 
 	public Track getTrack(Map<String,String> properties);
 	
