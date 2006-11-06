@@ -1,6 +1,7 @@
 /* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 #include "hippo-common-internal.h"
 #include "hippo-block-music-person.h"
+#include "hippo-block-abstract-person.h"
 #include "hippo-person.h"
 #include "hippo-xml-utils.h"
 #include <string.h>
@@ -25,12 +26,11 @@ static void hippo_block_music_person_get_property (GObject      *object,
                                                    GParamSpec   *pspec);
 
 struct _HippoBlockMusicPerson {
-    HippoBlock            parent;
-    HippoPerson          *user;
+    HippoBlockAbstractPerson            parent;
 };
 
 struct _HippoBlockMusicPersonClass {
-    HippoBlockClass parent_class;
+    HippoBlockAbstractPersonClass parent_class;
 };
 
 #if 0
@@ -42,11 +42,10 @@ static int signals[LAST_SIGNAL];
 #endif
 
 enum {
-    PROP_0,
-    PROP_USER
+    PROP_0
 };
 
-G_DEFINE_TYPE(HippoBlockMusicPerson, hippo_block_music_person, HIPPO_TYPE_BLOCK);
+G_DEFINE_TYPE(HippoBlockMusicPerson, hippo_block_music_person, HIPPO_TYPE_BLOCK_ABSTRACT_PERSON);
                        
 static void
 hippo_block_music_person_init(HippoBlockMusicPerson *block_music_person)
@@ -66,34 +65,6 @@ hippo_block_music_person_class_init(HippoBlockMusicPersonClass *klass)
     object_class->finalize = hippo_block_music_person_finalize;
 
     block_class->update_from_xml = hippo_block_music_person_update_from_xml;
-    
-    g_object_class_install_property(object_class,
-                                    PROP_USER,
-                                    g_param_spec_object("user",
-                                                        _("User"),
-                                                        _("User who's music has changed"),
-                                                        HIPPO_TYPE_PERSON,
-                                                        G_PARAM_READABLE));
-}
-
-static void
-set_user(HippoBlockMusicPerson *block_music_person,
-         HippoPerson           *user)
-{
-    if (user == block_music_person->user)
-        return;
-    
-    if (block_music_person->user) {
-        g_object_unref(block_music_person->user);
-        block_music_person->user = NULL;
-    }
-
-    if (user) {
-        g_object_ref(user);
-        block_music_person->user = user;
-    }
-
-    g_object_notify(G_OBJECT(block_music_person), "user");
 }
 
 static void
@@ -101,8 +72,6 @@ hippo_block_music_person_dispose(GObject *object)
 {
     HippoBlockMusicPerson *block_music_person = HIPPO_BLOCK_MUSIC_PERSON(object);
 
-    set_user(block_music_person, NULL);
-    
     G_OBJECT_CLASS(hippo_block_music_person_parent_class)->dispose(object); 
 }
 
@@ -118,7 +87,13 @@ hippo_block_music_person_set_property(GObject         *object,
                                       const GValue    *value,
                                       GParamSpec      *pspec)
 {
-    G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
+    HippoBlockMusicPerson *block_music_person = HIPPO_BLOCK_MUSIC_PERSON(object);
+
+    switch (prop_id) {
+    default:
+        G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
+        break;
+    }
 }
 
 static void
@@ -130,9 +105,6 @@ hippo_block_music_person_get_property(GObject         *object,
     HippoBlockMusicPerson *block_music_person = HIPPO_BLOCK_MUSIC_PERSON(object);
 
     switch (prop_id) {
-    case PROP_USER:
-        g_value_set_object(value, G_OBJECT(block_music_person->user));
-        break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
         break;
@@ -161,7 +133,7 @@ hippo_block_music_person_update_from_xml (HippoBlock           *block,
                          NULL))
         return FALSE;
 
-    set_user(block_music_person, user);
+    hippo_block_abstract_person_set_user(HIPPO_BLOCK_ABSTRACT_PERSON(block), user);
 
     return TRUE;
 }

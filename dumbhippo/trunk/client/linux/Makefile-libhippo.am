@@ -162,6 +162,12 @@ LIBHIPPO_SOURCEFILES =						\
 	$(COMMONSRCDIR)/hippo/hippo-block-group-chat.h		\
 	$(COMMONSRCDIR)/hippo/hippo-block-group-member.c	\
 	$(COMMONSRCDIR)/hippo/hippo-block-group-member.h	\
+	$(COMMONSRCDIR)/hippo/hippo-block-abstract-person.c	\
+	$(COMMONSRCDIR)/hippo/hippo-block-abstract-person.h	\
+	$(COMMONSRCDIR)/hippo/hippo-block-blog-person.c		\
+	$(COMMONSRCDIR)/hippo/hippo-block-blog-person.h		\
+	$(COMMONSRCDIR)/hippo/hippo-block-facebook-person.c	\
+	$(COMMONSRCDIR)/hippo/hippo-block-facebook-person.h	\
 	$(COMMONSRCDIR)/hippo/hippo-block-music-person.c	\
 	$(COMMONSRCDIR)/hippo/hippo-block-music-person.h	\
 	$(COMMONSRCDIR)/hippo/hippo-block-post.c		\

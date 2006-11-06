@@ -5,6 +5,8 @@
 #include "hippo-block-group-member.h"
 #include "hippo-block-post.h"
 #include "hippo-block-music-person.h"
+#include "hippo-block-facebook-person.h"
+#include "hippo-block-blog-person.h"
 #include "hippo-xml-utils.h"
 #include <string.h>
 
@@ -318,6 +320,12 @@ hippo_block_new(const char    *guid,
         break;
     case HIPPO_BLOCK_TYPE_MUSIC_PERSON:
         object_type = HIPPO_TYPE_BLOCK_MUSIC_PERSON;
+        break;
+    case HIPPO_BLOCK_TYPE_FACEBOOK_PERSON:
+        object_type = HIPPO_TYPE_BLOCK_FACEBOOK_PERSON;
+        break;
+    case HIPPO_BLOCK_TYPE_BLOG_PERSON:
+        object_type = HIPPO_TYPE_BLOCK_BLOG_PERSON;
         break;
         /* don't add default case, it hides warnings */
     }

@@ -1,5 +1,5 @@
 /* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
-#ifndef __HIPPO_BLOCK_MUSIC_MEMBER_H__
+#ifndef __HIPPO_BLOCK_MUSIC_PERSON_H__
 #define __HIPPO_BLOCK_MUSIC_PERSON_H__
 
 #include <hippo/hippo-block.h>
