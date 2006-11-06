@@ -52,9 +52,7 @@ import com.dumbhippo.persistence.PostMessage;
 import com.dumbhippo.persistence.StackInclusion;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.UserBlockData;
-import com.dumbhippo.server.Enabled;
 import com.dumbhippo.server.GroupSystem;
-import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Pageable;
@@ -86,16 +84,11 @@ import com.dumbhippo.server.views.Viewpoint;
 @Service
 public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListener<BlockEvent> {
 
-	static final private boolean disabled = false;
-	
 	@SuppressWarnings("unused")
 	static private final Logger logger = GlobalSetup.getLogger(StackerBean.class);
 	
 	@PersistenceContext(unitName = "dumbhippo")
 	private EntityManager em;
-	
-	@EJB
-	private IdentitySpider identitySpider;
 	
 	@EJB
 	private GroupSystem groupSystem;
@@ -289,26 +282,6 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		return getOrCreateBlock(key, false, false);
 	}
 	
-	private Block getUpdatingDetails(BlockKey key, long activity, PublicityUpdate publicityUpdate) {
-		Block block;
-		try {
-			logger.debug("will query for a block with key {}", key);
-			block = queryBlock(key);
-			logger.debug("found block {}", block);
-		} catch (NotFoundException e) {
-			logger.debug("no block found");
-			return null;
-		}
-		if (block.getTimestampAsLong() < activity) // never "roll back"
-			block.setTimestampAsLong(activity);
-	
-		if (publicityUpdate != null) {
-		    publicityUpdate.update(block);	
-		}
-		
-		return block;
-	}
-	
 	// note this query includes ubd.deleted=1
 	private List<UserBlockData> queryUserBlockDatas(Block block) {
 		Query q = em.createQuery("SELECT ubd FROM UserBlockData ubd WHERE ubd.block = :block");
@@ -466,42 +439,13 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		updateGroupBlockDatas(block, desiredGroups, isGroupParticipation);
 	}
 	
-	private void stack(Block block, long activity, boolean isGroupParticipation) {
-		if (disabled)
-			return;
+	private void stack(final Block block, final long activity, final Guid participantId, final boolean isGroupParticipation) {
 
-		if (block.getTimestampAsLong() < activity) {
+		// never "roll back" to an earlier timestamp
+		if (block.getTimestampAsLong() < activity) { 
 			block.setTimestampAsLong(activity);
-			updateUserBlockDatas(block, null);
-			updateGroupBlockDatas(block, isGroupParticipation);
 		}
-	}
-
-	private interface PublicityUpdate {
-		void update(Block block);
-	}
-	
-	public void stack(BlockKey key, long activity, Guid participantId, boolean isGroupParticipation) {
-        stack(key, activity, null, participantId, isGroupParticipation);
-	}
-	
-	public void stack(BlockKey key, long activity) {
-		stack(key, activity, null, false);
-	}
-	
-	private void stack(final BlockKey key, final long activity, PublicityUpdate publicityUpdate, final Guid participantId, final boolean isGroupParticipation) {
-		if (disabled)
-			return;
 		
-		// Updating the block timestamp is something we want to do as part of the enclosing transaction;
-		// if the enclosing transaction is rolled back, the timestamp needs to be rolled back
-		final Block block = getUpdatingDetails(key, activity, publicityUpdate);
-		if (block == null) {
-			logger.warn("No block exists when stacking {} migration needed or bug",
-					    key);
-			return;
-		}
-
 		// Now we need to create demand-create user/group block data objects and update the
 		// cached user timestamps. update{User,Group{BlockDatas(block) are always safe to call
 		// at any point without worrying about ordering. We queue the update asynchronously
@@ -519,10 +463,26 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		});
 	}
 	
-	private void click(BlockKey key, User user, long clickTime) {
-		if (disabled)
-			return;
-		
+	private void stack(Block block, long activity) {
+		stack(block, activity, null, false);
+	}
+	
+	public Block stack(BlockKey key, long activity, Guid participantId, boolean isGroupParticipation) {
+		Block block;
+		try {
+			block = queryBlock(key);
+		} catch (NotFoundException e) {
+			throw new RuntimeException("stack() called on block that doesn't exist; probably means a migration is needed. key=" + key, e);
+		}
+        stack(block, activity, participantId, isGroupParticipation);
+        return block;
+	}
+	
+	public Block stack(BlockKey key, long activity) {
+		return stack(key, activity, null, false);
+	}
+	
+	private void click(BlockKey key, User user, long clickTime) {		
 		UserBlockData ubd;
 		try {
 			ubd = queryUserBlockData(user, key);
@@ -548,30 +508,9 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		logger.debug("due to click, restacking block {} with new time {}", ubd.getBlock(), clickTime);
 		// now update the timestamp in the block (if it's newer)
 		// and update user caches for all users
-		stack(ubd.getBlock(), clickTime, false);
+		stack(ubd.getBlock(), clickTime);
 	}
-		
-	private void updateMusicPersonPublicity(Block block, User user, boolean onMusicPersonStacking) {
-		if (!user.getGuid().equals(block.getData1AsGuid()))
-			throw new IllegalArgumentException("setMusicPersonPublicity takes the guid from the block");
-	    boolean publicBlock;
-		if (onMusicPersonStacking) {
-			publicBlock = identitySpider.getMusicSharingEnabled(user, Enabled.AND_ACCOUNT_IS_ACTIVE);
-		} else {
-			// FIXME Shouldn't this check from Anonymous not System viewpoint?
-			// (also, it could be done cheaper than countTrackHistory perhaps)
-			
-			// if we are not updating publicity because a MUSIC_PERSON block was stacked, 
-			// we need to check if the person has played any tracks before possibly setting the 
-			// publicBlock flag to true
-			// countTrackHistory includes the check for getMusicSharingEnabled
-		    publicBlock = (musicSystem.countTrackHistory(SystemViewpoint.getInstance(), user) > 0);	
-	    }
 
-		if (block.isPublicBlock() != publicBlock )
-		    block.setPublicBlock(publicBlock);
-	}
-		
 	// FIXME this function should die since block-type-specific code should not 
 	// be in this file
 	private BlockKey getMusicPersonKey(Guid userId) {
@@ -606,20 +545,6 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	// be in this file
 	private BlockKey getBlogPersonKey(Guid userId, StackInclusion inclusion) {
 		return getHandler(BlogBlockHandler.class, BlockType.BLOG_PERSON).getKey(userId, inclusion);
-	}
-	
-	// don't create or suspend transaction; we will manage our own for now (FIXME) 
-	@TransactionAttribute(TransactionAttributeType.SUPPORTS)
-	public void stackMusicPerson(final Guid userId, final long activity) {
-		// we need to set the publicBlock flag correctly the first time the person music block
-		// is stacked, but we do not want to have a special flag for this transition, so
-		// we double-check the block publicity anytime a music block that is not public is stacked
-		stack(getMusicPersonKey(userId), activity, new PublicityUpdate() {
-			      public void update(Block block) {
-			 	    if (!block.isPublicBlock())
-					    updateMusicPersonPublicity(block, em.find(User.class, userId.toString()), true);
-			      }
-	          }, userId, false);
 	}
 	
 	// don't create or suspend transaction; we will manage our own for now (FIXME) 
@@ -1500,9 +1425,6 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	}
 	
 	public void migrateEverything() {	
-		if (disabled)
-			throw new RuntimeException("stacking disabled, can't migrate anything");
-		
 		List<Runnable> tasks = new ArrayList<Runnable>();
 		
 		Query q = em.createQuery("SELECT post.id FROM Post post");
@@ -1522,10 +1444,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		runMigration(tasks);
 	}
 	
-	public void migrateParticipation() {
-		if (disabled)
-			throw new RuntimeException("stacking disabled, can't migrate anything");
-		
+	public void migrateParticipation() {		
 		runMigration(generateParticipationMigrationTasks());		
 	}
 	
@@ -1563,9 +1482,6 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	}
 	
 	public void migrateGroups() {
-		if (disabled)
-			throw new RuntimeException("stacking disabled, can't migrate anything");
-
 		List<Runnable> tasks = new ArrayList<Runnable>();
 
 		Query q = em.createQuery("SELECT group.id FROM Group group");
@@ -1662,7 +1578,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		// cached user timestamps after this transaction commits. It would also 
 		// create any  UserBlockData objects that didn't exist at that point, but 
 		// they should have all been created above by migrating PersonPostData
-		stack(block, activity, !(post instanceof FeedPost) || messages.size() > 0);		
+		stack(block, activity, null, !(post instanceof FeedPost) || messages.size() > 0);		
 	}
 	
 	public void migratePostParticipation(String postId) {
@@ -1710,9 +1626,12 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	public void migrateUser(String userId) {
 		logger.debug("    migrating user {}", userId);
 		User user = em.find(User.class, userId);
-		getOrCreateBlock(getMusicPersonKey(user.getGuid()));
+		BlockKey key = getMusicPersonKey(user.getGuid());
+		getOrCreateBlock(key);
 		long lastPlayTime = musicSystem.getLatestPlayTime(SystemViewpoint.getInstance(), user);
-		stackMusicPerson(user.getGuid(), lastPlayTime);
+		if (lastPlayTime != 0) {			
+			stack(key, lastPlayTime);
+		}
 	}
 	
 	public void migrateBlockParticipation(String blockId) {

@@ -37,7 +37,6 @@ import org.apache.lucene.queryParser.QueryParser;
 import org.apache.lucene.queryParser.QueryParser.Operator;
 import org.apache.lucene.search.Hits;
 import org.hibernate.lucene.DocumentBuilder;
-import org.jboss.annotation.IgnoreDependency;
 import org.slf4j.Logger;
 
 import com.dumbhippo.ExceptionUtils;
@@ -61,10 +60,10 @@ import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.MusicSystemInternal;
 import com.dumbhippo.server.NotFoundException;
+import com.dumbhippo.server.Notifier;
 import com.dumbhippo.server.Pageable;
 import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.RhapsodyDownloadCache;
-import com.dumbhippo.server.Stacker;
 import com.dumbhippo.server.TrackIndexer;
 import com.dumbhippo.server.TrackSearchResult;
 import com.dumbhippo.server.TransactionRunner;
@@ -141,8 +140,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	private YahooArtistAlbumsCache yahooArtistAlbumsCache;
 	
 	@EJB
-	@IgnoreDependency
-	private Stacker stacker;
+	private Notifier notifier;
 	
 	private static ExecutorService threadPool;
 	private static boolean shutdown = false;
@@ -265,7 +263,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		});
 		
 		// update the stack with this new listen event
-		stacker.stackMusicPerson(user.getGuid(), now.getTime());
+		notifier.onTrackPlayed(user, track, now);
 	}
 	
 	@TransactionAttribute(TransactionAttributeType.NEVER)	
@@ -360,22 +358,32 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		return results;
 	}
 	
+	private int queryCount(User user, boolean limitToOne) {
+		Query q;
+		
+		q = em.createQuery("SELECT COUNT(*) FROM TrackHistory h WHERE h.user = :user " +
+				(limitToOne ? " LIMIT 1" : ""));
+		q.setParameter("user", user);
+		
+		Object o = q.getSingleResult();
+		return ((Number)o).intValue();		
+	}
+	
 	public int countTrackHistory(Viewpoint viewpoint, User user) {
 		if (!identitySpider.getMusicSharingEnabled(user, Enabled.AND_ACCOUNT_IS_ACTIVE)) {
 			return 0;
 		}
 		
-		Query q;
-		
-		q = em.createQuery("SELECT COUNT(*) FROM TrackHistory h WHERE h.user = :user ");
-		q.setParameter("user", user);
-		
-		Object o = q.getSingleResult();
-		int count = ((Number)o).intValue();
-
-		return count;		
+		return queryCount(user, false);		
 	}
 
+	public boolean hasTrackHistory(Viewpoint viewpoint, User user) {
+		if (!identitySpider.getMusicSharingEnabled(user, Enabled.AND_ACCOUNT_IS_ACTIVE)) {
+			return false;
+		}
+		return queryCount(user, true) > 0;
+	}
+	
 	static final private int MAX_GROUP_HISTORY_TRACKS = 200;
 	static final private int MAX_GROUP_HISTORY_TRACKS_PER_MEMBER = 8;
 	

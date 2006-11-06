@@ -1,5 +1,6 @@
 package com.dumbhippo.server.blocks;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
@@ -15,11 +16,13 @@ import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.BlockKey;
 import com.dumbhippo.persistence.BlockType;
 import com.dumbhippo.persistence.Group;
+import com.dumbhippo.persistence.Track;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.Enabled;
 import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PersonViewer;
+import com.dumbhippo.server.views.AnonymousViewpoint;
 import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.PersonViewExtra;
 import com.dumbhippo.server.views.TrackView;
@@ -82,28 +85,45 @@ public class MusicPersonBlockHandlerBean extends AbstractBlockHandlerBean<MusicP
 	}
 	
 	// FIXME some cut-and-paste from StackerBean here for now
-	private void updatePublicFlag(Account account) {
-		User user = account.getOwner();
+	private void updatePublicFlag(Block block, User user, boolean knownToHaveTracks) {
+		boolean publicBlock = identitySpider.getMusicSharingEnabled(user, Enabled.AND_ACCOUNT_IS_ACTIVE);
+		if (publicBlock && !knownToHaveTracks) {
+			// maybe disable public block flag due to no visible tracks, this 
+			// happens if someone has never played anything
+			publicBlock = musicSystem.hasTrackHistory(AnonymousViewpoint.getInstance(), user);
+		}
+		block.setPublicBlock(publicBlock);
+	}
+
+	private void updatePublicFlag(Account account, boolean knownToHaveTracks) {
 		Block block;
 		try {
-			block = stacker.queryBlock(getKey(user));
+			block = stacker.queryBlock(getKey(account.getOwner()));
 		} catch (NotFoundException e) {
 			logger.warn("Account has no music person block, need migration? {}", account);
 			return;
-		}
-		boolean publicBlock = identitySpider.getMusicSharingEnabled(user, Enabled.AND_ACCOUNT_IS_ACTIVE);
-		block.setPublicBlock(publicBlock);
+		}		
+		updatePublicFlag(block, account.getOwner(), knownToHaveTracks);
 	}
 	
 	public void onAccountDisabledToggled(Account account) {
-		updatePublicFlag(account);
+		updatePublicFlag(account, false);
 	}
 	
 	public void onAccountAdminDisabledToggled(Account account) {
-		updatePublicFlag(account);
+		updatePublicFlag(account, false);
 	}
 	
 	public void onMusicSharingToggled(Account account) {
-		updatePublicFlag(account);
+		updatePublicFlag(account, false);
+	}
+
+	public void onTrackPlayed(User user, Track track, Date when) {
+		Block block = stacker.stack(getKey(user), when.getTime());
+
+		// if we weren't public we might be now. Playing a track won't 
+		// ever un-public us though.
+		if (!block.isPublicBlock())
+			updatePublicFlag(block, user, true);
 	}
 }

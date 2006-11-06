@@ -23,6 +23,8 @@ public interface MusicSystem {
 	
 	public int countTrackHistory(Viewpoint viewpoint, User user);
 	
+	public boolean hasTrackHistory(Viewpoint viewpoint, User user);
+	
 	/**
 	 * Retrieve the set of tracks that were played globally on the system most recently
 	 * 
@@ -204,5 +206,6 @@ public interface MusicSystem {
 	
 	public void addFeedTrack(User user, TrackFeedEntry entry, int entryPosition);
 	
+	// somewhat oddly, returns 0 if none
 	public long getLatestPlayTime(Viewpoint viewpoint, User user);
 }

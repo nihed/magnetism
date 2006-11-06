@@ -43,6 +43,10 @@ public class MusicSystemBean implements MusicSystem {
 	    return internal.countTrackHistory(viewpoint, user);
 	}
 	
+	public boolean hasTrackHistory(Viewpoint viewpoint, User user) {
+		return internal.hasTrackHistory(viewpoint, user);
+	}
+	
 	public void pageLatestTrackViews(Viewpoint viewpoint, Pageable<TrackView> pageable) {
 		internal.pageLatestTrackViews(viewpoint, pageable);
 	}
