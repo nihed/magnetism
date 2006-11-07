@@ -867,7 +867,7 @@ public class PresenceService extends ServiceMBeanSupport implements PresenceServ
 			if (!newMembers.contains(address)) {
 				ServerInfo server = servers.get(address);
 				i.remove();
-				server.notifyAll();
+				server.notifyAllRemoved();
 			}
 		}
 	}
