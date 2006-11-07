@@ -6,6 +6,9 @@ import java.net.URL;
 import com.dumbhippo.StringUtils;
 import com.dumbhippo.services.FlickrUser;
 
+import org.slf4j.Logger;
+import com.dumbhippo.GlobalSetup;
+
 /**
  * This enum goes in the database, so don't change values without migrating the db
  * 
@@ -157,10 +160,8 @@ public enum ExternalAccountType {
 	FACEBOOK("Facebook")  {
 		@Override
 		public String getLink(String handle, String extra) {
-			// TODO: we are currently not getting ids used by facebook to identify profiles
-			// on the web, we need to form this link our API key and the user id we get through
-			// facebook web services
-			return getSiteLink(); // + "/profile.php?id=" + StringUtils.urlEncode(handle);
+			logger.warn("getLink() in ExternalAccountType does not provide a link to a Facebook profile based on a handle and an extra.");
+			return getSiteLink();
 		}
 		
 		@Override
@@ -302,6 +303,8 @@ public enum ExternalAccountType {
 			return handle;
 		}
 	};
+	
+	private static final Logger logger = GlobalSetup.getLogger(ExternalAccountType.class);	
 	
 	private String siteName;
 	
