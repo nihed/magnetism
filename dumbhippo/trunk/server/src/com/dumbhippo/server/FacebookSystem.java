@@ -4,6 +4,7 @@ import java.util.List;
 
 import javax.ejb.Local;
 
+import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.FacebookAccount;
 import com.dumbhippo.persistence.FacebookEvent;
 import com.dumbhippo.persistence.User;
@@ -23,6 +24,8 @@ public interface FacebookSystem {
 	public FacebookAccount lookupFacebookAccount(Viewpoint viewpoint, User user) throws NotFoundException;
 	
 	public List<FacebookEvent> getLatestEvents(Viewpoint viewpoint, FacebookAccount facebookAccount, int eventsCount);
+	
+	public String getProfileLink(ExternalAccount externalAccount);
 	
 	public String getApiKey();	
 }

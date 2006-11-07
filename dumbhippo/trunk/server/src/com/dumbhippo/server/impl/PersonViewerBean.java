@@ -23,7 +23,6 @@ import com.dumbhippo.persistence.AimResource;
 import com.dumbhippo.persistence.Contact;
 import com.dumbhippo.persistence.ContactClaim;
 import com.dumbhippo.persistence.EmailResource;
-import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
@@ -34,6 +33,7 @@ import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.InvitationSystem;
 import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.Configuration.PropertyNotFoundException;
+import com.dumbhippo.server.views.ExternalAccountView;
 import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.PersonViewExtra;
 import com.dumbhippo.server.views.SystemViewpoint;
@@ -220,13 +220,13 @@ public class PersonViewerBean implements PersonViewer {
 				pv.addAllAims(new TypeFilteredCollection<Resource,AimResource>(resources, AimResource.class));
 			} else if (e == PersonViewExtra.EXTERNAL_ACCOUNTS) {
 				if (pv.getUser() != null) {
-					Set<ExternalAccount> externals = externalAccounts.getExternalAccounts(viewpoint, pv.getUser()); 
+					Set<ExternalAccountView> externals = externalAccounts.getExternalAccountViews(viewpoint, pv.getUser()); 
 					externalAccounts.loadThumbnails(viewpoint, externals);
-					pv.addExternalAccounts(externals);
+					pv.addExternalAccountViews(externals);
 				} else {
-					pv.addExternalAccounts(new HashSet<ExternalAccount>());
+					pv.addExternalAccountViews(new HashSet<ExternalAccountView>());
 				}
-				if (pv.getExternalAccounts() == null)
+				if (pv.getExternalAccountViews() == null)
 					throw new IllegalStateException("Somehow set null external accounts on PersonView");
 			} else if (e == PersonViewExtra.CONTACT_STATUS) {
 				boolean isContact = false;

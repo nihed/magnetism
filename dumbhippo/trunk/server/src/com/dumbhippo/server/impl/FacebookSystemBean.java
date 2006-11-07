@@ -46,9 +46,13 @@ public class FacebookSystemBean implements FacebookSystem {
 	
 		ExternalAccount externalAccount = externalAccounts.lookupExternalAccount(viewpoint, user, ExternalAccountType.FACEBOOK);
 
+        return lookupFacebookAccount(externalAccount);
+	}
+	
+	private FacebookAccount lookupFacebookAccount(ExternalAccount externalAccount) throws NotFoundException {
 		FacebookAccount facebookAccount;
 		if (externalAccount.getExtra() == null) {
-			throw new NotFoundException("No facebook account details for user " + user);
+			throw new NotFoundException("No facebook account details for user " + externalAccount.getAccount().getOwner());
 		} else {
 			facebookAccount = em.find(FacebookAccount.class, Long.parseLong(externalAccount.getExtra()));
 			if (facebookAccount == null)
@@ -95,6 +99,17 @@ public class FacebookSystemBean implements FacebookSystem {
 		
 		return list.subList(0, Math.min(eventsCount, list.size()));
 	}
+	
+	public String getProfileLink(ExternalAccount externalAccount) {
+		try {
+		    FacebookAccount facebookAccount = lookupFacebookAccount(externalAccount);
+		    return "http://www.facebook.com/profile.php?uid=" 
+		           + facebookAccount.getFacebookUserId() + "&api_key=" + getApiKey();
+		} catch (NotFoundException e) {
+			throw new RuntimeException("An ExternalAccount passed to getProfileLink() was not associated with a valid FacebookAccount.", e);
+		}
+	}
+	
 	
 	public String getApiKey() {
     	String apiKey;

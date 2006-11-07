@@ -1,5 +1,6 @@
 package com.dumbhippo.server.impl;
 
+import java.util.HashSet;
 import java.util.Set;
 
 import javax.ejb.EJB;
@@ -21,10 +22,12 @@ import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.ValidationException;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.ExternalAccountSystem;
+import com.dumbhippo.server.FacebookSystem;
 import com.dumbhippo.server.MessageSender;
 import com.dumbhippo.server.MySpaceTracker;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Notifier;
+import com.dumbhippo.server.views.ExternalAccountView;
 import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.server.views.Viewpoint;
 import com.dumbhippo.services.FlickrPhotoSize;
@@ -44,6 +47,10 @@ public class ExternalAccountSystemBean implements ExternalAccountSystem {
 	@EJB
 	@IgnoreDependency
 	private MessageSender messageSender;
+	
+	@EJB
+	@IgnoreDependency
+	private FacebookSystem facebookSystem;
 	
 	@EJB
 	private Notifier notifier;
@@ -85,7 +92,7 @@ public class ExternalAccountSystemBean implements ExternalAccountSystem {
 			return external;
 	}
 	
-	public Set<ExternalAccount> getExternalAccounts(Viewpoint viewpoint, User user) {
+	public Set<ExternalAccountView> getExternalAccountViews(Viewpoint viewpoint, User user) {
 		// Right now we ignore the viewpoint, so this method is pretty pointless.
 		// but if people use it, future code will work properly.
 		
@@ -95,7 +102,17 @@ public class ExternalAccountSystemBean implements ExternalAccountSystem {
 		
 		Set<ExternalAccount> accounts = user.getAccount().getExternalAccounts();
 		//logger.debug("{} external accounts for user {}", accounts.size(), user);
-		return accounts;
+		
+		Set<ExternalAccountView> accountViews = new HashSet<ExternalAccountView>();
+		for (ExternalAccount account : accounts) {
+			if (account.getAccountType() == ExternalAccountType.FACEBOOK) {
+				accountViews.add(new ExternalAccountView(account, facebookSystem.getProfileLink(account)));
+			} else {
+				accountViews.add(new ExternalAccountView(account));
+			}				
+		}
+
+		return accountViews;
 	}
 	
 	public void setMySpaceName(UserViewpoint viewpoint, String name) throws ValidationException {
@@ -135,11 +152,11 @@ public class ExternalAccountSystemBean implements ExternalAccountSystem {
 		}
 	}
 	
-	public void loadThumbnails(Viewpoint viewpoint, Set<ExternalAccount> accounts) {
-		for (ExternalAccount external : accounts) {
-			switch (external.getAccountType()) {
+	public void loadThumbnails(Viewpoint viewpoint, Set<ExternalAccountView> accountViews) {
+		for (ExternalAccountView externalView : accountViews) {
+			switch (externalView.getExternalAccount().getAccountType()) {
 			case FLICKR:
-				loadFlickrThumbnails(viewpoint, external);
+				loadFlickrThumbnails(viewpoint, externalView.getExternalAccount());
 				break;
 			default:
 				break;

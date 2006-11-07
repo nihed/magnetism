@@ -23,7 +23,6 @@ import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.AimResource;
 import com.dumbhippo.persistence.Contact;
 import com.dumbhippo.persistence.EmailResource;
-import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.Sentiment;
@@ -59,7 +58,7 @@ public class PersonView extends EntityView {
 	private boolean viewOfSelf;
 	private boolean online;
 	private boolean isContactOfViewer;
-	private Set<ExternalAccount> externalAccounts;
+	private Set<ExternalAccountView> externalAccountViews;
 	private List<TrackView> trackHistory;
 	private String aimPresenceKey;
 	private boolean viewerIsContact;
@@ -170,11 +169,11 @@ public class PersonView extends EntityView {
 			return null;
 	}
 	
-	public void addExternalAccounts(Set<ExternalAccount> externalAccounts) {
-		if (externalAccounts == null)
+	public void addExternalAccountViews(Set<ExternalAccountView> externalAccountViews) {
+		if (externalAccountViews == null)
 			throw new IllegalArgumentException("can't add null internal accounts set");
 		addExtras(EnumSet.of(PersonViewExtra.EXTERNAL_ACCOUNTS));
-		this.externalAccounts = externalAccounts;
+		this.externalAccountViews = externalAccountViews;
 	}
 	
 	/**
@@ -348,46 +347,46 @@ public class PersonView extends EntityView {
 		return getMany(PersonViewExtra.ALL_RESOURCES, Resource.class);
 	}
 	
-	public Set<ExternalAccount> getExternalAccounts() {
+	public Set<ExternalAccountView> getExternalAccountViews() {
 		if (!hasExtra(PersonViewExtra.EXTERNAL_ACCOUNTS))
 			throw new IllegalStateException("asked for " + PersonViewExtra.EXTERNAL_ACCOUNTS + " but this PersonView wasn't created with that, only with " + extras + " for " + this.hashCode());
-		return externalAccounts;
+		return externalAccountViews;
 	}
 	
-	public ListBean<ExternalAccount> getAccountsBySentiment(Sentiment sentiment) {
-		List<ExternalAccount> list = new ArrayList<ExternalAccount>();
-		for (ExternalAccount a : getExternalAccounts()) {
-			if (a.getSentiment() == sentiment) {
+	public ListBean<ExternalAccountView> getAccountsBySentiment(Sentiment sentiment) {
+		List<ExternalAccountView> list = new ArrayList<ExternalAccountView>();
+		for (ExternalAccountView a : getExternalAccountViews()) {
+			if (a.getExternalAccount().getSentiment() == sentiment) {
 				list.add(a);
 			}
 		}
-		Collections.sort(list, new Comparator<ExternalAccount>() {
+		Collections.sort(list, new Comparator<ExternalAccountView>() {
 
-			public int compare(ExternalAccount first, ExternalAccount second) {
+			public int compare(ExternalAccountView first, ExternalAccountView second) {
 				// Equality should be impossible, someone should not have two of the same account.
 				// But we'll put it here in case the java sort algorithm somehow needs it (tough to imagine)
-				if (first.getAccountType() == second.getAccountType())
+				if (first.getExternalAccount().getAccountType() == second.getExternalAccount().getAccountType())
 					return 0;
 				
 				// We want "my website" first, then everything alphabetized by the human-readable name.
 				
-				if (first.getAccountType() == ExternalAccountType.WEBSITE)
+				if (first.getExternalAccount().getAccountType() == ExternalAccountType.WEBSITE)
 					return -1;
-				if (second.getAccountType() == ExternalAccountType.WEBSITE)
+				if (second.getExternalAccount().getAccountType() == ExternalAccountType.WEBSITE)
 					return 1;
 				
-				return String.CASE_INSENSITIVE_ORDER.compare(first.getSiteName(), second.getSiteName());
+				return String.CASE_INSENSITIVE_ORDER.compare(first.getExternalAccount().getSiteName(), second.getExternalAccount().getSiteName());
 			}
 			
 		});
-		return new ListBean<ExternalAccount>(list);
+		return new ListBean<ExternalAccountView>(list);
 	}
 	
-	public ListBean<ExternalAccount> getLovedAccounts() {
+	public ListBean<ExternalAccountView> getLovedAccounts() {
 		return getAccountsBySentiment(Sentiment.LOVE);
 	}
 	
-	public ListBean<ExternalAccount> getHatedAccounts() {
+	public ListBean<ExternalAccountView> getHatedAccounts() {
 		return getAccountsBySentiment(Sentiment.HATE);
 	}
 	

@@ -108,6 +108,7 @@ public class FacebookTrackerBean implements FacebookTracker, SingletonServiceMBe
 			// we also want to make sure the message count timestamp is refreshed
 			facebookAccount.setMessageCountTimestampAsLong(updateTime);
 		}
+		externalAccount.setHandle(facebookAccount.getFacebookUserId());
 		notifier.onFacebookSignedIn(facebookAccount.getExternalAccount().getAccount().getOwner(),
 				facebookAccount, updateTime);
 	}

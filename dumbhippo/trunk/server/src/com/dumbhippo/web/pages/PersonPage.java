@@ -6,9 +6,9 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.XmlBuilder;
-import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.Sentiment;
 import com.dumbhippo.server.Configuration;
+import com.dumbhippo.server.views.ExternalAccountView;
 import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.web.ListBean;
 import com.dumbhippo.web.WebEJBUtil;
@@ -23,8 +23,8 @@ public class PersonPage extends AbstractPersonPage {
 	static private final Logger logger = GlobalSetup.getLogger(PersonPage.class);	
 	
 	private boolean asOthersWouldSee;
-	private ListBean<ExternalAccount> lovedAccounts;
-	private ListBean<ExternalAccount> hatedAccounts;
+	private ListBean<ExternalAccountView> lovedAccounts;
+	private ListBean<ExternalAccountView> hatedAccounts;
 	
 	private Configuration config;
 	
@@ -40,19 +40,19 @@ public class PersonPage extends AbstractPersonPage {
 		this.asOthersWouldSee = asOthersWouldSee;
 	}
 	
-	private ListBean<ExternalAccount> getAccountsBySentiment(Sentiment sentiment) {
+	private ListBean<ExternalAccountView> getAccountsBySentiment(Sentiment sentiment) {
 		PersonView pv = getViewedPerson();
 		return pv.getAccountsBySentiment(sentiment);
 	}
 	
-	public ListBean<ExternalAccount> getLovedAccounts() {
+	public ListBean<ExternalAccountView> getLovedAccounts() {
 		if (lovedAccounts == null) {
 			lovedAccounts = getAccountsBySentiment(Sentiment.LOVE);
 		}
 		return lovedAccounts;
 	}
 	
-	public ListBean<ExternalAccount> getHatedAccounts() {
+	public ListBean<ExternalAccountView> getHatedAccounts() {
 		if (hatedAccounts == null) {
 			hatedAccounts = getAccountsBySentiment(Sentiment.HATE);
 		}
@@ -91,7 +91,7 @@ public class PersonPage extends AbstractPersonPage {
 					"href", getFullProfileUrl());
 			xml.closeElement();						
 		} else {
-			List<ExternalAccount> loved = getLovedAccounts().getList();
+			List<ExternalAccountView> loved = getLovedAccounts().getList();
 			if (loved.size() == 0) {
 				xml.openElement("div", "class", "mugshot-error");
 				xml.appendTextNode("a", "Where's the love?", "href",
@@ -100,9 +100,9 @@ public class PersonPage extends AbstractPersonPage {
 			} else {
 				xml.openElement("ul", "class", "mugshot-external-accounts");
 				xml.append("\n");
-				for (ExternalAccount a : loved) {
+				for (ExternalAccountView a : loved) {
 					xml.openElement("li", "class", "mugshot-external-account");
-					xml.appendTextNode("a", a.getSiteName(), "href", a.getLink());
+					xml.appendTextNode("a", a.getExternalAccount().getSiteName(), "href", a.getLink());
 					xml.append("\n");
 				}
 				xml.closeElement();

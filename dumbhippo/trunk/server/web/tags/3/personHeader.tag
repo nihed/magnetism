@@ -98,7 +98,7 @@
 			                <td align="right">
 			                    <%-- Accounts with thumbnail boxes --%>
 			 		            <c:forEach var="account" items="${who.lovedAccounts.list}">
-						           <c:if test="${account.hasThumbnails}">
+						           <c:if test="${account.externalAccount.hasThumbnails}">
 					                    <dht:whereAtThumbnailBox account="${account}" />
 						           </c:if>
 					            </c:forEach>

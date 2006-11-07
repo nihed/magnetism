@@ -15,6 +15,6 @@
         <dht3:whereAtIcon label="AIM" linkText="${who.aim.screenName}" linkTarget="${who.aimLink}" imgSrc="${aimIcon}"/>
 	</c:if>						
 	<c:forEach var="account" items="${who.lovedAccounts.list}">
-		<dht3:whereAtIcon label="${account.siteName}" linkText="${account.linkText}" linkTarget="${account.link}" imgSrc="/images3/${buildStamp}/${account.iconName}"/>
+		<dht3:whereAtIcon label="${account.externalAccount.siteName}" linkText="${account.externalAccount.linkText}" linkTarget="${account.link}" imgSrc="/images3/${buildStamp}/${account.externalAccount.iconName}"/>
 	</c:forEach>							
 </div>
