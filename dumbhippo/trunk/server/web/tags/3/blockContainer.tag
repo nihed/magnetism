@@ -15,7 +15,7 @@
 	<jsp:attribute name="cellpadding">0</jsp:attribute>	
 	<jsp:body>
 	<tr>
-		<td valign="top" align="left" width="20px"><dh:png klass="dh-stacker-block-icon" src="${block.icon}" style="width: 16; height: 16; border: none;"/></td>
+		<td valign="top" align="left" width="22px"><dh:png klass="dh-stacker-block-icon" src="${block.icon}" style="width: 16; height: 16; border: none;"/></td>
 		<jsp:doBody/>
 	</tr>
 	</jsp:body>
