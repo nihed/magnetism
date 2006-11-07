@@ -1,5 +1,10 @@
 package com.dumbhippo.statistics;
 
+import java.lang.management.GarbageCollectorMXBean;
+import java.lang.management.ManagementFactory;
+import java.lang.management.MemoryMXBean;
+import java.util.List;
+
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
@@ -13,18 +18,34 @@ import com.dumbhippo.server.impl.MessengerGlueBean;
  */
 public class ServerStatistics implements StatisticsSource {
 	private static ServerStatistics instance = new ServerStatistics();
-//	@Column(id="heapSize",
-//			name="Heap Size", 
-//			units=ColumnUnit.BYTES, 
-//			type=ColumnType.SNAPSHOT)
-//	public long getHeapSize() {
-//		return 0;
-//	}
 	
 	static public ServerStatistics getInstance() {
 		return instance;
 	}
   	
+	@Column(id="heapUsed",
+			name="Heap Used", 
+			units=ColumnUnit.BYTES, 
+			type=ColumnType.SNAPSHOT)
+	public long getHeapSize() {
+		MemoryMXBean memoryBean = ManagementFactory.getMemoryMXBean();
+		return memoryBean.getHeapMemoryUsage().getUsed();
+	}
+	
+	@Column(id="collectionTime",
+			name="Collection Time", 
+			units=ColumnUnit.MILLISECONDS, 
+			type=ColumnType.CUMULATIVE)
+	public long getCollectionTime() {
+		long time = 0;
+		
+		for (GarbageCollectorMXBean gcBean : ManagementFactory.getGarbageCollectorMXBeans()) {
+			time += gcBean.getCollectionTime();
+		}
+		
+		return time;
+	}
+	
 	private Object getDBAttribute(String attr) {
 		MBeanServer jboss = MBeanServerLocator.locateJBoss();
 		try {

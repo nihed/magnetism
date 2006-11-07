@@ -1,4 +1,4 @@
-dojo.provide("dh.statistics.*");
+dojo.provide("dh.statistics");
 
 dojo.require("dh.statistics.block");
 dojo.require("dh.statistics.fetcher");
@@ -11,7 +11,7 @@ dh.statistics._blocks = {};
 dh.statistics._nextBlockId = 1;
 dh.statistics._set = null;
 
-function dhStatisticsInit() {
+dhStatisticsInit = function() {
 	dh.statistics._fetcher = new dh.statistics.fetcher.Fetcher();
 	dh.statistics._fetcher.onFetch = function(ids) {
 		dh.statistics._onFetch(ids);

@@ -37,7 +37,7 @@ original_files = {}
 ## list.
 ## Look at the generated target/javascript/file-dependencies.txt for modules
 ## that drag in a long list of separate files. That file reflects bundling.
-bundle_modules = [ 'common', 'dh.site', 'dh.model', 'dh.accountpage', 'dh.share', 'dh.sharelink', 'dh.statistics.*'  ]
+bundle_modules = [ 'common', 'dh.site', 'dh.model', 'dh.accountpage', 'dh.share', 'dh.sharelink', 'dh.statistics'  ]
 
 ## Map from module names to OriginalFile objects
 providers = {}
@@ -205,37 +205,28 @@ def write_required_check(out, indent, module, already):
                 already[next] = 1
             sofar = next
 
-## checks before we create the module, like "dh.actions={}"
-def write_pre_provide_checks(out, indent, module):
+# Create empty hashes as necessary
+def write_namespaces(out, indent, module, already):
     module = module_identifier(module)
-    write_line(out, indent, "// check that we didn't already create %s" % module)
     elems = module.split(".")
     sofar = ""
     for e in elems:
         if sofar == "":
-            if e != module:
+            if not already.has_key(e):
                 write_line(out, indent,
                            "if (typeof %s == 'undefined')" % e)
                 write_line(out, indent + 4,
-                           "throw new Error('%s in %s is not parsed yet before providing %s');" % (e, file_providing(e), module))
-            else:
-                write_line(out, indent,
-                           "if (typeof %s !== 'undefined')" % e)
-                write_line(out, indent + 4,
-                           "throw new Error('%s already exists when providing %s');" % (e, module))
+                           "%s = {};" % e)
+                already[e] = 1
             sofar = e
         else:
             next = sofar + "." + e
-            if next == module:
-                write_line(out, indent,
-                           "if (typeof %s['%s'] !== 'undefined')" % (sofar, e))
-                write_line(out, indent + 4,
-                           "throw new Error('%s already parsed when providing %s');" % (next, module))
-            else:
+            if not already.has_key(next):
                 write_line(out, indent,
                            "if (typeof %s['%s'] == 'undefined')" % (sofar, e))
                 write_line(out, indent + 4,
-                           "throw new Error('%s not yet parsed when providing %s');" % (next,  module))
+                           "%s = {};" % next)
+                already[next] = 1
             sofar = next
 
 def write_check_has_type(out, indent, obj, name, js_type_name):
@@ -274,14 +265,7 @@ def write_post_load_checks(out, indent, module):
 
             sofar = next
 
-    write_check_has_type(out, indent, module, "_loaded", 'boolean')
-    write_check_has_type(out, indent, module, "_parsed", 'boolean')
     write_check_has_type(out, indent, module, "_load", 'function')
-
-## Output only for stuff where dojo is going to replace our
-## module object
-def global_load_symbol(module):
-    return module_as_variable_name(module) + "_load_backup"
 
 ## get module foo.bar if passed module foo
 child_modules = {}
@@ -321,15 +305,11 @@ def post_fixup_when_dojo_replaces_module_object(out, indent, module):
 
     ## Confirm we were replaced
     write_line(out, indent, "// check that dojo indeed mangled %s" % module)
-    write_check_has_type(out, indent, module, "_loaded", "undefined")
-    write_check_has_type(out, indent, module, "_parsed", "undefined")
     write_check_has_type(out, indent, module, "_load", "undefined")
 
     ## add our stuff back to the new object
     write_line(out, indent, "// fix %s again after dojo's change" % module)
-    write_line(out, indent, "%s._loaded = true;" % module);
-    write_line(out, indent, "%s._parsed = true;" % module);
-    write_line(out, indent, "%s._load = %s;" % (module, global_load_symbol(module)))
+    write_line(out, indent, "%s._load = dhNoop;" % module)
 
     for c in get_immediate_child_modules(module):
         write_line(out, indent, "if ((typeof %s) == 'undefined')" % module_identifier(c))
@@ -416,27 +396,6 @@ class OriginalFile:
                     ## since usually we're adding a.b when the file
                     ## also provides a.b.c
                     self._provides[p] = -1
-
-        ## now require all parent modules of our provides, many
-        ## modules in dojo don't seem to do this explicitly.
-        ## if we provide both a.b and a.b.c then this may
-        ## try to require something we provide ourselves, so we check
-        ## for and avoid that situation.
-        for p in self._provides.keys():
-            elems = p.split(".")
-            sofar = ""
-            for e in elems:
-                if sofar == "":
-                     ## don't require the root modules; nothing
-                     ## even provides 'dojo' and it's hard to fix
-                    sofar = e
-                else:
-                    sofar = sofar + "." + e
-                    if sofar != p and not \
-                           self._requires.has_key(sofar) and not \
-                           self._provides.has_key(sofar):
-                        ## -1 is a line number before any real ones
-                        self._requires[sofar] = -1
 
     def _find_provides_requires_package(self):
         in_conditional_load = 0
@@ -625,16 +584,16 @@ class OriginalFile:
             if l != "":
                 write_line(out, indent, l)
 
-    def write(self, out, already, indent):
-        if already.has_key(self):
+    def write(self, out, parsed_modules, created_namespaces, indent):
+        if parsed_modules.has_key(self):
             return
-        already[self] = 1
+        parsed_modules[self] = 1
 
         if self.get_may_contain_bundled_files():
             for r in self.get_all_requires():
                 orig = providers[r]
-                if not already.has_key(orig) and orig.get_bundler() == self.get_bundler():
-                    orig.write(out, already, indent)
+                if not parsed_modules.has_key(orig) and orig.get_bundler() == self.get_bundler():
+                    orig.write(out, parsed_modules, created_namespaces, indent)
 
         ## Assert that our direct dependencies have been loaded
         requires_asserted = {}
@@ -649,20 +608,15 @@ class OriginalFile:
             ## we use an arbitrary "master module" to name
             ## a load function that loads all of them at once
             master_module = module_identifier(provides[0])
-            for p in self.get_all_provides():
-                write_pre_provide_checks(out, indent, p)
 
-                p = module_identifier(p)
-                write_line(out, indent, "%s = {};" % p)
-                write_line(out, indent, "%s._parsed = true;" % p)
-                write_line(out, indent, "%s._loaded = false;" % p)
+            # Demand create our namespaces
+            for p in self.get_all_provides():
+                write_namespaces(out, indent, p, created_namespaces)
 
             write_line(out, indent, "%s._load = function() {" % (master_module))
-            write_line(out, indent + 4, "if (%s._loaded)" % master_module)
-            write_line(out, indent + 8, "return;")
             for p in self.get_all_provides():
                 p = module_identifier(p)                
-                write_line(out, indent + 4, "%s._loaded = true;" % p)
+                write_line(out, indent + 4, "%s._load = dhNoop;" % p)
 
             for r in self.get_all_requires():
                 r = module_identifier(r)
@@ -691,10 +645,6 @@ class OriginalFile:
                 p = module_identifier(p)
                 if p != master_module:
                     write_line(out, indent, "%s._load = %s._load;" % (p, master_module))
-
-                if dojo_replaces_module_object_hash.has_key(p):
-                    write_line(out, indent, "// save by another name so we can restore it post-dojo-mangle")
-                    write_line(out, indent, "%s = %s._load;" % (global_load_symbol(p), master_module))
 
             write_line(out, indent, "// end of module '%s'" % master_module);
 
@@ -739,7 +689,7 @@ class DestFile:
         except:
             pass
         out = open(self._path, 'w')
-        self._orig.write(out, {}, 0)
+        self._orig.write(out, {}, {}, 0)
         out.close()
 
     ## this gets a one-level list of the dependent files, not
@@ -752,7 +702,8 @@ class DestFile:
                     print "%s is not provided by any destination file" % (r)
                     sys.exit(1)
                 required_dest = dest_providers[r]
-                self._depfiles[required_dest] = 1
+                if required_dest != self:
+                    self._depfiles[required_dest] = 1
 
         return self._depfiles.keys()
         

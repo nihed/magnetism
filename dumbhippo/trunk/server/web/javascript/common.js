@@ -1,10 +1,7 @@
 // common.js - adds requires on the dojo bootstrap files
 // our dh:script tag forces it to load on all pages that use any javascript
 
-// Provide our toplevel modules (this just creates the empty modules)
 dojo.provide('common');
-dojo.provide('dh');
-dojo.provide('dh.statistics');
 
 // these modules are invented in the jscompress script.
 // bootstrap1 has to be included already, making it work 

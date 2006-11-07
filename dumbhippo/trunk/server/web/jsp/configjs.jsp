@@ -38,3 +38,5 @@ var djConfig = {
 	baseScriptUri: dhScriptRoot,
 	bindEncoding: "UTF-8" // For post submission. Default is mangled ASCII
 };
+
+function dhNoop() {}

@@ -10,6 +10,7 @@
 	<title>Mugshot Server Statistics</title>
 	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/statistics.css">
 	<dht:faviconIncludes/>
+		<dh:script module="dojo.event"/>
 		<dh:script module="dh.statistics"/>
 	<script type="text/javascript">
 		dojo.event.connect(dojo, "loaded", dj_global, "dhStatisticsInit");
