@@ -113,6 +113,15 @@
 				RelativePath="..\..\common\hippo\hippo-basics.c">
 			</File>
 			<File
+				RelativePath="..\..\common\hippo\hippo-block-abstract-person.c">
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-block-blog-person.c">
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-block-facebook-person.c">
+			</File>
+			<File
 				RelativePath="..\..\common\hippo\hippo-block-group-chat.c">
 			</File>
 			<File
@@ -292,6 +301,15 @@
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\hippo-basics.h">
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-block-abstract-person.h">
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-block-blog-person.h">
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-block-facebook-person.h">
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\hippo-block-group-chat.h">

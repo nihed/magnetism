@@ -138,6 +138,7 @@
 		    </Directory>
 		    <Directory Id="dhImagesDir" Name="Images">
         		<Component Id="images" Guid="681D6075-3B98-428C-8B73-68D9F15133AD">
+	        	    <File Id="addIconPng"        Name="add_icon.png" LongName="add_icon.png"       src="images\add_icon.png"       DiskId="1" Vital="yes"/>
 	        	    <File Id="arrowPng"          Name="arrow.png"    LongName="arrow.png"          src="images\arrow.png"          DiskId="1" Vital="yes"/>
 	        	    <File Id="arrow2Png"         Name="arrow2.png"   LongName="arrow2.png"         src="images\arrow2.png"         DiskId="1" Vital="yes"/>
 	        	    <File Id="barMiddlePng"      Name="bar_midd.png" LongName="bar_middle.png"     src="images\bar_middle.png"     DiskId="1" Vital="yes"/>
@@ -146,6 +147,8 @@
 	                    <File Id="barX2Png"          Name="bar_x2.png"   LongName="bar_x2.png"         src="images\bar_x2.png"         DiskId="1" Vital="yes"/>
 	                    <File Id="blueXPng"          Name="blue_x.png"   LongName="blue_x.png"         src="images\blue_x.png"         DiskId="1" Vital="yes"/>
 	                    <File Id="chatPng"           Name="chat.png"     LongName="chat.png"           src="images\chat.png"           DiskId="1" Vital="yes"/>
+	                    <File Id="closetipPng"       Name="closetip.png" LongName="closetip.png"       src="images\closetip.png"       DiskId="1" Vital="yes"/>
+	                    <File Id="expandtipPng"      Name="expandti.png" LongName="expandtip.png"      src="images\expandtip.png"      DiskId="1" Vital="yes"/>
 	                    <File Id="findPng"           Name="find.png"     LongName="find.png"           src="images\find.png"           DiskId="1" Vital="yes"/>
 	                    <File Id="homePng"           Name="home.png"     LongName="home.png"           src="images\home.png"           DiskId="1" Vital="yes"/>
 	                    <File Id="home2Png"          Name="home2.png"    LongName="home2.png"          src="images\home2.png"          DiskId="1" Vital="yes"/>
