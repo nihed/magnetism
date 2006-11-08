@@ -503,7 +503,7 @@ public class FeedSystemBean implements FeedSystem {
 		
 		try {
 			final SyndFeed syndFeed = fetchFeedFromNet(feed.getSource());
-			logger.info("  HTTP request completed for feed {}, retrieved {} entries", feed.getSource(), feed.getEntries().size());
+			logger.info("  HTTP request completed for feed {}, retrieved {} entries", feed.getSource(), syndFeed.getEntries().size());
 			return new UpdateFeedContext(feed.getId(), syndFeed);		
 		} catch (XmlMethodException e) {
 			logger.warn("Couldn't update feed {}: " + e.getCodeString() + ": {}", feed.getSource(), e.getMessage());
