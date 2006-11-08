@@ -23,9 +23,9 @@
 	<c:choose>
 		<c:when test="${browser.linuxRequested}">
 			<%-- LINUX RELEASE NOTES GO HERE --%>
-			<p>Version 1.1.23</p>
+			<p>Version 1.1.24</p>
 			<ul>
-				<li>A better way to expand and collapse blocks.</li>			
+				<li>Show appropriate icons by feed items.</li>			
 				<li>Bug fixes.</li>
 			</ul>
 			<div class="dh-upgrade-message">
