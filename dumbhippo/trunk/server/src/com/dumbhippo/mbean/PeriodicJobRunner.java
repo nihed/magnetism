@@ -19,7 +19,8 @@ public class PeriodicJobRunner extends ServiceMBeanSupport implements PeriodicJo
 	private static final Logger logger = GlobalSetup.getLogger(PeriodicJobRunner.class);
 	
 	private static final Class[] jobClasses = {
-		FeedUpdaterPeriodicJob.class
+		FeedUpdaterPeriodicJob.class,
+		FacebookTrackerPeriodicJob.class
 	};
 	
 	private List<Thread> threads;
@@ -29,6 +30,12 @@ public class PeriodicJobRunner extends ServiceMBeanSupport implements PeriodicJo
 	}
 	
 	public synchronized void startSingleton() {
+		
+		// CAUTION this runs before our entire application is loaded - some session beans 
+		// might not be available yet for example. Right now, we rely on all the jobs 
+		// to have an interval longer than the time until we're fully started up, which 
+		// is pretty sketchy.
+		
 		logger.info("Starting PeriodicUpdater singleton");
 		
 		for (Class<?> jobClass : jobClasses) {
@@ -109,7 +116,8 @@ public class PeriodicJobRunner extends ServiceMBeanSupport implements PeriodicJo
 		}
 		
 		public void run() {
-			logger.info("Starting periodic update thread for '{}' with interval {}", job.getName(), job.getFrequencyInMilliseconds());
+			logger.info("Starting periodic update thread for '{}' with interval {} minutes",
+					job.getName(), job.getFrequencyInMilliseconds() / 1000.0 / 60.0);
 			while (runOneGeneration()) {
 				// sleep protects us from 100% CPU in catastrophic failure case
 				logger.warn("Periodic job thread sleeping and then restarting itself");

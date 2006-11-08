@@ -314,6 +314,9 @@ public class FacebookWebServices extends AbstractXmlRequest<FacebookSaxHandler> 
 		if (handler.getErrorCode() > 0) {
 		    if (handler.getErrorCode() == FacebookSaxHandler.FacebookErrorCode.API_EC_PARAM_SESSION_KEY.getCode()) {
 			    // setSessionKeyValid to false if we received the response that the session key is no longer valid
+		    	// FIXME this is somewhat conceptually weird, because we shouldn't do web services with a transaction 
+		    	// open, which means modifying a persistence bean won't do anything persistent.
+		    	// Should consider keeping the layering clean by not passing persistence beans into web service code.
 			    facebookAccount.setSessionKeyValid(false);
 		    } else {
 			    logger.error("Did not receive a valid response for {} request, error message {}, error code {}",
