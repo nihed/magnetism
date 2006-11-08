@@ -1,6 +1,12 @@
 @CHARSET "UTF-8";
 @IMPORT url("person-positions.css");
 
+/* this is done to avoid inheriting a larger font which, if inherited, 
+   ends up being used in the empty spaces around dh-person-header-name */    
+.dh-person-header-next-to-image {
+	font-size:		14px;
+}
+
 .dh-person-header-name {
 	font-size:		14px;
 	font-weight:	bold;
