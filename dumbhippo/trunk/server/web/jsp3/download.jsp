@@ -24,7 +24,7 @@
 
 <head>
 	<title>Mugshot Download</title>
-	<dht3:stylesheet name="site" iefixes="true"/>	
+	<dht3:stylesheet name="site" iefixes="true" lffixes="true"/>	
 	<dht3:stylesheet name="download"/>
 		<dh:script module="dh.download"/>
 	<dht:faviconIncludes/>

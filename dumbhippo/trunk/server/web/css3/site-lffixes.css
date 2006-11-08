@@ -5,3 +5,11 @@
 .dh-person-header-next-to-image, .dh-person-header-next-to-image * {
     margin-top:     -5px;
 }
+
+.dh-stacker-block-left {
+	margin-top:		2px;
+}
+
+.dh-stacker-block-right {
+    margin-top:     -5px;
+}
