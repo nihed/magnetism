@@ -10,7 +10,7 @@ import com.dumbhippo.statistics.StatisticsSource;
  * @author otaylor
  */
 public class LiveStatistics implements StatisticsSource {
-	@Column(id="localUserCount",
+	@Column(id="localAvailableCount",
 			name="Local Available User Count", 
 			units=ColumnUnit.COUNT, 
 			type=ColumnType.SNAPSHOT)
