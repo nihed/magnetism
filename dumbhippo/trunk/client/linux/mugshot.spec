@@ -1,5 +1,5 @@
 Name:           mugshot
-Version:        1.1.23
+Version:        1.1.24
 Release:        1%{?dist}
 Summary:        Companion software for mugshot.org
 
@@ -180,6 +180,12 @@ fi
 %{_sysconfdir}/gconf/schemas/*.schemas
 
 %changelog
+* Wed Nov  8 2006 Owen Taylor <otaylor@redhat.com> - 1.1.24-1
+- 1.1.24
+
+* Mon Nov  6 2006 Owen Taylor <otaylor@redhat.com> - 1.1.23-2
+- On upgrade/removal clean up GConf schemas
+
 * Wed Nov  1 2006 Owen Taylor <otaylor@redhat.com> - 1.1.23-1
 - 1.1.23
 
