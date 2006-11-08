@@ -3,11 +3,17 @@ package com.dumbhippo.statistics;
 import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryMXBean;
-import java.util.List;
 
 import javax.management.MBeanServer;
+import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 
+import org.jboss.cache.Fqn;
+import org.jboss.cache.TreeCache;
+import org.jboss.cache.TreeCacheMBean;
+import org.jboss.cache.eviction.EvictionPolicy;
+import org.jboss.cache.eviction.EvictionQueue;
+import org.jboss.mx.util.MBeanProxyExt;
 import org.jboss.mx.util.MBeanServerLocator;
 
 import com.dumbhippo.server.impl.MessengerGlueBean;
@@ -97,5 +103,31 @@ public class ServerStatistics implements StatisticsSource {
 			type=ColumnType.CUMULATIVE)
 	public long getXmppTooBusyCount() {
 		return MessengerGlueBean.getTooBusyCount();
+	}
+	
+	@Column(id="entityCacheNodes",
+			name="Entity Cache Nodes", 
+			units=ColumnUnit.COUNT, 
+			type=ColumnType.SNAPSHOT)
+	public long getEntityCacheNodes() {
+		// We use the eviction queue as a cheap way of finding out the total
+		// number of nodes in the tree; it's tracked there because you can
+		// evict when the count exceeds a limit (though we don't). 
+		// TreeCache.getNumberOfNodes() is considerly more expensive since
+		// it walks over the entire tree.
+		
+		MBeanServer server = MBeanServerLocator.locateJBoss();
+		TreeCacheMBean mbean;		
+		try {
+			mbean = (TreeCacheMBean) MBeanProxyExt.create(TreeCacheMBean.class, "jboss.cache:service=EJB3EntityTreeCache", server);
+		} catch (MalformedObjectNameException e) {
+			throw new RuntimeException(e);
+		}
+		
+		TreeCache cache = mbean.getInstance();
+		EvictionPolicy policy = cache.getEvictionRegionManager().getRegion(new Fqn()).getEvictionPolicy();
+		EvictionQueue queue = policy.getEvictionAlgorithm().getEvictionQueue();
+		
+		return queue.getNumberOfNodes();
 	}
 }
