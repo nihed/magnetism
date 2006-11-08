@@ -5,7 +5,6 @@
 
 <%@ attribute name="cssClass" required="true" type="java.lang.String" %>
 <%@ attribute name="blockId" required="true" type="java.lang.String" %>
-<%@ attribute name="block" required="true" type="com.dumbhippo.server.blocks.BlockView" %>
 <%@ attribute name="expandable" required="false" type="java.lang.Boolean" %>
 
 <jsp:element name="table">
@@ -15,12 +14,12 @@
 	<jsp:attribute name="cellpadding">0</jsp:attribute>	
 	<jsp:body>
 	<tr>
-		<td valign="top" align="left" width="22px"><dh:png klass="dh-stacker-block-icon" src="${block.icon}" style="width: 16; height: 16; border: none;"/></td>
-		<jsp:doBody/>
+	    <jsp:doBody/>
 	</tr>
 	</jsp:body>
 </jsp:element>
 <c:if test="${expandable}">
+<dh:script module="dh.stacker"/>
 <script type="text/javascript">
 	var block = document.getElementById("dhStackerBlock-${blockId}");
 	block.dhBlockId = "${blockId}";

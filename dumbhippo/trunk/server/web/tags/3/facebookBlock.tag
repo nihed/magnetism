@@ -9,8 +9,8 @@
 <%@ attribute name="showFrom" required="false" type="java.lang.Boolean" %>
 <%@ attribute name="oneLine" required="true" type="java.lang.Boolean" %>
 
-<dht3:blockContainer cssClass="${offset ? 'dh-box-grey2' : 'dh-box-grey1'}" block="${block}" blockId="${blockId}">
-	<dht3:blockLeft>
+<dht3:blockContainer cssClass="${offset ? 'dh-box-grey2' : 'dh-box-grey1'}" blockId="${blockId}">
+	<dht3:blockLeft block="${block}">
 		<table cellspacing="0" cellpadding="0">
 		<tr>
 		<td class="dh-stacker-block-title">

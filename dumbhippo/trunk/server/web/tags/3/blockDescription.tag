@@ -11,6 +11,7 @@
 		<c:when test="${!truncate}">
 			<div id="dhStackerBlockHeaderDescription-${blockId}" class="dh-stacker-block-header-description-summary"></div>
 			<div id="dhStackerBlockDescription-${blockId}" class="dh-stacker-block-header-description-full"><jsp:doBody/></div>
+			<dh:script module="dh.stacker"/>
 			<script type="text/javascript">
 				dh.stacker.insertBlockHeaderDescription("${blockId}");
 			</script>

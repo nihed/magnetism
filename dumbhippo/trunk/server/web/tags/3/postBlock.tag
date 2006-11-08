@@ -9,8 +9,8 @@
 <%@ attribute name="showFrom" required="false" type="java.lang.Boolean" %>
 <%@ attribute name="oneLine" required="true" type="java.lang.Boolean" %>
 
-<dht3:blockContainer cssClass="${offset ? 'dh-box-grey2' : 'dh-box-grey1'}" blockId="${blockId}" block="${block}" expandable="${!oneLine}">
-	<dht3:blockLeft>
+<dht3:blockContainer cssClass="${offset ? 'dh-box-grey2' : 'dh-box-grey1'}" blockId="${blockId}" expandable="${!oneLine}">
+	<dht3:blockLeft block="${block}">
 		<dht3:blockTitle>
 		    <%-- TODO: it is nicer to do this with display "none" in css, but for some reason could not detect --%> 
 		    <%-- node.style.display == "none" in getTextFromHtmlNode() and truncateTextInHtmlNode() util.js, so --%>

@@ -10,7 +10,7 @@
 	<dht3:stylesheet name="site" iefixes="true" lffixes="true"/>	
 	<dht3:stylesheet name="main"/>
 	<dht:faviconIncludes/>
-	<dh:script module="dh.main"/>
+    <dh:script modules="dh.main,dojo.event,dojo.event.browser"/>
 	<script type="text/javascript">
 		dojo.event.connect(dojo, "loaded", dj_global, "dhMainInit");
 	</script>

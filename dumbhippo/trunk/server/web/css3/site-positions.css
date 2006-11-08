@@ -277,16 +277,17 @@ div.dh-notification {
 }
 
 .dh-stacker-block-left {
-	margin-top:			5px;
-	margin-left:		5px;
+    float:              left;
+	margin:			    5px;
 }
-
+ 
 .dh-stacker-block-bottom-padding {
 	font-size:			4px;
 	height:				4px;
 }
 
 .dh-stacker-block-icon {
+    float:              left;
 	margin:				5px;
 }
 
@@ -311,10 +312,6 @@ div.dh-notification {
 .dh-stacker-block-right {
 	text-align:			right;
 	margin-right:		5px;
-}
-
-.dh-stacker-block-right-container {
-	width:				25%;
 }
 
 .dh-stacker-block-right-container-inner {

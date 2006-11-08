@@ -3,7 +3,7 @@ dojo.require('dojo.html');
 dojo.require("dh.util")
 
 dhMainInit = function() {
-	var blockHeaders = dojo.html.getElementsByClass('dh-stacker-block-header');
+	var blockHeaders = dojo.html.getElementsByClass('dh-stacker-block');
 	var i = 0;
 	while (i < blockHeaders.length) {
 	   var blockIcons = dojo.html.getElementsByClass('dh-stacker-block-icon', blockHeaders[i]);	
@@ -14,20 +14,12 @@ dhMainInit = function() {
        if (blockTitles.length != 1)
 	       throw "stacker block should contain a single title element";
 
-	   var blockDetails = dojo.html.getElementsByClass('dh-stacker-block-right', blockHeaders[i]);	
+	   var blockDetails = dojo.html.getElementsByClass('dh-stacker-block-right-container-inner', blockHeaders[i]);	
        if (blockDetails.length != 1)
-	       throw "stacker block should contain a single details element";
-
-	   var detailsText = dh.util.getTextFromHtmlNode(blockDetails[0]);	    
-	   var newDetailsWidth = dh.util.getTextWidth(detailsText, "Arial, sans", "11px", null, null, "normal") + 2;	       	
-	   var oldDetailsWidth = blockDetails[0].offsetWidth;
-	   // blockDetails[0].style.width = newDetailsWidth + "px"    			
+	       throw "stacker block should contain a single details element";   			
 	       				       			
-	   var oldTitleWidth = blockTitles[0].offsetWidth;
-	   // 20 is the width of the icon cell and 4 is for the extra cell between 
-	   // the left and right sections of the block
-	   var newTitleWidth = blockHeaders[i].offsetWidth - 24 - newDetailsWidth;
-	   // blockTitles[0].style.width = newTitleWidth + "px" 	   
+	   // 36 is for the icon on the left    				       			
+	   var newTitleWidth = blockHeaders[i].offsetWidth * .75 - 36;   
 	   	     
 	   var titleText = dh.util.getTextFromHtmlNode(blockTitles[0]);	
 	   // this is for figuring out how many characters we can fit     
@@ -46,9 +38,9 @@ dhMainInit = function() {
            dh.util.truncateTextInHtmlNode(blockTitles[0], charToDisplay - 3);
        }
        
-       blockIcons[0].style.display = "inline";  			
-	   blockTitles[0].style.display = "inline"; 	
-       blockDetails[0].style.display = "inline"; 	    
+       blockIcons[0].style.display = "block";  			
+	   blockTitles[0].style.display = "block"; 	
+       blockDetails[0].style.display = "block"; 	    
 	   	
        i++;     
 	}   
