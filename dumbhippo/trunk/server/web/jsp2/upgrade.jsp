@@ -41,9 +41,9 @@
 		</c:when>
 		<c:otherwise>
 			<%-- WINDOWS RELEASE NOTES GO HERE --%>
-			<p>Version 1.1.77</p>
+			<p>Version 1.1.78</p>
 			<ul>
-				<li>A better way to expand and collapse blocks.</li>			
+				<li>Show appropriate icons by feed items.</li>			
 				<li>Bug fixes.</li>
 			</ul>
 		</c:otherwise>
