@@ -11,6 +11,7 @@ import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.BlockKey;
 import com.dumbhippo.persistence.BlockType;
 import com.dumbhippo.persistence.ExternalAccount;
+import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.FacebookAccount;
 import com.dumbhippo.persistence.FacebookEvent;
 import com.dumbhippo.persistence.FacebookEventType;
@@ -79,6 +80,8 @@ public class FacebookBlockHandlerBean extends AbstractBlockHandlerBean<FacebookB
 	}
 	
 	public void onExternalAccountCreated(User user, ExternalAccount external) {
+		if (external.getAccountType() != ExternalAccountType.FACEBOOK)
+			return;
 		stacker.createBlock(getKey(user, StackInclusion.ONLY_WHEN_VIEWED_BY_OTHERS));
 		stacker.createBlock(getKey(user, StackInclusion.ONLY_WHEN_VIEWING_SELF));
 	}
