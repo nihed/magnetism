@@ -21,7 +21,7 @@
 				<c:when test="${dh:enumIs(block.status, 'INVITED_TO_FOLLOW')}"> is invited to be a follower.</c:when>
 			</c:choose>
 		</dht3:blockTitle>
-		<dht3:blockDescription blockId="${blockId}" truncate="false">
+		<dht3:blockDescription blockId="${blockId}" literalBody="true">
 			<c:choose>
 				<c:when test="${dh:enumIs(block.status, 'FOLLOWER')}">
 					<img src="/images2/${buildStamp}/add.png"/>	

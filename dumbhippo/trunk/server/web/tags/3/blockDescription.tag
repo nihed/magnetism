@@ -4,11 +4,11 @@
 <%@ taglib tagdir="/WEB-INF/tags/3" prefix="dht3" %>
 
 <%@ attribute name="blockId" required="true" type="java.lang.String" %>
-<%@ attribute name="truncate" required="false" type="java.lang.Boolean" %>
+<%@ attribute name="literalBody" required="false" type="java.lang.Boolean" %>
 
 <div class="dh-stacker-block-header-description" id="dhStackerBlockHeaderDescriptionContainer-${blockId}">
 	<c:choose>
-		<c:when test="${!truncate}">
+		<c:when test="${!literalBody}">
 			<div id="dhStackerBlockHeaderDescription-${blockId}" class="dh-stacker-block-header-description-summary"></div>
 			<div id="dhStackerBlockDescription-${blockId}" class="dh-stacker-block-header-description-full"><jsp:doBody/></div>
 			<dh:script module="dh.stacker"/>
