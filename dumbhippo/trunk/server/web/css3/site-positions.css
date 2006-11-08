@@ -277,8 +277,10 @@ div.dh-notification {
 }
 
 .dh-stacker-block-left {
-    float:              left;
-	margin:			    5px;
+	margin-top:			5px;
+	margin-bottom:		5px;
+	margin-right:		5px;
+	margin-left:		3px;
 }
  
 .dh-stacker-block-bottom-padding {
@@ -287,8 +289,7 @@ div.dh-notification {
 }
 
 .dh-stacker-block-icon {
-    float:              left;
-	margin:				5px;
+	margin:	            5px;
 }
 
 .dh-stacker-block p	{

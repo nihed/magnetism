@@ -18,8 +18,8 @@ dhMainInit = function() {
        if (blockDetails.length != 1)
 	       throw "stacker block should contain a single details element";   			
 	       				       			
-	   // 36 is for the icon on the left    				       			
-	   var newTitleWidth = blockHeaders[i].offsetWidth * .75 - 36;   
+	   // 24 is for the icon on the left and margins   				       			
+	   var newTitleWidth = blockHeaders[i].offsetWidth * .75 - 24;   
 	   	     
 	   var titleText = dh.util.getTextFromHtmlNode(blockTitles[0]);	
 	   // this is for figuring out how many characters we can fit     
