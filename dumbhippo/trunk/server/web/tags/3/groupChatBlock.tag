@@ -8,7 +8,7 @@
 <%@ attribute name="blockId" required="true" type="java.lang.String" %>
 <%@ attribute name="showFrom" required="false" type="java.lang.Boolean" %>
 
-<dht3:blockContainer cssClass="${offset ? 'dh-box-orange2' : 'dh-box-orange1'}" blockId="${blockId}" expandable="true">
+<dht3:blockContainer cssClass="${offset ? 'dh-box-orange2' : 'dh-box-orange1'}" blockId="${blockId}" expandable="${!oneLine}">
 	<dht3:blockLeft block="${block}">
 	    <dht3:blockTitle>
 		    Group Chat: <dht:actionLinkChat linkText="New chat activity" oneLine="true" chatId="${block.groupView.group.id}" kind="${chatKind}"/>
