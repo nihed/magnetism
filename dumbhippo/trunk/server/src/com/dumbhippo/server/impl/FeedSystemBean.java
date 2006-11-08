@@ -31,7 +31,7 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.ThreadUtils;
 import com.dumbhippo.TypeUtils;
 import com.dumbhippo.identity20.Guid.ParseException;
-import com.dumbhippo.mbean.FeedUpdater;
+import com.dumbhippo.mbean.FeedUpdaterPeriodicJob;
 import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.Feed;
 import com.dumbhippo.persistence.FeedEntry;
@@ -477,7 +477,7 @@ public class FeedSystemBean implements FeedSystem {
 
 	@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 	public boolean updateFeedNeedsFetch(Feed feed) {
-		long updateTime = feed.getLastFetchSucceeded() ? FeedUpdater.FEED_UPDATE_TIME : FeedUpdater.BAD_FEED_UPDATE_TIME;
+		long updateTime = feed.getLastFetchSucceeded() ? FeedUpdaterPeriodicJob.FEED_UPDATE_TIME : FeedUpdaterPeriodicJob.BAD_FEED_UPDATE_TIME;
 		
 		if ((System.currentTimeMillis() - feed.getLastFetched().getTime()) < updateTime) {
 			//logger.debug("  Feed {} is already up-to-date", feed);
