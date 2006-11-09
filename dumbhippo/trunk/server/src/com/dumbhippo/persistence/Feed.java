@@ -25,12 +25,10 @@ public class Feed extends DBUnique {
 	private String title;
 	private long lastFetched;
 	private boolean lastFetchSucceeded;
-	private Set<FeedEntry> entries;
 	private Set<GroupFeed> groups;
 	private Set<ExternalAccount> accounts;
 	
 	protected Feed() {
-		this.entries = new HashSet<FeedEntry>();
 		this.groups = new HashSet<GroupFeed>();
 		this.accounts = new HashSet<ExternalAccount>();
 	}
@@ -73,15 +71,6 @@ public class Feed extends DBUnique {
 	
 	public void setTitle(String title) {
 		this.title = title;
-	}
-	
-	@OneToMany(mappedBy="feed")
-	public Set<FeedEntry> getEntries() {
-		return entries;
-	}
-	
-	public void setEntries(Set<FeedEntry> entries) {
-		this.entries = entries;
 	}
 	
 	@OneToMany(mappedBy="feed")
