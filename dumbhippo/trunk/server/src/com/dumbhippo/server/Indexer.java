@@ -2,6 +2,7 @@ package com.dumbhippo.server;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.BlockingQueue;
@@ -24,15 +25,80 @@ public abstract class Indexer<T> {
 	@SuppressWarnings("unused")
 	static private final Logger logger = GlobalSetup.getLogger(Indexer.class);
 
+	private static final long READER_EXPIRATION_TIME = 20 * 1000;
+
 	public BlockingQueue<Object> pending;
 
 	private DocumentBuilder<T> builder;
 
-	private IndexReader reader;
+	private IndexerThread indexerThread;	
+	
+	private static abstract class Expirable<T> {
+		private long expirationTime;
+		private long duration;
+		private T obj;
+		public Expirable(long duration) {
+			this.duration = duration;
+			expirationTime = new Date().getTime() + duration;
+		}
+		
+		public void clear() {
+			this.obj = null;
+		}
+		
+		public T get() {
+			if (obj == null || new Date().getTime() > expirationTime) {
+				if (obj != null)
+					expire(obj);
+				obj = create();
+				expirationTime = new Date().getTime() + duration;
+			}
+			return obj;
+		}
+		
+		public T getNoCreate() {
+			return obj;
+		}
+		
+		protected abstract T create();
+		
+		protected abstract void expire(T obj);
+	}	
+	
+	private Expirable<IndexReader> reader = new Expirable<IndexReader> (READER_EXPIRATION_TIME) {
+		protected IndexReader create() {
+			try {
+				return IndexReader.open(getBuilder().getDirectoryProvider().getDirectory());
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}	
+		}
+		
+		protected void expire(IndexReader reader) {
+			try {
+				reader.close();
+			} catch (IOException e) {
+				logger.error("Couldn't close IndexReader", e);
+			}
+		}
+	};
 
-	private IndexSearcher searcher;
-
-	private IndexerThread indexerThread;
+	private Expirable<IndexSearcher> searcher = new Expirable<IndexSearcher> (READER_EXPIRATION_TIME) {
+		protected IndexSearcher create() {
+			try {
+				return new IndexSearcher(getReader());
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+		}
+		protected void expire(IndexSearcher searcher) {
+			try {
+				searcher.close();
+			} catch (IOException e) {
+				logger.error("Couldn't close IndexSearcher", e);
+			}
+		}		
+	};
 
 	private static class Reindex {
 		private Object id;
@@ -95,34 +161,27 @@ public abstract class Indexer<T> {
 	}
 
 	public synchronized IndexReader getReader() throws IOException {
-		if (reader == null)
-			reader = IndexReader.open(getBuilder().getDirectoryProvider()
-					.getDirectory());
-
-		return reader;
+		return reader.get();
 	}
 
 	public synchronized Searcher getSearcher() throws IOException {
-		if (searcher == null)
-			searcher = new IndexSearcher(getReader());
-
-		return searcher;
+		return searcher.get();
 	}
 
 	private synchronized void clearSearcher() {
-		if (searcher != null) {
+		if (searcher.getNoCreate() != null) {
 			try {
-				searcher.close();
+				searcher.getNoCreate().close();
 			} catch (IOException e) {
 			}
-			searcher = null;
+			searcher.clear();
 		}
-		if (reader != null) {
+		if (reader.getNoCreate() != null) {
 			try {
-				reader.close();
+				reader.getNoCreate().close();
 			} catch (IOException e) {
 			}
-			reader = null;
+			reader.clear();
 		}
 	}
 
