@@ -66,6 +66,7 @@ public abstract class Indexer<T> {
 	}	
 	
 	private Expirable<IndexReader> reader = new Expirable<IndexReader> (READER_EXPIRATION_TIME) {
+		@Override
 		protected IndexReader create() {
 			try {
 				return IndexReader.open(getBuilder().getDirectoryProvider().getDirectory());
@@ -74,6 +75,7 @@ public abstract class Indexer<T> {
 			}	
 		}
 		
+		@Override
 		protected void expire(IndexReader reader) {
 			try {
 				reader.close();
@@ -84,6 +86,7 @@ public abstract class Indexer<T> {
 	};
 
 	private Expirable<IndexSearcher> searcher = new Expirable<IndexSearcher> (READER_EXPIRATION_TIME) {
+		@Override
 		protected IndexSearcher create() {
 			try {
 				return new IndexSearcher(getReader());
@@ -91,6 +94,7 @@ public abstract class Indexer<T> {
 				throw new RuntimeException(e);
 			}
 		}
+		@Override
 		protected void expire(IndexSearcher searcher) {
 			try {
 				searcher.close();
