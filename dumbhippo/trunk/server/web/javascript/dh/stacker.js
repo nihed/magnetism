@@ -13,6 +13,9 @@ dh.stacker.blockOpen = function(block) {
 	var controls = document.getElementById("dhStackerBlockControls-" + block.dhBlockId);
 	if (controls)
 		controls.style.display = "block";
+	var qual = document.getElementById("dhStackerBlockTimeAgoQualifier-" + block.dhBlockId);
+	if (qual)
+		qual.style.display = "inline";		
 	var fullDesc = document.getElementById("dhStackerBlockDescription-" + block.dhBlockId);
 	var shortDesc = document.getElementById("dhStackerBlockHeaderDescription-" + block.dhBlockId);
 	if (shortDesc) {
@@ -29,6 +32,9 @@ dh.stacker.blockClose = function(block) {
 	var controls = document.getElementById("dhStackerBlockControls-" + block.dhBlockId)
 	if (controls)
 		controls.style.display = "none";
+	var qual = document.getElementById("dhStackerBlockTimeAgoQualifier-" + block.dhBlockId);
+	if (qual)
+		qual.style.display = "none";			
 	var fullDesc = document.getElementById("dhStackerBlockDescription-" + block.dhBlockId);
 	var shortDesc = document.getElementById("dhStackerBlockHeaderDescription-" + block.dhBlockId);
 	if (shortDesc) {

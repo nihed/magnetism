@@ -41,7 +41,7 @@
 		    </c:choose>
 		    | 
 		</c:if>
-		<dht3:blockTimeAgo block="${block}"/>
+		<dht3:blockTimeAgo blockId="${blockId}" block="${block}"/>
 		<dht3:blockControls blockId="${blockId}">
 			<c:if test="${signin.valid}">
 				<jsp:element name="a">
@@ -49,6 +49,7 @@
 			  	  <jsp:body>Share this</jsp:body>
 			  	</jsp:element>
 			</c:if>
+			<dht3:blockSentTimeAgo>${block.postTimeAgo}</dht3:blockSentTimeAgo>
 			<dht3:blockSentTo blockId="${blockId}" who="${block.postView.recipients}"/>				
 		</dht3:blockControls>				
 	</dht3:blockRight>

@@ -316,7 +316,14 @@ div.dh-notification {
 }
 
 .dh-stacker-block-right-container-inner {
+	width:				100%;
 	margin-top:			5px;
+	white-space:		nowrap;
+}
+
+.dh-stacker-block-right-container-inner-table {
+	width:				100%;
+	table-layout:		fixed;
 }
 
 .dh-stacker-block-right-from-image {
@@ -363,6 +370,10 @@ div.dh-notification {
 
 .dh-stacker-block-title-facebook-events {
 	margin-left:		5px;
+}
+
+.dh-stacker-block-time-qualifier {
+	display:			none;
 }
 
 .dh-stacker-block-chat-time-ago {

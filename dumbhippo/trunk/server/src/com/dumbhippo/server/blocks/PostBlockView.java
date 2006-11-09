@@ -3,6 +3,7 @@ package com.dumbhippo.server.blocks;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.dumbhippo.DateUtils;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.UserBlockData;
@@ -42,6 +43,10 @@ public class PostBlockView extends BlockView {
 	
 	public void setRecentMessages(List<ChatMessageView> recentMessages) {
 		this.recentMessages = recentMessages;
+	}
+	
+	public String getPostTimeAgo() {
+		return DateUtils.formatTimeAgo(getPostView().getPost().getPostDate());
 	}
 	
 	@Override

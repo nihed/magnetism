@@ -27,6 +27,6 @@
 		</dht3:blockDescription>			
 	</dht3:blockLeft>
 	<dht3:blockRight blockId="${blockId}" from="${block.personSource}" showFrom="${showFrom}">
-		<dht3:blockTimeAgo block="${block}"/>
+		<dht3:blockTimeAgo blockId="${blockId}" block="${block}"/>
 	</dht3:blockRight>
 </dht3:blockContainer>
