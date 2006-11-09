@@ -1,4 +1,4 @@
-package com.dumbhippo.server.impl;
+package com.dumbhippo.services.caches;
 
 import java.util.Date;
 import java.util.concurrent.Callable;
@@ -22,7 +22,7 @@ import com.dumbhippo.persistence.CachedYahooAlbumData;
 import com.dumbhippo.server.BanFromWebTier;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.TransactionRunner;
-import com.dumbhippo.server.YahooAlbumCache;
+import com.dumbhippo.services.caches.YahooAlbumCache;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.services.YahooAlbumData;
 import com.dumbhippo.services.YahooSearchWebServices;

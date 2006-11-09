@@ -1,4 +1,4 @@
-package com.dumbhippo.server;
+package com.dumbhippo.services.caches;
 
 /** Immutable object representing album and artist pair, used to pass 
  * one arg instead of two to certain  methods

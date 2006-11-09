@@ -1,4 +1,4 @@
-package com.dumbhippo.server.impl;
+package com.dumbhippo.services.caches;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -19,7 +19,7 @@ import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.KnownFuture;
 import com.dumbhippo.persistence.CachedListItem;
-import com.dumbhippo.server.AbstractListCache;
+import com.dumbhippo.services.caches.AbstractListCache;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.util.EJBUtil;

@@ -1,4 +1,4 @@
-package com.dumbhippo.server.impl;
+package com.dumbhippo.services.caches;
 
 import java.util.EnumMap;
 import java.util.List;
@@ -9,7 +9,7 @@ import org.slf4j.Logger;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.ThreadUtils;
 import com.dumbhippo.UniqueTaskExecutor;
-import com.dumbhippo.server.AbstractCache;
+import com.dumbhippo.services.caches.AbstractCache;
 
 /**
  * Base class used for beans that implement a cached web service lookup.

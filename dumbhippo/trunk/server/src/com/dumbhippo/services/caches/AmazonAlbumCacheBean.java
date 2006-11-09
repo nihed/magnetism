@@ -1,4 +1,4 @@
-package com.dumbhippo.server.impl;
+package com.dumbhippo.services.caches;
 
 import java.util.Date;
 import java.util.concurrent.Callable;
@@ -19,8 +19,8 @@ import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.KnownFuture;
 import com.dumbhippo.persistence.CachedAmazonAlbumData;
-import com.dumbhippo.server.AlbumAndArtist;
-import com.dumbhippo.server.AmazonAlbumCache;
+import com.dumbhippo.services.caches.AlbumAndArtist;
+import com.dumbhippo.services.caches.AmazonAlbumCache;
 import com.dumbhippo.server.BanFromWebTier;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HippoProperty;

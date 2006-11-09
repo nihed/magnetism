@@ -265,8 +265,9 @@ public class EJBUtil {
 		"com.dumbhippo.server",
 		"com.dumbhippo.server.blocks",
 		"com.dumbhippo.live",
-		"com.dumbhippo.search"
-	};	
+		"com.dumbhippo.search",
+		"com.dumbhippo.services.caches"
+	};
 	
 	// this is a huge hack
 	static public Class<?> loadLocalBeanInterface(ClassLoader loader, String name) {

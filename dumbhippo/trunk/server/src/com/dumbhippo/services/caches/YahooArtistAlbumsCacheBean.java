@@ -1,4 +1,4 @@
-package com.dumbhippo.server.impl;
+package com.dumbhippo.services.caches;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -27,7 +27,7 @@ import com.dumbhippo.server.BanFromWebTier;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.TransactionRunner;
-import com.dumbhippo.server.YahooArtistAlbumsCache;
+import com.dumbhippo.services.caches.YahooArtistAlbumsCache;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.services.YahooAlbumData;
 import com.dumbhippo.services.YahooSearchWebServices;

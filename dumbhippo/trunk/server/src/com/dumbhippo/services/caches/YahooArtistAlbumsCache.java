@@ -1,7 +1,8 @@
-package com.dumbhippo.server;
+package com.dumbhippo.services.caches;
 
 import javax.ejb.Local;
 
+import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.services.YahooAlbumData;
 
 @Local

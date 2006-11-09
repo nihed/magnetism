@@ -15,7 +15,7 @@ import org.slf4j.Logger;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.live.LiveState;
 import com.dumbhippo.persistence.SchemaUpdater;
-import com.dumbhippo.server.impl.AbstractCacheBean;
+import com.dumbhippo.services.caches.AbstractCacheBean;
 import com.dumbhippo.server.impl.MusicSystemInternalBean;
 import com.dumbhippo.server.impl.TransactionRunnerBean;
 import com.dumbhippo.server.util.FaviconCache;

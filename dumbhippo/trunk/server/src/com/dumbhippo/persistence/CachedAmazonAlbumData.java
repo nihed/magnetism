@@ -8,8 +8,8 @@ import javax.persistence.Table;
 import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
 
-import com.dumbhippo.server.AlbumAndArtist;
 import com.dumbhippo.services.AmazonAlbumData;
+import com.dumbhippo.services.caches.AlbumAndArtist;
 
 @Entity
 @Table(name="CachedAmazonAlbumData", 

@@ -1,4 +1,4 @@
-package com.dumbhippo.server.impl;
+package com.dumbhippo.services.caches;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -25,7 +25,7 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.KnownFuture;
 import com.dumbhippo.persistence.CachedRhapsodyDownload;
 import com.dumbhippo.server.BanFromWebTier;
-import com.dumbhippo.server.RhapsodyDownloadCache;
+import com.dumbhippo.services.caches.RhapsodyDownloadCache;
 import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.util.EJBUtil;
 

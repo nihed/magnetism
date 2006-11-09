@@ -25,7 +25,7 @@ import com.dumbhippo.persistence.ValidationException;
 import com.dumbhippo.server.ExternalAccountSystem;
 import com.dumbhippo.server.FacebookSystem;
 import com.dumbhippo.server.FlickrUpdater;
-import com.dumbhippo.server.FlickrUserPhotosCache;
+import com.dumbhippo.services.caches.FlickrUserPhotosCache;
 import com.dumbhippo.server.MessageSender;
 import com.dumbhippo.server.MySpaceTracker;
 import com.dumbhippo.server.NotFoundException;

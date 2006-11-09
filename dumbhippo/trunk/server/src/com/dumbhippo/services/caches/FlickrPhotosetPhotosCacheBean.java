@@ -1,4 +1,4 @@
-package com.dumbhippo.server.impl;
+package com.dumbhippo.services.caches;
 
 import java.util.List;
 
@@ -10,7 +10,7 @@ import org.slf4j.Logger;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.TypeUtils;
 import com.dumbhippo.persistence.CachedFlickrPhotosetPhoto;
-import com.dumbhippo.server.FlickrPhotosetPhotosCache;
+import com.dumbhippo.services.caches.FlickrPhotosetPhotosCache;
 import com.dumbhippo.services.FlickrPhotoView;
 import com.dumbhippo.services.FlickrPhotoset;
 import com.dumbhippo.services.FlickrWebServices;

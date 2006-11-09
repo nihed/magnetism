@@ -1,4 +1,4 @@
-package com.dumbhippo.server;
+package com.dumbhippo.services.caches;
 
 import java.util.List;
 

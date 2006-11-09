@@ -121,6 +121,7 @@
 				<include name="**/recommender/*.class" />
 				<include name="**/postinfo/*.class" />
 				<include name="**/services/*.class" />
+				<include name="**/services/caches/*.class" />
 				<include name="**/dav/*.class" />
 				<include name="**/storage/*.class" />
 				<include name="**/search/*.class" />
@@ -327,7 +328,6 @@
 				<include name="**/persistence/**/*.class" />
 				<!-- server+util but not server/impl -->
 				<include name="**/server/*.class" />
-				<include name="**/server/blocks/*.class" />
 				<include name="**/server/util/*.class" />
 				<include name="**/server/views/*.class" />
 			</fileset>
