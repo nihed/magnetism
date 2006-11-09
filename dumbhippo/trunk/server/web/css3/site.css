@@ -386,6 +386,10 @@ div.dh-async-action-link-complete {
 .dh-stacker-block-chat-message {
 }
 
+.dh-stacker-block-chat-time-ago {
+	color:				#666666;
+}
+
 .dh-stacker-block-chat-sender {
 	font-style:			italic;
 }

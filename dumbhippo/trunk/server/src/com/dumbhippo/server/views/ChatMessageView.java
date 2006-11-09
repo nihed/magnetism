@@ -2,6 +2,7 @@ package com.dumbhippo.server.views;
 
 import org.slf4j.Logger;
 
+import com.dumbhippo.DateUtils;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.persistence.ChatMessage;
@@ -23,6 +24,10 @@ public class ChatMessageView {
 
 	public PersonView getSenderView() {
 		return sender;
+	}
+	
+	public String getTimeAgo() {
+		return DateUtils.formatTimeAgo(msg.getTimestamp());
 	}
 
 	public void writeToXmlBuilder(XmlBuilder builder) {

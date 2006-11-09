@@ -365,6 +365,10 @@ div.dh-notification {
 	margin-left:		5px;
 }
 
+.dh-stacker-block-chat-time-ago {
+	margin-left:		5px;
+}
+
 .dh-thumbnail-box-border, .dh-rss-box-border {
 	position:			relative;
 	width:				478px;
