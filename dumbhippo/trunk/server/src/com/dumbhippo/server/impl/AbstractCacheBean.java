@@ -34,7 +34,10 @@ public abstract class AbstractCacheBean<KeyType,ResultType> {
 		YAHOO_ARTIST,
 		YAHOO_ARTIST_BY_NAME,
 		YAHOO_SONG,
-		YAHOO_SONG_DOWNLOAD
+		YAHOO_SONG_DOWNLOAD,
+		FLICKR_USER_PHOTOS,
+		FLICKR_PHOTOSET_PHOTOS,
+		FLICKR_USER_PHOTOSETS
 	}
 	
 	private static EnumMap<Request,UniqueTaskExecutor> executors;

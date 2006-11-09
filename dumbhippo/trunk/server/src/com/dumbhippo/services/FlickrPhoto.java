@@ -1,8 +1,7 @@
 package com.dumbhippo.services;
 
-import com.dumbhippo.Thumbnail;
 
-public final class FlickrPhoto implements Thumbnail {
+public final class FlickrPhoto implements FlickrPhotoView {
 	private String id;
 	private String owner;
 	private String secret;

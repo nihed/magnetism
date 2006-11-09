@@ -1,6 +1,6 @@
 package com.dumbhippo.services;
 
-public final class FlickrPhotoset {
+public final class FlickrPhotoset implements FlickrPhotosetView {
 	private String id;
 	private FlickrPhoto primaryPhoto;
 	private int photoCount;
@@ -8,7 +8,7 @@ public final class FlickrPhotoset {
 	private String description;
 	private FlickrPhotos photos;
 	
-	FlickrPhotoset() {
+	public FlickrPhotoset() {
 		
 	}	
 	
