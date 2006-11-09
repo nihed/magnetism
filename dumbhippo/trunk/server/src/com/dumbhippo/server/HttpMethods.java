@@ -12,7 +12,6 @@ import org.xml.sax.SAXException;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
-import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.server.views.UserViewpoint;
 
 /**
@@ -353,36 +352,7 @@ public interface HttpMethods {
  	@HttpParams( { "filename", "columns", "start", "end", "timescale" })
  	@HttpOptions( optionalParams = { "filename", "start", "end", "timescale" } )
  	public void getStatistics(XmlBuilder xml, UserViewpoint viewpoint, String filename, String columns, String start, String end, String timescale) throws IOException, XmlMethodException;
- 	
- 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
- 	@HttpParams( { "userId", "lastTimestamp", "start", "count" })
- 	@HttpOptions( optionalParams = { "userId" } )
- 	public void getBlocks(XmlBuilder xml, UserViewpoint viewpoint, String userId, String lastTimestamp, String start, String count) throws XmlMethodException;
-
- 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
- 	@HttpParams( { "blockId" })
- 	public void getBlock(XmlBuilder xml, UserViewpoint viewpoint, UserBlockData block) throws XmlMethodException, NotFoundException;
- 	
- 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
- 	@HttpParams( { "userId" })
- 	public void getMusicPersonSummary(XmlBuilder xml, UserViewpoint viewpoint, String userId) throws XmlMethodException;
- 	
- 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
- 	@HttpParams( { "userId", "accountType" }) 	
- 	public void getExternalAccountSummary(XmlBuilder xml, UserViewpoint viewpoint, String userId, String accountType) throws XmlMethodException, NotFoundException;
-
-	@HttpContentTypes(HttpResponseData.XMLMETHOD)
- 	@HttpParams( { "groupId" })
- 	public void getGroupChatSummary(XmlBuilder xml, UserViewpoint viewpoint, String groupId) throws XmlMethodException;
-	
-	@HttpContentTypes(HttpResponseData.XMLMETHOD)
- 	@HttpParams( { "postId" })
- 	public void getPostSummary(XmlBuilder xml, UserViewpoint viewpoint, String postId) throws XmlMethodException;
-	
-	@HttpContentTypes(HttpResponseData.XMLMETHOD)
- 	@HttpParams( { "blockId", "hushed" })
- 	public void doSetBlockHushed(XmlBuilder xml, UserViewpoint viewpoint, UserBlockData userBlockData, boolean hushed) throws XmlMethodException, NotFoundException;
-	
+ 		
 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
 	@HttpParams( { "fileId" })
 	@HttpOptions(transaction=false)
