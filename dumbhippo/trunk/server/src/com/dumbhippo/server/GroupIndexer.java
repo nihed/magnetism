@@ -4,14 +4,14 @@ import java.io.IOException;
 import java.util.List;
 
 import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.Term;
 
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.server.util.EJBUtil;
+import com.dumbhippo.server.views.SystemViewpoint;
 
-public final class GroupIndexer extends Indexer<Group> {
+public final class GroupIndexer extends GuidPersistableIndexer<Group> {
 	static GroupIndexer instance = new GroupIndexer();
 	
 	public static GroupIndexer getInstance() {
@@ -28,14 +28,18 @@ public final class GroupIndexer extends Indexer<Group> {
 	}
 	
 	@Override
-	protected void doIndex(IndexWriter writer, List<Object> ids) throws IOException {
-		EJBUtil.defaultLookup(GroupSystem.class).indexGroups(writer, getBuilder(), ids);
+	protected List<Guid> loadAllIds() {
+		return EJBUtil.defaultLookup(GroupSystem.class).getAllGroupIds();
 	}
-	
+
 	@Override
-	protected void doIndexAll(IndexWriter writer) throws IOException {
-		EJBUtil.defaultLookup(GroupSystem.class).indexAllGroups(writer, getBuilder());
-	}
+	protected Group loadObject(Guid guid) {
+		try {
+			return EJBUtil.defaultLookup(GroupSystem.class).lookupGroupById(SystemViewpoint.getInstance(), guid);
+		} catch (NotFoundException e) {
+			throw new RuntimeException(e);
+		}
+	}		
 	
 	@Override
 	protected void doDelete(IndexReader reader, List<Object> ids) throws IOException {

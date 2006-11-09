@@ -23,13 +23,10 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
-import org.apache.lucene.document.Document;
-import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.queryParser.MultiFieldQueryParser;
 import org.apache.lucene.queryParser.QueryParser;
 import org.apache.lucene.queryParser.QueryParser.Operator;
 import org.apache.lucene.search.Hits;
-import org.hibernate.lucene.DocumentBuilder;
 import org.jboss.annotation.IgnoreDependency;
 import org.slf4j.Logger;
 import org.xml.sax.SAXException;
@@ -1288,21 +1285,6 @@ public class PostingBoardBean implements PostingBoard {
 		
 		return result;
 	}
-
-	public void indexPosts(IndexWriter writer, DocumentBuilder<Post> builder, List<Object> ids) throws IOException {
-		for (Object o : ids) {
-			Guid guid = (Guid)o;
-			try {
-				Post post = loadRawPost(SystemViewpoint.getInstance(), guid);
-				Document document = builder.getDocument(post, post.getId());
-				writer.addDocument(document);
-				logger.debug("Indexed post with guid {}", guid);
-			} catch (NotFoundException e) {
-				logger.debug("Couldn't find post to index");
-				// ignore
-			}
-		}
-	}
 	
 	public boolean postIsGroupNotification(Post post) {
 		try {
@@ -1315,19 +1297,6 @@ public class PostingBoardBean implements PostingBoard {
 			logger.warn("Error parsing post info", e);
 		}		
 		return false;		
-	}
-	
-	public void indexAllPosts(IndexWriter writer, DocumentBuilder<Post> builder) throws IOException {
-		List<?> l = em.createQuery("SELECT p FROM Post p").getResultList();
-		List<Post> posts = TypeUtils.castList(Post.class, l);
-		
-		for (Post post : posts) {
-			// Don't index group updates, they aren't really posts
-			if (postIsGroupNotification(post))
-				continue;
-			Document document = builder.getDocument(post, post.getId());
-			writer.addDocument(document);
-		}
 	}
 	
 	public PostSearchResult searchPosts(Viewpoint viewpoint, String queryString) {
@@ -1438,5 +1407,9 @@ public class PostingBoardBean implements PostingBoard {
 			logger.debug("Disabled flag toggled to {} on post {}", disabled, post);
 			notifier.onPostDisabledToggled(post);
 		}   
+	}
+
+	public List<Guid> getAllPostIds() {
+		return TypeUtils.castList(Guid.class, em.createQuery("SELECT new com.dumbhippo.identity20.Guid(p.id) FROM Post p").getResultList());
 	}
 }
