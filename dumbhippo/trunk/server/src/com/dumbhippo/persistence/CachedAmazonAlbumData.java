@@ -8,6 +8,7 @@ import javax.persistence.Table;
 import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
 
+import com.dumbhippo.server.AlbumAndArtist;
 import com.dumbhippo.services.AmazonAlbumData;
 
 @Entity
@@ -49,6 +50,10 @@ public class CachedAmazonAlbumData extends DBUnique {
 		this.artist = artist;
 		this.album = album;
 		updateData(data);
+	}
+
+	public CachedAmazonAlbumData(AlbumAndArtist albumAndArtist, AmazonAlbumData data) {
+		this(albumAndArtist.getArtist(), albumAndArtist.getAlbum(), data);
 	}
 
 	public void updateData(AmazonAlbumData data) {

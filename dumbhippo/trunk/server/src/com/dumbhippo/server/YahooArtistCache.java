@@ -15,10 +15,7 @@ import com.dumbhippo.services.YahooArtistData;
  * keep the logic together here so we can sort it out.
  */
 @Local
-public interface YahooArtistCache {
-	public YahooArtistData getSync(String artistId); 
-	
-	public Future<YahooArtistData> getAsync(String artistId);
+public interface YahooArtistCache extends AbstractCache<String,YahooArtistData> {
 
 	// FIXME these "get by name" should really return a list and then
 	// in the UI we should try to resolve the multiple search results
@@ -30,15 +27,9 @@ public interface YahooArtistCache {
 	
 	public Future<YahooArtistData> getAsyncByName(String artist);	
 	
-	public YahooArtistData checkCache(String artistId);
-	
 	public List<YahooArtistData> checkCacheByName(String artist);
 	
-	public YahooArtistData fetchFromNet(String artistId);
-	
 	public List<YahooArtistData> fetchFromNetByName(String artist);
-	
-	public YahooArtistData saveInCache(String artistId, YahooArtistData data);
 
 	public List<YahooArtistData> saveInCacheByName(String artist, List<YahooArtistData> data);
 }

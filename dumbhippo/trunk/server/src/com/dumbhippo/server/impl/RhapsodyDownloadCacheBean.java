@@ -31,7 +31,7 @@ import com.dumbhippo.server.util.EJBUtil;
 
 @BanFromWebTier
 @Stateless
-public class RhapsodyDownloadCacheBean extends AbstractCacheBean<String,String> implements
+public class RhapsodyDownloadCacheBean extends AbstractCacheBean<String,Boolean> implements
 		RhapsodyDownloadCache {
 
 	@SuppressWarnings("unused")
@@ -50,7 +50,7 @@ public class RhapsodyDownloadCacheBean extends AbstractCacheBean<String,String> 
 		super(Request.RHAPSODY_DOWNLOAD);
 	}
 	
-	static private class RhapsodyLinkTask implements Callable<String> {
+	static private class RhapsodyLinkTask implements Callable<Boolean> {
 		
 		private String link;
 
@@ -58,7 +58,7 @@ public class RhapsodyDownloadCacheBean extends AbstractCacheBean<String,String> 
 			this.link = link;
 		}
 		
-		public String call() {
+		public Boolean call() {
 			logger.debug("In Rhapsody link check thread for {}", link);
 			
 			RhapsodyDownloadCache cache = EJBUtil.defaultLookup(RhapsodyDownloadCache.class);
@@ -66,7 +66,7 @@ public class RhapsodyDownloadCacheBean extends AbstractCacheBean<String,String> 
 			// Check again in case another node stored the data first
 			Boolean alreadyStored = cache.checkCache(link);
 			if (alreadyStored != null)
-				return alreadyStored ? link : null;
+				return alreadyStored;
 						
 			boolean fetched = cache.fetchFromNet(link);
 
@@ -95,27 +95,47 @@ public class RhapsodyDownloadCacheBean extends AbstractCacheBean<String,String> 
 		}
 	}
 	
-	public String getSync(String album, String artist, int track) {
-		return getFutureResultNullOnException(getAsync(album, artist, track));
-	}
-
-	public Future<String> getAsync(String album, String artist, int track) {
+	// nothing database-related about this method, so don't force a transaction
+	@TransactionAttribute(TransactionAttributeType.SUPPORTS)
+	public String buildLink(String album, String artist, int track) {
 		if (artist == null || album == null || track < 1) {
 			logger.debug("missing artist or album or track, not looking up album {} by artist {} on Rhapsody", 
 					     album, artist);
-			return new KnownFuture<String>(null);
+			return null; 
 		}
 		
 		// Try to concoct a Rhapsody friendly URL; see:
-		//  http://rws-blog.rhapsody.com/rhapsody_web_services/2006/04/new_album_urls.html
-		final String link = "http://play.rhapsody.com/" + rhapString(artist) + "/" + rhapString(album) + "/track-" + track;
-		
+		//  http://rws-blog.rhapsody.com/rhapsody_web_services/2006/04/new_album_urls.html		
+		return "http://play.rhapsody.com/" + rhapString(artist) + "/" + rhapString(album) + "/track-" + track;
+	}
+	
+	public Boolean getSync(String album, String artist, int track) {
+		String link = buildLink(album, artist, track);
+		if (link == null)
+			return null;
+		else
+			return getSync(link);
+	}
+
+	public Boolean getSync(String link) {
+		return getFutureResultNullOnException(getAsync(link));
+	}
+
+	public Future<Boolean> getAsync(String album, String artist, int track) {
+		String link = buildLink(album, artist, track);
+		if (link == null)
+			return null;
+		else
+			return getAsync(link);		
+	}
+	
+	public Future<Boolean> getAsync(String link) {		
 		Boolean result = checkCache(link);
 		if (result != null) {
 			if (result)
-				return new KnownFuture<String>(link);
+				return new KnownFuture<Boolean>(result);
 			else
-				return new KnownFuture<String>(null);
+				return new KnownFuture<Boolean>(null);
 		}
 		
 		return getExecutor().execute(link, new RhapsodyLinkTask(link));
@@ -135,7 +155,7 @@ public class RhapsodyDownloadCacheBean extends AbstractCacheBean<String,String> 
 	}
 
 	@TransactionAttribute(TransactionAttributeType.NEVER)
-	public boolean fetchFromNet(String link) {
+	public Boolean fetchFromNet(String link) {
 		boolean found = false;
 		try {
 			URL u = new URL(link);
@@ -175,7 +195,7 @@ public class RhapsodyDownloadCacheBean extends AbstractCacheBean<String,String> 
 	}
 
 	@TransactionAttribute(TransactionAttributeType.NEVER)
-	public String saveInCache(final String link, final boolean valid) {
+	public Boolean saveInCache(final String link, final Boolean valid) {
 		// need to retry on constraint violation to deal with race where multiple TrackViews are
 		// being updated in parallel
 		try {
@@ -206,9 +226,7 @@ public class RhapsodyDownloadCacheBean extends AbstractCacheBean<String,String> 
 				throw new RuntimeException(e); // not reached
 			}
 		}
-		if (valid)
-			return link;
-		else
-			return null;
+		
+		return valid;
 	}
 }

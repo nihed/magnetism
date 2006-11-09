@@ -9,12 +9,13 @@ import org.slf4j.Logger;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.ThreadUtils;
 import com.dumbhippo.UniqueTaskExecutor;
+import com.dumbhippo.server.AbstractCache;
 
 /**
  * Base class used for beans that implement a cached web service lookup.
  *
  */
-public abstract class AbstractCacheBean<KeyType,ResultType> {
+public abstract class AbstractCacheBean<KeyType,ResultType> implements AbstractCache<KeyType,ResultType> {
 	@SuppressWarnings("unused")
 	static private final Logger logger = GlobalSetup.getLogger(AbstractCacheBean.class);
 	
@@ -96,5 +97,9 @@ public abstract class AbstractCacheBean<KeyType,ResultType> {
 	@SuppressWarnings("unchecked")
 	protected UniqueTaskExecutor<KeyType,ResultType> getExecutor(Request request) {
 		return getExecutorInternal(request);
+	}
+	
+	public void expireCache(KeyType key) {
+		throw new UnsupportedOperationException("This cache bean doesn't implement cache expiration");
 	}
 }

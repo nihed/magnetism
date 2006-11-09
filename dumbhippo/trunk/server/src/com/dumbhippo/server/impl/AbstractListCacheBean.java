@@ -144,6 +144,7 @@ public abstract class AbstractListCacheBean<KeyType,ResultType,EntityType extend
 
 	protected abstract void setAllLastUpdatedToZero(KeyType key);
 	
+	@Override
 	public void expireCache(KeyType key) {
 		setAllLastUpdatedToZero(key);
 	}
