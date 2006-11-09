@@ -39,6 +39,7 @@ import com.dumbhippo.server.listeners.AccountStatusListener;
 import com.dumbhippo.server.listeners.ExternalAccountFeedListener;
 import com.dumbhippo.server.listeners.ExternalAccountsListener;
 import com.dumbhippo.server.listeners.FacebookListener;
+import com.dumbhippo.server.listeners.FlickrListener;
 import com.dumbhippo.server.listeners.GroupChatListener;
 import com.dumbhippo.server.listeners.GroupCreationListener;
 import com.dumbhippo.server.listeners.GroupMembershipListener;
@@ -48,6 +49,8 @@ import com.dumbhippo.server.listeners.PostClickedListener;
 import com.dumbhippo.server.listeners.PostListener;
 import com.dumbhippo.server.listeners.UserCreationListener;
 import com.dumbhippo.server.util.EJBUtil;
+import com.dumbhippo.services.FlickrPhotoView;
+import com.dumbhippo.services.FlickrPhotosetView;
 
 /**
  * See the docs for the Notifier interface.
@@ -287,6 +290,18 @@ public class NotifierBean implements Notifier {
 	public void onFacebookEvent(User user, FacebookEventType eventType, FacebookAccount facebookAccount, long updateTime) {
 		for (FacebookListener l : getListeners(FacebookListener.class)) {
 			l.onFacebookEvent(user, eventType, facebookAccount, updateTime);
+		}
+	}
+
+	public void onMostRecentFlickrPhotosChanged(String flickrId, List<FlickrPhotoView> recentPhotos) {
+		for (FlickrListener l : getListeners(FlickrListener.class)) {
+			l.onMostRecentFlickrPhotosChanged(flickrId, recentPhotos);
+		}
+	}
+
+	public void onFlickrPhotosetsChanged(String flickrId, List<FlickrPhotosetView> allPhotosets) {
+		for (FlickrListener l : getListeners(FlickrListener.class)) {
+			l.onFlickrPhotosetsChanged(flickrId, allPhotosets);
 		}
 	}
 }

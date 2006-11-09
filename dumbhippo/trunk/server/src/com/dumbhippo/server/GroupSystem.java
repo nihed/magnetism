@@ -1,14 +1,10 @@
 package com.dumbhippo.server;
 
-import java.io.IOException;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
 import javax.ejb.Local;
-
-import org.apache.lucene.index.IndexWriter;
-import org.hibernate.lucene.DocumentBuilder;
 
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.Group;

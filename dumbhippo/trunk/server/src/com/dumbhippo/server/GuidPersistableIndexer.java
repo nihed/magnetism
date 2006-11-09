@@ -41,10 +41,12 @@ public abstract class GuidPersistableIndexer<T extends GuidPersistable> extends 
 		}		
 	}
 	
+	@Override
 	protected void doIndex(IndexWriter writer, List<Object> ids) throws IOException {
 		doIndexObjects(writer, getBuilder(), TypeUtils.castList(Guid.class, ids));
 	}
 
+	@Override
 	protected void doIndexAll(IndexWriter writer) throws IOException {
 		doIndexObjects(writer, getBuilder(), loadAllIds());
 	}

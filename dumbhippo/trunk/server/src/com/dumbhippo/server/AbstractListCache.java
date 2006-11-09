@@ -22,4 +22,6 @@ public interface AbstractListCache<KeyType, ResultType> {
 	public List<ResultType> fetchFromNet(KeyType key);
 
 	public List<ResultType> saveInCache(KeyType key, List<ResultType> newResults);
+	
+	public void expireCache(KeyType key);
 }

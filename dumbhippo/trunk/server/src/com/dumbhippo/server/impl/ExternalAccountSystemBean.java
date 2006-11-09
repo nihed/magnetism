@@ -1,6 +1,7 @@
 package com.dumbhippo.server.impl;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import javax.ejb.EJB;
@@ -17,12 +18,14 @@ import com.dumbhippo.TypeUtils;
 import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.ExternalAccountType;
+import com.dumbhippo.persistence.FlickrUpdateStatus;
 import com.dumbhippo.persistence.Sentiment;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.ValidationException;
-import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.ExternalAccountSystem;
 import com.dumbhippo.server.FacebookSystem;
+import com.dumbhippo.server.FlickrUpdater;
+import com.dumbhippo.server.FlickrUserPhotosCache;
 import com.dumbhippo.server.MessageSender;
 import com.dumbhippo.server.MySpaceTracker;
 import com.dumbhippo.server.NotFoundException;
@@ -31,8 +34,7 @@ import com.dumbhippo.server.views.ExternalAccountView;
 import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.server.views.Viewpoint;
 import com.dumbhippo.services.FlickrPhotoSize;
-import com.dumbhippo.services.FlickrPhotos;
-import com.dumbhippo.services.FlickrWebServices;
+import com.dumbhippo.services.FlickrPhotoView;
 
 @Stateless
 public class ExternalAccountSystemBean implements ExternalAccountSystem {
@@ -53,10 +55,15 @@ public class ExternalAccountSystemBean implements ExternalAccountSystem {
 	private FacebookSystem facebookSystem;
 	
 	@EJB
-	private Notifier notifier;
+	@IgnoreDependency
+	private FlickrUserPhotosCache flickrUserPhotosCache;
 	
 	@EJB
-	private Configuration config;
+	@IgnoreDependency
+	private FlickrUpdater flickrUpdater;
+	
+	@EJB
+	private Notifier notifier;
 	
 	@PersistenceContext(unitName = "dumbhippo")
 	private EntityManager em; 
@@ -139,17 +146,23 @@ public class ExternalAccountSystemBean implements ExternalAccountSystem {
 		if (account.getHandle() == null || account.getSentiment() != Sentiment.LOVE)
 			return;
 		
-		FlickrWebServices ws = new FlickrWebServices(5000, config);
-		FlickrPhotos photos = ws.lookupPublicPhotos(account.getHandle(), 1);
-		if (photos == null) {
-			logger.debug("Failed to load public photos for {}", account);
+		FlickrUpdateStatus updateStatus;
+		try {
+			updateStatus = flickrUpdater.getCachedStatus(account);
+		} catch (NotFoundException e) {
+			// happens if updater has never run
+			logger.debug("No cached flickr status for {}", account);
 			return;
 		}
 		
-		if (photos.getPhotos().size() > 0) {
-			account.setThumbnails(TypeUtils.castList(Thumbnail.class, photos.getPhotos()), photos.getTotal(), 
-					FlickrPhotoSize.SMALL_SQUARE.getPixels(), FlickrPhotoSize.SMALL_SQUARE.getPixels());
+		List<FlickrPhotoView> photos = flickrUserPhotosCache.getSync(account.getHandle());
+		if (photos.isEmpty()) {
+			logger.debug("Empty list of public photos for {}", account);
+			return;
 		}
+		
+		account.setThumbnails(TypeUtils.castList(Thumbnail.class, photos), updateStatus.getTotalPhotoCount(), 
+					FlickrPhotoSize.SMALL_SQUARE.getPixels(), FlickrPhotoSize.SMALL_SQUARE.getPixels());
 	}
 	
 	public void loadThumbnails(Viewpoint viewpoint, Set<ExternalAccountView> accountViews) {

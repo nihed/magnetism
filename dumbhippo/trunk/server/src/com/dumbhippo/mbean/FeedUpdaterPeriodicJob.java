@@ -49,23 +49,29 @@ public final class FeedUpdaterPeriodicJob implements PeriodicJob {
 			try {
                 final Object o = feedSystem.updateFeedFetchFeed(feed);
                 if (o != null) {
-                        final TransactionRunner runner = EJBUtil.defaultLookup(TransactionRunner.class);
-                        runner.runTaskRetryingOnDuplicateEntry(new Runnable() {
-                                public void run() {
-                                        try {
-                                            feedSystem.updateFeedStoreFeed(o);
-                                        } catch (final XmlMethodException e) {
-                                                logger.warn("Couldn't store feed update results {}: {}", feed, e.getCodeString() + ": " + e.getMessage());
-                                                // XmlMethodException here should be some kind of feed parse error, not a database error.
-                                                // we don't want to mark a feed failed due to a db error anyway since the expected db
-                                                // error is that another thread successfully saved the feed first.
-                                                feedSystem.markFeedFailedLastUpdate(feed);
-                                        }
-                                }
-                        });
-                }
+					final TransactionRunner runner = EJBUtil.defaultLookup(TransactionRunner.class);
+					runner.runTaskRetryingOnDuplicateEntry(new Runnable() {
+						public void run() {
+							try {
+								feedSystem.updateFeedStoreFeed(o);
+							} catch (final XmlMethodException e) {
+								logger.warn("Couldn't store feed update results {}: {}", feed,
+										e.getCodeString() +
+										": " + e.getMessage());
+								// XmlMethodException here should be some kind
+								// of feed parse error, not a database error.
+								// we don't want to mark a feed failed due to a
+								// db error anyway since the expected db
+								// error is that another thread successfully
+								// saved the feed first.
+								feedSystem.markFeedFailedLastUpdate(feed);
+							}
+						}
+					});
+				}
 			} catch (XmlMethodException e) {
-				// this should have been logged already deeper in the system where more detail was known,
+				// this should have been logged already deeper in the system
+				// where more detail was known,
 				// do a debug log here in case it somehow was not.
 				logger.debug("Couldn't update feed {}: {}", feed, e.getCodeString() + ": " + e.getMessage());
 				feedSystem.markFeedFailedLastUpdate(feed);											

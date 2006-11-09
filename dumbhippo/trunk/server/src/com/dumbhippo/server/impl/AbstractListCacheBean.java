@@ -141,6 +141,12 @@ public abstract class AbstractListCacheBean<KeyType,ResultType,EntityType extend
 	}
 
 	protected abstract EntityType newNoResultsMarker(KeyType key);
+
+	protected abstract void setAllLastUpdatedToZero(KeyType key);
+	
+	public void expireCache(KeyType key) {
+		setAllLastUpdatedToZero(key);
+	}
 	
 	@TransactionAttribute(TransactionAttributeType.NEVER)
 	public List<ResultType> saveInCache(final KeyType key, List<ResultType> newResults) {
@@ -155,12 +161,11 @@ public abstract class AbstractListCacheBean<KeyType,ResultType,EntityType extend
 				public List<ResultType> call() {
 					
 					logger.debug("Saving new results in cache for bean {}", ejbIface.getName());
-					
-					// remove all old results
+
 					List<EntityType> old = queryExisting(key);
 					for (EntityType d : old) {
 						em.remove(d);
-					}
+					}					
 					
 					Date now = new Date();
 					

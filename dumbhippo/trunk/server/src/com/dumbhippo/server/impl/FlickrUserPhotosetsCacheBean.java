@@ -22,7 +22,10 @@ public class FlickrUserPhotosetsCacheBean extends AbstractListCacheBean<String,F
 	@SuppressWarnings("unused")
 	static private final Logger logger = GlobalSetup.getLogger(FlickrUserPhotosetsCacheBean.class);
 
-	static private final long FLICKR_USER_PHOTOSETS_EXPIRATION = 1000 * 60 * 10; // 10 minutes
+	// this is long, because we explicitly drop the cache if we think there 
+	// might be a change... having an expiration here at all isn't needed in 
+	// theory.
+	static private final long FLICKR_USER_PHOTOSETS_EXPIRATION = 1000 * 60 * 60 * 24 * 7;
 	
 	public FlickrUserPhotosetsCacheBean() {
 		super(Request.FLICKR_USER_PHOTOSETS, FlickrUserPhotosetsCache.class, FLICKR_USER_PHOTOSETS_EXPIRATION);
@@ -37,6 +40,16 @@ public class FlickrUserPhotosetsCacheBean extends AbstractListCacheBean<String,F
 		return results;
 	}
 
+	@Override
+	protected void setAllLastUpdatedToZero(String key) {
+		Query q = em.createQuery("UPDATE CachedFlickrUserPhotoset photoset " + 
+				" SET photoset.lastUpdated = 0 " + 
+				" WHERE photoset.ownerId = :ownerId");
+		q.setParameter("ownerId", key);
+		int updated = q.executeUpdate();
+		logger.debug("{} cached items expired", updated);
+	}	
+	
 	@Override
 	protected FlickrPhotosetView resultFromEntity(CachedFlickrUserPhotoset entity) {
 		return entity.toPhotoset();

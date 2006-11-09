@@ -14,6 +14,9 @@ import com.dumbhippo.server.impl.ConfigurationBean;
 
 public class FlickrWebServices extends AbstractXmlRequest<FlickrSaxHandler> {
 
+	static public final int MIN_PER_PAGE = 1;
+	static public final int MAX_PER_PAGE = 500;
+	
 	static private final Logger logger = GlobalSetup.getLogger(FlickrWebServices.class);
 
 	private String apiId;
@@ -66,25 +69,35 @@ public class FlickrWebServices extends AbstractXmlRequest<FlickrSaxHandler> {
 	 * 
 	 * @param userId Flickr NSID
 	 * @param page 1-based page to return
+	 * @param perPage how many per page; Flickr ignores it if less than 1 and clamps it to 500
 	 * @return photos or null on failure
 	 */
-	public FlickrPhotos lookupPublicPhotos(String userId, int page) {
+	public FlickrPhotos lookupPublicPhotos(String userId, int page, int perPage) {
 		if (page < 1)
 			throw new RuntimeException("Flickr photo pages count from 1");
 		FlickrSaxHandler handler = doFlickrCall("flickr.people.getPublicPhotos",
-				"user_id", userId, "page", Integer.toString(page));
+				"user_id", userId, "page", Integer.toString(page),
+				"per_page", Integer.toString(perPage));
 		if (handler == null)
 			return null;
 		else
 			return handler.getPhotos();
 	}
 	
-	public FlickrPhotoset lookupPublicPhotoset(String photosetId, int page) {
+	/**
+	 * 
+	 * @param photosetId Flickr photoset id
+	 * @param page 1-based page to return
+	 * @param perPage how many per page; Flickr ignores it if less than 1 and clamps it to 500
+	 * @return photos or null on failure
+	 */
+	public FlickrPhotoset lookupPublicPhotoset(String photosetId, int page, int perPage) {
 		if (page < 1)
 			throw new RuntimeException("flickr photoset pages count from 1");
 		FlickrSaxHandler handler = doFlickrCall("flickr.photosets.getPhotos",
 				"photoset_id", photosetId,
-				"page", Integer.toString(page));
+				"page", Integer.toString(page),
+				"per_page", Integer.toString(perPage));
 		if (handler == null)
 			return null;
 		else
@@ -115,7 +128,7 @@ public class FlickrWebServices extends AbstractXmlRequest<FlickrSaxHandler> {
 		if (user == null)
 			return;
 		
-		FlickrPhotos photos = ws.lookupPublicPhotos(user.getId(), 1);
+		FlickrPhotos photos = ws.lookupPublicPhotos(user.getId(), 1, MAX_PER_PAGE);
 		System.out.println("Their photos are: " + photos);
 		if (photos == null)
 			return;
@@ -129,7 +142,7 @@ public class FlickrWebServices extends AbstractXmlRequest<FlickrSaxHandler> {
 			return;
 		
 		for (FlickrPhotoset photoset : photosets.getSets()) {
-			FlickrPhotoset filledPhotoset = ws.lookupPublicPhotoset(photoset.getId(), 1);
+			FlickrPhotoset filledPhotoset = ws.lookupPublicPhotoset(photoset.getId(), 1, MAX_PER_PAGE);
 			System.out.println("Filled photoset is:  " + filledPhotoset);
 			if (filledPhotoset == null)
 				continue;
