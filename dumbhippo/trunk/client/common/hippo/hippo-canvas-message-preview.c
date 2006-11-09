@@ -44,6 +44,8 @@ struct _HippoCanvasMessagePreview {
 
     HippoCanvasItem *message_text;
     HippoCanvasItem *entity_name;
+    HippoCanvasItem *time_ago;
+    HippoCanvasBox  *time_ago_parent;
 };
 
 struct _HippoCanvasMessagePreviewClass {
@@ -229,9 +231,55 @@ hippo_canvas_message_preview_constructor (GType                  type,
                                                 NULL);
     hippo_canvas_box_append(box, message_preview->entity_name, 0);
 
+    message_preview->time_ago_parent = g_object_new(HIPPO_TYPE_CANVAS_BOX,
+                                                    "orientation", HIPPO_ORIENTATION_HORIZONTAL,
+                                                    "xalign", HIPPO_ALIGNMENT_START,
+                                                    "border-left", 6,
+                                                    "color", HIPPO_CANVAS_BLOCK_GRAY_TEXT_COLOR,
+                                                    NULL);
+    hippo_canvas_box_append(box, HIPPO_CANVAS_ITEM(message_preview->time_ago_parent), HIPPO_PACK_EXPAND);
+
+    message_preview->time_ago = g_object_new(HIPPO_TYPE_CANVAS_TEXT, 
+                                             "text", NULL,
+                                             NULL);
+    hippo_canvas_box_append(message_preview->time_ago_parent, message_preview->time_ago, 0);
+
     hippo_canvas_message_preview_update(message_preview);
     
     return object;
+}
+
+static void
+update_time(HippoCanvasMessagePreview *preview)
+{
+    gint64 server_time_now;
+    char *when;
+
+    if (preview->message == NULL)
+        return;
+
+    /* See comments in hippo-canvas-block.c:update_time */
+
+    server_time_now = hippo_current_time_ms() + hippo_actions_get_server_time_offset(preview->actions);
+    
+    when = hippo_format_time_ago(server_time_now / 1000, hippo_chat_message_get_timestamp(preview->message));
+
+    hippo_canvas_box_set_child_visible(preview->time_ago_parent,
+                                       preview->time_ago,
+                                       strcmp(when, "") != 0);
+
+    g_object_set(G_OBJECT(preview->time_ago),
+                 "text", when,
+                 NULL);
+    
+    g_free(when);
+}
+
+static void
+on_minute_ticked(HippoActions              *actions,
+                 HippoCanvasMessagePreview *preview)
+{
+    update_time(preview);
 }
 
 static void
@@ -245,6 +293,7 @@ hippo_canvas_message_preview_update(HippoCanvasMessagePreview *message_preview)
     g_object_set(G_OBJECT(message_preview->entity_name),
                  "entity", message ? hippo_chat_message_get_person(message) : NULL,
                  NULL);
+    update_time(message_preview);
 }
 
 static void
@@ -276,6 +325,9 @@ hippo_canvas_message_preview_set_actions(HippoCanvasMessagePreview  *message_pre
         return;
 
     if (message_preview->actions) {
+        g_signal_handlers_disconnect_by_func(G_OBJECT(message_preview->actions),
+                                             G_CALLBACK(on_minute_ticked),
+                                             message_preview);
         g_object_unref(message_preview->actions);
         message_preview->actions = NULL;
     }
@@ -283,6 +335,10 @@ hippo_canvas_message_preview_set_actions(HippoCanvasMessagePreview  *message_pre
     if (actions) {
         g_object_ref(actions);
         message_preview->actions = actions;
+        g_signal_connect(G_OBJECT(message_preview->actions),
+                         "minute-ticked",
+                         G_CALLBACK(on_minute_ticked),
+                         message_preview);
     }
 
     g_object_notify(G_OBJECT(message_preview), "actions");
