@@ -14,7 +14,7 @@ import com.dumbhippo.services.YahooSongData;
  * subclasses have the distinct keys used for lookup.
  */
 @MappedSuperclass
-abstract public class AbstractYahooSongData extends DBUnique {
+abstract public class AbstractYahooSongData extends DBUnique implements CachedListItem {
 	
 	private static final long serialVersionUID = 1L;
 

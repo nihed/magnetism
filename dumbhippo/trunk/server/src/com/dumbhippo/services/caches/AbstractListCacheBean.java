@@ -148,7 +148,9 @@ public abstract class AbstractListCacheBean<KeyType,ResultType,EntityType extend
 
 	protected abstract EntityType newNoResultsMarker(KeyType key);
 
-	protected abstract void setAllLastUpdatedToZero(KeyType key);
+	protected void setAllLastUpdatedToZero(KeyType key) {
+		throw new UnsupportedOperationException("Cache doesn't support manual expiration: " + getEjbIface().getName());
+	}
 	
 	@Override
 	public void expireCache(KeyType key) {

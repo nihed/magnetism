@@ -14,4 +14,10 @@ import org.hibernate.annotations.Index;
 public class CachedYahooAlbumSongData extends AbstractYahooSongData {
 	private static final long serialVersionUID = 1L;
 
+	static public CachedYahooAlbumSongData newNoResultsMarker(String albumId) {
+		CachedYahooAlbumSongData d = new CachedYahooAlbumSongData();
+		d.setAlbumId(albumId);
+		d.setNoResultsMarker(true);
+		return d;
+	}
 }

@@ -21,6 +21,15 @@ public class CachedYahooSongData extends AbstractYahooSongData {
 	private String searchedAlbum;
 	private String searchedName;
 	
+	static public CachedYahooSongData newNoResultsMarker(String searchedArtist, String searchedAlbum, String searchedName) {
+		CachedYahooSongData d = new CachedYahooSongData();
+		d.setSearchedArtist(searchedArtist);
+		d.setSearchedAlbum(searchedAlbum);
+		d.setSearchedName(searchedName);
+		d.setNoResultsMarker(true);
+		return d;
+	}
+	
 	@Column(nullable=true, length=100)
 	public String getSearchedAlbum() {
 		return searchedAlbum;
