@@ -32,7 +32,7 @@ import com.dumbhippo.services.AmazonItemSearch;
 
 @BanFromWebTier
 @Stateless
-public class AmazonAlbumCacheBean extends AbstractCacheBean<AlbumAndArtist,AmazonAlbumData> implements AmazonAlbumCache {
+public class AmazonAlbumCacheBean extends AbstractCacheBean<AlbumAndArtist,AmazonAlbumData,AbstractCache> implements AmazonAlbumCache {
 	@SuppressWarnings("unused")
 	static private final Logger logger = GlobalSetup.getLogger(AmazonAlbumCacheBean.class);
 	
@@ -49,7 +49,7 @@ public class AmazonAlbumCacheBean extends AbstractCacheBean<AlbumAndArtist,Amazo
 	private Configuration config;	
 	
 	public AmazonAlbumCacheBean() {
-		super(Request.AMAZON_ALBUM);
+		super(Request.AMAZON_ALBUM, AmazonAlbumCache.class, AMAZON_EXPIRATION_TIMEOUT);
 	}	
 	
 	static private class AmazonAlbumSearchTask implements Callable<AmazonAlbumData> {
@@ -65,14 +65,14 @@ public class AmazonAlbumCacheBean extends AbstractCacheBean<AlbumAndArtist,Amazo
 			
 			AmazonAlbumCache cache = EJBUtil.defaultLookup(AmazonAlbumCache.class);	
 						
-			// Check again in case another node stored the data first
-			AmazonAlbumData alreadyStored = cache.checkCache(albumAndArtist);
-			if (alreadyStored != null)
-				return alreadyStored;
+			try {
+				// Check again in case another node stored the data first				
+				return cache.checkCache(albumAndArtist);
+			} catch (NotCachedException e) {
+				AmazonAlbumData data = cache.fetchFromNet(albumAndArtist);
 
-			AmazonAlbumData data = cache.fetchFromNet(albumAndArtist);
-
-			return cache.saveInCache(albumAndArtist, data);
+				return cache.saveInCache(albumAndArtist, data);
+			}
 		}
 	}
 
@@ -83,14 +83,12 @@ public class AmazonAlbumCacheBean extends AbstractCacheBean<AlbumAndArtist,Amazo
 			return new KnownFuture<AmazonAlbumData>(null);
 		}
 		
-		AmazonAlbumData result = checkCache(albumAndArtist);
-		if (result != null) {
-			if (result.getASIN() == null) // cached negative
-				result = null;
+		try {
+			AmazonAlbumData result = checkCache(albumAndArtist);
 			return new KnownFuture<AmazonAlbumData>(result);
+		} catch (NotCachedException e) {
+			return getExecutor().execute(albumAndArtist, new AmazonAlbumSearchTask(albumAndArtist));
 		}
-		
-		return getExecutor().execute(albumAndArtist, new AmazonAlbumSearchTask(albumAndArtist));		
 	}
 	
 	private CachedAmazonAlbumData albumResultQuery(AlbumAndArtist albumAndArtist) {
@@ -114,7 +112,7 @@ public class AmazonAlbumCacheBean extends AbstractCacheBean<AlbumAndArtist,Amazo
 		return getFutureResultNullOnException(getAsync(albumAndArtist));
 	}
 	
-	public AmazonAlbumData checkCache(AlbumAndArtist albumAndArtist) {
+	public AmazonAlbumData checkCache(AlbumAndArtist albumAndArtist) throws NotCachedException {
 		CachedAmazonAlbumData result = albumResultQuery(albumAndArtist);
 
 		if (result != null) {
@@ -122,15 +120,19 @@ public class AmazonAlbumCacheBean extends AbstractCacheBean<AlbumAndArtist,Amazo
 			Date lastUpdated = result.getLastUpdated();
 			if (lastUpdated == null || ((lastUpdated.getTime() + AMAZON_EXPIRATION_TIMEOUT) < now)) {
 				result = null;
-			}
+			} 
 		}
 
 		if (result != null) {
 			logger.debug("Have cached amazon album result for {}: {}", 
 					albumAndArtist, result);
-			return result.toData();
+			if (result.getASIN() == null) { // no result marker
+				return null;
+			} else {
+				return result.toData();
+			}
 		} else {
-			return null;
+			throw new NotCachedException();
 		}
 	}
 	

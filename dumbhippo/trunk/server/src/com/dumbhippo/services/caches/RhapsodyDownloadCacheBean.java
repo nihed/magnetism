@@ -31,7 +31,7 @@ import com.dumbhippo.server.util.EJBUtil;
 
 @BanFromWebTier
 @Stateless
-public class RhapsodyDownloadCacheBean extends AbstractCacheBean<String,Boolean> implements
+public class RhapsodyDownloadCacheBean extends AbstractCacheBean<String,Boolean,AbstractCache> implements
 		RhapsodyDownloadCache {
 
 	@SuppressWarnings("unused")
@@ -47,7 +47,7 @@ public class RhapsodyDownloadCacheBean extends AbstractCacheBean<String,Boolean>
 	private TransactionRunner runner;
 	
 	public RhapsodyDownloadCacheBean() {
-		super(Request.RHAPSODY_DOWNLOAD);
+		super(Request.RHAPSODY_DOWNLOAD, RhapsodyDownloadCache.class, RHAPLINK_EXPIRATION_TIMEOUT);
 	}
 	
 	static private class RhapsodyLinkTask implements Callable<Boolean> {
@@ -64,13 +64,13 @@ public class RhapsodyDownloadCacheBean extends AbstractCacheBean<String,Boolean>
 			RhapsodyDownloadCache cache = EJBUtil.defaultLookup(RhapsodyDownloadCache.class);
 			
 			// Check again in case another node stored the data first
-			Boolean alreadyStored = cache.checkCache(link);
-			if (alreadyStored != null)
-				return alreadyStored;
-						
-			boolean fetched = cache.fetchFromNet(link);
+			try {
+				return cache.checkCache(link);
+			} catch (NotCachedException e) {
+				Boolean fetched = cache.fetchFromNet(link);
 
-			return cache.saveInCache(link, fetched);
+				return cache.saveInCache(link, fetched);
+			}
 		}
 	}
 	
@@ -129,26 +129,23 @@ public class RhapsodyDownloadCacheBean extends AbstractCacheBean<String,Boolean>
 			return getAsync(link);		
 	}
 	
-	public Future<Boolean> getAsync(String link) {		
-		Boolean result = checkCache(link);
-		if (result != null) {
-			if (result)
-				return new KnownFuture<Boolean>(result);
-			else
-				return new KnownFuture<Boolean>(null);
+	public Future<Boolean> getAsync(String link) {
+		try {
+			Boolean result = checkCache(link);
+			return new KnownFuture<Boolean>(result);
+		} catch (NotCachedException e) {
+			return getExecutor().execute(link, new RhapsodyLinkTask(link));
 		}
-		
-		return getExecutor().execute(link, new RhapsodyLinkTask(link));
 	}
 
-	public Boolean checkCache(String link) {
+	public Boolean checkCache(String link) throws NotCachedException {
 		CachedRhapsodyDownload oldLink = rhapLinkQuery(link);
 		
 		final long now = System.currentTimeMillis();
 		if ((oldLink == null) ||
 			(oldLink.getLastUpdated().getTime() + RHAPLINK_EXPIRATION_TIMEOUT) < now) {
 			logger.debug("Unknown or outdated Rhapsody link {}", link);
-			return null;
+			throw new NotCachedException();
 		} else {
 			return oldLink.isActive();
 		}

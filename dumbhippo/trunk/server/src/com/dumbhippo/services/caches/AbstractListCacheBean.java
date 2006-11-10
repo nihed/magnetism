@@ -24,7 +24,9 @@ import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.util.EJBUtil;
 
-public abstract class AbstractListCacheBean<KeyType,ResultType,EntityType extends CachedListItem> extends AbstractCacheBean<KeyType,List<ResultType>> implements AbstractListCache<KeyType, ResultType> {
+public abstract class AbstractListCacheBean<KeyType,ResultType,EntityType extends CachedListItem>
+	extends AbstractCacheBean<KeyType,List<ResultType>,AbstractListCache<KeyType,ResultType>>
+	implements AbstractListCache<KeyType, ResultType> {
 
 	@SuppressWarnings("unused")
 	static private final Logger logger = GlobalSetup.getLogger(AbstractListCacheBean.class);
@@ -38,13 +40,8 @@ public abstract class AbstractListCacheBean<KeyType,ResultType,EntityType extend
 	@EJB
 	protected Configuration config;		
 	
-	private Class<? extends AbstractListCache<KeyType,ResultType>> ejbIface;
-	private long expirationTime; // in milliseconds until we expire the cache
-	
 	protected AbstractListCacheBean(Request defaultRequest, Class<? extends AbstractListCache<KeyType,ResultType>> ejbIface, long expirationTime) {
-		super(defaultRequest);
-		this.ejbIface = ejbIface;
-		this.expirationTime = expirationTime;
+		super(defaultRequest, ejbIface, expirationTime);
 	}
 
 	static private class AbstractListCacheTask<KeyType,ResultType,EntityType> implements Callable<List<ResultType>> {
@@ -64,15 +61,19 @@ public abstract class AbstractListCacheBean<KeyType,ResultType,EntityType extend
 			AbstractListCache<KeyType,ResultType> cache = EJBUtil.defaultLookup(ejbIface);
 			
 			// Check again in case another node stored the data first
-			List<ResultType> alreadyStored = cache.checkCache(key);
-			if (alreadyStored != null)
-				return alreadyStored;
-			
-			List<ResultType> result = cache.fetchFromNet(key);
-			
-			return cache.saveInCache(key, result);
+			try {
+				List<ResultType> results = cache.checkCache(key);
+				if (results == null)
+					throw new RuntimeException("AbstractListCache.checkCache() isn't supposed to return null ever, it did for key: " + key);
+				else
+					return results;
+			} catch (NotCachedException e) {
+				List<ResultType> result = cache.fetchFromNet(key);
+				
+				return cache.saveInCache(key, result);
+			}
 		}
-	}	
+	}
 	
 	public List<ResultType> getSync(KeyType key) {
 		return getFutureResultEmptyListOnException(getAsync(key));
@@ -82,13 +83,18 @@ public abstract class AbstractListCacheBean<KeyType,ResultType,EntityType extend
 		if (key == null)
 			throw new IllegalArgumentException("null key passed to AbstractListCacheBean");
 		
-		List<ResultType> results = checkCache(key);
-		if (results != null) {
+		try {
+			List<ResultType> results = checkCache(key);
+
+			if (results == null)
+				throw new RuntimeException("AbstractListCache.checkCache isn't supposed to return null ever, it did for key " + key);
+		
 			logger.debug("Using cached listing of {} items for {}", results.size(), key);
 			return new KnownFuture<List<ResultType>>(results);
+		} catch (NotCachedException e) {
+			Callable<List<ResultType>> task = new AbstractListCacheTask<KeyType,ResultType,EntityType>(key, getEjbIface());
+			return getExecutor().execute(key, task);
 		}
-		Callable<List<ResultType>> task = new AbstractListCacheTask<KeyType,ResultType,EntityType>(key, ejbIface);
-		return getExecutor().execute(key, task);
 	}
 
 	protected abstract List<EntityType> queryExisting(KeyType key);
@@ -97,17 +103,17 @@ public abstract class AbstractListCacheBean<KeyType,ResultType,EntityType extend
 	
 	protected abstract EntityType entityFromResult(KeyType key, ResultType result);
 	
-	public List<ResultType> checkCache(KeyType key) {
+	public List<ResultType> checkCache(KeyType key) throws NotCachedException {
 		List<EntityType> old = queryExisting(key);
 
 		if (old.isEmpty())
-			return null;
+			throw new NotCachedException();
 		
 		long now = System.currentTimeMillis();
 		boolean outdated = false;
 		boolean haveNoResultsMarker = false;
 		for (EntityType d : old) {
-			if ((d.getLastUpdated().getTime() + expirationTime) < now) {
+			if ((d.getLastUpdated().getTime() + getExpirationTime()) < now) {
 				outdated = true;
 			}
 			if (d.isNoResultsMarker()) {
@@ -116,12 +122,12 @@ public abstract class AbstractListCacheBean<KeyType,ResultType,EntityType extend
 		}
 		
 		if (outdated) {
-			logger.debug("Cache appears outdated for bean {} key {}", ejbIface.getName(), key);
-			return null;
+			logger.debug("Cache appears outdated for bean {} key {}", getEjbIface().getName(), key);
+			throw new NotCachedException();
 		}
 		
 		if (haveNoResultsMarker) {
-			logger.debug("Negative result cached for bean {} key {}", ejbIface.getName(), key);
+			logger.debug("Negative result cached for bean {} key {}", getEjbIface().getName(), key);
 			return Collections.emptyList();
 		}
 		
@@ -161,7 +167,7 @@ public abstract class AbstractListCacheBean<KeyType,ResultType,EntityType extend
 			return runner.runTaskInNewTransaction(new Callable<List<ResultType>>() {
 				public List<ResultType> call() {
 					
-					logger.debug("Saving new results in cache for bean {}", ejbIface.getName());
+					logger.debug("Saving new results in cache for bean {}", getEjbIface().getName());
 
 					List<EntityType> old = queryExisting(key);
 					for (EntityType d : old) {
@@ -191,7 +197,7 @@ public abstract class AbstractListCacheBean<KeyType,ResultType,EntityType extend
 			});
 		} catch (Exception e) {
 			if (EJBUtil.isDatabaseException(e)) {
-				logger.warn("Ignoring database exception saving in cache for " + ejbIface.getName() + " {}: {}", e.getClass().getName(), e.getMessage());
+				logger.warn("Ignoring database exception saving in cache for " + getEjbIface().getName() + " {}: {}", e.getClass().getName(), e.getMessage());
 				return newItems;
 			} else {
 				ExceptionUtils.throwAsRuntimeException(e);

@@ -34,7 +34,7 @@ import com.dumbhippo.services.YahooSearchWebServices;
 
 @BanFromWebTier
 @Stateless
-public class YahooArtistAlbumsCacheBean extends AbstractCacheBean<String,List<YahooAlbumData>> implements YahooArtistAlbumsCache {
+public class YahooArtistAlbumsCacheBean extends AbstractCacheBean<String,List<YahooAlbumData>,AbstractListCache> implements YahooArtistAlbumsCache {
 	@SuppressWarnings("unused")
 	static private final Logger logger = GlobalSetup.getLogger(YahooArtistAlbumsCacheBean.class);
 
@@ -48,7 +48,7 @@ public class YahooArtistAlbumsCacheBean extends AbstractCacheBean<String,List<Ya
 	private Configuration config;
 	
 	public YahooArtistAlbumsCacheBean() {
-		super(Request.YAHOO_ARTIST_ALBUMS);
+		super(Request.YAHOO_ARTIST_ALBUMS, YahooArtistAlbumsCache.class, YAHOO_EXPIRATION_TIMEOUT);
 	}
 	
 	static private class YahooArtistAlbumsTask implements Callable<List<YahooAlbumData>> {
@@ -66,13 +66,13 @@ public class YahooArtistAlbumsCacheBean extends AbstractCacheBean<String,List<Ya
 			YahooArtistAlbumsCache cache = EJBUtil.defaultLookup(YahooArtistAlbumsCache.class);
 			
 			// Check again in case another node stored the data first
-			List<YahooAlbumData> alreadyStored = cache.checkCache(artistId);
-			if (alreadyStored != null)
-				return alreadyStored;
-			
-			List<YahooAlbumData> result = cache.fetchFromNet(artistId);
-			
-			return cache.saveInCache(artistId, result);
+			try {
+				return cache.checkCache(artistId);
+			} catch (NotCachedException e) {
+				List<YahooAlbumData> result = cache.fetchFromNet(artistId);
+				
+				return cache.saveInCache(artistId, result);
+			}
 		}
 	}
 	
@@ -84,13 +84,13 @@ public class YahooArtistAlbumsCacheBean extends AbstractCacheBean<String,List<Ya
 		if (artistId == null)
 			throw new IllegalArgumentException("null artistId passed to YahooArtistAlbumsCacheBean");
 		
-		List<YahooAlbumData> result = checkCache(artistId);
-		if (result != null) {
+		try {
+			List<YahooAlbumData> result = checkCache(artistId);
 			logger.debug("Using cached album listing of {} items for artistId {}", result.size(), artistId);
 			return new KnownFuture<List<YahooAlbumData>>(result);
+		} catch (NotCachedException e) {
+			return getExecutor().execute(artistId, new YahooArtistAlbumsTask(artistId));
 		}
-	
-		return getExecutor().execute(artistId, new YahooArtistAlbumsTask(artistId));
 	}
 
 	private List<CachedYahooArtistAlbumData> albumDataQuery(String artistId) {
@@ -101,13 +101,13 @@ public class YahooArtistAlbumsCacheBean extends AbstractCacheBean<String,List<Ya
 		return results;
 	}
 
-	// returning empty list means up-to-date cache of no results, while returning 
-	// null means no up-to-date cache
-	public List<YahooAlbumData> checkCache(String artistId) {
+	// returning empty list means up-to-date cache of no results, while 
+	// throwing exception means no up-to-date cache
+	public List<YahooAlbumData> checkCache(String artistId) throws NotCachedException {
 		List<CachedYahooArtistAlbumData> old = albumDataQuery(artistId);
 
 		if (old.isEmpty())
-			return null;
+			throw new NotCachedException();
 		
 		long now = System.currentTimeMillis();
 		boolean outdated = false;
@@ -123,7 +123,7 @@ public class YahooArtistAlbumsCacheBean extends AbstractCacheBean<String,List<Ya
 		
 		if (outdated) {
 			logger.debug("Cache appears outdated for artist's album listing {}", artistId);
-			return null;
+			throw new NotCachedException();
 		}
 		
 		if (haveNoResultsMarker) {

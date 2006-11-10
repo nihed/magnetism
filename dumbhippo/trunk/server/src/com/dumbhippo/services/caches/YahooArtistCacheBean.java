@@ -34,7 +34,7 @@ import com.dumbhippo.services.YahooSearchWebServices;
 
 @BanFromWebTier
 @Stateless
-public class YahooArtistCacheBean extends AbstractCacheBean<String,YahooArtistData> implements YahooArtistCache {
+public class YahooArtistCacheBean extends AbstractCacheBean<String,YahooArtistData,AbstractCache> implements YahooArtistCache {
 	@SuppressWarnings("unused")
 	static private final Logger logger = GlobalSetup.getLogger(YahooArtistCacheBean.class);
 	
@@ -48,7 +48,7 @@ public class YahooArtistCacheBean extends AbstractCacheBean<String,YahooArtistDa
 	private Configuration config;		
 
 	public YahooArtistCacheBean() {
-		super(Request.YAHOO_ARTIST);
+		super(Request.YAHOO_ARTIST, YahooArtistCache.class, YAHOO_EXPIRATION_TIMEOUT);
 	}
 	
 	static private class YahooArtistByIdTask implements Callable<YahooArtistData> {
@@ -65,13 +65,13 @@ public class YahooArtistCacheBean extends AbstractCacheBean<String,YahooArtistDa
 			YahooArtistCache cache = EJBUtil.defaultLookup(YahooArtistCache.class);	
 						
 			// Check again in case another node stored the data first
-			YahooArtistData alreadyStored = cache.checkCache(artistId);
-			if (alreadyStored != null)
-				return alreadyStored;
-			
-			YahooArtistData data = cache.fetchFromNet(artistId);
-
-			return cache.saveInCache(artistId, data);
+			try {
+				return cache.checkCache(artistId);
+			} catch (NotCachedException e) {
+				YahooArtistData data = cache.fetchFromNet(artistId);
+	
+				return cache.saveInCache(artistId, data);
+			}
 		}
 	}
 
@@ -102,14 +102,12 @@ public class YahooArtistCacheBean extends AbstractCacheBean<String,YahooArtistDa
 		if (artistId == null)
 			throw new IllegalArgumentException("null artistId");
 		
-		YahooArtistData result = checkCache(artistId);
-		if (result != null) {
-			if (result.getArtist() == null) // cached negative result
-				result = null;
+		try {
+			YahooArtistData result = checkCache(artistId);
 			return new KnownFuture<YahooArtistData>(result);
+		} catch (NotCachedException e) {
+			return getExecutor().execute(artistId, new YahooArtistByIdTask(artistId));
 		}
-
-		return getExecutor().execute(artistId, new YahooArtistByIdTask(artistId));
 	}
 
 	public YahooArtistData getSyncByName(String artist) {
@@ -174,18 +172,21 @@ public class YahooArtistCacheBean extends AbstractCacheBean<String,YahooArtistDa
 		return TypeUtils.castList(CachedYahooArtistIdByName.class, q.getResultList());
 	}
 	
-	public YahooArtistData checkCache(String artistId) {
+	public YahooArtistData checkCache(String artistId) throws NotCachedException {
 		CachedYahooArtistData cached = artistByIdQuery(artistId);
 		if (cached == null)
-			return null;
+			throw new NotCachedException();
 		
 		long now = System.currentTimeMillis();
 		Date lastUpdated = cached.getLastUpdated();
 		if (lastUpdated == null || ((lastUpdated.getTime() + YAHOO_EXPIRATION_TIMEOUT) < now)) {
-			return null;
+			throw new NotCachedException();
 		}
 		
-		return cached.toData();
+		if (cached.getArtist() == null) // cached negative result
+			return null;
+		else
+			return cached.toData();
 	}
 
 	public List<YahooArtistData> checkCacheByName(String artist) {
@@ -215,7 +216,12 @@ public class YahooArtistCacheBean extends AbstractCacheBean<String,YahooArtistDa
 		// conglomerate of stuff as outdated and redo the yahoo request
 		List<YahooArtistData> datas = new ArrayList<YahooArtistData>();
 		for (CachedYahooArtistIdByName id : ids) {
-			YahooArtistData data = checkCache(id.getArtistId());
+			YahooArtistData data;
+			try {
+				data = checkCache(id.getArtistId());
+			} catch (NotCachedException e) {
+				data = null;
+			}
 			if (data == null) { 
 				logger.debug("missing data on id {} so redoing query for name '{}'",
 						id.getArtistId(), artist);

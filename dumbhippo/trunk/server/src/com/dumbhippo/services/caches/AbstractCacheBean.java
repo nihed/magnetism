@@ -14,8 +14,11 @@ import com.dumbhippo.services.caches.AbstractCache;
 /**
  * Base class used for beans that implement a cached web service lookup.
  *
+ * Use one of the two subclasses (AbstractBasicCacheBean, AbstractListCacheBean) if possible, 
+ * they have more stuff implemented by default (they add knowledge of the entity bean type used 
+ * to store the cache).
  */
-public abstract class AbstractCacheBean<KeyType,ResultType> implements AbstractCache<KeyType,ResultType> {
+public abstract class AbstractCacheBean<KeyType,ResultType,EjbIfaceType> implements AbstractCache<KeyType,ResultType> {
 	@SuppressWarnings("unused")
 	static private final Logger logger = GlobalSetup.getLogger(AbstractCacheBean.class);
 	
@@ -45,6 +48,9 @@ public abstract class AbstractCacheBean<KeyType,ResultType> implements AbstractC
 	private static boolean shutdown = false;
 	
 	private Request defaultRequest;
+	
+	private Class<? extends EjbIfaceType> ejbIface;
+	private long expirationTime; // in milliseconds until we expire the cache	
 	
 	private synchronized static UniqueTaskExecutor getExecutorInternal(Request request) {
 		if (shutdown)
@@ -85,8 +91,10 @@ public abstract class AbstractCacheBean<KeyType,ResultType> implements AbstractC
 		return ThreadUtils.getFutureResultEmptyListOnException(future);
 	}
 	
-	protected AbstractCacheBean(Request defaultRequest) {
+	protected AbstractCacheBean(Request defaultRequest, Class<? extends EjbIfaceType> ejbIface, long expirationTime) {
 		this.defaultRequest = defaultRequest;
+		this.ejbIface = ejbIface;
+		this.expirationTime = expirationTime;
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -97,7 +105,15 @@ public abstract class AbstractCacheBean<KeyType,ResultType> implements AbstractC
 	@SuppressWarnings("unchecked")
 	protected UniqueTaskExecutor<KeyType,ResultType> getExecutor(Request request) {
 		return getExecutorInternal(request);
+	}	
+
+	protected Class<? extends EjbIfaceType> getEjbIface() {
+		return ejbIface;
 	}
+
+	protected long getExpirationTime() {
+		return expirationTime;
+	}	
 	
 	public void expireCache(KeyType key) {
 		throw new UnsupportedOperationException("This cache bean doesn't implement cache expiration");

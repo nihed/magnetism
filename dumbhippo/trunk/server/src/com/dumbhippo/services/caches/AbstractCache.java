@@ -20,7 +20,10 @@ public interface AbstractCache<KeyType, ResultType> {
 
 	public Future<ResultType> getAsync(KeyType key);
 
-	public ResultType checkCache(KeyType key);
+	// null return means "we cached the lack of a result", while throwing NotCachedException
+	// means "we have nothing cached". Subclasses of AbstractListCache never return null,
+	// they return empty list for "we cached the lack of a result"
+	public ResultType checkCache(KeyType key) throws NotCachedException;
 
 	public ResultType fetchFromNet(KeyType key);
 

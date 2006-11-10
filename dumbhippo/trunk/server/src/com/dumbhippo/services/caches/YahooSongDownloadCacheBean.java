@@ -32,7 +32,7 @@ import com.dumbhippo.services.YahooSongDownloadData;
 
 @BanFromWebTier
 @Stateless
-public class YahooSongDownloadCacheBean extends AbstractCacheBean<String,List<YahooSongDownloadData>> implements YahooSongDownloadCache {
+public class YahooSongDownloadCacheBean extends AbstractCacheBean<String,List<YahooSongDownloadData>,AbstractListCache> implements YahooSongDownloadCache {
 	@SuppressWarnings("unused")
 	static private final Logger logger = GlobalSetup.getLogger(YahooSongDownloadCacheBean.class);
 	
@@ -46,7 +46,7 @@ public class YahooSongDownloadCacheBean extends AbstractCacheBean<String,List<Ya
 	private Configuration config;	
 
 	public YahooSongDownloadCacheBean() {
-		super(Request.YAHOO_SONG_DOWNLOAD);
+		super(Request.YAHOO_SONG_DOWNLOAD, YahooSongDownloadCache.class, YAHOO_EXPIRATION_TIMEOUT);
 	}
 	
 	static private class YahooSongDownloadTask implements Callable<List<YahooSongDownloadData>> {
@@ -64,13 +64,13 @@ public class YahooSongDownloadCacheBean extends AbstractCacheBean<String,List<Ya
 			YahooSongDownloadCache cache = EJBUtil.defaultLookup(YahooSongDownloadCache.class);
 			
 			// Check again in case another node stored the data first
-			List<YahooSongDownloadData> alreadyStored = cache.checkCache(songId);
-			if (alreadyStored != null)
-				return alreadyStored;
+			try {
+				return cache.checkCache(songId);
+			} catch (NotCachedException e) {
+				List<YahooSongDownloadData> result = cache.fetchFromNet(songId);
 			
-			List<YahooSongDownloadData> result = cache.fetchFromNet(songId);
-			
-			return cache.saveInCache(songId, result);
+				return cache.saveInCache(songId, result);
+			}
 		}
 	}
 	
@@ -82,11 +82,12 @@ public class YahooSongDownloadCacheBean extends AbstractCacheBean<String,List<Ya
 		if (songId == null)
 			throw new IllegalArgumentException("null songId passed to YahooSongDownloadCacheBean");
 		
-		List<YahooSongDownloadData> result = checkCache(songId);
-		if (result != null)
+		try {
+			List<YahooSongDownloadData> result = checkCache(songId);
 			return new KnownFuture<List<YahooSongDownloadData>>(result);
-		
-		return getExecutor().execute(songId, new YahooSongDownloadTask(songId));
+		} catch (NotCachedException e) {
+			return getExecutor().execute(songId, new YahooSongDownloadTask(songId));
+		}
 	}
 
 	private List<CachedYahooSongDownload> songDataQuery(String songId) {
@@ -97,13 +98,13 @@ public class YahooSongDownloadCacheBean extends AbstractCacheBean<String,List<Ya
 		return results;
 	}
 
-	// returning empty list means up-to-date cache of no results, while returning 
-	// null means no up-to-date cache
-	public List<YahooSongDownloadData> checkCache(String songId) {
+	// returning empty list means up-to-date cache of no results, while throwing 
+	// the exception means there are no up-to-date results
+	public List<YahooSongDownloadData> checkCache(String songId) throws NotCachedException {
 		List<CachedYahooSongDownload> old = songDataQuery(songId);
 
 		if (old.isEmpty())
-			return null;
+			throw new NotCachedException();
 		
 		long now = System.currentTimeMillis();
 		boolean outdated = false;
@@ -119,7 +120,7 @@ public class YahooSongDownloadCacheBean extends AbstractCacheBean<String,List<Ya
 		
 		if (outdated) {
 			logger.debug("song download data cache outdated for {}", songId);
-			return null;
+			throw new NotCachedException();
 		}
 		
 		if (haveNoResultsMarker) {

@@ -29,7 +29,7 @@ import com.dumbhippo.services.YahooSearchWebServices;
 
 @BanFromWebTier
 @Stateless
-public class YahooAlbumCacheBean extends AbstractCacheBean<String,YahooAlbumData> implements YahooAlbumCache {
+public class YahooAlbumCacheBean extends AbstractCacheBean<String,YahooAlbumData,AbstractCache> implements YahooAlbumCache {
 	@SuppressWarnings("unused")
 	static private final Logger logger = GlobalSetup.getLogger(YahooAlbumCacheBean.class);
 
@@ -43,7 +43,7 @@ public class YahooAlbumCacheBean extends AbstractCacheBean<String,YahooAlbumData
 	private Configuration config;
 
 	public YahooAlbumCacheBean() {
-		super(Request.YAHOO_ALBUM);
+		super(Request.YAHOO_ALBUM, YahooAlbumCache.class, YAHOO_EXPIRATION_TIMEOUT);
 	}
 	
 	static private class YahooAlbumSearchTask implements Callable<YahooAlbumData> {
@@ -60,13 +60,13 @@ public class YahooAlbumCacheBean extends AbstractCacheBean<String,YahooAlbumData
 			YahooAlbumCache cache = EJBUtil.defaultLookup(YahooAlbumCache.class);	
 						
 			// Check again in case another node stored the data first
-			YahooAlbumData alreadyStored = cache.checkCache(albumId);
-			if (alreadyStored != null)
-				return alreadyStored;
-			
-			YahooAlbumData data = cache.fetchFromNet(albumId);
+			try {
+				return cache.checkCache(albumId);
+			} catch (NotCachedException e) {
+				YahooAlbumData data = cache.fetchFromNet(albumId);
 
-			return cache.saveInCache(albumId, data);
+				return cache.saveInCache(albumId, data);
+			}
 		}
 	}	
 	
@@ -79,14 +79,12 @@ public class YahooAlbumCacheBean extends AbstractCacheBean<String,YahooAlbumData
 			throw new IllegalArgumentException("null albumId passed to YahooAlbumCache");
 		}
 		
-		YahooAlbumData result = checkCache(albumId);
-		if (result != null) {
-			if (result.getAlbum() == null) // no result marker
-				result = null;
+		try {
+			YahooAlbumData result = checkCache(albumId);
 			return new KnownFuture<YahooAlbumData>(result);
+		} catch (NotCachedException e) {
+			return getExecutor().execute(albumId, new YahooAlbumSearchTask(albumId));	
 		}
-
-		return getExecutor().execute(albumId, new YahooAlbumSearchTask(albumId));
 	}
 
 	private CachedYahooAlbumData albumResultQuery(String albumId) {
@@ -102,7 +100,7 @@ public class YahooAlbumCacheBean extends AbstractCacheBean<String,YahooAlbumData
 		}
 	}
 	
-	public YahooAlbumData checkCache(String albumId) {
+	public YahooAlbumData checkCache(String albumId) throws NotCachedException {
 		CachedYahooAlbumData result = albumResultQuery(albumId);
 
 		if (result != null) {
@@ -116,9 +114,12 @@ public class YahooAlbumCacheBean extends AbstractCacheBean<String,YahooAlbumData
 		if (result != null) {
 			logger.debug("Have cached yahoo album result for albumId {}: {}",
 					albumId, result);
-			return result.toData();
+			if (result.getAlbum() == null) // no result marker
+				return null;
+			else
+				return result.toData();
 		} else {
-			return null;
+			throw new NotCachedException();
 		}
 	}
 

@@ -33,7 +33,7 @@ import com.dumbhippo.services.YahooSongData;
 
 @BanFromWebTier
 @Stateless
-public class YahooSongCacheBean extends AbstractCacheBean<Track,List<YahooSongData>> implements YahooSongCache {
+public class YahooSongCacheBean extends AbstractCacheBean<Track,List<YahooSongData>,AbstractCache> implements YahooSongCache {
 	
 	@SuppressWarnings("unused")
 	static private final Logger logger = GlobalSetup.getLogger(YahooSongCacheBean.class);
@@ -48,7 +48,7 @@ public class YahooSongCacheBean extends AbstractCacheBean<Track,List<YahooSongDa
 	private Configuration config;
 
 	public YahooSongCacheBean() {
-		super(Request.YAHOO_SONG);
+		super(Request.YAHOO_SONG, YahooSongCache.class, YAHOO_EXPIRATION_TIMEOUT);
 	}
 	
 	static private class YahooSongTask implements Callable<List<YahooSongData>> {
@@ -66,17 +66,17 @@ public class YahooSongCacheBean extends AbstractCacheBean<Track,List<YahooSongDa
 			YahooSongCache cache = EJBUtil.defaultLookup(YahooSongCache.class);
 			
 			// Check again in case another node stored the data first
-			List<YahooSongData> alreadyStored = cache.checkCache(track);
-			if (alreadyStored != null) {
+			try {
+				List<YahooSongData> alreadyStored = cache.checkCache(track);
 				logger.debug("YahooSongTask found results for artist={}, album={}, name={}, nothing to do",
-						     new Object[] { track.getArtist(), track.getAlbum(), track.getName() }); 
-							
+						new Object[] { track.getArtist(), track.getAlbum(), track.getName() }); 
+								
 				return alreadyStored;
+			} catch (NotCachedException e) {
+				List<YahooSongData> result = cache.fetchFromNet(track);
+			
+				return cache.saveInCache(track, result);
 			}
-			
-			List<YahooSongData> result = cache.fetchFromNet(track);
-			
-			return cache.saveInCache(track, result);
 		}
 	}
 	
@@ -94,13 +94,13 @@ public class YahooSongCacheBean extends AbstractCacheBean<Track,List<YahooSongDa
 			return new KnownFuture<List<YahooSongData>>(empty);
 		}
 		
-		List<YahooSongData> result = checkCache(track);
-		if (result != null) {
+		try {
+			List<YahooSongData> result = checkCache(track);
 			logger.debug("using cached song listing {} song ids for track {}", result.size(), track);
 			return new KnownFuture<List<YahooSongData>>(result);
+		} catch (NotCachedException e) {
+			return getExecutor().execute(track, new YahooSongTask(track));
 		}
-		
-		return getExecutor().execute(track, new YahooSongTask(track));
 	}
 
 	private List<CachedYahooSongData> songDataQuery(Track track) {
@@ -115,11 +115,11 @@ public class YahooSongCacheBean extends AbstractCacheBean<Track,List<YahooSongDa
 
 	// returning empty list means up-to-date cache of no results, while returning 
 	// null means no up-to-date cache
-	public List<YahooSongData> checkCache(Track track) {
+	public List<YahooSongData> checkCache(Track track) throws NotCachedException {
 		List<CachedYahooSongData> old = songDataQuery(track);
 
 		if (old.isEmpty())
-			return null;
+			throw new NotCachedException();
 		
 		long now = System.currentTimeMillis();
 		boolean outdated = false;
@@ -135,7 +135,7 @@ public class YahooSongCacheBean extends AbstractCacheBean<Track,List<YahooSongDa
 		
 		if (outdated) {
 			logger.debug("cached yahoo songs for track are outdated, track = {}", track);
-			return null;
+			throw new NotCachedException();
 		}
 		
 		if (haveNoResultsMarker) {
