@@ -60,6 +60,7 @@ public class CachedAmazonAlbumData extends DBUnique implements CachedItem {
 		return new CachedAmazonAlbumData(albumAndArtist, null);
 	}
 	
+	@Transient
 	public boolean isNoResultsMarker() {
 		return getASIN() == null;
 	}
