@@ -21,6 +21,8 @@ typedef struct _HippoCanvasLinkClass HippoCanvasLinkClass;
 
 struct _HippoCanvasLink {
     HippoCanvasText text;
+    gboolean visited;
+    PangoAttrList *base_attrs;
 };
 
 struct _HippoCanvasLinkClass {

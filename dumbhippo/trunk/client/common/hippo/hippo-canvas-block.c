@@ -164,11 +164,11 @@ set_timestamp_item(HippoCanvasBlock *canvas_block,
     gboolean nonempty;
 
     if (canvas_block->block == NULL)
-        return;
+        return FALSE;
 
     server_time_now = hippo_current_time_ms() + hippo_actions_get_server_time_offset(canvas_block->actions);
     
-    when = hippo_format_time_ago(server_time_now / 1000, age);
+    when = hippo_format_time_ago((GTime) (server_time_now / 1000), age);
 
     g_object_set(G_OBJECT(item),
                  "text", when,
@@ -185,7 +185,7 @@ update_time(HippoCanvasBlock *canvas_block)
 {
     gboolean nonempty;
     nonempty = set_timestamp_item(canvas_block, canvas_block->age_parent, canvas_block->age_item, 
-                                  hippo_block_get_timestamp(canvas_block->block) / 1000);
+                                  (GTime) (hippo_block_get_timestamp(canvas_block->block) / 1000));
 
     hippo_canvas_box_set_child_visible(canvas_block->age_parent,
                                        canvas_block->age_item,
@@ -1013,12 +1013,14 @@ hippo_canvas_block_set_heading (HippoCanvasBlock *canvas_block,
 void
 hippo_canvas_block_set_title(HippoCanvasBlock *canvas_block,
                              const char       *text,
-                             const char       *tooltip)
+                             const char       *tooltip,
+                             gboolean          visited)
 {
     /* keep in mind that title may be NULL */
     g_object_set(G_OBJECT(canvas_block->title_link_item),
                  "text", text,
                  "tooltip", tooltip,
+                 "visited", visited,
                  NULL);
 }
 

@@ -2116,6 +2116,7 @@ hippo_connection_parse_post(HippoConnection *connection,
     const char *info =  NULL;
     gboolean to_world = FALSE;
     gboolean ignored = FALSE;
+    gboolean viewed = FALSE;
     GTime post_date;
     int post_date_int;
     GSList *recipients = NULL;
@@ -2134,6 +2135,7 @@ hippo_connection_parse_post(HippoConnection *connection,
                          "toWorld", HIPPO_SPLIT_BOOLEAN | HIPPO_SPLIT_ELEMENT | HIPPO_SPLIT_OPTIONAL, &to_world,
                          "postDate", HIPPO_SPLIT_INT32 | HIPPO_SPLIT_ELEMENT, &post_date_int,
                          "recipients", HIPPO_SPLIT_NODE | HIPPO_SPLIT_ELEMENT, &recipients_node,
+                         "viewed", HIPPO_SPLIT_BOOLEAN | HIPPO_SPLIT_ELEMENT | HIPPO_SPLIT_OPTIONAL, &viewed,
                          "ignored", HIPPO_SPLIT_BOOLEAN | HIPPO_SPLIT_ELEMENT | HIPPO_SPLIT_OPTIONAL, &ignored,
                          NULL))
         return FALSE;
@@ -2184,6 +2186,7 @@ hippo_connection_parse_post(HippoConnection *connection,
     hippo_post_set_recipients(post, recipients);
     hippo_post_set_ignored(post, ignored);
     hippo_post_set_to_world(post, to_world);
+    hippo_post_set_have_viewed(post, viewed);
 
     g_slist_free(recipients);
 

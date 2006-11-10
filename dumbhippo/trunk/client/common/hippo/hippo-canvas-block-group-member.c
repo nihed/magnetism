@@ -303,7 +303,7 @@ update_member_and_status(HippoCanvasBlockGroupMember *canvas_group_member,
     }
 
     hippo_canvas_block_set_title(HIPPO_CANVAS_BLOCK(canvas_group_member),
-                                 title, "Click to go to the group page");
+                                 title, "Click to go to the group page", FALSE);
 
     hippo_canvas_box_set_child_visible(canvas_group_member->invite_parent,
                                        canvas_group_member->invite_image,

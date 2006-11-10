@@ -341,7 +341,7 @@ update_post(HippoCanvasBlockPost *canvas_block_post)
 
     if (post == NULL) {
         hippo_canvas_block_set_title(HIPPO_CANVAS_BLOCK(canvas_block_post),
-                                     NULL, NULL);
+                                     NULL, NULL, FALSE);
         hippo_canvas_block_set_sender(HIPPO_CANVAS_BLOCK(canvas_block_post),
                                       NULL);
         hippo_canvas_block_set_sent_to(HIPPO_CANVAS_BLOCK(canvas_block_post),
@@ -360,7 +360,8 @@ update_post(HippoCanvasBlockPost *canvas_block_post)
         
         hippo_canvas_block_set_title(HIPPO_CANVAS_BLOCK(canvas_block_post),
                                      hippo_post_get_title(post),
-                                     hippo_post_get_url(post));
+                                     hippo_post_get_url(post), 
+                                     hippo_post_get_have_viewed(post));
         hippo_canvas_block_set_sender(HIPPO_CANVAS_BLOCK(canvas_block_post),
                                       hippo_post_get_sender(post));
         hippo_canvas_block_set_sent_to(HIPPO_CANVAS_BLOCK(canvas_block_post),

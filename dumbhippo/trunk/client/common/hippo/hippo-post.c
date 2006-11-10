@@ -149,6 +149,7 @@ hippo_post_update_from_xml(HippoPost      *post,
     int total_viewers;
     LmMessageNode *recipients_node = NULL;
     GSList *recipients = NULL;
+    gboolean viewed = FALSE;
 
     if (!hippo_xml_split(cache, node, NULL,
                          "id", HIPPO_SPLIT_GUID, &id,
@@ -160,6 +161,7 @@ hippo_post_update_from_xml(HippoPost      *post,
                          "recipients", HIPPO_SPLIT_NODE | HIPPO_SPLIT_OPTIONAL, &recipients_node,
                          "totalViewers", HIPPO_SPLIT_INT32 | HIPPO_SPLIT_OPTIONAL, &total_viewers,
                          "totalViewers", HIPPO_SPLIT_SET, &total_viewers_set,
+                         "viewed", HIPPO_SPLIT_BOOLEAN, &viewed,
                          NULL))
         return FALSE;
 
@@ -201,6 +203,8 @@ hippo_post_update_from_xml(HippoPost      *post,
 
     if (total_viewers_set)
         hippo_post_set_total_viewers(post, total_viewers);
+
+    hippo_post_set_have_viewed(post, viewed);
 
     hippo_post_thaw_notify(post);
 

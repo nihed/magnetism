@@ -86,7 +86,8 @@ void hippo_canvas_block_set_heading (HippoCanvasBlock *canvas_block,
                                      const char       *heading);
 void hippo_canvas_block_set_title   (HippoCanvasBlock *canvas_block,
                                      const char       *text,
-                                     const char       *tooltip);
+                                     const char       *tooltip,
+                                     gboolean          visited);
 void hippo_canvas_block_set_content (HippoCanvasBlock *canvas_block,
                                      HippoCanvasItem  *content_item);
 /* probably has to get factored out into subclass */
