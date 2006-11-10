@@ -153,33 +153,43 @@ hippo_canvas_block_class_init(HippoCanvasBlockClass *klass)
                                                         G_PARAM_READABLE | G_PARAM_WRITABLE | G_PARAM_CONSTRUCT_ONLY)); 
 }
 
-static void
-update_time(HippoCanvasBlock *canvas_block)
+static gboolean
+set_timestamp_item(HippoCanvasBlock *canvas_block,
+                   HippoCanvasBox *parent, 
+                   HippoCanvasItem *item, 
+                   GTime age)
 {
     gint64 server_time_now;
     char *when;
+    gboolean nonempty;
 
     if (canvas_block->block == NULL)
         return;
 
-    /* Since we do this every minute it's important to keep it relatively cheap,
-     * in particular we rely on setting the text on the canvas item to short-circuit
-     * and not create X server traffic if there's no change
-     */
-    
     server_time_now = hippo_current_time_ms() + hippo_actions_get_server_time_offset(canvas_block->actions);
     
-    when = hippo_format_time_ago(server_time_now / 1000, hippo_block_get_timestamp(canvas_block->block) / 1000);
+    when = hippo_format_time_ago(server_time_now / 1000, age);
 
-    hippo_canvas_box_set_child_visible(canvas_block->age_parent,
-                                       canvas_block->age_separator_item,
-                                       strcmp(when, "") != 0);
-
-    g_object_set(G_OBJECT(canvas_block->age_item),
+    g_object_set(G_OBJECT(item),
                  "text", when,
                  NULL);
-    
+    nonempty = strcmp(when, "") != 0;
+
     g_free(when);
+
+    return nonempty;
+}
+
+static void
+update_time(HippoCanvasBlock *canvas_block)
+{
+    gboolean nonempty;
+    nonempty = set_timestamp_item(canvas_block, canvas_block->age_parent, canvas_block->age_item, 
+                                  hippo_block_get_timestamp(canvas_block->block) / 1000);
+
+    hippo_canvas_box_set_child_visible(canvas_block->age_parent,
+                                       canvas_block->age_item,
+                                       nonempty);
 }
 
 static void
@@ -537,10 +547,37 @@ hippo_canvas_block_constructor (GType                  type,
                                              "text", " | ",
                                              NULL);
     hippo_canvas_box_append(box3, block->age_separator_item, HIPPO_PACK_END);
-    
+
     block->age_item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
                                    NULL);
     hippo_canvas_box_append(box3, block->age_item, HIPPO_PACK_END);
+
+    block->age_prefix_item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
+                                          "text", "active ",
+                                          NULL);
+    hippo_canvas_box_append(box3, block->age_prefix_item, HIPPO_PACK_END);
+    hippo_canvas_box_set_child_visible(box3, block->age_prefix_item, FALSE);
+
+    block->original_age_box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
+                                           "orientation", HIPPO_ORIENTATION_HORIZONTAL,
+                                           "xalign", HIPPO_ALIGNMENT_END,
+                                           "yalign", HIPPO_ALIGNMENT_START,                        
+                                           NULL);
+
+    block->original_age_item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
+                                            NULL);
+    hippo_canvas_box_append(block->original_age_box, block->original_age_item, HIPPO_PACK_END);
+    hippo_canvas_box_set_child_visible(block->original_age_box, block->original_age_item, FALSE);
+
+    block->original_age_prefix_item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
+                                                   "text", "first sent ",
+                                                   NULL);
+    hippo_canvas_box_append(block->original_age_box, 
+                            block->original_age_prefix_item, 
+                            HIPPO_PACK_END);
+    hippo_canvas_box_set_child_visible(block->original_age_box, block->original_age_prefix_item, FALSE);
+
+    hippo_canvas_box_append(box2, HIPPO_CANVAS_ITEM(block->original_age_box), 0);
 
     block->sent_to_box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
                                       "orientation", HIPPO_ORIENTATION_HORIZONTAL,
@@ -825,19 +862,27 @@ hippo_canvas_block_set_block_impl(HippoCanvasBlock *canvas_block,
 }
 
 static void
+hideshow_flat_box(HippoCanvasBox *box, gboolean expand) 
+{
+    GList *children = hippo_canvas_box_get_children(box);
+    for (; children ; children = g_list_next(children)) {
+        hippo_canvas_box_set_child_visible(box,
+                                           children->data,
+                                           expand);
+    }
+}
+
+static void
 hippo_canvas_block_set_expansion(HippoCanvasBlock *canvas_block, gboolean expand)
 {
     hippo_canvas_box_set_child_visible(canvas_block->close_controls_parent, canvas_block->close_controls,
                                        expand);
-    if (canvas_block->sent_to_set) {
-        GList *children = hippo_canvas_box_get_children(canvas_block->sent_to_box);
-        for (; children ; children = g_list_next(children)) {
-            hippo_canvas_box_set_child_visible(canvas_block->sent_to_box,
-                                               children->data,
-                                               expand);
-        }
-    }
-
+    if (canvas_block->sent_to_set)
+        hideshow_flat_box(canvas_block->sent_to_box, expand);
+    hippo_canvas_box_set_child_visible(canvas_block->age_parent, canvas_block->age_prefix_item,
+                                       expand);
+    if (canvas_block->original_age_set)
+        hideshow_flat_box(canvas_block->original_age_box, expand);
     update_expand_pointer(canvas_block, FALSE, 0, 0);
 }
 
@@ -1077,6 +1122,16 @@ hippo_canvas_block_set_sent_to(HippoCanvasBlock *canvas_block,
     } else {
         canvas_block->sent_to_set = FALSE;
     }
+}
+
+void
+hippo_canvas_block_set_original_age(HippoCanvasBlock *canvas_block,
+                                    GTime            age)
+{
+    canvas_block->original_age_set = age != 0;
+    set_timestamp_item(canvas_block,
+                       canvas_block->original_age_box, 
+                       canvas_block->original_age_item, age);
 }
 
 HippoActions*

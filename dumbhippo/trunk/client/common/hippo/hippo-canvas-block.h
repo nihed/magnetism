@@ -33,9 +33,13 @@ struct _HippoCanvasBlock {
     HippoCanvasItem *unexpand_pointer;
     HippoCanvasBox  *close_controls_parent;
     HippoCanvasItem *close_controls;    
-    HippoCanvasBox *age_parent;
+    HippoCanvasBox  *age_parent;
     HippoCanvasItem *age_separator_item;
+    HippoCanvasItem *age_prefix_item;
     HippoCanvasItem *age_item;
+    HippoCanvasBox  *original_age_box;
+    HippoCanvasItem *original_age_prefix_item;
+    HippoCanvasItem *original_age_item;
     HippoCanvasBox  *sent_to_parent;
     HippoCanvasBox  *sent_to_box;
     HippoCanvasItem *sent_to_text_item;
@@ -51,6 +55,7 @@ struct _HippoCanvasBlock {
     unsigned int expanded : 1;
     unsigned int hushed : 1;
     unsigned int sent_to_set : 1;
+    unsigned int original_age_set : 1;
     unsigned int child_changed_pointer : 1;
 };
 
@@ -89,6 +94,8 @@ void hippo_canvas_block_set_sender  (HippoCanvasBlock *canvas_block,
                                      const char       *entity_guid);
 void hippo_canvas_block_set_sent_to (HippoCanvasBlock *canvas_block,
                                      GSList           *entities);
+void hippo_canvas_block_set_orignal_age (HippoCanvasBlock *canvas_block,
+                                         GTime            age);
 
 HippoActions* hippo_canvas_block_get_actions  (HippoCanvasBlock *canvas_block);
 

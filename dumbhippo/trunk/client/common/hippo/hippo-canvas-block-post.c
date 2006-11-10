@@ -346,6 +346,8 @@ update_post(HippoCanvasBlockPost *canvas_block_post)
                                       NULL);
         hippo_canvas_block_set_sent_to(HIPPO_CANVAS_BLOCK(canvas_block_post),
                                        NULL);
+        hippo_canvas_block_set_original_age(HIPPO_CANVAS_BLOCK(canvas_block_post),
+                                            0);
         g_object_set(G_OBJECT(canvas_block_post->description_item),
                      "text", NULL,
                      NULL);
@@ -363,6 +365,8 @@ update_post(HippoCanvasBlockPost *canvas_block_post)
                                       hippo_post_get_sender(post));
         hippo_canvas_block_set_sent_to(HIPPO_CANVAS_BLOCK(canvas_block_post),
                                        hippo_post_get_recipients(post));
+        hippo_canvas_block_set_original_age(HIPPO_CANVAS_BLOCK(canvas_block_post),
+                                            hippo_post_get_date(post));
         g_object_set(G_OBJECT(canvas_block_post->description_item),
                      "text", hippo_post_get_description(post),
                      NULL);
