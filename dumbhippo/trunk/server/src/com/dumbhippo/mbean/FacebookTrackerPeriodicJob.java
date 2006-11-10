@@ -16,7 +16,7 @@ public class FacebookTrackerPeriodicJob implements PeriodicJob {
 	static private final Logger logger = GlobalSetup.getLogger(FacebookTrackerPeriodicJob.class);
 	
 	// How often to poll facebook
-	static final long FACEBOOK_UPDATE_TIME = 2 * 60 * 1000; // 10 minutes
+	static final long FACEBOOK_UPDATE_TIME = 1000 * 60 * 11; // 11 minutes
 
 	public long getFrequencyInMilliseconds() {
 		return FACEBOOK_UPDATE_TIME;
