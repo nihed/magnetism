@@ -1,96 +1,33 @@
 package com.dumbhippo.services.caches;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
 import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Future;
 
-import javax.ejb.EJB;
 import javax.ejb.Stateless;
-import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
 import org.slf4j.Logger;
 
-import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
-import com.dumbhippo.KnownFuture;
 import com.dumbhippo.TypeUtils;
 import com.dumbhippo.persistence.CachedYahooSongDownload;
 import com.dumbhippo.server.BanFromWebTier;
-import com.dumbhippo.server.Configuration;
-import com.dumbhippo.server.TransactionRunner;
-import com.dumbhippo.services.caches.YahooSongDownloadCache;
-import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.services.YahooSearchWebServices;
 import com.dumbhippo.services.YahooSongDownloadData;
 
 @BanFromWebTier
 @Stateless
-public class YahooSongDownloadCacheBean extends AbstractCacheBean<String,List<YahooSongDownloadData>,AbstractListCache> implements YahooSongDownloadCache {
+public class YahooSongDownloadCacheBean
+	extends AbstractListCacheBean<String,YahooSongDownloadData,CachedYahooSongDownload>
+	implements YahooSongDownloadCache {
 	@SuppressWarnings("unused")
 	static private final Logger logger = GlobalSetup.getLogger(YahooSongDownloadCacheBean.class);
 	
-	@PersistenceContext(unitName = "dumbhippo")
-	private EntityManager em;
-
-	@EJB
-	private TransactionRunner runner;
-
-	@EJB
-	private Configuration config;	
-
 	public YahooSongDownloadCacheBean() {
 		super(Request.YAHOO_SONG_DOWNLOAD, YahooSongDownloadCache.class, YAHOO_EXPIRATION_TIMEOUT);
 	}
 	
-	static private class YahooSongDownloadTask implements Callable<List<YahooSongDownloadData>> {
-
-		private String songId;
-		
-		public YahooSongDownloadTask(String songId) {
-			this.songId = songId;
-		}
-		
-		public List<YahooSongDownloadData> call() {			
-			logger.debug("Entering YahooSongDownloadTask thread for songId {}", songId);
-
-			// we do this instead of an inner class to work right with threads
-			YahooSongDownloadCache cache = EJBUtil.defaultLookup(YahooSongDownloadCache.class);
-			
-			// Check again in case another node stored the data first
-			try {
-				return cache.checkCache(songId);
-			} catch (NotCachedException e) {
-				List<YahooSongDownloadData> result = cache.fetchFromNet(songId);
-			
-				return cache.saveInCache(songId, result);
-			}
-		}
-	}
-	
-	public List<YahooSongDownloadData> getSync(String songId) {
-		return getFutureResultEmptyListOnException(getAsync(songId));
-	}
-
-	public Future<List<YahooSongDownloadData>> getAsync(String songId) {
-		if (songId == null)
-			throw new IllegalArgumentException("null songId passed to YahooSongDownloadCacheBean");
-		
-		try {
-			List<YahooSongDownloadData> result = checkCache(songId);
-			return new KnownFuture<List<YahooSongDownloadData>>(result);
-		} catch (NotCachedException e) {
-			return getExecutor().execute(songId, new YahooSongDownloadTask(songId));
-		}
-	}
-
-	private List<CachedYahooSongDownload> songDataQuery(String songId) {
+	@Override
+	protected List<CachedYahooSongDownload> queryExisting(String songId) {
 		Query q = em.createQuery("SELECT song FROM CachedYahooSongDownload song WHERE song.songId = :songId");
 		q.setParameter("songId", songId);
 		
@@ -98,46 +35,8 @@ public class YahooSongDownloadCacheBean extends AbstractCacheBean<String,List<Ya
 		return results;
 	}
 
-	// returning empty list means up-to-date cache of no results, while throwing 
-	// the exception means there are no up-to-date results
-	public List<YahooSongDownloadData> checkCache(String songId) throws NotCachedException {
-		List<CachedYahooSongDownload> old = songDataQuery(songId);
-
-		if (old.isEmpty())
-			throw new NotCachedException();
-		
-		long now = System.currentTimeMillis();
-		boolean outdated = false;
-		boolean haveNoResultsMarker = false;
-		for (CachedYahooSongDownload d : old) {
-			if ((d.getLastUpdated().getTime() + YAHOO_EXPIRATION_TIMEOUT) < now) {
-				outdated = true;
-			}
-			if (d.isNoResultsMarker()) {
-				haveNoResultsMarker = true;
-			}
-		}
-		
-		if (outdated) {
-			logger.debug("song download data cache outdated for {}", songId);
-			throw new NotCachedException();
-		}
-		
-		if (haveNoResultsMarker) {
-			logger.debug("negative song download data result cached for {}", songId);
-			return Collections.emptyList();
-		}
-		
-		List<YahooSongDownloadData> results = new ArrayList<YahooSongDownloadData>();
-		for (CachedYahooSongDownload d : old) {
-			results.add(d.toData());
-		}
-		
-		return results;
-	}
-
-	@TransactionAttribute(TransactionAttributeType.NEVER)
-	public List<YahooSongDownloadData> fetchFromNet(String songId) {
+	@Override
+	protected List<YahooSongDownloadData> fetchFromNetImpl(String songId) {
 		YahooSearchWebServices ws = new YahooSearchWebServices(REQUEST_TIMEOUT, config);
 		List<YahooSongDownloadData> results = ws.lookupDownloads(songId);
 		
@@ -146,66 +45,21 @@ public class YahooSongDownloadCacheBean extends AbstractCacheBean<String,List<Ya
 		return results;
 	}
 
-	private CachedYahooSongDownload createCachedSong(String songId) {
+	@Override
+	protected YahooSongDownloadData resultFromEntity(CachedYahooSongDownload entity) {
+		return entity.toData();
+	}
+
+	@Override
+	protected CachedYahooSongDownload entityFromResult(String key, YahooSongDownloadData result) {
 		CachedYahooSongDownload d = new CachedYahooSongDownload();
-		d.setSongId(songId);
+		d.setSongId(key);
+		d.updateData(result);
 		return d;
 	}
-	
-	@TransactionAttribute(TransactionAttributeType.NEVER)
-	public List<YahooSongDownloadData> saveInCache(final String songId, List<YahooSongDownloadData> newSongs) {
-		// null songs doesn't happen but if it did would be the same as empty list
-		if (newSongs == null)
-			newSongs = Collections.emptyList();
 
-		final List<YahooSongDownloadData> songs = newSongs; 
-		
-		try {
-			return runner.runTaskRetryingOnConstraintViolation(new Callable<List<YahooSongDownloadData>>() {
-				public List<YahooSongDownloadData> call() {
-					
-					// remove all old results
-					List<CachedYahooSongDownload> old = songDataQuery(songId);
-					
-					logger.debug("Saving new song download results in cache; {} old results removed {} to save", old.size(), songs.size());
-					
-					for (CachedYahooSongDownload d : old) {
-						em.remove(d);
-					}
-					
-					// this seems to be required to be sure the rows we just removed don't
-					// cause constraint violations; otherwise I guess Hibernate isn't 
-					// strict about doing the removes and inserts in order?
-					em.flush();
-					
-					Date now = new Date();
-					
-					// save new results
-					if (songs.isEmpty()) {
-						CachedYahooSongDownload d = createCachedSong(songId);
-						d.setLastUpdated(now);
-						d.setNoResultsMarker(true);
-						em.persist(d);
-					} else {
-						for (YahooSongDownloadData s : songs) {							
-							CachedYahooSongDownload d = createCachedSong(songId);
-							d.setLastUpdated(now);
-							d.updateData(s);
-							em.persist(d);
-						}
-					}
-					
-					return songs;
-				}
-			});
-		} catch (Exception e) {
-			if (EJBUtil.isDatabaseException(e)) {
-				logger.warn("Ignoring database exception {}: {}", e.getClass().getName(), e.getMessage());
-				return songs;
-			} else {
-				ExceptionUtils.throwAsRuntimeException(e);
-				throw new RuntimeException(e); // not reached
-			}
-		}
+	@Override
+	protected CachedYahooSongDownload newNoResultsMarker(String key) {
+		return CachedYahooSongDownload.newNoResultsMarker(key);
 	}
 }

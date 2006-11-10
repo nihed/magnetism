@@ -15,7 +15,7 @@ import com.dumbhippo.services.YahooSongDownloadData;
 		   uniqueConstraints = 
 		      {@UniqueConstraint(columnNames={"songId","source"})}
 	      )
-public class CachedYahooSongDownload extends DBUnique {
+public class CachedYahooSongDownload extends DBUnique implements CachedListItem {
 	private static final long serialVersionUID = 1L;
 
 	private String songId;
@@ -30,6 +30,31 @@ public class CachedYahooSongDownload extends DBUnique {
 		
 	}
 
+	static public CachedYahooSongDownload newNoResultsMarker(String songId) {
+		CachedYahooSongDownload d = new CachedYahooSongDownload();
+		return d;
+	}
+
+	/**
+	 * For each Yahoo web services request, we can get back multiple 
+	 * CachedYahooSongDownload. If we get back 0, then we save one as a 
+	 * marker that we got no results. If a song has no rows in the db,
+	 * that means we haven't ever done the web services request.
+	 * @return whether this row marks that we did the request and got nothing
+	 */
+	@Transient
+	public boolean isNoResultsMarker() {
+		return this.source == SongDownloadSource.NONE_MARKER;
+	}
+	
+	public void setNoResultsMarker(boolean noResultsMarker) {
+		if (noResultsMarker)
+			this.source = SongDownloadSource.NONE_MARKER;
+		else
+			this.source = null; // probably a bug if this is reached though
+	}
+	
+	
 	public void updateData(YahooSongDownloadData data) {
 		this.songId = data.getSongId();
 		this.source = data.getSource();
@@ -115,25 +140,6 @@ public class CachedYahooSongDownload extends DBUnique {
 
 	public void setSource(SongDownloadSource source) {
 		this.source = source;
-	}
-	
-	/**
-	 * For each Yahoo web services request, we can get back multiple 
-	 * CachedYahooSongDownload. If we get back 0, then we save one as a 
-	 * marker that we got no results. If a song has no rows in the db,
-	 * that means we haven't ever done the web services request.
-	 * @return whether this row marks that we did the request and got nothing
-	 */
-	@Transient
-	public boolean isNoResultsMarker() {
-		return this.source == SongDownloadSource.NONE_MARKER;
-	}
-	
-	public void setNoResultsMarker(boolean noResultsMarker) {
-		if (noResultsMarker)
-			this.source = SongDownloadSource.NONE_MARKER;
-		else
-			this.source = null; // probably a bug if this is reached though
 	}
 	
 	@Override
