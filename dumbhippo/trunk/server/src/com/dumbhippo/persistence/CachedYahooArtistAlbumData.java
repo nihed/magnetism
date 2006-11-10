@@ -18,13 +18,19 @@ import com.dumbhippo.services.YahooAlbumData;
 		uniqueConstraints = {
 			@UniqueConstraint(columnNames={"artistId","albumId"})
 		})
-public class CachedYahooArtistAlbumData extends AbstractYahooAlbumData {
+public class CachedYahooArtistAlbumData
+	extends AbstractYahooAlbumData implements CachedListItem {
 
 	// Observationally,  the maximum length we've seen for Yahoo ID's is 35
 	private static final int MAX_YAHOO_ID_LENGTH = 64;
 	
 	private static final long serialVersionUID = 1L;
 
+	static public CachedYahooArtistAlbumData newNoResultsMarker(String artistId) {
+		CachedYahooArtistAlbumData d = new CachedYahooArtistAlbumData();
+		d.setArtistId(artistId);
+		return d;
+	}
 	
 	public void updateData(String artistId, YahooAlbumData data) {
 		updateData(null, artistId, data);

@@ -41,7 +41,12 @@ abstract public class AbstractYahooAlbumData extends DBUnique {
 	public AbstractYahooAlbumData() {
 		reset();
 	}
-
+	
+	@Transient
+	public boolean isNoResultsMarker() {
+		return album == null;
+	}	
+	
 	protected void updateData(String albumId, String artistId, YahooAlbumData data) {
 		if (albumId == null && artistId == null)
 			throw new IllegalArgumentException("must set either album id or artist id so the cache has a key");
@@ -135,11 +140,6 @@ abstract public class AbstractYahooAlbumData extends DBUnique {
 
 	public void setLastUpdated(Date lastUpdated) {
 		this.lastUpdated = lastUpdated.getTime();
-	}
-
-	@Transient
-	public boolean isNoResultsMarker() {
-		return album == null;
 	}
 	
 	@Column(nullable=true)

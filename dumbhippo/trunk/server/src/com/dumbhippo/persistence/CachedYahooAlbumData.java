@@ -11,9 +11,16 @@ import com.dumbhippo.services.YahooAlbumData;
 @org.hibernate.annotations.Table(appliesTo = "CachedYahooAlbumData", indexes={ 
 		@Index(name="artistAlbum_index", columnNames = { "artist", "album", "id" } ) 
 })
-public class CachedYahooAlbumData extends AbstractYahooAlbumData {
+public class CachedYahooAlbumData
+	extends AbstractYahooAlbumData implements CachedItem {
 	private static final long serialVersionUID = 1L;
 
+	static public CachedYahooAlbumData newNoResultsMarker(String albumId) {
+		CachedYahooAlbumData d = new CachedYahooAlbumData();
+		d.setAlbumId(albumId);
+		return d;
+	}
+	
 	public void updateData(String albumId, YahooAlbumData data) {
 		updateData(albumId, null, data);
 	}
