@@ -16,7 +16,7 @@ import com.dumbhippo.services.caches.AlbumAndArtist;
 		   uniqueConstraints = 
 		      {@UniqueConstraint(columnNames={"artist","album"})}
 	      )
-public class CachedAmazonAlbumData extends DBUnique {
+public class CachedAmazonAlbumData extends DBUnique implements CachedItem {
 
 	private static final long serialVersionUID = 1L;
 
@@ -56,6 +56,14 @@ public class CachedAmazonAlbumData extends DBUnique {
 		this(albumAndArtist.getArtist(), albumAndArtist.getAlbum(), data);
 	}
 
+	static public CachedAmazonAlbumData newNoResultsMarker(AlbumAndArtist albumAndArtist) {
+		return new CachedAmazonAlbumData(albumAndArtist, null);
+	}
+	
+	public boolean isNoResultsMarker() {
+		return getASIN() == null;
+	}
+	
 	public void updateData(AmazonAlbumData data) {
 		if (data != null) {
 			ASIN = data.getASIN();

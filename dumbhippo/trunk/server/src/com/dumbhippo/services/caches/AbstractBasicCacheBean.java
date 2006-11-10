@@ -93,6 +93,8 @@ public abstract class AbstractBasicCacheBean<KeyType,ResultType,EntityType exten
 	
 	protected abstract ResultType resultFromEntity(EntityType entity);
 	
+	protected abstract EntityType entityFromResult(KeyType key, ResultType result);
+	
 	protected abstract void updateEntityFromResult(KeyType key, ResultType result, EntityType entity);
 	
 	public ResultType checkCache(KeyType key) throws NotCachedException {
@@ -134,9 +136,11 @@ public abstract class AbstractBasicCacheBean<KeyType,ResultType,EntityType exten
 				public ResultType call() {
 					EntityType e = queryExisting(key);
 					if (e == null) {
-						// data is allowed to be null which saves the negative result row
-						// in the db
-						e = newNoResultsMarker(key);
+						if (data == null) {
+							e = newNoResultsMarker(key);
+						} else {
+							e = entityFromResult(key, data);
+						}
 						em.persist(e);
 					} else {
 						// don't ever save a negative result once we have data at some point
