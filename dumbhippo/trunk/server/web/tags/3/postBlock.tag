@@ -22,7 +22,7 @@
 			</c:if>      
 			<span class="dh-stacker-block-title-title">
 				<jsp:element name="a">
-					<jsp:attribute name="class">dh-underlined-link</jsp:attribute>
+					<jsp:attribute name="class">dh-underlined-link<c:if test="${block.postView.viewerHasViewed}"> dh-underlined-link-visited</c:if></jsp:attribute>
 					<jsp:attribute name="href">/visit?post=${block.postView.identifyingGuid}</jsp:attribute>
 					<jsp:body><c:out value="${block.postView.title}"/></jsp:body>
 				</jsp:element>		

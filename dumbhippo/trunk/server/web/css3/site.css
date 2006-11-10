@@ -37,6 +37,10 @@ img {
 	text-decoration:	underline;
 }
 
+a.dh-underlined-link-visited:link, a.dh-underlined-link-visited:hover, a.dh-underlined-link-visited:visited {
+	color:				#666666;
+}
+
 .dh-page-title-container {
 }
 

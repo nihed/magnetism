@@ -304,6 +304,7 @@ public class PostView implements ObjectView {
 						    "href", post.getUrl().toString(),
 							"postDate", Long.toString(post.getPostDate().getTime()),
 							"toWorld", Boolean.toString(isToWorld()),
+							"viewed", Boolean.toString(isViewerHasViewed()),
 							"favorite", Boolean.toString(favorite));
 							
 		builder.appendTextNode("title", post.getTitle());
