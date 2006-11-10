@@ -5,6 +5,7 @@ import java.util.Date;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
 
 /**
@@ -15,7 +16,7 @@ import javax.persistence.UniqueConstraint;
 
 @Entity
 @Table(uniqueConstraints = {@UniqueConstraint(columnNames={"url"})})
-public class CachedRhapsodyDownload extends DBUnique {
+public class CachedRhapsodyDownload extends DBUnique implements CachedItem {
 	private static final long serialVersionUID = 1L;
 
 	private String url;
@@ -27,6 +28,17 @@ public class CachedRhapsodyDownload extends DBUnique {
 		lastUpdated = -1;
 	}
 
+	static public CachedRhapsodyDownload newNoResultsMarker() {
+		return new CachedRhapsodyDownload();
+	}
+	
+	// This is a little bogus; for the Rhapsody download web request, we treat 
+	// "no results" and "false" as the same.
+	@Transient
+	public boolean isNoResultsMarker() {
+		return !active;
+	}
+	
 	@Column(nullable=false)
 	public boolean isActive() {
 		return active;

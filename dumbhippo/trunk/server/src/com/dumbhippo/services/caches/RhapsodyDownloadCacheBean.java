@@ -5,33 +5,23 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
-import java.util.Date;
-import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
-import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
-import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
-import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
 import org.slf4j.Logger;
 
-import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
-import com.dumbhippo.KnownFuture;
 import com.dumbhippo.persistence.CachedRhapsodyDownload;
 import com.dumbhippo.server.BanFromWebTier;
-import com.dumbhippo.services.caches.RhapsodyDownloadCache;
-import com.dumbhippo.server.TransactionRunner;
-import com.dumbhippo.server.util.EJBUtil;
 
 @BanFromWebTier
 @Stateless
-public class RhapsodyDownloadCacheBean extends AbstractCacheBean<String,Boolean,AbstractCache> implements
+public class RhapsodyDownloadCacheBean extends AbstractBasicCacheBean<String,Boolean,CachedRhapsodyDownload> implements
 		RhapsodyDownloadCache {
 
 	@SuppressWarnings("unused")
@@ -40,38 +30,8 @@ public class RhapsodyDownloadCacheBean extends AbstractCacheBean<String,Boolean,
 	// 14 days
 	static private final int RHAPLINK_EXPIRATION_TIMEOUT = 1000 * 60 * 60 * 24 * 14;
 	
-	@PersistenceContext(unitName = "dumbhippo")
-	private EntityManager em;
-	
-	@EJB
-	private TransactionRunner runner;
-	
 	public RhapsodyDownloadCacheBean() {
 		super(Request.RHAPSODY_DOWNLOAD, RhapsodyDownloadCache.class, RHAPLINK_EXPIRATION_TIMEOUT);
-	}
-	
-	static private class RhapsodyLinkTask implements Callable<Boolean> {
-		
-		private String link;
-
-		public RhapsodyLinkTask(String link) {
-			this.link = link;
-		}
-		
-		public Boolean call() {
-			logger.debug("In Rhapsody link check thread for {}", link);
-			
-			RhapsodyDownloadCache cache = EJBUtil.defaultLookup(RhapsodyDownloadCache.class);
-			
-			// Check again in case another node stored the data first
-			try {
-				return cache.checkCache(link);
-			} catch (NotCachedException e) {
-				Boolean fetched = cache.fetchFromNet(link);
-
-				return cache.saveInCache(link, fetched);
-			}
-		}
 	}
 	
 	/*
@@ -84,17 +44,6 @@ public class RhapsodyDownloadCacheBean extends AbstractCacheBean<String,Boolean,
 		return s.replaceAll("[^a-zA-Z0-9]","").toLowerCase();
 	}
 
-	private CachedRhapsodyDownload rhapLinkQuery(String rhaplink) {
-		try {
-			Query q = em.createQuery("FROM CachedRhapsodyDownload crd WHERE crd.url = :url");
-			q.setParameter("url", rhaplink);
-			return (CachedRhapsodyDownload)(q.getSingleResult());
-		} catch (NoResultException e) {
-			//logger.debug("No cached rhaplink status for {}", rhaplink);
-			return null;
-		}
-	}
-	
 	// nothing database-related about this method, so don't force a transaction
 	@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 	public String buildLink(String album, String artist, int track) {
@@ -117,42 +66,30 @@ public class RhapsodyDownloadCacheBean extends AbstractCacheBean<String,Boolean,
 			return getSync(link);
 	}
 
-	public Boolean getSync(String link) {
-		return getFutureResultNullOnException(getAsync(link));
-	}
-
 	public Future<Boolean> getAsync(String album, String artist, int track) {
 		String link = buildLink(album, artist, track);
 		if (link == null)
 			return null;
 		else
 			return getAsync(link);		
-	}
-	
-	public Future<Boolean> getAsync(String link) {
-		try {
-			Boolean result = checkCache(link);
-			return new KnownFuture<Boolean>(result);
-		} catch (NotCachedException e) {
-			return getExecutor().execute(link, new RhapsodyLinkTask(link));
-		}
-	}
+	}	
 
+	@Override
 	public Boolean checkCache(String link) throws NotCachedException {
-		CachedRhapsodyDownload oldLink = rhapLinkQuery(link);
 		
-		final long now = System.currentTimeMillis();
-		if ((oldLink == null) ||
-			(oldLink.getLastUpdated().getTime() + RHAPLINK_EXPIRATION_TIMEOUT) < now) {
-			logger.debug("Unknown or outdated Rhapsody link {}", link);
-			throw new NotCachedException();
-		} else {
-			return oldLink.isActive();
-		}
+		// allowing a null return here is just annoying for everyone 
+		// (null return means "no results marker" which we treat the 
+		// same as a result of false)
+		
+		Boolean b = super.checkCache(link);
+		if (b == null)
+			return false;
+		else
+			return b;
 	}
 
-	@TransactionAttribute(TransactionAttributeType.NEVER)
-	public Boolean fetchFromNet(String link) {
+	@Override
+	protected Boolean fetchFromNetImpl(String link) {
 		boolean found = false;
 		try {
 			URL u = new URL(link);
@@ -191,39 +128,39 @@ public class RhapsodyDownloadCacheBean extends AbstractCacheBean<String,Boolean,
 		return found;
 	}
 
-	@TransactionAttribute(TransactionAttributeType.NEVER)
-	public Boolean saveInCache(final String link, final Boolean valid) {
-		// need to retry on constraint violation to deal with race where multiple TrackViews are
-		// being updated in parallel
+	@Override
+	protected CachedRhapsodyDownload queryExisting(String key) {
 		try {
-			runner.runTaskRetryingOnConstraintViolation(new Runnable() {
-				
-				public void run() {
-					
-					logger.debug("saving status = {} for link {}", valid, link);
-					
-					CachedRhapsodyDownload status = rhapLinkQuery(link);
-					if (status == null) {
-						status = new CachedRhapsodyDownload();
-						status.setUrl(link);
-						status.setActive(valid);
-						status.setLastUpdated(new Date());
-						em.persist(status);
-					} else {
-						status.setActive(valid);
-						status.setLastUpdated(new Date());
-					}
-				}
-			});
-		} catch (Exception e) {
-			if (EJBUtil.isDatabaseException(e)) {
-				logger.warn("Ignoring database exception {}: {}", e.getClass().getName(), e.getMessage());
-			} else {
-				ExceptionUtils.throwAsRuntimeException(e);
-				throw new RuntimeException(e); // not reached
-			}
+			Query q = em.createQuery("SELECT crd FROM CachedRhapsodyDownload crd WHERE crd.url = :url");
+			q.setParameter("url", key);
+			return (CachedRhapsodyDownload)(q.getSingleResult());
+		} catch (NoResultException e) {
+			//logger.debug("No cached rhaplink status for {}", rhaplink);
+			return null;
 		}
-		
-		return valid;
+	}
+
+	@Override
+	protected Boolean resultFromEntity(CachedRhapsodyDownload entity) {
+		return entity.isActive();
+	}
+
+	@Override
+	protected CachedRhapsodyDownload entityFromResult(String key, Boolean result) {
+		CachedRhapsodyDownload entity = new CachedRhapsodyDownload();
+		entity.setUrl(key);
+		entity.setActive(result);
+		return entity;
+	}
+
+	@Override
+	protected void updateEntityFromResult(String key, Boolean result, CachedRhapsodyDownload entity) {
+		entity.setUrl(key);
+		entity.setActive(result);
+	}
+
+	@Override
+	protected CachedRhapsodyDownload newNoResultsMarker(String key) {
+		return CachedRhapsodyDownload.newNoResultsMarker();
 	}
 }

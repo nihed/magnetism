@@ -138,6 +138,9 @@ public abstract class AbstractBasicCacheBean<KeyType,ResultType,EntityType exten
 					if (e == null) {
 						if (data == null) {
 							e = newNoResultsMarker(key);
+							if (!e.isNoResultsMarker()) {
+								throw new RuntimeException("Newly-returned no results marker isn't: " + e);
+							}
 						} else {
 							e = entityFromResult(key, data);
 						}
