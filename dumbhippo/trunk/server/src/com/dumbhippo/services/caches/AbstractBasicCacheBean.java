@@ -119,13 +119,6 @@ public abstract class AbstractBasicCacheBean<KeyType,ResultType,EntityType exten
 		}
 	}
 
-	protected abstract ResultType fetchFromNetImpl(KeyType key);	
-	
-	@TransactionAttribute(TransactionAttributeType.NEVER)
-	public ResultType fetchFromNet(KeyType key) {
-		return fetchFromNetImpl(key);
-	}
-
 	protected abstract EntityType newNoResultsMarker(KeyType key);
 	
 	// null data means to save a negative result

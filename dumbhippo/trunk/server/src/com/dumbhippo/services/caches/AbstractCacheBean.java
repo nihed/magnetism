@@ -4,6 +4,9 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.concurrent.Future;
 
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
+
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
@@ -118,4 +121,11 @@ public abstract class AbstractCacheBean<KeyType,ResultType,EjbIfaceType> impleme
 	public void expireCache(KeyType key) {
 		throw new UnsupportedOperationException("This cache bean doesn't implement cache expiration");
 	}
+	
+	protected abstract ResultType fetchFromNetImpl(KeyType key);	
+	
+	@TransactionAttribute(TransactionAttributeType.NEVER)
+	public ResultType fetchFromNet(KeyType key) {
+		return fetchFromNetImpl(key);
+	}	
 }

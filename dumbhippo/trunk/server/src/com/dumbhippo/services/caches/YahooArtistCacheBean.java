@@ -234,8 +234,8 @@ public class YahooArtistCacheBean extends AbstractCacheBean<String,YahooArtistDa
 		return datas;
 	}
 
-	@TransactionAttribute(TransactionAttributeType.NEVER)
-	public YahooArtistData fetchFromNet(String artistId) {
+	@Override
+	protected YahooArtistData fetchFromNetImpl(String artistId) {
 		YahooSearchWebServices ws = new YahooSearchWebServices(REQUEST_TIMEOUT, config);
 		YahooArtistData data = ws.lookupArtistById(artistId);
 		logger.debug("Fetched artist data for id {}: {}", artistId, data);

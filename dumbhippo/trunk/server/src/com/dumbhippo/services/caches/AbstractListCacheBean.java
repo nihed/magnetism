@@ -139,13 +139,6 @@ public abstract class AbstractListCacheBean<KeyType,ResultType,EntityType extend
 		return results;		
 	}
 
-	protected abstract List<ResultType> fetchFromNetImpl(KeyType key);
-	
-	@TransactionAttribute(TransactionAttributeType.NEVER)
-	public List<ResultType> fetchFromNet(KeyType key) {
-		return fetchFromNetImpl(key);
-	}
-
 	protected abstract EntityType newNoResultsMarker(KeyType key);
 
 	protected void setAllLastUpdatedToZero(KeyType key) {
