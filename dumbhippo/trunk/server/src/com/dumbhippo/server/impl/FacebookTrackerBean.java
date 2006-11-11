@@ -77,8 +77,9 @@ public class FacebookTrackerBean implements FacebookTracker {
 			// we also want to make sure the message count timestamp is refreshed
 			facebookAccount.setMessageCountTimestampAsLong(updateTime);
 		}
-		notifier.onFacebookSignedIn(facebookAccount.getExternalAccount().getAccount().getOwner(),
-				facebookAccount, updateTime);
+		FacebookEvent loginStatusEvent = getLoginStatusEvent(facebookAccount, true);
+		if (loginStatusEvent != null)  
+		    notifier.onFacebookEvent(facebookAccount.getExternalAccount().getAccount().getOwner(), loginStatusEvent);
 	}
 	
 	public List<FacebookAccount> getAccountsWithValidSession() {
@@ -101,27 +102,46 @@ public class FacebookTrackerBean implements FacebookTracker {
 		// we could do these requests in parallel, but be careful about updating the same facebookAccount
 		long time = ws.updateMessageCount(facebookAccount);
 		if (time != -1) {
-			notifier.onFacebookEvent(user, FacebookEventType.UNREAD_MESSAGES_UPDATE, 
-					facebookAccount, time);
+			// we recycle the event about unread messages for a given facebook account
+			FacebookEvent unreadMessagesEvent = facebookAccount.getRecyclableEvent(FacebookEventType.UNREAD_MESSAGES_UPDATE);
+			if (unreadMessagesEvent == null) {
+				unreadMessagesEvent = 
+					new FacebookEvent(facebookAccount, FacebookEventType.UNREAD_MESSAGES_UPDATE, 
+	                                  facebookAccount.getUnreadMessageCount(), facebookAccount.getMessageCountTimestampAsLong());
+				persistFacebookEvent(unreadMessagesEvent);
+			} else {
+				unreadMessagesEvent.setCount(facebookAccount.getUnreadMessageCount());
+				unreadMessagesEvent.setEventTimestampAsLong(facebookAccount.getMessageCountTimestampAsLong());
+			}
+			notifier.onFacebookEvent(user, unreadMessagesEvent);
 		}
 		if (facebookAccount.isSessionKeyValid()) {
 		    FacebookEvent newWallMessagesEvent = ws.updateWallMessageCount(facebookAccount);
 		    if (newWallMessagesEvent != null) {
-		    	em.persist(newWallMessagesEvent);
-		    	facebookAccount.addFacebookEvent(newWallMessagesEvent);
-		    	notifier.onFacebookEvent(user, newWallMessagesEvent.getEventType(),
-		    			facebookAccount, newWallMessagesEvent.getEventTimestampAsLong());		    	
+		    	// we create an individual event for each wall messages update
+				persistFacebookEvent(newWallMessagesEvent);
+		    	notifier.onFacebookEvent(user, newWallMessagesEvent);		    	
 		    }
 		    
 		    if (facebookAccount.isSessionKeyValid()) {
 		    	long pokeTime = ws.updatePokeCount(facebookAccount);
 		    	if (pokeTime != -1) {
-		    		notifier.onFacebookEvent(user, FacebookEventType.UNSEEN_POKES_UPDATE,
-		    				facebookAccount, pokeTime);
+					// we recycle the event about unseen pokes for a given facebook account
+					FacebookEvent unseenPokesEvent = facebookAccount.getRecyclableEvent(FacebookEventType.UNSEEN_POKES_UPDATE);
+					if (unseenPokesEvent == null) {
+						unseenPokesEvent = 
+							new FacebookEvent(facebookAccount, FacebookEventType.UNSEEN_POKES_UPDATE, 
+			                                  facebookAccount.getUnseenPokeCount(), facebookAccount.getPokeCountTimestampAsLong());
+						persistFacebookEvent(unseenPokesEvent);
+					} else {
+						unseenPokesEvent.setCount(facebookAccount.getUnseenPokeCount());
+						unseenPokesEvent.setEventTimestampAsLong(facebookAccount.getPokeCountTimestampAsLong());
+					}
+					notifier.onFacebookEvent(user, unseenPokesEvent);
 		    	}
 		    }
 		} else {
-			notifier.onFacebookSignedOut(user, facebookAccount);
+			notifier.onFacebookEvent(user, getLoginStatusEvent(facebookAccount, false));
 		}
 	}
 	
@@ -138,7 +158,7 @@ public class FacebookTrackerBean implements FacebookTracker {
 		
 		if (newPhotos == null) {
 			if (!facebookAccount.isSessionKeyValid()) {
-				notifier.onFacebookSignedOut(user, facebookAccount);
+				notifier.onFacebookEvent(user, getLoginStatusEvent(facebookAccount, false));
 		    }
 			return;
 		}
@@ -181,18 +201,15 @@ public class FacebookTrackerBean implements FacebookTracker {
 				
 		    FacebookEvent taggedPhotosEvent = new FacebookEvent(facebookAccount, FacebookEventType.NEW_TAGGED_PHOTOS_EVENT, 
                                                                 newPhotosToAdd.size(), (new Date()).getTime());		
-		    
-		    em.persist(taggedPhotosEvent);
+			persistFacebookEvent(taggedPhotosEvent);
 		    for (FacebookPhotoData newPhotoToAdd : newPhotosToAdd) {
 		    	newPhotoToAdd.setFacebookEvent(taggedPhotosEvent);
 			    em.persist(newPhotoToAdd);
 			    taggedPhotosEvent.addPhoto(newPhotoToAdd);
 			    facebookAccount.addTaggedPhoto(newPhotoToAdd);
 		    }
-		    
-		    facebookAccount.addFacebookEvent(taggedPhotosEvent);
 		 
-		    notifier.onFacebookEvent(user, taggedPhotosEvent.getEventType(), facebookAccount, taggedPhotosEvent.getEventTimestampAsLong());
+		    notifier.onFacebookEvent(user, taggedPhotosEvent);
 		}
 	}
 
@@ -209,7 +226,7 @@ public class FacebookTrackerBean implements FacebookTracker {
 		
 		if (modifiedAlbums.isEmpty()) {
 			if (!facebookAccount.isSessionKeyValid()) {
-				notifier.onFacebookSignedOut(user, facebookAccount);
+				notifier.onFacebookEvent(user, getLoginStatusEvent(facebookAccount, false));
 		    }
 			return;
 		}
@@ -233,6 +250,7 @@ public class FacebookTrackerBean implements FacebookTracker {
 						albumsModifiedTimestamp = oldAlbum.getModifiedTimestampAsLong();
 					}
 					foundAlbum = newAlbum;
+					notifier.onFacebookEvent(user, oldAlbum.getFacebookEvent());	
 					break;
 				}
 			}
@@ -244,27 +262,49 @@ public class FacebookTrackerBean implements FacebookTracker {
 		    em.persist(newAlbumToAdd.getCoverPhoto());
 		    em.persist(newAlbumToAdd);
 		    facebookAccount.addAlbum(newAlbumToAdd);
-		    if (facebookAccount.getAlbumsModifiedTimestampAsLong() > 0) {
-		    	FacebookEvent modifiedAlbumEvent = new FacebookEvent(facebookAccount, FacebookEventType.NEW_ALBUM_EVENT,
-		    			                                             1, updateTime);
-		    	modifiedAlbumEvent.setAlbum(newAlbumToAdd);
-		    	em.persist(modifiedAlbumEvent);
-		    	newAlbumToAdd.setFacebookEvent(modifiedAlbumEvent);
-		    	facebookAccount.addFacebookEvent(modifiedAlbumEvent);
-		    }
+
+	    	FacebookEvent newAlbumEvent = new FacebookEvent(facebookAccount, FacebookEventType.NEW_ALBUM_EVENT,
+	    			                                             1, updateTime);
+	    	newAlbumEvent.setAlbum(newAlbumToAdd);
+			persistFacebookEvent(newAlbumEvent);
+	    	newAlbumToAdd.setFacebookEvent(newAlbumEvent);
+	    	// albumsModifiedTimestamp on facebookAccount will be less than 0 if this is the first
+	    	// time we are uploading information about the user's albums, in which case we do not 
+	    	// want to stack a new album event 
+	    	if (facebookAccount.getAlbumsModifiedTimestampAsLong() > 0) {
+	    		notifier.onFacebookEvent(user, newAlbumEvent);
+	    	}
+
 			if (albumsModifiedTimestamp < newAlbumToAdd.getModifiedTimestampAsLong()) {
 				albumsModifiedTimestamp = newAlbumToAdd.getModifiedTimestampAsLong();
 			}		    
 		}
 		
-		if (facebookAccount.getAlbumsModifiedTimestampAsLong() > 0) {
-			// this assumes that MODIFIED_ALBUM_EVENT and NEW_ALBUM_EVENT have the same stacking rules,
-			// otherwise we'd need to check what event(s) happened. Also this assumes that 
-			// the only listener to this event notification is the stacker block handler and 
-			// so we only need to send one event instead of each event.
-			notifier.onFacebookEvent(user, FacebookEventType.MODIFIED_ALBUM_EVENT, facebookAccount, updateTime);
-		}
-		
 		facebookAccount.setAlbumsModifiedTimestampAsLong(albumsModifiedTimestamp);		
+	}
+
+	private FacebookEvent getLoginStatusEvent(FacebookAccount facebookAccount, boolean signedIn) {
+		FacebookEvent loginStatusEvent = facebookAccount.getRecyclableEvent(FacebookEventType.LOGIN_STATUS_EVENT);
+		if (loginStatusEvent == null) {
+			loginStatusEvent = 
+				new FacebookEvent(facebookAccount, FacebookEventType.LOGIN_STATUS_EVENT, 
+	                              signedIn ? 1 : 0, (new Date()).getTime());
+			persistFacebookEvent(loginStatusEvent);
+		} else {
+			// we should not re-stack the login status if the person was already logged in
+			if (signedIn && (loginStatusEvent.getCount() == 1))
+				return null;			
+			loginStatusEvent.setCount(signedIn ? 1 : 0);
+			loginStatusEvent.setEventTimestampAsLong((new Date()).getTime());
+		}		
+		
+		return loginStatusEvent; 
+	}
+	
+	private void persistFacebookEvent(FacebookEvent event) {
+        em.persist(event);
+        event.getFacebookAccount().addFacebookEvent(event);
+        notifier.onFacebookEventCreated(event.getFacebookAccount().getExternalAccount().getAccount().getOwner(),
+        		                        event);
 	}
 }

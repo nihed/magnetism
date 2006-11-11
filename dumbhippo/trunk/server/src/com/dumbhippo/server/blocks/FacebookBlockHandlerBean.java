@@ -1,20 +1,22 @@
 package com.dumbhippo.server.blocks;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 
+import org.slf4j.Logger;
+
+import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.BlockKey;
 import com.dumbhippo.persistence.BlockType;
 import com.dumbhippo.persistence.ExternalAccount;
-import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.FacebookAccount;
 import com.dumbhippo.persistence.FacebookEvent;
-import com.dumbhippo.persistence.FacebookEventType;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.StackInclusion;
 import com.dumbhippo.persistence.User;
@@ -28,7 +30,9 @@ import com.dumbhippo.server.views.Viewpoint;
 @Stateless
 public class FacebookBlockHandlerBean extends AbstractBlockHandlerBean<FacebookBlockView> implements
 		FacebookBlockHandler {
-
+	
+	static private final Logger logger = GlobalSetup.getLogger(FacebookBlockHandlerBean.class);
+	
 	@EJB
 	private PersonViewer personViewer;	
 
@@ -47,6 +51,14 @@ public class FacebookBlockHandlerBean extends AbstractBlockHandlerBean<FacebookB
 		return new BlockKey(BlockType.FACEBOOK_PERSON, userId, inclusion);
 	}	
 	
+	public BlockKey getKey(User user, FacebookEvent event, StackInclusion inclusion) {
+		return getKey(user.getGuid(), event.getId(), inclusion);
+	}
+
+	public BlockKey getKey(Guid userId, long eventId, StackInclusion inclusion) {
+		return new BlockKey(BlockType.FACEBOOK_EVENT, userId, null, eventId, inclusion);
+	}	
+	
 	@Override
 	protected void populateBlockViewImpl(FacebookBlockView blockView) throws BlockNotVisibleException {
 		Viewpoint viewpoint = blockView.getViewpoint();
@@ -55,20 +67,26 @@ public class FacebookBlockHandlerBean extends AbstractBlockHandlerBean<FacebookB
 		User user = identitySpider.lookupUser(block.getData1AsGuid());
 		// TODO: check what extras we need to request here
 		PersonView userView = personViewer.getPersonView(viewpoint, user, PersonViewExtra.ALL_RESOURCES);
-		FacebookAccount facebookAccount;
-		try {
-			facebookAccount = facebookSystem.lookupFacebookAccount(viewpoint, user);
-		} catch (NotFoundException e) {
-			throw new BlockNotVisibleException("external facebook account for block not visible", e);
+		
+		if (block.getBlockType() == BlockType.FACEBOOK_EVENT) {	
+			FacebookEvent facebookEvent;
+			try {
+			    facebookEvent = facebookSystem.lookupFacebookEvent(viewpoint, block.getData3());
+			} catch (NotFoundException e) {
+				throw new BlockNotVisibleException("external facebook account for block not visible", e);
+			}							
+		    List<FacebookEvent> facebookEvents = new ArrayList<FacebookEvent>();
+		    facebookEvents.add(facebookEvent);
+			blockView.setUserView(userView);
+			blockView.setFacebookEvents(facebookEvents);
+			blockView.setLink(facebookSystem.getEventLink(facebookEvent));
+			blockView.setPopulated(true);		    
+		} else if (block.getBlockType() == BlockType.FACEBOOK_PERSON) {
+		    logger.error("Will not populate a block view for BlockType.FACEBOOK_PERSON, " +
+		    		     "we should not have blocks with that type around anymore!");		
+		} else {
+			logger.error("Unexpected block type in populateBlockViewImpl(): {}", block);
 		}
-		int eventsToRequestCount = 3;
-		if (!facebookAccount.isSessionKeyValid() && viewpoint.isOfUser(facebookAccount.getExternalAccount().getAccount().getOwner())) {
-		    eventsToRequestCount = 2;
-		}
-		List<FacebookEvent> facebookEvents = facebookSystem.getLatestEvents(viewpoint, facebookAccount, eventsToRequestCount);
-		blockView.setUserView(userView);
-		blockView.setFacebookEvents(facebookEvents);
-		blockView.setPopulated(true);
 	}
 	
 	public Set<User> getInterestedUsers(Block block) {
@@ -80,35 +98,30 @@ public class FacebookBlockHandlerBean extends AbstractBlockHandlerBean<FacebookB
 	}
 	
 	public void onExternalAccountCreated(User user, ExternalAccount external) {
-		if (external.getAccountType() != ExternalAccountType.FACEBOOK)
-			return;
-		stacker.createBlock(getKey(user, StackInclusion.ONLY_WHEN_VIEWED_BY_OTHERS));
-		stacker.createBlock(getKey(user, StackInclusion.ONLY_WHEN_VIEWING_SELF));
-	}
-
-	private void stackSelfOnly(User user, long activity) {
-		stacker.stack(getKey(user, StackInclusion.ONLY_WHEN_VIEWING_SELF), activity, user, false);
+		// we do not have per-facebook-account blocks anymore
 	}
 	
-	private void stackSelfAndOthers(User user, long activity) {
-		stackSelfOnly(user, activity);
-		stacker.stack(getKey(user, StackInclusion.ONLY_WHEN_VIEWED_BY_OTHERS), activity, user, false);
+	public void onFacebookEventCreated(User user, FacebookEvent event) {
+		if (event.getEventType().getDisplayToOthers()) {
+			Block block = stacker.createBlock(getKey(user, event, StackInclusion.IN_ALL_STACKS));	
+			// TODO: adjust publicity if an account is disabled per bug 929
+			block.setPublicBlock(true);
+		} else {
+		    stacker.createBlock(getKey(user, event, StackInclusion.ONLY_WHEN_VIEWING_SELF));
+		    // the block was created with publicBlock flag set to false by default
+		    // TODO: consider making StackInclusion.ONLY_WHEN_VIEWING_SELF have publicBlock
+		    // set to true, because they should always be "retrieved" only for the self,
+		    // and therefore should always be "public" if they were retrieved
+		}
 	}
 	
-	public void onFacebookSignedIn(User user, FacebookAccount facebookAccount, long activity) {
-		// we want to stack an update regardless of whether they have new messages, so that they know
-		// they logged in successfully		
-		stackSelfOnly(user, activity);
-	}
-
-	public void onFacebookSignedOut(User user, FacebookAccount facebookAccount) {
-		stackSelfOnly(user, System.currentTimeMillis());
-	}
-
-	public void onFacebookEvent(User user, FacebookEventType eventType, FacebookAccount facebookAccount, long updateTime) {
-		if (eventType.getDisplayToOthers())
-			stackSelfAndOthers(user, updateTime);
-		else
-			stackSelfOnly(user, updateTime);
+	public void onFacebookEvent(User user, FacebookEvent event) {
+		if (event.getEventType().getDisplayToOthers()) {
+			stacker.stack(getKey(user, event, StackInclusion.IN_ALL_STACKS), 
+				          event.getEventTimestampAsLong(), user, false);
+		} else {
+			stacker.stack(getKey(user, event, StackInclusion.ONLY_WHEN_VIEWING_SELF), 
+				      event.getEventTimestampAsLong(), user, false);
+		}
 	}
 }

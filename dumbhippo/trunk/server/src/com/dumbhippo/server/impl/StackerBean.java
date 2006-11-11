@@ -130,6 +130,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 			handlerClass = BlogBlockHandler.class;
 			break;
 		case FACEBOOK_PERSON:
+		case FACEBOOK_EVENT:	
 			handlerClass = FacebookBlockHandler.class;
 			break;
 		case GROUP_CHAT:
@@ -1242,6 +1243,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		q = em.createQuery("SELECT block.id FROM Block block" +
 				           " WHERE block.blockType = " + BlockType.MUSIC_PERSON.ordinal() +
 				           " OR block.blockType = " + BlockType.FACEBOOK_PERSON.ordinal() +
+				           " OR block.blockType = " + BlockType.FACEBOOK_EVENT.ordinal() +
 				           " OR block.blockType = " + BlockType.BLOG_PERSON.ordinal());
 		for (String id : TypeUtils.castList(String.class, q.getResultList()))
 			tasks.add(new BlockParticipationMigrationTask(id));
@@ -1513,6 +1515,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 			break;
 		case MUSIC_PERSON:
 		case FACEBOOK_PERSON:
+		case FACEBOOK_EVENT:	
 		case BLOG_PERSON:
 			isGroupParticipation = false;
 			break;

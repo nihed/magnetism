@@ -8,6 +8,7 @@
 <%@ attribute name="blockId" required="true" type="java.lang.String" %>
 <%@ attribute name="showFrom" required="false" type="java.lang.Boolean" %>
 <%@ attribute name="oneLine" required="false" type="java.lang.Boolean" %>
+<%@ attribute name="homeStack" required="false" type="java.lang.Boolean" %>
 
 <c:if test="${empty oneLine}">
 	<c:set var="oneLine" value="false"/>
@@ -29,8 +30,8 @@
    	<c:when test="${dh:enumIs(block.blockType, 'GROUP_MEMBER')}">
    		<dht3:groupMemberBlock block="${block}" blockId="${blockId}" offset="${offset}" showFrom="${showFrom}"/>
    	</c:when>
-   	<c:when test="${dh:enumIs(block.blockType, 'FACEBOOK_PERSON')}">
-	   	<dht3:facebookBlock block="${block}" blockId="${blockId}" offset="${offset}" showFrom="${showFrom}" oneLine="${oneLine}"/>
+   	<c:when test="${dh:enumIs(block.blockType, 'FACEBOOK_EVENT')}">
+	   	<dht3:facebookBlock block="${block}" blockId="${blockId}" offset="${offset}" showFrom="${showFrom}" oneLine="${oneLine}" homeStack="${homeStack}"/>
    	</c:when>
    	<c:when test="${dh:enumIs(block.blockType, 'BLOG_PERSON')}">
 	   	<dht3:blogBlock block="${block}" blockId="${blockId}" offset="${offset}" showFrom="${showFrom}" oneLine="${oneLine}"/>

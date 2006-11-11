@@ -8,8 +8,13 @@
 <%@ attribute name="blockId" required="true" type="java.lang.String" %>
 <%@ attribute name="showFrom" required="false" type="java.lang.Boolean" %>
 <%@ attribute name="oneLine" required="true" type="java.lang.Boolean" %>
+<%@ attribute name="homeStack" required="false" type="java.lang.Boolean" %>
 
-<dht3:blockContainer cssClass="${offset ? 'dh-box-grey2' : 'dh-box-grey1'}" blockId="${blockId}">
+<%-- this tag displays a single facebook event, the first one in the list of facebook events --%>
+<%-- in FacebookBlockView; currently all FacebookBlockViews should have a single event associated --%>
+<%-- with them --%>
+
+<dht3:blockContainer cssClass="${offset ? 'dh-box-grey2' : 'dh-box-grey1'}" blockId="${blockId}" expandable="${(block.photos.size > 0) && !oneLine}">
 	<dht3:blockLeft block="${block}">
 		<table cellspacing="0" cellpadding="0">
 		<tr>
@@ -19,26 +24,30 @@
 		    </c:if>     
 		</td>    
 		<td>
-		<div class="dh-stacker-block-title-facebook-events">
-			<c:forEach items="${block.facebookEvents}" var="event" varStatus="eventIdx" end="3">
-				<c:choose>
-					<c:when test="${dh:enumIs(event.eventType, 'NEW_TAGGED_PHOTOS_EVENT')}">
-						<div><a class="dh-underlined-link" href="http://www.facebook.com"><dht3:plural n="${event.count}" s="tagged picture"/></a></div>
-					</c:when>
-					<c:when test="${dh:enumIs(event.eventType, 'UNSEEN_POKES_EVENT')}">
-						<div><a class="dh-underlined-link" href="http://www.facebook.com"><dht3:plural n="${event.count}" s="unseen poke"/></a></div>
-					</c:when>
-					<c:when test="${dh:enumIs(event.eventType, 'UNREAD_MESSAGES_UPDATE')}">
-						<div><a class="dh-underlined-link" href="http://www.facebook.com"><dht3:plural n="${event.count}" s="unread message"/></a></div>
-					</c:when>						
-				</c:choose>
-			</c:forEach>
+		<div class="dh-stacker-block-title-facebook-event">
+			<a class="dh-underlined-link" href="${block.link}">
+			    <c:choose>
+			        <c:when test="${homeStack}">
+			            <c:out value="${block.textForHome}"/>
+			        </c:when>
+			        <c:otherwise>
+			            <%-- if you see updates about your own Facebook not on your own homepage, it --%>
+			            <%-- is less confusing if they are in the third person --%>
+			            <c:out value="${block.genericText}"/>           
+			        </c:otherwise>
+			    </c:choose>         
+			</a>
 		</div>
 		</td>
 		</tr>
 		</table>
 	<dht3:blockDescription blockId="${blockId}">
-	</dht3:blockDescription>			
+	</dht3:blockDescription>
+	<dht3:blockContent blockId="${blockId}">
+	    <c:if test="${block.photos.size > 0}">
+	        photos go here!
+	    </c:if>    
+	</dht3:blockContent>			
 	</dht3:blockLeft>
 	<dht3:blockRight blockId="${blockId}" from="${block.personSource}" showFrom="${showFrom}">
 		<dht3:blockTimeAgo blockId="${blockId}" block="${block}"/>

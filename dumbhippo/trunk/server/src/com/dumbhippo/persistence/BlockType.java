@@ -36,6 +36,12 @@ public enum BlockType {
 		public StackInclusion getDefaultStackInclusion() {
 			return null;
 		}
+	},
+	FACEBOOK_EVENT {
+		@Override
+		public StackInclusion getDefaultStackInclusion() {
+			return null;
+		}		
 	};
 	
 	// returns true if all blocks of this type are always public,

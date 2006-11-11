@@ -24,8 +24,7 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.TypeUtils;
 import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.ExternalAccount;
-import com.dumbhippo.persistence.FacebookAccount;
-import com.dumbhippo.persistence.FacebookEventType;
+import com.dumbhippo.persistence.FacebookEvent;
 import com.dumbhippo.persistence.FeedEntry;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupMember;
@@ -275,21 +274,15 @@ public class NotifierBean implements Notifier {
 		}
 	}
 
-	public void onFacebookSignedIn(User user, FacebookAccount facebookAccount, long activity) {
+	public void onFacebookEventCreated(User user, FacebookEvent event) {
 		for (FacebookListener l : getListeners(FacebookListener.class)) {
-			l.onFacebookSignedIn(user, facebookAccount, activity);
-		}
+			l.onFacebookEventCreated(user, event);
+		}			
 	}
-
-	public void onFacebookSignedOut(User user, FacebookAccount facebookAccount) {
+	
+	public void onFacebookEvent(User user, FacebookEvent event) {
 		for (FacebookListener l : getListeners(FacebookListener.class)) {
-			l.onFacebookSignedOut(user, facebookAccount);
-		}
-	}
-
-	public void onFacebookEvent(User user, FacebookEventType eventType, FacebookAccount facebookAccount, long updateTime) {
-		for (FacebookListener l : getListeners(FacebookListener.class)) {
-			l.onFacebookEvent(user, eventType, facebookAccount, updateTime);
+			l.onFacebookEvent(user, event);
 		}
 	}
 

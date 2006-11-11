@@ -254,4 +254,15 @@ public class FacebookAccount extends DBUnique {
 	public void setAlbumsModifiedTimestampAsLong(long albumsModifiedTimestamp) {
 		this.albumsModifiedTimestamp = albumsModifiedTimestamp;
 	}
+
+	@Transient
+	public FacebookEvent getRecyclableEvent(FacebookEventType eventType) {
+	    for (FacebookEvent event : getFacebookEvents()) {
+		    if (event.getEventType().equals(eventType)) {
+                return event;
+		    }
+	    }
+	    return null;
+	}
+
 }

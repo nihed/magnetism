@@ -175,7 +175,10 @@ public abstract class AbstractBlockHandlerBean<BlockViewSubType extends BlockVie
 		case ONLY_WHEN_VIEWED_BY_OTHERS:
 			peopleWhoCare = identitySpider.getUsersWhoHaveUserAsContact(SystemViewpoint.getInstance(), user);
 		
-			// we also show each block to its "owner"
+			// we also show each block to its "owner" when it is IN_ALL_STACKS;
+			// we include the "owner" for the ONLY_WHEN_VIEWED_BY_OTHERS block, so
+			// that the block is displayed in the owner's mugshot when it is viewed 
+			// by another person
 			peopleWhoCare.add(user);
 			return peopleWhoCare;
 		case ONLY_WHEN_VIEWING_SELF:

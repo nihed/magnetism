@@ -14,6 +14,7 @@ import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.MembershipStatus;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.AccountSystem;
+import com.dumbhippo.server.FacebookTracker;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.MusicSystem;
@@ -47,6 +48,7 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 	private GroupSystem groupSystem;
 	private MusicSystem musicSystem;
 	private PersonView viewedPerson; 	
+	private FacebookTracker facebookTracker;
 	
 	private ListBean<GroupView> groups;
 	private Pageable<GroupView> pageablePublicGroups;
@@ -75,6 +77,7 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 	protected AbstractPersonPage() {	
 		groupSystem = WebEJBUtil.defaultLookup(GroupSystem.class);
 		musicSystem = WebEJBUtil.defaultLookup(MusicSystem.class);
+		facebookTracker = WebEJBUtil.defaultLookup(FacebookTracker.class);
 		lookedUpCurrentTrack = false;
 	}
 	
@@ -371,4 +374,9 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 			randomTipIndex = new Random().nextInt(3);
 		return randomTipIndex;
 	}
+	
+    public void setFacebookAuthToken(String facebookAuthToken) {
+    	// request a session key for the signed in user and set it in the database 
+    	facebookTracker.updateOrCreateFacebookAccount(getUserSignin().getViewpoint(), facebookAuthToken);
+    }
 }

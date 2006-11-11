@@ -23,9 +23,13 @@ public interface FacebookSystem {
 	
 	public FacebookAccount lookupFacebookAccount(Viewpoint viewpoint, User user) throws NotFoundException;
 	
+	public FacebookEvent lookupFacebookEvent(Viewpoint viewpoint, long eventId) throws NotFoundException;
+	
 	public List<FacebookEvent> getLatestEvents(Viewpoint viewpoint, FacebookAccount facebookAccount, int eventsCount);
 	
 	public String getProfileLink(ExternalAccount externalAccount);
 	
+	public String getEventLink(FacebookEvent facebookEvent);
+
 	public String getApiKey();	
 }

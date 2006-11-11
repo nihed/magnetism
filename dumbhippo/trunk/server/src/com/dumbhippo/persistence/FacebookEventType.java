@@ -14,9 +14,30 @@ public enum FacebookEventType {
 			return false;
 		}
     },
-    NEW_TAGGED_PHOTOS_EVENT,
-    NEW_ALBUM_EVENT,
-    MODIFIED_ALBUM_EVENT;
+    NEW_TAGGED_PHOTOS_EVENT {
+	    @Override
+	    public String getPageName() {
+		    return "photo_search";
+	    }
+    },
+    NEW_ALBUM_EVENT {
+	    @Override
+	    public String getPageName() {
+		    return "photos";
+	    }
+    },
+    MODIFIED_ALBUM_EVENT {
+	    @Override
+	    public String getPageName() {
+		    return "photos";
+	    }
+    },
+    LOGIN_STATUS_EVENT {
+		@Override
+		public boolean getDisplayToOthers() {
+			return false;
+		}
+    };
     
     public boolean getDisplayToSelf() {
     	return true;
@@ -31,5 +52,9 @@ public enum FacebookEventType {
     		return true;
     	}   	
     	return false;
+    }
+    
+    public String getPageName() {
+    	return "profile";
     }
 }

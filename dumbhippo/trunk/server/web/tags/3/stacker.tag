@@ -10,6 +10,7 @@
 <%@ attribute name="blocks" required="false" type="java.util.List" %>
 <%@ attribute name="showFrom" required="true" type="java.lang.Boolean" %>
 <%@ attribute name="oneLine" required="false" type="java.lang.Boolean" %>
+<%@ attribute name="homeStack" required="false" type="java.lang.Boolean" %>
 
 <c:if test="${empty oneLine}">
 	<c:set var="oneLine" value="false"/>
@@ -21,7 +22,7 @@
 
 <div class="dh-stacker-container">
 	<c:forEach items="${blocks}" var="block" varStatus="blockIdx">
-		<dht3:block block="${block}" offset="${blockIdx.count % 2 == 0}" blockId="${stackOrder}_${blockIdx.count + 1}" showFrom="${showFrom}" oneLine="${oneLine}"/>	
+		<dht3:block block="${block}" offset="${blockIdx.count % 2 == 0}" blockId="${stackOrder}_${blockIdx.count + 1}" showFrom="${showFrom}" oneLine="${oneLine}" homeStack="${homeStack}"/>	
 		<c:if test="${!blockIdx.last}">
 			<div class="dh-stacker-block-bottom-padding">&nbsp;</div>
 		</c:if>

@@ -7,6 +7,9 @@
 
 <dht3:requirePersonBean/>
 
+<%-- This is a Facebook authetication token, when people re-login we land them on their person page and get the token --%>
+<jsp:setProperty name="person" property="facebookAuthToken" param="auth_token"/>
+
 <c:set var="pageName" value="Home" scope="page"/>
 
 <head>
@@ -22,7 +25,7 @@
 		<dht3:randomTip tipIndex="${person.randomTipIndex}" isSelf="${person.self}"/>
 		<dht3:standardPageOptions selected="${pageName}"/>
 	</dht3:pageSubHeader>
-	<dht3:personStack person="${person.viewedPerson}" stackOrder="1" pageable="${person.pageableMugshot}" shortVersion="${person.pageableStack.position > 0}" showFrom="true" />
+	<dht3:personStack person="${person.viewedPerson}" stackOrder="1" pageable="${person.pageableMugshot}" shortVersion="${person.pageableStack.position > 0}" showFrom="true" homeStack="${person.self}"/>
 	
 	<dht3:shinyBox color="grey">
 	    <div class="dh-person-stacker-header">
@@ -36,7 +39,7 @@
 				    </c:otherwise>
 			    </c:choose>
 		</div>    
-		<dht3:stacker stackOrder="2" stackType="dhStacker" pageable="${person.pageableStack}" showFrom="true"/>
+		<dht3:stacker stackOrder="2" stackType="dhStacker" pageable="${person.pageableStack}" showFrom="true" homeStack="${person.self}"/>
 		<c:if test="${person.pageableMugshot.position != 0}">
 		    <div class="dh-back">
 		        <a href="/person?who=${person.viewedPerson.viewPersonPageId}">Back to <c:out value="${person.viewedPerson.name}"/>'s Home</a>

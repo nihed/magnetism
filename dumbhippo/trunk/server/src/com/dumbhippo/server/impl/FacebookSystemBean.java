@@ -62,6 +62,16 @@ public class FacebookSystemBean implements FacebookSystem {
 		return facebookAccount;
 	}
 	
+	public FacebookEvent lookupFacebookEvent(Viewpoint viewpoint, long eventId) throws NotFoundException {
+		FacebookEvent facebookEvent = em.find(FacebookEvent.class, eventId);
+		if (facebookEvent.getEventType().getDisplayToOthers() 
+			|| viewpoint.isOfUser(facebookEvent.getFacebookAccount().getExternalAccount().getAccount().getOwner())) {
+			return facebookEvent;
+		} else {
+			throw new NotFoundException("Viewpoint " + viewpoint + " can't view facebook event " + facebookEvent);
+		}
+	}
+	
 	public List<FacebookEvent> getLatestEvents(Viewpoint viewpoint, FacebookAccount facebookAccount, int eventsCount) {
 		ArrayList<FacebookEvent> list = new ArrayList<FacebookEvent>();
 		
@@ -110,6 +120,14 @@ public class FacebookSystemBean implements FacebookSystem {
 		}
 	}
 	
+	public String getEventLink(FacebookEvent facebookEvent) {
+        if ((facebookEvent.getEventType() == FacebookEventType.LOGIN_STATUS_EVENT) && (facebookEvent.getCount() == 0)) {		
+	        return "http://api.facebook.com/login.php?api_key=" + getApiKey() + "&next=/";
+	    } else {
+		    return "http://www.facebook.com/" + facebookEvent.getEventType().getPageName() +  ".php?uid=" 
+	               + facebookEvent.getFacebookAccount().getFacebookUserId() + "&api_key=" + getApiKey();
+	    }
+	}
 	
 	public String getApiKey() {
     	String apiKey;

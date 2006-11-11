@@ -13,6 +13,7 @@
 <%@ attribute name="embedVersion" required="false" type="java.lang.Boolean" %>
 <%@ attribute name="width" required="false" type="java.lang.String" %>
 <%@ attribute name="floatSide" required="false" type="java.lang.String" %>
+<%@ attribute name="homeStack" required="false" type="java.lang.Boolean" %>
 
 <c:if test="${empty shortVersion}">
 	<c:set var="shortVersion" value="false"/>
@@ -52,6 +53,6 @@
 	</c:choose>    		    
 	</dht3:personHeader>
 	<c:if test="${!shortVersion}">
-	    <dht3:stacker stackOrder="${stackOrder}" stackType="${stackType}" pageable="${pageable}" blocks="${blocks}" showFrom="${showFrom}" oneLine="${embedVersion}"/>
+	    <dht3:stacker stackOrder="${stackOrder}" stackType="${stackType}" pageable="${pageable}" blocks="${blocks}" showFrom="${showFrom}" oneLine="${embedVersion}" homeStack="${homeStack}"/>
     </c:if>
 </dht3:shinyBox>
