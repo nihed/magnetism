@@ -1790,13 +1790,16 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 				throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, "Bad timescale seconds value '" + timescaleString + "'");
 			}
 		} else {
-			// If the user doesn't specify a timescale, try to get about 100 points
-			timescaleSeconds = (int)(end.getTime() - start.getTime()) / 1000 / 100;
+			// If the user doesn't specify a timescale, try to get about 200 points
+			timescaleSeconds = (int)(end.getTime() - start.getTime()) / 1000 / 200;
 		}
 		
 		Timescale timescale = Timescale.get(timescaleSeconds);
 		
-		xml.openElement("statistics", "timescale", Integer.toString(timescale.getSeconds()));
+		xml.openElement("statistics", 
+				        "timescale", Integer.toString(timescale.getSeconds()),
+				        "setStartTime", Long.toString(set.getStartDate().getTime()),
+				        "setEndTime", Long.toString(set.getEndDate().getTime()));
 		
 		Iterator<Row> iterator = set.getIterator(start, end, timescale, columnIndexes);
 		while (iterator.hasNext()) {

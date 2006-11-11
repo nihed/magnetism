@@ -11,6 +11,8 @@ dh.statistics.fetcher.Fetcher = function() {
 	this._datasets = {};
 	this._lastFetched = {};
 	this._timeout = null;
+	this._selectionStart = null;
+	this._selectionEnd = null;
 }
 
 dojo.lang.extend(dh.statistics.fetcher.Fetcher,
@@ -22,6 +24,13 @@ dojo.lang.extend(dh.statistics.fetcher.Fetcher,
 		};
 		 
 		this._queueIdleFetch();
+	},
+	
+	setSelection: function(start, end) {
+		this._selectionStart = start;
+		this._selectionEnd = end;
+		
+		this.refetchAll();		
 	},
 	
 	remove: function(id) {
@@ -37,6 +46,22 @@ dojo.lang.extend(dh.statistics.fetcher.Fetcher,
 		var dataset = this._datasets[id];
 		if (dataset)
 			return this._datasets[id].dataset;
+		else
+			return null;
+	},
+	
+	getSetStartTime: function(id) {
+		var dataset = this._datasets[id];
+		if (dataset)
+			return this._datasets[id].setStartTime;
+		else
+			return null;
+	},
+	
+	getSetEndTime: function(id) {
+		var dataset = this._datasets[id];
+		if (dataset)
+			return this._datasets[id].setEndTime;
 		else
 			return null;
 	},
@@ -114,6 +139,11 @@ dojo.lang.extend(dh.statistics.fetcher.Fetcher,
 	    	params.filename = filename;
 	    	
 		params.runOnServer = server;
+		
+		if (this._selectionStart != null)
+			params.start = this._selectionStart;
+		if (this._selectionEnd != null)
+			params.end = this._selectionEnd;
     
     	var me = this;
 		dh.server.doXmlMethodGET("statistics",
@@ -129,6 +159,8 @@ dojo.lang.extend(dh.statistics.fetcher.Fetcher,
 	_handleOneResult: function(topElement, server, filename, columns, columnOrder) {
 		// Create one dataset for each column in the result
 		var datasets = [];
+		var setStartTime = parseFloat(topElement.getAttribute("setStartTime"));
+		var setEndTime = parseFloat(topElement.getAttribute("setEndTime"));
 		for (var i = 0; i < columnOrder.length; i++) {
 			datasets[i] = new dh.statistics.dataset.Dataset();
 		}
@@ -138,7 +170,7 @@ dojo.lang.extend(dh.statistics.fetcher.Fetcher,
  	    var first = true;
         for (var i = 0; i < childNodes.length; ++i) {
 	        var child = childNodes.item(i);
-	        var time = child.getAttribute("time");
+	        var time = parseFloat(child.getAttribute("time"));
 	        var content = dojo.dom.textContent(child);
 	        var values = dojo.dom.textContent(child).split(",");
 			for (var j = 0; j < values.length; j++) {
@@ -161,6 +193,8 @@ dojo.lang.extend(dh.statistics.fetcher.Fetcher,
 					info.specification.filename == filename && 
 					info.specification.column == column) {
 					info.dataset = datasets[i];
+					info.setStartTime = setStartTime;
+					info.setEndTime = setEndTime;
 					allIds.push(id);
 				}
 			}

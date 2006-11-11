@@ -145,21 +145,19 @@ public class RowStore {
 		}
 		
 		public boolean hasNext() {
-			getNextRow(false);
-			return nextIndex < endIndex;
+			return getNextRow(false) != null;
 		}
 		
 		// only advances nextRow if nextRow is null
 		private Row getNextRow(boolean mustHaveNext) {
-			if (mustHaveNext && (nextIndex == endIndex))
-				throw new NoSuchElementException();
-
-			// keep advancing nextIndex and nextRow if nextRow time is 0 (i.e. nextRow is a placeholder)
-			while (((nextRow == null) || (nextRow.getDate().getTime() == 0)) && (nextIndex < endIndex)) {
+			// keep advancing nextIndex skipping rows where nextRow time is 0 (i.e. nextRow is a placeholder)
+			while ((nextRow == null) && (nextIndex < endIndex)) {
 				if (nextRowBlock == null)
 					nextRowBlock = lockBlock(nextIndex, false);
 								
-				nextRow = new BufferRow(nextRowBlock.buffer, (int)(nextIndex - nextRowBlock.startRow), numColumns);		
+				nextRow = new BufferRow(nextRowBlock.buffer, (int)(nextIndex - nextRowBlock.startRow), numColumns);
+				if (nextRow.getDate().getTime() == 0)
+					nextRow = null;
 				
 				nextIndex++;
 
@@ -170,6 +168,9 @@ public class RowStore {
 				}
 			}
 			
+			if (mustHaveNext && nextRow == null)
+				throw new NoSuchElementException();
+
 			return nextRow;
 		}
 		

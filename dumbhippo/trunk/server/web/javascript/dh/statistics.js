@@ -12,11 +12,23 @@ dh.statistics._nextBlockId = 1;
 dh.statistics._set = null;
 
 dhStatisticsInit = function() {
+	window.addEventListener("keypress", dh.statistics._onKeyPress, true);
+
 	dh.statistics._fetcher = new dh.statistics.fetcher.Fetcher();
 	dh.statistics._fetcher.onFetch = function(ids) {
 		dh.statistics._onFetch(ids);
 	}
 	
+	dh.statistics._selectionStart = null;
+	dh.statistics._selectionEnd = null;
+	
+	dh.statistics._selector = new dh.statistics.selector.Selector();
+    document.getElementById("dhHourSelector").appendChild(dh.statistics._selector.table);
+	
+	dh.statistics._selector.onSelectionChanged = function(start, end) {
+		dh.statistics._onSelectionChanged(start, end);
+	}
+
 	dh.statistics.addBlock(false);
 	
     dh.statistics.onSelectedFileChange();
@@ -81,6 +93,22 @@ dh.statistics._setSet = function(set) {
 }
 	
 dh.statistics._onFetch = function(ids) {
+	var	minT = null;
+    var	maxT = null;
+	for (var id in this._blocks) {
+		var setStartTime = this._fetcher.getSetStartTime(id);
+		var setEndTime = this._fetcher.getSetEndTime(id);
+		var dataset = this._fetcher.getDataset(id);
+		
+		if (setStartTime != null && (minT == null || minT > setStartTime))
+			minT = setStartTime;
+		if (setEndTime != null && (maxT == null || maxT < setEndTime))
+			maxT = setEndTime;
+	}
+
+	this._setsStartTime = minT;
+	this._setsEndTime = maxT;
+
 	for (var i = 0; i < ids.length; i++) {
 		var id = ids[i];
 		var block = this._blocks[id];
@@ -90,9 +118,53 @@ dh.statistics._onFetch = function(ids) {
 		var dataset = this._fetcher.getDataset(id);
 		block.setDataset(dataset);
 	}
+
+	this._updateBlockRanges();	
+	this._selector.setRange(minT, maxT);
+}
+
+dh.statistics._updateBlockRanges = function() {
+	var selectionStart;
+	if (this._selectionStart != null && this._selectionStart > this._setsStartTime)
+		selectionStart = this._selectionStart;
+	else
+		selectionStart = this._setsStartTime;
+		
+	var selectionEnd;
+	if (this._selectionEnd != null && this._selectionEnd < this._setsEndTime)
+		selectionEnd = this._selectionEnd;
+	else
+		selectionEnd = this._setsEndTime;
+
+	for (var id in this._blocks) {
+		this._blocks[id].setRange(selectionStart, selectionEnd);
+	}
 }
 
 dh.statistics._onSpecificationChanged = function(id) {
 	var block = this._blocks[id];
 	this._fetcher.setSpecification(id, block.getSpecification());
+}
+
+dh.statistics._onSelectionChanged = function(start, end) {
+	if (start == this._selectionStart && end == this._selectionEnd)
+		return;
+
+	this._selectionStart = start;
+	this._selectionEnd = end;
+	
+	this._fetcher.setSelection(start, end);
+	
+	// Redraw the blocks with the current data, when the new fetch
+	// comes in we'll do it again with better data
+	this._updateBlockRanges();	
+}
+
+dh.statistics._onKeyPress = function(e) {
+	// Hook up Shift-Alt-D to show the debug log window
+	if (e.charCode == 68 && e.shiftKey && e.altKey) {
+		dh.logger.show();		
+		e.stopPropagation();
+		e.preventDefault();	
+	}
 }

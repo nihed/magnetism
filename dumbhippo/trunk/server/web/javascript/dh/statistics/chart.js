@@ -74,14 +74,37 @@ dojo.lang.extend(dh.statistics.chart.Chart,
 
 	setDataset: function(dataset) {
 		this.dataset = dataset;
-		this._draw();
+		this._queueDraw();
+	},
+	
+	setRange: function(minT, maxT) {
+		if (minT == this.minT && maxT == this.maxT)
+			return;
+			
+		this.minT = minT;
+		this.maxT = maxT;
+		
+		this._queueDraw();
 	},
 	
 	onCoordinatesChanged: function(t, y) {
 	},
 	
+	_queueDraw: function() {
+		if (!this._drawTimeout) {
+			var me = this;
+			this._drawTimeout = setTimeout(function() {
+				me._draw();
+			});
+		}
+	},
+	
 	_draw: function(drawRegion) {
+		this._drawTimeout = null;
+	
 		var context = this.canvas.getContext("2d");
+		var minT = this.minT != null ? this.minT : this.dataset.minT;
+		var maxT = this.maxT != null ? this.maxT : this.dataset.maxT;
 
 		// save the context and restore it on *all* exit points from the
 		// function, otherwise end up applying values to previous translate 
@@ -102,13 +125,13 @@ dojo.lang.extend(dh.statistics.chart.Chart,
             
 		    // xscale determines how wide we need a single unit on the canvas to be to fit the 
 		    // whole range between minT and maxT
-		    if (this.dataset.maxT > this.dataset.minT)
-			    this.xscale = this.width / (this.dataset.maxT - this.dataset.minT);
+		    if (maxT > minT)
+			    this.xscale = this.width / (maxT - minT);
 	  	    else
 			    this.xscale = 1;
 
 	        // our own reference point that will land minT in the bottom left corner	
-		    this.x0 = - this.xscale * this.dataset.minT;		
+		    this.x0 = - this.xscale * minT;
 		
 		    // yscale determines how high we need a single unit on the canvas to be to fit the 
 		    // whole range between minY and maxY	

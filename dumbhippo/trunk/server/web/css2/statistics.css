@@ -23,6 +23,7 @@ body { font-family: sans-serif; }
 #dhHourSelector .dh-hour {
 	border: 1px solid #666666; 
 	padding: 2px; 
+	cursor: default;
 }
 	
 #dhHourSelector .dh-normal-hour { 

@@ -39,5 +39,8 @@
 	<div id="dhBlocksDiv">
 	</div>
 	<input type="button" value="Add" onclick="dh.statistics.addBlock();"></input>
+	
+	<div id="dhHourSelector">
+	</div>
 </body>
 </html>

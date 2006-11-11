@@ -143,8 +143,8 @@ public class StatisticsWriter extends StatisticsSet {
 					long time = System.currentTimeMillis();
 					long newPosition = (time - header.getStartTime().getTime() + INTERVAL / 2) / INTERVAL;
 					
-					if (newPosition > position) {
-						while (newPosition > position + 1)
+					if (newPosition >= position) {
+						while (newPosition > position)
 							appendSpacerRow();
 						appendRow(time);
 						header.setNumRecords(position);

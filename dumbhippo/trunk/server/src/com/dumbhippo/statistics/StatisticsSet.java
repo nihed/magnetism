@@ -10,7 +10,6 @@ import java.util.Iterator;
  * @author otaylor
  */
 public abstract class StatisticsSet {
-	
 	protected Header header;
 	protected String filename;
 	protected RowStore rowStore;
@@ -36,7 +35,7 @@ public abstract class StatisticsSet {
 	 * @return the end timestamp
 	 */
 	public Date getEndDate() {
-		return new Date(header.getStartTime().getTime() + header.getInterval() * header.getNumRecords());
+		return new Date(header.getStartTime().getTime() + header.getInterval() * (header.getNumRecords() - 1));
 	}
 	
 	/**
@@ -63,10 +62,12 @@ public abstract class StatisticsSet {
 	}
 	
 	/**
-	 * Get an iterator to the data held in the statistics set
+	 * Get an iterator to the data held in the statistics set; the handling of 
+	 *  startDate and endDate is inclusive; if possible we return a set of 
+	 *  points that spans the entire range.
 	 * @param startDate time to start the iterator at
 	 * @param endDate end time for the iterator
-	 * @param timescale timescale (interfval )at which to return data. If you select a 
+	 * @param timescale timescale (interval )at which to return data. If you select a 
 	 *   larger timescale than the timescale at which the data was recorded, then 
 	 *   the fine-grained data will be aggregated to the larger timescale 
 	 * @param columnIndexes the columns from the data set to include in the output;
@@ -85,12 +86,11 @@ public abstract class StatisticsSet {
 			startTime = fileStartTime;
 		if (endTime > fileEndTime)
 			endTime = fileEndTime;
-		
+
 		long startIndex = (startTime - fileStartTime) / interval;
-		// this rounds UP the number of data points we will produce in case aggregation is needed,
-		// if aggregation will not be needed, this produces an index for the end row, where the end 
-		// row is not to be included in the result set 
-		long endIndex = (endTime + interval - 1 - fileStartTime) / interval;
+		// round up; add 1 because the endTime is inclusive, but the
+		// rowStore.getiterator() doesn't include the last row
+		long endIndex = 1 + (endTime + interval - 1 - fileStartTime) / interval;
 		
 		long factor = (timescale.getSeconds() * 1000) / header.getInterval();
 		
