@@ -10,7 +10,7 @@ import org.slf4j.Logger;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.TypeUtils;
 import com.dumbhippo.persistence.CachedFlickrUserPhotoset;
-import com.dumbhippo.services.caches.FlickrUserPhotosetsCache;
+import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.services.FlickrPhotosetView;
 import com.dumbhippo.services.FlickrPhotosets;
 import com.dumbhippo.services.FlickrWebServices;
@@ -42,9 +42,11 @@ public class FlickrUserPhotosetsCacheBean extends AbstractListCacheBean<String,F
 
 	@Override
 	protected void setAllLastUpdatedToZero(String key) {
-		Query q = em.createQuery("UPDATE CachedFlickrUserPhotoset photoset " + 
-				" SET photoset.lastUpdated = 0 " + 
-				" WHERE photoset.ownerId = :ownerId");
+		EJBUtil.prepareUpdate(em, CachedFlickrUserPhotoset.class);
+		
+		Query q = em.createQuery("UPDATE CachedFlickrUserPhotoset " + 
+				" SET lastUpdated = '1970-01-01 00:00:00' " + 
+				" WHERE ownerId = :ownerId");
 		q.setParameter("ownerId", key);
 		int updated = q.executeUpdate();
 		logger.debug("{} cached items expired", updated);

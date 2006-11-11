@@ -138,31 +138,6 @@ public class TransactionRunnerBean implements TransactionRunner {
 	public void runTaskOnTransactionCommitOrRollback(final Runnable runnable) {
 		runTaskOnTransactionComplete(runnable, false);
 	}
-
-	static private String transactionStatusString(int status) {
-		switch (status) {
-		case Status.STATUS_ACTIVE:
-			return "ACTIVE - " + status;
-		case Status.STATUS_COMMITTED:
-			return "COMMITTED - " + status;
-		case Status.STATUS_MARKED_ROLLBACK:
-			return "MARKED_ROLLBACK - " + status;
-		case Status.STATUS_NO_TRANSACTION:
-			return "NO_TRANSACTION - " + status;
-		case Status.STATUS_PREPARED:
-			return "PREPARED - " + status;
-		case Status.STATUS_PREPARING:
-			return "PREPARING - " + status;
-		case Status.STATUS_ROLLEDBACK:
-			return "ROLLEDBACK - " + status;
-		case Status.STATUS_ROLLING_BACK:
-			return "ROLLING_BACK - " + status;
-		case Status.STATUS_UNKNOWN:
-			return "UNKNOWN - " + status;
-		default:
-			return "NOT HANDLED - " + status;
-		}
-	}
 	
 	private void runTaskOnTransactionComplete(final Runnable runnable, final boolean checkCommited) {
 		TransactionManager tm;
@@ -181,8 +156,8 @@ public class TransactionRunnerBean implements TransactionRunner {
 						getPostTransactionExecutor().execute(runnable);
 						//logger.debug("Post-commit task submitted");
 					} else {
-						logger.debug("Not running post-commit task since checkCommited={} and status={}",
-								checkCommited, transactionStatusString(status));
+						logger.debug("Not running post-commit task since checkCommitted={} and status={}",
+								checkCommited, EJBUtil.transactionStatusString(status));
 					}
 				}
 			});

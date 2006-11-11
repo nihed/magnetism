@@ -19,8 +19,9 @@ public class PeriodicJobRunner extends ServiceMBeanSupport implements PeriodicJo
 	private static final Logger logger = GlobalSetup.getLogger(PeriodicJobRunner.class);
 	
 	private static final Class[] jobClasses = {
+		FacebookTrackerPeriodicJob.class,
 		FeedUpdaterPeriodicJob.class,
-		FacebookTrackerPeriodicJob.class
+		FlickrUpdaterPeriodicJob.class
 	};
 	
 	private List<Thread> threads;

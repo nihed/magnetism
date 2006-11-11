@@ -1,6 +1,5 @@
 package com.dumbhippo.server.blocks;
 
-import java.util.Collections;
 import java.util.List;
 
 import com.dumbhippo.XmlBuilder;
@@ -10,13 +9,11 @@ import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.TrackView;
 import com.dumbhippo.server.views.Viewpoint;
 
-public class MusicPersonBlockView extends BlockView {
-	
-	private PersonView userView;
+public class MusicPersonBlockView extends AbstractPersonBlockView {
 	
 	public MusicPersonBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd, PersonView userView) {
-		super(viewpoint, block, ubd);
-		this.userView = userView;
+		super(viewpoint, block, ubd, userView);
+		// we have nothing to populate except the userView, so go ahead and mark populated
 		setPopulated(true);
 	}
 
@@ -24,31 +21,16 @@ public class MusicPersonBlockView extends BlockView {
 		super(viewpoint, block, ubd);
 	}
 	
-	public PersonView getUserView() {
-		return userView;
-	}
-	
-	public void setUserView(PersonView userView) {
-		this.userView = userView;
-	}
 	
 	public List<TrackView> getTrackViews() {
-		return userView.getTrackHistory(); 
+		return getUserView().getTrackHistory(); 
 	}
 
-	@Override
-	public PersonView getPersonSource() {
-	    return userView;	
-	}
 	
 	@Override
 	protected void writeDetailsToXmlBuilder(XmlBuilder builder) {
 		builder.appendEmptyNode("musicPerson",
-				                "userId", userView.getIdentifyingGuid().toString());
-	}
-
-	public List<Object> getReferencedObjects() {
-		return Collections.singletonList((Object)userView);
+				                "userId", getUserView().getIdentifyingGuid().toString());
 	}
 	
 	@Override

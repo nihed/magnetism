@@ -10,7 +10,6 @@ import com.dumbhippo.StringUtils;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.Configuration.PropertyNotFoundException;
-import com.dumbhippo.server.impl.ConfigurationBean;
 
 public class FlickrWebServices extends AbstractXmlRequest<FlickrSaxHandler> {
 
@@ -21,20 +20,30 @@ public class FlickrWebServices extends AbstractXmlRequest<FlickrSaxHandler> {
 
 	private String apiId;
 	
-	public FlickrWebServices(int timeoutMilliseconds, Configuration config) {
-		super(timeoutMilliseconds);
+	static private String loadApiId(Configuration config) {
+		String apiId;
 		try {
-			this.apiId = config.getPropertyNoDefault(HippoProperty.FLICKR_API_ID);
+			apiId = config.getPropertyNoDefault(HippoProperty.FLICKR_API_ID);
 			if (apiId.trim().length() == 0)
 				apiId = null;
 		} catch (PropertyNotFoundException e) {
 			apiId = null;
 		}
-
-		if (apiId == null)
-			logger.warn("Flickr app ID is not set, can't make Flickr web services calls.");
+		return apiId;
+	}
+	
+	public FlickrWebServices(int timeoutMilliseconds, Configuration config) {
+		this(timeoutMilliseconds, loadApiId(config));
 	}
 
+	public FlickrWebServices(int timeoutMilliseconds, String apiId) {
+		super(timeoutMilliseconds);
+		this.apiId = apiId;
+
+		if (this.apiId == null)
+			logger.warn("Flickr app ID is not set, can't make Flickr web services calls.");		
+	}
+	
 	private FlickrSaxHandler doFlickrCall(String method, String... keysAndValues) {
 		StringBuilder sb = new StringBuilder();
 		sb.append("http://www.flickr.com/services/rest/?method=");
@@ -51,7 +60,9 @@ public class FlickrWebServices extends AbstractXmlRequest<FlickrSaxHandler> {
 		}
 
 		String wsUrl = sb.toString();
-		logger.debug("Running Flickr API call {}", wsUrl);
+		
+		// too verbose, since we do it in a periodic "cron"
+		//logger.debug("Running Flickr API call {}", wsUrl);
 		
 		return parseUrl(new FlickrSaxHandler(), wsUrl);
 	}
@@ -119,10 +130,7 @@ public class FlickrWebServices extends AbstractXmlRequest<FlickrSaxHandler> {
 		log4jRoot.addAppender(appender);
 		log4jRoot.setLevel(Level.DEBUG);
 		
-		ConfigurationBean config = new ConfigurationBean();
-		config.init();
-		
-		FlickrWebServices ws = new FlickrWebServices(6000, config);
+		FlickrWebServices ws = new FlickrWebServices(6000, (String)null); // add flickr API id here to test
 		FlickrUser user = ws.lookupFlickrUserByEmail("hp@pobox.com");
 		System.out.println("Got flickr user: " + user);
 		if (user == null)
@@ -142,6 +150,8 @@ public class FlickrWebServices extends AbstractXmlRequest<FlickrSaxHandler> {
 			return;
 		
 		for (FlickrPhotoset photoset : photosets.getSets()) {
+			System.out.println("Photoset title='" + photoset.getTitle() + "' desc='" + photoset.getDescription() + "'");
+			
 			FlickrPhotoset filledPhotoset = ws.lookupPublicPhotoset(photoset.getId(), 1, MAX_PER_PAGE);
 			System.out.println("Filled photoset is:  " + filledPhotoset);
 			if (filledPhotoset == null)

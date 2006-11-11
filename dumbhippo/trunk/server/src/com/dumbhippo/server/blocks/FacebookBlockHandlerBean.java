@@ -15,7 +15,6 @@ import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.BlockKey;
 import com.dumbhippo.persistence.BlockType;
 import com.dumbhippo.persistence.ExternalAccount;
-import com.dumbhippo.persistence.FacebookAccount;
 import com.dumbhippo.persistence.FacebookEvent;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.StackInclusion;

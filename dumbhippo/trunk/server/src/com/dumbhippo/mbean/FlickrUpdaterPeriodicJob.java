@@ -1,6 +1,6 @@
 package com.dumbhippo.mbean;
 
-import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -41,8 +41,10 @@ public class FlickrUpdaterPeriodicJob implements PeriodicJob {
 		// bean method to get a separate transaction for each method on
 		// the updater bean rather than holding a single transaction over the whole
 		// process.
+		EJBUtil.assertNoTransaction();
+		
 		FlickrUpdater updater = EJBUtil.defaultLookup(FlickrUpdater.class);
-		List<String> flickrUserIds = updater.getActiveFlickrUserIds();
+		Set<String> flickrUserIds = updater.getActiveFlickrUserIds();
 		
 		logger.debug("FlickrUpdater slept " + sleepTime / 1000.0 + " seconds, and now has " + flickrUserIds.size() + " users to poll, iteration " + iteration);
 		

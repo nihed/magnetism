@@ -26,6 +26,7 @@ import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.FacebookEvent;
 import com.dumbhippo.persistence.FeedEntry;
+import com.dumbhippo.persistence.FlickrPhotosetStatus;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupMember;
 import com.dumbhippo.persistence.GroupMessage;
@@ -49,7 +50,6 @@ import com.dumbhippo.server.listeners.PostListener;
 import com.dumbhippo.server.listeners.UserCreationListener;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.services.FlickrPhotoView;
-import com.dumbhippo.services.FlickrPhotosetView;
 
 /**
  * See the docs for the Notifier interface.
@@ -59,6 +59,9 @@ import com.dumbhippo.services.FlickrPhotosetView;
  * transaction state; the notifying code or notified code might
  * care, but they can set their own transaction attributes.
  * 
+ * Well, maybe specifying the bean-wide default transaction attribute 
+ * doesn't work:
+ *  http://jira.jboss.com/jira/browse/EJBTHREE-356
  */
 @Stateless
 @TransactionAttribute(TransactionAttributeType.SUPPORTS)
@@ -292,9 +295,15 @@ public class NotifierBean implements Notifier {
 		}
 	}
 
-	public void onFlickrPhotosetsChanged(String flickrId, List<FlickrPhotosetView> allPhotosets) {
+	public void onFlickrPhotosetCreated(FlickrPhotosetStatus photosetStatus) {
 		for (FlickrListener l : getListeners(FlickrListener.class)) {
-			l.onFlickrPhotosetsChanged(flickrId, allPhotosets);
+			l.onFlickrPhotosetCreated(photosetStatus);
 		}
+	}
+
+	public void onFlickrPhotosetChanged(FlickrPhotosetStatus photosetStatus) {
+		for (FlickrListener l : getListeners(FlickrListener.class)) {
+			l.onFlickrPhotosetChanged(photosetStatus);
+		}		
 	}
 }

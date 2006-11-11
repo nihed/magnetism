@@ -98,6 +98,8 @@ public abstract class AbstractBasicCacheBean<KeyType,ResultType,EntityType exten
 	protected abstract void updateEntityFromResult(KeyType key, ResultType result, EntityType entity);
 	
 	public ResultType checkCache(KeyType key) throws NotCachedException {
+		EJBUtil.assertHaveTransaction();
+		
 		EntityType result = queryExisting(key);
 
 		if (result == null) {
@@ -124,6 +126,7 @@ public abstract class AbstractBasicCacheBean<KeyType,ResultType,EntityType exten
 	// null data means to save a negative result
 	@TransactionAttribute(TransactionAttributeType.NEVER)
 	public ResultType saveInCache(final KeyType key, final ResultType data) {
+		EJBUtil.assertNoTransaction();
 		try {
 			return runner.runTaskRetryingOnConstraintViolation(new Callable<ResultType>() {
 				public ResultType call() {

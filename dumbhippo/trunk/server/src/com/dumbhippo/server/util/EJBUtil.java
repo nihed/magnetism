@@ -16,11 +16,17 @@ import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
 import javax.persistence.EntityExistsException;
 import javax.persistence.EntityManager;
+import javax.transaction.Status;
+import javax.transaction.SystemException;
+import javax.transaction.TransactionManager;
 
 import org.hibernate.JDBCException;
 import org.hibernate.NonUniqueObjectException;
+import org.hibernate.Session;
+import org.hibernate.annotations.Cache;
 import org.hibernate.collection.PersistentCollection;
 import org.hibernate.exception.ConstraintViolationException;
+import org.jboss.ejb3.entity.HibernateSession;
 import org.slf4j.Logger;
 
 import com.dumbhippo.ExceptionUtils;
@@ -446,5 +452,85 @@ public class EJBUtil {
 		if (collection instanceof PersistentCollection) {
 			((PersistentCollection)collection).forceInitialization();
 		}
+	}
+	
+	/**
+	 * For each affected entity class, 1) evict it from first-level cache and 2) assert that it's not in the second-level cache.
+	 * @param em
+	 * @param affectedEntityClasses
+	 */
+	public static void prepareUpdate(EntityManager em, Class<?>... affectedEntityClasses) {
+		if (affectedEntityClasses.length == 0)
+			throw new RuntimeException("You need to specify the entity classes involved in the update statement");
+		Session session = ((HibernateSession) em).getHibernateSession();
+		for (Class<?> klass : affectedEntityClasses) {
+			if (klass.isAnnotationPresent(Cache.class))
+				throw new RuntimeException("Entity class " + klass.getName() + " has second-level Cache annotation, so an UPDATE is a bad idea");
+			
+			// We want to throw all objects with the class out of the first level cache. 
+			// Unfortunately, the evict() method on Session takes just one object, not a class.
+			// So instead we sync to the db - flush() - and then just dump the whole first-level cache - clear()
+			// SessionFactory has the method we want (evict-by-entity-name) for the second-level cache, but not useful here.
+			
+			session.flush();
+			session.clear();
+		}
+	}
+
+	public static String transactionStatusString(int status) {
+		switch (status) {
+		case Status.STATUS_ACTIVE:
+			return "ACTIVE-" + status;
+		case Status.STATUS_COMMITTED:
+			return "COMMITTED-" + status;
+		case Status.STATUS_MARKED_ROLLBACK:
+			return "MARKED_ROLLBACK-" + status;
+		case Status.STATUS_NO_TRANSACTION:
+			return "NO_TRANSACTION-" + status;
+		case Status.STATUS_PREPARED:
+			return "PREPARED-" + status;
+		case Status.STATUS_PREPARING:
+			return "PREPARING-" + status;
+		case Status.STATUS_ROLLEDBACK:
+			return "ROLLEDBACK-" + status;
+		case Status.STATUS_ROLLING_BACK:
+			return "ROLLING_BACK-" + status;
+		case Status.STATUS_UNKNOWN:
+			return "UNKNOWN-" + status;
+		default:
+			return "NOT_HANDLED-" + status;
+		}
+	}	
+	
+	public static void assertTransactionStatus(int desired) {
+		TransactionManager tm;
+		try {
+			tm = (TransactionManager) (new InitialContext()).lookup("java:/TransactionManager");
+		} catch (NamingException e) {
+			throw new RuntimeException("no TransactionManager found", e);
+		}
+
+		int txStatus;
+		try {
+			txStatus = tm.getStatus();
+		} catch (SystemException e) {
+			throw new RuntimeException("failed to get tx status", e);
+		}
+		
+		if (txStatus != desired) {
+			// Just warn instead of throw until we figure this out
+			logger.warn("Unexpected tx status {} while expecting {}", transactionStatusString(txStatus),
+					transactionStatusString(desired));
+			//throw new RuntimeException("Unexpected tx status " + transactionStatusString(txStatus) + 
+			//		" expecting " + transactionStatusString(desired));
+		}
+	}
+	
+	public static void assertNoTransaction() {
+		assertTransactionStatus(Status.STATUS_NO_TRANSACTION);
+	}
+	
+	public static void assertHaveTransaction() {
+		assertTransactionStatus(Status.STATUS_ACTIVE);
 	}
 }

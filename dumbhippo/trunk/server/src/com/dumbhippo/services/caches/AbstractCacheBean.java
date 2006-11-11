@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.ThreadUtils;
 import com.dumbhippo.UniqueTaskExecutor;
+import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.services.caches.AbstractCache;
 
 /**
@@ -126,6 +127,7 @@ public abstract class AbstractCacheBean<KeyType,ResultType,EjbIfaceType> impleme
 	
 	@TransactionAttribute(TransactionAttributeType.NEVER)
 	public ResultType fetchFromNet(KeyType key) {
+		EJBUtil.assertNoTransaction();
 		return fetchFromNetImpl(key);
-	}	
+	}
 }

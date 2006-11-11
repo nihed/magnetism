@@ -57,6 +57,8 @@ public abstract class AbstractListCacheBean<KeyType,ResultType,EntityType extend
 		public List<ResultType> call() {
 			logger.debug("Entering AbstractListCacheTask thread for bean {} key {}", ejbIface.getName(), key);
 
+			EJBUtil.assertNoTransaction();
+			
 			// we do this instead of an inner class to work right with threads
 			AbstractListCache<KeyType,ResultType> cache = EJBUtil.defaultLookup(ejbIface);
 			
@@ -152,6 +154,8 @@ public abstract class AbstractListCacheBean<KeyType,ResultType,EntityType extend
 	
 	@TransactionAttribute(TransactionAttributeType.NEVER)
 	public List<ResultType> saveInCache(final KeyType key, List<ResultType> newResults) {
+		EJBUtil.assertNoTransaction();
+		
 		// null results doesn't happen right now but if it did would be the same as empty list
 		if (newResults == null)
 			newResults = Collections.emptyList(); 

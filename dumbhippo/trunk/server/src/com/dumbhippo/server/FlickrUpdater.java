@@ -1,6 +1,7 @@
 package com.dumbhippo.server;
 
 import java.util.List;
+import java.util.Set;
 
 import javax.ejb.Local;
 
@@ -24,7 +25,7 @@ public interface FlickrUpdater extends ExternalAccountsListener {
 	public FlickrUpdateStatus getCachedStatus(User user) throws NotFoundException;
 	public FlickrUpdateStatus getCachedStatus(ExternalAccount flickrAccount) throws NotFoundException;
 	public FlickrUpdateStatus getCachedStatus(String flickrId) throws NotFoundException;
-	public List<String> getActiveFlickrUserIds();
+	public Set<String> getActiveFlickrUserIds();
 	// called by the "cron job"
 	public void periodicUpdate(String flickrId);
 	// called by periodicUpdate if it thinks there are new changes

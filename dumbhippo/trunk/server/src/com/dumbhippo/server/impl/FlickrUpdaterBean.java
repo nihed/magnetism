@@ -1,6 +1,10 @@
 package com.dumbhippo.server.impl;
 
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -17,6 +21,7 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.TypeUtils;
 import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.ExternalAccountType;
+import com.dumbhippo.persistence.FlickrPhotosetStatus;
 import com.dumbhippo.persistence.FlickrUpdateStatus;
 import com.dumbhippo.persistence.Sentiment;
 import com.dumbhippo.persistence.User;
@@ -92,18 +97,23 @@ public class FlickrUpdaterBean implements FlickrUpdater {
 		}
 	}
 	
-	public List<String> getActiveFlickrUserIds() {
+	public Set<String> getActiveFlickrUserIds() {
 		Query q = em.createQuery("SELECT ea.handle FROM ExternalAccount ea WHERE " + 
 				" ea.accountType = " + ExternalAccountType.FLICKR.ordinal() + 
 				" AND ea.sentiment = " + Sentiment.LOVE.ordinal() + 
 				" AND ea.handle IS NOT NULL " + 
 				" AND ea.account.disabled = false AND ea.account.adminDisabled = false");
-		return TypeUtils.castList(String.class, q.getResultList());
+		// we need a set because multiple accounts can have the same flickr account
+		Set<String> results = new HashSet<String>();
+		results.addAll(TypeUtils.castList(String.class, q.getResultList()));
+		return results;
 	}
 
 	// avoid log messages in here that will happen on every call, or it could get noisy
 	@TransactionAttribute(TransactionAttributeType.NEVER)
 	public void periodicUpdate(String flickrId) {
+		EJBUtil.assertNoTransaction();
+		
 		FlickrWebServices ws = new FlickrWebServices(5000, config);
 		
 		// These do NOT use any cache - remember, we're polling periodically for changes.
@@ -163,6 +173,40 @@ public class FlickrUpdaterBean implements FlickrUpdater {
 		}
 	}
 	
+	private void updateUserPhotosetStatuses(String ownerId, List<FlickrPhotosetView> allPhotosets) {
+		Query q = em.createQuery("SELECT setStatus FROM FlickrPhotosetStatus setStatus WHERE " + 
+				"setStatus.ownerId = :ownerId");
+		q.setParameter("ownerId", ownerId);
+		List<FlickrPhotosetStatus> statuses = TypeUtils.castList(FlickrPhotosetStatus.class, q.getResultList());
+		Map<String,FlickrPhotosetView> viewsBySetId = new HashMap<String,FlickrPhotosetView>();
+		for (FlickrPhotosetView view : allPhotosets) {
+			viewsBySetId.put(view.getId(), view);
+		}
+		
+		// for each view we already have a status for, see if it changed
+		for (FlickrPhotosetStatus status : statuses) {
+			FlickrPhotosetView view = viewsBySetId.get(status.getFlickrId());
+			viewsBySetId.remove(status.getFlickrId());
+			// view may be null, then update() will status.setActive(false)
+			if (status.update(view)) {
+				logger.debug("flickr photoset status changed, now {}", status);
+				
+				notifier.onFlickrPhotosetChanged(status);
+			}
+		}
+		
+		// remaining views require creating a new status object
+		for (FlickrPhotosetView view : viewsBySetId.values()) {
+			FlickrPhotosetStatus status = new FlickrPhotosetStatus(ownerId, view.getId());
+			status.update(view);
+			em.persist(status);
+			
+			logger.debug("created new flickr photoset status {}", status);
+			
+			notifier.onFlickrPhotosetCreated(status);
+		}
+	}
+	
 	// compute a "hash" (relies on the most recent photos being first, 
 	// so it always changes if there are new photos)
 	private String computePhotosHash(List<FlickrPhotoView> photoViews) {
@@ -210,37 +254,60 @@ public class FlickrUpdaterBean implements FlickrUpdater {
 		String photosHash = computePhotosHash(photoViews);
 		String photosetsHash = computePhotosetsHash(photosetViews);
 		
-		boolean anyChange = false;
+		boolean photosChanged = false;
+		boolean photosetsChanged = false;
 		
 		if (!updateStatus.getMostRecentPhotos().equals(photosHash)) {
 			logger.debug("Most recent photos changed '{}' -> '{}'",
 					updateStatus.getMostRecentPhotos(), photosHash);
-			anyChange = true;
+			photosChanged = true;
 			updateStatus.setMostRecentPhotos(photosHash);
-			notifier.onMostRecentFlickrPhotosChanged(flickrId, photoViews);
 		}
 		
 		if (!updateStatus.getMostRecentPhotosets().equals(photosetsHash)) {
 			logger.debug("Most recent photosets changed '{}' -> '{}'",
 					updateStatus.getMostRecentPhotosets(), photosetsHash);
-			anyChange = true;
+			photosetsChanged = true;
 			updateStatus.setMostRecentPhotosets(photosetsHash);
-			notifier.onFlickrPhotosetsChanged(flickrId, photosetViews);
 		}
 		
-		if (anyChange) {
+		// Push the updateStatus object to the database. The theory here is that 
+		// it keeps Hibernate from reordering saving the new UpdateStatus vs. 
+		// the other work we're about to do below, which might help avoid 
+		// deadlock situations with the 2nd level cache. 
+		// (If two threads both do A,B that's safer than having one do A,B and
+		// one B,A.) Since we're done with the updateStatus
+		// at this point, it shouldn't hurt efficiency too much to do this.
+		em.flush();
+		
+		if (photosChanged || photosetsChanged) {
 			// If anything changes, drop all the cached photoset contents
 			// to be sure we display all photoset blocks correctly. This
 			// is serious overkill, but avoids a lot of complexity with 
-			// tracking changes to each photoset individually.
+			// tracking changes to each photoset's photo list individually.
 			// However, this approach does not let us restack a photoset
-			// block if the photoset changes; to do that we'd need
-			// a PhotosetUpdateStatus table or something with a "hash" 
-			// just as we have for the recent photos list.
+			// block if the photoset contents change; to do that we'd need
+			// to track a "hash" of the most recent photos in the set in
+			// FlickrPhotosetStatus just as we do for people's total list 
+			// of photos.
 			for (FlickrPhotosetView photoset : photosetViews) {
 				photosetPhotosCache.expireCache(photoset.getId());				
 			}
+			// Again, superstitious predictable ordering (see above)
+			em.flush();
 		}
+
+		// Try to do the notifications after we already did the earlier stuff.
+		// This will stack some blocks, and create/modify FlickrPhotosetStatus objects
+		
+		if (photosChanged)
+			notifier.onMostRecentFlickrPhotosChanged(flickrId, photoViews);
+		
+		// Again, superstitious predictable ordering (see above)
+		em.flush();
+		
+		if (photosetsChanged)
+			updateUserPhotosetStatuses(flickrId, photosetViews);
 	}
 
 	public void onExternalAccountCreated(User user, ExternalAccount external) {
