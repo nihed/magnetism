@@ -1,5 +1,8 @@
 package com.dumbhippo.server.blocks;
 
+import java.util.List;
+
+import com.dumbhippo.Thumbnail;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.ExternalAccountType;
@@ -7,7 +10,7 @@ import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.server.views.Viewpoint;
 
 public class FlickrPhotosetBlockView extends AbstractPersonBlockView
-	implements ExternalAccountBlockView {
+	implements ExternalAccountBlockView, ThumbnailsBlockView {
 
 	public FlickrPhotosetBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd) {
 		super(viewpoint, block, ubd);
@@ -26,5 +29,25 @@ public class FlickrPhotosetBlockView extends AbstractPersonBlockView
 
 	public ExternalAccountType getAccountType() {
 		return ExternalAccountType.FLICKR;
+	}
+
+	public List<Thumbnail> getThumbnails() {
+		// FIXME
+		return null;
+	}
+
+	public int getThumbnailCount() {
+		// FIXME
+		return 0;
+	}
+
+	public String getMoreThumbnailsLink() {
+		// FIXME
+		return null;
+	}
+
+	public String getMoreThumbnailsTitle() {
+		// FIXME
+		return null;
 	}
 }
