@@ -1054,31 +1054,51 @@ public class PostingBoardBean implements PostingBoard {
 		return block.getClickedCount();
 	}
 	
+	public void postViewedBy(final Post post, final User user) {
+		logger.debug("Post {} clicked by {}", post.getId(), user);
+		final long clickTime = System.currentTimeMillis();
+		
+		// We don't actually need to wait for transaction commit to do this (the
+		// transaction is going to be read-only typically), but this avoids having
+		// to write our own code for asynchronous execution
+		runner.runTaskOnTransactionCommit(new Runnable() {
+			public void run() {
+				runner.runTaskRetryingOnConstraintViolation(new Runnable() {
+					public void run() {
+						Post attachedPost = em.find(Post.class, post.getId());
+						User attachedUser = em.find(User.class, user.getId());
+		
+						// Notify the recommender system that a user clicked through, so that ratings can be updated
+						recommenderSystem.addRatingForPostViewedBy(attachedPost, attachedUser);
+						
+						// Update Block/UserBlockData for the new viewer and restack if necessary
+						notifier.onPostClicked(attachedPost, attachedUser, clickTime);
+					}
+				});
+			}
+		});
+		
+	}
+
 	public void postViewedBy(String postId, User user) {
-		logger.debug("Post {} clicked by {}", postId, user);
-		
-		Post post;
-		
 		Guid postGuid;
 		try {
 			postGuid = new Guid(postId);
 		} catch (ParseException e) {
 			throw new RuntimeException("postViewedBy, bad Guid for some reason " + postId, e);
 		}
+		
+		Post post;
 		try {
 			post = loadRawPost(new UserViewpoint(user), postGuid);
 		} catch (NotFoundException e) {
 			throw new RuntimeException("postViewedBy, nonexistent Guid for some reason " + postId, e);
 		}
 		
-		// Notify the recommender system that a user clicked through, so that ratings can be updated
-		recommenderSystem.addRatingForPostViewedBy(post, user);
+		postViewedBy(post, user);
+  	}
 		
-		// Update Block/UserBlockData for the new viewer and restack if necessary
-		notifier.onPostClicked(post, user, System.currentTimeMillis());
-	}
-
-	public int getPostsForCount(Viewpoint viewpoint, Person forPerson) {
+  	public int getPostsForCount(Viewpoint viewpoint, Person forPerson) {
 		return getPostsForCount(viewpoint, forPerson, null);
 	}	
 	

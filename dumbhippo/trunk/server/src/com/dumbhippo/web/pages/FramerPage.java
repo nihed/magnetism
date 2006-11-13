@@ -31,6 +31,7 @@ public class FramerPage {
 	
     private PostingBoard postBoard;
     private PostView post;
+    private boolean isVisit = false;
 	
     public FramerPage() {
 		postBoard = WebEJBUtil.defaultLookup(PostingBoard.class);
@@ -43,14 +44,18 @@ public class FramerPage {
     public String getPostId() {
 		return postId;
     }
+    
+    public void setIsVisit(boolean isVisit) {
+    	this.isVisit = isVisit;
+    }
 
     protected void setPost(PostView post) {
 		this.post = post;
 		this.postId = post.getPost().getId();
 		logger.debug("viewing post: {}", this.postId);
-		if (signin.isValid()) {
+		if (isVisit && signin.isValid()) {
 			UserViewpoint viewpoint = (UserViewpoint)signin.getViewpoint();
-			postBoard.postViewedBy(this.postId, viewpoint.getViewer());
+			postBoard.postViewedBy(post.getPost(), viewpoint.getViewer());
 		}
     }
 

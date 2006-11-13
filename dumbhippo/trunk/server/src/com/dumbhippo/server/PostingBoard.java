@@ -174,6 +174,9 @@ public interface PostingBoard {
 	 * @param postId the ID of the post that was clicked
 	 * @param clicker person who clicked on the post
 	 */
+	public void postViewedBy(Post post, User clicker);
+	// Should get rid of this variant, but it's slightly a pain, due to the
+	// usage from web servlets
 	public void postViewedBy(String postId, User clicker);
 	
 	/**

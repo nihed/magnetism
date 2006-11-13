@@ -77,7 +77,7 @@ public class ChatWindowPage {
 		logger.debug("chatting about post: {}", getPostId());
 		if (signin.isValid()) {
 			UserViewpoint viewpoint = (UserViewpoint)signin.getViewpoint();
-			postBoard.postViewedBy(getPostId(), viewpoint.getViewer());
+			postBoard.postViewedBy(post.getPost(), viewpoint.getViewer());
 		}
     }
 

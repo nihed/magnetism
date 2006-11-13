@@ -6,6 +6,7 @@
 <%@ taglib tagdir="/WEB-INF/tags/3" prefix="dht3" %>
 
 <dh:bean id="framer" class="com.dumbhippo.web.pages.FramerPage" scope="request"/>
+<jsp:setProperty name="framer" property="isVisit" value="true"/>
 <jsp:setProperty name="framer" property="postId" param="post"/>
 
 <c:set var="title" value="${framer.post.title}" scope="page"/>

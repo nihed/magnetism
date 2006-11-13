@@ -59,8 +59,6 @@ gboolean         hippo_connection_get_connected             (HippoConnection  *c
 /* signin returns TRUE if we're waiting on the user to set the login cookie, FALSE if we already have it */
 gboolean         hippo_connection_signin                    (HippoConnection  *connection);
 void             hippo_connection_signout                   (HippoConnection  *connection);
-void             hippo_connection_notify_post_clicked       (HippoConnection  *connection,
-                                                             const char       *post_id);
 void             hippo_connection_set_post_ignored          (HippoConnection  *connection,
                                                              const char       *post_id);
 void             hippo_connection_do_invite_to_group        (HippoConnection  *connection,

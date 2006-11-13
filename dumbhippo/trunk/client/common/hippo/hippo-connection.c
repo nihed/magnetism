@@ -531,31 +531,6 @@ hippo_connection_signout(HippoConnection *connection)
     hippo_connection_disconnect(connection);
 }
 
-void 
-hippo_connection_notify_post_clicked(HippoConnection *connection,
-                                     const char      *post_id)
-{
-    LmMessage *message;
-    LmMessageNode *node;
-    LmMessageNode *method;
-    LmMessageNode *guid_arg;
-            
-    g_return_if_fail(HIPPO_IS_CONNECTION(connection));
-    
-    message = lm_message_new_with_sub_type(HIPPO_ADMIN_JID, LM_MESSAGE_TYPE_IQ,
-                                           LM_MESSAGE_SUB_TYPE_SET);
-    node = lm_message_get_node(message);
-
-    method = lm_message_node_add_child (node, "method", NULL);
-    lm_message_node_set_attribute(method, "xmlns", "http://dumbhippo.com/protocol/servermethod");
-    lm_message_node_set_attribute(method, "name", "postClicked");
-    guid_arg = lm_message_node_add_child (method, "arg", NULL);
-    lm_message_node_set_value (guid_arg, post_id);
-
-    hippo_connection_send_message(connection, message, SEND_MODE_AFTER_AUTH);
-
-    lm_message_unref(message);
-}
 static void
 add_track_props(LmMessageNode *node,
                 char         **keys,
@@ -2137,33 +2112,6 @@ hippo_connection_parse_post(HippoConnection *connection,
 }
 
 static gboolean
-hippo_connection_parse_post_stream(HippoConnection *connection,
-                                   LmMessageNode   *node,
-                                   const char      *func_name)
-{
-    LmMessageNode *subchild;
-    for (subchild = node->children; subchild; subchild = subchild->next) {
-        if (is_entity(subchild)) {
-            if (!hippo_connection_parse_entity(connection, subchild)) {
-                g_warning("failed to parse entity in %s", func_name);
-                return FALSE;
-            }
-        } else if (is_post(subchild)) {
-            if (!hippo_connection_parse_post(connection, subchild, FALSE, NULL)) {
-                g_warning("failed to parse post in %s", func_name);
-                return FALSE;
-            }
-        } else if (is_live_post(subchild)) {
-            if (!hippo_connection_parse_live_post(connection, subchild, NULL)) {
-                g_warning("failed to parse live post in %s", func_name);
-                return FALSE;
-            }
-        }
-    }
-    return TRUE;
-}
-
-static gboolean
 hippo_connection_parse_post_data_full(HippoConnection *connection,
                                       LmMessageNode   *node,
                                       gboolean         is_new,
@@ -3131,32 +3079,6 @@ handle_active_posts_changed(HippoConnection *connection,
 }
 
 static gboolean
-handle_hotness_changed(HippoConnection *connection,
-                       LmMessage       *message)
-{
-    HippoHotness hotness;
-    const char *hotness_str;
-    LmMessageNode *child;
-
-    if (lm_message_get_sub_type(message) != LM_MESSAGE_SUB_TYPE_HEADLINE)
-        return FALSE;
-        
-    child = find_child_node(message->node, "http://dumbhippo.com/protocol/hotness", "hotness");
-    if (!child)
-        return FALSE;
-    hotness_str = lm_message_node_get_attribute(child, "value");
-    if (!hotness_str) {
-        g_warning("No hotness value in hotness message");
-        return TRUE;
-    }
-    hotness = hotness_from_string(hotness_str);
-
-    hippo_data_cache_set_hotness(connection->cache, hotness);
-
-    return TRUE;
-}
-
-static gboolean
 handle_prefs_changed(HippoConnection *connection,
                      LmMessage       *message)
 {
@@ -3323,10 +3245,6 @@ handle_message (LmMessageHandler *handler,
         return LM_HANDLER_RESULT_REMOVE_MESSAGE;
     }
 
-    if (handle_hotness_changed(connection, message)) {
-        return LM_HANDLER_RESULT_REMOVE_MESSAGE;
-    }
-    
     if (handle_prefs_changed(connection, message)) {
         return LM_HANDLER_RESULT_REMOVE_MESSAGE;
     }
