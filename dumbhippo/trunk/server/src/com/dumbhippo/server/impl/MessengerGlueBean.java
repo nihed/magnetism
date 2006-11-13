@@ -23,7 +23,6 @@ import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.live.ChatRoomEvent;
-import com.dumbhippo.live.LivePost;
 import com.dumbhippo.live.LiveState;
 import com.dumbhippo.live.UserChangedEvent;
 import com.dumbhippo.persistence.Account;
@@ -35,7 +34,6 @@ import com.dumbhippo.persistence.GroupMessage;
 import com.dumbhippo.persistence.InvitationToken;
 import com.dumbhippo.persistence.MembershipStatus;
 import com.dumbhippo.persistence.MySpaceBlogComment;
-import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.PostMessage;
 import com.dumbhippo.persistence.PostVisibility;
@@ -62,6 +60,7 @@ import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.PromotionCode;
 import com.dumbhippo.server.ServerStatus;
 import com.dumbhippo.server.TransactionRunner;
+import com.dumbhippo.server.blocks.PostBlockHandler;
 import com.dumbhippo.server.views.EntityView;
 import com.dumbhippo.server.views.GroupView;
 import com.dumbhippo.server.views.PersonView;
@@ -87,6 +86,9 @@ public class MessengerGlueBean implements MessengerGlue {
 
 	@EJB
 	private PostingBoard postingBoard;
+	
+	@EJB
+	private PostBlockHandler postBlockHandler;
 	
 	@EJB
 	private MySpaceTracker mySpaceTracker;
@@ -645,7 +647,6 @@ public class MessengerGlueBean implements MessengerGlue {
 	public String getPostsXml(Guid userId, Guid id, String elementName) {
 		User user = getUserFromGuid(userId);
 		UserViewpoint viewpoint = new UserViewpoint(user);
-		LiveState liveState = LiveState.getInstance();
 		List<PostView> views;
 		
 		if (id != null) {
@@ -669,18 +670,6 @@ public class MessengerGlueBean implements MessengerGlue {
 		Set<EntityView> viewerEntities = new HashSet<EntityView>();
 		
 		for (PostView postView : views) {
-			LivePost lpost = liveState.getLivePost(postView.getPost().getGuid());
-			for (Guid guid : lpost.getViewers()) {
-				Person viewer;
-				try {
-					viewer = identitySpider.lookupGuid(Person.class, guid);
-				} catch (NotFoundException e) {
-					throw new RuntimeException(e);
-				}
-				viewerEntities.add(personViewer.getPersonView(viewpoint, viewer));
-			}
-			
-			
 			for (EntityView ev : postingBoard.getReferencedEntities(viewpoint, postView.getPost())) {
 				viewerEntities.add(ev);
 			}			
@@ -692,8 +681,6 @@ public class MessengerGlueBean implements MessengerGlue {
 		
 		for (PostView postView : views) {
 			builder.append(postView.toXmlOld());
-			LivePost lpost = liveState.getLivePost(postView.getPost().getGuid()); 
-			builder.append(lpost.toXml());
 		}
 		
 		builder.closeElement();
@@ -703,7 +690,8 @@ public class MessengerGlueBean implements MessengerGlue {
 	public void setPostIgnored(Guid userId, Guid postId, boolean ignore) throws NotFoundException, ParseException {
 		User user = getUserFromGuid(userId);
 		Post post = postingBoard.loadRawPost(new UserViewpoint(user), postId);
-		postingBoard.setPostIgnored(user, post, ignore);
+		
+		postBlockHandler.setPostHushed(new UserViewpoint(user), post, ignore);
 	}
 
 	public String getGroupXml(Guid userId, Guid groupId) throws NotFoundException {

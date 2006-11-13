@@ -11,7 +11,6 @@ import javax.persistence.Entity;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
-import javax.persistence.OneToMany;
 import javax.persistence.Transient;
 
 import org.hibernate.annotations.Cache;
@@ -54,7 +53,6 @@ public class Post extends GuidPersistable {
 	private Set<Resource> expandedRecipients;
 	transient private boolean cachedUrlUpdated;
 	transient private URL cachedUrl;
-	private Set<PersonPostData> personPostData;
 	
 	private void initMissing() {
 		if (visibility == null)
@@ -67,8 +65,6 @@ public class Post extends GuidPersistable {
 			resources = new HashSet<Resource>();
 		if (expandedRecipients == null)
 			expandedRecipients = new HashSet<Resource>();
-		if (personPostData == null)
-			personPostData = new HashSet<PersonPostData>();
 	}
 	
 	protected Post() {
@@ -336,22 +332,6 @@ public class Post extends GuidPersistable {
 		cachedPostInfo = postInfo;
 		if (cachedPostInfo != null)
 			cachedPostInfo.makeImmutable();
-	}
-	
-	@OneToMany(mappedBy="post")
-	@Cache(usage=CacheConcurrencyStrategy.TRANSACTIONAL)
-	public Set<PersonPostData> getPersonPostData() {
-		return personPostData;
-	}
-	
-	/**
-	 * Only hibernate should call this probably
-	 * @param datas
-	 */
-	protected void setPersonPostData(Set<PersonPostData> datas) {
-		if (datas == null)
-			throw new IllegalArgumentException("null");
-		this.personPostData = datas;
 	}
 	
 	@Transient 

@@ -13,7 +13,6 @@ import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupFeed;
 import com.dumbhippo.persistence.GuidPersistable;
 import com.dumbhippo.persistence.Person;
-import com.dumbhippo.persistence.PersonPostData;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.PostMessage;
 import com.dumbhippo.persistence.Resource;
@@ -165,9 +164,7 @@ public interface PostingBoard {
 	 */
 	public Set<EntityView> getReferencedEntities(Viewpoint viewpoint, Post post);
 		
-	public List<PersonPostData> getPostViewers(Viewpoint viewpoint, Guid guid, int max);
-	
-	public int getPostViewerCount(Guid guid);
+	public int getPostViewerCount(Post post);
 
 	/**
 	 * Notifies system that the post was viewed by the given person.
@@ -191,15 +188,6 @@ public interface PostingBoard {
 	public List<PostMessage> getNewestPostMessages(Post post, int maxResults);
 	
 	public List<ChatMessageView> viewPostMessages(List<PostMessage> messages, Viewpoint viewpoint);
-	
-	/**
-	 * Count of recent messages that were posted in the chatroom about this post.
-	 * 
-	 * @param post the post the look up the messages for
-	 * @param seconds number of seconds that count as "recent"
-	 * @return count of how many messages have happened in the time window 
-	 */
-	public int getRecentPostMessageCount(Post post, int seconds);
 	
 	/**
 	 * Add a new message that was sent to the chatroom about this post
@@ -246,26 +234,6 @@ public interface PostingBoard {
 	 */
 	public void setFavoritePost(UserViewpoint viewpoint, Post post, boolean favorite);
 
-	/**
-	 * Record whether ornot the specified user wants to ignore future notifications about
-	 * a particular post.
-	 * 
-	 * @param user user who wishes to ignore a post
-	 * @param post post to be ignored
-	 * @param ignore true iff future notifications should be ignored
-	 */
-	public void setPostIgnored(User user, Post post, boolean ignore);
-	
-	/**
-	 * Returns whether or not the specified user wants to ignore notifications
-	 * about a post.
-	 * 
-	 * @param user user in question
-	 * @param post post in question
-	 * @return true iff post notifications should be ignored
-	 */
-	public boolean getPostIgnored(User user, Post post);
-	
 	/**
 	 * Determines whether a post is sufficiently interesting to one of the recipients
 	 * to be worth sending an email notification for it. This is currently defined

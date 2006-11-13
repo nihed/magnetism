@@ -8,7 +8,6 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.live.LiveObject;
-import com.dumbhippo.live.LivePost;
 import com.dumbhippo.live.LiveState;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.Configuration;
@@ -26,7 +25,6 @@ public class AdminPage extends AbstractSigninRequiredPage {
 	private LiveState liveState;	
 	
 	private Set<PersonView> cachedLiveUsers;
-	private Set<LivePost> livePosts;
  	private List<PersonView> users;
 	
 	private int systemInvitations;
@@ -78,16 +76,6 @@ public class AdminPage extends AbstractSigninRequiredPage {
 	
 	public int getAvailableLiveUsersCount() {
 		return liveState.getLiveUserAvailableCount();
-	}
-	
-	public Set<LivePost> getLivePosts() {
-		if (livePosts == null)
-			livePosts = liveState.getLivePostSnapshot();
-		return livePosts;
-	}
-	
-	public int getLivePostsCount() {
-		return getLivePosts().size();
 	}
 	
 	public int getSystemInvitations() {

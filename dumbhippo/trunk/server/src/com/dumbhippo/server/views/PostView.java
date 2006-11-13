@@ -15,13 +15,13 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.StringUtils;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.identity20.Guid;
-import com.dumbhippo.live.LivePost;
-import com.dumbhippo.live.LiveState;
+import com.dumbhippo.live.PresenceService;
+import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.FeedPost;
-import com.dumbhippo.persistence.PersonPostData;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.postinfo.PostInfo;
 import com.dumbhippo.postinfo.PostInfoType;
 import com.dumbhippo.server.formatters.AmazonFormatter;
@@ -53,7 +53,7 @@ public class PostView implements ObjectView {
 	private PostFormatter formatter;
 	private Resource mailRecipient;
 	private Viewpoint viewpoint;
-	private LivePost livePost;
+	private int totalViewers;
 	private boolean favorite;
 	private boolean ignored;
 	private boolean toWorld;
@@ -80,19 +80,22 @@ public class PostView implements ObjectView {
 	 * @param ejbContext current EJB context (only accessed inside constructor)
 	 * @param p the post to view
 	 * @param poster the person who posted the post
-	 * @param ppd information about the relationship of the viewer to the post, may be null
+	 * @param block object for this post
+	 * @param ubd information about the relationship of the viewer to the post, may be null
 	 * @param chatRoom the associated chatRoom, or null
 	 * @param lastFewMessages the last few chat room messages, or null
 	 * @param recipientList the list of (visible) recipients of the post
 	 * @param viewpoint who is looking at the post
 	 */
-	public PostView(EJBContext ejbContext, Post p, EntityView poster, PersonPostData ppd, List<EntityView>recipientList, Viewpoint viewpoint) {
+	public PostView(EJBContext ejbContext, Post p, EntityView poster, Block block, UserBlockData ubd, List<EntityView>recipientList, Viewpoint viewpoint) {
 		this(p, Context.WEB_BUBBLE);
 		posterView = poster;
-		viewerHasViewed = (ppd != null && ppd.getClickedDate() != null);
+		viewerHasViewed = (ubd != null && ubd.isClicked());
 		recipients = recipientList;
 		this.viewpoint = viewpoint;
 		this.toWorld = p.isToWorld();
+		
+		totalViewers = block.getClickedCount();
 	
 		if (p instanceof FeedPost) {
 			feedFavicon = ((FeedPost)p).getFeed().getFeed().getFavicon();
@@ -101,7 +104,7 @@ public class PostView implements ObjectView {
 		if (viewpoint instanceof UserViewpoint) {
 			User viewer = ((UserViewpoint) viewpoint).getViewer();
 			this.favorite = viewer.getAccount().getFavoritePosts().contains(post);
-			this.ignored = (ppd != null && ppd.isIgnored());
+			this.ignored = (ubd != null && ubd.isIgnored());
 		}
 		
 		initFormatter(ejbContext);
@@ -217,6 +220,10 @@ public class PostView implements ObjectView {
 		return true;
 	}
 
+	public int getTotalViewers() {
+		return totalViewers;
+	}
+	
 	public boolean isFavorite() {
 		return favorite;
 	}
@@ -240,6 +247,10 @@ public class PostView implements ObjectView {
 //				return memberlist;
 	}
 
+	public int getChattingUserCount() {
+		return PresenceService.getInstance().getPresentUsers("/rooms/" + post.getId(), 2).size();
+	}
+	
 	public Collection<String> getSearchTerms() {
 		if (search != null) {
 			String[] terms = StringUtils.splitWords(search);
@@ -305,6 +316,7 @@ public class PostView implements ObjectView {
 							"postDate", Long.toString(post.getPostDate().getTime()),
 							"toWorld", Boolean.toString(isToWorld()),
 							"viewed", Boolean.toString(isViewerHasViewed()),
+							"totalViewers", Integer.toString(getTotalViewers()),
 							"favorite", Boolean.toString(favorite));
 							
 		builder.appendTextNode("title", post.getTitle());
@@ -318,13 +330,5 @@ public class PostView implements ObjectView {
 		builder.closeElement();
 		
 		builder.closeElement();
-	}
-
-	public LivePost getLivePost() {
-		if (livePost == null) {
-			LiveState liveState = LiveState.getInstance();
-			livePost = liveState.getLivePost(post.getGuid());
-		}
-		return livePost;
 	}
 }

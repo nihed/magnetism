@@ -2,10 +2,8 @@ package com.dumbhippo.server.impl;
 
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import javax.ejb.EJB;
 import javax.ejb.EJBContext;
@@ -24,11 +22,8 @@ import com.dumbhippo.StringUtils;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.RandomToken;
-import com.dumbhippo.live.LivePost;
-import com.dumbhippo.live.LiveState;
 import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.InvitationToken;
-import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
@@ -45,13 +40,11 @@ import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.PostType;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.Configuration.PropertyNotFoundException;
-import com.dumbhippo.server.views.EntityView;
 import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.PersonViewExtra;
 import com.dumbhippo.server.views.PostView;
 import com.dumbhippo.server.views.SystemViewpoint;
 import com.dumbhippo.server.views.UserViewpoint;
-import com.dumbhippo.server.views.Viewpoint;
 
 /**
  * Send out messages when events happen (for now, when a link is shared).
@@ -109,43 +102,6 @@ public class MessageSenderBean implements MessageSender {
 	
 	private XMPPSender xmppSender;
 	private EmailSender emailSender;
-	
-	private static class LivePostChangedExtension implements PacketExtension {
-
-		private static final String ELEMENT_NAME = "livePostChanged";
-
-		private static final String NAMESPACE = "http://dumbhippo.com/protocol/post";
-		
-		private LivePost lpost;
-		private PostView post;
-		private Set<EntityView> viewerEntities;
-		
-		public String toXML() {
-			XmlBuilder builder = new XmlBuilder();
-			builder.openElement(ELEMENT_NAME, "xmlns", NAMESPACE);
-			for (EntityView ev : viewerEntities) {
-				ev.writeToXmlBuilderOld(builder);
-			}
-			post.writeToXmlBuilderOld(builder);
-			builder.append(lpost.toXml());
-			builder.closeElement();
-			return builder.toString();
-		}
-		
-		public LivePostChangedExtension(PostView pv, LivePost lpost, Set<EntityView> viewerEntities) {
-			this.post = pv;
-			this.lpost = lpost;
-			this.viewerEntities = viewerEntities;
-		}
-
-		public String getElementName() {
-			return ELEMENT_NAME;
-		}
-
-		public String getNamespace() {
-			return NAMESPACE;
-		}
-	}	
 	
 	private static class MySpaceNameChangedExtension implements PacketExtension {
 		private static final String ELEMENT_NAME = "mySpaceNameChanged";
@@ -293,34 +249,6 @@ public class MessageSenderBean implements MessageSender {
 		public synchronized void sendPostNotification(User recipient, Post post, List<User> viewers, PostType postType) {
 		}
 		
-		public synchronized void sendLivePostChanged(User user, LivePost lpost, PostView post) {
-			XMPPConnection connection;
-			try {
-				connection = getConnection();
-			} catch (NotConnectedException e) {
-				logger.warn("Not sending live post changed because not connected to xmpp: {}", e.getMessage());
-				return;
-			}
-			Message message = createMessageFor(user, Message.Type.HEADLINE);
-			Set<EntityView> viewerEntities = new HashSet<EntityView>();
-			Viewpoint viewpoint = new UserViewpoint(user);
-			for (Guid guid : lpost.getViewers()) {
-				Person viewer;
-				try {
-					viewer = identitySpider.lookupGuid(Person.class, guid);
-				} catch (NotFoundException e) {
-					throw new RuntimeException(e);
-				}
-				viewerEntities.add(personViewer.getPersonView(viewpoint, viewer));
-			}
-			for (EntityView ev : postingBoard.getReferencedEntities(viewpoint, post.getPost())) {
-				viewerEntities.add(ev);
-			}
-			message.addExtension(new LivePostChangedExtension(post, lpost, viewerEntities));
-			logger.debug("Sending livePostChanged message to {}", message.getTo());
-			connection.sendPacket(message);
-		}
-
 		public void sendMySpaceNameChangedNotification(User user) {
 			XMPPConnection connection;
 			try {
@@ -594,42 +522,6 @@ public class MessageSenderBean implements MessageSender {
 		} else {
 			throw new IllegalStateException("Don't know how to send a notification to resource: " + recipient);
 		}
-	}
-
-	public void sendLivePostChanged(LivePost lpost, Guid excludeId) {
-		Post post;
-		try {
-			post = postingBoard.loadRawPost(SystemViewpoint.getInstance(), lpost.getGuid());
-		} catch (NotFoundException e) {
-			throw new RuntimeException(e);
-		}
-		for (Resource recipientResource : postingBoard.getPostRecipients(post)) {
-			User recipient = identitySpider.getUser(recipientResource);	
-			if (recipient != null) {
-				if (recipient.getGuid().equals(excludeId))
-					continue;						
-				try {
-					PostView postView = postingBoard.loadPost(new UserViewpoint(recipient), post.getGuid());
-					xmppSender.sendLivePostChanged(recipient, lpost, postView);
-				} catch (NotFoundException e) {
-				// User doesn't have permission to view a post where they were in expandedRecipients(?)
-				}
-			}
-		}
-	}
-	
-	/**
-	 * This method sends a post change notification to just a particular
-	 * user.  It is used currently when the "ignored" state on a post
-	 * changes. 
-	 * 
-	 * @param viewpoint the viewpoint of the user
-	 * @param post post in question
-	 */
-	public void sendPostViewChanged(UserViewpoint viewpoint, Post post) {
-		PostView postView = postingBoard.getPostView(viewpoint, post);
-		LivePost lpost = LiveState.getInstance().getLivePost(post.getGuid());
-		xmppSender.sendLivePostChanged(viewpoint.getViewer(), lpost, postView);		
 	}
 
 	public void sendMySpaceNameChangedNotification(User user) {

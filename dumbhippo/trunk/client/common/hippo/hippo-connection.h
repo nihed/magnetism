@@ -97,9 +97,6 @@ void             hippo_connection_request_chat_room_details (HippoConnection *co
                                                              HippoChatRoom   *room);
 
 void     hippo_connection_request_prefs             (HippoConnection *connection);
-void     hippo_connection_request_recent_posts      (HippoConnection *connection);
-void     hippo_connection_request_post              (HippoConnection *connection,
-                                                     const char      *post_id);
 void     hippo_connection_request_hotness           (HippoConnection *connection);
 void     hippo_connection_request_blocks            (HippoConnection *connection,
                                                      gint64           last_timestamp);

@@ -39,11 +39,10 @@ import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.live.GroupEvent;
 import com.dumbhippo.live.LiveState;
-import com.dumbhippo.live.PostChatEvent;
 import com.dumbhippo.live.PostCreatedEvent;
-import com.dumbhippo.live.PostViewedEvent;
 import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.AccountClaim;
+import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.FeedEntry;
 import com.dumbhippo.persistence.FeedPost;
 import com.dumbhippo.persistence.Group;
@@ -54,12 +53,12 @@ import com.dumbhippo.persistence.GuidPersistable;
 import com.dumbhippo.persistence.InvitationToken;
 import com.dumbhippo.persistence.MembershipStatus;
 import com.dumbhippo.persistence.Person;
-import com.dumbhippo.persistence.PersonPostData;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.PostMessage;
 import com.dumbhippo.persistence.PostVisibility;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.postinfo.NodeName;
 import com.dumbhippo.postinfo.PostInfo;
 import com.dumbhippo.postinfo.PostInfoType;
@@ -86,6 +85,7 @@ import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.RecommenderSystem;
 import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.XmppMessageSender;
+import com.dumbhippo.server.blocks.PostBlockHandler;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.util.GuidNotFoundException;
 import com.dumbhippo.server.views.AnonymousViewpoint;
@@ -125,6 +125,10 @@ public class PostingBoardBean implements PostingBoard {
 	
 	@EJB
 	private PostInfoSystem infoSystem;
+	
+	@EJB
+	@IgnoreDependency
+	private PostBlockHandler postBlockHandler;
 	
 	@EJB
 	private InvitationSystem invitationSystem;
@@ -496,23 +500,6 @@ public class PostingBoardBean implements PostingBoard {
 		});
 	}
 
-	private PersonPostData getPersonPostData(User user, Post post) {
-		for (PersonPostData ppd : post.getPersonPostData()) {
-			Person p = ppd.getPerson();
-			if (!(p instanceof User)) // possible? FIXME decide for sure
-				continue;
-			if (user.equals(p)) {
-				return ppd;
-			}
-		}
-		return null;
-	}
-	
-	private PersonPostData getPersonPostData(UserViewpoint viewpoint, Post post) {
-		return getPersonPostData(viewpoint.getViewer(), post);
-	}	
-	
-	
 	/*
 	 * CAREFUL: These queries have to be kept in sync with the Java code in 
 	 * canViewPost() 
@@ -665,21 +652,27 @@ public class PostingBoardBean implements PostingBoard {
 			logger.debug("Updated, post info now null");
 		*/
 		
-		try {
-			PersonPostData ppd;
-			if (viewpoint instanceof UserViewpoint)
-				ppd = getPersonPostData((UserViewpoint)viewpoint, post);
-			else
-				ppd = null;
-			
-			return new PostView(ejbContext, post, 
-					getPosterView(viewpoint, post),
-					ppd,
-					recipients,
-					viewpoint);
-		} catch (Exception e) {
-			throw new RuntimeException(e);
+		UserBlockData ubd = null;
+		if (viewpoint instanceof UserViewpoint) {
+			try {
+				ubd = postBlockHandler.lookupUserBlockData((UserViewpoint)viewpoint, post);
+			} catch (NotFoundException e) {
+				// No UserBlockData, presumably not a recipient
+			}
 		}
+		
+		Block block;
+		if (ubd != null)
+			block = ubd.getBlock();
+		else
+			block = postBlockHandler.lookupBlock(post);
+		
+		return new PostView(ejbContext, post, 
+				getPosterView(viewpoint, post),
+				block,
+				ubd,
+				recipients,
+				viewpoint);
 	}
 	
 	private List<PostView> getPostViews(Viewpoint viewpoint, Query q, String search, int start, int max) {
@@ -1056,54 +1049,9 @@ public class PostingBoardBean implements PostingBoard {
 		return getPostView(viewpoint, p);
 	}
 
-    public List<PersonPostData> getPostViewers(Viewpoint viewpoint, Guid guid, int max) {
-    	if (!(viewpoint == null || viewpoint instanceof SystemViewpoint))
-    		throw new IllegalArgumentException("getPostViewers is not implemented for user viewpoints");
-    	List<PersonPostData> viewers = new ArrayList<PersonPostData>();
-    	Post post;
-		try {
-			post = loadRawPost(viewpoint, guid);
-		} catch (NotFoundException e) {
-			// FIXME really this should throw as a checked exception probably
-			// (or, why doesn't this method just take a Post anyway?)
-			throw new RuntimeException("post not found", e);
-		}
-		for (PersonPostData ppd : post.getPersonPostData()) {
-			if (ppd.getClickedDate() != null)
-				viewers.add(ppd);
-		}
-		 
-		// sort descending by view date
-		Collections.sort(viewers, new Comparator<PersonPostData>() {
-
-			public int compare(PersonPostData ppd1, PersonPostData ppd2) {
-				long date1 = ppd1.getClickedDate().getTime();
-				long date2 = ppd2.getClickedDate().getTime();
-				if (date1 < date2)
-					return 1; /* descending! */
-				else if (date1 > date2)
-					return -1;
-				else
-					return 0;
-			}
-			
-		});
-
-		if (viewers.size() > max)
-			viewers.subList(max, viewers.size()).clear();
-		return viewers;
-    }
-    
-	public int getPostViewerCount(Guid guid) {
-    	Post post;
-		try {
-			post = loadRawPost(SystemViewpoint.getInstance(), guid);
-		} catch (NotFoundException e) {
-			// FIXME really this should throw as a checked exception probably
-			// (or, why doesn't this method just take a Post anyway?)
-			throw new RuntimeException("post not found", e);
-		}
-		return post.getPersonPostData().size();
+	public int getPostViewerCount(Post post) {
+		Block block = postBlockHandler.lookupBlock(post);
+		return block.getClickedCount();
 	}
 	
 	public void postViewedBy(String postId, User user) {
@@ -1126,20 +1074,8 @@ public class PostingBoardBean implements PostingBoard {
 		// Notify the recommender system that a user clicked through, so that ratings can be updated
 		recommenderSystem.addRatingForPostViewedBy(post, user);
 		
-		// Now update the per-user post data
-		PersonPostData ppd = getOrCreatePersonPostData(user, post);
-		boolean previouslyViewed = ppd.getClickedDate() != null;
-		ppd.setClicked();
-		setPostIgnored(user, post, false); // Since they viewed it, they implicitly un-ignore it
-		
-		// pass the clicked info over to our new way of recording it also...
-		notifier.onPostClicked(post, user, ppd.getClickedDateAsLong());
-		
-		if (!previouslyViewed) {
-			LiveState.getInstance().queueUpdate(new PostViewedEvent(postGuid, user.getGuid(), ppd.getClickedDate()));
-		} else {
-			logger.debug("Post {} had already been clicked by {}", postId, user);
-		}
+		// Update Block/UserBlockData for the new viewer and restack if necessary
+		notifier.onPostClicked(post, user, System.currentTimeMillis());
 	}
 
 	public int getPostsForCount(Viewpoint viewpoint, Person forPerson) {
@@ -1243,15 +1179,6 @@ public class PostingBoardBean implements PostingBoard {
 		return TypeUtils.castList(PostMessage.class, messages);		
 	}
 	
-	public int getRecentPostMessageCount(Post post, int seconds) {
-		Object result = em.createQuery("SELECT COUNT(pm) FROM PostMessage pm WHERE pm.post = :post AND pm.timestamp >= :oldestTimestamp")
-		.setParameter("post", post)
-		.setParameter("oldestTimestamp", new Date(System.currentTimeMillis() - seconds * 1000))
-		.getSingleResult();		
-		return ((Number) result).intValue();
-	}
-	
-
 	public List<ChatMessageView> viewPostMessages(List<PostMessage> messages, Viewpoint viewpoint) {
 		List<ChatMessageView> viewedMsgs = new ArrayList<ChatMessageView>();
 		for (PostMessage m : messages) {
@@ -1265,7 +1192,6 @@ public class PostingBoardBean implements PostingBoard {
 		em.persist(postMessage);
 		
 		notifier.onPostMessageCreated(postMessage);
-		LiveState.getInstance().queueUpdate(new PostChatEvent(post.getGuid()));
 	}
 
 	public Set<EntityView> getReferencedEntities(Viewpoint viewpoint, Post post) {
@@ -1331,43 +1257,6 @@ public class PostingBoardBean implements PostingBoard {
 			account.addFavoritePost(post);
 		else
 			account.removeFavoritePost(post);
-	}
-	
-	public PersonPostData getOrCreatePersonPostData(final User user, final Post post) {
-		try {
-			return runner.runTaskThrowingConstraintViolation(new Callable<PersonPostData>() {
-				public PersonPostData call() {
-					PersonPostData ppd = getPersonPostData(user, post);
-
-					if (ppd == null) {
-						ppd = new PersonPostData(user, post);
-						em.persist(ppd);
-						post.getPersonPostData().add(ppd);							
-					}
-					return ppd;
-				}
-			});
-		} catch (Exception e) {
-			ExceptionUtils.throwAsRuntimeException(e);
-			return null;
-		}		
-	}
-
-	public void setPostIgnored(final User user, final Post post, boolean ignore) {
-		if (!canViewPost(new UserViewpoint(user), post)) {
-			logger.debug("attempt to ignore non-viewable post {}", post.getId());
-			return;
-		}
-		PersonPostData ppd = getOrCreatePersonPostData(user, post);
-		if (ppd.isIgnored() != ignore) {
-			ppd.setIgnored(ignore);
-			messageSender.sendPostViewChanged(new UserViewpoint(user), post);
-		}
-	}
-
-	public boolean getPostIgnored(User user, Post post) {
-		PersonPostData ppd = getPersonPostData(user, post);
-		return ppd != null && ppd.isIgnored();
 	}
 	
 	public boolean worthEmailNotification(Post post, Resource recipient) {

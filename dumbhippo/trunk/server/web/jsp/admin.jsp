@@ -87,13 +87,6 @@ New features flag is <b><c:out value="${admin.newFeatures}"/></b>
 	<dht:liveUserDebug user="${user}"/>
   </c:forEach>  
 </p>
-<h2>Cached live posts: </h2>
-<p><c:out value="${admin.livePostsCount}"/> live posts</p>
-<p>
-  <c:forEach items="${admin.livePosts}" var="post">
-  	<dht:livePostDebug post="${post}"/>
-  </c:forEach>
-</p>
 </c:when>
 <c:when test="${mode == 'users'}">
 <div><a href="?mode=shell">Interactive Shell</a></div>

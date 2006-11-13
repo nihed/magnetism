@@ -30,14 +30,14 @@
 		</dht3:blockTitle>
 	    <dht3:blockDescription blockId="${blockId}">${block.postView.textAsHtml}</dht3:blockDescription>   
 		<dht3:blockContent blockId="${blockId}">
-			<dht3:chatPreview block="${block}" chatId="${block.postView.post.id}" chatKind="group" chattingCount="${block.postView.livePost.chattingUserCount}"/>
+			<dht3:chatPreview block="${block}" chatId="${block.postView.post.id}" chatKind="group" chattingCount="${block.postView.chattingUserCount}"/>
 		</dht3:blockContent>		    
 	</dht3:blockLeft>
 	<dht3:blockRight blockId="${blockId}" from="${block.postView.poster}" showFrom="${showFrom}">
 	    <c:if test="${!oneLine}"> 
 		    <c:choose>
-			    <c:when test="${block.postView.livePost.totalViewerCount == 1}">1 view</c:when>
-			    <c:otherwise>${block.postView.livePost.totalViewerCount} views</c:otherwise>
+			    <c:when test="${block.postView.totalViewers == 1}">1 view</c:when>
+			    <c:otherwise>${block.postView.totalViewers} views</c:otherwise>
 		    </c:choose>
 		    | 
 		</c:if>

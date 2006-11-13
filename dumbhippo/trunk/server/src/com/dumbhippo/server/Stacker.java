@@ -106,6 +106,7 @@ public interface Stacker {
 	public void pageRecentGroupActivity(Viewpoint viewpoint, Pageable<GroupMugshotView> pageable, int blockPerGroup);
 
 	public UserBlockData lookupUserBlockData(UserViewpoint viewpoint, Guid guid) throws NotFoundException;
+	public UserBlockData lookupUserBlockData(UserViewpoint viewpoint, BlockKey key) throws NotFoundException;
 	
 	public void setBlockHushed(UserBlockData userBlockData, boolean hushed);
 	

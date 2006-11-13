@@ -63,11 +63,11 @@
 								<%-- FIXME --%>
 								<div class="dh-counts">
 									<c:choose>
-										<c:when test="${post.livePost.totalViewerCount == 1}">
+										<c:when test="${post.totalViewers == 1}">
 											1 view
 										</c:when>
 										<c:otherwise>
-											${post.livePost.totalViewerCount} views
+											${post.totalViewers} views
 										</c:otherwise>
 									</c:choose>
 									<dh:script module="dh.actions"/>

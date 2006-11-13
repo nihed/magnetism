@@ -33,12 +33,4 @@ public class LiveStatistics implements StatisticsSource {
 	public long getCachedUserCount() {
 		return LiveState.getInstance().getLiveUserCount();
 	}
-	
-	@Column(id="cachedPostCount",
-			name="Cached Post Count", 
-			units=ColumnUnit.COUNT, 
-			type=ColumnType.SNAPSHOT)
-	public long getCachePostCount() {
-		return LiveState.getInstance().getLivePostCount();
-	}	
 }

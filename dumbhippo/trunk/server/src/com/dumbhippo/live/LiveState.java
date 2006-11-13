@@ -47,9 +47,6 @@ public class LiveState {
 	// Maximum number of cleaner intervals for each group
 	private static final int MAX_GROUP_CACHE_AGE = 30;
 
-	// Maximum number of cleaner intervals for each post
-	private static final int MAX_POST_CACHE_AGE = 30;
-	
 	/**
 	 * Get the global singleton LiveState object. The methods of the
 	 * LiveState object may safely be called from any thread.
@@ -168,53 +165,6 @@ public class LiveState {
 	}
 
 	/**
-	 * Locate or create a LivePost cache object for a particular user.
-	 * See getLiveUser().
-	 * 
-	 * @param userId the post ID for which we should get a cache object
-	 * @return the LivePost cache object.
-	 */
-	public LivePost getLivePost(Guid postId) {
-		return postCache.get(postId);
-	}
-	
-	/**
-	 * Get or create a LivePost cache object for a particular post in 
-	 * preparation for updating it with new values. See
-	 * getLiveUserForUpdate()
-	 * 
-	 * @param userId the post ID for which we should get a cache object
-	 * @return a copy of the existing or newly created object
-	 */
-	LivePost getLivePostForUpdate(Guid postId) {
-		return (LivePost)postCache.getForUpdate(postId).clone();
-	}
-	
-	/**
-	 * Insert an updated LivePost object into the cache. See updateLiveUser()
-	 * 
-	 * @param user new LivePost object to insert
-	 */
-	void updateLivePost(LivePost post) {
-		postCache.update(post);	
-	}	
-	
-	/**
-	 * Returns a snapshot of the current set of LivePost objects in
-	 * the memory cache.
-	 */
-	public Set<LivePost> getLivePostSnapshot() {
-		return postCache.getAllObjects(false);
-	}
-	
-	/**
-	 * Returns the number of LiveUser objects in the memory cache
-	 */
-	public int getLivePostCount() {
-		return postCache.getObjectCount(false);
-	}
-
-	/**
 	 * Locate or create a LiveGroup cache object for a particular group.
 	 * See getLiveUser()
 	 * 
@@ -291,8 +241,6 @@ public class LiveState {
 
 	private LiveObjectCache<LiveUser> userCache;
 	
-	private LiveObjectCache<LivePost> postCache;
-	
 	private LiveObjectCache<LiveGroup> groupCache;
 
 	private Cleaner cleaner;
@@ -311,17 +259,6 @@ public class LiveState {
 					}
 				},
 				MAX_USER_CACHE_AGE);
-		postCache = new LiveObjectCache<LivePost>(
-				new LiveObjectFactory<LivePost>() {
-					public LivePost create(Guid guid) {
-						LivePost livePost = new LivePost(guid);			
-						LivePostUpdater postUpdater = EJBUtil.defaultLookup(LivePostUpdater.class);
-						postUpdater.initialize(livePost);
-
-						return livePost;
-					}
-				},
-				MAX_POST_CACHE_AGE);
 		groupCache = new LiveObjectCache<LiveGroup>(
 				new LiveObjectFactory<LiveGroup>() {
 					public LiveGroup create(Guid guid) {
@@ -340,46 +277,6 @@ public class LiveState {
 		cleaner.start();
 	}
 		
-	// Internal function to record a user joining the chat room for a post;
-	// see LiveXmppServer.postRoomUserAvailable
-	void postRoomUserAvailable(Guid postId, Guid userId, boolean isParticipant) {
-		LivePost lpost = getLivePostForUpdate(postId);
-		try {
-			if (lpost.getChattingUserCount() == 0 && lpost.getViewingUserCount() == 0)
-				postCache.addStrongReference(lpost);
-	
-			if (isParticipant)
-				lpost.setChattingUserCount(lpost.getChattingUserCount() + 1);
-			else
-				lpost.setViewingUserCount(lpost.getViewingUserCount() + 1);
-		} finally {
-			updateLivePost(lpost);
-		}
-
-		logger.debug("Post {} now has {} viewing users and " + lpost.getChattingUserCount() + " chatting users", 
-				postId, lpost.getViewingUserCount());
-	}
-
-	// Internal function to record a user leaving the chat room for a post;
-	// see LiveXmppServer.postRoomUserUnavailable
-	void postRoomUserUnavailable(Guid postId, Guid userId, boolean wasParticipant) {
-		LivePost lpost = getLivePostForUpdate(postId);
-		try {
-			if (wasParticipant)
-				lpost.setChattingUserCount(lpost.getChattingUserCount() - 1);
-			else
-				lpost.setViewingUserCount(lpost.getViewingUserCount() - 1);
-			
-			if (lpost.getChattingUserCount() == 0 && lpost.getViewingUserCount() == 0)
-				postCache.dropStrongReference(lpost);
-		} finally {
-			updateLivePost(lpost);
-		}
-		
-		logger.debug("Post {} now has {} viewing users and " + lpost.getChattingUserCount() + " chatting users", 
-				postId, lpost.getViewingUserCount());  
-	}	
-
 	private static Map<Class<?>, ListenerList<?>> listenerLists = new HashMap<Class<?>, ListenerList<?>>();
 	
 	@SuppressWarnings("unchecked")
@@ -422,7 +319,6 @@ public class LiveState {
 	private void clean() throws InterruptedException {
 		// Bump the age of all objects, removing ones that pass the maximum age
 		userCache.age();
-		postCache.age();
 		groupCache.age();
 	}
 
@@ -482,7 +378,6 @@ public class LiveState {
 			});
 			
 			userCache.removeAllWeak();
-			postCache.removeAllWeak();
 			groupCache.removeAllWeak();
 			
 			final int NUM_THREADS = 10;

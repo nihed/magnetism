@@ -42,8 +42,6 @@ import com.dumbhippo.persistence.GroupAccess;
 import com.dumbhippo.persistence.GroupBlockData;
 import com.dumbhippo.persistence.GroupMember;
 import com.dumbhippo.persistence.GroupMessage;
-import com.dumbhippo.persistence.Person;
-import com.dumbhippo.persistence.PersonPostData;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.PostMessage;
 import com.dumbhippo.persistence.StackInclusion;
@@ -179,27 +177,38 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		LiveState.removeEventListener(BlockEvent.class, this);
 	}
 	
-	public Block queryBlock(BlockKey key) throws NotFoundException {
+	private String getBlockClause(BlockKey key) {
+		Guid data1 = key.getData1();
+		Guid data2 = key.getData2();
+		if (data1 != null && data2 != null) {
+			return "block.blockType=:type " +
+				   "AND block.data1=:data1 AND block.data2=:data2 AND block.data3=:data3 " + 
+				   "AND block.inclusion = :inclusion";
+		} else if (data1 != null) {
+			return "block.blockType=:type " +
+				   "AND block.data1=:data1 AND block.data2='' AND block.data3=:data3 " + 
+				   "AND block.inclusion = :inclusion";
+		} else if (data2 != null) {
+			return "block.blockType=:type " +
+				   "AND block.data2=:data2 AND block.data1='' AND block.data3=:data3 " +
+				   "AND block.inclusion = :inclusion";
+		} else {
+			throw new IllegalArgumentException("must provide either data1 or data2 in query for block type " + key.getBlockType());
+		}
+	}
+	
+	private void setBlockParameters(BlockKey key, Query q) {
 		Guid data1 = key.getData1();
 		Guid data2 = key.getData2();
 		long data3 = key.getData3();
 		StackInclusion inclusion = key.getInclusion();
-		Query q;
+
 		if (data1 != null && data2 != null) {
-			q = em.createQuery("SELECT block FROM Block block WHERE block.blockType=:type " +
-					           "AND block.data1=:data1 AND block.data2=:data2 AND block.data3=:data3 " + 
-					           "AND block.inclusion = :inclusion");
 			q.setParameter("data1", data1.toString());
 			q.setParameter("data2", data2.toString());			
 		} else if (data1 != null) {
-			q = em.createQuery("SELECT block FROM Block block WHERE block.blockType=:type " +
-					           "AND block.data1=:data1 AND block.data2='' AND block.data3=:data3 " + 
-							   "AND block.inclusion = :inclusion");
 			q.setParameter("data1", data1.toString());
 		} else if (data2 != null) {
-			q = em.createQuery("SELECT block FROM Block block WHERE block.blockType=:type " +
-					           "AND block.data2=:data2 AND block.data1='' AND block.data3=:data3 " +
-							   "AND block.inclusion = :inclusion");
 			q.setParameter("data2", data2.toString());	
 		} else {
 			throw new IllegalArgumentException("must provide either data1 or data2 in query for block type " + key.getBlockType());
@@ -209,6 +218,12 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		if (inclusion == null)
 			throw new IllegalArgumentException("BlockKey should not have null inclusion" + key);
 		q.setParameter("inclusion", inclusion);
+	}
+	
+	public Block queryBlock(BlockKey key) throws NotFoundException {
+		Query q = em.createQuery("SELECT block FROM Block block WHERE " + getBlockClause(key));
+		setBlockParameters(key, q);
+
 		try {
 			return (Block) q.getSingleResult();
 		} catch (NoResultException e) {
@@ -944,15 +959,28 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	}
 
 	public UserBlockData lookupUserBlockData(UserViewpoint viewpoint, Guid guid) throws NotFoundException {
-		Query q = em.createQuery("SELECT ubd FROM UserBlockData ubd, Block block WHERE ubd.block = block AND block.id = :blockId AND ubd.user = :user");
-		q.setParameter("blockId", guid.toString());
+		Query q = em.createQuery("SELECT ubd FROM UserBlockData ubd, Block block WHERE ubd.user = :user AND ubd.block = block AND block.id = :blockId");
 		q.setParameter("user", viewpoint.getViewer());
+		q.setParameter("blockId", guid.toString());
 		try {
 			return (UserBlockData) q.getSingleResult();
 		} catch (NonUniqueResultException e) {
 			throw new NotFoundException("multiple UserBlockData for this block");
 		} catch (NoResultException e) {
 			throw new NotFoundException("no UserBlockData for blockId " + guid);
+		}
+	}
+	
+	public UserBlockData lookupUserBlockData(UserViewpoint viewpoint, BlockKey key) throws NotFoundException {
+		Query q = em.createQuery("SELECT ubd FROM UserBlockData ubd, Block block WHERE ubd.user = :user AND ubd.block = block AND " + getBlockClause(key));
+		q.setParameter("user", viewpoint.getViewer());
+		setBlockParameters(key, q);
+		try {
+			return (UserBlockData) q.getSingleResult();
+		} catch (NonUniqueResultException e) {
+			throw new NotFoundException("multiple UserBlockData for this block key");
+		} catch (NoResultException e) {
+			throw new NotFoundException("no UserBlockData for blockKey " + key);
 		}
 	}
 	
@@ -1273,73 +1301,9 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		Post post = em.find(Post.class, postId);
 		Block block = getOrCreateBlock(getPostKey(post.getGuid()), post.isPublic());
 		long activity = post.getPostDate().getTime();
+		
+		// Now that PersonPostData is gone, we can no longer migrate it here...
 
-		// we want to move PersonPostData info into UserBlockData
-		// (this is obviously expensive as hell)
-		List<UserBlockData> userDatas = queryUserBlockDatas(block);
-		Map<User,UserBlockData> byUser = new HashMap<User,UserBlockData>();
-		for (UserBlockData ubd : userDatas) {
-			byUser.put(ubd.getUser(), ubd);
-		}
-
-		// There is a race condition if a UserBlockData is created for the Block by
-		// some other thread, but that can only happen if the getOrCreateBlock() finds 
-		// an existing Block but the UserBlockData for that Block are missing. If it 
-		// does happen (indicating that some earlier version of the migration code was 
-		// run, perhaps) then the retry-on-constraint-violation that we wrap migration
-		// tasks in should task care of it.
-		
-		Set<PersonPostData> postDatas = post.getPersonPostData();
-		for (PersonPostData ppd : postDatas) {
-			Person p = ppd.getPerson();
-			if (!(p instanceof User))
-				continue;
-			User user = (User) p;
-			UserBlockData ubd = byUser.get(user);
-			if (ubd == null) {
-				// create a deleted UserBlockData to store the info from the ppd
-				long participatedTimestamp = -1;
-				if (user.equals(post.getPoster()))
-					participatedTimestamp = post.getPostDate().getTime();
-				ubd = new UserBlockData(user, block, participatedTimestamp);
-				ubd.setDeleted(true);
-				em.persist(ubd);
-			}
-			if (ubd.isIgnored()) {
-				// keep the existing ignored info
-			} else if (ppd.isIgnored()) {
-				// there's no ignored date on ppd, so we use the latest block 
-				// timestamp (the point of the ignored date is to freeze the block's 
-				// stack location so this is perfect really)
-				ubd.setIgnored(true);
-				ubd.setIgnoredTimestampAsLong(block.getTimestampAsLong());
-			} else {
-				// neither one is ignored, nothing to migrate
-			}
-			
-			// if ppd has a clicked date and ubd doesn't, copy in from ppd
-			if (ubd.getClickedTimestampAsLong() < 0 && 
-					ppd.getClickedDateAsLong() >= 0) {
-				ubd.setClickedTimestampAsLong(ppd.getClickedDateAsLong());
-			}
-		}
-		
-		// now count the denormalized number of viewers. the old 
-		// query of UserBlockData is fine since we only added deleted
-		// ones.
-		int clickedCount = 0;
-		for (UserBlockData ubd : userDatas) {
-			if (!ubd.isDeleted() && ubd.isClicked()) {
-				clickedCount += 1;
-				if (ubd.getClickedTimestampAsLong() > activity)
-					activity = ubd.getClickedTimestampAsLong();
-			}
-		}
-		if (block.getClickedCount() != clickedCount) {
-			logger.debug("  fixing up clicked count from {} to {} for block " + block, block.getClickedCount(), clickedCount);
-			block.setClickedCount(clickedCount);
-		}
-		
 		List<PostMessage> messages = postingBoard.getNewestPostMessages(post, 1);
 		if (messages.size() > 0) {
 			PostMessage m = messages.get(0);

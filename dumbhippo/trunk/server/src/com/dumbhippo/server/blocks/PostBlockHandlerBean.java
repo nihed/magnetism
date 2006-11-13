@@ -21,11 +21,13 @@ import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.PostMessage;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.views.ChatMessageView;
 import com.dumbhippo.server.views.PostView;
+import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.server.views.Viewpoint;
 
 @Stateless
@@ -119,5 +121,29 @@ public class PostBlockHandlerBean extends AbstractBlockHandlerBean<PostBlockView
 
 	public void onPostClicked(Post post, User user, long clickedTime) {
 		stacker.blockClicked(getKey(post), user, clickedTime);
+	}
+
+	public Block lookupBlock(Post post) {
+		try {
+			return stacker.queryBlock(getKey(post));
+		} catch (NotFoundException e) {
+			throw new RuntimeException("No Block found for Post {}, migration needed?", e);
+		}
+	}
+	
+	public UserBlockData lookupUserBlockData(UserViewpoint viewpoint, Post post) throws NotFoundException {
+		return stacker.lookupUserBlockData(viewpoint, getKey(post));
+	}
+	
+	
+	public void setPostHushed(UserViewpoint viewpoint, Post post, boolean hushed) {
+		UserBlockData ubd;
+		try {
+			ubd = lookupUserBlockData(viewpoint, post);
+			stacker.setBlockHushed(ubd, hushed);
+		} catch (NotFoundException e) {
+			logger.warn("No UserBlockData found for post {}, user {}, skipping setPostHushed",
+					    post, viewpoint.getViewer());
+		}
 	}
 }

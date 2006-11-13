@@ -1022,11 +1022,6 @@ hippo_data_cache_on_connect(HippoConnection      *connection,
         hippo_data_cache_foreach_chat_room(cache, FALSE, update_chat_room_func, cache);
 
         hippo_connection_request_prefs(connection);
-        /* FIXME the server seems to send the hotness spontaneously anyway,
-         * so this request is pointless?
-         */
-        /* hippo_connection_request_hotness(connection); */
-        /* hippo_connection_request_recent_posts(connection); */
         hippo_connection_request_blocks(connection, 0);
     } else {
         /* Clear stuff, so we get "changed" signals both on disconnect 
