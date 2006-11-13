@@ -30,12 +30,13 @@
         	</c:forEach>
 		</select>
 	</td>
-	<td id="dhRefreshCell">
-		<input type="button" value="Refresh" onclick="dh.statistics.refresh();"></input>
-	</td>
 	</td>
 	</table>
 	
+	<div id="dhRefreshDiv">
+		<input type="button" value="Refresh" onclick="dh.statistics.refresh();"></input>
+	</div>
+
 	<div id="dhBlocksDiv">
 	</div>
 	<input type="button" value="Add" onclick="dh.statistics.addBlock();"></input>

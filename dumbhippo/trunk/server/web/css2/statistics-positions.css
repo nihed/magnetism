@@ -4,6 +4,12 @@
 	 left: 775px; 
 }
 
+#dhRefreshDiv {
+	position: fixed;
+	top: 10px;
+	right: 10px;
+}
+
 .dh-block-table {
 	table-layout: fixed;
 	border-spacing: 0px;

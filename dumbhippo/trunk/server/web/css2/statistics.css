@@ -7,10 +7,6 @@ body { font-family: sans-serif; }
 	width: 100%;
 }
 
-#dhRefreshCell {
-	text-align: right;
-}
-
 #dhHourSelector {
 	 text-align: right;
 	 font-size: 12px;
