@@ -235,7 +235,9 @@ public class YahooArtistCacheBean extends AbstractCacheBean<String,YahooArtistDa
 		return datas;
 	}
 
-	private void saveInCacheInParentTransaction(String artistId, YahooArtistData data, Date now) {
+	@TransactionAttribute(TransactionAttributeType.MANDATORY)
+	public YahooArtistData saveInCacheInsideExistingTransaction(String artistId, YahooArtistData data, Date now) {
+		EJBUtil.assertHaveTransaction();
 		CachedYahooArtistData d = artistByIdQuery(artistId);
 		if (d == null) {
 			d = new CachedYahooArtistData();
@@ -249,33 +251,13 @@ public class YahooArtistCacheBean extends AbstractCacheBean<String,YahooArtistDa
 				d.updateData(data);
 		}
 		d.setLastUpdated(now);
+		
+		if (data != null && data.getArtist() == null)
+			return null;
+		else
+			return data;		
 	}
 	
-	@TransactionAttribute(TransactionAttributeType.NEVER)
-	public YahooArtistData saveInCache(final String artistId, final YahooArtistData data) {
-		try {
-			runner.runTaskRetryingOnConstraintViolation(new Runnable() {
-
-				public void run() {
-					saveInCacheInParentTransaction(artistId, data, new Date());
-				}
-				
-			});
-			if (data != null && data.getArtist() == null)
-				return null;
-			else
-				return data;
-		} catch (Exception e) {
-			if (EJBUtil.isDatabaseException(e)) {
-				logger.warn("Ignoring database exception {}: {}", e.getClass().getName(), e.getMessage());
-				return data;
-			} else {
-				ExceptionUtils.throwAsRuntimeException(e);
-				throw new RuntimeException(e); // not reached
-			}
-		}
-	}
-
 	@TransactionAttribute(TransactionAttributeType.NEVER)
 	public List<YahooArtistData> saveInCacheByName(final String artist, List<YahooArtistData> newArtists) {
 		// null doesn't happen but if it did would be the same as empty list
@@ -329,7 +311,7 @@ public class YahooArtistCacheBean extends AbstractCacheBean<String,YahooArtistDa
 					// or involved). We would never save negative results here so 
 					// we don't need to filter them out.
 					for (YahooArtistData a : artists) {
-						saveInCacheInParentTransaction(a.getArtistId(), a, now);
+						saveInCacheInsideExistingTransaction(a.getArtistId(), a, now);
 					}
 					
 					return artists;

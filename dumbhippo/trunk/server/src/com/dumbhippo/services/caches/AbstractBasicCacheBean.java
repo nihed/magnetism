@@ -9,7 +9,6 @@ import javax.ejb.TransactionAttributeType;
 
 import org.slf4j.Logger;
 
-import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.KnownFuture;
 import com.dumbhippo.persistence.CachedItem;
@@ -114,48 +113,34 @@ public abstract class AbstractBasicCacheBean<KeyType,ResultType,EntityType exten
 	protected abstract EntityType newNoResultsMarker(KeyType key);
 	
 	// null data means to save a negative result
-	@TransactionAttribute(TransactionAttributeType.NEVER)
-	public ResultType saveInCache(final KeyType key, final ResultType data) {
-		EJBUtil.assertNoTransaction();
-		try {
-			return runner.runTaskRetryingOnConstraintViolation(new Callable<ResultType>() {
-				public ResultType call() {
-					EntityType e = queryExisting(key);
-					if (e == null) {
-						if (data == null) {
-							e = newNoResultsMarker(key);
-							if (!e.isNoResultsMarker()) {
-								throw new RuntimeException("Newly-returned no results marker isn't: " + e);
-							}
-						} else {
-							e = entityFromResult(key, data);
-						}
-						em.persist(e);
-					} else {
-						// don't ever save a negative result once we have data at some point
-						if (data != null) {
-							updateEntityFromResult(key, data, e);
-						}
-					}
-					e.setLastUpdated(new Date());
-					
-					logger.debug("Saved new cached item under {}: {}", 
-						     key, e);
-					
-					if (e.isNoResultsMarker())
-						return null;
-					else
-						return resultFromEntity(e);
+	@TransactionAttribute(TransactionAttributeType.MANDATORY)
+	public ResultType saveInCacheInsideExistingTransaction(KeyType key, ResultType data, Date now) {
+		EJBUtil.assertHaveTransaction();
+		EntityType e = queryExisting(key);
+		if (e == null) {
+			if (data == null) {
+				e = newNoResultsMarker(key);
+				if (!e.isNoResultsMarker()) {
+					throw new RuntimeException("Newly-returned no results marker isn't: " + e);
 				}
-			});
-		} catch (Exception e) {
-			if (EJBUtil.isDatabaseException(e)) {
-				logger.warn("Ignoring database exception {}: {}", e.getClass().getName(), e.getMessage());
-				return data;
 			} else {
-				ExceptionUtils.throwAsRuntimeException(e);
-				throw new RuntimeException(e); // not reached
+				e = entityFromResult(key, data);
+			}
+			em.persist(e);
+		} else {
+			// don't ever save a negative result once we have data at some point
+			if (data != null) {
+				updateEntityFromResult(key, data, e);
 			}
 		}
+		e.setLastUpdated(now);
+		
+		logger.debug("Saved new cached item under {}: {}", 
+			     key, e);
+		
+		if (e.isNoResultsMarker())
+			return null;
+		else
+			return resultFromEntity(e);
 	}
 }

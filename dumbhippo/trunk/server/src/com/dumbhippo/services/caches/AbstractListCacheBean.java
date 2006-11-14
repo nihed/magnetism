@@ -12,7 +12,6 @@ import javax.ejb.TransactionAttributeType;
 
 import org.slf4j.Logger;
 
-import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.KnownFuture;
 import com.dumbhippo.persistence.CachedListItem;
@@ -137,56 +136,36 @@ public abstract class AbstractListCacheBean<KeyType,ResultType,EntityType extend
 		setAllLastUpdatedToZero(key);
 	}
 	
-	@TransactionAttribute(TransactionAttributeType.NEVER)
-	public List<ResultType> saveInCache(final KeyType key, List<ResultType> newResults) {
-		EJBUtil.assertNoTransaction();
+	@TransactionAttribute(TransactionAttributeType.MANDATORY)
+	public List<ResultType> saveInCacheInsideExistingTransaction(KeyType key, List<ResultType> newItems, Date now) {
+		EJBUtil.assertHaveTransaction();
 		
 		// null results doesn't happen right now but if it did would be the same as empty list
-		if (newResults == null)
-			newResults = Collections.emptyList(); 
-		
-		final List<ResultType> newItems = newResults; // the method param is reassigned above
-		
-		try {
-			return runner.runTaskInNewTransaction(new Callable<List<ResultType>>() {
-				public List<ResultType> call() {
-					
-					logger.debug("Saving new results in cache for bean {}", getEjbIface().getName());
+		if (newItems == null)
+			newItems = Collections.emptyList(); 
+	
+		logger.debug("Saving new results in cache for bean {}", getEjbIface().getName());
 
-					List<EntityType> old = queryExisting(key);
-					for (EntityType d : old) {
-						em.remove(d);
-					}					
-					
-					Date now = new Date();
-					
-					// save new results
-					if (newItems.isEmpty()) {
-						EntityType e = newNoResultsMarker(key);
-						if (!e.isNoResultsMarker())
-							throw new RuntimeException("new no results marker isn't: " + e);
-						e.setLastUpdated(now);
-						em.persist(e);
-					} else {
-						for (ResultType r : newItems) {							
-							EntityType e = entityFromResult(key, r);
-							e.setLastUpdated(now);
-							em.persist(e);
-						}
-					}
-					
-					return newItems;
-				}
-				
-			});
-		} catch (Exception e) {
-			if (EJBUtil.isDatabaseException(e)) {
-				logger.warn("Ignoring database exception saving in cache for " + getEjbIface().getName() + " {}: {}", e.getClass().getName(), e.getMessage());
-				return newItems;
-			} else {
-				ExceptionUtils.throwAsRuntimeException(e);
-				throw new RuntimeException(e); // not reached
+		List<EntityType> old = queryExisting(key);
+		for (EntityType d : old) {
+			em.remove(d);
+		}
+		
+		// save new results
+		if (newItems.isEmpty()) {
+			EntityType e = newNoResultsMarker(key);
+			if (!e.isNoResultsMarker())
+				throw new RuntimeException("new no results marker isn't: " + e);
+			e.setLastUpdated(now);
+			em.persist(e);
+		} else {
+			for (ResultType r : newItems) {							
+				EntityType e = entityFromResult(key, r);
+				e.setLastUpdated(now);
+				em.persist(e);
 			}
 		}
+		
+		return newItems;
 	}
 }

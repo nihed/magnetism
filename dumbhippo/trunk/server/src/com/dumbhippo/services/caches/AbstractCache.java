@@ -1,5 +1,6 @@
 package com.dumbhippo.services.caches;
 
+import java.util.Date;
 import java.util.concurrent.Future;
 
 /**
@@ -28,6 +29,11 @@ public interface AbstractCache<KeyType, ResultType> {
 	public ResultType fetchFromNet(KeyType key);
 
 	public ResultType saveInCache(KeyType key, ResultType newResult);
+
+	/** It's wrong to use this unless it's from inside another saveInCache* call, because 
+	 * 	the results you're saving should have been obtained outside a transaction.
+	 */
+	public ResultType saveInCacheInsideExistingTransaction(KeyType key, ResultType data, Date now);	
 	
 	public void expireCache(KeyType key);
 }

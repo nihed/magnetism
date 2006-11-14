@@ -1,7 +1,9 @@
 package com.dumbhippo.services.caches;
 
+import java.util.Date;
 import java.util.EnumMap;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
 import javax.ejb.EJB;
@@ -12,13 +14,13 @@ import javax.persistence.PersistenceContext;
 
 import org.slf4j.Logger;
 
+import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.ThreadUtils;
 import com.dumbhippo.UniqueTaskExecutor;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.util.EJBUtil;
-import com.dumbhippo.services.caches.AbstractCache;
 
 /**
  * Base class used for beans that implement a cached web service lookup.
@@ -144,4 +146,25 @@ public abstract class AbstractCacheBean<KeyType,ResultType,EjbIfaceType> impleme
 		EJBUtil.assertNoTransaction();
 		return fetchFromNetImpl(key);
 	}
+
+	/** This is final since you should override saveInCacheInsideExistingTransaction instead, generally */
+	@TransactionAttribute(TransactionAttributeType.NEVER)
+	public final ResultType saveInCache(final KeyType key, final ResultType data) {
+		EJBUtil.assertNoTransaction();
+		try {
+			return runner.runTaskRetryingOnConstraintViolation(new Callable<ResultType>() {
+				public ResultType call() {
+					return saveInCacheInsideExistingTransaction(key, data, new Date());
+				}
+			});
+		} catch (Exception e) {
+			if (EJBUtil.isDatabaseException(e)) {
+				logger.warn("Ignoring database exception {}: {}", e.getClass().getName(), e.getMessage());
+				return data;
+			} else {
+				ExceptionUtils.throwAsRuntimeException(e);
+				throw new RuntimeException(e); // not reached
+			}
+		}
+	}	
 }
