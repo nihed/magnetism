@@ -33,6 +33,17 @@ public interface Stacker {
 	public Block stack(BlockKey key, long activity, StackReason reason);
 	public void stack(Block block, long activity, User participant, boolean isGroupParticipation, StackReason reason);
 	public void stack(Block block, long activity, StackReason reason);
+
+	/**
+	 * Re-requests the desired user/group block datas from the block handler, 
+	 * and toggles the deleted flag on any ubd/gdb that already 
+	 * exist to reflect the currently-desired state. Does not create any ubd/gbd that didn't exist 
+	 * before, however, since it would not know the activity/participant/reason and other info.
+	 * If you want to create new blocks you can just stack() instead, it will automatically 
+	 * also do a refreshDeletedFlags() equivalent.
+	 * @param block
+	 */
+	public void refreshDeletedFlags(Block block);
 	
 	public void blockClicked(BlockKey key, User user, long clickedTime);
 	

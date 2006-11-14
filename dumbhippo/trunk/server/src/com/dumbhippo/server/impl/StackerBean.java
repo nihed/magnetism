@@ -396,7 +396,33 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		updateUserBlockDatas(block, desiredUsers, participantId, reason);
 	}
 	
-	// note this query includes ubd.deleted=1
+	private void refreshUserBlockDatasDeleted(Block block) {
+		Set<User> desiredUsers = getHandler(block).getInterestedUsers(block);
+
+		List<UserBlockData> userDatas = queryUserBlockDatas(block);
+		
+		Map<User,UserBlockData> existing = new HashMap<User,UserBlockData>();
+		for (UserBlockData ubd : userDatas) {
+			existing.put(ubd.getUser(), ubd);
+		}
+		
+		for (User u : desiredUsers) {
+			UserBlockData old = existing.get(u);
+			if (old != null) {
+				existing.remove(u);
+				if (old.isDeleted())
+					old.setDeleted(false);
+			}
+		}
+		// the rest of "existing" is users who no longer are in the desired set
+		for (User u : existing.keySet()) {
+			UserBlockData old = existing.get(u);
+			if (!old.isDeleted())
+				old.setDeleted(true);
+		}
+	}
+	
+	// note this query includes gbd.deleted=1
 	private List<GroupBlockData> queryGroupBlockDatas(Block block) {
 		Query q = em.createQuery("SELECT gbd FROM GroupBlockData gbd WHERE gbd.block = :block");
 		q.setParameter("block", block);
@@ -451,7 +477,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 				addCount += 1;
 			}
 		}
-		// the rest of "existing" is users who no longer are in the desired set
+		// the rest of "existing" is groups who no longer are in the desired set
 		for (Group g : existing.keySet()) {
 			GroupBlockData old = existing.get(g);
 			if (!old.isDeleted())
@@ -466,6 +492,46 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		Set<Group> desiredGroups = getHandler(block).getInterestedGroups(block);
 		
 		updateGroupBlockDatas(block, desiredGroups, isGroupParticipation, reason);
+	}
+	
+	private void refreshGroupBlockDatasDeleted(Block block) {
+		Set<Group> desiredGroups = getHandler(block).getInterestedGroups(block);
+
+		List<GroupBlockData> groupDatas = queryGroupBlockDatas(block);
+		
+		Map<Group,GroupBlockData> existing = new HashMap<Group,GroupBlockData>();
+		for (GroupBlockData gbd : groupDatas) {
+			existing.put(gbd.getGroup(), gbd);
+		}
+		
+		for (Group g : desiredGroups) {
+			GroupBlockData old = existing.get(g);
+			if (old != null) {
+				existing.remove(g);
+				if (old.isDeleted())
+					old.setDeleted(false);
+			}
+		}
+		// the rest of "existing" is groups who no longer are in the desired set
+		for (Group g : existing.keySet()) {
+			GroupBlockData old = existing.get(g);
+			if (!old.isDeleted())
+				old.setDeleted(true);
+		}
+	}
+	
+	public void refreshDeletedFlags(final Block block) {
+		runner.runTaskOnTransactionCommit(new Runnable() {
+			public void run() {
+				runner.runTaskInNewTransaction(new Runnable() {
+					public void run() {
+						Block attached = em.find(Block.class, block.getId());
+						refreshUserBlockDatasDeleted(attached);
+						refreshGroupBlockDatasDeleted(attached);
+					}
+				});
+			}
+		});		
 	}
 	
 	public void stack(final Block block, final long activity, final User participant, final boolean isGroupParticipation, final StackReason reason) {
