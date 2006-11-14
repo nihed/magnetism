@@ -5,6 +5,7 @@ import javax.persistence.Entity;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 
+import com.dumbhippo.services.FlickrPhotoset;
 import com.dumbhippo.services.FlickrPhotosetView;
 
 /** 
@@ -73,8 +74,23 @@ public class FlickrPhotosetStatus extends EmbeddedGuidPersistable {
 		}
 	}
 	
+	public FlickrPhotosetView toPhotoset() {
+		FlickrPhotoset photoset = new FlickrPhotoset();
+		photoset.setId(flickrId);		
+		if (isActive()) {
+			photoset.setTitle(title);
+			photoset.setDescription(description);
+			photoset.setPhotoCount(photoCount);
+		} else {
+			photoset.setTitle("Not available");
+			photoset.setDescription("Photoset has been deleted or is currently unavailable");
+			photoset.setPhotoCount(0);
+		}
+		return photoset;
+	}
+	
 	/** true if the photoset was in the list of the user's photosets last time we called
-	 * the web service
+	 * the web service, which should also mean our fields are valid.
 	 */
 	@Column(nullable=false)
 	public boolean isActive() {

@@ -30,10 +30,8 @@ public class FlickrPhotosetBlockHandlerBean extends
 	@Override
 	protected void populateBlockViewImpl(FlickrPhotosetBlockView blockView)
 			throws BlockNotVisibleException {
-		//FlickrPhotosetStatus photosetStatus = em.find(FlickrPhotosetStatus.class, blockView.getBlock().getData2AsGuid().toString());
-		//blockView.populate();
-		// FIXME
-		throw new BlockNotVisibleException("IMPLEMENT ME");
+		FlickrPhotosetStatus photosetStatus = em.find(FlickrPhotosetStatus.class, blockView.getBlock().getData2AsGuid().toString());
+		blockView.populate(photosetStatus.toPhotoset(), photosetStatus.getOwnerId());
 	}
 
 	public BlockKey getKey(User user, FlickrPhotosetStatus photosetStatus) {
