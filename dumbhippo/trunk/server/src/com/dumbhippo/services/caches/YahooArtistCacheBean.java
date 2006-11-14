@@ -7,13 +7,10 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
-import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
-import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
-import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
 import org.slf4j.Logger;
@@ -25,9 +22,6 @@ import com.dumbhippo.TypeUtils;
 import com.dumbhippo.persistence.CachedYahooArtistData;
 import com.dumbhippo.persistence.CachedYahooArtistIdByName;
 import com.dumbhippo.server.BanFromWebTier;
-import com.dumbhippo.server.Configuration;
-import com.dumbhippo.server.TransactionRunner;
-import com.dumbhippo.services.caches.YahooArtistCache;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.services.YahooArtistData;
 import com.dumbhippo.services.YahooSearchWebServices;
@@ -37,15 +31,6 @@ import com.dumbhippo.services.YahooSearchWebServices;
 public class YahooArtistCacheBean extends AbstractCacheBean<String,YahooArtistData,AbstractCache> implements YahooArtistCache {
 	@SuppressWarnings("unused")
 	static private final Logger logger = GlobalSetup.getLogger(YahooArtistCacheBean.class);
-	
-	@PersistenceContext(unitName = "dumbhippo")
-	private EntityManager em;
-	
-	@EJB
-	private TransactionRunner runner;
-
-	@EJB
-	private Configuration config;		
 
 	public YahooArtistCacheBean() {
 		super(Request.YAHOO_ARTIST, YahooArtistCache.class, YAHOO_EXPIRATION_TIMEOUT);

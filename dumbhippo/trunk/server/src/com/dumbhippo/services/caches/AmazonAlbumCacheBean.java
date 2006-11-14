@@ -1,6 +1,5 @@
 package com.dumbhippo.services.caches;
 
-import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.persistence.NoResultException;
 import javax.persistence.Query;
@@ -10,7 +9,6 @@ import org.slf4j.Logger;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.CachedAmazonAlbumData;
 import com.dumbhippo.server.BanFromWebTier;
-import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.Configuration.PropertyNotFoundException;
 import com.dumbhippo.services.AmazonAlbumData;
@@ -24,9 +22,6 @@ public class AmazonAlbumCacheBean extends AbstractBasicCacheBean<AlbumAndArtist,
 	
 	// 14 days since we aren't getting price information
 	static private final int AMAZON_EXPIRATION_TIMEOUT = 1000 * 60 * 60 * 24 * 14;	
-	
-	@EJB
-	private Configuration config;	
 	
 	public AmazonAlbumCacheBean() {
 		super(Request.AMAZON_ALBUM, AmazonAlbumCache.class, AMAZON_EXPIRATION_TIMEOUT);

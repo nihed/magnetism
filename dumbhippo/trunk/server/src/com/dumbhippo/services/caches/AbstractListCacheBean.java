@@ -7,11 +7,8 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
-import javax.ejb.EJB;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
 
 import org.slf4j.Logger;
 
@@ -19,9 +16,6 @@ import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.KnownFuture;
 import com.dumbhippo.persistence.CachedListItem;
-import com.dumbhippo.services.caches.AbstractListCache;
-import com.dumbhippo.server.Configuration;
-import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.util.EJBUtil;
 
 public abstract class AbstractListCacheBean<KeyType,ResultType,EntityType extends CachedListItem>
@@ -30,15 +24,6 @@ public abstract class AbstractListCacheBean<KeyType,ResultType,EntityType extend
 
 	@SuppressWarnings("unused")
 	static private final Logger logger = GlobalSetup.getLogger(AbstractListCacheBean.class);
-	
-	@PersistenceContext(unitName = "dumbhippo")
-	protected EntityManager em;
-	
-	@EJB
-	protected TransactionRunner runner;
-	
-	@EJB
-	protected Configuration config;		
 	
 	protected AbstractListCacheBean(Request defaultRequest, Class<? extends AbstractListCache<KeyType,ResultType>> ejbIface, long expirationTime) {
 		super(defaultRequest, ejbIface, expirationTime);

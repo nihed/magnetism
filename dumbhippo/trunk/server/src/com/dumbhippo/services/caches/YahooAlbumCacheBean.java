@@ -1,6 +1,5 @@
 package com.dumbhippo.services.caches;
 
-import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.persistence.NoResultException;
 import javax.persistence.Query;
@@ -10,7 +9,6 @@ import org.slf4j.Logger;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.CachedYahooAlbumData;
 import com.dumbhippo.server.BanFromWebTier;
-import com.dumbhippo.server.Configuration;
 import com.dumbhippo.services.YahooAlbumData;
 import com.dumbhippo.services.YahooSearchWebServices;
 
@@ -21,9 +19,6 @@ public class YahooAlbumCacheBean
 	implements YahooAlbumCache {
 	@SuppressWarnings("unused")
 	static private final Logger logger = GlobalSetup.getLogger(YahooAlbumCacheBean.class);
-
-	@EJB
-	private Configuration config;
 
 	public YahooAlbumCacheBean() {
 		super(Request.YAHOO_ALBUM, YahooAlbumCache.class, YAHOO_EXPIRATION_TIMEOUT);

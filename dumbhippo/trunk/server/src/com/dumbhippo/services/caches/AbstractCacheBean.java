@@ -4,14 +4,19 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.concurrent.Future;
 
+import javax.ejb.EJB;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.ThreadUtils;
 import com.dumbhippo.UniqueTaskExecutor;
+import com.dumbhippo.server.Configuration;
+import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.services.caches.AbstractCache;
 
@@ -55,6 +60,15 @@ public abstract class AbstractCacheBean<KeyType,ResultType,EjbIfaceType> impleme
 	
 	private Class<? extends EjbIfaceType> ejbIface;
 	private long expirationTime; // in milliseconds until we expire the cache	
+	
+	@PersistenceContext(unitName = "dumbhippo")
+	protected EntityManager em;
+	
+	@EJB
+	protected TransactionRunner runner;
+	
+	@EJB
+	protected Configuration config;			
 	
 	private synchronized static UniqueTaskExecutor getExecutorInternal(Request request) {
 		if (shutdown)
