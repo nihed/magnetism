@@ -21,11 +21,14 @@ public class MusicPersonBlockView extends AbstractPersonBlockView {
 		super(viewpoint, block, ubd);
 	}
 	
+	void populate(PersonView userView) {
+		partiallyPopulate(userView);
+		setPopulated(true);
+	}
 	
 	public List<TrackView> getTrackViews() {
 		return getUserView().getTrackHistory(); 
 	}
-
 	
 	@Override
 	protected void writeDetailsToXmlBuilder(XmlBuilder builder) {

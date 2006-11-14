@@ -69,12 +69,9 @@ public class GroupMemberBlockHandlerBean extends AbstractBlockHandlerBean<GroupM
 			// so now they have no GroupMember.
 			member = null;
 		}
-		blockView.setGroupView(groupView);
-		blockView.setMemberView(memberView);
-		blockView.setStatus(member != null ? member.getStatus() : MembershipStatus.NONMEMBER);
-		if (member != null)
-			blockView.setAdders(personViewer.viewUsers(viewpoint, member.getAdders()));
-		blockView.setPopulated(true);
+		blockView.populate(groupView, memberView, member != null ? member.getStatus() : MembershipStatus.NONMEMBER,
+				member != null ?
+						personViewer.viewUsers(viewpoint, member.getAdders()) : null);
 	}
 	
 	public Set<User> getInterestedUsers(Block block) {

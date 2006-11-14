@@ -18,31 +18,29 @@ public class GroupMemberBlockView extends BlockView {
 	private MembershipStatus status;
 	private Set<PersonView> adders;
 	
-	public GroupMemberBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd, GroupView group, PersonView member, MembershipStatus status) {
+	public GroupMemberBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd, GroupView group, PersonView member, MembershipStatus status, Set<PersonView> adders) {
 		super(viewpoint, block, ubd);
-		this.group = group;
-		this.member = member;
-		this.status = status;
+		populate(group, member, status, adders);
 	}
 
 	public GroupMemberBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd) {
 		super(viewpoint, block, ubd);
 	}
 
-	public GroupView getGroupView() {
-		return this.group;
+	void populate(GroupView group, PersonView member, MembershipStatus status, Set<PersonView> adders) {
+		this.group = group;
+		this.member = member;
+		this.status = status;
+		this.adders = adders; // may be null
+		setPopulated(true);
 	}
 	
-	public void setGroupView(GroupView group) {
-		this.group = group;
+	public GroupView getGroupView() {
+		return this.group;
 	}
 
 	public PersonView getMemberView() {
 		return this.member;
-	}
-	
-	public void setMemberView(PersonView member) {
-		this.member = member;
 	}
 
 	@Override
@@ -63,14 +61,6 @@ public class GroupMemberBlockView extends BlockView {
 
 	public MembershipStatus getStatus() {
 		return status;
-	}
-	
-	public void setStatus(MembershipStatus status) {
-		this.status = status;
-	}
-
-	public void setAdders(Set<PersonView> adders) {
-		this.adders = adders;
 	}
 	
 	public Set<PersonView> getAdders() {

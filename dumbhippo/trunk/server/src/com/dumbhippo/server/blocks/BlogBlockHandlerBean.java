@@ -64,9 +64,8 @@ public class BlogBlockHandlerBean extends AbstractBlockHandlerBean<BlogBlockView
 			throw new BlockNotVisibleException("external blog account for block not visible", e);
 		}  
 	    FeedEntry lastEntry = feedSystem.getLastEntry(blogAccount.getFeed());
-	    blockView.setUserView(userView);
-		blockView.setEntry(lastEntry);
-		blockView.setPopulated(true);
+
+	    blockView.populate(userView, lastEntry);
 	}
 
 	public Set<User> getInterestedUsers(Block block) {

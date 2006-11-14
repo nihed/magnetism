@@ -77,10 +77,8 @@ public class FacebookBlockHandlerBean extends AbstractBlockHandlerBean<FacebookB
 			}							
 		    List<FacebookEvent> facebookEvents = new ArrayList<FacebookEvent>();
 		    facebookEvents.add(facebookEvent);
-			blockView.setUserView(userView);
-			blockView.setFacebookEvents(facebookEvents);
-			blockView.setLink(facebookSystem.getEventLink(facebookEvent));
-			blockView.setPopulated(true);		    
+		    
+		    blockView.populate(userView, facebookEvents, facebookSystem.getEventLink(facebookEvent));
 		} else if (block.getBlockType() == BlockType.FACEBOOK_PERSON) {
 		    logger.error("Will not populate a block view for BlockType.FACEBOOK_PERSON, " +
 		    		     "we should not have blocks with that type around anymore!");		

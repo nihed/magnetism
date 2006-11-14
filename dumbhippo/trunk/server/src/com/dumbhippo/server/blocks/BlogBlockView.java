@@ -13,13 +13,18 @@ public class BlogBlockView extends AbstractPersonBlockView implements ExternalAc
 	private FeedEntry entry;
 	
 	public BlogBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd, PersonView userView, FeedEntry entry) {
-		super(viewpoint, block, ubd, userView);
-		this.entry = entry;
-		setPopulated(true);
+		super(viewpoint, block, ubd);
+		populate(userView, entry);
 	}
 
 	public BlogBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd) {
 		super(viewpoint, block, ubd);
+	}
+	
+	void populate(PersonView userView, FeedEntry entry) {
+		partiallyPopulate(userView);
+		this.entry = entry;
+		setPopulated(true);
 	}
 	
 	public FeedEntry getEntry() {

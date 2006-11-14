@@ -1,7 +1,6 @@
 package com.dumbhippo.server.blocks;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import com.dumbhippo.XmlBuilder;
@@ -15,37 +14,28 @@ import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.Viewpoint;
 import com.dumbhippo.web.ListBean;
 
-public class FacebookBlockView extends BlockView implements ExternalAccountBlockView {
-	private PersonView userView;
+public class FacebookBlockView extends AbstractPersonBlockView implements ExternalAccountBlockView {
 	private List<FacebookEvent> facebookEvents;
 	private String link;
 	
 	public FacebookBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd, PersonView userView, List<FacebookEvent> facebookEvents, String link) {
 		super(viewpoint, block, ubd);
-		this.userView = userView;
-		this.facebookEvents = facebookEvents;
-		this.link = link;
-		setPopulated(true);
+		populate(userView, facebookEvents, link);
 	}
 
 	public FacebookBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd) {
 		super(viewpoint, block, ubd);
 	}
 	
-	public PersonView getUserView() {
-		return userView;
+	void populate(PersonView userView, List<FacebookEvent> facebookEvents, String link) {
+		partiallyPopulate(userView);
+		this.facebookEvents = facebookEvents;
+		this.link = link;
+		setPopulated(true);		
 	}
-	
-	public void setUserView(PersonView userView) {
-		this.userView = userView;
-	}
-	
+		
 	public List<FacebookEvent> getFacebookEvents() {
 	    return facebookEvents;	
-	}
-	
-	public void setFacebookEvents(List<FacebookEvent> facebookEvents) {
-		this.facebookEvents = facebookEvents;
 	}
 	
 	public FacebookEvent getFacebookEvent() {
@@ -67,11 +57,6 @@ public class FacebookBlockView extends BlockView implements ExternalAccountBlock
 	}
 	
 	@Override
-	public PersonView getPersonSource() {
-	    return userView;	
-	}
-	
-	@Override
 	protected void writeDetailsToXmlBuilder(XmlBuilder builder) {
 		builder.openElement("facebookPerson");
 		
@@ -82,10 +67,6 @@ public class FacebookBlockView extends BlockView implements ExternalAccountBlock
 		}
 		
 		builder.closeElement();
-	}
-	
-	public List<Object> getReferencedObjects() {
-		return Collections.singletonList((Object)userView);
 	}
 
 	public ExternalAccountType getAccountType() {
@@ -101,12 +82,8 @@ public class FacebookBlockView extends BlockView implements ExternalAccountBlock
 		return link;
 	}
 
-	public void setLink(String link) {
-		this.link = link;
-	}
-	
 	public String getTextForHome() {		
-		if (getViewpoint().isOfUser(userView.getUser()))
+		if (getViewpoint().isOfUser(getUserView().getUser()))
 			return getTextForSelf();
 		else 		
 			return getGenericText();
@@ -163,11 +140,11 @@ public class FacebookBlockView extends BlockView implements ExternalAccountBlock
 			case NEW_WALL_MESSAGES_EVENT :
 				return event.getCount() + " new wall message" + pluralChar;
 			case NEW_TAGGED_PHOTOS_EVENT :
-				return userView.getName() + " was tagged in " + event.getPhotos().size() + " photo" + pluralChar;
+				return getUserView().getName() + " was tagged in " + event.getPhotos().size() + " photo" + pluralChar;
 			case NEW_ALBUM_EVENT :
-				return userView.getName() + " has created a new album \"" + event.getAlbum().getName() + "\"";
+				return getUserView().getName() + " has created a new album \"" + event.getAlbum().getName() + "\"";
 			case MODIFIED_ALBUM_EVENT :
-				return userView.getName() + " has modified an album \"" + event.getAlbum().getName() + "\"";
+				return getUserView().getName() + " has modified an album \"" + event.getAlbum().getName() + "\"";
 	   	    // no default, it hides bugs
 		}
 		

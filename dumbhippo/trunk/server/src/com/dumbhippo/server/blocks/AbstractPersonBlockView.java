@@ -18,18 +18,27 @@ public abstract class AbstractPersonBlockView extends BlockView {
 
 	protected AbstractPersonBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd, PersonView userView) {
 		super(viewpoint, block, ubd);
-		this.userView = userView;
+		partiallyPopulate(userView);
 	}
 	
 	protected AbstractPersonBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd) {
 		super(viewpoint, block, ubd);
 	}
 	
+	/**
+	 * "partially" because it doesn't setPopulated(true), the subclass must do that
+	 * @param userView
+	 */
+	protected void partiallyPopulate(PersonView userView) {
+		this.userView = userView;
+	}
+	
 	public PersonView getUserView() {
 		return userView;
 	}
 	
-	public void setUserView(PersonView userView) {
+	// not public - use populate()
+	protected void setUserView(PersonView userView) {
 		this.userView = userView;
 	}
 

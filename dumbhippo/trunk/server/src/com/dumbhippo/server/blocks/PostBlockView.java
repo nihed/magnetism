@@ -19,30 +19,26 @@ public class PostBlockView extends BlockView {
 	
 	public PostBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd, PostView post, List<ChatMessageView> recentMessages) {
 		super(viewpoint, block, ubd);
-		this.postView = post;
-		this.recentMessages = recentMessages;
-		
-		setPopulated(true);
+		populate(post, recentMessages);
 	}
 	
 	public PostBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd) {
 		super(viewpoint, block, ubd);
 	}
 
+	void populate(PostView post, List<ChatMessageView> recentMessages) {
+		this.postView = post;
+		this.recentMessages = recentMessages;
+		
+		setPopulated(true);
+	}
+	
 	public PostView getPostView() {
 		return this.postView;
 	}
 	
-	public void setPostView(PostView postView) {
-		this.postView = postView;
-	}
-	
 	public List<ChatMessageView> getRecentMessages() {
 		return recentMessages;
-	}
-	
-	public void setRecentMessages(List<ChatMessageView> recentMessages) {
-		this.recentMessages = recentMessages;
 	}
 	
 	public String getPostTimeAgo() {

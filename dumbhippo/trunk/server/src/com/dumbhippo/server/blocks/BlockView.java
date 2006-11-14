@@ -47,7 +47,8 @@ public abstract class BlockView implements ObjectView {
 		return populated;
 	}
 	
-	public void setPopulated(boolean populated) {
+	/** called by a default-visibility populate() method on each view */
+	protected void setPopulated(boolean populated) {
 		this.populated = populated;
 	}
 	

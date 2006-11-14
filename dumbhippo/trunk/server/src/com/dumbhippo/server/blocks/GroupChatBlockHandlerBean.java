@@ -48,9 +48,7 @@ public class GroupChatBlockHandlerBean extends AbstractBlockHandlerBean<GroupCha
 		List<ChatMessageView> recentMessages = groupSystem.viewGroupMessages(
 				groupSystem.getNewestGroupMessages(groupView.getGroup(), GroupChatBlockView.RECENT_MESSAGE_COUNT),
 				viewpoint);
-		blockView.setGroupView(groupView);
-		blockView.setRecentMessages(recentMessages);
-		blockView.setPopulated(true);
+		blockView.populate(groupView, recentMessages);
 	}
 	
 	public Set<User> getInterestedUsers(Block block) {
