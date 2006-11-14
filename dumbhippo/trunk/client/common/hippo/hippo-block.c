@@ -44,14 +44,17 @@ enum {
     PROP_CLICKED_TIMESTAMP,
     PROP_IGNORED_TIMESTAMP,
     PROP_CLICKED_COUNT,
+    PROP_SIGNIFICANT_CLICKED_COUNT,
     PROP_CLICKED,
     PROP_ICON_URL,
-    PROP_IGNORED
+    PROP_IGNORED,
+    PROP_STACK_REASON
 };
 
 static void
 hippo_block_init(HippoBlock *block)
 {
+    block->stack_reason = HIPPO_STACK_NEW_BLOCK;
 }
 
 static void
@@ -126,6 +129,15 @@ hippo_block_class_init(HippoBlockClass *klass)
                                                      G_PARAM_READABLE | G_PARAM_WRITABLE));
 
     g_object_class_install_property(object_class,
+                                    PROP_SIGNIFICANT_CLICKED_COUNT,
+                                    g_param_spec_int("significant-clicked-count",
+                                                     _("Significant clicked count"),
+                                                     _("Last click count that caused a restack"),
+                                                     0, G_MAXINT,
+                                                     0,
+                                                     G_PARAM_READABLE | G_PARAM_WRITABLE));
+
+    g_object_class_install_property(object_class,
                                     PROP_CLICKED,
                                     g_param_spec_boolean("clicked",
                                                          _("Clicked"),
@@ -148,6 +160,13 @@ hippo_block_class_init(HippoBlockClass *klass)
                                                         NULL,
                                                         G_PARAM_READABLE));
     
+    g_object_class_install_property(object_class,
+                                    PROP_STACK_REASON,
+                                    g_param_spec_int("stack-reason",
+                                                     _("Stack Reason"),
+                                                     _("Reason code for why the block was restacked"),
+                                                     0, G_MAXINT, HIPPO_STACK_NEW_BLOCK,
+                                                     G_PARAM_READABLE));
 }
 
 static void
@@ -187,6 +206,10 @@ hippo_block_set_property(GObject         *object,
         hippo_block_set_clicked_count(block,
                                       g_value_get_int(value));
         break;
+    case PROP_SIGNIFICANT_CLICKED_COUNT:
+        hippo_block_set_significant_clicked_count(block,
+                                                  g_value_get_int(value));
+        break;
     case PROP_CLICKED:
         hippo_block_set_clicked(block,
                                 g_value_get_boolean(value));
@@ -194,6 +217,10 @@ hippo_block_set_property(GObject         *object,
     case PROP_IGNORED:
         hippo_block_set_ignored(block,
                                 g_value_get_boolean(value));        
+        break;
+    case PROP_STACK_REASON:
+        hippo_block_set_stack_reason(block,
+                                     g_value_get_int(value));
         break;
     case PROP_GUID:                  /* read-only */
     case PROP_BLOCK_TYPE:            /* read-only */
@@ -238,11 +265,17 @@ hippo_block_get_property(GObject         *object,
     case PROP_CLICKED_COUNT:
         g_value_set_int(value, block->clicked_count);
         break;
+    case PROP_SIGNIFICANT_CLICKED_COUNT:
+        g_value_set_int(value, block->significant_clicked_count);
+        break;
     case PROP_CLICKED:
         g_value_set_boolean(value, block->clicked);
         break;
     case PROP_IGNORED:
         g_value_set_boolean(value, block->ignored);
+        break;
+    case PROP_STACK_REASON:
+        g_value_set_int(value, block->stack_reason);
         break;
     case PROP_ICON_URL:
         g_value_set_string(value, block->icon_url);
@@ -265,6 +298,7 @@ hippo_block_real_update_from_xml (HippoBlock     *block,
     gint64 clicked_timestamp;
     gint64 ignored_timestamp;
     int clicked_count;
+    int significant_clicked_count = 0;
     gboolean clicked;
     gboolean ignored;
     const char *icon_url;
@@ -279,6 +313,7 @@ hippo_block_real_update_from_xml (HippoBlock     *block,
                          "clickedTimestamp", HIPPO_SPLIT_TIME_MS, &clicked_timestamp,
                          "ignoredTimestamp", HIPPO_SPLIT_TIME_MS, &ignored_timestamp,
                          "clickedCount", HIPPO_SPLIT_INT32, &clicked_count,
+                         "significantClickedCount", HIPPO_SPLIT_INT32 | HIPPO_SPLIT_OPTIONAL, &significant_clicked_count ,
                          "clicked", HIPPO_SPLIT_BOOLEAN, &clicked, 
                          "ignored", HIPPO_SPLIT_BOOLEAN, &ignored,
                          "icon", HIPPO_SPLIT_STRING | HIPPO_SPLIT_OPTIONAL, &icon_url,
@@ -300,6 +335,7 @@ hippo_block_real_update_from_xml (HippoBlock     *block,
     hippo_block_set_clicked_timestamp(block, clicked_timestamp);
     hippo_block_set_ignored_timestamp(block, ignored_timestamp);
     hippo_block_set_clicked_count(block, clicked_count);
+    hippo_block_set_significant_clicked_count(block, significant_clicked_count);
     hippo_block_set_clicked(block, clicked);
     hippo_block_set_ignored(block, ignored);
     hippo_block_set_icon_url(block, icon_url);
@@ -497,6 +533,26 @@ hippo_block_set_clicked_count(HippoBlock *block,
     }
 }
 
+int
+hippo_block_get_significant_clicked_count(HippoBlock *block)
+{
+    g_return_val_if_fail(HIPPO_IS_BLOCK(block), 0);
+
+    return block->significant_clicked_count;
+}
+
+void
+hippo_block_set_significant_clicked_count(HippoBlock *block,
+                                          int         value)
+{
+    g_return_if_fail(HIPPO_IS_BLOCK(block));
+
+    if (value != block->significant_clicked_count) {
+        block->significant_clicked_count = value;
+        g_object_notify(G_OBJECT(block), "significant-clicked-count");
+    }
+}
+
 gboolean
 hippo_block_get_clicked(HippoBlock *block)
 {
@@ -535,6 +591,26 @@ hippo_block_set_ignored(HippoBlock *block,
     if (value != block->ignored) {
         block->ignored = value;
         g_object_notify(G_OBJECT(block), "ignored");
+    }
+}
+
+HippoStackReason
+hippo_block_get_stack_reason(HippoBlock *block)
+{
+    g_return_val_if_fail(HIPPO_IS_BLOCK(block), HIPPO_STACK_NEW_BLOCK);
+
+    return block->stack_reason;
+}
+
+void
+hippo_block_set_stack_reason(HippoBlock      *block,
+                             HippoStackReason value)
+{
+    g_return_if_fail(HIPPO_IS_BLOCK(block));
+
+    if (value != block->stack_reason) {
+        block->stack_reason = value;
+        g_object_notify(G_OBJECT(block), "stack-reason");
     }
 }
 

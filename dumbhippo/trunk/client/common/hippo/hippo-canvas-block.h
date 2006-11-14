@@ -95,8 +95,8 @@ void hippo_canvas_block_set_sender  (HippoCanvasBlock *canvas_block,
                                      const char       *entity_guid);
 void hippo_canvas_block_set_sent_to (HippoCanvasBlock *canvas_block,
                                      GSList           *entities);
-void hippo_canvas_block_set_orignal_age (HippoCanvasBlock *canvas_block,
-                                         GTime            age);
+void hippo_canvas_block_set_original_age (HippoCanvasBlock *canvas_block,
+                                          GTime            age);
 
 HippoActions* hippo_canvas_block_get_actions  (HippoCanvasBlock *canvas_block);
 

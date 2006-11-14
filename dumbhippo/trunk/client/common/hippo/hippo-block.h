@@ -17,6 +17,13 @@ typedef enum {
     HIPPO_BLOCK_TYPE_BLOG_PERSON
 } HippoBlockType;
 
+typedef enum {
+    HIPPO_STACK_NEW_BLOCK,
+    HIPPO_STACK_BLOCK_UPDATE,
+    HIPPO_STACK_VIEWER_COUNT,
+    HIPPO_STACK_CHAT_MESSAGE
+} HippoStackReason;
+
 typedef struct _HippoBlock      HippoBlock;
 typedef struct _HippoBlockClass HippoBlockClass;
 
@@ -27,7 +34,6 @@ typedef struct _HippoBlockClass HippoBlockClass;
 #define HIPPO_IS_BLOCK_CLASS(klass)   (G_TYPE_CHECK_CLASS_TYPE ((klass), HIPPO_TYPE_BLOCK))
 #define HIPPO_BLOCK_GET_CLASS(obj)    (G_TYPE_INSTANCE_GET_CLASS ((obj), HIPPO_TYPE_BLOCK, HippoBlockClass))
 
-
 struct _HippoBlock {
     GObject parent;
     char   *guid;
@@ -36,8 +42,10 @@ struct _HippoBlock {
     gint64 timestamp;
     gint64 clicked_timestamp;
     gint64 ignored_timestamp;
+    int significant_clicked_count;
     int clicked_count;
     char *icon_url;
+    HippoStackReason stack_reason;
     guint clicked : 1;
     guint ignored : 1;
 };
@@ -78,12 +86,18 @@ gint64   hippo_block_get_sort_timestamp    (HippoBlock *block);
 int      hippo_block_get_clicked_count     (HippoBlock *block);
 void     hippo_block_set_clicked_count     (HippoBlock *block,
                                             int         value);
+int      hippo_block_get_significant_clicked_count     (HippoBlock *block);
+void     hippo_block_set_significant_clicked_count     (HippoBlock *block,
+                                                        int         value);
 gboolean hippo_block_get_clicked           (HippoBlock *block);
 void     hippo_block_set_clicked           (HippoBlock *block,
                                             gboolean    value);
 gboolean hippo_block_get_ignored           (HippoBlock *block);
 void     hippo_block_set_ignored           (HippoBlock *block,
                                             gboolean    value);
+HippoStackReason hippo_block_get_stack_reason (HippoBlock      *block);
+void             hippo_block_set_stack_reason (HippoBlock      *block,
+                                               HippoStackReason value);
 
 const char* hippo_block_get_icon_url       (HippoBlock *block); 
 void        hippo_block_set_icon_url       (HippoBlock *block,

@@ -62,6 +62,7 @@ struct _HippoCanvasBlockPost {
     HippoCanvasBlock canvas_block;
     HippoPost *post;
     HippoCanvasItem *description_item;
+    HippoCanvasItem *reason_item;
     HippoCanvasItem *single_message_preview;
     HippoCanvasItem *clicked_count_item;
     HippoCanvasBox *parent_box;
@@ -206,6 +207,16 @@ hippo_canvas_block_post_constructor (GType                  type,
     box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
                        NULL);
     
+    block_post->reason_item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
+                                           "text", NULL,
+                                           "border-top", 4,
+                                           "border-bottom", 4,
+                                           NULL);
+    hippo_canvas_box_append(box, block_post->description_item, 0);
+    hippo_canvas_box_set_child_visible(box,
+                                       block_post->reason_item,
+                                       FALSE);
+
     block_post->description_item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
                                                 "size-mode", HIPPO_CANVAS_SIZE_ELLIPSIZE_END,
                                                 "xalign", HIPPO_ALIGNMENT_START,
