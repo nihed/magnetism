@@ -95,7 +95,12 @@ public class FacebookBlockHandlerBean extends AbstractBlockHandlerBean<FacebookB
 		return getGroupsData1UserIsIn(block);
 	}
 	
+	// FIXME stop implementing this interface, no?
 	public void onExternalAccountCreated(User user, ExternalAccount external) {
+		// we do not have per-facebook-account blocks anymore
+	}
+	
+	public void onExternalAccountLovedAndEnabledMaybeChanged(User user, ExternalAccount external) {
 		// we do not have per-facebook-account blocks anymore
 	}
 	

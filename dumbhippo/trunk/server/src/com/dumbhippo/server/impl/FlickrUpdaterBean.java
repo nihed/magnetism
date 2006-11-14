@@ -308,20 +308,14 @@ public class FlickrUpdaterBean implements FlickrUpdater {
 		
 		if (photosetsChanged)
 			updateUserPhotosetStatuses(flickrId, photosetViews);
+	} 
+
+	private boolean isLovedAndEnabledFlickr(ExternalAccount external) {
+		return external.hasLovedAndEnabledType(ExternalAccountType.FLICKR) && 
+			external.getHandle() != null;
 	}
-
-	public void onExternalAccountCreated(User user, ExternalAccount external) {
-		// FIXME create a method ExternalAccount.isEnabledType(FLICKR) and use 
-		// it all over the place
-		if (external.getAccountType() != ExternalAccountType.FLICKR)
-			return;
-		if (external.getSentiment() != Sentiment.LOVE)
-			return;
-		if (external.getAccount().isDisabled() || external.getAccount().isAdminDisabled())
-			return;
-		if (external.getHandle() == null)
-			return;
-
+	
+	private void doPeriodicUpdateNow(ExternalAccount external) {
 		// Immediately update the flickr account status instead of 
 		// waiting for the next periodic update to kick in, so if someone
 		// adds a flickr account they can see the result right away.
@@ -334,6 +328,20 @@ public class FlickrUpdaterBean implements FlickrUpdater {
 				updater.periodicUpdate(flickrId);
 			}
 			
-		});
+		});		
+	}
+	
+	public void onExternalAccountCreated(User user, ExternalAccount external) {
+		if (!isLovedAndEnabledFlickr(external))
+			return;
+		
+		doPeriodicUpdateNow(external);
+	}
+
+	public void onExternalAccountLovedAndEnabledMaybeChanged(User user, ExternalAccount external) {
+		if (!isLovedAndEnabledFlickr(external))
+			return;
+
+		doPeriodicUpdateNow(external);
 	}
 }

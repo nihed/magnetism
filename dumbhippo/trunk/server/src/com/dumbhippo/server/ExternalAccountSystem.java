@@ -6,14 +6,16 @@ import javax.ejb.Local;
 
 import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.ExternalAccountType;
+import com.dumbhippo.persistence.Sentiment;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.ValidationException;
+import com.dumbhippo.server.listeners.AccountStatusListener;
 import com.dumbhippo.server.views.ExternalAccountView;
 import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.server.views.Viewpoint;
 
 @Local
-public interface ExternalAccountSystem {
+public interface ExternalAccountSystem extends AccountStatusListener {
 	/**
 	 * Gets (creating if necessary) an ExternalAccount of the given type for the current user's viewpoint.
 	 * 
@@ -76,4 +78,6 @@ public interface ExternalAccountSystem {
 	public String getMySpaceName(Viewpoint viewpoint, User user) throws NotFoundException;
 	
 	public void loadThumbnails(Viewpoint viewpoint, Set<ExternalAccountView> accountViews);
+	
+	public void setSentiment(ExternalAccount externalAccount, Sentiment sentiment);
 }

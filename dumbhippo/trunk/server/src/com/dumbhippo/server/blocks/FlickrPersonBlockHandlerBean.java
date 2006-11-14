@@ -12,6 +12,7 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.BlockKey;
 import com.dumbhippo.persistence.BlockType;
+import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.FlickrPhotosetStatus;
 import com.dumbhippo.persistence.Group;
@@ -65,16 +66,18 @@ public class FlickrPersonBlockHandlerBean extends
 	}
 
 	public void onFlickrPhotosetCreated(FlickrPhotosetStatus photosetStatus) {
-		// (remove this log message)
-		logger.debug("new photoset status " + photosetStatus);
-		
-		// FIXME
-
+		// we don't care about this, the photoset block does though
 	}
 
 	public void onFlickrPhotosetChanged(FlickrPhotosetStatus photosetStatus) {
-		// (remove this log message)
-		logger.debug("changed photoset status " + photosetStatus);
+		// we don't care about this, the photoset block does though
+	}
+
+	public void onExternalAccountCreated(User user, ExternalAccount external) {
+		// FIXME
+	}
+
+	public void onExternalAccountLovedAndEnabledMaybeChanged(User user, ExternalAccount external) {
 		// FIXME
 	}
 }

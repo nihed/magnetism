@@ -59,7 +59,7 @@ public class FacebookTrackerBean implements FacebookTracker {
 		    facebookAccount = new FacebookAccount(externalAccount);
 		    em.persist(facebookAccount);
 		    externalAccount.setExtra(Long.toString(facebookAccount.getId()));
-		    externalAccount.setSentiment(Sentiment.LOVE);
+		    externalAccounts.setSentiment(externalAccount, Sentiment.LOVE);
 		} else {
 			facebookAccount = em.find(FacebookAccount.class, Long.parseLong(externalAccount.getExtra()));
 			if (facebookAccount == null)

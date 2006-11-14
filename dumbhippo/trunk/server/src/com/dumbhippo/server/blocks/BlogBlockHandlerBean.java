@@ -84,6 +84,7 @@ public class BlogBlockHandlerBean extends AbstractBlockHandlerBean<BlogBlockView
 	}
 
 	public void onExternalAccountFeedEntry(User user, ExternalAccount external, FeedEntry entry, int entryPosition) {
+		// FIXME need to use external.hasLovedAndEnabledType(BLOG)
 		if (external.getAccountType() != ExternalAccountType.BLOG)
 			return;
 		// entry.getDate().getTime() creates a timestamp that is too old, at least with blogspot
@@ -91,5 +92,9 @@ public class BlogBlockHandlerBean extends AbstractBlockHandlerBean<BlogBlockView
 		long now = System.currentTimeMillis();
 		stacker.stack(getKey(user, StackInclusion.ONLY_WHEN_VIEWED_BY_OTHERS), now, user, false, StackReason.BLOCK_UPDATE);
 		stacker.stack(getKey(user, StackInclusion.ONLY_WHEN_VIEWING_SELF), now, user, false, StackReason.BLOCK_UPDATE);
+	}
+
+	public void onExternalAccountLovedAndEnabledMaybeChanged(User user, ExternalAccount external) {
+		// FIXME
 	}
 }

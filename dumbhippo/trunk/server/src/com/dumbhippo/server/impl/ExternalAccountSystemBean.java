@@ -210,4 +210,31 @@ public class ExternalAccountSystemBean implements ExternalAccountSystem {
 			loadThumbnails(viewpoint, externalView);
 		}
 	}
+	
+	public void setSentiment(ExternalAccount externalAccount, Sentiment sentiment) {
+		boolean wasLovedAndEnabled = externalAccount.isLovedAndEnabled();
+		if (sentiment != externalAccount.getSentiment()) {
+			externalAccount.setSentiment(sentiment);
+			if (externalAccount.isLovedAndEnabled() != wasLovedAndEnabled)
+				notifier.onExternalAccountLovedAndEnabledMaybeChanged(externalAccount.getAccount().getOwner(), externalAccount);
+		}
+	}
+
+	public void onAccountDisabledToggled(Account account) {
+		for (ExternalAccount external : account.getExternalAccounts()) {
+			// this is why we have "maybe changed" since we really don't know.
+			notifier.onExternalAccountLovedAndEnabledMaybeChanged(account.getOwner(), external);
+		}
+	}
+
+	public void onAccountAdminDisabledToggled(Account account) {
+		for (ExternalAccount external : account.getExternalAccounts()) {
+			// this is why we have "maybe changed" since we really don't know.
+			notifier.onExternalAccountLovedAndEnabledMaybeChanged(account.getOwner(), external);
+		}		
+	}
+
+	public void onMusicSharingToggled(Account account) {
+		// We aren't interested in this, just part of a listener iface we're using
+	}
 }

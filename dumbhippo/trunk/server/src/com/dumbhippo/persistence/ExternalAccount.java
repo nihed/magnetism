@@ -122,6 +122,7 @@ public class ExternalAccount extends DBUnique {
 	public Sentiment getSentiment() {
 		return sentiment;
 	}
+	/** Don't call directly, use ExternalAccountSystem.setSentiment */
 	public void setSentiment(Sentiment sentiment) {
 		this.sentiment = sentiment;
 	}
@@ -168,5 +169,16 @@ public class ExternalAccount extends DBUnique {
 	@Transient
 	public String getLinkText() {
 		return accountType.getLinkText(handle, extra);
+	}
+	
+	@Transient
+	public boolean hasLovedAndEnabledType(ExternalAccountType type) {
+		return accountType == type && getSentiment() == Sentiment.LOVE && 
+		!getAccount().isDisabled() && !getAccount().isAdminDisabled();
+	}
+	
+	@Transient
+	public boolean isLovedAndEnabled() {
+		return hasLovedAndEnabledType(accountType);
 	}
 }

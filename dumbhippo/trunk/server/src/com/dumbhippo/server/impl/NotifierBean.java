@@ -247,6 +247,12 @@ public class NotifierBean implements Notifier {
 		}
 	}
 
+	public void onExternalAccountLovedAndEnabledMaybeChanged(User user, ExternalAccount external) {
+		for (ExternalAccountsListener l : getListeners(ExternalAccountsListener.class)) {
+			l.onExternalAccountLovedAndEnabledMaybeChanged(user, external);
+		}
+	}
+	
 	public void onTrackPlayed(User user, Track track, Date when) {
 		for (MusicListener l : getListeners(MusicListener.class)) {
 			l.onTrackPlayed(user, track, when);

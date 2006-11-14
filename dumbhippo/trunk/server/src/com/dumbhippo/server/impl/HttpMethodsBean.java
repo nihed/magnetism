@@ -1497,7 +1497,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, e.getMessage());
 		}
 
-		external.setSentiment(Sentiment.LOVE);
+		externalAccountSystem.setSentiment(external, Sentiment.LOVE);
 		external.setFeed(feed);
 		feed.getAccounts().add(external);
 	}
@@ -1525,7 +1525,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		
 		ExternalAccountType typeEnum = parseExternalAccountType(type);
 		ExternalAccount external = externalAccountSystem.getOrCreateExternalAccount(viewpoint, typeEnum);
-		external.setSentiment(Sentiment.HATE);
+		externalAccountSystem.setSentiment(external, Sentiment.HATE);
 		if (quip != null) {
 			quip = quip.trim();
 			if (quip.length() == 0)
@@ -1540,7 +1540,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		
 		ExternalAccountType typeEnum = parseExternalAccountType(type);
 		ExternalAccount external = externalAccountSystem.getOrCreateExternalAccount(viewpoint, typeEnum);
-		external.setSentiment(Sentiment.INDIFFERENT);
+		externalAccountSystem.setSentiment(external, Sentiment.INDIFFERENT);
 	}
 
 	public void doFindFlickrAccount(XmlBuilder xml, UserViewpoint viewpoint, String email) throws XmlMethodException {
@@ -1559,7 +1559,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 
 		email = parseEmail(email);
 		
-		external.setSentiment(Sentiment.LOVE);
+		externalAccountSystem.setSentiment(external, Sentiment.LOVE);
 		external.setHandle(nsid);
 		external.setExtra(email);
 	}
@@ -1573,7 +1573,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, e.getMessage());
 		}
 
-		external.setSentiment(Sentiment.LOVE);
+		externalAccountSystem.setSentiment(external, Sentiment.LOVE);
 		
 		// FIXME in externalAccounts.setMySpaceName we don't clear the friend ID in this way... 
 		// but might have side effect problems if we did.
@@ -1608,7 +1608,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		} catch (ValidationException e) {
 			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, e.getMessage());
 		}
-		external.setSentiment(Sentiment.LOVE);
+		externalAccountSystem.setSentiment(external, Sentiment.LOVE);
 		
 		xml.appendTextNode("username", external.getHandle());
 	}
@@ -1632,7 +1632,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		} catch (ValidationException e) {
 			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, e.getMessage());
 		}
-		external.setSentiment(Sentiment.LOVE);
+		externalAccountSystem.setSentiment(external, Sentiment.LOVE);
 		
 		xml.appendTextNode("username", external.getHandle());
 	}
@@ -1667,7 +1667,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		} catch (ValidationException e) {
 			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, e.getMessage());
 		}
-		external.setSentiment(Sentiment.LOVE);
+		externalAccountSystem.setSentiment(external, Sentiment.LOVE);
 	}
 
 	public void doSetBlog(XmlBuilder xml, UserViewpoint viewpoint, URL url) throws XmlMethodException {
@@ -1684,7 +1684,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, e.getMessage());
 		}
 
-		external.setSentiment(Sentiment.LOVE);
+		externalAccountSystem.setSentiment(external, Sentiment.LOVE);
 		external.setFeed(feed);
 		feed.getAccounts().add(external);
 	}
