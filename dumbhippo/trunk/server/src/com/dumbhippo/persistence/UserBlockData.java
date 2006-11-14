@@ -40,6 +40,8 @@ public class UserBlockData extends DBUnique {
 		this.clickedTimestamp = -1;
 		this.ignoredTimestamp = -1;
 		this.participatedTimestamp = -1;
+		this.stackReason = StackReason.NEW_BLOCK;
+		this.participatedReason = StackReason.NEW_BLOCK;
 		this.ignored = false;
 		this.deleted = false;
 	}

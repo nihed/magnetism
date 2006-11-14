@@ -35,6 +35,8 @@ public class GroupBlockData extends DBUnique {
 	
 	public GroupBlockData() {
 		this.deleted = false;
+		this.stackReason = StackReason.NEW_BLOCK;
+		this.participatedReason = StackReason.NEW_BLOCK;
 	}
 	
 	public GroupBlockData(Group group, Block block) {
