@@ -45,6 +45,7 @@ import com.dumbhippo.persistence.GroupMessage;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.PostMessage;
 import com.dumbhippo.persistence.StackInclusion;
+import com.dumbhippo.persistence.StackReason;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.server.GroupSystem;
@@ -322,7 +323,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		}
 	}
 	
-	private void updateUserBlockDatas(Block block, Set<User> desiredUsers, Guid participantId) {
+	private void updateUserBlockDatas(Block block, Set<User> desiredUsers, Guid participantId, StackReason reason) {
 		int addCount;
 		int removeCount;
 		
@@ -357,12 +358,15 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 				if (old.isDeleted())
 					addCount += 1;
 				old.setDeleted(false);
-				if (u.getGuid().equals(participantId))
+				if (u.getGuid().equals(participantId)) {
 					old.setParticipatedTimestamp(block.getTimestamp());
+					old.setParticipatedReason(reason);
+				}
 				if (!old.isIgnored())
 					old.setStackTimestamp(block.getTimestamp());
+				old.setStackReason(reason);
 			} else {
-				UserBlockData data = new UserBlockData(u, block, u.getGuid().equals(participantId));
+				UserBlockData data = new UserBlockData(u, block, u.getGuid().equals(participantId), reason);
 				em.persist(data);
 				addCount += 1;
 			}
@@ -386,10 +390,10 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		LiveState.getInstance().queueUpdate(event);
 	}
 	
-	private void updateUserBlockDatas(Block block, Guid participantId) {
+	private void updateUserBlockDatas(Block block, Guid participantId, StackReason reason) {
 		Set<User> desiredUsers = getHandler(block).getInterestedUsers(block);
 		
-		updateUserBlockDatas(block, desiredUsers, participantId);
+		updateUserBlockDatas(block, desiredUsers, participantId, reason);
 	}
 	
 	// note this query includes ubd.deleted=1
@@ -399,7 +403,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		return TypeUtils.castList(GroupBlockData.class, q.getResultList());
 	}
 	
-	private void updateGroupBlockDatas(Block block, Set<Group> desiredGroups, boolean isGroupParticipation) {
+	private void updateGroupBlockDatas(Block block, Set<Group> desiredGroups, boolean isGroupParticipation, StackReason reason) {
 		int addCount;
 		int removeCount;
 		
@@ -431,12 +435,18 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 					addCount += 1;
 				old.setDeleted(false);
 				old.setStackTimestamp(block.getTimestamp());
-				if (isGroupParticipation)
+				old.setStackReason(reason);
+				if (isGroupParticipation) {
 					old.setParticipatedTimestamp(block.getTimestamp());
+					old.setParticipatedReason(reason);
+				}
 			} else {
 				GroupBlockData data = new GroupBlockData(g, block);
-				if (isGroupParticipation)
+				data.setStackReason(reason);
+				if (isGroupParticipation) {
 					data.setParticipatedTimestamp(block.getTimestamp());
+					data.setParticipatedReason(reason);
+				}
 				em.persist(data);
 				addCount += 1;
 			}
@@ -452,13 +462,13 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		logger.debug("block {}, {} total groups {} added {} removed {}", new Object[] { block, affectedGuids.size(), addCount, removeCount } );
 	}		
 
-	private void updateGroupBlockDatas(Block block, boolean isGroupParticipation) {
+	private void updateGroupBlockDatas(Block block, boolean isGroupParticipation, StackReason reason) {
 		Set<Group> desiredGroups = getHandler(block).getInterestedGroups(block);
 		
-		updateGroupBlockDatas(block, desiredGroups, isGroupParticipation);
+		updateGroupBlockDatas(block, desiredGroups, isGroupParticipation, reason);
 	}
 	
-	public void stack(final Block block, final long activity, final User participant, final boolean isGroupParticipation) {
+	public void stack(final Block block, final long activity, final User participant, final boolean isGroupParticipation, final StackReason reason) {
 
 		// never "roll back" to an earlier timestamp
 		if (block.getTimestampAsLong() < activity) { 
@@ -474,31 +484,31 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 				runner.runTaskRetryingOnConstraintViolation(new Runnable() {
 					public void run() {
 						Block attached = em.find(Block.class, block.getId());
-						updateUserBlockDatas(attached, (participant != null ? participant.getGuid() : null));
-						updateGroupBlockDatas(attached, isGroupParticipation);
+						updateUserBlockDatas(attached, (participant != null ? participant.getGuid() : null), reason);
+						updateGroupBlockDatas(attached, isGroupParticipation, reason);
 					}
 				});
 			}
 		});
 	}
 	
-	public void stack(Block block, long activity) {
-		stack(block, activity, null, false);
+	public void stack(Block block, long activity, StackReason reason) {
+		stack(block, activity, null, false, reason);
 	}
 	
-	public Block stack(BlockKey key, long activity, User participant, boolean isGroupParticipation) {
+	public Block stack(BlockKey key, long activity, User participant, boolean isGroupParticipation, StackReason reason) {
 		Block block;
 		try {
 			block = queryBlock(key);
 		} catch (NotFoundException e) {
 			throw new RuntimeException("stack() called on block that doesn't exist; probably means a migration is needed. key=" + key, e);
 		}
-        stack(block, activity, participant, isGroupParticipation);
+        stack(block, activity, participant, isGroupParticipation, reason);
         return block;
 	}
 	
-	public Block stack(BlockKey key, long activity) {
-		return stack(key, activity, null, false);
+	public Block stack(BlockKey key, long activity, StackReason reason) {
+		return stack(key, activity, null, false, reason);
 	}
 	
 	public void blockClicked(BlockKey key, User user, long clickedTime) {
@@ -527,9 +537,12 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		logger.debug("due to click, restacking block {} with new time {}",
 				ubd.getBlock(), clickedTime);
 		
+		if (!BlockView.clickedCountIsSignificant(ubd.getBlock().getClickedCount()))
+			return;
+		
 		// now update the timestamp in the block (if it's newer)
 		// and update user caches for all users
-		stack(ubd.getBlock(), clickedTime);
+		stack(ubd.getBlock(), clickedTime, StackReason.VIEWER_COUNT);
 	}
 
 	// FIXME this function should die since block-type-specific code should not 
@@ -1309,6 +1322,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		Post post = em.find(Post.class, postId);
 		Block block = getOrCreateBlock(getPostKey(post.getGuid()), post.isPublic());
 		long activity = post.getPostDate().getTime();
+		StackReason reason = StackReason.NEW_BLOCK;
 		
 		// Now that PersonPostData is gone, we can no longer migrate it here...
 
@@ -1316,15 +1330,17 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		if (messages.size() > 0) {
 			PostMessage m = messages.get(0);
 			long newestMessageTime = m.getTimestamp().getTime();
-			if (newestMessageTime > activity)
+			if (newestMessageTime > activity) {
 				activity = newestMessageTime;
+				reason = StackReason.CHAT_MESSAGE;
+			}
 		}
 		
 		// This will update the block timestamp then asynchronously update the
 		// cached user timestamps after this transaction commits. It would also 
 		// create any  UserBlockData objects that didn't exist at that point, but 
 		// they should have all been created above by migrating PersonPostData
-		stack(block, activity, null, !(post instanceof FeedPost) || messages.size() > 0);		
+		stack(block, activity, null, !(post instanceof FeedPost) || messages.size() > 0, reason);		
 	}
 	
 	public void migratePostParticipation(String postId) {
@@ -1376,7 +1392,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		getOrCreateBlock(key);
 		long lastPlayTime = musicSystem.getLatestPlayTime(SystemViewpoint.getInstance(), user);
 		if (lastPlayTime != 0) {			
-			stack(key, lastPlayTime);
+			stack(key, lastPlayTime, StackReason.BLOCK_UPDATE);
 		}
 	}
 	
@@ -1409,7 +1425,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		getOrCreateBlock(getGroupChatKey(group.getGuid()), group.isPublic());
 		List<GroupMessage> messages = groupSystem.getNewestGroupMessages(group, 1);
 		if (!messages.isEmpty()) {
-			stack(getGroupChatKey(group.getGuid()), messages.get(0).getTimestamp().getTime());
+			stack(getGroupChatKey(group.getGuid()), messages.get(0).getTimestamp().getTime(), StackReason.CHAT_MESSAGE);
 		}
 	}
 	
@@ -1454,7 +1470,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 				// we set a timestamp of 0, since we have no way of knowing the right
 				// timestamp, and we don't want to make a big pile of group member blocks 
 				// at the top of the stack whenever we run a migration
-				stack(block, 0, a.getOwner(), true);
+				stack(block, 0, a.getOwner(), true, StackReason.VIEWER_COUNT);
 			}
 		}
 	}
@@ -1464,6 +1480,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		
 		Block block = em.find(Block.class, blockId);
         boolean isGroupParticipation;
+        StackReason reason = StackReason.BLOCK_UPDATE;
 
         isGroupParticipation = false;
 		switch (block.getBlockType()) {
@@ -1480,10 +1497,13 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 				return;
 			}
 			isGroupParticipation = !(post instanceof FeedPost);
+			reason = StackReason.NEW_BLOCK;
 			break;
 		case GROUP_MEMBER:
+			break;
 		case GROUP_CHAT:
 			isGroupParticipation = true;
+			reason = StackReason.CHAT_MESSAGE;
 			break;
 		case MUSIC_PERSON:
 		case FACEBOOK_PERSON:
@@ -1499,6 +1519,6 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 			// don't add a default, it hides compiler warnings
 		}
 
-		updateGroupBlockDatas(block, isGroupParticipation);
+		updateGroupBlockDatas(block, isGroupParticipation, reason);
 	}
 }

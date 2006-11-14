@@ -65,15 +65,20 @@ public abstract class BlockView implements ObjectView {
 	}
 	
 	public void writeToXmlBuilder(XmlBuilder builder) {
+		// FIXME: We really shouldn't include clickedCount/significantClickedCount
+		//   to all blocks; they only make sense for posts, but the XmlBuilder
+		//   API makes that painful.
 		builder.openElement("block",
 							"id", block.getId(),
 							"type", block.getBlockType().name(),
 							"timestamp", Long.toString(block.getTimestampAsLong()),
 							"clickedCount", Integer.toString(block.getClickedCount()),
+							"significantClickedCount", Integer.toString(getSignificantClickedCount()),
 							"ignored", Boolean.toString(userBlockData.isIgnored()),
 							"ignoredTimestamp", Long.toString(userBlockData.getIgnoredTimestampAsLong()),
 							"clicked", Boolean.toString(userBlockData.isClicked()),
 							"clickedTimestamp", Long.toString(userBlockData.getClickedTimestampAsLong()),
+							"stackReason", userBlockData.getStackReason().name(),
 							"icon", getIcon());
 		
 		writeDetailsToXmlBuilder(builder);
@@ -93,5 +98,30 @@ public abstract class BlockView implements ObjectView {
 	@Override
 	public String toString() {
 		return "{view of " + block + "}";
+	}
+	
+	static final int SIGNIFICANT_CLICKS[] = {
+		1,5,10,25,100,500,1000
+	};
+	
+	public static boolean clickedCountIsSignificant(int count) {
+		for (int i = 0; i < SIGNIFICANT_CLICKS.length; i++) {
+			if (SIGNIFICANT_CLICKS[i] == count)
+				return true;
+		}
+		
+		return false;
+	}
+	
+	public int getSignificantClickedCount() {
+		int clickCount = block.getClickedCount();
+		int result = 0;
+		for (int i = 0; i < SIGNIFICANT_CLICKS.length; i++) {
+			if (clickCount >= SIGNIFICANT_CLICKS[i]) {
+				result = SIGNIFICANT_CLICKS[i];
+			}
+		}
+		
+		return result;
 	}
 }

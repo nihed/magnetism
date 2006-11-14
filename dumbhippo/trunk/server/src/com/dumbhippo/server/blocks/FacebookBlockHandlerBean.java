@@ -18,6 +18,7 @@ import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.FacebookEvent;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.StackInclusion;
+import com.dumbhippo.persistence.StackReason;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.FacebookSystem;
 import com.dumbhippo.server.NotFoundException;
@@ -117,10 +118,10 @@ public class FacebookBlockHandlerBean extends AbstractBlockHandlerBean<FacebookB
 	public void onFacebookEvent(User user, FacebookEvent event) {
 		if (event.getEventType().getDisplayToOthers()) {
 			stacker.stack(getKey(user, event, StackInclusion.IN_ALL_STACKS), 
-				          event.getEventTimestampAsLong(), user, false);
+				          event.getEventTimestampAsLong(), user, false, StackReason.BLOCK_UPDATE);
 		} else {
 			stacker.stack(getKey(user, event, StackInclusion.ONLY_WHEN_VIEWING_SELF), 
-				      event.getEventTimestampAsLong(), user, false);
+				      event.getEventTimestampAsLong(), user, false, StackReason.BLOCK_UPDATE);
 		}
 	}
 }

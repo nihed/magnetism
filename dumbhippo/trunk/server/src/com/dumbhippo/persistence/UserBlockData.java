@@ -33,6 +33,8 @@ public class UserBlockData extends DBUnique {
 	private boolean deleted;
 	private long participatedTimestamp;
 	private long stackTimestamp;
+	private StackReason participatedReason;
+	private StackReason stackReason;
 	
 	public UserBlockData() {
 		this.clickedTimestamp = -1;
@@ -42,8 +44,11 @@ public class UserBlockData extends DBUnique {
 		this.deleted = false;
 	}
 	
-	public UserBlockData(User user, Block block, boolean isParticipant) {
+	public UserBlockData(User user, Block block, boolean isParticipant, StackReason reason) {
 		this(user, block, isParticipant ? block.getTimestamp().getTime() : -1);
+		setStackReason(reason);
+		if (isParticipant)
+			setParticipatedReason(reason);
 	}
 
 	public UserBlockData(User user, Block block, long participatedTimestamp) {
@@ -173,7 +178,25 @@ public class UserBlockData extends DBUnique {
 	public void setStackTimestampAsLong(long stackTimestamp) {
 		this.stackTimestamp = stackTimestamp;
 	}
-	
+
+	@Column(nullable = false)
+	public StackReason getParticipatedReason() {
+		return participatedReason;
+	}
+
+	public void setParticipatedReason(StackReason participatedReason) {
+		this.participatedReason = participatedReason;
+	}
+
+	@Column(nullable = false)
+	public StackReason getStackReason() {
+		return stackReason;
+	}
+
+	public void setStackReason(StackReason stackReason) {
+		this.stackReason = stackReason;
+	}
+
 	@Override
 	public String toString() {
 		return "{UserBlockData user=" + user + " block=" + block + "}";

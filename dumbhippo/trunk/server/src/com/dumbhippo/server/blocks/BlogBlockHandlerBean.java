@@ -14,6 +14,7 @@ import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.FeedEntry;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.StackInclusion;
+import com.dumbhippo.persistence.StackReason;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.ExternalAccountSystem;
 import com.dumbhippo.server.FeedSystem;
@@ -89,7 +90,7 @@ public class BlogBlockHandlerBean extends AbstractBlockHandlerBean<BlogBlockView
 		// entry.getDate().getTime() creates a timestamp that is too old, at least with blogspot
 		// so it is unreliable, because we update blocks based on timestamps
 		long now = System.currentTimeMillis();
-		stacker.stack(getKey(user, StackInclusion.ONLY_WHEN_VIEWED_BY_OTHERS), now, user, false);
-		stacker.stack(getKey(user, StackInclusion.ONLY_WHEN_VIEWING_SELF), now, user, false);
+		stacker.stack(getKey(user, StackInclusion.ONLY_WHEN_VIEWED_BY_OTHERS), now, user, false, StackReason.BLOCK_UPDATE);
+		stacker.stack(getKey(user, StackInclusion.ONLY_WHEN_VIEWING_SELF), now, user, false, StackReason.BLOCK_UPDATE);
 	}
 }

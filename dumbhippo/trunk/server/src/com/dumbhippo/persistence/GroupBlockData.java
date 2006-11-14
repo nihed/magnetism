@@ -30,6 +30,8 @@ public class GroupBlockData extends DBUnique {
 	private boolean deleted;
 	private long participatedTimestamp;
 	private long stackTimestamp;
+	private StackReason participatedReason;
+	private StackReason stackReason;
 	
 	public GroupBlockData() {
 		this.deleted = false;
@@ -112,7 +114,25 @@ public class GroupBlockData extends DBUnique {
 	public void setStackTimestampAsLong(long stackTimestamp) {
 		this.stackTimestamp = stackTimestamp;
 	}
-	
+
+	@Column(nullable = false)
+	public StackReason getParticipatedReason() {
+		return participatedReason;
+	}
+
+	public void setParticipatedReason(StackReason participatedReason) {
+		this.participatedReason = participatedReason;
+	}
+
+	@Column(nullable = false)
+	public StackReason getStackReason() {
+		return stackReason;
+	}
+
+	public void setStackReason(StackReason stackReason) {
+		this.stackReason = stackReason;
+	}
+
 	@Override
 	public String toString() {
 		return "{GroupBlockData user=" + group + " block=" + block + "}";

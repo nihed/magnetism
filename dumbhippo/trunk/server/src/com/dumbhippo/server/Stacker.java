@@ -8,6 +8,7 @@ import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.BlockKey;
 import com.dumbhippo.persistence.Group;
+import com.dumbhippo.persistence.StackReason;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.server.blocks.BlockView;
@@ -28,10 +29,10 @@ public interface Stacker {
 	public Block createBlock(BlockKey key);
 	public Block queryBlock(BlockKey key) throws NotFoundException;
 
-	public Block stack(BlockKey key, long activity, User participant, boolean isGroupParticipation);
-	public Block stack(BlockKey key, long activity);
-	public void stack(Block block, long activity, User participant, boolean isGroupParticipation);
-	public void stack(Block block, long activity);
+	public Block stack(BlockKey key, long activity, User participant, boolean isGroupParticipation, StackReason reason);
+	public Block stack(BlockKey key, long activity, StackReason reason);
+	public void stack(Block block, long activity, User participant, boolean isGroupParticipation, StackReason reason);
+	public void stack(Block block, long activity, StackReason reason);
 	
 	public void blockClicked(BlockKey key, User user, long clickedTime);
 	

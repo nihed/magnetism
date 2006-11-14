@@ -20,6 +20,7 @@ import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.PostMessage;
 import com.dumbhippo.persistence.Resource;
+import com.dumbhippo.persistence.StackReason;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.server.NotFoundException;
@@ -100,7 +101,7 @@ public class PostBlockHandlerBean extends AbstractBlockHandlerBean<PostBlockView
 		block.setPublicBlock(post.isPublic() && !post.isDisabled());
 		User poster = post.getPoster();
 		stacker.stack(block, post.getPostDate().getTime(),
-					poster, !(post instanceof FeedPost));
+					poster, !(post instanceof FeedPost), StackReason.NEW_BLOCK);
 	}
 
 	public void onPostDisabledToggled(Post post) {
@@ -116,7 +117,7 @@ public class PostBlockHandlerBean extends AbstractBlockHandlerBean<PostBlockView
 
 	public void onPostMessageCreated(PostMessage message) {
 		stacker.stack(getKey(message.getPost()), message.getTimestamp().getTime(),
-				message.getFromUser(), true);
+				message.getFromUser(), true, StackReason.CHAT_MESSAGE);
 	}
 
 	public void onPostClicked(Post post, User user, long clickedTime) {

@@ -13,6 +13,7 @@ import com.dumbhippo.persistence.BlockType;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupMember;
 import com.dumbhippo.persistence.MembershipStatus;
+import com.dumbhippo.persistence.StackReason;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PersonViewer;
@@ -99,7 +100,7 @@ public class GroupMemberBlockHandlerBean extends AbstractBlockHandlerBean<GroupM
 			// get onGroupMemberCreated again later for the same group/person if they rejoin
 			Block block = stacker.getOrCreateBlock(getKey(member.getGroup(), a.getOwner()));
 			block.setPublicBlock(member.getGroup().isPublic());
-			stacker.stack(block, when, a.getOwner(), true);
+			stacker.stack(block, when, a.getOwner(), true, StackReason.BLOCK_UPDATE);
 		}		
 	}
 
@@ -115,7 +116,7 @@ public class GroupMemberBlockHandlerBean extends AbstractBlockHandlerBean<GroupM
 		case INVITED:
 		case INVITED_TO_FOLLOW:			
 			stacker.stack(getKey(member.getGroup(), a.getOwner()),
-					when, a.getOwner(), true);
+					when, a.getOwner(), true, StackReason.BLOCK_UPDATE);
 			break;
 		case NONMEMBER:
 			// moves to these states don't create a new timestamp
