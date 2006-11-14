@@ -740,6 +740,32 @@ on_block_clicked_count_changed(HippoBlock *block,
 }
 
 static void
+on_block_significant_clicked_count_changed(HippoBlock *block,
+                                           GParamSpec *arg,
+                                           void       *data)
+{
+    HippoCanvasBlock *canvas_block = HIPPO_CANVAS_BLOCK(data);
+    HippoCanvasBlockClass *klass;
+
+    klass = HIPPO_CANVAS_BLOCK_GET_CLASS(canvas_block);
+    if (klass->significant_clicked_count_changed)
+        (* klass->significant_clicked_count_changed) (canvas_block);
+}
+
+static void
+on_block_stack_reason_changed(HippoBlock *block,
+                              GParamSpec *arg,
+                              void       *data)
+{
+    HippoCanvasBlock *canvas_block = HIPPO_CANVAS_BLOCK(data);
+    HippoCanvasBlockClass *klass;
+
+    klass = HIPPO_CANVAS_BLOCK_GET_CLASS(canvas_block);
+    if (klass->stack_reason_changed)
+        (* klass->stack_reason_changed) (canvas_block);
+}
+
+static void
 on_block_timestamp_changed(HippoBlock *block,
                            GParamSpec *arg, /* null when we invoke callback manually */
                            void       *data)
@@ -825,8 +851,14 @@ hippo_canvas_block_set_block_impl(HippoCanvasBlock *canvas_block,
             g_signal_connect(G_OBJECT(new_block), "notify::clicked-count",
                              G_CALLBACK(on_block_clicked_count_changed),
                              canvas_block);
+            g_signal_connect(G_OBJECT(new_block), "notify::significant-clicked-count",
+                             G_CALLBACK(on_block_significant_clicked_count_changed),
+                             canvas_block);
             g_signal_connect(G_OBJECT(new_block), "notify::ignored",
                              G_CALLBACK(on_block_ignored_changed),
+                             canvas_block);
+            g_signal_connect(G_OBJECT(new_block), "notify::stack-reason",
+                             G_CALLBACK(on_block_stack_reason_changed),
                              canvas_block);
             g_signal_connect(G_OBJECT(new_block), "notify::icon-url",
                              G_CALLBACK(on_block_icon_url_changed),
@@ -852,7 +884,9 @@ hippo_canvas_block_set_block_impl(HippoCanvasBlock *canvas_block,
         if (new_block) {
             on_block_timestamp_changed(new_block, NULL, canvas_block);
             on_block_clicked_count_changed(new_block, NULL, canvas_block);
+            on_block_significant_clicked_count_changed(new_block, NULL, canvas_block);
             on_block_ignored_changed(new_block, NULL, canvas_block);
+            on_block_stack_reason_changed(new_block, NULL, canvas_block);
             on_block_icon_url_changed(new_block, NULL, canvas_block);
         }
         

@@ -66,6 +66,8 @@ struct _HippoCanvasBlockClass {
                                     HippoBlock       *block);
     void (* title_activated)       (HippoCanvasBlock *canvas_block);
     void (* clicked_count_changed) (HippoCanvasBlock *canvas_block);
+    void (* significant_clicked_count_changed) (HippoCanvasBlock *canvas_block);
+    void (* stack_reason_changed)  (HippoCanvasBlock *canvas_block);
     void (* expand)                (HippoCanvasBlock *canvas_block);
     void (* unexpand)              (HippoCanvasBlock *canvas_block);
     void (* hush)                  (HippoCanvasBlock *canvas_block);

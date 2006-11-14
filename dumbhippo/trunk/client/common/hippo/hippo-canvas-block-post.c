@@ -41,6 +41,8 @@ static void hippo_canvas_block_post_set_block       (HippoCanvasBlock *canvas_bl
 static void hippo_canvas_block_post_title_activated (HippoCanvasBlock *canvas_block);
 
 static void hippo_canvas_block_post_clicked_count_changed (HippoCanvasBlock *canvas_block);
+static void hippo_canvas_block_post_significant_clicked_count_changed (HippoCanvasBlock *canvas_block);
+static void hippo_canvas_block_post_stack_reason_changed (HippoCanvasBlock *canvas_block);
 
 static void hippo_canvas_block_post_expand   (HippoCanvasBlock *canvas_block);
 static void hippo_canvas_block_post_unexpand (HippoCanvasBlock *canvas_block);
@@ -128,6 +130,8 @@ hippo_canvas_block_post_class_init(HippoCanvasBlockPostClass *klass)
     canvas_block_class->set_block = hippo_canvas_block_post_set_block;
     canvas_block_class->title_activated = hippo_canvas_block_post_title_activated;
     canvas_block_class->clicked_count_changed = hippo_canvas_block_post_clicked_count_changed;
+    canvas_block_class->significant_clicked_count_changed = hippo_canvas_block_post_significant_clicked_count_changed;
+    canvas_block_class->stack_reason_changed = hippo_canvas_block_post_stack_reason_changed;
     canvas_block_class->expand = hippo_canvas_block_post_expand;
     canvas_block_class->unexpand = hippo_canvas_block_post_unexpand;
     canvas_block_class->hush = hippo_canvas_block_post_hush;
@@ -208,11 +212,11 @@ hippo_canvas_block_post_constructor (GType                  type,
                        NULL);
     
     block_post->reason_item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
+                                           "xalign", HIPPO_ALIGNMENT_START,
                                            "text", NULL,
-                                           "border-top", 4,
-                                           "border-bottom", 4,
+                                           "font", "Italic 11px",
                                            NULL);
-    hippo_canvas_box_append(box, block_post->description_item, 0);
+    hippo_canvas_box_append(box, block_post->reason_item, 0);
     hippo_canvas_box_set_child_visible(box,
                                        block_post->reason_item,
                                        FALSE);
@@ -509,11 +513,53 @@ hippo_canvas_block_post_clicked_count_changed (HippoCanvasBlock *canvas_block)
 }
 
 static void
+block_post_update_reason_item(HippoCanvasBlockPost *canvas_block_post)
+{
+    HippoCanvasBlock *canvas_block = HIPPO_CANVAS_BLOCK(canvas_block_post);
+    HippoStackReason stack_reason = hippo_block_get_stack_reason(canvas_block->block);
+    
+    switch (stack_reason) {
+    case HIPPO_STACK_VIEWER_COUNT:
+        {
+            int significant_count = hippo_block_get_significant_clicked_count(canvas_block->block);
+            char *s;
+            if (significant_count == 1)
+                s = g_strdup(_("1 person has now viewed this post."));
+            else
+                s = g_strdup_printf(_("%d people have now viewed this post."), significant_count);
+            g_object_set(G_OBJECT(canvas_block_post->reason_item),
+                         "text", s,
+                         NULL);
+            g_free(s);
+            break;
+        }
+    default:
+        break;
+    }
+
+    hippo_canvas_block_post_update_visibility(canvas_block_post);
+}
+
+static void 
+hippo_canvas_block_post_significant_clicked_count_changed(HippoCanvasBlock *canvas_block)
+{
+    block_post_update_reason_item(HIPPO_CANVAS_BLOCK_POST(canvas_block));
+}
+
+static void 
+hippo_canvas_block_post_stack_reason_changed(HippoCanvasBlock *canvas_block)
+{
+    block_post_update_reason_item(HIPPO_CANVAS_BLOCK_POST(canvas_block));
+}
+
+static void
 hippo_canvas_block_post_update_visibility(HippoCanvasBlockPost *block_post)
 {
     HippoCanvasBlock *canvas_block = HIPPO_CANVAS_BLOCK(block_post);
+    HippoStackReason stack_reason = hippo_block_get_stack_reason(canvas_block->block);
     gboolean show_description;
     gboolean show_single_message;
+    gboolean show_reason;
 
     /* the details box and chat preview both show iff. we are expanded
      */
@@ -525,21 +571,23 @@ hippo_canvas_block_post_update_visibility(HippoCanvasBlockPost *block_post)
                                        block_post->chat_preview,
                                        canvas_block->expanded);
 
-    /* When not expanded, we choose whether to show a single line of the
-     * chat preview or a single line of the description. When expanded,
-     * we show the full description
+    /* The description is always visible when expanded, otherwise we sometimes
+     * show a single line summary
      */
-    show_description = canvas_block->expanded || !block_post->have_messages;
-    show_single_message = !canvas_block->expanded && block_post->have_messages;
+    g_object_set(G_OBJECT(block_post->description_item),
+                 "size-mode", canvas_block->expanded ? HIPPO_CANVAS_SIZE_WRAP_WORD : HIPPO_CANVAS_SIZE_ELLIPSIZE_END,
+                 NULL);
+    
+    show_single_message = !canvas_block->expanded && stack_reason == HIPPO_STACK_CHAT_MESSAGE;
+    show_reason = stack_reason == HIPPO_STACK_VIEWER_COUNT;
+    show_description = canvas_block->expanded || (!show_single_message && !show_reason);
 
     hippo_canvas_box_set_child_visible(block_post->parent_box,
                                        block_post->description_item,
                                        show_description);
-    if (show_description)
-        g_object_set(G_OBJECT(block_post->description_item),
-                     "size-mode", canvas_block->expanded ? HIPPO_CANVAS_SIZE_WRAP_WORD : HIPPO_CANVAS_SIZE_ELLIPSIZE_END,
-                     NULL);
-
+    hippo_canvas_box_set_child_visible(block_post->parent_box,
+                                       block_post->reason_item,
+                                       show_reason);
     hippo_canvas_box_set_child_visible(block_post->parent_box,
                                        block_post->single_message_preview,
                                        show_single_message);

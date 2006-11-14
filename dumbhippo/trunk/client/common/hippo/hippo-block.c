@@ -286,6 +286,23 @@ hippo_block_get_property(GObject         *object,
     }
 }
 
+static HippoStackReason
+stack_reason_from_string(const char *string) 
+{
+    if (strcmp(string, "NEW_BLOCK") == 0)
+        return HIPPO_STACK_NEW_BLOCK;
+    else if (strcmp(string, "BLOCK_UPDATE") == 0)
+        return HIPPO_STACK_BLOCK_UPDATE;
+    else if (strcmp(string, "VIEWER_COUNT") == 0)
+        return HIPPO_STACK_VIEWER_COUNT;
+    else if (strcmp(string, "CHAT_MESSAGE") == 0)
+        return HIPPO_STACK_CHAT_MESSAGE;
+    else {
+        g_warning("Unknown stack reason %s", string);
+        return HIPPO_STACK_NEW_BLOCK;
+    }
+}
+
 static gboolean
 hippo_block_real_update_from_xml (HippoBlock     *block,
                                   HippoDataCache *cache,
@@ -301,11 +318,12 @@ hippo_block_real_update_from_xml (HippoBlock     *block,
     int significant_clicked_count = 0;
     gboolean clicked;
     gboolean ignored;
-    const char *icon_url;
+    const char *icon_url = NULL;
+    const char *stack_reason_str = NULL;
+    HippoStackReason stack_reason = HIPPO_STACK_NEW_BLOCK;
     
     g_assert(cache != NULL);
 
-    icon_url = NULL;
     if (!hippo_xml_split(cache, node, NULL,
                          "id", HIPPO_SPLIT_GUID, &guid,
                          "type", HIPPO_SPLIT_STRING, &type_str,
@@ -317,6 +335,7 @@ hippo_block_real_update_from_xml (HippoBlock     *block,
                          "clicked", HIPPO_SPLIT_BOOLEAN, &clicked, 
                          "ignored", HIPPO_SPLIT_BOOLEAN, &ignored,
                          "icon", HIPPO_SPLIT_STRING | HIPPO_SPLIT_OPTIONAL, &icon_url,
+                         "stackReason", HIPPO_SPLIT_STRING | HIPPO_SPLIT_OPTIONAL, &stack_reason_str,
                          NULL))
         return FALSE;
 
@@ -339,6 +358,10 @@ hippo_block_real_update_from_xml (HippoBlock     *block,
     hippo_block_set_clicked(block, clicked);
     hippo_block_set_ignored(block, ignored);
     hippo_block_set_icon_url(block, icon_url);
+
+    if (stack_reason_str)
+        stack_reason = stack_reason_from_string(stack_reason_str);
+    hippo_block_set_stack_reason(block, stack_reason);
     
     g_debug("Parsed block %s type %s - %s timestamp = %" G_GINT64_FORMAT,
             guid, g_type_name_from_instance((GTypeInstance*) block), type_str,
