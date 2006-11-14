@@ -52,6 +52,10 @@ public interface ExternalAccountSystem {
 	public Set<ExternalAccountView> getExternalAccountViews(Viewpoint viewpoint, User user);
 	
 	
+	public ExternalAccountView getExternalAccountView(Viewpoint viewpoint, ExternalAccount externalAccount);
+	
+	public ExternalAccountView getExternalAccountView(Viewpoint viewpoint, User user, ExternalAccountType externalAccountType) throws NotFoundException;
+	
 	/**
 	 * Associate a MySpace identity with an account holder. 
 	 * 

@@ -5,7 +5,7 @@ import java.util.List;
 
 public interface Thumbnails {
 
-	public List<Thumbnail> getThumbnails();
+	public List<? extends Thumbnail> getThumbnails();
 
 	public int getThumbnailCount();
 

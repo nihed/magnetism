@@ -62,6 +62,8 @@ import com.dumbhippo.server.blocks.BlockNotVisibleException;
 import com.dumbhippo.server.blocks.BlockView;
 import com.dumbhippo.server.blocks.BlogBlockHandler;
 import com.dumbhippo.server.blocks.FacebookBlockHandler;
+import com.dumbhippo.server.blocks.FlickrPersonBlockHandler;
+import com.dumbhippo.server.blocks.FlickrPhotosetBlockHandler;
 import com.dumbhippo.server.blocks.GroupChatBlockHandler;
 import com.dumbhippo.server.blocks.GroupMemberBlockHandler;
 import com.dumbhippo.server.blocks.MusicPersonBlockHandler;
@@ -142,6 +144,12 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 			break;			
 		case POST:
 			handlerClass = PostBlockHandler.class;
+			break;
+		case FLICKR_PERSON:
+			handlerClass = FlickrPersonBlockHandler.class;
+			break;
+		case FLICKR_PHOTOSET:
+			handlerClass = FlickrPhotosetBlockHandler.class;
 			break;
 		case OBSOLETE_EXTERNAL_ACCOUNT_UPDATE:
 		case OBSOLETE_EXTERNAL_ACCOUNT_UPDATE_SELF:
@@ -1481,6 +1489,8 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		case FACEBOOK_PERSON:
 		case FACEBOOK_EVENT:	
 		case BLOG_PERSON:
+		case FLICKR_PERSON:
+		case FLICKR_PHOTOSET:
 			isGroupParticipation = false;
 			break;
 		case OBSOLETE_EXTERNAL_ACCOUNT_UPDATE:

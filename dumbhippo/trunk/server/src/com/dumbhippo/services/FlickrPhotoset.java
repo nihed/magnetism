@@ -1,5 +1,7 @@
 package com.dumbhippo.services;
 
+import com.dumbhippo.Thumbnails;
+
 public final class FlickrPhotoset implements FlickrPhotosetView {
 	private String id;
 	private FlickrPhoto primaryPhoto;
@@ -71,9 +73,24 @@ public final class FlickrPhotoset implements FlickrPhotosetView {
 		return photos;
 	}
 	
+	// See http://www.flickr.com/services/api/misc.urls.html 
+	// for info on urls
+	public String getUrl(String ownerId) {
+		StringBuilder sb = new StringBuilder("http://static.flickr.com/");
+		sb.append(ownerId);
+		sb.append("/sets/");
+		sb.append(getId());
+		
+		return sb.toString();
+	}
+	
 	@Override
 	public String toString() {
 		return "{FlickrPhotoset id=" + id + " title=" + title + " desc=" + description +
 		" primary=" + getPrimaryPhoto() + " hasPhotos=" + getHasPhotos() + "}";
+	}
+
+	public Thumbnails getThumbnails() {
+		return getPhotos();
 	}
 }

@@ -3,6 +3,7 @@ package com.dumbhippo.server.blocks;
 import java.util.List;
 import java.util.Set;
 
+import javax.ejb.EJB;
 import javax.ejb.Stateless;
 
 import org.slf4j.Logger;
@@ -10,9 +11,13 @@ import org.slf4j.Logger;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.BlockKey;
+import com.dumbhippo.persistence.BlockType;
+import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.FlickrPhotosetStatus;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.server.ExternalAccountSystem;
+import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.services.FlickrPhotoView;
 
 @Stateless
@@ -22,6 +27,9 @@ public class FlickrPersonBlockHandlerBean extends
 
 	static private final Logger logger = GlobalSetup.getLogger(FlickrPersonBlockHandlerBean.class);	
 	
+	@EJB
+	private ExternalAccountSystem externalAccountSystem;
+	
 	protected FlickrPersonBlockHandlerBean() {
 		super(FlickrPersonBlockView.class);
 	}
@@ -29,22 +37,24 @@ public class FlickrPersonBlockHandlerBean extends
 	@Override
 	protected void populateBlockViewImpl(FlickrPersonBlockView blockView)
 			throws BlockNotVisibleException {
-		// FIXME
+		try {
+			blockView.populate(externalAccountSystem.getExternalAccountView(blockView.getViewpoint(),
+					blockView.getPersonSource().getUser(), ExternalAccountType.FLICKR));
+		} catch (NotFoundException e) {
+			throw new BlockNotVisibleException("external account not visible");
+		}
 	}
 
 	public BlockKey getKey(User user) {
-		// FIXME
-		return null;
+		return new BlockKey(BlockType.FLICKR_PERSON, user.getGuid());
 	}
 
 	public Set<User> getInterestedUsers(Block block) {
-		// FIXME
-		return null;
+		return super.getUsersWhoCareAboutData1User(block);
 	}
 
 	public Set<Group> getInterestedGroups(Block block) {
-		// FIXME
-		return null;
+		return super.getGroupsData1UserIsIn(block);
 	}
 
 	public void onMostRecentFlickrPhotosChanged(String flickrId,

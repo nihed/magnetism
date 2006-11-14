@@ -1,11 +1,16 @@
 package com.dumbhippo.services.caches;
 
+import java.io.Serializable;
+
 /** Immutable object representing album and artist pair, used to pass 
  * one arg instead of two to certain  methods
+ * Has to implement serializable so it can be used as a lock for the tree cache
  * 
  * @author Havoc Pennington
  */
-public class AlbumAndArtist {
+public class AlbumAndArtist implements Serializable {
+	private static final long serialVersionUID = 1L;
+	
 	private String album;
 	private String artist;
 

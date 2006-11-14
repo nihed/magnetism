@@ -42,6 +42,20 @@ public enum BlockType {
 		public StackInclusion getDefaultStackInclusion() {
 			return null;
 		}		
+	},
+	FLICKR_PERSON {
+		// Right now we only get completely public Flickr photos
+		@Override
+		public boolean isAlwaysPublic() {
+			return true;
+		}
+	},
+	FLICKR_PHOTOSET {
+		// Right now we only get completely public Flickr photosets
+		@Override
+		public boolean isAlwaysPublic() {
+			return true;
+		}		
 	};
 	
 	// returns true if all blocks of this type are always public,

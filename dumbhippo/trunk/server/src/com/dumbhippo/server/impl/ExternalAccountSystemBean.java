@@ -121,6 +121,24 @@ public class ExternalAccountSystemBean implements ExternalAccountSystem {
 
 		return accountViews;
 	}
+
+	public ExternalAccountView getExternalAccountView(Viewpoint viewpoint, ExternalAccount externalAccount) {
+		ExternalAccountView view;
+		if (externalAccount.getAccountType() == ExternalAccountType.FACEBOOK) {
+			view = new ExternalAccountView(externalAccount, facebookSystem.getProfileLink(externalAccount));
+		} else {
+			view = new ExternalAccountView(externalAccount);
+		}
+		
+		loadThumbnails(viewpoint, view);
+		
+		return view;
+	}
+	
+	public ExternalAccountView getExternalAccountView(Viewpoint viewpoint, User user, ExternalAccountType externalAccountType) throws NotFoundException {
+		ExternalAccount externalAccount = lookupExternalAccount(viewpoint, user, externalAccountType);
+		return getExternalAccountView(viewpoint, externalAccount);
+	}
 	
 	public void setMySpaceName(UserViewpoint viewpoint, String name) throws ValidationException {
 		ExternalAccount external = getOrCreateExternalAccount(viewpoint, ExternalAccountType.MYSPACE);
@@ -139,11 +157,16 @@ public class ExternalAccountSystemBean implements ExternalAccountSystem {
 		}
 	}
 	
-	private void loadFlickrThumbnails(Viewpoint viewpoint, ExternalAccount account) {
+	private void loadFlickrThumbnails(Viewpoint viewpoint, ExternalAccountView accountView) {
+		ExternalAccount account = accountView.getExternalAccount();
+		
 		if (account.getAccountType() != ExternalAccountType.FLICKR)
 			throw new IllegalArgumentException("should be a flickr account here");
+	
+		if (account.getSentiment() != Sentiment.LOVE)
+			throw new IllegalArgumentException("Flickr account is unloved");
 		
-		if (account.getHandle() == null || account.getSentiment() != Sentiment.LOVE)
+		if (account.getHandle() == null)
 			return;
 		
 		FlickrUpdateStatus updateStatus;
@@ -161,19 +184,30 @@ public class ExternalAccountSystemBean implements ExternalAccountSystem {
 			return;
 		}
 		
-		account.setThumbnails(TypeUtils.castList(Thumbnail.class, photos), updateStatus.getTotalPhotoCount(), 
+		accountView.setThumbnailsData(TypeUtils.castList(Thumbnail.class, photos), updateStatus.getTotalPhotoCount(), 
 					FlickrPhotoSize.SMALL_SQUARE.getPixels(), FlickrPhotoSize.SMALL_SQUARE.getPixels());
+	}
+	
+	private void loadThumbnails(Viewpoint viewpoint, ExternalAccountView externalAccountView) {
+		ExternalAccount externalAccount = externalAccountView.getExternalAccount();
+		ExternalAccountType type = externalAccount.getAccountType();
+		// you only have thumbnails for accounts you like
+		if (externalAccount.getSentiment() != Sentiment.LOVE)
+			return;
+		
+		switch (type) {
+		case FLICKR:
+			loadFlickrThumbnails(viewpoint, externalAccountView);
+			break;
+		default:
+			// most accounts lack thumbnails
+			break;
+		}		
 	}
 	
 	public void loadThumbnails(Viewpoint viewpoint, Set<ExternalAccountView> accountViews) {
 		for (ExternalAccountView externalView : accountViews) {
-			switch (externalView.getExternalAccount().getAccountType()) {
-			case FLICKR:
-				loadFlickrThumbnails(viewpoint, externalView.getExternalAccount());
-				break;
-			default:
-				break;
-			}
+			loadThumbnails(viewpoint, externalView);
 		}
 	}
 }

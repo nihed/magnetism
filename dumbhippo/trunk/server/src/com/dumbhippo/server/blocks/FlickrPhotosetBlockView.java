@@ -1,25 +1,26 @@
 package com.dumbhippo.server.blocks;
 
-import java.util.List;
-
-import com.dumbhippo.Thumbnail;
+import com.dumbhippo.Thumbnails;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.server.views.Viewpoint;
+import com.dumbhippo.services.FlickrPhotosetView;
 
 public class FlickrPhotosetBlockView extends AbstractPersonBlockView
 	implements ExternalAccountBlockView, ThumbnailsBlockView {
 
+	private FlickrPhotosetView photosetView;
+	private String flickrOwnerId;
+	
 	public FlickrPhotosetBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd) {
 		super(viewpoint, block, ubd);
 	}
 
 	@Override
 	public String getIcon() {
-		// FIXME
-		return "/images3/musicradar_icon.png";
+		return ExternalAccountType.FLICKR.getIconName();
 	}
 
 	@Override
@@ -31,23 +32,21 @@ public class FlickrPhotosetBlockView extends AbstractPersonBlockView
 		return ExternalAccountType.FLICKR;
 	}
 
-	public List<Thumbnail> getThumbnails() {
-		// FIXME
-		return null;
+	void populate(FlickrPhotosetView photosetView, String flickrOwnerId) {
+		this.photosetView = photosetView;
+		this.flickrOwnerId = flickrOwnerId;
+		this.setPopulated(true);
 	}
-
-	public int getThumbnailCount() {
-		// FIXME
-		return 0;
+	
+	public Thumbnails getThumbnails() {
+		return photosetView.getThumbnails();
 	}
 
 	public String getMoreThumbnailsLink() {
-		// FIXME
-		return null;
+		return photosetView.getUrl(flickrOwnerId);
 	}
 
 	public String getMoreThumbnailsTitle() {
-		// FIXME
-		return null;
+		return "All photos in '" + photosetView.getTitle() + "'";
 	}
 }

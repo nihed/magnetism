@@ -1,25 +1,25 @@
 package com.dumbhippo.server.blocks;
 
-import java.util.List;
-
-import com.dumbhippo.Thumbnail;
+import com.dumbhippo.Thumbnails;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.UserBlockData;
+import com.dumbhippo.server.views.ExternalAccountView;
 import com.dumbhippo.server.views.Viewpoint;
 
 public class FlickrPersonBlockView extends AbstractPersonBlockView
 	implements ExternalAccountBlockView, ThumbnailsBlockView {
 
+	private ExternalAccountView externalAccountView;
+	
 	public FlickrPersonBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd) {
 		super(viewpoint, block, ubd);
 	}
 
 	@Override
 	public String getIcon() {
-		// FIXME
-		return "/images3/musicradar_icon.png";
+		return ExternalAccountType.FLICKR.getIconName();
 	}
 
 	@Override
@@ -27,27 +27,24 @@ public class FlickrPersonBlockView extends AbstractPersonBlockView
 		// FIXME
 	}
 
+	void populate(ExternalAccountView externalAccountView) {
+		this.externalAccountView = externalAccountView;
+		setPopulated(true);
+	}
+	
 	public ExternalAccountType getAccountType() {
 		return ExternalAccountType.FLICKR;
 	}
-	
-	public List<Thumbnail> getThumbnails() {
-		// FIXME
-		return null;
-	}
 
-	public int getThumbnailCount() {
-		// FIXME
-		return 0;
+	public Thumbnails getThumbnails() {
+		return externalAccountView.getThumbnails();
 	}
 
 	public String getMoreThumbnailsLink() {
-		// FIXME
-		return null;
+		return externalAccountView.getLink();
 	}
 
 	public String getMoreThumbnailsTitle() {
-		// FIXME
-		return null;
-	}	
+		return externalAccountView.getExternalAccount().getLink();
+	}
 }

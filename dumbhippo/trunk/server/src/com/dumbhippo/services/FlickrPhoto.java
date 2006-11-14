@@ -13,6 +13,8 @@ public final class FlickrPhoto implements FlickrPhotoView {
 	 // is primary in a photoset; the photoset should be apparent from context
 	private boolean primary;
 	
+	static public final FlickrPhotoSize THUMBNAIL_SIZE = FlickrPhotoSize.SMALL_SQUARE;
+	
 	public boolean isFamily() {
 		return family;
 	}
@@ -86,8 +88,9 @@ public final class FlickrPhoto implements FlickrPhotoView {
 		return "{id=" + id + " title='" + title + "' url=" +
 		getUrl(FlickrPhotoSize.SMALL_SQUARE) + "}";
 	}
+	
 	public String getThumbnailSrc() {
-		return getUrl(FlickrPhotoSize.SMALL_SQUARE);
+		return getUrl(THUMBNAIL_SIZE);
 	}
 	public String getThumbnailHref() {
 		StringBuilder sb = new StringBuilder("http://www.flickr.com/photos/");
@@ -100,10 +103,10 @@ public final class FlickrPhoto implements FlickrPhotoView {
 		return getTitle();
 	}
 	public int getThumbnailWidth() {
-		return FlickrPhotoSize.SMALL_SQUARE.getPixels();
+		return THUMBNAIL_SIZE.getPixels();
 	}
 	public int getThumbnailHeight() {
-		return FlickrPhotoSize.SMALL_SQUARE.getPixels();
+		return THUMBNAIL_SIZE.getPixels();
 	}
 
 	public boolean isPrimary() {

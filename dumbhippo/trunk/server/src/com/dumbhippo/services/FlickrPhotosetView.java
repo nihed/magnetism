@@ -1,5 +1,7 @@
 package com.dumbhippo.services;
 
+import com.dumbhippo.Thumbnails;
+
 /**
  * A read-only minimal subset of FlickrPhotoset that we pass around in most places
  * instead of a concrete implementation
@@ -17,4 +19,7 @@ public interface FlickrPhotosetView {
 
 	public int getPhotoCount();
 
+	public String getUrl(String ownerId);
+	
+	public Thumbnails getThumbnails();
 }

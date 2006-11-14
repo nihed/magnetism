@@ -1,7 +1,5 @@
 package com.dumbhippo.persistence;
 
-import java.util.List;
-
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
@@ -12,8 +10,6 @@ import javax.persistence.UniqueConstraint;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
-
-import com.dumbhippo.Thumbnail;
 
 @Entity
 @Table(name="ExternalAccount", 
@@ -39,11 +35,6 @@ public class ExternalAccount extends DBUnique {
 	private String quip;
 	// if the account has an associated feed, that goes here
 	private Feed feed;
-	
-	private List<Thumbnail> thumbnails;
-	private int thumbnailTotalItems;
-	private int thumbnailWidth;
-	private int thumbnailHeight;
 	
 	public ExternalAccount() {
 		sentiment = Sentiment.INDIFFERENT;
@@ -177,60 +168,5 @@ public class ExternalAccount extends DBUnique {
 	@Transient
 	public String getLinkText() {
 		return accountType.getLinkText(handle, extra);
-	}
-
-	/**
-	 * Sets thumbnails for this account; done in the "view" tier. This thumbnail stuff
-	 * would typically be on a "view" object like PersonView, TrackView but in this
-	 * case it doesn't seem worth creating and managing an ExternalAccountView. We'll see 
-	 * how it goes.
-	 * 
-	 * @param thumbnails
-	 * @param width
-	 * @param height
-	 */
-	public void setThumbnails(List<Thumbnail> thumbnails, int totalItems, int width, int height) {
-		this.thumbnails = thumbnails;
-		this.thumbnailWidth = width;
-		this.thumbnailHeight = height;
-		this.thumbnailTotalItems = totalItems;
-	}
-	
-	@Transient
-	public boolean getHasThumbnails() {
-		return thumbnails != null;
-	}
-	
-	@Transient
-	public List<Thumbnail> getThumbnails() {
-		return thumbnails;
-	}
-	
-	@Transient
-	public int getThumbnailCount() {
-		if (thumbnails != null)
-			return thumbnails.size();
-		else
-			return 0;
-	}
-	
-	@Transient
-	public int getThumbnailWidth() {
-		return thumbnailWidth;
-	}
-	
-	@Transient
-	public int getThumbnailHeight() {
-		return thumbnailHeight;
-	}
-	
-	@Transient
-	public int getTotalThumbnailItems() {
-		return thumbnailTotalItems; 
-	}
-	
-	@Transient
-	public String getTotalThumbnailItemsString() {
-		return accountType.formatThumbnailCount(thumbnailTotalItems); 
 	}
 }

@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.BlockKey;
+import com.dumbhippo.persistence.BlockType;
 import com.dumbhippo.persistence.FlickrPhotosetStatus;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.User;
@@ -29,22 +30,22 @@ public class FlickrPhotosetBlockHandlerBean extends
 	@Override
 	protected void populateBlockViewImpl(FlickrPhotosetBlockView blockView)
 			throws BlockNotVisibleException {
+		//FlickrPhotosetStatus photosetStatus = em.find(FlickrPhotosetStatus.class, blockView.getBlock().getData2AsGuid().toString());
+		//blockView.populate();
 		// FIXME
+		throw new BlockNotVisibleException("IMPLEMENT ME");
 	}
 
 	public BlockKey getKey(User user, FlickrPhotosetStatus photosetStatus) {
-		// FIXME
-		return null;
+		return new BlockKey(BlockType.FLICKR_PHOTOSET, user.getGuid(), photosetStatus.getGuid());
 	}
 
 	public Set<User> getInterestedUsers(Block block) {
-		// FIXME
-		return null;
+		return super.getUsersWhoCareAboutData1User(block);
 	}
 
 	public Set<Group> getInterestedGroups(Block block) {
-		// FIXME
-		return null;
+		return super.getGroupsData1UserIsIn(block);
 	}
 
 	public void onMostRecentFlickrPhotosChanged(String flickrId,

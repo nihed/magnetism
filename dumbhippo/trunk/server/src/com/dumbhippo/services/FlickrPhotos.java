@@ -4,7 +4,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public final class FlickrPhotos {
+import com.dumbhippo.Thumbnail;
+import com.dumbhippo.Thumbnails;
+import com.dumbhippo.persistence.ExternalAccountType;
+
+public final class FlickrPhotos implements Thumbnails {
 	private List<FlickrPhoto> photos;
 	private int page;
 	private int pages;
@@ -53,5 +57,29 @@ public final class FlickrPhotos {
 	public String toString() {
 		return "{" + photos.size() + " photos, page=" + page + " perPage=" + perPage +
 		" pages=" + pages + " total=" + total + "}"; 
+	}
+
+	public List<? extends Thumbnail> getThumbnails() {
+		return photos;
+	}
+
+	public int getThumbnailCount() {
+		return photos.size();
+	}
+
+	public int getThumbnailWidth() {
+		return FlickrPhoto.THUMBNAIL_SIZE.getPixels();
+	}
+
+	public int getThumbnailHeight() {
+		return FlickrPhoto.THUMBNAIL_SIZE.getPixels();
+	}
+
+	public int getTotalThumbnailItems() {
+		return getTotal(); 
+	}
+
+	public String getTotalThumbnailItemsString() {
+		return ExternalAccountType.FLICKR.formatThumbnailCount(getTotalThumbnailItems());
 	}
 }
