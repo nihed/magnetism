@@ -31,7 +31,7 @@
  * but there could be a separate HippoDispatchable, say, that does that.
  */
 template <class I, class T>
-class HippoDispatchableObject : public I, public IDispatch {
+class HippoDispatchableObject : public I, virtual public IDispatch {
 public:
     // IUnknown methods
     STDMETHODIMP QueryInterface(REFIID, LPVOID*);

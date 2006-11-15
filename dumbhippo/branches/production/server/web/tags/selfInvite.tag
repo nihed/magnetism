@@ -12,9 +12,6 @@
 
 <div>
 	<script type="text/javascript">
-		dojo.require('dh.util');
-		dojo.require('dh.server');
-		
 		var dhSelfInviteComplete${N} = function(message) {
 			var messageNode = document.getElementById('dhSelfInviteMessage${N}');
 			dh.util.clearNode(messageNode);

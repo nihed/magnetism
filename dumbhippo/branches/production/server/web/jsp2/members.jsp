@@ -15,13 +15,11 @@
 
 <head>
 	<title><c:out value="${group.name}"/>'s Mugshot</title>
+	<dht:siteStyle/>	
 	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/group.css"/>
 	<dht:faviconIncludes/>
 	<dht:scriptIncludes/>
 	<dht:embedObject/>
-    <script type="text/javascript">
-        dojo.require("dh.util");
-    </script>
 </head>
 <dht:twoColumnPage alwaysShowSidebar="true">
 	<dht:sidebarGroup/>

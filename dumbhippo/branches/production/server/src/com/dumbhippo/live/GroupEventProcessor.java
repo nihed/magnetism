@@ -14,7 +14,7 @@ import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.MessageSender;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PostingBoard;
-import com.dumbhippo.server.SystemViewpoint;
+import com.dumbhippo.server.views.SystemViewpoint;
 
 // Handles processing incoming GroupEvent
 
@@ -42,7 +42,7 @@ public class GroupEventProcessor implements LiveEventProcessor {
 	public void process(LiveState state, LiveEvent abstractEvent) {
 		GroupEvent event = (GroupEvent)abstractEvent;
 		
-		if (event.getEvent() == GroupEvent.Type.MEMBERSHIP_CHANGE) {
+		if (event.getDetail() == GroupEvent.Detail.MEMBERS_CHANGED) {
 			groupUpdater.groupMemberCountChanged(event.getGroupId());
 			userUpdater.handleGroupMembershipChanged(event.getResourceId());
 
@@ -51,14 +51,14 @@ public class GroupEventProcessor implements LiveEventProcessor {
 				GroupMember groupMember = groupSystem.getGroupMember(group, event.getResourceId());
 				if (groupMember.getStatus().equals(MembershipStatus.FOLLOWER) ||
 				    groupMember.getStatus().equals(MembershipStatus.ACTIVE)) {					
-				    messageSender.sendGroupMembershipUpdate(group, groupMember);
+				    // messageSender.sendGroupMembershipUpdate(group, groupMember);
 				}
 			} catch (NotFoundException e) {
 				// probably a follower or an invited e-mail resource was deleted
 				logger.debug("Group with guid {} or groupMember for resource with guid {} could not be found: {}",
 						     new Object[]{e.getMessage(), event.getGroupId(), event.getResourceId()});
 			}
-		} else if (event.getEvent() == GroupEvent.Type.POST_ADDED) {
+		} else if (event.getDetail() == GroupEvent.Detail.POST_ADDED) {
 			groupUpdater.groupPostReceived(event.getGroupId());
 		}
 	}

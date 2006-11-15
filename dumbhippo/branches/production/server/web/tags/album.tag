@@ -1,5 +1,5 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
-<%@ attribute name="album" required="true" type="com.dumbhippo.server.AlbumView"%>
+<%@ attribute name="album" required="true" type="com.dumbhippo.server.views.AlbumView"%>
 
 <c:url value="/album" var="albumlink">
 	<c:param name="artist" value="${album.artist}"/>

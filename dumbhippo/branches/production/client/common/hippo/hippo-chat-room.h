@@ -36,7 +36,7 @@ typedef struct _HippoChatMessage   HippoChatMessage;
 #define HIPPO_IS_CHAT_ROOM_CLASS(klass)   (G_TYPE_CHECK_CLASS_TYPE ((klass), HIPPO_TYPE_CHAT_ROOM))
 #define HIPPO_CHAT_ROOM_GET_CLASS(obj)    (G_TYPE_INSTANCE_GET_CLASS ((obj), HIPPO_TYPE_CHAT_ROOM, HippoChatRoomClass))
 
-GType        	 hippo_chat_room_get_type               (void) G_GNUC_CONST;
+GType            hippo_chat_room_get_type               (void) G_GNUC_CONST;
 
 HippoChatRoom*    hippo_chat_room_new                     (const char   *chat_id,
                                                            HippoChatKind kind);
@@ -72,9 +72,9 @@ void     hippo_chat_room_set_user_state          (HippoChatRoom *room,
                                                   HippoPerson   *person,
                                                   HippoChatState state);
 void     hippo_chat_room_set_date_last_ignored   (HippoChatRoom *room,
-												  GTime          date); 
+                                                  GTime          date); 
 void     hippo_chat_room_set_ignored             (HippoChatRoom *room,
-												  gboolean       is_ignored);
+                                                  gboolean       is_ignored);
 
 
 /* Ownership of the message passes to the chat room, which may IMMEDIATELY FREE
@@ -100,6 +100,9 @@ HippoChatMessage* hippo_chat_message_new           (HippoPerson      *person,
                                                     const char       *text,
                                                     GTime             timestamp,
                                                     int               serial);
+HippoChatMessage *hippo_chat_message_new_from_xml  (HippoDataCache   *cache,
+                                                    LmMessageNode    *node);
+
 void              hippo_chat_message_free          (HippoChatMessage *message);
 HippoChatMessage* hippo_chat_message_copy          (HippoChatMessage *message);
 HippoPerson*      hippo_chat_message_get_person    (HippoChatMessage *message);

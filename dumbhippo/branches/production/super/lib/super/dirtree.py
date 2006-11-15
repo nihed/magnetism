@@ -8,7 +8,7 @@ import super.service
 from super.expander import Expander
 
 def verbose(msg):
-#    print >>sys.stderr, msg
+   # print >>sys.stderr, msg
     pass
 
 # Return values for DirTree.check()
@@ -29,6 +29,7 @@ HOT = 8      # We can redeploy by copying over without restarting
 PERMS_OK = 0         # Everything OK
 PERMS_MISSING = 1    # Destination wasn't there
 PERMS_MISMATCH = 2   # Permission mismatch
+PERMS_OK_AND_SAME_TIMESTAMP = 3 # perms are good, and the mtime matches
 
 class Node:
 
@@ -39,6 +40,7 @@ class Node:
              DIR/SYMLINK/EXPAND that represents attributes of a
              node of the directory tree.
     children -- children of the node. Only true if the DIR flag is set
+    times -- tuple of (atime,mtime) if it's a DIR, used to set target dir to match (for files we just use cp -a)
     """
     
     def __init__(self, src, flags):
@@ -46,6 +48,7 @@ class Node:
         self.flags = flags
         if (flags & DIR) != 0:
             self.children = []
+            self.times = None
 
 # Flags used for compiled 'exclude' patterns
 NEGATE = 1           # Pattern started with + - include and stop processing
@@ -125,7 +128,7 @@ class DirTree:
     def write(self):
         """Write the tree out into the output location. Any cleanup
         of existing content must be done beforehand. """
-        self._write_path('')
+        self._write_path('', False)
         
     def check(self, target_attributes):
         """Check that the contents of the output location match the tree.
@@ -138,12 +141,23 @@ class DirTree:
                        returned as the second item in the tuple
         UPDATE_NEEDED --  The trees differed, write() must be called
         """
-        return self._check_path('', target_attributes)
+        (result, hotcopies) = self._check_path('', target_attributes)
+        move_to_end = []
+        if hotcopies:
+            for path in hotcopies:
+                hot_update_last = self._has_target_attribute(path, target_attributes, super.service.HOT_UPDATE_LAST)
+                if hot_update_last:
+                    move_to_end.append(path)
+            for path in move_to_end:
+                hotcopies.remove(path)
+                hotcopies.append(path)
+        return (result, hotcopies)
 
     def hot_update(self, hot_files):
         """Do a hot update based on the files returned from check()"""
+        # the "files" can also be directories that need their timestamp updated
         for path in hot_files:
-            self._copy_file(path)
+            self._write_path(path, True)
 
     def list_sources(self, path=''):
         """Return an array of files and directories (excluding symlinked
@@ -181,7 +195,7 @@ class DirTree:
             flags = flags | HOT
         self.nodes[path] = Node(src, flags)
 
-    def _add_dir(self, path, src, symlink):
+    def _add_dir(self, path, src, symlink, times, hot):
         """Add a directory to the tree. Will replace any existing
         file and be merged with an existing directory."""
         if not self.nodes.has_key(path):
@@ -195,7 +209,11 @@ class DirTree:
             flags = DIR
             if symlink:
                 flags = flags | SYMLINK
-            self.nodes[path] = Node(src, flags)
+            if hot:
+    	        flags = flags | HOT
+            n = Node(src, flags)
+            n.times = times
+            self.nodes[path] = n
 
     def _add_tree_recurse(self, path, src, symlink, expand, hot, excludes):
         """Add a source directory and children to the tree. The
@@ -220,7 +238,7 @@ class DirTree:
                         return False
 
         if src_is_dir:
-            self._add_dir(path, src, symlink)
+            self._add_dir(path, src, symlink, (src_stat.st_atime, src_stat.st_mtime), hot)
                 
             result = True
             for f in os.listdir(src):
@@ -243,7 +261,16 @@ class DirTree:
         """When writing, create a symlink."""
         src = self.nodes[path].src
         dest = os.path.join(self.target, path)
-        os.symlink(src, dest)
+        try:
+            os.symlink(src, dest)
+        except OSError, e:
+            if e.errno == errno.EEXIST:
+                current_src = os.readlink(dest)
+                if current_src != src:
+                    print >>sys.stderr, 'symlink %s->%s is messed up' % (dest,src)
+                    raise e
+            else:
+                raise e
 
     def _copy_file(self, path):
         """When writing, copy a file without expansion."""
@@ -271,8 +298,8 @@ class DirTree:
         src_stat = os.stat(src)
         os.chmod(dest, stat.S_IMODE(src_stat.st_mode))
 
-    def write_dir(self, path):
-        """Write out a directory node with its children."""
+    def _write_dir(self, path, hot):
+        """Write out a directory node, including its children if not hot, without children if hot"""
         if (path != ''):
             dest = os.path.join(self.target, path)
         else:
@@ -286,16 +313,25 @@ class DirTree:
 
         if dest_stat is None or not stat.S_ISDIR(dest_stat.st_mode):
             os.mkdir(dest)
+
+        if not hot:
+            for f in self.nodes[path].children:
+                self._write_path(f, hot)
         
-        for f in self.nodes[path].children:
-            self._write_path(f)
+        n = self.nodes[path]
         
-    def _write_path(self, path):
-        """Write out a node, including children, if any."""
+        # set the directory's timestamps to match the source,
+        # AFTER writing child files so writing the children
+        # doesn't break things
+        if n.times:
+            os.utime(dest, n.times)
+        
+    def _write_path(self, path, hot):
+        """Write out a node, including children, if any. hot=True if we're walking hot update list so need not recurse."""
         if self._test_flag(path, SYMLINK):
             self._symlink(path)
         elif self._test_flag(path, DIR):
-            self.write_dir(path)
+            self._write_dir(path, hot)
         elif self._test_flag(path, EXPAND):
             self._expand_file(path)
         else:
@@ -364,14 +400,24 @@ class DirTree:
             verbose("Permissions on %s do not match source" % path)
             return PERMS_MISMATCH
 
-        return PERMS_OK
+        if src_stat.st_mtime == dest_stat.st_mtime:
+            # this size check will catch almost all cases where the mtime
+            # would be safer than a file content comparison.
+            if src_stat.st_size != dest_stat.st_size:
+                raise Exception('files have the same mtime but different size, should not happen! %s' % path)
+            return PERMS_OK_AND_SAME_TIMESTAMP
+        else:
+            return PERMS_OK
         
     def _check_expand(self, path, target_attributes):
         """Check a node that is copied with expansion"""
         src = self.nodes[path].src
         dest = os.path.join(self.target, path)
 
-        if self._check_perms(path, src, dest) != PERMS_OK:
+        perms_result = self._check_perms(path, src, dest)
+        if perms_result == PERMS_OK or perms_result == PERMS_OK_AND_SAME_TIMESTAMP:
+            pass
+        else:
             return (UPDATE_NEEDED, None)
         
         f_src = open(src, "r")
@@ -423,26 +469,39 @@ class DirTree:
         dest = os.path.join(self.target, path)
 
         # We allow hot redeployment if the destination isn't there,
-        # but if the destination is a directory, a symlink, or
+        # but if the destination is a symlink, or
         # has the wrong permissions, we don't trust deployers
         # to do the right thing.
         perms_result = self._check_perms(path, src, dest)
         if (perms_result == PERMS_MISSING and
             self._test_flag(path, HOT)):
-            verbose("Hot reploy for %s" % path)
+            verbose("Hot redeploy for %s" % path)
             return (UPDATE_HOT, [path])
+        elif perms_result == PERMS_OK_AND_SAME_TIMESTAMP:
+            return (UPDATE_OK, None)
         elif perms_result != PERMS_OK:
             return (UPDATE_NEEDED, None)
-
-        if (os.spawnl(os.P_WAIT, "/usr/bin/cmp", "cmp", "-s", src, dest) != 0):
-            verbose("%s doesn't match source" % path)
+        else:
+            # timestamps differ.
+            verbose("%s doesn't match source timestamp" % path)
             if self._test_flag(path, HOT):
-                verbose("Hot reploy for %s" % path)
+                verbose("Hot redeploy for %s" % path)
                 return (UPDATE_HOT, [path])
             else:
                 return (UPDATE_NEEDED, None)
-        else:
-            return (UPDATE_OK, None)
+
+            # if we want to check by content it would look like this, but
+            # it's really slow and annoying to do this... maybe it
+            # should be a "paranoid mode" set in super.conf ? check_perms
+            # already verifies that the files are the same size as a paranoia
+            # check, so the main virtue of this is not safety but to avoid
+            # updates when _only_ the mtime differs. It's a lot better to
+            # update gratuitously once in a while due to mtime change, than
+            # always be super-slow due to running this cmp though.
+            # the mtimes should not get pointlessly updated unless
+            # an ant script is busted, or you make a change in an editor
+            # and manually revert it.
+            #if (os.spawnl(os.P_WAIT, "/usr/bin/cmp", "cmp", "-s", src, dest) != 0):
 
     def _check_dir(self, path, target_attributes):
         """Check a directory node and children"""
@@ -485,7 +544,26 @@ class DirTree:
                 result = UPDATE_HOT
                 hotcopies.extend(child_hotcopies)
 
+	# check timestamp on the directory only for hot-updated directories
+        if self._test_flag(path, HOT):
+            n = self.nodes[path]
+            if n.times and n.times[1] != dest_stat.st_mtime:
+                verbose("target dir %s has wrong mtime" % dest)
+                # hot-update if allowed
+                if result == UPDATE_HOT or result == UPDATE_OK:
+                    result = UPDATE_HOT
+                    # dir added to hotcopies further down
+                else:
+                    pass # result should already be UPDATE_NEEDED
+            else:
+                verbose("target dir %s has correct mtime" % dest)
+
         if result == UPDATE_HOT:
+            # if we update any files in a dir we need to also hot update
+            # the directory, otherwise creating the files might break
+            # the mtime on the dir
+            if path != '': # root node has path of ''
+                hotcopies.extend([path])
             return (result, hotcopies)
         else:
             return (result, [])

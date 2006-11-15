@@ -3,19 +3,20 @@ package com.dumbhippo.web.pages;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
-import com.dumbhippo.persistence.AccountFeed;
 import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.Sentiment;
 import com.dumbhippo.server.ClaimVerifier;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.ExternalAccountSystem;
+import com.dumbhippo.server.FacebookSystem;
+import com.dumbhippo.server.FacebookTracker;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.NotFoundException;
-import com.dumbhippo.server.PersonView;
-import com.dumbhippo.server.PersonViewExtra;
 import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.Configuration.PropertyNotFoundException;
+import com.dumbhippo.server.views.PersonView;
+import com.dumbhippo.server.views.PersonViewExtra;
 import com.dumbhippo.web.Signin;
 import com.dumbhippo.web.SigninBean;
 import com.dumbhippo.web.UserSigninBean;
@@ -38,12 +39,18 @@ public class AccountPage {
 	private Configuration config;
 	private ClaimVerifier claimVerifier;
 	private ExternalAccountSystem externalAccounts;
+	private FacebookTracker facebookTracker;
+	private FacebookSystem facebookSystem;
+	private String facebookAuthToken;
 	
 	public AccountPage() {
 		personViewer = WebEJBUtil.defaultLookup(PersonViewer.class);
 		config = WebEJBUtil.defaultLookup(Configuration.class);
 		claimVerifier = WebEJBUtil.defaultLookup(ClaimVerifier.class);
 		externalAccounts = WebEJBUtil.defaultLookup(ExternalAccountSystem.class);
+		facebookTracker = WebEJBUtil.defaultLookup(FacebookTracker.class);
+		facebookSystem =  WebEJBUtil.defaultLookup(FacebookSystem.class);
+		facebookAuthToken = null;
 	}
 	
 	public SigninBean getSignin() {
@@ -80,11 +87,16 @@ public class AccountPage {
 	}
 	
 	public String getRhapsodyListeningHistoryFeedUrl() {
-		AccountFeed rhapsodyHistoryFeed = signin.getUser().getAccount().getRhapsodyHistoryFeed();
-		if (rhapsodyHistoryFeed != null) {
-			return rhapsodyHistoryFeed.getFeed().getSource().getUrl();
-		} else {
+		ExternalAccount external;
+		try {
+			external = externalAccounts.lookupExternalAccount(signin.getViewpoint(), signin.getUser(), ExternalAccountType.RHAPSODY);
+		} catch (NotFoundException e) {
 			return null;
+		}
+		if (external.getSentiment() != Sentiment.LOVE) {
+			return null;
+		} else {
+			return external.getFeed().getSource().getUrl();
 		}
 	}
 	
@@ -183,6 +195,26 @@ public class AccountPage {
 	}
 		
 	public String getWebsiteUrl() {
+		logger.debug("returning {} for website ", getExternalAccountHandle(ExternalAccountType.WEBSITE));
 		return getExternalAccountHandle(ExternalAccountType.WEBSITE);
 	}
+	
+	public String getBlogUrl() {
+		logger.debug("returning {} for blog ", getExternalAccountHandle(ExternalAccountType.BLOG));
+		return getExternalAccountHandle(ExternalAccountType.BLOG);
+	}	
+	
+    public void setFacebookAuthToken(String facebookAuthToken) {
+    	this.facebookAuthToken = facebookAuthToken;  	
+    	// request a session key for the signed in user and set it in the database 
+    	facebookTracker.updateOrCreateFacebookAccount(signin.getViewpoint(), facebookAuthToken);
+    }
+    
+    public String getFacebookAuthToken() {
+    	return facebookAuthToken;
+    }
+    
+    public String getFacebookApiKey() {
+        return facebookSystem.getApiKey();
+    }
 }

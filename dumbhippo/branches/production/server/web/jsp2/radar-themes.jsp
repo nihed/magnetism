@@ -8,12 +8,10 @@
 
 <head>
         <title>Music Radar Themes</title>
-	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/radar.css"/>        
-	<dht:faviconIncludes/>
-        <dht:scriptIncludes/>
-        <script type="text/javascript">
-	        dojo.require("dh.nowplaying");
-		</script>
+       	<dht:siteStyle/>
+		<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/radar.css"/>        
+		<dht:faviconIncludes/>
+        	<dh:script module="dh.nowplaying"/>
 </head>
 <dht:twoColumnPage neverShowSidebar="true">
 	<dht:contentColumn>

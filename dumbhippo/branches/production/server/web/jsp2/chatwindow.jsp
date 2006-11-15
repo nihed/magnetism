@@ -20,39 +20,14 @@
 
 <head>
 	<title><c:out value="${chatwindow.title}"/></title>
-   <link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/chatwindow.css"/>
-	<dht:scriptIncludes/>
-   <script type="text/javascript">
-   	dojo.require("dh.chatwindow");
-   	dh.chatwindow.setSelfId("${chatwindow.signin.userId}")
-	</script>
-	<dht:chatControl userId="${chatwindow.signin.userId}" chatId="${chatwindow.chatId}"/>
-	<script for="dhChatControl" type="text/javascript" event="OnUserJoin(userId, photoUrl, name, participant)">
-		dh.chatwindow.onUserJoin(userId, photoUrl, name, participant)
-	</script>
-	<script for="dhChatControl" language="javascript" event="OnUserLeave(userId)">
-		dh.chatwindow.onUserLeave(userId)
-	</script>
-	<script for="dhChatControl" language="javascript" event="OnMessage(userId, photoUrl, name, text, timestamp, serial)">
-		dh.chatwindow.onMessage(userId, photoUrl, name, text, timestamp, serial)
-	</script>
-	<script for="dhChatControl" language="javascript" event="OnReconnect()">
-		dh.chatwindow.onReconnect()
-	</script>
-	<script for="dhChatControl" type="text/javascript" event="OnUserMusicChange(userId, arrangementName, artist, musicPlaying)">
-		dh.chatwindow.onUserMusicChange(userId, arrangementName, artist, musicPlaying)
-	</script>
-	<script type="text/javascript">
-		var chatControl = document.getElementById("dhChatControl")
-       if (chatControl && chatControl.readyState && chatControl.readyState == 4) {
-			chatControl.Join(true)
-		}
-	</script>
-	<script defer type="text/javascript">
-		dh.chatwindow.init()
+    <link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/chatwindow.css"/>
+		<dh:script module="dh.chatwindow"/>
+    <script type="text/javascript">
+   	    dh.chatwindow.setSelfId("${chatwindow.signin.userId}")
+        dh.chatwindow.chatId = "${chatwindow.chatId}"
 	</script>
 </head>
-<body scroll="no" onload="dh.chatwindow.rescan()">
+<body scroll="no" onload="dh.chatwindow.init()">
    <div id="dhChatPostInfoDiv">
    	${chatwindow.titleAsHtml}
    	<c:if test="${chatwindow.aboutPost}">

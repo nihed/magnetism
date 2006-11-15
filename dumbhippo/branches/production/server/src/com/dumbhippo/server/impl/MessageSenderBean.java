@@ -1,6 +1,5 @@
 package com.dumbhippo.server.impl;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -25,25 +24,16 @@ import com.dumbhippo.StringUtils;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.RandomToken;
-import com.dumbhippo.live.Hotness;
-import com.dumbhippo.live.LiveClientData;
 import com.dumbhippo.live.LivePost;
 import com.dumbhippo.live.LiveState;
-import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.EmailResource;
-import com.dumbhippo.persistence.Group;
-import com.dumbhippo.persistence.GroupMember;
 import com.dumbhippo.persistence.InvitationToken;
-import com.dumbhippo.persistence.MembershipStatus;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.Configuration;
-import com.dumbhippo.server.EntityView;
 import com.dumbhippo.server.ExternalAccountSystem;
-import com.dumbhippo.server.GroupSystem;
-import com.dumbhippo.server.GroupView;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.InvitationSystem;
@@ -51,16 +41,17 @@ import com.dumbhippo.server.Mailer;
 import com.dumbhippo.server.MessageSender;
 import com.dumbhippo.server.NoMailSystem;
 import com.dumbhippo.server.NotFoundException;
-import com.dumbhippo.server.PersonView;
-import com.dumbhippo.server.PersonViewExtra;
 import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.PostType;
-import com.dumbhippo.server.PostView;
 import com.dumbhippo.server.PostingBoard;
-import com.dumbhippo.server.SystemViewpoint;
-import com.dumbhippo.server.UserViewpoint;
-import com.dumbhippo.server.Viewpoint;
 import com.dumbhippo.server.Configuration.PropertyNotFoundException;
+import com.dumbhippo.server.views.EntityView;
+import com.dumbhippo.server.views.PersonView;
+import com.dumbhippo.server.views.PersonViewExtra;
+import com.dumbhippo.server.views.PostView;
+import com.dumbhippo.server.views.SystemViewpoint;
+import com.dumbhippo.server.views.UserViewpoint;
+import com.dumbhippo.server.views.Viewpoint;
 
 /**
  * Send out messages when events happen (for now, when a link is shared).
@@ -109,10 +100,6 @@ public class MessageSenderBean implements MessageSender {
 	
 	@EJB
 	@IgnoreDependency
-	private GroupSystem groupSystem;
-	
-	@EJB
-	@IgnoreDependency
 	private ExternalAccountSystem externalAccounts;
 	
 	@javax.annotation.Resource
@@ -122,40 +109,6 @@ public class MessageSenderBean implements MessageSender {
 	
 	private XMPPSender xmppSender;
 	private EmailSender emailSender;
-	
-	private static class NewPostExtension implements PacketExtension {
-
-		private static final String ELEMENT_NAME = "newPost";
-
-		private static final String NAMESPACE = "http://dumbhippo.com/protocol/post";
-		
-		private PostView postView;
-		private Set<EntityView> referencedEntities;
-
-		public NewPostExtension(PostView pv, Set<EntityView> referenced) {
-			postView = pv;
-			referencedEntities = referenced;
-		}
-
-		public String toXML() {
-			XmlBuilder builder = new XmlBuilder();
-			builder.openElement(ELEMENT_NAME, "xmlns", NAMESPACE);
-			for (EntityView ev: referencedEntities) {
-				ev.writeToXmlBuilder(builder);
-			}
-			postView.writeToXmlBuilder(builder);
-			builder.closeElement();
-			return builder.toString();
-		}
-		
-		public String getElementName() {
-			return ELEMENT_NAME;
-		}
-
-		public String getNamespace() {
-			return NAMESPACE;
-		}
-	}
 	
 	private static class LivePostChangedExtension implements PacketExtension {
 
@@ -171,9 +124,9 @@ public class MessageSenderBean implements MessageSender {
 			XmlBuilder builder = new XmlBuilder();
 			builder.openElement(ELEMENT_NAME, "xmlns", NAMESPACE);
 			for (EntityView ev : viewerEntities) {
-				ev.writeToXmlBuilder(builder);
+				ev.writeToXmlBuilderOld(builder);
 			}
-			post.writeToXmlBuilder(builder);
+			post.writeToXmlBuilderOld(builder);
 			builder.append(lpost.toXml());
 			builder.closeElement();
 			return builder.toString();
@@ -244,71 +197,6 @@ public class MessageSenderBean implements MessageSender {
 			return builder.toString();
 		}
 	}
-	
-	private static class HotnessChangedExtension implements PacketExtension {
-		private static final String ELEMENT_NAME = "hotness";
-
-		private static final String NAMESPACE = "http://dumbhippo.com/protocol/hotness";
-		
-		private Hotness hotness;
-		
-		public HotnessChangedExtension(Hotness hotness) {
-			this.hotness = hotness;
-		}
-
-		public String getElementName() {
-			return ELEMENT_NAME;
-		}
-
-		public String getNamespace() {
-			return NAMESPACE;
-		}
-
-		public String toXML() {
-			XmlBuilder builder = new XmlBuilder();
-			builder.openElement(ELEMENT_NAME, "xmlns", NAMESPACE, "value", hotness.name());
-			builder.closeElement();
-			return builder.toString();
-		}
-	}
-	
-	private static class ActivePostsChangedExtension implements PacketExtension {
-		private static final String ELEMENT_NAME = "activePostsChanged";
-
-		private static final String NAMESPACE = "http://dumbhippo.com/protocol/post";
-		
-		List<PostView> postViews;
-		List<LivePost> livePosts;
-		Set<EntityView> referencedEntities;
-		
-		public ActivePostsChangedExtension(List<PostView> postViews, List<LivePost> posts, Set<EntityView> referencedEntities) {
-			this.postViews = postViews;
-			this.livePosts = posts;
-			this.referencedEntities = referencedEntities;
-		}
-
-		public String getElementName() {
-			return ELEMENT_NAME;
-		}
-
-		public String getNamespace() {
-			return NAMESPACE;
-		}
-
-		public String toXML() {
-			XmlBuilder builder = new XmlBuilder();
-			builder.openElement(ELEMENT_NAME, "xmlns", NAMESPACE);
-			for (int i = 0; i < livePosts.size(); i++) {
-				for (EntityView ev: referencedEntities) {
-					ev.writeToXmlBuilder(builder);
-				}				
-				postViews.get(i).writeToXmlBuilder(builder);
-				builder.append(livePosts.get(i).toXml());
-			}
-			builder.closeElement();
-			return builder.toString();
-		}
-	}
 
 	private static class PrefsChangedExtension implements PacketExtension {
 		private static final String ELEMENT_NAME = "prefs";
@@ -343,57 +231,31 @@ public class MessageSenderBean implements MessageSender {
 			return builder.toString();
 		}
 	}
-	
-	private static class GroupMembershipUpdateExtension implements PacketExtension {
 
-		private static final String ELEMENT_NAME = "membershipChange";
-
-		private static final String NAMESPACE = "http://dumbhippo.com/protocol/group";
-		
-		private PersonView personView;
-		private GroupView groupView;
-		private MembershipStatus status;
-
-		public GroupMembershipUpdateExtension(PersonView personView, 
-				                              GroupView groupView, 
-				                              MembershipStatus status) {
-			this.personView = personView;
-			this.groupView = groupView;
-			this.status = status;
-		}
-
-		public String toXML() {
-			XmlBuilder builder = new XmlBuilder();
-			builder.openElement(ELEMENT_NAME, "xmlns", NAMESPACE, 
-					            "membershipStatus", status.toString(),
-					            "groupId", groupView.getIdentifyingGuid().toString(), 
-					            "userId", personView.getIdentifyingGuid().toString());
-			personView.writeToXmlBuilder(builder);
-			groupView.writeToXmlBuilder(builder);
-			builder.closeElement();
-			return builder.toString();
-		}
-		
-		public String getElementName() {
-			return ELEMENT_NAME;
-		}
-
-		public String getNamespace() {
-			return NAMESPACE;
-		}
-	}
-	
 	private class XMPPSender {
 
 		private XMPPConnection connection;
-				
-		private synchronized XMPPConnection getConnection() {
+		
+		class NotConnectedException extends Exception {
+
+			private static final long serialVersionUID = 1L;
+
+			NotConnectedException(String message) {
+				super(message);
+			}
+			
+			NotConnectedException(String message, Throwable cause) {
+				super(message, cause);
+			}
+		}
+		
+		private synchronized XMPPConnection getConnection() throws NotConnectedException {
 			if (connection != null && !connection.isConnected()) {
 				logger.info("Disconnected from XMPP server");
 			}
 			if (connection == null || !connection.isConnected()) {			
 				try {
-					String addr = config.getPropertyNoDefault(HippoProperty.XMPP_ADDRESS);
+					String addr = config.getPropertyNoDefault(HippoProperty.BIND_HOST);
 					String port = config.getPropertyNoDefault(HippoProperty.XMPP_PORT);
 					String user = config.getPropertyNoDefault(HippoProperty.XMPP_ADMINUSER);
 					String password = config.getPropertyNoDefault(HippoProperty.XMPP_PASSWORD);
@@ -404,62 +266,41 @@ public class MessageSenderBean implements MessageSender {
 					connection.login(user, password, StringUtils.hexEncode(token.getBytes()));
 					logger.info("Successfully reconnected to XMPP server");
 				} catch (XMPPException e) {
-					logger.error("Failed to log in to XMPP server", e);
 					connection = null;
-				} catch (PropertyNotFoundException e) {
-					logger.error("configuration is f'd up, can't connect to XMPP", e);
+					throw new NotConnectedException("Failed to log in to XMPP server: " + e.getMessage(), e);
+				} catch (PropertyNotFoundException e) { 
+					logger.error("configuration is f'd up, can't connect to XMPP"); 
 					connection = null;
+					throw new NotConnectedException("Configuration properties missing so can't connect to XMPP", e);
 				}
 			}
+			
+			if (connection == null)
+				throw new RuntimeException("connection == null and we didn't throw a NotConnectedException");
 
 			return connection;
 		}
+
+		private Message createMessageFor(Guid userId, Message.Type type) {
+			// FIXME should dumbhippo.com domain be hardcoded here?			
+			return new Message(userId.toJabberId("dumbhippo.com"), type);
+		}		
 		
 		private Message createMessageFor(User user, Message.Type type) {
-			// FIXME should dumbhippo.com domain be hardcoded here?			
-			return new Message(user.getGuid().toJabberId("dumbhippo.com"), type);
+			return createMessageFor(user.getGuid(), type);
 		}
 		
-		private Message createMessageFor(User user) {
-			return createMessageFor(user, Message.Type.NORMAL);
-		}
-
 		public synchronized void sendPostNotification(User recipient, Post post, List<User> viewers, PostType postType) {
-			XMPPConnection connection = getConnection();
-
-			if (connection == null || !connection.isConnected()) {
-				logger.warn("Connection to XMPP is not active, not sending notification for post {}", post.getId());
-				return;
-			}
-			
-			Message message = createMessageFor(recipient); 
-
-			String title = post.getTitle();
-			
-			String url = post.getUrl() != null ? post.getUrl().toExternalForm() : null;
-			
-			if (url == null) {
-				// this particular jabber message protocol has no point without an url
-				logger.debug("no url found on post, not sending xmpp");
-				return;
-			}
-			
-			Viewpoint viewpoint = new UserViewpoint(recipient);
-
-			PostView postView = postingBoard.getPostView(viewpoint, post);
-			Set<EntityView> referenced = postingBoard.getReferencedEntities(viewpoint, post);
-			
-			NewPostExtension extension = new NewPostExtension(postView, referenced);
-			message.addExtension(extension);
-
-			message.setBody(String.format("%s\n%s", title, url));
-
-			logger.debug("Sending jabber message to {}", message.getTo());
-			connection.sendPacket(message);
 		}
 		
 		public synchronized void sendLivePostChanged(User user, LivePost lpost, PostView post) {
-			XMPPConnection connection = getConnection();
+			XMPPConnection connection;
+			try {
+				connection = getConnection();
+			} catch (NotConnectedException e) {
+				logger.warn("Not sending live post changed because not connected to xmpp: {}", e.getMessage());
+				return;
+			}
 			Message message = createMessageFor(user, Message.Type.HEADLINE);
 			Set<EntityView> viewerEntities = new HashSet<EntityView>();
 			Viewpoint viewpoint = new UserViewpoint(user);
@@ -481,7 +322,13 @@ public class MessageSenderBean implements MessageSender {
 		}
 
 		public void sendMySpaceNameChangedNotification(User user) {
-			XMPPConnection connection = getConnection();
+			XMPPConnection connection;
+			try {
+				connection = getConnection();
+			} catch (NotConnectedException e) {
+				logger.warn("Not sending myspace name changed because not connected to xmpp: " + e.getMessage());
+				return;
+			}
 			Message message = createMessageFor(user, Message.Type.HEADLINE);
 			String newMySpaceName;
 			try {
@@ -494,84 +341,33 @@ public class MessageSenderBean implements MessageSender {
 			connection.sendPacket(message);			
 		}
 
-		public void sendMySpaceContactCommentNotification(User user) {
-			XMPPConnection connection = getConnection();
+		public synchronized void sendMySpaceContactCommentNotification(User user) {
+			XMPPConnection connection;
+			try {
+				connection = getConnection();
+			} catch (NotConnectedException e) {
+				logger.warn("Not sending myspace comment notification because not connected to xmpp: " + e.getMessage());
+				return;
+			}
 			Message message = createMessageFor(user, Message.Type.HEADLINE);
 			message.addExtension(new MySpaceContactCommentExtension());
 			logger.debug("Sending mySpaceContactComment message to {}", message.getTo());			
 			connection.sendPacket(message);
 		}
-
-		public void sendHotnessChanged(LiveClientData clientData) {
-			XMPPConnection connection = getConnection();
-			User dbUser = identitySpider.lookupUser(clientData.getGuid());			
-			Message message = createMessageFor(dbUser, Message.Type.HEADLINE);
-			message.addExtension(new HotnessChangedExtension(clientData.getHotness()));
-			logger.debug("Sending hotnessChanged message to {}", message.getTo());			
-			connection.sendPacket(message);
-		}
-
-		public void sendActivePostsChanged(LiveClientData clientData) {
-			XMPPConnection connection = getConnection();
-			User dbUser = identitySpider.lookupUser(clientData.getGuid());
-			Viewpoint viewpoint = new UserViewpoint(dbUser);
-			Message message = createMessageFor(dbUser, Message.Type.HEADLINE);
-			List<LivePost> lposts = new ArrayList<LivePost>();
-			List<PostView> posts = new ArrayList<PostView>();
-			Set<EntityView> referencedEntities = new HashSet<EntityView>();			
-			for (Guid id : clientData.getActivePosts()) {
-				LivePost lpost = LiveState.getInstance().getLivePost(id);
-				PostView pv;
-				try {
-					pv = postingBoard.loadPost(viewpoint, id);
-				} catch (NotFoundException e) {
-					throw new RuntimeException(e);
-				}
-				lposts.add(lpost);
-				posts.add(pv);
-				referencedEntities.addAll(postingBoard.getReferencedEntities(viewpoint, pv.getPost()));
-
-				// getReferencedEntities() returns personRecipients but not expandedRecipients 
-				// so we also need to add any viewers
-				for (Guid guid : lpost.getViewers()) {
-					Person viewer;
-					try {
-						viewer = identitySpider.lookupGuid(Person.class, guid);
-					} catch (NotFoundException e) {
-						throw new RuntimeException(e);
-					}
-					referencedEntities.add(personViewer.getPersonView(viewpoint, viewer));
-				}
-			}
-
-			message.addExtension(new ActivePostsChangedExtension(posts, lposts, referencedEntities));
-			logger.info("Sending activePostsChanged message to {}; {} active posts" + message.getTo(), + posts.size());			
-			connection.sendPacket(message);						
-		}
 		
-		public void sendPrefChanged(User user, String key, String value) {
-			XMPPConnection connection = getConnection();
+		public synchronized void sendPrefChanged(User user, String key, String value) {
+			XMPPConnection connection; 
+			try {
+				connection = getConnection();
+			} catch (NotConnectedException e) {
+				logger.warn("Not sending pref changed notification because not connected to xmpp: " + e.getMessage());
+				return;
+			}
 			Message message = createMessageFor(user, Message.Type.HEADLINE);
 			message.addExtension(new PrefsChangedExtension(key, value));
 			logger.debug("Sending prefs changed message to {}", message.getTo());			
 			connection.sendPacket(message);
 		}
-		
-		public void sendGroupMembershipUpdate(User recipient, Group group, GroupMember groupMember) {
-			XMPPConnection connection = getConnection();
-			Message message = createMessageFor(recipient);	
-			PersonView updatedMember = personViewer.getPersonView(new UserViewpoint(recipient), 
-					                                                groupMember.getMember(),
-					                                                PersonViewExtra.PRIMARY_RESOURCE);
-
-			GroupView groupView = groupSystem.getGroupView(new UserViewpoint(recipient), group);
-			
-			message.addExtension(
-                new GroupMembershipUpdateExtension(updatedMember, groupView, groupMember.getStatus()));
-			logger.debug("Sending groupMembershipUpdate message to {}", message.getTo());			
-			connection.sendPacket(message);
-		}
-		
 	}
 
 	private class EmailSender {
@@ -791,8 +587,8 @@ public class MessageSenderBean implements MessageSender {
 	public void sendPostNotification(Resource recipient, Post post, PostType postType) {
 		User user = identitySpider.getUser(recipient);
 		if (user != null) {
-			Account account = user.getAccount();
-			xmppSender.sendPostNotification(account.getOwner(), post, null, postType);
+			// Nothing to do here; will be sent out from the XMPP server based on the 
+			// PostCreatedEvent notification
 		} else if (recipient instanceof EmailResource) {
 			emailSender.sendPostNotification((EmailResource)recipient, post, postType);
 		} else {
@@ -843,23 +639,8 @@ public class MessageSenderBean implements MessageSender {
 	public void sendMySpaceContactCommentNotification(User user) {
 		xmppSender.sendMySpaceContactCommentNotification(user);
 	}
-
-	public void sendHotnessChanged(LiveClientData clientData) {
-		xmppSender.sendHotnessChanged(clientData);
-	}
-
-	public void sendActivePostsChanged(LiveClientData clientData) {
-		xmppSender.sendActivePostsChanged(clientData);
-	}
 	
 	public void sendPrefChanged(User user, String key, String value) {
 		xmppSender.sendPrefChanged(user, key, value);
-	}
-
-	public void sendGroupMembershipUpdate(Group group, GroupMember groupMember) {
-		Set<User> recipients = groupSystem.getMembershipChangeRecipients(group);
-		for (User recipient : recipients) {
-			xmppSender.sendGroupMembershipUpdate(recipient, group, groupMember);			
-		}
 	}
 }

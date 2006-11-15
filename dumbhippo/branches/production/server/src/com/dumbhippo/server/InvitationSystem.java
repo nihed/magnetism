@@ -11,6 +11,8 @@ import com.dumbhippo.persistence.InvitationToken;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.ValidationException;
+import com.dumbhippo.server.views.InvitationView;
+import com.dumbhippo.server.views.UserViewpoint;
 
 @Local
 public interface InvitationSystem {
@@ -220,4 +222,11 @@ public interface InvitationSystem {
 	 * @return unclaimed invite count
 	 */
 	public int getTotalInvitationCount(UserViewpoint viewpoint);
+
+	/**
+	 * Get the number of self invitations that can be used for open sign up. 
+	 * 
+	 * @return count of self invitations available
+	 */
+    public int getSelfInvitationCount();
 }

@@ -17,7 +17,7 @@ import org.slf4j.Logger;
  * loader, obviously it does not work across app server instances).
  * 
  */
-public final class UniqueTaskExecutor<KeyType,ResultType> {
+public class UniqueTaskExecutor<KeyType,ResultType> {
 	@SuppressWarnings("unused")
 	static private final Logger logger = GlobalSetup.getLogger(UniqueTaskExecutor.class);		
 	
@@ -33,11 +33,11 @@ public final class UniqueTaskExecutor<KeyType,ResultType> {
 		return threadPool;
 	}
 	
-	public synchronized void shutdown() {
+	public synchronized void shutdownAndAwaitTermination() {
 		shutdown = true;
 			
 		if (threadPool != null) {
-			threadPool.shutdown();
+			ThreadUtils.shutdownAndAwaitTermination(threadPool);
 			threadPool = null;
 		}
 	}
@@ -74,6 +74,10 @@ public final class UniqueTaskExecutor<KeyType,ResultType> {
 		return task;
 	}
 	
+	public synchronized Future<ResultType> peek(KeyType key) {
+		return inProgress.get(key);
+	}
+	
 	// note this is an inner class and has to be threadsafe in accessing the outer
 	private class UniqueFutureTask extends FutureTask<ResultType> {
 		private KeyType key;
@@ -87,5 +91,9 @@ public final class UniqueTaskExecutor<KeyType,ResultType> {
 		protected void done() {
 			removeTask(key);
 		}
+	}
+
+	public String getName() {
+		return name;
 	}
 }

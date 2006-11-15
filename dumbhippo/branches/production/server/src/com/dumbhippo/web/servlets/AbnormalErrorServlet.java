@@ -77,7 +77,7 @@ public class AbnormalErrorServlet extends AbstractServlet {
     }
 
 	@Override
-	protected boolean requiresTransaction() {
+	protected boolean requiresTransaction(HttpServletRequest request) {
 		return false;
 	}
 }

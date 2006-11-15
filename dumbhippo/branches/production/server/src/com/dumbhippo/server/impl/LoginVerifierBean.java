@@ -24,8 +24,8 @@ import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.HumanVisibleException;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.LoginVerifier;
-import com.dumbhippo.server.SystemViewpoint;
 import com.dumbhippo.server.TransactionRunner;
+import com.dumbhippo.server.views.SystemViewpoint;
 
 @Stateless
 public class LoginVerifierBean implements LoginVerifier {

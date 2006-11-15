@@ -56,9 +56,11 @@
 								<c:when test="${signin.valid && !person.self}">
 							        <c:choose>
 					    		        <c:when test="${person.contact}">
+											<dh:script module="dh.actions"/>
 					    			        <dht:actionLink href="javascript:dh.actions.removeContact('${person.viewedPerson.viewPersonPageId}')" title="Remove this person from your friends list">Remove from your friends</dht:actionLink>
 						    	        </c:when>
 								        <c:otherwise>
+								        	<dh:script module="dh.actions"/>
 											<dht:actionLink href="javascript:dh.actions.addContact('${person.viewedPerson.viewPersonPageId}')" title="Add this person to your friends list">Add to your friends</dht:actionLink>
 										</c:otherwise>
 									</c:choose>

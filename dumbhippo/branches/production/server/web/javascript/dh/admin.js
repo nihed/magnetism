@@ -1,6 +1,7 @@
 dojo.provide("dh.admin");
 
 dojo.require("dh.server");
+dojo.require("dh.util");
 
 dh.admin.sendRepairEmail = function(userId) {
    	dh.server.doPOST("sendrepairemail",

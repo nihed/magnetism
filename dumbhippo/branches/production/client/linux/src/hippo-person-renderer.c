@@ -160,10 +160,10 @@ hippo_person_renderer_get_property(GObject              *object,
 
     switch (param_id) {
     case PROP_PERSON:
-        g_value_set_object(value, G_OBJECT(renderer->person));
+        g_value_set_object(value, (GObject*) renderer->person);
         break;
     case PROP_PHOTO:
-        g_value_set_object(value, G_OBJECT(renderer->photo));
+        g_value_set_object(value, (GObject*) renderer->photo);
         break;        
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, param_id, pspec);

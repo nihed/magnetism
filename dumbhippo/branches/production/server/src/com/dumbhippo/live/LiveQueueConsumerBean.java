@@ -12,7 +12,6 @@ import javax.jms.ObjectMessage;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
-import com.dumbhippo.jms.JmsProducer;
 
 //
 // Handles taking events queued via LiveState.queueUpdate and dispatching
@@ -22,9 +21,9 @@ import com.dumbhippo.jms.JmsProducer;
 @MessageDriven(activationConfig =
 {
   @ActivationConfigProperty(propertyName="destinationType",
-    propertyValue="javax.jms.Queue"),
+    propertyValue="javax.jms.Topic"),
   @ActivationConfigProperty(propertyName="destination",
-    propertyValue="queue/" + LiveEvent.QUEUE)
+    propertyValue=LiveEvent.TOPIC_NAME)
 })
 public class LiveQueueConsumerBean implements MessageListener {
 	
@@ -39,18 +38,16 @@ public class LiveQueueConsumerBean implements MessageListener {
 		// is no standard way of finding a bean at runtime.
 		
 		Class<? extends LiveEventProcessor> clazz = event.getProcessorClass();
-		LiveEventProcessor processor = (LiveEventProcessor)context.lookup(clazz.getCanonicalName());
-		if (processor == null) {
-			logger.warn("Could not lookup event processor bean " + clazz.getCanonicalName());
-			return;
+		if (clazz != null) {
+			LiveEventProcessor processor = (LiveEventProcessor)context.lookup(clazz.getCanonicalName());
+			if (processor == null) {
+				logger.warn("Could not lookup event processor bean " + clazz.getCanonicalName());
+			} else {
+				processor.process(LiveState.getInstance(), event);
+			}
 		}
 		
-		processor.process(LiveState.getInstance(), event);
-		
-		// Reflect LiveEvents to XMPP server
-		JmsProducer producer = new JmsProducer(LiveEvent.XMPP_QUEUE, false);
-		ObjectMessage jmsMessage = producer.createObjectMessage(event);
-		producer.send(jmsMessage);		
+		LiveState.getInstance().invokeEventListeners(event);
 	}
 
 	public void onMessage(Message message) {
@@ -61,7 +58,7 @@ public class LiveQueueConsumerBean implements MessageListener {
 				ObjectMessage objectMessage = (ObjectMessage) message;
 				Object obj = objectMessage.getObject();
 				
-				logger.debug("Got object in " + LiveEvent.QUEUE + ": " + obj);
+				logger.debug("Got object in " + LiveEvent.TOPIC_NAME + ": " + obj);
 				
 				if (obj instanceof LiveEvent) {
 					process((LiveEvent) obj);

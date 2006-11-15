@@ -1,8 +1,6 @@
 
 package com.dumbhippo.persistence;
 
-import java.io.Serializable;
-
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
@@ -19,8 +17,8 @@ import com.dumbhippo.identity20.Guid.ParseException;
 
 @Entity
 @Inheritance(strategy = InheritanceType.JOINED)
-@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)
-public abstract class GuidPersistable implements Serializable {
+@Cache(usage=CacheConcurrencyStrategy.TRANSACTIONAL)
+public abstract class GuidPersistable {
 	private Guid guid;
 	
 	protected GuidPersistable() {

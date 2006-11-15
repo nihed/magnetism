@@ -10,12 +10,13 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
+import javax.persistence.Transient;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 @Entity
-@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)	   
+@Cache(usage=CacheConcurrencyStrategy.TRANSACTIONAL)	   
 public class Feed extends DBUnique {
 	private static final long serialVersionUID = 1L;
 
@@ -26,11 +27,12 @@ public class Feed extends DBUnique {
 	private boolean lastFetchSucceeded;
 	private Set<FeedEntry> entries;
 	private Set<GroupFeed> groups;
-	private Set<AccountFeed> accounts;
+	private Set<ExternalAccount> accounts;
 	
 	protected Feed() {
 		this.entries = new HashSet<FeedEntry>();
 		this.groups = new HashSet<GroupFeed>();
+		this.accounts = new HashSet<ExternalAccount>();
 	}
 	
 	public Feed(LinkResource source) {
@@ -83,7 +85,7 @@ public class Feed extends DBUnique {
 	}
 	
 	@OneToMany(mappedBy="feed")
-	@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)
+	@Cache(usage=CacheConcurrencyStrategy.TRANSACTIONAL)
 	public Set<GroupFeed> getGroups() {
 		return groups;
 	}
@@ -97,8 +99,8 @@ public class Feed extends DBUnique {
 	}
 	
 	@OneToMany(mappedBy="feed")
-	@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)
-	public Set<AccountFeed> getAccounts() {
+	@Cache(usage=CacheConcurrencyStrategy.TRANSACTIONAL)
+	public Set<ExternalAccount> getAccounts() {
 		return accounts;
 	}
 	
@@ -106,7 +108,7 @@ public class Feed extends DBUnique {
 	 * Only hibernate should call this probably
 	 * @param groups
 	 */
-	protected void setAccounts(Set<AccountFeed> accounts) {
+	protected void setAccounts(Set<ExternalAccount> accounts) {
 		this.accounts = accounts;
 	}
 	
@@ -128,5 +130,11 @@ public class Feed extends DBUnique {
 
 	public void setLink(LinkResource link) {
 		this.link = link;
+	}
+
+	@Transient
+	public String getFavicon() {
+		// FIXME need build stamp on this (well, dh:png usually fixes it)
+		return "/favicons/feed/" + getSource().getId();
 	}
 }

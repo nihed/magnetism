@@ -8,6 +8,7 @@ import javax.persistence.PersistenceContext;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.persistence.InvitationToken;
 import com.dumbhippo.persistence.Token;
 import com.dumbhippo.server.TokenExpiredException;
 import com.dumbhippo.server.TokenSystem;
@@ -44,7 +45,8 @@ public class TokenSystemBean implements TokenSystem {
 		// we probably should not remove tokens that were marked as deleted though
 		if (ret != null && ret.isExpired()) {
 			// em.remove(ret);	// FIXME is this a good idea? probably it should just be in a cron job
-			throw new TokenExpiredException(ret.getClass()); 
+			boolean viewed = ((ret instanceof InvitationToken) ? ((InvitationToken)ret).isViewed() : false);
+			throw new TokenExpiredException(ret.getClass(), viewed);
 		}
 		
 		assert ret != null;

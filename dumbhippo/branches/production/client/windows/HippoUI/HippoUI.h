@@ -4,26 +4,24 @@
  **/
 #pragma once
 
-#include "stdafx.h"
 #include <glib.h>
 #include <hippo/hippo-common.h>
 #include <HippoUtil.h>
 #include <HippoArray.h>
-#include "HippoBubble.h"
-#include "HippoBubbleList.h"
-#include "HippoChatWindow.h"
+#include <HippoMessageHook.h>
 #include "HippoIcon.h"
+#include "HippoListenerProxy.h"
 #include "HippoLogWindow.h"
-#include "HippoMenu.h"
 #include "HippoUpgrader.h"
-#include "HippoFlickr.h"
 #include "HippoExternalBrowser.h"
 #include "HippoRemoteWindow.h"
 #include "HippoMusic.h"
-#include "HippoMySpace.h"
 #include "HippoUIUtil.h"
 #include "HippoGSignal.h"
 
+#include <vector>
+
+class HippoChatManager;
 class HippoPreferences;
 
 struct HippoBrowserInfo
@@ -63,15 +61,24 @@ public:
     STDMETHODIMP UnregisterBrowser(DWORD);
     STDMETHODIMP UpdateBrowser(DWORD, BSTR, BSTR);
     STDMETHODIMP Quit(DWORD *processId);
-    STDMETHODIMP ShowMissed();
     STDMETHODIMP ShowRecent();
-    STDMETHODIMP BeginFlickrShare(BSTR filePath);
+    STDMETHODIMP BeginFlickrShare(BSTR path);
     STDMETHODIMP ShareLink(BSTR url, BSTR title);
     STDMETHODIMP ShowChatWindow(BSTR postId);
     STDMETHODIMP GetLoginId(BSTR *result);
     STDMETHODIMP GetChatRoom(BSTR postId, IHippoChatRoom **result);
     STDMETHODIMP DoUpgrade();
     STDMETHODIMP ShareLinkComplete(BSTR postId, BSTR url);
+
+    STDMETHODIMP RegisterListener(IHippoUIListener *listener, UINT64 *listenerId);
+    STDMETHODIMP UnregisterListener(UINT64 listenerId);
+    STDMETHODIMP RegisterEndpoint(UINT64 listenerId, UINT64 *endpointId);
+    STDMETHODIMP UnregisterEndpoint(UINT64 endpointId);
+    STDMETHODIMP JoinChatRoom(UINT64 endpointId, BSTR chatId, BOOL participant);
+    STDMETHODIMP LeaveChatRoom(UINT64 endpointId, BSTR chatId);
+    STDMETHODIMP SendChatMessage(BSTR chatId, BSTR text);
+    STDMETHODIMP GetServerName(BSTR *serverName);
+    STDMETHODIMP LaunchBrowser(BSTR url);
 
     bool create(HINSTANCE instance);
     void destroy();
@@ -90,6 +97,8 @@ public:
     void ignoreChat(BSTR chatId);
     void groupInvite(BSTR groupId, BSTR userId);
 
+    HippoWindowState getChatWindowState(BSTR chatId);
+
     void debugLogW(const WCHAR *format, ...); // UTF-16
     void debugLogU(const char *format, ...);  // UTF-8
     void logErrorU(const char *format, ...); // UTF-8
@@ -98,13 +107,10 @@ public:
 
     void onUpgradeReady();
 
-    void setHaveMissedBubbles(bool haveMissed);
-
     int getRecentMessageCount();
 
-    bool isGroupChatActive(HippoEntity *entity);
+    bool isGroupChatActive(HippoGroup *group);
     bool isShareActive(HippoPost *post);
-    void onChatWindowClosed(HippoChatWindow *chatWindow);
 
     void getRemoteURL(BSTR appletName, BSTR *result) throw (std::bad_alloc, HResultException);
     void getAppletPath(BSTR filename, BSTR *result) throw (std::bad_alloc, HResultException);
@@ -112,13 +118,13 @@ public:
 
     void showAppletWindow(BSTR url, HippoPtr<IWebBrowser2> &webBrowser);
 
-    void registerWindowMsgHook(HWND window, HippoMessageHook *hook);
-    void unregisterWindowMsgHook(HWND window);
+    void getImagePath(BSTR filename, BSTR *result) throw (std::bad_alloc, HResultException);
+
+    void registerMessageHook(HWND window, HippoMessageHook *hook);
+    void unregisterMessageHook(HWND window);
     HWND getWindow() { return window_; }
     HICON getSmallIcon() { return smallIcon_; }
     HICON getBigIcon() { return bigIcon_; }
-
-    void bubbleNewMySpaceComment(long myId, long blogId, const HippoMySpaceCommentData &comment);
 
 private:
     class HippoUIUpgradeWindowCallback : public HippoIEWindowCallback
@@ -129,6 +135,8 @@ private:
     private:
         HippoUI *ui_;
     };
+
+    HippoBSTR getBasePath() throw (std::bad_alloc, HResultException);
 
     bool registerActive();
     bool registerClass();
@@ -166,7 +174,6 @@ private:
     void unregisterStartup();
 
     static int doQuit(gpointer data);
-    static gboolean idleCreateMySpace(gpointer data);
 
     static LRESULT CALLBACK windowProc(HWND   window,
                                        UINT   message,
@@ -193,6 +200,9 @@ private:
     void onHasAuthChanged();
     void onAuthFailed();
     void onAuthSucceeded();
+
+    HippoListenerProxy *findListenerById(UINT64 listenerId);
+    HippoListenerProxy *findListenerByEndpoint(UINT64 endpointId);
 
 private:
     // If true, this is a debug instance, acts as a separate global
@@ -231,16 +241,12 @@ private:
     GTimeout showDebugShareTimeout_;
     GTimeout checkIdleTimeout_;
 
-    HippoBubble bubble_;
-    HippoMenu menu_;
     HippoLogWindow logWindow_;
     HippoIcon notificationIcon_;
-    HippoFlickr *flickr_;
     HippoUpgrader upgrader_;
     HippoMusic music_;
-    HippoMySpace mySpace_;
+    HippoChatManager *chatManager_;
 
-    HippoBubbleList *recentPostList_;
     HippoRemoteWindow *currentShare_;
     HippoRemoteWindow *upgradeWindow_;
     HippoRemoteWindow *signinWindow_;
@@ -252,7 +258,7 @@ private:
 
     HippoArray<HippoPtr<HippoExternalBrowser> > internalBrowsers_;
     HippoArray<HippoBrowserInfo> browsers_;
-    HippoArray<HippoChatWindow *> chatWindows_;
+    std::vector<HippoPtr<HippoListenerProxy> > listeners_;
 
     DWORD nextBrowserCookie_;
 

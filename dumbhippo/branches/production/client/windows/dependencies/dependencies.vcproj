@@ -53,8 +53,14 @@
 				DeploymentContent="TRUE">
 			</File>
 			<File
+				RelativePath=".\libcairo-2.dll">
+			</File>
+			<File
 				RelativePath=".\libglib-2.0-0.dll"
 				DeploymentContent="TRUE">
+			</File>
+			<File
+				RelativePath=".\libgmodule-2.0-0.dll">
 			</File>
 			<File
 				RelativePath=".\libgobject-2.0-0.dll">
@@ -62,6 +68,21 @@
 			<File
 				RelativePath=".\libgthread-2.0-0.dll"
 				DeploymentContent="TRUE">
+			</File>
+			<File
+				RelativePath=".\libpango-1.0-0.dll">
+			</File>
+			<File
+				RelativePath=".\libpangocairo-1.0-0.dll">
+			</File>
+			<File
+				RelativePath=".\libpangowin32-1.0-0.dll">
+			</File>
+			<File
+				RelativePath=".\libpng13.dll">
+			</File>
+			<File
+				RelativePath=".\zlib1.dll">
 			</File>
 		</Filter>
 		<File

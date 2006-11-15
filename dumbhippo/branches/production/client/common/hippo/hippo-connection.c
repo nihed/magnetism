@@ -3,6 +3,7 @@
 #include "hippo-connection.h"
 #include "hippo-data-cache-internal.h"
 #include "hippo-common-marshal.h"
+#include "hippo-xml-utils.h"
 #include <loudmouth/loudmouth.h>
 #include <string.h>
 #include <stdlib.h>
@@ -102,7 +103,10 @@ static void     hippo_connection_start_signin_timeout (HippoConnection *connecti
 static void     hippo_connection_stop_signin_timeout  (HippoConnection *connection);
 static void     hippo_connection_start_retry_timeout  (HippoConnection *connection);
 static void     hippo_connection_stop_retry_timeout   (HippoConnection *connection);
-static void     hippo_connection_connect              (HippoConnection *connection);
+static void     hippo_connection_queue_request_blocks (HippoConnection *connection);
+static void     hippo_connection_unqueue_request_blocks (HippoConnection *connection);
+static void     hippo_connection_connect              (HippoConnection *connection,
+                                                       const char      *redirect_host);
 static void     hippo_connection_disconnect           (HippoConnection *connection);
 static void     hippo_connection_state_change         (HippoConnection *connection,
                                                        HippoState       state);
@@ -114,9 +118,9 @@ static void     hippo_connection_send_message         (HippoConnection *connecti
                                                        LmMessage       *message,
                                                        SendMode         mode);
 static void     hippo_connection_send_message_with_reply(HippoConnection *connection,
-                                                       LmMessage         *message,
-                                                       LmHandleMessageFunction handler,
-                                                       SendMode           mode);
+                                                         LmMessage         *message,
+                                                         LmHandleMessageFunction handler,
+                                                         SendMode           mode);
 static void     hippo_connection_request_client_info  (HippoConnection *connection);
 static void     hippo_connection_parse_prefs_node     (HippoConnection *connection,
                                                        LmMessageNode   *prefs_node);
@@ -141,6 +145,10 @@ static LmHandlerResult handle_message     (LmMessageHandler *handler,
                                            LmConnection     *connection,
                                            LmMessage        *message,
                                            gpointer          data);
+static LmHandlerResult handle_stream_error (LmMessageHandler *handler,
+                                            LmConnection     *connection,
+                                            LmMessage        *message,
+                                            gpointer          data);
 static LmHandlerResult handle_presence    (LmMessageHandler *handler,
                                            LmConnection     *connection,
                                            LmMessage        *message,
@@ -171,11 +179,17 @@ struct _HippoConnection {
     /* queue of LmMessage */
     GQueue *pending_room_messages;
     HippoBrowserKind login_browser;
+    int message_port;
     char *username;
     char *password;
+    char *download_url;
+    char *tooltip;
+    int request_blocks_id;
+    gint64 last_blocks_timestamp;
+    gint64 server_time_offset;
     unsigned int too_old : 1;
     unsigned int upgrade_available : 1;
-    char *download_url;
+    unsigned int last_auth_failed : 1;
 };
 
 struct _HippoConnectionClass {
@@ -236,84 +250,84 @@ hippo_connection_class_init(HippoConnectionClass *klass)
   
     signals[STATE_CHANGED] =
         g_signal_new ("state-changed",
-            		  G_TYPE_FROM_CLASS (object_class),
-            		  G_SIGNAL_RUN_LAST,
-            		  0,
-            		  NULL, NULL,
-            		  g_cclosure_marshal_VOID__VOID,
-            		  G_TYPE_NONE, 0); 
+                      G_TYPE_FROM_CLASS (object_class),
+                      G_SIGNAL_RUN_LAST,
+                      0,
+                      NULL, NULL,
+                      g_cclosure_marshal_VOID__VOID,
+                      G_TYPE_NONE, 0); 
 
     signals[CONNECTED_CHANGED] =
         g_signal_new ("connected-changed",
-            		  G_TYPE_FROM_CLASS (object_class),
-            		  G_SIGNAL_RUN_LAST,
-            		  0,
-            		  NULL, NULL,
-            		  g_cclosure_marshal_VOID__BOOLEAN,
-            		  G_TYPE_NONE, 1, G_TYPE_BOOLEAN);
+                      G_TYPE_FROM_CLASS (object_class),
+                      G_SIGNAL_RUN_LAST,
+                      0,
+                      NULL, NULL,
+                      g_cclosure_marshal_VOID__BOOLEAN,
+                      G_TYPE_NONE, 1, G_TYPE_BOOLEAN);
 
     signals[HAS_AUTH_CHANGED] =
         g_signal_new ("has-auth-changed",
-            		  G_TYPE_FROM_CLASS (object_class),
-            		  G_SIGNAL_RUN_LAST,
-            		  0,
-            		  NULL, NULL,
-            		  g_cclosure_marshal_VOID__VOID,
-            		  G_TYPE_NONE, 0);
+                      G_TYPE_FROM_CLASS (object_class),
+                      G_SIGNAL_RUN_LAST,
+                      0,
+                      NULL, NULL,
+                      g_cclosure_marshal_VOID__VOID,
+                      G_TYPE_NONE, 0);
 
     signals[AUTH_FAILED] =
         g_signal_new ("auth-failed",
-            		  G_TYPE_FROM_CLASS (object_class),
-            		  G_SIGNAL_RUN_LAST,
-            		  0,
-            		  NULL, NULL,
-            		  g_cclosure_marshal_VOID__VOID,
-            		  G_TYPE_NONE, 0); 
+                      G_TYPE_FROM_CLASS (object_class),
+                      G_SIGNAL_RUN_LAST,
+                      0,
+                      NULL, NULL,
+                      g_cclosure_marshal_VOID__VOID,
+                      G_TYPE_NONE, 0); 
 
     signals[AUTH_SUCCEEDED] =
         g_signal_new ("auth-succeeded",
-            		  G_TYPE_FROM_CLASS (object_class),
-            		  G_SIGNAL_RUN_LAST,
-            		  0,
-            		  NULL, NULL,
-            		  g_cclosure_marshal_VOID__VOID,
-            		  G_TYPE_NONE, 0); 
+                      G_TYPE_FROM_CLASS (object_class),
+                      G_SIGNAL_RUN_LAST,
+                      0,
+                      NULL, NULL,
+                      g_cclosure_marshal_VOID__VOID,
+                      G_TYPE_NONE, 0); 
 
     signals[CLIENT_INFO_AVAILABLE] =
         g_signal_new ("client-info-available",
-            		  G_TYPE_FROM_CLASS (object_class),
-            		  G_SIGNAL_RUN_LAST,
-            		  0,
-            		  NULL, NULL,
-            		  g_cclosure_marshal_VOID__VOID,
-            		  G_TYPE_NONE, 0);
+                      G_TYPE_FROM_CLASS (object_class),
+                      G_SIGNAL_RUN_LAST,
+                      0,
+                      NULL, NULL,
+                      g_cclosure_marshal_VOID__VOID,
+                      G_TYPE_NONE, 0);
 
     signals[POST_ACTIVITY] =
         g_signal_new ("post-activity",
-            		  G_TYPE_FROM_CLASS (object_class),
-            		  G_SIGNAL_RUN_LAST,
-            		  0,
-            		  NULL, NULL,
-            		  g_cclosure_marshal_VOID__OBJECT,
-            		  G_TYPE_NONE, 1, G_TYPE_OBJECT);
+                      G_TYPE_FROM_CLASS (object_class),
+                      G_SIGNAL_RUN_LAST,
+                      0,
+                      NULL, NULL,
+                      g_cclosure_marshal_VOID__OBJECT,
+                      G_TYPE_NONE, 1, G_TYPE_OBJECT);
 
     signals[MYSPACE_CHANGED] =
         g_signal_new ("myspace-changed",
-            		  G_TYPE_FROM_CLASS (object_class),
-            		  G_SIGNAL_RUN_LAST,
-            		  0,
-            		  NULL, NULL,
-            		  g_cclosure_marshal_VOID__VOID,
-            		  G_TYPE_NONE, 0); 
+                      G_TYPE_FROM_CLASS (object_class),
+                      G_SIGNAL_RUN_LAST,
+                      0,
+                      NULL, NULL,
+                      g_cclosure_marshal_VOID__VOID,
+                      G_TYPE_NONE, 0); 
 
-	signals[GROUP_MEMBERSHIP_CHANGED] =
+    signals[GROUP_MEMBERSHIP_CHANGED] =
         g_signal_new ("group-membership-changed",
-            		  G_TYPE_FROM_CLASS (object_class),
-            		  G_SIGNAL_RUN_LAST,
-            		  0,
-            		  NULL, NULL,
-					  hippo_common_marshal_VOID__OBJECT_OBJECT_STRING,
-            		  G_TYPE_NONE, 3, G_TYPE_OBJECT, G_TYPE_OBJECT, G_TYPE_STRING); 
+                      G_TYPE_FROM_CLASS (object_class),
+                      G_SIGNAL_RUN_LAST,
+                      0,
+                      NULL, NULL,
+                      hippo_common_marshal_VOID__OBJECT_OBJECT_STRING,
+                      G_TYPE_NONE, 3, G_TYPE_OBJECT, G_TYPE_OBJECT, G_TYPE_STRING); 
 
     object_class->finalize = hippo_connection_finalize;
 }
@@ -325,6 +339,7 @@ hippo_connection_finalize(GObject *object)
 
     g_debug("Finalizing connection");
 
+    hippo_connection_unqueue_request_blocks(connection);
     hippo_connection_stop_signin_timeout(connection);
     hippo_connection_stop_retry_timeout(connection);
     
@@ -340,6 +355,7 @@ hippo_connection_finalize(GObject *object)
 
     g_free(connection->username);
     g_free(connection->password);
+    g_free(connection->tooltip);
 
     g_object_unref(connection->platform);
     connection->platform = NULL;
@@ -367,6 +383,14 @@ hippo_connection_new(HippoPlatform *platform)
     g_object_ref(connection->platform);
     
     return connection;
+}
+
+HippoPlatform*
+hippo_connection_get_platform(HippoConnection  *connection)
+{
+    g_return_val_if_fail(HIPPO_IS_CONNECTION(connection), NULL);
+    
+    return connection->platform;
 }
 
 int
@@ -409,9 +433,9 @@ hippo_connection_set_cache(HippoConnection  *connection,
      * be emitting signals that the cache would see, rather than calling methods
      * on the cache; but in practice that's sort of painful and inefficient.
      */
-     g_return_if_fail(HIPPO_IS_CONNECTION(connection));
+    g_return_if_fail(HIPPO_IS_CONNECTION(connection));
      
-     connection->cache = cache;
+    connection->cache = cache;
 }
 
 gboolean
@@ -486,7 +510,7 @@ hippo_connection_signin(HippoConnection *connection)
         if (connection->state == HIPPO_STATE_AUTH_WAIT)
             hippo_connection_authenticate(connection);
         else
-            hippo_connection_connect(connection);
+            hippo_connection_connect(connection, NULL);
         return FALSE;
     } else {
         if (connection->state != HIPPO_STATE_SIGN_IN_WAIT &&
@@ -714,6 +738,7 @@ hippo_connection_auth_failure(HippoConnection *connection,
     hippo_connection_forget_auth(connection);
     hippo_connection_start_signin_timeout(connection);
     hippo_connection_state_change(connection, HIPPO_STATE_AUTH_WAIT);
+    connection->last_auth_failed = TRUE;
     g_signal_emit(connection, signals[AUTH_FAILED], 0);
 }
 
@@ -730,7 +755,7 @@ signin_timeout(gpointer data)
         if (connection->state == HIPPO_STATE_AUTH_WAIT)
             hippo_connection_authenticate(connection);
         else
-            hippo_connection_connect(connection);
+            hippo_connection_connect(connection, NULL);
 
         return FALSE;
     }
@@ -740,7 +765,7 @@ signin_timeout(gpointer data)
         /* Try more slowly */
         g_source_remove (connection->signin_timeout_id);
         connection->signin_timeout_id = g_timeout_add (SIGN_IN_SUBSEQUENT_TIMEOUT, signin_timeout, 
-                                                        connection);
+                                                       connection);
         return FALSE;
     }
 
@@ -778,7 +803,7 @@ retry_timeout(gpointer data)
     g_debug("Retry timeout");
 
     hippo_connection_stop_retry_timeout(connection);
-    hippo_connection_connect(connection);
+    hippo_connection_connect(connection, NULL);
 
     return FALSE;
 }
@@ -805,23 +830,30 @@ hippo_connection_stop_retry_timeout(HippoConnection *connection)
 }
 
 static void
-hippo_connection_connect(HippoConnection *connection)
+hippo_connection_connect(HippoConnection *connection, const char *redirect_host)
 {
     char *message_host;
     int message_port;
     LmMessageHandler *handler;
     GError *error;
-    
-    hippo_platform_get_message_host_port(connection->platform, &message_host, &message_port);
 
     if (connection->lm_connection != NULL) {
         g_warning("hippo_connection_connect() called when already connected");
         return;
     }
+    
+    hippo_platform_get_message_host_port(connection->platform, &message_host, &message_port);
+
+    if (redirect_host) {
+        g_free(message_host);
+        message_host = g_strdup(redirect_host);
+    }
 
     g_debug("Connecting to %s port %d", message_host, message_port);
 
     connection->lm_connection = lm_connection_new(message_host);
+
+    g_free(message_host);
     
     hippo_override_loudmouth_log(); /* lm installed its log handler the first time we did connection_new */
 
@@ -829,19 +861,25 @@ hippo_connection_connect(HippoConnection *connection)
     lm_connection_set_keep_alive_rate(connection->lm_connection, KEEP_ALIVE_RATE);
 
     handler = lm_message_handler_new(handle_message, connection, NULL);
-    lm_connection_register_message_handler(connection->lm_connection, handler, 
-                                           LM_MESSAGE_TYPE_MESSAGE, 
+    lm_connection_register_message_handler(connection->lm_connection, handler,
+                                           LM_MESSAGE_TYPE_MESSAGE,
+                                           LM_HANDLER_PRIORITY_NORMAL);
+    lm_message_handler_unref(handler);
+    handler = lm_message_handler_new(handle_presence, connection, NULL);
+
+    lm_connection_register_message_handler(connection->lm_connection, handler,
+                                           LM_MESSAGE_TYPE_PRESENCE,
                                            LM_HANDLER_PRIORITY_NORMAL);
     lm_message_handler_unref(handler);
 
-    handler = lm_message_handler_new(handle_presence, connection, NULL);
+    handler = lm_message_handler_new(handle_stream_error, connection, NULL);
     lm_connection_register_message_handler(connection->lm_connection, handler, 
-                                           LM_MESSAGE_TYPE_PRESENCE, 
+                                           LM_MESSAGE_TYPE_STREAM_ERROR,
                                            LM_HANDLER_PRIORITY_NORMAL);
     lm_message_handler_unref(handler);
 
     lm_connection_set_disconnect_function(connection->lm_connection,
-            handle_disconnect, connection, NULL);
+                                          handle_disconnect, connection, NULL);
 
     hippo_connection_state_change(connection, HIPPO_STATE_CONNECTING);
 
@@ -894,6 +932,11 @@ hippo_connection_state_change(HippoConnection *connection,
 
     connection->state = state;
     
+    if (connection->tooltip) {
+        g_free(connection->tooltip);
+        connection->tooltip = NULL;
+    }
+
     connected = hippo_connection_get_connected(connection);
 
     hippo_connection_flush_outgoing(connection);
@@ -930,13 +973,13 @@ hippo_connection_load_auth(HippoConnection *connection)
     zero_str(&connection->password);
     
     result = hippo_platform_read_login_cookie(connection->platform,
-                &connection->login_browser,
-                &connection->username, &connection->password);
+                                              &connection->login_browser,
+                                              &connection->username, &connection->password);
 
     if (connection->username) {
         /* don't print the password in the log info */
         g_debug("Loaded username '%s' password %s", connection->username,
-        connection->password ? "loaded" : "not found");
+                connection->password ? "loaded" : "not found");
     }
 
     if (old_has_auth != hippo_connection_get_has_auth(connection)) {
@@ -968,11 +1011,11 @@ hippo_connection_authenticate(HippoConnection *connection)
                                     resource,
                                     handle_authenticate, connection, NULL,
                                     &error))
-    {
-        hippo_connection_auth_failure(connection, error ? error->message : NULL);
-        if (error)
-            g_error_free(error);
-    } else {
+        {
+            hippo_connection_auth_failure(connection, error ? error->message : NULL);
+            if (error)
+                g_error_free(error);
+        } else {
         hippo_connection_state_change(connection, HIPPO_STATE_AUTHENTICATING);
     }
     g_free(jabber_id);
@@ -1072,6 +1115,61 @@ hippo_connection_flush_outgoing(HippoConnection *connection)
 #endif
 }
 
+typedef struct {
+    HippoConnection *connection;
+} RequestBlocksData;
+
+static gboolean
+request_blocks_idle(void *data)
+{
+    RequestBlocksData *rbd = data;
+
+    rbd->connection->request_blocks_id = 0;
+
+    g_debug("Firing request_blocks_idle");
+    
+    /* if the latest block's timestamp is still <= last_blocks_timestamp,
+     * this will return an empty list of blocks
+     */
+    hippo_connection_request_blocks(rbd->connection,
+                                    rbd->connection->last_blocks_timestamp);
+
+    return FALSE;
+}
+
+static void
+hippo_connection_queue_request_blocks (HippoConnection *connection)
+{
+    RequestBlocksData *rbd;
+    
+    hippo_connection_unqueue_request_blocks(connection);
+
+    g_debug("adding request blocks idle");
+
+    rbd = g_new0(RequestBlocksData, 1);
+    rbd->connection = connection;
+    
+    connection->request_blocks_id = g_idle_add_full(G_PRIORITY_DEFAULT,
+                                                    request_blocks_idle,
+                                                    rbd, g_free);
+}
+
+static void
+hippo_connection_unqueue_request_blocks (HippoConnection *connection)
+{
+    if (connection->request_blocks_id != 0) {
+        g_debug("removing request blocks idle");
+        g_source_remove(connection->request_blocks_id);
+        connection->request_blocks_id = 0;
+    }
+}
+
+static gboolean
+parse_bool(const char *str)
+{
+    return strcmp(str, "true") == 0;
+}
+
 static gboolean
 node_matches(LmMessageNode *node, const char *name, const char *expectedNamespace)
 {
@@ -1088,9 +1186,13 @@ find_child_node(LmMessageNode *node,
 {
     LmMessageNode *child;
     for (child = node->children; child; child = child->next) {
-        const char *ns = lm_message_node_get_attribute(child, "xmlns");
-        if (!(ns && strcmp(ns, element_namespace) == 0 && child->name))
+        if (child->name == NULL)
             continue;
+        if (element_namespace) {
+            const char *ns = lm_message_node_get_attribute(child, "xmlns");
+            if (!(ns && strcmp(ns, element_namespace) == 0))
+                continue;
+        }
         if (strcmp(child->name, element_name) != 0)
             continue;
 
@@ -1111,9 +1213,9 @@ message_is_iq_with_namespace(LmMessage  *message,
         lm_message_get_sub_type(message) != LM_MESSAGE_SUB_TYPE_RESULT ||
         !child || child->next ||
         !node_matches(child, document_element_name, expected_namespace))
-    {
-        return FALSE;
-    } else {
+        {
+            return FALSE;
+        } else {
         return TRUE;
     }
 }
@@ -1137,14 +1239,13 @@ on_client_info_reply(LmMessageHandler *handler,
     }
 
     child = message->node->children;
-    minimum = lm_message_node_get_attribute(child, "minimum");
-    current = lm_message_node_get_attribute(child, "current");
-    download = lm_message_node_get_attribute(child, "download");
 
-    if (!minimum || !current || !download) {
-        hippo_connection_connect_failure(connection, "Client info reply was missing attributes");
+    if (!hippo_xml_split(connection->cache, child, NULL,
+                         "minimum", HIPPO_SPLIT_STRING, &minimum,
+                         "current", HIPPO_SPLIT_STRING, &current,
+                         "download", HIPPO_SPLIT_STRING, &download,
+                         NULL))
         return LM_HANDLER_RESULT_REMOVE_MESSAGE;
-    }
 
     g_debug("Got clientInfo response: minimum=%s, current=%s, download=%s", minimum, current, download);
     
@@ -1194,7 +1295,8 @@ hippo_connection_request_client_info(HippoConnection *connection)
     LmMessage *message;
     LmMessageNode *node;
     LmMessageNode *child;
-                
+    HippoPlatformInfo info;
+    
     message = lm_message_new_with_sub_type(HIPPO_ADMIN_JID, LM_MESSAGE_TYPE_IQ,
                                            LM_MESSAGE_SUB_TYPE_GET);
     node = lm_message_get_node(message);
@@ -1202,15 +1304,14 @@ hippo_connection_request_client_info(HippoConnection *connection)
     child = lm_message_node_add_child (node, "clientInfo", NULL);
 
     lm_message_node_set_attribute(child, "xmlns", "http://dumbhippo.com/protocol/clientinfo");
-#ifdef G_OS_WIN32
-#define PLATFORM "windows"
-#endif
-#ifdef G_OS_UNIX
-#define PLATFORM "linux"
-#endif
 
-    lm_message_node_set_attribute(child, "platform", PLATFORM);
-
+    hippo_platform_get_platform_info(connection->platform,
+                                     &info);
+    
+    lm_message_node_set_attribute(child, "platform", info.name);
+    if (info.distribution)
+        lm_message_node_set_attribute(child, "distribution", info.distribution);
+    
     hippo_connection_send_message_with_reply(connection, message, on_client_info_reply, SEND_MODE_IMMEDIATELY);
 
     lm_message_unref(message);
@@ -1281,10 +1382,10 @@ hippo_connection_parse_prefs_node(HippoConnection *connection,
         }
         
         if (strcmp(key, "musicSharingEnabled") == 0) {
-            music_sharing_enabled = value != NULL && g_ascii_strcasecmp(value, "TRUE") == 0;
+            music_sharing_enabled = value != NULL && parse_bool(value);
             saw_music_sharing_enabled = TRUE;
         } else if (strcmp(key, "musicSharingPrimed") == 0) {
-            music_sharing_primed = value != NULL && g_ascii_strcasecmp(value, "TRUE") == 0;
+            music_sharing_primed = value != NULL && parse_bool(value);
             saw_music_sharing_primed = TRUE;
         } else {
             g_debug("Unknown pref '%s'", key);
@@ -1314,7 +1415,7 @@ on_get_myspace_name_reply(LmMessageHandler *handler,
     child = message->node->children;
 
     if (!message_is_iq_with_namespace(message,
-          "http://dumbhippo.com/protocol/myspace", "mySpaceInfo")) {
+                                      "http://dumbhippo.com/protocol/myspace", "mySpaceInfo")) {
         return LM_HANDLER_RESULT_REMOVE_MESSAGE;
     }
 
@@ -1373,31 +1474,22 @@ on_get_myspace_blog_comments_reply(LmMessageHandler *handler,
 
     comments = NULL;
     for (subchild = child->children; subchild; subchild = subchild->next) {
-        LmMessageNode *comment_node;
         int comment_id;
         int poster_id;
     
         if (strcmp (subchild->name, "comment") != 0)
             continue;
 
-        comment_node = lm_message_node_get_child (subchild, "commentId");
-        if (!(comment_node && comment_node->value)) {
+        if (!hippo_xml_split(connection->cache, subchild, NULL,
+                             "commentId", HIPPO_SPLIT_INT32 | HIPPO_SPLIT_ELEMENT, &comment_id,
+                             "posterId", HIPPO_SPLIT_INT32 | HIPPO_SPLIT_ELEMENT, &poster_id,
+                             NULL))
             return LM_HANDLER_RESULT_REMOVE_MESSAGE;
-        }
-        
-        comment_id = strtol(comment_node->value, NULL, 10);
 
-        comment_node = lm_message_node_get_child (subchild, "posterId");
-        if (!(comment_node && comment_node->value)) {
-            return LM_HANDLER_RESULT_REMOVE_MESSAGE;
-        }        
-        
-        poster_id = strtol(comment_node->value, NULL, 10);
-        
         g_debug("Got myspace comment id %d poster %d\n", comment_id, poster_id);
         
         comments = g_slist_prepend(comments,
-                    hippo_myspace_blog_comment_new(comment_id, poster_id));
+                                   hippo_myspace_blog_comment_new(comment_id, poster_id));
     }
 
     /* This takes ownership of the comments in the list but not the list itself */
@@ -1457,15 +1549,15 @@ on_get_myspace_contacts_reply(LmMessageHandler *handler,
                 
         if (strcmp (subchild->name, "contact") != 0)
             continue;
-        name = lm_message_node_get_attribute(subchild, "name");
-        if (!name)
+
+        if (!hippo_xml_split(connection->cache, subchild, NULL,
+                             "name", HIPPO_SPLIT_STRING, &name,
+                             "friendID", HIPPO_SPLIT_STRING, &friend_id,
+                             NULL))
             continue;
-        friend_id = lm_message_node_get_attribute(subchild, "friendID");
-        if (!friend_id)
-            continue;
-            
+        
         contacts = g_slist_prepend(contacts,
-                hippo_myspace_contact_new(name, friend_id));
+                                   hippo_myspace_contact_new(name, friend_id));
                 
         g_debug("got myspace contact '%s'", name);
     }
@@ -1623,6 +1715,149 @@ hippo_connection_request_hotness(HippoConnection *connection)
     g_debug("Sent request for hotness");
 }
 
+
+gint64
+hippo_connection_get_server_time_offset(HippoConnection *connection)
+{
+    return connection->server_time_offset;
+}
+
+static void
+hippo_connection_update_server_time_offset(HippoConnection *connection,
+                                           gint64           server_time)
+{
+    connection->server_time_offset = server_time - hippo_current_time_ms();
+}
+ 
+static gboolean
+hippo_connection_parse_blocks(HippoConnection *connection,
+                              LmMessageNode   *node)
+{
+    LmMessageNode *subchild;
+    gint64 server_timestamp;
+
+    if (!hippo_xml_split(connection->cache, node, NULL,
+                         "serverTime", HIPPO_SPLIT_TIME_MS, &server_timestamp,
+                         NULL))
+        return FALSE;
+
+    hippo_connection_update_server_time_offset(connection, server_timestamp);
+    
+    for (subchild = node->children; subchild; subchild = subchild->next)
+        hippo_data_cache_update_from_xml(connection->cache, subchild);
+    
+    return TRUE;
+}
+
+static LmHandlerResult
+on_request_blocks_reply(LmMessageHandler *handler,
+                        LmConnection     *lconnection,
+                        LmMessage        *message,
+                        gpointer          data)
+{
+    HippoConnection *connection = HIPPO_CONNECTION(data);
+    LmMessageNode *child;
+
+    child = message->node->children;
+
+    g_debug("got reply for blocks");
+
+    if (!message_is_iq_with_namespace(message, "http://dumbhippo.com/protocol/blocks", "blocks")) {
+        return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+    }
+
+    if (!hippo_connection_parse_blocks(connection, child))
+        g_warning("Failed to parse <blocks>");
+    
+    return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+}
+
+void
+hippo_connection_request_blocks(HippoConnection *connection,
+                                gint64           last_timestamp)
+{
+    LmMessage *message;
+    LmMessageNode *node;
+    LmMessageNode *child;
+    char *s;
+    
+    message = lm_message_new_with_sub_type(HIPPO_ADMIN_JID, LM_MESSAGE_TYPE_IQ,
+                                           LM_MESSAGE_SUB_TYPE_GET);
+    node = lm_message_get_node(message);
+    
+    child = lm_message_node_add_child (node, "blocks", NULL);
+    lm_message_node_set_attribute(child, "xmlns", "http://dumbhippo.com/protocol/blocks");
+    s = g_strdup_printf("%" G_GINT64_FORMAT, last_timestamp);
+    lm_message_node_set_attribute(child, "lastTimestamp", s);
+    g_free(s);
+    
+    hippo_connection_send_message_with_reply(connection, message,
+                                             on_request_blocks_reply, SEND_MODE_AFTER_AUTH);
+
+    lm_message_unref(message);
+
+    g_debug("Sent request for blocks lastTimestamp %" G_GINT64_FORMAT, last_timestamp);
+}
+
+static LmHandlerResult
+on_block_hushed_reply(LmMessageHandler *handler,
+                      LmConnection     *lconnection,
+                      LmMessage        *message,
+                      gpointer          data)
+{
+    HippoConnection *connection = HIPPO_CONNECTION(data);
+    LmMessageNode *child;
+
+    child = message->node->children;
+
+    g_debug("got reply for <blockHushed/>");
+
+    if (!message_is_iq_with_namespace(message, "http://dumbhippo.com/protocol/blocks", "blockHushed")) {
+        g_warning("Got unexpected reply for <blockHushed/>");
+        return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+    }
+
+    if (!hippo_connection_parse_blocks(connection, child))
+        g_warning("Failed to parse <blockHushed/>");
+    
+    return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+}
+
+void
+hippo_connection_set_block_hushed(HippoConnection *connection,
+                                  const char      *block_id,
+                                  gboolean         hushed)
+{
+    LmMessage *message;
+    LmMessageNode *node;
+    LmMessageNode *child;
+    
+    message = lm_message_new_with_sub_type(HIPPO_ADMIN_JID, LM_MESSAGE_TYPE_IQ,
+                                           LM_MESSAGE_SUB_TYPE_SET);
+    node = lm_message_get_node(message);
+    
+    child = lm_message_node_add_child (node, "blockHushed", NULL);
+    lm_message_node_set_attribute(child, "xmlns", "http://dumbhippo.com/protocol/blocks");
+    lm_message_node_set_attribute(child, "blockId", block_id);
+    lm_message_node_set_attribute(child, "hushed", hushed ? "true" : "false");
+
+    hippo_connection_send_message_with_reply(connection, message, on_block_hushed_reply, SEND_MODE_AFTER_AUTH);
+
+    lm_message_unref(message);
+
+    g_debug("Sent blockHushed=%d", hushed);
+}
+
+void
+hippo_connection_update_last_blocks_timestamp (HippoConnection *connection,
+                                               gint64           timestamp)
+{
+    if (timestamp >= connection->last_blocks_timestamp) {
+        g_debug("Have new latest block timestamp %" G_GINT64_FORMAT, timestamp);
+        connection->last_blocks_timestamp = timestamp;
+    }
+}
+
 static gboolean
 get_entity_guid(LmMessageNode *node,
                 const char   **guid_p)
@@ -1653,7 +1888,6 @@ hippo_connection_parse_live_post(HippoConnection *connection,
     long viewing_user_count;
     long total_viewers;
     GSList *viewers;
-    LmMessageNode *subchild;
     
     post = NULL;
     
@@ -1741,7 +1975,7 @@ hippo_connection_parse_live_post(HippoConnection *connection,
 
     return TRUE;
     
-  failed:
+ failed:
     if (post)
         g_object_unref(post);
     g_slist_free(viewers);
@@ -1757,23 +1991,6 @@ is_entity(LmMessageNode *node)
     return FALSE;
 }
 
-static char*
-make_absolute_url(HippoConnection *connection,
-                  const char      *relative)
-{
-    char *server;
-    char *url;
-
-    if (relative[0] != '/')
-	return g_strdup(relative);
-    
-    server = hippo_platform_get_web_server(connection->platform);
-    url = g_strdup_printf("http://%s%s", server, relative);
-    g_free(server);
-    
-    return url;
-}
-
 /* Derive a fallback home location if the server didn't send one
  */
 static void
@@ -1782,9 +1999,8 @@ set_fallback_home_url(HippoConnection *connection,
 {
     HippoEntityType type = hippo_entity_get_entity_type(entity);
     const char *id = hippo_entity_get_guid(entity);
-
-    char *url;
     char *relative;
+
     if (type == HIPPO_ENTITY_PERSON)
         relative = g_strdup_printf("/person?who=%s", id);
     else if (type == HIPPO_ENTITY_GROUP)
@@ -1792,10 +2008,10 @@ set_fallback_home_url(HippoConnection *connection,
     else {
         return;
     }        
-    url = make_absolute_url(connection, relative);
-    hippo_entity_set_home_url(entity, url);
+
+    hippo_entity_set_home_url(entity, relative);
+
     g_free(relative);
-    g_free(url);
 }
 
 static gboolean
@@ -1807,7 +2023,7 @@ hippo_connection_parse_entity(HippoConnection *connection,
     const char *guid;
     const char *name;
     const char *home_url;
-    const char *small_photo_url;
+    const char *photo_url;
  
     HippoEntityType type;
     if (strcmp(node->name, "resource") == 0)
@@ -1829,26 +2045,27 @@ hippo_connection_parse_entity(HippoConnection *connection,
         return FALSE;
     }
 
-    if (type != HIPPO_ENTITY_RESOURCE) {
-        name = lm_message_node_get_attribute(node, "name");
-        if (!name) {
-            g_warning("entity node lacks name");
-            return FALSE;
-        }
-    } else {
-        name = NULL;
+    /* Resources generally shouldn't have a NULL name either, but
+     * I'll leave the check for now, since the entire function is
+     * obsolescent code; hippo_data_cache_update_from_xml() has
+     * the more modern logic.
+     */
+    name = lm_message_node_get_attribute(node, "name");
+    if (!name && type != HIPPO_ENTITY_RESOURCE) {
+        g_warning("entity node lacks name");
+        return FALSE;
     }
 
     home_url = lm_message_node_get_attribute(node, "homeUrl");
 
     if (type != HIPPO_ENTITY_RESOURCE) {
-        small_photo_url = lm_message_node_get_attribute(node, "smallPhotoUrl");
-        if (!small_photo_url) {
+        photo_url = lm_message_node_get_attribute(node, "smallPhotoUrl");
+        if (!photo_url) {
             g_warning("entity node lacks photo url");
             return FALSE;
         }
     } else {
-        small_photo_url = NULL;
+        photo_url = NULL;
     }
 
     entity = hippo_data_cache_lookup_entity(connection->cache, guid);
@@ -1861,14 +2078,13 @@ hippo_connection_parse_entity(HippoConnection *connection,
     }
 
     hippo_entity_set_name(entity, name);
+    
     if (home_url) {
-        char *absolute = make_absolute_url(connection, home_url);
-	    hippo_entity_set_home_url(entity, absolute);
-	    g_free(absolute);
+        hippo_entity_set_home_url(entity, home_url);
     } else {
-	    set_fallback_home_url(connection, entity);
+        set_fallback_home_url(connection, entity);
     }
-    hippo_entity_set_small_photo_url(entity, small_photo_url);
+    hippo_entity_set_photo_url(entity, photo_url);
  
     if (created_entity) {
         hippo_data_cache_add_entity(connection->cache, entity);
@@ -1885,81 +2101,50 @@ is_post(LmMessageNode *node)
 }
 
 static gboolean
-parse_bool(const char *str) 
-{
-    return strcmp(str, "true") == 0;
-}
-
-static gboolean
 hippo_connection_parse_post(HippoConnection *connection,
                             LmMessageNode   *post_node,
                             gboolean         is_new,
                             HippoPost      **post_return)
 {
-    LmMessageNode *node;
+    LmMessageNode *recipients_node;
     HippoPost *post;
     const char *post_guid;
     const char *sender_guid;
     const char *url;
     const char *title;
-    const char *text;
-    const char *info;
-    gboolean to_world;
-    gboolean ignored;
+    const char *text = NULL;
+    const char *info =  NULL;
+    gboolean to_world = FALSE;
+    gboolean ignored = FALSE;
     GTime post_date;
+    int post_date_int;
     GSList *recipients = NULL;
     LmMessageNode *subchild;
     gboolean created_post;
     
     g_assert(connection->cache != NULL);
 
-    post_guid = lm_message_node_get_attribute (post_node, "id");
-    if (!post_guid)
+    if (!hippo_xml_split(connection->cache, post_node, NULL,
+                         "id", HIPPO_SPLIT_GUID, &post_guid,
+                         "poster", HIPPO_SPLIT_GUID | HIPPO_SPLIT_ELEMENT, &sender_guid,
+                         "href", HIPPO_SPLIT_URI_ABSOLUTE | HIPPO_SPLIT_ELEMENT, &url,
+                         "title", HIPPO_SPLIT_STRING | HIPPO_SPLIT_ELEMENT, &title,
+                         "text", HIPPO_SPLIT_STRING | HIPPO_SPLIT_ELEMENT | HIPPO_SPLIT_OPTIONAL, &text,
+                         "postInfo", HIPPO_SPLIT_STRING | HIPPO_SPLIT_ELEMENT | HIPPO_SPLIT_OPTIONAL, &info,
+                         "toWorld", HIPPO_SPLIT_BOOLEAN | HIPPO_SPLIT_ELEMENT | HIPPO_SPLIT_OPTIONAL, &to_world,
+                         "postDate", HIPPO_SPLIT_INT32 | HIPPO_SPLIT_ELEMENT, &post_date_int,
+                         "recipients", HIPPO_SPLIT_NODE | HIPPO_SPLIT_ELEMENT, &recipients_node,
+                         "ignored", HIPPO_SPLIT_BOOLEAN | HIPPO_SPLIT_ELEMENT | HIPPO_SPLIT_OPTIONAL, &ignored,
+                         NULL))
         return FALSE;
 
-    node = lm_message_node_find_child (post_node, "poster");
-    if (!(node && node->value))
-        return FALSE;
-    sender_guid = node->value;
-
-    node = lm_message_node_find_child (post_node, "href");
-    if (!(node && node->value))
-        return FALSE;
-    url = node->value;
-
-    node = lm_message_node_find_child (post_node, "title");
-    if (!(node && node->value))
-        return FALSE;
-    title = node->value;
-
-    node = lm_message_node_find_child (post_node, "text");
-    if (!(node && node->value))
+    if (text == NULL)
         text = "";
-    else
-        text = node->value;
+    
+    /* FIXME: this deviates from our practice elsewhere, where we use gint64 ms */
+    post_date = post_date_int;
 
-    node = lm_message_node_find_child (post_node, "postInfo");
-    if (node && node->value)
-        info = node->value;
-    else
-        info = NULL;
-
-    node = lm_message_node_find_child (post_node, "toWorld");
-    if (node && node->value)
-        to_world = parse_bool(node->value);
-    else
-        to_world = FALSE;
-
-    node = lm_message_node_find_child (post_node, "postDate");
-    if (!(node && node->value))
-        return FALSE;
-    post_date = strtol(node->value, NULL, 10);
-
-    node = lm_message_node_find_child (post_node, "recipients");
-    if (!node)
-        return FALSE;
-
-    for (subchild = node->children; subchild; subchild = subchild->next) {
+    for (subchild = recipients_node->children; subchild; subchild = subchild->next) {
         const char *entity_id;
         HippoEntity *entity;
         if (!get_entity_guid(subchild, &entity_id))
@@ -1976,12 +2161,6 @@ hippo_connection_parse_post(HippoConnection *connection,
         else
             g_warning("Post receipient '%s' was not in the cache prior to post message", entity_id);
     }
-
-    node = lm_message_node_find_child (post_node, "ignored");
-    if (node && node->value)
-        ignored = parse_bool(node->value);
-    else
-        ignored = FALSE;
 
     post = hippo_data_cache_lookup_post(connection->cache, post_guid);
     if (post == NULL) {
@@ -2015,7 +2194,7 @@ hippo_connection_parse_post(HippoConnection *connection,
     
     g_object_unref(post);
     if (post_return)
-    	*post_return = post;
+        *post_return = post;
 
     return TRUE;
 }
@@ -2049,10 +2228,10 @@ hippo_connection_parse_post_stream(HippoConnection *connection,
 
 static gboolean
 hippo_connection_parse_post_data_full(HippoConnection *connection,
-                                 LmMessageNode   *node,
-                                 gboolean         is_new,
-                                 const char      *func_name,
-                                 HippoPost      **post_return)
+                                      LmMessageNode   *node,
+                                      gboolean         is_new,
+                                      const char      *func_name,
+                                      HippoPost      **post_return)
 {
     gboolean seen_post;
     gboolean seen_live_post;
@@ -2159,13 +2338,20 @@ hippo_connection_request_posts_impl(HippoConnection *connection,
 
     lm_message_unref(message);
 
-    g_debug("Sent request for recent posts");
+    g_debug("Sent request for recent posts id=%s", post_id ? post_id : "null");
 }
 
 void
 hippo_connection_request_recent_posts(HippoConnection *connection)
 {
     hippo_connection_request_posts_impl(connection, NULL);
+}
+
+void
+hippo_connection_request_post(HippoConnection *connection,
+                              const char      *post_id)
+{
+    hippo_connection_request_posts_impl(connection, post_id);
 }
 
 static void 
@@ -2391,7 +2577,7 @@ parse_room_info(HippoConnection *connection,
     const char *kind_str;
     const char *title;
     LmMessageNode *info_node;
-	LmMessageNode *child;
+    LmMessageNode *child;
 
     if (kind_p)
         *kind_p = HIPPO_CHAT_KIND_UNKNOWN;
@@ -2416,15 +2602,15 @@ parse_room_info(HippoConnection *connection,
     title = lm_message_node_get_attribute(info_node, "title");
     /* title can be NULL, roomInfo only optionally has it */
 
-	/* Look for the object associated with this room */
-	for (child = info_node->children; child; child = child->next) {
-		if (strcmp (child->name, "objects") == 0 && child->children) {
-			if (kind == HIPPO_CHAT_KIND_GROUP)
-			    hippo_connection_parse_entity(connection, child->children);
-		    else if (kind == HIPPO_CHAT_KIND_POST)
-				hippo_connection_parse_post_data(connection, child, FALSE, "parseRoomInfo");
-		}
-	}
+    /* Look for the object associated with this room */
+    for (child = info_node->children; child; child = child->next) {
+        if (strcmp (child->name, "objects") == 0 && child->children) {
+            if (kind == HIPPO_CHAT_KIND_GROUP)
+                hippo_connection_parse_entity(connection, child->children);
+            else if (kind == HIPPO_CHAT_KIND_POST)
+                hippo_connection_parse_post_data(connection, child, FALSE, "parseRoomInfo");
+        }
+    }
 
     room = hippo_data_cache_lookup_chat_room(connection->cache, chat_id, &existing_kind);
     
@@ -2518,7 +2704,7 @@ on_get_chat_room_details_reply(LmMessageHandler *handler,
         g_warning("Couldn't find post associated with chat");
         goto out;
     } else if (kind == HIPPO_CHAT_KIND_GROUP &&
-        hippo_data_cache_lookup_entity(connection->cache, chat_id) == NULL) {
+               hippo_data_cache_lookup_entity(connection->cache, chat_id) == NULL) {
         g_warning("Couldn't find entity associated with chat");
         goto out;
     }
@@ -2540,7 +2726,7 @@ on_get_chat_room_details_reply(LmMessageHandler *handler,
     /* process any pending notifications of new users / messages */
     hippo_connection_process_pending_room_messages(connection);
 
-    out:
+ out:
     g_object_unref(room);
 
     return LM_HANDLER_RESULT_REMOVE_MESSAGE;
@@ -2590,23 +2776,27 @@ parse_chat_user_info(HippoConnection *connection,
     }
 
     {
+        HippoTrack *track;
         HippoChatState status;
-        gboolean music_playing_bool;
-        const char *name = lm_message_node_get_attribute(info_node, "name");
-        const char *small_photo_url = lm_message_node_get_attribute(info_node, "smallPhotoUrl");
-        const char *role = lm_message_node_get_attribute(info_node, "role");
-        const char *old_role = lm_message_node_get_attribute(info_node, "oldRole");
-        const char *arrangement_name = lm_message_node_get_attribute(info_node, "arrangementName");
-        const char *artist = lm_message_node_get_attribute(info_node, "artist");
-        const char *music_playing = lm_message_node_get_attribute(info_node, "musicPlaying");
+        const char *name;
+        const char *photo_url = NULL;
+        const char *role = NULL;
+        const char *old_role = NULL;
+        const char *arrangement_name = NULL;
+        const char *artist = NULL;
+        gboolean music_playing = FALSE;
 
-        if (!name) {
-            g_warning("userInfo node without name");
+        if (!hippo_xml_split(connection->cache, info_node, NULL,
+                             "name", HIPPO_SPLIT_STRING, &name,
+                             "smallPhotoUrl", HIPPO_SPLIT_URI_RELATIVE | HIPPO_SPLIT_OPTIONAL, &photo_url,
+                             "role", HIPPO_SPLIT_STRING | HIPPO_SPLIT_OPTIONAL, &role,
+                             "old_role", HIPPO_SPLIT_STRING | HIPPO_SPLIT_OPTIONAL, &old_role,
+                             "arrangementName", HIPPO_SPLIT_STRING | HIPPO_SPLIT_OPTIONAL, &arrangement_name,
+                             "artist", HIPPO_SPLIT_STRING | HIPPO_SPLIT_OPTIONAL, &artist,
+                             "musicPlaying", HIPPO_SPLIT_BOOLEAN | HIPPO_SPLIT_OPTIONAL, &music_playing,
+                             NULL))
             return FALSE;
-        }        
 
-        music_playing_bool = music_playing ? g_ascii_strcasecmp(music_playing, "TRUE") == 0 : FALSE;
-        
         if (!role)
             status = HIPPO_CHAT_STATE_PARTICIPANT;
         else
@@ -2617,11 +2807,12 @@ parse_chat_user_info(HippoConnection *connection,
     
         hippo_entity_set_name(HIPPO_ENTITY(person), name);
         /* FIXME this is a temporary hack to deal with stale photos in chat */
-        if (hippo_entity_get_small_photo_url(HIPPO_ENTITY(person)) == NULL)
-            hippo_entity_set_small_photo_url(HIPPO_ENTITY(person), small_photo_url);
-        hippo_person_set_current_song(person, arrangement_name);
-        hippo_person_set_current_artist(person, artist);
-        hippo_person_set_music_playing(person, music_playing_bool);  
+        if (hippo_entity_get_photo_url(HIPPO_ENTITY(person)) == NULL)
+            hippo_entity_set_photo_url(HIPPO_ENTITY(person), photo_url);
+
+        track = hippo_track_new_deprecated(artist, arrangement_name, music_playing);
+        g_object_set(G_OBJECT(person), "current-track", track, NULL);
+        g_object_unref(track);
     }
 
     return TRUE;
@@ -2633,7 +2824,7 @@ parse_chat_message_info(HippoConnection  *connection,
                         HippoPerson      *sender,
                         const char       *text,
                         const char      **name_p,
-                        const char      **small_photo_url_p)
+                        const char      **photo_url_p)
 {
     LmMessageNode *info_node;
     
@@ -2644,24 +2835,25 @@ parse_chat_message_info(HippoConnection  *connection,
     }
 
     {
-        const char *name_str = lm_message_node_get_attribute(info_node, "name");
-        const char *small_photo_url_str = lm_message_node_get_attribute(info_node, "smallPhotoUrl");
-        const char *timestamp_str = lm_message_node_get_attribute(info_node, "timestamp");
-        const char *serial_str = lm_message_node_get_attribute(info_node, "serial");
+        const char *name_str;
+        const char *photo_url;
+        gint64 timestamp_milliseconds;
         GTime timestamp;
         int serial;
 
-        if (!name_str || !timestamp_str || !serial_str || !small_photo_url_str) {
-            g_debug("messageInfo node without all fields");
+        if (!hippo_xml_split(connection->cache, info_node, NULL,
+                             "name", HIPPO_SPLIT_STRING, &name_str,
+                             "smallPhotoUrl", HIPPO_SPLIT_URI_RELATIVE, &photo_url,
+                             "timestamp", HIPPO_SPLIT_TIME_MS, &timestamp_milliseconds,
+                             "serial", HIPPO_SPLIT_INT32, &serial,
+                             NULL))
             return NULL;
-        }
 
         *name_p = name_str;
-        *small_photo_url_p = small_photo_url_str;
+        *photo_url_p = photo_url;
 
-        timestamp = strtol(timestamp_str, NULL, 10);
-        serial = atoi(serial_str);
-        
+        timestamp = (GTime) (timestamp_milliseconds / 1000);
+
         return hippo_chat_message_new(sender, text, timestamp, serial);
     }
 }
@@ -2701,8 +2893,8 @@ process_room_chat_message(HippoConnection *connection,
     /* update new info about the user */
     hippo_entity_set_name(sender, name);
     /* FIXME hack since chat has stale info for now */
-    if (hippo_entity_get_small_photo_url(sender) == NULL)
-        hippo_entity_set_small_photo_url(sender, photo_url);
+    if (hippo_entity_get_photo_url(sender) == NULL)
+        hippo_entity_set_photo_url(sender, photo_url);
 
     /* We can usually skip this in the case where the message was pending - but
      * it's tricky to get it exactly right. See comments in handleRoomPresence().
@@ -2805,12 +2997,12 @@ process_room_presence(HippoConnection *connection,
            do, but maybe it isn't quite right since I'm not sure I fully grokked the above
            comment.
 
-        if (post && !room->getFilling()) {
-            if (room->getState() == HippoChatRoom::NONMEMBER && newlyJoined)
-                ui_->onViewerJoin(post);
-            else
-                ui_->updatePost(post);
-        }
+           if (post && !room->getFilling()) {
+           if (room->getState() == HippoChatRoom::NONMEMBER && newlyJoined)
+           ui_->onViewerJoin(post);
+           else
+           ui_->updatePost(post);
+           }
         */
 
     } else if (subtype == LM_MESSAGE_SUB_TYPE_UNAVAILABLE) {
@@ -2854,7 +3046,7 @@ process_room_message(HippoConnection *connection,
         goto out;
     }    
  
-	g_debug("hippo-connection::process_room_message Chat id is %s", chat_id);
+    g_debug("hippo-connection::process_room_message Chat id is %s", chat_id);
     /* We only use this for "spontaneous" chat messages right now, 
      * since otherwise we have the kind from get_chat_room_details reply
      */    
@@ -2867,16 +3059,16 @@ process_room_message(HippoConnection *connection,
     room = hippo_data_cache_lookup_chat_room(connection->cache, chat_id, NULL);
     
     if (!room) {
-	    g_debug("hippo-connection::process_room_message no room");
-		if ((kind == HIPPO_CHAT_KIND_POST) || (kind == HIPPO_CHAT_KIND_GROUP)) {
-			// we don't need to check here if the group or post exists, because we 
-			// want to create a chat room and load details for it in any case;
-			// if the group or post is already around, we will associate the chat room with
-			// it immediately in hippo_data_cache_ensure_chat_room; if the group or post
-			// is not around we'll get the details for it when we get a response 
-			// with the chat room info, and create it and the association then
-		    room = hippo_data_cache_ensure_chat_room(connection->cache, chat_id, kind);
-		} else {
+        g_debug("hippo-connection::process_room_message no room");
+        if ((kind == HIPPO_CHAT_KIND_POST) || (kind == HIPPO_CHAT_KIND_GROUP)) {
+            // we don't need to check here if the group or post exists, because we 
+            // want to create a chat room and load details for it in any case;
+            // if the group or post is already around, we will associate the chat room with
+            // it immediately in hippo_data_cache_ensure_chat_room; if the group or post
+            // is not around we'll get the details for it when we get a response 
+            // with the chat room info, and create it and the association then
+            room = hippo_data_cache_ensure_chat_room(connection->cache, chat_id, kind);
+        } else {
             // spontaneous messages that aren't about posts or groups we just want to ignore
             result = PROCESS_MESSAGE_CONSUME;
             goto out;
@@ -2901,19 +3093,19 @@ process_room_message(HippoConnection *connection,
         goto out;
     }
 
-	if (lm_message_get_type(message) == LM_MESSAGE_TYPE_MESSAGE) {
-		g_debug("hippo-connection::process_room_message processing room message");
+    if (lm_message_get_type(message) == LM_MESSAGE_TYPE_MESSAGE) {
+        g_debug("hippo-connection::process_room_message processing room message");
         process_room_chat_message(connection, message, room, user_id, was_pending);
-	} else if (lm_message_get_type(message) == LM_MESSAGE_TYPE_PRESENCE) {
-		g_debug("hippo-connection::process_room_message processing room presence");
-		process_room_presence(connection, message, room, user_id, was_pending);
-	} else {
-		g_debug("hippo-connection::process_room_message unknown message type");
-	}
+    } else if (lm_message_get_type(message) == LM_MESSAGE_TYPE_PRESENCE) {
+        g_debug("hippo-connection::process_room_message processing room presence");
+        process_room_presence(connection, message, room, user_id, was_pending);
+    } else {
+        g_debug("hippo-connection::process_room_message unknown message type");
+    }
 
     result = PROCESS_MESSAGE_CONSUME;
     
-  out:
+ out:
   
     g_free(chat_id);
     g_free(user_id);
@@ -2941,6 +3133,37 @@ hippo_connection_process_pending_room_messages(HippoConnection *connection)
 /* === HippoConnection Loudmouth handlers === */
 
 static gboolean
+handle_blocks_changed(HippoConnection *connection,
+                      LmMessage       *message)
+{
+    LmMessageNode *child;
+    gint64 last_timestamp;
+    
+    if (lm_message_get_sub_type(message) != LM_MESSAGE_SUB_TYPE_HEADLINE)
+        return FALSE;
+
+    child = find_child_node(message->node, "http://dumbhippo.com/protocol/blocks", "blocksChanged");
+    if (child == NULL)
+        return FALSE;
+
+    if (!hippo_xml_split(connection->cache, child, NULL,
+                         "lastTimestamp", HIPPO_SPLIT_TIME_MS, &last_timestamp,
+                         NULL))
+        return TRUE;
+    
+    g_debug("handling blocksChanged message timestamp %" G_GINT64_FORMAT " our latest timestamp %" G_GINT64_FORMAT,
+            last_timestamp, connection->last_blocks_timestamp);
+
+    /* last_timestamp of -1 means the server has lost track of what the latest timestamp
+     * is, but something has potentially changed
+     */
+    if (last_timestamp < 0 || last_timestamp > connection->last_blocks_timestamp)
+        hippo_connection_queue_request_blocks(connection);
+    
+    return TRUE;
+}
+
+static gboolean
 handle_live_post_changed(HippoConnection *connection,
                          LmMessage       *message)
 {
@@ -2952,13 +3175,13 @@ handle_live_post_changed(HippoConnection *connection,
         return FALSE;
 
     child = find_child_node(message->node,
-                    "http://dumbhippo.com/protocol/post", "livePostChanged");
+                            "http://dumbhippo.com/protocol/post", "livePostChanged");
     if (child == NULL)
         return FALSE;   
 
     g_debug("handling livePostChanged message");
 
-	post = NULL;
+    post = NULL;
     if (!hippo_connection_parse_post_data_full(connection, child, FALSE, "livePostChanged", &post)) {
         g_warning("failed to parse post stream from livePostChanged");
         return TRUE; /* still handled, just busted */
@@ -2980,7 +3203,7 @@ handle_active_posts_changed(HippoConnection *connection,
                             LmMessage       *message)
 {
     if (lm_message_get_sub_type(message) == LM_MESSAGE_SUB_TYPE_HEADLINE
-       || lm_message_get_sub_type(message) == LM_MESSAGE_SUB_TYPE_NOT_SET) {
+        || lm_message_get_sub_type(message) == LM_MESSAGE_SUB_TYPE_NOT_SET) {
         LmMessageNode *child;
         LmMessageNode *subchild;
         GSList *active_posts;    
@@ -3031,9 +3254,9 @@ handle_active_posts_changed(HippoConnection *connection,
         g_slist_free(active_posts);
         
         return TRUE;
-   } else {
-       return FALSE;
-   }
+    } else {
+        return FALSE;
+    }
 }
 
 static gboolean
@@ -3128,46 +3351,74 @@ static gboolean
 handle_group_membership_change(HippoConnection *connection,
                                LmMessage       *message)
 {
-	const char *group_id;
-	HippoEntity *group;
-	const char *user_id;
-	HippoEntity *user;
-	const char *membership_status;
+    const char *group_id;
+    HippoEntity *group;
+    const char *user_id;
+    HippoEntity *user;
+    const char *membership_status;
     LmMessageNode *child;
     LmMessageNode *sub_child;
 
-	if (lm_message_get_sub_type(message) != LM_MESSAGE_SUB_TYPE_NORMAL &&
-		lm_message_get_sub_type(message) != LM_MESSAGE_SUB_TYPE_NOT_SET)
+    if (lm_message_get_sub_type(message) != LM_MESSAGE_SUB_TYPE_NORMAL &&
+        lm_message_get_sub_type(message) != LM_MESSAGE_SUB_TYPE_NOT_SET)
         return FALSE;
 
     child = find_child_node(message->node, "http://dumbhippo.com/protocol/group", "membershipChange");
     if (child == NULL)
         return FALSE;
     
-	/* Look for the objects associated with this message */
-	for (sub_child = child->children; sub_child; sub_child = sub_child->next) {
-		hippo_connection_parse_entity(connection, sub_child);
-	}
+    /* Look for the objects associated with this message */
+    for (sub_child = child->children; sub_child; sub_child = sub_child->next) {
+        hippo_connection_parse_entity(connection, sub_child);
+    }
 
-	group_id = lm_message_node_get_attribute(child, "groupId");
-	if (group_id == NULL)
-		return FALSE;
-	group = hippo_data_cache_lookup_entity(connection->cache, group_id);
-	if (!group)
-		return FALSE;
-	user_id = lm_message_node_get_attribute(child, "userId");
-	if (user_id == NULL)
-		return FALSE;
-	user = hippo_data_cache_lookup_entity(connection->cache, user_id);
-	if (!user)
-		return FALSE;
+    group_id = lm_message_node_get_attribute(child, "groupId");
+    if (group_id == NULL)
+        return FALSE;
+    group = hippo_data_cache_lookup_entity(connection->cache, group_id);
+    if (!group)
+        return FALSE;
+    user_id = lm_message_node_get_attribute(child, "userId");
+    if (user_id == NULL)
+        return FALSE;
+    user = hippo_data_cache_lookup_entity(connection->cache, user_id);
+    if (!user)
+        return FALSE;
 
-	membership_status = lm_message_node_get_attribute(child, "membershipStatus");
+    membership_status = lm_message_node_get_attribute(child, "membershipStatus");
 
-	g_signal_emit(connection, signals[GROUP_MEMBERSHIP_CHANGED], 0, 
-		          group, user, membership_status);
+    g_signal_emit(connection, signals[GROUP_MEMBERSHIP_CHANGED], 0, 
+                  group, user, membership_status);
     
     return TRUE;
+}
+
+static LmHandlerResult 
+handle_stream_error (LmMessageHandler *handler,
+                     LmConnection     *lconnection,
+                     LmMessage        *message,
+                     gpointer          data)
+{
+    HippoConnection *connection = HIPPO_CONNECTION(data);
+    LmMessageNode *child;
+
+    g_debug("handling stream error message");
+
+    child = find_child_node(message->node, NULL, "see-other-host");
+
+    if (child) {
+        char *redirect_host = g_strdup(child->value);
+        g_debug("Got see-other-host message, redirected to '%s'", redirect_host);
+        
+        hippo_connection_signout(connection);
+        hippo_connection_connect(connection, redirect_host);
+        g_free (redirect_host);
+        return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+    }
+
+    g_debug("handle_stream-error: message not handled by any of our handlers");
+
+    return LM_HANDLER_RESULT_ALLOW_MORE_HANDLERS;
 }
 
 static LmHandlerResult 
@@ -3179,16 +3430,20 @@ handle_message (LmMessageHandler *handler,
     HippoConnection *connection = HIPPO_CONNECTION(data);
     
     switch (process_room_message(connection, message, FALSE)) {
-        case PROCESS_MESSAGE_IGNORE:
-            break;
-        case PROCESS_MESSAGE_CONSUME:
-            return LM_HANDLER_RESULT_REMOVE_MESSAGE;
-        case PROCESS_MESSAGE_PEND:
-            lm_message_ref(message);
-            g_queue_push_tail(connection->pending_room_messages, message);
-            return LM_HANDLER_RESULT_REMOVE_MESSAGE;
-     }
+    case PROCESS_MESSAGE_IGNORE:
+        break;
+    case PROCESS_MESSAGE_CONSUME:
+        return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+    case PROCESS_MESSAGE_PEND:
+        lm_message_ref(message);
+        g_queue_push_tail(connection->pending_room_messages, message);
+        return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+    }
 
+    if (handle_blocks_changed(connection, message)) {
+        return LM_HANDLER_RESULT_REMOVE_MESSAGE;
+    }
+    
     if (handle_active_posts_changed(connection, message)) {
         return LM_HANDLER_RESULT_REMOVE_MESSAGE;
     }
@@ -3219,7 +3474,7 @@ handle_message (LmMessageHandler *handler,
     
     /* Messages used to be HEADLINE, we accept both for compatibility */
     if (lm_message_get_sub_type(message) == LM_MESSAGE_SUB_TYPE_NORMAL
-         /* Shouldn't need this, default should be normal */
+        /* Shouldn't need this, default should be normal */
         || lm_message_get_sub_type(message) == LM_MESSAGE_SUB_TYPE_NOT_SET
         || lm_message_get_sub_type(message) == LM_MESSAGE_SUB_TYPE_HEADLINE) {
         LmMessageNode *child = find_child_node(message->node, "http://dumbhippo.com/protocol/post", "newPost");
@@ -3256,21 +3511,21 @@ static const char*
 disconnect_reason_debug_string(LmDisconnectReason reason)
 {
     switch (reason) {
-        case LM_DISCONNECT_REASON_ERROR:
-            return "ERROR";
-            break;
-        case LM_DISCONNECT_REASON_HUP:
-            return "HUP";
-            break;
-        case LM_DISCONNECT_REASON_OK:
-            return "OK";
-            break;
-        case LM_DISCONNECT_REASON_PING_TIME_OUT:
-            return "PING_TIME_OUT";
-            break;
-        case LM_DISCONNECT_REASON_UNKNOWN:
-            return "UNKNOWN";
-            break;
+    case LM_DISCONNECT_REASON_ERROR:
+        return "ERROR";
+        break;
+    case LM_DISCONNECT_REASON_HUP:
+        return "HUP";
+        break;
+    case LM_DISCONNECT_REASON_OK:
+        return "OK";
+        break;
+    case LM_DISCONNECT_REASON_PING_TIME_OUT:
+        return "PING_TIME_OUT";
+        break;
+    case LM_DISCONNECT_REASON_UNKNOWN:
+        return "UNKNOWN";
+        break;
     }
     return "WHAT THE?";
 }
@@ -3283,7 +3538,7 @@ handle_disconnect (LmConnection       *lconnection,
     HippoConnection *connection = HIPPO_CONNECTION(data);
 
     g_debug("handle_disconnect reason NO j/k reason=%s",
-        disconnect_reason_debug_string(reason));
+            disconnect_reason_debug_string(reason));
 
     if (connection->state == HIPPO_STATE_SIGNED_OUT) {
         hippo_connection_clear(connection);
@@ -3332,6 +3587,7 @@ handle_authenticate(LmConnection *lconnection,
 
     hippo_connection_request_client_info(connection);
     
+    connection->last_auth_failed = FALSE;
     g_signal_emit(connection, signals[AUTH_SUCCEEDED], 0);
 }
 
@@ -3342,40 +3598,72 @@ const char*
 hippo_connection_get_tooltip(HippoConnection *connection)
 {
     HippoState state;
+    HippoInstanceType instance;
+    const char *name;
     const char *tip;
     
     g_return_val_if_fail(HIPPO_IS_CONNECTION(connection), NULL);
+
+    if (connection->tooltip)
+        return connection->tooltip;
     
     state = hippo_connection_get_state(connection);
+    instance = hippo_platform_get_instance_type(connection->platform);
+
+    name = NULL;
+    switch (instance) {
+    case HIPPO_INSTANCE_NORMAL:
+        name = _("Mugshot");
+        break;
+    case HIPPO_INSTANCE_DOGFOOD:
+        name = _("Mugshot - I prefer dog food!");
+        break;
+    case HIPPO_INSTANCE_DEBUG:
+        name = _("Mugshot - Eat pesky bugs!");
+        break;
+    }
+
+    if (name == NULL)
+        name = _("Mugshot");
     
     tip = NULL;
     switch (state) {
     case HIPPO_STATE_SIGNED_OUT:
-    case HIPPO_STATE_RETRYING:    
-        tip = _("Mugshot (disconnected)");
+    case HIPPO_STATE_RETRYING:
+        if (connection->last_auth_failed) {
+            /* This is because it's possible to transition from AUTH_WAIT or SIGN_IN_WAIT to 
+             * SIGNED_OUT or RETRYING, which loses the information that we failed to log in,
+             * we had someone asking about how to fix the "disconnected" on the list.
+             */
+            tip = _("%s (disconnected - please log in to mugshot.org)");
+        } else {
+            tip = _("%s (disconnected - will try reconnecting in a few)");
+        }
         break;
     case HIPPO_STATE_SIGN_IN_WAIT:
-        tip = _("Mugshot (please log in to mugshot.org)");
+        tip = _("%s (please log in to mugshot.org)");
         break;
     case HIPPO_STATE_CONNECTING:
     case HIPPO_STATE_AUTHENTICATING:
-        tip = _("Mugshot (connecting)");
+        tip = _("%s (connecting - please wait)");
         break;    
     case HIPPO_STATE_AWAITING_CLIENT_INFO:
-        tip = _("Mugshot (checking for updates)");
+        tip = _("%s (checking for updates)");
         break;    
     case HIPPO_STATE_AUTH_WAIT:
-        tip = _("Mugshot (login failed, try logging in to mugshot.org?)");
+        tip = _("%s (login failed - please log in to mugshot.org)");
         break;
     case HIPPO_STATE_AUTHENTICATED:
-        tip = _("Mugshot");
+        tip = _("%s");
         break;
     }
 
     if (tip == NULL)
-        tip = _("Mugshot");
+        tip = _("%s");
+    
+    connection->tooltip = g_strdup_printf(tip, name);
 
-    return tip;
+    return connection->tooltip;
 }
 
 const char*
@@ -3401,4 +3689,72 @@ hippo_state_debug_string(HippoState state)
     }
     /* not a default case so we get a warning if we omit one from the switch */
     return "WHAT THE?";
+}
+
+char*
+hippo_connection_make_absolute_url(HippoConnection *connection,
+                                   const char      *maybe_relative)
+{
+    if (*maybe_relative == '/') {
+        char *server;
+        char *url;
+        
+        server = hippo_platform_get_web_server(connection->platform);
+        url = g_strdup_printf("http://%s%s", server, maybe_relative);
+        g_free(server);
+
+        return url;
+    } else if (g_str_has_prefix(maybe_relative, "http:")) {
+        return g_strdup(maybe_relative);
+    } else {
+        g_warning("weird url '%s', not sure what to do with it", maybe_relative);
+        return g_strdup(maybe_relative);
+    }
+}
+
+void
+hippo_connection_open_maybe_relative_url(HippoConnection *connection,
+                                         const char      *relative_url)
+{
+    char *url;
+    url = hippo_connection_make_absolute_url(connection,
+                                             relative_url);
+    hippo_platform_open_url(connection->platform,
+                            connection->login_browser,
+                            url);
+    g_free(url);
+}
+
+void
+hippo_connection_visit_post(HippoConnection *connection,
+                            HippoPost       *post)
+{
+    hippo_connection_visit_post_id(connection,
+                                   hippo_post_get_guid(post));
+}
+
+void
+hippo_connection_visit_post_id(HippoConnection *connection,
+                               const char      *guid)
+{
+    char *relative;
+    relative = g_strdup_printf("/visit?post=%s", guid);
+    hippo_connection_open_maybe_relative_url(connection, relative);
+    g_free(relative);
+}
+
+void
+hippo_connection_visit_entity(HippoConnection *connection,
+                              HippoEntity     *entity)
+{
+
+    const char *home_url;
+
+    home_url = hippo_entity_get_home_url(entity);
+    if (home_url) {
+        hippo_connection_open_maybe_relative_url(connection, home_url);
+    } else {
+        g_warning("Don't know how to go to the home page for entity '%s'",
+                  hippo_entity_get_guid(entity));
+    }
 }

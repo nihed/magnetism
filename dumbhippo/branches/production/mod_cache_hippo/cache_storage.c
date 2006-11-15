@@ -298,13 +298,50 @@ int cache_select_url(request_rec *r, char *url)
     return DECLINED;
 }
 
+/*
+ * Hardcode the handling of the user agent key to match what we do on
+ * the Mugshot site. The main conditionalization we do in our returned
+ * responses is that for IE5.5 and IE6 we use hacks to alpha-blend
+ * PNGS. But to be a bit more flexible group browsers into three camps:
+ *
+ *  Other browser (CSS standard hopefully)
+ *  MSIE 5.5/6
+ *  MSIE 7
+ *
+ *  MSIE older than 5.5 is hopeless, so we might as well throw it into
+ *  the "other" bucket.
+ */
+const char *get_user_agent_key( request_rec *r )
+{
+    const char *user_agent;
+
+    user_agent = apr_table_get(r->headers_in, "User-Agent");
+    if (user_agent == NULL)
+	return "other";
+
+    if (strstr(user_agent, "Windows") == NULL)
+	return "other";
+
+    if (strstr(user_agent, "MSIE 5.5") != NULL ||
+	strstr(user_agent, "MSIE 6") != NULL)
+	return "ie6";
+    
+    if (strstr(user_agent, "MSIE 7") != NULL ||
+        strstr(user_agent, "MSIE 8") != NULL)
+	return "ie7";
+
+    return "other";
+}
+
 apr_status_t cache_generate_key_default( request_rec *r, apr_pool_t*p, char**key ) 
 {
+    const char *user_agent_key = get_user_agent_key(r);
+    
     if (r->hostname) {
-        *key = apr_pstrcat(p, r->hostname, r->uri, "?", r->args, NULL);
+        *key = apr_pstrcat(p, r->hostname, r->uri, "?", r->args, "|", user_agent_key, NULL);
     }
     else {
-        *key = apr_pstrcat(p, r->uri, "?", r->args, NULL);
+        *key = apr_pstrcat(p, r->uri, "?", r->args, "|", user_agent_key, NULL);
     }
     return APR_SUCCESS;
 }

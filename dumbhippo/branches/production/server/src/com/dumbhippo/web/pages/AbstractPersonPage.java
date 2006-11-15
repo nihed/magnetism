@@ -3,6 +3,7 @@ package com.dumbhippo.web.pages;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Random;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -14,15 +15,15 @@ import com.dumbhippo.persistence.MembershipStatus;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.GroupSystem;
-import com.dumbhippo.server.GroupView;
 import com.dumbhippo.server.IdentitySpider;
-import com.dumbhippo.server.InvitationView;
 import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Pageable;
-import com.dumbhippo.server.PersonView;
-import com.dumbhippo.server.PersonViewExtra;
-import com.dumbhippo.server.TrackView;
+import com.dumbhippo.server.views.GroupView;
+import com.dumbhippo.server.views.InvitationView;
+import com.dumbhippo.server.views.PersonView;
+import com.dumbhippo.server.views.PersonViewExtra;
+import com.dumbhippo.server.views.TrackView;
 import com.dumbhippo.web.ListBean;
 import com.dumbhippo.web.PagePositions;
 import com.dumbhippo.web.PagePositionsBean;
@@ -45,8 +46,7 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 	
 	private GroupSystem groupSystem;
 	private MusicSystem musicSystem;
-	private PersonView viewedPerson;
-	private AccountSystem accountSystem; 	
+	private PersonView viewedPerson; 	
 	
 	private ListBean<GroupView> groups;
 	private Pageable<GroupView> pageablePublicGroups;
@@ -61,6 +61,8 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 	private boolean lookedUpCurrentTrack;
 	private TrackView currentTrack;
 	
+	protected Set<PersonView> unsortedContacts; 
+	
 	protected ListBean<PersonView> contacts;
 	private Pageable<PersonView> pageableContacts; 
 	protected int totalContacts;
@@ -68,10 +70,11 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 	protected ListBean<PersonView> followers;
 	private Pageable<PersonView> pageableFollowers;
 	
+	private int randomTipIndex = -1;
+	
 	protected AbstractPersonPage() {	
 		groupSystem = WebEJBUtil.defaultLookup(GroupSystem.class);
 		musicSystem = WebEJBUtil.defaultLookup(MusicSystem.class);
-		accountSystem = WebEJBUtil.defaultLookup(AccountSystem.class);
 		lookedUpCurrentTrack = false;
 	}
 	
@@ -136,16 +139,22 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 	public PersonView getViewedPerson() {
 		if (viewedPerson == null) {
 			if (getNeedExternalAccounts())
-				viewedPerson = personViewer.getPersonView(getSignin().getViewpoint(), getViewedUser(), PersonViewExtra.ALL_RESOURCES,
+				viewedPerson = personViewer.getPersonView(getSignin().getViewpoint(), getViewedUser(), 
+						PersonViewExtra.ALL_RESOURCES,
+						PersonViewExtra.CONTACT_STATUS,
 						PersonViewExtra.EXTERNAL_ACCOUNTS);
 			else
-				viewedPerson = personViewer.getPersonView(getSignin().getViewpoint(), getViewedUser(), PersonViewExtra.ALL_RESOURCES);
+				viewedPerson = personViewer.getPersonView(getSignin().getViewpoint(), getViewedUser(), 
+						PersonViewExtra.ALL_RESOURCES, 
+						PersonViewExtra.CONTACT_STATUS);
 		}
 		
 		return viewedPerson;
 	}
 	
 	public boolean isContact() {
+		// this determines if the viewed user is a contact of the signed in user, it is used to decide 
+		// whether to offer a link to add or to remove viewed user as a contact of the signed in user
 		if (getSignin().isValid())
 			return identitySpider.isContact(getSignin().getViewpoint(), getUserSignin().getUser(), getViewedUser());
 		else
@@ -248,21 +257,37 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 		return groupInvitationReceived.compareTo(lastSeenInvitation) > 0;
 	}
 	
+	public boolean getNeedsClient() {
+		if (!isSelf())
+			return false;
+		Account acct = getViewedUser().getAccount();
+		Date lastLogin = acct.getLastLoginDate();
+		// Display notification if they haven't signed on in 5 days
+		return lastLogin == null || new Date().getTime() - lastLogin.getTime() > 1000*60*60*24*5;
+	}
+	
+	public Set<PersonView> getUnsortedContacts() {
+	    if (unsortedContacts == null) {
+	    	unsortedContacts = 
+				personViewer.getContacts(getSignin().getViewpoint(), getViewedUser(), 
+		                   false, PersonViewExtra.INVITED_STATUS, 
+		                   PersonViewExtra.PRIMARY_EMAIL, 
+		                   PersonViewExtra.PRIMARY_AIM,
+		                   PersonViewExtra.EXTERNAL_ACCOUNTS);	
+	    }
+	    
+	    return unsortedContacts;
+	}
+	
 	/**
 	 * Get a set of contacts of the viewed user that we want to display on the person page.
 	 * 
 	 * @return a list of PersonViews of a subset of contacts
 	 */
 	public ListBean<PersonView> getContacts() {
-		if (contacts == null) {
-			Set<PersonView> mingledContacts = 
-				personViewer.getContacts(getSignin().getViewpoint(), getViewedUser(), 
-						                   false, PersonViewExtra.INVITED_STATUS, 
-						                   PersonViewExtra.PRIMARY_EMAIL, 
-						                   PersonViewExtra.PRIMARY_AIM);		
-			contacts = new ListBean<PersonView>(PersonView.sortedList(getSignin().getViewpoint(), getViewedUser(), mingledContacts));
-			
-			totalContacts = mingledContacts.size();
+		if (contacts == null) {	
+			contacts = new ListBean<PersonView>(PersonView.sortedList(getSignin().getViewpoint(), getViewedUser(), getUnsortedContacts()));
+			totalContacts = getUnsortedContacts().size();
 		}
 		return contacts;
 	}
@@ -339,5 +364,11 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 	
 	public void setNeedExternalAccounts(boolean needExternalAccounts) {
 		this.needExternalAccounts = needExternalAccounts;
+	}
+	
+	public int getRandomTipIndex() {
+		if (randomTipIndex < 0)
+			randomTipIndex = new Random().nextInt(3);
+		return randomTipIndex;
 	}
 }

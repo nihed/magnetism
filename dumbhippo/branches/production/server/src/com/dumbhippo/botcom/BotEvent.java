@@ -7,7 +7,7 @@ public class BotEvent implements Serializable {
 
 	private String botName;
 
-	static public final String QUEUE = "IncomingAimQueue";
+	static public final String QUEUE_NAME = "queue/IncomingAimQueue";
 	
 	public BotEvent(String botName) {
 		this.botName = botName;

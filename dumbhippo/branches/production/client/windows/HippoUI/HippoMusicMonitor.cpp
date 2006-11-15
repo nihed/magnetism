@@ -16,15 +16,15 @@ HippoTrackInfo::toGStringVectors(char ***keysReturn,
 
     n_props_check = 0;
 
-#define ADD_PROP(lower, upper)              \
-  do {                                      \
-    ++n_props_check;                        \
-    if (has ## upper ()) {                  \
-        HippoUStr value(get ## upper ());   \
-        keys[i] = g_strdup(#lower);         \
-        values[i] = value.steal();          \
-        ++i;                                \
-    }                                       \
+#define ADD_PROP(lower, upper)               \
+  do {                                       \
+    ++n_props_check;                         \
+    if (has ## upper ()) {                   \
+        HippoUStr value(get ## upper ());    \
+        keys[i] = g_strdup(#lower);          \
+        values[i] = g_strdup(value.c_str()); \
+        ++i;                                 \
+    }                                        \
   } while(0)
 
     keys = g_new0(char*, HIPPO_TRACK_N_PROPERTIES + 1);

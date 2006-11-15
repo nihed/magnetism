@@ -27,7 +27,7 @@ import com.dumbhippo.identity20.RandomToken;
  * 
  */
 @Entity
-@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)
+@Cache(usage=CacheConcurrencyStrategy.TRANSACTIONAL)
 public class Client extends DBUnique implements Serializable {
 
 	private static final long serialVersionUID = 0L;

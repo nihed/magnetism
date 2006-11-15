@@ -1,10 +1,10 @@
 <?xml version="1.0"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2003/01/wi">
-    <Product Id="58D9A0B1-5D3C-45AA-B1B9-445FA135389E"
+    <Product Id="DE6A686A-C76F-4D49-A8DD-C798967F29E0"
             UpgradeCode="9A9721CB-6D56-478C-9AEE-2AAC1D75BA2F"
             Name="Mugshot" 
             Language="1033"
-            Version="1.1.59"
+            Version="1.1.78"
             Manufacturer="Red Hat">
         <Package Id="????????-????-????-????-????????????"
                 Description="Mugshot client software" 
@@ -21,8 +21,8 @@
         <Property Id="ARPPRODUCTICON" Value="hippoIcon"/>
         
         <Upgrade Id="9A9721CB-6D56-478C-9AEE-2AAC1D75BA2F">
-            <UpgradeVersion Minimum="0" Maximum="1.1.59" Property="DHPREVIOUSVERSIONS"/>
-            <UpgradeVersion Minimum="1.1.59" IncludeMinimum="yes" Property="DHNEWERVERSIONS"/>
+            <UpgradeVersion Minimum="0" Maximum="1.1.78" Property="DHPREVIOUSVERSIONS"/>
+            <UpgradeVersion Minimum="1.1.78" IncludeMinimum="yes" Property="DHNEWERVERSIONS"/>
         </Upgrade>
 
         <!-- Separate "cabinets" would be used if you broke the installer across floppies ... -->
@@ -39,6 +39,7 @@
         <ComponentRef Id="hippoUtil" />
         <ComponentRef Id="loudmouth" />
         <ComponentRef Id="applets" />
+        <ComponentRef Id="images" />
     </Feature>
     
     <CustomAction Id="DhQuitApp" FileKey="mugshotExe" Return="ignore" ExeCommand="--quit"/> 
@@ -88,7 +89,7 @@
     </UI>
     
     <!-- Used for the page header -->
-    <Binary Id="fogJpg" src="../WixInstaller/fog.jpg"/>
+    <Binary Id="bannerBmp" src="../WixInstaller/mugshotBanner.bmp"/>
     
     <Icon Id="hippoIcon" src="../HippoUI/Mugshot.ico"/>
     </Product>

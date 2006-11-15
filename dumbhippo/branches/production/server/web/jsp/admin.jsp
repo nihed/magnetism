@@ -13,10 +13,7 @@
 <head>
 	<title>Admin Console</title>
 	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/admin.css"/>	
-	<dht:scriptIncludes/>
-	<script type="text/javascript">
-        dojo.require("dh.admin");
-	</script>
+	<dh:script module="dh.admin"/>
 </head>
 <dht:body>
 
@@ -83,14 +80,6 @@ New features flag is <b><c:out value="${admin.newFeatures}"/></b>
 <c:out value="${admin.totalInvitations}"/> total invitations.
 </p>
 
-<h2>Cached client data: </h2>
-<p><c:out value="${admin.cachedLiveClientDataCount}"/> cached clientData objects</p>
-<p><c:out value="${admin.availableLiveUsersCount}"/> available users</p>
-<p>
-  <c:forEach items="${admin.cachedLiveClientData}" var="user">
-	<dht:liveClientDataDebug user="${user}"/>
-  </c:forEach>  
-</p>
 <h2>Cached live users: </h2>
 <p><c:out value="${admin.cachedLiveUsersCount}"/> cached users</p>
 <p>

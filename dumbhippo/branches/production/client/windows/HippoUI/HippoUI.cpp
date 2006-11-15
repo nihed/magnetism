@@ -19,6 +19,7 @@
 #include <wininet.h>  // for cookie retrieval
 #include <limits>
 #include "Resource.h"
+#include "HippoChatManager.h"
 #include "HippoHTTP.h"
 #include "HippoToolbarEdit.h"
 #include "HippoRegKey.h"
@@ -27,6 +28,14 @@
 #include "HippoPlatformImpl.h"
 #include "HippoUIUtil.h"
 #include "HippoComWrappers.h"
+#include "HippoImageFactory.h"
+#include <hippo/hippo-stack-manager.h>
+#include <hippo/hippo-canvas-box.h>
+#include <hippo/hippo-canvas-text.h>
+#include <hippo/hippo-canvas-image.h>
+#include <hippo/hippo-canvas-widgets.h>
+#include <hippo/hippo-window.h>
+#include <hippo/hippo-canvas-test.h>
 
 #include <glib.h>
 
@@ -85,22 +94,19 @@ HippoUI::HippoUI(HippoInstanceType instanceType, bool replaceExisting, bool init
     authFailed_.connect(G_OBJECT(connection), "auth-failed", slot(this, &HippoUI::onAuthFailed));
     authSucceeded_.connect(G_OBJECT(connection), "auth-succeeded", slot(this, &HippoUI::onAuthSucceeded));
 
+    hippo_platform_impl_set_ui(HIPPO_PLATFORM_IMPL(platform_), this);
     notificationIcon_.setUI(this);
-    bubble_.setUI(this);
-    menu_.setUI(this);
     upgrader_.setUI(this);
     music_.setUI(this);
-    // FIXME this is disabled since it's hosed up, see HippoMySpace.h comments
-    // mySpace_.setUI(this);
+    hippo_image_factory_set_ui(this);
 
     hotnessBlinkCount_ = 0;
     idleHotnessBlinkId_ = 0;
 
+    chatManager_ = NULL;
     preferencesDialog_ = NULL;
 
     registered_ = false;
-
-    flickr_ = NULL;
 
     nextBrowserCookie_ = 0;
 
@@ -116,7 +122,6 @@ HippoUI::HippoUI(HippoInstanceType instanceType, bool replaceExisting, bool init
     haveMissedBubbles_ = FALSE;
     screenSaverRunning_ = FALSE;
 
-    recentPostList_ = NULL;
     currentShare_ = NULL;
     upgradeWindowCallback_ = NULL;
     upgradeWindow_ = NULL;
@@ -125,8 +130,8 @@ HippoUI::HippoUI(HippoInstanceType instanceType, bool replaceExisting, bool init
 
 HippoUI::~HippoUI()
 {
-    if (recentPostList_)
-        delete recentPostList_;
+    if (chatManager_)
+        delete chatManager_;
 
     DestroyIcon(smallIcon_);
     DestroyIcon(bigIcon_);
@@ -258,7 +263,7 @@ HippoUI::UpdateBrowser(DWORD cookie, BSTR url, BSTR title)
             browsers_[i].url = url;
             browsers_[i].title = title;
 
-            mySpace_.browserChanged(browsers_[i]);
+            // mySpace_.browserChanged(browsers_[i]);
 
             return S_OK;
         }
@@ -291,42 +296,6 @@ HippoUI::Quit(DWORD *processId)
     return S_OK;
 }
 
-STDMETHODIMP
-HippoUI::ShowMissed()
-{
-    bubble_.showMissedBubbles();
-    return S_OK;
-}
-
-STDMETHODIMP
-HippoUI::ShowRecent()
-{
-    GSList *recent;
-
-    recent = hippo_data_cache_get_recent_posts(dataCache_);
-
-    if (recent == NULL) // No recent links, just ignore
-        return S_OK;
-
-    if (!recentPostList_) {
-        recentPostList_ = new HippoBubbleList();
-        recentPostList_->setUI(this);
-        recentPostList_->create();
-    } else {
-        recentPostList_->hide();
-        recentPostList_->clear();
-    }
-    
-    for (GSList *link = recent; link != NULL; link = link->next) {
-        recentPostList_->addLinkShare(HIPPO_POST(link->data));
-    }
-    g_slist_foreach(recent, (GFunc) g_object_unref, NULL);
-    g_slist_free(recent);
-
-    recentPostList_->show();
-
-    return S_OK;
-}
 
 ////////////////////////////////////////////////////////////////////////////
 
@@ -373,7 +342,7 @@ HippoUI::setIcons(void)
 
     // Load the standard icons if not loaded before
     if (smallIcon_ == NULL) {
-        icon = MAKEINTRESOURCE(IDI_LINKSWARM);
+        icon = MAKEINTRESOURCE(IDI_MUGSHOT);
         smallIcon_ = (HICON)LoadImage(instance_, icon,
                                       IMAGE_ICON, 16, 16, LR_DEFAULTCOLOR);
         bigIcon_ = (HICON)LoadImage(instance_, icon,
@@ -382,31 +351,12 @@ HippoUI::setIcons(void)
 
     // And always load the notification icon
     if (!hippo_connection_get_connected(getConnection())) {
-        icon = MAKEINTRESOURCE(IDI_SWARM1);
+        icon = MAKEINTRESOURCE(IDI_NOTIFICATION_DISCONNECTED);
     } else if (hotnessBlinkCount_ % 2 == 1) {
+        // Currently unused
         icon = MAKEINTRESOURCE(IDI_DUMBHIPPO_BLANK); // need blank/outlined icon?
     } else {
-        switch (hippo_data_cache_get_hotness(getDataCache())) {
-        case HIPPO_HOTNESS_COLD:
-            icon = MAKEINTRESOURCE(IDI_SWARM1);
-            break;
-        case HIPPO_HOTNESS_COOL:
-            icon = MAKEINTRESOURCE(IDI_SWARM2);
-            break;
-        case HIPPO_HOTNESS_WARM:
-            icon = MAKEINTRESOURCE(IDI_SWARM3);
-            break;
-        case HIPPO_HOTNESS_GETTING_HOT:
-            icon = MAKEINTRESOURCE(IDI_SWARM4);
-            break;
-        case HIPPO_HOTNESS_HOT:
-            icon = MAKEINTRESOURCE(IDI_SWARM5);
-            break;
-        default:
-        case HIPPO_HOTNESS_UNKNOWN:
-            icon = MAKEINTRESOURCE(IDI_SWARM1); // need different icon for this?
-            break;
-        }
+        icon = MAKEINTRESOURCE(IDI_NOTIFICATION);
     }
     if (trayIcon_ != NULL)
         DestroyIcon(trayIcon_);
@@ -414,10 +364,7 @@ HippoUI::setIcons(void)
     trayIcon_ = (HICON)LoadImage(instance_, icon,
                                  IMAGE_ICON, 16, 16, LR_DEFAULTCOLOR);
 
-    const WCHAR *currentDesc = getPreferences()->getInstanceDescription();
-    tooltip_ = currentDesc;
-    if (!hippo_connection_get_connected(getConnection()))
-        tooltip_.Append(L" (disconnected)");
+    tooltip_ = HippoBSTR::fromUTF8(hippo_connection_get_tooltip(getConnection()));
 }
 
 void
@@ -499,17 +446,6 @@ HippoUI::timeoutShowDebugShare()
 {
     hippo_data_cache_add_debug_data(dataCache_);
 
-    HippoMySpaceCommentData blogComment;
-
-    // Bryan commenting on Colin's blog
-    blogComment.commentId = -1;
-    blogComment.posterId = 29366619;
-    blogComment.posterImgUrl.setUTF8("http://myspace-714.vo.llnwd.net/00227/41/75/227675714_s.jpg");
-    blogComment.posterName.setUTF8("Bryan");
-    blogComment.content.setUTF8("Blah, blah, blah... Blah!");
-
-    bubble_.addMySpaceCommentNotification(48113941, 80801051, blogComment);
-
     return false; // remove idle
 }
 
@@ -530,7 +466,8 @@ HippoUI::ignoreEntity(BSTR entityId)
     HippoUStr entityIdU(entityId);
     HippoEntity *entity;
     entity = hippo_data_cache_lookup_entity(getDataCache(), entityIdU.c_str());
-    hippo_entity_set_ignored(entity, TRUE);
+    if (entity && HIPPO_IS_GROUP(entity))
+        hippo_group_set_ignored(HIPPO_GROUP(entity), TRUE);
 }
 
 void 
@@ -559,20 +496,23 @@ HippoUI::create(HINSTANCE instance)
     oldMenu_ = LoadMenu(instance, MAKEINTRESOURCE(IDR_NOTIFY));
     debugMenu_ = LoadMenu(instance, MAKEINTRESOURCE(IDR_DEBUG));
 
-    if (!registerClass())
+    if (!registerClass()) {
+        hippoDebugLastErr(L"Failed to register class %s", CLASS_NAME);
         return false;
+    }
 
     if (!registerActive())
         return false;
 
-
     if (!createWindow()) {
+        g_debug("Failed to createWindow()");
         revokeActive();
         return false;
     }
 
     notificationIcon_.setIcon(trayIcon_);
     if (!notificationIcon_.create(window_)) {
+        g_debug("Failed to create notification icon");
         revokeActive();
         return false;
     }
@@ -581,19 +521,36 @@ HippoUI::create(HINSTANCE instance)
     logWindow_.setBigIcon(bigIcon_);
     logWindow_.setSmallIcon(smallIcon_);
     if (!logWindow_.create()) {
+        g_debug("Failed to create log window");
         revokeActive();
         notificationIcon_.destroy();
         return false;
     }
 
+#if 1
     if (hippo_platform_get_signin(platform_)) {
         if (hippo_connection_signin(getConnection()))
             showSignInWindow();
     }
+#endif
 
     checkIdleTimeout_.add(CHECK_IDLE_TIME, slot(this, &HippoUI::timeoutCheckIdle));
 
     registerStartup();
+
+#if 1
+    // and very last once we're all ready, fire up the stacker
+    hippo_stack_manager_manage(dataCache_);
+#endif
+
+#if 0
+    HippoWindow *window = hippo_platform_create_window(platform_);
+    hippo_window_set_resizable(window, HIPPO_ORIENTATION_HORIZONTAL, TRUE);
+    hippo_window_set_resizable(window, HIPPO_ORIENTATION_VERTICAL, TRUE);
+    HippoCanvasItem *root = hippo_canvas_test_get_root();
+    hippo_window_set_contents(window, root);
+    hippo_window_set_visible(window, TRUE);
+#endif
 
     if (initialShowDebugShare_) {
         showDebugShareTimeout_.add(3000, slot(this, &HippoUI::timeoutShowDebugShare));
@@ -605,10 +562,7 @@ HippoUI::create(HINSTANCE instance)
 void
 HippoUI::destroy()
 {
-    for (unsigned long i = chatWindows_.length(); i > 0; i--) {
-        delete chatWindows_[i - 1];
-        chatWindows_.remove(i - 1);
-    }
+    hippo_stack_manager_unmanage(dataCache_);
 
     if (currentShare_) {
         delete currentShare_;
@@ -694,6 +648,24 @@ HippoUI::showAppletWindow(BSTR url, HippoPtr<IWebBrowser2> &webBrowser)
     webBrowser->put_Visible(VARIANT_TRUE);
 }
 
+HRESULT
+HippoUI::ShowRecent()
+{
+    // FIXME this is not used, but it's in the COM IDL so maybe
+    // it's bad to just delete
+
+    return S_OK;
+}
+
+HRESULT
+HippoUI::BeginFlickrShare(BSTR path)
+{
+    // FIXME this is not used, but it's in the COM IDL so maybe
+    // it's bad to just delete
+
+    return S_OK;
+}
+
 // Show a window offering to share the given URL
 HRESULT
 HippoUI::ShareLink(BSTR url, BSTR title)
@@ -707,42 +679,24 @@ HippoUI::ShareLink(BSTR url, BSTR title)
     return S_OK;
 }
 
-STDMETHODIMP 
-HippoUI::BeginFlickrShare(BSTR filePath)
-{
-    debugLogW(L"sharing photo: path=%s", filePath);
-
-    if (flickr_ == NULL || flickr_->isCommitted()) {
-        if (flickr_ != NULL)
-            flickr_->Release();
-        flickr_ = new HippoFlickr(this);
-    }
-    flickr_->uploadPhoto(filePath);
-    return S_OK;
-}
-
 HRESULT
 HippoUI::ShowChatWindow(BSTR chatId)
 {
-    // If a chat window already exists for the post, just raise it
-    for (unsigned i = 0; i < chatWindows_.length(); i++) {
-        if (wcscmp(chatWindows_[i]->getChatId(), chatId) == 0) {
-            chatWindows_[i]->setForegroundWindow();
-            return S_OK;
-        }
-    }
+    if (!chatManager_)
+        chatManager_ = HippoChatManager::createInstance(this);
 
-    HippoChatWindow *window = new HippoChatWindow();
-    window->setUI(this);
-    window->setChatId(chatId);
-
-    chatWindows_.append(window);
-
-    window->create();
-    window->show();
-    window->setForegroundWindow();
+    chatManager_->showChatWindow(chatId);
 
     return S_OK;
+}
+    
+HippoWindowState
+HippoUI::getChatWindowState(BSTR chatId)
+{
+    if (!chatManager_)
+        return HIPPO_WINDOW_STATE_CLOSED;
+
+    return chatManager_->getChatWindowState(chatId);
 }
 
 HRESULT
@@ -806,6 +760,156 @@ HippoUI::ShareLinkComplete(BSTR postId, BSTR url)
     return S_OK;
 }
 
+HippoListenerProxy *
+HippoUI::findListenerById(UINT64 listenerId)
+{
+    for (std::vector<HippoPtr<HippoListenerProxy> >::iterator i = listeners_.begin();
+         i != listeners_.end();
+         i++) 
+    {
+        HippoListenerProxy *proxy = *i;
+
+        if (proxy->getId() == listenerId)
+            return proxy;
+    }
+
+    return NULL;
+}
+
+HippoListenerProxy *
+HippoUI::findListenerByEndpoint(UINT64 endpointId)
+{
+    for (std::vector<HippoPtr<HippoListenerProxy> >::iterator i = listeners_.begin();
+         i != listeners_.end();
+         i++) 
+    {
+        HippoListenerProxy *proxy = *i;
+
+        if (proxy->hasEndpoint(endpointId))
+            return proxy;
+    }
+
+    return NULL;
+}
+
+STDMETHODIMP 
+HippoUI::RegisterListener(IHippoUIListener *listener, UINT64 *listenerId)
+{
+    HippoListenerProxy *proxy = HippoListenerProxy::createInstance(dataCache_, listener);
+    listeners_.push_back(proxy);
+   
+    *listenerId = proxy->getId();
+
+    return S_OK;
+}
+ 
+STDMETHODIMP 
+HippoUI::UnregisterListener(UINT64 listenerId)
+{
+    for (std::vector<HippoPtr<HippoListenerProxy> >::iterator i = listeners_.begin();
+         i != listeners_.end();
+         i++) 
+    {
+        HippoListenerProxy *proxy = *i;
+
+        if (proxy->getId() == listenerId) {
+            proxy->unregister();
+            listeners_.erase(i);
+            break;
+        }
+    }
+
+    return S_OK;
+}
+
+STDMETHODIMP 
+HippoUI::RegisterEndpoint(UINT64 listenerId, UINT64 *endpointId)
+{
+    HippoListenerProxy *proxy = findListenerById(listenerId);
+    if (proxy)
+        *endpointId = proxy->registerEndpoint();
+
+    return S_OK;
+}
+
+STDMETHODIMP 
+HippoUI::UnregisterEndpoint(UINT64 endpointId)
+{
+    HippoListenerProxy *proxy = findListenerByEndpoint(endpointId);
+    if (proxy)
+        proxy->unregisterEndpoint(endpointId);
+
+    return S_OK;
+}
+    
+STDMETHODIMP 
+HippoUI::JoinChatRoom(UINT64 endpointId, BSTR chatId, BOOL participant)
+{
+    HippoListenerProxy *proxy = findListenerByEndpoint(endpointId);
+    if (proxy)
+        proxy->joinChatRoom(endpointId, chatId, participant);
+
+    return S_OK;
+}
+ 
+STDMETHODIMP 
+HippoUI::LeaveChatRoom(UINT64 endpointId, BSTR chatId)
+{
+    HippoListenerProxy *proxy = findListenerByEndpoint(endpointId);
+    if (proxy)
+        proxy->leaveChatRoom(endpointId, chatId);
+
+    return S_OK;
+}
+
+STDMETHODIMP 
+HippoUI::SendChatMessage(BSTR chatId, BSTR text)
+{
+    HippoUStr chatIdU(chatId);
+    HippoUStr textU(text);
+
+    HippoChatRoom *room = hippo_data_cache_ensure_chat_room(dataCache_, chatIdU.c_str(), HIPPO_CHAT_KIND_UNKNOWN);
+    hippo_connection_send_chat_room_message(hippo_data_cache_get_connection(dataCache_), room, textU.c_str());
+
+    return S_OK;
+}
+
+STDMETHODIMP
+HippoUI::GetServerName(BSTR *serverName)
+{
+    // We can't use the value from preferences_ directly, since we want to include
+    // the port even for the default value of 80, so rebuild the host:port value
+    // from the parsed version.
+
+    char *hostU;
+    int port;
+    hippo_platform_get_web_host_port(platform_, &hostU, &port);
+
+    HippoBSTR result = HippoBSTR::fromUTF8(hostU, -1);
+    result.Append(L":");
+
+    WCHAR buffer[16];
+    StringCchPrintfW(buffer, sizeof(buffer), L"%d", port);
+    result.Append(buffer);
+
+    g_free(hostU);
+
+    result.CopyTo(serverName);
+
+    return S_OK;
+}
+
+STDMETHODIMP 
+HippoUI::LaunchBrowser(BSTR url)
+{
+    if (!url)
+        return E_INVALIDARG;
+
+    launchBrowser(url);
+
+    return S_OK;
+}
+
 void
 HippoUI::showSignInWindow()
 {
@@ -847,9 +951,7 @@ HippoUI::showMenu(UINT buttonFlag)
 
         PostMessage(window_, WM_NULL, 0, 0);
     } else {
-        SetForegroundWindow(window_);
-        menu_.popup(pt.x, pt.y);
-        PostMessage(window_, WM_NULL, 0, 0);
+        hippo_stack_manager_toggle_browser(dataCache_);
     }
 }
 
@@ -1122,14 +1224,9 @@ HippoUI::onAuthFailed()
 
 
 bool 
-HippoUI::isGroupChatActive(HippoEntity *entity)
+HippoUI::isGroupChatActive(HippoGroup *group)
 {
-    if (hippo_entity_get_entity_type(entity) != HIPPO_ENTITY_GROUP) {
-        g_warning("HippoUI::isGroupChatActive was called with an entity that is not a group");
-        return false;
-    }
-
-    HippoChatRoom *chatRoom = hippo_entity_get_chat_room(entity);
+    HippoChatRoom *chatRoom = hippo_group_get_chat_room(group);
         
     if (chatRoom != NULL &&
         hippo_chat_room_get_desired_state(chatRoom) != HIPPO_CHAT_STATE_NONMEMBER) {
@@ -1157,21 +1254,6 @@ HippoUI::isShareActive(HippoPost *post)
     return false;
 }
 
-void 
-HippoUI::onChatWindowClosed(HippoChatWindow *chatWindow)
-{
-    for (unsigned i = 0; i < chatWindows_.length(); i++) {
-        if (chatWindows_[i] == chatWindow) {
-            chatWindows_.remove(i);
-            delete chatWindow; // should be safe, called from WM_CLOSE only
-
-            return;
-        }
-    }
-
-    assert(false);
-}
-
 void
 HippoUI::onAuthSucceeded()
 {
@@ -1196,15 +1278,6 @@ HippoUI::onUpgradeReady()
     HippoBSTR url;
     getRemoteURL(HippoBSTR(L"upgrade"), &url);
     upgradeWindow_->navigate(url);
-}
-
-void 
-HippoUI::setHaveMissedBubbles(bool haveMissed)
-{
-    if (haveMissedBubbles_ != haveMissed) {
-        haveMissedBubbles_ = haveMissed;
-    }
-    updateIcon();
 }
 
 int
@@ -1257,6 +1330,8 @@ RETRY_REGISTER:
             if (oldUI)
                 oldUI->ShowRecent();
         }
+
+        g_debug("Another copy already running, will exit");
 
         return false;
     }
@@ -1403,12 +1478,14 @@ HippoUI::timeoutCheckIdle()
     if (currentTime - lastInput.dwTime > USER_IDLE_TIME) {
         if (!idle_) {
             idle_ = true;
-            bubble_.setIdle(true);
+            // FIXME hippo_stack_manager_set_idle
+            // bubble_.setIdle(true);
         }
     } else {
         if (idle_) {
             idle_ = false;
-            bubble_.setIdle(false);
+            // FIXME hippo_stack_manager_set_idle
+            // bubble_.setIdle(false);
         }
     }
 
@@ -1421,7 +1498,8 @@ HippoUI::timeoutCheckIdle()
     SystemParametersInfo(SPI_GETSCREENSAVERRUNNING, 0, (void *)&screenSaverRunning, 0);
     if (!screenSaverRunning_ != !screenSaverRunning) {
         screenSaverRunning_ = screenSaverRunning != FALSE;
-        bubble_.setScreenSaverRunning(screenSaverRunning_);
+        // FIXME would want to forward this to stack manager
+        // bubble_.setScreenSaverRunning(screenSaverRunning_);
     }
 
     return true;
@@ -1526,8 +1604,8 @@ HippoUI::updateMenu()
     EnableMenuItem(popupMenu, IDM_MISSED, haveMissedBubbles_ ? MF_ENABLED : MF_GRAYED);
 }
 
-void
-HippoUI::getAppletPath(BSTR filename, BSTR *result)
+HippoBSTR
+HippoUI::getBasePath() throw (std::bad_alloc, HResultException)
 {
     // XXX can theoretically truncate if we have a \?\\foo\bar\...
     // path which isn't limited to the short Windows MAX_PATH
@@ -1545,11 +1623,33 @@ HippoUI::getAppletPath(BSTR filename, BSTR *result)
     if (i == 0)  // No \ in path?
         throw HResultException(E_FAIL);
 
-    HippoBSTR path((UINT)i, baseBuf);
+    return HippoBSTR((UINT)i, baseBuf);
+}
+
+void
+HippoUI::getAppletPath(BSTR filename, BSTR *result)
+{
+    assert(*result == NULL);
+
+    HippoBSTR path(getBasePath());
+    
     path.Append(L"applets\\");
 
     path.Append(filename);
-    *result = ::SysAllocString(path);
+    *result = ::SysAllocStringLen(path.m_str, path.Length());
+}
+
+void
+HippoUI::getImagePath(BSTR filename, BSTR *result) throw (std::bad_alloc, HResultException)
+{
+    assert(*result == NULL);
+
+    HippoBSTR path(getBasePath());
+    
+    path.Append(L"images\\");
+
+    path.Append(filename);
+    *result = ::SysAllocStringLen(path.m_str, path.Length());
 }
 
 // Find the pathname for a local HTML file, based on the location of the .exe
@@ -1632,9 +1732,6 @@ HippoUI::processMessage(UINT   message,
             return true;
         case IDM_RECENT:
             ShowRecent();
-            return true;
-        case IDM_MISSED:
-            ShowMissed();
             return true;
         case IDM_PREFERENCES:
             showPreferences();
@@ -1783,32 +1880,22 @@ closeDownload()
 
 }
 
-static HippoArray<HWND> *windowHookKeys = NULL;
-static HippoArray<HippoMessageHook*> *windowHookValues = NULL;
+HippoMessageHookList *messageHooks = NULL;
 
 void 
-HippoUI::registerWindowMsgHook(HWND window, HippoMessageHook *hook)
+HippoUI::registerMessageHook(HWND window, HippoMessageHook *hook)
 {
-    if (!windowHookKeys) {
-        windowHookKeys = new HippoArray<HWND>;
-        windowHookValues = new HippoArray<HippoMessageHook*>;
-    }
+    if (!messageHooks)
+        messageHooks = new HippoMessageHookList();
     
-    windowHookKeys->append(window);
-    windowHookValues->append(hook);
+    messageHooks->registerMessageHook(window, hook);
 }
 
 void 
-HippoUI::unregisterWindowMsgHook(HWND window)
+HippoUI::unregisterMessageHook(HWND window)
 {
-    // fixme
-}
-
-// notification from HippoMySpace when we have a new comment to bubble
-void 
-HippoUI::bubbleNewMySpaceComment(long myId, long blogId, const HippoMySpaceCommentData &comment)
-{
-    bubble_.addMySpaceCommentNotification(myId, blogId, comment);
+    if (messageHooks)
+        messageHooks->unregisterMessageHook(window);
 }
 
 /* Define a custom main loop source for integrating the Glib main loop with Win32
@@ -1864,15 +1951,8 @@ win32SourceDispatch(GSource     *source,
         return FALSE;
     }
 
-    if (windowHookKeys) {
-        for (UINT i = 0; i < windowHookKeys->length(); i++) {
-            HWND hookWin = (*windowHookKeys)[i];
-            if (IsChild(hookWin, msg.hwnd)) {
-                if ((*windowHookValues)[i]->hookMessage(&msg))
-                    return TRUE;
-            }
-        }
-    }
+    if (messageHooks && messageHooks->processMessage(&msg))
+        return TRUE;
 
     try {
         TranslateMessage(&msg);
@@ -2055,6 +2135,8 @@ WinMain(HINSTANCE hInstance,
     char **argv;
     HippoOptions options;
 
+    //_putenv("G_DEBUG=fatal_warnings");
+
     g_thread_init(NULL);
     g_type_init();
 
@@ -2095,9 +2177,33 @@ WinMain(HINSTANCE hInstance,
         return 0;
     }
 
+    int ccMajor = 0, ccMinor = 0;
+    if (hippoGetDllVersion(L"comctl32.dll", &ccMajor, &ccMinor))
+        hippoDebugLogW(L"Common controls dll %d.%d", ccMajor, ccMinor);
+    else
+        hippoDebugLogW(L"Failed to get common controls version");
+
+    if (ccMajor < 6) {
+        hippoDebugDialog(L"Mugshot requires Windows XP.\n(Common controls version %d.%d is too old.)", ccMajor, ccMinor);
+        return 1;
+    }
+
     // Initialize OLE and COM; We need to use this rather than CoInitialize
     // in order to get cut-and-paste and drag-and-drop to work
     OleInitialize(NULL);
+
+    // Initialize common control window classes; needed to use e.g. 
+    // scrollbar and tooltips
+    INITCOMMONCONTROLSEX initControls;
+    initControls.dwSize = sizeof(initControls);
+    initControls.dwICC = ICC_STANDARD_CLASSES | ICC_TAB_CLASSES;
+    if (!InitCommonControlsEx(&initControls)) {
+        // the error codes for this function are not documented
+        // anywhere I can find.
+        HRESULT e = GetLastError();
+        hippoDebugLogW(L"InitCommonControlsEx error %d", (int) e);
+        hippoDebugLastErr(L"Failed to initialize common controls");
+    }
 
     if (!initializeWinSock())
         return 0;
@@ -2111,8 +2217,10 @@ WinMain(HINSTANCE hInstance,
     migrateCookie();
 
     ui = new HippoUI(options.instance_type, options.replace_existing, options.initial_debug_share);
-    if (!ui->create(hInstance))
+    if (!ui->create(hInstance)) {
+        g_debug("Failed to create UI");
         return 0;
+    }
 
     loop = g_main_loop_new(NULL, FALSE);
 

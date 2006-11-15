@@ -22,7 +22,7 @@
         or something probably, but only IE is known to work anyhow --%>
 
 	<c:when test="${signin.valid && browser.ie}">
-		<c:set scope="page" var="joinChatUri" value="javascript:dh.actions.requestJoinRoom('${signin.userId}','${framer.post.post.id}')"/>
+		<c:set scope="page" var="joinChatUri" value="javascript:dh.control.control.showChatWindow('${framer.post.post.id}')"/>
 	</c:when>
 	<c:when test="${signin.valid && browser.linux && browser.gecko}">
 		<c:set scope="page" var="joinChatUri" value="mugshot://${signin.server}/joinChat?id=${framer.post.post.id}&kind=post"/>
@@ -38,29 +38,12 @@
 	<!--[if IE]>
 	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/framer-iefixes.css">
 	<![endif]-->
-	<dht:scriptIncludes/>
+		<dh:script module="dh.framer"/>
     <script type="text/javascript">
-    	dojo.require("dh.framer")
     	dh.framer.setSelfId("${framer.signin.userId}")
+    	dh.framer.chatId = "${framer.post.post.id}"
     	dh.framer.forwardUrl = <dh:jsString value="${url}"/>;
 		dh.framer.forwardTitle = <dh:jsString value="${title}"/>;
-    	dh.framer.openForwardWindow = function() {
-    		dh.util.openShareLinkWindow(dh.framer.forwardUrl, dh.framer.forwardTitle);
-    	}
-	</script>
-	<dht:embedObject/>
-	<dht:chatControl userId="${framer.signin.userId}" chatId="${framer.post.post.id}"/>
-	<script for="dhChatControl" type="text/javascript" event="OnUserJoin(userId, version, name, participant)">
-		dh.framer.onUserJoin(userId, version, name, participant)
-	</script>
-	<script for="dhChatControl" language="javascript" event="OnUserLeave(userId)">
-		dh.framer.onUserLeave(userId)
-	</script>
-	<script for="dhChatControl" language="javascript" event="OnMessage(userId, version, name, text, timestamp, serial)">
-		dh.framer.onMessage(userId, version, name, text, timestamp, serial)
-	</script>
-	<script for="dhChatControl" language="javascript" event="OnReconnect()">
-		dh.framer.onReconnect()
 	</script>
 	<script type="text/javascript">
 		// This is called by the Explorer browser bar code when the browser bar
@@ -71,15 +54,8 @@
 		// doesn't work.)
 		var dhClosed = false
 		function dhBarClosed() {
-			var chatControl = document.getElementById("dhChatControl")
-			if (chatControl)
-				chatControl.Leave(false)
+			dh.framer._chatRoom.leave()
 			dhClosed = true
-		}
-		
-		var chatControl = document.getElementById("dhChatControl");
-        if (!dhClosed && chatControl && chatControl.readyState && chatControl.readyState == 4) {
-			chatControl.Join(false);
 		}
 	</script>
 </head>

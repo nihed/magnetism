@@ -188,7 +188,9 @@ deleteKeyPrintf(HKEY         key,
 
 HRESULT
 HippoRegistrar::registerInprocServer(const CLSID &classID,
-                                     const WCHAR *title)
+                                     const WCHAR *title,
+                                     const WCHAR *versionIndependentProgId,
+                                     const WCHAR *progId)
 {
     WCHAR *classStr;
     HRESULT hr;
@@ -215,6 +217,49 @@ HippoRegistrar::registerInprocServer(const CLSID &classID,
                         L"CLSID\\%ls\\InprocServer32", 
                         L"ThreadingModel", L"Apartment",
                         classStr); 
+
+    if (versionIndependentProgId) {
+        hr = setValuePrintf(HKEY_CLASSES_ROOT, 
+                            L"%ls", 
+                            NULL, title,
+                            versionIndependentProgId);
+        if (FAILED(hr))
+            goto failed;
+
+        hr = setValuePrintf(HKEY_CLASSES_ROOT,
+                            L"%ls\\CLSID",
+                            NULL, classStr,
+                            versionIndependentProgId); 
+
+        if (FAILED(hr))
+            goto failed;
+
+        if (progId) {
+            hr = setValuePrintf(HKEY_CLASSES_ROOT,
+                                L"%ls\\CurVer",
+                                NULL, progId,
+                                versionIndependentProgId);
+            if (FAILED(hr))
+                goto failed;
+        }
+
+    }
+
+    if (progId) {
+        hr = setValuePrintf(HKEY_CLASSES_ROOT, 
+                            L"%ls", 
+                            NULL, title,
+                            progId);
+        if (FAILED(hr))
+            goto failed;
+
+        hr = setValuePrintf(HKEY_CLASSES_ROOT,
+                            L"%ls\\CLSID",
+                            NULL, classStr,
+                            progId);
+        if (FAILED(hr))
+            goto failed;
+    }
 
 failed:
     CoTaskMemFree(classStr);

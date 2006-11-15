@@ -17,13 +17,16 @@ public class BrowserBean implements Serializable {
 
 	private enum OS { Mac, Windows, Linux, Unknown };
 	private enum Browser { Khtml, Gecko, Opera, IE, Unknown };
+	private enum Distribution { Fedora5, Fedora6, Unknown };
 	
 	private OS os;
 	private Browser browser;
+	private Distribution distribution;
 	private int browserVersion;
 	
 	private OS osRequested;
 	private Browser browserRequested;
+	private Distribution distributionRequested;
 	
 	private BrowserBean(HttpServletRequest request) {
 		
@@ -44,6 +47,14 @@ public class BrowserBean implements Serializable {
 		else if (userAgent.contains("Windows"))
 			os = OS.Windows;
 
+		distribution = Distribution.Unknown;
+		if (userAgent.contains("Fedora")) {
+			if (userAgent.contains("fc5"))
+				distribution = Distribution.Fedora5;
+			else if (userAgent.contains("fc6"))
+				distribution = Distribution.Fedora6;
+		}
+		
 		/* note that we aren't counting IE before 5.0 or not on Windows 
 		 * as IE ... it's just Unknown.
 		 * For Netscape 4 and old Mozilla I'm guessing we should do
@@ -86,8 +97,10 @@ public class BrowserBean implements Serializable {
 		
 		String platformOverrideStr = request.getParameter("platform");
 		String browserOverrideStr = request.getParameter("browser");
+		String distributionOverrideStr = request.getParameter("distribution");
 		osRequested = null;
 		browserRequested = null;
+		distributionRequested = null;
 		
 		if (platformOverrideStr != null) {
 			platformOverrideStr = platformOverrideStr.toLowerCase();
@@ -111,6 +124,19 @@ public class BrowserBean implements Serializable {
 			if (browserRequested == null && browserOverrideStr.equals("safari")) {
 				osRequested = OS.Mac;
 				browserRequested = Browser.Khtml;
+			}
+		}
+		
+		if (distributionOverrideStr != null) {
+			distributionOverrideStr = distributionOverrideStr.toLowerCase();
+			for (Distribution d : Distribution.values()) {
+				if (d.name().toLowerCase().equals(distributionOverrideStr)) {
+					distributionRequested = d;
+					// implies platform=linux
+					if (osRequested == null)
+						osRequested = OS.Linux;
+					break;
+				}
 			}
 		}
 		
@@ -143,6 +169,10 @@ public class BrowserBean implements Serializable {
 	
 	private boolean isRequested(OS o) {
 		return osRequested == o || (osRequested == null && os == o);
+	}
+	
+	private boolean isRequested(Distribution d) {
+		return distributionRequested == d || (distributionRequested == null && distribution == d);
 	}
 	
 	public boolean isGecko() {
@@ -225,6 +255,22 @@ public class BrowserBean implements Serializable {
 		return isMacRequested() && isKhtmlRequested();
 	}
 	
+	public boolean isFedora5() {
+		return distribution == Distribution.Fedora5;
+	}
+	
+	public boolean isFedora6() {
+		return distribution == Distribution.Fedora6;
+	}
+	
+	public boolean isFedora5Requested() {
+		return isRequested(Distribution.Fedora5);
+	}
+	
+	public boolean isFedora6Requested() {
+		return isRequested(Distribution.Fedora6);
+	}
+	
 	public String getSupportedBrowsers() {
 		return "Internet Explorer 6 and Firefox 1.5";
 	}
@@ -239,6 +285,6 @@ public class BrowserBean implements Serializable {
 	
 	@Override
 	public String toString() {
-		return "{os=" + os + " browser=" + browser + " version=" + browserVersion + " osRequested=" + osRequested + " browserRequested=" + browserRequested + "}";
+		return "{os=" + os + " browser=" + browser + " version=" + browserVersion + " osRequested=" + osRequested + " browserRequested=" + browserRequested + " distribution=" + distribution + " distributionRequested=" + distributionRequested + "}";
 	}
 }

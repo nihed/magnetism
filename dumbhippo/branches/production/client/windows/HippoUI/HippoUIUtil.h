@@ -4,10 +4,11 @@
  */
 #pragma once
 
-#include "stdafx.h"
 #include <HippoUtil.h>
 #include <HippoArray.h>
 #include <glib-object.h>
+#include <hippo/hippo-basics.h>
+#include <hippo/hippo-graphics.h>
 
 class HippoUIUtil
 {
@@ -33,71 +34,6 @@ public:
     static void splitString(const HippoBSTR       &str, 
                             WCHAR                  separator, 
                             HippoArray<HippoBSTR> &result);
-};
-
-// Basically just a wrapper for g_utf16_to_utf8(), think three times before extending it
-class HippoUStr 
-{
-public:
-
-    HippoUStr() {
-        str = NULL;
-    }
-
-    HippoUStr(const HippoBSTR &bstr) {
-        if (bstr.m_str)       
-            str = g_utf16_to_utf8((gunichar2 *)bstr.m_str, SysStringLen(bstr.m_str), NULL, NULL, NULL);
-        else
-            str = NULL;
-    }
-
-    HippoUStr(WCHAR *wstr) {
-        if (wstr)
-            str = g_utf16_to_utf8((gunichar2 *)wstr, -1, NULL, NULL, NULL);
-        else
-            str = NULL;
-    }
-
-    HippoUStr(WCHAR *wstr, int len) {
-        if (wstr)
-            str = g_utf16_to_utf8((gunichar2 *)wstr, len, NULL, NULL, NULL);
-        else
-            str = NULL;
-    }
-
-    ~HippoUStr() {
-        g_free((void*)str);
-    }
-
-    char** operator&() {
-        assert(str == NULL);
-        return &str;
-    }
-
-    const char *c_str() const {
-        return str;
-    }
-
-    HippoBSTR toBSTR() const {
-        if (str == NULL)
-            return HippoBSTR();
-        else
-            return HippoBSTR::fromUTF8(str, -1);
-    }
-
-    // get a g_malloc allocated string and unset this one;
-    // must be g_free'd 
-    char *steal() {
-        char *tmp = str;
-        str = NULL;
-        return tmp;
-    }
-
-private:
-    HippoUStr(const HippoUStr &other) {}
-    HippoUStr operator=(const HippoUStr &other) {}
-
-    char *str;
 };
 
 /* this is just so the implementations aren't templatized */
@@ -178,3 +114,12 @@ private:
         raw_ = t;
     }
 };
+
+bool hippoWindowIsOnscreen(HWND window);
+bool hippoWindowIsActive(HWND window);
+
+void hippo_rectangle_from_rect(HippoRectangle *hippo_rect, const RECT *windows_rect);
+void hippo_rectangle_to_rect  (const HippoRectangle *hippo_rect, RECT *windows_rect);
+
+bool hippoGetDllVersion(WCHAR *dllName, int *majorP, int *minorP);
+

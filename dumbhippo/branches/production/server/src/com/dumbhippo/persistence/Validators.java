@@ -10,7 +10,7 @@ public class Validators {
 	/**
 	 * Be sure a stock photo name looks plausible and can be stuck in HTML without escaping.
 	 * Expects the url to be in the form we'd put in the database, currently always 
-	 * /user_pix1/foo.gif or /group_pix1/foo.gif
+	 * /user_pix1/foo.png or /group_pix1/foo.png
 	 * 
 	 * @param relativePhotoUrl
 	 * @return true if it's OK
@@ -26,12 +26,12 @@ public class Validators {
 			return false;
 		}
 		
-		if (!relativePhotoUrl.endsWith(".gif")) {
+		if (!relativePhotoUrl.endsWith(".png")) {
 			logger.debug("Invalid stock photo name '{}'", relativePhotoUrl);
 			return false;
 		}
 		
-		String basename = relativePhotoUrl.substring(dirLen, relativePhotoUrl.length() - ".gif".length());
+		String basename = relativePhotoUrl.substring(dirLen, relativePhotoUrl.length() - ".png".length());
 				
 		for (char c : basename.toCharArray()) {
 			if (c < 'a' || c > 'z') {

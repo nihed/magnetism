@@ -4,6 +4,7 @@
 	<classpathentry kind="src" path="taste/src/main"/>
 	<classpathentry kind="src" path="imbot/src/java"/>
 	<classpathentry kind="src" path="hungry/src/test/java"/>
+	<classpathentry kind="src" path="cluster/balancer/src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER">
 		<accessrules>
 			<accessrule kind="accessible" pattern="**/awt/image/**"/>
@@ -13,18 +14,18 @@
 			<accessrule kind="accessible" pattern="**/awt/Rectangle"/>
 			<accessrule kind="accessible" pattern="**/awt/Image"/>
 			<accessrule kind="discouraged" pattern="**/awt/**"/>
+			<accessrule kind="nonaccessible" pattern="**/awt/List"/>
 		</accessrules>
 	</classpathentry>
 	<classpathentry sourcepath="ECLIPSE_HOME/plugins/org.eclipse.jdt.source_3.0.0/src/org.junit_3.8.1/junitsrc.zip" kind="var" path="JUNIT_HOME/junit.jar"/>
-	<classpathentry kind="lib" path="server/lib/commons-collections-2.1.1.jar"/>
-	<classpathentry kind="lib" path="server/lib/dom4j-1.6.jar"/>
-	<classpathentry sourcepath="/smack/source" kind="lib" path="server/lib/smack-svn-local-build-2005-09-30.jar"/>
-	<classpathentry kind="lib" path="server/lib/smackx-svn-local-build-2005-09-30.jar"/>
-	<classpathentry kind="lib" path="server/lib/standard.jar"/>
-	<classpathentry kind="lib" path="server/lib/jboss-remoting.jar"/>
-	<classpathentry kind="lib" path="server/lib/commons-codec-1.3.jar"/>
-	<classpathentry kind="lib" path="server/lib/commons-httpclient-2.0.2.jar"/>
-	<classpathentry kind="lib" path="server/lib/commons-fileupload-1.0.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/server/commons-collections-2.1.1.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/server/dom4j-1.6.jar"/>
+	<classpathentry sourcepath="/smack/source" kind="var" path="HIPPO_TRUNK_LIB/server/smack-svn-local-build-2005-09-30.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/server/smackx-svn-local-build-2005-09-30.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/server/standard.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/server/jboss-remoting.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/server/commons-codec-1.3.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/server/commons-httpclient-2.0.2.jar"/>
 	<classpathentry kind="var" path="JBOSS_HOME/server/default/deploy/ejb3.deployer/jboss-ejb3.jar"/>
 	<classpathentry kind="var" path="JBOSS_HOME/server/default/deploy/ejb3.deployer/jboss-ejb3x.jar"/>
 	<classpathentry kind="var" path="JBOSS_HOME/client/mail.jar"/>
@@ -32,62 +33,60 @@
 	<classpathentry kind="var" path="JBOSS_HOME/server/default/deploy/jboss-aop-jdk50.deployer/jboss-aop-jdk50.jar"/>
 	<classpathentry kind="var" path="JBOSS_HOME/server/default/deploy/jboss-aop-jdk50.deployer/jboss-aspect-library-jdk50.jar"/>
 	<classpathentry kind="var" path="JBOSS_HOME/client/activation.jar"/>
-	<classpathentry kind="var" path="JBOSS_HOME/server/default/deploy/ejb3.deployer/hibernate3.jar"/>
-	<classpathentry kind="var" path="JBOSS_HOME/server/default/deploy/ejb3.deployer/hibernate-annotations.jar"/>
-	<classpathentry kind="var" path="JBOSS_HOME/server/default/deploy/ejb3.deployer/ejb3-persistence.jar"/>
+	<classpathentry kind="var" path="JBOSS_HOME/server/default/lib/ejb3-persistence.jar"/>
 	<classpathentry kind="var" path="JBOSS_HOME/server/default/lib/javax.servlet.jsp.jar"/>
 	<classpathentry kind="var" path="JBOSS_HOME/client/jbossall-client.jar"/>
 	<classpathentry kind="var" path="JBOSS_HOME/lib/jboss-system.jar"/>
-	<classpathentry kind="lib" path="hungry/lib/js.jar"/>
-	<classpathentry kind="lib" path="hungry/lib/nekohtml.jar"/>
-	<classpathentry kind="lib" path="hungry/lib/Tidy.jar"/>
-	<classpathentry kind="lib" path="hungry/lib/xercesImpl.jar"/>
-	<classpathentry kind="lib" path="hungry/lib/xmlParserAPIs.jar"/>
-	<classpathentry kind="lib" path="hungry/lib/jwebunit-1.2.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/hungry/js.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/hungry/nekohtml.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/hungry/Tidy.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/hungry/xercesImpl.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/hungry/xmlParserAPIs.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/hungry/jwebunit-1.2.jar"/>
 	<classpathentry kind="src" path="wildfire/src/java"/>
-	<classpathentry kind="lib" path="wildfire/build/lib/dist/activation.jar"/>
-	<classpathentry kind="lib" path="wildfire/build/lib/ant.jar"/>
-	<classpathentry kind="lib" path="wildfire/build/lib/ant-contrib.jar"/>
-	<classpathentry kind="lib" path="wildfire/build/lib/ant-subdirtask.jar"/>
-	<classpathentry kind="lib" path="wildfire/build/lib/commons-el.jar"/>
-	<classpathentry kind="lib" path="wildfire/build/lib/jasper-compiler.jar"/>
-	<classpathentry kind="lib" path="wildfire/build/lib/jasper-runtime.jar"/>
-	<classpathentry kind="lib" path="wildfire/build/lib/junit.jar"/>
-	<classpathentry kind="lib" path="wildfire/build/lib/xmltask.jar"/>
-	<classpathentry kind="lib" path="wildfire/build/lib/dist/dumbhippo-client.jar"/>
-	<classpathentry kind="lib" path="wildfire/build/lib/dist/ejb3-persistence.jar"/>
-	<classpathentry kind="lib" path="wildfire/build/lib/dist/hsqldb.jar"/>
-	<classpathentry kind="lib" path="wildfire/build/lib/dist/jbossall-client.jar"/>
-	<classpathentry kind="lib" path="wildfire/build/lib/dist/jboss-aop-jdk50.jar"/>
-	<classpathentry kind="lib" path="wildfire/build/lib/dist/jboss-aspect-library-jdk50.jar"/>
-	<classpathentry kind="lib" path="wildfire/build/lib/dist/jboss-ejb3.jar"/>
-	<classpathentry kind="lib" path="wildfire/build/lib/dist/jboss-ejb3x.jar"/>
-	<classpathentry kind="lib" path="wildfire/build/lib/dist/jtds.jar"/>
-	<classpathentry kind="lib" path="wildfire/build/lib/dist/mysql.jar"/>
-	<classpathentry kind="lib" path="wildfire/build/lib/dist/postgres.jar"/>
-	<classpathentry kind="lib" path="wildfire/build/lib/merge/dom4j.jar"/>
-	<classpathentry kind="lib" path="wildfire/build/lib/merge/jaxen.jar"/>
-	<classpathentry kind="lib" path="wildfire/build/lib/merge/jdic.jar"/>
-	<classpathentry kind="lib" path="wildfire/build/lib/merge/jetty.jar"/>
-	<classpathentry kind="lib" path="wildfire/build/lib/merge/jmdns.jar"/>
-	<classpathentry kind="lib" path="wildfire/build/lib/merge/shaj.jar"/>
-	<classpathentry kind="lib" path="wildfire/build/lib/merge/sitemesh.jar"/>
-	<classpathentry kind="lib" path="wildfire/build/lib/merge/standard.jar"/>
-	<classpathentry kind="lib" path="wildfire/build/lib/merge/whack.jar"/>
-	<classpathentry kind="lib" path="wildfire/build/lib/merge/xpp3.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/wildfire/ant.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/wildfire/ant-contrib.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/wildfire/ant-subdirtask.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/wildfire/commons-el.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/wildfire/jasper-compiler.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/wildfire/jasper-runtime.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/wildfire/junit.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/wildfire/xmltask.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/wildfire/dist/activation.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/wildfire/dist/hsqldb.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/wildfire/dist/jtds.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/wildfire/dist/mysql.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/wildfire/dist/postgres.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/wildfire/merge/dom4j.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/wildfire/merge/jaxen.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/wildfire/merge/jdic.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/wildfire/merge/jetty.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/wildfire/merge/jmdns.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/wildfire/merge/shaj.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/wildfire/merge/sitemesh.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/wildfire/merge/standard.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/wildfire/merge/whack.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/wildfire/merge/xpp3.jar"/>
 	<classpathentry kind="src" path="wildfire/src/plugins/hippo/src/java"/>
-	<classpathentry kind="lib" path="server/lib/slf4j-log4j12.jar"/>
-	<classpathentry kind="lib" path="server/lib/lucene-core-1.9.1.jar"/>
-	<classpathentry kind="lib" path="taste/taste.jar"/>
-	<classpathentry kind="lib" path="taste/lib/annotations.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/server/slf4j-log4j12.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/taste/annotations.jar"/>
 	<classpathentry kind="src" path="server/tests"/>
-	<classpathentry kind="var" path="JBOSS_HOME/server/default/deploy/ejb3.deployer/hibernate-entitymanager.jar"/>
-	<classpathentry kind="lib" path="hungry/lib/httpunit-1.6.2.jar"/>
-	<classpathentry kind="lib" path="wildfire/build/lib/merge/jstl.jar"/>
-	<classpathentry kind="lib" path="server/lib/bsh-2.0b4.jar"/>
-	<classpathentry kind="lib" path="server/lib/rome-0.8.jar"/>
-	<classpathentry kind="lib" path="server/lib/rome-fetcher-0.7.jar"/>
-	<classpathentry kind="lib" path="server/lib/tagsoup-1.0.jar"/>
-	<classpathentry kind="lib" path="server/lib/jdom-1.0.jar"/>
-	<classpathentry kind="output" path="eclipse-bin"/>
+	<classpathentry kind="var" path="JBOSS_HOME/server/default/lib/hibernate-entitymanager.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/hungry/httpunit-1.6.2.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/wildfire/merge/jstl.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/server/bsh-2.0b4.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/server/rome-0.8.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/server/rome-fetcher-0.7.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/server/tagsoup-1.0.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/server/jdom-1.0.jar"/>
+	<classpathentry kind="var" path="JBOSS_HOME/client/javax.servlet.jar"/>
+	<classpathentry kind="var" path="JBOSS_HOME/server/default/deploy/ejb3.deployer/jboss-annotations-ejb3.jar"/>
+	<classpathentry kind="var" path="JBOSS_HOME/server/all/lib/jgroups.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/server/commons-fileupload-1.1.1.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/server/commons-io-1.2.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/server/lucene-core-2.0.0.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/server/hibernate3.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/server/hibernate-annotations.jar"/>
+	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/server/jboss-cache.jar"/>
+	<classpathentry kind="output" path="eclipse-build"/>
 </classpath>

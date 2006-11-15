@@ -6,12 +6,10 @@
 
 <head>
 	<title><c:out value="${!empty flashMessage ? flashMessage : 'Mugshot'}"/></title>
-	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/site.css"/>
+	<dht:siteStyle/>	
 	<dht:faviconIncludes/>
 	<dht:scriptIncludes/>
 	<script type="text/javascript">
-		dojo.require("dh.util");
-	
 		dh.util.goToNextPage("<c:out value="${next}"/>", "<c:out value="${flashMessage}"/>");
 	</script>
 </head>

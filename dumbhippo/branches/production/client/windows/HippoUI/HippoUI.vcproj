@@ -19,15 +19,16 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="../HippoUtil;../dependencies/glib/include/glib-2.0;../dependencies/glib/lib/glib-2.0/include;../loudmouth;../../common"
+				AdditionalIncludeDirectories="../HippoUtil;../dependencies/glib/include/glib-2.0;../dependencies/cairo/include/cairo;../dependencies/pango/include/pango-1.0;../dependencies/glib/lib/glib-2.0/include;../../common/loudmouth;../../common;../../common/canvas"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;NOMINMAX"
 				GeneratePreprocessedFile="0"
 				MinimalRebuild="TRUE"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="5"
+				RuntimeLibrary="1"
 				TreatWChar_tAsBuiltInType="TRUE"
 				ForceConformanceInForLoopScope="TRUE"
 				UsePrecompiledHeader="1"
+				PrecompiledHeaderThrough="stdafx-hippoui.h"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="TRUE"
 				DebugInformationFormat="4"/>
@@ -35,10 +36,11 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="Gdiplus.lib shlwapi.lib glib-2.0.lib gthread-2.0.lib gobject-2.0.lib loudmouth.lib ws2_32.lib wininet.lib urlmon.lib thrownew.obj advapi32.lib gdi32.lib shell32.lib"
+				AdditionalOptions="/VERBOSE:LIB"
+				AdditionalDependencies=" thrownew.obj Gdiplus.lib shlwapi.lib glib-2.0.lib gthread-2.0.lib gobject-2.0.lib loudmouth.lib pango-1.0.lib pangocairo-1.0.lib pangowin32-1.0.lib cairo.lib ws2_32.lib wininet.lib urlmon.lib advapi32.lib gdi32.lib shell32.lib comctl32.lib"
 				OutputFile="$(OutDir)/Mugshot.exe"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="../debug;../dependencies/glib/lib"
+				AdditionalLibraryDirectories="../debug;../dependencies/glib/lib;../dependencies/cairo/lib;../dependencies/pango/lib"
 				GenerateDebugInformation="TRUE"
 				ProgramDatabaseFile="$(OutDir)/HippoUI.pdb"
 				SubSystem="2"
@@ -76,6 +78,7 @@
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
 				RuntimeLibrary="4"
 				UsePrecompiledHeader="3"
+				PrecompiledHeaderThrough="stdafx-hippoui.h"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="TRUE"
 				DebugInformationFormat="3"/>
@@ -123,13 +126,25 @@
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
 			<File
+				RelativePath=".\HippoAbstractControl.cpp">
+			</File>
+			<File
+				RelativePath=".\HippoAbstractIEWindow.cpp">
+			</File>
+			<File
 				RelativePath=".\HippoAbstractWindow.cpp">
 			</File>
 			<File
-				RelativePath=".\HippoBubble.cpp">
+				RelativePath=".\HippoCanvas.cpp">
 			</File>
 			<File
-				RelativePath=".\HippoBubbleList.cpp">
+				RelativePath=".\HippoCanvasControl.cpp">
+			</File>
+			<File
+				RelativePath=".\HippoCanvasWidgets.cpp">
+			</File>
+			<File
+				RelativePath=".\HippoChatManager.cpp">
 			</File>
 			<File
 				RelativePath=".\HippoChatWindow.cpp">
@@ -139,9 +154,6 @@
 			</File>
 			<File
 				RelativePath=".\HippoExternalBrowser.cpp">
-			</File>
-			<File
-				RelativePath=".\HippoFlickr.cpp">
 			</File>
 			<File
 				RelativePath=".\HippoGSignal.cpp">
@@ -156,22 +168,25 @@
 				RelativePath=".\HippoIEWindow.cpp">
 			</File>
 			<File
+				RelativePath=".\HippoImageFactory.cpp">
+			</File>
+			<File
 				RelativePath=".\HippoITunesMonitor.cpp">
 			</File>
 			<File
-				RelativePath=".\HippoLogWindow.cpp">
+				RelativePath=".\HippoJScriptEngine.cpp">
 			</File>
 			<File
-				RelativePath=".\HippoMenu.cpp">
+				RelativePath=".\HippoListenerProxy.cpp">
+			</File>
+			<File
+				RelativePath=".\HippoLogWindow.cpp">
 			</File>
 			<File
 				RelativePath=".\HippoMusic.cpp">
 			</File>
 			<File
 				RelativePath=".\HippoMusicMonitor.cpp">
-			</File>
-			<File
-				RelativePath=".\HippoMySpace.cpp">
 			</File>
 			<File
 				RelativePath=".\HippoPlatformImpl.cpp">
@@ -183,7 +198,13 @@
 				RelativePath=".\HippoRemoteWindow.cpp">
 			</File>
 			<File
+				RelativePath=".\HippoScrollbar.cpp">
+			</File>
+			<File
 				RelativePath=".\HippoToolbarEdit.cpp">
+			</File>
+			<File
+				RelativePath=".\HippoToolTip.cpp">
 			</File>
 			<File
 				RelativePath=".\HippoUI.cpp">
@@ -196,6 +217,9 @@
 			</File>
 			<File
 				RelativePath=".\HippoUpgrader.cpp">
+			</File>
+			<File
+				RelativePath=".\HippoWindowWin.cpp">
 			</File>
 			<File
 				RelativePath=".\HippoYahooMonitor.cpp">
@@ -224,13 +248,22 @@
 				RelativePath=".\Guid.h">
 			</File>
 			<File
+				RelativePath=".\HippoAbstractControl.h">
+			</File>
+			<File
+				RelativePath=".\HippoAbstractIEWindow.h">
+			</File>
+			<File
 				RelativePath=".\HippoAbstractWindow.h">
 			</File>
 			<File
-				RelativePath=".\HippoBubble.h">
+				RelativePath=".\HippoCanvas.h">
 			</File>
 			<File
-				RelativePath=".\HippoBubbleList.h">
+				RelativePath=".\HippoCanvasControl.h">
+			</File>
+			<File
+				RelativePath=".\HippoChatManager.h">
 			</File>
 			<File
 				RelativePath=".\HippoChatWindow.h">
@@ -240,9 +273,6 @@
 			</File>
 			<File
 				RelativePath=".\HippoExternalBrowser.h">
-			</File>
-			<File
-				RelativePath=".\HippoFlickr.h">
 			</File>
 			<File
 				RelativePath=".\HippoGSignal.h">
@@ -257,22 +287,25 @@
 				RelativePath=".\HippoIEWindow.h">
 			</File>
 			<File
+				RelativePath=".\HippoImageFactory.h">
+			</File>
+			<File
 				RelativePath=".\HippoITunesMonitor.h">
 			</File>
 			<File
-				RelativePath=".\HippoLogWindow.h">
+				RelativePath=".\HippoJScriptEngine.h">
 			</File>
 			<File
-				RelativePath=".\HippoMenu.h">
+				RelativePath=".\HippoListenerProxy.h">
+			</File>
+			<File
+				RelativePath=".\HippoLogWindow.h">
 			</File>
 			<File
 				RelativePath=".\HippoMusic.h">
 			</File>
 			<File
 				RelativePath=".\HippoMusicMonitor.h">
-			</File>
-			<File
-				RelativePath=".\HippoMySpace.h">
 			</File>
 			<File
 				RelativePath=".\HippoPlatformImpl.h">
@@ -284,7 +317,13 @@
 				RelativePath=".\HippoRemoteWindow.h">
 			</File>
 			<File
+				RelativePath=".\HippoScrollbar.h">
+			</File>
+			<File
 				RelativePath=".\HippoToolbarEdit.h">
+			</File>
+			<File
+				RelativePath=".\HippoToolTip.h">
 			</File>
 			<File
 				RelativePath=".\HippoUI.h">
@@ -294,6 +333,9 @@
 			</File>
 			<File
 				RelativePath=".\HippoUpgrader.h">
+			</File>
+			<File
+				RelativePath=".\HippoWindowWin.h">
 			</File>
 			<File
 				RelativePath=".\HippoYahooMonitor.h">
@@ -344,6 +386,12 @@
 			</File>
 			<File
 				RelativePath=".\Mugshot.ico">
+			</File>
+			<File
+				RelativePath=".\notification.ico">
+			</File>
+			<File
+				RelativePath=".\notification_disconnected.ico">
 			</File>
 			<File
 				RelativePath=".\swarm1.ico">

@@ -10,12 +10,20 @@ import com.dumbhippo.statistics.StatisticsSource;
  * @author otaylor
  */
 public class LiveStatistics implements StatisticsSource {
-	@Column(id="availableUserCount",
-			name="Available User Count", 
+	@Column(id="localAvailableCount",
+			name="Local Available User Count", 
 			units=ColumnUnit.COUNT, 
 			type=ColumnType.SNAPSHOT)
-	public long getAvailableUserCount() {
-		return LiveState.getInstance().getLiveUserAvailableCount();
+	public long getLocalAvailableCount() {
+		return PresenceService.getInstance().getLocalPresentUsers("/users", 1).size();
+	}	
+
+	@Column(id="totalAvailableCount",
+			name="Total Available User Count", 
+			units=ColumnUnit.COUNT, 
+			type=ColumnType.SNAPSHOT)
+	public long getTotalAvailableUserCount() {
+		return PresenceService.getInstance().getPresentUsers("/users", 1).size();
 	}	
 
 	@Column(id="cachedUserCount",

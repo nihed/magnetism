@@ -26,7 +26,7 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.postinfo.PostInfo;
 
 @Entity
-@Indexed(index="index/post")
+@Indexed(index="post")
 @org.hibernate.annotations.Table(appliesTo = "Post", indexes={ 
 		@Index(name="postDate_index", columnNames = { "postDate" } ) }
 )
@@ -118,10 +118,12 @@ public class Post extends GuidPersistable {
 	}
 	
 	@Column(nullable=false)
-	public boolean getDisabled() {
+	public boolean isDisabled() {
 		return disabled;
 	}
 
+	// do not use this directly from the admin console, use setPostDisabled()
+	// in the PostingBoardBean
 	public void setDisabled(boolean disabled) {
 		this.disabled = disabled;
 	}	
@@ -137,7 +139,7 @@ public class Post extends GuidPersistable {
 	
 	@ManyToMany
 	@JoinTable(name="Post_PersonRecipient")
-	@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)
+	@Cache(usage=CacheConcurrencyStrategy.TRANSACTIONAL)
 	public Set<Resource> getPersonRecipients() {
 		return personRecipients;
 	}
@@ -151,7 +153,7 @@ public class Post extends GuidPersistable {
 	}
 	
 	@ManyToMany
-	@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)
+	@Cache(usage=CacheConcurrencyStrategy.TRANSACTIONAL)
 	public Set<Group> getGroupRecipients() {
 		return groupRecipients;
 	}
@@ -165,7 +167,7 @@ public class Post extends GuidPersistable {
 	}
 	
 	@ManyToMany
-	@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)
+	@Cache(usage=CacheConcurrencyStrategy.TRANSACTIONAL)
 	public Set<Resource> getResources() {
 		return resources;
 	}
@@ -205,7 +207,7 @@ public class Post extends GuidPersistable {
 
 	@ManyToMany
 	@JoinTable(name="Post_ExpandedRecipient")
-	@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)
+	@Cache(usage=CacheConcurrencyStrategy.TRANSACTIONAL)
 	public Set<Resource> getExpandedRecipients() {
 		return expandedRecipients;
 	}
@@ -337,7 +339,7 @@ public class Post extends GuidPersistable {
 	}
 	
 	@OneToMany(mappedBy="post")
-	@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)
+	@Cache(usage=CacheConcurrencyStrategy.TRANSACTIONAL)
 	public Set<PersonPostData> getPersonPostData() {
 		return personPostData;
 	}
@@ -350,6 +352,11 @@ public class Post extends GuidPersistable {
 		if (datas == null)
 			throw new IllegalArgumentException("null");
 		this.personPostData = datas;
+	}
+	
+	@Transient 
+	public boolean isPublic() {
+	    return (visibility == PostVisibility.ANONYMOUSLY_PUBLIC || visibility == PostVisibility.ATTRIBUTED_PUBLIC);	
 	}
 	
 	@Transient

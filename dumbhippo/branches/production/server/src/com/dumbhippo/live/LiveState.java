@@ -1,33 +1,27 @@
 package com.dumbhippo.live;
 
 import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-import javax.naming.InitialContext;
-import javax.persistence.EntityManager;
-import javax.transaction.Status;
-import javax.transaction.Synchronization;
-import javax.transaction.TransactionManager;
-
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.ListenerList;
 import com.dumbhippo.identity20.Guid;
+import com.dumbhippo.jms.JmsConnectionType;
 import com.dumbhippo.jms.JmsProducer;
 import com.dumbhippo.persistence.Account;
 import com.dumbhippo.server.AccountSystem;
-import com.dumbhippo.server.Configuration;
-import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.util.EJBUtil;
 
@@ -37,6 +31,10 @@ public class LiveState {
 	
 	// This is for poking from the admin console
 	static public boolean verboseLogging = false;
+	static private boolean throwRandomExceptionOnEntryCreation = false;
+	
+	static public final String testExceptionText = "Test exception creating a cache entry.";
+	static public final String objectCreationFailedText = "Waited for object creation that failed.";
 	
 	private static LiveState theState;
 	
@@ -52,9 +50,6 @@ public class LiveState {
 	// Maximum number of cleaner intervals for each post
 	private static final int MAX_POST_CACHE_AGE = 30;
 	
-	// Maximum number of cleaner intervals for un-pinged XMPP servers
-	private static final int MAX_XMPP_SERVER_CACHE_AGE = 2;
-
 	/**
 	 * Get the global singleton LiveState object. The methods of the
 	 * LiveState object may safely be called from any thread.
@@ -79,6 +74,20 @@ public class LiveState {
 	 */
 	public LiveUser getLiveUser(Guid userId) {
 		return userCache.get(userId);
+	}
+	
+	/**
+	 * Return a LiveUser cache object if one exists for a given userId.
+	 * 
+	 * @param userId
+	 * @return a LiveUser cache object if one exists for a given userId
+	 */
+	public LiveUser peekLiveUser(Guid userId) {
+		LiveUser current = userCache.peek(userId);
+		if (current != null)
+			return current;
+		else
+			return null;
 	}
 	
 	/**
@@ -144,84 +153,18 @@ public class LiveState {
 	 * Returns a snapshot of the current set of available users.
 	 */
 	public Set<LiveUser> getLiveUserAvailableSnapshot() {
-		return userCache.getAllObjects(true);
+		Set<LiveUser> result = new HashSet<LiveUser>();
+		for (Guid guid : PresenceService.getInstance().getLocalPresentUsers("/users", 1))
+			result.add(getLiveUser(guid));
+		
+		return result;
 	}	
 	
 	/**
 	 * Returns the number of available users
 	 */
 	public int getLiveUserAvailableCount() {
-		return clientDataCache.getObjectCount(true);
-	}
-
-	/**
-	 * Locate or create a LiveClientData cache object for a particular user.
-	 * See getLiveClientData()
-	 * 
-	 * @param userId the user ID for which we should get a cache object
-	 * @return the LiveClientData cache object.
-	 */
-	public LiveClientData getLiveClientData(Guid userId) {
-		return clientDataCache.get(userId);
-	}
-	
-	/**
-	 * Locate a LiveClientData cache object for a particular user. Does
-	 * not force creation if the object doesn't already exist, does not
-	 * reset the cache age to zero, and doesn't wait for object update.
-	 * (In the last case, it simply returns stale data.)  
-	 * 
-	 * @param userId the user ID for which we should get a cache object
-	 * @return the LiveClientData cache object, or null if the user is
-	 *   no client data has currently been computed 
-	 */
-	public LiveClientData peekLiveClientData(Guid userId) {
-		return clientDataCache.peek(userId);
-	}
-	
-	/**
-	 * Get or create a LiveClientData cache object for a particular user in 
-	 * preparation for updating it with new values. See
-	 * getLiveUserForUpdate()
-	 * 
-	 * @param userId the post ID for which we should get a cache object
-	 * @return a copy of the existing or newly created object
-	 */
-	LiveClientData getLiveClientDataForUpdate(Guid userId) {
-		return (LiveClientData)clientDataCache.getForUpdate(userId).clone();
-	}
-	
-	/**
-	 * Get a LiveClientData cache object for a particular user in preparation
-	 * for updating it with new values. See peekLiveUserForUpdate().  
-	 * 
-	 * @param user the user ID for which we should get a cache object
-	 * @return a copy of the existing LiveClientData cache object if one is currently loaded,
-	 *    otherwise null.
-	 */
-	public LiveClientData peekLiveClientDataForUpdate(Guid userId) {
-		LiveClientData current = clientDataCache.peekForUpdate(userId);
-		if (current != null)
-			return (LiveClientData)current.clone();
-		else
-			return null;
-	}	
-	
-	/**
-	 * Insert an updated LiveClientData object into the cache. See updateLiveUser()
-	 * 
-	 * @param group new LiveClientData object to insert
-	 */
-	public void updateLiveClientData(LiveClientData newClientData) {
-		clientDataCache.update(newClientData);
-	}	
-	
-	/**
-	 * Returns a snapshot of the current set of LiveClientData objects in
-	 * the memory cache.
-	 */
-	public Set<LiveClientData> getLiveClientDataCacheSnapshot() {
-		return clientDataCache.getAllObjects(false);
+		return PresenceService.getInstance().getLocalPresentUsers("/users", 1).size();
 	}
 
 	/**
@@ -308,72 +251,19 @@ public class LiveState {
 	}	
 	
 	/**
-	 * Create a new LiveXmppServer object representing a newly connected
-	 * instance of a Jabber server. The object can be looked up in
-	 * the future by calling getXmppServer() with the unique cookie
-	 * from LiveXmppServer.getServerIdentifier().
-	 * 
-	 * @return the new LiveXmppServer object.
-	 */
-	public LiveXmppServer createXmppServer() {
-		LiveXmppServer xmppServer = new LiveXmppServer(this);
-		xmppServers.put(xmppServer.getServerIdentifier(), xmppServer);
-		
-		return xmppServer;
-	}
-	
-	/**
-	 * Looks up a previously created LiveXmppServer, if it hasn't been
-	 * timed out in between.
-	 * 
-	 * @param serverIdentifier cookie from LiveXmppServer.getServerIdentifier().
-	 * @return the server, if found, otherwise null.
-	 */
-	public LiveXmppServer getXmppServer(String serverIdentifier) {
-		return xmppServers.get(serverIdentifier);
-	}
-
-	/**
 	 * Queue an event representing a change to the database state. The
 	 * event will be processed asynchronously resulting in updates to
 	 * the live state objects and also possibly in notifications sent
 	 * to present users via XMPPP.
 	 * 
+	 * The event is queued as part of the current transaction, and will be
+	 * sent out upon commit or discarded if the current transaction is
+	 * rolled back.
+	 * 
 	 * @param event the event
 	 */
 	public void queueUpdate(LiveEvent event) {
-		synchronized(updateQueue) {
-			updateQueue.send(updateQueue.createObjectMessage(event));
-		}
-	}
-	
-	private class LiveStateTransactionSynchronization implements Synchronization {
-		private LiveEvent event;
-		
-		public LiveStateTransactionSynchronization(LiveEvent event) {
-			this.event = event;
-		}
-		
-		public void beforeCompletion() {
-		}
-
-		public void afterCompletion(int status) {
-			if (status == Status.STATUS_COMMITTED) {
-				logger.debug("running post-transaction event " + event);
-				LiveState.getInstance().queueUpdate(event);
-			}
-		}
-	}
-	
-	public void queuePostTransactionUpdate(EntityManager em, LiveEvent event) {
-		Synchronization hook = new LiveStateTransactionSynchronization(event);
-		TransactionManager tm;
-		try {		
-			tm = (TransactionManager) (new InitialContext()).lookup("java:/TransactionManager");
-			tm.getTransaction().registerSynchronization(hook);
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
+		updateQueue.sendObjectMessage(event);
 	}
 	
 	/**
@@ -394,35 +284,18 @@ public class LiveState {
 			// Shouldn't happen, just ignore
 		}
 		
-		liveUserUpdater.interrupt();
-		
-		try {
-			liveUserUpdater.join();
-			logger.info("Successfully stopped LiveState user updater thread");
-		} catch (InterruptedException e) {}
+		updateQueue.close();
 	}
 	
 	/**************************************************************************/
 
 	private LiveObjectCache<LiveUser> userCache;
 	
-	private LiveObjectCache<LiveClientData> clientDataCache;
-	
 	private LiveObjectCache<LivePost> postCache;
 	
 	private LiveObjectCache<LiveGroup> groupCache;
 
-	// Current LiveXmppServer objects. This is simpler than the post and
-	// user caches, since we don't want to keep around stray LiveXmppServer
-	// objects. If the server fails to ping, we want to unconditionally
-	// discard it. We, however, do use some of the same code to implement
-	// aging and timing out of xmppServers as is used for cachedUsers and
-	// cachedPosts.
-	private Map<String, LiveXmppServer> xmppServers;
-
 	private Cleaner cleaner;
-	
-	private LiveUserPeriodicUpdater liveUserUpdater;
 	
 	private JmsProducer updateQueue;
 	
@@ -435,17 +308,6 @@ public class LiveState {
 						userUpdater.initialize(liveUser);
 
 						return liveUser;
-					}
-				},
-				MAX_USER_CACHE_AGE);
-		clientDataCache = new LiveObjectCache<LiveClientData>(
-				new LiveObjectFactory<LiveClientData>() {
-					public LiveClientData create(Guid guid) {
-						LiveClientData clientData = new LiveClientData(guid);			
-						LiveClientDataUpdater dataUpdater = EJBUtil.defaultLookup(LiveClientDataUpdater.class);
-						dataUpdater.initialize(clientData);
-
-						return clientData;
 					}
 				},
 				MAX_USER_CACHE_AGE);
@@ -472,48 +334,12 @@ public class LiveState {
 				},
 				MAX_GROUP_CACHE_AGE);
 		
-		xmppServers = new ConcurrentHashMap<String, LiveXmppServer>();
-		
-		updateQueue = new JmsProducer(LiveEvent.QUEUE, true);
+		updateQueue = new JmsProducer(LiveEvent.TOPIC_NAME, JmsConnectionType.TRANSACTED_IN_SERVER);
 		
 		cleaner = new Cleaner();
 		cleaner.start();
+	}
 		
-		liveUserUpdater = new LiveUserPeriodicUpdater();
-		liveUserUpdater.setName("LiveUserUpdater");		
-		liveUserUpdater.start();
-	}
-	
-	// Internal function to update the availability count for the user;
-	// see LiveXmppServer.userAvailable().
-	void userAvailable(Guid userId) {
-		LiveClientData clientData = getLiveClientDataForUpdate(userId);
-		try {
-			clientData.setAvailableCount(clientData.getAvailableCount() + 1);
-			if (clientData.getAvailableCount() == 1) {
-				logger.debug("User {} is now available", clientData.getGuid());			
-				clientDataCache.addStrongReference(clientData);
-			}
-		} finally {
-			updateLiveClientData(clientData);
-		}
-	}
-
-	// Internal function to update the availability count for the user;
-	// see LiveXmppServer.userUnavailable().
-	void userUnavailable(Guid userId) {
-		LiveClientData clientData = peekLiveClientDataForUpdate(userId);
-		try {
-			clientData.setAvailableCount(clientData.getAvailableCount() - 1);
-			if (clientData.getAvailableCount() == 0) {
-				logger.debug("User {} is no longer available", clientData.getGuid());
-				clientDataCache.dropStrongReference(clientData);
-			}
-		} finally {
-			updateLiveClientData(clientData);
-		}
-	}
-	
 	// Internal function to record a user joining the chat room for a post;
 	// see LiveXmppServer.postRoomUserAvailable
 	void postRoomUserAvailable(Guid postId, Guid userId, boolean isParticipant) {
@@ -552,34 +378,52 @@ public class LiveState {
 		
 		logger.debug("Post {} now has {} viewing users and " + lpost.getChattingUserCount() + " chatting users", 
 				postId, lpost.getViewingUserCount());  
-	}
-
-	public void resendAllNotifications(Guid guid) {
-		LiveClientDataUpdater updater = EJBUtil.defaultLookup(LiveClientDataUpdater.class);
-		LiveClientData clientData = getLiveClientData(guid);
-		updater.sendAllNotifications(clientData);
 	}	
 
+	private static Map<Class<?>, ListenerList<?>> listenerLists = new HashMap<Class<?>, ListenerList<?>>();
 	
-	private void ageXmppServers() throws InterruptedException {
-		for (Iterator<LiveXmppServer> i = xmppServers.values().iterator(); i.hasNext();) {
-			LiveXmppServer xmppServer = i.next();
-			int newAge = xmppServer.increaseCacheAge();
-			if (newAge >= MAX_XMPP_SERVER_CACHE_AGE) {
-				logger.debug("Discarding timed-out LiveXmppServer");
-		                     i.remove();
-		                     xmppServer.discard();
+	@SuppressWarnings("unchecked")
+	public static <T extends LiveEvent> ListenerList<LiveEventListener<T>> getListenerList(Class<T> clazz, boolean create) {
+		ListenerList<LiveEventListener<T>> listeners;
+		
+		synchronized(listenerLists) {
+			 listeners = (ListenerList<LiveEventListener<T>>)listenerLists.get(clazz);
+			 if (listeners == null && create) {
+				 listeners = new ListenerList<LiveEventListener<T>>();
+				 listenerLists.put(clazz, listeners);
+			 }
+		}
+		
+		return listeners;
+	}
+
+	public static <T extends LiveEvent> void addEventListener(Class<T> clazz, LiveEventListener<T> listener) {
+		ListenerList<LiveEventListener<T>> listeners = getListenerList(clazz, true);
+		listeners.addListener(listener);
+	}
+	
+	public static <T extends LiveEvent> void removeEventListener(Class<T> clazz, LiveEventListener<T> listener) {
+		ListenerList<LiveEventListener<T>> listeners = getListenerList(clazz, false);
+		if (listeners != null)
+			listeners.removeListener(listener);
+	}
+	
+	@SuppressWarnings("unchecked")
+	public void invokeEventListeners(LiveEvent event) {
+		ListenerList listeners = getListenerList(event.getClass(), false);
+		logger.info("Processing event: " + event);
+		if (listeners != null) {
+			for (Object o : listeners) {
+				((LiveEventListener)o).onEvent(event);
 			}
 		}
 	}
-
+	
 	private void clean() throws InterruptedException {
 		// Bump the age of all objects, removing ones that pass the maximum age
 		userCache.age();
 		postCache.age();
 		groupCache.age();
-		
-		ageXmppServers();
 	}
 
 	// Thread that ages the different types of objects we keep around, and
@@ -605,54 +449,6 @@ public class LiveState {
 		}
 	}
 	
-	public void setUserUpdateInterval(int interval) {
-		liveUserUpdater.setUserUpdateInterval(interval);
-	}
-	
-	// Periodically decays the hotness of every active user
-	private class LiveUserPeriodicUpdater extends Thread {
-		int userUpdateInterval;
-		
-		public LiveUserPeriodicUpdater() {
-			Configuration configuration = EJBUtil.defaultLookup(Configuration.class);
-			String intervalString = configuration.getProperty(HippoProperty.USER_UPDATE_INTERVAL);
-			userUpdateInterval = Integer.parseInt(intervalString);
-		}
-		
-		public synchronized void setUserUpdateInterval(int interval) {
-			userUpdateInterval = interval;
-		}
-		
-		@Override
-		public void run() {
-			long nextTime = System.currentTimeMillis() + userUpdateInterval * 1000;
-			
-			while (true) {
-				try {
-					Thread.sleep(nextTime - System.currentTimeMillis());
-
-					LiveClientDataUpdater updater = EJBUtil.defaultLookup(LiveClientDataUpdater.class);					
-					Set<LiveClientData> toUpdate;
-					// Grab a copy of the current user map to avoid locking the whole
-					// object for a long time
-					toUpdate = getLiveClientDataCacheSnapshot();
-					
-					for (LiveClientData clientData : toUpdate) {
-						updater.periodicUpdate(clientData.getGuid());
-					}		
-				} catch (InterruptedException e) {
-					break; // exit the loop
-				} catch (Throwable t) {
-					logger.warn("Unexpected exception in LiveUserPeriodicUpdater", t);
-				} finally {
-					// this is in finally so a recurring exception doesn't busy loop so badly
-					long currentTime = System.currentTimeMillis();
-					nextTime = Math.max(currentTime, nextTime + userUpdateInterval * 1000);
-				}
-			}
-		}
-	}
-	
 	/**
 	 * Do some stress testing of LiveState by dumping all our caches, then trying to
 	 * reload all users from the different threads simulaneously.
@@ -660,57 +456,83 @@ public class LiveState {
 	 * The normal way to run this is from the admin console
 	 * 
 	 *  com.dumbhippo.live.LiveState.verboseLogging = true;
-	 *  com.dumbhippo.live.LiveState.getInstance().stressTest();
+	 *  com.dumbhippo.live.LiveState.getInstance().stressTest(false); 
 	 */
-	public void stressTest() {
-		final List<Guid> toLookup = new ArrayList<Guid>();
+	public void stressTest(boolean throwRandomExceptionOnEntryCreation) {
+		LiveState.throwRandomExceptionOnEntryCreation = throwRandomExceptionOnEntryCreation;
 		
-		final TransactionRunner runner = EJBUtil.defaultLookup(TransactionRunner.class);
-		runner.runTaskInNewTransaction(new Runnable() {
-			public void run() {
-				AccountSystem accountSystem = EJBUtil.defaultLookup(AccountSystem.class);
-				
-				for (Account account : accountSystem.getActiveAccounts()) {
-					toLookup.add(account.getOwner().getGuid());
-				}
-			}
-		});
+		// The use of runTaskInNewTransaction here could deadlock if we were
+		// called from a transaction that also made database modifications;
+		// but since we're just going to be called explicitly from the admin
+		// console we are pretty safe.
 		
-		userCache.removeAllWeak();
-		postCache.removeAllWeak();
-		groupCache.removeAllWeak();
-		
-		final int NUM_THREADS = 10;
-		ExecutorService threadPool = Executors.newFixedThreadPool(NUM_THREADS);
-		final long baseSeed = System.currentTimeMillis();
-		
-		List<Future<Object>> futures = new ArrayList<Future<Object>>(); 
-		
-		for (int i = 0; i < NUM_THREADS; i++) {
-			final long seed = baseSeed + i;
-			futures.add(threadPool.submit(new Callable<Object>() {
-				public Object call() {
-					runner.runTaskInNewTransaction(new Runnable() {
-						public void run() {
-							for (Guid guid : shuffle(toLookup, seed)) {
-								getLiveUser(guid);
-							}
-						}
-					});
+		try {
+			
+			final List<Guid> toLookup = new ArrayList<Guid>();
+			
+			final TransactionRunner runner = EJBUtil.defaultLookup(TransactionRunner.class);
+			runner.runTaskInNewTransaction(new Runnable() {
+				public void run() {
+					AccountSystem accountSystem = EJBUtil.defaultLookup(AccountSystem.class);
 					
-					return null;
+					for (Account account : accountSystem.getActiveAccounts()) {
+						toLookup.add(account.getOwner().getGuid());
+					}
 				}
-			}));
-		}
-		
-		for (Future<Object> future : futures) {
-			try {
-				future.get();
-			} catch (InterruptedException e) {
-				throw new RuntimeException("Interrupted!", e);
-			} catch (ExecutionException e) {
-				throw new RuntimeException("Test thread hit exception", e);
+			});
+			
+			userCache.removeAllWeak();
+			postCache.removeAllWeak();
+			groupCache.removeAllWeak();
+			
+			final int NUM_THREADS = 10;
+			ExecutorService threadPool = Executors.newFixedThreadPool(NUM_THREADS);
+			final long baseSeed = System.currentTimeMillis();
+			
+			List<Future<Object>> futures = new ArrayList<Future<Object>>(); 
+			
+			for (int i = 0; i < NUM_THREADS; i++) {
+				final long seed = baseSeed + i;
+				futures.add(threadPool.submit(new Callable<Object>() {
+					public Object call() {
+						runner.runTaskInNewTransaction(new Runnable() {
+							public void run() {
+								for (Guid guid : shuffle(toLookup, seed)) {
+									try {
+									    getLiveUser(guid);
+									} catch (RuntimeException e) {
+								    	if (LiveState.throwRandomExceptionOnEntryCreation) {
+								    		if ((e.getMessage().startsWith(LiveState.testExceptionText)) ||
+								    		    (e.getMessage().startsWith(LiveState.objectCreationFailedText))) {
+								    			logger.debug(e.getMessage());
+								    		} else {
+								    			throw e;
+								    		}
+								    	} else {
+								    		throw e;
+								    	}
+									}
+								}
+							}
+						});
+						
+						return null;
+					}
+				}));
 			}
+			
+			for (Future<Object> future : futures) {
+				try {
+					future.get();
+				} catch (InterruptedException e) {
+				    throw new RuntimeException("Interrupted!", e);
+				} catch (ExecutionException e) {
+					throw new RuntimeException("Test thread hit exception", e);
+				}
+			}
+		
+		} finally {
+		    LiveState.throwRandomExceptionOnEntryCreation = false;
 		}
 	}
 	
@@ -726,5 +548,9 @@ public class LiveState {
 		}
 		
 		return result;
+	}
+	
+	public static boolean getThrowRandomExceptionOnEntryCreation() {
+		return LiveState.throwRandomExceptionOnEntryCreation;
 	}
 }

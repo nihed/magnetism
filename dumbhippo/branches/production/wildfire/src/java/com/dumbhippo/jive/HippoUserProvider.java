@@ -12,8 +12,8 @@ import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.Log;
 
 import com.dumbhippo.server.JabberUserNotFoundException;
-import com.dumbhippo.server.MessengerGlueRemote;
-import com.dumbhippo.server.MessengerGlueRemote.JabberUser;
+import com.dumbhippo.server.MessengerGlue;
+import com.dumbhippo.server.MessengerGlue.JabberUser;
 import com.dumbhippo.server.util.EJBUtil;
 
 public class HippoUserProvider implements UserProvider {
@@ -29,7 +29,7 @@ public class HippoUserProvider implements UserProvider {
 		
 		Log.debug("loadUser() username = " + username);
 		
-		MessengerGlueRemote glue = EJBUtil.defaultLookupRemote(MessengerGlueRemote.class);
+		MessengerGlue glue = EJBUtil.defaultLookup(MessengerGlue.class);
 	
 		if (ENABLE_ADMIN_USER && username.equals(getAdminUsername())) {
 			return new User(getAdminUsername(), "Administrator", null, null, null);
@@ -66,7 +66,7 @@ public class HippoUserProvider implements UserProvider {
 		
 		Log.debug("getUserCount()");
 		
-		MessengerGlueRemote glue = EJBUtil.defaultLookupRemote(MessengerGlueRemote.class);
+		MessengerGlue glue = EJBUtil.defaultLookup(MessengerGlue.class);
 	
 		long result = glue.getJabberUserCount();
 		// Is there such a thing as optimistic paranoia?
@@ -120,7 +120,7 @@ public class HippoUserProvider implements UserProvider {
 		if (ENABLE_ADMIN_USER && username.equals(getAdminUsername()))
 			return;
 		
-		MessengerGlueRemote glue = EJBUtil.defaultLookupRemote(MessengerGlueRemote.class);
+		MessengerGlue glue = EJBUtil.defaultLookup(MessengerGlue.class);
 
 		try {
 			glue.setName(username, name);
@@ -137,7 +137,7 @@ public class HippoUserProvider implements UserProvider {
 		if (ENABLE_ADMIN_USER && username.equals(getAdminUsername()))
 			return;
 
-		MessengerGlueRemote glue = EJBUtil.defaultLookupRemote(MessengerGlueRemote.class);		
+		MessengerGlue glue = EJBUtil.defaultLookup(MessengerGlue.class);		
 
 		try {
 			glue.setEmail(username, email);

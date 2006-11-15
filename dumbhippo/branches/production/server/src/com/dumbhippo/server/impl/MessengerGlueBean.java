@@ -11,6 +11,8 @@ import java.util.Set;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.interceptor.AroundInvoke;
 import javax.interceptor.InvocationContext;
 
@@ -20,11 +22,10 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
-import com.dumbhippo.live.Hotness;
-import com.dumbhippo.live.LiveClientData;
+import com.dumbhippo.live.ChatRoomEvent;
 import com.dumbhippo.live.LivePost;
 import com.dumbhippo.live.LiveState;
-import com.dumbhippo.live.LiveXmppServer;
+import com.dumbhippo.live.UserChangedEvent;
 import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.EmbeddedMessage;
 import com.dumbhippo.persistence.ExternalAccount;
@@ -46,31 +47,32 @@ import com.dumbhippo.server.ChatRoomInfo;
 import com.dumbhippo.server.ChatRoomKind;
 import com.dumbhippo.server.ChatRoomMessage;
 import com.dumbhippo.server.ChatRoomUser;
-import com.dumbhippo.server.Enabled;
-import com.dumbhippo.server.EntityView;
 import com.dumbhippo.server.ExternalAccountSystem;
 import com.dumbhippo.server.GroupSystem;
-import com.dumbhippo.server.GroupView;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.InvitationSystem;
 import com.dumbhippo.server.JabberUserNotFoundException;
-import com.dumbhippo.server.MessengerGlueRemote;
+import com.dumbhippo.server.MessengerGlue;
 import com.dumbhippo.server.MusicSystem;
+import com.dumbhippo.server.MusicSystemInternal;
 import com.dumbhippo.server.MySpaceTracker;
 import com.dumbhippo.server.NotFoundException;
-import com.dumbhippo.server.PersonView;
-import com.dumbhippo.server.PersonViewExtra;
 import com.dumbhippo.server.PersonViewer;
-import com.dumbhippo.server.PostView;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.PromotionCode;
 import com.dumbhippo.server.ServerStatus;
-import com.dumbhippo.server.SystemViewpoint;
-import com.dumbhippo.server.TrackView;
-import com.dumbhippo.server.UserViewpoint;
+import com.dumbhippo.server.TransactionRunner;
+import com.dumbhippo.server.views.EntityView;
+import com.dumbhippo.server.views.GroupView;
+import com.dumbhippo.server.views.PersonView;
+import com.dumbhippo.server.views.PersonViewExtra;
+import com.dumbhippo.server.views.PostView;
+import com.dumbhippo.server.views.SystemViewpoint;
+import com.dumbhippo.server.views.TrackView;
+import com.dumbhippo.server.views.UserViewpoint;
 
 @Stateless
-public class MessengerGlueBean implements MessengerGlueRemote {
+public class MessengerGlueBean implements MessengerGlue {
 	
 	static private final Logger logger = GlobalSetup.getLogger(MessengerGlueBean.class);
 	
@@ -93,6 +95,9 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 	private MusicSystem musicSystem;
 	
 	@EJB
+	private MusicSystemInternal musicSystemInternal;	
+	
+	@EJB
 	private InvitationSystem invitationSystem;
 	
 	@EJB
@@ -100,6 +105,9 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 	
 	@EJB
 	private ServerStatus serverStatus;
+	
+	@EJB
+	private TransactionRunner transactionRunner;
 	
 	@EJB
 	private ExternalAccountSystem externalAccounts;
@@ -229,141 +237,88 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 	
 		return user;
 	}
+	
+	private void doShareLinkTutorial(Account account) {
+		logger.debug("We have a new user!!!!! WOOOOOOOOOOOOHOOOOOOOOOOOOOOO send them tutorial!");
 
-	public String serverStartup(long timestamp) {
-		logger.info("Jabber server startup at {}", new Date(timestamp));
+		InvitationToken invite = invitationSystem.getCreatingInvitation(account);
 		
-		return LiveState.getInstance().createXmppServer().getServerIdentifier();
-	}
-	
-	public void serverPing(String serverIdentifier) throws NoSuchServerException {
-		LiveXmppServer server = LiveState.getInstance().getXmppServer(serverIdentifier);
-		if (server == null)
-			throw new NoSuchServerException(null);
+		// see what feature the user was sold on originally, and share the right thing 
+		// with them accordingly
 		
-		server.ping();
-	}
-	
-	public void onUserAvailable(String serverIdentifier, String username) throws NoSuchServerException {
-		logger.debug("Jabber user {} now available", username);
-
-		LiveXmppServer server = LiveState.getInstance().getXmppServer(serverIdentifier);
-		if (server == null)
-			throw new NoSuchServerException(null);
-
-		try {
-			// account could be missing due to debug users or our own
-			// send-notifications
-			// user, i.e. any user on the jabber server that we don't know about
-			Account account;
-			try {
-				account = accountFromUsername(username);
-			} catch (JabberUserNotFoundException e) {
-				if (!username.equals("admin"))
-					logger.warn("username signed on that we don't know: {}", username);
-				return;
-			}
-			
-			server.userAvailable(account.getOwner().getGuid());
-
-			// FIXME: Updating the last-logged-in-date here means we'll update it if the
-			// Jive/JBoss connection is lost; doing it in LiveState would sometimes
-			// prevent that, but it's bad to modify the database from LiveState.
-			//
-			// The right thing is to pass an extra parameter in here that
-			// says whether the user is newly logged in to the Jive server, or
-			// whether the jive server is just reconnecting to the JBoss server.
-			//
-			// In any case, last-logged-in date is mostly interesting as an 
-			// approximation to last-logged-out date.
-			accountSystem.touchLoginDate(account.getOwner().getGuid());
-			
-			if (!account.getWasSentShareLinkTutorial()) {
-				logger.debug("We have a new user!!!!! WOOOOOOOOOOOOHOOOOOOOOOOOOOOO send them tutorial!");
-	
-				InvitationToken invite = invitationSystem.getCreatingInvitation(account);
-				
-				// see what feature the user was sold on originally, and share the right thing 
-				// with them accordingly
-				
-				User owner = account.getOwner();
-				if (invite != null && invite.getPromotionCode() == PromotionCode.MUSIC_INVITE_PAGE_200602)
-					postingBoard.doNowPlayingTutorialPost(owner);
-				else {
-					UserViewpoint viewpoint = new UserViewpoint(owner);
-					Set<Group> invitedToGroups = groupSystem.findRawGroups(viewpoint, owner, MembershipStatus.INVITED);
-					Set<Group> invitedToFollowGroups = groupSystem.findRawGroups(viewpoint, owner, MembershipStatus.INVITED_TO_FOLLOW);
-					invitedToGroups.addAll(invitedToFollowGroups);
-					if (invitedToGroups.size() == 0) {
-						postingBoard.doShareLinkTutorialPost(account.getOwner());
-					} else {
-						for (Group group : invitedToGroups) {
-							postingBoard.doGroupInvitationPost(owner, group);
-						}
-					}
+		User owner = account.getOwner();
+		if (invite != null && invite.getPromotionCode() == PromotionCode.MUSIC_INVITE_PAGE_200602)
+			postingBoard.doNowPlayingTutorialPost(owner);
+		else {
+			UserViewpoint viewpoint = new UserViewpoint(owner);
+			Set<Group> invitedToGroups = groupSystem.findRawGroups(viewpoint, owner, MembershipStatus.INVITED);
+			Set<Group> invitedToFollowGroups = groupSystem.findRawGroups(viewpoint, owner, MembershipStatus.INVITED_TO_FOLLOW);
+			invitedToGroups.addAll(invitedToFollowGroups);
+			if (invitedToGroups.size() == 0) {
+				postingBoard.doShareLinkTutorialPost(account.getOwner());
+			} else {
+				for (Group group : invitedToGroups) {
+					postingBoard.doGroupInvitationPost(owner, group);
 				}
-	
-				account.setWasSentShareLinkTutorial(true);
 			}
-		} catch (RuntimeException e) {
-			logger.error("Failed to do share link tutorial");
-			throw e;
 		}
+
+		account.setWasSentShareLinkTutorial(true);
 	}
 
-	public void onUserUnavailable(String serverIdentifier, String username) throws NoSuchServerException {
-		logger.debug("Jabber user {} now unavailable", username);
-		LiveXmppServer server = LiveState.getInstance().getXmppServer(serverIdentifier);
-		if (server == null)
-			throw new NoSuchServerException(null);
-		
+	public void updateLoginDate(String username, Date timestamp) {
+		// account could be missing due to debug users or our own
+		// send-notifications user. In fact any user on the jabber server 
+		// that we don't know about
+		Account account;
 		try {
-			server.userUnavailable(Guid.parseJabberId(username));
-		} catch (ParseException e) {
-			logger.warn("Corrupt username passed to onUserUnavailable", e);
-		}
-	}
-
-	public void onRoomUserAvailable(String serverIdentifier, ChatRoomKind kind, String roomname, String username, boolean participant) throws NoSuchServerException  {
-		logger.debug("Jabber user {} has joined chatroom {}", username, roomname);
-		LiveXmppServer server = LiveState.getInstance().getXmppServer(serverIdentifier);
-		if (server == null)
-			throw new NoSuchServerException(null);
-		
-		if (kind == ChatRoomKind.POST) {
-			try {
-				server.postRoomUserAvailable(Guid.parseJabberId(roomname), Guid.parseJabberId(username), participant);
-			} catch (ParseException e) {
-				logger.warn("Corrupt roomname or username passed to onUserUnavailable", e);
-			}
-		}
-	}
-
-	public void onRoomUserUnavailable(String serverIdentifier, ChatRoomKind kind, String roomname, String username) throws NoSuchServerException {
-		logger.debug("Jabber user {} has left chatroom {}", username, roomname);
-		LiveXmppServer server = LiveState.getInstance().getXmppServer(serverIdentifier);
-		if (server == null)
-			throw new NoSuchServerException(null);
-		
-		if (kind == ChatRoomKind.POST) {
-			try {
-				server.postRoomUserUnavailable(Guid.parseJabberId(roomname), Guid.parseJabberId(username));
-			} catch (ParseException e) {
-				logger.warn("Corrupt roomname or username passed to onUserUnavailable", e);
-			}
-		}
-	}
-	
-	public void onResourceConnected(String serverIdentifier, String username) throws NoSuchServerException {
-		LiveXmppServer server = LiveState.getInstance().getXmppServer(serverIdentifier);
-		if (server == null)
-			throw new NoSuchServerException(null);
-		try {
-			server.resourceConnected(Guid.parseJabberId(username));
-		} catch (ParseException e) {
+			account = accountFromUsername(username);
+		} catch (JabberUserNotFoundException e) {
 			if (!username.equals("admin"))
-				logger.warn("Corrupt username passed to onResourceConnected", e);
-		}		
+				logger.warn("username logged in that we don't know: {}", username);
+			return;
+		}
+		
+		account.setLastLoginDate(timestamp);
+	}	
+
+	public void updateLogoutDate(String username, Date timestamp) {
+		Account account;
+		try {
+			account = accountFromUsername(username);
+		} catch (JabberUserNotFoundException e) {
+			if (!username.equals("admin"))
+				logger.warn("username logged out that we don't know: {}", username);
+			return;
+		}
+		
+		account.setLastLogoutDate(timestamp);
+	}
+	
+	public void sendConnectedResourceNotifications(String username, boolean wasAlreadyConnected) {
+		Account account;
+		try {
+			account = accountFromUsername(username);
+		} catch (JabberUserNotFoundException e) {
+			if (!username.equals("admin"))
+				logger.warn("username signed on that we don't know: {}", username);
+			return;
+		}
+
+		// We can't reliably tell if the user is currently logged in by checking
+		// for loginDate > logoutDate, since that could happen if the server
+		// crashed while the user was logged in as well, so instead we check
+		// wasAlreadyConnected. wasAlreadyConnected isn't 100% reliable if two 
+		// resources are connecting simultaneously, but the worst that will happen 
+		// is that the user gets backlog replayed to both accounts, which might be 
+		// considered a feature.
+		if (!wasAlreadyConnected) {
+			postingBoard.sendBacklog(account.getOwner(), account.getLastLogoutDate());
+		}
+			
+		if (!account.getWasSentShareLinkTutorial()) {
+			doShareLinkTutorial(account);
+		}
 	}	
 	
 	public String getMySpaceName(String username) {
@@ -438,12 +393,12 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 	private ChatRoomMessage newChatRoomMessage(EmbeddedMessage message) {
 		String username = message.getFromUser().getGuid().toJabberId(null);
 		return new ChatRoomMessage(username, message.getMessageText(),
-				message.getTimestamp(), message.getMessageSerial()); 		
+				message.getTimestamp(), message.getId()); 		
 	}
 	
 	private ChatRoomUser newChatRoomUser(User user) {
 		return new ChatRoomUser(user.getGuid().toJabberId(null),
-				                user.getNickname(), user.getPhotoUrl60());
+				                user.getNickname(), user.getPhotoUrl());
 	}
 	
 	private Set<ChatRoomUser> getChatRoomRecipients(Group group) {
@@ -456,15 +411,19 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 	}
 		
 	
-	private ChatRoomInfo getChatRoomInfo(String roomName, Group group) {
-		List<GroupMessage> messages = groupSystem.getGroupMessages(group);
+	private List<ChatRoomMessage> getChatRoomMessages(Group group, long lastSeenSerial) {
+		List<GroupMessage> messages = groupSystem.getGroupMessages(group, lastSeenSerial);
 
 		List<ChatRoomMessage> history = new ArrayList<ChatRoomMessage>();
 		
-		for (GroupMessage m : messages) {
+		for (GroupMessage m : messages)
 			history.add(newChatRoomMessage(m));
-		}
-		
+
+		return history;
+	}
+
+	private ChatRoomInfo getChatRoomInfo(String roomName, Group group) {
+		List<ChatRoomMessage> history = getChatRoomMessages(group, -2);
 		return new ChatRoomInfo(ChatRoomKind.GROUP, roomName, group.getName(), history, false);
 	}
 
@@ -485,30 +444,36 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 		}
 		return recipients;
 	}
-	
-	private ChatRoomInfo getChatRoomInfo(String roomName, Post post) {
-		User poster = post.getPoster();
-		
-		List<PostMessage> messages = postingBoard.getPostMessages(post);
+
+	private List<ChatRoomMessage> getChatRoomMessages(Post post, long lastSeenSerial) {
+		List<PostMessage> messages = postingBoard.getPostMessages(post, lastSeenSerial);
 
 		List<ChatRoomMessage> history = new ArrayList<ChatRoomMessage>();
-	
-		// if post description is not empty, add it to the history of chat room messages, designate this type
-		// of message that contains post description with serial = -1
-		// FIXME: Should handle the case of a FeedPost where the effective poster is a GroupFeed
-		if (poster != null && post.getText().trim().length() != 0) {
-            ChatRoomMessage message = new ChatRoomMessage(poster.getGuid().toJabberId(null), post.getText(), post.getPostDate(), -1);	 
-            history.add(message);
+
+		if (lastSeenSerial < -1) {
+			// if post description is not empty, add it to the history of chat room messages.
+			// We mark this message that contains post description with the serial = -1
+			// FIXME: Should handle the case of a FeedPost where the effective poster is a GroupFeed
+			User poster = post.getPoster();
+			if (poster != null && post.getText().trim().length() != 0) {
+	            ChatRoomMessage message = new ChatRoomMessage(poster.getGuid().toJabberId(null), post.getText(), post.getPostDate(), -1);	 
+	            history.add(message);
+			}
 		}
 		
 		for (PostMessage postMessage : messages) {
 			history.add(newChatRoomMessage(postMessage));
 		}
 		
+		return history;
+	}
+	
+	private ChatRoomInfo getChatRoomInfo(String roomName, Post post) {
 		boolean worldAccessible = true;
 		if (post.getVisibility() == PostVisibility.RECIPIENTS_ONLY)
 			worldAccessible = false;
 		
+		List<ChatRoomMessage> history = getChatRoomMessages(post, -2);
 		return new ChatRoomInfo(ChatRoomKind.POST, roomName, post.getTitle(), history, worldAccessible);
 	}
 	
@@ -572,6 +537,56 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 			return null;
 		}
 	}
+	
+	public List<ChatRoomMessage> getChatRoomMessages(String roomName, ChatRoomKind kind, long lastSeenSerial) {
+		switch (kind) {
+		case POST:
+			Post post;
+			try {
+				post = postingBoard.loadRawPost(SystemViewpoint.getInstance(), Guid.parseTrustedJabberId(roomName));
+			} catch (NotFoundException e) {
+				throw new RuntimeException("post chat not found", e);
+			}
+			return getChatRoomMessages(post, lastSeenSerial);
+		case GROUP:
+			Group group;
+			try {
+				group = groupSystem.lookupGroupById(SystemViewpoint.getInstance(), Guid.parseTrustedJabberId(roomName));
+			} catch (NotFoundException e) {
+				throw new RuntimeException("group chat not found", e);
+			}
+			return getChatRoomMessages(group, lastSeenSerial);
+		}
+		throw new IllegalArgumentException("Bad chat room type");
+	}
+
+	public void addChatRoomMessage(String roomName, ChatRoomKind kind, String userName, String text, Date timestamp) {
+		Guid chatRoomId = Guid.parseTrustedJabberId(roomName);
+		User fromUser = getUserFromUsername(userName);
+		UserViewpoint viewpoint = new UserViewpoint(fromUser);
+		switch (kind) {
+		case POST:
+			Post post;
+			try {
+				post = postingBoard.loadRawPost(viewpoint, Guid.parseTrustedJabberId(roomName));
+			} catch (NotFoundException e) {
+				throw new RuntimeException("post chat not found", e);
+			}
+			postingBoard.addPostMessage(post, fromUser, text, timestamp);
+			break;
+		case GROUP:
+			Group group;
+			try {
+				group = groupSystem.lookupGroupById(viewpoint, Guid.parseTrustedJabberId(roomName));
+			} catch (NotFoundException e) {
+				throw new RuntimeException("group chat not found", e);
+			}
+			groupSystem.addGroupMessage(group, fromUser, text, timestamp);
+			break;
+		}
+		
+		LiveState.getInstance().queueUpdate(new ChatRoomEvent(chatRoomId, ChatRoomEvent.Detail.MESSAGES_CHANGED));
+	}
 
 	public boolean canJoinChat(String roomName, ChatRoomKind kind, String username) {
 		try {
@@ -621,28 +636,13 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 			return prefs;
 		}
 		
-		// account.isMusicSharingEnabled() could return null, so we should use getMusicSharingEnabled()
-		// method in identitySpider to get the right default
-		prefs.put("musicSharingEnabled", Boolean.toString(identitySpider.getMusicSharingEnabled(account.getOwner(),
-																			Enabled.AND_ACCOUNT_IS_ACTIVE)));
-
-		// not strictly a "pref" but this is a convenient place to send this to the client
-		prefs.put("musicSharingPrimed", Boolean.toString(account.isMusicSharingPrimed()));
-		
-		return prefs;
+		return accountSystem.getPrefs(account);
 	}
 
-	public Hotness getUserHotness(String username) {
-		User user = userFromTrustedUsername(username);
-		LiveState state = LiveState.getInstance();
-		LiveClientData data = state.getLiveClientData(user.getGuid());
-		return data.getHotness();
-	}
-	
 	static final String RECENT_POSTS_ELEMENT_NAME = "recentPosts";
 	static final String RECENT_POSTS_NAMESPACE = "http://dumbhippo.com/protocol/post";
 	
-	public String getPostsXML(Guid userId, Guid id, String elementName) {
+	public String getPostsXml(Guid userId, Guid id, String elementName) {
 		User user = getUserFromGuid(userId);
 		UserViewpoint viewpoint = new UserViewpoint(user);
 		LiveState liveState = LiveState.getInstance();
@@ -687,11 +687,11 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 		}
 		
 		for (EntityView ev : viewerEntities) {
-			builder.append(ev.toXml());
+			builder.append(ev.toXmlOld());
 		}
 		
 		for (PostView postView : views) {
-			builder.append(postView.toXml());
+			builder.append(postView.toXmlOld());
 			LivePost lpost = liveState.getLivePost(postView.getPost().getGuid()); 
 			builder.append(lpost.toXml());
 		}
@@ -706,11 +706,11 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 		postingBoard.setPostIgnored(user, post, ignore);
 	}
 
-	public String getGroupXML(Guid username, Guid groupId) throws NotFoundException {
-		User user = getUserFromGuid(username);
+	public String getGroupXml(Guid userId, Guid groupId) throws NotFoundException {
+		User user = getUserFromGuid(userId);
 		UserViewpoint viewpoint = new UserViewpoint(user);		
 		GroupView groupView = groupSystem.loadGroup(viewpoint, groupId);
-		return groupView.toXml();
+		return groupView.toXmlOld();
 	}
 
 	public void addGroupMember(Guid userId, Guid groupId, Guid inviteeId) throws NotFoundException {
@@ -728,5 +728,45 @@ public class MessengerGlueBean implements MessengerGlueRemote {
 		} else {
 			return false;
 		}
+	}
+
+	private void queueMusicChange(final Guid userId) {
+		// LiveState.queueUpdate() expects to be called in a transaction, and we
+		// don't have one since the music system code needs to be called not
+		// in a transaction.
+		transactionRunner.runTaskInNewTransaction(new Runnable() {
+			public void run() {
+				LiveState.getInstance().queueUpdate(new UserChangedEvent(userId, UserChangedEvent.Detail.MUSIC)); 
+			}
+		});
+	}
+	
+	@TransactionAttribute(TransactionAttributeType.NEVER)
+	public void handleMusicChanged(Guid userId, Map<String, String> properties) {
+		User user = getUserFromGuid(userId);
+		musicSystemInternal.setCurrentTrack(user, properties);
+		queueMusicChange(userId);
+	}
+
+	@TransactionAttribute(TransactionAttributeType.NEVER)
+	public void handleMusicPriming(Guid userId, List<Map<String, String>> tracks) {
+		User user = getUserFromGuid(userId);
+		if (identitySpider.getMusicSharingPrimed(user)) {
+			// at log .info, since it isn't really a problem, but if it happened a lot we'd 
+			// want to investigate why
+			logger.info("Ignoring priming data for music sharing, already primed");
+			return;
+		}
+		// the tracks are in order from most to least highly-ranked, we want to 
+		// timestamp the most highly-ranked one as most recent, so do this backward
+		tracks = new ArrayList<Map<String,String>>(tracks);
+		Collections.reverse(tracks);
+		for (Map<String,String> properties : tracks) {
+			musicSystemInternal.addHistoricalTrack(user, properties);
+		}
+		// don't do this again
+		identitySpider.setMusicSharingPrimed(user, true);
+		logger.debug("Primed user with {} tracks", tracks.size());	
+		queueMusicChange(userId);
 	}
 }

@@ -10,6 +10,7 @@
 
 <head>
 	<title>Upgrade</title>
+	<dht:siteStyle/>
 	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/upgrade.css"/>
 	<dht:faviconIncludes/>
 	<dht:scriptIncludes/>
@@ -22,17 +23,28 @@
 	<c:choose>
 		<c:when test="${browser.linuxRequested}">
 			<%-- LINUX RELEASE NOTES GO HERE --%>
-			<p>Version 1.1.11</p>
+			<p>Version 1.1.24</p>
 			<ul>
-				<li>World share swarming: The bubble now shows how many people visited a post.</li>			
+				<li>Show appropriate icons by feed items.</li>			
+				<li>Bug fixes.</li>
 			</ul>
+			<div class="dh-upgrade-message">
+			    Note: the last version of Mugshot didn't shut down properly
+			    on some systems, so after upgrade, you may end up with two
+			    mugshot icons in your notification area. If you see this, 
+			    please open a terminal and  enter the following command:
+			    <div class="dh-command">
+				   killall mugshot ; sleep 1 ; mugshot &
+				</div>
+				Or, simply log out and log back in.
+			</div>
 		</c:when>
 		<c:otherwise>
 			<%-- WINDOWS RELEASE NOTES GO HERE --%>
-			<p>Version 1.1.59</p>
+			<p>Version 1.1.78</p>
 			<ul>
-				<li>World share swarming: The bubble now shows how many people visited a post.</li>
-				<li>Fixed a bug that caused a lot of old bubbles to show up again periodically.</li>				
+				<li>Show appropriate icons by feed items.</li>			
+				<li>Bug fixes.</li>
 			</ul>
 		</c:otherwise>
 	</c:choose>
@@ -44,14 +56,18 @@
 		<center>
 			<c:choose>
 				<c:when test="${browser.linuxRequested}">
-					<a href="${download.downloadUrlLinux}">Fedora Core 5 RPM</a>
+					<c:if test="${download.haveDownload}">
+						<a href="${download.downloadUrl}"><c:out value="${download.downloadFor}"/> RPM</a>
+						<br/>
+					</c:if>
+					Source code: <a href="${download.downloadUrlLinuxTar}">tar.gz</a> | <a href="${download.downloadUrlSrpm}">SRPM</a>
 					<br/>
-					Source code: <a href="${download.downloadUrlLinuxTar}">tar.gz</a> | <a href="${download.downloadUrlLinuxSrpm}">SRPM</a>
+					<a href="http://developer.mugshot.org/wiki/Downloads" target="_new">Packages for other distributions</a>
 				</c:when>
 				<c:otherwise>
 					<input type="button" value="Install now" onclick="window.external.application.DoUpgrade(); window.close();"/> 
 					<input type="button" value="Install later" onclick="window.close();"/>		
-				</c:otherwise>		
+				</c:otherwise>
 			</c:choose>
 		</center>
 	</div>

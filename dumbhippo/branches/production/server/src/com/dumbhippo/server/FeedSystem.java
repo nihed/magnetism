@@ -4,7 +4,6 @@ import java.util.List;
 
 import javax.ejb.Local;
 
-import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.Feed;
 import com.dumbhippo.persistence.FeedEntry;
 import com.dumbhippo.persistence.Group;
@@ -51,15 +50,26 @@ public interface FeedSystem {
 	 */
 	void markFeedFailedLastUpdate(Feed feed);
 	
+	/**
+	 * Returns feed entries with sorted by publishing date, with the latest entry first.
+	 * 
+	 * @param feed
+	 * @return feed entries
+	 */
 	List<FeedEntry> getCurrentEntries(Feed feed);
+	
+	/**
+	 * Returns the latest entry for a feed.
+	 * 
+	 * @param feed
+	 * @return the latest entry for a feed
+	 */
+	FeedEntry getLastEntry(Feed feed);
 	
 	List<Feed> getInUseFeeds();
 	
 	void addGroupFeed(Group group, Feed feed);
 	void removeGroupFeed(Group group, Feed feed);
-
-	void addAccountFeed(Account account, Feed feed);
-	void removeAccountFeed(Account account, Feed feed);
 	
 	/*
 	 * Called (by FeedSystem itself) when a new FeedEntry is found
@@ -67,5 +77,9 @@ public interface FeedSystem {
 	 *  @param entryId the ID of the entry that changed (a ID rather than
 	 *     a FeedEntry is used here because this is called asynchronously) 
 	 */
-	void handleNewEntryNotification(long entryId);	
+	void handleNewEntryNotification(long entryId);
+	
+	String getUrlToScrapeFaviconFrom(String untrustedFeedSourceUrl) throws NotFoundException;
+	
+	String getUrlToScrapeFaviconFrom(Feed feed) throws NotFoundException;
 }

@@ -12,6 +12,7 @@ IGNORE = 1               # Skip in target when checking for updateness
 PRESERVE = 2             # Don't erase for 'build', just fir 'init' 
 FUZZY = 4                # Do approximate comparisons ... right now,
                          # defined as "ignore trailing whitespace"
+HOT_UPDATE_LAST = 8      # if hot updating, do this file last
 
 class Service:
 
@@ -48,7 +49,7 @@ class Service:
         """Add a <requiredService/> element to the service."""
         self.required_services[service_name] = 1
 
-    def add_target_attributes(self, pattern, ignore, preserve, fuzzy):
+    def add_target_attributes(self, pattern, ignore, preserve, fuzzy, hot_update_last):
         flags = 0
         if ignore:
             flags |= IGNORE
@@ -56,6 +57,8 @@ class Service:
             flags |= PRESERVE
         if fuzzy:
             flags |= FUZZY
+        if hot_update_last:
+            flags |= HOT_UPDATE_LAST
 
         (pattern, pattern_flags) = super.dirtree.compile_pattern(pattern)
             
@@ -148,14 +151,14 @@ class Service:
             return
 
         stopCommand = self.expand_parameter('stopCommand')
-        os.system(stopCommand)
+        self._run_missing_ok(stopCommand)
         
     def status(self):
         if not self.has_parameter('statusCommand'):
             return True
-            
+
         statusCommand = self.expand_parameter('statusCommand')
-        return os.system(statusCommand) == 0
+        return self._run_missing_ok(statusCommand) == 0
         
     def console(self):
         if not self.has_parameter('consoleCommand'):
@@ -216,6 +219,19 @@ class Service:
             sys.exit(1)
             
         self.watchFile(filename)
+
+    def _run_missing_ok(self, command):
+        # Run command if exists and return its exit value, if missing, return a
+        # non-zero value. Note that we don't do anything resembling proper
+        # shell parsing here
+        args = command.split()
+        try:
+            os.lstat(args[0])
+            return os.spawnv(os.P_WAIT, args[0], args)
+        except OSError, e:
+            if e.errno == errno.ENOENT:
+                return 1
+            raise
 
     def _clean_recurse(self, path, fullpath):
         # Worker function for clean()

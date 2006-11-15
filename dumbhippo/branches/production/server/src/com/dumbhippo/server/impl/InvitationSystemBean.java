@@ -40,18 +40,18 @@ import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.InvitationSystem;
 import com.dumbhippo.server.InvitationSystemRemote;
-import com.dumbhippo.server.InvitationView;
 import com.dumbhippo.server.Mailer;
 import com.dumbhippo.server.NoMailSystem;
 import com.dumbhippo.server.NotFoundException;
-import com.dumbhippo.server.PersonView;
 import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.PromotionCode;
-import com.dumbhippo.server.SystemViewpoint;
 import com.dumbhippo.server.TransactionRunner;
-import com.dumbhippo.server.UserViewpoint;
 import com.dumbhippo.server.WantsInSystem;
 import com.dumbhippo.server.Configuration.PropertyNotFoundException;
+import com.dumbhippo.server.views.InvitationView;
+import com.dumbhippo.server.views.PersonView;
+import com.dumbhippo.server.views.SystemViewpoint;
+import com.dumbhippo.server.views.UserViewpoint;
 
 @Stateless
 public class InvitationSystemBean implements InvitationSystem, InvitationSystemRemote {
@@ -87,6 +87,9 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 	
 	@EJB 
 	private WantsInSystem wantsInSystem;
+	
+	@EJB
+	private IdentitySpider identitySpider;
 	
 	public InvitationToken lookupInvitationFor(User inviter, Resource invitee) {
 		InvitationToken invite;
@@ -564,8 +567,9 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		EmailResource invitationResource = (EmailResource) invite.getInvitee();
 		
 		Account acct = accounts.createAccountFromResource(invitationResource);
-		if (disable)
-			acct.setDisabled(true);
+		if (disable) {
+			identitySpider.setAccountDisabled(acct.getOwner(), true);
+		}
 
 		Client client = null;
 		if (firstClientName != null) {
@@ -721,6 +725,10 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 			throw new RuntimeException("can't do this if you aren't an admin");
 		Query q = em.createQuery("SELECT SUM(a.invitations) FROM Account a");
 		return ((Number) q.getSingleResult()).intValue();
+	}
+	
+	public int getSelfInvitationCount() {
+		return getInvitations(accounts.getCharacter(Character.MUGSHOT));
 	}
 	
 	private void sendEmailNotification(UserViewpoint viewpoint, InvitationToken invite, String subject, String message) {

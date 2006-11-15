@@ -1,21 +1,31 @@
 bin_PROGRAMS += mugshot mugshot-uri-handler
 
-# -Itop_srcdir gets our cut-and-pasted gtk
 mugshot_CPPFLAGS = 			\
 	$(AM_CPPFLAGS)			\
 	-I $(top_srcdir)		\
-	$(MUGSHOT_CFLAGS)
+	$(MUGSHOT_CFLAGS)		\
+	-I$(top_srcdir)/canvas
 
 mugshot_LDFLAGS=$(MUGSHOT_LIBS)
-mugshot_LDADD= libhippoipc.la libhippo.la libgtkcopy.la
+mugshot_LDADD= libhippoipc.la libhippo.la
+
+if !HAVE_GTK210
+mugshot_CPPFLAGS += -I$(top_srcdir)/gtkcopy
+mugshot_LDFLAGS += libgtkcopy.la
+endif
 
 mugshot_SOURCES	=				\
-	src/hippo-bubble.c			\
-	src/hippo-bubble.h			\
-	src/hippo-bubble-manager.c		\
-	src/hippo-bubble-manager.h		\
-	src/hippo-bubble-util.c			\
-	src/hippo-bubble-util.h			\
+	canvas/hippo/hippo-canvas.c		\
+	canvas/hippo/hippo-canvas.h		\
+	canvas/hippo/hippo-canvas-helper.c	\
+	canvas/hippo/hippo-canvas-helper.h	\
+	canvas/hippo/hippo-canvas-widget.c	\
+	canvas/hippo/hippo-canvas-widget.h	\
+	canvas/hippo/hippo-canvas-widgets.c	\
+	canvas/hippo/hippo-canvas-window.c	\
+	canvas/hippo/hippo-canvas-window.h	\
+	canvas/hippo/hippo-canvas-window-child.c\
+	canvas/hippo/hippo-canvas-window-child.h\
 	src/hippo-chat-window.c		    	\
 	src/hippo-chat-window.h		    	\
 	src/hippo-cookies-linux.c		\
@@ -28,56 +38,47 @@ mugshot_SOURCES	=				\
 	src/hippo-embedded-image.h		\
 	src/hippo-http.c			\
 	src/hippo-http.h			\
-	src/hippo-idle.c                \
-	src/hippo-idle.h                \
-	src/hippo-image-cache.c			\
-	src/hippo-image-cache.h			\
+	src/hippo-idle.c                	\
+	src/hippo-idle.h                	\
+	src/hippo-pixbuf-cache.c		\
+	src/hippo-pixbuf-cache.h		\
 	src/hippo-person-renderer.c		\
 	src/hippo-person-renderer.h		\
 	src/hippo-platform-impl.c		\
 	src/hippo-platform-impl.h		\
 	src/hippo-status-icon.c			\
 	src/hippo-status-icon.h			\
+	src/hippo-window-gtk.c			\
+	src/hippo-window-gtk.h			\
 	src/main.c				\
 	src/main.h
 
-EMBEDDEDIMAGEDIR=images
+## Also edit Windows Applets/Makefile if changing this
+EMBEDDEDIMAGEDIR=$(COMMONSRCDIR)/images
 EMBEDDED_IMAGES=				\
-	$(EMBEDDEDIMAGEDIR)/add.png	\
-	$(EMBEDDEDIMAGEDIR)/bublinkswarm.gif	\
-	$(EMBEDDEDIMAGEDIR)/bubgroupupdate.gif	\
-	$(EMBEDDEDIMAGEDIR)/blueleftarrow.gif	\
-	$(EMBEDDEDIMAGEDIR)/bluerightarrow.gif	\
-	$(EMBEDDEDIMAGEDIR)/chaticon.gif	\
-	$(EMBEDDEDIMAGEDIR)/grayleftarrow.gif	\
-	$(EMBEDDEDIMAGEDIR)/grayrightarrow.gif	\
-	$(EMBEDDEDIMAGEDIR)/ignoreicon.png	\
-	$(EMBEDDEDIMAGEDIR)/pbubcnr_blmix.png	\
-	$(EMBEDDEDIMAGEDIR)/pbubcnr_bl.png	\
-	$(EMBEDDEDIMAGEDIR)/pbubcnr_brmix.png	\
-	$(EMBEDDEDIMAGEDIR)/pbubcnr_br.png	\
-	$(EMBEDDEDIMAGEDIR)/pbubcnr_tlmix.png	\
-	$(EMBEDDEDIMAGEDIR)/pbubcnr_tl.png	\
-	$(EMBEDDEDIMAGEDIR)/pbubcnr_tr.png	\
-	$(EMBEDDEDIMAGEDIR)/pbubedge_bmix.png	\
-	$(EMBEDDEDIMAGEDIR)/pbubedge_b.png	\
-	$(EMBEDDEDIMAGEDIR)/pbubedge_lmix.png	\
-	$(EMBEDDEDIMAGEDIR)/pbubedge_l.png	\
-	$(EMBEDDEDIMAGEDIR)/pbubedge_r.png	\
-	$(EMBEDDEDIMAGEDIR)/pbubedge_t.png	\
-	$(EMBEDDEDIMAGEDIR)/obubcnr_blmix.png	\
-	$(EMBEDDEDIMAGEDIR)/obubcnr_bl.png	\
-	$(EMBEDDEDIMAGEDIR)/obubcnr_brmix.png	\
-	$(EMBEDDEDIMAGEDIR)/obubcnr_br.png	\
-	$(EMBEDDEDIMAGEDIR)/obubcnr_tlmix.png	\
-	$(EMBEDDEDIMAGEDIR)/obubcnr_tl.png	\
-	$(EMBEDDEDIMAGEDIR)/obubcnr_tr.png	\
-	$(EMBEDDEDIMAGEDIR)/obubedge_bmix.png	\
-	$(EMBEDDEDIMAGEDIR)/obubedge_b.png	\
-	$(EMBEDDEDIMAGEDIR)/obubedge_lmix.png	\
-	$(EMBEDDEDIMAGEDIR)/obubedge_l.png	\
-	$(EMBEDDEDIMAGEDIR)/obubedge_r.png	\
-	$(EMBEDDEDIMAGEDIR)/obubedge_t.png
+	$(EMBEDDEDIMAGEDIR)/add_icon.png	\
+	$(EMBEDDEDIMAGEDIR)/arrow.png		\
+	$(EMBEDDEDIMAGEDIR)/arrow2.png		\
+	$(EMBEDDEDIMAGEDIR)/bar_middle.png	\
+	$(EMBEDDEDIMAGEDIR)/bar_pipe.png	\
+	$(EMBEDDEDIMAGEDIR)/bar_x2.png		\
+	$(EMBEDDEDIMAGEDIR)/bar_x.png		\
+	$(EMBEDDEDIMAGEDIR)/blue_x.png		\
+	$(EMBEDDEDIMAGEDIR)/chat.png		\
+	$(EMBEDDEDIMAGEDIR)/closetip.png	\
+	$(EMBEDDEDIMAGEDIR)/expandtip.png	\
+	$(EMBEDDEDIMAGEDIR)/find.png		\
+	$(EMBEDDEDIMAGEDIR)/home2.png		\
+	$(EMBEDDEDIMAGEDIR)/home.png		\
+	$(EMBEDDEDIMAGEDIR)/hush2.png		\
+	$(EMBEDDEDIMAGEDIR)/hush.png		\
+	$(EMBEDDEDIMAGEDIR)/lid.png		\
+	$(EMBEDDEDIMAGEDIR)/mugshotstacker.png	\
+	$(EMBEDDEDIMAGEDIR)/nophoto.png		\
+	$(EMBEDDEDIMAGEDIR)/photo_icon.png	\
+	$(EMBEDDEDIMAGEDIR)/search_x.png	\
+	$(EMBEDDEDIMAGEDIR)/unhush2.png		\
+	$(EMBEDDEDIMAGEDIR)/unhush.png
 
 EMBEDDED_IMAGE_HEADER=$(BUILT_SRC_DIR)/hippo-embedded-image-data.h
 $(EMBEDDED_IMAGE_HEADER):	$(EMBEDDED_IMAGES)
@@ -85,9 +86,9 @@ $(EMBEDDED_IMAGE_HEADER):	$(EMBEDDED_IMAGES)
 	cat </dev/null > $(EMBEDDED_IMAGE_HEADER) || exit 1 ;				\
 	ALL_NAMES="" ;									\
 	for I in $(EMBEDDED_IMAGES); do							\
-	    IMG=$(srcdir)/$$I ;								\
+	    IMG=$$I ;									\
 	    NAME=`echo "$$I" | sed -e 's/.png//g' | sed -e 's/.gif//g'` ;		\
-	    NAME=`echo "$$NAME" | sed -e 's/images\///g'` ;				\
+	    NAME=`basename "$$NAME"` ;							\
 	    echo "Writing embedded image $$IMG with name $$NAME" ;			\
 	    gdk-pixbuf-csource --struct --raw --static "$$IMG"				\
                                 --name="$$NAME"						\
@@ -103,8 +104,16 @@ $(EMBEDDED_IMAGE_HEADER):	$(EMBEDDED_IMAGES)
 	echo '{ NULL, NULL, NULL } };' >> $(EMBEDDED_IMAGE_HEADER) || exit 1
 
 BUILT_SOURCES += $(EMBEDDED_IMAGE_HEADER)
-EXTRA_DIST += $(EMBEDDED_IMAGES)
 MAINTAINERCLEANFILES +=	$(EMBEDDED_IMAGE_HEADER)
+
+## we need to nodist these because otherwise automake would copy 
+## ../common to distdir/../common which puts common outside of distdir.
+## so we handle the disting manually so the destination is always distdir/common-dist
+nodist_mugshot_SOURCES=$(EMBEDDED_IMAGES)
+mugshot-dist-hook:
+	-mkdir $(distdir)/common-dist
+	mkdir $(distdir)/common-dist/images
+	cp $(EMBEDDED_IMAGES) $(distdir)/common-dist/images
 
 desktopfilesdir=$(datadir)/gnome/autostart
 desktopfiles_in_files=mugshot.desktop.in

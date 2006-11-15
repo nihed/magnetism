@@ -92,6 +92,7 @@ public final class FeedScraper {
 				String rel = attrs.getValue("rel");
 				String type = attrs.getValue("type");
 				String href = attrs.getValue("href");
+				String title = attrs.getValue("title"); // supposed to be human-readable so we don't rely on it existing
 				if (rel != null && type != null && href != null && 
 						rel.trim().equals("alternate")) {
 					href = href.trim();
@@ -104,7 +105,13 @@ public final class FeedScraper {
 						} else if (type.equals("application/atom+xml") && atomUrl == null) {
 							atomUrl = new URL(href);
 							if (!atomUrl.getProtocol().equals("http"))
-								atomUrl = null;							
+								atomUrl = null;
+						} else if (type.equals("text/xml") && rssUrl == null && title != null && title.contains("RSS")) {
+							// text/xml with title=RSS seems to be something old Wordpress does.
+							// it also has a text/xml with title=RDF
+							rssUrl = new URL(href);
+							if (!rssUrl.getProtocol().equals("http"))
+								rssUrl = null;
 						}
 					} catch (MalformedURLException e) {
 						

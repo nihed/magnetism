@@ -23,6 +23,11 @@ import com.dumbhippo.persistence.PostMessage;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.postinfo.PostInfo;
+import com.dumbhippo.server.views.ChatMessageView;
+import com.dumbhippo.server.views.EntityView;
+import com.dumbhippo.server.views.PostView;
+import com.dumbhippo.server.views.UserViewpoint;
+import com.dumbhippo.server.views.Viewpoint;
 
 @Local
 public interface PostingBoard {
@@ -68,7 +73,7 @@ public interface PostingBoard {
 	 */
 	public void pageFavoritePosts(Viewpoint viewpoint, User user, Pageable<PostView> pageable);	
 	
-	public boolean canViewPost(UserViewpoint viewpoint, Post post);
+	public boolean canViewPost(Viewpoint viewpoint, Post post);	
 	
 	public int getPostsForCount(Viewpoint viewpoint, Person forPerson, String search);
 	
@@ -182,11 +187,14 @@ public interface PostingBoard {
 	 * Get all messages that were posted in the chatroom about this post.
 	 * 
 	 * @param post the post the look up the messages for
+	 * @param lastSeenSerial return only messages with serials greater than this
 	 * @return the list of mesages, sorted by date (newest last)
 	 */
-	public List<PostMessage> getPostMessages(Post post);
+	public List<PostMessage> getPostMessages(Post post, long lastSeenSerial);
 	
 	public List<PostMessage> getNewestPostMessages(Post post, int maxResults);
+	
+	public List<ChatMessageView> viewPostMessages(List<PostMessage> messages, Viewpoint viewpoint);
 	
 	/**
 	 * Count of recent messages that were posted in the chatroom about this post.
@@ -204,9 +212,8 @@ public interface PostingBoard {
 	 * @param fromUser the user who sent the message
 	 * @param text the text of the message
 	 * @param timestamp the time when the message was posted
-	 * @param serial counter (starts at zero) of messages for the post
 	 */
-	public void addPostMessage(Post post, User fromUser, String text, Date timestamp, int serial);
+	public void addPostMessage(Post post, User fromUser, String text, Date timestamp);
 	
 	/**
 	 * Search the database of posts using Lucene.
@@ -299,5 +306,22 @@ public interface PostingBoard {
 	
 	public boolean postIsGroupNotification(Post post);
 	
-	public void sendPostNotifications(Post post, PostType postType);	
+	public void sendPostNotifications(Post post, PostType postType);
+
+	/**
+	 * Sends messages that the user might have missed to them via XMPP.
+	 * 
+	 * @param user the user to send backlog to
+	 * @param lastLogoutDate date the user was last logged in, or %null
+	 */
+	public void sendBacklog(User user, Date lastLogoutDate);	
+	
+	/**
+	 * Sets the disabled status on the post. Can be used from the admin console
+	 * to disable posts.
+	 * 
+	 * @param post
+	 * @param disabled
+	 */
+	public void setPostDisabled(Post post, boolean disabled);
 }

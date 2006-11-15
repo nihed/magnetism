@@ -1,6 +1,7 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="/jsp/dumbhippo.tld" prefix="dh" %>
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
+<%@ taglib tagdir="/WEB-INF/tags/3" prefix="dht3" %>
 
 <%@ attribute name="a" required="false" type="java.lang.String" %>
 <%@ attribute name="pageable" required="false" type="com.dumbhippo.server.Pageable" %>
@@ -15,7 +16,7 @@
 				<c:out value="${pageable.start + 1}"/> to <c:out value="${pageable.currentItemCount}"/> of 
 				<c:if test="${pageable.totalCount > pageable.currentItemCount}">about </c:if>
 			</c:if>
-			<c:out value="${pageable.totalCount}"/> results for
+			<dht3:plural n="${pageable.totalCount}" s="result"/> for
 			<span class="dh-search-keyword"><c:out value="${query}"/></span>
 		</span>
 	</c:if>

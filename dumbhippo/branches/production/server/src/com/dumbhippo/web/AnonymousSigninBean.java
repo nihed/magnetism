@@ -2,8 +2,8 @@ package com.dumbhippo.web;
 
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.User;
-import com.dumbhippo.server.AnonymousViewpoint;
-import com.dumbhippo.server.Viewpoint;
+import com.dumbhippo.server.views.AnonymousViewpoint;
+import com.dumbhippo.server.views.Viewpoint;
 
 public class AnonymousSigninBean extends SigninBean {
 	/**

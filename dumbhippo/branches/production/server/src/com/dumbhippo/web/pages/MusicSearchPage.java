@@ -4,13 +4,13 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.StringUtils;
-import com.dumbhippo.server.AlbumView;
-import com.dumbhippo.server.ExpandedArtistView;
 import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Pageable;
-import com.dumbhippo.server.SystemViewpoint;
-import com.dumbhippo.server.Viewpoint;
+import com.dumbhippo.server.views.AlbumView;
+import com.dumbhippo.server.views.ExpandedArtistView;
+import com.dumbhippo.server.views.SystemViewpoint;
+import com.dumbhippo.server.views.Viewpoint;
 import com.dumbhippo.web.PagePositions;
 import com.dumbhippo.web.PagePositionsBean;
 import com.dumbhippo.web.WebEJBUtil;

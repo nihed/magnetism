@@ -3,7 +3,7 @@ package com.dumbhippo.server.formatters;
 import javax.ejb.EJBContext;
 
 import com.dumbhippo.XmlBuilder;
-import com.dumbhippo.server.PostView;
+import com.dumbhippo.server.views.PostView;
 
 public class DefaultFormatter implements PostFormatter {
 	

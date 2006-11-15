@@ -182,8 +182,8 @@ hippo_cookie_get_value(HippoCookie *cookie)
 
    Example line from cookies.txt (split in two lines for readability):
 
-       .google.com	TRUE	/	FALSE	2147368447	\
-       PREF	ID=34bb47565bbcd47b:LD=en:NR=20:TM=985172580:LM=985739012
+       .google.com  TRUE    /   FALSE   2147368447  \
+       PREF ID=34bb47565bbcd47b:LD=en:NR=20:TM=985172580:LM=985739012
 
 */
 

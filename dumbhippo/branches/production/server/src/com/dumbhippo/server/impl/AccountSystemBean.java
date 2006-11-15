@@ -1,8 +1,10 @@
 package com.dumbhippo.server.impl;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
@@ -27,8 +29,10 @@ import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.ValidationException;
 import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.Character;
+import com.dumbhippo.server.Enabled;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.NotFoundException;
+import com.dumbhippo.server.Notifier;
 import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.UnauthorizedException;
 import com.dumbhippo.server.util.EJBUtil;
@@ -45,7 +49,10 @@ public class AccountSystemBean implements AccountSystem {
 	
 	@EJB
 	private TransactionRunner runner;
-
+	
+	@EJB
+	private Notifier notifier;
+	
 	public Account createAccountFromResource(Resource res) {
 		User user = new User();
 		user.setNickname(res.getDerivedNickname());
@@ -57,6 +64,9 @@ public class AccountSystemBean implements AccountSystem {
 		// the GroupMember canonicalization code assumes this for example.
 		spider.addVerifiedOwnershipClaim(user, account);		
 		spider.addVerifiedOwnershipClaim(user, res);
+		
+		notifier.onUserCreated(user);
+		
 		return account;
 	}
 
@@ -66,9 +76,12 @@ public class AccountSystemBean implements AccountSystem {
 	}
 
 	public Client authorizeNewClient(Account acct, String name) {
+		acct.prepareToAuthorizeClient();
+		
 		Client c = new Client(acct, name);
 		em.persist(c);
 		acct.authorizeNewClient(c);
+		
 		return c;
 	}
 	
@@ -134,15 +147,6 @@ public class AccountSystemBean implements AccountSystem {
 		return TypeUtils.castList(Account.class, q.getResultList());
 	}
 
-	public void touchLoginDate(Guid userId) {
-		try {
-			Account acct = lookupAccountByOwnerId(userId);
-			acct.setLastLoginDate(new Date());
-		} catch (NotFoundException e) {
-			throw new RuntimeException("User doesn't exist");
-		}
-	}
-	
 	public User getCharacter(final Character whichOne) {
 		try {
 			return runner.runTaskThrowingConstraintViolation(new Callable<User>() {
@@ -172,5 +176,17 @@ public class AccountSystemBean implements AccountSystem {
 			ExceptionUtils.throwAsRuntimeException(e);
 			return null; // not reached
 		}
+	}
+
+	public Map<String, String> getPrefs(Account account) {
+		Map<String,String> prefs = new HashMap<String, String>();
+		// account.isMusicSharingEnabled() could return null, so we should use getMusicSharingEnabled()
+		// method in identitySpider to get the right default
+		prefs.put("musicSharingEnabled", Boolean.toString(spider.getMusicSharingEnabled(account.getOwner(),
+																			Enabled.AND_ACCOUNT_IS_ACTIVE)));
+
+		// not strictly a "pref" but this is a convenient place to send this to the client
+		prefs.put("musicSharingPrimed", Boolean.toString(account.isMusicSharingPrimed()));
+		return prefs;
 	}	
 }

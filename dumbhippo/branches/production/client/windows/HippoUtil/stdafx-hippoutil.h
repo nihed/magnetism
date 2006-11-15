@@ -3,5 +3,6 @@
 // are changed infrequently
 //
 
+#define _WIN32_WINNT 0x400 // For CoInitializeEx
 #include "HippoStdAfx.h"
 #include <comutil.h>

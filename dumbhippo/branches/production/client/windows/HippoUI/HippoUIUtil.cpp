@@ -152,3 +152,148 @@ HippoGObjectRefcounter::unref(GObject *object)
         G_BREAKPOINT();
     g_object_unref(object);
 }
+
+void
+hippo_rectangle_from_rect(HippoRectangle *hippo_rect, const RECT *windows_rect)
+{
+    hippo_rect->x = windows_rect->left;
+    hippo_rect->y = windows_rect->top;
+    hippo_rect->width = windows_rect->right - windows_rect->left;
+    hippo_rect->height = windows_rect->bottom - windows_rect->top;
+}
+
+void
+hippo_rectangle_to_rect(const HippoRectangle *hippo_rect, RECT *windows_rect)
+{
+    windows_rect->left = hippo_rect->x;
+    windows_rect->top = hippo_rect->y;
+    windows_rect->right = hippo_rect->x + hippo_rect->width;
+    windows_rect->bottom = hippo_rect->y + hippo_rect->height;
+}
+
+static bool
+windowVisibleAtPoint(HWND  window,
+                     POINT point)
+{
+    HWND atPoint = WindowFromPoint(point);
+    if (!atPoint)
+        return FALSE;
+
+    // The root here isn't the X root window (the entire screen), but the toplevel window
+    HWND root = GetAncestor(atPoint, GA_ROOT);
+
+    return root == window;
+}
+
+bool 
+hippoWindowIsOnscreen(HWND window)
+{
+    // We consider a window to be partially visible (and hence "onscreen") if
+    // any of its four corners are visible
+
+    RECT rect;
+
+    if (!GetWindowRect(window, &rect))
+        return FALSE;
+
+    POINT point;
+
+    point.x = rect.left;
+    point.y = rect.top;
+    if (windowVisibleAtPoint(window, point))
+        return true;
+
+    point.x = rect.right - 1;
+    if (windowVisibleAtPoint(window, point))
+        return true;
+    
+    point.y = rect.bottom - 1;
+    if (windowVisibleAtPoint(window, point))
+        return true;
+     
+    point.x = rect.left;
+    if (windowVisibleAtPoint(window, point))
+        return true;
+
+    return FALSE;
+}
+
+bool
+hippoWindowIsActive(HWND window)
+{
+    // The active window isn't actually what we are interested in here, since what we
+    // want to know for the Mugshot browser window is whether when the user clicks on
+    // the mugshot icon, we should raise the window or instead hide it. And when the
+    // user clicks on the mugshot icon, the panel is the active window. So, what
+    // we check here is if our window is the top window that isn't WS_EX_TOPMOST.
+    //
+    // In other uses, we could just do a simple check with GetWindowInfo(), but
+    // we'll just always do the same thing for now.
+
+
+    HWND top = GetTopWindow(NULL);
+    while (top) {
+        if (top == window)
+            return TRUE;
+
+        WINDOWINFO windowInfo;
+        memset(&windowInfo, 0, sizeof(windowInfo));
+        windowInfo.cbSize = sizeof(windowInfo);
+        if (!GetWindowInfo(top, &windowInfo))
+            return FALSE;
+
+        if ((windowInfo.dwExStyle & WS_EX_TOPMOST) == 0)
+            return FALSE;
+
+        top = GetNextWindow(top, GW_HWNDNEXT);
+    }
+
+    return FALSE;
+}
+
+bool
+hippoGetDllVersion(WCHAR *dllName, int *majorP, int *minorP)
+{
+    HINSTANCE instance;
+    bool success;
+
+    success = false;
+
+    *majorP = 0;
+    *minorP = 0;
+
+    instance = LoadLibrary(dllName);
+
+    if (!instance) {
+        return success;
+    }
+
+    DLLGETVERSIONPROC dllGetVersionFunc;
+    dllGetVersionFunc = (DLLGETVERSIONPROC) GetProcAddress(instance, "DllGetVersion");
+
+    // Not all DLLs export DllGetVersion.
+
+    if (!dllGetVersionFunc) {
+        goto out;
+    }
+
+    DLLVERSIONINFO info;
+    HRESULT hr;
+    
+    ZeroMemory(&info, sizeof(info));
+    info.cbSize = sizeof(info);
+
+    hr = dllGetVersionFunc(&info);
+
+    if(SUCCEEDED(hr)) {
+        *majorP = info.dwMajorVersion;
+        *minorP = info.dwMinorVersion;
+        success = true;
+    }
+
+out:
+
+    FreeLibrary(instance);
+
+    return success;
+}

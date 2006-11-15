@@ -2,9 +2,11 @@
 #ifndef __HIPPO_DATA_CACHE_H__
 #define __HIPPO_DATA_CACHE_H__
 
+#include <loudmouth/loudmouth.h>
 #include <hippo/hippo-connection.h>
 #include <hippo/hippo-person.h>
 #include <hippo/hippo-post.h>
+#include <hippo/hippo-block.h>
 #include <hippo/hippo-chat-room.h>
 
 G_BEGIN_DECLS
@@ -25,7 +27,7 @@ typedef struct
 #define HIPPO_IS_DATA_CACHE_CLASS(klass)   (G_TYPE_CHECK_CLASS_TYPE ((klass), HIPPO_TYPE_DATA_CACHE))
 #define HIPPO_DATA_CACHE_GET_CLASS(obj)    (G_TYPE_INSTANCE_GET_CLASS ((obj), HIPPO_TYPE_DATA_CACHE, HippoDataCacheClass))
 
-GType        	 hippo_data_cache_get_type               (void) G_GNUC_CONST;
+GType            hippo_data_cache_get_type               (void) G_GNUC_CONST;
 
 HippoDataCache*  hippo_data_cache_new                    (HippoConnection *connection);
 
@@ -35,6 +37,8 @@ HippoPost*       hippo_data_cache_lookup_post            (HippoDataCache  *cache
                                                           const char      *guid);
 HippoEntity*     hippo_data_cache_lookup_entity          (HippoDataCache  *cache,
                                                           const char      *guid);
+HippoBlock*      hippo_data_cache_lookup_block           (HippoDataCache  *cache,
+                                                          const char      *guid);
 /* A convenience method like ensure_post() doesn't work well because we want to be 
  * able to init the properties of a post before adding it and thus emitting the 
  * post-added signal
@@ -43,10 +47,15 @@ void             hippo_data_cache_add_post               (HippoDataCache *cache,
                                                           HippoPost      *post);
 void             hippo_data_cache_add_entity             (HippoDataCache *cache,
                                                           HippoEntity    *entity);
+void             hippo_data_cache_add_block              (HippoDataCache *cache,
+                                                          HippoBlock     *block);
 /* but sometimes we want an entity with no properties anyhow */
 HippoEntity*     hippo_data_cache_ensure_bare_entity     (HippoDataCache *cache,
                                                           HippoEntityType type,
                                                           const char     *guid);
+
+gboolean         hippo_data_cache_update_from_xml        (HippoDataCache *cache,
+                                                          LmMessageNode  *node);
                                                           
 /* must free list and unref each post in it */
 GSList*          hippo_data_cache_get_recent_posts       (HippoDataCache  *cache);

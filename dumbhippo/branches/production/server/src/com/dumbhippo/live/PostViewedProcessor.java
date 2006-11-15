@@ -12,7 +12,7 @@ import com.dumbhippo.persistence.Post;
 import com.dumbhippo.server.MessageSender;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PostingBoard;
-import com.dumbhippo.server.SystemViewpoint;
+import com.dumbhippo.server.views.SystemViewpoint;
 
 // Handles processing incoming PostViewedEvent
 

@@ -16,25 +16,29 @@ import org.slf4j.Logger;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.TypeFilteredCollection;
 import com.dumbhippo.identity20.Guid;
+import com.dumbhippo.live.PresenceService;
 import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.AccountClaim;
 import com.dumbhippo.persistence.AimResource;
 import com.dumbhippo.persistence.Contact;
 import com.dumbhippo.persistence.ContactClaim;
 import com.dumbhippo.persistence.EmailResource;
-import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.ExternalAccountSystem;
+import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.InvitationSystem;
-import com.dumbhippo.server.PersonView;
-import com.dumbhippo.server.PersonViewExtra;
 import com.dumbhippo.server.PersonViewer;
-import com.dumbhippo.server.SystemViewpoint;
-import com.dumbhippo.server.UserViewpoint;
-import com.dumbhippo.server.Viewpoint;
+import com.dumbhippo.server.Configuration.PropertyNotFoundException;
+import com.dumbhippo.server.views.ExternalAccountView;
+import com.dumbhippo.server.views.PersonView;
+import com.dumbhippo.server.views.PersonViewExtra;
+import com.dumbhippo.server.views.SystemViewpoint;
+import com.dumbhippo.server.views.UserViewpoint;
+import com.dumbhippo.server.views.Viewpoint;
 
 /*
  * An implementation of the Identity Spider.  It sucks your blood.
@@ -57,6 +61,9 @@ public class PersonViewerBean implements PersonViewer {
 	@EJB
 	@IgnoreDependency
 	private InvitationSystem invitationSystem;
+	
+	@EJB
+	private Configuration config;
 	
 	private Set<Resource> getResourcesForPerson(Person person) {
 		Set<Resource> resources = new HashSet<Resource>();
@@ -109,6 +116,15 @@ public class PersonViewerBean implements PersonViewer {
             logger.warn("No fallback identifying guid for {}", pv);				
     }
 	
+    private String getAimPresenceKey() {
+		try {
+		    return config.getPropertyNoDefault(HippoProperty.AIM_PRESENCE_KEY);				 
+		} catch (PropertyNotFoundException pnfe) {
+			logger.warn("Could not find HippoProperty.AIM_PRESENCE_KEY");
+		}   
+		return null;
+    }
+    
 	private void addPersonViewExtras(Viewpoint viewpoint, PersonView pv, Resource fromResource, PersonViewExtra... extras) {		
 		// given the viewpoint, set whether the view is of self
 		if (viewpoint.isOfUser(pv.getUser())) {
@@ -150,6 +166,7 @@ public class PersonViewerBean implements PersonViewer {
 		// can only get user resources if we are a contact of the user
 		if (pv.getUser() != null && identitySpider.isViewerSystemOrFriendOf(viewpoint, pv.getUser())) {
 			userResources = getResourcesForPerson(pv.getUser());
+			pv.setViewerIsContact(true);
 		}
 		
 		// If it's not our own contact, contactResources should be null here
@@ -196,21 +213,32 @@ public class PersonViewerBean implements PersonViewer {
 					}
 				}
 			} else if (e == PersonViewExtra.ALL_RESOURCES) {
-				pv.addAllResources(resources);
+				pv.addAllResources(resources);			 
 			} else if (e == PersonViewExtra.ALL_EMAILS) {
 				pv.addAllEmails(new TypeFilteredCollection<Resource,EmailResource>(resources, EmailResource.class));
 			} else if (e == PersonViewExtra.ALL_AIMS) {
 				pv.addAllAims(new TypeFilteredCollection<Resource,AimResource>(resources, AimResource.class));
 			} else if (e == PersonViewExtra.EXTERNAL_ACCOUNTS) {
 				if (pv.getUser() != null) {
-					Set<ExternalAccount> externals = externalAccounts.getExternalAccounts(viewpoint, pv.getUser()); 
+					Set<ExternalAccountView> externals = externalAccounts.getExternalAccountViews(viewpoint, pv.getUser()); 
 					externalAccounts.loadThumbnails(viewpoint, externals);
-					pv.addExternalAccounts(externals);
+					pv.addExternalAccountViews(externals);
 				} else {
-					pv.addExternalAccounts(new HashSet<ExternalAccount>());
+					pv.addExternalAccountViews(new HashSet<ExternalAccountView>());
 				}
-				if (pv.getExternalAccounts() == null)
+				if (pv.getExternalAccountViews() == null)
 					throw new IllegalStateException("Somehow set null external accounts on PersonView");
+			} else if (e == PersonViewExtra.CONTACT_STATUS) {
+				boolean isContact = false;
+				
+				if (pv.getContact() != null && 
+					viewpoint.isOfUser(pv.getContact().getAccount().getOwner())) {
+					isContact = true;
+				} else if (viewpoint instanceof UserViewpoint && pv.getUser() != null) {
+					isContact = identitySpider.isContact(viewpoint, ((UserViewpoint)viewpoint).getViewer(), pv.getUser()); 
+				}
+				
+				pv.setIsContactOfViewer(isContact);				
 			} else {
 				EmailResource email = null;
 				AimResource aim = null;
@@ -240,6 +268,18 @@ public class PersonViewerBean implements PersonViewer {
 				}
 			}
 		}
+		
+		if (pv.hasExtra(PersonViewExtra.PRIMARY_AIM)) {
+			pv.setAimPresenceKey(getAimPresenceKey());
+		}
+	}
+	
+	// Should the online status be an "extra"? it's relatively cheap to compute,
+	// since it only involves in-memory data, but not completely free.
+	private void initOnline(PersonView personView) {
+		User user = personView.getUser();
+		if (user != null && PresenceService.getInstance().getPresence("/users", user.getGuid()) > 0)
+			personView.setOnline(true);
 	}
 	
 	public PersonView getPersonView(Viewpoint viewpoint, Person p, PersonViewExtra... extras) {
@@ -252,6 +292,7 @@ public class PersonViewerBean implements PersonViewer {
 		PersonView pv = new PersonView(contact, user);
 				
 		addPersonViewExtras(viewpoint, pv, null, extras);
+		initOnline(pv);
 		
 		return pv;
 	}
@@ -272,6 +313,7 @@ public class PersonViewerBean implements PersonViewer {
 		}
 		
 		PersonView pv = new PersonView(contact, user);
+		initOnline(pv);
 		
 		PersonViewExtra allExtras[] = new PersonViewExtra[extras.length + 1];
 		allExtras[0] = firstExtra;
@@ -285,7 +327,10 @@ public class PersonViewerBean implements PersonViewer {
 
 	public PersonView getSystemView(User user, PersonViewExtra... extras) {
 		PersonView pv = new PersonView(null, user);
+		
 		addPersonViewExtras(SystemViewpoint.getInstance(), pv, null, extras);
+		initOnline(pv);
+		
 		return pv;
 	}
 
@@ -298,6 +343,12 @@ public class PersonViewerBean implements PersonViewer {
 
 		boolean sawSelf = false;
 		Set<PersonView> result = new HashSet<PersonView>();
+
+		if (viewpoint instanceof UserViewpoint) {
+			UserViewpoint userViewpoint = (UserViewpoint)viewpoint;
+		    userViewpoint.cacheAllFriendOfStatus(identitySpider.getUsersWhoHaveUserAsContact(viewpoint, userViewpoint.getViewer()));
+		}
+
 		for (Person p : identitySpider.getRawContacts(viewpoint, user)) {
 			PersonView pv = getPersonView(viewpoint, p, extras);
 
@@ -359,5 +410,13 @@ public class PersonViewerBean implements PersonViewer {
 		}
 		
 		return result;
+	}
+	
+	public Set<PersonView> viewUsers(Viewpoint viewpoint, Set<User> users) {
+		Set<PersonView> viewedUsers = new HashSet<PersonView>();
+		for (User user : users) {
+			viewedUsers.add(getPersonView(viewpoint, user));
+		}
+		return viewedUsers;
 	}
 }

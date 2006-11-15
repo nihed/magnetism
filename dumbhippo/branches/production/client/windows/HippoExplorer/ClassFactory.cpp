@@ -6,6 +6,7 @@
 #include "stdafx-hippoexplorer.h"
 #include "ClassFactory.h"
 #include "Guid.h"
+#include "HippoControl.h"
 #include "HippoChatControl.h"
 #include "HippoExplorerBar.h"
 #include "HippoToolbarAction.h"
@@ -77,6 +78,8 @@ ClassFactory::CreateInstance (IUnknown  *outer,
         return createInstance<HippoToolbarAction>(ifaceID, result);
     } else if (IsEqualCLSID(classID_, CLSID_HippoTracker)) {
         return createInstance<HippoTracker>(ifaceID, result);
+    } else if (IsEqualCLSID(classID_, CLSID_HippoControl)) {
+        return createInstance<HippoControl>(ifaceID, result);
     } else if (IsEqualCLSID(classID_, CLSID_HippoEmbed)) {
         return createInstance<HippoEmbed>(ifaceID, result);
     } else {

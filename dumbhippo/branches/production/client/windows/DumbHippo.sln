@@ -46,12 +46,18 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "WiXInstaller", "WiXInstalle
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "HippoExplorer", "HippoExplorer\HippoExplorer.vcproj", "{5EE19538-0578-4199-93DD-E77F11A060E4}"
 	ProjectSection(ProjectDependencies) = postProject
+		{90FE4378-3E7D-4C9D-9509-5F551B00515E} = {90FE4378-3E7D-4C9D-9509-5F551B00515E}
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "HippoCommon", "HippoCommon\HippoCommon.vcproj", "{2F331475-82BE-44AC-B6DD-D430C758BC7B}"
 	ProjectSection(ProjectDependencies) = postProject
 		{923DC368-46A9-4977-B827-75797CC259E3} = {923DC368-46A9-4977-B827-75797CC259E3}
 		{E02F6EA7-65C3-4D2A-919F-D022D6C26DFA} = {E02F6EA7-65C3-4D2A-919F-D022D6C26DFA}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "HippoIpc", "HippoIpc\HippoIpc.vcproj", "{90FE4378-3E7D-4C9D-9509-5F551B00515E}"
+	ProjectSection(ProjectDependencies) = postProject
+		{638E7547-B5E8-49AD-A70B-56E333C216FE} = {638E7547-B5E8-49AD-A70B-56E333C216FE}
 	EndProjectSection
 EndProject
 Global
@@ -100,6 +106,10 @@ Global
 		{2F331475-82BE-44AC-B6DD-D430C758BC7B}.Debug.Build.0 = Debug|Win32
 		{2F331475-82BE-44AC-B6DD-D430C758BC7B}.Release.ActiveCfg = Release|Win32
 		{2F331475-82BE-44AC-B6DD-D430C758BC7B}.Release.Build.0 = Release|Win32
+		{90FE4378-3E7D-4C9D-9509-5F551B00515E}.Debug.ActiveCfg = Debug|Win32
+		{90FE4378-3E7D-4C9D-9509-5F551B00515E}.Debug.Build.0 = Debug|Win32
+		{90FE4378-3E7D-4C9D-9509-5F551B00515E}.Release.ActiveCfg = Release|Win32
+		{90FE4378-3E7D-4C9D-9509-5F551B00515E}.Release.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 	EndGlobalSection

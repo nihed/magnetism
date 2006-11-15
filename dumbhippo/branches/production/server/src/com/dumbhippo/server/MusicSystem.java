@@ -5,15 +5,24 @@ import java.util.List;
 
 import javax.ejb.Local;
 
-import com.dumbhippo.persistence.AccountFeed;
 import com.dumbhippo.persistence.Group;
-import com.dumbhippo.persistence.TrackFeedEntry;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.server.views.AlbumView;
+import com.dumbhippo.server.views.ArtistView;
+import com.dumbhippo.server.views.ExpandedArtistView;
+import com.dumbhippo.server.views.PersonMusicView;
+import com.dumbhippo.server.views.TrackView;
+import com.dumbhippo.server.views.UserViewpoint;
+import com.dumbhippo.server.views.Viewpoint;
 
 @Local
 public interface MusicSystem {
 	
 	public TrackView getCurrentTrackView(Viewpoint viewpoint, User user) throws NotFoundException;
+	
+	public int countTrackHistory(Viewpoint viewpoint, User user);
+	
+	public boolean hasTrackHistory(Viewpoint viewpoint, User user);
 	
 	/**
 	 * Retrieve the set of tracks that were played globally on the system most recently
@@ -194,7 +203,6 @@ public interface MusicSystem {
 	 */
 	public List<TrackView> getTrackSearchTracks(Viewpoint viewpoint, TrackSearchResult searchResult, int start, int count);
 	
-	public void addFeedTrack(AccountFeed feed, TrackFeedEntry entry, int entryPosition);
-	
+	// somewhat oddly, returns 0 if none
 	public long getLatestPlayTime(Viewpoint viewpoint, User user);
 }

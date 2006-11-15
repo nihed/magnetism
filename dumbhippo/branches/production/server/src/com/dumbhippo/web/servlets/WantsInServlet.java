@@ -55,7 +55,7 @@ public class WantsInServlet extends AbstractServlet {
 	}
 
 	@Override
-	protected boolean requiresTransaction() {
+	protected boolean requiresTransaction(HttpServletRequest request) {
 		return false;
 	}
 }

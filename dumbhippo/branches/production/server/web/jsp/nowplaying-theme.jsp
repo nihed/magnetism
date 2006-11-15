@@ -14,10 +14,7 @@
 <head>
         <title>Now Playing Theme '<c:out value="${nowplaying.theme.name}"/></title>
         <dht:stylesheets />
-        <dht:scriptIncludes/>
-        <script type="text/javascript">
-	        dojo.require("dh.nowplaying");
-		</script>
+		<dh:script module="dh.nowplaying"/>
 </head>
 <dht:bodyWithAds>
 	<dht:mainArea>

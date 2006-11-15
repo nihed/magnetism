@@ -4,6 +4,7 @@
 
 #include <hippo/hippo-basics.h>
 #include <hippo/hippo-chat-room.h>
+#include <loudmouth/loudmouth.h>
 
 G_BEGIN_DECLS
 
@@ -17,8 +18,12 @@ typedef struct _HippoPostClass HippoPostClass;
 #define HIPPO_IS_POST_CLASS(klass)   (G_TYPE_CHECK_CLASS_TYPE ((klass), HIPPO_TYPE_POST))
 #define HIPPO_POST_GET_CLASS(obj)    (G_TYPE_INSTANCE_GET_CLASS ((obj), HIPPO_TYPE_POST, HippoPostClass))
 
-GType        	 hippo_post_get_type                  (void) G_GNUC_CONST;
+GType            hippo_post_get_type                  (void) G_GNUC_CONST;
 HippoPost*       hippo_post_new                       (const char *guid);
+
+gboolean         hippo_post_update_from_xml           (HippoPost      *post,
+                                                       HippoDataCache *cache,
+                                                       LmMessageNode  *node);
 
 const char*      hippo_post_get_guid                  (HippoPost *post);
 const char*      hippo_post_get_sender                (HippoPost *post);
@@ -27,6 +32,7 @@ const char*      hippo_post_get_title                 (HippoPost *post);
 const char*      hippo_post_get_description           (HippoPost *post);
 /* list of HippoEntity, list is not copied and entities not ref'd */
 GSList*          hippo_post_get_recipients            (HippoPost *post);
+HippoEntity *    hippo_post_get_primary_recipient     (HippoPost *post);
 GSList*          hippo_post_get_viewers               (HippoPost *post);
 const char*      hippo_post_get_info                  (HippoPost *post);
 GTime            hippo_post_get_date                  (HippoPost *post);

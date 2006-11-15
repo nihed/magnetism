@@ -1,12 +1,8 @@
-var dh = {}
-dh.control = {}
-dh.lang = {}
-
-var dhBaseUrl = "http://fresnel.dumbhippo.com:8080"
+dojo.provide("dh.control")
 
 ///////////////////////// metalinguistic band-aids
 
-var dh = {}
+dh.lang = {}
 
 dh.lang.mixin = function(obj, props){
 	var tobj = {};
@@ -18,19 +14,10 @@ dh.lang.mixin = function(obj, props){
 	return obj;
 }
 
-dh.inherits = function(subclass, superclass){
-	if(typeof superclass != 'function'){ 
-		dh.raise("superclass: "+superclass+" borken");
-	}
-	subclass.prototype = new superclass();
-	subclass.prototype.constructor = subclass;
-	subclass.superclass = superclass.prototype;
-}
-
 var defineClass = function(childConstructor, parentConstructor, childProps) {
 	if (!parentConstructor)
 		parentConstructor = Object;
-	dh.inherits(childConstructor, parentConstructor);
+	dojo.inherits(childConstructor, parentConstructor);
 	dh.lang.mixin(childConstructor.prototype, childProps);
 }
 
@@ -44,9 +31,6 @@ dh.control.Entity = function(id) {
 
 defineClass(dh.control.Entity, null, 
 {
-	onChanged : function() {
-	},
-
 	getId : function() {
 		return this._id;
 	},
@@ -57,7 +41,6 @@ defineClass(dh.control.Entity, null,
 
 	setName : function(name) {
 		this._name = name;
-		this.onChanged();
 	},
 
 	getPhotoUrl : function() {
@@ -66,7 +49,6 @@ defineClass(dh.control.Entity, null,
 	
 	setPhotoUrl : function(url) {
 		this._photoUrl = url;
-		this.onChanged();
 	}	
 })
 
@@ -85,7 +67,6 @@ defineClass(dh.control.Person, dh.control.Entity,
 	
 	setCurrentSong : function(song) {
 		this._currentSong = song;
-		this.onChanged();
 	},
 	
 	getCurrentArtist : function() {
@@ -94,7 +75,6 @@ defineClass(dh.control.Person, dh.control.Entity,
 	
 	setCurrentArtist : function(artist) {
 		this._currentArtist = artist;
-		this.onChanged();
 	},
 	
 	getMusicPlaying : function() {
@@ -103,7 +83,6 @@ defineClass(dh.control.Person, dh.control.Entity,
 	
 	setMusicPlaying : function(playing) {
 		this._musicPlaying = playing;
-		this.onChanged();
 	},
 	
 	toString: function() {
@@ -136,8 +115,27 @@ defineClass(dh.control.ChatMessage, null,
 		return this._serial;
 	},
 	
+	_shortLocaleTime : function(date) {
+		return date.toLocaleTimeString().replace(/(\d:\d\d):\d\d/, "$1")
+	},
+
+	timeString : function() {
+		var now = new Date();
+		var nowTimestamp = now.getTime();
+	    var date = new Date(this._timestamp);
+    
+		if (nowTimestamp - this._timestamp < 24 * 60 * 60 * 1000 && now.getDate() == date.getDate()) {
+			return this._shortLocaleTime(date);
+		} else if (nowTimestamp - this._timestamp < 7 * 24 * 60 * 60 * 1000) {
+			var weekday = [ "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" ][date.getDay()];
+			return weekday + ", " + this._shortLocaleTime(date);
+		} else {
+			return date.toDateString();
+		}
+	},	
+	
 	toString: function() {
-		return "[ChatMessage (" + this._entity + "," + this._message + ")]"
+		return "[ChatMessage (" + this._entity + "," + this._message + "," + this.timeString() + ")]";
 	}
 })
 
@@ -145,14 +143,29 @@ dh.control.NONMEMBER = 0;
 dh.control.PARTICIPANT = 1;
 dh.control.VISITOR = 2;
 
+dh.control.ChatUser = function(user, participant) {
+	this._user = user;
+	this._participant = participant;
+}
+
+defineClass(dh.control.ChatUser, null,
+{
+	getUser : function() {
+		return this._user;
+	},
+	
+	getParticipant : function() {
+		return this._participant;
+	}
+})
+
 dh.control.ChatRoom = function(control, id) {
-	this._control = control;
 	this._id = id;
 	this._participantJoinCount = 0;
 	this._visitorJoinCount = 0;
-	this._desiredState = dh.control.NONMEMBER
 	
-	this._members = {}
+	this._users = {}
+	this._messages = {}
 }
 
 defineClass(dh.control.ChatRoom, null, 
@@ -161,7 +174,7 @@ defineClass(dh.control.ChatRoom, null,
 		return this._id;
 	},
 	
-	onUserJoin : function(entity) {
+	onUserJoin : function(entity, participant) {
 	},
 	
 	onUserLeave : function(entity) {
@@ -170,30 +183,53 @@ defineClass(dh.control.ChatRoom, null,
 	onMessage : function(message) {
 	},
 	
+	onReconnect : function() {
+	},
+	
 	sendMessage : function(text) {
-		this._control.sendChatMessage(this._id, text);
+		dh.control.control.sendChatMessage(this._id, text);
 	},
 	
 	join : function(participant) {
-		var newState = participant ? dh.control.PARTICIPANT : dh.control.VISITOR
-		if (newState == this._desiredState)
-			return
-		if (this._desiredState != dh.control.NONMEMBER)
-			this._control._leaveChatRoom(this._id)
-		this._desiredState = newState
-		this._control._joinChatRoom(this._id, participant);
+		var oldState = this._desiredState();
+		if (participant)
+			this._participantJoinCount++;
+		else
+			this._visitorJoinCount++;
+		var newState = this._desiredState();
+		if (newState != oldState) {
+			if (oldState != dh.control.NONMEMBER)
+				dh.control.control._leaveChatRoom(this._id);
+			dh.control.control._joinChatRoom(this._id, newState == dh.control.PARTICIPANT);
+		}
 	},
 	
 	leave : function(participant) {
-		if (this._desiredState != dh.control.NONMEMBER)
-			this._control._leaveChatRoom(this._id);
-		this._control._desiredState = dh.control.NONMEMBER
+		var oldState = this._desiredState();
+		if (participant && this._participantJoinCount > 0)
+			this._participantJoinCount--;
+		else if (this._visitorJoinCount > 0)
+			this._visitorJoinCount--;
+		var newState = this._desiredState();
+		if (newState != oldState) {
+			dh.control.control._leaveChatRoom(this._id);
+			if (newState == dh.control.NONMEMBER) {
+				// FIXME: remove existing users
+			} else {
+				dh.control.control._joinChatRoom(this._id, newState == dh.control.PARTICIPANT);
+			}
+		}
 	},
 	
 	_reconnect : function() {
-		var state = this._desiredState;
+		this._users = {};
+		this._messages = {};
+		
+		var state = this._desiredState();
 		if (state != dh.control.NONMEMBER) {
-			this._control._joinChatRoom(this._id, state == dh.control.PARTICIPANT);
+			this.onReconnect();
+		
+			dh.control.control._joinChatRoom(this._id, state == dh.control.PARTICIPANT);
 		}
 	},
 	
@@ -210,16 +246,24 @@ defineClass(dh.control.ChatRoom, null,
 	},
 	
 	_addMessage : function(message) {
-		// FIXME store the message in a list
+		this._messages[message.getSerial()] = message;
 		this.onMessage(message);
 	},
 	
-	_onUserJoin : function(person) {
-		this.onUserJoin(person)
+	_onUserJoin : function(person, participant) {
+		var chatUser = this._users[person.getId()]
+		if (chatUser) {
+			if (chatUser.getParticipant() == participant)
+				return;
+			this._onUserLeave(person);
+		}
+		this._users[person.getId()] = new dh.control.ChatUser(person, participant);
+		this.onUserJoin(person, participant);
 	},
 		
 	_onUserLeave : function(person) {
-		this.onUserLeave(person)
+		delete this._users[person.getId()];
+		this.onUserLeave(person);
 	}
 })
 
@@ -236,24 +280,32 @@ dh.control.AbstractControl = function() {
 	this._connected = false
 	
 	this._allEntities = {}
-	this._allChatRooms = []
+	this._allChatRooms = {}
 }
 
 defineClass(dh.control.AbstractControl, null, 
 {
-	dh: dh,
+	// Connection point for notification of a change to a user; it would
+	// be more pleasant to be able to connect to the user itself, but 
+	// creating lots of small closures is memory intensive and prone to
+	// creation of uncollectable cycles
+	onUserChange : function(user) {
+	},
 
 	isConnected : function() {
-		return this._connected
+		return this._connected;
 	},
 	
 	peekEntity : function(id) {
 		return this._allEntities[id];
 	},
 
-	createChatRoom : function(id) {
-		var room = new dh.control.ChatRoom(this, id);
-		this._allChatRooms.push(room);
+	getOrCreateChatRoom : function(id) {
+		var room = this._allChatRooms[id]
+		if (!room) {
+			room = new dh.control.ChatRoom(this, id);
+			this._allChatRooms[id] = room;
+		}
 		
 		return room;
 	},
@@ -261,64 +313,63 @@ defineClass(dh.control.AbstractControl, null,
 	_getOrCreatePerson : function(id) {
 		var entity = this._allEntities[id]
 		if (!entity) {
-			entity = new dh.control.Person(id)
-			this._allEntities[id] = entity
+			entity = new dh.control.Person(id);
+			this._allEntities[id] = entity;
 		}
 		return entity
 	},
 	
 	_doForRoom : function(id, f) {
-		for (var i = 0; i < this._allChatRooms.length; i++) {
-			if (this._allChatRooms[i].getId() == id) {
-				f(this._allChatRooms[i])
-			}
+		if (this._allChatRooms[id]) {
+			f(this._allChatRooms[id]);
 		}
 	},
 	
 	_reconnect : function() {
 		this._allEntities = {}		
-		for (var i = 0; i < this._allChatRooms.length; i++) {
-			this._allChatRooms[i]._reconnect()
+		for (var id in this._allChatRooms) {
+			this._allChatRooms[id]._reconnect();
 		}
 	},
 	
 	_disconnect : function() {
-		for (var i = 0; i < allChatRooms.length; i++) {
-			this._allChatRooms[i]._disconnect()
+		for (var id in this._allChatRooms) {
+			this._allChatRooms[id]._disconnect();
 		}
 	},
 	
-	_onUserJoin : function(chatId, userId) {
-		var person = this._getOrCreatePerson(userId)
-		this._doForRoom(chatId, function(room) {
-			room._onUserJoin(person)
-		})
+	_onUserJoin : function(chatId, userId, participant) {
+		if (this._allChatRooms[chatId]) {
+			var person = this._getOrCreatePerson(userId);
+			this._allChatRooms[chatId]._onUserJoin(person, participant);
+		}
 	},
 	
 	_onUserLeave : function(chatId, userId) {
-		var person = this._getOrCreatePerson(userId)
-		this._doForRoom(chatId, function(room) {
-			room._onUserLeave(person)		
-		})
+		if (this._allChatRooms[chatId]) {
+			var person = this._getOrCreatePerson(userId);
+			this._allChatRooms[chatId]._onUserLeave(person)	;	
+		}
 	},
 	
 	_onMessage : function(chatId, userId, text, timestamp, serial) {
-		var message = new dh.control.ChatMessage(this._getOrCreatePerson(userId),
-			text, timestamp, serial)
-		this._doForRoom(chatId, function(room) {
-			room._addMessage(message)
-		})
+		if (this._allChatRooms[chatId]) {	
+			var message = new dh.control.ChatMessage(this._getOrCreatePerson(userId),
+											 		 text, timestamp, serial);
+			this._allChatRooms[chatId]._addMessage(message);
+		}
 	}, 
 	
 	_userInfo : function(userId, name, photoUrl, currentSong, currentArtist, musicPlaying) {
-		var u = this._getOrCreatePerson(userId)
-		u.setName(name)
-		u.setPhotoUrl(photoUrl)
-		u.setCurrentSong(currentSong)
-		u.setCurrentArtist(currentArtist)
-		u.setMusicPlaying(musicPlaying)
+		var u = this._getOrCreatePerson(userId);
+		u.setName(name);
+		u.setPhotoUrl(photoUrl);
+		u.setCurrentSong(currentSong);
+		u.setCurrentArtist(currentArtist);
+		u.setMusicPlaying(musicPlaying);
+		this.onUserChange(u)
 	}
-})
+});
 
 //// WebOnlyControl may be just a dummy object that never
 //// gets onConnected, or someday maybe it does something useful
@@ -328,54 +379,29 @@ dh.control.WebOnlyControl = function() {
 }
 
 defineClass(dh.control.WebOnlyControl, dh.control.AbstractControl, {
-	frobate : function() {
+	sendChatMessage : function(chatId, text) {
+	},
+	
+	showChatWindow : function(chatId) {
+	},
+
+	haveLiveChat : function(chatId) {
+		return false
 	}
-})
+});
 
 //// NativeControl wraps the XPCOM or ActiveX object
 dh.control.NativeControl = function(nativeObject) {
 	dh.control.AbstractControl.call(this);
 	this._native = nativeObject;
 	
-	var me = this;
-	
-	// Note that this creates a refcount cycle through COM or XPCOM that
-	// can't be collected, but since we don't want our object to go away
-	// until the Javascript context for the page is deleted, that shouldn't
-	// be a big problem
-	this._native.setListener({
-		onConnect: function() {
-			me._reconnect();
-        },
-        onDisconnect: function() {
-        	me._disconnect();
-        },
-        onUserJoin: function(chatId, userId) {
-        	me._onUserJoin(chatId, userId);
-        },
-        onUserLeave: function(chatId, userId) {
-        	me._onUserLeave(chatId, userId);
-        },
-        onMessage: function(chatId, userId, message, timestamp, serial) {
-        	me._onMessage(chatId, userId, message, timestamp, serial);
-        },
-        userInfo: function(userId, name, smallPhotoUrl, arrangementName, artistName, musicPlaying) {
-        	me._userInfo(userId, name, smallPhotoUrl, arrangementName, artistName, musicPlaying);
-        },
-        // The QueryInterface function is used only for Firefox, where the callback
-        // is used as a XPCOM object for IE, we just need a javascript object
-        QueryInterface: function(aIID) {
-            if (!aIID.equals(Components.interfaces.hippoIServiceListener) &&
-                !aIID.equals(Components.interfaces.nsISupports))
-                throw new Components.results.NS_ERROR_NO_INTERFACE
-            return this
-        }})
+	this._native.setListener(new dh.control.NativeControlListener())
         
     this._native.start(dhBaseUrl);
 }
 
-defineClass(dh.control.NativeControl, dh.control.AbstractControl, {
 
+defineClass(dh.control.NativeControl, dh.control.AbstractControl, {
 	_joinChatRoom : function(chatId, participant) {
 		this._native.joinChatRoom(chatId, participant);
 	},
@@ -390,22 +416,98 @@ defineClass(dh.control.NativeControl, dh.control.AbstractControl, {
 	
 	showChatWindow : function(chatId) {
 		this._native.showChatWindow(chatId);
+	},
+	
+	haveLiveChat : function(chatId) {
+		return true;
 	}
-})
+});
 
+// You'd expect this object to take a NativeControl as a constructor argument
+// and call the callbacks on that, rather than on dh.control.control,
+// but that would create a refcount cycle through XPCOM (the
+// XPCOM Object => NativeControlListenre => NativeControl => XPCOM Object)
+// and things would never get freed. So we just hardcode a call to the global 
+// singleton dh.control.control instead.
+dh.control.NativeControlListener = function() {
+}
+
+defineClass(dh.control.NativeControlListener, null, {
+	onConnect: function() {
+		dh.control.control._reconnect();
+    },
+    onDisconnect: function() {
+    	dh.control.control._disconnect();
+    },
+    onUserJoin: function(chatId, userId, participant) {
+    	dh.control.control._onUserJoin(chatId, userId, participant);
+    },
+    onUserLeave: function(chatId, userId) {
+    	dh.control.control._onUserLeave(chatId, userId);
+    },
+    onMessage: function(chatId, userId, message, timestamp, serial) {
+    	dh.control.control._onMessage(chatId, userId, message, timestamp, serial);
+    },
+    userInfo: function(userId, name, smallPhotoUrl, arrangementName, artistName, musicPlaying) {
+    	dh.control.control._userInfo(userId, name, smallPhotoUrl, arrangementName, artistName, musicPlaying);
+    },
+    // The QueryInterface function is used only for Firefox, where the callback
+    // is used as a XPCOM object for IE, we just need a javascript object
+    QueryInterface: function(aIID) {
+        if (!aIID.equals(Components.interfaces.hippoIControlListener) &&
+            !aIID.equals(Components.interfaces.nsISupports))
+            throw new Components.results.NS_ERROR_NO_INTERFACE
+        return this
+    }
+});
 
 //// build our appropriate control object
+dh.control.control = null; // init variable to null on load
 
-dh.control.control = null;
+dh.control.createControl = function() {
+	// note that we may be called multiple times, all after
+	// the first should no-op
 
-try {
-	var firefoxControl = new HippoService();
-	dh.control.control = new dh.control.NativeControl(firefoxControl);
-} catch (e) {
-	try {
-		var ieControl = new ActiveXObject("HippoControl");
-		dh.control.control = new dh.control.NativeControl(ieControl);
-	} catch (e) {
+	if (!dh.control.control) {
+		var firefoxControl
+		try { 
+			firefoxControl  = new HippoControl(); 
+		} catch (e) {}
+	
+		if (firefoxControl)
+			dh.control.control = new dh.control.NativeControl(firefoxControl);
+	} 
+	
+	if (!dh.control.control) {
+		var ieControl
+		try {
+			ieControl = new ActiveXObject("Hippo.Control");
+		} catch (e) {}
+		
+		if (ieControl)
+			dh.control.control = new dh.control.NativeControl(ieControl);
+	}
+	
+	if (!dh.control.control) {
 		dh.control.control = new dh.control.WebOnlyControl();
+	}
+}
+
+//
+// We want to make sure that our control isn't leaked even if the
+// web browser isn't cleaned up properly, since that can cause a
+// user to appear in a chatroom after they are gone. So on teardown,
+// we clear the references to the control forcibly
+//
+if (dojo.render.html.ie) {
+	dh.control.oldOnUnload = window.onunload
+	window.onunload = function() {
+		if (dh.control.control) {
+			dh.control.control._native = null;
+			dh.control.control = null;
+		}
+		if (dh.control.oldOnUnload) {
+			dh.control.oldOnUnload()
+		}
 	}
 }

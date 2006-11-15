@@ -1,5 +1,4 @@
 @CHARSET "UTF-8";
-@IMPORT url("site.css");
 @IMPORT url("account-positions.css");
 @IMPORT url("photo-chooser.css");
 
@@ -18,8 +17,9 @@ div.dh-account-disabled-message {
 	font-size:		14px;
 }
 
-#dhTermsOfUseNote {
+#dhTermsOfUseNote, #dhFacebookNote {
 	background-color:	#ffffcc;
 	color:				#cc0033;
 	font-size:          12px;
+	font-weight:		bold;
 }

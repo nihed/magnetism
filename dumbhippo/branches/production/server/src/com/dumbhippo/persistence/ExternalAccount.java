@@ -20,7 +20,7 @@ import com.dumbhippo.Thumbnail;
 		   uniqueConstraints = 
 			      {@UniqueConstraint(columnNames={"account_id", "accountType"})}
 		   )
-@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)
+@Cache(usage=CacheConcurrencyStrategy.TRANSACTIONAL)
 public class ExternalAccount extends DBUnique {
 	private static final long serialVersionUID = 1L;
 
@@ -37,7 +37,9 @@ public class ExternalAccount extends DBUnique {
 	private String extra;
 	// quip (right now only applies if sentiment == HATE)
 	private String quip;
- 
+	// if the account has an associated feed, that goes here
+	private Feed feed;
+	
 	private List<Thumbnail> thumbnails;
 	private int thumbnailTotalItems;
 	private int thumbnailWidth;
@@ -133,6 +135,16 @@ public class ExternalAccount extends DBUnique {
 		this.sentiment = sentiment;
 	}
 
+	@ManyToOne
+	@JoinColumn(nullable=true)	
+	public Feed getFeed() {
+		return feed;
+	}
+
+	public void setFeed(Feed feed) {
+		this.feed = feed;
+	}
+	
 	@Override
 	public String toString() {
 		return "{" + sentiment + " accountType=" + accountType + " handle=" + handle + " extra=" + extra + " quip=" + quip + "}";
@@ -146,6 +158,20 @@ public class ExternalAccount extends DBUnique {
 	@Transient
 	public String getLink() {
 		return accountType.getLink(handle, extra);
+	}
+	
+	@Transient
+	public String getSiteLink() {
+	    if (!accountType.getSiteLink().equals("")) {
+	    	return accountType.getSiteLink();
+	    } else {
+	    	return getLink();
+	    }
+	}
+	
+	@Transient
+	public String getIconName() {
+		return accountType.getIconName();
 	}
 	
 	@Transient

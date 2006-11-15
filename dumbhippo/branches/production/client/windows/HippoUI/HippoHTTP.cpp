@@ -621,10 +621,16 @@ HippoHTTP::doAsync(WCHAR                 *host,
         HttpAddRequestHeaders(context->requestOpenHandle_, buf, -1, HTTP_ADDREQ_FLAG_ADD_IF_NEW);
     }
 
-    if (!HttpSendRequest(context->requestOpenHandle_, NULL, 0, context->inputData_, context->inputLen_) &&
-        GetLastError() != ERROR_IO_PENDING) 
-    {
-        context->enqueueError(GetLastError());
+    if (!HttpSendRequest(context->requestOpenHandle_, NULL, 0, context->inputData_, context->inputLen_)) {
+        // Normally when our request is sent to the web, we get an IO_PENDING error here
+        if (GetLastError() != ERROR_IO_PENDING)
+            context->enqueueError(GetLastError());
+
         return;
     }
+
+    // If HttpSendRequest returned true, that means that the data is being served from the
+    // local cache, so go straight on to reading
+    handleCompleteRequest(context->requestOpenHandle_, context, 
+                          INTERNET_STATUS_REQUEST_COMPLETE, NULL, 0); // last two parameters don't matter
 }

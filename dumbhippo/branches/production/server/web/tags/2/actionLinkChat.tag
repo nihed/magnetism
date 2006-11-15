@@ -5,6 +5,13 @@
 <%@ attribute name="chatId" required="true" type="java.lang.String" %>
 <%-- must be "group" "post" "unknown" --%>
 <%@ attribute name="kind" required="true" type="java.lang.String" %>
+<%@ attribute name="prefix" required="false" type="java.lang.String" %>
+<%@ attribute name="oneLine" required="false" type="java.lang.Boolean" %>
+<%@ attribute name="linkText" required="false" type="java.lang.String" %>
+
+<c:if test="${empty linkText}">
+	<c:set scope="page" var="linkText" value="Join Chat"/>
+</c:if>
 
 <c:choose>
    <%-- The browser.ie check is necessary because the dynamic hiding of
@@ -13,7 +20,8 @@
         or something probably, but only IE is known to work anyhow --%>
 
 	<c:when test="${signin.valid && browser.ie}">
-		<c:set scope="page" var="joinChatUri" value="javascript:dh.actions.requestJoinRoom('${signin.userId}','${chatId}')"/>
+		<dh:script module="dh.actions"/>
+		<c:set scope="page" var="joinChatUri" value="javascript:dh.actions.joinChatUsingControl('${chatId}')"/>
 	</c:when>
 	<c:when test="${signin.valid && browser.linux && browser.gecko}">
 		<c:set scope="page" var="joinChatUri" value="mugshot://${signin.server}/joinChat?id=${chatId}&kind=${kind}"/>
@@ -35,6 +43,7 @@
 			<c:set scope="page" var="joinChatTitle" value="Chat about this"/>
 		</c:otherwise>
 	</c:choose>
-	<dht:actionLink href="${joinChatUri}"
-		title="${joinChatTitle}">Join Chat</dht:actionLink>
+	<c:out value="${prefix}"/>
+	<dht:actionLink oneLine="${oneLine}" href="${joinChatUri}"
+		title="${joinChatTitle}"><c:out value="${linkText}"/></dht:actionLink>
 </c:if>

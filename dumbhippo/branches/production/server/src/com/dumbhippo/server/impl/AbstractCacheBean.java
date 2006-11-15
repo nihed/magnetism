@@ -51,7 +51,7 @@ public abstract class AbstractCacheBean<KeyType,ResultType> {
 		
 		UniqueTaskExecutor executor = executors.get(request);
 		if (executor == null) {
-			executor = new UniqueTaskExecutor(request.name().toLowerCase() + " pool");
+			executor = new CacheTaskExecutor(request.name().toLowerCase() + " pool");
 			executors.put(request, executor);
 		}
 		return executor;
@@ -65,7 +65,7 @@ public abstract class AbstractCacheBean<KeyType,ResultType> {
 			// executors is null if we've never called getExecutorInternal
 			if (executors != null) {
 				for (UniqueTaskExecutor executor : executors.values()) {
-					executor.shutdown();
+					executor.shutdownAndAwaitTermination();
 				}
 				executors.clear();
 				executors = null;

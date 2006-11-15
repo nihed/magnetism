@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project basedir="." default="all" name="hungry">
-	<property name="hippo.server.path" value="${basedir}/../server"/>
-	<property name="jboss.path" value="/opt/jboss"/>
+        <import file="${basedir}/../common.xml"/>
+        <property name="hippo.server.path" value="${dumbhippo.global.trunkdir}/server"/>
+	<property name="jboss.path" value="${dumbhippo.global.jboss.root}"/>
+
 	<property name="target" value="target" />
 	<property name="build" value="${target}/classes" />
 	<property name="build.tests" value="${target}/test-classes" />
@@ -18,18 +20,14 @@
 		<include name="jboss-j2ee.jar"/>
 		<include name="log4j.jar"/> -->
 	</fileset>
-	<fileset dir="${hippo.server.path}" id="dependency.jars.server">
-		<!--
-		<include name="target/classes/dumbhippo-client.jar"/>
-		<include name="lib/commons-logging-1.0.4.jar"/>
-		<include name="lib/commons-logging-api-1.0.4.jar"/> -->
-		<include name="lib/smack-svn-local-build-2005-09-30.jar"/>
-		<include name="lib/mysql-connector-java-3.1.12-bin.jar"/>
-		<include name="target/classes/dumbhippo-client.jar"/>
+	<fileset dir="${dumbhippo.global.trunkdir}" id="dependency.jars.server">
+		<include name="lib/server/smack-svn-local-build-2005-09-30.jar"/>
+		<include name="lib/server/mysql-connector-java-3.1.12-bin.jar"/>
+		<include name="server/target/classes/dumbhippo-client.jar"/>
 	</fileset>
     <path id="project.classpath">
         <pathelement location="${build}"/>
-		<fileset dir="lib" includes="*.jar" />
+	<fileset dir="${dumbhippo.global.lib}/hungry" includes="*.jar" />
     	<fileset refid="dependency.jars.jboss" />
     	<fileset refid="dependency.jars.server" />
     </path>

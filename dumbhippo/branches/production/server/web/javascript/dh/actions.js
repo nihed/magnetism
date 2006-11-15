@@ -3,18 +3,7 @@ dojo.provide("dh.actions");
 dojo.require("dh.server");
 dojo.require("dh.util");
 dojo.require("dh.asyncActionLink")
-
-dh.actions.requestJoinRoom = function(userId, chatId) {
-    // Check readyState is to see if the object was actually loaded.
-    var embed = document.getElementById("dhEmbedObject");
-    if (embed && embed.readyState && embed.readyState >= 3) {
-		embed.showChatWindow(userId, chatId);
-	} else {
-		// should only show up when we suck and don't remove the "join chat" option
-		// in advance, but here as a fallback
-		alert("Can't join chat! Mugshot software not found installed on your system, or more likely, our page is messed up.");
-	}
-}
+dojo.require("dh.control");
 
 dh.actions.addContact = function(contactId, cb, errcb) {
    	dh.server.doPOST("addcontactperson",
@@ -250,9 +239,9 @@ dh.actions.switchPage = function (name, anchor, newPage) {
 	
 	var newQuery = dh.util.encodeQueryString(params)
 	var newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname +
-	            newQuery + "#"
-	if (anchor != null)
-		newUrl += anchor
+	            newQuery
+	if (anchor != null && anchor != "")
+		newUrl += "#" + anchor
 	window.location.replace(newUrl)
 	
 	return false
@@ -267,4 +256,18 @@ dh.actions.validateWantsIn = function(emailInputId) {
 		return false;
 	}
 	return true;
+}
+
+// This is a wrapper around dh.control.control.showChatWindow(chatId)
+// that lazily tries loading the control
+dh.actions.joinChatUsingControl = function(chatId) {
+	dh.control.createControl();
+
+	if (dh.control.control.haveLiveChat()) {
+		dh.control.control.showChatWindow(chatId);
+	} else {
+		window.open("/download",
+		'_NEW',
+		'height=400,width=550,top='+((screen.availHeight-400)/2)+',left='+((screen.availWidth-550)/2));		
+	}
 }

@@ -4,14 +4,10 @@
  */
 #pragma once
 
-#include <HippoUtil.h>
 #include <vector>
 
-#ifdef BUILDING_HIPPO_UTIL
-#define DLLEXPORT __declspec(dllexport)
-#else
-#define DLLEXPORT __declspec(dllimport)
-#endif
+#include <HippoUtil.h>
+#include <HippoUtilExport.h>
 
 class HippoInvocationImpl;
 
@@ -51,6 +47,12 @@ public:
     HippoInvocation &addLong(long value);
 
     /**
+     * Add a double parameter to the list of parameters to provide to the function
+     * @param value parameter value
+     **/
+    HippoInvocation &addDouble(double value);
+
+    /**
      * Add a IDispatch parameter to the list of parameters to provide to the function
      * @param value parameter value
      **/
@@ -83,7 +85,7 @@ public:
      */
     HRESULT getResult(variant_t *result);
 
-    // The default copy constructor and operator = work for this class
+    // The default copy constructor and operator work for this class
 
 private:
     HippoInvocationImpl *impl_;

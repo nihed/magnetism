@@ -30,6 +30,9 @@ public class ClientInfoIQHandler extends AbstractIQHandler {
         	return reply;
         }
 
+        // optional distribution info
+        String distribution = iq.attributeValue("distribution");
+        
 		Document document = DocumentFactory.getInstance().createDocument();
 		Element childElement = document.addElement("clientInfo", "http://dumbhippo.com/protocol/clientinfo");
 		if (platform.equals("windows")) {
@@ -39,7 +42,18 @@ public class ClientInfoIQHandler extends AbstractIQHandler {
 		} else if (platform.equals("linux")) {
 			childElement.addAttribute("minimum", JiveGlobals.getXMLProperty("dumbhippo.client.linux.minimum"));
 			childElement.addAttribute("current", JiveGlobals.getXMLProperty("dumbhippo.client.linux.current"));
-			childElement.addAttribute("download", JiveGlobals.getXMLProperty("dumbhippo.client.linux.download"));
+			
+			// Linux does not use a download url here, because it doesn't auto-download the new package
+			// (perhaps it should, but for now it doesn't). We set the url anyway because 1) we might 
+			// want to use it later and 2) older clients will break if the attribute is missing.
+			if (distribution != null && distribution.equals("fedora5")) {
+				childElement.addAttribute("download", JiveGlobals.getXMLProperty("dumbhippo.client.fedora5.download"));
+			} else if (distribution != null && distribution.equals("fedora6")) {
+				childElement.addAttribute("download", JiveGlobals.getXMLProperty("dumbhippo.client.fedora6.download"));
+			} else {
+				// We set the attribute anyway so older client versions don't throw an error.
+				childElement.addAttribute("download", "http://example.com/notused");
+			}
 		} else {
 			Log.debug("Unknown platform '" + platform + "' in clientInfo IQ");
 			makeError(reply, "clientInfo IQ: unrecognized platform: '" + platform + "'");

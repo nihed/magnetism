@@ -6,6 +6,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
+import java.net.HttpURLConnection;
+import java.net.InetAddress;
+import java.net.URL;
+import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Enumeration;
@@ -27,11 +31,21 @@ import javax.transaction.Status;
 import javax.transaction.SystemException;
 import javax.transaction.UserTransaction;
 
+import org.jboss.ha.framework.interfaces.ClusterNode;
+import org.jboss.ha.framework.interfaces.HAPartition;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.StreamUtils;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.server.Configuration;
+import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.HumanVisibleException;
+import com.dumbhippo.server.util.ClusterUtil;
+import com.dumbhippo.server.util.EJBUtil;
+import com.dumbhippo.server.views.Viewpoint;
+import com.dumbhippo.web.CookieAuthentication;
+import com.dumbhippo.web.LoginCookie;
 import com.dumbhippo.web.SigninBean;
 import com.dumbhippo.web.UserSigninBean;
 
@@ -119,11 +133,17 @@ public abstract class AbstractServlet extends HttpServlet {
 	}
 	
 	protected void logRequest(HttpServletRequest request, String type) {
+		logRequest(request, type, false); // FIXME false for requires transaction is misleading
+	}
+	
+	private void logRequest(HttpServletRequest request, String type, boolean requiresTransaction) {
 		if (!logger.isDebugEnabled()) // avoid this expense entirely in production
 			return;
 		
 		// this line of debug is cut-and-pasted over to RewriteServlet also
-		logger.debug("--------------- HTTP {} for '{}' content-type=" + request.getContentType(), type, request.getRequestURI());
+		logger.debug("--------------- HTTP {} for '{}' content-type='" +
+				request.getContentType() + "' transaction=" + requiresTransaction,
+				type, request.getRequestURI());
 		
 		Enumeration names = request.getAttributeNames(); 
 		while (names.hasMoreElements()) {
@@ -132,7 +152,7 @@ public abstract class AbstractServlet extends HttpServlet {
 			logger.debug("request attr {} = {}", name, request.getAttribute(name));
 		}
 		
-		names = request.getParameterNames();		
+		names = request.getParameterNames();
 		while (names.hasMoreElements()) {
 			String name = (String) names.nextElement();
 			String[] values = request.getParameterValues(name);
@@ -147,6 +167,11 @@ public abstract class AbstractServlet extends HttpServlet {
 				showValue = "[SUPPRESSED FROM LOG]";
 			logger.debug("param {} = {}", name, showValue);
 		}
+	}
+	
+	protected Viewpoint getViewpoint(HttpServletRequest request) {
+		SigninBean signin = SigninBean.getForRequest(request);
+		return signin.getViewpoint();
 	}
 	
 	protected User getUser(HttpServletRequest request) {
@@ -183,28 +208,16 @@ public abstract class AbstractServlet extends HttpServlet {
 			HumanVisibleException, IOException, ServletException {
 		throw new HttpException(HttpResponseCode.NOT_FOUND, "GET not implemented");				 
 	}
-	
-	private void copy(InputStream in, OutputStream out) throws IOException {
-		byte[] buffer = new byte[256];
-        int bytesRead;
-
-        for (;;) {
-        	bytesRead = in.read(buffer, 0, buffer.length);
-        	if (bytesRead == -1)
-        		break; // all done (NOT an error, that throws IOException)
-
-            out.write(buffer, 0, bytesRead);
-        }
-	}	
-	
+		
 	void sendFile(HttpServletRequest request, HttpServletResponse response, String contentType, File file) throws IOException {
 		if (logger.isDebugEnabled())
 			logger.debug("sending file {}", file.getCanonicalPath());
 		response.setContentType(contentType);
 		InputStream in = new FileInputStream(file);
 		OutputStream out = response.getOutputStream();
-		copy(in, out);
-		out.flush();		
+		StreamUtils.copy(in, out);
+		out.flush();
+		in.close();
 	}
 
 	/** 
@@ -253,7 +266,7 @@ public abstract class AbstractServlet extends HttpServlet {
 		response.setHeader("Expires", expires);	
 	}
 	
-	protected abstract boolean requiresTransaction();
+	protected abstract boolean requiresTransaction(HttpServletRequest request);
 	
 	private Object runWithTransaction(HttpServletRequest request, Callable func) throws HumanVisibleException, HttpException {
 		long startTime = System.currentTimeMillis();
@@ -325,7 +338,7 @@ public abstract class AbstractServlet extends HttpServlet {
 		} catch (RuntimeException e) {
 			Throwable cause = e.getCause();
 			if (cause instanceof HttpException) {
-				logger.debug("http exception processing POST", e);
+				logger.debug("http exception processing " + request.getMethod(), e);
 				((HttpException) cause).send(response);
 				return null;
 			} else if (cause instanceof HumanVisibleException) {
@@ -362,9 +375,10 @@ public abstract class AbstractServlet extends HttpServlet {
 	protected void doPost(final HttpServletRequest request, final HttpServletResponse response) throws ServletException,
 			IOException {
 		ensureRequestEncoding(request);
-		logRequest(request, "POST");
+		boolean requiresTransaction = requiresTransaction(request);
+		logRequest(request, "POST", requiresTransaction);
 		String forwardUrl;
-		if (requiresTransaction()) {
+		if (requiresTransaction) {
 			 forwardUrl = (String)runWithTransactionAndErrorPage(request, response, new Callable() { 
 				public Object call() throws Exception {
 					return wrappedDoPost(request, response);
@@ -381,13 +395,132 @@ public abstract class AbstractServlet extends HttpServlet {
 		if (forwardUrl != null)
 			request.getRequestDispatcher(forwardUrl).forward(request, response);
 	}
+
+	private int	getClusterHttpPort() {
+		Configuration config = EJBUtil.defaultLookup(Configuration.class);
+		return Integer.parseInt(config.getProperty(HippoProperty.HTTP_PORT));
+	}
+	
+	private void
+	runOnServer(HttpServletRequest request, HttpServletResponse response, InetAddress address) throws ServletException, IOException {
+		// It would be a bit nicer to strip out the runOnServer part of the Query string
+		// so that the destination server doesn't have to do the processing
+		String path;
+		if (request.getQueryString() != null)
+			path = request.getRequestURI() + "?" + request.getQueryString();
+		else
+			path = request.getRequestURI();
+
+		int port = getClusterHttpPort();
+		URL url = new URL("http", address.getHostAddress(), port, path);
+		logger.debug("runOnServer: forwarding to URL: " + url);
+
+		HttpURLConnection connection = (HttpURLConnection)url.openConnection();
+		
+		LoginCookie cookie = CookieAuthentication.findLoginCookie(request);
+		if (cookie != null)
+			connection.setRequestProperty("Cookie", "auth=" + cookie.getCookieValue());
+		
+		logger.debug("runOnServer: status code is " + connection.getResponseCode());
+
+		if (connection.getResponseCode() != 200)
+			response.setStatus(connection.getResponseCode());
+		
+		InputStream in = null;
+		
+		try {
+			in = connection.getInputStream();
+		} catch (IOException e) {
+			in = connection.getErrorStream();
+			if (in == null) {
+				logger.debug("runOnServer: sending generic error response");
+				int status = connection.getResponseCode();
+				if (status < 300)
+					status = 500; // internal server error
+				response.sendError(status);
+				return;
+			}
+		}
+
+		OutputStream out = response.getOutputStream();
+		
+		byte buffer[] = new byte[16384];
+		while (true) {
+			int count = in.read(buffer);
+			if (count < 0)
+				break;
+			out.write(buffer, 0, count);
+		}
+
+		logger.debug("runOnServer: completed forwarding");
+	}
+	
+	private void
+	denyForwarding(HttpServletResponse response, String server) throws IOException {
+		response.sendError(HttpServletResponse.SC_FORBIDDEN, "Can't forward to host '" + server + "'");
+	}
+	
+	// For GET, we allow an explicit request to run the request on a particular cluster
+	// member; the use case for this is the stats page XML request which is different
+	// for each cluster member, but it should be harmless to allow it for other
+	// GET requests as well. Note that we don't propagate any Set-Cookie headers from
+	// the response, so we won't override the JSESSIONID cookie for this session.
+	private boolean maybeRunOnServer(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		String server = request.getParameter("runOnServer");
+		if (server == null)
+			return false;
+		
+		logger.debug("Found runOnServer=" + server);
+		
+		InetAddress address;
+		try {
+			address = InetAddress.getByName(server);
+		} catch (UnknownHostException e) {
+			logger.warn("Can't resolve runOnServer=" + server);
+			denyForwarding(response, server);
+			return true;
+		}
+		
+		HAPartition partition = ClusterUtil.getPartition();
+		
+		if (partition.getClusterNode().getIpAddress().equals(address)) {
+			logger.debug("Skipping runOnServer=" + server + ", that's us");
+			// Already running on that server, handle normally
+			return false;
+		}
+
+		boolean foundNode = false;
+		ClusterNode[] nodes = partition.getClusterNodes();
+		for (ClusterNode node : nodes) {
+			if (node.getIpAddress().equals(address)) {
+				foundNode = true;
+				break;
+			}
+		}
+		
+		if (!foundNode) {
+			logger.warn("runOnServer=" + server + " does not point to this cluster");
+			denyForwarding(response, server);
+			return true;
+		}
+		
+		// We've validated now validated that the request is to forward to
+		// another node of the current cluster
+		runOnServer(request, response, address);
+
+		return true;
+	}
 	
 	@Override
 	protected void doGet(final HttpServletRequest request, final HttpServletResponse response) throws ServletException, IOException {
+		if (maybeRunOnServer(request, response))
+			return;
+		
 		ensureRequestEncoding(request);
-		logRequest(request, "GET");
+		boolean requiresTransaction = requiresTransaction(request); 
+		logRequest(request, "GET", requiresTransaction);
 		String forwardUrl;
-		if (requiresTransaction()) {
+		if (requiresTransaction) {
 			forwardUrl = (String)runWithTransactionAndErrorPage(request, response, new Callable() { 
 				public Object call() throws Exception {
 					return wrappedDoGet(request, response);

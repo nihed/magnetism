@@ -296,5 +296,31 @@
            <required>false</required>
            <rtexprvalue>true</rtexprvalue>
         </attribute>
+    </tag>
+    <tag>
+        <name>script</name>
+        <tagclass>com.dumbhippo.web.tags.ScriptTag</tagclass>
+        <bodycontent>empty</bodycontent>
+        <info>Script modules to include (automatically pulling in their dependencies)</info>
+	    <attribute>
+           <name>module</name>
+           <required>false</required>
+           <rtexprvalue>true</rtexprvalue>
+        </attribute>
+	    <attribute>
+           <name>modules</name>
+           <required>false</required>
+           <rtexprvalue>true</rtexprvalue>
+        </attribute>                        
     </tag>    
+    <function>
+    	<name>enumIs</name>
+    	<function-class>com.dumbhippo.web.tags.FuncUtils</function-class>
+    	<function-signature>boolean enumIs( java.lang.Enum, java.lang.String )</function-signature>
+    </function>
+    <function>
+    	<name>myInstanceOf</name>
+    	<function-class>com.dumbhippo.web.tags.FuncUtils</function-class>
+    	<function-signature>boolean myInstanceOf( java.lang.Object, java.lang.String )</function-signature>
+    </function>    
 </taglib>

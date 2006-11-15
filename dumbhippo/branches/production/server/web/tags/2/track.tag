@@ -1,7 +1,7 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 
-<%@ attribute name="track" required="true" type="com.dumbhippo.server.TrackView"%>
+<%@ attribute name="track" required="true" type="com.dumbhippo.server.views.TrackView"%>
 <%@ attribute name="oneLine" required="false" type="java.lang.Boolean"%>
 <%@ attribute name="albumArt" required="false" type="java.lang.Boolean"%>
 <%@ attribute name="linkifySong" required="false" type="java.lang.Boolean"%>

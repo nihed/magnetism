@@ -4,13 +4,13 @@
  */
 #pragma once
 
-#include "stdafx.h"
 #include <wininet.h>
 #include <new>
 
 class HippoHTTPAsyncHandler
 {
 public:
+    virtual ~HippoHTTPAsyncHandler() {};
     virtual void handleError(HRESULT result) = 0;
     virtual void handleGotSize(long responseSize) { };
     virtual void handleContentType(WCHAR *mimetype, WCHAR *charset) { };

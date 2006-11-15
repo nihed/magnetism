@@ -1,4 +1,3 @@
-<html>
 <%@ page pageEncoding="UTF-8" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="dumbhippo.tld" prefix="dh" %>
@@ -11,12 +10,12 @@
 	<jsp:forward page="/jsp/nogroup.jsp"/>
 </c:if>
 
+<html>
 <head>
 	<title>Share <c:out value="${viewgroup.name}"/></title>
 	<dht:stylesheets href="sharelink.css" iehref="sharelink-iefixes.css" />
-	<dht:scriptIncludes/>
+		<dh:script module="dh.sharegroup"/>
 	<script type="text/javascript">
-		dojo.require("dh.sharegroup");
 		dhShareGroupId = "${viewgroup.viewedGroupId}";
 		dhShareGroupName = "${viewgroup.name}";
 		dhShareGroupInvitationCount = "${viewgroup.invitations}";

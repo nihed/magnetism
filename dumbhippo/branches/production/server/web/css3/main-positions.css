@@ -1,0 +1,61 @@
+@CHARSET "UTF-8";
+
+.dh-shiny-box {
+	margin-bottom:		5px;
+}
+
+#dhMugshotIntro {
+}    
+    
+#dhMugshotIntro {
+    position:        relative;  
+    width:           290px; 
+    display:         block;
+    float:           left;
+    margin-top:      10px;  
+    margin-bottom:   10px;
+    margin-left:     15px;
+    margin-right:    10px;
+}
+
+#dhMugshotExample {
+    position:        relative;
+    width:           406px;    
+    display:         block;
+    float:           left;
+    margin-bottom:   10px; 
+    bottom:          -19px; 
+}
+
+#dhMugshotIntro * {
+    margin-top:     20px;
+}
+
+#dhMugshotIntro .dh-intro-options {
+    margin-top:     0px;
+}
+
+#dhMugshotIntro .dh-button {
+   position:        relative;
+   top:             7px;  
+}
+
+.dh-main-people {
+    width:              49%;
+    float:              left;
+}
+
+.dh-main-groups {
+    width:              49%;
+    float:              right;
+    text-align:         left;
+}
+
+.dh-header {
+    margin-bottom:  5px;
+    margin-top:     5px;
+}
+
+.dh-stacker-block-right {
+    margin-top:     0px;
+}

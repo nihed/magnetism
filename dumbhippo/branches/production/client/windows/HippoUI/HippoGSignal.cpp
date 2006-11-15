@@ -175,6 +175,14 @@ GIdle::add(Slot0<bool> *slot)
     add_impl(source, gcallback, slot);
 }
 
+void
+GIdle::add(Slot0<bool> *slot, int priority)
+{
+    GSource *source = g_idle_source_new ();
+    g_source_set_priority (source, priority);
+    add_impl(source, gcallback, slot);
+}
+
 gboolean
 GIdle::gcallback(void *data)
 {

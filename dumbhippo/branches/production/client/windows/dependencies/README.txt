@@ -13,12 +13,33 @@ checking in the binary builds are:
    
  - To simplify everybody's life
 
-All libraries included here are licensed under the GNU LGPL.
-See the file COPYING.txt for details. (And change this text
-if you add a library under a different license.)
+Most libraries included here are licensed under the GNU LGPL.
+See the file COPYING.txt for details. libpng is under a different
+license though. Packages with a COPYING or LICENSE file will have 
+it copied to their "doc" dir by prepare.py
 
-If you change anything in this directory, update the Manifest
-file to match. The Manifest file should be an exact description
-of how to get what is derived here from publically available
-tarballs. Don't break that.
+If you change anything in this directory, do it by modifying and
+re-running the prepare.py script. Don't manually unpack zip files.
+
+The basic way prepare.py works is:
+
+  ./prepare.py all all
+
+This should download everything (if not already downloaded), unpack
+it, apply needed exclusions/inclusions, and then create a directory
+tree simulating what should go in subversion.
+
+Then to copy into your subversion directory, run:
+   
+  ./prepare.py overwrite all
+
+The second "all" can be replaced with just the package you want to
+update, like:
+
+  ./prepare.py all libpng 
+  ./prepare.py overwrite libpng
+ 
+You can also run only some phases (download, unpack, etc.) - just read
+the prepare.py source.
+
 

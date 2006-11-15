@@ -1,7 +1,11 @@
+/* -*- mode: C++; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 #include "stdafx-hippoui.h"
 
 #include "HippoPlatformImpl.h"
 #include "HippoUIUtil.h"
+#include "HippoHttp.h"
+#include "HippoUI.h"
+#include "HippoWindowWin.h"
 #include <HippoUtil.h>
 #include <Windows.h>
 #include <mshtml.h>
@@ -13,12 +17,16 @@ static void      hippo_platform_impl_iface_init          (HippoPlatformClass    
 
 static void      hippo_platform_impl_finalize            (GObject                 *object);
 
+static void      hippo_platform_impl_get_platform_info   (HippoPlatform           *platform,
+                                                          HippoPlatformInfo       *info);
 static gboolean  hippo_platform_impl_read_login_cookie   (HippoPlatform           *platform,
                                                           HippoBrowserKind        *origin_browser_p,
                                                           char                   **username_p,
                                                           char                   **password_p);
 static void      hippo_platform_impl_delete_login_cookie (HippoPlatform           *platform);                                                          
 static const char* hippo_platform_impl_get_jabber_resource (HippoPlatform           *platform);
+
+static HippoInstanceType hippo_platform_impl_get_instance_type (HippoPlatform *platform);
 
 static char*     hippo_platform_impl_get_message_server  (HippoPlatform           *platform); 
 static char*     hippo_platform_impl_get_web_server      (HippoPlatform           *platform); 
@@ -29,6 +37,26 @@ static void      hippo_platform_impl_set_web_server      (HippoPlatform         
                                                           const char              *value); 
 static void      hippo_platform_impl_set_signin          (HippoPlatform           *platform,
                                                           gboolean                 value);
+static HippoWindow* hippo_platform_impl_create_window       (HippoPlatform     *platform);
+static void         hippo_platform_impl_get_screen_info     (HippoPlatform     *platform,
+                                                             HippoRectangle    *monitor_rect_p,
+                                                             HippoRectangle    *tray_icon_rect_p,
+                                                             HippoOrientation  *tray_icon_orientation_p);
+static void         hippo_platform_impl_open_url            (HippoPlatform     *platform,
+                                                             HippoBrowserKind   browser,
+                                                             const char        *url);
+static void         hippo_platform_impl_http_request        (HippoPlatform     *platform,
+                                                             const char        *url,
+                                                             HippoHttpFunc      func,
+                                                             void              *data);
+
+static void             hippo_platform_impl_show_chat_window    (HippoPlatform  *platform,
+                                                                 const char     *chat_id);
+static HippoWindowState hippo_platform_impl_get_chat_window_state(HippoPlatform *platform,
+                                                                  const char    *chat_id);
+
+static gboolean     hippo_platform_impl_can_play_song_download (HippoPlatform     *platform,
+                                                                HippoSongDownload *song_download);
 
 
 struct _HippoPlatformImpl {
@@ -36,6 +64,8 @@ struct _HippoPlatformImpl {
     HippoInstanceType instance;
     char *jabber_resource;
     HippoPreferences *preferences;
+    HippoHTTP *http;
+    HippoUI *ui;
 };
 
 struct _HippoPlatformImplClass {
@@ -45,14 +75,22 @@ struct _HippoPlatformImplClass {
 
 G_DEFINE_TYPE_WITH_CODE(HippoPlatformImpl, hippo_platform_impl, G_TYPE_OBJECT,
                         G_IMPLEMENT_INTERFACE(HIPPO_TYPE_PLATFORM, hippo_platform_impl_iface_init));
-                       
 
 static void
 hippo_platform_impl_iface_init(HippoPlatformClass *klass)
 {
+    klass->get_platform_info = hippo_platform_impl_get_platform_info;
+    klass->create_window = hippo_platform_impl_create_window;
+    klass->get_screen_info = hippo_platform_impl_get_screen_info;
     klass->read_login_cookie = hippo_platform_impl_read_login_cookie;
     klass->delete_login_cookie = hippo_platform_impl_delete_login_cookie;
     klass->get_jabber_resource = hippo_platform_impl_get_jabber_resource;
+    klass->open_url = hippo_platform_impl_open_url;
+    klass->http_request = hippo_platform_impl_http_request;
+    klass->show_chat_window = hippo_platform_impl_show_chat_window;
+    klass->get_chat_window_state = hippo_platform_impl_get_chat_window_state;
+    klass->can_play_song_download = hippo_platform_impl_can_play_song_download;
+    klass->get_instance_type = hippo_platform_impl_get_instance_type;
     klass->get_message_server = hippo_platform_impl_get_message_server;
     klass->get_web_server = hippo_platform_impl_get_web_server;
     klass->get_signin = hippo_platform_impl_get_signin;
@@ -93,8 +131,18 @@ hippo_platform_impl_finalize(GObject *object)
 
     g_free(impl->jabber_resource);
     delete impl->preferences;
-    
+
+    if (impl->http)
+        delete impl->http;
+
     G_OBJECT_CLASS(hippo_platform_impl_parent_class)->finalize(object);
+}
+
+void
+hippo_platform_impl_set_ui(HippoPlatformImpl *impl,
+                           HippoUI           *ui)
+{
+    impl->ui = ui;
 }
 
 HippoPreferences*
@@ -166,17 +214,22 @@ do_read_login_cookie(const char       *web_host,
     makeAuthUrl(web_host, &authUrl);
 
 retry:
+    *cookieBuffer = 0;
     if (!InternetGetCookieEx(authUrl, 
                              L"auth",
                              cookieBuffer, &cookieSize,
                              0,
                              NULL))
     {
-        if (GetLastError() == ERROR_INSUFFICIENT_BUFFER) {
+        HRESULT error = GetLastError();
+        if (error == ERROR_INSUFFICIENT_BUFFER) {
             cookieBuffer = allocBuffer = new WCHAR[cookieSize];
             if (!cookieBuffer)
                 goto out;
             goto retry;
+        } else {
+            hippoDebugLogW(L"Failed to get auth cookie %d", (int) error);
+            cookieSize = 0;
         }
     }
 
@@ -200,10 +253,13 @@ retry:
         p += 5; // Skip 'auth='
 
         HippoUStr cookieValue(p, (int) (nextCookie - p));
-        
-        if (hippo_parse_login_cookie(cookieValue.c_str(),
-                                     web_host, username_p, password_p))
+    
+        if (hippo_parse_login_cookie(cookieValue.c_str(), web_host, username_p, password_p)) {
+            //hippoDebugLogU("using cookie '%s'", cookieValue.c_str());
             break;
+        }
+
+        //hippoDebugLogU("skipping cookie '%s'", cookieValue.c_str());
     }
 
 out:
@@ -299,6 +355,15 @@ hippo_platform_impl_windows_migrate_cookie(const char *from_web_host,
     g_free(password);
 }
 
+static void
+hippo_platform_impl_get_platform_info(HippoPlatform           *platform,
+                                      HippoPlatformInfo       *info)
+{
+    info->name = "windows";
+    // we could stick the windows flavor ("xp", "nt") in here eventually if we needed it
+    info->distribution = NULL;
+}
+
 static const char*
 hippo_platform_impl_get_jabber_resource(HippoPlatform *platform)
 {
@@ -310,7 +375,7 @@ hippo_platform_impl_get_jabber_resource(HippoPlatform *platform)
         HW_PROFILE_INFO hwProfile;
         if (GetCurrentHwProfile(&hwProfile)) {
             HippoUStr guidUTF(hwProfile.szHwProfileGuid);
-            impl->jabber_resource = guidUTF.steal();                      
+            impl->jabber_resource = g_strdup(guidUTF.c_str());
         } else {
             hippoDebugLogW(L"Failed to get hardware profile!");
 
@@ -325,6 +390,14 @@ hippo_platform_impl_get_jabber_resource(HippoPlatform *platform)
     return impl->jabber_resource;
 }
 
+static HippoInstanceType
+hippo_platform_impl_get_instance_type(HippoPlatform *platform)
+{
+    HippoPlatformImpl *impl = HIPPO_PLATFORM_IMPL(platform);
+
+    return impl->instance;
+}
+
 static char*
 hippo_platform_impl_get_message_server(HippoPlatform *platform)
 {
@@ -335,7 +408,7 @@ hippo_platform_impl_get_message_server(HippoPlatform *platform)
     impl->preferences->getMessageServer(&messageServer);
 
     HippoUStr messageServerUTF(messageServer);
-    return messageServerUTF.steal();
+    return g_strdup(messageServerUTF.c_str());
 }
 
 static char*
@@ -348,7 +421,7 @@ hippo_platform_impl_get_web_server(HippoPlatform *platform)
     impl->preferences->getWebServer(&webServer);
 
     HippoUStr webServerUTF(webServer);
-    return webServerUTF.steal();
+    return g_strdup(webServerUTF.c_str());
 }
 
 static gboolean
@@ -382,4 +455,270 @@ hippo_platform_impl_set_signin(HippoPlatform  *platform,
 {
     HippoPlatformImpl *impl = HIPPO_PLATFORM_IMPL(platform);
     impl->preferences->setSignIn(value != FALSE);
+}
+
+static HippoWindow*
+hippo_platform_impl_create_window(HippoPlatform     *platform)
+{
+    return hippo_window_win_new(HIPPO_PLATFORM_IMPL(platform)->ui);
+}
+
+struct TrayIconInfo {
+    HippoOrientation orientation;
+    RECT rect;
+};
+
+BOOL CALLBACK
+enum_tray_icon_child(HWND child, LPARAM lParam)
+{
+    TrayIconInfo *info = (TrayIconInfo *)lParam;
+
+    WCHAR className[256];
+    GetClassName(child, className, 256);
+    if (wcscmp(className, L"TrayNotifyWnd") == 0) {
+        // Aha, found the notification tray, this is a better guess than
+        // the whole taskbar. We stop here; the codeproject code goes further
+        // and cuts out the clock (as below), but I think it actually looks 
+        // a bit better this way ... going to the whole notification area
+        // makes it clear to the user that it's just an approximation
+        GetWindowRect(child, &info->rect);
+        return FALSE;
+    }
+#if 0    
+    else if (wcscmp(className, L"TrayClockWClass") == 0) {
+        // The clock sits either to the right of the taskbar (horizontal orientation)
+        // or above it (vertical orientation)
+        RECT clockRect;
+        GetWindowRect(child, &clockRect);
+        if (info->orientation == HIPPO_ORIENTATION_HORIZONTAL)
+            info->rect.right = clockRect.left;
+        else
+            info->rect.top = clockRect.bottom;
+
+        return FALSE;
+    }
+#endif
+
+    return TRUE; // Keep going
+}
+
+// The basic technique here comes from http://www.codeproject.com/shell/trayposition.asp
+static gboolean
+find_icon_tray_rect(RECT            *iconTrayRect,
+                    HippoOrientation orientation)
+{
+    HWND trayWindow = FindWindow(L"Shell_TrayWnd", NULL);
+    TrayIconInfo info;
+
+    info.orientation = orientation;
+
+    if (!trayWindow)
+        return FALSE;
+
+    // This gets the entire taskbar size, we use this as a fallback, if our
+    // child window search fails
+    GetWindowRect(trayWindow, &info.rect);
+
+    // We refine the taskbar 
+    EnumChildWindows(trayWindow, enum_tray_icon_child, (LPARAM)&info);
+
+    *iconTrayRect = info.rect;
+    
+    return TRUE;
+}
+
+static void
+hippo_platform_impl_get_screen_info(HippoPlatform     *platform,
+                                    HippoRectangle    *monitor_rect_p,
+                                    HippoRectangle    *tray_icon_rect_p,
+                                    HippoOrientation  *tray_icon_orientation_p)
+{
+    APPBARDATA abd;
+    abd.cbSize = sizeof(abd);
+    if (!SHAppBarMessage(ABM_GETTASKBARPOS, &abd)) {
+        g_warning("Failed to get task bar extents");
+        return;
+    }
+
+    HippoOrientation orientation;
+    switch (abd.uEdge) {
+        case ABE_BOTTOM:
+        case ABE_TOP:
+            orientation = HIPPO_ORIENTATION_HORIZONTAL;
+            break;
+        case ABE_LEFT:
+        case ABE_RIGHT:
+            orientation = HIPPO_ORIENTATION_VERTICAL;
+            break;
+        default:
+            g_warning("unknown tray icon orientation");
+            break;
+    }
+
+    if (tray_icon_orientation_p)
+        *tray_icon_orientation_p = orientation;
+
+    RECT iconTrayRect;
+
+    if (!find_icon_tray_rect(&iconTrayRect, orientation)) {
+        // If this starts happening  regularly, we can refine
+        // this code to make a better guess at that point.
+        iconTrayRect = abd.rc;
+    }
+
+    if (tray_icon_rect_p) {
+        tray_icon_rect_p->x = iconTrayRect.left;
+        tray_icon_rect_p->width = iconTrayRect.right - iconTrayRect.left;
+        tray_icon_rect_p->y = iconTrayRect.top;
+        tray_icon_rect_p->height = iconTrayRect.bottom - iconTrayRect.top;
+    }
+
+    if (monitor_rect_p) {
+        HMONITOR monitor = MonitorFromRect(&iconTrayRect, MONITOR_DEFAULTTONEAREST);
+        MONITORINFO monitorInfo;
+        monitorInfo.cbSize = sizeof(monitorInfo);
+        if (GetMonitorInfo(monitor, &monitorInfo)) {
+            monitor_rect_p->x = monitorInfo.rcWork.left;
+            monitor_rect_p->y = monitorInfo.rcWork.top;
+            monitor_rect_p->width = monitorInfo.rcWork.right - monitorInfo.rcWork.left;
+            monitor_rect_p->height = monitorInfo.rcWork.bottom - monitorInfo.rcWork.top;
+        } else {
+            g_warning("GetMonitorInfo failed"); // Shouldn't happen, don't both with a fallback
+        }
+    }
+}
+
+static void
+hippo_platform_impl_open_url(HippoPlatform     *platform,
+                             HippoBrowserKind   browser,
+                             const char        *url)
+{
+    HippoPlatformImpl *impl = HIPPO_PLATFORM_IMPL(platform);
+    if (!impl->ui) {
+        g_warning("trying to hippo_platform_open_url before ui set on platform object");
+        return;
+    }
+
+    // FIXME this really is not right at all, it ignores the browser kind, 
+    // but let's sort it out as part of getting firefox to work since 
+    // I'm not even sure what API HippoPlatform should have here.
+
+    impl->ui->LaunchBrowser(HippoBSTR::fromUTF8(url));
+}
+
+class HttpHandler : public HippoHTTPAsyncHandler
+{
+public:
+    HttpHandler(HippoHttpFunc cCallback, void *cCallbackData)
+        : cCallback_(cCallback), cCallbackData_(cCallbackData), errorCode_(S_OK) {
+        
+    }
+
+    ~HttpHandler() {
+        
+    }
+
+    virtual void handleError(HRESULT result) {
+        errorCode_ = result;
+        finish(NULL, 0);
+    }
+    virtual void handleGotSize(long responseSize) { };
+    virtual void handleContentType(WCHAR *mimetype, WCHAR *charset) {
+        contentType_.setUTF16(mimetype);
+    }
+    virtual void handleBytesRead(void *responseData, long responseBytes) { };
+    virtual void handleComplete(void *responseData, long responseBytes) {
+        finish(responseData, responseBytes);
+    }
+
+private:
+    HippoHttpFunc cCallback_;
+    void *cCallbackData_;
+    HippoUStr contentType_;
+    HRESULT errorCode_;
+
+    // my reading of HippoHTTP.h is that exactly one of handleError or handleComplete
+    // is guaranteed to be called, so if those each call finish() it's safe to 
+    // "delete this" here.
+    void finish(void *responseData, long responseBytes) {
+        if (cCallback_ == NULL) // pointless since we'll self-delete anyway
+            return;
+        if (contentType_.c_str() != NULL && responseData) {
+            GString *str = g_string_new_len((char*) responseData, responseBytes);
+            (* cCallback_) (contentType_.c_str(), str, cCallbackData_);
+            g_string_free(str, TRUE);
+        } else {
+            GString *str = g_string_new(NULL);
+            g_string_append_printf(str, "HTTP error: %d", errorCode_);
+            (* cCallback_) (NULL, str, cCallbackData_);
+            g_string_free(str, TRUE);
+        }
+        cCallback_ = NULL;
+        cCallbackData_ = NULL;
+
+        delete this;
+    }
+};
+
+static void
+hippo_platform_impl_http_request(HippoPlatform     *platform,
+                                 const char        *url,
+                                 HippoHttpFunc      func,
+                                 void              *data)
+{
+    HippoPlatformImpl *impl = HIPPO_PLATFORM_IMPL(platform);
+
+    if (impl->http == NULL) {
+        impl->http = new HippoHTTP();
+    }
+
+    // we use the cache here, even though on Linux the http handler 
+    // does not, so maybe we should not either. Also on linux 
+    // we'll never use cookies from the browser while I bet we do 
+    // here.
+    HippoBSTR urlW = HippoBSTR::fromUTF8(url);
+    impl->http->doGet(urlW, true /* use cache */, new HttpHandler(func, data));
+}
+
+static void
+hippo_platform_impl_show_chat_window(HippoPlatform   *platform,
+                                     const char      *chat_id)
+{
+    HippoPlatformImpl *impl = HIPPO_PLATFORM_IMPL(platform);
+    if (!impl->ui) {
+        g_warning("trying to hippo_platform_show_chat_window before ui set on platform object");
+        return;
+    }
+
+    impl->ui->ShowChatWindow(HippoBSTR::fromUTF8(chat_id));
+}
+
+static HippoWindowState 
+hippo_platform_impl_get_chat_window_state(HippoPlatform *platform,
+                                          const char    *chat_id)
+{
+    HippoPlatformImpl *impl = HIPPO_PLATFORM_IMPL(platform);
+    if (!impl->ui) {
+        g_warning("trying to hippo_platform_get_chat_window_state before ui set on platform object");
+        return HIPPO_WINDOW_STATE_CLOSED;
+    }
+
+    return impl->ui->getChatWindowState(HippoBSTR::fromUTF8(chat_id));
+}
+
+
+static gboolean
+hippo_platform_impl_can_play_song_download(HippoPlatform     *platform,
+                                           HippoSongDownload *song_download)
+{
+    switch (hippo_song_download_get_source(song_download)) {
+    case HIPPO_SONG_DOWNLOAD_ITUNES:
+        return TRUE;
+    case HIPPO_SONG_DOWNLOAD_YAHOO:
+        return TRUE;
+    case HIPPO_SONG_DOWNLOAD_RHAPSODY:
+        return TRUE;
+    }
+
+    return TRUE;
 }

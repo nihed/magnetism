@@ -5,9 +5,9 @@ import java.util.List;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.MusicSystem;
-import com.dumbhippo.server.PostView;
 import com.dumbhippo.server.PostingBoard;
-import com.dumbhippo.server.TrackView;
+import com.dumbhippo.server.views.PostView;
+import com.dumbhippo.server.views.TrackView;
 import com.dumbhippo.web.WebEJBUtil;
 
 public class ViewGroupPage extends AbstractGroupPage {

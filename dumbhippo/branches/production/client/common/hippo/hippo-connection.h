@@ -30,8 +30,10 @@ typedef struct {
 #define HIPPO_IS_CONNECTION_CLASS(klass)   (G_TYPE_CHECK_CLASS_TYPE ((klass), HIPPO_TYPE_CONNECTION))
 #define HIPPO_CONNECTION_GET_CLASS(obj)    (G_TYPE_INSTANCE_GET_CLASS ((obj), HIPPO_TYPE_CONNECTION, HippoConnectionClass))
 
-GType        	 hippo_connection_get_type                  (void) G_GNUC_CONST;
+GType            hippo_connection_get_type                  (void) G_GNUC_CONST;
 HippoConnection *hippo_connection_new                       (HippoPlatform    *platform);
+
+HippoPlatform*   hippo_connection_get_platform              (HippoConnection  *connection);
 
 int              hippo_connection_get_generation            (HippoConnection  *connection);
 
@@ -96,7 +98,21 @@ void             hippo_connection_request_chat_room_details (HippoConnection *co
 
 void     hippo_connection_request_prefs             (HippoConnection *connection);
 void     hippo_connection_request_recent_posts      (HippoConnection *connection);
+void     hippo_connection_request_post              (HippoConnection *connection,
+                                                     const char      *post_id);
 void     hippo_connection_request_hotness           (HippoConnection *connection);
+void     hippo_connection_request_blocks            (HippoConnection *connection,
+                                                     gint64           last_timestamp);
+
+void     hippo_connection_set_block_hushed          (HippoConnection *connection,
+                                                     const char      *block_id,
+                                                     gboolean         hushed);
+
+/* Gets the number of milliseconds to add to the local time to get the server time */
+gint64   hippo_connection_get_server_time_offset    (HippoConnection *connection);
+
+void     hippo_connection_update_last_blocks_timestamp (HippoConnection *connection,
+                                                        gint64           timestamp);
 
 void hippo_connection_request_myspace_name          (HippoConnection *connection);
 void hippo_connection_request_myspace_blog_comments (HippoConnection *connection);
@@ -112,6 +128,20 @@ const char*      hippo_connection_get_tooltip       (HippoConnection *connection
 
 /* return string form of enum values */
 const char*      hippo_state_debug_string(HippoState state);
+
+
+/* Convenience wrappers around open_url that create part of the url for you */
+char* hippo_connection_make_absolute_url       (HippoConnection *connection,
+                                                const char      *relative_url);
+void  hippo_connection_open_maybe_relative_url (HippoConnection *connection,
+                                                const char      *relative_url);
+void  hippo_connection_visit_post              (HippoConnection *connection,
+                                                HippoPost       *post);
+void  hippo_connection_visit_post_id           (HippoConnection *connection,
+                                                const char      *guid);
+void  hippo_connection_visit_entity            (HippoConnection *connection,
+                                                HippoEntity     *entity);
+
 
 G_END_DECLS
 

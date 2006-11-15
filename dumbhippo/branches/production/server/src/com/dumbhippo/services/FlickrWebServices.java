@@ -79,6 +79,27 @@ public class FlickrWebServices extends AbstractXmlRequest<FlickrSaxHandler> {
 			return handler.getPhotos();
 	}
 	
+	public FlickrPhotoset lookupPublicPhotoset(String photosetId, int page) {
+		if (page < 1)
+			throw new RuntimeException("flickr photoset pages count from 1");
+		FlickrSaxHandler handler = doFlickrCall("flickr.photosets.getPhotos",
+				"photoset_id", photosetId,
+				"page", Integer.toString(page));
+		if (handler == null)
+			return null;
+		else
+			return handler.getPhotoset();
+	}
+	
+	public FlickrPhotosets lookupPublicPhotosets(String userId) {
+		FlickrSaxHandler handler = doFlickrCall("flickr.photosets.getList",
+				"user_id", userId);
+		if (handler == null)
+			return null;
+		else
+			return handler.getPhotosets();
+	}
+	
 	static public final void main(String[] args) {
 		org.apache.log4j.Logger log4jRoot = org.apache.log4j.Logger.getRootLogger();
 		ConsoleAppender appender = new ConsoleAppender(new PatternLayout("%d %-5p [%c] (%t): %m%n"));
@@ -91,11 +112,30 @@ public class FlickrWebServices extends AbstractXmlRequest<FlickrSaxHandler> {
 		FlickrWebServices ws = new FlickrWebServices(6000, config);
 		FlickrUser user = ws.lookupFlickrUserByEmail("hp@pobox.com");
 		System.out.println("Got flickr user: " + user);
+		if (user == null)
+			return;
 		
 		FlickrPhotos photos = ws.lookupPublicPhotos(user.getId(), 1);
 		System.out.println("Their photos are: " + photos);
+		if (photos == null)
+			return;
 		for (FlickrPhoto p : photos.getPhotos()) {
 			System.out.println("  " + p);
+		}
+		
+		FlickrPhotosets photosets = ws.lookupPublicPhotosets(user.getId());
+		System.out.println("Their photosets are:  " + photosets);
+		if (photosets == null)
+			return;
+		
+		for (FlickrPhotoset photoset : photosets.getSets()) {
+			FlickrPhotoset filledPhotoset = ws.lookupPublicPhotoset(photoset.getId(), 1);
+			System.out.println("Filled photoset is:  " + filledPhotoset);
+			if (filledPhotoset == null)
+				continue;
+			for (FlickrPhoto p : filledPhotoset.getPhotos().getPhotos()) {
+				System.out.println("  " + p);
+			}
 		}
 	}
 }

@@ -3,6 +3,7 @@
 #define __HIPPO_PERSON_H__
 
 #include <hippo/hippo-entity.h>
+#include <hippo/hippo-track.h>
 
 G_BEGIN_DECLS
 
@@ -16,8 +17,12 @@ typedef struct _HippoPersonClass HippoPersonClass;
 #define HIPPO_IS_PERSON_CLASS(klass)   (G_TYPE_CHECK_CLASS_TYPE ((klass), HIPPO_TYPE_PERSON))
 #define HIPPO_PERSON_GET_CLASS(obj)    (G_TYPE_INSTANCE_GET_CLASS ((obj), HIPPO_TYPE_PERSON, HippoPersonClass))
 
-GType        	 hippo_person_get_type                  (void) G_GNUC_CONST;
+GType            hippo_person_get_type                  (void) G_GNUC_CONST;
 HippoPerson*     hippo_person_new                       (const char  *guid);
+
+/* This should eventually replace the methods below, but isn't yet hooked up for chatrooms
+ */
+HippoTrack *     hippo_person_get_current_track         (HippoPerson *person);
 
 const char*      hippo_person_get_current_song          (HippoPerson *person);
 const char*      hippo_person_get_current_artist        (HippoPerson *person);

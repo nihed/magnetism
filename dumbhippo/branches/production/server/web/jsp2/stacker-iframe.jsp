@@ -8,8 +8,7 @@
 	<title>Mugshot Stacker</title>
 	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/site.css"/>
 	<dht:faviconIncludes/>
-	<dht:scriptIncludes/>
-	<script src="/javascript/${buildStamp}/dh/stacker.js" type="text/javascript"></script>
+		<dh:script module="dh.stacker"/>
 	<style type="text/css">
 		body {
 			/* firefox sets a default body margin of 8px */
@@ -86,12 +85,20 @@
 			background-color:	#84569B;
 			color:				white;	
 		}	
+		.dh-stacked-block-account-update {
+		    background-color:   #666666;
+		    color:              white; 
+		}
 		.dh-stacked-block .dh-left-column {
 			position:	relative;
+			float:      left;
+			display:    block;
 			width: 		350px;
 		}
 		.dh-stacked-block .dh-right-column {
-			position:	absolute;
+			position:	relative;
+			float:      right;
+			display:    block;
 			top:		0px;
 			right:		0px;
 			width:		100px;
@@ -118,6 +125,15 @@
 		.dh-stacked-block .dh-left-column .dh-description {
 			font-size: 	10px;
 		}
+		.dh-stacked-block .dh-left-column .dh-photos {
+		}
+		.dh-stacked-block .dh-left-column .dh-photos .dh-photo {
+			float:      left;
+			height:     75px;
+			width:      75px;
+			margin:     3px 3px 0px 0px;
+            overflow:   hidden;
+		}		
 		.dh-stacked-block .dh-left-column .dh-messages {
 			font-size: 	10px;
 			font-style: italic;
@@ -153,7 +169,6 @@
 
 	</style>
 	<script>
-		dojo.require('dh.stacker');
 		var dhStackerInit = function() {
 			var stacker = dh.stacker.getInstance();
 			stacker.setContainer(document.getElementById('dhStackerBackground'));

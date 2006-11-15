@@ -1,10 +1,24 @@
 package com.dumbhippo.web.servlets;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
@@ -25,10 +39,12 @@ import javax.transaction.UserTransaction;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.ThreadUtils;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.ServerStatus;
 import com.dumbhippo.web.DisabledSigninBean;
+import com.dumbhippo.web.JavascriptResolver;
 import com.dumbhippo.web.RewrittenRequest;
 import com.dumbhippo.web.SigninBean;
 import com.dumbhippo.web.WebEJBUtil;
@@ -54,16 +70,26 @@ public class RewriteServlet extends HttpServlet {
 	private Set<String> requiresSignin;
 	private Set<String> requiresSigninStealth;
 	private Set<String> noSignin;
-	private Set<String> jspPages;
-	private Set<String> jsp2Pages;	
+	private Map<String, Integer> jspPages;
 	private Set<String> htmlPages;
 	private String buildStamp;
 	
 	private List<String> psaLinks; // used to choose a random one
 	private int nextPsa;
 	
+	private JavascriptResolver jsResolver;
+	
 	private ServletContext context;
 	private ServerStatus serverStatus;
+	
+	private File buildstampFile;
+	private ExecutorService buildstampThread;
+	private long buildstampFileLastModified;
+	private Lock buildstampLock;
+	private Condition buildstampCondition;
+	private int webVersion;
+	
+	private FaviconHandler faviconHandler;
 	
 	private boolean hasSignin(HttpServletRequest request) {
 		return SigninBean.getForRequest(request).isValid();
@@ -81,6 +107,28 @@ public class RewriteServlet extends HttpServlet {
 			return null;
 		}
 	}
+    
+    private static final String DEFAULT_IMAGE_SIZE = "60";
+    
+    private boolean needsImageSize(String relativePath) {
+		return relativePath.startsWith("/images2/user_pix1/") ||
+			   relativePath.startsWith("/images2/group_pix1/");
+    }
+    
+    private String checkImageSize(HttpServletRequest request, String relativePath) {
+    	if (!needsImageSize(relativePath))
+    		return null;
+
+		String size = DEFAULT_IMAGE_SIZE;
+    	String sizeParameter = request.getParameter("size");
+    	if (sizeParameter != null && AbstractSmallImageServlet.isValidSize(sizeParameter))
+        	size = sizeParameter;
+    	
+    	int lastSlash = relativePath.lastIndexOf("/");
+    	String newPath = relativePath.substring(0, lastSlash + 1) + size + relativePath.substring(lastSlash);
+    	
+    	return newPath;
+    }
      
     private synchronized String getNextPsa() {
     	if (nextPsa >= psaLinks.size())
@@ -99,6 +147,18 @@ public class RewriteServlet extends HttpServlet {
 	return !path.equals("/error");
     }
     
+    private String getVersionedJspPath(String name) {
+		Integer version = jspPages.get(name);
+		String suffix = version.intValue() > 1 ? version.toString() : ""; 	
+		return "/jsp" + suffix + "/" + name + ".jsp";
+    }
+	
+	private void handleVersionedJsp(HttpServletRequest request, HttpServletResponse response, String name) throws IOException, ServletException {
+		// We can't use RewrittenRequest for JSP's because it breaks the
+		// handling of <jsp:forward/> and is generally unreliable
+		handleJsp(request, response, getVersionedJspPath(name));		
+	}
+    
 	public void handleJsp(HttpServletRequest request, HttpServletResponse response, String newPath) throws IOException, ServletException {
 		// Instead of just forwarding JSP's to the right handler, we surround
 		// them in a transaction; this doesn't have anything to do with 
@@ -112,7 +172,7 @@ public class RewriteServlet extends HttpServlet {
 		
 		// If the server says it's too busy, just redirect to a busy page
 	    if (serverStatus.isTooBusy() && canBusyRedirect(request)) {
-			context.getRequestDispatcher("/jsp2/busy.jsp").forward(request, response);
+			context.getRequestDispatcher(getVersionedJspPath("busy")).forward(request, response);
 			return;
 		}
 		
@@ -145,6 +205,7 @@ public class RewriteServlet extends HttpServlet {
 			// Deleting the user from SigninBean means that next time it
 			// is accessed, we'll get a copy attached to this hibernate Session
 			SigninBean.getForRequest(request).resetSessionObjects();
+			request.setAttribute("webVersion", webVersion);
 			
 			context.getRequestDispatcher(newPath).forward(request, response);
 			WebStatistics.getInstance().incrementJspPagesServed();
@@ -191,16 +252,33 @@ public class RewriteServlet extends HttpServlet {
 			}
 		}		
 	}
-    
+
 	@Override
 	public void service(HttpServletRequest request,	HttpServletResponse response) throws IOException, ServletException {
+
+		// be sure we only handle appropriate http methods, not e.g. DAV methods.
+		// also, appropriately implement OPTIONS method.
+		String httpMethod = request.getMethod().toUpperCase();
+		if (!(httpMethod.equals("GET") ||
+				httpMethod.equals("HEAD") ||
+				httpMethod.equals("POST"))) {
+			// If an unexpected method is received, the reply is the same as 
+			// for the OPTIONS method, but with this error. See the 
+			// http spec where it defines 405 Method Not Allowed.
+			if (!httpMethod.equals("OPTIONS")) {
+				logger.warn("Got unusual method {} on rewrite servlet", httpMethod);
+				response.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED);	
+			}
+			response.setHeader("Allow", "GET, HEAD, POST, OPTIONS");
+			return;
+		}
 		
-		String newPath = null;
+		Boolean modifiedPath = false;
 		
 		String path = request.getServletPath();
 		
 		// this line of debug is cut-and-pasted over to AbstractServlet also
-		logger.debug("--------------- HTTP {} for '{}' content-type=" + request.getContentType(), request.getMethod(), path);
+		logger.debug("--------------- HTTP {} for '{}' content-type=" + request.getContentType(), httpMethod, path);
 		
 		// Support for legacy /home, main, and /comingsoon URLs;
 		// forward them all to the root URL; see next stanza for
@@ -216,11 +294,11 @@ public class RewriteServlet extends HttpServlet {
 		
 		if (path.equals("/")) {
 			if (hasSignin(request))
-				handleJsp(request, response, "/jsp2/home.jsp");
+				handleVersionedJsp(request, response, "home");
 			else if (stealthMode)
-				handleJsp(request, response, "/jsp2/comingsoon.jsp");
+				handleVersionedJsp(request, response, "comingsoon");
 			else
-				handleJsp(request, response, "/jsp2/main.jsp");
+				handleVersionedJsp(request, response, "main");
 			return;
 		}
 		
@@ -242,28 +320,36 @@ public class RewriteServlet extends HttpServlet {
 			RewrittenRequest rewrittenRequest = new RewrittenRequest(request, "/images2/favicon.ico");
 			context.getNamedDispatcher("default").forward(rewrittenRequest, response);
 			return;
-		} else if (path.startsWith("/javascript/") || 
-			path.startsWith("/css/") ||
-			path.startsWith("/images/") ||
-			path.startsWith("/css2/") ||
-			path.startsWith("/images2/") ||
-			path.startsWith("/flash/")) {
+		} else if (path.startsWith("/javascript/") ||
+				path.matches("/css\\d*/.*") ||
+				path.matches("/images\\d*/.*") ||
+				path.startsWith("/flash/") || 
+				path.startsWith("/favicons/")) {
 			
-			newPath = checkBuildStamp(path);
-			if (newPath != null) {
+			String pathWithoutStamp = checkBuildStamp(path);
+			if (pathWithoutStamp != null) {
 				AbstractServlet.setInfiniteExpires(response);
-				path = newPath;
+				path = pathWithoutStamp;
+				modifiedPath = true;
+			}
+			
+			String pathWithImageSize = checkImageSize(request, path);
+			if (pathWithImageSize != null) {
+				path = pathWithImageSize;
+				modifiedPath = true;
 			}
 			
 			if (path.equals("/javascript/config.js")) {
 				// config.js is special and handled by a JSP, but it doesn't need
 				// our usual error/transaction stuff in handleJsp since it's just text 
 				// substitution
-				context.getRequestDispatcher("/jsp/configjs.jsp").forward(request, response);
+				context.getRequestDispatcher(getVersionedJspPath("configjs")).forward(request, response);
 			} else if (path.equals("/javascript/whereimat.js")) {
-				handleJsp(request, response, "/jsp2/whereimatjs.jsp");
-			} else if (newPath != null) {
-				RewrittenRequest rewrittenRequest = new RewrittenRequest(request, newPath);
+				handleVersionedJsp(request, response, "whereimatjs");
+			} else if (path.startsWith("/favicons/")) {
+				faviconHandler.service(context, request, response, path, modifiedPath);
+			} else if (modifiedPath) {
+				RewrittenRequest rewrittenRequest = new RewrittenRequest(request, path);
 				context.getNamedDispatcher("default").forward(rewrittenRequest, response);
 			} else {
 				context.getNamedDispatcher("default").forward(request, response);
@@ -360,14 +446,10 @@ public class RewriteServlet extends HttpServlet {
 			}
 		}
 		
-		if (jsp2Pages.contains(afterSlash)) {
-			// We can't use RewrittenRequest for JSP's because it breaks the
-			// handling of <jsp:forward/> and is generally unreliable.
-			newPath = "/jsp2" + path + ".jsp";
-			
-			handleJsp(request, response, newPath);
-			
+		if (jspPages.containsKey(afterSlash)) {
+			handleVersionedJsp(request, response, afterSlash);
 		} else if (htmlPages.contains(afterSlash)) {
+			String newPath;
 			// We could eliminate the use of RewrittenRequest entirely by
 			// adding a mapping for *.html to servlet-info.xml
 			if (afterSlash.equals("robots.txt"))
@@ -376,10 +458,6 @@ public class RewriteServlet extends HttpServlet {
 				newPath = "/html" + path + ".html";
 			RewrittenRequest rewrittenRequest = new RewrittenRequest(request, newPath);
 			context.getNamedDispatcher("default").forward(rewrittenRequest, response);
-		} else if (jspPages.contains(afterSlash)) {
-			newPath = "/jsp" + path + ".jsp";
-			
-			handleJsp(request, response, newPath);
 		} else {
 			response.sendError(HttpServletResponse.SC_NOT_FOUND);
 		}
@@ -394,6 +472,130 @@ public class RewriteServlet extends HttpServlet {
 		return set;
 	}
 	
+	private void initBuildStampScan() { 
+		URL url = RewriteServlet.class.getResource("buildstamp.properties");
+		File file;
+		try {
+			 file = new File(new URI(url.toExternalForm()));
+		} catch (URISyntaxException e) {
+			logger.error("Failed to get buildstamp.properties URI", e);
+			throw new RuntimeException(e);
+		}
+		// the lock covers buildstampFile, buildstampFileLastModified, and updating the build stamp
+		buildstampLock = new ReentrantLock();
+		buildstampCondition = buildstampLock.newCondition();
+		buildstampFile = file;
+		buildstampFileLastModified = 0;
+		
+		buildstampThread = ThreadUtils.newSingleThreadExecutor("buildstamp scanner");
+		buildstampThread.execute(new Runnable() {
+			public void run() {
+				logger.debug("Entering build stamp scanner thread");
+				
+				buildstampLock.lock();
+				try {
+					while (buildstampFile != null) {
+						try {
+							loadBuildStamp();
+						} catch (IOException e) {
+							logger.warn("Build stamp load failed", e);
+						}
+						try {
+							buildstampCondition.await(2, TimeUnit.SECONDS);
+						} catch (InterruptedException e) {
+						}
+					}
+				} finally {
+					buildstampLock.unlock();
+				}
+				
+				logger.debug("Leaving build stamp scanner thread");
+			}
+		});
+	}
+	
+	private void stopBuildStampScan() {
+		logger.debug("Asking build stamp scanner thread to exit");
+		
+		buildstampLock.lock();
+		try {
+			buildstampFile = null;
+			// this just saves us the timeout of the scanner thread
+			buildstampCondition.signalAll();
+		} finally {
+			buildstampLock.unlock();
+		}
+		
+		ThreadUtils.shutdownAndAwaitTermination(buildstampThread);
+
+		logger.debug("Done waiting for buildstamp scanner thread, terminated={}", buildstampThread.isTerminated());
+		buildstampThread = null;
+	}
+	
+	// when called from the buildstamp scanner thread, we'll already 
+	// have the buildstampLock; but we take the lock ourselves also
+	// because on startup the scanner thread and the init() method 
+	// both call this
+	private void loadBuildStamp() throws IOException {
+		buildstampLock.lock();
+		try {
+			if (buildstampFile == null) // indicates that load thread has been asked to shut down
+				return;
+			
+			Properties props = new Properties();
+			long modified = buildstampFile.lastModified();
+			if (modified == buildstampFileLastModified) {
+				return;
+			}
+			
+			logger.debug("New timestamp on buildstamp.properties: {}", modified);
+			buildstampFileLastModified = modified;
+			
+			InputStream str = new FileInputStream(buildstampFile);
+			props.load(str);
+	
+	        buildStamp = props.getProperty("dumbhippo.server.buildstamp");
+	        
+	        if (buildStamp == null || buildStamp.trim().length() == 0) {
+	        	logger.error("buildstamp.properties does not contain build stamp");
+	        	// IOException so the calling thread will catch it and not exit;
+	        	// this can possibly happen in normal circumstances if the props
+	        	// file isn't written atomically
+	        	throw new IOException("buildstamp.properties does not contain build stamp");
+	        }
+	     
+			logger.debug("Loaded build stamp '{}'", buildStamp);
+	        
+	        // We store the builtstamp in the servlet context so we can reference it from JSP pages.
+	        // This could change the buildstamp while a jsp and related items are in the process of being served,
+	        // but not sure how to avoid that. Should not matter on the production server since 
+	        // we won't change the build stamp there.
+	        getServletContext().setAttribute("buildStamp", buildStamp);
+	        
+	        // Now also load the Javascript dependency information, since .js files
+	        // might have changed. This makes the whole loadBuildStamp() name on this
+	        // method a bit of a misnomer, I guess.
+	       
+			String jsFileDepsPath = context.getRealPath("/javascript/file-dependencies.txt");
+			if (jsFileDepsPath == null)
+				throw new IOException("/javascript/file-dependencies.txt not found");
+			String jsModuleMapPath = context.getRealPath("/javascript/module-file-map.txt");
+			if (jsModuleMapPath == null)
+				throw new IOException("/javascript/module-file-map.txt not found");
+			
+			jsResolver = JavascriptResolver.newInstance("/javascript", buildStamp,
+						new File(jsFileDepsPath), new File(jsModuleMapPath));
+	        
+			getServletContext().setAttribute("jsResolver", jsResolver);
+			
+			logger.debug("Loaded new Javascript dependency information from {} and {}",
+					jsFileDepsPath, jsModuleMapPath);
+			
+		} finally {
+			buildstampLock.unlock();
+		}
+	}
+	
 	@Override
 	public void init() throws ServletException {
 		ServletConfig config = getServletConfig();
@@ -404,35 +606,26 @@ public class RewriteServlet extends HttpServlet {
         Configuration configuration = WebEJBUtil.defaultLookup(Configuration.class);
         
 		String stealthModeString = configuration.getProperty(HippoProperty.STEALTH_MODE);
+		webVersion = Integer.parseInt(configuration.getPropertyFatalIfUnset(HippoProperty.WEB_VERSION));
+		
 		stealthMode = Boolean.parseBoolean(stealthModeString);
 		
 		logger.debug("Stealth mode: " + stealthMode);
 		
 		requiresSignin = getStringSet(config, "requiresSignin");
 		requiresSigninStealth = getStringSet(config, "requiresSigninStealth");
-		noSignin = getStringSet(config, "noSignin");
+		noSignin = getStringSet(config, "noSignin");		
 		
-		jspPages = new HashSet<String>();
-		Set jspPaths = context.getResourcePaths("/jsp/");
-		if (jspPaths != null) {
-			for (Object o : jspPaths) {
+		jspPages = new HashMap<String, Integer>();
+		for (int i = 1; i <= webVersion; i++) {
+			String prefix = "/jsp" + (i == 1 ? "" : Integer.toString(i)) + "/";		
+			for (Object o : context.getResourcePaths(prefix)) {
 				String path = (String)o;
 				if (path.endsWith(".jsp") && path.indexOf('/') != -1)
-					jspPages.add(path.substring(5, path.length() - 4));
-			}
+					jspPages.put(path.substring(prefix.length(), path.length() - 4), i);
+			}			
 		}
 		logger.debug("jsp pages are {}", jspPages);
-		
-		jsp2Pages = new HashSet<String>();
-		Set jsp2Paths = context.getResourcePaths("/jsp2/");
-		if (jsp2Paths != null) {
-			for (Object o : jsp2Paths) {
-				String path = (String)o;
-				if (path.endsWith(".jsp") && path.indexOf('/') != -1)
-					jsp2Pages.add(path.substring(6, path.length() - 4));
-			}
-		}
-		logger.debug("jsp2 pages are {}", jsp2Pages);
 		
 		htmlPages = new HashSet<String>();
 		Set htmlPaths = context.getResourcePaths("/html/");
@@ -450,28 +643,18 @@ public class RewriteServlet extends HttpServlet {
 		withSigninRequirements.addAll(requiresSigninStealth);
 		withSigninRequirements.addAll(noSignin);
 		
-		for (String p : jspPages) {
+		for (String p : jspPages.keySet()) {
 			if (!withSigninRequirements.contains(p)) {
 				if (p.startsWith("psa-"))
 					noSignin.add(p);
 				else {
 					// This warning is generated superfluously on some unused /jsp pages
 					// for now
-					logger.error(".jsp {} does not have its signin requirements specified", p);
+					logger.error(".jsp {} at version {} does not have its signin requirements specified", p, jspPages.get(p));
 				}
 			}
 		}
 
-		for (String p : jsp2Pages) {
-			if (!withSigninRequirements.contains(p)) {
-				if (p.startsWith("psa-"))
-					noSignin.add(p);
-				else {
-					logger.error(".jsp {} does not have its signin requirements specified", p);
-				}
-			}
-		}
-		
 		for (String p : htmlPages) {
 			if (!withSigninRequirements.contains(p)) {
 				if (p.startsWith("psa-"))
@@ -483,7 +666,7 @@ public class RewriteServlet extends HttpServlet {
 		}
 		
 		for (String p : withSigninRequirements) {
-			if (!jspPages.contains(p) && !htmlPages.contains(p) && !jsp2Pages.contains(p)) {
+			if (!jspPages.containsKey(p) && !htmlPages.contains(p)) {
 				logger.warn("Page '{}' in servlet config is not a .jsp or .html we know about", p);
 			}
 		}
@@ -493,16 +676,26 @@ public class RewriteServlet extends HttpServlet {
 			if (p.startsWith("psa-"))
 				psaLinks.add(p);
 		}
-		logger.debug("Added {} PSAs: {}", psaLinks.size(), psaLinks);
+		logger.debug("Added {} PSAs: {}", psaLinks.size(), psaLinks);		
+        
+		faviconHandler = new FaviconHandler();
 		
-        buildStamp = configuration.getProperty(HippoProperty.BUILDSTAMP);
-        
-        // We store the builtstamp in the servlet context so we can reference it from JSP pages
-        getServletContext().setAttribute("buildStamp", buildStamp);
-        
-        // Also store the server's base URL
+		initBuildStampScan();
+		try {
+			loadBuildStamp();
+		} catch (IOException e) {
+			logger.error("Initial build stamp load failed: {}", e.getMessage());
+			throw new ServletException("Failed to load build stamp", e);
+		}
+		
+        // Store the server's base URL for reference from JSP pages
         String baseUrl = configuration.getPropertyFatalIfUnset(HippoProperty.BASEURL);
-        getServletContext().setAttribute("baseUrl", baseUrl); 
- 
+        getServletContext().setAttribute("baseUrl", baseUrl);
+        getServletContext().setAttribute("googleAnalyticsKey", configuration.getPropertyFatalIfUnset(HippoProperty.GOOGLE_ANALYTICS_KEY));        
+	}
+	
+	@Override
+	public void destroy() {
+		stopBuildStampScan();
 	}
 }

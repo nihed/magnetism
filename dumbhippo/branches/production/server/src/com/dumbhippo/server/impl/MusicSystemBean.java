@@ -6,22 +6,20 @@ import java.util.List;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 
-import com.dumbhippo.persistence.AccountFeed;
 import com.dumbhippo.persistence.Group;
-import com.dumbhippo.persistence.TrackFeedEntry;
 import com.dumbhippo.persistence.User;
-import com.dumbhippo.server.AlbumView;
-import com.dumbhippo.server.ArtistView;
-import com.dumbhippo.server.ExpandedArtistView;
 import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.MusicSystemInternal;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Pageable;
-import com.dumbhippo.server.PersonMusicView;
 import com.dumbhippo.server.TrackSearchResult;
-import com.dumbhippo.server.TrackView;
-import com.dumbhippo.server.UserViewpoint;
-import com.dumbhippo.server.Viewpoint;
+import com.dumbhippo.server.views.AlbumView;
+import com.dumbhippo.server.views.ArtistView;
+import com.dumbhippo.server.views.ExpandedArtistView;
+import com.dumbhippo.server.views.PersonMusicView;
+import com.dumbhippo.server.views.TrackView;
+import com.dumbhippo.server.views.UserViewpoint;
+import com.dumbhippo.server.views.Viewpoint;
 
 /**
  * Originally there was one stateless bean implementing MusicSystem and MusicSystemInternal;
@@ -40,6 +38,14 @@ public class MusicSystemBean implements MusicSystem {
 		return internal.getCurrentTrackView(viewpoint, user);
 	}
 
+	public int countTrackHistory(Viewpoint viewpoint, User user) {
+	    return internal.countTrackHistory(viewpoint, user);
+	}
+	
+	public boolean hasTrackHistory(Viewpoint viewpoint, User user) {
+		return internal.hasTrackHistory(viewpoint, user);
+	}
+	
 	public void pageLatestTrackViews(Viewpoint viewpoint, Pageable<TrackView> pageable) {
 		internal.pageLatestTrackViews(viewpoint, pageable);
 	}
@@ -135,10 +141,6 @@ public class MusicSystemBean implements MusicSystem {
 	
 	public List<TrackView> getTrackSearchTracks(Viewpoint viewpoint, TrackSearchResult searchResult, int start, int count) {
 		return internal.getTrackSearchTracks(viewpoint, searchResult, start, count);
-	}
-	
-	public void addFeedTrack(AccountFeed feed, TrackFeedEntry entry, int entryPosition) {
-		internal.addFeedTrack(feed, entry, entryPosition);
 	}
 	
 	public long getLatestPlayTime(Viewpoint viewpoint, User user) {

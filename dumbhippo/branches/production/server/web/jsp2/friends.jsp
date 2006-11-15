@@ -29,7 +29,7 @@
 
 <head>
 	<title><c:out value="${person.viewedPerson.name}"/>'s Friends</title>
-	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/site.css"/>
+	<dht:siteStyle/>
 	<dht:faviconIncludes/>
 	<dht:scriptIncludes/>
 </head>

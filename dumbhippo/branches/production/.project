@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>production</name>
+	<name>trunk</name>
 	<comment></comment>
 	<projects>
 	</projects>
@@ -14,4 +14,11 @@
 	<natures>
 		<nature>org.eclipse.jdt.core.javanature</nature>
 	</natures>
+	<linkedResources>
+		<link>
+			<name>eclipse-build</name>
+			<type>2</type>
+			<location>ECLIPSE_BUILD_DIR/dumbhippo</location>
+		</link>
+	</linkedResources>
 </projectDescription>

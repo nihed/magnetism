@@ -11,6 +11,7 @@
 
 <head>
 	<title><c:out value="${musicsearch.expandedArtistView.name}"/></title>
+	<dht:siteStyle/>	
 	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/artist.css"/>
 	<!--[if IE]>
 	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/artist-iefixes.css">

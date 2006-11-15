@@ -1,10 +1,18 @@
 package com.dumbhippo;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
+
 import org.slf4j.Logger;
 import org.xml.sax.Attributes;
+import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
 import org.xml.sax.helpers.DefaultHandler;
@@ -12,6 +20,8 @@ import org.xml.sax.helpers.DefaultHandler;
 public abstract class EnumSaxHandler<E extends Enum<E>> extends DefaultHandler {
 	@SuppressWarnings("unused")
 	static private final Logger logger = GlobalSetup.getLogger(EnumSaxHandler.class);
+
+	private static SAXParserFactory saxFactory;	
 	
 	private Class<E> enumClass;
 	private E ignoredValue;
@@ -20,6 +30,50 @@ public abstract class EnumSaxHandler<E extends Enum<E>> extends DefaultHandler {
 	private List<E> stack;
 	private StringBuilder content;
 
+	// putting these general SAX convenience methods in this class is a little bogus, but 
+	// oh well
+	
+	public static SAXParser newSAXParser() {
+		SAXParser parser;
+		try {
+			synchronized (EnumSaxHandler.class) {
+				if (saxFactory == null) {
+					saxFactory = SAXParserFactory.newInstance();
+					saxFactory.setNamespaceAware(true);
+					saxFactory.setValidating(false);
+					logger.debug("New SAX parser factory validating {} namespaces {}",
+							saxFactory.isValidating(), saxFactory.isNamespaceAware());				}
+				
+				parser = saxFactory.newSAXParser();
+			}
+		} catch (ParserConfigurationException e) {
+			logger.error("failed to create sax parser: {}", e.getMessage());
+			throw new RuntimeException(e);
+		} catch (SAXException e) {
+			logger.error("failed to create sax parser: {}", e.getMessage());
+			throw new RuntimeException(e);
+		}
+		return parser;
+	}
+	
+	public static void parse(InputStream input, DefaultHandler handler)
+			throws SAXException, IOException {
+		newSAXParser().parse(input, handler);
+	}
+	
+	public static void parse(String input, DefaultHandler handler)
+		throws SAXException, IOException {
+		newSAXParser().parse(new InputSource(new StringReader(input)), handler);
+	}
+	
+	public void parse(InputStream input) throws SAXException, IOException {
+		parse(input, this);
+	}
+	
+	public void parse(String input) throws SAXException, IOException {
+		parse(input, this);
+	}
+	
 	protected EnumSaxHandler(Class<E> enumClass, E ignoredValue) {
 		this.enumClass = enumClass;
 		this.ignoredValue = ignoredValue;
@@ -75,12 +129,27 @@ public abstract class EnumSaxHandler<E extends Enum<E>> extends DefaultHandler {
 			return null;		
 	}
 	
+	// FIXME check that the uri is the right namespace if using localName
+	protected String getUnqualifiedName(String uri, String localName, String qName) throws SAXException {
+		if (localName != null && localName.length() > 0)
+			return localName;
+		else if (qName != null && qName.length() > 0) {
+			int colon = qName.indexOf(':');
+			if (colon >= 0)
+				return qName.substring(colon);
+			else
+				return qName;
+		} else {
+			throw new SAXException("element has no name, uri=" + uri + " localName=" + localName + " qName=" + qName);
+		}
+	}
+	
 	@Override
-	public final void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
-		 // logger.debug("start element " + qName);
+	public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
+		 //logger.debug("start element uri '{}' localName '{}' qName '" + qName + "'", uri, localName);
 		 // debugLogAttributes(attributes);
 		 
-		 push(qName, attributes);
+		 push(getUnqualifiedName(uri, localName, qName), attributes);
 		 
 		 openElement(current());
 	}
@@ -94,7 +163,7 @@ public abstract class EnumSaxHandler<E extends Enum<E>> extends DefaultHandler {
 		
 		closeElement(c);
 		
-		pop(qName);
+		pop(getUnqualifiedName(uri, localName, qName));
 	}
 	
 	@Override

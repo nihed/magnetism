@@ -12,18 +12,23 @@ struct _HippoEntity {
     char *guid;
     char *name;
     char *home_url;
-    char *small_photo_url;
+    char *photo_url;
     int version;
-	HippoChatRoom *room;
-	/* date updates about this entity were last ignored */
-	GTime date_last_ignored;
+    int notify_freeze_count;
+    gboolean need_notify;
 };
 
 struct _HippoEntityClass {
     GObjectClass parent;
+
+    gboolean (*update_from_xml) (HippoEntity    *entity,
+                                 HippoDataCache *cache,
+                                 LmMessageNode  *node);
 };
 
-void hippo_entity_emit_changed   (HippoEntity *entity);
+void hippo_entity_freeze_notify (HippoEntity *entity);
+void hippo_entity_thaw_notify   (HippoEntity *entity);
+void hippo_entity_notify        (HippoEntity *entity);
 
 void hippo_entity_set_string     (HippoEntity *entity,
                                   char       **s_p,

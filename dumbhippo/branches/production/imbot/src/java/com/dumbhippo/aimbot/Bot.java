@@ -334,7 +334,7 @@ class Bot implements Runnable {
 		if (aim != null)
 			throw new IllegalStateException("can't sign on when you're already running");
 
-		logger.debug("Bot signing on...");
+		logger.debug("Bot signing on... name {}, pass {}", name, pass);
 		
 		/*
 		if (false || true)

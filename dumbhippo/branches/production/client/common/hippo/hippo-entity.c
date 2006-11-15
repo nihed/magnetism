@@ -1,20 +1,22 @@
 /* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 #include "hippo-entity-protected.h"
+#include "hippo-feed.h"
+#include "hippo-group.h"
 #include "hippo-person.h"
+#include "hippo-resource.h"
 #include "hippo-chat-room.h"
+#include "hippo-xml-utils.h"
 #include <string.h>
-
-/* === CONSTANTS === */
-
-/* 2 hours entity ignore timeout, in seconds; make this a parameter that can be set */
-/* if want different ignore timeouts or want ignore to remain in effect indefinitely */
-static const int ENTITY_IGNORE_TIMEOUT = 2*60*60; 
 
 /* === HippoEntity implementation === */
 
 static void     hippo_entity_finalize             (GObject *object);
 
-G_DEFINE_TYPE(HippoEntity, hippo_entity, G_TYPE_OBJECT);
+static gboolean hippo_entity_real_update_from_xml(HippoEntity    *entity,
+                                                  HippoDataCache *cache,
+                                                  LmMessageNode  *node);
+
+G_DEFINE_ABSTRACT_TYPE(HippoEntity, hippo_entity, G_TYPE_OBJECT);
 
 enum {
     CHANGED,
@@ -38,14 +40,15 @@ hippo_entity_class_init(HippoEntityClass *klass)
      */
     signals[CHANGED] =
         g_signal_new ("changed",
-            		  G_TYPE_FROM_CLASS (object_class),
-            		  G_SIGNAL_RUN_LAST,
-            		  0,
-            		  NULL, NULL,
-            		  g_cclosure_marshal_VOID__VOID,
-            		  G_TYPE_NONE, 0);
+                      G_TYPE_FROM_CLASS (object_class),
+                      G_SIGNAL_RUN_LAST,
+                      0,
+                      NULL, NULL,
+                      g_cclosure_marshal_VOID__VOID,
+                      G_TYPE_NONE, 0);
 
     object_class->finalize = hippo_entity_finalize;
+    klass->update_from_xml = hippo_entity_real_update_from_xml;
 }
 
 static void
@@ -55,19 +58,71 @@ hippo_entity_finalize(GObject *object)
 
     g_free(entity->guid);
     g_free(entity->name);
-    g_free(entity->small_photo_url);
+    g_free(entity->photo_url);
 
     G_OBJECT_CLASS(hippo_entity_parent_class)->finalize(object); 
+}
+
+static gboolean
+hippo_entity_real_update_from_xml(HippoEntity    *entity,
+                                  HippoDataCache *cache,
+                                  LmMessageNode  *node)
+{
+    const char *id;
+    const char *name; 
+    const char *photoUrl = NULL;
+    const char *homeUrl = NULL;
+
+    if (!hippo_xml_split(cache, node, NULL,
+                         "id", HIPPO_SPLIT_GUID, &id,
+                         "name", HIPPO_SPLIT_STRING, &name,
+                         "photoUrl", HIPPO_SPLIT_URI_RELATIVE | HIPPO_SPLIT_OPTIONAL, &photoUrl,
+                         /* Home url isn't relative if this is a feed, for example */
+                         "homeUrl", HIPPO_SPLIT_URI_EITHER | HIPPO_SPLIT_OPTIONAL, &homeUrl,
+                         NULL))
+        return FALSE;
+    
+    if (!strcmp(id, entity->guid) == 0) {
+        g_warning("ID on node for update doesn't match entity's ID");
+        return FALSE;
+    }
+
+    hippo_entity_set_name(entity, name);
+
+    if (photoUrl)
+        hippo_entity_set_photo_url(entity, photoUrl);
+
+    if (homeUrl)
+        hippo_entity_set_home_url(entity, homeUrl);
+
+    return TRUE;
 }
 
 /* === HippoEntity "protected" API === */
 
 void
-hippo_entity_emit_changed(HippoEntity *entity)
+hippo_entity_freeze_notify(HippoEntity *entity)
 {
-    g_return_if_fail(HIPPO_IS_ENTITY(entity));
-    
-    g_signal_emit(entity, signals[CHANGED], 0);
+    entity->notify_freeze_count++;
+}
+
+void
+hippo_entity_thaw_notify(HippoEntity *entity)
+{
+    entity->notify_freeze_count--;
+    if (entity->notify_freeze_count == 0 && entity->need_notify) {
+        entity->need_notify = FALSE;
+        g_signal_emit(entity, signals[CHANGED], 0);
+    }
+}
+
+void 
+hippo_entity_notify(HippoEntity *entity)
+{
+    if (entity->notify_freeze_count == 0)
+        g_signal_emit(entity, signals[CHANGED], 0);
+    else
+        entity->need_notify = TRUE;
 }
 
 void
@@ -82,7 +137,7 @@ hippo_entity_set_string(HippoEntity *entity,
         
     g_free(*s_p);
     *s_p = g_strdup(val);
-    hippo_entity_emit_changed(entity);
+    hippo_entity_notify(entity);
 }
 
 /* === HippoEntity exported API === */
@@ -91,18 +146,46 @@ HippoEntity*
 hippo_entity_new(HippoEntityType  type,
                  const char      *guid)
 {
-    HippoEntity *entity;
-    
-    if (type == HIPPO_ENTITY_PERSON)
+    HippoEntity *entity = NULL;
+
+    switch (type) {
+    case HIPPO_ENTITY_RESOURCE:
+        entity = g_object_new(HIPPO_TYPE_RESOURCE, NULL);
+        break;
+    case HIPPO_ENTITY_GROUP:
+        entity = g_object_new(HIPPO_TYPE_GROUP, NULL);
+        break;
+    case HIPPO_ENTITY_PERSON:
         entity = g_object_new(HIPPO_TYPE_PERSON, NULL);
-    else
-        entity = g_object_new(HIPPO_TYPE_ENTITY, NULL);
+        break;
+    case HIPPO_ENTITY_FEED:
+        entity = g_object_new(HIPPO_TYPE_FEED, NULL);
+        break;
+    }
+
+    g_assert(entity != NULL);
     
     entity->type = type;
     entity->guid = g_strdup(guid);
-	entity->date_last_ignored = 0;
     
     return entity;
+}
+
+gboolean
+hippo_entity_update_from_xml(HippoEntity    *entity,
+                             HippoDataCache *cache,
+                             LmMessageNode  *node)
+{
+    gboolean success;
+    
+    hippo_entity_freeze_notify(entity);
+
+    success = HIPPO_ENTITY_GET_CLASS(entity)->update_from_xml(entity, cache, node);
+
+    hippo_entity_thaw_notify(entity);
+
+    return success;
+    
 }
 
 const char*
@@ -134,54 +217,10 @@ hippo_entity_get_home_url(HippoEntity    *entity)
 }
 
 const char*
-hippo_entity_get_small_photo_url(HippoEntity    *entity)
+hippo_entity_get_photo_url(HippoEntity    *entity)
 {
     g_return_val_if_fail(HIPPO_IS_ENTITY(entity), NULL);
-    return entity->small_photo_url;
-}
-
-HippoChatRoom*   
-hippo_entity_get_chat_room(HippoEntity    *entity)
-{
-    g_return_val_if_fail(HIPPO_IS_ENTITY(entity), NULL);
-    return entity->room;
-}
-
-int
-hippo_entity_get_chatting_user_count(HippoEntity *entity)
-{
-	if (entity->room)
-		return hippo_chat_room_get_chatting_user_count(entity->room);
-	else
-		return 0;
-}
-
-GTime            
-hippo_entity_get_date_last_ignored(HippoEntity   *entity)
-{
-    g_return_val_if_fail(HIPPO_IS_ENTITY(entity), 0);
-    return entity->date_last_ignored;
-}
-
-gboolean         
-hippo_entity_get_ignored(HippoEntity  *entity)
-{
-    GTimeVal timeval;
-
-	g_return_val_if_fail(HIPPO_IS_ENTITY(entity), FALSE);
-
-	// date_last_ignored being 0 means that the entity was never ignored 
-	// or that the entity was explicitly unignored; we want to check for 
-	// it explicitly here, rather than let this special meaning of 0 be lost
-	// in the check below
-	if (entity->date_last_ignored == 0)
-        return FALSE;
-
-    g_get_current_time(&timeval);
-	if (entity->date_last_ignored + ENTITY_IGNORE_TIMEOUT < timeval.tv_sec)
-		return FALSE;
-
-	return TRUE;
+    return entity->photo_url;
 }
 
 void
@@ -197,62 +236,15 @@ hippo_entity_set_home_url(HippoEntity    *entity,
                           const char     *url)
 {
     g_return_if_fail(HIPPO_IS_ENTITY(entity));
+    
     hippo_entity_set_string(entity, &entity->home_url, url);
 }
 
 void
-hippo_entity_set_small_photo_url(HippoEntity    *entity,
+hippo_entity_set_photo_url(HippoEntity    *entity,
                                  const char     *url)
 {
     g_return_if_fail(HIPPO_IS_ENTITY(entity));
     /* g_debug("Setting photo for '%s' to '%s'", entity->guid, url ? url : "null"); */
-    hippo_entity_set_string(entity, &entity->small_photo_url, url);
-}
-
-void
-hippo_entity_set_chat_room(HippoEntity    *entity,
-						   HippoChatRoom  *room)
-{
-    g_return_if_fail(HIPPO_IS_ENTITY(entity));
-
-    if (room == entity->room)
-        return;
-            
-    if (room)
-        g_object_ref(room);
-    if (entity->room)
-        g_object_unref(entity->room);
-    entity->room = room;
-
-    if (entity->room)
-        hippo_chat_room_set_title(entity->room, entity->name);
-    
-    hippo_entity_emit_changed(entity);
-}
-
-void             
-hippo_entity_set_date_last_ignored(HippoEntity   *entity,
-								   GTime          date) 
-{
-	g_return_if_fail(HIPPO_IS_ENTITY(entity));
-    if (entity->date_last_ignored != date) {
-        entity->date_last_ignored = date;
-        hippo_entity_emit_changed(entity);
-    }
-}
-
-void             
-hippo_entity_set_ignored(HippoEntity    *entity,
-						 gboolean        is_ignored)
-{
-    GTimeVal timeval;
-
-	g_return_if_fail(HIPPO_IS_ENTITY(entity));
-    
-	if (is_ignored) {
-        g_get_current_time(&timeval);
-        entity->date_last_ignored = timeval.tv_sec; 
-	} else {
-        entity->date_last_ignored = 0;
-	}
+    hippo_entity_set_string(entity, &entity->photo_url, url);
 }

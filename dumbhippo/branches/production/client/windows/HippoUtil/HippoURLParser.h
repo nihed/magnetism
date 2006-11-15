@@ -5,13 +5,8 @@
 #pragma once
 
 #include <HippoUtil.h>
+#include <HippoUtilExport.h>
 #include <wininet.h>
-
-#ifdef BUILDING_HIPPO_UTIL
-#define DLLEXPORT __declspec(dllexport)
-#else
-#define DLLEXPORT __declspec(dllimport)
-#endif
 
 class DLLEXPORT HippoURLParser {
 public:

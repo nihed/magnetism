@@ -7,6 +7,10 @@ import javax.ejb.Local;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.server.views.PersonView;
+import com.dumbhippo.server.views.PersonViewExtra;
+import com.dumbhippo.server.views.UserViewpoint;
+import com.dumbhippo.server.views.Viewpoint;
 
 @Local
 public interface PersonViewer {
@@ -87,4 +91,13 @@ public interface PersonViewer {
 	 *   objects from the omniscient System viewpoint.
 	 */  
 	 public Set<PersonView> getAllUsers(UserViewpoint viewpoint);
+	 
+	 /**
+	  * View a set of users by applying getPersonView to each one.
+	  * 
+	  * @param viewpoint the viewpoint
+	  * @param users a set of users to view
+	  * @return a set of PersonView objects for each user
+	  */
+	 public Set<PersonView> viewUsers(Viewpoint viewpoint, Set<User> users);	 
 }

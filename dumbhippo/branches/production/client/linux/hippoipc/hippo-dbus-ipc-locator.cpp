@@ -4,7 +4,7 @@
 class HippoDBusIpcLocatorImpl : public HippoDBusIpcLocator
 {
 public:
-    virtual HippoIpcProvider *createProvider(const char *url);
+    virtual HippoIpcController *createController(const char *url);
 };
 
 HippoDBusIpcLocator *
@@ -18,9 +18,13 @@ HippoDBusIpcLocator::getInstance()
     return instance;
 }
 
-HippoIpcProvider *
-HippoDBusIpcLocatorImpl::createProvider(const char *url)
+HippoIpcController *
+HippoDBusIpcLocatorImpl::createController(const char *url)
 {
-    return HippoDBusIpcProvider::createInstance(url);
+    HippoIpcProvider *provider = HippoDBusIpcProvider::createInstance(url);
+    HippoIpcController *controller = HippoIpcController::createInstance(provider);
+    provider->unref();
+
+    return controller;
 }
 

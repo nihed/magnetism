@@ -23,6 +23,8 @@ import java.util.concurrent.FutureTask;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
@@ -41,7 +43,9 @@ import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.ThreadUtils;
 import com.dumbhippo.TypeUtils;
-import com.dumbhippo.persistence.AccountFeed;
+import com.dumbhippo.persistence.ExternalAccount;
+import com.dumbhippo.persistence.ExternalAccountType;
+import com.dumbhippo.persistence.FeedEntry;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.MembershipStatus;
 import com.dumbhippo.persistence.SongDownloadSource;
@@ -50,29 +54,22 @@ import com.dumbhippo.persistence.TrackFeedEntry;
 import com.dumbhippo.persistence.TrackHistory;
 import com.dumbhippo.persistence.TrackType;
 import com.dumbhippo.persistence.User;
-import com.dumbhippo.server.AlbumView;
+import com.dumbhippo.search.SearchSystem;
 import com.dumbhippo.server.AmazonAlbumCache;
-import com.dumbhippo.server.ArtistView;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.Enabled;
-import com.dumbhippo.server.ExpandedArtistView;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.MusicSystemInternal;
 import com.dumbhippo.server.NotFoundException;
+import com.dumbhippo.server.Notifier;
 import com.dumbhippo.server.Pageable;
-import com.dumbhippo.server.PersonMusicPlayView;
-import com.dumbhippo.server.PersonMusicView;
 import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.RhapsodyDownloadCache;
-import com.dumbhippo.server.Stacker;
 import com.dumbhippo.server.TrackIndexer;
 import com.dumbhippo.server.TrackSearchResult;
-import com.dumbhippo.server.TrackView;
 import com.dumbhippo.server.TransactionRunner;
-import com.dumbhippo.server.UserViewpoint;
-import com.dumbhippo.server.Viewpoint;
 import com.dumbhippo.server.YahooAlbumCache;
 import com.dumbhippo.server.YahooAlbumSongsCache;
 import com.dumbhippo.server.YahooArtistAlbumsCache;
@@ -80,6 +77,14 @@ import com.dumbhippo.server.YahooArtistCache;
 import com.dumbhippo.server.YahooSongCache;
 import com.dumbhippo.server.YahooSongDownloadCache;
 import com.dumbhippo.server.util.EJBUtil;
+import com.dumbhippo.server.views.AlbumView;
+import com.dumbhippo.server.views.ArtistView;
+import com.dumbhippo.server.views.ExpandedArtistView;
+import com.dumbhippo.server.views.PersonMusicPlayView;
+import com.dumbhippo.server.views.PersonMusicView;
+import com.dumbhippo.server.views.TrackView;
+import com.dumbhippo.server.views.UserViewpoint;
+import com.dumbhippo.server.views.Viewpoint;
 import com.dumbhippo.services.AmazonAlbumData;
 import com.dumbhippo.services.YahooAlbumData;
 import com.dumbhippo.services.YahooArtistData;
@@ -111,6 +116,9 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	private Configuration config;
 	
 	@EJB
+	private SearchSystem searchSystem;
+	
+	@EJB
 	private AmazonAlbumCache amazonAlbumCache;
 	
 	@EJB
@@ -135,7 +143,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	private YahooArtistAlbumsCache yahooArtistAlbumsCache;
 	
 	@EJB
-	private Stacker stacker;
+	private Notifier notifier;
 	
 	private static ExecutorService threadPool;
 	private static boolean shutdown = false;
@@ -156,7 +164,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			shutdown = true;
 			
 			if (threadPool != null) {
-				threadPool.shutdown();
+				ThreadUtils.shutdownAndAwaitTermination(threadPool);
 				threadPool = null;
 			}
 		}	
@@ -168,9 +176,14 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	 * can't use this id, but can pass it to a new transaction for 
 	 * use.
 	 * 
+	 * Note that if the caller has previously looked up and modified
+	 * the same track (acquiring a write lock), this will deadlock, 
+	 * so use with great caution.
+	 * 
 	 * @param properties properties of the track
 	 * @return the track id
 	 */
+	@TransactionAttribute(TransactionAttributeType.SUPPORTS)	
 	private long getTrackIdIsolated(final Map<String, String> properties) {
 		Track detached;
 		try {
@@ -220,7 +233,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 					return res;	
 				}			
 			});
-			TrackIndexer.getInstance().indexAfterTransaction(track.getId());
+			searchSystem.indexTrack(track);
 			return track;
 		} catch (Exception e) {
 			ExceptionUtils.throwAsRuntimeException(e);
@@ -253,13 +266,15 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		});
 		
 		// update the stack with this new listen event
-		stacker.stackMusicPerson(user.getGuid(), now.getTime());
+		notifier.onTrackPlayed(user, track, now);
 	}
 	
+	@TransactionAttribute(TransactionAttributeType.NEVER)	
 	public void setCurrentTrack(final User user, final Track track) {
 		addTrackHistory(user, track, new Date());
 	}
 	 
+	@TransactionAttribute(TransactionAttributeType.NEVER)	
 	public void setCurrentTrack(User user, Map<String,String> properties) {
 		// empty properties means "not listening to any track" - we always
 		// keep the latest track with content, we don't set CurrentTrack to null
@@ -286,6 +301,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		});
 	}
 	
+	@TransactionAttribute(TransactionAttributeType.NEVER)	
 	public void addHistoricalTrack(User user, Map<String,String> properties) {
 		// for now there's no difference here, but eventually we might have the 
 		// client supply some properties like the date of listening instead of 
@@ -307,11 +323,6 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	
 	private List<TrackHistory> getTrackHistory(Viewpoint viewpoint, User user, History type, int firstResult, int maxResults) {
 		//logger.debug("getTrackHistory() type {} for {} max results " + maxResults, type, user);
-		
-		if (!identitySpider.isViewerSystemOrFriendOf(viewpoint, user) && maxResults != 1) {
-			// A non-friend can only see one result
-			maxResults = 1;
-		}
 
 		if (!identitySpider.getMusicSharingEnabled(user, Enabled.AND_ACCOUNT_IS_ACTIVE)) {
 			return Collections.emptyList();
@@ -350,27 +361,32 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		return results;
 	}
 	
-	private int countTrackHistory(Viewpoint viewpoint, User user) {
+	private int queryCount(User user, boolean limitToOne) {
+		Query q;
+		
+		q = em.createQuery("SELECT COUNT(*) FROM TrackHistory h WHERE h.user = :user " +
+				(limitToOne ? " LIMIT 1" : ""));
+		q.setParameter("user", user);
+		
+		Object o = q.getSingleResult();
+		return ((Number)o).intValue();		
+	}
+	
+	public int countTrackHistory(Viewpoint viewpoint, User user) {
 		if (!identitySpider.getMusicSharingEnabled(user, Enabled.AND_ACCOUNT_IS_ACTIVE)) {
 			return 0;
 		}
 		
-		Query q;
-		
-		q = em.createQuery("SELECT COUNT(*) FROM TrackHistory h WHERE h.user = :user ");
-		q.setParameter("user", user);
-		
-		Object o = q.getSingleResult();
-		int count = ((Number)o).intValue();
-		
-		if (!identitySpider.isViewerSystemOrFriendOf(viewpoint, user) && count > 1) {
-			// A non-friend can only see one result
-			count = 1;
-		}
-
-		return count;		
+		return queryCount(user, false);		
 	}
 
+	public boolean hasTrackHistory(Viewpoint viewpoint, User user) {
+		if (!identitySpider.getMusicSharingEnabled(user, Enabled.AND_ACCOUNT_IS_ACTIVE)) {
+			return false;
+		}
+		return queryCount(user, true) > 0;
+	}
+	
 	static final private int MAX_GROUP_HISTORY_TRACKS = 200;
 	static final private int MAX_GROUP_HISTORY_TRACKS_PER_MEMBER = 8;
 	
@@ -1752,7 +1768,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	}
 
 	public TrackSearchResult searchTracks(Viewpoint viewpoint, String queryString) {
-		final String[] fields = { "Artist", "Album", "Name" };
+		final String[] fields = { "artist", "album", "name" };
 		QueryParser queryParser = new MultiFieldQueryParser(fields, TrackIndexer.getInstance().createAnalyzer());
 		queryParser.setDefaultOperator(Operator.AND);
 		org.apache.lucene.search.Query query;
@@ -1801,24 +1817,54 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		}
 	}
 
-	
-	public void addFeedTrack(AccountFeed feed, TrackFeedEntry entry, int entryPosition) {
-		final User user = feed.getAccount().getOwner();
+	// FIXMEFIXMEFIXME - this needs to be annotated to mandate no transaction,
+    // since it can deadlock if called for the same track twice in the same transaction
+	//
+	// Alternatively, and maybe better, unify the last segment of code with 
+	// setCurrentTrack and make adding tracks to the track database always async.
+	//
+	public void onExternalAccountFeedEntry(final User user, ExternalAccount external, FeedEntry feedEntry, int entryPosition) {
+		if (external.getAccountType() != ExternalAccountType.RHAPSODY)
+			return;
+
+		if (!(feedEntry instanceof TrackFeedEntry)) {
+			logger.warn("Rhapsody account {} has non-TrackFeedEntry {}", external, feedEntry);
+			return;
+		}
+		
+		TrackFeedEntry entry = (TrackFeedEntry) feedEntry;
 		
 		final Map<String,String> properties = new HashMap<String,String>();
 		properties.put("type", ""+TrackType.NETWORK_STREAM);
-		properties.put("name", entry.getTrack());
-		properties.put("artist", entry.getArtist());
-		properties.put("album", entry.getAlbum());
-		properties.put("url", entry.getPlayHref());
 		
-		try {
-			Integer duration = Integer.parseInt(entry.getDuration());
-			duration = duration/1000;  // Rhapsody duration info is in milliseconds, elswhere it's seconds
+		// Rhapsody has a tendency to leave stuff blank, e.g. artist and duration are known to be sometimes blank
+		String name = entry.getTrack();
+		String album = entry.getAlbum();
+		String url = entry.getPlayHref();
+		String duration = entry.getDuration();
+		String artist = entry.getArtist();
+		if (artist == null || artist.trim().length() == 0) {
+			logger.debug("Rhapsody feed has blank artist field");
+			artist = "Unknown";
+		}
 		
-			properties.put("duration", ""+duration);
-		} catch (NumberFormatException e) {
-			logger.debug("bad duration in rhapsody feed '{}'", entry.getDuration());
+		properties.put("name", name);
+		properties.put("artist", artist);
+		properties.put("album", album);
+		properties.put("url", url);
+		
+		if (duration != null && duration.trim().length() > 0) {
+			try {
+				Integer durationInt = Integer.parseInt(duration);
+				durationInt = durationInt/1000;  // Rhapsody duration info is in milliseconds, elswhere it's seconds
+			
+				properties.put("duration", ""+duration);
+			} catch (NumberFormatException e) {
+				logger.debug("bad duration in rhapsody feed '{}'", duration);
+				// just don't store the duration
+			}
+		} else {
+			logger.debug("Rhapsody feed has empty duration field");
 			// just don't store the duration
 		}
 		
@@ -1855,7 +1901,10 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 				Track t = em.find(Track.class, trackId);
 				if (t == null)
 					throw new RuntimeException("database isolation mistake (?): null track " + trackId);
-				addTrackHistory(user, t, new Date(virtualPlayTime));
+				User u = em.find(User.class, user.getId());
+				if (u == null)
+					throw new RuntimeException("failed to reattach user");
+				addTrackHistory(u, t, new Date(virtualPlayTime));
 			}
 		});
 	}

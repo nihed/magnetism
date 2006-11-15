@@ -5,8 +5,8 @@
 class HippoIpcControllerEndpoint {
 public:
     HippoIpcControllerEndpoint(HippoIpcListener *listener, HippoEndpointId id) {
-	listener_ = listener;
-	id_ = id;
+        listener_ = listener;
+        id_ = id;
     }
 
     HippoIpcListener *getListener() { return listener_; }
@@ -58,12 +58,14 @@ HippoIpcController::createInstance(HippoIpcProvider *provider)
 HippoIpcControllerImpl::HippoIpcControllerImpl(HippoIpcProvider *provider)
 {
     provider_ = provider;
+    provider_->ref();
     provider_->setListener(this);
 }
 
 HippoIpcControllerImpl::~HippoIpcControllerImpl()
 {
     provider_->setListener(NULL);
+    provider_->unref();
 }
 
 HippoEndpointId 
@@ -81,11 +83,11 @@ void
 HippoIpcControllerImpl::unregisterEndpoint(HippoEndpointId endpoint)
 {
     for (std::vector<HippoIpcControllerEndpoint>::iterator i = endpoints_.begin(); i != endpoints_.end(); i++) {
-	if (i->getId() == endpoint) {
-	    endpoints_.erase(i);
-	    provider_->unregisterEndpoint(endpoint);
-	    break;
-	}
+        if (i->getId() == endpoint) {
+            endpoints_.erase(i);
+            provider_->unregisterEndpoint(endpoint);
+            break;
+        }
     }
 }
 
@@ -123,18 +125,18 @@ void
 HippoIpcControllerImpl::removeListener(HippoIpcListener *listener)
 {
     for (std::vector<HippoIpcControllerEndpoint>::iterator i = endpoints_.begin(); i != endpoints_.end();) {
-	if (i->getListener() == listener) {
-	    i = endpoints_.erase(i);
-	} else {
+        if (i->getListener() == listener) {
+            i = endpoints_.erase(i);
+        } else {
             i++;
         }
     }
 
     for (std::vector<HippoIpcListener *>::iterator i = listeners_.begin(); i != listeners_.end(); i++) {
-	if (*i == listener) {
-	    listeners_.erase(i);
-	    break;
-	}
+        if (*i == listener) {
+            listeners_.erase(i);
+            break;
+        }
     }
 }
 
@@ -158,10 +160,10 @@ void
 HippoIpcControllerImpl::onUserJoin(HippoEndpointId endpoint, const char *chatId, const char *userId, bool participant)
 {
     for (std::vector<HippoIpcControllerEndpoint>::iterator i = endpoints_.begin(); i != endpoints_.end(); i++) {
-	if (i->getId() == endpoint) {
-	    i->getListener()->onUserJoin(endpoint, chatId, userId, participant);
-	    break;
-	}
+        if (i->getId() == endpoint) {
+            i->getListener()->onUserJoin(endpoint, chatId, userId, participant);
+            break;
+        }
     }
 }
 
@@ -169,10 +171,10 @@ void
 HippoIpcControllerImpl::onUserLeave(HippoEndpointId endpoint, const char *chatId, const char *userId)
 {
     for (std::vector<HippoIpcControllerEndpoint>::iterator i = endpoints_.begin(); i != endpoints_.end(); i++) {
-	if (i->getId() == endpoint) {
-	    i->getListener()->onUserLeave(endpoint, chatId, userId);
-	    break;
-	}
+        if (i->getId() == endpoint) {
+            i->getListener()->onUserLeave(endpoint, chatId, userId);
+            break;
+        }
     }
 }
 
@@ -180,10 +182,10 @@ void
 HippoIpcControllerImpl::onMessage(HippoEndpointId endpoint, const char *chatId, const char *userId, const char *message, double timestamp, long serial)
 {
     for (std::vector<HippoIpcControllerEndpoint>::iterator i = endpoints_.begin(); i != endpoints_.end(); i++) {
-	if (i->getId() == endpoint) {
-	    i->getListener()->onMessage(endpoint, chatId, userId, message, timestamp, serial);
-	    break;
-	}
+        if (i->getId() == endpoint) {
+            i->getListener()->onMessage(endpoint, chatId, userId, message, timestamp, serial);
+            break;
+        }
     }
 }
 
@@ -191,9 +193,9 @@ void
 HippoIpcControllerImpl::userInfo(HippoEndpointId endpoint, const char *userId, const char *name, const char *smallPhotoUrl, const char *currentSong, const char *currentArtist, bool musicPlaying)
 {
     for (std::vector<HippoIpcControllerEndpoint>::iterator i = endpoints_.begin(); i != endpoints_.end(); i++) {
-	if (i->getId() == endpoint) {
-	    i->getListener()->userInfo(endpoint, userId, name, smallPhotoUrl, currentSong, currentArtist, musicPlaying);
-	    break;
-	}
+        if (i->getId() == endpoint) {
+            i->getListener()->userInfo(endpoint, userId, name, smallPhotoUrl, currentSong, currentArtist, musicPlaying);
+            break;
+        }
     }
 }

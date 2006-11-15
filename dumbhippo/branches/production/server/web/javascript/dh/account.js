@@ -4,6 +4,7 @@ dojo.require("dh.textinput");
 dojo.require("dh.fileinput");
 dojo.require("dh.photochooser");
 dojo.require("dh.lovehate");
+dojo.require('dh.password');
 
 dh.account.generatingRandomBio = false;
 dh.account.generateRandomBio = function() {
@@ -255,15 +256,15 @@ dhAccountInit = function() {
 		"Your bio has been saved.");
 	}
 	
-	dh.account.musicbioEntryNode = document.getElementById('dhMusicBioEntry');
-	dh.account.musicbioEntry = new dh.textinput.Entry(dh.account.musicbioEntryNode, "If you listen to Coldplay, I want to meet you.", dh.formtable.currentValues['dhMusicBioEntry']);
+//	dh.account.musicbioEntryNode = document.getElementById('dhMusicBioEntry');
+//	dh.account.musicbioEntry = new dh.textinput.Entry(dh.account.musicbioEntryNode, "If you listen to Coldplay, I want to meet you.", dh.formtable.currentValues['dhMusicBioEntry']);
  
- 	dh.formtable.undoValues['dhMusicBioEntry'] = dh.account.musicbioEntry.getValue();
-	dh.account.musicbioEntry.onValueChanged = function(value) {
-		dh.formtable.onValueChanged(dh.account.musicbioEntry, 'setmusicbio', 'musicbio', value,
-		"Saving new music bio...",
-		"Your music bio has been saved.");
-	}
+// 	dh.formtable.undoValues['dhMusicBioEntry'] = dh.account.musicbioEntry.getValue();
+//	dh.account.musicbioEntry.onValueChanged = function(value) {
+//		dh.formtable.onValueChanged(dh.account.musicbioEntry, 'setmusicbio', 'musicbio', value,
+//		"Saving new music bio...",
+//		"Your music bio has been saved.");
+//	}
 
 	dh.account.rhapsodyListeningHistoryEntryNode = document.getElementById('dhRhapsodyListeningHistoryEntry');
 	dh.account.rhapsodyListeningHistoryEntry = new dh.textinput.Entry(dh.account.rhapsodyListeningHistoryEntryNode, "Rhapsody recent plays RSS URL", dh.formtable.currentValues['dhRhapsodyListeningHistoryEntry']);
@@ -283,6 +284,16 @@ dhAccountInit = function() {
 		dh.formtable.onValueChangedXmlMethod(dh.account.websiteEntry, 'setwebsite', 'url', value,
 		"Saving your website address...",
 		"Your website link has been updated.");  // phrasing "updated" is because it could also be removed
+	}
+
+	dh.account.blogEntryNode = document.getElementById('dhBlogEntry');
+	dh.account.blogEntry = new dh.textinput.Entry(dh.account.blogEntryNode, "Your blog URL", dh.formtable.currentValues['dhBlogEntry']);
+
+	dh.formtable.undoValues['dhBlogEntry'] = dh.account.blogEntry.getValue();
+	dh.account.blogEntry.onValueChanged = function(value) {
+		dh.formtable.onValueChangedXmlMethod(dh.account.blogEntry, 'setblog', 'url', value,
+		"Saving your blog address...",
+		"Your blog link has been updated.");  // phrasing "updated" is because it could also be removed
 	}
 	
 	// add some event handlers on the file input

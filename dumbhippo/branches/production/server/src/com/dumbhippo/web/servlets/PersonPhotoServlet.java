@@ -14,19 +14,14 @@ import org.apache.commons.fileupload.FileItem;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HumanVisibleException;
-import com.dumbhippo.server.IdentitySpider;
-import com.dumbhippo.server.UserViewpoint;
-import com.dumbhippo.web.WebEJBUtil;
+import com.dumbhippo.server.views.UserViewpoint;
 
 public class PersonPhotoServlet extends AbstractPhotoServlet {
 	private static final long serialVersionUID = 1L;
 	
-	private IdentitySpider identitySpider;
-	
 	@Override
 	public void init() {
 		super.init();
-		identitySpider = WebEJBUtil.defaultLookup(IdentitySpider.class);
 	}	
 	
 	@Override
@@ -52,7 +47,7 @@ public class PersonPhotoServlet extends AbstractPhotoServlet {
 	}
 
 	@Override
-	protected boolean requiresTransaction() {
+	protected boolean requiresTransaction(HttpServletRequest request) {
 		return true;
 	}
 

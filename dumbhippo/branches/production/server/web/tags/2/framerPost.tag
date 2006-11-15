@@ -1,9 +1,9 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="/jsp/dumbhippo.tld" prefix="dh" %>
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
-<script type="text/javascript">dojo.require("dh.artist");</script>
+<dh:script module="dh.util"/>
 
-<%@ attribute name="post" required="true" type="com.dumbhippo.server.PostView"%>
+<%@ attribute name="post" required="true" type="com.dumbhippo.server.views.PostView"%>
 
 <div class="dh-framer-share">
 	<div class="dh-framer-from-container">
@@ -12,7 +12,7 @@
 				<dht:headshot person="${post.poster}" size="60"/>
 			</div>
 			<div>
-				<a class="dh-framer-from" href="${post.poster.homeUrl}"><c:out value="${post.poster.name}"/></a>
+				<a class="dh-framer-from" href="${post.poster.homeUrl}" target="_top"><c:out value="${post.poster.name}"/></a>
 			</div>
 		</div>
 	</div>

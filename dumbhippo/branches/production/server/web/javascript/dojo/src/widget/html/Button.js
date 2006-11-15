@@ -1,6 +1,6 @@
 dojo.provide("dojo.widget.html.Button");
 dojo.require("dojo.widget.HtmlWidget");
-dojo.require("dojo.widget.Button");
+// removed require on dojo.widget.Button since it's a circular dep and confuses jscompress
 
 dojo.widget.html.Button = function(){
 	// mix in the button properties

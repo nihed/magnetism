@@ -1,5 +1,4 @@
 @CHARSET "UTF-8";
-@IMPORT url("site.css");
 @IMPORT url("invitation-positions.css");
 
 /* Shared between invitation.jsp and group-invitation.jsp */

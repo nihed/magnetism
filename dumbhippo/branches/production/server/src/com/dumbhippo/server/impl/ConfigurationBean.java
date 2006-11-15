@@ -1,7 +1,5 @@
 package com.dumbhippo.server.impl;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Properties;
@@ -32,20 +30,23 @@ public class ConfigurationBean implements Configuration {
 	
 	@PostConstruct
 	public void init() {
-		logger.debug("Loading dumbhippo configuration properties");
+		logger.debug("Loading dumbhippo configuration properties (happens once per ConfigurationBean instance)");
 		
 		Properties systemProperties = System.getProperties();
 		
 		// We don't want to use System.getProperties() as the default here, since 
 		// then we couldn't substitute "" with null, as we do below
 		props = new Properties();
+		// we don't have a dumbhippo.properties for now, since there are no props set at build time
+		/*
 		try {
 			InputStream str = ConfigurationBean.class.getResourceAsStream("dumbhippo.properties");
 			if (str != null)
-				props.load(str);			
+				props.load(str);
 		} catch (IOException e) {
 			logger.warn("Exception reading dumbhippo.properties", e);
 		}
+		*/
 		
 		// use values System.getProperties() or our hardcoded defaults
 		for (HippoProperty prop : HippoProperty.values()) {

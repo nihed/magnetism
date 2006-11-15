@@ -3,7 +3,6 @@ package com.dumbhippo.persistence;
 import java.util.Date;
 
 import javax.persistence.Column;
-import javax.persistence.JoinColumn;
 import javax.persistence.MappedSuperclass;
 import javax.persistence.Transient;
 
@@ -16,8 +15,8 @@ abstract public class AbstractYahooAlbumData extends DBUnique {
 	
 	private long lastUpdated;
 	private String albumId;
+	private String artistId;	
 	private String album;
-	private String artistId;
 	private String artist;
 	private String publisher;
 	private String releaseDate;
@@ -26,15 +25,35 @@ abstract public class AbstractYahooAlbumData extends DBUnique {
 	private int smallImageWidth;
 	private int smallImageHeight;
 	
+	private void reset() {
+		albumId = null;
+		artistId = null;
+		album = null;
+		artist = null;
+		publisher = null;
+		releaseDate = null;
+		tracksNumber = -1;
+		smallImageUrl = null;
+		smallImageWidth = -1;
+		smallImageHeight = -1;
+	}
+	
 	public AbstractYahooAlbumData() {
-		updateData(null);
+		reset();
 	}
 
-	public void updateData(YahooAlbumData data) {
+	protected void updateData(String albumId, String artistId, YahooAlbumData data) {
+		if (albumId == null && artistId == null)
+			throw new IllegalArgumentException("must set either album id or artist id so the cache has a key");
 		if (data != null) {
-			albumId = data.getAlbumId();
+			if (albumId != null && !albumId.equals(data.getAlbumId()))
+				throw new IllegalArgumentException("albumId passed to updateData() must match albumId in the data");
+			if (artistId != null && !artistId.equals(data.getArtistId()))
+				throw new IllegalArgumentException("artistId passed to updateData() must match artistId in the data");
+			
+			this.albumId = data.getAlbumId();
+			this.artistId = data.getArtistId();
 			album = data.getAlbum();
-			artistId = data.getArtistId();
 			artist = data.getArtist();
 			publisher = data.getPublisher();
 			releaseDate = data.getReleaseDate();
@@ -43,37 +62,30 @@ abstract public class AbstractYahooAlbumData extends DBUnique {
 			smallImageWidth = data.getSmallImageWidth();
 			smallImageHeight = data.getSmallImageHeight();
 		} else {
-			albumId = null;
-			album = null;
-			artistId = null;
-			artist = null;
-			publisher = null;
-			releaseDate = null;
-			tracksNumber = -1;
-			smallImageUrl = null;
-			smallImageWidth = -1;
-			smallImageHeight = -1;
-		}
+			reset();
+			this.albumId = albumId;
+			this.artistId = artistId;
+		}		
 	}
 	
-	// Yahoo album results always have a single artist element.
-    // If an album has multiple artists, then we get that back as
-    // as a single result with an artist like 
-    // "B.B. King & Eric Clapton" rather than multiple results.
-	// Every such combination of artists has its own id. 
-	// Thus, we would not get multiple AbstractYahooAlbumData entries
-	// when an album has multiple artists, so albumId is unique 
-	// by itself and doesn't need to be combined with artistId to 
-	// provide a unique key.
-	@JoinColumn(nullable=true, unique=true)
-	public String getAlbumId() {
+	// actual getAlbumId is in the subclass since its annotations vary by subclass
+	final protected String internalGetAlbumId() {
 		return albumId;
 	}
 
-	public void setAlbumId(String albumId) {
+	final protected void internalSetAlbumId(String albumId) {
 		this.albumId = albumId;
 	}
+	
+	// actual getArtistId is in the subclass since its annotations vary by subclass
+	final protected String internalGetArtistId() {
+		return artistId;
+	}
 
+	final protected void internalSetArtistId(String artistId) {
+		this.artistId = artistId;
+	}
+	
 	@Column(nullable=true)
 	public String getAlbum() {
 		return album;
@@ -81,15 +93,6 @@ abstract public class AbstractYahooAlbumData extends DBUnique {
 
 	public void setAlbum(String album) {
 		this.album = album;
-	}
-	
-	@Column(nullable=true)
-	public String getArtistId() {
-		return artistId;
-	}
-
-	public void setArtistId(String artistId) {
-		this.artistId = artistId;
 	}
 
 	@Column(nullable=true)

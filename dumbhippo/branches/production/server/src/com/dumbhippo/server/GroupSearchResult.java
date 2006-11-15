@@ -13,6 +13,8 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.Group;
+import com.dumbhippo.server.views.GroupView;
+import com.dumbhippo.server.views.Viewpoint;
 
 /**
  * Represents the result of searching over Groups using lucene. When
@@ -101,9 +103,9 @@ public class GroupSearchResult {
 		for (int i = nChecked; toGet > 0 && i < hits.length(); i++) {
 			try {
 				Document d = hits.doc(i);
-				String id = d.get("Id");
+				String id = d.get("id");
 				if (id == null) {
-					logger.error("Document didn't have Id field");
+					logger.error("Document didn't have id field");
 					continue;
 				}
 				

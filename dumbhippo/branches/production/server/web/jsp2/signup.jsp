@@ -8,13 +8,10 @@
 
 <head>
 	<title>Sign up for Mugshot</title>
+	<dht:siteStyle/>
     <link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/landing.css"/>	
 	<dht:faviconIncludes/>
-	<dht:scriptIncludes/>
-	<script type="text/javascript">
-		dojo.require("dh.util");
-		dojo.require("dh.download");
-	</script>
+		<dh:script module="dh.download"/>
 </head>
 <%-- TODO: could get a more appropriate header, but Sign Up works too. --%>
 <dht:systemPage disableJumpTo="true" disableSignupLink="true" topImage="/images2/${buildStamp}/header_signup500.gif" fullHeader="true">
@@ -29,8 +26,7 @@
                 <dht:selfInvite promotion="${landing.openSignupPromotion}" invitesAvailable="${landing.selfInvitations}"/>
 		    </c:when>
 		    <c:otherwise>
-	            <p><strong>Mugshot is currently operating as a limited user trial.
-	                  <br/>Enter your email address, and when we are ready to open our doors we'll send you an invitation link!
+	            <p><strong>Enter your email address to request an invitation to Mugshot!
 	            </strong></p>
                 <dht:wantsIn buttonText="Sign Me Up!"/>
             </c:otherwise>

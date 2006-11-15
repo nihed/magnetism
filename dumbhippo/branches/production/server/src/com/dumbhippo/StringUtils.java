@@ -3,6 +3,7 @@ package com.dumbhippo;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.Iterator;
 import java.util.List;
@@ -20,13 +21,21 @@ public class StringUtils {
 		return str.toString();
 	}
 	
+	public static String urlDecode(String str) {
+		try {
+			return URLDecoder.decode(str, "UTF-8");
+		} catch (UnsupportedEncodingException e) {
+			throw new RuntimeException("broken Java implementation", e);
+		}
+	}
+	
 	public static String urlEncode(String str) {
 		try {
 			return URLEncoder.encode(str, "UTF-8");
 		} catch (UnsupportedEncodingException e) {
 			throw new RuntimeException("broken Java implementation", e);
 		}
-	}
+	} 
 
 	/**
 	 * Url-encode an email address, not encoding the "@" symbol. 
@@ -115,5 +124,17 @@ public class StringUtils {
 		}
 		
 		return truncatedString;
+	}
+	
+	/**
+	 * Picks a random String from an array of Strings.
+	 * 
+	 * @param strings an array of Strings
+	 * @return a random String from the array
+	 */
+	public static String getRandomString(String[] strings) {
+		// use seconds not milliseconds, milliseconds might always be multiples of 10 or something 
+		int i = (int) ((System.currentTimeMillis() / 1000) % strings.length);
+		return strings[i];			
 	}
 }

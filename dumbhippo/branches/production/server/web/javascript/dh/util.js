@@ -1,5 +1,102 @@
 dojo.provide("dh.util");
+dojo.provide("dh.logger");
 dojo.require("dojo.html");
+
+dh.logger.LogEntry = function(category, text, level) {
+	this.category = category;
+	this.text = text;
+	this.date = new Date();
+	this.level = level ? level : "info";	
+}
+
+dh.logger.logWindow = null;
+dh.logger.maxLogEntries = 40;
+dh.logger.logEntries = [];
+
+dh.logger.isActive = function() {
+	return dh.logger.logWindow && !dh.logger.logWindow.closed;
+}
+
+dh.logger.show = function() {
+	if (!dh.logger.isActive()) {
+		dh.logger.logWindow = window.open();
+		
+		var doc = dh.logger.logWindow.document;
+		
+		var log = doc.createElement("table");
+		var tbody = doc.createElement("tbody");
+		log.appendChild(tbody);
+		tbody.id = "dhErrorLog";
+
+		var controlsDiv = doc.createElement("div")
+
+		var clearButton = doc.createElement("input")
+		clearButton.type = "button";
+		clearButton.value = "Clear"
+		clearButton.onclick = function (e) {
+			tbody.innerHTML = "";
+		}		
+		controlsDiv.appendChild(clearButton)
+
+		doc.body.appendChild(controlsDiv)
+		doc.body.appendChild(log);		
+		var i;
+		for (i = 0; i < dh.logger.logEntries.length; i++) {
+			dh.logger.append(dh.logger.logEntries[i]);
+		}
+		dh.logger.logEntries = []
+	}
+}
+
+dh.logger.append = function(entry) {
+	var doc = dh.logger.logWindow.document;
+	var logTable = doc.getElementById("dhErrorLog");
+	
+	var tr = doc.createElement("tr");
+	var td = doc.createElement("td");
+	tr.appendChild(td);
+	td.style.fontSize = "smaller";
+	td.appendChild(doc.createTextNode(entry.date));
+	var td = doc.createElement("td");
+	tr.appendChild(td);
+	td.style.fontWeight = "bold";
+	td.appendChild(doc.createTextNode(entry.category));
+	var td = doc.createElement("td");
+	tr.appendChild(td);
+	var span = doc.createElement("span");
+	if (entry.level == "error") {
+		span.style.color = "red";
+	}
+	span.style.marginLeft = "10px;"
+	span.appendChild(doc.createTextNode(entry.text));
+	td.appendChild(span);
+	
+	logTable.appendChild(tr);	
+}
+
+dh.logger.log = function(category, text, level) {
+	if (!text) {
+		text = category;
+		category = "unknown";
+	}
+	var entry = new dh.logger.LogEntry(category, text, level);
+	if (dh.logger.isActive()) {
+		dh.logger.append(entry);
+	} else {
+		dh.logger.logEntries.push(entry);
+		if (dh.logger.logEntries.length >= dh.logger.maxLogEntries) {
+			dh.logger.logEntries.shift();
+		}
+	}
+}
+
+dh.logger.logError = function(category, text) {
+	dh.logger.log(category, text, "error");
+}
+
+// Convenience aliases
+dh.log = dh.logger.log;
+dh.logError = dh.logger.logError;
 
 dh.util.getParamsFromLocation = function() {
 	var query = window.location.search.substring(1);
@@ -66,6 +163,13 @@ dh.util.toggleShowing = function(node) {
 
 dh.util.isShowing = function(node) {
 	return !dojo.html.hasClass(node, "dhInvisible");
+}
+
+dh.util.isDescendant = function (possibleParent, child) {
+	while (child && child != possibleParent) {
+		child = child.parentNode;
+	}
+	return child == possibleParent;
 }
 
 dh.util.closeWindow = function() {
@@ -182,8 +286,9 @@ dh.util.goToNextPage = function(def, flashMessage) {
 // loosely based on dojo.html.renderedTextContent
 dh.util.getTextFromHtmlNode = function(node) {
 	var result = "";
-	if (node == null) { return result; }
-	
+	if (node == null) 
+	    return result;
+
 	switch (node.nodeType) {
 		case dojo.dom.ELEMENT_NODE: // ELEMENT_NODE
 			if (node.nodeName.toLowerCase() == "br") {
@@ -217,6 +322,59 @@ dh.util.getTextFromRichText = function(richtext) {
 	// finished and doesn't work well enough for our purposes here
 	// yet (probably overkill too since we offer no styled text toolbar)
 	return dh.util.getTextFromHtmlNode(richtext.editNode);
+}
+
+dh.util.truncateTextInHtmlNode = function(node, length) {
+	if (node == null)
+	    return length;
+	    
+	switch (node.nodeType) {
+		case dojo.dom.ELEMENT_NODE: // ELEMENT_NODE
+			if (node.nodeName.toLowerCase() == "br") {
+		        // TODO: not sure if can remove <br> on the fly here, 
+		        // but that would be a good thing to do
+		        // this is a corner case, we want some other node to 
+		        // take care of inserting "..."
+		        if (length > 1)
+				    length--;				    
+			} else {
+				//dojo.debug("element = " + node.nodeName);
+			}
+			break;
+		case 5: // ENTITY_REFERENCE_NODE
+		    if (length <= 0) {
+		        node.nodeValue = "";
+		    } else if (length <= node.nodeValue.length) {
+		        var newText = node.nodeValue.substring(0, length) + "...";
+		        node.nodeValue = newText; 
+		        length = 0;     
+		    } else {
+		        length = length - node.nodeValue.length;
+		    }
+			break;
+		case 2: // ATTRIBUTE_NODE
+			break;
+		case 3: // TEXT_NODE
+		case 4: // CDATA_SECTION_NODE
+		    if (length <= 0) {
+		        node.nodeValue = "";
+		    } else if (length <= node.nodeValue.length) {
+		        var newText = node.nodeValue.substring(0, length) + "...";
+		        node.nodeValue = newText; 
+		        length = 0;     
+		    } else {
+		        length = length - node.nodeValue.length;
+		    }
+		    break;
+		default:
+			break;
+	}
+	
+	for (var i = 0; i < node.childNodes.length; i++) {       
+	   length = dh.util.truncateTextInHtmlNode(node.childNodes[i], length);
+	}
+
+	return length;
 }
 
 dh.util.toggleCheckBox = function(boxNameOrNode) {
@@ -344,6 +502,18 @@ dh.util.openShareLinkWindow = function(link, title) {
 
 dh.util.useFrameSet = function(window, event, obj, postID) {
 	obj.href="/visit?post=" + postID;
+}
+
+dh.util.hasClass = function(node, className) {
+	return dojo.html.hasClass(node, className)
+}
+
+dh.util.prependClass = function(node, className) {
+	dojo.html.prependClass(node, className)
+}
+
+dh.util.removeClass = function(node, className) {
+	dojo.html.removeClass(node, className)
 }
 
 dh.util.getTextWidth = function(text, fontFamily, fontSize, fontStyle, fontVariant, fontWeight) {
@@ -521,15 +691,18 @@ dh.util.getEventNode = function(ev)
 // cancel an event
 dh.util.cancelEvent = function(ev)
 {
-	if (ev) {
+	if (!ev)
+		ev = window.event;
+		
+	if (ev.preventDefault)
 		ev.preventDefault();
+	else
+		ev.returnValue = false;
+		
+	if (ev.stopPropagation)
 		ev.stopPropagation();
-	}
-	
-	if (window.event) {
-		window.event.returnValue = false;
-		window.event.cancelBubble = true;
-	}
+	else
+		ev.cancelBubble = true;		
 };
 
 // Define common keycodes
@@ -598,7 +771,10 @@ dh.util.contains = function(items, item) {
 
 // This function only works if you have the client running, on Windows
 dh.util.clientDebug = function(text) {
-	window.external.DebugLog(text)
+	try {
+		window.external.DebugLog(text);
+	} catch (e) {
+	}
 }
 
 dh.util.timeString = function(timestamp) {
@@ -608,7 +784,6 @@ dh.util.timeString = function(timestamp) {
            + date.getFullYear() + " " + dh.util.zeroPad(date.getHours(), 2) + ":" 
            + dh.util.zeroPad(date.getMinutes(), 2) + ":" + dh.util.zeroPad(date.getSeconds(), 2);
 }
-    
 
 dh.util.zeroPad = function(number, len) {
     var str = number + "";

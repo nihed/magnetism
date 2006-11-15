@@ -3,6 +3,7 @@
 targetdir=@@targetdir@@
 jbossdir=@@jbossdir@@
 jnpPort=@@jnpPort@@
+bindHost="@@bindHost@@"
 
 pidfile=$targetdir/run/jboss.pid
 
@@ -15,7 +16,7 @@ fi
 
 pid=`cat $pidfile`
 
-$jbossdir/bin/shutdown.sh -s jnp://localhost:$jnpPort > /dev/null &
+$jbossdir/bin/shutdown.sh -s jnp://$bindHost:$jnpPort > /dev/null &
 
 timeout=30
 interval=1

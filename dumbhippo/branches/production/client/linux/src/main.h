@@ -21,7 +21,7 @@
 #include <gtk/gtkaboutdialog.h>
 #include <gtk/gtkmessagedialog.h>
 #include <glib/gi18n-lib.h>
-#include "hippo-image-cache.h"
+#include "hippo-pixbuf-cache.h"
 
 G_BEGIN_DECLS
 
@@ -52,9 +52,13 @@ void       hippo_app_visit_entity_id(HippoApp    *app,
                                      const char  *guid);
 void       hippo_app_invite_to_group(HippoApp   *app,
                                      const char *group_id,
-                                     const char *user_id);                                     
-void       hippo_app_join_chat      (HippoApp   *app,
-                                     const char *chat_id);
+                                     const char *user_id);
+
+void              hippo_app_join_chat     (HippoApp   *app,
+                                           const char *chat_id);
+HippoWindowState hippo_app_get_chat_state (HippoApp   *app,
+                                           const char *chat_id);
+
 gboolean   hippo_app_post_is_active (HippoApp   *app,
                                      const char *post_id);                                     
 gboolean   hippo_app_chat_is_active (HippoApp   *app,
@@ -62,17 +66,18 @@ gboolean   hippo_app_chat_is_active (HippoApp   *app,
 /* use this only for user and group photos, caching is weird 
  * if the cache for lots of image types interacts
  */
-void       hippo_app_load_photo     (HippoApp               *app,
-                                     HippoEntity            *entity,
-                                     HippoImageCacheLoadFunc func,
-                                     void                   *data);
+void       hippo_app_load_photo     (HippoApp                *app,
+                                     HippoEntity             *entity,
+                                     HippoPixbufCacheLoadFunc func,
+                                     void                    *data);
+void       hippo_app_get_screen_info   (HippoApp         *app,
+                                        HippoRectangle   *monitor_rect_p,
+                                        HippoRectangle   *tray_icon_rect_p,
+                                        HippoOrientation *tray_icon_orientation_p);
 
-void       hippo_app_put_window_by_icon(HippoApp  *app,
-                                        GtkWindow *window);
-
-/* less typing */
-#define ADD_WEAK(ptr)    g_object_add_weak_pointer(G_OBJECT(*(ptr)), (void**) (char*) (ptr))
-#define REMOVE_WEAK(ptr) do { if (*ptr) { g_object_remove_weak_pointer(G_OBJECT(*(ptr)), (void**) (char*) (ptr)); *ptr = NULL; } } while(0)
+/* FIXME just change all references to have the HIPPO_ */
+#define ADD_WEAK(ptr)    HIPPO_ADD_WEAK(ptr)
+#define REMOVE_WEAK(ptr) HIPPO_REMOVE_WEAK(ptr)
 
 G_END_DECLS
 

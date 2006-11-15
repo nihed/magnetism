@@ -43,6 +43,7 @@
         
      	<dht:sidebarBoxSeparator/>
 		<dht:actionLink href="/public-groups" title="Browse existing public groups">Browse public groups</dht:actionLink>
+		<dht:actionLink href="/active-groups" title="Browse recently active public groups">Browse active groups</dht:actionLink>
 		<dht:actionLink href="/create-group" title="Create a new group of your very own">Create a new group</dht:actionLink>
 	</dht:sidebarBox>
 </c:if>

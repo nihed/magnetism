@@ -1,7 +1,7 @@
 package com.dumbhippo.web.pages;
 
 import com.dumbhippo.server.MusicSystem;
-import com.dumbhippo.server.TrackView;
+import com.dumbhippo.server.views.TrackView;
 import com.dumbhippo.web.ListBean;
 import com.dumbhippo.web.WebEJBUtil;
 

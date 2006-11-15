@@ -18,8 +18,8 @@ import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.HumanVisibleException;
 import com.dumbhippo.server.NotFoundException;
-import com.dumbhippo.server.UserViewpoint;
-import com.dumbhippo.server.Viewpoint;
+import com.dumbhippo.server.views.UserViewpoint;
+import com.dumbhippo.server.views.Viewpoint;
 import com.dumbhippo.web.WebEJBUtil;
 
 public class GroupPhotoServlet extends AbstractPhotoServlet {
@@ -78,7 +78,7 @@ public class GroupPhotoServlet extends AbstractPhotoServlet {
 	}
 
 	@Override
-	protected boolean requiresTransaction() {
+	protected boolean requiresTransaction(HttpServletRequest request) {
 		return true;
 	}
 

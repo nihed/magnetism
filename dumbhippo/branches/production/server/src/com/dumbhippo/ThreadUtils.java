@@ -1,5 +1,6 @@
 package com.dumbhippo;
 
+import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -7,12 +8,47 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 
 public class ThreadUtils {
 	@SuppressWarnings("unused")
 	static private final Logger logger = GlobalSetup.getLogger(ThreadUtils.class);
+		
+	static private int nextGlobalThreadId = 0;
+	
+	static private UncaughtExceptionHandler exceptionHandler = new EmergencyExceptionHandler();
+	
+	// note that there's also a Thread.setDefaultUncaughtExceptionHandler which sets the 
+	// global handler for all threads, but since our class will get unloaded without 
+	// exiting the jvm, setting that would be evil.
+	
+	// Something to be careful of is that if you do ExecutorService.submit(), it returns 
+	// a future and any exception from your runnable is set on the future as an ExecutionException,
+	// rather than thrown out to the thread's root run(). This means that you need to 
+	// actually call get() on the Future so you get that exception. If you don't want the 
+	// future, be sure you use ExecutorService.execute(), not submit().
+	
+	static private class EmergencyExceptionHandler implements UncaughtExceptionHandler {
+		@SuppressWarnings({"unused","hiding"})
+		static private final Logger logger = GlobalSetup.getLogger(EmergencyExceptionHandler.class);
+
+		public void uncaughtException(Thread thread, Throwable throwable) {
+			logger.error("Uncaught exception terminated thread {}: {}", thread.getName(),
+					ExceptionUtils.getRootCause(throwable).getMessage());
+			logger.error("Exception killing thread", throwable);
+		}
+	}
+	
+	public static void shutdownAndAwaitTermination(ExecutorService service) {
+		service.shutdown();
+		try {
+			service.awaitTermination(60, TimeUnit.SECONDS);
+		} catch (InterruptedException e) {
+			logger.error("Timed out while waiting to shut down executor service");
+		}
+	}
 	
 	/**
 	 * Like Executors.newCachedThreadPool, but you can specify the name of 
@@ -33,6 +69,7 @@ public class ThreadUtils {
 				t.setDaemon(true);
 				t.setName(baseName + " " + nextThreadId);
 				nextThreadId += 1;
+				t.setUncaughtExceptionHandler(exceptionHandler);
 				return t;
 			}
 		});
@@ -51,6 +88,7 @@ public class ThreadUtils {
 				t.setDaemon(true);
 				t.setName(baseName + " " + nextThreadId);
 				nextThreadId += 1;
+				t.setUncaughtExceptionHandler(exceptionHandler);
 				return t;
 			}
 		});
@@ -70,9 +108,21 @@ public class ThreadUtils {
 				Thread t = new Thread(r);
 				t.setDaemon(true);
 				t.setName(name);
+				t.setUncaughtExceptionHandler(exceptionHandler);
 				return t;
 			}
 		});
+	}
+	
+	public static Thread newDaemonThread(String name, Runnable r) {
+		Thread t = new Thread(r);
+		t.setDaemon(true);
+		synchronized (ThreadUtils.class) {
+			t.setName(name + " " + nextGlobalThreadId);
+			nextGlobalThreadId += 1;
+		}
+		t.setUncaughtExceptionHandler(exceptionHandler);
+		return t;
 	}
 	
 	private static void logException(Exception e, boolean fullLog) {

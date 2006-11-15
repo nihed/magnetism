@@ -15,13 +15,12 @@ import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.botcom.BotEvent;
 import com.dumbhippo.botcom.BotEventLogin;
 import com.dumbhippo.botcom.BotEventToken;
-import com.dumbhippo.botcom.BotTask;
 import com.dumbhippo.botcom.BotTaskMessage;
-import com.dumbhippo.jms.JmsProducer;
 import com.dumbhippo.persistence.AimResource;
 import com.dumbhippo.persistence.ResourceClaimToken;
 import com.dumbhippo.persistence.Token;
 import com.dumbhippo.persistence.ValidationException;
+import com.dumbhippo.server.AimQueueSender;
 import com.dumbhippo.server.ClaimVerifier;
 import com.dumbhippo.server.HumanVisibleException;
 import com.dumbhippo.server.IdentitySpider;
@@ -35,7 +34,7 @@ import com.dumbhippo.server.TokenUnknownException;
    @ActivationConfigProperty(propertyName="destinationType",
      propertyValue="javax.jms.Queue"),
    @ActivationConfigProperty(propertyName="destination",
-     propertyValue="queue/" + BotEvent.QUEUE)
+     propertyValue=BotEvent.QUEUE_NAME)
 })
 public class AimQueueConsumerBean implements MessageListener {
 	static private final Logger logger = GlobalSetup.getLogger(AimQueueConsumerBean.class);
@@ -52,12 +51,12 @@ public class AimQueueConsumerBean implements MessageListener {
 	@EJB
 	private SigninSystem signinSystem;
 	
+	@EJB
+	private AimQueueSender aimQueueSender;
+	
 	private void sendHtmlReplyMessage(BotEvent event, String aimName, String htmlMessage) {
 		BotTaskMessage message = new BotTaskMessage(event.getBotName(), aimName, htmlMessage);
-		JmsProducer producer = new JmsProducer(BotTask.QUEUE, true);
-		ObjectMessage jmsMessage = producer.createObjectMessage(message);
-		// logger.debug("Sending JMS message to " + BotTask.QUEUE + ": " + jmsMessage);
-		producer.send(jmsMessage);
+		aimQueueSender.sendMessage(message);
 	}
 	
 	private void sendReplyMessage(BotEvent event, String aimName, String textMessage) {
@@ -117,7 +116,7 @@ public class AimQueueConsumerBean implements MessageListener {
 				ObjectMessage objectMessage = (ObjectMessage) message;
 				Object obj = objectMessage.getObject();
 				
-				logger.debug("Got object in {}: {}", BotEvent.QUEUE, obj);
+				logger.debug("Got object in {}: {}", BotEvent.QUEUE_NAME, obj);
 					
 				if (obj instanceof BotEventToken) {
 					BotEventToken event = (BotEventToken) obj;

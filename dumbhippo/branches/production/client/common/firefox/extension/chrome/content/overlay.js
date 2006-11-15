@@ -27,12 +27,12 @@ var Hippo = {
        	// http://xulplanet.com/references/elemref/ref_toolbar.html#prop_insertItem
        	// put our button right before the location entry box
 		toolbar.insertItem("mugshot-button", urlbar);
-		// annoyingly, it seems insertItem does not change toolbar.currentset
-		// which is a comma-separated list of item ids.
-		// there's also "toolbar.currentSet" which seems to be different from 
-		// the lowercase currentset attribute? anyway changing that didn't work
+		// toolbar.currentSet is the list of toolbar items currently in the
+		// toolbar; this is distinct from the "currentset" attribute which is
+        // the value that was read on startup and will be written back when
+        // we call document.persist().
 		currentset = toolbar.getAttribute("currentset");
-		toolbar.setAttribute("currentset", currentset.replace("urlbar-container", "mugshot-button,urlbar-container"));
+		toolbar.setAttribute("currentset", toolbar.currentSet);
 		
        	// save the toolbar settings
        	document.persist(toolbar.id, "currentset");

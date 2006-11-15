@@ -10,10 +10,14 @@ import javax.ejb.Local;
 import org.apache.lucene.index.IndexWriter;
 import org.hibernate.lucene.DocumentBuilder;
 
-import com.dumbhippo.persistence.AccountFeed;
 import com.dumbhippo.persistence.Track;
-import com.dumbhippo.persistence.TrackFeedEntry;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.server.listeners.ExternalAccountFeedListener;
+import com.dumbhippo.server.views.AlbumView;
+import com.dumbhippo.server.views.ArtistView;
+import com.dumbhippo.server.views.ExpandedArtistView;
+import com.dumbhippo.server.views.TrackView;
+import com.dumbhippo.server.views.Viewpoint;
 import com.dumbhippo.services.AmazonAlbumData;
 import com.dumbhippo.services.YahooAlbumData;
 import com.dumbhippo.services.YahooSongData;
@@ -28,7 +32,8 @@ import com.dumbhippo.services.YahooSongData;
  */
 @BanFromWebTier
 @Local
-public interface MusicSystemInternal extends MusicSystem {
+public interface MusicSystemInternal
+	extends MusicSystem, ExternalAccountFeedListener {
 
 	public Track getTrack(Map<String,String> properties);
 	
@@ -44,6 +49,8 @@ public interface MusicSystemInternal extends MusicSystem {
 	 */
 	public void addHistoricalTrack(User user, Map<String,String> properties);
 		
+	public int countTrackHistory(Viewpoint viewpoint, User user);
+	
 	public TrackView getTrackView(Track track, long lastListen);
 
 	public Future<TrackView> getTrackViewAsync(long trackId, long lastListen);	
@@ -118,6 +125,4 @@ public interface MusicSystemInternal extends MusicSystem {
 	 * @throws IOException
 	 */
 	public void indexAllTracks(IndexWriter writer, DocumentBuilder<Track> builder) throws IOException;
-	
-	public void addFeedTrack(AccountFeed feed, TrackFeedEntry entry, int entryPosition);
 }

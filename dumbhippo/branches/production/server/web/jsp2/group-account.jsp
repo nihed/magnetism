@@ -12,13 +12,17 @@
 	<dht:errorPage>Group not found</dht:errorPage>
 </c:if>
 
+<c:if test="${!group.viewedGroup.status.canModify}">
+	<dht:errorPage>Only members can edit a group</dht:errorPage>
+</c:if>
+
 <head>
 	<title>Edit <c:out value="${group.name}"/></title> <%-- see also groupaccount.js --%>
+	<dht:siteStyle/>	
 	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/group-account.css"/>
 	<dht:faviconIncludes/>
-	<dht:scriptIncludes/>
+		<dh:script module="dh.groupaccount"/>
 	<script type="text/javascript">
-		dojo.require("dh.groupaccount")
 		dh.formtable.currentValues = {
 			'dhGroupNameEntry' : <dh:jsString value="${group.name}"/>,
 			'dhAboutGroupEntry' : <dh:jsString value="${!empty group.viewedGroup.group.description ? group.viewedGroup.group.description : ''}"/>
@@ -72,6 +76,8 @@
 							</form>
 						</div>
 						<div id="dhChooseStockLinkContainer">
+						</div>
+						<div>
 							or <a href="javascript:dh.photochooser.show(document.getElementById('dhChooseStockLinkContainer'), dh.groupaccount.reloadPhoto);" title="Choose from a library of pictures">choose stock picture</a>
 						</div>
 					</div>

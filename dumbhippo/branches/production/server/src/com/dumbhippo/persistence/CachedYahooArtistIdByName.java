@@ -25,6 +25,8 @@ public class CachedYahooArtistIdByName extends DBUnique {
 
 	private static final long serialVersionUID = 1L;
 
+	public static final int DATA_COLUMN_LENGTH = 100;
+	
 	private String name;
 	private String artistId;
 	private long lastUpdated;
@@ -33,7 +35,7 @@ public class CachedYahooArtistIdByName extends DBUnique {
 	}
 
 	// null artistId means a cached negative name lookup
-	@Column(nullable=true,length=100)
+	@Column(nullable=true,length=DATA_COLUMN_LENGTH)
 	public String getArtistId() {
 		return artistId;
 	}
@@ -42,7 +44,7 @@ public class CachedYahooArtistIdByName extends DBUnique {
 		this.artistId = artistId;
 	}
 
-	@Column(nullable=false,length=100)
+	@Column(nullable=false,length=DATA_COLUMN_LENGTH)
 	public String getName() {
 		return name;
 	}

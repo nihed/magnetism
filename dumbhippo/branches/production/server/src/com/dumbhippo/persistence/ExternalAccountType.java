@@ -6,6 +6,9 @@ import java.net.URL;
 import com.dumbhippo.StringUtils;
 import com.dumbhippo.services.FlickrUser;
 
+import org.slf4j.Logger;
+import com.dumbhippo.GlobalSetup;
+
 /**
  * This enum goes in the database, so don't change values without migrating the db
  * 
@@ -17,7 +20,12 @@ public enum ExternalAccountType {
 		@Override
 		public String getLink(String handle, String extra) {
 			// handle is myspace name, extra is friend id number
-			return "http://myspace.com/" + StringUtils.urlEncode(handle);
+			return getSiteLink() + "/" + StringUtils.urlEncode(handle);
+		}
+		
+		@Override
+		public String getSiteLink() {
+		    return "http://myspace.com";	
 		}
 		
 		@Override
@@ -39,7 +47,7 @@ public enum ExternalAccountType {
 		// friend ID
 		@Override
 		public String canonicalizeExtra(String extra) throws ValidationException {
-			extra = super.canonicalizeHandle(extra);
+			extra = super.canonicalizeExtra(extra);
 			if (extra != null) {
 				try {
 					long val = Long.parseLong(extra);
@@ -56,6 +64,11 @@ public enum ExternalAccountType {
 		public String getLink(String handle, String extra) {
 			// handle is "NSID" extra is flickr email address
 			return FlickrUser.getPhotosUrl(handle);
+		}
+		
+		@Override
+		public String getSiteLink() {
+		    return "http://www.flickr.com";	
 		}
 		
 		@Override
@@ -82,11 +95,14 @@ public enum ExternalAccountType {
 
 	},
 	LINKED_IN("LinkedIn")  {
-		private static final String PROFILE_BASE_URL = "http://www.linkedin.com/in/";
-		
 		@Override
 		public String getLink(String handle, String extra) {
-			return PROFILE_BASE_URL + StringUtils.urlEncode(handle);
+			return getSiteLink() + "/in/" + StringUtils.urlEncode(handle);
+		}
+		
+		@Override
+		public String getSiteLink() {
+			return "http://www.linkedin.com";
 		}
 		
 		@Override
@@ -124,6 +140,11 @@ public enum ExternalAccountType {
 		}
 		
 		@Override
+		public String getIconName() {
+		    return "homepage_icon.png";	
+		}
+		
+		@Override
 		public String canonicalizeHandle(String handle) throws ValidationException {
 			handle = super.canonicalizeHandle(handle);
 			if (handle != null) {
@@ -139,13 +160,32 @@ public enum ExternalAccountType {
 	FACEBOOK("Facebook")  {
 		@Override
 		public String getLink(String handle, String extra) {
-			// the handle here is a numeric ID 
-			return "http://www.facebook.com/profile.php?id=" + StringUtils.urlEncode(handle);
+			logger.warn("getLink() in ExternalAccountType does not provide a link to a Facebook profile based on a handle and an extra.");
+			return getSiteLink();
+		}
+		
+		@Override
+		public String getSiteLink() {
+		    return "http://www.facebook.com";	
 		}
 		
 		@Override
 		public String getLinkText(String handle, String extra) {
 			return "My Profile";
+		}		
+        // id in FacebookAccount
+		@Override
+		public String canonicalizeExtra(String extra) throws ValidationException {
+			extra = super.canonicalizeExtra(extra);
+			if (extra != null) {
+				try {
+					long val = Long.parseLong(extra);
+					extra = Long.toString(val); // a little extra paranoia
+				} catch (NumberFormatException e) {
+					throw new ValidationException("FacebookAccount id is not a number: " + extra);
+				}
+			}
+			return extra;
 		}
 	},
 	ORKUT("Orkut")  {
@@ -163,12 +203,17 @@ public enum ExternalAccountType {
 			http://www.youtube.com/rssls
 			feed://www.youtube.com/rss/user/$username/videos.rss
 		*/
-		private static final String PROFILE_BASE_URL = "http://www.youtube.com/user/";
 
 		@Override
 		public String getLink(String handle, String extra) {
-			return PROFILE_BASE_URL + StringUtils.urlEncode(handle);
+			return getSiteLink() + "/user/" + StringUtils.urlEncode(handle);
 		}
+		
+		@Override 
+		public String getSiteLink() {
+		    return "http://www.youtube.com";
+		}
+		
 		@Override
 		public String getLinkText(String handle, String extra) {
 			return handle;
@@ -196,7 +241,70 @@ public enum ExternalAccountType {
 		public String getLinkText(String handle, String extra) {
 			throw new UnsupportedOperationException("Not implemented yet");
 		}
+	},
+	BLOG("Blog") {
+		@Override
+		public String getLink(String handle, String extra) {
+			// handle is the blog url (human-readable, not the feed url)
+			return handle;
+		}
+		
+		@Override
+		public String getLinkText(String handle, String extra) {
+			// prettier without the http://
+			if (handle.startsWith("http://"))
+				return handle.substring("http://".length());
+			else
+				return handle;
+		}
+		
+		@Override
+		public String getIconName() {
+		    return "blog_icon.png";	
+		}
+		
+		@Override
+		public String canonicalizeHandle(String handle) throws ValidationException {
+			handle = super.canonicalizeHandle(handle);
+			if (handle != null) {
+				try {
+					handle = new URL(handle).toExternalForm();
+				} catch (MalformedURLException e) {
+					throw new ValidationException("Invalid URL: " + e.getMessage());
+				}
+			}
+			return handle;
+		}
+	},
+	RHAPSODY("Rhapsody") {
+		@Override
+		public String getLink(String handle, String extra) {
+			// handle is the rhapUserId in the feed url
+			return "http://feeds.rhapsody.com/user-track-history.rss?rhapUserId=" + handle + "&userName=I";
+		}
+		
+		@Override
+		public String getSiteLink() {
+		    return "http://www.rhapsody.com";	
+		}
+		
+		@Override
+		public String getLinkText(String handle, String extra) {
+			return "Recent Tracks RSS";
+		}
+		
+		@Override
+		public String canonicalizeHandle(String handle) throws ValidationException {
+			handle = super.canonicalizeHandle(handle);
+			if (handle != null) {
+				if (handle.trim().length() == 0)
+					throw new ValidationException("empty rhapUserId in Rhapsody URL");
+			}
+			return handle;
+		}
 	};
+	
+	private static final Logger logger = GlobalSetup.getLogger(ExternalAccountType.class);	
 	
 	private String siteName;
 	
@@ -213,9 +321,17 @@ public enum ExternalAccountType {
 		return siteName;
 	}
 	
+	public String getIconName() {
+		return "favicon_" + siteName.toLowerCase() + ".png";
+	}
+	
 	abstract public String getLink(String handle, String extra);
 	
 	abstract public String getLinkText(String handle, String extra);
+	
+	public String getSiteLink() {
+	    return "";	
+	}
 	
 	public String formatThumbnailCount(int count) {
 		if (count == 1)

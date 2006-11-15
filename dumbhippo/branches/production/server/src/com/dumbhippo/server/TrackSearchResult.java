@@ -10,6 +10,8 @@ import org.apache.lucene.search.Hits;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.server.views.TrackView;
+import com.dumbhippo.server.views.Viewpoint;
 
 /**
  * Represents the result of searching over Track using lucene.
@@ -90,9 +92,9 @@ public class TrackSearchResult {
 		for (int i = start;  i < start + count && i < hits.length(); i++) {
 			try {
 				Document d = hits.doc(i);
-				String artist = d.get("Artist");
-				String album = d.get("Album");
-				String name = d.get("Name");
+				String artist = d.get("artist");
+				String album = d.get("album");
+				String name = d.get("name");
 
 				TrackView trackView = musicSystem.songSearch(viewpoint, artist, album, name);
 				results.add(trackView);

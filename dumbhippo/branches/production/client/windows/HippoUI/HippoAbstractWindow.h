@@ -1,18 +1,22 @@
-/* HippoAbstractWindow.h: Base class for toplevel windows that embed a web browser control
+/* HippoAbstractWindow.h: Base class for Windows windows.
  *
- * Copyright Red Hat, Inc. 2005
+ * Copyright Red Hat, Inc. 2005, 2006
  **/
 #pragma once
 
-#include "HippoIE.h"
+#include <HippoMessageHook.h>
+#include <HippoUtil.h>
+#include <hippo/hippo-basics.h>
+#include <hippo/hippo-graphics.h>
 
 class HippoUI;
 
 class HippoAbstractWindow : public HippoMessageHook
 {
 public:
+    HIPPO_DECLARE_REFCOUNTING;
+
     HippoAbstractWindow();
-    virtual ~HippoAbstractWindow();
 
     /**
      * Provide a pointer to the main UI object for the application. Mandatory to call
@@ -22,15 +26,9 @@ public:
     void setUI(HippoUI *ui);
 
     /**
-     * Provide an (optional) object that will be available as window.external.application
-     * Must be called before create() if called at all.
-     * @param application pointer to the COM object to make available to javascript
-     */
-    void setApplication(IDispatch *application);
-
-    /**
-     * Set the title of the window. Note that this currently is always used, and any title
-     * set by the page that is loaded is ignored. Must be called before create() to have
+     * Set the title of the window. Note that this currently is always used, even if 
+     * e.g. the window contains a browser control that loads a document with a title.
+     * Must be called before create() to have
      * any effect.
      * @param title the title to set
      */
@@ -42,17 +40,22 @@ public:
      *
      * FIXME: We possibly should do this behind the scenes
      */
-    bool create();
+    virtual bool create();
+
+    /**
+     * Destroy the window and shutdown any stuff in it.
+     */
+    virtual void destroy();
 
     /**
      * Make the window visible onscreen.
      */
-    void show(BOOL activate = true);
+    virtual void show(BOOL activate = true);
 
     /**
      * Hide the window 
      */
-    void hide();
+    virtual void hide();
 
     /**
      * Set the window as the "foreground window". This will either bring the window to
@@ -61,24 +64,35 @@ public:
      */
     void setForegroundWindow();
 
-    /**
-     * Move and resize the window to the given size and position
-     * @param x X position. CW_DEAULT means center horizontally
-     * @param y Y position. CW_DEAULT means center vertically
-     * @param width the new width, including window decorations
-     * @param height the new height, including window decorations
-     */
-    void moveResize(int x, int y, int width, int height);
+    /* call SetFocus(), normally managed by the parent of the window */
+    void setFocus();
 
-    /**
-     * Get the HippoIE object that wraps the embedded web browser control
-     * @return the HippoIE object
-     */
-    HippoIE *getIE();
+    void invalidate(int x, int y, int width, int height);
+
+    void getClientArea(HippoRectangle *rect);
+
+    int getX();
+
+    int getY();
+
+    int getWidth();
+
+    int getHeight();
+
+    bool isCreated() { return created_; }
+
+    bool isShowing() { return showing_; }
+
+    void setDefaultSize(int width, int height);
+    void setDefaultPosition(int x, int y);
+    void setPosition(int x, int y);
+    void setSize(int width, int height);
+
+    const HippoBSTR& getClassName() const { return className_; }
 
     ////////////////////////////////////////////////////////////
 
-    bool hookMessage(MSG *msg);
+    virtual bool hookMessage(MSG *msg);
 
 protected:
     /**
@@ -131,38 +145,16 @@ protected:
     void setClassName(const HippoBSTR &className);
 
     /**
-     * Set the URL that will be loaded into the window. Mandatory to
-     * call before create().
-     @param URL the URL to load
+     * Sets the parent window to create the control with
      */
-    void setURL(const HippoBSTR &url);
-
+    void setCreateWithParent(HippoAbstractWindow* parent);
+        
     /********************************************************/
-
-    /**
-     * Get the URL that will be passed to the HippoIE object. The default
-     * implementation just returns the result of setURL(), but this 
-     * is virtual so that it can be determined dynamically, depending
-     * on, for example, the HippoUI object passed to setUI().
-     **/
-    virtual HippoBSTR getURL();
 
     /**
      * Do any necessary post-creation initialization of our window
      **/
     virtual void initializeWindow();
-
-    /**
-     * Do any initializion of the HippoIE needed before calling ie_->create(),
-     * for example, call ie_->setXsltTransform()
-     **/
-    virtual void initializeIE();
-
-    /**
-     * Do any necessary initialization of the browser control 
-     * post-creation.
-     **/
-    virtual void initializeBrowser();
 
     /** 
      * Do any initialization after the UI is set
@@ -184,11 +176,6 @@ protected:
                                 LPARAM lParam);
 
     /**
-     * Callback when the document finishes loading 
-     **/
-    virtual void onDocumentComplete();
-
-    /**
      * Callback when the window is closed either by the user
      * or by a script. There is no default implementation, so
      * close attempts will have no effect other than anything
@@ -197,44 +184,62 @@ protected:
      **/
     virtual void onClose(bool fromScript);
 
-    HippoIE *ie_;
-    HippoPtr<IWebBrowser2> browser_;
+    virtual void onWindowDestroyed();
+
+    // called for WM_SIZE / WM_MOVE, but *not* for move resizes in general
+    virtual void onMoveResizeMessage(const HippoRectangle *newClientArea);
+
+    DWORD getWindowStyle() const { return windowStyle_; }
+    DWORD getExtendedStyle() const { return extendedStyle_; }
+
     HippoUI* ui_;
     HWND window_;
-    DWORD windowStyle_;
-    DWORD extendedStyle_;
+
+    // protected since we're refcounted; subclasses
+    // ideally override destroy() instead
+    virtual ~HippoAbstractWindow();
+
+    void moveResizeWindow(int x, int y, int width, int height);
+
+    void markShowing(bool showing) { showing_ = showing; }
+
+    virtual bool onNotify(NMHDR *nmhdr) { return false; }
+
+    void setSelfSizing(bool selfSizing) { selfSizing_ = selfSizing; }
 
 private:
     bool useParent_;
+    HippoAbstractWindow *createWithParent_;
     bool animate_;
     bool updateOnShow_;
     UINT classStyle_;
     HippoBSTR className_;
-    HippoBSTR url_;
     HippoBSTR title_;
+    DWORD windowStyle_;
+    DWORD extendedStyle_;
 
     HINSTANCE instance_;
-    HippoPtr<IDispatch> application_;
 
-    class HippoAbstractWindowIECallback : public HippoIECallback
-    {
-    public:
-        HippoAbstractWindowIECallback(HippoAbstractWindow *chatWindow) {
-            abstractWindow_ = chatWindow;
-        }
-        HippoAbstractWindow *abstractWindow_;
-        void onDocumentComplete();
-        void onClose();
-        void launchBrowser(const HippoBSTR &url);
-        bool isOurServer(const HippoBSTR &host);
-        HRESULT getToplevelBrowser(const IID &ifaceID, void **toplevelBrowser);
+    DWORD refCount_;
 
-    };
-    HippoAbstractWindowIECallback *ieCallback_;
+    int x_;
+    int y_;
+    int width_;
+    int height_;
 
-    bool embedIE(void);
+    unsigned int defaultPositionSet_ : 1;
+    // for tooltip windows, we need to just not mess up the size Windows picks
+    unsigned int selfSizing_ : 1;
+
+    unsigned int created_ : 1;
+    unsigned int showing_ : 1;
+    unsigned int destroyed_ : 1;
+
     bool createWindow(void);
     bool registerClass();
+
+    void convertClientRectToWindowRect(HippoRectangle *rect);
+    void queryCurrentClientRect(HippoRectangle *rect);
 
     static LRESULT CALLBACK windowProc(HWND   window,
                                        UINT   message,

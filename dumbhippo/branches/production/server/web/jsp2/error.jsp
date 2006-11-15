@@ -18,9 +18,9 @@
 
 <head>
 	<title>Oops!</title>
+	<dht:siteStyle/>
 	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/error.css"/>
 	<dht:faviconIncludes/>
-	<dht:scriptIncludes/>
 </head>
 <dht:systemPage disableJumpTo="true" topImage="/images2/${buildStamp}/header_oops500.gif">
 	<p class="dh-error-header">

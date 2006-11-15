@@ -7,6 +7,7 @@
 <%@ attribute name="title" required="true" type="java.lang.String" %>
 <%@ attribute name="oneLine" required="false" type="java.lang.Boolean" %>
 <%@ attribute name="disabled" required="false" type="java.lang.Boolean" %>
+<%@ attribute name="underline" required="false" type="java.lang.Boolean" %>
 
 <c:set var="tagName" value="div"/>
 	
@@ -22,6 +23,10 @@
 	<c:set var="disabledAttribute" value="disabled"/>
 </c:if>
 
+<c:if test="${underline}">
+    <c:set var="underlineClass" value="dh-underlined-link"/>
+</c:if>
+
 <${tagName} class="dh-action-link">
-<a ${idAttribute} ${disabledAttribute} href="${href}" title="${title}"><jsp:doBody/></a>
+<a ${idAttribute} ${disabledAttribute} class="${underlineClass}" href="${href}" title="${title}"><jsp:doBody/></a>
 </${tagName}>

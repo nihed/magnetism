@@ -62,4 +62,8 @@ public class LiveUser extends LiveObject {
 	public void setSentPostsCount(int sentPosts) {
 		this.sentPostsCount = sentPosts;
 	}
+	
+	public int getContactResourcesSize() {
+		return contactResources.size();
+	}
 }

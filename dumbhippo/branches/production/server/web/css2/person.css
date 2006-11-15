@@ -1,5 +1,4 @@
 @CHARSET "UTF-8";
-@IMPORT url("site.css");
 @IMPORT url("person-positions.css");
 
 #dhContentColumn .dh-zone-box .dh-hated-place {
@@ -20,6 +19,12 @@
 	color:				blue;
 	font-size:			12px;
 }
+
+#dhContentColumn .dh-zone-box .dh-where-at-empty {
+	color:			#777777;
+	font-size:			12px;
+}
+
 #dhContentColumn .dh-zone-box .dh-thumbnail-box-border, #dhContentColumn .dh-zone-box .dh-rss-box-border {
 	background-color:	#cccccc;
 	color:				inherit;

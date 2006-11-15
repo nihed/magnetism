@@ -65,6 +65,11 @@ public class YahooArtistAlbumsCacheBean extends AbstractCacheBean<String,List<Ya
 			// we do this instead of an inner class to work right with threads
 			YahooArtistAlbumsCache cache = EJBUtil.defaultLookup(YahooArtistAlbumsCache.class);
 			
+			// Check again in case another node stored the data first
+			List<YahooAlbumData> alreadyStored = cache.checkCache(artistId);
+			if (alreadyStored != null)
+				return alreadyStored;
+			
 			List<YahooAlbumData> result = cache.fetchFromNet(artistId);
 			
 			return cache.saveInCache(artistId, result);
@@ -196,7 +201,7 @@ public class YahooArtistAlbumsCacheBean extends AbstractCacheBean<String,List<Ya
 							
 							CachedYahooArtistAlbumData d = createCachedAlbum(artistId);
 							d.setLastUpdated(now);
-							d.updateData(s);
+							d.updateData(artistId, s);
 							em.persist(d);
 						}
 					}

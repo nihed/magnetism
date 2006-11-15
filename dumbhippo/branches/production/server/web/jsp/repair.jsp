@@ -1,4 +1,3 @@
-<html>
 <%@ page pageEncoding="UTF-8" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="dumbhippo.tld" prefix="dh" %>
@@ -10,14 +9,11 @@
 	<jsp:forward page="/jsp/we-miss-you.jsp"/>
 </c:if>
 
+<html>
 <head>
 	<title>Repair Mugshot</title>
 	<dht:stylesheets href="welcome.css" iehref="bubbles-iefixes.css"/>
-	<dht:scriptIncludes/>
-	<script type="text/javascript">
-		dojo.require("dh.util");
-		dojo.require("dh.welcome");
-	</script>
+	<dh:script module="dh.welcome"/>
 </head>
 <dht:body>
 	<c:url value="person?who=${welcome.signin.userId}" var="publicurl"/>

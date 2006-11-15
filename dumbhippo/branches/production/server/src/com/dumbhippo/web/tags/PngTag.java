@@ -52,7 +52,10 @@ public class PngTag extends SimpleTagSupport implements DynamicAttributes {
 	}
 	
 	private static String addBuildStamp(String srcUrl, String buildStamp) {
-		if (!(srcUrl.startsWith("/images2/") || srcUrl.startsWith("/images/"))) {
+		if (!(srcUrl.startsWith("/images3/") ||
+			  srcUrl.startsWith("/images2/") ||
+			  srcUrl.startsWith("/images/") ||
+			  srcUrl.startsWith("/favicons/"))) {
 			return srcUrl;
 		}
 		
@@ -79,6 +82,9 @@ public class PngTag extends SimpleTagSupport implements DynamicAttributes {
 		BrowserBean browser = BrowserBean.getForRequest(request);
 		
 		if (browser.getIeAlphaImage()) {
+			// for fillAlphaPng
+			ScriptTag.includeModule("dh.actions", context, xml);
+			
 			xml.append("<span ");
 			if (klass != null) {
 				xml.append("class=\"");
@@ -95,7 +101,7 @@ public class PngTag extends SimpleTagSupport implements DynamicAttributes {
 			}
 			appendExtraAttributes(xml, extraAttributes);
 			xml.append("><img src=\"");
-			xml.append(addBuildStamp(src, buildStamp));
+			xml.appendEscaped(addBuildStamp(src, buildStamp));
 			xml.append("\" style=\"visibility:hidden\" onload=\"dh.actions.fillAlphaPng(this)\"/></span>");
 		} else {
 			xml.append("<img ");
@@ -105,7 +111,7 @@ public class PngTag extends SimpleTagSupport implements DynamicAttributes {
 				xml.append("\" ");
 			}
 			xml.append("src=\"");
-			xml.append(addBuildStamp(src, buildStamp));
+			xml.appendEscaped(addBuildStamp(src, buildStamp));
 			xml.append("\" ");
 			if (style != null) {
 				xml.append("style=\"");

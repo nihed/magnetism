@@ -9,7 +9,6 @@
 }
 
 #dhContentColumn .dh-form-table .dh-control-cell .dh-control-cell-div {
-	position:		relative;
 	width:			358px;
 }
 
@@ -49,7 +48,7 @@ tr.dh-email-address-spacer {
 	margin-right:	10px;
 }
 
-#dhTermsOfUseNote {
+#dhTermsOfUseNote, #dhFacebookNote {
 	padding:            5px;
 	margin-bottom:      10px;
 }

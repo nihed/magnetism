@@ -3,7 +3,7 @@
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 
 <%@ attribute name="group" required="false" type="com.dumbhippo.web.pages.GroupPage" %>
-<%@ attribute name="who" required="true" type="com.dumbhippo.server.PersonView" %>
+<%@ attribute name="who" required="true" type="com.dumbhippo.server.views.PersonView" %>
 
 <c:choose>
 	<c:when test="${(empty group) || group.canModify}">
@@ -11,6 +11,7 @@
 			<div class="dh-follower-actions">
 		        <c:choose>
 		            <c:when test="${empty group}">
+		            	<dh:script module="dh.actions"/>
 				        <dht:asyncActionLink 
 					        exec="dh.actions.addContact('${who.user.id}', function () { dh.asyncActionLink.complete('addContact${who.user.id}') })"
 					        ctrlId="addContact${who.user.id}"
@@ -18,6 +19,7 @@
 					        completedText="Added"/>			            
 					</c:when>
 					<c:otherwise>
+						<dh:script module="dh.actions"/>
 				        <dht:asyncActionLink 
 					        exec="dh.actions.addMember('${group.viewedGroupId}', '${who.user.id}', function () { dh.asyncActionLink.complete('addMember${group.viewedGroupId}${who.user.id}') })"
 					        ctrlId="addMember${group.viewedGroupId}${who.user.id}"

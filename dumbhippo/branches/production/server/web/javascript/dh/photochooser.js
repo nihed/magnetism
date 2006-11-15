@@ -4,24 +4,24 @@ dojo.require("dojo.style");
 dojo.require("dh.popup");
 
 // FIXME automate getting this from the app server
-dh.photochooser.user_nophoto = '/user_pix1/nophoto.gif';
-dh.photochooser.user_pix1 = [ 'alien.gif', 'apricot.gif', 'bear.gif',
-			      'bear2.gif', 'clown.gif', 'devil.gif', 'duck.gif',
-			      'eye.gif', 'giraffe.gif', 'greenie.gif', 'kitty.gif',
-			      'mask.gif', 'monster.gif', 'mysteryman.gif', 'oooh.gif',
-			      'puffer.gif', 'pug.gif', 'purplehead.gif', 'robo.gif',
-			      'skull.gif', 'sun.gif', 'tiger.gif', 'tiki.gif', 
-			      'wolfman.gif', 'ghost.gif', 'hippo.gif', 'monkey.gif',
-			      'bloo.gif', 'cactoo.gif', 'eggwin.gif', 'goobli.gif',
-			      'jojo.gif', 'mutt.gif', 'burnie.gif', 'drippy.gif', 'flim.gif',
-			      'hrvatchki.gif', 'leafy.gif', 'squidley.gif' ];
+dh.photochooser.user_nophoto = '/user_pix1/nophoto.png';
+dh.photochooser.user_pix1 = [ 'alien.png', 'apricot.png', 'bear.png',
+			      'bear2.png', 'clown.png', 'devil.png', 'duck.png',
+			      'eye.png', 'giraffe.png', 'greenie.png', 'kitty.png',
+			      'mask.png', 'monster.png', 'mysteryman.png', 'oooh.png',
+			      'puffer.png', 'pug.png', 'purplehead.png', 'robo.png',
+			      'skull.png', 'sun.png', 'tiger.png', 'tiki.png', 
+			      'wolfman.png', 'ghost.png', 'hippo.png', 'monkey.png',
+			      'bloo.png', 'cactoo.png', 'eggwin.png', 'goobli.png',
+			      'jojo.png', 'mutt.png', 'burnie.png', 'drippy.png', 'flim.png',
+			      'hrvatchki.png', 'leafy.png', 'squidley.png' ];
 
-dh.photochooser.group_nophoto = '/group_pix1/nogroupphoto.gif';
-dh.photochooser.group_pix1 = [ 'baseball.gif', 'bingo.gif', 'birds.gif',
-							   'bowling.gif', 'cards.gif', 'cows.gif', 'dudes.gif',
-							   'fish.gif', 'flock.gif', 'flowers.gif', 'geese.gif',
-							   'kittens.gif', 'penguins.gif', 'pills.gif',
-							   'pirates.gif' ];
+dh.photochooser.group_nophoto = '/group_pix1/nogroupphoto.png';
+dh.photochooser.group_pix1 = [ 'baseball.png', 'bingo.png', 'birds.png',
+							   'bowling.png', 'cards.png', 'cows.png', 'dudes.png',
+							   'fish.png', 'flock.png', 'flowers.png', 'geese.png',
+							   'kittens.png', 'penguins.png', 'pills.png',
+							   'pirates.png' ];
 
 dh.photochooser.type = "user"
 dh.photochooser.pages = [];

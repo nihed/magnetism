@@ -11,6 +11,8 @@ public final class FlickrPhoto implements Thumbnail {
 	private boolean public_;
 	private boolean friend;
 	private boolean family;
+	 // is primary in a photoset; the photoset should be apparent from context
+	private boolean primary;
 	
 	public boolean isFamily() {
 		return family;
@@ -103,5 +105,12 @@ public final class FlickrPhoto implements Thumbnail {
 	}
 	public int getThumbnailHeight() {
 		return FlickrPhotoSize.SMALL_SQUARE.getPixels();
+	}
+
+	public boolean isPrimary() {
+		return primary;
+	}
+	public void setPrimary(boolean primary) {
+		this.primary = primary;
 	}
 }

@@ -6,7 +6,7 @@ AC_CONFIG_AUX_DIR(config)
 
 AC_CANONICAL_TARGET
 
-AM_INIT_AUTOMAKE(mugshot, 1.1.11)
+AM_INIT_AUTOMAKE(mugshot, 1.1.24)
 
 AM_CONFIG_HEADER(config/config.h)
 
@@ -251,7 +251,7 @@ if ! $have_xscreensaver ; then
 fi
 XSCREENSAVER_LIBS=-lXss
 
-PKG_CHECK_MODULES(LIBHIPPO, gobject-2.0 >= $GLIB2_REQUIRED gthread-2.0 loudmouth-1.0 >= $LOUDMOUTH_REQUIRED)
+PKG_CHECK_MODULES(LIBHIPPO, gobject-2.0 >= $GLIB2_REQUIRED gthread-2.0 loudmouth-1.0 >= $LOUDMOUTH_REQUIRED cairo pango)
 PKG_CHECK_MODULES(LIBHIPPOIPC, gobject-2.0 dbus-1 >= $DBUS_REQUIRED dbus-glib-1 >= $DBUS_REQUIRED)
 PKG_CHECK_MODULES(LIBGTKCOPY, gtk+-2.0 >= $GTK2_REQUIRED gtk+-x11-2.0)
 PKG_CHECK_MODULES(MUGSHOT_BASE, gtk+-2.0 >= $GTK2_REQUIRED gthread-2.0 loudmouth-1.0 >= $LOUDMOUTH_REQUIRED dbus-1 >= $DBUS_REQUIRED dbus-glib-1 >= $DBUS_GLIB_REQUIRED)
@@ -265,7 +265,11 @@ PKG_CHECK_MODULES(TEST_HIPPO_IPC, gobject-2.0 dbus-1 >= $DBUS_REQUIRED dbus-glib
 GLIB_GENMARSHAL=`$PKG_CONFIG --variable=glib_genmarshal glib-2.0`
 AC_SUBST(GLIB_GENMARSHAL)
 
+GLIB_MKENUMS=`$PKG_CONFIG --variable=glib_mkenums glib-2.0`
+AC_SUBST(GLIB_MKENUMS)
+
 PKG_CHECK_EXISTS(gtk+-2.0 < 2.9.0, have_gtk210=false, have_gtk210=true)
+AM_CONDITIONAL(HAVE_GTK210, $have_gtk210)
 
 ## used for .desktop file in theory, disabled until we have actual translations
 ## IT_PROG_INTLTOOL([0.34.90])
@@ -320,9 +324,44 @@ if test "x$with_xpidl" != x -a "x$with_xpidl" != xyes -a "x$with_xpidl" != xno ;
     XPIDL="$with_xpidl"
 fi
 
+# if the firefox-devel RPM is installed, set paths from that
+if test \( x"$GECKO_IDLDIR" = x -o "x$GECKO_INCLUDEDIR" = x -o "x$XPIDL" = x \) -a -x /bin/rpm ; then
+   AC_MSG_CHECKING([for Gecko SDK via the firefox-devel package])
+   FIREFOX_VERSION="`/bin/rpm -q --qf '%{version} ' firefox-devel`"
+   if  test $? = 0 ; then
+       # In multi-arch situations, there might be multiple versions of firefox-devel
+       # installed; we assume it doesn't matter which one we find; ideally we'd
+       # like to find the one that matches the architecture we are building for
+       # but that's hard to do, and what we use shouldn't be dependent on
+       # architecture or exact version. The only problem would be if the two versions 
+       # are for wildly different versions of firefox.
+       #
+       FIREFOX_VERSION=`(set $FIREFOX_VERSION && echo $1)`
+
+       AC_MSG_RESULT([yes])
+       if test x"$GECKO_IDLDIR" = x ; then
+           GECKO_IDLDIR=/usr/share/idl/firefox-$FIREFOX_VERSION
+       fi
+       if test x"$GECKO_INCLUDEDIR" = x ; then
+           GECKO_INCLUDEDIR=/usr/include/firefox-$FIREFOX_VERSION
+       fi
+       if test x"$XPIDL" = x ; then
+           if test -x /usr/lib/firefox-$FIREFOX_VERSION/xpidl ; then
+               XPIDL=/usr/lib/firefox-$FIREFOX_VERSION/xpidl
+	   elif test -x /usr/lib64/firefox-$FIREFOX_VERSION/xpidl ; then
+               XPIDL=/usr/lib64/firefox-$FIREFOX_VERSION/xpidl
+	   else
+	       AC_MSG_WARN([Found firefox-devel RPM, but couldn't find xpidl binary])
+           fi
+       fi
+   else
+       AC_MSG_RESULT([no])
+   fi
+fi
+
 if test "x$GECKO_INCLUDEDIR" = x ; then
     AC_MSG_CHECKING([for Gecko SDK in /opt/gecko-sdk])
-    if ! test -f "/opt/gecko-sdk/include/nsIURI.idl" ; then
+    if test -f "/opt/gecko-sdk/idl/nsIURI.idl" ; then
         GECKO_IDLDIR="/opt/gecko-sdk/idl"
         GECKO_INCLUDEDIR="/opt/gecko-sdk/include"
         XPIDL="/opt/gecko-sdk/bin/xpidl"
@@ -341,10 +380,10 @@ else
 fi
 
 if test "x$GECKO_INCLUDEDIR" != x ; then
-   if test -f "$GECKO_INCLUDEDIR/nsIURI.h" ; then
-	:
-   elif test -f "$GECKO_INCLUDEDIR/caps/nsIScriptSecurityManager.h" ; then
+   if test -f "$GECKO_INCLUDEDIR/caps/nsIScriptSecurityManager.h" ; then
 	have_full_gecko=true
+   elif test -f "$GECKO_INCLUDEDIR/nsIURI.h" ; then
+	:
    else
        AC_MSG_ERROR([Cannot find Gecko headers in $GECKO_INCLUDEDIR])
    fi
@@ -414,14 +453,5 @@ if "$warn_about_curl_version" ; then
         ***** we've tested with versions $CURL_REQUIRED and above.
         ***** If you have an older version, the build might fail or 
         ***** there may be bugs at runtime, or, it might work - we don't know!
-    "
-fi
-
-if "$have_gtk210" ; then
-    echo "
-        ***** GTK+ 2.9 or above may conflict with cut-and-pasted GTK+ 2.9
-        ***** code in the gtk/ subdirectory. 
-        ***** We tried to avoid the problem but haven't tested it yet.
-        ***** Try it and let us know.
     "
 fi

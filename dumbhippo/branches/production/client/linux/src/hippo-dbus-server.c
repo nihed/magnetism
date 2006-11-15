@@ -22,6 +22,16 @@
 #define BANSHEE_MUGSHOT_IFACE  "org.gnome.Banshee.Mugshot"
 #define BANSHEE_STATE_CHANGED  "StateChangedEvent"
 
+/* muine messages */
+#define MUINE_BUS_NAME      "org.gnome.Muine"
+#define MUINE_PLAYER_IFACE  "org.gnome.Muine.Player"
+/* #define MUINE_STATE_CHANGED "StateChanged" */
+#define MUINE_SONG_CHANGED  "SongChanged"
+
+/* quodlibet messages */
+#define QL_PLAYER_IFACE        "net.sacredchao.QuodLibet"
+#define QL_SONG_STARTED        "SongStarted"
+
 typedef struct _HippoDBusListener HippoDBusListener;
 
 static void      hippo_dbus_init                (HippoDBus       *dbus);
@@ -193,7 +203,46 @@ hippo_dbus_try_to_acquire(const char  *server,
         return NULL;
     }
 
-    dbus_bus_add_match(connection,"type='signal',interface='" BANSHEE_MUGSHOT_IFACE "',member='" BANSHEE_STATE_CHANGED "'",&derror);
+    dbus_bus_add_match(connection,
+                       "type='signal',sender='"
+                       MUINE_BUS_NAME
+                       "',interface='"
+                       MUINE_PLAYER_IFACE
+                       "',member='"
+                       MUINE_SONG_CHANGED
+                       "'",
+                       &derror);
+
+    if (dbus_error_is_set(&derror)) {
+        g_free(bus_name);
+        propagate_dbus_error(error, &derror);
+        /* FIXME leak bus connection since unref isn't allowed */
+        return NULL;
+    }
+    
+    dbus_bus_add_match(connection,"type='signal',interface='"
+                       BANSHEE_MUGSHOT_IFACE
+                       "',member='"
+                       BANSHEE_STATE_CHANGED
+                       "'",
+                       &derror);
+
+    if (dbus_error_is_set(&derror)) {
+        g_free(bus_name);
+        propagate_dbus_error(error, &derror);
+        /* FIXME leak bus connection since unref isn't allowed */
+        return NULL;
+    }
+
+    /* Add QuodLibet signal match */
+    /* don't match on sender, because QL doesn't standardize on one
+     * (which makes things really inefficient - bad QL)
+     */
+    dbus_bus_add_match(connection,
+                       "type='signal',interface='" QL_PLAYER_IFACE
+                       "',member='" QL_SONG_STARTED "'", 
+                       &derror);
+    
     if (dbus_error_is_set(&derror)) {
         g_free(bus_name);
         propagate_dbus_error(error, &derror);
@@ -330,6 +379,7 @@ watch_for_disconnect(HippoDBus  *dbus,
     dbus_bus_add_match(dbus->connection,
                        rule,
                        &derror);
+
     if (dbus_error_is_set(&derror)) {
         g_warning("Failed to add watch rule: %s: %s: %s",
                   rule,
@@ -479,7 +529,7 @@ on_endpoint_entity_info(HippoEndpointProxy *proxy,
     guint64 endpoint = hippo_endpoint_proxy_get_id(proxy);
     const char *user_id = hippo_entity_get_guid(entity);
     const char *name = hippo_entity_get_name(entity);
-    const char *small_photo_url = hippo_entity_get_small_photo_url(entity);
+    const char *photo_url = hippo_entity_get_photo_url(entity);
 
     if (HIPPO_IS_PERSON(entity)) {
         HippoPerson *person = HIPPO_PERSON(entity);
@@ -503,7 +553,7 @@ on_endpoint_entity_info(HippoEndpointProxy *proxy,
                                  DBUS_TYPE_UINT64, &endpoint,
                                  DBUS_TYPE_STRING, &user_id,
                                  DBUS_TYPE_STRING, &name,
-                                 DBUS_TYPE_STRING, &small_photo_url,
+                                 DBUS_TYPE_STRING, &photo_url,
                                  DBUS_TYPE_STRING, &current_song,
                                  DBUS_TYPE_STRING, &current_artist,
                                  DBUS_TYPE_BOOLEAN, &music_playing,
@@ -1011,6 +1061,181 @@ handle_banshee_state_changed( HippoDBus   *dbus,
         /*TODO send music stopped signal */
     }
 }
+
+static void
+handle_ql_song_started(HippoDBus   *dbus,
+                       DBusMessage *message)
+{
+#define MAX_PROPS 10
+    DBusMessageIter iter;
+    DBusMessageIter array_iter;
+    HippoSong song;
+    char **keys;
+    char **values;
+    int i;
+
+    i = 0;
+    keys = g_new0(char*, MAX_PROPS+1);
+    values = g_new0(char*, MAX_PROPS+1);
+
+    dbus_message_iter_init(message, &iter);
+    if(dbus_message_iter_get_arg_type(&iter) == DBUS_TYPE_INVALID)
+        goto bad_args;
+
+    dbus_message_iter_recurse(&iter, &array_iter);
+
+    while (dbus_message_iter_get_arg_type(&array_iter) != DBUS_TYPE_INVALID) {
+        DBusMessageIter struct_iter;
+        const char *prop_name;
+        const char *prop_val;
+
+        prop_name = NULL;
+
+        dbus_message_iter_recurse(&array_iter, &struct_iter);
+
+        /* struct_iter should have two strings (name and value) in it */
+        if(dbus_message_iter_get_arg_type(&struct_iter) != DBUS_TYPE_STRING)
+            continue;
+        dbus_message_iter_get_basic(&struct_iter, &prop_name);
+        if(!dbus_message_iter_has_next(&struct_iter))
+            continue;
+        dbus_message_iter_next(&struct_iter);
+        if(dbus_message_iter_get_arg_type(&struct_iter) != DBUS_TYPE_STRING)
+            continue;
+        dbus_message_iter_get_basic(&struct_iter, &prop_val);
+
+        if (strcmp(prop_name, "title") == 0) {
+            g_debug("title %s", prop_val);
+            keys[i] = g_strdup("name");
+            values[i] = g_strdup(prop_val);
+            ++i;
+        } else if (strcmp(prop_name, "artist") == 0) {
+            g_debug("artist %s", prop_val);
+            keys[i] = g_strdup("artist");
+            values[i] = g_strdup(prop_val);
+            ++i;            
+        } else if (strcmp(prop_name, "album") == 0) {
+            g_debug("album %s", prop_val);
+            keys[i] = g_strdup("album");
+            values[i] = g_strdup(prop_val);
+            ++i;                        
+        } else if (strcmp(prop_name, "~#length") == 0) {
+            /* type STRING in seconds going to key "duration" in seconds */
+            g_debug("duration %s", prop_val);
+            keys[i] = g_strdup("duration");
+            values[i] = g_strdup(prop_val);
+            ++i;                  
+        } else if (strcmp(prop_name, "tracknumber") == 0) {
+            /* type STRING of form "01" or "01/10" going to key "trackNumber" of form "1" */
+            const char *track;
+            const char *endtrack;
+            for (track = prop_val; *track < '1' || *track > '9'; track++)
+                ;
+            for (endtrack = track; *endtrack >= '0' && *endtrack <= '9'; endtrack++)
+                ;
+            if (endtrack > track) {
+                keys[i] = g_strdup("trackNumber");
+                values[i] = g_strndup(track, endtrack - track);
+                g_debug("trackNumber %s", values[i]);
+                ++i;
+            }
+        } else {
+            /* Not interested in this property */
+            /* QL also supports date, genre, discnumber, ~#rating, ~#bitrate etc. */
+            /* the server also supports fileSize, MediaFileFormat, discIdentifier, 
+               and TrackType */
+            g_debug("discarded property '%s' value '%s'", prop_name, prop_val);
+        }
+            
+        dbus_message_iter_next(&array_iter);
+    }
+
+    g_assert(i < MAX_PROPS);
+    
+    song.keys = keys;
+    song.values = values;
+    g_signal_emit(G_OBJECT(dbus), signals[SONG_CHANGED], 0, &song);
+
+    g_strfreev(keys);
+    g_strfreev(values);
+
+    return;
+
+  bad_args:
+    g_debug("Failed to parse dbus message in handle_ql_song_started");
+    g_strfreev(keys);
+    g_strfreev(values);
+}
+
+static void
+handle_muine_song_changed(HippoDBus   *dbus,
+                          DBusMessage *message)
+{
+#define MAX_PROPS 10
+    HippoSong song;
+    char *string, *value;
+    char **keys, **values;
+    char **fields;
+    int i, j;
+
+    i = 0;
+
+    if (!dbus_message_get_args(message, NULL,
+                               DBUS_TYPE_STRING, &string,
+                               DBUS_TYPE_INVALID)) {
+        g_warning("Muine SongChanged signal had unexpected arguments");
+
+        return;
+    }
+
+    keys = g_new0(char*, MAX_PROPS + 1);
+    values = g_new0(char*, MAX_PROPS + 1);
+    
+    fields = g_strsplit(string, "\n", 0);
+
+    for (j = 0; fields[j] != NULL; j++) {
+        value = strchr(fields[j], ':');
+        if (value != NULL && value[1] != '\0' && value[2] != '\0') {
+            value += 2;
+            if (g_strncasecmp(fields[j], "artist", 6) == 0) {
+                g_debug(fields[j]);
+                keys[i] = g_strdup("artist");
+                values[i] = g_strdup(value);
+                ++i;
+            } else if (g_strncasecmp(fields[j], "title", 5) == 0) {
+                g_debug(fields[j]);
+                keys[i] = g_strdup("name");
+                values[i] = g_strdup(value);
+                ++i;
+            } else if (g_strncasecmp(fields[j], "album", 5) == 0) {
+                g_debug(fields[j]);
+                keys[i] = g_strdup("album");
+                values[i] = g_strdup(value);
+                ++i;
+            } else if (g_strncasecmp(fields[j], "duration", 8) == 0) {
+                g_debug(fields[j]);
+                keys[i] = g_strdup("duration");
+                values[i] = g_strdup(value);
+                ++i;
+            } else if (g_strncasecmp(fields[j], "track_number", 12) == 0) {
+                g_debug(fields[j]);
+                keys[i] = g_strdup("track-number");
+                values[i] = g_strdup(value);
+                ++i;
+            }
+        }
+    }
+    g_assert(i < MAX_PROPS);
+    g_strfreev(fields);
+
+    song.keys = keys;
+    song.values = values;
+    g_signal_emit(G_OBJECT(dbus), signals[SONG_CHANGED], 0, &song);
+
+    g_strfreev(keys);
+    g_strfreev(values);
+}
+
 static void
 handle_rb_playing_uri_changed(HippoDBus   *dbus,
                               DBusMessage *message)
@@ -1160,6 +1385,10 @@ handle_message(DBusConnection     *connection,
             handle_rb_playing_uri_changed(dbus, message);
         } else if (dbus_message_is_signal(message, BANSHEE_MUGSHOT_IFACE, BANSHEE_STATE_CHANGED)) {
             handle_banshee_state_changed(dbus, message);
+        } else if (dbus_message_is_signal(message, MUINE_PLAYER_IFACE, MUINE_SONG_CHANGED)) {
+            handle_muine_song_changed(dbus, message);
+        } else if (dbus_message_is_signal(message, QL_PLAYER_IFACE, QL_SONG_STARTED)) {
+            handle_ql_song_started(dbus, message);
         }
     } else if (dbus_message_get_type(message) == DBUS_MESSAGE_TYPE_ERROR) {
         hippo_dbus_debug_log_error("main connection handler", message);

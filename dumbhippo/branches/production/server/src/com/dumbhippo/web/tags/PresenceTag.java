@@ -6,9 +6,9 @@ import javax.servlet.jsp.JspWriter;
 import javax.servlet.jsp.tagext.SimpleTagSupport;
 
 import com.dumbhippo.persistence.AimResource;
-import com.dumbhippo.server.GroupView;
-import com.dumbhippo.server.PersonView;
-import com.dumbhippo.server.PostView;
+import com.dumbhippo.server.views.GroupView;
+import com.dumbhippo.server.views.PersonView;
+import com.dumbhippo.server.views.PostView;
 
 /**
  * Tag to display presence, including whether a user is online or offline,

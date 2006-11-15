@@ -188,6 +188,7 @@ dojo.hostenv.getText = function(uri, async_cb, fail_ok){
  * That is because any subsequent script elements haven't shown up in the document
  * object yet.
  */
+ // This does not work with our current setup because we run this code separately from parsing it
 function dj_last_script_src() {
     var scripts = window.document.getElementsByTagName('script');
     if(scripts.length < 1){ 
@@ -201,8 +202,9 @@ function dj_last_script_src() {
     return src;
 }
 
+// grep turns up nothing that uses this anyhow, so it's just disabled instead of fixing it
 if(!dojo.hostenv["library_script_uri_"]){
-	dojo.hostenv.library_script_uri_ = dj_last_script_src();
+	dojo.hostenv.library_script_uri_ = "library_script_uri_disabled_and_believed_unused" //dj_last_script_src();
 }
 
 dojo.hostenv.defaultDebugContainerId = 'dojoDebug';

@@ -8,6 +8,9 @@ import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.ValidationException;
+import com.dumbhippo.server.views.ExternalAccountView;
+import com.dumbhippo.server.views.UserViewpoint;
+import com.dumbhippo.server.views.Viewpoint;
 
 @Local
 public interface ExternalAccountSystem {
@@ -38,15 +41,15 @@ public interface ExternalAccountSystem {
 	ExternalAccount lookupExternalAccount(Viewpoint viewpoint, User user, ExternalAccountType type) throws NotFoundException;
 	
 	/**
-	 * Gets all external accounts for a user, taking into account the current viewpoint.
+	 * Gets all external account views for a user, taking into account the current viewpoint.
 	 * 
 	 * Accounts may have any sentiment (loved, hated, indifferent), remember. 
 	 *  
 	 * @param viewpoint the current viewpoint
 	 * @param user the user to get external accounts for
-	 * @return the set of external accounts for this user (should not be modified)
+	 * @return the set of external account views for this user (should not be modified)
 	 */
-	public Set<ExternalAccount> getExternalAccounts(Viewpoint viewpoint, User user);
+	public Set<ExternalAccountView> getExternalAccountViews(Viewpoint viewpoint, User user);
 	
 	
 	/**
@@ -68,5 +71,5 @@ public interface ExternalAccountSystem {
 	 */
 	public String getMySpaceName(Viewpoint viewpoint, User user) throws NotFoundException;
 	
-	public void loadThumbnails(Viewpoint viewpoint, Set<ExternalAccount> accounts);
+	public void loadThumbnails(Viewpoint viewpoint, Set<ExternalAccountView> accountViews);
 }

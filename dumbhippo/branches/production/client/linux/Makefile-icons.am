@@ -21,17 +21,19 @@ smallishicon_DATA=				\
 
 SMALLICONSUBDIR=icons/hicolor/22x22/apps
 smallicondir=$(datadir)/$(SMALLICONSUBDIR)
-smallicon_DATA=					\
-	$(SMALLICONSUBDIR)/mugshot_swarm_1.png	\
-	$(SMALLICONSUBDIR)/mugshot_swarm_2.png	\
-	$(SMALLICONSUBDIR)/mugshot_swarm_3.png	\
-	$(SMALLICONSUBDIR)/mugshot_swarm_4.png	\
+smallicon_DATA=							\
+	$(SMALLICONSUBDIR)/mugshot_notification.png		\
+	$(SMALLICONSUBDIR)/mugshot_notification_disabled.png	\
+	$(SMALLICONSUBDIR)/mugshot_swarm_1.png			\
+	$(SMALLICONSUBDIR)/mugshot_swarm_2.png			\
+	$(SMALLICONSUBDIR)/mugshot_swarm_3.png			\
+	$(SMALLICONSUBDIR)/mugshot_swarm_4.png			\
 	$(SMALLICONSUBDIR)/mugshot_swarm_5.png
 
 SMALLERICONSUBDIR=icons/hicolor/16x16/apps
 smallericondir=$(datadir)/$(SMALLERICONSUBDIR)
 smallericon_DATA=					\
-	$(SMALLERICONSUBDIR)/mugshot.gif		\
+	$(SMALLERICONSUBDIR)/mugshot.png		\
 	$(SMALLERICONSUBDIR)/mugshot_note_on.png	\
 	$(SMALLERICONSUBDIR)/mugshot_note_off.png
 

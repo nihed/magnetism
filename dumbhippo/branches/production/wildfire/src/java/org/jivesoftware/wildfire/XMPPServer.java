@@ -126,12 +126,22 @@ public class XMPPServer {
      * Creates a server and starts it.
      */
     public XMPPServer() {
+    	this(null);
+    }
+
+    /**
+     * Creates a server and starts it with a specified homedir
+     * 
+     * @param home the home directory of the wildfire installation. If null,
+     *    then it will be retrieved from the system property wildfireHome.
+     */
+    public XMPPServer(String home) {
         // We may only have one instance of the server running on the JVM
         if (instance != null) {
             throw new IllegalStateException("A server is already running");
         }
         instance = this;
-        start();
+        start(home);
     }
 
     /**
@@ -249,8 +259,8 @@ public class XMPPServer {
         return admins;
     }
 
-    private void initialize() throws FileNotFoundException {
-        locateWildfire();
+    private void initialize(String home) throws FileNotFoundException {
+        locateWildfire(home);
 
         name = JiveGlobals.getProperty("xmpp.domain");
         if (name == null) {
@@ -331,9 +341,9 @@ public class XMPPServer {
         }
     }
 
-    public void start() {
+    public void start(String home) {
         try {
-            initialize();
+            initialize(home);
 
             // If the server has already been setup then we can start all the server's modules
             if (!setupMode) {
@@ -621,11 +631,25 @@ public class XMPPServer {
     /**
      * <p>Retrieve the jive home for the container.</p>
      *
+     * @param specifiedHome Home directory passed to the constructor
      * @throws FileNotFoundException If jiveHome could not be located
      */
-    private void locateWildfire() throws FileNotFoundException {
+    private void locateWildfire(String specifiedHome) throws FileNotFoundException {
         String jiveConfigName = "conf" + File.separator + "wildfire.xml";
-        // First, try to load it wildfireHome as a system property.
+        
+        // If a home directory was passed to the constructor, use that
+        if (wildfireHome == null) {
+            try {
+                if (specifiedHome != null) {
+                    wildfireHome = verifyHome(specifiedHome, jiveConfigName);
+                }
+            }
+            catch (FileNotFoundException fe) {
+                // Ignore.
+            }
+        }
+        
+        // Then try to load it wildfireHome as a system property.
         if (wildfireHome == null) {
             String homeProperty = System.getProperty("wildfireHome");
             try {

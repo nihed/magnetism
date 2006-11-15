@@ -1,6 +1,6 @@
 /* -*- mode: C++; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
-#ifndef __HIPPO_DBUS_IPC_H__
-#define __HIPPO_DBUS_IPC_H__
+#ifndef __HIPPO_IPC_H__
+#define __HIPPO_IPC_H__
 
 typedef unsigned long long HippoEndpointId;
 
@@ -44,6 +44,10 @@ class HippoIpcProvider : public HippoIpcMethods {
 public:
     virtual HippoEndpointId registerEndpoint() = 0;
     virtual void setListener(HippoIpcListener *listener) = 0;
+
+    // Providers are refcounted, so that one can be given to a controller then forgotten about
+    virtual void ref() = 0;
+    virtual void unref() = 0;
 };
 
 class HippoIpcController : public HippoIpcMethods {
@@ -59,17 +63,17 @@ class HippoIpcLocatorMap;
 
 class HippoIpcLocator {
 public:    
-    HippoIpcController *getController(const char *url);
-    void releaseController(HippoIpcController *controller);
+    virtual HippoIpcController *getController(const char *url);
+    virtual void releaseController(HippoIpcController *controller);
 
 protected:
     HippoIpcLocator();
     virtual ~HippoIpcLocator();
 
-    virtual HippoIpcProvider *createProvider(const char *url) = 0;
+    virtual HippoIpcController *createController(const char *url) = 0;
         
 private:
     HippoIpcLocatorMap *map_;
 };
 
-#endif /* __HIPPO_DBUS_IPC_H__ */
+#endif /* __HIPPO_IPC_H__ */

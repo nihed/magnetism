@@ -59,7 +59,7 @@ public class Slurper {
 		}
 		
 		try {
-			URLConnection connection = (URLConnection)url.openConnection();
+			URLConnection connection = url.openConnection();
 			String authCookieString = "auth=name=" + userId + "&password=" + authKey;
 			String sesssionCookieString = "JSESSIONID=" + sessionCookie;
 			connection.setRequestProperty("Cookie", authCookieString + "; " + sesssionCookieString);

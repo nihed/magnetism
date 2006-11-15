@@ -27,6 +27,7 @@ import org.slf4j.Logger;
 import com.dumbhippo.Digest;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.StringUtils;
+import com.dumbhippo.server.util.EJBUtil;
 
 
 /**
@@ -62,6 +63,7 @@ public class Account extends Resource {
 	
 	private long creationDate;
 	private long lastLoginDate;
+	private long lastLogoutDate;
 	private int invitations;
 	
 	private boolean wasSentShareLinkTutorial;
@@ -105,8 +107,6 @@ public class Account extends Resource {
 
 	private Set<ExternalAccount> externalAccounts; 
 	
-	private Set<AccountFeed> feeds;
-	
 	/**
 	 * Used only for Hibernate 
 	 */
@@ -114,14 +114,14 @@ public class Account extends Resource {
 		this(null);
 	}
 	
-	public Account(User owner) {	
-		feeds = new HashSet<AccountFeed>();		
+	public Account(User owner) {			
 		clients = new HashSet<Client>();
 		contacts = new HashSet<Contact>();
 		favoritePosts = new HashSet<Post>();
 		externalAccounts = new HashSet<ExternalAccount>();
 		creationDate = -1;
 		lastLoginDate = -1;
+		lastLogoutDate = -1;
 		wasSentShareLinkTutorial = false;
 		hasDoneShareLinkTutorial = false;
 		disabled = false;
@@ -153,6 +153,13 @@ public class Account extends Resource {
 		// able to toString() a detached account
 		
 		return builder.toString();
+	}
+	
+	/**
+	 * Bug work around, see docs for EJBUtil.forceInitialization()
+	 */
+	public void prepareToAuthorizeClient() {
+		EJBUtil.forceInitialization(clients);
 	}
 	
 	/** 
@@ -214,7 +221,7 @@ public class Account extends Resource {
 	 * @return the clients (programs/machines) used with this account
 	 */
 	@OneToMany(cascade = { CascadeType.ALL }, mappedBy="account")
-	@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)
+	@Cache(usage=CacheConcurrencyStrategy.TRANSACTIONAL)
 	protected Set<Client> getClients() {
 		return clients;
 	}
@@ -248,7 +255,7 @@ public class Account extends Resource {
 	}
 
 	@OneToMany(mappedBy="account")
-	@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)	
+	@Cache(usage=CacheConcurrencyStrategy.TRANSACTIONAL)	
 	public Set<Contact> getContacts() {
 		if (contacts == null)
 			throw new RuntimeException("no contacts set???");
@@ -316,6 +323,21 @@ public class Account extends Resource {
 			this.lastLoginDate = date.getTime();
 		else
 			this.lastLoginDate = -1;
+	}	
+
+	@Column(nullable=true)
+	public Date getLastLogoutDate() {
+		if (lastLogoutDate < 0) {
+			return null;
+		}
+		return new Date(lastLogoutDate);
+	}
+
+	public void setLastLogoutDate(Date date) {
+		if (date != null)
+			this.lastLogoutDate = date.getTime();
+		else
+			this.lastLogoutDate = -1;
 	}	
 
 	@Column(nullable = false)
@@ -559,7 +581,7 @@ public class Account extends Resource {
 		       joinColumns=@JoinColumn(name="Account_id", referencedColumnName="id"),                 
 		       inverseJoinColumns=@JoinColumn(name="favoritePosts_id", referencedColumnName="id"),
 		       uniqueConstraints=@UniqueConstraint(columnNames={"Account_id", "favoritePosts_id"}))	
-	@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)
+	@Cache(usage=CacheConcurrencyStrategy.TRANSACTIONAL)
 	public Set<Post> getFavoritePosts() {
 		if (favoritePosts == null)
 			throw new RuntimeException("no favorite posts?");
@@ -626,7 +648,7 @@ public class Account extends Resource {
 	// try LAZY fetch since for now we only need this on /account and /person
 	// maybe it will make sense
 	@OneToMany(mappedBy="account", fetch=FetchType.LAZY)
-	@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)
+	@Cache(usage=CacheConcurrencyStrategy.TRANSACTIONAL)
 	public Set<ExternalAccount> getExternalAccounts() {
 		if (externalAccounts == null)
 			throw new RuntimeException("no external accounts set???");
@@ -662,35 +684,6 @@ public class Account extends Resource {
 
 	public void touchGroupInvitationReceived() {
 		this.groupInvitationReceived = System.currentTimeMillis();
-	}
-	
-	@OneToMany(mappedBy="account")
-	@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)
-	public Set<AccountFeed> getFeeds() {
-		return feeds;
-	}
-	
-	/**
-	 * Only hibernate should call this probably
-	 * @param feeds
-	 */
-	protected void setFeeds(Set<AccountFeed> feeds) {
-		if (feeds == null)
-			throw new IllegalArgumentException("null passed for feed");
-		this.feeds = feeds;
-	}
-	
-	
-	@Transient
-	public AccountFeed getRhapsodyHistoryFeed() {
-		Set<AccountFeed> accountFeeds = getFeeds();
-		// we assume there are zero or one not removed AccountFeeds for now, which 
-		// will be pretty bogus in the end 
-		for (AccountFeed f : accountFeeds) {
-			if (!f.isRemoved())
-				return f;
-		}
-		return null;
 	}
 	
 	@Transient

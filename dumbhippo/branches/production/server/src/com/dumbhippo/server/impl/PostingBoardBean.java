@@ -12,6 +12,7 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
@@ -66,38 +67,41 @@ import com.dumbhippo.postinfo.NodeName;
 import com.dumbhippo.postinfo.PostInfo;
 import com.dumbhippo.postinfo.PostInfoType;
 import com.dumbhippo.postinfo.ShareGroupPostInfo;
+import com.dumbhippo.search.SearchSystem;
 import com.dumbhippo.server.AccountSystem;
-import com.dumbhippo.server.AnonymousViewpoint;
 import com.dumbhippo.server.Character;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.CreateInvitationResult;
-import com.dumbhippo.server.EntityView;
-import com.dumbhippo.server.FeedView;
 import com.dumbhippo.server.GroupSystem;
-import com.dumbhippo.server.GroupView;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.InvitationSystem;
 import com.dumbhippo.server.MessageSender;
 import com.dumbhippo.server.NotFoundException;
+import com.dumbhippo.server.Notifier;
 import com.dumbhippo.server.Pageable;
-import com.dumbhippo.server.PersonView;
-import com.dumbhippo.server.PersonViewExtra;
 import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.PostIndexer;
 import com.dumbhippo.server.PostInfoSystem;
 import com.dumbhippo.server.PostSearchResult;
 import com.dumbhippo.server.PostType;
-import com.dumbhippo.server.PostView;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.RecommenderSystem;
-import com.dumbhippo.server.Stacker;
-import com.dumbhippo.server.SystemViewpoint;
 import com.dumbhippo.server.TransactionRunner;
-import com.dumbhippo.server.UserViewpoint;
-import com.dumbhippo.server.Viewpoint;
+import com.dumbhippo.server.XmppMessageSender;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.util.GuidNotFoundException;
+import com.dumbhippo.server.views.AnonymousViewpoint;
+import com.dumbhippo.server.views.ChatMessageView;
+import com.dumbhippo.server.views.EntityView;
+import com.dumbhippo.server.views.FeedView;
+import com.dumbhippo.server.views.GroupView;
+import com.dumbhippo.server.views.PersonView;
+import com.dumbhippo.server.views.PersonViewExtra;
+import com.dumbhippo.server.views.PostView;
+import com.dumbhippo.server.views.SystemViewpoint;
+import com.dumbhippo.server.views.UserViewpoint;
+import com.dumbhippo.server.views.Viewpoint;
 
 @Stateless
 public class PostingBoardBean implements PostingBoard {
@@ -132,15 +136,20 @@ public class PostingBoardBean implements PostingBoard {
 	private GroupSystem groupSystem;
 	
 	@EJB
+	private SearchSystem searchSystem;
+	
+	@EJB
 	private TransactionRunner runner;
+	
+	@EJB
+	private XmppMessageSender xmppMessageSender;
 	
 	@EJB
 	@IgnoreDependency
 	private RecommenderSystem recommenderSystem;
 	
 	@EJB
-	@IgnoreDependency
-	private Stacker stacker;
+	private Notifier notifier;
 	
 	@javax.annotation.Resource
 	private EJBContext ejbContext;
@@ -265,18 +274,16 @@ public class PostingBoardBean implements PostingBoard {
 						} catch (NotFoundException e) {
 							throw new RuntimeException(e);
 						}
-						
-						Stacker stacker = EJBUtil.defaultLookup(Stacker.class);
-						stacker.stackPost(currentPost.getGuid(), currentPost.getPostDate().getTime());
-						
+												
 						// Sends out XMPP notification
 						board.sendPostNotifications(currentPost, postType);
 						
 						LiveState liveState = LiveState.getInstance();			
 						for (Group g : post.getGroupRecipients()) {
-						    liveState.queueUpdate(new GroupEvent(g.getGuid(), post.getGuid(), GroupEvent.Type.POST_ADDED));
+						    liveState.queueUpdate(new GroupEvent(g.getGuid(), post.getGuid(), GroupEvent.Detail.POST_ADDED));
 						}
-						liveState.queueUpdate(new PostCreatedEvent(post.getGuid(), poster.getGuid()));				
+						liveState.queueUpdate(new PostCreatedEvent(post.getGuid(), poster != null ? 
+								poster.getGuid() : null));				
 					}
 				});
 			}
@@ -452,7 +459,7 @@ public class PostingBoardBean implements PostingBoard {
 	private Post createAndIndexPost(Callable<Post> creator) {
 		try {
 			Post detached = runner.runTaskNotInNewTransaction(creator);
-			PostIndexer.getInstance().indexAfterTransaction(detached.getGuid());
+			searchSystem.indexPost(detached, false);
 			Post post = em.find(Post.class, detached.getId());
 			if (post == null)
 				logger.error("reattach after creating new post FAILED ...");
@@ -472,6 +479,7 @@ public class PostingBoardBean implements PostingBoard {
 					Post post = new Post(poster, visibility, toWorld, title, text, personRecipients, groupRecipients, expandedRecipients, resources);
 					post.setPostInfo(postInfo);
 					em.persist(post);
+					notifier.onPostCreated(post);
 					logger.debug("saved new Post {}", post);
 					return post;
 				}
@@ -483,6 +491,7 @@ public class PostingBoardBean implements PostingBoard {
 			public Post call() {
 				FeedPost post = new FeedPost(feed, entry, expandVisibilityForGroup(PostVisibility.RECIPIENTS_ONLY, feed.getGroup()));
 				em.persist(post);
+				notifier.onPostCreated(post);
 
 				logger.debug("saved new FeedPost {}", post);
 				return post;
@@ -541,7 +550,7 @@ public class PostingBoardBean implements PostingBoard {
 
 	static private final String ORDER_RECENT = " ORDER BY post.postDate DESC ";
 
-	private void addGroupRecipients(Viewpoint viewpoint, Post post, List<Object> recipients) {
+	private void addGroupRecipients(Viewpoint viewpoint, Post post, List<EntityView> recipients) {
 		
 		if (viewpoint instanceof SystemViewpoint) {
 			for (Group g : post.getGroupRecipients()) {
@@ -628,7 +637,7 @@ public class PostingBoardBean implements PostingBoard {
 	// when loading the post... conceivably we should redo the API to eliminate 
 	// that danger
 	public PostView getPostView(Viewpoint viewpoint, Post post) {
-		List<Object> recipients = new ArrayList<Object>();
+		List<EntityView> recipients = new ArrayList<EntityView>();
 		
 		addGroupRecipients(viewpoint, post, recipients);
 		
@@ -750,7 +759,7 @@ public class PostingBoardBean implements PostingBoard {
 	 * @return true if post is visible, false otherwise
 	 */
 	public boolean canViewPost(UserViewpoint viewpoint, Post post) {
-		if (post.getDisabled()) {
+		if (post.isDisabled()) {
 			return false;
 		}
 		
@@ -834,9 +843,15 @@ public class PostingBoardBean implements PostingBoard {
 		pageable.setResults(getPostsFor(viewpoint, poster, pageable.getStart(), pageable.getCount()));
 		pageable.setTotalCount(getPostsForCount(viewpoint, poster));
 	}
+	
+	private enum PostFilter {
+		NO_FEEDS,
+		ONLY_FEEDS,
+		ALL_POSTS
+	}
 
 	private Query buildReceivedPostsQuery(UserViewpoint viewpoint, User recipient,
-			String search, boolean isCount, boolean isFeeds) {
+			String search, boolean isCount, PostFilter filter, Date since) {
 		// There's an efficiency win here by specializing to the case where
 		// viewer == recipient ... we know that posts are always visible
 		// to the recipient; we don't bother implementing the other case for
@@ -852,17 +867,26 @@ public class PostingBoardBean implements PostingBoard {
 		else
 			queryText.append("post");
 		
-		if (isFeeds)
-			queryText.append(" FROM FeedPost post ");
-		else
+		switch (filter) {
+		case NO_FEEDS:
+		case ALL_POSTS:
 			queryText.append(" FROM Post post ");
+			break;
+		case ONLY_FEEDS:
+			queryText.append(" FROM FeedPost post ");
+			break;
+		}
 		
 		queryText.append("WHERE (post.poster IS NULL OR post.poster != :viewer) ");
 		
-		if (!isFeeds)
+		if (filter == PostFilter.NO_FEEDS)
 			queryText.append(" AND NOT EXISTS (SELECT fp.id FROM FeedPost fp WHERE post.id=fp.id) ");
 		
 		queryText.append("AND " + VIEWER_RECEIVED);
+		
+		if (since != null) {
+			queryText.append(" AND post.postDate > :since");
+		}
 		
 		appendPostLikeClause(queryText, search);
 
@@ -874,29 +898,33 @@ public class PostingBoardBean implements PostingBoard {
 		q = em.createQuery(queryText.toString());
 		
 		q.setParameter("viewer", recipient);
+		
+		if (since != null)
+			q.setParameter("since", since);
+		
 		return q;
 	}
 	
 	private int getReceivedPostsCount(UserViewpoint viewpoint, User recipient, String search) {
-		Query q = buildReceivedPostsQuery(viewpoint, recipient, search, true, false);
+		Query q = buildReceivedPostsQuery(viewpoint, recipient, search, true, PostFilter.NO_FEEDS, null);
 		Object result = q.getSingleResult();
 		return ((Number) result).intValue();
 	}
 	
 	private List<PostView> getReceivedPosts(UserViewpoint viewpoint, User recipient, String search, int start, int max) {
-		Query q  = buildReceivedPostsQuery(viewpoint, recipient, search, false, false);
+		Query q  = buildReceivedPostsQuery(viewpoint, recipient, search, false, PostFilter.NO_FEEDS, null);
 		return getPostViews(viewpoint, q, search, start, max);
 	}
 
 	private int getReceivedFeedPostsCount(UserViewpoint viewpoint, User recipient, String search) {
-		Query q = buildReceivedPostsQuery(viewpoint, recipient, search, true, true);
+		Query q = buildReceivedPostsQuery(viewpoint, recipient, search, true, PostFilter.ONLY_FEEDS, null);
 		Object result = q.getSingleResult();
 		//logger.debug("feed posts count {}", result);
 		return ((Number) result).intValue();
 	}
 	
 	private List<PostView> getReceivedFeedPosts(UserViewpoint viewpoint, User recipient, String search, int start, int max) {
-		Query q  = buildReceivedPostsQuery(viewpoint, recipient, search, false, true);
+		Query q  = buildReceivedPostsQuery(viewpoint, recipient, search, false,  PostFilter.ONLY_FEEDS, null);
 		return getPostViews(viewpoint, q, search, start, max);
 	}
 	
@@ -1108,10 +1136,12 @@ public class PostingBoardBean implements PostingBoard {
 		setPostIgnored(user, post, false); // Since they viewed it, they implicitly un-ignore it
 		
 		// pass the clicked info over to our new way of recording it also...
-		stacker.clickedPost(post, user, ppd.getClickedDateAsLong());
+		notifier.onPostClicked(post, user, ppd.getClickedDateAsLong());
 		
 		if (!previouslyViewed) {
 			LiveState.getInstance().queueUpdate(new PostViewedEvent(postGuid, user.getGuid(), ppd.getClickedDate()));
+		} else {
+			logger.debug("Post {} had already been clicked by {}", postId, user);
 		}
 	}
 
@@ -1191,9 +1221,17 @@ public class PostingBoardBean implements PostingBoard {
 		pageable.setTotalCount(getReceivedFeedPostsCount(viewpoint, recipient, null));		
 	}
 	
-	public List<PostMessage> getPostMessages(Post post) {
-		List<?> messages = em.createQuery("SELECT pm from PostMessage pm WHERE pm.post = :post ORDER BY pm.timestamp")
+	// We order and select on pm.id, though in rare cases the order by pm.id and by pm.timestamp
+	// might be different if two messages arrive almost at once. In this case, the timestamps will
+	// likely be within a second of each other and its much cheaper this way.
+	private static final String POST_MESSAGE_QUERY = "SELECT pm from PostMessage pm WHERE pm.post = :post";
+	private static final String POST_MESSAGE_SELECT = " AND pm.id >= :lastSeenSerial ";
+	private static final String POST_MESSAGE_ORDER = " ORDER BY pm.id";
+	
+	public List<PostMessage> getPostMessages(Post post, long lastSeenSerial) {
+		List<?> messages = em.createQuery(POST_MESSAGE_QUERY + POST_MESSAGE_SELECT + POST_MESSAGE_ORDER)
 		.setParameter("post", post)
+		.setParameter("lastSeenSerial", lastSeenSerial)
 		.getResultList();
 		
 		return TypeUtils.castList(PostMessage.class, messages);
@@ -1216,17 +1254,21 @@ public class PostingBoardBean implements PostingBoard {
 		return ((Number) result).intValue();
 	}
 	
-	public void addPostMessage(Post post, User fromUser, String text, Date timestamp, int serial) {
-		// we use serial = -1 in other places in the system to designate a message that contains
-		// the post description, but we never add this type of message to the database
-		if (serial < 0) 
-			throw new IllegalArgumentException("Negative serial");
-		
-		PostMessage postMessage = new PostMessage(post, fromUser, text, timestamp, serial);
+
+	public List<ChatMessageView> viewPostMessages(List<PostMessage> messages, Viewpoint viewpoint) {
+		List<ChatMessageView> viewedMsgs = new ArrayList<ChatMessageView>();
+		for (PostMessage m : messages) {
+			viewedMsgs.add(new ChatMessageView(m, personViewer.getPersonView(viewpoint, m.getFromUser())));
+		}
+		return viewedMsgs;
+	}	
+	
+	public void addPostMessage(Post post, User fromUser, String text, Date timestamp) {
+		PostMessage postMessage = new PostMessage(post, fromUser, text, timestamp);
 		em.persist(postMessage);
 		
+		notifier.onPostMessageCreated(postMessage);
 		LiveState.getInstance().queueUpdate(new PostChatEvent(post.getGuid()));
-		stacker.stackPost(post.getGuid(), timestamp.getTime());
 	}
 
 	public Set<EntityView> getReferencedEntities(Viewpoint viewpoint, Post post) {
@@ -1289,7 +1331,7 @@ public class PostingBoardBean implements PostingBoard {
 	}
 	
 	public PostSearchResult searchPosts(Viewpoint viewpoint, String queryString) {
-		final String[] fields = { "ExplicitTitle", "Text" };
+		final String[] fields = { "explicitTitle", "text" };
 		QueryParser queryParser = new MultiFieldQueryParser(fields, PostIndexer.getInstance().createAnalyzer());
 		queryParser.setDefaultOperator(Operator.AND);
 		org.apache.lucene.search.Query query;
@@ -1373,5 +1415,28 @@ public class PostingBoardBean implements PostingBoard {
 		}
 		
 		return false;
+	}
+	
+	static final int MAX_BACKLOG = 20;
+
+	public void sendBacklog(User user, Date lastLogoutDate) {
+		UserViewpoint viewpoint = new UserViewpoint(user);
+		
+		Query q = buildReceivedPostsQuery(viewpoint, user, null, false, PostFilter.ALL_POSTS, lastLogoutDate);
+		q.setMaxResults(MAX_BACKLOG);
+		List<Post> posts = TypeUtils.castList(Post.class, q.getResultList());
+		
+		// Send the messages in reverse order - oldest first
+		ListIterator<Post> i = posts.listIterator(posts.size());
+		while (i.hasPrevious())
+			xmppMessageSender.sendNewPostMessage(user, i.previous());
+	}
+	
+	public void setPostDisabled(Post post, boolean disabled) {
+		if (post.isDisabled() != disabled) {
+			post.setDisabled(disabled);
+			logger.debug("Disabled flag toggled to {} on post {}", disabled, post);
+			notifier.onPostDisabledToggled(post);
+		}   
 	}
 }

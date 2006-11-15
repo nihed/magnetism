@@ -41,7 +41,7 @@ public class User extends Person implements VersionedEntity {
 	// to properly initialize the combination of Acount
 	// and User in that case.
 	@OneToMany(fetch=FetchType.LAZY, mappedBy="owner")
-	@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)
+	@Cache(usage=CacheConcurrencyStrategy.TRANSACTIONAL)
 	protected Set<Account> getAccounts() {
 		return accounts;
 	}
@@ -74,7 +74,7 @@ public class User extends Person implements VersionedEntity {
 	}
 	
 	@OneToMany(fetch=FetchType.LAZY, mappedBy="owner")
-	@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)
+	@Cache(usage=CacheConcurrencyStrategy.TRANSACTIONAL)
 	public Set<AccountClaim> getAccountClaims() {
 		if (accountClaims == null)
 			accountClaims = new HashSet<AccountClaim>();
@@ -94,23 +94,17 @@ public class User extends Person implements VersionedEntity {
 		// last-ditch check, we also want to check closer to where we got the 
 		// photo from (e.g. on input from the wire)
 		if (stockPhoto != null && !Validators.validateStockPhoto(stockPhoto))
-			throw new RuntimeException("Set invalid stock photo on Group");		
+			throw new RuntimeException("Set invalid stock photo on User");		
 		this.stockPhoto = stockPhoto;
 	}
 	
 	@Transient
-	public String getPhotoUrl(int size) {
-		if (stockPhoto != null && size == 60) {
+	public String getPhotoUrl() {
+		if (stockPhoto != null) {
 			return "/images2" + stockPhoto;
 		} else {
-			return "/files/headshots/" + size + "/" + getId() + "?v=" + version;
+			return "/files/headshots/" + getId() + "?v=" + version;
 		}
-	}
-	
-	// usable from jstl expression language since it has no args
-	@Transient
-	public String getPhotoUrl60() {
-		return getPhotoUrl(60);
 	}
 	
 	@Override

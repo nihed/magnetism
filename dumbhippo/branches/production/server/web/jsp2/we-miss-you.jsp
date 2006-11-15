@@ -13,7 +13,7 @@
 			<title>Account Enabled</title>
 		</c:otherwise>
 	</c:choose>
-	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/site.css">
+	<dht:siteStyle/>	
 	<dht:faviconIncludes/>
 	<dht:scriptIncludes/>
 </head>
@@ -23,6 +23,7 @@
 			<p>
 				You have disabled your account. Reenable it to use all of Mugshot's features.
 			</p>
+			<dh:script module="dh.actions"/>
 			<div><a href="javascript:dh.actions.enableAccount()">Reenable my account</a></div>
 			<div><a href="javascript:dh.actions.signOut()">Use Mugshot as a guest</a></div>
 		</c:when>

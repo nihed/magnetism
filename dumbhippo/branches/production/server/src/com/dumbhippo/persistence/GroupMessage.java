@@ -16,7 +16,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
  */
 
 @Entity
-@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)
+@Cache(usage=CacheConcurrencyStrategy.TRANSACTIONAL)
 public class GroupMessage extends EmbeddedMessage {
 
 	private static final long serialVersionUID = 1L;
@@ -24,13 +24,11 @@ public class GroupMessage extends EmbeddedMessage {
 	private Group group;
 	
 	public GroupMessage() {
-		// serial of -1 is just plain invalid for GroupMessages (we should not store 
-		// this in the db)
-		this(null, null, null, null, -1);
+		this(null, null, null, null);
 	}
 
-	public GroupMessage(Group group, User fromUser, String messageText, Date timestamp, int messageSerial) {
-		super(fromUser, messageText, timestamp, messageSerial);
+	public GroupMessage(Group group, User fromUser, String messageText, Date timestamp) {
+		super(fromUser, messageText, timestamp);
 		this.group = group;
 	}
 	

@@ -1,16 +1,25 @@
 package com.dumbhippo.server.util;
 
 import java.sql.SQLException;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Properties;
+import java.util.Set;
 
 import javax.ejb.EJBContext;
-import javax.ejb.EJBException;
 import javax.ejb.Local;
+import javax.ejb.Remote;
+import javax.naming.Context;
 import javax.naming.InitialContext;
+import javax.naming.NameClassPair;
+import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
+import javax.persistence.EntityExistsException;
 import javax.persistence.EntityManager;
 
 import org.hibernate.JDBCException;
 import org.hibernate.NonUniqueObjectException;
+import org.hibernate.collection.PersistentCollection;
 import org.hibernate.exception.ConstraintViolationException;
 import org.slf4j.Logger;
 
@@ -20,20 +29,49 @@ import com.dumbhippo.StringUtils;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.GuidPersistable;
+import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.NotFoundException;
+import com.dumbhippo.server.Configuration.PropertyNotFoundException;
 
 public class EJBUtil {
 	
 	@SuppressWarnings("unused")
 	static private final Logger logger = GlobalSetup.getLogger(EJBUtil.class);	
 	
-	private static final String classPrefix = "dumbhippo/";
+	private static final String ROOT_NAME = "dumbhippo";
+	private static final String CLASS_PREFIX = ROOT_NAME + "/";
 	
 	private static final int MAX_SEARCH_TERMS = 3;
 	// we avoid using \ because by the 
 	// time you go through Java and MySQL also interpreting it
 	// it becomes really confusing
 	private static final char LIKE_ESCAPE_CHAR = '^';
+	
+	public static Context getHAContext() throws NamingException {
+		Configuration config = defaultLookup(Configuration.class);
+		Properties p = new Properties();
+		p.put(Context.INITIAL_CONTEXT_FACTORY, "org.jnp.interfaces.NamingContextFactory");
+		p.put(Context.URL_PKG_PREFIXES, "jboss.naming:org.jnp.interfaces");
+		String bind;
+		String port;
+		try {
+			bind = System.getProperty("jboss.bind.address", "localhost");
+			port = config.getProperty("dumbhippo.server.hajndiPort");
+		} catch (PropertyNotFoundException e) {
+			bind = "localhost";
+			port = "1100";
+		}
+		p.put(Context.PROVIDER_URL, bind + ":" + port);
+		return new InitialContext(p);
+	}
+	
+	public static <T> T defaultHALookup(Class<T> clazz) {
+		try {
+			return defaultHALookupChecked(clazz);
+		} catch (NamingException e) {
+			throw new RuntimeException(e);
+		}
+	}	
 	
 	/**
 	 * Very simple wrapper around InitialContext.lookup that looks up an
@@ -107,7 +145,7 @@ public class EJBUtil {
 	public static <T> T defaultLookupChecked(Class<T> clazz) throws NamingException {
 
 		if (clazz == null)
-			throw new IllegalArgumentException("Class passed to nameLookup() is nNull");
+			throw new IllegalArgumentException("Class passed to nameLookup() is null");
 		
 		String name = clazz.getSimpleName();		
 		if (!clazz.isInterface())
@@ -118,20 +156,46 @@ public class EJBUtil {
 			return clazz.cast(uncheckedDynamicLookupRemote(name));
 	}	
 	
+	public static <T> T defaultHALookupChecked(Class<T> clazz) throws NamingException {
+
+		if (clazz == null)
+			throw new IllegalArgumentException("Class passed to nameLookup() is nNull");
+		
+		String name = clazz.getSimpleName();		
+		if (!clazz.isInterface())
+			throw new IllegalArgumentException("Class passed to nameLookup() has to be an interface, not " + name);
+		if (clazz.isAnnotationPresent(Local.class))		
+			return clazz.cast(uncheckedDynamicLookupLocal(name, true));
+		else
+			return clazz.cast(uncheckedDynamicLookupRemote(name, true));
+	}	
+	
 	public static Object uncheckedDynamicLookupLocal(String name) throws NamingException {	
-		return uncheckedDynamicLookup(classPrefix + name + "Bean/local");
+		return uncheckedDynamicLookupLocal(name, false);
+	}
+	
+	public static Object uncheckedDynamicLookupLocal(String name, boolean ha) throws NamingException {	
+		return uncheckedDynamicLookup(CLASS_PREFIX + name + "Bean/local", ha);
 	}	
 	
 	public static Object uncheckedDynamicLookupRemote(String name) throws NamingException {
+		return uncheckedDynamicLookupRemote(name, false);
+	}
+	
+	public static Object uncheckedDynamicLookupRemote(String name, boolean ha) throws NamingException {
 		if (name.endsWith("Remote"))
 			name = name.substring(0, name.lastIndexOf("Remote"));
 		name = name + "Bean";
-		return uncheckedDynamicLookup(classPrefix + name + "/remote");
+		return uncheckedDynamicLookup(CLASS_PREFIX + name + "/remote", ha);
 	}		
 	
 	public static Object uncheckedDynamicLookup(String name) throws NamingException {
-		InitialContext namingContext; // note, if ever caching this, it isn't threadsafe
-		namingContext = new InitialContext();	
+		return uncheckedDynamicLookup(name, false);
+	}	
+	
+	public static Object uncheckedDynamicLookup(String name, boolean ha) throws NamingException {
+		Context namingContext; // note, if ever caching this, it isn't threadsafe
+		namingContext = ha ? getHAContext() : new InitialContext();	
 		return namingContext.lookup(name);
 	}
 	
@@ -144,17 +208,142 @@ public class EJBUtil {
 			throw new IllegalArgumentException("Class passed to contextLookup() has to be an interface, not " + name);
 		String suffix = clazz.isAnnotationPresent(Local.class) ? "local" : "remote";	
 		name = name + "Bean";
-		return clazz.cast(ejbContext.lookup(classPrefix + name + "/" + suffix));
+		return clazz.cast(ejbContext.lookup(CLASS_PREFIX + name + "/" + suffix));
+	} 
+	
+	@SuppressWarnings("unused")
+	private static void dumpContext(String name) {
+		try {
+			logger.debug("Dumping items in {}", name);
+			Context namingContext = new InitialContext();
+			NamingEnumeration ne = namingContext.list(name);
+			while (ne.hasMore()) {
+				Object o = ne.next();
+				logger.debug(" listed object {} {}", o.getClass().getName(), o);
+				try {
+					if (o instanceof NameClassPair) {
+						NameClassPair ncp = (NameClassPair) o;
+						
+						String n1 = null, n2 = null, n3 = null;
+						boolean relative = false;
+						try {
+							n1 = ncp.getName();
+						} catch (UnsupportedOperationException e) {
+							
+						}
+						try {
+							n2 = ncp.getNameInNamespace();
+						} catch (UnsupportedOperationException e) {
+							
+						}
+						try {
+							n3 = ncp.getClassName();
+						} catch (UnsupportedOperationException e) {
+							
+						}
+						try {
+							relative = ncp.isRelative();
+						} catch (UnsupportedOperationException e) {
+							
+						}
+						
+						logger.debug(" name={} nameInNamespace={} className={} relative={} ",
+								new Object[] { n1, n2, n3, relative });
+					}
+				} catch (RuntimeException e) {
+					logger.debug(" (failed to print NameClassPair): {}", e.getMessage());
+				}
+			}
+			logger.debug("Done");
+		} catch (NamingException e) {
+			logger.debug("Failed to dump {}: {}", name, e.getMessage());
+		}
 	}
 	
-	// Returns true if this is an exception we would get with a race condition
-	// between two people trying to create the same object at once
-	public static boolean isDuplicateException(Exception e) {
-		return ((e instanceof EJBException &&
-				 ((EJBException)e).getCausedByException() instanceof ConstraintViolationException) ||
-	            e instanceof NonUniqueObjectException);
+
+	static private final String[] beanIfacePackages = {
+		"com.dumbhippo.server",
+		"com.dumbhippo.server.blocks",
+		"com.dumbhippo.live",
+		"com.dumbhippo.search"
+	};	
+	
+	// this is a huge hack
+	static public Class<?> loadLocalBeanInterface(ClassLoader loader, String name) {
+		Class<?> klass = null;
+
+		if (!name.startsWith(CLASS_PREFIX)) {
+			logger.warn("Name {} does not start with {} as expected",
+					name, CLASS_PREFIX);
+			return null;
+		}
+		if (!name.endsWith("Bean/local")) {
+			logger.warn("Name {} does not end with Bean/local as expected",
+					name);
+			return null;
+		}
+		
+		String ifaceWithoutPackage = name.substring(CLASS_PREFIX.length(),
+				name.length() - "Bean/local".length());
+		
+		for (String pkg : beanIfacePackages) {
+			try {
+				String fullName = pkg + "." + ifaceWithoutPackage;
+				//logger.debug(" trying to load {}", fullName);
+				klass = loader.loadClass(fullName);
+				break;
+			} catch (ClassNotFoundException e) {
+			}
+		}
+		
+		if (klass == null) {
+			logger.warn("Bean {} interface {} not found in any package or not loadable", name, ifaceWithoutPackage);
+			return null;
+		} else {
+			if (!klass.isAnnotationPresent(Local.class)) {
+				if (!klass.isAnnotationPresent(Remote.class))
+					logger.warn("Interface {} does not have @Local or @Remote annotation", klass.getName());
+				return null;
+			}
+			return klass;
+		}
 	}
-	 
+	
+	public static Collection<String> listLocalBeanNames() throws NamingException {
+		/*dumpContext("");
+		dumpContext(rootName);
+		dumpContext(classPrefix + "IdentitySpiderBean");
+		dumpContext(classPrefix + "IdentitySpiderBean/local");
+		dumpContext(classPrefix + "BlogBlockHandlerBean");
+		dumpContext(classPrefix + "BlogBlockHandlerBean/local");*/		
+		//logger.debug("Listing known bean classes");
+		Set<String> beanClasses = new HashSet<String>();
+		Context namingContext = new InitialContext();
+		NamingEnumeration ne = namingContext.list(ROOT_NAME);
+		while (ne.hasMore()) {
+			NameClassPair ncp = (NameClassPair) ne.next();
+			//logger.debug(" bean '{}'", ncp.getName());
+			beanClasses.add(CLASS_PREFIX + ncp.getName() + "/local");
+		}
+		//logger.debug("Done listing");
+		return beanClasses;
+	}
+	
+	public static Set<Class<?>> getConstraintViolationExceptions() {
+		HashSet<Class<?>> exceptions = new HashSet<Class<?>>();
+		exceptions.add(ConstraintViolationException.class);
+		exceptions.add(NonUniqueObjectException.class);		
+		return exceptions;
+	}
+
+	// Returns an exception we would get with a race condition
+	// between two transactions trying to create the same object at once
+	public static Set<Class<?>> getDuplicateEntryExceptions() {
+		HashSet<Class<?>> exceptions = new HashSet<Class<?>>();
+		exceptions.add(EntityExistsException.class);
+		return exceptions;
+	}
+	
 	public static boolean isDatabaseException(Exception e) {
 		Throwable root = ExceptionUtils.getRootCause(e);
 		// FIXME not sure what should really be here or if this will work
@@ -238,5 +427,23 @@ public class EJBUtil {
 		Guid guid = new Guid(id); //throw Parse here instead of GuidNotFound if invalid
 		
 		return lookupGuid(em, klass, guid);
+	}
+	
+	/**
+	 * This function provides a workaround for
+	 *  
+	 *  http://opensource.atlassian.com/projects/hibernate/browse/HHH-2192
+	 * 
+	 * You should call it if you are updating a persistent collection without
+	 * reading it first. Really, there is no advantage to this function of
+	 * just calling collection.size(), but doing it this way marks the
+	 * usage as a workaround, which is useful for future maintentance.
+	 *  
+	 * @param collection
+	 */
+	public static void forceInitialization(Collection collection) {
+		if (collection instanceof PersistentCollection) {
+			((PersistentCollection)collection).forceInitialization();
+		}
 	}
 }

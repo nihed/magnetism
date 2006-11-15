@@ -42,6 +42,7 @@ dh.stacker.Kind.POST = 1;
 dh.stacker.Kind.MUSIC_PERSON = 2;
 dh.stacker.Kind.GROUP_CHAT = 3;
 dh.stacker.Kind.GROUP_MEMBER = 4;
+dh.stacker.Kind.EXTERNAL_ACCOUNT_UPDATE = 5;
 
 dh.stacker.kindFromString = function(str) {
 	if (str == "POST")
@@ -52,6 +53,8 @@ dh.stacker.kindFromString = function(str) {
 		return dh.stacker.Kind.GROUP_CHAT;
 	else if (str == "GROUP_MEMBER")
 		return dh.stacker.Kind.GROUP_MEMBER;
+	else if (str == "EXTERNAL_ACCOUNT_UPDATE" || str == "EXTERNAL_ACCOUNT_UPDATE_SELF")
+	    return dh.stacker.Kind.EXTERNAL_ACCOUNT_UPDATE;	
 	else
 		return dh.stacker.Kind.UNKNOWN;
 }
@@ -61,14 +64,19 @@ dh.stacker.kindClasses[dh.stacker.Kind.POST] = "dh-stacked-block-post";
 dh.stacker.kindClasses[dh.stacker.Kind.MUSIC_PERSON] = "dh-stacked-block-music-person";
 dh.stacker.kindClasses[dh.stacker.Kind.GROUP_CHAT] = "dh-stacked-block-group-chat";
 dh.stacker.kindClasses[dh.stacker.Kind.GROUP_MEMBER] = "dh-stacked-block-group-member";
+dh.stacker.kindClasses[dh.stacker.Kind.EXTERNAL_ACCOUNT_UPDATE] = "dh-stacked-block-account-update";
 
 dh.stacker.kindHeadings = {};
 dh.stacker.kindHeadings[dh.stacker.Kind.POST] = "Web Swarm";
 dh.stacker.kindHeadings[dh.stacker.Kind.MUSIC_PERSON] = "Music Radar";
 dh.stacker.kindHeadings[dh.stacker.Kind.GROUP_CHAT] = "Group Chat";
 dh.stacker.kindHeadings[dh.stacker.Kind.GROUP_MEMBER] = "Group Members";
+dh.stacker.kindHeadings[dh.stacker.Kind.EXTERNAL_ACCOUNT_UPDATE] = "Friend Update";
 
 dh.stacker.formatTimeAgo = function(timestamp) {
+	if (timestamp <= 0)
+		return "";
+
 	var now = dh.stacker.getInstance().getServerTime();
 	var then = timestamp;
 	
@@ -90,7 +98,7 @@ dh.stacker.formatTimeAgo = function(timestamp) {
 		}
 	}
 
-	var deltaHours = deltaSeconds / 60 / 60;
+	var deltaHours = deltaSeconds / (60 * 60);
 	
 	if (deltaHours < 1.55) {
 		return "1 hr. ago";
@@ -140,6 +148,7 @@ dh.stacker.Block = function(kind, blockId) {
 	this._ignoredTime = 0;
 	
 	this._title = "";
+	this._heading = null;
 	
 	this._clickedCount = 0;
 	
@@ -179,11 +188,22 @@ defineClass(dh.stacker.Block, null,
 	},
 	
 	setTitle : function(title) {
-		this._title = title;
-		
+		this._title = title;	
 		this._updateTitleDiv();
 	},
+
+	getHeading : function() {
+		if (this._heading == null)
+		    return dh.stacker.kindHeadings[this._kind];
 		
+		return this._heading;    
+	},
+	
+	setHeading : function(heading) {
+		this._heading = heading;	
+		this._updateHeadingDiv();
+	},
+			
 	getClickedCount : function() {
 		return this._clickedCount;
 	},
@@ -228,10 +248,15 @@ defineClass(dh.stacker.Block, null,
 			dojo.dom.textContent(this._titleDiv, this._title);
 		}
 	},
+	
+    _updateHeadingDiv : function(headingText) {
+		if (this._div) {
+			dojo.dom.textContent(this._headingDiv, headingText);
+		}	
+	},
 
 	_updateStackTimeDiv : function() {
 		if (this._div) {
-			;
 			//var d = new Date(this._stackTime);
 			//dojo.dom.textContent(this._stackTimeDiv, d.getFullYear() + "-" + (d.getMonth()+1) + "-" + d.getDate() + " " + d.getHours() + ":" + d.getMinutes() + ":" + d.getSeconds() + ":" + d.getMilliseconds());
 		}
@@ -298,7 +323,7 @@ defineClass(dh.stacker.Block, null,
 			this._headingDiv = document.createElement("div");
 			dojo.html.setClass(this._headingDiv, "dh-heading");
 			this._innerDiv.appendChild(this._headingDiv);
-			dojo.dom.textContent(this._headingDiv, dh.stacker.kindHeadings[this._kind]);
+			dojo.dom.textContent(this._headingDiv, this.getHeading());
 			
 			this._hushDiv = document.createElement("div");
 			dojo.html.setClass(this._hushDiv, "dh-hush");
@@ -570,11 +595,12 @@ defineClass(dh.stacker.PostBlock, dh.stacker.Block,
 				var a = document.createElement("a");
 				dojo.html.setClass(a, "dh-post-chat-message-author");
 				a.href = "/person?who=" + this._messages[i].fromId;
-				a.title = "wouldn't it be nice to see their name...";
+				a.title = this._messages[i].fromNickname;
 				a.target = "_blank";
-				dojo.dom.textContent(a, this._messages[i].fromId);
+				dojo.dom.textContent(a, this._messages[i].fromNickname);
 				msg.appendChild(a);
 				msgs.appendChild(msg);
+
 			}
 			this._messagesDiv.appendChild(msgs);
 		}
@@ -749,7 +775,7 @@ defineClass(dh.stacker.MusicPersonBlock, dh.stacker.Block,
 			var track = dh.model.trackFromXmlNode(trackNode);
 			tracks.push(track);
 		}
-		this.setTitle(person.displayName + "'s Music");
+		this.setTitle(person.displayName);
 		this.setTracks(tracks);
 	},
 
@@ -772,6 +798,23 @@ defineClass(dh.stacker.MusicPersonBlock, dh.stacker.Block,
 		// this is a little unkosher since it doesn't make a copy
 		this.setTracks(newBlock._tracks);
 		return true;
+	},
+	
+	// override
+	_updateTitleDiv : function() {
+		if (this._div) {
+			while (this._titleDiv.firstChild)
+				this._titleDiv.removeChild(this._titleDiv.firstChild);
+
+			var a = document.createElement("a");
+			dojo.html.setClass(a, "dh-person");
+			a.href = "/person?who=" + this._userId;
+			a.title = this._title;
+			a.target = "_blank";
+			dojo.dom.textContent(a, this._title);
+			this._titleDiv.appendChild(a);
+			this._titleDiv.appendChild(document.createTextNode("'s Music"));
+		}
 	},
 
 	_updateTracksDiv : function() {
@@ -908,9 +951,9 @@ defineClass(dh.stacker.GroupChatBlock, dh.stacker.Block,
 				var a = document.createElement("a");
 				dojo.html.setClass(a, "dh-group-chat-message-author");
 				a.href = "/person?who=" + this._messages[i].fromId;
-				a.title = "wouldn't it be nice to see their name...";
+				a.title = this._messages[i].fromNickname;
 				a.target = "_blank";
-				dojo.dom.textContent(a, this._messages[i].fromId);
+				dojo.dom.textContent(a, this._messages[i].fromNickname);
 				msg.appendChild(a);
 				msgs.appendChild(msg);
 			}
@@ -1002,6 +1045,192 @@ defineClass(dh.stacker.GroupMemberBlock, dh.stacker.Block,
 			dojo.dom.textContent(member, this._userId);
 			this._titleDiv.appendChild(member);
 		}
+	}
+});
+
+dh.stacker.AccountUpdateBlock = function(blockId, userId, accountType) {
+	dh.stacker.Block.call(this, dh.stacker.Kind.EXTERNAL_ACCOUNT_UPDATE, blockId);
+	this._userId = userId;
+	this._accountType = accountType;
+
+    this._items = [];		
+	this._itemsDiv = null;
+	
+	this._timeDivs = [];
+	// possibly also need this._accountTypeStr
+}
+
+defineClass(dh.stacker.AccountUpdateBlock, dh.stacker.Block,
+{
+	getUserId : function() {
+		return this._userId;
+	},
+
+    getAccountType : function() {
+        return this._accountType;
+    },
+
+	getItems : function() {
+		return this._items;
+	},
+
+	setItems : function(items) {
+		this._items = items;
+		this._updateItemsDiv();
+	},	
+		
+	_parse : function(childNodes) {
+		var accountUpdate = childNodes.item(0);
+		if (accountUpdate.nodeName != "accountUpdate") {
+			throw new Error("accountUpdate node expected");
+		}
+		childNodes = accountUpdate.childNodes;
+		var personNode = childNodes.item(0);
+		if (personNode.nodeName != "person")
+			throw new Error("person node expected");
+		var person = dh.model.personFromXmlNode(personNode);
+
+		var accountTypeNode = childNodes.item(1);
+		if (accountTypeNode.nodeName != "accountType")
+			throw new Error("accountType node expected");
+		var accountType = dojo.dom.textContent(accountTypeNode);	
+		
+		var items = [];
+		var i;
+		for (i = 2; i < childNodes.length; ++i) {
+			var itemNode = childNodes.item(i);
+			var item = dh.model.updateItemFromXmlNode(itemNode);
+			items.push(item);
+		}
+				
+		this.setHeading(person.displayName + "'s " + accountType);
+		this.setItems(items);
+	},
+
+	load : function(completeFunc, errorFunc) {
+		var me = this;
+	   	dh.server.doXmlMethod("externalaccountsummary",
+					     	{ "userId" : me._userId,
+					     	  "accountType" : me._accountType },
+							function(childNodes, http) {
+								me._parse(childNodes);
+								completeFunc(me);
+				 	    	},
+				  	    	function(code, msg, http) {
+								errorFunc(me);
+				  	    	});
+	},
+	
+	updateFrom : function(newBlock) {
+		if (!dh.stacker.AccountUpdateBlock.superclass.updateFrom.call(this, newBlock))
+			return false;	
+		this.setHeading(newBlock.getHeading());
+		this.setItems(newBlock.getItems());				
+		return true;
+	},
+	
+	_updateItemsDiv : function() {
+	    if (this._div) {
+			while (this._itemsDiv.firstChild)
+				this._itemsDiv.removeChild(this._itemsDiv.firstChild);
+            this._timeDivs = []; 
+
+			var items = document.createElement("div");
+			dojo.html.setClass(items, "dh-account-update-items");
+			var i;
+			for (i = 0; i < this._items.length; ++i) {
+				var item = document.createElement("div");
+				dojo.html.setClass(item, "dh-account-update-item");
+
+			    var leftDiv = document.createElement("div");
+			    dojo.html.setClass(leftDiv, "dh-left-column");
+			    item.appendChild(leftDiv);
+
+			    var rightDiv = document.createElement("div");
+			    dojo.html.setClass(rightDiv, "dh-right-column");
+			    item.appendChild(rightDiv);
+			
+			    var titleDiv = document.createElement("div");
+			    dojo.html.setClass(titleDiv, "dh-title");	
+			    var a = document.createElement('a');
+			    a.href = this._items[i].link;
+			    a.title = this._items[i].title;
+			    a.target="_blank";
+			    dojo.dom.textContent(a, this._items[i].title);
+			    titleDiv.appendChild(a);
+			    leftDiv.appendChild(titleDiv);
+
+			    var detailDiv = document.createElement("div");
+			    dojo.html.setClass(detailDiv, "dh-details");
+			    rightDiv.appendChild(detailDiv);	
+			
+		        var timeDiv = document.createElement("div");
+			    detailDiv.appendChild(timeDiv);
+			    dojo.html.setClass(timeDiv, "dh-when");
+			    var time = this._items[i].timestamp;
+			    if (time == null)
+			        time = this._stackTime;
+			    dojo.dom.textContent(timeDiv, dh.stacker.formatTimeAgo(time));
+			    this._timeDivs.push(timeDiv);
+
+	            var textDiv = document.createElement("div");
+	            leftDiv.appendChild(textDiv);
+	            dojo.html.setClass(textDiv, "dh-description");
+			    dojo.dom.textContent(textDiv, this._items[i].text);
+	
+	            if (this._items[i].photos.length > 0) {
+	                var photosDiv = document.createElement("div");	   			   
+			        dojo.html.setClass(photosDiv, "dh-photos");
+			        var j;
+			        for (j = 0; j < this._items[i].photos.length; ++j) {
+			            var photo =  this._items[i].photos[j];
+			            var photoDiv = document.createElement("div");	
+			            dojo.html.setClass(photoDiv, "dh-photo");
+			            var a = document.createElement('a');
+			            a.href = photo.link;
+		  	            a.title = photo.caption;
+			            a.target="_blank";
+			            var photoImg = document.createElement("img");
+			            photoImg.src = photo.source;
+			            a.appendChild(photoImg);
+			            photoDiv.appendChild(a);
+			            photosDiv.appendChild(photoDiv);
+			        }		        
+			        leftDiv.appendChild(photosDiv);
+			    }    
+			        
+			    items.appendChild(item);
+			}
+			this._itemsDiv.appendChild(items);
+		}
+	},
+	
+	// override
+	_updateStackTimeDiv : function() {
+		if (this._div) {
+		    for (i = 0; i < this._items.length; ++i) {	
+			    var time = this._items[i].timestamp;
+			    if (time == null)
+			        time = this._stackTime;		
+	            dojo.dom.textContent(this._timeDivs[i], dh.stacker.formatTimeAgo(time));
+	        }
+	    }
+	},
+	
+	realize : function() {
+		if (!this._div) {		
+			dh.stacker.AccountUpdateBlock.superclass.realize.call(this);			
+			this._itemsDiv = document.createElement("div");
+			this._contentDiv.appendChild(this._itemsDiv);
+			dojo.html.setClass(this._itemsDiv, "dh-items");
+			this._updateItemsDiv();
+		}
+	},
+	
+	unrealize : function() {
+		dh.stacker.AccountUpdateBlock.superclass.unrealize.call(this);
+		this._timeDivs = [];
+		this._itemsDiv = null;
 	}
 });
 
@@ -1180,6 +1409,18 @@ dh.stacker.blockParsers[dh.stacker.Kind.MUSIC_PERSON] = function(node) {
 		return null;
 	var userId = musicPerson.getAttribute("userId");
 	var block = new dh.stacker.MusicPersonBlock(attrs["id"], userId);
+	dh.stacker.mergeBlockAttrs(block, attrs);
+	return block;
+};
+
+dh.stacker.blockParsers[dh.stacker.Kind.EXTERNAL_ACCOUNT_UPDATE] = function(node) {
+	var attrs = dh.stacker.parseBlockAttrs(node);
+	var extAccountUpdate = node.childNodes.item(0);
+	if (extAccountUpdate.nodeName != "extAccountUpdate")
+		return null;
+	var userId = extAccountUpdate.getAttribute("userId");
+	var accountType = extAccountUpdate.getAttribute("accountType");
+	var block = new dh.stacker.AccountUpdateBlock(attrs["id"], userId, accountType);
 	dh.stacker.mergeBlockAttrs(block, attrs);
 	return block;
 };
@@ -1542,4 +1783,155 @@ dh.stacker.simulateNewStackTime = function(stacker) {
 		dh.stacker.simulatePostUpdate(stacker, block, block.getTitle(), dh.stacker.getInstance().getServerTime(), 
 			block.getClickedCount());
 	}
+}
+
+dh.stacker.removePrelight = function(node) {
+	dh.util.removeClass(node, "dh-box-prelighted")
+}
+
+dh.stacker.blockOpen = function(block) {
+	block.dhExpanded = true;
+	var content = document.getElementById("dhStackerBlockContent-" + block.dhBlockId);
+	if (content)
+		content.style.display = "block";
+	var controls = document.getElementById("dhStackerBlockControls-" + block.dhBlockId);
+	if (controls)
+		controls.style.display = "block";
+	var fullDesc = document.getElementById("dhStackerBlockDescription-" + block.dhBlockId);
+	var shortDesc = document.getElementById("dhStackerBlockHeaderDescription-" + block.dhBlockId);
+	if (shortDesc) {
+		fullDesc.style.display = "block";
+		shortDesc.style.display = "none";
+	}
+}
+
+dh.stacker.blockClose = function(block) {
+	block.dhExpanded = false;;
+	var content = document.getElementById("dhStackerBlockContent-" + block.dhBlockId)
+	if (content)
+		content.style.display = "none";	
+	var controls = document.getElementById("dhStackerBlockControls-" + block.dhBlockId)
+	if (controls)
+		controls.style.display = "none";
+	var fullDesc = document.getElementById("dhStackerBlockDescription-" + block.dhBlockId);
+	var shortDesc = document.getElementById("dhStackerBlockHeaderDescription-" + block.dhBlockId);
+	if (shortDesc) {
+		fullDesc.style.display = "none";
+		shortDesc.style.display = "block";
+	}
+}
+
+dh.stacker.onBlockMouseOver = function(e) {
+	if (!e) e = window.event;
+	var block = this;
+	dh.log("stacker-cursor", "block " + block.dhBlockId + " mouseover");
+	if (!dh.util.hasClass(block, "dh-box-prelighted"))
+		dh.util.prependClass(block, "dh-box-prelighted");
+	var expandImg = document.getElementById("dhStackerBlockExpandTip");
+	expandImg.style.display = "block";		
+	dh.stacker.updatePointer(block);	
+}
+
+dh.stacker.hideBlockPointer = function(block) {
+	var expandImg = document.getElementById("dhStackerBlockExpandTip");
+	var closeImg = document.getElementById("dhStackerBlockCloseTip");	
+	expandImg.style.display = "none";
+	closeImg.style.display = "none";
+}
+
+dh.stacker.onBlockMouseOut = function(e) {
+	if (!e) e = window.event;
+	var block = this;
+	dh.log("stacker-cursor", "block " + block.dhBlockId + " mouseout");	
+	dh.stacker.removePrelight(block);
+	dh.stacker.updatePointer(block);	
+	dh.stacker.hideBlockPointer(block);
+}
+
+dh.stacker.repositionPointer = function (block, e) 
+{
+	var expandImg = document.getElementById("dhStackerBlockExpandTip");
+	var closeImg = document.getElementById("dhStackerBlockCloseTip");	
+	var img = block.dhExpanded ? closeImg : expandImg;
+	var xOffset = window.pageXOffset ? window.pageXOffset : document.body.scrollLeft;
+	var yOffset = window.pageYOffset ? window.pageYOffset : document.body.scrollTop;
+	img.style.top = (yOffset + e.clientY - 11) + "px"
+	img.style.left = (xOffset + e.clientX - 11) + "px";
+	dh.log("stacker-cursor", "block: " + block.dhBlockId + " position: left: " + img.style.left + " top: " + img.style.top)
+}
+
+dh.stacker.onBlockMouseMove = function(e) {
+	if (!e) e = window.event;
+	var block = this;
+	dh.stacker.repositionPointer(block, e);
+}
+
+dh.stacker.updatePointer = function(block) {
+	var expandImg = document.getElementById("dhStackerBlockExpandTip");
+	var closeImg = document.getElementById("dhStackerBlockCloseTip");	
+	var img;
+	var prevImg;
+	if (block.dhExpanded) {
+		img = closeImg;
+		prevImg = expandImg;
+	} else {
+		img = expandImg;
+		prevImg = closeImg;
+	}		
+	img.style.display = "block";
+	prevImg.style.display = "none";		
+}
+
+dh.stacker.onBlockClick = function(e) {
+	if (!e) e = window.event;
+	var block = this;
+	dh.log("stacker", "block " + block.dhBlockId + " click")	
+	if (block.dhExpanded) {
+		dh.stacker.blockClose(block)
+	} else {
+		dh.stacker.blockOpen(block)
+	}
+	dh.stacker.updatePointer(block);
+	dh.stacker.repositionPointer(block, e);
+}
+
+dh.stacker.hookLinkChildren = function(block, startNode) {
+	var i;
+	if (startNode.nodeType != 1)
+		return;
+	for (i = 0; i < startNode.childNodes.length; i++) {
+		var node = startNode.childNodes[i];
+		if (node.nodeType != 1)
+			continue;		
+		if (node.nodeName.toLowerCase() == "a") {
+			node.onmouseover = function (e) {
+				if (!e) e = window.event;
+				dh.log("stacker-cursor", "block: " + block.dhBlockId + " link mouseover")				
+				dh.stacker.hideBlockPointer(block);
+				dh.util.cancelEvent(e);
+			};
+			node.onmouseout = function (e) {
+				if (!e) e = window.event;
+				var relTarget = e.relatedTarget || e.toElement;				
+				dh.log("stacker-cursor", "block: " + block.dhBlockId + " link mouseout to " + relTarget)					
+				if (!dh.util.isDescendant(block, relTarget))
+					dh.stacker.hideBlockPointer(block);				
+				dh.util.cancelEvent(e);			
+			};			
+		} else {
+			dh.stacker.hookLinkChildren(block, node);
+		}
+	}
+}
+
+dh.stacker.insertBlockHeaderDescription = function(blockId) {
+	var fullDesc = document.getElementById("dhStackerBlockDescription-" + blockId);
+	var shortDesc = document.getElementById("dhStackerBlockHeaderDescription-" + blockId);
+	
+	var text = dh.util.getTextFromHtmlNode(fullDesc);
+	shortText = text.substring(0, 70);
+	shortDesc.appendChild(document.createTextNode(shortText));
+	if (text.length > shortText.length)
+		shortDesc.appendChild(document.createTextNode("..."));
+	fullDesc.style.display = "none";
 }

@@ -1,5 +1,6 @@
 /* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 #include "hippo-platform.h"
+#include "hippo-connection.h"
 
 static void hippo_platform_base_init(void *klass);
 
@@ -33,6 +34,37 @@ hippo_platform_base_init(void *klass)
     }
 }
 
+void
+hippo_platform_get_platform_info (HippoPlatform     *platform,
+                                  HippoPlatformInfo *info)
+{
+    g_return_if_fail(HIPPO_IS_PLATFORM(platform));
+    
+    HIPPO_PLATFORM_GET_CLASS(platform)->get_platform_info(platform, info);
+}
+
+HippoWindow*
+hippo_platform_create_window(HippoPlatform    *platform)
+{
+    g_return_val_if_fail(HIPPO_IS_PLATFORM(platform), NULL);
+    
+    return HIPPO_PLATFORM_GET_CLASS(platform)->create_window(platform);
+}
+
+void
+hippo_platform_get_screen_info(HippoPlatform    *platform,
+                               HippoRectangle   *monitor_rect_p,
+                               HippoRectangle   *tray_icon_rect_p,
+                               HippoOrientation *tray_icon_orientation_p)
+{
+    g_return_if_fail(HIPPO_IS_PLATFORM(platform));
+    
+    HIPPO_PLATFORM_GET_CLASS(platform)->get_screen_info(platform,
+                                                        monitor_rect_p,
+                                                        tray_icon_rect_p,
+                                                        tray_icon_orientation_p);
+}
+
 gboolean
 hippo_platform_read_login_cookie(HippoPlatform    *platform,
                                  HippoBrowserKind *origin_browser_p,
@@ -57,7 +89,68 @@ hippo_platform_get_jabber_resource(HippoPlatform *platform)
 {
     g_return_val_if_fail(HIPPO_IS_PLATFORM(platform), NULL);
 
-    return HIPPO_PLATFORM_GET_CLASS(platform)->get_jabber_resource(platform);    
+    return HIPPO_PLATFORM_GET_CLASS(platform)->get_jabber_resource(platform);
+}
+
+void
+hippo_platform_open_url(HippoPlatform   *platform,
+                        HippoBrowserKind browser,
+                        const char      *url)
+{
+    g_return_if_fail(HIPPO_IS_PLATFORM(platform));
+
+    HIPPO_PLATFORM_GET_CLASS(platform)->open_url(platform,
+                                                 browser,
+                                                 url);
+}
+
+void
+hippo_platform_http_request(HippoPlatform   *platform,
+                            const char      *url,
+                            HippoHttpFunc    func,
+                            void            *data)
+{
+    g_return_if_fail(HIPPO_IS_PLATFORM(platform));
+
+    HIPPO_PLATFORM_GET_CLASS(platform)->http_request(platform,
+                                                     url,
+                                                     func,
+                                                     data);
+}
+
+gboolean
+hippo_platform_can_play_song_download(HippoPlatform     *platform,
+                                      HippoSongDownload *song_download)
+{
+    g_return_val_if_fail(HIPPO_IS_PLATFORM(platform), FALSE);
+
+    return HIPPO_PLATFORM_GET_CLASS(platform)->can_play_song_download(platform, song_download);
+}
+
+void
+hippo_platform_show_chat_window(HippoPlatform   *platform,
+                                const char      *chat_id)
+{
+    g_return_if_fail(HIPPO_IS_PLATFORM(platform));
+
+    HIPPO_PLATFORM_GET_CLASS(platform)->show_chat_window(platform,
+                                                         chat_id);
+}
+
+HippoWindowState 
+hippo_platform_get_chat_window_state (HippoPlatform    *platform,
+                                      const char       *chat_id)
+{
+    g_return_val_if_fail(HIPPO_IS_PLATFORM(platform), HIPPO_WINDOW_STATE_CLOSED);
+
+    return HIPPO_PLATFORM_GET_CLASS(platform)->get_chat_window_state(platform, chat_id);
+}
+
+HippoInstanceType 
+hippo_platform_get_instance_type (HippoPlatform *platform)
+{
+    g_return_val_if_fail(HIPPO_IS_PLATFORM(platform), HIPPO_INSTANCE_NORMAL);
+    return HIPPO_PLATFORM_GET_CLASS(platform)->get_instance_type(platform);
 }
 
 char*

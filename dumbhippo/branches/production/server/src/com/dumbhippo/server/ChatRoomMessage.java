@@ -17,11 +17,11 @@ public class ChatRoomMessage implements Serializable {
 	private static final long serialVersionUID = 0L;
 	
 	private String fromUsername;
-	private int serial;
+	private long serial;
 	private Date timestamp;
 	private String text;
 	
-	public ChatRoomMessage(String fromUsername, String text, Date timestamp, int serial) {
+	public ChatRoomMessage(String fromUsername, String text, Date timestamp, long serial) {
 		this.fromUsername = fromUsername;
 		this.timestamp = timestamp;
 		this.text = text;
@@ -32,7 +32,7 @@ public class ChatRoomMessage implements Serializable {
 		return fromUsername;
 	}
 
-	public int getSerial() {
+	public long getSerial() {
 		return serial;
 	}
 

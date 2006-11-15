@@ -24,9 +24,9 @@ class LiveObjectCache<T extends LiveObject> {
 	private int maxAge;
 	LiveObjectFactory<T> factory;
 	
-	private static class CacheEntry<T extends LiveObject> {
+	private static class CacheEntry<U extends LiveObject> {
 		private Guid guid;
-		private T t;
+		private U u;
 		private boolean inUpdate;
 		int strongCount;
 		int cacheAge;
@@ -57,21 +57,42 @@ class LiveObjectCache<T extends LiveObject> {
 				logger.debug("CacheEntry {} finished updating", guid);
 		}
 		
-		public synchronized T get() {
+		public synchronized U get() {
 			waitForUpdate();
 			
-			return t;
+			if (!isValid()) {
+				// this can only happen if we were waiting for another thread to update the entry
+				// and that thread threw an exception 
+				// we are not going to coordinate the waiting threads to have one of them retry 
+				// creating the object for the entry, but will have all of them throw this exception
+				// we will retry creating the object for this entry next time it is requested
+				throw new RuntimeException(LiveState.objectCreationFailedText + " Guid: " + guid);	
+			}
+			
+			return u;
 		}
 		
-		public synchronized T getForUpdate() {
+		public synchronized U getForUpdate() {
 			waitForUpdate();
+
+			if (!isValid()) {
+				// see the comment in get() above
+				throw new RuntimeException(LiveState.objectCreationFailedText + " Guid: " + guid);	
+			}
 			
+			inUpdate = true;			
+			return u;
+		}
+
+		public synchronized void markInvalidEntryForUpdate() {
+			if (isValid()) {
+				throw new RuntimeException("markInvalidEntryForUpdate should not be called for a valid entry");
+			}
+		
 			inUpdate = true;
-			
-			return t;
 		}
 		
-		public synchronized void update(T t) {
+		public synchronized void update(U t) {
 			if (!inUpdate) {
 				logger.warn("Attempt to update an entry not primed for update");
 				return;
@@ -80,25 +101,34 @@ class LiveObjectCache<T extends LiveObject> {
 			if (LiveState.verboseLogging)
 				logger.debug("Finished update for {}", guid);
 			
-			// If updating failed to result in an object to store in the cache
-			// then things will go pretty badly, since other people waiting on
-			// the cache entry to be created will get null as a result, but 
-			// what we very much don't want to do is leave inUpdate = true and
-			// let things hang forever
+			// we need to indicate that the thread is done updating the object
+			// to store in the cache, regardless of whether the thread was able
+			// to get a valid object or threw an exception
 			inUpdate = false;
+			// in we got a null object, we leave the old data here because it is better if 
+			// there is a permanent database failure when getting the object
+			// however, if we expect most failures to be transient, we could set the value 
+			// to null here for it to have a chance to be updated correctly next time around
+			// this approach should also include changing the callers to not pass in the old
+			// value when an exception occurs, but to pass in null
 			if (t != null) {
-				this.t = t;
+				this.u = t;
 			}
 			notifyAll();
 		}
 
-		public synchronized T peek() {
-			return t;
+		public synchronized U peek() {
+			return u;
 		}
 		
 		public synchronized boolean isInUpdate() {
 			return inUpdate;
 		}
+		
+		public synchronized boolean isValid() {
+			return (u != null) || inUpdate;
+		}
+
 	}
 	
 	private HashMap<Guid, CacheEntry<T>> entries;
@@ -115,6 +145,12 @@ class LiveObjectCache<T extends LiveObject> {
 		entries = new HashMap<Guid, CacheEntry<T>>();
 	}
 	
+	/**
+	 * Will always return a valid entry or throw a runtime exception.
+	 * 
+	 * @param guid
+	 * @return a cache entry
+	 */
 	private CacheEntry<T> getEntry(Guid guid) {
 		CacheEntry<T> entry;
 		boolean needNew = false;
@@ -125,6 +161,14 @@ class LiveObjectCache<T extends LiveObject> {
 				 entry = new CacheEntry<T>(guid);
 				 entries.put(guid, entry);
 				 needNew = true;
+			 } else if (!entry.isValid()) {
+                 // our previous attempt to create an entry failed, so let's retry
+				 if (LiveState.verboseLogging)
+					logger.debug("Entry for {} is not valid, will retry", guid);
+				 // once we mark an invalid entry for update, isValid() will be returning true, 
+				 // so other threads will bypass this block and wait for us to complete 
+				 entry.markInvalidEntryForUpdate();
+				 needNew = true;
 			 }
 			 entry.cacheAge = 0;
 		}
@@ -132,10 +176,21 @@ class LiveObjectCache<T extends LiveObject> {
 		if (needNew) {
 			T t = null;
 			try {
-				t = factory.create(guid);
+				t = factory.create(guid);			    
+				if (t == null) {					
+					// this ensures that we never return an invalid entry, factory create methods
+					// must never return null anyway
+					throw new RuntimeException("Factory create method returned null for Guid " + guid);
+				}			
+				
+				 if (LiveState.getThrowRandomExceptionOnEntryCreation() && Math.random() > 0.5)
+					 throw new RuntimeException(LiveState.testExceptionText + " Guid: " + guid);
+				 
 			} finally {
 				entry.update(t);
 			}
+		} else if (LiveState.verboseLogging) {
+				logger.debug("Entry for {} was already in the cache", guid);
 		}
 		
 		return entry;
@@ -176,7 +231,11 @@ class LiveObjectCache<T extends LiveObject> {
 	}
 	
 	private synchronized CacheEntry<T> peekEntry(Guid guid) {
-		return entries.get(guid);
+		CacheEntry<T> entry = entries.get(guid);	
+		if ((entry == null) || !entry.isValid())
+			return null;
+		
+		return entry;
 	}
 
 	/**

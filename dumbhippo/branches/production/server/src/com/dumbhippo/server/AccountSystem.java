@@ -1,6 +1,7 @@
 package com.dumbhippo.server;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.ejb.Local;
@@ -107,15 +108,6 @@ public interface AccountSystem {
 	public Account lookupAccountByOwnerId(Guid ownerId) throws NotFoundException;
 
 	/**
-	 * Update the last login time for the account associated with the user; throws
-	 * a RuntimeException if the user doesn't exist.
-	 * 
-	 * @param userId the guid of a user
-	 */
-	public void touchLoginDate(Guid userId);
-	
-	
-	/**
 	 * Gets one of our special users, like the music butterfly or 
 	 * photo hippo or whatever. Supposed to be like any other user in 
 	 * all respects, to avoid weird special cases. The only special case
@@ -123,5 +115,14 @@ public interface AccountSystem {
 	 *
 	 * @return the character's User
 	 */
-	public User getCharacter(Character whichOne);	
+	public User getCharacter(Character whichOne);
+
+	/**
+	 * Return the "preferences" for this user.  Currently just two keys:
+	 *   musicSharingEnabled
+	 *   musicSharingPrimed
+	 * @param account user's account
+	 * @return preferences mapping
+	 */
+	public Map<String, String> getPrefs(Account account);	
 }

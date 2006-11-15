@@ -3,48 +3,24 @@ dojo.provide("dh.chat")
 dh.chat.MESSAGE_FONT_STYLE = "normal" 
 dh.chat.DESCRIPTION_MESSAGE_FONT_STYLE = "italic"  
 
-dh.chat.Message = function(userId, photoUrl, name, text, timestamp, serial) {
-	this.userId = userId 
-	this.photoUrl = photoUrl
-	this.name = name
-	this.text = text
-	this.timestamp = timestamp
-	this.serial = serial
-	
-	this._shortLocaleTime = function(date) {
-		return date.toLocaleTimeString().replace(/(\d:\d\d):\d\d/, "$1")
-	}
-
-	this.timeString = function() {
-		var now = new Date()
-		var nowTimestamp = now.getTime()
-	    var date = new Date(this.timestamp)
-    
-		if (nowTimestamp - this.timestamp < 24 * 60 * 60 * 1000 && now.getDate() == date.getDate()) {
-			return this._shortLocaleTime(date)
-		} else if (nowTimestamp - this.timestamp < 7 * 24 * 60 * 60 * 1000) {
-			var weekday = [ "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" ][date.getDay()]
-			return weekday + ", " + this._shortLocaleTime(date)
-		} else {
-			return date.toDateString()
-		}
-	}
-}
-
-dh.chat.MessageList = function(insertCallback, removeCallback, limit) {
+dh.chat.MessageList = function(chatRoom, insertCallback, removeCallback, limit) {
+	this._chatRoom = chatRoom
 	this._limit = limit
 	this._insertCallback = insertCallback
 	this._removeCallback = removeCallback
 	
 	this._messages = []
 	
-	this.addMessage = function(message) {
+	dojo.event.connect(chatRoom, "onMessage", this, "_onMessage")
+	dojo.event.connect(chatRoom, "onReconnect", this, "_onReconnect")
+
+	this._onMessage = function(message) {
 		// Find the place to insert this message in the list
 		var insertPos = this._messages.length
 		for (var i = 0; i < this._messages.length; i++) {
-			if (this._messages[i].serial == message.serial) // Already in the list
+			if (this._messages[i].getSerial() == message.getSerial()) // Already in the list
 				return
-			if (this._messages[i].serial > message.serial) {
+			if (this._messages[i].getSerial() > message.getSerial()) {
 				insertPos = i
 				break
 			}
@@ -60,7 +36,7 @@ dh.chat.MessageList = function(insertCallback, removeCallback, limit) {
 			insertPos--
 		}
 		
-		if (insertPos > 0 && this._messages[insertPos - 1].userId == message.userId)
+		if (insertPos > 0 && this._messages[insertPos - 1].getEntity() == message.getEntity())
 			message.userFirst = false
 		else
 			message.userFirst = true
@@ -76,7 +52,7 @@ dh.chat.MessageList = function(insertCallback, removeCallback, limit) {
 			// If the 'userFirst' user for the next message, we need
 			// to remove and reinsert it so that the GUI can be updated
 			var oldNextIsFirst = before.userFirst
-			before.userFirst = before.userId != message.userId
+			before.userFirst = before.getEntity() != message.getEntity()
 			
 			if (before.userFirst != oldNextIsFirst) {
 				var nextBefore
@@ -91,7 +67,7 @@ dh.chat.MessageList = function(insertCallback, removeCallback, limit) {
 		}
 	}
 	
-	this.clear = function() {
+	this._onReconnect = function() {
 		while (this._messages.length > 0) {
 			var old = this._messages.pop()
 			this._removeCallback(old)
@@ -113,42 +89,53 @@ dh.chat.MessageList = function(insertCallback, removeCallback, limit) {
 	}
 }
 
-dh.chat.User = function(userId, photoUrl, name) {
-	this.userId = userId 
-	this.photoUrl = photoUrl
-	this.name = name
-}
-
-dh.chat.UserList = function(insertCallback, removeCallback) {
+dh.chat.UserList = function(chatRoom, insertCallback, removeCallback, updateCallback, userFilter) {
+	this._chatRoom = chatRoom
 	this._insertCallback = insertCallback
 	this._removeCallback = removeCallback
+	this._updateCallback = updateCallback
+	this._userFilter = userFilter
 	
 	this._users = []
+	this._userMap = {}
+
+	dojo.event.connect(chatRoom, "onUserJoin", this, "_onUserJoin")
+	dojo.event.connect(chatRoom, "onUserLeave", this, "_onUserLeave")	
+	dojo.event.connect(chatRoom, "onReconnect", this, "_onReconnect")	
+	dojo.event.connect(dh.control.control, "onUserChange", this, "_onUserChange")
 	
-	this.userJoin = function(user) {
+	this._onUserJoin = function(user, participant) {
+		if (this._userFilter && !this._userFilter(user, participant))
+			return
+			
 		// Find the place to insert this user in the list
 		var insertPos = this._users.length
-		var sortName = user.name.toLowerCase()
+		var sortName = user.getName().toLowerCase()
+		var userId = user.getId()
 		for (var i = 0; i < this._users.length; i++) {
-			if (this._users[i].userId == user.userId) // Already in the list
+			if (this._users[i].getId() == userId) // Already in the list
 				return
-			if (this._users[i].name.toLowerCase() > sortName) {
+			if (this._users[i].getName().toLowerCase() > sortName) {
 				insertPos = i
 				break
 			}
 		}
+		
+		this._userMap[user.getId()] = user;
 		
 		// Insert the new user in the correct place
 		this._users.splice(insertPos, 0, user)
 		var before = null
 		if (insertPos < this._users.length - 1)
 			before = this._users[insertPos + 1]
-		this._insertCallback(user, before)		
+		this._insertCallback(user, before, participant)		
 	}
 	
-	this.userLeave = function(userId) {
+	this._onUserLeave = function(user) {
+		delete this._userMap[user.getId()];
+		
 		for (var i = 0; i < this._users.length; i++) {
-			if (this._users[i].userId == userId) {
+			if (this._users[i] == user) {
 				var old = this._users[i]
 				this._users.splice(i, 1)
 				this._removeCallback(old)
@@ -156,19 +143,16 @@ dh.chat.UserList = function(insertCallback, removeCallback) {
 		}
 	}
 	
-	this.getUser = function(userId) {
-		for (var i = 0; i < this._users.length; i++) {
-			if (this._users[i].userId == userId) {
-				return this._users[i]
-			}
-		}	
-		return null
-	 }
-	
-	this.clear = function() {
+	this._onReconnect = function() {
 		while (this._users.length > 0) {
 			var old = this._users.pop()
 			this._removeCallback(old)
+		}
+	}
+	
+	this._onUserChange = function(user) {
+		if (this._userMap[user.getId()]) {
+			this._updateCallback(user)
 		}
 	}
 	
@@ -180,7 +164,7 @@ dh.chat.UserList = function(insertCallback, removeCallback) {
 dh.chat.getMessageFontStyle = function(message) {
     var messageFontStyle = this.MESSAGE_FONT_STYLE   
     // if message serial is -1, it is a post description that is displayed as the first message
-    if (message.serial == -1) {
+    if (message.getSerial() == -1) {
         messageFontStyle = this.DESCRIPTION_MESSAGE_FONT_STYLE
     }
     return messageFontStyle  

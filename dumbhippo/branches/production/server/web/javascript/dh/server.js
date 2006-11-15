@@ -51,14 +51,17 @@ dh.server.getXmlPOST = function(name, params, loadFunc, errorFunc) {
 
 // omit the serverErrorFunc if you want to treat it the same as an XML error reply.
 // (serverErrorFunc = http error, normalErrorFunc = error returned as xml document)
-dh.server.doXmlMethod = function(name, params, loadFunc, normalErrorFunc, serverErrorFunc) {
+dh.server.doXmlMethod = function(name, params, loadFunc, normalErrorFunc, serverErrorFunc, method) {
 	if (!serverErrorFunc) {
 		serverErrorFunc = function(type, error, http) {
 			normalErrorFunc("red", "Something went wrong! We're supposed to keep that from happening... trying again might help (we hope).", http);
 		}
 	}
 	
-	dh.server.getXmlPOST(name, params, 
+	if (!method)
+		method = "POST";
+		
+	dh.server.get(name, params,
 		function(type, retDoc, http) {		
 			var respElt = retDoc.documentElement
 			var stat = respElt.getAttribute("stat")
@@ -82,7 +85,11 @@ dh.server.doXmlMethod = function(name, params, loadFunc, normalErrorFunc, server
 				normalErrorFunc(code, msg, http)					
 			}
 		},
-		serverErrorFunc);
+		serverErrorFunc, method, "text/xml");
+}
+
+dh.server.doXmlMethodGET = function(name, params, loadFunc, normalErrorFunc, serverErrorFunc) {
+	dh.server.doXmlMethod(name, params, loadFunc, normalErrorFunc, serverErrorFunc, "GET");
 }
 
 // a POST with no expected data back, it just does some operation

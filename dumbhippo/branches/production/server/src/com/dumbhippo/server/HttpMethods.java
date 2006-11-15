@@ -3,14 +3,17 @@ package com.dumbhippo.server;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.MalformedURLException;
+import java.net.URL;
 
 import javax.ejb.Local;
 
 import org.xml.sax.SAXException;
 
 import com.dumbhippo.XmlBuilder;
+import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.UserBlockData;
+import com.dumbhippo.server.views.UserViewpoint;
 
 /**
  * - Methods must be named getFoo or doFoo
@@ -63,7 +66,6 @@ public interface HttpMethods {
 
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "name" })
-	@HttpOptions(invalidatesSession = true)
 	public void doRenamePerson(UserViewpoint viewpoint, String name);
 	
 	@HttpContentTypes(HttpResponseData.NONE)
@@ -338,6 +340,10 @@ public interface HttpMethods {
 	@HttpParams( { "url" })
 	public void doSetRhapsodyHistoryFeed(XmlBuilder xml, UserViewpoint viewpoint, String url) throws XmlMethodException;
     
+	@HttpContentTypes(HttpResponseData.XMLMETHOD)
+	@HttpParams( { "url" })
+	public void doSetBlog(XmlBuilder xml, UserViewpoint viewpoint, URL url) throws XmlMethodException;	
+	
  	@HttpContentTypes(HttpResponseData.XMLMETHOD)
  	@HttpParams( { "filename" })
  	@HttpOptions( optionalParams = { "filename" } )
@@ -355,12 +361,16 @@ public interface HttpMethods {
 
  	@HttpContentTypes(HttpResponseData.XMLMETHOD)
  	@HttpParams( { "blockId" })
- 	public void getBlock(XmlBuilder xml, UserViewpoint viewpoint, UserBlockData block) throws XmlMethodException;
+ 	public void getBlock(XmlBuilder xml, UserViewpoint viewpoint, UserBlockData block) throws XmlMethodException, NotFoundException;
  	
  	@HttpContentTypes(HttpResponseData.XMLMETHOD)
  	@HttpParams( { "userId" })
  	public void getMusicPersonSummary(XmlBuilder xml, UserViewpoint viewpoint, String userId) throws XmlMethodException;
  	
+ 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
+ 	@HttpParams( { "userId", "accountType" }) 	
+ 	public void getExternalAccountSummary(XmlBuilder xml, UserViewpoint viewpoint, String userId, String accountType) throws XmlMethodException, NotFoundException;
+
 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
  	@HttpParams( { "groupId" })
  	public void getGroupChatSummary(XmlBuilder xml, UserViewpoint viewpoint, String groupId) throws XmlMethodException;
@@ -371,5 +381,10 @@ public interface HttpMethods {
 	
 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
  	@HttpParams( { "blockId", "hushed" })
- 	public void doSetBlockHushed(XmlBuilder xml, UserViewpoint viewpoint, UserBlockData userBlockData, boolean hushed) throws XmlMethodException;
+ 	public void doSetBlockHushed(XmlBuilder xml, UserViewpoint viewpoint, UserBlockData userBlockData, boolean hushed) throws XmlMethodException, NotFoundException;
+	
+	@HttpContentTypes(HttpResponseData.XMLMETHOD)
+	@HttpParams( { "fileId" })
+	@HttpOptions(transaction=false)
+	public void doDeleteFile(XmlBuilder xml, UserViewpoint viewpoint, Guid fileId) throws XmlMethodException;
 }

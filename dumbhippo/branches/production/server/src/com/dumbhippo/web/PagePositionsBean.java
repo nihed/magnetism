@@ -63,12 +63,16 @@ public class PagePositionsBean {
 	}
 	
 	public <T> Pageable<T> createBoundedPageable(String name) {
-		return createBoundedPageable(name, -1);
+		return createBoundedPageable(name, -1, DEFAULT_BOUND);
 	}
 	
-	public <T> Pageable<T> createBoundedPageable(String name, int initialPerPage) {
+	public <T> Pageable<T> createBoundedPageable(String name, int initialPerPage) {		
+		return createBoundedPageable(name, -1, DEFAULT_BOUND);
+	}
+
+	public <T> Pageable<T> createBoundedPageable(String name, int initialPerPage, int bound) {
 		Pageable<T> pageable = createPageable(name, initialPerPage);
-		pageable.setBound(DEFAULT_BOUND);
+		pageable.setBound(bound);
 		
 		return pageable;
 	}

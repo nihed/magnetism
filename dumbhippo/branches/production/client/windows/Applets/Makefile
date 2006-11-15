@@ -1,4 +1,4 @@
-all: *.xml *.css *.png *.js *.gif
+all: *.xml *.css *.png *.js *.gif images
     -mkdir $(OUTDIR)\applets
     copy add.png $(OUTDIR)\applets    
     copy blue*arrow.gif $(OUTDIR)\applets
@@ -34,5 +34,35 @@ all: *.xml *.css *.png *.js *.gif
     copy notification.xml $(OUTDIR)\applets
     copy wbubcnr_*.png $(OUTDIR)\applets
 
+
+## Also edit Linux Makefile.am if changing this
+IMGDIR=..\..\common\images
+images:
+	-mkdir $(OUTDIR)\images
+	copy $(IMGDIR)\add_icon.png $(OUTDIR)\images
+	copy $(IMGDIR)\arrow.png $(OUTDIR)\images
+	copy $(IMGDIR)\arrow2.png $(OUTDIR)\images
+	copy $(IMGDIR)\bar_middle.png $(OUTDIR)\images
+	copy $(IMGDIR)\bar_pipe.png $(OUTDIR)\images
+	copy $(IMGDIR)\bar_x2.png $(OUTDIR)\images
+	copy $(IMGDIR)\bar_x.png $(OUTDIR)\images
+	copy $(IMGDIR)\blue_x.png $(OUTDIR)\images
+	copy $(IMGDIR)\chat.png $(OUTDIR)\images
+	copy $(IMGDIR)\closetip.png $(OUTDIR)\images
+	copy $(IMGDIR)\expandtip.png $(OUTDIR)\images
+	copy $(IMGDIR)\find.png $(OUTDIR)\images
+	copy $(IMGDIR)\home2.png $(OUTDIR)\images
+	copy $(IMGDIR)\home.png $(OUTDIR)\images
+	copy $(IMGDIR)\hush2.png $(OUTDIR)\images
+	copy $(IMGDIR)\hush.png $(OUTDIR)\images
+	copy $(IMGDIR)\lid.png $(OUTDIR)\images
+	copy $(IMGDIR)\mugshotstacker.png $(OUTDIR)\images
+	copy $(IMGDIR)\nophoto.png $(OUTDIR)\images
+	copy $(IMGDIR)\photo_icon.png $(OUTDIR)\images
+	copy $(IMGDIR)\search_x.png $(OUTDIR)\images
+	copy $(IMGDIR)\unhush2.png $(OUTDIR)\images
+	copy $(IMGDIR)\unhush.png $(OUTDIR)\images
+
 clean:
 	-deltree $(OUTDIR)\applets
+	-deltree $(OUTDIR)\images

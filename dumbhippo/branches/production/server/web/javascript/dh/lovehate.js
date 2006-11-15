@@ -23,6 +23,9 @@ dh.lovehate.Entry = function(baseId, defaultLoveText, currentLoveValue, defaultH
 	this._loveEntryNode = document.getElementById(baseId + 'LoveEntryId');
 	this._hateEntryNode = document.getElementById(baseId + 'HateEntryId');
 	
+	this._defaultLoveText = defaultLoveText;
+	this._defaultHateText = defaultHateText;
+
 	this._loveEntry = new dh.textinput.Entry(this._loveEntryNode, defaultLoveText, currentLoveValue);
 	this._hateEntry = new dh.textinput.Entry(this._hateEntryNode, defaultHateText, currentHateValue);
 	
@@ -137,6 +140,9 @@ dh.lovehate.Entry = function(baseId, defaultLoveText, currentLoveValue, defaultH
 		if (mode == 'love') {
 			me.onLoveSaved(me._loveEntry.getValue());
 		} else if (mode == 'hate') {
+			if (me._hateEntry.getValue() == "") // If you just want to hate, hate on and we'll take care of your message
+				me._hateEntry.setValue(this._defaultHateText);
+
 			me.onHateSaved(me._hateEntry.getValue());
 		} else {
 			throw new Error("unknown mode " + mode);

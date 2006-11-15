@@ -61,7 +61,12 @@ public class RhapsodyDownloadCacheBean extends AbstractCacheBean<String,String> 
 		public String call() {
 			logger.debug("In Rhapsody link check thread for {}", link);
 			
-			RhapsodyDownloadCache cache = EJBUtil.defaultLookup(RhapsodyDownloadCache.class);	
+			RhapsodyDownloadCache cache = EJBUtil.defaultLookup(RhapsodyDownloadCache.class);
+			
+			// Check again in case another node stored the data first
+			Boolean alreadyStored = cache.checkCache(link);
+			if (alreadyStored != null)
+				return alreadyStored ? link : null;
 						
 			boolean fetched = cache.fetchFromNet(link);
 

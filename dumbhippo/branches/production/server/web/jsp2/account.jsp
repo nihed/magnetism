@@ -10,6 +10,9 @@
 </c:if>
 
 <dh:bean id="account" class="com.dumbhippo.web.pages.AccountPage" scope="page"/>
+<%-- This is a Facebook authetication token, we can create a seperate post-facebook-login landing page --%>
+<%-- or land people on their account page, get a token, and display a message --%>
+<jsp:setProperty name="account" property="facebookAuthToken" param="auth_token"/>
 
 <c:set var="termsOfUseNote" value='false'/>
 <c:if test='${!empty param["termsOfUseNote"]}'>
@@ -18,18 +21,18 @@
 
 <head>
 	<title>Your Account</title>
+	<dht:siteStyle/>
 	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/account.css">
 	<dht:faviconIncludes/>
-	<dht:scriptIncludes/>
+		<dh:script module="dh.account"/>
 	<script type="text/javascript">
-		dojo.require("dh.account");
-		dojo.require("dh.password");
 		dh.formtable.currentValues = {
 			'dhUsernameEntry' : <dh:jsString value="${signin.user.nickname}"/>,
 			'dhBioEntry' : <dh:jsString value="${signin.user.account.bio}"/>,
 			'dhMusicBioEntry' : <dh:jsString value="${signin.user.account.musicBio}"/>,
 			'dhRhapsodyListeningHistoryEntry' : <dh:jsString value="${account.rhapsodyListeningHistoryFeedUrl}"/>,
-			'dhWebsiteEntry' : <dh:jsString value="${account.websiteUrl}"/>
+			'dhWebsiteEntry' : <dh:jsString value="${account.websiteUrl}"/>,
+			'dhBlogEntry' : <dh:jsString value="${account.blogUrl}"/>
 		};
 		dh.account.userId = <dh:jsString value="${signin.user.id}"/>
 		dh.account.reloadPhoto = function() {
@@ -42,7 +45,7 @@
 		dh.account.initialFlickrEmail = <dh:jsString value="${account.flickrEmail}"/>;
 		dh.account.initialFlickrHateQuip = <dh:jsString value="${account.flickrHateQuip}"/>;
 		dh.account.initialLinkedInName = <dh:jsString value="${account.linkedInName}"/>;
-		dh.account.initialLinkedInHateQuip = <dh:jsString value="${account.linkedInHateQuip}"/>;		
+		dh.account.initialLinkedInHateQuip = <dh:jsString value="${account.linkedInHateQuip}"/>;	
 	</script>
 </head>
 <dht:twoColumnPage neverShowSidebar="true">
@@ -54,7 +57,7 @@
 				<dht:zoneBoxSubtitle>This information will be visible on your <a href="/person?who=${signin.user.id}">profile page</a>.</dht:zoneBoxSubtitle>
 				<dht:formTable>
 				<dht:formTableRowStatus controlId='dhUsernameEntry'></dht:formTableRowStatus>
-				<dht:formTableRow label="User name">
+				<dht:formTableRow label="My name">
 					<dht:textInput id="dhUsernameEntry" extraClass="dh-username-input"/>
 				</dht:formTableRow>
 				<dht:formTableRowStatus controlId='dhBioEntry'></dht:formTableRowStatus>
@@ -68,17 +71,14 @@
 						<dht:textInput id="dhBioEntry" multiline="true"/>
 					</div>
 				</dht:formTableRow>
+				<!-- music bio currently disabled
 				<dht:formTableRowStatus controlId='dhMusicBioEntry'></dht:formTableRowStatus>
 				<dht:formTableRow label="Your music bio">
-				    <%--
-					<div>
-						<input type="button" value="Generate a random music bio!" onclick="dh.account.generateRandomBio();"/>
-					</div>
-					--%>
 					<div>
 						<dht:textInput id="dhMusicBioEntry" multiline="true"/>
 					</div>
 				</dht:formTableRow>
+				-->
 				<dht:formTableRowStatus controlId='dhPictureEntry'></dht:formTableRowStatus>
 				<dht:formTableRow label="Picture">
 					<div id="dhHeadshotImageContainer" class="dh-image">
@@ -96,7 +96,9 @@
 							</form>
 						</div>
 						<div id="dhChooseStockLinkContainer">
-							or <a href="javascript:dh.photochooser.show(document.getElementById('dhChooseStockLinkContainer'), dh.account.reloadPhoto);" title="Choose from a library of pictures">choose stock picture</a>
+						</div>
+						<div>
+						or <a href="javascript:dh.photochooser.show(document.getElementById('dhChooseStockLinkContainer'), dh.account.reloadPhoto);" title="Choose from a library of pictures">choose stock picture</a>						
 						</div>
 					</div>
 					<div class="dh-grow-div-around-floats"><div></div></div>
@@ -121,6 +123,20 @@
 				<dht:formTableRowStatus controlId='dhWebsiteEntry'></dht:formTableRowStatus>
 				<dht:formTableRow label="My website">
 					<dht:textInput id="dhWebsiteEntry" maxlength="255"/>
+				</dht:formTableRow>
+				<dht:formTableRowStatus controlId='dhBlogEntry'></dht:formTableRowStatus>
+				<dht:formTableRow label="My blog">
+					<dht:textInput id="dhBlogEntry" maxlength="255"/>
+				</dht:formTableRow>				
+				<tr valign="top">
+	                <td colspan="2">
+	                    <c:if test="${account.facebookAuthToken != null}">
+                            <div id="dhFacebookNote">Thank you for logging in to Facebook! You and your friends will now be getting Facebook updates.</div>                     
+                        </c:if>   	                
+                    </td>
+                </tr>     
+				<dht:formTableRow label="Login to Facebook">
+					<a href="http://api.facebook.com/login.php?api_key=${account.facebookApiKey}&next=/account" target="_blank"><img src="http://static.facebook.com/images/devsite/facebook_login.gif"></a>
 				</dht:formTableRow>
 			</dht:formTable>
 			<dht:zoneBoxSeparator/>
@@ -175,6 +191,28 @@
 				</dht:formTableRow>
 			</dht:formTable>
 			<dht:zoneBoxSeparator/>
+			<dht:zoneBoxTitle>MUSIC RADAR</dht:zoneBoxTitle>
+			<dht:zoneBoxSubtitle>Control the Mugshot Music Radar feature.</dht:zoneBoxSubtitle>
+				<dht:formTable>
+					<dht:formTableRow label="Music Sharing">
+					<c:choose>
+					<c:when test="${signin.musicSharingEnabled}">
+						<dh:script module="dh.actions"/>
+						<input type="radio" id="dhMusicOn" name="dhMusicEmbedEnabled" checked="true" onclick="dh.actions.setMusicSharingEnabled(true);"> <label for="dhMusicOn">On</label>
+						<input type="radio" id="dhMusicOff" name="dhMusicEmbedEnabled" onclick="dh.actions.setMusicSharingEnabled(false);">	<label for="dhMusicOff">Off</label>			
+					</c:when>
+					<c:otherwise>
+						<dh:script module="dh.actions"/>
+						<input type="radio" id="dhMusicOn" name="dhMusicEmbedEnabled" onclick="dh.actions.setMusicSharingEnabled(true);"> <label for="dhMusicOn">On</label>
+						<input type="radio" id="dhMusicOff" name="dhMusicEmbedEnabled" checked="true" onclick="dh.actions.setMusicSharingEnabled(false);">	<label for="dhMusicOff">Off</label>
+					</c:otherwise>
+					</c:choose>
+					<div><a href="radar-learnmore">Music Radar</a> shows on your Mugshot what music you're listening to.
+					<a href="/radar-themes">Edit Your Theme</a> - <a href="/getradar">Get Music Radar HTML</a>
+					</div>
+					</dht:formTableRow>
+				</dht:formTable>
+			<dht:zoneBoxSeparator/>
 			<dht:zoneBoxTitle>SECURITY INFO</dht:zoneBoxTitle>
 			<dht:zoneBoxSubtitle>Nobody sees this stuff but you.</dht:zoneBoxSubtitle>
 				<dht:formTable>
@@ -199,6 +237,7 @@
                             <div id="dhTermsOfUseNote">If you no longer agree with <a href="javascript:window.open('/terms', 'dhTermsOfUs', 'menubar=no,scrollbars=yes,width=600,height=600');void(0);">Terms of Use</a> and <a href="javascript:window.open('/privacy', 'dhPrivacy', 'menubar=no,scrollbars=yes,width=600,height=600');void(0);">Privacy Policy</a>, disable your account here.</div>
                         </c:if>    
 						<div>
+							<dh:script module="dh.actions"/>						
 							<input type="button" value="Disable account" onclick="javascript:dh.actions.disableAccount();"/>
 						</div>
 						<div>
@@ -227,6 +266,7 @@
 						</p>
 						</div>
 						<div>
+							<dh:script module="dh.actions"/>
 							<input type="button" value="Enable account" onclick="javascript:dh.actions.enableAccount();"/>
 						</div>
 					</dht:formTableRow>						

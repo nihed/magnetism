@@ -65,6 +65,15 @@ public class YahooSongCacheBean extends AbstractCacheBean<Track,List<YahooSongDa
 			// we do this instead of an inner class to work right with threads
 			YahooSongCache cache = EJBUtil.defaultLookup(YahooSongCache.class);
 			
+			// Check again in case another node stored the data first
+			List<YahooSongData> alreadyStored = cache.checkCache(track);
+			if (alreadyStored != null) {
+				logger.debug("YahooSongTask found results for artist={}, album={}, name={}, nothing to do",
+						     new Object[] { track.getArtist(), track.getAlbum(), track.getName() }); 
+							
+				return alreadyStored;
+			}
+			
 			List<YahooSongData> result = cache.fetchFromNet(track);
 			
 			return cache.saveInCache(track, result);

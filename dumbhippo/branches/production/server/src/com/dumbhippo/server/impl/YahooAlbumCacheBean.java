@@ -59,6 +59,11 @@ public class YahooAlbumCacheBean extends AbstractCacheBean<String,YahooAlbumData
 
 			YahooAlbumCache cache = EJBUtil.defaultLookup(YahooAlbumCache.class);	
 						
+			// Check again in case another node stored the data first
+			YahooAlbumData alreadyStored = cache.checkCache(albumId);
+			if (alreadyStored != null)
+				return alreadyStored;
+			
 			YahooAlbumData data = cache.fetchFromNet(albumId);
 
 			return cache.saveInCache(albumId, data);
@@ -136,11 +141,11 @@ public class YahooAlbumCacheBean extends AbstractCacheBean<String,YahooAlbumData
 						// data is allowed to be null which saves the negative result row
 						// in the db
 						r = new CachedYahooAlbumData();
-						r.updateData(data);
+						r.updateData(albumId, data);
 						em.persist(r);
 					} else {
 						if (data != null) // don't ever save a negative result once we have data at some point
-							r.updateData(data);
+							r.updateData(albumId, data);
 					}
 					r.setLastUpdated(new Date());
 					

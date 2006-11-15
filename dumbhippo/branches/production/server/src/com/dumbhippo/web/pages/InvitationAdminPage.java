@@ -5,18 +5,16 @@ import org.slf4j.Logger;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.MembershipStatus;
 import com.dumbhippo.persistence.User;
-import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.Character;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.GroupSystem;
-import com.dumbhippo.server.GroupView;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.HumanVisibleException;
-import com.dumbhippo.server.IdentitySpider;
-import com.dumbhippo.server.PersonView;
-import com.dumbhippo.server.UserViewpoint;
 import com.dumbhippo.server.WantsInSystem;
-import com.dumbhippo.server.WantsInView;
+import com.dumbhippo.server.views.GroupView;
+import com.dumbhippo.server.views.PersonView;
+import com.dumbhippo.server.views.UserViewpoint;
+import com.dumbhippo.server.views.WantsInView;
 import com.dumbhippo.web.ListBean;
 import com.dumbhippo.web.WebEJBUtil;
 
@@ -27,8 +25,6 @@ public class InvitationAdminPage extends AbstractSigninRequiredPage {
 
 	private Configuration config;
 	
-	private IdentitySpider identitySpider;
-	private AccountSystem accountSystem;
 	private WantsInSystem wantsInSystem;
 	private GroupSystem groupSystem;
 	
@@ -44,8 +40,6 @@ public class InvitationAdminPage extends AbstractSigninRequiredPage {
 		logger.debug("admin console enabled: {}", isAdminEnabled);
 		if (!isAdminEnabled.equals("true"))
 			throw new HumanVisibleException("Administrator console not enabled");
-		identitySpider = WebEJBUtil.defaultLookup(IdentitySpider.class);
-		accountSystem = WebEJBUtil.defaultLookup(AccountSystem.class);		
 		wantsInSystem = WebEJBUtil.defaultLookup(WantsInSystem.class);	
 		groupSystem = WebEJBUtil.defaultLookup(GroupSystem.class);
 		countToInvite = 50;

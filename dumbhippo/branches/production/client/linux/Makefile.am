@@ -10,13 +10,14 @@ endif
 # note that target-specific CPPFLAGS will REPLACE
 # not augment these default flags by default,
 # so we manually put AM_CPPFLAGS in the target flags
-AM_CPPFLAGS=-DHIPPO_COMPILATION -DHIPPO_OS_LINUX -DVERSION_FILE=\"$(pkgdatadir)/version\" -I$(top_builddir)/config -I$(COMMONSRCDIR)
+AM_CPPFLAGS=-DHIPPO_COMPILATION -DHIPPO_OS_LINUX -DVERSION_FILE=\"$(pkgdatadir)/version\" -I$(top_builddir)/config -I$(COMMONSRCDIR) -I$(COMMONSRCDIR)/canvas
 
 # the "config" dir seems like a convenient place that's already 
 # in everyone's include path ... I dunno
 BUILT_SRC_DIR=$(top_builddir)/config/hippo
 # Generated marshallers go into this directory as well
 MARSHAL_DIR=$(BUILT_SRC_DIR)
+ENUMS_DIR=$(BUILT_SRC_DIR)
 
 ## we install a file containing our version, so the running app 
 ## can check its version vs. the installed app
@@ -33,8 +34,8 @@ distclean-local:
 	  rmdir $(BUILT_SRC_DIR) ;		\
 	fi
 
-dist-hook: libhippo-dist-hook libhippoipc-dist-hook libhippofirefox-dist-hook
-.PHONY: libhippo-dist-hook libhippoipc-dist-hook libhippofirefox-dist-hook
+dist-hook: libhippo-dist-hook libhippoipc-dist-hook libhippofirefox-dist-hook mugshot-dist-hook
+.PHONY: libhippo-dist-hook libhippoipc-dist-hook libhippofirefox-dist-hook mugshot-dist-hook
 
 # These are added to using += in the included files
 bin_PROGRAMS = 

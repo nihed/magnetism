@@ -2,7 +2,7 @@
 <%@ taglib uri="/jsp/dumbhippo.tld" prefix="dh" %>
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 
-<%@ attribute name="post" required="true" type="com.dumbhippo.server.PostView" %>
+<%@ attribute name="post" required="true" type="com.dumbhippo.server.views.PostView" %>
 <%@ attribute name="favesMode" required="false" type="java.lang.String" %>
 <%@ attribute name="includeExtra" required="false" type="java.lang.Boolean" %>
 <%@ attribute name="showPhoto" required="false" type="java.lang.Boolean" %>
@@ -70,6 +70,7 @@
 											${post.livePost.totalViewerCount} views
 										</c:otherwise>
 									</c:choose>
+									<dh:script module="dh.actions"/>
 									<c:choose>
 										<c:when test="${favesMode == 'none' || !signin.valid}">
 											

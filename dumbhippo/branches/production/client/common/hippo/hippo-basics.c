@@ -8,6 +8,7 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <math.h>
 #include "hippo-common-internal.h"
 
 static void hippo_basic_self_test(void);
@@ -16,6 +17,16 @@ GQuark
 hippo_error_quark(void)
 {
     return g_quark_from_static_string("hippo-error-quark");
+}
+
+/* rint doesn't exist on Windows */
+static double 
+hippo_rint(double n)
+{
+    double ci, fl;
+    ci = ceil(n);
+    fl = floor(n);
+    return (((ci-n) >= (n-fl)) ? fl :ci);
 }
 
 /* should be robust against untrusted data, e.g. we 
@@ -313,6 +324,7 @@ typedef enum {
 #endif
 
 static gboolean hippo_print_debug_level = FALSE;
+static gboolean hippo_print_xmpp_noise = FALSE;
 
 static void
 log_handler(const char    *log_domain,
@@ -334,7 +346,7 @@ log_handler(const char    *log_domain,
             break;    
         case LM_LOG_LEVEL_VERBOSE:
         case LM_LOG_LEVEL_NET:
-           if (!hippo_print_debug_level)
+           if (!hippo_print_xmpp_noise)
                return;
             prefix = "LM: ";
             break;
@@ -412,6 +424,7 @@ hippo_parse_options(int          *argc_p,
     static gboolean quit_existing = FALSE;
     static gboolean initial_debug_share = FALSE;
     static gboolean verbose = FALSE;
+    static gboolean verbose_xmpp = FALSE;
     char *argv0;
     GError *error;
     GOptionContext *context;
@@ -429,6 +442,7 @@ hippo_parse_options(int          *argc_p,
         { "quit", '\0', 0, G_OPTION_ARG_NONE, (gpointer)&quit_existing, "Tell any existing instances to quit" },
         { "debug-share", 0, 0, G_OPTION_ARG_NONE, (gpointer)&initial_debug_share, "Show an initial dummy debug share" },
         { "verbose", 0, 0, G_OPTION_ARG_NONE, (gpointer)&verbose, "Print lots of debugging information" },
+        { "verbose-xmpp", 0, 0, G_OPTION_ARG_NONE, (gpointer)&verbose_xmpp, "Print lots of debugging information about raw XMPP traffic" },
         { NULL }
     };
 
@@ -473,9 +487,11 @@ hippo_parse_options(int          *argc_p,
     results->quit_existing = quit_existing;
     results->initial_debug_share = initial_debug_share;
     results->verbose = verbose;
+    results->verbose_xmpp = verbose_xmpp;
 
-    if (results->verbose) {
-        hippo_print_debug_level = TRUE;
+    hippo_print_debug_level = results->verbose;
+    hippo_print_xmpp_noise = results->verbose_xmpp;
+    if (hippo_print_debug_level || hippo_print_xmpp_noise) {
         hippo_override_loudmouth_log();
     }
 
@@ -498,6 +514,10 @@ hippo_parse_options(int          *argc_p,
     }
     if (results->verbose) {
         results->restart_argv[results->restart_argc] = g_strdup("--verbose");
+        results->restart_argc += 1;
+    }
+    if (results->verbose_xmpp) {
+        results->restart_argv[results->restart_argc] = g_strdup("--verbose-xmpp");
         results->restart_argc += 1;
     }
     
@@ -1042,6 +1062,87 @@ hippo_compare_versions(const char *version_a,
         return 0;
 }
 
+/* improvements to this should probably go in the javascript version too */
+char*
+hippo_format_time_ago(GTime now,
+                      GTime then)
+{
+    GTime delta = now - then;
+    double delta_hours;
+    double delta_weeks;
+    double delta_years;
+
+    if (then <= 0)
+        return g_strdup("");
+    
+    if (delta < 0)
+        return g_strdup("the future");
+
+    if (delta < 120)
+        return g_strdup("a minute ago");
+
+    if (delta < 60*60) {
+        int delta_minutes = delta / 60;
+        if (delta_minutes > 5)
+            delta_minutes = delta_minutes - (delta_minutes % 5);
+        return g_strdup_printf("%d minutes ago", delta_minutes);
+    }
+
+    delta_hours = delta / (60.0 * 60.0);
+
+    if (delta_hours < 1.55)
+        return g_strdup("1 hr. ago");
+
+    if (delta_hours < 24) {
+        return g_strdup_printf("%.0f hrs. ago", hippo_rint(delta_hours));
+    }
+
+    if (delta_hours < 48) {
+        return g_strdup("Yesterday");
+    }
+    
+    if (delta_hours < 24*15) {
+        return g_strdup_printf("%.0f days ago", hippo_rint(delta_hours / 24));
+    }
+
+    delta_weeks = delta_hours / (24.0 * 7.0);
+
+    if (delta_weeks < 6) {
+        return g_strdup_printf("%.0f weeks ago", hippo_rint(delta_weeks));
+    }
+
+    if (delta_weeks < 50) {
+        return g_strdup_printf("%.0f months ago", hippo_rint(delta_weeks / 4));
+    }
+
+    delta_years = delta_weeks / 52;
+
+    if (delta_years < 1.55)
+        return g_strdup_printf("1 year ago");
+
+    return g_strdup_printf("%.0f years ago", hippo_rint(delta_years));
+}
+
+
+char*
+hippo_size_photo_url(const char *base_url,
+                     int         size)
+{
+    if (strchr(base_url, '?') != 0)
+        return g_strdup_printf("%s&size=%d", base_url, size);
+    else
+        return g_strdup_printf("%s?size=%d", base_url, size);
+}
+
+gint64
+hippo_current_time_ms(void)
+{
+    GTimeVal now;
+
+    g_get_current_time(&now);
+    return (gint64)now.tv_sec * 1000 + now.tv_usec / 1000;
+}
+ 
 static const char*
 hippo_uri_valid_tests[] = { 
     /* both chat kinds */

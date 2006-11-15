@@ -67,8 +67,15 @@ body {
 }
 
 .dh-chat-person {
-	background-image:  url(/images/personArea.jpg);
 	background-repeat: no-repeat;
+}
+
+.dh-chat-person-music-playing {
+	background-image:  url(/images2/personAreaNoteOn_60.gif);
+}
+
+.dh-chat-person-music-stopped {
+	background-image:  url(/images2/personAreaNoteOff_60.gif);
 }
 
 .dh-chat-person-image {

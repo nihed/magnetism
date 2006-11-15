@@ -24,6 +24,16 @@ public class PostThumbnailServlet extends AbstractSmallImageServlet {
 	private static final long serialVersionUID = 1L;
 	@SuppressWarnings("unused")
 	private static final Logger logger = GlobalSetup.getLogger(PostThumbnailServlet.class);
+	
+	@Override
+	protected boolean needsSize() {
+		return false;
+	}
+
+	@Override
+	protected String getDefaultSize() {
+		return null;
+	}
 
 	@Override
 	protected void doUpload(HttpServletRequest request, HttpServletResponse response, User user,
@@ -63,7 +73,7 @@ public class PostThumbnailServlet extends AbstractSmallImageServlet {
 	}
 
 	@Override
-	protected boolean requiresTransaction() {
+	protected boolean requiresTransaction(HttpServletRequest request) {
 		return false;
 	}
 

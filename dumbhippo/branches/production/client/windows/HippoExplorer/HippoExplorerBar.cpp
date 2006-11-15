@@ -108,6 +108,9 @@ HippoExplorerBar::CloseDW(DWORD reserved)
     DestroyWindow(window_);
     window_ = NULL;
 
+    ie_->shutdown();
+    ie_ = NULL;
+
     return S_OK;
 }
 
@@ -481,6 +484,7 @@ HippoExplorerBar::createIE()
         framerUrl = L"about:blank";
 
     ie_ = HippoIE::create(window_, framerUrl.m_str, this, NULL);
+    ie_->Release();
     ie_->embedBrowser();
 
     return true;
@@ -621,7 +625,13 @@ HippoExplorerBar::windowProc(HWND   window,
                              WPARAM wParam,
                              LPARAM lParam)
 {
-    HippoExplorerBar *explorerBar = hippoGetWindowData<HippoExplorerBar>(window);
+    // Our only content is the IE browser, and it erases everything itself
+    // on repaint, so we tell windows not to repaint by returning 1. This
+    // prevents flicker on resize.
+    if (message == WM_ERASEBKGND)
+        return 1;
+
+    HippoPtr<HippoExplorerBar> explorerBar = hippoGetWindowData<HippoExplorerBar>(window);
     if (explorerBar) {
         if (explorerBar->processMessage(message, wParam, lParam))
             return 0;

@@ -6,6 +6,7 @@
 <dh:png src="/images/${buildStamp}/worldShare.png" style="width: 48; height: 48; float: left;"/>
 Bubble up posts sent to <b>The World</b>:<br/>
 <form>
+<dh:script module="dh.actions"/>
 <input name="defaultPublicShare" type="radio" id="defaultPublicOn" 
        <c:if test="${defaultPublic}">checked="true"</c:if>
        onclick="dh.actions.setNotifyPublicShares(true);"> <label for="defaultPublicOn">Show me public shares</label><br/>

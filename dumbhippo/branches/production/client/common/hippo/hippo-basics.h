@@ -6,6 +6,9 @@
 
 G_BEGIN_DECLS
 
+typedef struct _HippoWindow      HippoWindow;
+typedef struct _HippoWindowClass HippoWindowClass;
+
 typedef struct _HippoDataCache      HippoDataCache;
 typedef struct _HippoDataCacheClass HippoDataCacheClass;
 
@@ -37,8 +40,15 @@ typedef enum {
     HIPPO_HOTNESS_UNKNOWN
 } HippoHotness;
 
+
+/* This can be used to specify which browser to use,
+ * in which case UNKNOWN = use system default,
+ * or to specify which browser was used (e.g. for cookies)
+ * in which case UNKNOWN = don't know.
+ */
 typedef enum 
 {
+    HIPPO_BROWSER_UNKNOWN,
     HIPPO_BROWSER_IE,
     HIPPO_BROWSER_FIREFOX,
     HIPPO_BROWSER_EPIPHANY
@@ -57,11 +67,30 @@ typedef enum {
     HIPPO_CHAT_KIND_BROKEN
 } HippoChatKind;
 
-typedef enum 
-{
+typedef enum {
+    HIPPO_MEMBERSHIP_STATUS_NONMEMBER,
+    HIPPO_MEMBERSHIP_STATUS_INVITED_TO_FOLLOW,
+    HIPPO_MEMBERSHIP_STATUS_FOLLOWER,
+    HIPPO_MEMBERSHIP_STATUS_REMOVED,
+    HIPPO_MEMBERSHIP_STATUS_INVITED,
+    HIPPO_MEMBERSHIP_STATUS_ACTIVE
+} HippoMembershipStatus;
+
+typedef enum {
     HIPPO_URI_ACTION_BROKEN,
     HIPPO_URI_ACTION_JOIN_CHAT
 } HippoUriAction;
+
+/* Used currently for chat windows, but probably should also be used
+ * to replace HippoWindow::active HippoWindow::onscreen with
+ * HippoWindow::window-state.
+ */
+typedef enum {
+    HIPPO_WINDOW_STATE_CLOSED, /* nonexistent, or "withdrawn" */
+    HIPPO_WINDOW_STATE_HIDDEN, /* iconified, on another desktop, or obscured */
+    HIPPO_WINDOW_STATE_ONSCREEN, /* some portion of the window is visible */
+    HIPPO_WINDOW_STATE_ACTIVE /* the window the user is actively working with */
+} HippoWindowState;
 
 #define HIPPO_URI_SCHEME     "mugshot"
 #define HIPPO_URI_SCHEME_LEN 7
@@ -77,7 +106,7 @@ typedef struct {
     } u;
 } HippoUriActionData;
 
-#define HIPPO_DEFAULT_MESSAGE_HOST     "messages.mugshot.org"
+#define HIPPO_DEFAULT_MESSAGE_HOST     "message-router.mugshot.org"
 #define HIPPO_DEFAULT_MESSAGE_PORT     5222
 #define HIPPO_DEFAULT_MESSAGE_SERVER   HIPPO_DEFAULT_MESSAGE_HOST ":5222"
 #define HIPPO_DEFAULT_WEB_HOST         "mugshot.org"
@@ -90,18 +119,20 @@ typedef struct {
 
 #ifdef G_OS_WIN32
 
-#define HIPPO_DEFAULT_MESSAGE_HOST_L   L"messages.mugshot.org"
+#define HIPPO_DEFAULT_MESSAGE_HOST_L   L"message-router.mugshot.org"
 #define HIPPO_DEFAULT_MESSAGE_SERVER_L HIPPO_DEFAULT_MESSAGE_HOST_L L":5222"
 #define HIPPO_DEFAULT_WEB_HOST_L       L"mugshot.org"
 #define HIPPO_DEFAULT_WEB_SERVER_L     HIPPO_DEFAULT_WEB_HOST_L L":80"
 #define HIPPO_DEFAULT_LOCAL_HOST_L     L"localinstance.mugshot.org"
 #define HIPPO_DEFAULT_LOCAL_WEB_SERVER_L     HIPPO_DEFAULT_LOCAL_HOST_L L":8080"
 #define HIPPO_DEFAULT_LOCAL_MESSAGE_SERVER_L HIPPO_DEFAULT_LOCAL_HOST_L L":21020"
-#endif
+
+#endif /* G_OS_WIN32 */
 
 #define HIPPO_JID_DOMAIN "dumbhippo.com"
 #define HIPPO_ROOMS_JID_DOMAIN "rooms." HIPPO_JID_DOMAIN
 #define HIPPO_ADMIN_JID "admin@" HIPPO_JID_DOMAIN
+
 
 typedef struct {
     HippoInstanceType instance_type;
@@ -110,11 +141,19 @@ typedef struct {
     guint quit_existing : 1;
     guint initial_debug_share : 1;
     guint verbose : 1;
+    guint verbose_xmpp : 1;
     char **restart_argv;
     int    restart_argc;
 } HippoOptions;
 
 typedef void (* HippoPrintDebugFunc) (const char *message);
+
+/* if content_type == NULL then we failed to get any content and the string is an error
+ * message. If content_type != NULL then the string is the content.
+ */
+typedef void (* HippoHttpFunc) (const char *content_type,
+                                GString    *content_or_error,
+                                void       *data);
 
 gboolean hippo_parse_server          (const char *server,
                                       char      **host,
@@ -158,6 +197,16 @@ const char*   hippo_chat_kind_as_string    (HippoChatKind kind);
 
 int      hippo_compare_versions            (const char *version_a,
                                             const char *version_b);
+
+gint64   hippo_current_time_ms             (void);
+char*    hippo_format_time_ago             (GTime       now,
+                                            GTime       then);
+
+char*    hippo_size_photo_url              (const char *base_url,
+                                            int         size);
+
+#define HIPPO_ADD_WEAK(ptr)    g_object_add_weak_pointer(G_OBJECT(*(ptr)), (void**) (char*) (ptr))
+#define HIPPO_REMOVE_WEAK(ptr) do { if (*ptr) { g_object_remove_weak_pointer(G_OBJECT(*(ptr)), (void**) (char*) (ptr)); *ptr = NULL; } } while(0)
 
 G_END_DECLS
 

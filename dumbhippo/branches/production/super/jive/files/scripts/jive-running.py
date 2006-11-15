@@ -9,7 +9,7 @@ import sys
 result = False
 try:
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.connect(("127.0.0.1", @@jivePlainPort@@))
+    s.connect(("@@bindHost@@", @@jivePlainPort@@))
 
     s.send("<stream/>")
     got = s.recv(1024)

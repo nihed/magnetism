@@ -28,41 +28,37 @@ import com.dumbhippo.identity20.Guid.ParseException;
  * @author Havoc Pennington
  */
 @Entity
-@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)
+@Cache(usage=CacheConcurrencyStrategy.TRANSACTIONAL)
 @Table(name="Block", 
 	   uniqueConstraints = {
-			@UniqueConstraint(columnNames={"blockType", "data1", "data2"})
+			@UniqueConstraint(columnNames={"blockType", "data1", "data2", "data3", "inclusion"})
 		})
-/*
- This doesn't work because hibernate sets the index length for data1 to 20 but the column 
- only has length 14, which makes mysql barf.
- 
- @org.hibernate.annotations.Table(name="Block",
-		// this indexing could be overzealous
-		indexes = {
-			@Index(name="timestamp_index", columnNames = { "timestamp" }),
-			@Index(name="data1_index", columnNames = { "data1" }),
-			@Index(name="data2_index", columnNames = { "data2" })
-		})
-		*/
 public class Block extends EmbeddedGuidPersistable {
 
 	private BlockType blockType;
 	private long timestamp;
 	private Guid data1;
 	private Guid data2;
+	private long data3;
 	private int clickedCount;
+	private boolean publicBlock;
+	private StackInclusion inclusion;
 	
 	// for hibernate
 	public Block() {
 		this.timestamp = 0;
+		this.data3 = -1;
+		this.inclusion = StackInclusion.IN_ALL_STACKS;
 	}
 
-	public Block(BlockType type, Guid data1, Guid data2) {
+	public Block(BlockKey key) {
 		this();
-		this.blockType = type;
-		this.data1 = data1;
-		this.data2 = data2;
+		this.blockType = key.getBlockType();
+		this.publicBlock = this.blockType.isAlwaysPublic();
+		this.data1 = key.getData1();
+		this.data2 = key.getData2();
+		this.data3 = key.getData3();
+		this.inclusion = key.getInclusion();
 	}
 	
 	@Column(nullable=false)
@@ -146,6 +142,15 @@ public class Block extends EmbeddedGuidPersistable {
 		setData2AsGuid(data2.length() > 0 ? new Guid(data2) : null);
 	}
 	
+	@Column(nullable = false)
+	public long getData3() {
+		return data3;
+	}
+
+	public void setData3(long data3) {
+		this.data3 = data3;
+	}
+	
 	// this is a denormalized field; it should be equal to the number of 
 	// UserBlockData for this block with a non-null clicked time
 	@Column(nullable=false)
@@ -157,8 +162,27 @@ public class Block extends EmbeddedGuidPersistable {
 		this.clickedCount = clickedCount;
 	}
 	
+	@Column(nullable=false)
+	public boolean isPublicBlock() {
+		return publicBlock;
+	}	
+
+	public void setPublicBlock(boolean publicBlock) {
+		this.publicBlock = publicBlock;
+	}
+	
+	@Column(nullable=false)
+	public StackInclusion getInclusion() {
+		return inclusion;
+	}
+	
+	public void setInclusion(StackInclusion stackInclusion) {
+		this.inclusion = stackInclusion;
+	}
+	
 	@Override
 	public String toString() {
-		return "{Block type=" + getBlockType() + " timestamp=" + getTimestampAsLong() + " data1=" + getData1() + " data2=" + getData2() + "}";
+		return "{Block type=" + getBlockType() + " timestamp=" + getTimestampAsLong() + " data1=" + getData1() + " data2=" + getData2() 
+		       + " data3=" + getData3() + " publicBlock=" + isPublicBlock() + " inclusion=" + getInclusion() + "}";
 	}
 }

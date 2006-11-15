@@ -6,12 +6,7 @@
 #pragma once
 
 #include <ComCat.h>
-
-#ifdef BUILDING_HIPPO_UTIL
-#define DLLEXPORT __declspec(dllexport)
-#else
-#define DLLEXPORT __declspec(dllimport)
-#endif
+#include <HippoUtilExport.h>
 
 class DLLEXPORT HippoRegistrar
 {
@@ -25,7 +20,9 @@ public:
                                         ULONG        cCategories,
                                         CATID        categories[]);
     HRESULT registerInprocServer(const CLSID &classID,
-                                 const WCHAR *title);
+                                 const WCHAR *title,
+                                 const WCHAR *versionIndependentProgId = 0,
+                                 const WCHAR *progId = 0);
     HRESULT registerBrowserHelperObject(const CLSID &classID,
                                         const WCHAR *title);
     HRESULT registerStartupProgram(const WCHAR *key,

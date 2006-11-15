@@ -80,6 +80,10 @@
     left:             7px;
 }
 
+.dh-chat-person-image a {
+	border:           0px;
+}
+
 .dh-chat-person-name {
 	position:         absolute;
 	top:              10px;

@@ -6,7 +6,7 @@
 
 <head>
 	<title>Web Services</title>
-	<link rel="stylesheet" type="text/css" href="/css2/${buildStamp}/site.css"/>
+	<dht:siteStyle/>	
 	<dht:faviconIncludes/>
 	<dht:scriptIncludes/>
 </head>

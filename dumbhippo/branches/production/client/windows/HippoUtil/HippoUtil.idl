@@ -14,6 +14,7 @@ import "exdisp.idl";
 ]
 library HippoUtil {
     interface IHippoChatRoom;
+    interface IHippoUIListener;
 
     [
         uuid(F596AE04-94E7-4cdd-8CD8-5D4361F962E5), // IID_IHippoUI
@@ -47,7 +48,43 @@ library HippoUtil {
         HRESULT DoUpgrade();
         [id(111), helpstring("Signal a share as complete")]
         HRESULT ShareLinkComplete([in] BSTR postId, [in] BSTR url);
-        // up to 120
+
+        [id(112), helpstring("Register a listener for callbacks")]
+        HRESULT RegisterListener([in] IHippoUIListener *listener, [out] UINT64 *listenerId);
+        [id(113), helpstring("Unregister a listener added with RegisterListener")]
+        HRESULT UnregisterListener([in] UINT64 listenerId);
+        [id(114), helpstring("Register a single recipient of callbacks within a listener")]
+        HRESULT RegisterEndpoint([in] UINT64 listenerId, [out] UINT64 *endpointId);
+        [id(116), helpstring("Unregister an endpoint registered with RegisterEndpoint")]
+        HRESULT UnregisterEndpoint([in] UINT64 endpointId);
+        [id(117), helpstring("Join a chat room, sending events to the given endpoint")]
+        HRESULT JoinChatRoom([in] UINT64 endpointId, [in] BSTR chatId, [in] BOOL participant);
+        [id(118), helpstring("Leave a chatroom joined with JoinChatRoom")]
+        HRESULT LeaveChatRoom([in] UINT64 endpointId, [in] BSTR chatId);
+        [id(119), helpstring("Send a chat message to a particular room")]
+        HRESULT SendChatMessage([in] BSTR chatId, [in] BSTR text);
+
+        [id(120), helpstring("Get the name of the server we connect to in host:port format")]
+        HRESULT GetServerName([out, retval] BSTR *serverName);
+        [id(121), helpstring("Launch a web browser for the given URL, reusing existing windows if appropriate")]
+        HRESULT LaunchBrowser([in] BSTR url);
+
+        // up to 129
+    }
+    [
+        uuid(BB761F87-493F-43F5-A1F2-2DDD1045B62F),
+        helpstring("DumbHippo User Interface Listener"),
+        dual,
+        oleautomation
+    ]
+    interface IHippoUIListener : IDispatch
+    {
+        HRESULT OnConnect();
+        HRESULT OnDisconnect();
+        HRESULT OnUserJoin([in] UINT64 endpointId, [in] BSTR chatId, [in] BSTR userId, [in] BOOL participant);
+        HRESULT OnUserLeave([in] UINT64 endpointId, [in] BSTR chatId, [in] BSTR userId);
+        HRESULT OnMessage([in] UINT64 endpointId, [in] BSTR chatId, [in] BSTR userId, [in] BSTR message, [in] double timestamp, [in] int serial);
+        HRESULT UserInfo([in]  UINT64 endpointId, [in] BSTR userId, [in] BSTR name, [in] BSTR smallPhotoUrl, [in] BSTR currentSong, [in] BSTR currentArtist, [in] BOOL musicPlaying);
     }
     [
         uuid(58C5A8FC-5DD5-4005-A267-5511D9128ADF), // IID_IHippoChatRoom
@@ -197,5 +234,35 @@ library HippoUtil {
         HRESULT ToWorld([out, retval] BOOL *toWorld);
         [id(238), propget, helpstring("Whether or not post is currently ignored")]
         HRESULT Ignored([out, retval] BOOL *ignored);
-   }
+    }
+    [
+        uuid(C79153EE-79EB-4269-8EA3-5E57722776F3),
+        helpstring("DumbHippo Inter-thread Call Interface"),
+        dual
+    ]
+    interface IHippoCallable : IUnknown
+    {
+        HRESULT call([in] UINT64 param, [out, retval] UINT64 *reval);
+    }
+    [
+        uuid(FD2D3BEE-477E-4625-B35F-BF497FF601D9)
+    ]
+    coclass HippoUI 
+    {
+        [default] interface IHippoUI;
+    }
+    [
+        uuid(EE8E46EB-CDC7-4f89-A8AE-AF09946C9685)
+    ]
+    coclass HippoUI_Debug
+    {
+        [default] interface IHippoUI;
+    }
+    [
+        uuid(B3124A18-A7AB-41a8-AB11-A0D6452209C6)
+    ]
+    coclass HippoUI_Dogfood 
+    {
+        [default] interface IHippoUI;
+    }
 }

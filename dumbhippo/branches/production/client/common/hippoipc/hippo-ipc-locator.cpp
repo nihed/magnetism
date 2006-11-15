@@ -1,5 +1,4 @@
 /* -*- mode: C++; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
-
 #include "hippo-ipc.h"
 #include <string>
 #include <vector>
@@ -7,7 +6,6 @@
 class HippoIpcLocatorMapEntry {
 public:
     std::string url_;
-    HippoIpcProvider *provider_;
     HippoIpcController *controller_;
     unsigned int refcount_;
 };
@@ -15,7 +13,7 @@ public:
 class HippoIpcLocatorMap {
 public:
     HippoIpcController *get(const char *url);
-    void insert(const char *url, HippoIpcProvider *provider, HippoIpcController *controller);
+    void insert(const char *url, HippoIpcController *controller);
     void release(HippoIpcController *controller);
     
 private:
@@ -47,7 +45,6 @@ HippoIpcLocatorMap::release(HippoIpcController *controller)
             i->refcount_--;
             if (i->refcount_ == 0) {
                 delete i->controller_;
-                delete i->provider_;
                 entries_.erase(i);
             }
             return;
@@ -57,12 +54,10 @@ HippoIpcLocatorMap::release(HippoIpcController *controller)
 
 void 
 HippoIpcLocatorMap::insert(const char         *url,
-                           HippoIpcProvider   *provider,
                            HippoIpcController *controller)
 {
     HippoIpcLocatorMapEntry entry;
     entry.url_ = url;
-    entry.provider_ = provider;
     entry.controller_ = controller;
     entry.refcount_ = 1;
 
@@ -74,9 +69,8 @@ HippoIpcLocator::getController(const char *url)
 {
     HippoIpcController *controller = map_->get(url);
     if (!controller) {
-        HippoIpcProvider *provider = createProvider(url);
-        controller = HippoIpcController::createInstance(provider);
-        map_->insert(url, provider, controller);
+        controller = createController(url);
+        map_->insert(url, controller);
     }
 
     return controller;
@@ -97,4 +91,3 @@ HippoIpcLocator::~HippoIpcLocator()
 {
     delete map_;
 }
-

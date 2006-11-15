@@ -21,8 +21,7 @@ echo "classpath $deps"
 
 "$JAVA" -Xdebug 					\
      -server 						\
-     -Djava.naming.provider.url=jnp://localhost:@@jnpPort@@ \
-     -classpath $deps:$targetdir/dumbhippo-imbot.jar 	\
+     -classpath $deps:$targetdir/conf:$targetdir/dumbhippo-imbot.jar 	\
      com.dumbhippo.aimbot.Main  >$targetdir/logs/imbot.log 2>&1 &
 
 pid=$!

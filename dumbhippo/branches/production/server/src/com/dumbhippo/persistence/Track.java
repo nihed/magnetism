@@ -1,5 +1,6 @@
 package com.dumbhippo.persistence;
 
+import java.io.Serializable;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.MessageDigest;
@@ -58,8 +59,10 @@ import com.dumbhippo.GlobalSetup;
 		   uniqueConstraints = 
 		      {@UniqueConstraint(columnNames={"digest"})}
 	      )
-@Indexed(index="index/track")
-public class Track extends DBUnique {
+@Indexed(index="track")
+// Needs to be serializable since it is used as a cluster-wide locking key
+// when doing web service requests to look up track information
+public class Track extends DBUnique implements Serializable {
 	private static final long serialVersionUID = 1L;
 	static private final Logger logger = GlobalSetup.getLogger(Track.class);
 	

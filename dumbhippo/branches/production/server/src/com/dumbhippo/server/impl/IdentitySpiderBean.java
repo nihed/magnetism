@@ -26,6 +26,8 @@ import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.live.ContactsChangedEvent;
 import com.dumbhippo.live.LiveState;
 import com.dumbhippo.live.LiveUser;
+import com.dumbhippo.live.UserChangedEvent;
+import com.dumbhippo.live.UserPrefChangedEvent;
 import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.AccountClaim;
 import com.dumbhippo.persistence.Administrator;
@@ -52,13 +54,13 @@ import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.IdentitySpiderRemote;
-import com.dumbhippo.server.MessageSender;
 import com.dumbhippo.server.NotFoundException;
-import com.dumbhippo.server.SystemViewpoint;
+import com.dumbhippo.server.Notifier;
 import com.dumbhippo.server.TransactionRunner;
-import com.dumbhippo.server.UserViewpoint;
-import com.dumbhippo.server.Viewpoint;
 import com.dumbhippo.server.util.EJBUtil;
+import com.dumbhippo.server.views.SystemViewpoint;
+import com.dumbhippo.server.views.UserViewpoint;
+import com.dumbhippo.server.views.Viewpoint;
 
 /*
  * An implementation of the Identity Spider.  It sucks your blood.
@@ -81,10 +83,6 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 
 	@EJB
 	@IgnoreDependency
-	private MessageSender messageSender;
-
-	@EJB
-	@IgnoreDependency
 	private GroupSystem groupSystem;
 
 	@EJB
@@ -93,7 +91,10 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 
 	@EJB
 	private Configuration config;
-
+	
+	@EJB
+	private Notifier notifier;
+	
 	public User lookupUserByEmail(Viewpoint viewpoint, String email) {
 		EmailResource res = lookupEmail(email);
 		if (res == null)
@@ -119,20 +120,18 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	public User lookupUser(Guid guid) {
 		return em.find(User.class, guid.toString());
 	}
-
+	
 	public <T extends GuidPersistable> T lookupGuidString(Class<T> klass,
 			String id) throws ParseException, NotFoundException {
 		if (klass.equals(Post.class) || klass.equals(Group.class))
-			logger
-					.error("Probable bug: looking up Post/Group should use GroupSystem/PostingBoard to get access controls");
+			logger.error("Probable bug: looking up Post/Group should use GroupSystem/PostingBoard to get access controls");
 		return EJBUtil.lookupGuidString(em, klass, id);
 	}
 
 	public <T extends GuidPersistable> T lookupGuid(Class<T> klass, Guid id)
 			throws NotFoundException {
 		if (klass.equals(Post.class) || klass.equals(Group.class))
-			logger
-					.error("Probable bug: looking up Post/Group should use GroupSystem/PostingBoard to get access controls");
+			logger.error("Probable bug: looking up Post/Group should use GroupSystem/PostingBoard to get access controls");
 		return EJBUtil.lookupGuid(em, klass, id);
 	}
 
@@ -232,7 +231,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		Query q;
 		String className = klass.getName();
 
-		q = em.createQuery("from " + className + " a where a." + identifier
+		q = em.createQuery("SELECT a FROM " + className + " a WHERE a." + identifier
 				+ " = :name");
 		q.setParameter("name", name);
 
@@ -263,6 +262,10 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		return lookupResourceByName(EmailResource.class, "email", email);
 	}
 
+	public LinkResource lookupLink(final URL url) {
+		return lookupResourceByName(LinkResource.class, "url", url.toExternalForm());
+	}
+	
 	public LinkResource getLink(final URL url) {
 		try {
 			return runner
@@ -271,8 +274,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 						public LinkResource call() throws Exception {
 							Query q;
 
-							q = em
-									.createQuery("from LinkResource l where l.url = :url");
+							q = em.createQuery("SELECT l FROM LinkResource l WHERE l.url = :url");
 							q.setParameter("url", url.toExternalForm());
 
 							LinkResource res;
@@ -293,7 +295,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 			return null; // not reached
 		}
 	}
-
+	
 	private User getUserForContact(Contact contact) {
 		for (ContactClaim cc : contact.getResources()) {
 			Resource resource = cc.getResource();
@@ -352,6 +354,8 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		}
 
 		// Now create the new db claim
+		
+		res.prepareToSetAccountClaim();
 
 		AccountClaim ac = new AccountClaim(claimedOwner, res);
 		em.persist(ac);
@@ -453,8 +457,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 
 		// After the transaction commits succesfully, update the list of contact
 		// resources for this user
-		LiveState.getInstance().queuePostTransactionUpdate(em,
-				new ContactsChangedEvent(user.getGuid()));
+		LiveState.getInstance().queueUpdate(new ContactsChangedEvent(user.getGuid()));
 
 		return contact;
 	}
@@ -529,8 +532,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 
 		// After the transaction commits succesfully, update the list of contact
 		// resources for this user
-		LiveState.getInstance().queuePostTransactionUpdate(em,
-				new ContactsChangedEvent(user.getGuid()));
+		LiveState.getInstance().queueUpdate(new ContactsChangedEvent(user.getGuid()));
 	}
 
 	public Set<Contact> getRawContacts(Viewpoint viewpoint, User user) {
@@ -575,14 +577,13 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	}
 
 	/**
-	 * 
 	 * @param user
 	 *            the user we're looking at the contacts of
 	 * @param contactUser
 	 *            is this person a contact of user?
 	 * @return true if contactUser is a contact of user
 	 */
-	private boolean isContactNoViewpoint(User user, User contactUser) {
+	private boolean userHasContact(User user, User contactUser) {
 		LiveUser liveUser = LiveState.getInstance().getLiveUser(user.getGuid());
 		for (AccountClaim ac : contactUser.getAccountClaims()) {
 			if (liveUser.hasContactResource(ac.getResource().getGuid()))
@@ -591,9 +592,10 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 
 		return false;
 	}
-
+	
 	// We don't want to use the general isContactNoViewpoint for this, because
-	// there could be race conditions with the async-updated LiveUser cache.
+	// there could be race conditions with the async-updated LiveUser cache,
+	// and the viewer needs to see accurate information about their own contacts.
 	// 
 	// We don't mind reconstituting *the viewer's* contact database from the
 	// hibernate second level cache, so we just do the check directly
@@ -608,18 +610,17 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 
 		return false;
 	}
-
+	
 	public boolean isContact(Viewpoint viewpoint, User user, User contactUser) {
 		// see if we're allowed to look at who user's contacts are
 		if (!isViewerSystemOrFriendOf(viewpoint, user))
 			return false;
 
 		if (viewpoint.isOfUser(user))
-			return viewerHasContact((UserViewpoint) viewpoint, contactUser);
-
-		// if we can see their contacts, return whether this person is one of
-		// them
-		return isContactNoViewpoint(user, contactUser);
+			return viewerHasContact((UserViewpoint)viewpoint, contactUser);
+	
+		// if we can see their contacts, return whether this person is one of them
+		return userHasContact(user, contactUser);
 	}
 
 	public boolean isViewerSystemOrFriendOf(Viewpoint viewpoint, User user) {
@@ -629,18 +630,18 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 			UserViewpoint userViewpoint = (UserViewpoint) viewpoint;
 			if (user.equals(userViewpoint.getViewer()))
 				return true;
-			if (userViewpoint.isFriendOfStatusCached(user))
+			if (userViewpoint.isFriendOfStatusCached(user)) {
 				return userViewpoint.getCachedFriendOfStatus(user);
-
-			boolean isFriendOf = isContactNoViewpoint(user, userViewpoint
-					.getViewer());
-			userViewpoint.setCachedFriendOfStatus(user, isFriendOf);
+			}
+			
+			boolean isFriendOf = userHasContact(user, userViewpoint.getViewer());
+            userViewpoint.setCachedFriendOfStatus(user, isFriendOf);
 			return isFriendOf;
 		} else {
 			return false;
 		}
 	}
-
+    
 	public boolean isViewerWeirdTo(Viewpoint viewpoint, User user) {
 		// FIXME haven't implemented this feature yet
 		return false;
@@ -677,11 +678,28 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 
 	public void setAccountDisabled(User user, boolean disabled) {
 		Account account = getAttachedAccount(user);
-		account.setDisabled(disabled);
-		logger.debug("Disabled flag toggled to {} on account {}", disabled,
-				account);
+		if (account.isDisabled() != disabled) {
+			account.setDisabled(disabled);
+			logger.debug("Disabled flag toggled to {} on account {}", disabled,
+					account);
+			notifier.onAccountDisabledToggled(account);
+		}
 	}
 
+	public boolean getAccountAdminDisabled(User user) {
+		return user.getAccount().isAdminDisabled();
+	}
+	
+	public void setAccountAdminDisabled(User user, boolean disabled) {
+		Account account = getAttachedAccount(user);
+		if (account.isAdminDisabled() != disabled) {
+			account.setAdminDisabled(disabled);
+			logger.debug("adminDisabled flag toggled to {} on account {}", disabled,
+					account);
+			notifier.onAccountAdminDisabledToggled(account);
+		}
+	}
+	
 	static final String GET_ADMIN_QUERY = "SELECT adm FROM Administrator adm WHERE adm.account = :acct";
 
 	public boolean isAdministrator(User user) {
@@ -730,15 +748,15 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 
 	public void setMusicSharingEnabled(User user, boolean enabled) {
 		Account account = getAttachedAccount(user);
-		if (account.isMusicSharingEnabled() != enabled) {
+		if (account.isMusicSharingEnabled() == null || account.isMusicSharingEnabled() != enabled) {
 			account.setMusicSharingEnabled(enabled);
-			messageSender.sendPrefChanged(user, "musicSharingEnabled", Boolean
-					.toString(enabled));
+			notifier.onMusicSharingToggled(account);
+			LiveState.getInstance().queueUpdate(new UserPrefChangedEvent(user.getGuid(), "musicSharingEnabled", Boolean.toString(enabled)));
 		}
 	}
 
 	public boolean getMusicSharingPrimed(User user) {
-		Account account = user.getAccount();
+		Account account = getAttachedAccount(user);
 		return account.isMusicSharingPrimed();
 	}
 
@@ -746,8 +764,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		Account account = getAttachedAccount(user);
 		if (account.isMusicSharingPrimed() != primed) {
 			account.setMusicSharingPrimed(primed);
-			messageSender.sendPrefChanged(user, "musicSharingPrimed", Boolean
-					.toString(primed));
+			LiveState.getInstance().queueUpdate(new UserPrefChangedEvent(user.getGuid(), "musicSharingPrimed", Boolean.toString(primed)));			
 		}
 	}
 
@@ -810,6 +827,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 			throw new RuntimeException("invalid stock photo name");
 
 		user.setStockPhoto(photo);
+		LiveState.getInstance().queueUpdate(new UserChangedEvent(user.getGuid(), UserChangedEvent.Detail.PHOTO)); 		
 	}
 
 	public Set<User> getMySpaceContacts(UserViewpoint viewpoint) {

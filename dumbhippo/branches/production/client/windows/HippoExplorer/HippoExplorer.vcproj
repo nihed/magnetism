@@ -19,14 +19,15 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="../HippoUtil"
+				AdditionalIncludeDirectories="../HippoUtil;../../common/hippoipc;../HippoIpc"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;NOMINMAX"
 				MinimalRebuild="TRUE"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="5"
+				RuntimeLibrary="1"
 				TreatWChar_tAsBuiltInType="TRUE"
 				ForceConformanceInForLoopScope="TRUE"
 				UsePrecompiledHeader="3"
+				PrecompiledHeaderThrough="stdafx-hippoexplorer.h"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="TRUE"
 				DebugInformationFormat="4"/>
@@ -76,6 +77,7 @@
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
 				RuntimeLibrary="4"
 				UsePrecompiledHeader="3"
+				PrecompiledHeaderThrough="stdafx-hippoexplorer.h"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="TRUE"
 				DebugInformationFormat="3"/>
@@ -127,6 +129,9 @@
 			</File>
 			<File
 				RelativePath=".\HippoChatControl.cpp">
+			</File>
+			<File
+				RelativePath=".\HippoControl.cpp">
 			</File>
 			<File
 				RelativePath=".\HippoEmbed.cpp">
@@ -193,6 +198,9 @@
 			</File>
 			<File
 				RelativePath=".\HippoChatControl.h">
+			</File>
+			<File
+				RelativePath=".\HippoControl.h">
 			</File>
 			<File
 				RelativePath=".\HippoEmbed.h">

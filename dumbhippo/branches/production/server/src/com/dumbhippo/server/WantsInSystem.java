@@ -6,6 +6,7 @@ import javax.ejb.Local;
 
 import com.dumbhippo.persistence.ValidationException;
 import com.dumbhippo.persistence.WantsIn;
+import com.dumbhippo.server.views.WantsInView;
 
 @Local
 public interface WantsInSystem {

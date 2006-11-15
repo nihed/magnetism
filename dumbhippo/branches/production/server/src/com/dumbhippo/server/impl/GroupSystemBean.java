@@ -11,7 +11,6 @@ import java.util.Set;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
-import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
@@ -22,12 +21,12 @@ import org.apache.lucene.queryParser.QueryParser;
 import org.apache.lucene.queryParser.QueryParser.Operator;
 import org.apache.lucene.search.Hits;
 import org.hibernate.lucene.DocumentBuilder;
-import org.jboss.annotation.IgnoreDependency;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.TypeUtils;
 import com.dumbhippo.identity20.Guid;
+import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.live.GroupEvent;
 import com.dumbhippo.live.LiveState;
 import com.dumbhippo.persistence.Account;
@@ -43,21 +42,24 @@ import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.Validators;
+import com.dumbhippo.search.SearchSystem;
 import com.dumbhippo.server.GroupIndexer;
 import com.dumbhippo.server.GroupSearchResult;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.GroupSystemRemote;
-import com.dumbhippo.server.GroupView;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.NotFoundException;
+import com.dumbhippo.server.Notifier;
 import com.dumbhippo.server.Pageable;
-import com.dumbhippo.server.PersonView;
-import com.dumbhippo.server.PersonViewExtra;
 import com.dumbhippo.server.PersonViewer;
-import com.dumbhippo.server.Stacker;
-import com.dumbhippo.server.SystemViewpoint;
-import com.dumbhippo.server.UserViewpoint;
-import com.dumbhippo.server.Viewpoint;
+import com.dumbhippo.server.util.EJBUtil;
+import com.dumbhippo.server.views.ChatMessageView;
+import com.dumbhippo.server.views.GroupView;
+import com.dumbhippo.server.views.PersonView;
+import com.dumbhippo.server.views.PersonViewExtra;
+import com.dumbhippo.server.views.SystemViewpoint;
+import com.dumbhippo.server.views.UserViewpoint;
+import com.dumbhippo.server.views.Viewpoint;
 
 @Stateless
 public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
@@ -75,8 +77,10 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 	private PersonViewer personViewer;
 	
 	@EJB
-	@IgnoreDependency
-	private Stacker stacker;
+	private SearchSystem searchSystem;
+	
+	@EJB
+	private Notifier notifier;
 	
 	public Group createGroup(User creator, String name, GroupAccess access, String description) {
 		if (creator == null)
@@ -93,8 +97,10 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		
 		// Fix up the inverse side of the mapping
 		g.getMembers().add(groupMember);
-
-		GroupIndexer.getInstance().indexAfterTransaction(g.getGuid());
+		
+		notifier.onGroupMemberCreated(groupMember, System.currentTimeMillis());
+		
+		searchSystem.indexGroup(g, false);
 		
 		return g;
 	}
@@ -161,10 +167,11 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 			}
 			logger.debug("Adding new account member to group {} for account {}", group, account);
 			accountMember = new GroupMember(group, account, status);
-			if (!adders.isEmpty())
+			if (adders != null && !adders.isEmpty())
 				accountMember.setAdders(adders);
 			em.persist(accountMember);
 			group.getMembers().add(accountMember);
+			notifier.onGroupMemberCreated(accountMember, System.currentTimeMillis());
 		}
 		
 		return accountMember;
@@ -258,6 +265,8 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		
 		boolean adderCanAdd = canAddMembers(adder, group);
 		
+		long now = System.currentTimeMillis();
+		
 		MembershipStatus newStatus;
 		if (selfAdd)
 			newStatus = adderCanAdd ? MembershipStatus.ACTIVE : MembershipStatus.FOLLOWER;
@@ -319,12 +328,14 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 			em.persist(groupMember);
 			group.getMembers().add(groupMember);
 			em.persist(group);
+			
+			notifier.onGroupMemberCreated(groupMember, now);
 		}
 		
-		stacker.stackGroupMember(groupMember, System.currentTimeMillis());
+		notifier.onGroupMemberStatusChanged(groupMember, now);
 		
-        LiveState.getInstance().queuePostTransactionUpdate(em, new GroupEvent(group.getGuid(), groupMember.getMember().getGuid(),
-        		GroupEvent.Type.MEMBERSHIP_CHANGE));
+        LiveState.getInstance().queueUpdate(new GroupEvent(group.getGuid(), groupMember.getMember().getGuid(),
+        		GroupEvent.Detail.MEMBERS_CHANGED));
 	}
 	
 	public void removeMember(User remover, Group group, Person person) {		
@@ -351,9 +362,9 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 			if (groupMember.getStatus().ordinal() > MembershipStatus.REMOVED.ordinal()) {
 				groupMember.setStatus(MembershipStatus.REMOVED);
 				
-				stacker.stackGroupMember(groupMember, System.currentTimeMillis());
-		        LiveState.getInstance().queuePostTransactionUpdate(em, new GroupEvent(group.getGuid(),
-		        		groupMember.getMember().getGuid(), GroupEvent.Type.MEMBERSHIP_CHANGE));
+				notifier.onGroupMemberStatusChanged(groupMember, System.currentTimeMillis());
+		        LiveState.getInstance().queueUpdate(new GroupEvent(group.getGuid(),
+		        		groupMember.getMember().getGuid(), GroupEvent.Detail.MEMBERS_CHANGED));
 			} else if (groupMember.getStatus().ordinal() < MembershipStatus.REMOVED.ordinal()) {
 				// To go from FOLLOWER or INVITED_TO_FOLLOW to removed, we delete the GroupMember
 				group.getMembers().remove(groupMember);
@@ -361,8 +372,8 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 				
 				// we don't stackGroupMember here, we only care about transitions to REMOVED for timestamp 
 				// updating (right now anyway)
-				LiveState.getInstance().queuePostTransactionUpdate(em, new GroupEvent(group.getGuid(),
-						groupMember.getMember().getGuid(), GroupEvent.Type.MEMBERSHIP_CHANGE));
+				LiveState.getInstance().queueUpdate(new GroupEvent(group.getGuid(),
+						groupMember.getMember().getGuid(), GroupEvent.Detail.MEMBERS_CHANGED));
 			} else {
 				// status == REMOVED, nothing to do
 			}
@@ -454,6 +465,11 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 			return Collections.emptySet();
 		
 		Set<PersonView> result = new HashSet<PersonView>();
+		if (viewpoint instanceof UserViewpoint) {
+			UserViewpoint userViewpoint = (UserViewpoint)viewpoint;
+		    userViewpoint.cacheAllFriendOfStatus(identitySpider.getUsersWhoHaveUserAsContact(viewpoint, userViewpoint.getViewer()));
+		}
+		logger.debug("will generate person views for {} resources", resourceMembers.size());
 		for (Resource r : resourceMembers) {
 			result.add(personViewer.getPersonView(viewpoint, r, PersonViewExtra.PRIMARY_RESOURCE, extras)); 
 		}
@@ -485,31 +501,29 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		return getUserMembers(SystemViewpoint.getInstance(), group, MembershipStatus.ACTIVE);
 	}
 	
-	// The selection of Group is only needed for the CAN_SEE checks
-	private static final String GET_GROUP_MEMBER_QUERY = 
-		"SELECT gm FROM GroupMember gm, AccountClaim ac, Group g " +
-        "WHERE gm.group = :group AND ac.resource = gm.member AND ac.owner = :member AND g = :group";
-	
-	public GroupMember getGroupMember(Viewpoint viewpoint, Group group, User member) throws NotFoundException {
-		Query query;
-		
-		if (viewpoint.isOfUser(member) || viewpoint instanceof SystemViewpoint) {
-			query = em.createQuery(GET_GROUP_MEMBER_QUERY);
+	private MembershipStatus getViewerStatus(Viewpoint viewpoint, Group group) {
+		if (viewpoint instanceof SystemViewpoint) {
+			// System viewpoint as the same visibility as a member
+			return MembershipStatus.ACTIVE;
 		} else if (viewpoint instanceof UserViewpoint) {
 			User viewer = ((UserViewpoint)viewpoint).getViewer();
-			query = em.createQuery(GET_GROUP_MEMBER_QUERY + " AND " + CAN_SEE);
-			query.setParameter("viewer", viewer);
-		} else  {
-			query = em.createQuery(GET_GROUP_MEMBER_QUERY + " AND " + CAN_SEE_ANONYMOUS);			
+			try {
+				GroupMember viewerGroupMember = getGroupMember(group, viewer);
+				return viewerGroupMember.getStatus();
+			} catch (NotFoundException e) {
+				return MembershipStatus.NONMEMBER;
+			}
+		} else {			
+			return MembershipStatus.NONMEMBER;
 		}
-		query.setParameter("group", group);
-		query.setParameter("member", member);
-		
-		try {
-			return (GroupMember)query.getSingleResult();
-		} catch (NoResultException e) {
-			throw new NotFoundException("GroupMember for resource " + member + " not found", e);
-		}
+	}
+	
+	public GroupMember getGroupMember(Viewpoint viewpoint, Group group, User member) throws NotFoundException {
+		if (group.getAccess() == GroupAccess.SECRET &&
+			!getViewerStatus(viewpoint, group).getCanSeeSecretMembers())
+			throw new NotFoundException("GroupMember for user " + member + " not found");
+			
+		return getGroupMember(group, member);
 	}
 	
 	// The selection of Group is only needed for the CAN_SEE checks
@@ -517,19 +531,20 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		"SELECT gm.group FROM GroupMember gm, AccountClaim ac, Group g " +
 		"WHERE ac.resource = gm.member AND ac.owner = :member AND g = gm.group ";
 
-	public Set<Group> findRawGroups(Viewpoint viewpoint, User member, MembershipStatus status) {
+	private Set<Group> findRawGroups(Viewpoint viewpoint, User member, MembershipStatus status, boolean privateOnly) {
 		Query q;
 		
 		String statusClause = getStatusClause(status);
+		String privacyClause = privateOnly ? " AND g.access = " + GroupAccess.SECRET.ordinal() : "";
 		
 		if (viewpoint.isOfUser(member) || viewpoint instanceof SystemViewpoint) {
 			// Special case this for effiency
-			q = em.createQuery(FIND_RAW_GROUPS_QUERY + statusClause); 
+			q = em.createQuery(FIND_RAW_GROUPS_QUERY + statusClause + privacyClause); 
 		} else if (viewpoint instanceof UserViewpoint) {
-			q = em.createQuery(FIND_RAW_GROUPS_QUERY + " AND " + CAN_SEE + statusClause);
+			q = em.createQuery(FIND_RAW_GROUPS_QUERY + " AND " + CAN_SEE + statusClause + privacyClause);
 			q.setParameter("viewer", ((UserViewpoint)viewpoint).getViewer());			
 		} else {
-			q = em.createQuery(FIND_RAW_GROUPS_QUERY + " AND " + CAN_SEE_ANONYMOUS + statusClause);
+			q = em.createQuery(FIND_RAW_GROUPS_QUERY + " AND " + CAN_SEE_ANONYMOUS + statusClause + privacyClause);
 		}
 		q.setParameter("member", member);
 		Set<Group> ret = new HashSet<Group>();
@@ -538,11 +553,17 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		}
 		return ret;
 	}
+	public Set<Group> findRawGroups(Viewpoint viewpoint, User member, MembershipStatus status) {
+		return findRawGroups(viewpoint, member, status, false);
+	}
 	
 	public Set<Group> findRawGroups(Viewpoint viewpoint, User member) {
-		return findRawGroups(viewpoint, member, null);
+		return findRawGroups(viewpoint, member, null, false);
 	}
 
+	public Set<Group> findRawPrivateGroups(Viewpoint viewpoint, User member) {
+		return findRawGroups(viewpoint, member, null, true);
+	}
  
 	public void fixupGroupMemberships(User user) {
 		Set<Group> groups = findRawGroups(SystemViewpoint.getInstance(), user);
@@ -642,9 +663,12 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 			groups.add(new GroupView((Group) o, null, null));
 		}
 		pageable.setResults(groups);
-		
-		q = em.createQuery(COUNT_PUBLIC_GROUPS_QUERY + CAN_SEE_ANONYMOUS);
-		pageable.setTotalCount(((Number) q.getSingleResult()).intValue());
+		pageable.setTotalCount(getPublicGroupCount());
+	}
+	
+	public int getPublicGroupCount() {
+		Query q = em.createQuery(COUNT_PUBLIC_GROUPS_QUERY + CAN_SEE_ANONYMOUS);
+		return ((Number) q.getSingleResult()).intValue();
 	}
 	
 	public void incrementGroupVersion(final Group group) {
@@ -660,33 +684,27 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		group.setVersion(group.getVersion() + 1);
 	}
 	
-	// The selection of Group is only needed for the CAN_SEE checks
-	private static final String LOOKUP_GROUP_QUERY = "SELECT g FROM Group g where g.id = :groupId";
-
 	// some usages of this don't necessarily trust the groupId to be valid, keep that in mind
 	public Group lookupGroupById(Viewpoint viewpoint, String groupId) throws NotFoundException {
-		Query query;
-		
-		if (viewpoint instanceof SystemViewpoint) {
-			query = em.createQuery(LOOKUP_GROUP_QUERY);
-		} else if (viewpoint instanceof UserViewpoint) {
-			User viewer = ((UserViewpoint)viewpoint).getViewer();
-			query = em.createQuery(LOOKUP_GROUP_QUERY + " AND " + CAN_SEE_GROUP);
-			query.setParameter("viewer", viewer);
-		} else {
-			query = em.createQuery(LOOKUP_GROUP_QUERY + " AND " + CAN_SEE_ANONYMOUS);
-		}
-		query.setParameter("groupId", groupId);
+		Guid guid;
 		
 		try {
-			return (Group)query.getSingleResult();
-		} catch (NoResultException e) {
-			throw new NotFoundException("No such group with ID " + groupId + " for the given viewpoint", e);
+			guid = new Guid(groupId);
+		} catch (ParseException e) {
+			throw new NotFoundException("Invalid group ID " + groupId);
 		}
+
+		return lookupGroupById(viewpoint, guid);
 	}
 	
 	public Group lookupGroupById(Viewpoint viewpoint, Guid guid) throws NotFoundException {
-		return lookupGroupById(viewpoint, guid.toString());
+		Group group = EJBUtil.lookupGuid(em, Group.class, guid);
+		
+		if (group.getAccess() == GroupAccess.SECRET &&
+			!getViewerStatus(viewpoint, group).getCanSeeSecretGroup())
+			throw new NotFoundException("No such group with ID " + guid + " for the given viewpoint");
+		
+		return group;
 	}
 	
 	private static final String CONTACT_IS_MEMBER =
@@ -718,12 +736,17 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		return result;
 	}	
 	
-	private static final String GROUP_MESSAGE_QUERY = "SELECT pm from GroupMessage pm WHERE pm.group = :group";
-	private static final String GROUP_MESSAGE_ORDER = " ORDER BY pm.timestamp";
+	// We order and select on pm.id, though in rare cases the order by pm.id and by pm.timestamp
+	// might be different if two messages arrive almost at once. In this case, the timestamps will
+	// likely be within a second of each other and its much cheaper this way.
+	private static final String GROUP_MESSAGE_QUERY = "SELECT pm from GroupMessage pm WHERE pm.group = :group ";
+	private static final String GROUP_MESSAGE_SELECT = " AND pm.id >= :lastSeenSerial ";
+	private static final String GROUP_MESSAGE_ORDER = " ORDER BY pm.id";
 	
-	public List<GroupMessage> getGroupMessages(Group group) {
-		List<?> messages =  em.createQuery(GROUP_MESSAGE_QUERY + GROUP_MESSAGE_ORDER)
+	public List<GroupMessage> getGroupMessages(Group group, long lastSeenSerial) {
+		List<?> messages = em.createQuery(GROUP_MESSAGE_QUERY + GROUP_MESSAGE_SELECT + GROUP_MESSAGE_ORDER)
 		.setParameter("group", group)
+		.setParameter("lastSeenSerial", lastSeenSerial)
 		.getResultList();
 		
 		return TypeUtils.castList(GroupMessage.class, messages);
@@ -737,19 +760,20 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		
 		return TypeUtils.castList(GroupMessage.class, messages);		
 	}
+
+	public List<ChatMessageView> viewGroupMessages(List<GroupMessage> messages, Viewpoint viewpoint) {
+		List<ChatMessageView> viewedMsgs = new ArrayList<ChatMessageView>();
+		for (GroupMessage m : messages) {
+			viewedMsgs.add(new ChatMessageView(m, personViewer.getPersonView(viewpoint, m.getFromUser())));
+		}
+		return viewedMsgs;
+	}	
 	
-	public void addGroupMessage(Group group, User fromUser, String text, Date timestamp, int serial) {
-		// we use serial = -1 in other places in the system to designate a message that contains
-		// the group description, but we never add this type of message to the database
-		if (serial < 0) 
-			throw new IllegalArgumentException("Negative serial");
-		
-		GroupMessage groupMessage = new GroupMessage(group, fromUser, text, timestamp, serial);
+	public void addGroupMessage(Group group, User fromUser, String text, Date timestamp) {
+		GroupMessage groupMessage = new GroupMessage(group, fromUser, text, timestamp);
 		em.persist(groupMessage);
 
-		// this assumes Group has been committed in a previous transaction, which should 
-		// be safe since nobody can chat about a group until it's created
-		stacker.stackGroupChat(group.getGuid(), timestamp.getTime());
+		notifier.onGroupMessageCreated(groupMessage);
 	}
 
 	public boolean canEditGroup(UserViewpoint viewpoint, Group group) {
@@ -831,7 +855,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 	}
 
 	public GroupSearchResult searchGroups(Viewpoint viewpoint, String queryString) {
-		final String[] fields = { "Name", "Description" };
+		final String[] fields = { "name", "description" };
 		QueryParser queryParser = new MultiFieldQueryParser(fields, GroupIndexer.getInstance().createAnalyzer());
 		queryParser.setDefaultOperator(Operator.AND);
 		org.apache.lucene.search.Query query;

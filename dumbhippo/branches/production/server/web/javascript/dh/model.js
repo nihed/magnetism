@@ -36,9 +36,108 @@ dh.model.trackFromXmlNode = function(element) {
 	return new dh.model.Track(image, title, artist, album, stillPlaying == "true");
 }
 
-dh.model.Message = function(text, fromId, serial, timestamp) {
+dh.model.UpdateItem = function(title, link, text, timestamp, photos) {
+	this.title = title;
+	this.link = link;
+	this.text = text;
+	this.timestamp = timestamp;
+	this.photos = photos;
+}
+
+dh.model.updateItemFromXmlNode = function(element) {		
+    if (element.nodeName != "updateItem")
+        dojo.raise("updateItem node expected");		
+			
+	var title = null;
+	var link = null;
+	var text = null;
+	var timestamp = null;
+	var photos = [];
+	    			
+	itemChildNodes = element.childNodes;	
+		
+	var updateTitleNode = itemChildNodes.item(0);
+	if (updateTitleNode.nodeName != "updateTitle")
+		dojo.raise("updateTitle node expected");
+	title = dojo.dom.textContent(updateTitleNode);
+
+	var updateLinkNode = itemChildNodes.item(1);
+	if (updateLinkNode.nodeName != "updateLink")
+		dojo.raise("updateLink node expected");
+	link = dojo.dom.textContent(updateLinkNode);
+				
+	var updateTextNode = itemChildNodes.item(2);
+	if (updateTextNode.nodeName != "updateText")
+		dojo.raise("updateText node expected");
+	text = dojo.dom.textContent(updateTextNode);
+	
+	// "updateTimestamp" is optional
+	if (itemChildNodes.length > 3) {
+	    var updateTimestampNode = itemChildNodes.item(3);
+	    if (updateTimestampNode.nodeName != "updateTimestamp")
+		    dojo.raise("updateTimestamp node expected");
+	    timestampString = dojo.dom.textContent(updateTimestampNode);	    	
+	    timestamp = parseInt(timestampString);
+	    if (timestamp == NaN)
+		    dojo.raise("failed to parse '" + timestampString + "' as an integer for a timestamp");
+	}
+	
+	if (itemChildNodes.length > 4) {
+	    var updatePhotosNode = itemChildNodes.item(4);
+	    if (updatePhotosNode.nodeName != "updatePhotos")
+		    dojo.raise("updatePhotos node expected");
+	    
+	    photoNodes = updatePhotosNode.childNodes;
+		var i;
+		for (i = 0; i < photoNodes.length; ++i) {
+			var photoNode = photoNodes.item(i);
+			var photo = dh.model.updatePhotoDataFromXmlNode(photoNode);
+			photos.push(photo);
+		}
+	    	    
+	}	    	    
+	
+	return new dh.model.UpdateItem(title, link, text, timestamp, photos);
+}
+
+dh.model.PhotoData = function(link, source, caption) {
+	this.link = link;
+	this.source = source;
+	this.caption = caption;
+}
+
+dh.model.updatePhotoDataFromXmlNode = function(element) {		
+    if (element.nodeName != "photo")
+        dojo.raise("photo node expected");		
+			
+	var link = null;
+	var source = null;
+	var caption = null;
+	    			
+	photoChildNodes = element.childNodes;	
+		
+	var linkNode = photoChildNodes.item(0);
+	if (linkNode.nodeName != "photoLink")
+		dojo.raise("photoLink node expected");
+	link = dojo.dom.textContent(linkNode);
+
+	var sourceNode = photoChildNodes.item(1);
+	if (sourceNode.nodeName != "photoSource")
+		dojo.raise("photoSource node expected");
+	source = dojo.dom.textContent(sourceNode);
+	
+    var captionNode = photoChildNodes.item(2);
+	if (captionNode.nodeName != "photoCaption")
+		dojo.raise("photoCaption node expected");
+	caption = dojo.dom.textContent(captionNode);
+	
+	return new dh.model.PhotoData(link, source, caption);
+}	
+	
+dh.model.Message = function(text, fromId, fromNickname, serial, timestamp) {
 	this.text = text;
 	this.fromId = fromId;
+	this.fromNickname = fromNickname;
 	this.serial = serial;
 	this.timestamp = timestamp;
 }
@@ -48,10 +147,11 @@ dh.model.messageFromXmlNode = function(element) {
 		dojo.raise("not a message element");
 	var text = dojo.dom.textContent(element);
 	var from = element.getAttribute("fromId");
+	var nick = element.getAttribute("fromNickname");
 	var serial = element.getAttribute("serial");	
 	var timestamp = element.getAttribute("timestamp");
 
-	return new dh.model.Message(text, from, parseInt(serial), parseInt(timestamp));
+	return new dh.model.Message(text, from, nick ,parseInt(serial), parseInt(timestamp));
 }
 
 dh.model.GuidPersistable = function(id, displayName) {

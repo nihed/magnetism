@@ -13,10 +13,11 @@ HippoIEWindow::HippoIEWindow(WCHAR *src, HippoIEWindowCallback *cb)
     cb_ = cb;
 
     setAnimate(true);
-    setWindowStyle(WS_OVERLAPPED | WS_MINIMIZEBOX | WS_SYSMENU);
+    setWindowStyle(WS_OVERLAPPED | WS_MINIMIZEBOX | WS_SYSMENU | WS_CAPTION);
     setClassName(CLASS_NAME);
     setTitle(L"Loading...");
     setURL(src);
+    setDefaultSize(600, 400);
 }
 
 HippoIEWindow::~HippoIEWindow()

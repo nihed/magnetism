@@ -45,6 +45,9 @@
 #define IDI_ICON1                       167
 #define IDI_LINKSWARM                   167
 #define IDI_ICON2                       169
+#define IDI_NOTIFICATION                170
+#define IDI_ICON4                       171
+#define IDI_NOTIFICATION_DISCONNECTED   171
 #define IDI_DUMBHIPPO_BLANK             207
 #define IDC_USERNAME                    1000
 #define IDC_PASSWORD                    1001
@@ -68,7 +71,7 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NO_MFC                     1
-#define _APS_NEXT_RESOURCE_VALUE        170
+#define _APS_NEXT_RESOURCE_VALUE        172
 #define _APS_NEXT_COMMAND_VALUE         32790
 #define _APS_NEXT_CONTROL_VALUE         1012
 #define _APS_NEXT_SYMED_VALUE           124

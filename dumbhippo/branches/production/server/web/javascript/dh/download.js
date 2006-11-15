@@ -1,20 +1,49 @@
 dojo.provide("dh.download")
 
-dojo.require("dojo.render")
 dojo.require("dojo.html")
 dojo.require("dh.server")
+
+dh.download.getImage = function(node) {
+	if (node.nodeName.toLowerCase() == "img")
+		return node;
+	for (var i = 0; i < node.childNodes.length; i++) {
+		var child = node.childNodes.item(i);
+		if (child.nodeName.toLowerCase() == "img")
+			return child;
+	}
+	return null;
+}
 
 dh.download.updateDownload = function() {
 	var acceptedTerms = document.getElementById("dhAcceptTerms").checked
 
 	var className = acceptedTerms ? "dh-download-product" : "dh-download-product dh-download-product-disabled"
-	document.getElementById("dhDownloadProduct").className = className
+	var downloadNode = document.getElementById("dhDownloadProduct");
 	
+	// it's null when we don't have a download to offer
+	if (downloadNode) {
+		downloadNode.className = className;
+	
+		var img = dh.download.getImage(downloadNode);
+		if (img) {
+			if (acceptedTerms)
+				img.src = dhImageRoot3 + "download_now_button.gif";
+			else
+				img.src = dhImageRoot3 + "download_now_disabled.gif";
+		}
+	}
+	
+	// this can return a link with either text or an image in it
 	var skipNode = document.getElementById('dhSkipDownload');
-	if (acceptedTerms)
+	var skipNodeImg = dh.download.getImage(skipNode);
+	
+	if (acceptedTerms) {
+		skipNodeImg.src = dhImageRoot3 + "no_thanks_button.gif";
 		dojo.html.removeClass(skipNode, "dh-download-product-disabled");
-	else
+	} else {
+		skipNodeImg.src = dhImageRoot3 + "no_thanks_disabled.gif";
 		dojo.html.addClass(skipNode, "dh-download-product-disabled");	
+	}
 }
 
 dh.download.doDownload = function(url) {
@@ -22,7 +51,7 @@ dh.download.doDownload = function(url) {
 
 	if (dh.download.needTermsOfUse && !document.getElementById("dhAcceptTerms").checked) {
 		document.getElementById("dhAcceptTermsBox").className = "dh-accept-terms-box-warning"
-		return
+		return;
 	}
 
     // they can start downloading while the terms of use are being accepted
@@ -46,7 +75,7 @@ dh.download.doDownload = function(url) {
 
 dh.download.init = function() {
 	if (dh.download.needTermsOfUse) {
-		document.getElementById("dhAcceptTerms").checked = false
-		dh.download.updateDownload()
+		document.getElementById("dhAcceptTerms").checked = false;
+		dh.download.updateDownload();
 	}
 }

@@ -168,7 +168,7 @@ public class SchemaUpdater {
 			// number of bytes indexed must be less than 1000 for MySQL, and
 			// with UTF-8 encoding, varchar(255) is treated as 763 bytes. Plus
 			// it's just silly to index that much in most cases.
-			if (columnMeta.getTypeCode() == Types.VARCHAR)
+			if (columnMeta.getTypeCode() == Types.VARCHAR && columnMeta.getColumnSize() > 20)
 				columnString.append("(20)");
 		}
 		
@@ -200,11 +200,11 @@ public class SchemaUpdater {
 		String name = tableAnnotation.appliesTo();
 		TableMetadata tableMeta = meta.getTableMetadata(name , "dumbhippo", null);
 		if (tableMeta == null) {
-			logger.warn("Couldn't find metadata for table {}", name);
-		}
-		
-		for (Index indexAnnotation : tableAnnotation.indexes()) {
-			updateIndex(tableMeta, indexAnnotation);
+			logger.warn("Couldn't find metadata for table {}, it probably doesn't exist yet", name);
+		} else {
+			for (Index indexAnnotation : tableAnnotation.indexes()) {
+				updateIndex(tableMeta, indexAnnotation);
+			}
 		}
 	}
 	

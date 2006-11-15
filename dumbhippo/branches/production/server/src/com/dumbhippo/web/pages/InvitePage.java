@@ -1,7 +1,7 @@
 package com.dumbhippo.web.pages;
 
 import com.dumbhippo.persistence.Resource;
-import com.dumbhippo.server.InvitationView;
+import com.dumbhippo.server.views.InvitationView;
 
 /**
  * This class is currently not used, but it contains a 

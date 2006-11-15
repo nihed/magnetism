@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project basedir="." default="all" name="imbot">
-	<property name="hippo.server.path" value="${basedir}/../server"/>
-	<property name="jboss.path" value="/opt/jboss"/>
+        <import file="${basedir}/../common.xml"/>
+
 	<property name="target" value="target" />
 	<property name="build" value="${target}/classes" />
 	<property name="build.tests" value="${target}/test-classes" />
@@ -9,15 +9,15 @@
 	<property name="target.lib" value="${target}/lib" />
 	<property name="src.java" value="src/java" />
 	<property name="src.tests.java" value="src/test/java" />
-	<fileset dir="${jboss.path}/client" id="dependency.jars.jboss">
+	<fileset dir="${dumbhippo.global.jboss.root}/client" id="dependency.jars.jboss">
 		<include name="jbossall-client.jar"/>
 		<include name="jbossmq-client.jar"/>
 		<include name="jboss-j2ee.jar"/>
 		<include name="log4j.jar"/>
 	</fileset>
-	<fileset dir="${hippo.server.path}" id="dependency.jars.server">
-		<include name="target/classes/dumbhippo-client.jar"/>
-		<include name="lib/slf4j-*.jar"/>
+	<fileset dir="${dumbhippo.global.trunkdir}" id="dependency.jars.server">
+		<include name="server/target/classes/dumbhippo-client.jar"/>
+		<include name="lib/server/slf4j-*.jar"/>
 	</fileset>
     <path id="project.classpath">
         <pathelement location="${build}"/>

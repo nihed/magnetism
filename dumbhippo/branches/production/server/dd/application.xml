@@ -15,7 +15,10 @@
     	<java>smackx-svn-local-build-2005-09-30.jar</java>
     </module>
     <module>
-    	<java>commons-fileupload-1.0.jar</java>
+    	<java>commons-io-1.2.jar</java>
+    </module>    
+    <module>
+    	<java>commons-fileupload-1.1.1.jar</java>
     </module>    
     <module>
     	<java>slf4j-log4j12.jar</java>
@@ -33,6 +36,9 @@
     	<java>tagsoup-1.0.jar</java>
     </module>
     <module>
+    	<java>ICOReader-1.04.jar</java>
+    </module>
+    <module>
         <java>dumbhippo-base.jar</java>
     </module>
     <module>
@@ -41,11 +47,12 @@
     <module>
         <ejb>dumbhippo.ejb3</ejb>
     </module>
+    <!--  war can be separate, see jboss-web.xml, comment the below out if so -->
+    <!-- empty context-root means to deploy at / -->
     <module>
         <web>
             <web-uri>dumbhippo.war</web-uri>
-            <!-- empty context-root means to deploy at / -->
-            <context-root></context-root>
+			<context-root></context-root>
         </web>
     </module>
 </application>
