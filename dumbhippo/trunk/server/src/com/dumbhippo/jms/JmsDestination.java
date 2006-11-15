@@ -1,6 +1,7 @@
 package com.dumbhippo.jms;
 
 import javax.jms.Destination;
+import javax.jms.ExceptionListener;
 import javax.jms.InvalidDestinationException;
 import javax.jms.JMSException;
 import javax.naming.Context;
@@ -16,7 +17,7 @@ import com.dumbhippo.server.util.EJBUtil;
 /**
  * A base class for JmsProducer and JmsConsumer which handles connection and session management. 
  */
-public class JmsDestination {
+public class JmsDestination implements ExceptionListener {
 	// State of the connection
 	private enum State {
 		CLOSED,   // Initial or cleanly closed
@@ -62,9 +63,9 @@ public class JmsDestination {
 
 		try {
 			if (connectionType.isTransacted())
-				sessionFactory = new TxJmsSessionFactory(context);
+				sessionFactory = new TxJmsSessionFactory(context, this);
 			else
-				sessionFactory = new NonTxJmsSessionFactory(context);
+				sessionFactory = new NonTxJmsSessionFactory(context, this);
 		} catch (NamingException e) {
 			throw new JMSException("Can't create look up connection factory");
 		}
@@ -202,5 +203,10 @@ public class JmsDestination {
 				logger.error("Error marking transaction rollback-only", e);
 			}
 		}
+	}
+
+	public void onException(JMSException e) {
+		logger.error("Exception listener caught exception", e);
+		closeOnFailure();
 	}
 }
