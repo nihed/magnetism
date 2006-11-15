@@ -14,13 +14,10 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
-import org.apache.lucene.document.Document;
-import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.queryParser.MultiFieldQueryParser;
 import org.apache.lucene.queryParser.QueryParser;
 import org.apache.lucene.queryParser.QueryParser.Operator;
 import org.apache.lucene.search.Hits;
-import org.hibernate.lucene.DocumentBuilder;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
@@ -834,26 +831,6 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		addMember(viewpoint.getViewer(), group, viewpoint.getViewer());
 	}
 
-	public void indexGroups(IndexWriter writer, DocumentBuilder<Group> builder, List<Object> ids) throws IOException {
-		for (Object o : ids) {
-			Guid guid = (Guid)o;
-			Group g = em.find(Group.class, guid.toString());
-			Document document = builder.getDocument(g, g.getId());
-			writer.addDocument(document);
-			logger.debug("Indexed group with guid {}", guid);
-		}
-	}
-
-	public void indexAllGroups(IndexWriter writer, DocumentBuilder<Group> builder) throws IOException {
-		List<?> l = em.createQuery("SELECT g FROM Group g").getResultList();
-		List<Group> groups = TypeUtils.castList(Group.class, l);
-		
-		for (Group g : groups) {
-			Document document = builder.getDocument(g, g.getId());
-			writer.addDocument(document);
-		}
-	}
-
 	public GroupSearchResult searchGroups(Viewpoint viewpoint, String queryString) {
 		final String[] fields = { "name", "description" };
 		QueryParser queryParser = new MultiFieldQueryParser(fields, GroupIndexer.getInstance().createAnalyzer());
@@ -878,5 +855,9 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		// object to the method rather than the proxy; getGroups() can make many, 
 		// many calls back against the GroupSystem
 		return searchResult.getGroups(this, viewpoint, start, count);
+	}
+
+	public List<Guid> getAllGroupIds() {
+		return TypeUtils.castList(Guid.class, em.createQuery("SELECT new com.dumbhippo.identity20.Guid(g.id) FROM Group g").getResultList());		
 	}
 }

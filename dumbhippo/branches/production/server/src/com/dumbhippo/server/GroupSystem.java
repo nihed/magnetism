@@ -208,10 +208,6 @@ public interface GroupSystem {
 	 */
 	public void acceptInvitation(UserViewpoint userView, Group group);
 
-	public void indexGroups(IndexWriter writer, DocumentBuilder<Group> builder, List<Object> ids) throws IOException;
-
-	public void indexAllGroups(IndexWriter writer, DocumentBuilder<Group> builder) throws IOException;
-	
 	/**
 	 * Search the database of groups using Lucene.
 	 * 
@@ -238,4 +234,11 @@ public interface GroupSystem {
 	 *        are available. 
 	 */
 	public List<GroupView> getGroupSearchGroups(Viewpoint viewpoint, GroupSearchResult searchResult, int start, int count);
+
+	/**
+	 * Return a list of all group guids.
+	 * 
+	 * @return list of group guids
+	 */
+	public List<Guid> getAllGroupIds();
 }

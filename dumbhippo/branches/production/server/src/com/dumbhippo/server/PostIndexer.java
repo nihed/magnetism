@@ -4,14 +4,14 @@ import java.io.IOException;
 import java.util.List;
 
 import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.Term;
 
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.server.util.EJBUtil;
+import com.dumbhippo.server.views.SystemViewpoint;
 
-public class PostIndexer extends Indexer<Post> {
+public class PostIndexer extends GuidPersistableIndexer<Post> {
 	static PostIndexer instance = new PostIndexer();
 	
 	public static PostIndexer getInstance() {
@@ -26,16 +26,6 @@ public class PostIndexer extends Indexer<Post> {
 	protected String getIndexName() {
 		return "Posts";
 	}
-	
-	@Override
-	protected void doIndex(IndexWriter writer, List<Object> ids) throws IOException {
-		EJBUtil.defaultLookup(PostingBoard.class).indexPosts(writer, getBuilder(), ids);
-	}
-	
-	@Override
-	protected void doIndexAll(IndexWriter writer) throws IOException {
-		EJBUtil.defaultLookup(PostingBoard.class).indexAllPosts(writer, getBuilder());
-	}
 
 	// We never actually reindex posts currently, implement just for completeness
 	@Override
@@ -44,6 +34,25 @@ public class PostIndexer extends Indexer<Post> {
 			Guid guid = (Guid)o;
 			Term term = new Term("id", guid.toString());
 			reader.deleteDocuments(term);
+		}
+	}
+
+	@Override
+	protected List<Guid> loadAllIds() {
+		return EJBUtil.defaultLookup(PostingBoard.class).getAllPostIds();
+	}
+
+	@Override
+	protected Post loadObject(Guid guid) {
+		try {
+			PostingBoard board = EJBUtil.defaultLookup(PostingBoard.class);
+			Post post = board.loadRawPost(SystemViewpoint.getInstance(), guid);
+			// Filter group notifications from search results
+			if (board.postIsGroupNotification(post))
+				return null;
+			return post;
+		} catch (NotFoundException e) {
+			throw new RuntimeException(e);
 		}
 	}	
 }
