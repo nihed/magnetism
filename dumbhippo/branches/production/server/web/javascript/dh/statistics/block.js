@@ -113,13 +113,18 @@ dojo.lang.extend(dh.statistics.block.Block,
 		return this._table;
 	},
 
+	setRange: function(minT, maxT) {
+		this._chart.setRange(minT, maxT);
+		this._updateAxes();
+	},
+
 	setSet: function(set) {
 		this._set = set;
 		this._fillColumnSelect();
 		this._fillServerSelect();
 		this.onSpecificationChanged();
 	},
-
+	
 	getSpecification: function() {
 		if (!this._set)
 			return null;
@@ -191,11 +196,13 @@ dojo.lang.extend(dh.statistics.block.Block,
 	
 	_updateAxes: function() {
 		var dataset = this._chart.dataset;
+		var minT = this._chart.minT != null ? this._chart.minT : dataset.minT;
+		var maxT = this._chart.maxT != null ? this._chart.maxT : dataset.maxT;
 	    
-	    var startTime = dataset.minT == 0 ? "" : dh.util.timeString(dataset.minT);
+	    var startTime = minT == 0 ? "" : dh.util.timeString(minT);
 	    this._setText(this._startTimeDiv, startTime);
 	    
-		var endTime = (dataset.minT == dataset.maxT) ? "" : dh.util.timeString(dataset.maxT);
+		var endTime = (minT == maxT) ? "" : dh.util.timeString(maxT);
 		this._setText(this._endTimeDiv, endTime);
 		
 	    // this will display 0 next to the origin point if there is no data in the dataset
