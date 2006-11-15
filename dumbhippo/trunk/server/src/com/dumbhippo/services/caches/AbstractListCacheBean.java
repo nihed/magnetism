@@ -150,6 +150,10 @@ public abstract class AbstractListCacheBean<KeyType,ResultType,EntityType extend
 		for (EntityType d : old) {
 			em.remove(d);
 		}
+
+		// This is perhaps superstitious, but we do have an ordering constraint that we must 
+		// remove the old items then insert the new, or it will cause a constraint violation
+		em.flush();
 		
 		// save new results
 		if (newItems.isEmpty()) {

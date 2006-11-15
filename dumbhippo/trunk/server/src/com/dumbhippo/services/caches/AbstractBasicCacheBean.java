@@ -126,14 +126,17 @@ public abstract class AbstractBasicCacheBean<KeyType,ResultType,EntityType exten
 			} else {
 				e = entityFromResult(key, data);
 			}
+			// the setLastUpdated has to be before the persist() since lastUpdated isn't nullable,
+			// or hibernate gets upset
+			e.setLastUpdated(now);
 			em.persist(e);
 		} else {
+			e.setLastUpdated(now);
 			// don't ever save a negative result once we have data at some point
 			if (data != null) {
 				updateEntityFromResult(key, data, e);
 			}
 		}
-		e.setLastUpdated(now);
 		
 		logger.debug("Saved new cached item under {}: {}", 
 			     key, e);
