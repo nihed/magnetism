@@ -16,6 +16,7 @@ import org.jboss.cache.eviction.EvictionQueue;
 import org.jboss.mx.util.MBeanProxyExt;
 import org.jboss.mx.util.MBeanServerLocator;
 
+import com.dumbhippo.logging.CountingAppender;
 import com.dumbhippo.server.impl.MessengerGlueBean;
 
 /**
@@ -129,5 +130,21 @@ public class ServerStatistics implements StatisticsSource {
 		EvictionQueue queue = policy.getEvictionAlgorithm().getEvictionQueue();
 		
 		return queue.getNumberOfNodes();
+	}
+	
+	@Column(id="warnCount",
+	        name="Warning Count",
+	        units=ColumnUnit.COUNT,
+	        type=ColumnType.CUMULATIVE)
+	public long getWarnCount() {
+		return CountingAppender.getWarnCount();
+	}
+		
+	@Column(id="errorCount",
+	        name="Error Count",
+	        units=ColumnUnit.COUNT,
+	        type=ColumnType.CUMULATIVE)
+	public long getErrorCount() {
+		return CountingAppender.getErrorCount();
 	}
 }
