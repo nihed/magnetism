@@ -73,6 +73,7 @@ public class BlogBlockHandlerBean extends AbstractBlockHandlerBean<BlogBlockView
 	}
 	
 	public void onExternalAccountCreated(User user, ExternalAccount external) {
+		// Note that we create the block even if the new account is not loved-and-enabled
 		if (external.getAccountType() != ExternalAccountType.BLOG)
 			return;
 		stacker.createBlock(getKey(user, StackInclusion.ONLY_WHEN_VIEWED_BY_OTHERS));
@@ -80,8 +81,7 @@ public class BlogBlockHandlerBean extends AbstractBlockHandlerBean<BlogBlockView
 	}
 
 	public void onExternalAccountFeedEntry(User user, ExternalAccount external, FeedEntry entry, int entryPosition) {
-		// FIXME need to use external.hasLovedAndEnabledType(BLOG)
-		if (external.getAccountType() != ExternalAccountType.BLOG)
+		if (!external.hasLovedAndEnabledType(ExternalAccountType.BLOG))
 			return;
 		// entry.getDate().getTime() creates a timestamp that is too old, at least with blogspot
 		// so it is unreliable, because we update blocks based on timestamps
