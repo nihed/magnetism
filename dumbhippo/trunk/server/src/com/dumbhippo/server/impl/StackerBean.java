@@ -1393,6 +1393,16 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		runMigration(tasks);
 	}
 	
+	public void migrateUsers() {
+		List<Runnable> tasks = new ArrayList<Runnable>();
+
+		Query q = em.createQuery("SELECT user.id FROM User user");
+		for (String id : TypeUtils.castList(String.class, q.getResultList()))
+			tasks.add(new UserMigrationTask(id));
+		
+		runMigration(tasks);
+	}
+	
 	// migratePostParticipation should also be called to do a complete migration of post participation
 	public void migratePost(String postId) {
 		logger.debug("    migrating post {}", postId);

@@ -5,6 +5,7 @@ import javax.persistence.Entity;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 
+import com.dumbhippo.services.FlickrPhotos;
 import com.dumbhippo.services.FlickrPhotoset;
 import com.dumbhippo.services.FlickrPhotosetView;
 
@@ -12,6 +13,9 @@ import com.dumbhippo.services.FlickrPhotosetView;
  * CachedFlickrUserPhotoset is a stored return from the web service, while this is a never-deleted 
  * Guid-having object that's the referent of a Flickr photoset block. Instead of ever 
  * deleting this, we just setActive(false).
+ * 
+ * FIXME this is broken that it stores the title and description; those things should be in a pure-cache
+ * object returned from an AbstractCache cached web service.
  * 
  * @author Havoc Pennington
  *
@@ -74,13 +78,21 @@ public class FlickrPhotosetStatus extends EmbeddedGuidPersistable {
 		}
 	}
 	
-	public FlickrPhotosetView toPhotoset() {
+	/** 
+	 * FIXME this is busted; we should not be storing the title/description anyway, those 
+	 * things should be returned from a cached web service, and all callers of this should 
+	 * be changed to instead use said web service that would return a FlickrPhotosetView 
+	 * given a photoset ID.
+	 * @return
+	 */
+	public FlickrPhotosetView toPhotoset(FlickrPhotos photos) {
 		FlickrPhotoset photoset = new FlickrPhotoset();
 		photoset.setId(flickrId);		
 		if (isActive()) {
 			photoset.setTitle(title);
 			photoset.setDescription(description);
 			photoset.setPhotoCount(photoCount);
+			photoset.setPhotos(photos);
 		} else {
 			photoset.setTitle("Not available");
 			photoset.setDescription("Photoset has been deleted or is currently unavailable");

@@ -7,6 +7,7 @@ import java.util.Set;
 import javax.ejb.Local;
 
 import com.dumbhippo.persistence.ExternalAccount;
+import com.dumbhippo.persistence.FlickrPhotosetStatus;
 import com.dumbhippo.persistence.FlickrUpdateStatus;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.listeners.ExternalAccountsListener;
@@ -28,6 +29,7 @@ public interface FlickrUpdater extends ExternalAccountsListener {
 	public FlickrUpdateStatus getCachedStatus(String flickrId) throws NotFoundException;
 	public Set<String> getActiveFlickrUserIds();
 	public Collection<User> getUsersWhoLoveFlickrAccount(String flickrUserId);
+	public Collection<FlickrPhotosetStatus> getPhotosetStatusesForFlickrAccount(String flickrUserId);
 	// called by the "cron job"
 	public void periodicUpdate(String flickrId);
 	// called by periodicUpdate if it thinks there are new changes

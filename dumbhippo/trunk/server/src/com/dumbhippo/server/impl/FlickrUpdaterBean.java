@@ -121,6 +121,13 @@ public class FlickrUpdaterBean implements FlickrUpdater {
 		return TypeUtils.castList(User.class, q.getResultList());
 	}
 	
+	public Collection<FlickrPhotosetStatus> getPhotosetStatusesForFlickrAccount(String flickrUserId) {
+		Query q = em.createQuery("SELECT photosetStatus FROM FlickrPhotosetStatus photosetStatus WHERE " + 
+				" photosetStatus.ownerId = :ownerId");
+		q.setParameter("ownerId", flickrUserId);
+		return TypeUtils.castList(FlickrPhotosetStatus.class, q.getResultList());
+	}
+	
 	// avoid log messages in here that will happen on every call, or it could get noisy
 	@TransactionAttribute(TransactionAttributeType.NEVER)
 	public void periodicUpdate(String flickrId) {

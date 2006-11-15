@@ -127,6 +127,7 @@ public interface Stacker {
 	public void migrateParticipation();
 	public void migrateGroupBlockData();
 	public void migrateGroups();
+	public void migrateUsers();
 	public void migratePost(String postId);
 	public void migratePostParticipation(String postId);
 	public void migrateUser(String userId);

@@ -76,7 +76,7 @@ public final class FlickrPhotoset implements FlickrPhotosetView {
 	// See http://www.flickr.com/services/api/misc.urls.html 
 	// for info on urls
 	public String getUrl(String ownerId) {
-		StringBuilder sb = new StringBuilder("http://static.flickr.com/");
+		StringBuilder sb = new StringBuilder("http://www.flickr.com/photos/");
 		sb.append(ownerId);
 		sb.append("/sets/");
 		sb.append(getId());

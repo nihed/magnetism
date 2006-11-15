@@ -89,7 +89,8 @@ public class FlickrPersonBlockHandlerBean extends
 		// Note that we create the block even if the new account is not loved-and-enabled
 		if (external.getAccountType() != ExternalAccountType.FLICKR)
 			return;
-		stacker.createBlock(getKey(user));
+		Block block = stacker.createBlock(getKey(user));
+		stacker.stack(block, System.currentTimeMillis(), StackReason.NEW_BLOCK);
 	}
 
 	public void onExternalAccountLovedAndEnabledMaybeChanged(User user, ExternalAccount external) {
