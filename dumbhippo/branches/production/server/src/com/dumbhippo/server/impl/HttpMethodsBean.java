@@ -45,31 +45,23 @@ import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.live.LiveState;
 import com.dumbhippo.persistence.AimResource;
-import com.dumbhippo.persistence.ChatMessage;
 import com.dumbhippo.persistence.Contact;
 import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.ExternalAccountType;
-import com.dumbhippo.persistence.FacebookAccount;
-import com.dumbhippo.persistence.FacebookEvent;
-import com.dumbhippo.persistence.FacebookEventType;
-import com.dumbhippo.persistence.FacebookPhotoData;
 import com.dumbhippo.persistence.Feed;
 import com.dumbhippo.persistence.FeedEntry;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupAccess;
-import com.dumbhippo.persistence.GroupMessage;
 import com.dumbhippo.persistence.GuidPersistable;
 import com.dumbhippo.persistence.LinkResource;
 import com.dumbhippo.persistence.NowPlayingTheme;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Post;
-import com.dumbhippo.persistence.PostMessage;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.Sentiment;
 import com.dumbhippo.persistence.StorageState;
 import com.dumbhippo.persistence.User;
-import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.persistence.ValidationException;
 import com.dumbhippo.persistence.WantsIn;
 import com.dumbhippo.postinfo.PostInfo;
@@ -79,7 +71,6 @@ import com.dumbhippo.server.Character;
 import com.dumbhippo.server.ClaimVerifier;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.ExternalAccountSystem;
-import com.dumbhippo.server.FacebookSystem;
 import com.dumbhippo.server.FeedSystem;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.HippoProperty;
@@ -97,17 +88,14 @@ import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.PromotionCode;
 import com.dumbhippo.server.SharedFileSystem;
 import com.dumbhippo.server.SigninSystem;
-import com.dumbhippo.server.Stacker;
 import com.dumbhippo.server.WantsInSystem;
 import com.dumbhippo.server.XmlMethodErrorCode;
 import com.dumbhippo.server.XmlMethodException;
-import com.dumbhippo.server.blocks.BlockView;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.util.FeedScraper;
 import com.dumbhippo.server.views.EntityView;
 import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.PersonViewExtra;
-import com.dumbhippo.server.views.PostView;
 import com.dumbhippo.server.views.SystemViewpoint;
 import com.dumbhippo.server.views.TrackView;
 import com.dumbhippo.server.views.UserViewpoint;
@@ -143,9 +131,6 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	private AccountSystem accountSystem;
 
 	@EJB
-	private FeedSystem feedSystem;
-
-	@EJB
 	private GroupSystem groupSystem;
 
 	@EJB
@@ -173,13 +158,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	private ExternalAccountSystem externalAccountSystem;
 	
 	@EJB
-	private FacebookSystem facebookSystem;
-	
-	@EJB
 	private SearchSystem searchSystem;
-	
-	@EJB
-	private Stacker stacker;
 	
 	@EJB
 	private SharedFileSystem sharedFileSystem;
@@ -1834,210 +1813,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		xml.closeElement();
 	}
 	
-	
-	private User parseUserId(String userId) throws XmlMethodException {
-		try {
-			return identitySpider.lookupGuidString(User.class, userId);
-		} catch (ParseException e) {
-			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, "bad userId " + userId);
-		} catch (NotFoundException e) {
-			throw new XmlMethodException(XmlMethodErrorCode.INVALID_ARGUMENT, "no such person " + userId);
-		}
-	}
-
-	private Post parsePostId(Viewpoint viewpoint, String postId) throws XmlMethodException {
-		try {
-			return postingBoard.loadRawPost(viewpoint, new Guid(postId));
-		} catch (ParseException e) {
-			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, "bad postId " + postId);
-		} catch (NotFoundException e) {
-			throw new XmlMethodException(XmlMethodErrorCode.INVALID_ARGUMENT, "no such post " + postId);
-		}
-	}
-	
-	private void returnBlocks(XmlBuilder xml, UserViewpoint viewpoint, User user, List<BlockView> list) throws XmlMethodException {
-		logger.debug("Returning {} blocks", list.size());
-		
-		CommonXmlWriter.writeBlocks(xml, viewpoint, user, list, null);
-	}
-	
-	public void getBlocks(XmlBuilder xml, UserViewpoint viewpoint, String userId, String lastTimestampStr, String startStr, String countStr) throws XmlMethodException {
-		long lastTimestamp;
-		int start;
-		int count;
-		
-		try {
-			lastTimestamp = Long.parseLong(lastTimestampStr);
-			start = Integer.parseInt(startStr);
-			count = Integer.parseInt(countStr);
-		} catch (NumberFormatException e) {
-			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, "bad integer");
-		}
-		if (start < 0)
-			throw new XmlMethodException(XmlMethodErrorCode.INVALID_ARGUMENT, "start must be >= 0");
-		if (count < 1)
-			throw new XmlMethodException(XmlMethodErrorCode.INVALID_ARGUMENT, "count must be > 0");
-		if (lastTimestamp < 0)
-			throw new XmlMethodException(XmlMethodErrorCode.INVALID_ARGUMENT, "lastTimestamp must be >= 0");
-		
-		User user;
-		if (userId == null) {
-			user = viewpoint.getViewer();
-		} else {
-			user = parseUserId(userId);
-		}
-		
-		List<BlockView> list = stacker.getStack(viewpoint, user, lastTimestamp, start, count);
-		returnBlocks(xml, viewpoint, user, list);
-	}
-	
-	public void getBlock(XmlBuilder xml, UserViewpoint viewpoint, UserBlockData ubd) throws XmlMethodException, NotFoundException {
-		returnBlocks(xml, viewpoint, viewpoint.getViewer(), Collections.singletonList(stacker.loadBlock(viewpoint, ubd)));
-	}
-	
-	public void getMusicPersonSummary(XmlBuilder xml, UserViewpoint viewpoint, String userId) throws XmlMethodException {
-		User musicPlayer = parseUserId(userId);
-		// ALL_RESOURCES here is just because returnPersonsXml wants it, the javascript doesn't need it
-		PersonView pv = personViewer.getPersonView(viewpoint, musicPlayer, PersonViewExtra.ALL_RESOURCES);
-		List<TrackView> tracks = musicSystem.getLatestTrackViews(viewpoint, musicPlayer, 5);
-		xml.openElement("musicPerson", "userId", musicPlayer.getId());
-		returnPersonsXml(xml, viewpoint, Collections.singleton(pv));
-		for (TrackView tv : tracks) {
-			returnTrackXml(xml, tv);
-		}
-		xml.closeElement();
-	}
-	
-	public void getExternalAccountSummary(XmlBuilder xml, UserViewpoint viewpoint, String userId, String accountType) throws XmlMethodException, NotFoundException {
-		User user = parseUserId(userId);
-		// ALL_RESOURCES here is just because returnPersonsXml wants it, the javascript doesn't need it
-		PersonView pv = personViewer.getPersonView(viewpoint, user, PersonViewExtra.ALL_RESOURCES);
-   		xml.openElement("accountUpdate", "userId", user.getId(), "accountType", accountType);
-		returnPersonsXml(xml, viewpoint, Collections.singleton(pv));
-		int accountTypeOrdinal = Integer.parseInt(accountType);
-		if (accountTypeOrdinal == ExternalAccountType.BLOG.ordinal()) {
-			ExternalAccount blogAccount = externalAccountSystem.lookupExternalAccount(viewpoint, user, ExternalAccountType.BLOG);  
-			FeedEntry lastEntry = feedSystem.getLastEntry(blogAccount.getFeed());
-			xml.appendTextNode("accountType", "Blog");
-			xml.openElement("updateItem");
-			xml.appendTextNode("updateTitle", lastEntry.getTitle());
-			xml.appendTextNode("updateLink", lastEntry.getLink().getUrl());
-			xml.appendTextNode("updateText", lastEntry.getDescription());
-			xml.closeElement();
-		} else if (accountTypeOrdinal == ExternalAccountType.FACEBOOK.ordinal()) {			
-			FacebookAccount facebookAccount = facebookSystem.lookupFacebookAccount(viewpoint, user);
-			xml.appendTextNode("accountType", "Facebook");
-			int eventsToRequestCount = 3;
-			if (!facebookAccount.isSessionKeyValid() && viewpoint.isOfUser(facebookAccount.getExternalAccount().getAccount().getOwner())) {
-				xml.openElement("updateItem");
-			    xml.appendTextNode("updateTitle", "Please re-login to Facebook to continue getting Facebook updates");
-			    xml.appendTextNode("updateLink", "http://api.facebook.com/login.php?api_key=" + facebookSystem.getApiKey() +"&next=/account");
-			    xml.appendTextNode("updateText", "");	
-			    xml.closeElement();
-			    eventsToRequestCount = 2;
-			}
-			List<FacebookEvent> facebookEvents = facebookSystem.getLatestEvents(viewpoint, facebookAccount, eventsToRequestCount);
-			for (FacebookEvent facebookEvent : facebookEvents) {
-				xml.openElement("updateItem");
-				String pageName = "profile";
-				String updateText = "";
-				String multiple = "";
-				if (facebookEvent.getCount() != 1)
-					multiple = "s";
-				if (facebookEvent.getEventType().equals(FacebookEventType.UNREAD_MESSAGES_UPDATE)) {
-				    xml.appendTextNode("updateTitle", facebookEvent.getCount() + " unread message" + multiple);
-				} else if (facebookEvent.getEventType().equals(FacebookEventType.NEW_WALL_MESSAGES_EVENT)) {
-					xml.appendTextNode("updateTitle", facebookEvent.getCount() + " new wall message" + multiple);					
-				} else if (facebookEvent.getEventType().equals(FacebookEventType.UNSEEN_POKES_UPDATE)) {
-				    xml.appendTextNode("updateTitle", facebookEvent.getCount() + " unseen poke" + multiple);			
-				} else if (facebookEvent.getEventType().equals(FacebookEventType.NEW_TAGGED_PHOTOS_EVENT)) {
-					xml.appendTextNode("updateTitle", facebookEvent.getCount() + " new photo" + multiple);		
-					pageName = "photo_search";
-				} else if (facebookEvent.getEventType().equals(FacebookEventType.NEW_ALBUM_EVENT)) {
-					xml.appendTextNode("updateTitle", "Created new album \"" + facebookEvent.getAlbum().getName() + "\"");
-					if (!facebookEvent.getAlbum().getLocation().equals("")) {
-						updateText = "Location: " + facebookEvent.getAlbum().getLocation() + " ";						
-					}
-					updateText = updateText + facebookEvent.getAlbum().getDescription();	
-					pageName = "photos";
-				} else if (facebookEvent.getEventType().equals(FacebookEventType.MODIFIED_ALBUM_EVENT)) {
-					xml.appendTextNode("updateTitle", "Modified album \"" + facebookEvent.getAlbum().getName() + "\"");
-					if (!facebookEvent.getAlbum().getLocation().equals("")) {
-						updateText = "Location: " + facebookEvent.getAlbum().getLocation() + " ";						
-					}
-					updateText = updateText + facebookEvent.getAlbum().getDescription();	
-					pageName = "photos";
-				} else {
-					throw new RuntimeException("Unexpected event type in HttpMethodsBean::getExternalAccountSummary(): " + facebookEvent.getEventType());
-				}
-			    xml.appendTextNode("updateLink", "http://www.facebook.com/" + pageName + ".php?uid=" + facebookAccount.getFacebookUserId() + "&api_key=" + facebookSystem.getApiKey());
-			    xml.appendTextNode("updateText", updateText);
-			    xml.appendTextNode("updateTimestamp", Long.toString(facebookEvent.getEventTimestampAsLong()));
-			    if ((facebookEvent.getPhotos().size() > 0) || (facebookEvent.getAlbum() != null)) {
-					xml.openElement("updatePhotos");								
-					Set<FacebookPhotoData> photos;
-					if (facebookEvent.getPhotos().size() > 0) {
-						photos = facebookEvent.getPhotos();
-					} else {
-						photos = Collections.singleton(facebookEvent.getAlbum().getCoverPhoto());
-					}
-					for (FacebookPhotoData photoData : photos) {
-						if (photoData.isValid()) {
-						    xml.openElement("photo");
-					        xml.appendTextNode("photoLink", photoData.getLink());
-					        xml.appendTextNode("photoSource", photoData.getSource() + "&size=thumb");
-					        xml.appendTextNode("photoCaption", photoData.getCaption());
-					        xml.closeElement();
-						} 
-					}
-					xml.closeElement();
-				}			    
-			    xml.closeElement();
-			}
-		}
-		xml.closeElement();
-	}
-	
-	private void writeChatMessage(XmlBuilder xml, ChatMessage m) {
-		xml.appendTextNode("message", m.getMessageText(), "fromId", m.getFromUser().getId(),
-				"fromNickname", m.getFromUser().getNickname(),
-				"timestamp", Long.toString(m.getTimestamp().getTime()),
-				"serial", Long.toString(m.getId()));		
-	}
-	
-	public void getGroupChatSummary(XmlBuilder xml, UserViewpoint viewpoint, String groupId) throws XmlMethodException {
-		Group group = parseGroupId(viewpoint, groupId);
-		xml.openElement("groupChat", "groupId", group.getId());
-		returnGroupsXml(xml, viewpoint, Collections.singleton(group));
-		List<GroupMessage> messages = groupSystem.getNewestGroupMessages(group, 5);
-		for (GroupMessage gm : messages) {
-			writeChatMessage(xml, gm);
-		}
-		xml.closeElement();
-	}
-	
- 	public void getPostSummary(XmlBuilder xml, UserViewpoint viewpoint, String postId) throws XmlMethodException {
- 		Post post = parsePostId(viewpoint, postId);
- 		
- 		PostView pv = postingBoard.getPostView(viewpoint, post);
- 		pv.writeToXmlBuilderOld(xml);
- 		EntityView poster = pv.getPoster();
- 		poster.writeToXmlBuilderOld(xml);
- 		
-		List<PostMessage> messages = postingBoard.getNewestPostMessages(post, 5);
-		for (PostMessage pm : messages) {
-			writeChatMessage(xml, pm);
-		}
- 	}
- 	
- 	public void doSetBlockHushed(XmlBuilder xml, UserViewpoint viewpoint, UserBlockData userBlockData, boolean hushed) throws XmlMethodException, NotFoundException {
- 		stacker.setBlockHushed(userBlockData, hushed);
-
- 		// send the new block data back, to avoid an extra round trip
- 		returnBlocks(xml, viewpoint, viewpoint.getViewer(), Collections.singletonList(stacker.loadBlock(viewpoint, userBlockData)));
- 	}
- 	
- 	@TransactionAttribute(TransactionAttributeType.NEVER)
+	@TransactionAttribute(TransactionAttributeType.NEVER)
  	public void doDeleteFile(XmlBuilder xml, UserViewpoint viewpoint, Guid fileId) throws XmlMethodException {
  		// Transaction 1 - set state to DELETING
  		try {

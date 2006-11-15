@@ -2,7 +2,6 @@ package com.dumbhippo.server.impl;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
 import java.util.EnumMap;
 import java.util.HashMap;
@@ -105,8 +104,6 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	
 	@EJB
 	private XmppMessageSender xmppMessageSystem;	
-	
-	private Map<Guid,CacheEntry> userCacheEntries = new HashMap<Guid,CacheEntry>();		
 	
 	private Map<BlockType,BlockHandler> handlers;
 	
@@ -579,14 +576,6 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	 * @return
 	 */
 	private List<UserBlockData> getBlocks(Viewpoint viewpoint, User user, long lastTimestamp, int start, int count, boolean participantOnly) {
-		long cached = -1;
-		if (lastTimestamp >= 0 && !participantOnly) {
-			cached = getLastTimestamp(user.getGuid());
-			if (cached >= 0 && cached <= lastTimestamp)
-				return Collections.emptyList(); // nothing new
-			
-			logger.debug("getStack cache miss lastTimestamp {} cached {}", lastTimestamp, cached);
-		}
 		
 		StringBuilder sb = new StringBuilder();
 		
@@ -637,76 +626,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		q.setParameter("user", user);
 		q.setParameter("viewedGuid", user.getGuid().toString());
 		
-		List<UserBlockData> list = TypeUtils.castList(UserBlockData.class, q.getResultList());		
-
-		if (list.isEmpty()) // code later on will die if the list is empty since newestTimestamp isn't initialized
-			return list; 
-		
-		long newestTimestamp = -1;
-		int newestTimestampCount = 0;
-		
-		int countAtLastTimestamp = 0; 
-		for (UserBlockData ubd : list) {
-			long stamp = ubd.getBlock().getTimestampAsLong();
-			
-			if (stamp < lastTimestamp) {
-				// FIXME this is happening with secondsMatch = false, needs debugging
-				boolean secondsMatch = ((cached / 1000) == (newestTimestamp / 1000));
-				logger.error("Query returned block at wrong timestamp lastTimestamp {} block {}: match at seconds resolution: " + secondsMatch,
-						lastTimestamp, ubd.getBlock());
-			}
-			
-			if (stamp == lastTimestamp)
-				countAtLastTimestamp += 1;
-			
-			if (stamp > newestTimestamp) {
-				newestTimestamp = stamp;
-				newestTimestampCount = 1;
-			} else if (stamp == newestTimestamp) {
-				newestTimestampCount += 1;
-			}
-		}
-		if (newestTimestamp < 0)
-			throw new RuntimeException("had a block with negative timestamp? " + list);
-		
-		if (cached >= 0 && cached < newestTimestamp) {
-			//	FIXME I think the problem here may be that the database only goes to seconds not milliseconds,
-			// at least when doing comparisons
-			boolean secondsMatch = ((cached / 1000) == (newestTimestamp / 1000));
-			logger.error("Cached timestamp {} was somehow older than actual newest timestamp {}, match at seconds resolution: " + secondsMatch,
-					cached, newestTimestamp);
-		}
-
-		if (lastTimestamp >= 0) {
-			
-			// If there is 1 block at the lastTimestamp, then the caller for sure already has that
-			// block. If there are >1 blocks, then the caller might have only some of them.
-			// If there's only 1 block then we need not return it, if there are >1 we return 
-			// them all.
-			// The reason we bother with this is that when we have a cached timestamp we return 
-			// nothing if there's nothing newer than lastTimestamp, so we want to be consistent
-			// and still return nothing if we did the db query.
-			
-			
-			// remove any single blocks that have the requested stamp
-			if (countAtLastTimestamp == 1) {
-				Iterator<UserBlockData> i = list.iterator();
-				while (i.hasNext()) {
-					UserBlockData ubd = i.next();
-					if (ubd.getBlock().getTimestampAsLong() == lastTimestamp) {
-						i.remove();
-						break;
-					}
-				}
-			}
-		}
-		
-		// we only know the timestamp is globally newest if start is 0 and we didn't filter out participantOnly
-		if (start == 0 && !participantOnly) {
-			saveLastTimestamp(user.getGuid(), newestTimestamp, newestTimestampCount);
-		}
-		
-		return list;
+		return TypeUtils.castList(UserBlockData.class, q.getResultList());		
 	}
 	
 	private interface BlockSource {
@@ -1045,83 +965,10 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
  		}
 	}
 
-	static private class CacheEntry {
-		public long lastTimestamp;
-		public int count;
-		
-		CacheEntry(long lastTimestamp, int count) {
-			this.lastTimestamp = lastTimestamp;
-			this.count = count;
-		}
-		
-		@Override
-		public String toString() {
-			return "{time " + lastTimestamp + " count " + count + "}";
-		}
-	}
-		
-	// called whenever we save a new block timestamp, if it's the newest
-	// timestamp we've seen for a given user then we save it as the 
-	// newest timestamp for that user. We also keep a count of 
-	// how many times a given timestamp was saved since we need to 
-	// do a db query if >1 block has the same stamp.
-	synchronized void updateLastTimestamp(Guid guid, long lastTimestamp) {
-		CacheEntry entry = userCacheEntries.get(guid);
-		if (entry == null) {
-			entry = new CacheEntry(lastTimestamp, 1);
-			userCacheEntries.put(guid, entry);
-		} else {
-			if (entry.lastTimestamp == lastTimestamp) {
-				entry.count += 1;
-			} else if (entry.lastTimestamp < lastTimestamp) {
-				entry.lastTimestamp = lastTimestamp;
-				entry.count = 1;
-			}
-		}
-		//logger.debug("updating block timestamp for user {} to {}", guid, entry);
-	}
-	
-	// called when we do a db query and discover the last timestamp and number of blocks
-	// with said timestamp. This avoids doing the same db query again, at least 
-	// until updateLastTimestamp saves a newer timestamp.
-	synchronized void saveLastTimestamp(Guid guid, long lastTimestamp, int blockCount) {
-		CacheEntry entry = userCacheEntries.get(guid);
-		if (entry == null) {
-			entry = new CacheEntry(lastTimestamp, blockCount);
-			userCacheEntries.put(guid, entry);
-		} else {
-			if (entry.lastTimestamp == lastTimestamp) {
-				entry.count = blockCount;
-			} else if (entry.lastTimestamp < lastTimestamp) {
-				entry.lastTimestamp = lastTimestamp;
-				entry.count = blockCount;
-			}
-		}
-		//logger.debug("saving block timestamp for user {} as {}", guid, entry);
-	}
-	
-	// returns the newest timestamp for which only one block
-	// exists, or -1 if nothing cached or if >1 block for the 
-	// newest timestamp, i.e. returns -1 if we need to do a db
-	// query
-	synchronized long getLastTimestamp(Guid guid) {
-		CacheEntry entry = userCacheEntries.get(guid);
-		if (entry == null)
-			return -1;
-		else if (entry.count > 1)
-			return -1;
-		else
-			return entry.lastTimestamp;
-	}
-
 	private static final String ELEMENT_NAME = "blocksChanged";
 	private static final String NAMESPACE = CommonXmlWriter.NAMESPACE_BLOCKS;
 	
 	public void onEvent(BlockEvent event) {
-		for (Guid guid : event.getAffectedUsers()) {
-			updateLastTimestamp(guid, event.getStackTimestamp());
-		}
-		
 		XmlBuilder builder = new XmlBuilder();
 		builder.openElement(ELEMENT_NAME, 
 				            "xmlns", NAMESPACE, 
