@@ -1471,6 +1471,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		if (lastPlayTime != 0) {			
 			stack(key, lastPlayTime, StackReason.BLOCK_UPDATE);
 		}
+		migrateFlickr(user);
 	}
 	
 	public void migrateBlockParticipation(String blockId) {
@@ -1550,6 +1551,10 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 				stack(block, 0, a.getOwner(), true, StackReason.VIEWER_COUNT);
 			}
 		}
+	}
+
+	public void migrateFlickr(User user) {
+		getHandler(FlickrPersonBlockHandler.class, BlockType.FLICKR_PERSON).migrate(user);
 	}
 	
 	public void migrateGroupBlockData(String blockId) {

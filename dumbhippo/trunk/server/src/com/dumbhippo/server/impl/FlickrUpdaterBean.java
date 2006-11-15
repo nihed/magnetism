@@ -1,5 +1,6 @@
 package com.dumbhippo.server.impl;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -109,6 +110,17 @@ public class FlickrUpdaterBean implements FlickrUpdater {
 		return results;
 	}
 
+	public Collection<User> getUsersWhoLoveFlickrAccount(String flickrUserId) {
+		Query q = em.createQuery("SELECT user FROM User user WHERE EXISTS " + 
+				" (SELECT ea from ExternalAccount ea WHERE " +
+				"  ea.account.owner = user " +
+				"  AND ea.accountType = " + ExternalAccountType.FLICKR.ordinal() + 
+				"  AND ea.sentiment = " + Sentiment.LOVE.ordinal() + 
+				"  AND ea.handle IS NOT NULL " + 
+				"  AND ea.account.disabled = false AND ea.account.adminDisabled = false)");
+		return TypeUtils.castList(User.class, q.getResultList());
+	}
+	
 	// avoid log messages in here that will happen on every call, or it could get noisy
 	@TransactionAttribute(TransactionAttributeType.NEVER)
 	public void periodicUpdate(String flickrId) {

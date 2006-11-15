@@ -36,6 +36,12 @@
    	<c:when test="${dh:enumIs(block.blockType, 'BLOG_PERSON')}">
 	   	<dht3:blogBlock block="${block}" blockId="${blockId}" offset="${offset}" showFrom="${showFrom}" oneLine="${oneLine}"/>
    	</c:when>
+   	<c:when test="${dh:enumIs(block.blockType, 'FLICKR_PERSON')}">
+	   	<dht3:flickrPersonBlock block="${block}" blockId="${blockId}" offset="${offset}" showFrom="${showFrom}" oneLine="${oneLine}"/>
+   	</c:when>
+   	<c:when test="${dh:enumIs(block.blockType, 'FLICKR_PHOTOSET')}">
+	   	<dht3:flickrPhotosetBlock block="${block}" blockId="${blockId}" offset="${offset}" showFrom="${showFrom}" oneLine="${oneLine}"/>
+   	</c:when>
 </c:choose>
 <c:if test="${oneLine}">
     </div>

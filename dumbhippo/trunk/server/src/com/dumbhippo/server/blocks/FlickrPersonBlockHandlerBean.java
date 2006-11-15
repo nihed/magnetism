@@ -1,8 +1,10 @@
 package com.dumbhippo.server.blocks;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
+import javax.ejb.EJB;
 import javax.ejb.Stateless;
 
 import org.slf4j.Logger;
@@ -15,7 +17,9 @@ import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.FlickrPhotosetStatus;
 import com.dumbhippo.persistence.Group;
+import com.dumbhippo.persistence.StackReason;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.server.FlickrUpdater;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.services.FlickrPhotoView;
 
@@ -25,6 +29,9 @@ public class FlickrPersonBlockHandlerBean extends
 		FlickrPersonBlockHandler {
 
 	static private final Logger logger = GlobalSetup.getLogger(FlickrPersonBlockHandlerBean.class);	
+
+	@EJB
+	private FlickrUpdater flickrUpdater;
 	
 	protected FlickrPersonBlockHandlerBean() {
 		super(FlickrPersonBlockView.class);
@@ -57,7 +64,11 @@ public class FlickrPersonBlockHandlerBean extends
 			List<FlickrPhotoView> recentPhotos) {
 		logger.debug("most recent flickr photos changed for " + flickrId);
 
-		// FIXME
+		long now = System.currentTimeMillis();
+		Collection<User> users = flickrUpdater.getUsersWhoLoveFlickrAccount(flickrId);
+		for (User user : users) {
+			stacker.stack(getKey(user), now, StackReason.BLOCK_UPDATE);
+		}
 	}
 
 	public void onFlickrPhotosetCreated(FlickrPhotosetStatus photosetStatus) {
@@ -69,12 +80,24 @@ public class FlickrPersonBlockHandlerBean extends
 	}
 
 	public void onExternalAccountCreated(User user, ExternalAccount external) {
-		// FIXME
+		// Note that we create the block even if the new account is not loved-and-enabled
+		if (external.getAccountType() != ExternalAccountType.FLICKR)
+			return;
+		stacker.createBlock(getKey(user));
 	}
 
 	public void onExternalAccountLovedAndEnabledMaybeChanged(User user, ExternalAccount external) {
 		if (external.getAccountType() != ExternalAccountType.FLICKR)
 			return;
 		stacker.refreshDeletedFlags(getKey(user));
+	}
+	
+	public void migrate(User user) {
+		ExternalAccount external = user.getAccount().getExternalAccount(ExternalAccountType.FLICKR);
+		if (external == null)
+			return;
+		Block block = stacker.getOrCreateBlock(getKey(user));
+		if (block.getTimestampAsLong() <= 0)
+			stacker.stack(block, System.currentTimeMillis(), StackReason.BLOCK_UPDATE);
 	}
 }

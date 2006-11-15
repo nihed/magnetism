@@ -10,4 +10,6 @@ import com.dumbhippo.server.listeners.FlickrListener;
 @Local
 public interface FlickrPersonBlockHandler extends BlockHandler, FlickrListener, ExternalAccountsListener {
 	public BlockKey getKey(User user);
+	
+	public void migrate(User user);
 }

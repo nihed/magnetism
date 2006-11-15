@@ -135,4 +135,5 @@ public interface Stacker {
 	public void migrateGroupChatParticipation(String groupId);
 	public void migrateGroupMembers(String groupId);
 	public void migrateGroupBlockData(String blockId);
+	public void migrateFlickr(User user);
 }
