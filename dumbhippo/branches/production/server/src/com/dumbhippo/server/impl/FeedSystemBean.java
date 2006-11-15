@@ -190,8 +190,17 @@ public class FeedSystemBean implements FeedSystem {
 		return new URL(entryLink);
 	}
 	
-	private String makeEntryGuid(SyndEntry syndEntry) {
+	private static class NoEntryGuidException extends Exception {
+		private static final long serialVersionUID = 1L;
+	}
+	
+	private String makeEntryGuid(SyndEntry syndEntry) throws NoEntryGuidException {
 		String guid = syndEntry.getUri();
+		// Null does occur in practice, if rarely, we just silently such entries
+		// assuming that they won't be interesting things to post in any case
+		if (guid == null) 
+			throw new NoEntryGuidException();
+		
 		if (guid.length() <= FeedEntry.MAX_ENTRY_GUID_LENGTH)
 			return guid;
 		else
@@ -239,7 +248,11 @@ public class FeedSystemBean implements FeedSystem {
 			entry = new FeedEntry(feed);
 		}
 			
-		entry.setEntryGuid(makeEntryGuid(syndEntry));
+		try {
+			entry.setEntryGuid(makeEntryGuid(syndEntry));
+		} catch (NoEntryGuidException e) {
+			throw new RuntimeException(e); // We should have filtered such entries out before
+		}
 
 		String title = syndEntry.getTitle();
 		if (title != null) // probably never null, but who knows what rome does
@@ -318,7 +331,13 @@ public class FeedSystemBean implements FeedSystem {
 		for (Object o : syndFeed.getEntries()) {
 			SyndEntry syndEntry = (SyndEntry)o;
 			
-			String guid = makeEntryGuid(syndEntry);
+			String guid;
+			try {
+				guid = makeEntryGuid(syndEntry);
+			} catch (NoEntryGuidException e1) {
+				continue; // Silently ignore; its hard to log usefully
+			}
+			
 			if (foundGuids.contains(guid))
 				continue;
 			
@@ -365,7 +384,12 @@ public class FeedSystemBean implements FeedSystem {
 		for (Object o : syndFeed.getEntries()) {
 			SyndEntry syndEntry = (SyndEntry)o;
 			
-			String guid = makeEntryGuid(syndEntry);
+			String guid;
+			try {
+				guid = makeEntryGuid(syndEntry);
+			} catch (NoEntryGuidException e1) {
+				continue;
+			}
 			
 			if (foundGuids.contains(guid))
 				continue;
