@@ -21,6 +21,8 @@ import com.dumbhippo.persistence.StackReason;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.FlickrUpdater;
 import com.dumbhippo.server.NotFoundException;
+import com.dumbhippo.server.views.ExternalAccountView;
+import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.services.FlickrPhotoView;
 
 @Stateless
@@ -40,12 +42,16 @@ public class FlickrPersonBlockHandlerBean extends
 	@Override
 	protected void populateBlockViewImpl(FlickrPersonBlockView blockView)
 			throws BlockNotVisibleException {
+		User user = getData1User(blockView.getBlock());
+		ExternalAccountView externalAccountView;
 		try {
-			blockView.populate(externalAccountSystem.getExternalAccountView(blockView.getViewpoint(),
-					blockView.getPersonSource().getUser(), ExternalAccountType.FLICKR));
+			externalAccountView = externalAccountSystem.getExternalAccountView(blockView.getViewpoint(),
+					user, ExternalAccountType.FLICKR);
 		} catch (NotFoundException e) {
 			throw new BlockNotVisibleException("external account not visible");
 		}
+		PersonView userView = personViewer.getPersonView(blockView.getViewpoint(), user);
+		blockView.populate(userView, externalAccountView);
 	}
 
 	public BlockKey getKey(User user) {
@@ -93,10 +99,14 @@ public class FlickrPersonBlockHandlerBean extends
 	}
 	
 	public void migrate(User user) {
+		logger.debug("Migrating Flickr for user {}", user);
 		ExternalAccount external = user.getAccount().getExternalAccount(ExternalAccountType.FLICKR);
-		if (external == null)
+		if (external == null) {
+			logger.debug("No flickr account for this user");
 			return;
+		}
 		Block block = stacker.getOrCreateBlock(getKey(user));
+		logger.debug("Created block {}", block);
 		if (block.getTimestampAsLong() <= 0)
 			stacker.stack(block, System.currentTimeMillis(), StackReason.BLOCK_UPDATE);
 	}

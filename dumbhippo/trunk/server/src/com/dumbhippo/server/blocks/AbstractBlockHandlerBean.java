@@ -23,8 +23,10 @@ import com.dumbhippo.server.ExternalAccountSystem;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.NotFoundException;
+import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.Stacker;
 import com.dumbhippo.server.util.EJBUtil;
+import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.SystemViewpoint;
 import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.server.views.Viewpoint;
@@ -44,6 +46,9 @@ public abstract class AbstractBlockHandlerBean<BlockViewSubType extends BlockVie
 	
 	@EJB
 	protected ExternalAccountSystem externalAccountSystem;
+	
+	@EJB
+	protected PersonViewer personViewer;	
 	
 	@EJB
 	@IgnoreDependency
@@ -179,7 +184,7 @@ public abstract class AbstractBlockHandlerBean<BlockViewSubType extends BlockVie
 		throw new RuntimeException("invalid inclusion " + block);
 	}
 	
-	private User getData1User(Block block) {
+	protected User getData1User(Block block) {
 		User user;
 		try {
 			user = EJBUtil.lookupGuid(em, User.class, block.getData1AsGuid());
@@ -187,6 +192,14 @@ public abstract class AbstractBlockHandlerBean<BlockViewSubType extends BlockVie
 			throw new RuntimeException("invalid user in data1 of " + block, e);
 		}
 		return user;
+	}
+	
+	protected PersonView getData1UserView(Viewpoint viewpoint, Block block) {
+		User user = getData1User(block);
+		// No PersonViewExtra are needed since we know this isn't a contact so we have a name 
+		// without having to get any resources.
+		PersonView userView = personViewer.getPersonView(viewpoint, user);
+		return userView;
 	}
 	
 	/**

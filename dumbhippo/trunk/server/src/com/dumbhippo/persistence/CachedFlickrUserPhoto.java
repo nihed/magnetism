@@ -59,6 +59,7 @@ public class CachedFlickrUserPhoto extends DBUnique implements CachedListItem {
 		photo.setServer(server);
 		photo.setSecret(secret);
 		photo.setTitle(title);
+		photo.setOwner(ownerId);
 		return photo;
 	}
 	

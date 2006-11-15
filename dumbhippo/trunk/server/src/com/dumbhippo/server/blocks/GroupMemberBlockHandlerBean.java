@@ -2,7 +2,6 @@ package com.dumbhippo.server.blocks;
 
 import java.util.Set;
 
-import javax.ejb.EJB;
 import javax.ejb.Stateless;
 
 import com.dumbhippo.identity20.Guid;
@@ -16,7 +15,6 @@ import com.dumbhippo.persistence.MembershipStatus;
 import com.dumbhippo.persistence.StackReason;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.NotFoundException;
-import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.views.GroupView;
 import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.PersonViewExtra;
@@ -25,9 +23,6 @@ import com.dumbhippo.server.views.Viewpoint;
 @Stateless
 public class GroupMemberBlockHandlerBean extends AbstractBlockHandlerBean<GroupMemberBlockView> implements
 		GroupMemberBlockHandler {
-	
-	@EJB
-	private PersonViewer personViewer;
 	
 	public GroupMemberBlockHandlerBean() {
 		super(GroupMemberBlockView.class);

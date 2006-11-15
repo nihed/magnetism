@@ -6,6 +6,7 @@ import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.server.views.ExternalAccountView;
+import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.Viewpoint;
 
 public class FlickrPersonBlockView extends AbstractPersonBlockView
@@ -19,7 +20,7 @@ public class FlickrPersonBlockView extends AbstractPersonBlockView
 
 	@Override
 	public String getIcon() {
-		return ExternalAccountType.FLICKR.getIconName();
+		return "/images3/" + ExternalAccountType.FLICKR.getIconName();
 	}
 
 	@Override
@@ -27,7 +28,8 @@ public class FlickrPersonBlockView extends AbstractPersonBlockView
 		// FIXME
 	}
 
-	void populate(ExternalAccountView externalAccountView) {
+	void populate(PersonView userView, ExternalAccountView externalAccountView) {
+		super.partiallyPopulate(userView);
 		this.externalAccountView = externalAccountView;
 		setPopulated(true);
 	}
@@ -57,7 +59,7 @@ public class FlickrPersonBlockView extends AbstractPersonBlockView
 	}
 
 	public String getLink() {
-		return "FIXME"; 
+		return getMoreThumbnailsLink(); 
 	}
 
 	@Override

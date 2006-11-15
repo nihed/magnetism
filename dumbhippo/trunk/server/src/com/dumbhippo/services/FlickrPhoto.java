@@ -67,6 +67,13 @@ public final class FlickrPhoto implements FlickrPhotoView {
 	// See http://www.flickr.com/services/api/misc.urls.html 
 	// for info on urls
 	public String getUrl(FlickrPhotoSize size) {
+		if (server == null)
+			throw new IllegalStateException("must have server set to get url from " + this);
+		if (id == null)
+			throw new IllegalStateException("must have id set to get url from " + this);
+		if (secret == null)
+			throw new IllegalStateException("must have secret set to get url from " + this);		
+		
 		StringBuilder sb = new StringBuilder("http://static.flickr.com/");
 		sb.append(server);
 		sb.append("/");
@@ -85,26 +92,32 @@ public final class FlickrPhoto implements FlickrPhotoView {
 	
 	@Override
 	public String toString() {
-		return "{id=" + id + " title='" + title + "' url=" +
-		getUrl(FlickrPhotoSize.SMALL_SQUARE) + "}";
+		return "{id=" + id + " title='" + title + "' server=" + server + " secret=" + secret + " owner=" + owner + "}";
 	}
 	
 	public String getThumbnailSrc() {
 		return getUrl(THUMBNAIL_SIZE);
 	}
+	
 	public String getThumbnailHref() {
+		if (owner == null)
+			throw new IllegalStateException("owner field must be set to get thumbnail href from " + this);
+		
 		StringBuilder sb = new StringBuilder("http://www.flickr.com/photos/");
 		sb.append(owner);
 		sb.append("/");
 		sb.append(id);
 		return sb.toString();
 	}
+	
 	public String getThumbnailTitle() {
 		return getTitle();
 	}
+	
 	public int getThumbnailWidth() {
 		return THUMBNAIL_SIZE.getPixels();
 	}
+	
 	public int getThumbnailHeight() {
 		return THUMBNAIL_SIZE.getPixels();
 	}

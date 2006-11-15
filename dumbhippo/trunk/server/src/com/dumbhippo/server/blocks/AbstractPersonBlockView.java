@@ -44,7 +44,9 @@ public abstract class AbstractPersonBlockView extends BlockView {
 
 	@Override
 	public PersonView getPersonSource() {
-	    return userView;	
+		if (!isPopulated())
+			throw new IllegalStateException("BlockView not populated yet, can't get source");
+	    return userView;
 	}
 
 	public List<Object> getReferencedObjects() {

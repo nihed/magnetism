@@ -16,6 +16,7 @@ import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.FlickrPhotosetStatus;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.services.FlickrPhotoView;
 
 @Stateless
@@ -32,8 +33,13 @@ public class FlickrPhotosetBlockHandlerBean extends
 	@Override
 	protected void populateBlockViewImpl(FlickrPhotosetBlockView blockView)
 			throws BlockNotVisibleException {
+		
+		User user = getData1User(blockView.getBlock());
+		PersonView userView = personViewer.getPersonView(blockView.getViewpoint(), user);
+		
 		FlickrPhotosetStatus photosetStatus = em.find(FlickrPhotosetStatus.class, blockView.getBlock().getData2AsGuid().toString());
-		blockView.populate(photosetStatus.toPhotoset(), photosetStatus.getOwnerId());
+		
+		blockView.populate(userView, photosetStatus.toPhotoset(), photosetStatus.getOwnerId());
 	}
 
 	public BlockKey getKey(User user, FlickrPhotosetStatus photosetStatus) {

@@ -4,7 +4,9 @@
 <%@ taglib tagdir="/WEB-INF/tags/3" prefix="dht3" %>
 
 <%@ attribute name="blockId" required="true" type="java.lang.String" %>
-<%@ attribute name="from" required="false" type="com.dumbhippo.server.views.EntityView" %>
+<%-- from attr isn't really required if showFrom=false, but right now everything provides from anyway, and 
+     I'm not sure how to throw if showFrom=true and from is empty --%>
+<%@ attribute name="from" required="true" type="com.dumbhippo.server.views.EntityView" %>
 <%@ attribute name="showFrom" required="false" type="java.lang.Boolean" %>
 
 <td align="right" valign="top" id="dhStackerBlockRightContainer-${blockId}" class="dh-stacker-block-right-container" width="25%">

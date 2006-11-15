@@ -23,9 +23,7 @@ import com.dumbhippo.persistence.StackReason;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.FacebookSystem;
 import com.dumbhippo.server.NotFoundException;
-import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.views.PersonView;
-import com.dumbhippo.server.views.PersonViewExtra;
 import com.dumbhippo.server.views.Viewpoint;
 
 @Stateless
@@ -33,9 +31,6 @@ public class FacebookBlockHandlerBean extends AbstractBlockHandlerBean<FacebookB
 		FacebookBlockHandler {
 	
 	static private final Logger logger = GlobalSetup.getLogger(FacebookBlockHandlerBean.class);
-	
-	@EJB
-	private PersonViewer personViewer;	
 
 	@EJB
 	private FacebookSystem facebookSystem;
@@ -65,9 +60,9 @@ public class FacebookBlockHandlerBean extends AbstractBlockHandlerBean<FacebookB
 		Viewpoint viewpoint = blockView.getViewpoint();
 		Block block = blockView.getBlock();
 		
-		User user = identitySpider.lookupUser(block.getData1AsGuid());
-		// TODO: check what extras we need to request here
-		PersonView userView = personViewer.getPersonView(viewpoint, user, PersonViewExtra.ALL_RESOURCES);
+		User user = getData1User(block);
+		// no extras needed, we just need user.getName
+		PersonView userView = personViewer.getPersonView(viewpoint, user);
 		
 		if (block.getBlockType() == BlockType.FACEBOOK_EVENT) {	
 			FacebookEvent facebookEvent;

@@ -18,17 +18,12 @@ import com.dumbhippo.persistence.StackReason;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.FeedSystem;
 import com.dumbhippo.server.NotFoundException;
-import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.views.PersonView;
-import com.dumbhippo.server.views.PersonViewExtra;
 import com.dumbhippo.server.views.Viewpoint;
 
 @Stateless
 public class BlogBlockHandlerBean extends AbstractBlockHandlerBean<BlogBlockView> implements
 		BlogBlockHandler {
-
-	@EJB
-	private PersonViewer personViewer;	
 	
 	@EJB
 	private FeedSystem feedSystem;
@@ -50,9 +45,9 @@ public class BlogBlockHandlerBean extends AbstractBlockHandlerBean<BlogBlockView
 		Viewpoint viewpoint = blockView.getViewpoint();
 		Block block = blockView.getBlock();
 		
-		User user = identitySpider.lookupUser(block.getData1AsGuid());
-		// TODO: check what extras we need to request here
-		PersonView userView = personViewer.getPersonView(viewpoint, user, PersonViewExtra.ALL_RESOURCES);
+		User user = getData1User(block);
+		// no extras needed, we just need the username
+		PersonView userView = personViewer.getPersonView(viewpoint, user);
 		ExternalAccount blogAccount;
 		try {
 			blogAccount = externalAccountSystem.lookupExternalAccount(viewpoint, user, ExternalAccountType.BLOG);

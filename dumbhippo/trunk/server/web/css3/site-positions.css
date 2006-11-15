@@ -443,7 +443,7 @@ div.dh-notification {
 	margin:				0px;
 }
 
-.dh-thumbnail-title {
+.dh-thumbnail-photo .dh-thumbnail-title {
 	width:				75px;
 	overflow:			hidden;
 	text-align:			center;
@@ -492,4 +492,30 @@ div.dh-person-header {
 
 .dh-download-buttons img, .dh-download-buttons-or {
 	margin-right:			10px;
+}
+
+.dh-thumbnail-block-thumbs {
+	margin:					10px;
+}
+
+.dh-thumbnail-block-thumb {
+	float:				left;
+	margin-right:		20px;
+	width:				75px;
+	padding:			0px;
+}
+
+.dh-thumbnail-block-thumb img {
+	border:				none;
+	margin:				0px;
+}
+
+.dh-thumbnail-block-thumb .dh-thumbnail-title {
+	width:				75px;
+	overflow:			hidden;
+	text-align:			center;
+}
+
+.dh-thumbnail-block-more {
+	float:				left;
 }

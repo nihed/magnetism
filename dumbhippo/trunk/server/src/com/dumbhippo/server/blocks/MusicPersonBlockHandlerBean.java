@@ -22,10 +22,8 @@ import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.Enabled;
 import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.NotFoundException;
-import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.views.AnonymousViewpoint;
 import com.dumbhippo.server.views.PersonView;
-import com.dumbhippo.server.views.PersonViewExtra;
 import com.dumbhippo.server.views.TrackView;
 import com.dumbhippo.server.views.Viewpoint;
 
@@ -37,9 +35,6 @@ public class MusicPersonBlockHandlerBean extends AbstractBlockHandlerBean<MusicP
 	
 	@EJB
 	private MusicSystem musicSystem;
-	
-	@EJB
-	private PersonViewer personViewer;
 	
 	public MusicPersonBlockHandlerBean() {
 		super(MusicPersonBlockView.class);
@@ -58,8 +53,9 @@ public class MusicPersonBlockHandlerBean extends AbstractBlockHandlerBean<MusicP
 		Viewpoint viewpoint = blockView.getViewpoint();
 		Block block = blockView.getBlock();
 		
-		User user = identitySpider.lookupUser(block.getData1AsGuid());
-		PersonView userView = personViewer.getPersonView(viewpoint, user, PersonViewExtra.PRIMARY_RESOURCE);
+		User user = getData1User(block);
+		// no resource needed just to display user.getName()
+		PersonView userView = personViewer.getPersonView(viewpoint, user);
 		List<TrackView> tracks = musicSystem.getLatestTrackViews(viewpoint, user, 5);
 		if (tracks.isEmpty()) {
 			throw new BlockNotVisibleException("No tracks for this person are visible");
@@ -67,8 +63,7 @@ public class MusicPersonBlockHandlerBean extends AbstractBlockHandlerBean<MusicP
 		
 		userView.setTrackHistory(tracks);
 		
-		blockView.setUserView(userView);
-		blockView.setPopulated(true);
+		blockView.populate(userView);
 	}
 	
 	public Set<User> getInterestedUsers(Block block) {
