@@ -3,7 +3,6 @@ package com.dumbhippo.server.blocks;
 import java.util.List;
 import java.util.Set;
 
-import javax.ejb.EJB;
 import javax.ejb.Stateless;
 
 import org.slf4j.Logger;
@@ -17,7 +16,6 @@ import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.FlickrPhotosetStatus;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.User;
-import com.dumbhippo.server.ExternalAccountSystem;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.services.FlickrPhotoView;
 
@@ -27,9 +25,6 @@ public class FlickrPersonBlockHandlerBean extends
 		FlickrPersonBlockHandler {
 
 	static private final Logger logger = GlobalSetup.getLogger(FlickrPersonBlockHandlerBean.class);	
-	
-	@EJB
-	private ExternalAccountSystem externalAccountSystem;
 	
 	protected FlickrPersonBlockHandlerBean() {
 		super(FlickrPersonBlockView.class);
@@ -51,11 +46,11 @@ public class FlickrPersonBlockHandlerBean extends
 	}
 
 	public Set<User> getInterestedUsers(Block block) {
-		return super.getUsersWhoCareAboutData1User(block);
+		return super.getUsersWhoCareAboutData1UserAndExternalAccount(block, ExternalAccountType.FLICKR);
 	}
 
 	public Set<Group> getInterestedGroups(Block block) {
-		return super.getGroupsData1UserIsIn(block);
+		return super.getGroupsData1UserIsInIfExternalAccount(block, ExternalAccountType.FLICKR);
 	}
 
 	public void onMostRecentFlickrPhotosChanged(String flickrId,
@@ -78,6 +73,8 @@ public class FlickrPersonBlockHandlerBean extends
 	}
 
 	public void onExternalAccountLovedAndEnabledMaybeChanged(User user, ExternalAccount external) {
-		// FIXME
+		if (external.getAccountType() != ExternalAccountType.FLICKR)
+			return;
+		stacker.refreshDeletedFlags(getKey(user));
 	}
 }

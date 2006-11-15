@@ -15,6 +15,7 @@ import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.BlockKey;
 import com.dumbhippo.persistence.BlockType;
 import com.dumbhippo.persistence.ExternalAccount;
+import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.FacebookEvent;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.StackInclusion;
@@ -88,23 +89,27 @@ public class FacebookBlockHandlerBean extends AbstractBlockHandlerBean<FacebookB
 	}
 	
 	public Set<User> getInterestedUsers(Block block) {
-		return getUsersWhoCareAboutData1User(block);
+		return getUsersWhoCareAboutData1UserAndExternalAccount(block, ExternalAccountType.FACEBOOK);
 	}	
 	
 	public Set<Group> getInterestedGroups(Block block) {
-		return getGroupsData1UserIsIn(block);
+		return getGroupsData1UserIsInIfExternalAccount(block, ExternalAccountType.FACEBOOK);
 	}
 	
-	// FIXME stop implementing this interface, no?
 	public void onExternalAccountCreated(User user, ExternalAccount external) {
 		// we do not have per-facebook-account blocks anymore
 	}
 	
 	public void onExternalAccountLovedAndEnabledMaybeChanged(User user, ExternalAccount external) {
-		// we do not have per-facebook-account blocks anymore
+		if (external.getAccountType() != ExternalAccountType.FACEBOOK)
+			return;
+		// FIXME need to do stacker.refreshDeletedFlags on all keys that might exist
 	}
 	
 	public void onFacebookEventCreated(User user, FacebookEvent event) {
+		
+		// FIXME check ExternalAccountSystem.getExternalAccountExistsLovedAndEnabled or is that already guaranteed?
+		
 		if (event.getEventType().getDisplayToOthers()) {
 			Block block = stacker.createBlock(getKey(user, event, StackInclusion.IN_ALL_STACKS));	
 			// TODO: adjust publicity if an account is disabled per bug 929
@@ -119,6 +124,9 @@ public class FacebookBlockHandlerBean extends AbstractBlockHandlerBean<FacebookB
 	}
 	
 	public void onFacebookEvent(User user, FacebookEvent event) {
+		
+		// FIXME check ExternalAccountSystem.getExternalAccountExistsLovedAndEnabled or is that already guaranteed?
+		
 		if (event.getEventType().getDisplayToOthers()) {
 			stacker.stack(getKey(user, event, StackInclusion.IN_ALL_STACKS), 
 				          event.getEventTimestampAsLong(), user, false, StackReason.BLOCK_UPDATE);

@@ -44,6 +44,7 @@ public interface Stacker {
 	 * @param block
 	 */
 	public void refreshDeletedFlags(Block block);
+	public void refreshDeletedFlags(BlockKey key);
 	
 	public void blockClicked(BlockKey key, User user, long clickedTime);
 	

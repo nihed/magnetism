@@ -16,7 +16,6 @@ import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.StackInclusion;
 import com.dumbhippo.persistence.StackReason;
 import com.dumbhippo.persistence.User;
-import com.dumbhippo.server.ExternalAccountSystem;
 import com.dumbhippo.server.FeedSystem;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PersonViewer;
@@ -30,9 +29,6 @@ public class BlogBlockHandlerBean extends AbstractBlockHandlerBean<BlogBlockView
 
 	@EJB
 	private PersonViewer personViewer;	
-	
-	@EJB
-	private ExternalAccountSystem externalAccountSystem;
 	
 	@EJB
 	private FeedSystem feedSystem;
@@ -69,11 +65,11 @@ public class BlogBlockHandlerBean extends AbstractBlockHandlerBean<BlogBlockView
 	}
 
 	public Set<User> getInterestedUsers(Block block) {
-		return getUsersWhoCareAboutData1User(block);
+		return getUsersWhoCareAboutData1UserAndExternalAccount(block, ExternalAccountType.BLOG);
 	}
 	
 	public Set<Group> getInterestedGroups(Block block) {
-		return getGroupsData1UserIsIn(block);
+		return getGroupsData1UserIsInIfExternalAccount(block, ExternalAccountType.BLOG);
 	}
 	
 	public void onExternalAccountCreated(User user, ExternalAccount external) {
@@ -95,6 +91,9 @@ public class BlogBlockHandlerBean extends AbstractBlockHandlerBean<BlogBlockView
 	}
 
 	public void onExternalAccountLovedAndEnabledMaybeChanged(User user, ExternalAccount external) {
-		// FIXME
+		if (external.getAccountType() != ExternalAccountType.BLOG)
+			return;
+		stacker.refreshDeletedFlags(getKey(user, StackInclusion.ONLY_WHEN_VIEWED_BY_OTHERS));
+		stacker.refreshDeletedFlags(getKey(user, StackInclusion.ONLY_WHEN_VIEWING_SELF));
 	}
 }

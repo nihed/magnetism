@@ -11,6 +11,8 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.BlockKey;
 import com.dumbhippo.persistence.BlockType;
+import com.dumbhippo.persistence.ExternalAccount;
+import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.FlickrPhotosetStatus;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.User;
@@ -39,11 +41,11 @@ public class FlickrPhotosetBlockHandlerBean extends
 	}
 
 	public Set<User> getInterestedUsers(Block block) {
-		return super.getUsersWhoCareAboutData1User(block);
+		return super.getUsersWhoCareAboutData1UserAndExternalAccount(block, ExternalAccountType.FLICKR);
 	}
 
 	public Set<Group> getInterestedGroups(Block block) {
-		return super.getGroupsData1UserIsIn(block);
+		return super.getGroupsData1UserIsInIfExternalAccount(block, ExternalAccountType.FLICKR);
 	}
 
 	public void onMostRecentFlickrPhotosChanged(String flickrId,
@@ -65,5 +67,15 @@ public class FlickrPhotosetBlockHandlerBean extends
 		// (remove this log message)
 		logger.debug("changed photoset status " + photosetStatus);
 		// FIXME
+	}
+	
+	public void onExternalAccountCreated(User user, ExternalAccount external) {
+		// nothing to do, just wait for a photoset to appear (?)
+	}
+
+	public void onExternalAccountLovedAndEnabledMaybeChanged(User user, ExternalAccount external) {
+		if (external.getAccountType() != ExternalAccountType.FLICKR)
+			return;
+		// FIXME we need to query our photosets and stacker.refreshDeletedFlags on all of their blocks
 	}
 }

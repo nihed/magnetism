@@ -43,6 +43,17 @@ public interface ExternalAccountSystem extends AccountStatusListener {
 	ExternalAccount lookupExternalAccount(Viewpoint viewpoint, User user, ExternalAccountType type) throws NotFoundException;
 	
 	/**
+	 * Checks whether the given external account exists, is loved, and the user's account is enabled. i.e. 
+	 * returns TRUE if we should be using this account. Equivalent to calling ExternalAccount.isLovedAndEnabled()
+	 * after looking up the account by type.
+	 * @param viewpoint
+	 * @param user
+	 * @param accountType
+	 * @return
+	 */
+	public boolean getExternalAccountExistsLovedAndEnabled(Viewpoint viewpoint, User user, ExternalAccountType accountType);
+	
+	/**
 	 * Gets all external account views for a user, taking into account the current viewpoint.
 	 * 
 	 * Accounts may have any sentiment (loved, hated, indifferent), remember. 

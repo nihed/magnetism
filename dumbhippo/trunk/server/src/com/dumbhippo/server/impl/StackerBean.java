@@ -520,6 +520,17 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		}
 	}
 	
+	public void refreshDeletedFlags(BlockKey key) {
+		Block block;
+		try {
+			block = queryBlock(key);
+		} catch (NotFoundException e) {
+			logger.debug("refreshDeletedFlags() called on block that doesn't exist which should be harmless, key={}", key);
+			return;
+		}
+		refreshDeletedFlags(block);
+	}
+	
 	public void refreshDeletedFlags(final Block block) {
 		runner.runTaskOnTransactionCommit(new Runnable() {
 			public void run() {

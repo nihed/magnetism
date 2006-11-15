@@ -14,10 +14,12 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.Block;
+import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.StackInclusion;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.UserBlockData;
+import com.dumbhippo.server.ExternalAccountSystem;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.NotFoundException;
@@ -39,6 +41,9 @@ public abstract class AbstractBlockHandlerBean<BlockViewSubType extends BlockVie
 	
 	@EJB
 	protected GroupSystem groupSystem;
+	
+	@EJB
+	protected ExternalAccountSystem externalAccountSystem;
 	
 	@EJB
 	@IgnoreDependency
@@ -151,23 +156,7 @@ public abstract class AbstractBlockHandlerBean<BlockViewSubType extends BlockVie
 		}
 	}
 	
-	/**
-	 * Utility helper for implementing getInterestedUsers() that gets everyone with 
-	 * the user id in data1 listed in their contacts.
-	 * 
-	 * Returns only the person themselves in the set if block.getInclusion() == ONLY_WHEN_VIEWING_SELF.
-	 * 
-	 * @param block
-	 * @return
-	 */
-	protected final Set<User> getUsersWhoCareAboutData1User(Block block) {
-		User user;
-		try {
-			user = EJBUtil.lookupGuid(em, User.class, block.getData1AsGuid());
-		} catch (NotFoundException e) {
-			throw new RuntimeException("invalid user in data1 of " + block, e);
-		}
-		
+	private Set<User> getUsersWhoCareAboutData1User(Block block, User user) {
 		Set<User> peopleWhoCare = null;
 		
 		switch (block.getInclusion()) {
@@ -189,7 +178,39 @@ public abstract class AbstractBlockHandlerBean<BlockViewSubType extends BlockVie
 		
 		throw new RuntimeException("invalid inclusion " + block);
 	}
+	
+	private User getData1User(Block block) {
+		User user;
+		try {
+			user = EJBUtil.lookupGuid(em, User.class, block.getData1AsGuid());
+		} catch (NotFoundException e) {
+			throw new RuntimeException("invalid user in data1 of " + block, e);
+		}
+		return user;
+	}
+	
+	/**
+	 * Utility helper for implementing getInterestedUsers() that gets everyone with 
+	 * the user id in data1 listed in their contacts.
+	 * 
+	 * Returns only the person themselves in the set if block.getInclusion() == ONLY_WHEN_VIEWING_SELF.
+	 * 
+	 * @param block
+	 * @return
+	 */
+	protected final Set<User> getUsersWhoCareAboutData1User(Block block) {
+		return getUsersWhoCareAboutData1User(block, getData1User(block));
+	}
 
+	protected final Set<User> getUsersWhoCareAboutData1UserAndExternalAccount(Block block, ExternalAccountType accountType) {
+		User user = getData1User(block);
+		if (externalAccountSystem.getExternalAccountExistsLovedAndEnabled(SystemViewpoint.getInstance(), user, accountType)) {
+			return getUsersWhoCareAboutData1User(block, user);
+		} else {
+			return Collections.emptySet();
+		}
+	}
+	
 	/**
 	 * Utility helper for implementing getInterestedUsers() that gets everyone in 
 	 * the group identified by the group id in data1.
@@ -225,6 +246,18 @@ public abstract class AbstractBlockHandlerBean<BlockViewSubType extends BlockVie
 		return Collections.singleton(group);
 	}
 	
+	private Set<Group> getGroupsData1UserIsIn(Block block, User user) {
+		switch (block.getInclusion()) {
+		case IN_ALL_STACKS:
+		case ONLY_WHEN_VIEWED_BY_OTHERS:
+			return groupSystem.findRawGroups(SystemViewpoint.getInstance(), user);
+		case ONLY_WHEN_VIEWING_SELF:
+			return Collections.emptySet();
+			// no default, hides bugs
+		}
+		throw new RuntimeException("invalid inclusion " + block);		
+	}
+	
 	/** 
 	 * Utility helper for implementing getInterestedGroups() that returns
 	 * the set of groups the user id stored in data1 is a member of.
@@ -235,23 +268,19 @@ public abstract class AbstractBlockHandlerBean<BlockViewSubType extends BlockVie
 	 * @param block
 	 * @return
 	 */
-	protected Set<Group> getGroupsData1UserIsIn(Block block) {
-		User user;
-		try {
-			user = EJBUtil.lookupGuid(em, User.class, block.getData1AsGuid());
-		} catch (NotFoundException e) {
-			throw new RuntimeException(e);
-		}
+	protected final Set<Group> getGroupsData1UserIsIn(Block block) {
+		User user = getData1User(block);
 		
-		switch (block.getInclusion()) {
-		case IN_ALL_STACKS:
-		case ONLY_WHEN_VIEWED_BY_OTHERS:
-			return groupSystem.findRawGroups(SystemViewpoint.getInstance(), user);
-		case ONLY_WHEN_VIEWING_SELF:
+		return getGroupsData1UserIsIn(block, user);
+	}
+
+	protected final Set<Group> getGroupsData1UserIsInIfExternalAccount(Block block, ExternalAccountType accountType) {
+		User user = getData1User(block);
+		
+		if (externalAccountSystem.getExternalAccountExistsLovedAndEnabled(SystemViewpoint.getInstance(), user, accountType)) {
+			return getGroupsData1UserIsIn(block, user);
+		} else {
 			return Collections.emptySet();
-		// no default, hides bugs
 		}
-		
-		throw new RuntimeException("invalid inclusion " + block);
 	}
 }

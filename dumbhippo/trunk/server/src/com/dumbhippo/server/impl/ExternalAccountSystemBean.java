@@ -220,6 +220,15 @@ public class ExternalAccountSystemBean implements ExternalAccountSystem {
 		}
 	}
 
+	public boolean getExternalAccountExistsLovedAndEnabled(Viewpoint viewpoint, User user, ExternalAccountType accountType) {
+		try {
+			ExternalAccount external = lookupExternalAccount(viewpoint, user, accountType);
+			return external.isLovedAndEnabled();
+		} catch (NotFoundException e) {
+			return false;
+		}
+	}
+	
 	public void onAccountDisabledToggled(Account account) {
 		for (ExternalAccount external : account.getExternalAccounts()) {
 			// this is why we have "maybe changed" since we really don't know.
