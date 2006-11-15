@@ -99,6 +99,14 @@
 		</junit>
 	</target>
 	
+	<target name="loggingjar" depends="compile">
+		<jar destfile="${buildjar.dir}/dumbhippo-logging.jar">
+			<fileset dir="${build}">
+				<include name="**/logging/**/*.class" />
+			</fileset>
+		</jar>
+	</target>
+
 	<target name="basejar" depends="compile">
 		<jar destfile="${buildjar.dir}/dumbhippo-base.jar">
 			<fileset dir="${build}">
@@ -334,7 +342,7 @@
 		</jar>
 	</target>
 
-	<target name="build-notest" depends="exploded-ear,clientjar" />
+	<target name="build-notest" depends="exploded-ear,loggingjar,clientjar" />
 
 	<target name="build" depends="test,build-notest" />
 

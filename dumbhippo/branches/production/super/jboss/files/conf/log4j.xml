@@ -75,7 +75,7 @@
    <!-- A time/date based rolling appender -->
    <!--  jboss DailyRollingFileAppender is just a subclass of the standard log4j one that 
    		also creates directories as needed or something like that -->
-   <appender name="FILE" class="org.jboss.logging.appender.DailyRollingFileAppender">
+   <appender name="FILE" class="com.dumbhippo.logging.CountingAppender">
       <errorHandler class="org.jboss.logging.util.OnlyOnceErrorHandler"/>
       <param name="File" value="${jboss.server.home.dir}/log/server.log"/>
        <!-- don't truncate, just append -->
