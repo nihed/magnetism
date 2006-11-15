@@ -8,10 +8,16 @@ import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.Table;
+import javax.persistence.UniqueConstraint;
 
 @Entity
+@Table(name="FeedEntry", 
+    uniqueConstraints = { @UniqueConstraint(columnNames={"feed_id", "entryGuid"}) })
 @Inheritance(strategy=InheritanceType.JOINED)
 public class FeedEntry extends DBUnique {
+	// This limit makes sure that MySQL can handle the unique constraint on feed/entryGuid
+	public static final int MAX_ENTRY_GUID_LENGTH = 240;
 	private static final long serialVersionUID = 1L;
 	
 	private Feed feed;
@@ -48,6 +54,7 @@ public class FeedEntry extends DBUnique {
 		this.date = date.getTime();
 	}
 
+	@Column(length = MAX_ENTRY_GUID_LENGTH)
 	public String getEntryGuid() {
 		return entryGuid;
 	}

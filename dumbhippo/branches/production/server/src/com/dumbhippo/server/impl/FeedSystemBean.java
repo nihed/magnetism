@@ -5,8 +5,6 @@ import java.io.Serializable;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -24,6 +22,7 @@ import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
 
 import org.slf4j.Logger;
 
@@ -191,6 +190,14 @@ public class FeedSystemBean implements FeedSystem {
 		return new URL(entryLink);
 	}
 	
+	private String makeEntryGuid(SyndEntry syndEntry) {
+		String guid = syndEntry.getUri();
+		if (guid.length() <= FeedEntry.MAX_ENTRY_GUID_LENGTH)
+			return guid;
+		else
+			return guid.substring(0, FeedEntry.MAX_ENTRY_GUID_LENGTH);
+	}
+	
 	private FeedEntry createEntryFromSyndEntry(Feed feed, SyndFeed syndFeed, SyndEntry syndEntry) throws MalformedURLException {
 		URL entryUrl = entryURLFromSyndEntry(syndEntry);
 		
@@ -232,7 +239,7 @@ public class FeedSystemBean implements FeedSystem {
 			entry = new FeedEntry(feed);
 		}
 			
-		entry.setEntryGuid(syndEntry.getUri());
+		entry.setEntryGuid(makeEntryGuid(syndEntry));
 
 		String title = syndEntry.getTitle();
 		if (title != null) // probably never null, but who knows what rome does
@@ -311,7 +318,7 @@ public class FeedSystemBean implements FeedSystem {
 		for (Object o : syndFeed.getEntries()) {
 			SyndEntry syndEntry = (SyndEntry)o;
 			
-			String guid = syndEntry.getUri();
+			String guid = makeEntryGuid(syndEntry);
 			if (foundGuids.contains(guid))
 				continue;
 			
@@ -321,7 +328,6 @@ public class FeedSystemBean implements FeedSystem {
 					entry = createEntryFromSyndEntry(feed, syndFeed, syndEntry);
 					foundGuids.add(guid);
 					em.persist(entry);
-					feed.getEntries().add(entry);
 					// This won't work at the moment because the feed hasn't yet been associated with an account yet
 					// Would also need to figure out what entryPosition should be
 				    // processFeedExternalAccounts(entry, 0);
@@ -339,21 +345,32 @@ public class FeedSystemBean implements FeedSystem {
 	private void updateFeedFromSyndFeed(Feed feed, SyndFeed syndFeed) throws XmlMethodException {
 		feed.setTitle(syndFeed.getTitle());
 		setLinkFromSyndFeed(feed, syndFeed);
-		Map<String, FeedEntry> oldEntries = new HashMap<String, FeedEntry>();
+		Map<String, FeedEntry> lastEntries = new HashMap<String, FeedEntry>();
 		
-		for (FeedEntry entry : feed.getEntries()) {
-			oldEntries.put(entry.getEntryGuid(), entry);
-		}
+		// We want to keep a complete set of old GUIDs in the database to
+		// keep from reposting entries to feeds when something upstream of
+		// us breaks, but loading them all up every time would be hideously
+		// expensive, so what we do is only load up the entries we saw
+		// last time, and then when we get something not in that set, 
+		// explicitly check with a separate query to make sure that it isn't
+		// an old resurrected GUID.
 		
+		for (FeedEntry entry : getCurrentEntries(feed))
+			lastEntries.put(entry.getEntryGuid(), entry);
+		
+		final List<Long> newEntryIds = new ArrayList<Long>();
 		Set<String> foundGuids = new HashSet<String>();
+		
 		int entryPosition = 0;
 		for (Object o : syndFeed.getEntries()) {
 			SyndEntry syndEntry = (SyndEntry)o;
 			
-			String guid = syndEntry.getUri();
+			String guid = makeEntryGuid(syndEntry);
+			
 			if (foundGuids.contains(guid))
 				continue;
-			if (oldEntries.containsKey(guid)) {
+			
+			if (lastEntries.containsKey(guid)) {
 				// We don't try to update old entries, because it is painful and expensive:
 				// The most interesting thing to update is the description, and we only store the 
 				// extracted version of the description, so we have to actually do the extraction 
@@ -364,42 +381,51 @@ public class FeedSystemBean implements FeedSystem {
 				continue;
 			}
 			
-			if (!foundGuids.contains(guid)) {
-				FeedEntry entry;
-				try {
-					entry = createEntryFromSyndEntry(feed, syndFeed, syndEntry);
-					foundGuids.add(guid);
-					em.persist(entry);
-					feed.getEntries().add(entry);
-					// if this feed is associated with some external account(s), this function will take 
-					// care of what needs to happen
-					processFeedExternalAccounts(entry, entryPosition++);
-				} catch (MalformedURLException e) {
-					logger.debug("ignoring feed entry with bogus url on {}: {}", feed.getSource(), e.getMessage());
-					continue;
-				}
+			// At this point we tentatively think that we have a new entry, but it
+			// could also be a resurrected entry - one that was returned by the feed
+			// earlier, vanished from the feed - then came back
+			
+			try {
+				Query q = em.createQuery("SELECT fe FROM FeedEntry fe WHERE fe.feed = :feed AND fe.entryGuid = :guid");
+				q.setParameter("feed", feed);
+				q.setParameter("guid", guid);
+				
+				// It was resurrected
+				FeedEntry old = (FeedEntry)q.getSingleResult();
+				old.setCurrent(true);
+				foundGuids.add(guid);
+				continue;
+				
+			} catch (NoResultException e) {
+				// not already there, we are good to go
+			}
+			
+			try {
+				FeedEntry entry = createEntryFromSyndEntry(feed, syndFeed, syndEntry);
+				em.persist(entry);
+				// if this feed is associated with some external account(s), this function will take 
+				// care of what needs to happen
+				processFeedExternalAccounts(entry, entryPosition++);
+				
+				foundGuids.add(guid);
+				newEntryIds.add(entry.getId());
+				
+				logger.debug("  Found new Feed entry: {}", entry.getTitle());
+			} catch (MalformedURLException e) {
+				logger.debug("ignoring feed entry with bogus url on {}: {}", feed.getSource(), e.getMessage());
+				continue;
 			}
 		}
-		
-		for (FeedEntry entry : feed.getEntries()) {
+
+		// Mark any old items as no longer current
+		for (FeedEntry entry : lastEntries.values()) {
 			if (!foundGuids.contains(entry.getEntryGuid()))
 				entry.setCurrent(false);
-			else if (oldEntries.containsKey(entry))
-				entry.setCurrent(true);
 		}
 
 		feed.setLastFetched(new Date());
 		feed.setLastFetchSucceeded(true);
 
-		final List<Long> newEntryIds = new ArrayList<Long>();
-		for (FeedEntry entry : feed.getEntries()) {
-			if (foundGuids.contains(entry.getEntryGuid()) && !oldEntries.containsKey(entry.getEntryGuid())) {
-				logger.debug("  Found new Feed entry: {}", entry.getTitle());
-				
-				newEntryIds.add(entry.getId());
-			}
-		}
-		
 		// The feed entries aren't visible to the notification service 
 		// thread until after we commit this transaction, so don't submit them
 		// to that thread until then.
@@ -569,20 +595,12 @@ public class FeedSystemBean implements FeedSystem {
 	}
 
 	public List<FeedEntry> getCurrentEntries(Feed feed) {
-		List<FeedEntry> result = new ArrayList<FeedEntry>();
+		Query q = em.createQuery("SELECT fe FROM FeedEntry fe " +
+				                 "WHERE fe.feed = :feed AND fe.current = 1" +
+				                 "ORDER BY fe.date DESC");
+		q.setParameter("feed", feed);
 		
-		for (FeedEntry entry : feed.getEntries()) {
-			if (entry.isCurrent())
-				result.add(entry);
-		}
-		
-		Collections.sort(result, new Comparator<FeedEntry>() {
-			public int compare(FeedEntry a, FeedEntry b) {
-				return - a.getDate().compareTo(b.getDate());
-			}
-		});
-		
-		return result;
+		return TypeUtils.castList(FeedEntry.class, q.getResultList());
 	}
 	
 	public FeedEntry getLastEntry(Feed feed) {
