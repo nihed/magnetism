@@ -9,7 +9,7 @@ import com.dumbhippo.server.views.ExternalAccountView;
 import com.dumbhippo.server.views.Viewpoint;
 
 public class FlickrPersonBlockView extends AbstractPersonBlockView
-	implements ExternalAccountBlockView, ThumbnailsBlockView {
+	implements ExternalAccountBlockView, ThumbnailsBlockView, SimpleTitleBlockView {
 
 	private ExternalAccountView externalAccountView;
 	
@@ -46,5 +46,22 @@ public class FlickrPersonBlockView extends AbstractPersonBlockView
 
 	public String getMoreThumbnailsTitle() {
 		return externalAccountView.getExternalAccount().getLink();
+	}
+
+	public String getTitleForHome() {
+		return getTitle();
+	}
+	
+	public String getTitle() {
+		return "New photos posted";
+	}
+
+	public String getLink() {
+		return "FIXME"; 
+	}
+
+	@Override
+	public String getTypeTitle() {
+		return "Flickr photos";
 	}
 }

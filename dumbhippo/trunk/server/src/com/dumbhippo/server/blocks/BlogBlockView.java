@@ -8,7 +8,7 @@ import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.Viewpoint;
 
-public class BlogBlockView extends AbstractPersonBlockView implements ExternalAccountBlockView {
+public class BlogBlockView extends AbstractPersonBlockView implements ExternalAccountBlockView, SimpleTitleBlockView {
 	
 	private FeedEntry entry;
 	
@@ -50,5 +50,22 @@ public class BlogBlockView extends AbstractPersonBlockView implements ExternalAc
 	public String getIcon() {
 		return "/images3/blog_icon.png";
 		//return entry.getFeed().getFavicon();
+	}
+
+	public String getTitle() {
+		return getEntry().getTitle();
+	}
+
+	public String getLink() {
+		return getEntry().getLink().getUrl();
+	}
+
+	@Override
+	public String getTypeTitle() {
+		return "Blog post";
+	}
+
+	public String getTitleForHome() {
+		return getTitle();
 	}
 }

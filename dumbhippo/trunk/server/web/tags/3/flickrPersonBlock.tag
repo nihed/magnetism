@@ -11,18 +11,7 @@
 
 <dht3:blockContainer cssClass="${offset ? 'dh-box-grey2' : 'dh-box-grey1'}" blockId="${blockId}">
 	<dht3:blockLeft block="${block}">
-		<dht3:blockTitle>
-		    <c:if test="${!oneLine}"> 
-			    <span class="dh-stacker-block-title-type">Flickr photos:</span>
-			</c:if>    	
-			<span class="dh-stacker-block-title-blog-post">
-				<jsp:element name="a">
-					<jsp:attribute name="class">dh-underlined-link</jsp:attribute>
-					<jsp:attribute name="href"><c:out value="FIXME"/></jsp:attribute>
-					<jsp:body><c:out value="FIXME"/></jsp:body>
-				</jsp:element>
-			</span>
-		</dht3:blockTitle>
+		<dht3:simpleBlockTitle block="${block}" oneLine="${oneLine}" homeStack="false"/>
 		<dht3:blockDescription blockId="${blockId}">
 		</dht3:blockDescription>			
 	</dht3:blockLeft>

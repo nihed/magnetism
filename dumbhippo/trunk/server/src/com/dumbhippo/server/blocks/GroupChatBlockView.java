@@ -10,7 +10,7 @@ import com.dumbhippo.server.views.ChatMessageView;
 import com.dumbhippo.server.views.GroupView;
 import com.dumbhippo.server.views.Viewpoint;
 
-public class GroupChatBlockView extends BlockView {
+public class GroupChatBlockView extends BlockView implements SimpleTitleBlockView {
 	public static final int RECENT_MESSAGE_COUNT = 3;
 	
 	private GroupView group;
@@ -66,5 +66,23 @@ public class GroupChatBlockView extends BlockView {
 	public String getIcon() {
 		// Mugshot stock favicon
 		return "/images3/mugshot_icon.png";
+	}
+
+	public String getTitleForHome() {
+		return getTitle();
+	}
+	
+	public String getTitle() {
+		return "New chat activity";
+	}
+
+	public String getLink() {
+		// the chat link requires special handling - it's a javascript: link.
+		return "";
+	}
+
+	@Override
+	public String getTypeTitle() {
+		return "Group Chat";
 	}
 }

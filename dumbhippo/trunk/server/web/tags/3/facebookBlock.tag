@@ -16,11 +16,12 @@
 
 <dht3:blockContainer cssClass="${offset ? 'dh-box-grey2' : 'dh-box-grey1'}" blockId="${blockId}" expandable="${(block.photos.size > 0) && !oneLine}">
 	<dht3:blockLeft block="${block}">
+		<%-- FIXME is this table layout different from simpleBlockTitle on purpose or just for historical reasons? --%>
 		<table cellspacing="0" cellpadding="0">
 		<tr>
 		<td class="dh-stacker-block-title">
 		    <c:if test="${!oneLine}">  
-		        <span class="dh-stacker-block-title-type">Facebook:</span>
+		        <span class="dh-stacker-block-title-type"><c:out value="${block.typeTitle}"/>:</span>
 		    </c:if>     
 		</td>    
 		<td>
@@ -28,12 +29,12 @@
 			<a class="dh-underlined-link" href="${block.link}">
 			    <c:choose>
 			        <c:when test="${homeStack}">
-			            <c:out value="${block.textForHome}"/>
+			            <c:out value="${block.titleForHome}"/>
 			        </c:when>
 			        <c:otherwise>
 			            <%-- if you see updates about your own Facebook not on your own homepage, it --%>
 			            <%-- is less confusing if they are in the third person --%>
-			            <c:out value="${block.genericText}"/>           
+			            <c:out value="${block.title}"/>           
 			        </c:otherwise>
 			    </c:choose>         
 			</a>

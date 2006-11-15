@@ -11,7 +11,7 @@
 <dht3:blockContainer cssClass="${offset ? 'dh-box-orange2' : 'dh-box-orange1'}" blockId="${blockId}" expandable="${!oneLine}">
 	<dht3:blockLeft block="${block}">
 	    <dht3:blockTitle>
-		    Group Chat: <dht:actionLinkChat linkText="New chat activity" oneLine="true" chatId="${block.groupView.group.id}" kind="${chatKind}"/>
+		    <c:out value="${block.typeTitle}"/>: <dht:actionLinkChat linkText="${block.title}" oneLine="true" chatId="${block.groupView.group.id}" kind="${chatKind}"/>
         </dht3:blockTitle>
 		<dht3:blockContent blockId="${blockId}">
 			<dht3:chatPreview block="${block}" chatId="${block.groupView.group.id}" chatKind="group" chattingCount="${block.groupView.chattingUserCount}"/>

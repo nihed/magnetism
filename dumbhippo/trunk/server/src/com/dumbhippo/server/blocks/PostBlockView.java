@@ -11,7 +11,7 @@ import com.dumbhippo.server.views.ChatMessageView;
 import com.dumbhippo.server.views.PostView;
 import com.dumbhippo.server.views.Viewpoint;
 
-public class PostBlockView extends BlockView {
+public class PostBlockView extends BlockView implements SimpleTitleBlockView {
 	static final public int RECENT_MESSAGE_COUNT = 3;
 	
 	private PostView postView;
@@ -75,5 +75,22 @@ public class PostBlockView extends BlockView {
 			return feedIcon;
 		else
 			return "/images3/webswarm_icon.png";
+	}
+
+	@Override
+	public String getTypeTitle() {
+		return "Web Swarm";
+	}
+
+	public String getTitleForHome() {
+		return getTitle();
+	}
+
+	public String getTitle() {
+		return postView.getTitle();
+	}
+
+	public String getLink() {
+		return "/visit?post=" + postView.getPost().getId();
 	}
 }

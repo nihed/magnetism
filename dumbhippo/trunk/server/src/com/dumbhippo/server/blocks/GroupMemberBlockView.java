@@ -71,5 +71,11 @@ public class GroupMemberBlockView extends BlockView {
 	public String getIcon() {
 		// Mugshot stock favicon
 		return "/images3/mugshot_icon.png";
-	}	
+	}
+
+	@Override
+	public String getTypeTitle() {
+		// we don't display a type title for this kind of block, but if we did...
+		return "Group update";
+	}
 }

@@ -41,7 +41,13 @@ public abstract class BlockView implements ObjectView {
 		return viewpoint;
 	}
 	
-	public abstract String getIcon();
+	/** Gets icon to be displayed next to the title */
+	public abstract String getIcon();	
+	
+	/** Gets a string like "Flickr photoset" or "Web swarm" indicating the kind of block for 
+	 * display to the user 
+	 */
+	public abstract String getTypeTitle();
 	
 	public boolean isPopulated() {
 		return populated;

@@ -14,7 +14,7 @@ import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.Viewpoint;
 import com.dumbhippo.web.ListBean;
 
-public class FacebookBlockView extends AbstractPersonBlockView implements ExternalAccountBlockView {
+public class FacebookBlockView extends AbstractPersonBlockView implements ExternalAccountBlockView, SimpleTitleBlockView {
 	private List<FacebookEvent> facebookEvents;
 	private String link;
 	
@@ -82,14 +82,14 @@ public class FacebookBlockView extends AbstractPersonBlockView implements Extern
 		return link;
 	}
 
-	public String getTextForHome() {		
+	public String getTitleForHome() {		
 		if (getViewpoint().isOfUser(getUserView().getUser()))
 			return getTextForSelf();
 		else 		
 			return getGenericText();
 	}
 
-	public String getTextForSelf() {
+	private String getTextForSelf() {
         FacebookEvent event = getFacebookEvent();
 				
 		String pluralChar = "";
@@ -125,7 +125,7 @@ public class FacebookBlockView extends AbstractPersonBlockView implements Extern
 		throw new RuntimeException("need to support event type for " + event + " in getTextForSelf()");			
 	}
 	
-	public String getGenericText() {
+	private String getGenericText() {
 		FacebookEvent event = getFacebookEvent();
 		String pluralChar = "";
 		
@@ -149,5 +149,14 @@ public class FacebookBlockView extends AbstractPersonBlockView implements Extern
 		}
 		
 		throw new RuntimeException("need to support event type for " + event + " in getTextForOthers()");	
+	}
+
+	public String getTitle() {
+		return getGenericText();
+	}
+
+	@Override
+	public String getTypeTitle() {
+		return "Facebook";
 	}
 }

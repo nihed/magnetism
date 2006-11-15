@@ -13,7 +13,7 @@
 	<dht3:blockLeft block="${block}">
 		<dht3:blockTitle>
 		    <c:if test="${!oneLine}"> 
-			    <span class="dh-stacker-block-title-type">Music Radar:</span>	
+			    <span class="dh-stacker-block-title-type"><c:out value="${block.typeTitle}"/>:</span>	
 			</c:if>    	   
 			<span class="dh-stacker-block-title-music-person">
 				<c:forEach items="${block.trackViews}" end="2" var="track" varStatus="trackIdx">

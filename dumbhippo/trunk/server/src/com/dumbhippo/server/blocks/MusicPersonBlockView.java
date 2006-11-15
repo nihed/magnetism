@@ -40,4 +40,9 @@ public class MusicPersonBlockView extends AbstractPersonBlockView {
 	public String getIcon() {
 		return "/images3/musicradar_icon.png";
 	}
+
+	@Override
+	public String getTypeTitle() {
+		return "Music Radar";
+	}
 }
