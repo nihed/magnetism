@@ -4,6 +4,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.jms.ExceptionListener;
 import javax.jms.JMSException;
 import javax.jms.Session;
 import javax.jms.XAConnection;
@@ -51,13 +52,15 @@ class TxJmsSessionFactory implements JmsSessionFactory {
 	// for a particular transaction at once
 	Map<Transaction, XASession> sessions = Collections.synchronizedMap(new HashMap<Transaction, XASession>());
 	
-	public TxJmsSessionFactory(Context namingContext) throws NamingException, JMSException {
+	public TxJmsSessionFactory(Context namingContext, ExceptionListener exceptionListener) throws NamingException, JMSException {
 		XAConnectionFactory connectionFactory;
 		
 		connectionFactory = (XAConnectionFactory) namingContext.lookup("XAConnectionFactory");
 		connection = connectionFactory.createXAConnection();
+		connection.setExceptionListener(exceptionListener);
 		// There may be some amount of inefficiency in calling start() on a connection that
-		// we are only using to send messages.
+		// we are only using to send messages, but a possible advantage is that if we
+		// are listening on a socket we'll see when the other end goes away
 		connection.start();
 	}
 
