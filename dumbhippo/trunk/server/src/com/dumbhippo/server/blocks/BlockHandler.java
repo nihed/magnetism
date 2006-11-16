@@ -4,6 +4,7 @@ import java.util.Set;
 
 import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.Group;
+import com.dumbhippo.persistence.GroupBlockData;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.server.views.Viewpoint;
@@ -27,7 +28,8 @@ public interface BlockHandler {
 	 * @return new block view
 	 * @throws BlockNotVisibleException if the viewpoint can't see this block or user block data
 	 */
-	public BlockView getUnpopulatedBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd) throws BlockNotVisibleException;
+	public BlockView getUnpopulatedBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd, boolean participated) throws BlockNotVisibleException;
+	public BlockView getUnpopulatedBlockView(Viewpoint viewpoint, Block block, GroupBlockData gbd, boolean participated) throws BlockNotVisibleException;
 	
 	/**
 	 * Do any more work to get a displayable BlockView that was not done during prepareBlockView().

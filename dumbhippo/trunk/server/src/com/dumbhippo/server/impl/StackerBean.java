@@ -655,19 +655,33 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	// What we do check at this point is access control: this method throws NotFoundException 
 	//  if the user can't see the contents of the Block.
 	//
-	private BlockView prepareBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd) throws BlockNotVisibleException {
-		return getHandler(block).getUnpopulatedBlockView(viewpoint, block, ubd);
+	private BlockView prepareBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd, boolean participated) throws BlockNotVisibleException {
+		return getHandler(block).getUnpopulatedBlockView(viewpoint, block, ubd, participated);
 	} 
 	
+	private BlockView prepareBlockView(Viewpoint viewpoint, Block block, GroupBlockData gbd, boolean participated) throws BlockNotVisibleException {
+		return getHandler(block).getUnpopulatedBlockView(viewpoint, block, gbd, participated);
+	} 
+
 	// Populating the block view fills in all the details that were skipped at
 	//   the prepare stage and makes it ready for viewing by the user.
 	private void populateBlockView(BlockView blockView) {
 		getHandler(blockView).populateBlockView(blockView);
 	}
 	
-	public BlockView getBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd) throws NotFoundException {
+	private BlockView getBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd, boolean participated) throws NotFoundException {
 		try {
-			BlockView blockView = prepareBlockView(viewpoint, block, ubd);
+			BlockView blockView = prepareBlockView(viewpoint, block, ubd, participated);
+			populateBlockView(blockView);
+			return blockView;
+		} catch (BlockNotVisibleException e) {
+			throw new NotFoundException("Can't see this block", e);
+		}
+	}
+	
+	private BlockView getBlockView(Viewpoint viewpoint, Block block, GroupBlockData gbd, boolean participated) throws NotFoundException {
+		try {
+			BlockView blockView = prepareBlockView(viewpoint, block, gbd, participated);
 			populateBlockView(blockView);
 			return blockView;
 		} catch (BlockNotVisibleException e) {
@@ -676,7 +690,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	}
 	
 	public BlockView loadBlock(Viewpoint viewpoint, UserBlockData ubd) throws NotFoundException {	
-		return getBlockView(viewpoint, ubd.getBlock(), ubd);
+		return getBlockView(viewpoint, ubd.getBlock(), ubd, false);
 	}	
 	
 	/**
@@ -743,11 +757,12 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		return TypeUtils.castList(UserBlockData.class, q.getResultList());		
 	}
 	
-	private interface BlockSource {
-		List<Pair<Block, UserBlockData>> get(int start, int count);
+	private interface BlockSource<T> {
+		List<Pair<Block, T>> get(int start, int count);
+		BlockView prepareView(Viewpoint viewpoint, Block block, T t) throws BlockNotVisibleException;
 	}
 
-	public void pageStack(Viewpoint viewpoint, BlockSource source, Pageable<BlockView> pageable, int expectedHitFactor) {
+	public <T> void pageStack(Viewpoint viewpoint, BlockSource<T> source, Pageable<BlockView> pageable, int expectedHitFactor) {
 		
 		// + 1 is for finding out if there are items for the next page
 		int targetedNumberOfItems = pageable.getStart() + pageable.getCount() + 1;
@@ -758,18 +773,18 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		
 		while (stack.size() < targetedNumberOfItems) {
 			int count = (targetedNumberOfItems - stack.size()) * expectedHitFactor;
-			List<Pair<Block, UserBlockData>> blocks = source.get(start, count);
+			List<Pair<Block, T>> blocks = source.get(start, count);
 			if (blocks.isEmpty())
 				break;
 			
 			int resultItemCount = 0;
 			// Create BlockView objects for the blocks, performing access control checks
-			for (Pair<Block, UserBlockData> pair : blocks) {
+			for (Pair<Block, T> pair : blocks) {
 				Block block = pair.getFirst();
-				UserBlockData ubd = pair.getSecond();
+				T t = pair.getSecond();
 				
 				try {
-					stack.add(prepareBlockView(viewpoint, block, ubd));
+					stack.add(source.prepareView(viewpoint, block, t));
 					resultItemCount++;
 					if (stack.size() >= targetedNumberOfItems)
 						break;
@@ -816,13 +831,16 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		if (viewpoint.isOfUser(user))
 			expectedHitFactor = 2;
 		
-		pageStack(viewpoint, new BlockSource() {
+		pageStack(viewpoint, new BlockSource<UserBlockData>() {
 			public List<Pair<Block, UserBlockData>> get(int start, int count) {
 				List<Pair<Block, UserBlockData>> results = new ArrayList<Pair<Block, UserBlockData>>();
 				for (UserBlockData ubd : getBlocks(viewpoint, user, -1, start, count, participantOnly)) {
 					results.add(new Pair<Block, UserBlockData>(ubd.getBlock(), ubd));
 				}
 				return results;
+			}
+			public BlockView prepareView(Viewpoint viewpoint, Block block, UserBlockData ubd) throws BlockNotVisibleException {
+				return prepareBlockView(viewpoint, block, ubd, participantOnly);
 			}
 		}, pageable, expectedHitFactor);
 	}
@@ -910,7 +928,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
          	List<BlockView> blocks = new ArrayList<BlockView>();
          	for (UserBlockData ubd : TypeUtils.castList(UserBlockData.class, qu.getResultList())) {
 	         	try {
-	         	    BlockView blockView = getBlockView(viewpoint, ubd.getBlock(), ubd);
+	         	    BlockView blockView = getBlockView(viewpoint, ubd.getBlock(), ubd, true);
 	         	    blocks.add(blockView);
 	         	} catch (NotFoundException e) {
 	         		// this is used on the main page, let's not risk it throwing an exception here
@@ -945,7 +963,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		// Create BlockView objects for the blocks, implicitly performing access control
 		for (UserBlockData ubd : blocks) {
 			try {
-				stack.add(getBlockView(viewpoint, ubd.getBlock(), ubd));
+				stack.add(getBlockView(viewpoint, ubd.getBlock(), ubd, participantOnly));
 			} catch (NotFoundException e) {
 				// Do nothing, we can't see this block
 			}
@@ -979,13 +997,16 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		// you should be able to see all the blocks for the group
        	int expectedHitFactor = 2;
        	
-		pageStack(viewpoint, new BlockSource() {
-			public List<Pair<Block, UserBlockData>> get(int start, int count) {
-				List<Pair<Block, UserBlockData>> results = new ArrayList<Pair<Block, UserBlockData>>();
+		pageStack(viewpoint, new BlockSource<GroupBlockData>() {
+			public List<Pair<Block, GroupBlockData>> get(int start, int count) {
+				List<Pair<Block, GroupBlockData>> results = new ArrayList<Pair<Block, GroupBlockData>>();
 				for (GroupBlockData gbd : getBlocks(viewpoint, group, start, count, byParticipation)) {
-					results.add(new Pair<Block, UserBlockData>(gbd.getBlock(), null));
+					results.add(new Pair<Block, GroupBlockData>(gbd.getBlock(), gbd));
 				}
 				return results;
+			}
+			public BlockView prepareView(Viewpoint viewpoint, Block block, GroupBlockData gbd) throws BlockNotVisibleException {
+				return prepareBlockView(viewpoint, block, gbd, byParticipation);
 			}
 		}, pageable, expectedHitFactor);
 	}
@@ -1037,7 +1058,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
          	List<BlockView> blocks = new ArrayList<BlockView>();
          	for (GroupBlockData gbd : TypeUtils.castList(GroupBlockData.class, q.getResultList())) {
 	         	try {
-	         	    BlockView blockView = getBlockView(viewpoint, gbd.getBlock(), null);
+	         	    BlockView blockView = getBlockView(viewpoint, gbd.getBlock(), gbd, true);
 	         	    blocks.add(blockView);
 	         	} catch (NotFoundException e) {
 	         		// this is used on the main page, let's not risk it throwing an exception here

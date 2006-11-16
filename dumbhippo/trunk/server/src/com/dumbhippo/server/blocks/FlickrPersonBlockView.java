@@ -4,6 +4,7 @@ import com.dumbhippo.Thumbnails;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.ExternalAccountType;
+import com.dumbhippo.persistence.GroupBlockData;
 import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.server.views.ExternalAccountView;
 import com.dumbhippo.server.views.PersonView;
@@ -14,8 +15,12 @@ public class FlickrPersonBlockView extends AbstractPersonBlockView
 
 	private ExternalAccountView externalAccountView;
 	
-	public FlickrPersonBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd) {
-		super(viewpoint, block, ubd);
+	public FlickrPersonBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd, boolean participated) {
+		super(viewpoint, block, ubd, participated);
+	}
+
+	public FlickrPersonBlockView(Viewpoint viewpoint, Block block, GroupBlockData gbd, boolean participated) {
+		super(viewpoint, block, gbd, participated);
 	}
 
 	@Override

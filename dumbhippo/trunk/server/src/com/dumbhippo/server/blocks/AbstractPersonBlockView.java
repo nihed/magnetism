@@ -4,6 +4,7 @@ import java.util.Collections;
 import java.util.List;
 
 import com.dumbhippo.persistence.Block;
+import com.dumbhippo.persistence.GroupBlockData;
 import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.Viewpoint;
@@ -16,13 +17,12 @@ public abstract class AbstractPersonBlockView extends BlockView {
 	
 	private PersonView userView;
 
-	protected AbstractPersonBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd, PersonView userView) {
-		super(viewpoint, block, ubd);
-		partiallyPopulate(userView);
+	protected AbstractPersonBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd, boolean participated) {
+		super(viewpoint, block, ubd, participated);
 	}
 	
-	protected AbstractPersonBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd) {
-		super(viewpoint, block, ubd);
+	protected AbstractPersonBlockView(Viewpoint viewpoint, Block block, GroupBlockData gbd, boolean participated) {
+		super(viewpoint, block, gbd, participated);
 	}
 	
 	/**

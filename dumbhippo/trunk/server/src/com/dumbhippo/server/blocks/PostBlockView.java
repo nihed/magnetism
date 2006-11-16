@@ -6,6 +6,7 @@ import java.util.List;
 import com.dumbhippo.DateUtils;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.persistence.Block;
+import com.dumbhippo.persistence.GroupBlockData;
 import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.server.views.ChatMessageView;
 import com.dumbhippo.server.views.PostView;
@@ -17,13 +18,12 @@ public class PostBlockView extends BlockView implements SimpleTitleBlockView {
 	private PostView postView;
 	private List<ChatMessageView> recentMessages;
 	
-	public PostBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd, PostView post, List<ChatMessageView> recentMessages) {
-		super(viewpoint, block, ubd);
-		populate(post, recentMessages);
+	public PostBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd, boolean participated) {
+		super(viewpoint, block, ubd, participated);
 	}
-	
-	public PostBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd) {
-		super(viewpoint, block, ubd);
+
+	public PostBlockView(Viewpoint viewpoint, Block block, GroupBlockData gbd, boolean participated) {
+		super(viewpoint, block, gbd, participated);
 	}
 
 	void populate(PostView post, List<ChatMessageView> recentMessages) {

@@ -375,6 +375,11 @@ div.dh-async-action-link-complete {
 	font-size:			12px;
 }
 
+.dh-stacker-stack-reason {
+	font-size:			11px;
+	font-style:			italic;
+}
+
 .dh-stacker-block-content {
 	font-size:			12px;
 	display:			none;

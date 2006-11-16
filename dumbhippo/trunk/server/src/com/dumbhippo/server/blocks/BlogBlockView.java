@@ -4,6 +4,7 @@ import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.FeedEntry;
+import com.dumbhippo.persistence.GroupBlockData;
 import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.Viewpoint;
@@ -12,13 +13,12 @@ public class BlogBlockView extends AbstractPersonBlockView implements ExternalAc
 	
 	private FeedEntry entry;
 	
-	public BlogBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd, PersonView userView, FeedEntry entry) {
-		super(viewpoint, block, ubd);
-		populate(userView, entry);
+	public BlogBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd, boolean participated) {
+		super(viewpoint, block, ubd, participated);
 	}
-
-	public BlogBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd) {
-		super(viewpoint, block, ubd);
+	
+	public BlogBlockView(Viewpoint viewpoint, Block block, GroupBlockData gbd, boolean participated) {
+		super(viewpoint, block, gbd, participated);
 	}
 	
 	void populate(PersonView userView, FeedEntry entry) {

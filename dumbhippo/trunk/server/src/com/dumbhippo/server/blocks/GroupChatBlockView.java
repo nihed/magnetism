@@ -5,6 +5,7 @@ import java.util.List;
 
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.persistence.Block;
+import com.dumbhippo.persistence.GroupBlockData;
 import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.server.views.ChatMessageView;
 import com.dumbhippo.server.views.GroupView;
@@ -16,13 +17,12 @@ public class GroupChatBlockView extends BlockView implements SimpleTitleBlockVie
 	private GroupView group;
 	private List<ChatMessageView> recentMessages;
 	
-	public GroupChatBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd, GroupView group, List<ChatMessageView> recentMessages) {
-		super(viewpoint, block, ubd);
-		populate(group, recentMessages);
+	public GroupChatBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd, boolean participated) {
+		super(viewpoint, block, ubd, participated);
 	}
 	
-	public GroupChatBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd) {
-		super(viewpoint, block, ubd);
+	public GroupChatBlockView(Viewpoint viewpoint, Block block, GroupBlockData gbd, boolean participated) {
+		super(viewpoint, block, gbd, participated);
 	}
 	
 	void populate(GroupView group, List<ChatMessageView> recentMessages) {

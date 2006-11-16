@@ -16,6 +16,7 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.Group;
+import com.dumbhippo.persistence.GroupBlockData;
 import com.dumbhippo.persistence.StackInclusion;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.UserBlockData;
@@ -55,21 +56,26 @@ public abstract class AbstractBlockHandlerBean<BlockViewSubType extends BlockVie
 	protected Stacker stacker;
 	
 	private Class<BlockViewSubType> viewClass;
-	private Constructor<BlockViewSubType> viewClassConstructor;
+	private Constructor<BlockViewSubType> viewClassConstructorUser;
+	private Constructor<BlockViewSubType> viewClassConstructorGroup;
 	
 	protected AbstractBlockHandlerBean(Class<BlockViewSubType> viewClass) {
 		this.viewClass = viewClass;
 		try {
-			this.viewClassConstructor = viewClass.getConstructor(Viewpoint.class, Block.class, UserBlockData.class);
+			this.viewClassConstructorUser = viewClass.getConstructor(Viewpoint.class, Block.class, UserBlockData.class, boolean.class);
 		} catch (SecurityException e) {
 		} catch (NoSuchMethodException e) {
 		}
-		if (this.viewClassConstructor == null)
-			logger.debug("{} must override createBlockView since it lacks the expected constructor for its view class", this.getClass().getName());
+		try {
+			this.viewClassConstructorGroup = viewClass.getConstructor(Viewpoint.class, Block.class, GroupBlockData.class, boolean.class);
+		} catch (SecurityException e) {
+		} catch (NoSuchMethodException e) {
+		}
+		if (this.viewClassConstructorUser == null || this.viewClassConstructorGroup == null)
+			logger.debug("{} must override createBlockView since it lacks the expected constructors for its view class", this.getClass().getName());
 	}
 	
-	public BlockViewSubType getUnpopulatedBlockView(Viewpoint viewpoint, Block block,
-			UserBlockData ubd) throws BlockNotVisibleException {
+	private void checkCreationInvariants(Viewpoint viewpoint, Block block) throws BlockNotVisibleException {
 		UserViewpoint userview = null;
 		if (viewpoint instanceof UserViewpoint)
 			userview = (UserViewpoint) viewpoint;
@@ -83,8 +89,24 @@ public abstract class AbstractBlockHandlerBean<BlockViewSubType extends BlockVie
 				throw new BlockNotVisibleException("ONLY_WHEN_VIEWING_SELF block is not visible to non-self viewpoint");
 			}
 		}
+	}
+	
+	public BlockViewSubType getUnpopulatedBlockView(Viewpoint viewpoint, Block block,
+			UserBlockData ubd, boolean participated) throws BlockNotVisibleException {
+
+		checkCreationInvariants(viewpoint, block);
+		BlockViewSubType blockView = createBlockView(viewpoint, block, ubd, participated);
 		
-		BlockViewSubType blockView = createBlockView(viewpoint, block, ubd);
+		checkBlockViewVisible(blockView);
+		
+		return blockView;
+	}
+
+	public BlockViewSubType getUnpopulatedBlockView(Viewpoint viewpoint, Block block,
+			GroupBlockData gbd, boolean participated) throws BlockNotVisibleException {
+
+		checkCreationInvariants(viewpoint, block);
+		BlockViewSubType blockView = createBlockView(viewpoint, block, gbd, participated);
 		
 		checkBlockViewVisible(blockView);
 		
@@ -106,12 +128,12 @@ public abstract class AbstractBlockHandlerBean<BlockViewSubType extends BlockVie
 	 * @return new block view
 	 */
 	protected BlockViewSubType createBlockView(Viewpoint viewpoint, Block block,
-			UserBlockData ubd) {
-		if (viewClassConstructor == null)
+			UserBlockData ubd, boolean participated) {
+		if (viewClassConstructorUser == null)
 			throw new IllegalStateException("Must override createBlockView if your block view type doesn't have the right constructor");
 
 		try {
-			return viewClassConstructor.newInstance(viewpoint, block, ubd);
+			return viewClassConstructorUser.newInstance(viewpoint, block, ubd, participated);
 		} catch (IllegalArgumentException e) {
 			throw new RuntimeException(e);
 		} catch (InstantiationException e) {
@@ -123,6 +145,24 @@ public abstract class AbstractBlockHandlerBean<BlockViewSubType extends BlockVie
 		}
 	}
 	
+	protected BlockViewSubType createBlockView(Viewpoint viewpoint, Block block,
+			GroupBlockData gbd, boolean participated) {
+		if (viewClassConstructorUser == null)
+			throw new IllegalStateException("Must override createBlockView if your block view type doesn't have the right constructor");
+
+		try {
+			return viewClassConstructorUser.newInstance(viewpoint, block, gbd, participated);
+		} catch (IllegalArgumentException e) {
+			throw new RuntimeException(e);
+		} catch (InstantiationException e) {
+			throw new RuntimeException(e);
+		} catch (IllegalAccessException e) {
+			throw new RuntimeException(e);
+		} catch (InvocationTargetException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
 	/**
 	 * The default implementation of this returns immediately if block.isPublicBlock(), otherwise
 	 * tries to call populateBlockViewImpl() and lets that throw BlockNotVisibleException if appropriate.

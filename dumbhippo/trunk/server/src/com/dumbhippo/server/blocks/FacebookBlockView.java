@@ -9,6 +9,7 @@ import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.FacebookEvent;
 import com.dumbhippo.persistence.FacebookEventType;
 import com.dumbhippo.persistence.FacebookPhotoData;
+import com.dumbhippo.persistence.GroupBlockData;
 import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.Viewpoint;
@@ -18,13 +19,12 @@ public class FacebookBlockView extends AbstractPersonBlockView implements Extern
 	private List<FacebookEvent> facebookEvents;
 	private String link;
 	
-	public FacebookBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd, PersonView userView, List<FacebookEvent> facebookEvents, String link) {
-		super(viewpoint, block, ubd);
-		populate(userView, facebookEvents, link);
+	public FacebookBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd, boolean participated) {
+		super(viewpoint, block, ubd, participated);
 	}
-
-	public FacebookBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd) {
-		super(viewpoint, block, ubd);
+	
+	public FacebookBlockView(Viewpoint viewpoint, Block block, GroupBlockData gbd, boolean participated) {
+		super(viewpoint, block, gbd, participated);
 	}
 	
 	void populate(PersonView userView, List<FacebookEvent> facebookEvents, String link) {
