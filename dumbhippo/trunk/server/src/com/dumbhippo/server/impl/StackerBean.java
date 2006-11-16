@@ -69,6 +69,7 @@ import com.dumbhippo.server.blocks.GroupChatBlockHandler;
 import com.dumbhippo.server.blocks.GroupMemberBlockHandler;
 import com.dumbhippo.server.blocks.MusicPersonBlockHandler;
 import com.dumbhippo.server.blocks.PostBlockHandler;
+import com.dumbhippo.server.blocks.YouTubeBlockHandler;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.views.GroupMugshotView;
 import com.dumbhippo.server.views.GroupView;
@@ -151,6 +152,9 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 			break;
 		case FLICKR_PHOTOSET:
 			handlerClass = FlickrPhotosetBlockHandler.class;
+			break;
+		case YOUTUBE_PERSON:
+			handlerClass = YouTubeBlockHandler.class;
 			break;
 		case OBSOLETE_EXTERNAL_ACCOUNT_UPDATE:
 		case OBSOLETE_EXTERNAL_ACCOUNT_UPDATE_SELF:
@@ -1503,6 +1507,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 			stack(key, lastPlayTime, StackReason.BLOCK_UPDATE);
 		}
 		migrateFlickr(user);
+		migrateYouTube(user);
 	}
 	
 	public void migrateBlockParticipation(String blockId) {
@@ -1588,6 +1593,10 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		getHandler(FlickrPersonBlockHandler.class, BlockType.FLICKR_PERSON).migrate(user);
 	}
 	
+	public void migrateYouTube(User user) {
+		getHandler(YouTubeBlockHandler.class, BlockType.YOUTUBE_PERSON).migrate(user);
+	}
+	
 	public void migrateGroupBlockData(String blockId) {
 		logger.debug("    migrating group block data for {}", blockId);
 		
@@ -1624,6 +1633,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		case BLOG_PERSON:
 		case FLICKR_PERSON:
 		case FLICKR_PHOTOSET:
+		case YOUTUBE_PERSON:
 			isGroupParticipation = false;
 			break;
 		case OBSOLETE_EXTERNAL_ACCOUNT_UPDATE:

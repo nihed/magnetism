@@ -1,5 +1,6 @@
 package com.dumbhippo.server.impl;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -88,6 +89,17 @@ public class YouTubeUpdaterBean implements YouTubeUpdater {
 		results.addAll(TypeUtils.castList(String.class, q.getResultList()));
 		return results;
 	}
+	
+	public Collection<User> getUsersWhoLoveYouTubeAccount(String username) {
+		Query q = em.createQuery("SELECT user FROM User user WHERE EXISTS " + 
+				" (SELECT ea from ExternalAccount ea WHERE " +
+				"  ea.account.owner = user " +
+				"  AND ea.accountType = " + ExternalAccountType.YOUTUBE.ordinal() + 
+				"  AND ea.sentiment = " + Sentiment.LOVE.ordinal() +
+				"  AND ea.handle IS NOT NULL " + 
+				"  AND ea.account.disabled = false AND ea.account.adminDisabled = false)");
+		return TypeUtils.castList(User.class, q.getResultList());
+	}	
 	
 	// avoid log messages in here that will happen on every call, or it could get noisy
 	@TransactionAttribute(TransactionAttributeType.NEVER)

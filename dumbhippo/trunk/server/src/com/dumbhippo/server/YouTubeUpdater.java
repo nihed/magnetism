@@ -1,5 +1,6 @@
 package com.dumbhippo.server;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -23,6 +24,7 @@ public interface YouTubeUpdater extends ExternalAccountsListener {
 	public YouTubeUpdateStatus getCachedStatus(ExternalAccount external) throws NotFoundException;
 	public YouTubeUpdateStatus getCachedStatus(String username) throws NotFoundException;
 	public Set<String> getActiveYouTubeUsers();
+	public Collection<User> getUsersWhoLoveYouTubeAccount(String username);	
 
 	public void periodicUpdate(String username);
 

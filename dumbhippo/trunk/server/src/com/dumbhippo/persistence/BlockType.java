@@ -12,50 +12,56 @@ package com.dumbhippo.persistence;
  *
  */
 public enum BlockType {
-	POST,
-	GROUP_MEMBER,
-	GROUP_CHAT,
-	MUSIC_PERSON,
+	POST, // 0
+	GROUP_MEMBER, // 1
+	GROUP_CHAT, // 2
+	MUSIC_PERSON, // 3
 	/** This is just placeholding a historically-used ordinal that should not be 
 	 * reused to avoid database confusion.
 	 */
-	OBSOLETE_EXTERNAL_ACCOUNT_UPDATE,
+	OBSOLETE_EXTERNAL_ACCOUNT_UPDATE, // 4
 	/** This is just placeholding a historically-used ordinal that should not be 
 	 * reused to avoid database confusion.
 	 */
-	OBSOLETE_EXTERNAL_ACCOUNT_UPDATE_SELF,
+	OBSOLETE_EXTERNAL_ACCOUNT_UPDATE_SELF, // 5
 	
-	BLOG_PERSON {
+	BLOG_PERSON { // 6
 		@Override
 		public StackInclusion getDefaultStackInclusion() {
 			return null;
 		}
 	},
-	FACEBOOK_PERSON {
+	FACEBOOK_PERSON { // 7
 		@Override
 		public StackInclusion getDefaultStackInclusion() {
 			return null;
 		}
 	},
-	FACEBOOK_EVENT {
+	FACEBOOK_EVENT { // 8
 		@Override
 		public StackInclusion getDefaultStackInclusion() {
 			return null;
 		}		
 	},
-	FLICKR_PERSON {
+	FLICKR_PERSON { // 9
 		// Right now we only get completely public Flickr photos
 		@Override
 		public boolean isAlwaysPublic() {
 			return true;
 		}
 	},
-	FLICKR_PHOTOSET {
+	FLICKR_PHOTOSET { // 10
 		// Right now we only get completely public Flickr photosets
 		@Override
 		public boolean isAlwaysPublic() {
 			return true;
 		}		
+	},
+	YOUTUBE_PERSON { // 11
+		@Override
+		public boolean isAlwaysPublic() {
+			return true;
+		}
 	};
 	
 	// returns true if all blocks of this type are always public,

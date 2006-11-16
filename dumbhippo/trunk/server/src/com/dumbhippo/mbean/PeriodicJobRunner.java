@@ -1,7 +1,9 @@
 package com.dumbhippo.mbean;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.jboss.system.ServiceMBeanSupport;
 import org.slf4j.Logger;
@@ -21,13 +23,16 @@ public class PeriodicJobRunner extends ServiceMBeanSupport implements PeriodicJo
 	private static final Class[] jobClasses = {
 		FacebookTrackerPeriodicJob.class,
 		FeedUpdaterPeriodicJob.class,
-		FlickrUpdaterPeriodicJob.class
+		FlickrUpdaterPeriodicJob.class,
+		YouTubeUpdaterPeriodicJob.class
 	};
 	
 	private List<Thread> threads;
+	private Map<Class, PeriodicJobRunnable> jobs;
 	
 	public PeriodicJobRunner() {
 		threads = new ArrayList<Thread>();
+		jobs = new HashMap<Class, PeriodicJobRunnable>();
 	}
 	
 	public synchronized void startSingleton() {
@@ -48,9 +53,10 @@ public class PeriodicJobRunner extends ServiceMBeanSupport implements PeriodicJo
 			} catch (IllegalAccessException e) {
 				throw new RuntimeException(e);
 			}
-			Thread t = ThreadUtils.newDaemonThread("periodic " + job.getName(),
-					new PeriodicJobRunnable(job));
+			PeriodicJobRunnable runnable = new PeriodicJobRunnable(job);
+			Thread t = ThreadUtils.newDaemonThread("periodic " + job.getName(), runnable);
 			threads.add(t);
+			jobs.put(jobClass, runnable);
 		}
 		
 		for (Thread t : threads) {
@@ -60,6 +66,7 @@ public class PeriodicJobRunner extends ServiceMBeanSupport implements PeriodicJo
 	
 	public synchronized void stopSingleton() {
 		logger.info("Stopping PeriodicUpdater singleton");
+		jobs.clear();
 		for (Thread t : threads) {
 			logger.debug(" interrupting {}", t.getName());
 			t.interrupt();
@@ -74,14 +81,25 @@ public class PeriodicJobRunner extends ServiceMBeanSupport implements PeriodicJo
 		}
 		logger.debug("PeriodicUpdater singleton stopped");
 	}
+	
+	public synchronized void pokeTask(Class klass) {
+		logger.debug("Prodding periodic task for class {}", klass);
+		jobs.get(klass).poke();
+	}
 
 	private static class PeriodicJobRunnable implements Runnable {
 		private int generation;
+		private boolean poked;
 		private PeriodicJob job;
 		
 		PeriodicJobRunnable(PeriodicJob job) {
 			this.generation = 0;
 			this.job = job;
+			this.poked = false;
+		}
+		
+		public synchronized void poke() {
+			this.poked = true;
 		}
 
 		private boolean runOneGeneration() {
@@ -94,19 +112,29 @@ public class PeriodicJobRunner extends ServiceMBeanSupport implements PeriodicJo
 				
 				while (true) {
 					iteration += 1;
+					long sleepTime = lastUpdate + job.getFrequencyInMilliseconds() - System.currentTimeMillis();
+					if (sleepTime < 0)
+						sleepTime = 0;					
 					try {
-						long sleepTime = lastUpdate + job.getFrequencyInMilliseconds() - System.currentTimeMillis();
-						if (sleepTime < 0)
-							sleepTime = 0;
 						Thread.sleep(sleepTime);
-
-						job.doIt(sleepTime, generation, iteration);
-						
-						lastUpdate = System.currentTimeMillis();
 					} catch (InterruptedException e) {
-						// exit the loop - we're shutting down
+						if (!poked) {
+							// exit the loop - we're shutting down
+							break;
+						} else {
+							logger.debug("Got poke in thread {}", job.getName());							
+							// We were poked into running early - reset poked flag
+							poked = false;
+						}
+					}
+
+					try {
+						job.doIt(sleepTime, generation, iteration);
+					} catch (InterruptedException e) {
 						break;
 					}
+					
+					lastUpdate = System.currentTimeMillis();					
 				}
 			} catch (RuntimeException e) {
 				logger.error("Unexpected exception in periodic job, generation " + generation + " exiting abnormally", e);

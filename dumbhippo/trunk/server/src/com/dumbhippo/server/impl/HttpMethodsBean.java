@@ -24,11 +24,16 @@ import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
+import javax.management.MBeanServer;
+import javax.management.MalformedObjectNameException;
 import javax.naming.NameNotFoundException;
 import javax.naming.NamingException;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
+import org.jboss.cache.TreeCacheMBean;
+import org.jboss.mx.util.MBeanProxyExt;
+import org.jboss.mx.util.MBeanServerLocator;
 import org.slf4j.Logger;
 import org.xml.sax.SAXException;
 
@@ -1278,6 +1283,10 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			}
 		}
 		
+		public UserViewpoint getView(User u) {
+			return new UserViewpoint(u);
+		}
+		
 		public Object getEJB(String name) throws ClassNotFoundException, NamingException {
 			try {
 				return EJBUtil.uncheckedDynamicLookupLocal(name);
@@ -1285,6 +1294,11 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 				return EJBUtil.uncheckedDynamicLookupRemote(name);
 			}
 		}		
+		
+		public Object getMBean(Class iface, String service) throws MalformedObjectNameException {
+			MBeanServer server = MBeanServerLocator.locateJBoss();
+			return MBeanProxyExt.create(iface, service, server);			
+		}
 	}
 	
 	private Interpreter makeInterpreter(PrintWriter out) {
@@ -1300,7 +1314,9 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		
 			// Some handy primitives
 			bsh.eval("user(str) { return server.getUser(str); };");
-			bsh.eval("ejb(str) { return server.getEJB(str); };");			
+			bsh.eval("view(u) { return server.getView(u); };");
+			bsh.eval("ejb(str) { return server.getEJB(str); };");
+			bsh.eval("mbean(c, i) { return server.getMBean(c, i); };");
 			bsh.eval("guid(str) { return new com.dumbhippo.identity20.Guid(str); }");
 			
 			// Some default bindings
