@@ -16,6 +16,7 @@ import javax.persistence.Query;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.KnownFuture;
 import com.dumbhippo.persistence.CachedRhapsodyDownload;
 import com.dumbhippo.server.BanFromWebTier;
 
@@ -46,11 +47,11 @@ public class RhapsodyDownloadCacheBean extends AbstractBasicCacheBean<String,Boo
 
 	// nothing database-related about this method, so don't force a transaction
 	@TransactionAttribute(TransactionAttributeType.SUPPORTS)
-	public String buildLink(String album, String artist, int track) {
+	public String buildLink(String album, String artist, int track) throws MalformedURLException {
 		if (artist == null || album == null || track < 1) {
 			logger.debug("missing artist or album or track, not looking up album {} by artist {} on Rhapsody", 
 					     album, artist);
-			return null; 
+			throw new MalformedURLException("Don't have artist, album, or track"); 
 		}
 		
 		// Try to concoct a Rhapsody friendly URL; see:
@@ -59,20 +60,24 @@ public class RhapsodyDownloadCacheBean extends AbstractBasicCacheBean<String,Boo
 	}
 	
 	public Boolean getSync(String album, String artist, int track) {
-		String link = buildLink(album, artist, track);
-		if (link == null)
+		String link;
+		try {
+			link = buildLink(album, artist, track);
+		} catch (MalformedURLException e) {
 			return null;
-		else
-			return getSync(link);
+		}
+		return getSync(link);
 	}
 
 	public Future<Boolean> getAsync(String album, String artist, int track) {
-		String link = buildLink(album, artist, track);
-		if (link == null)
-			return null;
-		else
-			return getAsync(link);		
-	}	
+		String link;
+		try {
+			link = buildLink(album, artist, track);
+		} catch (MalformedURLException e) {
+			return new KnownFuture<Boolean>(null);
+		}
+		return getAsync(link);		
+	}
 
 	@Override
 	public Boolean checkCache(String link) throws NotCachedException {

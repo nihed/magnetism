@@ -1,6 +1,7 @@
 package com.dumbhippo.server.impl;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -674,12 +675,15 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 					    }
     			    }
 				}
-				String rhapsodyDownloadUrl = rhapsodyDownloadCache.buildLink(trackView.getAlbum(), trackView.getArtist(), trackView.getTrackNumber()); 
-				Boolean haveUrl = rhapsodyDownloadCache.getSync(rhapsodyDownloadUrl);
-				if (haveUrl != null && haveUrl) {
-					trackView.setDownloadUrl(SongDownloadSource.RHAPSODY, rhapsodyDownloadUrl);
-				}
-    		}
+				try {
+					String rhapsodyDownloadUrl = rhapsodyDownloadCache.buildLink(trackView.getAlbum(), trackView.getArtist(), trackView.getTrackNumber());
+					Boolean haveUrl = rhapsodyDownloadCache.getSync(rhapsodyDownloadUrl);
+					if (haveUrl != null && haveUrl) {
+						trackView.setDownloadUrl(SongDownloadSource.RHAPSODY, rhapsodyDownloadUrl);
+					}
+				} catch (MalformedURLException e) {
+				} 
+			}
 			
 			for (TrackView trackView : sortedTracks.values()) {
 				albumView.addTrack(trackView);
@@ -736,11 +740,14 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		if (futureYahooAlbum != null) {
 			YahooAlbumData yahooAlbum = ThreadUtils.getFutureResultNullOnException(futureYahooAlbum);
 			if (yahooAlbum != null) {
-				String rhapsodyDownloadUrl = rhapsodyDownloadCache.buildLink(yahooAlbum.getAlbum(), yahooAlbum.getArtist(), yahooSong.getTrackNumber());
-				Boolean haveUrl = rhapsodyDownloadCache.getSync(rhapsodyDownloadUrl);
-				if (haveUrl != null && haveUrl) {
-					view.setDownloadUrl(SongDownloadSource.RHAPSODY, rhapsodyDownloadUrl);
-					//logger.debug("set rhapsody download url {}", rhapsodyDownloadUrl);
+				try {
+					String rhapsodyDownloadUrl = rhapsodyDownloadCache.buildLink(yahooAlbum.getAlbum(), yahooAlbum.getArtist(), yahooSong.getTrackNumber());
+					Boolean haveUrl = rhapsodyDownloadCache.getSync(rhapsodyDownloadUrl);
+					if (haveUrl != null && haveUrl) {
+						view.setDownloadUrl(SongDownloadSource.RHAPSODY, rhapsodyDownloadUrl);
+						//logger.debug("set rhapsody download url {}", rhapsodyDownloadUrl);
+					}
+				} catch (MalformedURLException e) {
 				}
 			} else {
 				logger.warn("yahooAlbum for {} was null in getTrackView", yahooSong.getName());
