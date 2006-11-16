@@ -80,7 +80,7 @@ public class BlocksIQHandler extends AnnotatedIQHandler {
         	throw IQException.createBadRequest("get/blocks IQ lastTimestamp attribute not valid");
         }
         
-		List<BlockView> views = stacker.getStack(viewpoint, viewpoint.getViewer(), lastTimestamp, 0 /* start */, 10 /* count */);
+		List<BlockView> views = stacker.getStack(viewpoint, viewpoint.getViewer(), lastTimestamp, 0 /* start */, 25 /* count */);
 		String xml = getBlocksXml(viewpoint, "blocks", views);
         
 		reply.setChildElement(XmlParser.elementFromXml(xml));
