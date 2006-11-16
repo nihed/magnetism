@@ -307,17 +307,6 @@ public class MessengerGlueBean implements MessengerGlue {
 			return;
 		}
 
-		// We can't reliably tell if the user is currently logged in by checking
-		// for loginDate > logoutDate, since that could happen if the server
-		// crashed while the user was logged in as well, so instead we check
-		// wasAlreadyConnected. wasAlreadyConnected isn't 100% reliable if two 
-		// resources are connecting simultaneously, but the worst that will happen 
-		// is that the user gets backlog replayed to both accounts, which might be 
-		// considered a feature.
-		if (!wasAlreadyConnected) {
-			postingBoard.sendBacklog(account.getOwner(), account.getLastLogoutDate());
-		}
-			
 		if (!account.getWasSentShareLinkTutorial()) {
 			doShareLinkTutorial(account);
 		}
