@@ -1,6 +1,8 @@
 package com.dumbhippo.server.blocks;
 
 import com.dumbhippo.DateUtils;
+import com.dumbhippo.Thumbnail;
+import com.dumbhippo.Thumbnails;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.Block;
@@ -95,11 +97,32 @@ public abstract class BlockView implements ObjectView {
 	
 	protected abstract void writeDetailsToXmlBuilder(XmlBuilder builder);
 	
-	// a child multiple block types might have
+	// utility function for use in implementations of writeDetailsToXmlBuilder
 	protected void writeFeedEntryToXmlBuilder(XmlBuilder builder, FeedEntry entry) {
 		builder.appendTextNode("feedEntry", entry.getDescription(),
 				"title", entry.getTitle(),
 				"href", entry.getLink().getUrl());
+	}
+	
+	// utility function for use in implementations of writeDetailsToXmlBuilder
+	protected void writeThumbnailsToXmlBuilder(XmlBuilder builder, ThumbnailsBlockView thumbnailsBlock) {
+		Thumbnails thumbnails = thumbnailsBlock.getThumbnails();
+		builder.openElement("thumbnails", "count", Integer.toString(thumbnails.getThumbnailCount()),
+				"width", Integer.toString(thumbnails.getThumbnailWidth()),
+				"height", Integer.toString(thumbnails.getThumbnailHeight()), 
+				"totalItems", Integer.toString(thumbnails.getTotalThumbnailItems()),
+				"totalItemsString", thumbnails.getTotalThumbnailItemsString(),
+				"moreTitle", thumbnailsBlock.getMoreThumbnailsTitle(),
+				"moreLink", thumbnailsBlock.getMoreThumbnailsLink());
+		for (Thumbnail t : thumbnails.getThumbnails()) {
+			builder.appendEmptyNode("thumbnail",
+					"title", t.getThumbnailTitle(), 
+					"src", t.getThumbnailSrc(),
+					"href", t.getThumbnailHref(), 
+					"width", Integer.toString(t.getThumbnailWidth()),
+					"height", Integer.toString(t.getThumbnailHeight()));
+		}
+		builder.closeElement();
 	}
 	
 	@Override

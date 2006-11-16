@@ -33,7 +33,7 @@ public class MusicPersonBlockView extends AbstractPersonBlockView {
 	@Override
 	protected void writeDetailsToXmlBuilder(XmlBuilder builder) {
 		builder.appendEmptyNode("musicPerson",
-				                "userId", getUserView().getIdentifyingGuid().toString());
+				                "userId", getUserView().getUser().getId());
 	}
 	
 	@Override

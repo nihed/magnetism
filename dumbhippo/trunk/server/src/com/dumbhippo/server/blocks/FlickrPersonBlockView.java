@@ -25,7 +25,10 @@ public class FlickrPersonBlockView extends AbstractPersonBlockView
 
 	@Override
 	protected void writeDetailsToXmlBuilder(XmlBuilder builder) {
-		// FIXME
+		builder.openElement("flickrPerson",
+							"userId", getUserView().getUser().getId());
+		writeThumbnailsToXmlBuilder(builder, this);
+		builder.closeElement();
 	}
 
 	void populate(PersonView userView, ExternalAccountView externalAccountView) {
