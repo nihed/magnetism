@@ -31,12 +31,16 @@ public final class FlickrPhoto implements FlickrPhotoView {
 		return id;
 	}
 	public void setId(String id) {
+		if (id.length() > FlickrWebServices.MAX_FLICKR_PHOTO_ID_LENGTH)
+			throw new IllegalArgumentException("Flickr returned a longer photo id than we handle");		
 		this.id = id;
 	}
 	public String getOwner() {
 		return owner;
 	}
 	public void setOwner(String owner) {
+		if (owner.length() > FlickrWebServices.MAX_FLICKR_USER_ID_LENGTH)
+			throw new IllegalArgumentException("Flickr returned a longer user id than we handle");				
 		this.owner = owner;
 	}
 	public boolean isPublic() {
@@ -49,12 +53,16 @@ public final class FlickrPhoto implements FlickrPhotoView {
 		return secret;
 	}
 	public void setSecret(String secret) {
+		if (secret.length() > FlickrWebServices.MAX_FLICKR_SECRET_LENGTH)
+			throw new IllegalArgumentException("Flickr returned a longer secret than we handle");
 		this.secret = secret;
 	}
-	public String getServer() {
+	public String getServer() {		
 		return server;
 	}
 	public void setServer(String server) {
+		if (server.length() > FlickrWebServices.MAX_FLICKR_SERVER_LENGTH)
+			throw new IllegalArgumentException("Flickr returned a longer server than we handle");		
 		this.server = server;
 	}
 	public String getTitle() {

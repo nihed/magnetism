@@ -16,6 +16,24 @@ public class FlickrWebServices extends AbstractXmlRequest<FlickrSaxHandler> {
 	static public final int MIN_PER_PAGE = 1;
 	static public final int MAX_PER_PAGE = 500;
 	
+	// I don't think Flickr guarantees a real max here but all the ids
+	// I've seen seem to be about 12 chars - so 20 is hopefully generous
+	static public final int MAX_FLICKR_USER_ID_LENGTH = 20;
+	
+	// I don't think Flickr guarantees a real max here either, but 
+	// have seen up to about 18
+	static public final int MAX_FLICKR_PHOTOSET_ID_LENGTH = 30;
+	
+	// again, no max defined by Flickr but this is based on practice
+	// where 8 chars seems typical
+	static public final int MAX_FLICKR_PHOTO_ID_LENGTH = 20;
+	
+	// ditto, usually about 10 chars
+	static public final int MAX_FLICKR_SECRET_LENGTH = 20;
+	
+	// ditto - this is usually only about 2 chars
+	static public final int MAX_FLICKR_SERVER_LENGTH = 10;
+	
 	static private final Logger logger = GlobalSetup.getLogger(FlickrWebServices.class);
 
 	private String apiId;

@@ -10,6 +10,7 @@ import javax.persistence.UniqueConstraint;
 
 import com.dumbhippo.services.FlickrPhoto;
 import com.dumbhippo.services.FlickrPhotoView;
+import com.dumbhippo.services.FlickrWebServices;
 
 /** 
  * Cached results of the Flickr "get photos for user" call
@@ -62,7 +63,7 @@ public class CachedFlickrPhotosetPhoto extends DBUnique implements CachedListIte
 		return photo;
 	}
 	
-	@Column(nullable=false)
+	@Column(nullable=false, length=FlickrWebServices.MAX_FLICKR_PHOTO_ID_LENGTH)
 	public String getFlickrId() {
 		return flickrId;
 	}
@@ -70,7 +71,7 @@ public class CachedFlickrPhotosetPhoto extends DBUnique implements CachedListIte
 		this.flickrId = flickrId;
 	}
 	
-	@Column(nullable=false)
+	@Column(nullable=false, length=FlickrWebServices.MAX_FLICKR_PHOTOSET_ID_LENGTH)
 	public String getSetId() {
 		return setId;
 	}
@@ -78,7 +79,7 @@ public class CachedFlickrPhotosetPhoto extends DBUnique implements CachedListIte
 		this.setId = setId;
 	}
 	
-	@Column(nullable=false)
+	@Column(nullable=false, length=FlickrWebServices.MAX_FLICKR_SECRET_LENGTH)
 	public String getSecret() {
 		return secret;
 	}
@@ -86,7 +87,7 @@ public class CachedFlickrPhotosetPhoto extends DBUnique implements CachedListIte
 		this.secret = secret;
 	}
 	
-	@Column(nullable=false)
+	@Column(nullable=false, length=FlickrWebServices.MAX_FLICKR_SERVER_LENGTH)
 	public String getServer() {
 		return server;
 	}

@@ -6,6 +6,8 @@ import javax.persistence.Entity;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
+import com.dumbhippo.services.FlickrWebServices;
+
 /** 
  * This is our persistent state for Flickr polling. i.e. we check whether there's new 
  * stuff on Flickr periodically and this table stores what stuff we had at the last 
@@ -41,7 +43,7 @@ public class FlickrUpdateStatus extends DBUnique {
 	}
 	
 	/** flickr user ID this is the status for. */
-	@Column(nullable=false,unique=true)
+	@Column(nullable=false, unique=true, length=FlickrWebServices.MAX_FLICKR_USER_ID_LENGTH)
 	public String getFlickrId() {
 		return flickrId;
 	}

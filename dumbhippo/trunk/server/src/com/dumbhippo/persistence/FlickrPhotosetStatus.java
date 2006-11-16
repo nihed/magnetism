@@ -8,6 +8,7 @@ import javax.persistence.UniqueConstraint;
 import com.dumbhippo.services.FlickrPhotos;
 import com.dumbhippo.services.FlickrPhotoset;
 import com.dumbhippo.services.FlickrPhotosetView;
+import com.dumbhippo.services.FlickrWebServices;
 
 /** 
  * CachedFlickrUserPhotoset is a stored return from the web service, while this is a never-deleted 
@@ -118,14 +119,14 @@ public class FlickrPhotosetStatus extends EmbeddedGuidPersistable {
 	public void setDescription(String description) {
 		this.description = description;
 	}
-	@Column(nullable=false)
+	@Column(nullable=false, length=FlickrWebServices.MAX_FLICKR_PHOTOSET_ID_LENGTH)
 	public String getFlickrId() {
 		return flickrId;
 	}
 	public void setFlickrId(String flickrId) {
 		this.flickrId = flickrId;
 	}
-	@Column(nullable=false)
+	@Column(nullable=false, length=FlickrWebServices.MAX_FLICKR_USER_ID_LENGTH)
 	public String getOwnerId() {
 		return ownerId;
 	}

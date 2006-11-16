@@ -10,6 +10,8 @@ public final class FlickrUser {
 		return id;
 	}
 	public void setId(String id) {
+		if (id.length() > FlickrWebServices.MAX_FLICKR_USER_ID_LENGTH)
+			throw new IllegalArgumentException("Flickr returned a longer user id than we handle");				
 		this.id = id;
 	}
 	public String getName() {

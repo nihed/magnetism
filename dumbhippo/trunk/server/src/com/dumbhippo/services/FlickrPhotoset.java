@@ -34,6 +34,8 @@ public final class FlickrPhotoset implements FlickrPhotosetView {
 		return id;
 	}
 	public void setId(String id) {
+		if (id.length() > FlickrWebServices.MAX_FLICKR_PHOTOSET_ID_LENGTH)
+			throw new IllegalArgumentException("Flickr returned a longer photoset id than we handle");						
 		this.id = id;
 	}
 	public int getPhotoCount() {
