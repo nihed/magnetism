@@ -70,8 +70,13 @@ public class CachedAmazonAlbumData extends DBUnique implements CachedItem {
 			ASIN = data.getASIN();
 			setProductUrl(data.getProductUrl());
 			smallImageUrl = data.getSmallImageUrl();
-			smallImageWidth = data.getSmallImageWidth();
-			smallImageHeight = data.getSmallImageHeight();
+			if (smallImageUrl != null) {
+				smallImageWidth = data.getSmallImageWidth();
+				smallImageHeight = data.getSmallImageHeight();
+			} else {
+				smallImageWidth = -1;
+				smallImageHeight = -1;
+			}
 		} else {
 			ASIN = null;
 			setProductUrl(null);

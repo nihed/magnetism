@@ -105,8 +105,8 @@ class AmazonItemSearchSaxHandler extends EnumSaxHandler<AmazonItemSearchSaxHandl
 	}
 
 	private boolean isValid() {
-		return ASIN != null && smallImageUrl != null && 
-		smallImageWidth > 0 && smallImageHeight > 0 && 
+		return ASIN != null && 
+		(smallImageUrl == null || (smallImageWidth > 0 && smallImageHeight > 0)) && 
 		productUrl != null;
 	}
 	
