@@ -15,6 +15,10 @@ public class AlbumAndArtist implements Serializable {
 	private String artist;
 
 	public AlbumAndArtist(String album, String artist) {
+		if (album == null)
+			throw new IllegalStateException("null album not allowed");
+		if (artist == null)
+			throw new IllegalStateException("null artist not allowed");		
 		this.album = album;
 		this.artist = artist;
 	}
