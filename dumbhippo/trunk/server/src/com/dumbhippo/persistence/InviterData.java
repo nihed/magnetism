@@ -7,6 +7,7 @@ import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Transient;
+import javax.persistence.UniqueConstraint;
 
 import com.dumbhippo.AgeUtils;
 
@@ -15,13 +16,17 @@ import com.dumbhippo.AgeUtils;
  * 
  * @author marinaz
  */
-
+@javax.persistence.Table(name="InviterData",
+		uniqueConstraints = {
+			@UniqueConstraint(columnNames={"inviter_id","invitation_id"})
+		})
 @Entity
 public class InviterData extends DBUnique {
 
 	private static final long serialVersionUID = 1L;
 	
 	private User inviter;
+	private InvitationToken invitation;
 	private long invitationDate;
 	private String invitationSubject;
 	private String invitationMessage;
@@ -33,21 +38,33 @@ public class InviterData extends DBUnique {
 	 * Used only for Hibernate 
 	 */
 	protected InviterData() {
-		this(null, System.currentTimeMillis(), "", "", false);
+		this(null, null, System.currentTimeMillis(), "", "", false);
 	}
 
-	public InviterData(User inviter, String invitationSubject, String invitationMessage, boolean invitationDeducted) {	
-		this(inviter, System.currentTimeMillis(), invitationSubject, invitationMessage, invitationDeducted);
+	public InviterData(User inviter, InvitationToken invitation, String invitationSubject, String invitationMessage, boolean invitationDeducted) {	
+		this(inviter, invitation, System.currentTimeMillis(), invitationSubject, invitationMessage, invitationDeducted);
 	}
 	
-	public InviterData(User inviter, long invitationDate, String invitationSubject, String invitationMessage, boolean invitationDeducted) {	
+	public InviterData(User inviter, InvitationToken invitation, long invitationDate, String invitationSubject, String invitationMessage, boolean invitationDeducted) {	
         this.inviter = inviter;
+        this.invitation = invitation;
 		this.initialInvite = true;
         this.invitationDate = invitationDate;
         this.invitationSubject = invitationSubject;
         this.invitationMessage = invitationMessage;
         this.invitationDeducted = invitationDeducted;
         this.deleted = false;
+	}
+	
+	public InviterData(InvitationToken invitation, InviterData other) {
+		this.inviter = other.inviter;
+        this.invitation = invitation;
+		this.initialInvite = other.initialInvite;
+        this.invitationDate = other.invitationDate;
+        this.invitationSubject = other.invitationSubject;
+        this.invitationMessage = other.invitationMessage;
+        this.invitationDeducted = other.invitationDeducted;
+        this.deleted = other.deleted;
 	}
 
 	@JoinColumn(nullable=false)
@@ -58,6 +75,16 @@ public class InviterData extends DBUnique {
 	
 	public void setInviter(User inviter) {
 		this.inviter = inviter;
+	}
+	
+	@JoinColumn(nullable=false)
+	@ManyToOne
+	public InvitationToken getInvitation() {
+		return invitation;
+	}	
+	
+	public void setInvitation(InvitationToken invitation) {
+		this.invitation = invitation;
 	}
 	
 	@Column(nullable=false)

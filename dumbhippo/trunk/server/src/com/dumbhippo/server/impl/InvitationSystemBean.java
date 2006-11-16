@@ -91,19 +91,13 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 	@EJB
 	private IdentitySpider identitySpider;
 	
-	public InvitationToken lookupInvitationFor(User inviter, Resource invitee) {
+	private InvitationToken lookupInvitationFor(Resource invitee) {
 		InvitationToken invite;
 		try {
-			String inviterClause = "";
-			if (inviter != null)
-				inviterClause = "AND EXISTS (SELECT ivd FROM InviterData ivd WHERE ivd MEMBER OF iv.inviters AND ivd.inviter = :inviter)";
-			
 			// we get the newest invitation token, sort by date in descending order
 			Query q = em.createQuery(
-				"FROM InvitationToken AS iv WHERE iv.invitee = :resource " + inviterClause + " ORDER BY iv.creationDate DESC");
+				"SELECT iv FROM InvitationToken iv WHERE iv.invitee = :resource ORDER BY iv.creationDate DESC");
 			q.setParameter("resource", invitee);
-			if (inviter != null)
-				q.setParameter("inviter", inviter);
 			q.setMaxResults(1); // only need the first one
 			invite = (InvitationToken) q.getSingleResult();
 			
@@ -113,6 +107,25 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		return invite;
 	}
 
+	private InviterData lookupInviterData(User inviter, Resource invitee) {
+		InviterData inviterData;
+		try {
+			// we get the newest invitation token, sort by date in descending order
+			Query q = em.createQuery(
+				"SELECT ivd FROM InviterData ivd " +
+				"  WHERE ivd.inviter = :inviter " +
+				"    AND ivd.invitation.invitee = :resource " +
+				"  ORDER BY ivd.invitation.creationDate DESC");
+			q.setParameter("resource", invitee);
+			q.setParameter("inviter", inviter);
+			q.setMaxResults(1); // only need the first one
+			inviterData = (InviterData) q.getSingleResult();
+			
+		} catch (NoResultException e) {
+			inviterData = null;
+		}
+		return inviterData;
+	}
 
 	public InvitationToken lookupInvitation(UserViewpoint viewpoint, long id) {
 		InvitationToken token;		
@@ -133,10 +146,10 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		try {
 
 			Query q = em.createQuery(
-				"FROM InvitationToken AS iv WHERE iv.authKey = :authKey AND " + 
-				"EXISTS (SELECT ivd FROM InviterData ivd WHERE " +
-				         "ivd MEMBER OF iv.inviters AND " +
-				         "ivd.inviter = :inviter)");		
+				"SELECT ivd.invitation FROM InviterData ivd " +
+				"    WHERE ivd.invitation.authKey = :authKey AND " + 
+				"          ivd.invitation = iv AND " +
+				"          ivd.inviter = :inviter");		
 			q.setParameter("authKey", authKey);
             q.setParameter("inviter", inviter);
 			// we expect there to be at most one result because authentication key must be unique
@@ -155,17 +168,12 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		// when someone is viewing an invitation, they can see it only if they
 		// are an inviter
 		User inviter = viewpoint.getViewer();
-		InvitationToken invite = lookupInvitationFor(inviter, invitee);
-		if (invite == null) {
-			return null;
-		}
-		
-		InviterData ivd = getInviterData(invite, inviter);
+		InviterData ivd = lookupInviterData(inviter, invitee);
 		
 		Set<Group> suggestedGroups = 
-			groupSystem.getInvitedToGroups(ivd.getInviter(), invite.getInvitee());
+			groupSystem.getInvitedToGroups(ivd.getInviter(), invitee);
 		
-        InvitationView invitationView = new InvitationView(invite, ivd, suggestedGroups);
+        InvitationView invitationView = new InvitationView(ivd.getInvitation(), ivd, suggestedGroups);
         
         return invitationView;		
 	}
@@ -181,7 +189,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		// inviters who deleted their invitation.
 		Query query = em.createQuery("SELECT inviterData FROM " +
 								     "InviterData inviterData, InvitationToken invite, AccountClaim ar " + 
-								     "WHERE inviterData MEMBER OF invite.inviters AND " +
+								     "WHERE inviterData.invitation = invite AND " +
 								     "inviterData.deleted = FALSE AND " +
 								     "ar.resource = invite.invitee AND " +
 								     "ar.owner = :invitee AND " +
@@ -212,13 +220,11 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		// get only the InvitationTokens for which ResultingPerson is null,
 		// sorted by date in descending order
 		Query q = em.createQuery(
-			"FROM InvitationToken AS iv WHERE EXISTS " +
-			"(SELECT ivd FROM InviterData ivd WHERE " +
-			"ivd MEMBER OF iv.inviters AND " +
-			"ivd.inviter = :inviter AND " +
-			"ivd.deleted = FALSE AND " +
-			"iv.resultingPerson = NULL) " +
-			"ORDER BY iv.creationDate DESC");
+			"SELECT ivd.invitation FROM InviterData ivd " +
+			"    WHERE ivd.inviter = :inviter AND " +
+			"       ivd.deleted = FALSE AND " +
+			"       ivd.invitation.resultingPerson = NULL " +
+			"    ORDER BY ivd.invitation.creationDate DESC");
 		
 		q.setParameter("inviter", inviter);
 		
@@ -368,7 +374,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 	}
 
 	public InvitationToken updateValidInvitation(User inviter, Resource invitee, boolean addToInvitation) {
-		InvitationToken iv = lookupInvitationFor(null, invitee);
+		InvitationToken iv = lookupInvitationFor(invitee);
 		if (iv == null || !iv.isValid())
 			return null;
 		if (addToInvitation && getInviterData(iv, inviter) == null) {
@@ -376,7 +382,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 			// the inviters list and update the invitation date
 			long currentTime = System.currentTimeMillis();
 			InviterData ivd = 
-				new InviterData(inviter, currentTime, 
+				new InviterData(inviter, iv, currentTime, 
 						        "You joined an existing invitation.", 
 						        "", false);
 			em.persist(ivd);
@@ -401,14 +407,12 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		}
 
 		CreateInvitationResult result = CreateInvitationResult.REPEAT_INVITE;
-		InvitationToken iv = lookupInvitationFor(null, invitee);
+		InvitationToken iv = lookupInvitationFor(invitee);
 		if (iv == null || !iv.isValid()) {	
 			Account account = getAccount(inviter);
 			// first things first, do they have the dough
-            boolean invitationDeducted = false;
 			if (account.canSendInvitations(1)) {
 				account.deductInvitations(1);
-				invitationDeducted = true;
 			} else {
 				result = CreateInvitationResult.INVITE_WAS_NOT_CREATED;
 				return new Pair<CreateInvitationResult,InvitationToken>(result, null);
@@ -417,13 +421,15 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 			// renewing an expiration counts as creating (causes us to send new email)
 			result = CreateInvitationResult.INVITE_CREATED; 
 			if (iv != null) {	
-				iv = updateInvitation(iv, inviter, subject, message, invitationDeducted);				
+				iv = updateInvitation(iv, inviter, subject, message, true);				
 			} else {		
-				InviterData inviterData = new InviterData(inviter, subject, message, invitationDeducted);
-				em.persist(inviterData);
-				iv = new InvitationToken(invitee, inviterData);
+				iv = new InvitationToken(invitee);
 				iv.setPromotionCode(promotionCode);
 				em.persist(iv);
+				iv.prepareToAddInviter();
+				InviterData inviterData = new InviterData(inviter, iv, subject, message, true);
+				em.persist(inviterData);
+				iv.addInviter(inviterData);
 			}			
 		} else {	
 			InviterData ivd = getInviterData(iv, inviter); 
@@ -471,10 +477,10 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		InviterData ivd = getInviterData(iv, inviter);
 		long currentTime = System.currentTimeMillis();
 		if (ivd == null) {	
-			ivd = new InviterData(inviter, currentTime, subject, message, invitationDeducted);
-			em.persist(ivd);
             // in some cases, this will add a new inviter to an expired invitation, 
 			// but it's ok
+			ivd = new InviterData(inviter, iv, currentTime, subject, message, invitationDeducted);
+			em.persist(ivd);
 			iv.addInviter(ivd);
 		} else {		
 			ivd.setInvitationDate(new Date(currentTime));
@@ -491,22 +497,32 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		if (!iv.isExpired()) {	
 			iv.setCreationDate(new Date(currentTime));
 		} else {		
-		    // create a new auth key that isn't expired,
-		    // preserving current inviter list etc.
-		    iv = new InvitationToken(iv, ivd);
-			em.persist(iv);			
-			// for all inviters other than the current inviter, 
-			// unset invitationDeducted
-			// even if they did spend an invitation voucher on this
-			// invitation in the past, they allowed the invitation
-			// to expire, so they should not be reimbursed if they
-			// choose to delete this invitation
+		    // create a new auth key that isn't expired, preserving current inviter list
+		    InvitationToken newInvitation = new InvitationToken(iv.getInvitee());
+			em.persist(newInvitation);			
+			newInvitation.prepareToAddInviter();
+
 			for (InviterData inviterData : iv.getInviters()) {
-				if (!inviterData.getInviter().equals(inviter)) {
-					inviterData.setInvitationDeducted(false);
+				InviterData newData = new InviterData(newInvitation, inviterData);
+				
+				if (newData.getInviter().equals(inviter)) {
+					newData.setInvitationDeducted(invitationDeducted); // Normally true
+					// Make sure that dates agree
+					newData.setInvitationDate(newInvitation.getCreationDate());
+				} else {
+					// for all inviters other than the current inviter, unset invitationDeducted
+					// even if they did spend an invitation voucher on this
+					// invitation in the past, they allowed the invitation
+					// to expire, so they should not be reimbursed if they
+					// choose to delete this invitation
+					newData.setInvitationDeducted(false);
 				}
-			}			
+					
+				em.persist(newData);
+				newInvitation.addInviter(newData);
+			}
 		}
+			
 		return iv;
 	}
 	
@@ -689,16 +705,9 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		User user = viewpoint.getViewer();
 		
 		// iv will be null if user is not among the inviters
-		InvitationToken iv = lookupInvitationFor(user, invitee);
+		InviterData ivd = lookupInviterData(user, invitee);
 		
-		if (iv == null)
-			return false;
-		
-		InviterData ivd = getInviterData(iv, user);
-		
-		// ivd should not be null because we just got back an iv because the
-		// user was among the inviters, but just in case check if ivd != null
-		if (ivd != null && iv.isValid() && !ivd.isDeleted())
+		if (ivd != null && ivd.getInvitation().isValid() && !ivd.isDeleted())
 			return true;
 		else 
 			return false;

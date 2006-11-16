@@ -19,17 +19,6 @@ public interface InvitationSystem {
 	
 	static public final String INVITATION_SUCCESS_STRING = new String("Congratulations");
 		
-	/**
-	 * The inviter argument is optional and means we only return an invitation token if this inviter is
-	 * among the inviters. We return an invitation even if it was deleted or has expired and it is up to 
-	 * the caller to sort that out.
-	 * 
-	 * @param inviter only return non-null if this inviter is already in the inviters; null to always return invitation
-	 * @param invitee the invitee
-	 * @return invitation token or null
-	 */
-	public InvitationToken lookupInvitationFor(User inviter, Resource invitee);
-
 	public InvitationToken lookupInvitation(UserViewpoint viewpoint, long id);
 	
 	/**

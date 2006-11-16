@@ -5,26 +5,28 @@ import java.util.Set;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
 import javax.persistence.JoinColumn;
 import javax.persistence.OneToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.persistence.Transient;
-import javax.persistence.UniqueConstraint;
+
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.dumbhippo.AgeUtils;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PromotionCode;
+import com.dumbhippo.server.util.EJBUtil;
 
 @Entity
-@Table(name="InvitationToken", 
-		   uniqueConstraints = 
-		      {@UniqueConstraint(columnNames={"id", "invitee_id"})}
-	   )
+@Table(name="InvitationToken")
 public class InvitationToken extends Token {
 	private static final long serialVersionUID = 1L;
 	
+	// There can be multiple InvititationToken's for a single invitee, since
+	// when an old invitation expires we don't delete it, and if the resource
+	// is invited again, we create a new InvitationToken.
 	private Resource invitee;
 	private Set<InviterData> inviters;
 	private boolean viewed;
@@ -46,37 +48,12 @@ public class InvitationToken extends Token {
 	// for hibernate to use
 	protected InvitationToken() {
 		super(false);
-		this.inviters = new HashSet<InviterData>();
 	}
 
-	public InvitationToken(Resource invitee, InviterData inviter) {
+	public InvitationToken(Resource invitee) {
 		super(true);
 		this.viewed = false;
 		this.invitee = invitee;
-		this.inviters = new HashSet<InviterData>();
-		if (inviter != null) {
-			inviter.setInvitationDate(this.getCreationDate());
-			addInviter(inviter);
-		}				
-	}
-
-	/**
-	 * Copy an invitation token with a new auth key and creation date, usually
-	 * because the old one was expired. 
-	 * 
-	 * @param original the old token
-	 * @param inviter InviterData for the inviter who reinitiated the invitation
-	 */
-	public InvitationToken(InvitationToken original, InviterData inviter) {
-		super(true);
-		this.viewed = original.viewed;
-		this.invitee = original.invitee;
-		this.inviters = new HashSet<InviterData>(original.inviters);
-        // make sure the creation dates agree
-		inviter.setInvitationDate(this.getCreationDate());
-        if (!this.inviters.contains(inviter)) {
-    		addInviter(inviter);
-        }
 	}
 
 	@OneToOne
@@ -85,17 +62,24 @@ public class InvitationToken extends Token {
 		return invitee;
 	}
 
-	@OneToMany(fetch=FetchType.EAGER)
+	@OneToMany(mappedBy="invitation")
+	@Cache(usage=CacheConcurrencyStrategy.TRANSACTIONAL)
 	public Set<InviterData> getInviters() {
+		if (inviters == null)
+			inviters = new HashSet<InviterData>();
+		
 		return inviters;
 	}
 
 	/**
-	 * 
-	 * @param inviter inviterData for an inviter to be added
+	 * Bug work around, see docs for EJBUtil.forceInitialization()
 	 */
+	public void prepareToAddInviter() {
+		EJBUtil.forceInitialization(inviters);
+	}
+	
 	public void addInviter(InviterData inviter) {
-		inviters.add(inviter);
+		getInviters().add(inviter);
 	}
     
 	protected void setInvitee(Resource invitee) {
