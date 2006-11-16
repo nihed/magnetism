@@ -48,8 +48,10 @@ import com.dumbhippo.server.listeners.PostChatListener;
 import com.dumbhippo.server.listeners.PostClickedListener;
 import com.dumbhippo.server.listeners.PostListener;
 import com.dumbhippo.server.listeners.UserCreationListener;
+import com.dumbhippo.server.listeners.YouTubeListener;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.services.FlickrPhotoView;
+import com.dumbhippo.services.YouTubeVideo;
 
 /**
  * See the docs for the Notifier interface.
@@ -311,5 +313,11 @@ public class NotifierBean implements Notifier {
 		for (FlickrListener l : getListeners(FlickrListener.class)) {
 			l.onFlickrPhotosetChanged(photosetStatus);
 		}		
+	}
+
+	public void onYouTubeRecentVideosChanged(String flickrId, List<YouTubeVideo> videos) {
+		for (YouTubeListener l : getListeners(YouTubeListener.class)) {
+			l.onYouTubeRecentVideosChanged(flickrId, videos);
+		}
 	}
 }

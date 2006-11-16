@@ -1,7 +1,5 @@
 package com.dumbhippo.server.impl;
 
-import java.io.IOException;
-import java.io.Serializable;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -51,16 +49,11 @@ import com.dumbhippo.server.XmlMethodException;
 import com.dumbhippo.server.syndication.RhapModule;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.util.HtmlTextExtractor;
+import com.dumbhippo.services.FeedFetcher;
 import com.sun.syndication.feed.module.Module;
 import com.sun.syndication.feed.synd.SyndContent;
 import com.sun.syndication.feed.synd.SyndEntry;
 import com.sun.syndication.feed.synd.SyndFeed;
-import com.sun.syndication.fetcher.FeedFetcher;
-import com.sun.syndication.fetcher.FetcherException;
-import com.sun.syndication.fetcher.impl.FeedFetcherCache;
-import com.sun.syndication.fetcher.impl.HttpURLFeedFetcher;
-import com.sun.syndication.fetcher.impl.SyndFeedInfo;
-import com.sun.syndication.io.FeedException;
 
 @Stateless
 public class FeedSystemBean implements FeedSystem {
@@ -82,15 +75,9 @@ public class FeedSystemBean implements FeedSystem {
 	@EJB
 	private Notifier notifier;
 	
-	private static FeedFetcherCache cache = null;
 	private static ExecutorService notificationService;
 	private static boolean shutdown = false;
-	
-	private static synchronized FeedFetcherCache getCache() {
-		if (cache == null)
-			cache = new FeedCache();
-		return cache;
-	}
+
 	
 	private static synchronized ExecutorService getNotificationService() {
 		if (shutdown)
@@ -113,36 +100,23 @@ public class FeedSystemBean implements FeedSystem {
 			return null;
 		}
 	}
-	
-	private SyndFeed fetchFeedFromNet(LinkResource source) throws XmlMethodException {
+		
+	private SyndFeed getRawFeed(LinkResource source) throws XmlMethodException {
 		URL url;
 		try {
 			url = new URL(source.getUrl());
 		} catch (MalformedURLException e) {
 			throw new RuntimeException("getFeed passed malformed URL object");
 		}
-		
-		// FIXME unfortunately the timeout on the feed fetcher http download is 
-		// way too long - but there's no way to fix without hacking on ROME.
-		// Doing the HTTP GET by hand is not really desirable since the feed fetcher
-		// is smarter than that (e.g. uses some "get new stuff only" protocols, checks
-		// whether the data has changed, etc.)
-		
-		FeedFetcher feedFetcher = new HttpURLFeedFetcher(getCache());
+
 		try {
-			return feedFetcher.retrieveFeed(url);
-		} catch (IOException e) {
-			// log this here since we lose the details in the potentially-user-visible XmlMethodException
-			logger.warn("Network exception retrieving feed was {}: '{}' on url " + url, e.getClass().getName(), e.getMessage());
-			throw new XmlMethodException(XmlMethodErrorCode.NETWORK_ERROR, "Network error fetching feed " + url);
-		} catch (FetcherException e) {
-			// log this here since we lose the details in the potentially-user-visible XmlMethodException
-			logger.warn("Fetcher exception retrieving feed was {}: '{}' on url " + url, e.getClass().getName(), e.getMessage());
-			throw new XmlMethodException(XmlMethodErrorCode.NETWORK_ERROR, "Error requesting feed from server " + url);
-		} catch (FeedException e) {
-			// log this here since we lose the details in the potentially-user-visible XmlMethodException
-			logger.warn("Feed exception retrieving feed was {}: '{}' on url " + url, e.getClass().getName(), e.getMessage());
-			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, "Error parsing feed " + url);
+			return FeedFetcher.getFeed(url);
+		} catch (FeedFetcher.FetchFailedException e) {
+			// log this here since we lose the details in the
+			// potentially-user-visible XmlMethodException
+			logger.warn("Exception retrieving feed was {}: '{}' on url " + url, e.getClass().getName(), e.getMessage());
+			throw new XmlMethodException(XmlMethodErrorCode.NETWORK_ERROR,
+					"Error fetching feed " + url);
 		}
 	}
 	
@@ -480,7 +454,7 @@ public class FeedSystemBean implements FeedSystem {
 		if (feed != null)
 			return feed;
 		
-		final SyndFeed syndFeed = fetchFeedFromNet(source);
+		final SyndFeed syndFeed = getRawFeed(source);
 		
 		try {
 			return runner.runTaskThrowingConstraintViolation(new Callable<Feed>() {
@@ -552,7 +526,7 @@ public class FeedSystemBean implements FeedSystem {
 		logger.debug("  Feed {} being fetched", feed.getSource());
 		
 		try {
-			final SyndFeed syndFeed = fetchFeedFromNet(feed.getSource());
+			final SyndFeed syndFeed = getRawFeed(feed.getSource());
 			logger.info("  HTTP request completed for feed {}, retrieved {} entries", feed.getSource(), syndFeed.getEntries().size());
 			return new UpdateFeedContext(feed.getId(), syndFeed);		
 		} catch (XmlMethodException e) {
@@ -707,53 +681,6 @@ public class FeedSystemBean implements FeedSystem {
 				old.setRemoved(true);
 				return;
 			}
-		}
-	}
-		
-	/** 
-	 * For now the only point of this vs. the one that comes with Rome is that
-	 * we can do logging.
-	 *
-	 */
-	private static class FeedCache implements FeedFetcherCache, Serializable {
-		private static final long serialVersionUID = 1L;
-
-		@SuppressWarnings({"unused","hiding"})
-		private static final Logger logger = GlobalSetup.getLogger(FeedCache.class);		
-		
-		@SuppressWarnings("hiding")
-		private Map<String,SyndFeedInfo> cache;
-		
-		FeedCache() {
-			cache = new HashMap<String,SyndFeedInfo>();
-		}
-		
-		static private class InfoStringifier {
-			private SyndFeedInfo info;
-			InfoStringifier(SyndFeedInfo info) {
-				this.info = info;
-			}
-			
-			@Override
-			public String toString() {
-				return "{SyndFeedInfo id='" + info.getId() + "' + url='" + info.getUrl() + "' " +
-				"feed has " + info.getSyndFeed().getEntries().size() + " entries}";
-			}
-		}
-		
-		public synchronized SyndFeedInfo getFeedInfo(URL url) {
-			SyndFeedInfo info = cache.get(url.toExternalForm());
-			if (info != null) {
-				logger.debug(" getting cached feed for {}: {}", url, new InfoStringifier(info));
-			}
-			return info;
-		}
-
-		public synchronized void setFeedInfo(URL url, SyndFeedInfo info) {
-			if (info != null) {
-				logger.debug(" storing cached feed for {}: {}", url, new InfoStringifier(info));
-			}
-			cache.put(url.toExternalForm(), info);
 		}
 	}
 	

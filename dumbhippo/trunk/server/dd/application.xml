@@ -33,6 +33,9 @@
     	<java>rome-fetcher-0.7.jar</java>
     </module>
     <module>
+    	<java>mediarss-0.2.jar</java>
+    </module>
+    <module>
     	<java>tagsoup-1.0.jar</java>
     </module>
     <module>

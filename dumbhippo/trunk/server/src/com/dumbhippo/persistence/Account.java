@@ -517,6 +517,11 @@ public class Account extends Resource {
 	public void setAdminDisabled(boolean adminDisabled) {
 		this.adminDisabled = adminDisabled;
 	}
+	
+	@Transient
+	public boolean isActive() {
+		return !(isDisabled() || isAdminDisabled());
+	}
 
 	@Column(nullable=true)
 	public Boolean isMusicSharingEnabled() {

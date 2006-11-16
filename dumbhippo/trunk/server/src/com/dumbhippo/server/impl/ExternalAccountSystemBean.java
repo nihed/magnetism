@@ -25,16 +25,19 @@ import com.dumbhippo.persistence.ValidationException;
 import com.dumbhippo.server.ExternalAccountSystem;
 import com.dumbhippo.server.FacebookSystem;
 import com.dumbhippo.server.FlickrUpdater;
-import com.dumbhippo.services.caches.FlickrUserPhotosCache;
 import com.dumbhippo.server.MessageSender;
 import com.dumbhippo.server.MySpaceTracker;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Notifier;
+import com.dumbhippo.server.YouTubeUpdater;
 import com.dumbhippo.server.views.ExternalAccountView;
 import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.server.views.Viewpoint;
 import com.dumbhippo.services.FlickrPhotoSize;
 import com.dumbhippo.services.FlickrPhotoView;
+import com.dumbhippo.services.YouTubeVideo;
+import com.dumbhippo.services.caches.FlickrUserPhotosCache;
+import com.dumbhippo.services.caches.YouTubeVideosCache;
 
 @Stateless
 public class ExternalAccountSystemBean implements ExternalAccountSystem {
@@ -60,7 +63,15 @@ public class ExternalAccountSystemBean implements ExternalAccountSystem {
 	
 	@EJB
 	@IgnoreDependency
+	private YouTubeVideosCache youTubeVideosCache;
+	
+	@EJB
+	@IgnoreDependency
 	private FlickrUpdater flickrUpdater;
+	
+	@EJB
+	@IgnoreDependency
+	private YouTubeUpdater youTubeUpdater;
 	
 	@EJB
 	private Notifier notifier;
@@ -188,6 +199,36 @@ public class ExternalAccountSystemBean implements ExternalAccountSystem {
 					FlickrPhotoSize.SMALL_SQUARE.getPixels(), FlickrPhotoSize.SMALL_SQUARE.getPixels());
 	}
 	
+
+	private void loadYouTubeThumbnails(Viewpoint viewpoint, ExternalAccountView accountView) {
+		ExternalAccount account = accountView.getExternalAccount();
+		
+		if (account.getAccountType() != ExternalAccountType.YOUTUBE)
+			throw new IllegalArgumentException("should be a YouTube account here");
+	
+		if (account.getSentiment() != Sentiment.LOVE)
+			throw new IllegalArgumentException("YouTube account is unloved =(");
+		
+		if (account.getHandle() == null)
+			return;
+		
+		try {
+			youTubeUpdater.getCachedStatus(account);
+		} catch (NotFoundException e) {
+			logger.debug("No cached YouTube status for {}", account);
+			return;
+		}
+		
+		List<YouTubeVideo> videos = youTubeVideosCache.getSync(account.getHandle());
+		if (videos.isEmpty()) {
+			logger.debug("Empty list of videos for {}", account);
+			return;
+		}
+		
+		accountView.setThumbnailsData(TypeUtils.castList(Thumbnail.class, videos), videos.size(), 
+					videos.get(0).getThumbnailWidth(), videos.get(0).getThumbnailHeight());
+	}	
+	
 	private void loadThumbnails(Viewpoint viewpoint, ExternalAccountView externalAccountView) {
 		ExternalAccount externalAccount = externalAccountView.getExternalAccount();
 		ExternalAccountType type = externalAccount.getAccountType();
@@ -198,6 +239,9 @@ public class ExternalAccountSystemBean implements ExternalAccountSystem {
 		switch (type) {
 		case FLICKR:
 			loadFlickrThumbnails(viewpoint, externalAccountView);
+			break;
+		case YOUTUBE:
+			loadYouTubeThumbnails(viewpoint, externalAccountView);
 			break;
 		default:
 			// most accounts lack thumbnails
