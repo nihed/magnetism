@@ -111,13 +111,12 @@ public class FlickrUpdaterBean implements FlickrUpdater {
 	}
 
 	public Collection<User> getUsersWhoLoveFlickrAccount(String flickrUserId) {
-		Query q = em.createQuery("SELECT user FROM User user WHERE EXISTS " + 
-				" (SELECT ea from ExternalAccount ea WHERE " +
-				"  ea.account.owner = user " +
-				"  AND ea.accountType = " + ExternalAccountType.FLICKR.ordinal() + 
+		Query q = em.createQuery("SELECT ea.account.owner FROM ExternalAccount ea WHERE " +
+				"  ea.accountType = " + ExternalAccountType.FLICKR.ordinal() + 
 				"  AND ea.sentiment = " + Sentiment.LOVE.ordinal() + 
-				"  AND ea.handle IS NOT NULL " + 
-				"  AND ea.account.disabled = false AND ea.account.adminDisabled = false)");
+				"  AND ea.handle = :flickrUserId " + 
+				"  AND ea.account.disabled = false AND ea.account.adminDisabled = false");
+		q.setParameter("flickrUserId", flickrUserId);
 		return TypeUtils.castList(User.class, q.getResultList());
 	}
 	
