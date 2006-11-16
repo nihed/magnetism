@@ -561,7 +561,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		}
 		
 		// now get the amazon stuff
-		AmazonAlbumData amazonAlbum = ThreadUtils.getFutureResultNullOnException(futureAmazonAlbum);
+		AmazonAlbumData amazonAlbum = futureAmazonAlbum == null ? null : ThreadUtils.getFutureResultNullOnException(futureAmazonAlbum);
 					
 		if (amazonAlbum != null) {
 			// if album artwork was not available from yahoo, we are after album artwork from amazon
