@@ -6,6 +6,7 @@ import java.util.Set;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.OneToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
@@ -56,7 +57,7 @@ public class InvitationToken extends Token {
 		this.invitee = invitee;
 	}
 
-	@OneToOne
+	@ManyToOne
 	@JoinColumn(nullable=false)
 	public Resource getInvitee() {
 		return invitee;
