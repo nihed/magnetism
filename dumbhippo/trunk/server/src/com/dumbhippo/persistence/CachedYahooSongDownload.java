@@ -32,6 +32,7 @@ public class CachedYahooSongDownload extends DBUnique implements CachedListItem 
 
 	static public CachedYahooSongDownload newNoResultsMarker(String songId) {
 		CachedYahooSongDownload d = new CachedYahooSongDownload();
+		d.setSongId(songId);
 		d.setNoResultsMarker(true);
 		return d;
 	}
