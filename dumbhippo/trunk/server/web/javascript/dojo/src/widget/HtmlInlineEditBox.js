@@ -11,8 +11,11 @@ dojo.require("dojo.html");
 dojo.widget.HtmlInlineEditBox = function() {
 	dojo.widget.HtmlWidget.call(this);
 
-	this.templatePath = dojo.uri.dojoUri("src/widget/templates/HtmlInlineEditBox.html");
-	this.templateCssPath = dojo.uri.dojoUri("src/widget/templates/HtmlInlineEditBox.css");
+	// HIPPO: These paths were originally src/... but that doesn't work with our rearranged
+	// tree. We just change it here to keep things simple; it won't work for general 
+	// configurations of dojo, but we are we using general configurations of dojo? No.
+	this.templatePath = dojo.uri.dojoUri("dojo/widget/templates/HtmlInlineEditBox.html");
+	this.templateCssPath = dojo.uri.dojoUri("dojo/widget/templates/HtmlInlineEditBox.css");
 	this.widgetType = "InlineEditBox";
 
 	this.form = null;
