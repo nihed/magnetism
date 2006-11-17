@@ -6,10 +6,8 @@ import java.util.Set;
 
 import javax.ejb.Local;
 
-import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.YouTubeUpdateStatus;
-import com.dumbhippo.server.listeners.ExternalAccountsListener;
 import com.dumbhippo.services.YouTubeVideo;
 
 /** 
@@ -18,15 +16,9 @@ import com.dumbhippo.services.YouTubeVideo;
  * @author Colin Walters
  */
 @Local
-public interface YouTubeUpdater extends ExternalAccountsListener {
-
-	public YouTubeUpdateStatus getCachedStatus(User user) throws NotFoundException;
-	public YouTubeUpdateStatus getCachedStatus(ExternalAccount external) throws NotFoundException;
-	public YouTubeUpdateStatus getCachedStatus(String username) throws NotFoundException;
+public interface YouTubeUpdater extends CachedExternalUpdater<YouTubeUpdateStatus> {
 	public Set<String> getActiveYouTubeUsers();
-	public Collection<User> getUsersWhoLoveYouTubeAccount(String username);	
-
-	public void periodicUpdate(String username);
-
+	public Collection<User> getUsersWhoLoveYouTubeAccount(String username);
+	
 	public void saveUpdatedStatus(String username, List<YouTubeVideo> videos);
 }

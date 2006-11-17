@@ -31,7 +31,6 @@ import javax.naming.NamingException;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
-import org.jboss.cache.TreeCacheMBean;
 import org.jboss.mx.util.MBeanProxyExt;
 import org.jboss.mx.util.MBeanServerLocator;
 import org.slf4j.Logger;

@@ -2,17 +2,13 @@ package com.dumbhippo.server.impl;
 
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
-import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
-import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
@@ -20,29 +16,27 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.TypeUtils;
-import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.FlickrPhotosetStatus;
 import com.dumbhippo.persistence.FlickrUpdateStatus;
-import com.dumbhippo.persistence.Sentiment;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.server.CachedExternalUpdater;
 import com.dumbhippo.server.Configuration;
-import com.dumbhippo.services.caches.FlickrPhotosetPhotosCache;
 import com.dumbhippo.server.FlickrUpdater;
-import com.dumbhippo.services.caches.FlickrUserPhotosCache;
-import com.dumbhippo.services.caches.FlickrUserPhotosetsCache;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Notifier;
-import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.services.FlickrPhotoView;
 import com.dumbhippo.services.FlickrPhotos;
 import com.dumbhippo.services.FlickrPhotosetView;
 import com.dumbhippo.services.FlickrPhotosets;
 import com.dumbhippo.services.FlickrWebServices;
+import com.dumbhippo.services.caches.FlickrPhotosetPhotosCache;
+import com.dumbhippo.services.caches.FlickrUserPhotosCache;
+import com.dumbhippo.services.caches.FlickrUserPhotosetsCache;
 
 @Stateless
-public class FlickrUpdaterBean implements FlickrUpdater {
+public class FlickrUpdaterBean extends CachedExternalUpdaterBean<FlickrUpdateStatus> implements FlickrUpdater {
 
 	@SuppressWarnings("unused")
 	private static final Logger logger = GlobalSetup.getLogger(FlickrUpdaterBean.class);
@@ -63,61 +57,21 @@ public class FlickrUpdaterBean implements FlickrUpdater {
 	private FlickrPhotosetPhotosCache photosetPhotosCache;
 	
 	@EJB
-	private TransactionRunner runner;
-	
-	@EJB
 	private Notifier notifier;
 	
-	public FlickrUpdateStatus getCachedStatus(User user) throws NotFoundException {
-		ExternalAccount external = user.getAccount().getExternalAccount(ExternalAccountType.FLICKR);
-		if (external == null)
-			throw new NotFoundException("User has no flickr external account: " + user);
-		// sentiment and handle are checked in here
-		return getCachedStatus(external);
-	}
-	
-	public FlickrUpdateStatus getCachedStatus(ExternalAccount flickrAccount) throws NotFoundException {
-		if (flickrAccount.getAccountType() != ExternalAccountType.FLICKR)
-			throw new RuntimeException("Invalid account type passed to FlickrUpdater " + flickrAccount);
-		
-		if (flickrAccount.getHandle() == null || 
-				flickrAccount.getSentiment() != Sentiment.LOVE)
-			throw new NotFoundException("Flickr account has null handle or is unloved: " + flickrAccount);
-		return getCachedStatus(flickrAccount.getHandle());
-	}
-	
-	public FlickrUpdateStatus getCachedStatus(String flickrId) throws NotFoundException {
+	public Query getCachedStatusQuery(String flickrId) {
 		Query q = em.createQuery("SELECT updateStatus FROM FlickrUpdateStatus updateStatus " +
 				"WHERE updateStatus.flickrId = :flickrId");
 		q.setParameter("flickrId", flickrId);
-		
-		try {
-			return (FlickrUpdateStatus) q.getSingleResult();
-		} catch (NoResultException e) {
-			throw new NotFoundException("Have not cached a status for flickr id: " + flickrId);
-		}
+		return q;
 	}
 	
 	public Set<String> getActiveFlickrUserIds() {
-		Query q = em.createQuery("SELECT ea.handle FROM ExternalAccount ea WHERE " + 
-				" ea.accountType = " + ExternalAccountType.FLICKR.ordinal() + 
-				" AND ea.sentiment = " + Sentiment.LOVE.ordinal() + 
-				" AND ea.handle IS NOT NULL " + 
-				" AND ea.account.disabled = false AND ea.account.adminDisabled = false");
-		// we need a set because multiple accounts can have the same flickr account
-		Set<String> results = new HashSet<String>();
-		results.addAll(TypeUtils.castList(String.class, q.getResultList()));
-		return results;
+		return getActiveFlickrUserIds();
 	}
 
 	public Collection<User> getUsersWhoLoveFlickrAccount(String flickrUserId) {
-		Query q = em.createQuery("SELECT ea.account.owner FROM ExternalAccount ea WHERE " +
-				"  ea.accountType = " + ExternalAccountType.FLICKR.ordinal() + 
-				"  AND ea.sentiment = " + Sentiment.LOVE.ordinal() + 
-				"  AND ea.handle = :flickrUserId " + 
-				"  AND ea.account.disabled = false AND ea.account.adminDisabled = false");
-		q.setParameter("flickrUserId", flickrUserId);
-		return TypeUtils.castList(User.class, q.getResultList());
+		return getAccountLovers(flickrUserId);
 	}
 	
 	public Collection<FlickrPhotosetStatus> getPhotosetStatusesForFlickrAccount(String flickrUserId) {
@@ -127,11 +81,7 @@ public class FlickrUpdaterBean implements FlickrUpdater {
 		return TypeUtils.castList(FlickrPhotosetStatus.class, q.getResultList());
 	}
 	
-	// avoid log messages in here that will happen on every call, or it could get noisy
-	@TransactionAttribute(TransactionAttributeType.NEVER)
-	public void periodicUpdate(String flickrId) {
-		EJBUtil.assertNoTransaction();
-		
+	public void doPeriodicUpdate(String flickrId) {
 		FlickrWebServices ws = new FlickrWebServices(5000, config);
 		
 		// These do NOT use any cache - remember, we're polling periodically for changes.
@@ -326,40 +276,15 @@ public class FlickrUpdaterBean implements FlickrUpdater {
 		
 		if (photosetsChanged)
 			updateUserPhotosetStatuses(flickrId, photosetViews);
+	}
+
+	@Override
+	protected ExternalAccountType getAccountType() {
+		return ExternalAccountType.FLICKR;
+	}
+
+	@Override
+	protected Class<? extends CachedExternalUpdater<FlickrUpdateStatus>> getUpdater() {
+		return FlickrUpdater.class;
 	} 
-
-	private boolean isLovedAndEnabledFlickr(ExternalAccount external) {
-		return external.hasLovedAndEnabledType(ExternalAccountType.FLICKR) && 
-			external.getHandle() != null;
-	}
-	
-	private void doPeriodicUpdateNow(ExternalAccount external) {
-		// Immediately update the flickr account status instead of 
-		// waiting for the next periodic update to kick in, so if someone
-		// adds a flickr account they can see the result right away.
-		
-		final String flickrId = external.getHandle();
-		runner.runTaskOnTransactionCommit(new Runnable() {
-
-			public void run() {
-				FlickrUpdater updater = EJBUtil.defaultLookup(FlickrUpdater.class);
-				updater.periodicUpdate(flickrId);
-			}
-			
-		});		
-	}
-	
-	public void onExternalAccountCreated(User user, ExternalAccount external) {
-		if (!isLovedAndEnabledFlickr(external))
-			return;
-		
-		doPeriodicUpdateNow(external);
-	}
-
-	public void onExternalAccountLovedAndEnabledMaybeChanged(User user, ExternalAccount external) {
-		if (!isLovedAndEnabledFlickr(external))
-			return;
-
-		doPeriodicUpdateNow(external);
-	}
 }
