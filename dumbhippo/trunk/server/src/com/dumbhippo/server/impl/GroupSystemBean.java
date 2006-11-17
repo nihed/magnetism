@@ -264,11 +264,22 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		
 		long now = System.currentTimeMillis();
 		
+		MembershipStatus oldStatus;
+		if (groupMember != null)
+			oldStatus = groupMember.getStatus();
+		else
+			oldStatus = MembershipStatus.NONMEMBER;
+
+		// Compute the best status that the adder can make the user
 		MembershipStatus newStatus;
 		if (selfAdd)
 			newStatus = adderCanAdd ? MembershipStatus.ACTIVE : MembershipStatus.FOLLOWER;
-		else 
+		else
 			newStatus = adderCanAdd ? MembershipStatus.INVITED : MembershipStatus.INVITED_TO_FOLLOW;
+		
+		// If that's worse than the current status, then use the current status
+		if (newStatus.worseThan(oldStatus))
+			newStatus = oldStatus;
 
 		if (groupMember != null) {
 			switch (groupMember.getStatus()) {

@@ -18,6 +18,7 @@ public class GroupMemberBlockView extends BlockView {
 	private PersonView member;
 	private MembershipStatus status;
 	private Set<PersonView> adders;
+	private boolean viewerCanInvite;
 	
 	public GroupMemberBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd, boolean participated) {
 		super(viewpoint, block, ubd, participated);
@@ -27,11 +28,12 @@ public class GroupMemberBlockView extends BlockView {
 		super(viewpoint, block, gbd, participated);
 	}
 
-	void populate(GroupView group, PersonView member, MembershipStatus status, Set<PersonView> adders) {
+	void populate(GroupView group, PersonView member, MembershipStatus status, Set<PersonView> adders, boolean viewerCanInvite) {
 		this.group = group;
 		this.member = member;
 		this.status = status;
 		this.adders = adders; // may be null
+		this.viewerCanInvite = viewerCanInvite;
 		setPopulated(true);
 	}
 	
@@ -48,7 +50,8 @@ public class GroupMemberBlockView extends BlockView {
 		builder.appendEmptyNode("groupMember",
 							    "groupId", group.getIdentifyingGuid().toString(),
 							    "memberId", member.getIdentifyingGuid().toString(),
-							    "status", status.name());
+							    "status", status.name(),
+							    "viewerCanInvite", Boolean.toString(viewerCanInvite));
 	}
 
 	public List<Object> getReferencedObjects() {
@@ -65,6 +68,10 @@ public class GroupMemberBlockView extends BlockView {
 	
 	public Set<PersonView> getAdders() {
 		return adders;
+	}
+	
+	public boolean getViewerCanInvite() {
+		return viewerCanInvite;
 	}
 	
 	@Override

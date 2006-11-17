@@ -23,7 +23,7 @@
 		</dht3:blockTitle>
 		<dht3:blockDescription blockId="${blockId}" literalBody="true">
 			<c:choose>
-				<c:when test="${dh:enumIs(block.status, 'FOLLOWER')}">
+				<c:when test="${block.viewerCanInvite}">
 					<img src="/images2/${buildStamp}/add.png"/>	
 					<dh:script module="dh.actions"/>
 					<dht:asyncActionLink 

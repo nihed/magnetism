@@ -62,4 +62,24 @@ public enum MembershipStatus {
 	public boolean getCanModify() {
 		return ordinal() >= ACTIVE.ordinal();
 	}
+	
+	// REMOVED is unordered for the purposes of better/worse
+	
+	public boolean betterThan(MembershipStatus oldStatus) {
+		if (oldStatus == MembershipStatus.REMOVED)
+			return false;
+		else if (this == MembershipStatus.REMOVED)
+			return false;
+		else
+			return ordinal() > oldStatus.ordinal();
+	}
+
+	public boolean worseThan(MembershipStatus oldStatus) {
+		if (oldStatus == MembershipStatus.REMOVED)
+			return false;
+		else if (this == MembershipStatus.REMOVED)
+			return false;
+		else
+			return ordinal() < oldStatus.ordinal();
+	}
 }

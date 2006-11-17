@@ -30,6 +30,7 @@ struct _HippoBlockGroupMember {
     HippoGroup           *group;
     HippoPerson          *member;
     HippoMembershipStatus status;
+    gboolean              viewer_can_invite;
 };
 
 struct _HippoBlockGroupMemberClass {
@@ -48,7 +49,8 @@ enum {
     PROP_0,
     PROP_GROUP,
     PROP_MEMBER,
-    PROP_STATUS
+    PROP_STATUS,
+    PROP_VIEWER_CAN_INVITE
 };
 
 G_DEFINE_TYPE(HippoBlockGroupMember, hippo_block_group_member, HIPPO_TYPE_BLOCK);
@@ -95,6 +97,14 @@ hippo_block_group_member_class_init(HippoBlockGroupMemberClass *klass)
                                                      HIPPO_MEMBERSHIP_STATUS_ACTIVE,
                                                      HIPPO_MEMBERSHIP_STATUS_NONMEMBER,
                                                      G_PARAM_READABLE));
+    
+    g_object_class_install_property(object_class,
+                                    PROP_VIEWER_CAN_INVITE,
+                                    g_param_spec_boolean("viewer-can-invite",
+                                                         _("Viewer Can Invite"),
+                                                         _("Is it useful for the viewer to invite the user to the group"),
+                                                         FALSE,
+                                                         G_PARAM_READABLE));
 }
 
 static void
@@ -150,6 +160,20 @@ set_status(HippoBlockGroupMember *block_group_member,
 }
 
 static void
+set_viewer_can_invite(HippoBlockGroupMember *block_group_member,
+                      gboolean               viewer_can_invite)
+{
+    viewer_can_invite = viewer_can_invite != FALSE;
+    
+    if (viewer_can_invite == block_group_member->viewer_can_invite)
+        return;
+    
+    block_group_member->viewer_can_invite = viewer_can_invite;
+
+    g_object_notify(G_OBJECT(block_group_member), "viewer-can-invite");
+}
+
+static void
 hippo_block_group_member_dispose(GObject *object)
 {
     HippoBlockGroupMember *block_group_member = HIPPO_BLOCK_GROUP_MEMBER(object);
@@ -193,6 +217,9 @@ hippo_block_group_member_get_property(GObject         *object,
     case PROP_STATUS:
         g_value_set_int(value, block_group_member->status);
         break;
+    case PROP_VIEWER_CAN_INVITE:
+        g_value_set_boolean(value, block_group_member->viewer_can_invite);
+        break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
         break;
@@ -234,6 +261,8 @@ hippo_block_group_member_update_from_xml (HippoBlock           *block,
     HippoPerson *member;
     const char *status_str;
     HippoMembershipStatus status;
+    gboolean viewer_can_invite;
+    gboolean viewer_can_invite_set;
 
     if (!HIPPO_BLOCK_CLASS(hippo_block_group_member_parent_class)->update_from_xml(block, cache, node))
         return FALSE;
@@ -247,15 +276,22 @@ hippo_block_group_member_update_from_xml (HippoBlock           *block,
                          "groupId", HIPPO_SPLIT_GROUP, &group,
                          "memberId", HIPPO_SPLIT_PERSON, &member,
                          "status", HIPPO_SPLIT_STRING, &status_str,
+                         "viewerCanInvite", HIPPO_SPLIT_BOOLEAN | HIPPO_SPLIT_OPTIONAL, &viewer_can_invite,
+                         "viewerCanInvite", HIPPO_SPLIT_SET, &viewer_can_invite_set,
                          NULL))
         return FALSE;
+
 
     if (!membership_status_from_string(status_str, &status))
         return FALSE;
 
+    if (!viewer_can_invite_set)
+        viewer_can_invite = status == HIPPO_MEMBERSHIP_STATUS_FOLLOWER;
+            
     set_group(block_group_member, group);
     set_member(block_group_member, member);
     set_status(block_group_member, status);
+    set_viewer_can_invite(block_group_member, viewer_can_invite);
 
     return TRUE;
 }

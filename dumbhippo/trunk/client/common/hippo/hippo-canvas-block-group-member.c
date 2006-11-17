@@ -269,10 +269,10 @@ update_member_and_status(HippoCanvasBlockGroupMember *canvas_group_member,
     g_object_get(G_OBJECT(block),
                  "member", &member,
                  "status", &status,
+                 "viewer-can-invite", &show_invite_link,
                  NULL);
 
     title = NULL;
-    show_invite_link = FALSE;
     
     if (member != NULL) {
         const char *name;
@@ -288,7 +288,6 @@ update_member_and_status(HippoCanvasBlockGroupMember *canvas_group_member,
             break;
         case HIPPO_MEMBERSHIP_STATUS_FOLLOWER:
             title = g_strdup_printf("%s is a new follower", name);
-            show_invite_link = TRUE;
             break;
         case HIPPO_MEMBERSHIP_STATUS_REMOVED:
             title = g_strdup_printf("%s left the group", name);
@@ -317,24 +316,10 @@ update_member_and_status(HippoCanvasBlockGroupMember *canvas_group_member,
 }
 
 static void
-on_member_changed(HippoBlock *block,
-                  GParamSpec *arg, /* null when first calling this */
-                  HippoCanvasBlock *canvas_block)
+on_member_status_changed(HippoBlock *block,
+                         GParamSpec *arg, /* null when first calling this */
+                         HippoCanvasBlock *canvas_block)
 {
-    HippoCanvasBlockGroupMember *canvas_group_member;
-
-    canvas_group_member = HIPPO_CANVAS_BLOCK_GROUP_MEMBER(canvas_block);
-    g_assert(block == canvas_block->block);
-
-    update_member_and_status(canvas_group_member, block);
-}
-
-static void
-on_status_changed(HippoBlock *block,
-                  GParamSpec *arg, /* null when first calling this */
-                  HippoCanvasBlock *canvas_block)
-{
-
     HippoCanvasBlockGroupMember *canvas_group_member;
 
     canvas_group_member = HIPPO_CANVAS_BLOCK_GROUP_MEMBER(canvas_block);
@@ -354,10 +339,7 @@ hippo_canvas_block_group_member_set_block(HippoCanvasBlock *canvas_block,
 
     if (canvas_block->block != NULL) {
         g_signal_handlers_disconnect_by_func(G_OBJECT(canvas_block->block),
-                                             G_CALLBACK(on_member_changed),
-                                             canvas_block);
-        g_signal_handlers_disconnect_by_func(G_OBJECT(canvas_block->block),
-                                             G_CALLBACK(on_status_changed),
+                                             G_CALLBACK(on_member_status_changed),
                                              canvas_block);
         g_signal_handlers_disconnect_by_func(G_OBJECT(canvas_block->block),
                                              G_CALLBACK(on_group_changed),
@@ -369,16 +351,20 @@ hippo_canvas_block_group_member_set_block(HippoCanvasBlock *canvas_block,
 
     if (canvas_block->block != NULL) {
         g_signal_connect(G_OBJECT(canvas_block->block),
-                         "notify::member",
-                         G_CALLBACK(on_member_changed),
-                         canvas_block);
-        g_signal_connect(G_OBJECT(canvas_block->block),
                          "notify::group",
                          G_CALLBACK(on_group_changed),
                          canvas_block);
         g_signal_connect(G_OBJECT(canvas_block->block),
+                         "notify::member",
+                         G_CALLBACK(on_member_status_changed),
+                         canvas_block);
+        g_signal_connect(G_OBJECT(canvas_block->block),
                          "notify::status",
-                         G_CALLBACK(on_status_changed),
+                         G_CALLBACK(on_member_status_changed),
+                         canvas_block);        
+        g_signal_connect(G_OBJECT(canvas_block->block),
+                         "notify::viewer-can-view",
+                         G_CALLBACK(on_member_status_changed),
                          canvas_block);        
 
         on_group_changed(canvas_block->block, NULL, canvas_block);

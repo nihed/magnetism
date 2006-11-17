@@ -151,7 +151,7 @@ public abstract class AbstractBlockHandlerBean<BlockViewSubType extends BlockVie
 			throw new IllegalStateException("Must override createBlockView if your block view type doesn't have the right constructor");
 
 		try {
-			return viewClassConstructorUser.newInstance(viewpoint, block, gbd, participated);
+			return viewClassConstructorGroup.newInstance(viewpoint, block, gbd, participated);
 		} catch (IllegalArgumentException e) {
 			throw new RuntimeException(e);
 		} catch (InstantiationException e) {
