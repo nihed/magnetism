@@ -130,8 +130,8 @@ public abstract class BlockView implements ObjectView {
 	protected void writeThumbnailsToXmlBuilder(XmlBuilder builder, ThumbnailsBlockView thumbnailsBlock) {
 		Thumbnails thumbnails = thumbnailsBlock.getThumbnails();
 		builder.openElement("thumbnails", "count", Integer.toString(thumbnails.getThumbnailCount()),
-				"width", Integer.toString(thumbnails.getThumbnailWidth()),
-				"height", Integer.toString(thumbnails.getThumbnailHeight()), 
+				"maxWidth", Integer.toString(thumbnails.getThumbnailWidth()),
+				"maxHeight", Integer.toString(thumbnails.getThumbnailHeight()), 
 				"totalItems", Integer.toString(thumbnails.getTotalThumbnailItems()),
 				"totalItemsString", thumbnails.getTotalThumbnailItemsString(),
 				"moreTitle", thumbnailsBlock.getMoreThumbnailsTitle(),
