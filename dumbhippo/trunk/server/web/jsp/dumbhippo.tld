@@ -190,6 +190,17 @@
         </attribute>
     </tag>
     <tag>
+    	<name>login</name>
+        <tagclass>com.dumbhippo.web.tags.LoginTag</tagclass>
+        <bodycontent>empty</bodycontent>
+        <info>Redirect to /who-are-you</info>
+	    <attribute>
+           <name>next</name>
+           <required>false</required>
+           <rtexprvalue>true</rtexprvalue>
+        </attribute>
+    </tag>
+    <tag>
         <name>relocate</name>
         <tagclass>com.dumbhippo.web.tags.RelocateTag</tagclass>
         <bodycontent>scriptless</bodycontent>

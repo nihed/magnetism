@@ -16,6 +16,7 @@ import java.util.Enumeration;
 import java.util.Locale;
 import java.util.TimeZone;
 import java.util.concurrent.Callable;
+import java.util.regex.Pattern;
 
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
@@ -115,8 +116,26 @@ public abstract class AbstractServlet extends HttpServlet {
 		request.getRequestDispatcher("/error").forward(request, response);
 	}
 	
+	// Did you know that //example.com is a valid relative URL? It doesn't seem
+	// to be accepted for redirects in some quick testing, but disallow it here
+	// to be safe.
+	static final Pattern SCHEME_OR_NET_PATH = Pattern.compile("([A-Za-z][A-Za-z0-9+.-]*:|//).*");
+	
+	// We want to make sure here that the "next" argument is on our site, either
+	// with a relative or absolute path. The following doesn't validate urlString
+	// as a valid URL, but it excludes valid URLs that point off our site.
+	private boolean isLocal(String urlString) {
+		return !SCHEME_OR_NET_PATH.matcher(urlString).matches();
+	}
+	
 	protected String redirectToNextPage(HttpServletRequest request, HttpServletResponse response, String next, String flashMessage)
-		throws ServletException, IOException {
+		throws ServletException, IOException, HumanVisibleException {
+		if (next == null)
+			throw new IllegalArgumentException();
+
+		if (!isLocal(next))
+			throw new HumanVisibleException("next parameter '" + next + "' is not local");
+		
 		// if we have a flash message or need to close the window, we have to load a special
 		// page that does that in JavaScript; otherwise we can just redirect you straightaway
 		if (flashMessage != null || next.equals("/close") || next.equals("close")) {

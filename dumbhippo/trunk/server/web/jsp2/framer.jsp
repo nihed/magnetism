@@ -4,10 +4,13 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 <%@ taglib uri="/jsp/dumbhippo.tld" prefix="dh" %>
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
+<%@ taglib tagdir="/WEB-INF/tags/3" prefix="dht3" %>
 
 <dh:bean id="framer" class="com.dumbhippo.web.pages.FramerPage" scope="request"/>
 <dh:bean id="browser" class="com.dumbhippo.web.BrowserBean" scope="request"/>
 <jsp:setProperty name="framer" property="postId" param="postId"/>
+
+<dht3:validateFramer page="framer" framer="${framer}"/>
 
 <c:set var="title" value="${framer.post.title}" scope="page"/>
 <c:set var="url" value="${framer.post.url}" scope="page"/>

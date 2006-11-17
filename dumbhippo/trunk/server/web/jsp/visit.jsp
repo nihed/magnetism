@@ -9,6 +9,8 @@
 <jsp:setProperty name="framer" property="isVisit" value="true"/>
 <jsp:setProperty name="framer" property="postId" param="post"/>
 
+<dht3:validateFramer page="visit" framer="${framer}"/>
+
 <c:set var="title" value="${framer.post.title}" scope="page"/>
 <head>
 	<dht:embedObject/>

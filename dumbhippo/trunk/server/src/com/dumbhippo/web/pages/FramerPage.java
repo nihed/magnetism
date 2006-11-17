@@ -25,6 +25,7 @@ public class FramerPage {
     static private final Logger logger = GlobalSetup.getLogger(FramerPage.class);	
 	
     private String postId;
+    private String errorText;
 
     @Signin
 	private SigninBean signin;
@@ -45,28 +46,35 @@ public class FramerPage {
 		return postId;
     }
     
+    public String getErrorText() {
+    	return errorText;
+    }
+    
     public void setIsVisit(boolean isVisit) {
     	this.isVisit = isVisit;
     }
 
-    protected void setPost(PostView post) {
-		this.post = post;
-		this.postId = post.getPost().getId();
-		logger.debug("viewing post: {}", this.postId);
-		if (isVisit && signin.isValid()) {
-			UserViewpoint viewpoint = (UserViewpoint)signin.getViewpoint();
-			postBoard.postViewedBy(post.getPost(), viewpoint.getViewer());
-		}
-    }
-
-    public void setPostId(String postId) throws ParseException, NotFoundException {
+     public void setPostId(String postId) {
 		if (postId == null) {
-			logger.debug("no post id");
+			errorText = "No post specified";
 			return;
-		} else {
-			// FIXME - don't backtrace if the user isn't authorized to view the post
-			// (most pages handle this with dht:errorPage, find an example and copy that)
-			setPost(postBoard.loadPost(signin.getViewpoint(), new Guid(postId)));
+		}
+
+		try {
+			Guid guid = new Guid(postId);
+			this.postId = postId;
+			
+			this.post = postBoard.loadPost(signin.getViewpoint(), guid);
+			logger.debug("viewing post: {}", this.postId);
+			
+			if (isVisit && signin.isValid()) {
+				UserViewpoint viewpoint = (UserViewpoint)signin.getViewpoint();
+				postBoard.postViewedBy(post.getPost(), viewpoint.getViewer());
+			}
+		} catch (NotFoundException e) {
+			errorText = "Can't find a visible post for the post ID '" + postId + "'";
+		} catch (ParseException e) {
+			errorText = "The post ID '" + postId + "' doesn't make sense";
 		}
     }
 	
