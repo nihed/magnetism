@@ -5,6 +5,8 @@
 <%@ attribute name="pageable" required="true" type="com.dumbhippo.server.Pageable" %>
 <%@ attribute name="anchor" required="false" type="java.lang.String" %>
 
+<dh:script module="dh.actions"/>
+
 <c:if test="${pageable.pageCount > 1}">
 	<div class="dh-more">
 	<c:choose>
