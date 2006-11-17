@@ -31,7 +31,7 @@ public class LiveGroupUpdaterBean implements LiveGroupUpdater {
 	}
 	
 	private void initializeTotalReceivedPosts(LiveGroup liveGroup, Group group) {
-		liveGroup.setTotalReceivedPosts(postingBoard.getGroupPostsCount(SystemViewpoint.getInstance(), group));
+		liveGroup.setTotalReceivedPosts(postingBoard.getGroupPostsCount(group));
 	}
 	
 	private void initializeMemberCount(LiveGroup liveGroup, Group group) {

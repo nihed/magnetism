@@ -1373,7 +1373,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			// This downloads the url contents, and if it's already an RSS feed then FeedSystem will do it again 
 			// if it's not cached... but since 1) usually we'll be downloading html and not rss here and 2) many feeds
 			// will be cached, it's really not worth making a mess to move the downloaded bytes from FeedScraper to FeedSystem
-			scraper.analzyeURL(url);
+			scraper.analyzeURL(url);
 		} catch (IOException e) {
 			throw new XmlMethodException(XmlMethodErrorCode.NETWORK_ERROR, "Unable to contact the site (" + e.getMessage() + ")");
 		}

@@ -7,10 +7,13 @@ import java.util.HashSet;
 import java.util.Set;
 
 import javax.persistence.Column;
+import javax.persistence.ColumnResult;
 import javax.persistence.Entity;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
+import javax.persistence.NamedNativeQuery;
+import javax.persistence.SqlResultSetMapping;
 import javax.persistence.Transient;
 
 import org.hibernate.annotations.Cache;
@@ -29,6 +32,13 @@ import com.dumbhippo.postinfo.PostInfo;
 @org.hibernate.annotations.Table(appliesTo = "Post", indexes={ 
 		@Index(name="postDate_index", columnNames = { "postDate" } ) }
 )
+@SqlResultSetMapping(name="postCountMapping", 
+		columns={
+			@ColumnResult(name="count")
+		})
+@NamedNativeQuery(name="groupPostCount",
+		query= "SELECT COUNT(*) as count from Post_HippoGroup WHERE groupRecipients_id = :id",
+		resultSetMapping="postCountMapping")
 public class Post extends GuidPersistable {
 	
 	static private final Logger logger = GlobalSetup.getLogger(Post.class);

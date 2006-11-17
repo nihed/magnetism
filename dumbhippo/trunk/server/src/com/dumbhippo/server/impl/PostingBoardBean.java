@@ -1120,8 +1120,13 @@ public class PostingBoardBean implements PostingBoard {
 	}
 	
 
-	public int getGroupPostsCount(Viewpoint viewpoint, Group recipient) {
-		return getGroupPostsCount(viewpoint, recipient, null);
+	public int getGroupPostsCount(Group recipient) {
+		// We need to use a native query here since Hibernate is unable properly optimize
+		// SELECT count(*) from Post p, Group g WHERE g.id = '12312312' AND g MEMBER OF p.groupRecipients
+		// to SELECT count(*) FROM Post_HippoGroup WHERE groupRecipients_id = '12312312'
+		return ((Number)em.createNamedQuery("groupPostCount")
+					.setParameter("id", recipient.getId())
+					.getSingleResult()).intValue();
 	}
 	
 	public List<PostView> getGroupPosts(Viewpoint viewpoint, Group recipient, int start, int max) {
@@ -1130,7 +1135,7 @@ public class PostingBoardBean implements PostingBoard {
 	
 	public void getGroupPosts(Viewpoint viewpoint, Group recipient, Pageable<PostView> pageable) {
 		pageable.setResults(getGroupPosts(viewpoint, recipient, pageable.getStart(), pageable.getCount()));
-		pageable.setTotalCount(getGroupPostsCount(viewpoint, recipient));
+		pageable.setTotalCount(getGroupPostsCount(viewpoint, recipient, null));
 	}
 	
 	public void pageHotPosts(Viewpoint viewpoint, Pageable<PostView> pageable) {

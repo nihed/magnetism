@@ -157,7 +157,7 @@ public final class FeedScraper {
 		}
 	}
 	
-	public boolean analzyeURL(URL url) throws IOException {	
+	public boolean analyzeURL(URL url) throws IOException {	
 		URLConnection connection = url.openConnection();
 		connection.setConnectTimeout(TIMEOUT);
 		connection.setReadTimeout(TIMEOUT);
@@ -195,7 +195,7 @@ public final class FeedScraper {
 		for (String u : urls) {
 			FeedScraper scraper = new FeedScraper();
 			System.out.println("Trying url: " + u);
-			scraper.analzyeURL(new URL(u));
+			scraper.analyzeURL(new URL(u));
 			System.out.println("Got feed source: " + scraper.getFeedSource() + " (fromHtml = " + scraper.getFromHtml() + ")");
 		}
 		System.out.println("done");
