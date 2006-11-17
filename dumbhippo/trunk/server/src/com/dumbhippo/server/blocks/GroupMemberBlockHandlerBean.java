@@ -18,6 +18,7 @@ import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.views.GroupView;
 import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.PersonViewExtra;
+import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.server.views.Viewpoint;
 
 @Stateless
@@ -64,9 +65,25 @@ public class GroupMemberBlockHandlerBean extends AbstractBlockHandlerBean<GroupM
 			// so now they have no GroupMember.
 			member = null;
 		}
-		blockView.populate(groupView, memberView, member != null ? member.getStatus() : MembershipStatus.NONMEMBER,
+		
+		MembershipStatus status = member != null ? member.getStatus() : MembershipStatus.NONMEMBER;
+
+		// Determine if it's useful for the viewer to invite the person to the
+		// group. This basically means that the user wants to be in the group
+		// (status == FOLLOWER) and the user has the power to invite them in.
+		// We also allow upgrading INVITED_TO_FOLLOW to INVITED, though 
+		// I don't think that will come up in practice.
+		boolean viewerCanInvite = false;
+		if (status == MembershipStatus.FOLLOWER || status == MembershipStatus.INVITED_TO_FOLLOW) {
+			if ((viewpoint instanceof UserViewpoint) && 
+				groupSystem.canAddMembers(((UserViewpoint)viewpoint).getViewer(), groupView.getGroup()))
+				viewerCanInvite = true;
+		}
+
+		blockView.populate(groupView, memberView, status,
 				member != null ?
-						personViewer.viewUsers(viewpoint, member.getAdders()) : null);
+						personViewer.viewUsers(viewpoint, member.getAdders()) : null,
+						viewerCanInvite);
 	}
 	
 	public Set<User> getInterestedUsers(Block block) {
