@@ -3,6 +3,7 @@
 
 #include "hippo-common-internal.h"
 #include "hippo-canvas-block.h"
+#include "hippo-canvas-block-blog-person.h"
 #include "hippo-canvas-block-post.h"
 #include "hippo-canvas-block-group-chat.h"
 #include "hippo-canvas-block-group-member.h"
@@ -272,6 +273,9 @@ hippo_canvas_block_new(HippoBlockType type,
         break;
     case HIPPO_BLOCK_TYPE_GROUP_MEMBER:
         object_type = HIPPO_TYPE_CANVAS_BLOCK_GROUP_MEMBER;
+        break;
+    case HIPPO_BLOCK_TYPE_BLOG_PERSON:
+        object_type = HIPPO_TYPE_CANVAS_BLOCK_BLOG_PERSON;
         break;
     }
 
