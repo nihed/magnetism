@@ -5,9 +5,9 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.HashSet;
 
 import org.slf4j.Logger;
 
@@ -16,7 +16,6 @@ import com.dumbhippo.persistence.FacebookAccount;
 import com.dumbhippo.persistence.FacebookAlbumData;
 import com.dumbhippo.persistence.FacebookEvent;
 import com.dumbhippo.persistence.FacebookEventType;
-import com.dumbhippo.persistence.FacebookPhotoData;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.Configuration.PropertyNotFoundException;
@@ -191,6 +190,8 @@ public class FacebookWebServices extends AbstractXmlRequest<FacebookSaxHandler> 
         return -1;
 	}
 	
+	// if we already have results, returning null might mean that there was no change in the photo
+	// count, so we decided not to bother about checking for changes on the individual photos
 	public List<FacebookPhotoData> updateTaggedPhotos(FacebookAccount facebookAccount) {
 		List<String> params = new ArrayList<String>();
 		String methodName = "facebook.photos.getOfUser";
@@ -211,20 +212,65 @@ public class FacebookWebServices extends AbstractXmlRequest<FacebookSaxHandler> 
 
 		if (newCount != oldCount) {
 			// we do not want to go over all photos if the count did not change, even if there was an
-			// equal number of photos added and removed, we we'll get all the new photos next time
+			// equal number of photos added and removed, we'll get all the new photos next time
 			// the count changes
 			// the reason we have this logic here and not in the FacebookTrackerBean is because it 
 			// would be nice to change the code so that we parse through all the returned photos only
 			// if the count did change
 			return handler.getTaggedPhotos();
 		} else if (!facebookAccount.getTaggedPhotosPrimed()) {
+			// this will also result create a no results marker for the cached photos, because we
+			// are returning null below
             // this covers the case when the first time we get tagged photos from facebook, the user has none 
 			facebookAccount.setTaggedPhotosPrimed(true);
 		}
 		return null;
 	}
 	
+	// this function can be called with the detached facebookAccount
+	public int getTaggedPhotosCount(FacebookAccount facebookAccount) {
+		logger.debug("will get facebook tagged photos count for {}", facebookAccount.getFacebookUserId());
+		List<String> params = new ArrayList<String>();
+		String methodName = "facebook.photos.getOfUser";
+        params.add("method=" + methodName);
+		params.add("session_key=" + facebookAccount.getSessionKey());
+		params.add("id=" + facebookAccount.getFacebookUserId());
+		
+		String wsUrl = generateFacebookRequest(params);		
+		
+		FacebookSaxHandler handler = parseUrl(new FacebookSaxHandler(facebookAccount), wsUrl);
+		
+		if (handleErrorCode(facebookAccount, handler, methodName)) {
+			return -1;
+		}
+		
+		return handler.getTaggedPhotoCount();
+	}
+	
+	// this function can be called with the detached facebookAccount
+	public List<FacebookPhotoData> getTaggedPhotos(FacebookAccount facebookAccount) {
+		logger.debug("will get facebook tagged photos for {}", facebookAccount.getFacebookUserId());
+		List<String> params = new ArrayList<String>();
+		String methodName = "facebook.photos.getOfUser";
+        params.add("method=" + methodName);
+		params.add("session_key=" + facebookAccount.getSessionKey());
+		params.add("id=" + facebookAccount.getFacebookUserId());
+		
+		String wsUrl = generateFacebookRequest(params);		
+		
+		FacebookSaxHandler handler = parseUrl(new FacebookSaxHandler(facebookAccount), wsUrl);
+		
+		if (handleErrorCode(facebookAccount, handler, methodName)) {
+			logger.warn("Error when getting tagged photos from facebook, means we must have expired what we had for not'ing");
+			return null;
+		}
+		
+		return handler.getTaggedPhotos();		
+	}
+	
 	public Set<FacebookAlbumData> getModifiedAlbums(FacebookAccount facebookAccount) {
+		// we are temporarily not handling new/modified albums
+		/*
 		List<String> params = new ArrayList<String>();
 		String methodName = "facebook.photos.getAlbums"; 
         params.add("method=" + methodName);
@@ -234,9 +280,11 @@ public class FacebookWebServices extends AbstractXmlRequest<FacebookSaxHandler> 
 		String wsUrl = generateFacebookRequest(params);		
 		
 		FacebookSaxHandler handler = parseUrl(new FacebookSaxHandler(facebookAccount), wsUrl);
+		*/
 		
-		 Set<FacebookAlbumData> modifiedAlbums = new HashSet<FacebookAlbumData>();
-		 
+		Set<FacebookAlbumData> modifiedAlbums = new HashSet<FacebookAlbumData>();
+		
+		/*
 		if (handleErrorCode(facebookAccount, handler, methodName)) {
 			return modifiedAlbums;
 		}
@@ -257,6 +305,7 @@ public class FacebookWebServices extends AbstractXmlRequest<FacebookSaxHandler> 
 			 // this covers the case when the first time we get albums from facebook, the user has none 
 	    	facebookAccount.setAlbumsModifiedTimestampAsLong((new Date()).getTime());
 	    }
+		*/
 		
         return modifiedAlbums;
 	}

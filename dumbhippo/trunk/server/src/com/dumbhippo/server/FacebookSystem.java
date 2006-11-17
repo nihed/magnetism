@@ -4,6 +4,7 @@ import java.util.List;
 
 import javax.ejb.Local;
 
+import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.FacebookAccount;
 import com.dumbhippo.persistence.FacebookEvent;
@@ -21,6 +22,10 @@ import com.dumbhippo.server.views.Viewpoint;
 @Local
 public interface FacebookSystem {
 	
+	public List<FacebookAccount> getAllAccounts();
+	
+	public FacebookAccount lookupFacebookAccount(Viewpoint viewpoint, String userId) throws ParseException, NotFoundException;
+
 	public FacebookAccount lookupFacebookAccount(Viewpoint viewpoint, User user) throws NotFoundException;
 	
 	public FacebookEvent lookupFacebookEvent(Viewpoint viewpoint, long eventId) throws NotFoundException;
@@ -32,4 +37,5 @@ public interface FacebookSystem {
 	public String getEventLink(FacebookEvent facebookEvent);
 
 	public String getApiKey();	
+	
 }

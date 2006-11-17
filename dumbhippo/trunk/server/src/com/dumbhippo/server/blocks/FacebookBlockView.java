@@ -8,7 +8,7 @@ import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.FacebookEvent;
 import com.dumbhippo.persistence.FacebookEventType;
-import com.dumbhippo.persistence.FacebookPhotoData;
+import com.dumbhippo.persistence.FacebookPhotoDataStatus;
 import com.dumbhippo.persistence.GroupBlockData;
 import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.server.views.PersonView;
@@ -46,14 +46,14 @@ public class FacebookBlockView extends AbstractPersonBlockView implements Extern
 	}	
 	
 	// this can later be a part of PhotoSetView interface implementation
-	public ListBean<FacebookPhotoData> getPhotos() {
-		List<FacebookPhotoData> photos = new ArrayList<FacebookPhotoData>();
+	public ListBean<FacebookPhotoDataStatus> getPhotos() {
+		List<FacebookPhotoDataStatus> photos = new ArrayList<FacebookPhotoDataStatus>();
 		if (getFacebookEvent().getPhotos().size() > 0) {
 			photos.addAll(getFacebookEvent().getPhotos());	
 		} else if (getFacebookEvent().getAlbum() != null){
 			photos.add(getFacebookEvent().getAlbum().getCoverPhoto());
 		}
-		return new ListBean<FacebookPhotoData>(photos);
+		return new ListBean<FacebookPhotoDataStatus>(photos);
 	}
 	
 	@Override

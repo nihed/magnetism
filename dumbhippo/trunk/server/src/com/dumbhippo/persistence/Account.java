@@ -392,35 +392,6 @@ public class Account extends Resource {
 	public void setHasAcceptedTerms(boolean hasAcceptedTerms) {
 		this.hasAcceptedTerms = hasAcceptedTerms;
 	}
-
-	/** 
-	 * Return the SHA-1 hash of the given plainText hex-encoded in a String
-	 * @param plainText A String with the plain text, or null
-	 * @param salt An integer containing the password salt
-	 * @return A String with the hex-encoded hash, or null if either input was null
-	 */
-	protected String secureHash(String plainText, Integer salt) {
-		if (plainText == null)
-			return null;
-		if (salt == null)
-			return null;
-		
-		MessageDigest md;
-		try {
-			md = MessageDigest.getInstance("SHA-1");
-		} catch (NoSuchAlgorithmException nsae) {
-			throw new RuntimeException("SHA-1 algorithm unavailable", nsae);
-		}
-		
-		// get a String representation of the salt int, possibly including a minus sign
-		String saltText = salt.toString();
-		
-		md.update(StringUtils.getBytes(plainText));
-		md.update(StringUtils.getBytes(saltText));
-
-		byte[] hashRaw = md.digest();
-		return StringUtils.hexEncode(hashRaw);
-	}
 	
 	/**
 	 * Get the salt for the user's password
@@ -471,7 +442,7 @@ public class Account extends Resource {
 		} else { 
 			Random random = new Random();		
 			Integer passwordSalt = random.nextInt();
-			passwordHash = secureHash(password.trim(), passwordSalt);
+			passwordHash = StringUtils.secureHash(password.trim(), passwordSalt);
 			setPassword(passwordHash);
 			setPasswordSalt(passwordSalt);
 		}
@@ -491,7 +462,7 @@ public class Account extends Resource {
 			return false;
 		if (attempt == null)
 			return false;
-		String attemptHash = secureHash(attempt.trim(), passwordSalt);
+		String attemptHash = StringUtils.secureHash(attempt.trim(), passwordSalt);
 		return attemptHash.equals(correctHash);
 	}
 	

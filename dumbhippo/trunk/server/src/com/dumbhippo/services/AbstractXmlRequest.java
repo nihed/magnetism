@@ -15,7 +15,7 @@ class AbstractXmlRequest<SaxHandlerT extends DefaultHandler> {
 	
 	static private final Logger logger = GlobalSetup.getLogger(AbstractXmlRequest.class);
 	
-	private int timeoutMilliseconds;
+	protected int timeoutMilliseconds;
 	
 	protected AbstractXmlRequest(int timeoutMilliseconds) {
 		this.timeoutMilliseconds = timeoutMilliseconds;

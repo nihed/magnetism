@@ -5,31 +5,40 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.Callable;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
-import com.dumbhippo.TypeUtils;
+import com.dumbhippo.Pair;
+import com.dumbhippo.persistence.CachedFacebookPhotoData;
 import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.FacebookAccount;
 import com.dumbhippo.persistence.FacebookAlbumData;
 import com.dumbhippo.persistence.FacebookEvent;
 import com.dumbhippo.persistence.FacebookEventType;
-import com.dumbhippo.persistence.FacebookPhotoData;
+import com.dumbhippo.persistence.FacebookPhotoDataStatus;
 import com.dumbhippo.persistence.Sentiment;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.ExternalAccountSystem;
 import com.dumbhippo.server.FacebookTracker;
 import com.dumbhippo.server.Notifier;
+import com.dumbhippo.server.TransactionRunner;
+import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.services.FacebookWebServices;
+import com.dumbhippo.services.caches.ExpiredCacheException;
+import com.dumbhippo.services.caches.FacebookPhotoDataCache;
+import com.dumbhippo.services.caches.NotCachedException;
 
 @Stateless
 public class FacebookTrackerBean implements FacebookTracker {
@@ -50,6 +59,12 @@ public class FacebookTrackerBean implements FacebookTracker {
 	
 	@EJB
 	private Notifier notifier;
+	
+	@EJB
+	private TransactionRunner runner;
+	
+	@EJB
+	private FacebookPhotoDataCache taggedPhotosCache;
 		
 	public void updateOrCreateFacebookAccount(UserViewpoint viewpoint, String facebookAuthToken) {
 		ExternalAccount externalAccount = externalAccounts.getOrCreateExternalAccount(viewpoint, ExternalAccountType.FACEBOOK);
@@ -81,13 +96,7 @@ public class FacebookTrackerBean implements FacebookTracker {
 		if (loginStatusEvent != null)  
 		    notifier.onFacebookEvent(facebookAccount.getExternalAccount().getAccount().getOwner(), loginStatusEvent);
 	}
-	
-	public List<FacebookAccount> getAccountsWithValidSession() {
-		List list = em.createQuery("SELECT fa FROM FacebookAccount fa WHERE fa.sessionKeyValid = true")
-				.getResultList();
-		return TypeUtils.castList(FacebookAccount.class, list);
-	}
-	
+
 	// FIXME this is calling web services with a transaction open, which holds 
 	// a db connection open so other threads can't use it, and could also 
 	// time out the transaction
@@ -145,33 +154,94 @@ public class FacebookTrackerBean implements FacebookTracker {
 		}
 	}
 	
-	// FIXME this is calling web services with a transaction open, which holds 
-	// a db connection open so other threads can't use it, and could also 
-	// time out the transaction
-	public void updateTaggedPhotos(long facebookAccountId) {
-		FacebookAccount facebookAccount = em.find(FacebookAccount.class, facebookAccountId);
+	@TransactionAttribute(TransactionAttributeType.NEVER)
+	public void updateTaggedPhotos(final long facebookAccountId) {
+		Pair <FacebookAccount, Integer> facebookAccountPair;
+		try {
+			facebookAccountPair = runner.runTaskInNewTransaction(new Callable<Pair<FacebookAccount, Integer>>() {
+				public Pair <FacebookAccount, Integer> call() {
+					FacebookAccount facebookAccount = em.find(FacebookAccount.class, facebookAccountId);		
+					// the photos are loaded lazily, so we need to get their count up-front
+					return new Pair<FacebookAccount, Integer>(facebookAccount, facebookAccount.getTaggedPhotos().size());
+				}	
+			});
+		} catch (Exception e) {
+			logger.error("Failed to find facebookAccount for " + facebookAccountId, e.getMessage());
+			throw new RuntimeException(e);
+		}
+			
+		FacebookAccount facebookAccount = facebookAccountPair.getFirst();
+		int oldPhotoCount = facebookAccountPair.getSecond();
+		
 		if (facebookAccount == null)
-			throw new RuntimeException("Invalid FacebookAccount id " + facebookAccountId + " is passed in to updateMessageCount()");
+			throw new RuntimeException("Invalid FacebookAccount id " + facebookAccountId + " is passed in to updateTaggedPhotos()");
 		User user = facebookAccount.getExternalAccount().getAccount().getOwner();
 		FacebookWebServices ws = new FacebookWebServices(REQUEST_TIMEOUT, config);
-		List<FacebookPhotoData> newPhotos = ws.updateTaggedPhotos(facebookAccount);
 		
-		if (newPhotos == null) {
+		int newPhotoCount = ws.getTaggedPhotosCount(facebookAccount);
+			
+		FacebookTracker proxy = EJBUtil.defaultLookup(FacebookTracker.class);
+		if (newPhotoCount == -1) {
 			if (!facebookAccount.isSessionKeyValid()) {
-				notifier.onFacebookEvent(user, getLoginStatusEvent(facebookAccount, false));
+				// that was a detached copy of facebookAccount, we need to set isSessionKeyValid on an attached copy
+				proxy.handleExpiredSessionKey(facebookAccountId);
 		    }
+			return;			
+		}
+	
+		// we will catch a NotCachedException if we don't have anything in cache (we never had it or had to delete it),
+		// we will catch its subtype ExpiredCacheException if what we have in cache is expired (either we deliberately 
+		// expired it because we expect an update or it naturally expired because it's old)
+		boolean needCacheUpdate = false;       
+		boolean expiredCache = false;		
+		try {
+		    taggedPhotosCache.checkCache(user.getGuid().toString());
+		} catch (ExpiredCacheException e) {
+			expiredCache = true;
+			needCacheUpdate = true;
+		} catch (NotCachedException e) {
+			needCacheUpdate = true;
+		}
+	
+		if (needCacheUpdate || (newPhotoCount != oldPhotoCount)) {
+			if (expiredCache) {
+				// with facebook, if the cache is expired we need to delete it
+				taggedPhotosCache.deleteCache(user.getGuid().toString());
+			} else if (newPhotoCount != oldPhotoCount) {
+				// we just hope we will be able to get all the photos back right away
+				// and not be hit by the cache that we ourselves expired on the next
+				// iteration and have to delete it; what we really need to distinguish
+				// these two situations is a needsRefresh flag on the cached data
+				taggedPhotosCache.expireCache(user.getGuid().toString());
+			}
+			
+			List<CachedFacebookPhotoData> cachedPhotos = taggedPhotosCache.getSync(user.getGuid().toString());
+			
+			proxy.saveUpdatedTaggedPhotos(facebookAccountId, cachedPhotos);
+		}	
+	}
+	
+	// cachedPhotos that we get here are not attached
+	public void saveUpdatedTaggedPhotos(long facebookAccountId, List<CachedFacebookPhotoData> cachedPhotos) { 
+		FacebookAccount facebookAccount = em.find(FacebookAccount.class, facebookAccountId);	
+
+		if (!facebookAccount.getTaggedPhotosPrimed() && cachedPhotos.isEmpty()) {
+			// this covers the case when the user did not have any photos tagged with them on facebook prior 
+			// to adding their facebook account to mugshot
+			facebookAccount.setTaggedPhotosPrimed(true);
 			return;
 		}
+			
+		Set<FacebookPhotoDataStatus> oldPhotos = facebookAccount.getTaggedPhotos();
+		Set<FacebookPhotoDataStatus> oldPhotosToRemove = new HashSet<FacebookPhotoDataStatus>(oldPhotos);
+		List<CachedFacebookPhotoData> newPhotosToAdd = new ArrayList<CachedFacebookPhotoData>(cachedPhotos);
 		
-		Set<FacebookPhotoData> oldPhotos = facebookAccount.getTaggedPhotos();
-		Set<FacebookPhotoData> oldPhotosToRemove = new HashSet<FacebookPhotoData>(oldPhotos);
-		List<FacebookPhotoData> newPhotosToAdd = new ArrayList<FacebookPhotoData>(newPhotos);
-		
-		for (FacebookPhotoData oldPhoto : oldPhotos) {
-			FacebookPhotoData foundPhoto = null;
-			for (FacebookPhotoData newPhoto : newPhotosToAdd) {
-				if (newPhoto.getSource().equals(oldPhoto.getSource())) {
-					oldPhoto.updateCachedData(newPhoto);					
+		for (FacebookPhotoDataStatus oldPhoto : oldPhotos) {
+			CachedFacebookPhotoData foundPhoto = null;
+			for (CachedFacebookPhotoData newPhoto : newPhotosToAdd) {
+				if (oldPhoto.matchPhotoId(newPhoto.getPhotoId())) {
+					CachedFacebookPhotoData attachedCachedPhoto = em.find(CachedFacebookPhotoData.class, newPhoto.getId());
+					oldPhoto.setNewPhotoData(attachedCachedPhoto);					
 					oldPhotosToRemove.remove(oldPhoto);
 					foundPhoto = newPhoto;
 					break;
@@ -181,19 +251,26 @@ public class FacebookTrackerBean implements FacebookTracker {
 			    newPhotosToAdd.remove(foundPhoto);
 		}
 		
-		for (FacebookPhotoData oldPhotoToRemove : oldPhotosToRemove) {
-			facebookAccount.removeTaggedPhoto(oldPhotoToRemove);
-			// we do not remove the photo from its FacebookEvent and from the database,
-			// we leave the association in
+		for (FacebookPhotoDataStatus oldPhotoToRemove : oldPhotosToRemove) {
+			// deleting these photos would make us restack them if the web service glitched and
+			// only returned a suset of photos at some point, let's rather keep the photos
+			// with the ids we did not get, but make sure that the cached photos they point to are null
+            if (oldPhotoToRemove.getPhotoData() != null) {
+            	logger.warn("The cached photo data that was no longer returned for the facebookAccount was" +
+            			    " still set on the FacebookPhotoDataStatus {}", oldPhotoToRemove);
+            	oldPhotoToRemove.setNewPhotoData(null);
+            }
 		}
 		
 		if (newPhotosToAdd.size() > 0) {
 			if (!facebookAccount.getTaggedPhotosPrimed()) {
-				// this covers the case when a user has some photos tagged with them on facebook prior to adding
+				// this covers the case when the user has some photos tagged with them on facebook prior to adding
 				// their facebook account to mugshot
-			    for (FacebookPhotoData newPhotoToAdd : newPhotosToAdd) {
-				    em.persist(newPhotoToAdd);
-				    facebookAccount.addTaggedPhoto(newPhotoToAdd);
+			    for (CachedFacebookPhotoData newPhotoToAdd : newPhotosToAdd) {
+			    	CachedFacebookPhotoData attachedCachedPhoto = em.find(CachedFacebookPhotoData.class, newPhotoToAdd.getId());
+			    	FacebookPhotoDataStatus photoDataStatus = new FacebookPhotoDataStatus(facebookAccount, attachedCachedPhoto);
+				    em.persist(photoDataStatus);
+				    facebookAccount.addTaggedPhoto(photoDataStatus);
 			    }
 				facebookAccount.setTaggedPhotosPrimed(true);
 				return;
@@ -202,24 +279,51 @@ public class FacebookTrackerBean implements FacebookTracker {
 		    FacebookEvent taggedPhotosEvent = new FacebookEvent(facebookAccount, FacebookEventType.NEW_TAGGED_PHOTOS_EVENT, 
                                                                 newPhotosToAdd.size(), (new Date()).getTime());		
 			persistFacebookEvent(taggedPhotosEvent);
-		    for (FacebookPhotoData newPhotoToAdd : newPhotosToAdd) {
-		    	newPhotoToAdd.setFacebookEvent(taggedPhotosEvent);
-			    em.persist(newPhotoToAdd);
-			    taggedPhotosEvent.addPhoto(newPhotoToAdd);
-			    facebookAccount.addTaggedPhoto(newPhotoToAdd);
+		    for (CachedFacebookPhotoData newPhotoToAdd : newPhotosToAdd) {
+		    	CachedFacebookPhotoData attachedCachedPhoto = em.find(CachedFacebookPhotoData.class, newPhotoToAdd.getId());
+		    	FacebookPhotoDataStatus photoDataStatus = new FacebookPhotoDataStatus(facebookAccount, attachedCachedPhoto);
+		    	photoDataStatus.setFacebookEvent(taggedPhotosEvent);
+			    em.persist(photoDataStatus);
+			    taggedPhotosEvent.addPhoto(photoDataStatus);
+			    facebookAccount.addTaggedPhoto(photoDataStatus);
 		    }
 		 
-		    notifier.onFacebookEvent(user, taggedPhotosEvent);
+		    notifier.onFacebookEvent(facebookAccount.getExternalAccount().getAccount().getOwner(), taggedPhotosEvent);
 		}
 	}
 
+	public void removeExpiredTaggedPhotos(long facebookAccountId) {
+		FacebookAccount facebookAccount = em.find(FacebookAccount.class, facebookAccountId);	
+					
+		if (facebookAccount == null)
+			throw new RuntimeException("Invalid FacebookAccount id " + facebookAccountId + " is passed in to removeExpiredTaggedPhotos()");
+		User user = facebookAccount.getExternalAccount().getAccount().getOwner();
+		
+		// we will catch a NotCachedException if we don't have anything in cache (we never had it or had to delete it),
+		// we will catch its subtype ExpiredCacheException if what we have in cache is expired (either we deliberately 
+		// expired it because we expect an update or it naturally expired because it's old)   
+		boolean expiredCache = false;		
+		try {
+		    taggedPhotosCache.checkCache(user.getGuid().toString());
+		} catch (ExpiredCacheException e) {
+			expiredCache = true;
+		} catch (NotCachedException e) {
+			// nothing to do
+		}
+		
+		if (expiredCache) {
+			// we can't keep 'em anymore...
+			taggedPhotosCache.deleteCache(user.getGuid().toString());
+		}				
+	}
+	
 	// FIXME this is calling web services with a transaction open, which holds 
 	// a db connection open so other threads can't use it, and could also 
 	// time out the transaction
 	public void updateAlbums(long facebookAccountId) {
 		FacebookAccount facebookAccount = em.find(FacebookAccount.class, facebookAccountId);
 		if (facebookAccount == null)
-			throw new RuntimeException("Invalid FacebookAccount id " + facebookAccountId + " is passed in to updateMessageCount()");
+			throw new RuntimeException("Invalid FacebookAccount id " + facebookAccountId + " is passed in to updateAlbums()");
 		User user = facebookAccount.getExternalAccount().getAccount().getOwner();
 		FacebookWebServices ws = new FacebookWebServices(REQUEST_TIMEOUT, config);
 		Set<FacebookAlbumData> modifiedAlbums = ws.getModifiedAlbums(facebookAccount);
@@ -283,6 +387,13 @@ public class FacebookTrackerBean implements FacebookTracker {
 		facebookAccount.setAlbumsModifiedTimestampAsLong(albumsModifiedTimestamp);		
 	}
 
+	public void handleExpiredSessionKey(long facebookAccountId) {
+		FacebookAccount attachedFacebookAccount = em.find(FacebookAccount.class, facebookAccountId);
+		attachedFacebookAccount.setSessionKeyValid(false);
+		User user = attachedFacebookAccount.getExternalAccount().getAccount().getOwner();
+		notifier.onFacebookEvent(user, getLoginStatusEvent(attachedFacebookAccount, false));	
+	}
+	
 	private FacebookEvent getLoginStatusEvent(FacebookAccount facebookAccount, boolean signedIn) {
 		FacebookEvent loginStatusEvent = facebookAccount.getRecyclableEvent(FacebookEventType.LOGIN_STATUS_EVENT);
 		if (loginStatusEvent == null) {

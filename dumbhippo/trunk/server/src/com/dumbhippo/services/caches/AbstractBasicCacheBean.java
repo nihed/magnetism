@@ -131,6 +131,8 @@ public abstract class AbstractBasicCacheBean<KeyType,ResultType,EntityType exten
 			e.setLastUpdated(now);
 			em.persist(e);
 		} else {
+			// TODO: what if the data is really no longer there?!
+			// in any case, we probably should not set last updated time to now if data == null
 			e.setLastUpdated(now);
 			// don't ever save a negative result once we have data at some point
 			if (data != null) {

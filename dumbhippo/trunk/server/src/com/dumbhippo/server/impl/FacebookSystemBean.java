@@ -13,6 +13,9 @@ import javax.persistence.PersistenceContext;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.TypeUtils;
+import com.dumbhippo.identity20.Guid;
+import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.FacebookAccount;
@@ -25,6 +28,7 @@ import com.dumbhippo.server.FacebookSystem;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Configuration.PropertyNotFoundException;
+import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.views.Viewpoint;
 
 @Stateless
@@ -39,6 +43,16 @@ public class FacebookSystemBean implements FacebookSystem {
 	
 	@EJB
 	private Configuration config;
+	
+	public List<FacebookAccount> getAllAccounts() {
+		List list = em.createQuery("SELECT fa FROM FacebookAccount fa").getResultList();
+		return TypeUtils.castList(FacebookAccount.class, list);
+	}
+	
+	public FacebookAccount lookupFacebookAccount(Viewpoint viewpoint, String userId) throws ParseException, NotFoundException {
+        User user = EJBUtil.lookupGuid(em, User.class, new Guid(userId));
+        return lookupFacebookAccount(viewpoint, user);
+	}
 	
 	public FacebookAccount lookupFacebookAccount(Viewpoint viewpoint, User user) throws NotFoundException {
 		if (!em.contains(user.getAccount()))
@@ -64,8 +78,12 @@ public class FacebookSystemBean implements FacebookSystem {
 	
 	public FacebookEvent lookupFacebookEvent(Viewpoint viewpoint, long eventId) throws NotFoundException {
 		FacebookEvent facebookEvent = em.find(FacebookEvent.class, eventId);
-		if (facebookEvent.getEventType().getDisplayToOthers() 
-			|| viewpoint.isOfUser(facebookEvent.getFacebookAccount().getExternalAccount().getAccount().getOwner())) {
+		
+		// before we implement getting info about one's friends and network, we can only show
+		// facebook blocks to their owners; later we can return it if the viewpoint is for someone
+		// who is the owner's facebook friend or is in the same network with the owner and
+		// facebookEvent.getEventType().getDisplayToOthers() is true
+		if (viewpoint.isOfUser(facebookEvent.getFacebookAccount().getExternalAccount().getAccount().getOwner())) {
 			return facebookEvent;
 		} else {
 			throw new NotFoundException("Viewpoint " + viewpoint + " can't view facebook event " + facebookEvent);

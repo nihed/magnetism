@@ -1,6 +1,7 @@
 package com.dumbhippo.services;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -11,11 +12,10 @@ import com.dumbhippo.EnumSaxHandler;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.FacebookAccount;
 import com.dumbhippo.persistence.FacebookAlbumData;
-import com.dumbhippo.persistence.FacebookPhotoData;
 
 public class FacebookSaxHandler extends EnumSaxHandler<FacebookSaxHandler.Element>{
 	static private final Logger logger = GlobalSetup.getLogger(FacebookSaxHandler.class);
-	
+
 	enum Element {	
 		// General
 		result,
@@ -138,7 +138,6 @@ public class FacebookSaxHandler extends EnumSaxHandler<FacebookSaxHandler.Elemen
 			}
 		} else if ((c == Element.result_elt) && gettingTaggedPhotos) {
 			FacebookPhotoData photo = new FacebookPhotoData();
-			photo.setFacebookAccount(facebookAccount);
 			taggedPhotos.add(photo);
 		} else if ((c == Element.result_elt) && gettingAlbums) {
 			FacebookAlbumData album = new FacebookAlbumData();
@@ -199,34 +198,34 @@ public class FacebookSaxHandler extends EnumSaxHandler<FacebookSaxHandler.Elemen
 			if (gettingTaggedPhotos) {
 			    currentFacebookPhotoData().setLink(currentContent);
 			} else if (gettingAlbums) {
-				currentFacebookAlbumData().getCoverPhoto().setLink(currentContent);
+				// currentFacebookAlbumData().getCoverPhoto().setLink(currentContent);
 			}
 			logger.debug("Parsed out photo link {}", currentContent);
 		} else if (c == Element.src) {
 			if (gettingTaggedPhotos) {
 			    currentFacebookPhotoData().setSource(currentContent);
 			} else if (gettingAlbums) {
-				currentFacebookAlbumData().getCoverPhoto().setSource(currentContent);
+				// currentFacebookAlbumData().getCoverPhoto().setSource(currentContent);
 			}
 			logger.debug("Parsed out photo source {}", currentContent);
 		} else if (c == Element.caption) {
 			if (gettingTaggedPhotos) {
 			    currentFacebookPhotoData().setCaption(currentContent);
 			} else if (gettingAlbums) {
-				currentFacebookAlbumData().getCoverPhoto().setCaption(currentContent);
+				// currentFacebookAlbumData().getCoverPhoto().setCaption(currentContent);
 			}			    
 			logger.debug("Parsed out photo caption {}", currentContent);
 		} else if (c == Element.created) {
 		    long createdTimestamp = parseFacebookDate(c, currentContent);	
 			if (gettingTaggedPhotos) {
-			    currentFacebookPhotoData().setCreatedTimestampAsLong(createdTimestamp);
+			    currentFacebookPhotoData().setCreatedTimestamp(new Date(createdTimestamp));
 			    logger.debug("Parsed out tagged photo date {}", createdTimestamp);
 			} else if (gettingAlbums) {
 				if (parent() == Element.cover_photo) {
-					currentFacebookAlbumData().getCoverPhoto().setCreatedTimestampAsLong(createdTimestamp);
+					// currentFacebookAlbumData().getCoverPhoto().setCreatedTimestampAsLong(createdTimestamp);
 					logger.debug("Parsed out cover photo date {}", createdTimestamp);
 				} else {
-					currentFacebookAlbumData().setCreatedTimestampAsLong(createdTimestamp);
+					// currentFacebookAlbumData().setCreatedTimestampAsLong(createdTimestamp);
 					logger.debug("Parsed out album creation date {}", createdTimestamp);
 				}					
 			}
@@ -240,7 +239,7 @@ public class FacebookSaxHandler extends EnumSaxHandler<FacebookSaxHandler.Elemen
 				logger.debug("Parsed out tagged photo album id {}", currentContent);
 			} else if (gettingAlbums) {
 				if (parent() == Element.cover_photo) {
-					currentFacebookAlbumData().getCoverPhoto().setAlbumId(currentContent);
+					// currentFacebookAlbumData().getCoverPhoto().setAlbumId(currentContent);
 					logger.debug("Parsed out cover photo album id {}", currentContent);
 				} else {
 					currentFacebookAlbumData().setAlbumId(currentContent);

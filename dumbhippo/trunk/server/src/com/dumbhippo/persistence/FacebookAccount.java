@@ -29,7 +29,7 @@ public class FacebookAccount extends DBUnique {
 	private long pokeCountTimestamp;
 	private Set<FacebookEvent> facebookEvents; 
 	// photos tagged with the user
-	private Set<FacebookPhotoData> taggedPhotos;
+	private Set<FacebookPhotoDataStatus> taggedPhotos;
 	private boolean taggedPhotosPrimed;
 	private Set<FacebookAlbumData> albums;
 	// with this timestamp, we don't need to have an albumsPrimed flag
@@ -49,7 +49,7 @@ public class FacebookAccount extends DBUnique {
 		this.totalPokeCount = -1;
 		this.pokeCountTimestamp = -1;
 		this.facebookEvents = new HashSet<FacebookEvent>();
-		this.taggedPhotos = new HashSet<FacebookPhotoData>();	
+		this.taggedPhotos = new HashSet<FacebookPhotoDataStatus>();	
 		this.taggedPhotosPrimed = false;
 		this.albums = new HashSet<FacebookAlbumData>();	
 		this.albumsModifiedTimestamp = -1;
@@ -191,21 +191,21 @@ public class FacebookAccount extends DBUnique {
 	// souce for the photo), so it is just more convenient to store all 
 	// photos returned for each account separately.
 	@OneToMany(mappedBy="facebookAccount")
-	public Set<FacebookPhotoData> getTaggedPhotos() {
+	public Set<FacebookPhotoDataStatus> getTaggedPhotos() {
 		return taggedPhotos;
 	}
 	
-	public void setTaggedPhotos(Set<FacebookPhotoData> taggedPhotos) {
+	public void setTaggedPhotos(Set<FacebookPhotoDataStatus> taggedPhotos) {
 		if (taggedPhotos == null)
 			throw new IllegalArgumentException("null taggedPhotos");
 		this.taggedPhotos = taggedPhotos;
 	}
 	
-	public void addTaggedPhoto(FacebookPhotoData taggedPhoto) {
+	public void addTaggedPhoto(FacebookPhotoDataStatus taggedPhoto) {
 		taggedPhotos.add(taggedPhoto);
 	}
 	
-	public void removeTaggedPhoto(FacebookPhotoData taggedPhoto) {
+	public void removeTaggedPhoto(FacebookPhotoDataStatus taggedPhoto) {
 		taggedPhotos.remove(taggedPhoto);
 	}
 	

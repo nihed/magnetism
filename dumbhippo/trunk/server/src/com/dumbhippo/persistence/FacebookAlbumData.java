@@ -15,7 +15,7 @@ public class FacebookAlbumData extends DBUnique {
 	
 	private FacebookAccount facebookAccount;
 	private FacebookEvent facebookEvent;
-    private FacebookPhotoData coverPhoto;
+    private FacebookPhotoDataStatus coverPhoto;
     String albumId;
     String name;
 	long createdTimestamp;
@@ -24,10 +24,10 @@ public class FacebookAlbumData extends DBUnique {
 	String location;
 	
 	public FacebookAlbumData() {
-		this.coverPhoto = new FacebookPhotoData();
+		this.coverPhoto = new FacebookPhotoDataStatus();
 	}
 	
-	public FacebookAlbumData(FacebookAccount facebookAccount, FacebookPhotoData coverPhoto, String albumId,
+	public FacebookAlbumData(FacebookAccount facebookAccount, FacebookPhotoDataStatus coverPhoto, String albumId,
 			                 String name, long createdTimestamp, long modifiedTimestamp, String description,
 			                 String location) {
         this.facebookAccount = facebookAccount;
@@ -42,7 +42,7 @@ public class FacebookAlbumData extends DBUnique {
 	
 	public void updateCachedData(FacebookAlbumData albumData) {
 		// this should not update facebookAccount or facebookEvent
-		coverPhoto.updateCachedData(albumData.getCoverPhoto());
+		// coverPhoto.updateCachedData(albumData.getCoverPhoto());
 		albumId = albumData.getAlbumId();
 		name = albumData.getName();
 	    createdTimestamp = albumData.getCreatedTimestampAsLong();
@@ -79,11 +79,11 @@ public class FacebookAlbumData extends DBUnique {
 	
 	@OneToOne
 	@JoinColumn(nullable=false, unique=true)
-	public FacebookPhotoData getCoverPhoto() {
+	public FacebookPhotoDataStatus getCoverPhoto() {
 		return coverPhoto;
 	}
 	
-	public void setCoverPhoto(FacebookPhotoData coverPhoto) {
+	public void setCoverPhoto(FacebookPhotoDataStatus coverPhoto) {
 		this.coverPhoto = coverPhoto;
 	}
 	

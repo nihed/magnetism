@@ -5,6 +5,8 @@ import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Iterator;
 import java.util.List;
 
@@ -137,4 +139,34 @@ public class StringUtils {
 		int i = (int) ((System.currentTimeMillis() / 1000) % strings.length);
 		return strings[i];			
 	}
+
+	/** 
+	 * Return the SHA-1 hash of the given plainText hex-encoded in a String
+	 * @param plainText A String with the plain text, or null
+	 * @param salt An integer containing the salt
+	 * @return A String with the hex-encoded hash, or null if either input was null
+	 */
+	public static String secureHash(String plainText, Integer salt) {
+		if (plainText == null)
+			return null;
+		if (salt == null)
+			return null;
+		
+		MessageDigest md;
+		try {
+			md = MessageDigest.getInstance("SHA-1");
+		} catch (NoSuchAlgorithmException nsae) {
+			throw new RuntimeException("SHA-1 algorithm unavailable", nsae);
+		}
+		
+		// get a String representation of the salt int, possibly including a minus sign
+		String saltText = salt.toString();
+		
+		md.update(StringUtils.getBytes(plainText));
+		md.update(StringUtils.getBytes(saltText));
+
+		byte[] hashRaw = md.digest();
+		return StringUtils.hexEncode(hashRaw);
+	}
+
 }

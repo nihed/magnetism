@@ -21,10 +21,10 @@ public class FacebookEvent extends DBUnique {
 	private int count;  
 	private long eventTimestamp;
 	private FacebookAlbumData album;
-	private Set<FacebookPhotoData> photos;
+	private Set<FacebookPhotoDataStatus> photos;
 	
 	protected FacebookEvent() {
-		photos = new HashSet<FacebookPhotoData>();
+		photos = new HashSet<FacebookPhotoDataStatus>();
 	}
 	
 	public FacebookEvent(FacebookAccount facebookAccount, FacebookEventType eventType, int count, long eventTimestamp) {
@@ -93,23 +93,23 @@ public class FacebookEvent extends DBUnique {
 	}
 	
 	// this is one to many because we currently store multiple
-	// FacebookPhotoData if different people are tagged in the same photo
+	// FacebookPhotoDataStatus if different people are tagged in the same photo
 	@OneToMany(mappedBy="facebookEvent")
-	public Set<FacebookPhotoData> getPhotos() {
+	public Set<FacebookPhotoDataStatus> getPhotos() {
 		return photos;
 	}
 	
-	public void setPhotos(Set<FacebookPhotoData> photos) {
+	public void setPhotos(Set<FacebookPhotoDataStatus> photos) {
 		if (photos == null)
 			throw new IllegalArgumentException("null photos");
 		this.photos = photos;
 	}
 	
-	public void addPhoto(FacebookPhotoData photo) {
+	public void addPhoto(FacebookPhotoDataStatus photo) {
 		photos.add(photo);
 	}
 	
-	public void removePhoto(FacebookPhotoData photo) {
+	public void removePhoto(FacebookPhotoDataStatus photo) {
 		photos.remove(photo);
 	}
 }

@@ -12,4 +12,5 @@ import java.util.List;
  */
 public interface AbstractListCache<KeyType, ResultType> extends AbstractCache<KeyType, List<ResultType>> {
 
+	public void deleteCache(KeyType key);
 }

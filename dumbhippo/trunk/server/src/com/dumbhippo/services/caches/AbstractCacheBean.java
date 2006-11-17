@@ -52,7 +52,8 @@ public abstract class AbstractCacheBean<KeyType,ResultType,EjbIfaceType> impleme
 		YAHOO_SONG_DOWNLOAD,
 		FLICKR_USER_PHOTOS,
 		FLICKR_PHOTOSET_PHOTOS,
-		FLICKR_USER_PHOTOSETS, 
+		FLICKR_USER_PHOTOSETS,
+		FACEBOOK_PHOTO_DATA,
 		YOUTUBE_VIDEOS
 	}
 	

@@ -14,4 +14,8 @@ public class NotCachedException extends Exception {
 	public NotCachedException() {
 		super("Value was not in the cache");
 	}
+
+	public NotCachedException(String message) {
+		super(message);
+	}
 }

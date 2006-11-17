@@ -49,9 +49,9 @@ public class FlickrPhotosetPhotosCacheBean extends AbstractListCacheBean<String,
 	protected void setAllLastUpdatedToZero(String key) {
 		EJBUtil.prepareUpdate(em, CachedFlickrPhotosetPhoto.class);
 		
-		Query q = em.createQuery("UPDATE CachedFlickrPhotosetPhoto " + 
-				" SET lastUpdated = '1970-01-01 00:00:00' " + 
-				" WHERE setId = :setId");
+		Query q = em.createQuery("UPDATE CachedFlickrPhotosetPhoto c" + 
+				" SET c.lastUpdated = '1970-01-01 00:00:00' " + 
+				" WHERE c.setId = :setId");
 		q.setParameter("setId", key);
 		int updated = q.executeUpdate();
 		logger.debug("{} cached items expired", updated);

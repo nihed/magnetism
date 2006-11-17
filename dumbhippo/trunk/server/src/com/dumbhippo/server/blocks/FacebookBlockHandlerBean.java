@@ -1,6 +1,8 @@
 package com.dumbhippo.server.blocks;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -23,6 +25,7 @@ import com.dumbhippo.persistence.StackReason;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.FacebookSystem;
 import com.dumbhippo.server.NotFoundException;
+import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.Viewpoint;
 
@@ -61,6 +64,12 @@ public class FacebookBlockHandlerBean extends AbstractBlockHandlerBean<FacebookB
 		Block block = blockView.getBlock();
 		
 		User user = getData1User(block);
+		
+		// before we implement getting info about one's friends and network, we can only show
+		// facebook blocks to their owners
+		if (!viewpoint.isOfUser(user))
+		    throw new BlockNotVisibleException("external facebook account for block " + block + " is not visible to " + viewpoint);
+		
 		// no extras needed, we just need user.getName
 		PersonView userView = personViewer.getPersonView(viewpoint, user);
 		
@@ -69,7 +78,7 @@ public class FacebookBlockHandlerBean extends AbstractBlockHandlerBean<FacebookB
 			try {
 			    facebookEvent = facebookSystem.lookupFacebookEvent(viewpoint, block.getData3());
 			} catch (NotFoundException e) {
-				throw new BlockNotVisibleException("external facebook account for block not visible", e);
+				throw new BlockNotVisibleException("external facebook account for block is not visible", e);
 			}							
 		    List<FacebookEvent> facebookEvents = new ArrayList<FacebookEvent>();
 		    facebookEvents.add(facebookEvent);
@@ -84,11 +93,29 @@ public class FacebookBlockHandlerBean extends AbstractBlockHandlerBean<FacebookB
 	}
 	
 	public Set<User> getInterestedUsers(Block block) {
-		return getUsersWhoCareAboutData1UserAndExternalAccount(block, ExternalAccountType.FACEBOOK);
+		// For IN_ALL_STACKS and ONLY_WHEN_VIEWED_BY_OTHERS inclusions, this should return 
+		// the list of owner's friends who are also his friends on facebook or are in the same 
+		// network with the owner on facebook; it should also include the owner.
+		
+		User user;
+		try {
+			user = EJBUtil.lookupGuid(em, User.class, block.getData1AsGuid());
+		} catch (NotFoundException e) {
+			throw new RuntimeException("invalid user in data1 of " + block, e);
+		}
+		
+		Set<User> peopleWhoCare = null;
+		
+		peopleWhoCare = Collections.singleton(user);
+		return peopleWhoCare;
 	}	
 	
 	public Set<Group> getInterestedGroups(Block block) {
-		return getGroupsData1UserIsInIfExternalAccount(block, ExternalAccountType.FACEBOOK);
+		// we will never include facebook updates in the groups, because
+		// the group membership can change, and we can only show
+		// facebook updates to people who are facebook friends of the
+		// update owner or are in the same network with him
+		return new HashSet<Group>();
 	}
 	
 	public void onExternalAccountCreated(User user, ExternalAccount external) {
@@ -108,7 +135,7 @@ public class FacebookBlockHandlerBean extends AbstractBlockHandlerBean<FacebookB
 		if (event.getEventType().getDisplayToOthers()) {
 			Block block = stacker.createBlock(getKey(user, event, StackInclusion.IN_ALL_STACKS));	
 			// TODO: adjust publicity if an account is disabled per bug 929
-			block.setPublicBlock(true);
+			block.setPublicBlock(false);
 		} else {
 		    stacker.createBlock(getKey(user, event, StackInclusion.ONLY_WHEN_VIEWING_SELF));
 		    // the block was created with publicBlock flag set to false by default
