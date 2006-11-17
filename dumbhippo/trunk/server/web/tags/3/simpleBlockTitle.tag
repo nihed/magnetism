@@ -25,7 +25,11 @@
 		<jsp:element name="a">
 			<jsp:attribute name="class">${linkClass}</jsp:attribute>
 			<jsp:attribute name="href"><c:out value="${block.link}"/></jsp:attribute>
-			<jsp:body><c:out value="${homeStack ? block.titleForHome : block.title}"/></jsp:body>
+			<jsp:body>
+				<%-- if the updates are viewed outside of the person's own homeStack, we --%>
+			    <%-- always want them to be in the third person or neutral tone (not "You have") --%>
+			    <c:out value="${homeStack ? block.titleForHome : block.title}"/>
+			</jsp:body>
 		</jsp:element>
 	</span>
 </dht3:blockTitle>

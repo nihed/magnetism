@@ -4,6 +4,8 @@ import java.util.Date;
 
 public class FacebookPhotoData implements FacebookPhotoDataView {
 
+	public static int FACEBOOK_THUMB_SIZE = 100;
+	
 	private String link;
 	private String source;
 	private String caption;
@@ -57,6 +59,26 @@ public class FacebookPhotoData implements FacebookPhotoDataView {
 	public void setPhotoId(String photoId) {
 		this.photoId = photoId;
 	}	
+	
+	public String getThumbnailSrc() {
+		return getSource() + "&size=thumb";
+	}
+	
+	public String getThumbnailHref() {
+		return getLink();
+	}
+	
+	public String getThumbnailTitle() {
+		return getCaption();
+	}
+	
+	public int getThumbnailWidth() {
+		return FACEBOOK_THUMB_SIZE;
+	}
+	
+	public int getThumbnailHeight() {
+		return FACEBOOK_THUMB_SIZE;
+	}
 	
 	@Override
 	public String toString() {

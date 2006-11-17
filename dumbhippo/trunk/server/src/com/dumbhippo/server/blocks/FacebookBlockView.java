@@ -3,6 +3,8 @@ package com.dumbhippo.server.blocks;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.dumbhippo.BasicThumbnails;
+import com.dumbhippo.Thumbnails;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.ExternalAccountType;
@@ -13,9 +15,12 @@ import com.dumbhippo.persistence.GroupBlockData;
 import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.Viewpoint;
+import com.dumbhippo.services.FacebookPhotoData;
+import com.dumbhippo.services.FacebookPhotoDataView;
 import com.dumbhippo.web.ListBean;
 
-public class FacebookBlockView extends AbstractPersonBlockView implements ExternalAccountBlockView, SimpleTitleBlockView {
+public class FacebookBlockView extends AbstractPersonBlockView 
+       implements ThumbnailsBlockView, ExternalAccountBlockView, SimpleTitleBlockView {
 	private List<FacebookEvent> facebookEvents;
 	private String link;
 	
@@ -54,6 +59,35 @@ public class FacebookBlockView extends AbstractPersonBlockView implements Extern
 			photos.add(getFacebookEvent().getAlbum().getCoverPhoto());
 		}
 		return new ListBean<FacebookPhotoDataStatus>(photos);
+	}
+	
+	public Thumbnails getThumbnails() {
+		List<FacebookPhotoDataView> thumbnails = new ArrayList<FacebookPhotoDataView>();
+		for (FacebookPhotoDataStatus photoDataStatus : getFacebookEvent().getPhotos()) {
+			if (photoDataStatus.getPhotoData() != null) 
+			    thumbnails.add(photoDataStatus.getPhotoData().toPhotoData());
+		}
+		// TODO: check for the album cover photo once we support that
+		
+		return new BasicThumbnails(thumbnails, thumbnails.size(), 
+				                   FacebookPhotoData.FACEBOOK_THUMB_SIZE, FacebookPhotoData.FACEBOOK_THUMB_SIZE);
+	}
+
+	public String getMoreThumbnailsLink() {
+		return getLink();
+	}
+
+	public String getMoreThumbnailsTitle() {
+		switch (getFacebookEvent().getEventType()) {
+		case NEW_TAGGED_PHOTOS_EVENT :
+			return "All photos tagged with " + getUserView().getName();
+		case NEW_ALBUM_EVENT :
+		case MODIFIED_ALBUM_EVENT :
+			return "All photos in '" + getFacebookEvent().getAlbum().getName() + "'";
+   	    // no default, it hides bugs
+		}
+		
+		throw new RuntimeException("need to support event type for " + getFacebookEvent().getEventType() + " in getMoreThumbnailsTitle()");		
 	}
 	
 	@Override
@@ -111,9 +145,9 @@ public class FacebookBlockView extends AbstractPersonBlockView implements Extern
 			case NEW_TAGGED_PHOTOS_EVENT :
 				return "You were tagged in " + event.getPhotos().size() + " photo" + pluralChar;
 			case NEW_ALBUM_EVENT :
-				return "You created a new album \"" + event.getAlbum().getName() + "\"";
+				return "You created a new album '" + event.getAlbum().getName() + "'";
 			case MODIFIED_ALBUM_EVENT :
-				return "You modified an album \"" + event.getAlbum().getName() + "\"";
+				return "You modified an album '" + event.getAlbum().getName() + "'";
 			case LOGIN_STATUS_EVENT :
 				if (event.getCount() == 0) 
 					return "Log in to receive updates";
@@ -142,13 +176,13 @@ public class FacebookBlockView extends AbstractPersonBlockView implements Extern
 			case NEW_TAGGED_PHOTOS_EVENT :
 				return getUserView().getName() + " was tagged in " + event.getPhotos().size() + " photo" + pluralChar;
 			case NEW_ALBUM_EVENT :
-				return getUserView().getName() + " has created a new album \"" + event.getAlbum().getName() + "\"";
+				return getUserView().getName() + " has created a new album '" + event.getAlbum().getName() + "'";
 			case MODIFIED_ALBUM_EVENT :
-				return getUserView().getName() + " has modified an album \"" + event.getAlbum().getName() + "\"";
+				return getUserView().getName() + " has modified an album '" + event.getAlbum().getName() + "'";
 	   	    // no default, it hides bugs
 		}
 		
-		throw new RuntimeException("need to support event type for " + event + " in getTextForOthers()");	
+		throw new RuntimeException("need to support event type for " + event.getEventType() + " in getTextForOthers()");	
 	}
 
 	public String getTitle() {
