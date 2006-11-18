@@ -157,13 +157,13 @@ public abstract class AbstractListCacheBean<KeyType,ResultType,EntityType extend
 		List<EntityType> oldItems = queryExisting(key);		
 		if (newItems == null)
 		 	return formResultTypeList(oldItems);	
-
-		// This is perhaps superstitious, but we do have an ordering constraint that we must 
-		// remove the old items then insert the new, or it will cause a constraint violation
-		em.flush();
 		
 		if (!oldItems.isEmpty())
 		    deleteCache(key);
+		
+		// This is perhaps superstitious, but we do have an ordering constraint that we must 
+		// remove the old items then insert the new, or it will cause a constraint violation
+		em.flush();
 		
 		// save new results
 		if (newItems.isEmpty()) {
