@@ -18,7 +18,7 @@
 		</div>
 		<div class="dh-thumbnail-photos-border">
 			<div class="dh-thumbnail-photos">
-				<c:forEach items="${thumbnails.thumbnails}" end="4" var="thumbnail" varStatus="status">
+				<c:forEach items="${thumbnails.thumbnails}" end="${(475 / (thumbnails.thumbnailWidth + 20)) - 1}" var="thumbnail" varStatus="status">
 					<c:choose>
 						<c:when test="${status.first}">
 							<c:set var="css" value="dh-thumbnail-photo-first" />

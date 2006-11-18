@@ -419,7 +419,7 @@ div.dh-notification {
 	margin:					10px;
 	margin-top:				0px;
 	/* 
-	 * The thumbs are each 75px + 20px right margin = 95px * 5 = 475px
+	 * The thumbs each have a 20px right margin, we cap the whole size at 475px.
 	 * So we need to be at least that wide. It's OK to be larger than the
 	 * page width by up to the size of the right margin, since it will just
 	 * get chopped.
@@ -430,7 +430,6 @@ div.dh-notification {
 .dh-thumbnail-photo {
 	float:				left;
 	margin-right:		20px;
-	width:				75px;
 	padding:			0px;
 }
 
@@ -440,7 +439,6 @@ div.dh-notification {
 }
 
 .dh-thumbnail-photo .dh-thumbnail-title {
-	width:				75px;
 	overflow:			hidden;
 	text-align:			center;
 }
@@ -497,7 +495,6 @@ div.dh-person-header {
 .dh-thumbnail-block-thumb {
 	float:				left;
 	margin-right:		20px;
-	width:				75px;
 	padding:			0px;
 }
 
@@ -507,7 +504,6 @@ div.dh-person-header {
 }
 
 .dh-thumbnail-block-thumb .dh-thumbnail-title {
-	width:				75px;
 	overflow:			hidden;
 	text-align:			center;
 }
