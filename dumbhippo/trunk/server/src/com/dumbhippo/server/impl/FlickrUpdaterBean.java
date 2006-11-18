@@ -67,7 +67,7 @@ public class FlickrUpdaterBean extends CachedExternalUpdaterBean<FlickrUpdateSta
 	}
 	
 	public Set<String> getActiveFlickrUserIds() {
-		return getActiveFlickrUserIds();
+		return getActiveUsers();
 	}
 
 	public Collection<User> getUsersWhoLoveFlickrAccount(String flickrUserId) {
