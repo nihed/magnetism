@@ -1,9 +1,11 @@
 dojo.provide("dh.server");
 
 dojo.require("dojo.event.*");
-// "io.*" really means "XMLHTTPRequest only"
+// "io.*" really means "XMLHTTPRequest only", which is what we want.
+// IframeIO should be avoided unless you really need it, since even
+// requiring the module creates an iframe per page. (And requires
+// iframe_history.html, which we don't install into place right now)
 dojo.require("dojo.io.*");
-dojo.require("dojo.io.IframeIO");
 
 dh.server.get = function(name, params, loadFunc, errorFunc, how, what) {
 	var root = null;
@@ -95,21 +97,4 @@ dh.server.doXmlMethodGET = function(name, params, loadFunc, normalErrorFunc, ser
 // a POST with no expected data back, it just does some operation
 dh.server.doPOST = function(name, params, loadFunc, errorFunc) {
 	dh.server.get(name, params, loadFunc, errorFunc, "POST", null);
-}
-
-dh.server.submitUploadForm = function(node, name, loadFunc, errorFunc) {
-	
-	var action = dhUploadRoot + name;
-	
-	dojo.debug("launching upload form submit to " + action + " ...");
-	dojo.io.bind({
-		formNode: node,
-		method: "POST",
-		url: action,
-		load: loadFunc,
-		error: errorFunc,
-		async: true,
-		transport: "IframeTransport"
-		});
-	dojo.debug("...launched, waiting");
 }
