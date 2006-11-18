@@ -267,7 +267,6 @@ div.dh-notification {
 
 .dh-stacker-block {
 	width:				100%;
-	table-layout:		fixed;
 }
 
 .dh-stacker-block-mouse-tip {
@@ -286,6 +285,10 @@ div.dh-notification {
 .dh-stacker-block-bottom-padding {
 	font-size:			4px;
 	height:				4px;
+}
+
+.dh-stacker-block-icon-column {
+	width:				26px;
 }
 
 .dh-stacker-block-icon {
@@ -488,8 +491,13 @@ div.dh-person-header {
 	margin-right:			10px;
 }
 
+.dh-thumbnail-block-border {
+	width:				100%;
+}
+
 .dh-thumbnail-block-thumbs {
-	margin:					10px;
+	margin:				10px;
+	width:				100%;
 }
 
 .dh-thumbnail-block-thumb {
