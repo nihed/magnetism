@@ -223,15 +223,22 @@ public final class FaviconScraper {
 					break;
 				}
 				
-				if (image.getWidth() == 16 && image.getHeight() == 16) {
+				// The ICO ImageReader apparently returns null images for unsupported bit depths and
+				// prints something directly to stderr.  Thankfully it didn't do something
+				// rash and unheard of such as throw an exception.
+				if (image != null && (image.getWidth() == 16 && image.getHeight() == 16)) {
 					ByteArrayOutputStream out = new ByteArrayOutputStream();
 					ImageIO.write(image, "png", out);
 					setIconData(out.toByteArray());
 					setMimeType("image/png");
 					return true;
 				} else {
-					logger.debug("  ignoring {}x{} image in .ico data",
-							image.getWidth(), image.getHeight());
+					if (image == null) {
+						logger.debug("ICO reader barfed on image");
+					} else {
+						logger.debug("  ignoring {}x{} image in .ico data",
+								image.getWidth(), image.getHeight());
+					}
 				}
 			}
 			logger.debug(" ico data contained no 16x16 image");
