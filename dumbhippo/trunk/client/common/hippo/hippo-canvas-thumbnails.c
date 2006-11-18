@@ -3,6 +3,7 @@
 #include <string.h>
 #include <cairo.h>
 #include "hippo-canvas-thumbnails.h"
+#include "hippo-thumbnails.h"
 #include <hippo/hippo-canvas-item.h>
 #include <hippo/hippo-canvas-box.h>
 
@@ -20,10 +21,13 @@ static void hippo_canvas_thumbnails_get_property (GObject      *object,
                                                   GValue       *value,
                                                   GParamSpec   *pspec);
 
+static void set_thumbnails (HippoCanvasThumbnails *canvas_thumbnails,
+                            HippoThumbnails       *thumbnails);
 
 struct _HippoCanvasThumbnails {
     HippoCanvasBox parent;
 
+    HippoThumbnails *thumbnails;
 };
 
 struct _HippoCanvasThumbnailsClass {
@@ -38,7 +42,8 @@ enum {
 /* static int signals[LAST_SIGNAL]; */
 
 enum {
-    PROP_0
+    PROP_0,
+    PROP_THUMBNAILS
 };
 
 G_DEFINE_TYPE_WITH_CODE(HippoCanvasThumbnails, hippo_canvas_thumbnails, HIPPO_TYPE_CANVAS_ITEM,
@@ -71,12 +76,21 @@ hippo_canvas_thumbnails_class_init(HippoCanvasThumbnailsClass *klass)
 
     object_class->finalize = hippo_canvas_thumbnails_finalize;
 
+    g_object_class_install_property(object_class,
+                                    PROP_THUMBNAILS,
+                                    g_param_spec_object("thumbnails",
+                                                        _("Thumbnails"),
+                                                        _("The thumbnails to display"),
+                                                        HIPPO_TYPE_THUMBNAILS,
+                                                        G_PARAM_READABLE | G_PARAM_WRITABLE));
 }
 
 static void
 hippo_canvas_thumbnails_finalize(GObject *object)
 {
-    /* HippoCanvasThumbnails *thumbnails = HIPPO_CANVAS_THUMBNAILS(object); */
+    HippoCanvasThumbnails *thumbnails = HIPPO_CANVAS_THUMBNAILS(object);
+
+    set_thumbnails(thumbnails, NULL);
 
     G_OBJECT_CLASS(hippo_canvas_thumbnails_parent_class)->finalize(object);
 }
@@ -101,7 +115,12 @@ hippo_canvas_thumbnails_set_property(GObject         *object,
     thumbnails = HIPPO_CANVAS_THUMBNAILS(object);
 
     switch (prop_id) {
-
+    case PROP_THUMBNAILS:
+        {
+            HippoThumbnails *new_thumbs = (HippoThumbnails*) g_value_get_object(value);
+            set_thumbnails(thumbnails, new_thumbs);
+        }
+        break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
         break;
@@ -119,10 +138,33 @@ hippo_canvas_thumbnails_get_property(GObject         *object,
     thumbnails = HIPPO_CANVAS_THUMBNAILS (object);
 
     switch (prop_id) {
-
+    case PROP_THUMBNAILS:
+        g_value_set_object(value, thumbnails->thumbnails);
+        break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
         break;
     }
+}
+
+static void
+set_thumbnails (HippoCanvasThumbnails *canvas_thumbnails,
+                HippoThumbnails       *thumbnails)
+{
+    if (canvas_thumbnails->thumbnails == thumbnails)
+        return;
+
+    if (canvas_thumbnails->thumbnails) {
+        g_object_unref(canvas_thumbnails->thumbnails);
+
+        canvas_thumbnails->thumbnails = NULL;
+    }
+    
+    if (thumbnails) {
+        g_object_ref(thumbnails);
+        canvas_thumbnails->thumbnails = thumbnails;
+    }
+    
+    g_object_notify(G_OBJECT(canvas_thumbnails), "thumbnails");
 }
 
