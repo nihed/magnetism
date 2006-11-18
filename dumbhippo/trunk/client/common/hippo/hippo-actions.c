@@ -22,6 +22,7 @@ struct _HippoActions {
      */
     HippoImageCache *entity_photo_cache;
     HippoImageCache *favicon_cache;
+    HippoImageCache *thumbnail_cache;
     
     guint minute_timeout_id;
 };
@@ -98,6 +99,18 @@ hippo_actions_dispose(GObject *object)
         g_object_run_dispose(G_OBJECT(actions->entity_photo_cache));
         g_object_unref(actions->entity_photo_cache);
         actions->entity_photo_cache = NULL;
+    }
+
+    if (actions->favicon_cache) {
+        g_object_run_dispose(G_OBJECT(actions->favicon_cache));
+        g_object_unref(actions->favicon_cache);
+        actions->favicon_cache = NULL;
+    }
+    
+    if (actions->thumbnail_cache) {
+        g_object_run_dispose(G_OBJECT(actions->thumbnail_cache));
+        g_object_unref(actions->thumbnail_cache);
+        actions->thumbnail_cache = NULL;
     }
     
     G_OBJECT_CLASS(hippo_actions_parent_class)->dispose(object);
@@ -187,6 +200,29 @@ hippo_actions_load_favicon_async(HippoActions    *actions,
                                                   image_url);
     g_object_ref(image_item); /* held by the loader func */
     hippo_image_cache_load(actions->favicon_cache, absolute,
+                           image_set_on_canvas_item_func,
+                           image_item);
+    
+    g_free(absolute);
+}
+
+void
+hippo_actions_load_thumbnail_async(HippoActions    *actions,
+                                   const char      *image_url,
+                                   HippoCanvasItem *image_item)
+{
+    char *absolute;
+    
+    if (actions->thumbnail_cache == NULL) {
+        actions->thumbnail_cache = hippo_image_cache_new(get_platform(actions));
+    }
+
+    /* hippo_object_cache_debug_dump(HIPPO_OBJECT_CACHE(actions->favicon_cache)); */
+    
+    absolute = hippo_connection_make_absolute_url(get_connection(actions),
+                                                  image_url);
+    g_object_ref(image_item); /* held by the loader func */
+    hippo_image_cache_load(actions->thumbnail_cache, absolute,
                            image_set_on_canvas_item_func,
                            image_item);
     

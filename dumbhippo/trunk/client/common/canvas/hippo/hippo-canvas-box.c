@@ -89,6 +89,7 @@ static int  hippo_canvas_box_get_content_natural_width  (HippoCanvasBox *box);
 static int  hippo_canvas_box_get_content_height_request (HippoCanvasBox *box,
                                                          int             for_width);
 
+static void hippo_canvas_box_remove_and_dispose_all     (HippoCanvasBox *box);
 
 typedef struct {
     HippoCanvasItem *item;
@@ -451,7 +452,7 @@ hippo_canvas_box_dispose(GObject *object)
 {
     HippoCanvasBox *box = HIPPO_CANVAS_BOX(object);
 
-    hippo_canvas_box_remove_all(box);
+    hippo_canvas_box_remove_and_dispose_all(box);
 
     if (box->style) {
         g_object_unref(box->style);
@@ -2358,6 +2359,24 @@ hippo_canvas_box_append(HippoCanvasBox  *box,
     hippo_canvas_box_insert_sorted(box, child, flags, NULL, NULL);
 }
 
+static void
+remove_box_child(HippoCanvasBox *box,
+                 HippoBoxChild  *c)
+{
+    HippoCanvasItem *child;
+
+    child = c->item;
+
+    box->children = g_slist_remove(box->children, c);
+    disconnect_child(box, child);
+    hippo_canvas_item_set_context(child, NULL);
+ 
+    g_object_unref(child);
+    g_free(c);
+
+    hippo_canvas_item_emit_request_changed(HIPPO_CANVAS_ITEM(box));    
+}
+
 void
 hippo_canvas_box_remove(HippoCanvasBox  *box,
                         HippoCanvasItem *child)
@@ -2375,13 +2394,7 @@ hippo_canvas_box_remove(HippoCanvasBox  *box,
     }
     g_assert(c->item == child);
 
-    box->children = g_slist_remove(box->children, c);
-    disconnect_child(box, child);
-    hippo_canvas_item_set_context(child, NULL);
-    g_object_unref(child);
-    g_free(c);
-
-    hippo_canvas_item_emit_request_changed(HIPPO_CANVAS_ITEM(box));
+    remove_box_child(box, c);
 }
 
 void
@@ -2391,7 +2404,25 @@ hippo_canvas_box_remove_all(HippoCanvasBox *box)
     
     while (box->children != NULL) {
         HippoBoxChild *child = box->children->data;
-        hippo_canvas_box_remove(box, child->item);
+        remove_box_child(box, child);
+    }
+}
+
+static void
+hippo_canvas_box_remove_and_dispose_all(HippoCanvasBox *box)
+{
+    g_return_if_fail(HIPPO_IS_CANVAS_BOX(box));
+    
+    while (box->children != NULL) {
+        HippoBoxChild *child = box->children->data;
+        HippoCanvasItem *item = child->item;
+
+        g_object_ref(item);
+
+        remove_box_child(box, child);
+
+        g_object_run_dispose(G_OBJECT(item));
+        g_object_unref(item);
     }
 }
 

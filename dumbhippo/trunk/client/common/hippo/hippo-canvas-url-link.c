@@ -225,10 +225,15 @@ hippo_canvas_url_link_get_tooltip (HippoCanvasItem *item,
     HippoCanvasUrlLink *link = HIPPO_CANVAS_URL_LINK(item);
 
     char *tooltip = item_parent_class->get_tooltip(item, x, y, for_area);
-    if (tooltip)
+    if (tooltip) {
         return tooltip;
-    else if (link->url)
+    } else if (link->url) {
+        for_area->x = 0;
+        for_area->y = 0;
+        for_area->width = HIPPO_CANVAS_BOX(item)->allocated_width;
+        for_area->height = HIPPO_CANVAS_BOX(item)->allocated_height;
         return g_strdup(link->url);
-    else
+    } else {
         return NULL;
+    }
 }
