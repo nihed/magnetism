@@ -23,6 +23,13 @@ import com.dumbhippo.server.Configuration.PropertyNotFoundException;
 public class FacebookWebServices extends AbstractXmlRequest<FacebookSaxHandler> {
 	static private final Logger logger = GlobalSetup.getLogger(FacebookWebServices.class);
 
+	// The longest link I saw was 123 characters, they are usually pretty standard, 
+	// including an apid, uid, and apikey. With the 1000 bytes table key limit in 
+	// mysql, we should not have this variable longer than 236 to use it together 
+	// with a user guid as a key in the CachedFacebookPhotoData table. 
+	// (14*4 + 236*4 = 1000)
+	static public final int MAX_FACEBOOK_PHOTO_LINK_LENGTH = 200;
+	
 	private String apiKey;
 	private String secret;
 	

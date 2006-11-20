@@ -8,8 +8,10 @@ import javax.persistence.Table;
 import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
 
+import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.services.FacebookPhotoData;
 import com.dumbhippo.services.FacebookPhotoDataView;
+import com.dumbhippo.services.FacebookWebServices;
 
 @Entity
 // we do not store the photoId in the purified form, we only store it as part of the
@@ -55,8 +57,8 @@ public class CachedFacebookPhotoData extends DBUnique implements CachedListItem 
 		return photoData;
 	}
 	
-	static public CachedFacebookPhotoData newNoResultsMarker(String facebookApiUserId) {
-		return new CachedFacebookPhotoData(facebookApiUserId, "", "", "", -1, "");
+	static public CachedFacebookPhotoData newNoResultsMarker(String userId) {
+		return new CachedFacebookPhotoData(userId, "", "", "", -1, "");
 	}
 	
 	@Transient
@@ -72,7 +74,7 @@ public class CachedFacebookPhotoData extends DBUnique implements CachedListItem 
 	    albumId = photoData.getAlbumId();
 	}
 	
-	@Column(nullable=true)
+	@Column(nullable=false, length=Guid.STRING_LENGTH)
 	public String getUserId() {
 		return userId;
 	}
@@ -81,7 +83,7 @@ public class CachedFacebookPhotoData extends DBUnique implements CachedListItem 
 		this.userId = userId;
 	}
 	
-	@Column(nullable=false)
+	@Column(nullable=false, length=FacebookWebServices.MAX_FACEBOOK_PHOTO_LINK_LENGTH)
 	public String getLink() {
 		// there is a bug in what Facebook returns, api.facebook.com
 		// does not have photo.php, while www.facebook.com takes us

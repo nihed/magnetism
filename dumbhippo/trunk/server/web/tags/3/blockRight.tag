@@ -19,12 +19,12 @@
 		</c:if>
 		<jsp:doBody/>
 	</div></td>
-	<td valign="top" align="right" width="30px">
-		<c:if test="${showFrom}">
+	<c:if test="${showFrom}">
+	    <td valign="top" align="right" width="30px">
 			<span class="dh-stacker-block-right-from-image"><dht3:entityLink who="${from}" imageOnly="true"/></span>
-		</c:if>
-	</td>
-	<td width="5px">&nbsp;</td>
+	    </td>
+	    <td width="5px">&nbsp;</td>
+	</c:if>
 	</tr>
 	</table>
 </div>
