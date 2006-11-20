@@ -73,7 +73,7 @@ public class FlickrPersonBlockHandlerBean extends
 		long now = System.currentTimeMillis();
 		Collection<User> users = flickrUpdater.getUsersWhoLoveFlickrAccount(flickrId);
 		for (User user : users) {
-			stacker.stack(getKey(user), now, StackReason.BLOCK_UPDATE);
+			stacker.stack(getKey(user), now, user, false, StackReason.BLOCK_UPDATE);
 		}
 	}
 
@@ -90,7 +90,7 @@ public class FlickrPersonBlockHandlerBean extends
 		if (external.getAccountType() != ExternalAccountType.FLICKR)
 			return;
 		Block block = stacker.createBlock(getKey(user));
-		stacker.stack(block, System.currentTimeMillis(), StackReason.NEW_BLOCK);
+		stacker.stack(block, System.currentTimeMillis(), user, false, StackReason.NEW_BLOCK);
 	}
 
 	public void onExternalAccountLovedAndEnabledMaybeChanged(User user, ExternalAccount external) {
@@ -109,6 +109,6 @@ public class FlickrPersonBlockHandlerBean extends
 		Block block = stacker.getOrCreateBlock(getKey(user));
 		logger.debug("Created block {}", block);
 		if (block.getTimestampAsLong() <= 0)
-			stacker.stack(block, System.currentTimeMillis(), StackReason.BLOCK_UPDATE);
+			stacker.stack(block, System.currentTimeMillis(), user, false, StackReason.BLOCK_UPDATE);
 	}
 }

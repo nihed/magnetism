@@ -97,7 +97,7 @@ public class FlickrPhotosetBlockHandlerBean extends
 		Collection<User> users = flickrUpdater.getUsersWhoLoveFlickrAccount(photosetStatus.getOwnerId());
 		for (User user : users) {
 			Block block = stacker.createBlock(getKey(user, photosetStatus));
-			stacker.stack(block, now, StackReason.NEW_BLOCK);
+			stacker.stack(block, now, user, false, StackReason.NEW_BLOCK);
 		}
 	}
 
@@ -106,7 +106,7 @@ public class FlickrPhotosetBlockHandlerBean extends
 		long now = System.currentTimeMillis();
 		Collection<User> users = flickrUpdater.getUsersWhoLoveFlickrAccount(photosetStatus.getOwnerId());
 		for (User user : users) {
-			stacker.stack(getKey(user, photosetStatus), now, StackReason.BLOCK_UPDATE);
+			stacker.stack(getKey(user, photosetStatus), now, user, false, StackReason.BLOCK_UPDATE);
 		}		
 	}
 	
