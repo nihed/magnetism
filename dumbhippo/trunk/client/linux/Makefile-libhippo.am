@@ -234,6 +234,8 @@ LIBHIPPO_SOURCEFILES =						\
 	$(COMMONSRCDIR)/hippo/hippo-group.h			\
 	$(COMMONSRCDIR)/hippo/hippo-image-cache.c		\
 	$(COMMONSRCDIR)/hippo/hippo-image-cache.h		\
+	$(COMMONSRCDIR)/hippo/hippo-jpeg-loader.c		\
+	$(COMMONSRCDIR)/hippo/hippo-jpeg-loader.h		\
 	$(COMMONSRCDIR)/hippo/hippo-object-cache.c		\
 	$(COMMONSRCDIR)/hippo/hippo-object-cache.h		\
 	$(COMMONSRCDIR)/hippo/hippo-myspace.c			\

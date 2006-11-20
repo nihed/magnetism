@@ -160,8 +160,10 @@ hippo_thumbnails_new_from_xml (HippoDataCache       *cache,
                          "count", HIPPO_SPLIT_INT32, &count,
                          "moreTitle", HIPPO_SPLIT_STRING, &more_title,
                          "moreLink", HIPPO_SPLIT_URI_ABSOLUTE, &more_link,
-                         NULL))
+                         NULL)) {
+        g_debug("Failed to split <thumbnails>");
         return NULL;
+    }
 
     if (count < 0) {
         g_warning("negative count in <thumbnails>");
@@ -188,8 +190,10 @@ hippo_thumbnails_new_from_xml (HippoDataCache       *cache,
         int width, height;
         HippoThumbnail *thumb;
 
-        if (strcmp(child->name, "thumbnail") != 0)
+        if (strcmp(child->name, "thumbnail") != 0) {
+            g_debug("Not at <thumbnail> node");
             continue;
+        }
         
         thumb = &thumbnails->thumbs[i];
         ++i;
@@ -201,6 +205,7 @@ hippo_thumbnails_new_from_xml (HippoDataCache       *cache,
                              "width", HIPPO_SPLIT_INT32, &width,
                              "height", HIPPO_SPLIT_INT32, &height,
                              NULL)) {
+            g_debug("Failed to split <thumbnail>");
             g_object_unref(thumbnails);
             return NULL;
         }
@@ -213,6 +218,7 @@ hippo_thumbnails_new_from_xml (HippoDataCache       *cache,
     }
 
     if (i != count) {
+        g_debug("<thumbnails> had wrong count %d vs. %d", i, count);
         g_object_unref(thumbnails);
         return NULL;
     }

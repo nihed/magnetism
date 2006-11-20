@@ -338,8 +338,10 @@ hippo_block_real_update_from_xml (HippoBlock     *block,
                          "ignored", HIPPO_SPLIT_BOOLEAN, &ignored,
                          "icon", HIPPO_SPLIT_STRING | HIPPO_SPLIT_OPTIONAL, &icon_url,
                          "stackReason", HIPPO_SPLIT_STRING | HIPPO_SPLIT_OPTIONAL, &stack_reason_str,
-                         NULL))
+                         NULL)) {
+        g_debug("missing attributes on <block> %s update", block->guid);
         return FALSE;
+    }
 
     if (strcmp(block->guid, guid) != 0) {
         g_warning("Update to <block/> node doesn't match original ID");

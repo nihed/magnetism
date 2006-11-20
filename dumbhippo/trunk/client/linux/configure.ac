@@ -200,6 +200,42 @@ else
 fi
 AM_CONDITIONAL(COMMON_OUTSIDE_TREE, $common_outside_tree)
 
+# sigsetjmp is a macro on some platforms, so AC_CHECK_FUNCS is not reliable
+AC_MSG_CHECKING(for sigsetjmp)
+AC_TRY_LINK([#include <setjmp.h>], [
+sigjmp_buf env;
+sigsetjmp(env, 0);
+], gtk_ok=yes, gtk_ok=no)
+AC_MSG_RESULT($gtk_ok)
+if test "$gtk_ok" = "yes"; then
+  AC_DEFINE(HAVE_SIGSETJMP, , [whether we have SIGSETJMP])
+fi
+
+
+AC_CHECK_LIB(jpeg, jpeg_destroy_decompress,
+      jpeg_ok=yes,
+      jpeg_ok=no
+      AC_MSG_ERROR(*** JPEG library not found ***))
+
+if test "$jpeg_ok" = yes; then
+    AC_MSG_CHECKING([for jpeglib.h])
+    AC_TRY_CPP(
+[#include <stdio.h>
+#undef PACKAGE
+#undef VERSION
+#undef HAVE_STDLIB_H
+#include <jpeglib.h>],
+        jpeg_ok=yes,
+        jpeg_ok=no)
+    AC_MSG_RESULT($jpeg_ok)
+    if test "$jpeg_ok" = yes; then
+        JPEG_LIBS='-ljpeg'
+    else
+        AC_MSG_ERROR(*** JPEG header not found ***)
+    fi
+fi
+
+
 GLIB2_REQUIRED=2.6.0
 GTK2_REQUIRED=2.6.0
 LOUDMOUTH_REQUIRED=1.0
@@ -255,7 +291,7 @@ PKG_CHECK_MODULES(LIBHIPPO, gobject-2.0 >= $GLIB2_REQUIRED gthread-2.0 loudmouth
 PKG_CHECK_MODULES(LIBHIPPOIPC, gobject-2.0 dbus-1 >= $DBUS_REQUIRED dbus-glib-1 >= $DBUS_REQUIRED)
 PKG_CHECK_MODULES(LIBGTKCOPY, gtk+-2.0 >= $GTK2_REQUIRED gtk+-x11-2.0)
 PKG_CHECK_MODULES(MUGSHOT_BASE, gtk+-2.0 >= $GTK2_REQUIRED gthread-2.0 loudmouth-1.0 >= $LOUDMOUTH_REQUIRED dbus-1 >= $DBUS_REQUIRED dbus-glib-1 >= $DBUS_GLIB_REQUIRED)
-MUGSHOT_LIBS="$MUGSHOT_BASE_LIBS $CURL_LIBS $XSCREENSAVER_LIBS"
+MUGSHOT_LIBS="$MUGSHOT_BASE_LIBS $CURL_LIBS $XSCREENSAVER_LIBS $JPEG_LIBS"
 MUGSHOT_CFLAGS="$MUGSHOT_BASE_CFLAGS $CURL_CFLAGS"
 AC_SUBST(MUGSHOT_LIBS)
 AC_SUBST(MUGSHOT_CFLAGS)

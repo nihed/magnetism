@@ -1645,15 +1645,26 @@ hippo_connection_parse_blocks(HippoConnection *connection,
     LmMessageNode *subchild;
     gint64 server_timestamp;
 
+    /* g_debug("Parsing blocks list <%s>", node->name); */
+    
     if (!hippo_xml_split(connection->cache, node, NULL,
                          "serverTime", HIPPO_SPLIT_TIME_MS, &server_timestamp,
-                         NULL))
+                         NULL)) {
+        g_debug("missing serverTime on blocks");
         return FALSE;
+    }
 
     hippo_connection_update_server_time_offset(connection, server_timestamp);
     
-    for (subchild = node->children; subchild; subchild = subchild->next)
-        hippo_data_cache_update_from_xml(connection->cache, subchild);
+    for (subchild = node->children; subchild; subchild = subchild->next) {
+        if (!hippo_data_cache_update_from_xml(connection->cache, subchild)) {
+            g_debug("Did not successfully update <%s> from xml", subchild->name);
+        } else {
+            /* g_debug("Updated <%s>", subchild->name) */ ;
+        }
+    }
+
+    /* g_debug("Done parsing blocks list <%s>", node->name); */
     
     return TRUE;
 }

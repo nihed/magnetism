@@ -2,6 +2,7 @@
 #include "hippo-common-internal.h"
 #include "hippo-image-cache.h"
 #include "hippo-object-cache.h"
+#include "hippo-jpeg-loader.h"
 #include <string.h>
 
 static void      hippo_image_cache_init                (HippoImageCache       *cache);
@@ -89,6 +90,23 @@ gstring_read_func(void      *closure,
     return CAIRO_STATUS_SUCCESS;
 }
 
+#define PNG_MAGIC_PREFIX  "\x89PNG\r\n\x1a\x0a"
+#define JPEG_MAGIC_PREFIX "\xff\xd8"
+
+static gboolean
+has_prefix(GString    *content,
+           const char *prefix)
+{
+    unsigned int prefix_len;
+
+    prefix_len = strlen(prefix);
+
+    if (content->len < prefix_len)
+        return FALSE;
+
+    return strncmp(content->str, prefix, prefix_len) == 0;
+}
+
 static GObject*
 hippo_image_cache_parse(HippoObjectCache      *cache,
                         const char            *url,
@@ -98,33 +116,44 @@ hippo_image_cache_parse(HippoObjectCache      *cache,
 {
     cairo_surface_t *csurface;
     HippoSurface *surface;
-    GStringReader reader;
 
-    reader.str = content;
-    reader.already_read = 0;
-    
-    csurface =
-        cairo_image_surface_create_from_png_stream(gstring_read_func,
-                                                   &reader);
-    
-
-    if (csurface != NULL && cairo_surface_status(csurface) == CAIRO_STATUS_SUCCESS) {
+    if (has_prefix(content, PNG_MAGIC_PREFIX)) {
+        GStringReader reader;
+        
+        reader.str = content;
+        reader.already_read = 0;
+        
+        csurface =
+            cairo_image_surface_create_from_png_stream(gstring_read_func,
+                                                       &reader);
+        
+        if (csurface != NULL && cairo_surface_status(csurface) == CAIRO_STATUS_SUCCESS) {
+            surface = hippo_surface_new(csurface);
+            cairo_surface_destroy(csurface);
+        } else {
+            const char *msg;
+            
+            if (csurface) {
+                msg = cairo_status_to_string(cairo_surface_status(csurface));
+                cairo_surface_destroy(csurface);
+            } else {
+                msg = _("Corrupt image");
+            }
+            
+            surface = NULL;
+            g_set_error(error_p,
+                        g_quark_from_string("cairo-surface-error"),
+                        0, msg);                    
+            goto failed;
+        }
+    } else if (has_prefix(content, JPEG_MAGIC_PREFIX)) {
+        csurface = hippo_parse_jpeg(content->str, content->len, error_p);
+        if (csurface == NULL)
+            goto failed;
         surface = hippo_surface_new(csurface);
         cairo_surface_destroy(csurface);
     } else {
-        const char *msg;
-        
-        if (csurface) {
-            msg = cairo_status_to_string(cairo_surface_status(csurface));
-            cairo_surface_destroy(csurface);
-        } else {
-            msg = _("Corrupt image");
-        }
-        
-        surface = NULL;
-        g_set_error(error_p,
-                    g_quark_from_string("cairo-surface-error"),
-                    0, msg);                    
+        g_set_error(error_p, HIPPO_ERROR, HIPPO_ERROR_FAILED, _("Unknown image format"));
         goto failed;
     }
 

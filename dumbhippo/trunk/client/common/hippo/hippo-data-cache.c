@@ -483,12 +483,16 @@ update_block_from_xml(HippoDataCache *cache,
 
     if (!hippo_xml_split(cache, node, NULL,
                          "type", HIPPO_SPLIT_STRING, &type_str,
-                         NULL))
+                         NULL)) {
+        g_debug("no type attribute on block node");
         return FALSE;
+    }
 
     type = hippo_block_type_from_string(type_str);
-    if (type == HIPPO_BLOCK_TYPE_UNKNOWN)
+    if (type == HIPPO_BLOCK_TYPE_UNKNOWN) {
+        g_debug("Ignoring block of unknown type '%s'", type_str);
         return FALSE; // Ignore silently
+    }
 
     block = hippo_data_cache_lookup_block(cache, id);
     if (block) {
@@ -588,8 +592,10 @@ hippo_data_cache_update_from_xml (HippoDataCache *cache,
 
     if (!hippo_xml_split(cache, node, NULL,
                          "id", HIPPO_SPLIT_GUID, &id,
-                         NULL))
+                         NULL)) {
+        g_debug("no id=guid attribute on node <%s>", node->name);
         return FALSE;
+    }
 
     if (strcmp(name, "block") == 0) {
         return update_block_from_xml(cache, id, node);
@@ -605,7 +611,7 @@ hippo_data_cache_update_from_xml (HippoDataCache *cache,
         return update_entity_from_xml(cache, id, node, HIPPO_ENTITY_PERSON);
     }
 
-    g_warning("Unknown element '%s' in XML object stream\n", name);
+    g_debug("Unknown element '%s' in XML object stream\n", name);
     return FALSE;
 }
                                                           
