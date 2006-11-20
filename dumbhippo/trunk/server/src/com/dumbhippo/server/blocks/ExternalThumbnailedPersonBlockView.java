@@ -55,7 +55,7 @@ public abstract class ExternalThumbnailedPersonBlockView extends AbstractPersonB
 	}
 
 	public String getMoreThumbnailsTitle() {
-		return externalAccountView.getExternalAccount().getLink();
+		return externalAccountView.getExternalAccount().getLinkText();
 	}
 
 	public String getTitleForHome() {
