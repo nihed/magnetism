@@ -505,6 +505,7 @@ div.dh-person-header {
 	margin-right:		20px;
 	padding:			0px;
 	overflow:			hidden;
+	text-align:			center;	
 }
 
 .dh-thumbnail-block-thumb img {
@@ -514,7 +515,6 @@ div.dh-person-header {
 
 .dh-thumbnail-block-thumb .dh-thumbnail-title {
 	overflow:			hidden;
-	text-align:			center;
 }
 
 .dh-thumbnail-block-more {
