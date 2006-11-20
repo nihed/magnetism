@@ -37,6 +37,16 @@ all_packages = {
     'md5' : '48b7cb1ba976fcc4dbbeb6cd75a4a02d',
     'excludes' : [ 'bin/*', '*.tcl', '*/gettext-po.h', '*/gettextpo.lib' ]
     },
+    'jpeg-lib' : {
+    'url' : 'http://easynews.dl.sourceforge.net/sourceforge/gnuwin32/jpeg-6b-4-lib.zip',
+    'md5' : 'ff0b69c04ebc6e73e89da1f3a0c74a82',
+    'excludes' : [ "*.mft", "*.ver" ]
+    },
+#    'jpeg-bin' : {
+#    'url' : 'http://easynews.dl.sourceforge.net/sourceforge/gnuwin32/jpeg-6b-4-bin.zip',
+#    'md5' : '2c1affae71628525965c6742f6ba4126',
+#    'excludes' : [ "contrib/*", "bin/*", "manifest/*" ]
+#    },        
     'libpng-lib' : {
     'url' : 'http://superb-west.dl.sourceforge.net/sourceforge/gnuwin32/libpng-1.2.8-lib.zip',
     'md5' : '17a34613562c1d352e7cb27253e58498',
