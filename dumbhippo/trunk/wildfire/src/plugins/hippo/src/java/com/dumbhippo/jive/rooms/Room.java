@@ -341,18 +341,14 @@ public class Room implements PresenceListener {
 		return lookupUserInfo(username, false);
 	}
 	
-	private void updateRecipientsCache() {
-		MessengerGlue glue = EJBUtil.defaultLookup(MessengerGlue.class);		
-		for (ChatRoomUser user : glue.getChatRoomRecipients(roomName, this.kind)) {
-			Log.debug("Room recipient: " + user.getUsername());
-			recipientsCache.add(user.getUsername());
-		}					
-	}
-		
 	private Set<String> getRecipientsCache() {
 		if (recipientsCache == null) {
 			recipientsCache = new HashSet<String>();
-			updateRecipientsCache();
+			MessengerGlue glue = EJBUtil.defaultLookup(MessengerGlue.class);		
+			for (ChatRoomUser user : glue.getChatRoomRecipients(roomName, this.kind)) {
+				Log.debug("Room recipient: " + user.getUsername());
+				recipientsCache.add(user.getUsername());
+			}					
 		}
 		return recipientsCache;
 	}
@@ -818,7 +814,7 @@ public class Room implements PresenceListener {
 	 * Called when the set of members in a group chat room changes 
 	 */
 	public synchronized void onMembersChanged() {
-		updateRecipientsCache();
+		recipientsCache = null;
 	}
 	
 	/**
