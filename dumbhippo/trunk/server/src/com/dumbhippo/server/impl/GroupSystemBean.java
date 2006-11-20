@@ -320,6 +320,8 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 				return; // Nothing to do
 			}
 			groupMember.setStatus(newStatus);
+			notifier.onGroupMemberStatusChanged(groupMember, now);
+			
 		} else {
 			Resource resource = identitySpider.getBestResource(person);
 			
@@ -339,8 +341,6 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 			
 			notifier.onGroupMemberCreated(groupMember, now);
 		}
-		
-		notifier.onGroupMemberStatusChanged(groupMember, now);
 		
         LiveState.getInstance().queueUpdate(new GroupEvent(group.getGuid(), groupMember.getMember().getGuid(),
         		GroupEvent.Detail.MEMBERS_CHANGED));
