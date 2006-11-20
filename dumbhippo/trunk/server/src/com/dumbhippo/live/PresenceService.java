@@ -18,6 +18,7 @@ import org.jgroups.Channel;
 import org.jgroups.ChannelClosedException;
 import org.jgroups.ChannelException;
 import org.jgroups.ChannelNotConnectedException;
+import org.jgroups.ExitEvent;
 import org.jgroups.JChannelFactory;
 import org.jgroups.Message;
 import org.jgroups.TimeoutException;
@@ -871,6 +872,21 @@ public class PresenceService extends ServiceMBeanSupport implements PresenceServ
 			}
 		}
 	}
+	
+	private void handleExit() throws ChannelClosedException, ChannelException {
+		logger.info("Got exit event, reconnecting");
+		
+		// Remove all information for remote servers
+		for (Iterator<Address> i = servers.keySet().iterator(); i.hasNext();) {
+			Address address = i.next();
+			ServerInfo server = servers.get(address);
+			i.remove();
+			server.notifyAllRemoved();
+		}
+		
+		channel.open();
+		channel.connect(clusterName);
+	}
 
 	private void handleRequestState(Address source, RequestStateMessage message) throws ChannelNotConnectedException, ChannelClosedException {
 		// We can afford to be sloppy about exactly what state we respond with; 
@@ -957,6 +973,13 @@ public class PresenceService extends ServiceMBeanSupport implements PresenceServ
 						handleMessage((Message) object);
 					} else if (object instanceof View) {
 						handleViewChange((View)object);
+					} else if (object instanceof ExitEvent) {
+						try {
+							handleExit();
+						} catch (ChannelException e) {
+							logger.error("Failed to reconnect after being shunned, exiting thread", e);
+							break;
+						}
 					}
 				} catch (ChannelNotConnectedException e) {
 					logger.error("Channel not connected"); // Shouldn't happen, but won't fix itself, so exit thread

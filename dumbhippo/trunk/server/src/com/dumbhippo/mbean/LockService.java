@@ -58,6 +58,7 @@ public class LockService extends ServiceMBeanSupport implements LockServiceMBean
 		try {
 			JChannelFactory factory = new JChannelFactory(config);
 			channel = factory.createChannel();
+			channel.setOpt(Channel.AUTO_RECONNECT, true);
 			channel.connect(clusterName);
 			
 		} catch (ChannelException e) {
@@ -110,7 +111,13 @@ public class LockService extends ServiceMBeanSupport implements LockServiceMBean
 	 *    problem between this node and other nodes. 
 	 */
 	public void lock(Object obj, int timeout) throws LockNotGrantedException, ChannelException {
-		lockManager.lock(obj, channel.getLocalAddress(), timeout);
+		Object owner = channel.getLocalAddress();
+		if (owner == null) {
+			logger.warn("Not connected to lock service group in lock()");
+			return;
+		}
+		
+		lockManager.lock(obj, owner, timeout);
 	}
 
 	/**
@@ -123,6 +130,12 @@ public class LockService extends ServiceMBeanSupport implements LockServiceMBean
 	 *    problem between this node and other nodes. 
 	 */
 	public void unlock(Object obj) throws LockNotReleasedException, ChannelException {
-		lockManager.unlock(obj, channel.getLocalAddress());
+		Object owner = channel.getLocalAddress();
+		if (owner == null) {
+			logger.warn("Not connected to lock service group in unlock()");
+			return;
+		}
+		
+		lockManager.unlock(obj, owner);
 	}
 }
