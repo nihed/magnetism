@@ -267,6 +267,9 @@ hippo_canvas_block_flickr_photoset_set_block(HippoCanvasBlock *canvas_block,
                                          hippo_block_flickr_photoset_get_title(HIPPO_BLOCK_FLICKR_PHOTOSET(canvas_block->block)),
                                          hippo_thumbnails_get_more_link(thumbnails),
                                          FALSE);
+            g_object_set(HIPPO_CANVAS_BLOCK_FLICKR_PHOTOSET(canvas_block)->thumbnails,
+                         "thumbnails", thumbnails,
+                         NULL);            
         }
     }
 }

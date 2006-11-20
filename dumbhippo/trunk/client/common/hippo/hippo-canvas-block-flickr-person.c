@@ -267,6 +267,9 @@ hippo_canvas_block_flickr_person_set_block(HippoCanvasBlock *canvas_block,
                                          hippo_thumbnails_get_more_title(thumbnails),
                                          hippo_thumbnails_get_more_link(thumbnails),
                                          FALSE);
+            g_object_set(HIPPO_CANVAS_BLOCK_FLICKR_PERSON(canvas_block)->thumbnails,
+                         "thumbnails", thumbnails,
+                         NULL);
         }
     }
 }

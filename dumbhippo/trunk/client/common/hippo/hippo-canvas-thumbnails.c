@@ -54,7 +54,7 @@ enum {
     PROP_ACTIONS
 };
 
-G_DEFINE_TYPE_WITH_CODE(HippoCanvasThumbnails, hippo_canvas_thumbnails, HIPPO_TYPE_CANVAS_ITEM,
+G_DEFINE_TYPE_WITH_CODE(HippoCanvasThumbnails, hippo_canvas_thumbnails, HIPPO_TYPE_CANVAS_BOX,
                         G_IMPLEMENT_INTERFACE(HIPPO_TYPE_CANVAS_ITEM, hippo_canvas_thumbnails_iface_init));
 
 static void
@@ -235,6 +235,7 @@ hippo_canvas_thumbnails_create_children(HippoCanvasThumbnails *canvas_thumbnails
                                "text", hippo_thumbnail_get_title(thumb),
                                "xalign", HIPPO_ALIGNMENT_CENTER,
                                "yalign", HIPPO_ALIGNMENT_END,
+                               "size-mode", HIPPO_CANVAS_SIZE_ELLIPSIZE_END,
                                NULL);
         hippo_canvas_box_append(thumb_box, caption, 0);
 
