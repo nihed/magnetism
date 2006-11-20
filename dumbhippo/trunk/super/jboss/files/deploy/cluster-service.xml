@@ -46,7 +46,7 @@
                up_thread="true" down_thread="true"/>
             <MERGE2 min_interval="10000" max_interval="20000"/>
             <FD shun="true" up_thread="true" down_thread="true"
-               timeout="2500" max_tries="5"/>
+               timeout="@@jgroupsFdTimeout@@" max_tries="@@jgroupsFdMaxTries@@"/>
             <VERIFY_SUSPECT timeout="3000" num_msgs="3"
                up_thread="true" down_thread="true"/>
             <pbcast.NAKACK gc_lag="50" retransmit_timeout="300,600,1200,2400,4800"

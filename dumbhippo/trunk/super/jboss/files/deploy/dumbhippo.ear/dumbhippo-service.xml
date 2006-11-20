@@ -19,7 +19,8 @@
 				   ucast_recv_buf_size="80000" loopback="false" />
 				<PING timeout="2000" num_initial_members="3" up_thread="false" down_thread="false" />
 				<MERGE2 min_interval="10000" max_interval="20000" />
-				<FD shun="true" up_thread="true" down_thread="true" />
+                                <FD shun="true" up_thread="true" down_thread="true"
+                                    timeout="@@jgroupsFdTimeout@@" max_tries="@@jgroupsFdMaxTries@@"/>
 				<VERIFY_SUSPECT timeout="1500" up_thread="false" down_thread="false" />
 				<pbcast.NAKACK gc_lag="50" max_xmit_size="8192" retransmit_timeout="600,1200,2400,4800" up_thread="false"
 				   down_thread="false" />
@@ -41,7 +42,8 @@
 				   ucast_recv_buf_size="80000" loopback="false" />
 				<PING timeout="2000" num_initial_members="3" up_thread="false" down_thread="false" />
 				<MERGE2 min_interval="10000" max_interval="20000" />
-				<FD shun="true" up_thread="true" down_thread="true" />
+                                <FD shun="true" up_thread="true" down_thread="true"
+                                    timeout="@@jgroupsFdTimeout@@" max_tries="@@jgroupsFdMaxTries@@"/>
 				<VERIFY_SUSPECT timeout="1500" up_thread="false" down_thread="false" />
 				<pbcast.NAKACK gc_lag="50" max_xmit_size="8192" retransmit_timeout="600,1200,2400,4800" up_thread="false"
 				   down_thread="false" />
