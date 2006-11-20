@@ -504,6 +504,7 @@ div.dh-person-header {
 	float:				left;
 	margin-right:		20px;
 	padding:			0px;
+	overflow:			hidden;
 }
 
 .dh-thumbnail-block-thumb img {

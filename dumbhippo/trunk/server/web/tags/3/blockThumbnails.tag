@@ -22,9 +22,7 @@
 					    <c:set var="css" value="" />
 				    </c:otherwise>
 			    </c:choose>
-			    <div class="dh-thumbnail-block-thumb ${css}">
-			        <%-- not specifying width and height for the image doesn't make it stretch the image unnecessarily --%>
-			        <%-- and still looks good, if necessary, we can wrap the image in a div of a set height and width --%>
+			    <div class="dh-thumbnail-block-thumb ${css}" style="width: ${thumbnail.thumbnailWidth}">
 				    <a title="${thumbnail.thumbnailTitle}" href="${thumbnail.thumbnailHref}"><img src="${thumbnail.thumbnailSrc}"/></a>
 				    <div class="dh-thumbnail-title"><a href="${thumbnail.thumbnailHref}"><c:out value="${thumbnail.thumbnailTitle}" /></a></div>
 			    </div>

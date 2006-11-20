@@ -30,7 +30,7 @@
 							<c:set var="css" value="" />
 						</c:otherwise>
 					</c:choose>
-					<div class="dh-thumbnail-photo ${css}">
+					<div class="dh-thumbnail-photo ${css}" style="width: ${thumbnail.thumbnailWidth}">
 						<a title="${thumbnail.thumbnailTitle}" href="${thumbnail.thumbnailHref}"><img src="${thumbnail.thumbnailSrc}" width="${thumbnails.thumbnailWidth}" height="${thumbnails.thumbnailHeight}" /></a>
 						<div class="dh-thumbnail-title"><a href="${thumbnail.thumbnailHref}"><c:out value="${thumbnail.thumbnailTitle}" /></a></div>
 					</div>
