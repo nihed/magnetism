@@ -168,6 +168,10 @@ LIBHIPPO_SOURCEFILES =						\
 	$(COMMONSRCDIR)/hippo/hippo-block-blog-person.h		\
 	$(COMMONSRCDIR)/hippo/hippo-block-facebook-person.c	\
 	$(COMMONSRCDIR)/hippo/hippo-block-facebook-person.h	\
+	$(COMMONSRCDIR)/hippo/hippo-block-flickr-person.c	\
+	$(COMMONSRCDIR)/hippo/hippo-block-flickr-person.h	\
+	$(COMMONSRCDIR)/hippo/hippo-block-flickr-photoset.c	\
+	$(COMMONSRCDIR)/hippo/hippo-block-flickr-photoset.h	\
 	$(COMMONSRCDIR)/hippo/hippo-block-music-person.c	\
 	$(COMMONSRCDIR)/hippo/hippo-block-music-person.h	\
 	$(COMMONSRCDIR)/hippo/hippo-block-post.c		\
@@ -178,6 +182,10 @@ LIBHIPPO_SOURCEFILES =						\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-block.h		\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-block-blog-person.c	\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-block-blog-person.h	\
+	$(COMMONSRCDIR)/hippo/hippo-canvas-block-flickr-person.c	\
+	$(COMMONSRCDIR)/hippo/hippo-canvas-block-flickr-person.h	\
+	$(COMMONSRCDIR)/hippo/hippo-canvas-block-flickr-photoset.c	\
+	$(COMMONSRCDIR)/hippo/hippo-canvas-block-flickr-photoset.h	\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-block-group-chat.c	\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-block-group-chat.h	\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-block-group-member.c	\

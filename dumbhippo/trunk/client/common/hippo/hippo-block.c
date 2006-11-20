@@ -7,6 +7,8 @@
 #include "hippo-block-music-person.h"
 #include "hippo-block-facebook-person.h"
 #include "hippo-block-blog-person.h"
+#include "hippo-block-flickr-person.h"
+#include "hippo-block-flickr-photoset.h"
 #include "hippo-xml-utils.h"
 #include <string.h>
 
@@ -398,11 +400,14 @@ hippo_block_new(const char    *guid,
     case HIPPO_BLOCK_TYPE_MUSIC_PERSON:
         object_type = HIPPO_TYPE_BLOCK_MUSIC_PERSON;
         break;
-    case HIPPO_BLOCK_TYPE_FACEBOOK_PERSON:
-        object_type = HIPPO_TYPE_BLOCK_FACEBOOK_PERSON;
-        break;
     case HIPPO_BLOCK_TYPE_BLOG_PERSON:
         object_type = HIPPO_TYPE_BLOCK_BLOG_PERSON;
+        break;
+    case HIPPO_BLOCK_TYPE_FLICKR_PERSON:
+        object_type = HIPPO_TYPE_BLOCK_FLICKR_PERSON;
+        break;
+    case HIPPO_BLOCK_TYPE_FLICKR_PHOTOSET:
+        object_type = HIPPO_TYPE_BLOCK_FLICKR_PHOTOSET;
         break;
         /* don't add default case, it hides warnings */
     }
@@ -671,7 +676,9 @@ hippo_block_type_from_string(const char *s)
         { "GROUP_MEMBER", HIPPO_BLOCK_TYPE_GROUP_MEMBER },
         { "GROUP_CHAT", HIPPO_BLOCK_TYPE_GROUP_CHAT },
         { "MUSIC_PERSON", HIPPO_BLOCK_TYPE_MUSIC_PERSON },
-        { "BLOG_PERSON", HIPPO_BLOCK_TYPE_BLOG_PERSON }
+        { "BLOG_PERSON", HIPPO_BLOCK_TYPE_BLOG_PERSON },
+        { "FLICKR_PERSON", HIPPO_BLOCK_TYPE_FLICKR_PERSON },
+        { "FLICKR_PHOTOSET", HIPPO_BLOCK_TYPE_FLICKR_PHOTOSET }
     };
     unsigned int i;
     for (i = 0; i < G_N_ELEMENTS(types); ++i) {

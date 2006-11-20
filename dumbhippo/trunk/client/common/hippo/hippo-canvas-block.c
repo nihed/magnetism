@@ -8,6 +8,8 @@
 #include "hippo-canvas-block-group-chat.h"
 #include "hippo-canvas-block-group-member.h"
 #include "hippo-canvas-block-music-person.h"
+#include "hippo-canvas-block-flickr-person.h"
+#include "hippo-canvas-block-flickr-photoset.h"
 #include "hippo-canvas-entity-photo.h"
 #include "hippo-canvas-entity-name.h"
 #include <hippo/hippo-canvas-box.h>
@@ -276,6 +278,12 @@ hippo_canvas_block_new(HippoBlockType type,
         break;
     case HIPPO_BLOCK_TYPE_BLOG_PERSON:
         object_type = HIPPO_TYPE_CANVAS_BLOCK_BLOG_PERSON;
+        break;
+    case HIPPO_BLOCK_TYPE_FLICKR_PERSON:
+        object_type = HIPPO_TYPE_CANVAS_BLOCK_FLICKR_PERSON;
+        break;
+    case HIPPO_BLOCK_TYPE_FLICKR_PHOTOSET:
+        object_type = HIPPO_TYPE_CANVAS_BLOCK_FLICKR_PHOTOSET;
         break;
     }
 
