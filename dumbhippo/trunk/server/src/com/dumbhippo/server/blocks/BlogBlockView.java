@@ -37,7 +37,8 @@ public class BlogBlockView extends AbstractPersonBlockView implements ExternalAc
 	
 	@Override
 	protected void writeDetailsToXmlBuilder(XmlBuilder builder) {
-		builder.openElement("blogPerson");
+		builder.openElement("blogPerson",
+					"userId", getUserView().getUser().getId());
 		writeFeedEntryToXmlBuilder(builder, entry);
 		builder.closeElement();
 	}
