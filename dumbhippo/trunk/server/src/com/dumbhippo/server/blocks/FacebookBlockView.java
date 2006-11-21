@@ -84,22 +84,24 @@ public class FacebookBlockView extends AbstractPersonBlockView
 		case NEW_ALBUM_EVENT :
 		case MODIFIED_ALBUM_EVENT :
 			return "All photos in '" + getFacebookEvent().getAlbum().getName() + "'";
-   	    // no default, it hides bugs
+   	    default:
+   	        // for sending the info to the client, we pretend that all facebook
+   	    	// events could have thumbnails
+   	    	return "More photos";
 		}
-		
-		throw new RuntimeException("need to support event type for " + getFacebookEvent().getEventType() + " in getMoreThumbnailsTitle()");		
 	}
 	
 	@Override
 	protected void writeDetailsToXmlBuilder(XmlBuilder builder) {
-		builder.openElement("facebookPerson");
-		
-		for (FacebookEvent event : getFacebookEvents()) {
-			builder.appendEmptyNode("event", "type", event.getEventType().name(),
-					"count", Integer.toString(event.getCount()),
-					"timestamp",  Long.toString(event.getEventTimestampAsLong()));					
-		}
-		
+		// we could send the link separately, but since getMoreThumbnailsLink()
+		// above returns getLink(), we'll just use that on the client for now;
+		// the titles for the block and for the thumbnails more link are not the same 
+		builder.openElement("facebookEvent",
+				"userId", getUserView().getUser().getId(),
+				"title", getTitleForHome());
+		// we could omit this if the event doesn't have the thumbnails, but
+		// we rely on it for the moreThumbnailsLink for now 
+		writeThumbnailsToXmlBuilder(builder, this);
 		builder.closeElement();
 	}
 
