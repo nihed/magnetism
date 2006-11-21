@@ -17,13 +17,16 @@ import com.dumbhippo.services.YouTubeVideo;
  * @author Colin Walters
  */
 @Entity
-@Table(uniqueConstraints = {@UniqueConstraint(columnNames={"url"})})
+@Table(uniqueConstraints = {@UniqueConstraint(columnNames={"owner", "url"})})
 public class CachedYouTubeVideo extends DBUnique implements CachedListItem {
 	private String url;	
 	private String owner;
 	private String title;
 	private String thumbnail;	
 	private long lastUpdated;
+	
+	private static final int MAX_YOUTUBE_USERNAME_LENGTH = 48;
+	private static final int MAX_YOUTUBE_URL_LENGTH = 128;
 	
 	// for hibernate
 	protected CachedYouTubeVideo() {
@@ -71,7 +74,7 @@ public class CachedYouTubeVideo extends DBUnique implements CachedListItem {
 		this.lastUpdated = lastUpdated.getTime();
 	}
 
-	@Column(nullable=false)
+	@Column(nullable=false, length=MAX_YOUTUBE_USERNAME_LENGTH)
 	public String getOwner() {
 		return owner;
 	}
@@ -98,7 +101,7 @@ public class CachedYouTubeVideo extends DBUnique implements CachedListItem {
 		this.title = title;
 	}
 
-	@Column(nullable=false)	
+	@Column(nullable=false, length=MAX_YOUTUBE_URL_LENGTH)	
 	public String getUrl() {
 		return url;
 	}
