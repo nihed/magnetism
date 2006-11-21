@@ -40,13 +40,13 @@ all_packages = {
     'jpeg-lib' : {
     'url' : 'http://easynews.dl.sourceforge.net/sourceforge/gnuwin32/jpeg-6b-4-lib.zip',
     'md5' : 'ff0b69c04ebc6e73e89da1f3a0c74a82',
-    'excludes' : [ "*.mft", "*.ver" ]
+    'excludes' : [ "*.mft", "*.ver", "jpeg-bcc.lib" ]
     },
-#    'jpeg-bin' : {
-#    'url' : 'http://easynews.dl.sourceforge.net/sourceforge/gnuwin32/jpeg-6b-4-bin.zip',
-#    'md5' : '2c1affae71628525965c6742f6ba4126',
-#    'excludes' : [ "contrib/*", "bin/*", "manifest/*" ]
-#    },        
+    'jpeg-bin' : {
+    'url' : 'http://easynews.dl.sourceforge.net/sourceforge/gnuwin32/jpeg-6b-4-bin.zip',
+    'md5' : '2c1affae71628525965c6742f6ba4126',
+    'excludes' : [ "contrib/*", "bin/*.exe", "bin/exifautotran", "manifest/*", "man/*" ]
+    },        
     'libpng-lib' : {
     'url' : 'http://superb-west.dl.sourceforge.net/sourceforge/gnuwin32/libpng-1.2.8-lib.zip',
     'md5' : '17a34613562c1d352e7cb27253e58498',
