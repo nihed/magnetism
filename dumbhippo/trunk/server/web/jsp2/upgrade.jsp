@@ -23,7 +23,7 @@
 	<c:choose>
 		<c:when test="${browser.linuxRequested}">
 			<%-- LINUX RELEASE NOTES GO HERE --%>
-			<p>Version 1.1.24</p>
+			<p>Version 1.1.25</p>
 			<ul>
 				<li>Show appropriate icons by feed items.</li>			
 				<li>Bug fixes.</li>
@@ -41,7 +41,7 @@
 		</c:when>
 		<c:otherwise>
 			<%-- WINDOWS RELEASE NOTES GO HERE --%>
-			<p>Version 1.1.78</p>
+			<p>Version 1.1.79</p>
 			<ul>
 				<li>Show appropriate icons by feed items.</li>			
 				<li>Bug fixes.</li>
