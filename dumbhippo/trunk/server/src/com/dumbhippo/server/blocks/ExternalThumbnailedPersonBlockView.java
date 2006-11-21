@@ -1,6 +1,9 @@
 package com.dumbhippo.server.blocks;
 
+import com.dumbhippo.BasicThumbnails;
+import com.dumbhippo.Thumbnail;
 import com.dumbhippo.Thumbnails;
+import com.dumbhippo.TypeUtils;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.ExternalAccountType;
@@ -47,7 +50,11 @@ public abstract class ExternalThumbnailedPersonBlockView extends AbstractPersonB
 	public abstract ExternalAccountType getAccountType();
 
 	public Thumbnails getThumbnails() {
-		return externalAccountView.getThumbnails();
+		Thumbnails thumbnails = externalAccountView.getThumbnails();
+		if (thumbnails == null) {
+			thumbnails = new BasicThumbnails(TypeUtils.emptyList(Thumbnail.class), 0, 50, 50);
+		}
+		return thumbnails;
 	}
 
 	public String getMoreThumbnailsLink() {

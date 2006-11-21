@@ -132,6 +132,10 @@ public abstract class BlockView implements ObjectView {
 	// utility function for use in implementations of writeDetailsToXmlBuilder
 	protected void writeThumbnailsToXmlBuilder(XmlBuilder builder, ThumbnailsBlockView thumbnailsBlock) {
 		Thumbnails thumbnails = thumbnailsBlock.getThumbnails();
+		
+		if (thumbnails == null)
+			throw new IllegalStateException("ThumbnailsBlockView may not return null from getThumbnails()");
+		
 		builder.openElement("thumbnails", "count", Integer.toString(thumbnails.getThumbnailCount()),
 				"maxWidth", Integer.toString(thumbnails.getThumbnailWidth()),
 				"maxHeight", Integer.toString(thumbnails.getThumbnailHeight()), 
