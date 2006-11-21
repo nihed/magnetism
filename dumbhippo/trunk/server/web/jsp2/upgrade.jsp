@@ -28,16 +28,6 @@
 				<li>Show Facebook, YouTube, and Flickr activity.</li>			
 				<li>Bug fixes.</li>
 			</ul>
-			<div class="dh-upgrade-message">
-			    Note: the last version of Mugshot didn't shut down properly
-			    on some systems, so after upgrade, you may end up with two
-			    mugshot icons in your notification area. If you see this, 
-			    please open a terminal and  enter the following command:
-			    <div class="dh-command">
-				   killall mugshot ; sleep 1 ; mugshot &
-				</div>
-				Or, simply log out and log back in.
-			</div>
 		</c:when>
 		<c:otherwise>
 			<%-- WINDOWS RELEASE NOTES GO HERE --%>
