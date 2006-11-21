@@ -4,21 +4,21 @@
  
      <Description about="urn:mozilla:install-manifest">
    
-		<em:id>firefox@mugshot.org</em:id>
-		<em:name>Mugshot</em:name>
-		<em:version>0.1</em:version>
-		<em:description>Mugshot extension for Firefox</em:description>
-		<em:homepageURL>http://mugshot.org</em:homepageURL>
-		<em:iconURL>chrome://mugshot/skin/mugshot32x32.png</em:iconURL>
+                <em:id>firefox@mugshot.org</em:id>
+                <em:name>Mugshot</em:name>
+                <em:version>0.1</em:version>
+                <em:description>Mugshot extension for Firefox</em:description>
+                <em:homepageURL>http://mugshot.org</em:homepageURL>
+                <em:iconURL>chrome://mugshot/skin/mugshot32x32.png</em:iconURL>
 
-		<!-- Firefox -->
-		<em:targetApplication>
-		    <Description>
-		        <em:id>{ec8030f7-c20a-464f-9b0e-13a3a9e97384}</em:id>
-		        <em:minVersion>1.5</em:minVersion>
-		        <em:maxVersion>1.5.0.*</em:maxVersion>
-		    </Description>
-		</em:targetApplication>
+                <!-- Firefox -->
+                <em:targetApplication>
+                    <Description>
+                        <em:id>{ec8030f7-c20a-464f-9b0e-13a3a9e97384}</em:id>
+                        <em:minVersion>1.5</em:minVersion>
+                        <em:maxVersion>2.0.0.*</em:maxVersion>
+                    </Description>
+                </em:targetApplication>
  
      </Description>
  </RDF>
