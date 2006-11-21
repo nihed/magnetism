@@ -25,7 +25,7 @@
 			<%-- LINUX RELEASE NOTES GO HERE --%>
 			<p>Version 1.1.25</p>
 			<ul>
-				<li>Show appropriate icons by feed items.</li>			
+				<li>Show Facebook, YouTube, and Flickr activity.</li>			
 				<li>Bug fixes.</li>
 			</ul>
 			<div class="dh-upgrade-message">
@@ -43,7 +43,7 @@
 			<%-- WINDOWS RELEASE NOTES GO HERE --%>
 			<p>Version 1.1.79</p>
 			<ul>
-				<li>Show appropriate icons by feed items.</li>			
+				<li>Show Facebook, YouTube, and Flickr activity.</li>			
 				<li>Bug fixes.</li>
 			</ul>
 		</c:otherwise>
