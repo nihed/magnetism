@@ -18,6 +18,7 @@ BuildRequires:  dbus-devel >= 0.61
 BuildRequires:  curl-devel >= 7.15
 BuildRequires:  GConf2-devel >= 2.8
 BuildRequires:  libXScrnSaver-devel
+BuildRequires:  libjpeg-devel >= 6b
 
 # Needed for fc6 and greater
 # BuildRequires: firefox-devel >= 1.5.04
