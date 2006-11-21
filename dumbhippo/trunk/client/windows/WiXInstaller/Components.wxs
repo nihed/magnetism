@@ -17,6 +17,7 @@
 		        <File Id="gobjectDll"  Name="libgobje.dll" LongName="libgobject-2.0-0.dll" src="libgobject-2.0-0.dll"  DiskId="1" Vital="yes"/>
 		        <File Id="gthreadDll"  Name="libgthre.dll" LongName="libgthread-2.0-0.dll" src="libgthread-2.0-0.dll"  DiskId="1" Vital="yes"/>
 		        <File Id="cairoDll"    Name="libcairo.dll" LongName="libcairo-2.dll"       src="libcairo-2.dll"        DiskId="1" Vital="yes"/>
+		        <File Id="jpegDll"     Name="jpeg62.dll"                                   src="jpeg62.dll"            DiskId="1" Vital="yes"/>
 		        <File Id="pngDll"      Name="libpng13.dll"                                 src="libpng13.dll"          DiskId="1" Vital="yes"/>
 		        <File Id="zlibDll"     Name="zlib1.dll"                                    src="zlib1.dll"             DiskId="1" Vital="yes"/>
 		        <File Id="pangoDll"       Name="libpango.dll" LongName="libpango-1.0-0.dll"      src="libpango-1.0-0.dll"      DiskId="1" Vital="yes"/>

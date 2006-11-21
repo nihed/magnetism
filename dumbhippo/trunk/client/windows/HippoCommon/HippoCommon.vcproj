@@ -19,7 +19,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories=".;../HippoUtil;../dependencies/glib/include/glib-2.0;../dependencies/cairo/include/cairo;../dependencies/pango/include/pango-1.0;../dependencies/glib/lib/glib-2.0/include;../../common;../../common/loudmouth;../../common/canvas;../../common/hippo/generated"
+				AdditionalIncludeDirectories=".;../HippoUtil;../dependencies/glib/include/glib-2.0;../dependencies/cairo/include/cairo;../dependencies/pango/include/pango-1.0;../dependencies/glib/lib/glib-2.0/include;../dependencies/jpeg/include;../../common;../../common/loudmouth;../../common/canvas;../../common/hippo/generated"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;HIPPOCOMMON_EXPORTS"
 				MinimalRebuild="TRUE"
 				BasicRuntimeChecks="3"
@@ -119,7 +119,16 @@
 				RelativePath="..\..\common\hippo\hippo-block-blog-person.c">
 			</File>
 			<File
+				RelativePath="..\..\common\hippo\hippo-block-facebook-event.c">
+			</File>
+			<File
 				RelativePath="..\..\common\hippo\hippo-block-facebook-person.c">
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-block-flickr-person.c">
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-block-flickr-photoset.c">
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\hippo-block-group-chat.c">
@@ -134,10 +143,25 @@
 				RelativePath="..\..\common\hippo\hippo-block-post.c">
 			</File>
 			<File
+				RelativePath="..\..\common\hippo\hippo-block-youtube-person.c">
+			</File>
+			<File
 				RelativePath="..\..\common\hippo\hippo-block.c">
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\hippo-canvas-base.c">
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-canvas-block-blog-person.c">
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-canvas-block-facebook-event.c">
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-canvas-block-flickr-person.c">
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-canvas-block-flickr-photoset.c">
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\hippo-canvas-block-group-chat.c">
@@ -150,6 +174,9 @@
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\hippo-canvas-block-post.c">
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-canvas-block-youtube-person.c">
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\hippo-canvas-block.c">
@@ -206,6 +233,9 @@
 				RelativePath="..\..\common\canvas\hippo\hippo-canvas-text.c">
 			</File>
 			<File
+				RelativePath="..\..\common\hippo\hippo-canvas-thumbnails.c">
+			</File>
+			<File
 				RelativePath="..\..\common\hippo\generated\hippo-canvas-type-builtins.c">
 			</File>
 			<File
@@ -247,6 +277,9 @@
 				RelativePath="..\..\common\canvas\hippo\hippo-event.c">
 			</File>
 			<File
+				RelativePath="..\..\common\hippo\hippo-feed-entry.c">
+			</File>
+			<File
 				RelativePath="..\..\common\hippo\hippo-feed.c">
 			</File>
 			<File
@@ -257,6 +290,9 @@
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\hippo-image-cache.c">
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-jpeg-loader.c">
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\hippo-myspace.c">
@@ -281,6 +317,9 @@
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\hippo-surface.c">
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-thumbnails.c">
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\hippo-track.c">
@@ -309,7 +348,16 @@
 				RelativePath="..\..\common\hippo\hippo-block-blog-person.h">
 			</File>
 			<File
+				RelativePath="..\..\common\hippo\hippo-block-facebook-event.h">
+			</File>
+			<File
 				RelativePath="..\..\common\hippo\hippo-block-facebook-person.h">
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-block-flickr-person.h">
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-block-flickr-photoset.h">
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\hippo-block-group-chat.h">
@@ -324,13 +372,31 @@
 				RelativePath="..\..\common\hippo\hippo-block-post.h">
 			</File>
 			<File
+				RelativePath="..\..\common\hippo\hippo-block-youtube-person.h">
+			</File>
+			<File
 				RelativePath="..\..\common\hippo\hippo-block.h">
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\hippo-canvas-base.h">
 			</File>
 			<File
+				RelativePath="..\..\common\hippo\hippo-canvas-block-blog-person.h">
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-canvas-block-facebook-event.h">
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-canvas-block-flickr-person.h">
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-canvas-block-flickr-photoset.h">
+			</File>
+			<File
 				RelativePath="..\..\common\hippo\hippo-canvas-block-post.h">
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-canvas-block-youtube-person.h">
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\hippo-canvas-block.h">
@@ -390,6 +456,9 @@
 				RelativePath="..\..\common\canvas\hippo\hippo-canvas-text.h">
 			</File>
 			<File
+				RelativePath="..\..\common\hippo\hippo-canvas-thumbnails.h">
+			</File>
+			<File
 				RelativePath="..\..\common\hippo\generated\hippo-canvas-type-builtins.h">
 			</File>
 			<File
@@ -435,6 +504,9 @@
 				RelativePath="..\..\common\canvas\hippo\hippo-event.h">
 			</File>
 			<File
+				RelativePath="..\..\common\hippo\hippo-feed-entry.h">
+			</File>
+			<File
 				RelativePath="..\..\common\hippo\hippo-feed.h">
 			</File>
 			<File
@@ -445,6 +517,9 @@
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\hippo-image-cache.h">
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-jpeg-loader.h">
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\hippo-myspace.h">
@@ -469,6 +544,9 @@
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\hippo-surface.h">
+			</File>
+			<File
+				RelativePath="..\..\common\hippo\hippo-thumbnails.h">
 			</File>
 			<File
 				RelativePath="..\..\common\hippo\hippo-window.h">
