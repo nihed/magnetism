@@ -11,6 +11,7 @@
 #include "hippo-canvas-block-flickr-person.h"
 #include "hippo-canvas-block-youtube-person.h"
 #include "hippo-canvas-block-flickr-photoset.h"
+#include "hippo-canvas-block-facebook-event.h"
 #include "hippo-canvas-entity-photo.h"
 #include "hippo-canvas-entity-name.h"
 #include <hippo/hippo-canvas-box.h>
@@ -285,6 +286,9 @@ hippo_canvas_block_new(HippoBlockType type,
         break;
     case HIPPO_BLOCK_TYPE_FLICKR_PHOTOSET:
         object_type = HIPPO_TYPE_CANVAS_BLOCK_FLICKR_PHOTOSET;
+        break;
+    case HIPPO_BLOCK_TYPE_FACEBOOK_EVENT:
+        object_type = HIPPO_TYPE_CANVAS_BLOCK_FACEBOOK_EVENT;
         break;
     case HIPPO_BLOCK_TYPE_YOUTUBE_PERSON:
         object_type = HIPPO_TYPE_CANVAS_BLOCK_YOUTUBE_PERSON;
