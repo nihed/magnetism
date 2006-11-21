@@ -176,6 +176,8 @@ LIBHIPPO_SOURCEFILES =						\
 	$(COMMONSRCDIR)/hippo/hippo-block-music-person.h	\
 	$(COMMONSRCDIR)/hippo/hippo-block-post.c		\
 	$(COMMONSRCDIR)/hippo/hippo-block-post.h		\
+	$(COMMONSRCDIR)/hippo/hippo-block-youtube-person.c	\
+	$(COMMONSRCDIR)/hippo/hippo-block-youtube-person.h	\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-base.c		\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-base.h		\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-block.c		\
@@ -194,6 +196,8 @@ LIBHIPPO_SOURCEFILES =						\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-block-music-person.h	\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-block-post.c		\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-block-post.h		\
+	$(COMMONSRCDIR)/hippo/hippo-canvas-block-youtube-person.c	\
+	$(COMMONSRCDIR)/hippo/hippo-canvas-block-youtube-person.h	\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-chat-preview.c	\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-chat-preview.h	\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-entity-name.c	\

@@ -28,6 +28,8 @@ static void set_thumbnails (HippoCanvasThumbnails *canvas_thumbnails,
                             HippoThumbnails       *thumbnails);
 static void set_actions    (HippoCanvasThumbnails *canvas_thumbnails,
                             HippoActions          *actions);
+static void set_display_count (HippoCanvasThumbnails *canvas_thumbnails,
+                               int                    count);                            
 
 
 struct _HippoCanvasThumbnails {
@@ -35,6 +37,7 @@ struct _HippoCanvasThumbnails {
 
     HippoActions *actions;
     HippoThumbnails *thumbnails;
+    int display_count;
 };
 
 struct _HippoCanvasThumbnailsClass {
@@ -51,7 +54,8 @@ enum {
 enum {
     PROP_0,
     PROP_THUMBNAILS,
-    PROP_ACTIONS
+    PROP_ACTIONS,
+    PROP_DISPLAY_COUNT
 };
 
 G_DEFINE_TYPE_WITH_CODE(HippoCanvasThumbnails, hippo_canvas_thumbnails, HIPPO_TYPE_CANVAS_BOX,
@@ -60,7 +64,7 @@ G_DEFINE_TYPE_WITH_CODE(HippoCanvasThumbnails, hippo_canvas_thumbnails, HIPPO_TY
 static void
 hippo_canvas_thumbnails_init(HippoCanvasThumbnails *thumbnails)
 {
-
+        thumbnails->display_count = 2; /* default */
 }
 
 static HippoCanvasItemIface *item_parent_class;
@@ -100,6 +104,14 @@ hippo_canvas_thumbnails_class_init(HippoCanvasThumbnailsClass *klass)
                                                         _("The thumbnails to display"),
                                                         HIPPO_TYPE_THUMBNAILS,
                                                         G_PARAM_READABLE | G_PARAM_WRITABLE));
+                                                        
+    g_object_class_install_property(object_class,
+                                    PROP_DISPLAY_COUNT,
+                                    g_param_spec_int("display-count",
+                                                     _("Display Counter"),
+                                                     _("The maxiumum thumbnails to display"),
+                                                      0, G_MAXINT, 2,
+                                                      G_PARAM_READABLE | G_PARAM_WRITABLE));                                                        
 }
 
 static void
@@ -153,6 +165,10 @@ hippo_canvas_thumbnails_set_property(GObject         *object,
             set_actions(thumbnails, actions);
         }
         break;
+    case PROP_DISPLAY_COUNT:
+        {
+                set_display_count(thumbnails, g_value_get_int(value));
+        }
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
         break;
@@ -175,6 +191,9 @@ hippo_canvas_thumbnails_get_property(GObject         *object,
         break;
     case PROP_ACTIONS:
         g_value_set_object(value, thumbnails->actions);
+        break;
+    case PROP_DISPLAY_COUNT:
+        g_value_set_int(value, thumbnails->display_count);
         break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
@@ -207,7 +226,7 @@ hippo_canvas_thumbnails_create_children(HippoCanvasThumbnails *canvas_thumbnails
                               NULL);
     hippo_canvas_box_append(box, HIPPO_CANVAS_ITEM(thumbs_box), 0);
     
-    for (i = 0; i < hippo_thumbnails_get_count(thumbnails); ++i) {
+    for (i = 0; i < hippo_thumbnails_get_count(thumbnails) && i < canvas_thumbnails->display_count; ++i) {
         HippoThumbnail *thumb;
         HippoCanvasBox *thumb_box;
         HippoCanvasItem *image;
@@ -296,4 +315,12 @@ set_actions(HippoCanvasThumbnails *canvas_thumbnails,
     }
 
     g_object_notify(G_OBJECT(canvas_thumbnails), "actions");
+}
+
+static void
+set_display_count(HippoCanvasThumbnails *canvas_thumbnails,
+                                  int                    count)
+{
+        canvas_thumbnails->display_count = count;
+        g_object_notify(G_OBJECT(canvas_thumbnails), "display-count");
 }

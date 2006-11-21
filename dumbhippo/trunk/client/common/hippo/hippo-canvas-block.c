@@ -9,6 +9,7 @@
 #include "hippo-canvas-block-group-member.h"
 #include "hippo-canvas-block-music-person.h"
 #include "hippo-canvas-block-flickr-person.h"
+#include "hippo-canvas-block-youtube-person.h"
 #include "hippo-canvas-block-flickr-photoset.h"
 #include "hippo-canvas-entity-photo.h"
 #include "hippo-canvas-entity-name.h"
@@ -285,6 +286,9 @@ hippo_canvas_block_new(HippoBlockType type,
     case HIPPO_BLOCK_TYPE_FLICKR_PHOTOSET:
         object_type = HIPPO_TYPE_CANVAS_BLOCK_FLICKR_PHOTOSET;
         break;
+    case HIPPO_BLOCK_TYPE_YOUTUBE_PERSON:
+        object_type = HIPPO_TYPE_CANVAS_BLOCK_YOUTUBE_PERSON;
+        break;        
     }
 
     block = g_object_new(object_type,
