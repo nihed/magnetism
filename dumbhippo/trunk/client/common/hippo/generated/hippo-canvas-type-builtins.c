@@ -10,6 +10,7 @@ const GEnumValue _hippo_pack_flags_values[] = {
   { HIPPO_PACK_EXPAND, "HIPPO_PACK_EXPAND", "expand" },
   { HIPPO_PACK_END, "HIPPO_PACK_END", "end" },
   { HIPPO_PACK_FIXED, "HIPPO_PACK_FIXED", "fixed" },
+  { HIPPO_PACK_IF_FITS, "HIPPO_PACK_IF_FITS", "if-fits" },
   { 0, NULL, NULL }
 };
 

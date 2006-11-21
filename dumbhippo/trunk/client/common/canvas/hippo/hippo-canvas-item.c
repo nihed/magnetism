@@ -422,6 +422,12 @@ hippo_canvas_item_process_paint(HippoCanvasItem *canvas_item,
         cairo_save(cr);
         
         cairo_translate(cr, allocation_x, allocation_y);
+
+#if 0
+        hippo_cairo_set_source_rgba32(cr, 0x0000aa27);
+        cairo_rectangle(cr, 0, 0, item_box.width, item_box.height);
+        cairo_fill(cr);
+#endif
         
         g_signal_emit(canvas_item, signals[PAINT], 0, cr, &translated_box);
         

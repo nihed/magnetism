@@ -122,46 +122,59 @@ create_test_box_layout_root(void)
     HippoCanvasItem *text;
     
     box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
-                          "orientation", HIPPO_ORIENTATION_HORIZONTAL,
-                          "border", 4,
-                          "border-color", 0x000000ff,
-                          "padding", 10,
-                          "background-color", 0xffffffff,
-                          NULL);
+                       "orientation", HIPPO_ORIENTATION_HORIZONTAL,
+                       "border", 4,
+                       "border-color", 0x000000ff,
+                       "padding", 10,
+                       "background-color", 0xffffffff,
+                       "spacing", 10,
+                       NULL);
 
     text = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
                         "size-mode", HIPPO_CANVAS_SIZE_ELLIPSIZE_END,
-                        "text", "expand=0 ellipsize=1)",
+                        "text", "expand=0 ellipsize=1",
                         "background-color", 0xffaaaaff,
                         NULL);
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(box), text, 0);
 
     text = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
                         "size-mode", HIPPO_CANVAS_SIZE_ELLIPSIZE_END,
-                        "text", "expand=1 ellipsize=1)",
+                        "text", "expand=1 ellipsize=1",
                         "background-color", 0xaaffaaff,
                         NULL);
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(box), text, HIPPO_PACK_EXPAND);
 
     text = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
-                        "text", "expand=0 ellipsize=0)",
+                        "text", "expand=0 ellipsize=0",
                         "background-color", 0xaaaaffff,
                         NULL);
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(box), text, 0);
 
     text = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
-                        "text", "expand=1 ellipsize=0)",
+                        "text", "expand=1 ellipsize=0",
                         "background-color", 0xaaffffff,
                         NULL);
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(box), text, HIPPO_PACK_EXPAND);
 
     text = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
                         "size-mode", HIPPO_CANVAS_SIZE_ELLIPSIZE_END,
-                        "text", "short ex=0 el=1)",
+                        "text", "short ex=0 el=1",
                         "background-color", 0xffffaaff,
                         NULL);
     hippo_canvas_box_append(HIPPO_CANVAS_BOX(box), text, 0);
 
+    text = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
+                        "text", "expand=1 if_fits=1",
+                        "background-color", 0xaaffaaff,
+                        NULL);
+    hippo_canvas_box_append(HIPPO_CANVAS_BOX(box), text, HIPPO_PACK_EXPAND | HIPPO_PACK_IF_FITS);
+
+    text = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
+                        "text", "expand=0 if_fits=1",
+                        "background-color", 0xffaaffaa,
+                        NULL);
+    hippo_canvas_box_append(HIPPO_CANVAS_BOX(box), text, HIPPO_PACK_IF_FITS);
+    
     return box;
 }
 

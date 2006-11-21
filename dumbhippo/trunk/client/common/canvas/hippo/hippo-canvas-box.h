@@ -11,12 +11,17 @@ typedef struct _HippoCanvasStyleClass HippoCanvasStyleClass;
 
 typedef enum
 {
-    HIPPO_PACK_EXPAND = 1, /* This is equivalent to both EXPAND and FILL for GtkBox,
-                            * the way you'd get FILL=false is to set the alignment
-                            * on the child item
-                            */
+    HIPPO_PACK_EXPAND = 1,  /* This is equivalent to both EXPAND and FILL for GtkBox,
+                             * the way you'd get FILL=false is to set the alignment
+                             * on the child item
+                             */
     HIPPO_PACK_END = 2,
-    HIPPO_PACK_FIXED = 4  /* Like position: absolute or GtkFixed */
+    HIPPO_PACK_FIXED = 4,   /* Like position: absolute or GtkFixed */
+    HIPPO_PACK_IF_FITS = 8  /* Can hide this child to make space if allocation is too small
+                             * for the child's width request. 
+                             * Include child width in box's natural width but not box's request.
+                             * (doesn't work in vertical boxes for now)
+                             */
 } HippoPackFlags;
 
 typedef enum {

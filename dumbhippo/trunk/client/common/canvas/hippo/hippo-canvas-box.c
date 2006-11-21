@@ -5,6 +5,11 @@
 #include "hippo-canvas-box.h"
 #include "hippo-canvas-style.h"
 
+typedef struct {
+    int adjustment;
+    unsigned int does_not_fit : 1;
+} AdjustInfo;
+
 static void hippo_canvas_box_init               (HippoCanvasBox          *box);
 static void hippo_canvas_box_class_init         (HippoCanvasBoxClass     *klass);
 static void hippo_canvas_box_iface_init         (HippoCanvasItemIface    *klass);
@@ -104,6 +109,7 @@ typedef struct {
     guint            expand : 1;
     guint            end : 1;
     guint            fixed : 1;
+    guint            if_fits : 1;
     guint            hovering : 1;
     guint            visible : 1;
     guint            requesting : 1; /* used to detect bugs */
@@ -1195,15 +1201,21 @@ get_content_area(HippoCanvasBox *box,
 }
 
 static int
-count_expandable(GSList *children)
+count_width_expandable_children(GSList     *children,
+                                AdjustInfo *adjusts)
 {
     int count;
+    int i;
     GSList *link;
     count = 0;
+    i = 0;
     for (link = children; link != NULL; link = link->next) {
         HippoBoxChild *child = link->data;
-        if (child->visible && child->expand && !child->fixed)
+        if (child->visible && child->expand && !child->fixed &&
+            (!child->if_fits || !adjusts[i].does_not_fit))
             ++count;
+
+        ++i;
     }
     return count;
 }
@@ -1214,7 +1226,15 @@ count_height_expandable_children(HippoCanvasBox *box)
     if (box->orientation == HIPPO_ORIENTATION_HORIZONTAL) {
         return 0;
     } else {
-        return count_expandable(box->children);
+        int count;
+        GSList *link;
+        count = 0;
+        for (link = box->children; link != NULL; link = link->next) {
+            HippoBoxChild *child = link->data;
+            if (child->visible && child->expand && !child->fixed)
+                ++count;
+        }
+        return count;
     }
 }
 
@@ -1260,11 +1280,14 @@ hippo_canvas_box_get_content_width_request(HippoCanvasBox *box)
         HippoBoxChild *child = link->data;
 
         /* Note that we still request and allocate !visible children,
-         * but we allocate them 0x0
+         * but we allocate them 0x0. PACK_IF_FITS children are
+         * do not contribute to the min size of the whole box,
+         * but do contribute to natural size, and will be hidden
+         * entirely if their width request does not fit.
          */
         width_request_child(child);
  
-        if (child->fixed || !child->visible)
+        if (child->fixed || !child->visible || child->if_fits)
             continue;
         
         n_children += 1;
@@ -1310,8 +1333,10 @@ hippo_canvas_box_get_content_natural_width(HippoCanvasBox *box)
             continue;
 
         n_children += 1;
-        
-        if (child->natural_width != child->width_request)
+
+        /* PACK_IF_FITS children contribute a width request of 0 but contribute their natural width */
+        if (child->natural_width != child->width_request ||
+            (child->natural_width != 0 && child->if_fits))
             just_use_request = FALSE;
 
         if (box->orientation == HIPPO_ORIENTATION_VERTICAL)
@@ -1333,6 +1358,20 @@ hippo_canvas_box_get_content_natural_width(HippoCanvasBox *box)
         return total;
 }
 
+static int
+box_child_get_adjusted_width_request(HippoBoxChild   *child,
+                                     AdjustInfo      *adjust)
+{
+    return child->width_request + adjust->adjustment;
+}
+
+static AdjustInfo*
+adjust_infos_new(int count)
+{
+    /* we rely on the new0 to allocate 0 adjustments */
+    return g_new0(AdjustInfo, count);
+}
+
 /*
  If we have an allocation larger than our request (min width), we 
  distribute the space among children as follows:
@@ -1349,13 +1388,19 @@ hippo_canvas_box_get_content_natural_width(HippoCanvasBox *box)
  or not. Below-natural-size children always grow before expand=true children.
 
  Various optimizations are obviously possible here (keep track of flags for whether
- we have any expandable / any natural!=minimum, for example)
+ we have any expandable / any natural!=minimum, for example).
+
+ The PACK_IF_FITS children are done in a second pass after other children,
+ the if_fits flag indicates which pass this is. If if_fits=TRUE we need
+ to skip if_fits children that did not fit.
+ 
 */
 /* return TRUE if it needs to run again */
 static gboolean
-adjust_widths_up_to_natural_size(GSList *children,
-                                 int    *remaining_extra_space_p,
-                                 int    *adjusts)
+adjust_widths_up_to_natural_size(GSList     *children,
+                                 int        *remaining_extra_space_p,
+                                 AdjustInfo *adjusts,
+                                 gboolean    if_fits)
 {
     int i;
     GSList *link;
@@ -1374,10 +1419,19 @@ adjust_widths_up_to_natural_size(GSList *children,
     for (link = children; link != NULL; link = link->next) {
         HippoBoxChild *child = link->data;
 
-        if (!child->fixed && child->visible) {
+        if (!child->fixed && child->visible &&
+            ((!child->if_fits && !if_fits) ||
+             (child->if_fits && if_fits && !adjusts[i].does_not_fit))) {
             int needed_increase;
+
+            g_assert(adjusts[i].adjustment >= 0);
+            
             needed_increase = child->natural_width - child->width_request; /* guaranteed to be >= 0 */
-            needed_increase -= adjusts[i]; /* see how much we've already increased */
+
+            g_assert(needed_increase >= 0);
+            
+            needed_increase -= adjusts[i].adjustment; /* see how much we've already increased */
+
             if (needed_increase > 0) {
                 n_needing_increase += 1;
                 smallest_increase = MIN(smallest_increase, needed_increase);
@@ -1393,22 +1447,35 @@ adjust_widths_up_to_natural_size(GSList *children,
     g_assert(smallest_increase < G_MAXINT);
 
     space_to_distribute = MIN(*remaining_extra_space_p, smallest_increase * n_needing_increase);
+
+    g_assert(space_to_distribute >= 0);
+    g_assert(space_to_distribute <= *remaining_extra_space_p);
+    
     *remaining_extra_space_p -= space_to_distribute;
 
     i = 0;
     for (link = children; link != NULL; link = link->next) {
         HippoBoxChild *child = link->data;
 
-        if (!child->fixed && child->visible) {
+        if (!child->fixed && child->visible &&
+            ((!child->if_fits && !if_fits) ||
+             (child->if_fits && if_fits && !adjusts[i].does_not_fit))) {
             int needed_increase;
+
+            g_assert(adjusts[i].adjustment >= 0);
+            
             needed_increase = child->natural_width - child->width_request; /* guaranteed to be >= 0 */
-            needed_increase -= adjusts[i]; /* see how much we've already increased */
+
+            g_assert(needed_increase >= 0);
+            
+            needed_increase -= adjusts[i].adjustment; /* see how much we've already increased */
+            
             if (needed_increase > 0) {
                 int extra;
                 extra = (space_to_distribute / n_needing_increase);
                 n_needing_increase -= 1;
                 space_to_distribute -= extra;
-                adjusts[i] += extra;
+                adjusts[i].adjustment += extra;
             }
         }
 
@@ -1422,17 +1489,20 @@ adjust_widths_up_to_natural_size(GSList *children,
 }
 
 static void
-adjust_widths_for_expandable(GSList *children,
-                             int    *remaining_extra_space_p,
-                             int    *adjusts)
+adjust_widths_for_expandable(GSList        *children,
+                             int           *remaining_extra_space_p,
+                             AdjustInfo    *adjusts)
 {
     int i;
     GSList *link;
     int horizontal_expand_space;
     int horizontal_expand_count;
 
+    if (*remaining_extra_space_p == 0)
+        return;
+    
     horizontal_expand_space = *remaining_extra_space_p;
-    horizontal_expand_count = count_expandable(children);
+    horizontal_expand_count = count_width_expandable_children(children, adjusts);
 
     if (horizontal_expand_count == 0)
         return;
@@ -1441,12 +1511,12 @@ adjust_widths_for_expandable(GSList *children,
     for (link = children; link != NULL; link = link->next) {
         HippoBoxChild *child = link->data;
 
-        if (child->expand) {
+        if (child->expand && !adjusts[i].does_not_fit) {
             int extra;
             extra = (horizontal_expand_space / horizontal_expand_count);
             horizontal_expand_count -= 1;
             horizontal_expand_space -= extra;
-            adjusts[i] += extra;
+            adjusts[i].adjustment += extra;
         }
         ++i;
     }
@@ -1459,12 +1529,82 @@ adjust_widths_for_expandable(GSList *children,
 }
 
 static void
-compute_width_adjusts(GSList  *children,
-                      int      children_length,
-                      int      alloc_request_delta,
-                      int    **adjusts_p)
+adjust_if_fits_as_not_fitting(GSList      *children,
+                              AdjustInfo  *adjusts)
 {
-    int *adjusts;
+    int i;
+    GSList *link;
+
+    i = 0;
+    for (link = children; link != NULL; link = link->next) {
+        HippoBoxChild *child = link->data;
+
+        if (child->if_fits) {
+            adjusts[i].adjustment -= child->width_request;
+            adjusts[i].does_not_fit = TRUE;
+        }
+        ++i;
+    }
+}
+
+static gboolean
+adjust_one_if_fits(GSList     *children,
+                   int         spacing,
+                   int        *remaining_extra_space_p,
+                   AdjustInfo *adjusts)
+{
+    int i;
+    GSList *link;
+    int spacing_delta;
+    
+    if (*remaining_extra_space_p == 0)
+        return FALSE;
+
+    /* if only one child, then adding an if-fits child won't add
+     * another spacing
+     */
+    spacing_delta = (children && children->next == NULL) ? 0 : spacing;
+    
+    i = 0;
+    for (link = children; link != NULL; link = link->next) {
+        HippoBoxChild *child = link->data;
+
+        if (adjusts[i].does_not_fit) {
+            /* This child was adjusted downward, see if we can pop it visible
+             * (picking the smallest instead of first if-fits child on each pass
+             * might be nice, but for now it's the first that fits)
+             */
+
+            if ((child->width_request + spacing_delta) < *remaining_extra_space_p) {
+                adjusts[i].adjustment += child->width_request;
+
+                g_assert(adjusts[i].adjustment >= 0);
+                
+                adjusts[i].does_not_fit = FALSE;
+                *remaining_extra_space_p -= (child->width_request + spacing_delta);
+
+                g_assert(*remaining_extra_space_p >= 0);
+                
+                return TRUE;
+            }
+        }
+        ++i;
+    }
+
+    return FALSE;
+}
+
+/* this doesn't take a CanvasBox arg because it can be run in multiple contexts
+ * and it's important not to store the compute-adjusts state globally in the box
+ */
+static void
+compute_width_adjusts(GSList      *children,
+                      int          children_length,
+                      int          spacing,
+                      int          alloc_request_delta,
+                      AdjustInfo **adjusts_p)
+{
+    AdjustInfo *adjusts;
     int remaining_extra_space;
 
     if (children == NULL) {
@@ -1472,22 +1612,39 @@ compute_width_adjusts(GSList  *children,
         return;
     }
 
-    adjusts = g_new0(int, children_length);
+    adjusts = adjust_infos_new(children_length);
     *adjusts_p = adjusts;
 
+    /* Go ahead and cram all PACK_IF_FITS children to zero width,
+     * we'll expand them again if we can.
+     */
+    adjust_if_fits_as_not_fitting(children, adjusts);
+    
     /* Make no adjustments if we got too little or just right space.
      * (FIXME handle too little space better)
      */
     if (alloc_request_delta <= 0) {
         return;
     }
-
+    
     remaining_extra_space = alloc_request_delta;
-    while (adjust_widths_up_to_natural_size(children, &remaining_extra_space, adjusts))
+
+    /* adjust non-PACK_IF_FITS up to natural size */
+    while (adjust_widths_up_to_natural_size(children, &remaining_extra_space, adjusts, FALSE))
         ;
+
+    /* see if any PACK_IF_FITS can get their minimum size */
+    while (adjust_one_if_fits(children, spacing, &remaining_extra_space, adjusts))
+        ;
+
+    /* if so, then see if they can also get a natural size */
+    while (adjust_widths_up_to_natural_size(children, &remaining_extra_space, adjusts, TRUE))
+        ;
+    
+    /* and finally we can expand to fill empty space */
     adjust_widths_for_expandable(children, &remaining_extra_space, adjusts);
 
-    // remaining_extra_space need not be 0, if we had no expandable children
+    /* remaining_extra_space need not be 0, if we had no expandable children */
 }
 
 static void
@@ -1555,7 +1712,7 @@ hippo_canvas_box_get_content_height_request(HippoCanvasBox *box,
         HippoCanvasBoxClass *klass;
         int requested_content_width;
         int allocated_content_width;
-        int *width_adjusts;
+        AdjustInfo *width_adjusts;
         int i;
 
         /* Note that this algorithm must be kept in sync with the one in allocate() */
@@ -1569,6 +1726,7 @@ hippo_canvas_box_get_content_height_request(HippoCanvasBox *box,
 
         compute_width_adjusts(box->children,
                               g_slist_length(box->children),
+                              box->spacing,
                               allocated_content_width - requested_content_width,
                               &width_adjusts);
 
@@ -1584,7 +1742,7 @@ hippo_canvas_box_get_content_height_request(HippoCanvasBox *box,
 
             g_assert(child->width_request >= 0);
 
-            req = child->width_request + width_adjusts[i];
+            req = box_child_get_adjusted_width_request(child, &width_adjusts[i]);
 
             height_request_child(child, req);
 
@@ -1824,11 +1982,12 @@ hippo_canvas_box_allocate(HippoCanvasItem *item,
     } else {
         int left_x;
         int right_x;
-        int *width_adjusts;
+        AdjustInfo *width_adjusts;
         int i;
 
         compute_width_adjusts(box->children,
                               g_slist_length(box->children),
+                              box->spacing,
                               allocated_content_width - requested_content_width,
                               &width_adjusts);
 
@@ -1844,18 +2003,27 @@ hippo_canvas_box_allocate(HippoCanvasItem *item,
                 continue;
             }
             
-            req = child->width_request + width_adjusts[i];
+            req = box_child_get_adjusted_width_request(child, &width_adjusts[i]);
 
-            child->x = child->end ? (right_x - req) : left_x;
-            child->y = content_y;
-            hippo_canvas_item_allocate(child->item,
-                                       req,
-                                       allocated_content_height);
-            if (child->end)
-                right_x -= (req + box->spacing);
-            else
-                left_x += (req + box->spacing);
-
+            if (req > 0) {
+                child->x = child->end ? (right_x - req) : left_x;
+                child->y = content_y;
+                hippo_canvas_item_allocate(child->item,
+                                           req,
+                                           allocated_content_height);
+                if (child->end)
+                    right_x -= (req + box->spacing);
+                else
+                    left_x += (req + box->spacing);
+            } else {
+                /* Child was adjusted out of existence, act like it's
+                 * !visible
+                 */
+                child->x = 0;
+                child->y = 0;
+                hippo_canvas_item_allocate(child->item, 0, 0);
+            }
+            
             ++i;
         }
         g_free(width_adjusts);
@@ -2255,14 +2423,17 @@ set_flags(HippoBoxChild *c,
         old |= HIPPO_PACK_EXPAND;
     if (c->fixed)
         old |= HIPPO_PACK_FIXED;
-
+    if (c->if_fits)
+        old |= HIPPO_PACK_IF_FITS;
+    
     if (old == flags)
         return FALSE; /* no change */
 
     c->expand = (flags & HIPPO_PACK_EXPAND) != 0;
     c->end = (flags & HIPPO_PACK_END) != 0;
     c->fixed = (flags & HIPPO_PACK_FIXED) != 0;
-
+    c->if_fits = (flags & HIPPO_PACK_IF_FITS) != 0;
+    
     return TRUE;
 }
 
