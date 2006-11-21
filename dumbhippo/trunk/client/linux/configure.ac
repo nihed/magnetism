@@ -6,7 +6,7 @@ AC_CONFIG_AUX_DIR(config)
 
 AC_CANONICAL_TARGET
 
-AM_INIT_AUTOMAKE(mugshot, 1.1.24)
+AM_INIT_AUTOMAKE(mugshot, 1.1.25)
 
 AM_CONFIG_HEADER(config/config.h)
 
@@ -240,8 +240,8 @@ GLIB2_REQUIRED=2.6.0
 GTK2_REQUIRED=2.6.0
 LOUDMOUTH_REQUIRED=1.0
 # unfortunately this breaks us on FC4
-DBUS_REQUIRED=0.61
-DBUS_GLIB_REQUIRED=0.61
+DBUS_REQUIRED=0.60
+DBUS_GLIB_REQUIRED=0.60
 # earlier might work, but this is what's been tested
 CURL_REQUIRED=7.13.1
 
@@ -279,20 +279,47 @@ else
     fi
 fi
 
-AC_CHECK_HEADERS([X11/extensions/scrnsaver.h])
-AC_CHECK_LIB(Xss, XScreenSaverQueryExtension, have_xscreensaver=true, have_xscreensaver=false, -lX11 -lXext)
+XSCREENSAVER_PACKAGES=""
+XSCREENSAVER_LIBS=""
+XSCREENSAVER_CFLAGS=""
 
-if ! $have_xscreensaver ; then
-    AC_MSG_ERROR([XScreenSaver extension is required - X11/extensions/scnsaver.h, libXss.so])
+# First check to see if we have a .pc file for the xscreensaver extensio
+PKG_CHECK_EXISTS(xscrnsaver, have_xscreensaver=true, have_xscreensaver=false)
+if $have_xscreensaver ; then
+    XSCREENSAVER_PACKAGES="xscrnsaver"
+else
+    # No, check the old way
+    AC_PATH_XTRA
+    if test "x$no_x" = xyes ; then
+        AC_MSG_ERROR([Can't find path to the X development files])
+    fi
+
+    hippo_save_CPPFLAGS="$CPPFLAGS"
+    CPPFLAGS="$CPPFLAGS $X_CFLAGS"
+
+    hippo_save_LIBS="$LIBS"
+    LIBS="$X_LIBS $LIBS"
+
+    have_xscreensaver=true
+    AC_CHECK_HEADERS([X11/extensions/scrnsaver.h], :, [have_xscreensaver=false])
+    AC_CHECK_LIB(Xss, XScreenSaverQueryExtension, :, [have_xscreensaver=false], -lXext -lX11 $X_EXTRA_LIBS)
+
+    CFLAGS="$hippo_save_CFLAGS"
+    LIBS="$hippo_save_LIBS"
+
+    if ! $have_xscreensaver ; then
+        AC_MSG_ERROR([XScreenSaver extension is required - X11/extensions/scnsaver.h, libXss.so])
+    fi
+    XSCREENSAVER_LIBS="-lXss -lXext -lX11 $X_EXTRA_LIBS"
+    XSCREENSAVER_CFLAGS="$X_CFLAGS"
 fi
-XSCREENSAVER_LIBS=-lXss
 
 PKG_CHECK_MODULES(LIBHIPPO, gobject-2.0 >= $GLIB2_REQUIRED gthread-2.0 loudmouth-1.0 >= $LOUDMOUTH_REQUIRED cairo pango)
 PKG_CHECK_MODULES(LIBHIPPOIPC, gobject-2.0 dbus-1 >= $DBUS_REQUIRED dbus-glib-1 >= $DBUS_REQUIRED)
 PKG_CHECK_MODULES(LIBGTKCOPY, gtk+-2.0 >= $GTK2_REQUIRED gtk+-x11-2.0)
-PKG_CHECK_MODULES(MUGSHOT_BASE, gtk+-2.0 >= $GTK2_REQUIRED gthread-2.0 loudmouth-1.0 >= $LOUDMOUTH_REQUIRED dbus-1 >= $DBUS_REQUIRED dbus-glib-1 >= $DBUS_GLIB_REQUIRED)
+PKG_CHECK_MODULES(MUGSHOT_BASE, gtk+-2.0 >= $GTK2_REQUIRED gthread-2.0 loudmouth-1.0 >= $LOUDMOUTH_REQUIRED dbus-1 >= $DBUS_REQUIRED dbus-glib-1 >= $DBUS_GLIB_REQUIRED $XSCREENSAVER_PACKAGES)
 MUGSHOT_LIBS="$MUGSHOT_BASE_LIBS $CURL_LIBS $XSCREENSAVER_LIBS $JPEG_LIBS"
-MUGSHOT_CFLAGS="$MUGSHOT_BASE_CFLAGS $CURL_CFLAGS"
+MUGSHOT_CFLAGS="$MUGSHOT_BASE_CFLAGS $CURL_CFLAGS $XSCREENSAVER_CFLAGS"
 AC_SUBST(MUGSHOT_LIBS)
 AC_SUBST(MUGSHOT_CFLAGS)
 PKG_CHECK_MODULES(MUGSHOT_URI_HANDLER, gtk+-2.0 >= $GTK2_REQUIRED gthread-2.0 dbus-1 >= $DBUS_REQUIRED)
