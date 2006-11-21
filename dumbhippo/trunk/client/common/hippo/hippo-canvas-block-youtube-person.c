@@ -186,7 +186,7 @@ hippo_canvas_block_youtube_person_constructor (GType                  type,
                      NULL);
 
     hippo_canvas_box_append(block_youtube_person->thumbnails_parent,
-                            block_youtube_person->thumbnails, 0);
+                            block_youtube_person->thumbnails, HIPPO_PACK_EXPAND);
 
     hippo_canvas_box_set_child_visible(block_youtube_person->thumbnails_parent,
                                        block_youtube_person->thumbnails,

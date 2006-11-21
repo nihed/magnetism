@@ -186,7 +186,7 @@ hippo_canvas_block_facebook_event_constructor (GType                  type,
                      NULL);
 
     hippo_canvas_box_append(block_facebook_event->thumbnails_parent,
-                            block_facebook_event->thumbnails, 0);
+                            block_facebook_event->thumbnails, HIPPO_PACK_EXPAND);
 
     hippo_canvas_box_set_child_visible(block_facebook_event->thumbnails_parent,
                                        block_facebook_event->thumbnails,

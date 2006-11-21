@@ -186,7 +186,7 @@ hippo_canvas_block_flickr_photoset_constructor (GType                  type,
                      NULL);
 
     hippo_canvas_box_append(block_flickr_photoset->thumbnails_parent,
-                            block_flickr_photoset->thumbnails, 0);
+                            block_flickr_photoset->thumbnails, HIPPO_PACK_EXPAND);
 
     hippo_canvas_box_set_child_visible(block_flickr_photoset->thumbnails_parent,
                                        block_flickr_photoset->thumbnails,

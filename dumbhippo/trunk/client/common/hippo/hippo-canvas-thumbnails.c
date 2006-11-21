@@ -224,7 +224,7 @@ hippo_canvas_thumbnails_create_children(HippoCanvasThumbnails *canvas_thumbnails
                               "spacing", 8,
                               "border", 8,
                               NULL);
-    hippo_canvas_box_append(box, HIPPO_CANVAS_ITEM(thumbs_box), 0);
+    hippo_canvas_box_append(box, HIPPO_CANVAS_ITEM(thumbs_box), HIPPO_PACK_EXPAND);
     
     for (i = 0; i < hippo_thumbnails_get_count(thumbnails) && i < canvas_thumbnails->display_count; ++i) {
         HippoThumbnail *thumb;
@@ -236,17 +236,18 @@ hippo_canvas_thumbnails_create_children(HippoCanvasThumbnails *canvas_thumbnails
         
         thumb_box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
                                  "spacing", 4,
-                                 "xalign", HIPPO_ALIGNMENT_START,
                                  NULL);
 
         /* FIXME hook up clicking on the image */
         image = g_object_new(HIPPO_TYPE_CANVAS_IMAGE,
                              /* "tooltip", hippo_thumbnail_get_title(thumb), */
+                             "xalign", HIPPO_ALIGNMENT_CENTER,
+                             "yalign", HIPPO_ALIGNMENT_CENTER,
                              NULL);
         hippo_actions_load_thumbnail_async(canvas_thumbnails->actions,
                                            hippo_thumbnail_get_src(thumb),
                                            image);
-        hippo_canvas_box_append(thumb_box, image, 0);
+        hippo_canvas_box_append(thumb_box, image, HIPPO_PACK_EXPAND);
 
         caption = g_object_new(HIPPO_TYPE_CANVAS_URL_LINK,
                                "actions", canvas_thumbnails->actions,
@@ -256,11 +257,11 @@ hippo_canvas_thumbnails_create_children(HippoCanvasThumbnails *canvas_thumbnails
                                "yalign", HIPPO_ALIGNMENT_END,
                                "size-mode", HIPPO_CANVAS_SIZE_ELLIPSIZE_END,
                                NULL);
-        hippo_canvas_box_append(thumb_box, caption, 0);
+        hippo_canvas_box_append(thumb_box, caption, HIPPO_PACK_EXPAND);
 
         hippo_canvas_box_append(thumbs_box,
                                 HIPPO_CANVAS_ITEM(thumb_box),
-                                0);
+                                HIPPO_PACK_EXPAND);
     }
 
     more_link = g_object_new(HIPPO_TYPE_CANVAS_URL_LINK,
