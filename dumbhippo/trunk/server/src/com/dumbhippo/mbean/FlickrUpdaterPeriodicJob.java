@@ -16,7 +16,7 @@ public class FlickrUpdaterPeriodicJob implements PeriodicJob {
 	@SuppressWarnings("unused")
 	private static final Logger logger = GlobalSetup.getLogger(FlickrUpdaterPeriodicJob.class);	
 	
-	public static final long FLICKR_POLL_FREQUENCY = 1000 * 60 * 15; // 15 minutes
+	public static final long FLICKR_POLL_FREQUENCY = 1000 * 60 * 13; // 13 minutes, prime number not used elsewhere
 	
 	public long getFrequencyInMilliseconds() {
 		return FLICKR_POLL_FREQUENCY;
@@ -48,7 +48,7 @@ public class FlickrUpdaterPeriodicJob implements PeriodicJob {
 		
 		logger.debug("FlickrUpdater slept " + sleepTime / 1000.0 + " seconds, and now has " + flickrUserIds.size() + " users to poll, iteration " + iteration);
 		
-		ExecutorService threadPool = ThreadUtils.newCachedThreadPool("flickr updater " + generation + " " + iteration);
+		ExecutorService threadPool = ThreadUtils.newFixedThreadPool("flickr updater " + generation + " " + iteration, 10);
 
 		for (final String flickrId : flickrUserIds) {
 			threadPool.execute(new FlickrUserUpdateTask(flickrId));
@@ -57,13 +57,17 @@ public class FlickrUpdaterPeriodicJob implements PeriodicJob {
 		// tell thread pool to terminate once all tasks are run.
 		threadPool.shutdown();
 		
+		logger.debug("Waiting for FlickrUpdater to terminate");
+		
 		// The idea is to avoid "piling up" (only have one thread pool
 		// doing anything at a time). There's a timeout here 
 		// though and if it expired we would indeed pile up.
 		// This throws InterruptedException which would cause the periodic update thread to shut down.
 		if (!threadPool.awaitTermination(60 * 30, TimeUnit.SECONDS)) {
 			logger.warn("flickr updater thread pool timed out; some updater thread is still live and we're continuing anyway");
-		}		
+		}
+		
+		logger.debug("FlickrUpdater complete");
 	}
 
 	// keep this short/one-wordish since it's in all the log messages

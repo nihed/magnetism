@@ -8,8 +8,6 @@ import java.util.Set;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
 import org.slf4j.Logger;
@@ -41,9 +39,6 @@ public class FlickrUpdaterBean extends CachedExternalUpdaterBean<FlickrUpdateSta
 	@SuppressWarnings("unused")
 	private static final Logger logger = GlobalSetup.getLogger(FlickrUpdaterBean.class);
 	
-	@PersistenceContext(unitName = "dumbhippo")
-	private EntityManager em; 	
-	
 	@EJB
 	private Configuration config;
 	
@@ -59,6 +54,7 @@ public class FlickrUpdaterBean extends CachedExternalUpdaterBean<FlickrUpdateSta
 	@EJB
 	private Notifier notifier;
 	
+	@Override
 	public Query getCachedStatusQuery(String flickrId) {
 		Query q = em.createQuery("SELECT updateStatus FROM FlickrUpdateStatus updateStatus " +
 				"WHERE updateStatus.flickrId = :flickrId");
@@ -81,6 +77,7 @@ public class FlickrUpdaterBean extends CachedExternalUpdaterBean<FlickrUpdateSta
 		return TypeUtils.castList(FlickrPhotosetStatus.class, q.getResultList());
 	}
 	
+	@Override
 	public void doPeriodicUpdate(String flickrId) {
 		FlickrWebServices ws = new FlickrWebServices(5000, config);
 		

@@ -35,7 +35,7 @@ public class FacebookTrackerPeriodicJob implements PeriodicJob {
 				     + facebookAccounts.size() + " facebook accounts to check, iteration " 
 				     + iteration);
 		
-		ExecutorService threadPool = ThreadUtils.newCachedThreadPool("facebook fetcher " + generation + " " + iteration);
+		ExecutorService threadPool = ThreadUtils.newFixedThreadPool("facebook fetcher " + generation + " " + iteration, 10);
 		for (final FacebookAccount facebookAccount : facebookAccounts) {
 		    threadPool.execute(new Runnable() {
 				public void run() {
@@ -65,12 +65,16 @@ public class FacebookTrackerPeriodicJob implements PeriodicJob {
 		// tell thread pool to terminate once all tasks are run.
 		threadPool.shutdown();
 		
+		logger.debug("Waiting for FacebookUpdater to terminate");
+		
 		// The idea is to avoid "piling up" (only have one thread pool
 		// doing anything at a time). There's a timeout here 
 		// though and if it expired we would indeed pile up.
 		if (!threadPool.awaitTermination(60 * 30, TimeUnit.SECONDS)) {
 			logger.warn("FacebookUpdater thread pool timed out; some updater thread is still live and we're continuing anyway");
 		}
+		
+		logger.debug("FacebookUpdater complete");
 	}
 
 	public String getName() {

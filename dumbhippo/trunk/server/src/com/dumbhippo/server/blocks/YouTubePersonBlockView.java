@@ -16,10 +16,12 @@ public class YouTubePersonBlockView extends ExternalThumbnailedPersonBlockView {
 		super(viewpoint, block, gbd, participated);
 	}
 	
+	@Override
 	public ExternalAccountType getAccountType() {
 		return ExternalAccountType.YOUTUBE;
 	}
 
+	@Override
 	public String getTitle() {
 		return "New videos posted";
 	}

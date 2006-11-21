@@ -96,6 +96,9 @@ public abstract class BlockView implements ObjectView {
 	}
 	
 	public void writeToXmlBuilder(XmlBuilder builder) {
+		if (!isPopulated())
+			throw new RuntimeException("Attempt to write blockview to xml without populating it: " + this);
+		
 		// FIXME: We really shouldn't include clickedCount/significantClickedCount
 		//   to all blocks; they only make sense for posts, but the XmlBuilder
 		//   API makes that painful.

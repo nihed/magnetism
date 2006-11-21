@@ -6,8 +6,6 @@ import java.util.Set;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
 import org.slf4j.Logger;
@@ -29,9 +27,6 @@ public class YouTubeUpdaterBean extends CachedExternalUpdaterBean<YouTubeUpdateS
 
 	@SuppressWarnings("unused")
 	private static final Logger logger = GlobalSetup.getLogger(YouTubeUpdaterBean.class);
-	
-	@PersistenceContext(unitName = "dumbhippo")
-	private EntityManager em; 	
 
 	@EJB
 	private YouTubeVideosCache videosCache;
@@ -46,7 +41,8 @@ public class YouTubeUpdaterBean extends CachedExternalUpdaterBean<YouTubeUpdateS
 	public Collection<User> getUsersWhoLoveYouTubeAccount(String username) {
 		return getAccountLovers(username);
 	}	
-	
+
+	@Override
 	public void doPeriodicUpdate(String username) {
 		EJBUtil.assertNoTransaction();
 		YouTubeUpdater proxy = EJBUtil.defaultLookup(YouTubeUpdater.class);

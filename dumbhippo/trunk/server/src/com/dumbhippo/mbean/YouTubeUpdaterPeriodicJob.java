@@ -16,7 +16,7 @@ public class YouTubeUpdaterPeriodicJob implements PeriodicJob {
 	@SuppressWarnings("unused")
 	private static final Logger logger = GlobalSetup.getLogger(YouTubeUpdaterPeriodicJob.class);	
 	
-	public static final long YOUTUBE_POLL_FREQUENCY = 1000 * 60 * 10; // 10 minutes, matches feed system
+	public static final long YOUTUBE_POLL_FREQUENCY = 1000 * 60 * 17; // 17 minutes, prime number not used elsewhere
 	
 	public long getFrequencyInMilliseconds() {
 		return YOUTUBE_POLL_FREQUENCY;
@@ -44,7 +44,7 @@ public class YouTubeUpdaterPeriodicJob implements PeriodicJob {
 		
 		logger.debug("YouTubeUpdater slept " + sleepTime / 1000.0 + " seconds, and now has " + usernames.size() + " users to poll, iteration " + iteration);
 		
-		ExecutorService threadPool = ThreadUtils.newCachedThreadPool("YouTube updater " + generation + " " + iteration);
+		ExecutorService threadPool = ThreadUtils.newFixedThreadPool("YouTube updater " + generation + " " + iteration, 10);
 
 		for (final String username : usernames) {
 			threadPool.execute(new YouTubeUserUpdateTask(username));
@@ -53,13 +53,17 @@ public class YouTubeUpdaterPeriodicJob implements PeriodicJob {
 		// tell thread pool to terminate once all tasks are run.
 		threadPool.shutdown();
 		
+		logger.debug("Waiting for YouTubeUpdater to terminate");
+		
 		// The idea is to avoid "piling up" (only have one thread pool
 		// doing anything at a time). There's a timeout here 
 		// though and if it expired we would indeed pile up.
 		// This throws InterruptedException which would cause the periodic update thread to shut down.
 		if (!threadPool.awaitTermination(60 * 30, TimeUnit.SECONDS)) {
 			logger.warn("YouTube updater thread pool timed out; some updater thread is still live and we're continuing anyway");
-		}		
+		}
+		
+		logger.debug("YouTubeUpdater complete");
 	}
 
 	// keep this short/one-wordish since it's in all the log messages

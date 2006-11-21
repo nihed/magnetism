@@ -30,6 +30,8 @@ public abstract class AbstractPersonBlockView extends BlockView {
 	 * @param userView
 	 */
 	protected void partiallyPopulate(PersonView userView) {
+		if (userView == null)
+			throw new IllegalArgumentException("populating block view with null user view");
 		this.userView = userView;
 	}
 	
@@ -50,6 +52,8 @@ public abstract class AbstractPersonBlockView extends BlockView {
 	}
 
 	public List<Object> getReferencedObjects() {
+		if (!isPopulated())
+			throw new IllegalStateException("BlockView not populated yet, can't get referenced objects");		
 		return Collections.singletonList((Object)userView);
 	}
 }
