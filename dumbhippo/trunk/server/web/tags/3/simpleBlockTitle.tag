@@ -8,6 +8,7 @@
 <%@ attribute name="homeStack" required="true" type="java.lang.Boolean" %>
 <%@ attribute name="spanClass" required="false" type="java.lang.String" %>
 <%@ attribute name="linkClass" required="false" type="java.lang.String" %>
+<%@ attribute name="image" required="false" type="java.lang.String" %>
 
 <c:if test="${empty linkClass}">
 	<c:set var="linkClass" value="dh-underlined-link" scope="page"/>
@@ -20,7 +21,10 @@
 <dht3:blockTitle>
     <c:if test="${!oneLine}"> 
 	    <span class="dh-stacker-block-title-type"><c:out value="${block.typeTitle}"/>:</span>
-	</c:if>    	
+	</c:if>
+	<c:if test="${!empty image}">
+	    <dh:png klass="dh-stacker-block-title-image" src="${image}" style="width: 12; height: 14; border: none;"/>
+	</c:if>
 	<span class="${spanClass}">
 		<jsp:element name="a">
 			<jsp:attribute name="class">${linkClass}</jsp:attribute>

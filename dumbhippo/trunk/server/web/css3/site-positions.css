@@ -282,6 +282,11 @@ div.dh-notification {
 	margin-left:		3px;
 }
  
+ .dh-stacker-block-title-image {
+    position:           relative;
+    top:                1px;    
+ }
+ 
 .dh-stacker-block-bottom-padding {
 	font-size:			4px;
 	height:				4px;
