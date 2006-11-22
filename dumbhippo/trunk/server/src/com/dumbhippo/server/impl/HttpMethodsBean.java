@@ -1375,10 +1375,12 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			// will be cached, it's really not worth making a mess to move the downloaded bytes from FeedScraper to FeedSystem
 			scraper.analyzeURL(url);
 		} catch (IOException e) {
+			logger.debug("IO error analyzing url {}: {}", url, e.getMessage());
 			throw new XmlMethodException(XmlMethodErrorCode.NETWORK_ERROR, "Unable to contact the site (" + e.getMessage() + ")");
 		}
 		URL feedSource = scraper.getFeedSource();
 		if (feedSource == null) {
+			logger.debug("No feed found at url {}", url);
 			throw new XmlMethodException(XmlMethodErrorCode.INVALID_URL, "Couldn't find a feed at " + url);
 		}
 		FeedSystem feedSystem = EJBUtil.defaultLookup(FeedSystem.class);			
