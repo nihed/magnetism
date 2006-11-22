@@ -169,4 +169,11 @@ public class StringUtils {
 		return StringUtils.hexEncode(hashRaw);
 	}
 
+	public static boolean isAlphanumeric(String s) {
+		for (char c : s.toCharArray()) {
+			if (!Character.isLetterOrDigit(c))
+				return false;
+		}
+		return true;
+	}
 }

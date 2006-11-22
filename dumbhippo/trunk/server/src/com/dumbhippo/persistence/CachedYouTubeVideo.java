@@ -10,6 +10,7 @@ import javax.persistence.UniqueConstraint;
 
 import com.dumbhippo.Thumbnail;
 import com.dumbhippo.services.YouTubeVideo;
+import com.dumbhippo.services.YouTubeWebServices;
 
 /** 
  * Cached fields from YouTube videos feed.
@@ -25,7 +26,6 @@ public class CachedYouTubeVideo extends DBUnique implements CachedListItem {
 	private String thumbnail;	
 	private long lastUpdated;
 	
-	private static final int MAX_YOUTUBE_USERNAME_LENGTH = 48;
 	private static final int MAX_YOUTUBE_URL_LENGTH = 128;
 	
 	// for hibernate
@@ -74,7 +74,7 @@ public class CachedYouTubeVideo extends DBUnique implements CachedListItem {
 		this.lastUpdated = lastUpdated.getTime();
 	}
 
-	@Column(nullable=false, length=MAX_YOUTUBE_USERNAME_LENGTH)
+	@Column(nullable=false, length=YouTubeWebServices.MAX_YOUTUBE_USERNAME_LENGTH)
 	public String getOwner() {
 		return owner;
 	}

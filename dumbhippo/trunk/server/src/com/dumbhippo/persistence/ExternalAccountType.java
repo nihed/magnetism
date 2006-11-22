@@ -5,6 +5,7 @@ import java.net.URL;
 
 import com.dumbhippo.StringUtils;
 import com.dumbhippo.services.FlickrUser;
+import com.dumbhippo.services.YouTubeWebServices;
 
 import org.slf4j.Logger;
 import com.dumbhippo.GlobalSetup;
@@ -251,6 +252,15 @@ public enum ExternalAccountType {
 		public String canonicalizeHandle(String handle) throws ValidationException {
 			handle = super.canonicalizeHandle(handle);
 			if (handle != null) {
+				if (handle.length() > YouTubeWebServices.MAX_YOUTUBE_USERNAME_LENGTH)
+					throw new ValidationException("YouTube usernames have a maximum length of " + YouTubeWebServices.MAX_YOUTUBE_USERNAME_LENGTH);
+				
+				// This is determined from the YouTube signin form which throws this error if you put in 
+				// non-letters or non-digits
+				if (!StringUtils.isAlphanumeric(handle))
+					throw new ValidationException("YouTube usernames can only have letters and digits");
+				
+				// As extra paranoia, be sure we can use the username in an url
 				try {
 					new URL(getLink(handle, null));
 				} catch (MalformedURLException e) {
