@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import org.xml.sax.SAXException;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.URLUtils;
 import com.dumbhippo.XmlBuilder;
 
 public class EbayWebServices {
@@ -68,7 +69,7 @@ public class EbayWebServices {
 			// real API URL:    https://api.ebay.com/ws/api.dll
 			// sandbox API URL: https://api.sandbox.ebay.com/ws/api.dll
 			url = new URL("https://api.sandbox.ebay.com/ws/api.dll");
-			HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
+			HttpsURLConnection connection = (HttpsURLConnection) URLUtils.openConnection(url);
 			connection.setConnectTimeout(timeoutMilliseconds);
 			connection.setReadTimeout(timeoutMilliseconds);
 			connection.setRequestMethod("POST");

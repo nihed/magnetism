@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.StreamUtils;
+import com.dumbhippo.URLUtils;
 
 public class EbayScreenScraper {
 	static private final Logger logger = GlobalSetup.getLogger(EbayScreenScraper.class);
@@ -214,7 +215,7 @@ public class EbayScreenScraper {
 			URL url = new URL("http://cgi.ebay.com/ws/eBayISAPI.dll?ViewItem&item=" + itemId);
 			logger.debug("loading ebay url {}", url);
 
-			URLConnection connection = url.openConnection();
+			URLConnection connection = URLUtils.openConnection(url);
 			connection.setConnectTimeout(timeoutMilliseconds);
 			connection.setReadTimeout(timeoutMilliseconds);
 			html = StreamUtils.readStreamUTF8(connection.getInputStream(), StreamUtils.ONE_MEGACHAR);

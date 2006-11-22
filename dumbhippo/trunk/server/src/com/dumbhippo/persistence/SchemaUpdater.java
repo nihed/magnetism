@@ -31,6 +31,7 @@ import org.hibernate.tool.hbm2ddl.TableMetadata;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.URLUtils;
 
 /**
  * This class handles doing custom schema updates when our application starts.
@@ -97,7 +98,7 @@ public class SchemaUpdater {
 		List<Class<?>> classes = new ArrayList<Class<?>>();
 
 		try {
-			URLConnection connection = resource.openConnection();
+			URLConnection connection = URLUtils.openConnection(resource);
 			JarFile file = ((JarURLConnection)connection).getJarFile();
 			
 			Enumeration<JarEntry> entries = file.entries();

@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.StreamUtils;
+import com.dumbhippo.URLUtils;
 
 public class MySpaceScraper {
 
@@ -39,7 +40,7 @@ public class MySpaceScraper {
 		}
 		URLConnection connection;
 		logger.debug("opening connection to {}", u);		
-		connection = u.openConnection();
+		connection = URLUtils.openConnection(u);
 		connection.setConnectTimeout(REQUEST_TIMEOUT);
 		connection.setReadTimeout(REQUEST_TIMEOUT);
 		connection.setAllowUserInteraction(false);

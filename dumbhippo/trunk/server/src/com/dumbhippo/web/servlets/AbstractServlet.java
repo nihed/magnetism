@@ -38,6 +38,7 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.StreamUtils;
+import com.dumbhippo.URLUtils;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HippoProperty;
@@ -434,7 +435,7 @@ public abstract class AbstractServlet extends HttpServlet {
 		URL url = new URL("http", address.getHostAddress(), port, path);
 		logger.debug("runOnServer: forwarding to URL: " + url);
 
-		HttpURLConnection connection = (HttpURLConnection)url.openConnection();
+		HttpURLConnection connection = (HttpURLConnection)URLUtils.openConnection(url);
 		
 		LoginCookie cookie = CookieAuthentication.findLoginCookie(request);
 		if (cookie != null)

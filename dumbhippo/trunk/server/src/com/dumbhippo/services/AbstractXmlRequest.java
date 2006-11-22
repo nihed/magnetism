@@ -10,6 +10,7 @@ import org.xml.sax.helpers.DefaultHandler;
 
 import com.dumbhippo.EnumSaxHandler;
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.URLUtils;
 
 class AbstractXmlRequest<SaxHandlerT extends DefaultHandler> {
 	
@@ -24,7 +25,7 @@ class AbstractXmlRequest<SaxHandlerT extends DefaultHandler> {
 	protected SaxHandlerT parseUrl(SaxHandlerT handler, String url) {
 		try {
 			URL u = new URL(url);
-			URLConnection connection = u.openConnection();
+			URLConnection connection = URLUtils.openConnection(u);
 
 			connection.setConnectTimeout(timeoutMilliseconds);
 			connection.setReadTimeout(timeoutMilliseconds);

@@ -17,6 +17,7 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.KnownFuture;
+import com.dumbhippo.URLUtils;
 import com.dumbhippo.persistence.CachedRhapsodyDownload;
 import com.dumbhippo.server.BanFromWebTier;
 
@@ -98,7 +99,7 @@ public class RhapsodyDownloadCacheBean extends AbstractBasicCacheBean<String,Boo
 		boolean found = false;
 		try {
 			URL u = new URL(link);
-			URLConnection connection = u.openConnection();
+			URLConnection connection = URLUtils.openConnection(u);
 			if (!(connection instanceof HttpURLConnection)) {
 				logger.error("Got a weird connection of type {} for URL {}; skipping", connection.getClass().getName(), u);
 			} else {

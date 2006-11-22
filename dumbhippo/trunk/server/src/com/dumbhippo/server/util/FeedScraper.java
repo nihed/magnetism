@@ -17,6 +17,7 @@ import org.xml.sax.XMLReader;
 import com.dumbhippo.EnumSaxHandler;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.StreamUtils;
+import com.dumbhippo.URLUtils;
 import com.sun.syndication.feed.synd.SyndFeed;
 import com.sun.syndication.io.FeedException;
 import com.sun.syndication.io.SyndFeedInput;
@@ -158,7 +159,7 @@ public final class FeedScraper {
 	}
 	
 	public boolean analyzeURL(URL url) throws IOException {	
-		URLConnection connection = url.openConnection();
+		URLConnection connection = URLUtils.openConnection(url);
 		connection.setConnectTimeout(TIMEOUT);
 		connection.setReadTimeout(TIMEOUT);
 		byte[] data = StreamUtils.readStreamBytes(connection.getInputStream(), StreamUtils.ONE_MEGABYTE);

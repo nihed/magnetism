@@ -24,6 +24,7 @@ import org.xml.sax.XMLReader;
 import com.dumbhippo.EnumSaxHandler;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.StreamUtils;
+import com.dumbhippo.URLUtils;
 import com.dumbhippo.persistence.ExternalAccountType;
 
 /**
@@ -251,7 +252,7 @@ public final class FaviconScraper {
 	
 	public boolean downloadIcon(URL url, boolean withData) {
 		try {
-			URLConnection connection = url.openConnection();
+			URLConnection connection = URLUtils.openConnection(url);
 
 			connection.setConnectTimeout(TIMEOUT);
 			connection.setReadTimeout(TIMEOUT);
@@ -305,7 +306,7 @@ public final class FaviconScraper {
 	
 	private boolean scrapeURL(URL url) {
 		try {
-			URLConnection connection = url.openConnection();
+			URLConnection connection = URLUtils.openConnection(url);
 
 			connection.setConnectTimeout(TIMEOUT);
 			connection.setReadTimeout(TIMEOUT);
