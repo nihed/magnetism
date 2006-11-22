@@ -42,7 +42,11 @@
 				It's an easy way for you and friends to keep track of one other online.  Show a list of sites you belong to, like MySpace, <!--Digg,--> and LiveJournal.  Display
 				photo streams from your Flickr account.  Share what you're browsing and listening to, using Web Swarm and Music Radar.  Your Mugshot page also
 				includes friends' recent web activity.  Keep up with everything on one convenient page!
-				<div><a class="dh-underlined-link" href="/active-people">See some members' Mugshots</a></div>
+			    <div>
+			    <a class="dh-download-learnmore dh-underlined-link" href="/web-accounts-learnmore">Learn more</a>
+			    &nbsp;or&nbsp;	
+				<a class="dh-underlined-link" href="/active-people">See some members' Mugshots</a></div>
+				</div>
 			</div>
 			</td>
 			</tr>

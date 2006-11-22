@@ -488,6 +488,31 @@ div.dh-person-header {
     margin-top:     5px;
 }
 
+.dh-learnmore-section {
+    width:          100%;
+}
+
+.dh-learnmore-section-top { 
+    margin-top:     5px;
+}
+
+.dh-learnmore-header {
+	margin-bottom:	5px;
+}
+
+.dh-learnmore-summary {
+    margin-bottom:  5px;
+}
+
+.dh-learnmore-illustration {
+    float:         left;
+    margin-right:  10px;
+}
+
+.dh-learnmore-explanation {
+    float:         left;
+}
+
 .dh-download-buttons {
 	margin-bottom:			10px;
 }

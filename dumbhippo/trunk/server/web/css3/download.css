@@ -1,7 +1,7 @@
 @CHARSET "UTF-8";
 @IMPORT url("download-positions.css");
 
-.dh-download-header {
+.dh-download-header, .dh-learnmore-header {
 	color:				#9648BC;
 	font-weight:  		bold;
 	font-size:	  		18px;

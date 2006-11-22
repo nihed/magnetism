@@ -42,6 +42,6 @@
 				</p>
 			</div>
 		</dht3:radarLearnMore>
-		<div>Learn more about: <a class="dh-underlined-link" href="links-learnmore">Web Swarm</a> | <a class="dh-underlined-link" href="stacker-learnmore">Mugshot Stacker</a></div>
+		<dht3:learnMoreOptions exclude="musicRadar"/>	
 	</dht3:shinyBox>
 </dht3:page>

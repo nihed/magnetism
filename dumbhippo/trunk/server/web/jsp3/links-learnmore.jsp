@@ -79,6 +79,6 @@
 			</p>		
 			</div>
 		</dht3:webSwarmLearnMore>
-		<div>Learn more about: <a class="dh-underlined-link" href="radar-learnmore">Music Radar</a> | <a class="dh-underlined-link" href="stacker-learnmore">Mugshot Stacker</a></div>
+		<dht3:learnMoreOptions exclude="webSwarm"/>
 	</dht3:shinyBox>
 </dht3:page>
