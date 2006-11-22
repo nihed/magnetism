@@ -133,7 +133,15 @@ public class FlickrUpdaterBean extends CachedExternalUpdaterBean<FlickrUpdateSta
 			List<FlickrPhotoView> photoViews = userPhotosCache.getSync(flickrId);
 			List<FlickrPhotosetView> photosetViews = userPhotosetsCache.getSync(flickrId);
 			
-			proxy.saveUpdatedStatus(flickrId, totalPhotos, totalPhotosets,
+			// we pass photosetViews.size() instead of totalPhotosets because if the 
+			// second photoset listing fails and the first succeeded, we would 
+			// not update again but cache no photoset information. i.e. in the 
+			// db we'd have a photoset count of >0 and a photoset hash of ""
+			// For photos, the situation is different since the first and second
+			// web service calls are distinct. So if listing photos fails, we 
+			// just don't ever try again until the number of photos changes or 
+			// the cache expires in a couple weeks.
+			proxy.saveUpdatedStatus(flickrId, totalPhotos, photosetViews.size(),
 					photoViews, photosetViews);
 		}
 	}
