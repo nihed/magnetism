@@ -1,7 +1,5 @@
 package com.dumbhippo.persistence;
 
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Random;
