@@ -66,7 +66,10 @@ public class FlickrUserPhotosetsCacheBean extends AbstractListCacheBean<String,F
 	protected List<FlickrPhotosetView> fetchFromNetImpl(String key) {
 		FlickrWebServices ws = new FlickrWebServices(REQUEST_TIMEOUT, config);
 		FlickrPhotosets photosets = ws.lookupPublicPhotosets(key);
-		return TypeUtils.castList(FlickrPhotosetView.class, photosets.getSets());
+		if (photosets == null)
+			return null;
+		else
+			return TypeUtils.castList(FlickrPhotosetView.class, photosets.getSets());
 	}
 
 	@Override

@@ -102,12 +102,16 @@ public class FlickrPhotosetBlockHandlerBean extends
 	}
 
 	public void onFlickrPhotosetChanged(FlickrPhotosetStatus photosetStatus) {
-		logger.debug("photoset status changed, restacking " + photosetStatus);
+		if (!photosetStatus.isActive()) {
+			logger.debug("Not restacking inactive photoset status {}", photosetStatus);
+			return;
+		}
+		logger.debug("photoset status changed, restacking {}", photosetStatus);
 		long now = System.currentTimeMillis();
 		Collection<User> users = flickrUpdater.getUsersWhoLoveFlickrAccount(photosetStatus.getOwnerId());
 		for (User user : users) {
 			stacker.stack(getKey(user, photosetStatus), now, user, false, StackReason.BLOCK_UPDATE);
-		}		
+		}
 	}
 	
 	public void onExternalAccountCreated(User user, ExternalAccount external) {
