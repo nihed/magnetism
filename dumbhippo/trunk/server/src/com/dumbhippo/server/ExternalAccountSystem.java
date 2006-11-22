@@ -91,4 +91,6 @@ public interface ExternalAccountSystem extends AccountStatusListener {
 	public void loadThumbnails(Viewpoint viewpoint, Set<ExternalAccountView> accountViews);
 	
 	public void setSentiment(ExternalAccount externalAccount, Sentiment sentiment);
+	
+	public void validateAll();
 }

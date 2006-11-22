@@ -1,5 +1,7 @@
 package com.dumbhippo.server.impl;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -8,6 +10,7 @@ import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
 
 import org.jboss.annotation.IgnoreDependency;
 import org.slf4j.Logger;
@@ -289,5 +292,74 @@ public class ExternalAccountSystemBean implements ExternalAccountSystem {
 
 	public void onMusicSharingToggled(Account account) {
 		// We aren't interested in this, just part of a listener iface we're using
+	}
+	
+	public void validateAll() {
+		logger.info("Administrator kicked off validation of all ExternalAccount rows in the database");
+		Query q = em.createQuery("SELECT ea.id, ea.accountType, ea.handle, ea.extra FROM ExternalAccount ea");
+		List<Object[]> results = TypeUtils.castList(Object[].class, q.getResultList());
+		
+		logger.info("There are {} ExternalAccount rows to validate", results.size());
+		
+		List<Long> invalidHandles = new ArrayList<Long>();
+		List<Long> invalidExtras = new ArrayList<Long>();
+		
+		for (Object[] row : results) {
+			//logger.debug("row is: {}", Arrays.toString(row));
+			Long id = (Long) row[0];
+			ExternalAccountType accountType = (ExternalAccountType) row[1];
+			String handle = (String) row[2];
+			String extra = (String) row[3];
+			if (accountType == null) {
+				logger.info("Row has null accountType: {}", Arrays.toString(row));
+			} else {
+				try {
+					String c = accountType.canonicalizeHandle(handle);
+					if (handle != null && !c.equals(handle)) {
+						logger.info("Row is not canonicalized: {}: '{}' vs. '{}'",
+								new Object[] { Arrays.toString(row), handle, c });
+					}
+				} catch (ValidationException e) {
+					logger.info("Row had invalid 'handle': {}: {}", Arrays.toString(row), e.getMessage());
+					invalidHandles.add(id);
+				}
+				try {
+					String c = accountType.canonicalizeExtra(extra);
+					if (extra != null && !c.equals(extra)) {
+						logger.info("Row is not canonicalized: {}: '{}' vs. '{}'",
+								new Object[] { Arrays.toString(row), extra, c });
+					}
+				} catch (ValidationException e) {
+					logger.info("Row had invalid 'extra': {}: {}", Arrays.toString(row), e.getMessage());
+					invalidExtras.add(id);
+				}
+			}
+		}
+		
+		if (!invalidHandles.isEmpty()) {
+			StringBuilder sb = new StringBuilder();
+			sb.append("UPDATE ExternalAccount SET handle = NULL WHERE id IN (");
+			for (Long id : invalidHandles) {
+				sb.append(id);
+				sb.append(",");
+			}
+			sb.setLength(sb.length() - 1); // chop comma
+			sb.append(");");
+			logger.info("Possible query to null invalid handles: {}", sb);
+		}
+
+		if (!invalidExtras.isEmpty()) {
+			StringBuilder sb = new StringBuilder();
+			sb.append("UPDATE ExternalAccount SET extra = NULL WHERE id IN (");
+			for (Long id : invalidHandles) {
+				sb.append(id);
+				sb.append(",");
+			}
+			sb.setLength(sb.length() - 1); // chop comma
+			sb.append(");");
+			logger.info("Possible query to null invalid extras: {}", sb);
+		}
+				
+		logger.info("ExternalAccount validation complete, {} invalid handles {} invalid extras", invalidHandles.size(), invalidExtras.size());
 	}
 }
