@@ -58,6 +58,11 @@ public enum ExternalAccountType {
 			}
 			return extra;
 		}
+
+		@Override
+		public boolean getHasAccountInfo(String handle, String extra) {
+			return handle != null && extra != null;
+		}
 	},
 	FLICKR("Flickr") {
 		@Override
@@ -93,6 +98,10 @@ public enum ExternalAccountType {
 				return count + " photos";
 		}
 
+		@Override
+		public boolean getHasAccountInfo(String handle, String extra) {
+			return handle != null;
+		}
 	},
 	LINKED_IN("LinkedIn")  {
 		@Override
@@ -122,6 +131,11 @@ public enum ExternalAccountType {
 			}
 			return handle;
 		}
+		
+		@Override
+		public boolean getHasAccountInfo(String handle, String extra) {
+			return handle != null;
+		}		
 	},
 	WEBSITE("Website")  {
 		@Override
@@ -156,6 +170,11 @@ public enum ExternalAccountType {
 			}
 			return handle;
 		}
+		
+		@Override
+		public boolean getHasAccountInfo(String handle, String extra) {
+			return handle != null;
+		}
 	},
 	FACEBOOK("Facebook")  {
 		@Override
@@ -187,6 +206,11 @@ public enum ExternalAccountType {
 			}
 			return extra;
 		}
+		
+		@Override
+		public boolean getHasAccountInfo(String handle, String extra) {
+			return handle != null;
+		}
 	},
 	ORKUT("Orkut")  {
 		@Override
@@ -196,6 +220,11 @@ public enum ExternalAccountType {
 		@Override
 		public String getLinkText(String handle, String extra) {
 			throw new UnsupportedOperationException("Not implemented yet");
+		}
+		
+		@Override
+		public boolean getHasAccountInfo(String handle, String extra) {
+			return handle != null;
 		}
 	},
 	YOUTUBE("YouTube")  {
@@ -231,6 +260,10 @@ public enum ExternalAccountType {
 			return handle;
 		}
 
+		@Override
+		public boolean getHasAccountInfo(String handle, String extra) {
+			return handle != null;
+		}
 	},
 	XANGA("Xanga")  {
 		@Override
@@ -240,6 +273,11 @@ public enum ExternalAccountType {
 		@Override
 		public String getLinkText(String handle, String extra) {
 			throw new UnsupportedOperationException("Not implemented yet");
+		}
+		
+		@Override
+		public boolean getHasAccountInfo(String handle, String extra) {
+			return handle != null;
 		}
 	},
 	BLOG("Blog") {
@@ -275,6 +313,11 @@ public enum ExternalAccountType {
 			}
 			return handle;
 		}
+		
+		@Override
+		public boolean getHasAccountInfo(String handle, String extra) {
+			return handle != null;
+		}
 	},
 	RHAPSODY("Rhapsody") {
 		@Override
@@ -301,6 +344,11 @@ public enum ExternalAccountType {
 					throw new ValidationException("empty rhapUserId in Rhapsody URL");
 			}
 			return handle;
+		}
+		
+		@Override
+		public boolean getHasAccountInfo(String handle, String extra) {
+			return handle != null;
 		}
 	};
 	
@@ -339,6 +387,10 @@ public enum ExternalAccountType {
 		else
 			return count + " items";
 	}
+	
+	// do we have the info we need to be able to use the account - people can 
+	// register love/hate or a quip without setting their account name
+	abstract public boolean getHasAccountInfo(String handle, String extra);
 	
 	public String canonicalizeHandle(String handle) throws ValidationException {
 		if (handle != null) {

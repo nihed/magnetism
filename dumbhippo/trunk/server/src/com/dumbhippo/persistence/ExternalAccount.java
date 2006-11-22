@@ -173,7 +173,8 @@ public class ExternalAccount extends DBUnique {
 	
 	@Transient
 	public boolean hasLovedAndEnabledType(ExternalAccountType type) {
-		return accountType == type && getSentiment() == Sentiment.LOVE && 
+		return accountType == type && getSentiment() == Sentiment.LOVE &&
+		accountType.getHasAccountInfo(handle, extra) &&
 		!getAccount().isDisabled() && !getAccount().isAdminDisabled();
 	}
 	
