@@ -355,10 +355,17 @@ public class PersonView extends EntityView {
 	
 	public ListBean<ExternalAccountView> getAccountsBySentiment(Sentiment sentiment) {
 		List<ExternalAccountView> list = new ArrayList<ExternalAccountView>();
-		for (ExternalAccountView a : getExternalAccountViews()) {
-			if (a.getExternalAccount().getSentiment() == sentiment) {
-				list.add(a);
+		if (sentiment == Sentiment.LOVE) {
+			for (ExternalAccountView a : getExternalAccountViews()) {
+				if (a.getExternalAccount().isLovedAndEnabled())
+					list.add(a);
 			}
+		} else {
+			for (ExternalAccountView a : getExternalAccountViews()) {
+				if (a.getExternalAccount().getSentiment() == sentiment) {
+					list.add(a);
+				}
+			}			
 		}
 		Collections.sort(list, new Comparator<ExternalAccountView>() {
 
