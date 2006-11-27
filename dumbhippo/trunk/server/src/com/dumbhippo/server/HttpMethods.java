@@ -12,6 +12,7 @@ import org.xml.sax.SAXException;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
+import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.views.UserViewpoint;
 
 /**
@@ -357,4 +358,9 @@ public interface HttpMethods {
 	@HttpParams( { "fileId" })
 	@HttpOptions(transaction=false)
 	public void doDeleteFile(XmlBuilder xml, UserViewpoint viewpoint, Guid fileId) throws XmlMethodException;
+	
+	@HttpContentTypes(HttpResponseData.XMLMETHOD)
+	@HttpParams( { "who", "includeStack", "participantOnly" })
+	@HttpOptions( optionalParams = { "includeStack", "participantOnly" } )
+	public void getUserSummary(XmlBuilder xml, User who, boolean includeStack, boolean participantOnly) throws XmlMethodException;
 }

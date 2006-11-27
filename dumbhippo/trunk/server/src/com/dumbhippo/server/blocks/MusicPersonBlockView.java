@@ -44,4 +44,21 @@ public class MusicPersonBlockView extends AbstractPersonBlockView {
 	public String getTypeTitle() {
 		return "Music Radar";
 	}
+
+	@Override
+	protected String getSummaryHeading() {
+		return "Played";
+	}
+
+	@Override
+	protected String getSummaryLink() {
+		TrackView tv = getUserView().getCurrentTrack();
+		return tv.getArtistPageLink();
+	}
+
+	@Override
+	protected String getSummaryLinkText() {
+		TrackView tv = getUserView().getCurrentTrack();
+		return tv.getTruncatedName();		
+	}
 }

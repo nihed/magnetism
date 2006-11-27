@@ -99,15 +99,25 @@ public abstract class BlockView implements ObjectView {
 		if (!isPopulated())
 			throw new RuntimeException("Attempt to write blockview to xml without populating it: " + this);
 		
-		// FIXME: We really shouldn't include clickedCount/significantClickedCount
-		//   to all blocks; they only make sense for posts, but the XmlBuilder
-		//   API makes that painful.
+		String clickedCountString;
+		String significantClickedCountString;
+		if (block.getBlockType().getClickedCountUseful()) {
+			clickedCountString = Integer.toString(block.getClickedCount());
+			significantClickedCountString = Integer.toString(getSignificantClickedCount());
+		} else {
+			// FIXME this is to be nice to older clients. We need to check that the client 
+			// handles this attribute's absence, then phase this out to use null instead
+			// (causing XmlBuilder to omit the attr entirely)
+			clickedCountString = "-1"; // null;
+			significantClickedCountString = "-1"; // null; 
+		}
+		
 		builder.openElement("block",
 							"id", block.getId(),
 							"type", block.getBlockType().name(),
 							"timestamp", Long.toString(block.getTimestampAsLong()),
-							"clickedCount", Integer.toString(block.getClickedCount()),
-							"significantClickedCount", Integer.toString(getSignificantClickedCount()),
+							"clickedCount", clickedCountString,
+							"significantClickedCount", significantClickedCountString,
 							"ignored", Boolean.toString(userBlockData.isIgnored()),
 							"ignoredTimestamp", Long.toString(userBlockData.getIgnoredTimestampAsLong()),
 							"clicked", Boolean.toString(userBlockData.isClicked()),
@@ -120,7 +130,38 @@ public abstract class BlockView implements ObjectView {
 		builder.closeElement();
 	}
 	
-	protected abstract void writeDetailsToXmlBuilder(XmlBuilder builder);
+	protected abstract void writeDetailsToXmlBuilder(XmlBuilder builder);	
+	
+	/** This is used by the flash embed, which is more "thin client" than the 
+	 * web and windows/linux clients and thus needs a lot less info. In general the 
+	 * flash embed does not know about specific block types, and we'd like to keep it 
+	 * that way, so if you find yourself doing the equivalent of writeDetailsToXmlBuilder()
+	 * in this method you are probably wrong.
+	 * 
+	 * @param builder builder to write to
+	 */
+	public void writeSummaryToXmlBuilder(XmlBuilder builder) {
+		if (!isPopulated())
+			throw new RuntimeException("Attempt to write blockview to xml without populating it: " + this);
+		
+		long sortTimestamp = block.getTimestampAsLong();
+		if (userBlockData.getIgnoredTimestampAsLong() < sortTimestamp)
+			sortTimestamp = userBlockData.getIgnoredTimestampAsLong();
+		
+		builder.appendEmptyNode("block",
+				"id", block.getId(),
+				"sortTimestamp", Long.toString(sortTimestamp),
+				"timeAgo", DateUtils.formatTimeAgo(block.getTimestamp()),
+				"heading", getSummaryHeading(),
+				"link", getSummaryLink(),
+				"linkText", getSummaryLinkText());
+	}
+	
+	protected abstract String getSummaryHeading();
+	
+	protected abstract String getSummaryLink();
+	
+	protected abstract String getSummaryLinkText();
 	
 	// utility function for use in implementations of writeDetailsToXmlBuilder
 	protected void writeFeedEntryToXmlBuilder(XmlBuilder builder, FeedEntry entry) {

@@ -85,4 +85,19 @@ public class GroupChatBlockView extends BlockView implements SimpleTitleBlockVie
 	public String getTypeTitle() {
 		return "Group Chat";
 	}
+
+	@Override
+	protected String getSummaryHeading() {
+		return getTitle();
+	}
+
+	@Override
+	protected String getSummaryLink() {
+		return group.getHomeUrl();
+	}
+
+	@Override
+	protected String getSummaryLinkText() {
+		return group.getName();
+	}
 }

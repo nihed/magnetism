@@ -85,4 +85,19 @@ public class GroupMemberBlockView extends BlockView {
 		// we don't display a type title for this kind of block, but if we did...
 		return "Group update";
 	}
+
+	@Override
+	protected String getSummaryHeading() {
+		return "Group membership changed";
+	}
+
+	@Override
+	protected String getSummaryLink() {
+		return group.getHomeUrl();
+	}
+
+	@Override
+	protected String getSummaryLinkText() {
+		return group.getName();
+	}
 }

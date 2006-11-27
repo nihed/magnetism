@@ -11,6 +11,8 @@ public class AgeUtils {
 	/*  
 	 * Returns an age String in a human readable format.
 	 *  
+	 *  FIXME see also DateUtils.formatTimeAgo
+	 *  
 	 * @param age age in seconds
 	 * @return age String in a human readable format
 	 */

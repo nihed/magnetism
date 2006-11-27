@@ -5,9 +5,4 @@
 
 <%@ attribute name="track" required="true" type="com.dumbhippo.server.views.TrackView" %>
 
-<c:url value="/artist" var="songlink">
-	<c:param name="track" value="${track.name}"/>
-	<c:param name="artist" value="${track.artist}"/>
-	<c:param name="album" value="${track.album}"/>
-</c:url>
-<a href="${songlink}"><c:out value="${track.truncatedName}"/></a>
+<a href="${track.artistPageLink}"><c:out value="${track.truncatedName}"/></a>

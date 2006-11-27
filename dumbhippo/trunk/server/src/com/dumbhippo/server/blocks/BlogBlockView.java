@@ -69,4 +69,19 @@ public class BlogBlockView extends AbstractPersonBlockView implements ExternalAc
 	public String getTitleForHome() {
 		return getTitle();
 	}
+
+	@Override
+	protected String getSummaryHeading() {
+		return "Blogged";
+	}
+
+	@Override
+	protected String getSummaryLink() {
+		return entry.getLink().getUrl();
+	}
+
+	@Override
+	protected String getSummaryLinkText() {
+		return entry.getTitle();
+	}
 }

@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.dumbhippo.StringUtils;
+import com.dumbhippo.URLUtils;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.persistence.SongDownloadSource;
 import com.dumbhippo.persistence.Track;
@@ -220,6 +221,12 @@ public class TrackView {
 	
 	public void setPersonMusicPlayViews(List<PersonMusicPlayView> personMusicPlayViews) {
 		this.personMusicPlayViews = personMusicPlayViews;
+	}
+	
+	public String getArtistPageLink() {
+		return URLUtils.buildUrl("/artist", "track", getName(),
+				"artist", getArtist(),
+				"album", getAlbum());
 	}
 	
 	@Override

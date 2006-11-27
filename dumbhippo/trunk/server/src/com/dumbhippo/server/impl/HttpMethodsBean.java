@@ -92,12 +92,16 @@ import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.PromotionCode;
 import com.dumbhippo.server.SharedFileSystem;
 import com.dumbhippo.server.SigninSystem;
+import com.dumbhippo.server.Stacker;
 import com.dumbhippo.server.WantsInSystem;
 import com.dumbhippo.server.XmlMethodErrorCode;
 import com.dumbhippo.server.XmlMethodException;
+import com.dumbhippo.server.blocks.BlockView;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.util.FeedScraper;
+import com.dumbhippo.server.views.AnonymousViewpoint;
 import com.dumbhippo.server.views.EntityView;
+import com.dumbhippo.server.views.ExternalAccountView;
 import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.PersonViewExtra;
 import com.dumbhippo.server.views.SystemViewpoint;
@@ -166,6 +170,9 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	
 	@EJB
 	private SharedFileSystem sharedFileSystem;
+	
+	@EJB
+	private Stacker stacker;
 	
 	@PersistenceContext(unitName = "dumbhippo")
 	private EntityManager em;
@@ -1835,6 +1842,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	
 	@TransactionAttribute(TransactionAttributeType.NEVER)
  	public void doDeleteFile(XmlBuilder xml, UserViewpoint viewpoint, Guid fileId) throws XmlMethodException {
+		EJBUtil.assertNoTransaction();
  		// Transaction 1 - set state to DELETING
  		try {
 			sharedFileSystem.setFileState(viewpoint, fileId, StorageState.DELETING, -1);
@@ -1868,4 +1876,39 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			// standpoint
 		}
  	}
+
+	public void getUserSummary(XmlBuilder xml, User who, boolean includeStack, boolean participantOnly) throws XmlMethodException {
+		Set<ExternalAccountView> externalAccountViews = externalAccountSystem.getExternalAccountViews(AnonymousViewpoint.getInstance(), who);
+		
+		List<BlockView> stack;
+		if (includeStack)
+			stack = stacker.getStack(AnonymousViewpoint.getInstance(), who, 0, 0, 3, participantOnly);
+		else
+			stack = Collections.emptyList();
+		
+		PersonView userView = personViewer.getPersonView(AnonymousViewpoint.getInstance(), who);
+		
+		xml.openElement("userSummary",
+				"who", who.getId(),
+				"online", Boolean.toString(userView.isOnline()),
+				"photo", userView.getPhotoUrl(),
+				"name", userView.getName(),
+				"homeUrl", userView.getHomeUrl());
+		
+		xml.openElement("accounts");
+		
+		for (ExternalAccountView ea : externalAccountViews) {
+			ea.writeToXmlBuilder(xml);
+		}
+		
+		xml.closeElement();
+		
+		xml.openElement("stack");
+		
+		for (BlockView bv : stack) {
+			bv.writeSummaryToXmlBuilder(xml);
+		}
+		
+		xml.closeElement();
+	}
 }

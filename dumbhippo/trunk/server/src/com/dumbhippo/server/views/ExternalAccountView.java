@@ -5,6 +5,7 @@ import java.util.List;
 import com.dumbhippo.BasicThumbnails;
 import com.dumbhippo.Thumbnail;
 import com.dumbhippo.Thumbnails;
+import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.persistence.ExternalAccount;
 
 public class ExternalAccountView {
@@ -67,5 +68,13 @@ public class ExternalAccountView {
 	 */ 	
 	public void setThumbnails(Thumbnails thumbnails) {
 		this.thumbnails = thumbnails;
+	}
+	
+	public void writeToXmlBuilder(XmlBuilder builder) {
+		builder.appendEmptyNode("externalAccount",
+				"type", getExternalAccount().getAccountType().name(),
+				"link", getLink(),
+				"linkText", getExternalAccount().getLinkText(),
+				"icon", "/images3/" + getExternalAccount().getIconName());
 	}
 }

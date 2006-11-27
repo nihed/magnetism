@@ -12,7 +12,12 @@ package com.dumbhippo.persistence;
  *
  */
 public enum BlockType {
-	POST, // 0
+	POST { // 0
+		@Override
+		public boolean getClickedCountUseful() { 
+			return true;
+		}
+	},
 	GROUP_MEMBER, // 1
 	GROUP_CHAT, // 2
 	MUSIC_PERSON, // 3
@@ -76,5 +81,10 @@ public enum BlockType {
     // inclusions
     public StackInclusion getDefaultStackInclusion() {
     	return StackInclusion.IN_ALL_STACKS;
+    }
+    
+    /** returns true if the block keeps track of clicks */
+    public boolean getClickedCountUseful() {
+    	return false;
     }
 }

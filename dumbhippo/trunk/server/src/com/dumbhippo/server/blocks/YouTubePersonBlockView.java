@@ -35,4 +35,19 @@ public class YouTubePersonBlockView extends ExternalThumbnailedPersonBlockView {
 	protected String getElementName() {
 		return "youTubePerson";
 	}
+
+	@Override
+	protected String getSummaryHeading() {
+		return "Posted videos";
+	}
+
+	@Override
+	protected String getSummaryLink() {
+		return getMoreThumbnailsLink();
+	}
+
+	@Override
+	protected String getSummaryLinkText() {
+		return getMoreThumbnailsTitle();
+	}
 }
