@@ -1,4 +1,5 @@
 ﻿<flash_project name="nowPlaying" version="1">
     <project_file path="./nowPlaying2.fla" filetype="fla" profile="" def_file="true" />
     <project_file path="./nowPlaying.as" filetype="as" />
+    <project_file path="./hippo.as" filetype="as" />
 </flash_project>
