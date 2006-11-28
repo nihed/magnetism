@@ -1891,6 +1891,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		xml.openElement("userSummary",
 				"who", who.getId(),
 				"online", Boolean.toString(userView.isOnline()),
+				"onlineIcon", userView.getOnlineIcon(),
 				"photo", userView.getPhotoUrl(),
 				"name", userView.getName(),
 				"homeUrl", userView.getHomeUrl());

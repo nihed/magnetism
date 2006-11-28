@@ -1,6 +1,52 @@
 ﻿#include "hippo.as"
 
-var updateCount:Number = 0;
+var rootMovie:MovieClip = createEmptyMovieClip("rootMovie", 0);
+var currentView:MovieClip = null;
+var currentSummary:Object = null;
+
+var createView = function(summary:Object) {
+	var viewRoot:MovieClip = rootMovie.createEmptyMovieClip("viewRoot", rootMovie.getNextHighestDepth());
+	
+	var topStuff:MovieClip = viewRoot.createEmptyMovieClip("topStuff", viewRoot.getNextHighestDepth());
+	//viewRoot.createEmptyMovieClip("ribbonBar", 0);
+	//viewRoot.createEmptyMovieClip("stack", 0);
+	
+	var photo:MovieClip = topStuff.createEmptyMovieClip("photo", topStuff.getNextHighestDepth());
+	photo._x = 10;
+	photo._y = 5;
+	addImageToClip(viewRoot, photo, summary.photo, null);
+
+	var presenceIcon:MovieClip = topStuff.createEmptyMovieClip("presenceIcon", topStuff.getNextHighestDepth());
+	presenceIcon._x = 80;
+	presenceIcon._y = 5;
+	addImageToClip(viewRoot, presenceIcon, summary.onlineIcon, null);
+	
+	var name:TextField = topStuff.createTextField("title", topStuff.getNextHighestDepth(), 94, 5, 200, 50);
+	name.html = true;	
+	name.htmlText = "<b><a href='" + escapeXML(summary.homeUrl) + "'>" + escapeXML(summary.name) + "'s Mugshot</a></b>";
+	formatText(name, 14, 0x000000);
+	
+	var homeLink:TextField = topStuff.createTextField("visitLink", topStuff.getNextHighestDepth(), 94, 20, 200, 50);
+	homeLink.html = true;
+	homeLink.htmlText = "<a href='" + escapeXML(summary.homeUrl) + "'>Visit my Mugshot page</a>";
+	formatText(homeLink, 12, 0x0000ff);
+	
+	return clip;
+}
+
+var setSummaryData = function(summary:Object) {
+	if (genericEquals(currentSummary, summary))
+		return;
+	if (currentView) {
+		currentView.removeMovieClip();
+		currentView = null;
+	}
+	currentSummary = null;
+	if (summary) {
+		currentView = createView(summary);
+		currentSummary = summary;
+	}
+}
 
 var parseExternalAccounts = function(externalAccountsNode:XMLNode) {
 	var accounts:Array = [];
@@ -50,6 +96,8 @@ var parseBlocks = function(stackNode:XMLNode) {
 	return blocks;
 }
 
+var updateCount:Number = 0;
+
 var updateSummaryData = function() {	
 	updateCount = songUpdateCount + 1;
 	
@@ -97,6 +145,7 @@ var updateSummaryData = function() {
 		summary.who = who;
 		summary.photo = makeAbsoluteUrl(summaryNode.attributes["photo"] + "?size=60");
 		summary.online = summaryNode.attributes["online"] == "true";
+		summary.onlineIcon = makeAbsoluteUrl(summaryNode.attributes["onlineIcon"]);
 		summary.name = summaryNode.attributes["name"];
 		summary.homeUrl = makeAbsoluteUrl(summaryNode.attributes["homeUrl"]);	
 		summary.accounts = [];
@@ -114,6 +163,8 @@ var updateSummaryData = function() {
 		}
 		
 		trace("summary for " + who + " photo " + summary.photo + " " + summary.accounts.length + " accounts " + summary.stack.length + " blocks");
+		
+		setSummaryData(summary);
 	};
 	var reqUrl = makeAbsoluteUrl("/xml/usersummary?who=" + who + "&participantOnly=true&includeStack=true");
 	meuXML.load(reqUrl);

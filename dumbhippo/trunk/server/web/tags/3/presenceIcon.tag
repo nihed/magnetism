@@ -6,12 +6,5 @@
 <%@ attribute name="who" required="true" type="com.dumbhippo.server.views.PersonView" %>
 
 <span class="dh-presence">
-	<c:choose>
-		<c:when test="${who.online}">
-			<dh:png src="/images3/${buildStamp}/online_icon.png" style="width: 12px; height: 12px;"/>
-		</c:when>
-		<c:otherwise>
-			<dh:png src="/images3/${buildStamp}/offline_icon.png" style="width: 12px; height: 12px;"/>
-		</c:otherwise>
-	</c:choose>
-</span>	
+	<dh:png src="${who.onlineIcon}" style="width: 12px; height: 12px;"/>
+</span>
