@@ -16,7 +16,7 @@
     <c:set var="option" value="use all of the Stacker's features."/>
 </c:if>
 <c:if test="${page == 'webAccounts'}">
-    <c:set var="option" value="display updates from your web accounts. "/>
+    <c:set var="option" value="show your Web account updates."/>
 </c:if>
 
 <table id="dhLearnMoreNextStep" cellspacing="0" cellpadding="0">

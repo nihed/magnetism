@@ -38,7 +38,6 @@ public class DownloadPage extends AbstractSigninOptionalPage {
 		return download.getDownloadUrl();
 	}
 	
-	// if linuxRequested && haveDownload then this should always return non-null
 	public String getDownloadUrlSrpm() {
 		return download.getDownloadUrlSrpm();
 	}

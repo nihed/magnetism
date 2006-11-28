@@ -20,7 +20,7 @@
 			<dht3:learnMoreNextStep page="webAccounts"/>
 			<c:if test="${signin.valid}">
 			    <span>
-			        Add external Web accounts on your <i><a href="/account">My Account</a></i> page.
+			        Add external Web accounts on <i><a href="/account">your account page</a></i>.
 			    </span>
 			</c:if>   
 			We currently support blogs, Facebook, Flickr, and YouTube, with more to come soon.     
@@ -48,10 +48,12 @@
 			<div class="dh-learnmore-explanation">
 			    <p>Updates from external accounts with private information, like Facebook, will only be visible 
 			    to the account owner. Private updates are indicated by a lock icon.</p>          
-                <p>Log in to your Facebook account through Mugshot on your <i><a href="/account">My Account</a></i> 
-                page to receive updates. If you have a Facebook account listed in your Mugshot, you'll get a 
-                Stacker block once a day reminding you to log in. After you log in, a Stacker block will 
-                confirm it.</p>
+			    <c:if test="${signin.valid}">
+                    <p>Log in to your Facebook account through Mugshot on <i><a href="/account">your account page</a></i> 
+                    to receive updates. If you have a Facebook account listed in your Mugshot, you'll get a 
+                    Stacker block once a day reminding you to log in. After you log in, a Stacker block will 
+                    confirm it.</p>
+                </c:if>    
 			</div>
 			<div class="dh-grow-div-around-floats"></div>			
 		</div>		
