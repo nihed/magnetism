@@ -1,12 +1,36 @@
 ﻿#include "hippo.as"
 
+import flash.geom.Matrix;
+
 var rootMovie:MovieClip = createEmptyMovieClip("rootMovie", 0);
 var currentView:MovieClip = null;
 var currentSummary:Object = null;
 
+var simpleGradientFill = function(mc:MovieClip, x:Number, y:Number, width:Number, height:Number, horizontal:Boolean, colors:Array, ratios:Array) {
+	var matrix:Matrix = new Matrix();
+	matrix.createGradientBox(width, height, horizontal ? 0 : Math.PI / 2);
+	var alphas:Array = [];  // 0-100 alpha
+	var autoRatios:Array = []; 	// from 0-0xFF, the point where each color starts fading out (I think)
+	for (var i = 0; i < colors.length; ++i) {
+		alphas.push(100);
+		autoRatios.push(i * (0xFF / colors.length));
+	}
+	if (!ratios)
+		ratios = autoRatios;
+	mc.beginGradientFill("linear", colors, alphas, ratios, matrix);
+	mc.moveTo(x, y);
+	mc.lineTo(x + width, y);
+	mc.lineTo(x + width, y + height);
+	mc.lineTo(x, y + height);
+	mc.lineTo(x, y);
+	mc.endFill();
+}
+
 var createView = function(summary:Object) {
 	var viewRoot:MovieClip = rootMovie.createEmptyMovieClip("viewRoot", rootMovie.getNextHighestDepth());
-	
+
+	simpleGradientFill(viewRoot, 0, 0, 260, 220, false, [ 0xcccccc, 0xfefefe, 0xffffff ], [0x0, 0x20, 0xFF] );
+
 	var topStuff:MovieClip = viewRoot.createEmptyMovieClip("topStuff", viewRoot.getNextHighestDepth());
 	var ribbonBar:MovieClip = viewRoot.createEmptyMovieClip("ribbonBar", viewRoot.getNextHighestDepth());
 	var stack:MovieClip = viewRoot.createEmptyMovieClip("stack", viewRoot.getNextHighestDepth());
@@ -22,11 +46,13 @@ var createView = function(summary:Object) {
 	addImageToClip(viewRoot, presenceIcon, summary.onlineIcon, null);
 	
 	var name:TextField = topStuff.createTextField("title", topStuff.getNextHighestDepth(), 94, 5, 200, 50);
+	name.autoSize = 'left';
 	name.html = true;	
 	name.htmlText = "<b><a href='" + escapeXML(summary.homeUrl) + "'>" + escapeXML(summary.name) + "'s Mugshot</a></b>";
 	formatText(name, 14, 0x000000);
 	
 	var homeLink:TextField = topStuff.createTextField("visitLink", topStuff.getNextHighestDepth(), 94, 20, 200, 50);
+	homeLink.autoSize = 'left';
 	homeLink.html = true;
 	homeLink.htmlText = "<a href='" + escapeXML(summary.homeUrl) + "'>Visit my Mugshot page</a>";
 	formatText(homeLink, 12, 0x0000ff);
@@ -35,7 +61,7 @@ var createView = function(summary:Object) {
 	ribbon._x = 10;
 	ribbon._y = 72;
 	
-	var nextX = 0;
+	var nextX:Number = 0;
 	for (var i = 0; i < summary.accounts.length; ++i) {
 		var account:Object = summary.accounts[i];
 		var accountButton:MovieClip = ribbon.createEmptyMovieClip("account" + i, ribbon.getNextHighestDepth());
@@ -45,29 +71,45 @@ var createView = function(summary:Object) {
 		nextX = nextX + 18;
 	}
 	
-	var nextY = 92;
+	var blockHeight:Number = 35;
+	var nextY:Number = 92;
 	for (var i = 0; i < summary.stack.length; ++i) {
 		var block:Object = summary.stack[i];
 		
 		var blockClip:MovieClip = stack.createEmptyMovieClip("block" + i, stack.getNextHighestDepth());
 		
+		// this is how we set the movie clip size; just setting _width/_height doesn't seem to work
+		blockClip.beginFill(0xeeeeee);
+		blockClip.moveTo(0, 0);
+		blockClip.lineTo(240, 0);
+		blockClip.lineTo(240, blockHeight);
+		blockClip.lineTo(0, blockHeight);
+		blockClip.lineTo(0, 0);
+		blockClip.endFill();
+		
 		blockClip._x = 10;
 		blockClip._y = nextY;
+		//blockClip._height = blockHeight;
+		//blockClip._width = 220;
 
-		var heading:TextField = blockClip.createTextField("heading", blockClip.getNextHighestDepth(), 5, 5, 200, 20);
-		heading.text = block.heading;
+		var heading:TextField = blockClip.createTextField("heading", blockClip.getNextHighestDepth(), 5, 0, 200, 20);
+		heading.autoSize = 'left';
+		heading.html = true;
+		heading.htmlText = "<b>" + escapeXML(block.heading) + "</b>";
 		formatText(heading, 12, 0x000000);
 		
-		var timeAgo:TextField = blockClip.createTextField("timeAgo", blockClip.getNextHighestDepth(), heading._width + 5, 5, 200, 20);
+		var timeAgo:TextField = blockClip.createTextField("timeAgo", blockClip.getNextHighestDepth(), heading._width + 5, 0, 200, 20);
+		timeAgo.autoSize = 'left';
 		timeAgo.text = block.timeAgo;
-		formatText(timeAgo, 12, 0xcccccc);
+		formatText(timeAgo, 12, 0xaaaaaa);
 		
-		var link:TextField = blockClip.createTextField("link", blockClip.getNextHighestDepth(), 5, 20, 200, 20);
+		var link:TextField = blockClip.createTextField("link", blockClip.getNextHighestDepth(), 5, 15, 200, 20);
+		link.autoSize = 'left';
 		link.html = true;
-		link.htmlText = "<u><a href='" + escapeXML(block.link) + "'>" + escapeXML(block.linkText) + "</a></u>";
+		link.htmlText = "<u><b><a href='" + escapeXML(block.link) + "'>" + escapeXML(block.linkText) + "</a></b></u>";
 		formatText(link, 12, 0x0000ff);	
 		
-		nextY = nextY + 50;
+		nextY = nextY + blockHeight + 5;
 	}
 	
 	return clip;
