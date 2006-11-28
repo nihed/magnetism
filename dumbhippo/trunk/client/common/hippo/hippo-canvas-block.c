@@ -892,7 +892,13 @@ hippo_canvas_block_set_block_impl(HippoCanvasBlock *canvas_block,
                                                  G_CALLBACK(on_block_clicked_count_changed),
                                                  canvas_block);
             g_signal_handlers_disconnect_by_func(G_OBJECT(canvas_block->block),
+                                                 G_CALLBACK(on_block_significant_clicked_count_changed),
+                                                 canvas_block);
+            g_signal_handlers_disconnect_by_func(G_OBJECT(canvas_block->block),
                                                  G_CALLBACK(on_block_ignored_changed),
+                                                 canvas_block);
+            g_signal_handlers_disconnect_by_func(G_OBJECT(canvas_block->block),
+                                                 G_CALLBACK(on_block_stack_reason_changed),
                                                  canvas_block);
             g_signal_handlers_disconnect_by_func(G_OBJECT(canvas_block->block),
                                                  G_CALLBACK(on_block_icon_url_changed),
