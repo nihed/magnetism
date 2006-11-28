@@ -38,6 +38,10 @@
 		dumbhippo.server.downloadurl.fedora6=@@clientFedora6Download@@
 		dumbhippo.server.downloadurl.fedora6.srpm=@@clientFedora6DownloadSRPM@@
 		dumbhippo.server.downloadurl.linux.tar=@@clientLinuxDownloadTar@@
+		dumbhippo.server.downloadinfo.windows.current=@@clientWindowsCurrent@@
+		dumbhippo.server.downloadinfo.windows.date=@@clientWindowsDate@@
+		dumbhippo.server.downloadinfo.linux.current=@@clientLinuxCurrent@@
+		dumbhippo.server.downloadinfo.linux.date=@@clientLinuxDate@@
 		dumbhippo.server.amazon.accesskeyid=@@amazonAccessKeyId@@
 		dumbhippo.server.amazon.associatetag=@@amazonAssociateTag@@
 		dumbhippo.server.yahoo.appid=@@yahooAppId@@

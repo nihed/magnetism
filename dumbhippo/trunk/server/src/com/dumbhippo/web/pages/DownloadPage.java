@@ -6,14 +6,11 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.InvitationToken;
 import com.dumbhippo.persistence.User;
-import com.dumbhippo.server.Configuration;
-import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.UserViewpoint;
-import com.dumbhippo.web.Browser;
-import com.dumbhippo.web.BrowserBean;
-import com.dumbhippo.web.WebEJBUtil;
+import com.dumbhippo.web.Download;
+import com.dumbhippo.web.DownloadBean;
 
 /**
  * @author otaylor
@@ -24,16 +21,13 @@ public class DownloadPage extends AbstractSigninOptionalPage {
 	@SuppressWarnings("unused")
 	static private final Logger logger = GlobalSetup.getLogger(DownloadPage.class);
 	
-	private Configuration configuration;
-	
-	@Browser
-	private BrowserBean browser;
+	@Download
+	private DownloadBean download;
 	
 	private InvitationToken invitation;
 	private PersonView inviter;
 
 	public DownloadPage() {
-		configuration = WebEJBUtil.defaultLookup(Configuration.class);		
 	}
 	
 	public boolean getHaveDownload() {
@@ -41,74 +35,50 @@ public class DownloadPage extends AbstractSigninOptionalPage {
 	}
 	
 	public String getDownloadUrl() {
-		if (browser.isFedora5Requested()) {
-			return getDownloadUrlFedora5();
-		} else if (browser.isFedora6Requested()) {
-			return getDownloadUrlFedora6();
-		} else if (browser.isWindowsRequested()) {
-			return getDownloadUrlWindows();
-		} else {
-			return null;
-		}
+		return download.getDownloadUrl();
 	}
 	
 	// if linuxRequested && haveDownload then this should always return non-null
 	public String getDownloadUrlSrpm() {
-		if (browser.isFedora5Requested())
-			return getDownloadUrlFedora5Srpm();
-		else if (browser.isFedora6Requested()) {
-			return getDownloadUrlFedora6Srpm();
-		} else {
-			return null;
-		}
+		return download.getDownloadUrlSrpm();
 	}
 	
 	public String getDownloadFor() {
-		if (browser.isFedora5Requested()) {
-			return "Fedora Core 5";
-		} else if (browser.isFedora6Requested()) {
-			return "Fedora Core 6";
-		} else if (browser.isWindowsRequested()) {
-			return "Windows XP";
-		} else {
-			return null;
-		}
+		return download.getDownloadFor();
 	}
 	
 	public String getDownloadUrlWindows() {
-		return configuration.getPropertyFatalIfUnset(HippoProperty.DOWNLOADURL_WINDOWS);
+		return download.getDownloadUrlWindows();
 	}
 	
 	public String getDownloadUrlFedora5() {
-		return configuration.getPropertyFatalIfUnset(HippoProperty.DOWNLOADURL_FEDORA5);
+		return download.getDownloadUrlFedora5();
 	}
 	
 	public String getDownloadUrlFedora6() {
-		return configuration.getPropertyFatalIfUnset(HippoProperty.DOWNLOADURL_FEDORA6);
+		return download.getDownloadUrlFedora6();
 	}
 	
 	public String getDownloadUrlFedora5Srpm() {
-		return configuration.getPropertyFatalIfUnset(HippoProperty.DOWNLOADURL_FEDORA5_SRPM);
+		return download.getDownloadUrlFedora5Srpm();
 	}
 	
 	public String getDownloadUrlFedora6Srpm() {
-		return configuration.getPropertyFatalIfUnset(HippoProperty.DOWNLOADURL_FEDORA6_SRPM);
+		return download.getDownloadUrlFedora6Srpm();
 	}
 	
 	public String getDownloadUrlLinuxTar() {
-		return configuration.getPropertyFatalIfUnset(HippoProperty.DOWNLOADURL_LINUX_TAR);
+		return download.getDownloadUrlLinuxTar();
 	}
 	
 	// deprecated
 	public String getDownloadUrlLinux() {
-		logger.warn("Some page is still referring to downloadUrlLinux instead of distribution-specific urls");
-		return getDownloadUrlFedora5();
+		return download.getDownloadUrlLinux();
 	}
 	
 	// deprecated
 	public String getDownloadUrlLinuxSrpm() {
-		logger.warn("Some page is still referring to downloadUrlLinuxSrpm instead of distribution-specific urls");
-		return getDownloadUrlFedora5Srpm();
+		return download.getDownloadUrlLinuxSrpm();
 	}
 	
 	public InvitationToken getInvitation() {

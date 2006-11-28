@@ -7,6 +7,9 @@
 <%@ attribute name="exclude" required="false" type="java.lang.String" %>
 
 <div>Learn more about: 
+<c:if test="${signin.valid}">
+     <a class="dh-underlined-link" href="download">Installing the download</a> |
+</c:if>     
 <c:if test="${exclude != 'webSwarm'}">
     <a class="dh-underlined-link" href="links-learnmore">Web Swarm</a> | 
 </c:if>
@@ -14,7 +17,7 @@
     <a class="dh-underlined-link" href="radar-learnmore">Music Radar</a> | 
 </c:if>
 <c:if test="${exclude != 'stacker'}">
-    <a class="dh-underlined-link" href="stacker-learnmore">Mugshot Stacker</a> 
+    <a class="dh-underlined-link" href="stacker-learnmore">The Stacker</a> 
 </c:if>
 <c:if test="${exclude != 'stacker' && exclude != 'webAccounts'}">
     | 

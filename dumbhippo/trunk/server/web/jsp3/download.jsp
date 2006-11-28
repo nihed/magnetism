@@ -26,7 +26,7 @@
 	<title>Mugshot Download</title>
 	<dht3:stylesheet name="site" iefixes="true" lffixes="true"/>	
 	<dht3:stylesheet name="download"/>
-		<dh:script module="dh.download"/>
+	<dh:script module="dh.download"/>
 	<dht:faviconIncludes/>
 	<script type="text/javascript">
 		dh.download.needTermsOfUse = ${signin.needsTermsOfUse}
@@ -64,14 +64,14 @@
 					</div>
 					<div class="dh-download-yadayada">
 						Or, get Mugshot for another platform instead:
-							<c:if test="${!browser.fedora5Requested}">
+							<c:if test="${!download.fedora5Requested}">
 								<a href="/download?distribution=fedora5${urlParams}">Fedora Core 5</a>
 							</c:if>
-							<c:if test="${!browser.fedora6Requested}">
-								<c:if test="${!browser.fedora5Requested}">| </c:if>
+							<c:if test="${!download.fedora6Requested}">
+								<c:if test="${!download.fedora5Requested}">| </c:if>
 								<a href="/download?distribution=fedora6${urlParams}">Fedora Core 6</a>
 							</c:if>
-							<c:if test="${!browser.windowsRequested}">
+							<c:if test="${!download.windowsRequested}">
 								| <a href="/download?platform=windows${urlParams}">Windows XP</a>
 							</c:if>
 					</div>
@@ -81,13 +81,13 @@
 						We don't have Mugshot for your computer yet. (You can 
 						download for <a href="/download?platform=windows${urlParams}">Windows XP</a> or 
 						<a href="/download?distribution=fedora5${urlParams}">Fedora Core 5</a>.)
-						<c:if test="${browser.macRequested}">We're still working on Mac OS X support.</c:if>
+						<c:if test="${download.macRequested}">We're still working on Mac OS X support.</c:if>
 						You can use Mugshot without the download, however.
 					</div>
 					<div class="dh-download-yadayada">
 						<a id="dhSkipDownload" class="dh-download-product" href="javascript:dh.download.doDownload()">Continue without downloading.</a>
 					</div>
-					<c:if test="${browser.linuxRequested}">
+					<c:if test="${download.linuxRequested}">
 						<div class="dh-download-yadayada">						
 							Contributed third-party builds <a href="http://developer.mugshot.org/wiki/Downloads">can be found on the Mugshot Wiki</a>.
 							<c:if test="${signin.needsTermsOfUse}">Please also click "Continue without downloading"
@@ -97,7 +97,7 @@
 				</c:otherwise>
 			</c:choose>
 			<c:choose>
-				<c:when test="${browser.linuxRequested}">
+				<c:when test="${download.linuxRequested}">
 					<div class="dh-download-yadayada">
 						<i>Source code is available in <a href="${welcome.downloadUrlLinuxTar}">tar.gz</a> and
 						<a href="${welcome.downloadUrlSrpm}">SRPM</a> formats.</i>
@@ -125,11 +125,11 @@
 			<div class="dh-download-faq-q">How do I know Mugshot is running on my PC?</div>
 			<div class="dh-download-faq-a">
 			<c:choose>
-				<c:when test="${browser.windows}">
+				<c:when test="${download.windows}">
 					<div>Look in your Windows system tray for the Mugshot icon - it will look something like this:</div>
 					<dht3:toolTrayPointer/>
 				</c:when>
-				<c:when test="${browser.linux}">
+				<c:when test="${download.linux}">
 					<div>Look in your panel for the Mugshot icon - it will look something like this:</div>				
 					<dht3:toolTrayPointer/>						
 				</c:when>

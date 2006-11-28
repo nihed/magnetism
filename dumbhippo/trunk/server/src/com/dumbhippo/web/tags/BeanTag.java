@@ -14,6 +14,8 @@ import org.slf4j.Logger;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.web.Browser;
 import com.dumbhippo.web.BrowserBean;
+import com.dumbhippo.web.Download;
+import com.dumbhippo.web.DownloadBean;
 import com.dumbhippo.web.FromJspContext;
 import com.dumbhippo.web.PagePositions;
 import com.dumbhippo.web.PagePositionsBean;
@@ -85,6 +87,12 @@ public class BeanTag extends SimpleTagSupport {
 		
 		return BrowserBean.getForRequest((HttpServletRequest)context.getRequest());
 	}
+
+	private DownloadBean getDownloadBean() {
+		PageContext context = (PageContext)getJspContext();
+		
+		return DownloadBean.getForRequest((HttpServletRequest)context.getRequest());
+	}
 	
 	private PagePositionsBean getPagePositionsBean() {
 		PageContext context = (PageContext)getJspContext();
@@ -111,11 +119,13 @@ public class BeanTag extends SimpleTagSupport {
 	private Object instantiateObject() {
 		//logger.debug("Instantiating " + clazz.getName());
 		
-		// We special-case the SigninBean and BrowserBean
+		// We special-case the SigninBean, BrowserBean and DownloadBean
 		if (clazz == SigninBean.class) 
 			return getSigninBean(false);
 		if (clazz == BrowserBean.class)
 			return getBrowserBean();
+		if (clazz == DownloadBean.class)
+			return getDownloadBean();
 		
 		Object o;
 		try {
@@ -140,6 +150,9 @@ public class BeanTag extends SimpleTagSupport {
 				} else if (f.isAnnotationPresent(Browser.class) &&
 					f.getType().isAssignableFrom(BrowserBean.class)) {
 					setField(o, f, getBrowserBean());
+				} else if (f.isAnnotationPresent(Download.class) &&
+						f.getType().isAssignableFrom(DownloadBean.class)) {
+						setField(o, f, getDownloadBean());	
 				} else if (f.isAnnotationPresent(PagePositions.class) &&
 						f.getType().isAssignableFrom(PagePositionsBean.class)) {
 						setField(o, f, getPagePositionsBean());

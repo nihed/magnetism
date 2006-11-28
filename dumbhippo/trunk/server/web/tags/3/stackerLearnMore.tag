@@ -11,7 +11,7 @@
 
 <table class="dh-box-${backgroundColor} dh-download-section" cellspacing="0" cellpadding="0">
 	<tr>
-	<td valign="top" class="dh-download-section-icon-area"><dh:png src="/images3/${buildStamp}/stackericon59x56.png" style="width: 59; height: 56;"/></td>
+	<td valign="top" class="dh-download-section-icon-area"><dh:png src="/images3/${buildStamp}/stacker60x60.png" style="width: 59; height: 56;"/></td>
 	<td class="dh-download-section-details-area"><div class="dh-download-section-header"><a class="dh-download-product" href="/stacker-learnmore">Mugshot Stacker</a> gives you instant updates on your desktop.</div>
 	<div class="dh-download-section-description">
 	It's like a mini version of your Mugshot page, showing instant updates from Web Swarm, Music Radar, Mugshot Groups, and your

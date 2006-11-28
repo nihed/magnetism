@@ -17,22 +17,7 @@
 	<dht3:shinyBox color="grey">
 		<div class="dh-download-header-area">
 			<div class="dh-page-shinybox-title-large">Mugshot Features</div>
-			<div class="dh-page-shinybox-subtitle-bold"><span class="dh-download-product">Get maximum Mugshot!</span> The <a class="dh-underlined-link" href="/download">Mugshot download</a> gives you all of our features.  It's easy and free!</div>
-	        <table class="dh-download-buttons" cellspacing="0" cellpadding="0">
-	        	<tr height="27px">
-	        	<c:choose>
-	        		<c:when test="${signin.valid}">
-	        			<td><a class="dh-underlined-link" href="/download">Download now!</a></td>
-	        		</c:when>
-	        		<c:otherwise>
-	        			<td><span class="dh-button"><a href="/signup"><img src="/images3/${buildStamp}/signup.gif"/></a></span></td>
-			        	<td valign="middle" align="center"><span class="dh-download-buttons-or">or</span></td>
-	    		    	<td><span class="dh-button"><a href="/who-are-you"><img src="/images3/${buildStamp}/login.gif"/></a></span></td>
-	    		    </c:otherwise>
-	    		</c:choose>
-	        	</tr>
-	        </table>
-            </div> 			
+			<dht3:learnMoreNextStep/>	
 		</div>
 		<table class="dh-box-grey1 dh-download-section" cellspacing="0" cellpadding="0">
 			<tr>

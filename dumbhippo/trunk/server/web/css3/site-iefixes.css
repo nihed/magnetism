@@ -10,3 +10,9 @@
 
 .dh-stacker-block-content-container {
 }
+
+/* heigth: 1% is a hack to have "layout" forced on the text container for IE6, picked up on
+   http://www.pmob.co.uk/pob/caption-clear.htm */
+.dh-learnmore-explanation {
+    height:        1%;
+}

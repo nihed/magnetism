@@ -500,21 +500,45 @@ div.dh-person-header {
 	margin-bottom:	5px;
 }
 
+#dhLearnMoreNextStep {
+    margin-top:      5px;
+    margin-bottom:   10px;
+}
+
+#dhLearnMoreNextStep td {
+    padding-right:   10px; 
+}
+
+#dhLearnMoreButtons td { 
+    padding-right:   0px; 
+}
+
+.dh-download-details {
+    border-left:     2px solid #999999;
+    padding-left:    10px; 
+    white-space:     nowrap;
+}
+
 .dh-learnmore-summary {
     margin-bottom:  5px;
 }
 
 .dh-learnmore-illustration {
     float:         left;
+    display:       inline;
     margin-right:  10px;
 }
 
+/* overflow: auto keeps all the text to the right of the float instead of pushing part of it underneath
+   the float. If this text is floated as a block it tries to be 100% wide in Firefox and all of the text
+   ends up underneath the image. */
 .dh-learnmore-explanation {
-    float:         left;
+    overflow:      auto; 
 }
 
-.dh-download-buttons {
-	margin-bottom:			10px;
+.dh-learnmore-explanation p {
+    margin-top:    0px;
+    margin-bottom: 7px;
 }
 
 .dh-download-buttons img, .dh-download-buttons-or {

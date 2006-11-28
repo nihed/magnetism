@@ -17,7 +17,7 @@
 	<dht3:shinyBox color="grey">
 		<div class="dh-download-header-area">
 			<div class="dh-download-header">Mugshot Stacker</div>
-			<div class="dh-download-subtitle">Take advantage of all of our fun features with the Mugshot <a class="dh-underlined-link" href="/download">download</a>.  It's easy and free!</div>
+			<dht3:learnMoreNextStep page="stacker"/>
 		</div>
 		<dht3:stackerLearnMore>
 			<hr height="1px" color="#666666" style="margin: 10px 0px"/>

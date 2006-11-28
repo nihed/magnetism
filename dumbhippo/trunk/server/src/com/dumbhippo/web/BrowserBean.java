@@ -28,7 +28,7 @@ public class BrowserBean implements Serializable {
 	private Browser browserRequested;
 	private Distribution distributionRequested;
 	
-	private BrowserBean(HttpServletRequest request) {
+	protected BrowserBean(HttpServletRequest request) {
 		
 		os = OS.Unknown;
 		browser = Browser.Unknown;

@@ -459,6 +459,19 @@ div.dh-async-action-link-complete {
 	font-size:          13px;
 }
 
+#dhLearnMoreNextStep {
+    font-size:          13px;
+}
+
 .dh-learnmore-summary {
 	font-weight:        bold;
+}
+
+.dh-download-details {
+    font-size:         14px;
+}
+
+.dh-download-more-details {
+    color:             #666666;
+    font-size:         13px;
 }
