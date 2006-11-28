@@ -8,8 +8,8 @@ var createView = function(summary:Object) {
 	var viewRoot:MovieClip = rootMovie.createEmptyMovieClip("viewRoot", rootMovie.getNextHighestDepth());
 	
 	var topStuff:MovieClip = viewRoot.createEmptyMovieClip("topStuff", viewRoot.getNextHighestDepth());
-	//viewRoot.createEmptyMovieClip("ribbonBar", 0);
-	//viewRoot.createEmptyMovieClip("stack", 0);
+	var ribbonBar:MovieClip = viewRoot.createEmptyMovieClip("ribbonBar", viewRoot.getNextHighestDepth());
+	var stack:MovieClip = viewRoot.createEmptyMovieClip("stack", viewRoot.getNextHighestDepth());
 	
 	var photo:MovieClip = topStuff.createEmptyMovieClip("photo", topStuff.getNextHighestDepth());
 	photo._x = 10;
@@ -30,6 +30,45 @@ var createView = function(summary:Object) {
 	homeLink.html = true;
 	homeLink.htmlText = "<a href='" + escapeXML(summary.homeUrl) + "'>Visit my Mugshot page</a>";
 	formatText(homeLink, 12, 0x0000ff);
+	
+	var ribbon:MovieClip = ribbonBar.createEmptyMovieClip("ribbon", ribbonBar.getNextHighestDepth());
+	ribbon._x = 10;
+	ribbon._y = 72;
+	
+	var nextX = 0;
+	for (var i = 0; i < summary.accounts.length; ++i) {
+		var account:Object = summary.accounts[i];
+		var accountButton:MovieClip = ribbon.createEmptyMovieClip("account" + i, ribbon.getNextHighestDepth());
+		accountButton._x = nextX;
+		accountButton._y = 0;
+		addImageToClip(viewRoot, accountButton, account.icon, null);
+		nextX = nextX + 18;
+	}
+	
+	var nextY = 92;
+	for (var i = 0; i < summary.stack.length; ++i) {
+		var block:Object = summary.stack[i];
+		
+		var blockClip:MovieClip = stack.createEmptyMovieClip("block" + i, stack.getNextHighestDepth());
+		
+		blockClip._x = 10;
+		blockClip._y = nextY;
+
+		var heading:TextField = blockClip.createTextField("heading", blockClip.getNextHighestDepth(), 5, 5, 200, 20);
+		heading.text = block.heading;
+		formatText(heading, 12, 0x000000);
+		
+		var timeAgo:TextField = blockClip.createTextField("timeAgo", blockClip.getNextHighestDepth(), heading._width + 5, 5, 200, 20);
+		timeAgo.text = block.timeAgo;
+		formatText(timeAgo, 12, 0xcccccc);
+		
+		var link:TextField = blockClip.createTextField("link", blockClip.getNextHighestDepth(), 5, 20, 200, 20);
+		link.html = true;
+		link.htmlText = "<u><a href='" + escapeXML(block.link) + "'>" + escapeXML(block.linkText) + "</a></u>";
+		formatText(link, 12, 0x0000ff);	
+		
+		nextY = nextY + 50;
+	}
 	
 	return clip;
 }
