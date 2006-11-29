@@ -3,19 +3,20 @@ package com.dumbhippo.live;
 import com.dumbhippo.identity20.Guid;
 
 /**
- * Event sent when a contact is added to or removed from a user
+ * Event sent when another user adds or removes this user as
+ * a contact.
  * 
  * @author otaylor
  */
-public class ContactsChangedEvent implements LiveEvent {
+public class ContactersChangedEvent implements LiveEvent {
 	private static final long serialVersionUID = 1L;
 	
 	private Guid userId;
 	
 	/**
-	 * @param contactId the user who's contacts changed
+	 * @param userId the user whose contacters changed
 	 */
-	public ContactsChangedEvent(Guid userId) {
+	public ContactersChangedEvent(Guid userId) {
 		this.userId = userId;
 	}
 	
@@ -24,6 +25,6 @@ public class ContactsChangedEvent implements LiveEvent {
 	}
 
 	public Class<? extends LiveEventProcessor> getProcessorClass() {
-		return ContactsChangedEventProcessor.class;
+		return ContactersChangedEventProcessor.class;
 	}
 }

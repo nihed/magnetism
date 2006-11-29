@@ -21,5 +21,5 @@ public interface LiveUserUpdater {
 	
 	public void handleGroupMembershipChanged(Guid userGuid);
 	
-	void handleContactsChanged(Guid userGuid);
+	public void handleContactsChanged(Guid userGuid);
 }

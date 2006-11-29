@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.TypeFilteredCollection;
 import com.dumbhippo.identity20.Guid;
+import com.dumbhippo.live.LiveState;
 import com.dumbhippo.live.PresenceService;
 import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.AccountClaim;
@@ -343,11 +344,6 @@ public class PersonViewerBean implements PersonViewer {
 
 		boolean sawSelf = false;
 		Set<PersonView> result = new HashSet<PersonView>();
-
-		if (viewpoint instanceof UserViewpoint) {
-			UserViewpoint userViewpoint = (UserViewpoint)viewpoint;
-		    userViewpoint.cacheAllFriendOfStatus(identitySpider.getUsersWhoHaveUserAsContact(viewpoint, userViewpoint.getViewer()));
-		}
 
 		for (Person p : identitySpider.getRawContacts(viewpoint, user)) {
 			PersonView pv = getPersonView(viewpoint, p, extras);

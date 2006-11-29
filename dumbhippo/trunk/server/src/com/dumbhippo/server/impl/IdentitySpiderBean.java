@@ -23,7 +23,6 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.TypeUtils;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
-import com.dumbhippo.live.ContactsChangedEvent;
 import com.dumbhippo.live.LiveState;
 import com.dumbhippo.live.LiveUser;
 import com.dumbhippo.live.UserChangedEvent;
@@ -94,7 +93,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	
 	@EJB
 	private Notifier notifier;
-	
+
 	public User lookupUserByEmail(Viewpoint viewpoint, String email) {
 		EmailResource res = lookupEmail(email);
 		if (res == null)
@@ -366,6 +365,9 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 
 		// fix up group memberships
 		groupSystem.fixupGroupMemberships(claimedOwner);
+		
+		// People may have listed the newly claimed resource as a contact
+		LiveState.getInstance().invalidateContacters(claimedOwner.getGuid());
 	}
 
 	public void removeVerifiedOwnershipClaim(UserViewpoint viewpoint,
@@ -387,6 +389,10 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 				res.setAccountClaim(null);
 				claims.remove(claim);
 				em.remove(claim);
+				
+				// People may have listed the old resource as a contact
+				LiveState.getInstance().invalidateContacters(owner.getGuid());
+				
 				return;
 			}
 		}
@@ -454,10 +460,13 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		em.persist(cc);
 
 		contact.getResources().add(cc);
+		
+		User contactUser = getUser(resource);
 
-		// After the transaction commits succesfully, update the list of contact
-		// resources for this user
-		LiveState.getInstance().queueUpdate(new ContactsChangedEvent(user.getGuid()));
+		LiveState liveState = LiveState.getInstance();
+		liveState.invalidateContacts(user.getGuid());
+		if (contactUser != null)
+			liveState.invalidateContacters(contactUser.getGuid());
 
 		return contact;
 	}
@@ -510,29 +519,87 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 			doCreateContact(user, contactUser.getAccount());
 		}
 	}
-
+	
 	public void removeContactPerson(User user, Person contactPerson) {
 		logger.debug("removing contact {} from account {}", contactPerson, user
 				.getAccount());
 
+		Set<User> removedUsers = new HashSet<User>();
+		
 		Contact contact;
 		if (contactPerson instanceof Contact) {
 			contact = (Contact) contactPerson;
 		} else {
-			contact = findContactByUser(user, (User) contactPerson);
+			contact = findContactByUser(user, (User)contactPerson);
 			if (contact == null) {
 				logger.debug("User {} not found as a contact", contactPerson);
 				return;
 			}
 		}
 
+		for (ContactClaim cc : contact.getResources()) {
+			User resourceUser = getUser(cc.getResource());
+			if (resourceUser != null)
+				removedUsers.add(resourceUser);
+		}
+
 		user.getAccount().removeContact(contact);
 		em.remove(contact);
 		logger.debug("contact deleted");
 
-		// After the transaction commits succesfully, update the list of contact
-		// resources for this user
-		LiveState.getInstance().queueUpdate(new ContactsChangedEvent(user.getGuid()));
+		LiveState liveState = LiveState.getInstance();
+		liveState.invalidateContacts(user.getGuid());
+		for (User removedUser : removedUsers) {
+			liveState.invalidateContacters(removedUser.getGuid());
+			
+		}
+	}
+
+	public Set<Guid> computeContacts(Guid userId) {
+		User user = em.find(User.class, userId.toString());
+		
+		Query q = em.createQuery("SELECT ac.owner.id " +
+                 				 "  FROM ContactClaim cc, AccountClaim ac " +
+                 				 "  WHERE cc.resource = ac.resource " +
+				                 "    AND cc.account = :account");
+		q.setParameter("account", user.getAccount());
+		
+		Set<Guid> result = new HashSet<Guid>();
+		for (String s : TypeUtils.castList(String.class, q.getResultList())) {
+			try {
+				result.add(new Guid(s));
+			} catch (ParseException e) {
+				throw new RuntimeException("Bad GUID in database");
+			}
+		}
+		
+		return result;
+	}
+	
+	public Set<Guid> computeContacters(Guid userId) {
+		Query q = em.createQuery("SELECT cc.account.owner.id " +
+                                 "  FROM ContactClaim cc, AccountClaim ac " +
+                 				 "  WHERE cc.resource = ac.resource " +
+				                 "    AND ac.owner.id = :userId");
+		q.setParameter("userId", userId.toString());
+
+		Set<Guid> result = new HashSet<Guid>();
+		for (String s : TypeUtils.castList(String.class, q.getResultList())) {
+			try {
+				result.add(new Guid(s));
+			} catch (ParseException e) {
+				throw new RuntimeException("Bad GUID in database");
+			}
+		}
+
+		return result;
+	}
+	
+	public int getContactsCount(User user) {
+		Query q = em.createQuery("SELECT COUNT(*) FROM Contact c WHERE c.account = :account");
+		q.setParameter("account", user.getAccount());
+		
+		return ((Number)q.getSingleResult()).intValue();
 	}
 
 	public Set<Contact> getRawContacts(Viewpoint viewpoint, User user) {
@@ -583,32 +650,31 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	 *            is this person a contact of user?
 	 * @return true if contactUser is a contact of user
 	 */
-	private boolean userHasContact(User user, User contactUser) {
-		LiveUser liveUser = LiveState.getInstance().getLiveUser(user.getGuid());
-		for (AccountClaim ac : contactUser.getAccountClaims()) {
-			if (liveUser.hasContactResource(ac.getResource().getGuid()))
-				return true;
+	private boolean userHasContact(Viewpoint viewpoint, User user, User contactUser) {
+		LiveState liveState = LiveState.getInstance();
+
+		// See if we have either contacts or contacters cached for the relationship
+		Set<Guid> contacters = liveState.peekContacters(contactUser.getGuid());
+		if (contacters != null) {
+			return contacters.contains(user.getGuid());
 		}
 
-		return false;
-	}
-	
-	// We don't want to use the general isContactNoViewpoint for this, because
-	// there could be race conditions with the async-updated LiveUser cache,
-	// and the viewer needs to see accurate information about their own contacts.
-	// 
-	// We don't mind reconstituting *the viewer's* contact database from the
-	// hibernate second level cache, so we just do the check directly
-	private boolean viewerHasContact(UserViewpoint viewpoint, User contactUser) {
-		for (Contact contact : viewpoint.getViewer().getAccount().getContacts()) {
-			for (ContactClaim cc : contact.getResources()) {
-				AccountClaim ac = cc.getResource().getAccountClaim();
-				if (ac != null && ac.getOwner().equals(contactUser))
-					return true;
-			}
+		Set<Guid> contacts = liveState.peekContacts(user.getGuid());
+		if (contacts != null) {
+			return contacts.contains(contactUser.getGuid());
 		}
-
-		return false;
+		
+		// If neither is cached, we compute one of them; we prefer to cache
+		// information for the viewer; when neither the user or contactUser is
+		// the viewer we prefer the contact side of the relationship (somewhat
+		// abitrarily)
+		if (viewpoint.isOfUser(contactUser)) {
+			contacters = liveState.getContacters(contactUser.getGuid());
+			return contacters.contains(user.getGuid());
+		} else {
+			contacts = liveState.getContacts(user.getGuid());
+			return contacts.contains(contactUser.getGuid());
+		}
 	}
 	
 	public boolean isContact(Viewpoint viewpoint, User user, User contactUser) {
@@ -616,11 +682,8 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		if (!isViewerSystemOrFriendOf(viewpoint, user))
 			return false;
 
-		if (viewpoint.isOfUser(user))
-			return viewerHasContact((UserViewpoint)viewpoint, contactUser);
-	
 		// if we can see their contacts, return whether this person is one of them
-		return userHasContact(user, contactUser);
+		return userHasContact(viewpoint, user, contactUser);
 	}
 
 	public boolean isViewerSystemOrFriendOf(Viewpoint viewpoint, User user) {
@@ -630,13 +693,8 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 			UserViewpoint userViewpoint = (UserViewpoint) viewpoint;
 			if (user.equals(userViewpoint.getViewer()))
 				return true;
-			if (userViewpoint.isFriendOfStatusCached(user)) {
-				return userViewpoint.getCachedFriendOfStatus(user);
-			}
 			
-			boolean isFriendOf = userHasContact(user, userViewpoint.getViewer());
-            userViewpoint.setCachedFriendOfStatus(user, isFriendOf);
-			return isFriendOf;
+			return userHasContact(viewpoint, user, userViewpoint.getViewer());
 		} else {
 			return false;
 		}

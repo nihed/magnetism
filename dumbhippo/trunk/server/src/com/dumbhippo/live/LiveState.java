@@ -13,6 +13,14 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
+import javax.transaction.RollbackException;
+import javax.transaction.Status;
+import javax.transaction.Synchronization;
+import javax.transaction.SystemException;
+import javax.transaction.TransactionManager;
+
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
@@ -22,6 +30,7 @@ import com.dumbhippo.jms.JmsConnectionType;
 import com.dumbhippo.jms.JmsProducer;
 import com.dumbhippo.persistence.Account;
 import com.dumbhippo.server.AccountSystem;
+import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.util.EJBUtil;
 
@@ -46,6 +55,9 @@ public class LiveState {
 	
 	// Maximum number of cleaner intervals for each group
 	private static final int MAX_GROUP_CACHE_AGE = 30;
+	
+	// Maximum number of cleaner intervals for contacts/contacters
+	private static final int MAX_CONTACT_CACHE_AGE = 30;
 
 	/**
 	 * Get the global singleton LiveState object. The methods of the
@@ -199,6 +211,78 @@ public class LiveState {
 	public void updateLiveGroup(LiveGroup newGroup) {
 		groupCache.update(newGroup);
 	}	
+
+	/**
+	 * Get the set of users that a user has listed as contacts
+	 * 
+	 * @param userId the user listing contacts
+	 * @return guids of users that this user has listed as contacts 
+	 */
+	public Set<Guid> getContacts(Guid userId) {
+		return contactsCache.get(userId).getContacts();
+	}
+	
+	/**
+	 * Get the set of users that a user has listed as contacts if
+	 * we've already cached that information.
+	 * 
+	 * @param userId the user listing contacts
+	 * @return guids of users that this user has listed as contacts,
+	 *   or null if we haven't yet cached that information 
+	 */
+	public Set<Guid> peekContacts(Guid userId) {
+		LiveContacts contacts = contactsCache.peek(userId);
+		if (contacts != null)
+			return contacts.getContacts();
+		else
+			return null;
+	}
+	
+	/**
+	 * Get the set of users that have listed the user as a contact 
+	 * 
+	 * @param userId the user listed as a contact
+	 * @return guids of users that have listed this user as a contact
+	 */
+	public Set<Guid> getContacters(Guid userId) {
+		return contactersCache.get(userId).getContacts();
+	}
+	
+	/**
+	 * Get the set of users that have listed the user as a contact,
+	 *  if we've already computed that information 
+	 * 
+	 * @param userId the user listed as a contact
+	 * @return guids of users that have listed this user as a contact,
+	 *    or null if we haven't yet cached that information
+	 */
+	public Set<Guid> peekContacters(Guid userId) {
+		LiveContacts contacters = contactersCache.peek(userId);
+		if (contacters != null)
+			return contacters.getContacts();
+		else
+			return null;
+	}
+	
+	/**
+	 * Synchronously invalidate the local contacts cache entry for a user;
+	 * use invalidateContacts() instead.
+	 * 
+	 * @param userId the GUID of the user to invalidate the cache for
+	 */
+	void invalidateLocalContacts(Guid userId) {
+		contactsCache.invalidate(userId);
+	}
+	
+	/**
+	 * Synchronously invalidate the local contacts cache entry for a user;
+	 * use invalidateContacters() instead.
+	 * 
+	 * @param userId the GUID of the user to invalidate the cache for
+	 */
+	void invalidateLocalContacters(Guid userId) {
+		contactersCache.invalidate(userId);
+	}
 	
 	/**
 	 * Queue an event representing a change to the database state. The
@@ -242,6 +326,10 @@ public class LiveState {
 	private LiveObjectCache<LiveUser> userCache;
 	
 	private LiveObjectCache<LiveGroup> groupCache;
+	
+	private LiveObjectCache<LiveContacts> contactsCache;
+
+	private LiveObjectCache<LiveContacts> contactersCache;
 
 	private Cleaner cleaner;
 	
@@ -270,6 +358,28 @@ public class LiveState {
 					}
 				},
 				MAX_GROUP_CACHE_AGE);
+		contactsCache = new LiveObjectCache<LiveContacts>(
+				new LiveObjectFactory<LiveContacts>() {
+					public LiveContacts create(Guid guid) {
+						LiveContacts liveContacts = new LiveContacts(guid);
+						IdentitySpider identitySpider = EJBUtil.defaultLookup(IdentitySpider.class);
+						liveContacts.setContacts(identitySpider.computeContacts(guid));
+						
+						return liveContacts;
+					}
+				},
+				MAX_CONTACT_CACHE_AGE);
+		contactersCache = new LiveObjectCache<LiveContacts>(
+				new LiveObjectFactory<LiveContacts>() {
+					public LiveContacts create(Guid guid) {
+						LiveContacts liveContacts = new LiveContacts(guid);
+						IdentitySpider identitySpider = EJBUtil.defaultLookup(IdentitySpider.class);
+						liveContacts.setContacts(identitySpider.computeContacters(guid));
+						
+						return liveContacts;
+					}
+				},
+				MAX_CONTACT_CACHE_AGE);
 		
 		updateQueue = new JmsProducer(LiveEvent.TOPIC_NAME, JmsConnectionType.TRANSACTED_IN_SERVER);
 		
@@ -320,6 +430,8 @@ public class LiveState {
 		// Bump the age of all objects, removing ones that pass the maximum age
 		userCache.age();
 		groupCache.age();
+		contactsCache.age();
+		contactersCache.age();
 	}
 
 	// Thread that ages the different types of objects we keep around, and
@@ -447,5 +559,79 @@ public class LiveState {
 	
 	public static boolean getThrowRandomExceptionOnEntryCreation() {
 		return LiveState.throwRandomExceptionOnEntryCreation;
+	}
+
+	private void runTaskOnTransactionComplete(final Runnable runnable) {
+		TransactionManager tm;
+		try {
+			tm = (TransactionManager) (new InitialContext()).lookup("java:/TransactionManager");
+			tm.getTransaction().registerSynchronization(new Synchronization() {
+				public void beforeCompletion() {
+				}
+
+				public void afterCompletion(int status) {
+					if (status == Status.STATUS_COMMITTED)
+						runnable.run();
+				}
+			});
+		} catch (NamingException e) {
+			throw new RuntimeException(e);
+		} catch (IllegalStateException e) {
+			throw new RuntimeException(e);
+		} catch (RollbackException e) {
+			throw new RuntimeException(e);
+		} catch (SystemException e) {
+			throw new RuntimeException(e);
+		}
+	}
+	
+	/**
+	 * Invalidates the contacts cache for a user when the current
+	 * transaction finishes; this is done synchronously for the cache
+	 * on the local node, and asynchronously on other cluster nodes.
+	 *
+	 * You must make sure that the cache entry is not read by this
+	 * transaction before commit, since that will result in either
+	 * stale data being returned (if the data was already cached),
+	 * or in uncommitted data being exposed to other transactions
+	 * (if the data was not cached yet.)   
+	 * 
+	 * @param userId the user to invalidate the cache entry for
+	 */
+	public void invalidateContacts(final Guid userId) {
+		// Invalidate locally synchronously on commit
+		runTaskOnTransactionComplete(new Runnable() {
+			public void run() {
+				invalidateLocalContacts(userId);
+			}
+		});
+
+		// And invalidate remotely async
+		queueUpdate(new ContactsChangedEvent(userId));
+	}
+
+	/**
+	 * Invalidates the contacters cache for a user when the current
+	 * transaction finishes; this is done synchronously for the cache
+	 * on the local node, and asynchronously on other cluster nodes.
+	 *
+	 * You must make sure that the cache entry is not read by this
+	 * transaction before commit, since that will result in either
+	 * stale data being returned (if the data was already cached),
+	 * or in uncommitted data being exposed to other transactions
+	 * (if the data was not cached yet.)   
+	 * 
+	 * @param userId the user to invalidate the cache entry for
+	 */
+	public void invalidateContacters(final Guid userId) {
+		// Invalidate locally synchronously on commit
+		runTaskOnTransactionComplete(new Runnable() {
+			public void run() {
+				invalidateLocalContacters(userId);
+			}
+		});
+		
+		// And invalidate remotely async
+		queueUpdate(new ContactersChangedEvent(userId));
 	}
 }

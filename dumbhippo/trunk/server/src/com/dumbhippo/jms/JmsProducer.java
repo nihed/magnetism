@@ -20,9 +20,11 @@ import com.dumbhippo.GlobalSetup;
  */
 public class JmsProducer extends JmsDestination {
 	private static final Logger logger = GlobalSetup.getLogger(JmsProducer.class);
+	private static String sourceAddress;
 
 	public JmsProducer(String destinationName, JmsConnectionType connectionType) {
 		super(destinationName, connectionType);
+		sourceAddress = System.getProperty("jboss.bind.address");
 	}
 	
 	public void sendObjectMessage(Serializable payload) {
@@ -32,6 +34,7 @@ public class JmsProducer extends JmsDestination {
 			try {
 				JmsSession session = createSession();
 				Message message = session.createObjectMessage(payload);
+				message.setStringProperty("sourceAddress", sourceAddress);
 				session.getProducer(getDestination()).send(message);
 				session.close();
 				

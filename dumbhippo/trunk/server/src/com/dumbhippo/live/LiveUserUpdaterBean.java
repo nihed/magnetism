@@ -1,19 +1,12 @@
 package com.dumbhippo.live;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
 
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.identity20.Guid;
-import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.persistence.MembershipStatus;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.GroupSystem;
@@ -36,9 +29,6 @@ public class LiveUserUpdaterBean implements LiveUserUpdater {
 	@EJB
 	private PostingBoard postingBoard;
 	
-	@PersistenceContext(unitName = "dumbhippo")
-	private EntityManager em;
-	
 	private void initializeGroups(LiveUser user) {
 		User dbUser = identitySpider.lookupUser(user);		
 		user.setGroupCount(groupSystem.findGroupsCount(SystemViewpoint.getInstance(), dbUser, MembershipStatus.ACTIVE));
@@ -49,30 +39,15 @@ public class LiveUserUpdaterBean implements LiveUserUpdater {
 		user.setSentPostsCount(postingBoard.getPostsForCount(SystemViewpoint.getInstance(), dbUser));		
 	}
 	
-	private void initializeContactResources(LiveUser user) {
+	private void initializeContactsCount(LiveUser user) {
 		User dbUser = identitySpider.lookupUser(user);		
-		
-		List l = em.createQuery("SELECT cc.resource.id FROM ContactClaim cc WHERE cc.account = :account")
-			.setParameter("account", dbUser.getAccount())
-			.getResultList();
-
-		Set<Guid> guids = new HashSet<Guid>();
-
-		try {
-			for (Object o : l) {
-				guids.add(new Guid((String)o));
-			}
-		} catch (ParseException e) {
-			throw new RuntimeException("Database contained a bad GUID");
-		}
-	
-		user.setContactResources(guids);
+		user.setContactsCount(identitySpider.getContactsCount(dbUser));		
 	}
 	
 	public void initialize(LiveUser user) {
 		initializeGroups(user);
 		initializePostCount(user);
-		initializeContactResources(user);
+		initializeContactsCount(user);
 	}
 	
 	public void handleGroupMembershipChanged(Guid userGuid) {
@@ -98,16 +73,16 @@ public class LiveUserUpdaterBean implements LiveUserUpdater {
 			}
 		}
 	}	
-	
+
 	public void handleContactsChanged(Guid userGuid) {
 		LiveState state = LiveState.getInstance();
 		LiveUser liveUser = state.peekLiveUserForUpdate(userGuid);
 		if (liveUser != null) {
 			try {
-				initializeContactResources(liveUser);
+				initializeContactsCount(liveUser);
 			} finally {
 				state.updateLiveUser(liveUser);
 			}
 		}
-	}
+	}	
 }

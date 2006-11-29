@@ -473,10 +473,6 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 			return Collections.emptySet();
 		
 		Set<PersonView> result = new HashSet<PersonView>();
-		if (viewpoint instanceof UserViewpoint) {
-			UserViewpoint userViewpoint = (UserViewpoint)viewpoint;
-		    userViewpoint.cacheAllFriendOfStatus(identitySpider.getUsersWhoHaveUserAsContact(viewpoint, userViewpoint.getViewer()));
-		}
 		logger.debug("will generate person views for {} resources", resourceMembers.size());
 		for (Resource r : resourceMembers) {
 			result.add(personViewer.getPersonView(viewpoint, r, PersonViewExtra.PRIMARY_RESOURCE, extras)); 

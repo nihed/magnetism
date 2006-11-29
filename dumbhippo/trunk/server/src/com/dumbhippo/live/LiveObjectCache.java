@@ -278,14 +278,31 @@ class LiveObjectCache<T extends LiveObject> {
 	 * either called peekForUpdate() or getForUpdate()    
 	 */
 	public void update(T obj) {
-		CacheEntry<T> entry = entries.get(obj.getGuid());
+		CacheEntry<T> entry;
+		
+		synchronized(this) {
+			entry = entries.get(obj.getGuid());
+		}
+
 		if (entry == null) {
-			logger.warn("Attempt to update an entry not primed for update");
+			logger.warn("Attempt to update an entry not primed for update (may have been invalidated)");
 			return;
 		}
 		
 		entry.update(obj);
 	}		
+	
+	/**
+	 * Remove a LiveObject in the cache, if present, because te
+	 * data in the LiveObject has changed; note that this is incompatible 
+	 * with addStrongReference(). If addStrongReference() is used, you must
+	 * update cached objects instead of invalidating them.
+	 * 
+	 * @param guid the key for the object to remove
+	 */
+	public synchronized void invalidate(Guid guid) {
+		entries.remove(guid);
+	}
 	
 	/**
 	 * Adds an explicit "strong" reference to a LiveObject;

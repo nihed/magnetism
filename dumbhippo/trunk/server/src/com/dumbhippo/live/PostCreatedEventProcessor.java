@@ -20,7 +20,7 @@ public class PostCreatedEventProcessor implements LiveEventProcessor {
 	@EJB
 	LiveUserUpdater userUpdater;
 	
-	public void process(LiveState state, LiveEvent abstractEvent) {
+	public void process(LiveState state, LiveEvent abstractEvent, boolean isLocal) {
 		PostCreatedEvent event = (PostCreatedEvent)abstractEvent;
 		// posterId is null for FeedPost
 		Guid posterId = event.getPosterId();

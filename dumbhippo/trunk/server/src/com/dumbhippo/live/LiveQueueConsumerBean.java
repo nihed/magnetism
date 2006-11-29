@@ -31,7 +31,7 @@ public class LiveQueueConsumerBean implements MessageListener {
 
 	static private final Logger logger = GlobalSetup.getLogger(LiveQueueConsumerBean.class);
 	
-	private void process(LiveEvent event) {
+	private void process(LiveEvent event, boolean isLocal) {
 		// To find the right "processor bean" for this event, we have the 
 		// processor beans register themselves in JDNI under their class name
 		// using the JBoss @LocalBinding EJB3-annotation extension. There
@@ -43,7 +43,7 @@ public class LiveQueueConsumerBean implements MessageListener {
 			if (processor == null) {
 				logger.warn("Could not lookup event processor bean " + clazz.getCanonicalName());
 			} else {
-				processor.process(LiveState.getInstance(), event);
+				processor.process(LiveState.getInstance(), event, isLocal);
 			}
 		}
 		
@@ -57,11 +57,14 @@ public class LiveQueueConsumerBean implements MessageListener {
 			if (message instanceof ObjectMessage) {
 				ObjectMessage objectMessage = (ObjectMessage) message;
 				Object obj = objectMessage.getObject();
+				String sourceAddress = message.getStringProperty("sourceAddress");
+				String localAddress = System.getProperty("jboss.bind.address");
+				boolean isLocal = localAddress.equals(sourceAddress);
 				
-				logger.debug("Got object in " + LiveEvent.TOPIC_NAME + ": " + obj);
+				logger.debug("Got object in " + LiveEvent.TOPIC_NAME + ": " + obj + " (isLocal=" + isLocal + ")");
 				
 				if (obj instanceof LiveEvent) {
-					process((LiveEvent) obj);
+					process((LiveEvent) obj, isLocal);
 				} else {
 					logger.warn("Got unknown object: " + obj);
 				}

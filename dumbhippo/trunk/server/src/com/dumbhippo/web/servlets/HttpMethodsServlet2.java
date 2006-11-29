@@ -944,9 +944,7 @@ public class HttpMethodsServlet2 extends AbstractServlet {
 			SigninBean.updateAuthentication(request, response);
 		}
 		
-		out.flush();
-		out.close();
-		logger.debug("Reply for {} sent", m.getName());
+		logger.debug("Finishing generating reply for {}", m.getName());
 	}
 	
 	static private void writeXmlMethodError(HttpServletResponse response, String code, String message) throws IOException {

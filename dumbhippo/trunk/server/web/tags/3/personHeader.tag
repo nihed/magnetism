@@ -60,7 +60,7 @@
 						<div class="dh-person-header-controls"><jsp:doBody/></div>
 						<c:if test="${!embedVersion && who.liveUser != null}">
 						    <div class="dh-person-header-stats">
-								<span class="dh-info"><dht3:plural n="${who.liveUser.contactResourcesSize}" s="friend"/></span> | 							
+								<span class="dh-info"><dht3:plural n="${who.liveUser.contactsCount}" s="friend"/></span> | 							
 								<span class="dh-info"><dht3:plural n="${who.liveUser.groupCount}" s="group"/></span> | 
 								<span class="dh-info"><dht3:plural n="${who.liveUser.sentPostsCount}" s="post"/></span> 
 						    </div>

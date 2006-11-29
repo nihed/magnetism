@@ -195,6 +195,33 @@ public interface IdentitySpider {
 	 */
 	public void removeContactPerson(User user, Person contactPerson);
 
+	/**
+	 * Compute the set of users that this user has listed as friends; this
+	 * function should not be used directly; it is an internal implementation
+	 * detail of the contact cache; use the functions below instead. 
+	 * 
+	 * @param userId GUID of the user
+	 * @return guids of contacts
+	 */
+	public Set<Guid> computeContacts(Guid userId);
+	
+	/**
+	 * Compute the set of users that have listed this user as a friend; this
+	 * function should not be used directly; it is an internal implementation
+	 * detail of the contacter cache; use the functions below instead. 
+	 * 
+	 * @param user the user
+	 * @return guids of contacts
+	 */
+	public Set<Guid> computeContacters(Guid userId);
+	
+	/**
+	 * Gets the number of friends that this user has listed
+	 * @param user the user
+	 * @return the count of friends of user
+	 */
+	public int getContactsCount(User user);
+		
 	/** 
 	 * Get the contacts of the given person
 	 * @param user who to get contacts of

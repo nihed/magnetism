@@ -39,7 +39,7 @@ public class GroupEventProcessor implements LiveEventProcessor {
 	@EJB
 	GroupSystem groupSystem;
 	
-	public void process(LiveState state, LiveEvent abstractEvent) {
+	public void process(LiveState state, LiveEvent abstractEvent, boolean isLocal) {
 		GroupEvent event = (GroupEvent)abstractEvent;
 		
 		if (event.getDetail() == GroupEvent.Detail.MEMBERS_CHANGED) {

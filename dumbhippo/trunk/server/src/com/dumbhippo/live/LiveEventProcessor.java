@@ -17,6 +17,7 @@ public interface LiveEventProcessor {
 	 * @param state the state object to update 
 	 * @param abstractEvent the incoming event; this should be downcast
 	 *    to a particular event type.
+	 * @param isLocal did the event come from this node
 	 */
-	public void process(LiveState state, LiveEvent abstractEvent);
+	public void process(LiveState state, LiveEvent abstractEvent, boolean isLocal);
 }

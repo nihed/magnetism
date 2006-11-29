@@ -13,8 +13,12 @@ public class ContactsChangedEventProcessor implements LiveEventProcessor {
 	@EJB
 	LiveUserUpdater userUpdater;
 	
-	public void process(LiveState state, LiveEvent abstractEvent) {
+	public void process(LiveState state, LiveEvent abstractEvent, boolean isLocal) {
 		ContactsChangedEvent event = (ContactsChangedEvent)abstractEvent;
-		userUpdater.handleContactsChanged(event.getUserId());	
+		
+		userUpdater.handleContactsChanged(event.getUserId());
+		
+		if (!isLocal)
+			state.invalidateLocalContacts(event.getUserId());
 	}
 }
