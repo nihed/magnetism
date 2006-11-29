@@ -231,6 +231,21 @@ on_user_changed(HippoBlock *block,
         g_object_unref(person);
 }
 
+static void 
+on_title_changed(HippoBlockFacebookEvent *block_facebook_event,
+                 GParamSpec *arg, /* null when first calling this */
+                 HippoCanvasBlockFacebookEvent *canvas_block_facebook_event)
+{
+    HippoThumbnails *thumbnails;
+
+    thumbnails = hippo_block_facebook_event_get_thumbnails(block_facebook_event);
+    if (thumbnails != NULL)
+        hippo_canvas_block_set_title(HIPPO_CANVAS_BLOCK(canvas_block_facebook_event),
+                                     hippo_block_facebook_event_get_title(block_facebook_event), 
+                                     hippo_thumbnails_get_more_link(thumbnails),
+                                     FALSE);
+}
+
 static void
 hippo_canvas_block_facebook_event_set_block(HippoCanvasBlock *canvas_block,
                                              HippoBlock       *block)
@@ -245,6 +260,11 @@ hippo_canvas_block_facebook_event_set_block(HippoCanvasBlock *canvas_block,
                                              G_CALLBACK(on_user_changed),
                                              canvas_block);
         set_person(HIPPO_CANVAS_BLOCK_FACEBOOK_EVENT(canvas_block), NULL);
+
+        g_signal_handlers_disconnect_by_func(G_OBJECT(HIPPO_BLOCK_FACEBOOK_EVENT(canvas_block->block)),
+                                             G_CALLBACK(on_title_changed),
+                                             canvas_block);
+        hippo_canvas_block_set_title(canvas_block, NULL, NULL, FALSE);
     }
 
     /* Chain up to get the block really changed */
@@ -258,22 +278,27 @@ hippo_canvas_block_facebook_event_set_block(HippoCanvasBlock *canvas_block,
                          G_CALLBACK(on_user_changed),
                          canvas_block);
 
+        g_signal_connect(G_OBJECT(HIPPO_BLOCK_FACEBOOK_EVENT(canvas_block->block)),
+                         "notify::title",
+                         G_CALLBACK(on_title_changed),
+                         canvas_block);
+
         on_user_changed(canvas_block->block, NULL,
                         HIPPO_CANVAS_BLOCK_FACEBOOK_EVENT(canvas_block));
+        
+        on_title_changed(HIPPO_BLOCK_FACEBOOK_EVENT(canvas_block->block), NULL,
+                         HIPPO_CANVAS_BLOCK_FACEBOOK_EVENT(canvas_block));
 
         thumbnails = hippo_block_facebook_event_get_thumbnails(HIPPO_BLOCK_FACEBOOK_EVENT(canvas_block->block));
         if (thumbnails != NULL) {
-            hippo_canvas_block_set_title(canvas_block,
-                                         hippo_block_facebook_event_get_title(HIPPO_BLOCK_FACEBOOK_EVENT(canvas_block->block)),
-                                         hippo_thumbnails_get_more_link(thumbnails),
-                                         FALSE);
             g_object_set(HIPPO_CANVAS_BLOCK_FACEBOOK_EVENT(canvas_block)->thumbnails,
                          "thumbnails", thumbnails,
-                         NULL);            
-        }
-
-        if (hippo_thumbnails_get_count(thumbnails) <= 0)
+                         NULL);        
+            if (hippo_thumbnails_get_count(thumbnails) <= 0)
+                canvas_block->expandable = FALSE;
+        } else {
             canvas_block->expandable = FALSE;
+        }
     }
 }
 
