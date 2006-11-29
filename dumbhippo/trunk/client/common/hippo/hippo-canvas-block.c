@@ -440,6 +440,12 @@ hippo_canvas_block_constructor (GType                  type,
                                             NULL);
     hippo_canvas_box_append(box, block->heading_icon_item, 0);
 
+    block->heading_lock_item = g_object_new(HIPPO_TYPE_CANVAS_IMAGE,
+                                            "xalign", HIPPO_ALIGNMENT_START,
+                                            "yalign", HIPPO_ALIGNMENT_START,
+                                            NULL);
+    hippo_canvas_box_append(box, block->heading_lock_item, 0);
+
 #if 0
     block->heading_text_item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
                                             "text", NULL,
@@ -1055,6 +1061,15 @@ hippo_canvas_block_set_block(HippoCanvasBlock *canvas_block,
     (* klass->set_block) (canvas_block, block);
 }
 
+void 
+hippo_canvas_block_add_lock_icon(HippoCanvasBlock *canvas_block)
+{
+    g_object_set(G_OBJECT(canvas_block->heading_lock_item),
+                 "image-name", "lock_icon",
+                 "border-right", 4,
+                 NULL);    
+}
+                                
 void
 hippo_canvas_block_set_heading (HippoCanvasBlock *canvas_block,
                                 const char       *heading)

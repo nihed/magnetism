@@ -45,6 +45,7 @@ struct _HippoCanvasBlock {
     HippoCanvasItem *sent_to_text_item;
     HippoCanvasItem *sent_to_item;
     HippoCanvasItem *heading_icon_item;
+    HippoCanvasItem *heading_lock_item;
     HippoCanvasItem *title_link_item;
     HippoCanvasItem *content_container_item;
     HippoCanvasItem *headshot_item;
@@ -84,6 +85,7 @@ void             hippo_canvas_block_set_block   (HippoCanvasBlock *canvas_block,
 
 
 /* Protected methods */
+void hippo_canvas_block_add_lock_icon(HippoCanvasBlock *canvas_block);
 void hippo_canvas_block_set_heading (HippoCanvasBlock *canvas_block,
                                      const char       *heading);
 void hippo_canvas_block_set_title   (HippoCanvasBlock *canvas_block,

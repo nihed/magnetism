@@ -156,6 +156,7 @@
 	                    <File Id="hushPng"           Name="hush.png"     LongName="hush.png"           src="images\hush.png"           DiskId="1" Vital="yes"/>
 	                    <File Id="hush2Png"          Name="hush2.png"    LongName="hush2.png"          src="images\hush2.png"          DiskId="1" Vital="yes"/>
 	                    <File Id="lidPng"            Name="lid.png"      LongName="lid.png"            src="images\lid.png"            DiskId="1" Vital="yes"/>
+	                    <File Id="lockIconPng"       Name="lock_icon.png" LongName="lock_icon.png"     src="images\lock_icon.png"      DiskId="1" Vital="yes"/>
 	                    <File Id="mugshotstackerPng" Name="mugshots.png" LongName="mugshotstacker.png" src="images\mugshotstacker.png" DiskId="1" Vital="yes"/>
 	                    <File Id="nophotoPng"        Name="nophoto.png"  LongName="nophoto.png"        src="images\nophoto.png"        DiskId="1" Vital="yes"/>
 	                    <File Id="photoIconPng"      Name="photo_ic.png" LongName="photo_icon.png"     src="images\photo_icon.png"     DiskId="1" Vital="yes"/>

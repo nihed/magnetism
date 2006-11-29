@@ -56,6 +56,7 @@ images:
 	copy $(IMGDIR)\hush2.png $(OUTDIR)\images
 	copy $(IMGDIR)\hush.png $(OUTDIR)\images
 	copy $(IMGDIR)\lid.png $(OUTDIR)\images
+	copy $(IMGDIR)\lock_icon.png $(OUTDIR)\images
 	copy $(IMGDIR)\mugshotstacker.png $(OUTDIR)\images
 	copy $(IMGDIR)\nophoto.png $(OUTDIR)\images
 	copy $(IMGDIR)\photo_icon.png $(OUTDIR)\images
