@@ -2,13 +2,37 @@
 
 import flash.geom.Matrix;
 
-var entireWidth:Number = 250;
-var entireHeight:Number = 180;
+// this gives us our real window size, instead of giving us a fixed size then scaling.
+// We can't really handle arbitrary sizes though, only one of the expected ones.
+Stage.scaleMode = "noScale";
+
+var entireWidth:Number = Stage.width; //250;
+var entireHeight:Number = Stage.height; // 180;
+
+// don't let people pick arbitrary sizes, since then we might have to keep them working...
+// it might be nicer to just center our display in the available space if we get too-large size
+
+if (entireWidth != 250) {
+	throw new Error("we don't support this width " + entireWidth);
+}
+
+if (!(entireHeight == 70 || entireHeight == 180 || entireHeight == 255)) {
+	throw new Error("we don't support this height " + entireHeight);
+}
+
 var outerBorderWidth:Number = 2;
 var paddingInsideOuterBorder:Number = 5;
 var headshotSize:Number = 30;
 var presenceIconSize:Number = 12;
 var ribbonIconSize:Number = 16;
+var blockHeight:Number = 33;
+
+// See if we need to go into "mini" mode which has no stack and larger headshot
+var stacklessMode:Boolean = entireHeight < (headshotSize + blockHeight);
+if (stacklessMode) {
+	// we have a larger headshot in this mode
+	headshotSize = 60;
+}
 
 var rootMovie:MovieClip = createEmptyMovieClip("rootMovie", 0);
 var currentView:MovieClip = null;
@@ -49,9 +73,9 @@ var createView = function(summary:Object) {
 	// white border
 	viewRoot.beginFill(0xffffff);
 	viewRoot.moveTo(1, 1);
-	viewRoot.lineTo(entireWidth - 2, 1);
-	viewRoot.lineTo(entireWidth - 2, entireHeight - 2);
-	viewRoot.lineTo(1, entireHeight - 2);
+	viewRoot.lineTo(entireWidth - 1, 1);
+	viewRoot.lineTo(entireWidth - 1, entireHeight - 1);
+	viewRoot.lineTo(1, entireHeight - 1);
 	viewRoot.lineTo(1, 1);
 	viewRoot.endFill();	
 	
@@ -63,19 +87,26 @@ var createView = function(summary:Object) {
 	
 	var topStuff:MovieClip = viewRoot.createEmptyMovieClip("topStuff", viewRoot.getNextHighestDepth());
 	var ribbonBar:MovieClip = viewRoot.createEmptyMovieClip("ribbonBar", viewRoot.getNextHighestDepth());
-	var stack:MovieClip = viewRoot.createEmptyMovieClip("stack", viewRoot.getNextHighestDepth());
+	var stack:MovieClip;
+	if (!stacklessMode)
+		stack = viewRoot.createEmptyMovieClip("stack", viewRoot.getNextHighestDepth());
 	
 	var leftSide = outerBorderWidth + paddingInsideOuterBorder;
 	var topSide = outerBorderWidth + paddingInsideOuterBorder;
+	var rightSide = entireWidth - outerBorderWidth - paddingInsideOuterBorder;
 	
 	topStuff._x = leftSide;
 	topStuff._y = topSide;
 
-	ribbonBar._x = leftSide;
-	// ribbonBar y set later
-	
-	stack._x = leftSide;
-	// stack y set later
+	if (stacklessMode) {
+		ribbonBar._x = leftSide + headshotSize + 5;
+		// ribbonBar y set later
+	} else {
+		ribbonBar._x = leftSide;
+		// ribbonBar y set later
+		stack._x = leftSide;
+		// stack y set later
+	}
 	
 	var photo:MovieClip = topStuff.createEmptyMovieClip("photo", topStuff.getNextHighestDepth());
 	photo._x = 0;
@@ -105,27 +136,41 @@ var createView = function(summary:Object) {
 	homeLink.htmlText = "<u><a href='" + escapeXML(summary.homeUrl) + "'>Visit my Mugshot page</a></u>";
 	formatText(homeLink, 12, 0x0033ff);
 	
-	var topStuffBottomSide = topSide + name._y + 14 + 5 + 12;
+	var topStuffBottomSide = topSide + Math.max(14 + 5 + 12, headshotSize);
 	
-	ribbonBar._y = topStuffBottomSide + 5;
-	stack._y = ribbonBar._y + ribbonIconSize + 5;
+	if (stacklessMode) {
+		ribbonBar._y = topStuffBottomSide - ribbonIconSize;
+	} else {
+		ribbonBar._y = topStuffBottomSide + 5;
+		stack._y = ribbonBar._y + ribbonIconSize + 5;
+	}
 	
 	var ribbon:MovieClip = ribbonBar.createEmptyMovieClip("ribbon", ribbonBar.getNextHighestDepth());
 	
 	var nextX:Number = 0;
-	for (var i = 0; i < summary.accounts.length; ++i) {
+	for (var i = 0; i < summary.accounts.length && ribbonBar._x + nextX + ribbonIconSize < rightSide ; ++i) {
 		var account:Object = summary.accounts[i];
 		var accountButton:MovieClip = ribbon.createEmptyMovieClip("account" + i, ribbon.getNextHighestDepth());
 		accountButton._x = nextX;
 		accountButton._y = 0;
 		addImageToClip(viewRoot, accountButton, account.icon, null);
-		nextX = nextX + ribbonIconSize + 2;
+		nextX = nextX + ribbonIconSize + 3;
 	}
+
+	// return early if stackless
+	if (stacklessMode)
+		return clip;
 	
-	var blockHeight:Number = 33;
-	var blockWidth:Number = entireWidth - outerBorderWidth*2 - paddingInsideOuterBorder*2;
+	// otherwise build the stack
+	
+	var maxBlocks:Number = (entireHeight - outerBorderWidth - paddingInsideOuterBorder - stack._y) / blockHeight;		
+
+	trace("can show max of " + maxBlocks + " blocks");
+	
+	var blockWidth:Number = entireWidth - outerBorderWidth*2 - paddingInsideOuterBorder*2;	
+	
 	var nextY:Number = 0;
-	for (var i = 0; i < summary.stack.length; ++i) {
+	for (var i = 0; i < Math.min(summary.stack.length, maxBlocks); ++i) {
 		var block:Object = summary.stack[i];
 		
 		var blockClip:MovieClip = stack.createEmptyMovieClip("block" + i, stack.getNextHighestDepth());
