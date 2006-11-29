@@ -195,7 +195,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	}
 
 	private void returnPersonsXml(XmlBuilder xml, Viewpoint viewpoint,
-			Set<PersonView> persons) {
+			Collection<PersonView> persons) {
 		if (persons != null) {
 			for (PersonView p : persons) {
 
@@ -252,7 +252,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	}
 
 	private void returnGroupsXml(XmlBuilder xml, Viewpoint viewpoint,
-			Set<Group> groups) {
+			Collection<Group> groups) {
 		if (groups != null) {
 			for (Group g : groups) {
 
@@ -292,7 +292,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	}
 
 	private void returnObjects(OutputStream out, HttpResponseData contentType,
-			Viewpoint viewpoint, Set<PersonView> persons, Set<Group> groups)
+			Viewpoint viewpoint, Collection<PersonView> persons, Collection<Group> groups)
 			throws IOException {
 		XmlBuilder xml = new XmlBuilder();
 
@@ -352,8 +352,11 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	public void getContactsAndGroups(OutputStream out,
 			HttpResponseData contentType, UserViewpoint viewpoint) throws IOException {
 
-		Set<PersonView> persons = personViewer.getContacts(viewpoint, viewpoint.getViewer(),
-				true, PersonViewExtra.ALL_RESOURCES);
+		List<PersonView> persons = personViewer.getContacts(viewpoint, viewpoint.getViewer(),
+				0, -1, PersonViewExtra.ALL_RESOURCES);
+		// Add the user themself to the list of returned contacts (whether or not the
+		// viewer is in their own contact list getContacts() strips it out.)
+		persons.add(personViewer.getPersonView(viewpoint, viewpoint.getViewer(), PersonViewExtra.ALL_RESOURCES));
 		Set<Group> groups = groupSystem.findRawGroups(viewpoint, viewpoint.getViewer());
 
 		returnObjects(out, contentType, viewpoint, persons, groups);

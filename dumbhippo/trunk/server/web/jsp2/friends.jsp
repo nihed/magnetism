@@ -39,7 +39,7 @@
 		<dht:zoneBoxFriends back='true'>
 			<dht:zoneBoxTitle>ALL <c:out value='${selfView ? "YOUR " : "" }'/>FRIENDS</dht:zoneBoxTitle>
 			<c:choose>  
-		        <c:when test="${person.contacts.size > 0}">             
+		        <c:when test="${person.pageableContacts.resultCount > 0}">             
 			        <dht:twoColumnList>
 				        <c:forEach items="${person.pageableContacts.results}" var="person">
 					        <dht:personItem who="${person}" invited="true"/>

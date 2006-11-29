@@ -26,7 +26,7 @@
 				</c:forEach>
 				<c:choose>				
 				    <c:when test="${person.contacts.size > 3}">
-					    <dht:moreLink moreName="ALL ${title} (${person.contacts.size})" more="${url}"/>
+					    <dht:moreLink moreName="ALL ${title} (${person.viewedPerson.liveUser.contactsCount})" more="${url}"/>
 				    </c:when>
 				    <c:when test="${(person.followers.size > 0) && selfView}">
 					    <dht:moreLink moreName="ALL YOUR FOLLOWERS (${person.followers.size})" more="${url}"/>

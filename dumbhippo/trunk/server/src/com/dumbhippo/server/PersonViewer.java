@@ -1,5 +1,6 @@
 package com.dumbhippo.server;
 
+import java.util.List;
 import java.util.Set;
 
 import javax.ejb.Local;
@@ -16,16 +17,19 @@ import com.dumbhippo.server.views.Viewpoint;
 public interface PersonViewer {
 	
 	/** 
-	 * Get the contacts of the given person as a list of PersonView
-	 * @param viewpoint viewpoint person viewing the contacts (only
-	 *          a user can see their contacts, so if viewpoint.getviewer()
-	 *          doesn't match user, the result will be empty)    
+	 * Get the contacts of the given person as a list of PersonView; the
+	 *   result will never include the person themself.
+	 * @param viewpoint viewpoint person viewing the contacts
 	 * @param user who to get contacts of
 	 * @param includeSelf whether to include the user in the list
+	 * @param start starting index of contacts to include
+	 * @param max maximum number of contacts to return, or -1 for no limit
 	 * @param extras info to stuff into the PersonView objects
 	 * @return their contacts
 	 */
-	public Set<PersonView> getContacts(Viewpoint viewpoint, User user, boolean includeSelf, PersonViewExtra... extras);
+	public List<PersonView> getContacts(Viewpoint viewpoint, User user, int start, int max, PersonViewExtra... extras);
+	
+	public void pageContacts(Viewpoint viewpoint, User user, Pageable<PersonView> pageable, PersonViewExtra... extras);
 	
 	/**
 	 * Get a list of users who have this user as a contact, but who are not contacts of this user.

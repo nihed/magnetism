@@ -1,7 +1,6 @@
 package com.dumbhippo.server.impl;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -18,7 +17,6 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.TypeUtils;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
-import com.dumbhippo.persistence.Contact;
 import com.dumbhippo.persistence.NowPlayingTheme;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.IdentitySpider;
@@ -182,13 +180,7 @@ public class NowPlayingThemeSystemBean implements NowPlayingThemeSystem {
 	public void getFriendsThemes(Viewpoint viewpoint, User user, Pageable<NowPlayingTheme> pageable) {
 		// this will return no friends if we can't see this person's contacts
 		// from our viewpoint
-		Set<Contact> contacts = identitySpider.getRawContacts(viewpoint, user);
-		Set<User> friends = new HashSet<User>();
-		for (Contact c : contacts) {
-			User u = identitySpider.getUser(c);
-			if (u != null)
-				friends.add(u);
-		}
+		Set<User> friends = identitySpider.getRawUserContacts(viewpoint, user);
 		
 		if (friends.isEmpty()) {
 			pageable.setResults(new ArrayList<NowPlayingTheme>());

@@ -1,5 +1,6 @@
 package com.dumbhippo.server.impl;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -9,12 +10,14 @@ import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
 
 import org.jboss.annotation.IgnoreDependency;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.TypeFilteredCollection;
+import com.dumbhippo.TypeUtils;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.live.LiveState;
 import com.dumbhippo.live.PresenceService;
@@ -32,6 +35,8 @@ import com.dumbhippo.server.ExternalAccountSystem;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.InvitationSystem;
+import com.dumbhippo.server.NotFoundException;
+import com.dumbhippo.server.Pageable;
 import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.Configuration.PropertyNotFoundException;
 import com.dumbhippo.server.views.ExternalAccountView;
@@ -299,18 +304,22 @@ public class PersonViewerBean implements PersonViewer {
 	}
 
 	public PersonView getPersonView(Viewpoint viewpoint, Resource r, PersonViewExtra firstExtra, PersonViewExtra... extras) {
-		User user;
-		Contact contact;
-		
-		if (viewpoint instanceof UserViewpoint)
-			contact = identitySpider.findContactByResource(((UserViewpoint)viewpoint).getViewer(), r);
-		else
-			contact = null;
+		User user = null;
+		Contact contact = null;
 		
 		if (r instanceof Account) {
 			user = ((Account)r).getOwner();
 		} else {
 			user = identitySpider.lookupUserByResource(viewpoint, r);
+		}
+
+		if (user == null) {
+			if (viewpoint instanceof UserViewpoint) {
+				try {
+					contact = identitySpider.findContactByResource(((UserViewpoint)viewpoint).getViewer(), r);
+				} catch (NotFoundException e) {
+				}
+			}
 		}
 		
 		PersonView pv = new PersonView(contact, user);
@@ -335,39 +344,61 @@ public class PersonViewerBean implements PersonViewer {
 		return pv;
 	}
 
-	public Set<PersonView> getContacts(Viewpoint viewpoint, User user,
-			boolean includeSelf, PersonViewExtra... extras) {
+	public List<PersonView> getContacts(Viewpoint viewpoint, User user,
+			int start, int max, PersonViewExtra... extras) {
+		
+		if (!identitySpider.isViewerSystemOrFriendOf(viewpoint, user))
+			return Collections.emptyList();
 
 		// there are various ways to get yourself in your own contact list;
-		// we make includeSelf work in both cases (where you are or are not in
-		// there)
+		// we strip such things out. The caller can add them back if they
+		// need them
 
-		boolean sawSelf = false;
-		Set<PersonView> result = new HashSet<PersonView>();
+		List<PersonView> result = new ArrayList<PersonView>();
+		Set<Guid> seen = new HashSet<Guid>();
+		
+		// ORDER BY c.id DESC is an approximation "most recently added contacts first".
+		// To replace this ordering by an alphabetical ordering, we'd need to denormalize
+		// and store the display name of the contact in the Contact object; this isn't
+		// hard to do but it is a little tricky to keep updated.
+		Query q = em.createQuery("SELECT c from Contact c WHERE c.account = :account ORDER BY c.id DESC");
+		q.setParameter("account", user.getAccount());
+		q.setFirstResult(start);
+		if (max >= 0)
+			q.setMaxResults(max + 1); // Result might have ourself in it
 
-		for (Person p : identitySpider.getRawContacts(viewpoint, user)) {
-			PersonView pv = getPersonView(viewpoint, p, extras);
+		for (Contact c : TypeUtils.castList(Contact.class, q.getResultList())) {
+			if (max >= 0 && result.size() == max)
+				break;
+			
+			PersonView pv = getPersonView(viewpoint, c, extras);
+			
+			// Note that this uniquification is only among a single page of the 
+			// results and we also don't make any effort to get more results to
+			// fill up for results removed because uniquification, but hopefully
+			// one user having another user in their contact list multiple
+			// times will be rare; it can happen because of account claims that
+			// are added after the creation of contact entries.
+			if (seen.contains(pv.getIdentifyingGuid()))
+				continue;
+			seen.add(pv.getIdentifyingGuid());
 
-			if (pv.getUser() != null && pv.getUser().equals(user)) {
-				// FIXME the concept here (one contact displayed per User) could
-				// be generalized, i.e. we should probably nuke all but one
-				// PersonView
-				// for each User...
-				if (includeSelf && !sawSelf)
-					result.add(pv);
-				sawSelf = true;
-			} else {
-				result.add(pv);
-			}
-		}
-
-		if (includeSelf && !sawSelf) {
-			result.add(getPersonView(viewpoint, user, extras));
+			if (pv.getUser() != null && pv.getUser().equals(user))
+				continue;
+				
+			result.add(pv);
 		}
 
 		return result;
 	}
 
+
+	public void pageContacts(Viewpoint viewpoint, User user, Pageable<PersonView> pageable, PersonViewExtra... extras) {
+		pageable.setResults(getContacts(viewpoint, user, pageable.getStart(), pageable.getCount(), extras));
+		
+		pageable.setTotalCount(LiveState.getInstance().getLiveUser(user.getGuid()).getContactsCount());
+	}
+	
 	public Set<PersonView> getFollowers(Viewpoint viewpoint, User user,
 			PersonViewExtra... extras) {
 
@@ -377,16 +408,15 @@ public class PersonViewerBean implements PersonViewer {
 			return followers;
 		}
 
-		// we are only interested in user contacts of self
-		Set<User> rawContactsOfSelf = identitySpider.getRawUserContacts(viewpoint, user);
-		List<Account> accounts = identitySpider.getAccountsWhoHaveUserAsContact(user);
+		LiveState liveState = LiveState.getInstance();
+		Set<Guid> contacts = liveState.getContacts(user.getGuid());
+		Set<Guid> contacters = liveState.getContacters(user.getGuid());
 
-		for (Account a : accounts) {
-			User selfAContactOf = a.getOwner();
-			if (!rawContactsOfSelf.contains(selfAContactOf)) {
-				// this person is our follower, because we don't have them as a
-				// contact!
-				PersonView pv = getPersonView(viewpoint, selfAContactOf, extras);
+		for (Guid guid : contacters) {
+			if (!contacts.contains(guid)) {
+				User follower = em.find(User.class, guid.toString());
+
+				PersonView pv = getPersonView(viewpoint, follower, extras);
 				followers.add(pv);
 			}
 		}

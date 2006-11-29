@@ -57,8 +57,6 @@ public class Account extends Resource {
 		
 	private User owner;
 	
-	private Set<Contact> contacts;
-	
 	private long creationDate;
 	private long lastLoginDate;
 	private long lastLogoutDate;
@@ -114,7 +112,6 @@ public class Account extends Resource {
 	
 	public Account(User owner) {			
 		clients = new HashSet<Client>();
-		contacts = new HashSet<Contact>();
 		favoritePosts = new HashSet<Post>();
 		externalAccounts = new HashSet<ExternalAccount>();
 		creationDate = -1;
@@ -250,49 +247,6 @@ public class Account extends Resource {
 	 */
 	protected void setOwner(User owner) {
 		this.owner = owner;
-	}
-
-	@OneToMany(mappedBy="account")
-	@Cache(usage=CacheConcurrencyStrategy.TRANSACTIONAL)	
-	public Set<Contact> getContacts() {
-		if (contacts == null)
-			throw new RuntimeException("no contacts set???");
-		return contacts;
-	}
-
-	/**
-	 * This is protected because only Hibernate probably 
-	 * needs to call it. Use addContact/removeContact 
-	 * instead...
-	 * 
-	 * @param contacts your contacts
-	 */
-	protected void setContacts(Set<Contact> contacts) {
-		if (contacts == null)
-			throw new IllegalArgumentException("null contacts");
-		this.contacts = contacts;
-	}
-	
-	public void addContact(Contact contact) {
-		if (contact == null)
-			throw new IllegalArgumentException("null person");
-		if (contacts == null)
-			throw new RuntimeException("no contacts set???");
-		contacts.add(contact);
-	}
-	
-	public void addContacts(Set<Contact> contact) {
-		if (contact == null)
-			throw new IllegalArgumentException("null persons");
-		contacts.addAll(contact);
-	}
-	
-	public void removeContact(Contact contact) {
-		contacts.remove(contact);
-	}
-	
-	public void removeContacts(Set<Contact> contacts) {
-		contacts.removeAll(contacts);
 	}
 
 	@Column(nullable=false)

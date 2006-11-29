@@ -55,7 +55,7 @@
 								</c:when>
 								<c:when test="${signin.valid && !person.self}">
 							        <c:choose>
-					    		        <c:when test="${person.contact}">
+					    		        <c:when test="${person.viewedPerson.contactOfViewer}">
 											<dh:script module="dh.actions"/>
 					    			        <dht:actionLink href="javascript:dh.actions.removeContact('${person.viewedPerson.viewPersonPageId}')" title="Remove this person from your friends list">Remove from your friends</dht:actionLink>
 						    	        </c:when>

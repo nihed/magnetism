@@ -41,7 +41,7 @@ public class LiveUserUpdaterBean implements LiveUserUpdater {
 	
 	private void initializeContactsCount(LiveUser user) {
 		User dbUser = identitySpider.lookupUser(user);		
-		user.setContactsCount(identitySpider.getContactsCount(dbUser));		
+		user.setContactsCount(identitySpider.computeContactsCount(dbUser));		
 	}
 	
 	public void initialize(LiveUser user) {

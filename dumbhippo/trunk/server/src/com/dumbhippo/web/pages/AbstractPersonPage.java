@@ -37,6 +37,10 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 	static private final int FRIENDS_PER_PAGE = 20;
 	static private final int GROUPS_PER_PAGE = 20;
 	
+	// This is the number of contacts we request for the list in the sidebar;
+	// it's 1 greater than the number we actually show to allow for "More>".
+	static private final int SHORT_CONTACT_COUNT = 4;
+	
 	@PagePositions
 	PagePositionsBean pagePositions;
 	
@@ -67,7 +71,6 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 	
 	protected ListBean<PersonView> contacts;
 	private Pageable<PersonView> pageableContacts; 
-	protected int totalContacts;
 
 	protected ListBean<PersonView> followers;
 	private Pageable<PersonView> pageableFollowers;
@@ -153,15 +156,6 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 		}
 		
 		return viewedPerson;
-	}
-	
-	public boolean isContact() {
-		// this determines if the viewed user is a contact of the signed in user, it is used to decide 
-		// whether to offer a link to add or to remove viewed user as a contact of the signed in user
-		if (getSignin().isValid())
-			return identitySpider.isContact(getSignin().getViewpoint(), getUserSignin().getUser(), getViewedUser());
-		else
-			return false;
 	}
 	
 	public boolean isSelf() {
@@ -269,28 +263,21 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 		return lastLogin == null || new Date().getTime() - lastLogin.getTime() > 1000*60*60*24*5;
 	}
 	
-	public Set<PersonView> getUnsortedContacts() {
-	    if (unsortedContacts == null) {
-	    	unsortedContacts = 
-				personViewer.getContacts(getSignin().getViewpoint(), getViewedUser(), 
-		                   false, PersonViewExtra.INVITED_STATUS, 
-		                   PersonViewExtra.PRIMARY_EMAIL, 
-		                   PersonViewExtra.PRIMARY_AIM,
-		                   PersonViewExtra.EXTERNAL_ACCOUNTS);	
-	    }
-	    
-	    return unsortedContacts;
-	}
-	
 	/**
 	 * Get a set of contacts of the viewed user that we want to display on the person page.
 	 * 
 	 * @return a list of PersonViews of a subset of contacts
 	 */
 	public ListBean<PersonView> getContacts() {
-		if (contacts == null) {	
-			contacts = new ListBean<PersonView>(PersonView.sortedList(getSignin().getViewpoint(), getViewedUser(), getUnsortedContacts()));
-			totalContacts = getUnsortedContacts().size();
+		if (contacts == null) {
+			List<PersonView> list = personViewer.getContacts(getSignin().getViewpoint(), getViewedUser(), 
+			                   0, SHORT_CONTACT_COUNT,
+			                   PersonViewExtra.INVITED_STATUS, 
+			                   PersonViewExtra.PRIMARY_EMAIL, 
+			                   PersonViewExtra.PRIMARY_AIM,
+			                   PersonViewExtra.EXTERNAL_ACCOUNTS);	
+		    
+			contacts = new ListBean<PersonView>(list);
 		}
 		return contacts;
 	}
@@ -301,7 +288,11 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 			pageableContacts.setInitialPerPage(FRIENDS_PER_PAGE);
 			pageableContacts.setSubsequentPerPage(FRIENDS_PER_PAGE);
 			
-			pageableContacts.generatePageResults(getContacts().getList());
+			personViewer.pageContacts(getSignin().getViewpoint(), getViewedUser(), pageableContacts, 
+					   PersonViewExtra.INVITED_STATUS, 
+	                   PersonViewExtra.PRIMARY_EMAIL, 
+	                   PersonViewExtra.PRIMARY_AIM,
+	                   PersonViewExtra.EXTERNAL_ACCOUNTS);	
 		}
 		
 		return pageableContacts;
@@ -326,18 +317,6 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 		}
 		
 		return pageableFollowers;
-	}
-	
-	public void setTotalContacts(int totalContacts) {		
-	    this.totalContacts = totalContacts;
-	}
-	
-	public int getTotalContacts() {
-		if (contacts == null) {
-			getContacts();
-		}
-		
-		return totalContacts;
 	}
 	
 	public TrackView getCurrentTrack() {

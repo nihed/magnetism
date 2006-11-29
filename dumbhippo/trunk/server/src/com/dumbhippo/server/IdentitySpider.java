@@ -163,7 +163,7 @@ public interface IdentitySpider {
 	public List<Account> getAccountsWhoHaveUserAsContact(User user);	
 	
 	
-	public Contact findContactByResource(User owner, Resource resource);	
+	public Contact findContactByResource(User owner, Resource resource) throws NotFoundException;	
 	
 	/**
 	 * If the person has a Contact with a resource sharing a (system-verified)
@@ -216,19 +216,13 @@ public interface IdentitySpider {
 	public Set<Guid> computeContacters(Guid userId);
 	
 	/**
-	 * Gets the number of friends that this user has listed
+	 * Gets the number of friends that this user has listed; you should generally
+	 * get the cached value from LiveUser instead.
 	 * @param user the user
 	 * @return the count of friends of user
 	 */
-	public int getContactsCount(User user);
+	public int computeContactsCount(User user);
 		
-	/** 
-	 * Get the contacts of the given person
-	 * @param user who to get contacts of
-	 * @return their contacts
-	 */
-	public Set<Contact> getRawContacts(Viewpoint viewpoint, User user);
-	
 	/** 
 	 * Get the contacts of a given person who have an account; including the person themselves
 	 * @param user who to get contacts of

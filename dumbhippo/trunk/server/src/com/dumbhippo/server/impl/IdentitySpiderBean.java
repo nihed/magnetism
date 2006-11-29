@@ -401,30 +401,37 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 						res);
 	}
 
-	private Contact findContactByUser(User owner, User contactUser) {
-		for (Contact contact : owner.getAccount().getContacts()) {
-			for (ContactClaim cc : contact.getResources()) {
-				AccountClaim ac = cc.getResource().getAccountClaim();
-				if (ac != null && ac.getOwner().equals(contactUser))
-					return contact;
-			}
+	private Contact findContactByUser(User owner, User contactUser) throws NotFoundException {
+		Query q = em.createQuery("SELECT cc.contact " +
+				 				 "  FROM ContactClaim cc, AccountClaim ac " +
+				 				 "  WHERE cc.resource = ac.resource " +
+				 				 "    AND cc.account = :account " +
+				 				 "    AND ac.owner = :contact");
+		q.setParameter("account", owner.getAccount());
+		q.setParameter("contact", contactUser);
+		q.setMaxResults(1);
+	
+		try {
+			return (Contact)q.getSingleResult();
+		} catch (NoResultException e) {
+			throw new NotFoundException("No contact for user");
 		}
-
-		return null;
 	}
+	
+	public Contact findContactByResource(User owner, Resource resource) throws NotFoundException {
+		Query q = em.createQuery("SELECT cc.contact " +
+				 				 "  FROM ContactClaim cc " +
+				 				 "  WHERE cc.account = :account" +
+				 				 "    AND cc.resource = :contact");
+		q.setParameter("account", owner.getAccount());
+		q.setParameter("contact", resource);
+		q.setMaxResults(1);
 
-	public Contact findContactByResource(User owner, Resource resource) {
-		Account account = owner.getAccount();
-		Set<Contact> contacts = account.getContacts();
-		for (Contact contact : contacts) {
-			for (ContactClaim cc : contact.getResources()) {
-				Resource r = cc.getResource();
-				if (r != null && r.equals(resource))
-					return contact;
-			}
+		try {
+			return (Contact)q.getSingleResult();
+		} catch (NoResultException e) {
+			throw new NotFoundException("No contact for user");
 		}
-
-		return null;
 	}
 
 	private Contact doCreateContact(User user, Resource resource) {
@@ -444,18 +451,9 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		// if we don't update them the second-level cache will contain stale
 		// data.
 		// Updating them won't actually update the data in the second-level
-		// cache for
-		// a non-transactional cache; rather it will flag the data to be
-		// reloaded
-		// from the database.
+		// cache for a non-transactional cache; rather it will flag the data to be
+		// reloaded from the database.
 		//
-		// In order to add the contact to the account's list of contacts
-		// or to add the contact claim to the account's list of resources
-		// we need to load the set of existing values; the second-level
-		// cache makes that cheap.
-
-		account.addContact(contact);
-
 		ContactClaim cc = new ContactClaim(contact, resource);
 		em.persist(cc);
 
@@ -477,8 +475,11 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		if (resource == null)
 			throw new IllegalArgumentException("null contact resource");
 
-		Contact contact = findContactByResource(user, resource);
-		if (contact == null) {
+		Contact contact;
+		
+		try {
+			contact = findContactByResource(user, resource);
+		} catch (NotFoundException e) {
 			contact = doCreateContact(user, resource);
 
 			// Things work better (especially for now, when we don't fully
@@ -513,10 +514,11 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		} else {
 			User contactUser = (User) contactPerson;
 
-			if (findContactByUser(user, contactUser) != null)
-				return;
-
-			doCreateContact(user, contactUser.getAccount());
+			try {
+				findContactByUser(user, contactUser);
+			} catch (NotFoundException e) { 
+				doCreateContact(user, contactUser.getAccount());
+			}
 		}
 	}
 	
@@ -530,8 +532,9 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		if (contactPerson instanceof Contact) {
 			contact = (Contact) contactPerson;
 		} else {
-			contact = findContactByUser(user, (User)contactPerson);
-			if (contact == null) {
+			try {
+				contact = findContactByUser(user, (User)contactPerson);
+			} catch (NotFoundException e) {
 				logger.debug("User {} not found as a contact", contactPerson);
 				return;
 			}
@@ -543,7 +546,6 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 				removedUsers.add(resourceUser);
 		}
 
-		user.getAccount().removeContact(contact);
 		em.remove(contact);
 		logger.debug("contact deleted");
 
@@ -595,28 +597,20 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		return result;
 	}
 	
-	public int getContactsCount(User user) {
+	public int computeContactsCount(User user) {
 		Query q = em.createQuery("SELECT COUNT(*) FROM Contact c WHERE c.account = :account");
 		q.setParameter("account", user.getAccount());
 		
 		return ((Number)q.getSingleResult()).intValue();
 	}
 
-	public Set<Contact> getRawContacts(Viewpoint viewpoint, User user) {
+	public Set<User> getRawUserContacts(Viewpoint viewpoint, User user) {
 		if (!isViewerSystemOrFriendOf(viewpoint, user))
 			return Collections.emptySet();
 
-		Account account = getAttachedAccount(user);
-		return account.getContacts();
-	}
-
-	public Set<User> getRawUserContacts(Viewpoint viewpoint, User user) {
-		Set<Contact> contacts = getRawContacts(viewpoint, user);
 		Set<User> ret = new HashSet<User>();
-		for (Contact c : contacts) {
-			User u = getUserForContact(c);
-			if (u != null)
-				ret.add(u);
+		for (Guid guid : LiveState.getInstance().getContacts(user.getGuid())) {
+			ret.add(em.find(User.class, guid));
 		}
 		return ret;
 	}
