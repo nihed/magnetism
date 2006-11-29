@@ -4,7 +4,7 @@ import flash.geom.Matrix;
 
 var entireWidth:Number = 250;
 var entireHeight:Number = 180;
-var outerBorderWidth:Number = 1;
+var outerBorderWidth:Number = 2;
 var paddingInsideOuterBorder:Number = 5;
 var headshotSize:Number = 30;
 var presenceIconSize:Number = 12;
@@ -46,10 +46,19 @@ var createView = function(summary:Object) {
 	viewRoot.lineTo(0, 0);
 	viewRoot.endFill();
 	
+	// white border
+	viewRoot.beginFill(0xffffff);
+	viewRoot.moveTo(1, 1);
+	viewRoot.lineTo(entireWidth - 2, 1);
+	viewRoot.lineTo(entireWidth - 2, entireHeight - 2);
+	viewRoot.lineTo(1, entireHeight - 2);
+	viewRoot.lineTo(1, 1);
+	viewRoot.endFill();	
+	
 	// gradient background
 	simpleGradientFill(viewRoot, outerBorderWidth, outerBorderWidth,
 					   entireWidth - outerBorderWidth*2,
-					   entireHeight - outerBorderWidth*2,
+					   70,
 					   false, [ 0xefeeee, 0xffffff ], [0x0, 0xFF] );
 	
 	var topStuff:MovieClip = viewRoot.createEmptyMovieClip("topStuff", viewRoot.getNextHighestDepth());
@@ -80,8 +89,10 @@ var createView = function(summary:Object) {
 	
 	var rightEdgeOfPresenceIcon = presenceIcon._x + presenceIconSize;
 	
+	// the -5 y position of this seems bogus, but otherwise flash screws up and doesn't top-align.
+	// not sure what's going on.
 	var name:TextField = topStuff.createTextField("name", topStuff.getNextHighestDepth(),
-											      rightEdgeOfPresenceIcon + 5, 0, 200, 14);
+											      rightEdgeOfPresenceIcon + 5, -5, 200, 14);
 	name.autoSize = 'left';
 	name.html = true;
 	name.htmlText = "<b><a href='" + escapeXML(summary.homeUrl) + "'>" + escapeXML(summary.name) + "'s Mugshot</a></b>";
