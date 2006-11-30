@@ -35,6 +35,7 @@
 			</td>
     	    <tr valign="bottom" height="80%">
         	<td>
+	        <div id="dhShareRecipientsLoading">Loading friends and groups...</div>
 	        <div id="dhShareSendTo">Share <u>W</u>ith:</div>
     	    <div><span id="dhInvitationsRemainingMessage" style="display: none;"></span></div> 	        
  			<dht:shareRecipientEntry/>

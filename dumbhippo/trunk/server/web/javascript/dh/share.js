@@ -332,11 +332,15 @@ dh.share.loadContacts = function() {
 				dojo.debug("text is : " + http.responseText);
 							
 				dh.share.mergeObjectsDocument(data);
+				document.getElementById("dhShareRecipientsLoading").style.display = "none";
 				
 				dh.share.haveLoadedContacts = true;
 			},
 			function(type, error, http) {
 				dojo.debug("getting contacts, got back error " + dhAllPropsAsString(error));
+				var loadingDiv = document.getElementById("dhShareRecipientsLoading");
+				dh.util.clearNode(loadingDiv);
+				loadingDiv.appendchild(document.createTextNode("Error loading friends and groups"));
 				
 				// note that we don't cache an empty result set, we will retry instead...
 			});

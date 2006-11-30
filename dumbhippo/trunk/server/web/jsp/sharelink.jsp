@@ -25,6 +25,7 @@
         	</td>
 	        <tr valign="bottom" height="80%">
     	    <td>
+	        <div id="dhShareRecipientsLoading">Loading friends and groups...</div>
 	        <div id="dhShareSendTo">Send to:</div>
  			<dht:shareRecipientEntry/>
         	</td></tr>        

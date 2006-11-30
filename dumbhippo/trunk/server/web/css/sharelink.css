@@ -139,6 +139,12 @@ table, tr, td {
   margin: 0px 0px;
 }
 
+#dhShareRecipientsLoading {
+  font-size: 12px;
+  font-style: italic;
+  color: #666666;
+}
+
 #dhShareRecipientsBox {
   table-layout: fixed;
   margin: 0px;
