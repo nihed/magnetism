@@ -1,10 +1,8 @@
 package com.dumbhippo.services.caches;
 
-import java.util.Date;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
-import javax.annotation.PostConstruct;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 
@@ -12,37 +10,24 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.KnownFuture;
-import com.dumbhippo.persistence.CachedItem;
 import com.dumbhippo.server.util.EJBUtil;
 
+
 /** 
- * Base class for cache beans that store each result in one database row 
- * (vs. AbstractListCacheBean for beans that store a list of result rows).
- * 
- * @author Havoc Pennington
- *
- * @param <KeyType>
- * @param <ResultType>
- * @param <EntityType>
+ * A session bean implementing the Cache interface, which returns a single object (as opposed to a list) as the 
+ * ResultType. Subclass AbstractBasicCacheWithStorageBean is usually a better choice unless your cache needs to 
+ * implement its own custom handling of persistence objects.
  */
-public abstract class AbstractBasicCacheBean<KeyType,ResultType,EntityType extends CachedItem>
-	extends AbstractCacheBean<KeyType,ResultType,Cache<KeyType,ResultType>>
-	implements BasicCacheStorageMapper<KeyType,ResultType,EntityType> {
+public abstract class AbstractBasicCacheBean<KeyType, ResultType> extends
+		AbstractCacheBean<KeyType, ResultType, Cache<KeyType,ResultType>> {
 
 	@SuppressWarnings("unused")
 	static private final Logger logger = GlobalSetup.getLogger(AbstractBasicCacheBean.class);
 	
-	private BasicCacheStorage<KeyType,ResultType,EntityType> storage;
-	
 	protected AbstractBasicCacheBean(Request defaultRequest, Class<? extends Cache<KeyType,ResultType>> ejbIface, long expirationTime) {
 		super(defaultRequest, ejbIface, expirationTime);
-	}
-	
-	@PostConstruct
-	public void init() {
-		storage = new BasicCacheStorage<KeyType,ResultType,EntityType>(em, getExpirationTime(), this);
-	}
-	
+	}	
+
 	static private class AbstractBasicCacheTask<KeyType,ResultType> implements Callable<ResultType> {
 		
 		private Class<? extends Cache<KeyType,ResultType>> ejbIface;
@@ -87,25 +72,5 @@ public abstract class AbstractBasicCacheBean<KeyType,ResultType,EntityType exten
 		} catch (NotCachedException e) {
 			return getExecutor().execute(key, new AbstractBasicCacheTask<KeyType,ResultType>(key, getEjbIface()));	
 		}
-	}
-
-	public abstract EntityType queryExisting(KeyType key);
-	
-	public abstract ResultType resultFromEntity(EntityType entity);
-	
-	public abstract EntityType entityFromResult(KeyType key, ResultType result);
-	
-	public abstract void updateEntityFromResult(KeyType key, ResultType result, EntityType entity);
-	
-	public ResultType checkCache(KeyType key) throws NotCachedException {
-		return storage.checkCache(key);
-	}
-
-	public abstract EntityType newNoResultsMarker(KeyType key);
-	
-	// null data means to save a negative result
-	@TransactionAttribute(TransactionAttributeType.MANDATORY)
-	public ResultType saveInCacheInsideExistingTransaction(KeyType key, ResultType data, Date now) {
-		return storage.saveInCacheInsideExistingTransaction(key, data, now);
 	}
 }

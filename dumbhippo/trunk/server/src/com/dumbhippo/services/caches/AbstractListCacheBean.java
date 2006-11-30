@@ -1,40 +1,31 @@
 package com.dumbhippo.services.caches;
 
-import java.util.Date;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
-
-import javax.annotation.PostConstruct;
-import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
 
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.KnownFuture;
-import com.dumbhippo.persistence.CachedListItem;
 import com.dumbhippo.server.util.EJBUtil;
 
-public abstract class AbstractListCacheBean<KeyType,ResultType,EntityType extends CachedListItem>
-	extends AbstractCacheBean<KeyType,List<ResultType>,ListCache<KeyType,ResultType>>
-	implements ListCache<KeyType, ResultType>, ListCacheStorageMapper<KeyType,ResultType,EntityType> {
+/** 
+ * A session bean implementing the ListCache interface, which returns a list of objects (as opposed to one object) as the 
+ * ResultType. Subclass AbstractListCacheWithStorageBean is usually a better choice unless your cache needs to 
+ * implement its own custom handling of persistence objects.
+ */
+public abstract class AbstractListCacheBean<KeyType, ResultType>
+		extends AbstractCacheBean<KeyType, List<ResultType>, ListCache<KeyType, ResultType>> {
 
 	@SuppressWarnings("unused")
-	static private final Logger logger = GlobalSetup.getLogger(AbstractListCacheBean.class);
-	
-	private ListCacheStorage<KeyType,ResultType,EntityType> storage;
+	static private final Logger logger = GlobalSetup.getLogger(AbstractListCacheBean.class);	
 	
 	protected AbstractListCacheBean(Request defaultRequest, Class<? extends ListCache<KeyType,ResultType>> ejbIface, long expirationTime) {
 		super(defaultRequest, ejbIface, expirationTime);
 	}
 	
-	@PostConstruct
-	public void init() {
-		storage = new ListCacheStorage<KeyType,ResultType,EntityType>(em, getExpirationTime(), this);
-	}
-	
-	static private class AbstractListCacheTask<KeyType,ResultType,EntityType> implements Callable<List<ResultType>> {
+	static private class AbstractListCacheTask<KeyType,ResultType> implements Callable<List<ResultType>> {
 
 		private Class<? extends ListCache<KeyType,ResultType>> ejbIface;
 		private KeyType key;
@@ -73,7 +64,7 @@ public abstract class AbstractListCacheBean<KeyType,ResultType,EntityType extend
 
 	public Future<List<ResultType>> getAsync(KeyType key) {
 		if (key == null)
-			throw new IllegalArgumentException("null key passed to AbstractListCacheBean");
+			throw new IllegalArgumentException("null key passed to AbstractListCacheWithStorageBean");
 		
 		try {
 			List<ResultType> results = checkCache(key);
@@ -84,40 +75,8 @@ public abstract class AbstractListCacheBean<KeyType,ResultType,EntityType extend
 			logger.debug("Using cached listing of {} items for {}", results.size(), key);
 			return new KnownFuture<List<ResultType>>(results);
 		} catch (NotCachedException e) {
-			Callable<List<ResultType>> task = new AbstractListCacheTask<KeyType,ResultType,EntityType>(key, getEjbIface());
+			Callable<List<ResultType>> task = new AbstractListCacheTask<KeyType,ResultType>(key, getEjbIface());
 			return getExecutor().execute(key, task);
 		}
-	}
-
-	public abstract List<EntityType> queryExisting(KeyType key);
-	
-	public abstract ResultType resultFromEntity(EntityType entity);
-	
-	public abstract EntityType entityFromResult(KeyType key, ResultType result);
-	
-	public List<ResultType> checkCache(KeyType key) throws NotCachedException {
-		return storage.checkCache(key);
-	}
-	
-	public abstract EntityType newNoResultsMarker(KeyType key);
-
-	public void setAllLastUpdatedToZero(KeyType key) {
-		throw new UnsupportedOperationException("Cache doesn't support manual expiration: " + getEjbIface().getName());
-	}
-	
-	@Override
-	public void expireCache(KeyType key) {
-		storage.expireCache(key);
-	}
-	
-	public void deleteCache(KeyType key) {
-		storage.deleteCache(key);
-	}
-	
-	// null means that we could not get the updated results, so leave the old results
-	// empty list results means that we should save a no results marker
-	@TransactionAttribute(TransactionAttributeType.MANDATORY)
-	public List<ResultType> saveInCacheInsideExistingTransaction(KeyType key, List<ResultType> newItems, Date now) {
-		return storage.saveInCacheInsideExistingTransaction(key, newItems, now);
 	}
 }
