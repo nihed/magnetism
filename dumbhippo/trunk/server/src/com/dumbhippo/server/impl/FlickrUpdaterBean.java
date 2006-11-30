@@ -79,20 +79,30 @@ public class FlickrUpdaterBean extends CachedExternalUpdaterBean<FlickrUpdateSta
 	
 	@Override
 	public void doPeriodicUpdate(String flickrId) {
-		FlickrWebServices ws = new FlickrWebServices(5000, config);
+		FlickrWebServices ws = new FlickrWebServices(12000, config);
 		
 		// These do NOT use any cache - remember, we're polling periodically for changes.
 		FlickrPhotos photos = ws.lookupPublicPhotos(flickrId, 1, FlickrWebServices.MIN_PER_PAGE);
+		
+		if (photos == null) {
+			logger.debug("web services error checking for new photos for {}, skipping this update", flickrId);
+			return;
+		}
+		
 		FlickrPhotosets photosets = null;
 		//	no sets possible if no photos
-		if (photos != null && photos.getTotal() > 0) {
+		if (photos.getTotal() > 0) {
 			// unfortunately, it isn't obvious how we can get the photoset count 
 			// without getting all the sets
 			photosets = ws.lookupPublicPhotosets(flickrId);
+			if (photosets == null) {
+				logger.debug("web services error checking for new photosets for {}, skipping this update", flickrId);
+				return;
+			}
 		}
 	
-		int totalPhotos = photos != null ? photos.getTotal() : 0;
-		int totalPhotosets = photosets != null ? photosets.getSets().size() : 0;
+		int totalPhotos = photos.getTotal();
+		int totalPhotosets = photosets.getSets().size();
 
 		boolean changesLikely = false;
 		FlickrUpdater proxy = EJBUtil.defaultLookup(FlickrUpdater.class);
