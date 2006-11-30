@@ -26,7 +26,7 @@ import com.dumbhippo.server.util.EJBUtil;
  * @param <EntityType>
  */
 public abstract class AbstractBasicCacheBean<KeyType,ResultType,EntityType extends CachedItem>
-	extends AbstractCacheBean<KeyType,ResultType,AbstractCache<KeyType,ResultType>>
+	extends AbstractCacheBean<KeyType,ResultType,Cache<KeyType,ResultType>>
 	implements BasicCacheStorageMapper<KeyType,ResultType,EntityType> {
 
 	@SuppressWarnings("unused")
@@ -34,7 +34,7 @@ public abstract class AbstractBasicCacheBean<KeyType,ResultType,EntityType exten
 	
 	private BasicCacheStorage<KeyType,ResultType,EntityType> storage;
 	
-	protected AbstractBasicCacheBean(Request defaultRequest, Class<? extends AbstractCache<KeyType,ResultType>> ejbIface, long expirationTime) {
+	protected AbstractBasicCacheBean(Request defaultRequest, Class<? extends Cache<KeyType,ResultType>> ejbIface, long expirationTime) {
 		super(defaultRequest, ejbIface, expirationTime);
 	}
 	
@@ -45,10 +45,10 @@ public abstract class AbstractBasicCacheBean<KeyType,ResultType,EntityType exten
 	
 	static private class AbstractBasicCacheTask<KeyType,ResultType> implements Callable<ResultType> {
 		
-		private Class<? extends AbstractCache<KeyType,ResultType>> ejbIface;
+		private Class<? extends Cache<KeyType,ResultType>> ejbIface;
 		private KeyType key;
 
-		public AbstractBasicCacheTask(KeyType key, Class<? extends AbstractCache<KeyType,ResultType>> ejbIface) {
+		public AbstractBasicCacheTask(KeyType key, Class<? extends Cache<KeyType,ResultType>> ejbIface) {
 			this.key = key;
 			this.ejbIface = ejbIface;
 		}
@@ -56,7 +56,7 @@ public abstract class AbstractBasicCacheBean<KeyType,ResultType,EntityType exten
 		public ResultType call() {
 			logger.debug("Entering AbstractBasicCacheTask thread for bean {} key {}", ejbIface.getName(), key);
 		
-			AbstractCache<KeyType,ResultType> cache = EJBUtil.defaultLookup(ejbIface);					
+			Cache<KeyType,ResultType> cache = EJBUtil.defaultLookup(ejbIface);					
 
 			try {
 				// Check again in case another node stored the data first				

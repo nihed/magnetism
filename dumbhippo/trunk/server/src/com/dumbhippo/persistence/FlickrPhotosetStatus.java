@@ -16,7 +16,7 @@ import com.dumbhippo.services.FlickrWebServices;
  * deleting this, we just setActive(false).
  * 
  * FIXME this is broken that it stores the title and description; those things should be in a pure-cache
- * object returned from an AbstractCache cached web service.
+ * object returned from a cached web service session bean.
  * 
  * @author Havoc Pennington
  *

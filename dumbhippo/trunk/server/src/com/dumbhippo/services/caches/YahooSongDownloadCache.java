@@ -5,6 +5,6 @@ import javax.ejb.Local;
 import com.dumbhippo.services.YahooSongDownloadData;
 
 @Local
-public interface YahooSongDownloadCache extends AbstractListCache<String,YahooSongDownloadData> {
+public interface YahooSongDownloadCache extends ListCache<String,YahooSongDownloadData> {
 
 }

@@ -14,7 +14,7 @@ import java.util.concurrent.Future;
  * @param <KeyType> the argument to the web service request (should not be an entity bean)
  * @param <ResultType> the result of the web service request (should not be an entity bean)
  */
-public interface AbstractCache<KeyType, ResultType> extends CacheStorage<KeyType, ResultType> {
+public interface Cache<KeyType, ResultType> extends CacheStorage<KeyType, ResultType> {
 
 	public ResultType getSync(KeyType key);
 

@@ -28,7 +28,7 @@ import com.dumbhippo.services.YahooSearchWebServices;
 
 @BanFromWebTier
 @Stateless
-public class YahooArtistCacheBean extends AbstractCacheBean<String,YahooArtistData,AbstractCache> implements YahooArtistCache {
+public class YahooArtistCacheBean extends AbstractCacheBean<String,YahooArtistData,Cache> implements YahooArtistCache {
 	@SuppressWarnings("unused")
 	static private final Logger logger = GlobalSetup.getLogger(YahooArtistCacheBean.class);
 

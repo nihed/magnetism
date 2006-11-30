@@ -14,7 +14,7 @@ import java.util.Date;
 public interface CacheStorage<KeyType, ResultType> {
 
 	// null return means "we cached the lack of a result", while throwing NotCachedException
-	// means "we have nothing cached". Subclasses of AbstractListCache never return null,
+	// means "we have nothing cached". Subclasses of ListCache never return null,
 	// they return empty list for "we cached the lack of a result"
 	public ResultType checkCache(KeyType key) throws NotCachedException;
 

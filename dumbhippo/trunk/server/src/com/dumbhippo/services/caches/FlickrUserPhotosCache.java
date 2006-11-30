@@ -5,5 +5,5 @@ import javax.ejb.Local;
 import com.dumbhippo.services.FlickrPhotoView;
 
 @Local
-public interface FlickrUserPhotosCache extends AbstractListCache<String,FlickrPhotoView> {
+public interface FlickrUserPhotosCache extends ListCache<String,FlickrPhotoView> {
 }

@@ -29,7 +29,7 @@ import com.dumbhippo.server.util.EJBUtil;
  * they have more stuff implemented by default (they add knowledge of the entity bean type used 
  * to store the cache).
  */
-public abstract class AbstractCacheBean<KeyType,ResultType,EjbIfaceType> implements AbstractCache<KeyType,ResultType> {
+public abstract class AbstractCacheBean<KeyType,ResultType,EjbIfaceType> implements Cache<KeyType,ResultType> {
 	@SuppressWarnings("unused")
 	static private final Logger logger = GlobalSetup.getLogger(AbstractCacheBean.class);
 	

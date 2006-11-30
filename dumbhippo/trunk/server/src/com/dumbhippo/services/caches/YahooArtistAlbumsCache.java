@@ -6,7 +6,7 @@ import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.services.YahooAlbumData;
 
 @Local
-public interface YahooArtistAlbumsCache extends AbstractListCache<String,YahooAlbumData> {
+public interface YahooArtistAlbumsCache extends ListCache<String,YahooAlbumData> {
 	
 	public YahooAlbumData findAlreadyCachedAlbum(String artist, String album, String song) throws NotFoundException;
 }

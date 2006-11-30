@@ -17,15 +17,15 @@ import com.dumbhippo.persistence.CachedListItem;
 import com.dumbhippo.server.util.EJBUtil;
 
 public abstract class AbstractListCacheBean<KeyType,ResultType,EntityType extends CachedListItem>
-	extends AbstractCacheBean<KeyType,List<ResultType>,AbstractListCache<KeyType,ResultType>>
-	implements AbstractListCache<KeyType, ResultType>, ListCacheStorageMapper<KeyType,ResultType,EntityType> {
+	extends AbstractCacheBean<KeyType,List<ResultType>,ListCache<KeyType,ResultType>>
+	implements ListCache<KeyType, ResultType>, ListCacheStorageMapper<KeyType,ResultType,EntityType> {
 
 	@SuppressWarnings("unused")
 	static private final Logger logger = GlobalSetup.getLogger(AbstractListCacheBean.class);
 	
 	private ListCacheStorage<KeyType,ResultType,EntityType> storage;
 	
-	protected AbstractListCacheBean(Request defaultRequest, Class<? extends AbstractListCache<KeyType,ResultType>> ejbIface, long expirationTime) {
+	protected AbstractListCacheBean(Request defaultRequest, Class<? extends ListCache<KeyType,ResultType>> ejbIface, long expirationTime) {
 		super(defaultRequest, ejbIface, expirationTime);
 	}
 	
@@ -36,10 +36,10 @@ public abstract class AbstractListCacheBean<KeyType,ResultType,EntityType extend
 	
 	static private class AbstractListCacheTask<KeyType,ResultType,EntityType> implements Callable<List<ResultType>> {
 
-		private Class<? extends AbstractListCache<KeyType,ResultType>> ejbIface;
+		private Class<? extends ListCache<KeyType,ResultType>> ejbIface;
 		private KeyType key;
 		
-		public AbstractListCacheTask(KeyType key, Class<? extends AbstractListCache<KeyType,ResultType>> ejbIface) {
+		public AbstractListCacheTask(KeyType key, Class<? extends ListCache<KeyType,ResultType>> ejbIface) {
 			this.key = key;
 			this.ejbIface = ejbIface;
 		}
@@ -50,13 +50,13 @@ public abstract class AbstractListCacheBean<KeyType,ResultType,EntityType extend
 			EJBUtil.assertNoTransaction();
 			
 			// we do this instead of an inner class to work right with threads
-			AbstractListCache<KeyType,ResultType> cache = EJBUtil.defaultLookup(ejbIface);
+			ListCache<KeyType,ResultType> cache = EJBUtil.defaultLookup(ejbIface);
 			
 			// Check again in case another node stored the data first
 			try {
 				List<ResultType> results = cache.checkCache(key);
 				if (results == null)
-					throw new RuntimeException("AbstractListCache.checkCache() isn't supposed to return null ever, it did for key: " + key);
+					throw new RuntimeException("ListCache.checkCache() isn't supposed to return null ever, it did for key: " + key);
 				else
 					return results;
 			} catch (NotCachedException e) {
@@ -79,7 +79,7 @@ public abstract class AbstractListCacheBean<KeyType,ResultType,EntityType extend
 			List<ResultType> results = checkCache(key);
 
 			if (results == null)
-				throw new RuntimeException("AbstractListCache.checkCache isn't supposed to return null ever, it did for key " + key);
+				throw new RuntimeException("ListCache.checkCache isn't supposed to return null ever, it did for key " + key);
 		
 			logger.debug("Using cached listing of {} items for {}", results.size(), key);
 			return new KnownFuture<List<ResultType>>(results);

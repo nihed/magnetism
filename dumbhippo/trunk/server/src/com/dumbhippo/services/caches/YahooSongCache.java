@@ -6,6 +6,6 @@ import com.dumbhippo.persistence.Track;
 import com.dumbhippo.services.YahooSongData;
 
 @Local
-public interface YahooSongCache extends AbstractListCache<Track,YahooSongData> {
+public interface YahooSongCache extends ListCache<Track,YahooSongData> {
 
 }

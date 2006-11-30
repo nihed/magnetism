@@ -15,7 +15,7 @@ import com.dumbhippo.services.YahooArtistData;
  * keep the logic together here so we can sort it out.
  */
 @Local
-public interface YahooArtistCache extends AbstractCache<String,YahooArtistData> {
+public interface YahooArtistCache extends Cache<String,YahooArtistData> {
 
 	// FIXME these "get by name" should really return a list and then
 	// in the UI we should try to resolve the multiple search results
