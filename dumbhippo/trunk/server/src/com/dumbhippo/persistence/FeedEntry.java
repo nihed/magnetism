@@ -11,9 +11,14 @@ import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 
+import org.hibernate.annotations.Index;
+
 @Entity
 @Table(name="FeedEntry", 
     uniqueConstraints = { @UniqueConstraint(columnNames={"feed_id", "entryGuid"}) })
+@org.hibernate.annotations.Table(appliesTo = "FeedEntry", indexes={ 
+		@Index(name="feedDate_index", columnNames = { "feed_id", "current", "date" } ) 
+})		
 @Inheritance(strategy=InheritanceType.JOINED)
 public class FeedEntry extends DBUnique {
 	// This limit makes sure that MySQL can handle the unique constraint on feed/entryGuid
