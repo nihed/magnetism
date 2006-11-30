@@ -115,7 +115,7 @@ public class MusicPersonBlockHandlerBean extends AbstractBlockHandlerBean<MusicP
 	}
 
 	public void onTrackPlayed(User user, Track track, Date when) {
-		Block block = stacker.stack(getKey(user), when.getTime(), StackReason.BLOCK_UPDATE);
+		Block block = stacker.stack(getKey(user), when.getTime(), user, false, StackReason.BLOCK_UPDATE);
 
 		// if we weren't public we might be now. Playing a track won't 
 		// ever un-public us though.
