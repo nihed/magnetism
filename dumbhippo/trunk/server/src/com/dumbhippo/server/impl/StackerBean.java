@@ -827,7 +827,11 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		pageable.setResults(blockViewsToReturn);
 	}
 
-	public void pageStack(final Viewpoint viewpoint, final User user, Pageable<BlockView> pageable, final boolean participantOnly) {
+	public void pageStack(Viewpoint viewpoint, User user, Pageable<BlockView> pageable, boolean participantOnly) {
+		pageStack(viewpoint, user, pageable, -1, participantOnly);
+	}
+	
+	public void pageStack(final Viewpoint viewpoint, final User user, Pageable<BlockView> pageable, final long lastTimestamp, final boolean participantOnly) {
 		
 		logger.debug("getting stack for user {}", user);
 
@@ -838,7 +842,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		pageStack(viewpoint, new BlockSource<UserBlockData>() {
 			public List<Pair<Block, UserBlockData>> get(int start, int count) {
 				List<Pair<Block, UserBlockData>> results = new ArrayList<Pair<Block, UserBlockData>>();
-				for (UserBlockData ubd : getBlocks(viewpoint, user, -1, start, count, participantOnly)) {
+				for (UserBlockData ubd : getBlocks(viewpoint, user, lastTimestamp, start, count, participantOnly)) {
 					results.add(new Pair<Block, UserBlockData>(ubd.getBlock(), ubd));
 				}
 				return results;

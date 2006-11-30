@@ -52,6 +52,8 @@ public interface Stacker {
 	
 	public void pageStack(Viewpoint viewpoint, User user, Pageable<BlockView> pageable, boolean participantOnly);
 
+	public void pageStack(Viewpoint viewpoint, User user, Pageable<BlockView> pageable, long lastTimestamp, boolean participantOnly);
+	
 	/**
 	 * Fetch recently active users on the system, along with a snapshot of their activity.
 	 *  
@@ -83,7 +85,7 @@ public interface Stacker {
 	public void pageRecentUserActivity(Viewpoint viewpoint, Pageable<PersonMugshotView> pageable, int blocksPerUser);
 
 	public void pageStack(Viewpoint viewpoint, Group group, Pageable<BlockView> pageable, boolean byParticipation);	
-
+	
 	/**
 	 * Fetch recently active groups on the system, along with a snapshot of their activity.
 	 *  

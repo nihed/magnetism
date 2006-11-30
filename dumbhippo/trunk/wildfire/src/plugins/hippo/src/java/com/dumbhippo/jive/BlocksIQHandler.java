@@ -17,6 +17,7 @@ import com.dumbhippo.jive.annotations.IQHandler;
 import com.dumbhippo.jive.annotations.IQMethod;
 import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.server.NotFoundException;
+import com.dumbhippo.server.Pageable;
 import com.dumbhippo.server.Stacker;
 import com.dumbhippo.server.ViewStreamBuilder;
 import com.dumbhippo.server.blocks.BlockView;
@@ -80,7 +81,11 @@ public class BlocksIQHandler extends AnnotatedIQHandler {
         	throw IQException.createBadRequest("get/blocks IQ lastTimestamp attribute not valid");
         }
         
-		List<BlockView> views = stacker.getStack(viewpoint, viewpoint.getViewer(), lastTimestamp, 0 /* start */, 25 /* count */);
+		Pageable<BlockView> pageable = new Pageable<BlockView>("stack");
+		pageable.setPosition(0);
+		pageable.setInitialPerPage(25);
+		stacker.pageStack(viewpoint, viewpoint.getViewer(), pageable, lastTimestamp, false);
+		List<BlockView> views = pageable.getResults();
 		String xml = getBlocksXml(viewpoint, "blocks", views);
         
 		reply.setChildElement(XmlParser.elementFromXml(xml));
