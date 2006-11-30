@@ -291,7 +291,9 @@ public class PersonViewerBean implements PersonViewer {
 	public PersonView getPersonView(Viewpoint viewpoint, Person p, PersonViewExtra... extras) {
 		if (viewpoint == null)
 			throw new IllegalArgumentException("null viewpoint");
-				
+		if (p == null)
+			throw new IllegalArgumentException("null person");
+		
 		Contact contact = p instanceof Contact ? (Contact) p : null;
 		User user = identitySpider.getUser(p); // user for contact, or p itself if it's already a user
 		

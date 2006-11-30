@@ -312,6 +312,9 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 	}
 
 	public User getUser(Person person) {
+		if (person == null)
+			throw new IllegalArgumentException("null person in getUser()");
+		
 		if (person instanceof User)
 			return (User) person;
 		else {

@@ -144,6 +144,9 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 
 	public PersonView getViewedPerson() {
 		if (viewedPerson == null) {
+			if (getViewedUser() == null)
+				throw new IllegalStateException("not viewing any user");
+			
 			if (getNeedExternalAccounts())
 				viewedPerson = personViewer.getPersonView(getSignin().getViewpoint(), getViewedUser(), 
 						PersonViewExtra.ALL_RESOURCES,

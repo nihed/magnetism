@@ -1,5 +1,6 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="/jsp/dumbhippo.tld" prefix="dh" %>
+<%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 <%@ taglib tagdir="/WEB-INF/tags/3" prefix="dht3" %>
 
 <%@ attribute name="who" required="false" type="java.lang.String" %>
@@ -19,5 +20,9 @@
 		<c:otherwise>
 			<jsp:setProperty name="person" property="viewedUserId" value="${signin.userId}"/>
 		</c:otherwise>
-	</c:choose>	
+	</c:choose>
+	
+	<c:if test="${!person.valid}">
+		<dht:errorPage>Person not found (log in?)</dht:errorPage>
+	</c:if>
 </c:if>
