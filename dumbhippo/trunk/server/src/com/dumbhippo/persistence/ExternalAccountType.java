@@ -5,6 +5,7 @@ import java.net.URL;
 
 import com.dumbhippo.StringUtils;
 import com.dumbhippo.services.FlickrUser;
+import com.dumbhippo.services.LastFmWebServices;
 import com.dumbhippo.services.YouTubeWebServices;
 
 import org.slf4j.Logger;
@@ -364,7 +365,7 @@ public enum ExternalAccountType {
 	LASTFM("Last.fm")  {
 		@Override
 		public String getLink(String handle, String extra) {
-			return getSiteLink() + "/user/" + StringUtils.urlEncode(handle);
+			return getSiteLink() + "/user/" + StringUtils.urlEncode(handle) + "/";
 		}
 		
 		@Override 
@@ -380,19 +381,17 @@ public enum ExternalAccountType {
 		public String canonicalizeHandle(String handle) throws ValidationException {
 			handle = super.canonicalizeHandle(handle);
 			if (handle != null) {
-				if (handle.length() > YouTubeWebServices.MAX_YOUTUBE_USERNAME_LENGTH)
-					throw new ValidationException("YouTube usernames have a maximum length of " + YouTubeWebServices.MAX_YOUTUBE_USERNAME_LENGTH);
+				if (handle.length() > LastFmWebServices.MAX_USERNAME_LENGTH)
+					throw new ValidationException("Last.fm usernames have a maximum length of " + LastFmWebServices.MAX_USERNAME_LENGTH);
 				
-				// This is determined from the YouTube signin form which throws this error if you put in 
-				// non-letters or non-digits
 				if (!StringUtils.isAlphanumeric(handle))
-					throw new ValidationException("YouTube usernames can only have letters and digits");
+					throw new ValidationException("Last.fm usernames can only have letters and digits");
 				
 				// As extra paranoia, be sure we can use the username in an url
 				try {
 					new URL(getLink(handle, null));
 				} catch (MalformedURLException e) {
-					throw new ValidationException("Invalid YouTube username '" + handle + "': " + e.getMessage());
+					throw new ValidationException("Invalid Last.fm username '" + handle + "': " + e.getMessage());
 				}
 			}
 			return handle;

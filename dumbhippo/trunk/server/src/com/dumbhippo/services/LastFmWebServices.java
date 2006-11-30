@@ -28,6 +28,8 @@ import com.dumbhippo.URLUtils;
 
 public class LastFmWebServices {
 	
+	public static final int MAX_USERNAME_LENGTH = 16;	
+	
 	protected static class LastFmWebServiceTrack implements LastFmTrack {
 		private String artist;
 		private String title;
@@ -57,6 +59,7 @@ public class LastFmWebServices {
 			return url;
 		}
 	}
+
 	
 	private static URL getFeedUrl(String username) {
 		try {
