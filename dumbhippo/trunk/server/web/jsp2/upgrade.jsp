@@ -23,18 +23,18 @@
 	<c:choose>
 		<c:when test="${browser.linuxRequested}">
 			<%-- LINUX RELEASE NOTES GO HERE --%>
-			<p>Version 1.1.25</p>
+			<p>Version 1.1.26</p>
 			<ul>
-				<li>Show Facebook, YouTube, and Flickr activity.</li>			
-				<li>Bug fixes.</li>
+				<li>Improve the display of Facebook notifications.</li>			
+				<li>Fix a bug causing frequent crashes.</li>
 			</ul>
 		</c:when>
 		<c:otherwise>
 			<%-- WINDOWS RELEASE NOTES GO HERE --%>
-			<p>Version 1.1.79</p>
+			<p>Version 1.1.80</p>
 			<ul>
-				<li>Show Facebook, YouTube, and Flickr activity.</li>			
-				<li>Bug fixes.</li>
+				<li>Improve the display of Facebook notifications.</li>			
+				<li>Fix a bug causing frequent crashes.</li>
 			</ul>
 		</c:otherwise>
 	</c:choose>
