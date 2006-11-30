@@ -5,19 +5,26 @@ import flash.geom.Matrix;
 // this gives us our real window size, instead of giving us a fixed size then scaling.
 // We can't really handle arbitrary sizes though, only one of the expected ones.
 Stage.scaleMode = "noScale";
+Stage.align = "TL"; // top left instead of center
 
 var entireWidth:Number = Stage.width; //250;
 var entireHeight:Number = Stage.height; // 180;
 
+// allow query params to override the width/height, this is mostly a debugging thing.
+// it lets you just open the .swf in a browser without any html.
+if (badgeWidth)
+	entireWidth = badgeWidth;
+if (badgeHeight)
+	entireHeight = badgeHeight;
+
 // don't let people pick arbitrary sizes, since then we might have to keep them working...
 // it might be nicer to just center our display in the available space if we get too-large size
 
-if (entireWidth != 250) {
-	throw new Error("we don't support this width " + entireWidth);
-}
-
-if (!(entireHeight == 70 || entireHeight == 180 || entireHeight == 255)) {
-	throw new Error("we don't support this height " + entireHeight);
+if (entireWidth != 250 ||
+	!(entireHeight == 74 || entireHeight == 180 || entireHeight == 255)) {
+	var e:TextField = createTextField("error", getNextHighestDepth(), 0, 0, 200, 200);
+	e.text = "unsupported size " + entireWidth + "x" + entireHeight;
+	throw new Error("we don't support this size");
 }
 
 var outerBorderWidth:Number = 2;
@@ -28,7 +35,7 @@ var ribbonIconSize:Number = 16;
 var blockHeight:Number = 33;
 
 // See if we need to go into "mini" mode which has no stack and larger headshot
-var stacklessMode:Boolean = entireHeight < (headshotSize + blockHeight);
+var stacklessMode:Boolean = entireHeight < 80;
 if (stacklessMode) {
 	// we have a larger headshot in this mode
 	headshotSize = 60;
@@ -82,7 +89,7 @@ var createView = function(summary:Object) {
 	// gradient background
 	simpleGradientFill(viewRoot, outerBorderWidth, outerBorderWidth,
 					   entireWidth - outerBorderWidth*2,
-					   70,
+					   Math.min(70, entireHeight - outerBorderWidth * 2),
 					   false, [ 0xefeeee, 0xffffff ], [0x0, 0xFF] );
 	
 	var topStuff:MovieClip = viewRoot.createEmptyMovieClip("topStuff", viewRoot.getNextHighestDepth());
@@ -136,13 +143,17 @@ var createView = function(summary:Object) {
 	homeLink.htmlText = "<u><a href='" + escapeXML(summary.homeUrl) + "'>Visit my Mugshot page</a></u>";
 	formatText(homeLink, 12, 0x0033ff);
 	
-	var topStuffBottomSide = topSide + Math.max(14 + 5 + 12, headshotSize);
+	var topStuffBottomSide:Number = topSide + Math.max(14 + 5 + 12, headshotSize);
+	
+	var stackTop:Number;
 	
 	if (stacklessMode) {
 		ribbonBar._y = topStuffBottomSide - ribbonIconSize;
+		stackTop = 0;
 	} else {
 		ribbonBar._y = topStuffBottomSide + 5;
-		stack._y = ribbonBar._y + ribbonIconSize + 5;
+		stackTop = ribbonBar._y + ribbonIconSize + 5;
+		stack._y = stackTop;
 	}
 	
 	var ribbon:MovieClip = ribbonBar.createEmptyMovieClip("ribbon", ribbonBar.getNextHighestDepth());
@@ -163,7 +174,7 @@ var createView = function(summary:Object) {
 	
 	// otherwise build the stack
 	
-	var maxBlocks:Number = (entireHeight - outerBorderWidth - paddingInsideOuterBorder - stack._y) / blockHeight;		
+	var maxBlocks:Number = Math.floor((entireHeight - outerBorderWidth - paddingInsideOuterBorder - stackTop) / blockHeight);
 
 	trace("can show max of " + maxBlocks + " blocks");
 	
@@ -357,7 +368,8 @@ var updateSummaryData = function() {
 		
 		setSummaryData(summary);
 	};
-	var reqUrl = makeAbsoluteUrl("/xml/usersummary?who=" + who + "&participantOnly=true&includeStack=true");
+	var reqUrl = makeAbsoluteUrl("/xml/usersummary?who=" + who + "&participantOnly=true&includeStack=" + 
+								 (stacklessMode ? "false" : "true"));
 	meuXML.load(reqUrl);
 };
 

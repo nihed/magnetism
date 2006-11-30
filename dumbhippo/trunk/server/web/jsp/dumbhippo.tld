@@ -253,7 +253,7 @@
         <name>nowPlaying</name>
         <tagclass>com.dumbhippo.web.tags.NowPlayingTag</tagclass>
         <bodycontent>empty</bodycontent>
-        <info>Outputs the "now playing" flash embed object</info>
+        <info>Outputs the "now playing" flash badge object</info>
 	    <attribute>
            <name>userId</name>
            <required>true</required>
@@ -286,6 +286,38 @@
         </attribute>
         
     </tag>
+    <tag>
+        <name>userSummary</name>
+        <tagclass>com.dumbhippo.web.tags.UserSummaryTag</tagclass>
+        <bodycontent>empty</bodycontent>
+        <info>Outputs the "user summary" flash badge object</info>
+	    <attribute>
+           <name>userId</name>
+           <required>true</required>
+           <rtexprvalue>true</rtexprvalue>
+        </attribute>
+        <attribute>
+           <name>escapeXml</name>
+           <required>false</required>
+           <rtexprvalue>true</rtexprvalue>
+        </attribute>
+        <attribute>
+           <name>height</name>
+           <required>true</required>
+           <rtexprvalue>true</rtexprvalue>
+        </attribute>
+        <attribute>
+           <name>hasLabel</name>
+           <required>false</required>
+           <rtexprvalue>true</rtexprvalue>
+        </attribute>
+        <attribute>
+           <name>embedOnly</name>
+           <required>false</required>
+           <rtexprvalue>true</rtexprvalue>
+        </attribute>
+        
+    </tag>    
     <tag>
         <name>aRedHatSomething</name>
         <tagclass>com.dumbhippo.web.tags.RedHatSomethingTag</tagclass>

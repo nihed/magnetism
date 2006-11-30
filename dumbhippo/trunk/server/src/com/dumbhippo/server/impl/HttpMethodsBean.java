@@ -1885,7 +1885,7 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		
 		List<BlockView> stack;
 		if (includeStack)
-			stack = stacker.getStack(AnonymousViewpoint.getInstance(), who, 0, 0, 3, participantOnly);
+			stack = stacker.getStack(AnonymousViewpoint.getInstance(), who, 0, 0, 5, participantOnly);
 		else
 			stack = Collections.emptyList();
 		
@@ -1902,7 +1902,8 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		xml.openElement("accounts");
 		
 		for (ExternalAccountView ea : externalAccountViews) {
-			ea.writeToXmlBuilder(xml);
+			if (ea.getExternalAccount().isLovedAndEnabled())
+				ea.writeToXmlBuilder(xml);
 		}
 		
 		xml.closeElement();
