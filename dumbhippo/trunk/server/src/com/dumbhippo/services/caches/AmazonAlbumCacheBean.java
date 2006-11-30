@@ -16,7 +16,7 @@ import com.dumbhippo.services.AmazonItemSearch;
 
 @BanFromWebTier
 @Stateless
-public class AmazonAlbumCacheBean extends AbstractBasicCacheBean<AlbumAndArtist,AmazonAlbumData,CachedAmazonAlbumData> implements AmazonAlbumCache {
+public class AmazonAlbumCacheBean extends AbstractBasicCacheWithStorageBean<AlbumAndArtist,AmazonAlbumData,CachedAmazonAlbumData> implements AmazonAlbumCache {
 	@SuppressWarnings("unused")
 	static private final Logger logger = GlobalSetup.getLogger(AmazonAlbumCacheBean.class);
 	

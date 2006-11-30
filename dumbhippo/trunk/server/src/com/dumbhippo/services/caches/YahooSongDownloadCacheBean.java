@@ -17,7 +17,7 @@ import com.dumbhippo.services.YahooSongDownloadData;
 @BanFromWebTier
 @Stateless
 public class YahooSongDownloadCacheBean
-	extends AbstractListCacheBean<String,YahooSongDownloadData,CachedYahooSongDownload>
+	extends AbstractListCacheWithStorageBean<String,YahooSongDownloadData,CachedYahooSongDownload>
 	implements YahooSongDownloadCache {
 	@SuppressWarnings("unused")
 	static private final Logger logger = GlobalSetup.getLogger(YahooSongDownloadCacheBean.class);

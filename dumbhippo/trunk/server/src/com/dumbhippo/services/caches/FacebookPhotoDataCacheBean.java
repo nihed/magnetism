@@ -26,7 +26,7 @@ import com.dumbhippo.services.FacebookWebServices;
 
 @Stateless
 public class FacebookPhotoDataCacheBean 
-    extends AbstractListCacheBean<String,CachedFacebookPhotoData,CachedFacebookPhotoData> 
+    extends AbstractListCacheWithStorageBean<String,CachedFacebookPhotoData,CachedFacebookPhotoData> 
     implements FacebookPhotoDataCache {
 
 	static private final Logger logger = GlobalSetup.getLogger(FacebookPhotoDataCacheBean.class);

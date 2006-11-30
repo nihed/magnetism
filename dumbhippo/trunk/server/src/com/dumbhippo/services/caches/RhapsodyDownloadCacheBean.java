@@ -23,7 +23,7 @@ import com.dumbhippo.server.BanFromWebTier;
 
 @BanFromWebTier
 @Stateless
-public class RhapsodyDownloadCacheBean extends AbstractBasicCacheBean<String,Boolean,CachedRhapsodyDownload> implements
+public class RhapsodyDownloadCacheBean extends AbstractBasicCacheWithStorageBean<String,Boolean,CachedRhapsodyDownload> implements
 		RhapsodyDownloadCache {
 
 	@SuppressWarnings("unused")

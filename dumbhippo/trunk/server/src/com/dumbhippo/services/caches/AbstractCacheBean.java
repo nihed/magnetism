@@ -25,9 +25,8 @@ import com.dumbhippo.server.util.EJBUtil;
 /**
  * Base class used for beans that implement a cached web service lookup.
  *
- * Use one of the two subclasses (AbstractBasicCacheBean, AbstractListCacheBean) if possible, 
- * they have more stuff implemented by default (they add knowledge of the entity bean type used 
- * to store the cache).
+ * Use one of the subclasses (AbstractBasicCacheWithStorageBean, AbstractListCacheWithStorageBean, AbstractBasicCacheBean, AbstractListCacheBean)
+ * if possible, they have more stuff implemented by default.
  */
 public abstract class AbstractCacheBean<KeyType,ResultType,EjbIfaceType> implements Cache<KeyType,ResultType> {
 	@SuppressWarnings("unused")

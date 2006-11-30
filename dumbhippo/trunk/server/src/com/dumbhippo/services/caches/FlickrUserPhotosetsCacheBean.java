@@ -16,7 +16,7 @@ import com.dumbhippo.services.FlickrPhotosets;
 import com.dumbhippo.services.FlickrWebServices;
 
 @Stateless
-public class FlickrUserPhotosetsCacheBean extends AbstractListCacheBean<String,FlickrPhotosetView,CachedFlickrUserPhotoset> implements
+public class FlickrUserPhotosetsCacheBean extends AbstractListCacheWithStorageBean<String,FlickrPhotosetView,CachedFlickrUserPhotoset> implements
 		FlickrUserPhotosetsCache {
 
 	@SuppressWarnings("unused")

@@ -15,7 +15,7 @@ import com.dumbhippo.services.YahooSearchWebServices;
 @BanFromWebTier
 @Stateless
 public class YahooAlbumCacheBean
-	extends AbstractBasicCacheBean<String,YahooAlbumData,CachedYahooAlbumData>
+	extends AbstractBasicCacheWithStorageBean<String,YahooAlbumData,CachedYahooAlbumData>
 	implements YahooAlbumCache {
 	@SuppressWarnings("unused")
 	static private final Logger logger = GlobalSetup.getLogger(YahooAlbumCacheBean.class);

@@ -19,7 +19,7 @@ import com.dumbhippo.services.YahooSongData;
 @BanFromWebTier
 @Stateless
 public class YahooSongCacheBean
-	extends AbstractListCacheBean<Track,YahooSongData,CachedYahooSongData>
+	extends AbstractListCacheWithStorageBean<Track,YahooSongData,CachedYahooSongData>
 	implements YahooSongCache {
 	
 	@SuppressWarnings("unused")

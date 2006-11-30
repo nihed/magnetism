@@ -15,7 +15,7 @@ import com.dumbhippo.services.YouTubeVideo;
 import com.dumbhippo.services.YouTubeVideoFeedParser;
 
 @Stateless
-public class YouTubeVideosCacheBean extends AbstractListCacheBean<String,YouTubeVideo,CachedYouTubeVideo> implements
+public class YouTubeVideosCacheBean extends AbstractListCacheWithStorageBean<String,YouTubeVideo,CachedYouTubeVideo> implements
 		YouTubeVideosCache {
 
 	@SuppressWarnings("unused")
