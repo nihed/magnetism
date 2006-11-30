@@ -82,11 +82,6 @@ public interface Stacker {
 	 */
 	public void pageRecentUserActivity(Viewpoint viewpoint, Pageable<PersonMugshotView> pageable, int blocksPerUser);
 
-	// Returns a complete stack for the user.
-	public List<BlockView> getStack(Viewpoint viewpoint, User user, long lastTimestamp, int start, int count);
-	// Returns parts of the stack in which the user was an active participant if participantOnly is set to true.
-	public List<BlockView> getStack(Viewpoint viewpoint, User user, long lastTimestamp, int start, int count, boolean participantOnly);
-
 	public void pageStack(Viewpoint viewpoint, Group group, Pageable<BlockView> pageable, boolean byParticipation);	
 
 	/**

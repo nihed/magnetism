@@ -46,13 +46,6 @@ public class StackedPersonPage extends AbstractPersonPage {
 		stacker = WebEJBUtil.defaultLookup(Stacker.class);
 	}
 
-	public List<BlockView> getMusghot() {
-		if (getViewedUser() != null) {
-			return stacker.getStack(getSignin().getViewpoint(), getViewedUser(), 0, 0, 20, true);
-		}
-		return null;
-	}
-
 	public Pageable<BlockView> getPageableMugshot() {
 		if (pageableMugshot == null) {
 			pageableMugshot = 
@@ -63,14 +56,7 @@ public class StackedPersonPage extends AbstractPersonPage {
 		}
 
 		return pageableMugshot;
-	}
-	
-	public List<BlockView> getStack() {
-		if (getViewedUser() != null) {
-			return stacker.getStack(getSignin().getViewpoint(), getViewedUser(), 0, 0, 20);
-		}
-		return null;
-	}
+	}	
 	
 	public Pageable<BlockView> getPageableStack() {
 		if (pageableStack == null) {

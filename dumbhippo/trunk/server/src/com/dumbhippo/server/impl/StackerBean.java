@@ -766,7 +766,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		BlockView prepareView(Viewpoint viewpoint, Block block, T t) throws BlockNotVisibleException;
 	}
 
-	public <T> void pageStack(Viewpoint viewpoint, BlockSource<T> source, Pageable<BlockView> pageable, int expectedHitFactor) {
+	private <T> void pageStack(Viewpoint viewpoint, BlockSource<T> source, Pageable<BlockView> pageable, int expectedHitFactor) {
 		
 		// + 1 is for finding out if there are items for the next page
 		int targetedNumberOfItems = pageable.getStart() + pageable.getCount() + 1;
@@ -953,27 +953,6 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		
 		// Doing an exact count is expensive, our assumption is "lots and lots"
 		pageable.setTotalCount(pageable.getBound());		
-	}
-
-	public List<BlockView> getStack(Viewpoint viewpoint, User user, long lastTimestamp, int start, int count) {
-	    return getStack(viewpoint, user, lastTimestamp, start, count, false);
-    }
-	
-	public List<BlockView> getStack(Viewpoint viewpoint, User user, long lastTimestamp, int start, int count, boolean participantOnly) {		
-		
-		List<BlockView> stack = new ArrayList<BlockView>();
-		List<UserBlockData> blocks = getBlocks(viewpoint, user, lastTimestamp, start, count, participantOnly);
-		
-		// Create BlockView objects for the blocks, implicitly performing access control
-		for (UserBlockData ubd : blocks) {
-			try {
-				stack.add(getBlockView(viewpoint, ubd.getBlock(), ubd, participantOnly));
-			} catch (NotFoundException e) {
-				// Do nothing, we can't see this block
-			}
-		}		
-
-		return stack;
 	}
 	
 	private List<GroupBlockData> getBlocks(Viewpoint viewpoint, Group group, int start, int count, boolean byParticipation) {

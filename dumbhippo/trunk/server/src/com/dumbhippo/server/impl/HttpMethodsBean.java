@@ -86,6 +86,7 @@ import com.dumbhippo.server.InvitationSystem;
 import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.NowPlayingThemeSystem;
+import com.dumbhippo.server.Pageable;
 import com.dumbhippo.server.PermissionDeniedException;
 import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.PostingBoard;
@@ -1908,10 +1909,15 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		Set<ExternalAccountView> externalAccountViews = externalAccountSystem.getExternalAccountViews(AnonymousViewpoint.getInstance(), who);
 		
 		List<BlockView> stack;
-		if (includeStack)
-			stack = stacker.getStack(AnonymousViewpoint.getInstance(), who, 0, 0, 5, participantOnly);
-		else
+		if (includeStack) {
+			Pageable<BlockView> pageable = new Pageable<BlockView>("stack");
+			pageable.setPosition(0);
+			pageable.setInitialPerPage(5);
+			stacker.pageStack(AnonymousViewpoint.getInstance(), who, pageable, participantOnly);
+			stack = pageable.getResults();
+		} else {
 			stack = Collections.emptyList();
+		}
 		
 		PersonView userView = personViewer.getPersonView(AnonymousViewpoint.getInstance(), who);
 		

@@ -3,7 +3,6 @@ package com.dumbhippo.server.impl;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -19,7 +18,6 @@ import com.dumbhippo.server.CachedExternalUpdater;
 import com.dumbhippo.server.LastFmUpdater;
 import com.dumbhippo.server.MusicSystemInternal;
 import com.dumbhippo.server.NotFoundException;
-import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.services.LastFmTrack;
 import com.dumbhippo.services.LastFmWebServices;
@@ -33,9 +31,6 @@ public class LastFmUpdaterBean extends CachedExternalUpdaterBean<LastFmUpdateSta
 	
 	@EJB
 	private MusicSystemInternal musicSystem;
-	
-	@EJB
-	private TransactionRunner runner;
 
 	@Override
 	public void doPeriodicUpdate(String username) {
