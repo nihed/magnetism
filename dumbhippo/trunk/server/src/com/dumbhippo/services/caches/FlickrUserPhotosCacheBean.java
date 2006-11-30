@@ -37,7 +37,7 @@ public class FlickrUserPhotosCacheBean extends AbstractListCacheBean<String,Flic
 	}
 
 	@Override
-	protected List<CachedFlickrUserPhoto> queryExisting(String key) {
+	public List<CachedFlickrUserPhoto> queryExisting(String key) {
 		Query q = em.createQuery("SELECT photo FROM CachedFlickrUserPhoto photo WHERE photo.ownerId = :ownerId");
 		q.setParameter("ownerId", key);
 		
@@ -46,7 +46,7 @@ public class FlickrUserPhotosCacheBean extends AbstractListCacheBean<String,Flic
 	}
 
 	@Override
-	protected void setAllLastUpdatedToZero(String key) {
+	public void setAllLastUpdatedToZero(String key) {
 		EJBUtil.prepareUpdate(em, CachedFlickrUserPhoto.class);
 		
 		Query q = em.createQuery("UPDATE CachedFlickrUserPhoto c " + 
@@ -58,12 +58,12 @@ public class FlickrUserPhotosCacheBean extends AbstractListCacheBean<String,Flic
 	}	
 	
 	@Override
-	protected FlickrPhotoView resultFromEntity(CachedFlickrUserPhoto entity) {
+	public FlickrPhotoView resultFromEntity(CachedFlickrUserPhoto entity) {
 		return entity.toPhoto();
 	}
 
 	@Override
-	protected CachedFlickrUserPhoto entityFromResult(String key, FlickrPhotoView result) {
+	public CachedFlickrUserPhoto entityFromResult(String key, FlickrPhotoView result) {
 		return new CachedFlickrUserPhoto(key, result);
 	}
 
@@ -78,7 +78,7 @@ public class FlickrUserPhotosCacheBean extends AbstractListCacheBean<String,Flic
 	}
 
 	@Override
-	protected CachedFlickrUserPhoto newNoResultsMarker(String key) {
+	public CachedFlickrUserPhoto newNoResultsMarker(String key) {
 		return CachedFlickrUserPhoto.newNoResultsMarker(key);
 	}
 }

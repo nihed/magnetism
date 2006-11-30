@@ -37,7 +37,7 @@ public class FlickrPhotosetPhotosCacheBean extends AbstractListCacheBean<String,
 	}
 
 	@Override
-	protected List<CachedFlickrPhotosetPhoto> queryExisting(String key) {
+	public List<CachedFlickrPhotosetPhoto> queryExisting(String key) {
 		Query q = em.createQuery("SELECT photo FROM CachedFlickrPhotosetPhoto photo WHERE photo.setId = :setId");
 		q.setParameter("setId", key);
 		
@@ -46,7 +46,7 @@ public class FlickrPhotosetPhotosCacheBean extends AbstractListCacheBean<String,
 	}
 
 	@Override
-	protected void setAllLastUpdatedToZero(String key) {
+	public void setAllLastUpdatedToZero(String key) {
 		EJBUtil.prepareUpdate(em, CachedFlickrPhotosetPhoto.class);
 		
 		Query q = em.createQuery("UPDATE CachedFlickrPhotosetPhoto c" + 
@@ -58,12 +58,12 @@ public class FlickrPhotosetPhotosCacheBean extends AbstractListCacheBean<String,
 	}
 	
 	@Override
-	protected FlickrPhotoView resultFromEntity(CachedFlickrPhotosetPhoto entity) {
+	public FlickrPhotoView resultFromEntity(CachedFlickrPhotosetPhoto entity) {
 		return entity.toPhoto();
 	}
 
 	@Override
-	protected CachedFlickrPhotosetPhoto entityFromResult(String key, FlickrPhotoView result) {
+	public CachedFlickrPhotosetPhoto entityFromResult(String key, FlickrPhotoView result) {
 		return new CachedFlickrPhotosetPhoto(key, result);
 	}
 
@@ -78,7 +78,7 @@ public class FlickrPhotosetPhotosCacheBean extends AbstractListCacheBean<String,
 	}
 
 	@Override
-	protected CachedFlickrPhotosetPhoto newNoResultsMarker(String key) {
+	public CachedFlickrPhotosetPhoto newNoResultsMarker(String key) {
 		return CachedFlickrPhotosetPhoto.newNoResultsMarker(key);
 	}
 }

@@ -28,7 +28,7 @@ public class AmazonAlbumCacheBean extends AbstractBasicCacheBean<AlbumAndArtist,
 	}	
 	
 	@Override
-	protected CachedAmazonAlbumData queryExisting(AlbumAndArtist albumAndArtist) {
+	public CachedAmazonAlbumData queryExisting(AlbumAndArtist albumAndArtist) {
 		Query q;
 		
 		String album = albumAndArtist.getAlbum();
@@ -76,22 +76,22 @@ public class AmazonAlbumCacheBean extends AbstractBasicCacheBean<AlbumAndArtist,
 	}
 
 	@Override
-	protected AmazonAlbumData resultFromEntity(CachedAmazonAlbumData entity) {
+	public AmazonAlbumData resultFromEntity(CachedAmazonAlbumData entity) {
 		return entity.toData();
 	}
 
 	@Override
-	protected void updateEntityFromResult(AlbumAndArtist key, AmazonAlbumData result, CachedAmazonAlbumData entity) {
+	public void updateEntityFromResult(AlbumAndArtist key, AmazonAlbumData result, CachedAmazonAlbumData entity) {
 		entity.updateData(result);
 	}
 
 	@Override
-	protected CachedAmazonAlbumData entityFromResult(AlbumAndArtist key, AmazonAlbumData result) {
+	public CachedAmazonAlbumData entityFromResult(AlbumAndArtist key, AmazonAlbumData result) {
 		return new CachedAmazonAlbumData(key, result);
 	}
 
 	@Override
-	protected CachedAmazonAlbumData newNoResultsMarker(AlbumAndArtist key) {
+	public CachedAmazonAlbumData newNoResultsMarker(AlbumAndArtist key) {
 		return CachedAmazonAlbumData.newNoResultsMarker(key);
 	}
 }

@@ -1,12 +1,11 @@
 package com.dumbhippo.services.caches;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
+import javax.annotation.PostConstruct;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 
@@ -19,15 +18,22 @@ import com.dumbhippo.server.util.EJBUtil;
 
 public abstract class AbstractListCacheBean<KeyType,ResultType,EntityType extends CachedListItem>
 	extends AbstractCacheBean<KeyType,List<ResultType>,AbstractListCache<KeyType,ResultType>>
-	implements AbstractListCache<KeyType, ResultType> {
+	implements AbstractListCache<KeyType, ResultType>, ListCacheStorageMapper<KeyType,ResultType,EntityType> {
 
 	@SuppressWarnings("unused")
 	static private final Logger logger = GlobalSetup.getLogger(AbstractListCacheBean.class);
 	
+	private ListCacheStorage<KeyType,ResultType,EntityType> storage;
+	
 	protected AbstractListCacheBean(Request defaultRequest, Class<? extends AbstractListCache<KeyType,ResultType>> ejbIface, long expirationTime) {
 		super(defaultRequest, ejbIface, expirationTime);
 	}
-
+	
+	@PostConstruct
+	public void init() {
+		storage = new ListCacheStorage<KeyType,ResultType,EntityType>(em, getExpirationTime(), this);
+	}
+	
 	static private class AbstractListCacheTask<KeyType,ResultType,EntityType> implements Callable<List<ResultType>> {
 
 		private Class<? extends AbstractListCache<KeyType,ResultType>> ejbIface;
@@ -83,105 +89,35 @@ public abstract class AbstractListCacheBean<KeyType,ResultType,EntityType extend
 		}
 	}
 
-	protected abstract List<EntityType> queryExisting(KeyType key);
+	public abstract List<EntityType> queryExisting(KeyType key);
 	
-	protected abstract ResultType resultFromEntity(EntityType entity);
+	public abstract ResultType resultFromEntity(EntityType entity);
 	
-	protected abstract EntityType entityFromResult(KeyType key, ResultType result);
+	public abstract EntityType entityFromResult(KeyType key, ResultType result);
 	
 	public List<ResultType> checkCache(KeyType key) throws NotCachedException {
-		List<EntityType> oldItems = queryExisting(key);
-
-		if (oldItems.isEmpty())
-			throw new NotCachedException();
-		
-		long now = System.currentTimeMillis();
-		boolean outdated = false;
-		boolean haveNoResultsMarker = false;
-		for (EntityType d : oldItems) {
-			if ((d.getLastUpdated().getTime() + getExpirationTime()) < now) {
-				outdated = true;
-			}
-			if (d.isNoResultsMarker()) {
-				haveNoResultsMarker = true;
-			}
-		}
-		
-		if (outdated) {
-			logger.debug("Cache appears outdated for bean {} key {}", getEjbIface().getName(), key);
-			throw new ExpiredCacheException();
-		}
-		
-		if (haveNoResultsMarker) {
-			logger.debug("Negative result cached for bean {} key {}", getEjbIface().getName(), key);
-			return Collections.emptyList();
-		}
-		
-		return formResultTypeList(oldItems);		
-	}
-
-	private List<ResultType> formResultTypeList(List<EntityType> list) {
-		List<ResultType> results = new ArrayList<ResultType>();
-		for (EntityType e : list) {
-			results.add(resultFromEntity(e));
-		}		
-		return results;			
+		return storage.checkCache(key);
 	}
 	
-	protected abstract EntityType newNoResultsMarker(KeyType key);
+	public abstract EntityType newNoResultsMarker(KeyType key);
 
-	protected void setAllLastUpdatedToZero(KeyType key) {
+	public void setAllLastUpdatedToZero(KeyType key) {
 		throw new UnsupportedOperationException("Cache doesn't support manual expiration: " + getEjbIface().getName());
 	}
 	
 	@Override
 	public void expireCache(KeyType key) {
-		setAllLastUpdatedToZero(key);
+		storage.expireCache(key);
 	}
 	
 	public void deleteCache(KeyType key) {
-		List<EntityType> oldItems = queryExisting(key);
-		for (EntityType d : oldItems) {
-			em.remove(d);
-		}		
+		storage.deleteCache(key);
 	}
 	
 	// null means that we could not get the updated results, so leave the old results
 	// empty list results means that we should save a no results marker
 	@TransactionAttribute(TransactionAttributeType.MANDATORY)
 	public List<ResultType> saveInCacheInsideExistingTransaction(KeyType key, List<ResultType> newItems, Date now) {
-		EJBUtil.assertHaveTransaction();
-	
-		logger.debug("Saving new results in cache for bean {}", getEjbIface().getName());
-
-		List<EntityType> oldItems = queryExisting(key);		
-		if (newItems == null)
-		 	return formResultTypeList(oldItems);	
-		
-		if (!oldItems.isEmpty())
-		    deleteCache(key);
-		
-		// This is perhaps superstitious, but we do have an ordering constraint that we must 
-		// remove the old items then insert the new, or it will cause a constraint violation
-		em.flush();
-		
-		// save new results
-		if (newItems.isEmpty()) {
-			EntityType e = newNoResultsMarker(key);
-			if (!e.isNoResultsMarker())
-				throw new RuntimeException("new no results marker isn't: " + e);
-			e.setLastUpdated(now);
-			em.persist(e);
-			logger.debug("cached a no results marker for key {}", key);			
-		} else {
-			for (ResultType r : newItems) {							
-				EntityType e = entityFromResult(key, r);
-				e.setLastUpdated(now);
-				em.persist(e);
-			}
-			logger.debug("cached {} items for key {}", newItems.size(), key);
-		}
-		
-		return newItems;
+		return storage.saveInCacheInsideExistingTransaction(key, newItems, now);
 	}
 }

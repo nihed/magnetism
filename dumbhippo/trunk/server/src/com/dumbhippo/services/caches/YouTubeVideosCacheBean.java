@@ -30,7 +30,7 @@ public class YouTubeVideosCacheBean extends AbstractListCacheBean<String,YouTube
 	}
 
 	@Override
-	protected List<CachedYouTubeVideo> queryExisting(String key) {
+	public List<CachedYouTubeVideo> queryExisting(String key) {
 		Query q = em.createQuery("SELECT video FROM CachedYouTubeVideo video WHERE video.owner = :owner");
 		q.setParameter("owner", key);
 		
@@ -39,7 +39,7 @@ public class YouTubeVideosCacheBean extends AbstractListCacheBean<String,YouTube
 	}
 
 	@Override
-	protected void setAllLastUpdatedToZero(String key) {
+	public void setAllLastUpdatedToZero(String key) {
 		EJBUtil.prepareUpdate(em, CachedYouTubeVideo.class);
 		
 		Query q = em.createQuery("UPDATE CachedYouTubeVideo" + 
@@ -51,12 +51,12 @@ public class YouTubeVideosCacheBean extends AbstractListCacheBean<String,YouTube
 	}	
 	
 	@Override
-	protected YouTubeVideo resultFromEntity(CachedYouTubeVideo entity) {
+	public YouTubeVideo resultFromEntity(CachedYouTubeVideo entity) {
 		return entity.toThumbnail();
 	}
 
 	@Override
-	protected CachedYouTubeVideo entityFromResult(String key, YouTubeVideo result) {
+	public CachedYouTubeVideo entityFromResult(String key, YouTubeVideo result) {
 		return new CachedYouTubeVideo(key, result);
 	}
 
@@ -66,7 +66,7 @@ public class YouTubeVideosCacheBean extends AbstractListCacheBean<String,YouTube
 	}
 
 	@Override
-	protected CachedYouTubeVideo newNoResultsMarker(String key) {
+	public CachedYouTubeVideo newNoResultsMarker(String key) {
 		return CachedYouTubeVideo.newNoResultsMarker(key);
 	}
 }

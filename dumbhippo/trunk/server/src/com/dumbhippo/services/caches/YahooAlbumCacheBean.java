@@ -25,7 +25,7 @@ public class YahooAlbumCacheBean
 	}
 
 	@Override
-	protected CachedYahooAlbumData queryExisting(String albumId) {
+	public CachedYahooAlbumData queryExisting(String albumId) {
 		Query q;
 		
 		q = em.createQuery("FROM CachedYahooAlbumData album WHERE album.albumId = :albumId");
@@ -47,24 +47,24 @@ public class YahooAlbumCacheBean
 	}
 
 	@Override
-	protected YahooAlbumData resultFromEntity(CachedYahooAlbumData entity) {
+	public YahooAlbumData resultFromEntity(CachedYahooAlbumData entity) {
 		return entity.toData();
 	}
 
 	@Override
-	protected CachedYahooAlbumData entityFromResult(String key, YahooAlbumData result) {
+	public CachedYahooAlbumData entityFromResult(String key, YahooAlbumData result) {
 		CachedYahooAlbumData entity = new CachedYahooAlbumData();
 		entity.updateData(key, result);
 		return entity;
 	}
 
 	@Override
-	protected void updateEntityFromResult(String key, YahooAlbumData result, CachedYahooAlbumData entity) {
+	public void updateEntityFromResult(String key, YahooAlbumData result, CachedYahooAlbumData entity) {
 		entity.updateData(key, result);
 	}
 
 	@Override
-	protected CachedYahooAlbumData newNoResultsMarker(String key) {
+	public CachedYahooAlbumData newNoResultsMarker(String key) {
 		return CachedYahooAlbumData.newNoResultsMarker(key);
 	}
 }

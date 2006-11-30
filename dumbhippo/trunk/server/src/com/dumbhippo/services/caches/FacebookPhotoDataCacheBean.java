@@ -57,7 +57,7 @@ public class FacebookPhotoDataCacheBean
 	}
 
 	@Override
-	protected List<CachedFacebookPhotoData> queryExisting(String key) {
+	public List<CachedFacebookPhotoData> queryExisting(String key) {
 		Query q = em.createQuery("SELECT photo FROM CachedFacebookPhotoData photo WHERE photo.userId = :userId");
 		q.setParameter("userId", key);
 		List<CachedFacebookPhotoData> results = TypeUtils.castList(CachedFacebookPhotoData.class, q.getResultList());
@@ -65,7 +65,7 @@ public class FacebookPhotoDataCacheBean
 	}
 
 	@Override
-	protected void setAllLastUpdatedToZero(String key) {
+	public void setAllLastUpdatedToZero(String key) {
 		EJBUtil.prepareUpdate(em, CachedFacebookPhotoData.class);
 		
 		Query q = em.createQuery("UPDATE CachedFacebookPhotoData c" + 
@@ -101,12 +101,12 @@ public class FacebookPhotoDataCacheBean
 	}
 	
 	@Override
-	protected CachedFacebookPhotoData resultFromEntity(CachedFacebookPhotoData entity) {
+	public CachedFacebookPhotoData resultFromEntity(CachedFacebookPhotoData entity) {
 		return entity;
 	}
 
 	@Override
-	protected CachedFacebookPhotoData entityFromResult(String key, CachedFacebookPhotoData result) {
+	public CachedFacebookPhotoData entityFromResult(String key, CachedFacebookPhotoData result) {
 		return result;
 	}
 
@@ -133,7 +133,7 @@ public class FacebookPhotoDataCacheBean
 	}
 
 	@Override
-	protected CachedFacebookPhotoData newNoResultsMarker(String key) {
+	public CachedFacebookPhotoData newNoResultsMarker(String key) {
 		return CachedFacebookPhotoData.newNoResultsMarker(key);
 	}
 	

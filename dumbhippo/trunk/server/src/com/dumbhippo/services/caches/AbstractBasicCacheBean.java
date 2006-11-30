@@ -4,6 +4,7 @@ import java.util.Date;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
+import javax.annotation.PostConstruct;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 
@@ -25,13 +26,21 @@ import com.dumbhippo.server.util.EJBUtil;
  * @param <EntityType>
  */
 public abstract class AbstractBasicCacheBean<KeyType,ResultType,EntityType extends CachedItem>
-	extends AbstractCacheBean<KeyType,ResultType,AbstractCache<KeyType,ResultType>> {
+	extends AbstractCacheBean<KeyType,ResultType,AbstractCache<KeyType,ResultType>>
+	implements BasicCacheStorageMapper<KeyType,ResultType,EntityType> {
 
 	@SuppressWarnings("unused")
 	static private final Logger logger = GlobalSetup.getLogger(AbstractBasicCacheBean.class);
 	
+	private BasicCacheStorage<KeyType,ResultType,EntityType> storage;
+	
 	protected AbstractBasicCacheBean(Request defaultRequest, Class<? extends AbstractCache<KeyType,ResultType>> ejbIface, long expirationTime) {
 		super(defaultRequest, ejbIface, expirationTime);
+	}
+	
+	@PostConstruct
+	public void init() {
+		storage = new BasicCacheStorage<KeyType,ResultType,EntityType>(em, getExpirationTime(), this);
 	}
 	
 	static private class AbstractBasicCacheTask<KeyType,ResultType> implements Callable<ResultType> {
@@ -80,74 +89,23 @@ public abstract class AbstractBasicCacheBean<KeyType,ResultType,EntityType exten
 		}
 	}
 
-	protected abstract EntityType queryExisting(KeyType key);
+	public abstract EntityType queryExisting(KeyType key);
 	
-	protected abstract ResultType resultFromEntity(EntityType entity);
+	public abstract ResultType resultFromEntity(EntityType entity);
 	
-	protected abstract EntityType entityFromResult(KeyType key, ResultType result);
+	public abstract EntityType entityFromResult(KeyType key, ResultType result);
 	
-	protected abstract void updateEntityFromResult(KeyType key, ResultType result, EntityType entity);
+	public abstract void updateEntityFromResult(KeyType key, ResultType result, EntityType entity);
 	
 	public ResultType checkCache(KeyType key) throws NotCachedException {
-		EJBUtil.assertHaveTransaction();
-		
-		EntityType result = queryExisting(key);
-
-		if (result == null) {
-			throw new NotCachedException();
-		} else {
-			long now = System.currentTimeMillis();
-			Date lastUpdated = result.getLastUpdated();
-			if (lastUpdated == null || ((lastUpdated.getTime() + getExpirationTime()) < now)) {
-				throw new NotCachedException();
-			}
-		
-			logger.debug("Have cached result for key {}: {}", result, key);
-			
-			if (result.isNoResultsMarker()) {
-				return null;
-			} else {	
-				return resultFromEntity(result);
-			}
-		}
+		return storage.checkCache(key);
 	}
 
-	protected abstract EntityType newNoResultsMarker(KeyType key);
+	public abstract EntityType newNoResultsMarker(KeyType key);
 	
 	// null data means to save a negative result
 	@TransactionAttribute(TransactionAttributeType.MANDATORY)
 	public ResultType saveInCacheInsideExistingTransaction(KeyType key, ResultType data, Date now) {
-		EJBUtil.assertHaveTransaction();
-		EntityType e = queryExisting(key);
-		if (e == null) {
-			if (data == null) {
-				e = newNoResultsMarker(key);
-				if (!e.isNoResultsMarker()) {
-					throw new RuntimeException("Newly-returned no results marker isn't: " + e);
-				}
-			} else {
-				e = entityFromResult(key, data);
-			}
-			// the setLastUpdated has to be before the persist() since lastUpdated isn't nullable,
-			// or hibernate gets upset
-			e.setLastUpdated(now);
-			em.persist(e);
-		} else {
-			// TODO: what if the data is really no longer there?!
-			// in any case, we probably should not set last updated time to now if data == null
-			e.setLastUpdated(now);
-			// don't ever save a negative result once we have data at some point
-			if (data != null) {
-				updateEntityFromResult(key, data, e);
-			}
-		}
-		
-		logger.debug("Saved new cached item under {}: {}", 
-			     key, e);
-		
-		if (e.isNoResultsMarker())
-			return null;
-		else
-			return resultFromEntity(e);
+		return storage.saveInCacheInsideExistingTransaction(key, data, now);
 	}
 }

@@ -135,7 +135,7 @@ public class RhapsodyDownloadCacheBean extends AbstractBasicCacheBean<String,Boo
 	}
 
 	@Override
-	protected CachedRhapsodyDownload queryExisting(String key) {
+	public CachedRhapsodyDownload queryExisting(String key) {
 		try {
 			Query q = em.createQuery("SELECT crd FROM CachedRhapsodyDownload crd WHERE crd.url = :url");
 			q.setParameter("url", key);
@@ -147,12 +147,12 @@ public class RhapsodyDownloadCacheBean extends AbstractBasicCacheBean<String,Boo
 	}
 
 	@Override
-	protected Boolean resultFromEntity(CachedRhapsodyDownload entity) {
+	public Boolean resultFromEntity(CachedRhapsodyDownload entity) {
 		return entity.isActive();
 	}
 
 	@Override
-	protected CachedRhapsodyDownload entityFromResult(String key, Boolean result) {
+	public CachedRhapsodyDownload entityFromResult(String key, Boolean result) {
 		CachedRhapsodyDownload entity = new CachedRhapsodyDownload();
 		entity.setUrl(key);
 		entity.setActive(result);
@@ -160,13 +160,13 @@ public class RhapsodyDownloadCacheBean extends AbstractBasicCacheBean<String,Boo
 	}
 
 	@Override
-	protected void updateEntityFromResult(String key, Boolean result, CachedRhapsodyDownload entity) {
+	public void updateEntityFromResult(String key, Boolean result, CachedRhapsodyDownload entity) {
 		entity.setUrl(key);
 		entity.setActive(result);
 	}
 
-	@Override
-	protected CachedRhapsodyDownload newNoResultsMarker(String key) {
+	 @Override
+	public CachedRhapsodyDownload newNoResultsMarker(String key) {
 		return CachedRhapsodyDownload.newNoResultsMarker();
 	}
 }

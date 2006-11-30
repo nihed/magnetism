@@ -29,7 +29,7 @@ public class YahooArtistAlbumsCacheBean
 	}
 	
 	@Override
-	protected List<CachedYahooArtistAlbumData> queryExisting(String artistId) {
+	public List<CachedYahooArtistAlbumData> queryExisting(String artistId) {
 		Query q = em.createQuery("SELECT album FROM CachedYahooArtistAlbumData album WHERE album.artistId = :artistId");
 		q.setParameter("artistId", artistId);
 		
@@ -59,24 +59,24 @@ public class YahooArtistAlbumsCacheBean
 	}	
 
 	@Override
-	protected YahooAlbumData resultFromEntity(CachedYahooArtistAlbumData entity) {
+	public YahooAlbumData resultFromEntity(CachedYahooArtistAlbumData entity) {
 		return entity.toData();
 	}
 
 	@Override
-	protected CachedYahooArtistAlbumData entityFromResult(String key, YahooAlbumData result) {
+	public CachedYahooArtistAlbumData entityFromResult(String key, YahooAlbumData result) {
 		CachedYahooArtistAlbumData d = createCachedAlbum(key);
 		d.updateData(key, result);
 		return d;
 	}
 
 	@Override
-	protected CachedYahooArtistAlbumData newNoResultsMarker(String key) {
+	public CachedYahooArtistAlbumData newNoResultsMarker(String key) {
 		return CachedYahooArtistAlbumData.newNoResultsMarker(key);
 	}
 
 	@Override
-	protected void setAllLastUpdatedToZero(String key) {
+	public void setAllLastUpdatedToZero(String key) {
 		throw new UnsupportedOperationException("expiring this cache not supported");
 	}
 	

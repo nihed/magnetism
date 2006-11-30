@@ -28,7 +28,7 @@ public class YahooAlbumSongsCacheBean
 	}
 	
 	@Override
-	protected List<CachedYahooAlbumSongData> queryExisting(String albumId) {
+	public List<CachedYahooAlbumSongData> queryExisting(String albumId) {
 		Query q = em.createQuery("SELECT song FROM CachedYahooAlbumSongData song WHERE song.albumId = :albumId");
 		q.setParameter("albumId", albumId);
 		
@@ -47,12 +47,12 @@ public class YahooAlbumSongsCacheBean
 	}
 
 	@Override
-	protected YahooSongData resultFromEntity(CachedYahooAlbumSongData entity) {
+	public YahooSongData resultFromEntity(CachedYahooAlbumSongData entity) {
 		return entity.toData();
 	}
 
 	@Override
-	protected CachedYahooAlbumSongData entityFromResult(String key, YahooSongData result) {
+	public CachedYahooAlbumSongData entityFromResult(String key, YahooSongData result) {
 		if (!result.getAlbumId().equals(key)) {
 			// this would break since albumId is the key in the cache and also a returned value in the 
 			// song data... if it breaks then we need either the YahooWebServices stuff to filter out
@@ -69,7 +69,7 @@ public class YahooAlbumSongsCacheBean
 	}
 
 	@Override
-	protected CachedYahooAlbumSongData newNoResultsMarker(String key) {
+	public CachedYahooAlbumSongData newNoResultsMarker(String key) {
 		return CachedYahooAlbumSongData.newNoResultsMarker(key);
 	}
 }

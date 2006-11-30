@@ -30,7 +30,7 @@ public class YahooSongCacheBean
 	}
 
 	@Override
-	protected List<CachedYahooSongData> queryExisting(Track track) {
+	public List<CachedYahooSongData> queryExisting(Track track) {
 		Query q = em.createQuery("SELECT song FROM CachedYahooSongData song WHERE song.searchedName = :name AND song.searchedArtist = :artist AND song.searchedAlbum = :album");
 		q.setParameter("name", track.getName());
 		q.setParameter("artist", track.getArtist());
@@ -73,19 +73,19 @@ public class YahooSongCacheBean
 	}
 	
 	@Override
-	protected YahooSongData resultFromEntity(CachedYahooSongData entity) {
+	public YahooSongData resultFromEntity(CachedYahooSongData entity) {
 		return entity.toData();
 	}
 
 	@Override
-	protected CachedYahooSongData entityFromResult(Track key, YahooSongData result) {
+	public CachedYahooSongData entityFromResult(Track key, YahooSongData result) {
 		CachedYahooSongData d = createCachedSong(key);
 		d.updateData(result);
 		return d;
 	}
 
 	@Override
-	protected CachedYahooSongData newNoResultsMarker(Track key) {
+	public CachedYahooSongData newNoResultsMarker(Track key) {
 		return CachedYahooSongData.newNoResultsMarker(key.getArtist(),
 				key.getAlbum(), key.getName());
 	}

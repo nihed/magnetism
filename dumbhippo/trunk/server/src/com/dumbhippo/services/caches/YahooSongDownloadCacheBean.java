@@ -27,7 +27,7 @@ public class YahooSongDownloadCacheBean
 	}
 	
 	@Override
-	protected List<CachedYahooSongDownload> queryExisting(String songId) {
+	public List<CachedYahooSongDownload> queryExisting(String songId) {
 		Query q = em.createQuery("SELECT song FROM CachedYahooSongDownload song WHERE song.songId = :songId");
 		q.setParameter("songId", songId);
 		
@@ -46,12 +46,12 @@ public class YahooSongDownloadCacheBean
 	}
 
 	@Override
-	protected YahooSongDownloadData resultFromEntity(CachedYahooSongDownload entity) {
+	public YahooSongDownloadData resultFromEntity(CachedYahooSongDownload entity) {
 		return entity.toData();
 	}
 
 	@Override
-	protected CachedYahooSongDownload entityFromResult(String key, YahooSongDownloadData result) {
+	public CachedYahooSongDownload entityFromResult(String key, YahooSongDownloadData result) {
 		CachedYahooSongDownload d = new CachedYahooSongDownload();
 		d.setSongId(key);
 		d.updateData(result);
@@ -59,7 +59,7 @@ public class YahooSongDownloadCacheBean
 	}
 
 	@Override
-	protected CachedYahooSongDownload newNoResultsMarker(String key) {
+	public CachedYahooSongDownload newNoResultsMarker(String key) {
 		return CachedYahooSongDownload.newNoResultsMarker(key);
 	}
 }
