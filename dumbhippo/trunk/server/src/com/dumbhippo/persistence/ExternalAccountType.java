@@ -360,7 +360,49 @@ public enum ExternalAccountType {
 		public boolean getHasAccountInfo(String handle, String extra) {
 			return handle != null;
 		}
-	};
+	},
+	LASTFM("Last.fm")  {
+		@Override
+		public String getLink(String handle, String extra) {
+			return getSiteLink() + "/user/" + StringUtils.urlEncode(handle);
+		}
+		
+		@Override 
+		public String getSiteLink() {
+		    return "http://www.last.fm";
+		}
+		
+		@Override
+		public String getLinkText(String handle, String extra) {
+			return handle;
+		}
+		@Override
+		public String canonicalizeHandle(String handle) throws ValidationException {
+			handle = super.canonicalizeHandle(handle);
+			if (handle != null) {
+				if (handle.length() > YouTubeWebServices.MAX_YOUTUBE_USERNAME_LENGTH)
+					throw new ValidationException("YouTube usernames have a maximum length of " + YouTubeWebServices.MAX_YOUTUBE_USERNAME_LENGTH);
+				
+				// This is determined from the YouTube signin form which throws this error if you put in 
+				// non-letters or non-digits
+				if (!StringUtils.isAlphanumeric(handle))
+					throw new ValidationException("YouTube usernames can only have letters and digits");
+				
+				// As extra paranoia, be sure we can use the username in an url
+				try {
+					new URL(getLink(handle, null));
+				} catch (MalformedURLException e) {
+					throw new ValidationException("Invalid YouTube username '" + handle + "': " + e.getMessage());
+				}
+			}
+			return handle;
+		}
+
+		@Override
+		public boolean getHasAccountInfo(String handle, String extra) {
+			return handle != null;
+		}
+	};	
 	
 	private static final Logger logger = GlobalSetup.getLogger(ExternalAccountType.class);	
 	

@@ -1,8 +1,6 @@
 package com.dumbhippo.server.impl;
 
-import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -12,7 +10,6 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.ExternalAccountType;
-import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.YouTubeUpdateStatus;
 import com.dumbhippo.server.CachedExternalUpdater;
 import com.dumbhippo.server.NotFoundException;
@@ -34,14 +31,6 @@ public class YouTubeUpdaterBean extends CachedExternalUpdaterBean<YouTubeUpdateS
 	@EJB
 	private Notifier notifier;
 	
-	public Set<String> getActiveYouTubeUsers() {
-		return getActiveUsers();
-	}
-	
-	public Collection<User> getUsersWhoLoveYouTubeAccount(String username) {
-		return getAccountLovers(username);
-	}	
-
 	@Override
 	public void doPeriodicUpdate(String username) {
 		EJBUtil.assertNoTransaction();

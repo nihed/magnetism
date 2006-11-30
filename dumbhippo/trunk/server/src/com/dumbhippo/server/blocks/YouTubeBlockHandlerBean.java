@@ -69,7 +69,7 @@ public class YouTubeBlockHandlerBean extends
 		logger.debug("most recent YouTube videos changed for " + username);
 
 		long now = System.currentTimeMillis();
-		Collection<User> users = youTubeUpdater.getUsersWhoLoveYouTubeAccount(username);
+		Collection<User> users = youTubeUpdater.getAccountLovers(username);
 		for (User user : users) {
 			stacker.stack(getKey(user), now, user, false, StackReason.BLOCK_UPDATE);
 		}

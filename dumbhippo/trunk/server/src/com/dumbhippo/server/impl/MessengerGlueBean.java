@@ -24,7 +24,6 @@ import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.live.ChatRoomEvent;
 import com.dumbhippo.live.LiveState;
-import com.dumbhippo.live.UserChangedEvent;
 import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.EmbeddedMessage;
 import com.dumbhippo.persistence.ExternalAccount;
@@ -59,7 +58,6 @@ import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.PromotionCode;
 import com.dumbhippo.server.ServerStatus;
-import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.blocks.PostBlockHandler;
 import com.dumbhippo.server.views.EntityView;
 import com.dumbhippo.server.views.GroupView;
@@ -107,9 +105,6 @@ public class MessengerGlueBean implements MessengerGlue {
 	
 	@EJB
 	private ServerStatus serverStatus;
-	
-	@EJB
-	private TransactionRunner transactionRunner;
 	
 	@EJB
 	private ExternalAccountSystem externalAccounts;
@@ -706,23 +701,12 @@ public class MessengerGlueBean implements MessengerGlue {
 			return false;
 		}
 	}
-
-	private void queueMusicChange(final Guid userId) {
-		// LiveState.queueUpdate() expects to be called in a transaction, and we
-		// don't have one since the music system code needs to be called not
-		// in a transaction.
-		transactionRunner.runTaskInNewTransaction(new Runnable() {
-			public void run() {
-				LiveState.getInstance().queueUpdate(new UserChangedEvent(userId, UserChangedEvent.Detail.MUSIC)); 
-			}
-		});
-	}
 	
 	@TransactionAttribute(TransactionAttributeType.NEVER)
 	public void handleMusicChanged(Guid userId, Map<String, String> properties) {
 		User user = getUserFromGuid(userId);
 		musicSystemInternal.setCurrentTrack(user, properties);
-		queueMusicChange(userId);
+		musicSystemInternal.queueMusicChange(userId);
 	}
 
 	@TransactionAttribute(TransactionAttributeType.NEVER)
@@ -744,6 +728,6 @@ public class MessengerGlueBean implements MessengerGlue {
 		// don't do this again
 		identitySpider.setMusicSharingPrimed(user, true);
 		logger.debug("Primed user with {} tracks", tracks.size());	
-		queueMusicChange(userId);
+		musicSystemInternal.queueMusicChange(userId);
 	}
 }

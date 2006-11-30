@@ -193,6 +193,18 @@ public class AccountPage {
 	public String getYouTubeName() {
 		return getExternalAccountHandle(ExternalAccountType.YOUTUBE);
 	}
+
+	public String getLastFmSentiment() {
+		return getExternalAccountSentiment(ExternalAccountType.LASTFM);
+	}
+	
+	public String getLastFmHateQuip() {
+		return getExternalAccountHateQuip(ExternalAccountType.LASTFM);
+	}
+	
+	public String getLastFmName() {
+		return getExternalAccountHandle(ExternalAccountType.LASTFM);
+	}	
 		
 	public String getWebsiteUrl() {
 		logger.debug("returning {} for website ", getExternalAccountHandle(ExternalAccountType.WEBSITE));

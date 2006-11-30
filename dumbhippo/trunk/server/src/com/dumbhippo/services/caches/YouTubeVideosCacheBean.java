@@ -42,9 +42,9 @@ public class YouTubeVideosCacheBean extends AbstractListCacheBean<String,YouTube
 	protected void setAllLastUpdatedToZero(String key) {
 		EJBUtil.prepareUpdate(em, CachedYouTubeVideo.class);
 		
-		Query q = em.createQuery("UPDATE CachedYouTubeVideo c" + 
-				" SET c.lastUpdated = '1970-01-01 00:00:00' " + 
-				" WHERE c.owner = :owner");
+		Query q = em.createQuery("UPDATE CachedYouTubeVideo" + 
+				" SET lastUpdated = '1970-01-01 00:00:00' " + 
+				" WHERE owner = :owner");
 		q.setParameter("owner", key);
 		int updated = q.executeUpdate();
 		logger.debug("{} cached items expired", updated);

@@ -94,7 +94,7 @@ public class FlickrPhotosetBlockHandlerBean extends
 	public void onFlickrPhotosetCreated(FlickrPhotosetStatus photosetStatus) {
 		logger.debug("new photoset status to stack: " + photosetStatus);
 		long now = System.currentTimeMillis();
-		Collection<User> users = flickrUpdater.getUsersWhoLoveFlickrAccount(photosetStatus.getOwnerId());
+		Collection<User> users = flickrUpdater.getAccountLovers(photosetStatus.getOwnerId());
 		for (User user : users) {
 			Block block = stacker.createBlock(getKey(user, photosetStatus));
 			stacker.stack(block, now, user, false, StackReason.NEW_BLOCK);
@@ -108,7 +108,7 @@ public class FlickrPhotosetBlockHandlerBean extends
 		}
 		logger.debug("photoset status changed, restacking {}", photosetStatus);
 		long now = System.currentTimeMillis();
-		Collection<User> users = flickrUpdater.getUsersWhoLoveFlickrAccount(photosetStatus.getOwnerId());
+		Collection<User> users = flickrUpdater.getAccountLovers(photosetStatus.getOwnerId());
 		for (User user : users) {
 			stacker.stack(getKey(user, photosetStatus), now, user, false, StackReason.BLOCK_UPDATE);
 		}

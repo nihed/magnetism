@@ -60,10 +60,12 @@ public abstract class AbstractBasicCacheBean<KeyType,ResultType,EntityType exten
 		}
 	}
 	
+	@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 	public ResultType getSync(KeyType key) {
 		return getFutureResultNullOnException(getAsync(key));
 	}
 
+	@TransactionAttribute(TransactionAttributeType.SUPPORTS)	
 	public Future<ResultType> getAsync(KeyType key) {
 		if (key == null) {
 			throw new IllegalArgumentException("null key passed to " + getEjbIface().getName());

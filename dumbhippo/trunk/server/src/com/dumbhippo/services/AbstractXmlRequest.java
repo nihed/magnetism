@@ -24,12 +24,9 @@ class AbstractXmlRequest<SaxHandlerT extends DefaultHandler> {
 	
 	protected SaxHandlerT parseUrl(SaxHandlerT handler, String url) {
 		try {
-			URL u = new URL(url);
-			URLConnection connection = URLUtils.openConnection(u);
-
+			URLConnection connection = URLUtils.openConnection(new URL(url));
 			connection.setConnectTimeout(timeoutMilliseconds);
-			connection.setReadTimeout(timeoutMilliseconds);
-			connection.setAllowUserInteraction(false);
+			connection.setReadTimeout(timeoutMilliseconds);			
 			
 			EnumSaxHandler.parse(connection.getInputStream(), handler);
 			//logger.debug("Successfully parsed web service URL contents");

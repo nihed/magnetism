@@ -71,7 +71,7 @@ public class FlickrPersonBlockHandlerBean extends
 		logger.debug("most recent flickr photos changed for " + flickrId);
 
 		long now = System.currentTimeMillis();
-		Collection<User> users = flickrUpdater.getUsersWhoLoveFlickrAccount(flickrId);
+		Collection<User> users = flickrUpdater.getAccountLovers(flickrId);
 		for (User user : users) {
 			stacker.stack(getKey(user), now, user, false, StackReason.BLOCK_UPDATE);
 		}

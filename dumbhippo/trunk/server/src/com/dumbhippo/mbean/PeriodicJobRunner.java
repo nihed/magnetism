@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 import org.jboss.system.ServiceMBeanSupport;
 import org.slf4j.Logger;
@@ -24,7 +25,8 @@ public class PeriodicJobRunner extends ServiceMBeanSupport implements PeriodicJo
 		FacebookTrackerPeriodicJob.class,
 		FeedUpdaterPeriodicJob.class,
 		FlickrUpdaterPeriodicJob.class,
-		YouTubeUpdaterPeriodicJob.class
+		YouTubeUpdaterPeriodicJob.class,
+		LastFmUpdaterPeriodicJob.class
 	};
 	
 	private List<Thread> threads;
@@ -105,16 +107,26 @@ public class PeriodicJobRunner extends ServiceMBeanSupport implements PeriodicJo
 		private boolean runOneGeneration() {
 			int iteration = 0;
 			generation += 1;
+			boolean first = true;
 			try {
-				// We start off by sleeping for our delay time to reduce the initial
-				// server load on restart
+				// We start off by sleeping for 1-3 minutes to reduce initial server load
+				try {
+					Thread.sleep(new Random().nextInt(2 * 60 * 1000) + 60 * 1000);
+				} catch (InterruptedException e) {				
+					return false;
+				}
+				
 				long lastUpdate = System.currentTimeMillis();
 				
 				while (true) {
 					iteration += 1;
 					long sleepTime = lastUpdate + job.getFrequencyInMilliseconds() - System.currentTimeMillis();
 					if (sleepTime < 0)
-						sleepTime = 0;					
+						sleepTime = 0;
+					if (first) {
+						first = false;
+						sleepTime = 0;
+					}
 					try {
 						Thread.sleep(sleepTime);
 					} catch (InterruptedException e) {

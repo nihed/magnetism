@@ -44,6 +44,9 @@ import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.ThreadUtils;
 import com.dumbhippo.TypeUtils;
+import com.dumbhippo.identity20.Guid;
+import com.dumbhippo.live.LiveState;
+import com.dumbhippo.live.UserChangedEvent;
 import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.FeedEntry;
@@ -271,12 +274,15 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		notifier.onTrackPlayed(user, track, now);
 	}
 	
-	@TransactionAttribute(TransactionAttributeType.NEVER)	
+	@TransactionAttribute(TransactionAttributeType.SUPPORTS)	
 	public void setCurrentTrack(final User user, final Track track) {
 		addTrackHistory(user, track, new Date());
 	}
 	 
-	@TransactionAttribute(TransactionAttributeType.NEVER)	
+	// Although this is marked as SUPPORTS - you should never invoke this
+	// method from any code holding a transaction that could have potentially
+	// modified a Track
+	@TransactionAttribute(TransactionAttributeType.SUPPORTS)	
 	public void setCurrentTrack(User user, Map<String,String> properties) {
 		// empty properties means "not listening to any track" - we always
 		// keep the latest track with content, we don't set CurrentTrack to null
@@ -303,13 +309,50 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		});
 	}
 	
-	@TransactionAttribute(TransactionAttributeType.NEVER)	
+	// Although this is marked as SUPPORTS - you should never invoke this
+	// method from any code holding a transaction that could have potentially
+	// modified a Track	
+	@TransactionAttribute(TransactionAttributeType.SUPPORTS)	
 	public void addHistoricalTrack(User user, Map<String,String> properties) {
 		// for now there's no difference here, but eventually we might have the 
 		// client supply some properties like the date of listening instead of 
 		// pretending we "just" listened to this track.
 		setCurrentTrack(user, properties);
 	}
+	
+	// Although this is marked as SUPPORTS - you should never invoke this
+	// method from any code holding a transaction that could have potentially
+	// modified a Track		
+	@TransactionAttribute(TransactionAttributeType.SUPPORTS)	
+	public void addHistoricalTrack(final User user, final Map<String,String> properties, final long listenDate) {
+		final long trackId = getTrackIdIsolated(properties);
+		
+		final String userId = user.getId();
+		// trackId is invalid in this outer transaction, so we need a new one
+		runner.runTaskInNewTransaction(new Runnable() {
+			public void run() {
+				Track t = em.find(Track.class, trackId);
+				if (t == null)
+					throw new RuntimeException("database isolation problem (?): track id not found " + trackId);
+				User u = em.find(User.class, userId);
+				if (u == null)
+					throw new RuntimeException("database isolation problem (?): user id not found " + userId);
+				addTrackHistory(user, t, new Date(listenDate));
+			}
+		});
+	}
+	
+	@TransactionAttribute(TransactionAttributeType.SUPPORTS)	
+	public void queueMusicChange(final Guid userId) {
+		// LiveState.queueUpdate() expects to be called in a transaction, and we
+		// don't have one since the music system code needs to be called not
+		// in a transaction.
+		runner.runTaskInNewTransaction(new Runnable() {
+			public void run() {
+				LiveState.getInstance().queueUpdate(new UserChangedEvent(userId, UserChangedEvent.Detail.MUSIC)); 
+			}
+		});
+	}	
 	
 	private TrackHistory getCurrentTrack(Viewpoint viewpoint, User user) throws NotFoundException {
 		List<TrackHistory> list = getTrackHistory(viewpoint, user, History.LATEST, 0, 1);

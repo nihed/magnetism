@@ -72,7 +72,7 @@ public abstract class CachedExternalUpdaterBean<Status> implements CachedExterna
 		}
 	}
 	
-	protected Set<String> getActiveUsers() {
+	public Set<String> getActiveUsers() {
 		Query q = em.createQuery("SELECT ea.handle FROM ExternalAccount ea WHERE " + 
 				" ea.accountType = " + getAccountType().ordinal() + 
 				" AND ea.sentiment = " + Sentiment.LOVE.ordinal() + 

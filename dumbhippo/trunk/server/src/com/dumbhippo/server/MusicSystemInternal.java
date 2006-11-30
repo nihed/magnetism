@@ -10,6 +10,7 @@ import javax.ejb.Local;
 import org.apache.lucene.index.IndexWriter;
 import org.hibernate.lucene.DocumentBuilder;
 
+import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.persistence.Track;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.listeners.ExternalAccountFeedListener;
@@ -48,6 +49,22 @@ public interface MusicSystemInternal
 	 * @param properties props of the track
 	 */
 	public void addHistoricalTrack(User user, Map<String,String> properties);
+	
+	/**
+	 * Add this track as if it were one we have listened to, recording the date on which it was listened.
+	 * 
+	 * @param user who listened
+	 * @param properties props of the track
+	 * @param listenDate milliseconds since the epoch
+	 */	
+	public void addHistoricalTrack(User user, Map<String,String> properties, long listenDate);	
+	
+	/**
+	 * Should be invoked once after setCurrentTrack or addHistoricalTrack are invoked.
+	 * 
+	 * @param userId id of user whose music was changed
+	 */
+	public void queueMusicChange(final Guid userId);	
 		
 	public int countTrackHistory(Viewpoint viewpoint, User user);
 	

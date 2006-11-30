@@ -111,6 +111,11 @@ dh.account.setYouTubeName = function(name, loadFunc, errorFunc) {
 				     { "urlOrName" : name },
 						loadFunc, errorFunc);
 }
+dh.account.setLastFmName = function(name, loadFunc, errorFunc) {
+   	dh.server.doXmlMethod("setlastfmname",
+				     { "urlOrName" : name },
+						loadFunc, errorFunc);
+}
 
 dh.account.createExternalAccountOnHateSavedFunc = function(entry, accountType) {
 	return function(value) {
@@ -200,6 +205,20 @@ dh.account.onYouTubeLoveSaved = function(value) {
 	var oldMode = entry.getMode();
 	entry.setBusy();
   	dh.account.setYouTubeName(value, 
+	 	    	 function(childNodes, http) {
+	 	    	 	entry.setMode('love');
+	  	    	 },
+	  	    	 function(code, msg, http) {
+	  	    	 	alert(msg);
+	  	    	 	entry.setMode(oldMode);
+	  	    	 }); 
+}
+
+dh.account.onLastFmLoveSaved = function(value) {
+	var entry = dh.account.lastFmEntry;
+	var oldMode = entry.getMode();
+	entry.setBusy();
+  	dh.account.setLastFmName(value, 
 	 	    	 function(childNodes, http) {
 	 	    	 	entry.setMode('love');
 	  	    	 },
@@ -321,6 +340,12 @@ dhAccountInit = function() {
 	dh.account.youTubeEntry.onLoveSaved = dh.account.onYouTubeLoveSaved;
 	dh.account.youTubeEntry.onHateSaved = dh.account.createExternalAccountOnHateSavedFunc(dh.account.youTubeEntry, 'YOUTUBE');
 	dh.account.youTubeEntry.onCanceled = dh.account.createExternalAccountOnCanceledFunc(dh.account.youTubeEntry, 'YOUTUBE');
+	
+	dh.account.lastFmEntry = new dh.lovehate.Entry('dhLastFm', 'Last.fm username', dh.account.initialLastFmName,
+					'Uhh...what\'s Last.fm?', dh.account.initialLastFmHateQuip);
+	dh.account.lastFmEntry.onLoveSaved = dh.account.onLastFmLoveSaved;
+	dh.account.lastFmEntry.onHateSaved = dh.account.createExternalAccountOnHateSavedFunc(dh.account.LastFmEntry, 'LASTFM');
+	dh.account.lastFmEntry.onCanceled = dh.account.createExternalAccountOnCanceledFunc(dh.account.LastFmEntry, 'LASTFM');		
 		
 	dh.account.flickrEntry = new dh.lovehate.Entry('dhFlickr', 'Email used for Flickr account', dh.account.initialFlickrEmail,
 					'Flickr doesn\'t do it for me', dh.account.initialFlickrHateQuip);
@@ -332,7 +357,7 @@ dhAccountInit = function() {
 					'LinkedIn is for nerds', dh.account.initialLinkedInHateQuip);
 	dh.account.linkedInEntry.onLoveSaved = dh.account.onLinkedInLoveSaved;
 	dh.account.linkedInEntry.onHateSaved = dh.account.createExternalAccountOnHateSavedFunc(dh.account.linkedInEntry, 'LINKED_IN');
-	dh.account.linkedInEntry.onCanceled = dh.account.createExternalAccountOnCanceledFunc(dh.account.linkedInEntry, 'LINKED_IN');
+	dh.account.linkedInEntry.onCanceled = dh.account.createExternalAccountOnCanceledFunc(dh.account.linkedInEntry, 'LINKED_IN');	
 }
 
 dojo.event.connect(dojo, "loaded", dj_global, "dhAccountInit");
