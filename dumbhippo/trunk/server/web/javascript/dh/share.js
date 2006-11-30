@@ -292,7 +292,8 @@ dh.share.doAddRecipient = function(selectedId, noFlash) {
 		td.appendChild(div)
 		div.className = "dh-share-recipient-note"
 		if (obj.isGroup()) {
-			div.appendChild(document.createTextNode(obj.sampleMembers));
+			var text = obj.memberCount == 1 ? "1 member" : obj.memberCount + " members";
+			div.appendChild(document.createTextNode(text));
 		} else {
 			if (!obj.hasAccount)
 				div.appendChild(document.createTextNode("via email"));

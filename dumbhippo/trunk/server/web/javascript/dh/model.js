@@ -199,10 +199,10 @@ dh.model.Feed = function(id, displayName, photoUrl, homeUrl) {
 }
 dojo.inherits(dh.model.Feed, dh.model.GuidPersistable);
 
-dh.model.Group = function(id, displayName, sampleMembers, photoUrl, homeUrl) {
+dh.model.Group = function(id, displayName, memberCount, photoUrl, homeUrl) {
 	this.id = id;
 	this.displayName = displayName;
-	this.sampleMembers = sampleMembers; // can be null
+	this.memberCount = memberCount;
 	this.photoUrl = photoUrl;
 	this.homeUrl = homeUrl;
 	this.kind = "group";
@@ -291,7 +291,7 @@ dh.model.groupFromXmlNode = function(element) {
 
 	var id = element.getAttribute("id");
 	var displayName = element.getAttribute("display");
-	var sampleMembers = element.getAttribute("sampleMembers");
+	var memberCount = element.getAttribute("memberCount");
 	var photoUrl = element.getAttribute("photoUrl");
 	var homeUrl = element.getAttribute("homeUrl");
 
@@ -303,7 +303,7 @@ dh.model.groupFromXmlNode = function(element) {
 	if (!displayName)
 		dojo.raise("no display attr on <group> node");
 	
-	return new dh.model.Group(id, displayName, sampleMembers, photoUrl, homeUrl);
+	return new dh.model.Group(id, displayName, memberCount, photoUrl, homeUrl);
 }
 
 dh.model.objectFromXmlNode = function(element) {

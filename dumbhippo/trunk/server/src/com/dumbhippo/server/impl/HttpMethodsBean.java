@@ -47,6 +47,7 @@ import com.dumbhippo.StringUtils;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
+import com.dumbhippo.live.LiveGroup;
 import com.dumbhippo.live.LiveState;
 import com.dumbhippo.persistence.AimResource;
 import com.dumbhippo.persistence.Contact;
@@ -256,38 +257,12 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			Collection<Group> groups) {
 		if (groups != null) {
 			for (Group g : groups) {
-
-				// FIXME with the right database query we can avoid getting
-				// *all* the members to
-				// display just a few of them
-
-				StringBuilder sampleMembers = new StringBuilder();
-				Set<PersonView> members = groupSystem.getMembers(viewpoint, g);
-				//logger.debug(members.size() + " members of " + g.getName());
-				for (PersonView member : members) {
-
-
-					User user = member.getUser(); // can return null
-					if (user != null && viewpoint.isOfUser(user))
-						continue; // skip ourselves
-
-					String shortName = member.getTruncatedName();					
-					
-					if (sampleMembers.length() + shortName.length() > PersonView.MAX_SHORT_NAME_LENGTH * 3) {
-						sampleMembers.append(" ...");
-						break;
-					} else {	
-						if (sampleMembers.length() > 0)
-							sampleMembers.append(" ");
-						sampleMembers.append(shortName);
-					}
-				}
-
+				LiveGroup liveGroup = LiveState.getInstance().getLiveGroup(g.getGuid());
+				
 				xml.appendTextNode("group", null, "id", g.getId(), 
 						"display", g.getName(), 
 						"photoUrl", g.getPhotoUrl(),
-						"sampleMembers", sampleMembers.toString(),
-						"count", Integer.toString(members.size()));
+						"memberCount", Integer.toString(liveGroup.getMemberCount()));
 			}
 		}
 	}
