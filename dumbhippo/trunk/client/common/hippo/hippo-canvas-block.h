@@ -31,8 +31,6 @@ struct _HippoCanvasBlock {
     HippoCanvasItem *background_gradient;
     HippoCanvasItem *expand_pointer;
     HippoCanvasItem *unexpand_pointer;
-    HippoCanvasBox  *close_controls_parent;
-    HippoCanvasItem *close_controls;    
     HippoCanvasBox  *age_parent;
     HippoCanvasItem *age_separator_item;
     HippoCanvasItem *age_prefix_item;

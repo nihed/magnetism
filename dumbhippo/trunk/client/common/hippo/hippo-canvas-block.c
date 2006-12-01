@@ -65,8 +65,6 @@ static void hippo_canvas_block_set_hushed     (HippoCanvasBlock *canvas_block,
                                                gboolean          value);
 
 /* Callbacks */
-static void on_close_activated                (HippoCanvasItem  *button_or_link,
-                                               HippoCanvasBlock *canvas_block);
 static void on_hush_activated                 (HippoCanvasItem  *button_or_link,
                                                HippoCanvasBlock *canvas_block);
 
@@ -473,36 +471,7 @@ hippo_canvas_block_constructor (GType                  type,
 
     
     /* Fill in right column */
-    block->close_controls_parent = right_column;
-    block->close_controls = g_object_new(HIPPO_TYPE_CANVAS_BOX,
-                                         "orientation", HIPPO_ORIENTATION_HORIZONTAL,
-                                         "xalign", HIPPO_ALIGNMENT_END,
-                                         "yalign", HIPPO_ALIGNMENT_START,
-                                         "border-bottom", 4,
-                                         NULL);
-    hippo_canvas_box_append(block->close_controls_parent, block->close_controls, 0);
-    /* we start out !expanded */
-    hippo_canvas_box_set_child_visible(block->close_controls_parent, block->close_controls,
-                                       FALSE);
 
-    
-    item = g_object_new(HIPPO_TYPE_CANVAS_LINK,
-                        "text", "CLOSE",
-                        "tooltip", "Show less detail",
-                        NULL);
-    hippo_canvas_box_append(HIPPO_CANVAS_BOX(block->close_controls), item, 0);
-
-    g_signal_connect(G_OBJECT(item), "activated", G_CALLBACK(on_close_activated), block);
-    
-    item = g_object_new(HIPPO_TYPE_CANVAS_IMAGE_BUTTON,
-                        "normal-image-name", "blue_x",
-                        "border-left", 4,
-                        "tooltip", "Show less detail",
-                        NULL);
-    hippo_canvas_box_append(HIPPO_CANVAS_BOX(block->close_controls), item, 0);
-
-    g_signal_connect(G_OBJECT(item), "activated", G_CALLBACK(on_close_activated), block);
-    
     box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
                        "orientation", HIPPO_ORIENTATION_HORIZONTAL,
                        "xalign", HIPPO_ALIGNMENT_FILL,
@@ -941,8 +910,6 @@ hideshow_flat_box(HippoCanvasBox *box, gboolean expand)
 static void
 hippo_canvas_block_set_expansion(HippoCanvasBlock *canvas_block, gboolean expand)
 {
-    hippo_canvas_box_set_child_visible(canvas_block->close_controls_parent, canvas_block->close_controls,
-                                       expand);
     if (canvas_block->sent_to_set)
         hideshow_flat_box(canvas_block->sent_to_box, expand);
     hippo_canvas_box_set_child_visible(canvas_block->age_parent, canvas_block->age_prefix_item,
