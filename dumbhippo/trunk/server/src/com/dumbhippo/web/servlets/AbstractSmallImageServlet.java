@@ -238,6 +238,10 @@ public abstract class AbstractSmallImageServlet extends AbstractServlet {
 		 */
 		
 		String defaultFilename = getDefaultFilename();
+
+		if (request.getPathInfo() == null)
+			throw new HttpException(HttpResponseCode.NOT_FOUND, "No image specified");
+		
 		String noPrefix = request.getPathInfo().substring(1); // Skip the leading slash
 		
 		// See if we need to insert a size into the request
