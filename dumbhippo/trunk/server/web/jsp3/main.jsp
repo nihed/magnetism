@@ -23,15 +23,16 @@
 		    <div id="dhMugshotWelcome">
 		    <div id="dhMugshotIntro"> 
 		        <div class="dh-intro-message">Put your Mugshot on the Web.</div>
-		        <div class="dh-intro-explanation">Everything you and your friends do on the web, in real time.</div>
+		        <div class="dh-intro-explanation">Show updates from all your sites on one page. Get live updates from friends.  Mughot makes it fun, free and easy!</div>
+			<div class="dh-intro-text">Share content from <em>MySpace</em>, <em>YouTube</em>, <em>Facebook</em>, <em>Flickr</em>, blogs and more. Why go to a ton of different sites every day when you can check out just one?</div>
 		        <div class="dh-intro-options">
-                    <span class="dh-button"><a href="/features"><img src="/images3/${buildStamp}/learnmore.gif"/></a></span>
-                    &nbsp; or &nbsp;
-                    <span class="dh-button"><a href="/who-are-you"><img src="/images3/${buildStamp}/login.gif"/></a></span>
+			<span class="dh-button"><a href="/who-are-you"><img src="/images3/${buildStamp}/login.gif"/></a></span>
+			&nbsp; or &nbsp;
+			<span class="dh-button"><a href="/features"><img src="/images3/${buildStamp}/learnmore.gif"/></a></span>                
                 </div>
             </div>
             <div id="dhMugshotExample">
-                <dh:png src="/images3/${buildStamp}/${main.sampleMugshot}2.png" style="width: 406; height: 221; border: none;"/>
+                <img src="/images3/${buildStamp}/sampleMugshot.gif" style="width: 620px; height: 346px; border: none;"/>
             </div>     
             </div>        
 		</dht3:shinyBox>

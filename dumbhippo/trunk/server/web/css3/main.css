@@ -3,15 +3,26 @@
 @IMPORT url("main-positions.css");
 
 .dh-intro-message {
-    color:        #9648BC;
+	color:        #9648BC;
 	font-weight:  bold;
 	font-size:	  30px;
 }
 
-.dh-intro-explanation, .dh-intro-options, .dh-header {
+.dh-intro-options, .dh-header {
 	color:			#9648CD;
 	font-weight:	bold;
 	font-size:		18px;
+}
+
+.dh-intro-explanation {
+	font-weight:		bold;
+	font-size:		14px;
+	color:			#000000;
+}
+
+.dh-intro-text {
+	font-size:		12px;
+	color:			#000000;
 }
 
 .dh-header a:link, .dh-header a:hover, .dh-header a:visited {
