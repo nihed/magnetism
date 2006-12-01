@@ -22,7 +22,7 @@ public interface CacheStorage<KeyType, ResultType> {
 	 * 	the results you're saving should have been obtained outside a transaction.
 	 */
 	public ResultType saveInCacheInsideExistingTransaction(KeyType key,
-			ResultType data, Date now);
+			ResultType data, Date now, boolean refetchedWithoutCheckingCache);
 
 	public void expireCache(KeyType key);
 

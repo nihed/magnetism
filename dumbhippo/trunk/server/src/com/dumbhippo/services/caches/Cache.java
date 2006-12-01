@@ -20,7 +20,11 @@ public interface Cache<KeyType, ResultType> extends CacheStorage<KeyType, Result
 
 	public Future<ResultType> getAsync(KeyType key);
 
+	public ResultType getSync(KeyType key, boolean alwaysRefetchEvenIfCached);
+
+	public Future<ResultType> getAsync(KeyType key, boolean alwaysRefetchEvenIfCached);	
+	
 	public ResultType fetchFromNet(KeyType key);
 	
-	public ResultType saveInCache(KeyType key, ResultType result);
+	public ResultType saveInCache(KeyType key, ResultType result, boolean refetchedWithoutCheckingCache);
 }

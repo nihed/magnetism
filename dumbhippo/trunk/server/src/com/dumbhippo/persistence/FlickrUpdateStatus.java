@@ -25,14 +25,10 @@ public class FlickrUpdateStatus extends DBUnique {
 
 	private String flickrId;
 	 
-	private int totalPhotoCount;
-	private int totalPhotosetCount;
 	private String mostRecentPhotos;
 	private String mostRecentPhotosets;
 	
 	FlickrUpdateStatus() {
-		totalPhotoCount = 0;
-		totalPhotosetCount = 0;
 		mostRecentPhotos = "";
 		mostRecentPhotosets = "";
 	}
@@ -75,27 +71,5 @@ public class FlickrUpdateStatus extends DBUnique {
 	}
 	public void setMostRecentPhotosets(String mostRecentPhotosets) {
 		this.mostRecentPhotosets = mostRecentPhotosets;
-	}
-	
-	/** Set when we check whether there are new photos; if it changes, 
-	 * we ask for recent photos to see if they changed. 
-	 */
-	@Column(nullable=false)
-	public int getTotalPhotoCount() {
-		return totalPhotoCount;
-	}
-	public void setTotalPhotoCount(int totalPhotoCount) {
-		this.totalPhotoCount = totalPhotoCount;
-	}
-
-	/** Set when we check whether there are new photosets; if it changes, 
-	 * we ask for recent photosets to see if they changed. 
-	 */	
-	@Column(nullable=false)
-	public int getTotalPhotosetCount() {
-		return totalPhotosetCount;
-	}
-	public void setTotalPhotosetCount(int totalPhotosetCount) {
-		this.totalPhotosetCount = totalPhotosetCount;
 	}
 }

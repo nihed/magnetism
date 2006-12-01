@@ -3,6 +3,7 @@ package com.dumbhippo.services.caches;
 import java.util.Date;
 import java.util.EnumMap;
 import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
 
 import javax.ejb.EJB;
 import javax.ejb.TransactionAttribute;
@@ -139,12 +140,12 @@ public abstract class AbstractCacheBean<KeyType,ResultType,EjbIfaceType> impleme
 
 	/** This is final since you should override saveInCacheInsideExistingTransaction instead, generally */
 	@TransactionAttribute(TransactionAttributeType.NEVER)
-	public final ResultType saveInCache(final KeyType key, final ResultType data) {
+	public final ResultType saveInCache(final KeyType key, final ResultType data, final boolean refetchedWithoutCheckingCache) {
 		EJBUtil.assertNoTransaction();
 		try {
 			return runner.runTaskRetryingOnConstraintViolation(new Callable<ResultType>() {
 				public ResultType call() {
-					return saveInCacheInsideExistingTransaction(key, data, new Date());
+					return saveInCacheInsideExistingTransaction(key, data, new Date(), refetchedWithoutCheckingCache);
 				}
 			});
 		} catch (Exception e) {
@@ -156,5 +157,15 @@ public abstract class AbstractCacheBean<KeyType,ResultType,EjbIfaceType> impleme
 				throw new RuntimeException(e); // not reached
 			}
 		}
-	}	
+	}
+	
+	@TransactionAttribute(TransactionAttributeType.SUPPORTS)
+	public ResultType getSync(KeyType key) {
+		return getSync(key, false);
+	}
+
+	@TransactionAttribute(TransactionAttributeType.SUPPORTS)	
+	public Future<ResultType> getAsync(KeyType key) {
+		return getAsync(key, false);
+	}
 }

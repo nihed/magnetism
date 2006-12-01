@@ -19,18 +19,14 @@ import com.dumbhippo.persistence.FlickrPhotosetStatus;
 import com.dumbhippo.persistence.FlickrUpdateStatus;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.CachedExternalUpdater;
-import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.FlickrUpdater;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Notifier;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.services.FlickrPhotoView;
-import com.dumbhippo.services.FlickrPhotos;
 import com.dumbhippo.services.FlickrPhotosView;
 import com.dumbhippo.services.FlickrPhotosetView;
-import com.dumbhippo.services.FlickrPhotosets;
 import com.dumbhippo.services.FlickrPhotosetsView;
-import com.dumbhippo.services.FlickrWebServices;
 import com.dumbhippo.services.caches.FlickrPhotosetPhotosCache;
 import com.dumbhippo.services.caches.FlickrUserPhotosCache;
 import com.dumbhippo.services.caches.FlickrUserPhotosetsCache;
@@ -40,10 +36,7 @@ public class FlickrUpdaterBean extends CachedExternalUpdaterBean<FlickrUpdateSta
 
 	@SuppressWarnings("unused")
 	private static final Logger logger = GlobalSetup.getLogger(FlickrUpdaterBean.class);
-	
-	@EJB
-	private Configuration config;
-	
+		
 	@EJB
 	private FlickrUserPhotosCache userPhotosCache;
 	
@@ -81,80 +74,12 @@ public class FlickrUpdaterBean extends CachedExternalUpdaterBean<FlickrUpdateSta
 	
 	@Override
 	public void doPeriodicUpdate(String flickrId) {
-		FlickrWebServices ws = new FlickrWebServices(12000, config);
-		
-		// These do NOT use any cache - remember, we're polling periodically for changes.
-		FlickrPhotos photos = ws.lookupPublicPhotos(flickrId, 1, FlickrWebServices.MIN_PER_PAGE);
-		
-		if (photos == null) {
-			logger.debug("web services error checking for new photos for {}, skipping this update", flickrId);
-			return;
-		}
-		
-		FlickrPhotosets photosets = null;
-		//	no sets possible if no photos
-		if (photos.getTotal() > 0) {
-			// unfortunately, it isn't obvious how we can get the photoset count 
-			// without getting all the sets
-			photosets = ws.lookupPublicPhotosets(flickrId);
-			if (photosets == null) {
-				logger.debug("web services error checking for new photosets for {}, skipping this update", flickrId);
-				return;
-			}
-		}
-	
-		int totalPhotos = photos.getTotal();
-		int totalPhotosets = photosets.getSets().size();
-
-		boolean changesLikely = false;
 		FlickrUpdater proxy = EJBUtil.defaultLookup(FlickrUpdater.class);
-		try {
-			// The idea is to have only this one transaction if we have no work 
-			// to do
-			FlickrUpdateStatus detachedStatus = proxy.getCachedStatus(flickrId);
-			if (detachedStatus.getTotalPhotoCount() != totalPhotos ||
-				detachedStatus.getTotalPhotosetCount() != totalPhotosets) {
-				changesLikely = true;
-			}
-		} catch (NotFoundException e) {
-			// we have no idea about previous state
-			changesLikely = true;
-		}
+
+		FlickrPhotosView photosView = userPhotosCache.getSync(flickrId, true);
+		FlickrPhotosetsView photosetsView = userPhotosetsCache.getSync(flickrId, true);
 		
-		// If we now have work to do, we start creating all kinds of 
-		// transactions, woot
-		if (changesLikely) {
-			// Expire the caches to force a reload. Note that 
-			// we reload both caches if either count has changed;
-			// that's because we're trying to get changes to photoset
-			// content as well as changes to what photosets there are,
-			// and also changes to titles, comments, etc. - so aggressively
-			// expiring the cache improves our chances of seeing new stuff.
-			userPhotosCache.expireCache(flickrId);
-			userPhotosetsCache.expireCache(flickrId);
-			
-			// New web services calls. Note we already made these above,
-			// but not through the cache, and with the least expense possible
-			// (e.g. asking for only one photo). So we do it again here.
-			// Flickr is giving us new total photo/photoset counts in these
-			// calls but we're ignoring them, which could lead to extra work,
-			// but too complex to avoid and basically harmless.
-			// The list of photos is limited to only a few, the list of 
-			// photo sets is supposed to be complete. This is because 
-			// we have a block per photo set but only one block for all photos.
-			FlickrPhotosView photosView = userPhotosCache.getSync(flickrId);
-			FlickrPhotosetsView photosetsView = userPhotosetsCache.getSync(flickrId);
-			
-			// we pass photosetViews.size() instead of totalPhotosets because if the 
-			// second photoset listing fails and the first succeeded, we would 
-			// not update again but cache no photoset information. i.e. in the 
-			// db we'd have a photoset count of >0 and a photoset hash of ""
-			// For photos, the situation is different since the first and second
-			// web service calls are distinct. So if listing photos fails, we 
-			// just don't ever try again until the number of photos changes or 
-			// the cache expires in a couple weeks.
-			proxy.saveUpdatedStatus(flickrId, photosView, photosetsView);
-		}
+		proxy.saveUpdatedStatus(flickrId, photosView, photosetsView);
 	}
 	
 	private void updateUserPhotosetStatuses(String ownerId, List<? extends FlickrPhotosetView> allPhotosets) {
@@ -231,8 +156,6 @@ public class FlickrUpdaterBean extends CachedExternalUpdaterBean<FlickrUpdateSta
 			updateStatus = new FlickrUpdateStatus(flickrId);
 			em.persist(updateStatus);
 		}
-		updateStatus.setTotalPhotoCount(photosView.getTotal());
-		updateStatus.setTotalPhotosetCount(photosetsView.getTotal());
 		
 		String photosHash = computePhotosHash(photosView.getPhotos());
 		String photosetsHash = computePhotosetsHash(photosetsView.getSets());

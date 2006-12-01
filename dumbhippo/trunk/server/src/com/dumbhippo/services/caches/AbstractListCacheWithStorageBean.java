@@ -58,7 +58,7 @@ public abstract class AbstractListCacheWithStorageBean<KeyType,ResultType,Entity
 	// null means that we could not get the updated results, so leave the old results
 	// empty list results means that we should save a no results marker
 	@TransactionAttribute(TransactionAttributeType.MANDATORY)
-	public List<? extends ResultType> saveInCacheInsideExistingTransaction(KeyType key, List<? extends ResultType> newItems, Date now) {
-		return storage.saveInCacheInsideExistingTransaction(key, newItems, now);
+	public List<? extends ResultType> saveInCacheInsideExistingTransaction(KeyType key, List<? extends ResultType> newItems, Date now, boolean refetchedWithoutCheckingCache) {
+		return storage.saveInCacheInsideExistingTransaction(key, newItems, now, refetchedWithoutCheckingCache);
 	}
 }

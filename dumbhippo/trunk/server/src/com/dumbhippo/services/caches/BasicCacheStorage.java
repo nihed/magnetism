@@ -48,7 +48,7 @@ public class BasicCacheStorage<KeyType, ResultType, EntityType extends CachedIte
 	}
 	
 	// null data means to save a negative result
-	public ResultType saveInCacheInsideExistingTransaction(KeyType key, ResultType data, Date now) {
+	public ResultType saveInCacheInsideExistingTransaction(KeyType key, ResultType data, Date now, boolean refetchedWithoutCheckingCache) {
 		EJBUtil.assertHaveTransaction();
 		
 		EntityType e = mapper.queryExisting(key);
@@ -75,8 +75,7 @@ public class BasicCacheStorage<KeyType, ResultType, EntityType extends CachedIte
 			}
 		}
 		
-		logger.debug("Saved new cached item under {}: {}", 
-			     key, e);
+		logger.debug("Saved new cached item under {}: {}", key, e);
 		
 		if (e.isNoResultsMarker())
 			return null;

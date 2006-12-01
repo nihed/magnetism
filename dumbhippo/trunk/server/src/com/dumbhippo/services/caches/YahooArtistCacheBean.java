@@ -40,9 +40,11 @@ public class YahooArtistCacheBean extends AbstractCacheBean<String,YahooArtistDa
 	static private class YahooArtistByIdTask implements Callable<YahooArtistData> {
 		
 		private String artistId;
-
-		public YahooArtistByIdTask(String artistId) {
+		private boolean alwaysRefetch;
+		
+		public YahooArtistByIdTask(String artistId, boolean alwaysRefetch) {
 			this.artistId = artistId;
+			this.alwaysRefetch = alwaysRefetch;
 		}
 		
 		public YahooArtistData call() {
@@ -52,11 +54,14 @@ public class YahooArtistCacheBean extends AbstractCacheBean<String,YahooArtistDa
 						
 			// Check again in case another node stored the data first
 			try {
+				if (alwaysRefetch)
+					throw new NotCachedException("Forced refetch");
+
 				return cache.checkCache(artistId);
 			} catch (NotCachedException e) {
 				YahooArtistData data = cache.fetchFromNet(artistId);
 	
-				return cache.saveInCache(artistId, data);
+				return cache.saveInCache(artistId, data, alwaysRefetch);
 			}
 		}
 	}
@@ -80,19 +85,24 @@ public class YahooArtistCacheBean extends AbstractCacheBean<String,YahooArtistDa
 		}
 	}
 	
-	public YahooArtistData getSync(String artistId) {
-		return ThreadUtils.getFutureResultNullOnException(getAsync(artistId));
+	@TransactionAttribute(TransactionAttributeType.SUPPORTS)
+	public YahooArtistData getSync(String artistId, boolean alwaysRefetchEvenIfCached) {
+		return ThreadUtils.getFutureResultNullOnException(getAsync(artistId, alwaysRefetchEvenIfCached));
 	}
 
-	public Future<YahooArtistData> getAsync(String artistId) {
+	@TransactionAttribute(TransactionAttributeType.SUPPORTS)
+	public Future<YahooArtistData> getAsync(String artistId, boolean alwaysRefetchEvenIfCached) {
 		if (artistId == null)
 			throw new IllegalArgumentException("null artistId");
 		
 		try {
+			if (alwaysRefetchEvenIfCached)
+				throw new NotCachedException("Forced refetch");
+
 			YahooArtistData result = checkCache(artistId);
 			return new KnownFuture<YahooArtistData>(result);
 		} catch (NotCachedException e) {
-			return getExecutor().execute(artistId, new YahooArtistByIdTask(artistId));
+			return getExecutor().execute(artistId, new YahooArtistByIdTask(artistId, alwaysRefetchEvenIfCached));
 		}
 	}
 
@@ -237,7 +247,7 @@ public class YahooArtistCacheBean extends AbstractCacheBean<String,YahooArtistDa
 	}
 
 	@TransactionAttribute(TransactionAttributeType.MANDATORY)
-	public YahooArtistData saveInCacheInsideExistingTransaction(String artistId, YahooArtistData data, Date now) {
+	public YahooArtistData saveInCacheInsideExistingTransaction(String artistId, YahooArtistData data, Date now, boolean refetchedWithoutCheckingCache) {
 		EJBUtil.assertHaveTransaction();
 		CachedYahooArtistData d = artistByIdQuery(artistId);
 		if (d == null) {
@@ -312,7 +322,7 @@ public class YahooArtistCacheBean extends AbstractCacheBean<String,YahooArtistDa
 					// or involved). We would never save negative results here so 
 					// we don't need to filter them out.
 					for (YahooArtistData a : artists) {
-						saveInCacheInsideExistingTransaction(a.getArtistId(), a, now);
+						saveInCacheInsideExistingTransaction(a.getArtistId(), a, now, false);
 					}
 					
 					return artists;

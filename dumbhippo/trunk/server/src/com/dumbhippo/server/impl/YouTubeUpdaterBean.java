@@ -36,8 +36,7 @@ public class YouTubeUpdaterBean extends CachedExternalUpdaterBean<YouTubeUpdateS
 		EJBUtil.assertNoTransaction();
 		YouTubeUpdater proxy = EJBUtil.defaultLookup(YouTubeUpdater.class);
 		
-		videosCache.expireCache(username);
-		List<? extends YouTubeVideo> videos = videosCache.getSync(username);
+		List<? extends YouTubeVideo> videos = videosCache.getSync(username, true);
 		proxy.saveUpdatedStatus(username, videos);
 	}
 	

@@ -55,7 +55,7 @@ public abstract class AbstractBasicCacheWithStorageBean<KeyType,ResultType,Entit
 	
 	// null data means to save a negative result
 	@TransactionAttribute(TransactionAttributeType.MANDATORY)
-	public ResultType saveInCacheInsideExistingTransaction(KeyType key, ResultType data, Date now) {
-		return storage.saveInCacheInsideExistingTransaction(key, data, now);
+	public ResultType saveInCacheInsideExistingTransaction(KeyType key, ResultType data, Date now, boolean refetchedWithoutCheckingCache) {
+		return storage.saveInCacheInsideExistingTransaction(key, data, now, refetchedWithoutCheckingCache);
 	}
 }

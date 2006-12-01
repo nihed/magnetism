@@ -74,7 +74,7 @@ public class ListCacheStorage<KeyType, ResultType, EntityType extends CachedList
 	
 	// null means that we could not get the updated results, so leave the old results
 	// empty list results means that we should save a no results marker
-	public List<? extends ResultType> saveInCacheInsideExistingTransaction(KeyType key, List<? extends ResultType> newItems, Date now) {
+	public List<? extends ResultType> saveInCacheInsideExistingTransaction(KeyType key, List<? extends ResultType> newItems, Date now, boolean refetchedWithoutCheckingCache) {
 		EJBUtil.assertHaveTransaction();
 	
 		logger.debug("Saving new results in cache");

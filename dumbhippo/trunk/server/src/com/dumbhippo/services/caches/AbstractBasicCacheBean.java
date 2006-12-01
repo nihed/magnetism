@@ -33,10 +33,12 @@ public abstract class AbstractBasicCacheBean<KeyType, ResultType> extends
 		
 		private Class<? extends Cache<KeyType,ResultType>> ejbIface;
 		private KeyType key;
+		private boolean alwaysRefetch;
 
-		public AbstractBasicCacheTask(KeyType key, Class<? extends Cache<KeyType,ResultType>> ejbIface) {
+		public AbstractBasicCacheTask(KeyType key, boolean alwaysRefetch, Class<? extends Cache<KeyType,ResultType>> ejbIface) {
 			this.key = key;
 			this.ejbIface = ejbIface;
+			this.alwaysRefetch = alwaysRefetch;
 		}
 		
 		public ResultType call() {
@@ -45,33 +47,44 @@ public abstract class AbstractBasicCacheBean<KeyType, ResultType> extends
 			Cache<KeyType,ResultType> cache = EJBUtil.defaultLookup(ejbIface);					
 
 			try {
+				if (alwaysRefetch)
+					throw new NotCachedException("Forced refetch");
+				
 				// Check again in case another node stored the data first				
 				return cache.checkCache(key);
 			} catch (NotCachedException e) {
 				ResultType data = cache.fetchFromNet(key);
 
-				return cache.saveInCache(key, data);				
+				return cache.saveInCache(key, data, alwaysRefetch);				
 			}
 		}
 	}
 	
 	@TransactionAttribute(TransactionAttributeType.SUPPORTS)
-	public ResultType getSync(KeyType key) {
-		return ThreadUtils.getFutureResultNullOnException(getAsync(key));
+	public ResultType getSync(KeyType key, boolean alwaysRefetchEvenIfCached) {
+		return ThreadUtils.getFutureResultNullOnException(getAsync(key, alwaysRefetchEvenIfCached));
 	}
 
 	@TransactionAttribute(TransactionAttributeType.SUPPORTS)	
-	public Future<ResultType> getAsync(KeyType key) {
+	public Future<ResultType> getAsync(KeyType key, boolean alwaysRefetchEvenIfCached) {
 		if (key == null) {
 			throw new IllegalArgumentException("null key passed to " + getEjbIface().getName());
 		}
 		
+		// you really don't want a transaction open unless you can assume on average we aren't doing a
+		// remote request (i.e. assuming a cache hit is likely)
+		if (alwaysRefetchEvenIfCached)
+			EJBUtil.assertNoTransaction();
+		
 		try {
+			if (alwaysRefetchEvenIfCached)
+				throw new NotCachedException("Forced refetch");
+			
 			ResultType result = checkCache(key);
 			// result may be null, but in that case we cached null
 			return new KnownFuture<ResultType>(result);
 		} catch (NotCachedException e) {
-			return getExecutor().execute(key, new AbstractBasicCacheTask<KeyType,ResultType>(key, getEjbIface()));	
+			return getExecutor().execute(key, new AbstractBasicCacheTask<KeyType,ResultType>(key, alwaysRefetchEvenIfCached, getEjbIface()));	
 		}
 	}
 }

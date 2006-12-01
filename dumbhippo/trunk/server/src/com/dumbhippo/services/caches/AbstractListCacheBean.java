@@ -37,10 +37,12 @@ public abstract class AbstractListCacheBean<KeyType, ResultType>
 
 		private Class<? extends ListCache<KeyType,ResultType>> ejbIface;
 		private KeyType key;
+		private boolean alwaysRefetch;
 		
-		public AbstractListCacheTask(KeyType key, Class<? extends ListCache<KeyType,ResultType>> ejbIface) {
+		public AbstractListCacheTask(KeyType key, boolean alwaysRefetch, Class<? extends ListCache<KeyType,ResultType>> ejbIface) {
 			this.key = key;
 			this.ejbIface = ejbIface;
+			this.alwaysRefetch = alwaysRefetch;
 		}
 		
 		public List<? extends ResultType> call() {
@@ -53,6 +55,9 @@ public abstract class AbstractListCacheBean<KeyType, ResultType>
 			
 			// Check again in case another node stored the data first
 			try {
+				if (alwaysRefetch)
+					throw new NotCachedException("Forced refetch");
+				
 				List<? extends ResultType> results = cache.checkCache(key);
 				if (results == null)
 					throw new RuntimeException("ListCache.checkCache() isn't supposed to return null ever, it did for key: " + key);
@@ -61,20 +66,28 @@ public abstract class AbstractListCacheBean<KeyType, ResultType>
 			} catch (NotCachedException e) {
 				List<? extends ResultType> result = cache.fetchFromNet(key);
 				
-				return cache.saveInCache(key, result);
+				return cache.saveInCache(key, result, alwaysRefetch);
 			}
 		}
 	}
 	
-	public List<? extends ResultType> getSync(KeyType key) {
-		return ThreadUtils.getFutureResultEmptyListOnException(getAsync(key), resultClass);
+	public List<? extends ResultType> getSync(KeyType key, boolean alwaysRefetchEvenIfCached) {
+		return ThreadUtils.getFutureResultEmptyListOnException(getAsync(key, alwaysRefetchEvenIfCached), resultClass);
 	}
 
-	public Future<List<? extends ResultType>> getAsync(KeyType key) {
+	public Future<List<? extends ResultType>> getAsync(KeyType key, boolean alwaysRefetchEvenIfCached) {
 		if (key == null)
 			throw new IllegalArgumentException("null key passed to AbstractListCacheWithStorageBean");
+
+		// you really don't want a transaction open unless you can assume on average we aren't doing a
+		// remote request (i.e. assuming a cache hit is likely)
+		if (alwaysRefetchEvenIfCached)
+			EJBUtil.assertNoTransaction();		
 		
 		try {
+			if (alwaysRefetchEvenIfCached)
+				throw new NotCachedException("Forced refetch");
+			
 			List<? extends ResultType> results = checkCache(key);
 
 			if (results == null)
@@ -83,7 +96,7 @@ public abstract class AbstractListCacheBean<KeyType, ResultType>
 			logger.debug("Using cached listing of {} items for {}", results.size(), key);
 			return new KnownFuture<List<? extends ResultType>>(results);
 		} catch (NotCachedException e) {
-			Callable<List<? extends ResultType>> task = new AbstractListCacheTask<KeyType,ResultType>(key, getEjbIface());
+			Callable<List<? extends ResultType>> task = new AbstractListCacheTask<KeyType,ResultType>(key, alwaysRefetchEvenIfCached, getEjbIface());
 			return getExecutor().execute(key, task);
 		}
 	}

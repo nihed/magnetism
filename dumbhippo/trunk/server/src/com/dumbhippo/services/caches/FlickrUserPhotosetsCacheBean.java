@@ -134,9 +134,23 @@ public class FlickrUserPhotosetsCacheBean extends AbstractBasicCacheBean<String,
 	}
 
 	@TransactionAttribute(TransactionAttributeType.MANDATORY)
-	public FlickrPhotosetsView saveInCacheInsideExistingTransaction(String key, FlickrPhotosetsView data, Date now) {
-		FlickrPhotosetsView summary = summaryStorage.saveInCacheInsideExistingTransaction(key, data, now);
-		List<? extends FlickrPhotosetView> setList = setListStorage.saveInCacheInsideExistingTransaction(key, data.getSets(), now);
+	public FlickrPhotosetsView saveInCacheInsideExistingTransaction(String key, FlickrPhotosetsView data, Date now, boolean refetchedWithoutCheckingCache) {
+		if (refetchedWithoutCheckingCache) {
+			try {
+				// Try to avoid saving to the cache if the photoset count hasn't changed. (Yes, this could lead to not 
+				// getting new info if someone adds and deletes photosets for a net change of 0; but after the expiration of 
+				// the cache, checkCache here will return NotCachedException and we'll recover. Or as soon as someone 
+				// adds or removes another photoset we'll recover.)
+				FlickrPhotosetsView old = checkCache(key);
+				if (old.getTotal() == data.getTotal())
+					return old;
+			} catch (NotCachedException e) {
+				// we need to use the new results
+			}
+		}
+		
+		FlickrPhotosetsView summary = summaryStorage.saveInCacheInsideExistingTransaction(key, data, now, refetchedWithoutCheckingCache);
+		List<? extends FlickrPhotosetView> setList = setListStorage.saveInCacheInsideExistingTransaction(key, data.getSets(), now, refetchedWithoutCheckingCache);
 		summary.setSets(setList);
 		return summary;
 	}
