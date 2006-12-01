@@ -344,8 +344,8 @@ dhAccountInit = function() {
 	dh.account.lastFmEntry = new dh.lovehate.Entry('dhLastFm', 'Last.fm username', dh.account.initialLastFmName,
 					'Uhh...what\'s Last.fm?', dh.account.initialLastFmHateQuip);
 	dh.account.lastFmEntry.onLoveSaved = dh.account.onLastFmLoveSaved;
-	dh.account.lastFmEntry.onHateSaved = dh.account.createExternalAccountOnHateSavedFunc(dh.account.LastFmEntry, 'LASTFM');
-	dh.account.lastFmEntry.onCanceled = dh.account.createExternalAccountOnCanceledFunc(dh.account.LastFmEntry, 'LASTFM');		
+	dh.account.lastFmEntry.onHateSaved = dh.account.createExternalAccountOnHateSavedFunc(dh.account.lastFmEntry, 'LASTFM');
+	dh.account.lastFmEntry.onCanceled = dh.account.createExternalAccountOnCanceledFunc(dh.account.lastFmEntry, 'LASTFM');		
 		
 	dh.account.flickrEntry = new dh.lovehate.Entry('dhFlickr', 'Email used for Flickr account', dh.account.initialFlickrEmail,
 					'Flickr doesn\'t do it for me', dh.account.initialFlickrHateQuip);
