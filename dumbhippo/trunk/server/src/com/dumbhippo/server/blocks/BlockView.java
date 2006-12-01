@@ -201,7 +201,7 @@ public abstract class BlockView implements ObjectView {
 	}
 	
 	static final int SIGNIFICANT_CLICKS[] = {
-		1,5,10,25,100,500,1000
+		5,10,25,100,500,1000
 	};
 	
 	public static boolean clickedCountIsSignificant(int count) {
