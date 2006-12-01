@@ -6,13 +6,23 @@ body {
 	margin-left:	10px;	
 	margin-right:	10px;
 	padding: 		0px;
-	/* this only works in firefox, but keeps things from looking
-	 * ugly if you size the browser too small (you get scrollbars 
-	 * instead of hosed layout). The exact value is just from 
-	 * experimentation with a particular font size, so isn't too
-	 * scientific.
-	 */
-	min-width:		630px;
+	text-align:	    center; /* center the page for IE */
+}
+
+#dhPageOuter {
+	position:   relative;
+	/* Override the text-align on body */
+	text-align: left;
+	/* Set the bounds on the page size for firefox, ignored by IE; the 640 isn't scientific,
+	 * it's just a heuristic for when things start looking hosed at a particular font size */
+	min-width:	640px;
+	max-width: 	1000px;
+	/* And for IE, ignored by firefox */
+	width:expression(document.body.clientWidth < 660 ? 640 : document.body.clientWidth > 1020 ? 1000 : document.body.clientWidth - 20);
+	/* Center the page for firefox */
+	margin-left: auto;
+	margin-right: auto;
+	
 }
 
 /* browsers have default margins on forms it seems */
