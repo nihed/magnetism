@@ -23,7 +23,7 @@ public class YahooSongDownloadCacheBean
 	static private final Logger logger = GlobalSetup.getLogger(YahooSongDownloadCacheBean.class);
 	
 	public YahooSongDownloadCacheBean() {
-		super(Request.YAHOO_SONG_DOWNLOAD, YahooSongDownloadCache.class, YAHOO_EXPIRATION_TIMEOUT);
+		super(Request.YAHOO_SONG_DOWNLOAD, YahooSongDownloadCache.class, YAHOO_EXPIRATION_TIMEOUT, YahooSongDownloadData.class);
 	}
 	
 	@Override

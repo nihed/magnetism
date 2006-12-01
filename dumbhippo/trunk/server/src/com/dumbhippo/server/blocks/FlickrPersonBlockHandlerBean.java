@@ -1,7 +1,6 @@
 package com.dumbhippo.server.blocks;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Set;
 
 import javax.ejb.EJB;
@@ -23,7 +22,7 @@ import com.dumbhippo.server.FlickrUpdater;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.views.ExternalAccountView;
 import com.dumbhippo.server.views.PersonView;
-import com.dumbhippo.services.FlickrPhotoView;
+import com.dumbhippo.services.FlickrPhotosView;
 
 @Stateless
 public class FlickrPersonBlockHandlerBean extends
@@ -66,8 +65,7 @@ public class FlickrPersonBlockHandlerBean extends
 		return super.getGroupsData1UserIsInIfExternalAccount(block, ExternalAccountType.FLICKR);
 	}
 
-	public void onMostRecentFlickrPhotosChanged(String flickrId,
-			List<FlickrPhotoView> recentPhotos) {
+	public void onMostRecentFlickrPhotosChanged(String flickrId, FlickrPhotosView photosView) {
 		logger.debug("most recent flickr photos changed for " + flickrId);
 
 		long now = System.currentTimeMillis();

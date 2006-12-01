@@ -24,6 +24,7 @@ import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.services.FlickrPhoto;
 import com.dumbhippo.services.FlickrPhotoView;
 import com.dumbhippo.services.FlickrPhotos;
+import com.dumbhippo.services.FlickrPhotosView;
 import com.dumbhippo.services.FlickrPhotosetView;
 import com.dumbhippo.services.caches.FlickrPhotosetPhotosCache;
 
@@ -55,7 +56,7 @@ public class FlickrPhotosetBlockHandlerBean extends
 		
 		// This is all a screwy workaround for not having a "get photoset by ID" cached web service bean
 		FlickrPhotos photos = new FlickrPhotos();		
-		List<FlickrPhotoView> photoViews = photosetPhotosCache.getSync(photosetStatus.getFlickrId());
+		List<? extends FlickrPhotoView> photoViews = photosetPhotosCache.getSync(photosetStatus.getFlickrId());
 		
 		photos.setPage(1);
 		photos.setPerPage(photoViews.size());
@@ -87,7 +88,7 @@ public class FlickrPhotosetBlockHandlerBean extends
 	}
 
 	public void onMostRecentFlickrPhotosChanged(String flickrId,
-			List<FlickrPhotoView> recentPhotos) {
+			FlickrPhotosView photosView) {
 		// we don't care about this here, only in FlickrPersonBlockHandlerBean
 	}
 

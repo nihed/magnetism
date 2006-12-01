@@ -14,5 +14,5 @@ import com.dumbhippo.services.YouTubeVideo;
  */
 @Local
 public interface YouTubeUpdater extends CachedExternalUpdater<YouTubeUpdateStatus> {	
-	public void saveUpdatedStatus(String username, List<YouTubeVideo> videos);
+	public void saveUpdatedStatus(String username, List<? extends YouTubeVideo> videos);
 }

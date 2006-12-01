@@ -5,5 +5,5 @@ import java.util.List;
 import com.dumbhippo.services.YouTubeVideo;
 
 public interface YouTubeListener {
-	public void onYouTubeRecentVideosChanged(String flickrId, List<YouTubeVideo> videos);
+	public void onYouTubeRecentVideosChanged(String flickrId, List<? extends YouTubeVideo> videos);
 }

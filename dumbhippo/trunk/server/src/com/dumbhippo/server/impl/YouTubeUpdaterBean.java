@@ -37,12 +37,12 @@ public class YouTubeUpdaterBean extends CachedExternalUpdaterBean<YouTubeUpdateS
 		YouTubeUpdater proxy = EJBUtil.defaultLookup(YouTubeUpdater.class);
 		
 		videosCache.expireCache(username);
-		List<YouTubeVideo> videos = videosCache.getSync(username);
+		List<? extends YouTubeVideo> videos = videosCache.getSync(username);
 		proxy.saveUpdatedStatus(username, videos);
 	}
 	
 	//TODO: Identify the unique part of youtube urls instead of using the whole thing
-	private String computeHash(List<YouTubeVideo> videos) {
+	private String computeHash(List<? extends YouTubeVideo> videos) {
 		StringBuilder sb = new StringBuilder();
 		for (int i = 0; i < 5; ++i) {
 			if (i >= videos.size())
@@ -52,7 +52,7 @@ public class YouTubeUpdaterBean extends CachedExternalUpdaterBean<YouTubeUpdateS
 		return sb.toString();
 	}	
 
-	public void saveUpdatedStatus(String username, List<YouTubeVideo> videos) {
+	public void saveUpdatedStatus(String username, List<? extends YouTubeVideo> videos) {
 		logger.debug("Saving new YouTube status for " + username + ": videos {}",
 				videos);
 		

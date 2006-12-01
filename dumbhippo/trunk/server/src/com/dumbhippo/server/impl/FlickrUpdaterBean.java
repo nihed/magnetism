@@ -26,8 +26,10 @@ import com.dumbhippo.server.Notifier;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.services.FlickrPhotoView;
 import com.dumbhippo.services.FlickrPhotos;
+import com.dumbhippo.services.FlickrPhotosView;
 import com.dumbhippo.services.FlickrPhotosetView;
 import com.dumbhippo.services.FlickrPhotosets;
+import com.dumbhippo.services.FlickrPhotosetsView;
 import com.dumbhippo.services.FlickrWebServices;
 import com.dumbhippo.services.caches.FlickrPhotosetPhotosCache;
 import com.dumbhippo.services.caches.FlickrUserPhotosCache;
@@ -140,8 +142,8 @@ public class FlickrUpdaterBean extends CachedExternalUpdaterBean<FlickrUpdateSta
 			// The list of photos is limited to only a few, the list of 
 			// photo sets is supposed to be complete. This is because 
 			// we have a block per photo set but only one block for all photos.
-			List<FlickrPhotoView> photoViews = userPhotosCache.getSync(flickrId);
-			List<FlickrPhotosetView> photosetViews = userPhotosetsCache.getSync(flickrId);
+			FlickrPhotosView photosView = userPhotosCache.getSync(flickrId);
+			FlickrPhotosetsView photosetsView = userPhotosetsCache.getSync(flickrId);
 			
 			// we pass photosetViews.size() instead of totalPhotosets because if the 
 			// second photoset listing fails and the first succeeded, we would 
@@ -151,12 +153,11 @@ public class FlickrUpdaterBean extends CachedExternalUpdaterBean<FlickrUpdateSta
 			// web service calls are distinct. So if listing photos fails, we 
 			// just don't ever try again until the number of photos changes or 
 			// the cache expires in a couple weeks.
-			proxy.saveUpdatedStatus(flickrId, totalPhotos, photosetViews.size(),
-					photoViews, photosetViews);
+			proxy.saveUpdatedStatus(flickrId, photosView, photosetsView);
 		}
 	}
 	
-	private void updateUserPhotosetStatuses(String ownerId, List<FlickrPhotosetView> allPhotosets) {
+	private void updateUserPhotosetStatuses(String ownerId, List<? extends FlickrPhotosetView> allPhotosets) {
 		Query q = em.createQuery("SELECT setStatus FROM FlickrPhotosetStatus setStatus WHERE " + 
 				"setStatus.ownerId = :ownerId");
 		q.setParameter("ownerId", ownerId);
@@ -192,7 +193,7 @@ public class FlickrUpdaterBean extends CachedExternalUpdaterBean<FlickrUpdateSta
 	
 	// compute a "hash" (relies on the most recent photos being first, 
 	// so it always changes if there are new photos)
-	private String computePhotosHash(List<FlickrPhotoView> photoViews) {
+	private String computePhotosHash(List<? extends FlickrPhotoView> photoViews) {
 		StringBuilder sb = new StringBuilder();
 		for (int i = 0; i < 5; ++i) {
 			if (i >= photoViews.size())
@@ -205,7 +206,7 @@ public class FlickrUpdaterBean extends CachedExternalUpdaterBean<FlickrUpdateSta
 	
 	// compute a "hash" (relies on the most recent photos being first, 
 	// so it always changes if there are new photos)
-	private String computePhotosetsHash(List<FlickrPhotosetView> photosetViews) {
+	private String computePhotosetsHash(List<? extends FlickrPhotosetView> photosetViews) {
 		StringBuilder sb = new StringBuilder();
 		for (int i = 0; i < 5; ++i) {
 			if (i >= photosetViews.size())
@@ -219,10 +220,9 @@ public class FlickrUpdaterBean extends CachedExternalUpdaterBean<FlickrUpdateSta
 	// Our job is to notify so blocks can be created/stacked, and 
 	// to save the new status in the FlickrUpdateStatus table.
 	// We do this in one huge transaction.
-	public void saveUpdatedStatus(String flickrId, int totalPhotos, int totalPhotosets,
-			List<FlickrPhotoView> photoViews, List<FlickrPhotosetView> photosetViews) {
+	public void saveUpdatedStatus(String flickrId, FlickrPhotosView photosView, FlickrPhotosetsView photosetsView) { 
 		logger.debug("Saving new flickr status for " + flickrId + ": photos {} sets {}",
-				totalPhotos, totalPhotosets);
+				photosView.getTotal(), photosetsView.getTotal());
 		
 		FlickrUpdateStatus updateStatus;
 		try {
@@ -231,11 +231,11 @@ public class FlickrUpdaterBean extends CachedExternalUpdaterBean<FlickrUpdateSta
 			updateStatus = new FlickrUpdateStatus(flickrId);
 			em.persist(updateStatus);
 		}
-		updateStatus.setTotalPhotoCount(totalPhotos);
-		updateStatus.setTotalPhotosetCount(totalPhotosets);
+		updateStatus.setTotalPhotoCount(photosView.getTotal());
+		updateStatus.setTotalPhotosetCount(photosetsView.getTotal());
 		
-		String photosHash = computePhotosHash(photoViews);
-		String photosetsHash = computePhotosetsHash(photosetViews);
+		String photosHash = computePhotosHash(photosView.getPhotos());
+		String photosetsHash = computePhotosetsHash(photosetsView.getSets());
 		
 		boolean photosChanged = false;
 		boolean photosetsChanged = false;
@@ -273,7 +273,7 @@ public class FlickrUpdaterBean extends CachedExternalUpdaterBean<FlickrUpdateSta
 			// to track a "hash" of the most recent photos in the set in
 			// FlickrPhotosetStatus just as we do for people's total list 
 			// of photos.
-			for (FlickrPhotosetView photoset : photosetViews) {
+			for (FlickrPhotosetView photoset : photosetsView.getSets()) {
 				photosetPhotosCache.expireCache(photoset.getId());				
 			}
 			// Again, superstitious predictable ordering (see above)
@@ -284,13 +284,13 @@ public class FlickrUpdaterBean extends CachedExternalUpdaterBean<FlickrUpdateSta
 		// This will stack some blocks, and create/modify FlickrPhotosetStatus objects
 		
 		if (photosChanged)
-			notifier.onMostRecentFlickrPhotosChanged(flickrId, photoViews);
+			notifier.onMostRecentFlickrPhotosChanged(flickrId, photosView);
 		
 		// Again, superstitious predictable ordering (see above)
 		em.flush();
 		
 		if (photosetsChanged)
-			updateUserPhotosetStatuses(flickrId, photosetViews);
+			updateUserPhotosetStatuses(flickrId, photosetsView.getSets());
 	}
 
 	@Override

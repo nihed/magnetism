@@ -50,7 +50,7 @@ import com.dumbhippo.server.listeners.PostListener;
 import com.dumbhippo.server.listeners.UserCreationListener;
 import com.dumbhippo.server.listeners.YouTubeListener;
 import com.dumbhippo.server.util.EJBUtil;
-import com.dumbhippo.services.FlickrPhotoView;
+import com.dumbhippo.services.FlickrPhotosView;
 import com.dumbhippo.services.YouTubeVideo;
 
 /**
@@ -297,9 +297,9 @@ public class NotifierBean implements Notifier {
 		}
 	}
 
-	public void onMostRecentFlickrPhotosChanged(String flickrId, List<FlickrPhotoView> recentPhotos) {
+	public void onMostRecentFlickrPhotosChanged(String flickrId, FlickrPhotosView photosView) {
 		for (FlickrListener l : getListeners(FlickrListener.class)) {
-			l.onMostRecentFlickrPhotosChanged(flickrId, recentPhotos);
+			l.onMostRecentFlickrPhotosChanged(flickrId, photosView);
 		}
 	}
 
@@ -315,7 +315,7 @@ public class NotifierBean implements Notifier {
 		}		
 	}
 
-	public void onYouTubeRecentVideosChanged(String flickrId, List<YouTubeVideo> videos) {
+	public void onYouTubeRecentVideosChanged(String flickrId, List<? extends YouTubeVideo> videos) {
 		for (YouTubeListener l : getListeners(YouTubeListener.class)) {
 			l.onYouTubeRecentVideosChanged(flickrId, videos);
 		}

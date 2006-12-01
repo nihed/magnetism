@@ -2,9 +2,7 @@ package com.dumbhippo.services.caches;
 
 import java.util.Date;
 import java.util.EnumMap;
-import java.util.List;
 import java.util.concurrent.Callable;
-import java.util.concurrent.Future;
 
 import javax.ejb.EJB;
 import javax.ejb.TransactionAttribute;
@@ -16,7 +14,6 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
-import com.dumbhippo.ThreadUtils;
 import com.dumbhippo.UniqueTaskExecutor;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.TransactionRunner;
@@ -103,15 +100,7 @@ public abstract class AbstractCacheBean<KeyType,ResultType,EjbIfaceType> impleme
 			}
 		}
 	}
-	
-	protected static <T> T getFutureResultNullOnException(Future<T> future) {
-		return ThreadUtils.getFutureResultNullOnException(future);
-	}
-	
-	protected static <T> List<T> getFutureResultEmptyListOnException(Future<List<T>> future) {
-		return ThreadUtils.getFutureResultEmptyListOnException(future);
-	}
-	
+		
 	protected AbstractCacheBean(Request defaultRequest, Class<? extends EjbIfaceType> ejbIface, long expirationTime) {
 		this.defaultRequest = defaultRequest;
 		this.ejbIface = ejbIface;

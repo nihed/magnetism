@@ -26,7 +26,7 @@ public class YahooSongCacheBean
 	static private final Logger logger = GlobalSetup.getLogger(YahooSongCacheBean.class);
 
 	public YahooSongCacheBean() {
-		super(Request.YAHOO_SONG, YahooSongCache.class, YAHOO_EXPIRATION_TIMEOUT);
+		super(Request.YAHOO_SONG, YahooSongCache.class, YAHOO_EXPIRATION_TIMEOUT, YahooSongData.class);
 	}
 
 	@Override
@@ -41,7 +41,7 @@ public class YahooSongCacheBean
 	}
 
 	@Override
-	public List<YahooSongData> checkCache(Track track) throws NotCachedException {
+	public List<? extends YahooSongData> checkCache(Track track) throws NotCachedException {
 		// yahoo lookup requires these fields, so just never do a web request without them
 		if (track.getArtist() == null ||
 			track.getAlbum() == null ||

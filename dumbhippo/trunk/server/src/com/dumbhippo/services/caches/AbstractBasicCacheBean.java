@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.KnownFuture;
+import com.dumbhippo.ThreadUtils;
 import com.dumbhippo.server.util.EJBUtil;
 
 
@@ -56,7 +57,7 @@ public abstract class AbstractBasicCacheBean<KeyType, ResultType> extends
 	
 	@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 	public ResultType getSync(KeyType key) {
-		return getFutureResultNullOnException(getAsync(key));
+		return ThreadUtils.getFutureResultNullOnException(getAsync(key));
 	}
 
 	@TransactionAttribute(TransactionAttributeType.SUPPORTS)	

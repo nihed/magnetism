@@ -8,15 +8,15 @@ import com.dumbhippo.Thumbnail;
 import com.dumbhippo.Thumbnails;
 import com.dumbhippo.persistence.ExternalAccountType;
 
-public final class FlickrPhotos implements Thumbnails {
-	private List<FlickrPhoto> photos;
+public final class FlickrPhotos implements Thumbnails, FlickrPhotosView {
+	private List<FlickrPhotoView> photos;
 	private int page;
 	private int pages;
 	private int perPage;
 	private int total;
 	
 	public FlickrPhotos() {
-		photos = new ArrayList<FlickrPhoto>();
+		photos = new ArrayList<FlickrPhotoView>();
 	}
 	
 	public int getPage() {
@@ -38,12 +38,17 @@ public final class FlickrPhotos implements Thumbnails {
 		this.perPage = perPage;
 	}
 	
-	public List<FlickrPhoto> getPhotos() {
+	public List<? extends FlickrPhotoView> getPhotos() {
 		return Collections.unmodifiableList(photos);
 	}
 	
 	public void addPhoto(FlickrPhoto photo) {
 		photos.add(photo);
+	}
+	
+	public void setPhotos(List<? extends FlickrPhotoView> photos) {
+		this.photos.clear();
+		this.photos.addAll(photos);
 	}
 	
 	public int getTotal() {

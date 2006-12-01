@@ -25,7 +25,7 @@ public class YahooArtistAlbumsCacheBean
 	static private final Logger logger = GlobalSetup.getLogger(YahooArtistAlbumsCacheBean.class);
 	
 	public YahooArtistAlbumsCacheBean() {
-		super(Request.YAHOO_ARTIST_ALBUMS, YahooArtistAlbumsCache.class, YAHOO_EXPIRATION_TIMEOUT);
+		super(Request.YAHOO_ARTIST_ALBUMS, YahooArtistAlbumsCache.class, YAHOO_EXPIRATION_TIMEOUT, YahooAlbumData.class);
 	}
 	
 	@Override

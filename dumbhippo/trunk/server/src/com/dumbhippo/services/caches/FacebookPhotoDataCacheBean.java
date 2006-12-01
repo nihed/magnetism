@@ -24,6 +24,12 @@ import com.dumbhippo.server.views.SystemViewpoint;
 import com.dumbhippo.services.FacebookPhotoData;
 import com.dumbhippo.services.FacebookWebServices;
 
+
+// FIXME the ResultType and EntityType should not be the same. It leads to all kinds of confusion. To avoid
+// cut-and-paste, you can use various tricks (have an interface for ResultType that's implemented by the 
+// EntityType for example). The ResultType should be the same as whatever the raw, uncached, 
+// nothing-to-do-with-the-database web service returns. It's bad if anything is using attached
+// EntityType objects outside of the cache code itself.
 @Stateless
 public class FacebookPhotoDataCacheBean 
     extends AbstractListCacheWithStorageBean<String,CachedFacebookPhotoData,CachedFacebookPhotoData> 
@@ -53,7 +59,7 @@ public class FacebookPhotoDataCacheBean
 	static private final long FACEBOOK_PHOTO_DATA_EXPIRATION = 1000 * 60 * 30 * 23;
 	
 	public FacebookPhotoDataCacheBean() {
-		super(Request.FACEBOOK_PHOTO_DATA, FacebookPhotoDataCache.class, FACEBOOK_PHOTO_DATA_EXPIRATION);
+		super(Request.FACEBOOK_PHOTO_DATA, FacebookPhotoDataCache.class, FACEBOOK_PHOTO_DATA_EXPIRATION, CachedFacebookPhotoData.class);
 	}
 
 	@Override

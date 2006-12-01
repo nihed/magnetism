@@ -215,14 +215,15 @@ public class FacebookTrackerBean implements FacebookTracker {
 				taggedPhotosCache.expireCache(user.getGuid().toString());
 			}
 			
-			List<CachedFacebookPhotoData> cachedPhotos = taggedPhotosCache.getSync(user.getGuid().toString());
+//			 FIXME CachedFacebookPhotoData should not be leaking out of its cache bean
+			List<? extends CachedFacebookPhotoData> cachedPhotos = taggedPhotosCache.getSync(user.getGuid().toString());
 			
 			proxy.saveUpdatedTaggedPhotos(facebookAccountId, cachedPhotos);
 		}	
 	}
 	
 	// cachedPhotos that we get here are not attached
-	public void saveUpdatedTaggedPhotos(long facebookAccountId, List<CachedFacebookPhotoData> cachedPhotos) { 
+	public void saveUpdatedTaggedPhotos(long facebookAccountId, List<? extends CachedFacebookPhotoData> cachedPhotos) { 
 		FacebookAccount facebookAccount = em.find(FacebookAccount.class, facebookAccountId);	
 
 		if (!facebookAccount.getTaggedPhotosPrimed() && cachedPhotos.isEmpty()) {

@@ -1,7 +1,6 @@
 package com.dumbhippo;
 
 import java.lang.Thread.UncaughtExceptionHandler;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -176,15 +175,17 @@ public class ThreadUtils {
 		}
 	}
 	
-	public static <T> List<T> getFutureResultEmptyListOnException(Future<List<T>> future) {
+	// the Class should be Class<T> not Class<? extends T> because the caller won't know a subclass to pass in anyhow, 
+	// the "T" superclass should always be passed in
+	public static <T> List<? extends T> getFutureResultEmptyListOnException(Future<List<? extends T>> future, Class<T> klass) {
 		try {
 			return future.get();
 		} catch (InterruptedException e) {
 			logException(e, true);
-			return Collections.emptyList();
+			return TypeUtils.emptyList(klass);
 		} catch (ExecutionException e) {
 			logException(e, true);
-			return Collections.emptyList();
+			return TypeUtils.emptyList(klass);
 		}
 	}
 }

@@ -44,13 +44,16 @@ public final class FlickrPhotoset implements FlickrPhotosetView {
 	public void setPhotoCount(int photoCount) {
 		this.photoCount = photoCount;
 	}
+	
 	public FlickrPhoto getPrimaryPhoto() {
 		if (primaryPhoto == null && photos != null) {
 			// when we get a list of photos, flickr doesn't identify the 
 			// primary photo up front, instead it flags it in the list
-			for (FlickrPhoto photo : photos.getPhotos()) {
-				if (photo.isPrimary()) {
-					primaryPhoto = photo;
+			for (FlickrPhotoView photo : photos.getPhotos()) {
+				// this is pretty gross
+				if (photo instanceof FlickrPhoto && 
+						((FlickrPhoto)photo).isPrimary()) {
+					primaryPhoto = (FlickrPhoto)photo;
 					return primaryPhoto;
 				}
 			}

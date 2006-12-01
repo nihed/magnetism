@@ -1,7 +1,6 @@
 package com.dumbhippo.services.caches;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -10,23 +9,26 @@ import javax.persistence.EntityManager;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.TypeUtils;
 import com.dumbhippo.persistence.CachedListItem;
 import com.dumbhippo.server.util.EJBUtil;
 
 public class ListCacheStorage<KeyType, ResultType, EntityType extends CachedListItem>
-		extends AbstractCacheStorage<KeyType, List<ResultType>, EntityType> {
+		extends AbstractCacheStorage<KeyType, List<? extends ResultType>, EntityType> {
 
 	@SuppressWarnings("unused")
 	static private final Logger logger = GlobalSetup.getLogger(ListCacheStorage.class);
 	
 	private ListCacheStorageMapper<KeyType,ResultType,EntityType> mapper;
+	private Class<ResultType> resultClass;
 	
-	protected ListCacheStorage(EntityManager em, long expirationTime, ListCacheStorageMapper<KeyType,ResultType,EntityType> mapper) {
+	protected ListCacheStorage(EntityManager em, long expirationTime, Class<ResultType> resultClass, ListCacheStorageMapper<KeyType,ResultType,EntityType> mapper) {
 		super(em, expirationTime);
 		this.mapper = mapper;
+		this.resultClass = resultClass;
 	}
 	
-	public List<ResultType> checkCache(KeyType key) throws NotCachedException {
+	public List<? extends ResultType> checkCache(KeyType key) throws NotCachedException {
 		List<EntityType> oldItems = mapper.queryExisting(key);
 
 		if (oldItems.isEmpty())
@@ -51,7 +53,7 @@ public class ListCacheStorage<KeyType, ResultType, EntityType extends CachedList
 		
 		if (haveNoResultsMarker) {
 			logger.debug("Negative result cached for key {}", key);
-			return Collections.emptyList();
+			return TypeUtils.emptyList(resultClass);
 		}
 		
 		return formResultTypeList(oldItems);		
@@ -72,7 +74,7 @@ public class ListCacheStorage<KeyType, ResultType, EntityType extends CachedList
 	
 	// null means that we could not get the updated results, so leave the old results
 	// empty list results means that we should save a no results marker
-	public List<ResultType> saveInCacheInsideExistingTransaction(KeyType key, List<ResultType> newItems, Date now) {
+	public List<? extends ResultType> saveInCacheInsideExistingTransaction(KeyType key, List<? extends ResultType> newItems, Date now) {
 		EJBUtil.assertHaveTransaction();
 	
 		logger.debug("Saving new results in cache");

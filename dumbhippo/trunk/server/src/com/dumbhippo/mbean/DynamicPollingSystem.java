@@ -259,10 +259,16 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 		}
 	}
 	
-	// The invokeAll signature really should have been ? extends Callable (i think)		
+	// The invokeAll signature really should have been ? extends Callable
+	// (unless invokeAll modifies the passed-in collection it's tough to see how 
+	// it could require a List<Callable>). This cast is certainly bogus though
+	// if invokeAll intentionally has its current signature. We feel confident this
+	// is a library bug.
 	@SuppressWarnings("unchecked")
-	private Set<Callable<PollingTask>> castPollingTaskSet(Set<PollingTask> tasks) {	
-		return (Set) tasks;
+	private Set<Callable<PollingTask>> castPollingTaskSet(Set<? extends Callable<PollingTask>> tasks) {
+		// this cast makes javac complain (correctly) about an unsafe cast, but a cast to Set<Object> 
+		// makes Eclipse complain (incorrectly) about an unnecessary cast.
+		return (Set<Callable<PollingTask>>) tasks;
 	}
 	
 	// Invoked from TaskSet thread

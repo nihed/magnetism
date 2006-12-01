@@ -65,7 +65,7 @@ public class YouTubeBlockHandlerBean extends
 		return super.getGroupsData1UserIsInIfExternalAccount(block, ExternalAccountType.YOUTUBE);
 	}
 
-	public void onYouTubeRecentVideosChanged(String username, List<YouTubeVideo> videos) {
+	public void onYouTubeRecentVideosChanged(String username, List<? extends YouTubeVideo> videos) {
 		logger.debug("most recent YouTube videos changed for " + username);
 
 		long now = System.currentTimeMillis();

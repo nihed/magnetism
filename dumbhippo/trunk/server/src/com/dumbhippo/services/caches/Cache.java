@@ -22,5 +22,5 @@ public interface Cache<KeyType, ResultType> extends CacheStorage<KeyType, Result
 
 	public ResultType fetchFromNet(KeyType key);
 	
-	public ResultType saveInCache(KeyType key, ResultType newResult);
+	public ResultType saveInCache(KeyType key, ResultType result);
 }

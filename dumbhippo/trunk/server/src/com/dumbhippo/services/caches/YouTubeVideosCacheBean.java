@@ -26,7 +26,7 @@ public class YouTubeVideosCacheBean extends AbstractListCacheWithStorageBean<Str
 	static private final int NUMBER_OF_SAMPLE_VIDEOS = 7; 	
 	
 	public YouTubeVideosCacheBean() {
-		super(Request.YOUTUBE_VIDEOS, YouTubeVideosCache.class, VIDEO_EXPIRATION);
+		super(Request.YOUTUBE_VIDEOS, YouTubeVideosCache.class, VIDEO_EXPIRATION, YouTubeVideo.class);
 	}
 
 	@Override

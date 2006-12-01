@@ -18,6 +18,7 @@ import org.slf4j.Logger;
 import com.dumbhippo.ExceptionUtils;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.KnownFuture;
+import com.dumbhippo.ThreadUtils;
 import com.dumbhippo.TypeUtils;
 import com.dumbhippo.persistence.CachedYahooArtistData;
 import com.dumbhippo.persistence.CachedYahooArtistIdByName;
@@ -80,7 +81,7 @@ public class YahooArtistCacheBean extends AbstractCacheBean<String,YahooArtistDa
 	}
 	
 	public YahooArtistData getSync(String artistId) {
-		return getFutureResultNullOnException(getAsync(artistId));
+		return ThreadUtils.getFutureResultNullOnException(getAsync(artistId));
 	}
 
 	public Future<YahooArtistData> getAsync(String artistId) {
@@ -96,7 +97,7 @@ public class YahooArtistCacheBean extends AbstractCacheBean<String,YahooArtistDa
 	}
 
 	public YahooArtistData getSyncByName(String artist) {
-		return getFutureResultNullOnException(getAsyncByName(artist));
+		return ThreadUtils.getFutureResultNullOnException(getAsyncByName(artist));
 	}
 
 	static private YahooArtistData pickFirstItemOrNull(List<YahooArtistData> list) {

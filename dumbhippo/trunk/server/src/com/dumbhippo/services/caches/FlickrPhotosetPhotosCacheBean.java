@@ -33,7 +33,7 @@ public class FlickrPhotosetPhotosCacheBean extends AbstractListCacheWithStorageB
 	static private final int NUMBER_OF_SAMPLE_PHOTOS = 7;
 	
 	public FlickrPhotosetPhotosCacheBean() {
-		super(Request.FLICKR_PHOTOSET_PHOTOS, FlickrPhotosetPhotosCache.class, FLICKR_PHOTOSET_PHOTOS_EXPIRATION);
+		super(Request.FLICKR_PHOTOSET_PHOTOS, FlickrPhotosetPhotosCache.class, FLICKR_PHOTOSET_PHOTOS_EXPIRATION, FlickrPhotoView.class);
 	}
 
 	@Override

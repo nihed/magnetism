@@ -37,7 +37,7 @@ import com.dumbhippo.server.views.ExternalAccountView;
 import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.server.views.Viewpoint;
 import com.dumbhippo.services.FlickrPhotoSize;
-import com.dumbhippo.services.FlickrPhotoView;
+import com.dumbhippo.services.FlickrPhotosView;
 import com.dumbhippo.services.YouTubeVideo;
 import com.dumbhippo.services.caches.FlickrUserPhotosCache;
 import com.dumbhippo.services.caches.YouTubeVideosCache;
@@ -192,13 +192,13 @@ public class ExternalAccountSystemBean implements ExternalAccountSystem {
 			return;
 		}
 		
-		List<FlickrPhotoView> photos = flickrUserPhotosCache.getSync(account.getHandle());
-		if (photos.isEmpty()) {
-			logger.debug("Empty list of public photos for {}", account);
+		FlickrPhotosView photos = flickrUserPhotosCache.getSync(account.getHandle());
+		if (photos == null) {
+			logger.debug("No public photos for {}", account);
 			return;
 		}
 		
-		accountView.setThumbnailsData(TypeUtils.castList(Thumbnail.class, photos), updateStatus.getTotalPhotoCount(), 
+		accountView.setThumbnailsData(TypeUtils.castList(Thumbnail.class, photos.getPhotos()), updateStatus.getTotalPhotoCount(), 
 					FlickrPhotoSize.SMALL_SQUARE.getPixels(), FlickrPhotoSize.SMALL_SQUARE.getPixels());
 	}
 	
@@ -222,7 +222,7 @@ public class ExternalAccountSystemBean implements ExternalAccountSystem {
 			return;
 		}
 		
-		List<YouTubeVideo> videos = youTubeVideosCache.getSync(account.getHandle());
+		List<? extends YouTubeVideo> videos = youTubeVideosCache.getSync(account.getHandle());
 		if (videos.isEmpty()) {
 			logger.debug("Empty list of videos for {}", account);
 			return;

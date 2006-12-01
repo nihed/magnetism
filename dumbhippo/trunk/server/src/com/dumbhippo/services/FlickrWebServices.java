@@ -158,7 +158,7 @@ public class FlickrWebServices extends AbstractXmlRequest<FlickrSaxHandler> {
 		System.out.println("Their photos are: " + photos);
 		if (photos == null)
 			return;
-		for (FlickrPhoto p : photos.getPhotos()) {
+		for (FlickrPhotoView p : photos.getPhotos()) {
 			System.out.println("  " + p);
 		}
 		
@@ -167,14 +167,14 @@ public class FlickrWebServices extends AbstractXmlRequest<FlickrSaxHandler> {
 		if (photosets == null)
 			return;
 		
-		for (FlickrPhotoset photoset : photosets.getSets()) {
+		for (FlickrPhotosetView photoset : photosets.getSets()) {
 			System.out.println("Photoset title='" + photoset.getTitle() + "' desc='" + photoset.getDescription() + "'");
 			
 			FlickrPhotoset filledPhotoset = ws.lookupPublicPhotoset(photoset.getId(), 1, MAX_PER_PAGE);
 			System.out.println("Filled photoset is:  " + filledPhotoset);
 			if (filledPhotoset == null)
 				continue;
-			for (FlickrPhoto p : filledPhotoset.getPhotos().getPhotos()) {
+			for (FlickrPhotoView p : filledPhotoset.getPhotos().getPhotos()) {
 				System.out.println("  " + p);
 			}
 		}

@@ -16,7 +16,8 @@ public interface FacebookTracker {
 	
 	public void updateTaggedPhotos(long facebookAccountId);
 	
-	public void saveUpdatedTaggedPhotos(long facebookAccountId, List<CachedFacebookPhotoData> cachedPhotos);
+	// FIXME CachedFacebookPhotoData should not be leaking out of its cache bean
+	public void saveUpdatedTaggedPhotos(long facebookAccountId, List<? extends CachedFacebookPhotoData> cachedPhotos);
 
 	public void removeExpiredTaggedPhotos(long facebookAccountId);
 	

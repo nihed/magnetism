@@ -21,14 +21,14 @@ public abstract class AbstractListCacheWithStorageBean<KeyType,ResultType,Entity
 	
 	private ListCacheStorage<KeyType,ResultType,EntityType> storage;
 	
-	protected AbstractListCacheWithStorageBean(Request defaultRequest, Class<? extends ListCache<KeyType,ResultType>> ejbIface, long expirationTime) {
-		super(defaultRequest, ejbIface, expirationTime);
+	protected AbstractListCacheWithStorageBean(Request defaultRequest, Class<? extends ListCache<KeyType,ResultType>> ejbIface, long expirationTime, Class<ResultType> resultClass) {
+		super(defaultRequest, ejbIface, expirationTime, resultClass);
 	}
 	
 	@PostConstruct
 	public void init() {
-		storage = new ListCacheStorage<KeyType,ResultType,EntityType>(em, getExpirationTime(), this);
-	}	
+		storage = new ListCacheStorage<KeyType,ResultType,EntityType>(em, getExpirationTime(), getResultClass(), this);
+	}
 
 	public abstract List<EntityType> queryExisting(KeyType key);
 	
@@ -36,7 +36,7 @@ public abstract class AbstractListCacheWithStorageBean<KeyType,ResultType,Entity
 	
 	public abstract EntityType entityFromResult(KeyType key, ResultType result);
 	
-	public List<ResultType> checkCache(KeyType key) throws NotCachedException {
+	public List<? extends ResultType> checkCache(KeyType key) throws NotCachedException {
 		return storage.checkCache(key);
 	}
 	
@@ -58,7 +58,7 @@ public abstract class AbstractListCacheWithStorageBean<KeyType,ResultType,Entity
 	// null means that we could not get the updated results, so leave the old results
 	// empty list results means that we should save a no results marker
 	@TransactionAttribute(TransactionAttributeType.MANDATORY)
-	public List<ResultType> saveInCacheInsideExistingTransaction(KeyType key, List<ResultType> newItems, Date now) {
+	public List<? extends ResultType> saveInCacheInsideExistingTransaction(KeyType key, List<? extends ResultType> newItems, Date now) {
 		return storage.saveInCacheInsideExistingTransaction(key, newItems, now);
 	}
 }
