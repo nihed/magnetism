@@ -22,6 +22,8 @@ public class CachedPollingTaskStats extends DBUnique {
 	private long lastExecuted = -1;
 	private long periodicityAverage = -1;
 	
+	protected CachedPollingTaskStats() {}
+	
 	public CachedPollingTaskStats(String family, String id) {
 		this.family = family;
 		this.taskId = id;

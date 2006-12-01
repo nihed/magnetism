@@ -2,6 +2,7 @@ package com.dumbhippo.server.impl;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.Properties;
 
 import javax.annotation.PostConstruct;
@@ -126,6 +127,10 @@ public class ConfigurationBean implements Configuration {
 	
 	public void setProperty(String name, String value) {
 		overridenProperties.put(name, value);
+	}
+
+	public boolean isDebugFeatureEnabled(String name) {
+		return Arrays.asList(getProperty(HippoProperty.DEBUG_FEATURES).split(",")).contains(name);
 	}
 }
 

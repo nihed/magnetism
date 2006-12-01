@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -20,6 +21,9 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.ThreadUtils;
+import com.dumbhippo.identity20.Guid;
+import com.dumbhippo.mbean.DynamicPollingSystem.TestPollingTaskFamily.FamilyType;
+import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.DynamicPollingSource;
 import com.dumbhippo.server.PollingTaskPersistence;
 import com.dumbhippo.server.util.EJBUtil;
@@ -41,8 +45,6 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 	
 	public interface PollingTaskFamily {
 		public long getDefaultPeriodicity();
-		
-		public long getDefaultMaxWait();
 		
 		public long getMaxOutstanding();
 		
@@ -67,15 +69,17 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 		// Post-execution temporary stats
 		private long executionStart = -1;
 		private long executionEnd = -1;
-		private boolean executionChanged;		
+		private boolean executionChanged;
+		private boolean obsolete;
 
 		public PollingTask() {
 		}
 		
-		public final void setExecutionState(PollingTaskFamilyExecutionState state) {
+		private final void setExecutionState(PollingTaskFamilyExecutionState state) {
 			this.executionState = state;
 		}
 		
+		public abstract PollingTaskFamily getFamily();		
 		public abstract String getIdentifier();
 
 		@Override
@@ -91,10 +95,23 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 			return getIdentifier().hashCode();
 		}
 		
-		protected abstract boolean execute();
+		protected static class ExecutionResult {
+			public boolean executionChanged;
+			public boolean obsolete;
+			public ExecutionResult(boolean executionChanged, boolean obsolete) {
+				this.executionChanged = executionChanged;
+				this.obsolete = obsolete;
+			}
+		}
+		
+		protected abstract ExecutionResult execute() throws InterruptedException;
 
 		public final boolean isExecutionChanged() {
 			return executionChanged;
+		}
+		
+		public final boolean isObsolete() {
+			return obsolete;
 		}
 
 		public final long getExecutionEnd() {
@@ -113,17 +130,15 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 			executionState.awaitElgibility();
 			executionStart = System.currentTimeMillis();
 			try {
-				executionChanged = execute();
+				ExecutionResult result =  execute();
+				executionChanged = result.executionChanged;
+				obsolete = result.obsolete;
 				executionEnd = System.currentTimeMillis();
 			} finally {
 				executionState.notifyComplete();
 			}
 				
 			return this;
-		}
-		
-		public final PollingTaskFamily getFamily() {
-			return executionState.getFamily();
 		}
 
 		public final long getExecutionAverage() {
@@ -148,6 +163,11 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 
 		public long getLastExecuted() {
 			return executionStart;
+		}
+		
+		@Override
+		public final String toString() {
+			return getFamily().getName() + "-" + getIdentifier();
 		}
 	}
 	
@@ -203,7 +223,8 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 	private static TaskSet[] taskSetWorkers;
 	private static Thread[] taskSetThreads;
 	private static ExecutorService threadPool = ThreadUtils.newCachedThreadPool("polling task worker");
-	private static Thread taskPersistenceWorker;
+	private static TaskPersistenceWorker taskPersistenceWorker;
+	private static Thread taskPersistenceThread;
 	private static Thread taskInitializationThread;
 	
 	public DynamicPollingSystem() {
@@ -221,6 +242,7 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 		PollingTaskPersistence persister = EJBUtil.defaultLookup(PollingTaskPersistence.class);
 		persister.initializeTasks(newTasks);
 		for (PollingTask task : newTasks) {
+			logger.debug("adding task {}", task.toString());
 			task.setExecutionState(taskFamilies.get(task.getFamily()));
 			if (task.getPeriodicityAverage() == -1)
 				taskSetWorkers[DEFAULT_POLLING_SET_INDEX].addTasks(Collections.singleton(task));
@@ -258,6 +280,11 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 		return tasks;
 	}
 	
+	private synchronized void obsoleteTasks(Set<PollingTask> tasks) {
+		globalTasks.removeAll(tasks);
+		taskPersistenceWorker.addObsoleteTasks(tasks);
+	}
+	
 	private class TaskSet implements Runnable {
 		private long timeout;
 		private boolean hasFasterSet;
@@ -265,10 +292,10 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 		private Set<PollingTask> pendingTaskAdditions = new HashSet<PollingTask>();
 		private Set<PollingTask> tasks;
 		
-		public TaskSet(long timeoutSeconds, boolean hasLowerSet, boolean hasHigherSet) {
+		public TaskSet(long timeoutSeconds, boolean hasFasterSet, boolean hasSlowerSet) {
 			this.timeout = timeoutSeconds * 1000;
-			this.hasFasterSet = hasLowerSet;
-			this.hasSlowerSet = hasHigherSet;
+			this.hasFasterSet = hasFasterSet;
+			this.hasSlowerSet = hasSlowerSet;
 			tasks = new HashSet<PollingTask>(); 			
 		}
 		
@@ -325,7 +352,9 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 			Set<PollingTask> slowerCandidates = new HashSet<PollingTask>();
 			// Tasks that are changing every time we poll, so they're good
 			// candidates to go in a faster set if possible
-			Set<PollingTask> fasterCandidates = new HashSet<PollingTask>();				
+			Set<PollingTask> fasterCandidates = new HashSet<PollingTask>();
+			// Tasks whose implementation says they are no longer in use
+			Set<PollingTask> obsolete = new HashSet<PollingTask>();
 			
 			for (Future<PollingTask> result : results) {
 				PollingTask task;
@@ -341,22 +370,32 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 				if (result.isCancelled()) {
 					tooSlow.add(task);
 				} else {
-					recalculateTaskStats(task);
+					if (task.isObsolete()) {
+						obsolete.add(task);
+					} else {				
+						recalculateTaskStats(task);
 
-					if (hasFasterSet && task.getPeriodicityAverage() < (timeout * 1.1)) {
-						// Tasks with a periodicity average within 10% of this task set get
-						// bumped to a faster set if possible
-						fasterCandidates.add(task);
-					} else if (hasSlowerSet && (System.currentTimeMillis() - task.getLastChange()) > timeout * 2.1) {
-						// Tasks who have not changed in more than two iterations get bumped 
-						// to a slower set if possible 
-						slowerCandidates.add(task);
+						if (task.getPeriodicityAverage() < (timeout * 1.1)) {
+							// Tasks with a periodicity average within 10% of this task set get
+							// bumped to a faster set if possible
+							fasterCandidates.add(task);
+						} else if ((System.currentTimeMillis() - task.getLastChange()) > timeout * 2.1) {
+							// Tasks who have not changed in more than two iterations get bumped 
+							// to a slower set if possible 
+							slowerCandidates.add(task);
+						}
 					}
 				}
 			}
-			tasks.removeAll(bumpTasks(this, tooSlow, true));
-			tasks.removeAll(bumpTasks(this, slowerCandidates, true));
-			tasks.removeAll(bumpTasks(this, fasterCandidates, false));
+			logger.debug("executed: " + tasks.size() + " tooSlow: " + tooSlow.size() + " slower: " + slowerCandidates.size() + " faster: " + fasterCandidates.size() + " obsolete: " + obsolete.size());
+			if (hasSlowerSet)
+				tasks.removeAll(bumpTasks(this, tooSlow, true));
+			if (hasSlowerSet)
+				tasks.removeAll(bumpTasks(this, slowerCandidates, true));
+			if (hasFasterSet)
+				tasks.removeAll(bumpTasks(this, fasterCandidates, false));
+			obsoleteTasks(obsolete);
+			tasks.removeAll(obsolete);
 			return true;
 		}
 		
@@ -392,9 +431,14 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 	
 	private class TaskPersistenceWorker implements Runnable {
 		private static final long PERSISTENCE_PERIODICITY_MS = 60 * 1000; // 1 minute
-		private static final long PERSISTENCE_CLEAN_PERIDODICITY_GENERATIONS = 8 * 60; // 8 hours
 		
-		private long generation = 0;
+		private Set<PollingTask> pendingObsolete = new HashSet<PollingTask>();
+		
+		public void addObsoleteTasks(Set<PollingTask> tasks) {
+			synchronized (pendingObsolete) {
+				pendingObsolete.addAll(tasks);
+			}
+		}
 		
 		public void run() {
 			while (true) {
@@ -403,25 +447,31 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 				} catch (InterruptedException e) {
 					break;
 				}
+				logger.debug("task persistence starting");				
 				
 				PollingTaskPersistence persister = EJBUtil.defaultLookup(PollingTaskPersistence.class);
+				int total = 0;
 				for (int i = 0; i < taskSetWorkers.length; i++) {
 					TaskSet worker = taskSetWorkers[i];
 					synchronized (worker) {
-						persister.snapshot(worker.getTasks());
+						Set<PollingTask> tasks = worker.getTasks();	
+						total += tasks.size();
+						persister.snapshot(tasks);
 					}
 				}
-				generation++;
-				if (generation % PERSISTENCE_CLEAN_PERIDODICITY_GENERATIONS == 0) {
-					persister.clean();
-				}
+				Set<PollingTask> obsolete = new HashSet<PollingTask>();				
+				synchronized (pendingObsolete) {
+					obsolete.addAll(pendingObsolete);
+					pendingObsolete.clear();
+				}				
+				persister.clean(obsolete);
+				logger.debug("saved: {} obsoleted: {}", total, obsolete.size());				
 			}
 		}		
 	}
 	
-	// We wait 1 minute in the hopes everything is booted by then
 	private class TaskInitializationWorker implements Runnable {
-		private static final long TASK_INITIALIZATION_WAIT_MS = 60 * 1000; // 1 minute
+		private static final long TASK_INITIALIZATION_WAIT_MS = 5 * 1000; // 5 seconds
 
 		public void run() {
 			try {
@@ -444,7 +494,25 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 					registerFamily(source.getTaskFamily());
 					pushTasks(source.getTasks());
 				}
-			}			
+			}
+			
+			Configuration config = EJBUtil.defaultLookup(Configuration.class);
+			if (config.isDebugFeatureEnabled("pollingTask")) {
+				logger.warn("pollingTask debug enabled; injecting test tasks");
+				TestPollingTaskFamily[] families = 
+					new TestPollingTaskFamily[] { new TestPollingTaskFamily(FamilyType.SLOW),
+					  							  new TestPollingTaskFamily(FamilyType.MEDIUM),
+					  							  new TestPollingTaskFamily(FamilyType.FAST) };
+				for (TestPollingTaskFamily family : families) {
+					registerFamily(family);
+				}
+				Set<PollingTask> testTasks = new HashSet<PollingTask>();
+				Random r = new Random();
+				for (int i = 0; i < 20; i++) {
+					testTasks.add(new TestPollingTask(families[r.nextInt(families.length)]));
+				}
+				pushTasks(testTasks);
+			}
 		}
 	}
 	
@@ -456,7 +524,7 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 		for (int i = 0; i < pollingSetTimeSeconds.length; i++) {
 			long time = pollingSetTimeSeconds[i];
 			
-			TaskSet taskSet = new TaskSet(time, i > 0, i < pollingSetTimeSeconds.length - 1);
+			TaskSet taskSet = new TaskSet(time, i > 0, i < pollingSetTimeSeconds.length - 2);
 			Thread t = ThreadUtils.newDaemonThread("dynamic task set (" + time + ")",  taskSet);
 
 			taskSetWorkers[i] = taskSet;			
@@ -466,8 +534,9 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 		for (Thread t : taskSetThreads) {
 			t.start();
 		}
-		taskPersistenceWorker = ThreadUtils.newDaemonThread("dynamic task set persister", new TaskPersistenceWorker());
-		taskPersistenceWorker.start();
+		taskPersistenceWorker = new TaskPersistenceWorker();
+		taskPersistenceThread = ThreadUtils.newDaemonThread("dynamic task set persister", taskPersistenceWorker);
+		taskPersistenceThread.start();
 		
 		taskInitializationThread = ThreadUtils.newDaemonThread("dynamic task set initializer", new TaskInitializationWorker());
 		taskInitializationThread.start();		
@@ -484,12 +553,13 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 			logger.warn("Interrupted trying to join thread {}", taskInitializationThread.getName());			
 		}		
 		
-		taskPersistenceWorker.interrupt();
+		taskPersistenceThread.interrupt();
 		try {
-			taskPersistenceWorker.join();
+			taskPersistenceThread.join();
 		} catch (InterruptedException e) {
-			logger.warn("Interrupted trying to join thread {}", taskPersistenceWorker.getName());			
+			logger.warn("Interrupted trying to join thread {}", taskPersistenceThread.getName());			
 		}
+		taskPersistenceWorker = null;		
 		for (Thread t : taskSetThreads) {
 			logger.debug(" interrupting {}", t.getName());
 			t.interrupt();
@@ -507,5 +577,115 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 		taskSetWorkers = null;
 		taskFamilies.clear();
 		logger.debug("DynamicPollingSystem singleton stopped");
+	}
+	
+	protected static class TestPollingTaskFamily implements PollingTaskFamily {
+
+		public enum FamilyType {
+			SLOW(2000, 0.1),
+			MEDIUM(750, 0.1),
+			FAST(100, 0.1);
+		
+			private long executionAverage;
+			private double obsoletionFrequency;
+			
+			FamilyType(long avg, double obsoletionFrequency) {
+				this.executionAverage = avg;
+				this.obsoletionFrequency = obsoletionFrequency;
+			}
+
+			public double getObsoletionFrequency() {
+				return obsoletionFrequency;
+			}
+
+			public long getExecutionAverage() {
+				return executionAverage;
+			}			
+		}
+		
+		private FamilyType family;
+		
+		public TestPollingTaskFamily(FamilyType type) {
+			this.family = type;
+		}
+		
+		public long getDefaultPeriodicity() {
+			return -1;
+		}
+
+		public long getMaxOutstanding() {
+			return 3;
+		}
+
+		public long getMaxPerSecond() {
+			return 5;
+		}
+
+		public String getName() {
+			return "TestFamily-" + family.name();
+		}
+		
+		public long getTestExecutionAverage() {
+			return family.getExecutionAverage();
+		}
+		
+		public double getTestObsoletionFrequency() {
+			return family.getObsoletionFrequency();
+		}
+	}
+	
+	protected static class TestPollingTask extends PollingTask {
+		public enum TaskType {
+			VERY_SLOW(0.05),
+			SLOW(0.10),
+			MEDIUM(0.3),
+			FAST(0.6),
+			VERY_FAST(0.7),
+			COLIN(0.9);
+			
+			private double frequency;
+			
+			TaskType(double freq) {
+				this.frequency = freq;
+			}
+
+			public double getFrequency() {
+				return frequency;
+			}
+		}
+		
+		private TaskType type;
+		private String id;
+		private PollingTaskFamily family;
+		
+		public TestPollingTask(PollingTaskFamily family) {
+			this(family, TaskType.values()[new Random().nextInt(TaskType.values().length)]);
+		}
+		
+		public TestPollingTask(PollingTaskFamily family, TaskType type) {
+			this.family = family;
+			this.type = type;
+			this.id = Guid.createNew().toString();
+		}
+		
+		@Override
+		protected ExecutionResult execute() throws InterruptedException {
+			TestPollingTaskFamily family = (TestPollingTaskFamily) getFamily();
+			long execAverage = family.getTestExecutionAverage();
+			double variance = 0.1;
+			Random r = new Random();
+			Thread.sleep(execAverage + (long) (execAverage * variance * (r.nextBoolean() ? -1 : 1)));
+			return new ExecutionResult(r.nextDouble() < type.getFrequency(), r.nextDouble() < family.getTestObsoletionFrequency());
+		}
+
+		@Override
+		public String getIdentifier() {
+			return id;
+		}
+
+		@Override
+		public PollingTaskFamily getFamily() {
+			return family;
+		}
 	}
 }

@@ -10,7 +10,7 @@ import com.dumbhippo.mbean.DynamicPollingSystem.PollingTask;
 public interface PollingTaskPersistence {
 	public void snapshot(Set<PollingTask> task);
 	
-	public void clean();
+	public void clean(Set<PollingTask> obsolete);
 
 	public void initializeTasks(Set<PollingTask> tasks);
 }

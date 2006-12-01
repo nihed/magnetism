@@ -2,6 +2,7 @@ package com.dumbhippo.server;
 
 public enum HippoProperty {
 	BASEURL("dumbhippo.server.baseurl", "http://mugshot.org"),
+	DEBUG_FEATURES("dumbhippo.server.debug.features", ""),	
 	DISABLE_AUTHENTICATION("dumbhippo.server.disable.authentication", "false"),
 	DISABLE_EMAIL("dumbhippo.server.email.disable", "false"),
 	FEEDBACK_EMAIL("dumbhippo.server.email.feedback", "feedback@mugshot.org"),

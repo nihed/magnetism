@@ -93,4 +93,6 @@ public interface Configuration {
 	 * @param value property value
 	 */
 	public void setProperty(String name, String value);
+	
+	public boolean isDebugFeatureEnabled(String name);
 }

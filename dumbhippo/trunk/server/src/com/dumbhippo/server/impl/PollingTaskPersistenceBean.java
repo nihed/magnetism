@@ -24,17 +24,25 @@ public class PollingTaskPersistenceBean implements PollingTaskPersistence {
 	@PersistenceContext(unitName = "dumbhippo")
 	private EntityManager em;
 
-	private CachedPollingTaskStats getStats(PollingTask task) {
+	private CachedPollingTaskStats getStats(PollingTask task, boolean create) {
 		CachedPollingTaskStats stats;
 		try {
-			stats = (CachedPollingTaskStats) em.createQuery("select stats from CachedPollingTaskStats stats where family = :family and id = :id")
+			stats = (CachedPollingTaskStats) em.createQuery("select stats from CachedPollingTaskStats stats where family = :family and taskId = :id")
 			.setParameter("family", task.getFamily().getName())
 			.setParameter("id", task.getIdentifier()).getSingleResult();
 		} catch (NoResultException e) {
-			stats = new CachedPollingTaskStats(task.getFamily().getName(), task.getIdentifier());
-			em.persist(stats);
+			if (create) {
+				stats = new CachedPollingTaskStats(task.getFamily().getName(), task.getIdentifier());
+				em.persist(stats);
+			} else {
+				return null;
+			}
 		}
 		return stats;
+	}
+	
+	private CachedPollingTaskStats getStats(PollingTask task) {
+		return getStats(task, true);
 	}
 	
 	public void snapshot(Set<PollingTask> tasks) {
@@ -59,8 +67,11 @@ public class PollingTaskPersistenceBean implements PollingTaskPersistence {
 		}
 	}	
 	
-	public void clean() {
-		// TODO: noop for now...later we should clean out tasks which haven't been
-		// executed in a week or something
+	public void clean(Set<PollingTask> tasks) {
+		for (PollingTask task : tasks) {
+			CachedPollingTaskStats stats = getStats(task, false);
+			if (stats != null)
+				em.remove(stats);
+		}
 	}
 }

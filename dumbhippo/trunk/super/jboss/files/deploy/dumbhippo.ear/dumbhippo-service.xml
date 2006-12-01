@@ -82,6 +82,12 @@
     	<depends>jboss.j2ee:service=EJB3,module=dumbhippo.ejb3</depends>
     </mbean>
 
+    <!-- The cluster singleton service for polling dynamic sources --> 
+    <mbean code="com.dumbhippo.mbean.DynamicPollingSystem" name="dumbhippo.com:service=DynamicPollingSystem">
+    	<depends>jboss.j2ee:ear=dumbhippo.ear,jar=dumbhippo.ejb3,name=ConfigurationBean,service=EJB3</depends>    	
+    	<depends>jboss.j2ee:ear=dumbhippo.ear,jar=dumbhippo.ejb3,name=PollingTaskPersistenceBean,service=EJB3</depends>
+    </mbean>
+
     <mbean code="org.jboss.ha.singleton.HASingletonController" name="dumbhippo.com:service=PeriodicJobRunner-HASingletonController">
         <depends optional-attribute-name="ClusterPartition" proxy-type="attribute">
             jboss:service=${jboss.partition.name:DefaultPartition}
@@ -92,4 +98,15 @@
         <attribute name="TargetStartMethod">startSingleton</attribute>
         <attribute name="TargetStopMethod">stopSingleton</attribute>
     </mbean>
+    
+    <mbean code="org.jboss.ha.singleton.HASingletonController" name="dumbhippo.com:service=DynamicPollingSystem-HASingletonController">
+        <depends optional-attribute-name="ClusterPartition" proxy-type="attribute">
+            jboss:service=${jboss.partition.name:DefaultPartition}
+        </depends>
+        <depends optional-attribute-name="TargetName">
+            dumbhippo.com:service=DynamicPollingSystem
+        </depends>
+        <attribute name="TargetStartMethod">startSingleton</attribute>
+        <attribute name="TargetStopMethod">stopSingleton</attribute>
+    </mbean>    
 </server>
