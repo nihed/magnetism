@@ -401,6 +401,11 @@ public enum ExternalAccountType {
 		public boolean getHasAccountInfo(String handle, String extra) {
 			return handle != null;
 		}
+		
+		@Override
+		public String getIconName() {
+			return "favicon_lastfm.png";
+		}		
 	};	
 	
 	private static final Logger logger = GlobalSetup.getLogger(ExternalAccountType.class);	
