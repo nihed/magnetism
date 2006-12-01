@@ -31,7 +31,7 @@ public class FeedPost extends Post {
 	static private Set<Resource> makeExpandedRecipients(GroupFeed feed) {
 		Set<Resource> expandedRecipients = new HashSet<Resource>();
 		for (GroupMember member : feed.getGroup().getMembers()) {
-			if (member.isParticipant()) {
+			if (member.getStatus().getReceivesPosts()) {
 				expandedRecipients.add(member.getMember());
 			}
 		}

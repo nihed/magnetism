@@ -352,10 +352,6 @@ public class PostingBoardBean implements PostingBoard {
 
 		// build expanded recipients - note this logic is copied in FeedPost.makeExpandedRecipients,
 		// keep them in sync
-		// FIXME: a recipient will be added to the list twice if they are in
-		//    a group with something other than their "best resource"; we
-		//    probably should spider the best resource from the group
-		//    member.
 		expandedRecipients.addAll(personRecipients);
 		expandedRecipients.add(identitySpider.getBestResource(poster));
 		for (Group g : groupRecipients) {
@@ -364,7 +360,7 @@ public class PostingBoardBean implements PostingBoard {
 			visibility = expandVisibilityForGroup(visibility, g);
 			
 			for (GroupMember groupMember : g.getMembers()) {
-				if (groupMember.isParticipant())
+				if (groupMember.getStatus().getReceivesPosts())
 					expandedRecipients.add(groupMember.getMember());
 			}
 		}
