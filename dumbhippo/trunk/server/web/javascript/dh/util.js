@@ -793,6 +793,16 @@ dh.util.zeroPad = function(number, len) {
     return str;
 }
 
+dh.util.validateEmail = function(address) {
+	address = dojo.string.trim(address)
+
+	if (address == "" || address.indexOf("@") < 0) {
+		alert("Please enter a valid email address")
+		return false;
+	}
+	return true;
+}
+
 dh.util.addEventListener = function(node, eventName, func) {
 	if (node.addEventListener) {
 		node.addEventListener(eventName, func, false);

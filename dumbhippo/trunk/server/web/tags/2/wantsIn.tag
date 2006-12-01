@@ -8,7 +8,7 @@
 </c:if>
 
 <dh:script module="dh.actions"/>
-<form method="post" action="/wantsin" onsubmit="return dh.actions.validateWantsIn('dhWantsInEmailEntry');">
+<form method="post" action="/wantsin" onsubmit="return dh.actions.validateEmailInput('dhWantsInEmailEntry');">
     <input type="text" id="dhWantsInEmailEntry" name="address"/>
     <input type="submit" value="${buttonText}"/>
 </form>

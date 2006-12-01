@@ -13,6 +13,8 @@
 <c:set var="dhSelfInviteCount" value="${dhSelfInviteCount + 1}" scope="request"/>
 <c:set var="N" value="${dhSelfInviteCount}" scope="page"/>
 
+<dh:script module="dh.actions"/>
+<dh:script module="dh.util"/>
 <div>
 	<script type="text/javascript">		
 		selfInviteAddress${N} = null;
@@ -30,16 +32,16 @@
 		}
 		
 		var dhSelfInvite${N} = function() {
-			var addressNode = document.getElementById('dhSelfInviteAddress${N}');			
+			var address = selfInviteAddress${N}.getValue();
+			if (!dh.util.validateEmail(address))
+				return;
+			
 			dh.util.hideId('dhSelfInviteForm${N}');
 			dh.util.showId('dhSelfInviteMessage${N}');
-			
-			// make sure we do not send an e-mail to the e-mail example
-			selfInviteAddress${N}.hideDefaultText();
-			
+
 		   	dh.server.getXmlPOST("inviteself",
 			     {
-			     	"address" : addressNode.value,
+			     	"address" : address,
 			     	"promotion" : "${promotion}"
 			     },
 	  	    	 function(type, data, http) {
