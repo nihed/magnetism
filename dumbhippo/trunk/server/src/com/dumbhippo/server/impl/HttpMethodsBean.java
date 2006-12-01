@@ -859,8 +859,10 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 						note = "Your invitation is on its way (check your email)";
 				}
 			} catch (ValidationException e) {
-			    // FIXME should be displayed to user somehow
-				// "Something went wrong! Reload the page and try again." message we display looks ok for now
+			    // FIXME should switch this over to XmlMethod so we can display a custom error
+				//   to the user; right now we validate in Javascript
+				//   so this (and the resulting "Something went wrong! Reload the page and try again.")
+				//   shouldn't get hit in normal operation.
 			    throw new RuntimeException("Invalid email address", e);				
 			}
 		}
