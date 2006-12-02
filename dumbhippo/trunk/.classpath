@@ -89,5 +89,6 @@
 	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/server/hibernate-annotations.jar"/>
 	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/server/jboss-cache.jar"/>
 	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/server/mediarss-0.2.jar"/>
+	<classpathentry kind="var" path="JBOSS_HOME/server/default/deploy/jbossweb-tomcat55.sar/tomcat-util.jar"/>
 	<classpathentry kind="output" path="eclipse-build"/>
 </classpath>

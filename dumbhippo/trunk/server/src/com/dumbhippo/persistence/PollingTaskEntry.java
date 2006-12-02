@@ -9,32 +9,32 @@ import javax.persistence.UniqueConstraint;
 import com.dumbhippo.mbean.DynamicPollingSystem.PollingTask;
 
 @Entity
-@javax.persistence.Table(name="CachedPollingTaskStats",
+@javax.persistence.Table(name="PollingTaskEntry",
 		uniqueConstraints = {
 			@UniqueConstraint(columnNames={"family","taskId"})
 		})
-public class CachedPollingTaskStats extends DBUnique {
+public class PollingTaskEntry extends DBUnique {
 	
 	private static final long serialVersionUID = 1L;
 	
-	private String family;
+	private int family;
 	private String taskId;
 	private long lastExecuted = -1;
 	private long periodicityAverage = -1;
 	
-	protected CachedPollingTaskStats() {}
+	protected PollingTaskEntry() {}
 	
-	public CachedPollingTaskStats(String family, String id) {
+	public PollingTaskEntry(int family, String id) {
 		this.family = family;
 		this.taskId = id;
 	}
 	
 	@Column(nullable=false, length=PollingTask.MAX_FAMILY_NAME_LENGTH)
-	public String getFamily() {
+	public int getFamily() {
 		return family;
 	}
 
-	public void setFamily(String family) {
+	public void setFamily(int family) {
 		this.family = family;
 	}
 	

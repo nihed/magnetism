@@ -3,11 +3,13 @@ package com.dumbhippo.services;
 import java.io.IOException;
 import java.io.Serializable;
 import java.net.URL;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.slf4j.Logger;
 
+import com.dumbhippo.DateUtils;
 import com.dumbhippo.GlobalSetup;
 import com.sun.syndication.feed.synd.SyndFeed;
 import com.sun.syndication.fetcher.FetcherException;
@@ -17,9 +19,33 @@ import com.sun.syndication.fetcher.impl.SyndFeedInfo;
 import com.sun.syndication.io.FeedException;
 
 /**
- * Simple wrapper class for HttpURLFeedFetcher which uses a custom memory cache.
+ * Simple wrapper class for HttpURLFeedFetcher which uses a custom memory cache,
+ * and can return a status which tells us whether or not the feed was modified.
  */
 public class FeedFetcher {
+	
+	public interface FeedFetchResult {
+		public SyndFeed getFeed();
+		public boolean isModified();
+	}
+	
+	private static class FeedFetchResultImpl implements FeedFetchResult {
+		private SyndFeed feed;
+		private boolean modified;
+		
+		public FeedFetchResultImpl(SyndFeed feed, boolean modified) {
+			this.feed = feed;
+			this.modified = modified;
+		}
+
+		public SyndFeed getFeed() {
+			return feed;
+		}
+
+		public boolean isModified() {
+			return modified;
+		}
+	}	
 	
 	@SuppressWarnings("unused")
 	static private final Logger logger = GlobalSetup.getLogger(FeedFetcher.class);
@@ -88,15 +114,44 @@ public class FeedFetcher {
 		private static final long serialVersionUID = 1L;
 	}
 	
-	public static SyndFeed getFeed(URL url) throws FetchFailedException {
+	private static class RomeAPIDesignerInsanityException extends RuntimeException {
+		private static final long serialVersionUID = 1L;
+		public RomeAPIDesignerInsanityException(String message) {
+			super(message);
+		}
+	}
+	
+	private static Date getFeedModifiedDate(SyndFeedInfo info) {
+		// Clearly, they thought "Well, we don't have a class handy to parse HTTP dates.  Let's
+		// just punt this to our users.  And to add to the pain, we'll make the method return
+		// Object so they have to go digging in the source to find out what it will return!  Exccccellent."
+		Object modifiedObj = info.getLastModified();
+		if (modifiedObj instanceof Long)
+			return new Date(((Long) modifiedObj).longValue());
+		if (!(modifiedObj instanceof String))
+			throw new RomeAPIDesignerInsanityException("last modified object isn't a Long or String; giving up");
+		return new Date(DateUtils.parseHttpDate((String) modifiedObj));		
+	}
+	
+	public static FeedFetchResult getFeed(URL url) throws FetchFailedException {
 		// FIXME unfortunately the timeout on the feed fetcher http download is 
 		// way too long - but there's no way to fix without hacking on ROME.
 		// Doing the HTTP GET by hand is not really desirable since the feed fetcher
 		// is smarter than that (e.g. uses some "get new stuff only" protocols, checks
 		// whether the data has changed, etc.)
 		
+		// See if we have the feed cached
+		Date lastModified = null;
+		SyndFeedInfo info = getCache().getFeedInfo(url);
+		if (info != null)
+			lastModified = getFeedModifiedDate(info);
+		
 		try {
-			return new HttpURLFeedFetcher(getCache()).retrieveFeed(url);
+			SyndFeed feed = new HttpURLFeedFetcher(getCache()).retrieveFeed(url);
+			// Now check whether the feed changed
+			info = getCache().getFeedInfo(url);			
+			Date currentModified = getFeedModifiedDate(info);
+			return new FeedFetchResultImpl(feed, lastModified == null ? true : currentModified.after(lastModified));
 		} catch (IllegalArgumentException e) {
 			throw new RuntimeException(e);
 		} catch (IOException e) {

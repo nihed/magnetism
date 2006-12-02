@@ -29,12 +29,16 @@ import com.dumbhippo.ThreadUtils;
 import com.dumbhippo.TypeUtils;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.mbean.FeedUpdaterPeriodicJob;
+import com.dumbhippo.mbean.DynamicPollingSystem.PollingTask;
+import com.dumbhippo.mbean.DynamicPollingSystem.PollingTaskFamily;
 import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.Feed;
 import com.dumbhippo.persistence.FeedEntry;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupFeed;
 import com.dumbhippo.persistence.LinkResource;
+import com.dumbhippo.persistence.PollingTaskEntry;
+import com.dumbhippo.persistence.PollingTaskFamilyType;
 import com.dumbhippo.persistence.Sentiment;
 import com.dumbhippo.persistence.TrackFeedEntry;
 import com.dumbhippo.persistence.User;
@@ -42,6 +46,7 @@ import com.dumbhippo.server.FeedSystem;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Notifier;
+import com.dumbhippo.server.PollingTaskPersistence;
 import com.dumbhippo.server.PostingBoard;
 import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.XmlMethodErrorCode;
@@ -50,6 +55,7 @@ import com.dumbhippo.server.syndication.RhapModule;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.util.HtmlTextExtractor;
 import com.dumbhippo.services.FeedFetcher;
+import com.dumbhippo.services.FeedFetcher.FeedFetchResult;
 import com.sun.syndication.feed.module.Module;
 import com.sun.syndication.feed.synd.SyndContent;
 import com.sun.syndication.feed.synd.SyndEntry;
@@ -74,6 +80,9 @@ public class FeedSystemBean implements FeedSystem {
 
 	@EJB
 	private Notifier notifier;
+	
+	@EJB
+	private PollingTaskPersistence pollingPersistence;
 	
 	private static ExecutorService notificationService;
 	private static boolean shutdown = false;
@@ -100,8 +109,8 @@ public class FeedSystemBean implements FeedSystem {
 			return null;
 		}
 	}
-		
-	private SyndFeed getRawFeed(LinkResource source) throws XmlMethodException {
+	
+	private FeedFetchResult getRawFeed(LinkResource source) throws XmlMethodException {
 		URL url;
 		try {
 			url = new URL(source.getUrl());
@@ -454,7 +463,8 @@ public class FeedSystemBean implements FeedSystem {
 		if (feed != null)
 			return feed;
 		
-		final SyndFeed syndFeed = getRawFeed(source);
+		FeedFetchResult fetchResult = getRawFeed(source);
+		final SyndFeed syndFeed = fetchResult.getFeed();
 		
 		try {
 			return runner.runTaskThrowingConstraintViolation(new Callable<Feed>() {
@@ -484,10 +494,12 @@ public class FeedSystemBean implements FeedSystem {
 	static class UpdateFeedContext {
 		private long feedId;
 		private SyndFeed syndFeed;
+		private boolean modified;
 		
-		UpdateFeedContext(long feedId, SyndFeed syndFeed) {
+		UpdateFeedContext(long feedId, SyndFeed syndFeed, boolean modified) {
 			this.feedId = feedId;
 			this.syndFeed = syndFeed;
+			this.modified = modified;
 		}
 
 		public long getFeedId() {
@@ -496,6 +508,10 @@ public class FeedSystemBean implements FeedSystem {
 
 		public SyndFeed getSyndFeed() {
 			return syndFeed;
+		}
+
+		public boolean isModified() {
+			return modified;
 		}
 	}
 
@@ -526,9 +542,12 @@ public class FeedSystemBean implements FeedSystem {
 		logger.debug("  Feed {} being fetched", feed.getSource());
 		
 		try {
-			final SyndFeed syndFeed = getRawFeed(feed.getSource());
-			logger.info("  HTTP request completed for feed {}, retrieved {} entries", feed.getSource(), syndFeed.getEntries().size());
-			return new UpdateFeedContext(feed.getId(), syndFeed);		
+			final FeedFetchResult result = getRawFeed(feed.getSource());
+			if (result.isModified())
+				logger.info("  HTTP request completed for feed {}, retrieved {} entries", feed.getSource(), result.getFeed().getEntries().size());
+			else
+				logger.info("  Feed {} retrieved from local cache", feed.getSource());				
+			return new UpdateFeedContext(feed.getId(), result.getFeed(), result.isModified());		
 		} catch (XmlMethodException e) {
 			logger.warn("Couldn't update feed {}: " + e.getCodeString() + ": {}", feed.getSource(), e.getMessage());
 			throw e;
@@ -724,5 +743,82 @@ public class FeedSystemBean implements FeedSystem {
 	// FIXME is this used?
 	public void stop() {
 		logger.info("Stopping FeedSystemBean");
+	}
+	
+	private static class FeedTaskFamily implements PollingTaskFamily {
+
+		public long getDefaultPeriodicity() {
+			return 5 * 60 * 1000; // 5 minutes
+		}
+
+		public long getMaxOutstanding() {
+			return -1;
+		}
+
+		public long getMaxPerSecond() {
+			return -1;
+		}
+
+		public String getName() {
+			return PollingTaskFamilyType.FEED.name();
+		}
+	}
+	
+	private static PollingTaskFamily family = new FeedTaskFamily();
+	
+	private static class FeedTask extends PollingTask {
+		private Feed feed;  // detached from transaction
+		
+		public FeedTask(Feed feed) {
+			this.feed = feed;
+		}
+
+		@Override
+		protected PollResult execute() throws Exception {
+			boolean changed = false;
+			final FeedSystem feedSystem = EJBUtil.defaultLookup(FeedSystem.class);	
+			final UpdateFeedContext context = (UpdateFeedContext) feedSystem.updateFeedFetchFeed(feed);
+			if (context != null) {
+				changed = context.isModified();
+				final TransactionRunner runner = EJBUtil.defaultLookup(TransactionRunner.class);
+				runner.runTaskRetryingOnDuplicateEntry(new Runnable() {
+					public void run() {
+						try {
+							feedSystem.updateFeedStoreFeed(context);
+						} catch (XmlMethodException e) {
+							logger.error("failed to store feed", e);
+						}
+					}
+				});
+			}
+			
+			return new PollResult(changed, false);
+		}
+
+		@Override
+		public PollingTaskFamily getFamily() {
+			return family;
+		}
+
+		@Override
+		public String getIdentifier() {
+			return Long.toString(feed.getId());
+		}
+	}
+
+	public Set<PollingTask> loadTasks(Set<PollingTaskEntry> entries) {
+		Set<PollingTask> tasks = new HashSet<PollingTask>();
+		for (PollingTaskEntry entry : entries) {
+			String feedId = entry.getTaskId();
+			Feed feed = em.find(Feed.class, Long.valueOf(feedId));
+			tasks.add(new FeedTask(feed));
+		}
+		return tasks;
+	}
+
+	public void migrateTasks() {
+		for (Feed feed : getInUseFeeds()) {
+			pollingPersistence.createTask(PollingTaskFamilyType.FEED.ordinal(), Long.toString(feed.getId()));
+		}
 	}
 }

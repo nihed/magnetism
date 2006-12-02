@@ -8,9 +8,10 @@ import com.dumbhippo.persistence.Feed;
 import com.dumbhippo.persistence.FeedEntry;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.LinkResource;
+import com.dumbhippo.server.PollingTaskPersistence.PollingTaskLoader;
 
 @Local
-public interface FeedSystem {
+public interface FeedSystem extends PollingTaskLoader {
 	Feed getFeed(LinkResource link) throws XmlMethodException;
 	
 	/**

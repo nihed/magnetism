@@ -10,12 +10,12 @@ import org.apache.log4j.Level;
 import org.apache.log4j.PatternLayout;
 
 import com.dumbhippo.StringUtils;
+import com.dumbhippo.services.FeedFetcher.FeedFetchResult;
 import com.dumbhippo.services.FeedFetcher.FetchFailedException;
 import com.sun.syndication.feed.module.mediarss.MediaEntryModule;
 import com.sun.syndication.feed.module.mediarss.types.Metadata;
 import com.sun.syndication.feed.module.mediarss.types.Thumbnail;
 import com.sun.syndication.feed.synd.SyndEntry;
-import com.sun.syndication.feed.synd.SyndFeed;
 
 public class YouTubeVideoFeedParser {
 	
@@ -28,14 +28,14 @@ public class YouTubeVideoFeedParser {
 	}	
 	
 	public static List<YouTubeVideo> getVideosForUser(String username, int count) {
-		SyndFeed feed;		
+		FeedFetchResult fetchResult;		
 		try {
-			feed = FeedFetcher.getFeed(getVideosFeedUrl(username));
+			fetchResult = FeedFetcher.getFeed(getVideosFeedUrl(username));
 		} catch (FetchFailedException e) {
 			return null;
 		}
 		List<YouTubeVideo> videos = new ArrayList<YouTubeVideo>();
-		for (Object o : feed.getEntries()) {
+		for (Object o : fetchResult.getFeed().getEntries()) {
 			SyndEntry entry = (SyndEntry) o;
 			MediaEntryModule module = (MediaEntryModule) entry.getModule("http://search.yahoo.com/mrss/");
 			if (module == null)

@@ -1,8 +1,16 @@
 package com.dumbhippo;
 
+import java.text.DateFormat;
 import java.util.Date;
 
+import org.apache.tomcat.util.http.FastHttpDateFormat;
+
 public class DateUtils {
+	
+	public static long parseHttpDate(String date)  {
+		return FastHttpDateFormat.parseDate(date, new DateFormat[] {});
+	}
+	
 	public static String formatTimeAgo(Date timestamp) {
 		// We might want to suppress more of the surrounding text at times
 		// for unknown timestamps (0/-1) but displaying nothing is better

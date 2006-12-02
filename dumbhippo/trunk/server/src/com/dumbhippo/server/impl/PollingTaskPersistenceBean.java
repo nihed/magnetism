@@ -1,19 +1,25 @@
 package com.dumbhippo.server.impl;
 
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
-import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
 
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.TypeUtils;
 import com.dumbhippo.mbean.DynamicPollingSystem.PollingTask;
-import com.dumbhippo.persistence.CachedPollingTaskStats;
+import com.dumbhippo.persistence.PollingTaskEntry;
+import com.dumbhippo.persistence.PollingTaskFamilyType;
 import com.dumbhippo.server.PollingTaskPersistence;
+import com.dumbhippo.server.util.EJBUtil;
 
 @Stateless
 public class PollingTaskPersistenceBean implements PollingTaskPersistence {
@@ -24,54 +30,80 @@ public class PollingTaskPersistenceBean implements PollingTaskPersistence {
 	@PersistenceContext(unitName = "dumbhippo")
 	private EntityManager em;
 
-	private CachedPollingTaskStats getStats(PollingTask task, boolean create) {
-		CachedPollingTaskStats stats;
-		try {
-			stats = (CachedPollingTaskStats) em.createQuery("select stats from CachedPollingTaskStats stats where family = :family and taskId = :id")
+
+	public void createTask(int family, String id) {
+		PollingTaskEntry entry = new PollingTaskEntry(family, id);
+		em.persist(entry);		
+	}	
+	
+	private PollingTaskEntry getEntry(PollingTask task) {
+		PollingTaskEntry entry;
+		entry = (PollingTaskEntry) em.createQuery("select stats from PollingTaskEntry stats where family = :family and taskId = :id")
 			.setParameter("family", task.getFamily().getName())
 			.setParameter("id", task.getIdentifier()).getSingleResult();
-		} catch (NoResultException e) {
-			if (create) {
-				stats = new CachedPollingTaskStats(task.getFamily().getName(), task.getIdentifier());
-				em.persist(stats);
-			} else {
-				return null;
-			}
-		}
-		return stats;
-	}
-	
-	private CachedPollingTaskStats getStats(PollingTask task) {
-		return getStats(task, true);
+		return entry;
 	}
 	
 	public void snapshot(Set<PollingTask> tasks) {
 		for (PollingTask task : tasks) {
-			CachedPollingTaskStats stats = getStats(task);
+			synchronized (task) {
+				if (task.isDirty()) {
+					PollingTaskEntry stats = getEntry(task);
 			
-			Date lastExecuted = null;
-			if (task.getLastExecuted() >= 0)
-				lastExecuted = new Date(task.getLastExecuted());
-			stats.setLastExecuted(lastExecuted);
+					Date lastExecuted = null;
+					if (task.getLastExecuted() >= 0)
+						lastExecuted = new Date(task.getLastExecuted());
+					stats.setLastExecuted(lastExecuted);
 			
-			stats.setPeriodicityAverage(task.getPeriodicityAverage());
-		}
-	}	
-	
-	public void initializeTasks(Set<PollingTask> tasks) {
-		for (PollingTask task : tasks) {
-			CachedPollingTaskStats stats = getStats(task);
-			
-			// Don't set last executed, the system doesn't care about it
-			task.setPeriodicityAverage(stats.getPeriodicityAverage());
+					stats.setPeriodicityAverage(task.getPeriodicityAverage());
+					task.flagClean();
+				}
+			}
 		}
 	}	
 	
 	public void clean(Set<PollingTask> tasks) {
 		for (PollingTask task : tasks) {
-			CachedPollingTaskStats stats = getStats(task, false);
-			if (stats != null)
-				em.remove(stats);
+			PollingTaskEntry stats = getEntry(task);
+			em.remove(stats);
 		}
+	}
+	
+	private static class PollingTaskLoadResultImpl implements PollingTaskLoadResult {
+		private long lastDbId;
+		private Set<PollingTask> tasks;
+		
+		public PollingTaskLoadResultImpl(long lastDbId, Set<PollingTask> tasks) {
+			this.lastDbId = lastDbId;
+			this.tasks = tasks;
+		}
+
+		public long getLastDbId() {
+			return lastDbId;
+		}
+
+		public Set<PollingTask> getTasks() {
+			return tasks;
+		}
+	}
+
+	public PollingTaskLoadResult loadNewTasks(long dbId) {
+		String queryStr = "select task from PollingTaskEntry task";
+		if (dbId >= 0)
+			queryStr += " where task.id > :dbId";
+		Query query = em.createQuery(queryStr);
+		if (dbId >= 0)
+			query.setParameter("dbId", dbId);
+		Set<PollingTask> newTasks = new HashSet<PollingTask>();
+		List<PollingTaskEntry> entries = TypeUtils.castList(PollingTaskEntry.class, query.getResultList());
+		long largestId = -1;
+		for (PollingTaskEntry entry : entries) {
+			if (entry.getId() > largestId)
+				largestId = entry.getId();
+			PollingTaskFamilyType taskFamilyType = PollingTaskFamilyType.values()[entry.getFamily()];
+			PollingTaskLoader loader = EJBUtil.defaultLookup(taskFamilyType.getLoader());
+			newTasks.addAll(loader.loadTasks(Collections.singleton(entry)));
+		}
+		return new PollingTaskLoadResultImpl(largestId, newTasks);
 	}
 }
