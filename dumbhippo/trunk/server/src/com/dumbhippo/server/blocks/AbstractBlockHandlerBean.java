@@ -55,11 +55,11 @@ public abstract class AbstractBlockHandlerBean<BlockViewSubType extends BlockVie
 	@IgnoreDependency
 	protected Stacker stacker;
 	
-	private Class<BlockViewSubType> viewClass;
-	private Constructor<BlockViewSubType> viewClassConstructorUser;
-	private Constructor<BlockViewSubType> viewClassConstructorGroup;
+	private Class<? extends BlockViewSubType> viewClass;
+	private Constructor<? extends BlockViewSubType> viewClassConstructorUser;
+	private Constructor<? extends BlockViewSubType> viewClassConstructorGroup;
 	
-	protected AbstractBlockHandlerBean(Class<BlockViewSubType> viewClass) {
+	protected AbstractBlockHandlerBean(Class<? extends BlockViewSubType> viewClass) {
 		this.viewClass = viewClass;
 		try {
 			this.viewClassConstructorUser = viewClass.getConstructor(Viewpoint.class, Block.class, UserBlockData.class, boolean.class);

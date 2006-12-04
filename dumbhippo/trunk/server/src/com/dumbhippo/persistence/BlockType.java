@@ -67,6 +67,13 @@ public enum BlockType {
 		public boolean isAlwaysPublic() {
 			return true;
 		}
+	},
+	MYSPACE_PERSON { // 12
+		// Currently just used for MySpace blog entries which are always public
+		@Override
+		public boolean isAlwaysPublic() {
+			return true;
+		}
 	};
 	
 	// returns true if all blocks of this type are always public,

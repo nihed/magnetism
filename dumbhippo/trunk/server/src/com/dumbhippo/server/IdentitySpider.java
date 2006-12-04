@@ -341,23 +341,6 @@ public interface IdentitySpider {
 	public void setStockPhoto(UserViewpoint viewpoint, User user, String photo);
 	
 	/**
-	 * Return the set of all User contacts (Contacts which represent Users)
-	 * that have set a MySpace name.
-	 * 
-	 * @param viewpoint viewpoint from which we gather contacts
-	 * @return set of Users with MySpace names
-	 */
-	public Set<User> getMySpaceContacts(UserViewpoint viewpoint);
-	
-	/**
-	 * Similar to getMySpaceContacts, but filtered by a particular name.
-	 * 
-	 * @param mySpaceName name to look for
-	 * @return a set of Users claiming mySpaceName
-	 */
-	public Set<User> getUserContactsWithMySpaceName(UserViewpoint viewpoint, String mySpaceName); 	
-	
-	/**
 	 * Increase the version number of the user; increasing the user version means
 	 * any cached resources for the user (currently, just the headshot) are
 	 * no longer valid and must be reloaded. 

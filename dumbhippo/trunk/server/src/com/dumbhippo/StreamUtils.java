@@ -23,10 +23,10 @@ public class StreamUtils {
 	 * @throws IOException if anything goes wrong (also closes the stream...)
 	 */
 	public static String readStreamUTF8(InputStream input, int maxChars) throws IOException {
+		char[] buf = new char[256];		
 		try {
 			InputStreamReader reader = new InputStreamReader(input, "UTF-8");
 			StringBuilder sb = new StringBuilder();
-			char[] buf = new char[256];
 			int numRead = reader.read(buf);
 			while (numRead >= 0 && sb.length() < maxChars) {
 				sb.append(buf, 0, numRead);

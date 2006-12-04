@@ -8,7 +8,6 @@ import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.Sentiment;
 import com.dumbhippo.persistence.User;
-import com.dumbhippo.persistence.ValidationException;
 import com.dumbhippo.server.listeners.AccountStatusListener;
 import com.dumbhippo.server.views.ExternalAccountView;
 import com.dumbhippo.server.views.UserViewpoint;
@@ -68,25 +67,6 @@ public interface ExternalAccountSystem extends AccountStatusListener {
 	public ExternalAccountView getExternalAccountView(Viewpoint viewpoint, ExternalAccount externalAccount);
 	
 	public ExternalAccountView getExternalAccountView(Viewpoint viewpoint, User user, ExternalAccountType externalAccountType) throws NotFoundException;
-	
-	/**
-	 * Associate a MySpace identity with an account holder. 
-	 * 
-	 * @param viewpoint whose myspace name to set
-	 * @param name permanent MySpace name
-	 * @throws ValidationException 
-	 */
-	public void setMySpaceName(UserViewpoint viewpoint, String name) throws ValidationException;
-	
-	/**
-	 * Only returns a myspace name if the person has it set as LOVE
-	 * 
-	 * @param viewpoint
-	 * @param user
-	 * @return
-	 * @throws NotFoundException
-	 */
-	public String getMySpaceName(Viewpoint viewpoint, User user) throws NotFoundException;
 	
 	public void loadThumbnails(Viewpoint viewpoint, Set<ExternalAccountView> accountViews);
 	

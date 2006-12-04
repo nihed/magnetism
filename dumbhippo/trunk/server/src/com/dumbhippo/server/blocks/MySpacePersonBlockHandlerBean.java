@@ -6,18 +6,18 @@ import com.dumbhippo.persistence.BlockType;
 import com.dumbhippo.persistence.ExternalAccountType;
 
 @Stateless
-public class BlogBlockHandlerBean extends BlogLikeBlockHandlerBean implements BlogBlockHandler {
-	public BlogBlockHandlerBean() {
-		super(BlogBlockView.class);
+public class MySpacePersonBlockHandlerBean extends BlogLikeBlockHandlerBean implements MySpacePersonBlockHandler {
+	public MySpacePersonBlockHandlerBean() {
+		super(MySpacePersonBlockView.class);
 	}
 
 	@Override
 	protected ExternalAccountType getAccountType() {
-		return ExternalAccountType.BLOG;
+		return ExternalAccountType.MYSPACE;
 	}
 
 	@Override
 	protected BlockType getBlockType() {
-		return BlockType.BLOG_PERSON;
+		return BlockType.MYSPACE_PERSON;
 	}
 }

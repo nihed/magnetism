@@ -28,14 +28,12 @@ import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.Resource;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.Configuration;
-import com.dumbhippo.server.ExternalAccountSystem;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.InvitationSystem;
 import com.dumbhippo.server.Mailer;
 import com.dumbhippo.server.MessageSender;
 import com.dumbhippo.server.NoMailSystem;
-import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.PostType;
 import com.dumbhippo.server.PostingBoard;
@@ -43,7 +41,6 @@ import com.dumbhippo.server.Configuration.PropertyNotFoundException;
 import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.PersonViewExtra;
 import com.dumbhippo.server.views.PostView;
-import com.dumbhippo.server.views.SystemViewpoint;
 import com.dumbhippo.server.views.UserViewpoint;
 
 /**
@@ -91,10 +88,6 @@ public class MessageSenderBean implements MessageSender {
 	@IgnoreDependency
 	private NoMailSystem noMail;
 	
-	@EJB
-	@IgnoreDependency
-	private ExternalAccountSystem externalAccounts;
-	
 	@javax.annotation.Resource
 	private EJBContext ejbContext;
 	
@@ -103,57 +96,6 @@ public class MessageSenderBean implements MessageSender {
 	private XMPPSender xmppSender;
 	private EmailSender emailSender;
 	
-	private static class MySpaceNameChangedExtension implements PacketExtension {
-		private static final String ELEMENT_NAME = "mySpaceNameChanged";
-
-		private static final String NAMESPACE = "http://dumbhippo.com/protocol/myspace";
-		
-		private String mySpaceName;
-
-		public MySpaceNameChangedExtension(String newMySpaceName) {
-			mySpaceName = newMySpaceName;
-		}
-
-		public String getElementName() {
-			return ELEMENT_NAME;
-		}
-
-		public String getNamespace() {
-			return NAMESPACE;
-		}
-
-		public String toXML() {
-			XmlBuilder builder = new XmlBuilder();
-			builder.openElement("mySpaceNameChanged", "xmlns", NAMESPACE, "name", mySpaceName);
-			builder.closeElement();
-			return builder.toString();
-		}
-	}
-	
-	private static class MySpaceContactCommentExtension implements PacketExtension {
-		private static final String ELEMENT_NAME = "mySpaceContactComment";
-
-		private static final String NAMESPACE = "http://dumbhippo.com/protocol/myspace";
-		
-		public MySpaceContactCommentExtension() {
-		}
-
-		public String getElementName() {
-			return ELEMENT_NAME;
-		}
-
-		public String getNamespace() {
-			return NAMESPACE;
-		}
-
-		public String toXML() {
-			XmlBuilder builder = new XmlBuilder();
-			builder.openElement("mySpaceContactComment", "xmlns", NAMESPACE);
-			builder.closeElement();
-			return builder.toString();
-		}
-	}
-
 	private static class PrefsChangedExtension implements PacketExtension {
 		private static final String ELEMENT_NAME = "prefs";
 
@@ -247,40 +189,6 @@ public class MessageSenderBean implements MessageSender {
 		}
 		
 		public synchronized void sendPostNotification(User recipient, Post post, List<User> viewers, PostType postType) {
-		}
-		
-		public void sendMySpaceNameChangedNotification(User user) {
-			XMPPConnection connection;
-			try {
-				connection = getConnection();
-			} catch (NotConnectedException e) {
-				logger.warn("Not sending myspace name changed because not connected to xmpp: " + e.getMessage());
-				return;
-			}
-			Message message = createMessageFor(user, Message.Type.HEADLINE);
-			String newMySpaceName;
-			try {
-				newMySpaceName = externalAccounts.getMySpaceName(SystemViewpoint.getInstance(), user);
-			} catch (NotFoundException e) {
-				newMySpaceName = null;
-			}
-			message.addExtension(new MySpaceNameChangedExtension(newMySpaceName));
-			logger.debug("Sending mySpaceNameChanged message to {}", message.getTo());			
-			connection.sendPacket(message);			
-		}
-
-		public synchronized void sendMySpaceContactCommentNotification(User user) {
-			XMPPConnection connection;
-			try {
-				connection = getConnection();
-			} catch (NotConnectedException e) {
-				logger.warn("Not sending myspace comment notification because not connected to xmpp: " + e.getMessage());
-				return;
-			}
-			Message message = createMessageFor(user, Message.Type.HEADLINE);
-			message.addExtension(new MySpaceContactCommentExtension());
-			logger.debug("Sending mySpaceContactComment message to {}", message.getTo());			
-			connection.sendPacket(message);
 		}
 		
 		public synchronized void sendPrefChanged(User user, String key, String value) {
@@ -523,15 +431,6 @@ public class MessageSenderBean implements MessageSender {
 			throw new IllegalStateException("Don't know how to send a notification to resource: " + recipient);
 		}
 	}
-
-	public void sendMySpaceNameChangedNotification(User user) {
-		xmppSender.sendMySpaceNameChangedNotification(user);
-	}
-
-	public void sendMySpaceContactCommentNotification(User user) {
-		xmppSender.sendMySpaceContactCommentNotification(user);
-	}
-	
 	public void sendPrefChanged(User user, String key, String value) {
 		xmppSender.sendPrefChanged(user, key, value);
 	}

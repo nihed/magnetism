@@ -6,38 +6,37 @@ import com.dumbhippo.persistence.GroupBlockData;
 import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.server.views.Viewpoint;
 
-public class BlogBlockView extends BlogLikeBlockView {
+public class MySpacePersonBlockView extends BlogLikeBlockView {
 	
-	public BlogBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd, boolean participated) {
+	public MySpacePersonBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd, boolean participated) {
 		super(viewpoint, block, ubd, participated);
 	}
 	
-	public BlogBlockView(Viewpoint viewpoint, Block block, GroupBlockData gbd, boolean participated) {
+	public MySpacePersonBlockView(Viewpoint viewpoint, Block block, GroupBlockData gbd, boolean participated) {
 		super(viewpoint, block, gbd, participated);
 	}
 	
 	@Override
 	protected String getElementName() {
-		return "blogPerson";
+		return "mySpacePerson";
 	}
 	
 	@Override
 	public String getIcon() {
-		return "/images3/blog_icon.png";
-		//return entry.getFeed().getFavicon();
+		return getAccountType().getIconName();
 	}
 
 	@Override
 	public String getTypeTitle() {
-		return "Blog post";
+		return "MySpace Blog";
 	}
 
 	@Override
 	protected String getSummaryHeading() {
-		return "Blogged";
+		return "MySpace";
 	}
 
 	public ExternalAccountType getAccountType() {
-		return ExternalAccountType.BLOG;
+		return ExternalAccountType.MYSPACE;
 	}
 }

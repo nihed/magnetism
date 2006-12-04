@@ -39,7 +39,7 @@ public class PollingTaskPersistenceBean implements PollingTaskPersistence {
 	private PollingTaskEntry getEntry(PollingTask task) {
 		PollingTaskEntry entry;
 		entry = (PollingTaskEntry) em.createQuery("select stats from PollingTaskEntry stats where family = :family and taskId = :id")
-			.setParameter("family", task.getFamily().getName())
+			.setParameter("family", PollingTaskFamilyType.valueOf(task.getFamily().getName()))
 			.setParameter("id", task.getIdentifier()).getSingleResult();
 		return entry;
 	}

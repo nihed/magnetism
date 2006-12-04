@@ -52,41 +52,6 @@ public interface MessengerGlue {
 		public String getUsername() {
 			return username;
 		}
-	}
-	
-	public class MySpaceBlogCommentInfo implements Serializable {
-		private static final long serialVersionUID = 1L;
-
-		private long commentId;
-		private long posterId;
-		
-		public MySpaceBlogCommentInfo(long commentId, long posterId) {
-			this.commentId = commentId;
-			this.posterId = posterId;
-		}
-		public long getCommentId() {
-			return commentId;
-		}
-		public long getPosterId() {
-			return posterId;
-		}
-	}
-	
-	
-	public class MySpaceContactInfo implements Serializable {
-		private static final long serialVersionUID = 1L;		
-		private String username;
-		private String friendId;
-		public MySpaceContactInfo(String username, String friendId) {
-			this.username = username;
-			this.friendId = friendId;
-		}
-		public String getFriendId() {
-			return friendId;
-		}
-		public String getUsername() {
-			return username;
-		}
 	}	
 
 	/** 
@@ -126,30 +91,7 @@ public interface MessengerGlue {
 	
 	public JabberUser loadUser(String username)
 		throws JabberUserNotFoundException;
-	
-	/**
-	 * Return the MySpace name associated with a user, or null if none 
-	 * 
-	 * @param userId
-	 * @return MySpace name or null
-	 */
-	public String getMySpaceName(String username);
-	
-	public void addMySpaceBlogComment(String username, long commentId, long posterId);
-	
-	public List<MySpaceBlogCommentInfo> getMySpaceBlogComments(String username);	
-	
-	public void notifyNewMySpaceContactComment(String username, String contactName);
-	
-	/**
-	 * Return a list of MySpace names associated with the passed user's DumbHippo
-	 * contacts.
-	 * 
-	 * @param username user for which MySpace contacts are retrieved
-	 * @return MySpace contacts
-	 */
-	public List<MySpaceContactInfo> getContactMySpaceNames(String username);
-	
+
 	/**
 	 * Thrown when the server identifier passed to one of the functions
 	 * for maintaining Jabber state is unknown. This could happen for

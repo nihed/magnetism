@@ -26,8 +26,6 @@ import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.ValidationException;
 import com.dumbhippo.server.ExternalAccountSystem;
 import com.dumbhippo.server.FacebookSystem;
-import com.dumbhippo.server.MessageSender;
-import com.dumbhippo.server.MySpaceTracker;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Notifier;
 import com.dumbhippo.server.YouTubeUpdater;
@@ -45,14 +43,6 @@ public class ExternalAccountSystemBean implements ExternalAccountSystem {
 
 	@SuppressWarnings("unused")
 	private static final Logger logger = GlobalSetup.getLogger(ExternalAccountSystemBean.class);
-	
-	@EJB
-	@IgnoreDependency
-	private MySpaceTracker mySpaceTracker;
-	
-	@EJB
-	@IgnoreDependency
-	private MessageSender messageSender;
 	
 	@EJB
 	@IgnoreDependency
@@ -147,24 +137,7 @@ public class ExternalAccountSystemBean implements ExternalAccountSystem {
 		ExternalAccount externalAccount = lookupExternalAccount(viewpoint, user, externalAccountType);
 		return getExternalAccountView(viewpoint, externalAccount);
 	}
-	
-	public void setMySpaceName(UserViewpoint viewpoint, String name) throws ValidationException {
-		ExternalAccount external = getOrCreateExternalAccount(viewpoint, ExternalAccountType.MYSPACE);
-		external.setHandleValidating(name);
-		mySpaceTracker.updateFriendId(viewpoint.getViewer());
-		messageSender.sendMySpaceNameChangedNotification(viewpoint.getViewer());
-	}
-	
-	public String getMySpaceName(Viewpoint viewpoint, User user) throws NotFoundException {
-		ExternalAccount external = lookupExternalAccount(viewpoint, user, ExternalAccountType.MYSPACE);
-		if (external.getSentiment() == Sentiment.LOVE &&
-				external.getHandle() != null) {
-			return external.getHandle();
-		} else {
-			throw new NotFoundException("No MySpace name for user " + user);
-		}
-	}
-	
+
 	private void loadFlickrThumbnails(Viewpoint viewpoint, ExternalAccountView accountView) {
 		ExternalAccount account = accountView.getExternalAccount();
 		

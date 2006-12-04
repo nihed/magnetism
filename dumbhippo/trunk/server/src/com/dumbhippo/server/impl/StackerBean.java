@@ -68,6 +68,7 @@ import com.dumbhippo.server.blocks.FlickrPhotosetBlockHandler;
 import com.dumbhippo.server.blocks.GroupChatBlockHandler;
 import com.dumbhippo.server.blocks.GroupMemberBlockHandler;
 import com.dumbhippo.server.blocks.MusicPersonBlockHandler;
+import com.dumbhippo.server.blocks.MySpacePersonBlockHandler;
 import com.dumbhippo.server.blocks.PostBlockHandler;
 import com.dumbhippo.server.blocks.YouTubeBlockHandler;
 import com.dumbhippo.server.util.EJBUtil;
@@ -155,6 +156,9 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 			break;
 		case YOUTUBE_PERSON:
 			handlerClass = YouTubeBlockHandler.class;
+			break;
+		case MYSPACE_PERSON:
+			handlerClass = MySpacePersonBlockHandler.class;
 			break;
 		case OBSOLETE_EXTERNAL_ACCOUNT_UPDATE:
 		case OBSOLETE_EXTERNAL_ACCOUNT_UPDATE_SELF:
@@ -1617,6 +1621,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		case FLICKR_PERSON:
 		case FLICKR_PHOTOSET:
 		case YOUTUBE_PERSON:
+		case MYSPACE_PERSON:			
 			isGroupParticipation = false;
 			break;
 		case OBSOLETE_EXTERNAL_ACCOUNT_UPDATE:

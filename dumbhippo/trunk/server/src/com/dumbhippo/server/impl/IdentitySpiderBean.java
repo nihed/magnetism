@@ -917,21 +917,4 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 		}
 		return contacts;
 	}
-
-	public Set<User> getUserContactsWithMySpaceName(UserViewpoint viewpoint,
-			String mySpaceName) {
-		Set<User> users = getMySpaceContacts(viewpoint);
-		Set<User> ret = new HashSet<User>();
-		for (User u : users) {
-			try {
-				String name = externalAccounts.getMySpaceName(viewpoint, u);
-				if (name.equals(mySpaceName)) {
-					ret.add(u);
-				}
-			} catch (NotFoundException e) {
-				// nothing
-			}
-		}
-		return ret;
-	}
 }

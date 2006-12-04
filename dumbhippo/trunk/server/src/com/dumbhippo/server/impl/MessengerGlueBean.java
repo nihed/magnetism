@@ -26,25 +26,20 @@ import com.dumbhippo.live.ChatRoomEvent;
 import com.dumbhippo.live.LiveState;
 import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.EmbeddedMessage;
-import com.dumbhippo.persistence.ExternalAccount;
-import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.GroupMessage;
 import com.dumbhippo.persistence.InvitationToken;
 import com.dumbhippo.persistence.MembershipStatus;
-import com.dumbhippo.persistence.MySpaceBlogComment;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.PostMessage;
 import com.dumbhippo.persistence.PostVisibility;
 import com.dumbhippo.persistence.Resource;
-import com.dumbhippo.persistence.Sentiment;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.AccountSystem;
 import com.dumbhippo.server.ChatRoomInfo;
 import com.dumbhippo.server.ChatRoomKind;
 import com.dumbhippo.server.ChatRoomMessage;
 import com.dumbhippo.server.ChatRoomUser;
-import com.dumbhippo.server.ExternalAccountSystem;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.InvitationSystem;
@@ -52,7 +47,6 @@ import com.dumbhippo.server.JabberUserNotFoundException;
 import com.dumbhippo.server.MessengerGlue;
 import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.MusicSystemInternal;
-import com.dumbhippo.server.MySpaceTracker;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.PostingBoard;
@@ -87,10 +81,7 @@ public class MessengerGlueBean implements MessengerGlue {
 	
 	@EJB
 	private PostBlockHandler postBlockHandler;
-	
-	@EJB
-	private MySpaceTracker mySpaceTracker;
-	
+
 	@EJB
 	private MusicSystem musicSystem;
 	
@@ -105,9 +96,6 @@ public class MessengerGlueBean implements MessengerGlue {
 	
 	@EJB
 	private ServerStatus serverStatus;
-	
-	@EJB
-	private ExternalAccountSystem externalAccounts;
 	
 	static final private long EXECUTION_WARN_MILLISECONDS = 5000;
 	
@@ -179,6 +167,7 @@ public class MessengerGlueBean implements MessengerGlue {
 		}
 	}
 	
+	@SuppressWarnings("unused")
 	private User userFromTrustedUsername(String username) {
 		try {
 			return identitySpider.lookupGuid(User.class, Guid.parseTrustedJabberId(username));
@@ -305,55 +294,6 @@ public class MessengerGlueBean implements MessengerGlue {
 		if (!account.getWasSentShareLinkTutorial()) {
 			doShareLinkTutorial(account);
 		}
-	}	
-	
-	public String getMySpaceName(String username) {
-		User user = userFromTrustedUsername(username);
-		try {
-			return externalAccounts.getMySpaceName(SystemViewpoint.getInstance(), user);
-		} catch (NotFoundException e) {
-			return null;
-		}
-	}
-	
-	public void addMySpaceBlogComment(String username, long commentId, long posterId) {
-		mySpaceTracker.addMySpaceBlogComment(userFromTrustedUsername(username), commentId, posterId);
-	}	
-	
-	public List<MySpaceBlogCommentInfo> getMySpaceBlogComments(String username) {
-		List<MySpaceBlogCommentInfo> ret = new ArrayList<MySpaceBlogCommentInfo>();
-		for (MySpaceBlogComment cmt : mySpaceTracker.getRecentComments(userFromTrustedUsername(username))) {
-			ret.add(new MySpaceBlogCommentInfo(cmt.getCommentId(), cmt.getPosterId()));
-		}
-		return ret;
-	}
-	
-	private List<MySpaceContactInfo> userSetToContactList(Set<User> users) {
-		List<MySpaceContactInfo> ret = new ArrayList<MySpaceContactInfo>();
-		for (User user : users) {
-			String myspaceName = null;
-			String myspaceFriendId = null;
-			try {
-				ExternalAccount external = externalAccounts.lookupExternalAccount(SystemViewpoint.getInstance(), user, ExternalAccountType.MYSPACE);
-				if (external.getSentiment() == Sentiment.LOVE) {
-					myspaceName = external.getHandle();
-					myspaceFriendId = external.getExtra();
-				}
-			} catch (NotFoundException e) {
-			}
-			ret.add(new MySpaceContactInfo(myspaceName, myspaceFriendId));
-		}
-		return ret;
-	}
-	
-	public List<MySpaceContactInfo> getContactMySpaceNames(String username) {
-		User requestingUser = userFromTrustedUsername(username);
-		return userSetToContactList(identitySpider.getMySpaceContacts(new UserViewpoint(requestingUser)));
-	}
-	
-	public void notifyNewMySpaceContactComment(String username, String mySpaceContactName) {
-		User requestingUser = userFromTrustedUsername(username);
-		mySpaceTracker.notifyNewContactComment(new UserViewpoint(requestingUser), mySpaceContactName);
 	}
 	
 	private User getUserFromGuid(Guid guid) {

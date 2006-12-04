@@ -112,6 +112,8 @@ import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.server.views.Viewpoint;
 import com.dumbhippo.services.FlickrUser;
 import com.dumbhippo.services.FlickrWebServices;
+import com.dumbhippo.services.MySpaceScraper;
+import com.dumbhippo.services.TransientServiceException;
 import com.dumbhippo.statistics.ColumnDescription;
 import com.dumbhippo.statistics.ColumnMap;
 import com.dumbhippo.statistics.Row;
@@ -1571,24 +1573,26 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	
 	public void doSetMySpaceName(XmlBuilder xml, UserViewpoint viewpoint, String name) throws XmlMethodException {
 		ExternalAccount external = externalAccountSystem.getOrCreateExternalAccount(viewpoint, ExternalAccountType.MYSPACE);
-		String oldHandle = external.getHandle();
 		try {
 			external.setHandleValidating(name);
 		} catch (ValidationException e) {
 			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, e.getMessage());
 		}
-
-		externalAccountSystem.setSentiment(external, Sentiment.LOVE);
 		
-		// FIXME in externalAccounts.setMySpaceName we don't clear the friend ID in this way... 
-		// but might have side effect problems if we did.
-		String newHandle = external.getHandle();
-		if ((oldHandle == null && newHandle != null) ||
-			(oldHandle != null && newHandle == null) ||
-			(oldHandle != null && newHandle != null && !oldHandle.equals(newHandle))) {
-			// kill the friend ID if the name changes
-			external.setExtra(null);
+		String friendId;		
+		try {
+			friendId = MySpaceScraper.getFriendId(name);
+			external.setExtra(friendId);
+		} catch (TransientServiceException e) {
+			logger.warn("Failed to get MySpace friend ID", e);
+			throw new XmlMethodException(XmlMethodErrorCode.INVALID_ARGUMENT, "Couldn't verify MySpace name; try again later");
 		}
+		
+		Feed feed = scrapeFeedFromUrl(MySpaceScraper.getBlogURLFromFriendId(friendId));
+		EJBUtil.forceInitialization(feed.getAccounts());		
+		externalAccountSystem.setSentiment(external, Sentiment.LOVE);
+		external.setFeed(feed);
+		feed.getAccounts().add(external);		
 	}
 
 	public void doSetYouTubeName(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException {
