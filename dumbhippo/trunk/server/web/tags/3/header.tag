@@ -87,12 +87,14 @@
 </div>
 <!-- Semi-cracktastic thing to show our javascript debug log -->
 <dh:script module="dh.logger"/>
+<dh:script module="dh.util"/>
 <script type="text/javascript">
 	var link = document.getElementById("dhPageHeaderLeftLink");
 	link.onclick = function (e) {
 		if (!e) e = window.event;
 		if (e.ctrlKey && e.altKey) {
 			dh.logger.show();
+			dh.util.cancelEvent(e);
 			return false;
 		}
 		return true;

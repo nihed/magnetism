@@ -58,8 +58,6 @@ public interface PostingBoard {
 	 */
 	public void getGroupPosts(Viewpoint viewpoint, Group recipient, Pageable<PostView> pageable);
 
-	public List<PostView> getContactPosts(UserViewpoint viewpoint, User user, boolean include_received, int start, int max);
-
 	/**
 	 * Retrieve posts that a user has marked as "favorites"
 	 * @param viewpoint the viewpoint retrieving the information

@@ -716,7 +716,7 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 	
 	private static final String FIND_ADDABLE_CONTACTS_QUERY = 
 		"SELECT contact from Account a, Contact contact, Group g " +
-		"WHERE a.owner = :viewer AND contact MEMBER OF a.contacts AND " + 
+		"WHERE a.owner = :viewer AND contact.account = a AND " + 
 			  "g.id = :groupid AND " + CAN_SEE_GROUP + " AND " + 
 			  "NOT EXISTS(SELECT gm FROM GroupMember gm " +
 				         "WHERE gm.group = :groupid AND " + CONTACT_IS_MEMBER + " AND " +

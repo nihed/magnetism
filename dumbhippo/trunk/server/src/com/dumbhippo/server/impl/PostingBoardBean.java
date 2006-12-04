@@ -960,29 +960,6 @@ public class PostingBoardBean implements PostingBoard {
 		return getPostViews(viewpoint, q, search, start, max);
 	}
 	
-	public List<PostView> getContactPosts(UserViewpoint viewpoint, User user, boolean include_received, int start, int max) {
-		if (!viewpoint.isOfUser(user))
-			return Collections.emptyList();
-		
-		Account account = accountSystem.lookupAccountByUser(user); 
-		
-		assert account != null;
-		
-		String recipient_clause = include_received ? "" : "NOT " + VIEWER_RECEIVED; 
-
-		Query q;
-		q = em.createQuery("SELECT post FROM Account account, Post post " + 
-						   "WHERE account = :account AND " +
-				               "post.poster MEMBER OF account.contacts AND " +
-				                recipient_clause + " AND " +
-				                CAN_VIEW + ORDER_RECENT);
-		
-		q.setParameter("account", account);
-		q.setParameter("viewer", user);		
-		
-		return getPostViews(viewpoint, q, null, start, max);
-	}
-	
 	public void pageFavoritePosts(Viewpoint viewpoint, User user, Pageable<PostView> pageable) {
 		
 		/*
