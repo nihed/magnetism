@@ -639,7 +639,9 @@ HippoCanvas::updateTooltip(bool showIfNotAlready, int x, int y)
                                               x, y,
                                               &forArea);
     if (tip) {
-        tooltip_->update(&forArea, tip);
+        forArea.x -= canvasX_;
+        forArea.y -= canvasY_;
+        tooltip_->update(x - canvasX_, y - canvasY_, &forArea, tip);
 
         g_free(tip);
         

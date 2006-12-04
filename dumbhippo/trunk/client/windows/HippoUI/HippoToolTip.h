@@ -22,7 +22,9 @@ public:
         return hippo_rectangle_equal(forArea, &forArea_) != FALSE;
     }
 
-    void update(const HippoRectangle *forArea,
+    void update(int                   mouse_x,
+                int                   mouse_y,
+                const HippoRectangle *forArea,
                 const char           *text);
     void activate();
     void deactivate();
@@ -38,5 +40,6 @@ private:
 
     HWND forWindow_;
     HippoRectangle forArea_;
+    int mouseX_, mouseY_;
     HippoBSTR text_;
 };

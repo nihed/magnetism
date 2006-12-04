@@ -8,6 +8,16 @@
 #include "HippoToolTip.h"
 #include <glib.h>
 
+// Suprisingly, Windows doesn't handle avoiding the mouse pointer for
+// us, so we have to add these in ourself
+#define MOUSE_X_OFFSET 15
+#define MOUSE_Y_OFFSET 15
+
+// Passing the control size to windows to have it avoid it is a bad idea
+// if the control is too wide, since then the tooltip appears distant
+// from the cursor
+#define MAX_AVOID_WIDTH 100
+
 HippoToolTip::HippoToolTip()
 {
     setSelfSizing(true);
@@ -26,6 +36,9 @@ HippoToolTip::HippoToolTip()
     forArea_.y = 0;
     forArea_.width = 0;
     forArea_.height = 0;
+
+    mouseX_ = -1;
+    mouseY_ = -1;
 }
 
 bool
@@ -74,7 +87,7 @@ HippoToolTip::getTrackingToolInfo(TOOLINFO *ti)
     ZeroMemory(ti, sizeof(TOOLINFO));
 
     ti->cbSize = sizeof(TOOLINFO);
-    ti->uFlags = TTF_TRACK | TTF_ABSOLUTE;
+    ti->uFlags = TTF_TRACK;
     ti->hwnd = forWindow_;
     // we use the forWindow_ for this, but don't specify uFlags=TTF_IDISHWND
     // which means Windows thinks the tooltip goes with ti->rect instead
@@ -88,33 +101,38 @@ HippoToolTip::getTrackingToolInfo(TOOLINFO *ti)
     ti->lpszText = LPSTR_TEXTCALLBACK;
     // instance to get the text resource from
     ti->hinst  = NULL;
-    // With TTF_TRACK afaict this is just ignored. It would be 
-    // convenient if it were not, but I can't make it do anything.
-    ti->rect.left = ti->rect.top = ti->rect.bottom = ti->rect.right = 0;
 }
 
 void
-HippoToolTip::update(const HippoRectangle *for_area,
+HippoToolTip::update(int                   mouseX,
+                     int                   mouseY,
+                     const HippoRectangle *for_area,
                      const char           *text)
 {
     TOOLINFO ti;
 
-    // hippoDebugLogU("Updating tooltip '%s' for area %d,%d %dx%d window %p",
-    //    text, for_area->x, for_area->y, for_area->width, for_area->height, forWindow_);
+//    g_debug("HippoToolTip::update: (%d,%d) (%d,%d,%d,%d), %s",
+//            mouseX, mouseY,
+//            for_area->x, for_area->y, for_area->width, for_area->height,
+//            text);
 
     if (hippo_rectangle_equal(&forArea_, for_area) &&
-        text_ == HippoBSTR::fromUTF8(text))
+        text_ == HippoBSTR::fromUTF8(text) && 
+        mouseX_ == mouseX &&
+        mouseY_ == mouseY)
         return;
 
     forArea_ = *for_area;
     text_.setUTF8(text);
+    mouseX_ = mouseX_;
+    mouseY_ = mouseY_;
 
     if (!create())
         return;
 
     g_assert(window_ != NULL);
 
-    getTrackingToolInfo(&ti); // init the hwnd and uId fields
+    getTrackingToolInfo(&ti); // init the hwnd, uId fields
 
      // needs to be NULL or LPSTR_TEXTCALLBACK will be taken as a buffer to fill, afaict
     ti.lpszText = NULL;
@@ -134,14 +152,19 @@ HippoToolTip::update(const HippoRectangle *for_area,
     ti.lpszText = text_.m_str; // LPSTR_TEXTCALLBACK;
     ti.hinst = NULL; // interpret lpszText as a string instead of resource name
 
+    if (for_area->width < MAX_AVOID_WIDTH)
+        hippo_rectangle_to_rect(for_area, &ti.rect);
+    else
+        ti.rect.top = ti.rect.bottom = ti.rect.left = ti.rect.right = 0;
+
     // return value of this is meaningless, don't try to use it
     // to detect success/failure
     SendMessage(window_, TTM_SETTOOLINFO, 0, (LPARAM) &ti);
 
     // Now position tooltip in screen coordinates
     POINT where;
-    where.x = for_area->x;
-    where.y = for_area->y + for_area->height;
+    where.x = mouseX + MOUSE_X_OFFSET;;
+    where.y = mouseY + MOUSE_Y_OFFSET;
     MapWindowPoints(forWindow_, NULL, &where, 1);
     SendMessage(window_, TTM_TRACKPOSITION, 0, MAKELONG(where.x, where.y));
 
