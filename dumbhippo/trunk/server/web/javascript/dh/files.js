@@ -1,11 +1,12 @@
-dojo.provide('dh.files');
-dojo.require('dh.server');
+dojo.provide("dh.files");
+dojo.require("dh.server");
+dojo.require("dh.util");
 
 dh.files.deleteFile = function(fileId) {
 	dh.server.doXmlMethod("deleteFile",
 						{ "fileId": fileId },
 			  	    	function(childNodes, http) {
-			  	    		document.location.reload();
+			  	    		dh.util.refresh();
 						},
 		  	    	 	function(code, msg, http) {
 							alert(msg);

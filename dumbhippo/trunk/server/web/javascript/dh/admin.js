@@ -30,7 +30,7 @@ dh.admin.setAdminDisabled = function(userId, disabled) {
 				     { "userId" : userId,
 				       "disabled" : disabled },
 		  	    	 function(type, data, http) {
-		  	    	     document.location.reload()
+		  	    	     dh.util.refresh()
 		  	    	 },
 		  	    	 function(type, error, http) {
 		  	    	     alert("Couldn't " + (disabled ? "disable" : "enable") +  " user")
@@ -41,7 +41,7 @@ dh.admin.setNewFeatures = function(flag) {
    	dh.server.doPOST("setnewfeatures",
 				     { "newFeaturesFlag" : flag },
 		  	    	 function(type, data, http) {
-		  	    	     document.location.reload()
+		  	    	     dh.util.refresh()
 		  	    	 },
 		  	    	 function(type, error, http) {
 		  	    	     alert("Couldn't change new features flag")

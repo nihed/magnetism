@@ -78,7 +78,7 @@ dh.groupaccount.addFeed = function(feedUrl) {
 				       "url" :  feedUrl },
 		  	    	 function(childNodes, http) {
 		  	    	 	dh.groupaccount.hideAllFeedPopups();
-						document.location.reload();
+						dh.util.refresh();
 		  	    	 },
 		  	    	 function(code, msg, http) {
 			  	    	dh.groupaccount.hideAllFeedPopups();
@@ -226,7 +226,7 @@ dh.groupaccount.removeFeed = function(feedUrl) {
 				     { "groupId" : dh.groupaccount.groupId,
 				       "url" :  feedUrl },
 		  	    	 function(childNodes, http) {
-						document.location.reload();
+						dh.util.refresh();
 		  	    	 },
 		  	    	 function(code, msg, http) {
 			  	    	 dh.formtable.showStatusMessage('dhFeedEntry', "Failed to remove feed; try again? (" + msg + ")");

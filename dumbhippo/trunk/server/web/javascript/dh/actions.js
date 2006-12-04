@@ -12,7 +12,7 @@ dh.actions.addContact = function(contactId, cb, errcb) {
 		  	    	 	if (cb)
 		  	    	 		cb()
 		  	    	 	else
-		  	    	 		document.location.reload();
+		  	    	 		dh.util.refresh();
 		  	    	 },
 		  	    	 function(type, error, http) {
 		  	    	 	if (errcb)
@@ -26,7 +26,7 @@ dh.actions.removeContact = function(contactId) {
 	dh.server.doPOST("removecontactperson",
 				     { "contactId" : contactId },
 		  	    	 function(type, data, http) {
-		  	    	 	 document.location.reload();
+		  	    	 	 dh.util.refresh();
 		  	    	 },
 		  	    	 function(type, error, http) {
 		  	    	     alert("Couldn't remove user from contact list");
@@ -38,7 +38,7 @@ dh.actions.joinGroup = function(groupId, cb, errcb) {
 			 	     { "groupId" : groupId },
   					 function(type, data, http) {
   					 	if (!cb)
-			  		 		document.location.reload();
+			  		 		dh.util.refresh();
 			  		 	else
 			  		 		cb();
 					 },
@@ -55,7 +55,7 @@ dh.actions.leaveGroup = function(groupId, cb, errcb) {
 			 	     { "groupId" : groupId },
   					 function(type, data, http) {
   					 	if (!cb)
-			  		 		document.location.reload();
+			  		 		dh.util.refresh();
 			  		 	else
 			  		 		cb()
 					 },
@@ -107,7 +107,7 @@ dh.actions.disableAccount = function() {
    	dh.server.doPOST("setaccountdisabled",
    					{ "disabled" : "true" },
 		  	    	 function(type, data, http) {
-			  	    	 document.location.reload();
+			  	    	 dh.util.refresh();
 		  	    	 },
 		  	    	 function(type, error, http) {
 		  	    	     alert("Couldn't disable account");
@@ -118,7 +118,7 @@ dh.actions.setMusicSharingEnabled = function(enabled) {
    	dh.server.doPOST("setmusicsharingenabled",
    					{ "enabled" : enabled ? "true" : "false" },
 		  	    	 function(type, data, http) {
-			  	    	 document.location.reload();
+			  	    	 dh.util.refresh();
 		  	    	 },
 		  	    	 function(type, error, http) {
 		  	    	     alert("Couldn't toggle music sharing");
@@ -129,7 +129,7 @@ dh.actions.setNotifyPublicShares = function(notify) {
    	dh.server.doPOST("setnotifypublicshares",
    					{ "notify" : notify ? "true" : "false" },
 		  	    	 function(type, data, http) {
-			  	    	 document.location.reload();
+			  	    	 dh.util.refresh();
 		  	    	 },
 		  	    	 function(type, error, http) {
 		  	    	     alert("Couldn't toggle default public share");
@@ -140,7 +140,7 @@ dh.actions.setPersonQuip = function(entity, isLove, text) {
    	dh.server.doPOST("setquip",
    					{ entityType: "person", entity : entity, isLove: isLove, text: text },
 		  	    	 function(type, data, http) {
-			  	    	 document.location.reload();
+			  	    	 dh.util.refresh();
 		  	    	 },
 		  	    	 function(type, error, http) {
 		  	    	     alert("Couldn't set quip");
@@ -154,7 +154,7 @@ dh.actions.renamePersonHandler = function(value, oldValue) {
    	dh.server.doPOST("renameperson",
 				     { "name" : value },
 			  	    	 function(type, data, http) {
-	  	    	 	 document.location.reload();
+	  	    	 	 dh.util.refresh();
 		  	    	 },
 		  	    	 function(type, error, http) {
 		  	    	     alert("Couldn't rename user");
@@ -196,7 +196,7 @@ dh.actions.setPostFavorite = function(postId, favorite) {
 				     { "postId" : postId,
 				     	"favorite" : favorite },
 		  	    	 function(type, data, http) {
-		  	    	 	 document.location.reload();
+		  	    	 	 dh.util.refresh();
 		  	    	 },
 		  	    	 function(type, error, http) {
 		  	    	     alert("Couldn't change favoriteness of post");

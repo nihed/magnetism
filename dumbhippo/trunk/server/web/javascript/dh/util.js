@@ -812,3 +812,8 @@ dh.util.addEventListener = function(node, eventName, func) {
 		throw new Error("browser does not support addEventListener or attachEvent");
 	}
 }
+
+// Reload the content of the page, without trigger revalidation as document.location.reload()
+dh.util.refresh = function() {
+	window.open(document.location.href, "_self", null, true);
+}

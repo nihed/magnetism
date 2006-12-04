@@ -4,7 +4,8 @@ dojo.require("dh.textinput");
 dojo.require("dh.fileinput");
 dojo.require("dh.photochooser");
 dojo.require("dh.lovehate");
-dojo.require('dh.password');
+dojo.require("dh.password");
+dojo.require("dh.util");
 
 dh.account.generatingRandomBio = false;
 dh.account.generateRandomBio = function() {
@@ -55,7 +56,7 @@ dh.account.removeClaimEmail = function(address) {
   	dh.server.doPOST("removeclaimemail",
 			 	     { "address" : address },
   					 function(type, data, http) {
-  					 	document.location.reload();
+  					 	dh.util.refresh();
 					 },
 					 function(type, error, http) {
 						 alert("Couldn't remove this address.");
@@ -66,7 +67,7 @@ dh.account.removeClaimAim = function(address) {
   	dh.server.doPOST("removeclaimaim",
 			 	     { "address" : address },
   					 function(type, data, http) {
-  					 	document.location.reload();
+  					 	dh.util.refresh();
 					 },
 					 function(type, error, http) {
 						 alert("Couldn't remove this address.");

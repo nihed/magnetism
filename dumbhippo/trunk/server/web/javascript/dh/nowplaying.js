@@ -18,7 +18,7 @@ dh.nowplaying.setTheme = function(themeId) {
 	dh.server.doPOST("setnowplayingtheme",
 				     { "theme" : themeId },
 		  	    	 function(type, data, http) {	  
-		  	    	 	 document.location.reload();
+		  	    	 	 dh.util.refresh();
 		  	    	 },
 		  	    	 function(type, error, http) {
 		  	    	     alert("Couldn't set the theme");

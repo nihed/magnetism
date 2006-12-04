@@ -25,7 +25,7 @@ dh.invitationadmin.invite = function(countToInvite) {
 				       "message" : message.value,
 				       "suggestedGroupIds" : commaSuggestedGroups },
 		  	    	 function(type, data, http) {
-                         document.location.reload();
+                         dh.util.refresh();
 		  	    	 },
 		  	    	 function(type, error, http) {
 		  	    	     dh.util.showMessage("Couldn't invite");
