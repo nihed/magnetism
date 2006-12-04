@@ -60,8 +60,6 @@ dh.sharegroup.doSubmit = function() {
 						  	"recipients" : commaRecipients
 						},
 						function(type, data, http) {
-							dojo.debug("sharegroup got back data " + dhAllPropsAsString(data));
-							
 							if (window.opener) {
 								// reload the group page so it shows we've invited people
 								window.opener.location.reload();
@@ -71,7 +69,7 @@ dh.sharegroup.doSubmit = function() {
 							                     "The group has been shared!");
 						},
 						function(type, error, http) {
-							dojo.debug("sharegroup got back error " + dhAllPropsAsString(error));
+							alert("Couldn't share the group");
 						});
 }
 
@@ -98,9 +96,6 @@ dh.sharegroup.loadContacts = function() {
 				dh.share.haveLoadedContacts = true;
 			},
 			function(type, error, http) {
-				dojo.debug("getting contacts, got back error " + dhAllPropsAsString(error));
-				alert("could not get your contacts: " + error);
-				
 				// note that we don't cache an empty result set, we will retry instead...
 			});
 }

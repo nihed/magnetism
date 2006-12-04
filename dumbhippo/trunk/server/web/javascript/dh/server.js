@@ -6,6 +6,16 @@ dojo.require("dojo.event.*");
 // requiring the module creates an iframe per page. (And requires
 // iframe_history.html, which we don't install into place right now)
 dojo.require("dojo.io.*");
+dojo.require("dh.util");
+
+dh.server._wrapErrorFunc = function(f, name) {
+	return function(type, error, http) {
+		dh.logError("server", "Got error invoking method " + name);
+		dh.logError("server", "   " + error.message);
+		if (f != null)
+			f();
+	}
+}
 
 dh.server.get = function(name, params, loadFunc, errorFunc, how, what) {
 	var root = null;
@@ -26,7 +36,7 @@ dh.server.get = function(name, params, loadFunc, errorFunc, how, what) {
 		 method: how,
 		 url: root + name,
 		 load: loadFunc,
-		 error: errorFunc,
+		 error: dh.server._wrapErrorFunc(errorFunc, name),
 		 content: params,
 		 mimetype: what,
 		 async: true,

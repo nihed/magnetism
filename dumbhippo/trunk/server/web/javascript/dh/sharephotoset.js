@@ -294,12 +294,10 @@ dh.flickrupload.UploadStatus = function(photos, userId, photoTitle, descriptionH
 							"postInfoXml" : postInfoXml
 						},
 						function(type, data, http) {
-							dojo.debug("sharelink got back data " + dhAllPropsAsString(data));
 							dh.util.goToNextPage("", "You've been shared!");
 						},
 						function(type, error, http) {
-							dojo.debug("sharelink got back error " + dhAllPropsAsString(error));
-
+							alert("Couldn't share the photoset");
 						});
 	}
 }

@@ -49,7 +49,6 @@ dh.groupaccount.createGroup = function() {
                 		}                    	
                     },
                     function(type, error, http) {
-                        dojo.debug("creategroup got back error " + dhAllPropsAsString(error));
 						dh.groupaccount.stopWait("Couldn't create the group")
   	                })
 }

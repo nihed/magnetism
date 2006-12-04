@@ -61,7 +61,7 @@ dh.invitation.send = function() {
                 		}
                     },
                     function(type, error, http) {
-                        dojo.debug("sendemailinvitation got back error " + dhAllPropsAsString(error));
+                    	alert("Couldn't send the email invitation");
   	                })
 }
 

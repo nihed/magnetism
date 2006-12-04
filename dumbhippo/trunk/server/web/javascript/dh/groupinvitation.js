@@ -47,9 +47,6 @@ dh.groupinvitation.loadContacts = function() {
 			},
 			function(type, data, http) {
 				dh.groupinvitation.mergeObjectsDocument(data);
-			},
-			function(type, error, http) {
-				dojo.debug("getting contacts, got back error " + dhAllPropsAsString(error));
 			});
 }
 
@@ -106,7 +103,7 @@ dh.groupinvitation.send = function() {
                 		}
                     },
                     function(type, error, http) {
-                        dojo.debug("sendgroupinvitation got back error " + dhAllPropsAsString(error));
+                    	alert("Couldn't send the group invitation");
   	                })
 }
 

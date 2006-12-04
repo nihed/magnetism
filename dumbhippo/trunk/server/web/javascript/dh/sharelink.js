@@ -122,7 +122,6 @@ dh.sharelink.doCreateGroup = function() {
 						dh.sharelink.inAction = false;
 					},
 					function(type, error, http) {
-						//dojo.debug("creategroup got back error " + dhAllPropsAsString(error));
 						// FIXME display the error, don't hide status
 						dh.util.hide(statusNode);
 						dh.sharelink.inAction = false;		
@@ -194,7 +193,6 @@ dh.sharelink.doAddMembers = function() {
 						dh.sharelink.inAction = false;
 					},
 					function(type, error, http) {
-						//dojo.debug("addmembers got back error " + dhAllPropsAsString(error));
 						// FIXME display the error, don't hide status
 						dh.util.hide(statusNode);
 						dh.sharelink.inAction = false;		
@@ -296,8 +294,7 @@ dh.sharelink.doSubmit = function() {
 							dh.util.goToNextPage("", "You've been shared!");
 						},
 						function(type, error, http) {
-							dojo.debug("sharelink got back error " + dhAllPropsAsString(error));
-
+							alert("Couldn't share the link");
 						});
 }
 

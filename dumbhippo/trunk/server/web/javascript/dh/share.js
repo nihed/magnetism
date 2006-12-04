@@ -174,7 +174,6 @@ dh.share.addEmailContactAsync = function(email, onComplete) {
 					onComplete()
 			},
 			function(type, error, http) {
-				dojo.debug(" got back error " + dhAllPropsAsString(error));
 				// FIXME display
 			});
 }
@@ -337,7 +336,6 @@ dh.share.loadContacts = function() {
 				dh.share.haveLoadedContacts = true;
 			},
 			function(type, error, http) {
-				dojo.debug("getting contacts, got back error " + dhAllPropsAsString(error));
 				var loadingDiv = document.getElementById("dhShareRecipientsLoading");
 				dh.util.clearNode(loadingDiv);
 				loadingDiv.appendchild(document.createTextNode("Error loading friends and groups"));
