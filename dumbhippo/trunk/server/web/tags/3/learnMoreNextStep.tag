@@ -23,7 +23,7 @@
 <tr>
 <td>
 <div class="dh-learnmore-summary">
-	Get the Mugshot Client to <c:out value="${option}"/> It's easy and free!
+	Get the Mugshot download to <c:out value="${option}"/> It's easy and free!
 </div>    
 <c:choose>
 	<c:when test="${signin.valid}">
