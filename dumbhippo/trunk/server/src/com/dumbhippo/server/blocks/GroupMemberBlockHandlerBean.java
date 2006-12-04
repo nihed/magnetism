@@ -91,6 +91,11 @@ public class GroupMemberBlockHandlerBean extends AbstractBlockHandlerBean<GroupM
 		
 		Set<User> recipients = groupSystem.getMembershipChangeRecipients(group);
 		
+		// We always want to notify users about changes to their own status,
+		// even when they leave and are no longer a member
+		User user = em.find(User.class, block.getData2AsGuid().toString());
+		recipients.add(user);
+		
 		return recipients;
 	}
 	
