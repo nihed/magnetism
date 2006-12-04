@@ -5,6 +5,14 @@ dh.stacker.removePrelight = function(node) {
 	dh.util.removeClass(node, "dh-box-prelighted")
 }
 
+// Workaround for a Firefox resizing problem
+dh.stacker._forceResize = function(block) {
+	var blockTable = document.getElementById("dhStackerBlock-" + block.dhBlockId);
+	var old = blockTable.style.display
+	blockTable.style.display = "none";
+	blockTable.style.display = old;
+}
+
 dh.stacker.blockOpen = function(block) {
 	block.dhExpanded = true;
 	var content = document.getElementById("dhStackerBlockContent-" + block.dhBlockId);
@@ -22,6 +30,8 @@ dh.stacker.blockOpen = function(block) {
 		fullDesc.style.display = "block";
 		shortDesc.style.display = "none";
 	}
+	
+	dh.stacker._forceResize(block);
 }
 
 dh.stacker.blockClose = function(block) {
@@ -41,6 +51,8 @@ dh.stacker.blockClose = function(block) {
 		fullDesc.style.display = "none";
 		shortDesc.style.display = "block";
 	}
+	
+	dh.stacker._forceResize(block);
 }
 
 dh.stacker.onBlockMouseOver = function(e) {

@@ -60,6 +60,12 @@ public class BlogBlockView extends AbstractPersonBlockView implements ExternalAc
 	public String getLink() {
 		return getEntry().getLink().getUrl();
 	}
+	
+	public String getDescriptionAsHtml() {
+		XmlBuilder xml = new XmlBuilder();
+		xml.appendTextAsHtml(getEntry().getDescription(), null);
+		return xml.toString();
+	}
 
 	@Override
 	public String getTypeTitle() {
