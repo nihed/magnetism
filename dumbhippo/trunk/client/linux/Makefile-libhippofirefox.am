@@ -48,8 +48,12 @@ libhippofirefox_la_CPPFLAGS =			\
 	-I $(FIREFOX_SRCDIR)/include		\
 	-I config/hippo
 
+# The include of $(GECKO_INCLUDEDIR) in the FULL_GECKO case is for 
+# Ubuntu, which has a mix of the gecko-sdk directory arrangement
+# with including the full set of headers
 if HAVE_FULL_GECKO
 libhippofirefox_la_CPPFLAGS +=			\
+	-I $(GECKO_INCLUDEDIR)			\
 	-I $(GECKO_INCLUDEDIR)/caps		\
 	-I $(GECKO_INCLUDEDIR)/dom		\
 	-I $(GECKO_INCLUDEDIR)/js		\
