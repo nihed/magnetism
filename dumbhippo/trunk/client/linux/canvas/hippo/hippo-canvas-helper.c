@@ -133,9 +133,10 @@ cancel_tooltip(HippoCanvasHelper *helper)
     if (helper->tooltip_timeout_id) {
         g_source_remove(helper->tooltip_timeout_id);
         helper->tooltip_timeout_id = 0;
-        if (helper->tooltip_window)
-            gtk_widget_hide(helper->tooltip_window);
     }
+     
+    if (helper->tooltip_window)
+        gtk_widget_hide(helper->tooltip_window);
 }
 
 static void
@@ -483,8 +484,9 @@ handle_new_mouse_location(HippoCanvasHelper *helper,
     
     gdk_window_get_pointer(event_window, &mouse_x, &mouse_y, NULL);
 
-    if (mouse_x != helper->last_window_x || mouse_y != helper->last_window_y) {
-        
+    if (detail == HIPPO_MOTION_DETAIL_LEAVE) {
+        cancel_tooltip(helper);       
+    } else if (mouse_x != helper->last_window_x || mouse_y != helper->last_window_y) {
         cancel_tooltip(helper);       
         helper->last_window_x = mouse_x;
         helper->last_window_y = mouse_y;
@@ -595,6 +597,10 @@ hippo_canvas_helper_realize(HippoCanvasHelper *helper)
 void
 hippo_canvas_helper_unmap(HippoCanvasHelper *helper)
 {
+    /* This is actually unnecessary and not useful, though harmless ... we don't 
+     * reliably get an unmap if some ancestor is hidden, but we do reliably
+     * get a leave event, which we handle elsewhere.
+     */
     cancel_tooltip(helper);
 }
 
