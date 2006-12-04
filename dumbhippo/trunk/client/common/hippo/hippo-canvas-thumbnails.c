@@ -7,6 +7,7 @@
 #include <hippo/hippo-canvas-item.h>
 #include <hippo/hippo-canvas-box.h>
 #include <hippo/hippo-canvas-image.h>
+#include <hippo/hippo-canvas-url-image.h>
 #include <hippo/hippo-canvas-url-link.h>
 
 static void      hippo_canvas_thumbnails_init                (HippoCanvasThumbnails       *thumbnails);
@@ -217,8 +218,9 @@ hippo_canvas_thumbnails_create_children(HippoCanvasThumbnails *canvas_thumbnails
                                  "spacing", 4,
                                  NULL);
 
-        /* FIXME hook up clicking on the image */
-        image = g_object_new(HIPPO_TYPE_CANVAS_IMAGE,
+        image = g_object_new(HIPPO_TYPE_CANVAS_URL_IMAGE,
+                             "actions", canvas_thumbnails->actions,
+                             "url", hippo_thumbnail_get_href(thumb),
                              /* "tooltip", hippo_thumbnail_get_title(thumb), */
                              "xalign", HIPPO_ALIGNMENT_CENTER,
                              "yalign", HIPPO_ALIGNMENT_CENTER,

@@ -113,6 +113,10 @@ static void
 hippo_canvas_url_link_set_url(HippoCanvasUrlLink *link,
                               const char         *url)
 {
+
+    if (url == link->url)
+        return;
+
     if (link->url)
         g_free(link->url);
     
