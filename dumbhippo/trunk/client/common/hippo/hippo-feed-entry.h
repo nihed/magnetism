@@ -21,8 +21,9 @@ typedef struct _HippoFeedEntryClass HippoFeedEntryClass;
 
 GType            hippo_feed_entry_get_type               (void) G_GNUC_CONST;
 
-const char* hippo_feed_entry_get_title (HippoFeedEntry *feed_entry);
-const char* hippo_feed_entry_get_url   (HippoFeedEntry *feed_entry);
+const char* hippo_feed_entry_get_description (HippoFeedEntry *feed_entry);
+const char* hippo_feed_entry_get_title       (HippoFeedEntry *feed_entry);
+const char* hippo_feed_entry_get_url         (HippoFeedEntry *feed_entry);
 
 /* can return NULL */
 HippoFeedEntry* hippo_feed_entry_new_from_xml (HippoDataCache       *cache,

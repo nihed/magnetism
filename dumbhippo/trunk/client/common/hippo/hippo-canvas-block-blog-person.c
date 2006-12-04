@@ -43,6 +43,7 @@ static void set_person (HippoCanvasBlockBlogPerson *block_blog_person,
 
 struct _HippoCanvasBlockBlogPerson {
     HippoCanvasBlock canvas_block;
+    HippoCanvasItem *description_item;
     HippoPerson *person;
 };
 
@@ -73,7 +74,6 @@ hippo_canvas_block_blog_person_init(HippoCanvasBlockBlogPerson *block_blog_perso
     HippoCanvasBlock *block = HIPPO_CANVAS_BLOCK(block_blog_person);
 
     block->required_type = HIPPO_BLOCK_TYPE_BLOG_PERSON;
-    block->expandable = FALSE; /* currently we have nothing to show on expand */
 }
 
 static HippoCanvasItemIface *item_parent_class;
@@ -176,9 +176,17 @@ hippo_canvas_block_blog_person_constructor (GType                  type,
     hippo_canvas_block_set_heading(block, _("Blog Post"));
 
     box = g_object_new(HIPPO_TYPE_CANVAS_BOX,
-                       "orientation", HIPPO_ORIENTATION_HORIZONTAL,
-                       "spacing", 4,
                        NULL);
+
+    block_blog->description_item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
+                                                "size-mode", HIPPO_CANVAS_SIZE_ELLIPSIZE_END,
+                                                "xalign", HIPPO_ALIGNMENT_START,
+                                                "yalign", HIPPO_ALIGNMENT_START,
+                                                "text", NULL,
+                                                "border-top", 4,
+                                                "border-bottom", 4,
+                                                NULL);
+    hippo_canvas_box_append(box, block_blog->description_item, 0);
 
     hippo_canvas_block_set_content(block, HIPPO_CANVAS_ITEM(box));
 
@@ -223,6 +231,7 @@ static void
 hippo_canvas_block_blog_person_set_block(HippoCanvasBlock *canvas_block,
                                          HippoBlock       *block)
 {
+    HippoCanvasBlockBlogPerson *block_blog_person = HIPPO_CANVAS_BLOCK_BLOG_PERSON(canvas_block);
     /* g_debug("canvas-block-blog-person set block %p", block); */
 
     if (block == canvas_block->block)
@@ -232,7 +241,7 @@ hippo_canvas_block_blog_person_set_block(HippoCanvasBlock *canvas_block,
         g_signal_handlers_disconnect_by_func(G_OBJECT(canvas_block->block),
                                              G_CALLBACK(on_user_changed),
                                              canvas_block);
-        set_person(HIPPO_CANVAS_BLOCK_BLOG_PERSON(canvas_block), NULL);
+        set_person(block_blog_person, NULL);
     }
 
     /* Chain up to get the block really changed */
@@ -255,6 +264,18 @@ hippo_canvas_block_blog_person_set_block(HippoCanvasBlock *canvas_block,
                                          hippo_feed_entry_get_title(entry),
                                          hippo_feed_entry_get_url(entry),
                                          FALSE);
+            g_object_set(block_blog_person->description_item,
+                         "text", hippo_feed_entry_get_description(entry),
+                         NULL);
+        } else {
+            /* Won't normally happen */
+            hippo_canvas_block_set_title(canvas_block,
+                                         "Blog Entry",
+                                         NULL,
+                                         FALSE);
+            g_object_set(block_blog_person->description_item,
+                         "text", NULL,
+                         NULL);
         }
     }
 }
@@ -278,9 +299,21 @@ hippo_canvas_block_blog_person_title_activated(HippoCanvasBlock *canvas_block)
 }
 
 static void
+hippo_canvas_block_blog_person_update_visibility(HippoCanvasBlockBlogPerson *block_blog_person)
+{
+    HippoCanvasBlock *canvas_block = HIPPO_CANVAS_BLOCK(block_blog_person);
+
+    g_object_set(G_OBJECT(block_blog_person->description_item),
+                 "size-mode", canvas_block->expanded ? HIPPO_CANVAS_SIZE_WRAP_WORD : HIPPO_CANVAS_SIZE_ELLIPSIZE_END,
+                 NULL);
+}
+
+static void
 hippo_canvas_block_blog_person_expand(HippoCanvasBlock *canvas_block)
 {
-    /* HippoCanvasBlockBlogPerson *block_blog_person = HIPPO_CANVAS_BLOCK_BLOG_PERSON(canvas_block); */
+    HippoCanvasBlockBlogPerson *block_blog_person = HIPPO_CANVAS_BLOCK_BLOG_PERSON(canvas_block);
+
+    hippo_canvas_block_blog_person_update_visibility(block_blog_person);
 
     HIPPO_CANVAS_BLOCK_CLASS(hippo_canvas_block_blog_person_parent_class)->expand(canvas_block);
 }
@@ -288,7 +321,9 @@ hippo_canvas_block_blog_person_expand(HippoCanvasBlock *canvas_block)
 static void
 hippo_canvas_block_blog_person_unexpand(HippoCanvasBlock *canvas_block)
 {
-    /* HippoCanvasBlockBlogPerson *block_blog_person = HIPPO_CANVAS_BLOCK_BLOG_PERSON(canvas_block); */
+    HippoCanvasBlockBlogPerson *block_blog_person = HIPPO_CANVAS_BLOCK_BLOG_PERSON(canvas_block);
+
+    hippo_canvas_block_blog_person_update_visibility(block_blog_person);
 
     HIPPO_CANVAS_BLOCK_CLASS(hippo_canvas_block_blog_person_parent_class)->unexpand(canvas_block);
 }

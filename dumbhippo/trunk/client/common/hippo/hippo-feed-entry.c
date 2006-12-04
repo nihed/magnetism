@@ -21,6 +21,7 @@ static void hippo_feed_entry_get_property (GObject      *object,
 
 struct _HippoFeedEntry {
     GObject parent;
+    char *description;
     char *title;
     char *url;
 };
@@ -31,6 +32,7 @@ struct _HippoFeedEntryClass {
 
 enum {
     PROP_0,
+    PROP_DESCRIPTION,
     PROP_TITLE,
     PROP_URL
 };
@@ -55,6 +57,13 @@ hippo_feed_entry_class_init(HippoFeedEntryClass  *klass)
     object_class->dispose = hippo_feed_entry_dispose;
     object_class->finalize = hippo_feed_entry_finalize;
 
+    g_object_class_install_property(object_class,
+                                    PROP_DESCRIPTION,
+                                    g_param_spec_string("description",
+                                                        _("Description"),
+                                                        _("Description of entry"),
+                                                        NULL,
+                                                        G_PARAM_READABLE | G_PARAM_WRITABLE));
     g_object_class_install_property(object_class,
                                     PROP_TITLE,
                                     g_param_spec_string("title",
@@ -83,6 +92,7 @@ hippo_feed_entry_finalize(GObject *object)
 {
     HippoFeedEntry *feed_entry = HIPPO_FEED_ENTRY(object);
 
+    g_free(feed_entry->description);
     g_free(feed_entry->title);
     g_free(feed_entry->url);
     
@@ -100,6 +110,15 @@ hippo_feed_entry_set_property(GObject         *object,
     feed_entry = HIPPO_FEED_ENTRY (object);
 
     switch (prop_id) {
+    case PROP_DESCRIPTION:
+        {
+            const char *new_description = g_value_get_string(value);
+            if (new_description != feed_entry->description) {
+                g_free(feed_entry->description);
+                feed_entry->description = g_strdup(new_description);
+            }
+        }
+        break;
     case PROP_TITLE:
         {
             const char *new_title = g_value_get_string(value);
@@ -135,6 +154,9 @@ hippo_feed_entry_get_property(GObject         *object,
     feed_entry = HIPPO_FEED_ENTRY (object);
 
     switch (prop_id) {
+    case PROP_DESCRIPTION:
+        g_value_set_string(value, feed_entry->description);
+        break;
     case PROP_TITLE:
         g_value_set_string(value, feed_entry->title);
         break;
@@ -145,6 +167,12 @@ hippo_feed_entry_get_property(GObject         *object,
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
         break;
     }
+}
+
+const char*
+hippo_feed_entry_get_description (HippoFeedEntry *feed_entry)
+{
+    return feed_entry->description;
 }
 
 const char*
@@ -165,6 +193,7 @@ hippo_feed_entry_new_from_xml (HippoDataCache       *cache,
 {
     const char *title;
     const char *href;
+    const char *description;
     HippoFeedEntry *entry;
     
     if (!hippo_xml_split(cache, node, NULL,
@@ -173,10 +202,10 @@ hippo_feed_entry_new_from_xml (HippoDataCache       *cache,
                          NULL))
         return NULL;
 
-    /* we never display this right now anyway */
-    /* description = lm_message_node_get_value(node); */
+    description = lm_message_node_get_value(node);
 
     entry = g_object_new(HIPPO_TYPE_FEED_ENTRY,
+                         "description", description,
                          "title", title,
                          "url", href,
                          NULL);
