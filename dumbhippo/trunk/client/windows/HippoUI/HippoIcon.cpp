@@ -43,16 +43,10 @@ HippoIcon::create(HWND window)
    
     window_ = window;
     
-    message_ = RegisterWindowMessage(TEXT("HippoNotifyMessage"));
+    notifyMessage_ = RegisterWindowMessage(TEXT("HippoNotifyMessage"));
+    taskbarCreatedMessage_ = RegisterWindowMessage(TEXT("TaskbarCreated"));
 
-    notifyIconData.cbSize = sizeof(NOTIFYICONDATA);
-    notifyIconData.hWnd = window_;
-    notifyIconData.uID = 0;
-    notifyIconData.uFlags = NIF_ICON | NIF_MESSAGE;
-    notifyIconData.uCallbackMessage = message_;
-    notifyIconData.hIcon = icon_;
-
-    Shell_NotifyIcon(NIM_ADD, &notifyIconData);
+    registerWithTaskbar();
 
     return true;
 }
@@ -76,6 +70,29 @@ HippoIcon::setIcon(HICON icon)
 }
 
 void
+HippoIcon::registerWithTaskbar()
+{
+    NOTIFYICONDATA notifyIconData = { 0 };
+    HINSTANCE instance = GetModuleHandle(NULL);
+   
+    notifyIconData.cbSize = sizeof(NOTIFYICONDATA);
+    notifyIconData.hWnd = window_;
+    notifyIconData.uID = 0;
+    notifyIconData.uFlags = NIF_ICON | NIF_MESSAGE;
+    notifyIconData.uCallbackMessage = notifyMessage_;
+    notifyIconData.hIcon = icon_;
+
+    if (tip_.m_str != 0) {
+        notifyIconData.uFlags |= NIF_TIP;
+        StringCchCopyW(notifyIconData.szTip, 
+                       sizeof(notifyIconData.szTip) / sizeof(notifyIconData.szTip[0]),
+                       tip_.m_str);
+    }
+
+    Shell_NotifyIcon(NIM_ADD, &notifyIconData);
+}
+
+void
 HippoIcon::updateIcon(HICON icon)
 {       
     setIcon(icon);
@@ -91,6 +108,8 @@ HippoIcon::updateIcon(HICON icon)
 void
 HippoIcon::updateTip(const WCHAR *tip)
 {
+    tip_ = tip;
+
     NOTIFYICONDATA notifyIconData = { 0 };
     notifyIconData.uID = 0;
     notifyIconData.hWnd = window_;
@@ -98,36 +117,40 @@ HippoIcon::updateTip(const WCHAR *tip)
     StringCchCopyW(notifyIconData.szTip, 
                    sizeof(notifyIconData.szTip) / sizeof(notifyIconData.szTip[0]),
                    tip);
-    notifyIconData.szTip;
     Shell_NotifyIcon(NIM_MODIFY, &notifyIconData);
 }
 
-UINT
-HippoIcon::getMessage()
-{
-    return message_;
-}
-
-void 
-HippoIcon::processMessage(WPARAM wParam,
+bool
+HippoIcon::processMessage(UINT   message,
+                          WPARAM wParam,
                           LPARAM lParam)
                           
 {
-    switch (lParam) {
-    case WM_LBUTTONDOWN:
-    case NIN_SELECT:
-        ui_->showMenu(TPM_LEFTBUTTON);
-        break;
-    case WM_RBUTTONDOWN:
-    case WM_CONTEXTMENU:
-        ui_->showMenu(TPM_RIGHTBUTTON);
-        break;
-    case NIN_BALLOONSHOW:
-        break;
-    case NIN_BALLOONUSERCLICK:
-        break;
-    case NIN_BALLOONHIDE:
-    case NIN_BALLOONTIMEOUT:
-        break;
+    taskbarCreatedMessage_ = RegisterWindowMessage(TEXT("TaskbarCreated"));
+
+    if (message == notifyMessage_) {
+        switch (lParam) {
+        case WM_LBUTTONDOWN:
+        case NIN_SELECT:
+            ui_->showMenu(TPM_LEFTBUTTON);
+            break;
+        case WM_RBUTTONDOWN:
+        case WM_CONTEXTMENU:
+            ui_->showMenu(TPM_RIGHTBUTTON);
+            break;
+        case NIN_BALLOONSHOW:
+            break;
+        case NIN_BALLOONUSERCLICK:
+            break;
+        case NIN_BALLOONHIDE:
+        case NIN_BALLOONTIMEOUT:
+            break;
+        }
+        return true;
+    } else if (message == taskbarCreatedMessage_) {
+        registerWithTaskbar();
+        return true;
     }
+
+    return false;
 }

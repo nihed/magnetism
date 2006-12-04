@@ -1702,12 +1702,9 @@ HippoUI::processMessage(UINT   message,
 {
     int wmId, wmEvent;
 
-    // Messages sent from the notification icon
-    if (message == notificationIcon_.getMessage())
-    {
-        notificationIcon_.processMessage(wParam, lParam);
+    // Messages sent from the notification icon or the taskbar
+    if (notificationIcon_.processMessage(message, wParam, lParam))
         return true;
-    }
 
     switch (message) 
     {

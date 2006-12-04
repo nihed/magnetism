@@ -21,18 +21,21 @@ public:
     bool create(HWND window);
     void destroy();
 
-    UINT getMessage();
-    void processMessage(WPARAM wParam,
+    bool processMessage(UINT   message,
+                        WPARAM wParam,
                         LPARAM lParam);
                         
 private:
+    void registerWithTaskbar();
     void showMenu(UINT buttonFlag);
 
     HippoUI *ui_;
     HWND window_; // XXX should eliminate in favor of getter on HippoUI
     HWND popupWindow_;
-    UINT message_;
+    UINT notifyMessage_;
+    UINT taskbarCreatedMessage_;
     HICON icon_;
+    HippoBSTR tip_;
 
     // When the user clicks on us with a ballon tip, we get *first* a NIN_BALLOONUSERCLICK
     // then a WM_[LR]BUTTONDOWN. We want to ignore the second to avoid going to the
