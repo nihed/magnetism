@@ -9,6 +9,15 @@
 #include <gtk/gtkwindow.h>
 #include <gtk/gtklabel.h>
 
+/* Gap between the area we are tipping and the tooltip */
+#define TOOLTIP_PADDING 4
+/* Maximum width of a tippable area before we position the tooltip by the pointer */
+#define MAX_TOOLTIP_AREA_WIDTH 400
+/* Maximum height of a tippable area before we position the tooltip by the pointer */
+#define MAX_TOOLTIP_AREA_HEIGHT 40
+/* When positioning by the pointer, X/Y offset */
+#define TOOLTIP_OFFSET 15
+
 typedef struct
 {
     HippoCanvasItem *item;
@@ -47,11 +56,12 @@ static void             hippo_canvas_helper_translate_to_widget    (HippoCanvasC
 
 static void             hippo_canvas_helper_fixup_resize_state     (HippoCanvasHelper  *canvas);
 
-static void       tooltip_window_update   (GtkWidget  *tip,
-                                           GtkWidget  *for_widget,
-                                           int         root_x,
-                                           int         root_y,
-                                           const char *text);
+static void       tooltip_window_update   (GtkWidget      *tip,
+                                           GdkScreen      *screen,
+                                           int             mouse_x,
+                                           int             mouse_y,
+                                           HippoRectangle *for_area,
+                                           const char     *text);
 static GtkWidget* tooltip_window_new      (void);
 
 
@@ -284,6 +294,8 @@ update_tooltip(HippoCanvasHelper *helper,
     char *tip;
     HippoRectangle for_area;
     GtkWidget *toplevel;
+    int mouse_x;
+    int mouse_y;
 
     if ((helper->tooltip_window == NULL || !GTK_WIDGET_VISIBLE(helper->tooltip_window)) &&
         !show_if_not_already)
@@ -298,9 +310,10 @@ update_tooltip(HippoCanvasHelper *helper,
         GTK_WIDGET_VISIBLE(helper->widget)) {
         int window_x, window_y;
         get_root_item_window_coords(helper, &window_x, &window_y);
+        mouse_x = helper->last_window_x - window_x;
+        mouse_y = helper->last_window_y - window_y;
         tip = hippo_canvas_item_get_tooltip(helper->root,
-                                            helper->last_window_x - window_x,
-                                            helper->last_window_y - window_y,
+                                            mouse_x, mouse_y,
                                             &for_area);
         for_area.x += window_x;
         for_area.y += window_y;
@@ -317,11 +330,13 @@ update_tooltip(HippoCanvasHelper *helper,
 
         for_area.x += screen_x;
         for_area.y += screen_y;
+        mouse_x += screen_x;
+        mouse_y += screen_y;
 
         tooltip_window_update(helper->tooltip_window,
-                              helper->widget,
-                              for_area.x,
-                              for_area.y + for_area.height,
+                              gtk_widget_get_screen(helper->widget),
+                              mouse_x, mouse_y,
+                              &for_area,
                               tip);
 
         gtk_widget_show(helper->tooltip_window);
@@ -1019,24 +1034,23 @@ tooltip_motion_handler(GtkWidget *tip, GdkEventMotion *event, void *data)
 }
 
 static void
-tooltip_window_update(GtkWidget  *tip,
-                      GtkWidget  *for_widget,
-                      int         root_x,
-                      int         root_y,
-                      const char *text)
+tooltip_window_update(GtkWidget      *tip,
+                      GdkScreen      *gdk_screen,
+                      int             mouse_x,
+                      int             mouse_y,
+                      HippoRectangle *for_area,
+                      const char     *text)
 {
-    GdkScreen *gdk_screen;
     GdkRectangle monitor;
     gint mon_num;
+    int x, y;
     int w, h;
     GtkWidget *label;
     int screen_right_edge;
     int screen_bottom_edge;
     
-    gdk_screen = gtk_widget_get_screen(for_widget);
-    
     gtk_window_set_screen(GTK_WINDOW(tip), gdk_screen);
-    mon_num = gdk_screen_get_monitor_at_point(gdk_screen, root_x, root_y);
+    mon_num = gdk_screen_get_monitor_at_point(gdk_screen, mouse_x, mouse_y);
     gdk_screen_get_monitor_geometry(gdk_screen, mon_num, &monitor);
     screen_right_edge = monitor.x + monitor.width;
     screen_bottom_edge = monitor.y + monitor.height;
@@ -1046,10 +1060,37 @@ tooltip_window_update(GtkWidget  *tip,
     gtk_label_set(GTK_LABEL(label), text);
     
     gtk_window_get_size(GTK_WINDOW(tip), &w, &h);
-    if((root_x + w) > screen_right_edge)
-        root_x -= (root_x + w) - screen_right_edge;
+
+    if (for_area->width < MAX_TOOLTIP_AREA_WIDTH) {
+        /* Center on the area horizontally */
+        x = for_area->x + (for_area->width - w) / 2;
+    } else {
+        x = mouse_x + TOOLTIP_OFFSET;
+    }
+
+    /* Clamp onscreen */
+    if (x + w > screen_right_edge)
+        x = screen_right_edge - w;
+    if (x < 0)
+        x = 0;
+
+    if (for_area->height < MAX_TOOLTIP_AREA_HEIGHT) {
+        /* And place it below if there is enough space, otherwise place it above */
+        y = for_area->y + for_area->height + TOOLTIP_PADDING;
+        if (y + h > screen_bottom_edge)
+            y = for_area->y - h - TOOLTIP_PADDING;
+    } else {
+        y = mouse_y + TOOLTIP_OFFSET;
+
+    }
+
+    /* Clamp onscreen */
+    if (y + h > screen_bottom_edge)
+        y = screen_bottom_edge - h;
+    if (y < 0)
+        y = 0;
     
-    gtk_window_move(GTK_WINDOW(tip), root_x, root_y);
+    gtk_window_move(GTK_WINDOW(tip), x, y);
 }
 
 static GtkWidget*
