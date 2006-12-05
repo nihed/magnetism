@@ -112,7 +112,7 @@
 					<a class="dh-underlined-link" href="/active-groups">Active Groups</a> | 
 				</c:if>
 				<c:if test="${!disableMiniLink}">
-					<dh:png src="/images3/${buildStamp}/mini_icon.png" style="width: 28px; height: 11px;"/> <a class="dh-underlined-link" href="/badges">Get Mini</a> |
+					<a href="/badges"><dh:png src="/images3/${buildStamp}/mini_icon.png" style="width: 28px; height: 11px;"/></a> <a class="dh-underlined-link" href="/badges">Get Mini</a> |
 				</c:if>
 				<c:if test="${!disableFeaturesLink}">
 					<a class="dh-underlined-link" href="/features">Features</a> |				
