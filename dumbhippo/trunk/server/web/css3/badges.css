@@ -7,6 +7,10 @@
 	font-size:	  		18px;
 }
 
+.dh-badges-top-text-body {
+	font-size:			14px;	
+}
+
 .dh-badges-step-box {
 	background-color: 	#EEEEEE;
 }
@@ -21,4 +25,10 @@
 
 .dh-badges-code {
 	background-color:	#FFFFFF;
+}
+
+.dh-badges-signup-or-login-text {
+	color:				#9648BC;
+	font-size: 			14px;
+	font-weight:		bold;
 }
