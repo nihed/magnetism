@@ -20,14 +20,14 @@
     </c:otherwise>    
 </c:choose>
 
-<div class="dh-shiny-box dh-shiny-box-box ${floatClass}" style="width: ${width}">
-<div class="dh-shiny-box-box dh-shiny-box-inner dh-shiny-box-inner-${color}">
-	<div class="dh-shiny-box-box dh-shiny-box-top dh-shiny-box-top-${color}">
-	<div class="dh-shiny-box-box dh-shiny-box-upper-left dh-shiny-box-upper-left-${color}">
-	<div class="dh-shiny-box-box dh-shiny-box-upper-right dh-shiny-box-upper-right-${color}">
-		<div class="dh-shiny-box-box dh-shiny-box-content-border">
-		<div class="dh-shiny-box-box dh-shiny-box-content">
-		<table class="dh-shiny-box-box" cellspacing="0" cellpadding="0">
+<div class="dh-shiny-box ${floatClass}" style="width: ${width}">
+<div class="dh-shiny-box-inner dh-shiny-box-inner-${color}">
+	<div class="dh-shiny-box-top dh-shiny-box-top-${color}">
+	<div class="dh-shiny-box-upper-left dh-shiny-box-upper-left-${color}">
+	<div class="dh-shiny-box-upper-right dh-shiny-box-upper-right-${color}">
+		<div class="dh-shiny-box-content-border">
+		<div class="dh-shiny-box-content">
+		<table class="dh-shiny-box-spacer-table" cellspacing="0" cellpadding="0">
 		<tr>
 		<td class="dh-shiny-box-content-side-spacer">&nbsp;</td>
 		<td><jsp:doBody/></td>
