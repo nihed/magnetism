@@ -29,7 +29,12 @@
 		<c:when test="${signin.valid}">
             <c:choose>
         	    <c:when test="${person.viewOfSelf}">
-				    <a href="/account">Edit my Mugshot account</a>        		
+        	    	<div>
+					    <a href="/account">Edit my Mugshot account</a>        		
+					</div>
+					<div>
+						<dh:png src="/images3/${buildStamp}/mini_icon.png" style="width: 28px; height: 11px;"/> <a href="/badges">Get a Mini Mugshot for your site</a>
+					</div>
         	    </c:when>
         	    <c:otherwise>
 	        	    <c:choose>
