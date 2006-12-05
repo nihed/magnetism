@@ -4,13 +4,15 @@
 <%@ taglib tagdir="/WEB-INF/tags/3" prefix="dht3" %>
 
 <%@ attribute name="kind" required="false" type="java.lang.String" %>
-<%@ attribute name="disableHomeLink" required="false" type="java.lang.Boolean" %>
-<%@ attribute name="disableSignupLink" required="false" type="java.lang.Boolean" %>
+<%@ attribute name="currentPageLink" required="false" type="java.lang.String" %>
 <%@ attribute name="searchText" required="false" type="java.lang.String" %>
 
 <c:choose>
 <c:when test="${webVersion == 3}">
-	<dht3:header disableHomeLink="${disableHomeLink}" disableSignupLink="${disableSignupLink}" searchText="${searchText}"/>
+	<c:if test="${empty currentPageLink}">
+		<c:set var="currentPageLink" value="web2"/>
+	</c:if>
+	<dht3:header currentPageLink="${currentPageLink}" searchText="${searchText}"/>
 </c:when>
 <c:otherwise>
 

@@ -14,7 +14,7 @@
 		<dh:script module="dh.download"/>
 </head>
 <%-- TODO: could get a more appropriate header, but Sign Up works too. --%>
-<dht:systemPage disableJumpTo="true" disableSignupLink="true" topImage="/images2/${buildStamp}/header_signup500.gif" fullHeader="true">
+<dht:systemPage disableJumpTo="true" currentPageLink="summit" topImage="/images2/${buildStamp}/header_signup500.gif" fullHeader="true">
 	
 	<dht:zoneBoxTitle>Invite Yourself for a Mugshot</dht:zoneBoxTitle>
 	

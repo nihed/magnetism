@@ -5,12 +5,11 @@
 
 <%@ attribute name="alwaysShowSidebar" required="false" type="java.lang.Boolean" %>
 <%@ attribute name="neverShowSidebar" required="false" type="java.lang.Boolean" %>
-<%@ attribute name="disableHomeLink" required="false" type="java.lang.Boolean" %>
-<%@ attribute name="disableSignupLink" required="false" type="java.lang.Boolean" %>
 <%@ attribute name="searchText" required="false" type="java.lang.String" %>
 <%@ attribute name="logoOnly" required="false" type="java.lang.Boolean" %>
 <%@ attribute name="topMessageHtml" required="false" type="java.lang.String" %>
 <%@ attribute name="disableFooter" required="false" type="java.lang.Boolean" %>
+<%@ attribute name="currentPageLink" required="false" type="java.lang.String" %>
 
 <c:choose>
 	<c:when test="${alwaysShowSidebar}">
@@ -40,7 +39,7 @@
 			<center><div id="dhPageHeader"><dht:logo/></div></center>
 		</c:when>
 		<c:otherwise>
-			<dht:header disableHomeLink="${disableHomeLink}" disableSignupLink="${disableSignupLink}" searchText="${searchText}"/>
+			<dht:header currentPageLink="${currentPageLink}" searchText="${searchText}"/>
 		</c:otherwise>
 	</c:choose>
 	<div id="dhPage">

@@ -14,7 +14,7 @@
 	<dht:faviconIncludes/>
 </head>
 
-<dht3:page>
+<dht3:page currentPageLink="active-people">
 	<dht3:pageSubHeader title="Active People">
 	</dht3:pageSubHeader>
 	

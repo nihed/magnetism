@@ -13,7 +13,7 @@
 	<dht:faviconIncludes/>
 </head>
 
-<dht3:page>
+<dht3:page currentPageLink="features">
 	<dht3:shinyBox color="grey">
 		<div class="dh-download-header-area">
 			<div class="dh-page-shinybox-title-large">Mugshot Features</div>

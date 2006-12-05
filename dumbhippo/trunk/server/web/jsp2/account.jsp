@@ -50,7 +50,7 @@
 		dh.account.initialLinkedInHateQuip = <dh:jsString value="${account.linkedInHateQuip}"/>;	
 	</script>
 </head>
-<dht:twoColumnPage neverShowSidebar="true">
+<dht:twoColumnPage neverShowSidebar="true" currentPageLink="account">
 	<dht:contentColumn>
 		<dht:zoneBoxAccount>
 			<c:choose>

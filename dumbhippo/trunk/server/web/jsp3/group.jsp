@@ -19,7 +19,7 @@
 	<dht:faviconIncludes/>
 </head>
 
-<dht3:page>
+<dht3:page currentPageLink="group">
 	<dht3:pageSubHeader title="${group.private ? 'Private Group' : 'Public Group'}" privatePage="${group.private}">
 		<dht3:standardGroupOptions group="${group.viewedGroup}" selected="Home"/>
 	</dht3:pageSubHeader>

@@ -20,7 +20,7 @@
 </head>
 
 
-<dht3:page disableHomeLink="${person.self}">
+<dht3:page currentPageLink="person">
 	<dht3:pageSubHeader title="${person.viewedPerson.name}'s ${pageName}">
 		<dht3:randomTip tipIndex="${person.randomTipIndex}" isSelf="${person.self}"/>
 		<dht3:standardStackedPersonPageOptions selected="${pageName}"/>

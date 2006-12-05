@@ -66,7 +66,7 @@
 	</script>
 </head>
 
-<dht3:page>
+<dht3:page currentPageLink="badges">
 	<dht3:shinyBox color="grey">
 	
 		<div class="dh-badges-centered-column-container">
@@ -158,5 +158,11 @@
 		</div>
 	</dht3:shinyBox>
 </dht3:page>
+
+<script type="text/javascript">
+	// this is needed since the browser may remember the previously-checked 
+	// checkbox and thus differ from our default.
+	dhUpdateVisibleBadge();
+</script>
 
 </html>

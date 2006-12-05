@@ -13,7 +13,7 @@
 	<dht:faviconIncludes/>
 </head>
 
-<dht3:page>
+<dht3:page currentPageLink="web-accounts-learnmore">
 	<dht3:shinyBox color="grey">
 		<div class="dh-learnmore-section dh-learnmore-section-top">
 			<div class="dh-learnmore-header">Web Accounts</div>

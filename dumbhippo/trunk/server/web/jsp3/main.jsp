@@ -18,7 +18,7 @@
 
 <dh:bean id="main" class="com.dumbhippo.web.pages.MainPage" scope="request"/>
 
-<dht3:page>
+<dht3:page currentPageLink="main">
 		<dht3:shinyBox color="purple">
 		    <div id="dhMugshotWelcome">
 		    <div id="dhMugshotIntro"> 

@@ -3,10 +3,37 @@
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 <%@ taglib tagdir="/WEB-INF/tags/3" prefix="dht3" %>
 
-<%@ attribute name="disableHomeLink" required="false" type="java.lang.Boolean" %>
-<%@ attribute name="disableSignupLink" required="false" type="java.lang.Boolean" %>
-<%@ attribute name="disableMiniLink" required="false" type="java.lang.Boolean" %>
+<%@ attribute name="currentPageLink" required="true" type="java.lang.String" %>
 <%@ attribute name="searchText" required="false" type="java.lang.String" %>
+
+<c:choose>
+	<%-- we know that the "person" variable is available on /person though using it here is 
+		 a little fishy I suppose --%>
+	<c:when test="${currentPageLink == 'person' && signin.valid && person.self}">
+		<c:set var="disableHomeLink" value="true"/>
+	</c:when>
+	<c:when test="${currentPageLink == 'main' && !signin.valid}">
+		<c:set var="disableHomeLink" value="true"/>
+	</c:when>
+	<c:when test="${currentPageLink == 'signup'}">
+		<c:set var="disableSignupLink" value="true"/>
+	</c:when>
+	<c:when test="${currentPageLink == 'badges'}">
+		<c:set var="disableMiniLink" value="true"/>
+	</c:when>
+	<c:when test="${currentPageLink == 'active-people'}">
+		<c:set var="disableActivePeopleLink" value="true"/>
+	</c:when>
+	<c:when test="${currentPageLink == 'active-groups'}">
+		<c:set var="disableActiveGroupsLink" value="true"/>
+	</c:when>
+	<c:when test="${currentPageLink == 'features'}">
+		<c:set var="disableFeaturesLink" value="true"/>
+	</c:when>
+	<c:when test="${currentPageLink == 'account'}">
+		<c:set var="disableAccountLink" value="true"/>
+	</c:when>	
+</c:choose>
 
 <div id="dhPageHeader3">
 	<table cellspacing="0" cellpadding="0" width="100%">
@@ -68,20 +95,28 @@
 						<c:if test="${!disableHomeLink}">
 						    <a class="dh-underlined-link" href="/">My Home</a> | 
 						</c:if>
-				        <a class="dh-underlined-link" href="/account">My Account</a> |
+						<c:if test="${!disableAccountLink}">
+					        <a class="dh-underlined-link" href="/account">My Account</a> |
+					    </c:if>
 					</c:when>
 					<c:otherwise>
 						<c:if test="${!disableHomeLink}">
 							<a class="dh-underlined-link" href="/">Home</a> | 
 						</c:if>
 					</c:otherwise>
-				</c:choose>		
-				<a class="dh-underlined-link" href="/active-people">Active People</a> | 
-				<a class="dh-underlined-link" href="/active-groups">Active Groups</a> | 
+				</c:choose>
+				<c:if test="${!disableActivePeopleLink}">
+					<a class="dh-underlined-link" href="/active-people">Active People</a> | 
+				</c:if>
+				<c:if test="${!disableActiveGroupsLink}">
+					<a class="dh-underlined-link" href="/active-groups">Active Groups</a> | 
+				</c:if>
 				<c:if test="${!disableMiniLink}">
 					<dh:png src="/images3/${buildStamp}/mini_icon.png" style="width: 28px; height: 11px;"/> <a class="dh-underlined-link" href="/badges">Get Mini</a> |
 				</c:if>
-				<a class="dh-underlined-link" href="/features">Features</a> |				
+				<c:if test="${!disableFeaturesLink}">
+					<a class="dh-underlined-link" href="/features">Features</a> |				
+				</c:if>
 				<a class="dh-underlined-link" href="http://blog.mugshot.org/?page_id=245a">Help</a>
 			</div>	
 		</div>  
