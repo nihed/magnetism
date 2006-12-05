@@ -262,6 +262,7 @@ update_member_and_status(HippoCanvasBlockGroupMember *canvas_group_member,
     HippoPerson *member;
     HippoMembershipStatus status;
     char *title;
+    char *tooltip;
     gboolean show_invite_link;
     
     member = NULL;
@@ -273,6 +274,7 @@ update_member_and_status(HippoCanvasBlockGroupMember *canvas_group_member,
                  NULL);
 
     title = NULL;
+    tooltip = NULL;
     
     if (member != NULL) {
         const char *name;
@@ -299,10 +301,13 @@ update_member_and_status(HippoCanvasBlockGroupMember *canvas_group_member,
             title = g_strdup_printf("%s is a new member", name);
             break;
         }
+        
+        tooltip = g_strdup_printf("Click to go to %s's page", name);
     }
 
+
     hippo_canvas_block_set_title(HIPPO_CANVAS_BLOCK(canvas_group_member),
-                                 title, "Click to go to the group page", FALSE);
+                                 title, tooltip, FALSE);
 
     hippo_canvas_box_set_child_visible(canvas_group_member->invite_parent,
                                        canvas_group_member->invite_image,
@@ -377,24 +382,24 @@ static void
 hippo_canvas_block_group_member_title_activated(HippoCanvasBlock *canvas_block)
 {
     HippoActions *actions;
-    HippoGroup *group;
+    HippoPerson *member;
 
     if (canvas_block->block == NULL)
         return;
 
     actions = hippo_canvas_block_get_actions(canvas_block);
 
-    group = NULL;
+    member = NULL;
     g_object_get(G_OBJECT(canvas_block->block),
-                 "group", &group,
+                 "member", &member,
                  NULL);
 
-    if (group == NULL)
+    if (member == NULL)
         return;
 
-    hippo_actions_visit_entity(actions, HIPPO_ENTITY(group));
+    hippo_actions_visit_entity(actions, HIPPO_ENTITY(member));
 
-    g_object_unref(group);
+    g_object_unref(member);
 }
 
 static void
