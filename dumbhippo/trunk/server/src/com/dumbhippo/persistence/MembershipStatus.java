@@ -62,6 +62,14 @@ public enum MembershipStatus {
 	public boolean getCanModify() {
 		return ordinal() >= ACTIVE.ordinal();
 	}
+
+	/**
+	 * Can a member of this status share this group with others through an invite.
+	 * @ return true if group member can share group with others
+	 */
+	public boolean getCanShare() {
+		return (ordinal() == ACTIVE.ordinal() || ordinal() == FOLLOWER.ordinal());
+	}
 	
 	// REMOVED is unordered for the purposes of better/worse
 	

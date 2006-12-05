@@ -23,25 +23,7 @@
 	<dht3:pageSubHeader title="${group.private ? 'Private Group' : 'Public Group'}" privatePage="${group.private}">
 		<dht3:standardGroupOptions group="${group.viewedGroup}" selected="Home"/>
 	</dht3:pageSubHeader>
-    <dht3:groupStack who="${group.viewedGroup}" stackOrder="1" stackType="dhMugshot" pageable="${group.pageableMugshot}" shortVersion="${group.pageableStack.position > 0}" showFrom="true" showHomeUrl="false">
-		<c:choose>
-			<%-- Be careful if changing this not to show both join and leave at the same time --%>
-			<c:when test="${!empty group.joinAction}">
-				<dh:script module="dh.actions"/>
-				<a href="javascript:dh.actions.joinGroup('${group.viewedGroupId}')" title="${group.joinTooltip}"><c:out value="${group.joinAction}"/></a>
-			</c:when>							
-			<c:when test="${!empty group.leaveAction}">
-				<dh:script module="dh.actions"/>
-				<a href="javascript:dh.actions.leaveGroup('${group.viewedGroupId}')" title="${group.leaveTooltip}"><c:out value="${group.leaveAction}"/></a>
-			</c:when>
-		</c:choose>
-		<c:if test="${group.canShare}">
-			| <a href="/group-invitation?group=${group.viewedGroupId}" title="Invite other people to this group">Invite People</a>
-	    </c:if>
-		<c:if test="${group.member}">
-			<dht:actionLinkChat chatId="${group.viewedGroupId}" kind="group" prefix="| " oneLine="true"/>
-		</c:if>
-	</dht3:groupStack>
+    <dht3:groupStack who="${group.viewedGroup}" stackOrder="1" stackType="dhMugshot" pageable="${group.pageableMugshot}" shortVersion="${group.pageableStack.position > 0}" showFrom="true" showHomeUrl="false" />
 	<dht3:shinyBox color="grey">
 	    <div class="dh-person-stacker-header">
 		    <span class="dh-person-header-name"><a name="dhStacker">Group Stacker</a></span>

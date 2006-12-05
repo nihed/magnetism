@@ -17,6 +17,7 @@
 				<c:when test="${dh:enumIs(block.status, 'FOLLOWER')}"> is a new follower of the group </c:when>
 				<c:when test="${dh:enumIs(block.status, 'ACTIVE')}"> is a new member of the group </c:when>
 				<c:when test="${dh:enumIs(block.status, 'REMOVED')}"> left the group </c:when>
+				<c:when test="${dh:enumIs(block.status, 'NONMEMBER')}"> stopped following the group </c:when>
 				<c:when test="${dh:enumIs(block.status, 'INVITED')}"> is invited to the group </c:when>
 				<c:when test="${dh:enumIs(block.status, 'INVITED_TO_FOLLOW')}"> is invited to follow the group </c:when>
 			</c:choose>

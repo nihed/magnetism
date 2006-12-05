@@ -188,20 +188,6 @@ public class StackedGroupPage extends AbstractSigninOptionalPage {
 		return getGroupMember().canModify();
 	}
 
-	public boolean getCanShare() {
-		switch (getGroupMember().getStatus()) {
-		case NONMEMBER:
-		case INVITED_TO_FOLLOW:
-		case INVITED:
-		case REMOVED:
-			return false;
-		case ACTIVE:
-		case FOLLOWER:
-			return true;
-		}
-		return false;
-	}
-
 	public boolean isForum() {
 		return viewedGroup.getGroup().getAccess() == GroupAccess.PUBLIC;
 	}
