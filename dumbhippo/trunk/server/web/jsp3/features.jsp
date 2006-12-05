@@ -69,7 +69,7 @@
 		</table>
 		<table class="dh-box-grey1 dh-download-section" cellspacing="0" cellpadding="0">
 			<tr>
-			<td valign="top" class="dh-download-section-icon-area"><dh:png src="/images3/${buildStamp}/underthehood54x62.png" style="width: 54; height: 62;"/></td>
+			<td valign="top" class="dh-download-section-icon-area"><dh:png src="/images3/${buildStamp}/underthehood54x65.png" style="width: 54; height: 65;"/></td>
 			<td class="dh-download-section-details-area"><div class="dh-download-section-header">Get under the hood.</div>
 			<div class="dh-download-section-description">
 				<div>Mugshot is all open source, so you can chip in on the design and development if that's your style.</div>
