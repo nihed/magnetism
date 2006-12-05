@@ -64,6 +64,11 @@
 								<span class="dh-info"><dht3:plural n="${who.liveUser.groupCount}" s="group"/></span> | 
 								<span class="dh-info"><dht3:plural n="${who.liveUser.sentPostsCount}" s="post"/></span> 
 						    </div>
+						    <c:if test="${who.viewOfSelf}">
+							<div class="dh-person-header-controls">
+								<a href="/badges"><dh:png src="/images3/${buildStamp}/mini_icon.png" style="width: 28px; height: 11px;"/> Get a Mini Mugshot for your site</a>
+							</div>
+						    </c:if>
 						</c:if>
 						<c:if test="${embedVersion}">
 						    <dht3:whereAtIcons who="${who}"/>
