@@ -130,7 +130,8 @@ input.dh-text-input {
 
 .dh-nowplaying {
 	width:				440px;
-	height:				120px;
+	/* when the badge has a label, this is wrong. */
+	/* height:				120px; */
 }
 
 .dh-grow-div-around-floats {

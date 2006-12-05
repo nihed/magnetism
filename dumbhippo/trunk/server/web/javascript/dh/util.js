@@ -67,7 +67,7 @@ dh.logger.append = function(entry) {
 	if (entry.level == "error") {
 		span.style.color = "red";
 	}
-	span.style.marginLeft = "10px;"
+	span.style.marginLeft = "10px"
 	span.appendChild(doc.createTextNode(entry.text));
 	td.appendChild(span);
 	

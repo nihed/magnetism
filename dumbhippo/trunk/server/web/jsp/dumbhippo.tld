@@ -317,7 +317,38 @@
            <rtexprvalue>true</rtexprvalue>
         </attribute>
         
-    </tag>    
+    </tag>
+    <tag>
+        <name>flashBadge</name>
+        <tagclass>com.dumbhippo.web.tags.FlashBadgeTag</tagclass>
+        <bodycontent>empty</bodycontent>
+        <info>Outputs a flash badge object</info>
+        <attribute>
+           <name>badge</name>
+           <required>true</required>
+           <rtexprvalue>true</rtexprvalue>
+        </attribute>        
+	    <attribute>
+           <name>userId</name>
+           <required>true</required>
+           <rtexprvalue>true</rtexprvalue>
+        </attribute>
+        <attribute>
+           <name>escapeXml</name>
+           <required>false</required>
+           <rtexprvalue>true</rtexprvalue>
+        </attribute>
+        <attribute>
+           <name>hasLabel</name>
+           <required>false</required>
+           <rtexprvalue>true</rtexprvalue>
+        </attribute>
+        <attribute>
+           <name>embedOnly</name>
+           <required>false</required>
+           <rtexprvalue>true</rtexprvalue>
+        </attribute>   
+    </tag>
     <tag>
         <name>aRedHatSomething</name>
         <tagclass>com.dumbhippo.web.tags.RedHatSomethingTag</tagclass>

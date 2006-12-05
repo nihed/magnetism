@@ -7,43 +7,59 @@ import flash.geom.Matrix;
 Stage.scaleMode = "noScale";
 Stage.align = "TL"; // top left instead of center
 
-var entireWidth:Number = Stage.width; //250;
-var entireHeight:Number = Stage.height; // 180;
-
-// allow query params to override the width/height, this is mostly a debugging thing.
-// it lets you just open the .swf in a browser without any html.
-if (badgeWidth)
-	entireWidth = badgeWidth;
-if (badgeHeight)
-	entireHeight = badgeHeight;
-
-// don't let people pick arbitrary sizes, since then we might have to keep them working...
-// it might be nicer to just center our display in the available space if we get too-large size
-
-if (entireWidth != 250 ||
-	!(entireHeight == 74 || entireHeight == 180 || entireHeight == 255)) {
-	var e:TextField = createTextField("error", getNextHighestDepth(), 0, 0, 200, 200);
-	e.text = "unsupported size " + entireWidth + "x" + entireHeight;
-	throw new Error("we don't support this size");
-}
-
 var outerBorderWidth:Number = 2;
 var paddingInsideOuterBorder:Number = 5;
-var headshotSize:Number = 30;
 var presenceIconSize:Number = 12;
 var ribbonIconSize:Number = 16;
 var blockHeight:Number = 33;
 
-// See if we need to go into "mini" mode which has no stack and larger headshot
-var stacklessMode:Boolean = entireHeight < 80;
-if (stacklessMode) {
-	// we have a larger headshot in this mode
-	headshotSize = 60;
+var entireWidth:Number;
+var entireHeight:Number;
+var stacklessMode:Boolean;
+var headshotSize:Number;
+
+var refreshGlobalVariables = function() {
+	entireWidth = Stage.width; // 250;
+	entireHeight = Stage.height; // 180;
+	
+	// allow query params to override the width/height, this is mostly a debugging thing.
+	// it lets you just open the .swf in a browser without any html.
+	if (badgeWidth)
+		entireWidth = badgeWidth;
+	if (badgeHeight)
+		entireHeight = badgeHeight;
+	
+	// don't let people pick arbitrary sizes, since then we might have to keep them working...
+	// clamp to something we know about. Also, when we dynamically hide and show the 
+	// flash object in IE, it seems to give it a zero size initially
+	
+	if (entireWidth != 250)
+		entireWidth = 250;
+		
+	if (!(entireHeight == 74 || entireHeight == 180 || entireHeight == 255)) {
+		if (entireHeight > 255)
+			entireHeight = 255;
+		else if (entireHeight > 180)
+			entireHeight = 180;
+		else
+			entireHeight = 74;
+	}
+	
+	headshotSize = 30;
+	
+	// See if we need to go into "mini" mode which has no stack and larger headshot
+	stacklessMode = entireHeight < 80;
+	if (stacklessMode) {
+		// we have a larger headshot in this mode
+		headshotSize = 60;
+	}
 }
 
 var rootMovie:MovieClip = createEmptyMovieClip("rootMovie", 0);
 var currentView:MovieClip = null;
 var currentSummary:Object = null;
+var updateInProgress:Boolean = false;
+var updateAgainAfterCurrent:Boolean = false;
 
 var simpleGradientFill = function(mc:MovieClip, x:Number, y:Number, width:Number, height:Number, horizontal:Boolean, colors:Array, ratios:Array) {
 	var matrix:Matrix = new Matrix();
@@ -305,10 +321,32 @@ var updateSummaryData = function() {
 	
 	if (updateCount > 1000) // if someone just leaves a browser open, stop eventually
 		return;
+
+	// ensure we only have one outstanding update at a time. would be better
+	// to cancel the current one, but too lazy
+	if (updateInProgress) {
+		updateAgainAfterCurrent = true;
+		return;
+	}
 	
+	updateInProgress = true;
+		
+	refreshGlobalVariables();
+		
 	var meuXML:XML = new XML();
 	meuXML.ignoreWhite = true;
 	meuXML.onLoad = function(success:Boolean) {
+		if (!updateInProgress)
+			throw new Error("an update should have been in progress");
+		updateInProgress = false;
+		
+		if (updateAgainAfterCurrent) {
+			trace("abandoning this update, starting over");
+			updateAgainAfterCurrent = false;
+			updateSummaryData();
+			return;
+		}
+		
 		if (!success) {
 			trace("xml load failure");
 			return;
@@ -373,4 +411,12 @@ var updateSummaryData = function() {
 	meuXML.load(reqUrl);
 };
 
+// Update once on load
 updateSummaryData();
+
+// Update again if we get resized somehow
+var stageListener:Object = new Object();
+stageListener.onResize = function() {
+    updateSummaryData();
+};
+Stage.addListener(stageListener);

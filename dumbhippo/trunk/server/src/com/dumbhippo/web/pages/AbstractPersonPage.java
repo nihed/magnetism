@@ -1,5 +1,6 @@
 package com.dumbhippo.web.pages;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Date;
@@ -29,6 +30,7 @@ import com.dumbhippo.web.ListBean;
 import com.dumbhippo.web.PagePositions;
 import com.dumbhippo.web.PagePositionsBean;
 import com.dumbhippo.web.WebEJBUtil;
+import com.dumbhippo.web.tags.FlashBadge;
 
 public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 	static private final Logger logger = GlobalSetup.getLogger(AbstractPersonPage.class);	
@@ -76,6 +78,8 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 	private Pageable<PersonView> pageableFollowers;
 	
 	private int randomTipIndex = -1;
+	
+	private ListBean<FlashBadge> badges;
 	
 	protected AbstractPersonPage() {	
 		groupSystem = WebEJBUtil.defaultLookup(GroupSystem.class);
@@ -355,6 +359,21 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 		if (randomTipIndex < 0)
 			randomTipIndex = new Random().nextInt(3);
 		return randomTipIndex;
+	}
+	
+	public ListBean<FlashBadge> getBadges() {
+		if (badges == null)
+			badges = new ListBean<FlashBadge>(Arrays.asList(FlashBadge.values()));
+		return badges;
+	}
+	
+	public int getMaxBadgeHeight() {
+		int maxHeight = 0;
+		for (FlashBadge badge : FlashBadge.values()) {
+			if (badge.getHeight() > maxHeight)
+				maxHeight = badge.getHeight();
+		}
+		return maxHeight;
 	}
 	
     public void setFacebookAuthToken(String facebookAuthToken) {

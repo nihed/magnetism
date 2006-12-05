@@ -151,7 +151,7 @@ var recordOneImageLoadCompleted = function(tracker:Object) {
 
 // caution, this can synchronously call the "on all loaded completed" callback
 var loadImage = function(tracker:Object, target:MovieClip, fullUrl:String, fallbackUrl:String) {
-	trace("loading " + fullUrl);
+	trace("loading to " + target._name + " url " + fullUrl);
 	
 	// happens if no image url was provided at all by the xml
 	if (!fullUrl) {
@@ -163,14 +163,14 @@ var loadImage = function(tracker:Object, target:MovieClip, fullUrl:String, fallb
 	var listener:Object = new Object();
 	listener.onLoadError = function(targetClip:MovieClip, errorCode:String) {
 		// note, we could be replaced as the loadingMovie already
-		trace("failed to load " + fullUrl);
+		trace("failed to load " + fullUrl + " to " + target._name);
 		if (fallbackUrl != null)
 			loadImage(tracker, target, fallbackUrl, null); // increments pending image loads
 		recordOneImageLoadCompleted(tracker);
 	}
 	listener.onLoadComplete = function(targetClip:MovieClip) {
 		// note, we could be replaced as the loadingMovie already
-		trace("completed load of " + fullUrl + " to " + target);
+		trace("completed load of " + fullUrl + " to " + target._name);
 		recordOneImageLoadCompleted(tracker);
 	}
 	loader.addListener(listener);

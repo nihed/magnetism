@@ -1,0 +1,24 @@
+@CHARSET "UTF-8";
+@IMPORT url("badges-positions.css");
+
+.dh-badges-top-text-headline {
+	color:				#9648BC;
+	font-weight:  		bold;
+	font-size:	  		18px;
+}
+
+.dh-badges-step-box {
+	background-color: 	#EEEEEE;
+}
+
+.dh-badges-step-title {
+	font-weight:	bold;
+}
+
+.dh-badges-step-number {
+	color:				#9648BC;
+}
+
+.dh-badges-code {
+	background-color:	#FFFFFF;
+}

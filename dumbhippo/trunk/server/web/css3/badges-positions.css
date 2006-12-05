@@ -1,0 +1,56 @@
+@CHARSET "UTF-8";
+
+.dh-badges-centered-column-container {
+	/* Center the column in IE */
+	text-align:		center;	
+}
+
+.dh-badges-centered-column {
+	/* Center the column in Firefox */
+	margin-left:	auto;
+	margin-right:	auto;
+
+	/* undo IE text align */
+	text-align:		left;
+	
+	width:			700px;
+}
+
+.dh-badges-top {
+	width:			700px;
+	margin-top:		10px;
+	margin-bottom:  10px;
+}
+
+.dh-badges-top-logo {
+	float:			left;
+	margin-right:	20px;
+}
+
+.dh-badges-top-text {
+	float:			right;
+}
+
+.dh-badges-step-box {
+	margin-bottom: 	5px;	
+}
+
+.dh-badges-step-box-left {
+	float:			left;
+	margin-left:	10px;
+	width:			220px;
+	margin-top:		10px;
+	margin-bottom:	10px;	
+}
+
+.dh-badges-step-box-right {
+	float:			right;
+	margin-right:	10px;
+	width:			440px;
+	margin-top:		10px;
+	margin-bottom:	10px;	
+}
+
+.dh-badges-code {
+	width: 440px;
+}
