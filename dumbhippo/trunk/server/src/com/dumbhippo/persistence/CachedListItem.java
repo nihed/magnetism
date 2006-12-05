@@ -9,7 +9,7 @@ import java.util.Date;
  * @author Havoc Pennington
  *
  */
-public interface CachedListItem {
+public interface CachedListItem extends Comparable {
 	public boolean isNoResultsMarker();
 	public Date getLastUpdated();
 	public void setLastUpdated(Date lastUpdated);

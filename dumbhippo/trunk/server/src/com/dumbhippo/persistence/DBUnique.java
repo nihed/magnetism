@@ -9,7 +9,7 @@ import javax.persistence.MappedSuperclass;
 import org.hibernate.lucene.Keyword;
 
 @MappedSuperclass
-public abstract class DBUnique {
+public abstract class DBUnique implements Comparable {
 	private long id;
 	
 	protected DBUnique() {
@@ -25,5 +25,19 @@ public abstract class DBUnique {
 	
 	protected void setId(long id) {
 		this.id = id;
+	}
+	
+	// Used to sort a list by database ID
+	public int compareTo(Object other) {
+		if (!(other instanceof DBUnique))
+			return -1; // why not
+		
+		long otherId = ((DBUnique)other).getId();
+		if (this.id < otherId)
+			return -1;
+		else if (this.id > otherId)
+			return 1;
+		else
+			return 0;
 	}
 }

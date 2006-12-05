@@ -1,6 +1,7 @@
 package com.dumbhippo.services.caches;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -56,6 +57,7 @@ public class ListCacheStorage<KeyType, ResultType, EntityType extends CachedList
 			return TypeUtils.emptyList(resultClass);
 		}
 		
+		sort(oldItems);
 		return formResultTypeList(oldItems);		
 	}
 
@@ -63,13 +65,19 @@ public class ListCacheStorage<KeyType, ResultType, EntityType extends CachedList
 		List<ResultType> results = new ArrayList<ResultType>();
 		for (EntityType e : list) {
 			results.add(mapper.resultFromEntity(e));
-		}		
+		}
 		return results;			
 	}
 
 	@Override
 	public void expireCache(KeyType key) {
 		mapper.setAllLastUpdatedToZero(key);
+	}
+	
+	// why Eclipse warns about this I do not understand
+	@SuppressWarnings("unchecked")
+	private void sort(List<EntityType> list) {
+		Collections.sort(list);
 	}
 	
 	// null means that we could not get the updated results, so leave the old results
@@ -79,7 +87,12 @@ public class ListCacheStorage<KeyType, ResultType, EntityType extends CachedList
 	
 		logger.debug("Saving new results in cache");
 
-		List<EntityType> oldItems = mapper.queryExisting(key);		
+		List<EntityType> oldItems = mapper.queryExisting(key);
+		
+		// since we always load all items, this is as good as letting the database do it, and doesn't require
+		// hacking each individual oldItems
+		sort(oldItems);
+		
 		if (newItems == null)
 		 	return formResultTypeList(oldItems);	
 		
@@ -99,6 +112,9 @@ public class ListCacheStorage<KeyType, ResultType, EntityType extends CachedList
 			em.persist(e);
 			logger.debug("cached a no results marker for key {}", key);			
 		} else {
+			// Note that we are relying on getting database ID ordering that matches 
+			// the order of newItems, so when we load from the cache we can get things
+			// back in the same order.
 			for (ResultType r : newItems) {							
 				EntityType e = mapper.entityFromResult(key, r);
 				e.setLastUpdated(now);
