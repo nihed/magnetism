@@ -216,7 +216,7 @@ on_current_track_changed(HippoPerson *person,
         else
             title = g_strdup(name);
         hippo_canvas_block_set_title(canvas_block, title,
-                                     "Click to go to this person's Mugshot page", FALSE);
+                                     "More information about this song", FALSE);
 
         hippo_canvas_box_remove_all(block_music_person->downloads_box);
         
@@ -341,16 +341,14 @@ hippo_canvas_block_music_person_title_activated(HippoCanvasBlock *canvas_block)
 {
     HippoActions *actions;
     HippoPerson *person;
+    HippoTrack *track;
+    const char *url;
 
     if (canvas_block->block == NULL)
         return;
 
     actions = hippo_canvas_block_get_actions(canvas_block);
 
-    /* FIXME what is this about; clicking the song in the title should
-     * go to the song - add hippo_track_get_url or something
-     */
-    
     person = NULL;
     g_object_get(G_OBJECT(canvas_block->block),
                  "user", &person,
@@ -358,8 +356,16 @@ hippo_canvas_block_music_person_title_activated(HippoCanvasBlock *canvas_block)
 
     if (person == NULL)
         return;
+
+    track = hippo_person_get_current_track(person);
+    if (track == NULL)
+        return;
     
-    hippo_actions_visit_entity(actions, HIPPO_ENTITY(person));
+    url = hippo_track_get_url(track);
+    if (url == NULL)
+        return;
+    
+    hippo_actions_open_url(actions, url);
 
     g_object_unref(person);
 }
