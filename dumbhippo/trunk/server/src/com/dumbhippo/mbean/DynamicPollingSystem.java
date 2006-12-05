@@ -443,7 +443,7 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 					} else {				
 						recalculateTaskStats(task, result);
 
-						if (task.getPeriodicityAverage() < (timeout * 1.1)) {
+						if (task.getPeriodicityAverage() != -1 && task.getPeriodicityAverage() < (timeout * 1.1)) {
 							// Tasks with a periodicity average within 10% of this task set get
 							// bumped to a faster set if possible
 							fasterCandidates.add(task);

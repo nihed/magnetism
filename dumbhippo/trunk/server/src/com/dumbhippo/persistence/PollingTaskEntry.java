@@ -17,24 +17,23 @@ public class PollingTaskEntry extends DBUnique {
 	
 	private static final long serialVersionUID = 1L;
 	
-	private int family;
+	private PollingTaskFamilyType family;
 	private String taskId;
 	private long lastExecuted = -1;
 	private long periodicityAverage = -1;
 	
 	protected PollingTaskEntry() {}
 	
-	public PollingTaskEntry(int family, String id) {
+	public PollingTaskEntry(PollingTaskFamilyType family, String id) {
 		this.family = family;
 		this.taskId = id;
 	}
 	
-	@Column(nullable=false, length=PollingTask.MAX_FAMILY_NAME_LENGTH)
-	public int getFamily() {
+	public PollingTaskFamilyType getFamily() {
 		return family;
 	}
 
-	public void setFamily(int family) {
+	public void setFamily(PollingTaskFamilyType family) {
 		this.family = family;
 	}
 	

@@ -32,14 +32,14 @@ public class PollingTaskPersistenceBean implements PollingTaskPersistence {
 
 
 	public void createTask(int family, String id) {
-		PollingTaskEntry entry = new PollingTaskEntry(family, id);
+		PollingTaskEntry entry = new PollingTaskEntry(PollingTaskFamilyType.values()[family], id);
 		em.persist(entry);		
 	}	
 	
 	private PollingTaskEntry getEntry(PollingTask task) {
 		PollingTaskEntry entry;
 		entry = (PollingTaskEntry) em.createQuery("select stats from PollingTaskEntry stats where family = :family and taskId = :id")
-			.setParameter("family", PollingTaskFamilyType.valueOf(task.getFamily().getName()))
+			.setParameter("family", PollingTaskFamilyType.valueOf(task.getFamily().getName()).ordinal())
 			.setParameter("id", task.getIdentifier()).getSingleResult();
 		return entry;
 	}
@@ -100,7 +100,7 @@ public class PollingTaskPersistenceBean implements PollingTaskPersistence {
 		for (PollingTaskEntry entry : entries) {
 			if (entry.getId() > largestId)
 				largestId = entry.getId();
-			PollingTaskFamilyType taskFamilyType = PollingTaskFamilyType.values()[entry.getFamily()];
+			PollingTaskFamilyType taskFamilyType = entry.getFamily();
 			PollingTaskLoader loader = EJBUtil.defaultLookup(taskFamilyType.getLoader());
 			newTasks.addAll(loader.loadTasks(Collections.singleton(entry)));
 		}
