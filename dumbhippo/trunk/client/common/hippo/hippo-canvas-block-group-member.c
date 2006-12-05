@@ -283,7 +283,7 @@ update_member_and_status(HippoCanvasBlockGroupMember *canvas_group_member,
         
         switch (status) {
         case HIPPO_MEMBERSHIP_STATUS_NONMEMBER:
-            /* this really shouldn't happen unless the block just isn't initialized yet */
+            title = g_strdup_printf("%s stopped following the group", name);
             break;
         case HIPPO_MEMBERSHIP_STATUS_INVITED_TO_FOLLOW:
             title = g_strdup_printf("%s is invited to be a follower", name);
