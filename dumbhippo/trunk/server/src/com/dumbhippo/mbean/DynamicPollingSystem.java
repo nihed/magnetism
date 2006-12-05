@@ -309,25 +309,9 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 		}
 	}
 	
-	// The invokeAll signature really should have been ? extends Callable
-	// (unless invokeAll modifies the passed-in collection it's tough to see how 
-	// it could require a List<Callable>). This cast is certainly bogus though
-	// if invokeAll intentionally has its current signature. We feel confident this
-	// is a library bug.
-	@SuppressWarnings("unchecked")
-	private Set<Callable<PollingTaskExecutionResult>> castPollingTaskSet(Set<? extends Callable<PollingTaskExecutionResult>> tasks) {
-		// Cast to a set here, we know we're potentially breaking type saftey and
-		// we mark it with the @SuppressWarnings above.  Casting to a
-		// Set<Callable<PollingTaskExecutionResult>> is tempting but the eclipse compiler (correctly)
-		// warns because it's a no-op.  The object is already a Set; at runtime there is no difference
-		// between the two.  Better to tell compilers with the annotation that we know what we're
-		// doing here (hopefully) and don't need a warning.
-		return (Set) tasks;
-	}
-	
 	// Invoked from TaskSet thread
 	private synchronized List<Future<PollingTaskExecutionResult>> executeTaskSet(Set<PollingTask> tasks, long timeoutMs) throws InterruptedException {
-		return threadPool.invokeAll(castPollingTaskSet(tasks), timeoutMs, TimeUnit.MILLISECONDS);
+		return ThreadUtils.invokeAll(threadPool, tasks, timeoutMs, TimeUnit.MILLISECONDS);
 	}
 	
 	private synchronized Set<PollingTask> bumpTasks(TaskSet currentSet, Set<PollingTask> tasks, boolean slower) {

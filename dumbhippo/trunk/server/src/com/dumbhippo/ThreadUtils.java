@@ -1,7 +1,9 @@
 package com.dumbhippo;
 
 import java.lang.Thread.UncaughtExceptionHandler;
+import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -187,5 +189,23 @@ public class ThreadUtils {
 			logException(e, true);
 			return TypeUtils.emptyList(klass);
 		}
+	}
+	
+	/** Workaround for ExecutorService.invokeAll having the wrong signature - it doesn't allow a set of subclasses of callable, only 
+	 *  a set of callable. We think this is a bug in the declared signature, not a real limitation of the invokeAll() implementation.
+	 *  So we break type safety here and force invokeAll to take a set of any subclass of Callable
+	 */
+	@SuppressWarnings("unchecked")
+	public static <T> List<Future<T>> invokeAll(ExecutorService executor, Collection<? extends Callable<T>> tasks) throws InterruptedException {
+		return executor.invokeAll((Collection) tasks);
+	}
+	
+	/** Workaround for ExecutorService.invokeAll having the wrong signature - it doesn't allow a set of subclasses of callable, only 
+	 *  a set of callable. We think this is a bug in the declared signature, not a real limitation of the invokeAll() implementation.
+	 *  So we break type safety here and force invokeAll to take a set of any subclass of Callable
+	 */	
+	@SuppressWarnings("unchecked")
+	public static <T> List<Future<T>> invokeAll(ExecutorService executor, Collection<? extends Callable<T>> tasks, long timeout, TimeUnit units) throws InterruptedException {
+		return executor.invokeAll((Collection) tasks, timeout, units);
 	}
 }
