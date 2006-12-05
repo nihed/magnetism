@@ -202,10 +202,24 @@ public class RewriteServlet extends HttpServlet {
 		}
 		
 		try {
+			request.setAttribute("webVersion", webVersion);
+
+			SigninBean signin = SigninBean.getForRequest(request);
+
+			// When the user is logged in, we want to disable all caching of
+			// our responses; since we don't specify an Expires header, browsers
+			// would normally revalidate with an If-Modified request anyways, but 
+			// IE in some cases will used cached content without checking 
+			// (for example, when using the forward/back buttons). That breaks how 
+			// we do action links that cause the page to reload. Preventing that 
+			// caching will make back/forward a little slower, but as long as we 
+			// keep our page load times snappy it isn't a big deal.
+			if (signin.isValid())
+				response.setHeader("Cache-Control", "no-cache");
+			
 			// Deleting the user from SigninBean means that next time it
 			// is accessed, we'll get a copy attached to this hibernate Session
-			SigninBean.getForRequest(request).resetSessionObjects();
-			request.setAttribute("webVersion", webVersion);
+			signin.resetSessionObjects();
 			
 			context.getRequestDispatcher(newPath).forward(request, response);
 			WebStatistics.getInstance().incrementJspPagesServed();
