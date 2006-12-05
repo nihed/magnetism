@@ -34,6 +34,10 @@ public abstract class BlogLikeBlockHandlerBean extends AbstractBlockHandlerBean<
 	protected abstract BlockType getBlockType();
 	
 	protected abstract ExternalAccountType getAccountType();
+
+	public BlockKey getKey(User user) {
+		return new BlockKey(getBlockType(), user.getGuid());
+	}	
 	
 	public BlockKey getKey(User user, StackInclusion inclusion) {
 		return getKey(user.getGuid(), inclusion);

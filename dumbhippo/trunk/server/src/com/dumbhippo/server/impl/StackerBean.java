@@ -1507,6 +1507,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		}
 		migrateFlickr(user);
 		migrateYouTube(user);
+		migrateMySpace(user);
 	}
 	
 	public void migrateBlockParticipation(String blockId) {
@@ -1595,6 +1596,10 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 	public void migrateYouTube(User user) {
 		getHandler(YouTubeBlockHandler.class, BlockType.YOUTUBE_PERSON).migrate(user);
 	}
+	
+	public void migrateMySpace(User user) {
+		getHandler(MySpacePersonBlockHandler.class, BlockType.MYSPACE_PERSON).migrate(user);
+	}	
 	
 	public void migrateGroupBlockData(String blockId) {
 		logger.debug("    migrating group block data for {}", blockId);

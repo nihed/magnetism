@@ -8,6 +8,8 @@ import java.util.Set;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.persistence.Query;
 
 import org.slf4j.Logger;
@@ -73,6 +75,7 @@ public class FlickrUpdaterBean extends CachedExternalUpdaterBean<FlickrUpdateSta
 	}
 	
 	@Override
+	@TransactionAttribute(TransactionAttributeType.NEVER)	
 	public void doPeriodicUpdate(String flickrId) {
 		FlickrUpdater proxy = EJBUtil.defaultLookup(FlickrUpdater.class);
 

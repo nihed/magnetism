@@ -9,6 +9,7 @@
 #include "hippo-block-blog-person.h"
 #include "hippo-block-flickr-person.h"
 #include "hippo-block-youtube-person.h"
+#include "hippo-block-myspace-person.h"
 #include "hippo-block-flickr-photoset.h"
 #include "hippo-block-facebook-event.h"
 #include "hippo-xml-utils.h"
@@ -418,7 +419,10 @@ hippo_block_new(const char    *guid,
         break;
     case HIPPO_BLOCK_TYPE_YOUTUBE_PERSON:
         object_type = HIPPO_TYPE_BLOCK_YOUTUBE_PERSON;
-        break;        
+        break;
+    case HIPPO_BLOCK_TYPE_MYSPACE_PERSON:
+        object_type = HIPPO_TYPE_BLOCK_MYSPACE_PERSON;
+        break;         
         /* don't add default case, it hides warnings */
     }
     
@@ -690,7 +694,8 @@ hippo_block_type_from_string(const char *s)
         { "FLICKR_PERSON", HIPPO_BLOCK_TYPE_FLICKR_PERSON },
         { "FLICKR_PHOTOSET", HIPPO_BLOCK_TYPE_FLICKR_PHOTOSET },
         { "FACEBOOK_EVENT", HIPPO_BLOCK_TYPE_FACEBOOK_EVENT },
-        { "YOUTUBE_PERSON", HIPPO_BLOCK_TYPE_YOUTUBE_PERSON }    
+        { "YOUTUBE_PERSON", HIPPO_BLOCK_TYPE_YOUTUBE_PERSON },
+        { "MYSPACE_PERSON", HIPPO_BLOCK_TYPE_MYSPACE_PERSON }           
     };
     unsigned int i;
     for (i = 0; i < G_N_ELEMENTS(types); ++i) {

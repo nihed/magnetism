@@ -27,6 +27,7 @@ import org.slf4j.Logger;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.ThreadUtils;
 import com.dumbhippo.TypeUtils;
+import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.mbean.FeedUpdaterPeriodicJob;
 import com.dumbhippo.mbean.DynamicPollingSystem.PollingTask;
@@ -770,9 +771,11 @@ public class FeedSystemBean implements FeedSystem {
 	
 	private static class FeedTask extends PollingTask {
 		private Feed feed;  // detached from transaction
+		private Guid id;
 		
-		public FeedTask(Feed feed) {
+		public FeedTask(Feed feed, Guid id) {
 			this.feed = feed;
+			this.id = id;
 		}
 
 		@Override
@@ -804,7 +807,7 @@ public class FeedSystemBean implements FeedSystem {
 
 		@Override
 		public String getIdentifier() {
-			return Long.toString(feed.getId());
+			return id.toString();
 		}
 	}
 
@@ -815,7 +818,7 @@ public class FeedSystemBean implements FeedSystem {
 			LinkResource link = em.find(LinkResource.class, feedId);
 			try {
 				Feed feed = (Feed) em.createQuery("select feed from Feed feed where feed.source = :source").setParameter("source", link).getSingleResult();
-				tasks.add(new FeedTask(feed));
+				tasks.add(new FeedTask(feed, link.getGuid()));
 			} catch (NoResultException e) {
 				logger.warn("feed from link " + feedId + " was deleted", e);
 			}

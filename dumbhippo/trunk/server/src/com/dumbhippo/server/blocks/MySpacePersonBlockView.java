@@ -23,7 +23,7 @@ public class MySpacePersonBlockView extends BlogLikeBlockView {
 	
 	@Override
 	public String getIcon() {
-		return getAccountType().getIconName();
+		return "/images3/" + getAccountType().getIconName();
 	}
 
 	@Override

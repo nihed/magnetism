@@ -97,8 +97,9 @@ public class YouTubeBlockHandlerBean extends
 			return;
 		}
 		Block block = stacker.getOrCreateBlock(getKey(user));
-		logger.debug("Created block {}", block);
-		if (block.getTimestampAsLong() <= 0)
+		if (block.getTimestampAsLong() <= 0) {
+			logger.debug("Setting block {} timestamp", block);			
 			stacker.stack(block, System.currentTimeMillis(), user, false, StackReason.BLOCK_UPDATE);
+		}
 	}
 }

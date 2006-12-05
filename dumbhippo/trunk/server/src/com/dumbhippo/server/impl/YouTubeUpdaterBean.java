@@ -4,6 +4,8 @@ import java.util.List;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.persistence.Query;
 
 import org.slf4j.Logger;
@@ -32,8 +34,8 @@ public class YouTubeUpdaterBean extends CachedExternalUpdaterBean<YouTubeUpdateS
 	private Notifier notifier;
 	
 	@Override
+	@TransactionAttribute(TransactionAttributeType.NEVER)	
 	public void doPeriodicUpdate(String username) {
-		EJBUtil.assertNoTransaction();
 		YouTubeUpdater proxy = EJBUtil.defaultLookup(YouTubeUpdater.class);
 		
 		List<? extends YouTubeVideo> videos = videosCache.getSync(username, true);
