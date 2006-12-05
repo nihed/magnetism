@@ -202,6 +202,7 @@ public abstract class SigninBean  {
 		return server;
 	}
 	
+	/** Are we signed in? returns false if anonymous */
 	public abstract boolean isValid();
 	public abstract boolean isDisabled();
 	public abstract boolean getNeedsTermsOfUse();

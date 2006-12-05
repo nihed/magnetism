@@ -963,6 +963,18 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		pageable.setTotalCount(pageable.getBound());		
 	}
 	
+	public User getRandomActiveUser(Viewpoint viewpoint) {
+		List<User> list = getRecentActivityUsers(0, 1, "");
+		if (!list.isEmpty())
+			return list.get(0);
+		else {
+			// just pick any user that exists if nobody was active - should never happen on production
+			logger.warn("No active users, picking someone at random");
+			Query q = em.createQuery("SELECT user FROM User user LIMIT 1");
+			return (User) q.getSingleResult();
+		}
+	}
+	
 	private List<GroupBlockData> getBlocks(Viewpoint viewpoint, Group group, int start, int count, boolean byParticipation) {
 		String orderBy;
 		if (byParticipation)

@@ -5,7 +5,7 @@
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 <%@ taglib tagdir="/WEB-INF/tags/3" prefix="dht3" %>
 
-<dht3:requirePersonBean/>
+<dht3:requirePersonBean beanClass="com.dumbhippo.web.pages.BadgesPage" pickRandomIfAnonymous="true"/>
 
 <c:set var="pageName" value="Badges" scope="page"/>
 
@@ -26,17 +26,19 @@
 				
 				if (!previewNode)
 					throw new Error("missing dhBadgePreview" + b);
-				if (!codeNode)
-					throw new Error("missing dhBadgeCode" + b);
+
+				// codeNode is null if we are anonymous/logged-out
 				
 				if (b == name) {
-					dh.log("  showing preview " + i + " " + previewNode.id + " code " + codeNode.id);
+					dh.log("  showing preview " + i + " " + previewNode.id);
 					previewNode.style.display = 'block';
-					codeNode.style.display = 'block';
+					if (codeNode)
+						codeNode.style.display = 'block';
 				} else {
-					dh.log("  hiding preview " + i + " " + previewNode.id + " code " + codeNode.id);
+					dh.log("  hiding preview " + i + " " + previewNode.id);
 					previewNode.style.display = 'none';
-					codeNode.style.display = 'none';
+					if (codeNode)
+						codeNode.style.display = 'none';
 				}
 			}
 		}
@@ -90,7 +92,14 @@
 				<div class="dh-badges-step-box">
 					<div class="dh-badges-step-box-left">
 						<div class="dh-badges-step-title">
-							<span class="dh-badges-step-number">Step 1:</span> Choose a style
+							<c:choose>
+								<c:when test="${person.self}">
+									<span class="dh-badges-step-number">Step 1:</span> Choose a style
+								</c:when>
+								<c:otherwise>
+									See a live example
+								</c:otherwise>
+							</c:choose>
 						</div>
 						<div>
 							<c:forEach var="badge" items="${person.badges.list}" varStatus="status">
@@ -110,26 +119,29 @@
 					<div class="dh-grow-div-around-floats"><div></div></div>
 				</div>
 				<div class="dh-grow-div-around-floats"><div></div></div>
-				<div class="dh-badges-step-box">
-					<div class="dh-badges-step-box-left">
-						<div class="dh-badges-step-title">
-							<span class="dh-badges-step-number">Step 2:</span> Get the code
-						</div>
-						<div>
-							Copy all the code and paste it into your site.
-						</div>
-					</div>
-					<div class="dh-badges-step-box-right">
-						<c:forEach var="badge" items="${person.badges.list}" varStatus="status">
-							<div id="dhBadgeCode${badge.name}" style="display: ${status.first ? 'block' : 'none'};">
-								<!--  don't add whitespace inside the textarea tag -->
-								<textarea class="dh-badges-code" readonly="readonly" rows="8" cols="50" wrap="off"><dh:flashBadge badge="${badge}" escapeXml="true" embedOnly="true" userId="${person.viewedPerson.user.id}"/></textarea>
+				
+				<c:if test="${person.self}">
+					<div class="dh-badges-step-box">
+						<div class="dh-badges-step-box-left">
+							<div class="dh-badges-step-title">
+								<span class="dh-badges-step-number">Step 2:</span> Get the code
 							</div>
-						</c:forEach>
+							<div>
+								Copy all the code and paste it into your site.
+							</div>
+						</div>
+						<div class="dh-badges-step-box-right">
+							<c:forEach var="badge" items="${person.badges.list}" varStatus="status">
+								<div id="dhBadgeCode${badge.name}" style="display: ${status.first ? 'block' : 'none'};">
+									<!--  don't add whitespace inside the textarea tag -->
+									<textarea class="dh-badges-code" readonly="readonly" rows="8" cols="50" wrap="off"><dh:flashBadge badge="${badge}" escapeXml="true" embedOnly="true" userId="${person.viewedPerson.user.id}"/></textarea>
+								</div>
+							</c:forEach>
+						</div>
+						<div class="dh-grow-div-around-floats"><div></div></div>
 					</div>
 					<div class="dh-grow-div-around-floats"><div></div></div>
-				</div>
-				<div class="dh-grow-div-around-floats"><div></div></div>
+				</c:if>
 			</div>
 		</div>
 	</dht3:shinyBox>

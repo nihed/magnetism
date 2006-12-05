@@ -5,7 +5,7 @@
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 <%@ taglib tagdir="/WEB-INF/tags/3" prefix="dht3" %>
 
-<dht3:requirePersonBean/>
+<dht3:requireStackedPersonBean/>
 
 <%-- This is a Facebook authetication token, when people re-login we land them on their person page and get the token --%>
 <jsp:setProperty name="person" property="facebookAuthToken" param="auth_token"/>
@@ -23,7 +23,7 @@
 <dht3:page disableHomeLink="${person.self}">
 	<dht3:pageSubHeader title="${person.viewedPerson.name}'s ${pageName}">
 		<dht3:randomTip tipIndex="${person.randomTipIndex}" isSelf="${person.self}"/>
-		<dht3:standardPageOptions selected="${pageName}"/>
+		<dht3:standardStackedPersonPageOptions selected="${pageName}"/>
 	</dht3:pageSubHeader>
 	<dht3:personStack person="${person.viewedPerson}" stackOrder="1" pageable="${person.pageableMugshot}" shortVersion="${person.pageableStack.position > 0}" showFrom="true" homeStack="${person.self}"/>
 	

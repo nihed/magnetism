@@ -84,6 +84,8 @@ public interface Stacker {
 	 */
 	public void pageRecentUserActivity(Viewpoint viewpoint, Pageable<PersonMugshotView> pageable, int blocksPerUser);
 
+	public User getRandomActiveUser(Viewpoint viewpoint);
+	
 	public void pageStack(Viewpoint viewpoint, Group group, Pageable<BlockView> pageable, boolean byParticipation);	
 	
 	/**

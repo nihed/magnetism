@@ -1,9 +1,8 @@
 package com.dumbhippo.web.pages;
 
-import java.util.Arrays;
-import java.util.List;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Random;
 import java.util.Set;
 
@@ -21,6 +20,7 @@ import com.dumbhippo.server.IdentitySpider;
 import com.dumbhippo.server.MusicSystem;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Pageable;
+import com.dumbhippo.server.Stacker;
 import com.dumbhippo.server.views.GroupView;
 import com.dumbhippo.server.views.InvitationView;
 import com.dumbhippo.server.views.PersonView;
@@ -30,7 +30,6 @@ import com.dumbhippo.web.ListBean;
 import com.dumbhippo.web.PagePositions;
 import com.dumbhippo.web.PagePositionsBean;
 import com.dumbhippo.web.WebEJBUtil;
-import com.dumbhippo.web.tags.FlashBadge;
 
 public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 	static private final Logger logger = GlobalSetup.getLogger(AbstractPersonPage.class);	
@@ -55,6 +54,7 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 	private MusicSystem musicSystem;
 	private PersonView viewedPerson; 	
 	private FacebookTracker facebookTracker;
+	private Stacker stacker;
 	
 	private ListBean<GroupView> groups;
 	private Pageable<GroupView> pageablePublicGroups;
@@ -79,12 +79,11 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 	
 	private int randomTipIndex = -1;
 	
-	private ListBean<FlashBadge> badges;
-	
 	protected AbstractPersonPage() {	
 		groupSystem = WebEJBUtil.defaultLookup(GroupSystem.class);
 		musicSystem = WebEJBUtil.defaultLookup(MusicSystem.class);
 		facebookTracker = WebEJBUtil.defaultLookup(FacebookTracker.class);
+		stacker = WebEJBUtil.defaultLookup(Stacker.class);
 		lookedUpCurrentTrack = false;
 	}
 	
@@ -115,7 +114,11 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 	public boolean isDisabled() {
 		return disabled;
 	}
-	
+
+	public String getName() {
+		return getViewedUser().getNickname();
+	}
+
 	protected void setViewedUser(User user) {
 		this.viewedUser = user;
 		this.viewedUserId = user.getId();
@@ -127,10 +130,16 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 		logger.debug("viewing person: {} disabled = {}", this.viewedUser, disabled);
 	}
 	
-	public String getName() {
-		return getViewedUser().getNickname();
+	public void setRandomActiveUser(boolean randomActiveUser) {
+		if (getViewedUser() != null)
+			throw new IllegalStateException("already viewing someone");
+		
+		if (randomActiveUser) {
+			User user = stacker.getRandomActiveUser(getViewpoint());
+			setViewedUser(user);
+		}
 	}
-
+	
 	public void setViewedUserId(String userId) {
 		if (userId == null) {
 			logger.debug("no viewed person");
@@ -359,21 +368,6 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 		if (randomTipIndex < 0)
 			randomTipIndex = new Random().nextInt(3);
 		return randomTipIndex;
-	}
-	
-	public ListBean<FlashBadge> getBadges() {
-		if (badges == null)
-			badges = new ListBean<FlashBadge>(Arrays.asList(FlashBadge.values()));
-		return badges;
-	}
-	
-	public int getMaxBadgeHeight() {
-		int maxHeight = 0;
-		for (FlashBadge badge : FlashBadge.values()) {
-			if (badge.getHeight() > maxHeight)
-				maxHeight = badge.getHeight();
-		}
-		return maxHeight;
 	}
 	
     public void setFacebookAuthToken(String facebookAuthToken) {

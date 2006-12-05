@@ -3,7 +3,7 @@
 
 <%@ attribute name="selected" required="true" type="java.lang.String" %>
 
-<dht3:requirePersonBean/>
+<dht3:requireStackedPersonBean/>
 
 <c:if test="${!empty param['who'] && !person.self}">
 	<c:set var="whoParam" value="?who=${param['who']}" scope="page"/>
