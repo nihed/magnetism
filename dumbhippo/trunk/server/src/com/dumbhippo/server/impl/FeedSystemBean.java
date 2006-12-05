@@ -479,6 +479,8 @@ public class FeedSystemBean implements FeedSystem {
 										
 					initializeFeedFromSyndFeed(newFeed, syndFeed);
 					
+					pollingPersistence.createTask(PollingTaskFamilyType.FEED, newFeed.getSource().getId());
+					
 					return newFeed;
 				}
 			});
@@ -810,15 +812,20 @@ public class FeedSystemBean implements FeedSystem {
 		Set<PollingTask> tasks = new HashSet<PollingTask>();
 		for (PollingTaskEntry entry : entries) {
 			String feedId = entry.getTaskId();
-			Feed feed = em.find(Feed.class, Long.valueOf(feedId));
-			tasks.add(new FeedTask(feed));
+			LinkResource link = em.find(LinkResource.class, feedId);
+			try {
+				Feed feed = (Feed) em.createQuery("select feed from Feed feed where feed.source = :source").setParameter("source", link).getSingleResult();
+				tasks.add(new FeedTask(feed));
+			} catch (NoResultException e) {
+				logger.warn("feed from link " + feedId + " was deleted", e);
+			}
 		}
 		return tasks;
 	}
 
 	public void migrateTasks() {
 		for (Feed feed : getInUseFeeds()) {
-			pollingPersistence.createTask(PollingTaskFamilyType.FEED.ordinal(), Long.toString(feed.getId()));
+			pollingPersistence.createTask(PollingTaskFamilyType.FEED, feed.getSource().getId());
 		}
 	}
 }

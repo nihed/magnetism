@@ -6,6 +6,7 @@ import javax.ejb.Local;
 
 import com.dumbhippo.mbean.DynamicPollingSystem.PollingTask;
 import com.dumbhippo.persistence.PollingTaskEntry;
+import com.dumbhippo.persistence.PollingTaskFamilyType;
 
 @Local
 public interface PollingTaskPersistence {
@@ -14,7 +15,7 @@ public interface PollingTaskPersistence {
 		public Set<PollingTask> loadTasks(Set<PollingTaskEntry> entries);
 	}
 	
-	public void createTask(int i, String id);
+	public void createTask(PollingTaskFamilyType family, String id);
 	
 	public void snapshot(Set<PollingTask> task);
 	
