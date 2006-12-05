@@ -359,7 +359,7 @@ class ImageWindow (gtk.Window):
             self.status_color_box.modify_bg(gtk.STATE_NORMAL,
                                             gtk.gdk.Color(r*255, g*255, b*255))
 
-            pixel_desc = "%2x%2x%2x%2x at coordinates %d,%d" % (r, g, b, a, self.pixbuf_x, self.pixbuf_y)
+            pixel_desc = "%2x%2x%2x alpha %2x at coordinates %d,%d" % (r, g, b, a, self.pixbuf_x, self.pixbuf_y)
 
         else:
             pixel_desc = "no pixel"

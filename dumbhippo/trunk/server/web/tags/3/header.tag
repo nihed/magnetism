@@ -5,6 +5,7 @@
 
 <%@ attribute name="disableHomeLink" required="false" type="java.lang.Boolean" %>
 <%@ attribute name="disableSignupLink" required="false" type="java.lang.Boolean" %>
+<%@ attribute name="disableMiniLink" required="false" type="java.lang.Boolean" %>
 <%@ attribute name="searchText" required="false" type="java.lang.String" %>
 
 <div id="dhPageHeader3">
@@ -64,15 +65,22 @@
 			<div id="dhHeaderOptions3">
 				<c:choose>
 					<c:when test="${signin.valid}">
-					    <a class="dh-underlined-link" href="/">My Home</a> | 
+						<c:if test="${!disableHomeLink}">
+						    <a class="dh-underlined-link" href="/">My Home</a> | 
+						</c:if>
 				        <a class="dh-underlined-link" href="/account">My Account</a> |
 					</c:when>
 					<c:otherwise>
-						<a class="dh-underlined-link" href="/">Home</a> | 
+						<c:if test="${!disableHomeLink}">
+							<a class="dh-underlined-link" href="/">Home</a> | 
+						</c:if>
 					</c:otherwise>
 				</c:choose>		
 				<a class="dh-underlined-link" href="/active-people">Active People</a> | 
 				<a class="dh-underlined-link" href="/active-groups">Active Groups</a> | 
+				<c:if test="${!disableMiniLink}">
+					<dh:png src="/images3/${buildStamp}/mini_icon.png" style="width: 28px; height: 11px;"/> <a class="dh-underlined-link" href="/badges">Get Mini</a> |
+				</c:if>
 				<a class="dh-underlined-link" href="/features">Features</a> |				
 				<a class="dh-underlined-link" href="http://blog.mugshot.org/?page_id=245a">Help</a>
 			</div>	
