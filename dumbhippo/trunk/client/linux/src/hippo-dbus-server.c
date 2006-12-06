@@ -38,7 +38,9 @@ typedef struct _HippoDBusListener HippoDBusListener;
 static void      hippo_dbus_init                (HippoDBus       *dbus);
 static void      hippo_dbus_class_init          (HippoDBusClass  *klass);
 
-static void      hippo_dbus_finalize            (GObject               *object);
+static void      hippo_dbus_finalize            (GObject          *object);
+
+static void      hippo_dbus_disconnected        (HippoDBus        *dbus);
 
 static DBusHandlerResult handle_message         (DBusConnection     *connection,
                                                  DBusMessage        *message,
@@ -66,10 +68,8 @@ struct _HippoDBus {
     char           *bus_name;
     DBusConnection *connection;
     unsigned int in_dispatch : 1; /* dbus is broken and we can't recurse right now */
-    unsigned int requested_disconnect : 1;
-    unsigned int processed_disconnected : 1;
     unsigned int xmpp_connected : 1;
-    
+    unsigned int emitted_disconnected : 1;
     GSList *listeners;
 };
 
@@ -95,21 +95,21 @@ hippo_dbus_class_init(HippoDBusClass  *klass)
     
     signals[DISCONNECTED] =
         g_signal_new ("disconnected",
-            		  G_TYPE_FROM_CLASS (object_class),
-            		  G_SIGNAL_RUN_LAST,
-            		  0,
-            		  NULL, NULL,
-            		  g_cclosure_marshal_VOID__VOID,
-            		  G_TYPE_NONE, 0);
-
+                      G_TYPE_FROM_CLASS (object_class),
+                      G_SIGNAL_RUN_LAST,
+                      0,
+                      NULL, NULL,
+                      g_cclosure_marshal_VOID__VOID,
+                      G_TYPE_NONE, 0);
+    
     signals[SONG_CHANGED] =
         g_signal_new ("song-changed",
-            		  G_TYPE_FROM_CLASS (object_class),
-            		  G_SIGNAL_RUN_LAST,
-            		  0,
-            		  NULL, NULL,
-            		  g_cclosure_marshal_VOID__POINTER,
-            		  G_TYPE_NONE, 1, G_TYPE_POINTER);
+                      G_TYPE_FROM_CLASS (object_class),
+                      G_SIGNAL_RUN_LAST,
+                      0,
+                      NULL, NULL,
+                      g_cclosure_marshal_VOID__POINTER,
+                      G_TYPE_NONE, 1, G_TYPE_POINTER);
 }
 
 static gboolean
@@ -266,7 +266,7 @@ hippo_dbus_try_to_acquire(const char  *server,
 
     /* add an extra ref, which is owned by the "connected" state on 
      * the connection. We drop it in our filter func if we get 
-     * the disconnected message.
+     * the disconnected message or lose our bus name.
      */
     g_object_ref(dbus);
 
@@ -284,39 +284,38 @@ hippo_dbus_finalize(GObject *object)
 
     g_debug("Finalizing dbus object");
 
+    if (!dbus->emitted_disconnected)
+        g_warning("Messed-up reference counting on HippoDBus object - connected state should own a ref");
+    
+    while (dbus->listeners)
+	disconnect_listener(dbus, dbus->listeners->data);
+    
     g_free(dbus->bus_name);
-    /* assumes connection is disconnected */
+
+#ifdef HAVE_DBUS_1_0
+    /* pre-1.0 dbus is all f'd up and may crash if we do this when the
+     * connection is still connected.
+     */
     dbus_connection_unref(dbus->connection);
+#endif
     
     G_OBJECT_CLASS(hippo_dbus_parent_class)->finalize(object);
 }
 
-void
-hippo_dbus_disconnect(HippoDBus *dbus)
+static void
+hippo_dbus_disconnected(HippoDBus *dbus)
 {
+    if (dbus->emitted_disconnected)
+        return;
+
+    dbus->emitted_disconnected = TRUE;
+    
     while (dbus->listeners)
 	disconnect_listener(dbus, dbus->listeners->data);
-
-    if (dbus->requested_disconnect)
-        return;
-    dbus->requested_disconnect = TRUE;
-    /* will send back a message, processed in the main loop, that unrefs us */
-    dbus_connection_close(dbus->connection);    
-}
-
-void
-hippo_dbus_blocking_shutdown(HippoDBus   *dbus)
-{
-    /* disconnect if we haven't */
-    hippo_dbus_disconnect(dbus);
-
-    /* this processed_disconnected flag is to avoid recursive 
-     * dispatch, which current dbus doesn't like
-     */
-    if (!dbus->processed_disconnected) {
-        while (dbus_connection_read_write_dispatch(dbus->connection, -1))
-            ; /* nothing */
-    }
+    
+    /* the "connected" state owns one ref on the HippoDBus */
+    g_signal_emit(G_OBJECT(dbus), signals[DISCONNECTED], 0);
+    g_object_unref(dbus);
 }
 
 static HippoDBusListener *
@@ -1345,16 +1344,13 @@ handle_message(DBusConnection     *connection,
    
         if (dbus_message_has_sender(message, DBUS_SERVICE_DBUS) &&
             dbus_message_is_signal(message, DBUS_INTERFACE_DBUS, "NameLost")) {
-            /* If we lose our name, we disconnect and exit */
+            /* If we lose our name, we behave as if disconnected */
             const char *name = NULL;
             if (dbus_message_get_args(message, NULL, DBUS_TYPE_STRING, &name, DBUS_TYPE_INVALID) && 
                 strcmp(name, dbus->bus_name) == 0) {
-#if 1
-                /* See comment at the end of main.c */
-                exit(0);
-#else
-                hippo_dbus_disconnect(dbus);
-#endif
+
+                hippo_dbus_disconnected(dbus);
+                dbus = NULL;
             }
         } else if (dbus_message_has_sender(message, DBUS_SERVICE_DBUS) &&
                    dbus_message_is_signal(message, DBUS_INTERFACE_DBUS, "NameOwnerChanged")) {
@@ -1382,10 +1378,7 @@ handle_message(DBusConnection     *connection,
                 g_warning("NameOwnerChanged had wrong args???");
             }
         } else if (dbus_message_is_signal(message, DBUS_INTERFACE_LOCAL, "Disconnected")) {
-            /* the "connected" state owns one ref on the HippoDBus */
-            dbus->processed_disconnected = TRUE;
-            g_signal_emit(G_OBJECT(dbus), signals[DISCONNECTED], 0);
-            g_object_unref(dbus);
+            hippo_dbus_disconnected(dbus);
             dbus = NULL;
         } else if (dbus_message_is_signal(message, RB_PLAYER_IFACE, RB_PLAYING_URI_CHANGED)) {
             handle_rb_playing_uri_changed(dbus, message);

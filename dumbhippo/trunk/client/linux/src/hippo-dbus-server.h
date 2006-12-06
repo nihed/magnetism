@@ -24,14 +24,6 @@ GType        	 hippo_dbus_get_type               (void) G_GNUC_CONST;
 HippoDBus* hippo_dbus_try_to_acquire           (const char  *server,
                                                 gboolean     replace_existing,
                                                 GError     **error);
-/* drop the connection, but assume we'll go back to the main 
- * loop to deal with the consequences
- */
-void       hippo_dbus_disconnect               (HippoDBus   *dbus);
-/* disconnect, then process anything queued up 
- * to and including the Disconnected message
- */
-void       hippo_dbus_blocking_shutdown        (HippoDBus   *dbus);
 
 void       hippo_dbus_notify_xmpp_connected    (HippoDBus   *dbus,
                                                 gboolean     connected);

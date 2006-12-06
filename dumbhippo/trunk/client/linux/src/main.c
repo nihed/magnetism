@@ -1133,21 +1133,7 @@ main(int argc, char **argv)
     g_debug("Dropping loudmouth connection");
     hippo_connection_signout(the_app->connection);
 
-    /* FIXME: with D-Bus 0.93 / D-Bus GLib 0.93, trying to shutdown
-     *  the bus warns and hangs because it's trying to shut down
-     *  the shared singleton bus. So, we forget about cleanup for
-     *  the moment; the only real disadvantage I know about is that
-     *  it may make it harder to detect memory leaps. I'm skipping
-     *  the hippo_app_free() because conceptually that's assuming
-     *  that no further callbacks will come in from D-Bus, though
-     *  (with the main loop not running) it doesn't really matter.
-     */
-#if 0
-    g_debug("Releasing dbus");
-    hippo_dbus_blocking_shutdown(the_app->dbus);
-
     hippo_app_free(the_app);
-#endif
 
     return 0;
 }

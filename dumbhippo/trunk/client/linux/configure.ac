@@ -334,6 +334,11 @@ AC_SUBST(GLIB_MKENUMS)
 PKG_CHECK_EXISTS(gtk+-2.0 < 2.9.0, have_gtk210=false, have_gtk210=true)
 AM_CONDITIONAL(HAVE_GTK210, $have_gtk210)
 
+PKG_CHECK_EXISTS(dbus-1 < 1.0, have_dbus10=false, have_dbus10=true)
+if $have_dbus10 ; then
+    AC_DEFINE(HAVE_DBUS_1_0, , [whether we have dbus 1.0 or greater])
+fi
+
 ## used for .desktop file in theory, disabled until we have actual translations
 ## IT_PROG_INTLTOOL([0.34.90])
 
