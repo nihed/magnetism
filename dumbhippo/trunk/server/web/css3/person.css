@@ -30,3 +30,24 @@
 	font-size:		11px;
 	color:			#666666;	
 }
+
+.dh-person-header-hated-accounts {
+	font-size:		11px;
+}
+
+.dh-person-header-hated-account-link {
+	color:			#000000;
+	text-decoration:	none;
+}
+
+.dh-person-header-hated-account-link:visited {
+	color:			#000000;
+}
+
+.dh-person-header-hated-account-link:hover {
+	text-decoration:	underline;
+}
+
+.dh-person-header-hated-account-quip {
+	color:			#686868;
+}

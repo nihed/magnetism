@@ -82,6 +82,15 @@
 			            <div class="dh-person-header-bio">
 				            ${who.bioAsHtml}
 			            </div>
+					<%-- Accounts you won't find me at --%>
+					<c:if test="${!empty who.hatedAccounts.list}" >
+					    <div class="dh-person-header-hated-accounts">
+						<strong>Where you won't find <c:out value="${who.name}"/></strong>
+			 		            <c:forEach var="account" items="${who.hatedAccounts.list}">
+					                    <div class="dh-person-header-hated-account"><dh:png src="/images3/${buildStamp}/quiphate_icon.png" />&nbsp;<a class="dh-person-header-hated-account-link" href="${account.externalAccount.siteLink}"><c:out value="${account.externalAccount.siteName}" /></a>&nbsp;&mdash;&nbsp;<span class="dh-person-header-hated-account-quip"><c:out value="${account.externalAccount.quip}" /></span></div>
+					            </c:forEach>					
+					    </div>
+					</c:if>
 			        </c:if>
                 </td>
             </tr>             
