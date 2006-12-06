@@ -117,7 +117,11 @@ dh.account.setLastFmName = function(name, loadFunc, errorFunc) {
 				     { "urlOrName" : name },
 						loadFunc, errorFunc);
 }
-
+dh.account.setDeliciousName = function(name, loadFunc, errorFunc) {
+   	dh.server.doXmlMethod("setdeliciousname",
+				     { "urlOrName" : name },
+						loadFunc, errorFunc);
+}
 dh.account.createExternalAccountOnHateSavedFunc = function(entry, accountType) {
 	return function(value) {
 		var oldMode = entry.getMode();
@@ -255,6 +259,32 @@ dh.account.onLinkedInLoveSaved = function(value) {
 	  	    	 }); 
 }
 
+dh.account.onDeliciousLoveSaved = function(value) {
+	var entry = dh.account.deliciousEntry;
+	var oldMode = entry.getMode();
+	entry.setBusy();
+  	dh.account.setDeliciousName(value,
+	 	    	 function(childNodes, http) {
+				    var username = null;
+					var i = 0;
+					for (i = 0; i < childNodes.length; ++i) {
+						var child = childNodes.item(i);
+						if (child.nodeType != dojo.dom.ELEMENT_NODE)
+							continue;
+			
+						if (child.nodeName == "username") {
+							username = dojo.dom.textContent(child);
+						}
+	 	    	 	}
+					entry.setLoveValueAlreadySaved(username);
+	 	    	 	entry.setMode('love');
+	  	    	 },
+	  	    	 function(code, msg, http) {
+	  	    	 	alert(msg);
+	  	    	 	entry.setMode(oldMode);
+	  	    	 }); 
+}
+
 dhAccountInit = function() {
 	dh.account.usernameEntryNode = document.getElementById('dhUsernameEntry');
 	dh.account.usernameEntry = new dh.textinput.Entry(dh.account.usernameEntryNode, "J. Doe", dh.formtable.currentValues['dhUsernameEntry']);
@@ -358,7 +388,13 @@ dhAccountInit = function() {
 					'LinkedIn is for nerds', dh.account.initialLinkedInHateQuip);
 	dh.account.linkedInEntry.onLoveSaved = dh.account.onLinkedInLoveSaved;
 	dh.account.linkedInEntry.onHateSaved = dh.account.createExternalAccountOnHateSavedFunc(dh.account.linkedInEntry, 'LINKED_IN');
-	dh.account.linkedInEntry.onCanceled = dh.account.createExternalAccountOnCanceledFunc(dh.account.linkedInEntry, 'LINKED_IN');	
+	dh.account.linkedInEntry.onCanceled = dh.account.createExternalAccountOnCanceledFunc(dh.account.linkedInEntry, 'LINKED_IN');
+	
+	dh.account.deliciousEntry = new dh.lovehate.Entry('dhDelicious', 'del.icio.us URL or username', dh.account.initialDeliciousName,
+					'del.icio.us isn\'t', dh.account.initialDeliciousHateQuip);
+	dh.account.deliciousEntry.onLoveSaved = dh.account.onDeliciousLoveSaved;
+	dh.account.deliciousEntry.onHateSaved = dh.account.createExternalAccountOnHateSavedFunc(dh.account.deliciousEntry, 'DELICIOUS');
+	dh.account.deliciousEntry.onCanceled = dh.account.createExternalAccountOnCanceledFunc(dh.account.deliciousEntry, 'DELICIOUS');
 }
 
 dojo.event.connect(dojo, "loaded", dj_global, "dhAccountInit");

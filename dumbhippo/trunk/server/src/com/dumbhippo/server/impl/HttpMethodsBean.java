@@ -1646,6 +1646,30 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		xml.appendTextNode("username", external.getHandle());
 	}	
 	
+	public void doSetDeliciousName(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException {
+		String name = urlOrName.trim();
+		// del.icio.us urls are just "http://del.icio.us/myusername"
+		int user = name.lastIndexOf("/");
+		if (user >= 0) {
+			name = name.substring(user);
+		}
+		if (name.endsWith("/"))
+			name = name.substring(0, name.length() - 1);
+		
+		if (name.startsWith("http://"))
+			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, "Enter your public profile URL or just your username");
+		
+		ExternalAccount external = externalAccountSystem.getOrCreateExternalAccount(viewpoint, ExternalAccountType.DELICIOUS);
+		try {
+			external.setHandleValidating(name);
+		} catch (ValidationException e) {
+			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, e.getMessage());
+		}
+		externalAccountSystem.setSentiment(external, Sentiment.LOVE);
+		
+		xml.appendTextNode("username", external.getHandle());
+	}
+	
 	public void doSetLinkedInProfile(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException {
 		// Try to pull linked in name out of either a linked in profile url ("http://www.linkedin.com/in/username") or 
 		// just try using the thing as a username directly

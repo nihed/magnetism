@@ -337,6 +337,10 @@ public interface HttpMethods {
 	public void doSetLastFmName(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException;	
 
 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
+	@HttpParams( { "urlOrName" })	
+	public void doSetDeliciousName(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException;	
+	
+	@HttpContentTypes(HttpResponseData.XMLMETHOD)
 	@HttpParams( { "url" })
 	public void doSetWebsite(XmlBuilder xml, UserViewpoint viewpoint, String url) throws XmlMethodException;
 	

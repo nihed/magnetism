@@ -205,7 +205,19 @@ public class AccountPage {
 	public String getLastFmName() {
 		return getExternalAccountHandle(ExternalAccountType.LASTFM);
 	}	
-		
+	
+	public String getDeliciousSentiment() {
+		return getExternalAccountSentiment(ExternalAccountType.DELICIOUS);
+	}
+	
+	public String getDeliciousHateQuip() {
+		return getExternalAccountHateQuip(ExternalAccountType.DELICIOUS);
+	}
+	
+	public String getDeliciousName() {
+		return getExternalAccountHandle(ExternalAccountType.DELICIOUS);
+	}
+	
 	public String getWebsiteUrl() {
 		logger.debug("returning {} for website ", getExternalAccountHandle(ExternalAccountType.WEBSITE));
 		return getExternalAccountHandle(ExternalAccountType.WEBSITE);

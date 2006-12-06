@@ -406,7 +406,49 @@ public enum ExternalAccountType {
 		public String getIconName() {
 			return "favicon_lastfm.png";
 		}		
-	};	
+	}, 
+	DELICIOUS("del.icio.us") {
+		@Override
+		public String getIconName() {
+			return "favicon_delicious.png";
+		}
+		
+		@Override
+		public String getLink(String handle, String extra) {
+			return getSiteLink() + "/" + StringUtils.urlEncode(handle);
+		}
+		
+		@Override
+		public String getSiteLink() {
+			return "http://del.icio.us";
+		}
+		
+		@Override
+		public String getLinkText(String handle, String extra) {
+			return "My Favorites";
+		}
+		
+		@Override
+		public String canonicalizeHandle(String handle) throws ValidationException {
+			handle = super.canonicalizeHandle(handle);
+			if (handle != null) {
+				// According to del.icio.us login form, they allow a-z 0-9 underscore and period.
+				if (!StringUtils.isAlphanumericOrInSet(handle, "_."))
+					throw new ValidationException("del.icio.us usernames can only have letters, digits, underscores, and periods");
+				try {
+					new URL(getLink(handle, null));
+				} catch (MalformedURLException e) {
+					throw new ValidationException("Invalid del.icio.us username '" + handle + "': " + e.getMessage());
+				}
+			}
+			return handle;
+		}
+		
+		@Override
+		public boolean getHasAccountInfo(String handle, String extra) {
+			return handle != null;
+		}		
+	};
 	
 	private static final Logger logger = GlobalSetup.getLogger(ExternalAccountType.class);	
 	

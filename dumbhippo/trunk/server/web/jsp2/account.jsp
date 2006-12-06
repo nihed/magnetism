@@ -47,7 +47,9 @@
 		dh.account.initialFlickrEmail = <dh:jsString value="${account.flickrEmail}"/>;
 		dh.account.initialFlickrHateQuip = <dh:jsString value="${account.flickrHateQuip}"/>;
 		dh.account.initialLinkedInName = <dh:jsString value="${account.linkedInName}"/>;
-		dh.account.initialLinkedInHateQuip = <dh:jsString value="${account.linkedInHateQuip}"/>;	
+		dh.account.initialLinkedInHateQuip = <dh:jsString value="${account.linkedInHateQuip}"/>;
+		dh.account.initialDeliciousName = <dh:jsString value="${account.deliciousName}"/>;
+		dh.account.initialDeliciousHateQuip = <dh:jsString value="${account.deliciousHateQuip}"/>;			
 	</script>
 </head>
 <dht:twoColumnPage neverShowSidebar="true" currentPageLink="account">
@@ -119,7 +121,10 @@
 				</dht:formTableRow>
 				<dht:formTableRow label="Last.fm name">
 					<dht:loveHateEntry baseId="dhLastFm" mode="${account.lastFmSentiment}"/>
-				</dht:formTableRow>				
+				</dht:formTableRow>
+				<dht:formTableRow label="del.icio.us name">
+					<dht:loveHateEntry baseId="dhDelicious" mode="${account.deliciousSentiment}"/>
+				</dht:formTableRow>								
 				<dht:formTableRowStatus controlId='dhRhapsodyListeningHistoryEntry'></dht:formTableRowStatus>
 				<dht:formTableRow label="Rhapsody feed">
 					<dht:textInput id="dhRhapsodyListeningHistoryEntry" maxlength="255"/>
@@ -132,7 +137,7 @@
 				<dht:formTableRowStatus controlId='dhBlogEntry'></dht:formTableRowStatus>
 				<dht:formTableRow label="My blog">
 					<dht:textInput id="dhBlogEntry" maxlength="255"/>
-				</dht:formTableRow>				
+				</dht:formTableRow>
 				<tr valign="top">
 	                <td colspan="2">
 	                    <c:if test="${account.facebookAuthToken != null}">

@@ -176,4 +176,22 @@ public class StringUtils {
 		}
 		return true;
 	}
+	
+	public static boolean isAlphanumericOrInSet(String s, String otherCharsAllowed) {
+		for (char c : s.toCharArray()) {
+			if (!Character.isLetterOrDigit(c)) {
+				// this is inefficient, but we assume infrequent
+				boolean allowed = false;
+				for (char a : otherCharsAllowed.toCharArray()) {
+					if (c == a) {
+						allowed = true;
+						break;
+					}
+				}
+				if (!allowed)
+					return false;
+			}
+		}
+		return true;
+	}
 }
