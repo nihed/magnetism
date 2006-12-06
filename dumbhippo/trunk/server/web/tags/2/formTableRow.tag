@@ -22,7 +22,7 @@
 	</td>
 	<c:choose>
 	    <c:when test="${!empty info}">
-	        <td class="dh-control-cell"><div class="dh-control-cell-div"><jsp:doBody/></div></td>
+	        <td class="dh-control-cell dh-control-cell-next-to-info"><div class="dh-control-cell-div"><jsp:doBody/></div></td>
 	        <td class="dh-info-cell"><c:out value="${info}"/></td>
 	    </c:when>
 	    <c:otherwise>
