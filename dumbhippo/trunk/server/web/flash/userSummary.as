@@ -2,6 +2,12 @@
 
 import flash.geom.Matrix;
 
+if (isOldFlash()) {
+	var error:TextField = createTextField("error", getNextHighestDepth(), 0, 0, 300, 300);
+	error.text = "Flash 8 required to view this";
+	return;
+}
+
 // this gives us our real window size, instead of giving us a fixed size then scaling.
 // We can't really handle arbitrary sizes though, only one of the expected ones.
 Stage.scaleMode = "noScale";
