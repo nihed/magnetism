@@ -613,7 +613,7 @@ public class IdentitySpiderBean implements IdentitySpider, IdentitySpiderRemote 
 
 		Set<User> ret = new HashSet<User>();
 		for (Guid guid : LiveState.getInstance().getContacts(user.getGuid())) {
-			ret.add(em.find(User.class, guid));
+			ret.add(em.find(User.class, guid.toString()));
 		}
 		return ret;
 	}
