@@ -203,8 +203,8 @@ div.dh-async-action-link-complete {
 	color:				#9648BC;
 }
 
-.dh-page-shinybox-subtitle-bold {
-	font-size:			16px;
+.dh-page-shinybox-subtitle {
+	font-size:			14px;
 	font-weight:		bold;
 }
 
@@ -474,4 +474,8 @@ div.dh-async-action-link-complete {
 .dh-download-more-details {
     color:             #666666;
     font-size:         13px;
+}
+
+.dh-download-product {
+	color:				#9648BC;
 }

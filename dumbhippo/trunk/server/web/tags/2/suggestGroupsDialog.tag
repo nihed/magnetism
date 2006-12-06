@@ -3,6 +3,8 @@
 <%@ taglib tagdir="/WEB-INF/tags/2" prefix="dht" %>
 
 <div id="dhSuggestGroupsPopup" class="dhInvisible">
+	<div id="dhSuggestGroupsTopDiv" class="dh-border">
+			<div class="dh-content">
 	<div class="dh-title">INVITE TO GROUPS</div>
 	<div class="dh-explanation-note">
 	    Select groups for <span id="dhSuggestGroupsInvitee"></span>
@@ -28,4 +30,6 @@
 		<input type="button" id="dhSuggestGroupsCancel" class="dhButton" 
 		       value="Cancel" onclick="dh.invitation.cancelSuggestGroups();"/>
 	</div>
+	</div>
+    </div>
 </div>

@@ -1,5 +1,8 @@
 package com.dumbhippo.web.pages;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
@@ -15,8 +18,10 @@ import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.PersonViewer;
 import com.dumbhippo.server.Configuration.PropertyNotFoundException;
+import com.dumbhippo.server.views.ExternalAccountView;
 import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.PersonViewExtra;
+import com.dumbhippo.web.ListBean;
 import com.dumbhippo.web.Signin;
 import com.dumbhippo.web.SigninBean;
 import com.dumbhippo.web.UserSigninBean;
@@ -90,14 +95,16 @@ public class AccountPage {
 		ExternalAccount external;
 		try {
 			external = externalAccounts.lookupExternalAccount(signin.getViewpoint(), signin.getUser(), ExternalAccountType.RHAPSODY);
+            if (external.getFeed() != null)
+			    return external.getFeed().getSource().getUrl();
 		} catch (NotFoundException e) {
-			return null;
+			// nothing to do
 		}
-		if (external.getSentiment() != Sentiment.LOVE) {
-			return null;
-		} else {
-			return external.getFeed().getSource().getUrl();
-		}
+		return ""; 
+	}
+	
+	public String getRhapsodyHateQuip() {
+		return getExternalAccountHateQuip(ExternalAccountType.RHAPSODY);
 	}
 	
 	private String getExternalAccountSentiment(ExternalAccountType type) {
@@ -216,6 +223,28 @@ public class AccountPage {
 	
 	public String getDeliciousName() {
 		return getExternalAccountHandle(ExternalAccountType.DELICIOUS);
+	}
+	
+	/**
+	 * Returns a list of supported account views; with the ExternalAccount information for the
+	 * user filled in for the account types for which the user has accounts.
+	 * 
+	 * TODO: the list should be in the alphabetical order by the account type name
+	 */
+	public ListBean<ExternalAccountView> getSupportedAccounts() {
+		List<ExternalAccountView> supportedAccounts = new ArrayList<ExternalAccountView>(); 
+		for (ExternalAccountType type : ExternalAccountType.values()) {
+			if (type.isSupported()) {
+				try {
+				    ExternalAccount externalAccount = 
+				    	externalAccounts.lookupExternalAccount(signin.getViewpoint(), signin.getUser(), type);
+				    supportedAccounts.add(new ExternalAccountView(externalAccount));
+				} catch (NotFoundException e) {
+					supportedAccounts.add(new ExternalAccountView(type));
+				}
+			}
+		}
+		return new ListBean<ExternalAccountView>(supportedAccounts);
 	}
 	
 	public String getWebsiteUrl() {

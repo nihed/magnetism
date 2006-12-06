@@ -30,6 +30,7 @@ dh.lovehate.Entry = function(baseId, defaultLoveText, currentLoveValue, defaultH
 	this._hateEntry = new dh.textinput.Entry(this._hateEntryNode, defaultHateText, currentHateValue);
 	
 	this._loveValue = document.getElementById(baseId + 'LoveValueId');
+	this._specialLoveValue = null;
 	this._hateValue = document.getElementById(baseId + 'HateValueId');
 	
 	this._allNodes = [me._loveNode, me._hateNode, me._loveEditNode, me._hateEditNode, me._indifferentNode, me._busyNode];
@@ -53,7 +54,7 @@ dh.lovehate.Entry = function(baseId, defaultLoveText, currentLoveValue, defaultH
 			throw new Error("null/undefined node passed to _showNode");
 		
 		// Sync the "not in edit mode" values with the entries, if we're about to show them
-		if (node == me._loveNode) {
+		if (node == me._loveNode && me._specialLoveValue == null) {
 			dojo.dom.textContent(me._loveValue, me._loveEntry.getValue());			
 		}
 		if (node == me._hateNode) {
@@ -105,6 +106,10 @@ dh.lovehate.Entry = function(baseId, defaultLoveText, currentLoveValue, defaultH
 		return null;
 	}
 	
+	this.getLoveEntry = function() {
+	    return me._loveEntry;
+	}
+	
 	this.setMode = function(mode) {
 		var nodeVar = "_" + mode + "Node";
 		var node = me[nodeVar];
@@ -115,6 +120,13 @@ dh.lovehate.Entry = function(baseId, defaultLoveText, currentLoveValue, defaultH
 	
 	this.setBusy = function() {
 		me.setMode('busy');
+	}
+	
+	this.setSpecialLoveValue = function(value) {
+	    // this is used when we don't want a long value for the entry to be visible 
+	    // when the entry is not being edited
+	    dojo.dom.textContent(me._loveValue, value);	
+	    me._specialLoveValue = value;
 	}
 	
 	this.setLoveValueAlreadySaved = function(value) {

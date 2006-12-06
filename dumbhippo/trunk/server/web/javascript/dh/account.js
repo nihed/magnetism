@@ -122,6 +122,12 @@ dh.account.setDeliciousName = function(name, loadFunc, errorFunc) {
 				     { "urlOrName" : name },
 						loadFunc, errorFunc);
 }
+dh.account.setRhapsodyUrl = function(name, loadFunc, errorFunc) {
+   	dh.server.doXmlMethod("setrhapsodyhistoryfeed",
+   	                      { "url" : name },
+   	                      loadFunc, errorFunc);
+}
+   	
 dh.account.createExternalAccountOnHateSavedFunc = function(entry, accountType) {
 	return function(value) {
 		var oldMode = entry.getMode();
@@ -259,6 +265,20 @@ dh.account.onLinkedInLoveSaved = function(value) {
 	  	    	 }); 
 }
 
+dh.account.onRhapsodyLoveSaved = function(value) {
+	var entry = dh.account.rhapsodyEntry;
+	var oldMode = entry.getMode();
+	entry.setBusy();
+  	dh.account.setRhapsodyUrl(value, 
+	 	    	 function(childNodes, http) {
+	 	    	 	entry.setMode('love');
+	  	    	 },
+	  	    	 function(code, msg, http) {
+	  	    	 	alert(msg);
+	  	    	 	entry.setMode(oldMode);
+	  	    	 }); 
+}
+
 dh.account.onDeliciousLoveSaved = function(value) {
 	var entry = dh.account.deliciousEntry;
 	var oldMode = entry.getMode();
@@ -283,6 +303,63 @@ dh.account.onDeliciousLoveSaved = function(value) {
 	  	    	 	alert(msg);
 	  	    	 	entry.setMode(oldMode);
 	  	    	 }); 
+}
+
+dh.account.createMyspaceEntry = function() {
+    dh.account.myspaceEntry = new dh.lovehate.Entry('dhMySpace', 'Enter your Myspace name', dh.account.initialMyspaceName,
+							'I despise Tom and his space', dh.account.initialMyspaceHateQuip);
+	dh.account.myspaceEntry.onLoveSaved = dh.account.onMyspaceLoveSaved;
+	dh.account.myspaceEntry.onHateSaved = dh.account.createExternalAccountOnHateSavedFunc(dh.account.myspaceEntry, 'MYSPACE');
+	dh.account.myspaceEntry.onCanceled = dh.account.createExternalAccountOnCanceledFunc(dh.account.myspaceEntry, 'MYSPACE');
+}
+
+dh.account.createYouTubeEntry = function() {
+    dh.account.youTubeEntry = new dh.lovehate.Entry('dhYouTube', 'YouTube username or profile URL', dh.account.initialYouTubeName,
+							'Video should kill the internet geeks', dh.account.initialYouTubeHateQuip);
+	dh.account.youTubeEntry.onLoveSaved = dh.account.onYouTubeLoveSaved;
+	dh.account.youTubeEntry.onHateSaved = dh.account.createExternalAccountOnHateSavedFunc(dh.account.youTubeEntry, 'YOUTUBE');
+	dh.account.youTubeEntry.onCanceled = dh.account.createExternalAccountOnCanceledFunc(dh.account.youTubeEntry, 'YOUTUBE');
+}
+
+dh.account.createLastFmEntry = function() {	
+	dh.account.lastFmEntry = new dh.lovehate.Entry('dhLastfm', 'Last.fm username', dh.account.initialLastFmName,
+					'Uhh...what\'s Last.fm?', dh.account.initialLastFmHateQuip);
+	dh.account.lastFmEntry.onLoveSaved = dh.account.onLastFmLoveSaved;
+	dh.account.lastFmEntry.onHateSaved = dh.account.createExternalAccountOnHateSavedFunc(dh.account.lastFmEntry, 'LASTFM');
+	dh.account.lastFmEntry.onCanceled = dh.account.createExternalAccountOnCanceledFunc(dh.account.lastFmEntry, 'LASTFM');		
+}
+
+dh.account.createFlickrEntry = function() {		
+	dh.account.flickrEntry = new dh.lovehate.Entry('dhFlickr', 'Email used for Flickr account', dh.account.initialFlickrEmail,
+					'Flickr doesn\'t do it for me', dh.account.initialFlickrHateQuip);
+	dh.account.flickrEntry.onLoveSaved = dh.account.onFlickrLoveSaved;
+	dh.account.flickrEntry.onHateSaved = dh.account.createExternalAccountOnHateSavedFunc(dh.account.flickrEntry, 'FLICKR');
+	dh.account.flickrEntry.onCanceled = dh.account.createExternalAccountOnCanceledFunc(dh.account.flickrEntry, 'FLICKR');
+}
+
+dh.account.createLinkedInEntry = function() {	
+	dh.account.linkedInEntry = new dh.lovehate.Entry('dhLinkedIn', 'LinkedIn profile URL or username', dh.account.initialLinkedInName,
+					'LinkedIn is for nerds', dh.account.initialLinkedInHateQuip);
+	dh.account.linkedInEntry.onLoveSaved = dh.account.onLinkedInLoveSaved;
+	dh.account.linkedInEntry.onHateSaved = dh.account.createExternalAccountOnHateSavedFunc(dh.account.linkedInEntry, 'LINKED_IN');
+	dh.account.linkedInEntry.onCanceled = dh.account.createExternalAccountOnCanceledFunc(dh.account.linkedInEntry, 'LINKED_IN');	
+}
+
+dh.account.createRhapsodyEntry = function() {	
+	dh.account.rhapsodyEntry = new dh.lovehate.Entry('dhRhapsody', 'Rhapsody recent plays RSS URL', dh.account.initialRhapsodyUrl,
+					'All-you-can-eat music services hurt my diet', dh.account.initialRhapsodyHateQuip);
+	dh.account.rhapsodyEntry.setSpecialLoveValue("My feed");				
+	dh.account.rhapsodyEntry.onLoveSaved = dh.account.onRhapsodyLoveSaved;
+	dh.account.rhapsodyEntry.onHateSaved = dh.account.createExternalAccountOnHateSavedFunc(dh.account.rhapsodyEntry, 'RHAPSODY');
+	dh.account.rhapsodyEntry.onCanceled = dh.account.createExternalAccountOnCanceledFunc(dh.account.rhapsodyEntry, 'RHAPSODY');	
+}
+
+dh.account.createDeliciousEntry = function() {	
+	dh.account.deliciousEntry = new dh.lovehate.Entry('dhDelicious', 'del.icio.us URL or username', dh.account.initialDeliciousName,
+					'del.icio.us isn\'t', dh.account.initialDeliciousHateQuip);
+	dh.account.deliciousEntry.onLoveSaved = dh.account.onDeliciousLoveSaved;
+	dh.account.deliciousEntry.onHateSaved = dh.account.createExternalAccountOnHateSavedFunc(dh.account.deliciousEntry, 'DELICIOUS');
+	dh.account.deliciousEntry.onCanceled = dh.account.createExternalAccountOnCanceledFunc(dh.account.deliciousEntry, 'DELICIOUS');
 }
 
 dhAccountInit = function() {
@@ -315,16 +392,6 @@ dhAccountInit = function() {
 //		"Saving new music bio...",
 //		"Your music bio has been saved.");
 //	}
-
-	dh.account.rhapsodyListeningHistoryEntryNode = document.getElementById('dhRhapsodyListeningHistoryEntry');
-	dh.account.rhapsodyListeningHistoryEntry = new dh.textinput.Entry(dh.account.rhapsodyListeningHistoryEntryNode, "Rhapsody recent plays RSS URL", dh.formtable.currentValues['dhRhapsodyListeningHistoryEntry']);
-
-	dh.formtable.undoValues['dhRhapsodyListeningHistoryEntry'] = dh.account.rhapsodyListeningHistoryEntry.getValue();
-	dh.account.rhapsodyListeningHistoryEntry.onValueChanged = function(value) {
-		dh.formtable.onValueChangedXmlMethod(dh.account.rhapsodyListeningHistoryEntry, 'setrhapsodyhistoryfeed', 'url', value,
-		"Saving new Rhapsody recent plays RSS feed...",
-		"Your Rhapsody recent plays RSS feed has been updated."); // phrasing "updated" is because it could also be removed
-	}
 	
 	dh.account.websiteEntryNode = document.getElementById('dhWebsiteEntry');
 	dh.account.websiteEntry = new dh.textinput.Entry(dh.account.websiteEntryNode, "Your website URL", dh.formtable.currentValues['dhWebsiteEntry']);
@@ -360,41 +427,13 @@ dhAccountInit = function() {
 	
 	dh.photochooser.init("user", dh.account.userId)
 
-	dh.account.myspaceEntry = new dh.lovehate.Entry('dhMyspace', 'Enter your Myspace name', dh.account.initialMyspaceName,
-							'I despise Tom and his space', dh.account.initialMyspaceHateQuip);
-	dh.account.myspaceEntry.onLoveSaved = dh.account.onMyspaceLoveSaved;
-	dh.account.myspaceEntry.onHateSaved = dh.account.createExternalAccountOnHateSavedFunc(dh.account.myspaceEntry, 'MYSPACE');
-	dh.account.myspaceEntry.onCanceled = dh.account.createExternalAccountOnCanceledFunc(dh.account.myspaceEntry, 'MYSPACE');
-
-	dh.account.youTubeEntry = new dh.lovehate.Entry('dhYouTube', 'YouTube username or profile URL', dh.account.initialYouTubeName,
-							'Video should kill the internet geeks', dh.account.initialYouTubeHateQuip);
-	dh.account.youTubeEntry.onLoveSaved = dh.account.onYouTubeLoveSaved;
-	dh.account.youTubeEntry.onHateSaved = dh.account.createExternalAccountOnHateSavedFunc(dh.account.youTubeEntry, 'YOUTUBE');
-	dh.account.youTubeEntry.onCanceled = dh.account.createExternalAccountOnCanceledFunc(dh.account.youTubeEntry, 'YOUTUBE');
-	
-	dh.account.lastFmEntry = new dh.lovehate.Entry('dhLastFm', 'Last.fm username', dh.account.initialLastFmName,
-					'Uhh...what\'s Last.fm?', dh.account.initialLastFmHateQuip);
-	dh.account.lastFmEntry.onLoveSaved = dh.account.onLastFmLoveSaved;
-	dh.account.lastFmEntry.onHateSaved = dh.account.createExternalAccountOnHateSavedFunc(dh.account.lastFmEntry, 'LASTFM');
-	dh.account.lastFmEntry.onCanceled = dh.account.createExternalAccountOnCanceledFunc(dh.account.lastFmEntry, 'LASTFM');		
-		
-	dh.account.flickrEntry = new dh.lovehate.Entry('dhFlickr', 'Email used for Flickr account', dh.account.initialFlickrEmail,
-					'Flickr doesn\'t do it for me', dh.account.initialFlickrHateQuip);
-	dh.account.flickrEntry.onLoveSaved = dh.account.onFlickrLoveSaved;
-	dh.account.flickrEntry.onHateSaved = dh.account.createExternalAccountOnHateSavedFunc(dh.account.flickrEntry, 'FLICKR');
-	dh.account.flickrEntry.onCanceled = dh.account.createExternalAccountOnCanceledFunc(dh.account.flickrEntry, 'FLICKR');
-	
-	dh.account.linkedInEntry = new dh.lovehate.Entry('dhLinkedIn', 'LinkedIn profile URL or username', dh.account.initialLinkedInName,
-					'LinkedIn is for nerds', dh.account.initialLinkedInHateQuip);
-	dh.account.linkedInEntry.onLoveSaved = dh.account.onLinkedInLoveSaved;
-	dh.account.linkedInEntry.onHateSaved = dh.account.createExternalAccountOnHateSavedFunc(dh.account.linkedInEntry, 'LINKED_IN');
-	dh.account.linkedInEntry.onCanceled = dh.account.createExternalAccountOnCanceledFunc(dh.account.linkedInEntry, 'LINKED_IN');
-	
-	dh.account.deliciousEntry = new dh.lovehate.Entry('dhDelicious', 'del.icio.us URL or username', dh.account.initialDeliciousName,
-					'del.icio.us isn\'t', dh.account.initialDeliciousHateQuip);
-	dh.account.deliciousEntry.onLoveSaved = dh.account.onDeliciousLoveSaved;
-	dh.account.deliciousEntry.onHateSaved = dh.account.createExternalAccountOnHateSavedFunc(dh.account.deliciousEntry, 'DELICIOUS');
-	dh.account.deliciousEntry.onCanceled = dh.account.createExternalAccountOnCanceledFunc(dh.account.deliciousEntry, 'DELICIOUS');
+    dh.account.createMyspaceEntry();
+	dh.account.createYouTubeEntry();
+	dh.account.createLastFmEntry();
+	dh.account.createFlickrEntry();
+	dh.account.createLinkedInEntry();
+	dh.account.createRhapsodyEntry();
+	dh.account.createDeliciousEntry();
 }
 
 dojo.event.connect(dojo, "loaded", dj_global, "dhAccountInit");

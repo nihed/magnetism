@@ -5,8 +5,8 @@ import java.net.URL;
 
 import com.dumbhippo.StringUtils;
 import com.dumbhippo.services.FlickrUser;
-import com.dumbhippo.services.LastFmWebServices;
 import com.dumbhippo.services.YouTubeWebServices;
+import com.dumbhippo.services.LastFmWebServices;
 
 import org.slf4j.Logger;
 import com.dumbhippo.GlobalSetup;
@@ -177,6 +177,11 @@ public enum ExternalAccountType {
 		public boolean getHasAccountInfo(String handle, String extra) {
 			return handle != null;
 		}
+		
+		@Override
+		public boolean isSupported() {
+			return false;
+		}
 	},
 	FACEBOOK("Facebook")  {
 		@Override
@@ -213,6 +218,11 @@ public enum ExternalAccountType {
 		public boolean getHasAccountInfo(String handle, String extra) {
 			return handle != null;
 		}
+		
+		@Override
+		public boolean isSupported() {
+			return false;
+		}
 	},
 	ORKUT("Orkut")  {
 		@Override
@@ -227,6 +237,11 @@ public enum ExternalAccountType {
 		@Override
 		public boolean getHasAccountInfo(String handle, String extra) {
 			return handle != null;
+		}
+		
+		@Override
+		public boolean isSupported() {
+			return false;
 		}
 	},
 	YOUTUBE("YouTube")  {
@@ -290,6 +305,11 @@ public enum ExternalAccountType {
 		public boolean getHasAccountInfo(String handle, String extra) {
 			return handle != null;
 		}
+
+		@Override
+		public boolean isSupported() {
+			return false;
+		}
 	},
 	BLOG("Blog") {
 		@Override
@@ -328,6 +348,11 @@ public enum ExternalAccountType {
 		@Override
 		public boolean getHasAccountInfo(String handle, String extra) {
 			return handle != null;
+		}
+		
+		@Override
+		public boolean isSupported() {
+			return false;
 		}
 	},
 	RHAPSODY("Rhapsody") {
@@ -506,4 +531,12 @@ public enum ExternalAccountType {
 		}		
 		return extra;
 	}
+	
+    public boolean isSupported() {
+    	return true;
+    }
+    
+    public String getName() {
+    	return name();
+    }
 }

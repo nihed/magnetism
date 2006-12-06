@@ -7,9 +7,12 @@ import com.dumbhippo.Thumbnail;
 import com.dumbhippo.Thumbnails;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.persistence.ExternalAccount;
+import com.dumbhippo.persistence.ExternalAccountType;
+import com.dumbhippo.persistence.Sentiment;
 
 public class ExternalAccountView {
     private ExternalAccount externalAccount;
+    private ExternalAccountType externalAccountType;
     private String link;
     private Thumbnails thumbnails;
     
@@ -26,6 +29,7 @@ public class ExternalAccountView {
     
     public ExternalAccountView(ExternalAccount externalAccount) {
     	this.externalAccount = externalAccount;
+    	this.externalAccountType = externalAccount.getAccountType();
     }
     
     public ExternalAccountView(ExternalAccount externalAccount, String link) {
@@ -33,10 +37,39 @@ public class ExternalAccountView {
     	this.link = link;
     }
 
+    public ExternalAccountView(ExternalAccountType externalAccountType) {
+    	this.externalAccountType = externalAccountType;
+    }
+    
 	public ExternalAccount getExternalAccount() {
 		return externalAccount;
 	}
+	
+	public ExternalAccountType getExternalAccountType() {
+		return externalAccountType;
+	}
 
+	public String getSiteName() {
+		return externalAccountType.getSiteName();
+	}
+	
+	public String getSiteBaseName() {		
+		String name = externalAccountType.getSiteName();
+		return name.substring(0, 1).toUpperCase() +
+		       name.substring(1, name.length()).replaceAll("\\.", "");
+	}
+	
+	public String getIconName() {
+		return externalAccountType.getIconName();
+	}
+	
+	public String getSentiment() {
+		if (externalAccount != null)
+		     return externalAccount.getSentiment().name().toLowerCase();
+	
+		return Sentiment.INDIFFERENT.name().toLowerCase();
+	}
+	
 	public String getLink() {
 		if (link != null)
 		    return link;

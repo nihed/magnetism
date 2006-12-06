@@ -236,7 +236,12 @@ div.dh-notification {
 	position:			relative;
 }
 
-.dh-page-shinybox-title-large, .dh-page-shinybox-subtitle-bold  {
+.dh-page-shinybox-title-large  {
+	margin-bottom:		5px;
+}
+
+.dh-page-shinybox-subtitle  {
+    margin-top:         10px;
 	margin-bottom:		5px;
 }
 
