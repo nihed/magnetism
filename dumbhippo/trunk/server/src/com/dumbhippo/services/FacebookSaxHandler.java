@@ -32,6 +32,9 @@ public class FacebookSaxHandler extends EnumSaxHandler<FacebookSaxHandler.Elemen
 		// facebook.pokes.getCount
 		unseen,
 		
+		// facebook.users.getInfo, we only get a wall_count field from it
+		wall_count,
+		
 		// general for facebook.photos.getOfUser and facebook.photos.getAlbums
 		created,
 		aid,
@@ -194,6 +197,9 @@ public class FacebookSaxHandler extends EnumSaxHandler<FacebookSaxHandler.Elemen
 		} else if (c == Element.total) {
 			totalCount = parseFacebookCount(c, currentContent); 
 			logger.debug("Parsed out total count {}", totalCount);
+		} else if (c == Element.wall_count) {
+			wallMessageCount = parseFacebookCount(c, currentContent); 
+			logger.debug("Parsed out wall message count {}", wallMessageCount);
 		} else if (c == Element.link) {
 			if (gettingTaggedPhotos) {
 			    currentFacebookPhotoData().setLink(currentContent);
@@ -263,10 +269,7 @@ public class FacebookSaxHandler extends EnumSaxHandler<FacebookSaxHandler.Elemen
 				return;
 			}
 			Attributes attrs = currentAttributes();
-			if (attrs.getValue("method").equals("facebook.wall.getCount")) {
-				wallMessageCount = parseFacebookCount(c, currentContent); 
-				logger.debug("Parsed out wall message count {}", wallMessageCount);
-			} else if (attrs.getValue("method").equals("facebook.messages.getCount")) {
+			if (attrs.getValue("method").equals("facebook.messages.getCount")) {
 				totalMessageCount = totalCount;
 			} else if (attrs.getValue("method").equals("facebook.pokes.getCount")) {
 				totalPokeCount = totalCount;

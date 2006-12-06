@@ -175,9 +175,9 @@
 					    <dht:textInput id="dhBlogEntry" maxlength="255"/>
 				    </dht:formTableRow>				
 				    <tr valign="top">
-	                    <td colspan="2">
+	                    <td colspan="3">
 	                        <c:if test="${account.facebookAuthToken != null}">
-                                <div id="dhFacebookNote">Thank you for logging in to Facebook! You and your friends will now be getting Facebook updates.</div>                     
+                                <div id="dhFacebookNote">Thank you for logging in to Facebook! You will now be getting Facebook updates.</div>                     
                             </c:if>   	                
                         </td>
                     </tr>     

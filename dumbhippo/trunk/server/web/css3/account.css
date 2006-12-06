@@ -46,3 +46,10 @@
 .dh-love-hate {
 	font-size:		inherit;
 }
+
+#dhTermsOfUseNote, #dhFacebookNote {
+	background-color:	#ffffcc;
+	color:				#cc0033;
+	font-size:          12px;
+	font-weight:		bold;
+}

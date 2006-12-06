@@ -127,11 +127,12 @@ public class FacebookWebServices extends AbstractXmlRequest<FacebookSaxHandler> 
 	
 	public FacebookEvent updateWallMessageCount(FacebookAccount facebookAccount) {
 		List<String> params = new ArrayList<String>();
-		String methodName = "facebook.wall.getCount";
+		String methodName = "facebook.users.getInfo";
         params.add("method=" + methodName);
 		params.add("session_key=" + facebookAccount.getSessionKey());
-		params.add("id=" + facebookAccount.getFacebookUserId());
-
+		params.add("users=" + facebookAccount.getFacebookUserId());
+		params.add("fields=wall_count");
+		
 		String wsUrl = generateFacebookRequest(params);
 
 		FacebookSaxHandler handler = parseUrl(new FacebookSaxHandler(), wsUrl);
