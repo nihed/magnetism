@@ -1,5 +1,6 @@
 @CHARSET "UTF-8";
 @IMPORT url("account-positions.css");
+@IMPORT url("photo-chooser.css");
 
 #dhAccountInfoForm, #dhAccounts {
     font-size:  13px;
