@@ -65,7 +65,7 @@
 			<c:choose>
 			<c:when test="${!signin.user.account.disabled}">
 			    <dht3:shinyBox color="grey">
-			    <div class="dh-page-shinybox-subtitle"><span class="dh-download-product">Get maximum Mugshot!</span> <a class="dh-underlined-link" href="/download">Download the Mugshot Client</a> to use all of our features.  It's easy and free!</div>
+			    <div class="dh-page-shinybox-subtitle"><span class="dh-download-product">Get maximum Mugshot!</span> <a class="dh-underlined-link" href="/download">Download the Mugshot software</a> to use all of our features.  It's easy and free!</div>
 				<dht:formTable bodyId="dhAccountInfoForm">
 				<dht3:formTableRowSeparator>
 				    <div class="dh-section-header">Public Info</div>
