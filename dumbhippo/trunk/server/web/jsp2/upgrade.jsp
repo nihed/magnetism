@@ -23,12 +23,22 @@
 	<c:choose>
 		<c:when test="${browser.linuxRequested}">
 			<%-- LINUX RELEASE NOTES GO HERE --%>
-			<p>Version 1.1.27</p>
+			<p>Version 1.1.28</p>
 			<ul>
 				<li>Show notifications when your friends post blog entries on MySpace.</li>
 				<li>Improve the display of other blog notifications.</li>
 				<li>Bug fixes.</li>
 			</ul>
+			<div class="dh-upgrade-message">
+			    Note: the last version of Mugshot didn't shut down properly
+			    on some systems, so after upgrade, you may end up with two
+			    mugshot icons in your notification area. If you see this, 
+			    please open a terminal and  enter the following command:
+			    <div class="dh-command">
+				   killall mugshot ; sleep 1 ; mugshot &
+				</div>
+				Or, simply log out and log back in.
+			</div>
 		</c:when>
 		<c:otherwise>
 			<%-- WINDOWS RELEASE NOTES GO HERE --%>
