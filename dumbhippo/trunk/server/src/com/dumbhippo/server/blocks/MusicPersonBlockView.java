@@ -31,8 +31,14 @@ public class MusicPersonBlockView extends AbstractPersonBlockView {
 	
 	@Override
 	protected void writeDetailsToXmlBuilder(XmlBuilder builder) {
-		builder.appendEmptyNode("musicPerson",
-				                "userId", getUserView().getUser().getId());
+		builder.openElement("musicPerson",
+				            "userId", getUserView().getUser().getId());
+		builder.openElement("trackHistory");
+		for (TrackView trackView : getUserView().getTrackHistory()) {
+			trackView.writeToXmlBuilder(builder, "track");
+		}
+		builder.closeElement();
+		builder.closeElement();
 	}
 	
 	@Override

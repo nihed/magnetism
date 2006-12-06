@@ -177,7 +177,7 @@ LIBHIPPO_SOURCEFILES =						\
 	$(COMMONSRCDIR)/hippo/hippo-block-music-person.c	\
 	$(COMMONSRCDIR)/hippo/hippo-block-music-person.h	\
 	$(COMMONSRCDIR)/hippo/hippo-block-myspace-person.c	\
-	$(COMMONSRCDIR)/hippo/hippo-block-myspace-person.h	\	
+	$(COMMONSRCDIR)/hippo/hippo-block-myspace-person.h	\
 	$(COMMONSRCDIR)/hippo/hippo-block-post.c		\
 	$(COMMONSRCDIR)/hippo/hippo-block-post.h		\
 	$(COMMONSRCDIR)/hippo/hippo-block-youtube-person.c	\
@@ -201,7 +201,7 @@ LIBHIPPO_SOURCEFILES =						\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-block-music-person.c	\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-block-music-person.h	\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-block-myspace-person.c	\
-	$(COMMONSRCDIR)/hippo/hippo-canvas-block-myspace-person.h	\	
+	$(COMMONSRCDIR)/hippo/hippo-canvas-block-myspace-person.h	\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-block-post.c		\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-block-post.h		\
 	$(COMMONSRCDIR)/hippo/hippo-canvas-block-youtube-person.c	\

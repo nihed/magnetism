@@ -35,14 +35,15 @@ static void hippo_canvas_block_music_person_title_activated (HippoCanvasBlock *c
 static void hippo_canvas_block_music_person_expand   (HippoCanvasBlock *canvas_block);
 static void hippo_canvas_block_music_person_unexpand (HippoCanvasBlock *canvas_block);
 
-/* internals */
-static void set_person (HippoCanvasBlockMusicPerson *block_music_person,
-                        HippoPerson                 *person);
+/* Internals */
+static void set_track(HippoCanvasBlockMusicPerson *block_music_person,
+                      HippoTrack                  *track);
 
 
 struct _HippoCanvasBlockMusicPerson {
     HippoCanvasBlock canvas_block;
     HippoPerson *person;
+    HippoTrack *track;
     HippoCanvasBox *downloads_box;
 };
 
@@ -110,8 +111,8 @@ hippo_canvas_block_music_person_dispose(GObject *object)
 
     block_music_person = HIPPO_CANVAS_BLOCK_MUSIC_PERSON(object);
 
-    set_person(block_music_person, NULL);
-    
+    set_track(block_music_person, NULL);
+
     G_OBJECT_CLASS(hippo_canvas_block_music_person_parent_class)->dispose(object);
 }
 
@@ -188,22 +189,28 @@ hippo_canvas_block_music_person_constructor (GType                  type,
 }
 
 static void
-on_current_track_changed(HippoPerson *person,
-                         GParamSpec *arg, /* null when first calling this */
-                         HippoCanvasBlockMusicPerson *block_music_person)
+set_track(HippoCanvasBlockMusicPerson *block_music_person,
+          HippoTrack                  *track)
 {
     HippoCanvasBlock *canvas_block = HIPPO_CANVAS_BLOCK(block_music_person);
     HippoActions *actions = hippo_canvas_block_get_actions(canvas_block);
-    HippoTrack *track;
-    
-    track = NULL;
-    g_object_get(G_OBJECT(person), "current-track", &track, NULL);
 
+    if (track == block_music_person->track)
+        return;
+
+    if (block_music_person->track) {
+        g_object_unref (block_music_person->track);
+    }
+
+    block_music_person->track = track;
+    
     if (track) {
         char *artist = NULL;
         char *name = NULL;
         GSList *downloads = NULL;
         char *title;
+
+        g_object_ref(track);
         
         g_object_get(G_OBJECT(track),
                      "artist", &artist,
@@ -257,40 +264,26 @@ on_current_track_changed(HippoPerson *person,
         g_free(title);
         g_free(artist);
         g_free(name);
-
-        g_object_unref(track);
     } else {
         hippo_canvas_block_set_title(canvas_block, NULL, NULL, FALSE);
+        hippo_canvas_box_remove_all(block_music_person->downloads_box);
     }
 }
 
 static void
-set_person(HippoCanvasBlockMusicPerson *block_music_person,
-           HippoPerson                 *person)
+on_track_history_changed(HippoBlock *block,
+                         GParamSpec *arg, /* null when first calling this */
+                         HippoCanvasBlockMusicPerson *block_music_person)
 {
-    if (person == block_music_person->person)
-        return;
+    GSList *track_history = NULL;
+    HippoTrack *track = NULL;
     
-    if (block_music_person->person) {
-        g_signal_handlers_disconnect_by_func(G_OBJECT(block_music_person->person),
-                                             G_CALLBACK(on_current_track_changed),
-                                             block_music_person);
-        g_object_unref(block_music_person->person);
-        block_music_person->person = NULL;
-    }
+    g_object_get(G_OBJECT(block), "track_history", &track_history, NULL);
 
-    if (person) {
-        block_music_person->person = person;
-        g_object_ref(G_OBJECT(person));
-        g_signal_connect(G_OBJECT(person), "notify::current-track",
-                         G_CALLBACK(on_current_track_changed),
-                         block_music_person);
+    if (track_history)
+        track = track_history->data;
 
-        on_current_track_changed(person, NULL, block_music_person);
-    }
-
-    hippo_canvas_block_set_sender(HIPPO_CANVAS_BLOCK(block_music_person),
-                                  person ? hippo_entity_get_guid(HIPPO_ENTITY(person)) : NULL);
+    set_track(block_music_person, track);
 }
 
 static void
@@ -301,7 +294,10 @@ on_user_changed(HippoBlock *block,
     HippoPerson *person;
     person = NULL;
     g_object_get(G_OBJECT(block), "user", &person, NULL);
-    set_person(block_music_person, person);
+
+    hippo_canvas_block_set_sender(HIPPO_CANVAS_BLOCK(block_music_person),
+                                  person ? hippo_entity_get_guid(HIPPO_ENTITY(person)) : NULL);
+    
     if (person)
         g_object_unref(person);
 }
@@ -317,9 +313,11 @@ hippo_canvas_block_music_person_set_block(HippoCanvasBlock *canvas_block,
 
     if (canvas_block->block != NULL) {
         g_signal_handlers_disconnect_by_func(G_OBJECT(canvas_block->block),
+                                             G_CALLBACK(on_track_history_changed),
+                                             canvas_block);
+        g_signal_handlers_disconnect_by_func(G_OBJECT(canvas_block->block),
                                              G_CALLBACK(on_user_changed),
                                              canvas_block);
-        set_person(HIPPO_CANVAS_BLOCK_MUSIC_PERSON(canvas_block), NULL);
     }
 
     /* Chain up to get the block really changed */
@@ -327,47 +325,36 @@ hippo_canvas_block_music_person_set_block(HippoCanvasBlock *canvas_block,
 
     if (canvas_block->block != NULL) {
         g_signal_connect(G_OBJECT(canvas_block->block),
+                         "notify::track-history",
+                         G_CALLBACK(on_track_history_changed),
+                         canvas_block);
+        g_signal_connect(G_OBJECT(canvas_block->block),
                          "notify::user",
                          G_CALLBACK(on_user_changed),
                          canvas_block);
 
         on_user_changed(canvas_block->block, NULL,
                         HIPPO_CANVAS_BLOCK_MUSIC_PERSON(canvas_block));
+        on_track_history_changed(canvas_block->block, NULL,
+                                 HIPPO_CANVAS_BLOCK_MUSIC_PERSON(canvas_block));
     }
 }
 
 static void
 hippo_canvas_block_music_person_title_activated(HippoCanvasBlock *canvas_block)
 {
-    HippoActions *actions;
-    HippoPerson *person;
-    HippoTrack *track;
+    
+    HippoCanvasBlockMusicPerson *block_music_person = HIPPO_CANVAS_BLOCK_MUSIC_PERSON(canvas_block);
     const char *url;
 
-    if (canvas_block->block == NULL)
+    if (block_music_person->track == NULL)
         return;
 
-    actions = hippo_canvas_block_get_actions(canvas_block);
-
-    person = NULL;
-    g_object_get(G_OBJECT(canvas_block->block),
-                 "user", &person,
-                 NULL);
-
-    if (person == NULL)
-        return;
-
-    track = hippo_person_get_current_track(person);
-    if (track == NULL)
-        return;
-    
-    url = hippo_track_get_url(track);
+    url = hippo_track_get_url(block_music_person->track);
     if (url == NULL)
         return;
     
-    hippo_actions_open_url(actions, url);
-
-    g_object_unref(person);
+    hippo_actions_open_url(hippo_canvas_block_get_actions(canvas_block), url);
 }
 
 static void
