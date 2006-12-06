@@ -1667,6 +1667,17 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		}
 		externalAccountSystem.setSentiment(external, Sentiment.LOVE);
 		
+		Feed feed;
+		try {
+			feed = scrapeFeedFromUrl(new URL("http://del.icio.us/rss/" + StringUtils.urlEncode(external.getHandle())));
+		} catch (MalformedURLException e) {
+			throw new XmlMethodException(XmlMethodErrorCode.INVALID_URL, e.getMessage());
+		}
+		EJBUtil.forceInitialization(feed.getAccounts());
+		
+		external.setFeed(feed);
+		feed.getAccounts().add(external);
+		
 		xml.appendTextNode("username", external.getHandle());
 	}
 	
