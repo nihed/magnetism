@@ -59,8 +59,6 @@ import com.dumbhippo.persistence.TrackHistory;
 import com.dumbhippo.persistence.TrackType;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.search.SearchSystem;
-import com.dumbhippo.services.caches.AlbumAndArtist;
-import com.dumbhippo.services.caches.AmazonAlbumCache;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.Enabled;
 import com.dumbhippo.server.GroupSystem;
@@ -71,16 +69,9 @@ import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.server.Notifier;
 import com.dumbhippo.server.Pageable;
 import com.dumbhippo.server.PersonViewer;
-import com.dumbhippo.services.caches.RhapsodyDownloadCache;
 import com.dumbhippo.server.TrackIndexer;
 import com.dumbhippo.server.TrackSearchResult;
 import com.dumbhippo.server.TransactionRunner;
-import com.dumbhippo.services.caches.YahooAlbumCache;
-import com.dumbhippo.services.caches.YahooAlbumSongsCache;
-import com.dumbhippo.services.caches.YahooArtistAlbumsCache;
-import com.dumbhippo.services.caches.YahooArtistCache;
-import com.dumbhippo.services.caches.YahooSongCache;
-import com.dumbhippo.services.caches.YahooSongDownloadCache;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.views.AlbumView;
 import com.dumbhippo.server.views.ArtistView;
@@ -95,6 +86,15 @@ import com.dumbhippo.services.YahooAlbumData;
 import com.dumbhippo.services.YahooArtistData;
 import com.dumbhippo.services.YahooSongData;
 import com.dumbhippo.services.YahooSongDownloadData;
+import com.dumbhippo.services.caches.AlbumAndArtist;
+import com.dumbhippo.services.caches.AmazonAlbumCache;
+import com.dumbhippo.services.caches.RhapsodyDownloadCache;
+import com.dumbhippo.services.caches.YahooAlbumCache;
+import com.dumbhippo.services.caches.YahooAlbumSongsCache;
+import com.dumbhippo.services.caches.YahooArtistAlbumsCache;
+import com.dumbhippo.services.caches.YahooArtistCache;
+import com.dumbhippo.services.caches.YahooSongCache;
+import com.dumbhippo.services.caches.YahooSongDownloadCache;
 
 @Stateless
 public class MusicSystemInternalBean implements MusicSystemInternal {
@@ -409,12 +409,26 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	private int queryCount(User user, boolean limitToOne) {
 		Query q;
 		
-		q = em.createQuery("SELECT COUNT(*) FROM TrackHistory h WHERE h.user = :user " +
-				(limitToOne ? " LIMIT 1" : ""));
+		// not sure setMaxResults will work with COUNT(*) so this is a little annoying
+		if (limitToOne) {
+			q = em.createQuery("SELECT h.id FROM TrackHistory h WHERE h.user = :user");
+			q.setMaxResults(1);
+		} else {
+			q = em.createQuery("SELECT COUNT(*) FROM TrackHistory h WHERE h.user = :user");
+		}
 		q.setParameter("user", user);
 		
-		Object o = q.getSingleResult();
-		return ((Number)o).intValue();		
+		if (limitToOne) {
+			try {
+				q.getSingleResult();
+				return 1;
+			} catch (NoResultException e) {
+				return 0;
+			}
+		} else {
+			Object o = q.getSingleResult();
+			return ((Number)o).intValue();	
+		}
 	}
 	
 	public int countTrackHistory(Viewpoint viewpoint, User user) {
