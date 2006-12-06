@@ -23,18 +23,20 @@
 	<c:choose>
 		<c:when test="${browser.linuxRequested}">
 			<%-- LINUX RELEASE NOTES GO HERE --%>
-			<p>Version 1.1.26</p>
+			<p>Version 1.1.27</p>
 			<ul>
-				<li>Improve the display of Facebook notifications.</li>			
-				<li>Fix a bug causing frequent crashes.</li>
+				<li>Show notifications when your friends post blog entries on MySpace.</li>
+				<li>Improve the display of other blog notifications.</li>
+				<li>Bug fixes.</li>
 			</ul>
 		</c:when>
 		<c:otherwise>
 			<%-- WINDOWS RELEASE NOTES GO HERE --%>
-			<p>Version 1.1.80</p>
+			<p>Version 1.1.81</p>
 			<ul>
-				<li>Improve the display of Facebook notifications.</li>			
-				<li>Fix a bug causing frequent crashes.</li>
+				<li>Show notifications when your friends post blog entries on MySpace.</li>
+				<li>Improve the display of other blog notifications.</li>
+				<li>Bug fixes.</li>
 			</ul>
 		</c:otherwise>
 	</c:choose>
