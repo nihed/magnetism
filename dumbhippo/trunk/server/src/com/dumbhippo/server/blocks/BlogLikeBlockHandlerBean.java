@@ -67,11 +67,11 @@ public abstract class BlogLikeBlockHandlerBean extends AbstractBlockHandlerBean<
 	}
 
 	public Set<User> getInterestedUsers(Block block) {
-		return getUsersWhoCareAboutData1UserAndExternalAccount(block, ExternalAccountType.BLOG);
+		return getUsersWhoCareAboutData1UserAndExternalAccount(block, getAccountType());
 	}
 	
 	public Set<Group> getInterestedGroups(Block block) {
-		return getGroupsData1UserIsInIfExternalAccount(block, ExternalAccountType.BLOG);
+		return getGroupsData1UserIsInIfExternalAccount(block, getAccountType());
 	}
 	
 	public void onExternalAccountCreated(User user, ExternalAccount external) {
