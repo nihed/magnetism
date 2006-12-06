@@ -1,6 +1,7 @@
 /* -*- mode: C; c-basic-offset: 4; indent-tabs-mode: nil; -*- */
 #include <config.h>
 #include <glib/gi18n-lib.h>
+#include <stdlib.h>
 #include <string.h>
 #define DBUS_API_SUBJECT_TO_CHANGE 1
 #include <dbus/dbus-glib.h>
@@ -1348,7 +1349,12 @@ handle_message(DBusConnection     *connection,
             const char *name = NULL;
             if (dbus_message_get_args(message, NULL, DBUS_TYPE_STRING, &name, DBUS_TYPE_INVALID) && 
                 strcmp(name, dbus->bus_name) == 0) {
+#if 1
+                /* See comment at the end of main.c */
+                exit(0);
+#else
                 hippo_dbus_disconnect(dbus);
+#endif
             }
         } else if (dbus_message_has_sender(message, DBUS_SERVICE_DBUS) &&
                    dbus_message_is_signal(message, DBUS_INTERFACE_DBUS, "NameOwnerChanged")) {
