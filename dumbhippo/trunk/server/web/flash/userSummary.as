@@ -244,7 +244,8 @@ var createView = function(summary:Object) {
 		//link.autoSize = 'left'; // we want it to be clipped
 		link.html = true;
 		link.htmlText = "<u><b><a href='" + escapeXML(block.link) + "'>" + escapeXML(block.linkText) + "</a></b></u>";
-		formatText(link, 11, 0x0033ff);	
+		// Linux seems to screw up the font size, so set a smaller one there
+		formatText(link, isLinux() ? 9 : 11, 0x0033ff);
 		
 		trace("height of link is " + link._height + " and bottom of heading is " + (heading._y + heading._height))
 	}
@@ -383,7 +384,8 @@ var updateSummaryData = function() {
 		}
 		
 		summary.who = who;
-		summary.photo = makeAbsoluteUrl(summaryNode.attributes["photo"] + "?size=" + headshotSize);
+		summary.photo = makeAbsoluteUrl(summaryNode.attributes["photo"]);
+		summary.photo = addQueryParameter(summary.photo, "size", "" + headshotSize);
 		summary.online = summaryNode.attributes["online"] == "true";
 		summary.onlineIcon = makeAbsoluteUrl(summaryNode.attributes["onlineIcon"]);
 		summary.name = summaryNode.attributes["name"];

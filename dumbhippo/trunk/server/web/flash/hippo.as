@@ -20,6 +20,11 @@ var isOldFlash = function() {
 	}
 }
 
+var isLinux = function() {
+	var flashVersion:String = getVersion();
+	return flashVersion.indexOf("LNX") >= 0;
+}
+
 // Pick our favorite font; unfortunately doesn't fix 
 // the "no text in linux" problem most of the time 
 // (see https://bugzilla.redhat.com/bugzilla/show_bug.cgi?id=184028)
@@ -100,6 +105,15 @@ var makeAbsoluteUrl = function(s:String) {
 		return baseUrl + s;
 	else
 		return s;
+}
+
+var addQueryParameter = function(s:String, name:String, value:String) {
+	var lastSlash:Number = s.lastIndexOf('/');
+	var lastQuestion:Number = s.lastIndexOf('?');
+	if (lastQuestion > lastSlash)
+		return s + "&" + name + "=" + value;
+	else
+		return s + "?" + name + "=" + value;
 }
 
 // this is kinda bogus (e.g. won't work right if the two objects have different fields)
