@@ -366,7 +366,7 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 	
 	public int getRandomTipIndex() {
 		if (randomTipIndex < 0)
-			randomTipIndex = new Random().nextInt(3);
+			randomTipIndex = new Random().nextInt(12);
 		return randomTipIndex;
 	}
 	

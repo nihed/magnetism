@@ -21,6 +21,33 @@
 		<c:when test="${tipIndex == 2 && browser.gecko}">
 			<a class="dh-page-options-tip-link" href="/bookmark">Add Web Swarm link to Firefox</a>
 		</c:when>		
+		<c:when test="${tipIndex == 3}">
+			<a class="dh-page-options-tip-link" href="/badges">Put Mini Mugshot on your MySpace</a>
+		</c:when>
+		<c:when test="${tipIndex == 4}">
+			<a class="dh-page-options-tip-link" href="/badges">Add Mini Mugshot to your Blog sidebar</a>
+		</c:when>
+		<c:when test="${tipIndex == 5}">
+			<a class="dh-page-options-tip-link" href="/account">Last.fm geek?  We've got you covered</a>
+		</c:when>
+		<c:when test="${tipIndex == 6}">
+			<a class="dh-page-options-tip-link" href="/account">Facebook live updates</a>
+		</c:when>
+		<c:when test="${tipIndex == 7}">
+			<a class="dh-page-options-tip-link" href="/account">MySpace blogger?  Get live updates</a>
+		</c:when>
+		<c:when test="${tipIndex == 8}">
+			<a class="dh-page-options-tip-link" href="/account">Flickr live photo updates</a>
+		</c:when>
+		<c:when test="${tipIndex == 9}">
+			<a class="dh-page-options-tip-link" href="/account">YouTube video upload updates</a>
+		</c:when>
+		<c:when test="${tipIndex == 10}">
+			<a class="dh-page-options-tip-link" href="/account">Blog much?  Add it here</a>
+		</c:when>
+		<c:when test="${tipIndex == 11}">
+			<a class="dh-page-options-tip-link" href="/account">Rhapsody playlist in Music Radar</a>
+		</c:when>
 		<c:otherwise>
 		    &nbsp;
 		</c:otherwise>

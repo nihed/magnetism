@@ -67,6 +67,10 @@ a.dh-underlined-link-visited:link, a.dh-underlined-link-visited:hover, a.dh-unde
 	text-decoration:	underline;
 }
 
+.dh-page-options-tip-link:visited {
+	color:			#0000ff;
+}
+
 .dh-page-footer-text {
 	font-size:			12px;
 	color:				#666666;
