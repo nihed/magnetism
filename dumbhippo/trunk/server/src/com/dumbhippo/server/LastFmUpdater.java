@@ -5,6 +5,7 @@ import java.util.List;
 import javax.ejb.Local;
 
 import com.dumbhippo.persistence.LastFmUpdateStatus;
+import com.dumbhippo.server.PollingTaskPersistence.PollingTaskLoader;
 import com.dumbhippo.services.LastFmTrack;
 
 /** 
@@ -13,6 +14,6 @@ import com.dumbhippo.services.LastFmTrack;
  * @author Colin Walters
  */
 @Local
-public interface LastFmUpdater extends CachedExternalUpdater<LastFmUpdateStatus> {
-	public void saveUpdatedStatus(String username, List<LastFmTrack> tracks);
+public interface LastFmUpdater extends CachedExternalUpdater<LastFmUpdateStatus>, PollingTaskLoader {
+	public boolean saveUpdatedStatus(String username, List<LastFmTrack> tracks);
 }

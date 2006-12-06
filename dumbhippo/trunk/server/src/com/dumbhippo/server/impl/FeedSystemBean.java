@@ -29,6 +29,7 @@ import com.dumbhippo.ThreadUtils;
 import com.dumbhippo.TypeUtils;
 import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
+import com.dumbhippo.mbean.DynamicPollingSystem;
 import com.dumbhippo.mbean.FeedUpdaterPeriodicJob;
 import com.dumbhippo.mbean.DynamicPollingSystem.PollingTask;
 import com.dumbhippo.mbean.DynamicPollingSystem.PollingTaskFamily;
@@ -781,8 +782,16 @@ public class FeedSystemBean implements FeedSystem {
 		@Override
 		protected PollResult execute() throws Exception {
 			boolean changed = false;
-			final FeedSystem feedSystem = EJBUtil.defaultLookup(FeedSystem.class);	
-			final UpdateFeedContext context = (UpdateFeedContext) feedSystem.updateFeedFetchFeed(feed);
+			final FeedSystem feedSystem = EJBUtil.defaultLookup(FeedSystem.class);
+			final UpdateFeedContext context;			
+			try {
+				context = (UpdateFeedContext) feedSystem.updateFeedFetchFeed(feed);
+			} catch (XmlMethodException e) {
+				if (e.getCode().isExpected())
+					throw new DynamicPollingSystem.PollingTaskNormalExecutionException(e);
+				else
+					throw e;
+			}
 			if (context != null) {
 				changed = context.isModified();
 				final TransactionRunner runner = EJBUtil.defaultLookup(TransactionRunner.class);

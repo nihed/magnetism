@@ -92,6 +92,35 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 		}			
 	}
 	
+	/**
+	 * This exception should be thrown for executions which result in some
+	 * sort of (potentially) transient problem.  For example, an error opening a TCP
+	 * connection to a web service.  It should not be used to wrap just any exception
+	 * from the code because exceptions wrapped in this way will not have their stack
+	 * traces printed to the log.  Using this exception requires the task invoke
+	 * other methods or code which provides for this distinction.
+	 * 
+	 * This class intentionally omits the Exception(String) constructor because it
+	 * is assumed that it will be used solely to wrap an existing throwable from
+	 * an error condition as opposed to being a primary thrown exception.
+	 * 
+	 * @author walters
+	 */
+	public static class PollingTaskNormalExecutionException extends Exception {
+		private static final long serialVersionUID = 1L;
+
+		public PollingTaskNormalExecutionException() {
+		}
+
+		public PollingTaskNormalExecutionException(String message, Throwable cause) {
+			super(message, cause);
+		}
+
+		public PollingTaskNormalExecutionException(Throwable cause) {
+			super(cause);
+		}
+	}
+	
 	public static abstract class PollingTask implements Callable<PollingTaskExecutionResult> {
 		public static final int MAX_FAMILY_NAME_LENGTH = 20;
 		public static final int MAX_TASK_ID_LENGTH = 128;
@@ -165,6 +194,9 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 				executionChanged = result.executionChanged;
 				obsolete = result.obsolete;
 				executionEnd = System.currentTimeMillis();
+			} catch (PollingTaskNormalExecutionException e) {
+				logger.info("Transient exception: " + e.getMessage());
+				return new PollingTaskExecutionResult();				
 			} catch (Exception e) {
 				logger.warn("Execution of polling task failed", e);
 				return new PollingTaskExecutionResult();				
@@ -223,10 +255,13 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 		61,               // ~1 minute 
 		307,              // ~5 minutes
 	    907,              // ~15 minutes
-		3607,             // ~1 hour
-		28807,            // ~8 hours
-		86413,            // ~1 day
-		259201            // ~3 days
+	    1801,			  // ~30 minutes
+		3607              // ~1 hour
+		// Presently we really don't have anything we want to poll with
+		// periodicity this long
+		// 28807,            // ~8 hours
+		// 86413,            // ~1 day
+		// 259201            // ~3 days
 	};
 	private static final int DEFAULT_POLLING_SET_INDEX = 2;
 	
@@ -534,6 +569,11 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 	}
 	
 	public synchronized void startSingleton() {
+		Configuration config = EJBUtil.defaultLookup(Configuration.class);
+		if (!config.isFeatureEnabled("pollingTask")) {
+			logger.info("Dynamic polling not enabled; ignoring startup");
+			return;
+		}
 		logger.info("Starting DynamicPollingSystem singleton");
 		globalTasks = new HashSet<PollingTask>();
 		taskSetThreads = new Thread[pollingSetTimeSeconds.length];
@@ -555,9 +595,8 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 		taskPersistenceThread = ThreadUtils.newDaemonThread("dynamic task set persister", taskPersistenceWorker);
 		taskPersistenceThread.start();
 		
-		Configuration config = EJBUtil.defaultLookup(Configuration.class);
-		if (config.isDebugFeatureEnabled("pollingTask")) {
-			logger.warn("pollingTask debug enabled; injecting test tasks");
+		if (config.isFeatureEnabled("pollingTaskDebug")) {
+			logger.warn("pollingTask debug enabled; injecting test tasks");			
 			TestPollingTaskFamily[] families = new TestPollingTaskFamily[TestPollingTaskFamily.FamilyType.values().length];
 			for (int i = 0; i < families.length; i++) {
 				families[i] = new TestPollingTaskFamily(FamilyType.values()[i]);
@@ -575,6 +614,11 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 	}
 	
 	public synchronized void stopSingleton() {
+		Configuration config = EJBUtil.defaultLookup(Configuration.class);		
+		if (!config.isFeatureEnabled("pollingTask")) {
+			logger.info("Dynamic polling not enabled; ignoring shutdown");
+			return;
+		}		
 		logger.info("Stopping DynamicPollingSystem singleton");
 		globalTasks = null;
 		

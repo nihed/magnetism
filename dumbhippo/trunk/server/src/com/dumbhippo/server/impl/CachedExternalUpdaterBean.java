@@ -18,6 +18,7 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.TypeUtils;
 import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.ExternalAccountType;
+import com.dumbhippo.persistence.PollingTaskFamilyType;
 import com.dumbhippo.persistence.Sentiment;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.CachedExternalUpdater;
@@ -37,6 +38,7 @@ public abstract class CachedExternalUpdaterBean<Status> implements CachedExterna
 	private TransactionRunner runner;
 	
 	protected abstract ExternalAccountType getAccountType();
+	protected abstract PollingTaskFamilyType getTaskFamily();
 	
 	private String getName() {
 		return getAccountType().getSiteName();

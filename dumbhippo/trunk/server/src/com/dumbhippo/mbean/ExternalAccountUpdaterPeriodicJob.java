@@ -41,6 +41,10 @@ public abstract class ExternalAccountUpdaterPeriodicJob implements PeriodicJob {
 		}
 	}
 	
+	protected boolean enabled() {
+		return true; 
+	}
+	
 	public void doIt(long sleepTime, int generation, int iteration) throws InterruptedException {
 		EJBUtil.assertNoTransaction();
 		

@@ -1,7 +1,9 @@
 package com.dumbhippo.mbean;
 
 import com.dumbhippo.server.CachedExternalUpdater;
+import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.LastFmUpdater;
+import com.dumbhippo.server.util.EJBUtil;
 
 public class LastFmUpdaterPeriodicJob extends ExternalAccountUpdaterPeriodicJob {
 
@@ -9,6 +11,12 @@ public class LastFmUpdaterPeriodicJob extends ExternalAccountUpdaterPeriodicJob 
 	
 	public long getFrequencyInMilliseconds() {
 		return POLL_FREQUENCY;
+	}
+	
+	@Override
+	protected boolean enabled() {
+		Configuration config = EJBUtil.defaultLookup(Configuration.class);		
+		return !config.isFeatureEnabled("pollingTask");
 	}
 
 	@Override

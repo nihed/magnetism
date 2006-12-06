@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.ExternalAccountType;
+import com.dumbhippo.persistence.PollingTaskFamilyType;
 import com.dumbhippo.persistence.YouTubeUpdateStatus;
 import com.dumbhippo.server.CachedExternalUpdater;
 import com.dumbhippo.server.NotFoundException;
@@ -91,5 +92,11 @@ public class YouTubeUpdaterBean extends CachedExternalUpdaterBean<YouTubeUpdateS
 	@Override
 	protected Class<? extends CachedExternalUpdater<YouTubeUpdateStatus>> getUpdater() {
 		return YouTubeUpdater.class;
+	}
+
+	@Override
+	protected PollingTaskFamilyType getTaskFamily() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

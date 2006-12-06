@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.ThreadUtils;
 import com.dumbhippo.persistence.Feed;
+import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.FeedSystem;
 import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.XmlMethodException;
@@ -80,6 +81,9 @@ public final class FeedUpdaterPeriodicJob implements PeriodicJob {
 	}
 	
 	public void doIt(long sleepTime, int generation, int iteration) throws InterruptedException {
+		Configuration config = EJBUtil.defaultLookup(Configuration.class);		
+		if (config.isFeatureEnabled("pollingTask"))
+			return;
 		// We intentionally iterate here rather than inside a session
 		// bean method to get a separate transaction for each method on
 		// feedSystem rather than holding a single transaction over the whole

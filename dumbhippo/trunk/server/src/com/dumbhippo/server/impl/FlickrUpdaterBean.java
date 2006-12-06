@@ -19,6 +19,7 @@ import com.dumbhippo.TypeUtils;
 import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.FlickrPhotosetStatus;
 import com.dumbhippo.persistence.FlickrUpdateStatus;
+import com.dumbhippo.persistence.PollingTaskFamilyType;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.CachedExternalUpdater;
 import com.dumbhippo.server.FlickrUpdater;
@@ -227,5 +228,11 @@ public class FlickrUpdaterBean extends CachedExternalUpdaterBean<FlickrUpdateSta
 	@Override
 	protected Class<? extends CachedExternalUpdater<FlickrUpdateStatus>> getUpdater() {
 		return FlickrUpdater.class;
+	}
+
+	@Override
+	protected PollingTaskFamilyType getTaskFamily() {
+		// TODO Auto-generated method stub
+		return null;
 	} 
 }

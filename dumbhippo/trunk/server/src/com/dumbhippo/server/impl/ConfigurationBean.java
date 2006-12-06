@@ -129,8 +129,8 @@ public class ConfigurationBean implements Configuration {
 		overridenProperties.put(name, value);
 	}
 
-	public boolean isDebugFeatureEnabled(String name) {
-		return Arrays.asList(getProperty(HippoProperty.DEBUG_FEATURES).split(",")).contains(name);
+	public boolean isFeatureEnabled(String name) {
+		return Arrays.asList(getProperty(HippoProperty.FEATURES).split(",")).contains(name);
 	}
 }
 

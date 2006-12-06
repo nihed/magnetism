@@ -94,5 +94,5 @@ public interface Configuration {
 	 */
 	public void setProperty(String name, String value);
 	
-	public boolean isDebugFeatureEnabled(String name);
+	public boolean isFeatureEnabled(String name);
 }
