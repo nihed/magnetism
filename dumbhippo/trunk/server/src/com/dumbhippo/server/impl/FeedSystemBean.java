@@ -650,7 +650,7 @@ public class FeedSystemBean implements FeedSystem {
 		// (for example, if some blogs allow back dating entries)
 		// this could also be change to return a given number of recent entries
 		Query q = em.createQuery("SELECT fe FROM FeedEntry fe " +
-                "WHERE fe.feed = :feed AND" +
+                "WHERE fe.feed = :feed " +
                 "ORDER BY fe.date DESC");
 		q.setParameter("feed", feed);
 		q.setMaxResults(1);
