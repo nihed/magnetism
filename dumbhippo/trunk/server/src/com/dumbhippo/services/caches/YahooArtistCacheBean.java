@@ -27,6 +27,7 @@ import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.services.YahooArtistData;
 import com.dumbhippo.services.YahooSearchWebServices;
 
+@TransactionAttribute(TransactionAttributeType.REQUIRED) // because the base classes change the default; not sure this is needed, but can't hurt
 @BanFromWebTier
 @Stateless
 public class YahooArtistCacheBean extends AbstractCacheBean<String,YahooArtistData,Cache> implements YahooArtistCache {

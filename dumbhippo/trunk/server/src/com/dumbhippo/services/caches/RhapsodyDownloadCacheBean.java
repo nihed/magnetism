@@ -21,6 +21,7 @@ import com.dumbhippo.URLUtils;
 import com.dumbhippo.persistence.CachedRhapsodyDownload;
 import com.dumbhippo.server.BanFromWebTier;
 
+@TransactionAttribute(TransactionAttributeType.REQUIRED) // because the base classes change the default; not sure this is needed, but can't hurt
 @BanFromWebTier
 @Stateless
 public class RhapsodyDownloadCacheBean extends AbstractBasicCacheWithStorageBean<String,Boolean,CachedRhapsodyDownload> implements

@@ -4,6 +4,9 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
+
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
@@ -16,6 +19,7 @@ import com.dumbhippo.server.util.EJBUtil;
  * ResultType. Subclass AbstractListCacheWithStorageBean is usually a better choice unless your cache needs to 
  * implement its own custom handling of persistence objects.
  */
+@TransactionAttribute(TransactionAttributeType.SUPPORTS) // hackaround for bug with method tx attr on generic methods
 public abstract class AbstractListCacheBean<KeyType, ResultType>
 		extends AbstractCacheBean<KeyType, List<? extends ResultType>, ListCache<KeyType, ResultType>> {
 
@@ -71,10 +75,12 @@ public abstract class AbstractListCacheBean<KeyType, ResultType>
 		}
 	}
 	
+	@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 	public List<? extends ResultType> getSync(KeyType key, boolean alwaysRefetchEvenIfCached) {
 		return ThreadUtils.getFutureResultEmptyListOnException(getAsync(key, alwaysRefetchEvenIfCached), resultClass);
 	}
 
+	@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 	public Future<List<? extends ResultType>> getAsync(KeyType key, boolean alwaysRefetchEvenIfCached) {
 		if (key == null)
 			throw new IllegalArgumentException("null key passed to AbstractListCacheWithStorageBean");

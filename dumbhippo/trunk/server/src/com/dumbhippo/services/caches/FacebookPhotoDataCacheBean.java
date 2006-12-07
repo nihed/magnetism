@@ -5,6 +5,8 @@ import java.util.List;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.persistence.Query;
 
 import org.jboss.annotation.IgnoreDependency;
@@ -30,6 +32,7 @@ import com.dumbhippo.services.FacebookWebServices;
 // EntityType for example). The ResultType should be the same as whatever the raw, uncached, 
 // nothing-to-do-with-the-database web service returns. It's bad if anything is using attached
 // EntityType objects outside of the cache code itself.
+@TransactionAttribute(TransactionAttributeType.REQUIRED) // because the base classes change the default; not sure this is needed, but can't hurt
 @Stateless
 public class FacebookPhotoDataCacheBean 
     extends AbstractListCacheWithStorageBean<String,CachedFacebookPhotoData,CachedFacebookPhotoData> 

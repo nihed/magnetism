@@ -22,6 +22,7 @@ import com.dumbhippo.services.FlickrPhotosets;
 import com.dumbhippo.services.FlickrPhotosetsView;
 import com.dumbhippo.services.FlickrWebServices;
 
+@TransactionAttribute(TransactionAttributeType.REQUIRED) // because the base classes change the default; not sure this is needed, but can't hurt
 @Stateless
 public class FlickrUserPhotosetsCacheBean extends AbstractBasicCacheBean<String,FlickrPhotosetsView> implements
 		FlickrUserPhotosetsCache {

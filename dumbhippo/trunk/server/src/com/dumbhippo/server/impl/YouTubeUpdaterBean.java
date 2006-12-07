@@ -37,6 +37,8 @@ public class YouTubeUpdaterBean extends CachedExternalUpdaterBean<YouTubeUpdateS
 	@Override
 	@TransactionAttribute(TransactionAttributeType.NEVER)	
 	public void doPeriodicUpdate(String username) {
+		EJBUtil.assertNoTransaction();
+		
 		YouTubeUpdater proxy = EJBUtil.defaultLookup(YouTubeUpdater.class);
 		
 		List<? extends YouTubeVideo> videos = videosCache.getSync(username, true);
@@ -57,6 +59,8 @@ public class YouTubeUpdaterBean extends CachedExternalUpdaterBean<YouTubeUpdateS
 	public void saveUpdatedStatus(String username, List<? extends YouTubeVideo> videos) {
 		logger.debug("Saving new YouTube status for " + username + ": videos {}",
 				videos);
+		
+		EJBUtil.assertHaveTransaction();
 		
 		YouTubeUpdateStatus updateStatus;
 		try {

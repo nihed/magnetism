@@ -19,6 +19,7 @@ import com.dumbhippo.server.util.EJBUtil;
  * ResultType. Subclass AbstractBasicCacheWithStorageBean is usually a better choice unless your cache needs to 
  * implement its own custom handling of persistence objects.
  */
+@TransactionAttribute(TransactionAttributeType.SUPPORTS) // hackaround for bug with method tx attr on generic methods
 public abstract class AbstractBasicCacheBean<KeyType, ResultType> extends
 		AbstractCacheBean<KeyType, ResultType, Cache<KeyType,ResultType>> {
 

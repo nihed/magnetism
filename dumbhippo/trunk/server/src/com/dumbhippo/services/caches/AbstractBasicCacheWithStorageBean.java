@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.CachedItem;
+import com.dumbhippo.server.util.EJBUtil;
 
 /** 
  * Base class for cache beans that store each result in one database row 
@@ -21,6 +22,7 @@ import com.dumbhippo.persistence.CachedItem;
  * @param <ResultType>
  * @param <EntityType>
  */
+@TransactionAttribute(TransactionAttributeType.SUPPORTS) // hackaround for bug with method tx attr on generic methods
 public abstract class AbstractBasicCacheWithStorageBean<KeyType,ResultType,EntityType extends CachedItem>
 	extends AbstractBasicCacheBean<KeyType,ResultType>
 	implements BasicCacheStorageMapper<KeyType,ResultType,EntityType> {
@@ -47,7 +49,9 @@ public abstract class AbstractBasicCacheWithStorageBean<KeyType,ResultType,Entit
 	
 	public abstract void updateEntityFromResult(KeyType key, ResultType result, EntityType entity);
 	
+	@TransactionAttribute(TransactionAttributeType.REQUIRED) // would be the default, but we changed the class default
 	public ResultType checkCache(KeyType key) throws NotCachedException {
+		EJBUtil.assertHaveTransaction();
 		return storage.checkCache(key);
 	}
 
@@ -56,6 +60,7 @@ public abstract class AbstractBasicCacheWithStorageBean<KeyType,ResultType,Entit
 	// null data means to save a negative result
 	@TransactionAttribute(TransactionAttributeType.MANDATORY)
 	public ResultType saveInCacheInsideExistingTransaction(KeyType key, ResultType data, Date now, boolean refetchedWithoutCheckingCache) {
+		EJBUtil.assertHaveTransaction();
 		return storage.saveInCacheInsideExistingTransaction(key, data, now, refetchedWithoutCheckingCache);
 	}
 }

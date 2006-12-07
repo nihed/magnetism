@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.CachedListItem;
 
+@TransactionAttribute(TransactionAttributeType.SUPPORTS) // hackaround for bug with method tx attr on generic methods
 public abstract class AbstractListCacheWithStorageBean<KeyType,ResultType,EntityType extends CachedListItem>
 	extends AbstractListCacheBean<KeyType,ResultType>
 	implements ListCache<KeyType, ResultType>, ListCacheStorageMapper<KeyType,ResultType,EntityType> {
@@ -36,6 +37,7 @@ public abstract class AbstractListCacheWithStorageBean<KeyType,ResultType,Entity
 	
 	public abstract EntityType entityFromResult(KeyType key, ResultType result);
 	
+	@TransactionAttribute(TransactionAttributeType.REQUIRED) // would be the default, but we changed the class default
 	public List<? extends ResultType> checkCache(KeyType key) throws NotCachedException {
 		return storage.checkCache(key);
 	}
@@ -46,11 +48,13 @@ public abstract class AbstractListCacheWithStorageBean<KeyType,ResultType,Entity
 		throw new UnsupportedOperationException("Cache doesn't support manual expiration: " + getEjbIface().getName());
 	}
 	
+	@TransactionAttribute(TransactionAttributeType.REQUIRED) // would be the default, but we changed the class default
 	@Override
 	public void expireCache(KeyType key) {
 		storage.expireCache(key);
 	}
 	
+	@TransactionAttribute(TransactionAttributeType.REQUIRED) // would be the default, but we changed the class default
 	public void deleteCache(KeyType key) {
 		storage.deleteCache(key);
 	}

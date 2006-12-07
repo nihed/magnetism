@@ -518,10 +518,10 @@ public class EJBUtil {
 		}
 		
 		if (txStatus != desired) {
-			// Just warn instead of throw until we figure this out
 			logger.warn("Unexpected tx status {} while expecting {}", transactionStatusString(txStatus),
 					transactionStatusString(desired));
-			//throw new RuntimeException("Unexpected tx status " + transactionStatusString(txStatus) + 
+			// should throw, but since we have bugs here still...
+			//throw new IllegalStateException("Unexpected tx status " + transactionStatusString(txStatus) + 
 			//		" expecting " + transactionStatusString(desired));
 		}
 	}

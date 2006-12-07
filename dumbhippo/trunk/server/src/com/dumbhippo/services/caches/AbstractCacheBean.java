@@ -26,6 +26,7 @@ import com.dumbhippo.server.util.EJBUtil;
  * Use one of the subclasses (AbstractBasicCacheWithStorageBean, AbstractListCacheWithStorageBean, AbstractBasicCacheBean, AbstractListCacheBean)
  * if possible, they have more stuff implemented by default.
  */
+@TransactionAttribute(TransactionAttributeType.SUPPORTS) // hackaround for bug with method tx attr on generic methods
 public abstract class AbstractCacheBean<KeyType,ResultType,EjbIfaceType> implements Cache<KeyType,ResultType> {
 	@SuppressWarnings("unused")
 	static private final Logger logger = GlobalSetup.getLogger(AbstractCacheBean.class);
@@ -126,6 +127,7 @@ public abstract class AbstractCacheBean<KeyType,ResultType,EjbIfaceType> impleme
 		return expirationTime;
 	}	
 	
+	@TransactionAttribute(TransactionAttributeType.REQUIRED) // would be the default, but we changed the class default
 	public void expireCache(KeyType key) {
 		throw new UnsupportedOperationException("This cache bean doesn't implement cache expiration");
 	}
