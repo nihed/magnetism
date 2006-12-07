@@ -26,6 +26,6 @@ public class UserSummaryTag extends AbstractFlashTag {
 		if (badge == null)
 			throw new IllegalStateException("must specify a height for userSummary");
 		
-		doTag(badge, "dh-badge-user-summary", null, null);
+		doTag(badge, "dh-badge-user-summary", null);
 	}
 }

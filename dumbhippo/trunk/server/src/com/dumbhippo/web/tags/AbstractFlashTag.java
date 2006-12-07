@@ -72,7 +72,7 @@ public abstract class AbstractFlashTag extends SimpleTagSupport {
 			sb.append("<div align=\"center\">");
 			// label is supposed to be html already 
 			sb.append(label);
-			sb.append("</div>");			
+			sb.append("</div>\n");			
 		}
 
 		String format = ""
@@ -100,7 +100,7 @@ public abstract class AbstractFlashTag extends SimpleTagSupport {
 			sb.append("<div align=\"center\">");
 			// label is supposed to be html already
 			sb.append(label);
-			sb.append("</div>");
+			sb.append("</div>\n");
 		}
 		
 		// try to keep this nicely formatted, since we give it to people to cut-and-paste
@@ -127,7 +127,7 @@ public abstract class AbstractFlashTag extends SimpleTagSupport {
 		return sb.toString();
 	}
 
-	protected final void doTag(FlashBadge badge, String divClass, String bgColor, String label, String... queryParamPairs) throws IOException {
+	protected final void doTag(FlashBadge badge, String divClass, String bgColor, String... queryParamPairs) throws IOException {
 		if (userId == null)
 			throw new RuntimeException("no user provided to output tag");
 
@@ -164,9 +164,9 @@ public abstract class AbstractFlashTag extends SimpleTagSupport {
 		JspWriter writer = getJspContext().getOut();
 		String output;
 		if (embedOnly)
-			output = getEmbedHtml(badge, queryString, bgColor, hasLabel ? label : null);
+			output = getEmbedHtml(badge, queryString, bgColor, hasLabel ? badge.getLabel(baseurl, userId) : null);
 		else
-			output = getObjectHtml(badge, queryString, bgColor, hasLabel ? label : null);
+			output = getObjectHtml(badge, queryString, bgColor, hasLabel ? badge.getLabel(baseurl, userId) : null);
 		
 		// put a <div> around it if we're rendering the HTML ourselves, if we're printing out the html 
 		// for others then don't

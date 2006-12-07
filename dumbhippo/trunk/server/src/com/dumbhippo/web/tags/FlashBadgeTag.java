@@ -10,9 +10,8 @@ public class FlashBadgeTag extends AbstractFlashTag {
 		this.badge = badge;
 	}
 	
-	
 	@Override
 	public void doTag() throws IOException {
-		doTag(badge, "dh-badge", null, null);
+		doTag(badge, "dh-badge", null);
 	}
 }

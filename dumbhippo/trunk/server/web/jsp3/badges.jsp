@@ -124,7 +124,12 @@
 					<div class="dh-badges-step-box-right" style="height: ${person.maxBadgeHeight}px;">
 						<c:forEach var="badge" items="${person.badges.list}" varStatus="status">
 							<div id="dhBadgePreview${badge.name}" style="display: ${status.first ? 'block' : 'none'}; width: ${badge.width}px; height: ${badge.height}px;">
-								<dh:flashBadge badge="${badge}" userId="${person.viewedPerson.user.id}"/>
+								<dh:flashBadge badge="${badge}" userId="${person.viewedPerson.user.id}" hasLabel="false"/>
+								<c:if test="${dh:enumIs(badge, 'NOW_PLAYING_440_120')}">
+									<div style="margin-top: 5px;">
+										<a style="font-size: 12px;" class="dh-underlined-link" href="/radar-learnmore">Browse, edit, and create Music Radar themes</a>
+									</div>
+								</c:if>
 							</div>
 						</c:forEach>
 					</div>

@@ -1,5 +1,6 @@
 package com.dumbhippo.web.tags;
 
+
 public enum FlashBadge {	
 
 	USER_SUMMARY_250_74 {
@@ -108,7 +109,12 @@ public enum FlashBadge {
 		@Override
 		public int getMinFlashVersion() {
 			return 7;
-		}		
+		}
+		
+		@Override
+		public String getLabel(String baseUrl, String userId) {
+			return "<b><a href=\"" + baseUrl + "/person?who=" + userId.toString() + "\">What I'm listening to right now</a></b>";
+		}
 	};
 	
 	// rename this method so it works as a java bean
@@ -121,4 +127,8 @@ public enum FlashBadge {
 	public abstract int getWidth();
 	public abstract int getHeight();
 	public abstract int getMinFlashVersion();
+	
+	public String getLabel(String baseUrl, String userId) {
+		return "<b><a href=\"" + baseUrl + "/person?who=" + userId + "\">Visit my Mugshot page</a></b>";
+	}
 }

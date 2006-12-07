@@ -6,8 +6,6 @@ import com.dumbhippo.identity20.Guid;
 import com.dumbhippo.identity20.Guid.ParseException;
 
 public class NowPlayingTag extends AbstractFlashTag {
-
-	static final private String LABEL = "<b>What I'm listening to right now</b>\n";	
 	
 	private String themeId;	
 	private String forceMode;
@@ -29,7 +27,7 @@ public class NowPlayingTag extends AbstractFlashTag {
 	
 	@Override
 	public void doTag() throws IOException {
-		doTag(FlashBadge.NOW_PLAYING_440_120, "dh-nowplaying", null, LABEL, 
+		doTag(FlashBadge.NOW_PLAYING_440_120, "dh-nowplaying", null, 
 				"themeId", themeId, "forceMode", forceMode);
 	}
 }
