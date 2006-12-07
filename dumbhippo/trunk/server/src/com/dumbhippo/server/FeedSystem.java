@@ -9,6 +9,8 @@ import com.dumbhippo.persistence.FeedEntry;
 import com.dumbhippo.persistence.Group;
 import com.dumbhippo.persistence.LinkResource;
 import com.dumbhippo.server.PollingTaskPersistence.PollingTaskLoader;
+import com.dumbhippo.server.impl.FeedSystemBean.FeedLinkUnknownException;
+import com.sun.syndication.feed.synd.SyndFeed;
 
 @Local
 public interface FeedSystem extends PollingTaskLoader {
@@ -44,6 +46,15 @@ public interface FeedSystem extends PollingTaskLoader {
 	 * @throws XmlMethodException 
 	 */
 	void updateFeedStoreFeed(Object context) throws XmlMethodException;
+	
+	/**
+	 * Stores a raw feed.  This method should generally not be called
+	 * by methods outside of FeedSystem itself.
+	 * 
+	 * @param result the result of a feed fetch
+	 * @throws FeedLinkUnknownException 
+	 */
+	void storeRawUpdatedFeed(long feedId, SyndFeed feed) throws FeedLinkUnknownException;
 	
 	/**
 	 * Mark a feed as failed after an unsuccessful update.

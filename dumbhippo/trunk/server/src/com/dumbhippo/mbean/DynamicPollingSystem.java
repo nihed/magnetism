@@ -264,6 +264,7 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 		// 259201            // ~3 days
 	};
 	private static final int DEFAULT_POLLING_SET_INDEX = 2;
+	private static final int MAX_WORKER_COUNT = 300;
 	
 	private static class PollingTaskFamilyExecutionState {
 		private PollingTaskFamily family;
@@ -298,7 +299,7 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 	}
 	
 	private static Map<PollingTaskFamily, PollingTaskFamilyExecutionState> taskFamilies = new HashMap<PollingTaskFamily, PollingTaskFamilyExecutionState>();
-	private static ExecutorService threadPool = ThreadUtils.newCachedThreadPool("polling task worker");	
+	private static ExecutorService threadPool = ThreadUtils.newFixedThreadPool("polling task worker", MAX_WORKER_COUNT);
 	private static Set<PollingTask> globalTasks;
 	
 	private static TaskSet[] taskSetWorkers;

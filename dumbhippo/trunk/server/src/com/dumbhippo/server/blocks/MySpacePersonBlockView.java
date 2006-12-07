@@ -1,5 +1,8 @@
 package com.dumbhippo.server.blocks;
 
+import org.slf4j.Logger;
+
+import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.Block;
 import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.GroupBlockData;
@@ -8,8 +11,11 @@ import com.dumbhippo.server.views.Viewpoint;
 
 public class MySpacePersonBlockView extends BlogLikeBlockView {
 	
+	@SuppressWarnings("unused")
+	static private final Logger logger = GlobalSetup.getLogger(MySpacePersonBlockView.class);	
+	
 	public MySpacePersonBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd, boolean participated) {
-		super(viewpoint, block, ubd, participated);
+		super(viewpoint, block, ubd, participated);		
 	}
 	
 	public MySpacePersonBlockView(Viewpoint viewpoint, Block block, GroupBlockData gbd, boolean participated) {

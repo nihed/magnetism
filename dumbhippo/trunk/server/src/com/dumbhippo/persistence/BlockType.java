@@ -32,6 +32,10 @@ public enum BlockType {
 	
 	BLOG_PERSON { // 6
 		@Override
+		public boolean isAlwaysPublic() {
+			return true;
+		}		
+		@Override
 		public StackInclusion getDefaultStackInclusion() {
 			return null;
 		}
@@ -69,10 +73,13 @@ public enum BlockType {
 		}
 	},
 	MYSPACE_PERSON { // 12
-		// Currently just used for MySpace blog entries which are always public
 		@Override
 		public boolean isAlwaysPublic() {
 			return true;
+		}		
+		@Override
+		public StackInclusion getDefaultStackInclusion() {
+			return null;
 		}
 	};
 	

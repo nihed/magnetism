@@ -731,12 +731,13 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		sb.append(" AND (block.inclusion = ");
 		sb.append(StackInclusion.IN_ALL_STACKS.ordinal());
 		
-		sb.append(" OR (block.data1 = :viewedGuid AND block.inclusion = ");
-		if (viewpoint.isOfUser(user))
-			sb.append(StackInclusion.ONLY_WHEN_VIEWING_SELF.ordinal());
-		else
-			sb.append(StackInclusion.ONLY_WHEN_VIEWED_BY_OTHERS.ordinal());
-		sb.append("))");
+		if (viewpoint instanceof UserViewpoint) {
+			sb.append(" OR (block.data1 = :viewpointGuid AND block.inclusion = " + StackInclusion.ONLY_WHEN_VIEWING_SELF.ordinal() + ")");
+			sb.append(" OR (block.data1 != :viewpointGuid AND block.inclusion = " + StackInclusion.ONLY_WHEN_VIEWED_BY_OTHERS.ordinal() + ")");
+		} else {
+			sb.append(" OR block.inclusion = " + StackInclusion.ONLY_WHEN_VIEWED_BY_OTHERS.ordinal());
+		}
+		sb.append(")");
 		
 		/* Ordering clause */
 		
@@ -760,7 +761,8 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		if (lastTimestamp > 0)
 			q.setParameter("timestamp", new Date(lastTimestamp));
 		q.setParameter("user", user);
-		q.setParameter("viewedGuid", user.getGuid().toString());
+		if (viewpoint instanceof UserViewpoint)
+			q.setParameter("viewpointGuid", ((UserViewpoint) viewpoint).getViewer().getGuid().toString());
 		
 		return TypeUtils.castList(UserBlockData.class, q.getResultList());		
 	}
@@ -787,7 +789,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 			
 			int resultItemCount = 0;
 			// Create BlockView objects for the blocks, performing access control checks
-			for (Pair<Block, T> pair : blocks) {
+			for (Pair<Block, T> pair : blocks) {			
 				Block block = pair.getFirst();
 				T t = pair.getSecond();
 				

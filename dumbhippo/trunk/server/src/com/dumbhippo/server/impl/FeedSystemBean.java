@@ -58,6 +58,7 @@ import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.util.HtmlTextExtractor;
 import com.dumbhippo.services.FeedFetcher;
 import com.dumbhippo.services.FeedFetcher.FeedFetchResult;
+import com.dumbhippo.services.FeedFetcher.FetchFailedException;
 import com.sun.syndication.feed.module.Module;
 import com.sun.syndication.feed.synd.SyndContent;
 import com.sun.syndication.feed.synd.SyndEntry;
@@ -112,7 +113,17 @@ public class FeedSystemBean implements FeedSystem {
 		}
 	}
 	
-	private FeedFetchResult getRawFeed(LinkResource source) throws XmlMethodException {
+	private static FeedFetchResult getRawFeed(LinkResource source) throws FetchFailedException {
+		URL url;
+		try {
+			url = new URL(source.getUrl());
+		} catch (MalformedURLException e) {
+			throw new RuntimeException("getFeed passed malformed URL object");
+		}
+		return FeedFetcher.getFeed(url);
+	}	
+	
+	private FeedFetchResult getRawFeedChecked(LinkResource source) throws XmlMethodException {
 		URL url;
 		try {
 			url = new URL(source.getUrl());
@@ -286,7 +297,14 @@ public class FeedSystemBean implements FeedSystem {
 		}
 	}
 	
-	private void setLinkFromSyndFeed(Feed feed, SyndFeed syndFeed) throws XmlMethodException {
+	public static class FeedLinkUnknownException extends Exception {
+		private static final long serialVersionUID = 1L;
+		public FeedLinkUnknownException(String message) {
+			super(message);
+		}
+	}
+	
+	private void setLinkFromSyndFeed(Feed feed, SyndFeed syndFeed) throws FeedLinkUnknownException {
 		String link = syndFeed.getLink();
 		if (link == null) {
 			if (feed.getLink() != null) {
@@ -294,20 +312,20 @@ public class FeedSystemBean implements FeedSystem {
 				logger.debug("Feed already has a link, new SyndFeed does not, sticking to the old one. {}", feed);
 				return;
 			} else {
-				throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, "Feed contains no link element or we failed to parse one at least");
+				throw new FeedLinkUnknownException("Feed contains no link element or we failed to parse one at least");
 			}
 		} else {
 			URL linkUrl;
 			try {
 				linkUrl = new URL(link);
 			} catch (MalformedURLException e) {
-				throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, "Feed contains invalid link '" + link + "' " + e.getMessage());
+				throw new FeedLinkUnknownException("Feed contains invalid link '" + link + "' " + e.getMessage());
 			}
 			feed.setLink(identitySpider.getLink(linkUrl));
 		}
 	}
 	
-	private void initializeFeedFromSyndFeed(Feed feed, SyndFeed syndFeed) throws XmlMethodException {
+	private void initializeFeedFromSyndFeed(Feed feed, SyndFeed syndFeed) throws FeedLinkUnknownException {
 		feed.setTitle(syndFeed.getTitle());
 		setLinkFromSyndFeed(feed, syndFeed);
 		
@@ -346,7 +364,7 @@ public class FeedSystemBean implements FeedSystem {
 		feed.setLastFetchSucceeded(true);
 	}
 	
-	private void updateFeedFromSyndFeed(Feed feed, SyndFeed syndFeed) throws XmlMethodException {
+	private void updateFeedFromSyndFeed(Feed feed, SyndFeed syndFeed) throws FeedLinkUnknownException {
 		feed.setTitle(syndFeed.getTitle());
 		setLinkFromSyndFeed(feed, syndFeed);
 		Map<String, FeedEntry> lastEntries = new HashMap<String, FeedEntry>();
@@ -465,7 +483,7 @@ public class FeedSystemBean implements FeedSystem {
 		if (feed != null)
 			return feed;
 		
-		FeedFetchResult fetchResult = getRawFeed(source);
+		FeedFetchResult fetchResult = getRawFeedChecked(source);
 		final SyndFeed syndFeed = fetchResult.getFeed();
 		
 		try {
@@ -546,7 +564,7 @@ public class FeedSystemBean implements FeedSystem {
 		logger.debug("  Feed {} being fetched", feed.getSource());
 		
 		try {
-			final FeedFetchResult result = getRawFeed(feed.getSource());
+			final FeedFetchResult result = getRawFeedChecked(feed.getSource());
 			if (result.isModified())
 				logger.info("  HTTP request completed for feed {}, retrieved {} entries", feed.getSource(), result.getFeed().getEntries().size());
 			else
@@ -576,16 +594,18 @@ public class FeedSystemBean implements FeedSystem {
 		}
 	}
 	
+	public void storeRawUpdatedFeed(long feedId, SyndFeed syndFeed) throws FeedLinkUnknownException {
+		Feed feed = em.find(Feed.class, feedId);
+		logger.debug("  Saving feed update results in db for {}", feed.getSource());
+		updateFeedFromSyndFeed(feed, syndFeed);
+	}	
+	
 	public void updateFeedStoreFeed(Object contextObject) throws XmlMethodException {
 		UpdateFeedContext context = (UpdateFeedContext) contextObject;
-		SyndFeed syndFeed = context.getSyndFeed();
-		Feed feed = em.find(Feed.class, context.getFeedId());
-		logger.debug("  Saving feed update results in db for {}", feed.getSource());
 		try {
-			updateFeedFromSyndFeed(feed, syndFeed);
-		} catch (XmlMethodException e) {
-			logger.warn("Couldn't store feed {}: " + e.getCodeString() + ": {}", feed.getSource(), e.getMessage());
-			throw e;
+			storeRawUpdatedFeed(context.getFeedId(), context.getSyndFeed());
+		} catch (FeedLinkUnknownException e) {
+			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, "Couldn't find a link for this feed or it was invalid");			
 		}
 	}
 	
@@ -756,7 +776,7 @@ public class FeedSystemBean implements FeedSystem {
 		}
 
 		public long getMaxOutstanding() {
-			return -1;
+			return 100;
 		}
 
 		public long getMaxPerSecond() {
@@ -771,40 +791,38 @@ public class FeedSystemBean implements FeedSystem {
 	private static PollingTaskFamily family = new FeedTaskFamily();
 	
 	private static class FeedTask extends PollingTask {
-		private Feed feed;  // detached from transaction
-		private Guid id;
+		private Feed feed;  // detached
+		private LinkResource source; // detatched
+		private Guid linkId;
 		
 		public FeedTask(Feed feed, Guid id) {
 			this.feed = feed;
-			this.id = id;
+			this.source = feed.getSource();
+			this.linkId = id;
 		}
 
 		@Override
 		protected PollResult execute() throws Exception {
 			boolean changed = false;
 			final FeedSystem feedSystem = EJBUtil.defaultLookup(FeedSystem.class);
-			final UpdateFeedContext context;			
+			final FeedFetchResult result;			
 			try {
-				context = (UpdateFeedContext) feedSystem.updateFeedFetchFeed(feed);
-			} catch (XmlMethodException e) {
-				if (e.getCode().isExpected())
-					throw new DynamicPollingSystem.PollingTaskNormalExecutionException(e);
-				else
-					throw e;
+				result = FeedSystemBean.getRawFeed(source);
+			} catch (FeedFetcher.FetchFailedException e) {
+				throw new DynamicPollingSystem.PollingTaskNormalExecutionException(e);
 			}
-			if (context != null) {
-				changed = context.isModified();
-				final TransactionRunner runner = EJBUtil.defaultLookup(TransactionRunner.class);
-				runner.runTaskRetryingOnDuplicateEntry(new Runnable() {
-					public void run() {
-						try {
-							feedSystem.updateFeedStoreFeed(context);
-						} catch (XmlMethodException e) {
-							logger.error("failed to store feed", e);
-						}
+			changed = result.isModified();
+			final TransactionRunner runner = EJBUtil.defaultLookup(TransactionRunner.class);
+			runner.runTaskRetryingOnDuplicateEntry(new Callable<Object>() {
+				public Object call() throws Exception {
+					try {
+						feedSystem.storeRawUpdatedFeed(feed.getId(), result.getFeed());
+					} catch (FeedLinkUnknownException e) {
+						throw new DynamicPollingSystem.PollingTaskNormalExecutionException(e);						
 					}
-				});
-			}
+					return null;
+				}
+			});
 			
 			return new PollResult(changed, false);
 		}
@@ -816,20 +834,20 @@ public class FeedSystemBean implements FeedSystem {
 
 		@Override
 		public String getIdentifier() {
-			return id.toString();
+			return linkId.toString();
 		}
 	}
 
 	public Set<PollingTask> loadTasks(Set<PollingTaskEntry> entries) {
 		Set<PollingTask> tasks = new HashSet<PollingTask>();
 		for (PollingTaskEntry entry : entries) {
-			String feedId = entry.getTaskId();
-			LinkResource link = em.find(LinkResource.class, feedId);
+			String linkId = entry.getTaskId();
+			LinkResource link = em.find(LinkResource.class, linkId);
 			try {
 				Feed feed = (Feed) em.createQuery("select feed from Feed feed where feed.source = :source").setParameter("source", link).getSingleResult();
 				tasks.add(new FeedTask(feed, link.getGuid()));
 			} catch (NoResultException e) {
-				logger.warn("feed from link " + feedId + " was deleted", e);
+				logger.warn("feed from link " + linkId + " was deleted", e);
 			}
 		}
 		return tasks;
