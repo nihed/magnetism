@@ -94,7 +94,7 @@ public abstract class AbstractListCacheBean<KeyType, ResultType>
 			if (alwaysRefetchEvenIfCached)
 				throw new NotCachedException("Forced refetch");
 			
-			List<? extends ResultType> results = checkCache(key);
+			List<? extends ResultType> results = EJBUtil.defaultLookup(getEjbIface()).checkCache(key);
 
 			if (results == null)
 				throw new RuntimeException("ListCache.checkCache isn't supposed to return null ever, it did for key " + key);

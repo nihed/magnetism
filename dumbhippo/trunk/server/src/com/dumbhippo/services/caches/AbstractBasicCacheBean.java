@@ -81,7 +81,7 @@ public abstract class AbstractBasicCacheBean<KeyType, ResultType> extends
 			if (alwaysRefetchEvenIfCached)
 				throw new NotCachedException("Forced refetch");
 			
-			ResultType result = checkCache(key);
+			ResultType result = EJBUtil.defaultLookup(getEjbIface()).checkCache(key);
 			// result may be null, but in that case we cached null
 			return new KnownFuture<ResultType>(result);
 		} catch (NotCachedException e) {
