@@ -17,6 +17,7 @@ import com.dumbhippo.persistence.StackReason;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.FeedSystem;
 import com.dumbhippo.server.NotFoundException;
+import com.dumbhippo.server.FeedSystem.NoFeedEntryException;
 import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.Viewpoint;
 
@@ -56,7 +57,12 @@ public abstract class BlogLikeBlockHandlerBean extends AbstractBlockHandlerBean<
 		} catch (NotFoundException e) {
 			throw new BlockNotVisibleException("external blog account for block not visible", e);
 		}  
-	    FeedEntry lastEntry = feedSystem.getLastEntry(blogAccount.getFeed());
+	    FeedEntry lastEntry;
+		try {
+			lastEntry = feedSystem.getLastEntry(blogAccount.getFeed());
+		} catch (NoFeedEntryException e) {
+			throw new BlockNotVisibleException("Can't view block with no feed entry", e);
+		}
 
 	    blockView.populate(userView, lastEntry);
 	}

@@ -70,13 +70,17 @@ public interface FeedSystem extends PollingTaskLoader {
 	 */
 	List<FeedEntry> getCurrentEntries(Feed feed);
 	
+	public class NoFeedEntryException extends Exception {
+		private static final long serialVersionUID = 1L;	
+	}
+	
 	/**
 	 * Returns the latest entry for a feed.
 	 * 
 	 * @param feed
 	 * @return the latest entry for a feed
 	 */
-	FeedEntry getLastEntry(Feed feed);
+	FeedEntry getLastEntry(Feed feed) throws NoFeedEntryException;
 	
 	List<Feed> getInUseFeeds();
 	

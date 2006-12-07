@@ -644,14 +644,14 @@ public class FeedSystemBean implements FeedSystem {
 		return TypeUtils.castList(FeedEntry.class, q.getResultList());
 	}
 	
-	public FeedEntry getLastEntry(Feed feed) {
+	public FeedEntry getLastEntry(Feed feed) throws NoFeedEntryException {
 		// this could get smarter if we want to return the entry that was added last,
 		// which might not necessarily be the same one that has the latest publishing date
 		// (for example, if some blogs allow back dating entries)
 		// this could also be change to return a given number of recent entries
 		List<FeedEntry> entries = getCurrentEntries(feed);
 		if (entries.size() < 1)
-			return null;
+			throw new NoFeedEntryException();
 		
 		return entries.get(0);
 	}
