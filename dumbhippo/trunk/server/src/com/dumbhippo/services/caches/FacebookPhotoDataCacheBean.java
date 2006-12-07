@@ -32,7 +32,6 @@ import com.dumbhippo.services.FacebookWebServices;
 // EntityType for example). The ResultType should be the same as whatever the raw, uncached, 
 // nothing-to-do-with-the-database web service returns. It's bad if anything is using attached
 // EntityType objects outside of the cache code itself.
-@TransactionAttribute(TransactionAttributeType.REQUIRED) // because the base classes change the default; not sure this is needed, but can't hurt
 @Stateless
 public class FacebookPhotoDataCacheBean 
     extends AbstractListCacheWithStorageBean<String,CachedFacebookPhotoData,CachedFacebookPhotoData> 
@@ -85,6 +84,7 @@ public class FacebookPhotoDataCacheBean
 		logger.debug("{} cached items expired for key {}", updated, key);
 	}	
 	
+	@TransactionAttribute(TransactionAttributeType.REQUIRED)
 	@Override
 	public void deleteCache(String key) {
 		FacebookAccount facebookAccount = lookupFacebookAccount(key);

@@ -27,7 +27,6 @@ import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.services.YahooArtistData;
 import com.dumbhippo.services.YahooSearchWebServices;
 
-@TransactionAttribute(TransactionAttributeType.REQUIRED) // because the base classes change the default; not sure this is needed, but can't hurt
 @BanFromWebTier
 @Stateless
 public class YahooArtistCacheBean extends AbstractCacheBean<String,YahooArtistData,Cache> implements YahooArtistCache {
@@ -100,13 +99,14 @@ public class YahooArtistCacheBean extends AbstractCacheBean<String,YahooArtistDa
 			if (alwaysRefetchEvenIfCached)
 				throw new NotCachedException("Forced refetch");
 
-			YahooArtistData result = checkCache(artistId);
+			YahooArtistData result = EJBUtil.defaultLookup(YahooArtistCache.class).checkCache(artistId);
 			return new KnownFuture<YahooArtistData>(result);
 		} catch (NotCachedException e) {
 			return getExecutor().execute(artistId, new YahooArtistByIdTask(artistId, alwaysRefetchEvenIfCached));
 		}
 	}
 
+	@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 	public YahooArtistData getSyncByName(String artist) {
 		return ThreadUtils.getFutureResultNullOnException(getAsyncByName(artist));
 	}
@@ -136,11 +136,12 @@ public class YahooArtistCacheBean extends AbstractCacheBean<String,YahooArtistDa
 		}
 	}
 
+	@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 	public Future<YahooArtistData> getAsyncByName(String artist) {
 		if (artist == null)
 			throw new IllegalArgumentException("null artist");
 		
-		List<YahooArtistData> results = checkCacheByName(artist);
+		List<YahooArtistData> results = EJBUtil.defaultLookup(YahooArtistCache.class).checkCacheByName(artist);
 		if (results != null)
 			return new KnownFuture<YahooArtistData>(pickFirstItemOrNull(results));
 
@@ -186,6 +187,7 @@ public class YahooArtistCacheBean extends AbstractCacheBean<String,YahooArtistDa
 			return cached.toData();
 	}
 
+	@TransactionAttribute(TransactionAttributeType.REQUIRED)
 	public List<YahooArtistData> checkCacheByName(String artist) {
 		List<CachedYahooArtistIdByName> ids = artistIdsForNameQuery(artist);
 		if (ids.isEmpty())

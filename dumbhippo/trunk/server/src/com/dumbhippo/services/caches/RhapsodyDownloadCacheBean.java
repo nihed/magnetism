@@ -21,7 +21,6 @@ import com.dumbhippo.URLUtils;
 import com.dumbhippo.persistence.CachedRhapsodyDownload;
 import com.dumbhippo.server.BanFromWebTier;
 
-@TransactionAttribute(TransactionAttributeType.REQUIRED) // because the base classes change the default; not sure this is needed, but can't hurt
 @BanFromWebTier
 @Stateless
 public class RhapsodyDownloadCacheBean extends AbstractBasicCacheWithStorageBean<String,Boolean,CachedRhapsodyDownload> implements
@@ -60,7 +59,8 @@ public class RhapsodyDownloadCacheBean extends AbstractBasicCacheWithStorageBean
 		//  http://rws-blog.rhapsody.com/rhapsody_web_services/2006/04/new_album_urls.html		
 		return "http://play.rhapsody.com/" + rhapString(artist) + "/" + rhapString(album) + "/track-" + track;
 	}
-	
+
+	@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 	public Boolean getSync(String album, String artist, int track) {
 		String link;
 		try {
@@ -71,6 +71,7 @@ public class RhapsodyDownloadCacheBean extends AbstractBasicCacheWithStorageBean
 		return getSync(link);
 	}
 
+	@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 	public Future<Boolean> getAsync(String album, String artist, int track) {
 		String link;
 		try {
@@ -81,6 +82,7 @@ public class RhapsodyDownloadCacheBean extends AbstractBasicCacheWithStorageBean
 		return getAsync(link);		
 	}
 
+	@TransactionAttribute(TransactionAttributeType.REQUIRED)
 	@Override
 	public Boolean checkCache(String link) throws NotCachedException {
 		

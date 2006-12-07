@@ -3,8 +3,6 @@ package com.dumbhippo.services.caches;
 import java.util.List;
 
 import javax.ejb.Stateless;
-import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
 import javax.persistence.Query;
 
 import org.slf4j.Logger;
@@ -16,7 +14,6 @@ import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.services.YouTubeVideo;
 import com.dumbhippo.services.YouTubeVideoFeedParser;
 
-@TransactionAttribute(TransactionAttributeType.REQUIRED) // because the base classes change the default; not sure this is needed, but can't hurt
 @Stateless
 public class YouTubeVideosCacheBean extends AbstractListCacheWithStorageBean<String,YouTubeVideo,CachedYouTubeVideo> implements
 		YouTubeVideosCache {

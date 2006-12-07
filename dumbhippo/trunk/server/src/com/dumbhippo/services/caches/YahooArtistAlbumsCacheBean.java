@@ -3,8 +3,6 @@ package com.dumbhippo.services.caches;
 import java.util.List;
 
 import javax.ejb.Stateless;
-import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
 import javax.persistence.NoResultException;
 import javax.persistence.Query;
 
@@ -18,7 +16,6 @@ import com.dumbhippo.server.NotFoundException;
 import com.dumbhippo.services.YahooAlbumData;
 import com.dumbhippo.services.YahooSearchWebServices;
 
-@TransactionAttribute(TransactionAttributeType.REQUIRED) // because the base classes change the default; not sure this is needed, but can't hurt
 @BanFromWebTier
 @Stateless
 public class YahooArtistAlbumsCacheBean

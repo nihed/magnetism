@@ -18,7 +18,6 @@ import com.dumbhippo.server.BanFromWebTier;
 import com.dumbhippo.services.YahooSearchWebServices;
 import com.dumbhippo.services.YahooSongData;
 
-@TransactionAttribute(TransactionAttributeType.REQUIRED) // because the base classes change the default; not sure this is needed, but can't hurt
 @BanFromWebTier
 @Stateless
 public class YahooSongCacheBean
@@ -43,6 +42,7 @@ public class YahooSongCacheBean
 		return results;
 	}
 
+	@TransactionAttribute(TransactionAttributeType.REQUIRED)
 	@Override
 	public List<? extends YahooSongData> checkCache(Track track) throws NotCachedException {
 		// yahoo lookup requires these fields, so just never do a web request without them

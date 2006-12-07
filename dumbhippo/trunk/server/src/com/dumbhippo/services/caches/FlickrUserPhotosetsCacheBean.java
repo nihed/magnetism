@@ -22,7 +22,6 @@ import com.dumbhippo.services.FlickrPhotosets;
 import com.dumbhippo.services.FlickrPhotosetsView;
 import com.dumbhippo.services.FlickrWebServices;
 
-@TransactionAttribute(TransactionAttributeType.REQUIRED) // because the base classes change the default; not sure this is needed, but can't hurt
 @Stateless
 public class FlickrUserPhotosetsCacheBean extends AbstractBasicCacheBean<String,FlickrPhotosetsView> implements
 		FlickrUserPhotosetsCache {
@@ -126,7 +125,8 @@ public class FlickrUserPhotosetsCacheBean extends AbstractBasicCacheBean<String,
 		FlickrPhotosets photosets = ws.lookupPublicPhotosets(key);
 		return photosets;
 	}
-	
+
+	@TransactionAttribute(TransactionAttributeType.REQUIRED)
 	public FlickrPhotosetsView checkCache(String key) throws NotCachedException {
 		FlickrPhotosetsView summary = summaryStorage.checkCache(key);
 		List<? extends FlickrPhotosetView> setList = setListStorage.checkCache(key);
@@ -156,6 +156,7 @@ public class FlickrUserPhotosetsCacheBean extends AbstractBasicCacheBean<String,
 		return summary;
 	}
 
+	@TransactionAttribute(TransactionAttributeType.REQUIRED)
 	@Override
 	public void expireCache(String key) {
 		EJBUtil.assertHaveTransaction();
