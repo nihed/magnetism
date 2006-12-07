@@ -649,11 +649,16 @@ public class FeedSystemBean implements FeedSystem {
 		// which might not necessarily be the same one that has the latest publishing date
 		// (for example, if some blogs allow back dating entries)
 		// this could also be change to return a given number of recent entries
-		List<FeedEntry> entries = getCurrentEntries(feed);
-		if (entries.size() < 1)
-			throw new NoFeedEntryException();
-		
-		return entries.get(0);
+		Query q = em.createQuery("SELECT fe FROM FeedEntry fe " +
+                "WHERE fe.feed = :feed AND" +
+                "ORDER BY fe.date DESC");
+		q.setParameter("feed", feed);
+		q.setMaxResults(1);
+		try {
+			return (FeedEntry) q.getSingleResult();
+		} catch (NoResultException e) {
+			throw new NoFeedEntryException(e);
+		}
 	}
 	
 	public List<Feed> getInUseFeeds() {

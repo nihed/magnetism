@@ -3,6 +3,7 @@ package com.dumbhippo.server;
 import java.util.List;
 
 import javax.ejb.Local;
+import javax.persistence.NoResultException;
 
 import com.dumbhippo.persistence.Feed;
 import com.dumbhippo.persistence.FeedEntry;
@@ -71,6 +72,10 @@ public interface FeedSystem extends PollingTaskLoader {
 	List<FeedEntry> getCurrentEntries(Feed feed);
 	
 	public class NoFeedEntryException extends Exception {
+		public NoFeedEntryException(Exception e) {
+			super(e);
+		}
+
 		private static final long serialVersionUID = 1L;	
 	}
 	
