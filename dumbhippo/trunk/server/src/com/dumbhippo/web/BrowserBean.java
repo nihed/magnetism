@@ -16,11 +16,12 @@ public class BrowserBean implements Serializable {
 	private static final Logger logger = GlobalSetup.getLogger(BrowserBean.class);
 
 	private enum OS { Mac, Windows, Linux, Unknown };
-	private enum Browser { Khtml, Gecko, Opera, IE, Unknown };
+	private enum Browser { Khtml, Gecko, Firefox, Opera, IE, Unknown };
 	private enum Distribution { Fedora5, Fedora6, Unknown };
 	
 	private OS os;
 	private Browser browser;
+	private Browser geckoBrowser;
 	private Distribution distribution;
 	private int browserVersion;
 	
@@ -80,6 +81,8 @@ public class BrowserBean implements Serializable {
 				} catch (NumberFormatException e) {
 				}
 			}
+			if (userAgent.contains("Firefox")) 
+				geckoBrowser = Browser.Firefox;
 		} else if (userAgent.contains("Opera")) {
 			browser = Browser.Opera;
 		} else if (os == OS.Windows && userAgent.contains("MSIE 5.0")) {
@@ -189,6 +192,10 @@ public class BrowserBean implements Serializable {
 
 	public boolean isGeckoAtLeast15() {
 		return isGecko() && browserVersion >= 15;
+	}
+	
+	public boolean isFirefox() {
+		return geckoBrowser == Browser.Firefox;
 	}
 
 	public boolean isIe() {

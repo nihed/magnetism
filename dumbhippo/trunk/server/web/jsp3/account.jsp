@@ -17,6 +17,8 @@
 <%-- or land people on their account page, get a token, and display a message --%>
 <jsp:setProperty name="account" property="facebookAuthToken" param="auth_token"/>
 
+<dh:bean id="browser" class="com.dumbhippo.web.BrowserBean" scope="request"/>
+
 <c:set var="termsOfUseNote" value='false'/>
 <c:if test='${!empty param["termsOfUseNote"]}'>
     <c:set var="termsOfUseNote" value='${param["termsOfUseNote"]}'/> 
@@ -24,6 +26,29 @@
 
 <c:set var="pageName" value="Account" scope="page"/>
 
+<c:choose>
+    <c:when test="${browser.ie}">
+        <c:set var="browseButton" value="/images3/${buildStamp}/browse_ie.gif"/>
+        <c:set var="browseInputSize" value="0"/>
+        <c:set var="browseInputClass" value="dh-hidden-file-upload"/>
+    </c:when>
+    <c:when test="${browser.firefox && browser.windows}">
+        <c:set var="browseButton" value="/images3/${buildStamp}/browse_ff.gif"/>   
+        <c:set var="browseInputSize" value="1"/>  
+        <c:set var="browseInputClass" value="dh-hidden-file-upload"/>
+    </c:when>
+    <c:when test="${browser.firefox && browser.linux}">
+        <c:set var="browseButton" value="/images3/${buildStamp}/browse_lff.gif"/>   
+        <c:set var="browseInputSize" value="1"/>  
+        <c:set var="browseInputClass" value="dh-hidden-file-upload"/>
+    </c:when>
+    <c:otherwise>
+        <c:set var="browseButton" value=""/>     
+        <c:set var="browseInputSize" value="24"/>
+        <c:set var="browseInputClass" value="dh-file-upload"/>
+    </c:otherwise>
+</c:choose>
+    
 <head>
     <title><c:out value="${person.viewedPerson.name}"/>'s ${pageName} - Mugshot</title>
 	<dht3:stylesheet name="site" iefixes="true" lffixes="true"/>	
@@ -55,7 +80,7 @@
 		dh.account.initialRhapsodyUrl = <dh:jsString value="${account.rhapsodyListeningHistoryFeedUrl}"/>;
 		dh.account.initialRhapsodyHateQuip = <dh:jsString value="${account.rhapsodyHateQuip}"/>;	
 		dh.account.initialDeliciousName = <dh:jsString value="${account.deliciousName}"/>;
-		dh.account.initialDeliciousHateQuip = <dh:jsString value="${account.deliciousHateQuip}"/>;		
+		dh.account.initialDeliciousHateQuip = <dh:jsString value="${account.deliciousHateQuip}"/>;	
 	</script>
 </head>
 <dht3:page currentPageLink="account">
@@ -100,20 +125,23 @@
 						<dht:headshot person="${account.person}" size="60" customLink="javascript:dh.photochooser.show(document.getElementById('dhChooseStockLinkContainer'), dh.account.reloadPhoto);" />
 					</div>
 					<div class="dh-next-to-image">
-						<div>Upload new picture:</div>
+						<div class="dh-picture-instructions">Upload new picture:</div>
 						<c:set var="location" value="/headshots" scope="page"/>
 						<c:url value="/upload${location}" var="posturl"/>
-						<div>
-							<form enctype="multipart/form-data" action="${posturl}" method="post">
-								<input id='dhPictureEntry' type="file" name="photo"/>
-								<input type="hidden" name="groupId" value=""/>
-								<input type="hidden" name="reloadTo" value="/account"/>
-							</form>
+						<form id='dhPictureForm' enctype="multipart/form-data" action="${posturl}" method="post">
+							<input id='dhPictureEntry' class="${browseInputClass}" type="file" name="photo" size="${browseInputSize}"/>
+							<c:if test="${browseInputClass == 'dh-hidden-file-upload'}">
+							    <div id='dhStyledPictureEntry' class="dh-styled-file-upload">
+							        <img src="${browseButton}">
+							    </div>
+							</c:if>
+							<input type="hidden" name="groupId" value=""/>
+							<input type="hidden" name="reloadTo" value="/account"/>
+						</form>
+						<div class="dh-picture-more-instructions">
+						or <a href="javascript:dh.photochooser.show(document.getElementById('dhChooseStockLinkContainer'), dh.account.reloadPhoto);" title="Choose from a library of pictures">choose a stock picture</a>						
 						</div>
 						<div id="dhChooseStockLinkContainer">
-						</div>
-						<div>
-						or <a href="javascript:dh.photochooser.show(document.getElementById('dhChooseStockLinkContainer'), dh.account.reloadPhoto);" title="Choose from a library of pictures">choose a stock picture</a>						
 						</div>
 					</div>
 					<div class="dh-grow-div-around-floats"><div></div></div>
@@ -143,7 +171,7 @@
 									<td></td>
 								</tr>
 							</c:forEach>
-							<tr><td><dht:textInput id='dhEmailEntry'/></td><td><input id='dhEmailVerifyButton' type="button" value="Verify" onclick="dh.account.verifyEmail();"/></td></tr>
+							<tr><td><dht:textInput id='dhEmailEntry'/></td><td><img id='dhEmailVerifyButton' src="/images3/${buildStamp}/verify_button.gif" onclick="dh.account.verifyEmail();"/></td></tr>
                             </tbody>
 					    </table>
 				    </dht:formTableRow>
@@ -236,7 +264,7 @@
 					<c:if test="${!account.hasPassword}">
 						<c:set var="removePasswordLinkStyle" value="display: none;" scope="page"/>
 					</c:if>
-					<input id="dhSetPasswordButton" type="button" value="Set password"/><a id="dhRemovePasswordLink" style="${removePasswordLinkStyle}" href="javascript:dh.password.unsetPassword();" title="Delete my password">Delete my current password.</a>
+					<img id="dhSetPasswordButton" src="/images3/${buildStamp}/setpassword_disabled.gif"/><a id="dhRemovePasswordLink" style="${removePasswordLinkStyle}" href="javascript:dh.password.unsetPassword();" title="Delete my password">Delete my current password.</a>
 				</dht:formTableRow>
 				<dht:formTableRow label="Disable account">
 				    <div class="dh-explanation">
@@ -250,7 +278,7 @@
                     </c:if>    
 				    <div>
 						<dh:script module="dh.actions"/>						
-						<input id="dhDisableAccountButton" type="button" value="Disable my account" onclick="javascript:dh.actions.disableAccount();"/>
+						<img id="dhDisableAccountButton" src="/images3/${buildStamp}/disable.gif" onclick="javascript:dh.actions.disableAccount();"/>
 					</div>
 					<div>
 					</div>
@@ -277,7 +305,7 @@
 						</div>
 						<div>
 							<dh:script module="dh.actions"/>
-							<input type="button" value="Enable account" onclick="javascript:dh.actions.enableAccount();"/>
+							<img src="/images3/${buildStamp}/enable_acct_button.gif" onclick="javascript:dh.actions.enableAccount();"/>
 						</div>
 					</dht:formTableRow>						
 					</dht:formTable>

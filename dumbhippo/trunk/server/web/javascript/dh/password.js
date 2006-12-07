@@ -72,11 +72,11 @@ dhPasswordFormUpdate = function(ev) {
 	}
 	
 	if (invalid) {
-		dh.password.setButton.disabled = true;
+		dh.password.setButton.src = dhImageRoot3 + "setpassword_disabled.gif";
 	} else {
-		dh.password.setButton.disabled = false;
+		dh.password.setButton.src = dhImageRoot3 + "setpassword.gif";
 	}
-	
+				
 	var key = dh.util.getKeyCode(ev);
 	if (key && key == ENTER) {
 		dhPasswordFormSubmit();

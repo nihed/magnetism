@@ -18,3 +18,13 @@
 #dhMusicRadarPreferences #dhMusicOn, #dhMusicRadarPreferences #dhMusicOff {
     bottom:   0px;
 }
+
+.dh-hidden-file-upload {
+    width:    0px;
+    left:     0px;
+}    
+
+.dh-styled-file-upload, .dh-styled-file-upload-think {
+	top:      3px;	
+	left:     5px;
+}

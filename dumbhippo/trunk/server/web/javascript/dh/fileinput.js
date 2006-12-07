@@ -14,6 +14,7 @@ dh.fileinput.Entry = function(entryNode)
 	var me = this;
 	
 	this.elem = entryNode;
+	this.styledFileUpload = null;
 	
 	this.activate = function() {
 		var e = this.elem.parentNode;
@@ -35,8 +36,14 @@ dh.fileinput.Entry = function(entryNode)
 		img.src = dhImageRoot2 + "feedspinner.gif";
 		this.elem.parentNode.appendChild(img);
 		this.elem.style.display = "none";
+		if (this.styledFileUpload != null) {	    
+		    img.className = "dh-styled-file-upload-think";
+		    this.styledFileUpload.style.display = "none";	
+		} else {
+		    img.className = "dh-file-upload-think";
+		}	  
 	}
-
+   
 	// with the onchange, this isn't needed
 	/*
 	this.elem.onkeydown = function(ev) {
@@ -48,4 +55,17 @@ dh.fileinput.Entry = function(entryNode)
 		}
 	}
 	*/
+	
+	this.setBrowseButtonDiv = function(value) {
+	    // the passed in value can be null
+		this.styledFileUpload = value;
+	    
+	    // this image mapping worked for IE, but not for Firefox;
+	    // it could have been used along with 
+	    // this.elem.style.visibility = "hidden"
+	    // and would not have required any extra css
+	    // this.styledFileUpload.onclick = function() {
+        //   me.elem.click();
+        // } 
+	}
 }

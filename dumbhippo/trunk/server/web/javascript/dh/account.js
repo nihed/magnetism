@@ -415,6 +415,8 @@ dhAccountInit = function() {
 	
 	// add some event handlers on the file input
 	dh.account.photoEntry = new dh.fileinput.Entry(document.getElementById('dhPictureEntry'));
+	// the div below could be null
+	dh.account.photoEntry.setBrowseButtonDiv(document.getElementById('dhStyledPictureEntry'));
 	
 	// make pressing enter submit the email verify
 	var emailEntryNode = document.getElementById('dhEmailEntry');
