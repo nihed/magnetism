@@ -50,6 +50,7 @@ struct _HippoCanvasBlock {
     HippoCanvasItem *headshot_item;
     HippoCanvasItem *name_item;
     HippoCanvasItem *toggle_hush_link;
+    GTime original_age;
     /* probably a class prop not an instance prop, but it's a free bit anyway */
     unsigned int expandable : 1;
     unsigned int expanded : 1;

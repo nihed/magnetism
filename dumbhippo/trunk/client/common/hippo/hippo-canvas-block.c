@@ -200,10 +200,20 @@ update_time(HippoCanvasBlock *canvas_block)
 }
 
 static void
+update_original_age(HippoCanvasBlock *canvas_block)
+{
+    canvas_block->original_age_set =
+        set_timestamp_item(canvas_block,
+                           canvas_block->original_age_box, 
+                           canvas_block->original_age_item, canvas_block->original_age);
+}
+
+static void
 on_minute_ticked(HippoActions     *actions,
                  HippoCanvasBlock *canvas_block)
 {
     update_time(canvas_block);
+    update_original_age(canvas_block);
 }
 
 static void
@@ -1159,10 +1169,8 @@ void
 hippo_canvas_block_set_original_age(HippoCanvasBlock *canvas_block,
                                     GTime            age)
 {
-    canvas_block->original_age_set = age != 0;
-    set_timestamp_item(canvas_block,
-                       canvas_block->original_age_box, 
-                       canvas_block->original_age_item, age);
+    canvas_block->original_age = age;
+    update_original_age(canvas_block);
     hippo_canvas_block_update_item_expansion(canvas_block);
 }
 
