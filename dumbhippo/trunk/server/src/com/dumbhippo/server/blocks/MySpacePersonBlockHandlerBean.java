@@ -8,7 +8,6 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.BlockType;
 import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.ExternalAccountType;
-import com.dumbhippo.persistence.StackInclusion;
 import com.dumbhippo.persistence.User;
 
 @Stateless
@@ -38,7 +37,6 @@ public class MySpacePersonBlockHandlerBean extends BlogLikeBlockHandlerBean impl
 			logger.debug("No MySpace account for this user");
 			return;
 		}
-		stacker.getOrCreateBlock(getKey(user, StackInclusion.ONLY_WHEN_VIEWED_BY_OTHERS));
-		stacker.getOrCreateBlock(getKey(user, StackInclusion.ONLY_WHEN_VIEWING_SELF));		
+		stacker.getOrCreateBlock(getKey(user));
 	}	
 }

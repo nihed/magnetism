@@ -35,10 +35,6 @@ public enum BlockType {
 		public boolean isAlwaysPublic() {
 			return true;
 		}		
-		@Override
-		public StackInclusion getDefaultStackInclusion() {
-			return null;
-		}
 	},
 	FACEBOOK_PERSON { // 7
 		@Override
@@ -77,10 +73,6 @@ public enum BlockType {
 		public boolean isAlwaysPublic() {
 			return true;
 		}		
-		@Override
-		public StackInclusion getDefaultStackInclusion() {
-			return null;
-		}
 	};
 	
 	// returns true if all blocks of this type are always public,

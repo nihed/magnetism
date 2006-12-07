@@ -13,7 +13,6 @@ import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.FeedEntry;
 import com.dumbhippo.persistence.Group;
-import com.dumbhippo.persistence.StackInclusion;
 import com.dumbhippo.persistence.StackReason;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.FeedSystem;
@@ -39,12 +38,8 @@ public abstract class BlogLikeBlockHandlerBean extends AbstractBlockHandlerBean<
 		return new BlockKey(getBlockType(), user.getGuid());
 	}	
 	
-	public BlockKey getKey(User user, StackInclusion inclusion) {
-		return getKey(user.getGuid(), inclusion);
-	}
-
-	public BlockKey getKey(Guid userId, StackInclusion inclusion) {
-		return new BlockKey(getBlockType(), userId, inclusion);
+	public BlockKey getKey(Guid userId) {
+		return new BlockKey(getBlockType(), userId);
 	}	
 	
 	@Override
@@ -78,8 +73,7 @@ public abstract class BlogLikeBlockHandlerBean extends AbstractBlockHandlerBean<
 		// Note that we create the block even if the new account is not loved-and-enabled
 		if (external.getAccountType() != getAccountType())
 			return;
-		stacker.createBlock(getKey(user, StackInclusion.ONLY_WHEN_VIEWED_BY_OTHERS));
-		stacker.createBlock(getKey(user, StackInclusion.ONLY_WHEN_VIEWING_SELF));
+		stacker.createBlock(getKey(user));
 	}
 
 	public void onExternalAccountFeedEntry(User user, ExternalAccount external, FeedEntry entry, int entryPosition) {
@@ -88,14 +82,12 @@ public abstract class BlogLikeBlockHandlerBean extends AbstractBlockHandlerBean<
 		// entry.getDate().getTime() creates a timestamp that is too old, at least with blogspot
 		// so it is unreliable, because we update blocks based on timestamps
 		long now = System.currentTimeMillis();
-		stacker.stack(getKey(user, StackInclusion.ONLY_WHEN_VIEWED_BY_OTHERS), now, user, false, StackReason.BLOCK_UPDATE);
-		stacker.stack(getKey(user, StackInclusion.ONLY_WHEN_VIEWING_SELF), now, user, false, StackReason.BLOCK_UPDATE);
+		stacker.stack(getKey(user), now, user, false, StackReason.BLOCK_UPDATE);
 	}
 
 	public void onExternalAccountLovedAndEnabledMaybeChanged(User user, ExternalAccount external) {
 		if (external.getAccountType() != getAccountType())
 			return;
-		stacker.refreshDeletedFlags(getKey(user, StackInclusion.ONLY_WHEN_VIEWED_BY_OTHERS));
-		stacker.refreshDeletedFlags(getKey(user, StackInclusion.ONLY_WHEN_VIEWING_SELF));
+		stacker.refreshDeletedFlags(getKey(user));
 	}
 }
