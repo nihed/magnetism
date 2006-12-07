@@ -83,6 +83,11 @@ public class FlickrUpdaterBean extends CachedExternalUpdaterBean<FlickrUpdateSta
 		FlickrPhotosView photosView = userPhotosCache.getSync(flickrId, true);
 		FlickrPhotosetsView photosetsView = userPhotosetsCache.getSync(flickrId, true);
 		
+		if (photosView == null || photosetsView == null) {
+			logger.debug("one of two flickr requests failed, not saving new flickr status for " + flickrId);
+			return;
+		}
+		
 		proxy.saveUpdatedStatus(flickrId, photosView, photosetsView);
 	}
 	
@@ -149,7 +154,12 @@ public class FlickrUpdaterBean extends CachedExternalUpdaterBean<FlickrUpdateSta
 	// Our job is to notify so blocks can be created/stacked, and 
 	// to save the new status in the FlickrUpdateStatus table.
 	// We do this in one huge transaction.
-	public void saveUpdatedStatus(String flickrId, FlickrPhotosView photosView, FlickrPhotosetsView photosetsView) { 
+	public void saveUpdatedStatus(String flickrId, FlickrPhotosView photosView, FlickrPhotosetsView photosetsView) {
+		if (photosView == null)
+			throw new IllegalArgumentException("null photosView");
+		if (photosetsView == null)
+			throw new IllegalArgumentException("null photosetsView");
+		
 		logger.debug("Saving new flickr status for " + flickrId + ": photos {} sets {}",
 				photosView.getTotal(), photosetsView.getTotal());
 		
