@@ -1486,12 +1486,13 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		if (q == null)
 			throw new XmlMethodException(XmlMethodErrorCode.INVALID_URL, "Doesn't look like a Rhapsody RSS URL: " + urlStr);
 		
-		int i = q.indexOf("rhapUserId=");
+		String rhapUserIdParamName = "rhapUserId=";
+		int i = q.indexOf(rhapUserIdParamName);
 		int j = q.indexOf("&", i);
 		if (i < 0 || j < 0 || i == j) {
 			throw new XmlMethodException(XmlMethodErrorCode.INVALID_URL, "Doesn't look like a Rhapsody RSS URL: " + url);
 		}
-		String rhapUserId = q.substring(i, j);
+		String rhapUserId = q.substring(i+rhapUserIdParamName.length(), j);
 		Feed feed = scrapeFeedFromUrl(url);
 		
 		logger.debug("found feed: {}", feed);
