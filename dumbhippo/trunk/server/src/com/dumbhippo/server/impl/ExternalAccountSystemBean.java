@@ -215,14 +215,10 @@ public class ExternalAccountSystemBean implements ExternalAccountSystem {
 			loadThumbnails(viewpoint, externalView);
 		}
 	}
-	
+
 	public void setSentiment(ExternalAccount externalAccount, Sentiment sentiment) {
-		boolean wasLovedAndEnabled = externalAccount.isLovedAndEnabled();
-		if (sentiment != externalAccount.getSentiment()) {
-			externalAccount.setSentiment(sentiment);
-			if (externalAccount.isLovedAndEnabled() != wasLovedAndEnabled)
-				notifier.onExternalAccountLovedAndEnabledMaybeChanged(externalAccount.getAccount().getOwner(), externalAccount);
-		}
+		externalAccount.setSentiment(sentiment);
+		notifier.onExternalAccountLovedAndEnabledMaybeChanged(externalAccount.getAccount().getOwner(), externalAccount);
 	}
 
 	public boolean getExternalAccountExistsLovedAndEnabled(Viewpoint viewpoint, User user, ExternalAccountType accountType) {

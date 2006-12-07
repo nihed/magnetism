@@ -2,6 +2,8 @@ package com.dumbhippo.server;
 
 import javax.ejb.Local;
 
+import com.dumbhippo.persistence.ExternalAccount;
+import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.listeners.AccountStatusListener;
 import com.dumbhippo.server.listeners.ExternalAccountFeedListener;
 import com.dumbhippo.server.listeners.ExternalAccountsListener;

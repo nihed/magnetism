@@ -6,6 +6,7 @@ import javax.ejb.Local;
 
 import com.dumbhippo.persistence.FlickrPhotosetStatus;
 import com.dumbhippo.persistence.FlickrUpdateStatus;
+import com.dumbhippo.server.PollingTaskPersistence.PollingTaskLoader;
 import com.dumbhippo.services.FlickrPhotosView;
 import com.dumbhippo.services.FlickrPhotosetsView;
 
@@ -17,9 +18,9 @@ import com.dumbhippo.services.FlickrPhotosetsView;
  *
  */
 @Local
-public interface FlickrUpdater extends CachedExternalUpdater<FlickrUpdateStatus> {
+public interface FlickrUpdater extends CachedExternalUpdater<FlickrUpdateStatus>, PollingTaskLoader {
 	public Collection<FlickrPhotosetStatus> getPhotosetStatusesForFlickrAccount(String flickrUserId);
 
 	// called by periodicUpdate if it thinks there are new changes
-	public void saveUpdatedStatus(String flickrId, FlickrPhotosView photosView, FlickrPhotosetsView photosetsView);
+	public boolean saveUpdatedStatus(String flickrId, FlickrPhotosView photosView, FlickrPhotosetsView photosetsView);
 }

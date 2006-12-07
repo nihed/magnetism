@@ -855,7 +855,7 @@ public class FeedSystemBean implements FeedSystem {
 
 	public void migrateTasks() {
 		for (Feed feed : getInUseFeeds()) {
-			pollingPersistence.createTask(PollingTaskFamilyType.FEED, feed.getSource().getId());
+			pollingPersistence.createTaskIdempotent(PollingTaskFamilyType.FEED, feed.getSource().getId());
 		}
 	}
 }

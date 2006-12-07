@@ -1,10 +1,8 @@
 package com.dumbhippo.server.impl;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -20,14 +18,12 @@ import com.dumbhippo.mbean.DynamicPollingSystem.PollingTask;
 import com.dumbhippo.mbean.DynamicPollingSystem.PollingTaskFamily;
 import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.LastFmUpdateStatus;
-import com.dumbhippo.persistence.PollingTaskEntry;
 import com.dumbhippo.persistence.PollingTaskFamilyType;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.CachedExternalUpdater;
 import com.dumbhippo.server.LastFmUpdater;
 import com.dumbhippo.server.MusicSystemInternal;
 import com.dumbhippo.server.NotFoundException;
-import com.dumbhippo.server.PollingTaskPersistence;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.services.LastFmTrack;
 import com.dumbhippo.services.LastFmWebServices;
@@ -41,9 +37,6 @@ public class LastFmUpdaterBean extends CachedExternalUpdaterBean<LastFmUpdateSta
 	
 	@EJB
 	private MusicSystemInternal musicSystem;
-	
-	@EJB
-	private PollingTaskPersistence pollingPersistence;	
 
 	@Override
 	@TransactionAttribute(TransactionAttributeType.NEVER)	
@@ -181,7 +174,6 @@ public class LastFmUpdaterBean extends CachedExternalUpdaterBean<LastFmUpdateSta
 			}
 			
 			LastFmUpdater updater = EJBUtil.defaultLookup(LastFmUpdater.class);
-			
 			changed = updater.saveUpdatedStatus(username, tracks); 
 			return new PollResult(changed, false);
 		}
@@ -197,18 +189,8 @@ public class LastFmUpdaterBean extends CachedExternalUpdaterBean<LastFmUpdateSta
 		}
 	}	
 	
-	public Set<PollingTask> loadTasks(Set<PollingTaskEntry> entries) {
-		Set<PollingTask> tasks = new HashSet<PollingTask>();
-		for (PollingTaskEntry entry : entries) {
-			String username = entry.getTaskId();
-			tasks.add(new LastFmTask(username));
-		}
-		return tasks;		
-	}
-
-	public void migrateTasks() {
-		for (String username : getActiveUsers()) {
-			pollingPersistence.createTask(PollingTaskFamilyType.LASTFM, username);
-		}		
+	@Override
+	protected PollingTask createPollingTask(String handle) {
+		return new LastFmTask(handle);
 	}
 }

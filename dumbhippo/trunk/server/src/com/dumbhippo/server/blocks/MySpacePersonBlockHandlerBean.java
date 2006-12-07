@@ -38,5 +38,5 @@ public class MySpacePersonBlockHandlerBean extends BlogLikeBlockHandlerBean impl
 			return;
 		}
 		stacker.getOrCreateBlock(getKey(user));
-	}	
+	}
 }

@@ -96,7 +96,7 @@ public class FlickrPersonBlockHandlerBean extends
 			return;
 		stacker.refreshDeletedFlags(getKey(user));
 	}
-	
+
 	public void migrate(User user) {
 		logger.debug("Migrating Flickr for user {}", user);
 		ExternalAccount external = user.getAccount().getExternalAccount(ExternalAccountType.FLICKR);

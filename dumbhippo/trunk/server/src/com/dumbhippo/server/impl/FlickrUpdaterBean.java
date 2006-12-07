@@ -16,6 +16,8 @@ import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.TypeUtils;
+import com.dumbhippo.mbean.DynamicPollingSystem.PollingTask;
+import com.dumbhippo.mbean.DynamicPollingSystem.PollingTaskFamily;
 import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.FlickrPhotosetStatus;
 import com.dumbhippo.persistence.FlickrUpdateStatus;
@@ -154,12 +156,12 @@ public class FlickrUpdaterBean extends CachedExternalUpdaterBean<FlickrUpdateSta
 	// Our job is to notify so blocks can be created/stacked, and 
 	// to save the new status in the FlickrUpdateStatus table.
 	// We do this in one huge transaction.
-	public void saveUpdatedStatus(String flickrId, FlickrPhotosView photosView, FlickrPhotosetsView photosetsView) {
+	public boolean saveUpdatedStatus(String flickrId, FlickrPhotosView photosView, FlickrPhotosetsView photosetsView) { 
 		if (photosView == null)
 			throw new IllegalArgumentException("null photosView");
 		if (photosetsView == null)
 			throw new IllegalArgumentException("null photosetsView");
-		
+
 		logger.debug("Saving new flickr status for " + flickrId + ": photos {} sets {}",
 				photosView.getTotal(), photosetsView.getTotal());
 		
@@ -228,6 +230,7 @@ public class FlickrUpdaterBean extends CachedExternalUpdaterBean<FlickrUpdateSta
 		
 		if (photosetsChanged)
 			updateUserPhotosetStatuses(flickrId, photosetsView.getSets());
+		return photosChanged || photosetsChanged;
 	}
 
 	@Override
@@ -242,7 +245,65 @@ public class FlickrUpdaterBean extends CachedExternalUpdaterBean<FlickrUpdateSta
 
 	@Override
 	protected PollingTaskFamilyType getTaskFamily() {
-		// TODO Auto-generated method stub
-		return null;
-	} 
+		return PollingTaskFamilyType.FLICKR;
+	}
+
+	private static class FlickrTaskFamily implements PollingTaskFamily {
+
+		public long getDefaultPeriodicity() {
+			return 20 * 60 * 1000; // 20 minutes
+		}
+
+		// Rough numbers, hopefully they're reasonable
+		public long getMaxOutstanding() {
+			return 10;
+		}
+
+		public long getMaxPerSecond() {
+			return 5;
+		}
+
+		public String getName() {
+			return PollingTaskFamilyType.FLICKR.name();
+		}
+	}
+	
+	private static PollingTaskFamily family = new FlickrTaskFamily();
+	
+	private static class FlickrTask extends PollingTask {
+		private String flickrId;
+		
+		public FlickrTask(String username) {
+			this.flickrId = username;
+		}
+
+		@Override
+		protected PollResult execute() throws Exception {
+			boolean changed = false;
+			FlickrUpdater proxy = EJBUtil.defaultLookup(FlickrUpdater.class);
+			FlickrUserPhotosCache userPhotosCache = EJBUtil.defaultLookup(FlickrUserPhotosCache.class);
+			FlickrUserPhotosetsCache userPhotosetsCache = EJBUtil.defaultLookup(FlickrUserPhotosetsCache.class);
+			
+			FlickrPhotosView photosView = userPhotosCache.getSync(flickrId, true);
+			FlickrPhotosetsView photosetsView = userPhotosetsCache.getSync(flickrId, true);
+			
+			changed = proxy.saveUpdatedStatus(flickrId, photosView, photosetsView); 
+			return new PollResult(changed, false);
+		}
+
+		@Override
+		public PollingTaskFamily getFamily() {
+			return family;
+		}
+
+		@Override
+		public String getIdentifier() {
+			return flickrId;
+		}
+	}
+
+	@Override
+	protected PollingTask createPollingTask(String handle) {
+		return new FlickrTask(handle);
+	}		
 }

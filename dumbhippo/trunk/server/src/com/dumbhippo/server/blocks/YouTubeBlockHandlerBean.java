@@ -88,7 +88,7 @@ public class YouTubeBlockHandlerBean extends
 			return;
 		stacker.refreshDeletedFlags(getKey(user));
 	}
-	
+
 	public void migrate(User user) {
 		logger.debug("Migrating YouTube blocks for user {}", user);
 		ExternalAccount external = user.getAccount().getExternalAccount(ExternalAccountType.YOUTUBE);

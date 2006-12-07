@@ -31,7 +31,7 @@ import com.dumbhippo.server.util.EJBUtil;
  *  period depending on the task's rate of change.
  *  
  *  TODO: some random improvement thoughts
- *    - Seems probable that a large number of tasks will end up clumped in the 1 and 3 day
+ *    - Seems probable that a large number of tasks will end up clumped in slower
  *      task sets.  Might want to add support for having multiple staggered instances of 
  *      the longer sets.
  *    - Add statistics to track things like how often tasks are bouncing, task deviation
@@ -292,7 +292,7 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 		// Invoked from task worker threads
 		private void notifyComplete() {
 			synchronized (this) {
-				currentTaskCount--;
+		 		currentTaskCount--;
 				notifyAll();			
 			}
 		}		
@@ -412,6 +412,10 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 				tasks.addAll(pendingTaskAdditions);
 				pendingTaskAdditions.clear();
 			}
+			
+			// Basically just avoid the log message and some overhead
+			if (tasks.isEmpty())
+				return true;
 
 			List<Future<PollingTaskExecutionResult>> results;
 			// Execute the tasks using the common thread pool.  Do not let execution of any
@@ -440,6 +444,7 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 			Iterator<PollingTask> tasksIterator = tasks.iterator();
 			
 			int failureCount = 0;
+			int changedCount = 0;
 			
 			while (resultsIterator.hasNext()) {
 				Future<PollingTaskExecutionResult> resultFuture = resultsIterator.next();
@@ -463,13 +468,16 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 					} else {				
 						recalculateTaskStats(task, result);
 					}
+					
+					if (result.isChanged())
+						changedCount++;
 
 					// Both successful and failed tasks can be bumped to different sets, but we 
 					// just delete obsolete ones.
 					if (!result.isObsolete()) {
-						if (task.getPeriodicityAverage() != -1 && task.getPeriodicityAverage() < (timeout * 1.1)) {
-							// Tasks with a periodicity average within 10% of this task set get
-							// bumped to a faster set if possible
+						if (result.isChanged() && task.getPeriodicityAverage() != -1 && task.getPeriodicityAverage() < (timeout * 1.1)) {
+							// Tasks which changed this round, and with a periodicity average 
+							// within 10% of this task set get bumped to a faster set if possible
 							fasterCandidates.add(task);
 						} else if ((System.currentTimeMillis() - task.getLastChange()) > timeout * 2.1) {
 							// Tasks who have not changed in more than two iterations get bumped 
@@ -479,7 +487,7 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 					}
 				}
 			}
-			logger.debug("executed: " + tasks.size() + " timeout: " + execTimeout.size() + " slower: " + slowerCandidates.size() + " faster: " + fasterCandidates.size() + " obsolete: " + obsolete.size() + " failed: " + failureCount);
+			logger.debug("executed: " + tasks.size() + " changed: " + changedCount + " timeout: " + execTimeout.size() + " slower: " + slowerCandidates.size() + " faster: " + fasterCandidates.size() + " obsolete: " + obsolete.size() + " failed: " + failureCount);
 			if (hasSlowerSet)
 				tasks.removeAll(bumpTasks(this, execTimeout, true));
 			if (hasSlowerSet)
@@ -522,9 +530,13 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 	}
 	
 	private class TaskPersistenceWorker implements Runnable {
-		private static final long PERSISTENCE_PERIODICITY_MS = 60 * 1000; // 1 minute
+		
+		// Load every 5 seconds, save every minute
+		private static final long LOAD_PERIODICITY_MS = 5 * 1000;
+		private static final long SAVE_PERIODICITY_COUNT = 12;
 		
 		private long lastSeenTaskDatabaseId = -1;
+		private long loadCount = 0;
 		
 		private Set<PollingTask> pendingObsolete = new HashSet<PollingTask>();
 		
@@ -537,34 +549,41 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 		public void run() {
 			while (true) {
 				try {
-					Thread.sleep(PERSISTENCE_PERIODICITY_MS);
+					Thread.sleep(LOAD_PERIODICITY_MS);
 				} catch (InterruptedException e) {
 					break;
-				}
-				logger.debug("task persistence starting");				
+				}			
 				
 				PollingTaskPersistence persister = EJBUtil.defaultLookup(PollingTaskPersistence.class);
 
 				PollingTaskLoadResult loadResult = persister.loadNewTasks(lastSeenTaskDatabaseId);
 				pushTasks(loadResult.getTasks());
 				lastSeenTaskDatabaseId = loadResult.getLastDbId();
+				long totalLoaded = loadResult.getTasks().size();
 				
-				int total = 0;
-				for (int i = 0; i < taskSetWorkers.length; i++) {
-					TaskSet worker = taskSetWorkers[i];
-					synchronized (worker) {
-						Set<PollingTask> tasks = worker.getTasks();	
-						total += tasks.size();
-						persister.snapshot(tasks);
+				loadCount++;
+				if (loadCount == SAVE_PERIODICITY_COUNT) {
+					loadCount = 0;
+					int total = 0;
+					for (int i = 0; i < taskSetWorkers.length; i++) {
+						TaskSet worker = taskSetWorkers[i];
+						synchronized (worker) {
+							Set<PollingTask> tasks = worker.getTasks();	
+							total += tasks.size();
+							persister.snapshot(tasks);
+						}
 					}
+					Set<PollingTask> obsolete = new HashSet<PollingTask>();				
+					synchronized (pendingObsolete) {
+						obsolete.addAll(pendingObsolete);
+						pendingObsolete.clear();
+					}				
+					persister.clean(obsolete);
+					logger.debug("new: " + totalLoaded  + " saved: " + total + " obsoleted: " + obsolete.size());
+				} else {
+					if (totalLoaded > 0)
+						logger.debug("new: " + totalLoaded);
 				}
-				Set<PollingTask> obsolete = new HashSet<PollingTask>();				
-				synchronized (pendingObsolete) {
-					obsolete.addAll(pendingObsolete);
-					pendingObsolete.clear();
-				}				
-				persister.clean(obsolete);
-				logger.debug("new: " + loadResult.getTasks().size() + " saved: " + total + " obsoleted: " + obsolete.size());				
 			}
 		}		
 	}

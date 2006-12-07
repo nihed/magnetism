@@ -12,17 +12,22 @@ import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
+import org.jboss.annotation.IgnoreDependency;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.TypeUtils;
+import com.dumbhippo.mbean.DynamicPollingSystem.PollingTask;
 import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.ExternalAccountType;
+import com.dumbhippo.persistence.PollingTaskEntry;
 import com.dumbhippo.persistence.PollingTaskFamilyType;
 import com.dumbhippo.persistence.Sentiment;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.CachedExternalUpdater;
+import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.NotFoundException;
+import com.dumbhippo.server.PollingTaskPersistence;
 import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.util.EJBUtil;
 
@@ -33,6 +38,13 @@ public abstract class CachedExternalUpdaterBean<Status> implements CachedExterna
 	
 	@PersistenceContext(unitName = "dumbhippo")
 	protected EntityManager em; 	
+	
+	@EJB
+	protected PollingTaskPersistence pollingPersistence;
+	
+	@EJB
+	@IgnoreDependency
+	protected Configuration configuration;	
 	
 	@EJB
 	private TransactionRunner runner;
@@ -105,24 +117,33 @@ public abstract class CachedExternalUpdaterBean<Status> implements CachedExterna
 		doPeriodicUpdate(handle);
 	}
 	
-	private boolean isLovedAndEnabled(ExternalAccount external) {
+	protected boolean isLovedAndEnabled(ExternalAccount external) {
 		return external.hasLovedAndEnabledType(getAccountType()) && 
 			external.getHandle() != null;
 	}	
 	
 	protected abstract Class<? extends CachedExternalUpdater<Status>> getUpdater();
 	
-	private void onExternalAccountChange(User user, ExternalAccount external) {
+	protected void onExternalAccountChange(User user, ExternalAccount external) {
 		if (!isLovedAndEnabled(external))
 			return;
-
-		final String username = external.getHandle();
-		runner.runTaskOnTransactionCommit(new Runnable() {
-			public void run() {
-				EJBUtil.defaultLookup(getUpdater()).periodicUpdate(username);
-			}
-		});		
+		if (!configuration.isFeatureEnabled("pollingTask")) {
+			final String username = external.getHandle();
+			runner.runTaskOnTransactionCommit(new Runnable() {
+				public void run() {
+					EJBUtil.defaultLookup(getUpdater()).periodicUpdate(username);
+				}
+			});
+		} else {
+			pollingPersistence.createTaskIdempotent(getTaskFamily(), external.getHandle());			
+		}			
 	}
+	
+	public void migrateTasks() {
+		for (String username : getActiveUsers()) {
+			pollingPersistence.createTaskIdempotent(getTaskFamily(), username);
+		}		
+	}	
 	
 	public void onExternalAccountCreated(User user, ExternalAccount external) {
 		onExternalAccountChange(user, external);
@@ -131,4 +152,15 @@ public abstract class CachedExternalUpdaterBean<Status> implements CachedExterna
 	public void onExternalAccountLovedAndEnabledMaybeChanged(User user, ExternalAccount external) {
 		onExternalAccountChange(user, external);		
 	}
+	
+	protected abstract PollingTask createPollingTask(String handle);
+	
+	public Set<PollingTask> loadTasks(Set<PollingTaskEntry> entries) {
+		Set<PollingTask> tasks = new HashSet<PollingTask>();
+		for (PollingTaskEntry entry : entries) {
+			String username = entry.getTaskId();
+			tasks.add(createPollingTask(username));
+		}
+		return tasks;		
+	}	
 }

@@ -8,6 +8,7 @@ import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.Sentiment;
 import com.dumbhippo.persistence.User;
+import com.dumbhippo.persistence.ValidationException;
 import com.dumbhippo.server.listeners.AccountStatusListener;
 import com.dumbhippo.server.views.ExternalAccountView;
 import com.dumbhippo.server.views.UserViewpoint;
@@ -69,7 +70,7 @@ public interface ExternalAccountSystem extends AccountStatusListener {
 	public ExternalAccountView getExternalAccountView(Viewpoint viewpoint, User user, ExternalAccountType externalAccountType) throws NotFoundException;
 	
 	public void loadThumbnails(Viewpoint viewpoint, Set<ExternalAccountView> accountViews);
-	
+
 	public void setSentiment(ExternalAccount externalAccount, Sentiment sentiment);
 	
 	public void validateAll();

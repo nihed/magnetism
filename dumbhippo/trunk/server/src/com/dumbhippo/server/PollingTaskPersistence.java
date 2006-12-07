@@ -17,6 +17,8 @@ public interface PollingTaskPersistence {
 	
 	public void createTask(PollingTaskFamilyType family, String id);
 	
+	public void createTaskIdempotent(PollingTaskFamilyType family, String id);	
+	
 	public void snapshot(Set<PollingTask> task);
 	
 	public void clean(Set<PollingTask> obsolete);

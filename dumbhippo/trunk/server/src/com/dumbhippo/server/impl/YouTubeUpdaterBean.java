@@ -11,6 +11,8 @@ import javax.persistence.Query;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.mbean.DynamicPollingSystem.PollingTask;
+import com.dumbhippo.mbean.DynamicPollingSystem.PollingTaskFamily;
 import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.PollingTaskFamilyType;
 import com.dumbhippo.persistence.YouTubeUpdateStatus;
@@ -23,7 +25,7 @@ import com.dumbhippo.services.YouTubeVideo;
 import com.dumbhippo.services.caches.YouTubeVideosCache;
 
 @Stateless
-public class YouTubeUpdaterBean extends CachedExternalUpdaterBean<YouTubeUpdateStatus> implements YouTubeUpdater {
+public class YouTubeUpdaterBean extends CachedExternalUpdaterBean<YouTubeUpdateStatus> implements CachedExternalUpdater<YouTubeUpdateStatus>, YouTubeUpdater {
 
 	@SuppressWarnings("unused")
 	private static final Logger logger = GlobalSetup.getLogger(YouTubeUpdaterBean.class);
@@ -56,7 +58,7 @@ public class YouTubeUpdaterBean extends CachedExternalUpdaterBean<YouTubeUpdateS
 		return sb.toString();
 	}	
 
-	public void saveUpdatedStatus(String username, List<? extends YouTubeVideo> videos) {
+	public boolean saveUpdatedStatus(String username, List<? extends YouTubeVideo> videos) {
 		logger.debug("Saving new YouTube status for " + username + ": videos {}",
 				videos);
 		
@@ -77,7 +79,9 @@ public class YouTubeUpdaterBean extends CachedExternalUpdaterBean<YouTubeUpdateS
 					updateStatus.getVideoHash(), hash);
 			updateStatus.setVideoHash(hash);
 			notifier.onYouTubeRecentVideosChanged(username, videos);
+			return true;
 		}
+		return false;
 	}
 
 	@Override
@@ -100,7 +104,62 @@ public class YouTubeUpdaterBean extends CachedExternalUpdaterBean<YouTubeUpdateS
 
 	@Override
 	protected PollingTaskFamilyType getTaskFamily() {
-		// TODO Auto-generated method stub
-		return null;
+		return PollingTaskFamilyType.YOUTUBE;
+	}
+
+	private static class YouTubeTaskFamily implements PollingTaskFamily {
+
+		public long getDefaultPeriodicity() {
+			return 20 * 60 * 1000; // 20 minutes
+		}
+
+		// Rough numbers, hopefully they're reasonable
+		public long getMaxOutstanding() {
+			return 10;
+		}
+
+		public long getMaxPerSecond() {
+			return 5;
+		}
+
+		public String getName() {
+			return PollingTaskFamilyType.YOUTUBE.name();
+		}
+	}
+	
+	private static PollingTaskFamily family = new YouTubeTaskFamily();
+	
+	private static class YouTubeTask extends PollingTask {
+		private String username;
+		
+		public YouTubeTask(String username) {
+			this.username = username;
+		}
+
+		@Override
+		protected PollResult execute() throws Exception {
+			boolean changed = false;
+			YouTubeUpdater proxy = EJBUtil.defaultLookup(YouTubeUpdater.class);
+			YouTubeVideosCache cache = EJBUtil.defaultLookup(YouTubeVideosCache.class);
+			
+			List<? extends YouTubeVideo> videos = cache.getSync(username, true);
+			changed = proxy.saveUpdatedStatus(username, videos);			
+			return new PollResult(changed, false);
+		}
+
+		@Override
+		public PollingTaskFamily getFamily() {
+			return family;
+		}
+
+		@Override
+		public String getIdentifier() {
+			return username;
+		}
+	}	
+	
+	@Override
+	protected PollingTask createPollingTask(String handle) {
+		return new YouTubeTask(handle);
 	}
 }

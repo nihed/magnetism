@@ -8,6 +8,7 @@ import java.util.Set;
 
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
@@ -36,12 +37,24 @@ public class PollingTaskPersistenceBean implements PollingTaskPersistence {
 		em.persist(entry);		
 	}	
 	
-	private PollingTaskEntry getEntry(PollingTask task) {
+	private PollingTaskEntry getEntry(PollingTaskFamilyType family, String id) {
 		PollingTaskEntry entry;
 		entry = (PollingTaskEntry) em.createQuery("select stats from PollingTaskEntry stats where family = :family and taskId = :id")
-			.setParameter("family", PollingTaskFamilyType.valueOf(task.getFamily().getName()))
-			.setParameter("id", task.getIdentifier()).getSingleResult();
-		return entry;
+			.setParameter("family", family)
+			.setParameter("id", id).getSingleResult();
+		return entry;		
+	}
+	
+	public void createTaskIdempotent(PollingTaskFamilyType family, String id) {
+		try {
+			getEntry(family, id);
+		} catch (NoResultException e) {
+			createTask(family, id);
+		}
+	}
+	
+	private PollingTaskEntry getEntry(PollingTask task) {
+		return getEntry(PollingTaskFamilyType.valueOf(task.getFamily().getName()), task.getIdentifier());
 	}
 	
 	public void snapshot(Set<PollingTask> tasks) {
