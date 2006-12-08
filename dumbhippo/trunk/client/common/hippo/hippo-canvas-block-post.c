@@ -557,10 +557,15 @@ static void
 hippo_canvas_block_post_update_visibility(HippoCanvasBlockPost *block_post)
 {
     HippoCanvasBlock *canvas_block = HIPPO_CANVAS_BLOCK(block_post);
-    HippoStackReason stack_reason = hippo_block_get_stack_reason(canvas_block->block);
+    HippoStackReason stack_reason;
     gboolean show_description;
     gboolean show_single_message;
     gboolean show_reason;
+
+    if (canvas_block->block)
+        stack_reason = hippo_block_get_stack_reason(canvas_block->block);
+    else
+        stack_reason = HIPPO_STACK_BLOCK_UPDATE;
 
     /* the details box and chat preview both show iff. we are expanded
      */
