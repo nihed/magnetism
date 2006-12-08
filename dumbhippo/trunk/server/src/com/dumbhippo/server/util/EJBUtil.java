@@ -502,7 +502,7 @@ public class EJBUtil {
 		}
 	}	
 	
-	public static void assertTransactionStatus(int desired) {
+	private static int getTransactionStatus() {
 		TransactionManager tm;
 		try {
 			tm = (TransactionManager) (new InitialContext()).lookup("java:/TransactionManager");
@@ -516,11 +516,21 @@ public class EJBUtil {
 		} catch (SystemException e) {
 			throw new RuntimeException("failed to get tx status", e);
 		}
+		return txStatus;
+	}
+	
+	public static boolean isTransactionActive() {
+		return getTransactionStatus() == Status.STATUS_ACTIVE;
+	}
+	
+	public static void assertTransactionStatus(int desired) {
+		int txStatus = getTransactionStatus();
 		
 		if (txStatus != desired) {
 			logger.warn("Unexpected tx status {} while expecting {}", transactionStatusString(txStatus),
 					transactionStatusString(desired));
-			// should throw, but since we have bugs here still...
+			// uncomment this once we haven't seen the above warning in a while, the backtrace 
+			// makes it much easier to debug this situation.
 			//throw new IllegalStateException("Unexpected tx status " + transactionStatusString(txStatus) + 
 			//		" expecting " + transactionStatusString(desired));
 		}

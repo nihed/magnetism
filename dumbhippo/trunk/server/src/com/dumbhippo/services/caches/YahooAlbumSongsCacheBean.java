@@ -2,7 +2,6 @@ package com.dumbhippo.services.caches;
 
 import java.util.List;
 
-import javax.ejb.Stateless;
 import javax.persistence.Query;
 
 import org.slf4j.Logger;
@@ -15,7 +14,7 @@ import com.dumbhippo.services.YahooSearchWebServices;
 import com.dumbhippo.services.YahooSongData;
 
 @BanFromWebTier
-@Stateless
+//@Stateless // for now, these cache beans are our own special kind of bean and not EJBs due to a jboss bug
 public class YahooAlbumSongsCacheBean
 	extends AbstractListCacheWithStorageBean<String,YahooSongData,CachedYahooAlbumSongData>
 	implements YahooAlbumSongsCache {

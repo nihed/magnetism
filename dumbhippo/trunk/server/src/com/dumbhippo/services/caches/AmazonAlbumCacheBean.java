@@ -1,6 +1,5 @@
 package com.dumbhippo.services.caches;
 
-import javax.ejb.Stateless;
 import javax.persistence.NoResultException;
 import javax.persistence.Query;
 
@@ -15,7 +14,7 @@ import com.dumbhippo.services.AmazonAlbumData;
 import com.dumbhippo.services.AmazonItemSearch;
 
 @BanFromWebTier
-@Stateless
+// @Stateless // for now, these cache beans are our own special kind of bean and not EJBs due to a jboss bug
 public class AmazonAlbumCacheBean extends AbstractBasicCacheWithStorageBean<AlbumAndArtist,AmazonAlbumData,CachedAmazonAlbumData> implements AmazonAlbumCache {
 	@SuppressWarnings("unused")
 	static private final Logger logger = GlobalSetup.getLogger(AmazonAlbumCacheBean.class);

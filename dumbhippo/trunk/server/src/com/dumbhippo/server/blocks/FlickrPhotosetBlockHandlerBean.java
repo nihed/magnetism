@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
+import javax.annotation.PostConstruct;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 
@@ -26,7 +27,9 @@ import com.dumbhippo.services.FlickrPhotoView;
 import com.dumbhippo.services.FlickrPhotos;
 import com.dumbhippo.services.FlickrPhotosView;
 import com.dumbhippo.services.FlickrPhotosetView;
+import com.dumbhippo.services.caches.CacheFactory;
 import com.dumbhippo.services.caches.FlickrPhotosetPhotosCache;
+import com.dumbhippo.services.caches.WebServiceCache;
 
 @Stateless
 public class FlickrPhotosetBlockHandlerBean extends
@@ -38,13 +41,21 @@ public class FlickrPhotosetBlockHandlerBean extends
 	@EJB
 	private FlickrUpdater flickrUpdater;	
 	
-	@EJB
+	@WebServiceCache
 	private FlickrPhotosetPhotosCache photosetPhotosCache;
 	
-	protected FlickrPhotosetBlockHandlerBean() {
-		super(FlickrPhotosetBlockView.class);
+	@EJB
+	private CacheFactory cacheFactory;	
+	
+	@PostConstruct
+	public void init() {
+		cacheFactory.injectCaches(this);
 	}
 
+	protected FlickrPhotosetBlockHandlerBean() {
+		super(FlickrPhotosetBlockView.class);
+	}	
+	
 	@Override
 	protected void populateBlockViewImpl(FlickrPhotosetBlockView blockView)
 			throws BlockNotVisibleException {

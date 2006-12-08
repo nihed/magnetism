@@ -45,7 +45,7 @@ public abstract class AbstractBasicCacheBean<KeyType, ResultType> extends
 		public ResultType call() {
 			logger.debug("Entering AbstractBasicCacheTask thread for bean {} key {}", ejbIface.getName(), key);
 		
-			Cache<KeyType,ResultType> cache = EJBUtil.defaultLookup(ejbIface);					
+			Cache<KeyType,ResultType> cache = CacheFactoryBean.defaultLookup(ejbIface); 					
 
 			try {
 				if (alwaysRefetch)
@@ -81,7 +81,7 @@ public abstract class AbstractBasicCacheBean<KeyType, ResultType> extends
 			if (alwaysRefetchEvenIfCached)
 				throw new NotCachedException("Forced refetch");
 			
-			ResultType result = EJBUtil.defaultLookup(getEjbIface()).checkCache(key);
+			ResultType result = CacheFactoryBean.defaultLookup(getEjbIface()).checkCache(key);
 			// result may be null, but in that case we cached null
 			return new KnownFuture<ResultType>(result);
 		} catch (NotCachedException e) {

@@ -22,6 +22,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 
+import javax.annotation.PostConstruct;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
@@ -88,7 +89,9 @@ import com.dumbhippo.services.YahooSongData;
 import com.dumbhippo.services.YahooSongDownloadData;
 import com.dumbhippo.services.caches.AlbumAndArtist;
 import com.dumbhippo.services.caches.AmazonAlbumCache;
+import com.dumbhippo.services.caches.CacheFactory;
 import com.dumbhippo.services.caches.RhapsodyDownloadCache;
+import com.dumbhippo.services.caches.WebServiceCache;
 import com.dumbhippo.services.caches.YahooAlbumCache;
 import com.dumbhippo.services.caches.YahooAlbumSongsCache;
 import com.dumbhippo.services.caches.YahooArtistAlbumsCache;
@@ -123,32 +126,40 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	@EJB
 	private SearchSystem searchSystem;
 	
-	@EJB
+	@WebServiceCache
 	private AmazonAlbumCache amazonAlbumCache;
 	
-	@EJB
+	@WebServiceCache
 	private RhapsodyDownloadCache rhapsodyDownloadCache;
 	
-	@EJB
+	@WebServiceCache
 	private YahooAlbumCache yahooAlbumCache;
 	
-	@EJB
+	@WebServiceCache
 	private YahooArtistCache yahooArtistCache;
 	
-	@EJB
+	@WebServiceCache
 	private YahooSongCache yahooSongCache;
 
-	@EJB
+	@WebServiceCache
 	private YahooAlbumSongsCache yahooAlbumSongsCache;	
 	
-	@EJB
+	@WebServiceCache
 	private YahooSongDownloadCache yahooSongDownloadCache;
 	
-	@EJB
+	@WebServiceCache
 	private YahooArtistAlbumsCache yahooArtistAlbumsCache;
 	
 	@EJB
-	private Notifier notifier;
+	private Notifier notifier;	
+	
+	@EJB
+	private CacheFactory cacheFactory;	
+	
+	@PostConstruct
+	public void init() {
+		cacheFactory.injectCaches(this);
+	}
 	
 	private static ExecutorService threadPool;
 	private static boolean shutdown = false;

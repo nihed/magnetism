@@ -72,6 +72,9 @@ public abstract class AbstractCacheBean<KeyType,ResultType,EjbIfaceType> impleme
 	@EJB
 	protected Configuration config;			
 	
+	@EJB
+	protected CacheFactory cacheFactory;
+	
 	private synchronized static UniqueTaskExecutor getExecutorInternal(Request request) {
 		if (shutdown)
 			throw new RuntimeException("getExecutor() called after shutdown");

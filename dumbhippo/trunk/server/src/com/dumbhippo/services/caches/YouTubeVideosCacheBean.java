@@ -2,7 +2,6 @@ package com.dumbhippo.services.caches;
 
 import java.util.List;
 
-import javax.ejb.Stateless;
 import javax.persistence.Query;
 
 import org.slf4j.Logger;
@@ -14,7 +13,7 @@ import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.services.YouTubeVideo;
 import com.dumbhippo.services.YouTubeVideoFeedParser;
 
-@Stateless
+//@Stateless // for now, these cache beans are our own special kind of bean and not EJBs due to a jboss bug
 public class YouTubeVideosCacheBean extends AbstractListCacheWithStorageBean<String,YouTubeVideo,CachedYouTubeVideo> implements
 		YouTubeVideosCache {
 

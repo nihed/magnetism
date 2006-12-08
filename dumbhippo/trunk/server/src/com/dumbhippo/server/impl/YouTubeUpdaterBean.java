@@ -2,6 +2,7 @@ package com.dumbhippo.server.impl;
 
 import java.util.List;
 
+import javax.annotation.PostConstruct;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
@@ -22,6 +23,8 @@ import com.dumbhippo.server.Notifier;
 import com.dumbhippo.server.YouTubeUpdater;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.services.YouTubeVideo;
+import com.dumbhippo.services.caches.CacheFactory;
+import com.dumbhippo.services.caches.WebServiceCache;
 import com.dumbhippo.services.caches.YouTubeVideosCache;
 
 @Stateless
@@ -29,12 +32,20 @@ public class YouTubeUpdaterBean extends CachedExternalUpdaterBean<YouTubeUpdateS
 
 	@SuppressWarnings("unused")
 	private static final Logger logger = GlobalSetup.getLogger(YouTubeUpdaterBean.class);
-
-	@EJB
-	private YouTubeVideosCache videosCache;
 	
 	@EJB
 	private Notifier notifier;
+
+	@WebServiceCache
+	private YouTubeVideosCache videosCache;	
+	
+	@EJB
+	private CacheFactory cacheFactory;	
+	
+	@PostConstruct
+	public void init() {
+		cacheFactory.injectCaches(this);
+	}
 	
 	@Override
 	@TransactionAttribute(TransactionAttributeType.NEVER)	

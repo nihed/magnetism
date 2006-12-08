@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
-import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import javax.persistence.NoResultException;
@@ -28,7 +27,7 @@ import com.dumbhippo.services.YahooArtistData;
 import com.dumbhippo.services.YahooSearchWebServices;
 
 @BanFromWebTier
-@Stateless
+//@Stateless // for now, these cache beans are our own special kind of bean and not EJBs due to a jboss bug
 public class YahooArtistCacheBean extends AbstractCacheBean<String,YahooArtistData,Cache> implements YahooArtistCache {
 	@SuppressWarnings("unused")
 	static private final Logger logger = GlobalSetup.getLogger(YahooArtistCacheBean.class);
@@ -50,7 +49,7 @@ public class YahooArtistCacheBean extends AbstractCacheBean<String,YahooArtistDa
 		public YahooArtistData call() {
 			logger.debug("Entering YahooArtistByIdTask thread for {}", artistId);				
 
-			YahooArtistCache cache = EJBUtil.defaultLookup(YahooArtistCache.class);	
+			YahooArtistCache cache = CacheFactoryBean.defaultLookup(YahooArtistCache.class);	
 						
 			// Check again in case another node stored the data first
 			try {
@@ -77,7 +76,7 @@ public class YahooArtistCacheBean extends AbstractCacheBean<String,YahooArtistDa
 		public List<YahooArtistData> call() {
 			logger.debug("Entering YahooArtistByNameTask thread for '{}'", artist);				
 
-			YahooArtistCache cache = EJBUtil.defaultLookup(YahooArtistCache.class);	
+			YahooArtistCache cache = CacheFactoryBean.defaultLookup(YahooArtistCache.class);	
 						
 			List<YahooArtistData> results = cache.fetchFromNetByName(artist);
 
@@ -99,7 +98,7 @@ public class YahooArtistCacheBean extends AbstractCacheBean<String,YahooArtistDa
 			if (alwaysRefetchEvenIfCached)
 				throw new NotCachedException("Forced refetch");
 
-			YahooArtistData result = EJBUtil.defaultLookup(YahooArtistCache.class).checkCache(artistId);
+			YahooArtistData result = CacheFactoryBean.defaultLookup(YahooArtistCache.class).checkCache(artistId);
 			return new KnownFuture<YahooArtistData>(result);
 		} catch (NotCachedException e) {
 			return getExecutor().execute(artistId, new YahooArtistByIdTask(artistId, alwaysRefetchEvenIfCached));
@@ -141,7 +140,7 @@ public class YahooArtistCacheBean extends AbstractCacheBean<String,YahooArtistDa
 		if (artist == null)
 			throw new IllegalArgumentException("null artist");
 		
-		List<YahooArtistData> results = EJBUtil.defaultLookup(YahooArtistCache.class).checkCacheByName(artist);
+		List<YahooArtistData> results = CacheFactoryBean.defaultLookup(YahooArtistCache.class).checkCacheByName(artist);
 		if (results != null)
 			return new KnownFuture<YahooArtistData>(pickFirstItemOrNull(results));
 

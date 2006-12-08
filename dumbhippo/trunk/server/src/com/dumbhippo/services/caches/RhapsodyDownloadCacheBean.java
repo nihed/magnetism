@@ -7,7 +7,6 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.util.concurrent.Future;
 
-import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import javax.persistence.NoResultException;
@@ -22,7 +21,7 @@ import com.dumbhippo.persistence.CachedRhapsodyDownload;
 import com.dumbhippo.server.BanFromWebTier;
 
 @BanFromWebTier
-@Stateless
+//@Stateless // for now, these cache beans are our own special kind of bean and not EJBs due to a jboss bug
 public class RhapsodyDownloadCacheBean extends AbstractBasicCacheWithStorageBean<String,Boolean,CachedRhapsodyDownload> implements
 		RhapsodyDownloadCache {
 

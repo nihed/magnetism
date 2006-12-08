@@ -4,7 +4,6 @@ import java.util.Date;
 import java.util.List;
 
 import javax.annotation.PostConstruct;
-import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import javax.persistence.NoResultException;
@@ -22,7 +21,7 @@ import com.dumbhippo.services.FlickrPhotosets;
 import com.dumbhippo.services.FlickrPhotosetsView;
 import com.dumbhippo.services.FlickrWebServices;
 
-@Stateless
+//@Stateless // for now, these cache beans are our own special kind of bean and not EJBs due to a jboss bug
 public class FlickrUserPhotosetsCacheBean extends AbstractBasicCacheBean<String,FlickrPhotosetsView> implements
 		FlickrUserPhotosetsCache {
 

@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.ejb.EJB;
-import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import javax.persistence.Query;
@@ -32,7 +31,7 @@ import com.dumbhippo.services.FacebookWebServices;
 // EntityType for example). The ResultType should be the same as whatever the raw, uncached, 
 // nothing-to-do-with-the-database web service returns. It's bad if anything is using attached
 // EntityType objects outside of the cache code itself.
-@Stateless
+//@Stateless // for now, these cache beans are our own special kind of bean and not EJBs due to a jboss bug
 public class FacebookPhotoDataCacheBean 
     extends AbstractListCacheWithStorageBean<String,CachedFacebookPhotoData,CachedFacebookPhotoData> 
     implements FacebookPhotoDataCache {

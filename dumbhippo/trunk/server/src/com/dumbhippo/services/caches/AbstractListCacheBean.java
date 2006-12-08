@@ -55,7 +55,7 @@ public abstract class AbstractListCacheBean<KeyType, ResultType>
 			EJBUtil.assertNoTransaction();
 			
 			// we do this instead of an inner class to work right with threads
-			ListCache<KeyType,ResultType> cache = EJBUtil.defaultLookup(ejbIface);
+			ListCache<KeyType,ResultType> cache = CacheFactoryBean.defaultLookup(ejbIface);
 			
 			// Check again in case another node stored the data first
 			try {
@@ -94,7 +94,7 @@ public abstract class AbstractListCacheBean<KeyType, ResultType>
 			if (alwaysRefetchEvenIfCached)
 				throw new NotCachedException("Forced refetch");
 			
-			List<? extends ResultType> results = EJBUtil.defaultLookup(getEjbIface()).checkCache(key);
+			List<? extends ResultType> results = CacheFactoryBean.defaultLookup(getEjbIface()).checkCache(key);
 
 			if (results == null)
 				throw new RuntimeException("ListCache.checkCache isn't supposed to return null ever, it did for key " + key);

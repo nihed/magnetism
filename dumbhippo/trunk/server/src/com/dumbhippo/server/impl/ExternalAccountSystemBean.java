@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import javax.annotation.PostConstruct;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
@@ -35,7 +36,9 @@ import com.dumbhippo.server.views.Viewpoint;
 import com.dumbhippo.services.FlickrPhotoSize;
 import com.dumbhippo.services.FlickrPhotosView;
 import com.dumbhippo.services.YouTubeVideo;
+import com.dumbhippo.services.caches.CacheFactory;
 import com.dumbhippo.services.caches.FlickrUserPhotosCache;
+import com.dumbhippo.services.caches.WebServiceCache;
 import com.dumbhippo.services.caches.YouTubeVideosCache;
 
 @Stateless
@@ -50,14 +53,6 @@ public class ExternalAccountSystemBean implements ExternalAccountSystem {
 	
 	@EJB
 	@IgnoreDependency
-	private FlickrUserPhotosCache flickrUserPhotosCache;
-	
-	@EJB
-	@IgnoreDependency
-	private YouTubeVideosCache youTubeVideosCache;
-	
-	@EJB
-	@IgnoreDependency
 	private YouTubeUpdater youTubeUpdater;
 	
 	@EJB
@@ -65,6 +60,20 @@ public class ExternalAccountSystemBean implements ExternalAccountSystem {
 	
 	@PersistenceContext(unitName = "dumbhippo")
 	private EntityManager em; 
+	
+	@WebServiceCache
+	private FlickrUserPhotosCache flickrUserPhotosCache;
+	
+	@WebServiceCache
+	private YouTubeVideosCache youTubeVideosCache;
+	
+	@EJB
+	private CacheFactory cacheFactory;	
+	
+	@PostConstruct
+	public void init() {
+		cacheFactory.injectCaches(this);
+	}
 	
 	public ExternalAccount getOrCreateExternalAccount(UserViewpoint viewpoint, ExternalAccountType type) {
 		Account a = viewpoint.getViewer().getAccount();

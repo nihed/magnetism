@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.annotation.PostConstruct;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
@@ -32,27 +33,37 @@ import com.dumbhippo.services.FlickrPhotoView;
 import com.dumbhippo.services.FlickrPhotosView;
 import com.dumbhippo.services.FlickrPhotosetView;
 import com.dumbhippo.services.FlickrPhotosetsView;
+import com.dumbhippo.services.caches.CacheFactory;
 import com.dumbhippo.services.caches.FlickrPhotosetPhotosCache;
 import com.dumbhippo.services.caches.FlickrUserPhotosCache;
 import com.dumbhippo.services.caches.FlickrUserPhotosetsCache;
+import com.dumbhippo.services.caches.WebServiceCache;
 
 @Stateless
 public class FlickrUpdaterBean extends CachedExternalUpdaterBean<FlickrUpdateStatus> implements FlickrUpdater {
 
 	@SuppressWarnings("unused")
-	private static final Logger logger = GlobalSetup.getLogger(FlickrUpdaterBean.class);
-		
-	@EJB
-	private FlickrUserPhotosCache userPhotosCache;
-	
-	@EJB
-	private FlickrUserPhotosetsCache userPhotosetsCache;
-	
-	@EJB
-	private FlickrPhotosetPhotosCache photosetPhotosCache;
+	private static final Logger logger = GlobalSetup.getLogger(FlickrUpdaterBean.class);		
 	
 	@EJB
 	private Notifier notifier;
+
+	@WebServiceCache
+	private FlickrUserPhotosCache userPhotosCache;
+	
+	@WebServiceCache
+	private FlickrUserPhotosetsCache userPhotosetsCache;
+	
+	@WebServiceCache
+	private FlickrPhotosetPhotosCache photosetPhotosCache;
+
+	@EJB
+	private CacheFactory cacheFactory;	
+	
+	@PostConstruct
+	public void init() {
+		cacheFactory.injectCaches(this);
+	}
 	
 	@Override
 	public Query getCachedStatusQuery(String flickrId) {

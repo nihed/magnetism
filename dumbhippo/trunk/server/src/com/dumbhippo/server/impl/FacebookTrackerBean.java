@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
+import javax.annotation.PostConstruct;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
@@ -36,9 +37,11 @@ import com.dumbhippo.server.TransactionRunner;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.server.views.UserViewpoint;
 import com.dumbhippo.services.FacebookWebServices;
+import com.dumbhippo.services.caches.CacheFactory;
 import com.dumbhippo.services.caches.ExpiredCacheException;
 import com.dumbhippo.services.caches.FacebookPhotoDataCache;
 import com.dumbhippo.services.caches.NotCachedException;
+import com.dumbhippo.services.caches.WebServiceCache;
 
 @Stateless
 public class FacebookTrackerBean implements FacebookTracker {
@@ -62,10 +65,18 @@ public class FacebookTrackerBean implements FacebookTracker {
 	
 	@EJB
 	private TransactionRunner runner;
+
+	@WebServiceCache
+	private FacebookPhotoDataCache taggedPhotosCache;
 	
 	@EJB
-	private FacebookPhotoDataCache taggedPhotosCache;
-		
+	private CacheFactory cacheFactory;	
+	
+	@PostConstruct
+	public void init() {
+		cacheFactory.injectCaches(this);
+	}
+	
 	public void updateOrCreateFacebookAccount(UserViewpoint viewpoint, String facebookAuthToken) {
 		ExternalAccount externalAccount = externalAccounts.getOrCreateExternalAccount(viewpoint, ExternalAccountType.FACEBOOK);
 		
