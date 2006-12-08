@@ -716,13 +716,18 @@ HippoControl::checkURL(BSTR url)
     return true;
 }
 
-HRESULT 
-HippoControl::showHideBrowserBar(bool doShow)
+HRESULT
+HippoControl::showHideBrowserBar(bool doShow) 
 {
     HippoPtr<IWebBrowser2> toplevelBrowser;
     if (!getToplevelBrowser(&toplevelBrowser))
         return E_FAIL;
+    return HippoControl::showHideBrowserBarInternal(toplevelBrowser, doShow);
+}
 
+HRESULT 
+HippoControl::showHideBrowserBarInternal(HippoPtr<IWebBrowser2> &toplevelBrowser, bool doShow)
+{
     variant_t classId(L"{174D2323-9AF2-4257-B8BD-849865E4F1AE}"); // CLSID_HippoExplorerBar
     variant_t show(doShow);
     variant_t size;
@@ -731,19 +736,27 @@ HippoControl::showHideBrowserBar(bool doShow)
     // to stick in the registry, so we save the value of the relevant registry key
     // and restore it afterwards.
 
+    bool haveIE6Value;
     BYTE *oldRegistryData = NULL;
     DWORD oldRegistryLength = 0;
+    bool haveIE7Value;
+    BYTE *oldRegistryData7 = NULL;
+    DWORD oldRegistryLength7 = 0;
 
     {
         HippoRegKey key(HKEY_CURRENT_USER, L"Software\\Microsoft\\Internet Explorer\\Toolbar\\WebBrowser", false);
-        key.loadBinary(L"ITBarLayout", &oldRegistryData, &oldRegistryLength);
+        haveIE6Value = key.loadBinary(L"ITBarLayout", &oldRegistryData, &oldRegistryLength);
+        haveIE7Value = key.loadBinary(L"ITBar7Layout", &oldRegistryData7, &oldRegistryLength7);
     }
 
     HRESULT hr = toplevelBrowser->ShowBrowserBar(&classId, &show, &size);
 
     {
         HippoRegKey key(HKEY_CURRENT_USER, L"Software\\Microsoft\\Internet Explorer\\Toolbar\\WebBrowser", true);
-        key.saveBinary(L"ITBarLayout", oldRegistryData, oldRegistryLength);
+        if (haveIE6Value)
+            key.saveBinary(L"ITBarLayout", oldRegistryData, oldRegistryLength);
+        if (haveIE7Value)
+            key.saveBinary(L"ITBar7Layout", oldRegistryData7, oldRegistryLength7);
     }
 
     return hr;

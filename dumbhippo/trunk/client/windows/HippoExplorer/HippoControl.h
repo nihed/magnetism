@@ -85,13 +85,14 @@ public:
 
    virtual void userInfo(HippoEndpointId endpoint, const char *userId, const char *name, const char *smallPhotoUrl, const char *currentSong, const char *currentArtist, bool musicPlaying);
 
+   static HRESULT showHideBrowserBarInternal(HippoPtr<IWebBrowser2> &browser, bool doShow);
+
 private:
     void clearSite();
     bool siteIsTrusted();
     bool checkURL(BSTR url);
     bool getBrowser(IWebBrowser2 **browser);
     bool getToplevelBrowser(IWebBrowser2 **toplevelBrowser);
-
     HRESULT showHideBrowserBar(bool doShow);
 
     HippoConnectionPointContainer connectionPointContainer_;

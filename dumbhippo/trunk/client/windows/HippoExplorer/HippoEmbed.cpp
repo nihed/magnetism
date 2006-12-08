@@ -5,6 +5,7 @@
 #include "stdafx-hippoexplorer.h"
 
 #include "HippoEmbed.h"
+#include "HippoControl.h"
 #include "HippoExplorer_h.h"
 #include "HippoExplorerDispID.h"
 #include "HippoExplorerUtil.h"
@@ -447,29 +448,5 @@ HippoEmbed::showHideBrowserBar(bool doShow)
 {
     if (!toplevelBrowser_)
         return E_FAIL;
-
-    variant_t classId(L"{174D2323-9AF2-4257-B8BD-849865E4F1AE}"); // CLSID_HippoExplorerBar
-    variant_t show(doShow);
-    variant_t size;
-
-    // We want to change our browser bar for this window, but we don't want the change
-    // to stick in the registry, so we save the value of the relevant registry key
-    // and restore it afterwards.
-
-    BYTE *oldRegistryData = NULL;
-    DWORD oldRegistryLength = 0;
-
-    {
-        HippoRegKey key(HKEY_CURRENT_USER, L"Software\\Microsoft\\Internet Explorer\\Toolbar\\WebBrowser", false);
-        key.loadBinary(L"ITBarLayout", &oldRegistryData, &oldRegistryLength);
-    }
-
-    HRESULT hr = toplevelBrowser_->ShowBrowserBar(&classId, &show, &size);
-
-    {
-        HippoRegKey key(HKEY_CURRENT_USER, L"Software\\Microsoft\\Internet Explorer\\Toolbar\\WebBrowser", true);
-        key.saveBinary(L"ITBarLayout", oldRegistryData, oldRegistryLength);
-    }
-
-    return hr;
+    return HippoControl::showHideBrowserBarInternal(toplevelBrowser_, doShow);
 }
