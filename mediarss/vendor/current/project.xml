@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 
+/*
+ * Copyright 2001-2004 The Apache Software Foundation.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+ -->
+<project>
+    <!-- the version of maven's project object model -->
+    <pomVersion>3</pomVersion>
+    <!-- a unique name for this project -->
+    <artifactId>mediarss</artifactId>
+    <groupId>rome</groupId>
+    <reports>
+        <report>maven-javadoc-plugin</report>
+        <report>maven-jdepend-plugin</report>
+        <report>maven-emma-plugin</report>
+        <report>maven-jxr-plugin</report>
+        <report>maven-license-plugin</report>
+        <report>maven-junit-report-plugin</report>
+    </reports>
+    <id>mediarss</id>
+    <!-- a short but descriptive name for the project -->
+    <name>Yahoo! MediaRSS ROME Plug In</name>
+    <!-- The version of the project under development, e.g.
+       1.1, 1.2, 2.0-SNAPSHOT -->
+    <currentVersion>0.2.1</currentVersion>
+    <!-- details about the organization that 'owns' the project -->
+    <organization>
+        <name>Copyright 2006 Nathanial X. Freitas, ion.tv</name>
+        <url>https://ion.dev.java.net</url>
+    </organization>
+    <!-- the year the project started -->
+    <inceptionYear>2005</inceptionYear>
+    <package>com.sun.syndication.feed.module.mediarss</package>
+    <description>A ROME Plug In that supports the Yahoo! MediaRSS extensions to RSS 2.0/Atom</description>
+    <!-- a short description of what the project does -->
+    <shortDescription>A ROME Plug in for working with MediaRSS Extensions</shortDescription>
+    <!-- the project home page -->
+    <url>http://rome.dev.java.net</url>
+    <!-- any mailing lists for the project -->
+    <!-- who the developers are for the project -->
+    <!-- jar files the project is dependent on -->
+    <dependencies>
+        <dependency>
+            <groupId>rome</groupId>
+            <artifactId>rome</artifactId>
+            <version>0.8</version>
+            <type>jar</type>
+        </dependency>
+        <dependency>
+            <groupId>jdom</groupId>
+            <artifactId>jdom</artifactId>
+            <version>1.0</version>
+            <type>jar</type>
+        </dependency>
+        <dependency>
+            <groupId>emma</groupId>
+            <artifactId>maven-emma-plugin</artifactId>
+            <version>0.5</version>
+            <type>plugin</type>
+        </dependency>
+    </dependencies>
+    <!-- build information for the project -->
+    <build>
+        <nagEmailAddress>turbine-maven-dev@jakarta.apache.org</nagEmailAddress>
+        <sourceDirectory>src/java</sourceDirectory>
+        <unitTestSourceDirectory>src/test</unitTestSourceDirectory>
+        <unitTest>
+            <includes>
+                <include>**/*Test.java</include>
+            </includes>
+            <excludes>
+                <exclude>**/NaughtyTest.java</exclude>
+            </excludes>
+        </unitTest>
+        <resources>
+            <resource>
+                <directory>src/conf</directory>
+                <includes>
+                    <include>*.properties</include>
+                    <include>**/*.properties</include>
+                </includes>
+            </resource>
+        </resources>
+    </build>
+</project>
+
