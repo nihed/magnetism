@@ -382,11 +382,15 @@ dojo.io.XMLHTTPTransport = new function(){
 
 	this.startWatchingInFlight = function(){
 		if(!this.inFlightTimer){
-			this.inFlightTimer = setInterval("dojo.io.XMLHTTPTransport.watchInFlight();", 10);
+			// setInterval broken in mozilla x86_64 in some circumstances, see
+			// <a href="https://bugzilla.mozilla.org/show_bug.cgi?id=344439">https://bugzilla.mozilla.org/show_bug.cgi?id=344439</a>
+			// using setTimeout instead
+			this.inFlightTimer = setTimeout("dojo.io.XMLHTTPTransport.watchInFlight();", 10);
 		}
 	}
 
 	this.watchInFlight = function(){
+		this.inFlightTimer = null;
 		for(var x=this.inFlight.length-1; x>=0; x--){
 			var tif = this.inFlight[x];
 			if(!tif){ this.inFlight.splice(x, 1); continue; }
@@ -394,12 +398,10 @@ dojo.io.XMLHTTPTransport = new function(){
 				// remove it so we can clean refs
 				this.inFlight.splice(x, 1);
 				doLoad(tif.req, tif.http, tif.url, tif.query, tif.useCache);
-				if(this.inFlight.length == 0){
-					clearInterval(this.inFlightTimer);
-					this.inFlightTimer = null;
-				}
 			} // FIXME: need to implement a timeout param here!
-		}
+		} 
+		if (this.inFlight.length > 0)
+			this.startWatchingInFlight();
 	}
 
 	var hasXmlHttp = dojo.hostenv.getXmlhttpObject() ? true : false;
