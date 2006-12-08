@@ -428,7 +428,7 @@ HippoControl::start(BSTR serverUrl)
     serverName.Append(L":");
 
     WCHAR buffer[16];
-    StringCchPrintfW(buffer, sizeof(buffer), L"%d", serverUrlParser.getPort());
+    StringCchPrintfW(buffer, sizeof(buffer)/sizeof(buffer[0]), L"%d", serverUrlParser.getPort());
 
     serverName.Append(buffer);
 
