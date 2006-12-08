@@ -5,6 +5,7 @@
     
     <target name="compile">
     	<ant dir="taste" target="build"/>
+        <ant dir="mediarss" target="all"/>
         <ant dir="server" target="build"/>
     	<!-- jive has a weird ant file -->
         <ant dir="wildfire/" antfile="build/build.xml" target="plugins">    	
@@ -38,7 +39,8 @@
     </target>
 
     <target name="clean">
-		<ant dir="server" target="clean"/>
+	<ant dir="mediarss" target="clean"/>
+	<ant dir="server" target="clean"/>
     	<ant dir="taste" target="clean"/>
         <ant dir="wildfire/" antfile="build/build.xml" target="clean"/>    	
         <ant dir="imbot" target="clean"/>
