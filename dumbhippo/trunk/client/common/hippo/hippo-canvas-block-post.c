@@ -319,6 +319,36 @@ on_block_post_post_changed(HippoBlock *block,
 }
 
 static void
+on_block_post_recent_messages_changed(HippoBlock *block,
+                                      GParamSpec *arg, /* null when first calling this */
+                                      void       *data)
+{
+    HippoCanvasBlockPost *canvas_block_post = HIPPO_CANVAS_BLOCK_POST(data);
+    HippoChatMessage *last_message;
+    GSList *messages;
+
+    last_message = NULL;
+    messages = NULL;
+    g_object_get(G_OBJECT(block),
+                 "recent-messages", &messages,
+                 NULL);
+        
+    if (messages)
+        last_message = messages->data;
+    
+    g_object_set(G_OBJECT(canvas_block_post->chat_preview),
+                 "recent-messages", messages,
+                 NULL);
+    g_object_set(G_OBJECT(canvas_block_post->single_message_preview),
+                 "message", last_message,
+                 NULL);
+        
+    canvas_block_post->have_messages = last_message != NULL;
+
+    hippo_canvas_block_post_update_visibility(canvas_block_post);
+}
+
+static void
 hippo_canvas_block_post_set_block(HippoCanvasBlock *canvas_block,
                                   HippoBlock       *block)
 {
@@ -331,6 +361,9 @@ hippo_canvas_block_post_set_block(HippoCanvasBlock *canvas_block,
         g_signal_handlers_disconnect_by_func(G_OBJECT(canvas_block->block),
                                              G_CALLBACK(on_block_post_post_changed),
                                              canvas_block);
+        g_signal_handlers_disconnect_by_func(G_OBJECT(canvas_block->block),
+                                             G_CALLBACK(on_block_post_recent_messages_changed),
+                                             canvas_block);
     }
     
     /* Chain up to get the block really changed */
@@ -342,7 +375,13 @@ hippo_canvas_block_post_set_block(HippoCanvasBlock *canvas_block,
                          G_CALLBACK(on_block_post_post_changed),
                          canvas_block);
         
+        g_signal_connect(G_OBJECT(canvas_block->block),
+                         "notify::recent-messages",
+                         G_CALLBACK(on_block_post_recent_messages_changed),
+                         canvas_block);
+        
         on_block_post_post_changed(canvas_block->block, NULL, canvas_block);
+        on_block_post_recent_messages_changed(canvas_block->block, NULL, canvas_block);
     }
 }
 
@@ -350,7 +389,6 @@ static void
 update_post(HippoCanvasBlockPost *canvas_block_post)
 {
     HippoPost *post;
-    HippoChatMessage *last_message = NULL;
     
     post = canvas_block_post->post;
 
@@ -368,11 +406,8 @@ update_post(HippoCanvasBlockPost *canvas_block_post)
                      NULL);
         g_object_set(G_OBJECT(canvas_block_post->chat_preview),
                      "chat-id", NULL,
-                     "chat-room", NULL,
                      NULL);
     } else {
-        HippoChatRoom *room;
-        
         hippo_canvas_block_set_title(HIPPO_CANVAS_BLOCK(canvas_block_post),
                                      hippo_post_get_title(post),
                                      hippo_post_get_url(post), 
@@ -387,45 +422,11 @@ update_post(HippoCanvasBlockPost *canvas_block_post)
                      "text", hippo_post_get_description(post),
                      NULL);
 
-        /* For the chat preview, prefer to use the chat room if
-         * we have one, otherwise use the static recent messages
-         * summary.
-         */
-        
-        room = hippo_post_get_chat_room(post);
         g_object_set(G_OBJECT(canvas_block_post->chat_preview),
                      "chat-id", hippo_post_get_guid(post),
-                     "chat-room", room,
                      NULL);
-
-        if (room) {
-            last_message = hippo_chat_room_get_last_message(room);
-        } else {
-            /* We need to use recent messages summary from the block instead */
-            
-            HippoBlock *block = HIPPO_CANVAS_BLOCK(canvas_block_post)->block;
-            GSList *messages;
-            messages = NULL;
-            g_object_get(G_OBJECT(block), "recent-messages", &messages, NULL);
-
-            if (messages)
-                last_message = messages->data;
-            
-            while (messages) {
-                g_object_set(G_OBJECT(canvas_block_post->chat_preview),
-                             "recent-message", messages->data,
-                             NULL);
-                messages = messages->next;
-            }
-        }
     }
     
-    g_object_set(G_OBJECT(canvas_block_post->single_message_preview),
-                 "message", last_message,
-                 NULL);
-        
-    canvas_block_post->have_messages = last_message != NULL;
-
     hippo_canvas_block_post_update_visibility(canvas_block_post);
 }
 
@@ -578,7 +579,7 @@ hippo_canvas_block_post_update_visibility(HippoCanvasBlockPost *block_post)
                  "size-mode", canvas_block->expanded ? HIPPO_CANVAS_SIZE_WRAP_WORD : HIPPO_CANVAS_SIZE_ELLIPSIZE_END,
                  NULL);
     
-    show_single_message = !canvas_block->expanded && stack_reason == HIPPO_STACK_CHAT_MESSAGE;
+    show_single_message = !canvas_block->expanded && stack_reason == HIPPO_STACK_CHAT_MESSAGE && block_post->have_messages;
     show_reason = stack_reason == HIPPO_STACK_VIEWER_COUNT;
     show_description = canvas_block->expanded || (!show_single_message && !show_reason);
 

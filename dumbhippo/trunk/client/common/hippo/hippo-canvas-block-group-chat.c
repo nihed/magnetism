@@ -203,27 +203,15 @@ hippo_canvas_block_group_chat_constructor (GType                  type,
 static void
 update_chat_messages(HippoCanvasBlockGroupChat *canvas_group_chat)
 {
-    HippoGroup *group;
     HippoBlock *block;
     HippoCanvasBlock *canvas_block;
     HippoChatMessage *last_message = NULL;
-    HippoChatRoom *room;
+    GSList *messages;
     
     canvas_block = HIPPO_CANVAS_BLOCK(canvas_group_chat);
     block = canvas_block->block;
     g_assert(block != NULL);
-    group = NULL;
-    g_object_get(G_OBJECT(block), "group", &group, NULL);    
 
-    if (group == NULL) {  /* should only happen transiently if at all */
-        /* unset all the chat preview */
-        g_object_set(G_OBJECT(canvas_group_chat->chat_preview),
-                     "chat-id", NULL,
-                     "chat-room", NULL,
-                     NULL);
-        return;
-    }
-    
     /* FIXME the title should probably be something like "N people chatting" or
      * "N messages" but we don't have that info yet
      */
@@ -231,36 +219,14 @@ update_chat_messages(HippoCanvasBlockGroupChat *canvas_group_chat)
                                  "New chat activity",
                                  "Click to join group chat", FALSE);
     
-    /* For the chat preview, prefer to use the chat room if
-     * we have one, otherwise use the static recent messages
-     * summary.
-     */
+    g_object_get(G_OBJECT(block), "recent-messages", &messages, NULL);
+    
+    if (messages)
+        last_message = messages->data;
 
-    room = hippo_group_get_chat_room(group);
     g_object_set(G_OBJECT(canvas_group_chat->chat_preview),
-                 "chat-id", hippo_entity_get_guid(HIPPO_ENTITY(group)),
-                 "chat-room", room,
+                 "recent-messages", messages,
                  NULL);
-    
-    if (room) {
-        last_message = hippo_chat_room_get_last_message(room);
-    } else {
-        /* We need to use recent messages summary from the block instead */
-        GSList *messages;
-
-        g_object_get(G_OBJECT(block), "recent-messages", &messages, NULL);
-        
-        if (messages)
-            last_message = messages->data;
-
-        while (messages) {
-            g_object_set(G_OBJECT(canvas_group_chat->chat_preview),
-                         "recent-message", messages->data,
-                         NULL);
-            messages = messages->next;
-        }
-    }
-    
     g_object_set(G_OBJECT(canvas_group_chat->single_message_preview),
                  "message", last_message,
                  NULL);
@@ -268,8 +234,6 @@ update_chat_messages(HippoCanvasBlockGroupChat *canvas_group_chat)
     canvas_group_chat->have_messages = last_message != NULL;
 
     hippo_canvas_block_group_update_visibility(canvas_group_chat);
-
-    g_object_unref(group);
 }
 
 static void
@@ -286,11 +250,13 @@ on_group_changed(HippoBlock *block,
     g_object_get(G_OBJECT(block), "group", &group, NULL);
 
     if (group == NULL) {
-        /* can't think of much sensible to do here, presumably it will
-         * get set back to non-null later
-         */
+        g_object_set(G_OBJECT(canvas_group_chat->chat_preview),
+                     "chat-id", NULL,
+                     NULL);
     } else {
-        update_chat_messages(canvas_group_chat);
+        g_object_set(G_OBJECT(canvas_group_chat->chat_preview),
+                     "chat-id", hippo_entity_get_guid(HIPPO_ENTITY(group)),
+                     NULL);
                                      
         hippo_canvas_block_set_sender(HIPPO_CANVAS_BLOCK(canvas_group_chat),
                                       hippo_entity_get_guid(HIPPO_ENTITY(group)));

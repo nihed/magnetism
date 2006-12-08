@@ -88,7 +88,7 @@ enum {
     PROP_CHAT_ROOM,
     PROP_CHAT_ID,
     PROP_ACTIONS,
-    PROP_RECENT_MESSAGE,
+    PROP_RECENT_MESSAGES,
     PROP_CHATTING_COUNT
 };
 
@@ -167,11 +167,11 @@ hippo_canvas_chat_preview_class_init(HippoCanvasChatPreviewClass *klass)
                                                      G_PARAM_READABLE | G_PARAM_WRITABLE));
     
     g_object_class_install_property(object_class,
-                                    PROP_RECENT_MESSAGE,
-                                    g_param_spec_pointer("recent-message",
+                                    PROP_RECENT_MESSAGES,
+                                    g_param_spec_pointer("recent-messages",
                                                          _("Recent Message"),
-                                                         _("A recent message to consider displaying"),
-                                                         G_PARAM_WRITABLE));
+                                                         _("A list of recent messages"),
+                                                         G_PARAM_READABLE | G_PARAM_WRITABLE));
     
 }
 
@@ -241,10 +241,14 @@ hippo_canvas_chat_preview_set_property(GObject         *object,
             hippo_canvas_chat_preview_set_actions(chat_preview, new_actions);
         }
         break;
-    case PROP_RECENT_MESSAGE:
+    case PROP_RECENT_MESSAGES:
         {
-            HippoChatMessage *message = (HippoChatMessage*) g_value_get_pointer(value);
-            hippo_canvas_chat_preview_add_recent_message(chat_preview, message);
+            GSList *messages = (GSList *) g_value_get_pointer(value);
+            GSList *l;
+
+            clear_recent_messages(chat_preview);
+            for (l = messages; l; l = l->next)
+                hippo_canvas_chat_preview_add_recent_message(chat_preview, l->data);
         }
         break;
     case PROP_CHATTING_COUNT:
@@ -280,7 +284,9 @@ hippo_canvas_chat_preview_get_property(GObject         *object,
     case PROP_CHATTING_COUNT:
         g_value_set_int(value, chat_preview->chatting_count);
         break;
-    case PROP_RECENT_MESSAGE: /* it's not readable */
+    case PROP_RECENT_MESSAGES:
+        g_value_set_pointer(value, chat_preview->recent_messages);
+        break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
         break;

@@ -2889,20 +2889,10 @@ process_room_message(HippoConnection *connection,
     room = hippo_data_cache_lookup_chat_room(connection->cache, chat_id, NULL);
     
     if (!room) {
-        g_debug("hippo-connection::process_room_message no room");
-        if ((kind == HIPPO_CHAT_KIND_POST) || (kind == HIPPO_CHAT_KIND_GROUP)) {
-            // we don't need to check here if the group or post exists, because we 
-            // want to create a chat room and load details for it in any case;
-            // if the group or post is already around, we will associate the chat room with
-            // it immediately in hippo_data_cache_ensure_chat_room; if the group or post
-            // is not around we'll get the details for it when we get a response 
-            // with the chat room info, and create it and the association then
-            room = hippo_data_cache_ensure_chat_room(connection->cache, chat_id, kind);
-        } else {
-            // spontaneous messages that aren't about posts or groups we just want to ignore
-            result = PROCESS_MESSAGE_CONSUME;
-            goto out;
-        }
+        // Just ignore spontaneous messages; old versions of the server sent them
+        // for notifications we now do via the block system
+        result = PROCESS_MESSAGE_CONSUME;
+        goto out;
     }
 
     is_history_message = FALSE;
