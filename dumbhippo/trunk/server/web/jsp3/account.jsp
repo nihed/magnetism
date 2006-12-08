@@ -32,6 +32,8 @@
         <c:set var="browseInputSize" value="0"/>
         <c:set var="browseInputClass" value="dh-hidden-file-upload"/>
     </c:when>
+    <%-- This is ok here, but don't use browser.firefox on the anonymous pages --%>
+    <%-- for which we use a single cache for all gecko browsers. --%>
     <c:when test="${browser.firefox && browser.windows}">
         <c:set var="browseButton" value="/images3/${buildStamp}/browse_ff.gif"/>   
         <c:set var="browseInputSize" value="1"/>  

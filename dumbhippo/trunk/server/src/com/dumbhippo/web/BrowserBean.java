@@ -16,12 +16,12 @@ public class BrowserBean implements Serializable {
 	private static final Logger logger = GlobalSetup.getLogger(BrowserBean.class);
 
 	private enum OS { Mac, Windows, Linux, Unknown };
-	private enum Browser { Khtml, Gecko, Firefox, Opera, IE, Unknown };
+	private enum Browser { Khtml, Gecko, Opera, IE, Unknown };
 	private enum Distribution { Fedora5, Fedora6, Unknown };
 	
 	private OS os;
 	private Browser browser;
-	private Browser geckoBrowser;
+	private boolean isFirefox;
 	private Distribution distribution;
 	private int browserVersion;
 	
@@ -33,6 +33,7 @@ public class BrowserBean implements Serializable {
 		
 		os = OS.Unknown;
 		browser = Browser.Unknown;
+		isFirefox = false;
 		browserVersion = 0;
 				
 		String userAgent = request.getHeader("User-Agent");
@@ -82,7 +83,7 @@ public class BrowserBean implements Serializable {
 				}
 			}
 			if (userAgent.contains("Firefox")) 
-				geckoBrowser = Browser.Firefox;
+				isFirefox = true;
 		} else if (userAgent.contains("Opera")) {
 			browser = Browser.Opera;
 		} else if (os == OS.Windows && userAgent.contains("MSIE 5.0")) {
@@ -194,8 +195,10 @@ public class BrowserBean implements Serializable {
 		return isGecko() && browserVersion >= 15;
 	}
 	
+	// This method should not be used to determine html content for 
+	// anonymous pages for which we use a single cache for all gecko browsers.
 	public boolean isFirefox() {
-		return geckoBrowser == Browser.Firefox;
+		return isFirefox;
 	}
 
 	public boolean isIe() {
