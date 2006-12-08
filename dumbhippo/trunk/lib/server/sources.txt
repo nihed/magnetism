@@ -1,1 +1,3 @@
-mediarss-0.2.jar http://wiki.java.net/bin/view/Javawsxml/MediaRSS
+# An example, no longer used
+# mediarss-0.2.jar http://wiki.java.net/bin/view/Javawsxml/MediaRSS
+
