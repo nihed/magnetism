@@ -68,6 +68,9 @@ public class PollingTaskPersistenceBean implements PollingTaskPersistence {
 						lastExecuted = new Date(task.getLastExecuted());
 					stats.setLastExecuted(lastExecuted);
 			
+					// Fixup for a bug
+					if (task.getPeriodicityAverage() < 0)
+						task.setPeriodicityAverage(task.getFamily().getDefaultPeriodicity());
 					stats.setPeriodicityAverage(task.getPeriodicityAverage());
 					task.flagClean();
 				}

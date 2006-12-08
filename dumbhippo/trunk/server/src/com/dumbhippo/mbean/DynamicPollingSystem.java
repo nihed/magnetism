@@ -380,7 +380,7 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 		}
 		
 		private double exponentialAverage(double prevAvg, double current, double alpha) {
-			return prevAvg - (alpha * (current - prevAvg)); 
+			return prevAvg + (alpha * (current - prevAvg)); 
 		}
 		
 		private void recalculateTaskStats(PollingTask task, PollingTaskExecutionResult result) {
