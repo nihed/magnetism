@@ -44,6 +44,7 @@ import com.sun.syndication.io.ModuleParser;
 import org.jdom.Element;
 import org.jdom.Namespace;
 
+import java.net.MalformedURLException;
 import java.net.URL;
 
 import java.util.ArrayList;
@@ -361,6 +362,18 @@ public class MediaModuleParser implements ModuleParser {
             i++) {
                 try {
                     Element thumb = (Element) thumbnails.get(i);
+                    String urlString = thumb.getAttributeValue("url");
+                    if (urlString == null) {
+                    	LOG.log(Level.WARNING, "thumbnail tag missing required url attribute");
+                    	continue;
+                    }
+                    URL url;
+					try {
+						url = new URL(urlString);
+					} catch (MalformedURLException e1) {
+                    	LOG.log(Level.WARNING, "url attribute of thumbnail tag invalid");
+                    	continue;
+					}
                     Time t = (thumb.getAttributeValue("time") == null) ? null
                             : new Time(thumb.getAttributeValue(
                             "time"));
@@ -368,10 +381,8 @@ public class MediaModuleParser implements ModuleParser {
                     ? null : new Integer(thumb.getAttributeValue("width"));
                     Integer height = (thumb.getAttributeValue("height") == null)
                     ? null : new Integer(thumb.getAttributeValue("height"));
-                    values.add(new Thumbnail(
-                            new URL(thumb.getAttributeValue("url")), width,
-                            height, t));
-                } catch (Exception ex) {
+                    values.add(new Thumbnail(url, width, height, t));
+                } catch (RuntimeException ex) {
                     LOG.log(Level.WARNING, "Exception parsing thumbnail tag.",
                             ex);
                 }

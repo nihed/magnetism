@@ -5,6 +5,7 @@
 	<classpathentry kind="src" path="imbot/src/java"/>
 	<classpathentry kind="src" path="hungry/src/test/java"/>
 	<classpathentry kind="src" path="cluster/balancer/src"/>
+	<classpathentry kind="src" path="mediarss/src/java"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER">
 		<accessrules>
 			<accessrule kind="accessible" pattern="**/awt/image/**"/>
@@ -88,7 +89,6 @@
 	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/server/hibernate3.jar"/>
 	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/server/hibernate-annotations.jar"/>
 	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/server/jboss-cache.jar"/>
-	<classpathentry kind="var" path="HIPPO_TRUNK_LIB/server/mediarss-0.2.jar"/>
 	<classpathentry kind="var" path="JBOSS_HOME/server/default/deploy/jbossweb-tomcat55.sar/tomcat-util.jar"/>
 	<classpathentry kind="output" path="eclipse-build"/>
 </classpath>
