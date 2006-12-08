@@ -2,6 +2,7 @@ package com.dumbhippo.services.caches;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;
@@ -72,10 +73,12 @@ public class CacheFactoryBean implements CacheFactory {
 			// The method passed in is the one declared in the proxy class, but to get the annotations we need the 
 			// one declared in the real class
 			
-			final Method instanceMethod = instance.getClass().getMethod(proxyMethod.getName(), (Class[]) proxyMethod.getParameterTypes());
-			
-			if (instanceMethod == null)
+			final Method instanceMethod;
+			try {
+				instanceMethod = instance.getClass().getMethod(proxyMethod.getName(), (Class[]) proxyMethod.getParameterTypes());
+			} catch (NoSuchMethodException e) {
 				throw new RuntimeException("could not find same method on delegate object, params " + Arrays.toString(proxyMethod.getParameterTypes()));
+			}
 			
 			//logger.debug("Replacing method with method on delegate instance {}.{}", instanceMethod.getDeclaringClass().getName(),
 			//		instanceMethod.getName());
@@ -98,20 +101,30 @@ public class CacheFactoryBean implements CacheFactory {
 				txType = TransactionAttributeType.REQUIRED;
 			}
 			
-			switch (txType) {
-			case MANDATORY:
-				EJBUtil.assertHaveTransaction();
-				return instanceMethod.invoke(instance, args);
-			case NEVER:
-				EJBUtil.assertNoTransaction();
-				return instanceMethod.invoke(instance, args);
-			case NOT_SUPPORTED:
-				throw new RuntimeException("we don't know how to suspend a transaction here");
-				
-			case REQUIRED:
-				if (EJBUtil.isTransactionActive()) {
+			try {
+				switch (txType) {
+				case MANDATORY:
+					EJBUtil.assertHaveTransaction();
 					return instanceMethod.invoke(instance, args);
-				} else {
+				case NEVER:
+					EJBUtil.assertNoTransaction();
+					return instanceMethod.invoke(instance, args);
+				case NOT_SUPPORTED:
+					throw new RuntimeException("we don't know how to suspend a transaction here");
+					
+				case REQUIRED:
+					if (EJBUtil.isTransactionActive()) {
+						return instanceMethod.invoke(instance, args);
+					} else {
+						return runner.runTaskInNewTransaction(new Callable<Object>() {
+		
+							public Object call() throws Exception {
+								return instanceMethod.invoke(instance, args);
+							}
+							
+						});
+					}
+				case REQUIRES_NEW:
 					return runner.runTaskInNewTransaction(new Callable<Object>() {
 	
 						public Object call() throws Exception {
@@ -119,20 +132,22 @@ public class CacheFactoryBean implements CacheFactory {
 						}
 						
 					});
+				case SUPPORTS:
+					return instanceMethod.invoke(instance, args);
 				}
-			case REQUIRES_NEW:
-				return runner.runTaskInNewTransaction(new Callable<Object>() {
-
-					public Object call() throws Exception {
-						return instanceMethod.invoke(instance, args);
-					}
-					
-				});
-			case SUPPORTS:
-				return instanceMethod.invoke(instance, args);
+				
+				throw new RuntimeException("Unhandled transaction attribute " + txType);
+			} catch (InvocationTargetException e) {
+				// The method itself threw an exception, propagate it back
+				throw e.getCause();
+			} catch (IllegalArgumentException e) {
+				throw new RuntimeException(e);
+			} catch (IllegalAccessException e) {
+				throw new RuntimeException(e);
+			} catch (Exception e) {
+				// Should not be hit, runTaskInNewTransaction should only throw one of the above
+				throw new RuntimeException("Unexpected exception invoking method with transaction", e);
 			}
-			
-			throw new RuntimeException("Unhandled transaction attribute " + txType);
 		}
 	}
 	
