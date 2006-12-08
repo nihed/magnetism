@@ -322,8 +322,10 @@ public class MediaModuleParser implements ModuleParser {
             for (int i = 0; (ratings != null) && (i < ratings.size()); i++) {
                 try {
                     Element rat = (Element) ratings.get(i);
-                    values.add(new Rating(rat.getAttributeValue("scheme"),
-                            rat.getText()));
+                    String scheme = rat.getAttributeValue("scheme");
+                    if (scheme == null)
+                    	scheme = "urn:simple";
+                    values.add(new Rating(scheme, rat.getText()));
                 } catch (Exception ex) {
                     LOG.log(Level.WARNING, "Exception parsing rating tag.", ex);
                 }
