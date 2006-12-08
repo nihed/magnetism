@@ -401,9 +401,13 @@ public class FacebookTrackerBean implements FacebookTracker {
 
 	public void handleExpiredSessionKey(long facebookAccountId) {
 		FacebookAccount attachedFacebookAccount = em.find(FacebookAccount.class, facebookAccountId);
-		attachedFacebookAccount.setSessionKeyValid(false);
-		User user = attachedFacebookAccount.getExternalAccount().getAccount().getOwner();
-		notifier.onFacebookEvent(user, getLoginStatusEvent(attachedFacebookAccount, false));	
+		handleExpiredSessionKey(attachedFacebookAccount);	
+	}
+	
+	public void handleExpiredSessionKey(FacebookAccount facebookAccount) {
+		facebookAccount.setSessionKeyValid(false);
+		User user = facebookAccount.getExternalAccount().getAccount().getOwner();
+		notifier.onFacebookEvent(user, getLoginStatusEvent(facebookAccount, false));	
 	}
 	
 	private FacebookEvent getLoginStatusEvent(FacebookAccount facebookAccount, boolean signedIn) {

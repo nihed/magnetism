@@ -216,7 +216,7 @@ public enum ExternalAccountType {
 		
 		@Override
 		public boolean getHasAccountInfo(String handle, String extra) {
-			return handle != null;
+			return extra != null;
 		}
 		
 		@Override

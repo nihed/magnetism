@@ -5,6 +5,7 @@ import java.util.List;
 import javax.ejb.Local;
 
 import com.dumbhippo.persistence.CachedFacebookPhotoData;
+import com.dumbhippo.persistence.FacebookAccount;
 import com.dumbhippo.server.views.UserViewpoint;
 
 @Local
@@ -24,4 +25,6 @@ public interface FacebookTracker {
 	public void updateAlbums(long facebookAccountId);
 	
 	public void handleExpiredSessionKey(long facebookAccountId);
+	
+	public void handleExpiredSessionKey(FacebookAccount facebookAccount);
 }

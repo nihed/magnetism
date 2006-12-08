@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.ExternalAccountType;
+import com.dumbhippo.persistence.FacebookAccount;
 import com.dumbhippo.persistence.Sentiment;
 import com.dumbhippo.server.ClaimVerifier;
 import com.dumbhippo.server.Configuration;
@@ -67,6 +68,15 @@ public class AccountPage {
 			person = personViewer.getPersonView(signin.getViewpoint(), signin.getUser(), PersonViewExtra.ALL_RESOURCES);
 		
 		return person;
+	}
+	
+	public boolean isLoggedInToFacebook() {
+		try {
+		    FacebookAccount facebookAccount = facebookSystem.lookupFacebookAccount(signin.getViewpoint(), signin.getUser()); 
+		    return facebookAccount.isSessionKeyValid();
+		} catch (NotFoundException e) {
+			return false;
+		}
 	}
 
 	public boolean getCanRemoveEmails() {

@@ -119,7 +119,11 @@ public interface HttpMethods {
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "address" })
 	public void doRemoveClaimAim(UserViewpoint viewpoint, String address) throws IOException, HumanVisibleException;	
-	
+
+	@HttpContentTypes(HttpResponseData.NONE)
+	@HttpParams( {} )	
+	public void doDisableFacebookSession(UserViewpoint viewpoint) throws IOException, HumanVisibleException;
+
 	@HttpContentTypes(HttpResponseData.NONE)
 	@HttpParams( { "disabled" })
 	@HttpOptions( allowDisabledAccount = true )

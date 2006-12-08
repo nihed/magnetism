@@ -54,6 +54,7 @@ import com.dumbhippo.persistence.Contact;
 import com.dumbhippo.persistence.EmailResource;
 import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.ExternalAccountType;
+import com.dumbhippo.persistence.FacebookAccount;
 import com.dumbhippo.persistence.Feed;
 import com.dumbhippo.persistence.FeedEntry;
 import com.dumbhippo.persistence.Group;
@@ -76,6 +77,8 @@ import com.dumbhippo.server.Character;
 import com.dumbhippo.server.ClaimVerifier;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.ExternalAccountSystem;
+import com.dumbhippo.server.FacebookSystem;
+import com.dumbhippo.server.FacebookTracker;
 import com.dumbhippo.server.FeedSystem;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.HippoProperty;
@@ -177,6 +180,12 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	
 	@EJB
 	private Stacker stacker;
+	
+	@EJB
+	private FacebookSystem facebookSystem;
+
+	@EJB
+	private FacebookTracker facebookTracker;
 	
 	@PersistenceContext(unitName = "dumbhippo")
 	private EntityManager em;
@@ -580,6 +589,15 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		if (resource == null)
 			return; // doesn't exist anyhow
 		identitySpider.removeVerifiedOwnershipClaim(viewpoint, viewpoint.getViewer(), resource);
+	}
+	
+	public void doDisableFacebookSession(UserViewpoint viewpoint) throws IOException, HumanVisibleException {
+		try {
+		    FacebookAccount facebookAccount = facebookSystem.lookupFacebookAccount(viewpoint, viewpoint.getViewer());
+		    facebookTracker.handleExpiredSessionKey(facebookAccount);
+		} catch (NotFoundException e) {
+			throw new RuntimeException("The viewer does not have a Facebook account registered on Mugshot.", e);
+		}	
 	}
 
 	public void doRemoveClaimAim(UserViewpoint viewpoint, String address) throws IOException, HumanVisibleException {

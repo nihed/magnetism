@@ -212,7 +212,14 @@
                         </td>
                     </tr>     
 				    <dht:formTableRow label="Facebook" icon="/images3/${buildStamp}/favicon_facebook.png">
-					    <a href="http://api.facebook.com/login.php?api_key=${account.facebookApiKey}&next=/account" target="_blank">Log in to receive updates</a>
+				        <c:choose>
+				            <c:when test="${account.loggedInToFacebook}">
+				                You are logged in <a href="javascript:dh.account.disableFacebookSession();">Log out</a>
+				            </c:when>
+				            <c:otherwise>
+				                <a href="http://api.facebook.com/login.php?api_key=${account.facebookApiKey}&next=/account">Log in to receive updates</a>
+				            </c:otherwise>
+				        </c:choose>    			            					   
 				    </dht:formTableRow>
 				    <c:forEach items="${account.supportedAccounts.list}" var="supportedAccount">
                         <dht:formTableRow label="${supportedAccount.siteName}" icon="/images3/${buildStamp}/${supportedAccount.iconName}">

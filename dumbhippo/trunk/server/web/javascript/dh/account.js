@@ -305,6 +305,17 @@ dh.account.onDeliciousLoveSaved = function(value) {
 	  	    	 }); 
 }
 
+dh.account.disableFacebookSession = function() {   
+  	dh.server.doPOST("disablefacebooksession",
+			 	     {},
+  					 function(type, data, http) {
+  					 	dh.util.refresh();
+					 },
+					 function(type, error, http) {
+						 alert("Couldn't disabled the Facebook session.");
+					 });    
+}
+
 dh.account.createMyspaceEntry = function() {
     dh.account.myspaceEntry = new dh.lovehate.Entry('dhMySpace', 'Enter your Myspace name', dh.account.initialMyspaceName,
 							'I despise Tom and his space', dh.account.initialMyspaceHateQuip);
