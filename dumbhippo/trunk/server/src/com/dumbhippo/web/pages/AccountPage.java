@@ -235,6 +235,19 @@ public class AccountPage {
 		return getExternalAccountHandle(ExternalAccountType.DELICIOUS);
 	}
 	
+	public String getTwitterSentiment() {
+		return getExternalAccountSentiment(ExternalAccountType.TWITTER);
+	}
+	
+	public String getTwitterHateQuip() {
+		return getExternalAccountHateQuip(ExternalAccountType.TWITTER);
+	}
+	
+	public String getTwitterName() {
+		return getExternalAccountHandle(ExternalAccountType.TWITTER);
+	}
+	
+	
 	/**
 	 * Returns a list of supported account views; with the ExternalAccount information for the
 	 * user filled in for the account types for which the user has accounts.

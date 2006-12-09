@@ -122,6 +122,11 @@ dh.account.setDeliciousName = function(name, loadFunc, errorFunc) {
 				     { "urlOrName" : name },
 						loadFunc, errorFunc);
 }
+dh.account.setTwitterName = function(name, loadFunc, errorFunc) {
+   	dh.server.doXmlMethod("settwittername",
+				     { "urlOrName" : name },
+						loadFunc, errorFunc);
+}
 dh.account.setRhapsodyUrl = function(name, loadFunc, errorFunc) {
    	dh.server.doXmlMethod("setrhapsodyhistoryfeed",
    	                      { "url" : name },
@@ -305,6 +310,31 @@ dh.account.onDeliciousLoveSaved = function(value) {
 	  	    	 }); 
 }
 
+dh.account.onTwitterLoveSaved = function(value) {
+	var entry = dh.account.twitterEntry;
+	var oldMode = entry.getMode();
+	entry.setBusy();
+  	dh.account.setTwitterName(value,
+	 	    	 function(childNodes, http) {
+				    var username = null;
+					var i = 0;
+					for (i = 0; i < childNodes.length; ++i) {
+						var child = childNodes.item(i);
+						if (child.nodeType != dojo.dom.ELEMENT_NODE)
+							continue;
+			
+						if (child.nodeName == "username") {
+							username = dojo.dom.textContent(child);
+						}
+	 	    	 	}
+					entry.setLoveValueAlreadySaved(username);
+	 	    	 	entry.setMode('love');
+	  	    	 },
+	  	    	 function(code, msg, http) {
+	  	    	 	alert(msg);
+	  	    	 	entry.setMode(oldMode);
+	  	    	 }); 
+}
 dh.account.disableFacebookSession = function() {   
   	dh.server.doPOST("disablefacebooksession",
 			 	     {},
@@ -315,7 +345,6 @@ dh.account.disableFacebookSession = function() {
 						 alert("Couldn't disabled the Facebook session.");
 					 });    
 }
-
 dh.account.createMyspaceEntry = function() {
     dh.account.myspaceEntry = new dh.lovehate.Entry('dhMySpace', 'Enter your Myspace name', dh.account.initialMyspaceName,
 							'I despise Tom and his space', dh.account.initialMyspaceHateQuip);
@@ -371,6 +400,14 @@ dh.account.createDeliciousEntry = function() {
 	dh.account.deliciousEntry.onLoveSaved = dh.account.onDeliciousLoveSaved;
 	dh.account.deliciousEntry.onHateSaved = dh.account.createExternalAccountOnHateSavedFunc(dh.account.deliciousEntry, 'DELICIOUS');
 	dh.account.deliciousEntry.onCanceled = dh.account.createExternalAccountOnCanceledFunc(dh.account.deliciousEntry, 'DELICIOUS');
+}
+
+dh.account.createTwitterEntry = function() {	
+	dh.account.twitterEntry = new dh.lovehate.Entry('dhTwitter', 'Twitter URL or username', dh.account.initialTwitterName,
+					'And *why* do I care what you\'re doing?', dh.account.initialTwitterHateQuip);
+	dh.account.twitterEntry.onLoveSaved = dh.account.onTwitterLoveSaved;
+	dh.account.twitterEntry.onHateSaved = dh.account.createExternalAccountOnHateSavedFunc(dh.account.twitterEntry, 'TWITTER');
+	dh.account.twitterEntry.onCanceled = dh.account.createExternalAccountOnCanceledFunc(dh.account.twitterEntry, 'TWITTER');
 }
 
 dhAccountInit = function() {
@@ -447,6 +484,7 @@ dhAccountInit = function() {
 	dh.account.createLinkedInEntry();
 	dh.account.createRhapsodyEntry();
 	dh.account.createDeliciousEntry();
+	dh.account.createTwitterEntry();
 }
 
 dojo.event.connect(dojo, "loaded", dj_global, "dhAccountInit");

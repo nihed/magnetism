@@ -83,6 +83,8 @@
 		dh.account.initialRhapsodyHateQuip = <dh:jsString value="${account.rhapsodyHateQuip}"/>;	
 		dh.account.initialDeliciousName = <dh:jsString value="${account.deliciousName}"/>;
 		dh.account.initialDeliciousHateQuip = <dh:jsString value="${account.deliciousHateQuip}"/>;	
+		dh.account.initialTwitterName = <dh:jsString value="${account.twitterName}"/>;
+		dh.account.initialTwitterHateQuip = <dh:jsString value="${account.twitterHateQuip}"/>;	
 	</script>
 </head>
 <dht3:page currentPageLink="account">

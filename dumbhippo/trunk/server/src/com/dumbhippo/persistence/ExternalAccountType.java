@@ -473,6 +473,45 @@ public enum ExternalAccountType {
 		public boolean getHasAccountInfo(String handle, String extra) {
 			return handle != null;
 		}		
+	},
+	TWITTER("Twitter") {
+		@Override
+		public String getIconName() {
+			return "favicon_twitter.png";
+		}
+		
+		@Override
+		public String getLink(String handle, String extra) {
+			return getSiteLink() + "/" + StringUtils.urlEncode(handle);
+		}
+		
+		@Override
+		public String getSiteLink() {
+			return "http://twitter.com";
+		}
+		
+		@Override
+		public String getLinkText(String handle, String extra) {
+			return "My Updates";
+		}
+		
+		@Override
+		public String canonicalizeHandle(String handle) throws ValidationException {
+			handle = super.canonicalizeHandle(handle);
+			if (handle != null) {
+				try {
+					new URL(getLink(handle, null));
+				} catch (MalformedURLException e) {
+					throw new ValidationException("Invalid Twitter username '" + handle + "': " + e.getMessage());
+				}
+			}
+			return handle;
+		}
+		
+		@Override
+		public boolean getHasAccountInfo(String handle, String extra) {
+			return handle != null;
+		}		
 	};
 	
 	private static final Logger logger = GlobalSetup.getLogger(ExternalAccountType.class);	

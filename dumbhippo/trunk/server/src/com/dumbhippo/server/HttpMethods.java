@@ -343,6 +343,10 @@ public interface HttpMethods {
 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
 	@HttpParams( { "urlOrName" })	
 	public void doSetDeliciousName(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException;	
+
+	@HttpContentTypes(HttpResponseData.XMLMETHOD)
+	@HttpParams( { "urlOrName" })	
+	public void doSetTwitterName(XmlBuilder xml, UserViewpoint viewpoint, String urlOrName) throws XmlMethodException;	
 	
 	@HttpContentTypes(HttpResponseData.XMLMETHOD)
 	@HttpParams( { "url" })
