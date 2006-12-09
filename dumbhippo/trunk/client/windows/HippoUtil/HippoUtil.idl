@@ -15,6 +15,7 @@ import "exdisp.idl";
 library HippoUtil {
     interface IHippoChatRoom;
     interface IHippoUIListener;
+    interface IHippoTracker;
 
     [
         uuid(F596AE04-94E7-4cdd-8CD8-5D4361F962E5), // IID_IHippoUI
@@ -25,7 +26,7 @@ library HippoUtil {
     interface IHippoUI : IDispatch
     {
         [id(100), helpstring("Register a browser")]
-        HRESULT RegisterBrowser([in] IWebBrowser2 *browser, [out, retval] DWORD* cookie);
+        HRESULT RegisterBrowser([in] IHippoTracker *tracker, [in] IWebBrowser2 *browser, [out, retval] DWORD* cookie);
         [id(101), helpstring("Unregister a previously registered browser")]
         HRESULT UnregisterBrowser([in] DWORD cookie);
         [id(102), helpstring("Update information about a browser")]
@@ -74,6 +75,16 @@ library HippoUtil {
     [
         uuid(BB761F87-493F-43F5-A1F2-2DDD1045B62F),
         helpstring("DumbHippo User Interface Listener"),
+        dual,
+        oleautomation
+    ]
+    interface IHippoTracker : IDispatch
+    {
+        HRESULT Navigate([in] BSTR url);
+    }
+    [
+        uuid(4C18F53D-DF8A-44f5-97A0-D0A4950EB726), // IID_IHippoTracker
+        helpstring("DumbHippo Web Tracker"),
         dual,
         oleautomation
     ]

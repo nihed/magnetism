@@ -32,6 +32,7 @@ struct HippoBrowserInfo
         return const_cast<IWebBrowser2*>(b);
     }
 
+    HippoPtr<IHippoTracker> tracker;
     HippoPtr<IWebBrowser2> browser;
     HippoBSTR url;
     HippoBSTR title;
@@ -57,7 +58,7 @@ public:
     STDMETHODIMP Invoke(DISPID, REFIID, LCID, WORD, DISPPARAMS *, VARIANT *, EXCEPINFO *, UINT *);
 
     //IHippoUI methods
-    STDMETHODIMP RegisterBrowser(IWebBrowser2 *, DWORD *);
+    STDMETHODIMP RegisterBrowser(IHippoTracker *,IWebBrowser2 *, DWORD *);
     STDMETHODIMP UnregisterBrowser(DWORD);
     STDMETHODIMP UpdateBrowser(DWORD, BSTR, BSTR);
     STDMETHODIMP Quit(DWORD *processId);

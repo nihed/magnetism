@@ -11,8 +11,9 @@
 // Window class for our notification window
 static const TCHAR *CLASS_NAME = TEXT("HippoTrackerClass");
 
-HippoTrackerUpdater::HippoTrackerUpdater(IWebBrowser2 *browser)
+HippoTrackerUpdater::HippoTrackerUpdater(IHippoTracker *tracker, IWebBrowser2 *browser)
 {
+    tracker_ = tracker;
     browser_ = browser;
 
     InitializeCriticalSection(&criticalSection_);
@@ -153,21 +154,21 @@ HippoTrackerUpdater::registerBrowser()
 {
     if (!registered_ && ui_) {
         registered_ = true;
-        HRESULT hr = ui_->RegisterBrowser(browser_, &registerCookie_); // may reenter
+        HRESULT hr = ui_->RegisterBrowser(tracker_, browser_, &registerCookie_); // may reenter
         if (FAILED (hr))
             registered_ = false;
     }
 
     if (!dogfoodRegistered_ && dogfoodUi_) {
         dogfoodRegistered_ = true;
-        HRESULT hr = dogfoodUi_->RegisterBrowser(browser_, &dogfoodRegisterCookie_); // may reenter
+        HRESULT hr = dogfoodUi_->RegisterBrowser(tracker_, browser_, &dogfoodRegisterCookie_); // may reenter
         if (FAILED (hr))
             dogfoodRegistered_ = false;
     }
 
     if (!debugRegistered_ && debugUi_) {
         debugRegistered_ = true;
-        HRESULT hr = debugUi_->RegisterBrowser(browser_, &debugRegisterCookie_); // may reenter
+        HRESULT hr = debugUi_->RegisterBrowser(tracker_, browser_, &debugRegisterCookie_); // may reenter
         if (FAILED (hr))
             debugRegistered_ = false;
     }

@@ -229,11 +229,13 @@ HippoUI::Invoke (DISPID      dispIdMember,
 //////////////////////// IHippoTracker implementation //////////////////////
 
 STDMETHODIMP 
-HippoUI::RegisterBrowser(IWebBrowser2 *browser,
+HippoUI::RegisterBrowser(IHippoTracker *tracker,
+                         IWebBrowser2 *browser,
                          DWORD        *cookie)
 {
     HippoBrowserInfo info;
 
+    info.tracker = tracker;
     info.browser = browser;
     *cookie = info.cookie = ++nextBrowserCookie_;
 
@@ -751,9 +753,7 @@ HippoUI::ShareLinkComplete(BSTR postId, BSTR url)
             HippoBSTR visitUrl;
             getRemoteURL(HippoBSTR(L"visit?post="), &visitUrl);
             visitUrl.Append(postId);
-            VARIANT missing;
-            missing.vt = VT_EMPTY;
-            browsers_[i].browser->Navigate(visitUrl, &missing, &missing, &missing, &missing);
+            browsers_[i].tracker->Navigate(visitUrl);
             break;
         }
     }
