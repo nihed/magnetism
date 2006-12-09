@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.ThreadUtils;
 import com.dumbhippo.server.CachedExternalUpdater;
+import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.util.EJBUtil;
 
 /**
@@ -42,7 +43,8 @@ public abstract class ExternalAccountUpdaterPeriodicJob implements PeriodicJob {
 	}
 	
 	protected boolean enabled() {
-		return true; 
+		Configuration config = EJBUtil.defaultLookup(Configuration.class);		
+		return !config.isFeatureEnabled("pollingTask");		
 	}
 	
 	public void doIt(long sleepTime, int generation, int iteration) throws InterruptedException {

@@ -12,12 +12,6 @@ public class LastFmUpdaterPeriodicJob extends ExternalAccountUpdaterPeriodicJob 
 	public long getFrequencyInMilliseconds() {
 		return POLL_FREQUENCY;
 	}
-	
-	@Override
-	protected boolean enabled() {
-		Configuration config = EJBUtil.defaultLookup(Configuration.class);		
-		return !config.isFeatureEnabled("pollingTask");
-	}
 
 	@Override
 	public String getName() {
