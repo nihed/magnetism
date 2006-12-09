@@ -34,6 +34,7 @@ import com.dumbhippo.services.FlickrPhotosView;
 import com.dumbhippo.services.FlickrPhotosetView;
 import com.dumbhippo.services.FlickrPhotosetsView;
 import com.dumbhippo.services.caches.CacheFactory;
+import com.dumbhippo.services.caches.CacheFactoryBean;
 import com.dumbhippo.services.caches.FlickrPhotosetPhotosCache;
 import com.dumbhippo.services.caches.FlickrUserPhotosCache;
 import com.dumbhippo.services.caches.FlickrUserPhotosetsCache;
@@ -292,8 +293,8 @@ public class FlickrUpdaterBean extends CachedExternalUpdaterBean<FlickrUpdateSta
 		protected PollResult execute() throws Exception {
 			boolean changed = false;
 			FlickrUpdater proxy = EJBUtil.defaultLookup(FlickrUpdater.class);
-			FlickrUserPhotosCache userPhotosCache = EJBUtil.defaultLookup(FlickrUserPhotosCache.class);
-			FlickrUserPhotosetsCache userPhotosetsCache = EJBUtil.defaultLookup(FlickrUserPhotosetsCache.class);
+			FlickrUserPhotosCache userPhotosCache = CacheFactoryBean.defaultLookup(FlickrUserPhotosCache.class);
+			FlickrUserPhotosetsCache userPhotosetsCache = CacheFactoryBean.defaultLookup(FlickrUserPhotosetsCache.class);
 			
 			FlickrPhotosView photosView = userPhotosCache.getSync(flickrId, true);
 			FlickrPhotosetsView photosetsView = userPhotosetsCache.getSync(flickrId, true);

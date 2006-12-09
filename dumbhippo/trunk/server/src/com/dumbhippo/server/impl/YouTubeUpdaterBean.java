@@ -24,6 +24,7 @@ import com.dumbhippo.server.YouTubeUpdater;
 import com.dumbhippo.server.util.EJBUtil;
 import com.dumbhippo.services.YouTubeVideo;
 import com.dumbhippo.services.caches.CacheFactory;
+import com.dumbhippo.services.caches.CacheFactoryBean;
 import com.dumbhippo.services.caches.WebServiceCache;
 import com.dumbhippo.services.caches.YouTubeVideosCache;
 
@@ -151,7 +152,7 @@ public class YouTubeUpdaterBean extends CachedExternalUpdaterBean<YouTubeUpdateS
 		protected PollResult execute() throws Exception {
 			boolean changed = false;
 			YouTubeUpdater proxy = EJBUtil.defaultLookup(YouTubeUpdater.class);
-			YouTubeVideosCache cache = EJBUtil.defaultLookup(YouTubeVideosCache.class);
+			YouTubeVideosCache cache = CacheFactoryBean.defaultLookup(YouTubeVideosCache.class);
 			
 			List<? extends YouTubeVideo> videos = cache.getSync(username, true);
 			changed = proxy.saveUpdatedStatus(username, videos);			
