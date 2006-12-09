@@ -31,6 +31,7 @@ import com.dumbhippo.persistence.Sentiment;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.ExternalAccountSystem;
+import com.dumbhippo.server.FacebookSystemException;
 import com.dumbhippo.server.FacebookTracker;
 import com.dumbhippo.server.Notifier;
 import com.dumbhippo.server.TransactionRunner;
@@ -77,7 +78,7 @@ public class FacebookTrackerBean implements FacebookTracker {
 		cacheFactory.injectCaches(this);
 	}
 	
-	public void updateOrCreateFacebookAccount(UserViewpoint viewpoint, String facebookAuthToken) {
+	public void updateOrCreateFacebookAccount(UserViewpoint viewpoint, String facebookAuthToken) throws FacebookSystemException {
 		ExternalAccount externalAccount = externalAccounts.getOrCreateExternalAccount(viewpoint, ExternalAccountType.FACEBOOK);
 		
 		FacebookAccount facebookAccount;

@@ -14,6 +14,7 @@ import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.MembershipStatus;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.AccountSystem;
+import com.dumbhippo.server.FacebookSystemException;
 import com.dumbhippo.server.FacebookTracker;
 import com.dumbhippo.server.GroupSystem;
 import com.dumbhippo.server.IdentitySpider;
@@ -78,6 +79,7 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 	private Pageable<PersonView> pageableFollowers;
 	
 	private int randomTipIndex = -1;
+	private String facebookErrorMessage;
 	
 	protected AbstractPersonPage() {	
 		groupSystem = WebEJBUtil.defaultLookup(GroupSystem.class);
@@ -85,6 +87,7 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 		facebookTracker = WebEJBUtil.defaultLookup(FacebookTracker.class);
 		stacker = WebEJBUtil.defaultLookup(Stacker.class);
 		lookedUpCurrentTrack = false;
+		facebookErrorMessage = null;
 	}
 	
 	protected IdentitySpider getIdentitySpider() { 
@@ -371,7 +374,15 @@ public abstract class AbstractPersonPage extends AbstractSigninOptionalPage {
 	}
 	
     public void setFacebookAuthToken(String facebookAuthToken) {
-    	// request a session key for the signed in user and set it in the database 
-    	facebookTracker.updateOrCreateFacebookAccount(getUserSignin().getViewpoint(), facebookAuthToken);
+    	try {
+    	    // request a session key for the signed in user and set it in the database 
+    	    facebookTracker.updateOrCreateFacebookAccount(getUserSignin().getViewpoint(), facebookAuthToken);
+    	} catch (FacebookSystemException e) {
+    		facebookErrorMessage = e.getMessage();
+    	}
+    }
+    
+    public String getFacebookErrorMessage() {
+        return facebookErrorMessage;	 	
     }
 }

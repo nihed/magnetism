@@ -483,3 +483,10 @@ div.dh-async-action-link-complete {
 .dh-download-product {
 	color:				#9648BC;
 }
+
+#dhTermsOfUseNote, #dhFacebookNote {
+	background-color:	#ffffcc;
+	color:				#cc0033;
+	font-size:          12px;
+	font-weight:		bold;
+}

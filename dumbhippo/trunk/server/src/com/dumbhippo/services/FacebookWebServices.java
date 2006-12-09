@@ -17,6 +17,7 @@ import com.dumbhippo.persistence.FacebookAlbumData;
 import com.dumbhippo.persistence.FacebookEvent;
 import com.dumbhippo.persistence.FacebookEventType;
 import com.dumbhippo.server.Configuration;
+import com.dumbhippo.server.FacebookSystemException;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.Configuration.PropertyNotFoundException;
 
@@ -50,7 +51,7 @@ public class FacebookWebServices extends AbstractXmlRequest<FacebookSaxHandler> 
 			logger.warn("Facebook API key or secret are not set, can't make Facebook web services calls.");
 	}
 	
-	public void updateSession(FacebookAccount facebookAccount, String facebookAuthToken) {
+	public void updateSession(FacebookAccount facebookAccount, String facebookAuthToken) throws FacebookSystemException {
 		List<String> params = new ArrayList<String>();
 		String methodName = "facebook.auth.getSession";
         params.add("method=" + methodName);
@@ -62,6 +63,11 @@ public class FacebookWebServices extends AbstractXmlRequest<FacebookSaxHandler> 
 		
 		if (handleErrorCode(facebookAccount, handler, methodName)) {
 			return;
+		}
+		
+		if (facebookAccount.getFacebookUserId() != null 
+		    && !facebookAccount.getFacebookUserId().equals(handler.getFacebookUserId())) {
+			throw new FacebookSystemException("We do not support changing your Facebook account yet.");
 		}
 		
 		facebookAccount.setSessionKey(handler.getSessionKey());

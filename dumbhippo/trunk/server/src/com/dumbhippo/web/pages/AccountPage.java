@@ -14,6 +14,7 @@ import com.dumbhippo.server.ClaimVerifier;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.ExternalAccountSystem;
 import com.dumbhippo.server.FacebookSystem;
+import com.dumbhippo.server.FacebookSystemException;
 import com.dumbhippo.server.FacebookTracker;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.NotFoundException;
@@ -48,6 +49,7 @@ public class AccountPage {
 	private FacebookTracker facebookTracker;
 	private FacebookSystem facebookSystem;
 	private String facebookAuthToken;
+	private String facebookErrorMessage;
 	
 	public AccountPage() {
 		personViewer = WebEJBUtil.defaultLookup(PersonViewer.class);
@@ -57,6 +59,7 @@ public class AccountPage {
 		facebookTracker = WebEJBUtil.defaultLookup(FacebookTracker.class);
 		facebookSystem =  WebEJBUtil.defaultLookup(FacebookSystem.class);
 		facebookAuthToken = null;
+		facebookErrorMessage = null;
 	}
 	
 	public SigninBean getSignin() {
@@ -282,8 +285,16 @@ public class AccountPage {
 	
     public void setFacebookAuthToken(String facebookAuthToken) {
     	this.facebookAuthToken = facebookAuthToken;  	
-    	// request a session key for the signed in user and set it in the database 
-    	facebookTracker.updateOrCreateFacebookAccount(signin.getViewpoint(), facebookAuthToken);
+    	try {
+    	    // request a session key for the signed in user and set it in the database 
+    	    facebookTracker.updateOrCreateFacebookAccount(signin.getViewpoint(), facebookAuthToken);
+    	} catch (FacebookSystemException e) {
+            facebookErrorMessage = e.getMessage();		
+    	}
+    }
+    
+    public String getFacebookErrorMessage() {
+        return facebookErrorMessage;	 	
     }
     
     public String getFacebookAuthToken() {

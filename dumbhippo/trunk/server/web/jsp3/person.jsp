@@ -23,8 +23,15 @@
 <dht3:page currentPageLink="person">
 	<dht3:pageSubHeader title="${person.viewedPerson.name}'s ${pageName}">
 		<dht3:randomTip tipIndex="${person.randomTipIndex}" isSelf="${person.self}"/>
-		<dht3:standardStackedPersonPageOptions selected="${pageName}"/>
+		<dht3:standardStackedPersonPageOptions selected="${pageName}"/> 
 	</dht3:pageSubHeader>
+	<%-- this will go away soon, so it's not worth it creating a tag for it --%>
+	<c:if test="${person.facebookErrorMessage != null}">
+        <div id="dhFacebookNote">
+            <c:out value="${person.facebookErrorMessage}"/>
+            <a href="http://facebook.com">Log out from Facebook first</a> to re-login here.
+       </div>                     
+    </c:if> 
 	<dht3:personStack person="${person.viewedPerson}" stackOrder="1" pageable="${person.pageableMugshot}" shortVersion="${person.pageableStack.position > 0}" showFrom="true" homeStack="${person.self}"/>
 	
 	<dht3:shinyBox color="grey">

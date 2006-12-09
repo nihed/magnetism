@@ -11,7 +11,7 @@ import com.dumbhippo.server.views.UserViewpoint;
 @Local
 public interface FacebookTracker {
 
-	public void updateOrCreateFacebookAccount(UserViewpoint viewpoint, String facebookAuthToken);	
+	public void updateOrCreateFacebookAccount(UserViewpoint viewpoint, String facebookAuthToken) throws FacebookSystemException;	
 	
 	public void updateMessageCount(long facebookAccountId);
 	

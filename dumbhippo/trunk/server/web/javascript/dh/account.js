@@ -339,7 +339,9 @@ dh.account.disableFacebookSession = function() {
   	dh.server.doPOST("disablefacebooksession",
 			 	     {},
   					 function(type, data, http) {
-  					 	dh.util.refresh();
+  					    // it is important that we "loose" the authentication token here,
+  					    // otherwise we'll end up processing it again, and re-login the user
+  					 	window.open("/account", "_self", null, true);
 					 },
 					 function(type, error, http) {
 						 alert("Couldn't disabled the Facebook session.");

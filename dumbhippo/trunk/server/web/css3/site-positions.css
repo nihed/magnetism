@@ -590,3 +590,8 @@ div.dh-person-header {
 .dh-thumbnail-block-more {
 	float:				left;
 }
+
+#dhTermsOfUseNote, #dhFacebookNote {
+	padding:            5px;
+	margin-bottom:      5px;
+}

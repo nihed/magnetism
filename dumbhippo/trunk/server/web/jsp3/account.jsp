@@ -208,9 +208,17 @@
 				    </dht:formTableRow>				
 				    <tr valign="top">
 	                    <td colspan="3">
-	                        <c:if test="${account.facebookAuthToken != null}">
-                                <div id="dhFacebookNote">Thank you for logging in to Facebook! You will now be getting Facebook updates.</div>                     
-                            </c:if>   	                
+	                        <c:choose>
+	                            <c:when test="${account.facebookErrorMessage != null}">
+                                    <div id="dhFacebookNote">
+                                        <c:out value="${account.facebookErrorMessage}"/>
+                                        <a href="http://facebook.com">Log out from Facebook first</a> to re-login here.
+                                    </div>                     
+                                </c:when>   	     
+	                            <c:when test="${account.facebookAuthToken != null}">
+                                    <div id="dhFacebookNote">Thank you for logging in to Facebook! You will now be getting Facebook updates.</div>                     
+                                </c:when>
+                            </c:choose>       	                
                         </td>
                     </tr>     
 				    <dht:formTableRow label="Facebook" icon="/images3/${buildStamp}/favicon_facebook.png">
