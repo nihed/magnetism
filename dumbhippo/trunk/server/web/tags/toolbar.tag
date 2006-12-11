@@ -28,8 +28,6 @@ Do It:
 </c:if>
 <c:if test="${!empty publicPageId}">
 	<a class="dh-toolbar-item" href="/person?who=${publicPageId}">Your Public Page</a>
-	&#151;
-	<a class="dh-toolbar-item" href="/music?who=${publicPageId}">Your Music</a>
 </c:if>
 <jsp:doBody/>
 </div>

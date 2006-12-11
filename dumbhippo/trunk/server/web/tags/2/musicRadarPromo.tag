@@ -26,10 +26,6 @@
 		</c:otherwise>
 	</c:choose>
 </c:if>
-<c:if test="${empty musicLink || musicLink}">
-	| 
-	<a class="dh-option-list-option" href="/music">See what people are listening to</a>
-</c:if>
 	</span>
 </td>
 </tr></table>
