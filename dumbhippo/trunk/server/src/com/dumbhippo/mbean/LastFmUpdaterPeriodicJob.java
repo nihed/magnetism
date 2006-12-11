@@ -1,9 +1,7 @@
 package com.dumbhippo.mbean;
 
 import com.dumbhippo.server.CachedExternalUpdater;
-import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.LastFmUpdater;
-import com.dumbhippo.server.util.EJBUtil;
 
 public class LastFmUpdaterPeriodicJob extends ExternalAccountUpdaterPeriodicJob {
 
