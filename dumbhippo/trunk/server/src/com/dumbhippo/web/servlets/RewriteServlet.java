@@ -43,6 +43,7 @@ import com.dumbhippo.ThreadUtils;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.ServerStatus;
+import com.dumbhippo.server.impl.ConfigurationBean;
 import com.dumbhippo.web.DisabledSigninBean;
 import com.dumbhippo.web.JavascriptResolver;
 import com.dumbhippo.web.RewrittenRequest;
@@ -615,6 +616,8 @@ public class RewriteServlet extends HttpServlet {
 		ServletConfig config = getServletConfig();
 		context = config.getServletContext();
 
+		ConfigurationBean.setWebRealPath(new File(context.getRealPath("/")));
+		
 		serverStatus = WebEJBUtil.defaultLookup(ServerStatus.class);
 		
         Configuration configuration = WebEJBUtil.defaultLookup(Configuration.class);

@@ -134,7 +134,7 @@ public class ClaimVerifierBean implements ClaimVerifier {
 			bodyHtml.append("</body>\n</html>\n");
 			
 			mailer.setMessageContent(message, "Add address '" + resource.getEmail() + "' to your Mugshot account",
-					bodyText.toString(), bodyHtml.toString());
+					bodyText.toString(), bodyHtml.toString(), false);
 			mailer.sendMessage(message);
 		} else {
 			AimResource resource;

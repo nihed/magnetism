@@ -38,6 +38,7 @@
 		<pathelement location="/usr/share/java/ant/ant-junit.jar" />
 		<pathelement location="${jboss.root}/client/javax.servlet.jar"/>		
 		<pathelement location="${jboss.root}/client/mail.jar"/>
+		<pathelement location="${jboss.root}/client/activation.jar"/>
 		<pathelement location="${jboss.root}/client/log4j.jar"/>
 		<pathelement location="${jboss.root}/server/default/lib/javax.servlet.jsp.jar"/>
 		<pathelement location="${jboss.root}/server/default/deploy/jbossweb-tomcat55.sar/tomcat-util.jar"/>

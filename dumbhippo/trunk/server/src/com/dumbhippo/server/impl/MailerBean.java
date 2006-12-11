@@ -1,7 +1,11 @@
 package com.dumbhippo.server.impl;
 
+import java.io.File;
 import java.io.UnsupportedEncodingException;
 
+import javax.activation.DataHandler;
+import javax.activation.DataSource;
+import javax.activation.FileDataSource;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.mail.Message;
@@ -142,27 +146,49 @@ public class MailerBean implements Mailer {
 		
 		return createMessage(fromAddress, replyToAddress, toAddress);
 	}
+
+	private MimeBodyPart createHtmlBodyPart(String bodyHtml, boolean htmlUsesMugshotLogo) throws MessagingException {
+		// htmlPart contains htmlMultipart contains htmlMessagePart/htmlImagePart
+		MimeBodyPart htmlPart = new MimeBodyPart();
+		
+		MimeMultipart htmlMultipart = new MimeMultipart("related");
 	
-	public void setMessageContent(MimeMessage message, String subject, String bodyText, String bodyHtml) {
+		MimeBodyPart htmlMessagePart = new MimeBodyPart();
+		htmlMessagePart.setContent(bodyHtml.toString(), "text/html; charset=UTF-8");
+
+		htmlMultipart.addBodyPart(htmlMessagePart);
+		
+		if (htmlUsesMugshotLogo) {
+			MimeBodyPart htmlImagePart = new MimeBodyPart();
+			DataSource fds = new FileDataSource(new File(configuration.getWebRealPath(), "/images3/mugshot70x64.png"));
+			htmlImagePart.setDataHandler(new DataHandler(fds));
+			htmlImagePart.setHeader("Content-ID", "<mugshotlogo>");
+			htmlMultipart.addBodyPart(htmlImagePart);
+		}
+		
+		htmlPart.setContent(htmlMultipart);
+		
+		return htmlPart;
+	}
+	
+	public void setMessageContent(MimeMessage message, String subject, String bodyText, String bodyHtml, boolean htmlUsesMugshotLogo) {
 		try {
 			message.setSubject(subject);
 			
 			MimeBodyPart textPart = new MimeBodyPart();
 			textPart.setText(bodyText.toString(), "UTF-8");
+	
+			MimeBodyPart htmlPart = createHtmlBodyPart(bodyHtml, htmlUsesMugshotLogo);
 			
-			MimeBodyPart htmlPart = new MimeBodyPart();
-			htmlPart.setContent(bodyHtml.toString(), "text/html; charset=UTF-8");
-			
-			MimeMultipart multiPart = new MimeMultipart();
 			// "alternative" means display only one or the other, "mixed" means both
-			multiPart.setSubType("alternative");
+			MimeMultipart textOrHtmlPart = new MimeMultipart("alternative");
 			
 			// I read something on the internet saying to put the text part first
 			// so sucktastic mail clients see it first
-			multiPart.addBodyPart(textPart);
-			multiPart.addBodyPart(htmlPart);
+			textOrHtmlPart.addBodyPart(textPart);
+			textOrHtmlPart.addBodyPart(htmlPart);
 			
-			message.setContent(multiPart);
+			message.setContent(textOrHtmlPart);
 		} catch (MessagingException e) {
 			throw new RuntimeException("failed to put together MIME message", e);
 		}

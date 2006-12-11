@@ -1,5 +1,6 @@
 package com.dumbhippo.server;
 
+import java.io.File;
 import java.net.URL;
 
 import javax.ejb.ApplicationException;
@@ -95,4 +96,6 @@ public interface Configuration {
 	public void setProperty(String name, String value);
 	
 	public boolean isFeatureEnabled(String name);
+	
+	public File getWebRealPath();
 }

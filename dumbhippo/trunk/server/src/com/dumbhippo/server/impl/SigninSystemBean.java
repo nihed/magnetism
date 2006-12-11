@@ -79,7 +79,7 @@ public class SigninSystemBean implements SigninSystem {
 		bodyHtml.appendTextNode("a", "Click here to sign in", "href", link);
 		bodyHtml.append("</body>\n</html>\n");
 		
-		mailer.setMessageContent(message, "Sign in to Mugshot", bodyText.toString(), bodyHtml.toString());
+		mailer.setMessageContent(message, "Sign in to Mugshot", bodyText.toString(), bodyHtml.toString(), false);
 		mailer.sendMessage(message);
 	}
 	
@@ -184,7 +184,7 @@ public class SigninSystemBean implements SigninSystem {
 		
 		bodyHtml.append("</body>\n</html>\n");
 		
-		mailer.setMessageContent(message, "We messed up with Mugshot", bodyText.toString(), bodyHtml.toString());
+		mailer.setMessageContent(message, "We messed up with Mugshot", bodyText.toString(), bodyHtml.toString(), false);
 		mailer.sendMessage(message);
 	}
 

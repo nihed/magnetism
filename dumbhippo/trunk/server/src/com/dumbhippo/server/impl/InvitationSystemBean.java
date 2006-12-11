@@ -768,7 +768,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		}
 		
 		User mugshot = accounts.getCharacter(Character.MUGSHOT);
-		boolean isMugshotInvite = (viewedInviter.getUser() == mugshot);
+		boolean isMugshotInvite = (viewedInviter.getUser().equals(mugshot));
 		
 		if (subject == null || subject.trim().length() == 0) {
 			if (isMugshotInvite)
@@ -783,6 +783,8 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		messageHtml.appendHtmlHead("");
 		messageHtml.append("<body>\n");
 
+		messageHtml.append("<div><img src=\"cid:mugshotlogo\"/></div>\n");
+		
 		if (message != null && message.trim().length() > 0) {
 			messageHtml.append("<div style=\"padding: 1.5em;\">\n");
 			messageHtml.appendTextAsHtml(message, null);
@@ -815,7 +817,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		
 		messageHtml.append("</body>\n</html>\n");
 		
-		mailer.setMessageContent(msg, subject, messageText.toString(), messageHtml.toString());
+		mailer.setMessageContent(msg, subject, messageText.toString(), messageHtml.toString(), true);
 		
 		final MimeMessage finalizedMessage = msg;
 		

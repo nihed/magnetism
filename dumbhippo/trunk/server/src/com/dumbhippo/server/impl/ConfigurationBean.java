@@ -1,5 +1,6 @@
 package com.dumbhippo.server.impl;
 
+import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
@@ -132,5 +133,15 @@ public class ConfigurationBean implements Configuration {
 	public boolean isFeatureEnabled(String name) {
 		return Arrays.asList(getProperty(HippoProperty.FEATURES).split(",")).contains(name);
 	}
+	
+	static private File webRealPath;
+	
+	public File getWebRealPath() {
+		return webRealPath;
+	}
+	
+	public static synchronized void setWebRealPath(File file) {
+		webRealPath = file;
+		logger.debug("setting .war path to {}", webRealPath);
+	}
 }
-

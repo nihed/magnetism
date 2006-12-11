@@ -33,7 +33,7 @@ public interface Mailer {
 	public MimeMessage createMessage(SpecialSender from, UserViewpoint viewpointReplyTo, 
 			                         SpecialSender viewpointFallbackAddress, String to);
 	
-	public void setMessageContent(MimeMessage message, String subject, String bodyText, String bodyHtml);
+	public void setMessageContent(MimeMessage message, String subject, String bodyText, String bodyHtml, boolean htmlUsesMugshotLogo);
 	
 	public void sendMessage(MimeMessage message);
 }
