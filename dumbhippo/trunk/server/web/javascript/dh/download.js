@@ -47,29 +47,35 @@ dh.download.updateDownload = function() {
 }
 
 dh.download.doDownload = function(url) {
-	// "url" should be the download binary; if it's empty, it means we are skipping the download
+	// "url" should be the download binary; if it's empty, it means we are skipping the download.
+	// Whether we download or not, we proceed to the account page.
 
 	if (dh.download.needTermsOfUse && !document.getElementById("dhAcceptTerms").checked) {
-		document.getElementById("dhAcceptTermsBox").className = "dh-accept-terms-box-warning"
+		document.getElementById("dhAcceptTermsBox").className = "dh-accept-terms-box-warning";
 		return;
 	}
 
-    // they can start downloading while the terms of use are being accepted
+	// the download must begin in an onclick handler or we'll get the yellow stripe blocker
     if (url)
-	    window.open(url, "_self")
+	    window.open(url, "_self");
 	
 	if (dh.download.needTermsOfUse) {
 		dh.server.doPOST("acceptterms",
 						{},
 						function(type, data, http) {
-						    if (!url)
-	                            window.open("/account", "_self")
+							// the async redirect to /account can work even if we downloaded, but there's 
+							// a race if we window.open the account page before the download starts, 
+							// so we improve our chances with this timeout.
+							// A larger-scope reworking of the login page could avoid the problem.
+							setTimeout('window.open("/account?fromDownload=true", "_self");', 7000);
 						},
 						function(type, error, http) {
 							alert("Oops! Error accepting the terms of use agreement");
 						});
 	} else if (!url) {
-        window.open("/account", "_self")	
+		// this is only done if we skipped download, otherwise it seems to override
+		// the earlier window.open and prevent the download
+        window.open("/account?fromDownload=true", "_self");
 	}
 }
 

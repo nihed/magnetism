@@ -4,4 +4,4 @@
 
 <%@ attribute name="skip" required="false" type="java.lang.String" %>
 
-<%-- deleted, so it doesn't generate bad links even if something still uses this tag -->
+<%-- deleted, so it doesn't generate bad links even if something still uses this tag --%>
