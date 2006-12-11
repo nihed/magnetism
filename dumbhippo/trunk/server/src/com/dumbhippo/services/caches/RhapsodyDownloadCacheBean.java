@@ -40,8 +40,19 @@ public class RhapsodyDownloadCacheBean extends AbstractBasicCacheWithStorageBean
 	 * punctuation and whitespace and lowercase it
 	 */
 	private static String rhapString(String s) {
-		// strip all non-word characters, e.g. other than [a-zA-Z0-9]
-		// TODO: figure out how to deal with broader character set, if Rhapsody even supports that?
+		// Internationalization:
+		//  Rhapsody somtimes strips accents
+		//   http://play.rhapsody.com/edithpiaf (Édith Piaf)
+		//   http://play.rhapsody.com/lunasa (Lúnasa)
+		//   http://play.rhapsody.com/danu (Danú)
+		// Or strips accented characters:
+		//   http://www.rhapsody.com/carlosacua (Carlos Acuña)
+		//   http://www.rhapsody.com/claeshkonahnsjo (Claes-Håkon Ahnsjö)
+		// Or sometimes something different:
+		//   http://www.rhapsody.com/concertokoln2 (Concerto Köln)
+		//
+		// TODO: We probably should try both of the first two ways.
+		//
 		return s.replaceAll("[^a-zA-Z0-9]","").toLowerCase();
 	}
 
