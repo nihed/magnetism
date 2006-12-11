@@ -3,6 +3,7 @@ package com.dumbhippo.server;
 import javax.ejb.Local;
 import javax.mail.internet.MimeMessage;
 
+import com.dumbhippo.email.MessageContent;
 import com.dumbhippo.server.views.UserViewpoint;
 
 @Local
@@ -34,6 +35,8 @@ public interface Mailer {
 			                         SpecialSender viewpointFallbackAddress, String to);
 	
 	public void setMessageContent(MimeMessage message, String subject, String bodyText, String bodyHtml, boolean htmlUsesMugshotLogo);
+	
+	public void setMessageContent(MimeMessage message, MessageContent content);
 	
 	public void sendMessage(MimeMessage message);
 }

@@ -134,6 +134,7 @@
 				<include name="**/services/*.class" />
 				<include name="**/services/caches/*.class" />
 				<include name="**/dav/*.class" />
+				<include name="**/email/*.class" />
 				<include name="**/storage/*.class" />
 				<include name="**/search/*.class" />
 				<include name="**/server/**/*.class" />

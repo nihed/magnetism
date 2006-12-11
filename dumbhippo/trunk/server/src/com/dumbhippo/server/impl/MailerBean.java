@@ -21,6 +21,7 @@ import javax.mail.internet.MimeMultipart;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
+import com.dumbhippo.email.MessageContent;
 import com.dumbhippo.server.Configuration;
 import com.dumbhippo.server.HippoProperty;
 import com.dumbhippo.server.Mailer;
@@ -192,6 +193,10 @@ public class MailerBean implements Mailer {
 		} catch (MessagingException e) {
 			throw new RuntimeException("failed to put together MIME message", e);
 		}
+	}
+	
+	public void setMessageContent(MimeMessage message, MessageContent content) {
+		setMessageContent(message, content.getSubject(), content.getTextAlternative(), content.getHtmlAlternative(), content.getHtmlReferencesLogoImage());
 	}
 	
 	public void sendMessage(MimeMessage message) {

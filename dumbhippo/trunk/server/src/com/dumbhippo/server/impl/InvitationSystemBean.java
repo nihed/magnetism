@@ -22,6 +22,7 @@ import org.slf4j.Logger;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.Pair;
 import com.dumbhippo.XmlBuilder;
+import com.dumbhippo.email.MessageContent;
 import com.dumbhippo.persistence.Account;
 import com.dumbhippo.persistence.Client;
 import com.dumbhippo.persistence.EmailResource;
@@ -740,6 +741,52 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		return getInvitations(accounts.getCharacter(Character.MUGSHOT));
 	}
 	
+	static private class InviteMessageContent extends MessageContent {
+
+		private String subject;
+		private String message;
+		private String inviteUrl;
+		
+		InviteMessageContent(String subject, String message, String inviteUrl) {
+			this.subject = subject;
+			this.message = message != null ? message.trim() : "";
+			this.inviteUrl = inviteUrl;
+		}
+		
+		@Override
+		public String getSubject() {
+			return subject;
+		}
+
+		@Override
+		protected void buildMessage(StringBuilder messageText, XmlBuilder messageHtml) {
+			openStandardHtmlTemplate(messageHtml);
+			
+			if (message.length() > 0) {
+				messageHtml.append("<div style=\"padding: 1.5em;\">\n");
+				messageHtml.appendTextAsHtml(message, null);
+				messageHtml.append("</div>\n");
+				
+				messageText.append(message);
+				messageText.append("\n\n");
+			}
+			
+			messageHtml.append("<div style=\"padding: 1em;\">");
+			messageHtml.appendTextNode("a", inviteUrl, "href", inviteUrl);
+			messageHtml.append("</div>\n");
+			
+			messageText.append(inviteUrl);
+			messageText.append("\n\n");
+			
+			String noSpamDisclaimer = "If you got this by mistake, just ignore it.  We won't send you email again unless you ask us to.  Thanks!";
+			
+			messageHtml.appendTextNode("div", noSpamDisclaimer);
+			messageText.append(noSpamDisclaimer);
+			
+			closeStandardHtmlTemplate(messageHtml);
+		}		
+	}
+	
 	private void sendEmailNotification(UserViewpoint viewpoint, InvitationToken invite, String subject, String message) {
 		User inviter = viewpoint.getViewer();
 		EmailResource invitee = (EmailResource) invite.getInvitee();
@@ -776,24 +823,7 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 			else
 				subject = "Invitation from " + inviterName + " to join Mugshot";				
 		}
-		
-		StringBuilder messageText = new StringBuilder();
-		XmlBuilder messageHtml = new XmlBuilder();
-		
-		messageHtml.appendHtmlHead("");
-		messageHtml.append("<body>\n");
-
-		messageHtml.append("<div><img src=\"cid:mugshotlogo\"/></div>\n");
-		
-		if (message != null && message.trim().length() > 0) {
-			messageHtml.append("<div style=\"padding: 1.5em;\">\n");
-			messageHtml.appendTextAsHtml(message, null);
-			messageHtml.append("</div>\n");
-			
-			messageText.append(message);
-			messageText.append("\n\n");
-		}
-		
+				
 		String inviteUrl = invite.getAuthURL(baseurlObject);
 		// Only set the inviter for non-mugshot invitations; the download
 		// page assumes the absence of this parameter implies the invitation
@@ -802,22 +832,8 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 			inviteUrl += "&inviter=";
 			inviteUrl += inviter.getId();
 		}
-		
-		messageHtml.append("<div style=\"padding: 1em;\">");
-		messageHtml.appendTextNode("a", inviteUrl, "href", inviteUrl);
-		messageHtml.append("</div>\n");
-		
-		messageText.append(inviteUrl);
-		messageText.append("\n\n");
-		
-		String noSpamDisclaimer = "If you got this by mistake, just ignore it.  We won't send you email again unless you ask us to.  Thanks!";
-		
-		messageHtml.appendTextNode("div", noSpamDisclaimer);
-		messageText.append(noSpamDisclaimer);
-		
-		messageHtml.append("</body>\n</html>\n");
-		
-		mailer.setMessageContent(msg, subject, messageText.toString(), messageHtml.toString(), true);
+				
+		mailer.setMessageContent(msg, new InviteMessageContent(subject, message, inviteUrl));
 		
 		final MimeMessage finalizedMessage = msg;
 		
