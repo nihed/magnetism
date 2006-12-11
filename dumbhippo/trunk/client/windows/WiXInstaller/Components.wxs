@@ -165,6 +165,13 @@
 	                    <File Id="unhush2Png"        Name="unhush2.png"  LongName="unhush2.png"        src="images\unhush2.png"        DiskId="1" Vital="yes"/>
                         </Component>
                      </Directory>	                    
+		    <Directory Id="dhEtcDir" Name="etc">
+    		        <Directory Id="dhEtcPangoDir" Name="pango">
+    		            <Component Id="pangoConfiguration" Guid="7D242C09-A7C0-41cd-B5B6-6C70229F574D">
+	                        <File Id="pangoAliases"  Name="pango.ali"    LongName="pango.aliases"      src="etc\pango\pango.aliases"   DiskId="1" Vital="yes"/>
+	                    </Component>
+    		        </Directory>
+		    </Directory>
 	        </Directory>
 	    </Directory>
 	    

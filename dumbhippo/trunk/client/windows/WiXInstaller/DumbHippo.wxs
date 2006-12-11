@@ -40,6 +40,7 @@
         <ComponentRef Id="loudmouth" />
         <ComponentRef Id="applets" />
         <ComponentRef Id="images" />
+        <ComponentRef Id="pangoConfiguration" />
     </Feature>
     
     <CustomAction Id="DhQuitApp" FileKey="mugshotExe" Return="ignore" ExeCommand="--quit"/> 
