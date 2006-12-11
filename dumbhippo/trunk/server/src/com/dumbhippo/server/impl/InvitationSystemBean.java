@@ -746,11 +746,15 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		private String subject;
 		private String message;
 		private String inviteUrl;
+		private String inviterName;
+		private String inviterPageUrl;
 		
-		InviteMessageContent(String subject, String message, String inviteUrl) {
+		InviteMessageContent(String subject, String message, String inviteUrl, String inviterName, String inviterPageUrl) {
 			this.subject = subject;
 			this.message = message != null ? message.trim() : "";
 			this.inviteUrl = inviteUrl;
+			this.inviterName = inviterName;
+			this.inviterPageUrl = inviterPageUrl;
 		}
 		
 		@Override
@@ -762,29 +766,36 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 		protected void buildMessage(StringBuilder messageText, XmlBuilder messageHtml) {
 			openStandardHtmlTemplate(messageHtml);
 			
-			if (message.length() > 0) {
-				messageHtml.append("<div style=\"padding: 1.5em;\">\n");
-				messageHtml.appendTextAsHtml(message, null);
-				messageHtml.append("</div>\n");
-				
-				messageText.append(message);
-				messageText.append("\n\n");
+			appendParagraph(messageText, messageHtml, "Hello -");
+			
+			String intro;
+			if (inviterName != null)
+				intro = "This is an invitation to join the Mugshot service from " + inviterName + ".";
+			else
+				intro = "This is an invitation to join the Mugshot service.";
+			
+			appendParagraph(messageText, messageHtml, intro);
+			
+			if (inviterName != null && message.length() > 0) {
+				appendParagraph(messageText, messageHtml, "Your friend " + inviterName + " says:");
+				appendBlockquote(messageText, messageHtml, message);
 			}
 			
-			messageHtml.append("<div style=\"padding: 1em;\">");
-			messageHtml.appendTextNode("a", inviteUrl, "href", inviteUrl);
-			messageHtml.append("</div>\n");
+			appendParagraph(messageText, messageHtml, "Follow this link to get started:");
 			
-			messageText.append(inviteUrl);
-			messageText.append("\n\n");
+			appendLinkAsBlock(messageText, messageHtml, null, inviteUrl);
 			
-			String noSpamDisclaimer = "If you got this by mistake, just ignore it.  We won't send you email again unless you ask us to.  Thanks!";
+			if (inviterName != null && inviterPageUrl != null) {
+				appendParagraph(messageText, messageHtml, "See " + inviterName + "'s Mugshot page:");
+				appendLinkAsBlock(messageText, messageHtml, null, inviterPageUrl);
+			}
 			
-			messageHtml.appendTextNode("div", noSpamDisclaimer);
-			messageText.append(noSpamDisclaimer);
+			appendParagraph(messageText, messageHtml, "Thanks!");
+			
+			appendParagraph(messageText, messageHtml, "- Mugshot.org");
 			
 			closeStandardHtmlTemplate(messageHtml);
-		}		
+		}
 	}
 	
 	private void sendEmailNotification(UserViewpoint viewpoint, InvitationToken invite, String subject, String message) {
@@ -833,7 +844,10 @@ public class InvitationSystemBean implements InvitationSystem, InvitationSystemR
 			inviteUrl += inviter.getId();
 		}
 				
-		mailer.setMessageContent(msg, new InviteMessageContent(subject, message, inviteUrl));
+		mailer.setMessageContent(msg,
+				new InviteMessageContent(subject, message, inviteUrl,
+						isMugshotInvite ? null : inviterName,
+						isMugshotInvite ? null : baseurl + viewedInviter.getHomeUrl()));
 		
 		final MimeMessage finalizedMessage = msg;
 		

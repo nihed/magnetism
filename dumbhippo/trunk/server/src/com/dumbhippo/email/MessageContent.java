@@ -44,4 +44,31 @@ public abstract class MessageContent {
 	protected void closeStandardHtmlTemplate(XmlBuilder xml) {
 		xml.append("</body>\n</html>\n");
 	}
+	
+	protected void appendParagraph(StringBuilder messageText, XmlBuilder messageHtml, String paragraph) {
+		messageText.append(paragraph);
+		messageText.append("\n\n");
+		
+		messageHtml.appendTextNode("p", paragraph);
+	}
+	
+	protected void appendBlockquote(StringBuilder messageText, XmlBuilder messageHtml, String paragraph) {
+		messageText.append(paragraph);
+		messageText.append("\n\n");
+		
+		messageHtml.appendTextNode("div", paragraph, "style", "padding: 1.5em;");
+	}
+	
+	protected void appendLinkAsBlock(StringBuilder messageText, XmlBuilder messageHtml, String linkText, String link) {
+		
+		if (linkText == null)
+			linkText = link;
+		
+		messageHtml.append("<div style=\"padding: 1em;\">");
+		messageHtml.appendTextNode("a", linkText, "href", link);
+		messageHtml.append("</div>\n");		
+		
+		messageText.append(link);
+		messageText.append("\n\n");
+	}
 }
