@@ -160,7 +160,7 @@ public class MailerBean implements Mailer {
 		
 		if (htmlUsesMugshotLogo) {
 			MimeBodyPart htmlImagePart = new MimeBodyPart();
-			DataSource fds = new FileDataSource(new File(configuration.getWebRealPath(), "/images3/mugshot70x64.png"));
+			DataSource fds = new FileDataSource(new File(configuration.getWebRealPath(), "/images3/mugshot_logo_email.gif"));
 			htmlImagePart.setDataHandler(new DataHandler(fds));
 			htmlImagePart.setHeader("Content-ID", "<mugshotlogo>");
 			htmlMultipart.addBodyPart(htmlImagePart);
