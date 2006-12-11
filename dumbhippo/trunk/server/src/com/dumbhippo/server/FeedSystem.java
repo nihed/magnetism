@@ -3,7 +3,6 @@ package com.dumbhippo.server;
 import java.util.List;
 
 import javax.ejb.Local;
-import javax.persistence.NoResultException;
 
 import com.dumbhippo.persistence.Feed;
 import com.dumbhippo.persistence.FeedEntry;

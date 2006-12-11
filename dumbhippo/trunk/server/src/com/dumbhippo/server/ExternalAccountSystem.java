@@ -8,7 +8,6 @@ import com.dumbhippo.persistence.ExternalAccount;
 import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.Sentiment;
 import com.dumbhippo.persistence.User;
-import com.dumbhippo.persistence.ValidationException;
 import com.dumbhippo.server.listeners.AccountStatusListener;
 import com.dumbhippo.server.views.ExternalAccountView;
 import com.dumbhippo.server.views.UserViewpoint;
