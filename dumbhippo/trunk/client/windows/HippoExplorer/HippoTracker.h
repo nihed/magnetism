@@ -9,7 +9,6 @@
 #include "HippoTrackerUpdater.h"
 
 class HippoTracker : 
-    public IHippoTracker,
     public IObjectWithSite,
     public DWebBrowserEvents2
 {
@@ -32,8 +31,6 @@ public:
    STDMETHOD (GetTypeInfoCount) (unsigned int *);
    STDMETHOD (Invoke) (DISPID, const IID &, LCID, WORD, DISPPARAMS *, 
                        VARIANT *, EXCEPINFO *, unsigned int *);
-
-   STDMETHODIMP Navigate(BSTR url);
 
 protected:
     DWORD refCount_;

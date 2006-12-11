@@ -9,14 +9,13 @@
 class HippoTrackerUpdater
 {
 public:
-    HippoTrackerUpdater(IHippoTracker *tracker, IWebBrowser2 *browser);
+    HippoTrackerUpdater(IWebBrowser2 *browser);
     ~HippoTrackerUpdater();
 
     // Pass a new url and name to any UI's that we are updating
     void setInfo(const HippoBSTR &url, const HippoBSTR &name);
 
 private:
-    IHippoTracker *tracker_;
     HippoPtr<IWebBrowser2> browser_;
 
     HANDLE thread_; // The worker thread

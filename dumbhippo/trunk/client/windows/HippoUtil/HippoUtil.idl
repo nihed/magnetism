@@ -15,7 +15,7 @@ import "exdisp.idl";
 library HippoUtil {
     interface IHippoChatRoom;
     interface IHippoUIListener;
-    interface IHippoTracker;
+    interface IHippoToolbarAction;
 
     [
         uuid(F596AE04-94E7-4cdd-8CD8-5D4361F962E5), // IID_IHippoUI
@@ -26,7 +26,7 @@ library HippoUtil {
     interface IHippoUI : IDispatch
     {
         [id(100), helpstring("Register a browser")]
-        HRESULT RegisterBrowser([in] IHippoTracker *tracker, [in] IWebBrowser2 *browser, [out, retval] DWORD* cookie);
+        HRESULT RegisterBrowser([in] IWebBrowser2 *browser, [out, retval] DWORD* cookie);
         [id(101), helpstring("Unregister a previously registered browser")]
         HRESULT UnregisterBrowser([in] DWORD cookie);
         [id(102), helpstring("Update information about a browser")]
@@ -38,7 +38,7 @@ library HippoUtil {
         [id(105), helpstring("Upload a photo file to flickr and share link to it")]
         HRESULT BeginFlickrShare([in] BSTR path);
         [id(106), helpstring("Share a specific URL")]
-        HRESULT ShareLink([in] BSTR url, [in] BSTR title);
+        HRESULT ShareLink([in] BSTR url, [in] BSTR title, [in] IHippoToolbarAction *actions);
         [id(107), helpstring("Open a chat window about a post")]
         HRESULT ShowChatWindow([in] BSTR postId);
         [id(108), helpstring("Get the user ID of the logged-in user")]
@@ -78,13 +78,13 @@ library HippoUtil {
         dual,
         oleautomation
     ]
-    interface IHippoTracker : IDispatch
+    interface IHippoToolbarAction : IUnknown
     {
         HRESULT Navigate([in] BSTR url);
     }
-    [
-        uuid(4C18F53D-DF8A-44f5-97A0-D0A4950EB726), // IID_IHippoTracker
-        helpstring("DumbHippo Web Tracker"),
+    [   
+        uuid(D7CECFA9-49F8-4a12-AB5E-1991332B081A), // IID_IHippoToolbarAction
+        helpstring("DumbHippo Web Toolbar Action"),
         dual,
         oleautomation
     ]

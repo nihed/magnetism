@@ -39,12 +39,10 @@ HippoTracker::QueryInterface(const IID &ifaceID,
 {
     if (IsEqualIID(ifaceID, IID_IUnknown))
         *result = static_cast<IUnknown *>(static_cast<IObjectWithSite *>(this));
-    else if (IsEqualIID(ifaceID, IID_IHippoTracker)) 
-        *result = static_cast<IHippoTracker *>(this);
     else if (IsEqualIID(ifaceID, IID_IObjectWithSite)) 
         *result = static_cast<IObjectWithSite *>(this);
     else if (IsEqualIID(ifaceID, IID_IDispatch)) 
-        *result = static_cast<IDispatch *>(static_cast<IHippoTracker*>(this));
+        *result = static_cast<IDispatch *>(this);
     else if (IsEqualIID(ifaceID, DIID_DWebBrowserEvents2))
         *result = static_cast<DWebBrowserEvents2 *>(this);
     else {
@@ -239,7 +237,7 @@ void
 HippoTracker::createUpdater()
 {
     if (!updater_ && site_) {
-        updater_ = new HippoTrackerUpdater(static_cast<IHippoTracker*>(this), site_);
+        updater_ = new HippoTrackerUpdater(site_);
     }
 }
 
@@ -250,11 +248,4 @@ HippoTracker::clearUpdater()
         delete updater_;
         updater_ = NULL;
     }
-}
-
-STDMETHODIMP 
-HippoTracker::Navigate(BSTR url){
-    VARIANT missing;
-    missing.vt = VT_EMPTY;
-    return site_->Navigate(url, &missing, &missing, &missing, &missing);
 }

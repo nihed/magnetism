@@ -15,6 +15,7 @@ HippoToolbarAction::HippoToolbarAction(void)
 {
     refCount_ = 1;
     dllRefCount++;
+
     launcher_.setListener(this);
 }
 
@@ -34,6 +35,8 @@ HippoToolbarAction::QueryInterface(const IID &ifaceID,
 {
     if (IsEqualIID(ifaceID, IID_IUnknown))
         *result = static_cast<IUnknown *>(static_cast<IObjectWithSite *>(this));
+    else if (IsEqualIID(ifaceID, IID_IHippoToolbarAction)) 
+        *result = static_cast<IHippoToolbarAction *>(this);
     else if (IsEqualIID(ifaceID, IID_IObjectWithSite)) 
         *result = static_cast<IObjectWithSite *>(this);
     else if (IsEqualIID(ifaceID, IID_IOleCommandTarget)) 
@@ -195,6 +198,16 @@ HippoToolbarAction::onLaunchFailure(HippoUILauncher *launcher, const WCHAR *reas
     hippoDebugDialog(L"%s", reason);
 }
 
+/////////////////// HippoToolbarAction implementation ///////////////////
+
+STDMETHODIMP 
+HippoToolbarAction::Navigate(BSTR url){
+    VARIANT missing;
+    missing.vt = VT_EMPTY;
+    HRESULT hr =  browser_->Navigate(url, &missing, &missing, &missing, &missing);
+    return hr;
+}
+
 /////////////////////////////////////////////////////////////////////
 
 void
@@ -226,5 +239,6 @@ HippoToolbarAction::doShareLink(IHippoUI        *ui,
     // In theory, we should restrict setting the foreground to the HippoUI process, 
     // the chance of some other app getting in the way is small
     AllowSetForegroundWindow(ASFW_ANY);
-    ui->ShareLink(url.m_str, title.m_str);
+    ui->ShareLink(url.m_str, title.m_str, this);
 }
+

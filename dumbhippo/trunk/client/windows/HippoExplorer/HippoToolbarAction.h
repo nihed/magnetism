@@ -9,6 +9,7 @@
 #include "HippoUILauncher.h"
 
 class HippoToolbarAction :
+    public IHippoToolbarAction,
     public IObjectWithSite,
     public IOleCommandTarget,
     public HippoUILaunchListener
@@ -41,6 +42,9 @@ public:
    void onLaunchSuccess(HippoUILauncher *launcher, IHippoUI *ui);
    void onLaunchFailure(HippoUILauncher *launcher, const WCHAR *reason);
 
+   // IHippoToolbarAction
+   STDMETHODIMP Navigate(BSTR url);
+
 protected:
     DWORD refCount_;
 
@@ -62,6 +66,8 @@ private:
                                        UINT   message,
                                        WPARAM wParam,
                                        LPARAM lParam);
+
+    HippoPtr<ITypeInfo> eventsTypeInfo_;
 
     HippoUILauncher launcher_;
 

@@ -229,13 +229,11 @@ HippoUI::Invoke (DISPID      dispIdMember,
 //////////////////////// IHippoTracker implementation //////////////////////
 
 STDMETHODIMP 
-HippoUI::RegisterBrowser(IHippoTracker *tracker,
-                         IWebBrowser2 *browser,
+HippoUI::RegisterBrowser(IWebBrowser2 *browser,
                          DWORD        *cookie)
 {
     HippoBrowserInfo info;
 
-    info.tracker = tracker;
     info.browser = browser;
     *cookie = info.cookie = ++nextBrowserCookie_;
 
@@ -670,13 +668,14 @@ HippoUI::BeginFlickrShare(BSTR path)
 
 // Show a window offering to share the given URL
 HRESULT
-HippoUI::ShareLink(BSTR url, BSTR title)
+HippoUI::ShareLink(BSTR url, BSTR title, IHippoToolbarAction *action)
 {
     if (currentShare_)
         delete currentShare_;
     currentShare_ = new HippoRemoteWindow(this, L"Share Link", NULL);
     currentShare_->showShare(url, title);
     currentShare_->setForegroundWindow();
+    currentShareAction_ = action;
 
     return S_OK;
 }
@@ -748,15 +747,15 @@ HippoUI::DoUpgrade()
 STDMETHODIMP
 HippoUI::ShareLinkComplete(BSTR postId, BSTR url)
 {
-    for (ULONG i = 0; i < browsers_.length(); i++) {
-        if (!wcscmp(url, browsers_[i].url)) {
-            HippoBSTR visitUrl;
-            getRemoteURL(HippoBSTR(L"visit?post="), &visitUrl);
-            visitUrl.Append(postId);
-            browsers_[i].tracker->Navigate(visitUrl);
-            break;
-        }
-    }
+    if (currentShareAction_ == NULL)
+        return S_OK;
+    HippoBSTR visitUrl;
+    getRemoteURL(HippoBSTR(L"visit?post="), &visitUrl);
+    visitUrl.Append(postId);
+    VARIANT missing;
+    missing.vt = VT_EMPTY;
+
+    HRESULT hr = currentShareAction_->Navigate(visitUrl);
     return S_OK;
 }
 
@@ -1714,7 +1713,7 @@ HippoUI::processMessage(UINT   message,
         if (wmId >= IDM_SHARE0 && wmId <= IDM_SHARE9) {
             UINT i = wmId - IDM_SHARE0;
             if (i < browsers_.length() && browsers_[i].url)
-                ShareLink(browsers_[i].url, browsers_[i].title);
+                ShareLink(browsers_[i].url, browsers_[i].title, NULL);
             return true;
         }
 
