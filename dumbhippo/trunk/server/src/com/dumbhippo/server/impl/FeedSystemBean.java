@@ -3,6 +3,7 @@ package com.dumbhippo.server.impl;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -457,6 +458,16 @@ public class FeedSystemBean implements FeedSystem {
 		// thread until after we commit this transaction, so don't submit them
 		// to that thread until then.
 		if (!newEntryIds.isEmpty()) {
+			// Feeds generally have their entries in reverse order - with the most recent first
+			// but things work better if we process in chronological order, so we reverse
+			// first. (Another option would be to sort on FeedEntry.getDate())
+			//
+			// Note that this reversal doesn't apply to the call to processFeedExternalAccounts()
+			// above. If that ever matters, we would need to preserve the entry index down
+			// to this point, or otherwise restructure things.
+			//
+			Collections.reverse(newEntryIds);
+			
 			runner.runTaskOnTransactionCommit(new Runnable() {
 				public void run() {
 					logger.debug("  Transaction committed, running new entry notification for {} entries", newEntryIds.size());
