@@ -1,5 +1,6 @@
 package com.dumbhippo.server.impl;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -92,17 +93,31 @@ public class LastFmUpdaterBean extends CachedExternalUpdaterBean<LastFmUpdateSta
 			logger.debug("Most recent tracks changed '{}' -> '{}'",
 					updateStatus.getSongHash(), hash);
 			updateStatus.setSongHash(hash);
+			long mostRecentListenTimeSeconds = -1;
+			for (LastFmTrack track : tracks) {
+				if (mostRecentListenTimeSeconds == -1 || track.getListenTime() > mostRecentListenTimeSeconds)
+					mostRecentListenTimeSeconds = track.getListenTime();
+			}
+			Date lastLastFmUpdate = new Date(mostRecentListenTimeSeconds * 1000);			
 			for (User user : getAccountLovers(username)) {
 				// Tracks are in most to least recent order, walk in reverse
+				Date lastNativeUpdate = user.getAccount().getNativeMusicSharingTimestamp();
+				// Don't add these tracks if we've gotten "recent" updates natively
+				if (lastNativeUpdate != null
+						&& (lastLastFmUpdate.before(lastNativeUpdate) || 
+						  (lastLastFmUpdate.getTime() - lastNativeUpdate.getTime()) < MusicSystemInternal.NATIVE_MUSIC_OVERRIDE_TIME_MS)) {
+					logger.debug("Ignoring music update due to recent native update");
+					continue;
+				}
 				for (int i = tracks.size() - 1; i >= 0; i--) {
 					LastFmTrack lastFmTrack = tracks.get(i);
 					if (computeTrackHash(lastFmTrack).equals(previousHash))
 						break; // Stop when we get to the last track we saw
 					Map<String, String> props = lastFmTrackToProps(lastFmTrack);
 					if (i == 0) {
-						musicSystem.setCurrentTrack(user, props);
+						musicSystem.setCurrentTrack(user, props, false);
 					} else {
-						musicSystem.addHistoricalTrack(user, props);
+						musicSystem.addHistoricalTrack(user, props, false);
 					}
 				}
 				musicSystem.queueMusicChange(user.getGuid());

@@ -1,7 +1,6 @@
 package com.dumbhippo.server.impl;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -258,9 +257,18 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		}
 	}
 
-	private void addTrackHistory(final User user, final Track track, final Date now) {
+	private void addTrackHistory(final User user, final Track track, final Date now, final boolean isNative) {
 		runner.runTaskRetryingOnConstraintViolation(new Runnable() {				
 			public void run() {
+				User u = em.find(User.class, user.getId());					
+				if (isNative) {
+					u.getAccount().setNativeMusicSharingTimestamp(new Date());
+				}
+				// This can happen when we get an empty track notification to signal
+				// playback stopped - we still want to update the native timestamp in that case
+				if (track == null)
+					return;
+				
 				Query q;
 				
 				q = em.createQuery("FROM TrackHistory h WHERE h.user = :user " +
@@ -283,25 +291,28 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		});
 		
 		// update the stack with this new listen event
-		notifier.onTrackPlayed(user, track, now);
+		if (track != null)
+			notifier.onTrackPlayed(user, track, now);
 	}
 	
 	@TransactionAttribute(TransactionAttributeType.SUPPORTS)	
-	public void setCurrentTrack(final User user, final Track track) {
-		addTrackHistory(user, track, new Date());
+	public void setCurrentTrack(final User user, final Track track, final boolean isNative) {
+		addTrackHistory(user, track, new Date(), isNative);
 	}
 	 
 	// Although this is marked as SUPPORTS - you should never invoke this
 	// method from any code holding a transaction that could have potentially
 	// modified a Track
 	@TransactionAttribute(TransactionAttributeType.SUPPORTS)	
-	public void setCurrentTrack(User user, Map<String,String> properties) {
+	public void setCurrentTrack(User user, Map<String,String> properties, final boolean isNative) {
+		
 		// empty properties means "not listening to any track" - we always
 		// keep the latest track with content, we don't set CurrentTrack to null
+		final long trackId;		
 		if (properties.size() == 0)
-			return; 
-		
-		final long trackId = getTrackIdIsolated(properties);
+			trackId = -1;
+		else
+			trackId = getTrackIdIsolated(properties);
 		
 		final String userId = user.getId();
 		
@@ -309,13 +320,16 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		runner.runTaskInNewTransaction(new Runnable() {
 
 			public void run() {
-				Track t = em.find(Track.class, trackId);
-				if (t == null)
-					throw new RuntimeException("database isolation problem (?): track id not found " + trackId);
 				User u = em.find(User.class, userId);
 				if (u == null)
-					throw new RuntimeException("database isolation problem (?): user id not found " + userId);				
-				setCurrentTrack(u, t);
+					throw new RuntimeException("database isolation problem (?): user id not found " + userId);
+				Track t = null;				
+				if (trackId != -1) {
+					t = em.find(Track.class, trackId);
+					if (t == null)
+						throw new RuntimeException("database isolation problem (?): track id not found " + trackId);
+				}
+				setCurrentTrack(u, t, isNative);
 			}
 			
 		});
@@ -325,18 +339,18 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 	// method from any code holding a transaction that could have potentially
 	// modified a Track	
 	@TransactionAttribute(TransactionAttributeType.SUPPORTS)	
-	public void addHistoricalTrack(User user, Map<String,String> properties) {
+	public void addHistoricalTrack(User user, Map<String,String> properties, final boolean isNative) {
 		// for now there's no difference here, but eventually we might have the 
 		// client supply some properties like the date of listening instead of 
 		// pretending we "just" listened to this track.
-		setCurrentTrack(user, properties);
+		setCurrentTrack(user, properties, isNative);
 	}
 	
 	// Although this is marked as SUPPORTS - you should never invoke this
 	// method from any code holding a transaction that could have potentially
 	// modified a Track		
 	@TransactionAttribute(TransactionAttributeType.SUPPORTS)	
-	public void addHistoricalTrack(final User user, final Map<String,String> properties, final long listenDate) {
+	public void addHistoricalTrack(final User user, final Map<String,String> properties, final long listenDate, final boolean isNative) {
 		final long trackId = getTrackIdIsolated(properties);
 		
 		final String userId = user.getId();
@@ -349,7 +363,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 				User u = em.find(User.class, userId);
 				if (u == null)
 					throw new RuntimeException("database isolation problem (?): user id not found " + userId);
-				addTrackHistory(user, t, new Date(listenDate));
+				addTrackHistory(user, t, new Date(listenDate), isNative);
 			}
 		});
 	}
@@ -2022,7 +2036,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 				User u = em.find(User.class, user.getId());
 				if (u == null)
 					throw new RuntimeException("failed to reattach user");
-				addTrackHistory(u, t, new Date(virtualPlayTime));
+				addTrackHistory(u, t, new Date(virtualPlayTime), false);
 			}
 		});
 	}

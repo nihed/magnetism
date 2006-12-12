@@ -645,7 +645,7 @@ public class MessengerGlueBean implements MessengerGlue {
 	@TransactionAttribute(TransactionAttributeType.NEVER)
 	public void handleMusicChanged(Guid userId, Map<String, String> properties) {
 		User user = getUserFromGuid(userId);
-		musicSystemInternal.setCurrentTrack(user, properties);
+		musicSystemInternal.setCurrentTrack(user, properties, true);
 		musicSystemInternal.queueMusicChange(userId);
 	}
 
@@ -663,7 +663,7 @@ public class MessengerGlueBean implements MessengerGlue {
 		tracks = new ArrayList<Map<String,String>>(tracks);
 		Collections.reverse(tracks);
 		for (Map<String,String> properties : tracks) {
-			musicSystemInternal.addHistoricalTrack(user, properties);
+			musicSystemInternal.addHistoricalTrack(user, properties, true);
 		}
 		// don't do this again
 		identitySpider.setMusicSharingPrimed(user, true);

@@ -77,6 +77,7 @@ public class Account extends Resource {
 	private Boolean musicSharingEnabled;
 	// whether we've "primed" music sharing with some sample music
 	private boolean musicSharingPrimed;
+	private long nativeMusicSharingTimestamp;
 	
 	private Boolean notifyPublicShares;
 	
@@ -119,6 +120,7 @@ public class Account extends Resource {
 		lastLogoutDate = -1;
 		wasSentShareLinkTutorial = false;
 		hasDoneShareLinkTutorial = false;
+		nativeMusicSharingTimestamp = -1;
 		disabled = false;
 		musicSharingPrimed = false;
 		lastSeenGroupInvitations = -1;
@@ -464,6 +466,20 @@ public class Account extends Resource {
 		this.musicSharingPrimed = musicSharingPrimed;
 	}
 	
+	@Column(nullable=true)
+	public Date getNativeMusicSharingTimestamp() {
+		if (nativeMusicSharingTimestamp == -1)
+			return null;
+		return new Date(nativeMusicSharingTimestamp);
+	}
+
+	public void setNativeMusicSharingTimestamp(Date nativeMusicSharingTimestamp) {
+		if (nativeMusicSharingTimestamp == null)
+			this.nativeMusicSharingTimestamp = -1;
+		else
+			this.nativeMusicSharingTimestamp = nativeMusicSharingTimestamp.getTime();
+	}
+
 	@Column(nullable=true)
 	public Boolean isNotifyPublicShares() {
 		return notifyPublicShares;
