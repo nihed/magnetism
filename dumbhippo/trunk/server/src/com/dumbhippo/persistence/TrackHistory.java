@@ -129,7 +129,7 @@ import javax.persistence.UniqueConstraint;
 		)
 	
 })
-public class TrackHistory extends DBUnique {
+public class TrackHistory extends EmbeddedGuidPersistable {
 
 	private static final long serialVersionUID = 1L;
 
