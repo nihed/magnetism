@@ -19,6 +19,9 @@
 </c:if>
 
 <dht3:blockTitle>
+	<c:if test="${!block.public}">
+		<dh:png klass="dh-stacker-block-title-lock" src="/images3/${buildStamp}/lock_icon.png" style="width: 12; height: 14; border: none;"/>
+	</c:if>
     <c:if test="${!oneLine}"> 
 	    <span class="dh-stacker-block-title-type"><c:out value="${block.typeTitle}"/>:</span>
 	</c:if>

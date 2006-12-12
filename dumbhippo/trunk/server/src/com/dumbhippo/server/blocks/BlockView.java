@@ -86,6 +86,10 @@ public abstract class BlockView implements ObjectView {
 		return null;
 	}
 	
+	public boolean isPublic() { 
+		return getBlock().isPublicBlock(); 
+	}
+	
 	public StackReason getStackReason() {
 		if (userBlockData != null)
 			return participated ? userBlockData.getParticipatedReason() : userBlockData.getStackReason();
