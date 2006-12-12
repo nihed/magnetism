@@ -174,7 +174,6 @@ hippo_canvas_block_facebook_event_constructor (GType                  type,
     block = HIPPO_CANVAS_BLOCK(object);
     block_facebook_event = HIPPO_CANVAS_BLOCK_FACEBOOK_EVENT(object);
 
-    hippo_canvas_block_add_lock_icon(block);
     hippo_canvas_block_set_heading(block, _("Facebook event"));
 
     block_facebook_event->thumbnails_parent =

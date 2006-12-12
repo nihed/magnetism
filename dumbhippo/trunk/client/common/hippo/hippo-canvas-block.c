@@ -444,6 +444,7 @@ hippo_canvas_block_constructor (GType                  type,
                        "orientation", HIPPO_ORIENTATION_HORIZONTAL,
                        "font", "Bold 12px",
                        NULL);
+    block->heading_box = box;
     hippo_canvas_box_append(left_column, HIPPO_CANVAS_ITEM(box), 0);
 
     block->heading_icon_item = g_object_new(HIPPO_TYPE_CANVAS_IMAGE,
@@ -458,8 +459,11 @@ hippo_canvas_block_constructor (GType                  type,
     block->heading_lock_item = g_object_new(HIPPO_TYPE_CANVAS_IMAGE,
                                             "xalign", HIPPO_ALIGNMENT_START,
                                             "yalign", HIPPO_ALIGNMENT_START,
+                                            "image-name", "lock_icon",
+                                            "border-right", 4,
                                             NULL);
     hippo_canvas_box_append(box, block->heading_lock_item, 0);
+    hippo_canvas_box_set_child_visible(box, block->heading_lock_item, FALSE);
 
 #if 0
     block->heading_text_item = g_object_new(HIPPO_TYPE_CANVAS_TEXT,
@@ -906,6 +910,9 @@ hippo_canvas_block_set_block_impl(HippoCanvasBlock *canvas_block,
             on_block_ignored_changed(new_block, NULL, canvas_block);
             on_block_stack_reason_changed(new_block, NULL, canvas_block);
             on_block_icon_url_changed(new_block, NULL, canvas_block);
+            hippo_canvas_box_set_child_visible(canvas_block->heading_box,
+                                               canvas_block->heading_lock_item,
+                                               !hippo_block_is_public(canvas_block->block));
         }
         
         g_object_notify(G_OBJECT(canvas_block), "block");
@@ -1028,15 +1035,6 @@ hippo_canvas_block_set_block(HippoCanvasBlock *canvas_block,
     (* klass->set_block) (canvas_block, block);
 }
 
-void 
-hippo_canvas_block_add_lock_icon(HippoCanvasBlock *canvas_block)
-{
-    g_object_set(G_OBJECT(canvas_block->heading_lock_item),
-                 "image-name", "lock_icon",
-                 "border-right", 4,
-                 NULL);    
-}
-                                
 void
 hippo_canvas_block_set_heading (HippoCanvasBlock *canvas_block,
                                 const char       *heading)

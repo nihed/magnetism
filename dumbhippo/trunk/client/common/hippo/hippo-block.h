@@ -42,6 +42,7 @@ struct _HippoBlock {
     GObject parent;
     char   *guid;
     HippoBlockType type;
+    gboolean is_public;
     GTime  update_time;
     gint64 timestamp;
     gint64 clicked_timestamp;
@@ -74,6 +75,9 @@ gboolean         hippo_block_update_from_xml           (HippoBlock     *block,
 const char*      hippo_block_get_guid                  (HippoBlock *block);
 HippoBlockType   hippo_block_get_block_type            (HippoBlock *block);
 
+gboolean hippo_block_is_public             (HippoBlock *block);
+void     hippo_block_set_public            (HippoBlock *block,
+                                            gboolean    value);
 GTime    hippo_block_get_update_time       (HippoBlock *block);
 void     hippo_block_set_update_time       (HippoBlock *block,
                                             GTime       t);

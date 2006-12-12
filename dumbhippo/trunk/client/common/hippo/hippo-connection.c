@@ -2034,7 +2034,7 @@ hippo_connection_parse_post(HippoConnection *connection,
     const char *title;
     const char *text = NULL;
     const char *info =  NULL;
-    gboolean to_world = FALSE;
+    gboolean is_public = FALSE;
     gboolean ignored = FALSE;
     gboolean viewed = FALSE;
     GTime post_date;
@@ -2052,7 +2052,7 @@ hippo_connection_parse_post(HippoConnection *connection,
                          "title", HIPPO_SPLIT_STRING | HIPPO_SPLIT_ELEMENT, &title,
                          "text", HIPPO_SPLIT_STRING | HIPPO_SPLIT_ELEMENT | HIPPO_SPLIT_OPTIONAL, &text,
                          "postInfo", HIPPO_SPLIT_STRING | HIPPO_SPLIT_ELEMENT | HIPPO_SPLIT_OPTIONAL, &info,
-                         "toWorld", HIPPO_SPLIT_BOOLEAN | HIPPO_SPLIT_ELEMENT | HIPPO_SPLIT_OPTIONAL, &to_world,
+                         "isPublic", HIPPO_SPLIT_BOOLEAN | HIPPO_SPLIT_ELEMENT | HIPPO_SPLIT_OPTIONAL, &is_public,
                          "postDate", HIPPO_SPLIT_INT32 | HIPPO_SPLIT_ELEMENT, &post_date_int,
                          "recipients", HIPPO_SPLIT_NODE | HIPPO_SPLIT_ELEMENT, &recipients_node,
                          "viewed", HIPPO_SPLIT_BOOLEAN | HIPPO_SPLIT_ELEMENT | HIPPO_SPLIT_OPTIONAL, &viewed,
@@ -2105,7 +2105,7 @@ hippo_connection_parse_post(HippoConnection *connection,
     hippo_post_set_date(post, post_date);
     hippo_post_set_recipients(post, recipients);
     hippo_post_set_ignored(post, ignored);
-    hippo_post_set_to_world(post, to_world);
+    hippo_post_set_public(post, is_public);
     hippo_post_set_have_viewed(post, viewed);
 
     g_slist_free(recipients);

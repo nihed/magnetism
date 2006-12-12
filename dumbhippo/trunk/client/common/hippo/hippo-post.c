@@ -17,7 +17,7 @@ struct _HippoPost {
     GSList *recipients;
     char *info;
     GTime date;
-    gboolean to_world;
+    gboolean is_public;
     int timeout;
     /* have we clicked on this post ever */
     guint have_viewed : 1;
@@ -290,10 +290,10 @@ hippo_post_get_date(HippoPost *post)
 }
 
 gboolean
-hippo_post_is_to_world(HippoPost *post)
+hippo_post_is_public(HippoPost *post)
 {
     g_return_val_if_fail(HIPPO_IS_POST(post), 0);
-    return post->to_world;
+    return post->is_public;
 }
 
 int
@@ -510,11 +510,11 @@ hippo_post_set_timeout(HippoPost  *post,
 }
 
 void
-hippo_post_set_to_world(HippoPost  *post,
-                        gboolean    value)
+hippo_post_set_public(HippoPost  *post,
+                      gboolean    value)
 {
     g_return_if_fail(HIPPO_IS_POST(post));
-    set_bool(post, &post->to_world, value);
+    set_bool(post, &post->is_public, value);
 }
                        
 void

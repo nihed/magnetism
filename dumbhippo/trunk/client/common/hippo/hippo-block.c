@@ -44,6 +44,7 @@ enum {
     PROP_0,
     PROP_GUID,
     PROP_BLOCK_TYPE,
+    PROP_IS_PUBLIC,
     PROP_SORT_TIMESTAMP,
     PROP_TIMESTAMP,
     PROP_CLICKED_TIMESTAMP,
@@ -91,6 +92,14 @@ hippo_block_class_init(HippoBlockClass *klass)
                                                      HIPPO_BLOCK_TYPE_UNKNOWN,
                                                      G_PARAM_READABLE));
     
+    g_object_class_install_property(object_class,
+                                    PROP_IS_PUBLIC,
+                                    g_param_spec_boolean("is-public",
+                                                         _("Publicity"),
+                                                         _("Whether or not this block is public"),
+                                                         FALSE,
+                                                         G_PARAM_READABLE | G_PARAM_WRITABLE));
+
     g_object_class_install_property(object_class,
                                     PROP_SORT_TIMESTAMP,
                                     g_param_spec_int64("sort-timestamp",
@@ -316,6 +325,7 @@ hippo_block_real_update_from_xml (HippoBlock     *block,
     const char *guid;
     const char *type_str;
     HippoBlockType type;
+    gboolean is_public;
     gint64 timestamp;
     gint64 clicked_timestamp;
     gint64 ignored_timestamp;
@@ -332,6 +342,7 @@ hippo_block_real_update_from_xml (HippoBlock     *block,
     if (!hippo_xml_split(cache, node, NULL,
                          "id", HIPPO_SPLIT_GUID, &guid,
                          "type", HIPPO_SPLIT_STRING, &type_str,
+                         "isPublic", HIPPO_SPLIT_BOOLEAN, &is_public,
                          "timestamp", HIPPO_SPLIT_TIME_MS, &timestamp,
                          "clickedTimestamp", HIPPO_SPLIT_TIME_MS, &clicked_timestamp,
                          "ignoredTimestamp", HIPPO_SPLIT_TIME_MS, &ignored_timestamp,
@@ -357,6 +368,7 @@ hippo_block_real_update_from_xml (HippoBlock     *block,
         return FALSE;
     }
 
+    hippo_block_set_public(block, is_public);
     hippo_block_set_timestamp(block, timestamp);
     hippo_block_set_clicked_timestamp(block, clicked_timestamp);
     hippo_block_set_ignored_timestamp(block, ignored_timestamp);
@@ -613,6 +625,27 @@ hippo_block_set_clicked(HippoBlock *block,
     if (value != block->clicked) {
         block->clicked = value;
         g_object_notify(G_OBJECT(block), "clicked");
+    }
+}
+
+
+gboolean
+hippo_block_is_public(HippoBlock *block)
+{
+    g_return_val_if_fail(HIPPO_IS_BLOCK(block), FALSE);
+
+    return block->is_public;
+}
+
+void
+hippo_block_set_public(HippoBlock *block,
+                        gboolean    value)
+{
+    g_return_if_fail(HIPPO_IS_BLOCK(block));
+
+    if (value != block->is_public) {
+        block->is_public = value;
+        g_object_notify(G_OBJECT(block), "is-public");
     }
 }
 
