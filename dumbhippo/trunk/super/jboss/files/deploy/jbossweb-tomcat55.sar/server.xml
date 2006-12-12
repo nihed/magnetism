@@ -9,11 +9,12 @@
       className="org.jboss.web.tomcat.tc5.StandardService">
 
       <!-- A HTTP/1.1 Connector on port 8080 -->
+      <!-- HIPPO: Setting URIEncoding on the connectors controls how URI parameters are decoded -->
       <Connector port="8080" address="${jboss.bind.address}"
          maxThreads="250" strategy="ms" maxHttpHeaderSize="8192"
          emptySessionPath="true"
          enableLookups="false" redirectPort="8443" acceptCount="100"
-         connectionTimeout="20000" disableUploadTimeout="true"/>
+         connectionTimeout="20000" disableUploadTimeout="true" URIEncoding="UTF-8"/>
 
       <!-- Add this option to the connector to avoid problems with 
           .NET clients that don't implement HTTP/1.1 correctly 
@@ -21,9 +22,12 @@
       -->
 	
       <!-- A AJP 1.3 Connector on port 8009 -->
+      <!-- HIPPO: URIEncoding is as above, 
+           JkOptions +ForwardURIEscaped or +ForwardURICompatUnparsed
+           is also needed in the Apache configuration -->
       <Connector port="8009" address="${jboss.bind.address}"
-         emptySessionPath="true" enableLookups="false" redirectPort="8443" 
-         protocol="AJP/1.3"/>
+         emptySessionPath="true" enableLookups="false" redirectPort="8443"
+         protocol="AJP/1.3" URIEncoding="UTF-8" />
 
       <!-- SSL/TLS Connector configuration using the admin devl guide keystore
       <Connector port="8443" address="${jboss.bind.address}"
