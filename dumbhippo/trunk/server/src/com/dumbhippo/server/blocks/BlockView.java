@@ -90,6 +90,10 @@ public abstract class BlockView implements ObjectView {
 		return getBlock().isPublicBlock(); 
 	}
 	
+	public String getPrivacyTip() {
+		throw new RuntimeException("No privacy tip specified for non-public block");
+	}
+	
 	public StackReason getStackReason() {
 		if (userBlockData != null)
 			return participated ? userBlockData.getParticipatedReason() : userBlockData.getStackReason();
@@ -119,6 +123,7 @@ public abstract class BlockView implements ObjectView {
 		builder.openElement("block",
 							"id", block.getId(),
 							"type", block.getBlockType().name(),
+							"isPublic", Boolean.toString(isPublic()),							
 							"timestamp", Long.toString(block.getTimestampAsLong()),
 							"clickedCount", clickedCountString,
 							"significantClickedCount", significantClickedCountString,

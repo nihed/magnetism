@@ -306,7 +306,8 @@ div.dh-notification {
 .dh-stacker-block-title-lock {
     position:           relative;
     top:                1px;  
-    padding-right:		5px;		  
+    padding-right:		5px;
+    padding-left:		5px;		  
  }
  
 .dh-stacker-block-bottom-padding {

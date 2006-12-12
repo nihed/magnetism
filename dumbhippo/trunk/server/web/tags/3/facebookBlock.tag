@@ -16,7 +16,7 @@
 
 <dht3:blockContainer cssClass="${offset ? 'dh-box-grey2' : 'dh-box-grey1'}" blockId="${blockId}" expandable="${(block.thumbnails.thumbnailCount > 0) && !oneLine}">
 	<dht3:blockLeft block="${block}">
-	    <dht3:simpleBlockTitle block="${block}" oneLine="${oneLine}" homeStack="${homeStack}" image="/images3/${buildStamp}/lock_icon.png"/>
+	    <dht3:simpleBlockTitle block="${block}" oneLine="${oneLine}" homeStack="${homeStack}"/>
 	    <dht3:blockDescription blockId="${blockId}">
 	    </dht3:blockDescription>
 	    <dht3:blockContent blockId="${blockId}">

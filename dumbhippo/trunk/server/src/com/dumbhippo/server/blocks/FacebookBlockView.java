@@ -116,6 +116,11 @@ public class FacebookBlockView extends AbstractPersonBlockView
 
 	public String getLink() {
 		return link;
+	}	
+	
+	@Override
+	public String getPrivacyTip() {
+		return "Private: This Facebook update can only be seen by you.";
 	}
 
 	public String getTitleForHome() {		

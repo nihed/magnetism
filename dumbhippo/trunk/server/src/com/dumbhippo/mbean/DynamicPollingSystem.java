@@ -109,9 +109,6 @@ public class DynamicPollingSystem extends ServiceMBeanSupport implements Dynamic
 	public static class PollingTaskNormalExecutionException extends Exception {
 		private static final long serialVersionUID = 1L;
 
-		public PollingTaskNormalExecutionException() {
-		}
-
 		public PollingTaskNormalExecutionException(String message, Throwable cause) {
 			super(message, cause);
 		}

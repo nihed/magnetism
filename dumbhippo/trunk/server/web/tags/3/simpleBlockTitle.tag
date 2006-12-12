@@ -8,35 +8,11 @@
 <%@ attribute name="homeStack" required="true" type="java.lang.Boolean" %>
 <%@ attribute name="spanClass" required="false" type="java.lang.String" %>
 <%@ attribute name="linkClass" required="false" type="java.lang.String" %>
-<%@ attribute name="image" required="false" type="java.lang.String" %>
-
-<c:if test="${empty linkClass}">
-	<c:set var="linkClass" value="dh-underlined-link" scope="page"/>
-</c:if>
-
-<c:if test="${empty spanClass}">
-	<c:set var="spanClass" value="dh-stacker-block-title-title" scope="page"/>
-</c:if>
 
 <dht3:blockTitle>
-	<c:if test="${!block.public}">
-		<dh:png klass="dh-stacker-block-title-lock" src="/images3/${buildStamp}/lock_icon.png" style="width: 12; height: 14; border: none;"/>
-	</c:if>
     <c:if test="${!oneLine}"> 
 	    <span class="dh-stacker-block-title-type"><c:out value="${block.typeTitle}"/>:</span>
 	</c:if>
-	<c:if test="${!empty image}">
-	    <dh:png klass="dh-stacker-block-title-image" src="${image}" style="width: 12; height: 14; border: none;"/>
-	</c:if>
-	<span class="${spanClass}">
-		<jsp:element name="a">
-			<jsp:attribute name="class">${linkClass}</jsp:attribute>
-			<jsp:attribute name="href"><c:out value="${block.link}"/></jsp:attribute>
-			<jsp:body>
-				<%-- if the updates are viewed outside of the person's own homeStack, we --%>
-			    <%-- always want them to be in the third person or neutral tone (not "You have") --%>
-			    <c:out value="${homeStack ? block.titleForHome : block.title}"/>
-			</jsp:body>
-		</jsp:element>
-	</span>
+	<dht3:blockPublicIcon block="${block}"/>
+	<dht3:blockTitleLink spanClass="${spanClass}" linkClass="${linkClass}" homeStack="${homeStack}" block="${block}"/>
 </dht3:blockTitle>

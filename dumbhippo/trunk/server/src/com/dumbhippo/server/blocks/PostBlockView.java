@@ -81,6 +81,11 @@ public class PostBlockView extends BlockView implements SimpleTitleBlockView {
 	public String getTypeTitle() {
 		return "Web Swarm";
 	}
+	
+	@Override
+	public String getPrivacyTip() {
+		return "Private: Only you and the recipients can see this.";
+	}
 
 	public String getTitleForHome() {
 		return getTitle();
