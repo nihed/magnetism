@@ -68,13 +68,11 @@ public abstract class BlogLikeBlockView extends AbstractPersonBlockView implemen
 		return getTitle();
 	}
 
-	@Override
-	protected String getSummaryLink() {
+	public @Override String getSummaryLink() {
 		return entry.getLink().getUrl();
 	}
 
-	@Override
-	protected String getSummaryLinkText() {
+	public @Override String getSummaryLinkText() {
 		return entry.getTitle();
 	}
 }

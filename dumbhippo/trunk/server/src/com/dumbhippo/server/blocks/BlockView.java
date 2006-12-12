@@ -151,17 +151,21 @@ public abstract class BlockView implements ObjectView {
 		builder.appendEmptyNode("block",
 				"id", block.getId(),
 				"sortTimestamp", Long.toString(sortTimestamp),
-				"timeAgo", DateUtils.formatTimeAgo(block.getTimestamp()),
+				"timeAgo", getSummaryTimeAgo(),
 				"heading", getSummaryHeading(),
 				"link", getSummaryLink(),
 				"linkText", getSummaryLinkText());
 	}
 	
-	protected abstract String getSummaryHeading();
+	public final String getSummaryTimeAgo() {
+		return DateUtils.formatTimeAgo(block.getTimestamp());
+	}
 	
-	protected abstract String getSummaryLink();
+	public abstract String getSummaryHeading();
 	
-	protected abstract String getSummaryLinkText();
+	public abstract String getSummaryLink();
+	
+	public abstract String getSummaryLinkText();
 	
 	// utility function for use in implementations of writeDetailsToXmlBuilder
 	protected void writeFeedEntryToXmlBuilder(XmlBuilder builder, FeedEntry entry) {

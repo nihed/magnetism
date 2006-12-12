@@ -5,10 +5,9 @@ import java.util.List;
 import org.slf4j.Logger;
 
 import com.dumbhippo.GlobalSetup;
-import com.dumbhippo.server.blocks.BlockView;
-import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.Pageable;
 import com.dumbhippo.server.Stacker;
+import com.dumbhippo.server.blocks.BlockView;
 import com.dumbhippo.web.WebEJBUtil;
 
 public class StackedPersonPage extends AbstractPersonPage {
@@ -21,26 +20,8 @@ public class StackedPersonPage extends AbstractPersonPage {
 	
 	protected Stacker stacker;
 	
-	protected List<StackedContact> stackedContacts;
-	
 	private Pageable<BlockView> pageableMugshot;
 	private Pageable<BlockView> pageableStack;
-	
-	public static class StackedContact {
-		private List<BlockView> stack;
-		private PersonView contact;
-		
-		public StackedContact(List<BlockView> stack, PersonView contact) {
-			this.stack = stack;
-			this.contact = contact;
-		}
-		public PersonView getContact() {
-			return contact;
-		}
-		public List<BlockView> getStack() {
-			return stack;
-		}
-	}
 	
 	public StackedPersonPage() {
 		stacker = WebEJBUtil.defaultLookup(Stacker.class);

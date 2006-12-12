@@ -94,18 +94,15 @@ public class PostBlockView extends BlockView implements SimpleTitleBlockView {
 		return "/visit?post=" + postView.getPost().getId();
 	}
 
-	@Override
-	protected String getSummaryHeading() {
+	public @Override String getSummaryHeading() {
 		return "Posted";
 	}
 
-	@Override
-	protected String getSummaryLink() {
+	public @Override String getSummaryLink() {
 		return getLink();
 	}
 
-	@Override
-	protected String getSummaryLinkText() {
+	public @Override String getSummaryLinkText() {
 		return getTitle();
 	}
 }

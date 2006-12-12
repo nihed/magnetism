@@ -86,18 +86,15 @@ public class GroupMemberBlockView extends BlockView {
 		return "Group update";
 	}
 
-	@Override
-	protected String getSummaryHeading() {
+	public @Override String getSummaryHeading() {
 		return "Group membership changed";
 	}
 
-	@Override
-	protected String getSummaryLink() {
+	public @Override String getSummaryLink() {
 		return group.getHomeUrl();
 	}
 
-	@Override
-	protected String getSummaryLinkText() {
+	public @Override String getSummaryLinkText() {
 		return group.getName();
 	}
 }

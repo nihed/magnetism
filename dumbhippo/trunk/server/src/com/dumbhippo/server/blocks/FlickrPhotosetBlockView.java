@@ -85,18 +85,15 @@ public class FlickrPhotosetBlockView extends AbstractPersonBlockView
 		return getTitle();
 	}
 
-	@Override
-	protected String getSummaryHeading() {
+	public @Override String getSummaryHeading() {
 		return "Posted Flickr photoset";
 	}
 
-	@Override
-	protected String getSummaryLink() {
+	public @Override String getSummaryLink() {
 		return getMoreThumbnailsLink();
 	}
 
-	@Override
-	protected String getSummaryLinkText() {
+	public @Override String getSummaryLinkText() {
 		return getMoreThumbnailsTitle();
 	}
 }

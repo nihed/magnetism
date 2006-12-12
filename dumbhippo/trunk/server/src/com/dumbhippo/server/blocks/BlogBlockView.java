@@ -32,8 +32,7 @@ public class BlogBlockView extends BlogLikeBlockView {
 		return "Blog post";
 	}
 
-	@Override
-	protected String getSummaryHeading() {
+	public @Override String getSummaryHeading() {
 		return "Blogged";
 	}
 

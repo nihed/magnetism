@@ -197,20 +197,17 @@ public class FacebookBlockView extends AbstractPersonBlockView
 	}
 
 	// FIXME doesn't fit into the way summary blocks look / are worded 
-	@Override
-	protected String getSummaryHeading() {
+	public @Override String getSummaryHeading() {
 		return "Facebook";
 	}
 
 	//	 FIXME doesn't fit into the way summary blocks look / are worded
-	@Override
-	protected String getSummaryLink() {
+	public @Override String getSummaryLink() {
 		return getLink();
 	}
 	
 	//	 FIXME doesn't fit into the way summary blocks look / are worded
-	@Override
-	protected String getSummaryLinkText() {
+	public @Override String getSummaryLinkText() {
 		return getGenericText();
 	}
 }

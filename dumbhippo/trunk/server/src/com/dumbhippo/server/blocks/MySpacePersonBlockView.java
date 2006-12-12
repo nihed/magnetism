@@ -37,8 +37,7 @@ public class MySpacePersonBlockView extends BlogLikeBlockView {
 		return "MySpace Blog";
 	}
 
-	@Override
-	protected String getSummaryHeading() {
+	public @Override String getSummaryHeading() {
 		return "MySpace";
 	}
 
