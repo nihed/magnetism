@@ -1,11 +1,11 @@
 package com.dumbhippo.services.caches;
 
-import java.net.MalformedURLException;
+import java.util.List;
 
 import javax.ejb.Local;
 
 @Local
 public interface RhapsodyDownloadCache extends Cache<String,Boolean> {
 
-	public String buildLink(String album, String artist, int track) throws MalformedURLException;
+	public List<String> buildLinks(String album, String artist, String name);
 }

@@ -5,7 +5,9 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
-import java.util.concurrent.Future;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
@@ -14,8 +16,9 @@ import javax.persistence.Query;
 
 import org.slf4j.Logger;
 
+import sun.text.Normalizer;
+
 import com.dumbhippo.GlobalSetup;
-import com.dumbhippo.KnownFuture;
 import com.dumbhippo.URLUtils;
 import com.dumbhippo.persistence.CachedRhapsodyDownload;
 import com.dumbhippo.server.BanFromWebTier;
@@ -39,7 +42,9 @@ public class RhapsodyDownloadCacheBean extends AbstractBasicCacheWithStorageBean
 	 * Mangle a string to work in a Rhapsody friendly URL - remove all 
 	 * punctuation and whitespace and lowercase it
 	 */
-	private static String rhapString(String s) {
+	private static String rhapString(String s, boolean canonicalize) {
+		// See http://rws-blog.rhapsody.com/rhapsody_web_services/2006/04/new_album_urls.html		
+		//
 		// Internationalization:
 		//  Rhapsody somtimes strips accents
 		//   http://play.rhapsody.com/edithpiaf (Édith Piaf)
@@ -51,7 +56,11 @@ public class RhapsodyDownloadCacheBean extends AbstractBasicCacheWithStorageBean
 		// Or sometimes something different:
 		//   http://www.rhapsody.com/concertokoln2 (Concerto Köln)
 		//
-		// TODO: We probably should try both of the first two ways. A way of
+		// We try both of the first two ways.
+		
+		if (canonicalize)
+			s = Normalizer.normalize(s, Normalizer.DECOMP_COMPAT, 0);
+		
 		//  implementing the first is to normalize to Unicode normalization
 		//  form NFKD before doing the stripping below. (java.text.Normalizer
 		//  is new for Java 6, but I think there are alternatives that can be used
@@ -62,41 +71,29 @@ public class RhapsodyDownloadCacheBean extends AbstractBasicCacheWithStorageBean
 		//
 		return s.replaceAll("[^a-zA-Z0-9]","").toLowerCase();
 	}
+	
+	private void addLink(List<String> links, String album, String artist, String name, boolean canonicalize) {
+		String link = "http://play.rhapsody.com/" + rhapString(artist, canonicalize) + "/" + rhapString(album, canonicalize) + "/" + rhapString(name, canonicalize);
+		
+		if (!links.contains(link))
+			links.add(link);
+	}
 
 	// nothing database-related about this method, so don't force a transaction
 	@TransactionAttribute(TransactionAttributeType.SUPPORTS)
-	public String buildLink(String album, String artist, int track) throws MalformedURLException {
-		if (artist == null || album == null || track < 1) {
-			logger.debug("missing artist or album or track, not looking up album {} by artist {} on Rhapsody", 
+	public List<String> buildLinks(String album, String artist, String name) {
+		if (artist == null || album == null || name == null) {
+			logger.debug("missing artist or album or track null, not looking up album {} by artist {} on Rhapsody", 
 					     album, artist);
-			throw new MalformedURLException("Don't have artist, album, or track"); 
+			return Collections.emptyList();
 		}
 		
-		// Try to concoct a Rhapsody friendly URL; see:
-		//  http://rws-blog.rhapsody.com/rhapsody_web_services/2006/04/new_album_urls.html		
-		return "http://play.rhapsody.com/" + rhapString(artist) + "/" + rhapString(album) + "/track-" + track;
-	}
-
-	@TransactionAttribute(TransactionAttributeType.SUPPORTS)
-	public Boolean getSync(String album, String artist, int track) {
-		String link;
-		try {
-			link = buildLink(album, artist, track);
-		} catch (MalformedURLException e) {
-			return null;
-		}
-		return getSync(link);
-	}
-
-	@TransactionAttribute(TransactionAttributeType.SUPPORTS)
-	public Future<Boolean> getAsync(String album, String artist, int track) {
-		String link;
-		try {
-			link = buildLink(album, artist, track);
-		} catch (MalformedURLException e) {
-			return new KnownFuture<Boolean>(null);
-		}
-		return getAsync(link);		
+		List<String> links = new ArrayList<String>();
+		
+		addLink(links, album, artist, name, false);
+		addLink(links, album, artist, name, true);
+		
+		return links;
 	}
 
 	@TransactionAttribute(TransactionAttributeType.REQUIRED)

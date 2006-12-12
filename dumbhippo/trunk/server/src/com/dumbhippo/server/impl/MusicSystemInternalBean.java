@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
@@ -671,6 +672,35 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		fillAlbumInfo(yahooAlbum, futureAmazonAlbum, albumView);				
 	}
 	
+	private static class RhapsodyFutureDownload {
+		private String url;
+		private Future<Boolean> future;
+		private TrackView trackView;
+		
+		RhapsodyFutureDownload(String url, Future<Boolean> future, TrackView trackView) {
+			this.url = url;
+			this.future = future;
+			this.trackView = trackView;
+		}
+		
+		public void storeInTrackView() {
+			// If we already found one download URL, don't replace it
+			if (trackView.getDownloadUrl(SongDownloadSource.RHAPSODY) != null)
+				return;
+			
+			Boolean haveUrl;
+			try {
+				haveUrl = future.get();
+			} catch (InterruptedException e) {
+				throw new RuntimeException(e);
+			} catch (ExecutionException e) {
+				throw new RuntimeException(e);
+			}
+			if (haveUrl != null && haveUrl)
+				trackView.setDownloadUrl(SongDownloadSource.RHAPSODY, url);
+		}
+	}
+	
 	private void fillAlbumInfo(Viewpoint viewpoint, YahooSongData yahooSong, YahooAlbumData yahooAlbum, Future<AmazonAlbumData> futureAmazonAlbum, Future<List<? extends YahooSongData>> futureAlbumTracks, AlbumView albumView) {
 			fillAlbumInfo(yahooAlbum, futureAmazonAlbum, albumView);
 
@@ -729,6 +759,8 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 				}
 			}
 			
+			List<RhapsodyFutureDownload> rhapsodyFutures = new ArrayList<RhapsodyFutureDownload>();
+			
     		for (Integer trackNumber : sortedTracks.keySet()) {
     			TrackView trackView = sortedTracks.get(trackNumber);       			
     			for (Future<List<? extends YahooSongDownloadData>> futureDownloads : trackDownloads.get(trackNumber)) {
@@ -743,16 +775,16 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 					    }
     			    }
 				}
-				try {
-					String rhapsodyDownloadUrl = rhapsodyDownloadCache.buildLink(trackView.getAlbum(), trackView.getArtist(), trackView.getTrackNumber());
-					Boolean haveUrl = rhapsodyDownloadCache.getSync(rhapsodyDownloadUrl);
-					if (haveUrl != null && haveUrl) {
-						trackView.setDownloadUrl(SongDownloadSource.RHAPSODY, rhapsodyDownloadUrl);
-					}
-				} catch (MalformedURLException e) {
-				} 
+    			for (String rhapsodyDownloadUrl : rhapsodyDownloadCache.buildLinks(trackView.getAlbum(), trackView.getArtist(), trackView.getName()))
+					rhapsodyFutures.add(new RhapsodyFutureDownload(rhapsodyDownloadUrl, 
+							rhapsodyDownloadCache.getAsync(rhapsodyDownloadUrl),
+							trackView));
 			}
 			
+    		for (RhapsodyFutureDownload rhapsodyFuture : rhapsodyFutures) {
+    			rhapsodyFuture.storeInTrackView();
+    		}
+
 			for (TrackView trackView : sortedTracks.values()) {
 				albumView.addTrack(trackView);
 			}
@@ -777,7 +809,14 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			futureAmazonAlbum = amazonAlbumCache.getAsync(new AlbumAndArtist(track.getAlbum(), track.getArtist()));
 		else
 			futureAmazonAlbum = null;
+
+		List<RhapsodyFutureDownload> rhapsodyFutures = new ArrayList<RhapsodyFutureDownload>();
 		
+		for (String rhapsodyDownloadUrl : rhapsodyDownloadCache.buildLinks(track.getAlbum(), track.getArtist(), track.getName()))
+			rhapsodyFutures.add(new RhapsodyFutureDownload(rhapsodyDownloadUrl, 
+					rhapsodyDownloadCache.getAsync(rhapsodyDownloadUrl),
+					view));
+
 		// get our song IDs; no point doing it async...
 		List<? extends YahooSongData> songs = yahooSongCache.getSync(track);
 		
@@ -809,23 +848,9 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 			}
 		}
 		
-		// if futureYahooAlbum is not null, try to get a Rhapsody download URL for this song and that album
-		if (futureYahooAlbum != null) {
-			YahooAlbumData yahooAlbum = ThreadUtils.getFutureResultNullOnException(futureYahooAlbum);
-			if (yahooAlbum != null) {
-				try {
-					String rhapsodyDownloadUrl = rhapsodyDownloadCache.buildLink(yahooAlbum.getAlbum(), yahooAlbum.getArtist(), yahooSong.getTrackNumber());
-					Boolean haveUrl = rhapsodyDownloadCache.getSync(rhapsodyDownloadUrl);
-					if (haveUrl != null && haveUrl) {
-						view.setDownloadUrl(SongDownloadSource.RHAPSODY, rhapsodyDownloadUrl);
-						//logger.debug("set rhapsody download url {}", rhapsodyDownloadUrl);
-					}
-				} catch (MalformedURLException e) {
-				}
-			} else {
-				logger.warn("yahooAlbum for {} was null in getTrackView", yahooSong.getName());
-			}
-		}
+		for (RhapsodyFutureDownload rhapsodyFuture : rhapsodyFutures)
+			rhapsodyFuture.storeInTrackView();
+
 		fillAlbumInfo(futureYahooAlbum, futureAmazonAlbum, view.getAlbumView());
 		
 		return view;
