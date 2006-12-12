@@ -1,6 +1,5 @@
 package com.dumbhippo.web;
 
-import com.dumbhippo.server.impl.MessengerGlueBean;
 import com.dumbhippo.statistics.Column;
 import com.dumbhippo.statistics.ColumnType;
 import com.dumbhippo.statistics.ColumnUnit;
