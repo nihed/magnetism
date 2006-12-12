@@ -47,6 +47,11 @@ public class MusicPersonBlockView extends AbstractPersonBlockView {
 	}
 
 	@Override
+	public String getPrivacyTip() {
+		return "Private: This music notification can only be seen by you.";
+	}	
+	
+	@Override
 	public String getTypeTitle() {
 		return "Music Radar";
 	}

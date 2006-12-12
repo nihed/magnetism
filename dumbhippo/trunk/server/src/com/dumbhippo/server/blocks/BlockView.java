@@ -91,7 +91,7 @@ public abstract class BlockView implements ObjectView {
 	}
 	
 	public String getPrivacyTip() {
-		throw new RuntimeException("No privacy tip specified for non-public block");
+		throw new RuntimeException("No privacy tip specified for non-public block: " + block);
 	}
 	
 	public StackReason getStackReason() {
