@@ -1,5 +1,6 @@
 package com.dumbhippo.web;
 
+import com.dumbhippo.server.impl.MessengerGlueBean;
 import com.dumbhippo.statistics.Column;
 import com.dumbhippo.statistics.ColumnType;
 import com.dumbhippo.statistics.ColumnUnit;
@@ -18,7 +19,8 @@ public class WebStatistics implements StatisticsSource {
 	private long httpMethodsServed;
 	private long httpMethodErrors;
 	private long pageServeTime;
-	
+	private long webTooBusyCount; 
+		
 	static public WebStatistics getInstance() {
 		return instance;
 	}
@@ -81,5 +83,17 @@ public class WebStatistics implements StatisticsSource {
 	
 	public synchronized void addPageServeTime(long serveTime) {
 		pageServeTime += serveTime;
+	}
+	
+	@Column(id="webTooBusyCount",
+			name="Web Too Busy Responses", 
+			units=ColumnUnit.EVENTS, 
+			type=ColumnType.CUMULATIVE)
+	public long getWebTooBusyCount() {
+		return webTooBusyCount; 
+	}
+	
+	public synchronized void incrementWebTooBusyCount() {
+		webTooBusyCount++;
 	}
 }

@@ -173,6 +173,7 @@ public class RewriteServlet extends HttpServlet {
 		
 		// If the server says it's too busy, just redirect to a busy page
 	    if (serverStatus.isTooBusy() && canBusyRedirect(request)) {
+	    	WebStatistics.getInstance().incrementWebTooBusyCount();
 			context.getRequestDispatcher(getVersionedJspPath("busy")).forward(request, response);
 			return;
 		}
