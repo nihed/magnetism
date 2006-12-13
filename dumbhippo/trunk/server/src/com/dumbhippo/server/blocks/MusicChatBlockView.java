@@ -1,5 +1,6 @@
 package com.dumbhippo.server.blocks;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.dumbhippo.XmlBuilder;
@@ -51,6 +52,16 @@ public class MusicChatBlockView extends AbstractPersonBlockView {
 		}
 		builder.closeElement();
 		builder.closeElement();
+	}
+
+	@Override
+	public List<Object> getReferencedObjects() {
+		List<Object> result = new ArrayList<Object>();
+		result.add(getUserView());
+		for (ChatMessageView message : getRecentMessages()) {
+			result.add(message.getSenderView());
+		}
+		return result;
 	}
 	
 	@Override

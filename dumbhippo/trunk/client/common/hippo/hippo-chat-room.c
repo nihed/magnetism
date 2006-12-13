@@ -632,6 +632,7 @@ struct _HippoChatMessage {
     guint32 magic;
     HippoPerson *person;
     char *text;
+    HippoSentiment sentiment;
     GTime timestamp;
     int serial;
 };
@@ -641,10 +642,11 @@ struct _HippoChatMessage {
 #define HIPPO_IS_CHAT_MESSAGE(message)(((HippoChatMessage*)message)->magic == HIPPO_CHAT_MESSAGE_MAGIC)
 
 HippoChatMessage*
-hippo_chat_message_new(HippoPerson *person,
-                       const char  *text,
-                       GTime        timestamp,
-                       int          serial)
+hippo_chat_message_new(HippoPerson   *person,
+                       const char    *text,
+                       HippoSentiment sentiment,
+                       GTime          timestamp,
+                       int            serial)
 {
     HippoChatMessage *message;
 
@@ -655,6 +657,7 @@ hippo_chat_message_new(HippoPerson *person,
     message->person = person;
     g_object_ref(message->person);
     message->text = g_strdup(text);
+    message->sentiment = sentiment;
     message->timestamp = timestamp;
     message->serial = serial;
 
@@ -669,16 +672,22 @@ hippo_chat_message_new_from_xml(HippoDataCache *cache,
     gint64 timestamp;
     HippoPerson *sender;
     const char *text;
+    const char *sentiment_str = NULL;
+    HippoSentiment sentiment = HIPPO_SENTIMENT_INDIFFERENT;
     
     if (!hippo_xml_split(cache, node, NULL,
                          "serial", HIPPO_SPLIT_INT64, &serial,
                          "timestamp", HIPPO_SPLIT_TIME_MS, &timestamp,
                          "sender", HIPPO_SPLIT_PERSON, &sender,
                          "text", HIPPO_SPLIT_STRING | HIPPO_SPLIT_ELEMENT, &text,
+                         "sentiment", HIPPO_SPLIT_STRING | HIPPO_SPLIT_OPTIONAL, &sentiment_str,
                          NULL))
         return NULL;
 
-    return hippo_chat_message_new(sender, text, timestamp / 1000, serial);
+    if (sentiment_str && !hippo_parse_sentiment(sentiment_str, &sentiment))
+        return NULL;
+
+    return hippo_chat_message_new(sender, text, sentiment, timestamp / 1000, serial);
 }
 
 void
@@ -720,6 +729,14 @@ hippo_chat_message_get_text(HippoChatMessage *message)
     g_return_val_if_fail(HIPPO_IS_CHAT_MESSAGE(message), NULL);
 
     return message->text;
+}
+
+HippoSentiment
+hippo_chat_message_get_sentiment (HippoChatMessage *message)
+{
+    g_return_val_if_fail(HIPPO_IS_CHAT_MESSAGE(message), HIPPO_SENTIMENT_INDIFFERENT);
+
+    return message->sentiment;
 }
 
 GTime

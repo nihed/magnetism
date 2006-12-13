@@ -98,6 +98,7 @@ HippoChatState  hippo_chat_room_get_desired_state     (HippoChatRoom *room);
 
 HippoChatMessage* hippo_chat_message_new           (HippoPerson      *person,
                                                     const char       *text,
+                                                    HippoSentiment    sentiment,
                                                     GTime             timestamp,
                                                     int               serial);
 HippoChatMessage *hippo_chat_message_new_from_xml  (HippoDataCache   *cache,
@@ -107,6 +108,7 @@ void              hippo_chat_message_free          (HippoChatMessage *message);
 HippoChatMessage* hippo_chat_message_copy          (HippoChatMessage *message);
 HippoPerson*      hippo_chat_message_get_person    (HippoChatMessage *message);
 const char*       hippo_chat_message_get_text      (HippoChatMessage *message);
+HippoSentiment    hippo_chat_message_get_sentiment (HippoChatMessage *message);
 GTime             hippo_chat_message_get_timestamp (HippoChatMessage *message);
 int               hippo_chat_message_get_serial    (HippoChatMessage *message);
 

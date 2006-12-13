@@ -73,10 +73,12 @@ EMBEDDED_IMAGES=				\
 	$(EMBEDDEDIMAGEDIR)/hush2.png		\
 	$(EMBEDDEDIMAGEDIR)/hush.png		\
 	$(EMBEDDEDIMAGEDIR)/lid.png		\
-	$(EMBEDDEDIMAGEDIR)/lock_icon.png		\
+	$(EMBEDDEDIMAGEDIR)/lock_icon.png	\
 	$(EMBEDDEDIMAGEDIR)/mugshotstacker.png	\
 	$(EMBEDDEDIMAGEDIR)/nophoto.png		\
 	$(EMBEDDEDIMAGEDIR)/photo_icon.png	\
+	$(EMBEDDEDIMAGEDIR)/quiphate_icon.png	\
+	$(EMBEDDEDIMAGEDIR)/quiplove_icon.png	\
 	$(EMBEDDEDIMAGEDIR)/search_x.png	\
 	$(EMBEDDEDIMAGEDIR)/unhush2.png		\
 	$(EMBEDDEDIMAGEDIR)/unhush.png

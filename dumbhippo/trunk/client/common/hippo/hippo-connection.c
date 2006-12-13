@@ -2670,13 +2670,19 @@ parse_chat_message_info(HippoConnection  *connection,
         gint64 timestamp_milliseconds;
         GTime timestamp;
         int serial;
+        const char *sentiment_str = NULL;
+        HippoSentiment sentiment = HIPPO_SENTIMENT_INDIFFERENT;
 
         if (!hippo_xml_split(connection->cache, info_node, NULL,
                              "name", HIPPO_SPLIT_STRING, &name_str,
+                             "sentiment", HIPPO_SPLIT_STRING | HIPPO_SPLIT_OPTIONAL, &sentiment_str,
                              "smallPhotoUrl", HIPPO_SPLIT_URI_RELATIVE, &photo_url,
                              "timestamp", HIPPO_SPLIT_TIME_MS, &timestamp_milliseconds,
                              "serial", HIPPO_SPLIT_INT32, &serial,
                              NULL))
+            return NULL;
+
+        if (sentiment_str && !hippo_parse_sentiment(sentiment_str, &sentiment))
             return NULL;
 
         *name_p = name_str;
@@ -2684,7 +2690,7 @@ parse_chat_message_info(HippoConnection  *connection,
 
         timestamp = (GTime) (timestamp_milliseconds / 1000);
 
-        return hippo_chat_message_new(sender, text, timestamp, serial);
+        return hippo_chat_message_new(sender, text, sentiment, timestamp, serial);
     }
 }
 

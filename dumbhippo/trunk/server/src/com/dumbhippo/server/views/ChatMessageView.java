@@ -6,6 +6,7 @@ import com.dumbhippo.DateUtils;
 import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.XmlBuilder;
 import com.dumbhippo.persistence.ChatMessage;
+import com.dumbhippo.persistence.Sentiment;
 
 public class ChatMessageView {
 	@SuppressWarnings("unused")
@@ -29,10 +30,19 @@ public class ChatMessageView {
 	public String getTimeAgo() {
 		return DateUtils.formatTimeAgo(msg.getTimestamp());
 	}
+	
+	private String getSentiment() {
+		// Small amount of protocol compression, default to INDIFFERENT
+		if (msg.getSentiment() == Sentiment.INDIFFERENT)
+			return null;
+		else
+			return msg.getSentiment().name();
+	}
 
 	public void writeToXmlBuilder(XmlBuilder builder) {
 		builder.openElement("message",
 				"serial", Long.toString(msg.getId()),
+				"sentiment", getSentiment(),
 				"timestamp",Long.toString(msg.getTimestamp().getTime()),
 				"sender", msg.getFromUser().getId());
 		builder.appendTextNode("text", msg.getMessageText());
