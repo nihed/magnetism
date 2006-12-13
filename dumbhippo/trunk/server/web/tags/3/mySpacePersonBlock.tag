@@ -12,7 +12,10 @@
 <dht3:blockContainer cssClass="${offset ? 'dh-box-grey2' : 'dh-box-grey1'}" blockId="${blockId}" expandable="${!oneLine}">
 	<dht3:blockLeft block="${block}">
 		<dht3:simpleBlockTitle block="${block}" oneLine="${oneLine}" homeStack="false" spanClass="dh-stacker-block-title-blog-post"/>
-		<dht3:blockDescription blockId="${blockId}">${block.descriptionAsHtml}</dht3:blockDescription>			
+		<dht3:blockDescription blockId="${blockId}">${block.descriptionAsHtml}</dht3:blockDescription>
+		<c:if test="${!empty block.entry.description}">
+			<dht3:blockContent blockId="${blockId}">${block.descriptionAsHtml}</dht3:blockContent>
+		</c:if>	
 	</dht3:blockLeft>
 	<dht3:blockRight blockId="${blockId}" from="${block.personSource}" showFrom="${showFrom}">
 		<dht3:blockTimeAgo blockId="${blockId}" block="${block}"/>

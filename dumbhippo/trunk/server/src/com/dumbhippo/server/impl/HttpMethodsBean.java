@@ -1759,11 +1759,11 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 		xml.appendTextNode("username", external.getHandle());
 	}
 
-	public void doSetWebsite(XmlBuilder xml, UserViewpoint viewpoint, String url) throws XmlMethodException {
+	public void doSetWebsite(XmlBuilder xml, UserViewpoint viewpoint, URL url) throws XmlMethodException {
 		// DO NOT cut and paste this block into similar external account methods. It's only here because
 		// we don't use the "love hate" widget on /account for the website, and the javascript glue 
 		// for the plain entries assumes this works.
-		if (url.trim().length() == 0) {
+		if (url == null) {
 			doRemoveExternalAccount(xml, viewpoint, "WEBSITE");
 			try {
 				ExternalAccount external = externalAccountSystem.lookupExternalAccount(viewpoint, viewpoint.getViewer(), ExternalAccountType.WEBSITE);
@@ -1774,18 +1774,13 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 			return;
 		}
 		
+		throwIfUrlNotHttp(url);
+		
 		// the rest of this is more typical of a "set external account" http method
-		
-		URL urlObject;
-		try {
-			urlObject = parseUserEnteredUrl(url, true);
-		} catch (MalformedURLException e) {
-			throw new XmlMethodException(XmlMethodErrorCode.INVALID_URL, "Invalid url (" + e.getMessage() + ")");
-		}
-		
+				
 		ExternalAccount external = externalAccountSystem.getOrCreateExternalAccount(viewpoint, ExternalAccountType.WEBSITE);
 		try {
-			external.setHandleValidating(urlObject.toExternalForm());
+			external.setHandleValidating(url.toExternalForm());
 		} catch (ValidationException e) {
 			throw new XmlMethodException(XmlMethodErrorCode.PARSE_ERROR, e.getMessage());
 		}
@@ -1793,6 +1788,21 @@ public class HttpMethodsBean implements HttpMethods, Serializable {
 	}
 
 	public void doSetBlog(XmlBuilder xml, UserViewpoint viewpoint, URL url) throws XmlMethodException {
+		
+		// DO NOT cut and paste this block into similar external account methods. It's only here because
+		// we don't use the "love hate" widget on /account for the website, and the javascript glue 
+		// for the plain entries assumes this works.
+		if (url == null) {
+			doRemoveExternalAccount(xml, viewpoint, "BLOG");
+			try {
+				ExternalAccount external = externalAccountSystem.lookupExternalAccount(viewpoint, viewpoint.getViewer(), ExternalAccountType.BLOG);
+				// otherwise the blog url would keep "coming back" since there's no visual indication of hate/indifferent status
+				external.setHandle(null);
+			} catch (NotFoundException e) {
+			}
+			return;
+		}
+		
 		throwIfUrlNotHttp(url);
 		
 		Feed feed = scrapeFeedFromUrl(url);

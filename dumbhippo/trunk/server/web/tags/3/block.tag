@@ -33,7 +33,7 @@
    	<c:when test="${dh:enumIs(block.blockType, 'FACEBOOK_EVENT')}">
 	   	<dht3:facebookBlock block="${block}" blockId="${blockId}" offset="${offset}" showFrom="${showFrom}" oneLine="${oneLine}" homeStack="${homeStack}"/>
    	</c:when>
-   	<c:when test="${dh:enumIs(block.blockType, 'BLOG_PERSON')}">
+   	<c:when test="${dh:enumIs(block.blockType, 'BLOG_ENTRY') || dh:enumIs(block.blockType, 'OBSOLETE_BLOG_PERSON')}">
 	   	<dht3:blogBlock block="${block}" blockId="${blockId}" offset="${offset}" showFrom="${showFrom}" oneLine="${oneLine}"/>
    	</c:when>
    	<c:when test="${dh:enumIs(block.blockType, 'FLICKR_PERSON')}">

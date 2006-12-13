@@ -243,14 +243,19 @@ public class HttpMethodsServlet2 extends AbstractServlet {
 						return null;
 					s = s.trim();
 					URL url;
-					try {
-						url = new URL(s);
-					} catch (MalformedURLException e) {
-						if (!s.startsWith("http://")) {
-							// let users type just "example.com" instead of "http://example.com"
-							return marshal(viewpoint, "http://" + s);	
-						} else {
-							throw new XmlMethodException(XmlMethodErrorCode.INVALID_URL, "Invalid URL: '" + s + "'");
+					
+					if (s.length() == 0) {
+						url = null;
+					} else {
+						try {
+							url = new URL(s);
+						} catch (MalformedURLException e) {
+							if (!s.startsWith("http://")) {
+								// let users type just "example.com" instead of "http://example.com"
+								return marshal(viewpoint, "http://" + s);	
+							} else {
+								throw new XmlMethodException(XmlMethodErrorCode.INVALID_URL, "Invalid URL: '" + s + "'");
+							}
 						}
 					}
 					return url;

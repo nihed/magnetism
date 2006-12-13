@@ -35,7 +35,10 @@ public enum BlockType {
 	 */
 	OBSOLETE_EXTERNAL_ACCOUNT_UPDATE_SELF, // 5
 	
-	BLOG_PERSON { // 6
+	/** This is just placeholding a historically-used ordinal that should not be 
+	 * reused to avoid database confusion.
+	 */
+	OBSOLETE_BLOG_PERSON { // 6
 		@Override
 		public boolean isAlwaysPublic() {
 			return true;
@@ -106,6 +109,12 @@ public enum BlockType {
 		}
 		@Override
 		public boolean userOriginIsData1() {
+			return true;
+		}		
+	},
+	BLOG_ENTRY { // 14
+		@Override
+		public boolean isAlwaysPublic() {
 			return true;
 		}		
 	};

@@ -131,7 +131,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		Class<? extends BlockHandler> handlerClass = null;
 		
 		switch (type) {
-		case BLOG_PERSON:
+		case BLOG_ENTRY:
 			handlerClass = BlogBlockHandler.class;
 			break;
 		case FACEBOOK_PERSON:
@@ -167,6 +167,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 			break;
 		case OBSOLETE_EXTERNAL_ACCOUNT_UPDATE:
 		case OBSOLETE_EXTERNAL_ACCOUNT_UPDATE_SELF:
+		case OBSOLETE_BLOG_PERSON:
 			break;
 			// don't add a default, it hides compiler warnings
 		}
@@ -1141,6 +1142,12 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 		pageable.setTotalCount(groupSystem.getPublicGroupCount());
 	}
 
+
+	public void pageRecentUsersGroupsActivity(Viewpoint viewpoint, User user, Pageable<GroupMugshotView> pageable, int blockPerGroup) {
+		// TODO Auto-generated method stub
+		
+	}	
+	
 	public UserBlockData lookupUserBlockData(UserViewpoint viewpoint, Guid guid) throws NotFoundException {
 		Query q = em.createQuery("SELECT ubd FROM UserBlockData ubd, Block block WHERE ubd.user = :user AND ubd.block = block AND block.id = :blockId");
 		q.setParameter("user", viewpoint.getViewer());
@@ -1455,7 +1462,7 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 				           " WHERE block.blockType = " + BlockType.MUSIC_PERSON.ordinal() +
 				           " OR block.blockType = " + BlockType.FACEBOOK_PERSON.ordinal() +
 				           " OR block.blockType = " + BlockType.FACEBOOK_EVENT.ordinal() +
-				           " OR block.blockType = " + BlockType.BLOG_PERSON.ordinal());
+				           " OR block.blockType = " + BlockType.BLOG_ENTRY.ordinal());
 		for (String id : TypeUtils.castList(String.class, q.getResultList()))
 			tasks.add(new BlockParticipationMigrationTask(id));
 
@@ -1694,16 +1701,17 @@ public class StackerBean implements Stacker, SimpleServiceMBean, LiveEventListen
 			break;
 		case MUSIC_PERSON:
 		case FACEBOOK_PERSON:
-		case FACEBOOK_EVENT:	
-		case BLOG_PERSON:
+		case FACEBOOK_EVENT:
 		case FLICKR_PERSON:
 		case FLICKR_PHOTOSET:
 		case YOUTUBE_PERSON:
-		case MYSPACE_PERSON:			
+		case MYSPACE_PERSON:
+		case BLOG_ENTRY:
 			isGroupParticipation = false;
 			break;
 		case OBSOLETE_EXTERNAL_ACCOUNT_UPDATE:
 		case OBSOLETE_EXTERNAL_ACCOUNT_UPDATE_SELF:
+		case OBSOLETE_BLOG_PERSON:
 			throw new RuntimeException("obsolete block type used " + block);
 			// don't add a default, it hides compiler warnings
 		}
