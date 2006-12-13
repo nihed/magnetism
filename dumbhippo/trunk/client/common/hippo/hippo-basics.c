@@ -919,6 +919,8 @@ hippo_parse_chat_kind(const char *str)
         return HIPPO_CHAT_KIND_POST;
     else if (strcmp(str, "group") == 0)
         return HIPPO_CHAT_KIND_GROUP;
+    else if (strcmp(str, "music") == 0)
+        return HIPPO_CHAT_KIND_MUSIC;
     else if (strcmp(str, "unknown") == 0)
         return HIPPO_CHAT_KIND_UNKNOWN;
     else
