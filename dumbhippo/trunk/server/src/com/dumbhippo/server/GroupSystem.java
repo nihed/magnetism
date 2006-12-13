@@ -14,6 +14,7 @@ import com.dumbhippo.persistence.GroupMessage;
 import com.dumbhippo.persistence.MembershipStatus;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Resource;
+import com.dumbhippo.persistence.Sentiment;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.server.views.ChatMessageView;
 import com.dumbhippo.server.views.GroupView;
@@ -164,9 +165,10 @@ public interface GroupSystem {
 	 * @param group the group the message is about.
 	 * @param fromUser the user who sent the message
 	 * @param text the text of the message
+	 * @param sentiment the type of message (INDIFFERENT=normal chat message, LOVE/HATE=quip)
 	 * @param timestamp the time when the message was posted
 	 */
-	public void addGroupMessage(Group group, User fromUser, String text, Date timestamp);
+	public void addGroupMessage(Group group, User fromUser, String text, Sentiment sentiment, Date timestamp);
 
 	/**
 	 * Return a view of chat messages based on a viewpoint.

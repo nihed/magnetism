@@ -41,6 +41,11 @@ static void hippo_canvas_block_music_unexpand (HippoCanvasBlock *canvas_block);
 /* Internals */
 static void hippo_canvas_block_music_update_visibility(HippoCanvasBlockMusic *block_music);
 
+static void on_love_activated(HippoCanvasItem       *item,
+                              HippoCanvasBlockMusic *block_music);
+static void on_hate_activated(HippoCanvasItem       *item,
+                              HippoCanvasBlockMusic *block_music);
+
 
 #if 0
 enum {
@@ -218,6 +223,7 @@ hippo_canvas_block_music_constructor (GType                  type,
                         NULL);
     HIPPO_CANVAS_BOX(item)->clickable = TRUE; /* Hack */
     hippo_canvas_box_append(quip_box, item, 0);
+    g_signal_connect(G_OBJECT(item), "activated", G_CALLBACK(on_love_activated), block_music);
     
     item = g_object_new(HIPPO_TYPE_CANVAS_LINK,
                         "padding-left", 4,
@@ -225,6 +231,7 @@ hippo_canvas_block_music_constructor (GType                  type,
                         "tooltip", "Add a quip",
                         NULL);
     hippo_canvas_box_append(quip_box, item, 0);
+    g_signal_connect(G_OBJECT(item), "activated", G_CALLBACK(on_love_activated), block_music);
     
     item = g_object_new(HIPPO_TYPE_CANVAS_IMAGE,
                         "border-left", 8,
@@ -234,6 +241,7 @@ hippo_canvas_block_music_constructor (GType                  type,
                         NULL);
     HIPPO_CANVAS_BOX(item)->clickable = TRUE; /* Hack */
     hippo_canvas_box_append(quip_box, item, 0);
+    g_signal_connect(G_OBJECT(item), "activated", G_CALLBACK(on_hate_activated), block_music);
 
     item = g_object_new(HIPPO_TYPE_CANVAS_LINK,
                         "padding-left", 4,
@@ -258,6 +266,7 @@ hippo_canvas_block_music_constructor (GType                  type,
     block_music->chat_preview = g_object_new(HIPPO_TYPE_CANVAS_CHAT_PREVIEW,
                                              "actions", hippo_canvas_block_get_actions(block),
                                              NULL);
+    g_signal_connect(G_OBJECT(item), "activated", G_CALLBACK(on_hate_activated), block_music);
 
     block_music->chat_preview_parent = content_box;
     hippo_canvas_box_append(content_box, block_music->chat_preview, 0);
@@ -540,3 +549,69 @@ hippo_canvas_block_music_update_visibility(HippoCanvasBlockMusic *block_music)
                                        canvas_block->expanded);
 }
 
+static void
+quip_on(HippoCanvasBlockMusic *block_music,
+        HippoSentiment         sentiment)
+{
+    HippoCanvasBlock *canvas_block = HIPPO_CANVAS_BLOCK(block_music);
+    const char *play_id;
+    const char *artist;
+    const char *name;
+    char *title = NULL;
+    
+    if (!block_music->track)
+        return;
+
+    play_id = hippo_track_get_play_id(block_music->track);
+    if (!play_id)
+        return;
+
+    /* Determine a title to show to the user as they are entering the quip
+     * (Do we need/want this?)
+     */
+    artist = hippo_track_get_artist(block_music->track);
+    name = hippo_track_get_artist(block_music->track);
+
+    if (artist && name)
+        title = g_strdup_printf("%s - %s", artist, name);
+    else if (artist)
+        title = g_strdup(artist);
+    else if (name)
+        title = g_strdup(name);
+    else if (canvas_block->block) {
+        HippoEntity *user = NULL;
+        const char *name = NULL;
+        
+        g_object_get(G_OBJECT(canvas_block), "user", &user, NULL);
+        if (user) {
+            name = hippo_entity_get_name(user);
+            if (name)
+                title = g_strdup_printf("%s's Music", name);
+            
+            g_object_unref(user);
+        }
+    }
+
+    if (!title)
+        title = g_strdup("Music");
+    
+    hippo_actions_quip(hippo_canvas_block_get_actions(canvas_block),
+                       HIPPO_CHAT_KIND_MUSIC, play_id,
+                       sentiment, title);
+
+    g_free(title);
+}
+
+static void
+on_love_activated(HippoCanvasItem       *item,
+                  HippoCanvasBlockMusic *block_music)
+{
+    quip_on(block_music, HIPPO_SENTIMENT_LOVE);
+}
+
+static void
+on_hate_activated(HippoCanvasItem       *item,
+                  HippoCanvasBlockMusic *block_music)
+{
+    quip_on(block_music, HIPPO_SENTIMENT_HATE);
+}

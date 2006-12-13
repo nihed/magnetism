@@ -527,7 +527,7 @@ public class MessengerGlueBean implements MessengerGlue {
 		throw new IllegalArgumentException("Bad chat room type");
 	}
 
-	public void addChatRoomMessage(String roomName, ChatRoomKind kind, String userName, String text, Date timestamp) {
+	public void addChatRoomMessage(String roomName, ChatRoomKind kind, String userName, String text, Sentiment sentiment, Date timestamp) {
 		Guid chatRoomId = Guid.parseTrustedJabberId(roomName);
 		User fromUser = getUserFromUsername(userName);
 		UserViewpoint viewpoint = new UserViewpoint(fromUser);
@@ -539,7 +539,7 @@ public class MessengerGlueBean implements MessengerGlue {
 			} catch (NotFoundException e) {
 				throw new RuntimeException("post chat not found", e);
 			}
-			postingBoard.addPostMessage(post, fromUser, text, timestamp);
+			postingBoard.addPostMessage(post, fromUser, text, sentiment, timestamp);
 			break;
 		case GROUP:
 			Group group;
@@ -548,7 +548,7 @@ public class MessengerGlueBean implements MessengerGlue {
 			} catch (NotFoundException e) {
 				throw new RuntimeException("group chat not found", e);
 			}
-			groupSystem.addGroupMessage(group, fromUser, text, timestamp);
+			groupSystem.addGroupMessage(group, fromUser, text, sentiment, timestamp);
 			break;
 		case MUSIC:
 			TrackHistory trackHistory;
@@ -557,7 +557,7 @@ public class MessengerGlueBean implements MessengerGlue {
 			} catch (NotFoundException e) {
 				throw new RuntimeException("track not found", e);
 			}
-			musicSystem.addTrackMessage(trackHistory, fromUser, text, timestamp, Sentiment.INDIFFERENT);
+			musicSystem.addTrackMessage(trackHistory, fromUser, text, sentiment, timestamp);
 			break;
 		}
 		

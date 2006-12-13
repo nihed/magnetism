@@ -37,6 +37,7 @@ import com.dumbhippo.persistence.GroupMessage;
 import com.dumbhippo.persistence.MembershipStatus;
 import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Resource;
+import com.dumbhippo.persistence.Sentiment;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.Validators;
 import com.dumbhippo.search.SearchSystem;
@@ -773,8 +774,8 @@ public class GroupSystemBean implements GroupSystem, GroupSystemRemote {
 		return viewedMsgs;
 	}	
 	
-	public void addGroupMessage(Group group, User fromUser, String text, Date timestamp) {
-		GroupMessage groupMessage = new GroupMessage(group, fromUser, text, timestamp);
+	public void addGroupMessage(Group group, User fromUser, String text, Sentiment sentiment, Date timestamp) {
+		GroupMessage groupMessage = new GroupMessage(group, fromUser, text, sentiment, timestamp);
 		em.persist(groupMessage);
 
 		notifier.onGroupMessageCreated(groupMessage);

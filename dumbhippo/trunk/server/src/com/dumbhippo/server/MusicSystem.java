@@ -238,8 +238,8 @@ public interface MusicSystem {
 	 * @param post the post the message is about.
 	 * @param fromUser the user who sent the message
 	 * @param text the text of the message
-	 * @param timestamp the time when the message was posted
 	 * @param sentiment the type of message (INDIFFERENT=normal chat message, LOVE/HATE=quip)
+	 * @param timestamp the time when the message was posted
 	 */
-	public void addTrackMessage(TrackHistory trackHistory, User fromUser, String text, Date timestamp, Sentiment sentiment);	
+	public void addTrackMessage(TrackHistory trackHistory, User fromUser, String text, Sentiment sentiment, Date timestamp);	
 }

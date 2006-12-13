@@ -171,7 +171,7 @@ public class MusicSystemBean implements MusicSystem {
 		return internal.getTrackMessages(trackHistory, lastSeenSerial);
 	}
 
-	public void addTrackMessage(TrackHistory trackHistory, User fromUser, String text, Date timestamp, Sentiment sentiment) {
-		internal.addTrackMessage(trackHistory, fromUser, text, timestamp, sentiment);
+	public void addTrackMessage(TrackHistory trackHistory, User fromUser, String text, Sentiment sentiment, Date timestamp) {
+		internal.addTrackMessage(trackHistory, fromUser, text, sentiment, timestamp);
 	}
 }

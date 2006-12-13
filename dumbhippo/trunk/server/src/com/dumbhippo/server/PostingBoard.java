@@ -16,6 +16,7 @@ import com.dumbhippo.persistence.Person;
 import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.PostMessage;
 import com.dumbhippo.persistence.Resource;
+import com.dumbhippo.persistence.Sentiment;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.postinfo.PostInfo;
 import com.dumbhippo.server.views.ChatMessageView;
@@ -194,9 +195,10 @@ public interface PostingBoard {
 	 * @param post the post the message is about.
 	 * @param fromUser the user who sent the message
 	 * @param text the text of the message
+	 * @param sentiment the type of message (INDIFFERENT=normal chat message, LOVE/HATE=quip)
 	 * @param timestamp the time when the message was posted
 	 */
-	public void addPostMessage(Post post, User fromUser, String text, Date timestamp);
+	public void addPostMessage(Post post, User fromUser, String text, Sentiment sentiment, Date timestamp);
 	
 	/**
 	 * Search the database of posts using Lucene.

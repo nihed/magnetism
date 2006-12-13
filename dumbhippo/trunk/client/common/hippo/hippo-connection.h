@@ -91,6 +91,13 @@ void             hippo_connection_send_chat_room_message    (HippoConnection *co
                                                              HippoChatRoom   *room,
                                                              const char      *text);
 
+/* Like send_chat_room_message, but without a chat room */
+void             hippo_connection_send_quip                 (HippoConnection *connection,
+                                                             HippoChatKind    kind,
+                                                             const char      *id,
+                                                             const char      *text,
+                                                             HippoSentiment   sentiment);
+
 void             hippo_connection_request_chat_room_details (HippoConnection *connection,
                                                              HippoChatRoom   *room);
 

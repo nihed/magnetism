@@ -32,6 +32,7 @@ import com.dumbhippo.identity20.Guid.ParseException;
 import com.dumbhippo.jive.XmlParser;
 import com.dumbhippo.live.PresenceListener;
 import com.dumbhippo.live.PresenceService;
+import com.dumbhippo.persistence.Sentiment;
 import com.dumbhippo.server.ChatRoomInfo;
 import com.dumbhippo.server.ChatRoomKind;
 import com.dumbhippo.server.ChatRoomMessage;
@@ -681,6 +682,7 @@ public class Room implements PresenceListener {
 	}
 	
 	private void processMessagePacket(Message packet) {
+		Sentiment sentiment = Sentiment.INDIFFERENT;
 		JID fromJid = packet.getFrom();
 		JID toJid = packet.getTo();
 		
@@ -697,7 +699,19 @@ public class Room implements PresenceListener {
 		// will then be sent to all nodes, including us, saying that there are new messages.
 		// We'll (in onMessagesChanged) query for new messages and send them to the connected clients.
 		MessengerGlue glue = EJBUtil.defaultLookup(MessengerGlue.class);
-		glue.addChatRoomMessage(roomName, kind, username, packet.getBody(), new Date());
+		
+		Element messageInfo = packet.getChildElement("messageInfo", "http://dumbhippo.com/protocol/rooms");
+		if (messageInfo != null) {
+			String sentimentString = messageInfo.attributeValue("sentiment");
+			if (sentimentString != null) {
+				if (sentimentString.equals("LOVE"))
+					sentiment = Sentiment.LOVE;
+				else if (sentimentString.equals("HATE"))
+					sentiment = Sentiment.HATE;
+			}
+		}
+		
+		glue.addChatRoomMessage(roomName, kind, username, packet.getBody(), sentiment, new Date());
 	}
 	
 	private void processIQPacket(IQ packet) {

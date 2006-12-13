@@ -2094,7 +2094,7 @@ public class MusicSystemInternalBean implements MusicSystemInternal {
 		return TypeUtils.castList(TrackMessage.class, q.getResultList());
 	}
 	
-	public void addTrackMessage(TrackHistory trackHistory, User fromUser, String text, Date timestamp, Sentiment sentiment) {
+	public void addTrackMessage(TrackHistory trackHistory, User fromUser, String text, Sentiment sentiment, Date timestamp) {
 		TrackMessage trackMessage = new TrackMessage(trackHistory, fromUser, text, timestamp, sentiment);
 		em.persist(trackMessage);
 		

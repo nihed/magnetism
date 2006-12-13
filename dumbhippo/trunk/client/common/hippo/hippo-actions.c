@@ -190,7 +190,7 @@ image_set_on_canvas_item_func(HippoSurface *surface,
     g_object_unref(item);
 }
 
-void
+static void
 load_image_url_async(HippoActions    *actions,
                      HippoImageCache *cache,
                      const char      *url,
@@ -395,3 +395,27 @@ hippo_actions_can_play_song_download(HippoActions      *actions,
     return hippo_platform_can_play_song_download(get_platform(actions), song_download);
 }
 
+void
+hippo_actions_quip(HippoActions   *actions,
+                   HippoChatKind   kind,
+                   const char     *id,
+                   HippoSentiment  sentiment,
+                   const char     *title)
+{
+    const char *text = NULL;
+
+    switch (sentiment) {
+    case HIPPO_SENTIMENT_INDIFFERENT:
+        text = "Who cares!";
+        break;
+    case HIPPO_SENTIMENT_LOVE:
+        text = "It rulez!";
+        break;
+    case HIPPO_SENTIMENT_HATE:
+        text = "It sucks!";
+        break;
+    }
+
+    hippo_connection_send_quip(get_connection(actions),
+                               kind, id, text, sentiment);
+}

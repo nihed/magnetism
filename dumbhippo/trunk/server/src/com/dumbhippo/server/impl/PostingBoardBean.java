@@ -57,6 +57,7 @@ import com.dumbhippo.persistence.Post;
 import com.dumbhippo.persistence.PostMessage;
 import com.dumbhippo.persistence.PostVisibility;
 import com.dumbhippo.persistence.Resource;
+import com.dumbhippo.persistence.Sentiment;
 import com.dumbhippo.persistence.User;
 import com.dumbhippo.persistence.UserBlockData;
 import com.dumbhippo.postinfo.NodeName;
@@ -1185,8 +1186,8 @@ public class PostingBoardBean implements PostingBoard {
 		return viewedMsgs;
 	}	
 	
-	public void addPostMessage(Post post, User fromUser, String text, Date timestamp) {
-		PostMessage postMessage = new PostMessage(post, fromUser, text, timestamp);
+	public void addPostMessage(Post post, User fromUser, String text, Sentiment sentiment, Date timestamp) {
+		PostMessage postMessage = new PostMessage(post, fromUser, text, sentiment, timestamp);
 		em.persist(postMessage);
 		
 		notifier.onPostMessageCreated(postMessage);

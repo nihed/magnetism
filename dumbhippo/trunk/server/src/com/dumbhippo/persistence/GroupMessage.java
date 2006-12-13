@@ -24,16 +24,12 @@ public class GroupMessage extends EmbeddedMessage {
 	private Group group;
 	
 	public GroupMessage() {
-		this(null, null, null, null);
+		this(null, null, null, Sentiment.INDIFFERENT, null);
 	}
 
-	public GroupMessage(Group group, User fromUser, String messageText, Date timestamp, Sentiment sentiment) {
+	public GroupMessage(Group group, User fromUser, String messageText, Sentiment sentiment, Date timestamp) {
 		super(fromUser, messageText, timestamp, sentiment);
 		this.group = group;
-	}
-	
-	public GroupMessage(Group group, User fromUser, String messageText, Date timestamp) {
-		this(group, fromUser, messageText, timestamp, Sentiment.INDIFFERENT);
 	}
 	
 	@ManyToOne

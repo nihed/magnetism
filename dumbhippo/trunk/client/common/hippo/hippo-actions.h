@@ -82,6 +82,11 @@ void          hippo_actions_invite_to_group         (HippoActions    *actions,
 gboolean      hippo_actions_can_play_song_download  (HippoActions      *actions,
                                                      HippoSongDownload *song_download);
 
+void          hippo_actions_quip                    (HippoActions      *actions,
+                                                     HippoChatKind      kind,
+                                                     const char        *id,
+                                                     HippoSentiment     sentiment,
+                                                     const char        *title);
 G_END_DECLS
 
 #endif /* __HIPPO_ACTIONS_H__ */

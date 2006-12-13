@@ -2351,6 +2351,37 @@ hippo_connection_send_chat_room_message(HippoConnection *connection,
     lm_message_unref(message);
 }
 
+void
+hippo_connection_send_quip(HippoConnection *connection,
+                           HippoChatKind    kind,
+                           const char      *id,
+                           const char      *text,
+                           HippoSentiment   sentiment)
+{
+    char *node, *to;
+    LmMessage *message;
+    LmMessageNode *body;
+    LmMessageNode *child;
+    
+    node = hippo_id_to_jabber_id(id);
+    to = g_strconcat(node, "@" HIPPO_ROOMS_JID_DOMAIN, NULL);
+    g_free(node);
+
+    message = lm_message_new(to, LM_MESSAGE_TYPE_MESSAGE);
+    body = lm_message_node_add_child(message->node, "body", text);
+
+    if (sentiment != HIPPO_SENTIMENT_INDIFFERENT) {
+        child = lm_message_node_add_child(message->node, "messageInfo", NULL);
+        lm_message_node_set_attribute(child, "xmlns", "http://dumbhippo.com/protocol/rooms");
+        lm_message_node_set_attribute(child, "sentiment", hippo_sentiment_as_string(sentiment));
+    }
+    
+    hippo_connection_send_message(connection, message, SEND_MODE_AFTER_AUTH);
+
+    lm_message_unref(message);
+    g_free(to);
+}
+
 static gboolean
 parse_room_jid(const char *jid,
                char      **chat_id_p,

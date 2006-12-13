@@ -25,15 +25,11 @@ public class PostMessage extends EmbeddedMessage {
 	private Post post;
 	
 	public PostMessage() {
-		this(null, null, null, null);
+		this(null, null, null, Sentiment.INDIFFERENT, null);
 	}
 
-	public PostMessage(Post post, User fromUser, String messageText, Date timestamp, Sentiment sentiment) {
+	public PostMessage(Post post, User fromUser, String messageText, Sentiment sentiment, Date timestamp) {
 		super(fromUser, messageText, timestamp, sentiment);
-	}
-	
-	public PostMessage(Post post, User fromUser, String messageText, Date timestamp) {
-		this(post, fromUser, messageText, timestamp, Sentiment.INDIFFERENT);
 	}
 	
 	@ManyToOne
