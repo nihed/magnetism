@@ -155,7 +155,7 @@ public abstract class AbstractFlashTag extends SimpleTagSupport {
 				
 				sb.append(key);
 				sb.append("=");
-				sb.append(StringUtils.urlDecode(value));
+				sb.append(StringUtils.urlEncode(value));
 			}
 		}
 	
