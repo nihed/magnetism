@@ -28,6 +28,6 @@ public class NowPlayingTag extends AbstractFlashTag {
 	@Override
 	public void doTag() throws IOException {
 		doTag(FlashBadge.NOW_PLAYING_440_120, "dh-nowplaying", null, 
-				"themeId", themeId, "forceMode", forceMode);
+				"theme", themeId, "forceMode", forceMode);
 	}
 }
