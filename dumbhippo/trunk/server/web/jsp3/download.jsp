@@ -37,9 +37,9 @@
 <dht3:page currentPageLink="download">
 	<dht3:shinyBox color="grey">
 		<div class="dh-download-header-area">
-			<div class="dh-download-header">Get Mugshot</div>
+			<div class="dh-download-header">Download Mugshot</div>
 			<c:if test="${welcome.haveDownload}">
-				<div class="dh-download-subtitle">Take advantage of all of our fun features with the Mugshot download.  It's easy and free!</div>
+				<div class="dh-download-subtitle">Share cool sites. Get updates from friends on your desktop. Show off your music playlist. Mugshot is free and easy to use!</div>
 			</c:if>
 			<div class="dh-download-terms">
 				<c:choose>
@@ -59,7 +59,7 @@
 					<div class="dh-download-buttons">
 						<%-- the class changes to dh-download-product-disabled in the javascript when one is not active --%>
 						<a id="dhDownloadProduct" class="dh-download-product" href="javascript:dh.download.doDownload('${welcome.downloadUrl}')"><img src="/images3/${buildStamp}/download_now_button.gif"/></a>
-						<a id="dhSkipDownload" class="dh-download-product" href="javascript:dh.download.doDownload()"><img src="/images3/${buildStamp}/no_thanks_button.gif"/></a>
+						<a id="dhSkipDownload" class="dh-download-product" href="javascript:dh.download.doDownload()">Skip this for now and go to my Account page</a>
 						<i>  (This download is for <c:out value="${welcome.downloadFor}"/>.)</i>
 					</div>
 					<div class="dh-download-yadayada">

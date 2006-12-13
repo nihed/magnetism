@@ -6,11 +6,9 @@ import com.dumbhippo.GlobalSetup;
 import com.dumbhippo.server.Pageable;
 import com.dumbhippo.server.Stacker;
 import com.dumbhippo.server.views.GroupMugshotView;
-import com.dumbhippo.web.PagePositions;
-import com.dumbhippo.web.PagePositionsBean;
 import com.dumbhippo.web.WebEJBUtil;
 
-public class ActiveGroupsPage extends AbstractSigninOptionalPage {
+public class MyGroupsPage extends AbstractPersonPage {
 	@SuppressWarnings("unused")
 	static private final Logger logger = GlobalSetup.getLogger(ActiveGroupsPage.class);
 	
@@ -19,12 +17,9 @@ public class ActiveGroupsPage extends AbstractSigninOptionalPage {
 	
 	protected Stacker stacker;
 	
-	@PagePositions
-	PagePositionsBean pagePositions;
-	
 	private Pageable<GroupMugshotView> activeGroups;
 	
-	public ActiveGroupsPage() {
+	public MyGroupsPage() {
 		stacker = WebEJBUtil.defaultLookup(Stacker.class);
 	}
 	
@@ -34,6 +29,7 @@ public class ActiveGroupsPage extends AbstractSigninOptionalPage {
 			activeGroups.setInitialPerPage(GROUPS_PER_PAGE);
 			activeGroups.setSubsequentPerPage(GROUPS_PER_PAGE);
 			
+			// FIXME do the query limited by groups we are in
 			stacker.pageRecentGroupActivity(getViewpoint(), activeGroups, BLOCKS_PER_GROUP);
 		}
 		return activeGroups;

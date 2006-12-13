@@ -23,7 +23,7 @@
 <dht3:page currentPageLink="person">
 	<dht3:pageSubHeader title="${person.viewedPerson.name}'s ${pageName}">
 		<dht3:randomTip tipIndex="${person.randomTipIndex}" isSelf="${person.self}"/>
-		<dht3:standardStackedPersonPageOptions selected="${pageName}"/> 
+		<dht3:personRelatedPagesTabs selected="person"/> 
 	</dht3:pageSubHeader>
 	<%-- this will go away soon, so it's not worth it creating a tag for it --%>
 	<c:if test="${person.facebookErrorMessage != null}">
