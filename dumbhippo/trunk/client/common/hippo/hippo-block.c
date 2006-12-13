@@ -4,6 +4,7 @@
 #include "hippo-block-group-chat.h"
 #include "hippo-block-group-member.h"
 #include "hippo-block-post.h"
+#include "hippo-block-music-chat.h"
 #include "hippo-block-music-person.h"
 #include "hippo-block-facebook-person.h"
 #include "hippo-block-blog-person.h"
@@ -414,6 +415,9 @@ hippo_block_new(const char    *guid,
     case HIPPO_BLOCK_TYPE_POST:
         object_type = HIPPO_TYPE_BLOCK_POST;
         break;
+    case HIPPO_BLOCK_TYPE_MUSIC_CHAT:
+        object_type = HIPPO_TYPE_BLOCK_MUSIC_CHAT;
+        break;
     case HIPPO_BLOCK_TYPE_MUSIC_PERSON:
         object_type = HIPPO_TYPE_BLOCK_MUSIC_PERSON;
         break;
@@ -722,6 +726,7 @@ hippo_block_type_from_string(const char *s)
         { "POST", HIPPO_BLOCK_TYPE_POST },
         { "GROUP_MEMBER", HIPPO_BLOCK_TYPE_GROUP_MEMBER },
         { "GROUP_CHAT", HIPPO_BLOCK_TYPE_GROUP_CHAT },
+        { "MUSIC_CHAT", HIPPO_BLOCK_TYPE_MUSIC_CHAT },
         { "MUSIC_PERSON", HIPPO_BLOCK_TYPE_MUSIC_PERSON },
         { "BLOG_PERSON", HIPPO_BLOCK_TYPE_BLOG_PERSON },
         { "FLICKR_PERSON", HIPPO_BLOCK_TYPE_FLICKR_PERSON },

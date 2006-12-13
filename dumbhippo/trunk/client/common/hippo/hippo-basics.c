@@ -935,6 +935,8 @@ hippo_chat_kind_as_string(HippoChatKind kind)
         return "post";
     case HIPPO_CHAT_KIND_GROUP:
         return "group";
+    case HIPPO_CHAT_KIND_MUSIC:
+        return "music";
     case HIPPO_CHAT_KIND_UNKNOWN:
         return "unknown";
     case HIPPO_CHAT_KIND_BROKEN:

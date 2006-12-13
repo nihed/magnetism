@@ -7,6 +7,7 @@
 #include "hippo-canvas-block-post.h"
 #include "hippo-canvas-block-group-chat.h"
 #include "hippo-canvas-block-group-member.h"
+#include "hippo-canvas-block-music-chat.h"
 #include "hippo-canvas-block-music-person.h"
 #include "hippo-canvas-block-flickr-person.h"
 #include "hippo-canvas-block-youtube-person.h"
@@ -283,6 +284,9 @@ hippo_canvas_block_new(HippoBlockType type,
         break;
     case HIPPO_BLOCK_TYPE_GROUP_CHAT:
         object_type = HIPPO_TYPE_CANVAS_BLOCK_GROUP_CHAT;
+        break;
+    case HIPPO_BLOCK_TYPE_MUSIC_CHAT:
+        object_type = HIPPO_TYPE_CANVAS_BLOCK_MUSIC_CHAT;
         break;
     case HIPPO_BLOCK_TYPE_MUSIC_PERSON:
         object_type = HIPPO_TYPE_CANVAS_BLOCK_MUSIC_PERSON;
