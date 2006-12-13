@@ -22,12 +22,12 @@ import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.Viewpoint;
 
 @Stateless
-public abstract class BlogLikeBlockHandlerBean extends AbstractBlockHandlerBean<BlogLikeBlockView> implements BlogLikeBlockHandler {
+public abstract class AbstractSingleBlockForFeedBlockHandlerBean extends AbstractBlockHandlerBean<AbstractSingleBlockForFeedBlockView> implements SingleBlockForFeedBlockHandler {
 	
 	@EJB
 	protected FeedSystem feedSystem;
 	
-	public BlogLikeBlockHandlerBean(Class<? extends BlogLikeBlockView> blockViewClass) {
+	public AbstractSingleBlockForFeedBlockHandlerBean(Class<? extends AbstractSingleBlockForFeedBlockView> blockViewClass) {
 		super(blockViewClass);
 	}
 	
@@ -44,7 +44,7 @@ public abstract class BlogLikeBlockHandlerBean extends AbstractBlockHandlerBean<
 	}	
 	
 	@Override
-	protected void populateBlockViewImpl(BlogLikeBlockView blockView) throws BlockNotVisibleException {
+	protected void populateBlockViewImpl(AbstractSingleBlockForFeedBlockView blockView) throws BlockNotVisibleException {
 		Viewpoint viewpoint = blockView.getViewpoint();
 		Block block = blockView.getBlock();
 		

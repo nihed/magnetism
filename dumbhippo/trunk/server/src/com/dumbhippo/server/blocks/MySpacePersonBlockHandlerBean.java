@@ -11,7 +11,7 @@ import com.dumbhippo.persistence.ExternalAccountType;
 import com.dumbhippo.persistence.User;
 
 @Stateless
-public class MySpacePersonBlockHandlerBean extends BlogLikeBlockHandlerBean implements MySpacePersonBlockHandler {
+public class MySpacePersonBlockHandlerBean extends AbstractSingleBlockForFeedBlockHandlerBean implements MySpacePersonBlockHandler {
 	
 	static private final Logger logger = GlobalSetup.getLogger(MySpacePersonBlockHandler.class);
 	

@@ -7,7 +7,7 @@ import com.dumbhippo.persistence.BlockKey;
 import com.dumbhippo.persistence.User;
 
 @Local
-public interface BlogLikeBlockHandler extends BlockHandler {
+public interface SingleBlockForFeedBlockHandler extends BlockHandler {
 	public BlockKey getKey(User user);
 	public BlockKey getKey(Guid userId);
 }

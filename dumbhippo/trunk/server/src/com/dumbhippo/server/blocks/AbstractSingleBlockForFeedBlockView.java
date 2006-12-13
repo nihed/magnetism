@@ -9,20 +9,21 @@ import com.dumbhippo.server.views.PersonView;
 import com.dumbhippo.server.views.Viewpoint;
 
 /**
- * Abstract class for block views of external accounts which act 
- * like blogs - MySpace, LiveJournal, and the arbitrary blog feed.
+ * Abstract class for block views of external accounts which have 
+ * a feed associated and we have one block per person (vs. one 
+ * block per feed entry or something)
  * 
  * @author walters
  */
-public abstract class BlogLikeBlockView extends AbstractPersonBlockView implements ExternalAccountBlockView, SimpleTitleBlockView {
+public abstract class AbstractSingleBlockForFeedBlockView extends AbstractPersonBlockView implements ExternalAccountBlockView, SimpleTitleBlockView {
 	
 	protected FeedEntry entry;
 	
-	public BlogLikeBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd, boolean participated) {
+	public AbstractSingleBlockForFeedBlockView(Viewpoint viewpoint, Block block, UserBlockData ubd, boolean participated) {
 		super(viewpoint, block, ubd, participated);
 	}
 	
-	public BlogLikeBlockView(Viewpoint viewpoint, Block block, GroupBlockData gbd, boolean participated) {
+	public AbstractSingleBlockForFeedBlockView(Viewpoint viewpoint, Block block, GroupBlockData gbd, boolean participated) {
 		super(viewpoint, block, gbd, participated);
 	}
 	
