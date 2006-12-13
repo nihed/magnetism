@@ -31,6 +31,7 @@ struct _HippoCanvasBlock {
     HippoCanvasItem *background_gradient;
     HippoCanvasItem *expand_pointer;
     HippoCanvasItem *unexpand_pointer;
+    HippoCanvasBox  *right_column;
     HippoCanvasBox  *age_parent;
     HippoCanvasItem *age_separator_item;
     HippoCanvasItem *age_prefix_item;
@@ -52,8 +53,10 @@ struct _HippoCanvasBlock {
     HippoCanvasItem *name_item;
     HippoCanvasItem *toggle_hush_link;
     GTime original_age;
-    /* probably a class prop not an instance prop, but it's a free bit anyway */
+    /* probably a class props not instance props, but free bits anyway */
     unsigned int expandable : 1;
+    unsigned int skip_heading : 1;
+    
     unsigned int expanded : 1;
     unsigned int hushed : 1;
     unsigned int sent_to_set : 1;
@@ -94,6 +97,7 @@ void hippo_canvas_block_set_title   (HippoCanvasBlock *canvas_block,
                                      gboolean          visited);
 void hippo_canvas_block_set_content (HippoCanvasBlock *canvas_block,
                                      HippoCanvasItem  *content_item);
+
 /* probably has to get factored out into subclass */
 void hippo_canvas_block_set_sender  (HippoCanvasBlock *canvas_block,
                                      const char       *entity_guid);

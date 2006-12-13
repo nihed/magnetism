@@ -22,7 +22,8 @@ struct _HippoActions {
      */
     HippoImageCache *entity_photo_cache;
     HippoImageCache *favicon_cache;
-    HippoImageCache *thumbnail_cache;
+    HippoImageCache *thumbnail_cache; /* photos/videos */
+    HippoImageCache *music_thumbnail_cache; /* album art */
     
     guint minute_timeout_id;
 };
@@ -113,6 +114,12 @@ hippo_actions_dispose(GObject *object)
         actions->thumbnail_cache = NULL;
     }
     
+    if (actions->music_thumbnail_cache) {
+        g_object_run_dispose(G_OBJECT(actions->music_thumbnail_cache));
+        g_object_unref(actions->music_thumbnail_cache);
+        actions->music_thumbnail_cache = NULL;
+    }
+    
     G_OBJECT_CLASS(hippo_actions_parent_class)->dispose(object);
 }
 
@@ -184,6 +191,18 @@ image_set_on_canvas_item_func(HippoSurface *surface,
 }
 
 void
+load_image_url_async(HippoActions    *actions,
+                     HippoImageCache *cache,
+                     const char      *url,
+                     HippoCanvasItem *image_item)
+{
+    g_object_ref(image_item); /* held by the loader func */
+    hippo_image_cache_load(cache, url,
+                           image_set_on_canvas_item_func,
+                           image_item);
+}
+
+void
 hippo_actions_load_favicon_async(HippoActions    *actions,
                                  const char      *image_url,
                                  HippoCanvasItem *image_item)
@@ -198,10 +217,7 @@ hippo_actions_load_favicon_async(HippoActions    *actions,
     
     absolute = hippo_connection_make_absolute_url(get_connection(actions),
                                                   image_url);
-    g_object_ref(image_item); /* held by the loader func */
-    hippo_image_cache_load(actions->favicon_cache, absolute,
-                           image_set_on_canvas_item_func,
-                           image_item);
+    load_image_url_async(actions, actions->favicon_cache, absolute, image_item);
     
     g_free(absolute);
 }
@@ -217,14 +233,31 @@ hippo_actions_load_thumbnail_async(HippoActions    *actions,
         actions->thumbnail_cache = hippo_image_cache_new(get_platform(actions));
     }
 
-    /* hippo_object_cache_debug_dump(HIPPO_OBJECT_CACHE(actions->favicon_cache)); */
+    /* hippo_object_cache_debug_dump(HIPPO_OBJECT_CACHE(actions->thumbnail_cache)); */
     
     absolute = hippo_connection_make_absolute_url(get_connection(actions),
                                                   image_url);
-    g_object_ref(image_item); /* held by the loader func */
-    hippo_image_cache_load(actions->thumbnail_cache, absolute,
-                           image_set_on_canvas_item_func,
-                           image_item);
+    load_image_url_async(actions, actions->thumbnail_cache, absolute, image_item);
+    
+    g_free(absolute);
+}
+
+void
+hippo_actions_load_music_thumbnail_async(HippoActions    *actions,
+                                         const char      *image_url,
+                                         HippoCanvasItem *image_item)
+{
+    char *absolute;
+    
+    if (actions->music_thumbnail_cache == NULL) {
+        actions->music_thumbnail_cache = hippo_image_cache_new(get_platform(actions));
+    }
+
+    /* hippo_object_cache_debug_dump(HIPPO_OBJECT_CACHE(actions->music_thumbnail_cache)); */
+    
+    absolute = hippo_connection_make_absolute_url(get_connection(actions),
+                                                  image_url);
+    load_image_url_async(actions, actions->music_thumbnail_cache, absolute, image_item);
     
     g_free(absolute);
 }
@@ -260,10 +293,7 @@ hippo_actions_load_entity_photo_async(HippoActions    *actions,
     
     absolute = hippo_connection_make_absolute_url(get_connection(actions),
                                                   sized);
-    g_object_ref(image_item); /* held by the loader func */
-    hippo_image_cache_load(actions->entity_photo_cache, absolute,
-                           image_set_on_canvas_item_func,
-                           image_item);
+    load_image_url_async(actions, actions->entity_photo_cache, absolute, image_item);
     
     g_free(absolute);
     g_free(sized);

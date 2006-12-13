@@ -31,6 +31,9 @@ const char* hippo_track_get_url         (HippoTrack *track);
 const char* hippo_track_get_play_id     (HippoTrack *track);
 gboolean    hippo_track_get_now_playing (HippoTrack *track);
 
+const char* hippo_track_get_thumbnail_url    (HippoTrack *track);
+int         hippo_track_get_thumbnail_width  (HippoTrack *track);
+int         hippo_track_get_thumbnail_height (HippoTrack *track);
 
 typedef struct _HippoSongDownload HippoSongDownload;
 

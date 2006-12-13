@@ -248,6 +248,12 @@ public class TrackView {
 		builder.appendTextNode("artist", getArtist());
 		builder.appendTextNode("album", getAlbum());
 		builder.appendTextNode("name", getName());
+		if (album.isSmallImageUrlAvailable()) {
+			builder.appendEmptyNode("thumbnail",
+									"url", album.getSmallImageUrl(),
+									"width", Integer.toString(album.getSmallImageWidth()),
+									"height", Integer.toString(album.getSmallImageHeight()));
+		}
 		
 		if (downloads != null) {
 			for (SongDownloadSource source: downloads.keySet()) {

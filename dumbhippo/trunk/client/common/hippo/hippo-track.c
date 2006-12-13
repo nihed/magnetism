@@ -28,6 +28,9 @@ struct _HippoTrack {
     char *name;
     char *play_id;
     char *url;
+    char *thumbnail_url;
+    int thumbnail_width;
+    int thumbnail_height;
     gint64 last_listen_time;
     gint64 duration;
     gboolean now_playing;
@@ -50,6 +53,11 @@ enum {
 static int signals[LAST_SIGNAL];
 */
 
+/* It's not clear to me why we have these properties, since tracks
+ * are immutable, and we have getters. I've skipped adding them for
+ * the thumbnail, but if there is a reason they are needed, they
+ * would be trivial to add.
+ */
 enum {
     PROP_0,
     PROP_ARTIST,
@@ -139,6 +147,7 @@ hippo_track_finalize(GObject *object)
     g_free(track->name);
     g_free(track->url);
     g_free(track->play_id);
+    g_free(track->thumbnail_url);
 
     g_slist_foreach(track->downloads, (GFunc)hippo_song_download_free, NULL);
     g_slist_free(track->downloads);
@@ -221,14 +230,20 @@ hippo_track_new_from_xml(HippoDataCache *cache,
     gboolean now_playing;
     HippoTrack *track;
     LmMessageNode *child;
+    LmMessageNode *thumbnail_node = NULL;
     const char *play_id = NULL;
     const char *url = NULL;
+    const char *thumbnail_url = NULL;
+    int thumbnail_width = -1;
+    int thumbnail_height = -1;
+
     
     if (!hippo_xml_split(cache, node, NULL,
                          "artist", HIPPO_SPLIT_STRING | HIPPO_SPLIT_ELEMENT, &artist,
                          "album", HIPPO_SPLIT_STRING | HIPPO_SPLIT_ELEMENT, &album,
                          "name", HIPPO_SPLIT_STRING | HIPPO_SPLIT_ELEMENT, &name,
                          "playId", HIPPO_SPLIT_STRING | HIPPO_SPLIT_OPTIONAL, &play_id,
+                         "thumbnail", HIPPO_SPLIT_NODE | HIPPO_SPLIT_OPTIONAL, &thumbnail_node,
                          "url", HIPPO_SPLIT_STRING | HIPPO_SPLIT_OPTIONAL, &url,
                          "lastListenTime", HIPPO_SPLIT_TIME_MS, &last_listen_time,
                          "duration", HIPPO_SPLIT_TIME_MS, &duration,
@@ -251,6 +266,20 @@ hippo_track_new_from_xml(HippoDataCache *cache,
 
     downloads = g_slist_reverse(downloads);
 
+    if (thumbnail_node) {
+        if (!hippo_xml_split(cache, thumbnail_node, NULL,
+                             "url", HIPPO_SPLIT_STRING, &thumbnail_url,
+                             "width", HIPPO_SPLIT_INT32, &thumbnail_width,
+                             "height", HIPPO_SPLIT_INT32, &thumbnail_height,
+                             NULL))
+            return NULL;
+
+        if (thumbnail_width <= 0 || thumbnail_height <= 0) {
+            g_warning("Bad thumbnail dimensions: %d x %d", thumbnail_width, thumbnail_height);
+            return NULL;
+        }
+    }
+
     track = g_object_new(HIPPO_TYPE_TRACK, NULL);
 
     track->artist = g_strdup(artist);
@@ -261,6 +290,9 @@ hippo_track_new_from_xml(HippoDataCache *cache,
     track->last_listen_time = last_listen_time;
     track->duration = duration;
     track->downloads = downloads;
+    track->thumbnail_url = g_strdup(thumbnail_url);
+    track->thumbnail_width = thumbnail_width;
+    track->thumbnail_height = thumbnail_height;
 
     if (now_playing) {
         HippoConnection *connection = hippo_data_cache_get_connection(cache);
@@ -333,6 +365,23 @@ hippo_track_get_now_playing (HippoTrack *track)
     return track->now_playing;
 }
 
+const char*
+hippo_track_get_thumbnail_url (HippoTrack *track)
+{
+    return track->thumbnail_url;
+}
+
+int
+hippo_track_get_thumbnail_width  (HippoTrack *track)
+{
+    return track->thumbnail_width;
+}
+
+int
+hippo_track_get_thumbnail_height (HippoTrack *track)
+{
+    return track->thumbnail_height;
+}
 
 /* === HippoSongDownload === */
 

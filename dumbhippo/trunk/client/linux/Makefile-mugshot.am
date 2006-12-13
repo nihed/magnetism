@@ -75,6 +75,7 @@ EMBEDDED_IMAGES=				\
 	$(EMBEDDEDIMAGEDIR)/lid.png		\
 	$(EMBEDDEDIMAGEDIR)/lock_icon.png	\
 	$(EMBEDDEDIMAGEDIR)/mugshotstacker.png	\
+	$(EMBEDDEDIMAGEDIR)/noart.png		\
 	$(EMBEDDEDIMAGEDIR)/nophoto.png		\
 	$(EMBEDDEDIMAGEDIR)/photo_icon.png	\
 	$(EMBEDDEDIMAGEDIR)/quiphate_icon.png	\

@@ -27,11 +27,18 @@ struct _HippoCanvasBlockMusic {
     HippoTrack *track;
     GSList *old_tracks;
 
-    HippoCanvasBox *parent_box;
+    HippoCanvasItem *thumbnail;
+    HippoCanvasBox *artist_link_parent;
+    HippoCanvasItem *artist_link;
+    HippoCanvasBox *name_link_parent;
+    HippoCanvasItem *name_link;
+    HippoCanvasBox *single_message_preview_parent;
     HippoCanvasItem *single_message_preview;
+    HippoCanvasBox *chat_preview_parent;
     HippoCanvasItem *chat_preview;
 
-    HippoCanvasBox *downloads_box;
+    HippoCanvasBox *downloads_parent;
+    HippoCanvasBox *downloads;
 
     guint have_messages : 1;
 };
